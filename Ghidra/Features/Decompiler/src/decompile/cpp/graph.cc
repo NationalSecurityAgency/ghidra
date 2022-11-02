@@ -16,6 +16,8 @@
  */
 #include "graph.hh"
 
+using namespace std;
+
 static void print_varnode_vertex(Varnode *vn,ostream &s)
 
 {

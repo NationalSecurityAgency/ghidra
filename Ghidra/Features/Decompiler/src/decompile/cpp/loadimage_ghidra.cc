@@ -15,6 +15,8 @@
  */
 #include "loadimage_ghidra.hh"
 
+using namespace std;
+
 LoadImageGhidra::LoadImageGhidra(ArchitectureGhidra *g)
   : LoadImage("ghidra_progam")
 

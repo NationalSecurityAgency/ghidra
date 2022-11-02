@@ -33,19 +33,19 @@
 /// have a tight internal encoding.
 class GhidraTranslate : public Translate {
   ArchitectureGhidra *glb;			///< The Ghidra Architecture and connection to the client
-  mutable map<string,VarnodeData> nm2addr;	///< Mapping from register name to Varnode
-  mutable map<VarnodeData,string> addr2nm;	///< Mapping rom Varnode to register name
-  const VarnodeData &cacheRegister(const string &nm,const VarnodeData &data) const;
+  mutable std::map<std::string,VarnodeData> nm2addr;	///< Mapping from register name to Varnode
+  mutable std::map<VarnodeData,std::string> addr2nm;	///< Mapping rom Varnode to register name
+  const VarnodeData &cacheRegister(const std::string &nm,const VarnodeData &data) const;
   void decode(Decoder &decoder);		///< Initialize \b this Translate from a stream
 public:
   GhidraTranslate(ArchitectureGhidra *g) { glb = g; }	///< Constructor
 
   virtual void initialize(DocumentStorage &store);
-  virtual const VarnodeData &getRegister(const string &nm) const;
-  virtual string getRegisterName(AddrSpace *base,uintb off,int4 size) const;
-  virtual void getAllRegisters(map<VarnodeData,string> &reglist) const {
+  virtual const VarnodeData &getRegister(const std::string &nm) const;
+  virtual std::string getRegisterName(AddrSpace *base,uintb off,int4 size) const;
+  virtual void getAllRegisters(std::map<VarnodeData,std::string> &reglist) const {
     throw LowlevelError("Cannot currently get all registers through this interface"); }
-  virtual void getUserOpNames(vector<string> &res) const;
+  virtual void getUserOpNames(std::vector<std::string> &res) const;
   virtual int4 oneInstruction(PcodeEmit &emit,const Address &baseaddr) const;
   virtual int4 instructionLength(const Address &baseaddr) const {
     throw LowlevelError("Cannot currently get instruction length through this interface"); }

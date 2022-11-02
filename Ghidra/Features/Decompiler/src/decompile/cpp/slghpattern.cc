@@ -15,6 +15,8 @@
  */
 #include "slghpattern.hh"
 
+using namespace std;
+
 uintm DisjointPattern::getMask(int4 startbit,int4 size,bool context) const
 
 {

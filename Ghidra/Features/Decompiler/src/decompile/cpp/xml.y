@@ -25,6 +25,8 @@
 #include <iostream>
 #include <string>
 
+using namespace std;
+
 string Attributes::bogus_uri("http://unused.uri");
 
 /// \brief The XML character scanner

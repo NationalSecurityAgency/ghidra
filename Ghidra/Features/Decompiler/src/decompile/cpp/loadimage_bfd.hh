@@ -47,8 +47,8 @@
 #endif
 
 struct ImportRecord {
-  string dllname;
-  string funcname;
+  std::string dllname;
+  std::string funcname;
   int ordinal;
   Address address;
   Address thunkaddress;
@@ -56,7 +56,7 @@ struct ImportRecord {
 
 class LoadImageBfd : public LoadImage {
   static int4 bfdinit;		// Is the library (globally) initialized
-  string target;		// File format (supported by BFD)
+  std::string target;		// File format (supported by BFD)
   bfd *thebfd;
   AddrSpace *spaceid;		// We need to map space id to segments but since
 				// we are currently ignoring segments anyway...
@@ -70,11 +70,11 @@ class LoadImageBfd : public LoadImage {
   asection *findSection(uintb offset,uintb &ssize) const; // Find section containing given offset
   void advanceToNextSymbol(void) const;
 public:
-  LoadImageBfd(const string &f,const string &t);
+  LoadImageBfd(const std::string &f,const std::string &t);
   void attachToSpace(AddrSpace *id) { spaceid = id; }
   void open(void);		// Open any descriptors
   void close(void);		// Close any descriptor
-  void getImportTable(vector<ImportRecord> &irec) { throw LowlevelError("Not implemented"); }
+  void getImportTable(std::vector<ImportRecord> &irec) { throw LowlevelError("Not implemented"); }
   virtual ~LoadImageBfd(void);
   virtual void loadFill(uint1 *ptr,int4 size,const Address &addr); // Load a chunk of image
   virtual void openSymbols(void) const;
@@ -84,7 +84,7 @@ public:
   virtual void closeSectionInfo(void) const;
   virtual bool getNextSection(LoadImageSection &sec) const;
   virtual void getReadonly(RangeList &list) const;
-  virtual string getArchType(void) const;
+  virtual std::string getArchType(void) const;
   virtual void adjustVma(long adjust);
 };
 

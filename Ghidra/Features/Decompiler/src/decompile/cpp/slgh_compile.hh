@@ -48,7 +48,7 @@ struct RtlPair {
 class SectionVector {
   int4 nextindex;		///< Index of the section currently being parsed.
   RtlPair main;			///< The main section
-  vector<RtlPair> named;	///< Named sections accessed by index
+  std::vector<RtlPair> named;	///< Named sections accessed by index
 public:
   SectionVector(ConstructTpl *rtl,SymbolScope *scope);					///< Constructor
   ConstructTpl *getMainSection(void) const { return main.section; }			///< Get the \e main section
@@ -70,12 +70,12 @@ struct SpaceQuality {
     ramtype,		///< An address space representing normal, indexed, memory
     registertype	///< An address space containing registers
   };
-  string name;		///< Name of the address space
+  std::string name;		///< Name of the address space
   uint4 type;		///< Type of address space, \e ramtype or \e registertype
   uint4 size;		///< Number of bytes required to index all bytes of the space
   uint4 wordsize;       ///< Number of bytes in an addressable unit of the space
   bool isdefault;	///< \b true if the new address space will be the default
-  SpaceQuality(const string &nm);	///< Constructor
+  SpaceQuality(const std::string &nm);	///< Constructor
 };
 
 /// \brief Qualities associated (via parsing) with a token or context \b field
@@ -84,13 +84,13 @@ struct SpaceQuality {
 /// are parsed in of a \b define \b token block prior to formally allocating the
 /// TokenField or FieldContext object.
 struct FieldQuality {
-  string name;		///< Name of the field
+  std::string name;		///< Name of the field
   uint4 low;		///< The least significant bit of the field within the token
   uint4 high;		///< The most significant bit of the field within the token
   bool signext;		///< \b true if the field's value is signed
   bool flow;		///< \b true if the context \b flows for this field.
   bool hex;		///< \b true if the field value is displayed in hex
-  FieldQuality(string *nm,uintb *l,uintb *h);	///< Constructor
+  FieldQuality(std::string *nm,uintb *l,uintb *h);	///< Constructor
 };
 
 /// \brief Subtable, pattern, and context information applied across a \b with block
@@ -101,14 +101,14 @@ struct FieldQuality {
 class WithBlock {
   SubtableSymbol *ss;			///< Subtable containing each Constructor (or null for root table)
   PatternEquation *pateq;		///< Pattern to prepend to each Constructor (or null)
-  vector<ContextChange *> contvec;	///< Context change to associate with each constructor (or null)
+  std::vector<ContextChange *> contvec;	///< Context change to associate with each constructor (or null)
 public:
   WithBlock(void) { pateq = (PatternEquation *)0; }	///< Constructor
-  void set(SubtableSymbol *s, PatternEquation *pq, vector<ContextChange *> *cvec);	///< Set components of the header
+  void set(SubtableSymbol *s, PatternEquation *pq, std::vector<ContextChange *> *cvec);	///< Set components of the header
   ~WithBlock(void);	///< Destructor
-  static PatternEquation *collectAndPrependPattern(const list<WithBlock> &stack, PatternEquation *pateq);
-  static vector<ContextChange *> *collectAndPrependContext(const list<WithBlock> &stack, vector<ContextChange *> *contvec);
-  static SubtableSymbol *getCurrentSubtable(const list<WithBlock> &stack);
+  static PatternEquation *collectAndPrependPattern(const std::list<WithBlock> &stack, PatternEquation *pateq);
+  static std::vector<ContextChange *> *collectAndPrependContext(const std::list<WithBlock> &stack, std::vector<ContextChange *> *contvec);
+  static SubtableSymbol *getCurrentSubtable(const std::list<WithBlock> &stack);
 };
 
 class SleighCompile;
@@ -158,11 +158,11 @@ class ConsistencyChecker {
   bool printdeadwarning;	///< Set to \b true if warning emitted for each written but not read temporary
   bool printlargetempwarning;	///< Set to \b true if warning emitted for each too large temporary
   SubtableSymbol *root_symbol;	///< The root symbol table for the parsed SLEIGH file
-  vector<SubtableSymbol *> postorder;	///< Subtables sorted into \e post order (dependent tables listed earlier)
-  map<SubtableSymbol *,int4> sizemap;	///< Sizes associated with table \e exports
+  std::vector<SubtableSymbol *> postorder;	///< Subtables sorted into \e post order (dependent tables listed earlier)
+  std::map<SubtableSymbol *,int4> sizemap;	///< Sizes associated with table \e exports
   OperandSymbol *getOperandSymbol(int4 slot,OpTpl *op,Constructor *ct);
-  void printOpName(ostream &s,OpTpl *op);
-  void printOpError(OpTpl *op,Constructor *ct,int4 err1,int4 err2,const string &message);
+  void printOpName(std::ostream &s,OpTpl *op);
+  void printOpError(OpTpl *op,Constructor *ct,int4 err1,int4 err2,const std::string &message);
   int4 recoverSize(const ConstTpl &sizeconst,Constructor *ct);
   bool checkOpMisuse(OpTpl *op,Constructor *ct);
   bool sizeRestriction(OpTpl *op,Constructor *ct);
@@ -177,14 +177,14 @@ class ConsistencyChecker {
   void setPostOrder(SubtableSymbol *root);
 
   // Optimization routines
-  static void examineVn(map<uintb,OptimizeRecord> &recs,const VarnodeTpl *vn,uint4 i,int4 inslot,int4 secnum);
+  static void examineVn(std::map<uintb,OptimizeRecord> &recs,const VarnodeTpl *vn,uint4 i,int4 inslot,int4 secnum);
   static bool possibleIntersection(const VarnodeTpl *vn1,const VarnodeTpl *vn2);
   bool readWriteInterference(const VarnodeTpl *vn,const OpTpl *op,bool checkread) const;
-  void optimizeGather1(Constructor *ct,map<uintb,OptimizeRecord> &recs,int4 secnum) const;
-  void optimizeGather2(Constructor *ct,map<uintb,OptimizeRecord> &recs,int4 secnum) const;
-  const OptimizeRecord *findValidRule(Constructor *ct,const map<uintb,OptimizeRecord> &recs) const;
+  void optimizeGather1(Constructor *ct,std::map<uintb,OptimizeRecord> &recs,int4 secnum) const;
+  void optimizeGather2(Constructor *ct,std::map<uintb,OptimizeRecord> &recs,int4 secnum) const;
+  const OptimizeRecord *findValidRule(Constructor *ct,const std::map<uintb,OptimizeRecord> &recs) const;
   void applyOptimization(Constructor *ct,const OptimizeRecord &rec);
-  void checkUnusedTemps(Constructor *ct,const map<uintb,OptimizeRecord> &recs);
+  void checkUnusedTemps(Constructor *ct,const std::map<uintb,OptimizeRecord> &recs);
   void checkLargeTemporaries(Constructor *ct,ConstructTpl *ctpl);
   void optimize(Constructor *ct);
 public:
@@ -221,14 +221,14 @@ struct FieldContext {
 class MacroBuilder : public PcodeBuilder {
   SleighCompile *slgh;		///< The SLEIGH parsing object
   bool haserror;		///< Set to \b true by the build() method if there was an error
-  vector<OpTpl *> &outvec;	///< The partial list of op templates to expand the macro into
-  vector<HandleTpl *> params;	///< List of parameters to substitute into the macro
-  bool transferOp(OpTpl *op,vector<HandleTpl *> &params);
+  std::vector<OpTpl *> &outvec;	///< The partial list of op templates to expand the macro into
+  std::vector<HandleTpl *> params;	///< List of parameters to substitute into the macro
+  bool transferOp(OpTpl *op,std::vector<HandleTpl *> &params);
   virtual void dump( OpTpl *op );
   void free(void);						///< Free resources used by the builder
-  void reportError(const Location* loc, const string &val);	///< Report error encountered expanding the macro
+  void reportError(const Location* loc, const std::string &val);	///< Report error encountered expanding the macro
 public:
-  MacroBuilder(SleighCompile *sl,vector<OpTpl *> &ovec,uint4 lbcnt) : PcodeBuilder(lbcnt),outvec(ovec) {
+  MacroBuilder(SleighCompile *sl,std::vector<OpTpl *> &ovec,uint4 lbcnt) : PcodeBuilder(lbcnt),outvec(ovec) {
     slgh = sl; haserror = false; }					///< Constructor
   void setMacroOp(OpTpl *macroop);					///< Establish the MACRO directive to expand
   bool hasError(void) const { return haserror; }			///< Return \b true if there were errors during expansion
@@ -248,8 +248,8 @@ class SleighPcode : public PcodeCompile {
   SleighCompile *compiler;			///< The main SLEIGH parser
   virtual uint4 allocateTemp(void);
   virtual const Location *getLocation(SleighSymbol *sym) const;
-  virtual void reportError(const Location* loc, const string &msg);
-  virtual void reportWarning(const Location* loc, const string &msg);
+  virtual void reportError(const Location* loc, const std::string &msg);
+  virtual void reportWarning(const Location* loc, const std::string &msg);
   virtual void addSymbol(SleighSymbol *sym);
 public:
   SleighPcode(void) : PcodeCompile() { compiler = (SleighCompile *)0; }	///< Constructor
@@ -269,21 +269,21 @@ class SleighCompile : public SleighBase {
 public:
   SleighPcode pcode;			///< The p-code parsing (sub)engine
 private:
-  map<string,string> preproc_defines;	///< Defines for the preprocessor
-  vector<FieldContext> contexttable;	///< Context field definitions (prior to defining ContextField and ContextSymbol)
-  vector<ConstructTpl *> macrotable;	///< SLEIGH macro definitions
-  vector<Token *> tokentable;		///< SLEIGH token definitions
-  vector<SubtableSymbol *> tables;	///< SLEIGH subtables
-  vector<SectionSymbol *> sections;	///< Symbols defining Constructor sections
-  list<WithBlock> withstack;		///< Current stack of \b with blocks
+  std::map<std::string,std::string> preproc_defines;	///< Defines for the preprocessor
+  std::vector<FieldContext> contexttable;	///< Context field definitions (prior to defining ContextField and ContextSymbol)
+  std::vector<ConstructTpl *> macrotable;	///< SLEIGH macro definitions
+  std::vector<Token *> tokentable;		///< SLEIGH token definitions
+  std::vector<SubtableSymbol *> tables;	///< SLEIGH subtables
+  std::vector<SectionSymbol *> sections;	///< Symbols defining Constructor sections
+  std::list<WithBlock> withstack;		///< Current stack of \b with blocks
   Constructor *curct;			///< Current Constructor being defined
   MacroSymbol *curmacro;		///< Current macro being defined
   bool contextlock;			///< If the context layout has been established yet
-  vector<string> relpath;		///< Relative path (to cwd) for each filename
-  vector<string> filename;		///< Stack of current files being parsed
-  vector<int4> lineno;			///< Current line number for each file in stack
-  map<Constructor *, Location> ctorLocationMap;		///< Map each Constructor to its defining parse location
-  map<SleighSymbol *, Location> symbolLocationMap;	///< Map each symbol to its defining parse location
+  std::vector<std::string> relpath;		///< Relative path (to cwd) for each filename
+  std::vector<std::string> filename;		///< Stack of current files being parsed
+  std::vector<int4> lineno;			///< Current line number for each file in stack
+  std::map<Constructor *, Location> ctorLocationMap;		///< Map each Constructor to its defining parse location
+  std::map<SleighSymbol *, Location> symbolLocationMap;	///< Map each symbol to its defining parse location
   int4 userop_count;			///< Number of userops defined
   bool warnunnecessarypcode;		///< \b true if we warn of unnecessary ZEXT or SEXT
   bool warndeadtemps;			///< \b true if we warn of temporaries that are written but not read
@@ -292,7 +292,7 @@ private:
   bool warnalllocalcollisions;		///< \b true if local export collisions generate individual warnings
   bool warnallnops;			///< \b true if pcode NOPs generate individual warnings
   bool failinsensitivedups;		///< \b true if case insensitive register duplicates cause error
-  vector<string> noplist;		///< List of individual NOP warnings
+  std::vector<std::string> noplist;		///< List of individual NOP warnings
   mutable Location currentLocCache;	///< Location for (last) request of current location
   int4 errors;				///< Number of fatal errors encountered
 
@@ -302,14 +302,14 @@ private:
   void buildDecisionTrees(void);			///< Build decision trees for all subtables
   void buildPatterns(void);		///< Generate final match patterns based on parse constraint equations
   void checkConsistency(void);		///< Perform final consistency checks on the SLEIGH definitions
-  static int4 findCollision(map<uintb,int4> &local2Operand,const vector<uintb> &locals,int operand);
+  static int4 findCollision(std::map<uintb,int4> &local2Operand,const std::vector<uintb> &locals,int operand);
   bool checkLocalExports(Constructor *ct);	///< Check for operands that \e might export the same local variable
   void checkLocalCollisions(void);	///< Check all Constructors for local export collisions between operands
   void checkNops(void);			///< Report on all Constructors with empty semantic sections
   void checkCaseSensitivity(void);	///< Check that register names can be treated as case insensitive
-  string checkSymbols(SymbolScope *scope);	///< Make sure label symbols are both defined and used
+  std::string checkSymbols(SymbolScope *scope);	///< Make sure label symbols are both defined and used
   void addSymbol(SleighSymbol *sym);	///< Add a new symbol to the current scope
-  SleighSymbol *dedupSymbolList(vector<SleighSymbol *> *symlist);	///< Deduplicate the given list of symbols
+  SleighSymbol *dedupSymbolList(std::vector<SleighSymbol *> *symlist);	///< Deduplicate the given list of symbols
   bool expandMacros(ConstructTpl *ctpl);	///< Expand any formal SLEIGH macros in the given section of p-code
 
   bool finalizeSections(Constructor *big,SectionVector *vec);	///< Do final checks, expansions, and linking for p-code sections
@@ -319,17 +319,17 @@ private:
   static void shiftUniqueOp(OpTpl *op,int4 sa);
   static void shiftUniqueHandle(HandleTpl *hand,int4 sa);
   static void shiftUniqueConstruct(ConstructTpl *tpl,int4 sa);
-  static string formatStatusMessage(const Location* loc, const string &msg);
+  static std::string formatStatusMessage(const Location* loc, const std::string &msg);
   void checkUniqueAllocation(void);	///< Modify temporary Varnode offsets to support \b crossbuilds
   void process(void);			///< Do all post processing on the parsed data structures
 public:
   SleighCompile(void);						///< Constructor
   const Location *getLocation(Constructor* ctor) const;		///< Get the source location of the given Constructor's definition
   const Location *getLocation(SleighSymbol *sym) const;		///< Get the source location of the given symbol's definition
-  void reportError(const string &msg);				///< Issue a fatal error message
-  void reportError(const Location *loc, const string &msg);	///< Issue a fatal error message with a source location
-  void reportWarning(const string &msg);			///< Issue a warning message
-  void reportWarning(const Location *loc, const string &msg);	///< Issue a warning message with a source location
+  void reportError(const std::string &msg);				///< Issue a fatal error message
+  void reportError(const Location *loc, const std::string &msg);	///< Issue a fatal error message with a source location
+  void reportWarning(const std::string &msg);			///< Issue a warning message
+  void reportWarning(const Location *loc, const std::string &msg);	///< Issue a warning message with a source location
   int4 numErrors(void) const { return errors; }			///< Return the current number of fatal errors
 
   uint4 getUniqueAddr(void);					///< Get the next available temporary register offset
@@ -376,21 +376,21 @@ public:
 
   // Lexer functions
   void calcContextLayout(void);				///< Calculate the internal context field layout
-  string grabCurrentFilePath(void) const;		///< Get the path to the current source file
-  void parseFromNewFile(const string &fname);		///< Push a new source file to the current parse stack
+  std::string grabCurrentFilePath(void) const;		///< Get the path to the current source file
+  void parseFromNewFile(const std::string &fname);		///< Push a new source file to the current parse stack
   void parsePreprocMacro(void);				///< Mark start of parsing for an expanded preprocessor macro
   void parseFileFinished(void);				///< Mark end of parsing for the current file or macro
   void nextLine(void) { lineno.back() += 1; }		///< Indicate parsing proceeded to the next line of the current file
-  bool getPreprocValue(const string &nm,string &res) const;	///< Retrieve a given preprocessor variable
-  void setPreprocValue(const string &nm,const string &value);	///< Set a given preprocessor variable
-  bool undefinePreprocValue(const string &nm);		///< Remove the value associated with the given preprocessor variable
+  bool getPreprocValue(const std::string &nm,std::string &res) const;	///< Retrieve a given preprocessor variable
+  void setPreprocValue(const std::string &nm,const std::string &value);	///< Set a given preprocessor variable
+  bool undefinePreprocValue(const std::string &nm);		///< Remove the value associated with the given preprocessor variable
 
   // Parser functions
-  TokenSymbol *defineToken(string *name,uintb *sz,int4 endian);
+  TokenSymbol *defineToken(std::string *name,uintb *sz,int4 endian);
   void addTokenField(TokenSymbol *sym,FieldQuality *qual);
   bool addContextField(VarnodeSymbol *sym,FieldQuality *qual);
   void newSpace(SpaceQuality *qual);
-  SectionSymbol *newSectionSymbol(const string &nm);
+  SectionSymbol *newSectionSymbol(const std::string &nm);
   void setEndian(int4 end);
 
   /// \brief Set instruction alignment for the SLEIGH specification
@@ -398,36 +398,36 @@ public:
   /// \param val is the alignment value in bytes. 1 is the default indicating no alignment
   void setAlignment(int4 val) { alignment = val; }
 
-  void defineVarnodes(SpaceSymbol *spacesym,uintb *off,uintb *size,vector<string> *names);
-  void defineBitrange(string *name,VarnodeSymbol *sym,uint4 bitoffset,uint4 numb);
-  void addUserOp(vector<string> *names);
-  void attachValues(vector<SleighSymbol *> *symlist,vector<intb> *numlist);
-  void attachNames(vector<SleighSymbol *> *symlist,vector<string> *names);
-  void attachVarnodes(vector<SleighSymbol *> *symlist,vector<SleighSymbol *> *varlist);
-  SubtableSymbol *newTable(string *nm);
-  void newOperand(Constructor *ct,string *nm);
+  void defineVarnodes(SpaceSymbol *spacesym,uintb *off,uintb *size,std::vector<std::string> *names);
+  void defineBitrange(std::string *name,VarnodeSymbol *sym,uint4 bitoffset,uint4 numb);
+  void addUserOp(std::vector<std::string> *names);
+  void attachValues(std::vector<SleighSymbol *> *symlist,std::vector<intb> *numlist);
+  void attachNames(std::vector<SleighSymbol *> *symlist,std::vector<std::string> *names);
+  void attachVarnodes(std::vector<SleighSymbol *> *symlist,std::vector<SleighSymbol *> *varlist);
+  SubtableSymbol *newTable(std::string *nm);
+  void newOperand(Constructor *ct,std::string *nm);
   PatternEquation *constrainOperand(OperandSymbol *sym,PatternExpression *patexp);
   void defineOperand(OperandSymbol *sym,PatternExpression *patexp);
   PatternEquation *defineInvisibleOperand(TripleSymbol *sym);
   void selfDefine(OperandSymbol *sym);
   ConstructTpl *setResultVarnode(ConstructTpl *ct,VarnodeTpl *vn);
   ConstructTpl *setResultStarVarnode(ConstructTpl *ct,StarQuality *star,VarnodeTpl *vn);
-  bool contextMod(vector<ContextChange *> *vec,ContextSymbol *sym,PatternExpression *pe);
-  void contextSet(vector<ContextChange *> *vec,TripleSymbol *sym,ContextSymbol *cvar);
-  MacroSymbol *createMacro(string *name,vector<string> *param);
-  void compareMacroParams(MacroSymbol *sym,const vector<ExprTree *> &param);
-  vector<OpTpl *> *createMacroUse(MacroSymbol *sym,vector<ExprTree *> *param);
+  bool contextMod(std::vector<ContextChange *> *vec,ContextSymbol *sym,PatternExpression *pe);
+  void contextSet(std::vector<ContextChange *> *vec,TripleSymbol *sym,ContextSymbol *cvar);
+  MacroSymbol *createMacro(std::string *name,std::vector<std::string> *param);
+  void compareMacroParams(MacroSymbol *sym,const std::vector<ExprTree *> &param);
+  std::vector<OpTpl *> *createMacroUse(MacroSymbol *sym,std::vector<ExprTree *> *param);
   SectionVector *standaloneSection(ConstructTpl *main);
   SectionVector *firstNamedSection(ConstructTpl *main,SectionSymbol *sym);
   SectionVector *nextNamedSection(SectionVector *vec,ConstructTpl *section,SectionSymbol *sym);
   SectionVector *finalNamedSection(SectionVector *vec,ConstructTpl *section);
-  vector<OpTpl *> *createCrossBuild(VarnodeTpl *addr,SectionSymbol *sym);
+  std::vector<OpTpl *> *createCrossBuild(VarnodeTpl *addr,SectionSymbol *sym);
   Constructor *createConstructor(SubtableSymbol *sym);
   bool isInRoot(Constructor *ct) const { return (root == ct->getParent()); }	///< Is the Constructor in the root table?
   void resetConstructors(void);
-  void pushWith(SubtableSymbol *ss,PatternEquation *pateq,vector<ContextChange *> *contvec);
+  void pushWith(SubtableSymbol *ss,PatternEquation *pateq,std::vector<ContextChange *> *contvec);
   void popWith(void);
-  void buildConstructor(Constructor *big,PatternEquation *pateq,vector<ContextChange *> *contvec,SectionVector *vec);
+  void buildConstructor(Constructor *big,PatternEquation *pateq,std::vector<ContextChange *> *contvec,SectionVector *vec);
   void buildMacro(MacroSymbol *sym,ConstructTpl *rtl);
   void recordNop(void);
 
@@ -437,11 +437,11 @@ public:
   virtual int4 oneInstruction(PcodeEmit &emit,const Address &baseaddr) const { return 0; }
   virtual int4 printAssembly(AssemblyEmit &emit,const Address &baseaddr) const { return 0; }
 
-  void setAllOptions(const map<string,string> &defines, bool unnecessaryPcodeWarning,
+  void setAllOptions(const std::map<std::string,std::string> &defines, bool unnecessaryPcodeWarning,
 		     bool lenientConflict, bool allCollisionWarning,
 		     bool allNopWarning,bool deadTempWarning,bool enforceLocalKeyWord,
 		     bool largeTemporaryWarning, bool caseSensitiveRegisterNames);
-  int4 run_compilation(const string &filein,const string &fileout);
+  int4 run_compilation(const std::string &filein,const std::string &fileout);
 };
 
 extern SleighCompile *slgh;		///< A global reference to the SLEIGH compiler accessible to the parse functions

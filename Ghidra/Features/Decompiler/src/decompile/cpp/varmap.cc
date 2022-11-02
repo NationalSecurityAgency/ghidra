@@ -16,6 +16,8 @@
 #include "varmap.hh"
 #include "funcdata.hh"
 
+using namespace std;
+
 AttributeId ATTRIB_LOCK = AttributeId("lock",133);
 AttributeId ATTRIB_MAIN = AttributeId("main",134);
 

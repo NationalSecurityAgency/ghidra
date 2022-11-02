@@ -15,6 +15,8 @@
  */
 #include "double.hh"
 
+using namespace std;
+
 /// Internally, the \b lo and \b hi Varnodes are set to null, and the \b val field
 /// holds the constant value.
 /// \param sz is the size in bytes of the constant

@@ -45,7 +45,7 @@ private:
   uint4 type;
   union tokenvalue {
     uintb integer;
-    string *stringval;
+    std::string *stringval;
   };
   tokenvalue value;
   int4 lineno;			// Line number containing this token
@@ -58,25 +58,25 @@ public:
   GrammarToken(void);
   uint4 getType(void) const { return type; }
   uintb getInteger(void) const { return value.integer; }
-  string *getString(void) const { return value.stringval; }
+  std::string *getString(void) const { return value.stringval; }
   int4 getLineNo(void) const { return lineno; }
   int4 getColNo(void) const { return colno; }
   int4 getFileNum(void) const { return filenum; }
 };
 
 class GrammarLexer {
-  map<int4,string> filenamemap;	// All files ever seen
-  map<int4,istream *> streammap;
-  vector<int4> filestack;	// Stack of current files
+  std::map<int4,std::string> filenamemap;	// All files ever seen
+  std::map<int4,std::istream *> streammap;
+  std::vector<int4> filestack;	// Stack of current files
   int4 buffersize;		// maximum characters in buffer
   char *buffer;			// Current line being processed
   int4 bufstart;		// Next character to process
   int4 bufend;			// Next open position in buffer
   int4 curlineno;
-  istream *in;			// Current stream
+  std::istream *in;			// Current stream
   bool endoffile;
   uint4 state;			// State of parser
-  string error;
+  std::string error;
   enum {
     start,
     slash,
@@ -97,18 +97,18 @@ class GrammarLexer {
   void bumpLine(void);
   uint4 moveState(char lookahead);
   void establishToken(GrammarToken &token,uint4 val);
-  void setError(const string &err) { error = err; }
+  void setError(const std::string &err) { error = err; }
 public:
   GrammarLexer(int4 maxbuffer);
   ~GrammarLexer(void);
   void clear(void);
-  istream *getCurStream(void) { return in; }
-  void pushFile(const string &filename,istream *i);
+  std::istream *getCurStream(void) { return in; }
+  void pushFile(const std::string &filename,std::istream *i);
   void popFile(void);
   void getNextToken(GrammarToken &token);
-  void writeLocation(ostream &s,int4 line,int4 filenum);
-  void writeTokenLocation(ostream &s,int4 line,int4 colno);
-  const string &getError(void) const { return error; }
+  void writeLocation(std::ostream &s,int4 line,int4 filenum);
+  void writeTokenLocation(std::ostream &s,int4 line,int4 colno);
+  const std::string &getError(void) const { return error; }
 };
 
 class TypeDeclarator;		// Forward declaration
@@ -148,12 +148,12 @@ public:
 };
 
 class FunctionModifier : public TypeModifier {
-  vector<TypeDeclarator *> paramlist;
+  std::vector<TypeDeclarator *> paramlist;
   bool dotdotdot;
 public:
-  FunctionModifier(const vector<TypeDeclarator *> *p,bool dtdtdt);
-  void getInTypes(vector<Datatype *> &intypes,Architecture *glb) const;
-  void getInNames(vector<string> &innames) const;
+  FunctionModifier(const std::vector<TypeDeclarator *> *p,bool dtdtdt);
+  void getInTypes(std::vector<Datatype *> &intypes,Architecture *glb) const;
+  void getInNames(std::vector<std::string> &innames) const;
   bool isDotdotdot(void) const { return dotdotdot; }
   virtual uint4 getType(void) const { return function_mod; }
   virtual bool isValid(void) const;
@@ -162,18 +162,18 @@ public:
 
 class TypeDeclarator {
   friend class CParse;
-  vector<TypeModifier *> mods;
+  std::vector<TypeModifier *> mods;
   Datatype *basetype;
-  string ident;			// variable identifier associated with type
-  string model;			// name of model associated with function pointer
+  std::string ident;			// variable identifier associated with type
+  std::string model;			// name of model associated with function pointer
   uint4 flags;			// Specifiers qualifiers
 public:
   TypeDeclarator(void) { basetype=(Datatype *)0; flags=0; }
-  TypeDeclarator(const string &nm) { ident=nm; basetype=(Datatype *)0; flags=0; }
+  TypeDeclarator(const std::string &nm) { ident=nm; basetype=(Datatype *)0; flags=0; }
   ~TypeDeclarator(void);
   Datatype *getBaseType(void) const { return basetype; }
   int4 numModifiers(void) const { return mods.size(); }
-  const string &getIdentifier(void) const { return ident; }
+  const std::string &getIdentifier(void) const { return ident; }
   ProtoModel *getModel(Architecture *glb) const;
   bool getPrototype(PrototypePieces &pieces,Architecture *glb) const;
   bool hasProperty(uint4 mask) { return ((flags&mask)!=0); }
@@ -183,17 +183,17 @@ public:
 
 struct TypeSpecifiers {
   Datatype *type_specifier;
-  string function_specifier;
+  std::string function_specifier;
   uint4 flags;
   TypeSpecifiers(void) { type_specifier = (Datatype *)0; flags = 0; }
 };
 
 struct Enumerator {
-  string enumconstant;		// Identifier associated with constant
+  std::string enumconstant;		// Identifier associated with constant
   bool constantassigned;	// True if user specified explicit constant
   uintb value;			// The actual constant
-  Enumerator(const string &nm) { constantassigned = false; enumconstant = nm; }
-  Enumerator(const string &nm,uintb val) { constantassigned = true; enumconstant=nm; value=val; }
+  Enumerator(const std::string &nm) { constantassigned = false; enumconstant = nm; }
+  Enumerator(const std::string &nm,uintb val) { constantassigned = true; enumconstant=nm; value=val; }
 };
 
 class CParse {
@@ -218,74 +218,74 @@ public:
   };
 private:
   Architecture *glb;
-  map<string,uint4> keywords;
+  std::map<std::string,uint4> keywords;
   GrammarLexer lexer;
   int4 lineno,colno,filenum;	// Location of last token
-  list<TypeDeclarator *> typedec_alloc;
-  list<TypeSpecifiers *> typespec_alloc;
-  list<vector<uint4> *> vecuint4_alloc;
-  list<vector<TypeDeclarator *> *> vecdec_alloc;
-  list<string *> string_alloc;
-  list<uintb *> num_alloc;
-  list<Enumerator *> enum_alloc;
-  list<vector<Enumerator *> *> vecenum_alloc;
+  std::list<TypeDeclarator *> typedec_alloc;
+  std::list<TypeSpecifiers *> typespec_alloc;
+  std::list<std::vector<uint4> *> vecuint4_alloc;
+  std::list<std::vector<TypeDeclarator *> *> vecdec_alloc;
+  std::list<std::string *> string_alloc;
+  std::list<uintb *> num_alloc;
+  std::list<Enumerator *> enum_alloc;
+  std::list<std::vector<Enumerator *> *> vecenum_alloc;
 
-  vector<TypeDeclarator *> *lastdecls;
+  std::vector<TypeDeclarator *> *lastdecls;
   int4 firsttoken;		// Message to parser indicating desired object
-  string lasterror;
-  void setError(const string &msg);
-  int4 lookupIdentifier(const string &nm);
+  std::string lasterror;
+  void setError(const std::string &msg);
+  int4 lookupIdentifier(const std::string &nm);
   bool runParse(uint4 doctype);
 public:
   CParse(Architecture *g,int4 maxbuf);
   ~CParse(void);
   void clear(void);
-  vector<TypeDeclarator *> *mergeSpecDecVec(TypeSpecifiers *spec);
-  vector<TypeDeclarator *> *mergeSpecDecVec(TypeSpecifiers *spec,vector<TypeDeclarator *> *declist);
+  std::vector<TypeDeclarator *> *mergeSpecDecVec(TypeSpecifiers *spec);
+  std::vector<TypeDeclarator *> *mergeSpecDecVec(TypeSpecifiers *spec,std::vector<TypeDeclarator *> *declist);
   TypeDeclarator *mergeSpecDec(TypeSpecifiers *spec);
   TypeDeclarator *mergeSpecDec(TypeSpecifiers *spec,TypeDeclarator *dec);
-  TypeSpecifiers *addSpecifier(TypeSpecifiers *spec,string *str);
+  TypeSpecifiers *addSpecifier(TypeSpecifiers *spec,std::string *str);
   TypeSpecifiers *addTypeSpecifier(TypeSpecifiers *spec,Datatype *tp);
-  TypeSpecifiers *addFuncSpecifier(TypeSpecifiers *spec,string *str);
-  TypeDeclarator *mergePointer(vector<uint4> *ptr,TypeDeclarator *dec);
-  TypeDeclarator *newDeclarator(string *str);
+  TypeSpecifiers *addFuncSpecifier(TypeSpecifiers *spec,std::string *str);
+  TypeDeclarator *mergePointer(std::vector<uint4> *ptr,TypeDeclarator *dec);
+  TypeDeclarator *newDeclarator(std::string *str);
   TypeDeclarator *newDeclarator(void);
   TypeSpecifiers *newSpecifier(void);
-  vector<TypeDeclarator *> *newVecDeclarator(void);
-  vector<uint4> *newPointer(void);
+  std::vector<TypeDeclarator *> *newVecDeclarator(void);
+  std::vector<uint4> *newPointer(void);
   TypeDeclarator *newArray(TypeDeclarator *dec,uint4 flags,uintb *num);
-  TypeDeclarator *newFunc(TypeDeclarator *dec,vector<TypeDeclarator *> *declist);
-  Datatype *newStruct(const string &ident,vector<TypeDeclarator *> *declist);
-  Datatype *oldStruct(const string &ident);
-  Datatype *newUnion(const string &ident,vector<TypeDeclarator *> *declist);
-  Datatype *oldUnion(const string &ident);
-  Enumerator *newEnumerator(const string &ident);
-  Enumerator *newEnumerator(const string &ident,uintb val);
-  vector<Enumerator *> *newVecEnumerator(void);
-  Datatype *newEnum(const string &ident,vector<Enumerator *> *vecenum);
-  Datatype *oldEnum(const string &ident);
-  uint4 convertFlag(string *str);
+  TypeDeclarator *newFunc(TypeDeclarator *dec,std::vector<TypeDeclarator *> *declist);
+  Datatype *newStruct(const std::string &ident,std::vector<TypeDeclarator *> *declist);
+  Datatype *oldStruct(const std::string &ident);
+  Datatype *newUnion(const std::string &ident,std::vector<TypeDeclarator *> *declist);
+  Datatype *oldUnion(const std::string &ident);
+  Enumerator *newEnumerator(const std::string &ident);
+  Enumerator *newEnumerator(const std::string &ident,uintb val);
+  std::vector<Enumerator *> *newVecEnumerator(void);
+  Datatype *newEnum(const std::string &ident,std::vector<Enumerator *> *vecenum);
+  Datatype *oldEnum(const std::string &ident);
+  uint4 convertFlag(std::string *str);
 
   void clearAllocation(void);
   int4 lex(void);
 
-  bool parseFile(const string &filename,uint4 doctype);
-  bool parseStream(istream &s,uint4 doctype);
+  bool parseFile(const std::string &filename,uint4 doctype);
+  bool parseStream(std::istream &s,uint4 doctype);
 
-  const string &getError(void) const { return lasterror; }
-  void setResultDeclarations(vector<TypeDeclarator *> *val) { lastdecls = val; }
-  vector<TypeDeclarator *> *getResultDeclarations(void) { return lastdecls; }
+  const std::string &getError(void) const { return lasterror; }
+  void setResultDeclarations(std::vector<TypeDeclarator *> *val) { lastdecls = val; }
+  std::vector<TypeDeclarator *> *getResultDeclarations(void) { return lastdecls; }
 };
 
-extern Datatype *parse_type(istream &s,string &name,Architecture *glb);
-extern void parse_protopieces(PrototypePieces &pieces,istream &s,Architecture *glb);
-extern void parse_C(Architecture *glb,istream &s);
+extern Datatype *parse_type(std::istream &s,std::string &name,Architecture *glb);
+extern void parse_protopieces(PrototypePieces &pieces,std::istream &s,Architecture *glb);
+extern void parse_C(Architecture *glb,std::istream &s);
 
 // Routines to parse interface commands
 
-extern void parse_toseparator(istream &s,string &name);
-extern Address parse_machaddr(istream &s,int4 &defaultsize,const TypeFactory &typegrp,bool ignorecolon=false);
-extern Address parse_varnode(istream &s,int4 &size,Address &pc,uintm &uq,const TypeFactory &typegrp);
-extern Address parse_op(istream &s,uintm &uq,const TypeFactory &typegrp);
+extern void parse_toseparator(std::istream &s,std::string &name);
+extern Address parse_machaddr(std::istream &s,int4 &defaultsize,const TypeFactory &typegrp,bool ignorecolon=false);
+extern Address parse_varnode(std::istream &s,int4 &size,Address &pc,uintm &uq,const TypeFactory &typegrp);
+extern Address parse_op(std::istream &s,uintm &uq,const TypeFactory &typegrp);
 
 #endif

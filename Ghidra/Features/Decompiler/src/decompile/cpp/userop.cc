@@ -16,6 +16,8 @@
 #include "userop.hh"
 #include "funcdata.hh"
 
+using namespace std;
+
 AttributeId ATTRIB_FARPOINTER = AttributeId("farpointer",85);
 AttributeId ATTRIB_INPUTOP = AttributeId("inputop",86);
 AttributeId ATTRIB_OUTPUTOP = AttributeId("outputop",87);

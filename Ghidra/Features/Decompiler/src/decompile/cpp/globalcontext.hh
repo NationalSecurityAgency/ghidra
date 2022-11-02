@@ -79,7 +79,7 @@ struct TrackedContext {
   void decode(Decoder &decoder);			///< Decode \b this from a stream
   void encode(Encoder &encoder) const;			///< Encode \b this to a stream
 };
-typedef vector<TrackedContext> TrackedSet;		///< A set of tracked registers and their values (at one code point)
+typedef std::vector<TrackedContext> TrackedSet;		///< A set of tracked registers and their values (at one code point)
 
 /// \brief An interface to a database of disassembly/decompiler \b context information
 ///
@@ -123,14 +123,14 @@ protected:
   /// If the variable doesn't exist an exception is thrown.
   /// \param nm is the name of the context value
   /// \return the ContextBitRange object matching the name
-  virtual ContextBitRange &getVariable(const string &nm)=0;
+  virtual ContextBitRange &getVariable(const std::string &nm)=0;
 
   /// \brief Retrieve the context variable description object by name
   ///
   /// If the variable doesn't exist an exception is thrown.
   /// \param nm is the name of the context value
   /// \return the ContextBitRange object matching the name
-  virtual const ContextBitRange &getVariable(const string &nm) const=0;
+  virtual const ContextBitRange &getVariable(const std::string &nm) const=0;
 
   /// \brief Grab the context blob(s) for the given address range, marking bits that will be set
   ///
@@ -144,7 +144,7 @@ protected:
   /// \param addr2 is (1 past) the last address of the range or is invalid
   /// \param num is the word index for the context value that will be set
   /// \param mask is a mask of the value being set (within its word)
-  virtual void getRegionForSet(vector<uintm *> &res,const Address &addr1,
+  virtual void getRegionForSet(std::vector<uintm *> &res,const Address &addr1,
 			       const Address &addr2,int4 num,uintm mask)=0;
 
   /// \brief Grab the context blob(s) starting at the given address up to the first point of change
@@ -156,7 +156,7 @@ protected:
   /// \param addr is the starting address of the regions to fetch
   /// \param num is the word index for the specific context value being set
   /// \param mask is a mask of the context value being set (within its word)
-  virtual void getRegionToChangePoint(vector<uintm *> &res,const Address &addr,int4 num,uintm mask)=0;
+  virtual void getRegionToChangePoint(std::vector<uintm *> &res,const Address &addr,int4 num,uintm mask)=0;
 
   /// \brief Retrieve the memory region holding all default context values
   ///
@@ -188,7 +188,7 @@ public:
   /// \param nm is the name of the new variable
   /// \param sbit is the position of the variable's most significant bit within the blob
   /// \param ebit is the position of the variable's least significant bit within the blob
-  virtual void registerVariable(const string &nm,int4 sbit,int4 ebit)=0;
+  virtual void registerVariable(const std::string &nm,int4 sbit,int4 ebit)=0;
 
   /// \brief Get the context blob of values associated with a given address
   ///
@@ -243,13 +243,13 @@ public:
   /// \param decoder is the given stream decoder
   virtual void decodeFromSpec(Decoder &decoder)=0;
 
-  void setVariableDefault(const string &nm,uintm val);	///< Provide a default value for a context variable
-  uintm getDefaultValue(const string &nm) const;	///< Retrieve the default value for a context variable
-  void setVariable(const string &nm,const Address &addr,uintm value);	///< Set a context value at the given address
-  uintm getVariable(const string &nm,const Address &addr) const;	///< Retrieve a context value at the given address
+  void setVariableDefault(const std::string &nm,uintm val);	///< Provide a default value for a context variable
+  uintm getDefaultValue(const std::string &nm) const;	///< Retrieve the default value for a context variable
+  void setVariable(const std::string &nm,const Address &addr,uintm value);	///< Set a context value at the given address
+  uintm getVariable(const std::string &nm,const Address &addr) const;	///< Retrieve a context value at the given address
   void setContextChangePoint(const Address &addr,int4 num,uintm mask,uintm value);
   void setContextRegion(const Address &addr1,const Address &addr2,int4 num,uintm mask,uintm value);
-  void setVariableRegion(const string &nm,const Address &begad,
+  void setVariableRegion(const std::string &nm,const Address &begad,
 			 const Address &endad,uintm value);
   uintb getTrackedValue(const VarnodeData &mem,const Address &point) const;
 };
@@ -277,23 +277,23 @@ class ContextInternal : public ContextDatabase {
   };
 
   int4 size;			///< Number of words in a context blob (for this architecture)
-  map<string,ContextBitRange> variables;		///< Map from context variable name to description object
+  std::map<std::string,ContextBitRange> variables;		///< Map from context variable name to description object
   partmap<Address,FreeArray> database;			///< Partition map of context blobs (FreeArray)
   partmap<Address,TrackedSet> trackbase;		///< Partition map of tracked register sets
   void encodeContext(Encoder &encoder,const Address &addr,const uintm *vec) const;
   void decodeContext(Decoder &decoder,const Address &addr1,const Address &addr2);
-  virtual ContextBitRange &getVariable(const string &nm);
-  virtual const ContextBitRange &getVariable(const string &nm) const;
-  virtual void getRegionForSet(vector<uintm *> &res,const Address &addr1,
+  virtual ContextBitRange &getVariable(const std::string &nm);
+  virtual const ContextBitRange &getVariable(const std::string &nm) const;
+  virtual void getRegionForSet(std::vector<uintm *> &res,const Address &addr1,
 			       const Address &addr2,int4 num,uintm mask);
-  virtual void getRegionToChangePoint(vector<uintm *> &res,const Address &addr,int4 num,uintm mask);
+  virtual void getRegionToChangePoint(std::vector<uintm *> &res,const Address &addr,int4 num,uintm mask);
   virtual uintm *getDefaultValue(void) { return database.defaultValue().array; }
   virtual const uintm *getDefaultValue(void) const { return database.defaultValue().array; }
 public:
   ContextInternal(void) { size = 0; }
   virtual ~ContextInternal(void) {}
   virtual int4 getContextSize(void) const { return size; }
-  virtual void registerVariable(const string &nm,int4 sbit,int4 ebit);
+  virtual void registerVariable(const std::string &nm,int4 sbit,int4 ebit);
 
   virtual const uintm *getContext(const Address &addr) const { return database.getValue(addr).array; }
   virtual const uintm *getContext(const Address &addr,uintb &first,uintb &last) const;

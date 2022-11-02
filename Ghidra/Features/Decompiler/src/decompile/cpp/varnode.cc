@@ -16,6 +16,8 @@
 #include "varnode.hh"
 #include "funcdata.hh"
 
+using namespace std;
+
 AttributeId ATTRIB_ADDRTIED = AttributeId("addrtied",30);
 AttributeId ATTRIB_GRP = AttributeId("grp",31);
 AttributeId ATTRIB_INPUT = AttributeId("input",32);

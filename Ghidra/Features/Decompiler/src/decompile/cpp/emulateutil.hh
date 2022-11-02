@@ -110,9 +110,9 @@ public:
 /// class, which can be repeatedly used by calling resetMemory() between executions.
 class EmulateSnippet : public Emulate {
   Architecture *glb;			///< The underlying Architecture for the program being emulated
-  vector<PcodeOpRaw *> opList;		///< Sequence of p-code ops to be executed
-  vector<VarnodeData *> varList;	///< Varnodes allocated for ops
-  map<uintb,uintb> tempValues;		///< Values stored in temporary registers
+  std::vector<PcodeOpRaw *> opList;		///< Sequence of p-code ops to be executed
+  std::vector<VarnodeData *> varList;	///< Varnodes allocated for ops
+  std::map<uintb,uintb> tempValues;		///< Values stored in temporary registers
   PcodeOpRaw *currentOp;		///< Current p-code op being executed
   int4 pos;				///< Index of current p-code op being executed
 
@@ -153,7 +153,7 @@ public:
   /// Reset the memory state, and set the first p-code op as current.
   void resetMemory(void) { tempValues.clear(); setCurrentOp(0); emu_halted = false; }
 
-  PcodeEmit *buildEmitter(const vector<OpBehavior *> &inst,uintb uniqReserve);
+  PcodeEmit *buildEmitter(const std::vector<OpBehavior *> &inst,uintb uniqReserve);
   bool checkForLegalCode(void) const;
 
   /// \brief Set the current executing p-code op by index

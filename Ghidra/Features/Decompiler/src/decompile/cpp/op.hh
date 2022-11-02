@@ -37,10 +37,10 @@ public:
   IopSpace(AddrSpaceManager *m,const Translate *t,int4 ind);
   virtual void encodeAttributes(Encoder &encoder,uintb offset) const { encoder.writeString(ATTRIB_SPACE, "iop"); }
   virtual void encodeAttributes(Encoder &encoder,uintb offset,int4 size) const { encoder.writeString(ATTRIB_SPACE, "iop"); }
-  virtual void printRaw(ostream &s,uintb offset) const;
-  virtual void saveXml(ostream &s) const;
+  virtual void printRaw(std::ostream &s,uintb offset) const;
+  virtual void saveXml(std::ostream &s) const;
   virtual void decode(Decoder &decoder);
-  static const string NAME;			///< Reserved name for the iop space
+  static const std::string NAME;			///< Reserved name for the iop space
 };
 
 /// \brief Lowest level operation of the \b p-code language
@@ -119,11 +119,11 @@ private:
   mutable uint4 addlflags;	///< Additional boolean attributes for this op
   SeqNum start;	                ///< What instruction address is this attached to
   BlockBasic *parent;	        ///< Basic block in which this op is contained
-  list<PcodeOp *>::iterator basiciter;	///< Iterator within basic block
-  list<PcodeOp *>::iterator insertiter;	///< Position in alive/dead list
-  list<PcodeOp *>::iterator codeiter;	///< Position in opcode list
+  std::list<PcodeOp *>::iterator basiciter;	///< Iterator within basic block
+  std::list<PcodeOp *>::iterator insertiter;	///< Position in alive/dead list
+  std::list<PcodeOp *>::iterator codeiter;	///< Position in opcode list
   Varnode *output;		///< The one possible output Varnode of this op
-  vector<Varnode *> inrefs;	///< The ordered list of input Varnodes for this op
+  std::vector<Varnode *> inrefs;	///< The ordered list of input Varnodes for this op
 
   // Only used by Funcdata
   void setOpcode(TypeOp *t_op);	///< Set the opcode for this PcodeOp
@@ -140,7 +140,7 @@ private:
   void insertInput(int4 slot);	///< Make room for a new input Varnode at a specific position
   void setOrder(uintm ord) { start.setOrder(ord); } ///< Order this op within the ops for a single instruction
   void setParent(BlockBasic *p) { parent = p; }	///< Set the parent basic block of this op
-  void setBasicIter(list<PcodeOp *>::iterator iter) { basiciter = iter; } ///< Store the iterator into this op's basic block
+  void setBasicIter(std::list<PcodeOp *>::iterator iter) { basiciter = iter; } ///< Store the iterator into this op's basic block
 
 public:
   PcodeOp(int4 s,const SeqNum &sq); ///< Construct an unattached PcodeOp
@@ -155,11 +155,11 @@ public:
   const Address &getAddr(void) const { return start.getAddr(); } ///< Get the instruction address associated with this op
   uintm getTime(void) const { return start.getTime(); }	///< Get the time index indicating when this op was created
   const SeqNum &getSeqNum(void) const { return start; }	///< Get the sequence number associated with this op
-  list<PcodeOp *>::iterator getInsertIter(void) const { return insertiter; } ///< Get position within alive/dead list
-  list<PcodeOp *>::iterator getBasicIter(void) const { return basiciter; } ///< Get position within basic block
+  std::list<PcodeOp *>::iterator getInsertIter(void) const { return insertiter; } ///< Get position within alive/dead list
+  std::list<PcodeOp *>::iterator getBasicIter(void) const { return basiciter; } ///< Get position within basic block
   /// \brief Get the slot number of the indicated input varnode
   int4 getSlot(const Varnode *vn) const { int4 i,n; n=inrefs.size(); for(i=0;i<n;++i) if (inrefs[i]==vn) break; return i; }
-  int4 getRepeatSlot(const Varnode *vn,int4 firstSlot,list<PcodeOp *>::const_iterator iter) const;
+  int4 getRepeatSlot(const Varnode *vn,int4 firstSlot,std::list<PcodeOp *>::const_iterator iter) const;
   /// \brief Get the evaluation type of this op
   uint4 getEvalType(void) const { return (flags&(PcodeOp::unary|PcodeOp::binary|PcodeOp::special|PcodeOp::ternary)); }
   /// \brief Get type which indicates unusual halt in control-flow
@@ -229,9 +229,9 @@ public:
   PcodeOp *target(void) const;	///< Return starting op for instruction associated with this op
   uintb getNZMaskLocal(bool cliploop) const; ///< Calculate known zero bits for output to this op
   int4 compareOrder(const PcodeOp *bop) const; ///< Compare the control-flow order of this and \e bop
-  void printRaw(ostream &s) const { opcode->printRaw(s,this); }	///< Print raw info about this op to stream
-  const string &getOpName(void) const { return opcode->getName(); } ///< Return the name of this op
-  void printDebug(ostream &s) const; ///< Print debug description of this op to stream
+  void printRaw(std::ostream &s) const { opcode->printRaw(s,this); }	///< Print raw info about this op to stream
+  const std::string &getOpName(void) const { return opcode->getName(); } ///< Return the name of this op
+  void printDebug(std::ostream &s) const; ///< Print debug description of this op to stream
   void encode(Encoder &encoder) const; ///< Encode a description of \b this op to stream
 
   /// \brief Retrieve the PcodeOp encoded as the address \e addr
@@ -252,7 +252,7 @@ struct PcodeOpNode {
 };
 
 /// A map from sequence number (SeqNum) to PcodeOp
-typedef map<SeqNum,PcodeOp *> PcodeOpTree;
+typedef std::map<SeqNum,PcodeOp *> PcodeOpTree;
 
 /// \brief Container class for PcodeOps associated with a single function
 ///
@@ -263,13 +263,13 @@ typedef map<SeqNum,PcodeOp *> PcodeOpTree;
 /// Several lists group PcodeOps with important op-codes (like STORE and RETURN).
 class PcodeOpBank {
   PcodeOpTree optree;			///< The main sequence number sort
-  list<PcodeOp *> deadlist;		///< List of \e dead PcodeOps
-  list<PcodeOp *> alivelist;		///< List of \e alive PcodeOps
-  list<PcodeOp *> storelist;		///< List of STORE PcodeOps
-  list<PcodeOp *> loadlist;		///< list of LOAD PcodeOps
-  list<PcodeOp *> returnlist;		///< List of RETURN PcodeOps
-  list<PcodeOp *> useroplist;		///< List of user-defined PcodeOps
-  list<PcodeOp *> deadandgone;		///< List of retired PcodeOps
+  std::list<PcodeOp *> deadlist;		///< List of \e dead PcodeOps
+  std::list<PcodeOp *> alivelist;		///< List of \e alive PcodeOps
+  std::list<PcodeOp *> storelist;		///< List of STORE PcodeOps
+  std::list<PcodeOp *> loadlist;		///< list of LOAD PcodeOps
+  std::list<PcodeOp *> returnlist;		///< List of RETURN PcodeOps
+  std::list<PcodeOp *> useroplist;		///< List of user-defined PcodeOps
+  std::list<PcodeOp *> deadandgone;		///< List of retired PcodeOps
   uintm uniqid;				///< Counter for producing unique id's for each op
   void addToCodeList(PcodeOp *op);	///< Add given PcodeOp to specific op-code list
   void removeFromCodeList(PcodeOp *op);	///< Remove given PcodeOp from specific op-code list
@@ -308,22 +308,22 @@ public:
   PcodeOpTree::const_iterator end(const Address &addr) const;
 
   /// \brief Start of all PcodeOps marked as \e alive
-  list<PcodeOp *>::const_iterator beginAlive(void) const { return alivelist.begin(); }
+  std::list<PcodeOp *>::const_iterator beginAlive(void) const { return alivelist.begin(); }
 
   /// \brief End of all PcodeOps marked as \e alive
-  list<PcodeOp *>::const_iterator endAlive(void) const { return alivelist.end(); }
+  std::list<PcodeOp *>::const_iterator endAlive(void) const { return alivelist.end(); }
 
   /// \brief Start of all PcodeOps marked as \e dead
-  list<PcodeOp *>::const_iterator beginDead(void) const { return deadlist.begin(); }
+  std::list<PcodeOp *>::const_iterator beginDead(void) const { return deadlist.begin(); }
 
   /// \brief End of all PcodeOps marked as \e dead
-  list<PcodeOp *>::const_iterator endDead(void) const { return deadlist.end(); }
+  std::list<PcodeOp *>::const_iterator endDead(void) const { return deadlist.end(); }
 
   /// \brief Start of all PcodeOps sharing the given op-code
-  list<PcodeOp *>::const_iterator begin(OpCode opc) const;
+  std::list<PcodeOp *>::const_iterator begin(OpCode opc) const;
 
   /// \brief End of all PcodeOps sharing the given op-code
-  list<PcodeOp *>::const_iterator end(OpCode opc) const;
+  std::list<PcodeOp *>::const_iterator end(OpCode opc) const;
 };
 
 extern int4 functionalEqualityLevel(Varnode *vn1,Varnode *vn2,Varnode **res1,Varnode **res2);

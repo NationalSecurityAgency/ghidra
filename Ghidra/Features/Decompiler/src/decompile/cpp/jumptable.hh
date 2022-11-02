@@ -37,12 +37,12 @@ extern ElementId ELEM_STARTVAL;		///< Marshaling element \<startval>
 
 /// \brief Exception thrown for a thunk mechanism that looks like a jump-table
 struct JumptableThunkError : public LowlevelError {
-  JumptableThunkError(const string &s) : LowlevelError(s) {}	///< Construct with an explanatory string
+  JumptableThunkError(const std::string &s) : LowlevelError(s) {}	///< Construct with an explanatory string
 };
 
 /// \brief Exception thrown is there are no legal flows to a switch
 struct JumptableNotReachableError : public LowlevelError {
-  JumptableNotReachableError(const string &s) : LowlevelError(s) {}	///< Constructor
+  JumptableNotReachableError(const std::string &s) : LowlevelError(s) {}	///< Constructor
 };
 
 /// \brief A description where and how data was loaded from memory
@@ -61,7 +61,7 @@ public:
   bool operator<(const LoadTable &op2) const { return (addr < op2.addr); }	///< Compare \b this with another table by address
   void encode(Encoder &encoder) const;				///< Encode a description of \b this as an \<loadtable> element
   void decode(Decoder &decoder);				///< Decode \b this table from a \<loadtable> element
-  static void collapseTable(vector<LoadTable> &table);		///< Collapse a sequence of table descriptions
+  static void collapseTable(std::vector<LoadTable> &table);		///< Collapse a sequence of table descriptions
 };
 
 /// \brief All paths from a (putative) switch variable to the CPUI_BRANCHIND
@@ -81,18 +81,18 @@ class PathMeld {
     int4 rootVn;	///< The index, within commonVn, of the Varnode at the split point
     RootedOp(PcodeOp *o,int4 root) { op = o; rootVn = root; }	///< Constructor
   };
-  vector<Varnode *> commonVn;		///< Varnodes in common with all paths
-  vector<RootedOp> opMeld;		///< All the ops for the melded paths
-  void internalIntersect(vector<int4> &parentMap);
-  int4 meldOps(const vector<PcodeOpNode> &path,int4 cutOff,const vector<int4> &parentMap);
+  std::vector<Varnode *> commonVn;		///< Varnodes in common with all paths
+  std::vector<RootedOp> opMeld;		///< All the ops for the melded paths
+  void internalIntersect(std::vector<int4> &parentMap);
+  int4 meldOps(const std::vector<PcodeOpNode> &path,int4 cutOff,const std::vector<int4> &parentMap);
   void truncatePaths(int4 cutPoint);
 public:
   void set(const PathMeld &op2);	///< Copy paths from another container
-  void set(const vector<PcodeOpNode> &path);	///< Initialize \b this to be a single path
+  void set(const std::vector<PcodeOpNode> &path);	///< Initialize \b this to be a single path
   void set(PcodeOp *op,Varnode *vn);	///< Initialize \b this container to a single node "path"
   void append(const PathMeld &op2);	///< Append a new set of paths to \b this set of paths
   void clear(void);			///< Clear \b this to be an empty container
-  void meld(vector<PcodeOpNode> &path);	///< Meld a new path into \b this container
+  void meld(std::vector<PcodeOpNode> &path);	///< Meld a new path into \b this container
   void markPaths(bool val,int4 startVarnode);			///< Mark PcodeOps paths from the given start
   int4 numCommonVarnode(void) const { return commonVn.size(); }	///< Return the number of Varnodes common to all paths
   int4 numOps(void) const { return opMeld.size(); }		///< Return the number of PcodeOps across all paths
@@ -110,9 +110,9 @@ public:
 /// only be one execution path, although there can be multiple data-flow paths.
 class EmulateFunction : public EmulatePcodeOp {
   Funcdata *fd;				///< The function being emulated
-  map<Varnode *,uintb> varnodeMap;	///< Light-weight memory state based on Varnodes
+  std::map<Varnode *,uintb> varnodeMap;	///< Light-weight memory state based on Varnodes
   bool collectloads;			///< Set to \b true if the emulator collects individual LOAD addresses
-  vector<LoadTable> loadpoints;		///< The set of collected LOAD records
+  std::vector<LoadTable> loadpoints;		///< The set of collected LOAD records
   virtual void executeLoad(void);
   virtual void executeBranch(void);
   virtual void executeBranchind(void);
@@ -127,7 +127,7 @@ public:
   virtual uintb getVarnodeValue(Varnode *vn) const;
   virtual void setVarnodeValue(Varnode *vn,uintb val);
   uintb emulatePath(uintb val,const PathMeld &pathMeld,PcodeOp *startop,Varnode *startvn);
-  void collectLoadPoints(vector<LoadTable> &res) const;	///< Recover any LOAD table descriptions
+  void collectLoadPoints(std::vector<LoadTable> &res) const;	///< Recover any LOAD table descriptions
 };
 
 class FlowInfo;
@@ -267,7 +267,7 @@ public:
   /// \param indop is the root BRANCHIND of the switch
   /// \param addresstable will hold the list of Addresses
   /// \param loadpoints if non-null will hold LOAD table information used by the model
-  virtual void buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,vector<LoadTable> *loadpoints) const=0;
+  virtual void buildAddresses(Funcdata *fd,PcodeOp *indop,std::vector<Address> &addresstable,std::vector<LoadTable> *loadpoints) const=0;
 
   /// \brief Recover the unnormalized switch variable
   ///
@@ -288,7 +288,7 @@ public:
   /// \param addresstable is the address table (used to label code blocks with bad or missing labels)
   /// \param label will hold recovered labels in JumpValues order
   /// \param orig is the JumpModel to use for the JumpValues iterator
-  virtual void buildLabels(Funcdata *fd,vector<Address> &addresstable,vector<uintb> &label,const JumpModel *orig) const=0;
+  virtual void buildLabels(Funcdata *fd,std::vector<Address> &addresstable,std::vector<uintb> &label,const JumpModel *orig) const=0;
 
   /// \brief Do normalization of the given switch specific to \b this model.
   ///
@@ -316,7 +316,7 @@ public:
   /// \param indop is the root BRANCHIND of the switch
   /// \param addresstable is the list of recovered Addresses, which may be modified
   /// \return \b true if there are (at least some) reasonable addresses in the table
-  virtual bool sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable)=0;
+  virtual bool sanityCheck(Funcdata *fd,PcodeOp *indop,std::vector<Address> &addresstable)=0;
 
   virtual JumpModel *clone(JumpTable *jt) const=0;	///< Clone \b this model
   virtual void clear(void) {}				///< Clear any non-permanent aspects of the model
@@ -337,12 +337,12 @@ public:
   virtual bool isOverride(void) const { return false; }
   virtual int4 getTableSize(void) const { return size; }
   virtual bool recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,uint4 maxtablesize);
-  virtual void buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,vector<LoadTable> *loadpoints) const;
+  virtual void buildAddresses(Funcdata *fd,PcodeOp *indop,std::vector<Address> &addresstable,std::vector<LoadTable> *loadpoints) const;
   virtual void findUnnormalized(uint4 maxaddsub,uint4 maxleftright,uint4 maxext) {}
-  virtual void buildLabels(Funcdata *fd,vector<Address> &addresstable,vector<uintb> &label,const JumpModel *orig) const;
+  virtual void buildLabels(Funcdata *fd,std::vector<Address> &addresstable,std::vector<uintb> &label,const JumpModel *orig) const;
   virtual Varnode *foldInNormalization(Funcdata *fd,PcodeOp *indop) { return (Varnode *)0; }
   virtual bool foldInGuards(Funcdata *fd,JumpTable *jump) { return false; }
-  virtual bool sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable) { return true; }
+  virtual bool sanityCheck(Funcdata *fd,PcodeOp *indop,std::vector<Address> &addresstable) { return true; }
   virtual JumpModel *clone(JumpTable *jt) const;
 };
 
@@ -356,7 +356,7 @@ class JumpBasic : public JumpModel {
 protected:
   JumpValuesRange *jrange;		///< Range of values for the (normalized) switch variable
   PathMeld pathMeld;			///< Set of PcodeOps and Varnodes producing the final target addresses
-  vector<GuardRecord> selectguards;	///< Any guards associated with \b model
+  std::vector<GuardRecord> selectguards;	///< Any guards associated with \b model
   int4 varnodeIndex;			///< Position of the normalized switch Varnode within PathMeld
   Varnode *normalvn;			///< Normalized switch Varnode
   Varnode *switchvn;			///< Unnormalized switch Varnode
@@ -391,12 +391,12 @@ public:
   virtual bool isOverride(void) const { return false; }
   virtual int4 getTableSize(void) const { return jrange->getSize(); }
   virtual bool recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,uint4 maxtablesize);
-  virtual void buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,vector<LoadTable> *loadpoints) const;
+  virtual void buildAddresses(Funcdata *fd,PcodeOp *indop,std::vector<Address> &addresstable,std::vector<LoadTable> *loadpoints) const;
   virtual void findUnnormalized(uint4 maxaddsub,uint4 maxleftright,uint4 maxext);
-  virtual void buildLabels(Funcdata *fd,vector<Address> &addresstable,vector<uintb> &label,const JumpModel *orig) const;
+  virtual void buildLabels(Funcdata *fd,std::vector<Address> &addresstable,std::vector<uintb> &label,const JumpModel *orig) const;
   virtual Varnode *foldInNormalization(Funcdata *fd,PcodeOp *indop);
   virtual bool foldInGuards(Funcdata *fd,JumpTable *jump);
-  virtual bool sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable);
+  virtual bool sanityCheck(Funcdata *fd,PcodeOp *indop,std::vector<Address> &addresstable);
   virtual JumpModel *clone(JumpTable *jt) const;
   virtual void clear(void);
 };
@@ -434,9 +434,9 @@ public:
 /// The model tries to repurpose some of the analysis that JumpBasic does to recover the switch variable.
 /// But it will revert to the trivial model if it can't find a suitable switch variable.
 class JumpBasicOverride : public JumpBasic {
-  set<Address> adset;		///< Absolute address table (manually specified)
-  vector<uintb> values;		///< Normalized switch variable values associated with addresses
-  vector<Address> addrtable;	///< Address associated with each value
+  std::set<Address> adset;		///< Absolute address table (manually specified)
+  std::vector<uintb> values;		///< Normalized switch variable values associated with addresses
+  std::vector<Address> addrtable;	///< Address associated with each value
   uintb startingvalue;		///< Possible start for guessing values that match addresses
   Address normaddress;		///< Dynamic info for recovering normalized switch variable
   uint8 hash;			///< if (hash==0) there is no normalized switch (use trivial model)
@@ -448,18 +448,18 @@ class JumpBasicOverride : public JumpBasic {
   void clearCopySpecific(void);
 public:
   JumpBasicOverride(JumpTable *jt);		///< Constructor
-  void setAddresses(const vector<Address> &adtable);	///< Manually set the address table for \b this model
+  void setAddresses(const std::vector<Address> &adtable);	///< Manually set the address table for \b this model
   void setNorm(const Address &addr,uintb h) { normaddress = addr; hash = h; }	///< Set the normalized switch variable
   void setStartingValue(uintb val) { startingvalue = val; }		///< Set the starting value for the normalized range
   virtual bool isOverride(void) const { return true; }
   virtual int4 getTableSize(void) const { return addrtable.size(); }
   virtual bool recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,uint4 maxtablesize);
-  virtual void buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,vector<LoadTable> *loadpoints) const;
+  virtual void buildAddresses(Funcdata *fd,PcodeOp *indop,std::vector<Address> &addresstable,std::vector<LoadTable> *loadpoints) const;
   // findUnnormalized inherited from JumpBasic
-  virtual void buildLabels(Funcdata *fd,vector<Address> &addresstable,vector<uintb> &label,const JumpModel *orig) const;
+  virtual void buildLabels(Funcdata *fd,std::vector<Address> &addresstable,std::vector<uintb> &label,const JumpModel *orig) const;
   // foldInNormalization inherited from JumpBasic
   virtual bool foldInGuards(Funcdata *fd,JumpTable *jump) { return false; }
-  virtual bool sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable) { return true; }
+  virtual bool sanityCheck(Funcdata *fd,PcodeOp *indop,std::vector<Address> &addresstable) { return true; }
   virtual JumpModel *clone(JumpTable *jt) const;
   virtual void clear(void);
   virtual void encode(Encoder &encoder) const;
@@ -491,12 +491,12 @@ public:
   virtual bool isOverride(void) const { return false; }
   virtual int4 getTableSize(void) const { return sizeIndices+1; }
   virtual bool recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,uint4 maxtablesize);
-  virtual void buildAddresses(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable,vector<LoadTable> *loadpoints) const;
+  virtual void buildAddresses(Funcdata *fd,PcodeOp *indop,std::vector<Address> &addresstable,std::vector<LoadTable> *loadpoints) const;
   virtual void findUnnormalized(uint4 maxaddsub,uint4 maxleftright,uint4 maxext) {}
-  virtual void buildLabels(Funcdata *fd,vector<Address> &addresstable,vector<uintb> &label,const JumpModel *orig) const;
+  virtual void buildLabels(Funcdata *fd,std::vector<Address> &addresstable,std::vector<uintb> &label,const JumpModel *orig) const;
   virtual Varnode *foldInNormalization(Funcdata *fd,PcodeOp *indop);
   virtual bool foldInGuards(Funcdata *fd,JumpTable *jump);
-  virtual bool sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &addresstable) { return true; }
+  virtual bool sanityCheck(Funcdata *fd,PcodeOp *indop,std::vector<Address> &addresstable) { return true; }
   virtual JumpModel *clone(JumpTable *jt) const;
   virtual void clear(void) { assistOp = (PcodeOp *)0; switchvn = (Varnode *)0; }
 };
@@ -519,10 +519,10 @@ class JumpTable {
   Architecture *glb;		///< Architecture under which this jump-table operates
   JumpModel *jmodel;		///< Current model of how the jump table is implemented in code
   JumpModel *origmodel;		///< Initial jump table model, which may be incomplete
-  vector<Address> addresstable; ///< Raw addresses in the jump-table
-  vector<IndexPair> block2addr;	///< Map from basic-blocks to address table index
-  vector<uintb> label;		///< The case label for each explicit target
-  vector<LoadTable> loadpoints;	///< Any recovered in-memory data for the jump-table
+  std::vector<Address> addresstable; ///< Raw addresses in the jump-table
+  std::vector<IndexPair> block2addr;	///< Map from basic-blocks to address table index
+  std::vector<uintb> label;		///< The case label for each explicit target
+  std::vector<LoadTable> loadpoints;	///< Any recovered in-memory data for the jump-table
   Address opaddress;		///< Absolute address of the BRANCHIND jump
   PcodeOp *indirect;		///< CPUI_BRANCHIND linked to \b this jump-table
   uintb switchVarConsume;	///< Bits of the switch variable being consumed
@@ -557,7 +557,7 @@ public:
   void setMaxTableSize(uint4 val) { maxtablesize = val; }	///< Set the maximum entries allowed in the address table
   void setNormMax(uint4 maddsub,uint4 mleftright,uint4 mext) {
     maxaddsub = maddsub; maxleftright = mleftright; maxext = mext; }	///< Set the switch variable normalization model restrictions
-  void setOverride(const vector<Address> &addrtable,const Address &naddr,uintb h,uintb sv);
+  void setOverride(const std::vector<Address> &addrtable,const Address &naddr,uintb h,uintb sv);
   int4 numIndicesByBlock(const FlowBlock *bl) const;
   int4 getIndexByBlock(const FlowBlock *bl,int4 i) const;
   Address getAddressByIndex(int4 i) const { return addresstable[i]; }	///< Get the i-th address table entry

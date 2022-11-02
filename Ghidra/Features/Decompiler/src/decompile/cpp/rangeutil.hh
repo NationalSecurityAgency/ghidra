@@ -95,7 +95,7 @@ public:
 			  int4 inSize,int4 outSize,int4 maxStep);
   void widen(const CircleRange &op2,bool leftIsStable);	///< Widen the unstable bound to match containing range
   int4 translate2Op(OpCode &opc,uintb &c,int4 &cslot) const;	///< Translate range to a comparison op
-  void printRaw(ostream &s) const;		///< Write a text representation of \b this to stream
+  void printRaw(std::ostream &s) const;		///< Write a text representation of \b this to stream
 };
 
 class Partition;		// Forward declaration
@@ -134,7 +134,7 @@ private:
   bool rightIsStable;	///< Set to \b true if right boundary of range didn't change (last iteration)
   Varnode *vn;		///< Varnode whose set this represents
   CircleRange range;	///< Range of values or offsets in this set
-  vector<Equation> equations;	///< Any equations associated with this value set
+  std::vector<Equation> equations;	///< Any equations associated with this value set
   Partition *partHead;	///< If Varnode is a component head, pointer to corresponding Partition
   ValueSet *next;	///< Next ValueSet to iterate
   bool doesEquationApply(int4 num,int4 slot) const;	///< Does the indicated equation apply for the given input slot
@@ -152,7 +152,7 @@ public:
   const CircleRange &getRange(void) const { return range; }	///< Get the actual range of values
   bool isLeftStable(void) const { return leftIsStable; }	///< Return \b true if the left boundary hasn't been changing
   bool isRightStable(void) const { return rightIsStable; }	///< Return \b true if the right boundary hasn't been changing
-  void printRaw(ostream &s) const;		///< Write a text description of \b to the given stream
+  void printRaw(std::ostream &s) const;		///< Write a text description of \b to the given stream
 };
 
 /// \brief A range of nodes (within the weak topological ordering) that are iterated together
@@ -191,7 +191,7 @@ public:
   bool isLeftStable(void) const { return leftIsStable; }	///< Return \b true if the left boundary hasn't been changing
   bool isRightStable(void) const { return rightIsStable; }	///< Return \b true if the right boundary hasn't been changing
   void compute(void);			///< Compute \b this value set
-  void printRaw(ostream &s) const;	///< Write a text description of \b to the given stream
+  void printRaw(std::ostream &s) const;	///< Write a text description of \b to the given stream
 };
 
 /// \brief Class holding a particular widening strategy for the ValueSetSolver iteration algorithm
@@ -277,21 +277,21 @@ class ValueSetSolver {
   /// there is support for a simulated root node. This class acts as an iterator over the outgoing
   /// edges of a particular ValueSet in the graph.
   class ValueSetEdge {
-    const vector<ValueSet *> *rootEdges;		///< The list of nodes attached to the simulated root node (or NULL)
+    const std::vector<ValueSet *> *rootEdges;		///< The list of nodes attached to the simulated root node (or NULL)
     int4 rootPos;					///< The iterator position for the simulated root node
     Varnode *vn;					///< The Varnode attached to a normal ValueSet node (or NULL)
-    list<PcodeOp *>::const_iterator iter;		///< The iterator position for a normal ValueSet node
+    std::list<PcodeOp *>::const_iterator iter;		///< The iterator position for a normal ValueSet node
   public:
-    ValueSetEdge(ValueSet *node,const vector<ValueSet *> &roots);
+    ValueSetEdge(ValueSet *node,const std::vector<ValueSet *> &roots);
     ValueSet *getNext(void);
   };
 
-  list<ValueSet> valueNodes;		///< Storage for all the current value sets
-  map<SeqNum,ValueSetRead> readNodes;	///< Additional, after iteration, add-on value sets
+  std::list<ValueSet> valueNodes;		///< Storage for all the current value sets
+  std::map<SeqNum,ValueSetRead> readNodes;	///< Additional, after iteration, add-on value sets
   Partition orderPartition;		///< Value sets in iteration order
-  list<Partition> recordStorage;	///< Storage for the Partitions establishing components
-  vector<ValueSet *> rootNodes;		///< Values treated as inputs
-  vector<ValueSet *> nodeStack;		///< Stack used to generate the topological ordering
+  std::list<Partition> recordStorage;	///< Storage for the Partitions establishing components
+  std::vector<ValueSet *> rootNodes;		///< Values treated as inputs
+  std::vector<ValueSet *> nodeStack;		///< Stack used to generate the topological ordering
   int4 depthFirstIndex;			///< (Global) depth first numbering for topological ordering
   int4 numIterations;			///< Count of individual ValueSet iterations
   int4 maxIterations;			///< Maximum number of iterations before forcing termination
@@ -307,20 +307,20 @@ class ValueSetSolver {
   void applyConstraints(Varnode *vn,int4 type,const CircleRange &range,PcodeOp *cbranch);
   void constraintsFromPath(int4 type,CircleRange &lift,Varnode *startVn,Varnode *endVn,PcodeOp *cbranch);
   void constraintsFromCBranch(PcodeOp *cbranch);		///< Generate constraints arising from the given branch
-  void generateConstraints(const vector<Varnode *> &worklist,const vector<PcodeOp *> &reads);	///< Generate constraints given a system of Varnodes
+  void generateConstraints(const std::vector<Varnode *> &worklist,const std::vector<PcodeOp *> &reads);	///< Generate constraints given a system of Varnodes
   bool checkRelativeConstant(Varnode *vn,int4 &typeCode,uintb &value) const;	///< Check if the given Varnode is a \e relative constant
   void generateRelativeConstraint(PcodeOp *compOp,PcodeOp *cbranch);	///< Try to find a \e relative constraint
 public:
-  void establishValueSets(const vector<Varnode *> &sinks,const vector<PcodeOp *> &reads,Varnode *stackReg,bool indirectAsCopy);
+  void establishValueSets(const std::vector<Varnode *> &sinks,const std::vector<PcodeOp *> &reads,Varnode *stackReg,bool indirectAsCopy);
   int4 getNumIterations(void) const { return numIterations; }	///< Get the current number of iterations
   void solve(int4 max,Widener &widener);			///< Iterate the ValueSet system until it stabilizes
-  list<ValueSet>::const_iterator beginValueSets(void) const { return valueNodes.begin(); }	///< Start of all ValueSets in the system
-  list<ValueSet>::const_iterator endValueSets(void) const { return valueNodes.end(); }	///< End of all ValueSets in the system
-  map<SeqNum,ValueSetRead>::const_iterator beginValueSetReads(void) const { return readNodes.begin(); }	///< Start of ValueSetReads
-  map<SeqNum,ValueSetRead>::const_iterator endValueSetReads(void) const { return readNodes.end(); }	///< End of ValueSetReads
+  std::list<ValueSet>::const_iterator beginValueSets(void) const { return valueNodes.begin(); }	///< Start of all ValueSets in the system
+  std::list<ValueSet>::const_iterator endValueSets(void) const { return valueNodes.end(); }	///< End of all ValueSets in the system
+  std::map<SeqNum,ValueSetRead>::const_iterator beginValueSetReads(void) const { return readNodes.begin(); }	///< Start of ValueSetReads
+  std::map<SeqNum,ValueSetRead>::const_iterator endValueSetReads(void) const { return readNodes.end(); }	///< End of ValueSetReads
   const ValueSetRead &getValueSetRead(const SeqNum &seq) { return (*readNodes.find(seq)).second; }	///< Get ValueSetRead by SeqNum
 #ifdef CPUI_DEBUG
-  void dumpValueSets(ostream &s) const;
+  void dumpValueSets(std::ostream &s) const;
 #endif
 };
 

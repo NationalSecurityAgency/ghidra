@@ -16,6 +16,8 @@
 #include "funcdata.hh"
 #include "flow.hh"
 
+using namespace std;
+
 // Funcdata members pertaining directly to blocks
 
 /// A description of each block in the current structure hierarchy is

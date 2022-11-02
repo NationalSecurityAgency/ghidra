@@ -17,6 +17,8 @@
 #include "op.hh"
 #include "database.hh"
 
+using namespace std;
+
 AttributeId ATTRIB_CLASS = AttributeId("class",66);
 AttributeId ATTRIB_REPREF = AttributeId("repref",67);
 AttributeId ATTRIB_SYMREF = AttributeId("symref",68);

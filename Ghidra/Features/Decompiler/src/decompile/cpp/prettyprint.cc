@@ -16,6 +16,8 @@
 #include "prettyprint.hh"
 #include "funcdata.hh"
 
+using namespace std;
+
 AttributeId ATTRIB_BLOCKREF = AttributeId("blockref",35);
 AttributeId ATTRIB_CLOSE = AttributeId("close",36);
 AttributeId ATTRIB_COLOR = AttributeId("color",37);

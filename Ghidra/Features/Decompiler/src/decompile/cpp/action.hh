@@ -28,13 +28,13 @@
 /// together form a \b root Action.
 class ActionGroupList {
   friend class ActionDatabase;
-  set<string> list;		///< List of group names
+  std::set<std::string> list;		///< List of group names
 public:
   /// \brief Check if \b this ActionGroupList contains a given group
   ///
   /// \param nm is the given group to check for
   /// \return true if \b this contains the group
-  bool contains(const string &nm) const { return (list.find(nm)!=list.end()); }
+  bool contains(const std::string &nm) const { return (list.find(nm)!=list.end()); }
 };
 
 class Rule;
@@ -82,29 +82,29 @@ protected:
   uint4 flags;			///< Behavior properties
   uint4 count_tests;		///< Number of times apply() has been called
   uint4 count_apply;		///< Number of times apply() made changes
-  string name;			///< Name of the action
-  string basegroup;		///< Base group this action belongs to
+  std::string name;			///< Name of the action
+  std::string basegroup;		///< Base group this action belongs to
   void issueWarning(Architecture *glb);	///< Warn that this Action has applied
   bool checkStartBreak(void);	///< Check start breakpoint
   bool checkActionBreak(void);	///< Check action breakpoint
   void turnOnWarnings(void) { flags |= rule_warnings_on; }	///< Enable warnings for this Action
   void turnOffWarnings(void) { flags &= ~rule_warnings_on; }	///< Disable warnings for this Action
 public:
-  Action(uint4 f,const string &nm,const string &g);		///< Base constructor for an Action
+  Action(uint4 f,const std::string &nm,const std::string &g);		///< Base constructor for an Action
   virtual ~Action(void) {}					///< Destructor
 #ifdef OPACTION_DEBUG
-  virtual bool turnOnDebug(const string &nm);			///< Turn on debugging
-  virtual bool turnOffDebug(const string &nm);			///< Turn off debugging
+  virtual bool turnOnDebug(const std::string &nm);			///< Turn on debugging
+  virtual bool turnOffDebug(const std::string &nm);			///< Turn off debugging
 #endif
-  virtual void printStatistics(ostream &s) const;		///< Dump statistics to stream
+  virtual void printStatistics(std::ostream &s) const;		///< Dump statistics to stream
   int4 perform(Funcdata &data); 				///< Perform this action (if necessary)
-  bool setBreakPoint(uint4 tp,const string &specify);		///< Set a breakpoint on this action
+  bool setBreakPoint(uint4 tp,const std::string &specify);		///< Set a breakpoint on this action
   virtual void clearBreakPoints(void);				///< Clear all breakpoints set on \b this Action
-  bool setWarning(bool val,const string &specify);		///< Set a warning on this action
-  bool disableRule(const string &specify);			///< Disable a specific Rule within \b this
-  bool enableRule(const string &specify);			///< Enable a specific Rule within \b this
-  const string &getName(void) const { return name; }		///< Get the Action's name
-  const string &getGroup(void) const { return basegroup; }	///< Get the Action's group
+  bool setWarning(bool val,const std::string &specify);		///< Set a warning on this action
+  bool disableRule(const std::string &specify);			///< Disable a specific Rule within \b this
+  bool enableRule(const std::string &specify);			///< Enable a specific Rule within \b this
+  const std::string &getName(void) const { return name; }		///< Get the Action's name
+  const std::string &getGroup(void) const { return basegroup; }	///< Get the Action's group
   uint4 getStatus(void) const { return status; }		///< Get the current status of \b this Action
   uint4 getNumTests(void) { return count_tests; }		///< Get the number of times apply() was invoked
   uint4 getNumApply(void) { return count_apply; }		///< Get the number of times apply() made changes
@@ -126,10 +126,10 @@ public:
   /// \param data is the function to inspect/modify
   /// \return 0 for a complete application, -1 for a partial completion (due to breakpoint)
   virtual int4 apply(Funcdata &data)=0;
-  virtual int4 print(ostream &s,int4 num,int4 depth) const;	///< Print a description of this Action to stream
-  virtual void printState(ostream &s) const;			///< Print status to stream
-  virtual Action *getSubAction(const string &specify);		///< Retrieve a specific sub-action by name
-  virtual Rule *getSubRule(const string &specify);		///< Retrieve a specific sub-rule by name
+  virtual int4 print(std::ostream &s,int4 num,int4 depth) const;	///< Print a description of this Action to stream
+  virtual void printState(std::ostream &s) const;			///< Print status to stream
+  virtual Action *getSubAction(const std::string &specify);		///< Retrieve a specific sub-action by name
+  virtual Rule *getSubRule(const std::string &specify);		///< Retrieve a specific sub-rule by name
 };
 
 /// \brief A group of actions (generally) applied in sequence
@@ -140,10 +140,10 @@ public:
 /// that also affect how the Actions are applied.
 class ActionGroup : public Action {
 protected:
-  vector<Action *> list;				///< List of actions to perform in the group
-  vector<Action *>::iterator state;			///< Current action being applied
+  std::vector<Action *> list;				///< List of actions to perform in the group
+  std::vector<Action *>::iterator state;			///< Current action being applied
 public:
-  ActionGroup(uint4 f,const string &nm) : Action(f,nm,"") {}	///< Construct given properties and a name
+  ActionGroup(uint4 f,const std::string &nm) : Action(f,nm,"") {}	///< Construct given properties and a name
   virtual ~ActionGroup(void);				///< Destructor
   void addAction(Action *ac);				///< Add an Action to the group
   virtual void clearBreakPoints(void);
@@ -151,15 +151,15 @@ public:
   virtual void reset(Funcdata &data);
   virtual void resetStats(void);
   virtual int4 apply(Funcdata &data);
-  virtual int4 print(ostream &s,int4 num,int4 depth) const;
-  virtual void printState(ostream &s) const;
-  virtual Action *getSubAction(const string &specify);
-  virtual Rule *getSubRule(const string &specify);
+  virtual int4 print(std::ostream &s,int4 num,int4 depth) const;
+  virtual void printState(std::ostream &s) const;
+  virtual Action *getSubAction(const std::string &specify);
+  virtual Rule *getSubRule(const std::string &specify);
 #ifdef OPACTION_DEBUG
-  virtual bool turnOnDebug(const string &nm);
-  virtual bool turnOffDebug(const string &nm);
+  virtual bool turnOnDebug(const std::string &nm);
+  virtual bool turnOffDebug(const std::string &nm);
 #endif
-  virtual void printStatistics(ostream &s) const;
+  virtual void printStatistics(std::ostream &s) const;
 };
 
 /// \brief Action which checks if restart (sub)actions have been generated
@@ -172,7 +172,7 @@ class ActionRestartGroup : public ActionGroup {
   int4 maxrestarts;			///< Maximum number of restarts allowed
   int4 curstart;			///< Current restart iteration
 public:
-  ActionRestartGroup(uint4 f,const string &nm,int4 max) :
+  ActionRestartGroup(uint4 f,const std::string &nm,int4 max) :
     ActionGroup(f,nm) { maxrestarts = max; }	///< Construct this providing maximum number of restarts
   virtual Action *clone(const ActionGroupList &grouplist) const;
   virtual void reset(Funcdata &data);
@@ -202,16 +202,16 @@ private:
   friend class ActionPool;
   uint4 flags;			///< Properties enabled with \b this Rule
   uint4 breakpoint;		///< Breakpoint(s) enabled for \b this Rule
-  string name;			///< Name of the Rule
-  string basegroup;		///< Group to which \b this Rule belongs
+  std::string name;			///< Name of the Rule
+  std::string basegroup;		///< Group to which \b this Rule belongs
   uint4 count_tests;		///< Number of times \b this Rule has attempted to apply
   uint4 count_apply;		///< Number of times \b this Rule has successfully been applied
   void issueWarning(Architecture *glb);	///< If enabled, print a warning that this Rule has been applied
 public:
-  Rule(const string &g,uint4 fl,const string &nm);		///< Construct given group, properties name
+  Rule(const std::string &g,uint4 fl,const std::string &nm);		///< Construct given group, properties name
   virtual ~Rule(void) {}					///< Destructor
-  const string &getName(void) const { return name; }		///< Return the name of \b this Rule
-  const string &getGroup(void) const { return basegroup; }	///< Return the group \b this Rule belongs to
+  const std::string &getName(void) const { return name; }		///< Return the name of \b this Rule
+  const std::string &getGroup(void) const { return basegroup; }	///< Return the group \b this Rule belongs to
   uint4 getNumTests(void) { return count_tests; }		///< Get number of attempted applications
   uint4 getNumApply(void) { return count_apply; }		///< Get number of successful applications
   void setBreak(uint4 tp) { breakpoint |= tp; }			///< Set a breakpoint on \b this Rule
@@ -232,7 +232,7 @@ public:
   /// \param grouplist is the list of groups being cloned
   /// \return the cloned Rule or NULL
   virtual Rule *clone(const ActionGroupList &grouplist) const=0;
-  virtual void getOpList(vector<uint4> &oplist) const;		///< List of op codes this rule operates on
+  virtual void getOpList(std::vector<uint4> &oplist) const;		///< List of op codes this rule operates on
 
   /// \brief Attempt to apply \b this Rule
   ///
@@ -244,10 +244,10 @@ public:
   virtual int4 applyOp(PcodeOp *op,Funcdata &data) { return 0; }
   virtual void reset(Funcdata &data);				///< Reset \b this Rule
   virtual void resetStats(void);				///< Reset Rule statistics
-  virtual void printStatistics(ostream &s) const;		///< Print statistics for \b this Rule
+  virtual void printStatistics(std::ostream &s) const;		///< Print statistics for \b this Rule
 #ifdef OPACTION_DEBUG
-  virtual bool turnOnDebug(const string &nm);			///< Turn on debugging
-  virtual bool turnOffDebug(const string &nm);			///< Turn off debugging
+  virtual bool turnOnDebug(const std::string &nm);			///< Turn on debugging
+  virtual bool turnOffDebug(const std::string &nm);			///< Turn off debugging
 #endif
 };
 
@@ -258,13 +258,13 @@ public:
 /// Usually rule_repeatapply is enabled for this action, which causes
 /// all Rules to apply repeatedly until no Rule can make an additional change.
 class ActionPool : public Action {
-  vector<Rule *> allrules;				///< The set of Rules in this ActionPool
-  vector<Rule *> perop[CPUI_MAX];			///< Rules associated with each OpCode
+  std::vector<Rule *> allrules;				///< The set of Rules in this ActionPool
+  std::vector<Rule *> perop[CPUI_MAX];			///< Rules associated with each OpCode
   PcodeOpTree::const_iterator op_state; 		///< Current PcodeOp up for rule application
   int4 rule_index;					///< Iterator over Rules for one OpCode
   int4 processOp(PcodeOp *op,Funcdata &data);		///< Apply the next possible Rule to a PcodeOp
 public:
-  ActionPool(uint4 f,const string &nm) : Action(f,nm,"") {}	///< Construct providing properties and name
+  ActionPool(uint4 f,const std::string &nm) : Action(f,nm,"") {}	///< Construct providing properties and name
   virtual ~ActionPool(void);				///< Destructor
   void addRule(Rule *rl);				///< Add a Rule to the pool
   virtual void clearBreakPoints(void);
@@ -272,13 +272,13 @@ public:
   virtual void reset(Funcdata &data);
   virtual void resetStats(void);
   virtual int4 apply(Funcdata &data);
-  virtual int4 print(ostream &s,int4 num,int4 depth) const;
-  virtual void printState(ostream &s) const;
-  virtual Rule *getSubRule(const string &specify);
-  virtual void printStatistics(ostream &s) const;
+  virtual int4 print(std::ostream &s,int4 num,int4 depth) const;
+  virtual void printState(std::ostream &s) const;
+  virtual Rule *getSubRule(const std::string &specify);
+  virtual void printStatistics(std::ostream &s) const;
 #ifdef OPACTION_DEBUG
-  virtual bool turnOnDebug(const string &nm);
-  virtual bool turnOffDebug(const string &nm);
+  virtual bool turnOnDebug(const std::string &nm);
+  virtual bool turnOffDebug(const std::string &nm);
 #endif
 };
 
@@ -295,29 +295,29 @@ public:
 /// the \e current root Action, which is the one that will be actively applied to functions.
 class ActionDatabase {
   Action *currentact;				///< This is the current root Action
-  string currentactname;			///< The name associated with the current root Action
-  map<string,ActionGroupList> groupmap;		///< Map from root Action name to the grouplist it uses
-  map<string,Action *> actionmap;		///< Map from name to root Action
+  std::string currentactname;			///< The name associated with the current root Action
+  std::map<std::string,ActionGroupList> groupmap;		///< Map from root Action name to the grouplist it uses
+  std::map<std::string,Action *> actionmap;		///< Map from name to root Action
   bool isDefaultGroups;				///< \b true if only the default groups are set
   static const char universalname[];		///< The name of the \e universal root Action
-  void registerAction(const string &nm,Action *act);	///< Register a \e root Action
+  void registerAction(const std::string &nm,Action *act);	///< Register a \e root Action
   void buildDefaultGroups(void);		///< Set up descriptions of preconfigured root Actions
-  Action *getAction(const string &nm) const;				///< Look up a \e root Action by name
-  Action *deriveAction(const string &baseaction,const string &grp);	///< Derive a \e root Action
+  Action *getAction(const std::string &nm) const;				///< Look up a \e root Action by name
+  Action *deriveAction(const std::string &baseaction,const std::string &grp);	///< Derive a \e root Action
 public:
   ActionDatabase(void) { currentact = (Action *)0; isDefaultGroups = false; }	///< Constructor
   ~ActionDatabase(void);				///< Destructor
   void resetDefaults(void);			///< (Re)set the default configuration
   Action *getCurrent(void) const { return currentact; }	///< Get the current \e root Action
-  const string &getCurrentName(void) const { return currentactname; }	///< Get the name of the current \e root Action
-  const ActionGroupList &getGroup(const string &grp) const;	///< Get a specific grouplist by name
-  Action *setCurrent(const string &actname);		///< Set the current \e root Action
-  Action *toggleAction(const string &grp,const string &basegrp,bool val);	///< Toggle a group of Actions with a \e root Action
+  const std::string &getCurrentName(void) const { return currentactname; }	///< Get the name of the current \e root Action
+  const ActionGroupList &getGroup(const std::string &grp) const;	///< Get a specific grouplist by name
+  Action *setCurrent(const std::string &actname);		///< Set the current \e root Action
+  Action *toggleAction(const std::string &grp,const std::string &basegrp,bool val);	///< Toggle a group of Actions with a \e root Action
 
-  void setGroup(const string &grp,const char **argv);			///< Establish a new \e root Action
-  void cloneGroup(const string &oldname,const string &newname);		///< Clone a \e root Action
-  bool addToGroup(const string &grp,const string &basegroup);		///< Add a group to a \e root Action
-  bool removeFromGroup(const string &grp,const string &basegroup);	///< Remove a group from a \e root Action
+  void setGroup(const std::string &grp,const char **argv);			///< Establish a new \e root Action
+  void cloneGroup(const std::string &oldname,const std::string &newname);		///< Clone a \e root Action
+  bool addToGroup(const std::string &grp,const std::string &basegroup);		///< Add a group to a \e root Action
+  bool removeFromGroup(const std::string &grp,const std::string &basegroup);	///< Remove a group from a \e root Action
   void universalAction(Architecture *glb);		///< Build the universal action
 };
 

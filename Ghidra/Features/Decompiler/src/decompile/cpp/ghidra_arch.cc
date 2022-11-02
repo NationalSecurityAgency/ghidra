@@ -23,6 +23,8 @@
 #include "cpool_ghidra.hh"
 #include "inject_ghidra.hh"
 
+using namespace std;
+
 //AttributeId ATTRIB_BADDATA = AttributeId("baddata",145);
 
 ElementId ELEM_COMMAND_ISNAMEUSED = ElementId("command_isnameused",239);

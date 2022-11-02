@@ -15,6 +15,8 @@
  */
 #include "raw_arch.hh"
 
+using namespace std;
+
 ElementId ELEM_RAW_SAVEFILE = ElementId("raw_savefile",237);
 
 // Constructing this object registers the capability

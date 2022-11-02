@@ -15,6 +15,8 @@
  */
 #include "loadimage.hh"
 
+using namespace std;
+
 /// This is a convenience method wrapped around the core
 /// loadFill() routine.  It automatically allocates an array
 /// of the desired size, and then fills it with load image data.

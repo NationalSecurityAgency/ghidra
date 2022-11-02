@@ -57,9 +57,9 @@ class PcodeCacher {
   VarnodeData *poolstart;		///< Start of the pool of VarnodeData objects
   VarnodeData *curpool;			///< First unused VarnodeData
   VarnodeData *endpool;			///< End of the pool of VarnodeData objects
-  vector<PcodeData> issued;		///< P-code ops issued for the current instruction
-  list<RelativeRecord> label_refs;	///< References to labels
-  vector<uintb> labels;			///< Locations of labels
+  std::vector<PcodeData> issued;		///< P-code ops issued for the current instruction
+  std::list<RelativeRecord> label_refs;	///< References to labels
+  std::vector<uintb> labels;			///< Locations of labels
   VarnodeData *expandPool(uint4 size);	///< Expand the memory pool
 public:
   PcodeCacher(void);		///< Constructor
@@ -173,8 +173,8 @@ public:
   virtual ~Sleigh(void);				///< Destructor
   void reset(LoadImage *ld,ContextDatabase *c_db);	///< Reset the engine for a new program
   virtual void initialize(DocumentStorage &store);
-  virtual void registerContext(const string &name,int4 sbit,int4 ebit);
-  virtual void setContextDefault(const string &nm,uintm val);
+  virtual void registerContext(const std::string &name,int4 sbit,int4 ebit);
+  virtual void setContextDefault(const std::string &nm,uintm val);
   virtual void allowContextSet(bool val) const;
   virtual int4 instructionLength(const Address &baseaddr) const;
   virtual int4 oneInstruction(PcodeEmit &emit,const Address &baseaddr) const;
@@ -327,8 +327,8 @@ public:
 
   // Set up the loadimage
   // Providing an executable name and architecture
-  string loadimagename = "x86testcode";
-  string bfdtarget= "default";
+  std::string loadimagename = "x86testcode";
+  std::string bfdtarget= "default";
 
   loader = new LoadImageBfd(loadimagename,bfdtarget);
   loader->open();       // Load the executable from file
@@ -345,7 +345,7 @@ public:
   this.
 
   \code
-  string sleighfilename = "specfiles/x86.sla";
+  std::string sleighfilename = "specfiles/x86.sla";
   DocumentStorage docstorage;
   Element *sleighroot = docstorage.openDocument(sleighfilename)->getRoot();
   docstorage.registerTag(sleighroot);
@@ -365,7 +365,7 @@ public:
   \code
   class AssemblyRaw : public AssemblyEmit {
   public:
-    virtual void dump(const Address &addr,const string &mnem,const string &body) {
+    virtual void dump(const Address &addr,const std::string &mnem,const std::string &body) {
       addr.printRaw(cout);
       cout << ": " << mnem << ' ' << body << endl;
     }
@@ -484,9 +484,9 @@ public:
   \code
   class MyLoadImage : public LoadImage {
   public:
-    MyLoadImage(const string &nm) : Loadimage(nm) {}
+    MyLoadImage(const std::string &nm) : Loadimage(nm) {}
     virtual void loadFill(uint1 *ptr,int4 size,const Address &addr);
-    virtual string getArchType(void) const { return "mytype"; }
+    virtual std::string getArchType(void) const { return "mytype"; }
     virtual void adjustVma(long adjust) {}
   };
   \endcode

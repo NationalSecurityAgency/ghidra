@@ -16,6 +16,8 @@
 #include "database_ghidra.hh"
 #include "funcdata.hh"
 
+using namespace std;
+
 Scope *ScopeGhidra::buildSubScope(uint8 id,const string &nm)
 
 {

@@ -47,7 +47,7 @@ public:
   FunctionTestCollection *testCollection;		///< Executable environment from a datatest
 
 #ifdef CPUI_RULECOMPILE
-  string experimental_file;	// File containing experimental rules
+  std::string experimental_file;	// File containing experimental rules
 #endif
 #ifdef OPACTION_DEBUG
   bool jumptabledebug;
@@ -55,11 +55,11 @@ public:
   IfaceDecompData(void);		///< Constructor
   virtual ~IfaceDecompData(void);
   void allocateCallGraph(void);		///< Allocate the call-graph object
-  void abortFunction(ostream &s);	///< Clear references to current function
+  void abortFunction(std::ostream &s);	///< Clear references to current function
   void clearArchitecture(void);		///< Free all resources for the current architecture/program
-  void followFlow(ostream &s,int4 size);
-  Varnode *readVarnode(istream &s);	///< Read a varnode from the given stream
-  void readSymbol(const string &name,vector<Symbol *> &res);	///< Find a symbol by name
+  void followFlow(std::ostream &s,int4 size);
+  Varnode *readVarnode(std::istream &s);	///< Read a varnode from the given stream
+  void readSymbol(const std::string &name,std::vector<Symbol *> &res);	///< Find a symbol by name
 };
 
 /// \brief Disassembly emitter that prints to a console stream
@@ -68,14 +68,14 @@ public:
 /// followed by the mnemonic and then column aligned operands.
 class IfaceAssemblyEmit : public AssemblyEmit {
   int4 mnemonicpad;		///< How much to pad the mnemonic
-  ostream *s;			///< The current stream to write to
+  std::ostream *s;			///< The current stream to write to
 public:
-  IfaceAssemblyEmit(ostream *val,int4 mp) { s = val; mnemonicpad=mp; }	///< Constructor
-  virtual void dump(const Address &addr,const string &mnem,const string &body) {
+  IfaceAssemblyEmit(std::ostream *val,int4 mp) { s = val; mnemonicpad=mp; }	///< Constructor
+  virtual void dump(const Address &addr,const std::string &mnem,const std::string &body) {
     addr.printRaw(*s);
     *s << ": " << mnem;
     for(int4 i=mnem.size();i<mnemonicpad;++i) *s << ' ';
-    *s << body << endl;
+    *s << body << std::endl;
   }
 };
 
@@ -94,7 +94,7 @@ protected:
   void iterateFunctionsAddrOrder(Scope *scope);	///< Iterate over all functions in a given scope
 public:
   virtual void setData(IfaceStatus *root,IfaceData *data) { status = root; dcp = (IfaceDecompData *)data; }
-  virtual string getModule(void) const { return "decompile"; }
+  virtual std::string getModule(void) const { return "decompile"; }
   virtual IfaceData *createData(void) { return new IfaceDecompData(); }
 
   /// \brief Perform the per-function aspect of \b this command.
@@ -108,545 +108,545 @@ public:
 
 class IfcSource : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcOption : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcParseLine : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcParseFile : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcAdjustVma : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcFuncload : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcAddrrangeLoad : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcCleararch : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcReadSymbols : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcMapaddress : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcMaphash : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcMapfunction : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcMapexternalref : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcMaplabel : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcMapconvert : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcMapunionfacet : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcPrintdisasm : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcDump : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcDumpbinary : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcDecompile : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcPrintLanguage : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcPrintCXml : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcPrintCFlat : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcPrintCStruct : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcPrintCGlobals : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcPrintCTypes : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcProduceC : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
   virtual void iterationCallback(Funcdata *fd);
 };
 
 class IfcProducePrototypes : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
   virtual void iterationCallback(Funcdata *fd);
 };
 
 class IfcListaction : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcListOverride : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcListprototypes : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcSetcontextrange : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcSettrackedrange : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcBreakstart : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcBreakaction : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcPrintTree : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcPrintBlocktree : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcPrintSpaces : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcPrintHigh : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcPrintParamMeasures : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcRename : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcRetype : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcRemove : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcPrintVarnode : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcPrintCover : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcVarnodehighCover : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcPrintExtrapop : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcVarnodeCover : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcNameVarnode : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcTypeVarnode : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcForceFormat : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcForceDatatypeFormat : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcForcegoto : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcProtooverride : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcJumpOverride : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcFlowOverride : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcDeadcodedelay : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcGlobalAdd : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcGlobalRemove : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcGlobalify : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcGlobalRegisters : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcPrintInputs : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
   static bool nonTrivialUse(Varnode *vn);		///< Check for non-trivial use of given Varnode
   static int4 checkRestore(Varnode *vn);		///< Check if a Varnode is \e restored to its original input value
   static bool findRestore(Varnode *vn,Funcdata *fd);	///< Check if storage is \e restored
-  static void print(Funcdata *fd,ostream &s);		///< Print information about function inputs
+  static void print(Funcdata *fd,std::ostream &s);		///< Print information about function inputs
 };
 
 class IfcPrintInputsAll : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
   virtual void iterationCallback(Funcdata *fd);
 };
 
 class IfcLockPrototype : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcUnlockPrototype : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcPrintLocalrange : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcPrintMap : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcContinue : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcPrintRaw : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcGraphDataflow : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcGraphControlflow : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcGraphDom : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcCommentInstr : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcDuplicateHash : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
   virtual void iterationCallback(Funcdata *fd);
-  static void check(Funcdata *fd,ostream &s);		///< Check for duplicate hashes in given function
+  static void check(Funcdata *fd,std::ostream &s);		///< Check for duplicate hashes in given function
 
 };
 
 class IfcCallGraphDump : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcCallGraphBuild : public IfaceDecompCommand {
 protected:
   bool quick;		///< Set to \b true if a quick analysis is desired
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
   virtual void iterationCallback(Funcdata *fd);
 };
 
 class IfcCallGraphBuildQuick : public IfcCallGraphBuild {
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcCallGraphLoad : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcCallGraphList : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
   virtual void iterationCallback(Funcdata *fd);
 };
 
 class IfcComment : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcCallFixup : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
-  static void readPcodeSnippet(istream &s,string &name,string &outname,vector<string> &inname,
-			       string &pcodestring);
+  virtual void execute(std::istream &s);
+  static void readPcodeSnippet(std::istream &s,std::string &name,std::string &outname,std::vector<std::string> &inname,
+			       std::string &pcodestring);
 };
 
 class IfcCallOtherFixup : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcFixupApply : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcCountPcode : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcPrintActionstats : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcResetActionstats : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcVolatile : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcReadonly : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcPointerSetting : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcPreferSplit : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcStructureBlocks : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcAnalyzeRange : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcLoadTestFile : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcListTestCommands : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcExecuteTestCommand : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 #ifdef CPUI_RULECOMPILE
 class IfcParseRule : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcExperimentalRules : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 #endif
 
 #ifdef OPACTION_DEBUG
 class IfcDebugAction : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcTraceBreak : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcTraceAddress : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcTraceEnable : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcTraceDisable : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcTraceClear : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcTraceList : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcBreakjump : public IfaceDecompCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 #endif

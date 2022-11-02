@@ -16,6 +16,8 @@
 #include "rangeutil.hh"
 #include "block.hh"
 
+using namespace std;
+
 const char CircleRange::arrange[] = "gcgbegdagggggggeggggcgbggggggggcdfgggggggegdggggbgggfggggcgbegda";
 
 /// All the instantiations where left == right represent the same set. We

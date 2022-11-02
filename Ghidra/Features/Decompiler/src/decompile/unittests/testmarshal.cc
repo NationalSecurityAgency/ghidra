@@ -16,6 +16,8 @@
 #include "translate.hh"
 #include "test.hh"
 
+using namespace std;
+
 class TestAddrSpaceManager : public AddrSpaceManager {
 public:
   TestAddrSpaceManager(Translate *t);

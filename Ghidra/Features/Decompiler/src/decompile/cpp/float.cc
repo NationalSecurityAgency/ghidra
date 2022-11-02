@@ -19,6 +19,8 @@
 #include <cmath>
 #include "address.hh"
 
+using namespace std;
+
 /// Set format for a given encoding size according to IEEE 754 standards
 /// \param sz is the size of the encoding in bytes
 FloatFormat::FloatFormat(int4 sz)

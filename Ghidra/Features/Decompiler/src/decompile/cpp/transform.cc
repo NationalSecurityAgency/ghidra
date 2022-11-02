@@ -16,6 +16,8 @@
 #include "transform.hh"
 #include "funcdata.hh"
 
+using namespace std;
+
 AttributeId ATTRIB_VECTOR_LANE_SIZES = AttributeId("vector_lane_sizes",130);
 
 /// \param op2 is the lane description to copy from

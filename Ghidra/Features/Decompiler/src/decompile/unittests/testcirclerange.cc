@@ -16,6 +16,8 @@
 #include "architecture.hh"
 #include "test.hh"
 
+using namespace std;
+
 class CircleRangeTestEnvironment {
   Architecture *g;
 public:

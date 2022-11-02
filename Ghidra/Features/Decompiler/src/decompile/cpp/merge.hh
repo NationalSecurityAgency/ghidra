@@ -49,7 +49,7 @@ public:
   bool operator<(const BlockVarnode &op2) const { return (index < op2.index); } ///< Comparator
   Varnode *getVarnode(void) const { return vn; } ///< Get the Varnode represented by \b this
   int4 getIndex(void) const { return index; }	 ///< Get the Varnode's defining block index
-  static int4 findFront(int4 blocknum,const vector<BlockVarnode> &list);
+  static int4 findFront(int4 blocknum,const std::vector<BlockVarnode> &list);
 };
 
 class Funcdata;
@@ -79,8 +79,8 @@ class Funcdata;
 ///   - Merging Varnodes that hold the same data-type
 class Merge {
   Funcdata &data;		///< The function containing the Varnodes to be merged
-  map<HighEdge,bool> highedgemap; ///< A cache of intersection tests, sorted by HighVariable pair
-  vector<PcodeOp *> copyTrims;	///< COPY ops inserted to facilitate merges
+  std::map<HighEdge,bool> highedgemap; ///< A cache of intersection tests, sorted by HighVariable pair
+  std::vector<PcodeOp *> copyTrims;	///< COPY ops inserted to facilitate merges
   bool updateHigh(HighVariable *a); ///< Make sure given HighVariable's Cover is up-to-date
   void purgeHigh(HighVariable *high); ///< Remove cached intersection tests for a given HighVariable
   bool blockIntersection(HighVariable *a,HighVariable *b,int4 blk);
@@ -88,29 +88,29 @@ class Merge {
   static bool mergeTestAdjacent(HighVariable *high_out,HighVariable *high_in);
   static bool mergeTestSpeculative(HighVariable *high_out,HighVariable *high_in);
   static bool mergeTestBasic(Varnode *vn);
-  static void findSingleCopy(HighVariable *high,vector<Varnode *> &singlelist);
+  static void findSingleCopy(HighVariable *high,std::vector<Varnode *> &singlelist);
   static bool compareHighByBlock(const HighVariable *a,const HighVariable *b);
   static bool compareCopyByInVarnode(PcodeOp *op1,PcodeOp *op2);
   static bool shadowedVarnode(const Varnode *vn);
-  static void findAllIntoCopies(HighVariable *high,vector<PcodeOp *> &copyIns,bool filterTemps);
-  void collectCovering(vector<Varnode *> &vlist,HighVariable *high,PcodeOp *op);
-  bool collectCorrectable(const vector<Varnode *> &vlist,list<PcodeOp *> &oplist,vector<int4> &slotlist,
+  static void findAllIntoCopies(HighVariable *high,std::vector<PcodeOp *> &copyIns,bool filterTemps);
+  void collectCovering(std::vector<Varnode *> &vlist,HighVariable *high,PcodeOp *op);
+  bool collectCorrectable(const std::vector<Varnode *> &vlist,std::list<PcodeOp *> &oplist,std::vector<int4> &slotlist,
 			   PcodeOp *op);
   PcodeOp *allocateCopyTrim(Varnode *inVn,const Address &addr,PcodeOp *trimOp);
-  void snipReads(Varnode *vn,list<PcodeOp *> &markedop);
+  void snipReads(Varnode *vn,std::list<PcodeOp *> &markedop);
   void snipIndirect(PcodeOp *indop);
-  void eliminateIntersect(Varnode *vn,const vector<BlockVarnode> &blocksort);
+  void eliminateIntersect(Varnode *vn,const std::vector<BlockVarnode> &blocksort);
   void unifyAddress(VarnodeLocSet::const_iterator startiter,VarnodeLocSet::const_iterator enditer);
   void trimOpOutput(PcodeOp *op);
   void trimOpInput(PcodeOp *op,int4 slot);
   void mergeRangeMust(VarnodeLocSet::const_iterator startiter,VarnodeLocSet::const_iterator enditer);
   void mergeOp(PcodeOp *op);
   void mergeIndirect(PcodeOp *indop);
-  void mergeLinear(vector<HighVariable *> &highvec);
+  void mergeLinear(std::vector<HighVariable *> &highvec);
   bool merge(HighVariable *high1,HighVariable *high2,bool isspeculative);
   bool checkCopyPair(HighVariable *high,PcodeOp *domOp,PcodeOp *subOp);
-  void buildDominantCopy(HighVariable *high,vector<PcodeOp *> &copy,int4 pos,int4 size);
-  void markRedundantCopies(HighVariable *high,vector<PcodeOp *> &copy,int4 pos,int4 size);
+  void buildDominantCopy(HighVariable *high,std::vector<PcodeOp *> &copy,int4 pos,int4 size);
+  void markRedundantCopies(HighVariable *high,std::vector<PcodeOp *> &copy,int4 pos,int4 size);
   void processHighDominantCopy(HighVariable *high);
   void processHighRedundantCopy(HighVariable *high);
 public:
@@ -118,7 +118,7 @@ public:
   bool intersection(HighVariable *a,HighVariable *b);
   bool inflateTest(Varnode *a,HighVariable *high);
   void inflate(Varnode *a,HighVariable *high);
-  bool mergeTest(HighVariable *high,vector<HighVariable *> &tmplist);
+  bool mergeTest(HighVariable *high,std::vector<HighVariable *> &tmplist);
 
   void mergeOpcode(OpCode opc);
   void mergeByDatatype(VarnodeLocSet::const_iterator startiter,VarnodeLocSet::const_iterator enditer);

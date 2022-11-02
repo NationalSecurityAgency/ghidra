@@ -20,8 +20,8 @@
 
 class RuleLexer {
   static int4 identlist[256];	// 1 is identifier, 2 is digit, 4=namechar
-  map<string,int4> keywordmap;
-  istream *s;
+  std::map<std::string,int4> keywordmap;
+  std::istream *s;
   char identifier[256];
   int4 identlength;
   int4 lookahead[4];
@@ -53,7 +53,7 @@ class RuleLexer {
   void initKeywords(void);
 public:
   RuleLexer(void);
-  void initialize(istream &t);
+  void initialize(std::istream &t);
   int4 getLineNo(void) { return lineno; }
   int4 nextToken(void);
 };
@@ -61,22 +61,22 @@ public:
 class DummyTranslate : public Translate {
 public:
   virtual void initialize(DocumentStorage &store) {}
-  virtual const VarnodeData &getRegister(const string &nm) const { throw LowlevelError("Cannot add register to DummyTranslate"); }
-  virtual string getRegisterName(AddrSpace *base,uintb off,int4 size) const { return ""; }
-  virtual void getAllRegisters(map<VarnodeData,string> &reglist) const {}
-  virtual void getUserOpNames(vector<string> &res) const {}
+  virtual const VarnodeData &getRegister(const std::string &nm) const { throw LowlevelError("Cannot add register to DummyTranslate"); }
+  virtual std::string getRegisterName(AddrSpace *base,uintb off,int4 size) const { return ""; }
+  virtual void getAllRegisters(std::map<VarnodeData,std::string> &reglist) const {}
+  virtual void getUserOpNames(std::vector<std::string> &res) const {}
   virtual int4 instructionLength(const Address &baseaddr) const { return -1; }
   virtual int4 oneInstruction(PcodeEmit &emit,const Address &baseaddr) const { return -1; }
   virtual int4 printAssembly(AssemblyEmit &emit,const Address &baseaddr) const { return -1; }
 };
 
 class RuleCompile {
-  ostream *error_stream;
+  std::ostream *error_stream;
   int4 errors;
   RuleLexer lexer;
-  map<string,int4> namemap;
+  std::map<std::string,int4> namemap;
   ConstraintGroup *finalrule;
-  vector<OpBehavior *> inst;
+  std::vector<OpBehavior *> inst;
 public:
   RuleCompile(void);
   ~RuleCompile(void);
@@ -86,9 +86,9 @@ public:
   void setFullRule(ConstraintGroup *full) { finalrule = full; }
   ConstraintGroup *getRule(void) { return finalrule; }
   ConstraintGroup *releaseRule(void) { ConstraintGroup *res = finalrule; finalrule = (ConstraintGroup *)0; return res; }
-  const map<string,int4> &getNameMap(void) const { return namemap; }
+  const std::map<std::string,int4> &getNameMap(void) const { return namemap; }
 
-  int4 findIdentifier(string *nm);
+  int4 findIdentifier(std::string *nm);
 
   ConstraintGroup *newOp(int4 id);
   ConstraintGroup *newVarnode(int4 id);
@@ -106,7 +106,7 @@ public:
   ConstraintGroup *varDescend(ConstraintGroup *base,int4 opid);
   ConstraintGroup *varUniqueDescend(ConstraintGroup *base,int4 opid);
 
-  ConstraintGroup *opCodeConstraint(ConstraintGroup *base,vector<OpCode> *oplist);
+  ConstraintGroup *opCodeConstraint(ConstraintGroup *base,std::vector<OpCode> *oplist);
   ConstraintGroup *opCompareConstraint(ConstraintGroup *base,int4 opid,OpCode opc);
   ConstraintGroup *varCompareConstraint(ConstraintGroup *base,int4 varid,OpCode opc);
   ConstraintGroup *constCompareConstraint(ConstraintGroup *base,int4 constid,OpCode opc);
@@ -128,30 +128,30 @@ public:
   RHSConstant *constAbsolute(int8 *val);
   RHSConstant *constBinaryExpression(RHSConstant *ex1,OpCode opc,RHSConstant *ex2);
   RHSConstant *constVarnodeSize(int4 varindex);
-  RHSConstant *dotIdentifier(int4 id,string *str);
+  RHSConstant *dotIdentifier(int4 id,std::string *str);
 
   int4 nextToken(void) { return lexer.nextToken(); }
 
-  void setErrorStream(ostream &t) { error_stream = &t; }
-  void run(istream &s,bool debug);
+  void setErrorStream(std::ostream &t) { error_stream = &t; }
+  void run(std::istream &s,bool debug);
   void postProcess(void);
-  int4 postProcessRule(vector<OpCode> &opcodelist);
-  static ConstraintGroup *buildUnifyer(const string &rule,const vector<string> &idlist,vector<int4> &res);
+  int4 postProcessRule(std::vector<OpCode> &opcodelist);
+  static ConstraintGroup *buildUnifyer(const std::string &rule,const std::vector<std::string> &idlist,std::vector<int4> &res);
 };
 
 class RuleGeneric : public Rule { // A user configurable rule, (a rule read in from a file)
-  vector<OpCode> starterops;
+  std::vector<OpCode> starterops;
   int4 opinit;			// Index of initialized op
   ConstraintGroup *constraint;
   UnifyState state;
 public:
-  RuleGeneric(const string &g,const string &nm,const vector<OpCode> &sops,int4 opi,ConstraintGroup *c);
+  RuleGeneric(const std::string &g,const std::string &nm,const std::vector<OpCode> &sops,int4 opi,ConstraintGroup *c);
   virtual ~RuleGeneric(void) { delete constraint; }
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0; return new RuleGeneric(getGroup(),getName(),starterops,opinit,(ConstraintGroup *)constraint->clone()); }
-  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual void getOpList(std::vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
-  static RuleGeneric *build(const string &nm,const string &gp,const string &content);
+  static RuleGeneric *build(const std::string &nm,const std::string &gp,const std::string &content);
 };
 
 /*

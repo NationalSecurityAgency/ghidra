@@ -46,15 +46,15 @@ protected:
   OpCode opcode;		///< The op-code value
   uint4 opflags;		///< Cached pcode-op properties for this op-code
   uint4 addlflags;		///< Additional properties
-  string name;			///< Symbol denoting this operation
+  std::string name;			///< Symbol denoting this operation
   OpBehavior *behave;		///< Object for emulating the behavior of the op-code
   virtual void setMetatypeIn(type_metatype val) {}	///< Set the data-type associated with inputs to this opcode
   virtual void setMetatypeOut(type_metatype val) {}	///< Set the data-type associated with outputs of this opcode
-  virtual void setSymbol(const string &nm) { name = nm; }	///< Set the display symbol associated with the op-code
+  virtual void setSymbol(const std::string &nm) { name = nm; }	///< Set the display symbol associated with the op-code
 public:
-  TypeOp(TypeFactory *t,OpCode opc,const string &n);	///< Constructor
+  TypeOp(TypeFactory *t,OpCode opc,const std::string &n);	///< Constructor
   virtual ~TypeOp(void);				///< Destructor
-  const string &getName(void) const { return name; }	///< Get the display name of the op-code
+  const std::string &getName(void) const { return name; }	///< Get the display name of the op-code
   OpCode getOpcode(void) const { return opcode; }	///< Get the op-code value
   uint4 getFlags(void) const { return opflags; }	///< Get the properties associated with the op-code
   OpBehavior *getBehavior(void) const { return behave; }	///< Get the behavior associated with the op-code
@@ -140,21 +140,21 @@ public:
   ///
   /// \param s is the output stream
   /// \param op is the specific PcodeOp to print
-  virtual void printRaw(ostream &s,const PcodeOp *op)=0;
+  virtual void printRaw(std::ostream &s,const PcodeOp *op)=0;
 
   /// \brief Get the name of the op-code as it should be displayed in context.
   ///
   /// Depending on the context, the same op-code may get displayed in different ways.
   /// \param op is the PcodeOp context
   /// \return the display token
-  virtual string getOperatorName(const PcodeOp *op) const { return name; }
+  virtual std::string getOperatorName(const PcodeOp *op) const { return name; }
 
   /// \brief Build a map from op-code value to the TypeOp information objects
-  static void registerInstructions(vector<TypeOp *> &inst,TypeFactory *tlst,
+  static void registerInstructions(std::vector<TypeOp *> &inst,TypeFactory *tlst,
 				   const Translate *trans);
 
   /// \brief Toggle Java specific aspects of the op-code information
-  static void selectJavaOperators(vector<TypeOp *> &inst,bool val);
+  static void selectJavaOperators(std::vector<TypeOp *> &inst,bool val);
 };
 
 // Major classes of operations
@@ -169,11 +169,11 @@ class TypeOpBinary : public TypeOp {
   virtual void setMetatypeIn(type_metatype val) { metain = val; }
   virtual void setMetatypeOut(type_metatype val) { metaout = val; }
 public:
-  TypeOpBinary(TypeFactory *t,OpCode opc,const string &n,type_metatype mout,type_metatype min)
+  TypeOpBinary(TypeFactory *t,OpCode opc,const std::string &n,type_metatype mout,type_metatype min)
     : TypeOp(t,opc,n) { metaout = mout; metain = min; }	///< Constructor
   virtual Datatype *getOutputLocal(const PcodeOp *op) const;
   virtual Datatype *getInputLocal(const PcodeOp *op,int4 slot) const;
-  virtual void printRaw(ostream &s,const PcodeOp *op);
+  virtual void printRaw(std::ostream &s,const PcodeOp *op);
 };
 
 /// \brief A generic unary operator: one input and one output
@@ -186,11 +186,11 @@ class TypeOpUnary : public TypeOp {
   virtual void setMetatypeIn(type_metatype val) { metain = val; }
   virtual void setMetatypeOut(type_metatype val) { metaout = val; }
 public:
-  TypeOpUnary(TypeFactory *t,OpCode opc,const string &n,type_metatype mout,type_metatype min)
+  TypeOpUnary(TypeFactory *t,OpCode opc,const std::string &n,type_metatype mout,type_metatype min)
     : TypeOp(t,opc,n) { metaout = mout; metain = min; }	///< Constructor
   virtual Datatype *getOutputLocal(const PcodeOp *op) const;
   virtual Datatype *getInputLocal(const PcodeOp *op,int4 slot) const;
-  virtual void printRaw(ostream &s,const PcodeOp *op);
+  virtual void printRaw(std::ostream &s,const PcodeOp *op);
 };
 
 /// \brief A generic functional operator.
@@ -203,11 +203,11 @@ class TypeOpFunc : public TypeOp {
   virtual void setMetatypeIn(type_metatype val) { metain = val; }
   virtual void setMetatypeOut(type_metatype val) { metaout = val; }
 public:
-  TypeOpFunc(TypeFactory *t,OpCode opc,const string &n,type_metatype mout,type_metatype min)
+  TypeOpFunc(TypeFactory *t,OpCode opc,const std::string &n,type_metatype mout,type_metatype min)
     : TypeOp(t,opc,n) { metaout = mout; metain = min; }		///< Constructor
   virtual Datatype *getOutputLocal(const PcodeOp *op) const;
   virtual Datatype *getInputLocal(const PcodeOp *op,int4 slot) const;
-  virtual void printRaw(ostream &s,const PcodeOp *op);
+  virtual void printRaw(std::ostream &s,const PcodeOp *op);
 };
 
 // A class for each op-code
@@ -221,7 +221,7 @@ public:
   virtual Datatype *propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn,Varnode *outvn,
 				  int4 inslot,int4 outslot);
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opCopy(op); }
-  virtual void printRaw(ostream &s,const PcodeOp *op);
+  virtual void printRaw(std::ostream &s,const PcodeOp *op);
 };
 
 /// \brief Information about the LOAD op-code
@@ -234,7 +234,7 @@ public:
   virtual Datatype *propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn,Varnode *outvn,
 				  int4 inslot,int4 outslot);
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opLoad(op); }
-  virtual void printRaw(ostream &s,const PcodeOp *op);
+  virtual void printRaw(std::ostream &s,const PcodeOp *op);
 };
 
 /// \brief Information about the STORE op-code
@@ -246,7 +246,7 @@ public:
   virtual Datatype *propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn,Varnode *outvn,
 				  int4 inslot,int4 outslot);
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opStore(op); }
-  virtual void printRaw(ostream &s,const PcodeOp *op);
+  virtual void printRaw(std::ostream &s,const PcodeOp *op);
 };
 
 /// \brief Information about the BRANCH op-code
@@ -254,7 +254,7 @@ class TypeOpBranch : public TypeOp {
 public:
   TypeOpBranch(TypeFactory *t);			///< Constructor
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opBranch(op); }
-  virtual void printRaw(ostream &s,const PcodeOp *op);
+  virtual void printRaw(std::ostream &s,const PcodeOp *op);
 };
 
 /// \brief Information about the CBRANCH op-code
@@ -263,7 +263,7 @@ public:
   TypeOpCbranch(TypeFactory *t);			///< Constructor
   virtual Datatype *getInputLocal(const PcodeOp *op,int4 slot) const;
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opCbranch(op); }
-  virtual void printRaw(ostream &s,const PcodeOp *op);
+  virtual void printRaw(std::ostream &s,const PcodeOp *op);
 };
 
 /// \brief Information about the BRANCHIND op-code
@@ -271,7 +271,7 @@ class TypeOpBranchind : public TypeOp {
 public:
   TypeOpBranchind(TypeFactory *t);			///< Constructor
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opBranchind(op); }
-  virtual void printRaw(ostream &s,const PcodeOp *op);
+  virtual void printRaw(std::ostream &s,const PcodeOp *op);
 };
 
 /// \brief Information about the CALL op-code
@@ -279,7 +279,7 @@ class TypeOpCall : public TypeOp {
 public:
   TypeOpCall(TypeFactory *t);			///< Constructor
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opCall(op); }
-  virtual void printRaw(ostream &s,const PcodeOp *op);
+  virtual void printRaw(std::ostream &s,const PcodeOp *op);
   virtual Datatype *getInputLocal(const PcodeOp *op,int4 slot) const;
   virtual Datatype *getOutputLocal(const PcodeOp *op) const;
 };
@@ -289,7 +289,7 @@ class TypeOpCallind : public TypeOp {
 public:
   TypeOpCallind(TypeFactory *t);			///< Constructor
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opCallind(op); }
-  virtual void printRaw(ostream &s,const PcodeOp *op);
+  virtual void printRaw(std::ostream &s,const PcodeOp *op);
   virtual Datatype *getInputLocal(const PcodeOp *op,int4 slot) const;
   virtual Datatype *getOutputLocal(const PcodeOp *op) const;
 };
@@ -299,8 +299,8 @@ class TypeOpCallother : public TypeOp {
 public:
   TypeOpCallother(TypeFactory *t);			///< Constructor
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opCallother(op); }
-  virtual void printRaw(ostream &s,const PcodeOp *op);
-  virtual string getOperatorName(const PcodeOp *op) const;
+  virtual void printRaw(std::ostream &s,const PcodeOp *op);
+  virtual std::string getOperatorName(const PcodeOp *op) const;
   virtual Datatype *getInputLocal(const PcodeOp *op,int4 slot) const;
   virtual Datatype *getOutputLocal(const PcodeOp *op) const;
 };
@@ -310,7 +310,7 @@ class TypeOpReturn : public TypeOp {
 public:
   TypeOpReturn(TypeFactory *t);			///< Constructor
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opReturn(op); }
-  virtual void printRaw(ostream &s,const PcodeOp *op);
+  virtual void printRaw(std::ostream &s,const PcodeOp *op);
   virtual Datatype *getInputLocal(const PcodeOp *op,int4 slot) const;
 };
 
@@ -381,7 +381,7 @@ class TypeOpIntZext : public TypeOpFunc {
 public:
   TypeOpIntZext(TypeFactory *t);			///< Constructor
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opIntZext(op,readOp); }
-  virtual string getOperatorName(const PcodeOp *op) const;
+  virtual std::string getOperatorName(const PcodeOp *op) const;
   virtual Datatype *getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const;
 };
 
@@ -390,7 +390,7 @@ class TypeOpIntSext : public TypeOpFunc {
 public:
   TypeOpIntSext(TypeFactory *t);			///< Constructor
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opIntSext(op,readOp); }
-  virtual string getOperatorName(const PcodeOp *op) const;
+  virtual std::string getOperatorName(const PcodeOp *op) const;
   virtual Datatype *getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const;
 };
 
@@ -419,7 +419,7 @@ class TypeOpIntCarry : public TypeOpFunc {
 public:
   TypeOpIntCarry(TypeFactory *t);			///< Constructor
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opIntCarry(op); }
-  virtual string getOperatorName(const PcodeOp *op) const;
+  virtual std::string getOperatorName(const PcodeOp *op) const;
 };
 
 /// \brief Information about the INT_SCARRY op-code
@@ -427,7 +427,7 @@ class TypeOpIntScarry : public TypeOpFunc {
 public:
   TypeOpIntScarry(TypeFactory *t);			///< Constructor
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opIntScarry(op); }
-  virtual string getOperatorName(const PcodeOp *op) const;
+  virtual std::string getOperatorName(const PcodeOp *op) const;
 };
 
 /// \brief Information about the INT_SBORROW op-code
@@ -435,7 +435,7 @@ class TypeOpIntSborrow : public TypeOpFunc {
 public:
   TypeOpIntSborrow(TypeFactory *t);			///< Constructor
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opIntSborrow(op); }
-  virtual string getOperatorName(const PcodeOp *op) const;
+  virtual std::string getOperatorName(const PcodeOp *op) const;
 };
 
 /// \brief Information about the INT_2COMP op-code
@@ -508,7 +508,7 @@ class TypeOpIntSright : public TypeOpBinary {
 public:
   TypeOpIntSright(TypeFactory *t);			///< Constructor
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opIntSright(op); }
-  virtual void printRaw(ostream &s,const PcodeOp *op);
+  virtual void printRaw(std::ostream &s,const PcodeOp *op);
   virtual Datatype *getInputCast(const PcodeOp *op,int4 slot,const CastStrategy *castStrategy) const;
   virtual Datatype *getInputLocal(const PcodeOp *op,int4 slot) const;
   virtual Datatype *getOutputToken(const PcodeOp *op,CastStrategy *castStrategy) const;
@@ -715,7 +715,7 @@ public:
   virtual Datatype *propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn,Varnode *outvn,
 				  int4 inslot,int4 outslot);
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opMultiequal(op); }
-  virtual void printRaw(ostream &s,const PcodeOp *op);
+  virtual void printRaw(std::ostream &s,const PcodeOp *op);
 };
 
 /// \brief Information about the INDIRECT op-code
@@ -726,7 +726,7 @@ public:
   virtual Datatype *propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn,Varnode *outvn,
 				  int4 inslot,int4 outslot);
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opIndirect(op); }
-  virtual void printRaw(ostream &s,const PcodeOp *op);
+  virtual void printRaw(std::ostream &s,const PcodeOp *op);
 };
 
 /// \brief Information about the PIECE op-code
@@ -734,7 +734,7 @@ class TypeOpPiece : public TypeOpFunc {
 public:
   TypeOpPiece(TypeFactory *t);			///< Constructor
   virtual Datatype *getOutputToken(const PcodeOp *op,CastStrategy *castStrategy) const;
-  virtual string getOperatorName(const PcodeOp *op) const;
+  virtual std::string getOperatorName(const PcodeOp *op) const;
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opPiece(op); }
 };
 
@@ -747,7 +747,7 @@ public:
   virtual Datatype *getOutputToken(const PcodeOp *op,CastStrategy *castStrategy) const;
   virtual Datatype *propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn,Varnode *outvn,
 				  int4 inslot,int4 outslot);
-  virtual string getOperatorName(const PcodeOp *op) const;
+  virtual std::string getOperatorName(const PcodeOp *op) const;
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opSubpiece(op); }
   static const TypeField *testExtraction(bool useHigh,const PcodeOp *op,Datatype *&parent,int4 &offset);
   static int4 computeByteOffsetForComposite(const PcodeOp *op);
@@ -760,7 +760,7 @@ public:
 				// We don't care what types are cast
 				// So no input and output requirements
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opCast(op); }
-  virtual void printRaw(ostream &s,const PcodeOp *op);
+  virtual void printRaw(std::ostream &s,const PcodeOp *op);
 };
   
 /// \brief Information about the PTRADD op-code
@@ -774,7 +774,7 @@ public:
   virtual Datatype *propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn,Varnode *outvn,
 				  int4 inslot,int4 outslot);
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opPtradd(op); }
-  virtual void printRaw(ostream &s,const PcodeOp *op);
+  virtual void printRaw(std::ostream &s,const PcodeOp *op);
 };
 
 /// \brief Information about the PTRSUB op-code
@@ -788,7 +788,7 @@ public:
   virtual Datatype *propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn,Varnode *outvn,
 				  int4 inslot,int4 outslot);
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opPtrsub(op); }
-  virtual void printRaw(ostream &s,const PcodeOp *op);
+  virtual void printRaw(std::ostream &s,const PcodeOp *op);
 };
 
 /// \brief Information about the SEGMENTOP op-code
@@ -809,7 +809,7 @@ public:
   virtual Datatype *propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn,Varnode *outvn,
 				  int4 inslot,int4 outslot);
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opSegmentOp(op); }
-  virtual void printRaw(ostream &s,const PcodeOp *op);
+  virtual void printRaw(std::ostream &s,const PcodeOp *op);
 };
 
 /// \brief Information about the CPOOLREF op-code
@@ -821,7 +821,7 @@ public:
   virtual Datatype *getOutputLocal(const PcodeOp *op) const;
   virtual Datatype *getInputLocal(const PcodeOp *op,int4 slot) const;
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opCpoolRefOp(op); }
-  virtual void printRaw(ostream &s,const PcodeOp *op);
+  virtual void printRaw(std::ostream &s,const PcodeOp *op);
 };
 
 /// \brief Information about the NEW op-code
@@ -832,7 +832,7 @@ public:
   virtual Datatype *propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn,Varnode *outvn,
 				  int4 inslot,int4 outslot);
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opNewOp(op); }
-  virtual void printRaw(ostream &s,const PcodeOp *op);
+  virtual void printRaw(std::ostream &s,const PcodeOp *op);
 };
 
 /// \brief Information about the INSERT op-code

@@ -15,6 +15,8 @@
  */
 #include "libdecomp.hh"
 
+using namespace std;
+
 void startDecompilerLibrary(const char *sleighhome)
 
 {

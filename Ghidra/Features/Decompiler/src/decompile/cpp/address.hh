@@ -72,8 +72,8 @@ public:
   bool isInvalid(void) const;  ///< Is the address invalid?
   int4 getAddrSize(void) const; ///< Get the number of bytes in the address
   bool isBigEndian(void) const;	///< Is data at this address big endian encoded
-  void printRaw(ostream &s) const; ///< Write a raw version of the address to a stream
-  int4 read(const string &s); ///< Read in the address from a string
+  void printRaw(std::ostream &s) const; ///< Write a raw version of the address to a stream
+  int4 read(const std::string &s); ///< Read in the address from a string
   AddrSpace *getSpace(void) const; ///< Get the address space
   uintb getOffset(void) const;  ///< Get the address offset
   char getShortcut(void) const;	///< Get the shortcut character for the address space
@@ -84,7 +84,7 @@ public:
   bool operator<=(const Address &op2) const; ///< Compare two addresses via their natural ordering
   Address operator+(int4 off) const; ///< Increment address by a number of bytes
   Address operator-(int4 off) const; ///< Decrement address by a number of bytes
-  friend ostream &operator<<(ostream &s,const Address &addr);  ///< Write out an address to stream
+  friend std::ostream &operator<<(std::ostream &s,const Address &addr);  ///< Write out an address to stream
   bool containedBy(int4 sz,const Address &op2,int4 sz2) const;	///< Determine if \e op2 range contains \b this range
   int4 justifiedContain(int4 sz,const Address &op2,int4 sz2,bool forceleft) const; ///< Determine if \e op2 is the least significant part of \e this.
   int4 overlap(int4 skip,const Address &op,int4 size) const; ///< Determine how two address ranges overlap
@@ -161,7 +161,7 @@ public:
   static SeqNum decode(Decoder &decoder);
 
   /// Write out a SeqNum in human readable form to a stream
-  friend ostream &operator<<(ostream &s,const SeqNum &sq);
+  friend std::ostream &operator<<(std::ostream &s,const SeqNum &sq);
 };
 
 class RangeProperties;
@@ -200,7 +200,7 @@ public:
     if (spc->getIndex() != op2.spc->getIndex())
       return (spc->getIndex() < op2.spc->getIndex());
     return (first < op2.first); }
-  void printBounds(ostream &s) const;			///< Print \b this Range to a stream
+  void printBounds(std::ostream &s) const;			///< Print \b this Range to a stream
   void encode(Encoder &encoder) const;			///< Encode \b this Range to a stream
   void decode(Decoder &decoder);			///< Restore \b this from a stream
   void decodeFromAttributes(Decoder &decoder);		///< Read \b from attributes on another tag
@@ -211,7 +211,7 @@ public:
 /// Class that allows \<range> tags to be parsed, when the address space doesn't yet exist
 class RangeProperties {
   friend class Range;
-  string spaceName;		///< Name of the address space containing the range
+  std::string spaceName;		///< Name of the address space containing the range
   uintb first;			///< Offset of first byte in the Range
   uintb last;			///< Offset of last byte in the Range
   bool isRegister;		///< Range is specified a  register name
@@ -227,14 +227,14 @@ public:
 /// that cover all the addresses in the container.  Ranges can be inserted
 /// and removed, but overlapping/adjacent ranges will get merged.
 class RangeList {
-  set<Range> tree;			///< The sorted list of Range objects
+  std::set<Range> tree;			///< The sorted list of Range objects
 public:
   RangeList(const RangeList &op2) { tree = op2.tree; }		///< Copy constructor
   RangeList(void) {}						///< Construct an empty container
   void clear(void) { tree.clear(); }				///< Clear \b this container to empty
   bool empty(void) const { return tree.empty(); }		///< Return \b true if \b this is empty
-  set<Range>::const_iterator begin(void) const { return tree.begin(); }	///< Get iterator to beginning Range
-  set<Range>::const_iterator end(void) const { return tree.end(); }	///< Get iterator to ending Range
+  std::set<Range>::const_iterator begin(void) const { return tree.begin(); }	///< Get iterator to beginning Range
+  std::set<Range>::const_iterator end(void) const { return tree.end(); }	///< Get iterator to ending Range
   int4 numRanges(void) const { return tree.size(); }		///< Return the number of Range objects in container
   const Range *getFirstRange(void) const;			///< Get the first Range
   const Range *getLastRange(void) const;			///< Get the last Range
@@ -245,7 +245,7 @@ public:
   void merge(const RangeList &op2);				///< Merge another RangeList into \b this
   bool inRange(const Address &addr,int4 size) const;		///< Check containment an address range
   uintb longestFit(const Address &addr,uintb maxsize) const;	///< Find size of biggest Range containing given address
-  void printBounds(ostream &s) const;				///< Print a description of \b this RangeList to stream
+  void printBounds(std::ostream &s) const;				///< Print a description of \b this RangeList to stream
   void encode(Encoder &encoder) const;				///< Encode \b this RangeList to a stream
   void decode(Decoder &decoder);				///< Decode \b this RangeList from a \<rangelist> element
 };
@@ -299,7 +299,7 @@ inline bool Address::isBigEndian(void) const {
 /// Write a short-hand or debug version of this address to a
 /// stream.
 /// \param s is the stream being written
-inline void Address::printRaw(ostream &s) const {
+inline void Address::printRaw(std::ostream &s) const {
   if (base == (AddrSpace *)0) {
     s << "invalid_addr";
     return;
@@ -311,7 +311,7 @@ inline void Address::printRaw(ostream &s) const {
 /// tailored for the particular address space.
 /// \param s is the string to parse
 /// \return any size associated with the parsed string
-inline int4 Address::read(const string &s) {
+inline int4 Address::read(const std::string &s) {
   int4 sz; offset=base->read(s,sz); return sz;
 }
 

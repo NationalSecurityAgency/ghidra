@@ -18,6 +18,8 @@
 #include "flow.hh"
 #include "printc.hh"
 
+using namespace std;
+
 ElementId ELEM_ALIASBLOCK = ElementId("aliasblock",174);
 ElementId ELEM_ALLOWCONTEXTSET = ElementId("allowcontextset",175);
 ElementId ELEM_ANALYZEFORLOOPS = ElementId("analyzeforloops",176);

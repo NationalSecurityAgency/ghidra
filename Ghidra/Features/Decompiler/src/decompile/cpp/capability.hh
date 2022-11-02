@@ -22,8 +22,6 @@
 #include <vector>
 #include <string>
 
-using namespace std;
-
 /// \brief Class for automatically registering extension points to the decompiler
 ///
 /// This uses the C++ static initializer feature to automatically \e discover
@@ -34,7 +32,7 @@ using namespace std;
 /// will ensure that the initialize() method is called on each extension, allowing it
 /// to complete its integration.
 class CapabilityPoint {
-  static vector<CapabilityPoint *> &getList(void);	///< Retrieve the list of extension point singletons
+  static std::vector<CapabilityPoint *> &getList(void);	///< Retrieve the list of extension point singletons
 protected:
   CapabilityPoint(void);		///< Construct extension capability exactly once
 public:

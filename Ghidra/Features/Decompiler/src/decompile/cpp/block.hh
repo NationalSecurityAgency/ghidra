@@ -122,13 +122,13 @@ private:
   int4 index;			///< Reference index for this block (reverse post order)
   int4 visitcount;		///< A count of visits of this node for various algorithms
   int4 numdesc;			///< Number of descendants of this block in spanning tree (+1)
-  vector<BlockEdge> intothis;	///< Blocks which (can) fall into this block
-  vector<BlockEdge> outofthis;	///< Blocks into which this block (can) fall
+  std::vector<BlockEdge> intothis;	///< Blocks which (can) fall into this block
+  std::vector<BlockEdge> outofthis;	///< Blocks into which this block (can) fall
 				// If there are two possible outputs as the
 				// result of a conditional branch
 				// the first block in outofthis should be
 				// the result of the condition being false
-  static void replaceEdgeMap(vector<BlockEdge> &vec);	///< Update block references in edges with copy map
+  static void replaceEdgeMap(std::vector<BlockEdge> &vec);	///< Update block references in edges with copy map
   void addInEdge(FlowBlock *b,uint4 lab);	///< Add an edge coming into \b this
   void decodeNextInEdge(Decoder &decoder,BlockMap &resolver);	///< Restore the next input edge from XML
   void halfDeleteInEdge(int4 slot);		///< Delete the \e in half of an edge, correcting indices
@@ -143,7 +143,7 @@ private:
   void clearOutEdgeFlag(int4 i,uint4 lab);	///< Remove an \e out edge label
   void eliminateInDups(FlowBlock *bl);		///< Eliminate duplicate \e in edges from given block
   void eliminateOutDups(FlowBlock *bl);		///< Eliminate duplicate \e out edges to given block
-  static void findDups(const vector<BlockEdge> &ref,vector<FlowBlock *> &duplist);
+  static void findDups(const std::vector<BlockEdge> &ref,std::vector<FlowBlock *> &duplist);
   void dedup(void);				///< Eliminate duplicate edges
   void replaceUsingMap(void);			///< Update references to other blocks using getCopyMap()
 #ifdef BLOCKCONSISTENT_DEBUG
@@ -168,16 +168,16 @@ public:
   virtual void markUnstructured(void) {}			///< Mark target blocks of any unstructured edges
   virtual void markLabelBumpUp(bool bump);	///< Let hierarchical blocks steal labels of their (first) components
   virtual void scopeBreak(int4 curexit,int4 curloopexit) {}	///< Mark unstructured edges that should be \e breaks
-  virtual void printHeader(ostream &s) const;		///< Print a simple description of \b this to stream
-  virtual void printTree(ostream &s,int4 level) const;	///< Print tree structure of any blocks owned by \b this
-  virtual void printRaw(ostream &s) const {}		///< Print raw instructions contained in \b this FlowBlock
+  virtual void printHeader(std::ostream &s) const;		///< Print a simple description of \b this to stream
+  virtual void printTree(std::ostream &s,int4 level) const;	///< Print tree structure of any blocks owned by \b this
+  virtual void printRaw(std::ostream &s) const {}		///< Print raw instructions contained in \b this FlowBlock
   virtual void emit(PrintLanguage *lng) const;	///<Emit the instructions in \b this FlowBlock as structured code
   virtual const FlowBlock *getExitLeaf(void) const { return (const FlowBlock *)0; }	///< Get the FlowBlock to which \b this block exits
   virtual PcodeOp *lastOp(void) const { return (PcodeOp *)0; }		///< Get the last PcodeOp executed by \b this FlowBlock
   virtual bool negateCondition(bool toporbottom);	///< Flip the condition computed by \b this
   virtual bool preferComplement(Funcdata &data);	///< Rearrange \b this hierarchy to simplify boolean expressions
   virtual FlowBlock *getSplitPoint(void);		///< Get the leaf splitting block
-  virtual int4 flipInPlaceTest(vector<PcodeOp *> &fliplist) const;
+  virtual int4 flipInPlaceTest(std::vector<PcodeOp *> &fliplist) const;
   virtual void flipInPlaceExecute(void);
   virtual bool isComplex(void) const { return true; }	///< Is \b this too complex to be a condition (BlockCondition)
   virtual FlowBlock *nextFlowAfter(const FlowBlock *bl) const;
@@ -263,12 +263,12 @@ public:
   bool isGotoIn(int4 i) const { return ((intothis[i].label & (f_irreducible|f_goto_edge))!=0); }	///< Is the i-th incoming edge unstructured
   bool isGotoOut(int4 i) const { return ((outofthis[i].label & (f_irreducible|f_goto_edge))!=0); }	///< Is the i-th outgoing edge unstructured
   JumpTable *getJumptable(void) const;	///< Get the JumpTable associated \b this block
-  static block_type nameToType(const string &name);	///< Get the block_type associated with a name string
-  static string typeToName(block_type bt);		///< Get the name string associated with a block_type
+  static block_type nameToType(const std::string &name);	///< Get the block_type associated with a name string
+  static std::string typeToName(block_type bt);		///< Get the name string associated with a block_type
   static bool compareBlockIndex(const FlowBlock *bl1,const FlowBlock *bl2);	///< Compare FlowBlock by index
   static bool compareFinalOrder(const FlowBlock *bl1,const FlowBlock *bl2);	///< Final FlowBlock comparison
   static FlowBlock *findCommonBlock(FlowBlock *bl1,FlowBlock *bl2);	///< Find the common dominator of two FlowBlocks
-  static FlowBlock *findCommonBlock(const vector<FlowBlock *> &blockSet);	///< Find common dominator of multiple FlowBlocks
+  static FlowBlock *findCommonBlock(const std::vector<FlowBlock *> &blockSet);	///< Find common dominator of multiple FlowBlocks
 };
 
 /// \brief A control-flow block built out of sub-components
@@ -278,15 +278,15 @@ public:
 /// with its own input and output blocks.
 /// All the code structuring elements (BlockList, BlockIf, BlockWhileDo, etc.) derive from this.
 class BlockGraph : public FlowBlock {
-  vector<FlowBlock *> list;     	///< List of FlowBlock components within \b this super-block
+  std::vector<FlowBlock *> list;     	///< List of FlowBlock components within \b this super-block
   void addBlock(FlowBlock *bl);		///< Add a component FlowBlock
   void forceOutputNum(int4 i);		///< Force number of outputs
   void selfIdentify(void);		///< Inherit our edges from the edges of our components
-  void identifyInternal(BlockGraph *ident,const vector<FlowBlock *> &nodes);
+  void identifyInternal(BlockGraph *ident,const std::vector<FlowBlock *> &nodes);
   void clearEdgeFlags(uint4 fl);	///< Clear a set of properties from all edges in the graph
-  static FlowBlock *createVirtualRoot(const vector<FlowBlock *> &rootlist);
-  void findSpanningTree(vector<FlowBlock *> &preorder,vector<FlowBlock *> &rootlist);
-  bool findIrreducible(const vector<FlowBlock *> &preorder,int4 &irreduciblecount);
+  static FlowBlock *createVirtualRoot(const std::vector<FlowBlock *> &rootlist);
+  void findSpanningTree(std::vector<FlowBlock *> &preorder,std::vector<FlowBlock *> &rootlist);
+  bool findIrreducible(const std::vector<FlowBlock *> &preorder,int4 &irreduciblecount);
   void forceFalseEdge(const FlowBlock *out0);	///< Force the \e false out edge to go to the given FlowBlock
 protected:
   void swapBlocks(int4 i,int4 j);	///< Swap the positions two component FlowBlocks
@@ -294,7 +294,7 @@ protected:
 public:
   void clear(void);					///< Clear all component FlowBlock objects
   virtual ~BlockGraph(void) { clear(); }		///< Destructor
-  const vector<FlowBlock *> &getList(void) const { return list; }	///< Get the list of component FlowBlock objects
+  const std::vector<FlowBlock *> &getList(void) const { return list; }	///< Get the list of component FlowBlock objects
   int4 getSize(void) const { return list.size(); }	///< Get the number of components
   FlowBlock *getBlock(int4 i) const { return list[i]; }	///< Get the i-th component
   virtual block_type getType(void) const { return t_graph; }
@@ -302,8 +302,8 @@ public:
   virtual void markUnstructured(void);
   virtual void markLabelBumpUp(bool bump);
   virtual void scopeBreak(int4 curexit,int4 curloopexit);
-  virtual void printTree(ostream &s,int4 level) const;
-  virtual void printRaw(ostream &s) const;
+  virtual void printTree(std::ostream &s,int4 level) const;
+  virtual void printRaw(std::ostream &s) const;
   virtual void emit(PrintLanguage *lng) const { lng->emitBlockGraph(this); }
   virtual FlowBlock *nextFlowAfter(const FlowBlock *bl) const;
   virtual void finalTransform(Funcdata &data);
@@ -330,7 +330,7 @@ public:
   BlockCopy *newBlockCopy(FlowBlock *bl);					///< Build a new BlockCopy
   BlockGoto *newBlockGoto(FlowBlock *bl);					///< Build a new BlockGoto
   BlockMultiGoto *newBlockMultiGoto(FlowBlock *bl,int4 outedge);		///< Build a new BlockMultiGoto
-  BlockList *newBlockList(const vector<FlowBlock *> &nodes);			///< Build a new BlockList
+  BlockList *newBlockList(const std::vector<FlowBlock *> &nodes);			///< Build a new BlockList
   BlockCondition *newBlockCondition(FlowBlock *b1,FlowBlock *b2);		///< Build a new BlockCondition
   BlockIf *newBlockIfGoto(FlowBlock *cond);					///< Build a new BlockIfGoto
   BlockIf *newBlockIf(FlowBlock *cond,FlowBlock *tc);				///< Build a new BlockIf
@@ -338,19 +338,19 @@ public:
   BlockWhileDo *newBlockWhileDo(FlowBlock *cond,FlowBlock *cl);			///< Build a new BlockWhileDo
   BlockDoWhile *newBlockDoWhile(FlowBlock *condcl);				///< Build a new BlockDoWhile
   BlockInfLoop *newBlockInfLoop(FlowBlock *body);				///< Build a new BlockInfLoop
-  BlockSwitch *newBlockSwitch(const vector<FlowBlock *> &cs,bool hasExit);	///< Build a new BlockSwitch
+  BlockSwitch *newBlockSwitch(const std::vector<FlowBlock *> &cs,bool hasExit);	///< Build a new BlockSwitch
 
   void orderBlocks(void) {	///< Sort blocks using the final ordering
     if (list.size()!=1) sort(list.begin(),list.end(),compareFinalOrder); }
   void buildCopy(const BlockGraph &graph);					///< Build a copy of a BlockGraph
   void clearVisitCount(void);							///< Clear the visit count in all node FlowBlocks
-  void calcForwardDominator(const vector<FlowBlock *> &rootlist);		///< Calculate forward dominators
-  void buildDomTree(vector<vector<FlowBlock *> > &child) const;			///< Build the dominator tree
-  int4 buildDomDepth(vector<int4> &depth) const;				///< Calculate dominator depths
-  void buildDomSubTree(vector<FlowBlock *> &res,FlowBlock *root) const;		///< Collect nodes from a dominator sub-tree
+  void calcForwardDominator(const std::vector<FlowBlock *> &rootlist);		///< Calculate forward dominators
+  void buildDomTree(std::vector<std::vector<FlowBlock *> > &child) const;			///< Build the dominator tree
+  int4 buildDomDepth(std::vector<int4> &depth) const;				///< Calculate dominator depths
+  void buildDomSubTree(std::vector<FlowBlock *> &res,FlowBlock *root) const;		///< Collect nodes from a dominator sub-tree
   void calcLoop(void);								///< Calculate loop edges
-  void collectReachable(vector<FlowBlock *> &res,FlowBlock *bl,bool un) const;	///< Collect reachable/unreachable FlowBlocks from a given start FlowBlock
-  void structureLoops(vector<FlowBlock *> &rootlist);				///< Label loop edges
+  void collectReachable(std::vector<FlowBlock *> &res,FlowBlock *bl,bool un) const;	///< Collect reachable/unreachable FlowBlocks from a given start FlowBlock
+  void structureLoops(std::vector<FlowBlock *> &rootlist);				///< Label loop edges
 #ifdef BLOCKCONSISTENT_DEBUG
   bool isConsistent(void) const;						///< Check consistency of \b this BlockGraph
 #endif
@@ -373,10 +373,10 @@ public:
 /// PcodeOps my migrate away from this original range.
 class BlockBasic: public FlowBlock {
   friend class Funcdata;				// Only uses private functions
-  list<PcodeOp *> op;					///< The sequence of p-code operations
+  std::list<PcodeOp *> op;					///< The sequence of p-code operations
   Funcdata *data;					///< The function of which this block is a part
   RangeList cover;					///< Original range of addresses covered by this basic block
-  void insert(list<PcodeOp *>::iterator iter,PcodeOp *inst);	///< Insert p-code operation at a given position
+  void insert(std::list<PcodeOp *>::iterator iter,PcodeOp *inst);	///< Insert p-code operation at a given position
   void setInitialRange(const Address &beg,const Address &end);	///< Set the initial address range of the block
   void copyRange(const BlockBasic *bb) { cover = bb->cover; }	///< Copy address ranges from another basic block
   void mergeRange(const BlockBasic *bb) { cover.merge(bb->cover); }	///< Merge address ranges from another basic block
@@ -394,23 +394,23 @@ public:
   virtual FlowBlock *subBlock(int4 i) const { return (FlowBlock *)0; }
   virtual void encodeBody(Encoder &encoder) const;
   virtual void decodeBody(Decoder &decoder);
-  virtual void printHeader(ostream &s) const;
-  virtual void printRaw(ostream &s) const;
+  virtual void printHeader(std::ostream &s) const;
+  virtual void printRaw(std::ostream &s) const;
   virtual void emit(PrintLanguage *lng) const { lng->emitBlockBasic(this); }
   virtual const FlowBlock *getExitLeaf(void) const { return this; }
   virtual PcodeOp *lastOp(void) const;
   virtual bool negateCondition(bool toporbottom);
   virtual FlowBlock *getSplitPoint(void);
-  virtual int4 flipInPlaceTest(vector<PcodeOp *> &fliplist) const;
+  virtual int4 flipInPlaceTest(std::vector<PcodeOp *> &fliplist) const;
   virtual void flipInPlaceExecute(void);
   virtual bool isComplex(void) const;
   bool unblockedMulti(int4 outslot) const;		///< Check if \b this block can be removed without introducing inconsistencies
   bool hasOnlyMarkers(void) const;		///< Does \b this block contain only MULTIEQUAL and INDIRECT ops
   bool isDoNothing(void) const;			///< Should \b this block should be removed
-  list<PcodeOp *>::iterator beginOp(void) { return op.begin(); }	///< Return an iterator to the beginning of the PcodeOps
-  list<PcodeOp *>::iterator endOp(void) { return op.end(); }		///< Return an iterator to the end of the PcodeOps
-  list<PcodeOp *>::const_iterator beginOp(void) const { return op.begin(); }	///< Return an iterator to the beginning of the PcodeOps
-  list<PcodeOp *>::const_iterator endOp(void) const { return op.end(); }	///< Return an iterator to the end of the PcodeOps
+  std::list<PcodeOp *>::iterator beginOp(void) { return op.begin(); }	///< Return an iterator to the beginning of the PcodeOps
+  std::list<PcodeOp *>::iterator endOp(void) { return op.end(); }		///< Return an iterator to the end of the PcodeOps
+  std::list<PcodeOp *>::const_iterator beginOp(void) const { return op.begin(); }	///< Return an iterator to the beginning of the PcodeOps
+  std::list<PcodeOp *>::const_iterator endOp(void) const { return op.end(); }	///< Return an iterator to the end of the PcodeOps
   bool emptyOp(void) const { return op.empty(); }		///< Return \b true if \b block contains no operations
   static bool noInterveningStatement(PcodeOp *first,int4 path,PcodeOp *last);
 };
@@ -431,9 +431,9 @@ public:
   BlockCopy(FlowBlock *bl) { copy = bl; }	///< Construct given the block to copy
   virtual FlowBlock *subBlock(int4 i) const { return copy; }
   virtual block_type getType(void) const { return t_copy; }
-  virtual void printHeader(ostream &s) const;
-  virtual void printTree(ostream &s,int4 level) const;
-  virtual void printRaw(ostream &s) const { copy->printRaw(s); }
+  virtual void printHeader(std::ostream &s) const;
+  virtual void printTree(std::ostream &s,int4 level) const;
+  virtual void printRaw(std::ostream &s) const { copy->printRaw(s); }
   virtual void emit(PrintLanguage *lng) const { lng->emitBlockCopy(this); }
   virtual const FlowBlock *getExitLeaf(void) const { return this; }
   virtual PcodeOp *lastOp(void) const { return copy->lastOp(); }
@@ -461,8 +461,8 @@ public:
   virtual block_type getType(void) const { return t_goto; }
   virtual void markUnstructured(void);
   virtual void scopeBreak(int4 curexit,int4 curloopexit);
-  virtual void printHeader(ostream &s) const;
-  virtual void printRaw(ostream &s) const { getBlock(0)->printRaw(s); }
+  virtual void printHeader(std::ostream &s) const;
+  virtual void printRaw(std::ostream &s) const { getBlock(0)->printRaw(s); }
   virtual void emit(PrintLanguage *lng) const { lng->emitBlockGoto(this); }
   virtual const FlowBlock *getExitLeaf(void) const { return getBlock(0)->getExitLeaf(); }
   virtual PcodeOp *lastOp(void) const { return getBlock(0)->lastOp(); }
@@ -477,7 +477,7 @@ public:
 /// presents a view to the structuring algorithm as if the edge didn't exist.  If at a later point,
 /// more edges can't be structured, the one instance can hold this information as well.
 class BlockMultiGoto : public BlockGraph {
-  vector<FlowBlock *> gotoedges; 		///< List of goto targets from this block
+  std::vector<FlowBlock *> gotoedges; 		///< List of goto targets from this block
   bool defaultswitch;				///< True if one of the unstructured edges is the formal switch \e default edge
 public:
   BlockMultiGoto(FlowBlock *bl) { defaultswitch = false; }	///< Construct given the underlying multi-exit block
@@ -489,8 +489,8 @@ public:
   
   virtual block_type getType(void) const { return t_multigoto; }
   virtual void scopeBreak(int4 curexit,int4 curloopexit);
-  virtual void printHeader(ostream &s) const;
-  virtual void printRaw(ostream &s) const { getBlock(0)->printRaw(s); }
+  virtual void printHeader(std::ostream &s) const;
+  virtual void printRaw(std::ostream &s) const { getBlock(0)->printRaw(s); }
   virtual void emit(PrintLanguage *lng) const { getBlock(0)->emit(lng); }
   virtual const FlowBlock *getExitLeaf(void) const { return getBlock(0)->getExitLeaf(); }
   virtual PcodeOp *lastOp(void) const { return getBlock(0)->lastOp(); }
@@ -506,7 +506,7 @@ public:
 class BlockList : public BlockGraph {
 public:
   virtual block_type getType(void) const { return t_ls; }
-  virtual void printHeader(ostream &s) const;
+  virtual void printHeader(std::ostream &s) const;
   virtual void emit(PrintLanguage *lng) const { lng->emitBlockLs(this); }
   virtual const FlowBlock *getExitLeaf(void) const;
   virtual PcodeOp *lastOp(void) const;
@@ -531,11 +531,11 @@ public:
   OpCode getOpcode(void) const { return opc; }	///< Get the boolean operation
   virtual block_type getType(void) const { return t_condition; }
   virtual void scopeBreak(int4 curexit,int4 curloopexit);
-  virtual void printHeader(ostream &s) const;
+  virtual void printHeader(std::ostream &s) const;
   virtual void emit(PrintLanguage *lng) const { lng->emitBlockCondition(this); }
   virtual bool negateCondition(bool toporbottom);
   virtual FlowBlock *getSplitPoint(void) { return this; }
-  virtual int4 flipInPlaceTest(vector<PcodeOp *> &fliplist) const;
+  virtual int4 flipInPlaceTest(std::vector<PcodeOp *> &fliplist) const;
   virtual void flipInPlaceExecute(void);
   virtual PcodeOp *lastOp(void) const;
   virtual bool isComplex(void) const { return getBlock(0)->isComplex(); }
@@ -572,7 +572,7 @@ public:
   virtual block_type getType(void) const { return t_if; }
   virtual void markUnstructured(void);
   virtual void scopeBreak(int4 curexit,int4 curloopexit);
-  virtual void printHeader(ostream &s) const;
+  virtual void printHeader(std::ostream &s) const;
   virtual void emit(PrintLanguage *lng) const { lng->emitBlockIf(this); }
   virtual bool preferComplement(Funcdata &data);
   virtual const FlowBlock *getExitLeaf(void) const;
@@ -613,7 +613,7 @@ public:
   virtual block_type getType(void) const { return t_whiledo; }
   virtual void markLabelBumpUp(bool bump);
   virtual void scopeBreak(int4 curexit,int4 curloopexit);
-  virtual void printHeader(ostream &s) const;
+  virtual void printHeader(std::ostream &s) const;
   virtual void emit(PrintLanguage *lng) const { lng->emitBlockWhileDo(this); }
   virtual FlowBlock *nextFlowAfter(const FlowBlock *bl) const;
   virtual void finalTransform(Funcdata &data);
@@ -629,7 +629,7 @@ public:
   virtual block_type getType(void) const { return t_dowhile; }
   virtual void markLabelBumpUp(bool bump);
   virtual void scopeBreak(int4 curexit,int4 curloopexit);
-  virtual void printHeader(ostream &s) const;
+  virtual void printHeader(std::ostream &s) const;
   virtual void emit(PrintLanguage *lng) const { lng->emitBlockDoWhile(this); }
   virtual FlowBlock *nextFlowAfter(const FlowBlock *bl) const;
 };
@@ -643,7 +643,7 @@ public:
   virtual block_type getType(void) const { return t_infloop; }
   virtual void markLabelBumpUp(bool bump);
   virtual void scopeBreak(int4 curexit,int4 curloopexit);
-  virtual void printHeader(ostream &s) const;
+  virtual void printHeader(std::ostream &s) const;
   virtual void emit(PrintLanguage *lng) const { lng->emitBlockInfLoop(this); }
   virtual FlowBlock *nextFlowAfter(const FlowBlock *bl) const;
 };
@@ -670,11 +670,11 @@ class BlockSwitch : public BlockGraph {
     bool isdefault;		///< True if this is formal \e default case for the switch
     static bool compare(const CaseOrder &a,const CaseOrder &b);	///< Compare two cases
   };
-  mutable vector<CaseOrder> caseblocks; ///< Blocks associated with switch cases
+  mutable std::vector<CaseOrder> caseblocks; ///< Blocks associated with switch cases
   void addCase(FlowBlock *switchbl,FlowBlock *bl,uint4 gt);	///< Add a new \e case to this switch
 public:
   BlockSwitch(FlowBlock *ind);		///< Construct given the multi-exit root block
-  void grabCaseBasic(FlowBlock *switchbl,const vector<FlowBlock *> &cs);	///< Build annotated CaseOrder objects
+  void grabCaseBasic(FlowBlock *switchbl,const std::vector<FlowBlock *> &cs);	///< Build annotated CaseOrder objects
   FlowBlock *getSwitchBlock(void) const { return getBlock(0); }		///< Get the root switch component
   int4 getNumCaseBlocks(void) const { return caseblocks.size(); }	///< Get the number of cases
   FlowBlock *getCaseBlock(int4 i) const { return caseblocks[i].block; }	///< Get the i-th \e case FlowBlock
@@ -699,7 +699,7 @@ public:
   virtual block_type getType(void) const { return t_switch; }
   virtual void markUnstructured(void);
   virtual void scopeBreak(int4 curexit,int4 curloopexit);
-  virtual void printHeader(ostream &s) const;
+  virtual void printHeader(std::ostream &s) const;
   virtual void emit(PrintLanguage *lng) const { lng->emitBlockSwitch(this); }
   virtual FlowBlock *nextFlowAfter(const FlowBlock *bl) const;
   virtual void finalizePrinting(Funcdata &data) const;
@@ -712,9 +712,9 @@ public:
 /// list of FlowBlock objects sorted by index and then looks up the FlowBlock matching a given
 /// index as edges specify them.
 class BlockMap {
-  vector<FlowBlock *> sortlist;		///< The list of deserialized FlowBlock objects
+  std::vector<FlowBlock *> sortlist;		///< The list of deserialized FlowBlock objects
   FlowBlock *resolveBlock(FlowBlock::block_type bt);	///< Construct a FlowBlock of the given type
-  static FlowBlock *findBlock(const vector<FlowBlock *> &list,int4 ind);	///< Locate a FlowBlock with a given index
+  static FlowBlock *findBlock(const std::vector<FlowBlock *> &list,int4 ind);	///< Locate a FlowBlock with a given index
 public:
   void sortList(void);					///< Sort the list of FlowBlock objects
 
@@ -723,7 +723,7 @@ public:
   /// \param index is the given index
   /// \return the FlowBlock matching the index
   FlowBlock *findLevelBlock(int4 index) const { return findBlock(sortlist,index); }
-  FlowBlock *createBlock(const string &name);		///< Create a FlowBlock of the named type
+  FlowBlock *createBlock(const std::string &name);		///< Create a FlowBlock of the named type
 };
 
 /// This is the main entry point, at the control-flow level, for printing structured code.
@@ -764,7 +764,7 @@ inline FlowBlock *FlowBlock::getSplitPoint(void)
 ///   - 2 if the flip produces an unnormalized condition
 /// \param fliplist will contain the PcodeOps that need to be adjusted
 /// \return 0 if the condition will be normalized, 1 or 2 otherwise
-inline int4 FlowBlock::flipInPlaceTest(vector<PcodeOp *> &fliplist) const
+inline int4 FlowBlock::flipInPlaceTest(std::vector<PcodeOp *> &fliplist) const
 
 {
   return 2;	// By default a block will not normalize

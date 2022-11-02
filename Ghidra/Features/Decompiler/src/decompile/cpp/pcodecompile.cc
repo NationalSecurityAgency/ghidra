@@ -15,6 +15,8 @@
  */
 #include "pcodecompile.hh"
 
+using namespace std;
+
 string Location::format(void) const
 
 {

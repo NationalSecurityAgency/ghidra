@@ -16,6 +16,8 @@
 #include "comment.hh"
 #include "funcdata.hh"
 
+using namespace std;
+
 ElementId ELEM_COMMENT = ElementId("comment",86);
 ElementId ELEM_COMMENTDB = ElementId("commentdb",87);
 ElementId ELEM_TEXT = ElementId("text",88);

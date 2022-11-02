@@ -16,6 +16,8 @@
 #include "unionresolve.hh"
 #include "funcdata.hh"
 
+using namespace std;
+
 /// The original parent must either be a union, a pointer to a union, or a partial union.
 /// The object is set up initially to resolve to the parent.
 /// \param parent is the original parent data-type

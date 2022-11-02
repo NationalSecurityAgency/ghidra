@@ -16,6 +16,8 @@
 #include "opbehavior.hh"
 #include "translate.hh"
 
+using namespace std;
+
 /// This routine generates a vector of OpBehavior objects indexed by opcode
 /// \param inst is the vector of behaviors to be filled
 /// \param trans is the translator object needed by the floating point behaviors

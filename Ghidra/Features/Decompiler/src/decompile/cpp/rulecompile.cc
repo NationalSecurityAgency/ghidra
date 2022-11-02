@@ -17,6 +17,8 @@
 #include "rulecompile.hh"
 #include "ruleparse.hh"
 
+using namespace std;
+
 RuleCompile *rulecompile;
 extern int4 ruleparsedebug;
 extern int4 ruleparseparse(void);

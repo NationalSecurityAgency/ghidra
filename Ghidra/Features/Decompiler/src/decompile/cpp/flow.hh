@@ -80,15 +80,15 @@ private:
   Funcdata &data;			///< The function being flow-followed
   PcodeOpBank &obank;			///< Container for generated p-code
   BlockGraph &bblocks;			///< Container for the control-flow graph
-  vector<FuncCallSpecs *> &qlst;	///< The list of discovered sub-function call sites
+  std::vector<FuncCallSpecs *> &qlst;	///< The list of discovered sub-function call sites
   PcodeEmitFd emitter;			///< PCodeOp factory (configured to allocate into \b data and \b obank)
-  vector<Address> unprocessed;		///< Addresses which are permanently unprocessed
-  vector<Address> addrlist;		///< Addresses to which there is flow
-  vector<PcodeOp *> tablelist;		///< List of BRANCHIND ops (preparing for jump table recovery)
-  vector<PcodeOp *> injectlist;		///< List of p-code ops that need injection
-  map<Address,VisitStat> visited;	///< Map of machine instructions that have been visited so far
-  list<PcodeOp *> block_edge1;		///< Source p-code op (Edges between basic blocks)
-  list<PcodeOp *> block_edge2;		///< Destination p-code op (Edges between basic blocks)
+  std::vector<Address> unprocessed;		///< Addresses which are permanently unprocessed
+  std::vector<Address> addrlist;		///< Addresses to which there is flow
+  std::vector<PcodeOp *> tablelist;		///< List of BRANCHIND ops (preparing for jump table recovery)
+  std::vector<PcodeOp *> injectlist;		///< List of p-code ops that need injection
+  std::map<Address,VisitStat> visited;	///< Map of machine instructions that have been visited so far
+  std::list<PcodeOp *> block_edge1;		///< Source p-code op (Edges between basic blocks)
+  std::list<PcodeOp *> block_edge2;		///< Destination p-code op (Edges between basic blocks)
   uint4 insn_count;			///< Number of instructions flowed through
   uint4 insn_max;			///< Maximum number of instructions
   Address baddr;			///< Start of range in which we are allowed to flow
@@ -98,8 +98,8 @@ private:
   bool flowoverride_present;		///< Does the function have registered flow override instructions
   uint4 flags;				///< Boolean options for flow following
   Funcdata *inline_head;		///< First function in the in-lining chain
-  set<Address> *inline_recursion;	///< Active list of addresses for function that are in-lined
-  set<Address> inline_base;		///< Storage for addresses of functions that are in-lined
+  std::set<Address> *inline_recursion;	///< Active list of addresses for function that are in-lined
+  std::set<Address> inline_base;		///< Storage for addresses of functions that are in-lined
   bool hasPossibleUnreachable(void) const { return ((flags & possible_unreachable)!=0); }	///< Are there possible unreachable ops
   void setPossibleUnreachable(void) { flags |= possible_unreachable; }	///< Mark that there may be unreachable ops
   void clearProperties(void);		///< Clear any discovered flow properties
@@ -107,8 +107,8 @@ private:
     return (visited.find(addr) != visited.end()); }	///< Has the given instruction (address) been seen in flow
   PcodeOp *fallthruOp(PcodeOp *op) const;		///< Find fallthru pcode-op for given op
   void newAddress(PcodeOp *from,const Address &to);	///< Register a new (non fall-thru) flow target
-  void deleteRemainingOps(list<PcodeOp *>::const_iterator oiter);
-  PcodeOp *xrefControlFlow(list<PcodeOp *>::const_iterator oiter,bool &startbasic,bool &isfallthru,FuncCallSpecs *fc);
+  void deleteRemainingOps(std::list<PcodeOp *>::const_iterator oiter);
+  PcodeOp *xrefControlFlow(std::list<PcodeOp *>::const_iterator oiter,bool &startbasic,bool &isfallthru,FuncCallSpecs *fc);
   bool processInstruction(const Address &curaddr,bool &startbasic);
   void fallthru(void);					///< Process (the next) sequence of instructions in fall-thru order
   PcodeOp *findRelTarget(PcodeOp *op,Address &res) const;
@@ -135,10 +135,10 @@ private:
   void checkMultistageJumptables(void);
   void deleteCallSpec(FuncCallSpecs *fc);		///< Remove the given call site from the list for \b this function
   void truncateIndirectJump(PcodeOp *op,int4 failuremode);  	///< Treat indirect jump as indirect call that never returns
-  static bool isInArray(vector<PcodeOp *> &array,PcodeOp *op);
+  static bool isInArray(std::vector<PcodeOp *> &array,PcodeOp *op);
 public:
-  FlowInfo(Funcdata &d,PcodeOpBank &o,BlockGraph &b,vector<FuncCallSpecs *> &q);	///< Constructor
-  FlowInfo(Funcdata &d,PcodeOpBank &o,BlockGraph &b,vector<FuncCallSpecs *> &q,const FlowInfo *op2);	///< Cloning constructor
+  FlowInfo(Funcdata &d,PcodeOpBank &o,BlockGraph &b,std::vector<FuncCallSpecs *> &q);	///< Constructor
+  FlowInfo(Funcdata &d,PcodeOpBank &o,BlockGraph &b,std::vector<FuncCallSpecs *> &q,const FlowInfo *op2);	///< Cloning constructor
   void setRange(const Address &b,const Address &e) { baddr = b; eaddr = e; }	///< Establish the flow bounds
   void setMaximumInstructions(uint4 max) { insn_max = max; }	///< Set the maximum number of instructions
   void setFlags(uint4 val) { flags |= val; }	///< Enable a specific option

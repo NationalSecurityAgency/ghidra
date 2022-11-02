@@ -15,6 +15,8 @@
  */
 #include "ghidra_context.hh"
 
+using namespace std;
+
 const TrackedSet &ContextGhidra::getTrackedSet(const Address &addr) const
 
 {

@@ -17,6 +17,8 @@
 #include "emulate.hh"
 #include "flow.hh"
 
+using namespace std;
+
 AttributeId ATTRIB_LABEL = AttributeId("label",131);
 AttributeId ATTRIB_NUM = AttributeId("num",132);
 

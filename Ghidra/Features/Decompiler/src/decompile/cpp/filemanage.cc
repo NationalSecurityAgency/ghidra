@@ -29,6 +29,8 @@ extern "C" {
 }
 #endif
 
+using namespace std;
+
 // Path name separator
 #ifdef _WINDOWS
 char FileManage::separator = '\\';

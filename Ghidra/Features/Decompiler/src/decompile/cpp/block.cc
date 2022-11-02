@@ -17,6 +17,8 @@
 #include "block.hh"
 #include "funcdata.hh"
 
+using namespace std;
+
 AttributeId ATTRIB_ALTINDEX = AttributeId("altindex",75);
 AttributeId ATTRIB_DEPTH = AttributeId("depth",76);
 AttributeId ATTRIB_END = AttributeId("end",77);

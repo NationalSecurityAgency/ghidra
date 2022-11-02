@@ -15,6 +15,8 @@
  */
 #include "flow.hh"
 
+using namespace std;
+
 /// Prepare for tracing flow for a new function.
 /// The Funcdata object and references to its internal containers must be explicitly given.
 /// \param d is the new function to trace

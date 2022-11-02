@@ -17,6 +17,8 @@
 #include "printlanguage.hh"
 #include "funcdata.hh"
 
+using namespace std;
+
 const string PrintLanguage::OPEN_PAREN = "(";
 const string PrintLanguage::CLOSE_PAREN = ")";
 

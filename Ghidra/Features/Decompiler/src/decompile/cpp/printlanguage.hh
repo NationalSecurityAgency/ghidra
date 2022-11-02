@@ -38,12 +38,12 @@ class ResolvedUnion;
 /// which must be derived from PrintLanguage.  The factory method for the capability to override
 /// is buildLanguage().
 class PrintLanguageCapability : public CapabilityPoint {
-  static vector<PrintLanguageCapability *> thelist;	///< The static array of registered high-level languages
+  static std::vector<PrintLanguageCapability *> thelist;	///< The static array of registered high-level languages
 protected:
-  string name;			///< Unique identifier for language capability
+  std::string name;			///< Unique identifier for language capability
   bool isdefault;		///< Set to \b true to treat \b this as the default language
 public:
-  const string &getName(void) const { return name; }	///< Get the high-level language name
+  const std::string &getName(void) const { return name; }	///< Get the high-level language name
   virtual void initialize(void);
 
   /// \brief Build the main PrintLanguage object corresponding to \b this capability
@@ -54,7 +54,7 @@ public:
   virtual PrintLanguage *buildLanguage(Architecture *glb)=0;
 
   static PrintLanguageCapability *getDefault(void);	///< Retrieve the default language capability
-  static PrintLanguageCapability *findCapability(const string &name);	///< Find a language capability by name
+  static PrintLanguageCapability *findCapability(const std::string &name);	///< Find a language capability by name
 };
 
 class BlockGraph;
@@ -90,8 +90,8 @@ public:
     space,			///< No explicitly printed token
     hiddenfunction		///< Operation that isn't explicitly printed
   };
-  string print1;		///< Printing characters for the token
-  string print2;		///< (terminating) characters for the token
+  std::string print1;		///< Printing characters for the token
+  std::string print2;		///< (terminating) characters for the token
   int4 stage;			///< Additional elements consumed from the RPN stack when emitting this token
   int4 precedence;		///< Precedence level of this token (higher binds more tightly)
   bool associative;		///< True if the operator is associative
@@ -135,8 +135,8 @@ public:
 /// stack to provide a printing context mechanism for derived classes.
 class PrintLanguage {
 public:
-  static const string OPEN_PAREN;	///< "(" token
-  static const string CLOSE_PAREN;	///< ")" token
+  static const std::string OPEN_PAREN;	///< "(" token
+  static const std::string CLOSE_PAREN;	///< ")" token
 
   /// \brief Possible context sensitive modifiers to how tokens get emitted
   enum modifiers {
@@ -205,7 +205,7 @@ public:
   /// The term \e variable has a broader meaning than just a Varnode. An Atom can also be a data-type
   /// name, a function name, or a structure field etc.
   struct Atom {
-    const string &name;		///< The actual printed characters of the token
+    const std::string &name;		///< The actual printed characters of the token
     tagtype type;		///< The type of Atom
     EmitMarkup::syntax_highlight highlight;	///< The type of highlighting to use when emitting the token
     const PcodeOp *op;		///< A p-code operation associated with the token
@@ -217,39 +217,39 @@ public:
     int4 offset;        	///< The offset (within the parent structure) for a \e field token
 
     /// \brief Construct a token with no associated data-flow annotations
-    Atom(const string &nm,tagtype t,EmitMarkup::syntax_highlight hl)
+    Atom(const std::string &nm,tagtype t,EmitMarkup::syntax_highlight hl)
       : name(nm) { type = t; highlight = hl; }
 
     /// \brief Construct a token for a data-type name
-    Atom(const string &nm,tagtype t,EmitMarkup::syntax_highlight hl,const Datatype *c)
+    Atom(const std::string &nm,tagtype t,EmitMarkup::syntax_highlight hl,const Datatype *c)
       : name(nm) { type = t; highlight = hl; ptr_second.ct = c; }
 
     /// \brief Construct a token for a field name
-    Atom(const string &nm,tagtype t,EmitMarkup::syntax_highlight hl,const Datatype *c,int4 off,const PcodeOp *o)
+    Atom(const std::string &nm,tagtype t,EmitMarkup::syntax_highlight hl,const Datatype *c,int4 off,const PcodeOp *o)
       : name(nm) { type = t; highlight = hl; ptr_second.ct = c; offset = off; op = o; }
 
     /// \brief Construct a token with an associated PcodeOp
-    Atom(const string &nm,tagtype t,EmitMarkup::syntax_highlight hl,const PcodeOp *o)
+    Atom(const std::string &nm,tagtype t,EmitMarkup::syntax_highlight hl,const PcodeOp *o)
       : name(nm) { type = t; highlight = hl; op = o; }
 
     /// \brief Construct a token with an associated PcodeOp and Varnode
-    Atom(const string &nm,tagtype t,EmitMarkup::syntax_highlight hl,const PcodeOp *o,const Varnode *v)
+    Atom(const std::string &nm,tagtype t,EmitMarkup::syntax_highlight hl,const PcodeOp *o,const Varnode *v)
       : name(nm) { type=t; highlight = hl; ptr_second.vn = v; op = o; }
 
     /// \brief Construct a token for a function name
-    Atom(const string &nm,tagtype t,EmitMarkup::syntax_highlight hl,const PcodeOp *o,const Funcdata *f)
+    Atom(const std::string &nm,tagtype t,EmitMarkup::syntax_highlight hl,const PcodeOp *o,const Funcdata *f)
       : name(nm) { type=t; highlight = hl; op = o; ptr_second.fd = f; }
   };
 private:
-  string name;				///< The name of the high-level language
-  vector<uint4> modstack;		///< Printing modification stack
-  vector<const Scope *> scopestack;	///< The symbol scope stack
-  vector<ReversePolish> revpol;		///< The Reverse Polish Notation (RPN) token stack
-  vector<NodePending> nodepend;		///< Data-flow nodes waiting to be pushed onto the RPN stack
+  std::string name;				///< The name of the high-level language
+  std::vector<uint4> modstack;		///< Printing modification stack
+  std::vector<const Scope *> scopestack;	///< The symbol scope stack
+  std::vector<ReversePolish> revpol;		///< The Reverse Polish Notation (RPN) token stack
+  std::vector<NodePending> nodepend;		///< Data-flow nodes waiting to be pushed onto the RPN stack
   int4 pending;				///< Number of data-flow nodes waiting to be pushed
   int4 line_commentindent;		///< Number of characters a comment line should be indented
-  string commentstart;			///< Delimiter characters for the start of a comment
-  string commentend;			///< Delimiter characters (if any) for the end of a comment
+  std::string commentstart;			///< Delimiter characters for the start of a comment
+  std::string commentend;			///< Delimiter characters (if any) for the end of a comment
 protected:
   Architecture *glb;			///< The Architecture owning the language emitter
   const Scope *curscope;		///< The current symbol scope
@@ -281,7 +281,7 @@ protected:
   void emitOp(const ReversePolish &entry);				///< Send an operator token from the RPN to the emitter
   void emitAtom(const Atom &atom);					///< Send an variable token from the RPN to the emitter
   static bool unicodeNeedsEscape(int4 codepoint);			///< Determine if the given codepoint needs to be escaped
-  bool escapeCharacterData(ostream &s,const uint1 *buf,int4 count,int4 charsize,bool bigend) const;
+  bool escapeCharacterData(std::ostream &s,const uint1 *buf,int4 count,int4 charsize,bool bigend) const;
   void recurse(void);							///< Emit from the RPN stack as much as possible
   void opBinary(const OpToken *tok,const PcodeOp *op);			///< Push a binary operator onto the RPN stack
   void opUnary(const OpToken *tok,const PcodeOp *op);			///< Push a unary operator onto the RPN stack
@@ -293,7 +293,7 @@ protected:
   /// For most languages, this prints the character surrounded by single quotes.
   /// \param s is the output stream
   /// \param onechar is the unicode code point of the character to print
-  virtual void printUnicode(ostream &s,int4 onechar) const=0;
+  virtual void printUnicode(std::ostream &s,int4 onechar) const=0;
 
   /// \brief Push a data-type name onto the RPN expression stack.
   ///
@@ -419,16 +419,16 @@ protected:
   /// \return \b true if the value can be easily inverted
   virtual bool checkPrintNegation(const Varnode *vn)=0;
 public:
-  PrintLanguage(Architecture *g,const string &nm);			///< Constructor
+  PrintLanguage(Architecture *g,const std::string &nm);			///< Constructor
   virtual ~PrintLanguage(void);						///< Destructor
-  const string &getName(void) const { return name; }			///< Get the language name
+  const std::string &getName(void) const { return name; }			///< Get the language name
   CastStrategy *getCastStrategy(void) const { return castStrategy; }	///< Get the casting strategy for the language
-  ostream *getOutputStream(void) const { return emit->getOutputStream(); }	///< Get the output stream being emitted to
-  void setOutputStream(ostream *t) { emit->setOutputStream(t); }	///< Set the output stream to emit to
+  std::ostream *getOutputStream(void) const { return emit->getOutputStream(); }	///< Get the output stream being emitted to
+  void setOutputStream(std::ostream *t) { emit->setOutputStream(t); }	///< Set the output stream to emit to
   void setMaxLineSize(int4 mls) { emit->setMaxLineSize(mls); }		///< Set the maximum number of characters per line
   void setIndentIncrement(int4 inc) { emit->setIndentIncrement(inc); }	///< Set the number of characters to indent per level of code nesting
   void setLineCommentIndent(int4 val);					///< Set the number of characters to indent comment lines
-  void setCommentDelimeter(const string &start,const string &stop,
+  void setCommentDelimeter(const std::string &start,const std::string &stop,
 			   bool usecommentfill);			///< Establish comment delimiters for the language
   uint4 getInstructionComment(void) const { return instr_comment_type; }	///< Get the type of comments suitable within the body of a function
   void setInstructionComment(uint4 val) { instr_comment_type = val; }	///< Set the type of comments suitable within the body of a function
@@ -443,14 +443,14 @@ public:
   virtual void adjustTypeOperators(void)=0;			///< Set basic data-type information for p-code operators
   virtual void resetDefaults(void);				///< Set printing options to their default value
   virtual void clear(void);					///< Clear the RPN stack and the low-level emitter
-  virtual void setIntegerFormat(const string &nm);		///< Set the default integer format
+  virtual void setIntegerFormat(const std::string &nm);		///< Set the default integer format
 
   /// \brief Set the way comments are displayed in decompiler output
   ///
   /// This method can either be provided a formal name or a \e sample of the initial delimiter,
   /// then it will choose from among the schemes it knows
   /// \param nm is the configuration description
-  virtual void setCommentStyle(const string &nm)=0;
+  virtual void setCommentStyle(const std::string &nm)=0;
 
   /// \brief Emit definitions of data-types
   ///
@@ -556,7 +556,7 @@ public:
   virtual void opPopcountOp(const PcodeOp *op)=0;			///< Emit a POPCOUNT operator
 
   static int4 mostNaturalBase(uintb val); 			///< Determine the most natural base for an integer
-  static void formatBinary(ostream &s,uintb val);		///< Print a number in binary form
+  static void formatBinary(std::ostream &s,uintb val);		///< Print a number in binary form
 };
 
 #endif

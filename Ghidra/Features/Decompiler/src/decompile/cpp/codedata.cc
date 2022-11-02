@@ -17,6 +17,8 @@
 #include "codedata.hh"
 #include "loadimage_bfd.hh"
 
+using namespace std;
+
 // Constructing this registers the capability
 IfaceCodeDataCapability IfaceCodeDataCapability::ifaceCodeDataCapability;
 

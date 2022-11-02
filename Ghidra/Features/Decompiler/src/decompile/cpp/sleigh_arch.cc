@@ -16,6 +16,8 @@
 #include "sleigh_arch.hh"
 #include "inject_sleigh.hh"
 
+using namespace std;
+
 AttributeId ATTRIB_DEPRECATED = AttributeId("deprecated",136);
 AttributeId ATTRIB_ENDIAN = AttributeId("endian",137);
 AttributeId ATTRIB_PROCESSOR = AttributeId("processor",138);

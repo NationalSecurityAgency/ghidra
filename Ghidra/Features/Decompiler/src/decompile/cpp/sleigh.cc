@@ -16,6 +16,8 @@
 #include "sleigh.hh"
 #include "loadimage.hh"
 
+using namespace std;
+
 PcodeCacher::PcodeCacher(void)
 
 {

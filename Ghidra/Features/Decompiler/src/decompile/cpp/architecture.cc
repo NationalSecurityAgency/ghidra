@@ -24,6 +24,8 @@
 #include <cmath>
 #endif
 
+using namespace std;
+
 vector<ArchitectureCapability *> ArchitectureCapability::thelist;
 
 const uint4 ArchitectureCapability::majorversion = 5;

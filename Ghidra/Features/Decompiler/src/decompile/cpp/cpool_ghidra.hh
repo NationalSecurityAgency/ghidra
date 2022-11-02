@@ -31,10 +31,10 @@
 class ConstantPoolGhidra : public ConstantPool {
   ArchitectureGhidra *ghidra;			///< The connection with the Ghidra client
   mutable ConstantPoolInternal cache;		///< The local cache of previouly queried CPoolRecord objects
-  virtual CPoolRecord *createRecord(const vector<uintb> &refs);
+  virtual CPoolRecord *createRecord(const std::vector<uintb> &refs);
 public:
   ConstantPoolGhidra(ArchitectureGhidra *g);	///< Constructor
-  virtual const CPoolRecord *getRecord(const vector<uintb> &refs) const;
+  virtual const CPoolRecord *getRecord(const std::vector<uintb> &refs) const;
   virtual bool empty(void) const { return false; }
   virtual void clear(void) { cache.clear(); }
   virtual void encode(Encoder &encoder) const;

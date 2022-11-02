@@ -15,6 +15,8 @@
  */
 #include "inject_ghidra.hh"
 
+using namespace std;
+
 void InjectContextGhidra::encode(Encoder &encoder) const
 
 {

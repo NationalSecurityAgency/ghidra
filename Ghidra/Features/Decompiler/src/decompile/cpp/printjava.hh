@@ -57,9 +57,9 @@ class PrintJava : public PrintC {
   static bool isArrayType(const Datatype *ct);		///< Does the given data-type reference a java array
   static bool needZeroArray(const Varnode *vn);		///< Do we need '[0]' syntax.
   void resetDefaultsPrintJava(void);			///< Set options that are specific to Java
-  virtual void printUnicode(ostream &s,int4 onechar) const;
+  virtual void printUnicode(std::ostream &s,int4 onechar) const;
 public:
-  PrintJava(Architecture *g,const string &nm="java-language");	///< Constructor
+  PrintJava(Architecture *g,const std::string &nm="java-language");	///< Constructor
   virtual void resetDefaults(void);
   virtual void docFunction(const Funcdata *fd);
   virtual void pushTypeStart(const Datatype *ct,bool noident);

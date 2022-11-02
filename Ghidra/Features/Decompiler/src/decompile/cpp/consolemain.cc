@@ -18,6 +18,8 @@
 
 #include "libdecomp.hh"
 
+using namespace std;
+
 class IfcLoadFile : public IfaceDecompCommand {
 public:
   virtual void execute(istream &s);

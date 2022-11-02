@@ -56,7 +56,7 @@ class SubvariableFlow {
     OpCode opc;			///< Opcode of the new op
     int4 numparams;		///< Number of parameters in (new) op
     ReplaceVarnode *output;	///< Varnode output
-    vector<ReplaceVarnode *> input; ///< Varnode inputs
+    std::vector<ReplaceVarnode *> input; ///< Varnode inputs
   };
 
   /// \brief Operation with a new logical value as (part of) input, but output Varnode is unchanged
@@ -83,11 +83,11 @@ class SubvariableFlow {
   bool aggressive;		///< Do we "know" initial seed point must be a sub variable
   bool sextrestrictions;	///< Check for logical variables that are always sign extended into their container
   Funcdata *fd;			///< Containing function
-  map<Varnode *,ReplaceVarnode> varmap;	///< Map from original Varnodes to the overlaying subgraph nodes
-  list<ReplaceVarnode> newvarlist;	///< Storage for subgraph variable nodes
-  list<ReplaceOp> oplist;		///< Storage for subgraph op nodes
-  list<PatchRecord> patchlist;	///< Operations getting patched (but with no flow thru)
-  vector<ReplaceVarnode *> worklist;	///< Subgraph variable nodes still needing to be traced
+  std::map<Varnode *,ReplaceVarnode> varmap;	///< Map from original Varnodes to the overlaying subgraph nodes
+  std::list<ReplaceVarnode> newvarlist;	///< Storage for subgraph variable nodes
+  std::list<ReplaceOp> oplist;		///< Storage for subgraph op nodes
+  std::list<PatchRecord> patchlist;	///< Operations getting patched (but with no flow thru)
+  std::vector<ReplaceVarnode *> worklist;	///< Subgraph variable nodes still needing to be traced
   int4 pullcount;		///< Number of instructions pulling out the logical value
   static int4 doesOrSet(PcodeOp *orop,uintb mask);
   static int4 doesAndClear(PcodeOp *andop,uintb mask);
@@ -132,7 +132,7 @@ public:
 /// involved in the data-flow into their logical pieces.
 class SplitFlow : public TransformManager {
   LaneDescription laneDescription;	///< Description of how to split Varnodes
-  vector<TransformVar *> worklist;	///< Pending work list of Varnodes to push the split through
+  std::vector<TransformVar *> worklist;	///< Pending work list of Varnodes to push the split through
   TransformVar *setReplacement(Varnode *vn);
   bool addOp(PcodeOp *op,TransformVar *rvn,int4 slot);
   bool traceForward(TransformVar *rvn);
@@ -152,7 +152,7 @@ class SubfloatFlow : public TransformManager {
   int4 precision;		///< Number of bytes of precision in the logical flow
   int4 terminatorCount;		///< Number of terminating nodes reachable via the root
   const FloatFormat *format;	///< The floating-point format of the logical value
-  vector<TransformVar *> worklist;	///< Current list of placeholders that still need to be traced
+  std::vector<TransformVar *> worklist;	///< Current list of placeholders that still need to be traced
   TransformVar *setReplacement(Varnode *vn);
   bool traceForward(TransformVar *rvn);
   bool traceBackward(TransformVar *rvn);
@@ -179,7 +179,7 @@ class LaneDivide : public TransformManager {
   };
 
   LaneDescription description;	///< Global description of lanes that need to be split
-  vector<WorkNode> workList;	///< List of Varnodes still left to trace
+  std::vector<WorkNode> workList;	///< List of Varnodes still left to trace
   bool allowSubpieceTerminator;	///< \b true if we allow lanes to be cast (via SUBPIECE) to a smaller integer size
 
   TransformVar *setReplacement(Varnode *vn,int4 numLanes,int4 skipLanes);

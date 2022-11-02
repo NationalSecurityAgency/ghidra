@@ -16,6 +16,8 @@
 #include "test.hh"
 #include "libdecomp.hh"
 
+using namespace std;
+
 vector<UnitTest *> UnitTest::tests;
 
 /// Run all the tests unless a non-empty set of names is passed in.

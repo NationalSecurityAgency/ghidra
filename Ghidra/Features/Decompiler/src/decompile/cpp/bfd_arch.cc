@@ -16,6 +16,8 @@
  */
 #include "bfd_arch.hh"
 
+using namespace std;
+
 // Constructing this object registers capability
 BfdArchitectureCapability BfdArchitectureCapability::bfdArchitectureCapability;
 

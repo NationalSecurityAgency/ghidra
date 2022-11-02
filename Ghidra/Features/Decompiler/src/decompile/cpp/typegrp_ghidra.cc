@@ -15,6 +15,8 @@
  */
 #include "typegrp_ghidra.hh"
 
+using namespace std;
+
 Datatype *TypeFactoryGhidra::findById(const string &n,uint8 id,int4 sz)
 
 {

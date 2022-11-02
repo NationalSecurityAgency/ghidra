@@ -16,6 +16,8 @@
 #include "space.hh"
 #include "translate.hh"
 
+using namespace std;
+
 AttributeId ATTRIB_BASE = AttributeId("base",89);
 AttributeId ATTRIB_DEADCODEDELAY = AttributeId("deadcodedelay",90);
 AttributeId ATTRIB_DELAY = AttributeId("delay", 91);

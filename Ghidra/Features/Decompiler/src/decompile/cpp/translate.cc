@@ -15,6 +15,8 @@
  */
 #include "translate.hh"
 
+using namespace std;
+
 AttributeId ATTRIB_CODE = AttributeId("code",43);
 AttributeId ATTRIB_CONTAIN = AttributeId("contain",44);
 AttributeId ATTRIB_DEFAULTSPACE = AttributeId("defaultspace",45);

@@ -28,8 +28,8 @@ class XmlArchitectureCapability : public ArchitectureCapability {
   XmlArchitectureCapability &operator=(const XmlArchitectureCapability &op2);	///< Not implemented
 public:
   virtual ~XmlArchitectureCapability(void);
-  virtual Architecture *buildArchitecture(const string &filename,const string &target,ostream *estream);
-  virtual bool isFileMatch(const string &filename) const;
+  virtual Architecture *buildArchitecture(const std::string &filename,const std::string &target,std::ostream *estream);
+  virtual bool isFileMatch(const std::string &filename) const;
   virtual bool isXmlMatch(Document *doc) const;
 };
 
@@ -42,6 +42,6 @@ class XmlArchitecture : public SleighArchitecture {
 public:
   virtual void encode(Encoder &encoder) const;
   virtual void restoreXml(DocumentStorage &store);
-  XmlArchitecture(const string &fname,const string &targ,ostream *estream);	///< Constructor
+  XmlArchitecture(const std::string &fname,const std::string &targ,std::ostream *estream);	///< Constructor
   virtual ~XmlArchitecture(void) {}
 };

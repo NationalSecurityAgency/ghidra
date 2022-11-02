@@ -15,6 +15,8 @@
  */
 #include "subflow.hh"
 
+using namespace std;
+
 /// \brief Return \e slot of constant if INT_OR op sets all bits in mask, otherwise -1
 ///
 /// \param orop is the given CPUI_INT_OR op

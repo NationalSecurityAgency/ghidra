@@ -58,8 +58,8 @@ struct DisassemblyResult {
 
 class DisassemblyEngine : public PcodeEmit {
   const Translate *trans;
-  vector<Address> jumpaddr;
-  set<uintb> targetoffsets;
+  std::vector<Address> jumpaddr;
+  std::set<uintb> targetoffsets;
   OpCode lastop;
   bool hascall;
   bool hitsaddress;
@@ -83,7 +83,7 @@ public:
 };
 
 struct TargetFeature {
-  string name;			// Name of the target function
+  std::string name;			// Name of the target function
   uint4 featuremask;		// id of this target for ORing into a mask
 };
 
@@ -104,22 +104,22 @@ public:
   Architecture *glb;
   DisassemblyEngine disengine;
   RangeList modelhits;
-  map<Address,CodeUnit> codeunit;
-  map<AddrLink,uint4> fromto_crossref;
-  map<AddrLink,uint4> tofrom_crossref;
-  list<map<Address,CodeUnit>::iterator> taintlist;
-  list<Address> unlinkedstarts;
-  list<TargetHit> targethits;
-  map<Address,TargetFeature> targets;
+  std::map<Address,CodeUnit> codeunit;
+  std::map<AddrLink,uint4> fromto_crossref;
+  std::map<AddrLink,uint4> tofrom_crossref;
+  std::list<std::map<Address,CodeUnit>::iterator> taintlist;
+  std::list<Address> unlinkedstarts;
+  std::list<TargetHit> targethits;
+  std::map<Address,TargetFeature> targets;
   virtual ~CodeDataAnalysis(void) {}
   void init(Architecture *g);
   void pushTaintAddress(const Address &addr);
   void processTaint(void);
-  Address commitCodeVec(const Address &addr,vector<CodeUnit> &codevec,map<AddrLink,uint4> &fromto_vec);
+  Address commitCodeVec(const Address &addr,std::vector<CodeUnit> &codevec,std::map<AddrLink,uint4> &fromto_vec);
   void clearHitBy(void);
   void clearCrossRefs(const Address &addr,const Address &endaddr);
   void clearCodeUnits(const Address &addr,const Address &endaddr);
-  void addTarget(const string &nm,const Address &addr,uint4 mask);
+  void addTarget(const std::string &nm,const Address &addr,uint4 mask);
   int4 getNumTargets(void) const { return targets.size(); }
   Address disassembleBlock(const Address &addr,const Address &endaddr);
   void disassembleRange(const Range &range);
@@ -130,16 +130,16 @@ public:
   void addTargetHit(const Address &codeaddr,uintb targethit);
   void resolveThunkHit(const Address &codeaddr,uintb targethit);
   void findUnlinked(void);
-  bool checkErrantStart(map<Address,CodeUnit>::iterator iter);
+  bool checkErrantStart(std::map<Address,CodeUnit>::iterator iter);
   bool repairJump(const Address &addr,int4 max);
   void findOffCut(void);
   Address findFunctionStart(const Address &addr) const;
-  const list<TargetHit> &getTargetHits(void) const { return targethits; }
-  void dumpModelHits(ostream &s) const;
-  void dumpCrossRefs(ostream &s) const;
-  void dumpFunctionStarts(ostream &s) const;
-  void dumpUnlinked(ostream &s) const;
-  void dumpTargetHits(ostream &s) const;
+  const std::list<TargetHit> &getTargetHits(void) const { return targethits; }
+  void dumpModelHits(std::ostream &s) const;
+  void dumpCrossRefs(std::ostream &s) const;
+  void dumpFunctionStarts(std::ostream &s) const;
+  void dumpUnlinked(std::ostream &s) const;
+  void dumpTargetHits(std::ostream &s) const;
   void runModel(void);
 };
 
@@ -150,48 +150,48 @@ protected:
   CodeDataAnalysis *codedata;
 public:
   virtual void setData(IfaceStatus *root,IfaceData *data);
-  virtual string getModule(void) const { return "codedata"; }
+  virtual std::string getModule(void) const { return "codedata"; }
   virtual IfaceData *createData(void) { return new CodeDataAnalysis(); }
 };
 
 class IfcCodeDataInit : public IfaceCodeDataCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcCodeDataTarget : public IfaceCodeDataCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcCodeDataRun : public IfaceCodeDataCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcCodeDataDumpModelHits : public IfaceCodeDataCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcCodeDataDumpCrossRefs : public IfaceCodeDataCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcCodeDataDumpStarts : public IfaceCodeDataCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcCodeDataDumpUnlinked : public IfaceCodeDataCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcCodeDataDumpTargetHits : public IfaceCodeDataCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 #endif

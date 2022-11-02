@@ -24,26 +24,24 @@
 #include <sstream>
 #include <fstream>
 
-using namespace std;
-
 class FileManage {
-  vector<string> pathlist;	// List of paths to search for files
+  std::vector<std::string> pathlist;	// List of paths to search for files
   static char separator;
-  static string buildPath(const vector<string> &pathels,int level);
-  static bool testDevelopmentPath(const vector<string> &pathels,int level,string &root);
-  static bool testInstallPath(const vector<string> &pathels,int level,string &root);
+  static std::string buildPath(const std::vector<std::string> &pathels,int level);
+  static bool testDevelopmentPath(const std::vector<std::string> &pathels,int level,std::string &root);
+  static bool testInstallPath(const std::vector<std::string> &pathels,int level,std::string &root);
 public:
-  void addDir2Path(const string &path);
+  void addDir2Path(const std::string &path);
   void addCurrentDir(void);
-  void findFile(string &res,const string &name) const; // Resolve full pathname
-  void matchList(vector<string> &res,const string &match,bool isSuffix) const; // List of files with suffix
-  static bool isDirectory(const string &path);
-  static void matchListDir(vector<string> &res,const string &match,bool isSuffix,const string &dir,bool allowdot);
-  static void directoryList(vector<string> &res,const string &dirname,bool allowdot=false);
-  static void scanDirectoryRecursive(vector<string> &res,const string &matchname,const string &rootpath,int maxdepth);
-  static void splitPath(const string &full,string &path,string &base);
-  static bool isAbsolutePath(const string &full) { if (full.empty()) return false; return (full[0] == separator); }
-  static string discoverGhidraRoot(const char *argv0);
+  void findFile(std::string &res,const std::string &name) const; // Resolve full pathname
+  void matchList(std::vector<std::string> &res,const std::string &match,bool isSuffix) const; // List of files with suffix
+  static bool isDirectory(const std::string &path);
+  static void matchListDir(std::vector<std::string> &res,const std::string &match,bool isSuffix,const std::string &dir,bool allowdot);
+  static void directoryList(std::vector<std::string> &res,const std::string &dirname,bool allowdot=false);
+  static void scanDirectoryRecursive(std::vector<std::string> &res,const std::string &matchname,const std::string &rootpath,int maxdepth);
+  static void splitPath(const std::string &full,std::string &path,std::string &base);
+  static bool isAbsolutePath(const std::string &full) { if (full.empty()) return false; return (full[0] == separator); }
+  static std::string discoverGhidraRoot(const char *argv0);
 };
 
 #endif

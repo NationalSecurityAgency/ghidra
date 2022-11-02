@@ -16,6 +16,8 @@
 #include "memstate.hh"
 #include "translate.hh"
 
+using namespace std;
+
 /// This is a static convenience routine for decoding a value from a sequence of bytes depending
 /// on the desired endianness
 /// \param ptr is the pointer to the bytes to decode

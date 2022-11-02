@@ -16,6 +16,8 @@
 #include "cast.hh"
 #include "op.hh"
 
+using namespace std;
+
 /// Sets the TypeFactory used to produce data-types for the arithmeticOutputStandard() method
 /// \param t is the TypeFactory
 void CastStrategy::setTypeFactory(TypeFactory *t)

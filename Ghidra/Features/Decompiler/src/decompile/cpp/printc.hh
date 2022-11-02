@@ -46,7 +46,7 @@ struct PartialSymbolEntry {
   const OpToken *token;		///< Operator used to drill-down to the field
   const TypeField *field;	///< The component object describing the field
   const Datatype *parent;	///< The parent data-type owning the field
-  string fieldname;		///< The name of the field
+  std::string fieldname;		///< The name of the field
   EmitMarkup::syntax_highlight hilite;	///< Highlight information for the field token
 };
 
@@ -114,31 +114,31 @@ protected:
   static OpToken array_expr;		///< Array adornment for a type declaration
   static OpToken enum_cat;		///< The \e concatenation operator for enumerated values
 public:
-  static const string EMPTY_STRING;	///< An empty token
-  static const string OPEN_CURLY;	///< "{" token
-  static const string CLOSE_CURLY;	///< "}" token
-  static const string SEMICOLON;	///< ";" token
-  static const string COLON;		///< ":" token
-  static const string EQUALSIGN;	///< "=" token
-  static const string COMMA;		///< "," token
-  static const string DOTDOTDOT;	///< "..." token
-  static const string KEYWORD_VOID;	///< "void" keyword
-  static const string KEYWORD_TRUE;	///< "true" keyword
-  static const string KEYWORD_FALSE;	///< "false" keyword
-  static const string KEYWORD_IF;	///< "if" keyword
-  static const string KEYWORD_ELSE;	///< "else" keyword
-  static const string KEYWORD_DO;	///< "do" keyword
-  static const string KEYWORD_WHILE;	///< "while" keyword
-  static const string KEYWORD_FOR;	///< "for" keyword
-  static const string KEYWORD_GOTO;	///< "goto" keyword
-  static const string KEYWORD_BREAK;	///< "break" keyword
-  static const string KEYWORD_CONTINUE;	///< "continue" keyword
-  static const string KEYWORD_CASE;	///< "case" keyword
-  static const string KEYWORD_SWITCH;	///< "switch" keyword
-  static const string KEYWORD_DEFAULT;	///< "default" keyword
-  static const string KEYWORD_RETURN;	///< "return" keyword
-  static const string KEYWORD_NEW;	///< "new" keyword
-  static const string typePointerRelToken;	///< The token to print indicating PTRSUB relative to a TypePointerRel
+  static const std::string EMPTY_STRING;	///< An empty token
+  static const std::string OPEN_CURLY;	///< "{" token
+  static const std::string CLOSE_CURLY;	///< "}" token
+  static const std::string SEMICOLON;	///< ";" token
+  static const std::string COLON;		///< ":" token
+  static const std::string EQUALSIGN;	///< "=" token
+  static const std::string COMMA;		///< "," token
+  static const std::string DOTDOTDOT;	///< "..." token
+  static const std::string KEYWORD_VOID;	///< "void" keyword
+  static const std::string KEYWORD_TRUE;	///< "true" keyword
+  static const std::string KEYWORD_FALSE;	///< "false" keyword
+  static const std::string KEYWORD_IF;	///< "if" keyword
+  static const std::string KEYWORD_ELSE;	///< "else" keyword
+  static const std::string KEYWORD_DO;	///< "do" keyword
+  static const std::string KEYWORD_WHILE;	///< "while" keyword
+  static const std::string KEYWORD_FOR;	///< "for" keyword
+  static const std::string KEYWORD_GOTO;	///< "goto" keyword
+  static const std::string KEYWORD_BREAK;	///< "break" keyword
+  static const std::string KEYWORD_CONTINUE;	///< "continue" keyword
+  static const std::string KEYWORD_CASE;	///< "case" keyword
+  static const std::string KEYWORD_SWITCH;	///< "switch" keyword
+  static const std::string KEYWORD_DEFAULT;	///< "default" keyword
+  static const std::string KEYWORD_RETURN;	///< "return" keyword
+  static const std::string KEYWORD_NEW;	///< "new" keyword
+  static const std::string typePointerRelToken;	///< The token to print indicating PTRSUB relative to a TypePointerRel
 protected:
   bool option_NULL;		///< Set to \b true if we should emit NULL keyword
   bool option_inplace_ops;	///< Set to \b true if we should use '+=' '&=' etc.
@@ -146,12 +146,12 @@ protected:
   bool option_nocasts;		///< Don't print a cast if \b true
   bool option_unplaced;		///< Set to \b true if we should display unplaced comments
   bool option_hide_exts;	///< Set to \b true if we should hide implied extension operations
-  string nullToken;		///< Token to use for 'null'
-  string sizeSuffix;		///< Characters to print to indicate a \e long integer token
+  std::string nullToken;		///< Token to use for 'null'
+  std::string sizeSuffix;		///< Characters to print to indicate a \e long integer token
   CommentSorter commsorter;	///< Container/organizer for comments in the current function
 
   // Routines that are specific to C/C++
-  void buildTypeStack(const Datatype *ct,vector<const Datatype *> &typestack);	///< Prepare to push components of a data-type declaration
+  void buildTypeStack(const Datatype *ct,std::vector<const Datatype *> &typestack);	///< Prepare to push components of a data-type declaration
   void pushPrototypeInputs(const FuncProto *proto);				///< Push input parameters
   void pushSymbolScope(const Symbol *symbol);			///< Push tokens resolving a symbol's scope
   void emitSymbolScope(const Symbol *symbol);			///< Emit tokens resolving a symbol's scope
@@ -190,8 +190,8 @@ protected:
   void opFunc(const PcodeOp *op);			///< Push a \e functional expression based on the given p-code op to the RPN stack
   void opTypeCast(const PcodeOp *op);			///< Push the given p-code op using type-cast syntax to the RPN stack
   void opHiddenFunc(const PcodeOp *op);			///< Push the given p-code op as a hidden token
-  static void printCharHexEscape(ostream &s,int4 val);	///< Print value as an escaped hex sequence
-  bool printCharacterConstant(ostream &s,const Address &addr,Datatype *charType) const;
+  static void printCharHexEscape(std::ostream &s,int4 val);	///< Print value as an escaped hex sequence
+  bool printCharacterConstant(std::ostream &s,const Address &addr,Datatype *charType) const;
   int4 getHiddenThisSlot(const PcodeOp *op,FuncProto *fc);	///< Get position of "this" pointer needing to be hidden
   void resetDefaultsPrintC(void);			///< Set default values for options specific to PrintC
   virtual void pushConstant(uintb val,const Datatype *ct,
@@ -212,10 +212,10 @@ protected:
 			    const PcodeOp *op);
   virtual void push_float(uintb val,int4 sz,const Varnode *vn,
 			  const PcodeOp *op);
-  virtual void printUnicode(ostream &s,int4 onechar) const;
+  virtual void printUnicode(std::ostream &s,int4 onechar) const;
   virtual void pushType(const Datatype *ct);
-  virtual string genericFunctionName(const Address &addr);
-  virtual string genericTypeName(const Datatype *ct);
+  virtual std::string genericFunctionName(const Address &addr);
+  virtual std::string genericTypeName(const Datatype *ct);
 
   virtual void emitExpression(const PcodeOp *op);
   virtual void emitVarDecl(const Symbol *sym);
@@ -226,7 +226,7 @@ protected:
   virtual bool checkPrintNegation(const Varnode *vn);
   void pushTypePointerRel(const PcodeOp *op);
 public:
-  PrintC(Architecture *g,const string &nm="c-language");	///< Constructor
+  PrintC(Architecture *g,const std::string &nm="c-language");	///< Constructor
   void setNULLPrinting(bool val) { option_NULL = val; }		///< Toggle the printing of a 'NULL' token
   void setInplaceOps(bool val) { option_inplace_ops = val; }	///< Toggle the printing of \e in-place operators
   void setConvention(bool val) { option_convention = val; }	///< Toggle whether calling conventions are printed
@@ -239,7 +239,7 @@ public:
   virtual void resetDefaults(void);
   virtual void initializeFromArchitecture(void);
   virtual void adjustTypeOperators(void);
-  virtual void setCommentStyle(const string &nm);
+  virtual void setCommentStyle(const std::string &nm);
   virtual void docTypeDefinitions(const TypeFactory *typegrp);
   virtual void docAllGlobals(void);
   virtual void docSingleGlobal(const Symbol *sym);

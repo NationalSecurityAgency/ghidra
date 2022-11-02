@@ -16,6 +16,8 @@
  */
 #include "loadimage_bfd.hh"
 
+using namespace std;
+
 int4 LoadImageBfd::bfdinit = 0;	// Global initialization variable
 
 LoadImageBfd::LoadImageBfd(const string &f,const string &t) : LoadImage(f)

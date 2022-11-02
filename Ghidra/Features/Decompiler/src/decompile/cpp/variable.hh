@@ -62,7 +62,7 @@ public:
 private:
   friend class Varnode;
   friend class Merge;
-  vector<Varnode *> inst;		///< The member Varnode objects making up \b this HighVariable
+  std::vector<Varnode *> inst;		///< The member Varnode objects making up \b this HighVariable
   int4 numMergeClasses;			///< Number of different speculative merge classes in \b this
   mutable uint4 highflags;		///< Dirtiness flags
   mutable uint4 flags;			///< Boolean properties inherited from Varnode members
@@ -102,9 +102,9 @@ public:
   /// \brief Print details of the cover for \b this (for debug purposes)
   ///
   /// \param s is the output stream
-  void printCover(ostream &s) const { if ((highflags&HighVariable::coverdirty)==0) wholecover.print(s); else s << "Cover dirty"; }
+  void printCover(std::ostream &s) const { if ((highflags&HighVariable::coverdirty)==0) wholecover.print(s); else s << "Cover dirty"; }
 
-  void printInfo(ostream &s) const;		///< Print information about \b this HighVariable to stream
+  void printInfo(std::ostream &s) const;		///< Print information about \b this HighVariable to stream
   bool hasName(void) const;			///< Check if \b this HighVariable can be named
   Varnode *getTiedVarnode(void) const;		///< Find the first address tied member Varnode
   Varnode *getInputVarnode(void) const;		///< Find (the) input member Varnode
@@ -143,7 +143,7 @@ public:
   //  Varnode *findGlobalRep(void) const;
   static bool compareName(Varnode *vn1,Varnode *vn2);	///< Determine which given Varnode is most nameable
   static bool compareJustLoc(const Varnode *a,const Varnode *b);	///< Compare based on storage location
-  static int4 markExpression(Varnode *vn,vector<HighVariable *> &highList);	///< Mark and collect variables in expression
+  static int4 markExpression(Varnode *vn,std::vector<HighVariable *> &highList);	///< Mark and collect variables in expression
 };
 
 #endif

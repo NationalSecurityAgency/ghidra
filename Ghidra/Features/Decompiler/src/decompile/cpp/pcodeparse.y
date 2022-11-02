@@ -16,6 +16,8 @@
 %{
 #include "pcodeparse.hh"
 
+using namespace std;
+
   //#define YYERROR_VERBOSE
   extern int yylex(void);
   static PcodeSnippet *pcode;

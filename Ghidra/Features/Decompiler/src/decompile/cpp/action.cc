@@ -18,6 +18,8 @@
 
 #include "coreaction.hh"
 
+using namespace std;
+
 /// Specify the name, group, and properties of the Action
 /// \param f is the collection of property flags
 /// \param nm is the Action name

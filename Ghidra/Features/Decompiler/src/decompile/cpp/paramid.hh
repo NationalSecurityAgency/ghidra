@@ -55,25 +55,25 @@ private:
   int4 numcalls;
   void walkforward( WalkState &state, PcodeOp *ignoreop, Varnode *vn );
   void walkbackward( WalkState &state, PcodeOp *ignoreop,Varnode *vn );
-  void updaterank( ParamRank rank_in,bool best ) { rank = (best==true) ? min( rank, rank_in ) : max( rank, rank_in ); }
+  void updaterank( ParamRank rank_in,bool best ) { rank = (best==true) ? std::min( rank, rank_in ) : std::max( rank, rank_in ); }
 public:
   ParamMeasure( const Address &addr, int4 sz, Datatype *dt, ParamIDIO io_in) {
     vndata.space=addr.getSpace(); vndata.offset=addr.getOffset(); vndata.size = sz; vntype=dt; io = io_in; rank=WORSTRANK; }
   void calculateRank(bool best,Varnode *basevn,PcodeOp *ignoreop);
   void encode( Encoder &encoder,ElementId &tag,bool moredetail ) const;
-  void savePretty( ostream &s,bool moredetail ) const;
+  void savePretty( std::ostream &s,bool moredetail ) const;
   int4 getMeasure(void) const { return (int4) rank; }
 };
 
 class ParamIDAnalysis
 {
   Funcdata *fd;
-  list<ParamMeasure> InputParamMeasures;
-  list<ParamMeasure> OutputParamMeasures;
+  std::list<ParamMeasure> InputParamMeasures;
+  std::list<ParamMeasure> OutputParamMeasures;
 public:
   ParamIDAnalysis( Funcdata *fd_in, bool justproto );
   void encode( Encoder &encoder, bool moredetail ) const;
-  void savePretty( ostream &s, bool moredetail ) const;
+  void savePretty( std::ostream &s, bool moredetail ) const;
 };
 
 #endif //ifndef __CPUI_PARAMID__

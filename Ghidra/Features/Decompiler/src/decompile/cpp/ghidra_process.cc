@@ -22,6 +22,8 @@
 #include <io.h>
 #endif
 
+using namespace std;
+
 #ifdef __REMOTE_SOCKET__
 
 #include "ifacedecomp.hh"

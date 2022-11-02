@@ -16,6 +16,8 @@
 #include "override.hh"
 #include "funcdata.hh"
 
+using namespace std;
+
 ElementId ELEM_DEADCODEDELAY = ElementId("deadcodedelay",218);
 ElementId ELEM_FLOW = ElementId("flow",219);
 ElementId ELEM_FORCEGOTO = ElementId("forcegoto",220);

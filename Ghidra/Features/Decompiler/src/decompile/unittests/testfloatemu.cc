@@ -27,6 +27,8 @@
 #include <limits>
 #include <vector>
 
+using namespace std;
+
 // utility functions
 float floatFromRawBits(uintb e) {
     float f;

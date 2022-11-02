@@ -16,6 +16,8 @@
 #include "cover.hh"
 #include "block.hh"
 
+using namespace std;
+
 const CoverBlock Cover::emptyBlock;
 
 /// PcodeOp objects and a CoverBlock start/stop boundaries have

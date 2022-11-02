@@ -62,10 +62,10 @@ class DynamicHash {
   uint4 opproc;			///< Number of PcodeOps processed in the \b markop list so far
   uint4 opedgeproc;		///< Number of edges processed in the \b opedge list
 
-  vector<const PcodeOp *> markop;	///< List of PcodeOps in the sub-graph being hashed
-  vector<const Varnode *> markvn;	///< List of Varnodes is the sub-graph being hashed
-  vector<const Varnode *> vnedge;	///< A staging area for Varnodes before formally adding to the sub-graph
-  vector<ToOpEdge> opedge;		///< The edges in the sub-graph
+  std::vector<const PcodeOp *> markop;	///< List of PcodeOps in the sub-graph being hashed
+  std::vector<const Varnode *> markvn;	///< List of Varnodes is the sub-graph being hashed
+  std::vector<const Varnode *> vnedge;	///< A staging area for Varnodes before formally adding to the sub-graph
+  std::vector<ToOpEdge> opedge;		///< The edges in the sub-graph
 
   Address addrresult;			///< Address most closely associated with variable
   uint8 hash;				///< The calculated hash value
@@ -88,8 +88,8 @@ public:
   uint8 getHash(void) const { return hash; }		///< Get the (current) hash
   
   const Address &getAddress(void) const { return addrresult; }	///< Get the (current) address
-  static void gatherFirstLevelVars(vector<Varnode *> &varlist,const Funcdata *fd,const Address &addr,uint8 h);
-  static void gatherOpsAtAddress(vector<PcodeOp *> &opList,const Funcdata *fd,const Address &addr);
+  static void gatherFirstLevelVars(std::vector<Varnode *> &varlist,const Funcdata *fd,const Address &addr,uint8 h);
+  static void gatherOpsAtAddress(std::vector<PcodeOp *> &opList,const Funcdata *fd,const Address &addr);
   static int4 getSlotFromHash(uint8 h);			///< Retrieve the encoded slot from a hash
   static uint4 getMethodFromHash(uint8 h);		///< Retrieve the encoded method from a hash
   static OpCode getOpCodeFromHash(uint8 h);		///< Retrieve the encoded op-code from a hash

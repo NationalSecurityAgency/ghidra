@@ -21,6 +21,8 @@
 #include "ext/stdio_filebuf.h"
 #endif
 
+using namespace std;
+
 vector<IfaceCapability *> IfaceCapability::thelist;
 
 void IfaceCapability::initialize(void)

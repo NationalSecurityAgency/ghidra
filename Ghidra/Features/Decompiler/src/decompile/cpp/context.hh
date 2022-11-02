@@ -20,16 +20,16 @@
 #include "opcodes.hh"
 
 class Token {			// A multiple-byte sized chunk of pattern in a bitstream
-  string name;
+  std::string name;
   int4 size;			// Number of bytes in token;
   int4 index;			// Index of this token, for resolving offsets
   bool bigendian;
 public:
-  Token(const string &nm,int4 sz,bool be,int4 ind) : name(nm) { size = sz; bigendian=be; index = ind; }
+  Token(const std::string &nm,int4 sz,bool be,int4 ind) : name(nm) { size = sz; bigendian=be; index = ind; }
   int4 getSize(void) const { return size; }
   bool isBigEndian(void) const { return bigendian; }
   int4 getIndex(void) const { return index; }
-  const string &getName(void) const { return name; }
+  const std::string &getName(void) const { return name; }
 };
 
 struct FixedHandle {		// A handle that is fully resolved
@@ -46,7 +46,7 @@ class Constructor;
 struct ConstructState {
   Constructor *ct;
   FixedHandle hand;
-  vector<ConstructState *> resolve;
+  std::vector<ConstructState *> resolve;
   ConstructState *parent;
   int4 length;			// Length of this instantiation of the constructor
   uint4 offset;			// Absolute offset (from start of instruction)
@@ -83,12 +83,12 @@ private:
   uintm *context;		// Pointer to local context
   int4 contextsize;		// Number of entries in context array
   ContextCache *contcache;   // Interface for getting/setting context
-  vector<ContextSet> contextcommit;
+  std::vector<ContextSet> contextcommit;
   Address addr;		// Address of start of instruction
   Address naddr;		// Address of next instruction
   mutable Address n2addr;	// Address of instruction after the next
   Address calladdr;		// For injections, this is the address of the call being overridden
-  vector<ConstructState> state; // Current resolved instruction
+  std::vector<ConstructState> state; // Current resolved instruction
   ConstructState *base_state;
   int4 alloc;			// Number of ConstructState's allocated
   int4 delayslot;		// delayslot depth
@@ -179,7 +179,7 @@ public:
 };
 
 struct SleighError : public LowlevelError {
-  SleighError(const string &s) : LowlevelError(s) {}
+  SleighError(const std::string &s) : LowlevelError(s) {}
 };
 
 inline void ParserContext::deallocateState(ParserWalkerChange &walker) {

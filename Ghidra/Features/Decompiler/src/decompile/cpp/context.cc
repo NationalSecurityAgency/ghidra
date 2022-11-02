@@ -17,6 +17,8 @@
 #include "slghsymbol.hh"
 #include "translate.hh"
 
+using namespace std;
+
 ParserContext::ParserContext(ContextCache *ccache,Translate *trans)
 
 {

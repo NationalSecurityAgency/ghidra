@@ -16,6 +16,8 @@
 #include "printc.hh"
 #include "funcdata.hh"
 
+using namespace std;
+
 // Operator tokens for expressions
 //                        token #in prec assoc   optype       space bump
 OpToken PrintC::hidden = { "", "", 1, 70, false, OpToken::hiddenfunction, 0, 0, (OpToken *)0 };

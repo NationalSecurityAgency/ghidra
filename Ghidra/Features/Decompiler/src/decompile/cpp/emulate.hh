@@ -137,11 +137,11 @@ inline void BreakCallBack::setEmulate(Emulate *emu)
 class BreakTableCallBack : public BreakTable {
   Emulate *emulate;		///< The emulator associated with this table
   Translate *trans;		///< The translator 
-  map<Address,BreakCallBack *> addresscallback;	///< a container of pcode based breakpoints
-  map<uintb,BreakCallBack *> pcodecallback; ///< a container of addressed based breakpoints
+  std::map<Address,BreakCallBack *> addresscallback;	///< a container of pcode based breakpoints
+  std::map<uintb,BreakCallBack *> pcodecallback; ///< a container of addressed based breakpoints
 public:
   BreakTableCallBack(Translate *t); ///< Basic breaktable constructor
-  void registerPcodeCallback(const string &nm,BreakCallBack *func); ///< Register a pcode based breakpoint
+  void registerPcodeCallback(const std::string &nm,BreakCallBack *func); ///< Register a pcode based breakpoint
   void registerAddressCallback(const Address &addr,BreakCallBack *func); ///< Register an address based breakpoint
   virtual void setEmulate(Emulate *emu); ///< Associate an emulator with all breakpoints in the table
   virtual bool doPcodeOpBreak(PcodeOpRaw *curop); ///< Invoke any breakpoints for the given pcode op
@@ -276,14 +276,14 @@ inline MemoryState *EmulateMemory::getMemoryState(void) const
 ///
 /// This is used for emulation when full Varnode and PcodeOp objects aren't needed
 class PcodeEmitCache : public PcodeEmit {
-  vector<PcodeOpRaw *> &opcache;	///< The cache of current p-code ops
-  vector<VarnodeData *> &varcache;	///< The cache of current varnodes
-  const vector<OpBehavior *> &inst;	///< Array of behaviors for translating OpCode
+  std::vector<PcodeOpRaw *> &opcache;	///< The cache of current p-code ops
+  std::vector<VarnodeData *> &varcache;	///< The cache of current varnodes
+  const std::vector<OpBehavior *> &inst;	///< Array of behaviors for translating OpCode
   uintm uniq;				///< Starting offset for defining temporaries in \e unique space
   VarnodeData *createVarnode(const VarnodeData *var);	///< Clone and cache a raw VarnodeData
 public:
-  PcodeEmitCache(vector<PcodeOpRaw *> &ocache,vector<VarnodeData *> &vcache,
-		 const vector<OpBehavior *> &in,uintb uniqReserve);	///< Constructor
+  PcodeEmitCache(std::vector<PcodeOpRaw *> &ocache,std::vector<VarnodeData *> &vcache,
+		 const std::vector<OpBehavior *> &in,uintb uniqReserve);	///< Constructor
   virtual void dump(const Address &addr,OpCode opc,VarnodeData *outvar,VarnodeData *vars,int4 isize);
 };
 
@@ -295,9 +295,9 @@ public:
 /// are additional methods for inspecting the pcode ops in the current instruction as a sequence.
 class EmulatePcodeCache : public EmulateMemory {
   Translate *trans;		///< The SLEIGH translator
-  vector<PcodeOpRaw *> opcache;	///< The cache of current p-code ops
-  vector<VarnodeData *> varcache;	///< The cache of current varnodes
-  vector<OpBehavior *> inst;	///< Map from OpCode to OpBehavior
+  std::vector<PcodeOpRaw *> opcache;	///< The cache of current p-code ops
+  std::vector<VarnodeData *> varcache;	///< The cache of current varnodes
+  std::vector<OpBehavior *> inst;	///< Map from OpCode to OpBehavior
   BreakTable *breaktable;	///< The table of breakpoints
   Address current_address;	///< Address of current instruction being executed
   bool instruction_start;	///< \b true if next pcode op is start of instruction

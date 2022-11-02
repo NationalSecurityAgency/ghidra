@@ -36,16 +36,16 @@ public:
   SourceFileIndexer() {leastUnusedIndex = 0;}
   ~SourceFileIndexer(void) { }
   ///Returns the index of the file.  If the file is not in the index it is added.
-  int4 index(const string filename);
-  int4 getIndex(const string);	///< get the index of a file.  Error if the file is not in the index.
-  string getFilename(int4);	///< get the filename corresponding to an index
+  int4 index(const std::string filename);
+  int4 getIndex(const std::string);	///< get the index of a file.  Error if the file is not in the index.
+  std::string getFilename(int4);	///< get the filename corresponding to an index
   void restoreXml(const Element *el);	///< read a stored index mapping from an XML file
-  void saveXml(ostream&) const;		///< save the index mapping to an XML file
+  void saveXml(std::ostream&) const;		///< save the index mapping to an XML file
 
 private:
   int4 leastUnusedIndex;  ///< one-up count for assigning indices to files
-  map<int4, string> indexToFile;  ///< map from indices to files
-  map<string, int4> fileToIndex;  ///< map from files to indices
+  std::map<int4, std::string> indexToFile;  ///< map from indices to files
+  std::map<std::string, int4> fileToIndex;  ///< map from files to indices
 };
 
 /// \brief Common core of classes that read or write SLEIGH specification files natively.
@@ -56,8 +56,8 @@ private:
 ///   - Building and writing out SLEIGH specification files
 class SleighBase : public Translate {
   static const int4 SLA_FORMAT_VERSION;	///< Current version of the .sla file read/written by SleighBash
-  vector<string> userop;		///< Names of user-define p-code ops for \b this Translate object
-  map<VarnodeData,string> varnode_xref;	///< A map from Varnodes in the \e register space to register names
+  std::vector<std::string> userop;		///< Names of user-define p-code ops for \b this Translate object
+  std::map<VarnodeData,std::string> varnode_xref;	///< A map from Varnodes in the \e register space to register names
 protected:
   SubtableSymbol *root;		///< The root SLEIGH decoding symbol
   SymbolTable symtab;		///< The SLEIGH symbol table
@@ -65,7 +65,7 @@ protected:
   uint4 unique_allocatemask;	///< Bits that are guaranteed to be zero in the unique allocation scheme
   uint4 numSections;		///< Number of \e named sections
   SourceFileIndexer indexer;    ///< source file index used when generating SLEIGH constructor debug info
-  void buildXrefs(vector<string> &errorPairs);	///< Build register map. Collect user-ops and context-fields.
+  void buildXrefs(std::vector<std::string> &errorPairs);	///< Build register map. Collect user-ops and context-fields.
   void reregisterContext(void);	///< Reregister context fields for a new executable
   void restoreXml(const Element *el);	///< Read a SLEIGH specification from XML
 public:
@@ -73,15 +73,15 @@ public:
   SleighBase(void);		///< Construct an uninitialized translator
   bool isInitialized(void) const { return (root != (SubtableSymbol *)0); }	///< Return \b true if \b this is initialized
   virtual ~SleighBase(void) {}	///< Destructor
-  virtual const VarnodeData &getRegister(const string &nm) const;
-  virtual string getRegisterName(AddrSpace *base,uintb off,int4 size) const;
-  virtual void getAllRegisters(map<VarnodeData,string> &reglist) const;
-  virtual void getUserOpNames(vector<string> &res) const;
+  virtual const VarnodeData &getRegister(const std::string &nm) const;
+  virtual std::string getRegisterName(AddrSpace *base,uintb off,int4 size) const;
+  virtual void getAllRegisters(std::map<VarnodeData,std::string> &reglist) const;
+  virtual void getUserOpNames(std::vector<std::string> &res) const;
 
-  SleighSymbol *findSymbol(const string &nm) const { return symtab.findSymbol(nm); }	///< Find a specific SLEIGH symbol by name in the current scope
+  SleighSymbol *findSymbol(const std::string &nm) const { return symtab.findSymbol(nm); }	///< Find a specific SLEIGH symbol by name in the current scope
   SleighSymbol *findSymbol(uintm id) const { return symtab.findSymbol(id); }	///< Find a specific SLEIGH symbol by id
-  SleighSymbol *findGlobalSymbol(const string &nm) const { return symtab.findGlobalSymbol(nm); }	///< Find a specific global SLEIGH symbol by name
-  void saveXml(ostream &s) const;	///< Write out the SLEIGH specification as an XML \<sleigh> tag.
+  SleighSymbol *findGlobalSymbol(const std::string &nm) const { return symtab.findGlobalSymbol(nm); }	///< Find a specific global SLEIGH symbol by name
+  void saveXml(std::ostream &s) const;	///< Write out the SLEIGH specification as an XML \<sleigh> tag.
 };
 
 #endif

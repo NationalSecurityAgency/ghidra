@@ -16,6 +16,8 @@
 #include "ghidra_translate.hh"
 #include "funcdata.hh"
 
+using namespace std;
+
 /// \brief Associate a Varnode with a register name
 ///
 /// \param nm is the register name
