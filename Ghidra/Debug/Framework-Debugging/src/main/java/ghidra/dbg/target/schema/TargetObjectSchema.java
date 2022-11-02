@@ -696,6 +696,13 @@ public interface TargetObjectSchema {
 		return null;
 	}
 
+	/**
+	 * Search for a suitable object with this schema at the given path
+	 * 
+	 * @param type the type of object sought
+	 * @param path the path of a seed object
+	 * @return the expected path of the suitable object, or null
+	 */
 	default List<String> searchForSuitable(Class<? extends TargetObject> type, List<String> path) {
 		for (; path != null; path = PathUtils.parent(path)) {
 			TargetObjectSchema schema = getSuccessorSchema(path);

@@ -260,7 +260,7 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 	 * @param column The field to add
 	 */
 	protected void addTableColumn(DynamicTableColumn<ROW_TYPE, ?, ?> column) {
-		addTableColumns(CollectionUtils.asSet(column));
+		addTableColumns(CollectionUtils.asSet(column), true);
 	}
 
 	/**
@@ -274,8 +274,24 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 	 * @param columns The columns to add
 	 */
 	protected void addTableColumns(Set<DynamicTableColumn<ROW_TYPE, ?, ?>> columns) {
+		addTableColumns(columns, true);
+	}
+
+	/**
+	 * Adds the given columns to the end of the list of columns. This method is intended for
+	 * implementations to add custom column objects, rather than relying on generic, discovered
+	 * DynamicTableColumn implementations.
+	 * 
+	 * <p>
+	 * <b>Note: this method assumes that the columns have already been sorted.</b>
+	 * 
+	 * @param columns The columns to add
+	 * @param isDefault true if these are default columns
+	 */
+	protected void addTableColumns(Set<DynamicTableColumn<ROW_TYPE, ?, ?>> columns,
+			boolean isDefault) {
 		for (DynamicTableColumn<ROW_TYPE, ?, ?> column : columns) {
-			doAddTableColumn(column, getDefaultTableColumns().size(), true);
+			doAddTableColumn(column, getDefaultTableColumns().size(), isDefault);
 		}
 		fireTableStructureChanged();
 	}

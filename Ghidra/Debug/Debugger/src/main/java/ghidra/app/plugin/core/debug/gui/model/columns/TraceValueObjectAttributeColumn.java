@@ -105,13 +105,6 @@ public class TraceValueObjectAttributeColumn
 		return type;
 	}
 
-	public static TraceValueObjectAttributeColumn fromSchema(SchemaContext ctx,
-			AttributeSchema attributeSchema) {
-		String name = attributeSchema.getName();
-		Class<?> type = computeColumnType(ctx, attributeSchema);
-		return new TraceValueObjectAttributeColumn(name, type);
-	}
-
 	private final String attributeName;
 	private final Class<?> attributeType;
 	private final AttributeRenderer renderer = new AttributeRenderer();
@@ -155,7 +148,7 @@ public class TraceValueObjectAttributeColumn
 					new ColumnRenderedValueBackupComparator<>(model, columnIndex));
 	}
 
-	protected Object getAttributeValue(ValueRow row) {
+	public Object getAttributeValue(ValueRow row) {
 		TraceObjectValue edge = row.getAttribute(attributeName);
 		return edge == null ? null : edge.getValue();
 	}

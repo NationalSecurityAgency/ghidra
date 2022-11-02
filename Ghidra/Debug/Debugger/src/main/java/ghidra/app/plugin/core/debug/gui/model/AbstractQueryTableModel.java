@@ -45,14 +45,14 @@ public abstract class AbstractQueryTableModel<T> extends ThreadedTableModel<T, T
 		}
 
 		protected void valueCreated(TraceObjectValue value) {
-			if (query != null && query.includes(span, value)) {
+			if (query != null && query.involves(span, value)) {
 				reload(); // Can I be more surgical?
 			}
 		}
 
 		protected void valueDeleted(TraceObjectValue value) {
-			if (query != null && query.includes(span, value)) {
-				reload();
+			if (query != null && query.involves(span, value)) {
+				reload(); // Can I be more surgical?
 			}
 		}
 
@@ -63,7 +63,7 @@ public abstract class AbstractQueryTableModel<T> extends ThreadedTableModel<T, T
 			}
 			boolean inOld = span.intersects(oldSpan);
 			boolean inNew = span.intersects(newSpan);
-			boolean queryIncludes = query.includes(Lifespan.ALL, value);
+			boolean queryIncludes = query.involves(Lifespan.ALL, value);
 			if (queryIncludes) {
 				if (inOld != inNew) {
 					reload();

@@ -120,7 +120,7 @@ public class GdbModelTargetStackFrame
 		return impl.gateFuture(frame.setActive(false));
 	}
 
-	@TargetAttributeType(name = FUNC_ATTRIBUTE_NAME)
+	@TargetAttributeType(name = FUNC_ATTRIBUTE_NAME, hidden = true)
 	public String getFunction() {
 		return func;
 	}
