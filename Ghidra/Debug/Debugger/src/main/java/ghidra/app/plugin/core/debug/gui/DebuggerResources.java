@@ -61,7 +61,8 @@ import resources.ResourceManager;
 import resources.icons.RotateIcon;
 
 public interface DebuggerResources {
-	String OPTIONS_CATEGORY_WORKFLOW = "Debugger.Workflow";
+	String OPTIONS_CATEGORY_DEBUGGER = "Debugger";
+	String OPTIONS_CATEGORY_WORKFLOW = "Workflow";
 
 	ImageIcon ICON_DEBUGGER = ResourceManager.loadImage("images/debugger.png");
 
