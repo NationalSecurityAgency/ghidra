@@ -76,6 +76,11 @@ prevent specific tasks from running:
 $ gradle buildGhidra -x ip
 ```
 
+## Known Issues
+* There is a known issue in Gradle that can prevent it from discovering native toolchains on Linux 
+  if a non-English system locale is being used. As a workaround, set the following environment 
+  variable prior to running your Gradle task: `LC_MESSAGES=en_US.UTF-8`
+
 ## Offline Development Environment
 Sometimes you may want to move the Ghidra repository to an offline network and do development there.
 These are the recommended steps to ensure that you not only move the source repository, but all 
