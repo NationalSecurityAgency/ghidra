@@ -962,4 +962,17 @@ public class FileSystemService {
 		return new CryptoProviderSessionChildImpl(currentCryptoSession);
 	}
 
+	/**
+	 * Adds the given {@link GFileSystem} instance to the managed filesystems list.
+	 *
+	 * @param fs {@link GFileSystem} to add to the managed filesystems list.
+	 */
+	public void addFileSystem(GFileSystem fs) {
+		synchronized (fsInstanceManager) {
+			if (!isFilesystemMountedAt(fs.getFSRL())) {
+				fsInstanceManager.add(fs);
+			}
+		}
+	}
+
 }
