@@ -15,14 +15,15 @@
  */
 package ghidra.program.model.data;
 
-import static ghidra.program.model.data.EndianSettingsDefinition.*;
-import static ghidra.program.model.data.RenderUnicodeSettingsDefinition.*;
+import static ghidra.program.model.data.EndianSettingsDefinition.ENDIAN;
+import static ghidra.program.model.data.RenderUnicodeSettingsDefinition.RENDER;
 import static ghidra.program.model.data.StringLayoutEnum.*;
-import static ghidra.program.model.data.TranslationSettingsDefinition.*;
+import static ghidra.program.model.data.TranslationSettingsDefinition.TRANSLATION;
+
+import java.util.*;
 
 import java.nio.*;
 import java.nio.charset.*;
-import java.util.*;
 
 import generic.stl.Pair;
 import ghidra.docking.settings.*;
@@ -1031,6 +1032,9 @@ public class StringDataInstance {
 	public StringDataInstance getByteOffcut(int byteOffset) {
 		if (isBadCharSize() || isProbe() || !isValidOffcutOffset(byteOffset)) {
 			return NULL_INSTANCE;
+		}
+		if (byteOffset == 0) {
+			return this;
 		}
 		int newLength = Math.max(0, length - byteOffset);
 		StringDataInstance sub = new StringDataInstance(this, getOffcutLayout(),
