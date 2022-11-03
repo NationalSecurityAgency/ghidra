@@ -17,14 +17,24 @@ package ghidra.app.plugin.core.debug.gui.model;
 
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.framework.plugintool.Plugin;
+import ghidra.trace.model.target.TraceObject;
 
-public class ObjectsTablePanel extends AbstractQueryTablePanel<ValueRow> {
+public class ObjectsTablePanel extends AbstractQueryTablePanel<ValueRow, ObjectTableModel> {
 	public ObjectsTablePanel(Plugin plugin) {
 		super(plugin);
 	}
 
 	@Override
-	protected AbstractQueryTableModel<ValueRow> createModel(Plugin plugin) {
+	protected ObjectTableModel createModel(Plugin plugin) {
 		return new ObjectTableModel(plugin);
+	}
+
+	public boolean trySelectAncestor(TraceObject successor) {
+		ValueRow row = tableModel.findTraceObjectAncestor(successor);
+		if (row == null) {
+			return false;
+		}
+		setSelectedItem(row);
+		return true;
 	}
 }

@@ -24,6 +24,7 @@ import docking.widgets.tree.GTreeLazyNode;
 import docking.widgets.tree.GTreeNode;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.dbg.target.*;
+import ghidra.dbg.util.PathUtils.TargetObjectKeyComparator;
 import ghidra.framework.model.DomainObjectClosedListener;
 import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.TraceObjectChangeType;
@@ -189,6 +190,19 @@ public class ObjectTreeModel implements DisplaysModified {
 	public abstract class AbstractNode extends GTreeLazyNode {
 		public abstract TraceObjectValue getValue();
 
+		@Override
+		public int compareTo(GTreeNode node) {
+			return TargetObjectKeyComparator.CHILD.compare(this.getName(), node.getName());
+		}
+
+		@Override
+		public String getName() {
+			return getValue().getEntryKey();
+		}
+
+		@Override
+		public abstract String getDisplayText();
+
 		protected void childCreated(TraceObjectValue value) {
 			if (getParent() == null || !isLoaded()) {
 				return;
@@ -249,6 +263,11 @@ public class ObjectTreeModel implements DisplaysModified {
 
 		@Override
 		public String getName() {
+			return "Root";
+		}
+
+		@Override
+		public String getDisplayText() {
 			if (trace == null) {
 				return "<html><em>No trace is active</em>";
 			}
@@ -332,7 +351,7 @@ public class ObjectTreeModel implements DisplaysModified {
 		}
 
 		@Override
-		public String getName() {
+		public String getDisplayText() {
 			String html = HTMLUtilities.escapeHTML(
 				value.getEntryKey() + ": " + display.getPrimitiveValueDisplay(value.getValue()));
 			return "<html>" + html;
@@ -380,7 +399,7 @@ public class ObjectTreeModel implements DisplaysModified {
 		}
 
 		@Override
-		public String getName() {
+		public String getDisplayText() {
 			return "<html>" + HTMLUtilities.escapeHTML(value.getEntryKey()) + ": <em>" +
 				HTMLUtilities.escapeHTML(display.getObjectLinkDisplay(value)) + "</em>";
 		}
@@ -422,7 +441,7 @@ public class ObjectTreeModel implements DisplaysModified {
 		}
 
 		@Override
-		public String getName() {
+		public String getDisplayText() {
 			return "<html>" + HTMLUtilities.escapeHTML(display.getObjectDisplay(value));
 		}
 
@@ -606,6 +625,7 @@ public class ObjectTreeModel implements DisplaysModified {
 		List<GTreeNode> result = ObjectTableModel
 				.distinctCanonical(object.getValues().stream().filter(this::isValueVisible))
 				.map(v -> nodeCache.getOrCreateNode(v))
+				.sorted()
 				.collect(Collectors.toList());
 		return result;
 	}

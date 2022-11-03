@@ -25,17 +25,20 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.event.ListSelectionListener;
 
+import docking.widgets.table.DynamicTableColumn;
 import docking.widgets.table.RangeCursorTableHeaderRenderer.SeekListener;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
 
-public abstract class AbstractQueryTablePanel<T> extends JPanel {
+public abstract class AbstractQueryTablePanel<T, M extends AbstractQueryTableModel<T>>
+		extends JPanel {
 
-	protected final AbstractQueryTableModel<T> tableModel;
+	protected final M tableModel;
 	protected final GhidraTable table;
 	protected final GhidraTableFilterPanel<T> filterPanel;
 
@@ -53,7 +56,7 @@ public abstract class AbstractQueryTablePanel<T> extends JPanel {
 		add(filterPanel, BorderLayout.SOUTH);
 	}
 
-	protected abstract AbstractQueryTableModel<T> createModel(Plugin plugin);
+	protected abstract M createModel(Plugin plugin);
 
 	public void goToCoordinates(DebuggerCoordinates coords) {
 		if (DebuggerCoordinates.equalsIgnoreRecorderAndView(current, coords)) {
@@ -182,6 +185,26 @@ public abstract class AbstractQueryTablePanel<T> extends JPanel {
 
 	public T getSelectedItem() {
 		return filterPanel.getSelectedItem();
+	}
+
+	public List<T> getAllItems() {
+		return List.copyOf(tableModel.getModelData());
+	}
+
+	@SuppressWarnings("unchecked")
+	public <V> DynamicTableColumn<T, V, Trace> getColumnByNameAndType(String name, Class<V> type) {
+		int count = tableModel.getColumnCount();
+		for (int i = 0; i < count; i++) {
+			DynamicTableColumn<T, ?, ?> column = tableModel.getColumn(i);
+			if (!name.equals(column.getColumnName())) {
+				continue;
+			}
+			if (column.getColumnClass() != type) {
+				continue;
+			}
+			return (DynamicTableColumn<T, V, Trace>) column;
+		}
+		return null;
 	}
 
 	public void setDiffColor(Color diffColor) {

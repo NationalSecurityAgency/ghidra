@@ -15,8 +15,11 @@
  */
 package ghidra.app.plugin.core.debug.gui.model.columns;
 
+import java.util.Comparator;
+
 import docking.widgets.table.AbstractDynamicTableColumn;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
+import ghidra.dbg.util.PathUtils.TargetObjectKeyComparator;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.trace.model.Trace;
@@ -31,5 +34,10 @@ public class TraceValueKeyColumn extends AbstractDynamicTableColumn<ValueRow, St
 	public String getValue(ValueRow rowObject, Settings settings, Trace data,
 			ServiceProvider serviceProvider) throws IllegalArgumentException {
 		return rowObject.getKey();
+	}
+
+	@Override
+	public Comparator<String> getComparator() {
+		return TargetObjectKeyComparator.CHILD;
 	}
 }
