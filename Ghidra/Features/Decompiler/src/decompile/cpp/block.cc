@@ -3425,6 +3425,11 @@ FlowBlock *BlockSwitch::nextFlowAfter(const FlowBlock *bl) const
 {
   if (getBlock(0) == bl)
     return (FlowBlock *)0;	// Don't know what will execute
+
+  // Can only evaluate this if bl is a case block that falls through to another case block.
+  // Otherwise there is a break statement in the flow
+  if (bl->getType() != t_goto)	// Fallthru must be a goto block
+    return (FlowBlock *)0;
   int4 i;
   // Look for block to find flow after
   for(i=0;i<caseblocks.size();++i)
