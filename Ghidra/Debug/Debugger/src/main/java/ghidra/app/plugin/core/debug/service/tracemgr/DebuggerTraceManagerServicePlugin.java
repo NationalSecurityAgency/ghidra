@@ -233,6 +233,8 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	private DebuggerModelService modelService;
 	@AutoServiceConsumed
 	private DebuggerEmulationService emulationService;
+	@AutoServiceConsumed
+	private DebuggerPlatformService platformService;
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
 
@@ -473,6 +475,21 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		return coordinates.recorder(recorder);
 	}
 
+	protected DebuggerCoordinates fillInPlatform(DebuggerCoordinates coordinates) {
+		if (platformService == null || coordinates.getTrace() == null) {
+			return coordinates;
+		}
+		// This will emit an event, but it should have no effect
+		DebuggerPlatformMapper mapper = platformService.getMapper(coordinates.getTrace(),
+			coordinates.getObject(), coordinates.getSnap());
+		if (mapper == null) {
+			return coordinates;
+		}
+		TracePlatform platform =
+			getPlatformForMapper(current.getTrace(), current.getObject(), mapper);
+		return coordinates.platform(platform);
+	}
+
 	protected DebuggerCoordinates doSetCurrent(DebuggerCoordinates newCurrent) {
 		newCurrent = newCurrent == null ? DebuggerCoordinates.NOWHERE : newCurrent;
 		synchronized (listenersByTrace) {
@@ -480,6 +497,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			if (current.equals(resolved)) {
 				return null;
 			}
+			resolved = fillInPlatform(resolved);
 			current = resolved;
 			contextChanged();
 			if (resolved.getTrace() != null) {
@@ -542,6 +560,11 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		activateSnap(snap);
 	}
 
+	protected TracePlatform getPlatformForMapper(Trace trace, TraceObject object,
+			DebuggerPlatformMapper mapper) {
+		return trace.getPlatformManager().getPlatform(mapper.getCompilerSpec(object));
+	}
+
 	protected void doPlatformMapperSelected(Trace trace, DebuggerPlatformMapper mapper) {
 		synchronized (listenersByTrace) {
 			if (!listenersByTrace.containsKey(trace)) {
@@ -549,8 +572,8 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			}
 			DebuggerCoordinates cur =
 				lastCoordsByTrace.getOrDefault(trace, DebuggerCoordinates.NOWHERE);
-			DebuggerCoordinates adj = cur.platform(
-				trace.getPlatformManager().getPlatform(mapper.getCompilerSpec(cur.getObject())));
+			DebuggerCoordinates adj =
+				cur.platform(getPlatformForMapper(trace, cur.getObject(), mapper));
 			lastCoordsByTrace.put(trace, adj);
 			if (trace == current.getTrace()) {
 				current = adj;
