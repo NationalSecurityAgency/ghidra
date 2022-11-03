@@ -33,6 +33,7 @@ import ghidra.framework.plugintool.dialog.KeyBindingsPanel;
 import ghidra.framework.plugintool.util.OptionsService;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
+import ghidra.util.exception.AssertException;
 
 /**
  * Created by PluginTool to manage the set of Options for each category.
@@ -60,6 +61,12 @@ public class OptionsManager implements OptionsService, OptionsChangeListener {
 
 	@Override
 	public ToolOptions getOptions(String category) {
+
+		if (category.contains(Options.DELIMITER_STRING)) {
+			throw new AssertException(
+				"Options category cannot contain the options path delimiter '" + Options.DELIMITER +
+					"'");
+		}
 
 		ToolOptions opt = optionsMap.get(category);
 		if (opt == null) {
@@ -245,8 +252,7 @@ public class OptionsManager implements OptionsService, OptionsChangeListener {
 	}
 
 	private void removeUnusedOptions(List<String> deleteList) {
-		for (int i = 0; i < deleteList.size(); i++) {
-			String name = deleteList.get(i);
+		for (String name : deleteList) {
 			ToolOptions options = optionsMap.remove(name);
 			options.removeOptionsChangeListener(this);
 		}
