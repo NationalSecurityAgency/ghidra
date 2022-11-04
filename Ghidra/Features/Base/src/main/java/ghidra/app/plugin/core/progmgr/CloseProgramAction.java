@@ -32,7 +32,7 @@ public class CloseProgramAction extends AbstractProgramNameSwitchingAction {
 		menuData.setMenuGroup(group);
 		menuData.setMenuSubGroup(Integer.toString(subGroup));
 		setMenuBarData(menuData);
-		setKeyBindingData(new KeyBindingData("ctrl o"));
+		setKeyBindingData(new KeyBindingData("ctrl w"));
 	}
 
 	@Override
