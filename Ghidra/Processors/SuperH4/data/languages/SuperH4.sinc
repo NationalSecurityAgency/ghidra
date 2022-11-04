@@ -1529,8 +1529,8 @@ define pcodeop cos;
 	fraction = fraction & FPUL;			# extract sub-rotation
 	angle 	 = int2float(fraction);			# convert to float
 	
-	pi:4 = 0x40c90fdb;				# 6.2831855.. as 32-bit float
-        angle = (pi f* angle) f/ int2float(65536 :4);   # convert to radian
+	two_pi:4 = 0x40c90fdb;				# 6.2831855.. as 32-bit float
+    angle = (two_pi f* angle) f/ int2float(65536 :4);   # convert to radian
     
 	local _sin:4 = sin(angle);			# call fake sin & cos
 	local _cos:4 = cos(angle);
@@ -2326,24 +2326,25 @@ define pcodeop mac_wOp;
 	N_0t = zext($(T_FLAG));
 }
 
-
 # Move Unaligned Long
 # pattern 0100mmmm10101001
 # text    movua.l @<REG_M>,R0
 # arch    
-:movua.l M_0t_at,r0               is OP_0=0x4 & M_0t_at & r0 & OP_4=0xA9  {
-	r0 = (*:4 ( M_0t_at ));                 
+:movua.l N_0t_at,r0               is OP_0=0x4 & N_0t_at & r0 & OP_4=0xA9  {
+	r0 = (*:4 ( N_0t_at ));                 
 }
 
 # Move Unaligned Long Pointer
 # pattern 0100mmmm11101001
 # text    movua.l @<REG_M>+,R0
 # arch    
-:movua.l M_0t_at,r0               is OP_0=0x4 & M_0t_at & r0 & OP_4=0xE9 {
-	r0 = (*:4 ( M_0t_at ));
-	
-	if (M_0t_at == 0) goto inst_next;
-	M_0t_at = M_0t_at + 4;
+:movua.l N_0t_at,r0               is OP_0=0x4 & N_0t_at & r0 & OP_4=0xE9 {
+	r0 = (*:4 ( N_0t_at ));
+	N_0t_at = N_0t_at + 4;
+}
+
+:movua.l N_0t_at,r0               is OP_0=0x4 & N_0t_at & N_0=0 & r0 & OP_4=0xE9 {
+	r0 = (*:4 ( N_0t_at ));
 }
 
 # Double-Precision Multiplication
