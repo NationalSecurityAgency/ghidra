@@ -2682,9 +2682,6 @@ moveaccreg2: ACC1  is ACC1 & op01=1    { export ACC1; }
 moveaccreg2: ACC2  is ACC2 & op01=2    { export ACC2; }
 moveaccreg2: ACC3  is ACC3 & op01=3    { export ACC3; }
 
-#:move.l ACC, reg03y			is op=10 & op811=1 & op47=8	& ACC & reg03y		{ reg03y = ACC; }
-#:move.l ACC, eal			is op=10 & op811=1 & op47=8	& ACC & reg03y		{ eal = ACC; }
-
 :move.l moveaccreg, reg03y  is op=0b1010 & op11=0 & moveaccreg & op8=1 & op47=0b1000 & reg03y    { reg03y = moveaccreg; }
 
 :move.l ACCext01, eal       is (op=0b1010 & op811=0b1011 & op67=0 & ACCext01 & (mode=0 | mode=1 | mode=7)) ... & eal   { ACCext01 = eal; }
@@ -2701,8 +2698,6 @@ moveaccreg2: ACC3  is ACC3 & op01=3    { export ACC3; }
 :move.l MASK, reg03y		is op=10 & op811=13 & op47=8 & MASK & reg03y	{ reg03y = MASK; }
 
 :move.l MACSR, "CCR"		is op=10 & op811=9 & op47=12 & MACSR			{ unpackflags(MACSR); }
-
-#:move.l eal, ACC			is (op=10 & op611=4 & ACC & (mode=0 | mode=1 | mode=7)) ... & eal			{ ACC = eal; }
 
 :move.l eal, MACSR			is (op=10 & op611=36 & MACSR & (mode=0 | mode=1 | mode=7)) ... & eal		{ MACSR = eal; }
 
