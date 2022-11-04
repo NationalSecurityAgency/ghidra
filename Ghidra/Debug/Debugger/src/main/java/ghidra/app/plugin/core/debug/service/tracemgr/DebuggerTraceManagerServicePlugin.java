@@ -486,25 +486,25 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			return coordinates;
 		}
 		TracePlatform platform =
-			getPlatformForMapper(current.getTrace(), current.getObject(), mapper);
+			getPlatformForMapper(coordinates.getTrace(), coordinates.getObject(), mapper);
 		return coordinates.platform(platform);
 	}
 
 	protected DebuggerCoordinates doSetCurrent(DebuggerCoordinates newCurrent) {
 		newCurrent = newCurrent == null ? DebuggerCoordinates.NOWHERE : newCurrent;
+		newCurrent = fillInRecorder(newCurrent.getTrace(), newCurrent);
+		newCurrent = fillInPlatform(newCurrent);
 		synchronized (listenersByTrace) {
-			DebuggerCoordinates resolved = fillInRecorder(newCurrent.getTrace(), newCurrent);
-			if (current.equals(resolved)) {
+			if (current.equals(newCurrent)) {
 				return null;
 			}
-			resolved = fillInPlatform(resolved);
-			current = resolved;
-			contextChanged();
-			if (resolved.getTrace() != null) {
-				lastCoordsByTrace.put(resolved.getTrace(), resolved);
+			current = newCurrent;
+			if (newCurrent.getTrace() != null) {
+				lastCoordsByTrace.put(newCurrent.getTrace(), newCurrent);
 			}
-			return resolved;
 		}
+		contextChanged();
+		return newCurrent;
 	}
 
 	protected void contextChanged() {
@@ -610,9 +610,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	public void processEvent(PluginEvent event) {
 		super.processEvent(event);
 		if (event instanceof TraceActivatedPluginEvent ev) {
-			synchronized (listenersByTrace) {
-				doSetCurrent(ev.getActiveCoordinates());
-			}
+			doSetCurrent(ev.getActiveCoordinates());
 		}
 		else if (event instanceof TraceClosedPluginEvent ev) {
 			doTraceClosed(ev.getTrace());
@@ -1048,10 +1046,16 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			boolean syncTargetFocus) {
 		DebuggerCoordinates prev;
 		DebuggerCoordinates resolved;
+
+		Trace newTrace = coordinates.getTrace();
 		synchronized (listenersByTrace) {
-			prev = current;
-			resolved = doSetCurrent(coordinates);
+			if (newTrace != null && !listenersByTrace.containsKey(newTrace)) {
+				throw new IllegalStateException(
+					"Trace must be opened before activated: " + newTrace);
+			}
 		}
+		prev = current;
+		resolved = doSetCurrent(coordinates);
 		if (resolved == null) {
 			return AsyncUtils.NIL;
 		}
