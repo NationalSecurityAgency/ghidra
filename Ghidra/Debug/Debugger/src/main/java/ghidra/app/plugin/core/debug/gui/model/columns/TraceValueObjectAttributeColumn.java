@@ -15,18 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.model.columns;
 
-import java.awt.Color;
-import java.awt.Component;
-import java.util.Comparator;
-import java.util.function.Function;
-
-import javax.swing.JTable;
-
-import docking.widgets.table.*;
-import docking.widgets.table.sort.ColumnRenderedValueBackupComparator;
-import docking.widgets.table.sort.DefaultColumnComparator;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources;
-import ghidra.app.plugin.core.debug.gui.model.ColorsModified;
+import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueProperty;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.dbg.target.TargetAttacher.TargetAttachKindSet;
 import ghidra.dbg.target.TargetBreakpointSpecContainer.TargetBreakpointKindSet;
@@ -37,49 +26,10 @@ import ghidra.dbg.target.TargetSteppable.TargetStepKindSet;
 import ghidra.dbg.target.schema.SchemaContext;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.target.schema.TargetObjectSchema.AttributeSchema;
-import ghidra.docking.settings.Settings;
-import ghidra.framework.plugintool.ServiceProvider;
-import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject;
-import ghidra.trace.model.target.TraceObjectValue;
-import ghidra.util.table.column.AbstractGColumnRenderer;
-import ghidra.util.table.column.GColumnRenderer;
 
-public class TraceValueObjectAttributeColumn
-		extends AbstractDynamicTableColumn<ValueRow, ValueRow, Trace> {
-
-	public class AttributeRenderer extends AbstractGColumnRenderer<ValueRow>
-			implements ColorsModified.InTable {
-		{
-			setHTMLRenderingEnabled(true);
-		}
-
-		@Override
-		public String getFilterString(ValueRow t, Settings settings) {
-			return t.getAttributeDisplay(attributeName);
-		}
-
-		@Override
-		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
-			super.getTableCellRendererComponent(data);
-			ValueRow row = (ValueRow) data.getValue();
-			setText(row.getAttributeHtmlDisplay(attributeName));
-			setToolTipText(row.getAttributeToolTip(attributeName));
-			setForeground(getForegroundFor(data.getTable(), row.isAttributeModified(attributeName),
-				data.isSelected()));
-			return this;
-		}
-
-		@Override
-		public Color getDiffForeground(JTable table) {
-			return diffColor;
-		}
-
-		@Override
-		public Color getDiffSelForeground(JTable table) {
-			return diffColorSel;
-		}
-	}
+public class TraceValueObjectAttributeColumn<T>
+		extends TraceValueObjectPropertyColumn<T> {
 
 	public static Class<?> computeColumnType(SchemaContext ctx, AttributeSchema attributeSchema) {
 		TargetObjectSchema schema = ctx.getSchema(attributeSchema.getSchema());
@@ -105,18 +55,11 @@ public class TraceValueObjectAttributeColumn
 		return type;
 	}
 
-	private final String attributeName;
-	private final Class<?> attributeType;
-	private final AttributeRenderer renderer = new AttributeRenderer();
-	private final Comparator<ValueRow> comparator;
+	protected final String attributeName;
 
-	private Color diffColor = DebuggerResources.DEFAULT_COLOR_VALUE_CHANGED;
-	private Color diffColorSel = DebuggerResources.DEFAULT_COLOR_VALUE_CHANGED_SEL;
-
-	public TraceValueObjectAttributeColumn(String attributeName, Class<?> attributeType) {
+	public TraceValueObjectAttributeColumn(String attributeName, Class<T> attributeType) {
+		super(attributeType);
 		this.attributeName = attributeName;
-		this.attributeType = attributeType;
-		this.comparator = newTypedComparator();
 	}
 
 	@Override
@@ -131,43 +74,7 @@ public class TraceValueObjectAttributeColumn
 	}
 
 	@Override
-	public ValueRow getValue(ValueRow rowObject, Settings settings, Trace data,
-			ServiceProvider serviceProvider) throws IllegalArgumentException {
-		return rowObject;
-	}
-
-	@Override
-	public GColumnRenderer<ValueRow> getColumnRenderer() {
-		return renderer;
-	}
-
-	@Override
-	public Comparator<ValueRow> getComparator(DynamicColumnTableModel<?> model, int columnIndex) {
-		return comparator == null ? null
-				: comparator.thenComparing(
-					new ColumnRenderedValueBackupComparator<>(model, columnIndex));
-	}
-
-	public Object getAttributeValue(ValueRow row) {
-		TraceObjectValue edge = row.getAttribute(attributeName);
-		return edge == null ? null : edge.getValue();
-	}
-
-	protected <C extends Comparable<C>> Comparator<ValueRow> newTypedComparator() {
-		if (Comparable.class.isAssignableFrom(attributeType)) {
-			@SuppressWarnings("unchecked")
-			Class<C> cls = (Class<C>) attributeType.asSubclass(Comparable.class);
-			Function<ValueRow, C> keyExtractor = r -> cls.cast(getAttributeValue(r));
-			return Comparator.comparing(keyExtractor, new DefaultColumnComparator());
-		}
-		return null; // Opt for the default filter-string-based comparator
-	}
-
-	public void setDiffColor(Color diffColor) {
-		this.diffColor = diffColor;
-	}
-
-	public void setDiffColorSel(Color diffColorSel) {
-		this.diffColorSel = diffColorSel;
+	public ValueProperty<T> getProperty(ValueRow row) {
+		return row.getAttribute(attributeName, propertyType);
 	}
 }

@@ -22,11 +22,6 @@ import ghidra.app.plugin.core.debug.event.TraceActivatedPluginEvent;
 import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.Function;
-import ghidra.program.util.ProgramLocation;
-import ghidra.trace.model.*;
-import ghidra.trace.model.thread.TraceThread;
 
 @PluginInfo(
 	shortDescription = "Debugger stack view",

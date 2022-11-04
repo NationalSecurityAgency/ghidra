@@ -21,6 +21,7 @@ import java.util.stream.Stream;
 
 import docking.widgets.table.RangeCursorTableHeaderRenderer.SeekListener;
 import docking.widgets.table.threaded.ThreadedTableModel;
+import ghidra.framework.model.DomainObjectChangeRecord;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.TraceObjectChangeType;
@@ -36,12 +37,17 @@ public abstract class AbstractQueryTableModel<T> extends ThreadedTableModel<T, T
 
 	protected class ListenerForChanges extends TraceDomainObjectListener {
 		public ListenerForChanges() {
+			listenForUntyped(Trace.DO_OBJECT_RESTORED, this::objectRestored);
 			listenFor(TraceObjectChangeType.VALUE_CREATED, this::valueCreated);
 			listenFor(TraceObjectChangeType.VALUE_DELETED, this::valueDeleted);
 			listenFor(TraceObjectChangeType.VALUE_LIFESPAN_CHANGED, this::valueLifespanChanged);
 
 			listenFor(TraceSnapshotChangeType.ADDED, this::maxSnapChanged);
 			listenFor(TraceSnapshotChangeType.DELETED, this::maxSnapChanged);
+		}
+
+		protected void objectRestored(DomainObjectChangeRecord record) {
+			reload();
 		}
 
 		protected void valueCreated(TraceObjectValue value) {

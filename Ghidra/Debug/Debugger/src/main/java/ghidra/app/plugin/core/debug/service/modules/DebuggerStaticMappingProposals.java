@@ -255,7 +255,7 @@ public enum DebuggerStaticMappingProposals {
 	protected static Set<String> getLikelyModulesFromName(TraceMemoryRegion region) {
 		String key;
 		try {
-			List<String> path = PathUtils.parse(region.getName());
+			List<String> path = PathUtils.parse(region.getPath());
 			key = PathUtils.getKey(path);
 			if (PathUtils.isIndex(key)) {
 				key = PathUtils.parseIndex(key);

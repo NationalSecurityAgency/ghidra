@@ -27,7 +27,7 @@ import ghidra.trace.model.Trace;
 import ghidra.util.table.column.GColumnRenderer;
 
 public class TraceValueLifePlotColumn
-		extends AbstractDynamicTableColumn<ValueRow, SpanSet<Long,?>, Trace> {
+		extends AbstractDynamicTableColumn<ValueRow, SpanSet<Long, ?>, Trace> {
 
 	private final SpanSetTableCellRenderer<Long> cellRenderer = new SpanSetTableCellRenderer<>();
 	private final RangeCursorTableHeaderRenderer<Long> headerRenderer =
@@ -45,7 +45,7 @@ public class TraceValueLifePlotColumn
 	}
 
 	@Override
-	public GColumnRenderer<SpanSet<Long,?>> getColumnRenderer() {
+	public GColumnRenderer<SpanSet<Long, ?>> getColumnRenderer() {
 		return cellRenderer;
 	}
 

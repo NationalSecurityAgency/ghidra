@@ -78,7 +78,7 @@ public class DebuggerRegionsPlugin extends AbstractDebuggerPlugin {
 		}
 		else if (event instanceof TraceActivatedPluginEvent) {
 			TraceActivatedPluginEvent ev = (TraceActivatedPluginEvent) event;
-			provider.setTrace(ev.getActiveCoordinates().getTrace());
+			provider.coordinatesActivated(ev.getActiveCoordinates());
 		}
 	}
 }

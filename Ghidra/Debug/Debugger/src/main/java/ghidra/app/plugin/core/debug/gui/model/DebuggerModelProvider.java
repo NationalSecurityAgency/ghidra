@@ -34,6 +34,7 @@ import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.gui.MultiProviderSaveBehavior.SaveableProvider;
+import ghidra.app.plugin.core.debug.gui.model.AbstractQueryTablePanel.CellActivationListener;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ObjectRow;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTreeModel.AbstractNode;
@@ -106,13 +107,15 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 	ToggleDockingAction actionShowPrimitivesInTree;
 	ToggleDockingAction actionShowMethodsInTree;
 	DockingAction actionFollowLink;
-	// TODO: Remove stopgap
-	DockingAction actionStepBackward;
-	DockingAction actionStepForward;
 
 	DebuggerObjectActionContext myActionContext;
 
-	private SeekListener seekListener = pos -> {
+	private final CellActivationListener elementActivationListener =
+		table -> activatedElementsTable();
+	private final CellActivationListener attributeActivationListener =
+		table -> activatedAttributesTable();
+
+	private final SeekListener seekListener = pos -> {
 		long snap = Math.round(pos);
 		if (current.getTrace() == null || snap < 0) {
 			snap = 0;
@@ -320,44 +323,8 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 			}
 		});
 
-		elementsTablePanel.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				if (e.getClickCount() != 2 || e.getButton() != MouseEvent.BUTTON1) {
-					return;
-				}
-				activatedElementsTable();
-			}
-		});
-		elementsTablePanel.addKeyListener(new KeyAdapter() {
-			@Override
-			public void keyPressed(KeyEvent e) {
-				if (e.getKeyCode() != KeyEvent.VK_ENTER) {
-					return;
-				}
-				activatedElementsTable();
-				e.consume();
-			}
-		});
-		attributesTablePanel.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				if (e.getClickCount() != 2 || e.getButton() != MouseEvent.BUTTON1) {
-					return;
-				}
-				activatedAttributesTable();
-			}
-		});
-		attributesTablePanel.addKeyListener(new KeyAdapter() {
-			@Override
-			public void keyPressed(KeyEvent e) {
-				if (e.getKeyCode() != KeyEvent.VK_ENTER) {
-					return;
-				}
-				activatedAttributesTable();
-				e.consume();
-			}
-		});
+		elementsTablePanel.addCellActivationListener(elementActivationListener);
+		attributesTablePanel.addCellActivationListener(attributeActivationListener);
 
 		elementsTablePanel.addSeekListener(seekListener);
 		attributesTablePanel.addSeekListener(seekListener);
@@ -392,16 +359,6 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 				.withContext(DebuggerObjectActionContext.class)
 				.enabledWhen(this::hasSingleLink)
 				.onAction(this::activatedFollowLink)
-				.buildAndInstallLocal(this);
-
-		// TODO: These are a stopgap until the plot column header provides nav
-		actionStepBackward = StepSnapBackwardAction.builder(plugin)
-				.enabledWhen(this::isStepBackwardEnabled)
-				.onAction(this::activatedStepBackward)
-				.buildAndInstallLocal(this);
-		actionStepForward = StepSnapForwardAction.builder(plugin)
-				.enabledWhen(this::isStepForwardEnabled)
-				.onAction(this::activatedStepForward)
 				.buildAndInstallLocal(this);
 	}
 
@@ -480,44 +437,6 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 		setPath(values.get(0).getChild().getCanonicalPath(), null, EventOrigin.USER_GENERATED);
 	}
 
-	private boolean isStepBackwardEnabled(ActionContext ignored) {
-		if (current.getTrace() == null) {
-			return false;
-		}
-		if (!current.getTime().isSnapOnly()) {
-			return true;
-		}
-		if (current.getSnap() <= 0) {
-			return false;
-		}
-		return true;
-	}
-
-	private void activatedStepBackward(ActionContext ignored) {
-		if (current.getTime().isSnapOnly()) {
-			traceManager.activateSnap(current.getSnap() - 1);
-		}
-		else {
-			traceManager.activateSnap(current.getSnap());
-		}
-	}
-
-	private boolean isStepForwardEnabled(ActionContext ignored) {
-		Trace curTrace = current.getTrace();
-		if (curTrace == null) {
-			return false;
-		}
-		Long maxSnap = curTrace.getTimeManager().getMaxSnap();
-		if (maxSnap == null || current.getSnap() >= maxSnap) {
-			return false;
-		}
-		return true;
-	}
-
-	private void activatedStepForward(ActionContext ignored) {
-		traceManager.activateSnap(current.getSnap() + 1);
-	}
-
 	@Override
 	public JComponent getComponent() {
 		return mainPanel;
@@ -533,7 +452,7 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 			return null;
 		}
 		TraceObject parent = trace.getObjectManager().getObjectByCanonicalPath(parentPath);
-		// TODO: Require parent to be a canonical container?
+		// Should we require parent to be a canonical container?
 		if (parent == null) {
 			return null;
 		}

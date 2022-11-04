@@ -27,8 +27,8 @@ import org.junit.*;
 import docking.widgets.table.DynamicTableColumn;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueProperty;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
-import ghidra.app.plugin.core.debug.gui.model.columns.TraceValueObjectAttributeColumn;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.services.DebuggerStaticMappingService;
@@ -39,7 +39,6 @@ import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.dbg.util.PathPattern;
 import ghidra.dbg.util.PathUtils;
-import ghidra.docking.settings.SettingsImpl;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.lang.Register;
@@ -214,23 +213,15 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 		assertEquals(size, stackProvider.panel.getAllItems().size());
 	}
 
-	protected Object rowColVal(ValueRow row, DynamicTableColumn<ValueRow, ?, Trace> col) {
-		if (col instanceof TraceValueObjectAttributeColumn attrCol) {
-			return attrCol.getAttributeValue(row);
-		}
-		Object value = col.getValue(row, SettingsImpl.NO_SETTINGS, tb.trace, tool);
-		return value;
-	}
-
 	protected void assertRow(int level, Address pcVal, Function func) {
 		ValueRow row = stackProvider.panel.getAllItems().get(level);
 
 		DynamicTableColumn<ValueRow, String, Trace> levelCol =
-			stackProvider.panel.getColumnByNameAndType("Level", String.class);
-		DynamicTableColumn<ValueRow, ValueRow, Trace> pcCol =
-			stackProvider.panel.getColumnByNameAndType("PC", ValueRow.class);
+			stackProvider.panel.getColumnByNameAndType("Level", String.class).getValue();
+		DynamicTableColumn<ValueRow, ?, Trace> pcCol =
+			stackProvider.panel.getColumnByNameAndType("PC", ValueProperty.class).getValue();
 		DynamicTableColumn<ValueRow, Function, Trace> funcCol =
-			stackProvider.panel.getColumnByNameAndType("Function", Function.class);
+			stackProvider.panel.getColumnByNameAndType("Function", Function.class).getValue();
 
 		assertEquals(PathUtils.makeKey(PathUtils.makeIndex(level)), rowColVal(row, levelCol));
 		assertEquals(pcVal, rowColVal(row, pcCol));

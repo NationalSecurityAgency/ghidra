@@ -49,6 +49,86 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 		});
 	}
 
+	public interface ValueProperty<T> {
+		public Class<T> getType();
+
+		public ValueRow getRow();
+
+		public T getValue();
+
+		public String getDisplay();
+
+		public String getHtmlDisplay();
+
+		public String getToolTip();
+
+		public boolean isModified();
+	}
+
+	public static abstract class ValueDerivedProperty<T> implements ValueProperty<T> {
+		protected final ValueRow row;
+		protected final Class<T> type;
+
+		public ValueDerivedProperty(ValueRow row, Class<T> type) {
+			this.row = row;
+			this.type = type;
+		}
+
+		@Override
+		public ValueRow getRow() {
+			return row;
+		}
+
+		@Override
+		public Class<T> getType() {
+			return type;
+		}
+	}
+
+	public record ValueAttribute<T> (ValueRow row, String name, Class<T> type)
+			implements ValueProperty<T> {
+		public TraceObjectValue getEntry() {
+			return row.getAttributeEntry(name);
+		}
+
+		@Override
+		public ValueRow getRow() {
+			return row;
+		}
+
+		@Override
+		public Class<T> getType() {
+			return type;
+		}
+
+		@Override
+		public T getValue() {
+			TraceObjectValue entry = row.getAttributeEntry(name);
+			return entry == null || !type.isInstance(entry.getValue()) ? null
+					: type.cast(entry.getValue());
+		}
+
+		@Override
+		public String getDisplay() {
+			return row.getAttributeDisplay(name);
+		}
+
+		@Override
+		public String getHtmlDisplay() {
+			return row.getAttributeHtmlDisplay(name);
+		}
+
+		@Override
+		public String getToolTip() {
+			return row.getAttributeToolTip(name);
+		}
+
+		@Override
+		public boolean isModified() {
+			return row.isAttributeModified(name);
+		}
+	}
+
 	public interface ValueRow {
 		String getKey();
 
@@ -79,7 +159,11 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 		 */
 		boolean isModified();
 
-		TraceObjectValue getAttribute(String attributeName);
+		default <T> ValueAttribute<T> getAttribute(String attributeName, Class<T> type) {
+			return new ValueAttribute<>(this, attributeName, type);
+		}
+
+		TraceObjectValue getAttributeEntry(String attributeName);
 
 		String getAttributeDisplay(String attributeName);
 
@@ -143,7 +227,7 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 		}
 
 		@Override
-		public TraceObjectValue getAttribute(String attributeName) {
+		public TraceObjectValue getAttributeEntry(String attributeName) {
 			return null;
 		}
 
@@ -196,28 +280,28 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 		}
 
 		@Override
-		public TraceObjectValue getAttribute(String attributeName) {
+		public TraceObjectValue getAttributeEntry(String attributeName) {
 			return object.getAttribute(getSnap(), attributeName);
 		}
 
 		@Override
 		public String getAttributeDisplay(String attributeName) {
-			return display.getEdgeDisplay(getAttribute(attributeName));
+			return display.getEdgeDisplay(getAttributeEntry(attributeName));
 		}
 
 		@Override
 		public String getAttributeHtmlDisplay(String attributeName) {
-			return display.getEdgeHtmlDisplay(getAttribute(attributeName));
+			return display.getEdgeHtmlDisplay(getAttributeEntry(attributeName));
 		}
 
 		@Override
 		public String getAttributeToolTip(String attributeName) {
-			return display.getEdgeToolTip(getAttribute(attributeName));
+			return display.getEdgeToolTip(getAttributeEntry(attributeName));
 		}
 
 		@Override
 		public boolean isAttributeModified(String attributeName) {
-			return isValueModified(getAttribute(attributeName));
+			return isValueModified(getAttributeEntry(attributeName));
 		}
 	}
 
@@ -269,21 +353,21 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 		}
 	}
 
-	static class AutoAttributeColumn extends TraceValueObjectAttributeColumn {
-		public static TraceValueObjectAttributeColumn fromSchema(SchemaContext ctx,
+	static class AutoAttributeColumn<T> extends TraceValueObjectAttributeColumn<T> {
+		public static TraceValueObjectAttributeColumn<?> fromSchema(SchemaContext ctx,
 				AttributeSchema attributeSchema) {
 			String name = attributeSchema.getName();
 			Class<?> type = computeColumnType(ctx, attributeSchema);
-			return new AutoAttributeColumn(name, type);
+			return new AutoAttributeColumn<>(name, type);
 		}
 
-		public AutoAttributeColumn(String attributeName, Class<?> attributeType) {
+		public AutoAttributeColumn(String attributeName, Class<T> attributeType) {
 			super(attributeName, attributeType);
 		}
 	}
 
 	// TODO: Save and restore these between sessions, esp., their settings
-	private Map<ColKey, TraceValueObjectAttributeColumn> columnCache = new HashMap<>();
+	private Map<ColKey, TraceValueObjectAttributeColumn<?>> columnCache = new HashMap<>();
 
 	protected ObjectTableModel(Plugin plugin) {
 		super("Object Model", plugin);
@@ -454,14 +538,14 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 		int count = getColumnCount();
 		for (int i = 0; i < count; i++) {
 			DynamicTableColumn<ValueRow, ?, ?> column = getColumn(i);
-			if (column instanceof TraceValueObjectAttributeColumn attrCol) {
+			if (column instanceof TraceValueObjectAttributeColumn<?> attrCol) {
 				attrCol.setDiffColor(diffColor);
 			}
 			else if (column instanceof TraceValueValColumn valCol) {
 				valCol.setDiffColor(diffColor);
 			}
 		}
-		for (TraceValueObjectAttributeColumn column : columnCache.values()) {
+		for (TraceValueObjectAttributeColumn<?> column : columnCache.values()) {
 			column.setDiffColor(diffColor);
 		}
 	}
@@ -471,14 +555,14 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 		int count = getColumnCount();
 		for (int i = 0; i < count; i++) {
 			DynamicTableColumn<ValueRow, ?, ?> column = getColumn(i);
-			if (column instanceof TraceValueObjectAttributeColumn attrCol) {
+			if (column instanceof TraceValueObjectAttributeColumn<?> attrCol) {
 				attrCol.setDiffColorSel(diffColorSel);
 			}
 			else if (column instanceof TraceValueValColumn valCol) {
 				valCol.setDiffColorSel(diffColorSel);
 			}
 		}
-		for (TraceValueObjectAttributeColumn column : columnCache.values()) {
+		for (TraceValueObjectAttributeColumn<?> column : columnCache.values()) {
 			column.setDiffColorSel(diffColorSel);
 		}
 	}

@@ -18,17 +18,20 @@ package ghidra.app.plugin.core.debug.gui.stack;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.swing.JTable;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import docking.ActionContext;
 import docking.widgets.table.AbstractDynamicTableColumn;
 import docking.widgets.table.TableColumnDescriptor;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.model.*;
+import ghidra.app.plugin.core.debug.gui.model.AbstractQueryTablePanel.CellActivationListener;
+import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueProperty;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.app.plugin.core.debug.gui.model.columns.TraceValueKeyColumn;
 import ghidra.app.plugin.core.debug.gui.model.columns.TraceValueObjectAttributeColumn;
+import ghidra.app.services.DebuggerListingService;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.dbg.target.TargetStack;
 import ghidra.dbg.target.TargetStackFrame;
@@ -40,11 +43,13 @@ import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.target.*;
+import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.TraceObjectValue;
 import utilities.util.SuppressableCallback;
 import utilities.util.SuppressableCallback.Suppression;
 
-public class DebuggerStackPanel extends ObjectsTablePanel implements ListSelectionListener {
+public class DebuggerStackPanel extends ObjectsTablePanel
+		implements ListSelectionListener, CellActivationListener {
 
 	private static class FrameLevelColumn extends TraceValueKeyColumn {
 		@Override
@@ -58,7 +63,7 @@ public class DebuggerStackPanel extends ObjectsTablePanel implements ListSelecti
 		}
 	}
 
-	private static class FramePcColumn extends TraceValueObjectAttributeColumn {
+	private static class FramePcColumn extends TraceValueObjectAttributeColumn<Address> {
 		public FramePcColumn() {
 			super(TargetStackFrame.PC_ATTRIBUTE_NAME, Address.class);
 		}
@@ -80,7 +85,8 @@ public class DebuggerStackPanel extends ObjectsTablePanel implements ListSelecti
 		@Override
 		public Function getValue(ValueRow rowObject, Settings settings, Trace data,
 				ServiceProvider serviceProvider) throws IllegalArgumentException {
-			TraceObjectValue value = rowObject.getAttribute(TargetStackFrame.PC_ATTRIBUTE_NAME);
+			TraceObjectValue value =
+				rowObject.getAttributeEntry(TargetStackFrame.PC_ATTRIBUTE_NAME);
 			return value == null ? null : provider.getFunction((Address) value.getValue());
 		}
 	}
@@ -96,13 +102,14 @@ public class DebuggerStackPanel extends ObjectsTablePanel implements ListSelecti
 			descriptor.addVisibleColumn(new FrameLevelColumn());
 			descriptor.addVisibleColumn(new FramePcColumn());
 			descriptor.addVisibleColumn(new FrameFunctionColumn());
-			// TODO: Comment column?
 			return descriptor;
 		}
 	}
 
 	private final DebuggerStackProvider provider;
 
+	@AutoServiceConsumed
+	protected DebuggerListingService listingService;
 	@AutoServiceConsumed
 	protected DebuggerTraceManagerService traceManager;
 	@SuppressWarnings("unused")
@@ -122,6 +129,7 @@ public class DebuggerStackPanel extends ObjectsTablePanel implements ListSelecti
 		setShowHidden(false);
 
 		addSelectionListener(this);
+		addCellActivationListener(this);
 	}
 
 	@Override
@@ -129,7 +137,7 @@ public class DebuggerStackPanel extends ObjectsTablePanel implements ListSelecti
 		return new StackTableModel(plugin);
 	}
 
-	public ActionContext getActionContext() {
+	public DebuggerObjectActionContext getActionContext() {
 		return myActionContext;
 	}
 
@@ -137,8 +145,7 @@ public class DebuggerStackPanel extends ObjectsTablePanel implements ListSelecti
 		if (object == null) {
 			return ModelQuery.EMPTY;
 		}
-		TargetObjectSchema rootSchema = object.getRoot()
-				.getTargetSchema();
+		TargetObjectSchema rootSchema = object.getRoot().getTargetSchema();
 		List<String> stackPath = rootSchema
 				.searchForSuitable(TargetStack.class, object.getCanonicalPath().getKeyList());
 		if (stackPath == null) {
@@ -174,6 +181,23 @@ public class DebuggerStackPanel extends ObjectsTablePanel implements ListSelecti
 		ValueRow item = getSelectedItem();
 		if (item != null) {
 			cbFrameSelected.invoke(() -> traceManager.activateObject(item.getValue().getChild()));
+		}
+	}
+
+	@Override
+	public void cellActivated(JTable table) {
+		if (listingService == null) {
+			return;
+		}
+		int row = table.getSelectedRow();
+		int col = table.getSelectedColumn();
+		Object value = table.getValueAt(row, col);
+		if (!(value instanceof ValueProperty<?> property)) {
+			return;
+		}
+		Object propVal = property.getValue();
+		if (propVal instanceof Address address) {
+			listingService.goTo(address, true);
 		}
 	}
 }
