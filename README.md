@@ -68,7 +68,9 @@ $ gradle buildGhidra
 ```
 The compressed development build will be located at `build/dist/`.
 
-For more detailed information on building Ghidra, please read the [Developer Guide][devguide].  
+For more detailed information on building Ghidra, please read the [Developer Guide][devguide].
+
+For issues building, please check the [Known Issues][known-issues] section for possible solutions.
 
 ## Develop
 
@@ -111,6 +113,7 @@ source project.
 [nsa]: https://www.nsa.gov
 [contrib]: CONTRIBUTING.md
 [devguide]: DevGuide.md
+[known-issues]: DevGuide.md#known-issues
 [career]: https://www.intelligencecareers.gov/nsa
 [releases]: https://github.com/NationalSecurityAgency/ghidra/releases
 [jdk17]: https://adoptium.net/temurin/releases
