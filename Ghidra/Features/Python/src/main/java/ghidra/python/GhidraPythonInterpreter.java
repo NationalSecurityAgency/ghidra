@@ -442,10 +442,18 @@ public class GhidraPythonInterpreter extends InteractiveInterpreter {
 	 *
 	 * @param cmd The command line.
 	 * @param includeBuiltins True if we should include python built-ins; otherwise, false.
+	 * @param caretPos The position of the caret in the input string 'cmd'
 	 * @return A list of possible command completions.  Could be empty if there aren't any.
 	 * @see PythonPlugin#getCompletions
 	 */
-	List<CodeCompletion> getCommandCompletions(String cmd, boolean includeBuiltins) {
+	List<CodeCompletion> getCommandCompletions(String cmd, boolean includeBuiltins, int caretPos) {
+		// At this point the caret is assumed to be positioned right after the value we need to
+		// complete (example: "[complete.Me<caret>, rest, code]"). To make the completion work
+		// in our case, it's sufficient (albeit naive) to just remove the text on the right side
+		// of our caret. The later code (on the python's side) will parse the rest properly
+		// and will generate the completions.
+		cmd = cmd.substring(0, caretPos);
+
 		if ((cmd.length() > 0) && (cmd.charAt(cmd.length() - 1) == '(')) {
 			return getMethodCommandCompletions(cmd);
 		}

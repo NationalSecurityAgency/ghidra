@@ -13,8 +13,10 @@ data/languages/mips32R6le.slaspec||GHIDRA||||END|
 data/languages/mips32_fp64.cspec||GHIDRA||||END|
 data/languages/mips32be.cspec||GHIDRA||||END|
 data/languages/mips32be.slaspec||GHIDRA||||END|
+data/languages/mips32be_eabi.cspec||GHIDRA||||END|
 data/languages/mips32le.cspec||GHIDRA||||END|
 data/languages/mips32le.slaspec||GHIDRA||||END|
+data/languages/mips32le_eabi.cspec||GHIDRA||||END|
 data/languages/mips32micro.pspec||GHIDRA||||END|
 data/languages/mips64.cspec||GHIDRA||||END|
 data/languages/mips64.pspec||GHIDRA||||END|

@@ -114,7 +114,7 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 		table.addRowSelectionInterval(0, 0);
 		Set<DockingActionIf> actions = getActionsByOwner(tool, plugin.getName());
 		for (DockingActionIf action : actions) {
-			if (action.getName().equals("Merge Blocks")) {
+			if (action.getName().equals("Merge Blocks") || action.getName().equals("Local Menu")) {
 				assertFalse(action.isEnabled());
 			}
 			else {
@@ -133,8 +133,7 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 			String name = action.getName();
 			if (name.equals("Add Block") || name.equals("Merge Blocks") ||
 				name.equals("Delete Block") || name.equals("Set Image Base") ||
-				name.equals("Memory Map") || name.equals("Close Window") ||
-				name.equals("Local Menu")) {
+				name.equals("Memory Map") || name.equals("Close Window")) {
 				assertTrue("Action should be enabled for  a multi-row selection - '" + name + "'",
 					action.isEnabled());
 			}
