@@ -44,7 +44,7 @@ public abstract class AbstractDBTraceProgramViewMemory
 	protected final DBTraceProgramView program;
 	protected final DBTraceMemoryManager memoryManager;
 
-	protected AddressSetView addressSet;
+	protected volatile AddressSetView addressSet;
 	protected boolean forceFullView = false;
 	protected long snap;
 
@@ -79,7 +79,7 @@ public abstract class AbstractDBTraceProgramViewMemory
 		}
 	}
 
-	protected void computeFullAdddressSet() {
+	protected synchronized void computeFullAdddressSet() {
 		AddressSet temp = new AddressSet();
 		forPhysicalSpaces(space -> temp.add(space.getMinAddress(), space.getMaxAddress()));
 		addressSet = temp;
@@ -125,17 +125,17 @@ public abstract class AbstractDBTraceProgramViewMemory
 	}
 
 	@Override
-	public synchronized AddressSetView getLoadedAndInitializedAddressSet() {
+	public AddressSetView getLoadedAndInitializedAddressSet() {
 		return addressSet;
 	}
 
 	@Override
-	public synchronized AddressSetView getAllInitializedAddressSet() {
+	public AddressSetView getAllInitializedAddressSet() {
 		return addressSet;
 	}
 
 	@Override
-	public synchronized AddressSetView getInitializedAddressSet() {
+	public AddressSetView getInitializedAddressSet() {
 		return addressSet;
 	}
 
@@ -230,7 +230,7 @@ public abstract class AbstractDBTraceProgramViewMemory
 	}
 
 	@Override
-	public synchronized long getSize() {
+	public long getSize() {
 		return addressSet.getNumAddresses();
 	}
 

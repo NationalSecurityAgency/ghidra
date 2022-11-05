@@ -40,11 +40,14 @@ import org.junit.runner.Description;
 import docking.ActionContext;
 import docking.action.ActionContextProvider;
 import docking.action.DockingActionIf;
+import docking.widgets.table.DynamicTableColumn;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import generic.Unique;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.core.debug.gui.action.*;
+import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
+import ghidra.app.plugin.core.debug.gui.model.columns.TraceValueObjectPropertyColumn;
 import ghidra.app.plugin.core.debug.mapping.*;
 import ghidra.app.plugin.core.debug.service.model.*;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
@@ -54,6 +57,7 @@ import ghidra.dbg.model.AbstractTestTargetRegisterBank;
 import ghidra.dbg.model.TestDebuggerModelBuilder;
 import ghidra.dbg.target.*;
 import ghidra.dbg.testutil.DebuggerModelTestUtils;
+import ghidra.docking.settings.SettingsImpl;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramDB;
@@ -484,6 +488,19 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 
 	protected void select(Navigatable nav, ProgramSelection sel) {
 		runSwing(() -> nav.setSelection(sel));
+	}
+
+	protected Object rowColVal(ValueRow row, DynamicTableColumn<ValueRow, ?, Trace> col) {
+		if (col instanceof TraceValueObjectPropertyColumn<?> attrCol) {
+			return attrCol.getValue(row, SettingsImpl.NO_SETTINGS, tb.trace, tool).getValue();
+		}
+		Object value = col.getValue(row, SettingsImpl.NO_SETTINGS, tb.trace, tool);
+		return value;
+	}
+
+	protected <T> String rowColDisplay(ValueRow row, DynamicTableColumn<ValueRow, T, Trace> col) {
+		T value = col.getValue(row, SettingsImpl.NO_SETTINGS, tb.trace, tool);
+		return col.getColumnRenderer().getFilterString(value, SettingsImpl.NO_SETTINGS);
 	}
 
 	protected static LocationTrackingSpec getLocationTrackingSpec(String name) {

@@ -356,8 +356,8 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 		DBTrace trace = object.getTrace();
 		switch (key) {
 			case TargetMemoryRegion.RANGE_ATTRIBUTE_NAME:
-				trace.updateViewsChangeRegionBlockRange(this,
-					(AddressRange) oldValue, (AddressRange) newValue);
+				// NB. old/newValue are null here. The CREATED event just has the new entry.
+				trace.updateViewsRefreshBlocks();
 				return;
 			case TargetObject.DISPLAY_ATTRIBUTE_NAME:
 				trace.updateViewsChangeRegionBlockName(this);

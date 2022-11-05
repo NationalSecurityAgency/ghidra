@@ -110,10 +110,13 @@ public class DebuggerStackProvider extends ComponentProviderAdapter {
 
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
+		final ActionContext context;
 		if (isLegacy(current.getTrace())) {
-			return legacyPanel.getActionContext();
+			context = legacyPanel.getActionContext();
 		}
-		ActionContext context = panel.getActionContext();
+		else {
+			context = panel.getActionContext();
+		}
 		if (context != null) {
 			return context;
 		}

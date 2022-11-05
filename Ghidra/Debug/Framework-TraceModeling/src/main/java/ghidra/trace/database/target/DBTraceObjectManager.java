@@ -258,12 +258,22 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 		rootSchema = schema;
 	}
 
+	protected void emitValueCreated(DBTraceObject parent, InternalTraceObjectValue entry) {
+		if (parent == null) {
+			// Don't need event for root value created
+			return;
+		}
+		parent.emitEvents(
+			new TraceChangeRecord<>(TraceObjectChangeType.VALUE_CREATED, null, entry));
+	}
+
 	protected InternalTraceObjectValue doCreateValue(Lifespan lifespan,
 			DBTraceObject parent, String key, Object value) {
 		if (value instanceof AddressRange) {
 			DBTraceObjectAddressRangeValue entry = rangeValueMap
 					.put(new ImmutableTraceAddressSnapRange((AddressRange) value, lifespan), null);
 			entry.set(parent, key, false);
+			emitValueCreated(parent, entry);
 			return entry;
 		}
 		else if (value instanceof Address) {
@@ -272,15 +282,12 @@ public class DBTraceObjectManager implements TraceObjectManager, DBTraceManager 
 			DBTraceObjectAddressRangeValue entry = rangeValueMap
 					.put(new ImmutableTraceAddressSnapRange(singleton, lifespan), null);
 			entry.set(parent, key, true);
+			emitValueCreated(parent, entry);
 			return entry;
 		}
 		DBTraceObjectValue entry = valueStore.create();
 		entry.set(lifespan, parent, key, value);
-		if (parent != null) {
-			// Don't need event for root value created
-			parent.emitEvents(
-				new TraceChangeRecord<>(TraceObjectChangeType.VALUE_CREATED, null, entry));
-		}
+		emitValueCreated(parent, entry);
 		return entry;
 	}
 
