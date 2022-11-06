@@ -104,9 +104,9 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 				.getDataTypeManager()
 				.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
 		final Enum enumm = new EnumDataType("Colors", 1);
-		enumm.add("Red", 0);
-		enumm.add("Green", 0x10);
-		enumm.add("Blue", 0x20);
+		enumm.add("Red", 0, "Lycoris");
+		enumm.add("Green", 0x10, "Angelica");
+		enumm.add("Blue", 0x20, "Chicory");
 
 		int transactionID = program.startTransaction("Test");
 		final Enum enummDt = (Enum) cat.addDataType(enumm, DataTypeConflictHandler.DEFAULT_HANDLER);
@@ -139,6 +139,15 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals("Red", model.getValueAt(0, EnumTableModel.NAME_COL));
 		assertEquals("Green", model.getValueAt(1, EnumTableModel.NAME_COL));
 		assertEquals("Blue", model.getValueAt(2, EnumTableModel.NAME_COL));
+
+		// sort by Comment
+		rect = header.getHeaderRect(EnumTableModel.COMMENT_COL);
+		clickMouse(header, 1, rect.x, rect.y, 1, 0);
+		waitForSwing();
+
+		assertEquals("Green", model.getValueAt(0, EnumTableModel.NAME_COL));
+		assertEquals("Blue", model.getValueAt(1, EnumTableModel.NAME_COL));
+		assertEquals("Red", model.getValueAt(2, EnumTableModel.NAME_COL));
 	}
 
 	@Test
