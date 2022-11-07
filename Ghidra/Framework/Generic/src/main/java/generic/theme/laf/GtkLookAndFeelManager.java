@@ -15,6 +15,7 @@
  */
 package generic.theme.laf;
 
+import generic.theme.ApplicationThemeManager;
 import generic.theme.LafType;
 
 /**
@@ -22,7 +23,7 @@ import generic.theme.LafType;
  */
 public class GtkLookAndFeelManager extends LookAndFeelManager {
 
-	public GtkLookAndFeelManager() {
-		super(LafType.GTK);
+	public GtkLookAndFeelManager(ApplicationThemeManager themeManager) {
+		super(LafType.GTK, themeManager);
 	}
 }

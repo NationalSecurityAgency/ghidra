@@ -31,9 +31,8 @@ import docking.actions.KeyBindingUtils;
 import docking.options.editor.FontEditor;
 import docking.widgets.OptionDialog;
 import generic.jar.ResourceFile;
-import generic.theme.GIcon;
+import generic.theme.*;
 import generic.theme.GThemeDefaults.Colors;
-import generic.theme.Gui;
 import ghidra.app.script.GhidraScriptUtil;
 import ghidra.util.*;
 import ghidra.util.datastruct.FixedSizeStack;
@@ -508,7 +507,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 		FontEditor editor = new FontEditor();
 		editor.setValue(Gui.getFont(FONT_ID));
 		editor.showDialog();
-		Gui.setFont(FONT_ID, (Font) editor.getValue());
+		ThemeManager.getInstance().setFont(FONT_ID, (Font) editor.getValue());
 	}
 
 	private void save() {

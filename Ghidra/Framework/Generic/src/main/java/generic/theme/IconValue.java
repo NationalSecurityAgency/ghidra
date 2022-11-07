@@ -247,8 +247,8 @@ public class IconValue extends ThemeValue<Icon> {
 	}
 
 	@Override
-	public void installValue() {
-		Gui.setIcon(this);
+	public void installValue(ThemeManager themeManager) {
+		themeManager.setIcon(this);
 	}
 
 }

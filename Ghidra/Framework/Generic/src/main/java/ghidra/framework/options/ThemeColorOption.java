@@ -17,8 +17,7 @@ package ghidra.framework.options;
 
 import java.awt.Color;
 
-import generic.theme.GColor;
-import generic.theme.Gui;
+import generic.theme.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 
@@ -55,17 +54,17 @@ public class ThemeColorOption extends Option {
 
 	@Override
 	public void doSetCurrentValue(Object value) {
-		Gui.setColor(colorId, (Color) value);
+		ThemeManager.getInstance().setColor(colorId, (Color) value);
 	}
 
 	@Override
 	public boolean isDefault() {
-		return !Gui.isChangedColor(colorId);
+		return !ThemeManager.getInstance().isChangedColor(colorId);
 	}
 
 	@Override
 	public void restoreDefault() {
-		Gui.restoreColor(colorId);
+		ThemeManager.getInstance().restoreColor(colorId);
 	}
 
 }

@@ -33,7 +33,7 @@ public class TokenHighlightColors {
 		float h = (float) Math.random(); // 0-360
 		float s = .25f; // saturation; gray to full color; full color is too harsh for highlights
 		float b = 1f; // brightness; black to full color
-		if (Gui.getActiveTheme().useDarkDefaults()) {
+		if (Gui.isDarkTheme()) {
 			s = .5f; // a bit more color against a dark background
 			b = .5f; // less brightness, as the background is not as bright
 		}

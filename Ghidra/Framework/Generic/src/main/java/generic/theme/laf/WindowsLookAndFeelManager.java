@@ -15,12 +15,13 @@
  */
 package generic.theme.laf;
 
+import generic.theme.ApplicationThemeManager;
 import generic.theme.LafType;
 
 public class WindowsLookAndFeelManager extends LookAndFeelManager {
 
-	public WindowsLookAndFeelManager() {
-		super(LafType.WINDOWS);
+	public WindowsLookAndFeelManager(ApplicationThemeManager themeManager) {
+		super(LafType.WINDOWS, themeManager);
 	}
 
 }

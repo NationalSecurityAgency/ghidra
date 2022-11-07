@@ -22,12 +22,14 @@ import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.swing.*;
+import javax.swing.JTable;
+import javax.swing.SwingConstants;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 
 import docking.widgets.AbstractGCellRenderer;
 import generic.theme.GColor;
+import generic.theme.Gui;
 import ghidra.docking.settings.*;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
@@ -56,7 +58,13 @@ public class GTableCellRenderer extends AbstractGCellRenderer implements TableCe
 	 * Constructs a new GTableCellRenderer.
 	 */
 	public GTableCellRenderer() {
-
+		// When the Look And Feel changes, renderers are not auto updated because they
+		// are not part of the component tree. So listen for a change to the Look And Feel.
+		Gui.addThemeListener(e -> {
+			if (e.isLookAndFeelChanged()) {
+				updateUI();
+			}
+		});
 	}
 
 	/**
@@ -100,10 +108,7 @@ public class GTableCellRenderer extends AbstractGCellRenderer implements TableCe
 				"Using a GTableCellRenderer in a non-GTable table. (Model class: " +
 					table.getModel().getClass().getName() + ")");
 		}
-		// check if LookAndFeel has changed
-		if (UIManager.getUI(this) != getUI()) {
-			updateUI();
-		}
+
 		GTable gTable = (GTable) table;
 		GTableCellRenderingData data = gTable.getRenderingData(column);
 		Object rowObject = null;

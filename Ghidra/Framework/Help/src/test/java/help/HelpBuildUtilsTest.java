@@ -25,7 +25,7 @@ import java.nio.file.Paths;
 
 import org.junit.Test;
 
-import generic.theme.Gui;
+import generic.theme.ApplicationThemeManager;
 import ghidra.GhidraTestApplicationLayout;
 import ghidra.framework.ApplicationConfiguration;
 import utility.application.ApplicationLayout;
@@ -101,7 +101,7 @@ public class HelpBuildUtilsTest extends AbstractHelpTest {
 
 	@Test
 	public void testLocateReferences_Icons() throws URISyntaxException {
-		Gui.initialize();
+		ApplicationThemeManager.initialize();
 		Path sourceFile = Paths.get(HTML_FILE_PATH);
 		String reference = "Icons.REFRESH_ICON"; // see Icons class
 		ImageLocation location = HelpBuildUtils.locateImageReference(sourceFile, reference);

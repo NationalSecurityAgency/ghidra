@@ -43,9 +43,11 @@ public class ExportThemeDialog extends DialogComponentProvider {
 	private JTextField fileTextField;
 	private GCheckBox includeDefaultsCheckbox;
 	private boolean exportAsZip;
+	private ThemeManager themeManager;
 
-	public ExportThemeDialog(boolean exportAsZip) {
+	public ExportThemeDialog(ThemeManager themeManager, boolean exportAsZip) {
 		super("Export Theme");
+		this.themeManager = themeManager;
 		this.exportAsZip = exportAsZip;
 		addWorkPanel(buildMainPanel());
 		addOKButton();
@@ -62,7 +64,7 @@ public class ExportThemeDialog extends DialogComponentProvider {
 
 	private boolean exportTheme() {
 		String themeName = nameField.getText();
-		GTheme activeTheme = Gui.getActiveTheme();
+		GTheme activeTheme = themeManager.getActiveTheme();
 		LafType laf = activeTheme.getLookAndFeelType();
 		boolean useDarkDefaults = activeTheme.useDarkDefaults();
 		File file = new File(fileTextField.getText());
@@ -87,10 +89,10 @@ public class ExportThemeDialog extends DialogComponentProvider {
 
 	private void loadValues(GTheme exportTheme) {
 		if (includeDefaultsCheckbox.isSelected()) {
-			exportTheme.load(Gui.getAllValues());
+			exportTheme.load(themeManager.getCurrentValues());
 		}
 		else {
-			exportTheme.load(Gui.getNonDefaultValues());
+			exportTheme.load(themeManager.getNonDefaultValues());
 		}
 	}
 
@@ -114,7 +116,7 @@ public class ExportThemeDialog extends DialogComponentProvider {
 
 	private Component buildNameField() {
 		nameField = new JTextField(25);
-		nameField.setText(Gui.getActiveTheme().getName());
+		nameField.setText(themeManager.getActiveTheme().getName());
 		return nameField;
 	}
 
@@ -127,7 +129,7 @@ public class ExportThemeDialog extends DialogComponentProvider {
 	private Component buildFilePanel() {
 		File homeDir = new File(System.getProperty("user.home")); // prefer the home directory
 
-		String name = Gui.getActiveTheme().getName();
+		String name = themeManager.getActiveTheme().getName();
 		String filename = name.replaceAll(" ", "_") + ".";
 		filename += exportAsZip ? GTheme.ZIP_FILE_EXTENSION : GTheme.FILE_EXTENSION;
 		File file = new File(homeDir, filename);

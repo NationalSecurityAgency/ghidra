@@ -32,7 +32,7 @@ import org.junit.*;
 import docking.test.AbstractDockingTest;
 import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors.Palette;
-import generic.theme.Gui;
+import generic.theme.ThemeManager;
 import ghidra.framework.options.*;
 import ghidra.framework.options.OptionsTest.FRUIT;
 import ghidra.program.database.ProgramBuilder;
@@ -61,7 +61,7 @@ public class OptionsDBTest extends AbstractDockingTest {
 		ProgramDB program = builder.getProgram();
 		txID = program.startTransaction("Test");
 		options = new OptionsDB(program);
-		Gui.setColor("color.test", Palette.MAGENTA);
+		ThemeManager.getInstance().setColor("color.test", Palette.MAGENTA);
 		testColor = new GColor("color.test");
 	}
 

@@ -21,9 +21,11 @@ import java.util.List;
 
 import org.junit.Test;
 
-public class WeakStoreTest {
+import generic.test.AbstractGenericTest;
+
+public class WeakStoreTest extends AbstractGenericTest {
 	@Test
-	public void testStore() throws InterruptedException {
+	public void testStore() {
 		WeakStore<Foo> store = new WeakStore<>();
 		store.add(new Foo("AAA"));
 		store.add(new Foo("BBB"));
@@ -38,13 +40,10 @@ public class WeakStoreTest {
 		assertEquals("CCC", values.get(2).getName());
 		values = null;
 
-		for (int i = 0; i < 20; i++) {
+		waitFor(() -> {
 			System.gc();
-			if (store.size() == 0) {
-				break;
-			}
-		}
-		assertEquals(0, store.size());
+			return store.size() == 0;
+		}, "Weak store values were never garbage collected");
 	}
 
 	static class Foo {

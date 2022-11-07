@@ -34,7 +34,7 @@ import generic.theme.builtin.*;
 import resources.ResourceManager;
 import resources.icons.UrlImageIcon;
 
-public class GuiTest {
+public class ThemeManagerTest {
 
 	private Font FONT = new Font("Dialog", Font.PLAIN, 13);
 	private Font SMALL_FONT = new Font("Dialog", Font.PLAIN, 4);
@@ -49,9 +49,11 @@ public class GuiTest {
 	private GTheme NIMBUS_THEME = new NimbusTheme();
 	private GTheme WINDOWS_THEME = new WindowsTheme();
 	private GTheme MAC_THEME = new MacTheme();
+	private ThemeManager themeManager;
 
 	@Before
 	public void setUp() {
+
 		themes = new HashSet<>();
 		themes.add(METAL_THEME);
 		themes.add(NIMBUS_THEME);
@@ -66,43 +68,8 @@ public class GuiTest {
 
 		darkDefaultValues.addColor(new ColorValue("color.test.bg", BLACK));
 		darkDefaultValues.addColor(new ColorValue("color.test.fg", BLUE));
+		themeManager = new DummyApplicationThemeManager();
 
-		Gui.setThemePreferenceManager(new ThemePreferenceManager() {
-
-			@Override
-			public GTheme getTheme() {
-				return new MetalTheme();
-			}
-
-			@Override
-			public void saveThemeToPreferences(GTheme theme) {
-				// do nothing
-			}
-		});
-
-		Gui.setPropertiesLoader(new ThemeFileLoader() {
-
-			@Override
-			public void loadThemeDefaultFiles() {
-				// do nothing
-			}
-
-			@Override
-			public Collection<GTheme> loadThemeFiles() {
-				return new HashSet<>(themes);
-			}
-
-			@Override
-			public GThemeValueMap getDefaults() {
-				return defaultValues;
-			}
-
-			@Override
-			public GThemeValueMap getDarkDefaults() {
-				return darkDefaultValues;
-			}
-		});
-		Gui.initialize();
 	}
 
 	@Test
@@ -110,12 +77,11 @@ public class GuiTest {
 		GColor gColor = new GColor("color.test.bg");
 
 		assertColor(WHITE, gColor);
-		Gui.setTheme(new GTheme("Test", LafType.FLAT_DARK, true));
+		themeManager.setTheme(new GTheme("Test", LafType.FLAT_DARK, true));
 		assertEquals(BLACK, gColor);
 
-		Gui.setTheme(new GTheme("Test2"));
+		themeManager.setTheme(new GTheme("Test2"));
 		assertEquals(WHITE, gColor);
-
 	}
 
 	@Test
@@ -126,25 +92,25 @@ public class GuiTest {
 		theme.setColor("color.test.bg", GREEN);
 
 		assertColor(WHITE, gColor);
-		Gui.setTheme(theme);
+		themeManager.setTheme(theme);
 		assertEquals(GREEN, gColor);
 
-		Gui.setTheme(new GTheme("Test2"));
+		themeManager.setTheme(new GTheme("Test2"));
 		assertEquals(WHITE, gColor);
 	}
 
 	@Test
 	public void testThemeFontOverride() {
-		assertEquals(FONT, Gui.getFont("font.test.foo"));
+		assertEquals(FONT, themeManager.getFont("font.test.foo"));
 
 		GTheme theme = new GTheme("Test");
 		theme.setFont("font.test.foo", SMALL_FONT);
-		Gui.setTheme(theme);
+		themeManager.setTheme(theme);
 
-		assertEquals(SMALL_FONT, Gui.getFont("font.test.foo"));
+		assertEquals(SMALL_FONT, themeManager.getFont("font.test.foo"));
 
-		Gui.setTheme(new GTheme("Test2"));
-		assertEquals(FONT, Gui.getFont("font.test.foo"));
+		themeManager.setTheme(new GTheme("Test2"));
+		assertEquals(FONT, themeManager.getFont("font.test.foo"));
 	}
 
 	@Test
@@ -155,10 +121,10 @@ public class GuiTest {
 		theme.setIcon("icon.test.foo", ICON2);
 
 		assertIcon(ICON1, gIcon);
-		Gui.setTheme(theme);
+		themeManager.setTheme(theme);
 		assertIcon(ICON2, gIcon);
 
-		Gui.setTheme(new GTheme("Test2"));
+		themeManager.setTheme(new GTheme("Test2"));
 		assertIcon(ICON1, gIcon);
 	}
 
@@ -168,7 +134,7 @@ public class GuiTest {
 		assertColor(WHITE, gColor);
 
 		defaultValues.addColor(new ColorValue("color.test.bg", YELLOW));
-		Gui.reloadApplicationDefaults();
+		themeManager.reloadApplicationDefaults();
 		assertEquals(YELLOW, gColor);
 	}
 
@@ -177,50 +143,50 @@ public class GuiTest {
 		GColor gColor = new GColor("color.test.bg");
 		assertColor(WHITE, gColor);
 
-		Gui.setColor("color.test.bg", PURPLE);
+		themeManager.setColor("color.test.bg", PURPLE);
 		assertColor(PURPLE, gColor);
 
-		Gui.restoreThemeValues();
+		themeManager.restoreThemeValues();
 		assertEquals(WHITE, gColor);
 
 	}
 
 	@Test
 	public void testGetAllThemes() {
-		assertEquals(themes, Gui.getAllThemes());
+		assertEquals(themes, themeManager.getAllThemes());
 	}
 
 	@Test
 	public void testAddTheme() {
 		GTheme newTheme = new GTheme("Test");
 
-		Set<GTheme> allThemes = Gui.getAllThemes();
+		Set<GTheme> allThemes = themeManager.getAllThemes();
 		assertEquals(themes.size(), allThemes.size());
 		assertFalse(allThemes.contains(newTheme));
 
-		Gui.addTheme(newTheme);
-		allThemes = Gui.getAllThemes();
+		themeManager.addTheme(newTheme);
+		allThemes = themeManager.getAllThemes();
 		assertTrue(allThemes.contains(newTheme));
 	}
 
 	@Test
 	public void testDeleteTheme() {
 		GTheme newTheme = new GTheme("Test");
-		Set<GTheme> allThemes = Gui.getAllThemes();
+		Set<GTheme> allThemes = themeManager.getAllThemes();
 		assertFalse(allThemes.contains(newTheme));
 
-		Gui.addTheme(newTheme);
-		allThemes = Gui.getAllThemes();
+		themeManager.addTheme(newTheme);
+		allThemes = themeManager.getAllThemes();
 		assertTrue(allThemes.contains(newTheme));
 
-		Gui.deleteTheme(newTheme);
-		allThemes = Gui.getAllThemes();
+		themeManager.deleteTheme(newTheme);
+		allThemes = themeManager.getAllThemes();
 		assertFalse(allThemes.contains(newTheme));
 	}
 
 	@Test
 	public void testGetSupportedThemes() {
-		Set<GTheme> supportedThemes = Gui.getSupportedThemes();
+		Set<GTheme> supportedThemes = themeManager.getSupportedThemes();
 		// since we put mac specific and windows specific themes, they can't all be here
 		// regardless of the current platform
 		assertTrue(supportedThemes.size() < themes.size());
@@ -231,31 +197,31 @@ public class GuiTest {
 
 	@Test
 	public void testGetLookAndFeelType() {
-		LafType lookAndFeelType = Gui.getLookAndFeelType();
+		LafType lookAndFeelType = themeManager.getLookAndFeelType();
 		// in the test setup, we defaulted to the MetalLookAndFeel
 		assertEquals(LafType.METAL, lookAndFeelType);
 	}
 
 	@Test
 	public void testGetActiveTheme() {
-		GTheme activeTheme = Gui.getActiveTheme();
+		GTheme activeTheme = themeManager.getActiveTheme();
 		assertEquals(METAL_THEME, activeTheme);
 	}
 
 	@Test
 	public void testGetThemeByName() {
-		GTheme theme = Gui.getTheme("Nimbus Theme");
+		GTheme theme = themeManager.getTheme("Nimbus Theme");
 		assertEquals(NIMBUS_THEME, theme);
 	}
 
 	@Test
 	public void testGetAllValues() {
-		GThemeValueMap allValues = Gui.getAllValues();
+		GThemeValueMap allValues = themeManager.getCurrentValues();
 		assertEquals(WHITE, allValues.getColor("color.test.bg").getRawValue());
 
-		Gui.setColor("color.test.bg", PURPLE);
+		themeManager.setColor("color.test.bg", PURPLE);
 
-		allValues = Gui.getAllValues();
+		allValues = themeManager.getCurrentValues();
 		assertEquals(PURPLE, allValues.getColor("color.test.bg").getRawValue());
 
 	}
@@ -263,17 +229,17 @@ public class GuiTest {
 	@Test
 	public void testGetNonDefaultValues() {
 		// should be empty if we haven't changed any themeValues
-		GThemeValueMap nonDefaultValues = Gui.getNonDefaultValues();
+		GThemeValueMap nonDefaultValues = themeManager.getNonDefaultValues();
 		assertTrue(nonDefaultValues.isEmpty());
 
 		// change some values and see that they show up in the nonDefaultValues
-		Gui.setColor("color.test.bg", RED);
-		Gui.setFont("font.test.foo", SMALL_FONT);
-		Gui.setIcon("icon.test.foo", ICON2);
+		themeManager.setColor("color.test.bg", RED);
+		themeManager.setFont("font.test.foo", SMALL_FONT);
+		themeManager.setIcon("icon.test.foo", ICON2);
 		// also add in a totally new value
-		Gui.setColor("color.test.xxx", GREEN);
+		themeManager.setColor("color.test.xxx", GREEN);
 
-		nonDefaultValues = Gui.getNonDefaultValues();
+		nonDefaultValues = themeManager.getNonDefaultValues();
 		assertEquals(4, nonDefaultValues.size());
 		assertEquals(RED, nonDefaultValues.getColor("color.test.bg").getRawValue());
 		assertEquals(GREEN, nonDefaultValues.getColor("color.test.xxx").getRawValue());
@@ -283,57 +249,57 @@ public class GuiTest {
 
 	@Test
 	public void testGetColor() {
-		assertEquals(WHITE, Gui.getColor("color.test.bg"));
+		assertEquals(WHITE, themeManager.getColor("color.test.bg"));
 	}
 
 	@Test
 	public void testGetFont() {
-		assertEquals(FONT, Gui.getFont("font.test.foo"));
+		assertEquals(FONT, themeManager.getFont("font.test.foo"));
 	}
 
 	@Test
 	public void testGetIcon() {
-		assertEquals(ICON1, Gui.getIcon("icon.test.foo"));
+		assertEquals(ICON1, themeManager.getIcon("icon.test.foo"));
 	}
 
 	@Test
 	public void testGetColorWithUnresolvedId() {
-		assertEquals(CYAN, Gui.getColor("color.badid", false));
+		assertEquals(CYAN, themeManager.getColor("color.badid"));
 	}
 
 	@Test
 	public void testGetIconWithUnresolvedId() {
-		assertEquals(ResourceManager.getDefaultIcon(), Gui.getIcon("icon.badid", false));
+		assertEquals(ResourceManager.getDefaultIcon(), themeManager.getIcon("icon.badid"));
 	}
 
 	@Test
 	public void testGetFontWithUnresolvedId() {
-		assertEquals(Gui.DEFAULT_FONT, Gui.getFont("font.badid", false));
+		assertEquals(ThemeManager.DEFAULT_FONT, themeManager.getFont("font.badid"));
 	}
 
 	@Test
 	public void testGetGColorUiResource() {
-		Color color = Gui.getGColorUiResource("color.test.bg");
+		Color color = themeManager.getGColorUiResource("color.test.bg");
 		assertTrue(color instanceof UIResource);
 
 		// make sure there is only one instance for an id;
-		Color color2 = Gui.getGColorUiResource("color.test.bg");
+		Color color2 = themeManager.getGColorUiResource("color.test.bg");
 		assertTrue(color == color2);
 	}
 
 	@Test
 	public void testGetGIconUiResource() {
-		Icon icon = Gui.getGIconUiResource("icon.test.foo");
+		Icon icon = themeManager.getGIconUiResource("icon.test.foo");
 		assertTrue(icon instanceof UIResource);
 
 		// make sure there is only one instance for an id;
-		Icon gIcon2 = Gui.getGIconUiResource("icon.test.foo");
+		Icon gIcon2 = themeManager.getGIconUiResource("icon.test.foo");
 		assertTrue(icon == gIcon2);
 	}
 
 	@Test
 	public void testGetApplicationLightDefaults() {
-		assertEquals(defaultValues, Gui.getApplicationLightDefaults());
+		assertEquals(defaultValues, themeManager.getApplicationLightDefaults());
 	}
 
 	@Test
@@ -342,17 +308,17 @@ public class GuiTest {
 		GThemeValueMap expected = new GThemeValueMap();
 		expected.load(defaultValues);
 		expected.load(darkDefaultValues);
-		assertEquals(expected, Gui.getApplicationDarkDefaults());
+		assertEquals(expected, themeManager.getApplicationDarkDefaults());
 	}
 
 	@Test
 	public void testRegisterFont() {
-		Gui.setFont(new FontValue("font.test", SMALL_FONT));
+		themeManager.setFont(new FontValue("font.test", SMALL_FONT));
 		JLabel label = new JLabel("Test");
 		assertNotEquals(SMALL_FONT, label.getFont());
-		Gui.registerFont(label, "font.test");
+		themeManager.registerFont(label, "font.test");
 		assertEquals(SMALL_FONT, label.getFont());
-		Gui.setFont(new FontValue("font.test", FONT));
+		themeManager.setFont(new FontValue("font.test", FONT));
 		assertEquals(FONT, label.getFont());
 	}
 
@@ -367,6 +333,45 @@ public class GuiTest {
 		URL gUrl = gIcon.getUrl();
 		if (!url.equals(gUrl)) {
 			fail("Icons don't match. Expected " + url + ", but got " + gUrl);
+		}
+	}
+
+	// ApplicationThemeManager that doesn't read in theme.properties files or preferences
+	class DummyApplicationThemeManager extends ApplicationThemeManager {
+		DummyApplicationThemeManager() {
+			themePreferences = new ThemePreferences() {
+				@Override
+				public GTheme load() {
+					return new MetalTheme();
+				}
+
+				@Override
+				public void save(GTheme theme) {
+					// do nothing
+				}
+			};
+			themeFileLoader = new ThemeFileLoader() {
+				@Override
+				public void loadThemeDefaultFiles() {
+					// do nothing
+				}
+
+				@Override
+				public Collection<GTheme> loadThemeFiles() {
+					return new HashSet<>(themes);
+				}
+
+				@Override
+				public GThemeValueMap getDefaults() {
+					return defaultValues;
+				}
+
+				@Override
+				public GThemeValueMap getDarkDefaults() {
+					return darkDefaultValues;
+				}
+			};
+			doInitialize();
 		}
 	}
 }

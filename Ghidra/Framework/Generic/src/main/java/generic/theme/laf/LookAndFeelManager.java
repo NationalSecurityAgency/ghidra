@@ -51,9 +51,11 @@ public abstract class LookAndFeelManager {
 	private LafType laf;
 	private Map<String, ComponentFontRegistry> fontRegistryMap = new HashMap<>();
 	protected GThemeValueMap systemToLafMap = new GThemeValueMap();
+	protected ApplicationThemeManager themeManager;
 
-	protected LookAndFeelManager(LafType laf) {
+	protected LookAndFeelManager(LafType laf, ApplicationThemeManager themeManager) {
 		this.laf = laf;
+		this.themeManager = themeManager;
 
 		// establish system color to LookAndFeel colors
 		systemToLafMap.addColor(new ColorValue(SYSTEM_APP_BACKGROUND_COLOR_ID, "control"));
@@ -84,7 +86,7 @@ public abstract class LookAndFeelManager {
 			IllegalAccessException, UnsupportedLookAndFeelException {
 
 		cleanUiDefaults();
-		Gui.setSystemDefaults(systemToLafMap);
+		themeManager.setSystemDefaults(systemToLafMap);
 		doInstallLookAndFeel();
 		installJavaDefaults();
 		fixupLookAndFeelIssues();
@@ -98,8 +100,7 @@ public abstract class LookAndFeelManager {
 	 * special as needed by the current {@link LookAndFeel}
 	 */
 	public void resetAll(GThemeValueMap javaDefaults) {
-		GColor.refreshAll();
-		GIcon.refreshAll();
+		themeManager.refreshGThemeValues();
 		resetIcons(javaDefaults);
 		resetFonts(javaDefaults);
 		updateAllRegisteredComponentFonts();
@@ -130,7 +131,7 @@ public abstract class LookAndFeelManager {
 		UIDefaults defaults = UIManager.getDefaults();
 		for (IconValue iconValue : icons) {
 			String id = iconValue.getId();
-			Icon correctIcon = Gui.getIcon(id, false);
+			Icon correctIcon = Gui.getIcon(id);
 			Icon storedIcon = defaults.getIcon(id);
 			if (correctIcon != null && !correctIcon.equals(storedIcon)) {
 				defaults.put(id, correctIcon);
@@ -142,7 +143,7 @@ public abstract class LookAndFeelManager {
 	 * Called when one or more colors have changed.
 	 */
 	public void colorsChanged() {
-		GColor.refreshAll();
+		themeManager.refreshGThemeValues();
 		repaintAll();
 	}
 
@@ -162,7 +163,7 @@ public abstract class LookAndFeelManager {
 			}
 			updateComponentUis();
 		}
-		GIcon.refreshAll();
+		themeManager.refreshGThemeValues();
 		repaintAll();
 	}
 
@@ -265,7 +266,7 @@ public abstract class LookAndFeelManager {
 		GThemeValueMap javaDefaults = extractJavaDefaults();
 		ThemeGrouper grouper = getThemeGrouper();
 		grouper.group(javaDefaults);
-		Gui.setJavaDefaults(javaDefaults);
+		themeManager.setJavaDefaults(javaDefaults);
 		installPropertiesBackIntoUiDefaults(javaDefaults);
 	}
 
@@ -276,7 +277,7 @@ public abstract class LookAndFeelManager {
 	private void installPropertiesBackIntoUiDefaults(GThemeValueMap javaDefaults) {
 		UIDefaults defaults = UIManager.getDefaults();
 
-		GTheme theme = Gui.getActiveTheme();
+		GTheme theme = themeManager.getActiveTheme();
 
 		// we replace java default colors with GColor equivalents so that we
 		// can change colors without having to reinstall ui on each component
@@ -284,7 +285,7 @@ public abstract class LookAndFeelManager {
 		// allow being wrapped like colors do.
 		for (ColorValue colorValue : javaDefaults.getColors()) {
 			String id = colorValue.getId();
-			defaults.put(id, Gui.getGColorUiResource(id));
+			defaults.put(id, themeManager.getGColorUiResource(id));
 		}
 
 		// put fonts back into defaults in case they have been changed by the current theme
@@ -304,7 +305,7 @@ public abstract class LookAndFeelManager {
 			if (themeValue != null) {
 				// because some icons are weird, put raw icons into defaults, only use GIcons for
 				// setting Icons explicitly on components
-				Icon icon = Gui.getIcon(id, true);
+				Icon icon = Gui.getIcon(id);
 				defaults.put(id, icon);
 			}
 		}
@@ -463,7 +464,7 @@ public abstract class LookAndFeelManager {
 	}
 
 	private void cleanUiDefaults() {
-		GThemeValueMap javaDefaults = Gui.getJavaDefaults();
+		GThemeValueMap javaDefaults = themeManager.getJavaDefaults();
 		if (javaDefaults == null) {
 			return;
 		}

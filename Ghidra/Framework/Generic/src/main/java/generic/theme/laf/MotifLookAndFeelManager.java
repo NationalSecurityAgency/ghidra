@@ -15,16 +15,15 @@
  */
 package generic.theme.laf;
 
-import generic.theme.ColorValue;
-import generic.theme.LafType;
+import generic.theme.*;
 
 /**
  * Motif {@link LookAndFeelManager}. Specialized so that it can return the Motif installer
  */
 public class MotifLookAndFeelManager extends LookAndFeelManager {
 
-	public MotifLookAndFeelManager() {
-		super(LafType.MOTIF);
+	public MotifLookAndFeelManager(ApplicationThemeManager themeManager) {
+		super(LafType.MOTIF, themeManager);
 		// establish system color to LookAndFeel colors
 		systemToLafMap.addColor(new ColorValue(SYSTEM_APP_BACKGROUND_COLOR_ID, "control"));
 		systemToLafMap.addColor(new ColorValue(SYSTEM_WIDGET_BACKGROUND_COLOR_ID, "window"));

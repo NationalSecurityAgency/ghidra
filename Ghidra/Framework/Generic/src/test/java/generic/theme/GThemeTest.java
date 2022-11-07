@@ -44,13 +44,13 @@ public class GThemeTest extends AbstractGenericTest {
 
 	@Before
 	public void setUp() {
-		theme = Gui.getDefaultTheme();
+		theme = new GTheme("TestTheme");
 		new Font("Courier", Font.BOLD, 12);
 	}
 
 	@Test
 	public void testGetName() {
-		assertEquals(Gui.getDefaultTheme().getName(), theme.getName());
+		assertEquals("TestTheme", theme.getName());
 	}
 
 	@Test
@@ -97,7 +97,7 @@ public class GThemeTest extends AbstractGenericTest {
 
 		File file = createTempFile("themeTest", ".theme");
 
-		theme.saveToFile(file, false);  // saveToFile returns new theme instance
+		new ThemeWriter(theme).writeThemeToFile(file);
 		theme = new ThemeReader(file).readTheme();
 
 		assertEquals("abc", theme.getName());

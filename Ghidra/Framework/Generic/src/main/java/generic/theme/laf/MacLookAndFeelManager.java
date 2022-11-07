@@ -15,12 +15,13 @@
  */
 package generic.theme.laf;
 
+import generic.theme.ApplicationThemeManager;
 import generic.theme.LafType;
 
 public class MacLookAndFeelManager extends LookAndFeelManager {
 
-	public MacLookAndFeelManager() {
-		super(LafType.MAC);
+	public MacLookAndFeelManager(ApplicationThemeManager themeManager) {
+		super(LafType.MAC, themeManager);
 	}
 
 	@Override

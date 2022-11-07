@@ -43,17 +43,17 @@ public class ThemeUtils {
 	 * overwrites an existing file.
 	 * @return true if the operation was not cancelled
 	 */
-	public static boolean askToSaveThemeChanges() {
-		if (Gui.hasThemeChanges()) {
+	public static boolean askToSaveThemeChanges(ThemeManager themeManager) {
+		if (themeManager.hasThemeChanges()) {
 			int result = OptionDialog.showYesNoCancelDialog(null, "Save Theme Changes?",
 				"You have made changes to the theme.\n Do you want save your changes?");
 			if (result == OptionDialog.CANCEL_OPTION) {
 				return false;
 			}
 			if (result == OptionDialog.YES_OPTION) {
-				return ThemeUtils.saveThemeChanges();
+				return ThemeUtils.saveThemeChanges(themeManager);
 			}
-			Gui.reloadApplicationDefaults();
+			themeManager.reloadApplicationDefaults();
 		}
 		return true;
 	}
@@ -63,32 +63,33 @@ public class ThemeUtils {
 	 * name and asking to overwrite an existing file.
 	 * @return true if the operation was not cancelled
 	 */
-	public static boolean saveThemeChanges() {
-		GTheme activeTheme = Gui.getActiveTheme();
+	public static boolean saveThemeChanges(ThemeManager themeManager) {
+		GTheme activeTheme = themeManager.getActiveTheme();
 		String name = activeTheme.getName();
 
-		while (!canSaveToName(name)) {
+		while (!canSaveToName(themeManager, name)) {
 			name = getNameFromUser(name);
 			if (name == null) {
 				return false;
 			}
 		}
-		return saveCurrentValues(name);
+		return saveCurrentValues(themeManager, name);
 	}
 
 	/**
 	 * Resets the theme to the default, handling the case where the current theme has changes.
 	 */
-	public static void resetThemeToDefault() {
-		if (askToSaveThemeChanges()) {
-			Gui.setTheme(Gui.getDefaultTheme());
+	public static void resetThemeToDefault(ThemeManager themeManager) {
+		if (askToSaveThemeChanges(themeManager)) {
+			themeManager.setTheme(themeManager.getDefaultTheme());
 		}
 	}
 
 	/**
 	 * Imports a theme. Handles the case where there are existing changes to the current theme.
+	 * @param themeManager the application ThemeManager
 	 */
-	public static void importTheme() {
+	public static void importTheme(ThemeManager themeManager) {
 		GhidraFileChooser chooser = new GhidraFileChooser(null);
 		chooser.setTitle("Choose Theme File");
 		chooser.setApproveButtonToolTipText("Select File");
@@ -100,14 +101,14 @@ public class ThemeUtils {
 		if (file == null) {
 			return;
 		}
-		importTheme(file);
+		importTheme(themeManager, file);
 	}
 
-	static void importTheme(File themeFile) {
-		if (!ThemeUtils.askToSaveThemeChanges()) {
+	static void importTheme(ThemeManager themeManager, File themeFile) {
+		if (!ThemeUtils.askToSaveThemeChanges(themeManager)) {
 			return;
 		}
-		GTheme startingTheme = Gui.getActiveTheme();
+		GTheme startingTheme = themeManager.getActiveTheme();
 		try {
 			GTheme imported = GTheme.loadTheme(themeFile);
 			// by setting the theme, we can let the normal save handle all the edge cases
@@ -115,9 +116,9 @@ public class ThemeUtils {
 			// Also, the imported theme may contain default values which we don't want to save. So
 			// by going through the usual save mechanism, only values that differ from defaults
 			// be saved.
-			Gui.setTheme(imported);
-			if (!ThemeUtils.saveThemeChanges()) {
-				Gui.setTheme(startingTheme);
+			themeManager.setTheme(imported);
+			if (!ThemeUtils.saveThemeChanges(themeManager)) {
+				themeManager.setTheme(startingTheme);
 			}
 		}
 		catch (IOException e) {
@@ -130,12 +131,13 @@ public class ThemeUtils {
 	/**
 	 * Exports a theme, prompting the user to pick an file. Also handles dealing with any 
 	 * existing changes to the current theme.
+	 * @param themeManager the ThemeManager that actually does the export
 	 */
-	public static void exportTheme() {
-		if (!ThemeUtils.askToSaveThemeChanges()) {
+	public static void exportTheme(ThemeManager themeManager) {
+		if (!ThemeUtils.askToSaveThemeChanges(themeManager)) {
 			return;
 		}
-		boolean hasExternalIcons = !Gui.getActiveTheme().getExternalIconFiles().isEmpty();
+		boolean hasExternalIcons = !themeManager.getActiveTheme().getExternalIconFiles().isEmpty();
 		String message =
 			"Export as zip file? (You are not using any external icons so the zip\n" +
 				"file would only contain a single theme file.)";
@@ -151,16 +153,16 @@ public class ThemeUtils {
 		}
 		boolean exportAsZip = result == OptionDialog.OPTION_ONE;
 
-		ExportThemeDialog dialog = new ExportThemeDialog(exportAsZip);
+		ExportThemeDialog dialog = new ExportThemeDialog(themeManager, exportAsZip);
 		DockingWindowManager.showDialog(dialog);
 	}
 
 	/**
 	 * Prompts for and deletes a selected theme.
 	 */
-	public static void deleteTheme() {
+	public static void deleteTheme(ThemeManager themeManager) {
 		List<GTheme> savedThemes = new ArrayList<>(
-			Gui.getAllThemes().stream().filter(t -> t.getFile() != null).toList());
+			themeManager.getAllThemes().stream().filter(t -> t.getFile() != null).toList());
 		if (savedThemes.isEmpty()) {
 			Msg.showInfo(ThemeUtils.class, null, "Delete Theme", "There are no deletable themes");
 			return;
@@ -171,7 +173,7 @@ public class ThemeUtils {
 		if (selectedTheme == null) {
 			return;
 		}
-		if (Gui.getActiveTheme().equals(selectedTheme)) {
+		if (themeManager.getActiveTheme().equals(selectedTheme)) {
 			Msg.showWarn(ThemeUtils.class, null, "Delete Failed",
 				"Can't delete the current theme.");
 			return;
@@ -180,7 +182,7 @@ public class ThemeUtils {
 		int result = OptionDialog.showYesNoDialog(null, "Delete Theme: " + fileTheme.getName(),
 			"Are you sure you want to delete theme " + fileTheme.getName());
 		if (result == OptionDialog.YES_OPTION) {
-			Gui.deleteTheme(fileTheme);
+			themeManager.deleteTheme(fileTheme);
 		}
 	}
 
@@ -190,8 +192,8 @@ public class ThemeUtils {
 		return inputDialog.getValue();
 	}
 
-	private static boolean canSaveToName(String name) {
-		GTheme existing = Gui.getTheme(name);
+	private static boolean canSaveToName(ThemeManager themeManager, String name) {
+		GTheme existing = themeManager.getTheme(name);
 		// if no theme exists with that name, then we are save to save it
 		if (existing == null) {
 			return true;
@@ -210,17 +212,17 @@ public class ThemeUtils {
 		return result == OptionDialog.YES_OPTION;
 	}
 
-	private static boolean saveCurrentValues(String themeName) {
-		GTheme activeTheme = Gui.getActiveTheme();
+	private static boolean saveCurrentValues(ThemeManager themeManager, String themeName) {
+		GTheme activeTheme = themeManager.getActiveTheme();
 		File file = getSaveFile(themeName);
 
 		GTheme newTheme = new GTheme(file, themeName, activeTheme.getLookAndFeelType(),
 			activeTheme.useDarkDefaults());
-		newTheme.load(Gui.getNonDefaultValues());
+		newTheme.load(themeManager.getNonDefaultValues());
 		try {
 			newTheme.save();
-			Gui.addTheme(newTheme);
-			Gui.setTheme(newTheme);
+			themeManager.addTheme(newTheme);
+			themeManager.setTheme(newTheme);
 		}
 		catch (IOException e) {
 			Msg.showError(ThemeUtils.class, null, "I/O Error",

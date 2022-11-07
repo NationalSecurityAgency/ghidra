@@ -30,8 +30,8 @@ import ghidra.util.exception.AssertException;
  */
 public class NimbusLookAndFeelManager extends LookAndFeelManager {
 
-	public NimbusLookAndFeelManager() {
-		super(LafType.NIMBUS);
+	public NimbusLookAndFeelManager(ApplicationThemeManager themeManager) {
+		super(LafType.NIMBUS, themeManager);
 
 		// establish system color specific to Nimbus
 		systemToLafMap.addColor(new ColorValue(SYSTEM_BORDER_COLOR_ID, "nimbusBorder"));
@@ -39,8 +39,7 @@ public class NimbusLookAndFeelManager extends LookAndFeelManager {
 
 	@Override
 	public void resetAll(GThemeValueMap javaDefaults) {
-		GColor.refreshAll();
-		GIcon.refreshAll();
+		themeManager.refreshGThemeValues();
 		reinstallNimubus();
 	}
 
@@ -58,16 +57,16 @@ public class NimbusLookAndFeelManager extends LookAndFeelManager {
 		if (!affectedJavaIds.isEmpty()) {
 			reinstallNimubus();
 		}
-		GIcon.refreshAll();
+		themeManager.refreshGThemeValues();
 		repaintAll();
 	}
 
 	private void reinstallNimubus() {
 		try {
-			UIManager.setLookAndFeel(new GNimbusLookAndFeel() {
+			UIManager.setLookAndFeel(new GNimbusLookAndFeel(themeManager) {
 				@Override
 				protected GThemeValueMap extractJavaDefaults(UIDefaults defaults) {
-					return Gui.getJavaDefaults();
+					return themeManager.getJavaDefaults();
 				}
 			});
 		}
@@ -79,13 +78,13 @@ public class NimbusLookAndFeelManager extends LookAndFeelManager {
 
 	@Override
 	protected void doInstallLookAndFeel() throws UnsupportedLookAndFeelException {
-		UIManager.setLookAndFeel(new GNimbusLookAndFeel());
+		UIManager.setLookAndFeel(new GNimbusLookAndFeel(themeManager));
 	}
 
 	@Override
 	protected GThemeValueMap extractJavaDefaults() {
 		// The GNimbusLookAndFeel already extracted the java defaults and installed them in the Gui
-		return Gui.getJavaDefaults();
+		return themeManager.getJavaDefaults();
 	}
 
 	@Override

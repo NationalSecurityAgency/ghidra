@@ -18,6 +18,7 @@ package ghidra.framework.options;
 import java.awt.Font;
 
 import generic.theme.Gui;
+import generic.theme.ThemeManager;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 
@@ -54,17 +55,17 @@ public class ThemeFontOption extends Option {
 
 	@Override
 	public void doSetCurrentValue(Object value) {
-		Gui.setFont(fontId, (Font) value);
+		ThemeManager.getInstance().setFont(fontId, (Font) value);
 	}
 
 	@Override
 	public boolean isDefault() {
-		return !Gui.isChangedFont(fontId);
+		return !ThemeManager.getInstance().isChangedFont(fontId);
 	}
 
 	@Override
 	public void restoreDefault() {
-		Gui.restoreFont(fontId);
+		ThemeManager.getInstance().restoreFont(fontId);
 	}
 
 }

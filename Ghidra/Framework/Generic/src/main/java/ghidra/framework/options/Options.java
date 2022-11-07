@@ -108,7 +108,14 @@ public interface Options {
 	/**
 	 * Registers an option with a description, help location, and a default value without specifying
 	 * the option type.  This form requires that the default value not be null so that the option
-	 * type can be inferred from the default value.
+	 * type can be inferred from the default value. 
+	 * <P>
+	 * Note, this method should not be used for
+	 * colors and font as doing so will result in those colors and fonts becoming disconnected
+	 * to the current theme. Instead use 
+	 * 
+	 * {@link #registerThemeColorBinding(String, String, HelpLocation, String)} or
+	 * {@link #registerThemeFontBinding(String, String, HelpLocation, String)}.
 	 * @param optionName the name of the option being registered.
 	 * @param defaultValue the defaultValue for the option. The default value must not be
 	 * null so that the OptionType can be determined.  If the default value should be null, use
@@ -123,6 +130,13 @@ public interface Options {
 	/**
 	 * Registers an option with a description, help location, and a optional default value.  With an optional
 	 * default value, an OptionType must be passed as it is otherwise derived from the default value.
+	 * <P>
+	 * Note, this method should not be used for
+	 * colors and font as doing so will result in those colors and fonts becoming disconnected
+	 * to the current theme. Instead use 
+	 * {@link #registerThemeColorBinding(String, String, HelpLocation, String)} or
+	 * {@link #registerThemeFontBinding(String, String, HelpLocation, String)}.
+	 * 
 	 * @param optionName the name of the option being registered.
 	 * @param type the OptionType for this options.
 	 * @param defaultValue the defaultValue for the option. In this version of the method, the default
@@ -136,6 +150,13 @@ public interface Options {
 	/**
 	 * Registers an option with a description, help location, and a optional default value.  With an optional
 	 * default value, an OptionType must be passed as it is otherwise derived from the default value.
+	 * <P>
+	 * Note, this method should not be used for
+	 * colors and font as doing so will result in those colors and fonts becoming disconnected
+	 * to the current theme. Instead use 
+	 * {@link #registerThemeColorBinding(String, String, HelpLocation, String)} or
+	 * {@link #registerThemeFontBinding(String, String, HelpLocation, String)}.
+	 * 
 	 * @param optionName the name of the option being registered.
 	 * @param type the OptionType for this options.
 	 * @param defaultValue the defaultValue for the option. In this version of the method, the default

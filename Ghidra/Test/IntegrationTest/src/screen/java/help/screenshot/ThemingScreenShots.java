@@ -26,13 +26,16 @@ import resources.ResourceManager;
 
 public class ThemingScreenShots extends GhidraScreenShotGenerator {
 
+	private ThemeManager themeManager;
+
 	public ThemingScreenShots() {
 		super();
+		themeManager = ThemeManager.getInstance();
 	}
 
 	@Test
 	public void testThemeDialog() {
-		showDialogWithoutBlocking(tool, new ThemeDialog());
+		showDialogWithoutBlocking(tool, new ThemeDialog(themeManager));
 		captureDialog(1000, 500);
 	}
 
@@ -41,7 +44,7 @@ public class ThemingScreenShots extends GhidraScreenShotGenerator {
 		ColorValueEditor editor = new ColorValueEditor(e -> {
 			/**/});
 		ColorValue value = new ColorValue("color.bg.test", Palette.BLUE);
-		Gui.setColor(value);
+		themeManager.setColor(value);
 		editor.editValue(value);
 		captureDialog();
 	}
@@ -51,7 +54,7 @@ public class ThemingScreenShots extends GhidraScreenShotGenerator {
 		FontValueEditor editor = new FontValueEditor(e -> {
 			/**/});
 		FontValue value = new FontValue("font.xyz", new Font("Monospaced", Font.BOLD, 14));
-		Gui.setFont(value);
+		themeManager.setFont(value);
 		editor.editValue(value);
 		captureDialog();
 	}
@@ -61,7 +64,7 @@ public class ThemingScreenShots extends GhidraScreenShotGenerator {
 		IconValueEditor editor = new IconValueEditor(e -> {
 			/**/});
 		IconValue value = new IconValue("icon.bomb", ResourceManager.getDefaultIcon());
-		Gui.setIcon(value);
+		themeManager.setIcon(value);
 		editor.editValue(value);
 		captureDialog();
 	}

@@ -49,8 +49,11 @@ public class ThemeDialog extends DialogComponentProvider {
 	private ThemeFontTable fontTable;
 	private ThemeIconTable iconTable;
 
-	public ThemeDialog() {
+	private ThemeManager themeManager;
+
+	public ThemeDialog(ThemeManager themeManager) {
 		super("Theme Dialog", false);
+		this.themeManager = themeManager;
 		addWorkPanel(createMainPanel());
 
 		addDismissButton();
@@ -79,7 +82,7 @@ public class ThemeDialog extends DialogComponentProvider {
 				.enabledWhen(c -> c.isChanged())
 				.popupWhen(c -> true)
 				.helpLocation(new HelpLocation("Theming", "Restore_Value"))
-				.onAction(c -> c.getThemeValue().installValue())
+				.onAction(c -> c.getThemeValue().installValue(themeManager))
 				.build();
 		addAction(resetValueAction);
 	}
@@ -93,44 +96,44 @@ public class ThemeDialog extends DialogComponentProvider {
 	}
 
 	private boolean handleChanges() {
-		if (Gui.hasThemeChanges()) {
+		if (themeManager.hasThemeChanges()) {
 			int result = OptionDialog.showYesNoCancelDialog(null, "Close Theme Dialog",
 				"You have changed the theme.\n Do you want save your changes?");
 			if (result == OptionDialog.CANCEL_OPTION) {
 				return false;
 			}
 			if (result == OptionDialog.YES_OPTION) {
-				return ThemeUtils.saveThemeChanges();
+				return ThemeUtils.saveThemeChanges(themeManager);
 			}
-			Gui.restoreThemeValues();
+			themeManager.restoreThemeValues();
 		}
 		return true;
 	}
 
 	protected void saveCallback() {
-		ThemeUtils.saveThemeChanges();
+		ThemeUtils.saveThemeChanges(themeManager);
 	}
 
 	private void restoreCallback() {
-		if (Gui.hasThemeChanges()) {
+		if (themeManager.hasThemeChanges()) {
 			int result = OptionDialog.showYesNoDialog(null, "Restore Theme Values",
 				"Are you sure you want to discard all your changes?");
 			if (result == OptionDialog.NO_OPTION) {
 				return;
 			}
 		}
-		Gui.restoreThemeValues();
+		themeManager.restoreThemeValues();
 	}
 
 	private void reloadDefaultsCallback() {
-		if (Gui.hasThemeChanges()) {
+		if (themeManager.hasThemeChanges()) {
 			int result = OptionDialog.showYesNoDialog(null, "Reload Ghidra Default Values",
 				"This will discard all your theme changes. Continue?");
 			if (result == OptionDialog.NO_OPTION) {
 				return;
 			}
 		}
-		Gui.reloadApplicationDefaults();
+		themeManager.reloadApplicationDefaults();
 	}
 
 	private void reset() {
@@ -147,15 +150,15 @@ public class ThemeDialog extends DialogComponentProvider {
 			return;
 		}
 
-		if (!ThemeUtils.askToSaveThemeChanges()) {
+		if (!ThemeUtils.askToSaveThemeChanges(themeManager)) {
 			Swing.runLater(() -> updateCombo());
 			return;
 		}
 		String themeName = (String) e.getItem();
 
 		Swing.runLater(() -> {
-			GTheme theme = Gui.getTheme(themeName);
-			Gui.setTheme(theme);
+			GTheme theme = themeManager.getTheme(themeName);
+			themeManager.setTheme(theme);
 			if (theme.getLookAndFeelType() == LafType.GTK) {
 				setStatusText(
 					"Warning - Themes using the GTK LookAndFeel do not support changing java component colors, fonts or icons.",
@@ -171,7 +174,7 @@ public class ThemeDialog extends DialogComponentProvider {
 	}
 
 	private void updateButtons() {
-		boolean hasChanges = Gui.hasThemeChanges();
+		boolean hasChanges = themeManager.hasThemeChanges();
 		saveButton.setEnabled(hasChanges);
 		restoreButton.setEnabled(hasChanges);
 	}
@@ -194,25 +197,25 @@ public class ThemeDialog extends DialogComponentProvider {
 	}
 
 	private void updateCombo() {
-		Set<GTheme> supportedThemes = Gui.getSupportedThemes();
+		Set<GTheme> supportedThemes = themeManager.getSupportedThemes();
 		List<String> themeNames =
 			supportedThemes.stream().map(t -> t.getName()).collect(Collectors.toList());
 		Collections.sort(themeNames);
 		combo.removeItemListener(comboListener);
 		combo.setModel(new DefaultComboBoxModel<String>(new Vector<String>(themeNames)));
-		combo.setSelectedItem(Gui.getActiveTheme().getName());
+		combo.setSelectedItem(themeManager.getActiveTheme().getName());
 		combo.addItemListener(comboListener);
 	}
 
 	private Component buildThemeCombo() {
 		JPanel panel = new JPanel();
-		Set<GTheme> supportedThemes = Gui.getSupportedThemes();
+		Set<GTheme> supportedThemes = themeManager.getSupportedThemes();
 		List<String> themeNames =
 			supportedThemes.stream().map(t -> t.getName()).collect(Collectors.toList());
 		Collections.sort(themeNames);
 
 		combo = new GhidraComboBox<>(themeNames);
-		combo.setSelectedItem(Gui.getActiveTheme().getName());
+		combo.setSelectedItem(themeManager.getActiveTheme().getName());
 		combo.addItemListener(comboListener);
 
 		panel.add(new JLabel("Theme: "), BorderLayout.WEST);
@@ -223,9 +226,9 @@ public class ThemeDialog extends DialogComponentProvider {
 
 	private Component buildTabedTables() {
 		tabbedPane = new JTabbedPane();
-		colorTable = new ThemeColorTable();
-		fontTable = new ThemeFontTable();
-		iconTable = new ThemeIconTable();
+		colorTable = new ThemeColorTable(themeManager);
+		fontTable = new ThemeFontTable(themeManager);
+		iconTable = new ThemeIconTable(themeManager);
 		tabbedPane.add("Colors", colorTable);
 		tabbedPane.add("Fonts", fontTable);
 		tabbedPane.add("Icons", iconTable);
@@ -250,12 +253,16 @@ public class ThemeDialog extends DialogComponentProvider {
 		return saveButton;
 	}
 
-	public static void editTheme() {
+	/**
+	 * Edits the current theme
+	 * @param themeManager the application ThemeManager
+	 */
+	public static void editTheme(ThemeManager themeManager) {
 		if (INSTANCE != null) {
 			INSTANCE.toFront();
 			return;
 		}
-		INSTANCE = new ThemeDialog();
+		INSTANCE = new ThemeDialog(themeManager);
 		DockingWindowManager.showDialog(INSTANCE);
 
 	}

@@ -15,11 +15,12 @@
  */
 package generic.theme.laf;
 
+import generic.theme.ApplicationThemeManager;
 import generic.theme.LafType;
 
 public class MetalLookAndFeelManager extends LookAndFeelManager {
 
-	public MetalLookAndFeelManager() {
-		super(LafType.METAL);
+	public MetalLookAndFeelManager(ApplicationThemeManager themeManager) {
+		super(LafType.METAL, themeManager);
 	}
 }

@@ -39,9 +39,11 @@ public class ThemeIconTableModel extends GDynamicColumnTableModel<IconValue, Obj
 	private GThemeValueMap currentValues;
 	private GThemeValueMap themeValues;
 	private GThemeValueMap defaultValues;
+	private ThemeManager themeManager;
 
-	public ThemeIconTableModel() {
+	public ThemeIconTableModel(ThemeManager themeManager) {
 		super(new ServiceProviderStub());
+		this.themeManager = themeManager;
 		load();
 	}
 
@@ -49,7 +51,7 @@ public class ThemeIconTableModel extends GDynamicColumnTableModel<IconValue, Obj
 	 * Reloads the just the current values shown in the table. Called whenever an icon changes.
 	 */
 	public void reloadCurrent() {
-		currentValues = Gui.getAllValues();
+		currentValues = themeManager.getCurrentValues();
 		icons = currentValues.getIcons();
 		fireTableDataChanged();
 	}
@@ -64,10 +66,10 @@ public class ThemeIconTableModel extends GDynamicColumnTableModel<IconValue, Obj
 	}
 
 	private void load() {
-		currentValues = Gui.getAllValues();
+		currentValues = themeManager.getCurrentValues();
 		icons = currentValues.getIcons();
-		themeValues = Gui.getThemeValues();
-		defaultValues = Gui.getDefaults();
+		themeValues = themeManager.getThemeValues();
+		defaultValues = themeManager.getDefaults();
 	}
 
 	@Override

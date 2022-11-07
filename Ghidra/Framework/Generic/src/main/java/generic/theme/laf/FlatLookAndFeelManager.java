@@ -17,13 +17,12 @@ package generic.theme.laf;
 
 import javax.swing.UIManager;
 
-import generic.theme.ColorValue;
-import generic.theme.LafType;
+import generic.theme.*;
 
 public class FlatLookAndFeelManager extends LookAndFeelManager {
 
-	public FlatLookAndFeelManager(LafType laf) {
-		super(laf);
+	public FlatLookAndFeelManager(LafType laf, ApplicationThemeManager themeManager) {
+		super(laf, themeManager);
 
 		// establish system color to LookAndFeel colors
 		systemToLafMap.addColor(new ColorValue(SYSTEM_WIDGET_BACKGROUND_COLOR_ID, "text"));

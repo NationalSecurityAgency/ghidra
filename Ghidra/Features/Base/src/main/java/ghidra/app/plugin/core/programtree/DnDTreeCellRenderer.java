@@ -34,6 +34,8 @@ import resources.ResourceManager;
  * Cell renderer for the drag and drop tree.
  */
 class DnDTreeCellRenderer extends DefaultTreeCellRenderer {
+	private static final Color BACKGROUND_UNSELECTED = new GColor("color.bg.tree");
+	private static final Color BACKGROUND_SELECTED = new GColor("color.bg.tree.selected");
 
 	private static final String DISABLED_DOCS = "DisabledDocument.gif";
 	private static final String DISABLED_FRAGMENT = "DisabledFragment";
@@ -73,8 +75,8 @@ class DnDTreeCellRenderer extends DefaultTreeCellRenderer {
 	 */
 	DnDTreeCellRenderer() {
 		super();
-		defaultNonSelectionColor = new GColor("Tree.textBackground");
-		defaultSelectionColor = new GColor("Tree.selectionBackground");
+		defaultNonSelectionColor = BACKGROUND_UNSELECTED;
+		defaultSelectionColor = BACKGROUND_SELECTED;
 		rowForFeedback = -1;
 
 		// disable HTML rendering

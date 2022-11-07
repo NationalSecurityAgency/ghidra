@@ -150,8 +150,8 @@ public class ColorValue extends ThemeValue<Color> {
 	}
 
 	@Override
-	public void installValue() {
-		Gui.setColor(this);
+	public void installValue(ThemeManager themeManager) {
+		themeManager.setColor(this);
 	}
 
 }

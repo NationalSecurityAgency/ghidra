@@ -24,7 +24,7 @@ import ghidra.util.Msg;
 /**
  * Reads and writes current theme info to preferences
  */
-public class ThemePreferenceManager {
+public class ThemePreferences {
 	private static final String THEME_PREFFERENCE_KEY = "Theme";
 
 	/**
@@ -32,7 +32,7 @@ public class ThemePreferenceManager {
 	 * @return the last theme used (stored in preferences) or the default theme if not stored
 	 * in preferences
 	 */
-	public GTheme getTheme() {
+	public GTheme load() {
 		String themeId = Preferences.getProperty(THEME_PREFFERENCE_KEY, "Default", true);
 		if (themeId.startsWith(GTheme.FILE_PREFIX)) {
 			String filename = themeId.substring(GTheme.FILE_PREFIX.length());
@@ -55,14 +55,14 @@ public class ThemePreferenceManager {
 					"Can't find or instantiate class: " + className, e);
 			}
 		}
-		return Gui.getDefaultTheme();
+		return ThemeManager.getDefaultTheme();
 	}
 
 	/**
 	 * Saves the current theme choice to {@link Preferences}.
 	 * @param theme the theme to remember in {@link Preferences}
 	 */
-	public void saveThemeToPreferences(GTheme theme) {
+	public void save(GTheme theme) {
 		Preferences.setProperty(THEME_PREFFERENCE_KEY, theme.getThemeLocater());
 		Preferences.store();
 	}

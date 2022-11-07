@@ -73,7 +73,10 @@ public abstract class ThemeValue<T> implements Comparable<ThemeValue<T>> {
 
 	/**
 	 * Returns the T value for this instance, following references as needed. Uses the given
-	 * preferredValues map to resolve references.
+	 * preferredValues map to resolve references. If the value can't be resolved by following
+	 * reference chains, an error stack trace will be generated and the default T value will
+	 * be returned. In rare situations where it is acceptable for the value to not be resolvable,
+	 * use the {@link #hasResolvableValue(GThemeValueMap)} method first.
 	 * @param values the {@link GThemeValueMap} used to resolve references if this 
 	 * instance doesn't have an actual value.
 	 * @return the T value for this instance, following references as needed.
@@ -85,21 +88,53 @@ public abstract class ThemeValue<T> implements Comparable<ThemeValue<T>> {
 
 		Set<String> visitedKeys = new HashSet<>();
 		visitedKeys.add(id);
-		ThemeValue<T> parent = getReferredValue(values, referenceId);
+		ThemeValue<T> referred = getReferredValue(values, referenceId);
 
 		// loop resolving indirect references
-		while (parent != null) {
-			if (parent.value != null) {
-				return parent.value;
+		while (referred != null) {
+			if (referred.value != null) {
+				return referred.value;
 			}
-			visitedKeys.add(parent.id);
-			if (visitedKeys.contains(parent.referenceId)) {
+			visitedKeys.add(referred.id);
+			if (visitedKeys.contains(referred.referenceId)) {
 				Msg.warn(this, "Theme value reference loop detected for key: " + id);
-				return getUnresolvedReferenceValue(id, parent.referenceId);
+				return getUnresolvedReferenceValue(id, referred.referenceId);
 			}
-			parent = getReferredValue(values, parent.referenceId);
+			referred = getReferredValue(values, referred.referenceId);
 		}
 		return getUnresolvedReferenceValue(id, referenceId);
+	}
+
+	/**
+	 * Returns true if the ThemeValue can resolve to the concrete T value (color, font, or icon)
+	 * from the given set of theme values.
+	 * @param values the set of values to use to try and follow reference chains to ultimately
+	 * resolve the ThemeValue to a an actual T value 
+	 * @return true if the ThemeValue can resolve to the concrete T value (color, font, or icon)
+	 * from the given set of theme values.
+	 */
+	public boolean hasResolvableValue(GThemeValueMap values) {
+		if (value != null) {
+			return true;
+		}
+
+		Set<String> visitedKeys = new HashSet<>();
+		visitedKeys.add(id);
+		ThemeValue<T> referred = getReferredValue(values, referenceId);
+
+		// loop resolving indirect references
+		while (referred != null) {
+			if (referred.value != null) {
+				return true;
+			}
+			visitedKeys.add(referred.id);
+			if (visitedKeys.contains(referred.referenceId)) {
+				Msg.warn(this, "Theme value reference loop detected for key: " + id);
+				return false;
+			}
+			referred = getReferredValue(values, referred.referenceId);
+		}
+		return false;
 	}
 
 	/**
@@ -208,7 +243,8 @@ public abstract class ThemeValue<T> implements Comparable<ThemeValue<T>> {
 
 	/**
 	 * Install this value as the current value for the application
+	 * @param themeManager the application ThemeManager
 	 */
-	public abstract void installValue();
+	public abstract void installValue(ThemeManager themeManager);
 
 }

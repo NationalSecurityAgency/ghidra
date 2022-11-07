@@ -38,7 +38,6 @@ import docking.widgets.label.GLabel;
 import docking.widgets.list.GListCellRenderer;
 import generic.theme.GColor;
 import generic.theme.GIcon;
-import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
@@ -74,6 +73,8 @@ public class GhidraFileChooser extends DialogComponentProvider implements FileFi
 	static final String UP_BUTTON_NAME = "UP_BUTTON";
 	private static final Color FOREROUND_COLOR = new GColor("color.fg.filechooser");
 	private static final Color BACKGROUND_COLOR = new GColor("color.bg.filechooser");
+	private static final Color SHORTCUT_BACKGROUND_COLOR =
+		new GColor("color.bg.filechooser.shortcut");
 	static final String PREFERENCES_PREFIX = "G_FILE_CHOOSER";
 	private static final String WIDTH_PREFERENCE_PREFIX = PREFERENCES_PREFIX + ".WIDTH.";
 	private static final String HEIGHT_PREFERENCE_PREFIX = PREFERENCES_PREFIX + ".HEIGHT.";
@@ -343,7 +344,7 @@ public class GhidraFileChooser extends DialogComponentProvider implements FileFi
 
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setBorder(BorderFactory.createLoweredBevelBorder());
-		panel.setBackground(Palette.DARK_GRAY);
+		panel.setBackground(SHORTCUT_BACKGROUND_COLOR);
 		panel.add(shortCutPanel, BorderLayout.NORTH);
 		return panel;
 	}

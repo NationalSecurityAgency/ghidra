@@ -31,6 +31,8 @@ public class GTreeRenderer extends DefaultTreeCellRenderer implements GComponent
 
 	private static final Color VALID_DROP_TARGET_COLOR = new GColor("color.bg.tree.drag");
 	private static final int DEFAULT_MIN_ICON_WIDTH = 22;
+	private static final Color BACKGROUND_UNSELECTED = new GColor("color.bg.tree");
+	private static final Color BACKGROUND_SELECTED = new GColor("color.bg.tree.selected");
 
 	private Object dropTarget;
 	private boolean paintDropTarget;
@@ -41,6 +43,8 @@ public class GTreeRenderer extends DefaultTreeCellRenderer implements GComponent
 
 	public GTreeRenderer() {
 		setHTMLRenderingEnabled(false);
+		setBackgroundNonSelectionColor(BACKGROUND_UNSELECTED);
+		setBackgroundSelectionColor(BACKGROUND_SELECTED);
 	}
 
 	@Override

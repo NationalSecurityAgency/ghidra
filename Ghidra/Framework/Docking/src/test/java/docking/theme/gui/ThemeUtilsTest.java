@@ -41,67 +41,69 @@ import generic.theme.builtin.NimbusTheme;
 public class ThemeUtilsTest extends AbstractDockingTest {
 
 	private Color testColor = Palette.RED;
+	private ThemeManager themeManager;
 
 	@Before
 	public void setup() {
+		themeManager = ThemeManager.getInstance();
 		GTheme nimbusTheme = new NimbusTheme();
 		GTheme metalTheme = new MetalTheme();
-		Gui.addTheme(nimbusTheme);
-		Gui.addTheme(metalTheme);
-		Gui.setTheme(nimbusTheme);
+		themeManager.addTheme(nimbusTheme);
+		themeManager.addTheme(metalTheme);
+		themeManager.setTheme(nimbusTheme);
 
 		// get rid of any leftover imported themes from previous tests
-		Set<GTheme> allThemes = Gui.getAllThemes();
+		Set<GTheme> allThemes = themeManager.getAllThemes();
 		for (GTheme theme : allThemes) {
 			if (!(theme instanceof DiscoverableGTheme)) {
-				Gui.deleteTheme(theme);
+				themeManager.deleteTheme(theme);
 			}
 		}
 	}
 
 	@Test
 	public void testImportThemeNonZip() throws IOException {
-		assertEquals("Nimbus Theme", Gui.getActiveTheme().getName());
+		assertEquals("Nimbus Theme", themeManager.getActiveTheme().getName());
 		File themeFile = createThemeFile("Bob");
-		ThemeUtils.importTheme(themeFile);
-		assertEquals("Bob", Gui.getActiveTheme().getName());
+		ThemeUtils.importTheme(themeManager, themeFile);
+		assertEquals("Bob", themeManager.getActiveTheme().getName());
 
 	}
 
 	@Test
 	public void testImportThemeFromZip() throws IOException {
-		assertEquals("Nimbus Theme", Gui.getActiveTheme().getName());
+		assertEquals("Nimbus Theme", themeManager.getActiveTheme().getName());
 		File themeFile = createZipThemeFile("zippy");
-		ThemeUtils.importTheme(themeFile);
-		assertEquals("zippy", Gui.getActiveTheme().getName());
+		ThemeUtils.importTheme(themeManager, themeFile);
+		assertEquals("zippy", themeManager.getActiveTheme().getName());
 	}
 
 	@Test
 	public void testImportThemeWithCurrentChangesCancelled() throws IOException {
-		assertEquals("Nimbus Theme", Gui.getActiveTheme().getName());
-		Gui.setColor("Panel.background", testColor);
-		assertTrue(Gui.hasThemeChanges());
+		assertEquals("Nimbus Theme", themeManager.getActiveTheme().getName());
+		themeManager.setColor("Panel.background", testColor);
+		assertTrue(themeManager.hasThemeChanges());
 
 		File themeFile = createThemeFile("Bob");
-		runSwingLater(() -> ThemeUtils.importTheme(themeFile));
+		runSwingLater(() -> ThemeUtils.importTheme(themeManager, themeFile));
 		OptionDialog dialog = waitForDialogComponent(OptionDialog.class);
 		assertNotNull(dialog);
 		assertEquals("Save Theme Changes?", dialog.getTitle());
 		pressButtonByText(dialog, "Cancel");
 		waitForSwing();
-		assertEquals("Nimbus Theme", Gui.getActiveTheme().getName());
+		assertEquals("Nimbus Theme", themeManager.getActiveTheme().getName());
 	}
 
 	@Test
 	public void testImportThemeWithCurrentChangesSaved() throws IOException {
-		assertEquals("Nimbus Theme", Gui.getActiveTheme().getName());
+		assertEquals("Nimbus Theme", themeManager.getActiveTheme().getName());
 
 		// make a change in the current theme, so you get asked to save
-		Gui.setColor("Panel.background", testColor);
-		assertTrue(Gui.hasThemeChanges());
+		themeManager.setColor("Panel.background", testColor);
+		assertTrue(themeManager.hasThemeChanges());
 
 		File themeFile = createThemeFile("Bob");
-		runSwingLater(() -> ThemeUtils.importTheme(themeFile));
+		runSwingLater(() -> ThemeUtils.importTheme(themeManager, themeFile));
 		OptionDialog dialog = waitForDialogComponent(OptionDialog.class);
 		assertNotNull(dialog);
 		assertEquals("Save Theme Changes?", dialog.getTitle());
@@ -111,32 +113,32 @@ public class ThemeUtilsTest extends AbstractDockingTest {
 		runSwing(() -> inputDialog.setValue("Joe"));
 		pressButtonByText(inputDialog, "OK");
 		waitForSwing();
-		assertEquals("Bob", Gui.getActiveTheme().getName());
-		assertNotNull(Gui.getTheme("Joe"));
+		assertEquals("Bob", themeManager.getActiveTheme().getName());
+		assertNotNull(themeManager.getTheme("Joe"));
 	}
 
 	@Test
 	public void testImportThemeWithCurrentChangesThrownAway() throws IOException {
-		assertEquals("Nimbus Theme", Gui.getActiveTheme().getName());
+		assertEquals("Nimbus Theme", themeManager.getActiveTheme().getName());
 
 		// make a change in the current theme, so you get asked to save
-		Gui.setColor("Panel.background", testColor);
-		assertTrue(Gui.hasThemeChanges());
+		themeManager.setColor("Panel.background", testColor);
+		assertTrue(themeManager.hasThemeChanges());
 
 		File bobThemeFile = createThemeFile("Bob");
-		runSwingLater(() -> ThemeUtils.importTheme(bobThemeFile));
+		runSwingLater(() -> ThemeUtils.importTheme(themeManager, bobThemeFile));
 
 		OptionDialog dialog = waitForDialogComponent(OptionDialog.class);
 		assertNotNull(dialog);
 		assertEquals("Save Theme Changes?", dialog.getTitle());
 		pressButtonByText(dialog, "No");
 		waitForSwing();
-		assertEquals("Bob", Gui.getActiveTheme().getName());
+		assertEquals("Bob", themeManager.getActiveTheme().getName());
 	}
 
 	@Test
 	public void testExportThemeAsZip() throws IOException {
-		runSwingLater(() -> ThemeUtils.exportTheme());
+		runSwingLater(() -> ThemeUtils.exportTheme(themeManager));
 		OptionDialog dialog = waitForDialogComponent(OptionDialog.class);
 		pressButtonByText(dialog, "Export Zip");
 		ExportThemeDialog exportDialog = waitForDialogComponent(ExportThemeDialog.class);
@@ -151,7 +153,7 @@ public class ThemeUtilsTest extends AbstractDockingTest {
 
 	@Test
 	public void testExportThemeAsFile() throws IOException {
-		runSwingLater(() -> ThemeUtils.exportTheme());
+		runSwingLater(() -> ThemeUtils.exportTheme(themeManager));
 		OptionDialog dialog = waitForDialogComponent(OptionDialog.class);
 		pressButtonByText(dialog, "Export File");
 		ExportThemeDialog exportDialog = waitForDialogComponent(ExportThemeDialog.class);
@@ -167,29 +169,29 @@ public class ThemeUtilsTest extends AbstractDockingTest {
 	@Test
 	public void testDeleteTheme() throws IOException {
 		File themeFile = createThemeFile("Bob");
-		ThemeUtils.importTheme(themeFile);
+		ThemeUtils.importTheme(themeManager, themeFile);
 		themeFile = createThemeFile("Joe");
-		ThemeUtils.importTheme(themeFile);
+		ThemeUtils.importTheme(themeManager, themeFile);
 		themeFile = createThemeFile("Lisa");
-		ThemeUtils.importTheme(themeFile);
+		ThemeUtils.importTheme(themeManager, themeFile);
 
-		assertNotNull(Gui.getTheme("Bob"));
-		assertNotNull(Gui.getTheme("Joe"));
-		assertNotNull(Gui.getTheme("Lisa"));
+		assertNotNull(themeManager.getTheme("Bob"));
+		assertNotNull(themeManager.getTheme("Joe"));
+		assertNotNull(themeManager.getTheme("Lisa"));
 
-		runSwingLater(() -> ThemeUtils.deleteTheme());
+		runSwingLater(() -> ThemeUtils.deleteTheme(themeManager));
 		@SuppressWarnings("unchecked")
 		SelectFromListDialog<GTheme> dialog = waitForDialogComponent(SelectFromListDialog.class);
-		runSwing(() -> dialog.setSelectedObject(Gui.getTheme("Bob")));
+		runSwing(() -> dialog.setSelectedObject(themeManager.getTheme("Bob")));
 		pressButtonByText(dialog, "OK");
 
 		OptionDialog optionDialog = waitForDialogComponent(OptionDialog.class);
 		pressButtonByText(optionDialog, "Yes");
 		waitForSwing();
 
-		assertNotNull(Gui.getTheme("Bob"));
-		assertNull(Gui.getTheme("Joe"));
-		assertNotNull(Gui.getTheme("Lisa"));
+		assertNotNull(themeManager.getTheme("Bob"));
+		assertNull(themeManager.getTheme("Joe"));
+		assertNotNull(themeManager.getTheme("Lisa"));
 
 	}
 
@@ -231,7 +233,7 @@ public class ThemeUtilsTest extends AbstractDockingTest {
 		File file = createTempFile("Test_Theme", ".theme.zip");
 		GTheme outputTheme = new GTheme(file, themeName, LafType.METAL, false);
 		outputTheme.addColor(new ColorValue("Panel.Background", testColor));
-		outputTheme.saveToZip(file, false);
+		new ThemeWriter(outputTheme).writeThemeToZipFile(file);
 		return file;
 	}
 

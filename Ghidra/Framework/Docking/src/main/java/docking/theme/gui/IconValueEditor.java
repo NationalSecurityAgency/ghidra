@@ -37,7 +37,7 @@ public class IconValueEditor extends ThemeValueEditor<Icon> {
 
 	@Override
 	protected Icon getRawValue(String id) {
-		return Gui.getIcon(id, true);
+		return Gui.getIcon(id);
 	}
 
 	@Override

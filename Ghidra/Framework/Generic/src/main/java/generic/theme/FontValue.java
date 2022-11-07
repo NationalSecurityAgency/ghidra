@@ -232,8 +232,8 @@ public class FontValue extends ThemeValue<Font> {
 	}
 
 	@Override
-	public void installValue() {
-		Gui.setFont(this);
+	public void installValue(ThemeManager themeManager) {
+		themeManager.setFont(this);
 	}
 
 }

@@ -39,9 +39,11 @@ public class ThemeFontTableModel extends GDynamicColumnTableModel<FontValue, Obj
 	private GThemeValueMap currentValues;
 	private GThemeValueMap themeValues;
 	private GThemeValueMap defaultValues;
+	private ThemeManager themeManager;
 
-	public ThemeFontTableModel() {
+	public ThemeFontTableModel(ThemeManager themeManager) {
 		super(new ServiceProviderStub());
+		this.themeManager = themeManager;
 		load();
 	}
 
@@ -49,7 +51,7 @@ public class ThemeFontTableModel extends GDynamicColumnTableModel<FontValue, Obj
 	 * Reloads the just the current values shown in the table. Called whenever a font changes.
 	 */
 	public void reloadCurrent() {
-		currentValues = Gui.getAllValues();
+		currentValues = themeManager.getCurrentValues();
 		fonts = currentValues.getFonts();
 		fireTableDataChanged();
 	}
@@ -64,10 +66,10 @@ public class ThemeFontTableModel extends GDynamicColumnTableModel<FontValue, Obj
 	}
 
 	private void load() {
-		currentValues = Gui.getAllValues();
+		currentValues = themeManager.getCurrentValues();
 		fonts = currentValues.getFonts();
-		themeValues = Gui.getThemeValues();
-		defaultValues = Gui.getDefaults();
+		themeValues = themeManager.getThemeValues();
+		defaultValues = themeManager.getDefaults();
 	}
 
 	@Override

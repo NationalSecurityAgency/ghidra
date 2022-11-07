@@ -24,7 +24,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import generic.theme.Gui;
+import ghidra.docking.util.LookAndFeelUtils;
 import resources.ResourceManager;
 
 /**
@@ -123,7 +123,7 @@ public class EmptyBorderButton extends JButton {
 
 		// Mac OSX LNF doesn't give us rollover callbacks, so we have to add a mouse listener to
 		// do the work
-		if (Gui.isUsingAquaUI(getUI())) {
+		if (LookAndFeelUtils.isUsingAquaUI(getUI())) {
 			addMouseListener(new MouseAdapter() {
 				@Override
 				public void mouseEntered(MouseEvent e) {

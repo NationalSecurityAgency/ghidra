@@ -50,20 +50,9 @@ public class GColor extends Color {
 	 * @param id the id used to lookup the current value for this color
 	 */
 	public GColor(String id) {
-		this(id, true);
-	}
-
-	/**
-	 * Construct a GColor with an id that will be used to look up the current color associated with
-	 * that id, which can be changed at runtime.
-	 * @param id the id used to lookup the current value for this color
-	 * @param validate if true, an error will be generated if the id can't be resolved to a color
-	 * at this time
-	 */
-	public GColor(String id, boolean validate) {
 		super(0x808080);
 		this.id = id;
-		delegate = Gui.getColor(id, validate);
+		delegate = Gui.getColor(id);
 		inUseColors.add(this);
 
 	}
@@ -230,9 +219,11 @@ public class GColor extends Color {
 
 	/**
 	 * Reloads the delegate.
+	 * @param currentValues the map of current theme values
 	 */
-	public void refresh() {
-		Color color = Gui.getColor(id, false);
+	public void refresh(GThemeValueMap currentValues) {
+		ColorValue value = currentValues.getColor(id);
+		Color color = value == null ? null : value.get(currentValues);
 		if (color != null) {
 			if (alpha != null) {
 				delegate = new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha);
@@ -246,10 +237,11 @@ public class GColor extends Color {
 	/**
 	 * Static method for notifying all the existing GColors that colors have changed and they
 	 * should reload their cached indirect color. 
+	 * @param currentValues the map of current theme values
 	 */
-	public static void refreshAll() {
+	public static void refreshAll(GThemeValueMap currentValues) {
 		for (GColor gcolor : inUseColors.getValues()) {
-			gcolor.refresh();
+			gcolor.refresh(currentValues);
 		}
 	}
 

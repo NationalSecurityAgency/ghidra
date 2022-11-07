@@ -97,6 +97,16 @@ public class MultipleActionDockingToolbarButton extends EmptyBorderButton {
 		popupContext = createPopupContext();
 	}
 
+	@Override
+	public void updateUI() {
+
+		removeMouseListener(popupListener);
+
+		super.updateUI();
+
+		installMouseListeners();
+	}
+
 	private void installMouseListeners() {
 		MouseListener[] mouseListeners = getMouseListeners();
 		for (MouseListener mouseListener : mouseListeners) {

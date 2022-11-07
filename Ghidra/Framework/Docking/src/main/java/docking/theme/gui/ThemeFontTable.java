@@ -29,7 +29,7 @@ import docking.action.ActionContextProvider;
 import docking.widgets.table.GFilterTable;
 import docking.widgets.table.GTable;
 import generic.theme.FontValue;
-import generic.theme.Gui;
+import generic.theme.ThemeManager;
 import ghidra.util.Swing;
 
 /**
@@ -41,11 +41,13 @@ public class ThemeFontTable extends JPanel implements ActionContextProvider {
 	private FontValueEditor fontEditor = new FontValueEditor(this::fontValueChanged);
 	private GTable table;
 	private GFilterTable<FontValue> filterTable;
+	private ThemeManager themeManager;
 
-	public ThemeFontTable() {
+	public ThemeFontTable(ThemeManager themeManager) {
 		super(new BorderLayout());
+		this.themeManager = themeManager;
 
-		fontTableModel = new ThemeFontTableModel();
+		fontTableModel = new ThemeFontTableModel(themeManager);
 		filterTable = new GFilterTable<>(fontTableModel);
 		table = filterTable.getTable();
 		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -86,7 +88,7 @@ public class ThemeFontTable extends JPanel implements ActionContextProvider {
 		// run later - don't rock the boat in the middle of a listener callback
 		Swing.runLater(() -> {
 			FontValue newValue = (FontValue) event.getNewValue();
-			Gui.setFont(newValue);
+			themeManager.setFont(newValue);
 		});
 	}
 

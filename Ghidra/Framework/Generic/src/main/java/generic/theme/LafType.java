@@ -85,34 +85,36 @@ public enum LafType {
 	/**
 	 * Returns a LookAndFeelManager that can install and update the {@link LookAndFeel} associated
 	 * with this LafType.
+	 * @param themeManager The application ThemeManager
 	 * @return a LookAndFeelManager that can install and update the {@link LookAndFeel} associated
 	 * with this LafType.
 	 */
-	public LookAndFeelManager getLookAndFeelManager() {
-		return getManager(this);
+	public LookAndFeelManager getLookAndFeelManager(ApplicationThemeManager themeManager) {
+		return createManager(this, themeManager);
 	}
 
-	private static LookAndFeelManager getManager(LafType lookAndFeel) {
-		switch (lookAndFeel) {
+	private static LookAndFeelManager createManager(LafType type,
+			ApplicationThemeManager themeManager) {
+		switch (type) {
 			case MAC:
-				return new MacLookAndFeelManager();
+				return new MacLookAndFeelManager(themeManager);
 			case METAL:
-				return new MetalLookAndFeelManager();
+				return new MetalLookAndFeelManager(themeManager);
 			case WINDOWS:
-				return new WindowsLookAndFeelManager();
+				return new WindowsLookAndFeelManager(themeManager);
 			case WINDOWS_CLASSIC:
-				return new WindowsClassicLookAndFeelManager();
+				return new WindowsClassicLookAndFeelManager(themeManager);
 			case GTK:
-				return new GtkLookAndFeelManager();
+				return new GtkLookAndFeelManager(themeManager);
 			case MOTIF:
-				return new MotifLookAndFeelManager();
+				return new MotifLookAndFeelManager(themeManager);
 			case NIMBUS:
-				return new NimbusLookAndFeelManager();
+				return new NimbusLookAndFeelManager(themeManager);
 			case FLAT_DARK:
 			case FLAT_LIGHT:
-				return new FlatLookAndFeelManager(lookAndFeel);
+				return new FlatLookAndFeelManager(type, themeManager);
 			default:
-				throw new AssertException("No lookAndFeelManager defined for " + lookAndFeel);
+				throw new AssertException("No lookAndFeelManager defined for " + type);
 		}
 	}
 

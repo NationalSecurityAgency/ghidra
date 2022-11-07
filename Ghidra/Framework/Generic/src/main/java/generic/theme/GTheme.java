@@ -218,43 +218,6 @@ public class GTheme extends GThemeValueMap {
 	}
 
 	/**
-	 * Saves this theme to a new theme file. 
-	 * @param outputFile the file to save to
-	 * @param includeDefaults if true, write all values to the theme file including default values.
-	 * Otherwise, just values that are not the default values are written to the file.
-	 * @return a new FileGTheme that represents the new file/theme
-	 * @throws IOException if an I/O error occurs writing the theme file
-	 */
-	public GTheme saveToFile(File outputFile, boolean includeDefaults) throws IOException {
-
-		GTheme fileTheme = new GTheme(outputFile, name, lookAndFeel, useDarkDefaults);
-		if (includeDefaults) {
-			fileTheme.load(Gui.getDefaults());
-		}
-		fileTheme.load(this);
-		fileTheme.save();
-		return fileTheme;
-	}
-
-	/**
-	 * Saves this theme to a new theme file. 
-	 * @param outputFile the file to save to
-	 * @param includeDefaults if true, write all values to the theme file including default values.
-	 * Otherwise, just values that are not the default values are written to the file.
-	 * @throws IOException if an I/O error occurs writing the theme file
-	 */
-	public void saveToZip(File outputFile, boolean includeDefaults) throws IOException {
-
-		GTheme theme = new GTheme(name, lookAndFeel, useDarkDefaults);
-		if (includeDefaults) {
-			theme.load(Gui.getDefaults());
-		}
-		theme.load(this);
-		ThemeWriter writer = new ThemeWriter(theme);
-		writer.writeThemeToZipFile(outputFile);
-	}
-
-	/**
 	 * Reads a theme from a file. The file can be either a theme file or a zip file containing
 	 * a theme file and optionally a set of icon files.
 	 * @param file the file to read.

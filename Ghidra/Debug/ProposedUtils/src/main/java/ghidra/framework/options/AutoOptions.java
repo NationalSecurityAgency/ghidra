@@ -212,10 +212,10 @@ public interface AutoOptions {
 			else {
 				options.registerOption(key.getName(), type, defaultValue, help, description,
 					editor);
+				// TODO: Wish Ghidra would do this upon any option registration
+				options.putObject(key.getName(), defaultValue, type);
 			}
 
-			// TODO: Wish Ghidra would do this upon any option registration
-			options.putObject(key.getName(), defaultValue, type);
 		}
 	}
 

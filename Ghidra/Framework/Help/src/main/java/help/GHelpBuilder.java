@@ -21,7 +21,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-import generic.theme.Gui;
+import generic.theme.ApplicationThemeManager;
 import ghidra.framework.Application;
 import ghidra.framework.ApplicationConfiguration;
 import help.validator.*;
@@ -69,7 +69,7 @@ public class GHelpBuilder {
 		ApplicationConfiguration config = new ApplicationConfiguration() {
 			@Override
 			protected void initializeApplication() {
-				Gui.initialize();
+				ApplicationThemeManager.initialize();
 			}
 
 			@Override

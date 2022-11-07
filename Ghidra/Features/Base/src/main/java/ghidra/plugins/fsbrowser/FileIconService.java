@@ -66,7 +66,7 @@ public class FileIconService {
 	}
 
 	private void createSubstringMap() {
-		GThemeValueMap values = Gui.getAllValues();
+		GThemeValueMap values = ThemeManager.getInstance().getCurrentValues();
 		List<IconValue> icons = values.getIcons();
 		for (IconValue iconValue : icons) {
 			String id = iconValue.getId();

@@ -70,6 +70,7 @@ public abstract class DragNDropTree extends JTree implements Draggable, Droppabl
 
 	public DragNDropTree(DefaultTreeModel model) {
 		super(model);
+		setBackground(new GColor("color.bg.tree"));
 		treeModel = model;
 		this.root = (ProgramNode) model.getRoot();
 		//setEditable(true); // edit interferes with drag gesture listener

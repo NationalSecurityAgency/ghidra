@@ -17,6 +17,7 @@ package ghidra.service.graph;
 
 import static org.junit.Assert.*;
 
+import java.awt.Color;
 import java.awt.Font;
 import java.util.Arrays;
 import java.util.List;
@@ -24,32 +25,23 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
-import docking.FakeDockingTool;
-import docking.test.AbstractDockingTest;
+import generic.theme.*;
 import generic.theme.GThemeDefaults.Colors.Palette;
-import generic.theme.Gui;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
 import ghidra.util.HelpLocation;
 
-public class GraphDisplayOptionsTest extends AbstractDockingTest {
+public class GraphDisplayOptionsTest {
 
 	private GraphType graphType;
 	private GraphDisplayOptions options;
 
 	@Before
 	public void setUp() {
-		Gui.setColor("color.V1", Palette.BLACK);
-		Gui.setColor("color.V2", Palette.BLACK);
-		Gui.setColor("color.V3", Palette.BLACK);
-		Gui.setColor("color.E1", Palette.BLACK);
-		Gui.setColor("color.E2", Palette.BLACK);
-		Gui.setColor("color.E3", Palette.BLACK);
-		Gui.setColor("color.edge.default", Palette.BLACK);
-		Gui.setColor("color.vertex.default", Palette.BLACK);
-		Gui.setColor("color.edge.selected", Palette.BLACK);
-		Gui.setColor("color.vertex.selected", Palette.BLACK);
-		Gui.setFont("font.graph", new Font("monospaced", Font.PLAIN, 12));
+		// create a dummy theme manager that defines values for use in this test
+		DummyThemeManager themeManager = new DummyThemeManager();
+
+		// create a new graph definition and options using theme properties
 		List<String> vertexTypes = Arrays.asList("V1", "V2", "V3");
 		List<String> edgeTypes = Arrays.asList("E1", "E2", "E3");
 		graphType = new GraphType("Test", "Test Description", vertexTypes, edgeTypes);
@@ -286,22 +278,44 @@ public class GraphDisplayOptionsTest extends AbstractDockingTest {
 
 	}
 
-	@Test
-	public void testChangingToolOptionsAffectsGraph() {
-		FakeDockingTool tool = new FakeDockingTool();
-		ToolOptions toolOptions = tool.getOptions("Graph");
-		options.registerOptions(toolOptions, null);
-		options.initializeFromOptions(tool);
+	// Create a ThemeManager that it not fully initialized for speed. This class provides
+	// fake property theme values.
+	class DummyThemeManager extends StubThemeManager {
+		DummyThemeManager() {
+			installTestValues();
+			installExpectedValues();
+			installInGui();
+		}
 
-		AttributedVertex vertex = new AttributedVertex("Foo");
-		vertex.setVertexType("V1");
-		assertEquals(Palette.BLACK.getRGB(), options.getVertexColor(vertex).getRGB());
+		private void installExpectedValues() {
+			setColor(new ColorValue("color.vertex.selected", Color.BLACK));
+			setColor(new ColorValue("color.edge.selected", Color.BLACK));
+			setColor(new ColorValue("color.graphdisplay.vertex.default", Color.BLACK));
+			setColor(new ColorValue("color.graphdisplay.edge.default", Color.BLACK));
+			setFont(new FontValue("font.graph", new Font("monospaced", Font.PLAIN, 12)));
 
-		Options graphDisplayOptions = toolOptions.getOptions(options.getRootOptionsName());
-		Options vertexColorOptions = graphDisplayOptions.getOptions("Vertex Colors");
-		vertexColorOptions.setColor("V1", Palette.GOLD);
+		}
 
-		assertEquals(Palette.GOLD.getRGB(), options.getVertexColor(vertex).getRGB());
+		protected void installTestValues() {
+			setColor(new ColorValue("color.V1", Color.BLACK));
+			setColor(new ColorValue("color.V2", Color.BLACK));
+			setColor(new ColorValue("color.V3", Color.BLACK));
+			setColor(new ColorValue("color.E1", Color.BLACK));
+			setColor(new ColorValue("color.E2", Color.BLACK));
+			setColor(new ColorValue("color.E3", Color.BLACK));
+			setColor(new ColorValue("color.edge.default", Color.BLACK));
+			setColor(new ColorValue("color.vertex.default", Color.BLACK));
+			setColor(new ColorValue("color.edge.selected", Color.BLACK));
+			setColor(new ColorValue("color.vertex.selected", Color.BLACK));
+			setColor(new ColorValue("color.graphdisplay.vertex.selected", Color.BLACK));
+			setColor(new ColorValue("color.graphdisplay.edge.selected", Color.BLACK));
+			setColor(new ColorValue("color.vertex.selected", Color.BLACK));
+			setColor(new ColorValue("color.vertex.selected", Color.BLACK));
+
+			setFont(new FontValue("font.graph", new Font("monospaced", Font.PLAIN, 12)));
+			setFont(
+				new FontValue("font.graphdisplay.default", new Font("monospaced", Font.PLAIN, 12)));
+		}
+
 	}
-
 }

@@ -29,7 +29,7 @@ import docking.action.ActionContextProvider;
 import docking.widgets.table.GFilterTable;
 import docking.widgets.table.GTable;
 import generic.theme.ColorValue;
-import generic.theme.Gui;
+import generic.theme.ThemeManager;
 import ghidra.util.Swing;
 
 /**
@@ -41,10 +41,12 @@ public class ThemeColorTable extends JPanel implements ActionContextProvider {
 	private ColorValueEditor colorEditor = new ColorValueEditor(this::colorValueChanged);
 	private GTable table;
 	private GFilterTable<ColorValue> filterTable;
+	private ThemeManager themeManager;
 
-	public ThemeColorTable() {
+	public ThemeColorTable(ThemeManager themeManager) {
 		super(new BorderLayout());
-		colorTableModel = new ThemeColorTableModel();
+		this.themeManager = themeManager;
+		colorTableModel = new ThemeColorTableModel(themeManager);
 
 		filterTable = new GFilterTable<>(colorTableModel);
 		table = filterTable.getTable();
@@ -87,7 +89,7 @@ public class ThemeColorTable extends JPanel implements ActionContextProvider {
 		// run later - don't rock the boat in the middle of a listener callback
 		Swing.runLater(() -> {
 			ColorValue newValue = (ColorValue) event.getNewValue();
-			Gui.setColor(newValue);
+			themeManager.setColor(newValue);
 		});
 	}
 

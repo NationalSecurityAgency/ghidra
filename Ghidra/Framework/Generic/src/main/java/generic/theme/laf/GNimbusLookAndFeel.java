@@ -19,18 +19,32 @@ import java.awt.Color;
 import java.awt.Font;
 import java.util.List;
 
-import javax.swing.Icon;
-import javax.swing.UIDefaults;
+import javax.swing.*;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.nimbus.NimbusLookAndFeel;
 
 import generic.theme.*;
 
 /**
- * Extends the NimbusLookAndFeel to intercept the {@link #getDefaults()}. To get Nimbus
- * to use our indirect values, we have to get in early.
+ * Extends the {@link NimbusLookAndFeel} to intercept the {@link #getDefaults()}. Nimbus does 
+ * not honor changes to the UIDefaults after it is installed as the active
+ * {@link LookAndFeel}, so we have to make the changes at the time the UIDefaults are installed. 
+ *
+ * To get around this issue, we extend the NimbusLookAndFeel
+ * so that we can install our GColors and overridden properties as Nimbus is being installed,
+ * specifically during the call to the getDefaults() method. For all other Look And Feels, the
+ * GColors and overridden properties are changed in the UIDefaults after the Look And Feel is
+ * installed, so they don't need to extends the Look and Feel class.
+ *  
+ * Also, note that Nimbus needs to be reinstalled every time we need to make a change to any of the
+ * UIDefaults values, since it does not respond to changes other than when first installed.
  */
 public class GNimbusLookAndFeel extends NimbusLookAndFeel {
+	private ApplicationThemeManager themeManager;
+
+	GNimbusLookAndFeel(ApplicationThemeManager themeManager) {
+		this.themeManager = themeManager;
+	}
 
 	@Override
 	public UIDefaults getDefaults() {
@@ -40,13 +54,13 @@ public class GNimbusLookAndFeel extends NimbusLookAndFeel {
 		// replace all colors with GColors
 		for (ColorValue colorValue : javaDefaults.getColors()) {
 			String id = colorValue.getId();
-			defaults.put(id, Gui.getGColorUiResource(id));
+			defaults.put(id, themeManager.getGColorUiResource(id));
 		}
 
 		// put fonts back into defaults in case they have been changed by the current theme
 		for (FontValue fontValue : javaDefaults.getFonts()) {
 			String id = fontValue.getId();
-			Font font = Gui.getFont(id);
+			Font font = themeManager.getFont(id);
 			defaults.put(id, new FontUIResource(font));
 		}
 
@@ -55,13 +69,12 @@ public class GNimbusLookAndFeel extends NimbusLookAndFeel {
 			String id = iconValue.getId();
 			// because some icons are weird, put raw icons into defaults, only use GIcons for
 			// setting Icons explicitly on components
-			Icon icon = Gui.getIcon(id, true);
+			Icon icon = themeManager.getIcon(id);
 			defaults.put(id, icon);
 		}
 
-		defaults.put("Label.textForeground", Gui.getGColorUiResource("Label.foreground"));
-		GColor.refreshAll();
-		GIcon.refreshAll();
+		defaults.put("Label.textForeground", themeManager.getGColorUiResource("Label.foreground"));
+		themeManager.refreshGThemeValues();
 		return defaults;
 	}
 
@@ -90,7 +103,7 @@ public class GNimbusLookAndFeel extends NimbusLookAndFeel {
 		}
 		// need to set javaDefalts now to trigger building currentValues so the when
 		// we create GColors below, they can be resolved. 
-		Gui.setJavaDefaults(javaDefaults);
+		themeManager.setJavaDefaults(javaDefaults);
 		return javaDefaults;
 	}
 }

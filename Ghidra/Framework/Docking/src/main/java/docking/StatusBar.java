@@ -312,7 +312,7 @@ public class StatusBar extends JPanel {
 
 			int value = 0;
 			int delta = 16;
-			if (Gui.getActiveTheme().useDarkDefaults()) {
+			if (Gui.isDarkTheme()) {
 				value = 128;
 				delta = -16;
 			}

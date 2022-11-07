@@ -18,7 +18,7 @@ package ghidra.app.plugin.gui;
 import docking.action.builder.ActionBuilder;
 import docking.theme.gui.ThemeDialog;
 import docking.theme.gui.ThemeUtils;
-import generic.theme.Gui;
+import generic.theme.ThemeManager;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.framework.main.ApplicationLevelOnlyPlugin;
 import ghidra.framework.main.UtilityPluginPackage;
@@ -38,8 +38,11 @@ import ghidra.util.HelpLocation;
 //@formatter:on
 public class ThemeManagerPlugin extends Plugin implements ApplicationLevelOnlyPlugin {
 
+	private ThemeManager themeManager;
+
 	public ThemeManagerPlugin(PluginTool tool) {
 		super(tool);
+		themeManager = ThemeManager.getInstance();
 	}
 
 	@Override
@@ -52,35 +55,35 @@ public class ThemeManagerPlugin extends Plugin implements ApplicationLevelOnlyPl
 				.menuPath("Edit", "Theme")
 				.menuGroup(group, "1")
 				.helpLocation(new HelpLocation("Theming", "Edit_Theme"))
-				.onAction(e -> ThemeDialog.editTheme())
+				.onAction(e -> ThemeDialog.editTheme(themeManager))
 				.buildAndInstall(tool);
 
 		new ActionBuilder("Reset", owner)
 				.menuPath("Edit", themeSubMenu, "Reset Theme Values")
 				.menuGroup(group, "2")
 				.helpLocation(new HelpLocation("Theming", "Reset_Theme_Values"))
-				.onAction(e -> ThemeUtils.resetThemeToDefault())
+				.onAction(e -> ThemeUtils.resetThemeToDefault(themeManager))
 				.buildAndInstall(tool);
 
 		new ActionBuilder("Import Theme", owner)
 				.menuPath("Edit", themeSubMenu, "Import...")
 				.menuGroup(group, "3")
 				.helpLocation(new HelpLocation("Theming", "Import_Theme"))
-				.onAction(e -> ThemeUtils.importTheme())
+				.onAction(e -> ThemeUtils.importTheme(themeManager))
 				.buildAndInstall(tool);
 
 		new ActionBuilder("Export Theme", owner)
 				.menuPath("Edit", themeSubMenu, "Export...")
 				.menuGroup(group, "4")
 				.helpLocation(new HelpLocation("Theming", "Export_Theme"))
-				.onAction(e -> ThemeUtils.exportTheme())
+				.onAction(e -> ThemeUtils.exportTheme(themeManager))
 				.buildAndInstall(tool);
 
 		new ActionBuilder("Delete Theme", owner)
 				.menuPath("Edit", themeSubMenu, "Delete...")
 				.menuGroup(group, "5")
 				.helpLocation(new HelpLocation("Theming", "Delete_Theme"))
-				.onAction(e -> ThemeUtils.deleteTheme())
+				.onAction(e -> ThemeUtils.deleteTheme(themeManager))
 				.buildAndInstall(tool);
 
 		tool.setMenuGroup(new String[] { "Edit", themeSubMenu }, group, "2");
@@ -89,8 +92,8 @@ public class ThemeManagerPlugin extends Plugin implements ApplicationLevelOnlyPl
 
 	@Override
 	protected boolean canClose() {
-		if (Gui.hasThemeChanges()) {
-			return ThemeUtils.askToSaveThemeChanges();
+		if (themeManager.hasThemeChanges()) {
+			return ThemeUtils.askToSaveThemeChanges(themeManager);
 		}
 		return true;
 	}

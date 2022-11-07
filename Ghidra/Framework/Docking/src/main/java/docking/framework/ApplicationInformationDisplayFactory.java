@@ -32,9 +32,9 @@ import ghidra.util.Msg;
 
 public class ApplicationInformationDisplayFactory {
 
-	private static final GIcon ICON_HOME = new GIcon("icon.docking.application.home");
-	private static final GIcon ICON_16 = new GIcon("icon.docking.application.16");
-	private static final GIcon ICON_128 = new GIcon("icon.base.application.128");
+	private static final String ICON_HOME = "icon.docking.application.home";
+	private static final String ICON_16 = "icon.docking.application.16";
+	private static final String ICON_128 = "icon.docking.application.128";
 
 	static {
 		PluggableServiceRegistry.registerPluggableService(
@@ -144,13 +144,13 @@ public class ApplicationInformationDisplayFactory {
 	}
 
 	protected Icon getSplashScreenIcon128() {
-		return ICON_128;
+		return new GIcon(ICON_128);
 	}
 
 	protected List<Image> doGetWindowIcons() {
 		List<Image> list = new ArrayList<>();
-		list.add(ICON_128.getImageIcon().getImage());
-		list.add(ICON_16.getImageIcon().getImage());
+		list.add(new GIcon(ICON_128).getImageIcon().getImage());
+		list.add(new GIcon(ICON_16).getImageIcon().getImage());
 		return list;
 	}
 
@@ -163,7 +163,7 @@ public class ApplicationInformationDisplayFactory {
 	}
 
 	protected Icon doGetHomeIcon() {
-		return ICON_HOME;
+		return new GIcon(ICON_HOME);
 	}
 
 	protected Runnable doGetHomeCallback() {

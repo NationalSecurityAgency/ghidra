@@ -21,10 +21,12 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import javax.swing.UIDefaults;
-import javax.swing.UIManager;
+import javax.swing.*;
+import javax.swing.plaf.ComponentUI;
 
 import docking.framework.ApplicationInformationDisplayFactory;
+import generic.theme.LafType;
+import generic.theme.ThemeManager;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.SystemUtilities;
 
@@ -81,4 +83,30 @@ public class LookAndFeelUtils {
 			}
 		}
 	}
+
+	/**
+	 * Returns the {@link LafType} for the currently active {@link LookAndFeel}
+	 * @return the {@link LafType} for the currently active {@link LookAndFeel}
+	 */
+	public static LafType getLookAndFeelType() {
+		return ThemeManager.getInstance().getLookAndFeelType();
+	}
+
+	/**
+	 * Returns true if the given UI object is using the Aqua Look and Feel.
+	 * @param UI the UI to examine.
+	 * @return true if the UI is using Aqua
+	 */
+	public static boolean isUsingAquaUI(ComponentUI UI) {
+		return ThemeManager.getInstance().isUsingAquaUI(UI);
+	}
+
+	/**
+	 * Returns true if 'Nimbus' is the current Look and Feel
+	 * @return true if 'Nimbus' is the current Look and Feel
+	 */
+	public static boolean isUsingNimbusUI() {
+		return ThemeManager.getInstance().isUsingNimbusUI();
+	}
+
 }

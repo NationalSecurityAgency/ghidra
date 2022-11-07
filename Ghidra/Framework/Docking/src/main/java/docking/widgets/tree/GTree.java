@@ -45,6 +45,7 @@ import docking.widgets.tree.internal.*;
 import docking.widgets.tree.support.*;
 import docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin;
 import docking.widgets.tree.tasks.*;
+import generic.theme.*;
 import generic.timer.ExpiringSwingTimer;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
@@ -55,8 +56,8 @@ import ghidra.util.worker.PriorityWorker;
  * Class for creating a JTree that supports filtering, threading, and a progress bar.
  */
 
-public class GTree extends JPanel implements BusyListener {
-
+public class GTree extends JPanel implements BusyListener, ThemeListener {
+	private static final Color BACKGROUND = new GColor("color.bg.tree");
 	private AutoScrollTree tree;
 	private GTreeModel model;
 
@@ -134,6 +135,7 @@ public class GTree extends JPanel implements BusyListener {
 				uniquePreferenceKey));
 
 		filterUpdateManager = new SwingUpdateManager(1000, 30000, () -> updateModelFilter());
+		Gui.addThemeListener(this);
 	}
 
 	/**
@@ -144,6 +146,13 @@ public class GTree extends JPanel implements BusyListener {
 	 */
 	void setThreadLocalMonitor(TaskMonitor monitor) {
 		threadLocalMonitor.set(monitor);
+	}
+
+	@Override
+	public void themeChanged(ThemeEvent event) {
+		if (event.isLookAndFeelChanged()) {
+			model.fireNodeStructureChanged(getModelRoot());
+		}
 	}
 
 	/**
@@ -1391,6 +1400,7 @@ public class GTree extends JPanel implements BusyListener {
 
 		public AutoScrollTree(TreeModel model) {
 			super(model);
+			setBackground(BACKGROUND);
 			scroller = new AutoscrollAdapter(this, 5);
 
 			setRowHeight(-1);// variable size rows

@@ -33,8 +33,7 @@ import docking.actions.KeyBindingUtils;
 import docking.options.editor.FontEditor;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
-import generic.theme.GIcon;
-import generic.theme.Gui;
+import generic.theme.*;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
@@ -274,7 +273,7 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 		FontEditor editor = new FontEditor();
 		editor.setValue(Gui.getFont(FONT_ID));
 		editor.showDialog();
-		Gui.setFont(FONT_ID, (Font) editor.getValue());
+		ThemeManager.getInstance().setFont(FONT_ID, (Font) editor.getValue());
 	}
 
 	private void save() {

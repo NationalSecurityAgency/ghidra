@@ -43,9 +43,11 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 	private GThemeValueMap defaultValues;
 	private GThemeValueMap lightDefaultValues;
 	private GThemeValueMap darkDefaultValues;
+	private ThemeManager themeManager;
 
-	public ThemeColorTableModel() {
+	public ThemeColorTableModel(ThemeManager themeManager) {
 		super(new ServiceProviderStub());
+		this.themeManager = themeManager;
 		load();
 	}
 
@@ -53,7 +55,7 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 	 * Reloads the just the current values shown in the table. Called whenever a color changes.
 	 */
 	public void reloadCurrent() {
-		currentValues = Gui.getAllValues();
+		currentValues = themeManager.getCurrentValues();
 		colors = currentValues.getColors();
 		fireTableDataChanged();
 	}
@@ -67,20 +69,17 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 		fireTableDataChanged();
 	}
 
-	/**
-	 * Returns the original value for the current theme
-	 */
-	public ColorValue getThemeValue(String id) {
+	ColorValue getThemeValue(String id) {
 		return themeValues.getColor(id);
 	}
 
 	private void load() {
-		currentValues = Gui.getAllValues();
+		currentValues = themeManager.getCurrentValues();
 		colors = currentValues.getColors();
-		themeValues = Gui.getThemeValues();
-		defaultValues = Gui.getDefaults();
-		lightDefaultValues = Gui.getApplicationLightDefaults();
-		darkDefaultValues = Gui.getApplicationDarkDefaults();
+		themeValues = themeManager.getThemeValues();
+		defaultValues = themeManager.getDefaults();
+		lightDefaultValues = themeManager.getApplicationLightDefaults();
+		darkDefaultValues = themeManager.getApplicationDarkDefaults();
 
 	}
 
@@ -155,7 +154,10 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 			if (colorValue == null) {
 				return null;
 			}
-			Color color = colorValue.get(valueMap);
+			Color color = colorValue.hasResolvableValue(valueMap) ? colorValue.get(valueMap) : null;
+			if (color == null) {
+				return null;
+			}
 			return new ResolvedColor(id, colorValue.getReferenceId(), color);
 		}
 

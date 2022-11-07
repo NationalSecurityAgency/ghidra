@@ -23,6 +23,7 @@ import javax.swing.*;
 
 import docking.action.*;
 import generic.theme.Gui;
+import generic.theme.ThemeManager;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
 import help.HelpDescriptor;
@@ -801,7 +802,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		else {
 			size = Math.max(size - 1, 3);
 		}
-		Gui.setFont(registeredFontId, font.deriveFont((float) size));
+		ThemeManager.getInstance().setFont(registeredFontId, font.deriveFont((float) size));
 	}
 
 	/**

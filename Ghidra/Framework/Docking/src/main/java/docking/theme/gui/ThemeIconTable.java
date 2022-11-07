@@ -26,8 +26,8 @@ import docking.ActionContext;
 import docking.action.ActionContextProvider;
 import docking.widgets.table.GFilterTable;
 import docking.widgets.table.GTable;
-import generic.theme.Gui;
 import generic.theme.IconValue;
+import generic.theme.ThemeManager;
 import ghidra.util.Swing;
 
 /**
@@ -39,10 +39,12 @@ public class ThemeIconTable extends JPanel implements ActionContextProvider {
 	private IconValueEditor iconEditor = new IconValueEditor(this::iconValueChanged);
 	private GTable table;
 	private GFilterTable<IconValue> filterTable;
+	private ThemeManager themeManager;
 
-	public ThemeIconTable() {
+	public ThemeIconTable(ThemeManager themeManager) {
 		super(new BorderLayout());
-		iconTableModel = new ThemeIconTableModel();
+		this.themeManager = themeManager;
+		iconTableModel = new ThemeIconTableModel(themeManager);
 		filterTable = new GFilterTable<>(iconTableModel);
 		table = filterTable.getTable();
 		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -82,7 +84,7 @@ public class ThemeIconTable extends JPanel implements ActionContextProvider {
 		// run later - don't rock the boat in the middle of a listener callback
 		Swing.runLater(() -> {
 			IconValue newValue = (IconValue) event.getNewValue();
-			Gui.setIcon(newValue);
+			themeManager.setIcon(newValue);
 		});
 	}
 
