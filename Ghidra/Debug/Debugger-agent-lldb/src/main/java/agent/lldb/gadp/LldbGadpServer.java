@@ -23,6 +23,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import agent.lldb.gadp.impl.LldbGadpServerImpl;
+import ghidra.async.AsyncUtils;
 import ghidra.dbg.agent.AgentWindow;
 import ghidra.util.Msg;
 
@@ -73,7 +74,8 @@ public interface LldbGadpServer extends AutoCloseable {
 			try (LldbGadpServer server = newInstance(bindTo)) {
 				//TODO: fix/test the debugConnect case when args are passed
 				server.startLLDB(lldbArgs.toArray(new String[] {})).exceptionally(e -> {
-					Msg.error(this, "Error starting lldb/GADP", e);
+					e = AsyncUtils.unwrapThrowable(e);
+					Msg.error(this, "Error starting lldb/GADP: " + e);
 					System.exit(-1);
 					return null;
 				});
