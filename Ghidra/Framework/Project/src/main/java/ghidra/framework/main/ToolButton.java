@@ -41,20 +41,19 @@ import ghidra.util.bean.GGlassPane;
 import ghidra.util.exception.AssertException;
 import help.Help;
 import help.HelpService;
+import utility.function.Dummy;
 
 /**
  * Component that is a drop target for a DataTreeTransferable object.
  * If the object contains a domain file that is supported by a tool of
  * this tool template, then a tool is launched with the data in it.
  * <p>
- * This button can be used in one of two ways: to launch new instances of an associated tool 
+ * This button can be used in one of two ways: to launch new instances of an associated tool
  * template, or to represent a running tool.
  */
 class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 
-	private static final Runnable DUMMY_CALLBACK_RUNNABLE = () -> {
-		// dummy
-	};
+	private static final Runnable DUMMY_RUNNABLE = Dummy.runnable();
 
 	private DropTarget dropTarget;
 	private DropTgtAdapter dropTargetAdapter;
@@ -74,6 +73,8 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 	/**
 	 * Construct a tool button that does not represent a running tool, using
 	 * the default tool icon.
+	 * @param plugin the plugin
+	 * @param template the template
 	 */
 	ToolButton(FrontEndPlugin plugin, ToolTemplate template) {
 		this(plugin, null, template, template.getIconURL());
@@ -83,6 +84,9 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 	/**
 	 * Construct a tool label that represents a running tool, using the
 	 * default RUNNING_TOOL icon.
+	 * @param plugin the plugin
+	 * @param tool the running tool
+	 * @param template the template
 	 */
 	ToolButton(FrontEndPlugin plugin, PluginTool tool, ToolTemplate template) {
 		this(plugin, tool, template, tool.getIconURL());
@@ -99,7 +103,6 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 		associatedRunningTool = tool;
 		this.template = template;
 		setUpDragDrop();
-		setToolTipText(generateToolTipText());
 
 		// configure the look and feel of the button
 		setVerticalTextPosition(SwingConstants.BOTTOM);
@@ -135,14 +138,11 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 		}
 	}
 
-	private String generateToolTipText() {
+	@Override
+	public String getToolTipText() {
 		if (associatedRunningTool != null) {
-			if (associatedRunningTool instanceof PluginTool) {
-				return "<html>" +
-					HTMLUtilities.escapeHTML(associatedRunningTool.getToolFrame().getTitle());
-			}
-
-			return "<html>" + HTMLUtilities.escapeHTML(associatedRunningTool.getName());
+			return "<html>" +
+				HTMLUtilities.escapeHTML(associatedRunningTool.getToolFrame().getTitle());
 		}
 		return "<html>" + HTMLUtilities.escapeHTML(template.getName());
 	}
@@ -151,9 +151,9 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 		doLaunchTool(new DomainFile[] { domainFile });
 	}
 
-//==================================================================================================    
+//==================================================================================================
 // Droppable interface
-//==================================================================================================    
+//==================================================================================================
 
 	/**
 	 * Set drag feedback according to the OK parameter.
@@ -211,7 +211,7 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 
 	/**
 	 * The given list must contain only valid domain files (i.e., no folders or null items)
-	 * @param nodeList The list of DataTreeNode objects to validate
+	 * @param fileList The list of file objects to validate
 	 * @return true if <b>all</b> items in the list are supported
 	 */
 	private boolean containsSupportedDataTypes(List<DomainFile> fileList) {
@@ -239,7 +239,7 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 	 * calls this method from its drop() method.
 	 *
 	 * @param obj Transferable object that is to be dropped.
-	 * @param e  has current state of drop operation
+	 * @param event has current state of drop operation
 	 * @param f represents the opaque concept of a data format as
 	 * would appear on a clipboard, during drag and drop.
 	 */
@@ -375,8 +375,8 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 		return task.getVersionedObject();
 	}
 
-//==================================================================================================    
-// Draggable interface 
+//==================================================================================================
+// Draggable interface
 //==================================================================================================
 
 	/** Fix the button state after dragging/dropping, since this is broken in Java */
@@ -402,7 +402,7 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 
 		// Unusual Code Alert!
 		// When dragging, we do not get mouseReleased() events, which we use to launch tools.
-		// In this case, the drag was cancelled; if we are over ourselves, then simulate 
+		// In this case, the drag was cancelled; if we are over ourselves, then simulate
 		// the Java-eaten mouseReleased() call
 		Container parent = getParent();
 		if (parent == null) {
@@ -457,11 +457,6 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 		return plugin.getToolButtonTransferable();
 	}
 
-	/**
-	 * Do the move operation; called when the drag and drop operation
-	 * completes.
-	 * @see ghidra.util.bean.dnd.DragSourceAdapter#dragDropEnd
-	 */
 	@Override
 	public void move() {
 		resetButtonAfterDrag(this);
@@ -484,11 +479,8 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 
 //==================================================================================================
 // Package methods
-//==================================================================================================    
+//==================================================================================================
 
-	/**
-	 * Set the tool template for this button.
-	 */
 	void setToolTemplate(ToolTemplate template, Icon icon) {
 		this.template = template;
 		setIcon(icon);
@@ -498,16 +490,10 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 		return template;
 	}
 
-	/**
-	 * Return whether this tool button represents a running tool.
-	 */
 	boolean isRunningTool() {
 		return associatedRunningTool != null;
 	}
 
-	/**
-	 * Close the running tool.
-	 */
 	void closeTool() {
 		associatedRunningTool.close();
 	}
@@ -548,7 +534,7 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 	}
 
 	private void openFilesAndOpenToolAsNecessary(final DomainFile[] domainFiles) {
-		openFilesAndOpenToolAsNecessary(domainFiles, DUMMY_CALLBACK_RUNNABLE);
+		openFilesAndOpenToolAsNecessary(domainFiles, DUMMY_RUNNABLE);
 	}
 
 	private void openFilesAndOpenToolAsNecessary(final DomainFile[] domainFiles,
@@ -565,7 +551,7 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 		Component glassPane = toolFrame.getGlassPane();
 		if (!(glassPane instanceof GGlassPane)) {
 			// We cannot perform the tool launching animation, so just do the old fashion way
-			Msg.debug(this, "Found root frame without a GhidraGlassPane registered!");
+			Msg.debug(this, "Found root frame without a GGlassPane registered!");
 
 			// try to recover without animation
 			PluginTool newTool = plugin.getActiveWorkspace().runTool(template);
@@ -600,9 +586,9 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 		// the final point over which the image will be painted
 		Rectangle endBounds = new Rectangle(new Point(0, 0), frameSize);
 
-		// Create our animation code: a zooming effect and an effect to move where the image is 
-		// painted.  These effects are independent code-wise, but work together in that the 
-		// mover will set the location and size, and the zoomer will will paint the image with 
+		// Create our animation code: a zooming effect and an effect to move where the image is
+		// painted.  These effects are independent code-wise, but work together in that the
+		// mover will set the location and size, and the zoomer will will paint the image with
 		// a transparency and a zoom level, which is affected by the movers bounds changing.
 		Image image = ZoomedImagePainter.createIconImage(icon);
 		final ZoomedImagePainter painter = new ZoomedImagePainter(startBounds, image);
@@ -690,8 +676,8 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 	}
 
 //==================================================================================================
-// Inner Classes    
-//==================================================================================================    
+// Inner Classes
+//==================================================================================================
 
 	private class ToolChangeListener implements DefaultToolChangeListener {
 		private final ToolTemplate toolTemplate;
