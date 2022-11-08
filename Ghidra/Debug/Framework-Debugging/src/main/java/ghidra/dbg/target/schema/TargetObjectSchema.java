@@ -18,6 +18,7 @@ package ghidra.dbg.target.schema;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import ghidra.dbg.agent.DefaultTargetObject;
@@ -420,6 +421,39 @@ public interface TargetObjectSchema {
 	}
 
 	/**
+	 * Get the list of schemas traversed from this schema along the given (sub) path
+	 * 
+	 * <p>
+	 * This list always begins with this schema, followed by the child schema for each key in the
+	 * path. Thus, for a path of length n, the resulting list has n+1 entries. This is useful for
+	 * searches along the ancestry of a given path:
+	 * 
+	 * <pre>
+	 * List<TargetObjectSchema> schemas = getSuccessorSchemas(path);
+	 * for (; path != null; path = PathUtils.parent(path)) {
+	 * 	TargetObjectSchema schema = schemas.get(path.size());
+	 * 	// ...
+	 * }
+	 * </pre>
+	 * 
+	 * <p>
+	 * All entries are non-null, though they may be {@link EnumerableTargetObjectSchema#VOID}.
+	 * 
+	 * @param path the relative path from an object having this schema to the desired successor
+	 * @return the list of schemas traversed, ending with the successor's schema
+	 */
+	default List<TargetObjectSchema> getSuccessorSchemas(List<String> path) {
+		List<TargetObjectSchema> result = new ArrayList<>();
+		TargetObjectSchema schema = this;
+		result.add(schema);
+		for (String key : path) {
+			schema = schema.getChildSchema(key);
+			result.add(schema);
+		}
+		return result;
+	}
+
+	/**
 	 * Do the same as {@link #searchFor(Class, List, boolean)} with an empty prefix
 	 */
 	default PathMatcher searchFor(Class<? extends TargetObject> type, boolean requireCanonical) {
@@ -541,6 +575,39 @@ public interface TargetObjectSchema {
 			}
 		}
 
+		private static class InAggregateSearch extends BreadthFirst<SearchEntry> {
+			final Set<TargetObjectSchema> visited = new HashSet<>();
+
+			public InAggregateSearch(TargetObjectSchema seed) {
+				super(Set.of(new SearchEntry(List.of(), seed)));
+			}
+
+			@Override
+			public boolean descend(SearchEntry ent) {
+				return ent.schema.getInterfaces().contains(TargetAggregate.class);
+			}
+
+			@Override
+			public void expandAttribute(Set<SearchEntry> nextLevel, SearchEntry ent,
+					TargetObjectSchema schema, List<String> path) {
+				if (visited.add(schema)) {
+					nextLevel.add(new SearchEntry(path, schema));
+				}
+			}
+
+			@Override
+			public void expandDefaultAttribute(Set<SearchEntry> nextLevel, SearchEntry ent) {
+			}
+
+			@Override
+			public void expandElements(Set<SearchEntry> nextLevel, SearchEntry ent) {
+			}
+
+			@Override
+			public void expandDefaultElement(Set<SearchEntry> nextLevel, SearchEntry ent) {
+			}
+		}
+
 		private static void searchFor(TargetObjectSchema sch, PathMatcher result,
 				List<String> prefix, boolean parentIsCanonical, Class<? extends TargetObject> type,
 				boolean requireCanonical, Set<TargetObjectSchema> visited) {
@@ -578,40 +645,12 @@ public interface TargetObjectSchema {
 			visited.remove(sch);
 		}
 
-		static List<String> searchForSuitableInAggregate(TargetObjectSchema seed,
-				Class<? extends TargetObject> type) {
-			Set<SearchEntry> init = Set.of(new SearchEntry(List.of(), seed));
-			BreadthFirst<SearchEntry> breadth = new BreadthFirst<>(init) {
-				final Set<TargetObjectSchema> visited = new HashSet<>();
-
-				@Override
-				public boolean descend(SearchEntry ent) {
-					return ent.schema.getInterfaces().contains(TargetAggregate.class);
-				}
-
-				@Override
-				public void expandAttribute(Set<SearchEntry> nextLevel, SearchEntry ent,
-						TargetObjectSchema schema, List<String> path) {
-					if (visited.add(schema)) {
-						nextLevel.add(new SearchEntry(path, schema));
-					}
-				}
-
-				@Override
-				public void expandDefaultAttribute(Set<SearchEntry> nextLevel, SearchEntry ent) {
-				}
-
-				@Override
-				public void expandElements(Set<SearchEntry> nextLevel, SearchEntry ent) {
-				}
-
-				@Override
-				public void expandDefaultElement(Set<SearchEntry> nextLevel, SearchEntry ent) {
-				}
-			};
-			while (!breadth.allOnLevel.isEmpty()) {
-				Set<SearchEntry> found = breadth.allOnLevel.stream()
-						.filter(ent -> ent.schema.getInterfaces().contains(type))
+		static List<String> searchForInAggregate(TargetObjectSchema seed,
+				Predicate<SearchEntry> predicate) {
+			InAggregateSearch inAgg = new InAggregateSearch(seed);
+			while (!inAgg.allOnLevel.isEmpty()) {
+				Set<SearchEntry> found = inAgg.allOnLevel.stream()
+						.filter(predicate)
 						.collect(Collectors.toSet());
 				if (!found.isEmpty()) {
 					if (found.size() == 1) {
@@ -619,9 +658,26 @@ public interface TargetObjectSchema {
 					}
 					return null;
 				}
-				breadth.nextLevel();
+				inAgg.nextLevel();
 			}
 			return null;
+		}
+
+		static List<String> searchForSuitableInAggregate(TargetObjectSchema seed,
+				Class<? extends TargetObject> type) {
+			return searchForInAggregate(seed, ent -> ent.schema.getInterfaces().contains(type));
+		}
+
+		static List<String> searchForSuitableContainerInAggregate(TargetObjectSchema seed,
+				Class<? extends TargetObject> type) {
+			return searchForInAggregate(seed, ent -> {
+				if (!ent.schema.isCanonicalContainer()) {
+					return false;
+				}
+				TargetObjectSchema deSchema =
+					ent.schema.getContext().getSchema(ent.schema.getDefaultElementSchema());
+				return deSchema.getInterfaces().contains(type);
+			});
 		}
 	}
 
@@ -704,12 +760,37 @@ public interface TargetObjectSchema {
 	 * @return the expected path of the suitable object, or null
 	 */
 	default List<String> searchForSuitable(Class<? extends TargetObject> type, List<String> path) {
+		List<TargetObjectSchema> schemas = getSuccessorSchemas(path);
 		for (; path != null; path = PathUtils.parent(path)) {
-			TargetObjectSchema schema = getSuccessorSchema(path);
+			TargetObjectSchema schema = schemas.get(path.size());
 			if (schema.getInterfaces().contains(type)) {
 				return path;
 			}
 			List<String> inAgg = Private.searchForSuitableInAggregate(schema, type);
+			if (inAgg != null) {
+				return PathUtils.extend(path, inAgg);
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Like {@link #searchForSuitable(Class, List)}, but searches for the canonical container whose
+	 * elements have the given type
+	 * 
+	 * @param type the type of object sought
+	 * @param path the path of a seed object
+	 * @return the expected path of the suitable container of those objects, or null
+	 */
+	default List<String> searchForSuitableContainer(Class<? extends TargetObject> type,
+			List<String> path) {
+		List<TargetObjectSchema> schemas = getSuccessorSchemas(path);
+		for (; path != null; path = PathUtils.parent(path)) {
+			TargetObjectSchema schema = schemas.get(path.size());
+			if (schema.getInterfaces().contains(type)) {
+				return path;
+			}
+			List<String> inAgg = Private.searchForSuitableContainerInAggregate(schema, type);
 			if (inAgg != null) {
 				return PathUtils.extend(path, inAgg);
 			}
@@ -732,6 +813,32 @@ public interface TargetObjectSchema {
 		for (; path != null; path = PathUtils.parent(path)) {
 			TargetObjectSchema schema = getSuccessorSchema(path);
 			if (schema.getInterfaces().contains(type)) {
+				return path;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Find the nearest ancestor which is the canonical container of the given interface
+	 * 
+	 * <p>
+	 * If the given path is such a container, it is returned, i.e., it is not strictly an ancestor.
+	 * 
+	 * @param type the interface whose canonical container to search for
+	 * @param path the seed path
+	 * @return the found path, or {@code null} if no such ancestor was found
+	 */
+	default List<String> searchForAncestorContainer(Class<? extends TargetObject> type,
+			List<String> path) {
+		for (; path != null; path = PathUtils.parent(path)) {
+			TargetObjectSchema schema = getSuccessorSchema(path);
+			if (!schema.isCanonicalContainer()) {
+				continue;
+			}
+			TargetObjectSchema deSchema =
+				schema.getContext().getSchema(schema.getDefaultElementSchema());
+			if (deSchema.getInterfaces().contains(type)) {
 				return path;
 			}
 		}

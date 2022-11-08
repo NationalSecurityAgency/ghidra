@@ -263,7 +263,7 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 			return legacyPanel.isContextNonEmpty(legacyCtx);
 		}
 		else if (context instanceof DebuggerObjectActionContext ctx) {
-			return panel.isContextNonEmpty(ctx);
+			return DebuggerRegionsPanel.isContextNonEmpty(ctx);
 		}
 		return false;
 	}

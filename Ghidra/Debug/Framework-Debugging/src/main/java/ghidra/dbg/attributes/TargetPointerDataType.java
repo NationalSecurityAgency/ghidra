@@ -15,6 +15,9 @@
  */
 package ghidra.dbg.attributes;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+
 public interface TargetPointerDataType extends TargetDataType {
 	public class DefaultTargetPointerDataType implements TargetPointerDataType {
 		protected final TargetDataType referentType;
@@ -26,6 +29,13 @@ public interface TargetPointerDataType extends TargetDataType {
 		@Override
 		public TargetDataType getReferentType() {
 			return referentType;
+		}
+
+		@Override
+		public JsonElement toJson() {
+			JsonObject object = new JsonObject();
+			object.add("referentType", referentType.toJson());
+			return object;
 		}
 	}
 

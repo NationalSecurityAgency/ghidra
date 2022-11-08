@@ -79,7 +79,6 @@ public class DBTraceProgramViewMemory extends AbstractDBTraceProgramViewMemory {
 		// TODO: Performance test this
 		forVisibleRegions(reg -> temp.add(reg.getRange()));
 		addressSet = temp;
-		System.err.println("Recomputed: " + temp);
 	}
 
 	protected MemoryBlock getRegionBlock(TraceMemoryRegion region) {

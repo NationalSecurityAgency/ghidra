@@ -54,8 +54,7 @@ import ghidra.trace.database.symbol.*;
 import ghidra.trace.database.target.DBTraceObjectManager;
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.database.time.DBTraceTimeManager;
-import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.Trace;
+import ghidra.trace.model.*;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.property.TraceAddressPropertyManager;
@@ -67,8 +66,7 @@ import ghidra.trace.util.TraceChangeRecord;
 import ghidra.util.*;
 import ghidra.util.database.*;
 import ghidra.util.datastruct.ListenerSet;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.VersionException;
+import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 // TODO: Need some subscription model to ensure record lifespans stay within lifespan of threads
@@ -217,6 +215,14 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 				new CompilerSpecID(traceInfo.getString(BASE_COMPILER, null)));
 			baseAddressFactory = new TraceAddressFactory(baseLanguage, baseCompilerSpec);
 		}
+	}
+
+	@Override
+	public void dbError(IOException e) {
+		if (e instanceof ClosedException) {
+			throw new TraceClosedException(e);
+		}
+		super.dbError(e);
 	}
 
 	protected void fixedProgramViewRemoved(RemovalNotification<Long, DBTraceProgramView> rn) {

@@ -13,16 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.dbg.attributes;
+package ghidra.trace.model;
 
-import com.google.gson.JsonElement;
+import ghidra.framework.model.DomainObjectException;
 
-import ghidra.dbg.attributes.TargetPrimitiveDataType.DefaultTargetPrimitiveDataType;
-import ghidra.dbg.attributes.TargetPrimitiveDataType.PrimitiveKind;
-
-public interface TargetDataType {
-	TargetDataType UNDEFINED1 =
-		new DefaultTargetPrimitiveDataType(PrimitiveKind.UNDEFINED, 1);
-
-	JsonElement toJson();
+public class TraceClosedException extends DomainObjectException {
+	public TraceClosedException(Throwable t) {
+		super(t);
+	}
 }

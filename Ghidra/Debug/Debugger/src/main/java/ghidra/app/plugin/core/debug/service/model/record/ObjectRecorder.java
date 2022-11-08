@@ -21,7 +21,11 @@ import java.util.stream.Collectors;
 import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+
 import ghidra.dbg.DebuggerObjectModel;
+import ghidra.dbg.attributes.TargetDataType;
 import ghidra.dbg.target.TargetAttacher.TargetAttachKind;
 import ghidra.dbg.target.TargetAttacher.TargetAttachKindSet;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
@@ -173,6 +177,11 @@ class ObjectRecorder {
 		}
 		if (attribute instanceof TargetBreakpointKindSet) {
 			return encodeEnumSet((TargetBreakpointKindSet) attribute);
+		}
+		if (attribute instanceof TargetDataType dataType) {
+			// NOTE: some are also TargetObject, but that gets checked first
+			JsonElement element = dataType.toJson();
+			return new Gson().toJson(element);
 		}
 		if (attribute instanceof TargetExecutionState) {
 			return encodeEnum((TargetExecutionState) attribute);

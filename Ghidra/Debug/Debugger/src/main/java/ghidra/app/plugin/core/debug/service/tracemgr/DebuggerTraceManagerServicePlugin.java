@@ -47,6 +47,7 @@ import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.lifecycle.Internal;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.Trace.TraceObjectChangeType;
 import ghidra.trace.model.Trace.TraceThreadChangeType;
 import ghidra.trace.model.TraceDomainObjectListener;
 import ghidra.trace.model.guest.TracePlatform;
@@ -100,6 +101,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			this.trace = trace;
 			listenFor(TraceThreadChangeType.ADDED, this::threadAdded);
 			listenFor(TraceThreadChangeType.DELETED, this::threadDeleted);
+			listenFor(TraceObjectChangeType.CREATED, this::objectCreated);
 		}
 
 		private void threadAdded(TraceThread thread) {
@@ -128,6 +130,20 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			if (current.getThread() == thread) {
 				activate(current.thread(null));
 			}
+		}
+
+		private void objectCreated(TraceObject object) {
+			TraceRecorder recorder = current.getRecorder();
+			if (supportsFocus(recorder)) {
+				return;
+			}
+			if (current.getTrace() != trace) {
+				return;
+			}
+			if (!object.isRoot()) {
+				return;
+			}
+			activate(current.object(object));
 		}
 	}
 

@@ -57,7 +57,7 @@ public class DebuggerStackProvider extends ComponentProviderAdapter {
 		return true;
 	}
 
-	private final DebuggerStackPlugin plugin;
+	final DebuggerStackPlugin plugin;
 
 	DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
 
@@ -90,7 +90,7 @@ public class DebuggerStackProvider extends ComponentProviderAdapter {
 	}
 
 	protected void buildMainPanel() {
-		panel = new DebuggerStackPanel(plugin, this);
+		panel = new DebuggerStackPanel(this);
 		mainPanel.add(panel);
 		legacyPanel = new DebuggerLegacyStackPanel(plugin, this);
 	}
