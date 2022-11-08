@@ -112,7 +112,7 @@ class TestTableModel implements RowObjectTableModel<Integer> {
 	@Override
 	public List<Integer> getModelData() {
 		List<Integer> rowObjects = new ArrayList<>();
-		for (int i = 0; i < getColumnCount(); i++) {
+		for (int i = 0; i < rowCount; i++) {
 			rowObjects.add(i);
 		}
 		return rowObjects;
