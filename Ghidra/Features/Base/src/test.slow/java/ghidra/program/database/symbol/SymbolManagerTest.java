@@ -2363,6 +2363,23 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNull(s);
 	}
 
+	@Test
+	public void testSymbolShortLongIteratorTransition() throws Exception {
+		// Exercises the small to large iterator transition
+		// See ShortDurationLongKeyIterator -> LongDurationLongKeyIterator transition
+		SymbolTable symbolTable = program.getSymbolTable();
+		for (long offset = 0; offset < 20; offset++) {
+			if (offset != 0) {
+				createLabel(addr(offset), "offset" + offset);
+			}
+			int total = 0;
+			for (Symbol s : symbolTable.getAllSymbols(true)) {
+				total += 1;
+			}
+			assertEquals(offset, total);
+		}
+	}
+
 //==================================================================================================
 // Private
 //==================================================================================================
