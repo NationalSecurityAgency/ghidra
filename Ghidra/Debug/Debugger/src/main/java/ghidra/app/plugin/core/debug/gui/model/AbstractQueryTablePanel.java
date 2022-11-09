@@ -189,13 +189,9 @@ public abstract class AbstractQueryTablePanel<T, M extends AbstractQueryTableMod
 		return true;
 	}
 
-	public boolean trySelect(Collection<TraceObject> objects) {
+	public void trySelect(Collection<TraceObject> objects) {
 		List<T> ts = objects.stream().map(tableModel::findTraceObject).collect(Collectors.toList());
-		if (ts.isEmpty()) {
-			return false;
-		}
 		setSelectedItems(ts);
-		return true;
 	}
 
 	public List<T> getSelectedItems() {

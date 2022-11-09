@@ -16,9 +16,7 @@
 package ghidra.app.plugin.core.debug.gui.stack;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
-import javax.swing.JTable;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
@@ -27,28 +25,28 @@ import docking.widgets.table.TableColumnDescriptor;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.model.*;
 import ghidra.app.plugin.core.debug.gui.model.AbstractQueryTablePanel.CellActivationListener;
-import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueProperty;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.app.plugin.core.debug.gui.model.columns.TraceValueKeyColumn;
 import ghidra.app.plugin.core.debug.gui.model.columns.TraceValueObjectAttributeColumn;
-import ghidra.app.services.DebuggerListingService;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.dbg.target.TargetStack;
 import ghidra.dbg.target.TargetStackFrame;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.util.PathMatcher;
 import ghidra.docking.settings.Settings;
-import ghidra.framework.plugintool.*;
+import ghidra.framework.plugintool.Plugin;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.stack.TraceObjectStackFrame;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
 import utilities.util.SuppressableCallback;
 import utilities.util.SuppressableCallback.Suppression;
 
-public class DebuggerStackPanel extends ObjectsTablePanel
+public class DebuggerStackPanel extends AbstractObjectsTableBasedPanel<TraceObjectStackFrame>
 		implements ListSelectionListener, CellActivationListener {
 
 	private static class FrameLevelColumn extends TraceValueKeyColumn {
@@ -99,7 +97,7 @@ public class DebuggerStackPanel extends ObjectsTablePanel
 		@Override
 		protected TableColumnDescriptor<ValueRow> createTableColumnDescriptor() {
 			TableColumnDescriptor<ValueRow> descriptor = new TableColumnDescriptor<>();
-			descriptor.addVisibleColumn(new FrameLevelColumn());
+			descriptor.addVisibleColumn(new FrameLevelColumn(), 1, true);
 			descriptor.addVisibleColumn(new FramePcColumn());
 			descriptor.addVisibleColumn(new FrameFunctionColumn());
 			return descriptor;
@@ -109,27 +107,13 @@ public class DebuggerStackPanel extends ObjectsTablePanel
 	private final DebuggerStackProvider provider;
 
 	@AutoServiceConsumed
-	protected DebuggerListingService listingService;
-	@AutoServiceConsumed
 	protected DebuggerTraceManagerService traceManager;
-	@SuppressWarnings("unused")
-	private final AutoService.Wiring autoServiceWiring;
 
 	private final SuppressableCallback<Void> cbFrameSelected = new SuppressableCallback<>();
 
-	private DebuggerObjectActionContext myActionContext;
-
-	public DebuggerStackPanel(Plugin plugin, DebuggerStackProvider provider) {
-		super(plugin);
+	public DebuggerStackPanel(DebuggerStackProvider provider) {
+		super(provider.plugin, provider, TraceObjectStackFrame.class);
 		this.provider = provider;
-
-		this.autoServiceWiring = AutoService.wireServicesConsumed(plugin, this);
-
-		setLimitToSnap(true);
-		setShowHidden(false);
-
-		addSelectionListener(this);
-		addCellActivationListener(this);
 	}
 
 	@Override
@@ -137,14 +121,8 @@ public class DebuggerStackPanel extends ObjectsTablePanel
 		return new StackTableModel(plugin);
 	}
 
-	public DebuggerObjectActionContext getActionContext() {
-		return myActionContext;
-	}
-
+	@Override
 	protected ModelQuery computeQuery(TraceObject object) {
-		if (object == null) {
-			return ModelQuery.EMPTY;
-		}
 		TargetObjectSchema rootSchema = object.getRoot().getTargetSchema();
 		List<String> stackPath = rootSchema
 				.searchForSuitable(TargetStack.class, object.getCanonicalPath().getKeyList());
@@ -156,11 +134,10 @@ public class DebuggerStackPanel extends ObjectsTablePanel
 		return new ModelQuery(matcher);
 	}
 
+	@Override
 	public void coordinatesActivated(DebuggerCoordinates coordinates) {
+		super.coordinatesActivated(coordinates);
 		TraceObject object = coordinates.getObject();
-		setQuery(computeQuery(object));
-		goToCoordinates(coordinates);
-
 		if (object != null) {
 			try (Suppression supp = cbFrameSelected.suppress(null)) {
 				trySelectAncestor(object);
@@ -170,34 +147,13 @@ public class DebuggerStackPanel extends ObjectsTablePanel
 
 	@Override
 	public void valueChanged(ListSelectionEvent e) {
+		super.valueChanged(e);
 		if (e.getValueIsAdjusting()) {
 			return;
-		}
-		List<ValueRow> sel = getSelectedItems();
-		if (!sel.isEmpty()) {
-			myActionContext = new DebuggerObjectActionContext(
-				sel.stream().map(r -> r.getValue()).collect(Collectors.toList()), provider, this);
 		}
 		ValueRow item = getSelectedItem();
 		if (item != null) {
 			cbFrameSelected.invoke(() -> traceManager.activateObject(item.getValue().getChild()));
-		}
-	}
-
-	@Override
-	public void cellActivated(JTable table) {
-		if (listingService == null) {
-			return;
-		}
-		int row = table.getSelectedRow();
-		int col = table.getSelectedColumn();
-		Object value = table.getValueAt(row, col);
-		if (!(value instanceof ValueProperty<?> property)) {
-			return;
-		}
-		Object propVal = property.getValue();
-		if (propVal instanceof Address address) {
-			listingService.goTo(address, true);
 		}
 	}
 }

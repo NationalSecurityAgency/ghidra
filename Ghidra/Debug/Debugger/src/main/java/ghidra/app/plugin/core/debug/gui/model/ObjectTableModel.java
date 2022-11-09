@@ -29,6 +29,7 @@ import ghidra.dbg.target.schema.SchemaContext;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.target.schema.TargetObjectSchema.AttributeSchema;
 import ghidra.framework.plugintool.Plugin;
+import ghidra.program.model.address.Address;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Lifespan.*;
 import ghidra.trace.model.Trace;
@@ -56,13 +57,22 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 
 		public T getValue();
 
-		public String getDisplay();
+		default public String getDisplay() {
+			T value = getValue();
+			return value == null ? "" : value.toString();
+		}
 
-		public String getHtmlDisplay();
+		default public String getHtmlDisplay() {
+			return "<html>" + HTMLUtilities.escapeHTML(getDisplay());
+		}
 
-		public String getToolTip();
+		default public String getToolTip() {
+			return getDisplay();
+		}
 
-		public boolean isModified();
+		default public boolean isModified() {
+			return false;
+		}
 	}
 
 	public static abstract class ValueDerivedProperty<T> implements ValueProperty<T> {
@@ -82,6 +92,20 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 		@Override
 		public Class<T> getType() {
 			return type;
+		}
+	}
+
+	public static abstract class ValueAddressProperty extends ValueDerivedProperty<Address> {
+		public ValueAddressProperty(ValueRow row) {
+			super(row, Address.class);
+		}
+
+		@Override
+		public String getHtmlDisplay() {
+			Address value = getValue();
+			return value == null ? ""
+					: ("<html><body style='font-family:monospaced'>" +
+						HTMLUtilities.escapeHTML(value.toString()));
 		}
 	}
 
@@ -131,6 +155,10 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 
 	public interface ValueRow {
 		String getKey();
+
+		long currentSnap();
+
+		long previousSnap();
 
 		LifeSet getLife();
 
@@ -190,6 +218,16 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 		@Override
 		public String getKey() {
 			return value.getEntryKey();
+		}
+
+		@Override
+		public long currentSnap() {
+			return getSnap();
+		}
+
+		@Override
+		public long previousSnap() {
+			return getTrace() == getDiffTrace() ? getDiffSnap() : getSnap();
 		}
 
 		@Override

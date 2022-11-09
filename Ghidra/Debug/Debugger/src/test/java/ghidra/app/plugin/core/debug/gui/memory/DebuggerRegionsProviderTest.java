@@ -149,7 +149,7 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	protected void assertRow(int position, Object object, String name, Address start,
 			Address end, long length, String flags) {
 		ValueRow row = provider.panel.getAllItems().get(position);
-		DynamicTableColumn<ValueRow, ValueRow, Trace> nameCol =
+		DynamicTableColumn<ValueRow, ?, Trace> nameCol =
 			provider.panel.getColumnByNameAndType("Name", ValueRow.class).getValue();
 		DynamicTableColumn<ValueRow, ?, Trace> startCol =
 			provider.panel.getColumnByNameAndType("Start", ValueProperty.class).getValue();
@@ -181,9 +181,8 @@ public class DebuggerRegionsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	}
 
 	@After
-	public void testDownRegionsProviderTest() throws Exception {
+	public void tearDownRegionsProviderTest() throws Exception {
 		traceManager.activate(DebuggerCoordinates.NOWHERE);
-		waitForSwing();
 		waitForTasks();
 		runSwing(() -> traceManager.closeAllTraces());
 	}

@@ -214,6 +214,9 @@ public class DebuggerLegacyRegionsPanel extends JPanel {
 		add(regionFilterPanel, BorderLayout.SOUTH);
 
 		regionTable.getSelectionModel().addListSelectionListener(evt -> {
+			if (evt.getValueIsAdjusting()) {
+				return;
+			}
 			myActionContext = new DebuggerRegionActionContext(provider,
 				regionFilterPanel.getSelectedItems(), regionTable);
 			contextChanged();

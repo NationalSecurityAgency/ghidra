@@ -16,9 +16,15 @@
 package ghidra.app.plugin.core.debug.gui.model;
 
 import ghidra.util.table.GhidraTable;
+import ghidra.util.table.GhidraTableFilterPanel;
 
 public class QueryPanelTestHelper {
 	public static GhidraTable getTable(AbstractQueryTablePanel<?, ?> panel) {
 		return panel.table;
+	}
+
+	public static <T> GhidraTableFilterPanel<T> getFilterPanel(
+			AbstractQueryTablePanel<T, ?> panel) {
+		return panel.filterPanel;
 	}
 }
