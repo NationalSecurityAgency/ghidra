@@ -954,7 +954,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 				.buildAndInstallLocal(this);
 		actionSelectCurrent = SelectRowsAction.builder(plugin)
 				.enabledWhen(ctx -> currentTrace != null)
-				.description("Select modules and sections by trace selection")
+				.description("Select modules and sections by dynamic selection")
 				.onAction(this::activatedSelectCurrent)
 				.buildAndInstallLocal(this);
 

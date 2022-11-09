@@ -227,7 +227,6 @@ public class AutocompletingStringConstraintEditor extends DataLoadingConstraintE
 				matcher.appendReplacement(sb, replacement);
 			}
 			matcher.appendTail(sb);
-
 			return sb.toString();
 		}
 
