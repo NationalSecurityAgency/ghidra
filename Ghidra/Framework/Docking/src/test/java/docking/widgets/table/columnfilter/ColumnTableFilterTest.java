@@ -19,8 +19,8 @@ import static org.junit.Assert.*;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
 
 import javax.swing.table.TableColumn;
 
@@ -29,14 +29,9 @@ import org.junit.Test;
 
 import docking.test.AbstractDockingTest;
 import docking.widgets.table.*;
-import docking.widgets.table.constraint.ColumnConstraint;
-import docking.widgets.table.constraint.MappedColumnConstraint;
 import docking.widgets.table.constraint.dialog.*;
-import docking.widgets.table.constraint.provider.*;
 import ghidra.framework.options.SaveState;
-import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
-import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -85,6 +80,18 @@ public class ColumnTableFilterTest extends AbstractDockingTest {
 		return new TableModelWrapper<>(testTableModel);
 	}
 
+	private RowObjectFilterModel<Integer> createTableModelWithNewlines() {
+		TestTableModel testTableModel = new TestTableModel();
+
+		testTableModel.addColumn("Name",
+			new String[] { "Hello World\n", "\nHello World", "Hello\nWorld", "Hello World" });
+
+		testTableModel.addColumn("Long ID",
+			new Long[] { 1000l, 2000l, 3000l });
+
+		return new TableModelWrapper<>(testTableModel);
+	}
+
 	private Date date(String dateString) {
 		try {
 			return DATE_FORMAT.parse(dateString);
@@ -105,6 +112,27 @@ public class ColumnTableFilterTest extends AbstractDockingTest {
 
 		int col = getColumn("Name");
 		assertEquals("Chuck", tableModel.getValueAt(0, col));
+	}
+
+	@Test
+	public void testStringStartsWithColumnFilter_WithNewline() {
+
+		runSwing(() -> gTable.dispose());
+
+		tableModel = createTableModelWithNewlines();
+		gTable = new GTable(tableModel);
+		filterModel = new ColumnFilterDialogModel<>(tableModel, gTable.getColumnModel(), null);
+
+		addFirstFilter("Name", "Starts With", "Hello");
+
+		applyFilter();
+
+		assertEquals(3, tableModel.getRowCount());
+
+		int col = getColumn("Name");
+		assertEquals("Hello World\n", tableModel.getValueAt(0, col));
+		assertEquals("Hello\nWorld", tableModel.getValueAt(1, col));
+		assertEquals("Hello World", tableModel.getValueAt(2, col));
 	}
 
 	@Test
@@ -137,6 +165,27 @@ public class ColumnTableFilterTest extends AbstractDockingTest {
 	}
 
 	@Test
+	public void testStringEndsWithColumnFilter_WithNewline() {
+
+		runSwing(() -> gTable.dispose());
+
+		tableModel = createTableModelWithNewlines();
+		gTable = new GTable(tableModel);
+		filterModel = new ColumnFilterDialogModel<>(tableModel, gTable.getColumnModel(), null);
+
+		addFirstFilter("Name", "Ends With", "World");
+
+		applyFilter();
+
+		assertEquals(3, tableModel.getRowCount());
+
+		int col = getColumn("Name");
+		assertEquals("\nHello World", tableModel.getValueAt(0, col));
+		assertEquals("Hello\nWorld", tableModel.getValueAt(1, col));
+		assertEquals("Hello World", tableModel.getValueAt(2, col));
+	}
+
+	@Test
 	public void testStringContainsColumnFilter() {
 		addFirstFilter("Name", "Contains", "l");
 
@@ -150,6 +199,44 @@ public class ColumnTableFilterTest extends AbstractDockingTest {
 	}
 
 	@Test
+	public void testStringContainsColumnFilter_WithNewline() {
+
+		runSwing(() -> gTable.dispose());
+
+		tableModel = createTableModelWithNewlines();
+		gTable = new GTable(tableModel);
+		filterModel = new ColumnFilterDialogModel<>(tableModel, gTable.getColumnModel(), null);
+
+		addFirstFilter("Name", "Contains", "Hello");
+
+		applyFilter();
+
+		assertEquals(4, tableModel.getRowCount());
+
+		int col = getColumn("Name");
+		assertEquals("Hello World\n", tableModel.getValueAt(0, col));
+		assertEquals("\nHello World", tableModel.getValueAt(1, col));
+		assertEquals("Hello\nWorld", tableModel.getValueAt(2, col));
+		assertEquals("Hello World", tableModel.getValueAt(3, col));
+	}
+
+	@Test
+	public void testStringNotContainsColumnFilter_WithNewline() {
+
+		runSwing(() -> gTable.dispose());
+
+		tableModel = createTableModelWithNewlines();
+		gTable = new GTable(tableModel);
+		filterModel = new ColumnFilterDialogModel<>(tableModel, gTable.getColumnModel(), null);
+
+		addFirstFilter("Name", "Does Not Contain", "Hello");
+
+		applyFilter();
+
+		assertEquals(0, tableModel.getRowCount());
+	}
+
+	@Test
 	public void testStringMatchesColumnFilter() {
 		addFirstFilter("Name", "Matches Regex", ".*l.*e.*");
 
@@ -160,6 +247,49 @@ public class ColumnTableFilterTest extends AbstractDockingTest {
 		int col = getColumn("Name");
 		assertEquals("Alice", tableModel.getValueAt(0, col));
 		assertEquals("Ellen", tableModel.getValueAt(1, col));
+	}
+
+	@Test
+	public void testStringMatchesColumnFilter_WithNewline() {
+
+		runSwing(() -> gTable.dispose());
+
+		tableModel = createTableModelWithNewlines();
+		gTable = new GTable(tableModel);
+		filterModel = new ColumnFilterDialogModel<>(tableModel, gTable.getColumnModel(), null);
+
+		addFirstFilter("Name", "Matches Regex", ".*Hello\\sWorld.*");
+
+		applyFilter();
+
+		assertEquals(2, tableModel.getRowCount());
+
+		// only matches when newline not at the beginning or end, since DOTALL mode is not used
+		int col = getColumn("Name");
+		assertEquals("Hello\nWorld", tableModel.getValueAt(0, col));
+		assertEquals("Hello World", tableModel.getValueAt(1, col));
+	}
+
+	@Test
+	public void testStringMatchesColumnFilter_WithNewline_WithDotallMode() {
+
+		runSwing(() -> gTable.dispose());
+
+		tableModel = createTableModelWithNewlines();
+		gTable = new GTable(tableModel);
+		filterModel = new ColumnFilterDialogModel<>(tableModel, gTable.getColumnModel(), null);
+
+		addFirstFilter("Name", "Matches Regex", "(?s).*Hello\\sWorld.*");
+
+		applyFilter();
+
+		assertEquals(4, tableModel.getRowCount());
+
+		int col = getColumn("Name");
+		assertEquals("Hello World\n", tableModel.getValueAt(0, col));
+		assertEquals("\nHello World", tableModel.getValueAt(1, col));
+		assertEquals("Hello\nWorld", tableModel.getValueAt(2, col));
+		assertEquals("Hello World", tableModel.getValueAt(3, col));
 	}
 
 	@Test
@@ -681,20 +811,6 @@ public class ColumnTableFilterTest extends AbstractDockingTest {
 			}
 		}
 		return null;
-	}
-
-	@SuppressWarnings("unchecked")
-	private List<ColumnConstraint<?>> loadConstraints() {
-		List<ColumnConstraint<?>> list = new ArrayList<>();
-		list.addAll(new NumberColumnConstraintProvider().getColumnConstraints());
-		list.addAll(new StringColumnConstraintProvider().getColumnConstraints());
-		Collection<ColumnConstraint<?>> columnConstraints =
-			new DateColumnConstraintProvider().getColumnConstraints();
-		for (ColumnConstraint<?> c : columnConstraints) {
-			list.add(new MappedColumnConstraint<>(new DateColumnTypeMapper(),
-				(ColumnConstraint<LocalDate>) c));
-		}
-		return list;
 	}
 
 	private void addConstraints(String columnName, String[] constraintNames,
