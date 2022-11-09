@@ -433,25 +433,20 @@ public class CliTableMethodDef extends CliAbstractTable {
 				}
 			}
 
+			FunctionManager funcMgr = program.getFunctionManager();
+
 			try {
-				Function newFunc = program.getFunctionManager()
-						.createFunction(funcName, startAddr, funcAddrSet, SourceType.ANALYSIS);
-				newFunc.setReturnType(returnType, SourceType.ANALYSIS);
-				newFunc.updateFunction(null, null, FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS,
+				// Create the function, if already created, update the existing function
+				Function func = funcMgr.getFunctionAt(startAddr);
+				if (func == null) {
+					func = funcMgr
+							.createFunction(funcName, startAddr, funcAddrSet, SourceType.ANALYSIS);
+				}
+				func.setReturnType(returnType, SourceType.ANALYSIS);
+				func.updateFunction(null, null, FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS,
 					true, SourceType.ANALYSIS, parameters);
 				
-				// If Code here is not of the correct type, create a data element to stop disassembly, and comment
-				PrototypeModel cliCallingConvention = program.getLanguage()
-						.getDefaultCompilerSpec()
-						.getCallingConvention(CLITABLEMETHODDEF_CLRCALL_CONVENTION);
-
-				if ((cliCallingConvention == null && !methodRow.isNative()) ||
-					(cliCallingConvention != null && methodRow.isNative())) {
-					Data data = program.getListing()
-							.createData(startAddr, new ArrayDataType(BYTE, (int) endAddr.subtract(startAddr) + 1, 1));
-					data.setComment(CodeUnit.PRE_COMMENT,
-						(methodRow.isManaged() ? ".NET CLR Managed Code" : "Native Code"));
-				}
+				markToPreventIncorrectProcessorDisassembly(program, methodRow, startAddr, endAddr);
 			}
 			catch (CodeUnitInsertionException e) {
 				// Ignore, something there already
@@ -468,8 +463,8 @@ public class CliTableMethodDef extends CliAbstractTable {
 				String err = "Error processing function \" (\" + methodRowIndex + \")" + funcName +
 					"\": Overlapping function (" + startAddr + ", " + endAddr + ": ";
 
-				Function existingFuncA = program.getFunctionManager().getFunctionAt(startAddr);
-				Function existingFuncB = program.getFunctionManager().getFunctionAt(endAddr);
+				Function existingFuncA = funcMgr.getFunctionContaining(startAddr);
+				Function existingFuncB = funcMgr.getFunctionContaining(endAddr);
 
 				if (existingFuncA != null && existingFuncB == null) {
 					err = err + existingFuncA.getName();
@@ -493,6 +488,42 @@ public class CliTableMethodDef extends CliAbstractTable {
 				paramNames += parameters[parameters.length - 1].getName();
 				Msg.warn(this, "Error processing function \"" + funcName + "\" (" + methodRowIndex +
 					"): Duplicate parameter name (" + paramNames + ")");
+			}
+		}
+	}
+
+	/**
+	 * 
+	 * For .Net code in programs loaded as x86, protect CLI code from disassembly.
+	 * For x86 code in programs loaded as CLI, protect x86 code from disassembly.
+	 * 
+	 * @param program program either loaded as x86 or CLI
+	 * @param methodRow CliMethodTable row
+	 * @param startAddr start address of the function
+	 * @param endAddr end address of the function
+	 * @throws CodeUnitInsertionException couldn't create dagta.
+	 */
+	private void markToPreventIncorrectProcessorDisassembly(Program program, CliMethodDefRow methodRow,
+			Address startAddr, Address endAddr) throws CodeUnitInsertionException {
+		
+
+		PrototypeModel cliCallingConvention = program.getLanguage()
+				.getDefaultCompilerSpec()
+				.getCallingConvention(CLITABLEMETHODDEF_CLRCALL_CONVENTION);
+
+		// If Code here is not of the correct type, create a data array of bytes to stop disassembly
+		if ((cliCallingConvention == null && !methodRow.isNative()) ||
+			(cliCallingConvention != null && methodRow.isNative())) {
+			Listing listing = program.getListing();
+			Data data = listing.getDefinedDataAt(startAddr);
+			if (data == null) {
+				int codeLength = (int) endAddr.subtract(startAddr) + 1;
+				ArrayDataType codeDT = new ArrayDataType(BYTE, codeLength, 1);
+				data = listing.createData(startAddr, codeDT);
+				
+				// comment the type of code that should appear here
+				data.setComment(CodeUnit.PRE_COMMENT,
+					(methodRow.isManaged() ? ".NET CLR Managed Code" : "Native Code"));
 			}
 		}
 	}
