@@ -2692,11 +2692,10 @@ public class Table {
 		@Override
 		public boolean hasNext() throws IOException {
 			synchronized (db) {
-				if (iterCnt <= SHORT_ITER_THRESHOLD) {
-					if (++iterCnt > SHORT_ITER_THRESHOLD) {
-						// Switch to long-running iterator
-						keyIter = new LongDurationLongKeyIterator((ShortDurationLongKeyIterator) keyIter);
-					}
+				if (iterCnt <= SHORT_ITER_THRESHOLD && ++iterCnt > SHORT_ITER_THRESHOLD) {
+					// Switch to long-running iterator
+					keyIter =
+						new LongDurationLongKeyIterator((ShortDurationLongKeyIterator) keyIter);
 				}
 				return keyIter.hasNext();
 			}
@@ -2705,11 +2704,10 @@ public class Table {
 		@Override
 		public boolean hasPrevious() throws IOException {
 			synchronized (db) {
-				if (iterCnt <= SHORT_ITER_THRESHOLD) {
-					if (++iterCnt > SHORT_ITER_THRESHOLD) {
-						// Switch to long-running iterator
-						keyIter = new LongDurationLongKeyIterator((ShortDurationLongKeyIterator) keyIter);
-					}
+				if (iterCnt <= SHORT_ITER_THRESHOLD && ++iterCnt > SHORT_ITER_THRESHOLD) {
+					// Switch to long-running iterator
+					keyIter =
+						new LongDurationLongKeyIterator((ShortDurationLongKeyIterator) keyIter);
 				}
 				return keyIter.hasPrevious();
 			}
@@ -2781,7 +2779,6 @@ public class Table {
 			this.maxKey = keyIter.maxKey;
 
 			if (bufferId >= 0) {
-
 				if (modCount != expectedModCount) {
 					reset();
 				}
@@ -2795,9 +2792,10 @@ public class Table {
 						nodeMgr.releaseNodes();
 					}
 				}
-
 			}
-
+			else {
+				keys = new long[0];
+			}
 		}
 
 		/**
