@@ -1067,6 +1067,8 @@ Symbol *Funcdata::linkSymbol(Varnode *vn)
   }
   else {			// Must create a symbol entry
     if (!vn->isPersist()) {	// Only create local symbol
+      if (vn->isAddrTied())
+	usepoint = Address();
       entry = localmap->addSymbol("", high->getType(), vn->getAddr(), usepoint);
       sym = entry->getSymbol();
       vn->setSymbolEntry(entry);
@@ -1443,6 +1445,8 @@ void Funcdata::coverVarnodes(SymbolEntry *entry,vector<Varnode *> &list)
       int4 diff = (int4)(vn->getOffset() - entry->getAddr().getOffset());
       ostringstream s;
       s << entry->getSymbol()->getName() << '_' << diff;
+      if (vn->isAddrTied())
+	usepoint = Address();
       scope->addSymbol(s.str(),vn->getHigh()->getType(),vn->getAddr(),usepoint);
     }
   }
