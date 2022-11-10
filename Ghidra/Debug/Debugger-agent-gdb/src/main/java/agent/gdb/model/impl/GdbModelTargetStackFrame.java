@@ -110,7 +110,7 @@ public class GdbModelTargetStackFrame
 	}
 
 	protected void invalidateRegisterCaches() {
-		listeners.fire.invalidateCacheRequested(this);
+		broadcast().invalidateCacheRequested(this);
 	}
 
 	@Override

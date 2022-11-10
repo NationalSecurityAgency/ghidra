@@ -82,6 +82,6 @@ public interface GadpClientTargetRegisterBank extends GadpClientTargetObject, Ta
 		Map<String, byte[]> updates = GadpValueUtils.getRegisterValueMap(evt.getValueList());
 		DelegateGadpClientTargetObject delegate = getDelegate();
 		delegate.getRegisterCache().putAll(updates);
-		delegate.getListeners().fire.registersUpdated(this, updates);
+		broadcast().registersUpdated(this, updates);
 	}
 }

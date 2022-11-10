@@ -142,25 +142,6 @@ public class ListenerMap<K, P, V extends P> {
 					}
 				}
 			});
-			Set<ListenerMap<?, ? extends P, ?>> chainedVolatile;
-			synchronized (lock) {
-				chainedVolatile = chained;
-			}
-			for (ListenerMap<?, ? extends P, ?> c : chainedVolatile) {
-				// Invocation will check if assignable
-				@SuppressWarnings("unchecked")
-				T l = ((ListenerMap<?, P, ?>) c).fire(ext);
-				try {
-					method.invoke(l, args);
-				}
-				catch (InvocationTargetException e) {
-					Throwable cause = e.getCause();
-					reportError(l, cause);
-				}
-				catch (Throwable e) {
-					reportError(l, e);
-				}
-			}
 			return null; // TODO: Assumes void return type
 		}
 	}
@@ -169,7 +150,6 @@ public class ListenerMap<K, P, V extends P> {
 	private final Class<P> iface;
 	private final Executor executor;
 	private Map<K, V> map = createMap();
-	private Set<ListenerMap<?, ? extends P, ?>> chained = new LinkedHashSet<>();
 
 	/**
 	 * A proxy which passes invocations to each value of this map
@@ -298,39 +278,6 @@ public class ListenerMap<K, P, V extends P> {
 				return;
 			}
 			map = createMap();
-		}
-	}
-
-	public void addChained(ListenerMap<?, ? extends P, ?> map) {
-		synchronized (lock) {
-			if (chained.contains(map)) {
-				return;
-			}
-			Set<ListenerMap<?, ? extends P, ?>> newChained = new LinkedHashSet<>();
-			newChained.addAll(chained);
-			newChained.add(map);
-			chained = newChained;
-		}
-	}
-
-	public void removeChained(ListenerMap<?, ?, ?> map) {
-		synchronized (lock) {
-			if (!chained.contains(map)) {
-				return;
-			}
-			Set<ListenerMap<?, ? extends P, ?>> newChained = new LinkedHashSet<>();
-			newChained.addAll(chained);
-			newChained.remove(map);
-			chained = newChained;
-		}
-	}
-
-	public void clearChained() {
-		synchronized (lock) {
-			if (chained.isEmpty()) {
-				return;
-			}
-			chained = new LinkedHashSet<>();
 		}
 	}
 }

@@ -25,9 +25,6 @@ import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.EnumerableTargetObjectSchema;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.util.PathUtils;
-import ghidra.lifecycle.Internal;
-import ghidra.util.Msg;
-import ghidra.util.datastruct.ListenerSet;
 
 /**
  * An abstract implementation of {@link TargetObject}
@@ -63,15 +60,10 @@ public abstract class AbstractTargetObject<P extends TargetObject> implements Sp
 
 	protected volatile boolean valid = true;
 
-	// TODO: Remove these, and just do invocations on model's listeners?
-	protected final ListenerSet<DebuggerModelListener> listeners;
-
 	public <I> AbstractTargetObject(ProxyFactory<I> proxyFactory, I proxyInfo,
 			AbstractDebuggerObjectModel model, P parent, String key, String typeHint,
 			TargetObjectSchema schema) {
-		this.listeners = new ListenerSet<>(DebuggerModelListener.class, model.clientExecutor);
 		this.model = model;
-		listeners.addChained(model.listeners);
 		this.parent = parent;
 		if (parent == null) {
 			this.path = key == null ? List.of() : List.of(key);
@@ -103,7 +95,7 @@ public abstract class AbstractTargetObject<P extends TargetObject> implements Sp
 		assert proxy != null;
 		synchronized (model.lock) {
 			model.objectCreated(proxy);
-			listeners.fire.created(proxy);
+			broadcast().created(proxy);
 		}
 	}
 
@@ -194,19 +186,6 @@ public abstract class AbstractTargetObject<P extends TargetObject> implements Sp
 	}
 
 	@Override
-	public void addListener(DebuggerModelListener l) {
-		if (!valid) {
-			throw new IllegalStateException("Object is no longer valid: " + getProxy());
-		}
-		listeners.add(l);
-	}
-
-	@Override
-	public void removeListener(DebuggerModelListener l) {
-		listeners.remove(l);
-	}
-
-	@Override
 	public AbstractDebuggerObjectModel getModel() {
 		return model;
 	}
@@ -252,14 +231,7 @@ public abstract class AbstractTargetObject<P extends TargetObject> implements Sp
 		}
 		valid = false;
 		model.objectInvalidated(getProxy());
-		listeners.fire.invalidated(getProxy(), branch, reason);
-		CompletableFuture.runAsync(() -> {
-			listeners.clear();
-			listeners.clearChained();
-		}, model.clientExecutor).exceptionally(ex -> {
-			Msg.error(this, "Error emptying invalidated object's listener set: ", ex);
-			return null;
-		});
+		broadcast().invalidated(getProxy(), branch, reason);
 	}
 
 	protected void doInvalidateElements(Map<String, ?> elems, String reason) {
@@ -330,19 +302,8 @@ public abstract class AbstractTargetObject<P extends TargetObject> implements Sp
 		}
 	}
 
-	/**
-	 * Get the listener set
-	 * 
-	 * <p>
-	 * TODO: This method should only be used by the internal implementation. It's not exposed on the
-	 * {@link TargetObject} interface, but it could be dangerous to have it here, since clients
-	 * could cast to {@link AbstractTargetObject} and get at it, even if the implementation's jar is
-	 * excluded from the compile-time classpath.
-	 * 
-	 * @return the listener set
-	 */
-	@Internal
-	public ListenerSet<DebuggerModelListener> getListeners() {
-		return listeners;
+	@Override
+	public DebuggerModelListener broadcast() {
+		return model.listeners.fire;
 	}
 }

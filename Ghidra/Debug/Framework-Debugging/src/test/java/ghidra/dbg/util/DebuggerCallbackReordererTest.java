@@ -262,7 +262,7 @@ public class DebuggerCallbackReordererTest implements DebuggerModelTestUtils {
 		 * child of [r1], to guarantee registersUpdated has happened
 		 */
 		toA.changeElements(List.of(), List.of(toA1), "Test");
-		toA.getListeners().fire.registersUpdated(toA, Map.of("r1", new byte[4]));
+		toA.broadcast().registersUpdated(toA, Map.of("r1", new byte[4]));
 		root.changeAttributes(List.of(), List.of(toA), Map.of(), "Test");
 		/**
 		 * CFs may get queued in depth, so add root here to ensure registersUpdated comes before
@@ -321,12 +321,14 @@ public class DebuggerCallbackReordererTest implements DebuggerModelTestUtils {
 		FakeTargetRoot root = new FakeTargetRoot(model, "Root", model.getRootSchema());
 		FakeTargetObject processes = new FakeTargetObject(model, root, "Processes");
 		FakeTargetProcess proc1 = new FakeTargetProcess(model, processes, "[1]");
-		root.getListeners().fire.event(root, null, TargetEventType.PROCESS_CREATED,
-			"Process 1 created", List.of(proc1));
+		root.broadcast()
+				.event(root, null, TargetEventType.PROCESS_CREATED, "Process 1 created",
+					List.of(proc1));
 		FakeTargetObject p1threads = new FakeTargetObject(model, proc1, "Threads");
 		FakeTargetThread thread1 = new FakeTargetThread(model, p1threads, "[1]");
-		root.getListeners().fire.event(root, thread1, TargetEventType.THREAD_CREATED,
-			"Thread 1 created", List.of());
+		root.broadcast()
+				.event(root, thread1, TargetEventType.THREAD_CREATED, "Thread 1 created",
+					List.of());
 
 		p1threads.changeElements(List.of(), List.of(thread1), "Test");
 		proc1.changeAttributes(List.of(), List.of(p1threads), Map.of(), "Test");
@@ -366,15 +368,18 @@ public class DebuggerCallbackReordererTest implements DebuggerModelTestUtils {
 		FakeTargetRoot root = new FakeTargetRoot(model, "Root", model.getRootSchema());
 		FakeTargetObject processes = new FakeTargetObject(model, root, "Processes");
 		FakeTargetProcess proc1 = new FakeTargetProcess(model, processes, "[1]");
-		root.getListeners().fire.event(root, null, TargetEventType.PROCESS_CREATED,
-			"Process 1 created", List.of(proc1));
+		root.broadcast()
+				.event(root, null, TargetEventType.PROCESS_CREATED, "Process 1 created",
+					List.of(proc1));
 		FakeTargetObject p1threads = new FakeTargetObject(model, proc1, "Threads");
 		FakeTargetThread thread1 = new FakeTargetThread(model, p1threads, "[1]");
-		root.getListeners().fire.event(root, thread1, TargetEventType.THREAD_CREATED,
-			"Thread 1 created", List.of());
+		root.broadcast()
+				.event(root, thread1, TargetEventType.THREAD_CREATED, "Thread 1 created",
+					List.of());
 		FakeTargetThread thread2 = new FakeTargetThread(model, p1threads, "[2]");
-		root.getListeners().fire.event(root, thread1, TargetEventType.THREAD_CREATED,
-			"Thread 2 created", List.of());
+		root.broadcast()
+				.event(root, thread1, TargetEventType.THREAD_CREATED, "Thread 2 created",
+					List.of());
 
 		p1threads.changeElements(List.of(), List.of(thread2), "Test");
 		proc1.changeAttributes(List.of(), List.of(p1threads), Map.of(), "Test");

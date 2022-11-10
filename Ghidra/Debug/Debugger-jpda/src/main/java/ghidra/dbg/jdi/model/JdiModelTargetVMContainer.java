@@ -31,11 +31,15 @@ import ghidra.dbg.target.schema.*;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.WeakValueHashMap;
 
-@TargetObjectSchemaInfo(name = "VMContainer", elements = { //
-	@TargetElementType(type = JdiModelTargetVM.class) //
-}, attributes = { //
-	@TargetAttributeType(type = Void.class) //
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "VMContainer",
+	elements = { //
+		@TargetElementType(type = JdiModelTargetVM.class) //
+	},
+	attributes = { //
+		@TargetAttributeType(type = Void.class) //
+	},
+	canonicalContainer = true)
 public class JdiModelTargetVMContainer extends JdiModelTargetObjectImpl
 		implements JdiEventsListenerAdapter {
 
@@ -56,7 +60,7 @@ public class JdiModelTargetVMContainer extends JdiModelTargetObjectImpl
 		// TODO: Move PROCESS_CREATED here to restore proper order of event reporting
 		// Pending some client-side changes to handle architecture selection, though.
 		target.started(vm.name()).thenAccept(__ -> {
-			session.getListeners().fire.event(session, null, TargetEventType.PROCESS_CREATED,
+			broadcast().event(session, null, TargetEventType.PROCESS_CREATED,
 				"VM " + vm.name() + " started " + vm.process() + " pid=" + vm.name(), List.of(vm));
 		}).exceptionally(ex -> {
 			Msg.error(this, "Could not notify vm started", ex);
@@ -70,8 +74,8 @@ public class JdiModelTargetVMContainer extends JdiModelTargetObjectImpl
 	public void vmDied(VMDeathEvent event, JdiCause cause) {
 		VirtualMachine vm = event.virtualMachine();
 		JdiModelTargetVM tgtVM = vmsById.get(vm.name());
-		session.getListeners().fire.event(session, null, TargetEventType.PROCESS_EXITED,
-			"VM " + vm.name(), List.of(tgtVM));
+		broadcast().event(session, null, TargetEventType.PROCESS_EXITED, "VM " + vm.name(),
+			List.of(tgtVM));
 		tgtVM.exited(vm);
 		synchronized (this) {
 			vmsById.remove(vm.name());
@@ -99,7 +103,7 @@ public class JdiModelTargetVMContainer extends JdiModelTargetObjectImpl
 			return;
 		}
 		JdiModelTargetThread targetThread = vm.threads.threadCreated(thread);
-		session.getListeners().fire.event(session, targetThread, TargetEventType.THREAD_CREATED,
+		broadcast().event(session, targetThread, TargetEventType.THREAD_CREATED,
 			"Thread " + thread.name() + " started", List.of(targetThread));
 	}
 
@@ -108,7 +112,7 @@ public class JdiModelTargetVMContainer extends JdiModelTargetObjectImpl
 		ThreadReference thread = event.thread();
 		JdiModelTargetVM tgtVM = vmsById.get(thread.virtualMachine().name());
 		JdiModelTargetThread targetThread = tgtVM.threads.threadsById.get(thread.name());
-		session.getListeners().fire.event(session, targetThread, TargetEventType.THREAD_EXITED,
+		broadcast().event(session, targetThread, TargetEventType.THREAD_EXITED,
 			"Thread " + thread.name() + " exited", List.of(targetThread));
 		tgtVM.threads.threadExited(thread);
 	}

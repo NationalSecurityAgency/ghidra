@@ -31,12 +31,16 @@ import ghidra.dbg.target.TargetConfigurable;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
 
-@TargetObjectSchemaInfo(name = "ThreadContainer", elements = { //
-	@TargetElementType(type = DbgModelTargetThreadImpl.class) //
-}, attributes = { //
-	@TargetAttributeType(name = TargetConfigurable.BASE_ATTRIBUTE_NAME, type = Integer.class), //
-	@TargetAttributeType(type = Void.class) //
-}, canonicalContainer = true)
+@TargetObjectSchemaInfo(
+	name = "ThreadContainer",
+	elements = {
+		@TargetElementType(type = DbgModelTargetThreadImpl.class)
+	},
+	attributes = {
+		@TargetAttributeType(name = TargetConfigurable.BASE_ATTRIBUTE_NAME, type = Integer.class),
+		@TargetAttributeType(type = Void.class)
+	},
+	canonicalContainer = true)
 public class DbgModelTargetThreadContainerImpl extends DbgModelTargetObjectImpl
 		implements DbgModelTargetThreadContainer, DbgModelTargetConfigurable {
 
@@ -59,7 +63,7 @@ public class DbgModelTargetThreadContainerImpl extends DbgModelTargetObjectImpl
 		DbgModelTargetThread targetThread = getTargetThread(thread);
 		changeElements(List.of(), List.of(targetThread), Map.of(), "Created");
 		targetThread.threadStateChangedSpecific(DbgState.STARTING, DbgReason.getReason(null));
-		getListeners().fire.event(getProxy(), targetThread, TargetEventType.THREAD_CREATED,
+		broadcast().event(getProxy(), targetThread, TargetEventType.THREAD_CREATED,
 			"Thread " + thread.getId() + " started", List.of(targetThread));
 	}
 
@@ -68,7 +72,7 @@ public class DbgModelTargetThreadContainerImpl extends DbgModelTargetObjectImpl
 			DbgReason reason) {
 		DbgModelTargetThread targetThread = getTargetThread(thread);
 		TargetEventType eventType = getEventType(state, cause, reason);
-		getListeners().fire.event(getProxy(), targetThread, eventType,
+		broadcast().event(getProxy(), targetThread, eventType,
 			"Thread " + thread.getId() + " state changed", List.of(targetThread));
 		targetThread.threadStateChangedSpecific(state, reason);
 	}
@@ -78,7 +82,7 @@ public class DbgModelTargetThreadContainerImpl extends DbgModelTargetObjectImpl
 		DbgModelImpl impl = (DbgModelImpl) model;
 		DbgModelTargetThread targetThread = (DbgModelTargetThread) impl.getModelObject(threadId);
 		if (targetThread != null) {
-			getListeners().fire.event(getProxy(), targetThread, TargetEventType.THREAD_EXITED,
+			broadcast().event(getProxy(), targetThread, TargetEventType.THREAD_EXITED,
 				"Thread " + threadId + " exited", List.of(targetThread));
 		}
 		//synchronized (this) {

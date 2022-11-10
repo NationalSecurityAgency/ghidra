@@ -159,7 +159,7 @@ public class GdbModelTargetProcessMemory
 				throw new DebuggerMemoryAccessException("Cannot read at " + address);
 			}
 			byte[] content = Arrays.copyOf(buf.array(), (int) s.length());
-			listeners.fire.memoryUpdated(this, address, content);
+			broadcast().memoryUpdated(this, address, content);
 			return content;
 		}).exceptionally(e -> {
 			e = AsyncUtils.unwrapThrowable(e);
@@ -167,10 +167,10 @@ public class GdbModelTargetProcessMemory
 				GdbCommandError gce = (GdbCommandError) e;
 				e = new DebuggerMemoryAccessException(
 					"Cannot read at " + address + ": " + gce.getInfo().getString("msg"));
-				listeners.fire.memoryReadError(this, range, (DebuggerMemoryAccessException) e);
+				broadcast().memoryReadError(this, range, (DebuggerMemoryAccessException) e);
 			}
 			if (e instanceof DebuggerMemoryAccessException) {
-				listeners.fire.memoryReadError(this, range, (DebuggerMemoryAccessException) e);
+				broadcast().memoryReadError(this, range, (DebuggerMemoryAccessException) e);
 			}
 			return ExceptionUtils.rethrow(e);
 		});
@@ -186,12 +186,12 @@ public class GdbModelTargetProcessMemory
 		CompletableFuture<Void> future =
 			inferior.writeMemory(address.getOffset(), ByteBuffer.wrap(data));
 		return impl.gateFuture(future.thenAccept(__ -> {
-			listeners.fire.memoryUpdated(this, address, data);
+			broadcast().memoryUpdated(this, address, data);
 		}));
 	}
 
 	protected void invalidateMemoryCaches() {
-		listeners.fire.invalidateCacheRequested(this);
+		broadcast().invalidateCacheRequested(this);
 	}
 
 	public void memoryChanged(long offset, int len) {

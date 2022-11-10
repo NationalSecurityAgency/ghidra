@@ -76,7 +76,7 @@ public class FridaModelTargetThreadContainerImpl extends FridaModelTargetObjectI
 		changeElements(List.of(), List.of(targetThread), Map.of(), "Created");
 		targetThread.threadStateChangedSpecific(FridaState.FRIDA_THREAD_UNINTERRUPTIBLE,
 			FridaReason.getReason(null));
-		getListeners().fire.event(getProxy(), targetThread, TargetEventType.THREAD_CREATED,
+		broadcast().event(getProxy(), targetThread, TargetEventType.THREAD_CREATED,
 			"Thread " + FridaClient.getId(thread) + " started", List.of(targetThread));
 	}
 
@@ -95,7 +95,7 @@ public class FridaModelTargetThreadContainerImpl extends FridaModelTargetObjectI
 		String threadId = FridaModelTargetThreadImpl.indexThread(thread);
 		FridaModelTargetThread targetThread = (FridaModelTargetThread) getMapObject(thread);
 		if (targetThread != null) {
-			getListeners().fire.event(getProxy(), targetThread, TargetEventType.THREAD_EXITED,
+			broadcast().event(getProxy(), targetThread, TargetEventType.THREAD_EXITED,
 				"Thread " + threadId + " exited", List.of(targetThread));
 		}
 		changeElements(List.of( //
@@ -108,7 +108,7 @@ public class FridaModelTargetThreadContainerImpl extends FridaModelTargetObjectI
 			FridaReason reason) {
 		FridaModelTargetThread targetThread = getTargetThread(thread);
 		TargetEventType eventType = getEventType(state, cause, reason);
-		getListeners().fire.event(getProxy(), targetThread, eventType,
+		broadcast().event(getProxy(), targetThread, eventType,
 			"Thread " + FridaClient.getId(thread) + " state changed", List.of(targetThread));
 		targetThread.threadStateChangedSpecific(state, reason);
 	}
@@ -133,7 +133,7 @@ public class FridaModelTargetThreadContainerImpl extends FridaModelTargetObjectI
 	@Override
 	public CompletableFuture<Void> requestElements(boolean refresh) {
 		if (refresh) {
-			listeners.fire.invalidateCacheRequested(this);
+			broadcast().invalidateCacheRequested(this);
 		}
 		return getManager().listThreads(process);
 	}

@@ -95,7 +95,7 @@ public class DbgModelTargetBreakpointContainerImpl extends DbgModelTargetObjectI
 		DbgModelTargetThread targetThread =
 			getParentProcess().getThreads().getTargetThread(getManager().getEventThread());
 		DbgModelTargetBreakpointSpec spec = getTargetBreakpointSpec(info);
-		listeners.fire.breakpointHit(getProxy(), targetThread, null, spec, spec);
+		broadcast().breakpointHit(getProxy(), targetThread, null, spec, spec);
 		spec.breakpointHit();
 	}
 
