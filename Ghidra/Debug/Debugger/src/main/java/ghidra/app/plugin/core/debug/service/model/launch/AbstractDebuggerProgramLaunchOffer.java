@@ -591,8 +591,11 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 			monitor.incrementProgress(1);
 			monitor.setMessage("Launching");
 			locals.futureTarget = listenForTarget(l.getModel());
+			if (prompt) {
+				return launch(l, true, configurator);
+			}
 			return AsyncTimer.DEFAULT_TIMER.mark()
-					.timeOut(launch(l, prompt, configurator), getTimeoutMillis(),
+					.timeOut(launch(l, false, configurator), getTimeoutMillis(),
 						() -> onTimedOutLaunch(monitor));
 		}).thenCompose(__ -> {
 			checkCancelled(monitor);
