@@ -17,8 +17,7 @@ package ghidra.app.plugin.core.searchmem;
 
 import java.awt.Color;
 import java.awt.event.KeyEvent;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
@@ -635,6 +634,8 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 
 		abstract List<MemSearchResult> getMatches();
 
+		abstract void cleanup();
+
 		private List<MemSearchResult> getAddressesFoundInRange(Address start, Address end) {
 			List<MemSearchResult> data = getMatches();
 			int startIndex = findFirstIndex(data, start, end);
@@ -766,12 +767,14 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 			if (provider != null) { // search all - remove highlights when
 				if (!tool.isVisible(provider)) { // results are no longer showing
 					highlightNavigatable.removeHighlightProvider(this, highlightProgram);
+					cleanup();
 					return true;
 				}
 			}
 			else if (!searchDialog.isVisible()) {
 				// single search - remove highlights when search dialog no longer showing
 				highlightNavigatable.removeHighlightProvider(this, highlightProgram);
+				cleanup();
 				return true;
 			}
 			return false;
@@ -791,16 +794,64 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 
 	private class SearchTableHighlightHandler extends SearchResultsHighlighter {
 		private final MemSearchTableModel model;
+		private List<MemSearchResult> sortedResults;
 
 		SearchTableHighlightHandler(Navigatable navigatable, MemSearchTableModel model,
 				TableComponentProvider<MemSearchResult> provider, Program program) {
 			super(navigatable, provider, program);
 			this.model = model;
+
+			model.addThreadedTableModelListener(new ThreadedTableModelListener() {
+
+				@Override
+				public void loadingStarted() {
+					clearCache();
+				}
+
+				@Override
+				public void loadingFinished(boolean wasCancelled) {
+					// stub
+				}
+
+				@Override
+				public void loadPending() {
+					clearCache();
+				}
+			});
 		}
 
 		@Override
 		List<MemSearchResult> getMatches() {
-			return model.getModelData();
+
+			if (sortedResults != null) {
+				return sortedResults;
+			}
+
+			if (model.isBusy()) {
+				return Collections.emptyList();
+			}
+
+			List<MemSearchResult> modelData = model.getModelData();
+			if (model.isSortedOnAddress()) {
+				return modelData;
+			}
+
+			sortedResults = new ArrayList<>(modelData);
+			Collections.sort(sortedResults);
+
+			return sortedResults;
+		}
+
+		@Override
+		void cleanup() {
+			clearCache();
+		}
+
+		private void clearCache() {
+			if (sortedResults != null) {
+				sortedResults.clear();
+				sortedResults = null;
+			}
 		}
 	}
 
@@ -816,6 +867,11 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 		@Override
 		List<MemSearchResult> getMatches() {
 			return searchTask.getMatchingAddresses();
+		}
+
+		@Override
+		void cleanup() {
+			// nothing to do
 		}
 	}
 

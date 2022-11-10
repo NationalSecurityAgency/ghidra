@@ -28,6 +28,8 @@ import ghidra.program.util.ProgramLocation;
 public class AddressTableColumn
 		extends ProgramLocationTableColumnExtensionPoint<Address, AddressBasedLocation> {
 
+	public static final String NAME = "Location";
+
 	@Override
 	public String getColumnDisplayName(Settings settings) {
 		return getColumnName();
@@ -35,7 +37,7 @@ public class AddressTableColumn
 
 	@Override
 	public String getColumnName() {
-		return "Location";
+		return NAME;
 	}
 
 	@Override
