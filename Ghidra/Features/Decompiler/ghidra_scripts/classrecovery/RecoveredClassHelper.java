@@ -6786,10 +6786,13 @@ public class RecoveredClassHelper {
 			// the operator delete or if there is no vftable ref, the call is before
 			// the operator delete call
 			Function calledFunction = addressToFunctionCallMap.get(callingAddress);
-			if (calledFunction.isThunk()) {
-				calledFunction.getThunkedFunction(true);
+			if (calledFunction != null) {
+				if (calledFunction.isThunk()) {
+					// TODO: should all thunks and real function be returned?
+					calledFunction.getThunkedFunction(true);
+				}
+				possibleCalledDestructorSet.add(calledFunction);
 			}
-			possibleCalledDestructorSet.add(calledFunction);
 		}
 		List<Function> possibleCalledDestructors =
 			new ArrayList<Function>(possibleCalledDestructorSet);

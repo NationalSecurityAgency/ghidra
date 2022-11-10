@@ -428,7 +428,7 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 				.buildAndInstallLocal(this);
 		actionSelectAddresses = new SelectAddressesAction();
 		actionSelectRows = SelectRowsAction.builder(plugin)
-				.description("Select regions by trace selection")
+				.description("Select regions by dynamic selection")
 				.enabledWhen(ctx -> currentTrace != null)
 				.onAction(this::activatedSelectCurrent)
 				.buildAndInstallLocal(this);

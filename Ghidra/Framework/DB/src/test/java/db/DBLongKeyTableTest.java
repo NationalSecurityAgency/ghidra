@@ -1180,4 +1180,73 @@ public class DBLongKeyTableTest extends AbstractGenericTest {
 		assertEquals(recs.length, recIx);
 	}
 
+	@Test
+	public void testShortToLongKeyIteratorTransitionForward() throws Exception {
+		// Exercises the small to large iterator transition
+		// See ShortDurationLongKeyIterator -> LongDurationLongKeyIterator transition
+
+		long txId = dbh.startTransaction();
+		Table table =
+			DBTestUtils.createLongKeyTable(dbh, table1Name, DBTestUtils.ALL_TYPES, false, false);
+		dbh.endTransaction(txId, true);
+
+		Schema schema = table.getSchema();
+		for (long k = 0; k < 20; k++) {
+
+			if (k != 0) {
+				txId = dbh.startTransaction();
+				DBRecord rec = schema.createRecord(k);
+				table.putRecord(rec);
+				dbh.endTransaction(txId, true);
+			}
+
+			int total = 0;
+			DBLongIterator longKeyIterator =
+				table.longKeyIterator(Long.MIN_VALUE, Long.MAX_VALUE, Long.MIN_VALUE);
+			for (long n = 0; n < 20; n++) {
+				// NOTE: Test purposely invokes hasNext more than neccessary
+				if (longKeyIterator.hasNext()) {
+					assertEquals(++total, longKeyIterator.next());
+				}
+			}
+
+			assertEquals(k, total);
+		}
+	}
+
+	@Test
+	public void testShortToLongKeyIteratorTransitionReverse() throws Exception {
+		// Exercises the small to large iterator transition
+		// See ShortDurationLongKeyIterator -> LongDurationLongKeyIterator transition
+
+		long txId = dbh.startTransaction();
+		Table table =
+			DBTestUtils.createLongKeyTable(dbh, table1Name, DBTestUtils.ALL_TYPES, false, false);
+		dbh.endTransaction(txId, true);
+
+		Schema schema = table.getSchema();
+		for (long k = 0; k < 20; k++) {
+
+			if (k != 0) {
+				txId = dbh.startTransaction();
+				DBRecord rec = schema.createRecord(k);
+				table.putRecord(rec);
+				dbh.endTransaction(txId, true);
+			}
+
+			int total = 0;
+			DBLongIterator longKeyIterator =
+				table.longKeyIterator(Long.MIN_VALUE, Long.MAX_VALUE, Long.MAX_VALUE);
+			for (long n = 0; n < 20; n++) {
+				// NOTE: Test purposely invokes hasNext more than neccessary
+				if (longKeyIterator.hasPrevious()) {
+					assertEquals(k - n, longKeyIterator.previous());
+					++total;
+				}
+			}
+
+			assertEquals(k, total);
+		}
+	}
+
 }

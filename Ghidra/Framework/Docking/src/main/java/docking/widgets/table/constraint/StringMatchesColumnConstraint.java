@@ -18,6 +18,8 @@ package docking.widgets.table.constraint;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import ghidra.util.UserSearchUtils;
+
 /**
  * String column constraint for matching column values if they match a full regular expression pattern.
  */
@@ -26,7 +28,7 @@ public class StringMatchesColumnConstraint extends StringColumnConstraint {
 	 * Constructor
 	 *
 	 * <P> This class is for users to enter true regular expression which is why it creates
-	 * a pattern directly without using the UserSearchUtils
+	 * a pattern directly without using the {@link UserSearchUtils}.
 	 *
 	 * @param spec the string to use to create a "matcher" pattern.
 	 */

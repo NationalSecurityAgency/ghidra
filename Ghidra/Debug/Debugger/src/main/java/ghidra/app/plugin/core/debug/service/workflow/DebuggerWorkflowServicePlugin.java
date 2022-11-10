@@ -128,7 +128,7 @@ public class DebuggerWorkflowServicePlugin extends Plugin
 	/* testing */ final List<DebuggerBot> allBots = new ArrayList<>();
 
 	// Cannot auto-wire, since they're dynamically populated
-	private final ToolOptions options;
+	private final Options options;
 
 	@SuppressWarnings("hiding") // I'm FrontEndOnly
 	protected final FrontEndTool tool;
@@ -140,8 +140,9 @@ public class DebuggerWorkflowServicePlugin extends Plugin
 		this.tool = (FrontEndTool) tool; // I'm FrontEndOnly
 
 		this.autoServiceWiring = AutoService.wireServicesProvidedAndConsumed(this);
-		this.options = tool.getOptions(DebuggerResources.OPTIONS_CATEGORY_WORKFLOW);
-		this.options.addOptionsChangeListener(this);
+		ToolOptions rootOptions = tool.getOptions(DebuggerResources.OPTIONS_CATEGORY_DEBUGGER);
+		rootOptions.addOptionsChangeListener(this);
+		this.options = rootOptions.getOptions(DebuggerResources.OPTIONS_CATEGORY_WORKFLOW);
 
 	}
 

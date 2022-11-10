@@ -39,6 +39,7 @@ import ghidra.util.task.SwingUpdateManager;
 /**
  * Plugin for producing a high-level C interpretation of assembly functions.
  */
+//@formatter:off
 @PluginInfo(
 	status = PluginStatus.RELEASED,
 	packageName = CorePluginPackage.NAME,
@@ -49,12 +50,13 @@ import ghidra.util.task.SwingUpdateManager;
 		GoToService.class, NavigationHistoryService.class, ClipboardService.class,
 		DataTypeManagerService.class /*, ProgramManager.class */
 	},
-	servicesProvided = { DecompilerHighlightService.class },
+	servicesProvided = { DecompilerHighlightService.class, DecompilerMarginService.class },
 	eventsConsumed = {
 		ProgramActivatedPluginEvent.class, ProgramOpenedPluginEvent.class,
 		ProgramLocationPluginEvent.class, ProgramSelectionPluginEvent.class,
 		ProgramClosedPluginEvent.class
 	})
+//@formatter:on
 public class DecompilePlugin extends Plugin {
 
 	private PrimaryDecompilerProvider connectedProvider;

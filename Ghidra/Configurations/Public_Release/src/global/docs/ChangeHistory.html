@@ -7,6 +7,28 @@
 
 <BODY>
 
+<H1 align="center">Ghidra 10.2.1 Change History (November 2022)</H1>
+<blockquote><p><u>Improvements</u></p>
+<ul>
+    <li><I>Data Types</I>. Added performance improvements for Structure build-up and resolution when simplifying assumptions can be made. (GP-2777)</li>
+</ul>
+</blockquote>
+<blockquote><p><u>Bugs</u></p>
+<ul>
+    <li><I>DB</I>. Corrected database table key iterator regression error introduced with Ghidra 10.2 which could result in a NullPointerException.  An internal long key iterator transition may fail under certain conditions when the iterator has already been exhausted. (GP-2805, Issue #4716)</li>
+    <li><I>Debugger</I>. Removed a timeout when prompting the user for Debugger launch options. (GP-2722)</li>
+    <li><I>Debugger:Agents</I>. Fixed error text rendering in Debugger agent windows. (GP-2724)</li>
+    <li><I>Decompiler</I>. Fixed a bug in the Decompiler preventing local variables outside of the normal stack region from being renamed or retyped. (GP-2818)</li>
+    <li><I>Disassembly</I>. Corrected regression error in Ghidra 10.2 which prevented proper disassembly flow within overlay memory blocks. (GP-2800)</li>
+    <li><I>GUI</I>. Fixed table column filtering to correctly match input data containing newline characters when using the <B>Contains</B> string column filter. (GP-2797, Issue #4722)</li>
+    <li><I>GUI</I>. Fixed the Front End's running Tool Button tooltip text to include the tool's title. (GP-2810)</li>
+    <li><I>Importer:Mach-O</I>. Fixed an issue that prevented some Mach-O binaries from being imported if there were unexpected issues while creating the Program Tree. (GP-2802, Issue #4724)</li>
+    <li><I>Importer:Mach-O</I>. Fixed an issue that prevented some Mach-O binaries from being imported if they did not define a __LINKEDIT segment. (GP-2803)</li>
+    <li><I>Importer:PE</I>. Fixed .Net/x86 disasembly protection code which prevents disassembly of CLI code in an x86 processor. (GP-2807)</li>
+    <li><I>Processors</I>. Corrected ARMv5 disassembly regression errors (GP-2812, Issue #4717)</li>
+</ul>
+</blockquote>
+
 <H1 align="center">Ghidra 10.2 Change History (November 2022)</H1>
 <blockquote><p><u>New Features</u></p>
 <ul>

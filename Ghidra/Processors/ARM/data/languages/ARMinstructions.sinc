@@ -1522,18 +1522,12 @@ SRSMode: "sys" is srsMode=23 & c0004 { export *[const]:1 c0004; }
 SRSMode: "#"^srsMode is srsMode      { export *[const]:1 srsMode; }
 @endif # VERSION_6
 
-# Add a hat instruction to set the ARMcond context variable which
-# tells whether this is a legal conditional instruction (for v7 and
-# later).
-
-@if defined(VERSION_6T2) || defined(VERSION_7)
-:^instruction is ARMcondCk=0 & itmode=0 & TMode=0 & (bit31=0|bit30=0|bit29=0|bit28=0) & instruction [ ARMcondCk=1; ARMcond=1; ] {}
+# Perform ARMcond check phase and set ARMcond context variable
+:^instruction is $(AMODE) & ARMcondCk=0 & (bit31=0|bit30=0|bit29=0|bit28=0) & instruction [ ARMcondCk=1; ARMcond=1; ] {}
 :^instruction is ARMcondCk=0 & instruction [ ARMcondCk=1; ARMcond=0; ] {}
 
-# Ensure one of the recursive rules above is applied for assembly
+# Ensure that the condition check phase has been completed
 with : ARMcondCk=1 {
-
-@endif
 
 #################################################
 #
@@ -6466,6 +6460,5 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 #}
 
 
-@if defined(VERSION_6T2) || defined(VERSION_7)
 } # End with : ARMcondCk=1
-@endif
+
