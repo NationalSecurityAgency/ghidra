@@ -323,6 +323,7 @@ public:
     document = (Document *)0; rootElement = root; attributeIndex = -1; }	///< Constructor with preparsed root
   XmlDecode(const AddrSpaceManager *spc) : Decoder(spc) {
     document = (Document *)0; rootElement = (const Element *)0; attributeIndex = -1; }	///< Constructor for use with ingestStream
+  const Element *getCurrentXmlElement(void) const { return elStack.back(); }	///< Get pointer to underlying XML element object
   virtual ~XmlDecode(void);
   virtual void ingestStream(istream &s);
   virtual uint4 peekElement(void);
