@@ -233,10 +233,9 @@ public class DebuggerLegacyStackPanel extends JPanel {
 	public DebuggerLegacyStackPanel(DebuggerStackPlugin plugin, DebuggerStackProvider provider) {
 		super(new BorderLayout());
 		this.provider = provider;
-		stackTableModel = new StackTableModel(provider.getTool());
-
 		this.autoServiceWiring = AutoService.wireServicesConsumed(plugin, this);
 
+		stackTableModel = new StackTableModel(provider.getTool());
 		stackTable = new GhidraTable(stackTableModel);
 		add(new JScrollPane(stackTable));
 		stackFilterPanel = new GhidraTableFilterPanel<>(stackTable, stackTableModel);

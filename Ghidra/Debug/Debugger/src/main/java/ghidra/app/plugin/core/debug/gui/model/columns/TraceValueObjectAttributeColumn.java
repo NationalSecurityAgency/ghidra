@@ -26,12 +26,28 @@ import ghidra.dbg.target.TargetSteppable.TargetStepKindSet;
 import ghidra.dbg.target.schema.SchemaContext;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.target.schema.TargetObjectSchema.AttributeSchema;
+import ghidra.docking.settings.Settings;
+import ghidra.framework.plugintool.ServiceProvider;
+import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject;
 
-public class TraceValueObjectAttributeColumn<T>
-		extends TraceValueObjectPropertyColumn<T> {
+/**
+ * A column which displays the object's value for a given attribute
+ *
+ * @param <T> the type of the attribute
+ */
+public class TraceValueObjectAttributeColumn<T> extends TraceValueObjectPropertyColumn<T> {
 
-	public static Class<?> computeColumnType(SchemaContext ctx, AttributeSchema attributeSchema) {
+	/**
+	 * Get the type of a given attribute for the model schema
+	 * 
+	 * @param ctx the schema context
+	 * @param attributeSchema the attribute entry from the schema
+	 * @return the type, as a Java class
+	 */
+	public static Class<?> computeAttributeType(SchemaContext ctx,
+			AttributeSchema attributeSchema) {
 		TargetObjectSchema schema = ctx.getSchema(attributeSchema.getSchema());
 		Class<?> type = schema.getType();
 		if (type == TargetObject.class) {
@@ -57,6 +73,13 @@ public class TraceValueObjectAttributeColumn<T>
 
 	protected final String attributeName;
 
+	/**
+	 * Construct an attribute-value column
+	 * 
+	 * @param attributeName the name of the attribute
+	 * @param attributeType the type of the attribute (see
+	 *            {@link #computeAttributeType(SchemaContext, AttributeSchema)})
+	 */
 	public TraceValueObjectAttributeColumn(String attributeName, Class<T> attributeType) {
 		super(attributeType);
 		this.attributeName = attributeName;
@@ -64,12 +87,6 @@ public class TraceValueObjectAttributeColumn<T>
 
 	@Override
 	public String getColumnName() {
-		/**
-		 * TODO: These are going to have "_"-prefixed things.... Sure, they're "hidden", but if we
-		 * remove them, we're going to hide important info. I'd like a way in the schema to specify
-		 * which "interface attribute" an attribute satisfies. That way, the name can be
-		 * human-friendly, but the interface can still find what it needs.
-		 */
 		return attributeName;
 	}
 

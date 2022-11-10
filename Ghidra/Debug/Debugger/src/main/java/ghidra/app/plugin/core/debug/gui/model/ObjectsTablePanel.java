@@ -15,13 +15,49 @@
  */
 package ghidra.app.plugin.core.debug.gui.model;
 
-import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
+import java.awt.Component;
+
+import javax.swing.JTable;
+import javax.swing.JTextField;
+
+import docking.widgets.table.GTableTextCellEditor;
+import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.*;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.trace.model.target.TraceObject;
 
 public class ObjectsTablePanel extends AbstractQueryTablePanel<ValueRow, ObjectTableModel> {
+
+	private static class PropertyEditor extends GTableTextCellEditor {
+		private final JTextField textField;
+
+		public PropertyEditor() {
+			super(new JTextField());
+			textField = (JTextField) getComponent();
+		}
+
+		@Override
+		public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected,
+				int row, int column) {
+			super.getTableCellEditorComponent(table, value, isSelected, row, column);
+			if (value instanceof ValueProperty<?> property) {
+				textField.setText(property.getDisplay());
+			}
+			else {
+				textField.setText(value.toString());
+			}
+			return textField;
+		}
+
+		@Override
+		public Object getCellEditorValue() {
+			Object value = super.getCellEditorValue();
+			return new ValueFixedProperty<>(value);
+		}
+	}
+
 	public ObjectsTablePanel(Plugin plugin) {
 		super(plugin);
+		table.setDefaultEditor(ValueProperty.class, new PropertyEditor());
 	}
 
 	@Override

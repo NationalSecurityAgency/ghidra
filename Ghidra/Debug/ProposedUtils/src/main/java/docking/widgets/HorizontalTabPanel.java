@@ -68,7 +68,7 @@ public class HorizontalTabPanel<T> extends JPanel {
 		}
 	}
 
-	private final JList<T> list = new JList<>();
+	protected final JList<T> list = new JList<>();
 	private final JScrollPane scroll = new JScrollPane(list);
 	private final JViewport viewport = scroll.getViewport();
 	private final DefaultListModel<T> model = new DefaultListModel<>();
