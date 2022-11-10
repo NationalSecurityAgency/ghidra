@@ -16,6 +16,7 @@
 package ghidra.trace.database.module;
 
 import ghidra.dbg.target.*;
+import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.AddressRange;
 import ghidra.trace.database.target.DBTraceObject;
 import ghidra.trace.database.target.DBTraceObjectInterface;
@@ -109,8 +110,10 @@ public class DBTraceObjectSection implements TraceObjectSection, DBTraceObjectIn
 
 	@Override
 	public String getName() {
+		String key = object.getCanonicalPath().key();
+		String index = PathUtils.isIndex(key) ? PathUtils.parseIndex(key) : key;
 		return TraceObjectInterfaceUtils.getValue(object, computeMinSnap(),
-			TargetObject.DISPLAY_ATTRIBUTE_NAME, String.class, "");
+			TargetObject.DISPLAY_ATTRIBUTE_NAME, String.class, index);
 	}
 
 	@Override

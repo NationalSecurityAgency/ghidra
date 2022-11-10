@@ -57,4 +57,31 @@ public class ModelQueryTest extends AbstractGhidraHeadedDebuggerGUITest {
 			assertFalse(threadQuery.includes(Lifespan.before(0), thread0Val));
 		}
 	}
+
+	@Test
+	public void testInvolves() throws Throwable {
+		createTrace();
+
+		ModelQuery rootQuery = ModelQuery.parse("");
+		ModelQuery threadQuery = ModelQuery.parse("Processes[].Threads[]");
+
+		try (UndoableTransaction tid = tb.startTransaction()) {
+			DBTraceObjectManager objects = tb.trace.getObjectManager();
+
+			TraceObjectValue rootVal =
+				objects.createRootObject(CTX.getSchema(new SchemaName("Session")));
+
+			TraceObjectValue thread0Val =
+				objects.createObject(TraceObjectKeyPath.parse("Processes[0].Threads[0]"))
+						.insert(Lifespan.nowOn(0), ConflictResolution.DENY)
+						.getLastEntry();
+
+			assertTrue(rootQuery.involves(Lifespan.ALL, rootVal));
+			assertFalse(rootQuery.involves(Lifespan.ALL, thread0Val));
+
+			assertTrue(threadQuery.involves(Lifespan.ALL, rootVal));
+			assertTrue(threadQuery.involves(Lifespan.ALL, thread0Val));
+			assertFalse(threadQuery.involves(Lifespan.before(0), thread0Val));
+		}
+	}
 }

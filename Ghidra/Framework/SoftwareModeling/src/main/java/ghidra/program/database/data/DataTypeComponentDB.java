@@ -220,15 +220,7 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 	@Override
 	public void setFieldName(String name) throws DuplicateNameException {
 		if (record != null) {
-			if (name != null) {
-				name = name.trim();
-				if (name.length() == 0 || name.equals(getDefaultFieldName())) {
-					name = null;
-				}
-				else {
-					checkDuplicateName(name);
-				}
-			}
+			name = checkFieldName(name);
 			record.setString(ComponentDBAdapter.COMPONENT_FIELD_NAME_COL, name);
 			updateRecord(true);
 		}
@@ -244,6 +236,19 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 				throw new DuplicateNameException("Duplicate field name: " + name);
 			}
 		}
+	}
+
+	private String checkFieldName(String name) throws DuplicateNameException {
+		if (name != null) {
+			name = name.trim();
+			if (name.length() == 0 || name.equals(getDefaultFieldName())) {
+				name = null;
+			}
+			else {
+				checkDuplicateName(name);
+			}
+		}
+		return name;
 	}
 
 	@Override
@@ -390,6 +395,24 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 
 	DBRecord getRecord() {
 		return record;
+	}
+
+	/**
+	 * Perform special-case component update that does not result in size or alignment changes. 
+	 * @param name new component name
+	 * @param dt new resolved datatype
+	 * @param cmt new comment
+	 */
+	void update(String name, DataType dt, String cmt) {
+		if (record != null) {
+			// TODO: Need to check field name and throw DuplicateNameException
+			// name = checkFieldName(name);
+			record.setString(ComponentDBAdapter.COMPONENT_FIELD_NAME_COL, name);
+			record.setLongValue(ComponentDBAdapter.COMPONENT_DT_ID_COL,
+				dataMgr.getResolvedID(dt));
+			record.setString(ComponentDBAdapter.COMPONENT_COMMENT_COL, cmt);
+			updateRecord(false);
+		}
 	}
 
 	@Override

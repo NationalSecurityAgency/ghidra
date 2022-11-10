@@ -74,7 +74,7 @@ public class DBTraceProgramViewMemory extends AbstractDBTraceProgramViewMemory {
 	}
 
 	@Override
-	protected void recomputeAddressSet() {
+	protected synchronized void recomputeAddressSet() {
 		AddressSet temp = new AddressSet();
 		// TODO: Performance test this
 		forVisibleRegions(reg -> temp.add(reg.getRange()));
@@ -139,7 +139,6 @@ public class DBTraceProgramViewMemory extends AbstractDBTraceProgramViewMemory {
 
 	public void updateChangeRegionBlockRange(TraceMemoryRegion region, AddressRange oldRange,
 			AddressRange newRange) {
-		// TODO: update cached block? Nothing to update.
 		changeRange(oldRange, newRange);
 	}
 

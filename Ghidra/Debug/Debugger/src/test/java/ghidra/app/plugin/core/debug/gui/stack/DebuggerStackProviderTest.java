@@ -15,42 +15,57 @@
  */
 package ghidra.app.plugin.core.debug.gui.stack;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
-import java.awt.event.MouseEvent;
-import java.math.BigInteger;
+import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 
 import org.junit.*;
 
-import generic.Unique;
+import docking.widgets.table.DynamicTableColumn;
+import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueProperty;
+import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.services.DebuggerStaticMappingService;
+import ghidra.dbg.target.TargetMemoryRegion;
+import ghidra.dbg.target.TargetStackFrame;
+import ghidra.dbg.target.schema.SchemaContext;
+import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
+import ghidra.dbg.target.schema.XmlSchemaContext;
+import ghidra.dbg.util.PathPattern;
+import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.lang.Register;
-import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
-import ghidra.trace.model.memory.TraceMemoryFlag;
-import ghidra.trace.model.memory.TraceMemorySpace;
-import ghidra.trace.model.stack.TraceStack;
-import ghidra.trace.model.stack.TraceStackFrame;
-import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.model.memory.TraceObjectMemoryRegion;
+import ghidra.trace.model.stack.TraceObjectStack;
+import ghidra.trace.model.target.*;
+import ghidra.trace.model.target.TraceObject.ConflictResolution;
+import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.util.database.UndoableTransaction;
-import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
+/**
+ * NOTE: I no longer synthesize a stack frame when the stack is absent. It's a bit of a hack, and I
+ * don't know if it's really valuable. In fact, in might obscure the fact that the stack is absent.
+ */
 public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
 	protected DebuggerStackPlugin stackPlugin;
 	protected DebuggerStackProvider stackProvider;
 	protected DebuggerStaticMappingService mappingService;
 
 	protected Register pc;
+
+	protected SchemaContext ctx;
 
 	@Before
 	public void setUpStackProviderTest() throws Exception {
@@ -62,80 +77,167 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 		pc = getToyBE64Language().getProgramCounter();
 	}
 
-	protected TraceThread addThread(String n) throws DuplicateNameException {
-		try (UndoableTransaction tid = tb.startTransaction()) {
-			return tb.trace.getThreadManager().createThread(n, 0);
+	@After
+	public void tearDownStackProviderTest() throws Exception {
+		traceManager.activate(DebuggerCoordinates.NOWHERE);
+		waitForSwing();
+		waitForTasks();
+		runSwing(() -> traceManager.closeAllTraces());
+	}
+
+	@Override
+	protected void createTrace(String langID) throws IOException {
+		super.createTrace(langID);
+		try {
+			activateObjectsMode();
+		}
+		catch (Exception e) {
+			throw new AssertionError(e);
 		}
 	}
 
-	protected void addRegVals(TraceThread thread) {
-		try (UndoableTransaction tid = tb.startTransaction()) {
-			TraceMemorySpace regs =
-				tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, true);
-			regs.setValue(0, new RegisterValue(pc, new BigInteger("00400123", 16)));
+	@Override
+	protected void useTrace(Trace trace) {
+		super.useTrace(trace);
+		try {
+			activateObjectsMode();
+		}
+		catch (Exception e) {
+			throw new AssertionError(e);
 		}
 	}
 
-	protected TraceStack addStack(TraceThread thread, int snap) {
+	public void activateObjectsMode() throws Exception {
+		// NOTE the use of index='1' allowing object-based managers to ID unique path
+		ctx = XmlSchemaContext.deserialize("""
+				<context>
+				    <schema name='Session' elementResync='NEVER' attributeResync='ONCE'>
+				        <attribute name='Processes' schema='ProcessContainer' />
+				    </schema>
+				    <schema name='ProcessContainer' canonical='yes' elementResync='NEVER'
+				            attributeResync='ONCE'>
+				        <element schema='Process' />
+				    </schema>
+				    <schema name='Process' elementResync='NEVER' attributeResync='ONCE'>
+				        <attribute name='Threads' schema='ThreadContainer' />
+				        <attribute name='Memory' schema='RegionContainer' />
+				    </schema>
+				    <schema name='ThreadContainer' canonical='yes' elementResync='NEVER'
+				            attributeResync='ONCE'>
+				        <element schema='Thread' />
+				    </schema>
+				    <schema name='Thread' elementResync='NEVER' attributeResync='NEVER'>
+				        <interface name='Thread' />
+				        <interface name='Aggregate' />
+				        <attribute name='Stack' schema='Stack' />
+				        <attribute name='Registers' schema='RegisterContainer' />
+				    </schema>
+				    <schema name='Stack' canonical='yes' elementResync='NEVER'
+				            attributeResync='ONCE'>
+				        <interface name='Stack' />
+				        <element schema='Frame' />
+				    </schema>
+				    <schema name='Frame' elementResync='NEVER' attributeResync='NEVER'>
+				        <interface name='StackFrame' />
+				    </schema>
+				    <schema name='RegisterContainer' canonical='yes' elementResync='NEVER'
+				            attributeResync='NEVER'>
+				        <interface name='RegisterContainer' />
+				        <element schema='Register' />
+				    </schema>
+				    <schema name='Register' elementResync='NEVER' attributeResync='NEVER'>
+				        <interface name='Register' />
+				    </schema>
+				    <schema name='RegionContainer' canonical='yes' elementResync='NEVER'
+				            attributeResync='ONCE'>
+				        <element schema='Region' />
+				    </schema>
+				    <schema name='Region' elementResync='NEVER' attributeResync='NEVER'>
+				        <interface name='MemoryRegion' />
+				    </schema>
+				</context>
+				""");
+
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			return tb.trace.getStackManager().getStack(thread, snap, true);
+			tb.trace.getObjectManager().createRootObject(ctx.getSchema(new SchemaName("Session")));
 		}
 	}
 
-	protected TraceStack addStack(TraceThread thread) {
-		return addStack(thread, 0);
+	protected TraceObjectThread addThread(int n) {
+		PathPattern threadPattern = new PathPattern(PathUtils.parse("Processes[1].Threads[]"));
+		TraceObjectKeyPath threadPath =
+			TraceObjectKeyPath.of(threadPattern.applyIntKeys(n).getSingletonPath());
+		try (UndoableTransaction tid = tb.startTransaction()) {
+			return Objects.requireNonNull(tb.trace.getObjectManager()
+					.createObject(threadPath)
+					.insert(Lifespan.nowOn(0), ConflictResolution.TRUNCATE)
+					.getDestination(null)
+					.queryInterface(TraceObjectThread.class));
+		}
 	}
 
-	protected void addStackFrames(TraceStack stack) {
+	protected TraceObjectStack addStack(TraceObjectThread thread) {
+		TraceObjectKeyPath stackPath = thread.getObject().getCanonicalPath().extend("Stack");
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			stack.setDepth(2, false);
+			return Objects.requireNonNull(tb.trace.getObjectManager()
+					.createObject(stackPath)
+					.insert(Lifespan.nowOn(0), ConflictResolution.TRUNCATE)
+					.getDestination(null)
+					.queryInterface(TraceObjectStack.class));
+		}
+	}
 
-			TraceStackFrame frame = stack.getFrame(0, false);
-			frame.setProgramCounter(Lifespan.ALL, tb.addr(0x00400100));
-			frame.setComment(stack.getSnap(), "Hello");
+	protected void addStackFrames(TraceObjectStack stack) {
+		addStackFrames(stack, 2);
+	}
 
-			frame = stack.getFrame(1, false);
-			frame.setProgramCounter(Lifespan.ALL, tb.addr(0x00400200));
-			frame.setComment(stack.getSnap(), "World");
+	protected void addStackFrames(TraceObjectStack stack, int count) {
+		TraceObjectKeyPath stackPath = stack.getObject().getCanonicalPath();
+		TraceObjectManager om = tb.trace.getObjectManager();
+		try (UndoableTransaction tid = tb.startTransaction()) {
+			for (int i = 0; i < count; i++) {
+				TraceObject frame = om.createObject(stackPath.index(i))
+						.insert(Lifespan.nowOn(0), ConflictResolution.TRUNCATE)
+						.getDestination(null);
+				frame.setAttribute(Lifespan.nowOn(0), TargetStackFrame.PC_ATTRIBUTE_NAME,
+					tb.addr(0x00400100 + 0x100 * i));
+			}
 		}
 	}
 
 	protected void assertProviderEmpty() {
-		List<StackFrameRow> framesDisplayed = stackProvider.stackTableModel.getModelData();
-		assertTrue(framesDisplayed.isEmpty());
-	}
-
-	protected void assertProviderPopulatedSynthetic() {
-		List<StackFrameRow> framesDisplayed = stackProvider.stackTableModel.getModelData();
-		StackFrameRow row = Unique.assertOne(framesDisplayed);
-
-		assertNull(row.frame);
-		assertEquals(0x00400123, row.getProgramCounter().getOffset());
+		assertTrue(stackProvider.panel.getAllItems().isEmpty());
 	}
 
 	protected void assertTableSize(int size) {
-		assertEquals(size, stackProvider.stackTableModel.getModelData().size());
+		assertEquals(size, stackProvider.panel.getAllItems().size());
 	}
 
-	protected void assertRow(int level, Address pcVal, String comment, Function func) {
-		StackFrameRow row = stackProvider.stackTableModel.getModelData().get(level);
-		assertEquals(level, row.getFrameLevel());
-		assertNotNull(row.frame);
-		assertEquals(pcVal, row.getProgramCounter());
-		assertEquals(comment, row.getComment());
-		assertEquals(func, row.getFunction());
+	protected void assertRow(int level, Address pcVal, Function func) {
+		ValueRow row = stackProvider.panel.getAllItems().get(level);
+
+		DynamicTableColumn<ValueRow, String, Trace> levelCol =
+			stackProvider.panel.getColumnByNameAndType("Level", String.class).getValue();
+		DynamicTableColumn<ValueRow, ?, Trace> pcCol =
+			stackProvider.panel.getColumnByNameAndType("PC", ValueProperty.class).getValue();
+		DynamicTableColumn<ValueRow, Function, Trace> funcCol =
+			stackProvider.panel.getColumnByNameAndType("Function", Function.class).getValue();
+
+		assertEquals(PathUtils.makeKey(PathUtils.makeIndex(level)), rowColVal(row, levelCol));
+		assertEquals(pcVal, rowColVal(row, pcCol));
+		assertEquals(func, rowColVal(row, funcCol));
 	}
 
 	protected void assertProviderPopulated() {
 		assertTableSize(2);
-		assertRow(0, tb.addr(0x00400100), "Hello", null);
-		assertRow(1, tb.addr(0x00400200), "World", null);
+		assertRow(0, tb.addr(0x00400100), null);
+		assertRow(1, tb.addr(0x00400200), null);
 	}
 
 	@Test
 	public void testEmpty() throws Exception {
 		waitForSwing();
-		assertProviderEmpty();
+		waitForPass(() -> assertProviderEmpty());
 	}
 
 	@Test
@@ -143,318 +245,304 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 		createAndOpenTrace();
 
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
+		waitForTasks();
 
-		assertProviderEmpty();
+		waitForPass(() -> assertProviderEmpty());
 	}
 
 	@Test
-	public void testActivateThreadNoStackNoRegsEmpty() throws Exception {
+	public void testActivateThreadNoStackEmpty() throws Exception {
 		createAndOpenTrace();
 
-		TraceThread thread = addThread("Processes[1].Threads[1]");
+		TraceObjectThread thread = addThread(1);
 		waitForDomainObject(tb.trace);
 
-		traceManager.activateThread(thread);
-		waitForSwing();
+		traceManager.activateObject(thread.getObject());
+		waitForTasks();
 
-		assertProviderEmpty();
+		waitForPass(() -> assertProviderEmpty());
 	}
 
 	@Test
-	public void testActivateThreadNoStackRegsSynthetic() throws Exception {
+	public void testActivateThreadThenAddEmptyStackEmpty() throws Exception {
 		createAndOpenTrace();
 
-		TraceThread thread = addThread("Processes[1].Threads[1]");
-		addRegVals(thread);
-		waitForDomainObject(tb.trace);
-
-		traceManager.activateThread(thread);
-		waitForSwing();
-
-		assertProviderPopulatedSynthetic();
-	}
-
-	@Test
-	public void testActivateThreadRegsThenAddEmptyStackEmpty() throws Exception {
-		createAndOpenTrace();
-
-		TraceThread thread = addThread("Processes[1].Threads[1]");
-		addRegVals(thread);
+		TraceObjectThread thread = addThread(1);
 		addStack(thread);
 		waitForDomainObject(tb.trace);
 
-		traceManager.activateThread(thread);
-		waitForSwing();
+		traceManager.activateObject(thread.getObject());
+		waitForTasks();
 
-		assertProviderEmpty();
+		waitForPass(() -> assertProviderEmpty());
 	}
 
 	@Test
 	public void testActivateThreadThenAddStackPopulatesProvider() throws Exception {
 		createAndOpenTrace();
 
-		TraceThread thread = addThread("Processes[1].Threads[1]");
-		traceManager.activateThread(thread);
-		TraceStack stack = addStack(thread);
+		TraceObjectThread thread = addThread(1);
+		traceManager.activateObject(thread.getObject());
+		TraceObjectStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
+		waitForTasks();
 
-		assertProviderPopulated();
+		waitForPass(() -> assertProviderPopulated());
 	}
 
 	@Test
 	public void testAddStackThenActivateThreadPopulatesProvider() throws Exception {
 		createAndOpenTrace();
 
-		TraceThread thread = addThread("Processes[1].Threads[1]");
-		TraceStack stack = addStack(thread);
+		TraceObjectThread thread = addThread(1);
+		TraceObjectStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
 
-		traceManager.activateThread(thread);
-		waitForSwing();
+		traceManager.activateObject(thread.getObject());
+		waitForTasks();
 
-		assertProviderPopulated();
+		waitForPass(() -> assertProviderPopulated());
+	}
+
+	/**
+	 * Because keys are strings, we need to ensure they get sorted numerically
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testTableSortedCorrectly() throws Exception {
+		createAndOpenTrace();
+		TraceObjectThread thread = addThread(1);
+		TraceObjectStack stack = addStack(thread);
+		addStackFrames(stack, 15);
+		waitForDomainObject(tb.trace);
+
+		traceManager.activateObject(thread.getObject());
+		waitForTasks();
+
+		waitForPass(() -> {
+			assertTableSize(15);
+			List<ValueRow> allItems = stackProvider.panel.getAllItems();
+			for (int i = 0; i < 15; i++) {
+				assertEquals(PathUtils.makeKey(PathUtils.makeIndex(i)), allItems.get(i).getKey());
+			}
+		});
 	}
 
 	@Test
 	public void testAppendStackUpdatesProvider() throws Exception {
 		createAndOpenTrace();
 
-		TraceThread thread = addThread("Processes[1].Threads[1]");
-		TraceStack stack = addStack(thread);
+		TraceObjectThread thread = addThread(1);
+		TraceObjectStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
 
-		traceManager.activateThread(thread);
-		waitForSwing();
+		traceManager.activateObject(thread.getObject());
+		waitForTasks();
 
-		assertProviderPopulated();
+		waitForPass(() -> assertProviderPopulated());
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			stack.setDepth(3, false);
+			TraceObject frame2 = tb.trace.getObjectManager()
+					.createObject(stack.getObject().getCanonicalPath().index(2))
+					.insert(Lifespan.nowOn(0), ConflictResolution.TRUNCATE)
+					.getDestination(null);
+			frame2.setAttribute(Lifespan.nowOn(0), TargetStackFrame.PC_ATTRIBUTE_NAME,
+				tb.addr(0x00400300));
 		}
 		waitForDomainObject(tb.trace);
+		waitForTasks();
 
-		assertTableSize(3);
-		assertRow(0, tb.addr(0x00400100), "Hello", null);
-		assertRow(1, tb.addr(0x00400200), "World", null);
-		assertRow(2, null, null, null);
+		waitForPass(() -> {
+			assertTableSize(3);
+			assertRow(0, tb.addr(0x00400100), null);
+			assertRow(1, tb.addr(0x00400200), null);
+			assertRow(2, tb.addr(0x00400300), null);
+		});
 	}
 
 	@Test
-	public void testPushStackUpdatesProvider() throws Exception {
+	public void testRemoveFrameUpdatesProvider() throws Exception {
 		createAndOpenTrace();
 
-		TraceThread thread = addThread("Processes[1].Threads[1]");
-		TraceStack stack = addStack(thread);
+		TraceObjectThread thread = addThread(1);
+		TraceObjectStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
 
-		traceManager.activateThread(thread);
-		waitForSwing();
+		traceManager.activateObject(thread.getObject());
+		waitForTasks();
 
-		assertProviderPopulated();
+		waitForPass(() -> assertProviderPopulated());
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			stack.setDepth(3, true);
+			TraceObject frame1 = stack.getObject().getElement(0, 1).getChild();
+			frame1.removeTree(Lifespan.nowOn(0));
 		}
 		waitForDomainObject(tb.trace);
-
-		assertTableSize(3);
-		assertRow(0, null, null, null);
-		assertRow(1, tb.addr(0x00400100), "Hello", null);
-		assertRow(2, tb.addr(0x00400200), "World", null);
+		waitForTasks();
+		waitForPass(() -> {
+			assertTableSize(1);
+			assertRow(0, tb.addr(0x00400100), null);
+		});
 	}
 
 	@Test
-	public void testTruncateStackUpdatesProvider() throws Exception {
+	public void testRemoveStackUpdatesProvider() throws Exception {
 		createAndOpenTrace();
 
-		TraceThread thread = addThread("Processes[1].Threads[1]");
-		TraceStack stack = addStack(thread);
+		TraceObjectThread thread = addThread(1);
+		TraceObjectStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
 
-		traceManager.activateThread(thread);
-		waitForSwing();
+		traceManager.activateObject(thread.getObject());
+		waitForTasks();
 
-		assertProviderPopulated();
+		waitForPass(() -> assertProviderPopulated());
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			stack.setDepth(1, false);
+			stack.getObject().removeTree(Lifespan.nowOn(0));
 		}
 		waitForDomainObject(tb.trace);
+		waitForTasks();
 
-		assertTableSize(1);
-		assertRow(0, tb.addr(0x00400100), "Hello", null);
+		waitForPass(() -> assertProviderEmpty());
 	}
 
 	@Test
-	public void testPopStackUpdatesProvider() throws Exception {
+	public void testActivateOtherThreadEmptiesProvider() throws Exception {
 		createAndOpenTrace();
 
-		TraceThread thread = addThread("Processes[1].Threads[1]");
-		TraceStack stack = addStack(thread);
-		addStackFrames(stack);
+		TraceObjectThread thread1 = addThread(1);
+		TraceObjectThread thread2 = addThread(2);
+		TraceObjectStack stack1 = addStack(thread1);
+		addStackFrames(stack1);
 		waitForDomainObject(tb.trace);
 
-		traceManager.activateThread(thread);
-		waitForSwing();
+		traceManager.activateObject(thread1.getObject());
+		waitForTasks();
 
-		assertProviderPopulated();
+		waitForPass(() -> assertProviderPopulated());
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
-			stack.setDepth(1, true);
-		}
-		waitForDomainObject(tb.trace);
+		traceManager.activateObject(thread2.getObject());
+		waitForTasks();
 
-		assertTableSize(1);
-		assertRow(0, tb.addr(0x00400200), "World", null);
-	}
-
-	@Test
-	public void testDeleteStackUpdatesProvider() throws Exception {
-		createAndOpenTrace();
-
-		TraceThread thread = addThread("Processes[1].Threads[1]");
-		TraceStack stack = addStack(thread);
-		addStackFrames(stack);
-		waitForDomainObject(tb.trace);
-
-		traceManager.activateThread(thread);
-		waitForSwing();
-
-		assertProviderPopulated();
-
-		try (UndoableTransaction tid = tb.startTransaction()) {
-			stack.delete();
-		}
-		waitForDomainObject(tb.trace);
-
-		assertProviderEmpty();
-	}
-
-	@Test
-	public void testActivateOtherThread() throws Exception {
-		createAndOpenTrace();
-
-		TraceThread thread1 = addThread("Processes[1].Threads[1]");
-		TraceThread thread2 = addThread("Processes[1].Threads[2]");
-		TraceStack stack = addStack(thread1);
-		addStackFrames(stack);
-		waitForDomainObject(tb.trace);
-
-		traceManager.activateThread(thread1);
-		waitForSwing();
-
-		assertProviderPopulated();
-
-		traceManager.activateThread(thread2);
-		waitForSwing();
-
-		assertProviderEmpty();
+		waitForPass(() -> assertProviderEmpty());
 	}
 
 	@Test
 	public void testActivateSnap() throws Exception {
 		createAndOpenTrace();
 
-		TraceThread thread = addThread("Processes[1].Threads[1]");
-		TraceStack stack = addStack(thread);
+		TraceObjectThread thread = addThread(1);
+		TraceObjectStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
 
-		traceManager.activateThread(thread);
-		waitForSwing();
+		traceManager.activateObject(thread.getObject());
+		waitForTasks();
 
-		assertProviderPopulated();
+		waitForPass(() -> assertProviderPopulated());
 
-		addStack(thread, 1);
-		waitForSwing();
+		try (UndoableTransaction tid = tb.startTransaction()) {
+			stack.getObject().removeTree(Lifespan.nowOn(1));
+		}
+		waitForDomainObject(tb.trace);
+		waitForTasks();
 
-		assertProviderPopulated();
+		waitForPass(() -> assertProviderPopulated());
 
 		traceManager.activateSnap(1);
-		waitForSwing();
+		waitForTasks();
 
-		assertProviderEmpty();
+		waitForPass(() -> assertProviderEmpty());
+
+		traceManager.activateSnap(0);
+		waitForTasks();
+
+		waitForPass(() -> assertProviderPopulated());
 	}
 
 	@Test
 	public void testCloseCurrentTraceEmpty() throws Exception {
 		createAndOpenTrace();
 
-		TraceThread thread = addThread("Processes[1].Threads[1]");
-		TraceStack stack = addStack(thread);
+		TraceObjectThread thread = addThread(1);
+		TraceObjectStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
 
-		traceManager.activateThread(thread);
-		waitForSwing();
+		traceManager.activateObject(thread.getObject());
+		waitForTasks();
 
-		assertProviderPopulated();
+		waitForPass(() -> assertProviderPopulated());
 
 		traceManager.closeTrace(tb.trace);
-		waitForSwing();
+		waitForTasks();
 
-		assertProviderEmpty();
+		waitForPass(() -> assertProviderEmpty());
 	}
 
 	@Test
-	@Ignore("TODO") // Not sure why this fails under Gradle but not my IDE
-	public void testSelectRowActivatesFrame() throws Exception {
+	public void testSelectRowActivateFrame() throws Exception {
 		createAndOpenTrace();
 
-		TraceThread thread = addThread("Processes[1].Threads[1]");
-		TraceStack stack = addStack(thread);
+		TraceObjectThread thread = addThread(1);
+		TraceObjectStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
 
-		traceManager.activateThread(thread);
-		waitForSwing();
+		traceManager.activateObject(thread.getObject());
+		waitForTasks();
 
-		assertProviderPopulated();
+		waitForPass(() -> assertProviderPopulated());
 
-		clickTableCellWithButton(stackProvider.stackTable, 0, 0, MouseEvent.BUTTON1);
-		waitForSwing();
+		TraceObject frame0 = stack.getObject().getElement(0, 0).getChild();
+		TraceObject frame1 = stack.getObject().getElement(0, 1).getChild();
+		List<ValueRow> allItems = stackProvider.panel.getAllItems();
 
-		assertEquals(0, traceManager.getCurrentFrame());
+		stackProvider.panel.setSelectedItem(allItems.get(1));
+		waitForTasks();
+		waitForPass(() -> assertEquals(frame1, traceManager.getCurrentObject()));
 
-		clickTableCellWithButton(stackProvider.stackTable, 1, 0, MouseEvent.BUTTON1);
-		waitForSwing();
-
-		assertEquals(1, traceManager.getCurrentFrame());
+		stackProvider.panel.setSelectedItem(allItems.get(0));
+		waitForTasks();
+		waitForPass(() -> assertEquals(frame0, traceManager.getCurrentObject()));
 	}
 
 	@Test
 	public void testActivateFrameSelectsRow() throws Exception {
 		createAndOpenTrace();
 
-		TraceThread thread = addThread("Processes[1].Threads[1]");
-		TraceStack stack = addStack(thread);
+		TraceObjectThread thread = addThread(1);
+		TraceObjectStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
 
-		traceManager.activateThread(thread);
-		waitForSwing();
+		traceManager.activateObject(thread.getObject());
+		waitForTasks();
 
-		assertProviderPopulated();
+		waitForPass(() -> assertProviderPopulated());
 
-		traceManager.activateFrame(0);
-		waitForSwing();
+		TraceObject frame0 = stack.getObject().getElement(0, 0).getChild();
+		TraceObject frame1 = stack.getObject().getElement(0, 1).getChild();
+		List<ValueRow> allItems = stackProvider.panel.getAllItems();
 
-		assertEquals(0, stackProvider.stackTable.getSelectedRow());
+		traceManager.activateObject(frame1);
+		waitForTasks();
+		waitForPass(() -> assertEquals(allItems.get(1), stackProvider.panel.getSelectedItem()));
 
-		traceManager.activateFrame(1);
-		waitForSwing();
-
-		assertEquals(1, stackProvider.stackTable.getSelectedRow());
+		traceManager.activateObject(frame0);
+		waitForTasks();
+		waitForPass(() -> assertEquals(allItems.get(0), stackProvider.panel.getSelectedItem()));
 	}
 
 	@Test
-	public void testActivateThenAddMappingPopulatesFunctionColumn() throws Exception {
+	public void testActivateTheAddMappingPopulatesFunctionColumn() throws Exception {
 		createTrace();
 		createProgramFromTrace();
 
@@ -464,15 +552,15 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 		traceManager.openTrace(tb.trace);
 		programManager.openProgram(program);
 
-		TraceThread thread = addThread("Processes[1].Threads[1]");
-		TraceStack stack = addStack(thread);
+		TraceObjectThread thread = addThread(1);
+		TraceObjectStack stack = addStack(thread);
 		addStackFrames(stack);
 		waitForDomainObject(tb.trace);
 
-		traceManager.activateThread(thread);
-		waitForSwing();
+		traceManager.activateObject(thread.getObject());
+		waitForTasks();
 
-		assertProviderPopulated();
+		waitForPass(() -> assertProviderPopulated());
 
 		Function func;
 		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add Function")) {
@@ -487,10 +575,14 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 		waitForDomainObject(program);
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			tb.trace.getMemoryManager()
-					.addRegion("Processes[1].Memory[bin:.text]", Lifespan.nowOn(0),
-						tb.drng(0x00400000, 0x00400fff),
-						TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+			TraceObjectMemoryRegion region = Objects.requireNonNull(tb.trace.getObjectManager()
+					.createObject(TraceObjectKeyPath.parse("Processes[1].Memory[bin:.text]"))
+					.insert(Lifespan.nowOn(0), ConflictResolution.TRUNCATE)
+					.getDestination(null)
+					.queryInterface(TraceObjectMemoryRegion.class));
+			region.getObject()
+					.setAttribute(Lifespan.nowOn(0), TargetMemoryRegion.RANGE_ATTRIBUTE_NAME,
+						tb.drng(0x00400000, 0x00400fff));
 
 			TraceLocation dloc =
 				new DefaultTraceLocation(tb.trace, null, Lifespan.nowOn(0), tb.addr(0x00400000));
@@ -498,9 +590,12 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 			DebuggerStaticMappingUtils.addMapping(dloc, sloc, 0x1000, false);
 		}
 		waitForDomainObject(tb.trace);
+		waitForTasks();
 
-		assertTableSize(2);
-		assertRow(0, tb.addr(0x00400100), "Hello", func);
-		assertRow(1, tb.addr(0x00400200), "World", null);
+		waitForPass(() -> {
+			assertTableSize(2);
+			assertRow(0, tb.addr(0x00400100), func);
+			assertRow(1, tb.addr(0x00400200), null);
+		});
 	}
 }

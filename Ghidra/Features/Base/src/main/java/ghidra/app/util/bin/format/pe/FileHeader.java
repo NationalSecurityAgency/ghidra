@@ -367,6 +367,11 @@ public class FileHeader implements StructConverter {
 	}
 
 	void processSymbols() throws IOException {
+		if (ntHeader.isRVAResoltionSectionAligned()) {
+			// Symbols table offsets are only valid when parsing from file, not memory
+			return;
+		}
+
 		if (isLordPE()) {
 			return;
 		}
@@ -414,6 +419,10 @@ public class FileHeader implements StructConverter {
 	 * @throws IOException if io error
 	 */
 	long getStringTableOffset() throws IOException {
+		if (ntHeader.isRVAResoltionSectionAligned()) {
+			// String table offsets are only valid when parsing from file, not memory
+			return -1;
+		}
 		if (pointerToSymbolTable <= 0 || numberOfSymbols < 0) {
 			return -1;
 		}

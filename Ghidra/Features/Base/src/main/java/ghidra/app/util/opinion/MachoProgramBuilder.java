@@ -427,8 +427,18 @@ public class MachoProgramBuilder {
 					break;
 				}
 			}
+			if (segmentFragment == null) {
+				log.appendMsg("Could not find/fixup segment in Program Tree: " + segmentName);
+				continue;
+			}
 			ProgramModule segmentModule = rootModule.createModule(segmentName);
-			segmentModule.reparent(noSectionsName, rootModule);
+			try {
+				segmentModule.reparent(noSectionsName, rootModule);
+			}
+			catch (NotFoundException e) {
+				log.appendException(e);
+				continue;
+			}
 
 			// Add the sections, which will remove overlapped ranges from the segment fragment
 			for (Section section : segment.getSections()) {

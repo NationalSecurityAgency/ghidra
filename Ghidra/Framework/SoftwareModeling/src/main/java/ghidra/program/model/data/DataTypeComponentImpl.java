@@ -128,19 +128,7 @@ public class DataTypeComponentImpl implements InternalDataTypeComponent, Seriali
 
 	@Override
 	public void setFieldName(String name) throws DuplicateNameException {
-		if (name != null) {
-			name = name.trim();
-			if (name.length() == 0 || name.equals(getDefaultFieldName())) {
-				name = null;
-			}
-			else {
-				if (name.equals(this.fieldName)) {
-					return;
-				}
-				checkDuplicateName(name);
-			}
-		}
-		this.fieldName = name;
+		this.fieldName = checkFieldName(name);
 	}
 
 	private void checkDuplicateName(String name) throws DuplicateNameException {
@@ -153,6 +141,19 @@ public class DataTypeComponentImpl implements InternalDataTypeComponent, Seriali
 				throw new DuplicateNameException("Duplicate field name: " + name);
 			}
 		}
+	}
+
+	private String checkFieldName(String name) throws DuplicateNameException {
+		if (name != null) {
+			name = name.trim();
+			if (name.length() == 0 || name.equals(getDefaultFieldName())) {
+				name = null;
+			}
+			else {
+				checkDuplicateName(name);
+			}
+		}
+		return name;
 	}
 
 	public static void checkDefaultFieldName(String fieldName) throws DuplicateNameException {
@@ -184,6 +185,20 @@ public class DataTypeComponentImpl implements InternalDataTypeComponent, Seriali
 	@Override
 	public DataType getParent() {
 		return parent;
+	}
+
+	/**
+	 * Perform special-case component update that does not result in size or alignment changes. 
+	 * @param name new component name
+	 * @param dt new resolved datatype
+	 * @param cmt new comment
+	 */
+	void update(String name, DataType dt, String cmt) {
+		// TODO: Need to check field name and throw DuplicateNameException
+		// this.fieldName =  = checkFieldName(name);
+		this.fieldName = name;
+		this.dataType = dt;
+		this.comment = cmt;
 	}
 
 	@Override

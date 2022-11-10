@@ -52,6 +52,13 @@ model {
 				}
 			}
 		}
+		if (isCurrentWindows() && VISUAL_STUDIO_INSTALL_DIR) {
+			// specify installDir because Gradle doesn't find VS Build Tools.
+			// See https://github.com/gradle/gradle-native/issues/617#issuecomment-575735288
+			visualCpp(VisualCpp) {
+				installDir VISUAL_STUDIO_INSTALL_DIR
+			}
+		}
 	}
 }
 

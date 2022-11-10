@@ -29,6 +29,7 @@ import ghidra.dbg.target.schema.SchemaContext;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.target.schema.TargetObjectSchema.AttributeSchema;
 import ghidra.framework.plugintool.Plugin;
+import ghidra.program.model.address.Address;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Lifespan.*;
 import ghidra.trace.model.Trace;
@@ -37,9 +38,6 @@ import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.util.HTMLUtilities;
 
 public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
-	/** Initialized in {@link #createTableColumnDescriptor()}, which precedes this. */
-	private TraceValueValColumn valueColumn;
-	private TraceValueLifePlotColumn lifePlotColumn;
 
 	protected static Stream<? extends TraceObjectValue> distinctCanonical(
 			Stream<? extends TraceObjectValue> stream) {
@@ -52,8 +50,115 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 		});
 	}
 
+	public interface ValueProperty<T> {
+		public Class<T> getType();
+
+		public ValueRow getRow();
+
+		public T getValue();
+
+		default public String getDisplay() {
+			T value = getValue();
+			return value == null ? "" : value.toString();
+		}
+
+		default public String getHtmlDisplay() {
+			return "<html>" + HTMLUtilities.escapeHTML(getDisplay());
+		}
+
+		default public String getToolTip() {
+			return getDisplay();
+		}
+
+		default public boolean isModified() {
+			return false;
+		}
+	}
+
+	public static abstract class ValueDerivedProperty<T> implements ValueProperty<T> {
+		protected final ValueRow row;
+		protected final Class<T> type;
+
+		public ValueDerivedProperty(ValueRow row, Class<T> type) {
+			this.row = row;
+			this.type = type;
+		}
+
+		@Override
+		public ValueRow getRow() {
+			return row;
+		}
+
+		@Override
+		public Class<T> getType() {
+			return type;
+		}
+	}
+
+	public static abstract class ValueAddressProperty extends ValueDerivedProperty<Address> {
+		public ValueAddressProperty(ValueRow row) {
+			super(row, Address.class);
+		}
+
+		@Override
+		public String getHtmlDisplay() {
+			Address value = getValue();
+			return value == null ? ""
+					: ("<html><body style='font-family:monospaced'>" +
+						HTMLUtilities.escapeHTML(value.toString()));
+		}
+	}
+
+	public record ValueAttribute<T> (ValueRow row, String name, Class<T> type)
+			implements ValueProperty<T> {
+		public TraceObjectValue getEntry() {
+			return row.getAttributeEntry(name);
+		}
+
+		@Override
+		public ValueRow getRow() {
+			return row;
+		}
+
+		@Override
+		public Class<T> getType() {
+			return type;
+		}
+
+		@Override
+		public T getValue() {
+			TraceObjectValue entry = row.getAttributeEntry(name);
+			return entry == null || !type.isInstance(entry.getValue()) ? null
+					: type.cast(entry.getValue());
+		}
+
+		@Override
+		public String getDisplay() {
+			return row.getAttributeDisplay(name);
+		}
+
+		@Override
+		public String getHtmlDisplay() {
+			return row.getAttributeHtmlDisplay(name);
+		}
+
+		@Override
+		public String getToolTip() {
+			return row.getAttributeToolTip(name);
+		}
+
+		@Override
+		public boolean isModified() {
+			return row.isAttributeModified(name);
+		}
+	}
+
 	public interface ValueRow {
 		String getKey();
+
+		long currentSnap();
+
+		long previousSnap();
 
 		LifeSet getLife();
 
@@ -82,7 +187,11 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 		 */
 		boolean isModified();
 
-		TraceObjectValue getAttribute(String attributeName);
+		default <T> ValueAttribute<T> getAttribute(String attributeName, Class<T> type) {
+			return new ValueAttribute<>(this, attributeName, type);
+		}
+
+		TraceObjectValue getAttributeEntry(String attributeName);
 
 		String getAttributeDisplay(String attributeName);
 
@@ -109,6 +218,16 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 		@Override
 		public String getKey() {
 			return value.getEntryKey();
+		}
+
+		@Override
+		public long currentSnap() {
+			return getSnap();
+		}
+
+		@Override
+		public long previousSnap() {
+			return getTrace() == getDiffTrace() ? getDiffSnap() : getSnap();
 		}
 
 		@Override
@@ -146,7 +265,7 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 		}
 
 		@Override
-		public TraceObjectValue getAttribute(String attributeName) {
+		public TraceObjectValue getAttributeEntry(String attributeName) {
 			return null;
 		}
 
@@ -199,28 +318,28 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 		}
 
 		@Override
-		public TraceObjectValue getAttribute(String attributeName) {
+		public TraceObjectValue getAttributeEntry(String attributeName) {
 			return object.getAttribute(getSnap(), attributeName);
 		}
 
 		@Override
 		public String getAttributeDisplay(String attributeName) {
-			return display.getEdgeDisplay(getAttribute(attributeName));
+			return display.getEdgeDisplay(getAttributeEntry(attributeName));
 		}
 
 		@Override
 		public String getAttributeHtmlDisplay(String attributeName) {
-			return display.getEdgeHtmlDisplay(getAttribute(attributeName));
+			return display.getEdgeHtmlDisplay(getAttributeEntry(attributeName));
 		}
 
 		@Override
 		public String getAttributeToolTip(String attributeName) {
-			return display.getEdgeToolTip(getAttribute(attributeName));
+			return display.getEdgeToolTip(getAttributeEntry(attributeName));
 		}
 
 		@Override
 		public boolean isAttributeModified(String attributeName) {
-			return isValueModified(getAttribute(attributeName));
+			return isValueModified(getAttributeEntry(attributeName));
 		}
 	}
 
@@ -272,8 +391,21 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 		}
 	}
 
+	static class AutoAttributeColumn<T> extends TraceValueObjectAttributeColumn<T> {
+		public static TraceValueObjectAttributeColumn<?> fromSchema(SchemaContext ctx,
+				AttributeSchema attributeSchema) {
+			String name = attributeSchema.getName();
+			Class<?> type = computeColumnType(ctx, attributeSchema);
+			return new AutoAttributeColumn<>(name, type);
+		}
+
+		public AutoAttributeColumn(String attributeName, Class<T> attributeType) {
+			super(attributeName, attributeType);
+		}
+	}
+
 	// TODO: Save and restore these between sessions, esp., their settings
-	private Map<ColKey, TraceValueObjectAttributeColumn> columnCache = new HashMap<>();
+	private Map<ColKey, TraceValueObjectAttributeColumn<?>> columnCache = new HashMap<>();
 
 	protected ObjectTableModel(Plugin plugin) {
 		super("Object Model", plugin);
@@ -307,7 +439,13 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 	protected void updateTimelineMax() {
 		Long max = getTrace() == null ? null : getTrace().getTimeManager().getMaxSnap();
 		Lifespan fullRange = Lifespan.span(0L, max == null ? 1 : max + 1);
-		lifePlotColumn.setFullRange(fullRange);
+		int count = getColumnCount();
+		for (int i = 0; i < count; i++) {
+			DynamicTableColumn<ValueRow, ?, ?> column = getColumn(i);
+			if (column instanceof TraceValueLifePlotColumn plotCol) {
+				plotCol.setFullRange(fullRange);
+			}
+		}
 	}
 
 	protected List<AttributeSchema> computeAttributeSchemas() {
@@ -337,7 +475,6 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 		else {
 			SchemaContext ctx = trace.getObjectManager().getRootSchema().getContext();
 			attributes = query.computeAttributes(trace)
-					.filter(a -> isShowHidden() || !a.isHidden())
 					.filter(a -> !ctx.getSchema(a.getSchema()).isCanonicalContainer())
 					.collect(Collectors.toList());
 		}
@@ -346,6 +483,9 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 
 	protected Set<DynamicTableColumn<ValueRow, ?, ?>> computeAttributeColumns(
 			Collection<AttributeSchema> attributes) {
+		if (attributes == null) {
+			return Set.of();
+		}
 		Trace trace = getTrace();
 		if (trace == null) {
 			return Set.of();
@@ -357,25 +497,31 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 		SchemaContext ctx = rootSchema.getContext();
 		return attributes.stream()
 				.map(as -> columnCache.computeIfAbsent(ColKey.fromSchema(ctx, as),
-					ck -> TraceValueObjectAttributeColumn.fromSchema(ctx, as)))
+					ck -> AutoAttributeColumn.fromSchema(ctx, as)))
 				.collect(Collectors.toSet());
 	}
 
 	protected void resyncAttributeColumns(Collection<AttributeSchema> attributes) {
-		Set<DynamicTableColumn<ValueRow, ?, ?>> columns =
-			new HashSet<>(computeAttributeColumns(attributes));
+		Map<Boolean, List<AttributeSchema>> byVisible = attributes == null ? Map.of()
+				: attributes.stream()
+						.collect(Collectors.groupingBy(a -> !a.isHidden() || isShowHidden()));
+		Set<DynamicTableColumn<ValueRow, ?, ?>> visibleColumns =
+			new HashSet<>(computeAttributeColumns(byVisible.get(true)));
+		Set<DynamicTableColumn<ValueRow, ?, ?>> hiddenColumns =
+			new HashSet<>(computeAttributeColumns(byVisible.get(false)));
 		Set<DynamicTableColumn<ValueRow, ?, ?>> toRemove = new HashSet<>();
 		for (int i = 0; i < getColumnCount(); i++) {
 			DynamicTableColumn<ValueRow, ?, ?> exists = getColumn(i);
-			if (!(exists instanceof TraceValueObjectAttributeColumn)) {
+			if (!(exists instanceof AutoAttributeColumn)) {
 				continue;
 			}
-			if (!columns.remove(exists)) {
+			if (!visibleColumns.remove(exists) && !hiddenColumns.remove(exists)) {
 				toRemove.add(exists);
 			}
 		}
 		removeTableColumns(toRemove);
-		addTableColumns(columns);
+		addTableColumns(visibleColumns, true);
+		addTableColumns(hiddenColumns, false);
 	}
 
 	@Override
@@ -389,9 +535,9 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 	protected TableColumnDescriptor<ValueRow> createTableColumnDescriptor() {
 		TableColumnDescriptor<ValueRow> descriptor = new TableColumnDescriptor<>();
 		descriptor.addVisibleColumn(new TraceValueKeyColumn());
-		descriptor.addVisibleColumn(valueColumn = new TraceValueValColumn());
+		descriptor.addVisibleColumn(new TraceValueValColumn());
 		descriptor.addVisibleColumn(new TraceValueLifeColumn());
-		descriptor.addHiddenColumn(lifePlotColumn = new TraceValueLifePlotColumn());
+		descriptor.addHiddenColumn(new TraceValueLifePlotColumn());
 		return descriptor;
 	}
 
@@ -405,18 +551,56 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 		return null;
 	}
 
+	/**
+	 * Find the row whose object is the canonical ancestor to the given object
+	 * 
+	 * @param successor the given object
+	 * @return the row or null
+	 */
+	public ValueRow findTraceObjectAncestor(TraceObject successor) {
+		for (ValueRow row : getModelData()) {
+			TraceObjectValue value = row.getValue();
+			if (!value.isObject()) {
+				continue;
+			}
+			if (!value.getChild().getCanonicalPath().isAncestor(successor.getCanonicalPath())) {
+				continue;
+			}
+			return row;
+		}
+		return null;
+	}
+
 	@Override
 	public void setDiffColor(Color diffColor) {
-		valueColumn.setDiffColor(diffColor);
-		for (TraceValueObjectAttributeColumn column : columnCache.values()) {
+		int count = getColumnCount();
+		for (int i = 0; i < count; i++) {
+			DynamicTableColumn<ValueRow, ?, ?> column = getColumn(i);
+			if (column instanceof TraceValueObjectAttributeColumn<?> attrCol) {
+				attrCol.setDiffColor(diffColor);
+			}
+			else if (column instanceof TraceValueValColumn valCol) {
+				valCol.setDiffColor(diffColor);
+			}
+		}
+		for (TraceValueObjectAttributeColumn<?> column : columnCache.values()) {
 			column.setDiffColor(diffColor);
 		}
 	}
 
 	@Override
 	public void setDiffColorSel(Color diffColorSel) {
-		valueColumn.setDiffColorSel(diffColorSel);
-		for (TraceValueObjectAttributeColumn column : columnCache.values()) {
+		int count = getColumnCount();
+		for (int i = 0; i < count; i++) {
+			DynamicTableColumn<ValueRow, ?, ?> column = getColumn(i);
+			if (column instanceof TraceValueObjectAttributeColumn<?> attrCol) {
+				attrCol.setDiffColorSel(diffColorSel);
+			}
+			else if (column instanceof TraceValueValColumn valCol) {
+				valCol.setDiffColorSel(diffColorSel);
+			}
+		}
+		for (TraceValueObjectAttributeColumn<?> column : columnCache.values()) {
 			column.setDiffColorSel(diffColorSel);
 		}
 	}
@@ -424,11 +608,24 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 	@Override
 	protected void snapChanged() {
 		super.snapChanged();
-		lifePlotColumn.setSnap(getSnap());
+		long snap = getSnap();
+		int count = getColumnCount();
+		for (int i = 0; i < count; i++) {
+			DynamicTableColumn<ValueRow, ?, ?> column = getColumn(i);
+			if (column instanceof TraceValueLifePlotColumn plotCol) {
+				plotCol.setSnap(snap);
+			}
+		}
 	}
 
 	@Override
 	public void addSeekListener(SeekListener listener) {
-		lifePlotColumn.addSeekListener(listener);
+		int count = getColumnCount();
+		for (int i = 0; i < count; i++) {
+			DynamicTableColumn<ValueRow, ?, ?> column = getColumn(i);
+			if (column instanceof TraceValueLifePlotColumn plotCol) {
+				plotCol.addSeekListener(listener);
+			}
+		}
 	}
 }

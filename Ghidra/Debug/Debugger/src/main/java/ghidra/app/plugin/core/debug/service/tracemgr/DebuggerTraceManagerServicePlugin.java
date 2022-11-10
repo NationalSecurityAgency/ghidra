@@ -47,6 +47,7 @@ import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.lifecycle.Internal;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.Trace.TraceObjectChangeType;
 import ghidra.trace.model.Trace.TraceThreadChangeType;
 import ghidra.trace.model.TraceDomainObjectListener;
 import ghidra.trace.model.guest.TracePlatform;
@@ -100,6 +101,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			this.trace = trace;
 			listenFor(TraceThreadChangeType.ADDED, this::threadAdded);
 			listenFor(TraceThreadChangeType.DELETED, this::threadDeleted);
+			listenFor(TraceObjectChangeType.CREATED, this::objectCreated);
 		}
 
 		private void threadAdded(TraceThread thread) {
@@ -128,6 +130,20 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			if (current.getThread() == thread) {
 				activate(current.thread(null));
 			}
+		}
+
+		private void objectCreated(TraceObject object) {
+			TraceRecorder recorder = current.getRecorder();
+			if (supportsFocus(recorder)) {
+				return;
+			}
+			if (current.getTrace() != trace) {
+				return;
+			}
+			if (!object.isRoot()) {
+				return;
+			}
+			activate(current.object(object));
 		}
 	}
 
@@ -233,6 +249,8 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	private DebuggerModelService modelService;
 	@AutoServiceConsumed
 	private DebuggerEmulationService emulationService;
+	@AutoServiceConsumed
+	private DebuggerPlatformService platformService;
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
 
@@ -473,20 +491,36 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		return coordinates.recorder(recorder);
 	}
 
+	protected DebuggerCoordinates fillInPlatform(DebuggerCoordinates coordinates) {
+		if (platformService == null || coordinates.getTrace() == null) {
+			return coordinates;
+		}
+		// This will emit an event, but it should have no effect
+		DebuggerPlatformMapper mapper = platformService.getMapper(coordinates.getTrace(),
+			coordinates.getObject(), coordinates.getSnap());
+		if (mapper == null) {
+			return coordinates;
+		}
+		TracePlatform platform =
+			getPlatformForMapper(coordinates.getTrace(), coordinates.getObject(), mapper);
+		return coordinates.platform(platform);
+	}
+
 	protected DebuggerCoordinates doSetCurrent(DebuggerCoordinates newCurrent) {
 		newCurrent = newCurrent == null ? DebuggerCoordinates.NOWHERE : newCurrent;
+		newCurrent = fillInRecorder(newCurrent.getTrace(), newCurrent);
+		newCurrent = fillInPlatform(newCurrent);
 		synchronized (listenersByTrace) {
-			DebuggerCoordinates resolved = fillInRecorder(newCurrent.getTrace(), newCurrent);
-			if (current.equals(resolved)) {
+			if (current.equals(newCurrent)) {
 				return null;
 			}
-			current = resolved;
-			contextChanged();
-			if (resolved.getTrace() != null) {
-				lastCoordsByTrace.put(resolved.getTrace(), resolved);
+			current = newCurrent;
+			if (newCurrent.getTrace() != null) {
+				lastCoordsByTrace.put(newCurrent.getTrace(), newCurrent);
 			}
-			return resolved;
 		}
+		contextChanged();
+		return newCurrent;
 	}
 
 	protected void contextChanged() {
@@ -542,6 +576,11 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		activateSnap(snap);
 	}
 
+	protected TracePlatform getPlatformForMapper(Trace trace, TraceObject object,
+			DebuggerPlatformMapper mapper) {
+		return trace.getPlatformManager().getPlatform(mapper.getCompilerSpec(object));
+	}
+
 	protected void doPlatformMapperSelected(Trace trace, DebuggerPlatformMapper mapper) {
 		synchronized (listenersByTrace) {
 			if (!listenersByTrace.containsKey(trace)) {
@@ -549,8 +588,8 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			}
 			DebuggerCoordinates cur =
 				lastCoordsByTrace.getOrDefault(trace, DebuggerCoordinates.NOWHERE);
-			DebuggerCoordinates adj = cur.platform(
-				trace.getPlatformManager().getPlatform(mapper.getCompilerSpec(cur.getObject())));
+			DebuggerCoordinates adj =
+				cur.platform(getPlatformForMapper(trace, cur.getObject(), mapper));
 			lastCoordsByTrace.put(trace, adj);
 			if (trace == current.getTrace()) {
 				current = adj;
@@ -587,9 +626,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	public void processEvent(PluginEvent event) {
 		super.processEvent(event);
 		if (event instanceof TraceActivatedPluginEvent ev) {
-			synchronized (listenersByTrace) {
-				doSetCurrent(ev.getActiveCoordinates());
-			}
+			doSetCurrent(ev.getActiveCoordinates());
 		}
 		else if (event instanceof TraceClosedPluginEvent ev) {
 			doTraceClosed(ev.getTrace());
@@ -1025,10 +1062,16 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			boolean syncTargetFocus) {
 		DebuggerCoordinates prev;
 		DebuggerCoordinates resolved;
+
+		Trace newTrace = coordinates.getTrace();
 		synchronized (listenersByTrace) {
-			prev = current;
-			resolved = doSetCurrent(coordinates);
+			if (newTrace != null && !listenersByTrace.containsKey(newTrace)) {
+				throw new IllegalStateException(
+					"Trace must be opened before activated: " + newTrace);
+			}
 		}
+		prev = current;
+		resolved = doSetCurrent(coordinates);
 		if (resolved == null) {
 			return AsyncUtils.NIL;
 		}

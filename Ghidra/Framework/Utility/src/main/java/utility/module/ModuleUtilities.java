@@ -63,6 +63,11 @@ public class ModuleUtilities {
 	 */
 	public static boolean isModuleDirectory(Path path) {
 		File file = path.toFile();
+		if ("bin".equals(file.getName())) {
+			// Prevent eclipse project bin directory from being treated as module root
+			// since files frequently get copied from root into bin
+			return false;
+		}
 		return new File(file, MANIFEST_FILE_NAME).exists();
 	}
 

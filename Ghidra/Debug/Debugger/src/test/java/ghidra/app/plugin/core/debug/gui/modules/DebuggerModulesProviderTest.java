@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.debug.gui.modules;
 import static org.junit.Assert.*;
 
 import java.awt.event.MouseEvent;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -25,111 +26,234 @@ import org.junit.*;
 import org.junit.experimental.categories.Category;
 
 import docking.widgets.filechooser.GhidraFileChooser;
+import docking.widgets.table.DynamicTableColumn;
 import generic.Unique;
 import generic.test.category.NightlyCategory;
+import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.*;
 import ghidra.app.plugin.core.debug.gui.DebuggerBlockChooserDialog.MemoryBlockRow;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractImportFromFileSystemAction;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractSelectAddressesAction;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
+import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueProperty;
+import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
+import ghidra.app.plugin.core.debug.gui.model.QueryPanelTestHelper;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerModuleMapProposalDialog.ModuleMapTableColumns;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerModulesProvider.MapModulesAction;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerModulesProvider.MapSectionsAction;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerSectionMapProposalDialog.SectionMapTableColumns;
+import ghidra.app.plugin.core.debug.mapping.DebuggerTargetTraceMapper;
+import ghidra.app.plugin.core.debug.mapping.ObjectBasedDebuggerTargetTraceMapper;
 import ghidra.app.services.DebuggerListingService;
+import ghidra.app.services.TraceRecorder;
 import ghidra.app.services.ModuleMapProposal.ModuleMapEntry;
 import ghidra.app.services.SectionMapProposal.SectionMapEntry;
-import ghidra.app.services.TraceRecorder;
 import ghidra.dbg.attributes.TargetPrimitiveDataType.DefaultTargetPrimitiveDataType;
 import ghidra.dbg.attributes.TargetPrimitiveDataType.PrimitiveKind;
 import ghidra.dbg.model.TestTargetModule;
 import ghidra.dbg.model.TestTargetTypedefDataType;
-import ghidra.dbg.util.TargetDataTypeConverter;
+import ghidra.dbg.target.*;
+import ghidra.dbg.target.schema.SchemaContext;
+import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
+import ghidra.dbg.util.*;
+import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.framework.main.DataTreeDialog;
 import ghidra.plugin.importer.ImporterPlugin;
-import ghidra.program.model.address.AddressOverflowException;
-import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
+import ghidra.program.model.lang.CompilerSpecID;
+import ghidra.program.model.lang.LanguageID;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.program.model.mem.MemoryConflictException;
-import ghidra.trace.database.memory.DBTraceMemoryManager;
+import ghidra.trace.database.module.TraceObjectSection;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.data.TraceBasedDataTypeManager;
-import ghidra.trace.model.memory.TraceMemoryFlag;
-import ghidra.trace.model.memory.TraceOverlappedRegionException;
 import ghidra.trace.model.modules.*;
 import ghidra.trace.model.symbol.TraceSymbol;
+import ghidra.trace.model.target.*;
+import ghidra.trace.model.target.TraceObject.ConflictResolution;
 import ghidra.util.database.UndoableTransaction;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.table.GhidraTable;
 
-@Category(NightlyCategory.class) // this may actually be an @PortSensitive test
+@Category(NightlyCategory.class)
 public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
-	protected DebuggerModulesPlugin modulesPlugin;
-	protected DebuggerModulesProvider modulesProvider;
 
-	protected TraceModule modExe;
-	protected TraceSection secExeText;
-	protected TraceSection secExeData;
+	DebuggerModulesProvider provider;
 
-	protected TraceModule modLib;
-	protected TraceSection secLibText;
-	protected TraceSection secLibData;
+	protected TraceObjectModule modExe;
+	protected TraceObjectSection secExeText;
+	protected TraceObjectSection secExeData;
 
-	@Before
-	public void setUpModulesProviderTest() throws Exception {
-		modulesPlugin = addPlugin(tool, DebuggerModulesPlugin.class);
-		modulesProvider = waitForComponentProvider(DebuggerModulesProvider.class);
+	protected TraceObjectModule modLib;
+	protected TraceObjectSection secLibText;
+	protected TraceObjectSection secLibData;
+
+	protected SchemaContext ctx;
+
+	@Override
+	protected DebuggerTargetTraceMapper createTargetTraceMapper(TargetObject target)
+			throws Exception {
+		return new ObjectBasedDebuggerTargetTraceMapper(target,
+			new LanguageID("DATA:BE:64:default"), new CompilerSpecID("pointer64"), Set.of());
 	}
 
-	protected void addRegionsFromModules()
-			throws TraceOverlappedRegionException, DuplicateNameException {
+	@Override
+	protected TraceRecorder recordAndWaitSync() throws Throwable {
+		TraceRecorder recorder = super.recordAndWaitSync();
+		useTrace(recorder.getTrace());
+		return recorder;
+	}
+
+	@Override
+	protected TargetObject chooseTarget() {
+		return mb.testModel.session;
+	}
+
+	@Override
+	protected void createTrace(String langID) throws IOException {
+		super.createTrace(langID);
+		try {
+			activateObjectsMode();
+		}
+		catch (Exception e) {
+			throw new AssertionError(e);
+		}
+	}
+
+	@Override
+	protected void useTrace(Trace trace) {
+		super.useTrace(trace);
+		if (trace.getObjectManager().getRootObject() != null) {
+			// If live, recorder will have created it
+			return;
+		}
+		try {
+			activateObjectsMode();
+		}
+		catch (Exception e) {
+			throw new AssertionError(e);
+		}
+	}
+
+	public void activateObjectsMode() throws Exception {
+		// NOTE the use of index='1' allowing object-based managers to ID unique path
+		ctx = XmlSchemaContext.deserialize("" + //
+			"<context>" + //
+			"    <schema name='Session' elementResync='NEVER' attributeResync='ONCE'>" + //
+			"        <attribute name='Processes' schema='ProcessContainer' />" + //
+			"    </schema>" + //
+			"    <schema name='ProcessContainer' canonical='yes' elementResync='NEVER' " + //
+			"            attributeResync='ONCE'>" + //
+			"        <element index='1' schema='Process' />" + // <---- NOTE HERE
+			"    </schema>" + //
+			"    <schema name='Process' elementResync='NEVER' attributeResync='ONCE'>" + //
+			"        <attribute name='Modules' schema='ModuleContainer' />" + //
+			"        <attribute name='Memory' schema='RegionContainer' />" + //
+			"    </schema>" + //
+			"    <schema name='RegionContainer' canonical='yes' elementResync='NEVER' " + //
+			"            attributeResync='ONCE'>" + //
+			"        <element schema='Region' />" + //
+			"    </schema>" + //
+			"    <schema name='Region' elementResync='NEVER' attributeResync='NEVER'>" + //
+			"        <interface name='MemoryRegion' />" + //
+			"    </schema>" + //
+			"    <schema name='ModuleContainer' canonical='yes' elementResync='NEVER' " + //
+			"            attributeResync='ONCE'>" + //
+			"        <element schema='Module' />" + //
+			"    </schema>" + //
+			"    <schema name='Module' elementResync='NEVER' attributeResync='NEVER'>" + //
+			"        <interface name='Module' />" + //
+			"        <attribute name='Sections' schema='SectionContainer' />" + //
+			"    </schema>" + //
+			"    <schema name='SectionContainer' canonical='yes' elementResync='NEVER' " + //
+			"            attributeResync='ONCE'>" + //
+			"        <element schema='Section' />" + //
+			"    </schema>" + //
+			"    <schema name='Section' elementResync='NEVER' attributeResync='NEVER'>" + //
+			"        <interface name='Section' />" + //
+			"    </schema>" + //
+			"</context>");
+
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			DBTraceMemoryManager manager = tb.trace.getMemoryManager();
-			for (TraceModule module : tb.trace.getModuleManager().getAllModules()) {
-				for (TraceSection section : module.getSections()) {
-					Set<TraceMemoryFlag> flags = new HashSet<>();
-					flags.add(TraceMemoryFlag.READ);
-					if (".text".equals(section.getName())) {
-						flags.add(TraceMemoryFlag.EXECUTE);
-					}
-					else if (".data".equals(section.getName())) {
-						flags.add(TraceMemoryFlag.WRITE);
-					}
-					else {
-						throw new AssertionError();
-					}
-					manager.addRegion(
-						"Processes[1].Memory[" + module.getName() + ":" + section.getName() + "]",
-						module.getLifespan(), section.getRange(), flags);
+			tb.trace.getObjectManager().createRootObject(ctx.getSchema(new SchemaName("Session")));
+		}
+	}
+
+	protected void addRegionsFromModules() throws Exception {
+		PathPattern regionPattern = new PathPattern(PathUtils.parse("Processes[1].Memory[]"));
+		TraceObjectManager om = tb.trace.getObjectManager();
+		try (UndoableTransaction tid = tb.startTransaction()) {
+			TraceObject root = om.getRootObject();
+			for (TraceObject module : (Iterable<TraceObject>) () -> root
+					.querySuccessorsTargetInterface(Lifespan.at(0), TargetModule.class)
+					.map(p -> p.getDestination(root))
+					.iterator()) {
+				String moduleName = module.getCanonicalPath().index();
+				Lifespan span = module.getLife().bound();
+				for (TraceObject section : (Iterable<TraceObject>) () -> module
+						.querySuccessorsTargetInterface(Lifespan.at(0), TargetSection.class)
+						.map(p -> p.getDestination(root))
+						.iterator()) {
+					String sectionName = section.getCanonicalPath().index();
+					TraceObject region = om.createObject(TraceObjectKeyPath
+							.of(regionPattern.applyKeys(moduleName + ":" + sectionName)
+									.getSingletonPath()))
+							.insert(span, ConflictResolution.TRUNCATE)
+							.getDestination(root);
+					region.setAttribute(span, TargetMemoryRegion.RANGE_ATTRIBUTE_NAME,
+						section.getAttribute(0, TargetSection.RANGE_ATTRIBUTE_NAME).getValue());
+					region.setAttribute(span, TargetMemoryRegion.READABLE_ATTRIBUTE_NAME, true);
+					region.setAttribute(span, TargetMemoryRegion.WRITABLE_ATTRIBUTE_NAME,
+						".data".equals(sectionName));
+					region.setAttribute(span, TargetMemoryRegion.EXECUTABLE_ATTRIBUTE_NAME,
+						".text".equals(sectionName));
 				}
 			}
 		}
 	}
 
-	protected void addModules() throws Exception {
-		TraceModuleManager manager = tb.trace.getModuleManager();
-		try (UndoableTransaction tid = tb.startTransaction()) {
-			modExe = manager.addLoadedModule("Processes[1].Modules[first_proc]", "first_proc",
-				tb.range(0x55550000, 0x5575007f), 0);
-			secExeText = modExe.addSection("Processes[1].Modules[first_proc].Sections[.text]",
-				".text", tb.range(0x55550000, 0x555500ff));
-			secExeData = modExe.addSection("Processes[1].Modules[first_proc].Sections[.data]",
-				".data", tb.range(0x55750000, 0x5575007f));
+	protected TraceObjectModule addModule(String name, AddressRange range, Lifespan span) {
+		PathPattern modulePattern = new PathPattern(PathUtils.parse("Processes[1].Modules[]"));
+		TraceObjectManager om = tb.trace.getObjectManager();
+		TraceObjectModule module = Objects.requireNonNull(
+			om.createObject(TraceObjectKeyPath.of(modulePattern.applyKeys(name).getSingletonPath()))
+					.insert(span, ConflictResolution.TRUNCATE)
+					.getDestination(null)
+					.queryInterface(TraceObjectModule.class));
+		module.getObject().setAttribute(span, TargetModule.MODULE_NAME_ATTRIBUTE_NAME, name);
+		module.getObject().setAttribute(span, TargetModule.RANGE_ATTRIBUTE_NAME, range);
+		return module;
+	}
 
-			modLib = manager.addLoadedModule("Processes[1].Modules[some_lib]", "some_lib",
-				tb.range(0x7f000000, 0x7f10003f), 0);
-			secLibText = modLib.addSection("Processes[1].Modules[some_lib].Sections[.text]",
-				".text", tb.range(0x7f000000, 0x7f0003ff));
-			secLibData = modLib.addSection("Processes[1].Modules[some_lib].Sections[.data]",
-				".data", tb.range(0x7f100000, 0x7f10003f));
+	protected TraceObjectSection addSection(TraceObjectModule module, String name,
+			AddressRange range) {
+		TraceObjectManager om = tb.trace.getObjectManager();
+		Lifespan span = module.getObject().getLife().bound();
+		TraceObjectSection section = Objects.requireNonNull(om
+				.createObject(
+					module.getObject().getCanonicalPath().key("Sections").index(name))
+				.insert(span, ConflictResolution.TRUNCATE)
+				.getDestination(null)
+				.queryInterface(TraceObjectSection.class));
+		section.getObject().setAttribute(span, TargetSection.RANGE_ATTRIBUTE_NAME, range);
+		return section;
+	}
+
+	protected void addModules() throws Exception {
+		Lifespan zeroOn = Lifespan.nowOn(0);
+		try (UndoableTransaction tid = tb.startTransaction()) {
+			modExe = addModule("first_proc", tb.range(0x55550000, 0x5575007f), zeroOn);
+			secExeText = addSection(modExe, ".text", tb.range(0x55550000, 0x555500ff));
+			secExeData = addSection(modExe, ".data", tb.range(0x55750000, 0x5575007f));
+
+			modLib = addModule("some_lib", tb.range(0x7f000000, 0x7f10003f), zeroOn);
+			secLibText = addSection(modLib, ".text", tb.range(0x7f000000, 0x7f0003ff));
+			secLibData = addSection(modLib, ".data", tb.range(0x7f100000, 0x7f10003f));
 		}
 	}
 
-	protected MemoryBlock addBlock() throws Exception,
-			MemoryConflictException, AddressOverflowException, CancelledException {
+	protected MemoryBlock addBlock() throws Exception {
 		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add block")) {
 			return program.getMemory()
 					.createInitializedBlock(".text", tb.addr(0x00400000), 0x1000, (byte) 0, monitor,
@@ -137,67 +261,108 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		}
 	}
 
-	protected void assertProviderEmpty() {
-		List<ModuleRow> modulesDisplayed = modulesProvider.moduleTableModel.getModelData();
-		assertTrue(modulesDisplayed.isEmpty());
+	protected void assertModuleTableSize(int size) {
+		assertEquals(size, provider.modulesPanel.getAllItems().size());
+	}
 
-		List<SectionRow> sectionsDisplayed = modulesProvider.sectionTableModel.getModelData();
-		assertTrue(sectionsDisplayed.isEmpty());
+	protected void assertSectionTableSize(int size) {
+		assertEquals(size, provider.sectionsPanel.getAllItems().size());
+	}
+
+	protected void assertProviderEmpty() {
+		assertModuleTableSize(0);
+		assertSectionTableSize(0);
+	}
+
+	protected void assertModuleRow(int pos, Object object, String name, Address start, Address end,
+			long length) {
+		ValueRow row = provider.modulesPanel.getAllItems().get(pos);
+		DynamicTableColumn<ValueRow, ?, Trace> nameCol =
+			provider.modulesPanel.getColumnByNameAndType("Name", ValueProperty.class).getValue();
+		DynamicTableColumn<ValueRow, ?, Trace> baseCol =
+			provider.modulesPanel.getColumnByNameAndType("Base", ValueProperty.class).getValue();
+		DynamicTableColumn<ValueRow, ?, Trace> maxCol =
+			provider.modulesPanel.getColumnByNameAndType("Max", ValueProperty.class).getValue();
+		DynamicTableColumn<ValueRow, ?, Trace> lengthCol =
+			provider.modulesPanel.getColumnByNameAndType("Length", ValueProperty.class).getValue();
+
+		assertSame(object, row.getValue().getValue());
+		assertEquals(name, rowColVal(row, nameCol));
+		assertEquals(start, rowColVal(row, baseCol));
+		assertEquals(end, rowColVal(row, maxCol));
+		assertEquals(length, rowColVal(row, lengthCol));
+	}
+
+	protected void assertSectionRow(int pos, Object object, String moduleName, String name,
+			Address start, Address end, long length) {
+		ValueRow row = provider.sectionsPanel.getAllItems().get(pos);
+		DynamicTableColumn<ValueRow, ?, Trace> moduleNameCol =
+			provider.sectionsPanel.getColumnByNameAndType("Module Name", ValueProperty.class)
+					.getValue();
+		DynamicTableColumn<ValueRow, ?, Trace> nameCol =
+			provider.sectionsPanel.getColumnByNameAndType("Name", String.class).getValue();
+		DynamicTableColumn<ValueRow, ?, Trace> startCol =
+			provider.sectionsPanel.getColumnByNameAndType("Start", ValueProperty.class).getValue();
+		DynamicTableColumn<ValueRow, ?, Trace> endCol =
+			provider.sectionsPanel.getColumnByNameAndType("End", ValueProperty.class).getValue();
+		DynamicTableColumn<ValueRow, ?, Trace> lengthCol =
+			provider.sectionsPanel.getColumnByNameAndType("Length", ValueProperty.class).getValue();
+
+		assertSame(object, row.getValue().getValue());
+		assertEquals(moduleName, rowColVal(row, moduleNameCol));
+		assertEquals(name, rowColVal(row, nameCol));
+		assertEquals(start, rowColVal(row, startCol));
+		assertEquals(end, rowColVal(row, endCol));
+		assertEquals(length, rowColVal(row, lengthCol));
 	}
 
 	protected void assertProviderPopulated() {
-		List<ModuleRow> modulesDisplayed =
-			new ArrayList<>(modulesProvider.moduleTableModel.getModelData());
-		modulesDisplayed.sort(Comparator.comparing(r -> r.getBase()));
-		// I should be able to assume this is sorted by base address. It's the default sort column.
-		assertEquals(2, modulesDisplayed.size());
+		assertModuleTableSize(2);
+		assertSectionTableSize(4);
 
-		ModuleRow execRow = modulesDisplayed.get(0);
-		assertEquals(tb.addr(0x55550000), execRow.getBase());
-		assertEquals("first_proc", execRow.getName());
+		assertModuleRow(0, modExe.getObject(), "first_proc", tb.addr(0x55550000),
+			tb.addr(0x5575007f), 0x00200080);
+		assertSectionRow(0, secExeText.getObject(), "first_proc", ".text", tb.addr(0x55550000),
+			tb.addr(0x555500ff), 256);
+		assertSectionRow(1, secExeData.getObject(), "first_proc", ".data", tb.addr(0x55750000),
+			tb.addr(0x5575007f), 128);
 
-		// Use only (start) offset for excess, as unique ID
-		ModuleRow libRow = modulesDisplayed.get(1);
-		assertEquals(tb.addr(0x7f000000), libRow.getBase());
+		assertModuleRow(1, modLib.getObject(), "some_lib", tb.addr(0x7f000000),
+			tb.addr(0x7f10003f), 0x00100040);
+		assertSectionRow(2, secLibText.getObject(), "some_lib", ".text", tb.addr(0x7f000000),
+			tb.addr(0x7f0003ff), 1024);
+		assertSectionRow(3, secLibData.getObject(), "some_lib", ".data", tb.addr(0x7f100000),
+			tb.addr(0x7f10003f), 64);
+	}
 
-		List<SectionRow> sectionsDisplayed =
-			new ArrayList<>(modulesProvider.sectionTableModel.getModelData());
-		sectionsDisplayed.sort(Comparator.comparing(r -> r.getStart()));
-		assertEquals(4, sectionsDisplayed.size());
+	@Before
+	public void setUpModulesProviderTest() throws Exception {
+		addPlugin(tool, DebuggerModulesPlugin.class);
+		provider = waitForComponentProvider(DebuggerModulesProvider.class);
+	}
 
-		SectionRow execTextRow = sectionsDisplayed.get(0);
-		assertEquals(tb.addr(0x55550000), execTextRow.getStart());
-		assertEquals(tb.addr(0x555500ff), execTextRow.getEnd());
-		assertEquals("first_proc", execTextRow.getModuleName());
-		assertEquals(".text", execTextRow.getName());
-		assertEquals(256, execTextRow.getLength());
-
-		SectionRow execDataRow = sectionsDisplayed.get(1);
-		assertEquals(tb.addr(0x55750000), execDataRow.getStart());
-
-		SectionRow libTextRow = sectionsDisplayed.get(2);
-		assertEquals(tb.addr(0x7f000000), libTextRow.getStart());
-
-		SectionRow libDataRow = sectionsDisplayed.get(3);
-		assertEquals(tb.addr(0x7f100000), libDataRow.getStart());
+	@After
+	public void tearDownModulesProviderTest() throws Exception {
+		traceManager.activate(DebuggerCoordinates.NOWHERE);
+		waitForTasks();
+		runSwing(() -> traceManager.closeAllTraces());
 	}
 
 	@Test
 	public void testEmpty() throws Exception {
-		waitForSwing();
-		assertProviderEmpty();
+		waitForPass(() -> assertProviderEmpty());
 	}
 
 	@Test
 	public void testActivateThenAddModulesPopulatesProvider() throws Exception {
 		createAndOpenTrace();
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
+		waitForTasks();
 
 		addModules();
-		waitForSwing();
+		waitForTasks();
 
-		assertProviderPopulated();
+		waitForPass(() -> assertProviderPopulated());
 	}
 
 	@Test
@@ -205,14 +370,14 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		createAndOpenTrace();
 
 		addModules();
-		waitForSwing();
+		waitForTasks();
 
-		assertProviderEmpty();
+		waitForPass(() -> assertProviderEmpty());
 
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
+		waitForTasks();
 
-		assertProviderPopulated();
+		waitForPass(() -> assertProviderPopulated());
 	}
 
 	@Test
@@ -224,17 +389,17 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		addModules();
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
+		waitForTasks();
 
 		MemoryBlock block = addBlock();
 		try (UndoableTransaction tid = UndoableTransaction.start(program, "Change name")) {
 			program.setName(modExe.getName());
 		}
 		waitForDomainObject(program);
-		waitForPass(() -> assertEquals(4, modulesProvider.sectionTable.getRowCount()));
+		waitForPass(() -> assertSectionTableSize(4));
 
-		runSwing(() -> modulesProvider.setSelectedSections(Set.of(secExeText)));
-		performAction(modulesProvider.actionMapSections, false);
+		runSwing(() -> provider.setSelectedSections(Set.of(secExeText)));
+		performEnabledAction(provider, provider.actionMapSections, false);
 
 		DebuggerSectionMapProposalDialog propDialog =
 			waitForDialogComponent(DebuggerSectionMapProposalDialog.class);
@@ -258,35 +423,27 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		addModules();
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
+		waitForTasks();
 
-		assertProviderPopulated(); // Cheap sanity check
+		waitForPass(() -> assertProviderPopulated());
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
-			modExe.delete();
+			modExe.getObject().removeTree(Lifespan.nowOn(0));
 		}
 		waitForDomainObject(tb.trace);
+		waitForTasks();
 
-		List<ModuleRow> modulesDisplayed =
-			new ArrayList<>(modulesProvider.moduleTableModel.getModelData());
-		modulesDisplayed.sort(Comparator.comparing(r -> r.getBase()));
-		assertEquals(1, modulesDisplayed.size());
+		waitForPass(() -> {
+			assertModuleTableSize(1);
+			assertSectionTableSize(2);
 
-		ModuleRow libRow = modulesDisplayed.get(0);
-		assertEquals("some_lib", libRow.getName());
-
-		List<SectionRow> sectionsDisplayed =
-			new ArrayList<>(modulesProvider.sectionTableModel.getModelData());
-		sectionsDisplayed.sort(Comparator.comparing(r -> r.getStart()));
-		assertEquals(2, sectionsDisplayed.size());
-
-		SectionRow libTextRow = sectionsDisplayed.get(0);
-		assertEquals(".text", libTextRow.getName());
-		assertEquals("some_lib", libTextRow.getModuleName());
-
-		SectionRow libDataRow = sectionsDisplayed.get(1);
-		assertEquals(".data", libDataRow.getName());
-		assertEquals("some_lib", libDataRow.getModuleName());
+			assertModuleRow(0, modLib.getObject(), "some_lib", tb.addr(0x7f000000),
+				tb.addr(0x7f10003f), 0x00100040);
+			assertSectionRow(0, secLibText.getObject(), "some_lib", ".text", tb.addr(0x7f000000),
+				tb.addr(0x7f0003ff), 1024);
+			assertSectionRow(1, secLibData.getObject(), "some_lib", ".data", tb.addr(0x7f100000),
+				tb.addr(0x7f10003f), 64);
+		});
 	}
 
 	@Test
@@ -295,15 +452,17 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		addModules();
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
+		waitForTasks();
 
-		assertProviderPopulated(); // Cheap sanity check
+		waitForPass(() -> assertProviderPopulated());
 
 		undo(tb.trace);
-		assertProviderEmpty();
+		waitForDomainObject(tb.trace);
+		waitForPass(() -> assertProviderEmpty());
 
 		redo(tb.trace);
-		assertProviderPopulated();
+		waitForDomainObject(tb.trace);
+		waitForPass(() -> assertProviderPopulated());
 	}
 
 	@Test
@@ -312,17 +471,17 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		addModules();
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
+		waitForTasks();
 
-		assertProviderPopulated(); // Cheap sanity check
+		waitForPass(() -> assertProviderPopulated());
 
 		traceManager.activateTrace(null);
-		waitForSwing();
-		assertProviderEmpty();
+		waitForTasks();
+		waitForPass(() -> assertProviderEmpty());
 
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
-		assertProviderPopulated();
+		waitForTasks();
+		waitForPass(() -> assertProviderPopulated());
 	}
 
 	@Test
@@ -331,18 +490,18 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		addModules();
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
+		waitForTasks();
 
-		assertProviderPopulated(); // Cheap sanity check
+		waitForPass(() -> assertProviderPopulated());
 
 		traceManager.closeTrace(tb.trace);
-		waitForSwing();
-		assertProviderEmpty();
+		waitForTasks();
+		waitForPass(() -> assertProviderEmpty());
 	}
 
 	@Test
 	public void testActionMapIdentically() throws Exception {
-		assertFalse(modulesProvider.actionMapIdentically.isEnabled());
+		assertFalse(provider.actionMapIdentically.isEnabled());
 
 		createAndOpenTrace();
 		createAndOpenProgramFromTrace();
@@ -351,9 +510,9 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		// No modules necessary
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
+		waitForTasks();
 
-		assertTrue(modulesProvider.actionMapIdentically.isEnabled());
+		waitForPass(() -> assertTrue(provider.actionMapIdentically.isEnabled()));
 
 		// Need some substance in the program
 		try (UndoableTransaction tid = UndoableTransaction.start(program, "Populate")) {
@@ -361,7 +520,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		}
 		waitForDomainObject(program);
 
-		performAction(modulesProvider.actionMapIdentically);
+		performEnabledAction(provider, provider.actionMapIdentically, true);
 		waitForDomainObject(tb.trace);
 
 		Collection<? extends TraceStaticMapping> mappings =
@@ -377,7 +536,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 	@Test
 	public void testActionMapModules() throws Exception {
-		assertFalse(modulesProvider.actionMapModules.isEnabled());
+		assertFalse(provider.actionMapModules.isEnabled());
 
 		createAndOpenTrace();
 		createAndOpenProgramFromTrace();
@@ -389,7 +548,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		waitForSwing();
 
 		// Still
-		assertFalse(modulesProvider.actionMapModules.isEnabled());
+		assertFalse(provider.actionMapModules.isEnabled());
 
 		try (UndoableTransaction tid = UndoableTransaction.start(program, "Change name")) {
 			program.setImageBase(addr(program, 0x00400000), true);
@@ -398,13 +557,13 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 			addBlock(); // So the program has a size
 		}
 		waitForDomainObject(program);
-		waitForPass(() -> assertEquals(2, modulesProvider.moduleTable.getRowCount()));
+		waitForTasks();
+		waitForPass(() -> assertModuleTableSize(2));
 
-		modulesProvider.setSelectedModules(Set.of(modExe));
-		waitForSwing();
-		assertTrue(modulesProvider.actionMapModules.isEnabled());
+		runSwing(() -> provider.setSelectedModules(Set.of(modExe)));
+		assertTrue(provider.actionMapModules.isEnabled());
 
-		performAction(modulesProvider.actionMapModules, false);
+		performEnabledAction(provider, provider.actionMapModules, false);
 
 		DebuggerModuleMapProposalDialog propDialog =
 			waitForDialogComponent(DebuggerModuleMapProposalDialog.class);
@@ -444,7 +603,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 	@Test
 	public void testActionMapSections() throws Exception {
-		assertFalse(modulesProvider.actionMapSections.isEnabled());
+		assertFalse(provider.actionMapSections.isEnabled());
 
 		createAndOpenTrace();
 		createAndOpenProgramFromTrace();
@@ -453,23 +612,23 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		addModules();
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
+		waitForTasks();
 
 		// Still
-		assertFalse(modulesProvider.actionMapSections.isEnabled());
+		assertFalse(provider.actionMapSections.isEnabled());
 
 		MemoryBlock block = addBlock();
 		try (UndoableTransaction tid = UndoableTransaction.start(program, "Change name")) {
 			program.setName(modExe.getName());
 		}
 		waitForDomainObject(program);
-		waitForPass(() -> assertEquals(4, modulesProvider.sectionTable.getRowCount()));
+		waitForTasks();
+		waitForPass(() -> assertSectionTableSize(4));
 
-		modulesProvider.setSelectedSections(Set.of(secExeText));
-		waitForSwing();
-		assertTrue(modulesProvider.actionMapSections.isEnabled());
+		runSwing(() -> provider.setSelectedSections(Set.of(secExeText)));
+		assertTrue(provider.actionMapSections.isEnabled());
 
-		performAction(modulesProvider.actionMapSections, false);
+		performEnabledAction(provider, provider.actionMapSections, false);
 
 		DebuggerSectionMapProposalDialog propDialog =
 			waitForDialogComponent(DebuggerSectionMapProposalDialog.class);
@@ -510,7 +669,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 	@Test
 	public void testActionSelectAddresses() throws Exception {
-		assertFalse(modulesProvider.actionSelectAddresses.isEnabled());
+		assertFalse(provider.actionSelectAddresses.isEnabled());
 
 		addPlugin(tool, DebuggerListingPlugin.class);
 		waitForComponentProvider(DebuggerListingProvider.class);
@@ -522,25 +681,20 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		addRegionsFromModules();
 
 		// Still
-		assertFalse(modulesProvider.actionSelectAddresses.isEnabled());
+		assertFalse(provider.actionSelectAddresses.isEnabled());
 
 		traceManager.activateTrace(tb.trace);
-		waitForSwing(); // NOTE: The table may select first by default, enabling action
-		waitForPass(() -> assertEquals(2, modulesProvider.moduleTable.getRowCount()));
-		waitForPass(() -> assertEquals(4, modulesProvider.sectionTable.getRowCount()));
-		modulesProvider.setSelectedModules(Set.of(modExe));
-		waitForSwing();
-		assertTrue(modulesProvider.actionSelectAddresses.isEnabled());
+		waitForTasks(); // NOTE: The table may select first by default, enabling action
+		waitForPass(() -> assertProviderPopulated());
+		runSwing(() -> provider.setSelectedModules(Set.of(modExe)));
 
-		performAction(modulesProvider.actionSelectAddresses);
+		performEnabledAction(provider, provider.actionSelectAddresses, true);
 		assertEquals(tb.set(tb.range(0x55550000, 0x555500ff), tb.range(0x55750000, 0x5575007f)),
 			new AddressSet(listing.getCurrentSelection()));
 
-		modulesProvider.setSelectedSections(Set.of(secExeText, secLibText));
-		waitForSwing();
-		assertTrue(modulesProvider.actionSelectAddresses.isEnabled());
+		runSwing(() -> provider.setSelectedSections(Set.of(secExeText, secLibText)));
 
-		performAction(modulesProvider.actionSelectAddresses);
+		performEnabledAction(provider, provider.actionSelectAddresses, true);
 		assertEquals(tb.set(tb.range(0x55550000, 0x555500ff), tb.range(0x7f000000, 0x7f0003ff)),
 			new AddressSet(listing.getCurrentSelection()));
 	}
@@ -548,7 +702,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	@Test
 	@Ignore("This action is hidden until supported")
 	public void testActionCaptureTypes() throws Exception {
-		assertFalse(modulesProvider.actionCaptureTypes.isEnabled());
+		assertFalse(provider.actionCaptureTypes.isEnabled());
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 
@@ -568,17 +722,17 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		waitForDomainObject(trace);
 
 		// Still
-		assertFalse(modulesProvider.actionCaptureTypes.isEnabled());
+		assertFalse(provider.actionCaptureTypes.isEnabled());
 
 		traceManager.activateTrace(trace);
 		waitForSwing();
 		TraceModule traceModule = waitForValue(() -> recorder.getTraceModule(module));
-		modulesProvider.setSelectedModules(Set.of(traceModule));
+		provider.setSelectedModules(Set.of(traceModule));
 		waitForSwing();
 		// TODO: When action is included, put this assertion back
 		//assertTrue(modulesProvider.actionCaptureTypes.isEnabled());
 
-		performAction(modulesProvider.actionCaptureTypes, true);
+		performEnabledAction(provider, provider.actionCaptureTypes, true);
 		waitForBusyTool(tool);
 		waitForDomainObject(trace);
 
@@ -598,18 +752,17 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		waitForLock(trace);
 		recorder.stopRecording();
 		waitForSwing();
-		assertFalse(modulesProvider.actionCaptureTypes.isEnabled());
+		assertFalse(provider.actionCaptureTypes.isEnabled());
 	}
 
 	@Test
-	public void testActionCaptureSymbols() throws Exception {
-		assertFalse(modulesProvider.actionCaptureSymbols.isEnabled());
+	public void testActionCaptureSymbols() throws Throwable {
+		assertFalse(provider.actionCaptureSymbols.isEnabled());
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 
-		TraceRecorder recorder = modelService.recordTargetAndActivateTrace(mb.testProcess1,
-			createTargetTraceMapper(mb.testProcess1));
-		Trace trace = recorder.getTrace();
+		TraceRecorder recorder = recordAndWaitSync();
+		traceManager.openTrace(recorder.getTrace());
 
 		// TODO: A region should not be required first. Just to get a memMapper?
 		mb.testProcess1.addRegion("first_proc:.text", mb.rng(0x55550000, 0x555500ff),
@@ -619,43 +772,43 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		// NOTE: A section should not be required at this point.
 		module.symbols.addSymbol("test", mb.addr(0x55550080), 8,
 			new DefaultTargetPrimitiveDataType(PrimitiveKind.UNDEFINED, 8));
-		waitForDomainObject(trace);
+		waitForDomainObject(tb.trace);
 
 		// Still
-		assertFalse(modulesProvider.actionCaptureSymbols.isEnabled());
+		assertFalse(provider.actionCaptureSymbols.isEnabled());
 
-		traceManager.activateTrace(trace);
-		waitForSwing();
+		traceManager.activateTrace(tb.trace);
+		waitForTasks();
 		waitForPass(() -> {
 			TraceModule traceModule = recorder.getTraceModule(module);
 			assertNotNull(traceModule);
-			modulesProvider.setSelectedModules(Set.of(traceModule));
-			waitForSwing();
-			assertTrue(modulesProvider.actionCaptureSymbols.isEnabled());
+			runSwing(() -> provider.setSelectedModules(Set.of(traceModule)));
+			assertTrue(provider.actionCaptureSymbols.isEnabled());
 		});
 
-		performAction(modulesProvider.actionCaptureSymbols, true);
+		performEnabledAction(provider, provider.actionCaptureSymbols, true);
 		waitForBusyTool(tool);
-		waitForDomainObject(trace);
+		waitForDomainObject(tb.trace);
 
 		// TODO: A separate action/script to transfer symbols from trace into mapped programs
+		// TODO: Let this action work on the TraceObjects instead of TargetObjects
 		// NOTE: Used types must go along.
 		Collection<? extends TraceSymbol> symbols =
-			trace.getSymbolManager().allSymbols().getNamed("test");
+			tb.trace.getSymbolManager().allSymbols().getNamed("test");
 		assertEquals(1, symbols.size());
 		TraceSymbol sym = symbols.iterator().next();
 		// TODO: Some heuristic or convention to extract the module name, if applicable
 		assertEquals("Processes[1].Modules[first_proc].Symbols::test", sym.getName(true));
 		// NOTE: builder (b) is not initialized here
-		assertEquals(trace.getBaseAddressFactory().getDefaultAddressSpace().getAddress(0x55550080),
+		assertEquals(tb.addr(0x55550080),
 			sym.getAddress());
 		// TODO: Check data type once those are captured in Data units.
 
-		assertTrue(modulesProvider.actionCaptureSymbols.isEnabled());
-		waitForLock(trace);
+		assertTrue(provider.actionCaptureSymbols.isEnabled());
+		waitForLock(tb.trace);
 		recorder.stopRecording();
 		waitForSwing();
-		assertFalse(modulesProvider.actionCaptureSymbols.isEnabled());
+		assertFalse(provider.actionCaptureSymbols.isEnabled());
 	}
 
 	@Test
@@ -664,53 +817,53 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		createAndOpenTrace();
 		addModules();
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
+		waitForTasks();
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			modExe.setName("/bin/echo"); // File has to exist
 		}
-		waitForPass(() -> assertEquals(2, modulesProvider.moduleTable.getRowCount()));
+		waitForPass(() -> assertModuleTableSize(2));
 
-		modulesProvider.setSelectedModules(Set.of(modExe));
-		waitForSwing();
-		performAction(modulesProvider.actionImportFromFileSystem, false);
+		runSwing(() -> provider.setSelectedModules(Set.of(modExe)));
+		performAction(provider.actionImportFromFileSystem, false);
 
 		GhidraFileChooser dialog = waitForDialogComponent(GhidraFileChooser.class);
 		dialog.close();
 	}
 
-	protected Set<SectionRow> visibleSections() {
-		return Set.copyOf(modulesProvider.sectionFilterPanel.getTableFilterModel().getModelData());
+	protected Set<ValueRow> visibleSections() {
+		return Set.copyOf(QueryPanelTestHelper.getFilterPanel(provider.sectionsPanel)
+				.getTableFilterModel()
+				.getModelData());
 	}
 
 	@Test
 	public void testActionFilterSections() throws Exception {
-		addPlugin(tool, ImporterPlugin.class);
 		createAndOpenTrace();
 		addModules();
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
-		waitForPass(() -> assertEquals(2, modulesProvider.moduleTable.getRowCount()));
-		waitForPass(() -> assertEquals(4, modulesProvider.sectionTable.getRowCount()));
+		waitForTasks();
+		waitForPass(() -> assertProviderPopulated());
 
-		assertEquals(4, visibleSections().size());
+		waitForPass(() -> assertEquals(4, visibleSections().size()));
 
-		modulesProvider.setSelectedModules(Set.of(modExe));
-		waitForSwing();
+		runSwing(() -> provider.setSelectedModules(Set.of(modExe)));
 
-		assertEquals(4, visibleSections().size());
+		waitForPass(() -> assertEquals(4, visibleSections().size()));
 
-		assertTrue(modulesProvider.actionFilterSectionsByModules.isEnabled());
-		performAction(modulesProvider.actionFilterSectionsByModules);
-		waitForSwing();
+		performEnabledAction(provider, provider.actionFilterSectionsByModules, true);
+		waitForTasks();
 
-		assertEquals(2, visibleSections().size());
-		for (SectionRow row : visibleSections()) {
-			assertEquals(modExe, row.getModule());
+		waitForPass(() -> assertEquals(2, visibleSections().size()));
+		for (ValueRow row : visibleSections()) {
+			assertEquals(modExe.getObject(), row.getValue()
+					.getChild()
+					.queryCanonicalAncestorsTargetInterface(TargetModule.class)
+					.findFirst()
+					.orElse(null));
 		}
 
-		modulesProvider.setSelectedModules(Set.of());
-		waitForSwing();
+		runSwing(() -> provider.setSelectedModules(Set.of()));
 
 		waitForPass(() -> assertEquals(4, visibleSections().size()));
 	}
@@ -724,11 +877,11 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		createAndOpenTrace();
 		addModules();
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
-		// NB. Table is debounced
-		waitForPass(() -> assertEquals(2, modulesProvider.moduleTable.getRowCount()));
+		waitForTasks();
+		waitForPass(() -> assertModuleTableSize(2));
 
-		clickTableCellWithButton(modulesProvider.moduleTable, 0, 0, MouseEvent.BUTTON3);
+		GhidraTable moduleTable = QueryPanelTestHelper.getTable(provider.modulesPanel);
+		clickTableCellWithButton(moduleTable, 0, 0, MouseEvent.BUTTON3);
 		waitForSwing();
 		assertMenu(POPUP_ACTIONS, Set.of(MapModulesAction.NAME, MapSectionsAction.NAME,
 			AbstractSelectAddressesAction.NAME));
@@ -737,7 +890,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		addPlugin(tool, ImporterPlugin.class);
 		waitForSwing();
-		clickTableCellWithButton(modulesProvider.moduleTable, 0, 0, MouseEvent.BUTTON3);
+		clickTableCellWithButton(moduleTable, 0, 0, MouseEvent.BUTTON3);
 		waitForSwing();
 		assertMenu(POPUP_ACTIONS, Set.of(MapModulesAction.NAME, MapSectionsAction.NAME,
 			AbstractSelectAddressesAction.NAME, AbstractImportFromFileSystemAction.NAME));
@@ -748,10 +901,11 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		createAndOpenTrace();
 		addModules();
 		traceManager.activateTrace(tb.trace);
-		waitForSwing();
-		waitForPass(() -> assertEquals(4, modulesProvider.sectionTable.getRowCount()));
+		waitForTasks();
+		waitForPass(() -> assertSectionTableSize(4));
 
-		clickTableCellWithButton(modulesProvider.sectionTable, 0, 0, MouseEvent.BUTTON3);
+		GhidraTable sectionTable = QueryPanelTestHelper.getTable(provider.sectionsPanel);
+		clickTableCellWithButton(sectionTable, 0, 0, MouseEvent.BUTTON3);
 		waitForSwing();
 		assertMenu(POPUP_ACTIONS, Set.of(MapModulesAction.NAME, MapSectionsAction.NAME,
 			AbstractSelectAddressesAction.NAME));

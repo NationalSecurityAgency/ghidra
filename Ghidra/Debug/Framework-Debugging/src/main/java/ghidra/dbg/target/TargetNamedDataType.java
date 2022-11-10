@@ -18,6 +18,9 @@ package ghidra.dbg.target;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+
 import ghidra.dbg.DebugModelConventions;
 import ghidra.dbg.DebuggerTargetObjectIface;
 import ghidra.dbg.attributes.TargetDataType;
@@ -56,6 +59,13 @@ public interface TargetNamedDataType extends TargetObject, TargetDataType {
 
 	String FUNCTION_RETURN_INDEX = "return";
 	String FUNCTION_PARAMETER_DIM = "param";
+
+	@Override
+	default JsonElement toJson() {
+		JsonObject object = new JsonObject();
+		object.addProperty("path", getJoinedPath("."));
+		return object;
+	}
 
 	/**
 	 * Get the members of this data type in order.

@@ -107,7 +107,11 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 			if (object != null) {
 				return iface.cast(recorder.getTargetObject(object));
 			}
-			return recorder.getFocus().getCachedSuitable(iface);
+			TargetObject focus = recorder.getFocus();
+			if (focus == null) {
+				return null;
+			}
+			return focus.getCachedSuitable(iface);
 		}
 
 		abstract boolean isEnabledForObject(T t);

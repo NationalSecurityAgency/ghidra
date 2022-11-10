@@ -53,14 +53,14 @@ import ghidra.util.task.TaskMonitorAdapter;
  * from when the last time Ghidra was run, (3) a class in the file was
  * not found,  or (4) a modification date specified in the classes file for
  * a jar file is older than the actual jar file's modification date.
- * 
+ *
  * <p><strong>Note</strong>: The Plugin path is a user preference that
  * indicates locations for where classes for plugins and data types should
  * be searched; the Plugin path can include jar files just like a classpath.
  * The Plugin path can be changed by using the <i>Edit Plugin Path</i> dialog,
  * displayed from the <i>Edit-&gt;Edit Plugin Path...</i> menu option on the main
  * Ghidra project window.
- * 
+ *
  * @see ghidra.GhidraLauncher
  */
 public class GhidraRun implements GhidraLaunchable {
@@ -169,7 +169,8 @@ public class GhidraRun implements GhidraLaunchable {
 				reopen = false;
 			}
 		}
-		if (projectLocator == null) {
+
+		if (projectLocator == null && tool.shouldRestorePreviousProject()) {
 			updateSplashScreenStatusMessage("Checking for last opened project...");
 			projectLocator = pm.getLastOpenedProject();
 		}

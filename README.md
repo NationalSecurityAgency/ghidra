@@ -46,7 +46,11 @@ To create the latest development build for your platform from this source reposi
 * [JDK 17 64-bit][jdk17]
 * [Gradle 7.3+][gradle]
 * make, gcc, and g++ (Linux/macOS-only)
-* [Microsoft Visual Studio][vs] (Windows-only)
+* [Microsoft Visual Studio][vs] or [Microsoft C++ Build Tools][vcbuildtools] with the following
+  components installed (Windows-only):
+  - MSVC
+  - Windows SDK
+  - C++ ATL
 
 ##### Download and extract the source:
 [Download from GitHub][master]
@@ -68,7 +72,9 @@ $ gradle buildGhidra
 ```
 The compressed development build will be located at `build/dist/`.
 
-For more detailed information on building Ghidra, please read the [Developer Guide][devguide].  
+For more detailed information on building Ghidra, please read the [Developer Guide][devguide].
+
+For issues building, please check the [Known Issues][known-issues] section for possible solutions.
 
 ## Develop
 
@@ -111,11 +117,13 @@ source project.
 [nsa]: https://www.nsa.gov
 [contrib]: CONTRIBUTING.md
 [devguide]: DevGuide.md
+[known-issues]: DevGuide.md#known-issues
 [career]: https://www.intelligencecareers.gov/nsa
 [releases]: https://github.com/NationalSecurityAgency/ghidra/releases
 [jdk17]: https://adoptium.net/temurin/releases
 [gradle]: https://gradle.org/releases/
 [vs]: https://visualstudio.microsoft.com/vs/community/
+[vcbuildtools]: https://visualstudio.microsoft.com/visual-cpp-build-tools/
 [eclipse]: https://www.eclipse.org/downloads/packages/
 [master]: https://github.com/NationalSecurityAgency/ghidra/archive/refs/heads/master.zip
 [security]: https://github.com/NationalSecurityAgency/ghidra/security/advisories

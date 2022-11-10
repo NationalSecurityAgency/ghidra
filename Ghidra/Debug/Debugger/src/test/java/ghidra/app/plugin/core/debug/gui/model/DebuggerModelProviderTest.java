@@ -229,7 +229,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 	}
 
 	protected void createTraceAndPopulateObjects() throws Throwable {
-		createTrace();
+		createAndOpenTrace();
 		populateSnapshots();
 		createSessionObject();
 		populateThreads();
@@ -273,7 +273,7 @@ public class DebuggerModelProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 
 	@Test
 	public void testSelectRootWOutObjects() throws Throwable {
-		createTrace();
+		createAndOpenTrace();
 
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();

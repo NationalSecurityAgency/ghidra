@@ -15,6 +15,8 @@
  */
 package docking.widgets.table.constraint;
 
+import ghidra.util.UserSearchUtils;
+
 /**
  * String column constraint for matching column values if they do not match a full regular
  * expression pattern.
@@ -25,7 +27,7 @@ public class StringNotMatchesColumnConstraint extends StringMatchesColumnConstra
 	 * Constructor
 	 *
 	 * <P> This class is for users to enter true regular expression which is why it creates
-	 * a pattern directly without using the UserSearchUtils
+	 * a pattern directly without using the {@link UserSearchUtils}
 	 *
 	 * @param spec the string to use to create a "matcher" pattern.
 	 */
