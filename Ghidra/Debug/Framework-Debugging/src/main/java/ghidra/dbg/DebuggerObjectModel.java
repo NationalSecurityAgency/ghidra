@@ -20,8 +20,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.function.Predicate;
 
-import ghidra.async.AsyncUtils;
-import ghidra.async.TypeSpec;
+import ghidra.async.*;
 import ghidra.dbg.error.*;
 import ghidra.dbg.target.TargetMemory;
 import ghidra.dbg.target.TargetObject;
@@ -558,11 +557,15 @@ public interface DebuggerObjectModel {
 	 * @param ex the exception
 	 */
 	default void reportError(Object origin, String message, Throwable ex) {
+		Throwable unwrapped = AsyncUtils.unwrapThrowable(ex);
 		if (ex == null || DebuggerModelTerminatingException.isIgnorable(ex)) {
 			Msg.warn(origin, message + ": " + ex);
 		}
-		else if (AsyncUtils.unwrapThrowable(ex) instanceof RejectedExecutionException) {
+		else if (unwrapped instanceof RejectedExecutionException) {
 			Msg.trace(origin, "Ignoring rejection", ex);
+		}
+		else if (unwrapped instanceof DisposedException) {
+			Msg.trace(origin, "Ignoring disposal", ex);
 		}
 		else {
 			Msg.error(origin, message, ex);

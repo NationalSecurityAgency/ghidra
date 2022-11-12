@@ -88,6 +88,18 @@ public class AsyncLockTest {
 	}
 
 	@Test
+	public void testWithError() throws Throwable {
+		AsyncLock l = new AsyncLock();
+		int result = l.with(TypeSpec.INT, null).then((own, seq) -> {
+			throw new AssertionError("Blargh");
+		}).finish().exceptionally(exc -> {
+			return 0xdead;
+		}).get(1000, TimeUnit.MILLISECONDS);
+
+		assertEquals(0xdead, result);
+	}
+
+	@Test
 	public void testReentry() {
 		// This is very contrived. A real use would pass ownership to some method which cannot
 		// assume that it already holds the lock

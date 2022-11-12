@@ -21,6 +21,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import javax.swing.Icon;
 import javax.swing.SwingUtilities;
 
 import docking.ActionContext;
@@ -49,8 +50,7 @@ import ghidra.framework.options.annotation.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRange;
+import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
@@ -308,13 +308,66 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 						: breakpointIneffDisColoringBackground;
 	}
 
+	protected static class DualMarkerSet {
+		private static final String SUFFIX = " (Point)";
+		final MarkerSet area;
+		final MarkerSet point;
+
+		public DualMarkerSet(MarkerService service, String name, String description,
+				Program program,
+				int priority, boolean showMarks, boolean showNavigation, boolean colorBackground,
+				Color color, Icon icon, boolean preferred) {
+			MarkerSet areaExisting = service.getMarkerSet(name, program);
+			if (areaExisting != null) {
+				area = areaExisting;
+			}
+			else {
+				area = service.createAreaMarker(name, description, program, priority - 1, showMarks,
+					showNavigation, colorBackground, color, preferred);
+			}
+			MarkerSet pointExisting = service.getMarkerSet(name + SUFFIX, program);
+			if (pointExisting != null) {
+				point = pointExisting;
+			}
+			else {
+				point = service.createPointMarker(name + SUFFIX, description, program, priority,
+					showMarks, showNavigation, false, color, icon, preferred);
+			}
+		}
+
+		public void add(Address start, Address end) {
+			area.add(start, end);
+			point.add(start);
+		}
+
+		public void clearAll() {
+			area.clearAll();
+			point.clearAll();
+		}
+
+		public void setMarkerColor(Color color) {
+			area.setMarkerColor(color);
+			point.setMarkerColor(color);
+		}
+
+		public void setColoringBackground(boolean coloringBackground) {
+			area.setColoringBackground(coloringBackground);
+			// point never colors background
+		}
+
+		public void remove(MarkerService service, Program program) {
+			service.removeMarker(area, program);
+			service.removeMarker(point, program);
+		}
+	}
+
 	/**
 	 * A variety of marker sets (one for each logical state) attached to a program or trace view
 	 */
 	protected class BreakpointMarkerSets {
 		final Program program;
 
-		final Map<State, MarkerSet> sets = new HashMap<>();
+		final Map<State, DualMarkerSet> sets = new HashMap<>();
 
 		protected BreakpointMarkerSets(Program program) {
 			this.program = program;
@@ -337,19 +390,15 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 			}
 		}
 
-		MarkerSet getMarkerSet(State state) {
+		DualMarkerSet getMarkerSet(State state) {
 			return sets.computeIfAbsent(state, this::doGetMarkerSet);
 		}
 
-		MarkerSet doGetMarkerSet(State state) {
+		DualMarkerSet doGetMarkerSet(State state) {
 			if (state.icon == null) {
 				return null;
 			}
-			MarkerSet set = markerService.getMarkerSet(state.display, program);
-			if (set != null) {
-				return set;
-			}
-			return markerService.createPointMarker(state.display, state.display, program,
+			return new DualMarkerSet(markerService, state.display, state.display, program,
 				MarkerService.BREAKPOINT_PRIORITY, true, true, stateColorsBackground(state),
 				colorForState(state), state.icon, true);
 		}
@@ -428,16 +477,16 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 
 		public void dispose() {
 			for (State state : State.values()) {
-				MarkerSet set = sets.get(state);
+				DualMarkerSet set = sets.get(state);
 				if (set != null) {
-					markerService.removeMarker(set, program);
+					set.remove(markerService, program);
 				}
 			}
 		}
 
 		public void clear() {
 			for (State state : State.values()) {
-				MarkerSet set = sets.get(state);
+				DualMarkerSet set = sets.get(state);
 				if (set != null) {
 					set.clearAll();
 				}
@@ -995,7 +1044,7 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 			Address start = bEnt.getKey();
 			for (Map.Entry<Long, State> sEnt : byLength.entrySet()) {
 				Address end = start.add(sEnt.getKey() - 1);
-				MarkerSet set = marks.getMarkerSet(sEnt.getValue());
+				DualMarkerSet set = marks.getMarkerSet(sEnt.getValue());
 				if (set != null) {
 					set.add(start, end);
 				}

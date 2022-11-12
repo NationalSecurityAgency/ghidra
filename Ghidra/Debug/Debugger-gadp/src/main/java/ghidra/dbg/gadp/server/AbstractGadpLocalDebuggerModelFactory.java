@@ -138,6 +138,8 @@ public abstract class AbstractGadpLocalDebuggerModelFactory implements DebuggerM
 					if (line.startsWith(AbstractGadpServer.LISTENING_ON)) {
 						String[] parts = line.split(":"); // Separates address from port
 						port = Integer.parseInt(parts[parts.length - 1]);
+					}
+					if (AbstractGadpServer.READY.equals(line)) {
 						ready.complete(null);
 					}
 				}
@@ -153,7 +155,6 @@ public abstract class AbstractGadpLocalDebuggerModelFactory implements DebuggerM
 						ready.completeExceptionally(
 							new RuntimeException("Agent terminated unexpectedly"));
 					}
-
 				}
 			}
 			catch (Throwable e) {

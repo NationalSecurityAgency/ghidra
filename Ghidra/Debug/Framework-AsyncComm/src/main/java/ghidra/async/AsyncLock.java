@@ -277,10 +277,12 @@ public class AsyncLock {
 	/**
 	 * Queue a sequence of actions on this lock
 	 * 
+	 * <p>
 	 * The lock will be acquired before executing the first action of the sequence, and the hold
 	 * will be automatically released upon completion, whether normal or exceptional. The first
 	 * action receives a reference to the hold, which may be used to re-enter the lock.
 	 * 
+	 * <p>
 	 * If the sequence stalls, i.e., an action never completes, it will cause deadlock.
 	 * 
 	 * @param type the type "returned" by the sequence
@@ -297,6 +299,7 @@ public class AsyncLock {
 	/**
 	 * Queue a sequence of actions on this lock
 	 * 
+	 * <p>
 	 * Identical to {@link #with(TypeSpec, Hold)} except that the acquired hold is stored into an
 	 * atomic reference rather than passed to the first action.
 	 * 
