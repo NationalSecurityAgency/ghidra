@@ -37,10 +37,54 @@ import ghidra.util.Msg;
  */
 public class GdbReadRegistersCommand
 		extends AbstractGdbCommandWithThreadAndFrameId<Map<GdbRegister, BigInteger>> {
-	protected static final Set<String> BYTE_ARRAY_KEYS = Set.of(
-		"v1_int8", "v2_int8", "v4_int8", "v8_int8", "v16_int8", "v32_int8", "v64_int8", // Observed on i386:x86-64
-		"u8" // Observed on armv7
-	);
+
+	protected static BigInteger tryStructPatterns(GdbCompositeValue cv, int byteCount,
+			ByteOrder endianness) {
+		for (Map.Entry<String, GdbCValue> ent : cv.entrySet()) {
+			switch (ent.getKey()) {
+				case "v1_int8", "v2_int8", "v4_int8", "v8_int8", "v16_int8", "v32_int8", "v64_int8":
+					// Observed on i386:x86-64
+				case "u8": {
+					// Observed on armv7
+					BigInteger result = (ent.getValue() instanceof GdbArrayValue arr)
+							? packElements(arr, byteCount, 1, endianness)
+							: null;
+					if (result != null) {
+						return result;
+					}
+				}
+				case "b": {
+					// Observed on aarch64
+					BigInteger result = (ent.getValue() instanceof GdbCompositeValue nested)
+							? tryStructPatternsB(nested, byteCount, endianness)
+							: null;
+					if (result != null) {
+						return result;
+					}
+				}
+			}
+		}
+		return null;
+	}
+
+	protected static BigInteger tryStructPatternsB(GdbCompositeValue cv, int byteCount,
+			ByteOrder endianness) {
+		for (Map.Entry<String, GdbCValue> ent : cv.entrySet()) {
+			switch (ent.getKey()) {
+				case "u": {
+					// Observed on aarch64, nested in "b"
+					BigInteger result = (ent.getValue() instanceof GdbArrayValue arr)
+							? packElements(arr, byteCount, 1, endianness)
+							: null;
+					if (result != null) {
+						return result;
+					}
+				}
+			}
+		}
+		return null;
+	}
+
 	private final Set<GdbRegister> regs;
 	private final GdbThreadImpl thread;
 
@@ -68,7 +112,7 @@ public class GdbReadRegistersCommand
 		return b.toString();
 	}
 
-	protected BigInteger packElements(GdbArrayValue av, int byteCount, int bytesPer,
+	public static BigInteger packElements(GdbArrayValue av, int byteCount, int bytesPer,
 			ByteOrder endianness) {
 		assert bytesPer * av.size() == byteCount;
 		List<BigInteger> elems = av.expectBigInts();
@@ -100,8 +144,8 @@ public class GdbReadRegistersCommand
 		return new BigInteger(1, packed);
 	}
 
-	protected BigInteger parseAndFindInteger(String val, int byteCount) throws GdbParseError {
-		ByteOrder endianness = thread.getInferior().getEndianness();
+	public static BigInteger parseAndFindInteger(String val, int byteCount, ByteOrder endianness)
+			throws GdbParseError {
 		if (val.contains("lbound")) {
 			/**
 			 * TODO: This might be useful information, but I've only ever seen
@@ -123,15 +167,9 @@ public class GdbReadRegistersCommand
 					return iv.getValue();
 				}
 			}
-			for (Map.Entry<String, GdbCValue> ent : cv.entrySet()) {
-				if (BYTE_ARRAY_KEYS.contains(ent.getKey())) {
-					GdbCValue int8v = ent.getValue();
-					if (!(int8v instanceof GdbArrayValue)) {
-						throw new AssertionError("Expected an array of ints for " + ent);
-					}
-					GdbArrayValue int8a = (GdbArrayValue) int8v;
-					return packElements(int8a, byteCount, 1, endianness);
-				}
+			BigInteger result = tryStructPatterns(cv, byteCount, endianness);
+			if (result != null) {
+				return result;
 			}
 		}
 		if (value instanceof GdbArrayValue) {
@@ -157,6 +195,7 @@ public class GdbReadRegistersCommand
 			regs.stream().collect(Collectors.toMap(GdbRegister::getNumber, r -> r));
 		List<GdbMiFieldList> valueList = done.assumeRegisterValueList();
 		Map<GdbRegister, BigInteger> result = new LinkedHashMap<>();
+		ByteOrder endianness = thread.getInferior().getEndianness();
 		for (GdbMiFieldList fields : valueList) {
 			int number = Integer.parseInt(fields.getString("number"));
 			String value = fields.getString("value");
@@ -166,7 +205,7 @@ public class GdbReadRegistersCommand
 				continue;
 			}
 			try {
-				result.put(r, parseAndFindInteger(value, r.getSize()));
+				result.put(r, parseAndFindInteger(value, r.getSize(), endianness));
 			}
 			catch (GdbParseError | AssertionError e) {
 				Msg.warn(this,
