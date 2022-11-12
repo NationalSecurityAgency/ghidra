@@ -15,10 +15,18 @@
  */
 package ghidra.app.plugin.core.debug.gui.model;
 
+import docking.widgets.table.*;
+import ghidra.app.plugin.core.debug.gui.thread.DebuggerThreadsPanel;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
+import ghidra.util.table.column.GColumnRenderer;
 
 public class QueryPanelTestHelper {
+
+	public static ObjectTableModel getTableModel(DebuggerThreadsPanel panel) {
+		return panel.tableModel;
+	}
+
 	public static GhidraTable getTable(AbstractQueryTablePanel<?, ?> panel) {
 		return panel.table;
 	}
@@ -26,5 +34,33 @@ public class QueryPanelTestHelper {
 	public static <T> GhidraTableFilterPanel<T> getFilterPanel(
 			AbstractQueryTablePanel<T, ?> panel) {
 		return panel.filterPanel;
+	}
+
+	@SuppressWarnings("unchecked")
+	public static SpannedRenderer<Long> getSpannedCellRenderer(
+			AbstractQueryTablePanel<?, ?> panel) {
+		int count = panel.tableModel.getColumnCount();
+		for (int i = 0; i < count; i++) {
+			DynamicTableColumn<?, ?, ?> column = panel.tableModel.getColumn(i);
+			GColumnRenderer<?> renderer = column.getColumnRenderer();
+			if (renderer instanceof SpannedRenderer<?> spanned) {
+				return (SpannedRenderer<Long>) spanned;
+			}
+		}
+		return null;
+	}
+
+	@SuppressWarnings("unchecked")
+	public static RangeCursorTableHeaderRenderer<Long> getCursorHeaderRenderer(
+			AbstractQueryTablePanel<?, ?> panel) {
+		int count = panel.tableModel.getColumnCount();
+		for (int i = 0; i < count; i++) {
+			DynamicTableColumn<?, ?, ?> column = panel.tableModel.getColumn(i);
+			GTableHeaderRenderer renderer = column.getHeaderRenderer();
+			if (renderer instanceof RangeCursorTableHeaderRenderer<?> spanned) {
+				return (RangeCursorTableHeaderRenderer<Long>) spanned;
+			}
+		}
+		return null;
 	}
 }

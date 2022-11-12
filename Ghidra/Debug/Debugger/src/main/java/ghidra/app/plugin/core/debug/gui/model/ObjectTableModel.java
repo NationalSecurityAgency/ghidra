@@ -28,7 +28,9 @@ import ghidra.app.plugin.core.debug.gui.model.columns.*;
 import ghidra.dbg.target.schema.SchemaContext;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.target.schema.TargetObjectSchema.AttributeSchema;
+import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.Plugin;
+import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Lifespan.*;
@@ -72,6 +74,29 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 
 		default public boolean isModified() {
 			return false;
+		}
+	}
+
+	public static class ValueFixedProperty<T> implements ValueProperty<T> {
+		private T value;
+
+		public ValueFixedProperty(T value) {
+			this.value = value;
+		}
+
+		@Override
+		public Class<T> getType() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public ValueRow getRow() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public T getValue() {
+			return value;
 		}
 	}
 
@@ -353,7 +378,8 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 	protected static class ColKey {
 		public static ColKey fromSchema(SchemaContext ctx, AttributeSchema attributeSchema) {
 			String name = attributeSchema.getName();
-			Class<?> type = TraceValueObjectAttributeColumn.computeColumnType(ctx, attributeSchema);
+			Class<?> type =
+				TraceValueObjectAttributeColumn.computeAttributeType(ctx, attributeSchema);
 			return new ColKey(name, type);
 		}
 
@@ -395,7 +421,7 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 		public static TraceValueObjectAttributeColumn<?> fromSchema(SchemaContext ctx,
 				AttributeSchema attributeSchema) {
 			String name = attributeSchema.getName();
-			Class<?> type = computeColumnType(ctx, attributeSchema);
+			Class<?> type = computeAttributeType(ctx, attributeSchema);
 			return new AutoAttributeColumn<>(name, type);
 		}
 
@@ -627,5 +653,75 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 				plotCol.addSeekListener(listener);
 			}
 		}
+	}
+
+	@Override
+	public boolean isCellEditable(int rowIndex, int columnIndex) {
+		initializeSorting();
+		List<ValueRow> modelData = getModelData();
+
+		if (rowIndex < 0 || rowIndex >= modelData.size()) {
+			return false;
+		}
+
+		ValueRow t = modelData.get(rowIndex);
+		return isColumnEditableForRow(t, columnIndex);
+	}
+
+	public final boolean isColumnEditableForRow(ValueRow t, int columnIndex) {
+		if (columnIndex < 0 || columnIndex >= tableColumns.size()) {
+			return false;
+		}
+
+		Trace dataSource = getDataSource();
+
+		@SuppressWarnings("unchecked")
+		DynamicTableColumn<ValueRow, ?, Trace> column =
+			(DynamicTableColumn<ValueRow, ?, Trace>) tableColumns.get(columnIndex);
+		if (!(column instanceof EditableColumn<ValueRow, ?, Trace> editable)) {
+			return false;
+		}
+		return editable.isEditable(t, columnSettings.get(column), dataSource, serviceProvider);
+	}
+
+	@Override
+	public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+		initializeSorting();
+		List<ValueRow> modelData = getModelData();
+
+		if (rowIndex < 0 || rowIndex >= modelData.size()) {
+			return;
+		}
+
+		ValueRow t = modelData.get(rowIndex);
+		setColumnValueForRow(t, aValue, columnIndex);
+	}
+
+	public void setColumnValueForRow(ValueRow t, Object aValue, int columnIndex) {
+		if (columnIndex < 0 || columnIndex >= tableColumns.size()) {
+			return;
+		}
+
+		Trace dataSource = getDataSource();
+
+		@SuppressWarnings("unchecked")
+		DynamicTableColumn<ValueRow, ?, Trace> column =
+			(DynamicTableColumn<ValueRow, ?, Trace>) tableColumns.get(columnIndex);
+		if (!(column instanceof EditableColumn<ValueRow, ?, Trace> editable)) {
+			return;
+		}
+		Settings settings = columnSettings.get(column);
+		if (!editable.isEditable(t, settings, dataSource, serviceProvider)) {
+			return;
+		}
+		doSetValue(editable, t, aValue, settings, dataSource, serviceProvider);
+	}
+
+	@SuppressWarnings("unchecked")
+	private static <ROW_TYPE, COLUMN_TYPE, DATA_SOURCE> void doSetValue(
+			EditableColumn<ROW_TYPE, COLUMN_TYPE, DATA_SOURCE> editable, ROW_TYPE t,
+			Object aValue, Settings settings, DATA_SOURCE dataSource,
+			ServiceProvider serviceProvider) {
+		editable.setValue(t, (COLUMN_TYPE) aValue, settings, dataSource, serviceProvider);
 	}
 }

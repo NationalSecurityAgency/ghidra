@@ -107,6 +107,10 @@ public class RangeCursorTableHeaderRenderer<N extends Number & Comparable<N>>
 	private final ForSeekMouseListener forSeekMouseListener = new ForSeekMouseListener();
 	private final ListenerSet<SeekListener> listeners = new ListenerSet<>(SeekListener.class);
 
+	public RangeCursorTableHeaderRenderer(N pos) {
+		this.pos = pos;
+	}
+
 	@Override
 	public void setFullRange(Span<N, ?> fullRange) {
 		this.fullRangeDouble = SpannedRenderer.validateViewRange(fullRange);
