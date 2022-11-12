@@ -23,6 +23,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import agent.frida.gadp.impl.FridaGadpServerImpl;
+import ghidra.async.AsyncUtils;
 import ghidra.dbg.agent.AgentWindow;
 import ghidra.util.Msg;
 
@@ -73,7 +74,8 @@ public interface FridaGadpServer extends AutoCloseable {
 			try (FridaGadpServer server = newInstance(bindTo)) {
 				//TODO: fix/test the debugConnect case when args are passed
 				server.startFrida(fridaArgs.toArray(new String[] {})).exceptionally(e -> {
-					Msg.error(this, "Error starting Frida/GADP", e);
+					e = AsyncUtils.unwrapThrowable(e);
+					Msg.error(this, "Error starting Frida/GADP: " + e);
 					System.exit(-1);
 					return null;
 				});

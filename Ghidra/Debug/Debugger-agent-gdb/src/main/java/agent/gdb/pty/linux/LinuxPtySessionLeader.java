@@ -68,8 +68,6 @@ public class LinuxPtySessionLeader {
 			LIB_POSIX.execv(subArgs.get(0), subArgs.toArray(new String[0]));
 		}
 		catch (Throwable t) {
-			System.err.println("Error with ptyPath = '" + ptyPath + "', and subArgs = " + subArgs);
-			t.printStackTrace();
 			if (bk != -1) {
 				try {
 					int bkt = bk;
@@ -80,7 +78,8 @@ public class LinuxPtySessionLeader {
 					System.exit(-1);
 				}
 			}
-			throw t;
+			System.err.println("Could not execute " + subArgs.get(0) + ": " + t.getMessage());
+			System.exit(-1);
 		}
 	}
 }
