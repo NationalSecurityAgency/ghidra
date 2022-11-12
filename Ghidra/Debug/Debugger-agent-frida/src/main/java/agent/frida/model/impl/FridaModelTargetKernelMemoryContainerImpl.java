@@ -80,7 +80,7 @@ public class FridaModelTargetKernelMemoryContainerImpl extends FridaModelTargetO
 	@Override
 	public CompletableFuture<Void> requestElements(boolean refresh) {
 		if (refresh) {
-			listeners.fire.invalidateCacheRequested(this);
+			broadcast().invalidateCacheRequested(this);
 		}
 		return getManager().listKernelMemory();
 	}
@@ -104,12 +104,12 @@ public class FridaModelTargetKernelMemoryContainerImpl extends FridaModelTargetO
 		if (range == null) {
 			throw new DebuggerMemoryAccessException("Cannot read at " + address);
 		}
-		listeners.fire.memoryUpdated(getProxy(), address, buf.array());
+		broadcast().memoryUpdated(getProxy(), address, buf.array());
 		return Arrays.copyOf(buf.array(), (int) range.getLength());
 	}
 
 	private void writeAssist(Address address, byte[] data) {
-		listeners.fire.memoryUpdated(getProxy(), address, data);
+		broadcast().memoryUpdated(getProxy(), address, data);
 	}
 
 	@Override

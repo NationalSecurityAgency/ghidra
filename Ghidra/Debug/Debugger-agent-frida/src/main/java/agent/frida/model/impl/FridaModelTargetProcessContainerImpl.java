@@ -64,7 +64,7 @@ public class FridaModelTargetProcessContainerImpl extends FridaModelTargetObject
 		FridaModelTargetProcess process = getTargetProcess(proc);
 		changeElements(List.of(), List.of(process), Map.of(), "Added");
 		process.processStarted(proc);
-		getListeners().fire.event(getProxy(), null, TargetEventType.PROCESS_CREATED,
+		broadcast().event(getProxy(), null, TargetEventType.PROCESS_CREATED,
 			"Process " + FridaClient.getId(proc) + " started " + process.getName(),
 			List.of(process));
 	}

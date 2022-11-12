@@ -20,7 +20,6 @@ import java.util.concurrent.CompletableFuture;
 
 import com.sun.jdi.Location;
 
-import ghidra.async.AsyncUtils;
 import ghidra.dbg.target.TargetRegisterBank;
 import ghidra.dbg.target.TargetRegisterContainer;
 import ghidra.dbg.target.schema.*;
@@ -121,7 +120,7 @@ public class JdiModelTargetRegisterContainer extends JdiModelTargetObjectImpl
 			map.put(retAddr.getIndex(), bytes);
 		}
 		if (!map.isEmpty()) {
-			listeners.fire.registersUpdated(this, map);
+			broadcast().registersUpdated(this, map);
 		}
 		return CompletableFuture.completedFuture(map);
 	}
@@ -133,13 +132,10 @@ public class JdiModelTargetRegisterContainer extends JdiModelTargetObjectImpl
 	}
 
 	public void invalidateRegisterCaches() {
-		listeners.fire.invalidateCacheRequested(this);
+		broadcast().invalidateCacheRequested(this);
 	}
 
 	protected CompletableFuture<?> update() {
-		if (!isObserved()) {
-			return AsyncUtils.NIL;
-		}
 		return fetchElements(true).exceptionally(e -> {
 			Msg.error(this, "Could not update registers " + this + " on STOPPED");
 			return null;

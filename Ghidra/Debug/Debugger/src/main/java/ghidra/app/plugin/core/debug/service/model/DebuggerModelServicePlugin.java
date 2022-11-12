@@ -78,90 +78,40 @@ public class DebuggerModelServicePlugin extends Plugin
 	// Since used for naming, no ':' allowed.
 	public static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy.MM.dd-HH.mm.ss-z");
 
-	protected class ListenersForRemovalAndFocus {
-		protected final DebuggerObjectModel model;
-		protected TargetObject root;
-		protected TargetFocusScope focusScope;
+	protected class ForRemovalAndFocusListener extends AnnotatedDebuggerAttributeListener {
+		public ForRemovalAndFocusListener() {
+			super(MethodHandles.lookup());
+		}
 
-		protected DebuggerModelListener forRemoval = new DebuggerModelListener() {
-			@Override
-			public void invalidated(TargetObject object, TargetObject branch, String reason) {
-				synchronized (listenersByModel) {
-					ListenersForRemovalAndFocus listener = listenersByModel.remove(model);
-					if (listener == null) {
-						return;
-					}
-					assert listener.forRemoval == this;
-					dispose();
-				}
-				modelListeners.fire.elementRemoved(model);
+		@Override
+		public void invalidated(TargetObject object, TargetObject branch, String reason) {
+			if (!object.isRoot()) {
+				return;
+			}
+			DebuggerObjectModel model = object.getModel();
+			synchronized (models) {
+				models.remove(model);
+			}
+			model.removeModelListener(this);
+			modelListeners.fire.elementRemoved(model);
+			if (currentModel == model) {
 				activateModel(null);
 			}
-		};
-
-		protected DebuggerModelListener forFocus =
-			new AnnotatedDebuggerAttributeListener(MethodHandles.lookup()) {
-				@AttributeCallback(TargetFocusScope.FOCUS_ATTRIBUTE_NAME)
-				public void focusChanged(TargetObject object, TargetObject focused) {
-					fireFocusEvent(focused);
-					List<DebuggerModelServiceProxyPlugin> copy;
-					synchronized (proxies) {
-						copy = List.copyOf(proxies);
-					}
-					for (DebuggerModelServiceProxyPlugin proxy : copy) {
-						proxy.fireFocusEvent(focused);
-					}
-				}
-			};
-
-		protected ListenersForRemovalAndFocus(DebuggerObjectModel model) {
-			this.model = model;
 		}
 
-		protected CompletableFuture<Void> init() {
-			return model.fetchModelRoot().thenCompose(r -> {
-				synchronized (this) {
-					this.root = r;
-				}
-				boolean isInvalid = false;
-				try {
-					r.addListener(this.forRemoval);
-				}
-				catch (IllegalStateException e) {
-					isInvalid = true;
-				}
-				isInvalid |= !r.isValid();
-				if (isInvalid) {
-					forRemoval.invalidated(root, root, "Who knows?");
-				}
-				CompletableFuture<? extends TargetFocusScope> findSuitable =
-					DebugModelConventions.findSuitable(TargetFocusScope.class, r);
-				return findSuitable;
-			}).thenAccept(fs -> {
-				synchronized (this) {
-					this.focusScope = fs;
-				}
-				if (fs != null) {
-					fs.addListener(this.forFocus);
-				}
-			});
-		}
-
-		public void dispose() {
-			TargetObject savedRoot;
-			TargetFocusScope savedFocusScope;
-			synchronized (this) {
-				savedRoot = root;
-				savedFocusScope = focusScope;
+		@AttributeCallback(TargetFocusScope.FOCUS_ATTRIBUTE_NAME)
+		public void focusChanged(TargetObject object, TargetObject focused) {
+			// I don't think I care which scope
+			fireFocusEvent(focused);
+			List<DebuggerModelServiceProxyPlugin> copy;
+			synchronized (proxies) {
+				copy = List.copyOf(proxies);
 			}
-			if (savedRoot != null) {
-				savedRoot.removeListener(this.forRemoval);
-			}
-			if (savedFocusScope != null) {
-				savedFocusScope.removeListener(this.forFocus);
+			for (DebuggerModelServiceProxyPlugin proxy : copy) {
+				proxy.fireFocusEvent(focused);
 			}
 		}
-	}
+	};
 
 	protected class ListenerOnRecorders implements TraceRecorderListener {
 		@Override
@@ -195,8 +145,11 @@ public class DebuggerModelServicePlugin extends Plugin
 
 	protected final Set<DebuggerModelFactory> factories = new HashSet<>();
 	// Keep strong references to my listeners, or they'll get torched
-	protected final Map<DebuggerObjectModel, ListenersForRemovalAndFocus> listenersByModel =
-		new LinkedHashMap<>();
+	//protected final Map<DebuggerObjectModel, ListenersForRemovalAndFocus> listenersByModel =
+	//new LinkedHashMap<>();
+	protected final Set<DebuggerObjectModel> models = new LinkedHashSet<>();
+	protected final ForRemovalAndFocusListener forRemovalAndFocusListener =
+		new ForRemovalAndFocusListener();
 	protected final Map<TargetObject, TraceRecorder> recordersByTarget = new WeakHashMap<>();
 
 	protected final ListenerSet<CollectionChangeListener<DebuggerModelFactory>> factoryListeners =
@@ -262,8 +215,8 @@ public class DebuggerModelServicePlugin extends Plugin
 
 	@Override
 	public Set<DebuggerObjectModel> getModels() {
-		synchronized (listenersByModel) {
-			return Set.copyOf(listenersByModel.keySet());
+		synchronized (models) {
+			return Set.copyOf(models);
 		}
 	}
 
@@ -286,20 +239,16 @@ public class DebuggerModelServicePlugin extends Plugin
 	@Override
 	public boolean addModel(DebuggerObjectModel model) {
 		Objects.requireNonNull(model);
-		synchronized (listenersByModel) {
-			if (listenersByModel.containsKey(model)) {
+		synchronized (models) {
+			if (models.contains(model)) {
 				return false;
 			}
-			ListenersForRemovalAndFocus listener = new ListenersForRemovalAndFocus(model);
-			listener.init().exceptionally(e -> {
-				Msg.error(this, "Could not add model " + model, e);
-				synchronized (listenersByModel) {
-					listenersByModel.remove(model);
-					listener.dispose();
-				}
-				return null;
-			});
-			listenersByModel.put(model, listener);
+			model.addModelListener(forRemovalAndFocusListener);
+			TargetObject root = model.getModelRoot();
+			if (!root.isValid()) {
+				forRemovalAndFocusListener.invalidated(root, root,
+					"Invalidated before or during add to service");
+			}
 		}
 		modelListeners.fire.elementAdded(model);
 		return true;
@@ -307,14 +256,12 @@ public class DebuggerModelServicePlugin extends Plugin
 
 	@Override
 	public boolean removeModel(DebuggerObjectModel model) {
-		ListenersForRemovalAndFocus listener;
-		synchronized (listenersByModel) {
-			listener = listenersByModel.remove(model);
-			if (listener == null) {
+		model.removeModelListener(forRemovalAndFocusListener);
+		synchronized (models) {
+			if (!models.remove(model)) {
 				return false;
 			}
 		}
-		listener.dispose();
 		modelListeners.fire.elementRemoved(model);
 		return true;
 	}

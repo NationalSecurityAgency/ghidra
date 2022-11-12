@@ -139,6 +139,7 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 		}
 	}
 
+	@Override
 	public void threadStateChangedSpecific(DbgThread thread, DbgState state) {
 		TargetExecutionState targetState = convertState(state);
 		setExecutionState(targetState, "ThreadStateChanged");
@@ -212,7 +213,7 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 				STATE_ATTRIBUTE_NAME, TargetExecutionState.TERMINATED, //
 				EXIT_CODE_ATTRIBUTE_NAME, proc.getExitCode() //
 			), "Exited");
-			getListeners().fire.event(getProxy(), null, TargetEventType.PROCESS_EXITED,
+			broadcast().event(getProxy(), null, TargetEventType.PROCESS_EXITED,
 				"Process " + proc.getId() + " exited code=" + proc.getExitCode(),
 				List.of(getProxy()));
 		}
@@ -221,7 +222,7 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 	@Override
 	public void memoryChanged(DbgProcess proc, long addr, int len, DbgCause cause) {
 		if (proc.equals(this.process)) {
-			listeners.fire.invalidateCacheRequested(memory);
+			broadcast().invalidateCacheRequested(memory);
 		}
 	}
 

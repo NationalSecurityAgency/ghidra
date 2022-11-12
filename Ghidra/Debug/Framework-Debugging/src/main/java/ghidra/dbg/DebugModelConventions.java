@@ -15,9 +15,7 @@
  */
 package ghidra.dbg;
 
-import java.lang.invoke.MethodHandles;
 import java.util.*;
-import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -457,281 +455,6 @@ public enum DebugModelConventions {
 		return isProcessAlive(process) ? process : null;
 	}
 
-	/**
-	 * A convenience for listening to selected portions (possible all) of a sub-tree of a model
-	 */
-	public abstract static class SubTreeListenerAdapter extends AnnotatedDebuggerAttributeListener {
-		protected boolean disposed = false;
-		protected final NavigableMap<List<String>, TargetObject> objects =
-			new TreeMap<>(PathComparator.KEYED);
-
-		public SubTreeListenerAdapter() {
-			super(MethodHandles.lookup());
-		}
-
-		/**
-		 * An object has been removed from the sub-tree
-		 * 
-		 * @param removed the removed object
-		 */
-		protected abstract void objectRemoved(TargetObject removed);
-
-		/**
-		 * An object has been added to the sub-tree
-		 * 
-		 * @param added the added object
-		 */
-		protected abstract void objectAdded(TargetObject added);
-
-		/**
-		 * Decide whether a sub-tree (of the sub-tree) should be tracked
-		 * 
-		 * @param obj the root of the sub-tree to consider
-		 * @return false to ignore, true to track
-		 */
-		protected abstract boolean checkDescend(TargetObject obj);
-
-		@Override
-		public void invalidated(TargetObject object, TargetObject branch, String reason) {
-			runNotInSwing(this, () -> doInvalidated(object, reason), "invalidated");
-		}
-
-		private void doInvalidated(TargetObject object, String reason) {
-			List<TargetObject> removed = new ArrayList<>();
-			synchronized (objects) {
-				if (disposed) {
-					return;
-				}
-				/**
-				 * NOTE: Can't use iteration, because subtrees will also remove stuff, causing
-				 * ConcurrentModificationException, even if removal is via the iterator...
-				 */
-				List<String> path = object.getPath();
-				while (true) {
-					Entry<List<String>, TargetObject> ent = objects.ceilingEntry(path);
-					if (ent == null || !PathUtils.isAncestor(path, ent.getKey())) {
-						break;
-					}
-					objects.remove(ent.getKey());
-					TargetObject succ = ent.getValue();
-					succ.removeListener(this);
-					removed.add(succ);
-				}
-			}
-			for (TargetObject r : removed) {
-				objectRemovedSafe(r);
-			}
-		}
-
-		private void objectRemovedSafe(TargetObject removed) {
-			try {
-				objectRemoved(removed);
-			}
-			catch (Throwable t) {
-				Msg.error(this, "Error in callback", t);
-			}
-		}
-
-		private void objectAddedSafe(TargetObject obj) {
-			try {
-				objectAdded(obj);
-			}
-			catch (Throwable t) {
-				Msg.error(this, "Error in callback", t);
-			}
-		}
-
-		private void considerObj(TargetObject obj) {
-			if (!checkDescend(obj)) {
-				return;
-			}
-			CompletableFuture.runAsync(() -> addListenerAndConsiderSuccessors(obj))
-					.exceptionally(ex -> {
-						Msg.error(this, "Could add to object: " + obj, ex);
-						return null;
-					});
-		}
-
-		private void considerElements(TargetObject parent,
-				Map<String, ? extends TargetObject> elements) {
-			synchronized (objects) {
-				if (disposed) {
-					return;
-				}
-				if (!objects.containsKey(parent.getPath())) {
-					return;
-				}
-			}
-			for (TargetObject e : elements.values()) {
-				considerObj(e);
-			}
-		}
-
-		protected void considerAttributes(TargetObject obj, Map<String, ?> attributes) {
-			synchronized (objects) {
-				if (disposed) {
-					return;
-				}
-				if (!objects.containsKey(obj.getPath())) {
-					return;
-				}
-			}
-			for (Map.Entry<String, ?> ent : attributes.entrySet()) {
-				String name = ent.getKey();
-				Object val = ent.getValue();
-				if (!(val instanceof TargetObject)) {
-					continue;
-				}
-				TargetObject a = (TargetObject) val;
-				if (PathUtils.isLink(obj.getPath(), name, a.getPath())) {
-					continue;
-				}
-				considerObj(a);
-			}
-		}
-
-		/**
-		 * Track a specified object, without initially adding the sub-tree
-		 * 
-		 * <p>
-		 * Note that {@link #checkDescend(TargetObject)} must also exclude the sub-tree, otherwise
-		 * children added later will be tracked.
-		 * 
-		 * @param obj the object to track
-		 * @return true if the object was not already being listened to
-		 */
-		public boolean addListener(TargetObject obj) {
-			if (obj == null) {
-				return false;
-			}
-			obj.addListener(this);
-			synchronized (objects) {
-				if (objects.put(obj.getPath(), obj) == obj) {
-					return false;
-				}
-			}
-			objectAddedSafe(obj);
-			return true;
-		}
-
-		/**
-		 * Add a specified sub-tree to this listener
-		 * 
-		 * @param obj
-		 * @return true if the object was not already being listened to
-		 */
-		public boolean addListenerAndConsiderSuccessors(TargetObject obj) {
-			boolean result = addListener(obj);
-			if (result && checkDescend(obj)) {
-				obj.fetchElements()
-						.thenAcceptAsync(elems -> considerElements(obj, elems))
-						.exceptionally(ex -> {
-							Msg.error(this, "Could not fetch elements of obj: " + obj, ex);
-							return null;
-						});
-				obj.fetchAttributes()
-						.thenAcceptAsync(attrs -> considerAttributes(obj, attrs))
-						.exceptionally(ex -> {
-							Msg.error(this, "Could not fetch attributes of obj: " + obj, ex);
-							return null;
-						});
-			}
-			return result;
-		}
-
-		@Override
-		public void elementsChanged(TargetObject parent, Collection<String> removed,
-				Map<String, ? extends TargetObject> added) {
-			runNotInSwing(this, () -> doElementsChanged(parent, removed, added), "elementsChanged");
-		}
-
-		private void doElementsChanged(TargetObject parent, Collection<String> removed,
-				Map<String, ? extends TargetObject> added) {
-			if (checkDescend(parent)) {
-				considerElements(parent, added);
-			}
-		}
-
-		@Override
-		public void attributesChanged(TargetObject parent, Collection<String> removed,
-				Map<String, ?> added) {
-			runNotInSwing(this, () -> doAttributesChanged(parent, removed, added),
-				"attributesChanged");
-		}
-
-		private void doAttributesChanged(TargetObject parent, Collection<String> removed,
-				Map<String, ?> added) {
-			if (checkDescend(parent)) {
-				considerAttributes(parent, added);
-			}
-		}
-
-		/**
-		 * Dispose of this sub-tree tracker/listener
-		 * 
-		 * <p>
-		 * This uninstalls the listener from every tracked object and clears its collection of
-		 * tracked objects.
-		 */
-		public void dispose() {
-			synchronized (objects) {
-				disposed = true;
-				for (Iterator<TargetObject> it = objects.values().iterator(); it.hasNext();) {
-					TargetObject obj = it.next();
-					obj.removeListener(this);
-					it.remove();
-				}
-			}
-		}
-	}
-
-	/**
-	 * A variable that is updated whenever access changes according to the (now deprecated)
-	 * "every-ancestor" convention.
-	 * 
-	 * @deprecated The "every-ancestor" thing doesn't add any flexibility to model implementations.
-	 *             It might even restrict it. Not to mention it's obtuse to implement.
-	 */
-	@Deprecated(forRemoval = true)
-	public static class AllRequiredAccess extends AsyncReference<Boolean, Void> {
-		protected class ListenerForAccess extends AnnotatedDebuggerAttributeListener {
-			protected final TargetAccessConditioned access;
-			private boolean accessible;
-
-			public ListenerForAccess(TargetAccessConditioned access) {
-				super(MethodHandles.lookup());
-				this.access = access;
-				this.access.addListener(this);
-				this.accessible = access.isAccessible();
-			}
-
-			@AttributeCallback(TargetAccessConditioned.ACCESSIBLE_ATTRIBUTE_NAME)
-			public void accessibilityChanged(TargetObject object, boolean accessibility) {
-				//Msg.debug(this, "Obj " + object + " has become " + accessibility);
-				synchronized (AllRequiredAccess.this) {
-					this.accessible = accessibility;
-					// Check that all requests have been issued (fence is ready)
-					if (listeners != null) {
-						set(getAllAccessibility(), null);
-					}
-				}
-			}
-		}
-
-		protected final List<ListenerForAccess> listeners;
-		protected final AsyncFence initFence = new AsyncFence();
-
-		public AllRequiredAccess(Collection<? extends TargetAccessConditioned> allReq) {
-			Msg.debug(this, "Listening for access on: " + allReq);
-			listeners = allReq.stream().map(ListenerForAccess::new).collect(Collectors.toList());
-			set(getAllAccessibility(), null);
-		}
-
-		public boolean getAllAccessibility() {
-			return listeners.stream().allMatch(l -> l.accessible);
-		}
-	}
-
 	public static class AsyncAttribute<T> extends AsyncReference<T, Void>
 			implements DebuggerModelListener {
 		private final TargetObject obj;
@@ -741,7 +464,7 @@ public enum DebugModelConventions {
 		public AsyncAttribute(TargetObject obj, String name) {
 			this.name = name;
 			this.obj = obj;
-			obj.addListener(this);
+			obj.getModel().addModelListener(this);
 			set((T) obj.getCachedAttribute(name), null);
 			obj.fetchAttribute(name).exceptionally(ex -> {
 				Msg.error(this, "Could not get initial value of " + name + " for " + obj, ex);
@@ -753,6 +476,9 @@ public enum DebugModelConventions {
 		@SuppressWarnings("unchecked")
 		public void attributesChanged(TargetObject parent, Collection<String> removed,
 				Map<String, ?> added) {
+			if (parent != obj) {
+				return;
+			}
 			if (added.containsKey(name)) {
 				set((T) added.get(name), null);
 			}
@@ -768,7 +494,7 @@ public enum DebugModelConventions {
 		@Override
 		public void dispose(Throwable reason) {
 			super.dispose(reason);
-			obj.removeListener(this);
+			obj.getModel().removeModelListener(this);
 		}
 	}
 
@@ -782,34 +508,6 @@ public enum DebugModelConventions {
 		public AsyncAccess(TargetAccessConditioned ac) {
 			super(ac, TargetAccessConditioned.ACCESSIBLE_ATTRIBUTE_NAME);
 		}
-	}
-
-	/**
-	 * Obtain an object which tracks accessibility for a given target object.
-	 * 
-	 * <p>
-	 * Recall that for an object to be considered accessible, it and its ancestors must all be
-	 * accessible. Objects without the {@link TargetAccessConditioned} interface, are assumed
-	 * accessible.
-	 * 
-	 * <p>
-	 * <b>Caution:</b> The returned {@link AllRequiredAccess} object has the only strong references
-	 * to the listeners. If you intend to wait for access, e.g., by calling
-	 * {@link AsyncReference#waitValue(Object)}, you must ensure a strong reference to this object
-	 * is maintained for the duration of the wait. If not, it could be garbage collected, and you
-	 * will never get a callback.
-	 * 
-	 * @param obj the object whose accessibility to track
-	 * @return a future which completes with an {@link AsyncReference} of the objects effective
-	 *         accessibility.
-	 * @deprecated Just listen on the nearest {@link TargetAccessConditioned} ancestor instead. The
-	 *             "every-ancestor" convention is deprecated.
-	 */
-	@Deprecated
-	public static CompletableFuture<AllRequiredAccess> trackAccessibility(TargetObject obj) {
-		CompletableFuture<? extends Collection<? extends TargetAccessConditioned>> collectAncestors =
-			collectAncestors(obj, TargetAccessConditioned.class);
-		return collectAncestors.thenApply(AllRequiredAccess::new);
 	}
 
 	/**

@@ -21,7 +21,6 @@ import java.util.concurrent.CompletableFuture;
 import org.apache.commons.lang3.StringUtils;
 
 import ghidra.async.AsyncUtils;
-import ghidra.dbg.DebuggerModelListener;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.target.TargetObject;
 
@@ -212,21 +211,12 @@ public class DummyTargetObject implements TargetObject {
 		return attributes;
 	}
 
-	@Override
-	public void addListener(DebuggerModelListener l) {
-	}
-
-	@Override
-	public void removeListener(DebuggerModelListener l) {
-	}
-
 	public String getJoinedPath() {
 		return joinedPath;
 	}
 
 	@Override
 	public boolean isValid() {
-		// TODO Auto-generated method stub
 		return true;
 	}
 
@@ -235,6 +225,7 @@ public class DummyTargetObject implements TargetObject {
 		return getName();
 	}
 
+	@Override
 	public Object getValue() {
 		return value;
 	}

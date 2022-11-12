@@ -121,7 +121,7 @@ public class DbgModelTargetMemoryContainerImpl extends DbgModelTargetObjectImpl
 		if (span == null) {
 			throw new DebuggerMemoryAccessException("Cannot read at " + address);
 		}
-		listeners.fire.memoryUpdated(getProxy(), address, buf.array());
+		broadcast().memoryUpdated(getProxy(), address, buf.array());
 		return Arrays.copyOf(buf.array(), (int) span.length());
 	}
 
@@ -138,7 +138,7 @@ public class DbgModelTargetMemoryContainerImpl extends DbgModelTargetObjectImpl
 	}
 
 	private void writeAssist(Address address, byte[] data) {
-		listeners.fire.memoryUpdated(getProxy(), address, data);
+		broadcast().memoryUpdated(getProxy(), address, data);
 	}
 
 	@Override

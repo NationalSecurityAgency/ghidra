@@ -79,7 +79,7 @@ public interface DbgModelTargetSession extends //
 		if (!isValid()) {
 			return;
 		}
-		getListeners().fire.consoleOutput(getProxy(), chan, output);
+		broadcast().consoleOutput(getProxy(), chan, output);
 	}
 
 	@Override

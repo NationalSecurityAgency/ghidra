@@ -153,7 +153,7 @@ public class LldbModelTargetProcessImpl extends LldbModelTargetObjectImpl
 			threads.requestElements(true);
 			StopReason stopReason = getManager().getCurrentThread().GetStopReason();
 			if (!stopReason.equals(StopReason.eStopReasonPlanComplete)) {
-				memory.requestElements(true);			
+				memory.requestElements(true);
 			}
 		}
 	}
@@ -245,7 +245,7 @@ public class LldbModelTargetProcessImpl extends LldbModelTargetObjectImpl
 				STATE_ATTRIBUTE_NAME, TargetExecutionState.TERMINATED, //
 				EXIT_CODE_ATTRIBUTE_NAME, exitDesc //
 			), "Exited");
-			getListeners().fire.event(getProxy(), null, TargetEventType.PROCESS_EXITED,
+			broadcast().event(getProxy(), null, TargetEventType.PROCESS_EXITED,
 				"Process " + DebugClient.getId(getProcess()) + " exited code=" + exitDesc,
 				List.of(getProxy()));
 		}

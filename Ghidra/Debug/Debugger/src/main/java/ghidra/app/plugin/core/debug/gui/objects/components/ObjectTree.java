@@ -404,7 +404,6 @@ public class ObjectTree implements ObjectPane {
 		DebuggerObjectsProvider provider = getProvider();
 		ObjectContainer oc = node.getContainer();
 		provider.deleteFromMap(oc);
-		oc.getTargetObject().removeListener(provider.getListener());
 		nodeMap.remove(path(node.getContainer()));
 	}
 

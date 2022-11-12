@@ -309,7 +309,7 @@ public class DefaultDebuggerObjectModelTest implements AsyncTestUtils {
 
 		FakeTargetObject fakeA = new FakeTargetObject(model, model.root, "A");
 		FakeTargetRegisterBank fakeA1rb = new FakeTargetRegisterBank(model, fakeA, "[1]");
-		fakeA1rb.listeners.fire.registersUpdated(fakeA1rb, Map.of());
+		fakeA1rb.broadcast().registersUpdated(fakeA1rb, Map.of());
 		fakeA.setElements(List.of(fakeA1rb), "Init");
 		model.root.setAttributes(List.of(fakeA), Map.of(), "Init");
 
@@ -329,7 +329,7 @@ public class DefaultDebuggerObjectModelTest implements AsyncTestUtils {
 
 		FakeTargetObject fakeA = new FakeTargetObject(model, model.root, "A");
 		FakeTargetRegisterBank fakeA1rb = new FakeTargetRegisterBank(model, fakeA, "[1]");
-		fakeA1rb.listeners.fire.registersUpdated(fakeA1rb, Map.of());
+		fakeA1rb.broadcast().registersUpdated(fakeA1rb, Map.of());
 		fakeA.setElements(List.of(fakeA1rb), "Init");
 		model.root.setAttributes(List.of(fakeA), Map.of(), "Init");
 		EventRecordingListener listener = new EventRecordingListener();

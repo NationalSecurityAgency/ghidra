@@ -20,7 +20,6 @@ import java.awt.Color;
 import java.awt.event.MouseEvent;
 import java.io.PrintWriter;
 import java.lang.invoke.MethodHandles;
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
@@ -795,9 +794,9 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 
 	@Override
 	public void closeComponent() {
-		TargetObject targetObject = getRoot().getTargetObject();
-		if (targetObject != null) {
-			targetObject.removeListener(getListener());
+		DebuggerObjectModel model = getModel();
+		if (model != null) {
+			model.removeModelListener(getListener());
 		}
 		super.closeComponent();
 	}

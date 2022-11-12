@@ -22,7 +22,6 @@ import java.util.stream.Collectors;
 import com.sun.jdi.ReferenceType;
 
 import ghidra.async.AsyncFence;
-import ghidra.async.AsyncUtils;
 import ghidra.dbg.target.schema.*;
 import ghidra.util.Msg;
 
@@ -90,9 +89,6 @@ public class JdiModelTargetClassContainer extends JdiModelTargetObjectImpl {
 	}
 
 	public CompletableFuture<?> refreshInternal() {
-		if (!isObserved()) {
-			return AsyncUtils.NIL;
-		}
 		return doRefresh().exceptionally(ex -> {
 			Msg.error(this, "Problem refreshing vm's classes", ex);
 			return null;
