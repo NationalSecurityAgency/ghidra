@@ -38,5 +38,6 @@ dependencies {
 // as a new Java 9 style module.  Ghidra is currently using unnamed modules everywhere.
 ext.addExports([
 	'java.desktop/sun.awt=ALL-UNNAMED',
-	'java.desktop/sun.awt.image=ALL-UNNAMED'
+	'java.desktop/sun.awt.image=ALL-UNNAMED',
+	'java.desktop/sun.swing=ALL-UNNAMED'
 ])
