@@ -215,6 +215,8 @@ public class DockingWindowsLookAndFeelUtils {
 				// (see NimbusDefaults for key values that can be changed here)
 				break;
 			case MOTIF_LOOK_AND_FEEL:
+				// Allow Motif to use antialiased text
+				SwingUtilities2.putAATextInfo(true, defaults);
 
 				doFixupMissingCopyPasteKeyBindings();
 
