@@ -79,7 +79,7 @@ public class LinuxPtySessionLeader {
 				}
 			}
 			System.err.println("Could not execute " + subArgs.get(0) + ": " + t.getMessage());
-			System.exit(-1);
+			System.exit(127);
 		}
 	}
 }
