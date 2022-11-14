@@ -495,26 +495,30 @@ public enum DBTraceUtils {
 			Map<R, V> toPut = new HashMap<>();
 			for (E entry : getIntersecting(prev, next)) {
 				R r = getRange(entry);
-				boolean precedesMin = getLower(r).compareTo(lower) < 0;
-				boolean succeedsMax = getUpper(r).compareTo(upper) > 0;
+				int cmpMin = getLower(r).compareTo(lower);
+				int cmpMax = getUpper(r).compareTo(upper);
 				boolean sameVal = Objects.equals(getValue(entry), value);
-				if (precedesMin && succeedsMax && sameVal) {
+				if (cmpMin <= 0 && cmpMax >= 0 && sameVal) {
 					return entry; // The value in this range is already set as specified
 				}
 				remove(entry);
-				if (precedesMin) {
+				if (cmpMin < 0) {
 					if (sameVal) {
+						// Expand the new entry to cover the one we just removed
 						lower = getLower(r);
 					}
 					else {
+						// Create a truncated entry to replace the one we just removed
 						toPut.put(toRange(getLower(r), prev), getValue(entry));
 					}
 				}
-				if (succeedsMax) {
+				if (cmpMax > 0) {
 					if (sameVal) {
+						// Expand the new entry to cover the one we just removed
 						upper = getUpper(r);
 					}
 					else {
+						// Create a truncated entry to replace the one we just removed
 						toPut.put(toRange(next, getUpper(r)), getValue(entry));
 					}
 				}
