@@ -240,7 +240,7 @@ public class DebuggerModelServicePlugin extends Plugin
 	public boolean addModel(DebuggerObjectModel model) {
 		Objects.requireNonNull(model);
 		synchronized (models) {
-			if (models.contains(model)) {
+			if (!models.add(model)) {
 				return false;
 			}
 			model.addModelListener(forRemovalAndFocusListener);
