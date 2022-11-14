@@ -60,8 +60,8 @@
 		<tocdef id="Theming" text="Theming" sortgroup="t" target="help/topics/Theming/ThemingOverview.html"> 
 		        <tocdef id="Overview" sortgroup="1" text="Overview" target="help/topics/Theming/ThemingOverview.html"/>
 		        <tocdef id="Editing Themes" sortgroup="2" text="Editing Themes" target="help/topics/Theming/ThemingUserDocs.html"/>
-		        <tocdef id="Developer Documentation" sortgroup="3" text="Developer Documentation" target="help/topics/Theming/ThemingDeveloperDocs.html"/>
-		        <tocdef id="Architecture Documentation" sortgroup="4" text="Architecture Documentation" target="help/topics/Theming/ThemingInternals.html"/>
+		        <tocdef id="Architecture" sortgroup="3" text="Architecture" target="help/topics/Theming/ThemingInternals.html"/>
+		        <tocdef id="Developer Documentation" sortgroup="4" text="Developer's Guide" target="help/topics/Theming/ThemingDeveloperDocs.html"/>		        
 	    </tocdef>
 	</tocdef>
 </tocroot>

@@ -53,7 +53,8 @@ import utilities.util.FileUtilities;
  */
 public class GHelpHTMLEditorKit extends HTMLEditorKit {
 
-	private static final String G_HELP_STYLE_SHEET = "help/shared/Frontpage.css";
+	private static final String G_HELP_STYLE_SHEET = "Frontpage.css";
+	private static final String DARK_G_HELP_STYLE_SHEET = "DarkStyle.css";
 
 	private static final Pattern EXTERNAL_URL_PATTERN = Pattern.compile("https?://.*");
 
@@ -320,12 +321,21 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 	}
 
 	private URL getGStyleSheetURL() {
-		URL GStyleSheetURL = ResourceManager.getResource(G_HELP_STYLE_SHEET);
-		if (GStyleSheetURL != null) {
-			return GStyleSheetURL;
+
+		if (Gui.isDarkTheme()) {
+			return findStyleSheet(DARK_G_HELP_STYLE_SHEET);
 		}
 
-		return findModuleFile("help/shared/FrontPage.css");
+		return findStyleSheet(G_HELP_STYLE_SHEET);
+	}
+
+	private URL findStyleSheet(String name) {
+		URL url = ResourceManager.getResource("help/shared/" + name);
+		if (url != null) {
+			return url;
+		}
+
+		return findModuleFile("help/shared/" + name);
 	}
 
 	private URL findApplicationfile(String relativePath) {

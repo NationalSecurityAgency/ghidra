@@ -28,7 +28,6 @@ import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
 
-import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.framework.LoggingInitialization;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
@@ -74,11 +73,7 @@ public class AgentWindow extends JFrame implements WindowListener, LogListener {
 
 	@Override
 	public void messageLogged(String message, boolean isError) {
-<<<<<<< Upstream, based on origin/master
-=======
-		String fMessage =
-			isError ? "<font color=\"" + Messages.ERROR + "\">" + message + "</font>" : message;
->>>>>>> 1e5309a GP-1981 - Theming - Color conversion for Debugger modules
+
 		Swing.runIfSwingOrRunLater(() -> {
 			MutableAttributeSet attributes = new SimpleAttributeSet();
 			if (isError) {

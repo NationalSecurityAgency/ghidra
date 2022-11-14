@@ -31,7 +31,7 @@ import ghidra.util.HelpLocation;
 	status = PluginStatus.RELEASED,
 	packageName = UtilityPluginPackage.NAME,
 	category = PluginCategoryNames.SUPPORT,
-	shortDescription = "Manages themes for the Ghdira GUI",
+	shortDescription = "Manages themes for the Ghidra GUI",
 	description = "Adds actions and options to manage Themes within Ghidra. " +
 			"This plugin is available only in the Ghidra Project Window."
 )

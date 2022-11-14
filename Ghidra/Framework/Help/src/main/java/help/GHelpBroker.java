@@ -28,7 +28,8 @@ import generic.theme.GIcon;
 import ghidra.util.Msg;
 import ghidra.util.bean.GGlassPane;
 import resources.Icons;
-import resources.ResourceManager;
+import resources.MultiIconBuilder;
+import resources.icons.EmptyIcon;
 
 // NOTE: for JH 2.0, this class has been rewritten to not
 // access the 'frame' and 'dialog' variable directly
@@ -240,7 +241,11 @@ public class GHelpBroker extends DefaultHelpBroker {
 				JToolBar toolbar = (JToolBar) component;
 				toolbar.addSeparator();
 
-				Icon zoomOutIcon = ResourceManager.getScaledIcon(ZOOM_OUT_ICON, 24, 24);
+				ImageIcon icon = new MultiIconBuilder(new EmptyIcon(24, 24))
+						.addCenteredIcon(ZOOM_OUT_ICON)
+						.build();
+
+				Icon zoomOutIcon = icon;
 				JButton zoomOutBtn = new JButton(zoomOutIcon);
 				zoomOutBtn.setToolTipText("Zoom out");
 				zoomOutBtn.addActionListener(e -> {
@@ -252,7 +257,10 @@ public class GHelpBroker extends DefaultHelpBroker {
 				});
 				toolbar.add(zoomOutBtn);
 
-				Icon zoomInIcon = ResourceManager.getScaledIcon(ZOOM_IN_ICON, 24, 24);
+				icon = new MultiIconBuilder(new EmptyIcon(24, 24))
+						.addCenteredIcon(ZOOM_IN_ICON)
+						.build();
+				Icon zoomInIcon = icon;
 				JButton zoomInBtn = new JButton(zoomInIcon);
 				zoomInBtn.setToolTipText("Zoom in");
 				zoomInBtn.addActionListener(e -> {

@@ -127,6 +127,16 @@ public class MultiIconBuilder {
 		return addIcon(icon, w, h, QUADRANT.LL);
 	}
 
+	// TODO
+	public MultiIconBuilder addCenteredIcon(Icon icon) {
+		int x = (multiIcon.getIconWidth() - icon.getIconWidth()) / 2;
+		int y = (multiIcon.getIconHeight() - icon.getIconHeight()) / 2;
+
+		TranslateIcon txIcon = new TranslateIcon(icon, x, y);
+		multiIcon.addIcon(txIcon);
+		return this;
+	}
+
 	/**
 	 * Add text overlaid on the base icon, aligned to the specified quadrant.
 	 * 
