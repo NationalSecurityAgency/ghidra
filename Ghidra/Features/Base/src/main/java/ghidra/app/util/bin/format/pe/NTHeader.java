@@ -22,10 +22,11 @@ import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.bin.format.pe.PortableExecutable.SectionLayout;
 import ghidra.program.model.data.*;
-import ghidra.util.*;
+import ghidra.util.DataConverter;
+import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.NotYetImplementedException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * A class to represent the <b><code>IMAGE_NT_HEADERS32</code></b> and
@@ -62,9 +63,11 @@ public class NTHeader implements StructConverter, OffsetValidator {
 	 * Constructs a new NT header.
 	 * @param reader the binary reader
 	 * @param index the index into the reader to the start of the NT header
-	 * @param advancedProcess if true, information rafside of the base header will be processed
+	 * @param layout The {@link SectionLayout}
+	 * @param advancedProcess if true, information outside of the base header will be processed
 	 * @param parseCliHeaders if true, CLI headers are parsed (if present)
 	 * @throws InvalidNTHeaderException if the bytes the specified index
+	 * @throws IOException if an IO-related exception occurred
 	 * do not constitute an accurate NT header.
 	 */
 	public NTHeader(BinaryReader reader, int index, SectionLayout layout, boolean advancedProcess,
@@ -124,22 +127,26 @@ public class NTHeader implements StructConverter, OffsetValidator {
 
 	/**
 	 * Converts a relative virtual address (RVA) into a pointer.
-	 * @see #rvaToPointer(long)
+	 * 
+	 * @param rva the relative virtual address
+	 * @return the pointer into binary image, 0 if not valid
 	 */
 	public int rvaToPointer(int rva) {
-		return (int) rvaToPointer(rva & Conv.INT_MASK);
+		return (int) rvaToPointer(Integer.toUnsignedLong(rva));
 	}
 
 	/**
+	 * Converts a relative virtual address (RVA) into a pointer.
+	
 	 * @param rva the relative virtual address
 	 * @return the pointer into binary image, 0 if not valid
 	 */
 	public long rvaToPointer(long rva) {
 		SectionHeader[] sections = fileHeader.getSectionHeaders();
 		for (SectionHeader section : sections) {
-			long sectionVA = section.getVirtualAddress() & Conv.INT_MASK;
-			long rawSize = section.getSizeOfRawData() & Conv.INT_MASK;
-			long rawPtr = section.getPointerToRawData() & Conv.INT_MASK;
+			long sectionVA = Integer.toUnsignedLong(section.getVirtualAddress());
+			long rawSize = Integer.toUnsignedLong(section.getSizeOfRawData());
+			long rawPtr = Integer.toUnsignedLong(section.getPointerToRawData());
 
 			switch (layout) {
 				case MEMORY:
@@ -169,10 +176,10 @@ public class NTHeader implements StructConverter, OffsetValidator {
 	public boolean checkPointer(long ptr) {
 		SectionHeader[] sections = fileHeader.getSectionHeaders();
 		for (SectionHeader section : sections) {
-			long virtPtr = section.getVirtualAddress() & Conv.INT_MASK;
-			long virtSize = section.getVirtualSize() & Conv.INT_MASK;
-			long rawSize = section.getSizeOfRawData() & Conv.INT_MASK;
-			long rawPtr = section.getPointerToRawData() & Conv.INT_MASK;
+			long virtPtr = Integer.toUnsignedLong(section.getVirtualAddress());
+			long virtSize = Integer.toUnsignedLong(section.getVirtualSize());
+			long rawSize = Integer.toUnsignedLong(section.getSizeOfRawData());
+			long rawPtr = Integer.toUnsignedLong(section.getPointerToRawData());
 
 			long sectionBasePtr = layout == SectionLayout.MEMORY ? virtPtr : rawPtr;
 			long sectionSize = layout == SectionLayout.MEMORY ? virtSize : rawSize;
@@ -199,13 +206,17 @@ public class NTHeader implements StructConverter, OffsetValidator {
 
 	/**
 	 * Converts a virtual address (VA) into a pointer.
-	 * @see #vaToPointer(long)
+	 * 
+	 * @param va the virtual address
+	 * @return the pointer into binary image, 0 if not valid
 	 */
 	public int vaToPointer(int va) {
-		return (int) vaToPointer(va & Conv.INT_MASK);
+		return (int) vaToPointer(Integer.toUnsignedLong(va));
 	}
 
 	/**
+	 * Converts a virtual address (VA) into a pointer.
+	 * 
 	 * @param va the virtual address
 	 * @return the pointer into binary image, 0 if not valid
 	 */
@@ -213,10 +224,6 @@ public class NTHeader implements StructConverter, OffsetValidator {
 		return rvaToPointer(va - getOptionalHeader().getImageBase());
 	}
 
-	/**
-	 * @throws InvalidNTHeaderException
-	 * @throws IOException
-	 */
 	private void parse() throws InvalidNTHeaderException, IOException {
 
 		if (index < 0 || index > reader.length()) {
@@ -229,6 +236,7 @@ public class NTHeader implements StructConverter, OffsetValidator {
 			signature = reader.readInt(tmpIndex);
 		}
 		catch (IndexOutOfBoundsException ioobe) {
+			// Handled below
 		}
 
 		// if not correct signature, then return...
@@ -256,7 +264,7 @@ public class NTHeader implements StructConverter, OffsetValidator {
 		fileHeader.processSymbols();
 
 		if (advancedProcess) {
-			optionalHeader.processDataDirectories(TaskMonitorAdapter.DUMMY_MONITOR);
+			optionalHeader.processDataDirectories(TaskMonitor.DUMMY);
 		}
 	}
 
