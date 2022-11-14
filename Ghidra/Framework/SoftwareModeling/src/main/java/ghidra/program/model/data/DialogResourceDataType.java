@@ -92,10 +92,10 @@ public class DialogResourceDataType extends DynamicDataType {
 			tempOffset = addDialogTitleArray(memBuffer, comps, tempOffset);
 
 			//Check to see if extra font size and array info after three dialog items
-			//will only be there if DS_SETFONT mask is set at offset 0 of DLGTEMPLATE
-			byte getStyle = memBuffer.getByte(0);
+			//will only be there if DS_SETFONT mask is set in the style field
+			byte getStyle = memBuffer.getByte(ex ? 12 : 0);
 			if ((getStyle & DS_SETFONT) > 0) {
-				tempOffset = addDialogFontSizeAndArray(memBuffer, comps, tempOffset);
+				tempOffset = addDialogFontComponents(memBuffer, comps, tempOffset, ex);
 			}
 
 			//get cdit value at offset 8 of DLGTEMPLATE or offset 16 of DLGTEMPLATEEX
@@ -199,13 +199,30 @@ public class DialogResourceDataType extends DynamicDataType {
 		return tempOffset;
 	}
 
-	//adds Dialog font size and font array - the OPTIONAL 4th and 5th components after the DLGTEMPLATE structure
-	private int addDialogFontSizeAndArray(MemBuffer memBuffer, List<DataTypeComponent> comps,
-			int tempOffset) {
+	//adds Dialog font components
+	//for DLGITEMTEMPLATE structures this is the font size and typeface array
+	//for DLGITEMTEMPLATEEX structures three additional fields (weight, italic, and
+	//charset) are added in between the font size and typeface
+	private int addDialogFontComponents(MemBuffer memBuffer, List<DataTypeComponent> comps,
+			int tempOffset, boolean ex) {
 		//add Dialog Font size
 		tempOffset =
 			addComp(new ShortDataType(), 2, "Dialog Font Size",
 				memBuffer.getAddress().add(tempOffset), comps, tempOffset);
+
+		if (ex) {
+			//add Dialog Font weight
+			tempOffset = addComp(new WordDataType(), 2, "Dialog Font Weight", memBuffer.getAddress().add(tempOffset),
+					comps, tempOffset);
+
+			//add Dialog Font Italic
+			tempOffset = addComp(new ByteDataType(), 1, "Dialog Font Italic", memBuffer.getAddress().add(tempOffset),
+					comps, tempOffset);
+
+			//add Dialog Font Charset
+			tempOffset = addComp(new ByteDataType(), 1, "Dialog Font Charset", memBuffer.getAddress().add(tempOffset),
+					comps, tempOffset);
+		}
 
 		//add Dialog Font Style array
 		tempOffset = addUnicodeString(memBuffer, comps, tempOffset, "Dialog Font Typeface");
