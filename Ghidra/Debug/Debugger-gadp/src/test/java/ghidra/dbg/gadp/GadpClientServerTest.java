@@ -984,6 +984,8 @@ public class GadpClientServerTest implements AsyncTestUtils {
 		AsynchronousSocketChannel socket = socketChannel();
 		try (ServerRunner runner = new ServerRunner()) {
 			GadpClient client = new GadpClient("Test", socket);
+			client.addModelListener(focusListener);
+
 			waitOn(AsyncUtils.completable(TypeSpec.VOID, socket::connect,
 				runner.server.getLocalAddress()));
 			waitOn(client.connect());
@@ -1044,7 +1046,7 @@ public class GadpClientServerTest implements AsyncTestUtils {
 		AsynchronousSocketChannel socket = socketChannel();
 		try (ServerRunner runner = new ServerRunner()) {
 			GadpClient client = new GadpClient("Test", socket);
-
+			client.addModelListener(elemL);
 			waitOn(AsyncUtils.completable(TypeSpec.VOID, socket::connect,
 				runner.server.getLocalAddress()));
 			waitOn(client.connect());
