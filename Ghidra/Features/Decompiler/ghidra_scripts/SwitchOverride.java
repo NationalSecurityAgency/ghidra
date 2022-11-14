@@ -83,7 +83,7 @@ public class SwitchOverride extends GhidraScript {
 		
 		FlowType flowType = instr.getFlowType();
 		
-		if (flowType == RefType.COMPUTED_JUMP) {
+		if (flowType.isJump() && flowType.isComputed()) {
 			return true;
 		}
 		if (flowType.isCall()) {
