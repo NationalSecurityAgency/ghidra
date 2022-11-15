@@ -40,7 +40,7 @@ public class TypedefDataType extends GenericDataType implements TypeDef {
 	 * @param dt data type that is being typedef'ed (may not be null)
 	 */
 	public TypedefDataType(String name, DataType dt) {
-		this(CategoryPath.ROOT, name, dt, null);
+		this(CategoryPath.ROOT, name, dt, dt.getDataTypeManager());
 	}
 
 	/**
@@ -50,7 +50,7 @@ public class TypedefDataType extends GenericDataType implements TypeDef {
 	 * @param dt data type that is being typedef'ed (may not be null)
 	 */
 	public TypedefDataType(CategoryPath path, String name, DataType dt) {
-		this(path, name, dt, null);
+		this(path, name, dt, dt.getDataTypeManager());
 	}
 
 	/**

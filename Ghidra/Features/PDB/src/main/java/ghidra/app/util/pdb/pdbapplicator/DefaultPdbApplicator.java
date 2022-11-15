@@ -272,6 +272,21 @@ public class DefaultPdbApplicator implements PdbApplicator {
 //		return;
 //	}
 
+		// WANTED TO put the following block in place of the one beneath it, but it would require
+		// that we visit all appliers to make sure they have the requisite logic to override
+		// primary mangled symbols with the appropriate global symbols that have the data types.
+		// See FunctionSymbolApplier for logic used in the "if" case below.
+
+//		// Processing public (mangled) symbols first, but global symbol processing can change
+//		// which symbol is marked primary to the global one if that global symbol provided a rich
+//		// function definition data type.  Doing this will prevent the mangled symbol from applying
+//		// the function signature (unless there is an option set to force the mangled symbol to be
+//		// the primary symbol).
+//		processPublicSymbols();
+//		processGlobalSymbolsNoTypedefs();
+
+		// WANTED TO replace the following block with the one above.  See comment above.
+
 		// Doing globals before publics, as publics are those that can have mangled names.  By
 		// applying the non-mangled symbols first, we can get full type information from the
 		// underlying type.  Then we can apply the mangled symbols and demangle them without

@@ -25,6 +25,7 @@ import java.util.concurrent.ExecutionException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import agent.dbgeng.gadp.impl.DbgEngGadpServerImpl;
+import ghidra.async.AsyncUtils;
 import ghidra.dbg.agent.AgentWindow;
 import ghidra.util.Msg;
 
@@ -84,7 +85,8 @@ public interface DbgEngGadpServer extends AutoCloseable {
 			try (DbgEngGadpServer server = newInstance(bindTo)) {
 				//TODO: fix/test the debugConnect case when args are passed
 				server.startDbgEng(dbgengArgs.toArray(new String[] {})).exceptionally(e -> {
-					Msg.error(this, "Error starting dbgeng/GADP", e);
+					e = AsyncUtils.unwrapThrowable(e);
+					Msg.error(this, "Error starting dbgeng/GADP: " + e);
 					System.exit(-1);
 					return null;
 				});

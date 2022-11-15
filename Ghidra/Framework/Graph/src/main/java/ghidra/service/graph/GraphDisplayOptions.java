@@ -23,10 +23,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import org.apache.commons.text.StringEscapeUtils;
-
-import com.google.common.base.Splitter;
-
 import docking.Tool;
 import docking.options.editor.*;
 import ghidra.framework.options.*;
@@ -249,11 +245,6 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 
 		if (vertexLabel == null) {
 			vertexLabel = vertex.getName();
-		}
-
-		if (vertexLabel.contains("\n")) {
-			vertexLabel = StringEscapeUtils.escapeHtml4(vertexLabel);
-			return "<html>" + String.join("<p>", Splitter.on('\n').split(vertexLabel));
 		}
 		return vertexLabel;
 	}

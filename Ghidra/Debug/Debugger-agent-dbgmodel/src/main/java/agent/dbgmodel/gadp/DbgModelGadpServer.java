@@ -23,6 +23,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import agent.dbgeng.gadp.DbgEngGadpServer;
 import agent.dbgmodel.gadp.impl.DbgModelGadpServerImpl;
+import ghidra.async.AsyncUtils;
 import ghidra.dbg.agent.AgentWindow;
 import ghidra.util.Msg;
 
@@ -114,7 +115,8 @@ public interface DbgModelGadpServer extends DbgEngGadpServer {
 
 			try (DbgModelGadpServer server = newInstance(bindTo)) {
 				server.startDbgEng(dbgengArgs.toArray(new String[] {})).exceptionally(e -> {
-					Msg.error(this, "Error starting dbgeng/GADP", e);
+					e = AsyncUtils.unwrapThrowable(e);
+					Msg.error(this, "Error starting dbgeng/GADP: " + e);
 					System.exit(-1);
 					return null;
 				});

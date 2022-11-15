@@ -25,6 +25,7 @@ import java.util.concurrent.ExecutionException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import agent.gdb.gadp.impl.GdbGadpServerImpl;
+import ghidra.async.AsyncUtils;
 import ghidra.dbg.agent.AgentWindow;
 import ghidra.util.Msg;
 
@@ -54,7 +55,8 @@ public interface GdbGadpServer extends AutoCloseable {
 
 			try (GdbGadpServer server = newInstance(bindTo)) {
 				server.startGDB(gdbCmd, gdbArgs.toArray(new String[] {})).exceptionally(e -> {
-					Msg.error(this, "Error starting GDB/GADP", e);
+					e = AsyncUtils.unwrapThrowable(e);
+					Msg.error(this, "Error starting GDB/GADP: " + e);
 					System.exit(-1);
 					return null;
 				});
