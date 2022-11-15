@@ -19,9 +19,6 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 import agent.dbgeng.model.iface2.DbgModelTargetConnector;
-import ghidra.async.AsyncUtils;
-import ghidra.async.TypeSpec;
-import ghidra.dbg.error.DebuggerUserException;
 import ghidra.dbg.target.TargetMethod;
 import ghidra.dbg.target.TargetMethod.ParameterDescription;
 import ghidra.dbg.target.TargetMethod.TargetParameterMap;
@@ -63,8 +60,24 @@ public class DbgModelTargetProcessLaunchConnectorImpl extends DbgModelTargetObje
 		HashMap<String, ParameterDescription<?>> map =
 			new HashMap<String, ParameterDescription<?>>();
 		ParameterDescription<String> param = ParameterDescription.create(String.class, "args", true,
-			"", "Cmd", "executable to be launched");
+			null, "Cmd", "executable to be launched");
+		ParameterDescription<String> initDir =
+			ParameterDescription.create(String.class, "dir", false,
+				null, "Dir", "initial directory");
+		ParameterDescription<String> env = ParameterDescription.create(String.class, "env", false,
+			null, "Env (sep=/0)", "environment block");
+		ParameterDescription<Integer> cf = ParameterDescription.create(Integer.class, "cf", true,
+			1, "Create Flags", "creation flags");
+		ParameterDescription<Integer> ef = ParameterDescription.create(Integer.class, "ef", false,
+			0, "Create Flags (Eng)", "engine creation flags");
+		ParameterDescription<Integer> vf = ParameterDescription.create(Integer.class, "vf", false,
+			0, "Verifier Flags", "verifier flags");
 		map.put("args", param);
+		map.put("dir", initDir);
+		map.put("env", env);
+		map.put("cf", cf);
+		map.put("ef", ef);
+		map.put("vf", vf);
 		return map;
 	}
 
@@ -75,15 +88,14 @@ public class DbgModelTargetProcessLaunchConnectorImpl extends DbgModelTargetObje
 
 	@Override
 	public CompletableFuture<Void> launch(Map<String, ?> args) {
-		return launch(
-			CmdLineParser.tokenize(TargetCmdLineLauncher.PARAMETER_CMDLINE_ARGS.get(args)));
+		return getManager().launch(args);
 	}
 
-	public CompletableFuture<Void> launch(List<String> args) {
-		return AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
-			getManager().launch(args).handle(seq::nextIgnore);
-		}).finish().exceptionally((exc) -> {
-			throw new DebuggerUserException("Launch failed for " + args);
-		});
-	}
+//	public CompletableFuture<Void> launch(List<String> args) {
+//		return AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
+//			getManager().launch(args).handle(seq::nextIgnore);
+//		}).finish().exceptionally((exc) -> {
+//			throw new DebuggerUserException("Launch failed for " + args);
+//		});
+//	}
 }

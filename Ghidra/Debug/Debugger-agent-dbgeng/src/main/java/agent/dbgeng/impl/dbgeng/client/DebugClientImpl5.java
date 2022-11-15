@@ -16,16 +16,17 @@
 package agent.dbgeng.impl.dbgeng.client;
 
 import com.sun.jna.WString;
-import com.sun.jna.platform.win32.WinDef.ULONG;
-import com.sun.jna.platform.win32.WinDef.ULONGLONGByReference;
+import com.sun.jna.platform.win32.WinDef.*;
 import com.sun.jna.platform.win32.COM.COMUtils;
 
 import agent.dbgeng.dbgeng.*;
 import agent.dbgeng.impl.dbgeng.event.WrapCallbackIDebugEventCallbacksWide;
 import agent.dbgeng.impl.dbgeng.io.WrapCallbackIDebugOutputCallbacksWide;
+import agent.dbgeng.jna.dbgeng.DbgEngNative.DEBUG_CREATE_PROCESS_OPTIONS;
 import agent.dbgeng.jna.dbgeng.client.IDebugClient5;
 import agent.dbgeng.jna.dbgeng.event.ListenerIDebugEventCallbacksWide;
 import agent.dbgeng.jna.dbgeng.io.ListenerIDebugOutputCallbacksWide;
+import ghidra.comm.util.BitmaskSet;
 
 public class DebugClientImpl5 extends DebugClientImpl4 {
 	private final IDebugClient5 jnaClient;
@@ -33,6 +34,26 @@ public class DebugClientImpl5 extends DebugClientImpl4 {
 	public DebugClientImpl5(IDebugClient5 jnaClient) {
 		super(jnaClient);
 		this.jnaClient = jnaClient;
+	}
+
+	@Override
+	public void createProcess(DebugServerId si, String commandLine,
+			String initialDirectory, String environment,
+			BitmaskSet<DebugCreateFlags> createFlags,
+			BitmaskSet<DebugEngCreateFlags> engCreateFlags,
+			BitmaskSet<DebugVerifierFlags> verifierFlags) {
+		ULONGLONG ullServer = new ULONGLONG(si.id);
+		DEBUG_CREATE_PROCESS_OPTIONS options = new DEBUG_CREATE_PROCESS_OPTIONS();
+		options.CreateFlags = new ULONG(createFlags.getBitmask());
+		options.EngCreateFlags = new ULONG(engCreateFlags.getBitmask());
+		options.VerifierFlags = new ULONG(verifierFlags.getBitmask());
+		ULONG ulOptionsBufferSize = new ULONG(options.size());
+		WString cmdLine = new WString(commandLine);
+		WString initDir = initialDirectory == null ? null : new WString(initialDirectory);
+		WString env = environment == null ? null : new WString(environment);
+		COMUtils.checkRC(jnaClient.CreateProcess2Wide(ullServer, cmdLine,
+			options, ulOptionsBufferSize,
+			initDir, env));
 	}
 
 	@Override

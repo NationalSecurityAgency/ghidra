@@ -21,7 +21,7 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 
 import agent.dbgeng.dbgeng.*;
-import agent.dbgeng.dbgeng.DebugClient.DebugCreateFlags;
+import agent.dbgeng.dbgeng.DebugClient.*;
 import agent.dbgeng.manager.*;
 import agent.dbgeng.manager.evt.AbstractDbgCompletedCommandEvent;
 import agent.dbgeng.manager.evt.DbgProcessCreatedEvent;
@@ -36,10 +36,24 @@ public class DbgLaunchProcessCommand extends AbstractDbgCommand<DbgThread> {
 	private DbgProcessCreatedEvent created = null;
 	private boolean completed = false;
 	private List<String> args;
+	private String initialDirectory;
+	private String environment;
+	private BitmaskSet<DebugCreateFlags> createFlags;
+	private BitmaskSet<DebugEngCreateFlags> engCreateFlags;
+	private BitmaskSet<DebugVerifierFlags> verifierFlags;
 
-	public DbgLaunchProcessCommand(DbgManagerImpl manager, List<String> args) {
+	public DbgLaunchProcessCommand(DbgManagerImpl manager, List<String> args,
+			String initialDirectory, String environment,
+			BitmaskSet<DebugCreateFlags> createFlags,
+			BitmaskSet<DebugEngCreateFlags> engCreateFlags,
+			BitmaskSet<DebugVerifierFlags> verifierFlags) {
 		super(manager);
 		this.args = args;
+		this.initialDirectory = initialDirectory;
+		this.environment = environment;
+		this.createFlags = createFlags;
+		this.engCreateFlags = engCreateFlags;
+		this.verifierFlags = verifierFlags;
 	}
 
 	@Override
@@ -69,15 +83,27 @@ public class DbgLaunchProcessCommand extends AbstractDbgCommand<DbgThread> {
 
 		List<String> newArgs = new ArrayList<>();
 		for (String arg : args) {
-			String na = arg;
-			if (arg.startsWith("/")) {
-				na = na.substring(1);
-			}
-			na = na.replace("/", "\\");
-			newArgs.add(na);
+			newArgs.add(fixPath(arg));
 		}
+
+		initialDirectory = fixPath(initialDirectory);
+		environment = fixPath(environment);
+
 		dbgeng.createProcess(dbgeng.getLocalServer(), StringUtils.join(newArgs, " "),
-			BitmaskSet.of(DebugCreateFlags.DEBUG_PROCESS));
+			initialDirectory, environment, createFlags, engCreateFlags, verifierFlags);
 		manager.waitForEventEx();
+	}
+
+	private String fixPath(String input) {
+		if (input.equals("")) {
+			return null;
+		}
+		String output = input;
+		if (input.startsWith("/")) {
+			output = output.substring(1);
+		}
+		output = output.replace("/", "\\");
+		output = output.replace("\\0", "\0");
+		return output;
 	}
 }
