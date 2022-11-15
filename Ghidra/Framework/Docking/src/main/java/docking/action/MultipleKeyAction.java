@@ -95,7 +95,7 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 	}
 
 	/**
-	 * Enables or disables the action.  This affects all uses of the action.  Note that for popups, 
+	 * Enables or disables the action.  This affects all uses of the action.  Note that for popups,
 	 * this affects whether or not the option is "grayed out", not whether the action is added
 	 * to the popup.
 	 *
@@ -131,7 +131,7 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 				dialog.setActionList(list);
 			}
 
-			// doing the show in an invoke later seems to fix a strange swing bug that lock up 
+			// doing the show in an invoke later seems to fix a strange swing bug that lock up
 			// the program if you tried to invoke a new action too quickly after invoking
 			// it the first time
 			Swing.runLater(() -> DockingWindowManager.showDialog(dialog));
@@ -161,9 +161,9 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 		List<ExecutableAction> list = new ArrayList<>();
 		boolean hasLocalActionsForKeyBinding = false;
 
-		// 
+		//
 		// 1) Prefer local actions for the active provider
-		// 
+		//
 		for (ActionData actionData : actions) {
 			if (actionData.isMyProvider(localContext)) {
 				hasLocalActionsForKeyBinding = true;
@@ -175,14 +175,14 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 
 		if (hasLocalActionsForKeyBinding) {
 			// At this point, we have local actions that may or may not be enabled. Return here
-			// so that any component specific actions found below will not interfere with the 
+			// so that any component specific actions found below will not interfere with the
 			// provider's local actions
 			return list;
 		}
 
 		//
-		// 2) Check for actions local to the source component 
-		// 
+		// 2) Check for actions local to the source component
+		//
 		for (ActionData actionData : actions) {
 			if (!(actionData.action instanceof ComponentBasedDockingAction)) {
 				continue;
@@ -204,9 +204,9 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 			return list;
 		}
 
-		// 
+		//
 		// 3) Check for global actions
-		// 
+		//
 		for (ActionData actionData : actions) {
 			if (actionData.isGlobalAction()) {
 				// When looking for context matches, we prefer local context, even though this
@@ -293,7 +293,12 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 			// this can happen if the dialog is closed during key event processing
 			return Collections.emptyList();
 		}
+
 		ActionContext context = provider.getActionContext(null);
+		if (context == null) {
+			return Collections.emptyList();
+		}
+
 		List<ExecutableAction> validActions = getValidContextActions(context, null);
 		return validActions;
 	}
