@@ -120,9 +120,9 @@ public class DBTraceData extends AbstractDBTraceCodeUnit<DBTraceData>
 	 * @param platform the platform
 	 * @param dataType the data type
 	 */
-	protected void set(InternalTracePlatform platform, DataType dataType) {
+	protected void set(InternalTracePlatform platform, long dataTypeID) {
 		this.platformKey = platform.getIntKey();
-		this.dataTypeID = space.dataTypeManager.getResolvedID(dataType);
+		this.dataTypeID = dataTypeID;
 		update(PLATFORM_COLUMN, DATATYPE_COLUMN);
 
 		this.platform = platform;
@@ -139,12 +139,6 @@ public class DBTraceData extends AbstractDBTraceCodeUnit<DBTraceData>
 	 * @return the length, or -1
 	 */
 	protected int getDataTypeLength() {
-		if (baseDataType instanceof Pointer) {
-			// TODO: Also need to know where this address maps into the other language's spaces....
-			// NOTE: Using default data space for now
-			// TODO: I may not need this Pointer check, as clone(dtm) should adjust already
-			return getLanguage().getDefaultDataSpace().getPointerSize();
-		}
 		return dataType.getLength(); // -1 is checked elsewhere
 	}
 

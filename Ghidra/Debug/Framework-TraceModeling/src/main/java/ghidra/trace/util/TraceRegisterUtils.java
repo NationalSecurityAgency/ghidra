@@ -18,7 +18,6 @@ package ghidra.trace.util;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.function.BiConsumer;
 
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -124,28 +123,6 @@ public enum TraceRegisterUtils {
 		return seekComponent(data, rangeForRegister(reg));
 	}
 
-	public static Object getValueHackPointer(TraceData data) {
-		if (data.getValueClass() != Address.class) {
-			return data.getValue();
-		}
-		if (!data.getAddress().getAddressSpace().isRegisterSpace()) {
-			return data.getValue();
-		}
-		return PointerDataType.getAddressValue(data, data.getLength(),
-			data.getTrace().getBaseAddressFactory().getDefaultAddressSpace());
-	}
-
-	public static String getValueRepresentationHackPointer(TraceData data) {
-		if (data.getValueClass() != Address.class) {
-			return data.getDefaultValueRepresentation();
-		}
-		Address addr = (Address) getValueHackPointer(data);
-		if (addr == null) {
-			return "NaP";
-		}
-		return addr.toString();
-	}
-
 	public static RegisterValue encodeValueRepresentationHackPointer(Register register,
 			TraceData data, String representation) throws DataTypeEncodeException {
 		DataType dataType = data.getBaseDataType();
@@ -207,30 +184,6 @@ public enum TraceRegisterUtils {
 			ArrayUtils.reverse(arr, register.getBaseMask().length, buf.capacity());
 		}
 		return new RegisterValue(register, arr);
-	}
-
-	public static RegisterValue getRegisterValue(Register reg,
-			BiConsumer<Address, ByteBuffer> readAction) {
-		/*
-		 * The byte array for reg values spans the whole base register, but we'd like to avoid
-		 * over-reading, so we'll zero in on the bytes actually included in the mask. We'll then
-		 * have to handle endianness and such. The regval instance should then apply the actual mask
-		 * for the sub-register, if applicable.
-		 */
-		int byteLength = reg.getNumBytes();
-		byte[] mask = reg.getBaseMask();
-		ByteBuffer buf = ByteBuffer.allocate(mask.length * 2);
-		buf.put(mask);
-		int maskOffset = TraceRegisterUtils.computeMaskOffset(reg);
-		int startVal = buf.position() + maskOffset;
-		buf.position(startVal);
-		buf.limit(buf.position() + byteLength);
-		readAction.accept(reg.getAddress(), buf);
-		byte[] arr = buf.array();
-		if (!reg.isBigEndian() && !reg.isProcessorContext()) {
-			ArrayUtils.reverse(arr, mask.length, buf.capacity());
-		}
-		return new RegisterValue(reg, arr);
 	}
 
 	public static boolean isByteBound(Register register) {

@@ -157,9 +157,10 @@ public class DBTraceDefinedDataView extends AbstractBaseDBTraceDefinedUnitsView<
 				return space.undefinedData.getAt(startSnap, address);
 			}
 
+			long dataTypeID = space.dataTypeManager.getResolvedID(dataType);
 			DBTraceData created = space.dataMapSpace.put(tasr, null);
 			// TODO: data units with a guest platform
-			created.set(space.trace.getPlatformManager().getHostPlatform(), dataType);
+			created.set(space.trace.getPlatformManager().getHostPlatform(), dataTypeID);
 			// TODO: Explicitly remove undefined from cache, or let weak refs take care of it?
 
 			cacheForContaining.notifyNewEntry(lifespan, createdRange, created);
