@@ -283,6 +283,11 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 						completionWindow.setVisible(false);
 						e.consume();
 						break;
+					case KeyEvent.VK_KP_LEFT, KeyEvent.VK_KP_RIGHT, KeyEvent.VK_HOME:
+					case KeyEvent.VK_LEFT, KeyEvent.VK_RIGHT, KeyEvent.VK_END:
+						// regenerate completions on the caret movement
+						updateCompletionList();
+						break;
 					default:
 
 						// Check for the completion window trigger on input that contains text
@@ -293,7 +298,6 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 							break;
 						}
 
-						updateCompletionList();
 						// and let the key go through to the text input field
 				}
 			}

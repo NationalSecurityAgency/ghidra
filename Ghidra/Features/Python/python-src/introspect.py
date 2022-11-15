@@ -28,7 +28,8 @@ except NameError:
 #from java.lang.System.out import println
     
 def getAutoCompleteList(command='', locals=None, includeMagic=1,
-                        includeSingle=1, includeDouble=1):
+                        includeSingle=1, includeDouble=1,
+                        includeOnlyPrefixCompletions=1):
     """Return list of auto-completion tuples for command.
     
     First entry is the possible completions, and second entry is the
@@ -66,7 +67,13 @@ def getAutoCompleteList(command='', locals=None, includeMagic=1,
                                            includeSingle, includeDouble)
     completion_list = []
     for attribute in attributes:
-        if attribute.lower().startswith(filter.lower()):
+
+        if includeOnlyPrefixCompletions:
+            to_include = attribute.lower().startswith(filter.lower())
+        else:
+            to_include = filter.lower() in attribute.lower()
+
+        if to_include:
             try:
                 if object is not None:
                     pyObj = getattr(object, attribute)
@@ -82,8 +89,30 @@ def getAutoCompleteList(command='', locals=None, includeMagic=1,
                 # inner classes, e.g. access$0, which aren't valid Python
                 # anyway
                 pass
-    completion_list.sort(compare_completions)
+
+    if includeOnlyPrefixCompletions:
+        completion_list.sort(compare_completions)
+    else:
+        compar = get_lexicographical_string_comparator_with_priority(filter)
+        completion_list.sort(compar)
+
     return completion_list
+
+def get_lexicographical_string_comparator_with_priority(prefix):
+    """Returns a simple lexicographical string comparator with one small addition:
+    strings that start with 'prefix' will be placed before those that don't"""
+    def comparator(a, b):
+        a_has_prefix = a.description.startswith(prefix)
+        b_has_prefix = b.description.startswith(prefix)
+        if a_has_prefix and b_has_prefix:
+            return cmp(a.description, b.description)
+        elif a_has_prefix:
+            return -1
+        elif b_has_prefix:
+            return 1
+        else:
+            return cmp(a.description, b.description)
+    return comparator
 
 def compare_completions(comp1, comp2):
     return cmp(comp1.description, comp2.description)

@@ -443,10 +443,13 @@ public class GhidraPythonInterpreter extends InteractiveInterpreter {
 	 * @param cmd The command line.
 	 * @param includeBuiltins True if we should include python built-ins; otherwise, false.
 	 * @param caretPos The position of the caret in the input string 'cmd'
+	 * @param includeOnlyPrefixCompletions True if we should only include completions that start
+	 *        with the word we're trying to complete here; otherwise, false.
 	 * @return A list of possible command completions.  Could be empty if there aren't any.
 	 * @see PythonPlugin#getCompletions
 	 */
-	List<CodeCompletion> getCommandCompletions(String cmd, boolean includeBuiltins, int caretPos) {
+	List<CodeCompletion> getCommandCompletions(String cmd, boolean includeBuiltins, int caretPos,
+			boolean includeOnlyPrefixCompletions) {
 		// At this point the caret is assumed to be positioned right after the value we need to
 		// complete (example: "[complete.Me<caret>, rest, code]"). To make the completion work
 		// in our case, it's sufficient (albeit naive) to just remove the text on the right side
@@ -457,7 +460,7 @@ public class GhidraPythonInterpreter extends InteractiveInterpreter {
 		if ((cmd.length() > 0) && (cmd.charAt(cmd.length() - 1) == '(')) {
 			return getMethodCommandCompletions(cmd);
 		}
-		return getPropertyCommandCompletions(cmd, includeBuiltins);
+		return getPropertyCommandCompletions(cmd, includeBuiltins, includeOnlyPrefixCompletions);
 	}
 
 	/**
@@ -497,10 +500,12 @@ public class GhidraPythonInterpreter extends InteractiveInterpreter {
 	 *
 	 * @param cmd current command
 	 * @param includeBuiltins True if we should include python built-ins; otherwise, false.
+	 * @param includeOnlyPrefixCompletions True if we should only include completions that start
+	 *        with the word we're trying to complete here; otherwise, false.
 	 * @return A list of possible command completions.  Could be empty if there aren't any.
 	 */
 	private List<CodeCompletion> getPropertyCommandCompletions(String cmd,
-			boolean includeBuiltins) {
+			boolean includeBuiltins, boolean includeOnlyPrefixCompletions) {
 		try {
 			PyObject getAutoCompleteList = introspectModule.__findattr__("getAutoCompleteList");
 			PyString command = new PyString(cmd);
@@ -509,7 +514,11 @@ public class GhidraPythonInterpreter extends InteractiveInterpreter {
 				// Add in the __builtin__ module's contents for the search
 				locals.update(builtinModule.__dict__);
 			}
-			List<?> list = (List<?>) getAutoCompleteList.__call__(command, locals);
+
+			PyObject[] args = { command, locals, new PyBoolean(includeOnlyPrefixCompletions)};
+			String[] keywordArgNames = { "includeOnlyPrefixCompletions" };
+			List<?> list = (List<?>) getAutoCompleteList.__call__(args, keywordArgNames);
+
 			return CollectionUtils.asList(list, CodeCompletion.class);
 		}
 		catch (Exception e) {

@@ -16,10 +16,22 @@
 package ghidra.python;
 
 import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.Toolkit;
+import java.awt.font.TextAttribute;
 import java.lang.reflect.Method;
+import java.text.AttributedString;
 import java.util.*;
 
+import javax.swing.Icon;
 import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 
 import org.python.core.PyInstance;
 import org.python.core.PyObject;
@@ -206,6 +218,7 @@ public class PythonCodeCompletionFactory {
 	public static CodeCompletion newCodeCompletion(String description, String insertion,
 			PyObject pyObj, String userInput) {
 		JComponent comp = null;
+		int charsToRemove = userInput.length();
 
 		if (pyObj != null) {
 			if (includeTypes) {
@@ -222,7 +235,10 @@ public class PythonCodeCompletionFactory {
 				description = description + " (" + className + ")";
 			}
 
-			comp = new GDLabel(description);
+			int highlightStart = description.toLowerCase().indexOf(userInput.toLowerCase());
+			int highlightEnd = highlightStart + userInput.length();
+			comp = new CodeCompletionEntryLabel(description, highlightStart, highlightEnd);
+
 			Iterator<Class<?>> iter = classes.iterator();
 			while (iter.hasNext()) {
 				Class<?> testClass = iter.next();
@@ -232,8 +248,7 @@ public class PythonCodeCompletionFactory {
 				}
 			}
 		}
-		
-		int charsToRemove = userInput.length();
+
 		return new CodeCompletion(description, insertion, comp, charsToRemove);
 	}
 
@@ -312,5 +327,107 @@ public class PythonCodeCompletionFactory {
 		}
 
 		return callMethodList.toArray();
+	}
+
+	/* The class represents a simple JLabel used as an entry in the CodeCompletion pop-up window.
+	 * The main feature is the ability to highlight a certain area of the text in bold.
+	 * (i.e. "some<b>Highlighted</b>Text"). Icons are not supported.
+	 * 
+	 * There are two reasons why we use it (and not simply JLabel with HTML):
+	 * 1) Performance. Using JLabel with HTML appears to be too slow for our case when we might
+	 * need to create 200+ labels in a reasonable time (faster than, say, 50 ms).
+	 * 2) Text Visibility. Various Look and Feels may have different background and highlighting
+	 * colors that may not look good enough with and match the text colors that we've selected
+	 * for the entries. This class lets us choose more appropriate colors at runtime. 
+	 */
+	private static class CodeCompletionEntryLabel extends GDLabel {
+		private Rectangle paintTextRect = new Rectangle();
+
+		private int highlightStart;
+		private int highlightEnd;
+
+		public CodeCompletionEntryLabel(String description, int highlightStart, int highlightEnd) {
+			super(description);
+
+			int textLength = description.length();
+			this.highlightStart = Math.max(0, Math.min(textLength, highlightStart));
+			this.highlightEnd = Math.max(0, Math.min(textLength, highlightEnd));
+		}
+
+		/* Calculates the final (relative) position of the label and returns its visible text
+		 * (after clipping, if any). This method is effectively a cleaned up copy of the private
+		 * Swing method "javax.swing.plaf.basic.BasicLabelUI.layout" for the "Basic" look and feel.
+		 */
+		private String layoutLabel(FontMetrics fm) {
+			Insets insets = this.getInsets(null);
+			String text = this.getText();
+			Icon icon = this.isEnabled() ? this.getIcon() : this.getDisabledIcon();
+			Rectangle paintIconR = new Rectangle(0, 0, 0, 0);
+			paintTextRect.x = paintTextRect.y = paintTextRect.width = paintTextRect.height = 0;
+
+			int viewWidth = getWidth() - (insets.left + insets.right);
+			int viewHeight = getHeight() - (insets.top + insets.bottom);
+			Rectangle paintViewR = new Rectangle(insets.left, insets.top, viewWidth, viewHeight);
+
+			return SwingUtilities.layoutCompoundLabel((JComponent) this, fm,
+				text, icon, this.getVerticalAlignment(), this.getHorizontalAlignment(),
+				this.getVerticalTextPosition(), this.getHorizontalTextPosition(),
+				paintViewR, paintIconR, paintTextRect, this.getIconTextGap());
+		}
+
+		/* Returns the most appropriate text color (either black or white) for the background
+		 * when the currently selected color is not distinct enough.
+		 */
+		private Color getMostVisibleTextColor(Color bgColor, Color currentTextColor) {
+			float[] bgRgb = bgColor.getRGBColorComponents(null);
+			float[] fgRgb = currentTextColor.getRGBColorComponents(null);
+
+			double bgGrayscale = 0.299 * bgRgb[0] + 0.587 * bgRgb[1] + 0.114 * bgRgb[2];
+			double fgGrayscale = 0.299 * fgRgb[0] + 0.587 * fgRgb[1] + 0.114 * fgRgb[2];
+
+			// very simple method, but it seems enough; the constants are arbitrary
+			Color newColor;
+			if (Math.abs(bgGrayscale - fgGrayscale) < 0.42) {
+				newColor = bgGrayscale > 0.73 ? Color.black : Color.white;
+			}
+			else {
+				newColor = currentTextColor;
+			}
+
+			return newColor;
+		}
+
+		@Override
+		protected void paintComponent(Graphics g) {
+			Graphics2D g2d = (Graphics2D) g.create();
+
+			// apply the standard text anti-aliasing settings for the system
+			var desktopHints = (RenderingHints) Toolkit.getDefaultToolkit()
+					.getDesktopProperty("awt.font.desktophints");
+			if (desktopHints != null) {
+				g2d.setRenderingHints(desktopHints);
+			}
+
+			// the background color depends on the current LookAndFeel and whether this completion
+			// item is selected/highlighted in the CodeCompletion window
+			Color bgColor = getBackground();
+			g2d.setColor(bgColor);
+			g2d.fillRect(0, 0, getWidth(), getHeight());
+
+			Color potentialTextColor = getForeground();
+			Color textColor = getMostVisibleTextColor(bgColor, potentialTextColor);
+			g2d.setColor(textColor);
+
+			FontMetrics fm = g2d.getFontMetrics();
+			String clippedText = layoutLabel(fm);
+			AttributedString text = new AttributedString(clippedText);
+			if (highlightStart < highlightEnd) {
+				Font boldFont = g2d.getFont().deriveFont(Font.BOLD);
+				text.addAttribute(TextAttribute.FONT, boldFont, highlightStart, highlightEnd);
+			}
+			g2d.drawString(text.getIterator(), paintTextRect.x, paintTextRect.y + fm.getAscent());
+
+			g2d.dispose();
+		}
 	}
 }
