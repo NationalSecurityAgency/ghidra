@@ -7,6 +7,18 @@
 
 <BODY>
 
+<H1 align="center">Ghidra 10.2.2 Change History (November 2022)</H1>
+<blockquote><p><u>Bugs</u></p>
+<ul>
+    <li><I>Debugger</I>. Improved error reporting for failed GADP-based Debugger connections. (GP-994)</li>
+    <li><I>Debugger:Breakpoints</I>. Fixed breakpoint margin display in the Listing for breakpoints spanning multiple lines (code units). (GP-2733)</li>
+    <li><I>Debugger:GDB</I>. Fixed parsing of AArch64 vector registers in GDB connector. (GP-1459, Issue #3541)</li>
+    <li><I>Disassembly</I>. Corrected regression error in Ghidra 10.2 which could prevent proper disassembly flow within overlay memory blocks. (GP-2800)</li>
+    <li><I>Graphing</I>. Corrected code flow graph node rendering issue which improperly displayed HTML tags.  This was a regression error introduced with Ghidra 10.2. (GP-2842)</li>
+    <li><I>PDB</I>. Fixed logic for overriding primary, public symbols on functions.  This will allow function definitions to be retrieved from mangled symbols when rich data types are not found with the global symbols. (GP-2838, Issue #4735)</li>
+</ul>
+</blockquote>
+
 <H1 align="center">Ghidra 10.2.1 Change History (November 2022)</H1>
 <blockquote><p><u>Improvements</u></p>
 <ul>
@@ -24,7 +36,7 @@
     <li><I>GUI</I>. Fixed the Front End's running Tool Button tooltip text to include the tool's title. (GP-2810)</li>
     <li><I>Importer:Mach-O</I>. Fixed an issue that prevented some Mach-O binaries from being imported if there were unexpected issues while creating the Program Tree. (GP-2802, Issue #4724)</li>
     <li><I>Importer:Mach-O</I>. Fixed an issue that prevented some Mach-O binaries from being imported if they did not define a __LINKEDIT segment. (GP-2803)</li>
-    <li><I>Importer:PE</I>. Fixed .Net/x86 disasembly protection code which prevents disassembly of CLI code in an x86 processor. (GP-2807)</li>
+    <li><I>Importer:PE</I>. Fixed .Net/x86 disassembly protection code which prevents disassembly of CLI code in an x86 processor. (GP-2807)</li>
     <li><I>Processors</I>. Corrected ARMv5 disassembly regression errors (GP-2812, Issue #4717)</li>
 </ul>
 </blockquote>
