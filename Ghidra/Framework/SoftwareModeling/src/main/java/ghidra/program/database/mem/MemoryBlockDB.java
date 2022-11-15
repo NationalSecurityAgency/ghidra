@@ -539,11 +539,14 @@ public class MemoryBlockDB implements MemoryBlock {
 	}
 
 	private SubMemoryBlock getSubBlock(long offset) {
-		if (lastSubBlock != null && lastSubBlock.contains(offset)) {
-			return lastSubBlock;
+		// avoid potential thread race condition
+		SubMemoryBlock last = lastSubBlock;
+		if (last != null && last.contains(offset)) {
+			return last;
 		}
-		lastSubBlock = findBlock(0, subBlocks.size() - 1, offset);
-		return lastSubBlock;
+		last = findBlock(0, subBlocks.size() - 1, offset);
+		lastSubBlock = last;
+		return last;
 	}
 
 	private SubMemoryBlock findBlock(int minIndex, int maxIndex, long offset) {
