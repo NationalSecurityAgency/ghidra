@@ -111,7 +111,7 @@ public class RegExMemSearcherAlgorithm implements MemorySearchAlgorithm {
 		SearchData searchData = searchInfo.getSearchData();
 		Pattern pattern = ((RegExSearchData) searchData).getRegExPattern();
 		Memory memory = program.getMemory();
-		int matchLimit = searchInfo.getMatchLimit();
+		int searchLimit = searchInfo.getSearchLimit();
 
 		try {
 			MemoryAddressSetCharSequence charSet =
@@ -129,7 +129,7 @@ public class RegExMemSearcherAlgorithm implements MemorySearchAlgorithm {
 					accumulator.add(result);
 					monitor.setProgress(progressCount + startIndex);
 
-					if (accumulator.size() >= matchLimit) {
+					if (accumulator.size() >= searchLimit) {
 						return;
 					}
 				}
