@@ -664,6 +664,10 @@ public abstract class PcodeEmit {
 		AddressSpace spc = vn.getSpace().fixSpace(walker);
 		Address addr = spc.getTruncatedAddress(vn.getOffset().fix(walker), false);
 		// translate the address into the overlayspace if we have an overlayspace.
+		if (startAddress.getAddressSpace().isOverlaySpace()) {
+			OverlayAddressSpace overSpace = (OverlayAddressSpace) startAddress.getAddressSpace();
+			addr = overSpace.getOverlayAddress(addr);
+		}
 		ParserWalker oldwalker = walker;
 		long olduniqueoffset = uniqueoffset;
 		setUniqueOffset(addr);
