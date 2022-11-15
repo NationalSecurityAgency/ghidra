@@ -17,15 +17,15 @@ package ghidra.app.plugin.core.compositeeditor;
 
 import java.util.Arrays;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import docking.ActionContext;
+import generic.theme.GIcon;
 import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.UsrException;
 import ghidra.util.task.TaskLauncher;
 import ghidra.util.task.TaskMonitor;
-import resources.ResourceManager;
 
 /**
  * Action for use in the structure data type editor.
@@ -33,8 +33,7 @@ import resources.ResourceManager;
  */
 public class CreateInternalStructureAction extends CompositeEditorTableAction {
 
-	private final static ImageIcon ICON =
-		ResourceManager.loadImage("images/cstruct.png");
+	private final static Icon ICON = new GIcon("icon.plugin.composite.editor.create");
 	public final static String ACTION_NAME = "Create Structure From Selection";
 	private final static String GROUP_NAME = COMPONENT_ACTION_GROUP;
 	private final static String DESCRIPTION =

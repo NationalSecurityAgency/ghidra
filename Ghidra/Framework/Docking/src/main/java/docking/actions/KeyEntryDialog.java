@@ -27,9 +27,10 @@ import docking.KeyEntryTextField;
 import docking.action.*;
 import docking.tool.ToolConstants;
 import docking.widgets.label.GIconLabel;
+import generic.theme.GThemeDefaults.Colors.Messages;
+import generic.util.action.ReservedKeyBindings;
 import ghidra.util.HelpLocation;
-import ghidra.util.ReservedKeyBindings;
-import resources.ResourceManager;
+import resources.Icons;
 
 /**
  * Dialog to set the key binding on an action; it is popped up when the F4 key
@@ -69,7 +70,7 @@ public class KeyEntryDialog extends DialogComponentProvider {
 		defaultPanel = new JPanel(new BorderLayout());
 		defaultPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 5));
 
-		JLabel imageLabel = new GIconLabel(ResourceManager.loadImage("images/information.png"));
+		JLabel imageLabel = new GIconLabel(Icons.INFO_ICON);
 		bgColor = imageLabel.getBackground();
 		JTextPane pane = new JTextPane();
 		pane.setBorder(BorderFactory.createEmptyBorder(0, 5, 2, 5));
@@ -172,7 +173,7 @@ public class KeyEntryDialog extends DialogComponentProvider {
 		textAttrSet = new SimpleAttributeSet();
 		textAttrSet.addAttribute(StyleConstants.FontFamily, "Tahoma");
 		textAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(11));
-		textAttrSet.addAttribute(StyleConstants.Foreground, Color.BLUE);
+		textAttrSet.addAttribute(StyleConstants.Foreground, Messages.NORMAL);
 
 		tabAttrSet = new SimpleAttributeSet();
 		TabStop tabs = new TabStop(20, StyleConstants.ALIGN_LEFT, TabStop.LEAD_NONE);
@@ -206,9 +207,7 @@ public class KeyEntryDialog extends DialogComponentProvider {
 		String ksName = KeyBindingUtils.parseKeyStroke(ks);
 		try {
 			doc.insertString(0, "Actions mapped to " + ksName + "\n\n", textAttrSet);
-			for (int i = 0; i < list.size(); i++) {
-				DockingActionIf a = list.get(i);
-
+			for (DockingActionIf a : list) {
 				String collisionStr = "\t" + a.getName() + " (" + a.getOwnerDescription() + ")\n";
 				int offset = doc.getLength();
 				doc.insertString(offset, collisionStr, textAttrSet);

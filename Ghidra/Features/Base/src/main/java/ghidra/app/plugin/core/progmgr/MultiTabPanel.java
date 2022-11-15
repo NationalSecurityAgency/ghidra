@@ -27,33 +27,40 @@ import javax.swing.border.*;
 import docking.actions.KeyBindingUtils;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GIconLabel;
+import generic.theme.*;
 import generic.util.WindowUtilities;
 import ghidra.framework.model.ProjectLocator;
 import ghidra.program.model.listing.Program;
 import ghidra.util.layout.HorizontalLayout;
-import resources.ResourceManager;
+import resources.Icons;
 
 /**
  * Panel to show a "tab" for an object. ChangeListeners are notified when a tab is selected. 
  */
 public class MultiTabPanel extends JPanel {
+	private static final String FONT_TABS_ID = "font.plugin.tabs";
+	private static final String FONT_TABS_LIST_ID = "font.plugin.tabs.list";
+	//@formatter:off
+	private final static Color SELECTED_TAB_COLOR = new GColor("color.bg.listing.tabs.selected");
+	private final static Color HIGHLIGHTED_TAB_BG_COLOR = new GColor("color.bg.listing.tabs.highlighted");
+	private final static Icon EMPTY16_ICON = Icons.EMPTY_ICON;
+	private final static Icon EMPTY8_ICON = new GIcon("icon.plugin.programmanager.empty.small");
+	private final static Icon CLOSE_ICON = new GIcon("icon.plugin.programmanager.close");
+	private final static Icon HIGHLIGHT_CLOSE_ICON = new GIcon("icon.plugin.programmanager.close.highlight");
+	private final static Icon LIST_ICON = new GIcon("icon.plugin.programmanager.list");
+	private final static Icon TRANSIENT_ICON = new GIcon("icon.plugin.programmanager.transient");
+	//@formatter:on
 
-	private final static Color SELECTED_TAB_COLOR = new Color(120, 140, 189);
-	private final static Color HIGHLIGHTED_TAB_COLOR = SELECTED_TAB_COLOR.brighter();
-	private final static Icon EMPTY16_ICON = ResourceManager.loadImage("images/EmptyIcon16.gif");
-	private final static Icon EMPTY8_ICON = ResourceManager.loadImage("images/empty8x16.png");
-	private final static Icon CLOSE_ICON = ResourceManager.loadImage("images/x.gif");
-	private final static Icon HIGHLIGHT_CLOSE_ICON = ResourceManager.loadImage("images/pinkX.gif");
-	private final static Icon LIST_ICON = ResourceManager.loadImage("images/VCRFastForward.gif");
-	private final static Icon TRANSIENT_ICON = ResourceManager.loadImage("images/link.png", 8, 16);
-
-	private final static Color TEXT_SELECTION_COLOR = Color.WHITE;
-	private final static Color TEXT_NON_SELECTION_COLOR = UIManager.getColor("Tree.textForeground");
+	private final static Color TEXT_SELECTION_COLOR =
+		new GColor("color.fg.listing.tabs.text.selected");
+	private final static Color TEXT_NON_SELECTION_COLOR =
+		new GColor("color.fg.listing.tabs.text.unselected");
 	private final static Color BG_SELECTION_COLOR = SELECTED_TAB_COLOR;
-	private final static Color BG_NON_SELECTION_COLOR = UIManager.getColor("Panel.background");
+	private final static Color BG_NON_SELECTION_COLOR =
+		new GColor("color.bg.listing.tabs.unselected");
+	private static final Color BG_COLOR_MORE_TABS_HOVER =
+		new GColor("color.bg.listing.tabs.more.tabs.hover");
 
-	private static final Font LABEL_FONT = new Font("Tahoma", Font.PLAIN, 11);
-	private static final Font LIST_LABEL_FONT = new Font("Tahoma", Font.BOLD, 9);
 	private static final String DEFAULT_HIDDEN_COUNT_STR = "99";
 
 	/** A list of tabs that are hidden from view due to space constraints */
@@ -70,8 +77,6 @@ public class MultiTabPanel extends JPanel {
 	private MultiTabPlugin multiTabPlugin;
 	private ProgramListPanel programListPanel;
 	private Border defaultListLabelBorder;
-	private Border noTabsBorder;
-	private Border tabbedBorder;
 	private JLabel showHiddenListLabel;
 	private JDialog listWindow;
 	private JTextField filterField;
@@ -126,8 +131,8 @@ public class MultiTabPanel extends JPanel {
 		currentProgram = null;
 		ArrayList<Program> list = new ArrayList<>(linkedProgramMap.keySet());
 
-		for (int i = 0; i < list.size(); i++) {
-			doRemoveProgram(list.get(i));
+		for (Program element : list) {
+			doRemoveProgram(element);
 		}
 		linkedProgramMap.clear();
 		visibleTabList.clear();
@@ -206,8 +211,6 @@ public class MultiTabPanel extends JPanel {
 		return false;
 	}
 
-	////////////////////////////////////////////////////////////
-
 	private TabPanel createProgramTab(final Program program, boolean isSelected) {
 		final JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 1));
 		labelPanel.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 10));
@@ -215,7 +218,7 @@ public class MultiTabPanel extends JPanel {
 		JLabel nameLabel = new GDLabel();
 		nameLabel.setIconTextGap(1);
 		nameLabel.setName("objectName"); // junit access
-		nameLabel.setFont(LABEL_FONT);
+		Gui.registerFont(nameLabel, FONT_TABS_ID);
 		Color foregroundColor = isSelected ? TEXT_SELECTION_COLOR : TEXT_NON_SELECTION_COLOR;
 		nameLabel.setForeground(foregroundColor);
 
@@ -632,11 +635,11 @@ public class MultiTabPanel extends JPanel {
 	private JLabel createLabel() {
 		JLabel newLabel = new GDLabel(DEFAULT_HIDDEN_COUNT_STR, LIST_ICON, SwingConstants.LEFT);
 		newLabel.setIconTextGap(0);
-		newLabel.setFont(LIST_LABEL_FONT);
+		Gui.registerFont(newLabel, FONT_TABS_LIST_ID);
 		newLabel.setBorder(BorderFactory.createEmptyBorder(4, 4, 0, 4));
 		newLabel.setToolTipText("Show Tab List");
 		newLabel.setName("showList");
-		newLabel.setBackground(new Color(255, 226, 213));
+		newLabel.setBackground(BG_COLOR_MORE_TABS_HOVER);
 
 		defaultListLabelBorder = newLabel.getBorder();
 		final Border hoverBorder = BorderFactory.createBevelBorder(BevelBorder.RAISED);
@@ -912,7 +915,8 @@ public class MultiTabPanel extends JPanel {
 //==================================================================================================	
 
 	private class TabPanel extends JPanel {
-		private Color defaultBackgroundColor;
+		private Color defaultBgColor;
+		private Color defaultFgColor;
 		protected final JLabel nameLabel;
 		protected final JPanel labelPanel;
 		protected final JLabel iconLabel;
@@ -920,7 +924,8 @@ public class MultiTabPanel extends JPanel {
 
 		private TabPanel(Color backgroundColor, Program program, JLabel nameLabel,
 				JPanel labelPanel, JLabel iconLabel) {
-			this.defaultBackgroundColor = backgroundColor;
+			this.defaultBgColor = backgroundColor;
+			this.defaultFgColor = nameLabel.getForeground();
 			this.program = program;
 			this.nameLabel = nameLabel;
 			this.labelPanel = labelPanel;
@@ -942,14 +947,19 @@ public class MultiTabPanel extends JPanel {
 		}
 
 		void paintHighlightedColor(boolean paintHighlight) {
-			Color newBackgroundColor = defaultBackgroundColor;
+			Color newBgColor = defaultBgColor;
+			Color newFgColor = defaultFgColor;
 			if (paintHighlight) {
-				newBackgroundColor = HIGHLIGHTED_TAB_COLOR;
+				newBgColor = HIGHLIGHTED_TAB_BG_COLOR;
+				newFgColor = TEXT_SELECTION_COLOR;
+
 			}
-			setBackground(newBackgroundColor);
-			nameLabel.setBackground(newBackgroundColor);
-			labelPanel.setBackground(newBackgroundColor);
-			iconLabel.setBackground(newBackgroundColor);
+
+			setBackground(newBgColor);
+			nameLabel.setBackground(newBgColor);
+			nameLabel.setForeground(newFgColor);
+			labelPanel.setBackground(newBgColor);
+			iconLabel.setBackground(newBgColor);
 		}
 	}
 
@@ -985,9 +995,9 @@ public class MultiTabPanel extends JPanel {
 		@Override
 		void paintHighlightedColor(boolean paintHighlight) {
 			super.paintHighlightedColor(paintHighlight);
-			Color foreground = Color.WHITE;
+			Color foreground = TEXT_NON_SELECTION_COLOR;
 			if (paintHighlight) {
-				foreground = Color.BLACK;
+				foreground = TEXT_SELECTION_COLOR;
 			}
 
 			// this tab is selected, so change the foreground to be readable

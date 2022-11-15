@@ -18,12 +18,12 @@ package ghidra.program.database;
 import java.io.IOException;
 
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 
 import db.DBConstants;
 import db.DBHandle;
 import db.buffers.BufferFile;
 import db.buffers.ManagedBufferFile;
+import generic.theme.GIcon;
 import ghidra.framework.data.*;
 import ghidra.framework.model.ChangeSet;
 import ghidra.framework.model.DomainObject;
@@ -33,7 +33,6 @@ import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
-import resources.ResourceManager;
 
 /**
  * <code>DataTypeArchiveContentHandler</code> converts between DataTypeArchive instantiations
@@ -42,9 +41,9 @@ import resources.ResourceManager;
  */
 public class DataTypeArchiveContentHandler extends DBContentHandler {
 
-	private static ImageIcon DATA_TYPE_ARCHIVE_ICON;
+	private static Icon DATA_TYPE_ARCHIVE_ICON;
 
-	private final static String PROGRAM_ICON_PATH = "images/closedBookBlue.png";
+	private final static String PROGRAM_ICON_ID = "icon.content.handler.archive.dt";
 	public final static String DATA_TYPE_ARCHIVE_CONTENT_TYPE = "Archive";
 
 	@Override
@@ -347,7 +346,7 @@ public class DataTypeArchiveContentHandler extends DBContentHandler {
 	public Icon getIcon() {
 		synchronized (DataTypeArchiveContentHandler.class) {
 			if (DATA_TYPE_ARCHIVE_ICON == null) {
-				DATA_TYPE_ARCHIVE_ICON = ResourceManager.loadImage(PROGRAM_ICON_PATH);
+				DATA_TYPE_ARCHIVE_ICON = new GIcon(PROGRAM_ICON_ID);
 			}
 		}
 		return DATA_TYPE_ARCHIVE_ICON;

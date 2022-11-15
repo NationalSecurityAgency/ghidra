@@ -25,11 +25,14 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 import docking.widgets.GComponent;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
+import generic.theme.GColor;
 
 public class GTreeRenderer extends DefaultTreeCellRenderer implements GComponent {
 
-	private static final Color VALID_DROP_TARGET_COLOR = new Color(200, 200, 255);
+	private static final Color VALID_DROP_TARGET_COLOR = new GColor("color.bg.tree.drag");
 	private static final int DEFAULT_MIN_ICON_WIDTH = 22;
+	private static final Color BACKGROUND_UNSELECTED = new GColor("color.bg.tree");
+	private static final Color BACKGROUND_SELECTED = new GColor("color.bg.tree.selected");
 
 	private Object dropTarget;
 	private boolean paintDropTarget;
@@ -40,6 +43,8 @@ public class GTreeRenderer extends DefaultTreeCellRenderer implements GComponent
 
 	public GTreeRenderer() {
 		setHTMLRenderingEnabled(false);
+		setBackgroundNonSelectionColor(BACKGROUND_UNSELECTED);
+		setBackgroundSelectionColor(BACKGROUND_SELECTED);
 	}
 
 	@Override
@@ -84,12 +89,12 @@ public class GTreeRenderer extends DefaultTreeCellRenderer implements GComponent
 
 	@Override
 	public void setBackgroundSelectionColor(Color newColor) {
-		super.setBackgroundSelectionColor(fromUiResource(newColor));
+		super.setBackgroundSelectionColor(fromUiResource(newColor, "Tree.selectionBackground"));
 	}
 
 	@Override
 	public void setBackgroundNonSelectionColor(Color newColor) {
-		super.setBackgroundNonSelectionColor(fromUiResource(newColor));
+		super.setBackgroundNonSelectionColor(fromUiResource(newColor, "Tree.textBackground"));
 	}
 
 	/**
@@ -99,11 +104,12 @@ public class GTreeRenderer extends DefaultTreeCellRenderer implements GComponent
 	 * method.
 	 * 
 	 * @param c the source color
+	 * @param defaultKey the GColor key to use if the given color is a ColorUIResource
 	 * @return the new color
 	 */
-	protected Color fromUiResource(Color c) {
+	protected Color fromUiResource(Color c, String defaultKey) {
 		if (c instanceof ColorUIResource) {
-			return new Color(c.getRGB());
+			return new GColor(defaultKey);
 		}
 		return c;
 	}
@@ -140,7 +146,7 @@ public class GTreeRenderer extends DefaultTreeCellRenderer implements GComponent
 			// Bug Alert!:
 			// We must create a new font here and not use deriveFont().  Using derive font has
 			// bugs when calculating the string width for a bold derived font.
-			cachedBoldFont = new Font(font.getFamily(), Font.BOLD, font.getSize());
+			cachedBoldFont = font.deriveFont(Font.BOLD);
 		}
 		return bold ? cachedBoldFont : cachedDefaultFont;
 	}

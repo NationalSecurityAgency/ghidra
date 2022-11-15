@@ -18,8 +18,6 @@ package ghidra.util;
 import java.awt.Color;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Class for web color support. This class defines many of the colors used by html. This class
@@ -27,7 +25,6 @@ import java.util.regex.Pattern;
  * those strings back to a color.
  */
 public abstract class WebColors {
-	private static final Pattern HEX_PATTERN = Pattern.compile("(0x|#)[0-9A-Fa-f]{6}");
 	private static final Map<String, Color> nameToColorMap = new HashMap<>();
 	private static final Map<Color, String> colorToNameMap = new HashMap<>();
 
@@ -152,7 +149,7 @@ public abstract class WebColors {
 	public static final Color MISTY_ROSE = registerColor("MistyRose", Color.decode("0xFFE4E1"));
 	public static final Color BLANCHED_ALMOND = registerColor("BlanchedAlmond", Color.decode("0xFFEBCD"));
 	public static final Color PAPAYA_WHIP = registerColor("PapayaWhip", Color.decode("0xFFEFD5"));
-	public static final Color LAVENDAR_BLUSH = registerColor("LavenderBlush", Color.decode("0xFFF0F5"));
+	public static final Color LAVENDER_BLUSH = registerColor("LavenderBlush", Color.decode("0xFFF0F5"));
 	public static final Color SEASHELL = registerColor("SeaShell", Color.decode("0xFFF5EE"));
 	public static final Color CORNSILK = registerColor("Cornsilk", Color.decode("0xFFF8DC"));
 	public static final Color LEMON_CHIFFON = registerColor("LemonChiffon", Color.decode("0xFFFACD"));
@@ -172,12 +169,12 @@ public abstract class WebColors {
 	public static final Color MEDUM_AQUA_MARINE = registerColor("MediumAquaMarine", Color.decode("0x66CDAA"));
 	public static final Color MEDIUM_TURQOISE = registerColor("MediumTurquoise", Color.decode("0x48D1CC"));
 	public static final Color DARK_OLIVE_GREEN = registerColor("DarkOliveGreen", Color.decode("0x556B2F"));
-	public static final Color CORN_FLOWER_BLUE = registerColor("CornflowerBlue", Color.decode("0x6495ED"));
+	public static final Color CORNFLOWER_BLUE = registerColor("CornflowerBlue", Color.decode("0x6495ED"));
 	//@formatter:on
 
 	// cannot instantiate nor extend
-    private WebColors() {
-    }
+	private WebColors() {
+	}
 
 	/**
 	 * Tries to find a color for the given String value. The String value can either be
@@ -194,56 +191,212 @@ public abstract class WebColors {
 	}
 
 	/**
-	 * Tries to find a color for the given String value. The String value can either be
-	 * a hex string (see {@link Color#decode(String)}) or a web color name as defined
-	 * in {@link WebColors}
-	 * 
-	 * @param value the string value to interpret as a color
-	 * @return a color for the given string value or null if the string can't be translated
-	 */
-	public static Color getColor(String value) {
-		Color color = nameToColorMap.get(value);
-		if (color != null) {
-			return color;
-		}
-		// if the value matches an RGB hex string, turn that into a color
-		color = getHexColor(value);
-		if (color != null) {
-			return color;
-		}
-		return null;
-    }
-
-	/**
 	 * Converts a color to a string value. If there is a defined color for the given color value,
 	 * the color name will be returned. Otherwise, it will return a hex string for the color as
-	 * defined by {@link Color#toString()}. The result of this call can be passed to 
-	 * {@link #getColor(String)} and be guaranteed that a color will be returned 
+	 * follows. If the color has an non-opaque alpha value, it will be of the form #rrggbb. If
+	 * it has an alpha value,then the format will be #rrggbbaa.
 	 * 
 	 * @param color the color to convert to a string.
 	 * @return the string representation for the given color.
 	 */
 	public static String toString(Color color) {
-		String name = colorToNameMap.get(color);
-		if (name != null) {
-			return name;
-		}
-		// this will format a color value as a 6 digit hex (e.g. #rrggbb)
-		return String.format("#%06X", color.getRGB() & 0xffffff);
+		return toString(color, true);
 	}
 
-	private static Color getHexColor(String hexString) {
-		Matcher matcher = HEX_PATTERN.matcher(hexString);
-		if (matcher.matches()) {
-			return Color.decode(hexString);
+	/**
+	 * Converts a color to a string value.  If the color is a WebColor and the useNameIfPossible
+	 * is true, the name of the color will be returned. OOtherwise, it will return a hex string for the color as
+	 * follows. If the color has an non-opaque alpha value, it will be of the form #rrggbb. If
+	 * it has an alpha value ,then the format will be #rrggbbaa.
+	 * 
+	 * @param color the color to convert to a string.
+	 * @param useNameIfPossible if true, the name of the color will be returned if the color is
+	 * a WebColor
+	 * @return the string representation for the given color.
+	 */
+	public static String toString(Color color, boolean useNameIfPossible) {
+		if (useNameIfPossible) {
+			String name = colorToNameMap.get(color);
+			if (name != null) {
+				return name;
+			}
 		}
-		return null;
+		int rgb = color.getRGB() & 0xffffff; //mask off any alpha value
+		int alpha = color.getAlpha();
+		if (alpha != 0xff) {
+			return String.format("#%06x%02x", rgb, alpha);
+		}
+		return String.format("#%06x", rgb);
+	}
+
+	/**
+	 * Returns the WebColor name for the given color. Returns null if the color is not a WebColor
+	 * @param color the color to lookup a WebColor name.
+	 * @return the WebColor name for the given color. Returns null if the color is not a WebColor
+	 */
+	public static String toWebColorName(Color color) {
+		return colorToNameMap.get(color);
 	}
 
 	private static Color registerColor(String name, Color color) {
-		nameToColorMap.put(name, color);
+		nameToColorMap.put(name.toLowerCase(), color);
 		colorToNameMap.put(color, name);
 		return color;
 	}
 
+	/**
+	 * Attempts to convert the given string into a color in a most flexible manner. It first checks
+	 * if the given string matches the name of a known web color as defined above. If so it
+	 * returns that color. Otherwise it tries to parse the string in any one of the following
+	 * formats:
+	 * <pre>
+	 * #rrggbb
+	 * #rrggbbaa
+	 * 0xrrggbb
+	 * 0xrrggbbaa
+	 * rgb(red, green, blue)
+	 * rgba(red, green, alpha)
+	 * </pre>
+	 * In the hex digit formats, the hex digits "rr", "gg", "bb", "aa" represent the values for red,
+	 * green, blue, and alpha, respectively. In the "rgb" and "rgba" formats the red, green, and
+	 * blue values are all integers between 0-255, while the alpha value is a float value from 0.0 to
+	 * 1.0.
+	 * <BR><BR>
+	 * @param colorString the color name
+	 * @return a color for the given string or null
+	 */
+	public static Color getColor(String colorString) {
+		String value = colorString.trim().toLowerCase();
+		Color color = nameToColorMap.get(value.toLowerCase());
+		if (color != null) {
+			return color;
+		}
+
+		return parseColor(value);
+	}
+
+	private static Color parseColor(String colorString) {
+		if (colorString.startsWith("#") || colorString.startsWith("0x")) {
+			return parseHexColor(colorString);
+		}
+		if (colorString.startsWith("rgb(")) {
+			return parseRGBColor(colorString);
+		}
+		return parseRGBAColor(colorString);
+	}
+
+	/**
+	 * Parses the given string into a color. The string must be in one of the following formats:
+	 * <pre>
+	 * #rrggbb
+	 * #rrggbbaa
+	 * 0xrrggbb 
+	 * 0xrrggbbaa
+	 * </pre> 
+	 * 
+	 * Each of the hex digits "rr", "gg", "bb", and "aa" specify the red, green, blue, and alpha
+	 * values respectively. 
+	 * <br><br>
+	 *
+	 * @param hexString the string to parse into a color.
+	 * @return the parsed Color or null if the input string was invalid.
+	 */
+	private static Color parseHexColor(String hexString) {
+		String value = hexString.trim();
+		if (value.startsWith("#")) {
+			value = value.substring(1);
+		}
+		else if (value.startsWith("0x")) {
+			value = value.substring(2);
+		}
+		else {
+			return null;
+		}
+
+		if (value.length() != 8 && value.length() != 6) {
+			return null;
+		}
+
+		boolean hasAlpha = value.length() == 8;
+		if (hasAlpha) {
+			// alpha value is the last 2 digits, Color wants alpha to be in upper bits so re-arrange
+			value = value.substring(6) + value.substring(0, 6);
+		}
+
+		try {
+			long colorValue = Long.parseLong(value, 16);
+			return new Color((int) colorValue, hasAlpha);
+		}
+		catch (NumberFormatException e) {
+			return null;
+		}
+	}
+
+	/**
+	 * Parses the given string into a color. The string must be in one of the following formats:
+	 * <pre>
+	 * rgb(red, green, blue)
+	 * rgb(red, green, blue, alpha)
+	 * </pre> 
+	 * Each of the values "red", "green", "blue", and "alpha" must be integer values between 0-255
+	 * <br><br>
+	 * @param rgbString the string to parse into a color.
+	 * @return the parsed Color or null if the input string was invalid.
+	 */
+	private static Color parseRGBColor(String rgbString) {
+		String value = rgbString.trim().replaceAll(" ", "");
+		if (!(value.startsWith("rgb(") && value.endsWith(")"))) {
+			return null;
+		}
+		// strip off to comma separated values
+		value = value.substring(4, value.length() - 1);
+		String[] split = value.split(",");
+		if (split.length != 3) {
+			return null;
+		}
+		try {
+			int red = Integer.parseInt(split[0]);
+			int green = Integer.parseInt(split[1]);
+			int blue = Integer.parseInt(split[2]);
+			return new Color(red, green, blue);
+		}
+		catch (IllegalArgumentException e) {
+			return null;
+		}
+	}
+
+	private static Color parseRGBAColor(String rgbaString) {
+		String value = rgbaString.replaceAll(" ", "");
+		if (!(value.startsWith("rgba(") && value.endsWith(")"))) {
+			return null;
+		}
+		// strip off to comma separated values
+		value = value.substring(5, value.length() - 1);
+		value = value.replaceAll(" ", "");
+		String[] split = value.split(",");
+		if (split.length != 4) {
+			return null;
+		}
+		try {
+			int red = Integer.parseInt(split[0]);
+			int green = Integer.parseInt(split[1]);
+			int blue = Integer.parseInt(split[2]);
+			int alpha = parseAlpha(split[3]);
+			return new Color(red, green, blue, alpha);
+		}
+		catch (IllegalArgumentException e) {
+			return null;
+		}
+	}
+
+	private static int parseAlpha(String string) {
+		// alpha strings can either be a float between 0.0 and 1.0 or an integer from 0 to 255.
+		// if it is a float, treat that value as a percentage of the 255 max value
+		// if it is an int, don't allow the value to be bigger than 255.
+		if (string.contains(".")) {
+			float value = Float.parseFloat(string);
+			return (int) (value * 0xff + 0.5) & 0xff;  // convert to value in range (0-255)
+		}
+		return Integer.parseInt(string) & 0xff;	// truncate any bits that would make it bigger than 255
+	}
 }

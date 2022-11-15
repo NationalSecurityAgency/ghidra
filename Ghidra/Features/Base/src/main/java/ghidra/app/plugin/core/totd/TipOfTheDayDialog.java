@@ -15,8 +15,8 @@
  */
 package ghidra.app.plugin.core.totd;
 
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
 import java.util.List;
 
 import javax.swing.*;
@@ -26,9 +26,14 @@ import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GLabel;
-import resources.ResourceManager;
+import generic.theme.GIcon;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Java;
+import generic.theme.Gui;
 
 class TipOfTheDayDialog extends DialogComponentProvider {
+	private static final String FONT_ID = "font.plugin.tips";
+	private static final String FONT_LABEL_ID = "font.plugin.tips.label";
 	private static final int _24_HOURS = 86400000;
 	private TipOfTheDayPlugin plugin;
 	private JCheckBox showTipsCheckbox;
@@ -48,11 +53,11 @@ class TipOfTheDayDialog extends DialogComponentProvider {
 			tips.add("Could not find any tips!");
 		}
 
-		ImageIcon tipIcon = ResourceManager.loadImage("images/help-hint.png");
+		Icon tipIcon = new GIcon("icon.plugin.totd.provider");
 
 		tipArea = new JTextArea(4, 30);
 		tipArea.setEditable(false);
-		tipArea.setFont(new Font("dialog", Font.PLAIN, 12));
+		tipArea.setFont(Gui.getFont(FONT_ID));
 		tipArea.setWrapStyleWord(true);
 		tipArea.setLineWrap(true);
 		tipArea.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -65,41 +70,28 @@ class TipOfTheDayDialog extends DialogComponentProvider {
 
 		showTipsCheckbox = new GCheckBox("Show Tips on Startup?");
 		showTipsCheckbox.setSelected(true); // TODO (FixMe) Moved this before its listener to prevent project save for now.
-		showTipsCheckbox.addItemListener(new ItemListener() {
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				showTipsChanged();
-			}
-		});
+		showTipsCheckbox.addItemListener(e -> showTipsChanged());
 
 		nextTipButton = new JButton("Next Tip");
-		nextTipButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				incrementTipIndex();
-				loadNextTip();
-			}
+		nextTipButton.addActionListener(e -> {
+			incrementTipIndex();
+			loadNextTip();
 		});
 		addButton(nextTipButton);
 
 		closeButton = new JButton("Close");
-		closeButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				close();
-			}
-		});
+		closeButton.addActionListener(e -> close());
 		addButton(closeButton);
 
 		JPanel panel = new JPanel(new BorderLayout());
 		Border panelBorder =
 			BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10),
-				BorderFactory.createLineBorder(Color.BLACK));
+				BorderFactory.createLineBorder(Java.BORDER));
 		panel.setBorder(panelBorder);
-		panel.setBackground(Color.WHITE);
+		panel.setBackground(Colors.BACKGROUND);
 
 		JLabel label = new GLabel("Did you know...", tipIcon, SwingConstants.LEFT);
-		label.setFont(new Font("dialog", Font.BOLD, 12));
+		Gui.registerFont(label, FONT_LABEL_ID);
 		panel.add(label, BorderLayout.NORTH);
 
 		panel.add(tipScroll, BorderLayout.CENTER);

@@ -37,6 +37,7 @@ import edu.uci.ics.jung.visualization.VisualizationModel;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.util.Caching;
 import generic.test.TestUtils;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.cmd.label.AddLabelCmd;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.nav.LocationMemento;
@@ -619,14 +620,14 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 		Color appliedBackgroundColor =
 			colorizingService.getBackgroundColor(focusedVertex.getVertexAddress());
 
-		Color testColor = Color.RED;
+		Color testColor = Palette.RED;
 		assertTrue("Unexpected start color--must change the test!",
 			!testColor.equals(appliedBackgroundColor));
 
 		chooseColor(focusedVertex, testColor);
 
 		Color newVertexBackgroundColor = focusedVertex.getUserDefinedColor();
-		assertEquals("Background color not set", testColor, newVertexBackgroundColor);
+		assertColorsEqual(testColor, newVertexBackgroundColor);
 
 		DockingAction clearColorAction = getClearColorAction(focusedVertex);
 		performAction(clearColorAction, graphProvider, true);

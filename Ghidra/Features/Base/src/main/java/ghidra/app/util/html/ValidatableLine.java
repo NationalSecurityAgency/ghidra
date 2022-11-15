@@ -17,6 +17,8 @@ package ghidra.app.util.html;
 
 import java.awt.Color;
 
+import generic.theme.GThemeDefaults.Colors.Messages;
+
 /**
  * A loose concept that represents a line of text, potentially with multiple parts, that can
  * be validated against other instances and can change the color of the text.
@@ -26,7 +28,7 @@ import java.awt.Color;
  */
 public interface ValidatableLine {
 
-	public static final Color INVALID_COLOR = Color.RED;
+	public static final Color INVALID_COLOR = Messages.ERROR;
 
 	public void updateColor(ValidatableLine otherLine, Color invalidColor);
 

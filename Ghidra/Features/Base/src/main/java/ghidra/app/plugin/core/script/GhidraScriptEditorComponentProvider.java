@@ -20,8 +20,6 @@ import java.awt.Font;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.io.*;
-import java.util.Collection;
-import java.util.Iterator;
 
 import javax.swing.*;
 import javax.swing.text.Document;
@@ -30,19 +28,20 @@ import javax.swing.undo.UndoableEdit;
 import docking.*;
 import docking.action.*;
 import docking.actions.KeyBindingUtils;
-import docking.options.editor.FontPropertyEditor;
+import docking.options.editor.FontEditor;
 import docking.widgets.OptionDialog;
 import generic.jar.ResourceFile;
+import generic.theme.*;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.script.GhidraScriptUtil;
-import ghidra.framework.options.SaveState;
 import ghidra.util.*;
 import ghidra.util.datastruct.FixedSizeStack;
 import resources.Icons;
-import resources.ResourceManager;
 
 public class GhidraScriptEditorComponentProvider extends ComponentProvider {
-	static final String EDITOR_COMPONENT_NAME="EDITOR";
-	
+	static final String EDITOR_COMPONENT_NAME = "EDITOR";
+	private static final String FONT_ID = "font.plugin.scripts.text.editor";
+
 	static final String CHANGE_DESTINATION_TITLE = "Where Would You Like to Store Your Changes?";
 	static final String FILE_ON_DISK_CHANGED_TITLE = "File Changed on Disk";
 	static final String FILE_ON_DISK_MISSING_TITLE = "File on Disk is Missing";
@@ -53,22 +52,6 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 	static final String DISCARD_CHANGES_TEXT = "Discard Changes";
 
 	private static final int MAX_UNDO_REDO_SIZE = 50;
-
-	private static Font defaultFont = new Font("monospaced", Font.PLAIN, 12);
-
-	static void restoreState(SaveState saveState) {
-		String name = saveState.getString("DEFAULT_FONT_NAME", "Monospaced");
-		int style = saveState.getInt("DEFAULT_FONT_STYLE", Font.PLAIN);
-		int size = saveState.getInt("DEFAULT_FONT_SIZE", 12);
-		defaultFont = new Font(name, style, size);
-	}
-
-	static void saveState(SaveState saveState) {
-		saveState.putString("DEFAULT_FONT_NAME", defaultFont.getName());
-		saveState.putInt("DEFAULT_FONT_STYLE", defaultFont.getStyle());
-		saveState.putInt("DEFAULT_FONT_SIZE", defaultFont.getSize());
-	}
-
 
 	private GhidraScriptMgrPlugin plugin;
 	private GhidraScriptComponentProvider provider;
@@ -227,12 +210,13 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 			@Override
 			public boolean isEnabledForContext(ActionContext context) {
 				Object contextObject = context.getContextObject();
-				return contextObject == GhidraScriptEditorComponentProvider.this && !undoStack.isEmpty();
+				return contextObject == GhidraScriptEditorComponentProvider.this &&
+					!undoStack.isEmpty();
 			}
 		};
 		undoAction.setDescription("Undo");
 		undoAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/undo.png"), "UndoRedo"));
+			new ToolBarData(new GIcon("icon.undo"), "UndoRedo"));
 		undoAction.setEnabled(false);
 		undoAction.setKeyBindingData(new KeyBindingData(
 			KeyStroke.getKeyStroke(KeyEvent.VK_Z, DockingUtils.CONTROL_KEY_MODIFIER_MASK)));
@@ -247,12 +231,13 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 			@Override
 			public boolean isEnabledForContext(ActionContext context) {
 				Object contextObject = context.getContextObject();
-				return contextObject == GhidraScriptEditorComponentProvider.this && !redoStack.isEmpty();
+				return contextObject == GhidraScriptEditorComponentProvider.this &&
+					!redoStack.isEmpty();
 			}
 		};
 		redoAction.setDescription("Redo");
 		redoAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/redo.png"), "UndoRedo"));
+			new ToolBarData(new GIcon("icon.redo"), "UndoRedo"));
 		redoAction.setKeyBindingData(new KeyBindingData(
 			KeyStroke.getKeyStroke(KeyEvent.VK_Y, DockingUtils.CONTROL_KEY_MODIFIER_MASK)));
 		redoAction.setEnabled(false);
@@ -280,7 +265,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 		};
 		saveAction.setDescription("Save");
 		saveAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/disk.png"), "Save"));
+			new ToolBarData(Icons.SAVE_ICON, "Save"));
 		saveAction.setKeyBindingData(new KeyBindingData(
 			KeyStroke.getKeyStroke(KeyEvent.VK_S, DockingUtils.CONTROL_KEY_MODIFIER_MASK)));
 
@@ -317,7 +302,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 		};
 		saveAsAction.setDescription("Save As...");
 		saveAsAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/disk_save_as.png"), "Save"));
+			new ToolBarData(Icons.SAVE_AS_ICON, "Save"));
 		saveAsAction.setEnabled(true);
 		plugin.getTool().addLocalAction(this, saveAsAction);
 
@@ -341,7 +326,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 			}
 		};
 		runAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/play.png"), "ZRun"));
+			new ToolBarData(new GIcon("icon.plugin.scriptmanager.run"), "ZRun"));
 		runAction.setDescription("Run Editor's Script");
 		runAction.setPopupMenuData(new MenuData(new String[] { "Run" }, "ZRun"));
 		runAction.setEnabled(true);
@@ -355,7 +340,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 			}
 		};
 		fontAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/text_lowercase.png"), "ZZFont"));
+			new ToolBarData(new GIcon("icon.font"), "ZZFont"));
 		fontAction.setDescription("Select Font");
 		fontAction.setEnabled(true);
 		plugin.getTool().addLocalAction(this, fontAction);
@@ -447,7 +432,8 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 
 		int choice = OptionDialog.showOptionDialog(scrollPane, FILE_ON_DISK_CHANGED_TITLE,
 			"<html>The contents of the script file have changed on disk.<br><br>Would " +
-				"you like to <b>keep your changes</b> in the editor or <b><font color=\"red\">" +
+				"you like to <b>keep your changes</b> in the editor or <b><font color=\"" +
+				Colors.ERROR.toHexString() + "\">" +
 				"discard</font></b> your changes?",
 			KEEP_CHANGES_TEXT, DISCARD_CHANGES_TEXT, OptionDialog.QUESTION_MESSAGE);
 
@@ -469,7 +455,9 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 		//
 		choice = OptionDialog.showOptionDialog(scrollPane, CHANGE_DESTINATION_TITLE,
 			"<html>You can save your current changes to <b>another file</b> or " +
-				"<b><font color=\"red\">overwrite</font></b> the contents of the file on disk.",
+				"<b><font color=\"" +
+				Colors.ERROR.toHexString() +
+				"\">overwrite</font></b> the contents of the file on disk.",
 			SAVE_CHANGES_AS_TEXT, OVERWRITE_CHANGES_TEXT, OptionDialog.QUESTION_MESSAGE);
 
 		//
@@ -515,18 +503,11 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 		}
 	}
 
-	private void doSelectFont() {
-		FontPropertyEditor editor = new FontPropertyEditor();
-		editor.setValue(defaultFont);
+	protected void doSelectFont() {
+		FontEditor editor = new FontEditor();
+		editor.setValue(Gui.getFont(FONT_ID));
 		editor.showDialog();
-		defaultFont = (Font) editor.getValue();
-
-		Collection<GhidraScriptEditorComponentProvider> values = provider.getEditorMap().values();
-		Iterator<GhidraScriptEditorComponentProvider> iterator = values.iterator();
-		while (iterator.hasNext()) {
-			GhidraScriptEditorComponentProvider editorComponent = iterator.next();
-			editorComponent.textArea.setFont(defaultFont);
-		}
+		ThemeManager.getInstance().setFont(FONT_ID, (Font) editor.getValue());
 	}
 
 	private void save() {
@@ -676,7 +657,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 		private KeyMasterTextArea(String text) {
 			super(text);
 
-			setFont(defaultFont);
+			Gui.registerFont(this, FONT_ID);
 			setName(EDITOR_COMPONENT_NAME);
 			setWrapStyleWord(false);
 			Document document = getDocument();

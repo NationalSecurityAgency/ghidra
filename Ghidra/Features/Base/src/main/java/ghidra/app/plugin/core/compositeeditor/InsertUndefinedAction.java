@@ -18,14 +18,14 @@ package ghidra.app.plugin.core.compositeeditor;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 import javax.swing.KeyStroke;
 
 import docking.ActionContext;
 import docking.action.KeyBindingData;
+import generic.theme.GIcon;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.UsrException;
-import resources.ResourceManager;
 
 /**
  * Action for use in the structure data type editor.
@@ -33,8 +33,7 @@ import resources.ResourceManager;
  */
 public class InsertUndefinedAction extends CompositeEditorTableAction {
 
-	private final static ImageIcon ICON =
-		ResourceManager.loadImage("images/Plus.png");
+	private final static Icon ICON = new GIcon("icon.plugin.composite.editor.insert.undefined");
 	public final static String ACTION_NAME = "Insert Undefined Byte";
 	private final static String GROUP_NAME = COMPONENT_ACTION_GROUP;
 	private final static String DESCRIPTION = "Insert an undefined byte before the selection";

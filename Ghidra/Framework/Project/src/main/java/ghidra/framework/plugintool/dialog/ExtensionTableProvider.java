@@ -36,7 +36,6 @@ import ghidra.util.*;
 import ghidra.util.filechooser.GhidraFileChooserModel;
 import ghidra.util.filechooser.GhidraFileFilter;
 import resources.Icons;
-import resources.ResourceManager;
 
 /**
  * Component Provider that shows the known extensions in Ghidra in a {@link GTable}. Users may
@@ -114,7 +113,7 @@ public class ExtensionTableProvider extends DialogComponentProvider {
 	 * @param panel The extensions table panel.
 	 */
 	private void createAddAction(ExtensionTablePanel panel) {
-		Icon addIcon = ResourceManager.loadImage("images/Plus.png");
+		Icon addIcon = Icons.ADD_ICON;
 		DockingAction addAction = new DockingAction("ExtensionTools", "AddExtension") {
 
 			@Override

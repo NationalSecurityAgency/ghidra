@@ -15,10 +15,9 @@
  */
 package docking.widgets.filter;
 
-import static docking.test.AbstractDockingTest.triggerEnter;
-import static docking.test.AbstractDockingTest.triggerKey;
-import static generic.test.AbstractGTest.sleep;
-import static generic.test.AbstractGenericTest.runSwing;
+import static docking.test.AbstractDockingTest.*;
+import static generic.test.AbstractGTest.*;
+import static generic.test.AbstractGenericTest.*;
 import static org.junit.Assert.*;
 
 import java.awt.BorderLayout;
@@ -32,6 +31,7 @@ import javax.swing.*;
 import org.junit.Before;
 import org.junit.Test;
 
+import generic.test.AbstractGTest;
 import generic.test.AbstractGenericTest;
 import utility.function.Callback;
 
@@ -291,7 +291,7 @@ public class FilterTextFieldTest {
 
 	private void waitForTimer() {
 		Timer timer = filter.getFlashTimer();
-		AbstractGenericTest.waitForCondition(() -> {
+		AbstractGTest.waitForCondition(() -> {
 			boolean running = runSwing(() -> timer.isRunning());
 			return !running;
 		}, "Timed-out waiting for flash timer to finish");

@@ -23,6 +23,7 @@ import java.util.Objects;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
+import generic.theme.GIcon;
 import generic.util.image.ImageUtils;
 import resources.ResourceManager;
 
@@ -32,6 +33,7 @@ import resources.ResourceManager;
 public class DerivedImageIcon extends LazyImageIcon {
 	private Icon sourceIcon;
 	private Image sourceImage;
+	private Icon cachedDelegate;
 
 	/**
 	 * Constructor for deriving from an icon
@@ -50,6 +52,20 @@ public class DerivedImageIcon extends LazyImageIcon {
 	public DerivedImageIcon(String name, Image image) {
 		super(name);
 		this.sourceImage = Objects.requireNonNull(image);
+	}
+
+	public Icon getSourceIcon() {
+		return sourceIcon;
+	}
+
+	protected boolean sourceIconChanged() {
+		if (sourceIcon instanceof GIcon gIcon) {
+			if (cachedDelegate != gIcon.getDelegate()) {
+				cachedDelegate = gIcon.getDelegate();
+				return true;
+			}
+		}
+		return false;
 	}
 
 	protected ImageIcon createImageIcon() {

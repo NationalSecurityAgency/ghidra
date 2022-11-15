@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,18 +17,20 @@ package docking.widgets.fieldpanel.internal;
 
 import java.awt.Color;
 
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors.Palette;
+import ghidra.util.ColorUtils;
+
 /**
  * Miscellaneous information needed by fields to paint.
  */
 public class PaintContext {
 
-	private Color defaultBackground;
 	private Color background;
 	private Color foreground;
 	private Color selectionColor;
 	private Color highlightColor;
 	private Color selectedHighlightColor;
-	private Color printColor;
 
 	private Color cursorColor;
 	private Color focusedCursorColor;
@@ -43,20 +44,18 @@ public class PaintContext {
 	 * Create a new PaintContext with default color values.
 	 */
 	public PaintContext() {
-		defaultBackground = Color.white;
-		background = Color.white;
-		foreground = Color.black;
-		selectionColor = new Color(180, 255, 180);
-		highlightColor = new Color(255, 255, 150);
-		selectedHighlightColor = Color.green;
-		focusedCursorColor = Color.RED;
+		background = new GColor("color.bg.fieldpanel");
+		foreground = new GColor("color.fg.fieldpanel");
+		selectionColor = new GColor("color.bg.fieldpanel.selection");
+		highlightColor = new GColor("color.bg.fieldpanel.highlight");
+		selectedHighlightColor = new GColor("color.bg.fieldpanel.selection.and.highlight");
+		focusedCursorColor = new GColor("color.cursor.focused");
+		notFocusedCursorColor = new GColor("color.cursor.unfocused");
 		cursorColor = focusedCursorColor;
-		invisibleCursorColor = new Color(255, 0, 0, 1);
-		notFocusedCursorColor = Color.PINK;
+		invisibleCursorColor = Palette.NO_COLOR;
 	}
 
 	public PaintContext(PaintContext other) {
-		defaultBackground = other.defaultBackground;
 		background = other.background;
 		foreground = other.foreground;
 		selectionColor = other.selectionColor;
@@ -66,19 +65,11 @@ public class PaintContext {
 		focusedCursorColor = other.focusedCursorColor;
 		notFocusedCursorColor = other.notFocusedCursorColor;
 		invisibleCursorColor = other.invisibleCursorColor;
-		printColor = other.printColor;
-	}
-
-	/**
-	 * Returns the current default background color setting that is used when 
-	 * there is no special background color or highlight or selection.
-	 */
-	public final Color getDefaultBackground() {
-		return defaultBackground;
 	}
 
 	/**
 	 * Returns the current background color setting.
+	 * @return the current background color setting.
 	 */
 	public final Color getBackground() {
 		return background;
@@ -86,6 +77,7 @@ public class PaintContext {
 
 	/**
 	 * Returns the current foreground color setting.
+	 * @return the current foreground color setting.
 	 */
 	public final Color getForeground() {
 		return foreground;
@@ -93,27 +85,31 @@ public class PaintContext {
 
 	/**
 	 * Returns the current selection color setting.
+	 * @return the current selection color setting.
 	 */
 	public final Color getSelectionColor() {
 		return selectionColor;
 	}
 
 	/**
-	 * Returns the current selection color setting.
+	 * Returns the current highlight color setting.
+	 * @return the current highlight color setting.
 	 */
 	public final Color getHighlightColor() {
 		return highlightColor;
 	}
 
 	/**
-	 * Returns the current selection color setting.
+	 * Returns the current selected highlight color setting.
+	 * @return the current selected highlight color setting.
 	 */
 	public final Color getSelectedHighlightColor() {
 		return selectedHighlightColor;
 	}
 
 	/**
-	 * Returns the current cursor color setting.
+	 * Returns the current cursor color.
+	 * @return the current cursor color.
 	 */
 	public final Color getCursorColor() {
 		return cursorColor;
@@ -133,22 +129,8 @@ public class PaintContext {
 		adjustSelectedHighlightColor();
 	}
 
-	public void setDefaultBackgroundColor(Color c) {
-		defaultBackground = c;
-	}
-
-	/**
-	 * Returns true if the current background color matches the default background color.
-	 */
-	public final boolean isDefaultBackground() {
-		return defaultBackground.equals(background);
-	}
-
 	private void adjustSelectedHighlightColor() {
-		int red = (selectionColor.getRed() + highlightColor.getRed()) / 2;
-		int green = (selectionColor.getGreen() + highlightColor.getGreen()) / 2;
-		int blue = (selectionColor.getBlue() + highlightColor.getBlue()) / 2;
-		selectedHighlightColor = new Color(red, green, blue);
+		selectedHighlightColor = ColorUtils.blend(selectionColor, highlightColor, 0.5);
 	}
 
 	public void setBackgroundColor(Color c) {
@@ -161,7 +143,7 @@ public class PaintContext {
 
 	public void setCursorColor(Color c) {
 		cursorColor = c;
-		invisibleCursorColor = new Color(c.getRed(), c.getGreen(), c.getBlue(), 1);
+		invisibleCursorColor = Palette.NO_COLOR;
 	}
 
 	public boolean cursorHidden() {
@@ -190,10 +172,6 @@ public class PaintContext {
 
 	public Color getNotFocusedCursorColor() {
 		return notFocusedCursorColor;
-	}
-
-	public void setPrintColor(Color c) {
-		printColor = c;
 	}
 
 	public void setPrinting(boolean b) {

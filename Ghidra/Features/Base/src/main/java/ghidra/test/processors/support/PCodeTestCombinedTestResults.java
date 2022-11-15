@@ -15,6 +15,7 @@
  */
 package ghidra.test.processors.support;
 
+import java.awt.Color;
 import java.io.*;
 import java.util.*;
 
@@ -23,6 +24,7 @@ import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
 import org.jdom.output.XMLOutputter;
 
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.test.processors.support.PCodeTestResults.TestResults;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.Msg;
@@ -383,9 +385,9 @@ public class PCodeTestCombinedTestResults {
 		w.println("</tr>");
 	}
 
-	private void writeResultCount(PrintWriter w, int count, String color) {
+	private void writeResultCount(PrintWriter w, int count, Color color) {
 		if (count == 0) {
-			w.print("<font color=\"gray\">-</font>");
+			w.print("<font color=\"" + Palette.GRAY + "\">-</font>");
 		}
 		else {
 			w.print("<font color=\"" + color + "\">" + Integer.toString(count) + "</font>");
@@ -417,25 +419,26 @@ public class PCodeTestCombinedTestResults {
 			// analyzed program has relocation or disassembly errors
 			w.print("<td align=\"center\" class=\"ResultSummary bad\">");
 			if (testResults.summaryHasIngestErrors) {
-				w.print("<font color=\"red\">Ingest-Err</font><br>");
+				w.print("<font color=\"" + Palette.RED + "\">Ingest-Err</font><br>");
 			}
 			if (testResults.summaryHasRelocationErrors) {
-				w.print("<font color=\"red\">Reloc-Err</font><br>");
+				w.print("<font color=\"" + Palette.RED + "\">Reloc-Err</font><br>");
 			}
 			if (testResults.summaryHasDisassemblyErrors) {
-				w.print("<font color=\"red\">Dis-Err</font>");
+				w.print("<font color=\"" + Palette.RED + "\">Dis-Err</font>");
 			}
 		}
 		else {
 			w.print("<td align=\"center\" class=\"ResultSummary " +
 				getSummaryHighlightColorClass(testResults) + "\">");
-			writeResultCount(w, testResults.summaryPassCount, "green");
+			writeResultCount(w, testResults.summaryPassCount, Palette.GREEN);
 			w.print("/");
-			writeResultCount(w, testResults.summaryFailCount, "red");
+			writeResultCount(w, testResults.summaryFailCount, Palette.RED);
 			w.print("/");
-			writeResultCount(w, testResults.summaryCallOtherCount, "orange");
+			writeResultCount(w, testResults.summaryCallOtherCount, Palette.ORANGE);
 			if (testResults.summarySevereFailures != 0) {
-				w.print("<br><font color=\"red\">ERR:&nbsp;" + testResults.summarySevereFailures +
+				w.print("<br><font color=\"" + Palette.RED + "\">ERR:&nbsp;" +
+					testResults.summarySevereFailures +
 					"</font>");
 			}
 		}
@@ -498,25 +501,26 @@ public class PCodeTestCombinedTestResults {
 						namedTestColumn.getColumnWidth() + "><br>");
 				}
 				if (severeFailure) {
-					w.print("<font color=\"red\">ERR</font>");
+					w.print("<font color=\"" + Palette.RED + "\">ERR</font>");
 				}
 				else {
 					if (total == 0) {
 						if (totalAsserts == 0) {
-							w.print("<font color=\"gray\">-</font>");
+							w.print("<font color=\"" + Palette.GRAY + "\">-</font>");
 						}
 						else {
-							w.print("<font color=\"red\">x</font>");
+							w.print("<font color=\"" + Palette.RED + "\">x</font>");
 						}
 					}
 					else {
-						writeResultCount(w, pass, "green");
+						writeResultCount(w, pass, Palette.GREEN);
 						w.print("/");
-						writeResultCount(w, fail, "red");
+						writeResultCount(w, fail, Palette.RED);
 						w.print("/");
-						writeResultCount(w, callother, "orange");
+						writeResultCount(w, callother, Palette.ORANGE);
 						if (total != totalAsserts) {
-							w.print("<br><font color=\"red\">(!=" + totalAsserts + ")</font>");
+							w.print("<br><font color=\"" + Palette.RED + "\">(!=" + totalAsserts +
+								")</font>");
 						}
 					}
 				}

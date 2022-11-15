@@ -35,6 +35,10 @@ import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.label.GLabel;
 import docking.widgets.table.*;
+import generic.theme.GColor;
+import generic.theme.GIcon;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.*;
 import generic.util.WindowUtilities;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.ToolTipUtils;
@@ -47,13 +51,12 @@ import ghidra.program.model.symbol.ExternalLocation;
 import ghidra.util.*;
 import ghidra.util.layout.PairLayout;
 import ghidra.util.layout.VerticalLayout;
-import resources.ResourceManager;
+import resources.Icons;
 
 public class FunctionEditorDialog extends DialogComponentProvider implements ModelChangeListener {
-	private static Icon ADD_ICON = ResourceManager.loadImage("images/Plus.png");
-	private static Icon REMOVE_ICON = ResourceManager.loadImage("images/edit-delete.png");
-	private static Icon UP_ICON = ResourceManager.loadImage("images/up.png");
-	private static Icon DOWN_ICON = ResourceManager.loadImage("images/down.png");
+	private static final Color FG_COLOR_THUNK =
+		new GColor("color.fg.plugin.function.editor.dialog.thunk");
+
 	private FunctionEditorModel model;
 	private DocumentListener nameFieldDocumentListener;
 	private GTable parameterTable;
@@ -209,10 +212,10 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		thunkedText.setEditable(false);
 		DockingUtils.setTransparent(thunkedText);
 		CompoundBorder border =
-			BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.GRAY),
+			BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Java.BORDER),
 				BorderFactory.createEmptyBorder(0, 5, 0, 5));
 		thunkedText.setBorder(border);
-		thunkedText.setForeground(Color.BLUE);
+		thunkedText.setForeground(FG_COLOR_THUNK);
 		thunkedPanel.add(thunkedText);
 		return thunkedPanel;
 	}
@@ -224,9 +227,9 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		scroll = new JScrollPane(verticalScrollPanel);
 		scroll.setBorder(null);
 		scroll.setOpaque(true);
-		scroll.setBackground(Color.WHITE);
-		scroll.getViewport().setBackground(new Color(0, 0, 0, 0)); // transparent
-		scroll.getViewport().setBackground(Color.WHITE);
+		scroll.setBackground(Colors.BACKGROUND);
+		scroll.getViewport().setBackground(Palette.NO_COLOR); // transparent
+		scroll.getViewport().setBackground(Colors.BACKGROUND);
 		previewPanel.add(scroll, BorderLayout.CENTER);
 		previewPanel.setBorder(BorderFactory.createLoweredBevelBorder());
 		scroll.getViewport().addMouseListener(new MouseAdapter() {
@@ -440,10 +443,10 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 	private Component buildButtonPanel() {
 		JPanel panel = new JPanel(new VerticalLayout(5));
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-		addButton = new JButton(ADD_ICON);
-		removeButton = new JButton(REMOVE_ICON);
-		upButton = new JButton(UP_ICON);
-		downButton = new JButton(DOWN_ICON);
+		addButton = new JButton(Icons.ADD_ICON);
+		removeButton = new JButton(Icons.DELETE_ICON);
+		upButton = new JButton(new GIcon("icon.up"));
+		downButton = new JButton(new GIcon("icon.down"));
 		addButton.setToolTipText("Add parameter");
 		removeButton.setToolTipText("Delete selected parameters");
 		upButton.setToolTipText("Move selected parameter up");
@@ -657,12 +660,13 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 			DataType dataType = (DataType) value;
 			Color color = isSelected ? table.getSelectionForeground() : table.getForeground();
 			if (!tableModel.isCellEditable(row, column)) {
-				color = isSelected ? Color.yellow : Color.gray;
+				color =
+					isSelected ? Tables.FG_UNEDITABLE_SELECTED : Tables.FG_UNEDITABLE_UNSELECTED;
 			}
 			if (dataType != null) {
 				setText(dataType.getName());
 				if (dataType.isNotYetDefined()) {
-					color = Color.red;
+					color = isSelected ? Tables.FG_ERROR_SELECTED : Tables.FG_ERROR_UNSELECTED;
 				}
 				String toolTipText = ToolTipUtils.getToolTipText(dataType);
 				String headerText = "<HTML><b>" +
@@ -751,17 +755,20 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 				boolean isInvalidStorage =
 					!storage.isValid() || rowData.getFormalDataType().getLength() != storage.size();
 				if (isInvalidStorage) {
-					setForeground(Color.RED);
+					setForeground(
+						isSelected ? Tables.FG_ERROR_SELECTED : Tables.FG_ERROR_UNSELECTED);
 					setToolTipText("Invalid Parameter Storage");
 				}
 				else {
-					setForeground(isSelected ? Color.WHITE : Color.BLACK);
+					setForeground(
+						isSelected ? table.getSelectionForeground() : Colors.FOREGROUND);
 					setToolTipText("");
 				}
 				setText(storage.toString());
 			}
 			else {
-				setForeground(isSelected ? Color.WHITE : Color.BLACK);
+				setForeground(
+					isSelected ? table.getSelectionForeground() : Colors.FOREGROUND);
 				setText("");
 				setToolTipText(null);
 			}
@@ -770,6 +777,7 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 	}
 
 	private class VariableStringCellRenderer extends GTableCellRenderer {
+
 		@Override
 		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 
@@ -785,7 +793,8 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 
 			ParameterTableModel tableModel = (ParameterTableModel) table.getModel();
 			if (!tableModel.isCellEditable(row, column)) {
-				setForeground(isSelected ? Color.yellow : Color.gray);
+				setForeground(
+					isSelected ? Tables.FG_UNEDITABLE_SELECTED : Tables.FG_UNEDITABLE_UNSELECTED);
 			}
 			else {
 				if (isSelected) {
@@ -853,7 +862,7 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 			Composite originalComposite = g2d.getComposite();
 			g2d.setComposite(alphaComposite);
 
-			g.setColor(Color.white);
+			g.setColor(Colors.BACKGROUND);
 			g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
 
 			g2d.setComposite(originalComposite);

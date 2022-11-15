@@ -17,6 +17,7 @@ package ghidra.formats.gfilesystem;
 
 import java.util.List;
 
+import docking.widgets.SelectFromListDialog;
 import ghidra.formats.gfilesystem.factory.FileSystemInfoRec;
 
 /**

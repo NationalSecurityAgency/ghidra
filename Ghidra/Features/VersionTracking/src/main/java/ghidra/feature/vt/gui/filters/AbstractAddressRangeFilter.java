@@ -30,11 +30,14 @@ import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GHtmlLabel;
 import docking.widgets.textfield.HexIntegerFormatter;
+import generic.theme.GColor;
 import ghidra.feature.vt.api.main.VTAssociation;
 import ghidra.feature.vt.gui.provider.matchtable.NumberRangeProducer;
 import ghidra.feature.vt.gui.provider.matchtable.NumberRangeSubFilterChecker;
 import ghidra.framework.options.SaveState;
 import ghidra.program.model.address.Address;
+import ghidra.util.ColorUtils;
+import ghidra.util.WebColors;
 
 public abstract class AbstractAddressRangeFilter<T> extends AncillaryFilter<T>
 		implements NumberRangeSubFilterChecker, NumberRangeProducer {
@@ -45,6 +48,8 @@ public abstract class AbstractAddressRangeFilter<T> extends AncillaryFilter<T>
 	private static final String LOWER_RANGE_SELECTED_VALUE_KEY = "lower.range.selected.value.key";
 	private static final String UPPER_RANGE_SELECTED_VALUE_KEY = "upper.range.selected.value.key";
 	private static final String IS_ENABLED_VALUE_KEY = "is.enabled.value.key";
+
+	private static final Color FG_TOOLTIP_DEFAULT = new GColor("color.fg.version.tracking.tooltip");
 
 	private static final Integer BASE_COMPONENT_LAYER = 1;
 	private static final Integer HOVER_COMPONENT_LAYER = 2;
@@ -118,8 +123,10 @@ public abstract class AbstractAddressRangeFilter<T> extends AncillaryFilter<T>
 		//
 		// Lower Score Panel
 		//
+		String fgColor = WebColors.toString(FG_TOOLTIP_DEFAULT);
 		lowerRangePanel = new JPanel(new GridLayout(2, 1));
-		JLabel lowLabel = new GHtmlLabel("<html><font size=\"2\" color=\"808080\">low</font>");
+		JLabel lowLabel =
+			new GHtmlLabel("<html><font size=\"2\" color=\"" + fgColor + "\">low</font>");
 		lowLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		lowLabel.setVerticalAlignment(SwingConstants.BOTTOM);
 		lowerRangePanel.add(lowLabel);
@@ -138,7 +145,8 @@ public abstract class AbstractAddressRangeFilter<T> extends AncillaryFilter<T>
 		// Upper Score Panel
 		//
 		upperRangePanel = new JPanel(new GridLayout(2, 1));
-		JLabel upperLabel = new GHtmlLabel("<html><font size=\"2\" color=\"808080\">high</font>");
+		JLabel upperLabel =
+			new GHtmlLabel("<html><font size=\"2\" color=\"" + fgColor + "\">high</font>");
 		upperLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		upperLabel.setVerticalAlignment(SwingConstants.BOTTOM);
 		upperRangePanel.add(upperLabel);
@@ -201,7 +209,7 @@ public abstract class AbstractAddressRangeFilter<T> extends AncillaryFilter<T>
 			@Override
 			protected void paintComponent(Graphics g) {
 				Color bg = getBackground();
-				Color disabledColor = new Color(bg.getRed(), bg.getGreen(), bg.getBlue(), 100);
+				Color disabledColor = ColorUtils.withAlpha(bg, 100);
 				g.setColor(disabledColor);
 				g.fillRect(0, 0, getWidth(), getHeight());
 			}

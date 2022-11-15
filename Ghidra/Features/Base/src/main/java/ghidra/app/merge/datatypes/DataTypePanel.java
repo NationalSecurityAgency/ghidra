@@ -23,6 +23,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextPane;
 import javax.swing.text.*;
 
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.merge.MergeConstants;
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
@@ -39,8 +40,7 @@ import ghidra.util.UniversalID;
  */
 class DataTypePanel extends JPanel {
 
-	private static final long serialVersionUID = 1L;
-	public Color SOURCE_COLOR = new Color(0, 140, 0);
+	public Color SOURCE_COLOR = Palette.GREEN;
 	private DataType dataType;
 	private JTextPane textPane;
 	private StyledDocument doc;
@@ -110,28 +110,28 @@ class DataTypePanel extends JPanel {
 		offsetAttrSet = new SimpleAttributeSet();
 		offsetAttrSet.addAttribute(StyleConstants.FontFamily, "Monospaced");
 		offsetAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(12));
-		offsetAttrSet.addAttribute(StyleConstants.Foreground, Color.BLACK);
+		offsetAttrSet.addAttribute(StyleConstants.Foreground, Palette.BLACK);
 
 		contentAttrSet = new SimpleAttributeSet();
 		contentAttrSet.addAttribute(StyleConstants.FontFamily, "Monospaced");
 		contentAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(12));
-		contentAttrSet.addAttribute(StyleConstants.Foreground, Color.BLUE);
+		contentAttrSet.addAttribute(StyleConstants.Foreground, Palette.BLUE);
 
 		fieldNameAttrSet = new SimpleAttributeSet();
 		fieldNameAttrSet.addAttribute(StyleConstants.FontFamily, "Monospaced");
 		fieldNameAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(12));
-		fieldNameAttrSet.addAttribute(StyleConstants.Foreground, new Color(204, 0, 204));
+		fieldNameAttrSet.addAttribute(StyleConstants.Foreground, Palette.MAGENTA);
 
 		commentAttrSet = new SimpleAttributeSet();
 		commentAttrSet.addAttribute(StyleConstants.FontFamily, "Monospaced");
 		commentAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(12));
-		commentAttrSet.addAttribute(StyleConstants.Foreground, new Color(0, 204, 51));
+		commentAttrSet.addAttribute(StyleConstants.Foreground, Palette.LIME);
 
 		deletedAttrSet = new SimpleAttributeSet();
 		deletedAttrSet.addAttribute(StyleConstants.FontFamily, "Tahoma");
 		deletedAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(12));
 		deletedAttrSet.addAttribute(StyleConstants.Bold, Boolean.TRUE);
-		deletedAttrSet.addAttribute(StyleConstants.Foreground, Color.RED);
+		deletedAttrSet.addAttribute(StyleConstants.Foreground, Palette.RED);
 
 		setDataType(dataType);
 	}

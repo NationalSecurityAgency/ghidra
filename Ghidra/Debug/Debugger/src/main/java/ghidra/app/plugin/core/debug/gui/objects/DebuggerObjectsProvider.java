@@ -43,6 +43,8 @@ import docking.widgets.OptionDialog;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel;
 import docking.widgets.tree.GTree;
 import generic.jar.ResourceFile;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
@@ -123,76 +125,76 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	public static final String OPTION_NAME_DEFAULT_BACKGROUND_COLOR = "Object Colors.Background";
 
 	@AutoOptionDefined( //
-		name = OPTION_NAME_DEFAULT_FOREGROUND_COLOR, //
-		description = "The default foreground color of items in the objects tree", //
-		help = @HelpInfo(anchor = "colors") //
+			name = OPTION_NAME_DEFAULT_FOREGROUND_COLOR, //
+			description = "The default foreground color of items in the objects tree", //
+			help = @HelpInfo(anchor = "colors") //
 	)
-	Color defaultForegroundColor = Color.BLACK;
+	Color defaultForegroundColor = new GColor("color.fg.debugger.plugin.objects.default");
 	@AutoOptionDefined( //
-		name = OPTION_NAME_DEFAULT_BACKGROUND_COLOR, //
-		description = "The default background color of items in the objects tree", //
-		help = @HelpInfo(anchor = "colors") //
+			name = OPTION_NAME_DEFAULT_BACKGROUND_COLOR, //
+			description = "The default background color of items in the objects tree", //
+			help = @HelpInfo(anchor = "colors") //
 	)
-	Color defaultBackgroundColor = Color.WHITE;
+	Color defaultBackgroundColor = new GColor("color.bg.debugger.plugin.objects.default");
 
 	@AutoOptionDefined( //
-		name = OPTION_NAME_INVISIBLE_FOREGROUND_COLOR, //
-		description = "The foreground color for items normally not visible (toggleable)", //
-		help = @HelpInfo(anchor = "colors") //
+			name = OPTION_NAME_INVISIBLE_FOREGROUND_COLOR, //
+			description = "The foreground color for items normally not visible (toggleable)", //
+			help = @HelpInfo(anchor = "colors") //
 	)
-	Color invisibleForegroundColor = Color.LIGHT_GRAY;
+	Color invisibleForegroundColor = new GColor("color.fg.debugger.plugin.objects.invisible");
 	@AutoOptionDefined( //
-		name = OPTION_NAME_INVALIDATED_FOREGROUND_COLOR, //
-		description = "The foreground color for items no longer valid", //
-		help = @HelpInfo(anchor = "colors") //
+			name = OPTION_NAME_INVALIDATED_FOREGROUND_COLOR, //
+			description = "The foreground color for items no longer valid", //
+			help = @HelpInfo(anchor = "colors") //
 	)
-	Color invalidatedForegroundColor = Color.LIGHT_GRAY;
+	Color invalidatedForegroundColor = new GColor("color.fg.debugger.plugin.objects.invalidated");
 	@AutoOptionDefined( //
-		name = OPTION_NAME_MODIFIED_FOREGROUND_COLOR, //
-		description = "The foreground color for modified items in the objects tree", //
-		help = @HelpInfo(anchor = "colors") //
+			name = OPTION_NAME_MODIFIED_FOREGROUND_COLOR, //
+			description = "The foreground color for modified items in the objects tree", //
+			help = @HelpInfo(anchor = "colors") //
 	)
-	Color modifiedForegroundColor = Color.RED;
+	Color modifiedForegroundColor = new GColor("color.fg.debugger.plugin.objects.modified");
 	@AutoOptionDefined( //
-		name = OPTION_NAME_SUBSCRIBED_FOREGROUND_COLOR, //
-		description = "The foreground color for subscribed items in the objects tree", //
-		help = @HelpInfo(anchor = "colors") //
+			name = OPTION_NAME_SUBSCRIBED_FOREGROUND_COLOR, //
+			description = "The foreground color for subscribed items in the objects tree", //
+			help = @HelpInfo(anchor = "colors") //
 	)
-	Color subscribedForegroundColor = Color.BLACK;
+	Color subscribedForegroundColor = new GColor("color.fg.debugger.plugin.objects.subscribed");
 	@AutoOptionDefined( //
-		name = OPTION_NAME_ERROR_FOREGROUND_COLOR, //
-		description = "The foreground color for items in error", //
-		help = @HelpInfo(anchor = "colors") //
+			name = OPTION_NAME_ERROR_FOREGROUND_COLOR, //
+			description = "The foreground color for items in error", //
+			help = @HelpInfo(anchor = "colors") //
 	)
-	Color errorForegroundColor = Color.RED;
+	Color errorForegroundColor = new GColor("color.fg.debugger.plugin.objects.error");
 	@AutoOptionDefined( //
-		name = OPTION_NAME_INTRINSIC_FOREGROUND_COLOR, //
-		description = "The foreground color for intrinsic items in the objects tree", //
-		help = @HelpInfo(anchor = "colors") //
+			name = OPTION_NAME_INTRINSIC_FOREGROUND_COLOR, //
+			description = "The foreground color for intrinsic items in the objects tree", //
+			help = @HelpInfo(anchor = "colors") //
 	)
-	Color intrinsicForegroundColor = Color.BLUE;
+	Color intrinsicForegroundColor = new GColor("color.fg.debugger.plugin.objects.intrinsic");
 	@AutoOptionDefined( //
-		name = OPTION_NAME_TARGET_FOREGROUND_COLOR, //
-		description = "The foreground color for target object items in the objects tree", //
-		help = @HelpInfo(anchor = "colors") //
+			name = OPTION_NAME_TARGET_FOREGROUND_COLOR, //
+			description = "The foreground color for target object items in the objects tree", //
+			help = @HelpInfo(anchor = "colors") //
 	)
-	Color targetForegroundColor = Color.MAGENTA;
+	Color targetForegroundColor = new GColor("color.fg.debugger.plugin.objects.target");
 	@AutoOptionDefined( //
-		name = OPTION_NAME_ACCESSOR_FOREGROUND_COLOR, //
-		description = "The foreground color for property accessor items in the objects tree", //
-		help = @HelpInfo(anchor = "colors") //
+			name = OPTION_NAME_ACCESSOR_FOREGROUND_COLOR, //
+			description = "The foreground color for property accessor items in the objects tree", //
+			help = @HelpInfo(anchor = "colors") //
 	)
-	Color accessorForegroundColor = Color.LIGHT_GRAY;
+	Color accessorForegroundColor = new GColor("color.fg.debugger.plugin.objects.accessor");
 	@AutoOptionDefined( //
-		name = OPTION_NAME_LINK_FOREGROUND_COLOR, //
-		description = "The foreground color for links to items in the objects tree", //
-		help = @HelpInfo(anchor = "colors") //
+			name = OPTION_NAME_LINK_FOREGROUND_COLOR, //
+			description = "The foreground color for links to items in the objects tree", //
+			help = @HelpInfo(anchor = "colors") //
 	)
-	Color linkForegroundColor = Color.GREEN.darker();
+	Color linkForegroundColor = new GColor("color.fg.debugger.plugin.objects.link");
 
 	@AutoOptionDefined( //
-		name = "Default Extended Step", //
-		description = "The default string for the extended step command" //
+			name = "Default Extended Step", //
+			description = "The default string for the extended step command" //
 	//help = @HelpInfo(anchor = "colors") //
 	)
 	String extendedStep = "";
@@ -281,7 +283,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		this.asTree = asTree;
 		setIcon(asTree ? ObjectTree.ICON_TREE : ObjectTable.ICON_TABLE);
 
-		targetMap = new LinkedMap<String, ObjectContainer>();
+		targetMap = new LinkedMap<>();
 		refSet = new HashSet<>();
 		getRoot().propagateProvider(this);
 
@@ -658,7 +660,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			}
 		}
 		model.addAll(list);
-		return new ObjectTable<ObjectAttributeRow>(container, ObjectAttributeRow.class, model);
+		return new ObjectTable<>(container, ObjectAttributeRow.class, model);
 	}
 
 	private ObjectTable<ObjectElementRow> buildTableFromElements(ObjectContainer container) {
@@ -678,7 +680,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			new ObjectEnumeratedColumnTableModel<>(name, cols);
 		model.addAll(list);
 		ObjectTable<ObjectElementRow> table =
-			new ObjectTable<ObjectElementRow>(container, ObjectElementRow.class, model);
+			new ObjectTable<>(container, ObjectElementRow.class, model);
 		for (Object obj : map.values()) {
 			if (obj instanceof TargetObject) {
 				TargetObject ref = (TargetObject) obj;
@@ -744,7 +746,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 
 	static List<ObjectContainer> getContainersFromObjects(Map<String, ?> objectMap,
 			TargetObject parent, boolean usingAttributes) {
-		List<ObjectContainer> result = new ArrayList<ObjectContainer>();
+		List<ObjectContainer> result = new ArrayList<>();
 		if (parent == null || parent instanceof DummyTargetObject) {
 			return result;
 		}
@@ -826,7 +828,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 
 	public ObjectContainer getParent(ObjectContainer container) {
 		List<String> path = container.getTargetObject().getPath();
-		List<String> ppath = new ArrayList<String>();
+		List<String> ppath = new ArrayList<>();
 		for (String link : path) {
 			ppath.add(link);
 		}
@@ -2028,7 +2030,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			case OPTION_NAME_TARGET_FOREGROUND_COLOR:
 				return targetForegroundColor;
 			default:
-				return Color.BLACK;
+				return Colors.FOREGROUND;
 		}
 	}
 

@@ -26,6 +26,7 @@ import javax.swing.KeyStroke;
 import org.junit.*;
 
 import generic.stl.Pair;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.gotoquery.GoToServicePlugin;
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
@@ -91,7 +92,7 @@ public class ToolPluginOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 		String optionName = " Highlight Color";
 		Color highlightColor = options.getColor(optionName, null);
 		assertNotNull("Existing option has been removed--update test", highlightColor);
-		options.setColor(optionName, Color.RED);
+		options.setColor(optionName, Palette.RED);
 
 		optionName = "Highlight Search Results";
 		boolean highlightResults = options.getBoolean(optionName, true);

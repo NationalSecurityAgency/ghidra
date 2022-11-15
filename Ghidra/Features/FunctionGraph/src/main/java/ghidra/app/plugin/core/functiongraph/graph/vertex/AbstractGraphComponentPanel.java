@@ -22,6 +22,7 @@ import java.awt.geom.Point2D;
 import javax.swing.*;
 
 import edu.uci.ics.jung.visualization.VisualizationViewer;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.plugin.core.functiongraph.graph.FGEdge;
 import ghidra.app.plugin.core.functiongraph.mvc.FGController;
 import ghidra.app.plugin.core.functiongraph.mvc.FGView;
@@ -133,7 +134,7 @@ public abstract class AbstractGraphComponentPanel extends JPanel {
 	abstract ProgramLocation getProgramLocation();
 
 	boolean isDefaultBackgroundColor() {
-		return getBackgroundColor().equals(Color.WHITE);
+		return getBackgroundColor().equals(Colors.BACKGROUND);
 	}
 
 	boolean isHeaderClick(Component clickedComponent) {

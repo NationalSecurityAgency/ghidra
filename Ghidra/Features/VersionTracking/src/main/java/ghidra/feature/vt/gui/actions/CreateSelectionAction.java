@@ -21,6 +21,7 @@ import javax.swing.Icon;
 
 import docking.ActionContext;
 import docking.action.*;
+import generic.theme.GIcon;
 import ghidra.feature.vt.api.main.VTAssociation;
 import ghidra.feature.vt.api.main.VTMatch;
 import ghidra.feature.vt.gui.plugin.VTController;
@@ -29,12 +30,11 @@ import ghidra.feature.vt.gui.provider.matchtable.VTMatchContext;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
-import resources.ResourceManager;
 
 public class CreateSelectionAction extends DockingAction {
 	public static final String NAME = "Create Match Table Selection";
 	private static final String MENU_GROUP = "Selection";
-	private static final Icon ICON = ResourceManager.loadImage("images/text_align_justify.png");
+	private static final Icon ICON = new GIcon("icon.version.tracking.action.create.selection");
 	private final VTController controller;
 
 	public CreateSelectionAction(VTController controller) {
@@ -44,7 +44,8 @@ public class CreateSelectionAction extends DockingAction {
 		setPopupMenuData(new MenuData(new String[] { "Make Selections" }, ICON, MENU_GROUP));
 		setEnabled(false);
 		setHelpLocation(new HelpLocation("VersionTrackingPlugin", "Make Selections"));
-		setDescription("Makes selections in both the source and destination tools for the selected matches.");
+		setDescription(
+			"Makes selections in both the source and destination tools for the selected matches.");
 	}
 
 	@Override

@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.swing.ImageIcon;
 import javax.swing.JEditorPane;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
@@ -35,6 +34,8 @@ import javax.swing.text.html.*;
 import javax.swing.text.html.HTML.Tag;
 
 import generic.jar.ResourceFile;
+import generic.theme.GIcon;
+import generic.theme.Gui;
 import ghidra.framework.Application;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.Msg;
@@ -52,7 +53,8 @@ import utilities.util.FileUtilities;
  */
 public class GHelpHTMLEditorKit extends HTMLEditorKit {
 
-	private static final String G_HELP_STYLE_SHEET = "help/shared/Frontpage.css";
+	private static final String G_HELP_STYLE_SHEET = "Frontpage.css";
+	private static final String DARK_G_HELP_STYLE_SHEET = "DarkStyle.css";
 
 	private static final Pattern EXTERNAL_URL_PATTERN = Pattern.compile("https?://.*");
 
@@ -319,12 +321,21 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 	}
 
 	private URL getGStyleSheetURL() {
-		URL GStyleSheetURL = ResourceManager.getResource(G_HELP_STYLE_SHEET);
-		if (GStyleSheetURL != null) {
-			return GStyleSheetURL;
+
+		if (Gui.isDarkTheme()) {
+			return findStyleSheet(DARK_G_HELP_STYLE_SHEET);
 		}
 
-		return findModuleFile("help/shared/FrontPage.css");
+		return findStyleSheet(G_HELP_STYLE_SHEET);
+	}
+
+	private URL findStyleSheet(String name) {
+		URL url = ResourceManager.getResource("help/shared/" + name);
+		if (url != null) {
+			return url;
+		}
+
+		return findModuleFile("help/shared/" + name);
 	}
 
 	private URL findApplicationfile(String relativePath) {
@@ -481,6 +492,12 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 			}
 
 			String srcString = src.toString();
+
+			// check if the srcString is a defined theme icon id
+			if (Gui.hasIcon(srcString)) {
+				return new GIcon(srcString).getUrl();
+			}
+
 			if (isJavaCode(srcString)) {
 				return installImageFromJavaCode(srcString);
 			}
@@ -496,8 +513,7 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 				return null;
 			}
 
-			ImageIcon imageIcon = iconProvider.getIcon();
-			this.image = imageIcon.getImage();
+			this.image = iconProvider.getImage();
 
 			URL url = iconProvider.getOrCreateUrl();
 			return url;

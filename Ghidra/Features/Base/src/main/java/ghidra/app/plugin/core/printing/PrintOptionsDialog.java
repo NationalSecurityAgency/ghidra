@@ -23,13 +23,12 @@ import javax.swing.*;
 import docking.DialogComponentProvider;
 import docking.widgets.button.GRadioButton;
 import docking.widgets.checkbox.GCheckBox;
+import generic.theme.Gui;
 import ghidra.util.HelpLocation;
 
 public class PrintOptionsDialog extends DialogComponentProvider {
 
-	private final Font HEADER_FONT = new Font("SansSerif", Font.PLAIN, 10);
-	private final FontMetrics HEADER_METRICS = rootPanel.getFontMetrics(HEADER_FONT);
-
+	private static final String FONT_ID = "font.print";
 	private boolean selectionEnabled;
 	private boolean cancelled = false;
 
@@ -163,11 +162,11 @@ public class PrintOptionsDialog extends DialogComponentProvider {
 	}
 
 	public Font getHeaderFont() {
-		return HEADER_FONT;
+		return Gui.getFont(FONT_ID);
 	}
 
 	public FontMetrics getHeaderMetrics() {
-		return HEADER_METRICS;
+		return rootPanel.getFontMetrics(getHeaderFont());
 	}
 
 	public boolean showHeader() {
@@ -183,7 +182,8 @@ public class PrintOptionsDialog extends DialogComponentProvider {
 	}
 
 	public int getHeaderHeight() {
-		return HEADER_METRICS.getMaxAscent() + HEADER_METRICS.getMaxDescent();
+		FontMetrics metrics = getHeaderMetrics();
+		return metrics.getMaxAscent() + metrics.getMaxDescent();
 	}
 
 	public void setSelectionEnabled(boolean selectionEnabled) {

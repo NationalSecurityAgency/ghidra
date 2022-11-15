@@ -27,6 +27,7 @@ import org.junit.*;
 import docking.ActionContext;
 import docking.action.DockingActionIf;
 import edu.uci.ics.jung.graph.Graph;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.plugin.core.clear.ClearPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.functiongraph.graph.FGEdge;
@@ -435,7 +436,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		// The coloring algorithm:
 		// 1) If the grouped vertices are not colored, then use the default group color
 		// 2) If the grouped vertices are colored, but not all the same color,
-		//    then use the default group color=
+		//    then use the default group color
 		// 3) If all grouped vertices share the same color, then make the group that color
 		//
 		// This test is for 1)
@@ -471,7 +472,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		// The coloring algorithm:
 		// 1) If the grouped vertices are not colored, then use the default group color
 		// 2) If the grouped vertices are colored, but not all the same color,
-		//    then use the default group color=
+		//    then use the default group color
 		// 3) If all grouped vertices share the same color, then make the group that color
 		//
 		// This test is for 2)
@@ -485,7 +486,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		FGVertex v2 = vertex("01002d0f");
 
 		// color just one of the vertices
-		Color newColor = Color.RED;
+		Color newColor = Palette.RED;
 		color(v1, newColor);
 
 		GroupedFunctionGraphVertex group = group("A", v1, v2);
@@ -513,7 +514,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		// The coloring algorithm:
 		// 1) If the grouped vertices are not colored, then use the default group color
 		// 2) If the grouped vertices are colored, but not all the same color,
-		//    then use the default group color=
+		//    then use the default group color
 		// 3) If all grouped vertices share the same color, then make the group that color
 		//
 		// This test is for 3)
@@ -527,7 +528,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		FGVertex v2 = vertex("01002d0f");
 
 		// color just one of the vertices
-		Color newColor = Color.RED;
+		Color newColor = Palette.RED;
 		color(v1, newColor);
 		color(v2, newColor);
 
@@ -564,7 +565,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		//
 		// Change the group color
 		//
-		Color newGroupColor = Color.CYAN;
+		Color newGroupColor = Palette.CYAN;
 		color(group, newGroupColor);
 
 		//
@@ -591,7 +592,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		FGVertex v2 = vertex("01002d0f");
 
 		// color just one of the vertices
-		Color newColor = Color.RED;
+		Color newColor = Palette.RED;
 		color(v1, newColor);
 
 		GroupedFunctionGraphVertex group = group("A", v1, v2);
@@ -599,7 +600,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		//
 		// Change the group color
 		//
-		Color newGroupColor = Color.CYAN;
+		Color newGroupColor = Palette.CYAN;
 		color(group, newGroupColor);
 
 		//
@@ -625,7 +626,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		FGVertex v2 = vertex("01002d0f");
 
 		// color just one of the vertices
-		Color newColor = Color.RED;
+		Color newColor = Palette.RED;
 		color(v1, newColor);
 		color(v2, newColor);
 
@@ -634,7 +635,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		//
 		// Change the group color
 		//
-		Color newGroupColor = Color.CYAN;
+		Color newGroupColor = Palette.CYAN;
 		color(group, newGroupColor);
 
 		//
@@ -663,7 +664,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		//
 		// Change the group color
 		//
-		Color newGroupColor = Color.CYAN;
+		Color newGroupColor = Palette.CYAN;
 		color(group, newGroupColor);
 
 		//
@@ -738,7 +739,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		//
 		// Color just one of the vertices
 		//
-		Color newColor = Color.RED;
+		Color newColor = Palette.RED;
 		color(v1, newColor);
 
 		//
@@ -782,7 +783,7 @@ public class FunctionGraphGroupVertices1Test extends AbstractFunctionGraphTest {
 		//
 		// Color just one of the vertices
 		//
-		Color newColor = Color.RED;
+		Color newColor = Palette.RED;
 		color(v1, newColor);
 
 		//

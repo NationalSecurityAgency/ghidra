@@ -33,6 +33,7 @@ import docking.action.ToggleDockingAction;
 import docking.tool.ToolConstants;
 import docking.widgets.fieldpanel.FieldPanel;
 import generic.test.AbstractGenericTest;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.events.ProgramLocationPluginEvent;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.marker.MarkerManagerPlugin;
@@ -271,10 +272,10 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 		builder.setIntProperty("10018ff", "Space", 1);
 		builder.setIntProperty("100248c", "Space", 1);
 
-		builder.setObjectProperty("100248c", "testColor", new SaveableColor(Color.CYAN));
-		builder.setObjectProperty("10039dd", "testColor", new SaveableColor(Color.BLACK));
-		builder.setObjectProperty("10039f8", "testColor", new SaveableColor(Color.BLACK));
-		builder.setObjectProperty("10039fe", "testColor", new SaveableColor(Color.RED));
+		builder.setObjectProperty("100248c", "testColor", new SaveableColor(Palette.CYAN));
+		builder.setObjectProperty("10039dd", "testColor", new SaveableColor(Palette.BLACK));
+		builder.setObjectProperty("10039f8", "testColor", new SaveableColor(Palette.BLACK));
+		builder.setObjectProperty("10039fe", "testColor", new SaveableColor(Palette.RED));
 
 		AbstractGenericTest.setInstanceField("recordChanges", builder.getProgram(), Boolean.TRUE);
 
@@ -450,10 +451,10 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 		builder.setIntProperty("1002428", "Space", 1);
 		builder.setIntProperty("100248c", "Space", 1);
 
-		builder.setObjectProperty("100248c", "testColor", new SaveableColor(Color.WHITE));
-		builder.setObjectProperty("10039f1", "testColor", new SaveableColor(Color.BLACK));
-		builder.setObjectProperty("10039f8", "testColor", new SaveableColor(Color.BLACK));
-		builder.setObjectProperty("10039fe", "testColor", new SaveableColor(Color.GREEN));
+		builder.setObjectProperty("100248c", "testColor", new SaveableColor(Palette.WHITE));
+		builder.setObjectProperty("10039f1", "testColor", new SaveableColor(Palette.BLACK));
+		builder.setObjectProperty("10039f8", "testColor", new SaveableColor(Palette.BLACK));
+		builder.setObjectProperty("10039fe", "testColor", new SaveableColor(Palette.GREEN));
 
 		AbstractGenericTest.setInstanceField("recordChanges", builder.getProgram(), Boolean.TRUE);
 

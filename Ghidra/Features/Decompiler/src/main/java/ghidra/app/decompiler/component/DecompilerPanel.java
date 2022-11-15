@@ -37,6 +37,7 @@ import docking.widgets.fieldpanel.field.FieldElement;
 import docking.widgets.fieldpanel.listener.*;
 import docking.widgets.fieldpanel.support.*;
 import docking.widgets.indexedscrollpane.IndexedScrollPane;
+import generic.theme.GColor;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.hover.DecompilerHoverService;
 import ghidra.app.decompiler.component.margin.*;
@@ -59,10 +60,11 @@ import ghidra.util.task.SwingUpdateManager;
 public class DecompilerPanel extends JPanel implements FieldMouseListener, FieldLocationListener,
 		FieldSelectionListener, ClangHighlightListener, LayoutListener {
 
-	private final static Color NON_FUNCTION_BACKGROUND_COLOR_DEF = new Color(220, 220, 220);
+	private final static Color NON_FUNCTION_BACKGROUND_COLOR_DEF = new GColor("color.bg.undefined");
 
 	// Default color for specially highlighted tokens
-	private final static Color SPECIAL_COLOR_DEF = new Color(255, 100, 0, 128);
+	private final static Color SPECIAL_COLOR_DEF =
+		new GColor("color.bg.decompiler.highlights.special");
 
 	private final DecompilerController controller;
 	private final DecompileOptions options;
@@ -116,7 +118,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 		layoutController = new ClangLayoutController(options, this, metrics, hlFactory);
 		fieldPanel = new DecompilerFieldPanel(layoutController);
-		setBackground(options.getCodeViewerBackgroundColor());
+		setBackground(options.getBackgroundColor());
 
 		scroller = new IndexedScrollPane(fieldPanel);
 		fieldPanel.addFieldSelectionListener(this);
@@ -520,7 +522,8 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 			return;
 		}
 
-		List<ClangToken> tokens = DecompilerUtils.getTokensFromView(layoutController.getFields(), address);
+		List<ClangToken> tokens =
+			DecompilerUtils.getTokensFromView(layoutController.getFields(), address);
 		goToBeginningOfLine(tokens);
 	}
 
@@ -570,7 +573,8 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 			return;
 		}
 
-		int firstLineNumber = DecompilerUtils.findIndexOfFirstField(tokens, layoutController.getFields());
+		int firstLineNumber =
+			DecompilerUtils.findIndexOfFirstField(tokens, layoutController.getFields());
 		if (firstLineNumber != -1) {
 			fieldPanel.goTo(BigInteger.valueOf(firstLineNumber), 0, 0, 0, false);
 		}
@@ -629,7 +633,8 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 			fieldSelection = new FieldSelection();
 		}
 		else {
-			List<ClangToken> tokens = DecompilerUtils.getTokens(layoutController.getRoot(), selection);
+			List<ClangToken> tokens =
+				DecompilerUtils.getTokens(layoutController.getRoot(), selection);
 			fieldSelection = DecompilerUtils.getFieldSelection(tokens);
 		}
 		fieldPanel.setSelection(fieldSelection);
@@ -1159,7 +1164,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	}
 
 	public void optionsChanged(DecompileOptions decompilerOptions) {
-		setBackground(decompilerOptions.getCodeViewerBackgroundColor());
+		setBackground(decompilerOptions.getBackgroundColor());
 		currentVariableHighlightColor = options.getCurrentVariableHighlightColor();
 		middleMouseHighlightColor = decompilerOptions.getMiddleMouseHighlightColor();
 		middleMouseHighlightButton = decompilerOptions.getMiddleMouseHighlightButton();

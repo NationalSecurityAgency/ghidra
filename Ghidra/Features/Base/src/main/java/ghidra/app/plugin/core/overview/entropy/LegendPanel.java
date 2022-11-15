@@ -48,7 +48,7 @@ public class LegendPanel extends JPanel {
 		return new Dimension(210, 300);
 	}
 
-	public void setPalette(Palette pal) {
+	public void setPalette(OverviewPalette pal) {
 		palettePanel.setPalette(pal);
 		knotPanel.setPalette(pal);
 	}

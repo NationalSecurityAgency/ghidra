@@ -36,12 +36,12 @@ import docking.widgets.dialogs.InputDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.label.*;
+import generic.theme.GIcon;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.framework.GenericRunInfo;
 import ghidra.framework.client.*;
 import ghidra.framework.main.datatable.ProjectDataTablePanel;
-import ghidra.framework.main.datatree.ClearCutAction;
-import ghidra.framework.main.datatree.ProjectDataTreePanel;
+import ghidra.framework.main.datatree.*;
 import ghidra.framework.main.projectdata.actions.*;
 import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
@@ -52,7 +52,6 @@ import ghidra.framework.remote.User;
 import ghidra.util.*;
 import ghidra.util.filechooser.GhidraFileChooserModel;
 import ghidra.util.filechooser.GhidraFileFilter;
-import resources.ResourceManager;
 
 /**
  * Main plugin component for the Ghidra Project Window, which is
@@ -119,9 +118,9 @@ public class FrontEndPlugin extends Plugin
 	private JPanel connectionIconPanel;
 	private JButton connectionButton;
 
-	static final Icon CONNECTED_ICON = ResourceManager.loadImage("images/connected.gif");
-	static final Icon DISCONNECTED_ICON = ResourceManager.loadImage("images/disconnected.gif");
-	private Icon emptyIcon = ResourceManager.loadImage("images/EmptyIcon.gif");
+	static final Icon CONNECTED_ICON = new GIcon("icon.frontend.project.connected");
+	static final Icon DISCONNECTED_ICON = new GIcon("icon.frontend.project.disconnected");
+	private static final Icon EMPTY_ICON = new GIcon("icon.empty.20");
 
 	private FrontEndProvider frontEndProvider;
 
@@ -131,12 +130,12 @@ public class FrontEndPlugin extends Plugin
 	private ProjectDataPasteAction pasteAction;
 	private ProjectDataRenameAction renameAction;
 	private ProjectDataOpenDefaultToolAction openAction;
-	private ProjectDataExpandAction expandAction;
-	private ProjectDataCollapseAction collapseAction;
+	private ProjectDataExpandAction<FrontEndProjectTreeContext> expandAction;
+	private ProjectDataCollapseAction<FrontEndProjectTreeContext> collapseAction;
 	private ProjectDataSelectAction selectAction;
 	private ProjectDataReadOnlyAction readOnlyAction;
 	private ProjectDataRefreshAction refreshAction;
-	private ProjectDataNewFolderAction newFolderAction;
+	private ProjectDataNewFolderAction<FrontEndProjectTreeContext> newFolderAction;
 	private ProjectDataDeleteAction deleteAction;
 	protected List<DockingAction> openActions = new ArrayList<>();
 
@@ -671,7 +670,7 @@ public class FrontEndPlugin extends Plugin
 			connectionIconPanel.remove(connectionButton);
 		}
 		if (project == null || project.getRepository() == null) {
-			connectionLabel = new GIconLabel(emptyIcon);
+			connectionLabel = new GIconLabel(EMPTY_ICON);
 			connectionIconPanel.add(connectionLabel);
 			return;
 		}

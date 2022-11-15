@@ -49,10 +49,7 @@
 
 <tocroot>
 
-<tocdef id="Root"
-		  sortgroup="a"
-	      text="Welcome to Ghidra Help" 
-	      target="help/topics/Misc/Welcome_to_Ghidra_Help.htm">
+<tocref id="Root">
 
     <tocdef id="Intro" sortgroup="1a" text="Introduction"  target="help/topics/Intro/Intro.htm" />
     
@@ -67,6 +64,7 @@
         <tocdef id="Ghidra Project Window" sortgroup="g" text="Ghidra Project Window"  target="help/topics/FrontEndPlugin/Ghidra_Front_end.htm#Project_Window" /> 
         <tocdef id="Ghidra Server" sortgroup="h" text="Ghidra Server" target="help/topics/GhidraServer/GhidraServer.htm" />
         <tocdef id="About Ghidra" sortgroup="i" text="About Ghidra" target="help/topics/About/About_Ghidra.htm" />
+
     </tocdef>
 
 
@@ -382,11 +380,11 @@
     <tocdef id="Glossary" sortgroup="i" text="Glossary"  target="help/topics/Glossary/glossary.htm" />
     <tocdef id="What's New" sortgroup="j" text="What's New" target="docs/WhatsNew.html" />
     <tocdef id="Tips of the Day" sortgroup="k" text="Tips of the Day" target="help/topics/Misc/Tips.htm" />
-    <tocdef id="Appendix" sortgroup="m" text="Appendix"  target="help/topics/Misc/Appendix.htm">
+    <tocdef id="Appendix" sortgroup="z" text="Appendix"  target="help/topics/Misc/Appendix.htm">
         <tocdef id="Block Models" sortgroup="a" text="Block Models"  target="help/topics/BlockModel/Block_Model.htm" />
         <tocdef id="Languages" sortgroup="b" text="Languages"     target="help/topics/LanguageProviderPlugin/Languages.htm" />
     </tocdef>
     
-</tocdef> <!-- End Welcome to Ghidra Help -->
+</tocref> <!-- End Welcome to Ghidra Help -->
 
 </tocroot>

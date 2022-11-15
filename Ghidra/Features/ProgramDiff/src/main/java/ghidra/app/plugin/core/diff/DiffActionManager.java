@@ -18,19 +18,20 @@ package ghidra.app.plugin.core.diff;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import docking.ActionContext;
 import docking.action.*;
 import docking.tool.ToolConstants;
 import docking.widgets.OptionDialog;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.codebrowser.OtherPanelContext;
 import ghidra.app.services.CodeViewerService;
 import ghidra.app.util.HelpTopics;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.HelpLocation;
-import resources.ResourceManager;
+import resources.Icons;
 
 /**
  * Creates the actions for the program diff plugin.
@@ -41,7 +42,6 @@ class DiffActionManager {
 	private static final String GET_DIFF_GROUP = "GetDiff";
 	private static final String DIFF_INFO_GROUP = "DiffInfo";
 	private static final String DIFF_NAVIGATE_GROUP = "DiffNavigate";
-	private static final String TOGGLE_VIEW_ICON_NAME = "images/table_relationship.png";
 	private static final String GROUP = "Diff";
 	private ProgramDiffPlugin plugin;
 	private CodeViewerService codeViewerService;
@@ -251,7 +251,7 @@ class DiffActionManager {
 				plugin.applyDiff();
 			}
 		};
-		ImageIcon icon = ResourceManager.loadImage("images/pencil16.png");
+		Icon icon = new GIcon("icon.plugin.programdiff.apply");
 		applyDiffsAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_F3, 0));
 		applyDiffsAction.setPopupMenuData(
 			new MenuData(new String[] { "Apply Selection" }, icon, GROUP));
@@ -265,7 +265,7 @@ class DiffActionManager {
 				plugin.applyDiffAndGoNext();
 			}
 		};
-		icon = ResourceManager.loadImage("images/pencil_arrow16.png");
+		icon = new GIcon("icon.plugin.programdiff.apply.next");
 		String[] applyDiffsPath = { "Apply Selection and Goto Next Difference" };
 		applyDiffsNextAction.setPopupMenuData(new MenuData(applyDiffsPath, icon, GROUP));
 		applyDiffsNextAction.setKeyBindingData(
@@ -281,7 +281,7 @@ class DiffActionManager {
 				plugin.ignoreDiff();
 			}
 		};
-		icon = ResourceManager.loadImage("images/eraser_arrow16.png");
+		icon = new GIcon("icon.plugin.programdiff.ignore");
 		ignoreDiffsAction.setPopupMenuData(new MenuData(
 			new String[] { "Ignore Selection and Goto Next Difference" }, icon, GROUP));
 		ignoreDiffsAction.setDescription(
@@ -294,9 +294,9 @@ class DiffActionManager {
 				plugin.nextDiff();
 			}
 		};
-		icon = ResourceManager.loadImage("images/down.png");
+		icon = Icons.DOWN_ICON;
 		nextDiffAction.setKeyBindingData(
-			new KeyBindingData('N', InputEvent.CTRL_MASK | InputEvent.ALT_MASK));
+			new KeyBindingData('N', InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK));
 		nextDiffAction.setPopupMenuData(
 			new MenuData(new String[] { "Next Difference" }, icon, DIFF_NAVIGATE_GROUP));
 		nextDiffAction.setToolBarData(new ToolBarData(icon, DIFF_NAVIGATE_GROUP));
@@ -308,9 +308,9 @@ class DiffActionManager {
 				plugin.previousDiff();
 			}
 		};
-		icon = ResourceManager.loadImage("images/up.png");
+		icon = Icons.UP_ICON;
 		previousDiffAction.setKeyBindingData(
-			new KeyBindingData('P', InputEvent.CTRL_MASK | InputEvent.ALT_MASK));
+			new KeyBindingData('P', InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK));
 		previousDiffAction.setPopupMenuData(
 			new MenuData(new String[] { "Previous Difference" }, icon, DIFF_NAVIGATE_GROUP));
 		previousDiffAction.setToolBarData(new ToolBarData(icon, DIFF_NAVIGATE_GROUP));
@@ -322,7 +322,7 @@ class DiffActionManager {
 				plugin.showDiffDetails();
 			}
 		};
-		icon = ResourceManager.loadImage("images/xmag.png");
+		icon = new GIcon("icon.search");
 		diffDetailsAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_F5, 0));
 		diffDetailsAction.setPopupMenuData(
 			new MenuData(new String[] { "Location Details..." }, icon, DIFF_INFO_GROUP));
@@ -349,7 +349,7 @@ class DiffActionManager {
 				plugin.diff();
 			}
 		};
-		icon = ResourceManager.loadImage("images/Diff16.png");
+		icon = new GIcon("icon.plugin.programdiff.get.diffs");
 		getDiffsAction.setPopupMenuData(
 			new MenuData(new String[] { "Get Differences..." }, icon, GET_DIFF_GROUP));
 		getDiffsAction.setToolBarData(new ToolBarData(icon, GET_DIFF_GROUP));
@@ -372,7 +372,7 @@ class DiffActionManager {
 				plugin.setP1SelectionOnP2();
 			}
 		};
-		icon = ResourceManager.loadImage("images/DiffSelect16.png");
+		icon = new GIcon("icon.plugin.programdiff.select.by.program");
 		p1SelectToP2Action.setDescription(
 			"Select Program 2 highlights using selection in Program 1.");
 		p1SelectToP2Action.setToolBarData(new ToolBarData(icon, SELECT_GROUP));
@@ -434,10 +434,10 @@ class DiffActionManager {
 					return true;
 				}
 			};
-		icon = ResourceManager.loadImage(TOGGLE_VIEW_ICON_NAME);
+		icon = new GIcon("icon.plugin.programdiff.open.close.program");
 		openCloseProgram2Action.setEnabled(false);
 		openCloseProgram2Action.setKeyBindingData(
-			new KeyBindingData('C', InputEvent.CTRL_MASK | InputEvent.ALT_MASK));
+			new KeyBindingData('C', InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK));
 		openCloseProgram2Action.setToolBarData(new ToolBarData(icon, "zzz"));
 		openCloseProgram2Action.setHelpLocation(
 			new HelpLocation(HelpTopics.DIFF, OPEN_CLOSE_PROGRAM2_ACTION));

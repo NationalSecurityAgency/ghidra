@@ -18,8 +18,8 @@ package ghidra.app.plugin.core.symboltree.nodes;
 import java.awt.datatransfer.DataFlavor;
 
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 
+import generic.theme.GIcon;
 import ghidra.app.util.ToolTipUtils;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.ExternalLocation;
@@ -34,13 +34,13 @@ public class CodeSymbolNode extends SymbolNode {
 	static final DataFlavor EXTERNAL_DATA_FLAVOR =
 		new SymbolTreeDataFlavor("Symbol Tree Data Flavor - External Data");
 
-	private static final Icon CODE_ICON = ResourceManager.loadImage("images/label.png");
-	private static final Icon PINNED_ICON = ResourceManager.loadImage("images/pin.png");
-	private static final Icon EXTERNAL_ICON = ResourceManager.loadImage("images/ExternalData.gif");
-	private static final Icon DISABLED_CODE_ICON =
-		ResourceManager.getDisabledIcon((ImageIcon) CODE_ICON);
-	private static final Icon DISABLED_EXTERNAL_ICON =
-		ResourceManager.getDisabledIcon((ImageIcon) EXTERNAL_ICON);
+	//@formatter:off
+	private static final Icon CODE_ICON = new GIcon("icon.plugin.symboltree.node.code");
+	private static final Icon PINNED_ICON = new GIcon("icon.plugin.symboltree.node.code.pinned");
+	private static final Icon EXTERNAL_ICON = new GIcon("icon.plugin.symboltree.node.code.external");
+	private static final Icon DISABLED_CODE_ICON = ResourceManager.getDisabledIcon(CODE_ICON);
+	private static final Icon DISABLED_EXTERNAL_ICON = ResourceManager.getDisabledIcon(EXTERNAL_ICON);
+	//@formatter:on
 
 	private String tooltip;
 

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +15,17 @@
  */
 package ghidra.feature.vt.gui.util;
 
-import ghidra.feature.vt.gui.filters.AncillaryFilterDialogComponentProvider;
-
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.*;
 
-import resources.ResourceManager;
+import generic.theme.GIcon;
+import ghidra.feature.vt.gui.filters.AncillaryFilterDialogComponentProvider;
 
 public class FilterIconFlashTimer<T> extends Timer implements ActionListener {
 
-	private static final Icon EMPTY_ICON = ResourceManager.loadImage("images/EmptyIcon16.gif");
+	private static final Icon EMPTY_ICON = new GIcon("icon.version.tracking.empty");
 	private static final long MINIMUM_TIME_BETWEEN_FLASHES = 20000;
 	private static final int MAX_FLASH_COUNT = 10;
 

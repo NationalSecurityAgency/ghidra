@@ -48,7 +48,7 @@ class IndexFieldFactory {
 
 		charWidth = fm.charWidth('W');
 		width = ByteViewerComponentProvider.DEFAULT_NUMBER_OF_CHARS * charWidth;
-		missingValueColor = ByteViewerComponentProvider.DEFAULT_MISSING_VALUE_COLOR;
+		missingValueColor = ByteViewerComponentProvider.SEPARATOR_COLOR;
 	}
 
 	/**

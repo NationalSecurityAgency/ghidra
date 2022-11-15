@@ -23,10 +23,11 @@ import javax.swing.JComponent;
 import javax.swing.JTable;
 
 import docking.widgets.table.*;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.framework.plugintool.ServiceProviderStub;
-import ghidra.util.ColorUtils;
 import ghidra.util.table.column.AbstractGColumnRenderer;
 import ghidra.util.table.column.GColumnRenderer;
 
@@ -36,8 +37,12 @@ import ghidra.util.table.column.GColumnRenderer;
 public class AnalysisEnablementTableModel
 		extends GDynamicColumnTableModel<AnalyzerEnablementState, Object> {
 
-	private static Color BG_COLOR_NOT_DEFAULT_ENABLEMENT = new Color(255, 255, 200);
-	private static Color BG_COLOR_NOT_DEFAULT_ENABLEMENT_SELECTED = new Color(177, 212, 236);
+	private static Color FG_COLOR_PROTOTYPE = new GColor("color.fg.analysis.options.prototype");
+
+	private static Color BG_COLOR_NOT_DEFAULT_ENABLEMENT =
+		new GColor("color.bg.analysis.options.not.default.enablement");
+	private static Color BG_COLOR_NOT_DEFAULT_ENABLEMENT_SELECTED =
+		new GColor("color.bg.analysis.options.not.default.enablement.selected");
 
 	private List<AnalyzerEnablementState> analyzerStates;
 	private AnalysisPanel panel;
@@ -203,10 +208,10 @@ public class AnalysisEnablementTableModel
 			}
 
 			String analyzerName = (String) value;
-
 			if (analyzerName.endsWith(AnalysisPanel.PROTOTYPE)) {
-				component.setForeground(
-					ColorUtils.deriveForeground(component.getBackground(), ColorUtils.HUE_RED));
+				if (!data.isSelected()) {
+					component.setForeground(FG_COLOR_PROTOTYPE);
+				}
 			}
 
 			AnalyzerEnablementState state = (AnalyzerEnablementState) data.getRowObject();
@@ -215,10 +220,10 @@ public class AnalysisEnablementTableModel
 				return component;
 			}
 
-			// not the default enablement			
+			// not the default enablement
+			component.setForeground(Palette.BLACK);
 			if (data.isSelected()) {
 				component.setBackground(BG_COLOR_NOT_DEFAULT_ENABLEMENT_SELECTED);
-				component.setForeground(Color.BLACK);
 			}
 			else {
 				component.setBackground(BG_COLOR_NOT_DEFAULT_ENABLEMENT);

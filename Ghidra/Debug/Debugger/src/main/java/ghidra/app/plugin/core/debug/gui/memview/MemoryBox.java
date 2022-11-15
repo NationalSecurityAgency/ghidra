@@ -20,6 +20,8 @@ import java.awt.Graphics;
 import java.util.HashMap;
 import java.util.Map;
 
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors.Java;
 import ghidra.program.model.address.AddressRange;
 import ghidra.trace.model.Lifespan;
 
@@ -34,7 +36,7 @@ public class MemoryBox {
 	protected long stopAddr = -1;
 	protected long startTime;
 	protected long stopTime = -1;
-	protected Color color = Color.BLUE;
+	protected Color color = new GColor("color.bg.debugger.memview.box");
 
 	protected int pixAstart;
 	protected int pixAend;
@@ -108,8 +110,9 @@ public class MemoryBox {
 	}
 
 	public int getAddressPixelWidth() {
-		if (pixAend - pixAstart <= 0)
+		if (pixAend - pixAstart <= 0) {
 			return 1;
+		}
 		return pixAend - pixAstart;
 	}
 
@@ -121,8 +124,9 @@ public class MemoryBox {
 		if (pixTend < pixTstart) {
 			pixTend = boundT;
 		}
-		if (pixTend - pixTstart == 0)
+		if (pixTend - pixTstart == 0) {
 			return 1;
+		}
 		return pixTend - pixTstart;
 	}
 
@@ -147,7 +151,7 @@ public class MemoryBox {
 		int w = vertical ? getTimePixelWidth() : getAddressPixelWidth();
 		int y = vertical ? getAddressPixelStart() : getTimePixelStart();
 		int h = vertical ? getAddressPixelWidth() : getTimePixelWidth();
-		g.setColor(Color.BLACK);
+		g.setColor(Java.BORDER);
 		g.fillRect(x - 1, y - 1, w + 2, h + 2);
 		g.setColor(color);
 		g.fillRect(x, y, w, h);
@@ -158,7 +162,7 @@ public class MemoryBox {
 		int w = vertical ? sz : getAddressPixelWidth();
 		int y = vertical ? getAddressPixelStart() : 0;
 		int h = vertical ? getAddressPixelWidth() : sz;
-		g.setColor(Color.BLACK);
+		g.setColor(Java.BORDER);
 		g.fillRect(x - 1, y - 1, w + 2, h + 2);
 		g.setColor(color);
 		g.fillRect(x, y, w, h);
@@ -169,7 +173,7 @@ public class MemoryBox {
 		int w = vertical ? 1 : sz;
 		int y = vertical ? 0 : getTimePixelStart();
 		int h = vertical ? sz : 1;
-		g.setColor(Color.BLACK);
+		g.setColor(Java.BORDER);
 		g.fillRect(x - 1, y - 1, w + 2, h + 2);
 		g.setColor(color);
 		g.fillRect(x, y, w, h);
@@ -227,10 +231,12 @@ public class MemoryBox {
 	}
 
 	public boolean inPixelRange(long pos) {
-		if (pos < pixTstart)
+		if (pos < pixTstart) {
 			return false;
-		if (pixTend <= 0)
+		}
+		if (pixTend <= 0) {
 			return true;
+		}
 		return pos <= pixTend;
 	}
 

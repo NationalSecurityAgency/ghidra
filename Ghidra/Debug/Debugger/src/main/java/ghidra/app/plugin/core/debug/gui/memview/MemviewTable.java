@@ -21,10 +21,9 @@ import java.awt.event.MouseEvent;
 import java.util.*;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 
 import docking.widgets.filter.FilterListener;
+import generic.theme.GIcon;
 import ghidra.app.services.DebuggerListingService;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRangeImpl;
@@ -32,11 +31,10 @@ import ghidra.program.model.listing.Program;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
 import ghidra.util.task.SwingUpdateManager;
-import resources.ResourceManager;
 
 public class MemviewTable {
 
-	public static final ImageIcon ICON_TABLE = ResourceManager.loadImage("images/table.png");
+	public static final Icon ICON_TABLE = new GIcon("icon.table");
 
 	private MemviewMapModel model;
 	private GhidraTable table;
@@ -61,19 +59,16 @@ public class MemviewTable {
 		component.add(filterPanel, BorderLayout.SOUTH);
 		table.setAutoscrolls(true);
 
-		table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-			@Override
-			public void valueChanged(ListSelectionEvent e) {
-				if (e.getValueIsAdjusting()) {
-					return;
-				}
-				int modelRow = filterPanel.getModelRow(table.getSelectedRow());
-				MemoryBox box = model.getBoxAt(modelRow);
-				if (box != null) {
-					Set<MemoryBox> boxes = new HashSet<MemoryBox>();
-					boxes.add(box);
-					provider.selectPanelPosition(boxes);
-				}
+		table.getSelectionModel().addListSelectionListener(e -> {
+			if (e.getValueIsAdjusting()) {
+				return;
+			}
+			int modelRow = filterPanel.getModelRow(table.getSelectedRow());
+			MemoryBox box = model.getBoxAt(modelRow);
+			if (box != null) {
+				Set<MemoryBox> boxes = new HashSet<>();
+				boxes.add(box);
+				provider.selectPanelPosition(boxes);
 			}
 		});
 		table.addMouseListener(new MouseAdapter() {

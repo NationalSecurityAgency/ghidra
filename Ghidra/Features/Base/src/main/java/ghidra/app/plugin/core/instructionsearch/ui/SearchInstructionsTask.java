@@ -15,19 +15,18 @@
  */
 package ghidra.app.plugin.core.instructionsearch.ui;
 
-import java.awt.Color;
 import java.util.*;
 
-import javax.swing.SwingUtilities;
-
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.plugin.core.instructionsearch.InstructionSearchPlugin;
 import ghidra.app.plugin.core.instructionsearch.model.InstructionMetadata;
 import ghidra.app.plugin.core.instructionsearch.ui.SearchDirectionWidget.Direction;
 import ghidra.app.services.GoToService;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
-import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.*;
 import ghidra.program.util.BytesFieldLocation;
+import ghidra.util.Swing;
 import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
 
@@ -73,8 +72,11 @@ class SearchInstructionsTask extends Task {
 
 		// See if we're searching forward or backwards.
 		boolean forward =
-			searchDialog.getControlPanel().getDirectionWidget().getSearchDirection().equals(
-				Direction.FORWARD);
+			searchDialog.getControlPanel()
+					.getDirectionWidget()
+					.getSearchDirection()
+					.equals(
+						Direction.FORWARD);
 
 		// If we're searching backwards we need to process address ranges in reverse so reverse
 		// the list.
@@ -121,7 +123,7 @@ class SearchInstructionsTask extends Task {
 			//
 			// Note we put these on the swing thread or it will throw off the task monitor display.
 			if (searchResults != null) {
-				SwingUtilities.invokeLater(() -> {
+				Swing.runLater(() -> {
 					goToLocation(searchResults.getAddr());
 					searchDialog.getMessagePanel().clear();
 				});
@@ -134,7 +136,8 @@ class SearchInstructionsTask extends Task {
 
 		// If we've gone through all the ranges and there are still no results, show an 
 		// error message.
-		searchDialog.getMessagePanel().setMessageText("No results found", Color.BLUE);
+		searchDialog.getMessagePanel()
+				.setMessageText("No results found", Messages.NORMAL);
 		return;
 
 	}
@@ -157,13 +160,13 @@ class SearchInstructionsTask extends Task {
 		// The reason for the getting the CodeUnit is that the instruction might be an off-cut, 
 		// and if that's the case, then we can't navigate directly to it.  What we have to do 
 		// is find the CodeUnit containing the instruction and navigate to that.
+		Program currentProgram = searchPlugin.getCurrentProgram();
+		Listing listing = currentProgram.getListing();
 		if (direction == Direction.FORWARD) {
 			for (InstructionMetadata instr : searchResults) {
-				CodeUnit unit = searchPlugin.getCurrentProgram().getListing().getCodeUnitContaining(
-					instr.getAddr());
-
-				if (unit.getMinAddress().compareTo(currentAddress) > 0) {
-					return unit.getMinAddress();
+				CodeUnit cu = listing.getCodeUnitContaining(instr.getAddr());
+				if (cu.getMinAddress().compareTo(currentAddress) > 0) {
+					return cu.getMinAddress();
 				}
 			}
 		}
@@ -173,14 +176,12 @@ class SearchInstructionsTask extends Task {
 		//
 		// See above for an explanation for why we need to get the CodeUnit in this block.
 		if (direction == Direction.BACKWARD) {
-			ListIterator<InstructionMetadata> iter =
-				searchResults.listIterator(searchResults.size());
-			while (iter.hasPrevious()) {
-				InstructionMetadata instr = iter.previous();
-				CodeUnit unit = searchPlugin.getCurrentProgram().getListing().getCodeUnitContaining(
-					instr.getAddr());
-				if (unit.getMinAddress().compareTo(currentAddress) < 0) {
-					return unit.getMinAddress();
+			ListIterator<InstructionMetadata> it = searchResults.listIterator(searchResults.size());
+			while (it.hasPrevious()) {
+				InstructionMetadata instr = it.previous();
+				CodeUnit cu = listing.getCodeUnitContaining(instr.getAddr());
+				if (cu.getMinAddress().compareTo(currentAddress) < 0) {
+					return cu.getMinAddress();
 				}
 			}
 		}

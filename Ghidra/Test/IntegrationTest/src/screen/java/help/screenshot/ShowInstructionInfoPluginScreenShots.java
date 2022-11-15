@@ -27,6 +27,7 @@ import docking.*;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.Layout;
 import docking.widgets.fieldpanel.field.Field;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.datamgr.DataTypesProvider;
@@ -93,11 +94,11 @@ public class ShowInstructionInfoPluginScreenShots extends GhidraScreenShotGenera
 		Rectangle shapeBounds = new Rectangle(location, labelSize);
 
 		int thickness = 5;
-		drawRectangle(Color.RED, shapeBounds, thickness);
+		drawRectangle(Palette.RED, shapeBounds, thickness);
 
 		Point start = getEndOfRow(cb, listingPanel, window);
 		Point end = new Point(location.x, location.y);
-		drawLine(Color.RED, thickness, start, end);
+		drawLine(Palette.RED, thickness, start, end);
 
 		cropListingWithStatusArea();
 

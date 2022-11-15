@@ -28,7 +28,7 @@ body { margin-bottom: 50px; margin-left: 10px; margin-right: 10px; margin-top: 1
 li { font-family:times new roman; font-size:14pt; }
 h1 { color:#000080; font-family:times new roman; font-size:36pt; font-style:italic; font-weight:bold; text-align:center; }
 h2 { margin: 10px; margin-top: 20px; color:#984c4c; font-family:times new roman; font-size:18pt; font-weight:bold; }
-h3 { margin-left: 10px; margin-top: 20px; color:#0000ff; font-family:times new roman; `font-size:14pt; font-weight:bold;  }
+h3 { margin-left: 10px; margin-top: 20px; color:#0000ff; font-family:times new roman; font-size:14pt; font-weight:bold;  }
 h4 { margin-left: 10px; margin-top: 20px; font-family:times new roman; font-size:14pt; font-style:italic; }
  
 /*

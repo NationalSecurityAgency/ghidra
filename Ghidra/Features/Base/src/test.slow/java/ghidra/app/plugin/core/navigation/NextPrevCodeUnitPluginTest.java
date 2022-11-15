@@ -17,16 +17,15 @@ package ghidra.app.plugin.core.navigation;
 
 import static org.junit.Assert.*;
 
-import java.awt.Color;
-
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 
 import org.junit.*;
 
 import docking.action.DockingActionIf;
 import docking.menu.ActionState;
 import docking.menu.MultiStateDockingAction;
+import generic.theme.GIcon;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.cmd.data.CreateDataCmd;
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.plugin.core.bookmark.BookmarkEditCmd;
@@ -40,7 +39,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.test.*;
 import ghidra.util.task.TaskMonitor;
-import resources.ResourceManager;
+import resources.Icons;
 
 public class NextPrevCodeUnitPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
@@ -122,8 +121,8 @@ public class NextPrevCodeUnitPluginTest extends AbstractGhidraHeadedIntegrationT
 	@Test
 	public void testToggle() throws Exception {
 
-		Icon upIcon = ResourceManager.loadImage("images/up.png");
-		Icon downIcon = ResourceManager.loadImage("images/down.png");
+		Icon upIcon = new GIcon("icon.up");
+		Icon downIcon = new GIcon("icon.down");
 
 		assertEquals(downIcon, direction.getToolBarData().getIcon());
 		assertStartsWith("Go To Next Instruction", nextInstruction.getDescription());
@@ -796,10 +795,9 @@ public class NextPrevCodeUnitPluginTest extends AbstractGhidraHeadedIntegrationT
 	public void testSearchCustomBobBookmark() throws Exception {
 
 		assertAddress("01001000");
-		ImageIcon bookmarkBobIcon =
-			ResourceManager.loadImage("images/applications-engineering.png");
+		Icon bookmarkBobIcon = Icons.ADD_ICON; // arbitrary icon
 
-		BookmarkType bob = bookmarkManager.defineType("BOB", bookmarkBobIcon, Color.YELLOW, 0);
+		BookmarkType bob = bookmarkManager.defineType("BOB", bookmarkBobIcon, Palette.YELLOW, 0);
 
 		String typeString = bob.getTypeString();
 

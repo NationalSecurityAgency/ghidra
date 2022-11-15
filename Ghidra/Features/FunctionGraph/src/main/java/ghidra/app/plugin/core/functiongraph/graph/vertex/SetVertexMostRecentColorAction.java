@@ -25,6 +25,8 @@ import docking.ActionContext;
 import docking.action.*;
 import docking.menu.MultiActionDockingAction;
 import docking.menu.MultipleActionDockingToolbarButton;
+import generic.theme.GColor;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.functiongraph.FGColorProvider;
 import ghidra.app.plugin.core.functiongraph.FunctionGraphPlugin;
 import ghidra.app.plugin.core.functiongraph.mvc.FGController;
@@ -47,7 +49,7 @@ public class SetVertexMostRecentColorAction extends MultiActionDockingAction {
 		this.controller = controller;
 		this.vertex = vertex;
 		setDescription("Set this block's background color");
-		colorIcon = new ColorIcon3D(new Color(189, 221, 252), 12, 12) {
+		colorIcon = new ColorIcon3D(new GColor("color.bg.functiongraph.paint.icon"), 12, 12) {
 			@Override
 			public Color getColor() {
 				return controller.getMostRecentColor();
@@ -57,8 +59,8 @@ public class SetVertexMostRecentColorAction extends MultiActionDockingAction {
 		Icon blankIcon = new EmptyIcon(16, 16);
 
 		MultiIcon multiIcon = new MultiIcon(blankIcon);
-		ImageIcon paintBrushImage = ResourceManager.loadImage("images/paintbrush.png");
-		ImageIcon scaledBrush = ResourceManager.getScaledIcon(paintBrushImage, 16, 16);
+		Icon paintBrushImage = new GIcon("icon.functiongraph.action.vertex.choose.color");
+		Icon scaledBrush = ResourceManager.getScaledIcon(paintBrushImage, 16, 16);
 
 		Point point = getLowerLeftIconOffset(blankIcon, colorIcon);
 		Icon translateIcon = new TranslateIcon(colorIcon, point.x, point.y);
@@ -98,7 +100,7 @@ public class SetVertexMostRecentColorAction extends MultiActionDockingAction {
 					colorProvider.setVertexColor(vertex, newColor);
 				}
 			};
-		ImageIcon imageIcon = ResourceManager.loadImage("images/palette.png");
+		Icon imageIcon = new GIcon("icon.functiongraph.action.vertex.choose.color.palette");
 		chooseColorAction.setMenuBarData(
 			new MenuData(new String[] { "Choose New Color" }, imageIcon));
 		chooseColorAction.setHelpLocation(

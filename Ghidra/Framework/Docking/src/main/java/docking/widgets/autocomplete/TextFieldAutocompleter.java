@@ -31,6 +31,7 @@ import javax.swing.text.Caret;
 import docking.DockingUtils;
 import docking.DockingUtils.TreeTraversalResult;
 import docking.widgets.textfield.TextFieldLinker;
+import generic.theme.GColor;
 import generic.util.WindowUtilities;
 import ghidra.util.task.SwingUpdateManager;
 
@@ -131,9 +132,13 @@ public class TextFieldAutocompleter<T> {
 	// Prepare all the swing components (except the window)
 	{
 		content.setBorder(
-			BorderFactory.createBevelBorder(BevelBorder.RAISED, Color.LIGHT_GRAY, Color.GRAY));
+			BorderFactory.createBevelBorder(BevelBorder.RAISED,
+				new GColor("color.border.bevel.highlight"),
+				new GColor("color.border.bevel.shadow")));
 		scrollPane.setBorder(
-			BorderFactory.createBevelBorder(BevelBorder.LOWERED, Color.LIGHT_GRAY, Color.GRAY));
+			BorderFactory.createBevelBorder(BevelBorder.RAISED,
+				new GColor("color.border.bevel.highlight"),
+				new GColor("color.border.bevel.shadow")));
 		//content.setFocusable(false);
 
 		scrollPane.getVerticalScrollBar().setFocusable(false);
@@ -1094,7 +1099,7 @@ public class TextFieldAutocompleter<T> {
 
 			dual.setVisible(true);
 
-			AutocompletionModel<String> model = new AutocompletionModel<String>() {
+			AutocompletionModel<String> model = new AutocompletionModel<>() {
 				Set<String> strings =
 					new HashSet<>(Arrays.asList(new String[] { "Test", "Testing", "Another",
 						"Yet another", "Yet still more", "Yet still even more", "Yetis, yo" }));
@@ -1110,7 +1115,7 @@ public class TextFieldAutocompleter<T> {
 					return matching;
 				}
 			};
-			TextFieldAutocompleter<String> auto = new TextFieldAutocompleter<String>(model) {
+			TextFieldAutocompleter<String> auto = new TextFieldAutocompleter<>(model) {
 				@Override
 				protected String getPrefix(JTextField field) {
 					return dual.getTextBeforeCursor(field);

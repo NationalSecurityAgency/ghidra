@@ -20,6 +20,11 @@ import java.awt.geom.GeneralPath;
 import java.util.ArrayList;
 import java.util.List;
 
+import generic.theme.GThemeDefaults.Colors.Palette;
+
+/**
+ * Paints a line showing the start and end points of a drag operation.
+ */
 public class MouseDraggedLinePaintableShape extends PaintableShape {
 
 	private List<Point> points = new ArrayList<>();
@@ -27,7 +32,7 @@ public class MouseDraggedLinePaintableShape extends PaintableShape {
 
 	public MouseDraggedLinePaintableShape(Point start, Point end, double tx, double ty) {
 		super(tx, ty);
-		this.color = new Color(0, 200, 0, 137);
+		this.color = Palette.GREEN.withAlpha(127);
 		this.stroke = new BasicStroke(20);
 
 		points.add(start);
@@ -89,7 +94,7 @@ public class MouseDraggedLinePaintableShape extends PaintableShape {
 		g.draw(shape);
 //			g.fill(shape);
 
-//			g.setColor(new Color(20, 200, 20, 147));
+//			g.setColor(Palette.GREEN.withAlpha(127););
 //			controls.forEach(c -> {
 		//
 //				int x = c.x;
@@ -101,7 +106,7 @@ public class MouseDraggedLinePaintableShape extends PaintableShape {
 //				g.fill(r);
 //			});
 		//
-//			g.setColor(Color.pink);
+//			g.setColor(Palette.PINK);
 //			points.forEach(p -> {
 //				int x = p.x;
 //				int y = p.y;

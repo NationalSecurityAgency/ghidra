@@ -15,13 +15,13 @@
  */
 package ghidra.app.plugin.core.navigation.locationreferences;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.table.GTableCellRenderingData;
+import generic.theme.GThemeDefaults.Colors.Tables;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
@@ -171,7 +171,7 @@ class LocationReferencesTableModel extends AddressBasedTableModel<LocationRefere
 			super.getTableCellRendererComponent(data);
 
 			LocationReference rowObject = (LocationReference) data.getRowObject();
-			String refTypeString = getRefTypeString(rowObject);
+			String refTypeString = getRefTypeString(rowObject, data.isSelected());
 			if (refTypeString != null) {
 				setText(refTypeString);
 				return this;
@@ -184,12 +184,13 @@ class LocationReferencesTableModel extends AddressBasedTableModel<LocationRefere
 			return this;
 		}
 
-		private String getRefTypeString(LocationReference rowObject) {
+		private String getRefTypeString(LocationReference rowObject, boolean isSelected) {
 			String refType = rowObject.getRefTypeString();
 			if (!StringUtils.isBlank(refType)) {
 				String trailingText = "";
 				if (rowObject.isOffcutReference()) {
-					setForeground(Color.RED);
+					setForeground(
+						isSelected ? Tables.FG_ERROR_SELECTED : Tables.FG_ERROR_UNSELECTED);
 					trailingText = OFFCUT_STRING;
 				}
 				return refType + trailingText;
@@ -199,7 +200,7 @@ class LocationReferencesTableModel extends AddressBasedTableModel<LocationRefere
 
 		@Override
 		public String getFilterString(LocationReference rowObject, Settings settings) {
-			String refTypeString = getRefTypeString(rowObject);
+			String refTypeString = getRefTypeString(rowObject, false);
 			if (refTypeString != null) {
 				return refTypeString;
 			}

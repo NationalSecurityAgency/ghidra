@@ -28,6 +28,9 @@ import org.junit.Test;
 
 import docking.DockableComponent;
 import docking.widgets.fieldpanel.FieldPanel;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Java;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.GhidraOptions;
 import ghidra.app.cmd.comments.SetCommentCmd;
 import ghidra.app.cmd.data.CreateDataCmd;
@@ -71,7 +74,7 @@ public class CodeBrowserPluginScreenShots extends GhidraScreenShotGenerator {
 
 		Rectangle cursor = getCursorBounds();
 		captureListingRange(0x0040be40, 0x0040be56, 600);
-		drawBorder(Color.BLACK);
+		drawBorder(Java.BORDER);
 
 		drawTextWithArrowNearOpenStructureIcon("Closed", cursor);
 
@@ -92,7 +95,7 @@ public class CodeBrowserPluginScreenShots extends GhidraScreenShotGenerator {
 		Rectangle cursor = getCursorBounds();
 		captureListingRange(0x0040be40, 0x0040be56, 600);
 
-		drawBorder(Color.BLACK);
+		drawBorder(Java.BORDER);
 
 		drawTextWithArrowNearOpenStructureIcon("Open", cursor);
 	}
@@ -102,7 +105,7 @@ public class CodeBrowserPluginScreenShots extends GhidraScreenShotGenerator {
 		// Make some room to draw our annotations (text and an arrow)
 		//
 		Dimension whitespace = new Dimension(150, 10);
-		padImage(Color.WHITE, whitespace.height, whitespace.width, 10, 10);
+		padImage(Colors.BACKGROUND, whitespace.height, whitespace.width, 10, 10);
 
 		//
 		// Draw text inside of the newly padded space
@@ -112,14 +115,14 @@ public class CodeBrowserPluginScreenShots extends GhidraScreenShotGenerator {
 		int textStartY = arrowStartY - 4;// up just a bit
 		Point textPoint = new Point(textStartX, textStartY);
 		int size = 24;
-		Color textColor = Color.MAGENTA.darker();
+		Color textColor = Palette.PURPLE;
 		drawText(text, textColor, textPoint, size);
 
 		//
 		// Draw an arrow from the text above to the 'open structure' icon
 		//
 		int arrowStartX = 60;
-		Color arrowColor = Color.GREEN.darker();
+		Color arrowColor = Palette.GREEN;
 		Point arrowStart = new Point(arrowStartX, arrowStartY);
 		int addressFieldStartX = 40;
 		int listingOffsetX = whitespace.width;
@@ -205,14 +208,14 @@ public class CodeBrowserPluginScreenShots extends GhidraScreenShotGenerator {
 		captureListingRange(topAddr, bottomAddr, 600);
 
 		int padX = 100;
-		padImage(Color.LIGHT_GRAY, 0, padX, 0, 0);
+		padImage(Palette.LIGHT_GRAY, 0, padX, 0, 0);
 		int y = conditional.y + 10;
-		drawText("Conditional", Color.BLACK, new Point(10, y), 12);
-		drawText("    Jump", Color.BLACK, new Point(10, y + 15), 12);
+		drawText("Conditional", Colors.FOREGROUND, new Point(10, y), 12);
+		drawText("    Jump", Colors.FOREGROUND, new Point(10, y + 15), 12);
 
 		y = unconditional.y + 10;
-		drawText("Unconditional", Color.BLACK, new Point(10, y), 12);
-		drawText("    Jump", Color.BLACK, new Point(10, y + 15), 12);
+		drawText("Unconditional", Colors.FOREGROUND, new Point(10, y), 12);
+		drawText("    Jump", Colors.FOREGROUND, new Point(10, y + 15), 12);
 
 	}
 
@@ -288,7 +291,7 @@ public class CodeBrowserPluginScreenShots extends GhidraScreenShotGenerator {
 
 		int width = image.getWidth(null);
 		crop(new Rectangle(0, 0, width, 30));
-		drawOval(new Color(107, 47, 109),
+		drawOval(Palette.PURPLE,
 			new Rectangle(p.x - 13, p.y - 1, bounds.width + 26, bounds.height + 2), 4);
 
 	}
@@ -318,7 +321,7 @@ public class CodeBrowserPluginScreenShots extends GhidraScreenShotGenerator {
 		int y = p.y - 2;
 		int height = bounds.height + 12;
 		int width = bounds.width + 34;
-		Color color = new Color(120, 0, 64);
+		Color color = Palette.PURPLE;
 		drawOval(color, new Rectangle(x, y, width, height), 5);
 
 		int arrowHeadX = x + (width / 4);

@@ -29,6 +29,7 @@ import docking.widgets.fieldpanel.Layout;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.listener.*;
 import docking.widgets.fieldpanel.support.*;
+import generic.theme.GColor;
 import ghidra.app.plugin.core.format.*;
 import ghidra.program.model.address.*;
 import ghidra.util.Msg;
@@ -729,9 +730,9 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 		createFields();
 
 		setCursorOn(true);
-		editColor = ByteViewerComponentProvider.DEFAULT_EDIT_COLOR;
-		currentCursorColor = ByteViewerComponentProvider.DEFAULT_CURRENT_CURSOR_COLOR;
-		setNonFocusCursorColor(ByteViewerComponentProvider.DEFAULT_NONFOCUS_CURSOR_COLOR);
+		editColor = ByteViewerComponentProvider.CHANGED_VALUE_COLOR;
+		currentCursorColor = ByteViewerComponentProvider.CURSOR_ACTIVE_COLOR;
+		setNonFocusCursorColor(ByteViewerComponentProvider.CURSOR_NOT_FOCUSED_COLOR);
 		setFocusedCursorColor(currentCursorColor);
 
 		updateColorRunner = () -> updateColor();
@@ -885,7 +886,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 
 	private class ByteViewerBackgroundColorModel implements BackgroundColorModel {
 
-		private Color defaultBackgroundColor = Color.WHITE;
+		private Color defaultBackgroundColor = new GColor("color.bg.byteviewer");
 
 		@Override
 		public Color getBackgroundColor(BigInteger index) {

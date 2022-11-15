@@ -15,14 +15,15 @@
  */
 package docking;
 
-import java.awt.Component;
-import java.awt.KeyboardFocusManager;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.*;
 
 import javax.swing.*;
 
 import docking.action.*;
+import generic.theme.Gui;
+import generic.theme.ThemeManager;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
 import help.HelpDescriptor;
@@ -113,6 +114,8 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	private boolean instanceIDHasBeenInitialized;
 
 	private String inceptionInformation;
+
+	private String registeredFontId;
 
 	/**
 	 * Creates a new component provider with a default location of {@link WindowPosition#WINDOW}.
@@ -776,6 +779,41 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		return dockingTool;
 	}
 
+	/**
+	 * Tells the provider to adjust the font size for this provider. By default, this method
+	 * will adjust the font for the registered font id if it has been registered using
+	 * {@link #registeredFontId}. Subclasses can override this method to a more comprehensive
+	 * adjustment to multiple fonts if necessary.
+	 * @param bigger if true, the font should be made bigger, otherwise the font should be made 
+	 * smaller
+	 */
+	public void adjustFontSize(boolean bigger) {
+		if (registeredFontId == null) {
+			return;
+		}
+		Font font = Gui.getFont(registeredFontId);
+		if (font == null) {
+			return;
+		}
+		int size = font.getSize();
+		if (bigger) {
+			size += 1;
+		}
+		else {
+			size = Math.max(size - 1, 3);
+		}
+		ThemeManager.getInstance().setFont(registeredFontId, font.deriveFont((float) size));
+	}
+
+	/**
+	 * Registers a fontId for the font that will be automatically adjusted when
+	 * {@link #adjustFontSize(boolean)} is called.
+	 * @param fontId the id of the theme font to be adjusted
+	 */
+	protected void registerAdjustableFontId(String fontId) {
+		this.registeredFontId = fontId;
+	}
+
 	@Override
 	public String toString() {
 		return name + " - " + getTitle() + " - " + getSubTitle();
@@ -885,4 +923,5 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 			return inceptionInformation;
 		}
 	}
+
 }

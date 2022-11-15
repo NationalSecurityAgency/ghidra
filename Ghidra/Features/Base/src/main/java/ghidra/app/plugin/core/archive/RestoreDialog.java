@@ -114,7 +114,7 @@ public class RestoreDialog extends DialogComponentProvider {
 			}
 		});
 		Font font = archiveBrowse.getFont();
-		archiveBrowse.setFont(new Font(font.getName(), Font.BOLD, font.getSize()));
+		archiveBrowse.setFont(font.deriveFont(Font.BOLD));
 
 		restoreLabel = new GDLabel(" Restore Directory ");
 		restoreField = new JTextField();
@@ -131,7 +131,7 @@ public class RestoreDialog extends DialogComponentProvider {
 			}
 		});
 		font = restoreBrowse.getFont();
-		restoreBrowse.setFont(new Font(font.getName(), Font.BOLD, font.getSize()));
+		restoreBrowse.setFont(font.deriveFont(Font.BOLD));
 
 		projectNameLabel = new GDLabel(" Project Name ");
 		projectNameField = new JTextField();

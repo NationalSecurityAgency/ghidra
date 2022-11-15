@@ -31,6 +31,8 @@ import docking.widgets.fieldpanel.support.*;
 import docking.widgets.indexedscrollpane.*;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
+import generic.theme.GColor;
+import generic.theme.Gui;
 import ghidra.app.plugin.core.format.*;
 import ghidra.app.util.viewer.listingpanel.AddressSetDisplayListener;
 import ghidra.program.model.address.AddressSet;
@@ -44,11 +46,12 @@ import help.Help;
 import help.HelpService;
 
 /**
- * Top level component that contains has a scrolled pane for the panel of components that show the
+ * Top level component that has a scrolled pane for the panel of components that show the
  * view for each format.
  */
 public class ByteViewerPanel extends JPanel
 		implements TableColumnModelListener, LayoutModel, LayoutListener {
+	private static final String FONT_STATUS_ID = "font.byteviewer.status";
 //    private ByteViewerPlugin plugin;
 	private List<ByteViewerComponent> viewList; // list of field viewers
 	private FieldPanel indexPanel; // panel for showing indexes
@@ -71,7 +74,6 @@ public class ByteViewerPanel extends JPanel
 	private ByteViewerComponent currentView;
 	private Color editColor;
 	private Color currentCursorColor;
-	private Color cursorColor;
 	private Color currentCursorLineColor;
 	private Color highlightColor;
 	private int highlightButton;
@@ -93,7 +95,7 @@ public class ByteViewerPanel extends JPanel
 		viewList = new ArrayList<>();
 		indexMap = new IndexMap();
 		create();
-		editColor = ByteViewerComponentProvider.DEFAULT_EDIT_COLOR;
+		editColor = ByteViewerComponentProvider.CHANGED_VALUE_COLOR;
 	}
 
 	/**
@@ -215,7 +217,6 @@ public class ByteViewerPanel extends JPanel
 	}
 
 	void setCursorColor(Color c) {
-		cursorColor = c;
 		for (int i = 0; i < viewList.size(); i++) {
 			ByteViewerComponent comp = viewList.get(i);
 			comp.setNonFocusCursorColor(c);
@@ -259,8 +260,8 @@ public class ByteViewerPanel extends JPanel
 				String start = blocks[0].getLocationRepresentation(BigInteger.ZERO);
 				startField.setText(start);
 				ByteBlock lastBlock = blocks[blocks.length - 1];
-				endField.setText(lastBlock.getLocationRepresentation(
-					lastBlock.getLength().subtract(BigInteger.ONE)));
+				endField.setText(lastBlock
+						.getLocationRepresentation(lastBlock.getLength().subtract(BigInteger.ONE)));
 
 				indexPanelWidth = getIndexPanelWidth(blocks);
 				int center = indexPanelWidth / 2;
@@ -415,7 +416,7 @@ public class ByteViewerPanel extends JPanel
 
 		ByteViewerComponent c = newByteViewerComponent(model);
 		c.setEditColor(editColor);
-		c.setNonFocusCursorColor(cursorColor);
+		c.setNonFocusCursorColor(ByteViewerComponentProvider.CURSOR_NOT_FOCUSED_COLOR);
 		c.setCurrentCursorColor(currentCursorColor);
 		c.setCurrentCursorLineColor(currentCursorLineColor);
 		c.setEditMode(editMode);
@@ -811,7 +812,7 @@ public class ByteViewerPanel extends JPanel
 
 		columnHeader = new ByteViewerHeader(this);
 
-		fm = getFontMetrics(ByteViewerComponentProvider.DEFAULT_FONT);
+		fm = getFontMetrics(Gui.getFont(ByteViewerComponentProvider.DEFAULT_FONT_ID));
 		fontHeight = fm.getHeight();
 
 		// for the index/address column
@@ -833,7 +834,8 @@ public class ByteViewerPanel extends JPanel
 
 		columnHeader.addColumn(ByteViewerComponentProvider.DEFAULT_INDEX_NAME, indexPanel);
 		scrollp.setColumnHeaderComp(columnHeader);
-		compPanel.setBackground(Color.WHITE);
+
+		compPanel.setBackground(new GColor("color.bg.byteviewer"));
 
 		statusPanel = createStatusPanel();
 		add(scrollp, BorderLayout.CENTER);
@@ -862,15 +864,14 @@ public class ByteViewerPanel extends JPanel
 		insertionField = new GDLabel("00000000");
 		insertionField.setName("Insertion");
 
-		Font f = new Font("SansSerif", Font.PLAIN, 11);
-		startLabel.setFont(f);
-		endLabel.setFont(f);
-		offsetLabel.setFont(f);
-		insertionLabel.setFont(f);
-		startField.setFont(f);
-		endField.setFont(f);
-		offsetField.setFont(f);
-		insertionField.setFont(f);
+		Gui.registerFont(startLabel, FONT_STATUS_ID);
+		Gui.registerFont(endLabel, FONT_STATUS_ID);
+		Gui.registerFont(offsetLabel, FONT_STATUS_ID);
+		Gui.registerFont(insertionLabel, FONT_STATUS_ID);
+		Gui.registerFont(startField, FONT_STATUS_ID);
+		Gui.registerFont(endField, FONT_STATUS_ID);
+		Gui.registerFont(offsetField, FONT_STATUS_ID);
+		Gui.registerFont(insertionField, FONT_STATUS_ID);
 
 		// make a panel for each label/value pair
 		JPanel p1 = new JPanel(new PairLayout(0, 5));

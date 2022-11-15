@@ -24,6 +24,7 @@ import java.io.IOException;
 import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
+import generic.theme.GThemeDefaults.Colors.Palette;
 
 public class FileOptionsTest extends AbstractGenericTest {
 
@@ -54,7 +55,7 @@ public class FileOptionsTest extends AbstractGenericTest {
 
 		assertEquals(10, restored.getInt("aaa", 0));
 		assertFalse(restored.contains("bbb"));		// default value should not have been saved
-		assertEquals(Color.BLUE, restored.getColor("ccc", null));
+		assertEquals(Color.BLUE.getRGB(), restored.getColor("ccc", null).getRGB());
 		assertEquals(custom, restored.getCustomOption("ddd", null));
 	}
 

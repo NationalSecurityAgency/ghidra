@@ -37,7 +37,8 @@ import docking.widgets.list.GList;
 import docking.widgets.list.GListCellRenderer;
 import docking.widgets.table.GTableCellRenderer;
 import docking.widgets.tree.support.GTreeRenderer;
-import ghidra.docking.util.DockingWindowsLookAndFeelUtils;
+import generic.theme.GThemeDefaults.Colors.Palette;
+import ghidra.docking.util.LookAndFeelUtils;
 import ghidra.util.HTMLUtilities;
 import resources.ResourceManager;
 
@@ -125,7 +126,7 @@ public class DockingUtils {
 	public static JSeparator createToolbarSeparator() {
 		Dimension sepDim = new Dimension(2, ICON_SIZE + 2);
 		JSeparator separator = new JSeparator(SwingConstants.VERTICAL);
-		if (DockingWindowsLookAndFeelUtils.isUsingAquaUI(separator.getUI())) {
+		if (LookAndFeelUtils.isUsingAquaUI(separator.getUI())) {
 			separator.setUI(new BasicSeparatorUI());
 		}
 		separator.setPreferredSize(sepDim); // ugly work around to force height of separator
@@ -349,7 +350,7 @@ public class DockingUtils {
 			c.setBorder(BorderFactory.createEmptyBorder());
 		}
 
-		c.setBackground(new Color(0, 0, 0, 0));
+		c.setBackground(Palette.NO_COLOR);
 	}
 
 	/** Hides any open tooltip window */

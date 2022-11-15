@@ -29,6 +29,9 @@ import docking.WindowPosition;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
 import docking.widgets.checkbox.GCheckBox;
+import generic.theme.GIcon;
+import generic.theme.GThemeDefaults.Ids.Fonts;
+import generic.theme.Gui;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.Plugin;
@@ -40,7 +43,6 @@ import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.task.SwingUpdateManager;
 import resources.Icons;
-import resources.ResourceManager;
 
 /**
  * The DiffDetailsProvider is used to view the differences for an address or
@@ -52,8 +54,8 @@ public class DiffDetailsProvider extends ComponentProviderAdapter {
 	public static final String FILTER_DIFFS_CHECK_BOX = "Filter Diffs Check Box";
 	public static final String DIFF_DETAILS_TEXT_AREA = "Diff Details Text Area";
 	public static final String DIFF_DETAILS_PANEL = "Diff Location Details Panel";
-	public static final ImageIcon ICON = ResourceManager.loadImage("images/xmag.png");
-	public static final ImageIcon REFRESH_ICON = Icons.REFRESH_ICON;
+	public static final Icon ICON = new GIcon("icon.search");
+	public static final Icon REFRESH_ICON = Icons.REFRESH_ICON;
 	public static final String TITLE = "Diff Details";
 
 	private ProgramDiffPlugin plugin;
@@ -72,9 +74,6 @@ public class DiffDetailsProvider extends ComponentProviderAdapter {
 	private SwingUpdateManager updateManager;
 	private ProgramLocation currentLocation;
 
-	/**
-	 * @param plugin
-	 */
 	public DiffDetailsProvider(ProgramDiffPlugin plugin) {
 		super(plugin.getTool(), "Diff Location Details", plugin.getName());
 		setTitle(TITLE);
@@ -91,17 +90,11 @@ public class DiffDetailsProvider extends ComponentProviderAdapter {
 		setUpRefreshDetailsUpdateManager();
 	}
 
-	/**
-	 * @param selected
-	 */
 	public void setAutoUpdate(boolean selected) {
 		autoUpdateCB.setSelected(selected);
 		autoUpdate = selected;
 	}
 
-	/**
-	 * @param selected
-	 */
 	public void setFilterDiffs(boolean selected) {
 		filterDiffsCB.setSelected(selected);
 		filterDiffs = selected;
@@ -121,8 +114,8 @@ public class DiffDetailsProvider extends ComponentProviderAdapter {
 		refreshDetailsAction.setEnabled(true);
 
 		refreshDetailsAction.setToolBarData(new ToolBarData(REFRESH_ICON, "Diff"));
-		refreshDetailsAction.setHelpLocation(
-			new HelpLocation(HelpTopics.DIFF, "Refresh Diff Details"));
+		refreshDetailsAction
+				.setHelpLocation(new HelpLocation(HelpTopics.DIFF, "Refresh Diff Details"));
 		plugin.getTool().addLocalAction(this, refreshDetailsAction);
 //		plugin.getTool().addLocalAction(this, new DiffIgnoreAllAction(this));
 	}
@@ -159,9 +152,6 @@ public class DiffDetailsProvider extends ComponentProviderAdapter {
 
 	}
 
-	/**
-	 * @param p1Location
-	 */
 	protected void locationChanged(ProgramLocation p1Location) {
 		if (isDisplayed && autoUpdate) {
 			refreshDetails(p1Location);
@@ -300,13 +290,12 @@ public class DiffDetailsProvider extends ComponentProviderAdapter {
 	}
 
 	private JScrollPane createDetailsPane() {
-		Font font = new Font("Monospaced", Font.PLAIN, 12);
 		textPane = new JTextPane();
 		doc = textPane.getStyledDocument();
 		textPane.setName(DIFF_DETAILS_TEXT_AREA);
 		textPane.setEditable(false);
 		textPane.setMargin(new Insets(5, 5, 5, 5));
-		textPane.setFont(font);
+		Gui.registerFont(textPane, Fonts.MONOSPACED);
 		textPane.setOpaque(true);
 		textPane.setCaretPosition(0);
 		JScrollPane scrolledDetails = new JScrollPane(textPane);
@@ -321,8 +310,7 @@ public class DiffDetailsProvider extends ComponentProviderAdapter {
 
 	@Override
 	public void componentHidden() {
-		for (int i = 0; i < listenerList.size(); i++) {
-			ActionListener listener = listenerList.get(i);
+		for (ActionListener listener : listenerList) {
 			listener.actionPerformed(new ActionEvent(this, 0, DIFF_DETAILS_HIDDEN_ACTION));
 		}
 		isDisplayed = false;

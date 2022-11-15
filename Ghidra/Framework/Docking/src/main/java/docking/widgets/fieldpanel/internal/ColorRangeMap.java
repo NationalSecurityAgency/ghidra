@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +15,10 @@
  */
 package docking.widgets.fieldpanel.internal;
 
-import ghidra.util.datastruct.*;
-
 import java.awt.Color;
 
+import ghidra.util.ColorUtils;
+import ghidra.util.datastruct.*;
 
 public class ColorRangeMap {
 	private RangeMap map;
@@ -30,7 +29,7 @@ public class ColorRangeMap {
 	public ColorRangeMap() {
 		map = new RangeMap();
 		valueRange = map.getValueRange(0);
-		
+
 	}
 
 	public void color(long start, long end, Color c) {
@@ -38,14 +37,17 @@ public class ColorRangeMap {
 		map.paintRange(start, end, colorValue);
 		valueRange = map.getValueRange(0);
 	}
+
 	public void clear(long start, long end) {
 		map.paintRange(start, end, 0);
 		valueRange = map.getValueRange(0);
 	}
+
 	public void clear() {
 		map.clear();
 		valueRange = map.getValueRange(0);
 	}
+
 	public Color getColor(long index, Color defaultColor) {
 		if (!valueRange.contains(index)) {
 			valueRange = map.getValueRange(index);
@@ -56,18 +58,20 @@ public class ColorRangeMap {
 		}
 		return getColor(valueRange.getValue());
 	}
-	private Color getColor(int colorValue) {
-		if (lastColorValue == colorValue) {
+
+	private Color getColor(int rgba) {
+		if (lastColorValue == rgba) {
 			return lastColor;
 		}
-		lastColorValue = colorValue;
-		lastColor = new Color(colorValue);
+		lastColorValue = rgba;
+		lastColor = ColorUtils.getColor(rgba);
 		return lastColor;
 	}
+
 	public ColorRangeMap copy() {
 		ColorRangeMap newMap = new ColorRangeMap();
 		IndexRangeIterator it = map.getIndexRangeIterator(-1);
-		while(it.hasNext()) {
+		while (it.hasNext()) {
 			IndexRange ir = it.next();
 			int colorValue = map.getValue(ir.getStart());
 			newMap.map.paintRange(ir.getStart(), ir.getEnd(), colorValue);

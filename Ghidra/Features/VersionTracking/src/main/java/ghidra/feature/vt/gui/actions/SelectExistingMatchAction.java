@@ -19,12 +19,12 @@ import javax.swing.Icon;
 
 import docking.ActionContext;
 import docking.action.*;
+import generic.theme.GIcon;
 import ghidra.feature.vt.api.main.VTMatch;
 import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.feature.vt.gui.plugin.VTPlugin;
 import ghidra.feature.vt.gui.provider.functionassociation.FunctionAssociationContext;
 import ghidra.util.HelpLocation;
-import resources.ResourceManager;
 
 /**
  * Action that selects the function match, if it exists, for the currently selected source and 
@@ -32,7 +32,8 @@ import resources.ResourceManager;
  */
 public class SelectExistingMatchAction extends DockingAction {
 
-	private static final Icon ICON = ResourceManager.loadImage("images/text_align_justify.png");
+	private static final Icon ICON =
+		new GIcon("icon.version.tracking.action.match.select.existing");
 
 	private static final String MENU_GROUP = "Create";
 

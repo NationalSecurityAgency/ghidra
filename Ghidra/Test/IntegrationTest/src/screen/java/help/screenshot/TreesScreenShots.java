@@ -15,7 +15,8 @@
  */
 package help.screenshot;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Rectangle;
 import java.util.Arrays;
 
 import javax.swing.*;
@@ -38,6 +39,7 @@ import docking.widgets.table.constrainteditor.ColumnConstraintEditor;
 import docking.widgets.table.constrainteditor.IntegerConstraintEditor;
 import docking.widgets.table.threaded.ThreadedTableModel;
 import docking.widgets.tree.*;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.plugin.core.datamgr.DataTypesProvider;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeArchiveGTree;
 import ghidra.app.plugin.core.functionwindow.FunctionWindowProvider;
@@ -182,7 +184,7 @@ public class TreesScreenShots extends GhidraScreenShotGenerator {
 		int x = rectangle.x + rectangle.width - (width - padding) - iconPadding;
 		int y = rectangle.y - padding;
 		Rectangle shapeBounds = new Rectangle(x, y, width, height);
-		drawOval(Color.GREEN.darker(), shapeBounds, thickness);
+		drawOval(Palette.GREEN, shapeBounds, thickness);
 
 	}
 

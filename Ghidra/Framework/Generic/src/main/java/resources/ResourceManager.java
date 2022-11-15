@@ -15,13 +15,13 @@
  */
 package resources;
 
-import java.awt.Image;
-import java.awt.MediaTracker;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.*;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
@@ -30,7 +30,8 @@ import javax.swing.*;
 
 import org.apache.commons.lang3.StringUtils;
 
-import generic.Images;
+import generic.theme.GIcon;
+import ghidra.framework.Application;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 import resources.icons.*;
@@ -46,15 +47,17 @@ import utility.module.ModuleUtilities;
  * as opposed to using the flawed constructor {@link ImageIcon#ImageIcon(Image)}.
  */
 public class ResourceManager {
+	public static final String BOMB = "images/core.png";
+	public static final String BIG_BOMB = "images/core24.png";
+	public static final String EXTERNAL_ICON_PREFIX = "[EXTERNAL]";
 
-	private final static String DEFAULT_ICON_FILENAME = Images.BOMB;
-	private static ImageIcon DEFAULT_ICON;
-	private static Map<String, ImageIcon> iconMap = new HashMap<>();
+	private static final Map<String, ImageIcon> iconMap = new HashMap<>();
 
 	private static List<String> defaultSearchPaths;
 	private static List<String> testSearchPaths;
 
 	private static ClassLoader classLoader = ResourceManager.class.getClassLoader();
+	private static final ImageIcon DEFAULT_ICON = loadDefaultIcon();
 
 	/**
 	 * Finds a resource with a given name. This method returns null if no
@@ -336,7 +339,25 @@ public class ResourceManager {
 	 * @param height the height of the new icon
 	 * @return A new, scaled ImageIcon
 	 */
-	public static ImageIcon getScaledIcon(Icon icon, int width, int height) {
+	public static ImageIcon getScaledIcon(ImageIcon icon, int width, int height) {
+		return new ScaledImageIcon(icon, width, height);
+	}
+
+	/**
+	 * Creates a scaled Icon from the given icon with scaling of 
+	 * {@link Image#SCALE_AREA_AVERAGING}. If an EmptyIcon is passed, a new EmptyIcon is returned
+	 * with the new dimensions.
+	 *  
+	 * @param icon the icon to scale
+	 * @param width the width of the new icon
+	 * @param height the height of the new icon
+	 * @return A new, scaled ImageIcon
+	 */
+	public static Icon getScaledIcon(Icon icon, int width, int height) {
+		if (icon instanceof EmptyIcon) {
+			return new EmptyIcon(width, height);
+		}
+
 		return new ScaledImageIcon(icon, width, height);
 	}
 
@@ -396,6 +417,9 @@ public class ResourceManager {
 		if (icon instanceof ImageIcon) {
 			return (ImageIcon) icon;
 		}
+		if (icon instanceof GIcon) {
+			return ((GIcon) icon).getImageIcon();
+		}
 		return new DerivedImageIcon(icon);
 	}
 
@@ -415,26 +439,9 @@ public class ResourceManager {
 		if (icon instanceof ImageIcon) {
 			iconName = ((ImageIcon) icon).getDescription();
 		}
-
-		/*
-		 	TODO - not sure why we wanted just the name and not the entire URL?  Delete this 
-		 	       after a bit
-		 	
-		if (iconName == null) {
-			return null;
+		if (icon instanceof GIcon) {
+			return ((GIcon) icon).getId();
 		}
-		 	
-		int pos = iconName.lastIndexOf(File.separator);
-		if (pos >= 0) {
-			iconName = iconName.substring(pos + 1);
-		}
-		else {
-			pos = iconName.lastIndexOf("/");
-			if (pos >= 0) {
-				iconName = iconName.substring(pos + 1);
-			}
-		}
-		*/
 		return iconName;
 	}
 
@@ -474,49 +481,123 @@ public class ResourceManager {
 	}
 
 	/**
-	 * Load the image specified by filename; returns the default bomb icon
-	 * if problems occur trying to load the file.
+	 * Attempts to load an icon from the given path. Returns the icon or null if no icon was
+	 * found from the given path. This differs from {@link #loadImage(String)} in that
+	 * loadImage will return the default Icon if one can't be found. Further, loadImage will cache
+	 * even the default value, while findIcon only caches resolved icons.
+	 * <p>
 	 * 
-	 * @param filename name of file to load, e.g., "images/home.gif"
-	 * @return the image icon stored in the bytes
+	 * @param path the icon to load, e.g., "images/home.gif"
+	 * @return the ImageIcon if it exists or null
 	 */
-	public static ImageIcon loadImage(String filename) {
-		ImageIcon icon = iconMap.get(filename);
+	public static ImageIcon findIcon(String path) {
+
+		// use the wrapper so that images are not loaded until they are needed
+		ImageIcon icon = iconMap.get(path);
 		if (icon == null) {
-			icon = doLoadIcon(filename, ResourceManager.getDefaultIcon());
-			iconMap.put(filename, icon);
+			icon = doLoadIcon(path);
+			if (icon != null) {
+				iconMap.put(path, icon);
+			}
 		}
 		return icon;
 	}
 
-	private static ImageIcon doLoadIcon(String filename, ImageIcon defaultIcon) {
+	/**
+	 * Load the icon specified by iconPath. The iconPath can be either a path to a resource on
+	 * the classpath or a relative or absolute path to an icon on the file system. If the iconPath
+	 * is a path to a classpath resource, then it will be searched directly or also with an "images/"
+	 * prepended to the path. For example, if there exists an icon "home.gif" on the classpath that
+	 * was stored in the standard "images" resource directory, then it exists on the classpath 
+	 * as "images/home.gif". That icon will be found if the iconPath is either "images/home.gif" or
+	 * just as "home.gif".
+	 * 
+	 * @param iconPath name of file to load, e.g., "images/home.gif"
+	 * @return an Icon from the given iconPath or null, if no such icon can be found
+	 */
+
+	public static Icon loadIcon(String iconPath) {
+		ImageIcon icon = iconMap.get(iconPath);
+		if (icon == null) {
+			icon = doLoadIcon(iconPath);
+			iconMap.put(iconPath, icon == null ? DEFAULT_ICON : icon);
+		}
+
+		return icon == DEFAULT_ICON ? null : icon;
+	}
+
+	/**
+	 * Load the image specified by filename; returns the default bomb icon
+	 * if problems occur trying to load the file.
+	 * 
+	 * @param iconPath name of file to load, e.g., "images/home.gif"
+	 * @return the image icon stored in the bytes
+	 */
+	public static ImageIcon loadImage(String iconPath) {
+		ImageIcon icon = iconMap.get(iconPath);
+		if (icon == null) {
+			icon = doLoadIcon(iconPath);
+			iconMap.put(iconPath, icon == null ? DEFAULT_ICON : icon);
+		}
+		return icon == null ? new UnresolvedIcon(iconPath, DEFAULT_ICON) : icon;
+	}
+
+	public static Set<Icon> getLoadedUrlIcons() {
+		Set<Icon> icons = new HashSet<>();
+		for (Icon icon : iconMap.values()) {
+			if (icon instanceof UrlImageIcon) {
+				icons.add(icon);
+			}
+		}
+
+		return icons;
+	}
+
+	private static UrlImageIcon doLoadIcon(String path) {
+
+		// if the has the "external prefix", it is an icon in the user's application directory
+		if (path.startsWith(EXTERNAL_ICON_PREFIX)) {
+			String relativePath = path.substring(EXTERNAL_ICON_PREFIX.length());
+			File dir = Application.getUserSettingsDirectory();
+			File iconFile = new File(dir, relativePath);
+			if (iconFile.exists()) {
+				try {
+					return new UrlImageIcon(path, iconFile.toURI().toURL());
+				}
+				catch (MalformedURLException e) {
+					// handled below
+				}
+			}
+			return null;
+		}
+
 		// if only the name of an icon is given, but not a path, check to see if it is 
 		// a resource that lives under our "images/" folder
-		if (!filename.contains("/")) {
-			URL url = getResource("images/" + filename);
+		if (!path.contains("/")) {
+			URL url = getResource("images/" + path);
 			if (url != null) {
-				return new UrlImageIcon(filename, url);
+				return new UrlImageIcon(path, url);
 			}
 		}
 
 		// look for it directly with the given path
-		URL url = getResource(filename);
+		URL url = getResource(path);
 		if (url != null) {
-			return new UrlImageIcon(filename, url);
+			return new UrlImageIcon(path, url);
 		}
 
 		// try using the filename as a file path
-		File imageFile = new File(filename);
+		File imageFile = new File(path);
 		if (imageFile.exists()) {
 			try {
-				return new UrlImageIcon(filename, imageFile.toURI().toURL());
+				return new UrlImageIcon(path, imageFile.toURI().toURL());
 			}
 			catch (MalformedURLException e) {
 				// handled below
 			}
 		}
 
-		return defaultIcon;
+		return null;
 	}
 
 	/**
@@ -549,14 +630,6 @@ public class ResourceManager {
 	}
 
 	public static ImageIcon getDefaultIcon() {
-		if (DEFAULT_ICON == null) {
-			URL url = getResource(DEFAULT_ICON_FILENAME);
-			if (url == null) {
-				Msg.error(ResourceManager.class,
-					"Could not find default icon: " + DEFAULT_ICON_FILENAME);
-			}
-			DEFAULT_ICON = new UrlImageIcon(DEFAULT_ICON_FILENAME, url);
-		}
 		return DEFAULT_ICON;
 	}
 
@@ -564,6 +637,16 @@ public class ResourceManager {
 		Set<String> list = getResourceNames("defaultTools/images", null);
 		filterImages(list);
 		return list;
+	}
+
+	private static ImageIcon loadDefaultIcon() {
+		URL url = getResource(BOMB);
+		if (url != null) {
+			return new UrlImageIcon(BOMB, url);
+		}
+		Msg.error(ResourceManager.class,
+			"Could not find default icon: " + BOMB);
+		return getImageIcon(new ColorIcon3D(Color.RED, 16, 16));
 	}
 
 	private static void filterImages(Set<String> set) {

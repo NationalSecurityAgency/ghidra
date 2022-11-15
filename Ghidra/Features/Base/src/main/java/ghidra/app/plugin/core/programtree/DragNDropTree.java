@@ -29,6 +29,8 @@ import docking.DockingUtils;
 import docking.actions.KeyBindingUtils;
 import docking.dnd.*;
 import docking.widgets.table.AutoscrollAdapter;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors;
 
 /**
  * Class to support Drag and Drop; it is also responsible for
@@ -36,6 +38,9 @@ import docking.widgets.table.AutoscrollAdapter;
  * <p>The nodes that are used in this class are ProgramNode objects.</p>
  */
 public abstract class DragNDropTree extends JTree implements Draggable, Droppable, Autoscroll {
+
+	private static final Color BG_COLOR_DRAG_NO_SELECTION =
+		new GColor("color.bg.tree.drag.no.selection");
 
 	private AutoscrollAdapter autoscroller;
 
@@ -63,15 +68,9 @@ public abstract class DragNDropTree extends JTree implements Draggable, Droppabl
 	protected Color nonSelectionDragColor;
 	protected int relativeMousePos; // mouse position within the node:
 
-	// -1 --> above node,
-	//  0 --> at the node
-	//  1 --> below the node
-
-	/**
-	 * Construct a new DragNDropTree.
-	 */
 	public DragNDropTree(DefaultTreeModel model) {
 		super(model);
+		setBackground(new GColor("color.bg.tree"));
 		treeModel = model;
 		this.root = (ProgramNode) model.getRoot();
 		//setEditable(true); // edit interferes with drag gesture listener
@@ -82,7 +81,7 @@ public abstract class DragNDropTree extends JTree implements Draggable, Droppabl
 		dndCellRenderer = new DnDTreeCellRenderer();
 		setCellRenderer(dndCellRenderer);
 		plafSelectionColor = dndCellRenderer.getBackgroundSelectionColor();
-		nonSelectionDragColor = new Color(204, 204, 255);
+		nonSelectionDragColor = BG_COLOR_DRAG_NO_SELECTION;
 		initDragNDrop();
 		ToolTipManager.sharedInstance().registerComponent(this);
 		autoscroller = new AutoscrollAdapter(this, getRowHeight());
@@ -164,7 +163,8 @@ public abstract class DragNDropTree extends JTree implements Draggable, Droppabl
 	public void dragCanceled(DragSourceDropEvent event) {
 		draggedNodes = null;
 		dndCellRenderer.setBackgroundSelectionColor(plafSelectionColor);
-		dndCellRenderer.setBackgroundNonSelectionColor(dndCellRenderer.getBackgroundNonSelectionColor());
+		dndCellRenderer
+				.setBackgroundNonSelectionColor(dndCellRenderer.getBackgroundNonSelectionColor());
 	}
 
 	//////////////////////////////////////////////////////////////////////
@@ -263,8 +263,8 @@ public abstract class DragNDropTree extends JTree implements Draggable, Droppabl
 			}
 			else {
 				destinationNode = null;
-				dndCellRenderer.setSelectionForDrag(Color.red);
-				dndCellRenderer.setNonSelectionForDrag(Color.red);
+				dndCellRenderer.setSelectionForDrag(Colors.ERROR);
+				dndCellRenderer.setNonSelectionForDrag(Colors.ERROR);
 			}
 			Point p = e.getLocation();
 			dndCellRenderer.setRowForFeedback(getRowForLocation(p.x, p.y));

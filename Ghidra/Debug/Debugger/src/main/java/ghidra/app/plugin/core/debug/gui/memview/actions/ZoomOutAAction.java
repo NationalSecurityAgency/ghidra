@@ -15,18 +15,18 @@
  */
 package ghidra.app.plugin.core.debug.gui.memview.actions;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.debug.gui.memview.MemviewProvider;
 import ghidra.util.HelpLocation;
-import resources.ResourceManager;
 
 public class ZoomOutAAction extends DockingAction {
 
-	private final ImageIcon ICON = ResourceManager.loadImage("images/zoom_out.png");
+	private static final Icon ICON = new GIcon("icon.widget.imagepanel.zoom.out");
 
 	private MemviewProvider provider;
 

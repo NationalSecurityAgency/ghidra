@@ -17,13 +17,13 @@ package ghidra.app.plugin.core.symboltree.nodes;
 
 import javax.swing.Icon;
 
+import generic.theme.GIcon;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
-import resources.ResourceManager;
 
 public class ParameterSymbolNode extends SymbolNode {
 
-	public static final Icon PARAMETER_ICON = ResourceManager.loadImage("images/Parameter.gif");
+	public static final Icon PARAMETER_ICON = new GIcon("icon.plugin.symboltree.node.parameter");
 
 	ParameterSymbolNode(Program program, Symbol symbol) {
 		super(program, symbol);

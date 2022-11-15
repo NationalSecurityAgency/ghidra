@@ -20,6 +20,7 @@ import java.awt.Component;
 import java.util.HashMap;
 import java.util.Map;
 
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.GhidraOptions;
 import ghidra.app.util.viewer.options.OptionsGui;
 import ghidra.app.util.viewer.options.ScreenElement;
@@ -431,7 +432,7 @@ public class SymbolInspector implements OptionsChangeListener {
 
 	private Color getColor(ScreenElement se) {
 		if (se == null) {
-			return Color.BLACK;
+			return Colors.BACKGROUND;
 		}
 		String optionName = se.getColorOptionName();
 		Color color = (Color) cache.get(optionName);

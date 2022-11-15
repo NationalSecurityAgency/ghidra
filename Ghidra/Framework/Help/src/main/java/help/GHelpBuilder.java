@@ -21,7 +21,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-import ghidra.GhidraApplicationLayout;
+import generic.theme.ApplicationThemeManager;
 import ghidra.framework.Application;
 import ghidra.framework.ApplicationConfiguration;
 import help.validator.*;
@@ -55,8 +55,8 @@ public class GHelpBuilder {
 
 	private String outputDirectoryName;
 	private String moduleName;
-	private Collection<File> dependencyHelpPaths = new LinkedHashSet<File>();
-	private Collection<File> helpInputDirectories = new LinkedHashSet<File>();
+	private Collection<File> dependencyHelpPaths = new LinkedHashSet<>();
+	private Collection<File> helpInputDirectories = new LinkedHashSet<>();
 	private static boolean debugEnabled = false;
 	private boolean ignoreInvalid = false; // TODO: Do actual validation here
 
@@ -66,9 +66,18 @@ public class GHelpBuilder {
 	public static void main(String[] args) throws Exception {
 		GHelpBuilder builder = new GHelpBuilder();
 		builder.exitOnError = true;
+		ApplicationConfiguration config = new ApplicationConfiguration() {
+			@Override
+			protected void initializeApplication() {
+				ApplicationThemeManager.initialize();
+			}
 
-		ApplicationConfiguration config = new ApplicationConfiguration();
-		Application.initializeApplication(new GhidraApplicationLayout(), config);
+			@Override
+			public boolean isHeadless() {
+				return false;
+			}
+		};
+		Application.initializeApplication(new HelpApplicationLayout("Help Builder", "0.1"), config);
 
 		builder.build(args);
 	}
@@ -98,7 +107,7 @@ public class GHelpBuilder {
 	}
 
 	private HelpModuleCollection collectAllHelp() {
-		List<File> allHelp = new ArrayList<File>(helpInputDirectories);
+		List<File> allHelp = new ArrayList<>(helpInputDirectories);
 		for (File file : dependencyHelpPaths) {
 			allHelp.add(file);
 		}

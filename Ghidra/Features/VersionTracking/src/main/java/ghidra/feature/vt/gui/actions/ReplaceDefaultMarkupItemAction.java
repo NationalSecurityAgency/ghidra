@@ -18,10 +18,10 @@ package ghidra.feature.vt.gui.actions;
 import static ghidra.feature.vt.gui.util.VTOptionDefines.*;
 
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 
 import docking.action.MenuData;
 import docking.action.ToolBarData;
+import generic.theme.GIcon;
 import ghidra.feature.vt.api.main.VTMarkupItemApplyActionType;
 import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.feature.vt.gui.plugin.VTPlugin;
@@ -40,7 +40,7 @@ public class ReplaceDefaultMarkupItemAction extends AbstractMarkupItemAction {
 		super(controller, "Apply (Replace Default Only)");
 
 		Icon replacedIcon = VTPlugin.REPLACED_ICON;
-		ImageIcon warningIcon = ResourceManager.loadImage("images/warning.png");
+		Icon warningIcon = new GIcon("icon.warning");
 		warningIcon = ResourceManager.getScaledIcon(warningIcon, 12, 12);
 		int warningIconWidth = warningIcon.getIconWidth();
 		int warningIconHeight = warningIcon.getIconHeight();

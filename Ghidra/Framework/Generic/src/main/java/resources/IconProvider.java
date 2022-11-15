@@ -15,14 +15,15 @@
  */
 package resources;
 
+import java.awt.Image;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
-import generic.Images;
 import generic.util.image.ImageUtils;
 import ghidra.util.Msg;
 
@@ -35,18 +36,19 @@ import ghidra.util.Msg;
  */
 public class IconProvider {
 
-	private ImageIcon icon;
+	private Icon icon;
 	private URL url;
 	private URL tempUrl;
 	private boolean tempFileFailed;
 
-	public IconProvider(ImageIcon icon, URL url) {
+	public IconProvider(Icon icon, URL url) {
 		this.icon = icon;
 		this.url = url;
 	}
 
-	public ImageIcon getIcon() {
-		return icon;
+	public Image getImage() {
+		ImageIcon imageIcon = ResourceManager.getImageIcon(icon);
+		return imageIcon.getImage();
 	}
 
 	public boolean isInvalid() {
@@ -94,7 +96,8 @@ public class IconProvider {
 		try {
 			File imageFile = File.createTempFile("temp.help.icon", null);
 			imageFile.deleteOnExit(); // don't let this linger
-			ImageUtils.writeFile(icon.getImage(), imageFile);
+			ImageIcon imageIcon = ResourceManager.getImageIcon(icon);
+			ImageUtils.writeFile(imageIcon.getImage(), imageFile);
 			return imageFile.toURI().toURL();
 		}
 		catch (IOException e) {
@@ -119,6 +122,6 @@ public class IconProvider {
 	}
 
 	private URL getDefaultUrl() {
-		return ResourceManager.getResource(Images.BOMB);
+		return ResourceManager.getResource(ResourceManager.BOMB);
 	}
 }

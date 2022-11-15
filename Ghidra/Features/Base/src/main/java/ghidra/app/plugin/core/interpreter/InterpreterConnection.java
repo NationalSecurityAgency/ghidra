@@ -17,7 +17,7 @@ package ghidra.app.plugin.core.interpreter;
 
 import java.util.List;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import ghidra.app.plugin.core.console.CodeCompletion;
 
@@ -38,7 +38,7 @@ public interface InterpreterConnection {
 	 * 
 	 * @return The icon associated with the interpreter.  Null if default icon is desired.
 	 */
-	public ImageIcon getIcon();
+	public Icon getIcon();
 
 	/**
 	 * Gets a {@link List} of {@link CodeCompletion code completions} for the given command.

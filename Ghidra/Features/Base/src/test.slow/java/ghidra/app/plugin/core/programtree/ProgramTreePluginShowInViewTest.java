@@ -30,6 +30,7 @@ import org.junit.*;
 import docking.ActionContext;
 import docking.action.DockingActionIf;
 import docking.action.ToggleDockingAction;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.navigation.GoToAddressLabelPlugin;
 import ghidra.app.services.*;
@@ -42,7 +43,6 @@ import ghidra.program.util.GroupPath;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.task.RunManager;
-import resources.ResourceManager;
 
 public class ProgramTreePluginShowInViewTest extends AbstractGhidraHeadedIntegrationTest {
 
@@ -514,7 +514,7 @@ public class ProgramTreePluginShowInViewTest extends AbstractGhidraHeadedIntegra
 
 		int row = getRow(node.getTreePath());
 		JLabel comp = render(tree, node, true, isExpanded, isLeaf, row, false);
-		assertEquals(ResourceManager.loadImage(iconName), getIcon(comp));
+		assertEquals(new GIcon(iconName), getIcon(comp));
 	}
 
 	private void waitForRunManager() {

@@ -640,7 +640,9 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		}
 		assertEquals(2, filtLocs.size());
 
-		breakpointsProvider.setSelectedBreakpoints(Set.of(data.get(0).getLogicalBreakpoint()));
+		LogicalBreakpointRow bpRow = data.get(0);
+		runSwing(() -> breakpointsProvider
+				.setSelectedBreakpoints(Set.of(bpRow.getLogicalBreakpoint())));
 		waitForSwing();
 
 		filtLocs = breakpointsProvider.locationFilterPanel.getTableFilterModel().getModelData();

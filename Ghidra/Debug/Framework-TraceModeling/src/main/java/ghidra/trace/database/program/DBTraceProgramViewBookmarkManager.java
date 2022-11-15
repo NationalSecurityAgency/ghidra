@@ -19,7 +19,7 @@ import java.awt.Color;
 import java.util.*;
 import java.util.function.Predicate;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import org.apache.commons.collections4.IteratorUtils;
 
@@ -52,7 +52,7 @@ public class DBTraceProgramViewBookmarkManager implements TraceProgramViewBookma
 	}
 
 	@Override
-	public BookmarkType defineType(String type, ImageIcon icon, Color color, int priority) {
+	public BookmarkType defineType(String type, Icon icon, Color color, int priority) {
 		return bookmarkManager.defineBookmarkType(type, icon, color, priority);
 	}
 
@@ -284,11 +284,11 @@ public class DBTraceProgramViewBookmarkManager implements TraceProgramViewBookma
 	 * {@link IteratorUtils#filteredIterator(Iterator, org.apache.commons.collections4.Predicate)}.
 	 * 
 	 * This one understands that the predicate will be testing things of the (possibly
-	 * more-specific) type of elements in the original iterator, not thatof the returned iterator.
+	 * more-specific) type of elements in the original iterator, not that of the returned iterator.
 	 * 
-	 * @param it
-	 * @param predicate
-	 * @return
+	 * @param it the iterator
+	 * @param predicate the predicate
+	 * @return the iterator
 	 */
 	@SuppressWarnings("unchecked")
 	protected static <T, U extends T> Iterator<T> filteredIterator(Iterator<U> it,

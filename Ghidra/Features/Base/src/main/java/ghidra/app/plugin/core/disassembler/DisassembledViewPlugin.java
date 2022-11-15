@@ -24,6 +24,7 @@ import javax.swing.event.ChangeListener;
 
 import docking.WindowPosition;
 import docking.widgets.list.GListCellRenderer;
+import generic.theme.Gui;
 import ghidra.GhidraOptions;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -449,8 +450,8 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 						Color background = selectedAddressColor;
 
 						if (isSelected) {
-							foreground = foreground.brighter();
-							background = background.darker();
+							foreground = Gui.brighter(foreground);
+							background = Gui.darker(background);
 						}
 
 						setForeground(foreground);
@@ -490,7 +491,7 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 				OptionsGui.BACKGROUND.getDefaultColor());
 
 			// font
-			font = opt.getFont(ADDRESS_FONT_OPTION, FieldFactory.DEFAULT_FIELD_FONT);
+			font = Gui.getFont(FieldFactory.BASE_LISTING_FONT_ID);
 
 			contentList.setForeground(addressForegroundColor);
 			contentList.setBackground(backgroundColor);
@@ -509,22 +510,6 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 			opt.removeOptionsChangeListener(optionsChangeListener);
 		}
 
-		/**
-		 * Adds the given listener to be notified when the user selects list
-		 * items in the view.
-		 * 
-		 * @param listener The listener to add.
-		 */
-//        void addListSelectionListener( ListSelectionListener listener )
-//        {
-//            contentList.addListSelectionListener( listener );
-//        }
-
-		/**
-		 * Sets the contents to the provided value.
-		 * 
-		 * @param displayContents The value that the view should display.
-		 */
 		void setContents(DisassembledAddressInfo[] addressInfos) {
 			contentList.setListData(addressInfos);
 		}
@@ -595,7 +580,7 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 						contentList.setBackground(backgroundColor);
 					}
 					else if (optionName.equals(ADDRESS_FONT_OPTION)) {
-						font = (Font) newValue;
+						font = Gui.getFont(FieldFactory.BASE_LISTING_FONT_ID);
 					}
 				}
 
@@ -606,9 +591,8 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 	}
 
 	/**
-	 * An object that provides information about the address that it wraps.
-	 * The info knows how to locate a {@link CodeInfo} object for the address
-	 * and can generate a string preview of the address.
+	 * An object that provides information about the address that it wraps.  The info knows how to 
+	 * locate an info object for the address and can generate a string preview of the address.
 	 */
 	private class DisassembledAddressInfo {
 		/**
@@ -683,8 +667,8 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 		/**
 		 * Get the code unit from the program location.
 		 *
-		 * @param  The address from which we want the CodeUnit.
-		 * @return CodeUnit null if there is no location.
+		 * @param address the address from which we want the CodeUnit.
+		 * @return null if there is no location.
 		 */
 		private CodeUnit getCodeUnitForAddress(Address address) {
 			CodeUnit codeUnit = null;
@@ -693,8 +677,8 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 				Listing listing = currentProgram.getListing();
 				codeUnit = listing.getCodeUnitAt(address);
 
-				// if the CodeUnit is Data and is not defined, then we 
-				// need to try to virutally disassemble it
+				// if the CodeUnit is Data and is not defined, then we need to try to virtually 
+				// disassemble it
 				if (codeUnit instanceof Data) {
 					if (!((Data) codeUnit).isDefined()) {
 						CodeUnit virtualCodeUnit = virtuallyDisassembleAddress(address);
@@ -727,18 +711,15 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 					codeUnit = disassembler.disassemble(address);
 				}
 				catch (UsrException ue) {
-					// these exceptions happen if there is insufficient data
-					// from the program: InsufficientBytesException, 
-					// UnknownInstructionException, UnknownContextException
+					// these exceptions happen if there is insufficient data from the program: 
+					// InsufficientBytesException, UnknownInstructionException, 
+					// UnknownContextException
 				}
 			}
 
 			return codeUnit;
 		}
 
-		/**
-		 * Gets the preview String for the provided code unit.
-		 */
 		public String getAddressPreview(CodeUnitFormat format) {
 			return getAddress().toString() + " " + format.getRepresentationString(addressCodeUnit);
 		}

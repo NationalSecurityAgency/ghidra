@@ -24,6 +24,7 @@ import docking.ActionContext;
 import docking.action.*;
 import docking.widgets.OptionDialog;
 import docking.widgets.tree.GTree;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
 import ghidra.app.plugin.core.datamgr.archive.FileArchive;
@@ -95,7 +96,8 @@ public class DeleteArchiveAction extends DockingAction {
 			"Confirm Delete Operation",
 			"<html><b>Are you sure you want to delete archive: " +
 				HTMLUtilities.escapeHTML(node.getName()) + "?<br><br>" +
-				"<font color=\"red\">(WARNING: This action will permanently " +
+				"<font color=\"" + Colors.ERROR.toHexString() +
+				"\">(WARNING: This action will permanently " +
 				"delete the file from disk.)</font></b>",
 			"Yes", OptionDialog.QUESTION_MESSAGE) != OptionDialog.OPTION_ONE) {
 			return;

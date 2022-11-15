@@ -27,10 +27,11 @@ import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.label.GDLabel;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.util.*;
 import help.Help;
 import help.HelpService;
-import resources.ResourceManager;
+import resources.Icons;
 
 /**
  * A dialog that controls the panels for going to "Next" and "Previous" in some
@@ -81,6 +82,7 @@ public class WizardManager extends DialogComponentProvider implements WizardPane
 	/**
 	 * @see java.awt.Window#dispose()
 	 */
+	@Override
 	public void dispose() {
 		if (currWizPanel != null) {
 			currWizPanel.removeWizardPanelListener(this);
@@ -219,7 +221,7 @@ public class WizardManager extends DialogComponentProvider implements WizardPane
 				: new GDLabel(INIT_TITLE, wizardIcon, SwingConstants.TRAILING));
 
 		EmptyBorderButton helpButton =
-			new EmptyBorderButton(ResourceManager.loadImage("images/information.png"));
+			new EmptyBorderButton(Icons.INFO_ICON);
 		helpButton.setToolTipText("Help (F1)");
 		helpButton.addActionListener(
 			e -> DockingWindowManager.getHelpService().showHelp(rootPanel, false, rootPanel));
@@ -471,7 +473,7 @@ if (!visitedMap.containsKey(currWizPanel)) {
 			}
 
 			titledBorder.setTitleFont(font.deriveFont(10f));
-			titledBorder.setTitleColor(Color.BLUE);
+			titledBorder.setTitleColor(Messages.NORMAL);
 			titledBorder.setTitlePosition(TitledBorder.BOTTOM);
 			titledBorder.setTitleJustification(TitledBorder.TRAILING);
 

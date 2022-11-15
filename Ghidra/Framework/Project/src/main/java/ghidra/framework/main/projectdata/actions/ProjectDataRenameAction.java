@@ -25,19 +25,19 @@ import javax.swing.table.TableColumnModel;
 import docking.action.MenuData;
 import docking.widgets.table.GTable;
 import docking.widgets.tree.GTreeNode;
+import generic.theme.GIcon;
 import ghidra.framework.main.datatable.*;
 import ghidra.framework.main.datatree.DataTree;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;
 import ghidra.util.Msg;
-import resources.ResourceManager;
 
 public class ProjectDataRenameAction extends FrontendProjectTreeAction {
-	private static Icon icon = ResourceManager.loadImage("images/page_edit.png");
+	private static final Icon ICON = new GIcon("icon.projectdata.rename");
 
 	public ProjectDataRenameAction(String owner, String group) {
 		super("Rename", owner);
-		setPopupMenuData(new MenuData(new String[] { "Rename" }, icon, group));
+		setPopupMenuData(new MenuData(new String[] { "Rename" }, ICON, group));
 		markHelpUnnecessary();
 	}
 

@@ -15,13 +15,15 @@
  */
 package ghidra.framework.main;
 
-import java.awt.Color;
 import java.awt.Font;
 import java.util.LinkedList;
 
 import javax.swing.JTextPane;
 import javax.swing.text.*;
 
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Ids.Fonts;
+import generic.theme.Gui;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.Msg;
@@ -113,7 +115,8 @@ public class ConsoleTextPane extends JTextPane implements OptionsChangeListener 
 
 	private void updateFromOptions(Options options) {
 		int newLimit = options.getInt(MAXIMUM_CHARACTERS_OPTION_NAME, DEFAULT_MAXIMUM_CHARS);
-		truncationFactor = options.getDouble(TRUNCATION_FACTOR_OPTION_NAME, DEFAULT_TRUNCATION_FACTOR);
+		truncationFactor =
+			options.getDouble(TRUNCATION_FACTOR_OPTION_NAME, DEFAULT_TRUNCATION_FACTOR);
 		setMaximumCharacterLimit(newLimit);
 	}
 
@@ -141,7 +144,7 @@ public class ConsoleTextPane extends JTextPane implements OptionsChangeListener 
 
 	private void doAddMessage(MessageWrapper newMessage) {
 		synchronized (messageList) {
-			if ( !messageList.isEmpty() ) {
+			if (!messageList.isEmpty()) {
 				MessageWrapper lastMessage = messageList.getLast();
 				if (lastMessage.merge(newMessage)) {
 					return;
@@ -201,7 +204,7 @@ public class ConsoleTextPane extends JTextPane implements OptionsChangeListener 
 	}
 
 	private void createAttribtues() {
-		createAttributes(new Font("monospaced", Font.PLAIN, 12));
+		createAttributes(Gui.getFont(Fonts.MONOSPACED));
 	}
 
 	private void createAttributes(Font font) {
@@ -211,7 +214,8 @@ public class ConsoleTextPane extends JTextPane implements OptionsChangeListener 
 		outputAttributeSet.addAttribute(StyleConstants.FontSize, font.getSize());
 		outputAttributeSet.addAttribute(StyleConstants.Italic, font.isItalic());
 		outputAttributeSet.addAttribute(StyleConstants.Bold, font.isBold());
-		outputAttributeSet.addAttribute(StyleConstants.Foreground, Color.BLACK);
+		outputAttributeSet.addAttribute(StyleConstants.Foreground,
+			new GColor("color.fg.consoletextpane"));
 
 		errorAttributeSet = new SimpleAttributeSet();
 		errorAttributeSet.addAttribute(CUSTOM_ATTRIBUTE_KEY, ERROR_ATTRIBUTE_VALUE);
@@ -219,7 +223,8 @@ public class ConsoleTextPane extends JTextPane implements OptionsChangeListener 
 		errorAttributeSet.addAttribute(StyleConstants.FontSize, font.getSize());
 		errorAttributeSet.addAttribute(StyleConstants.Italic, font.isItalic());
 		errorAttributeSet.addAttribute(StyleConstants.Bold, font.isBold());
-		errorAttributeSet.addAttribute(StyleConstants.Foreground, Color.RED);
+		errorAttributeSet.addAttribute(StyleConstants.Foreground,
+			new GColor("color.fg.error.consoletextpane"));
 	}
 
 	private void doUpdate() {

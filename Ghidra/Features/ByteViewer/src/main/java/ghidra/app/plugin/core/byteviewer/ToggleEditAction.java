@@ -20,8 +20,8 @@ import java.awt.event.KeyEvent;
 
 import docking.ActionContext;
 import docking.action.*;
+import generic.theme.GIcon;
 import ghidra.framework.plugintool.Plugin;
-import resources.ResourceManager;
 
 class ToggleEditAction extends ToggleDockingAction {
 	private final ByteViewerComponentProvider provider;
@@ -29,8 +29,7 @@ class ToggleEditAction extends ToggleDockingAction {
 	public ToggleEditAction(ByteViewerComponentProvider provider, Plugin plugin) {
 		super("Enable/Disable Byteviewer Editing", plugin.getName());
 		this.provider = provider;
-		setToolBarData(new ToolBarData(
-			ResourceManager.loadImage("images/editbytes.gif"), "Byteviewer"));
+		setToolBarData(new ToolBarData(new GIcon("icon.base.edit.bytes"), "Byteviewer"));
 		setKeyBindingData(new KeyBindingData(
 			KeyEvent.VK_E, InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK));
 

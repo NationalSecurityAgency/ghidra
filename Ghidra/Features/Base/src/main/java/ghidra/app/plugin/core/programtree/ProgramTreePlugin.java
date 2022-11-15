@@ -23,6 +23,7 @@ import javax.swing.tree.TreePath;
 
 import docking.ActionContext;
 import docking.action.*;
+import generic.theme.GIcon;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.cmd.module.*;
 import ghidra.app.events.ProgramActivatedPluginEvent;
@@ -46,7 +47,6 @@ import ghidra.util.datastruct.StringKeyIndexer;
 import ghidra.util.exception.AssertException;
 import ghidra.util.task.RunManager;
 import resources.Icons;
-import resources.ResourceManager;
 
 /**
  * Plugin that creates view provider services to show the trees in a program.
@@ -81,8 +81,6 @@ public class ProgramTreePlugin extends ProgramPlugin
 	private static final String TREE_NAME = "TreeName";
 	private static final String TOGGLE_STATE = "NavigationToggleState";
 
-	private final static String OPEN_VIEW_ICON_NAME = "images/openSmallFolder.png";
-	private final static String CREATE_ICON_NAME = "images/layout_add.png";
 	private final static Icon NAVIGATION_ICON = Icons.NAVIGATE_ON_INCOMING_EVENT_ICON;
 
 	private HashMap<String, TreeViewProvider> providerMap;// map of view providers, key is the name
@@ -480,7 +478,8 @@ public class ProgramTreePlugin extends ProgramPlugin
 	/**
 	 * Close the view if we are not trying to close the last view.
 	 *
-	 * @param treeViewProvider
+	 * 
+	 * @param treeViewProvider the provider
 	 * @return true if the view can be closed
 	 */
 	boolean closeView(TreeViewProvider treeViewProvider) {
@@ -516,10 +515,9 @@ public class ProgramTreePlugin extends ProgramPlugin
 
 	/**
 	 * Method renameView.
-	 *
-	 * @param treeViewProvider
-	 * @param newName
-	 * @return boolean
+	 * @param treeViewProvider the provider
+	 * @param newName the new name
+	 * @return true if renamed
 	 */
 	boolean renameView(TreeViewProvider treeViewProvider, String newName) {
 		Listing listing = currentProgram.getListing();
@@ -932,7 +930,7 @@ public class ProgramTreePlugin extends ProgramPlugin
 			}
 		};
 
-		Icon icon = ResourceManager.loadImage(OPEN_VIEW_ICON_NAME);
+		Icon icon = new GIcon("icon.plugin.programtree.open.tree");
 		openAction.setToolBarData(new ToolBarData(icon));
 		openAction.setEnabled(false);
 		openAction.setDescription("Open Tree View");
@@ -945,7 +943,7 @@ public class ProgramTreePlugin extends ProgramPlugin
 			}
 		};
 
-		icon = ResourceManager.loadImage(CREATE_ICON_NAME);
+		icon = new GIcon("icon.plugin.programtree.new.tree");
 		createAction.setToolBarData(new ToolBarData(icon));
 		createAction.setEnabled(false);
 		createAction.setDescription(HTMLUtilities.toHTML("Create a new default tree view; shows\n" +

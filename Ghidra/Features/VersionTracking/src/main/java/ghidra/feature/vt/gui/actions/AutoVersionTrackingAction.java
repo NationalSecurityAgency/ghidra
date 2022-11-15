@@ -20,19 +20,19 @@ import javax.swing.Icon;
 import docking.ActionContext;
 import docking.action.*;
 import docking.tool.ToolConstants;
+import generic.theme.GIcon;
 import ghidra.feature.vt.api.main.VTSession;
 import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.feature.vt.gui.plugin.VTPlugin;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.HelpLocation;
 import ghidra.util.task.TaskLauncher;
-import resources.ResourceManager;
 
 /**
  *  This action runs the {@link AutoVersionTrackingTask}
  */
 public class AutoVersionTrackingAction extends DockingAction {
-	public static Icon AUTO_VT_ICON = ResourceManager.loadImage("images/wizard.png");
+	public static Icon AUTO_VT_ICON = new GIcon("icon.version.tracking.auto");
 	private final VTController controller;
 
 	public AutoVersionTrackingAction(VTController controller) {

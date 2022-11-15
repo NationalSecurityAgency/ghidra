@@ -28,6 +28,7 @@ import javax.swing.event.ChangeListener;
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.ToggleDockingAction;
+import generic.theme.GColor;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.codebrowser.MarkerServiceBackgroundColorModel;
 import ghidra.app.plugin.core.debug.*;
@@ -57,28 +58,19 @@ import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.Msg;
 
-@PluginInfo(
-	shortDescription = "Compare memory state between times in a trace",
-	description = "Provides a side-by-side diff view between snapshots (points in time) in a " +
-		"trace. The comparison is limited to raw bytes.",
-	category = PluginCategoryNames.DEBUGGER,
-	packageName = DebuggerPluginPackage.NAME,
-	status = PluginStatus.RELEASED,
-	eventsConsumed = {
+@PluginInfo(shortDescription = "Compare memory state between times in a trace", description = "Provides a side-by-side diff view between snapshots (points in time) in a " +
+	"trace. The comparison is limited to raw bytes.", category = PluginCategoryNames.DEBUGGER, packageName = DebuggerPluginPackage.NAME, status = PluginStatus.RELEASED, eventsConsumed = {
 		TraceClosedPluginEvent.class,
-	},
-	eventsProduced = {},
-	servicesRequired = {
+	}, eventsProduced = {}, servicesRequired = {
 		DebuggerListingService.class,
-	},
-	servicesProvided = {})
+	}, servicesProvided = {})
 public class DebuggerTraceViewDiffPlugin extends AbstractDebuggerPlugin {
 	protected static final String MARKER_NAME = "Trace Diff";
 	protected static final String MARKER_DESCRIPTION = "Difference between snapshots in this trace";
 
 	public static final String DIFF_COLOR_CATEGORY = "Listing Fields";
 	public static final String DIFF_COLOR_NAME = "Selection Colors.Difference Color";
-	public static final Color DEFAULT_DIFF_COLOR = new Color(255, 230, 180); // light orange
+	public static final Color DEFAULT_DIFF_COLOR = new GColor("color.bg.debugger.diff.marker");
 
 	protected class ListingCoordinationListener implements CoordinatedListingPanelListener {
 		@Override

@@ -24,6 +24,8 @@ import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import generic.theme.GIcon;
+import generic.theme.Gui;
 import help.validator.location.*;
 import resources.IconProvider;
 import resources.Icons;
@@ -73,9 +75,12 @@ public class HelpBuildUtils {
 	}
 
 	/**
-	 * Returns a file object that is the help topic directory for the given file.  
-	 * This method is useful for finding the help topic directory when the given 
-	 * file doesn't live directly under a help topic.
+	 * Returns a file object that is the help topic directory for the given file.
+	 *   
+	 * <p>This method is useful for finding the help topic directory when the given file doesn't 
+	 * live directly under a help topic.
+	 * @param file the file for which to find a topic
+	 * @return the path to the help topic directory
 	 */
 	public static Path getHelpTopicDir(Path file) {
 		Path helpTopics = file.getFileSystem().getPath("help", "topics");
@@ -540,7 +545,7 @@ public class HelpBuildUtils {
 	 * @param sourceFile the source file path of the image reference
 	 * @param ref the reference text
 	 * @return an absolute path; null if the URI is remote
-	 * @throws URISyntaxException 
+	 * @throws URISyntaxException if there is an exception creating a URL/URI for the image location
 	 */
 	public static ImageLocation locateImageReference(Path sourceFile, String ref)
 			throws URISyntaxException {
@@ -563,6 +568,13 @@ public class HelpBuildUtils {
 			}
 			return ImageLocation.createRuntimeLocation(sourceFile, ref, resolved, path);
 		}
+		if (Gui.hasIcon(ref)) {
+			GIcon gIcon = new GIcon(ref);
+			URL url = gIcon.getUrl();
+			URI resolved = url.toURI();
+			Path path = toPath(resolved);
+			return ImageLocation.createRuntimeLocation(sourceFile, ref, resolved, path);
+		}
 
 		URI resolved = resolve(sourceFile, ref);
 		if (isRemote(resolved)) {
@@ -574,13 +586,14 @@ public class HelpBuildUtils {
 	}
 
 	/** 
-	 * Turn an HTML HREF reference into an absolute path.  This will 
-	 * locate files based upon relative references, specialized help system references (i.e., 
-	 * help/topics/...),  and absolute URLs.
+	 * Turn an HTML HREF reference into an absolute path.  This will locate files based upon 
+	 * relative references, specialized help system references (i.e., help/topics/...),  and 
+	 * absolute URLs.
 	 * 
+	 * @param sourceFile the reference's source file
 	 * @param ref the reference text
 	 * @return an absolute path; null if the URI is remote
-	 * @throws URISyntaxException 
+	 * @throws URISyntaxException if there is an exception creating a URL/URI for the image location
 	 */
 	public static Path locateReference(Path sourceFile, String ref) throws URISyntaxException {
 

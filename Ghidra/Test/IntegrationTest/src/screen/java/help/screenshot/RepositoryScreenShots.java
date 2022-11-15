@@ -28,6 +28,7 @@ import org.junit.*;
 
 import docking.widgets.indexedscrollpane.IndexedScrollPane;
 import generic.test.TestUtils;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.cmd.function.AddRegisterParameterCommand;
 import ghidra.app.merge.*;
 import ghidra.app.merge.listing.*;
@@ -71,7 +72,8 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 	public void setUp() throws Exception {
 		super.setUp();
 		String testFilename = getClass().getSimpleName().replace(".class", "");
-		mtfGenerator = new MergeScreenShotGenerator(testFilename, testName.getMethodName(), mtf, testName);
+		mtfGenerator =
+			new MergeScreenShotGenerator(testFilename, testName.getMethodName(), mtf, testName);
 		env = mtf.getTestEnvironment();
 	}
 
@@ -150,7 +152,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		Container namePanel = (Container) TestUtils.getInstanceField("namePanel", memoryMergePanel);
 		setToolSize(600, 450);
 		Window window = mergeTool.getActiveWindow();
-		
+
 		mtfGenerator.captureComponent(window);
 
 //		chooseRadioButton(MergeConstants.MY_TITLE, namePanel.getClass(), false);
@@ -642,13 +644,13 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		int arrowHead2Y = lock3Y;
 		int description1Y = arrowTailY - 10;
 		int description2Y = arrowTailY + 10;
-		mtfGenerator.drawArrow(Color.RED, 2, new Point(arrowTailX, arrowTailY),
+		mtfGenerator.drawArrow(Palette.RED, 2, new Point(arrowTailX, arrowTailY),
 			new Point(arrowHeadX, arrowHead1Y), 8);
-		mtfGenerator.drawArrow(Color.RED, 2, new Point(arrowTailX, arrowTailY),
+		mtfGenerator.drawArrow(Palette.RED, 2, new Point(arrowTailX, arrowTailY),
 			new Point(arrowHeadX, arrowHead2Y), 8);
-		mtfGenerator.drawText(description1, Color.RED, new Point(descriptionX, description1Y),
+		mtfGenerator.drawText(description1, Palette.RED, new Point(descriptionX, description1Y),
 			DESCRIPTION_FONT_SIZE);
-		mtfGenerator.drawText(description2, Color.RED, new Point(descriptionX, description2Y),
+		mtfGenerator.drawText(description2, Palette.RED, new Point(descriptionX, description2Y),
 			DESCRIPTION_FONT_SIZE);
 	}
 
@@ -661,7 +663,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		Dimension size = listingPanels[0].getSize();
 		int descriptionX = listingX + (size.width / 3);
 		int descriptionY = listingY + size.height - 20;
-		mtfGenerator.drawText(greyListingDescription, Color.RED,
+		mtfGenerator.drawText(greyListingDescription, Palette.RED,
 			new Point(descriptionX, descriptionY), DESCRIPTION_FONT_SIZE);
 	}
 
@@ -690,9 +692,9 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		int arrowHeadY = buttonY;
 		int arrowTailY = buttonY;
 		int descriptionY = buttonY + 5;
-		mtfGenerator.drawArrow(Color.RED, 2, new Point(arrowTailX, arrowTailY),
+		mtfGenerator.drawArrow(Palette.RED, 2, new Point(arrowTailX, arrowTailY),
 			new Point(arrowHeadX, arrowHeadY), 8);
-		mtfGenerator.drawText(adjustFieldsDescription, Color.RED,
+		mtfGenerator.drawText(adjustFieldsDescription, Palette.RED,
 			new Point(descriptionX, descriptionY), DESCRIPTION_FONT_SIZE);
 	}
 
@@ -711,11 +713,11 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		int arrowHeadY = westLabelBottomY;
 		int arrowTailY = westLabelBottomY + 15;
 		int descriptionY = westLabelBottomY + 20;
-		mtfGenerator.drawArrow(Color.RED, 2, new Point(arrowTailX, arrowTailY),
+		mtfGenerator.drawArrow(Palette.RED, 2, new Point(arrowTailX, arrowTailY),
 			new Point(arrowHeadX, arrowTailY), 0);
-		mtfGenerator.drawArrow(Color.RED, 2, new Point(arrowHeadX, arrowTailY),
+		mtfGenerator.drawArrow(Palette.RED, 2, new Point(arrowHeadX, arrowTailY),
 			new Point(arrowHeadX, arrowHeadY), 8);
-		mtfGenerator.drawText("Indicates which conflict you are resolving.", Color.RED,
+		mtfGenerator.drawText("Indicates which conflict you are resolving.", Palette.RED,
 			new Point(descriptionX, descriptionY), DESCRIPTION_FONT_SIZE);
 	}
 
@@ -734,9 +736,9 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		int arrowHeadY = eastLabelY - 10;
 		int arrowTailY = arrowHeadY - 30;
 		int descriptionY = arrowTailY - 5;
-		mtfGenerator.drawArrow(Color.RED, 2, new Point(arrowHeadX, arrowTailY),
+		mtfGenerator.drawArrow(Palette.RED, 2, new Point(arrowHeadX, arrowTailY),
 			new Point(arrowHeadX, arrowHeadY), 8);
-		mtfGenerator.drawText(addressRangeDescription, Color.RED,
+		mtfGenerator.drawText(addressRangeDescription, Palette.RED,
 			new Point(descriptionX, descriptionY), DESCRIPTION_FONT_SIZE);
 	}
 
@@ -744,7 +746,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		Graphics g = image.getGraphics();
 		Font font = g.getFont();
 		g.setFont(font.deriveFont(DESCRIPTION_FONT_SIZE));
-		g.setColor(Color.RED);
+		g.setColor(Palette.RED);
 		FontMetrics fontMetrics = g.getFontMetrics(font.deriveFont(DESCRIPTION_FONT_SIZE));
 		int descriptionWidth = fontMetrics.stringWidth(description);
 		return descriptionWidth;
@@ -763,9 +765,9 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		int westLabelY = westLabelLocation.y - windowLocationOnScreen.y;
 		int arrowY = westLabelY + 5;
 		int descriptionY = arrowY;
-		mtfGenerator.drawArrow(Color.RED, 2, new Point(arrowTailX, arrowY),
+		mtfGenerator.drawArrow(Palette.RED, 2, new Point(arrowTailX, arrowY),
 			new Point(arrowHeadX, arrowY), 8);
-		mtfGenerator.drawText("Indicates the address(es) in conflict.", Color.RED,
+		mtfGenerator.drawText("Indicates the address(es) in conflict.", Palette.RED,
 			new Point(descriptionX, descriptionY), DESCRIPTION_FONT_SIZE);
 	}
 
@@ -783,9 +785,9 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		int arrowTailY = endTitleTextY - 5;
 		int arrowHeadY = endTitleTextY + 5;
 		int descriptionY = endTitleTextY;
-		mtfGenerator.drawArrow(Color.RED, 2, new Point(arrowTailX, arrowTailY),
+		mtfGenerator.drawArrow(Palette.RED, 2, new Point(arrowTailX, arrowTailY),
 			new Point(arrowHeadX, arrowHeadY), 8);
-		mtfGenerator.drawText("Type of conflict to resolve.", Color.RED,
+		mtfGenerator.drawText("Type of conflict to resolve.", Palette.RED,
 			new Point(descriptionX, descriptionY), DESCRIPTION_FONT_SIZE);
 	}
 
@@ -794,9 +796,9 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		Point variousChoicesLocation = variousChoicesPanel.getLocationOnScreen();
 		int conflictAreaX = variousChoicesLocation.x - windowLocationOnScreen.x;
 		int conflictAreaY = variousChoicesLocation.y - windowLocationOnScreen.y;
-		mtfGenerator.drawText("Area indicating the specific information", Color.RED,
+		mtfGenerator.drawText("Area indicating the specific information", Palette.RED,
 			new Point(conflictAreaX + 20, conflictAreaY + 40), DESCRIPTION_FONT_SIZE);
-		mtfGenerator.drawText("for the current conflict(s) being resolved.", Color.RED,
+		mtfGenerator.drawText("for the current conflict(s) being resolved.", Palette.RED,
 			new Point(conflictAreaX + 20, conflictAreaY + 60), DESCRIPTION_FONT_SIZE);
 	}
 
@@ -816,11 +818,11 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		int arrowTailY = radioButtonY - 10;
 		int description1Y = radioButtonY - 20;
 		int description2Y = radioButtonY;
-		mtfGenerator.drawArrow(Color.RED, 2, new Point(arrowTailX, arrowTailY),
+		mtfGenerator.drawArrow(Palette.RED, 2, new Point(arrowTailX, arrowTailY),
 			new Point(arrowHeadX, arrowHeadY), 8);
-		mtfGenerator.drawText("Radio buttons or check boxes to", Color.RED,
+		mtfGenerator.drawText("Radio buttons or check boxes to", Palette.RED,
 			new Point(descriptionX, description1Y), DESCRIPTION_FONT_SIZE);
-		mtfGenerator.drawText("select for resolving the conflict(s).", Color.RED,
+		mtfGenerator.drawText("select for resolving the conflict(s).", Palette.RED,
 			new Point(descriptionX, description2Y), DESCRIPTION_FONT_SIZE);
 	}
 
@@ -838,11 +840,11 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		int checkBoxHeight = useForAllCB.getSize().height;
 		int arrowY = useForAllY + (checkBoxHeight / 2);
 		int descriptionY = useForAllY + 15;
-		mtfGenerator.drawArrow(Color.RED, 2, new Point(arrowTailX, arrowY),
+		mtfGenerator.drawArrow(Palette.RED, 2, new Point(arrowTailX, arrowY),
 			new Point(arrowHeadX, arrowY), 8);
 		mtfGenerator.drawText(
 			"Check this box to automatically make the same choice for all remaining conflicts like this one.",
-			Color.RED, new Point(descriptionX, descriptionY), DESCRIPTION_FONT_SIZE);
+			Palette.RED, new Point(descriptionX, descriptionY), DESCRIPTION_FONT_SIZE);
 	}
 
 	private void addApplyDescription(Image image, Point windowLocationOnScreen,
@@ -863,11 +865,11 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 		int arrowHeadY = applyButtonY + 10;
 		int description1Y = applyButtonY + 5;
 		int description2Y = description1Y + 20;
-		mtfGenerator.drawArrow(Color.RED, 2, new Point(arrowTailX, arrowTailY),
+		mtfGenerator.drawArrow(Palette.RED, 2, new Point(arrowTailX, arrowTailY),
 			new Point(arrowHeadX, arrowHeadY), 8);
-		mtfGenerator.drawText(description1, Color.RED, new Point(descriptionX, description1Y),
+		mtfGenerator.drawText(description1, Palette.RED, new Point(descriptionX, description1Y),
 			DESCRIPTION_FONT_SIZE);
-		mtfGenerator.drawText(description2, Color.RED, new Point(descriptionX, description2Y),
+		mtfGenerator.drawText(description2, Palette.RED, new Point(descriptionX, description2Y),
 			DESCRIPTION_FONT_SIZE);
 	}
 
@@ -2409,8 +2411,9 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 				int txId = program.startTransaction("Modify Original Program");
 				boolean commit = false;
 				try {
-					program.getExternalManager().setExternalPath("ADVAPI32.DLL", "//advapi32.dll",
-						true);
+					program.getExternalManager()
+							.setExternalPath("ADVAPI32.DLL", "//advapi32.dll",
+								true);
 					commit = true;
 				}
 				finally {
@@ -2465,8 +2468,9 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 				int txId = program.startTransaction("Modify Original Program");
 				boolean commit = false;
 				try {
-					program.getExternalManager().setExternalPath("ADVAPI32.DLL", "//advapi32.dll",
-						true);
+					program.getExternalManager()
+							.setExternalPath("ADVAPI32.DLL", "//advapi32.dll",
+								true);
 					commit = true;
 				}
 				finally {

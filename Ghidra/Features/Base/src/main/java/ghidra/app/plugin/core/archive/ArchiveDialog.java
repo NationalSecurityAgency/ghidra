@@ -94,7 +94,7 @@ public class ArchiveDialog extends DialogComponentProvider {
 			}
 		});
 		Font font = archiveBrowse.getFont();
-		archiveBrowse.setFont(new Font(font.getName(), Font.BOLD, font.getSize()));
+		archiveBrowse.setFont(font.deriveFont(Font.BOLD));
 		archiveBrowse.setName("archiveBrowse");
 
 		// Layout the components.
@@ -269,8 +269,10 @@ public class ArchiveDialog extends DialogComponentProvider {
 					return true;
 				}
 
-				return file.getAbsolutePath().toLowerCase().endsWith(
-					ArchivePlugin.ARCHIVE_EXTENSION);
+				return file.getAbsolutePath()
+						.toLowerCase()
+						.endsWith(
+							ArchivePlugin.ARCHIVE_EXTENSION);
 			}
 
 			@Override

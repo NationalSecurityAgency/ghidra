@@ -32,6 +32,7 @@ import org.apache.commons.collections4.map.LazyMap;
 import docking.*;
 import docking.action.*;
 import docking.tool.util.DockingToolConstants;
+import generic.util.action.ReservedKeyBindings;
 import ghidra.framework.options.*;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
@@ -99,6 +100,7 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 		if (SystemUtilities.isInDevelopmentMode()) {
 			keyBindingsManager.addReservedAction(new ShowFocusInfoAction());
 			keyBindingsManager.addReservedAction(new ShowFocusCycleAction());
+			keyBindingsManager.addReservedAction(new ComponentThemeInspectorAction());
 		}
 	}
 

@@ -16,9 +16,6 @@
 package ghidra.app.plugin.core.fallthrough;
 
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.net.URL;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -28,17 +25,14 @@ import javax.swing.event.ChangeListener;
 import docking.DialogComponentProvider;
 import docking.widgets.button.GRadioButton;
 import docking.widgets.label.GDLabel;
+import generic.theme.Gui;
 import ghidra.app.util.AddressInput;
 import ghidra.program.model.address.Address;
 import ghidra.util.HelpLocation;
-import resources.ResourceManager;
+import resources.Icons;
 
 /**
- * Dialog to prompt for overriding a fallthrough address on an
- * instruction.
- * 
- * 
- * 
+ * Dialog to prompt for overriding a fallthrough address on an instruction.
  */
 class FallThroughDialog extends DialogComponentProvider implements ChangeListener {
 
@@ -65,25 +59,16 @@ class FallThroughDialog extends DialogComponentProvider implements ChangeListene
 		model.setChangeListener(this);
 	}
 
-	/**
-	 * @see ghidra.util.bean.GhidraDialog#applyCallback()
-	 */
 	@Override
 	protected void applyCallback() {
 		model.execute();
 	}
 
-	/**
-	 * @see ghidra.util.bean.GhidraDialog#cancelCallback()
-	 */
 	@Override
 	protected void cancelCallback() {
 		close();
 	}
 
-	/**
-	 * @see ghidra.util.bean.GhidraDialog#okCallback()
-	 */
 	@Override
 	protected void okCallback() {
 		if (model.execute()) {
@@ -91,9 +76,6 @@ class FallThroughDialog extends DialogComponentProvider implements ChangeListene
 		}
 	}
 
-	/**
-	 * @see javax.swing.event.ChangeListener#stateChanged(javax.swing.event.ChangeEvent)
-	 */
 	public void updateState() {
 		Address addr = model.getAddress();
 		if (addr == null) {
@@ -140,18 +122,15 @@ class FallThroughDialog extends DialogComponentProvider implements ChangeListene
 			return;
 		}
 
-		Runnable r = new Runnable() {
-			@Override
-			public void run() {
-				Address addr = addrField.getAddress();
-				if (addr != null || addrField.getValue().length() == 0) {
-					model.setCurrentFallthrough(addr);
-				}
-				else {
-					setStatusText("Invalid Address");
-					setOkEnabled(false);
-					setApplyEnabled(false);
-				}
+		Runnable r = () -> {
+			Address addr = addrField.getAddress();
+			if (addr != null || addrField.getValue().length() == 0) {
+				model.setCurrentFallthrough(addr);
+			}
+			else {
+				setStatusText("Invalid Address");
+				setOkEnabled(false);
+				setApplyEnabled(false);
 			}
 		};
 		SwingUtilities.invokeLater(r);
@@ -162,18 +141,8 @@ class FallThroughDialog extends DialogComponentProvider implements ChangeListene
 		panel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
 		addrField = new AddressInput();
 		addrField.setAddressFactory(model.getProgram().getAddressFactory());
-		addrField.addChangeListener(new ChangeListener() {
-			@Override
-			public void stateChanged(ChangeEvent e) {
-				addressChanged();
-			}
-		});
-		addrField.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				model.setCurrentFallthrough(addrField.getAddress());
-			}
-		});
+		addrField.addChangeListener(e -> addressChanged());
+		addrField.addActionListener(e -> model.setCurrentFallthrough(addrField.getAddress()));
 		panel.add(createHomePanel(), BorderLayout.NORTH);
 		panel.add(createAddressPanel(), BorderLayout.CENTER);
 		return panel;
@@ -194,20 +163,14 @@ class FallThroughDialog extends DialogComponentProvider implements ChangeListene
 
 		addressLabel = new GDLabel("01001000");
 
-		Font font = addressLabel.getFont();
-		Font monoFont = new Font("monospaced", font.getStyle(), font.getSize());
+		Font monoFont = Gui.getFont("font.monospaced");
 		addressLabel.setFont(monoFont);
 
 		instLabel = new GDLabel("jmp DAT_01001000");
 		instLabel.setFont(monoFont);
 
-		homeButton = createButton("images/go-home.png", "Home");
-		homeButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				plugin.goTo(model.getAddress());
-			}
-		});
+		homeButton = createButton("Home");
+		homeButton.addActionListener(e -> plugin.goTo(model.getAddress()));
 
 		JPanel innerPanel = new JPanel();
 		BoxLayout bl = new BoxLayout(innerPanel, BoxLayout.X_AXIS);
@@ -232,21 +195,11 @@ class FallThroughDialog extends DialogComponentProvider implements ChangeListene
 
 		ButtonGroup group = new ButtonGroup();
 		defaultRB = new GRadioButton("Default", true);
-		defaultRB.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent ev) {
-				model.defaultSelected();
-			}
-		});
+		defaultRB.addActionListener(ev -> model.defaultSelected());
 		defaultRB.setToolTipText("Use default fallthrough address");
 
 		userRB = new GRadioButton("User", false);
-		userRB.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent ev) {
-				model.userSelected();
-			}
-		});
+		userRB.addActionListener(ev -> model.userSelected());
 		userRB.setToolTipText("Override default fallthrough address");
 
 		group.add(defaultRB);
@@ -260,18 +213,13 @@ class FallThroughDialog extends DialogComponentProvider implements ChangeListene
 		return outerPanel;
 	}
 
-	private JButton createButton(String filename, String altText) {
+	private JButton createButton(String altText) {
 		JButton button = new JButton();
-		URL imageURL = ResourceManager.getResource(filename);
-		if (imageURL != null) {
-			ImageIcon icon = new ImageIcon(imageURL);
-			button = new JButton(icon);
-			Insets noInsets = new Insets(0, 0, 0, 0);
-			button.setMargin(noInsets);
-		}
-		else {
-			button = new JButton(altText);
-		}
+		Icon icon = Icons.HOME_ICON;
+		button = new JButton(icon);
+		Insets noInsets = new Insets(0, 0, 0, 0);
+		button.setMargin(noInsets);
+
 		button.setToolTipText("Go back to home address");
 		return button;
 	}

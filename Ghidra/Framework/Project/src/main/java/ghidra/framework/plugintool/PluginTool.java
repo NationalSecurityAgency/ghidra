@@ -25,8 +25,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-import javax.swing.ImageIcon;
-import javax.swing.JComponent;
+import javax.swing.*;
 
 import org.jdom.Element;
 
@@ -214,7 +213,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 
 	protected void installHomeButton() {
 
-		ImageIcon homeIcon = ApplicationInformationDisplayFactory.getHomeIcon();
+		Icon homeIcon = ApplicationInformationDisplayFactory.getHomeIcon();
 		if (homeIcon == null) {
 			Msg.debug(this,
 				"If you would like a button to show the Front End, then set the home icon");
@@ -1119,10 +1118,13 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 * 	<LI>notify the project tool services that this tool is going away.
 	 * </OL>
 	 */
-
 	@Override
 	public void close() {
-		if (canClose(false) && pluginMgr.saveData()) {
+		close(false);
+	}
+
+	protected void close(boolean isExiting) {
+		if (canClose(isExiting) && pluginMgr.saveData()) {
 			doClose();
 		}
 	}

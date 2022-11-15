@@ -21,12 +21,14 @@ import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
 
 import docking.*;
 import docking.action.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.ViewerPosition;
+import generic.theme.GIcon;
 import ghidra.GhidraOptions;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.*;
@@ -51,7 +53,6 @@ import ghidra.util.Swing;
 import ghidra.util.bean.field.AnnotatedTextFieldElement;
 import ghidra.util.task.SwingUpdateManager;
 import resources.Icons;
-import resources.ResourceManager;
 import utility.function.Callback;
 
 public class DecompilerProvider extends NavigatableComponentProviderAdapter
@@ -61,8 +62,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	private static final String OPTIONS_TITLE = "Decompiler";
 
 	private static final Icon REFRESH_ICON = Icons.REFRESH_ICON;
-	private static final ImageIcon C_SOURCE_ICON =
-		ResourceManager.loadImage("images/decompileFunction.gif");
+	private static final Icon C_SOURCE_ICON = new GIcon("icon.decompiler.action.provider");
 
 	private DockingAction pcodeGraphAction;
 	private DockingAction astGraphAction;
@@ -111,7 +111,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 		this.plugin = plugin;
 		this.clipboardProvider = new DecompilerClipboardProvider(plugin, this);
-
+		registerAdjustableFontId(DecompileOptions.DEFAULT_FONT_ID);
 		setConnected(isConnected);
 
 		decompilerOptions = new DecompileOptions();

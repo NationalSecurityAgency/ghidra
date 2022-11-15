@@ -17,11 +17,12 @@ package ghidra.app.plugin.core.decompile.actions;
 
 import java.io.*;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import docking.action.ToolBarData;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
+import generic.theme.GIcon;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
@@ -30,10 +31,9 @@ import ghidra.framework.preferences.Preferences;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.filechooser.ExtensionFileFilter;
-import resources.ResourceManager;
 
 public class ExportToCAction extends AbstractDecompilerAction {
-	private static final ImageIcon EXPORT_ICON = ResourceManager.loadImage("images/page_edit.png");
+	private static final Icon EXPORT_ICON = new GIcon("icon.decompiler.action.export");
 	private static final String LAST_USED_C_FILE = "last.used.decompiler.c.export.file";
 
 	public ExportToCAction() {

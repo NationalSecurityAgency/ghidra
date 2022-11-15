@@ -115,8 +115,8 @@ public class ColumnFilterArchiveDialog<R> extends DialogComponentProvider {
 
 	private JComponent buildFilterList() {
 		JPanel panel = new JPanel(new BorderLayout());
-		panel.setBorder(BorderFactory.createTitledBorder(
-			BorderFactory.createEmptyBorder(19, 0, 0, 5), "Filter Names"));
+		panel.setBorder(BorderFactory
+				.createTitledBorder(BorderFactory.createEmptyBorder(19, 0, 0, 5), "Filter Names"));
 
 		jList = new JList<>();
 		jList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -136,22 +136,22 @@ public class ColumnFilterArchiveDialog<R> extends DialogComponentProvider {
 	}
 
 	private JComponent buildActionPanel() {
-		ImageIcon icon = Icons.DELETE_ICON;
+		Icon icon = Icons.DELETE_ICON;
 
 		removeSelectedFiltersButton = new JButton("Remove", icon);
 		removeSelectedFiltersButton.setEnabled(false);
 		removeSelectedFiltersButton.addActionListener(e -> removeSelectedFilter());
 
-		JPanel buttonPanel = new JPanel(new BorderLayout());
-		buttonPanel.add(removeSelectedFiltersButton, BorderLayout.EAST);
+		JPanel panel = new JPanel(new BorderLayout());
+		panel.add(removeSelectedFiltersButton, BorderLayout.EAST);
 
-		return buttonPanel;
+		return panel;
 	}
 
 	private Component buildPreviewPanel() {
 		JPanel panel = new JPanel(new BorderLayout());
-		panel.setBorder(BorderFactory.createTitledBorder(
-			BorderFactory.createEmptyBorder(19, 0, 26, 5), "Preview"));
+		panel.setBorder(BorderFactory
+				.createTitledBorder(BorderFactory.createEmptyBorder(19, 0, 26, 5), "Preview"));
 
 		previewLabel = new GDHtmlLabel();
 		previewLabel.setVerticalAlignment(SwingConstants.TOP);

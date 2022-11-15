@@ -15,7 +15,6 @@
  */
 package ghidra.framework.plugintool.dialog;
 
-import java.awt.Color;
 import java.awt.Point;
 
 import javax.swing.*;
@@ -25,13 +24,15 @@ import docking.DialogComponentProvider;
 import docking.action.*;
 import docking.tool.ToolConstants;
 import docking.widgets.OptionDialog;
+import generic.theme.GIcon;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.plugintool.PluginConfigurationModel;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginPackage;
 import ghidra.util.HelpLocation;
-import resources.ResourceManager;
+import resources.Icons;
 
 public class ManagePluginsDialog extends DialogComponentProvider {
 
@@ -55,7 +56,7 @@ public class ManagePluginsDialog extends DialogComponentProvider {
 		this.pluginConfigurationModel = pluginConfigurationModel;
 		pluginComponent = new PluginManagerComponent(tool, pluginConfigurationModel);
 		JScrollPane scrollPane = new JScrollPane(pluginComponent);
-		scrollPane.getViewport().setBackground(Color.white);
+		scrollPane.getViewport().setBackground(Colors.BACKGROUND);
 		scrollPane.getViewport().setViewPosition(new Point(0, 0));
 		addWorkPanel(scrollPane);
 		createActions(addSaveActions);
@@ -106,7 +107,7 @@ public class ManagePluginsDialog extends DialogComponentProvider {
 					pluginComponent.manageAllPlugins();
 				}
 			};
-		ImageIcon icon = ResourceManager.loadImage("images/plugin.png");
+		Icon icon = new GIcon("icon.extension.configure");
 		configureAllPluginsAction.setToolBarData(new ToolBarData(icon, "aaa"));
 		configureAllPluginsAction.setDescription("Configure All Plugins");
 		configureAllPluginsAction
@@ -121,7 +122,7 @@ public class ManagePluginsDialog extends DialogComponentProvider {
 				}
 			};
 			saveAction.setEnabled(tool.hasConfigChanged());
-			icon = ResourceManager.loadImage("images/disk.png");
+			icon = Icons.SAVE_ICON;
 			String saveGroup = "save";
 			saveAction.setMenuBarData(new MenuData(new String[] { "Save" }, icon, saveGroup));
 			saveAction.setToolBarData(new ToolBarData(icon, saveGroup));
@@ -136,7 +137,7 @@ public class ManagePluginsDialog extends DialogComponentProvider {
 				}
 			};
 			saveAsAction.setEnabled(true);
-			icon = ResourceManager.loadImage("images/disk_save_as.png");
+			icon = Icons.SAVE_AS_ICON;
 			saveAsAction
 					.setMenuBarData(new MenuData(new String[] { "Save As..." }, icon, saveGroup));
 			saveAsAction.setToolBarData(new ToolBarData(icon, saveGroup));

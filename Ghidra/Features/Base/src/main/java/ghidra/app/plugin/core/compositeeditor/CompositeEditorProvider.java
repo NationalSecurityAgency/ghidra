@@ -22,6 +22,7 @@ import javax.swing.*;
 import docking.ActionContext;
 import docking.ComponentProvider;
 import docking.widgets.OptionDialog;
+import generic.theme.GIcon;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.datatype.EmptyCompositeException;
@@ -33,7 +34,6 @@ import ghidra.util.HelpLocation;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.AssertException;
-import resources.ResourceManager;
 
 /**
  * Editor provider for a Composite Data Type.
@@ -41,8 +41,7 @@ import resources.ResourceManager;
 public abstract class CompositeEditorProvider extends ComponentProviderAdapter
 		implements EditorProvider, EditorActionListener {
 
-	protected static final ImageIcon EDITOR_ICON =
-		ResourceManager.loadImage("images/accessories-text-editor.png");
+	protected static final Icon EDITOR_ICON = new GIcon("icon.plugin.composite.editor.provider");
 
 	protected Plugin plugin;
 	protected Category category;
@@ -56,9 +55,6 @@ public abstract class CompositeEditorProvider extends ComponentProviderAdapter
 	/**
 	 * Construct a new stack editor provider. 
 	 * @param plugin owner of this provider
-	 * @param program program for data type; may be null if data type
-	 * is part of an archive
-	 * @param stack the stack frame to be edited
 	 */
 	protected CompositeEditorProvider(Plugin plugin) {
 		super(plugin.getTool(), "Composite Editor", plugin.getName());
@@ -283,6 +279,7 @@ public abstract class CompositeEditorProvider extends ComponentProviderAdapter
 	/**
 	 * Prompts the user if the editor has unsaved changes. Saves the changes if
 	 * the user indicates to do so.
+	 * @param allowCancel true if allowed to cancel
 	 * @return 0 if the user canceled; 1 if the user saved changes; 
 	 * 2 if the user did not to save changes; 3 if there was an error when
 	 * the changes were applied.

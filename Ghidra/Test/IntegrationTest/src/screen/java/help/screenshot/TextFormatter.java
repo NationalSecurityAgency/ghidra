@@ -20,6 +20,9 @@ import java.awt.image.BufferedImage;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Palette;
+
 /** 
  * Each line is sized based on the font height and line padding on the top and bottom of the line.
  * The y coordinate tracks the top of the line, so a lines baseline (position to draw the text) 
@@ -37,7 +40,7 @@ public class TextFormatter {
 	private int y;
 	private int leftMargin;
 	private int baselineOffset;
-	private TextFormatterContext defaultContext = new TextFormatterContext(Color.BLACK);
+	private TextFormatterContext defaultContext = new TextFormatterContext(Colors.FOREGROUND);
 
 	private int width;
 
@@ -65,9 +68,9 @@ public class TextFormatter {
 		int height = lineCount * (lineHeight) + topMargin * 2;
 		image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g = image.createGraphics();
-		g.setColor(Color.WHITE);
+		g.setColor(Colors.BACKGROUND);
 		g.fillRect(0, 0, width, height);
-		g.setColor(Color.black);
+		g.setColor(Palette.BLACK);
 		g.drawRect(0, 0, width - 1, height - 1);
 		g.dispose();
 	}

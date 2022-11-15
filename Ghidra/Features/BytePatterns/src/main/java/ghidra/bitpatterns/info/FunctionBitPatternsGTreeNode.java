@@ -20,8 +20,7 @@ import java.util.*;
 import javax.swing.Icon;
 
 import docking.widgets.tree.GTreeNode;
-import docking.widgets.tree.GTreeNode;
-import resources.ResourceManager;
+import generic.theme.GIcon;
 
 /**
  * 
@@ -30,9 +29,11 @@ import resources.ResourceManager;
  */
 public class FunctionBitPatternsGTreeNode extends GTreeNode {
 
-	private static final Icon DISABLED_ICON = ResourceManager.loadImage("images/ledred.png");
+	private static final Icon DISABLED_ICON =
+		new GIcon("icon.bytepatterns.function.bit.patterns.disabled");
 
-	private static final Icon ENABLED_ICON = ResourceManager.loadImage("images/ledgreen.png");
+	private static final Icon ENABLED_ICON =
+		new GIcon("icon.bytepatterns.function.bit.patterns.enabled");
 
 	private String name;
 	private String instruction;

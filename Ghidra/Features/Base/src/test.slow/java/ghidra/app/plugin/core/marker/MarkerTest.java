@@ -33,6 +33,7 @@ import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.FieldSelection;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.cmd.data.CreateStructureCmd;
 import ghidra.app.events.ProgramActivatedPluginEvent;
 import ghidra.app.events.ProgramSelectionPluginEvent;
@@ -342,7 +343,7 @@ public class MarkerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		Program program2 = loadSecondProgram();
 
-		Color startColor = Color.PINK;
+		Color startColor = Palette.PINK;
 		MarkerSet markersP1 = markerService.createPointMarker("Awesome Markers", "Description",
 			program, 0, true, true,
 			true, startColor, null, true);
@@ -358,8 +359,8 @@ public class MarkerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertMarkerColor(program, addressP1, startColor);
 		assertMarkerColor(program2, addressP2, startColor);
 
-		Color c1 = Color.ORANGE;
-		Color c2 = Color.BLUE;
+		Color c1 = Palette.ORANGE;
+		Color c2 = Palette.BLUE;
 
 		setMarkerColor(markersP1, c1);
 		setMarkerColor(markersP2, c2);
@@ -367,8 +368,8 @@ public class MarkerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertMarkerColor(program, addressP1, c1);
 		assertMarkerColor(program2, addressP2, c2);
 
-		Color c3 = Color.RED;
-		Color c4 = Color.GREEN;
+		Color c3 = Palette.RED;
+		Color c4 = Palette.GREEN;
 
 		// change markers for current program
 		setMarkerColor(markersP1, c3);

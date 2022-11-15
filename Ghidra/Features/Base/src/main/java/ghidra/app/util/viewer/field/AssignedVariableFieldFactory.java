@@ -21,6 +21,7 @@ import java.util.ArrayList;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.util.HighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
@@ -35,7 +36,7 @@ import ghidra.program.util.ProgramLocation;
   */
 public class AssignedVariableFieldFactory extends FieldFactory {
 	public static final String FIELD_NAME = "Var Assign";
-	public static final Color DEFAULT_COLOR = new Color(128, 0, 128);
+	public static final Color DEFAULT_COLOR = Palette.PURPLE;
 
 	/**
 	 * Default constructor.
@@ -59,14 +60,8 @@ public class AssignedVariableFieldFactory extends FieldFactory {
 	@Override
 	public void fieldOptionsChanged(Options options, String optionName, Object oldValue,
 			Object newValue) {
-
+		// stub
 	}
-
-//	private static String getOffsetString(int offset) {
-//		String offString =
-//			(offset >= 0 ? Integer.toHexString(offset) : "-" + Integer.toHexString(-offset));
-//		return offString;
-//	}
 
 	/**
 	 * Returns the FactoryField for the given object at index index.

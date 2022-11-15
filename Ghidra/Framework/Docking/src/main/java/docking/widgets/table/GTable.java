@@ -38,11 +38,12 @@ import docking.widgets.AutoLookup;
 import docking.widgets.OptionDialog;
 import docking.widgets.dialogs.SettingsDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
+import generic.theme.GIcon;
 import ghidra.docking.settings.*;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
-import resources.ResourceManager;
+import resources.Icons;
 
 /**
  * A sub-class of <code>JTable</code> that provides navigation and auto-lookup.
@@ -74,6 +75,7 @@ import resources.ResourceManager;
  */
 public class GTable extends JTable {
 
+	private static final GIcon ICON_SPREADSHEET = new GIcon("icon.spreadsheet");
 	private static final KeyStroke COPY_KEY_STROKE =
 		KeyStroke.getKeyStroke(KeyEvent.VK_C, CONTROL_KEY_MODIFIER_MASK);
 	private static final KeyStroke COPY_COLUMN_KEY_STROKE =
@@ -1279,7 +1281,7 @@ public class GTable extends JTable {
 		//@formatter:off
 		copyAction.setPopupMenuData(new MenuData(
 				new String[] { "Copy", "Copy" },
-				ResourceManager.loadImage("images/page_white_copy.png"),
+				Icons.COPY_ICON,
 				actionMenuGroup, NO_MNEMONIC,
 				Integer.toString(subGroupIndex++)
 			)
@@ -1300,7 +1302,7 @@ public class GTable extends JTable {
 		copyCurrentColumnAction.setPopupMenuData(new MenuData(
 				new String[] { "Copy",
 				"Copy Current Column" },
-				ResourceManager.loadImage("images/page_white_copy.png"),
+				Icons.COPY_ICON,
 				actionMenuGroup,
 				NO_MNEMONIC,
 				Integer.toString(subGroupIndex++)
@@ -1320,7 +1322,7 @@ public class GTable extends JTable {
 		//@formatter:off
 		copyColumnsAction.setPopupMenuData(new MenuData(
 				new String[] { "Copy", "Copy Columns..." },
-				ResourceManager.loadImage("images/page_white_copy.png"),
+				Icons.COPY_ICON,
 				actionMenuGroup,
 				NO_MNEMONIC,
 				Integer.toString(subGroupIndex++)
@@ -1339,7 +1341,7 @@ public class GTable extends JTable {
 		//@formatter:off
 		exportAction.setPopupMenuData(new MenuData(
 				new String[] { "Export", GTableToCSV.TITLE + "..." },
-				ResourceManager.loadImage("images/application-vnd.oasis.opendocument.spreadsheet-template.png"),
+				ICON_SPREADSHEET,
 				actionMenuGroup,
 				NO_MNEMONIC,
 				Integer.toString(subGroupIndex++)
@@ -1359,7 +1361,7 @@ public class GTable extends JTable {
 		//@formatter:off
 		exportColumnsAction.setPopupMenuData(new MenuData(
 				new String[] { "Export", "Export Columns to CSV..." },
-				ResourceManager.loadImage("images/application-vnd.oasis.opendocument.spreadsheet-template.png"),
+				ICON_SPREADSHEET,
 				actionMenuGroup,
 				NO_MNEMONIC,
 				Integer.toString(subGroupIndex++)

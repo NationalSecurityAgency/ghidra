@@ -64,6 +64,17 @@ public enum OptionType {
 		return stringAdapter.objectToString(object);
 	}
 
+	/**
+	 * Return true if the give value is of the correct type for this option type. Note that a
+	 * value of null is compatible with any class type
+	 * since it is an acceptable value for any class type.
+	 * @param object the object to see if it is compatible with this option type
+	 * @return true if the give value is of the correct type for this option type.
+	 */
+	public boolean isCompatible(Object object) {
+		return object == null || clazz.isAssignableFrom(object.getClass());
+	}
+
 	public Class<?> getValueClass() {
 		return clazz;
 	}
@@ -230,8 +241,8 @@ public enum OptionType {
 			}
 			catch (Exception e) {
 				Msg.error(this,
-					"Can't create customOption instance for: " + customOptionClassName + 
-					e);
+					"Can't create customOption instance for: " + customOptionClassName +
+						e);
 			}
 			return null;
 		}

@@ -315,8 +315,9 @@ public class ProgramDnDTree extends DragNDropTree {
 				return false;
 			}
 			try {
-				Object data = e.getTransferable().getTransferData(
-					SelectionTransferable.localProgramSelectionFlavor);
+				Object data = e.getTransferable()
+						.getTransferData(
+							SelectionTransferable.localProgramSelectionFlavor);
 				SelectionTransferData transferData = (SelectionTransferData) data;
 				return program.getDomainFile().getPathname().equals(transferData.getProgramPath());
 			}

@@ -27,6 +27,7 @@ import org.junit.Test;
 
 import docking.widgets.fieldpanel.support.*;
 import generic.test.AbstractGenericTest;
+import generic.theme.GThemeDefaults.Colors.Palette;
 
 public class CompositeVerticalLayoutTextFieldTest extends AbstractGenericTest {
 
@@ -65,7 +66,7 @@ public class CompositeVerticalLayoutTextFieldTest extends AbstractGenericTest {
 		List<FieldElement> elements = new ArrayList<>();
 		int row = 0;
 		for (String line : lines) {
-			elements.add(createRow(row++, line, Color.BLUE));
+			elements.add(createRow(row++, line, Palette.BLUE));
 		}
 
 		List<TextField> fields = new ArrayList<>();
@@ -83,7 +84,7 @@ public class CompositeVerticalLayoutTextFieldTest extends AbstractGenericTest {
 		List<FieldElement> elements = new ArrayList<>();
 		int row = 0;
 		for (String line : lines) {
-			elements.add(createRow(row++, line, Color.BLUE));
+			elements.add(createRow(row++, line, Palette.BLUE));
 		}
 
 		List<TextField> fields = new ArrayList<>();
@@ -114,12 +115,12 @@ public class CompositeVerticalLayoutTextFieldTest extends AbstractGenericTest {
 	}
 
 	private TextField wrappedField(int row, String text) {
-		FieldElement element = createRow(row, text, Color.BLUE);
+		FieldElement element = createRow(row, text, Palette.BLUE);
 		return new WrappingVerticalLayoutTextField(element, startX, width, maxLines, hlFactory);
 	}
 
 	private TextField clippedField(int row, String text) {
-		FieldElement element = createRow(row, text, Color.BLUE);
+		FieldElement element = createRow(row, text, Palette.BLUE);
 		return new ClippingTextField(startX, width, element, hlFactory);
 	}
 

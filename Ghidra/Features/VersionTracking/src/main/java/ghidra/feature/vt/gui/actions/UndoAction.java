@@ -23,11 +23,11 @@ import javax.swing.Icon;
 import docking.ActionContext;
 import docking.action.*;
 import docking.tool.ToolConstants;
+import generic.theme.GIcon;
 import ghidra.feature.vt.api.db.VTSessionDB;
 import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.feature.vt.gui.plugin.VTPlugin;
 import ghidra.util.*;
-import resources.ResourceManager;
 
 public class UndoAction extends DockingAction {
 	private final VTController controller;
@@ -38,7 +38,7 @@ public class UndoAction extends DockingAction {
 		setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Undo"));
 		String[] menuPath = { ToolConstants.MENU_EDIT, "&Undo" };
 		String group = "ZZUndo";
-		Icon icon = ResourceManager.loadImage("images/undo.png");
+		Icon icon = new GIcon("icon.undo");
 		MenuData menuData = new MenuData(menuPath, icon, group);
 		menuData.setMenuSubGroup("1Undo"); // make this appear above the redo menu item
 		setMenuBarData(menuData);

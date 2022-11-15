@@ -15,7 +15,8 @@
  */
 package ghidra.app.plugin.core.instructionsearch.ui;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.ArrayList;
@@ -25,6 +26,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
 import docking.DialogComponentProvider;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.plugin.core.instructionsearch.model.*;
 import ghidra.app.plugin.core.instructionsearch.ui.SelectionModeWidget.InputMode;
 import ghidra.app.plugin.core.instructionsearch.util.InstructionSearchUtils;
@@ -290,7 +292,8 @@ public class InsertBytesWidget extends DialogComponentProvider implements KeyLis
 				// there's a problem with the input. Just print a message to the user and
 				// exit.
 				if (allBytes.size() < instruction.getLength()) {
-					msgPanel.setMessageText("Input invalid: unknown disassembly error.", Color.RED);
+					msgPanel.setMessageText("Input invalid: unknown disassembly error.",
+						Messages.ERROR);
 					return;
 				}
 				allBytes.subList(0, instruction.getLength()).clear();
@@ -300,7 +303,8 @@ public class InsertBytesWidget extends DialogComponentProvider implements KeyLis
 
 				// If there's an exception, just stop and let the user figure out what went
 				// wrong - no need to continue.
-				msgPanel.setMessageText("Input invalid: unknown disassembly error.", Color.RED);
+				msgPanel.setMessageText("Input invalid: unknown disassembly error.",
+					Messages.ERROR);
 				Msg.debug(this, "Error disassembling instruction", e);
 
 				return;

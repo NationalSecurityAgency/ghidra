@@ -20,11 +20,11 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 
 import docking.ActionContext;
 import docking.action.*;
 import docking.widgets.dialogs.TableSelectionDialog;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.functioncompare.FunctionComparisonProvider;
 import ghidra.app.plugin.core.functioncompare.MultiFunctionComparisonPanel;
 import ghidra.app.plugin.core.functionwindow.FunctionRowObject;
@@ -35,10 +35,6 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
-import resources.MultiIcon;
-import resources.ResourceManager;
-import resources.icons.ScaledImageIcon;
-import resources.icons.TranslateIcon;
 import util.CollectionUtils;
 
 /**
@@ -49,14 +45,9 @@ import util.CollectionUtils;
  */
 public class OpenFunctionTableAction extends DockingAction {
 
-	private static final Icon ADD_ICON = ResourceManager.loadImage("images/Plus.png");
-	private static final Icon SCALED_ADD_ICON = new ScaledImageIcon(ADD_ICON, 10, 10);
-	private static final ImageIcon COMPARISON_ICON =
-		ResourceManager.loadImage("images/page_white_c.png");
-	private static final Icon TRANSLATED_ADD_ICON = new TranslateIcon(SCALED_ADD_ICON, 8, 1);
 	private static final String ADD_COMPARISON_GROUP = "A9_AddToComparison";
 	private static final Icon ADD_TO_COMPARISON_ICON =
-		new MultiIcon(COMPARISON_ICON, TRANSLATED_ADD_ICON);
+		new GIcon("icon.plugin.functioncompare.open.function.table");
 
 	protected PluginTool tool;
 	protected ProgramManager programManagerService;

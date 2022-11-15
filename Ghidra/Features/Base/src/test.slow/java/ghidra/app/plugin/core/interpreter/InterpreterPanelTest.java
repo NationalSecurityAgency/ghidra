@@ -201,7 +201,7 @@ public class InterpreterPanelTest extends AbstractGhidraHeadedIntegrationTest {
 			}
 
 			@Override
-			public ImageIcon getIcon() {
+			public Icon getIcon() {
 				return Icons.STOP_ICON;
 			}
 
@@ -222,8 +222,7 @@ public class InterpreterPanelTest extends AbstractGhidraHeadedIntegrationTest {
 		return result;
 	}
 
-	private void doSwingMultilinePasteTest(List<String> multiLineTestValues)
-			throws IOException {
+	private void doSwingMultilinePasteTest(List<String> multiLineTestValues) throws IOException {
 		// simulates what happens during a paste when multi-line string with
 		// "\n"s is pasted.
 		runSwingLater(() -> {

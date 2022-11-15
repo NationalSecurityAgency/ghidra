@@ -15,7 +15,6 @@
  */
 package ghidra.framework.plugintool.dialog;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.io.File;
 import java.util.*;
@@ -23,6 +22,7 @@ import java.util.*;
 import docking.widgets.table.*;
 import docking.widgets.table.threaded.ThreadedTableModel;
 import generic.jar.ResourceFile;
+import generic.theme.GThemeDefaults.Colors.Tables;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.Application;
 import ghidra.framework.plugintool.ServiceProvider;
@@ -415,17 +415,14 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, Object> {
 			Component comp = super.getTableCellRendererComponent(data);
 
 			ExtensionDetails extension = getSelectedExtension(data.getRowViewIndex());
-			if (data.isSelected()) {
-				comp.setForeground(Color.WHITE);
+			if (isValidVersion(extension) || SystemUtilities.isInDevelopmentMode()) {
+				comp.setForeground(data.isSelected() ? Tables.FG_SELECTED : Tables.FG_UNSELECTED);
 			}
 			else {
-				if (isValidVersion(extension) || SystemUtilities.isInDevelopmentMode()) {
-					comp.setForeground(Color.BLACK);
-				}
-				else {
-					comp.setForeground(Color.RED);
-				}
+				comp.setForeground(
+					data.isSelected() ? Tables.FG_ERROR_SELECTED : Tables.FG_ERROR_UNSELECTED);
 			}
+
 			return comp;
 		}
 

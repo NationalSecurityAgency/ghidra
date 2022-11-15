@@ -21,7 +21,7 @@ import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import db.DBHandle;
 import ghidra.program.model.address.*;
@@ -236,7 +236,7 @@ public class DBTraceBookmarkManager extends AbstractDBTraceSpaceBasedManager<DBT
 	}
 
 	@Override
-	public synchronized DBTraceBookmarkType defineBookmarkType(String typeName, ImageIcon icon,
+	public synchronized DBTraceBookmarkType defineBookmarkType(String typeName, Icon icon,
 			Color color, int priority) {
 		DBTraceBookmarkType type;
 		synchronized (this) {

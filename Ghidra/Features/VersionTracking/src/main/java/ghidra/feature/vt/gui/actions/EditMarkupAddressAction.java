@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,15 @@
  */
 package ghidra.feature.vt.gui.actions;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.*;
+
+import docking.ActionContext;
+import docking.DialogComponentProvider;
+import docking.action.*;
+import generic.theme.GIcon;
 import ghidra.feature.vt.api.main.VTMarkupItem;
 import ghidra.feature.vt.api.main.VTMarkupItemDestinationAddressEditStatus;
 import ghidra.feature.vt.gui.editors.*;
@@ -28,21 +36,11 @@ import ghidra.program.model.listing.Program;
 import ghidra.util.*;
 import ghidra.util.exception.InvalidInputException;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.swing.*;
-
-import resources.ResourceManager;
-import docking.ActionContext;
-import docking.DialogComponentProvider;
-import docking.action.*;
-
 public class EditMarkupAddressAction extends DockingAction {
 
 	private static final String MENU_GROUP = VTPlugin.ADDRESS_EDIT_MENU_GROUP;
 	private static final Icon EDIT_ADDRESS_ICON =
-		ResourceManager.loadImage("images/edit-rename.png");
+		new GIcon("icon.version.tracking.action.edit.markup.address");
 	private static final String ACTION_NAME = "Edit Markup Destination Address";
 
 	final VTController controller;
@@ -55,7 +53,8 @@ public class EditMarkupAddressAction extends DockingAction {
 			setToolBarData(new ToolBarData(EDIT_ADDRESS_ICON, MENU_GROUP));
 		}
 		MenuData menuData =
-			new MenuData(new String[] { "Edit Destination Address" }, EDIT_ADDRESS_ICON, MENU_GROUP);
+			new MenuData(new String[] { "Edit Destination Address" }, EDIT_ADDRESS_ICON,
+				MENU_GROUP);
 		setPopupMenuData(menuData);
 		setEnabled(false);
 		setHelpLocation(new HelpLocation("VersionTrackingPlugin",

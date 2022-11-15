@@ -488,7 +488,7 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 		mainContentPanel.add(progressBarPanel, BorderLayout.CENTER);
 		mainContentPanel.add(progressPanel, BorderLayout.EAST);
 
-		ImageIcon icon = Icons.STOP_ICON;
+		Icon icon = Icons.STOP_ICON;
 		cancelButton = new EmptyBorderButton(icon);
 
 		cancelButton.setName("CANCEL_TASK");

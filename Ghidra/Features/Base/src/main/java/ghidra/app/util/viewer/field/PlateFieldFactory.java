@@ -24,6 +24,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.*;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.util.HelpTopics;
 import ghidra.app.util.HighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
@@ -47,7 +48,7 @@ public class PlateFieldFactory extends FieldFactory {
 
 	private static final String EMPTY_STRING = "";
 	public static final String FIELD_NAME = "Plate Comment";
-	public static final Color DEFAULT_COLOR = Color.BLUE;
+	public static final Color DEFAULT_COLOR = Palette.BLUE;
 	private final static String FIELD_GROUP_TITLE = "Plate Comments Field";
 	public final static String ENABLE_WORD_WRAP_MSG =
 		FIELD_GROUP_TITLE + Options.DELIMITER + "Enable Word Wrapping";

@@ -15,11 +15,12 @@
  */
 package ghidra.app.util.xml;
 
-import java.awt.Color;
 import java.util.*;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
+import generic.theme.GIcon;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.cmd.function.*;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.NamespaceUtils;
@@ -39,7 +40,6 @@ import ghidra.util.task.TaskMonitor;
 import ghidra.util.xml.*;
 import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
-import resources.ResourceManager;
 
 class FunctionsXmlMgr {
 	public final static String LIB_BOOKMARK_CATEGORY = "Library Identification";
@@ -127,9 +127,9 @@ class FunctionsXmlMgr {
 							BookmarkManager bm = program.getBookmarkManager();
 							BookmarkType bt = bm.getBookmarkType("IMPORTED");
 							if (bt == null) {
-								ImageIcon icon =
-									ResourceManager.loadImage("images/imported_bookmark.gif");
-								bt = bm.defineType("IMPORTED", icon, Color.DARK_GRAY, 0);
+								Icon icon = new GIcon("icon.base.util.xml.functions.bookmark");
+								bt = bm.defineType("IMPORTED", icon, Palette.DARK_GRAY,
+									0);
 							}
 							bm.setBookmark(entryPoint, "IMPORTED", LIB_BOOKMARK_CATEGORY,
 								"Library function");
@@ -680,7 +680,7 @@ class FunctionsXmlMgr {
 
 	private Parameter[] getRegisterParameters(Function function) {
 
-		ArrayList<Parameter> list = new ArrayList<Parameter>();
+		ArrayList<Parameter> list = new ArrayList<>();
 		Parameter[] params = function.getParameters();
 		for (Parameter param : params) {
 			if (param.isRegisterVariable()) {

@@ -16,10 +16,6 @@
  */
 package docking.widgets.tree.internal;
 
-import ghidra.framework.OperatingSystem;
-import ghidra.framework.Platform;
-import ghidra.util.Msg;
-
 import java.awt.*;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
@@ -33,9 +29,15 @@ import javax.swing.SwingUtilities;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 
-import docking.widgets.tree.*;
+import docking.widgets.tree.GTree;
+import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.GTreeDragNDropHandler;
 import docking.widgets.tree.support.GTreeNodeTransferable;
+import generic.theme.GThemeDefaults.Colors.Palette;
+import ghidra.framework.OperatingSystem;
+import ghidra.framework.Platform;
+import ghidra.util.ColorUtils;
+import ghidra.util.Msg;
 
 public class GTreeDragNDropAdapter implements DragSourceListener, DragGestureListener,
 		DropTargetListener {
@@ -155,13 +157,11 @@ public class GTreeDragNDropAdapter implements DragSourceListener, DragGestureLis
 		// now we will create a fade effect using an alpha composite and a gradient
 		Graphics2D g2 = (Graphics2D) graphics;
 		GradientPaint mask;
-		Color treeBackground = tree.getBackground();
-		Color transparentTreeBackground =
-			new Color(treeBackground.getRed(), treeBackground.getGreen(), treeBackground.getBlue(),
-				100);
+		Color treeBg = tree.getBackground();
+		Color transparentTreeBackground = ColorUtils.withAlpha(treeBg, 100);
 		mask =
-			new GradientPaint(0, 0, transparentTreeBackground, 0, size.height >> 1, new Color(1.0f,
-				1.0f, 1.0f, 0.0f));
+			new GradientPaint(0, 0, transparentTreeBackground, 0, size.height >> 1,
+				Palette.NO_COLOR);
 		g2.setPaint(mask);
 
 		// Sets the alpha composite
@@ -214,14 +214,14 @@ public class GTreeDragNDropAdapter implements DragSourceListener, DragGestureLis
 
 	private List<GTreeNode> createSelectionList(TreePath[] selectionPaths) {
 
-		List<GTreeNode> list = new ArrayList<GTreeNode>();
+		List<GTreeNode> list = new ArrayList<>();
 
 		if (selectionPaths == null) {
 			return list;
 		}
 
-		for (int i = 0; i < selectionPaths.length; i++) {
-			list.add((GTreeNode) selectionPaths[i].getLastPathComponent());
+		for (TreePath selectionPath : selectionPaths) {
+			list.add((GTreeNode) selectionPath.getLastPathComponent());
 		}
 		return list;
 	}

@@ -18,13 +18,13 @@ package ghidra.app.plugin.core.compositeeditor;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 import javax.swing.KeyStroke;
 
 import docking.ActionContext;
 import docking.action.KeyBindingData;
+import generic.theme.GIcon;
 import ghidra.util.exception.UsrException;
-import resources.ResourceManager;
 
 /**
  * Action for use in the composite data type editor.
@@ -32,7 +32,7 @@ import resources.ResourceManager;
  */
 public class MoveDownAction extends CompositeEditorTableAction {
 
-	private final static ImageIcon ICON = ResourceManager.loadImage("images/down.png");
+	private final static Icon ICON = new GIcon("icon.plugin.composite.editor.move.down");
 	public final static String ACTION_NAME = "Move Components Down";
 	private final static String GROUP_NAME = COMPONENT_ACTION_GROUP;
 	private final static String DESCRIPTION = "Move the selected components down";

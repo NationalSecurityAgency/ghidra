@@ -19,10 +19,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import docking.action.MenuData;
 import docking.action.ToolBarData;
+import generic.theme.GIcon;
 import ghidra.framework.client.ClientUtil;
 import ghidra.framework.main.datatable.DomainFileContext;
 import ghidra.framework.main.datatree.*;
@@ -33,7 +34,6 @@ import ghidra.util.Msg;
 import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import resources.ResourceManager;
 
 /**
  * Action to add a domain file to version control in the repository.
@@ -42,7 +42,7 @@ public class VersionControlAddAction extends VersionControlAction {
 
 	public VersionControlAddAction(Plugin plugin) {
 		super("Add to Version Control", plugin.getName(), plugin.getTool());
-		ImageIcon icon = ResourceManager.loadImage("images/vcAdd.png");
+		Icon icon = new GIcon("icon.version.control.add");
 		setToolBarData(new ToolBarData(icon, GROUP));
 
 		setPopupMenuData(new MenuData(new String[] { "Add to Version Control..." }, icon, GROUP));
@@ -86,8 +86,9 @@ public class VersionControlAddAction extends VersionControlAction {
 		if (unversioned.isEmpty()) {
 			return;
 		}
-		ArrayList<DomainFile> list = new ArrayList<>();
-		ArrayList<DomainFile> changedList = new ArrayList<>();
+
+		List<DomainFile> list = new ArrayList<>();
+		List<DomainFile> changedList = new ArrayList<>();
 		for (DomainFile domainFile : unversioned) {
 			if (domainFile.isBusy()) {
 				Msg.showWarn(getClass(), null, "Add To Version Control Failed!",

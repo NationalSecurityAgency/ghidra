@@ -18,6 +18,7 @@ package ghidra.app.util.exporter;
 import java.io.*;
 import java.util.ArrayList;
 
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.util.DisplayableEol;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
@@ -372,7 +373,7 @@ class ProgramTextWriter {
 
 		buffy = new StringBuilder();
 		if (options.isHTML()) {
-			writer.print("<FONT COLOR=#ff0000>");
+			writer.print("<FONT COLOR=\"" + Messages.ERROR + "\">");
 		}
 		processAddress(bytesRemovedRangeStart, null);
 		buffy.append(" -> ");

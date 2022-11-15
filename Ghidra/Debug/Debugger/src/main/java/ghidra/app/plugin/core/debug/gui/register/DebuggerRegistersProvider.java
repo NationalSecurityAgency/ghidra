@@ -38,6 +38,7 @@ import docking.actions.PopupActionProvider;
 import docking.widgets.table.*;
 import docking.widgets.table.ColumnSortState.SortDirection;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
+import generic.theme.GColor;
 import ghidra.app.plugin.core.data.DataSettingsDialog;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
@@ -472,25 +473,21 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
 
-	@AutoOptionDefined(
-		name = DebuggerResources.OPTION_NAME_COLORS_REGISTER_STALE, //
-		description = "Text color for registers whose value is not known", //
-		help = @HelpInfo(anchor = "colors"))
+	@AutoOptionDefined(name = DebuggerResources.OPTION_NAME_COLORS_REGISTER_STALE, //
+			description = "Text color for registers whose value is not known", //
+			help = @HelpInfo(anchor = "colors"))
 	protected Color registerStaleColor = DebuggerResources.DEFAULT_COLOR_REGISTER_STALE;
-	@AutoOptionDefined(
-		name = DebuggerResources.OPTION_NAME_COLORS_REGISTER_STALE_SEL, //
-		description = "Selected text color for registers whose value is not known", //
-		help = @HelpInfo(anchor = "colors"))
+	@AutoOptionDefined(name = DebuggerResources.OPTION_NAME_COLORS_REGISTER_STALE_SEL, //
+			description = "Selected text color for registers whose value is not known", //
+			help = @HelpInfo(anchor = "colors"))
 	protected Color registerStaleSelColor = DebuggerResources.DEFAULT_COLOR_REGISTER_STALE_SEL;
-	@AutoOptionDefined(
-		name = DebuggerResources.OPTION_NAME_COLORS_REGISTER_CHANGED, //
-		description = "Text color for registers whose value just changed", //
-		help = @HelpInfo(anchor = "colors"))
+	@AutoOptionDefined(name = DebuggerResources.OPTION_NAME_COLORS_REGISTER_CHANGED, //
+			description = "Text color for registers whose value just changed", //
+			help = @HelpInfo(anchor = "colors"))
 	protected Color registerChangesColor = DebuggerResources.DEFAULT_COLOR_REGISTER_CHANGED;
-	@AutoOptionDefined(
-		name = DebuggerResources.OPTION_NAME_COLORS_REGISTER_CHANGED_SEL, //
-		description = "Selected text color for registers whose value just changed", //
-		help = @HelpInfo(anchor = "colors"))
+	@AutoOptionDefined(name = DebuggerResources.OPTION_NAME_COLORS_REGISTER_CHANGED_SEL, //
+			description = "Selected text color for registers whose value just changed", //
+			help = @HelpInfo(anchor = "colors"))
 	protected Color registerChangesSelColor = DebuggerResources.DEFAULT_COLOR_REGISTER_CHANGED_SEL;
 
 	@SuppressWarnings("unused")
@@ -550,7 +547,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			setTitle("[" + DebuggerResources.TITLE_PROVIDER_REGISTERS + "]");
 			setWindowGroup("Debugger.Core.disconnected");
 			setIntraGroupPosition(WindowPosition.STACK);
-			mainPanel.setBorder(BorderFactory.createLineBorder(Color.ORANGE, 2));
+			mainPanel.setBorder(BorderFactory
+					.createLineBorder(new GColor("color.border.provider.disconnected"), 2));
 			setTransient();
 		}
 		else {

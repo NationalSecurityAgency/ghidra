@@ -6,6 +6,7 @@
 ##MODULE IP: Tango Icons - Public Domain
 .gitignore||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
+data/decompiler.theme.properties||GHIDRA||||END|
 src/decompile/.cproject||GHIDRA||||END|
 src/decompile/.project||GHIDRA||||END|
 src/decompile/cpp/.gitignore||GHIDRA||||END|

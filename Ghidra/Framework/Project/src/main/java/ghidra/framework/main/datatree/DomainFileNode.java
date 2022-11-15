@@ -23,6 +23,7 @@ import javax.swing.Icon;
 import javax.swing.SwingWorker;
 
 import docking.widgets.tree.GTreeNode;
+import generic.theme.GIcon;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.store.ItemCheckoutStatus;
 import ghidra.util.*;
@@ -34,8 +35,7 @@ import resources.ResourceManager;
  */
 public class DomainFileNode extends GTreeNode implements Cuttable {
 
-	private static final Icon UNKNOWN_FILE_ICON =
-		ResourceManager.loadImage("images/unknownFile.gif");
+	private static final Icon UNKNOWN_FILE_ICON = new GIcon("icon.datatree.node.domain.file");
 
 	private final DomainFile domainFile;
 
@@ -48,9 +48,6 @@ public class DomainFileNode extends GTreeNode implements Cuttable {
 
 	private final SimpleDateFormat formatter = new SimpleDateFormat("yyyy MMM dd hh:mm aaa");
 
-	/**
-	 * Construct a node for a domain file.
-	 */
 	DomainFileNode(DomainFile domainFile) {
 		this.domainFile = domainFile;
 		displayName = domainFile.getName();
@@ -67,9 +64,6 @@ public class DomainFileNode extends GTreeNode implements Cuttable {
 		return domainFile;
 	}
 
-	/**
-	 * Returns true if this node has no children.
-	 */
 	@Override
 	public boolean isLeaf() {
 		return true;
@@ -134,9 +128,6 @@ public class DomainFileNode extends GTreeNode implements Cuttable {
 		return domainFile.getName();
 	}
 
-	/**
-	 * Set the name of this node; update the associated file or folder.
-	 */
 	void setName(String newName) {
 		try {
 			domainFile.setName(newName);
@@ -165,8 +156,6 @@ public class DomainFileNode extends GTreeNode implements Cuttable {
 
 	/**
 	 * Update the display name.
-	 * 
-	 * @return true if the node should be reloaded because the display name has changed
 	 */
 	void refresh() {
 		DomainFileNodeSwingWorker worker = new DomainFileNodeSwingWorker();
@@ -280,9 +269,6 @@ public class DomainFileNode extends GTreeNode implements Cuttable {
 		}
 	}
 
-	/**
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		return getName();

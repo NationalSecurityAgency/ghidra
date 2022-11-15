@@ -25,6 +25,8 @@ import javax.swing.*;
 
 import org.junit.Test;
 
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.references.*;
 import ghidra.app.util.importer.*;
@@ -84,19 +86,19 @@ public class ReferencesPluginScreenShots extends GhidraScreenShotGenerator {
 		captureProvider(provider);
 		int topMargin = 60;
 		int leftMargin = 10;
-		padImage(Color.WHITE, topMargin, leftMargin, 10, 10);
+		padImage(Colors.BACKGROUND, topMargin, leftMargin, 10, 10);
 		JComponent rootComp = getDockableComponent(EditReferencesProvider.class);
 		JComponent comp =
 			(JComponent) findComponentByName(provider.getComponent(), "operandLabels[0]");
 		Point origin = new Point(leftMargin, topMargin);
-		explainComponent(rootComp, comp, Color.GREEN, origin, new Point(250, 20),
+		explainComponent(rootComp, comp, Palette.GREEN, origin, new Point(250, 20),
 			"Operand-specific Drop Zones");
 		comp = (JComponent) findComponentByName(provider.getComponent(), "mnemonicLabel");
-		explainComponent(rootComp, comp, Color.GREEN, origin, new Point(250, 20),
+		explainComponent(rootComp, comp, Palette.GREEN, origin, new Point(250, 20),
 			"Operand-specific Drop Zones");
 
 		comp = (JComponent) findComponentByName(provider.getComponent(), "RefsTable");
-		explainComponent(rootComp, comp, Color.GREEN, origin, new Point(450, 40),
+		explainComponent(rootComp, comp, Palette.GREEN, origin, new Point(450, 40),
 			"Active-operand Drop Zones");
 
 	}
@@ -113,7 +115,7 @@ public class ReferencesPluginScreenShots extends GhidraScreenShotGenerator {
 		Point p2 = new Point(point.x + 20, point.y);
 		drawLine(color, 2, point, p2);
 		Point p3 = new Point(p2.x + 4, p2.y + 5);
-		drawText(text, Color.BLACK, p3, 12f);
+		drawText(text, Colors.FOREGROUND, p3, 12f);
 	}
 
 	@Test
@@ -270,7 +272,7 @@ public class ReferencesPluginScreenShots extends GhidraScreenShotGenerator {
 			RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 		g2.drawImage(image1, 0, 0, null);
 		g2.drawImage(image2, 0, height + gap, null);
-		g2.setColor(Color.BLACK);
+		g2.setColor(Colors.FOREGROUND);
 		String label = "Address History";
 		int x = 150;
 		int y = height + gap / 2;
@@ -293,8 +295,11 @@ public class ReferencesPluginScreenShots extends GhidraScreenShotGenerator {
 			programNameOverride, OptionChooser.DEFAULT_OPTIONS,
 			MultipleProgramsStrategy.ALL_PROGRAMS);
 		Program p = programs.get(0);
-		env.getProject().getProjectData().getRootFolder().createFile(p.getName(), p,
-			TaskMonitor.DUMMY);
+		env.getProject()
+				.getProjectData()
+				.getRootFolder()
+				.createFile(p.getName(), p,
+					TaskMonitor.DUMMY);
 	}
 
 }

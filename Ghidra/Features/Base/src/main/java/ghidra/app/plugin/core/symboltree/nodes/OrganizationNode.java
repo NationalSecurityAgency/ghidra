@@ -23,13 +23,13 @@ import javax.swing.Icon;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.tasks.GTreeCollapseAllTask;
+import generic.theme.GIcon;
 import ghidra.program.model.symbol.Namespace;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import resources.ResourceManager;
 
 /**
- * These nodes are used to organize large lists of nodes into a hierachical structure based on 
+ * These nodes are used to organize large lists of nodes into a hierarchical structure based on 
  * the node names. See {@link #organize(List, int, TaskMonitor)} for details on 
  * how this class works.
  */
@@ -39,9 +39,9 @@ public class OrganizationNode extends SymbolTreeNode {
 	static final Comparator<GTreeNode> COMPARATOR = new OrganizationNodeComparator();
 
 	private static Icon OPEN_FOLDER_GROUP_ICON =
-		ResourceManager.loadImage("images/openFolderGroup.png");
+		new GIcon("icon.plugin.symboltree.node.organization.open");
 	private static Icon CLOSED_FOLDER_GROUP_ICON =
-		ResourceManager.loadImage("images/closedFolderGroup.png");
+		new GIcon("icon.plugin.symboltree.node.organization.closed");
 
 	private String baseName;
 	private int totalCount;
@@ -370,7 +370,7 @@ public class OrganizationNode extends SymbolTreeNode {
 		for (GTreeNode node : nodeList) {
 			monitor.checkCanceled();
 			String prefix = getPrefix(node, uniquePrefixSize);
-			List<GTreeNode> list = map.computeIfAbsent(prefix, k -> new ArrayList<GTreeNode>());
+			List<GTreeNode> list = map.computeIfAbsent(prefix, k -> new ArrayList<>());
 			list.add(node);
 		}
 		if (map.size() == 1) {

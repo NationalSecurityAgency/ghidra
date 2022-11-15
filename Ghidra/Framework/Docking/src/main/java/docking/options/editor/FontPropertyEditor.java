@@ -16,74 +16,31 @@
 package docking.options.editor;
 
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyEditorSupport;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.stream.IntStream;
+import java.util.stream.*;
 
 import javax.swing.*;
 
-import docking.DialogComponentProvider;
-import docking.DockingWindowManager;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.label.GDLabel;
+import ghidra.util.Swing;
 
 /**
- * This Bean FontEditor displays a String with the current selected font name,
- * style and size attributes.
+ * Property Editor for editing {@link Font}s
  */
 public class FontPropertyEditor extends PropertyEditorSupport {
-	private Font font;
-//    private JLabel previewLabel = new GDLabel();
-	private final static String SAMPLE_STRING = "ABCabc \u00a9\u00ab\u00a7\u0429\u05d1\u062c\u4eb9";
-	private JButton previewButton = new JButton(SAMPLE_STRING);
+	public final static String SAMPLE_STRING = "ABCabc \u00a9\u00ab\u00a7\u0429\u05d1\u062c\u4eb9";
 
-	/**
-	 * The default constructor.
-	 *
-	 */
-	public FontPropertyEditor() {
-
-		previewButton.addActionListener(e -> {
-			// show the editor to get the user value
-			showDialog();
-
-			// now set the new value
-			previewButton.setFont(font);
-		});
-
-//        previewLabel.addMouseListener( new MouseAdapter() {
-//            @Override
-//            public void mouseClicked( MouseEvent evt ) {
-//                // show the editor to get the user value
-//                showDialog();
-//
-//                // now set the new value
-//                previewLabel.setFont( font );
-//            }
-//        } );
-	}
-
-	public void showDialog() {
-		EditorProvider provider = new EditorProvider(new FontPanel());
-		DockingWindowManager.showDialog(previewButton, provider);
-		previewButton.repaint();
-	}
+	private FontChooserPanel fontChooserPanel;
 
 	@Override
-	public void setValue(Object o) {
-		font = (Font) o;
-		previewButton.setFont(font);
-
-		// set the font values on the widget
-	}
-
-	@Override
-	public Object getValue() {
-		return font;
+	public Component getCustomEditor() {
+		fontChooserPanel = new FontChooserPanel();
+		fontChooserPanel.updateControls((Font) getValue());
+		return fontChooserPanel;
 	}
 
 	@Override
@@ -92,205 +49,221 @@ public class FontPropertyEditor extends PropertyEditorSupport {
 	}
 
 	@Override
-	public Component getCustomEditor() {
-		return previewButton;
+	public void setValue(Object value) {
+		if (fontChooserPanel != null) {
+			fontChooserPanel.updateControls((Font) value);
+		}
+		if (!Objects.equals(value, getValue())) {
+			super.setValue(value);
+		}
 	}
 
-//==================================================================================================
-// Inner Classes
-//==================================================================================================	
+	class FontChooserPanel extends JPanel {
 
-	private class FontPanel extends JPanel implements ActionListener {
-		JLabel fontLabel, sizeLabel, styleLabel;
-		JLabel fontStringLabel;
-		JComboBox<FontWrapper> fonts;
-		JComboBox<Integer> sizes;
-		JComboBox<String> styles;
-		int styleChoice;
-		int sizeChoice;
+		private GDLabel previewLabel;
+		private GComboBox<FontWrapper> fontCombo;
+		private GComboBox<Integer> sizeCombo;
+		private GComboBox<String> styleCombo;
+		private ActionListener actionListener = e -> fontChanged();
+		private List<FontWrapper> systemFontNames;
 
-		FontPanel() {
-			init();
+		public FontChooserPanel() {
+			build();
 		}
 
-		public void init() {
-			this.setLayout(new BorderLayout());
-
-			JPanel topPanel = new JPanel();
-			JPanel fontPanel = new JPanel();
-			JPanel sizePanel = new JPanel();
-			JPanel stylePanel = new JPanel();
-			JPanel sizeAndStylePanel = new JPanel();
-
-			topPanel.setLayout(new BorderLayout());
-			fontPanel.setLayout(new GridLayout(2, 1));
-			sizePanel.setLayout(new GridLayout(2, 1));
-			stylePanel.setLayout(new GridLayout(2, 1));
-			sizeAndStylePanel.setLayout(new BorderLayout());
-
-			topPanel.add(BorderLayout.WEST, fontPanel);
-			sizeAndStylePanel.add(BorderLayout.WEST, sizePanel);
-			sizeAndStylePanel.add(BorderLayout.CENTER, stylePanel);
-			topPanel.add(BorderLayout.CENTER, sizeAndStylePanel);
-
-			fontStringLabel = new GDLabel(FontPropertyEditor.SAMPLE_STRING);
-			fontStringLabel.setPreferredSize(new Dimension(350, 50));
-			fontStringLabel.setHorizontalAlignment(SwingConstants.CENTER);
-			fontStringLabel.setFont(font);
-			topPanel.add(BorderLayout.SOUTH, fontStringLabel);
-
-			add(BorderLayout.NORTH, topPanel);
-
-			fontLabel = new GDLabel("Fonts");
-			Font newFont = getFont().deriveFont(1);
-			fontLabel.setFont(newFont);
-			fontLabel.setHorizontalAlignment(SwingConstants.CENTER);
-			fontPanel.add(fontLabel);
-
-			sizeLabel = new GDLabel("Sizes");
-			sizeLabel.setFont(newFont);
-			sizeLabel.setHorizontalAlignment(SwingConstants.CENTER);
-			sizePanel.add(sizeLabel);
-
-			styleLabel = new GDLabel("Styles");
-			styleLabel.setFont(newFont);
-			styleLabel.setHorizontalAlignment(SwingConstants.CENTER);
-			stylePanel.add(styleLabel);
-
-			GraphicsEnvironment gEnv = GraphicsEnvironment.getLocalGraphicsEnvironment();
-
-			String envfonts[] = gEnv.getAvailableFontFamilyNames();
-			List<FontWrapper> list = new ArrayList<>(envfonts.length);
-			for (String envfont : envfonts) {
-				list.add(new FontWrapper(envfont));
+		public void updateControls(Font font) {
+			if (font == null) {
+				return;
 			}
-			Collections.sort(list);
-			fonts = new GComboBox<>(list.toArray(new FontWrapper[envfonts.length]));
-			fonts.setMaximumRowCount(9);
+			updatePreviewLabel(font);
+
+			fontCombo.removeActionListener(actionListener);
+			sizeCombo.removeActionListener(actionListener);
+			styleCombo.removeActionListener(actionListener);
+
 			FontWrapper fontWrapper = new FontWrapper(font.getName());
-			fontPanel.add(fonts);
-			fonts.setSelectedItem(fontWrapper);
+			updateComboBoxModeIfNeeded(fontWrapper);
 
-			sizes = new GComboBox<>(IntStream.rangeClosed(1, 72).boxed().toArray(Integer[]::new));
-			sizes.setMaximumRowCount(9);
-			sizePanel.add(sizes);
-			sizeChoice = font.getSize();
-			sizes.setSelectedItem(sizeChoice);
-			sizes.setMaximumRowCount(9);
+			int styleChoice = font.getStyle();
+			int size = font.getSize();
+			fontCombo.setSelectedItem(fontWrapper);
+			sizeCombo.setSelectedItem(size);
+			styleCombo.setSelectedIndex(styleChoice);
 
-			styles = new GComboBox<>(new String[] { "PLAIN", "BOLD", "ITALIC", "BOLD & ITALIC" });
-			styles.setMaximumRowCount(9);
-			stylePanel.add(styles);
-			styleChoice = font.getStyle();
-			styles.setSelectedIndex(styleChoice);
-			fonts.addActionListener(this);
-			styles.addActionListener(this);
-			sizes.addActionListener(this);
+			fontCombo.addActionListener(actionListener);
+			sizeCombo.addActionListener(actionListener);
+			styleCombo.addActionListener(actionListener);
+
 		}
 
-		@Override
-		public void actionPerformed(ActionEvent event) {
-			// get values of panels
-			// set the editors new font
-			Object list = event.getSource();
+		private void updateComboBoxModeIfNeeded(FontWrapper fontWrapper) {
+			if (systemFontNames.contains(fontWrapper)) {
+				return;
+			}
+			systemFontNames.add(fontWrapper);
+			DefaultComboBoxModel<FontWrapper> model =
+				new DefaultComboBoxModel<>(systemFontNames.toArray(new FontWrapper[0]));
+			fontCombo.setModel(model);
+		}
 
-			String fontNameChoice = font.getName();
-			if (list == fonts) {
-				FontWrapper fontWrapper = (FontWrapper) fonts.getSelectedItem();
-				fontNameChoice = fontWrapper.getFontName();
-			}
-			else if (list == styles) {
-				styleChoice = styles.getSelectedIndex();
-			}
-			else {
-				sizeChoice = (Integer) sizes.getSelectedItem();
-			}
+		private void build() {
+			setLayout(new BorderLayout());
+			add(buildTopPanel(), BorderLayout.NORTH);
+			add(buildPreviewLabel(), BorderLayout.CENTER);
+		}
 
-			font = new Font(fontNameChoice, styleChoice, sizeChoice);
-			fontStringLabel.setFont(font);
-			FontMetrics fm = fontStringLabel.getFontMetrics(font);
+		private Component buildTopPanel() {
+			JPanel panel = new JPanel(new FlowLayout(SwingConstants.CENTER, 10, 0));
+			panel.add(buildFontNamePanel());
+			panel.add(buildSizePanel());
+			panel.add(buildStylePanel());
+			return panel;
+		}
+
+		private Component buildPreviewLabel() {
+			previewLabel = new GDLabel(SAMPLE_STRING);
+			previewLabel.setPreferredSize(new Dimension(350, 50));
+			previewLabel.setHorizontalAlignment(SwingConstants.CENTER);
+			previewLabel.setVerticalAlignment(SwingConstants.CENTER);
+			previewLabel.setMinimumSize(new Dimension(300, 50));
+			return previewLabel;
+		}
+
+		private Component buildStylePanel() {
+			JPanel panel = new JPanel(new GridLayout(2, 1));
+
+			GDLabel styleLabel = new GDLabel("Styles");
+			styleLabel.setFont(getFont().deriveFont(1));
+			styleLabel.setHorizontalAlignment(SwingConstants.CENTER);
+			panel.add(styleLabel);
+
+			styleCombo =
+				new GComboBox<>(new String[] { "PLAIN", "BOLD", "ITALIC", "BOLD & ITALIC" });
+			styleCombo.setMaximumRowCount(9);
+			styleCombo.addActionListener(actionListener);
+			panel.add(styleCombo);
+
+			return panel;
+		}
+
+		private Component buildSizePanel() {
+			JPanel panel = new JPanel(new GridLayout(2, 1));
+
+			GDLabel sizeLabel = new GDLabel("Sizes");
+			sizeLabel.setFont(getFont().deriveFont(1));
+			sizeLabel.setHorizontalAlignment(SwingConstants.CENTER);
+			panel.add(sizeLabel);
+
+			sizeCombo =
+				new GComboBox<>(IntStream.rangeClosed(1, 72).boxed().toArray(Integer[]::new));
+			sizeCombo.setMaximumRowCount(9);
+			sizeCombo.setMaximumRowCount(9);
+			sizeCombo.addActionListener(actionListener);
+			panel.add(sizeCombo);
+
+			return panel;
+		}
+
+		private Component buildFontNamePanel() {
+			JPanel panel = new JPanel(new GridLayout(2, 1));
+
+			GDLabel fontLabel = new GDLabel("Fonts");
+			fontLabel.setFont(getFont().deriveFont(1));
+			fontLabel.setHorizontalAlignment(SwingConstants.CENTER);
+			panel.add(fontLabel);
+
+			systemFontNames = getSystemFontNames();
+			fontCombo = new GComboBox<>(systemFontNames.toArray(new FontWrapper[0]));
+			fontCombo.setMaximumRowCount(9);
+			fontCombo.addActionListener(actionListener);
+			panel.add(fontCombo);
+
+			return panel;
+		}
+
+		private List<FontWrapper> getSystemFontNames() {
+			GraphicsEnvironment gEnv = GraphicsEnvironment.getLocalGraphicsEnvironment();
+			Stream<String> stream = Arrays.stream(gEnv.getAvailableFontFamilyNames());
+			List<FontWrapper> collect =
+				stream.map(s -> new FontWrapper(s)).collect(Collectors.toList());
+			Collections.sort(collect);
+			return new ArrayList<>(collect);
+		}
+
+		private void fontChanged() {
+			FontWrapper fontWrapper = (FontWrapper) fontCombo.getSelectedItem();
+			String fontNameChoice = fontWrapper.getFontName();
+			int styleChoice = styleCombo.getSelectedIndex();
+			int sizeChoice = (Integer) sizeCombo.getSelectedItem();
+			Font font = new Font(fontNameChoice, styleChoice, sizeChoice);
+			updatePreviewLabel(font);
+			// allows debugging without hanging amazon aws
+			Swing.runLater(() -> setValue(font));
+		}
+
+		private void updatePreviewLabel(Font font) {
+			previewLabel.setFont(font);
+			FontMetrics fm = previewLabel.getFontMetrics(font);
 			int height = fm.getHeight();
-			Dimension d = fontStringLabel.getSize();
+			Dimension d = previewLabel.getSize();
 			if (d.height < height) {
 				d = new Dimension(d.width, height);
-				fontStringLabel.setPreferredSize(d);
+				previewLabel.setPreferredSize(d);
 			}
-			fontStringLabel.invalidate();
+			previewLabel.invalidate();
 
-			setValue(font);
-			FontPropertyEditor.this.firePropertyChange();
 		}
+
+		// A wrapper class created so that the names of fonts are comparable ignoring case
+		private class FontWrapper implements Comparable<FontWrapper> {
+			private final String fontName;
+
+			private FontWrapper(String fontName) {
+				this.fontName = fontName;
+			}
+
+			private String getFontName() {
+				return fontName;
+			}
+
+			@Override
+			public String toString() {
+				return fontName;
+			}
+
+			@Override
+			public boolean equals(Object obj) {
+				if (this == obj) {
+					return true;
+				}
+
+				if (obj == null) {
+					return false;
+				}
+
+				if (!getClass().equals(obj.getClass())) {
+					return false;
+				}
+
+				FontWrapper otherWrapper = (FontWrapper) obj;
+				return fontName.toLowerCase().equals(otherWrapper.fontName.toLowerCase());
+			}
+
+			@Override
+			public int hashCode() {
+				final int prime = 31;
+				int result = 1;
+				result =
+					prime * result + ((fontName == null) ? 0 : fontName.toLowerCase().hashCode());
+				return result;
+			}
+
+			@Override
+			public int compareTo(FontWrapper otherWrapper) {
+				return fontName.compareToIgnoreCase(otherWrapper.fontName);
+			}
+		}
+
 	}
 
-	class EditorProvider extends DialogComponentProvider {
-		private Font originalFont = font;
-
-		EditorProvider(JPanel contentPanel) {
-			super("Font Editor", true);
-
-			addWorkPanel(contentPanel);
-			addOKButton();
-			addCancelButton();
-		}
-
-		@Override
-		protected void okCallback() {
-			close();
-		}
-
-		@Override
-		protected void cancelCallback() {
-			font = originalFont;
-			super.cancelCallback();
-		}
-	}
-
-	// A wrapper class created so that the names of fonts are comparable ignoring case
-	private class FontWrapper implements Comparable<FontWrapper> {
-		private final String fontName;
-
-		private FontWrapper(String fontName) {
-			this.fontName = fontName;
-		}
-
-		private String getFontName() {
-			return fontName;
-		}
-
-		@Override
-		public String toString() {
-			return fontName;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj) {
-				return true;
-			}
-
-			if (obj == null) {
-				return false;
-			}
-
-			if (!getClass().equals(obj.getClass())) {
-				return false;
-			}
-
-			FontWrapper otherWrapper = (FontWrapper) obj;
-			return fontName.toLowerCase().equals(otherWrapper.fontName.toLowerCase());
-		}
-
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + ((fontName == null) ? 0 : fontName.toLowerCase().hashCode());
-			return result;
-		}
-
-		@Override
-		public int compareTo(FontWrapper otherWrapper) {
-			return fontName.compareToIgnoreCase(otherWrapper.fontName);
-		}
-	}
 }

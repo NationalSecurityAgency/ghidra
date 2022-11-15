@@ -34,6 +34,7 @@ import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.filter.FilterListener;
 import docking.widgets.filter.FilterTextField;
 import docking.widgets.label.GLabel;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
 import ghidra.util.task.SwingUpdateManager;
@@ -133,8 +134,8 @@ class FilterAction extends ToggleDockingAction {
 	}
 
 	synchronized void selectTypes(ArrayList<String> list) {
-		for (int i = 0; i < list.size(); i++) {
-			typeEnabledMap.put(list.get(i), Boolean.TRUE);
+		for (String element : list) {
+			typeEnabledMap.put(element, Boolean.TRUE);
 		}
 		if (dialog != null) {
 			dialog.selectTypes(list);
@@ -222,15 +223,13 @@ class FilterAction extends ToggleDockingAction {
 		}
 
 		void selectTypes(ArrayList<String> list) {
-			for (int i = 0; i < list.size(); i++) {
-				String type = list.get(i);
+			for (String type : list) {
 				selectCheckBox(type);
 			}
 		}
 
 		private void selectCheckBox(String typeName) {
-			for (int i = 0; i < checkboxes.size(); i++) {
-				JCheckBox cb = checkboxes.get(i);
+			for (JCheckBox cb : checkboxes) {
 				if (cb.getText().equals(typeName)) {
 					cb.setSelected(true);
 					return;
@@ -302,7 +301,7 @@ class FilterAction extends ToggleDockingAction {
 			typeButtonPanel.add(selectNoneButton);
 
 			checkboxPanel = new JPanel();
-			checkboxPanel.setBackground(Color.WHITE);
+			checkboxPanel.setBackground(Colors.BACKGROUND);
 			checkboxPanel.setLayout(new BoxLayout(checkboxPanel, BoxLayout.Y_AXIS));
 
 			buildCheckBoxList();

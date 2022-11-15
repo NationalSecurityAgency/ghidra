@@ -18,18 +18,15 @@ package ghidra.framework.main.datatree;
 import java.io.File;
 
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 
 import docking.tool.ToolConstants;
+import generic.theme.GIcon;
 import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.model.*;
-import resources.ResourceManager;
 
 public class DomainFolderRootNode extends DomainFolderNode {
-	private static final ImageIcon CLOSED_PROJECT =
-		ResourceManager.loadImage("images/closedSmallFolder.png");
-	private static final ImageIcon OPEN_PROJECT =
-		ResourceManager.loadImage("images/openSmallFolder.png");
+	private static final Icon CLOSED_PROJECT = new GIcon("icon.datatree.node.domain.folder.closed");
+	private static final Icon OPEN_PROJECT = new GIcon("icon.datatree.node.domain.folder.open");
 
 	private String projectName;
 	private String toolTipText;

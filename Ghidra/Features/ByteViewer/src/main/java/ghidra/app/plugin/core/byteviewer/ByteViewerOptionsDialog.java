@@ -15,12 +15,12 @@
  */
 package ghidra.app.plugin.core.byteviewer;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.math.BigInteger;
 import java.util.*;
-import java.util.List;
 import java.util.Map.Entry;
 
 import javax.swing.*;
@@ -31,6 +31,8 @@ import javax.swing.event.ChangeListener;
 import docking.DialogComponentProvider;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GLabel;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.plugin.core.format.ByteBlockSelection;
 import ghidra.app.plugin.core.format.DataFormatModel;
 import ghidra.app.util.AddressInput;
@@ -266,10 +268,10 @@ public class ByteViewerOptionsDialog extends DialogComponentProvider
 			JCheckBox checkBox = entry.getValue();
 			DataFormatModel model = provider.getDataFormatModel(entry.getKey());
 			if (model.validateBytesPerLine(bytesPerLine)) {
-				checkBox.setForeground(Color.BLACK);
+				checkBox.setForeground(Colors.FOREGROUND);
 			}
 			else {
-				checkBox.setForeground(Color.RED);
+				checkBox.setForeground(Messages.ERROR);
 				isBad |= checkBox.isSelected();
 			}
 		}

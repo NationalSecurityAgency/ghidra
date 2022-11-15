@@ -30,6 +30,7 @@ import docking.widgets.label.GLabel;
 import docking.widgets.table.*;
 import docking.widgets.table.threaded.ThreadedTableModel;
 import docking.widgets.textfield.IntegerTextField;
+import generic.theme.GIcon;
 import ghidra.app.services.GoToService;
 import ghidra.app.util.HelpTopics;
 import ghidra.docking.settings.SettingsImpl;
@@ -48,26 +49,26 @@ import ghidra.util.layout.VerticalLayout;
 import ghidra.util.table.*;
 import ghidra.util.table.actions.MakeProgramSelectionAction;
 import ghidra.util.task.TaskLauncher;
+import resources.Icons;
 import resources.ResourceManager;
 
 /**
  * Component provider for the Search -&gt; For Strings... result dialog.
  */
 public class StringTableProvider extends ComponentProviderAdapter implements DomainObjectListener {
-	private static final ImageIcon ICON = ResourceManager.loadImage("images/kmessedwords.png");
-	private static final Icon PARITALLY_DEFINED_ICON =
-		ResourceManager.loadImage("images/dialog-warning.png");
-	private static final Icon SHOW_UNDEFINED_ICON =
-		ResourceManager.loadImage("images/magnifier.png");
-	private static final Icon SHOW_DEFINED_ICON = ResourceManager.loadImage("images/font.png");
-	private static final Icon SHOW_WORDS_ICON = ResourceManager.loadImage("images/view-filter.png");
-	private static final Icon CONFLICTS_ICON =
-		ResourceManager.loadImage("images/dialog-warning_red.png");
-	private static final Icon REFRESH_ICON = ResourceManager.loadImage("images/reload.png");
-	private static final Icon REFRESH_NOT_NEEDED_ICON =
-		ResourceManager.getDisabledIcon(REFRESH_ICON);
-	private static final Icon EXPAND_ICON = ResourceManager.loadImage("images/expand.gif");
-	private static final Icon COLLAPSE_ICON = ResourceManager.loadImage("images/collapse.gif");
+
+	//@formatter:off
+	private static final Icon ICON = new GIcon("icon.plugin.stringtable.provider");
+	private static final Icon PARITALLY_DEFINED_ICON = new GIcon("icon.plugin.stringtable.defined.partial");
+	private static final Icon SHOW_UNDEFINED_ICON = new GIcon("icon.plugin.stringtable.undefined");
+	private static final Icon SHOW_DEFINED_ICON = new GIcon("icon.plugin.stringtable.defined");
+	private static final Icon SHOW_WORDS_ICON = new GIcon("icon.plugin.stringtable.words");
+	private static final Icon CONFLICTS_ICON = new GIcon("icon.plugin.stringtable.conflicts");
+	private static final Icon REFRESH_ICON = Icons.REFRESH_ICON;
+	private static final Icon REFRESH_NOT_NEEDED_ICON = ResourceManager.getDisabledIcon(REFRESH_ICON);
+	private static final Icon EXPAND_ICON = new GIcon("icon.toggle.expand");
+	private static final Icon COLLAPSE_ICON = new GIcon("icon.toggle.collapse");
+	//@formatter:off
 
 	private StringTablePlugin plugin;
 	private JPanel mainPanel;

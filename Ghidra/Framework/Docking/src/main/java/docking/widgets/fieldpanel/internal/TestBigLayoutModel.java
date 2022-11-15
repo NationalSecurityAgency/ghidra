@@ -28,12 +28,13 @@ import docking.widgets.fieldpanel.listener.IndexMapper;
 import docking.widgets.fieldpanel.listener.LayoutModelListener;
 import docking.widgets.fieldpanel.support.*;
 import docking.widgets.indexedscrollpane.IndexedScrollPane;
+import generic.theme.GThemeDefaults.Colors;
 
 public class TestBigLayoutModel implements LayoutModel {
 	private static final Highlight[] NO_HIGHLIGHTS = new Highlight[0];
 	private static final HighlightFactory hlFactory =
 		(field, text, cursorTextOffset) -> NO_HIGHLIGHTS;
-	ArrayList<LayoutModelListener> listeners = new ArrayList<LayoutModelListener>();
+	ArrayList<LayoutModelListener> listeners = new ArrayList<>();
 
 	FontMetrics fm;
 	//	BigInteger numIndexes = BigInteger.valueOf(1000000000000000L);
@@ -83,9 +84,10 @@ public class TestBigLayoutModel implements LayoutModel {
 		}
 		String text = name + ": This is line " + index +
 			" More text to make line longer abcdefghijklmnopqrstuvwxyzabcdefghijk";
-		FieldElement fe1 = new TextFieldElement(new AttributedString(text, Color.BLACK, fm), 0, 0);
+		FieldElement fe1 =
+			new TextFieldElement(new AttributedString(text, Colors.FOREGROUND, fm), 0, 0);
 		FieldElement fe2 =
-			new TextFieldElement(new AttributedString("More text", Color.BLACK, fm), 0, 0);
+			new TextFieldElement(new AttributedString("More text", Colors.FOREGROUND, fm), 0, 0);
 		SingleRowLayout layout = new SingleRowLayout(new ClippingTextField(20, 300, fe1, hlFactory),
 			new ClippingTextField(330, 100, fe2, hlFactory));
 

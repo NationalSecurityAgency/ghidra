@@ -27,6 +27,7 @@ import docking.DockingWindowManager;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GHtmlLabel;
 import docking.widgets.label.GLabel;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.util.HelpLocation;
 import ghidra.util.table.GhidraTable;
 import pdb.PdbPlugin;
@@ -40,6 +41,7 @@ class SymbolFilePanel extends JPanel {
 	interface SearchCallback {
 		void searchForPdbs(boolean allowRemote);
 	}
+
 	static final String SEARCH_OPTIONS_HELP_ANCHOR = "PDB_Search_Search_Options";
 	private SymbolFileTableModel tableModel;
 	private GhidraTable table;
@@ -117,7 +119,8 @@ class SymbolFilePanel extends JPanel {
 	private JPanel buildWelcomePanel() {
 		welcomePanel = new JPanel();
 		welcomePanel.add(new GHtmlLabel(
-			"<html><br><center><font color=red>Configuration must be set first!"));
+			"<html><br><center><font color=\"" + Colors.ERROR.toHexString() +
+				"\">Configuration must be set first!"));
 		welcomePanel.setPreferredSize(tablePanel.getPreferredSize());
 
 		return welcomePanel;

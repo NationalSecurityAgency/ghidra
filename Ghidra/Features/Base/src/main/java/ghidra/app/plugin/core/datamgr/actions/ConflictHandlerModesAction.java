@@ -20,11 +20,11 @@ import javax.swing.Icon;
 import docking.menu.ActionState;
 import docking.menu.MultiStateDockingAction;
 import docking.widgets.EventTrigger;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.program.model.data.DataTypeConflictHandler;
 import ghidra.program.model.data.DataTypeConflictHandler.ConflictResolutionPolicy;
 import ghidra.util.HelpLocation;
-import resources.ResourceManager;
 
 public class ConflictHandlerModesAction extends
 		MultiStateDockingAction<DataTypeConflictHandler.ConflictResolutionPolicy> {
@@ -41,10 +41,12 @@ public class ConflictHandlerModesAction extends
 			new HelpLocation(plugin.getName(), "conflict_mode");
 		setHelpLocation(conflictModesHelpLocation);
 
-		Icon renameAndAddIcon = ResourceManager.loadImage("images/conflictRename.png");
-		Icon useExistingIcon = ResourceManager.loadImage("images/conflictKeep.png");
-		Icon replaceExistingIcon = ResourceManager.loadImage("images/conflictReplace.png");
-		Icon replaceDefaultIcon = ResourceManager.loadImage("images/conflictReplaceOrRename.png");
+		//@formatter:off
+		Icon renameAndAddIcon = new GIcon("icon.plugin.datatypes.conflict.mode.rename.and.add");
+		Icon useExistingIcon = new GIcon("icon.plugin.datatypes.conflict.mode.use.existing");
+		Icon replaceExistingIcon = new GIcon("icon.plugin.datatypes.conflict.mode.replace.existing");
+		Icon replaceDefaultIcon = new GIcon("icon.plugin.datatypes.conflict.mode.replace.or.rename");
+		//@formatter:on
 
 		ActionState<DataTypeConflictHandler.ConflictResolutionPolicy> renameAndAddState =
 			new ActionState<>(

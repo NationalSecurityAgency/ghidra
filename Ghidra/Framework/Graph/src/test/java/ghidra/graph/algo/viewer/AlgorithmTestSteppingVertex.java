@@ -22,6 +22,8 @@ import java.awt.image.BufferedImage;
 
 import javax.swing.*;
 
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.graph.algo.GraphAlgorithmStatusListener.STATUS;
 import ghidra.graph.graphs.AbstractTestVertex;
 import ghidra.graph.viewer.vertex.VertexShapeProvider;
@@ -86,11 +88,12 @@ public class AlgorithmTestSteppingVertex<V> extends AbstractTestVertex
 
 	private void buildShapes() {
 
-		defaultShape = buildCircleShape(Color.LIGHT_GRAY, "default");
-		defaultWithPathShape = buildCircleShape(new Color(192, 216, 65), "default; was in path");
-		scheduledShape = buildCircleShape(new Color(255, 248, 169), "scheduled");
-		exploringShape = buildCircleShape(new Color(0, 147, 0), "exploring");
-		blockedShape = buildCircleShape(new Color(249, 190, 190), "blocked");
+		defaultShape = buildCircleShape(Palette.LIGHT_GRAY, "default");
+		defaultWithPathShape =
+			buildCircleShape(new GColor("color.palette.yellowgreen"), "default; was in path");
+		scheduledShape = buildCircleShape(new GColor("color.palette.khaki"), "scheduled");
+		exploringShape = buildCircleShape(Palette.GREEN, "exploring");
+		blockedShape = buildCircleShape(Palette.PINK, "blocked");
 
 		currentShape = defaultShape;
 	}

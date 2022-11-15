@@ -19,10 +19,19 @@ import java.awt.*;
 import java.awt.dnd.DragSource;
 import java.awt.image.BufferedImage;
 
+import generic.theme.*;
+
 /**
  * The cursor values used when drag-n-dropping dockable components
  */
 public class HeaderCursor {
+
+	private static final GColor CURSOR_COLOR = new GColor("color.header.drag.cursor");
+	private static final ThemeListener THEME_LISTENER = event -> {
+		if (event.isColorChanged(CURSOR_COLOR.getId())) {
+			initilizeCursors();
+		}
+	};
 
 	static Cursor LEFT;
 	static Cursor RIGHT;
@@ -33,6 +42,12 @@ public class HeaderCursor {
 	static Cursor NO_DROP = DragSource.DefaultMoveNoDrop;
 
 	static {
+		initilizeCursors();
+
+		Gui.addThemeListener(THEME_LISTENER);
+	}
+
+	private static void initilizeCursors() {
 		Toolkit tk = Toolkit.getDefaultToolkit();
 
 		Image image = drawLeftArrow();
@@ -57,7 +72,7 @@ public class HeaderCursor {
 	private static Image drawLeftArrow() {
 
 		BufferedImage image = new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
-		int v = 0xff000000;
+		int v = CURSOR_COLOR.getRGB();
 		int y = 6;
 		for (int i = 0; i < 6; i++) {
 			for (int j = 0; j < 2 * i + 1; j++) {
@@ -76,7 +91,7 @@ public class HeaderCursor {
 	private static Image drawRightArrow() {
 
 		BufferedImage image = new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
-		int v = 0xff000000;
+		int v = CURSOR_COLOR.getRGB();
 		int y = 6;
 		for (int i = 0; i < 6; i++) {
 			for (int j = 0; j < 2 * i + 1; j++) {
@@ -95,7 +110,7 @@ public class HeaderCursor {
 	private static Image drawTopArrow() {
 
 		BufferedImage image = new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
-		int v = 0xff000000;
+		int v = CURSOR_COLOR.getRGB();
 		int x = 6;
 		for (int i = 0; i < 6; i++) {
 			for (int j = 0; j < 2 * i + 1; j++) {
@@ -113,7 +128,7 @@ public class HeaderCursor {
 	private static Image drawBottomArrow() {
 
 		BufferedImage image = new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
-		int v = 0xff000000;
+		int v = CURSOR_COLOR.getRGB();
 		int x = 6;
 		for (int i = 0; i < 6; i++) {
 			for (int j = 0; j < 2 * i + 1; j++) {
@@ -131,7 +146,7 @@ public class HeaderCursor {
 	private static Image drawStack() {
 
 		BufferedImage image = new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
-		int v = 0xff000000;
+		int v = CURSOR_COLOR.getRGB();
 		for (int i = 0; i < 3; i++) {
 			int x = i * 3;
 			int y = 6 - i * 3;
@@ -149,10 +164,11 @@ public class HeaderCursor {
 	private static Image drawNewWindow() {
 
 		BufferedImage image = new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
-		int v = 0xff000000;
+		int headerColor = new GColor("color.bg.header.active").getRGB();
+		int v = CURSOR_COLOR.getRGB();
 		for (int i = 0; i < 5; i++) {
 			for (int j = 0; j < 14; j++) {
-				image.setRGB(j, i, 0xff0000ff);
+				image.setRGB(j, i, headerColor);
 			}
 		}
 		for (int i = 0; i < 14; i++) {

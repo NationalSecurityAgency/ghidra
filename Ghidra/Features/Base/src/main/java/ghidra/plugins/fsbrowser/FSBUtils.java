@@ -18,8 +18,8 @@ package ghidra.plugins.fsbrowser;
 import java.util.ArrayList;
 import java.util.List;
 
+import docking.widgets.SelectFromListDialog;
 import ghidra.app.services.ProgramManager;
-import ghidra.formats.gfilesystem.SelectFromListDialog;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.Msg;
 
@@ -27,7 +27,6 @@ import ghidra.util.Msg;
  * {@link FileSystemBrowserPlugin} utility methods that other things might find useful.
  */
 public class FSBUtils {
-
 
 	/**
 	 * Returns the {@link ProgramManager} associated with this fs browser plugin.

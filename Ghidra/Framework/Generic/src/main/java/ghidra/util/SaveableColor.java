@@ -17,97 +17,77 @@ package ghidra.util;
 
 import java.awt.Color;
 
-public class SaveableColor extends PrivateSaveable 
-{
+public class SaveableColor extends PrivateSaveable {
 	private Color color;
 	private Class<?>[] fields = new Class<?>[] {
-	    Integer.class, Integer.class, Integer.class
+		Integer.class, Integer.class, Integer.class
 	};
-	
+
 	public SaveableColor(Color color) {
 		this.color = color;
 	}
+
 	public SaveableColor() {
 	}
-	/**
-	 * @see Saveable#restore(ObjectStorage)
-	 */
+
 	@Override
 	public void save(ObjectStorage objStorage) {
 		objStorage.putInt(color.getRed());
 		objStorage.putInt(color.getBlue());
 		objStorage.putInt(color.getGreen());
 	}
-	
+
 	@Override
 	public Class<?>[] getObjectStorageFields() {
-	    return fields;
+		return fields;
 	}
-	
-	/**
-	 * @see Saveable#save(ObjectStorage)
-	 */
+
 	@Override
 	public void restore(ObjectStorage objStorage) {
 		int red = objStorage.getInt();
 		int blue = objStorage.getInt();
 		int green = objStorage.getInt();
-		color = new Color(red,green,blue);
+		color = new Color(red, green, blue);
 	}
 
 	public Color getColor() {
 		return color;
 	}
-	
-	/**
-	 * @see ghidra.util.Saveable#getSchemaVersion()
-	 */
+
 	@Override
 	public int getSchemaVersion() {
 		return 0;
 	}
 
-	/**
-	 * @see ghidra.util.Saveable#isUpgradeable(int)
-	 */
 	@Override
 	public boolean isUpgradeable(int oldSchemaVersion) {
 		return false;
 	}
 
-	/**
-	 * @see ghidra.util.Saveable#upgrade(ghidra.util.ObjectStorage, int, ghidra.util.ObjectStorage)
-	 */
 	@Override
-	public boolean upgrade(ObjectStorage oldObjStorage, int oldSchemaVersion, ObjectStorage currentObjStorage) {
+	public boolean upgrade(ObjectStorage oldObjStorage, int oldSchemaVersion,
+			ObjectStorage currentObjStorage) {
 		return false;
 	}
-	
-	/* (non-Javadoc)
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
+
 	@Override
-    public boolean equals(Object obj) {
+	public boolean equals(Object obj) {
 		if (obj == this) {
 			return true;
 		}
-		if (obj == null || getClass() != obj.getClass() ) {
+		if (obj == null || getClass() != obj.getClass()) {
 			return false;
 		}
-		return color.equals(((SaveableColor)obj).color);
+		return color.getRGB() == ((SaveableColor) obj).color.getRGB();
 	}
-	/* (non-Javadoc)
-	 * @see java.lang.Object#hashCode()
-	 */
+
 	@Override
-    public int hashCode() {
+	public int hashCode() {
 		return color.hashCode();
 	}
-	/* (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
+
 	@Override
-    public String toString() {
+	public String toString() {
 		return color.toString();
 	}
 }

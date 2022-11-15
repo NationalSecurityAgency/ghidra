@@ -19,10 +19,15 @@ import java.awt.*;
 
 import javax.swing.Icon;
 
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors.Palette;
+
 class BackgroundIcon implements Icon {
 
-	private static Color VERSION_ICON_COLOR_DARK = new Color(0x82, 0x82, 0xff);
-	private static Color VERSION_ICON_COLOR_LIGHT = new Color(0x9f, 0x9f, 0xff);
+	private static Color VERSION_ICON_COLOR_LINE = new GColor("color.bg.tree.renderer.icon.line");
+	private static Color VERSION_ICON_COLOR_LIGHT = new GColor("color.bg.tree.renderer.icon.fill");
+
+	private static Color ALPHA = Palette.NO_COLOR;
 
 	private int width;
 	private int height;
@@ -49,14 +54,14 @@ class BackgroundIcon implements Icon {
 		if (isVersioned) {
 			g.setColor(VERSION_ICON_COLOR_LIGHT);
 			g.fillRect(x + 1, y + 1, width - 2, height - 2);
-			g.setColor(VERSION_ICON_COLOR_DARK);
+			g.setColor(VERSION_ICON_COLOR_LINE);
 			g.drawLine(x + 1, y, x + width - 2, y);
 			g.drawLine(x + width - 1, y + 1, x + width - 1, y + height - 2);
 			g.drawLine(x + 1, y + height - 1, x + width - 2, y + height - 1);
 			g.drawLine(x, y + 1, x, y + height - 2);
 		}
 		else {
-			g.setColor(c.getBackground());
+			g.setColor(ALPHA);
 			g.fillRect(x, y, width, height);
 		}
 	}

@@ -27,7 +27,7 @@ import docking.action.ToolBarData;
 import ghidra.app.events.ProgramLocationPluginEvent;
 import ghidra.framework.plugintool.*;
 import ghidra.program.util.ProgramLocation;
-import resources.ResourceManager;
+import resources.Icons;
 
 public class EventDisplayComponentProvider extends ComponentProviderAdapter {
 	private JTextArea textArea;
@@ -82,7 +82,7 @@ public class EventDisplayComponentProvider extends ComponentProviderAdapter {
 
 		clearAction.markHelpUnnecessary();
 		clearAction.setEnabled(true);
-		ImageIcon icon = ResourceManager.loadImage("images/erase16.png");
+		Icon icon = Icons.CLEAR_ICON;
 		clearAction.setToolBarData(new ToolBarData(icon));
 		addLocalAction(clearAction);
 	}

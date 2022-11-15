@@ -39,7 +39,7 @@ public abstract class LazyImageIcon extends ImageIcon implements FileBasedIcon {
 	}
 
 	private synchronized void init() {
-		if (!loaded) {
+		if (!loaded || sourceIconChanged()) {
 			loaded = true;
 			ImageIcon imageIcon = createImageIcon();
 			if (imageIcon == null) {
@@ -51,6 +51,10 @@ public abstract class LazyImageIcon extends ImageIcon implements FileBasedIcon {
 	}
 
 	protected abstract ImageIcon createImageIcon();
+
+	protected boolean sourceIconChanged() {
+		return false;
+	}
 
 	@Override
 	public String getFilename() {

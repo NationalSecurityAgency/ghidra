@@ -27,7 +27,7 @@ public class RedoAction extends AbstractUndoRedoAction {
 	public static final String SUBGROUP = "2Redo";
 
 	public RedoAction(ProgramManagerPlugin plugin, PluginTool tool) {
-		super(tool, plugin, "Redo", "images/redo.png", "ctrl shift Z", SUBGROUP);
+		super(tool, plugin, "Redo", "icon.redo", "ctrl shift Z", SUBGROUP);
 	}
 
 	@Override

@@ -30,6 +30,8 @@ import docking.options.editor.ButtonPanelFactory;
 import docking.tool.ToolConstants;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.list.ListPanel;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.framework.ToolUtils;
 import ghidra.framework.model.ToolTemplate;
 import ghidra.util.HelpLocation;
@@ -174,7 +176,7 @@ class ImportGhidraToolsDialog extends DialogComponentProvider {
 		while (itr.hasNext()) {
 			tools[count] = itr.next();
 			checkboxes[count] = new GCheckBox(tools[count], false);
-			checkboxes[count].setBackground(Color.WHITE);
+			checkboxes[count].setBackground(Colors.BACKGROUND);
 			count++;
 		}
 
@@ -182,7 +184,7 @@ class ImportGhidraToolsDialog extends DialogComponentProvider {
 		while (itr.hasNext()) {
 			tools[count] = itr.next();
 			checkboxes[count] = new GCheckBox(tools[count], false);
-			checkboxes[count].setBackground(Color.LIGHT_GRAY);
+			checkboxes[count].setBackground(Palette.LIGHT_GRAY);
 			count++;
 		}
 
@@ -221,7 +223,7 @@ class ImportGhidraToolsDialog extends DialogComponentProvider {
 
 			if (boldFont == null) {
 				Font font = list.getFont();
-				boldFont = new Font(font.getName(), font.getStyle() | Font.BOLD, font.getSize());
+				boldFont = font.deriveFont(font.getStyle() | Font.BOLD);
 			}
 			if (index == -1) {
 				int selected = list.getSelectedIndex();

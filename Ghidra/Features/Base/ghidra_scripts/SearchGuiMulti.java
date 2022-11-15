@@ -26,6 +26,9 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Palette;
+
 public class SearchGuiMulti extends SearchBaseExtended {
 
 	private JScrollPane jScrollPane1;
@@ -65,39 +68,19 @@ public class SearchGuiMulti extends SearchBaseExtended {
 		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
 		mnemonicButton.setText("Mnemonic");
-		mnemonicButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent evt) {
-				mnemonicButtonActionPerformed(evt);
-			}
-		});
+		mnemonicButton.addActionListener(evt -> mnemonicButtonActionPerformed(evt));
 		mnemonicButton.setVisible(false);
 
 		op1Button.setText("Operand 1");
-		op1Button.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent evt) {
-				op1ButtonActionPerformed(evt);
-			}
-		});
+		op1Button.addActionListener(evt -> op1ButtonActionPerformed(evt));
 		op1Button.setVisible(false);
 
 		op2Button.setText("Operand 2");
-		op2Button.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent evt) {
-				op2ButtonActionPerformed(evt);
-			}
-		});
+		op2Button.addActionListener(evt -> op2ButtonActionPerformed(evt));
 		op2Button.setVisible(false);
 
 		searchButton.setText("Search");
-		searchButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent evt) {
-				searchButtonActionPerformed(evt);
-			}
-		});
+		searchButton.addActionListener(evt -> searchButtonActionPerformed(evt));
 
 		fillTable();
 		tableModel = new DefaultTableModel(tableContentsDO, columnIdentifiers) {
@@ -122,12 +105,7 @@ public class SearchGuiMulti extends SearchBaseExtended {
 
 				Color backgroundColor = dataObject.getBackgroundColor();
 				if (backgroundColor != null) {
-					if (isSelected) {
-						theRenderer.setBackground(backgroundColor.darker());
-					}
-					else {
-						theRenderer.setBackground(backgroundColor);
-					}
+					theRenderer.setBackground(backgroundColor);
 				}
 
 				return theRenderer;
@@ -152,45 +130,47 @@ public class SearchGuiMulti extends SearchBaseExtended {
 		GroupLayout layout = new GroupLayout(frame.getContentPane());
 		frame.getContentPane().setLayout(layout);
 		layout.setHorizontalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING) //
-			.addGroup(layout.createSequentialGroup() //
-				.addContainerGap(15, Short.MAX_VALUE) //
-				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING) //
-					.addGroup(GroupLayout.Alignment.TRAILING, layout.createSequentialGroup() //
-						.addComponent(jScrollPane1, GroupLayout.PREFERRED_SIZE, 357,
-							GroupLayout.PREFERRED_SIZE) //
-						.addContainerGap() //
-					) // 
-					.addGroup(GroupLayout.Alignment.CENTER, layout.createSequentialGroup() //
-						.addComponent(mnemonicButton) //
-						.addGap(39, 39, 39) //
-						.addComponent(op1Button) //
-						.addGap(42, 42, 42) //
-						.addComponent(op2Button) //
-						.addGap(40, 40, 40) //
-					) //
+				.addGroup(layout.createSequentialGroup() //
+						.addContainerGap(15, Short.MAX_VALUE) //
+						.addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING) //
+								.addGroup(GroupLayout.Alignment.TRAILING, layout
+										.createSequentialGroup() //
+										.addComponent(jScrollPane1, GroupLayout.PREFERRED_SIZE, 357,
+											GroupLayout.PREFERRED_SIZE) //
+										.addContainerGap() //
+								) // 
+								.addGroup(GroupLayout.Alignment.CENTER,
+									layout.createSequentialGroup() //
+											.addComponent(mnemonicButton) //
+											.addGap(39, 39, 39) //
+											.addComponent(op1Button) //
+											.addGap(42, 42, 42) //
+											.addComponent(op2Button) //
+											.addGap(40, 40, 40) //
+								) //
+						) //
 				) //
-			) //
-			.addGroup(layout.createSequentialGroup() //
-				.addGap(153, 153, 153) //
-				.addComponent(searchButton) //
-				.addContainerGap(164, Short.MAX_VALUE) //
-			) //
+				.addGroup(layout.createSequentialGroup() //
+						.addGap(153, 153, 153) //
+						.addComponent(searchButton) //
+						.addContainerGap(164, Short.MAX_VALUE) //
+				) //
 		);
 		layout.setVerticalGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING) //
-			.addGroup(layout.createSequentialGroup() //
-				.addGap(23, 23, 23) //
-				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE) //
-					.addComponent(op1Button) //
-					.addComponent(op2Button) //
-					.addComponent(mnemonicButton) //
+				.addGroup(layout.createSequentialGroup() //
+						.addGap(23, 23, 23) //
+						.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE) //
+								.addComponent(op1Button) //
+								.addComponent(op2Button) //
+								.addComponent(mnemonicButton) //
+						) //
+						.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED) //
+						.addComponent(jScrollPane1, GroupLayout.PREFERRED_SIZE, 402,
+							GroupLayout.PREFERRED_SIZE) //
+						.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED) //
+						.addComponent(searchButton) //
+						.addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE) //
 				) //
-				.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED) //
-				.addComponent(jScrollPane1, GroupLayout.PREFERRED_SIZE, 402,
-					GroupLayout.PREFERRED_SIZE) //
-				.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED) //
-				.addComponent(searchButton) //
-				.addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE) //
-			) //
 		);
 
 		frame.pack();
@@ -205,7 +185,7 @@ public class SearchGuiMulti extends SearchBaseExtended {
 
 				if (column == 0) {
 					tableContentsDO[mnemonic][column] =
-						new DataObject(mnemonics.get(mnemonic).textRep, Color.green);
+						new DataObject(mnemonics.get(mnemonic).textRep, Palette.GREEN);
 				}
 				else {
 					OperandCase temp = null;
@@ -217,10 +197,10 @@ public class SearchGuiMulti extends SearchBaseExtended {
 					}
 					if (temp != null) {
 						tableContentsDO[mnemonic][column] =
-							new DataObject(temp.textRep, Color.red.brighter());
+							new DataObject(temp.textRep, Palette.PINK);
 					}
 					else {
-						tableContentsDO[mnemonic][column] = new DataObject("", Color.white);
+						tableContentsDO[mnemonic][column] = new DataObject("", Palette.WHITE);
 					}
 				}
 
@@ -239,13 +219,13 @@ public class SearchGuiMulti extends SearchBaseExtended {
 			throw new IndexOutOfBoundsException();
 		}
 
-		if (tableContentsDO[rowSelection][columnSelection].getBackgroundColor().equals(
-			Color.green)) {
-			tableContentsDO[rowSelection][columnSelection].setBackgroundColor(Color.red);
+		if (tableContentsDO[rowSelection][columnSelection].getBackgroundColor()
+				.equals(Palette.GREEN)) {
+			tableContentsDO[rowSelection][columnSelection].setBackgroundColor(Palette.RED);
 		}
-		else if (tableContentsDO[rowSelection][columnSelection].getBackgroundColor().equals(
-			Color.red)) {
-			tableContentsDO[rowSelection][columnSelection].setBackgroundColor(Color.green);
+		else if (tableContentsDO[rowSelection][columnSelection].getBackgroundColor()
+				.equals(Palette.RED)) {
+			tableContentsDO[rowSelection][columnSelection].setBackgroundColor(Palette.GREEN);
 		}
 		else {
 			//TODO Determine what to do if the cell is white when clicked on. White cell means that there isn't an operand or mnemonic in that position.
@@ -258,10 +238,10 @@ public class SearchGuiMulti extends SearchBaseExtended {
 		int selectedRow = jTable1.getSelectedRow();
 
 		if (mnemonicButton.isSelected()) {
-			tableContentsDO[selectedRow][0].setBackgroundColor(Color.red);
+			tableContentsDO[selectedRow][0].setBackgroundColor(Palette.RED);
 		}
 		else {//off when clicked, turn on and update the table to reflect being enabled
-			tableContentsDO[selectedRow][0].setBackgroundColor(Color.green);
+			tableContentsDO[selectedRow][0].setBackgroundColor(Palette.GREEN);
 		}
 		jTable1.repaint();
 	}
@@ -271,10 +251,10 @@ public class SearchGuiMulti extends SearchBaseExtended {
 		int selectedRow = jTable1.getSelectedRow();
 
 		if (op1Button.isSelected()) {
-			tableContentsDO[selectedRow][1].setBackgroundColor(Color.red);
+			tableContentsDO[selectedRow][1].setBackgroundColor(Palette.RED);
 		}
 		else {//off when clicked, turn on and update the table to reflect being enabled
-			tableContentsDO[selectedRow][1].setBackgroundColor(Color.green);
+			tableContentsDO[selectedRow][1].setBackgroundColor(Palette.GREEN);
 		}
 		jTable1.repaint();
 	}
@@ -284,10 +264,10 @@ public class SearchGuiMulti extends SearchBaseExtended {
 		int selectedRow = jTable1.getSelectedRow();
 
 		if (op2Button.isSelected()) {
-			tableContentsDO[selectedRow][2].setBackgroundColor(Color.red);
+			tableContentsDO[selectedRow][2].setBackgroundColor(Palette.RED);
 		}
 		else {//off when clicked, turn on and update the table to reflect being enabled
-			tableContentsDO[selectedRow][2].setBackgroundColor(Color.green);
+			tableContentsDO[selectedRow][2].setBackgroundColor(Palette.GREEN);
 		}
 		jTable1.repaint();
 	}
@@ -300,14 +280,14 @@ public class SearchGuiMulti extends SearchBaseExtended {
 		for (int row = 0; row < mnemonics.size(); row++) {
 			SLMaskControl temp = new SLMaskControl();
 
-			if (tableContentsDO[row][0].getBackgroundColor().equals(Color.green)) {
+			if (tableContentsDO[row][0].getBackgroundColor().equals(Palette.GREEN)) {
 				temp.useMnemonic = true;
 			}
 			else {
 				temp.useMnemonic = false;
 			}
 
-			if (tableContentsDO[row][1].getBackgroundColor().equals(Color.green)) {
+			if (tableContentsDO[row][1].getBackgroundColor().equals(Palette.GREEN)) {
 				temp.useOp1 = true;
 				if (ops.get(0).get(mnemonics.get(row)).constant) {
 					temp.useConst = true;
@@ -317,7 +297,7 @@ public class SearchGuiMulti extends SearchBaseExtended {
 				temp.useOp1 = false;
 			}
 
-			if (tableContentsDO[row][2].getBackgroundColor().equals(Color.green)) {
+			if (tableContentsDO[row][2].getBackgroundColor().equals(Palette.GREEN)) {
 				temp.useOp2 = true;
 				if (ops.get(1).get(mnemonics.get(row)).constant) {
 					temp.useConst = true;
@@ -336,7 +316,7 @@ public class SearchGuiMulti extends SearchBaseExtended {
 
 	private class DataObject {
 		private String data;
-		private Color background = Color.white;
+		private Color background = Colors.BACKGROUND;
 
 		public DataObject(String data, Color color) {
 			this.data = data;

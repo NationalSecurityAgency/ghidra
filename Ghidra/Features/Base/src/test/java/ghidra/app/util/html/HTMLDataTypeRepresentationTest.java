@@ -29,6 +29,7 @@ import org.junit.*;
 
 import docking.widgets.label.GDHtmlLabel;
 import generic.test.AbstractGenericTest;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.util.ToolTipUtils;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Composite;
@@ -1474,7 +1475,7 @@ public class HTMLDataTypeRepresentationTest extends AbstractGenericTest {
 		StringBuffer buffy1 = new StringBuffer(rightHtml);
 		JLabel rightLabel = new GDHtmlLabel();
 		rightLabel.setOpaque(true);
-		rightLabel.setBackground(Color.WHITE);
+		rightLabel.setBackground(Colors.BACKGROUND);
 		rightLabel.setVerticalAlignment(SwingConstants.TOP);
 		rightPanel.add(rightLabel);
 
@@ -1484,7 +1485,7 @@ public class HTMLDataTypeRepresentationTest extends AbstractGenericTest {
 		StringBuffer buffy2 = new StringBuffer(leftHtml);
 		JLabel leftLabel = new GDHtmlLabel();
 		leftLabel.setOpaque(true);
-		leftLabel.setBackground(Color.WHITE);
+		leftLabel.setBackground(Colors.BACKGROUND);
 		leftLabel.setVerticalAlignment(SwingConstants.TOP);
 		leftPanel.add(leftLabel);
 

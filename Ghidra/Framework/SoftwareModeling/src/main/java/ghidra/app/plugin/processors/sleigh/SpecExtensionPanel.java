@@ -32,6 +32,7 @@ import org.xml.sax.SAXException;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.table.*;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.framework.preferences.Preferences;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.ProgramDB;
@@ -232,7 +233,7 @@ public class SpecExtensionPanel extends JPanel {
 			CompilerElement compilerElement = tableModel.getRowObject(row);
 
 			if (compilerElement.status == Status.EXTENSION_ERROR) {
-				setBackground(Color.pink);
+				setBackground(Palette.PINK);
 			}
 
 			return this;

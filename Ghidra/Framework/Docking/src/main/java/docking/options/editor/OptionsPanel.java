@@ -40,7 +40,7 @@ import ghidra.util.layout.MiddleLayout;
 import ghidra.util.task.SwingUpdateManager;
 import help.Help;
 import help.HelpService;
-import resources.ResourceManager;
+import resources.Icons;
 
 public class OptionsPanel extends JPanel {
 	private PropertyChangeListener changeListener;
@@ -251,7 +251,7 @@ public class OptionsPanel extends JPanel {
 		BoxLayout bl = new BoxLayout(labelPanel, BoxLayout.X_AXIS);
 		labelPanel.setLayout(bl);
 		labelPanel.add(Box.createHorizontalStrut(5));
-		labelPanel.add(new GIconLabel(ResourceManager.loadImage("images/information.png")));
+		labelPanel.add(new GIconLabel(Icons.INFO_ICON));
 		labelPanel.add(Box.createHorizontalStrut(5));
 		labelPanel.add(label);
 

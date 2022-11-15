@@ -33,11 +33,13 @@ import docking.widgets.table.GTableFilterPanel;
 import docking.widgets.table.RowObjectFilterModel;
 import docking.widgets.table.columnfilter.*;
 import docking.widgets.table.constrainteditor.ColumnConstraintEditor;
+import generic.theme.GThemeDefaults.Colors.Java;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import generic.util.WindowUtilities;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.layout.VerticalLayout;
-import resources.ResourceManager;
+import resources.Icons;
 import utility.function.Callback;
 
 /**
@@ -127,7 +129,7 @@ public class ColumnFilterDialog<R> extends DialogComponentProvider
 		};
 		saveAction.setHelpLocation(new HelpLocation("Trees", "Save_Filter"));
 		saveAction.setDescription("Save Filter");
-		saveAction.setToolBarData(new ToolBarData(ResourceManager.loadImage("images/disk.png")));
+		saveAction.setToolBarData(new ToolBarData(Icons.SAVE_ICON));
 		addAction(saveAction);
 
 		DockingAction loadAction = new DockingAction("Load", "Filter") {
@@ -139,7 +141,7 @@ public class ColumnFilterDialog<R> extends DialogComponentProvider
 		loadAction.setDescription("Load Filter");
 		loadAction.setHelpLocation(new HelpLocation("Trees", "Load_Filter"));
 		loadAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/openSmallFolder.png")));
+			new ToolBarData(Icons.OPEN_FOLDER_ICON));
 		addAction(loadAction);
 	}
 
@@ -222,13 +224,13 @@ public class ColumnFilterDialog<R> extends DialogComponentProvider
 			JPanel innerPanel = new JPanel(new VerticalLayout(3));
 
 			JButton addAndConditionButton =
-				new JButton("Add AND condition", ResourceManager.loadImage("images/Plus.png"));
+				new JButton("Add AND condition", Icons.ADD_ICON);
 
 			addAndConditionButton.addActionListener(e -> addFilterCondition(LogicOperation.AND));
 			addAndConditionButton.setEnabled(true);
 
 			JButton addOrConditionButton =
-				new JButton("Add  OR   condition", ResourceManager.loadImage("images/Plus.png"));
+				new JButton("Add  OR   condition", Icons.ADD_ICON);
 
 			addOrConditionButton.setHorizontalAlignment(SwingConstants.LEFT);
 			addOrConditionButton.addActionListener(e -> addFilterCondition(LogicOperation.OR));
@@ -369,7 +371,7 @@ public class ColumnFilterDialog<R> extends DialogComponentProvider
 
 	private GLabel createLogicalOperationLabel(LogicOperation op) {
 		GLabel label = new GLabel("<" + op + ">", SwingConstants.CENTER);
-		label.setForeground(Color.GRAY);
+		label.setForeground(Messages.HINT);
 		return label;
 	}
 
@@ -381,7 +383,7 @@ public class ColumnFilterDialog<R> extends DialogComponentProvider
 		headerPanel.add(new GLabel("Filter Value", SwingConstants.CENTER));
 
 		headerPanel.setBorder(new CompoundBorder(
-			BorderFactory.createMatteBorder(0, 0, 1, 0, Color.DARK_GRAY.brighter().brighter()),
+			BorderFactory.createMatteBorder(0, 0, 1, 0, Java.BORDER),
 			BorderFactory.createEmptyBorder(4, 0, 4, 0)));
 		return headerPanel;
 	}
@@ -474,6 +476,5 @@ public class ColumnFilterDialog<R> extends DialogComponentProvider
 		gTableFilterPanel.updateSavedFilters(filter, false);
 
 	}
-
 
 }

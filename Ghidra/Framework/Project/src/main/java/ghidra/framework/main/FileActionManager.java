@@ -29,6 +29,7 @@ import docking.tool.ToolConstants;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.wizard.WizardManager;
+import generic.theme.GIcon;
 import ghidra.framework.client.ClientUtil;
 import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.model.*;
@@ -38,7 +39,6 @@ import ghidra.framework.store.LockException;
 import ghidra.util.*;
 import ghidra.util.exception.NotFoundException;
 import ghidra.util.task.TaskLauncher;
-import resources.ResourceManager;
 
 /**
  * Helper class to manage actions on the File menu.
@@ -49,9 +49,10 @@ class FileActionManager {
 	private final static int OPEN_ACCELERATOR = KeyEvent.VK_O;
 	private final static int CLOSE_ACCELERATOR = KeyEvent.VK_W;
 	private final static int SAVE_ACCELERATOR = KeyEvent.VK_S;
-	private final static Icon NEW_PROJECT_ICON = ResourceManager.loadImage("images/folder_add.png");
-	private final static String LAST_SELECTED_PROJECT_DIRECTORY = "LastSelectedProjectDirectory";
 
+	private final static Icon NEW_PROJECT_ICON = new GIcon("icon.menu.file.new.project");
+
+	private final static String LAST_SELECTED_PROJECT_DIRECTORY = "LastSelectedProjectDirectory";
 	private static final String DISPLAY_DATA = "DISPLAY_DATA";
 
 	private FrontEndTool tool;

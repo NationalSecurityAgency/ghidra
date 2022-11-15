@@ -31,6 +31,7 @@ import docking.widgets.DropDownTextField;
 import docking.widgets.DropDownTextFieldDataModel;
 import docking.widgets.list.GListCellRenderer;
 import docking.widgets.table.constraint.*;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.util.HTMLUtilities;
 
 /**
@@ -214,7 +215,7 @@ public class AutocompletingStringConstraintEditor extends DataLoadingConstraintE
 		private String formatListValue(String value, boolean isSelected) {
 
 			Matcher matcher = model.lastConstraint.getHighlightMatcher(value);
-			Color color = isSelected ? Color.YELLOW : Color.MAGENTA;
+			Color color = isSelected ? Palette.YELLOW : Palette.MAGENTA;
 			StringBuilder sb = new StringBuilder("<html>");
 			// find and highlight all instances of the user-defined pattern
 			while (matcher.find()) {

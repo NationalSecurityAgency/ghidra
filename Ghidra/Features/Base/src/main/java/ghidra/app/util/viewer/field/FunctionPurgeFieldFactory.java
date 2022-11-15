@@ -15,11 +15,11 @@
  */
 package ghidra.app.util.viewer.field;
 
-import java.awt.Color;
 import java.math.BigInteger;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.util.HighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.options.OptionsGui;
@@ -47,8 +47,8 @@ public class FunctionPurgeFieldFactory extends FieldFactory {
 
 	@Override
 	public FieldFactory newInstance(FieldFormatModel newModel, HighlightProvider newHlProvider,
-			ToolOptions displayOptions, ToolOptions fieldOptions) {
-		return new FunctionPurgeFieldFactory(newModel, newHlProvider, displayOptions, fieldOptions);
+			ToolOptions toolOptions, ToolOptions fieldOptions) {
+		return new FunctionPurgeFieldFactory(newModel, newHlProvider, toolOptions, fieldOptions);
 	}
 
 	/**
@@ -79,7 +79,7 @@ public class FunctionPurgeFieldFactory extends FieldFactory {
 					stringDepth = Integer.toHexString(depth);
 				}
 		}
-		AttributedString as = new AttributedString(stringDepth, Color.BLUE, getMetrics());
+		AttributedString as = new AttributedString(stringDepth, Palette.BLUE, getMetrics());
 		FieldElement text = new TextFieldElement(as, 0, 0);
 		return ListingTextField.createSingleLineTextField(this, proxy, text, startX + varWidth,
 			width, hlProvider);

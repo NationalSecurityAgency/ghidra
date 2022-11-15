@@ -28,7 +28,6 @@ import java.util.Map.Entry;
 import javax.help.*;
 import javax.help.Map.ID;
 import javax.swing.JButton;
-import javax.swing.UIManager;
 
 import docking.ComponentProvider;
 import docking.action.DockingActionIf;
@@ -51,6 +50,12 @@ import utilities.util.reflection.ReflectionUtilities;
  * the {@link DockingActionIf} and the {@link ComponentProvider} base classes.
  */
 public class HelpManager implements HelpService {
+
+	/**
+	 * The hardcoded value to use for all HelpSet 'home id' values.  Subclasses may change this 
+	 * value by overriding {@link #getHomeId()}.
+	 */
+	private static final String HOME_ID = "Misc_Help_Contents";
 
 	public static final String SHOW_AID_KEY = "SHOW.HELP.NAVIGATION.AID";
 	private static final String TABLE_OF_CONTENTS_FILENAME_KEY = "data";
@@ -85,10 +90,9 @@ public class HelpManager implements HelpService {
 	 */
 	protected HelpManager(URL url) throws HelpSetException {
 		mainHS = new DockingHelpSet(new GHelpClassLoader(null), url);
+		mainHS.setHomeID(getHomeId());
 		mainHB = mainHS.createHelpBroker();
 		mainHS.setTitle(GHIDRA_HELP_TITLE);
-
-		setColorResources();
 
 		isValidHelp = isValidHelp();
 	}
@@ -122,6 +126,15 @@ public class HelpManager implements HelpService {
 		else {
 			helpSetsPendingMerge.add(hs);
 		}
+	}
+
+	/**
+	 * Returns the 'home id' to be used by all help sets in the system (as opposed to allowing each
+	 * help set to define its own home id.
+	 * @return the home id
+	 */
+	protected String getHomeId() {
+		return HOME_ID;
 	}
 
 	@Override
@@ -193,6 +206,18 @@ public class HelpManager implements HelpService {
 	 */
 	public GHelpSet getMasterHelpSet() {
 		return mainHS;
+	}
+
+	@Override
+	public void reload() {
+
+		if (!(mainHB instanceof GHelpBroker)) {
+			// not our broker installed; can't force a reload
+			return;
+		}
+
+		GHelpBroker gHelpBroker = (GHelpBroker) mainHB;
+		gHelpBroker.reload();
 	}
 
 	@Override
@@ -686,19 +711,11 @@ public class HelpManager implements HelpService {
 	private HelpSet createHelpSet(URL url, GHelpClassLoader classLoader) throws HelpSetException {
 		if (!urlToHelpSets.containsKey(url)) {
 			GHelpSet hs = new GHelpSet(classLoader, url);
+			hs.setHomeID(getHomeId());
 			urlToHelpSets.put(url, hs);
 			return hs;
 		}
 		return null;
-	}
-
-	/**
-	 * Set the color resources on the JEditorPane for selection so that
-	 * you can see the highlights when you do a search in the JavaHelp.
-	 */
-	private void setColorResources() {
-		UIManager.put("EditorPane.selectionBackground", new Color(204, 204, 255));
-		UIManager.put("EditorPane.selectionForeground", UIManager.get("EditorPane.foreground"));
 	}
 
 	private void displayHelpInfo(Object helpObj, HelpLocation loc, Window parent) {

@@ -19,12 +19,14 @@ import java.awt.Color;
 
 import javax.swing.JFrame;
 
+import generic.theme.GThemeDefaults.Colors.Palette;
+
 /*package*/ abstract class AbstractSearchScreenShots extends GhidraScreenShotGenerator {
 
-	protected static final Color YELLOW_ORANGE = new Color(155, 150, 50);
-	protected static final Color BLUE_GREEN = new Color(0, 128, 64);
-	protected static final Color DARK_BLUE = new Color(0, 0, 128);
-	protected static final Color DARK_GREEN = new Color(0, 128, 0);
+	protected static final Color YELLOW_ORANGE = Palette.getColor("darkkhaki");
+	protected static final Color BLUE_GREEN = Palette.GREEN;
+	protected static final Color DARK_BLUE = Palette.getColor("navy");
+	protected static final Color DARK_GREEN = Palette.getColor("darkgreen");
 
 	@Override
 	protected String getHelpTopicName() {

@@ -17,6 +17,8 @@ package ghidra.framework.main.datatree;
 
 import static org.junit.Assert.*;
 
+import java.net.URL;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.swing.*;
@@ -190,9 +192,11 @@ public class VersionControlAction2Test extends AbstractVersionControlActionTest 
 		assertTrue(icon instanceof MultiIcon);
 		Icon[] icons = ((MultiIcon) icon).getIcons();
 		Icon checkOutIcon = ResourceManager.loadImage("images/checkex.png");
+		URL checkOutIconUrl = getURL(checkOutIcon);
 		boolean found = false;
 		for (Icon element : icons) {
-			if (checkOutIcon.equals(element)) {
+			URL elementUrl = getURL(element);
+			if (Objects.equals(checkOutIconUrl, elementUrl)) {
 				found = true;
 				break;
 			}

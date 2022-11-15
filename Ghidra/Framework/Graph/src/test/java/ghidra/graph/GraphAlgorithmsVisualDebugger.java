@@ -15,7 +15,7 @@
  */
 package ghidra.graph;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -25,6 +25,8 @@ import javax.swing.JFrame;
 
 import org.junit.Test;
 
+import docking.framework.DockingApplicationConfiguration;
+import ghidra.framework.ApplicationConfiguration;
 import ghidra.graph.algo.*;
 import ghidra.graph.algo.viewer.*;
 import ghidra.util.SystemUtilities;
@@ -36,6 +38,13 @@ import ghidra.util.exception.CancelledException;
  * through the given graph algorithm.
  */
 public class GraphAlgorithmsVisualDebugger extends AbstractGraphAlgorithmsTest {
+
+	@Override
+	protected ApplicationConfiguration createApplicationConfiguration() {
+		DockingApplicationConfiguration config = new DockingApplicationConfiguration();
+		config.setShowSplashScreen(false);
+		return config;
+	}
 
 	@Override
 	protected GDirectedGraph<TestV, TestE> createGraph() {

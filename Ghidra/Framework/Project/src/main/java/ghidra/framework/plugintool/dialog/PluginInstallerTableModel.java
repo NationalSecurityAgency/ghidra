@@ -35,7 +35,6 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskLauncher;
 import ghidra.util.task.TaskMonitor;
 import resources.Icons;
-import resources.ResourceManager;
 
 /**
  * Table model for the {@link PluginInstallerDialog} dialog. This defines the table columns and
@@ -48,7 +47,7 @@ class PluginInstallerTableModel
 	final static int STATUS_COL = 1;
 	final static int NAME_COL = 2;
 
-	public static final Icon EXPERIMENTAL_ICON = ResourceManager.loadImage("images/warning.png");
+	public static final Icon EXPERIMENTAL_ICON = Icons.WARNING_ICON;
 	public static final Icon DEV_ICON = Icons.STRONG_WARNING_ICON;
 
 	private static Map<PluginStatus, Icon> statusIconMap = new HashMap<>();
@@ -136,8 +135,11 @@ class PluginInstallerTableModel
 			List<PluginDescription> pluginsThatUseTarget =
 				model.getDependencies(targetPluginDescription);
 			String dependenciesToUnloadHtmlList =
-				pluginsThatUseTarget.stream().map(PluginDescription::getName).sorted().collect(
-					Collectors.joining("<li>", "<ul><li>", "</ul>"));
+				pluginsThatUseTarget.stream()
+						.map(PluginDescription::getName)
+						.sorted()
+						.collect(
+							Collectors.joining("<li>", "<ul><li>", "</ul>"));
 
 			if (pluginsThatUseTarget.isEmpty() ||
 				OptionDialog.showYesNoDialog(parentComponent, "Confirm plugin removal",

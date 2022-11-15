@@ -24,6 +24,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.util.HighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.options.OptionsGui;
@@ -44,7 +45,7 @@ import ghidra.program.util.ProgramLocation;
 public class FunctionTagFieldFactory extends FieldFactory {
 
 	public static final String FIELD_NAME = "Function Tags";
-	public static final Color DEFAULT_COLOR = new Color(130, 0, 75);
+	public static final Color DEFAULT_COLOR = Palette.MAROON;
 
 	private Color literalColor;
 
@@ -59,10 +60,9 @@ public class FunctionTagFieldFactory extends FieldFactory {
 	 * Constructor
 	 * 
 	 * @param model the model that the field belongs to.
-	 * @param hsProvider the HightLightStringProvider.
+	 * @param hlProvider the HightLightStringProvider.
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
-	 * @param serviceProvider the provider for services.
 	 */
 	private FunctionTagFieldFactory(FieldFormatModel model, HighlightProvider hlProvider,
 			Options displayOptions, Options fieldOptions) {
@@ -72,10 +72,6 @@ public class FunctionTagFieldFactory extends FieldFactory {
 		literalColor = displayOptions.getColor(OptionsGui.SEPARATOR.getColorOptionName(),
 			OptionsGui.SEPARATOR.getDefaultColor());
 	}
-
-	/******************************************************************************
-	 * PUBLIC METHODS
-	 ******************************************************************************/
 
 	@Override
 	public ListingField getField(ProxyObj<?> proxy, int varWidth) {
@@ -139,8 +135,8 @@ public class FunctionTagFieldFactory extends FieldFactory {
 
 	@Override
 	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider provider,
-			ToolOptions displayOptions, ToolOptions fieldOptions) {
-		return new FunctionTagFieldFactory(formatModel, provider, displayOptions, fieldOptions);
+			ToolOptions toolOptions, ToolOptions fieldOptions) {
+		return new FunctionTagFieldFactory(formatModel, provider, toolOptions, fieldOptions);
 	}
 
 	@Override
@@ -155,15 +151,12 @@ public class FunctionTagFieldFactory extends FieldFactory {
 		super.displayOptionsChanged(options, optionName, oldValue, newValue);
 	}
 
-	/******************************************************************************
-	 * PROTECTED METHODS
-	 ******************************************************************************/
-
 	/**
 	 * Creates a tags list field to be show at the beginning of each function that shows the tags
 	 * assigned to that function. 
 	 * 
 	 * @param function the function to retrieve the tags from
+	 * @return the elements
 	 */
 	protected List<FieldElement> createFunctionTagElements(FunctionDB function) {
 
@@ -185,10 +178,6 @@ public class FunctionTagFieldFactory extends FieldFactory {
 
 		return textElements;
 	}
-
-	/******************************************************************************
-	 * PRIVATE METHODS
-	 ******************************************************************************/
 
 	/**
 	 * Returns all function tags associated with the given function.

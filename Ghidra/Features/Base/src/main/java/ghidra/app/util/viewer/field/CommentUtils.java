@@ -26,6 +26,8 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.fieldpanel.field.*;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.Gui;
 import ghidra.program.model.listing.Program;
 import ghidra.util.StringUtilities;
 import ghidra.util.WordLocation;
@@ -93,10 +95,10 @@ public class CommentUtils {
 	}
 
 	private static AttributedString createPrototype() {
-		Font dummyFont = new Font("monospaced", Font.PLAIN, 12);
+		Font dummyFont = Gui.getFont("font.monospaced");
 		@SuppressWarnings("deprecation")
 		FontMetrics fontMetrics = Toolkit.getDefaultToolkit().getFontMetrics(dummyFont);
-		return new AttributedString("", Color.BLACK, fontMetrics);
+		return new AttributedString("", Colors.FOREGROUND, fontMetrics);
 	}
 
 	/**

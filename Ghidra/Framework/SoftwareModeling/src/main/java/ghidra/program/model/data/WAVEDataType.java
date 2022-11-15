@@ -20,13 +20,13 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
 import javax.sound.sampled.*;
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
+import generic.theme.GIcon;
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.Msg;
-import resources.ResourceManager;
 
 public class WAVEDataType extends BuiltIn implements Dynamic {
 	public static byte[] MAGIC = new byte[] { (byte) 'R', (byte) 'I', (byte) 'F', (byte) 'F',
@@ -103,8 +103,7 @@ public class WAVEDataType extends BuiltIn implements Dynamic {
 
 	private static class WAVEData implements Playable {
 
-		private static final ImageIcon AUDIO_ICON =
-			ResourceManager.loadImage("images/audio-volume-medium.png");
+		private static final Icon AUDIO_ICON = new GIcon("icon.data.type.wave");
 		private byte[] bytes;
 
 		public WAVEData(byte[] bytes) {
@@ -127,7 +126,7 @@ public class WAVEDataType extends BuiltIn implements Dynamic {
 		}
 
 		@Override
-		public ImageIcon getImageIcon() {
+		public Icon getImageIcon() {
 			return AUDIO_ICON;
 		}
 	}

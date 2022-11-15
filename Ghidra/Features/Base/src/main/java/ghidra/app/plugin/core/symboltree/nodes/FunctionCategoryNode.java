@@ -22,19 +22,19 @@ import java.util.List;
 import javax.swing.Icon;
 
 import docking.widgets.tree.GTreeNode;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.symboltree.SymbolCategory;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
 import ghidra.util.task.TaskMonitor;
-import resources.ResourceManager;
 
 class FunctionCategoryNode extends SymbolCategoryNode {
 
 	public static final Icon OPEN_FOLDER_FUNCTIONS_ICON =
-		ResourceManager.loadImage("images/openFolderFunctions.png");
+		new GIcon("icon.plugin.symboltree.node.category.function.open");
 	public static final Icon CLOSED_FOLDER_FUNCTIONS_ICON =
-		ResourceManager.loadImage("images/closedFolderFunctions.png");
+		new GIcon("icon.plugin.symboltree.node.category.function.closed");
 
 	FunctionCategoryNode(Program program) {
 		super(SymbolCategory.FUNCTION_CATEGORY, program);

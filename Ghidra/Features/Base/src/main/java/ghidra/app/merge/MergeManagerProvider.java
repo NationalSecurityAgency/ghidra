@@ -26,6 +26,7 @@ import docking.options.editor.ButtonPanelFactory;
 import docking.util.image.ToolIconURL;
 import docking.widgets.OptionDialog;
 import docking.widgets.label.*;
+import generic.theme.GIcon;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.merge.tool.ListingMergePanel;
 import ghidra.app.nav.Navigatable;
@@ -36,7 +37,6 @@ import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
 import ghidra.util.layout.VerticalLayout;
-import resources.ResourceManager;
 
 /**
  * Component that displays merge components as needed.
@@ -59,7 +59,7 @@ class MergeManagerProvider extends ComponentProviderAdapter {
 	private JButton cancelButton;
 	private boolean wasCanceled;
 
-	private ImageIcon MERGE_ICON = ResourceManager.loadImage("images/Merge.png");
+	private Icon MERGE_ICON = new GIcon("icon.plugin.merge");
 	private JPanel mainPanel;
 
 	public MergeManagerProvider(MergeManagerPlugin plugin, String title) {

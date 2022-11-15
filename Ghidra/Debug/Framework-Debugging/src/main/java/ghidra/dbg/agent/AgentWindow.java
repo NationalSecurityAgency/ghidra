@@ -73,6 +73,7 @@ public class AgentWindow extends JFrame implements WindowListener, LogListener {
 
 	@Override
 	public void messageLogged(String message, boolean isError) {
+
 		Swing.runIfSwingOrRunLater(() -> {
 			MutableAttributeSet attributes = new SimpleAttributeSet();
 			if (isError) {

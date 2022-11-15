@@ -26,6 +26,7 @@ import docking.widgets.dialogs.MultiLineMessageDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import generic.jar.ResourceFile;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.plugin.core.analysis.AnalysisWorker;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.plugin.core.colorizer.ColorizingService;
@@ -421,8 +422,8 @@ public abstract class GhidraScript extends FlatProgramAPI {
 					null,
 					"Keep Changes?",
 					message,
-					"<html>No (<font color=\"red\">discard</font> changes)",
-					"<html>Yes (<font color=\"green\">keep</font> changes)",
+					"<html>No (<font color=\""+Palette.RED+"\">discard</font> changes)",
+					"<html>Yes (<font color=\""+Palette.GREEN+"\">keep</font> changes)",
 					OptionDialog.QUESTION_MESSAGE);
 		//@formatter:on
 
@@ -3684,7 +3685,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 				state.getTool(), currentProgram, addresses);
 			TableComponentProvider<Address> tableProvider =
 				table.showTableWithMarkers(title + " " + model.getName(), "GhidraScript", model,
-					Color.GREEN, null, "Script Results", null);
+					Palette.GREEN, null, "Script Results", null);
 			tableProvider.installRemoveItemsAction();
 		};
 		Swing.runLater(runnable);
@@ -3701,7 +3702,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 			AddressSetTableModel model =
 				new AddressSetTableModel(title, state.getTool(), currentProgram, addresses, null);
 			TableComponentProvider<Address> tableProvider = table.showTableWithMarkers(title,
-				"GhidraScript", model, Color.GREEN, null, "Script Results", null);
+				"GhidraScript", model, Palette.GREEN, null, "Script Results", null);
 			tableProvider.installRemoveItemsAction();
 		});
 	}

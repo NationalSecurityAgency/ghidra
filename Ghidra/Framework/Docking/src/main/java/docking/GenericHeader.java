@@ -29,16 +29,22 @@ import docking.action.DockingActionIf;
 import docking.util.AnimationUtils;
 import docking.widgets.VariableHeightPanel;
 import docking.widgets.label.GDLabel;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Java;
+import generic.theme.GThemeDefaults.Colors.Palette;
 
 // TODO: should this be put into generic?
 public class GenericHeader extends JPanel {
 
-	private static final Color NON_FOCUS_START_COLOR = new Color(150, 150, 150);
-	private static final Color FOCUS_START_COLOR = new Color(30, 30, 150);
+	private static final Color NON_FOCUS_START_COLOR = new GColor("color.bg.header.inactive");
+	private static final Color FOCUS_START_COLOR = new GColor("color.bg.header.active");
 	private static final int MINIMUM_TITLE_SIZE = 80;
 
 	private Color nonFocusColor = NON_FOCUS_START_COLOR;
 	private Color focusColor = FOCUS_START_COLOR;
+	private Color activeForeground = new GColor("color.fg.header.active");
+	private Color inactiveForeground = new GColor("color.fg.header.inactive");
 
 	protected Component component;
 	protected DockableToolBarManager toolBarMgr;
@@ -68,7 +74,7 @@ public class GenericHeader extends JPanel {
 		BorderLayout layout = new BorderLayout();
 		layout.setVgap(1);
 		setLayout(layout);
-		setBorder(BorderFactory.createLineBorder(Color.GRAY));
+		setBorder(BorderFactory.createLineBorder(Palette.GRAY));
 		setFocusable(false);
 
 		titlePanel = new TitlePanel();
@@ -206,7 +212,7 @@ public class GenericHeader extends JPanel {
 
 	private void constructMultiLinePanel() {
 		removeAll();
-		toolbar.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Color.BLACK));
+		toolbar.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Java.BORDER));
 		add(toolbar, BorderLayout.SOUTH);
 		add(titlePanel, BorderLayout.CENTER);
 		add(menuCloseToolbar, BorderLayout.EAST);
@@ -294,11 +300,7 @@ public class GenericHeader extends JPanel {
 
 		TitleFlasher() {
 			animator = PropertySetter.createAnimator(1000, this, "color", NON_FOCUS_START_COLOR,
-				NON_FOCUS_START_COLOR, Color.YELLOW, FOCUS_START_COLOR);
-
-//			animator =
-//				PropertySetter.createAnimator(1000, this, "color", NON_FOCUS_START_COLOR,
-//					NON_FOCUS_START_COLOR, Color.YELLOW, FOCUS_START_COLOR);
+				NON_FOCUS_START_COLOR, Palette.YELLOW, FOCUS_START_COLOR);
 
 			animator.setAcceleration(0.2f);
 			animator.setDeceleration(0.8f);
@@ -347,7 +349,7 @@ public class GenericHeader extends JPanel {
 			setFocusable(false);
 			titleLabel = new GDLabel();
 			titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 0));
-			titleLabel.setForeground(Color.BLACK);
+			titleLabel.setForeground(Colors.FOREGROUND);
 			titleLabel.setFocusable(false);
 			add(titleLabel, BorderLayout.CENTER);
 		}
@@ -419,7 +421,7 @@ public class GenericHeader extends JPanel {
 		 */
 		void setSelected(boolean state) {
 			isSelected = state;
-			titleLabel.setForeground(state ? Color.WHITE : Color.BLACK);
+			titleLabel.setForeground(state ? activeForeground : inactiveForeground);
 			repaint();
 		}
 

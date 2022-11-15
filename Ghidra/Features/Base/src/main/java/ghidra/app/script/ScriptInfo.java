@@ -23,8 +23,7 @@ import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.swing.ImageIcon;
-import javax.swing.KeyStroke;
+import javax.swing.*;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -465,7 +464,7 @@ public class ScriptInfo {
 	 * @param scaled true if the icon should be scaled to 16x16.
 	 * @return the script tool bar icon
 	 */
-	public ImageIcon getToolBarImage(boolean scaled) {
+	public Icon getToolBarImage(boolean scaled) {
 		parseHeader();
 		if (toolbar == null) {
 			return null;

@@ -18,6 +18,7 @@ package ghidra.framework.plugintool;
 import java.awt.Image;
 import java.util.List;
 
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 import docking.framework.ApplicationInformationDisplayFactory;
@@ -31,7 +32,7 @@ public class SettableApplicationInformationDisplayFactory extends
 	private Runnable homeCallback;
 
 	@Override
-	protected ImageIcon getSplashScreenIcon128() {
+	protected Icon getSplashScreenIcon128() {
 		if (splashIcon != null) {
 			return splashIcon;
 		}

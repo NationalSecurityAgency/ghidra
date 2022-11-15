@@ -28,6 +28,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import docking.widgets.fieldpanel.field.*;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.nav.TestDummyNavigatable;
 import ghidra.app.services.*;
@@ -670,7 +672,7 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 		FieldElement[] strings = getNumberOfSubFieldElements(fieldElement);
 		assertEquals("Unexpected number of AttributedStrings from comment text.", 2,
 			strings.length);
-		assertEquals("Did not get the expected error annotation string color.", Color.RED,
+		assertEquals("Did not get the expected error annotation string color.", Messages.ERROR,
 			strings[1].getColor(0));
 	}
 
@@ -703,7 +705,7 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 		FieldElement[] strings = getNumberOfSubFieldElements(fieldElement);
 		assertEquals("Unexpected number of AttributedStrings from comment text.", 2,
 			strings.length);
-		assertEquals("Did not get the expected error annotation string color.", Color.RED,
+		assertEquals("Did not get the expected error annotation string color.", Messages.ERROR,
 			strings[1].getColor(0));
 	}
 
@@ -757,7 +759,7 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private AttributedString prototype() {
 		FontMetrics fontMetrics = getFontMetrics();
-		AttributedString prototypeString = new AttributedString("", Color.BLACK, fontMetrics);
+		AttributedString prototypeString = new AttributedString("", Colors.FOREGROUND, fontMetrics);
 		return prototypeString;
 	}
 

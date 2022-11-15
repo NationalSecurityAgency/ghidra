@@ -15,12 +15,11 @@
  */
 package ghidra.app.util.bean;
 
-
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -28,14 +27,14 @@ import javax.swing.event.ChangeListener;
 import javax.swing.text.*;
 
 import docking.widgets.SmallBorderButton;
-import resources.ResourceManager;
+import generic.theme.GIcon;
+import generic.theme.Gui;
 
-
-/**
- *
- */
 public class FixedBitSizeValueField extends JPanel {
-	private static final ImageIcon DROP_DOWN_MENU_ICON = ResourceManager.loadImage("images/menu16.gif");
+
+	private static final Icon DROP_DOWN_MENU_ICON =
+		new GIcon("icon.base.util.fixed.bit.size.field");
+
 	protected JTextField valueField;
 	protected JButton menuButton;
 	private PlainDocument doc;
@@ -49,32 +48,27 @@ public class FixedBitSizeValueField extends JPanel {
 	private BigInteger maxValue;
 	private BigInteger minValue;
 	protected JPopupMenu popupMenu;
-	protected java.util.List<JCheckBoxMenuItem> menuItems = new ArrayList<>();
-	protected java.util.List<ChangeListener> listeners = new ArrayList<>();
+	protected List<JCheckBoxMenuItem> menuItems = new ArrayList<>();
+	protected List<ChangeListener> listeners = new ArrayList<>();
 
 	public FixedBitSizeValueField(int bitSize, boolean includeFormatButton, boolean leftJustify) {
 		setLayout(new BorderLayout());
 		valueField = new JTextField();
 		if (includeFormatButton) {
 			JPanel buttonPanel = new JPanel(new BorderLayout());
-			menuButton = new SmallBorderButton(" hex",DROP_DOWN_MENU_ICON);
+			menuButton = new SmallBorderButton(" hex", DROP_DOWN_MENU_ICON);
 			menuButton.setHorizontalTextPosition(SwingConstants.LEADING);
-			buttonPanel.setBorder(BorderFactory.createEmptyBorder(0,2,0,3));
+			buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 3));
 			buttonPanel.add(menuButton, BorderLayout.EAST);
 			add(buttonPanel, BorderLayout.EAST);
 			menuButton.setFocusable(false);
-			menuButton.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					showPopup();
-				}
-			});
+			menuButton.addActionListener(e -> showPopup());
 
 		}
 		add(valueField, BorderLayout.CENTER);
-		Font f2 = new Font("monospaced", Font.PLAIN, 14);
+		Font f2 = Gui.getFont(Font.MONOSPACED);
 		valueField.setFont(f2);
-		valueField.setMargin(new Insets(0,2,0,2));
+		valueField.setMargin(new Insets(0, 2, 0, 2));
 
 		createPopup();
 
@@ -92,8 +86,8 @@ public class FixedBitSizeValueField extends JPanel {
 
 	public void setBitSize(int bitSize) {
 		BigInteger b = BigInteger.valueOf(2);
-		maxSignedValue = b.pow(bitSize-1).subtract(BigInteger.ONE);
-		minSignedValue = b.pow(bitSize-1).negate();
+		maxSignedValue = b.pow(bitSize - 1).subtract(BigInteger.ONE);
+		minSignedValue = b.pow(bitSize - 1).negate();
 		maxUnsignedValue = b.pow(bitSize).subtract(BigInteger.ONE);
 
 		maxValue = signed ? maxSignedValue : maxUnsignedValue;
@@ -104,6 +98,7 @@ public class FixedBitSizeValueField extends JPanel {
 	public void addChangeListener(ChangeListener listener) {
 		listeners.add(listener);
 	}
+
 	public void removeChangeListener(ChangeListener listener) {
 		listeners.remove(listener);
 	}
@@ -128,18 +123,16 @@ public class FixedBitSizeValueField extends JPanel {
 		}
 		return true;
 	}
+
 	public void setMinMax(BigInteger min, BigInteger max) {
 		minValue = min;
 		maxValue = max;
 	}
 
 	protected void createPopup() {
-		ActionListener actionListener = new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				JCheckBoxMenuItem item = (JCheckBoxMenuItem)e.getSource();
-				menuActivated(item);
-			}
+		ActionListener actionListener = e -> {
+			JCheckBoxMenuItem item = (JCheckBoxMenuItem) e.getSource();
+			menuActivated(item);
 		};
 
 		popupMenu = new JPopupMenu();
@@ -154,16 +147,18 @@ public class FixedBitSizeValueField extends JPanel {
 			menuItem.addActionListener(actionListener);
 		}
 	}
+
 	private void showPopup() {
 		Dimension d = getSize();
-		popupMenu.show(this, d.width, d.height );
+		popupMenu.show(this, d.width, d.height);
 	}
+
 	protected void updatePopup() {
-		for (JCheckBoxMenuItem menuItem	 : menuItems) {
+		for (JCheckBoxMenuItem menuItem : menuItems) {
 			menuItem.setSelected(false);
 		}
 		int selectedMenuItem = -1;
-		switch(radix) {
+		switch (radix) {
 			case 2:
 				selectedMenuItem = signed ? -1 : 5;
 				break;
@@ -181,10 +176,11 @@ public class FixedBitSizeValueField extends JPanel {
 			menuItems.get(selectedMenuItem).setSelected(true);
 		}
 	}
+
 	protected void menuActivated(JCheckBoxMenuItem item) {
 
 		int index = menuItems.indexOf(item);
-		switch(index) {
+		switch (index) {
 			case 0:
 				setFormat(16, false);
 				break;
@@ -205,6 +201,7 @@ public class FixedBitSizeValueField extends JPanel {
 				break;
 		}
 	}
+
 	public void setFormat(int radix, boolean signed) {
 		BigInteger curValue = getValue(valueField.getText());
 
@@ -243,7 +240,7 @@ public class FixedBitSizeValueField extends JPanel {
 			return;
 		}
 		String buttonText = "";
-		switch(radix) {
+		switch (radix) {
 			case 16:
 				buttonText = " hex";
 				break;
@@ -264,6 +261,7 @@ public class FixedBitSizeValueField extends JPanel {
 	public boolean setValue(BigInteger value) {
 		return setValue(value, false);
 	}
+
 	public boolean setValue(BigInteger value, boolean pad) {
 		setText("");
 		if (value == null) {
@@ -282,6 +280,7 @@ public class FixedBitSizeValueField extends JPanel {
 		setText(valueString);
 		return true;
 	}
+
 	private String pad(String valueString) {
 		if (signed) {
 			return valueString;
@@ -290,7 +289,7 @@ public class FixedBitSizeValueField extends JPanel {
 		if (maxValueString.length() > valueString.length()) {
 			StringBuffer buf = new StringBuffer();
 			int n = maxValueString.length() - valueString.length();
-			for(int i=0;i<n;i++) {
+			for (int i = 0; i < n; i++) {
 				buf.append("0");
 			}
 			buf.append(valueString);
@@ -298,33 +297,25 @@ public class FixedBitSizeValueField extends JPanel {
 		}
 		return valueString;
 	}
+
 	private void setText(String text) {
 		doc.setDocumentFilter(null);
 		valueField.setText(text);
 		doc.setDocumentFilter(docFilter);
 	}
+
 	BigInteger getValue(String text) {
 		try {
 			return new BigInteger(text, radix);
-		} catch (NumberFormatException e) {
+		}
+		catch (NumberFormatException e) {
+			// return null
 		}
 		return null;
 	}
+
 	public BigInteger getValue() {
 		return getValue(valueField.getText().trim());
-	}
-	public static void main(String[] args) {
-		try {
-			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		} catch (Exception e) {
-		}
-		JFrame f = new JFrame("Test");
-		JPanel panel = new JPanel(new BorderLayout());
-		FixedBitSizeValueField rf = new FixedBitSizeValueField(8, true, false);
-		panel.add(rf, BorderLayout.NORTH);
-		f.getContentPane().add(panel);
-		f.pack();
-		f.setVisible(true);
 	}
 
 	String normalizeText(String s) {
@@ -339,11 +330,8 @@ public class FixedBitSizeValueField extends JPanel {
 		return s;
 	}
 
-
 	class MyDocFilter extends DocumentFilter {
-		/**
-		 * @see javax.swing.text.DocumentFilter#insertString(FilterBypass, int, String, AttributeSet)
-		 */
+
 		@Override
 		public void insertString(FilterBypass fb, int offset, String string,
 				AttributeSet attr) throws BadLocationException {
@@ -358,9 +346,6 @@ public class FixedBitSizeValueField extends JPanel {
 			valueChanged();
 		}
 
-		/**
-		 * @see javax.swing.text.DocumentFilter#remove(FilterBypass, int, int)
-		 */
 		@Override
 		public void remove(FilterBypass fb, int offset, int length)
 				throws BadLocationException {
@@ -374,9 +359,6 @@ public class FixedBitSizeValueField extends JPanel {
 			valueChanged();
 		}
 
-		/**
-		 * @see javax.swing.text.DocumentFilter#replace(FilterBypass, int, int, String, AttributeSet)
-		 */
 		@Override
 		public void replace(FilterBypass fb, int offset, int length,
 				String text, AttributeSet attrs) throws BadLocationException {
@@ -390,7 +372,6 @@ public class FixedBitSizeValueField extends JPanel {
 			valueChanged();
 		}
 	}
-
 
 	public Component getTextComponent() {
 		return valueField;
@@ -406,9 +387,4 @@ public class FixedBitSizeValueField extends JPanel {
 		}
 	}
 
-
-
-
 }
-
-

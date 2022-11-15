@@ -17,6 +17,7 @@ package ghidra.app.util.viewer.listingpanel;
 
 import java.awt.Color;
 
+import generic.theme.GColor;
 import ghidra.framework.options.ToolOptions;
 import ghidra.util.HelpLocation;
 
@@ -42,15 +43,16 @@ public class ListingCodeComparisonOptions {
 	private static final String DEFAULT_UNMATCHED_CODE_UNITS_BACKGROUND_COLOR_DESCRIPTION =
 		"The default background color applied to code units that are unmatched within the listing code comparison window by the address correlator.";
 
-	public static final Color MEDIUM_SKY_BLUE_COLOR = new Color(0x69, 0xcd, 0xe1);
-	public static final Color MEDIUM_GRAY_COLOR = new Color(0xb9, 0xb9, 0xb9);
-	public static final Color SPRING_GREEN_COLOR = new Color(0xaf, 0xff, 0x69);
-
-	private static final Color DEFAULT_BYTE_DIFFS_COLOR = SPRING_GREEN_COLOR;
-	private static final Color DEFAULT_MNEMONIC_DIFFS_COLOR = SPRING_GREEN_COLOR;
-	private static final Color DEFAULT_OPERAND_DIFFS_COLOR = SPRING_GREEN_COLOR;
-	private static final Color DEFAULT_DIFF_CODE_UNITS_COLOR = MEDIUM_GRAY_COLOR;
-	private static final Color DEFAULT_UNMATCHED_CODE_UNITS_COLOR = MEDIUM_SKY_BLUE_COLOR;
+	private static final Color DEFAULT_BYTE_DIFFS_COLOR =
+		new GColor("color.bg.listing.comparison.bytes");
+	private static final Color DEFAULT_MNEMONIC_DIFFS_COLOR =
+		new GColor("color.bg.listing.comparison.mnemonic");
+	private static final Color DEFAULT_OPERAND_DIFFS_COLOR =
+		new GColor("color.bg.listing.comparison.operand");
+	private static final Color DEFAULT_DIFF_CODE_UNITS_COLOR =
+		new GColor("color.bg.listing.comparison.code.units.diff");
+	private static final Color DEFAULT_UNMATCHED_CODE_UNITS_COLOR =
+		new GColor("color.bg.listing.comparison.code.units.unmatched");
 
 	private Color byteDiffsColor = DEFAULT_BYTE_DIFFS_COLOR;
 	private Color mnemonicDiffsColor = DEFAULT_MNEMONIC_DIFFS_COLOR;

@@ -15,21 +15,20 @@
  */
 package ghidra.app.plugin.core.datamgr.archive;
 
+import java.awt.Component;
+import java.io.IOException;
+
+import javax.swing.Icon;
+
+import generic.theme.GIcon;
 import ghidra.framework.model.DomainFile;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.DataTypeArchive;
 
-import java.awt.Component;
-import java.io.IOException;
-
-import javax.swing.ImageIcon;
-
-import resources.ResourceManager;
-
 public class ProjectArchive implements DomainFileArchive {
 
-	private static ImageIcon CLOSED_ICON = ResourceManager.loadImage("images/closedBookBlue.png");
-	private static ImageIcon OPEN_ICON = ResourceManager.loadImage("images/openBookBlue.png");
+	private static Icon CLOSED_ICON = new GIcon("icon.plugin.datatypes.archive.project.closed");
+	private static Icon OPEN_ICON = new GIcon("icon.plugin.datatypes.archive.project.open");
 	private DataTypeArchive dataTypeArchive;
 	private DomainFile originalDomainFile;
 	DataTypeManagerChangeListener categoryListener; // hold on to since it is stored in a weak set
@@ -115,7 +114,7 @@ public class ProjectArchive implements DomainFileArchive {
 	}
 
 	@Override
-	public ImageIcon getIcon(boolean expanded) {
+	public Icon getIcon(boolean expanded) {
 		return expanded ? OPEN_ICON : CLOSED_ICON;
 	}
 
@@ -140,7 +139,8 @@ public class ProjectArchive implements DomainFileArchive {
 		}
 
 		@Override
-		public void categoryRenamed(DataTypeManager dtm, CategoryPath oldPath, CategoryPath newPath) {
+		public void categoryRenamed(DataTypeManager dtm, CategoryPath oldPath,
+				CategoryPath newPath) {
 			if (!oldPath.equals(newPath)) {
 				fireStateChanged();
 			}
@@ -167,7 +167,8 @@ public class ProjectArchive implements DomainFileArchive {
 		}
 
 		@Override
-		public void dataTypeRenamed(DataTypeManager dtm, DataTypePath oldPath, DataTypePath newPath) {
+		public void dataTypeRenamed(DataTypeManager dtm, DataTypePath oldPath,
+				DataTypePath newPath) {
 			fireStateChanged();
 		}
 

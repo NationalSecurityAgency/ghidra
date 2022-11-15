@@ -15,10 +15,11 @@
  */
 package ghidra.app.plugin.core.codebrowser;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import docking.action.builder.ActionBuilder;
 import docking.tool.ToolConstants;
+import generic.theme.GIcon;
 import ghidra.GhidraOptions;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -38,7 +39,6 @@ import ghidra.util.datastruct.Accumulator;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.table.*;
 import ghidra.util.task.TaskMonitor;
-import resources.ResourceManager;
 
 /**
  * Plugin for adding some basic selection actions for Code Browser Listings.
@@ -129,7 +129,7 @@ public class CodeBrowserSelectionPlugin extends Plugin {
 
 		GhidraProgramTableModel<Address> model = createTableModel(program, codeUnits, selection);
 		String title = "Selection Table";
-		ImageIcon markerIcon = ResourceManager.loadImage("images/searchm_obj.gif");
+		Icon markerIcon = new GIcon("icon.plugin.codebrowser.cursor.marker");
 		TableComponentProvider<Address> tableProvider =
 			tableService.showTableWithMarkers(title + " " + model.getName(), "Selection",
 				model, PluginConstants.SEARCH_HIGHLIGHT_COLOR, markerIcon, title, null);
