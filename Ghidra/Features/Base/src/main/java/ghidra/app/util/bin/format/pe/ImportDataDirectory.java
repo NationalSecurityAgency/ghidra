@@ -338,7 +338,13 @@ public class ImportDataDirectory extends DataDirectory {
 				importList.add(
 					new ImportInfo(addr, cmt.toString(), dllName, boundName, id.isBound()));
 			}
-			id = new ImportDescriptor(reader, ptr);
+			try {
+				id = new ImportDescriptor(reader, ptr);
+			}
+			catch (IOException e) {
+				// Minimized PE may terminate import descriptors with end-of-file
+				break;
+			}
 		}
 
 		imports = new ImportInfo[importList.size()];
