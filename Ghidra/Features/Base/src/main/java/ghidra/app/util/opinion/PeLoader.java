@@ -16,7 +16,6 @@
 package ghidra.app.util.opinion;
 
 import java.io.IOException;
-import java.math.BigInteger;
 import java.util.*;
 
 import ghidra.app.util.MemoryBlockUtils;
@@ -36,8 +35,6 @@ import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
-import ghidra.program.model.lang.Register;
-import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
@@ -109,7 +106,6 @@ public class PeLoader extends AbstractPeDebugLoader {
 			return;
 		}
 		OptionalHeader optionalHeader = ntHeader.getOptionalHeader();
-		FileHeader fileHeader = ntHeader.getFileHeader();
 
 		monitor.setMessage("Completing PE header parsing...");
 		FileBytes fileBytes = createFileBytes(provider, program, monitor);
@@ -406,7 +402,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 			//than 32bit. On WindowsCE some sections are
 			//declared to roll over.
 			if (!optionalHeader.is64bit()) {
-				addr &= Conv.INT_MASK;
+				addr &= 0x00000000ffffffffL;
 			}
 
 			Address address = space.getAddress(addr);
@@ -686,6 +682,11 @@ public class PeLoader extends AbstractPeDebugLoader {
 
 				address = space.getAddress(addr);
 
+				String sectionName = sections[i].getReadableName();
+				if (sectionName.isBlank()) {
+					sectionName = "SECTION." + i;
+				}
+
 				r = ((sections[i].getCharacteristics() &
 					SectionFlags.IMAGE_SCN_MEM_READ.getMask()) != 0x0);
 				w = ((sections[i].getCharacteristics() &
@@ -706,10 +707,6 @@ public class PeLoader extends AbstractPeDebugLoader {
 						if (!ntHeader.checkRVA(dataSize)) {
 							Msg.warn(this, "OptionalHeader.SizeOfImage < size of " +
 								sections[i].getName() + " section");
-						}
-						String sectionName = sections[i].getReadableName();
-						if (sectionName.isBlank()) {
-							sectionName = "SECTION." + i;
 						}
 						MemoryBlockUtils.createInitializedBlock(prog, false, sectionName, address,
 							fileBytes, rawDataPtr, dataSize, "", "", r, w, x, log);
@@ -740,8 +737,8 @@ public class PeLoader extends AbstractPeDebugLoader {
 				else {
 					int dataSize = (virtualSize > 0 || rawDataSize < 0) ? virtualSize : 0;
 					if (dataSize > 0) {
-						MemoryBlockUtils.createUninitializedBlock(prog, false,
-							sections[i].getReadableName(), address, dataSize, "", "", r, w, x, log);
+						MemoryBlockUtils.createUninitializedBlock(prog, false, sectionName, address,
+							dataSize, "", "", r, w, x, log);
 						sectionToAddress.put(sections[i], address);
 					}
 				}
