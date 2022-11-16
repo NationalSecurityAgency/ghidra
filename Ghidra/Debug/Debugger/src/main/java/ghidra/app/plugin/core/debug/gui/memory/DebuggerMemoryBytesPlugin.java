@@ -32,6 +32,7 @@ import ghidra.app.plugin.core.byteviewer.*;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.*;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.NewMemoryAction;
 import ghidra.app.plugin.core.debug.gui.action.LocationTrackingSpec;
 import ghidra.app.plugin.core.debug.gui.action.NoneLocationTrackingSpec;
@@ -82,11 +83,11 @@ public class DebuggerMemoryBytesPlugin
 	private AutoService.Wiring autoServiceWiring;
 
 	@AutoOptionConsumed(name = OPTION_NAME_COLORS_STALE_MEMORY)
-	private Color staleMemoryColor;
+	private Color staleMemoryColor = DebuggerResources.DEFAULT_COLOR_BACKGROUND_STALE;
 	@AutoOptionConsumed(name = OPTION_NAME_COLORS_ERROR_MEMORY)
-	private Color errorMemoryColor;
+	private Color errorMemoryColor = DebuggerResources.DEFAULT_COLOR_BACKGROUND_ERROR;
 	@AutoOptionConsumed(name = OPTION_NAME_COLORS_TRACKING_MARKERS)
-	private Color trackingColor;
+	private Color trackingColor = DebuggerResources.DEFAULT_COLOR_REGISTER_MARKERS;
 	@SuppressWarnings("unused")
 	private AutoOptions.Wiring autoOptionsWiring;
 

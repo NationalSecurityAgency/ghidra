@@ -33,6 +33,7 @@ import org.apache.commons.lang3.StringUtils;
 import docking.action.DockingAction;
 import docking.widgets.table.*;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
+import generic.theme.GColor;
 import ghidra.GhidraOptions;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
@@ -551,20 +552,20 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 		help = @HelpInfo(anchor = "colors"))
 	private Color counterColor = DebuggerResources.DEFAULT_COLOR_PCODE_COUNTER;
 
-	private Color backgroundColor;
-	private Color cursorColor;
+	private Color backgroundColor = new GColor("color.bg.listing");
+	private Color cursorColor = new GColor("color.bg.currentline.listing");
 
-	private Color addressColor;
-	private Color registerColor;
-	private Color scalarColor;
-	private Color localColor;
-	private Color mnemonicColor;
-	private Color unimplColor;
-	private Color separatorColor;
-	private Color lineLabelColor;
-	private Color spaceColor;
-	private Color rawColor;
-	private Color useropColor;
+	private Color addressColor = new GColor("color.fg.listing.address");
+	private Color registerColor = new GColor("color.fg.listing.register");
+	private Color scalarColor = new GColor("color.fg.listing.constant");
+	private Color localColor = new GColor("color.fg.listing.label.local");
+	private Color mnemonicColor = new GColor("color.fg.listing.mnemonic");
+	private Color unimplColor = new GColor("color.fg.listing.mnemonic.unimplemented");
+	private Color separatorColor = new GColor("color.fg.listing.separator");
+	private Color lineLabelColor = new GColor("color.fg.listing.pcode.label");
+	private Color spaceColor = new GColor("color.fg.listing.pcode.space");
+	private Color rawColor = new GColor("color.fg.listing.pcode.varnode");
+	private Color useropColor = new GColor("color.fg.listing.pcode.userop");
 
 	@SuppressWarnings("unused")
 	private AutoOptions.Wiring autoOptionsWiring;
@@ -639,6 +640,7 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 		name = ADDRESS_COLOR)
 	private void setAddressColor(Color addressColor) {
 		this.addressColor = addressColor;
+		// TODO: I'll need a callback on color changes if I keep this style approach
 		recomputeStyle();
 	}
 

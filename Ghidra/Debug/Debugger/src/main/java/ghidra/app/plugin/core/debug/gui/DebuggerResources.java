@@ -274,7 +274,7 @@ public interface DebuggerResources {
 	String BOOKMARK_CATEGORY_MEMORY_READ_ERROR = "Debugger Memory Read Error";
 
 	String OPTION_NAME_COLORS_STALE_MEMORY = "Colors.Stale Memory";
-	Color DEFAULT_COLOR_BACKGROUND_STALE = new GColor("color.bg.debugger.plugin.resources.stale");
+	GColor DEFAULT_COLOR_BACKGROUND_STALE = new GColor("color.bg.debugger.plugin.resources.stale");
 
 	String OPTION_NAME_COLORS_ERROR_MEMORY = "Colors.Error Memory";
 	Color DEFAULT_COLOR_BACKGROUND_ERROR = new GColor("color.bg.debugger.plugin.resources.error");
