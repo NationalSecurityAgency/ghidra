@@ -23,6 +23,7 @@ import SWIG.*;
 import agent.lldb.manager.LldbEvent;
 import agent.lldb.manager.LldbManager;
 import agent.lldb.manager.evt.*;
+import agent.lldb.manager.impl.LldbManagerImpl;
 import ghidra.util.Msg;
 
 public class DebugClientImpl implements DebugClient {
@@ -112,10 +113,14 @@ public class DebugClientImpl implements DebugClient {
 	}
 
 	@Override
-	public SBProcess connectRemote(DebugServerId si, String key, boolean async) {
+	public SBProcess connectRemote(DebugServerId si, String key, boolean auto, boolean async) {
 		SBListener listener = new SBListener();
 		SBError error = new SBError();
 		session = createNullSession();
+		if (!auto) {
+			((LldbManagerImpl) manager).addSessionIfAbsent(session);
+			return null;
+		}
 		SBProcess process = session.ConnectRemote(listener, key, null, error);
 		if (!error.Success()) {
 			Msg.error(this, error.GetType() + " while attaching to " + key);

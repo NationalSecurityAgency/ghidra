@@ -228,12 +228,15 @@ public class LldbManagerImpl implements LldbManager {
 				if (process.IsValid()) {
 					DebugProcessInfo info = new DebugProcessInfo(process);
 					if (!map.containsKey(id)) {
-						getClient().processEvent(new LldbProcessCreatedEvent(info));
+						if (!info.state.equals(StateType.eStateUnloaded)) {
+							getClient().processEvent(new LldbProcessCreatedEvent(info));
+							map.put(id, process);
+						}
 					}
 					else {
 						getClient().processEvent(new LldbProcessReplacedEvent(info));
+						map.put(id, process);
 					}
-					map.put(id, process);
 				}
 			}
 		}
@@ -268,6 +271,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	public void addSessionIfAbsent(SBTarget session) {
 		synchronized (sessions) {
+			this.currentSession = eventSession = session;
 			String id = DebugClient.getId(session);
 			SBTarget pred = sessions.get(id);
 			if (!sessions.containsKey(id) || !session.equals(pred)) {
@@ -1078,7 +1082,9 @@ public class LldbManagerImpl implements LldbManager {
 		}
 		if (status.equals(DebugStatus.GO)) {
 			waiting = true;
-			processEvent(new LldbRunningEvent(DebugClient.getId(eventThread)));
+			if (eventThread != null) {
+				processEvent(new LldbRunningEvent(DebugClient.getId(eventThread)));
+			}
 			return DebugStatus.GO;
 		}
 
@@ -1471,8 +1477,8 @@ public class LldbManagerImpl implements LldbManager {
 	}
 
 	@Override
-	public CompletableFuture<?> connect(String url, boolean async) {
-		return execute(new LldbRemoteConnectionCommand(this, url, async));
+	public CompletableFuture<?> connect(String url, boolean auto, boolean async) {
+		return execute(new LldbRemoteConnectionCommand(this, url, auto, async));
 	}
 
 	@Override

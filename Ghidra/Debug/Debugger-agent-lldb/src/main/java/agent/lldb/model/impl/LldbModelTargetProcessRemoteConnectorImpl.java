@@ -70,8 +70,11 @@ public class LldbModelTargetProcessRemoteConnectorImpl extends LldbModelTargetOb
 			String.class, "Port", true, "12345", "Port", "port for connection");
 		map.put("Port", p1);
 		ParameterDescription<Boolean> p2 = ParameterDescription.create(
+			Boolean.class, "Auto", false, true, "Auto", "connect automatically");
+		map.put("Auto", p2);
+		ParameterDescription<Boolean> p3 = ParameterDescription.create(
 			Boolean.class, "Async", false, true, "Async", "connect asynchronously");
-		map.put("Async", p2);
+		map.put("Async", p3);
 		return map;
 	}
 
@@ -84,10 +87,11 @@ public class LldbModelTargetProcessRemoteConnectorImpl extends LldbModelTargetOb
 	public CompletableFuture<Void> launch(Map<String, ?> args) {
 		String host = (String) args.get("Host");
 		String port = (String) args.get("Port");
-		String url = "connect://"+host+":"+port;
+		String url = "connect://" + host + ":" + port;
+		Boolean auto = (Boolean) args.get("Auto");
 		Boolean async = (Boolean) args.get("Async");
 		return AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
-			getManager().connect(url, async).handle(seq::nextIgnore);
+			getManager().connect(url, auto, async).handle(seq::nextIgnore);
 		}).finish().exceptionally((exc) -> {
 			throw new DebuggerUserException("Launch failed for " + args);
 		});

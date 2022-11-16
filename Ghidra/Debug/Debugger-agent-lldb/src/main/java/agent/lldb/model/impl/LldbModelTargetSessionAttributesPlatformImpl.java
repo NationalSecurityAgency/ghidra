@@ -73,6 +73,9 @@ public class LldbModelTargetSessionAttributesPlatformImpl extends LldbModelTarge
 			desc = "unknown";
 		}
 		String wdir = platform.GetWorkingDirectory();
+		if (wdir == null) {
+			wdir = "unknown";
+		}
 
 		changeAttributes(List.of(), List.of(), Map.of( //
 			ARCH_ATTRIBUTE_NAME, triple[0], //
