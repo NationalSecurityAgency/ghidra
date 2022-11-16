@@ -342,7 +342,7 @@ public interface DebuggerResources {
 	Icon ICON_BREAKPOINT_MARKER_INEFF_DIS =
 		new GIcon("icon.debugger.breakpoint.marker.ineffective.disabled");
 	Icon ICON_BREAKPOINT_MARKER_INEFF_MIX =
-		new GIcon("icon.debugger.breakpoint.marker.ineffective.disabled");
+		new GIcon("icon.debugger.breakpoint.marker.ineffective.mixed");
 
 	Icon ICON_BREAKPOINT_MARKER_INCON_EN =
 		new MultiIcon(ICON_BREAKPOINT_MARKER_ENABLED, ICON_BREAKPOINT_OVERLAY_INCONSISTENT);
