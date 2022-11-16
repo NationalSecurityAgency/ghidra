@@ -42,7 +42,7 @@ public class MemoryStateListingBackgroundColorModel implements ListingBackground
 	private TraceMemoryManager memory;
 
 	@AutoOptionConsumed(name = DebuggerResources.OPTION_NAME_COLORS_ERROR_MEMORY)
-	private Color errorColor = DebuggerResources.DEFAULT_COLOR_BACKGROUND_ERROR;;
+	private Color errorColor = DebuggerResources.DEFAULT_COLOR_BACKGROUND_ERROR;
 	@AutoOptionConsumed(name = DebuggerResources.OPTION_NAME_COLORS_STALE_MEMORY)
 	private GColor unknownColor = DebuggerResources.DEFAULT_COLOR_BACKGROUND_STALE;
 	private Color unknownBlendedColor = unknownColor.withAlpha(127);
