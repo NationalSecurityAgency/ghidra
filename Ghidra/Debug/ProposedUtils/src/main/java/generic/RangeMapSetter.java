@@ -188,26 +188,30 @@ public abstract class RangeMapSetter<E, D, R, V> {
 		Map<R, V> toPut = new HashMap<>();
 		for (E entry : getIntersecting(prev, next)) {
 			R r = getRange(entry);
-			boolean precedesMin = compare(getLower(r), lower) < 0;
-			boolean succeedsMax = compare(getUpper(r), upper) > 0;
+			int cmpMin = compare(getLower(r), lower);
+			int cmpMax = compare(getUpper(r), upper);
 			boolean sameVal = Objects.equals(getValue(entry), value);
-			if (precedesMin && succeedsMax && sameVal) {
+			if (cmpMin <= 0 && cmpMax >= 0 && sameVal) {
 				return entry; // The value in this range is already set as specified
 			}
 			toRemove.add(entry);
-			if (precedesMin) {
+			if (cmpMin < 0) {
 				if (sameVal) {
+					// Expand the new entry to cover the one we just removed
 					lower = getLower(r);
 				}
 				else {
+					// Create a truncated entry to replace the one we just removed
 					toPut.put(toSpan(getLower(r), prev), getValue(entry));
 				}
 			}
-			if (succeedsMax) {
+			if (cmpMax > 0) {
 				if (sameVal) {
+					// Expand the new entry to cover the one we just removed
 					upper = getUpper(r);
 				}
 				else {
+					// Create a truncated entry to replace the one we just removed
 					toPut.put(toSpan(next, getUpper(r)), getValue(entry));
 				}
 			}
