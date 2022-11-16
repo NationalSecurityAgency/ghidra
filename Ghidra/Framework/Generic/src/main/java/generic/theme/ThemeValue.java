@@ -93,7 +93,7 @@ public abstract class ThemeValue<T> implements Comparable<ThemeValue<T>> {
 		// loop resolving indirect references
 		while (referred != null) {
 			if (referred.value != null) {
-				return referred.value;
+				return referred.get(values);
 			}
 			visitedKeys.add(referred.id);
 			if (visitedKeys.contains(referred.referenceId)) {

@@ -215,6 +215,9 @@ public class ThemeUtils {
 	private static boolean saveCurrentValues(ThemeManager themeManager, String themeName) {
 		GTheme activeTheme = themeManager.getActiveTheme();
 		File file = getSaveFile(themeName);
+		if (!file.exists()) {
+			Msg.info(ThemeUtils.class, "Saving theme to " + file);
+		}
 
 		GTheme newTheme = new GTheme(file, themeName, activeTheme.getLookAndFeelType(),
 			activeTheme.useDarkDefaults());
