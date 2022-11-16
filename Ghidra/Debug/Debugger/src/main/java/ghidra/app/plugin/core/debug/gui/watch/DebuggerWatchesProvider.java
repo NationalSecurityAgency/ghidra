@@ -16,8 +16,7 @@
 package ghidra.app.plugin.core.debug.gui.watch;
 
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -428,10 +427,17 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 		watchTable.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
-				if (e.getClickCount() != 2 || e.getButton() != MouseEvent.BUTTON1) {
-					return;
+				if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
+					navigateToSelectedWatch();
 				}
-				navigateToSelectedWatch();
+			}
+		});
+		watchTable.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+					navigateToSelectedWatch();
+				}
 			}
 		});
 

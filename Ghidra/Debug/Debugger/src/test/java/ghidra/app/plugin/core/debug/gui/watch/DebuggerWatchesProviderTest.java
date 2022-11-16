@@ -732,9 +732,9 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 			rowR0.setDataType(PointerDataType.dataType);
 			registersProvider.setSelectedRow(rowR0);
 		});
-		waitForWatches();
 
 		performEnabledAction(registersProvider, watchesProvider.actionAddFromRegister, true);
+		waitForWatches();
 
 		WatchRow watch = Unique.assertOne(watchesProvider.watchTableModel.getModelData());
 		assertEquals("r0", watch.getExpression());
