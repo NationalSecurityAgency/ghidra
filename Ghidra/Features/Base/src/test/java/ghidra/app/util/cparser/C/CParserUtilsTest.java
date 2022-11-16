@@ -21,7 +21,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
-import generic.theme.GThemeDefaults.Colors.Palette;
+import generic.theme.GThemeDefaults.Colors.Messages;
 
 public class CParserUtilsTest extends AbstractGenericTest {
 
@@ -32,7 +32,7 @@ public class CParserUtilsTest extends AbstractGenericTest {
 		String message = CParserUtils.handleParseProblem(t, function);
 
 		String characterInfo = "near character 8";
-		String invalidInfo = "<font color=\"" + Palette.RED + "\"><b>@";
+		String invalidInfo = "<font color=\"" + Messages.ERROR + "\"><b>@";
 		assertTrue(message.contains(characterInfo));
 		assertTrue(message.contains(invalidInfo));
 	}
