@@ -18,14 +18,12 @@ package agent.dbgeng.impl.dbgeng.client;
 import com.sun.jna.Native;
 import com.sun.jna.WString;
 import com.sun.jna.platform.win32.WinDef.*;
-
-import agent.dbgeng.dbgeng.DebugRunningProcess;
-import agent.dbgeng.dbgeng.DebugServerId;
-import agent.dbgeng.dbgeng.DebugRunningProcess.Description.ProcessDescriptionFlags;
-import agent.dbgeng.jna.dbgeng.client.IDebugClient3;
-
 import com.sun.jna.platform.win32.COM.COMUtils;
 
+import agent.dbgeng.dbgeng.DebugRunningProcess;
+import agent.dbgeng.dbgeng.DebugRunningProcess.Description.ProcessDescriptionFlags;
+import agent.dbgeng.dbgeng.DebugServerId;
+import agent.dbgeng.jna.dbgeng.client.IDebugClient3;
 import ghidra.comm.util.BitmaskSet;
 
 public class DebugClientImpl3 extends DebugClientImpl2 {
@@ -38,9 +36,19 @@ public class DebugClientImpl3 extends DebugClientImpl2 {
 
 	@Override
 	public void createProcess(DebugServerId si, String commandLine,
-			BitmaskSet<DebugCreateFlags> createFlags) {
+			String unusedInitialDirectory, String unusedEnvironment,
+			BitmaskSet<DebugCreateFlags> createFlags,
+			BitmaskSet<DebugEngCreateFlags> unusedEngCreateFlags,
+			BitmaskSet<DebugVerifierFlags> unusedVerifierFlags) {
 		ULONGLONG ullServer = new ULONGLONG(si.id);
 		ULONG ulFlags = new ULONG(createFlags.getBitmask());
+		if (unusedInitialDirectory != null) {
+			throw new UnsupportedOperationException(
+				"IDebugClient3 does not support 'initial directory'");
+		}
+		if (unusedEnvironment != null) {
+			throw new UnsupportedOperationException("IDebugClient3 does not support 'environment'");
+		}
 		COMUtils.checkRC(jnaClient.CreateProcessWide(ullServer, new WString(commandLine), ulFlags));
 	}
 

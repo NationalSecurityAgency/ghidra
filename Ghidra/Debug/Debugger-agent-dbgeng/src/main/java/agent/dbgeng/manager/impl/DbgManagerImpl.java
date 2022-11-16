@@ -47,6 +47,8 @@ import agent.dbgeng.model.iface2.DbgModelTargetObject;
 import agent.dbgeng.model.iface2.DbgModelTargetThread;
 import ghidra.async.*;
 import ghidra.comm.util.BitmaskSet;
+import ghidra.dbg.target.TargetLauncher.CmdLineParser;
+import ghidra.dbg.target.TargetLauncher.TargetCmdLineLauncher;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.util.HandlerMap;
 import ghidra.lifecycle.Internal;
@@ -1352,12 +1354,37 @@ public class DbgManagerImpl implements DbgManager {
 
 	@Override
 	public CompletableFuture<?> launch(List<String> args) {
-		return execute(new DbgLaunchProcessCommand(this, args));
+		BitmaskSet<DebugCreateFlags> cf = BitmaskSet.of(DebugCreateFlags.DEBUG_PROCESS);
+		BitmaskSet<DebugEngCreateFlags> ef =
+			BitmaskSet.of(DebugEngCreateFlags.DEBUG_ECREATE_PROCESS_DEFAULT);
+		BitmaskSet<DebugVerifierFlags> vf =
+			BitmaskSet.of(DebugVerifierFlags.DEBUG_VERIFIER_DEFAULT);
+		return execute(new DbgLaunchProcessCommand(this, args,
+			null, null, cf, ef, vf));
 	}
 
 	@Override
-	public CompletableFuture<Void> launch(Map<String, ?> args) {
-		return CompletableFuture.completedFuture(null);
+	public CompletableFuture<Void> launch(Map<String, ?> map) {
+		List<String> args =
+			CmdLineParser.tokenize(TargetCmdLineLauncher.PARAMETER_CMDLINE_ARGS.get(map));
+		String initDir = (String) map.get("dir");
+		String env = (String) map.get("env");
+
+		Integer cfVal = (Integer) map.get("cf");
+		Integer efVal = (Integer) map.get("ef");
+		Integer vfVal = (Integer) map.get("vf");
+		BitmaskSet<DebugCreateFlags> cf =
+			new BitmaskSet<DebugCreateFlags>(DebugCreateFlags.class,
+				cfVal == null ? 1 : cfVal);
+		BitmaskSet<DebugEngCreateFlags> ef =
+			new BitmaskSet<DebugEngCreateFlags>(DebugEngCreateFlags.class,
+				efVal == null ? 0 : efVal);
+		BitmaskSet<DebugVerifierFlags> vf =
+			new BitmaskSet<DebugVerifierFlags>(DebugVerifierFlags.class,
+				vfVal == null ? 0 : vfVal);
+		execute(new DbgLaunchProcessCommand(this, args,
+			initDir, env, cf, ef, vf));
+		return AsyncUtils.NIL;
 	}
 
 	public CompletableFuture<?> openFile(Map<String, ?> args) {
