@@ -28,6 +28,6 @@
     <stringAttribute key="org.eclipse.jdt.launching.MODULE_NAME" value="_Integration Test"/>
     <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="ghidra.GhidraRun"/>
     <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="_Integration Test"/>
-    <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-XX:+IgnoreUnrecognizedVMOptions&#13;&#10;-Djava.system.class.loader=ghidra.GhidraClassLoader&#13;&#10;-Xshare:off&#13;&#10;-Dfile.encoding=UTF8&#13;&#10;-Duser.country=US&#13;&#10;-Duser.language=en&#13;&#10;-Dsun.java2d.pmoffscreen=false&#13;&#10;-Dsun.java2d.xrender=true&#13;&#10;-Dsun.java2d.d3d=false&#13;&#10;-Xdock:name=&quot;Ghidra&quot;&#13;&#10;-Dvisualvm.display.name=Ghidra&#13;&#10;-Dpython.console.encoding=UTF-8&#13;&#10;--add-opens=java.desktop/sun.awt.image=ALL-UNNAMED"/>
+    <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-XX:+IgnoreUnrecognizedVMOptions&#13;&#10;-Djava.system.class.loader=ghidra.GhidraClassLoader&#13;&#10;-Xshare:off&#13;&#10;-Dfile.encoding=UTF8&#13;&#10;-Duser.country=US&#13;&#10;-Duser.language=en&#13;&#10;-Dsun.java2d.pmoffscreen=false&#13;&#10;-Dsun.java2d.xrender=true&#13;&#10;-Dsun.java2d.d3d=false&#13;&#10;-Xdock:name=&quot;Ghidra&quot;&#13;&#10;-Dvisualvm.display.name=Ghidra&#13;&#10;-Dpython.console.encoding=UTF-8"/>
     <stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="${workspace_loc:Framework Utility}"/>
 </launchConfiguration>
