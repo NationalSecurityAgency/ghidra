@@ -42,10 +42,10 @@ public class MemoryStateListingBackgroundColorModel implements ListingBackground
 	private TraceMemoryManager memory;
 
 	@AutoOptionConsumed(name = DebuggerResources.OPTION_NAME_COLORS_ERROR_MEMORY)
-	private Color errorColor;
+	private Color errorColor = DebuggerResources.DEFAULT_COLOR_BACKGROUND_ERROR;;
 	@AutoOptionConsumed(name = DebuggerResources.OPTION_NAME_COLORS_STALE_MEMORY)
-	private Color unknownColor;
-	private Color unknownBlendedColor;
+	private GColor unknownColor = DebuggerResources.DEFAULT_COLOR_BACKGROUND_STALE;
+	private Color unknownBlendedColor = unknownColor.withAlpha(127);
 	@SuppressWarnings("unused")
 	private final AutoOptions.Wiring autoOptionsWiring;
 
@@ -81,7 +81,7 @@ public class MemoryStateListingBackgroundColorModel implements ListingBackground
 
 	@AutoOptionConsumed(name = DebuggerResources.OPTION_NAME_COLORS_STALE_MEMORY)
 	protected void setUnknownColor(Color unknownColor) {
-		computeUnknownBlendedColor(unknownColor, defaultBackgroundColor);
+		// computeUnknownBlendedColor(unknownColor, defaultBackgroundColor);
 	}
 
 	protected Color getUnknownColor(Address address) {
@@ -117,7 +117,7 @@ public class MemoryStateListingBackgroundColorModel implements ListingBackground
 	@Override
 	public void setDefaultBackgroundColor(Color c) {
 		defaultBackgroundColor = c;
-		computeUnknownBlendedColor(unknownColor, c);
+		// computeUnknownBlendedColor(unknownColor, c);
 	}
 
 	@Override
