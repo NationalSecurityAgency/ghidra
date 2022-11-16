@@ -44,7 +44,6 @@ public class ThemeFileLoader {
 			Application.findFilesByExtensionInApplication(".theme.properties");
 
 		for (ResourceFile resourceFile : themeDefaultFiles) {
-			Msg.debug(this, "found theme file: " + resourceFile.getAbsolutePath());
 			try {
 				ThemePropertyFileReader reader = new ThemePropertyFileReader(resourceFile);
 				defaults.load(reader.getDefaultValues());

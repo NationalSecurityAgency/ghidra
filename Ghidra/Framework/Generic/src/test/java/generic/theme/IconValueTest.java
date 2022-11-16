@@ -123,6 +123,30 @@ public class IconValueTest {
 
 	@Test
 	public void testParseWithOverlays() throws ParseException {
+		IconValue value = IconValue.parse("icon.foo", "EMPTY_ICON{Plus2.png}");
+		values.addIcon(value);
+		value = IconValue.parse("icon.test",
+			"images/core.png[size(25,25)]{icon.foo[move(4,4)]}");
+
+		assertEquals("icon.test", value.getId());
+		Icon icon = value.get(values);
+
+		assertTrue(icon instanceof MultiIcon);
+		MultiIcon multiIcon = (MultiIcon) icon;
+		Icon[] icons = multiIcon.getIcons();
+		assertEquals(2, icons.length);
+		assertEquals(25, icons[0].getIconWidth());
+		assertEquals(25, icons[0].getIconWidth());
+		assertEquals(16, icons[1].getIconWidth());
+		assertEquals(16, icons[1].getIconWidth());
+		assertTrue(icons[1] instanceof TranslateIcon);
+		TranslateIcon tIcon = (TranslateIcon) icons[1];
+		Icon baseIcon = tIcon.getBaseIcon();
+		assertTrue(baseIcon instanceof MultiIcon);
+	}
+
+	@Test
+	public void testParseWithModifiedOverlay() throws ParseException {
 		IconValue value = IconValue.parse("icon.test",
 			"images/core.png[size(25,25)]{images/flag.png[size(8,8)][move(4,4)]}");
 		assertEquals("icon.test", value.getId());

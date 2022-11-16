@@ -104,7 +104,7 @@ public class ThemeIconTable extends JPanel implements ActionContextProvider {
 
 	@Override
 	public ActionContext getActionContext(MouseEvent e) {
-		if (e.getSource() == table) {
+		if (e != null && e.getSource() == table) {
 			IconValue currentValue = filterTable.getSelectedRowObject();
 			if (currentValue == null) {
 				return null;
