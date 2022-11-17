@@ -17,6 +17,7 @@ package ghidra.trace.database.listing;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.util.*;
 
 import db.DBRecord;
@@ -24,8 +25,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.ContextChangeException;
 import ghidra.program.model.listing.FlowOverride;
-import ghidra.program.model.mem.MemBuffer;
-import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceUtils;
@@ -106,8 +106,29 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 		@Override
 		public ParserContext getParserContext(Address instructionAddress)
 				throws UnknownContextException, MemoryAccessException {
-			// TODO: Does the given address need mapping?
 			return DBTraceInstruction.this.getParserContext(instructionAddress);
+		}
+	}
+
+	protected class GuestMemBuffer implements MemBufferAdapter {
+		@Override
+		public Address getAddress() {
+			return platform.mapHostToGuest(getX1());
+		}
+
+		@Override
+		public Memory getMemory() {
+			return null;
+		}
+
+		@Override
+		public boolean isBigEndian() {
+			return platform.getLanguage().isBigEndian();
+		}
+
+		@Override
+		public int getBytes(ByteBuffer buffer, int addressOffset) {
+			return DBTraceInstruction.this.getBytes(buffer, addressOffset);
 		}
 	}
 
@@ -126,6 +147,7 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 	protected ParserContext parserContext;
 	protected InternalTracePlatform platform;
 	protected InstructionContext instructionContext;
+	protected MemBuffer memBuffer;
 
 	/**
 	 * Construct an instruction unit
@@ -150,9 +172,11 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 		this.platform = platform;
 		if (platform.isHost()) {
 			instructionContext = this;
+			memBuffer = this;
 		}
 		else {
 			instructionContext = new GuestInstructionContext();
+			memBuffer = new GuestMemBuffer();
 		}
 	}
 
@@ -708,12 +732,13 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 
 	@Override
 	public MemBuffer getMemBuffer() {
-		return this;
+		return memBuffer;
 	}
 
 	@Override
 	public ParserContext getParserContext() throws MemoryAccessException {
-		return parserContext == null ? parserContext = prototype.getParserContext(this, this)
+		return parserContext == null
+				? parserContext = prototype.getParserContext(getMemBuffer(), getProcessorContext())
 				: parserContext;
 	}
 

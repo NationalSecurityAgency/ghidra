@@ -41,7 +41,7 @@ import ghidra.framework.plugintool.util.PluginStatus;
 //@formatter:on
 public class ReferenceListingHoverPlugin extends Plugin {
 
-	private ReferenceListingHover referenceHoverService;
+	private final ReferenceListingHover referenceHoverService;
 
 	public ReferenceListingHoverPlugin(PluginTool tool) {
 		super(tool);
@@ -65,5 +65,10 @@ public class ReferenceListingHoverPlugin extends Plugin {
 	@Override
 	public void dispose() {
 		referenceHoverService.dispose();
+	}
+
+	/* testing */
+	public ReferenceListingHover getReferenceHoverService() {
+		return referenceHoverService;
 	}
 }

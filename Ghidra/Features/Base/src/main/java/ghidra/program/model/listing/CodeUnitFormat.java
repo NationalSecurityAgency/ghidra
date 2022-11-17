@@ -21,7 +21,6 @@ import ghidra.app.util.NamespaceUtils;
 import ghidra.app.util.viewer.field.CommentUtils;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
-import ghidra.program.model.lang.InstructionPrototype;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.CodeUnitFormatOptions.ShowBlockName;
 import ghidra.program.model.listing.CodeUnitFormatOptions.ShowNamespace;
@@ -212,7 +211,6 @@ public class CodeUnitFormat {
 
 		Program program = cu.getProgram();
 		Instruction instr = (Instruction) cu;
-		InstructionPrototype proto = instr.getPrototype();
 
 		if (!program.getLanguage().supportsPcode()) {
 			// Formatted mark-up only supported for languages which support PCode
@@ -220,8 +218,7 @@ public class CodeUnitFormat {
 		}
 
 		// Get raw representation list and map of registers contained within it
-		ArrayList<Object> representationList =
-			proto.getOpRepresentationList(opIndex, instr.getInstructionContext());
+		List<Object> representationList = instr.getDefaultOperandRepresentationList(opIndex);
 		if (representationList == null) {
 			return new OperandRepresentationList("<BAD-Instruction>");
 		}

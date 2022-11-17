@@ -66,6 +66,16 @@ public abstract class AbstractReferenceHover extends AbstractConfigurableHover {
 		initialize();
 	}
 
+	/* testing */
+	public ListingPanel getPanel() {
+		return panel;
+	}
+
+	/* testing */
+	public JToolTip getToolTip() {
+		return toolTip;
+	}
+
 	@Override
 	public void dispose() {
 		super.dispose();

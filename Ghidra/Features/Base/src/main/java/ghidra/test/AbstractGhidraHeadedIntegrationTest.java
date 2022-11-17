@@ -27,7 +27,7 @@ import docking.DialogComponentProvider;
 import docking.action.DockingActionIf;
 import docking.widgets.fieldpanel.FieldPanel;
 import ghidra.GhidraTestApplicationLayout;
-import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
+import ghidra.app.plugin.core.codebrowser.AbstractCodeBrowserPlugin;
 import ghidra.framework.ApplicationConfiguration;
 import ghidra.framework.GhidraApplicationConfiguration;
 import ghidra.framework.model.*;
@@ -192,11 +192,11 @@ public abstract class AbstractGhidraHeadedIntegrationTest
 	 * @param codeBrowser the CodeBrowserPlugin
 	 * @param clickCount the click count
 	 */
-	public void click(CodeBrowserPlugin codeBrowser, int clickCount) {
+	public void click(AbstractCodeBrowserPlugin<?> codeBrowser, int clickCount) {
 		click(codeBrowser, clickCount, true);
 	}
 
-	public void click(CodeBrowserPlugin codeBrowser, int clickCount, boolean wait) {
+	public void click(AbstractCodeBrowserPlugin<?> codeBrowser, int clickCount, boolean wait) {
 
 		// make sure that the code browser is ready to go--sometimes it is not, due to timing
 		// during the testing process, like when the tool is first loaded.
