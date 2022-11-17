@@ -160,7 +160,8 @@ public abstract class PluginTool extends AbstractDockingTool {
 			String name, boolean isDockable, boolean hasStatus, boolean isModal) {
 		this.project = project;
 		this.projectManager = projectManager;
-		this.toolServices = toolServices;
+		this.toolServices = toolServices == null ? new ToolServicesAdapter() : toolServices;
+
 		propertyChangeMgr = new PropertyChangeSupport(this);
 		optionsMgr = new OptionsManager(this);
 		winMgr = createDockingWindowManager(isDockable, hasStatus, isModal);
@@ -1316,6 +1317,9 @@ public abstract class PluginTool extends AbstractDockingTool {
 		this.project = project;
 		if (project != null) {
 			toolServices = project.getToolServices();
+		}
+		else {
+			toolServices = new ToolServicesAdapter();
 		}
 	}
 
