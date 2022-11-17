@@ -30,7 +30,7 @@ import ghidra.program.model.address.AddressRange;
 public class MemviewPanel extends JPanel implements MouseListener, MouseMotionListener {
 	private static final long serialVersionUID = 1L;
 
-	private Color ARROW_COLOR = new GColor("color.debugger.memview.arrow");
+	private Color ARROW_COLOR = new GColor("color.debugger.plugin.plugin.memview.arrow");
 
 	private MemviewProvider provider;
 	private MemviewMap amap;
@@ -60,7 +60,6 @@ public class MemviewPanel extends JPanel implements MouseListener, MouseMotionLi
 	private Map<Long, Set<MemoryBox>> time2box = new HashMap<>();
 
 	public MemviewPanel(MemviewProvider provider) {
-		super();
 		this.provider = provider;
 		setPreferredSize(new Dimension(barWidth, barHeight));
 		setSize(getPreferredSize());
