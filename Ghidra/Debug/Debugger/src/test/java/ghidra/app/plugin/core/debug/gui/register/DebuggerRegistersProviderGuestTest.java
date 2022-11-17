@@ -34,12 +34,9 @@ import ghidra.app.services.TraceRecorder;
 import ghidra.dbg.target.TargetObject;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.*;
-import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.guest.TraceGuestPlatform;
 import ghidra.trace.model.guest.TracePlatform;
-import ghidra.trace.model.listing.TraceCodeSpace;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.database.UndoableTransaction;
@@ -139,16 +136,6 @@ public class DebuggerRegistersProviderGuestTest extends DebuggerRegistersProvide
 		regVals.putBytes(toy, 0, pc, tb.buf(0, 0, 0, 0, 0, 0x40, 0, 0));
 		regVals.putBytes(toy, 0, sp, tb.buf(0x1f, 0, 0, 0, 0, 0, 0, 0));
 		regVals.putBytes(toy, 0, r0, tb.buf(1, 2, 3, 4, 5, 6, 7, 8));
-	}
-
-	@Override
-	protected void addRegisterTypes(TraceThread thread, UndoableTransaction tid)
-			throws CodeUnitInsertionException {
-		TraceCodeSpace regCode =
-			tb.trace.getCodeManager().getCodeRegisterSpace(thread, true);
-		regCode.definedData().create(toy, Lifespan.nowOn(0), pc, PointerDataType.dataType);
-		// TODO: Pointer needs to be to ram, not register space
-		regCode.definedData().create(toy, Lifespan.nowOn(0), r0, r0Struct);
 	}
 
 	@Override
