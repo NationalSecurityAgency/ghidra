@@ -149,6 +149,10 @@ interface InternalTraceObjectValue extends TraceObjectValue {
 					return getParent().doCreateValue(range, getEntryKey(), value);
 				}
 			}.set(lifespan, getValue());
+			if (isObject()) {
+				DBTraceObject child = getChild();
+				child.emitEvents(new TraceChangeRecord<>(TraceObjectChangeType.LIFE_CHANGED, null, child));
+			}
 		}
 	}
 
