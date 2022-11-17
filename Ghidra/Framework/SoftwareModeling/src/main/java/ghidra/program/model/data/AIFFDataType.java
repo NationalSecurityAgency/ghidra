@@ -103,12 +103,12 @@ public class AIFFDataType extends BuiltIn implements Dynamic {
 			Msg.error(this, "AIFF-Sound error: Not enough bytes in memory");
 			return null;
 		}
-		return new DefaultAudioPlayer(data);
+		return new AudioPlayer(data);
 	}
 
 	@Override
 	public Class<?> getValueClass(Settings settings) {
-		return DefaultAudioPlayer.class;
+		return AudioPlayer.class;
 	}
 
 	@Override

@@ -107,12 +107,12 @@ public class AUDataType extends BuiltIn implements Dynamic {
 			Msg.error(this, "AU-DataTpe Error: Not enough bytes in memory");
 			return null;
 		}
-		return new DefaultAudioPlayer(data);
+		return new AudioPlayer(data);
 	}
 
 	@Override
 	public Class<?> getValueClass(Settings settings) {
-		return DefaultAudioPlayer.class;
+		return AudioPlayer.class;
 	}
 
 	@Override

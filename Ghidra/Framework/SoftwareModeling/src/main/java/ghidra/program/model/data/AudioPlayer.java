@@ -32,14 +32,14 @@ import javax.swing.ImageIcon;
 import ghidra.util.Msg;
 import resources.ResourceManager;
 
-public class DefaultAudioPlayer implements Playable, LineListener {
+public class AudioPlayer implements Playable, LineListener {
 
 	private static final ImageIcon AUDIO_ICON =
 			ResourceManager.loadImage("images/audio-volume-medium.png");
 
 	private byte[] bytes;
 	
-	public DefaultAudioPlayer(byte[] bytes) {
+	public AudioPlayer(byte[] bytes) {
 		this.bytes = bytes;
 	}
 
