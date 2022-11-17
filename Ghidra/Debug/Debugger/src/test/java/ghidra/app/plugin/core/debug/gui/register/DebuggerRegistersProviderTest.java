@@ -143,8 +143,8 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		DataTypeManager dtm = tb.trace.getDataTypeManager();
 		AddressSpace space = tb.host.getAddressFactory().getDefaultAddressSpace();
 		PointerTypedef ramPtr = new PointerTypedef(null, VoidDataType.dataType, -1, dtm, space);
-		regCode.definedData().create(Lifespan.nowOn(0), pc, ramPtr);
-		regCode.definedData().create(Lifespan.nowOn(0), r0, r0Struct);
+		regCode.definedData().create(getPlatform(), Lifespan.nowOn(0), pc, ramPtr);
+		regCode.definedData().create(getPlatform(), Lifespan.nowOn(0), r0, r0Struct);
 	}
 
 	protected void addRegisterTypes(TraceThread thread) throws CodeUnitInsertionException {
