@@ -408,7 +408,6 @@ public:
   void clearDeadVarnodes(void);					///< Delete any dead Varnodes
   void calcNZMask(void);					///< Calculate \e non-zero masks for all Varnodes
   void clearDeadOps(void) { obank.destroyDead(); }		///< Delete any dead PcodeOps
-  void clearSymbolLinks(HighVariable *high);			///< Clear Symbols attached to Varnodes in the given HighVariable
   void remapVarnode(Varnode *vn,Symbol *sym,const Address &usepoint);
   void remapDynamicVarnode(Varnode *vn,Symbol *sym,const Address &usepoint,uint8 hash);
   Symbol *linkSymbol(Varnode *vn);				///< Find or create Symbol associated with given Varnode
