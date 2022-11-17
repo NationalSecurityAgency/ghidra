@@ -15,19 +15,11 @@
  */
 package ghidra.program.model.data;
 
-import java.awt.event.MouseEvent;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-
-import javax.sound.sampled.*;
-import javax.swing.ImageIcon;
-
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.GhidraBigEndianDataConverter;
 import ghidra.util.Msg;
-import resources.ResourceManager;
 
 public class AUDataType extends BuiltIn implements Dynamic {
 	public static byte[] MAGIC = new byte[] { (byte) '.', (byte) 's', (byte) 'n', (byte) 'd' };
@@ -108,37 +100,6 @@ public class AUDataType extends BuiltIn implements Dynamic {
 		return "<AU-Representation>";
 	}
 
-	private static class AUData implements Playable {
-
-		private static final ImageIcon AUDIO_ICON =
-			ResourceManager.loadImage("images/audio-volume-medium.png");
-		private byte[] bytes;
-
-		public AUData(byte[] bytes) {
-			this.bytes = bytes;
-		}
-
-		@Override
-		public void clicked(MouseEvent event) {
-
-			try {
-				Clip clip = AudioSystem.getClip();
-				AudioInputStream ais =
-					AudioSystem.getAudioInputStream(new ByteArrayInputStream(bytes));
-				clip.open(ais);
-				clip.start();
-			}
-			catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
-				Msg.debug(this, "Unable to play audio", e);
-			}
-		}
-
-		@Override
-		public ImageIcon getImageIcon() {
-			return AUDIO_ICON;
-		}
-	}
-
 	@Override
 	public Object getValue(MemBuffer buf, Settings settings, int length) {
 		byte[] data = new byte[length];
@@ -146,12 +107,12 @@ public class AUDataType extends BuiltIn implements Dynamic {
 			Msg.error(this, "AU-DataTpe Error: Not enough bytes in memory");
 			return null;
 		}
-		return new AUData(data);
+		return new DefaultAudioPlayer(data);
 	}
 
 	@Override
 	public Class<?> getValueClass(Settings settings) {
-		return AUData.class;
+		return DefaultAudioPlayer.class;
 	}
 
 	@Override
