@@ -20,6 +20,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
 import javax.sound.sampled.*;
+import javax.sound.sampled.LineEvent.Type;
 import javax.swing.ImageIcon;
 
 import ghidra.docking.settings.Settings;
@@ -104,7 +105,7 @@ public class AIFFDataType extends BuiltIn implements Dynamic {
 		return "<AIFF-Representation>";
 	}
 
-	private static class AIFFData implements Playable {
+	private static class AIFFData implements Playable, LineListener {
 
 		private static final ImageIcon AUDIO_ICON =
 			ResourceManager.loadImage("images/audio-volume-medium.png");
@@ -116,12 +117,10 @@ public class AIFFDataType extends BuiltIn implements Dynamic {
 
 		@Override
 		public void clicked(MouseEvent event) {
-
-			try {
+			try (AudioInputStream stream = AudioSystem.getAudioInputStream(new ByteArrayInputStream(bytes))) {
 				Clip clip = AudioSystem.getClip();
-				AudioInputStream ais =
-					AudioSystem.getAudioInputStream(new ByteArrayInputStream(bytes));
-				clip.open(ais);
+				clip.addLineListener(this);
+				clip.open(stream);
 				clip.start();
 			}
 			catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
@@ -132,6 +131,20 @@ public class AIFFDataType extends BuiltIn implements Dynamic {
 		@Override
 		public ImageIcon getImageIcon() {
 			return AUDIO_ICON;
+		}
+
+		@Override
+		public void update(LineEvent event) {
+			LineEvent.Type eventType = event.getType();
+
+			if (eventType != Type.STOP && eventType != Type.CLOSE) {
+				return;
+			}
+
+			if (event.getSource() instanceof Clip clip) {
+				clip.removeLineListener(this);
+				clip.close();
+			}
 		}
 	}
 
