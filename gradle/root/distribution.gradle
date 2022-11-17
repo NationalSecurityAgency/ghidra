@@ -134,6 +134,9 @@ task createJavadocs(type: Javadoc, description: 'Generate javadocs for all proje
 	options.addBooleanOption("html5", true)
 
 	options.addBooleanOption('Xdoclint:none', true)
+	
+	// Some internal packages are not public and need to be exported.
+	options.addMultilineStringsOption("-add-exports").setValue(["java.desktop/sun.awt=ALL-UNNAMED"])
 }
 
 
@@ -188,6 +191,9 @@ task createJsondocs(type: Javadoc, description: 'Generate JSON docs for all proj
 	// Newer versions of gradle set this to true by default.
 	// The JsonDoclet doesn't have the -notimestamp option so ensure it isn't set.
 	options.setNoTimestamp(false)
+	
+	// Some internal packages are not public and need to be exported.
+	options.addMultilineStringsOption("-add-exports").setValue(["java.desktop/sun.awt=ALL-UNNAMED"])
 
 	options.doclet = "JsonDoclet"
 	doFirst {

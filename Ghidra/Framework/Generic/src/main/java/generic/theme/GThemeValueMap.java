@@ -39,7 +39,7 @@ public class GThemeValueMap {
 	}
 
 	/**
-	 * Constructs a new value map, populated by all the values in the given map. Essentailly clones
+	 * Constructs a new value map, populated by all the values in the given map. Essentially clones
 	 * the given map.
 	 * @param initial the set of values to initialize to
 	 */
@@ -135,7 +135,7 @@ public class GThemeValueMap {
 
 	/**
 	 * Returns a list of all the {@link FontValue}s stored in this map.
-	 * @return a list of all the {@link Fontvalue}s stored in this map.
+	 * @return a list of all the {@link FontValue}s stored in this map.
 	 */
 	public List<FontValue> getFonts() {
 		return new ArrayList<>(fontMap.values());
