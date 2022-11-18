@@ -35,7 +35,7 @@ public class OptionsDialog extends DialogComponentProvider {
 
 	/**
 	 * Construct a new OptionsDialog.
-	 * 
+	 *
 	 * @param title dialog title
 	 * @param rootNodeName name to display for the root node in the tree
 	 * @param options editable options
@@ -95,7 +95,9 @@ public class OptionsDialog extends DialogComponentProvider {
 				return;
 			}
 			if (result == OptionDialog.YES_OPTION) {
-				applyChanges();
+				if (!applyChanges()) {
+					return;
+				}
 			}
 		}
 		close();
@@ -142,7 +144,7 @@ public class OptionsDialog extends DialogComponentProvider {
 
 //=========================================================
 // Inner Classes
-//=========================================================	
+//=========================================================
 
 	class OptionsPropertyChangeListener implements PropertyChangeListener {
 		@Override
