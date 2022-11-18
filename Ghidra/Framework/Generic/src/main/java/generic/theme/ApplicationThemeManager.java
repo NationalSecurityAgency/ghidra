@@ -16,34 +16,28 @@
 package generic.theme;
 
 import java.awt.Component;
-import java.io.File;
+import java.io.*;
 import java.util.*;
 
 import javax.swing.*;
-import javax.swing.plaf.ComponentUI;
 
 import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatLightLaf;
 
 import generic.theme.laf.LookAndFeelManager;
+import ghidra.framework.Application;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
 
 /**
  * This is the fully functional {@link ThemeManager} that manages themes in a application. To
- * activate the theme functionality, Applications (or tests) must call 
+ * activate the theme functionality, Applications (or tests) must call
  * {@link ApplicationThemeManager#initialize()}
  */
 public class ApplicationThemeManager extends ThemeManager {
-	private GTheme activeTheme = getDefaultTheme();
+
 	private Set<GTheme> allThemes = null;
 
-	private GThemeValueMap applicationDefaults = new GThemeValueMap();
-	private GThemeValueMap applicationDarkDefaults = new GThemeValueMap();
-	private GThemeValueMap javaDefaults = new GThemeValueMap();
-	private GThemeValueMap systemValues = new GThemeValueMap();
-
-	protected ThemeFileLoader themeFileLoader = new ThemeFileLoader();
 	protected ThemePreferences themePreferences = new ThemePreferences();
 
 	private Map<String, GColorUIResource> gColorMap = new HashMap<>();
@@ -58,7 +52,8 @@ public class ApplicationThemeManager extends ThemeManager {
 	 */
 	public static void initialize() {
 		if (INSTANCE instanceof ApplicationThemeManager) {
-			Msg.error(ThemeManager.class, "Attempted to initialize theming more than once!");
+			Msg.error(ApplicationThemeManager.class,
+				"Attempted to initialize theming more than once!");
 			return;
 		}
 
@@ -74,13 +69,13 @@ public class ApplicationThemeManager extends ThemeManager {
 
 	protected void doInitialize() {
 		installFlatLookAndFeels();
-		loadThemeDefaults();
+		loadDefaultThemeValues();
 		setTheme(themePreferences.load());
 	}
 
 	@Override
 	public void reloadApplicationDefaults() {
-		loadThemeDefaults();
+		loadDefaultThemeValues();
 		buildCurrentValues();
 		lookAndFeelManager.resetAll(javaDefaults);
 		notifyThemeChanged(new AllValuesChangedThemeEvent(false));
@@ -184,33 +179,10 @@ public class ApplicationThemeManager extends ThemeManager {
 	}
 
 	@Override
-	public GTheme getActiveTheme() {
-		return activeTheme;
-	}
-
-	@Override
-	public LafType getLookAndFeelType() {
-		return activeTheme.getLookAndFeelType();
-	}
-
-	@Override
 	public GTheme getTheme(String themeName) {
 		Optional<GTheme> first =
 			getAllThemes().stream().filter(t -> t.getName().equals(themeName)).findFirst();
 		return first.orElse(null);
-	}
-
-	@Override
-	public GThemeValueMap getThemeValues() {
-		GThemeValueMap map = new GThemeValueMap();
-		map.load(javaDefaults);
-		map.load(systemValues);
-		map.load(applicationDefaults);
-		if (activeTheme.useDarkDefaults()) {
-			map.load(applicationDarkDefaults);
-		}
-		map.load(activeTheme);
-		return map;
 	}
 
 	@Override
@@ -286,49 +258,14 @@ public class ApplicationThemeManager extends ThemeManager {
 		return gIcon;
 	}
 
-	@Override
-	public GThemeValueMap getJavaDefaults() {
-		GThemeValueMap map = new GThemeValueMap();
-		map.load(javaDefaults);
-		return map;
-	}
-
-	@Override
-	public GThemeValueMap getApplicationDarkDefaults() {
-		GThemeValueMap map = new GThemeValueMap(applicationDefaults);
-		map.load(applicationDarkDefaults);
-		return map;
-	}
-
-	@Override
-	public GThemeValueMap getApplicationLightDefaults() {
-		GThemeValueMap map = new GThemeValueMap(applicationDefaults);
-		return map;
-	}
-
-	/**
-	 * Returns a {@link GThemeValueMap} containing all default values for the current theme. It
-	 * is a combination of application defined defaults and java {@link LookAndFeel} defaults.
-	 * @return the current set of defaults.
-	 */
-	public GThemeValueMap getDefaults() {
-		GThemeValueMap currentDefaults = new GThemeValueMap(javaDefaults);
-		currentDefaults.load(systemValues);
-		currentDefaults.load(applicationDefaults);
-		if (activeTheme.useDarkDefaults()) {
-			currentDefaults.load(applicationDarkDefaults);
-		}
-		return currentDefaults;
-	}
-
 	/**
 	 * Sets specially defined system UI values.  These values are created by the application as a
 	 * convenience for mapping generic concepts to values that differ by Look and Feel.  This allows
 	 * clients to use 'system' properties without knowing the actual Look and Feel terms.
-	 * 
+	 *
 	 * <p>For example, 'system.color.border' defaults to 'controlShadow', but maps to 'nimbusBorder'
 	 * in the Nimbus Look and Feel.
-	 * 
+	 *
 	 * @param map the map
 	 */
 	public void setSystemDefaults(GThemeValueMap map) {
@@ -336,7 +273,7 @@ public class ApplicationThemeManager extends ThemeManager {
 	}
 
 	/**
-	 * Sets the map of Java default UI values. These are the UI values defined by the current Java 
+	 * Sets the map of Java default UI values. These are the UI values defined by the current Java
 	 * Look and Feel.
 	 * @param map the default theme values defined by the {@link LookAndFeel}
 	 */
@@ -345,16 +282,6 @@ public class ApplicationThemeManager extends ThemeManager {
 		buildCurrentValues();
 		GColor.refreshAll(currentValues);
 		GIcon.refreshAll(currentValues);
-	}
-
-	@Override
-	public boolean isUsingAquaUI(ComponentUI UI) {
-		return activeTheme.getLookAndFeelType() == LafType.MAC;
-	}
-
-	@Override
-	public boolean isUsingNimbusUI() {
-		return activeTheme.getLookAndFeelType() == LafType.NIMBUS;
 	}
 
 	@Override
@@ -367,32 +294,14 @@ public class ApplicationThemeManager extends ThemeManager {
 		lookAndFeelManager.registerFont(component, fontId);
 	}
 
-	public boolean isDarkTheme() {
-		return activeTheme.useDarkDefaults();
-	}
-
 	private void installFlatLookAndFeels() {
 		UIManager.installLookAndFeel(LafType.FLAT_LIGHT.getName(), FlatLightLaf.class.getName());
 		UIManager.installLookAndFeel(LafType.FLAT_DARK.getName(), FlatDarkLaf.class.getName());
 	}
 
-	private void loadThemeDefaults() {
-		themeFileLoader.loadThemeDefaultFiles();
-		applicationDefaults = themeFileLoader.getDefaults();
-		applicationDarkDefaults = themeFileLoader.getDarkDefaults();
-	}
-
-	private void buildCurrentValues() {
-		GThemeValueMap map = new GThemeValueMap();
-
-		map.load(javaDefaults);
-		map.load(systemValues);
-		map.load(applicationDefaults);
-		if (activeTheme.useDarkDefaults()) {
-			map.load(applicationDarkDefaults);
-		}
-		map.load(activeTheme);
-		currentValues = map;
+	@Override
+	protected void buildCurrentValues() {
+		super.buildCurrentValues();
 		changedValuesMap.clear();
 	}
 
@@ -400,9 +309,40 @@ public class ApplicationThemeManager extends ThemeManager {
 		if (allThemes == null) {
 			Set<GTheme> set = new HashSet<>();
 			set.addAll(findDiscoverableThemes());
-			set.addAll(themeFileLoader.loadThemeFiles());
+			set.addAll(loadThemeFiles());
 			allThemes = set;
 		}
+	}
+
+	protected Collection<GTheme> loadThemeFiles() {
+		List<File> fileList = new ArrayList<>();
+		FileFilter themeFileFilter = file -> file.getName().endsWith("." + GTheme.FILE_EXTENSION);
+
+		File dir = Application.getUserSettingsDirectory();
+		File themeDir = new File(dir, THEME_DIR);
+		File[] files = themeDir.listFiles(themeFileFilter);
+		if (files != null) {
+			fileList.addAll(Arrays.asList(files));
+		}
+
+		List<GTheme> list = new ArrayList<>();
+		for (File file : fileList) {
+			GTheme theme = loadTheme(file);
+			if (theme != null) {
+				list.add(theme);
+			}
+		}
+		return list;
+	}
+
+	private static GTheme loadTheme(File file) {
+		try {
+			return new ThemeReader(file).readTheme();
+		}
+		catch (IOException e) {
+			Msg.error(Gui.class, "Could not load theme from file: " + file.getAbsolutePath(), e);
+		}
+		return null;
 	}
 
 	private Collection<DiscoverableGTheme> findDiscoverableThemes() {

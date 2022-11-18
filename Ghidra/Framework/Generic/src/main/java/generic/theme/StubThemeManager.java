@@ -24,7 +24,7 @@ import java.util.Set;
 import javax.swing.plaf.ComponentUI;
 
 /**
- * Version of ThemeManager that is used before an application or test installs a full 
+ * Version of ThemeManager that is used before an application or test installs a full
  * ApplicationThemeManager. Provides enough basic functionality used by the Gui class to
  * allow simple unit tests to run.
  */
@@ -35,7 +35,7 @@ public class StubThemeManager extends ThemeManager {
 	}
 
 	// palette colors are used statically throughout the application, so having them have values
-	// in the stub will allow unit tests to run withouth initializing theming 
+	// in the stub will allow unit tests to run without initializing theming
 	protected void installPaletteColors() {
 		addPalette("nocolor", BLACK);
 		addPalette("black", BLACK);

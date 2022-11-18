@@ -33,14 +33,15 @@ import ghidra.util.filechooser.ExtensionFileFilter;
 
 /**
  * Some common methods related to saving themes. These are invoked from various places to handle
- * what to do if a change is made that would result in loosing theme changes. 
+ * what to do if a change is made that would result in loosing theme changes.
  */
 public class ThemeUtils {
 
 	/**
 	 * Asks the user if they want to save the current theme changes. If they answer yes, it
-	 * will handle several use cases such as whether it gets saved to a new file or 
+	 * will handle several use cases such as whether it gets saved to a new file or
 	 * overwrites an existing file.
+	 * @param themeManager the theme manager
 	 * @return true if the operation was not cancelled
 	 */
 	public static boolean askToSaveThemeChanges(ThemeManager themeManager) {
@@ -61,6 +62,7 @@ public class ThemeUtils {
 	/**
 	 * Saves all current theme changes. Handles several use cases such as requesting a new theme
 	 * name and asking to overwrite an existing file.
+	 * @param themeManager the theme manager
 	 * @return true if the operation was not cancelled
 	 */
 	public static boolean saveThemeChanges(ThemeManager themeManager) {
@@ -78,10 +80,11 @@ public class ThemeUtils {
 
 	/**
 	 * Resets the theme to the default, handling the case where the current theme has changes.
+	 * @param themeManager the theme manager
 	 */
 	public static void resetThemeToDefault(ThemeManager themeManager) {
 		if (askToSaveThemeChanges(themeManager)) {
-			themeManager.setTheme(themeManager.getDefaultTheme());
+			themeManager.setTheme(ThemeManager.getDefaultTheme());
 		}
 	}
 
@@ -129,7 +132,7 @@ public class ThemeUtils {
 	}
 
 	/**
-	 * Exports a theme, prompting the user to pick an file. Also handles dealing with any 
+	 * Exports a theme, prompting the user to pick an file. Also handles dealing with any
 	 * existing changes to the current theme.
 	 * @param themeManager the ThemeManager that actually does the export
 	 */
@@ -138,9 +141,8 @@ public class ThemeUtils {
 			return;
 		}
 		boolean hasExternalIcons = !themeManager.getActiveTheme().getExternalIconFiles().isEmpty();
-		String message =
-			"Export as zip file? (You are not using any external icons so the zip\n" +
-				"file would only contain a single theme file.)";
+		String message = "Export as zip file? (You are not using any external icons so the zip\n" +
+			"file would only contain a single theme file.)";
 		if (hasExternalIcons) {
 			message =
 				"Export as zip file? (You have external icons so a zip file is required if you\n" +
@@ -159,6 +161,7 @@ public class ThemeUtils {
 
 	/**
 	 * Prompts for and deletes a selected theme.
+	 * @param themeManager the theme manager
 	 */
 	public static void deleteTheme(ThemeManager themeManager) {
 		List<GTheme> savedThemes = new ArrayList<>(
@@ -198,7 +201,7 @@ public class ThemeUtils {
 		if (existing == null) {
 			return true;
 		}
-		// if the existing theme is a built-in theme, then we definitely can't save to that name 
+		// if the existing theme is a built-in theme, then we definitely can't save to that name
 		if (existing instanceof DiscoverableGTheme) {
 			return false;
 		}
@@ -239,7 +242,7 @@ public class ThemeUtils {
 
 	private static File getSaveFile(String themeName) {
 		File dir = Application.getUserSettingsDirectory();
-		File themeDir = new File(dir, ThemeFileLoader.THEME_DIR);
+		File themeDir = new File(dir, ThemeManager.THEME_DIR);
 		if (!themeDir.exists()) {
 			themeDir.mkdir();
 		}

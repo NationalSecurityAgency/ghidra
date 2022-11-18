@@ -15,8 +15,8 @@
  */
 package generic.theme;
 
-import java.io.*;
-import java.util.*;
+import java.io.IOException;
+import java.util.List;
 
 import generic.jar.ResourceFile;
 import ghidra.framework.Application;
@@ -26,17 +26,20 @@ import ghidra.util.Msg;
  * Loads all the system theme.property files that contain all the default color, font, and
  * icon values.
  */
-public class ThemeFileLoader {
-	public static final String THEME_DIR = "themes";
+public class ThemeDefaultsProvider {
 
 	private GThemeValueMap defaults = new GThemeValueMap();
 	private GThemeValueMap darkDefaults = new GThemeValueMap();
+
+	ThemeDefaultsProvider() {
+		loadThemeDefaultFiles();
+	}
 
 	/**
 	 * Searches for all the theme.property files and loads them into either the standard
 	 * defaults (light) map or the dark defaults map.
 	 */
-	public void loadThemeDefaultFiles() {
+	private void loadThemeDefaultFiles() {
 		defaults.clear();
 		darkDefaults.clear();
 
@@ -56,28 +59,6 @@ public class ThemeFileLoader {
 		}
 	}
 
-	public Collection<GTheme> loadThemeFiles() {
-		List<File> fileList = new ArrayList<>();
-		FileFilter themeFileFilter = file -> file.getName().endsWith("." + GTheme.FILE_EXTENSION);
-
-		File dir = Application.getUserSettingsDirectory();
-		File themeDir = new File(dir, THEME_DIR);
-		File[] files = themeDir.listFiles(themeFileFilter);
-		if (files != null) {
-			fileList.addAll(Arrays.asList(files));
-		}
-
-		List<GTheme> list = new ArrayList<>();
-		for (File file : fileList) {
-			GTheme theme = loadTheme(file);
-			if (theme != null) {
-				list.add(theme);
-			}
-		}
-		return list;
-
-	}
-
 	/**
 	 * Returns the standard defaults {@link GThemeValueMap}
 	 * @return the standard defaults {@link GThemeValueMap}
@@ -92,15 +73,5 @@ public class ThemeFileLoader {
 	 */
 	public GThemeValueMap getDarkDefaults() {
 		return darkDefaults;
-	}
-
-	private static GTheme loadTheme(File file) {
-		try {
-			return new ThemeReader(file).readTheme();
-		}
-		catch (IOException e) {
-			Msg.error(Gui.class, "Could not load theme from file: " + file.getAbsolutePath(), e);
-		}
-		return null;
 	}
 }

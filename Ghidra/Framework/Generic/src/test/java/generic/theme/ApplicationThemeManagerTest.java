@@ -34,7 +34,7 @@ import generic.theme.builtin.*;
 import resources.ResourceManager;
 import resources.icons.UrlImageIcon;
 
-public class ThemeManagerTest {
+public class ApplicationThemeManagerTest {
 
 	private Font FONT = new Font("Dialog", Font.PLAIN, 13);
 	private Font SMALL_FONT = new Font("Dialog", Font.PLAIN, 4);
@@ -50,6 +50,8 @@ public class ThemeManagerTest {
 	private GTheme WINDOWS_THEME = new WindowsTheme();
 	private GTheme MAC_THEME = new MacTheme();
 	private ThemeManager themeManager;
+
+	private boolean errorsExpected;
 
 	@Before
 	public void setUp() {
@@ -69,7 +71,6 @@ public class ThemeManagerTest {
 		darkDefaultValues.addColor(new ColorValue("color.test.bg", BLACK));
 		darkDefaultValues.addColor(new ColorValue("color.test.fg", BLUE));
 		themeManager = new DummyApplicationThemeManager();
-
 	}
 
 	@Test
@@ -264,16 +265,19 @@ public class ThemeManagerTest {
 
 	@Test
 	public void testGetColorWithUnresolvedId() {
+		errorsExpected = true;
 		assertEquals(CYAN, themeManager.getColor("color.badid"));
 	}
 
 	@Test
 	public void testGetIconWithUnresolvedId() {
+		errorsExpected = true;
 		assertEquals(ResourceManager.getDefaultIcon(), themeManager.getIcon("icon.badid"));
 	}
 
 	@Test
 	public void testGetFontWithUnresolvedId() {
+		errorsExpected = true;
 		assertEquals(ThemeManager.DEFAULT_FONT, themeManager.getFont("font.badid"));
 	}
 
@@ -337,7 +341,7 @@ public class ThemeManagerTest {
 	}
 
 	// ApplicationThemeManager that doesn't read in theme.properties files or preferences
-	class DummyApplicationThemeManager extends ApplicationThemeManager {
+	private class DummyApplicationThemeManager extends ApplicationThemeManager {
 		DummyApplicationThemeManager() {
 			themePreferences = new ThemePreferences() {
 				@Override
@@ -350,28 +354,25 @@ public class ThemeManagerTest {
 					// do nothing
 				}
 			};
-			themeFileLoader = new ThemeFileLoader() {
-				@Override
-				public void loadThemeDefaultFiles() {
-					// do nothing
-				}
-
-				@Override
-				public Collection<GTheme> loadThemeFiles() {
-					return new HashSet<>(themes);
-				}
-
-				@Override
-				public GThemeValueMap getDefaults() {
-					return defaultValues;
-				}
-
-				@Override
-				public GThemeValueMap getDarkDefaults() {
-					return darkDefaultValues;
-				}
-			};
 			doInitialize();
+		}
+
+		@Override
+		protected void loadDefaultThemeValues() {
+			this.applicationDefaults = defaultValues;
+			this.applicationDarkDefaults = darkDefaultValues;
+		}
+
+		@Override
+		protected Collection<GTheme> loadThemeFiles() {
+			return new HashSet<>(themes);
+		}
+
+		@Override
+		protected void error(String message) {
+			if (!errorsExpected) {
+				super.error(message);
+			}
 		}
 	}
 }
