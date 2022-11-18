@@ -409,6 +409,11 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 			throw new OptionsVetoException("Search limit must be greater than 0");
 		}
 		searchLimit = newSearchLimit;
+
+		if (searchInfo != null) {
+			searchInfo.setSearchLimit(newSearchLimit);
+		}
+
 		prepopulateSearch = opt.getBoolean(PluginConstants.PRE_POPULATE_MEM_SEARCH, true);
 		autoRestrictSelection = opt.getBoolean(PluginConstants.AUTO_RESTRICT_SELECTION, true);
 		doHighlight = opt.getBoolean(PluginConstants.SEARCH_HIGHLIGHT_NAME, true);
