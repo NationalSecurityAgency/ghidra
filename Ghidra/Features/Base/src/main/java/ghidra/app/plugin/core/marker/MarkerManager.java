@@ -136,9 +136,8 @@ public class MarkerManager implements MarkerService {
 	public MarkerSet createPointMarker(String name, String markerDescription, Program program,
 			int priority, boolean showMarkers, boolean showNavigation, boolean colorBackground,
 			Color color, Icon icon) {
-		MarkerSetImpl markers =
-			new PointMarkerSet(this, name, markerDescription, priority, showMarkers,
-				showNavigation, colorBackground, color, icon, program);
+		MarkerSetImpl markers = new PointMarkerSet(this, name, markerDescription, priority,
+			showMarkers, showNavigation, colorBackground, color, icon, program);
 		insertMarkers(markers, program);
 		return markers;
 	}
@@ -147,9 +146,8 @@ public class MarkerManager implements MarkerService {
 	public MarkerSet createPointMarker(String name, String markerDescription, Program program,
 			int priority, boolean showMarkers, boolean showNavigation, boolean colorBackground,
 			Color color, Icon icon, boolean isPreferred) {
-		MarkerSetImpl markers =
-			new PointMarkerSet(this, name, markerDescription, priority, showMarkers,
-				showNavigation, colorBackground, color, icon, isPreferred, program);
+		MarkerSetImpl markers = new PointMarkerSet(this, name, markerDescription, priority,
+			showMarkers, showNavigation, colorBackground, color, icon, isPreferred, program);
 		insertMarkers(markers, program);
 		return markers;
 	}
@@ -311,7 +309,7 @@ public class MarkerManager implements MarkerService {
 	/**
 	 * Call to signal that the markers for a given program have changed in some way, such as being
 	 * removed, changing colors or the active state being changed
-	 * 
+	 *
 	 * @param p the program associated with the markers
 	 */
 	void markersChanged(Program p) {
@@ -392,6 +390,13 @@ public class MarkerManager implements MarkerService {
 		removeMarker(previousMarkers, program);
 		markersByProgram.put(program, markers);
 		insertMarkers(markers, program);
+	}
+
+	@Override
+	public boolean isActiveMarkerForGroup(String groupName, MarkerSet markerSet, Program program) {
+		Map<Program, MarkerSetImpl> markersByProgram = programMarkersByGroup.get(groupName);
+		MarkerSetImpl previousMarkers = markersByProgram.get(program);
+		return markerSet == previousMarkers;
 	}
 
 	@Override

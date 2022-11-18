@@ -78,8 +78,8 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 
 	TableComponentProvider(TableServicePlugin plugin, String title, String name,
 			GhidraProgramTableModel<T> model, String programName, GoToService gotoService,
-			MarkerService markerService, Color markerColor, Icon markerIcon,
-			String windowSubMenu, Navigatable navigatable) {
+			MarkerService markerService, Color markerColor, Icon markerIcon, String windowSubMenu,
+			Navigatable navigatable) {
 		super(plugin.getTool(), name, plugin.getName());
 
 		this.tableServicePlugin = plugin;
@@ -238,17 +238,36 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		return buffer.toString();
 	}
 
+	private void reloadMarkers() {
+		if (markerSet == null) {
+			return;
+		}
+
+		if (!markerService.isActiveMarkerForGroup(MarkerService.HIGHLIGHT_GROUP, markerSet,
+			program)) {
+			return; // we are not the active marker service; do not replace the active group
+		}
+
+		markerService.removeMarkerForGroup(MarkerService.HIGHLIGHT_GROUP, markerSet, program);
+		loadMarkers();
+	}
+
 	private void loadMarkers() {
 		if (markerSet == null) {
 			return;
 		}
 
+		if (markerService.isActiveMarkerForGroup(MarkerService.HIGHLIGHT_GROUP, markerSet,
+			program)) {
+			return; // already active; no need to load
+		}
+
 		markerSet.clearAll();
 		int n = model.getRowCount();
 		for (int i = 0; i < n; i++) {
-			ProgramLocation loc = model.getProgramLocation(i, 0);
-			if (loc != null) {
-				markerSet.add(loc.getByteAddress());
+			Address a = model.getAddress(i);
+			if (a != null) {
+				markerSet.add(a);
 			}
 		}
 
@@ -328,7 +347,7 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 	@Override
 	public void tableChanged(TableModelEvent ev) {
 		updateTitle();
-		loadMarkers();
+		reloadMarkers();
 	}
 
 	public GhidraProgramTableModel<T> getModel() {
@@ -347,9 +366,6 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		activationListenerList.remove(listener);
 	}
 
-	/**
-	 * @see docking.ComponentProvider#componentActivated()
-	 */
 	@Override
 	public void componentActivated() {
 		loadMarkers();
@@ -358,9 +374,6 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		}
 	}
 
-	/**
-	 * @see docking.ComponentProvider#componentDeactived()
-	 */
 	@Override
 	public void componentDeactived() {
 		for (ComponentProviderActivationListener listener : activationListenerList) {
@@ -368,9 +381,6 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		}
 	}
 
-	/**
-	 * @see docking.ComponentProvider#getWindowSubMenuName()
-	 */
 	@Override
 	public String getWindowSubMenuName() {
 		return windowSubMenu;
