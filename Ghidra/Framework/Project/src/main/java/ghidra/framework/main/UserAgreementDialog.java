@@ -24,8 +24,8 @@ import javax.swing.text.html.HTMLEditorKit;
 import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
 import docking.framework.DockingApplicationConfiguration;
-import docking.framework.DockingApplicationLayout;
 import docking.widgets.label.GDLabel;
+import generic.application.GenericApplicationLayout;
 import generic.theme.Gui;
 import ghidra.framework.Application;
 import ghidra.util.HTMLUtilities;
@@ -113,7 +113,7 @@ public class UserAgreementDialog extends DialogComponentProvider {
 	}
 
 	public static void main(String[] args) throws Exception {
-		ApplicationLayout layout = new DockingApplicationLayout("User Agreement Main", "1.0");
+		ApplicationLayout layout = new GenericApplicationLayout("User Agreement Main", "1.0");
 		DockingApplicationConfiguration config = new DockingApplicationConfiguration();
 		Application.initializeApplication(layout, config);
 		UserAgreementDialog dialog = new UserAgreementDialog(true, true);

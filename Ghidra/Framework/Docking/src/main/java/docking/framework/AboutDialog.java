@@ -21,14 +21,15 @@ import javax.swing.*;
 
 import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
+import generic.application.GenericApplicationLayout;
 import generic.theme.GThemeDefaults.Colors;
 import ghidra.framework.Application;
 import utility.application.ApplicationLayout;
 
 /**
- * Splash screen window to display version information about the current release of 
+ * Splash screen window to display version information about the current release of
  * the Ghidra application. The window is displayed when Ghidra starts; when
- * initialization is complete, the splash screen is dismissed. 
+ * initialization is complete, the splash screen is dismissed.
  */
 public class AboutDialog extends DialogComponentProvider {
 
@@ -68,7 +69,7 @@ public class AboutDialog extends DialogComponentProvider {
 	}
 
 	public static void main(String[] args) throws Exception {
-		ApplicationLayout layout = new DockingApplicationLayout("About Dialog", "1.0");
+		ApplicationLayout layout = new GenericApplicationLayout("About Dialog", "1.0");
 		DockingApplicationConfiguration config = new DockingApplicationConfiguration();
 		config.setShowSplashScreen(false);
 		Application.initializeApplication(layout, config);
