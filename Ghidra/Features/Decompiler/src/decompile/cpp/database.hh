@@ -925,6 +925,7 @@ public:
   Scope *mapScope(Scope *qpoint,const Address &addr,const Address &usepoint);
   uint4 getProperty(const Address &addr) const { return flagbase.getValue(addr); }	///< Get boolean properties at the given address
   void setPropertyRange(uint4 flags,const Range &range);	///< Set boolean properties over a given memory range
+  void clearPropertyRange(uint4 flags,const Range &range);	///< Clear boolean properties over a given memory range
   void setProperties(const partmap<Address,uint4> &newflags) { flagbase = newflags; }	///< Replace the property map
   const partmap<Address,uint4> &getProperties(void) const { return flagbase; }	///< Get the entire property map
   void encode(Encoder &encoder) const;				///< Encode the whole Database to a stream
