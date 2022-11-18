@@ -356,6 +356,10 @@ public:
   VarnodeLocSet::const_iterator endLoc(int4 s,const Address &addr,const Address &pc,uintm uniq=~((uintm)0)) const {
     return vbank.endLoc(s,addr,pc,uniq); }
 
+  /// \brief Given start, return maximal range of overlapping Varnodes
+  uint4 overlapLoc(VarnodeLocSet::const_iterator iter,vector<VarnodeLocSet::const_iterator> &bounds) const {
+    return vbank.overlapLoc(iter,bounds); }
+
   /// \brief Start of all Varnodes sorted by definition address
   VarnodeDefSet::const_iterator beginDef(void) const { return vbank.beginDef(); }
 

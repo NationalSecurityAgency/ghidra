@@ -330,6 +330,9 @@ public:
   Datatype *getLocalType(bool &blockup) const; ///< Calculate type of Varnode based on local information
   bool isBooleanValue(bool useAnnotation) const;	///< Does \b this Varnode hold a formal boolean value
   bool copyShadow(const Varnode *op2) const; ///< Are \b this and \b op2 copied from the same source?
+  bool findSubpieceShadow(int4 leastByte,const Varnode *whole,int4 recurse) const;
+  bool findPieceShadow(int4 leastByte,const Varnode *piece) const;
+  bool partialCopyShadow(const Varnode *op2,int4 relOff) const;	///< Is one of \b this or \b op2 a partial copy of the other?
   void encode(Encoder &encoder) const; ///< Encode a description of \b this to a stream
   static bool comparePointers(const Varnode *a,const Varnode *b) { return (*a < *b); }	///< Compare Varnodes as pointers
   static void printRaw(ostream &s,const Varnode *vn);	///< Print raw info about a Varnode to stream
@@ -386,6 +389,7 @@ public:
   VarnodeLocSet::const_iterator endLoc(int4 s,const Address &addr,uint4 fl) const;
   VarnodeLocSet::const_iterator beginLoc(int4 s,const Address &addr,const Address &pc,uintm uniq) const;
   VarnodeLocSet::const_iterator endLoc(int4 s,const Address &addr,const Address &pc,uintm uniq) const;
+  uint4 overlapLoc(VarnodeLocSet::const_iterator iter,vector<VarnodeLocSet::const_iterator> &bounds) const;
   VarnodeDefSet::const_iterator beginDef(void) const { return def_tree.begin(); }	///< Beginning of Varnodes sorted by definition
   VarnodeDefSet::const_iterator endDef(void) const { return def_tree.end(); }	///< End of Varnodes sorted by definition
   VarnodeDefSet::const_iterator beginDef(uint4 fl) const;
