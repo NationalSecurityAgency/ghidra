@@ -25,7 +25,6 @@ import ghidra.GhidraOptions;
 import ghidra.app.plugin.core.hover.AbstractScalarOperandHover;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.lang.InstructionPrototype;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.scalar.Scalar;
@@ -96,9 +95,7 @@ public class ScalarOperandListingHover extends AbstractScalarOperandHover
 			return operands[0];
 		}
 
-		InstructionPrototype prototype = instruction.getPrototype();
-		List<Object> list =
-			prototype.getOpRepresentationList(opIndex, instruction.getInstructionContext());
+		List<Object> list = instruction.getDefaultOperandRepresentationList(opIndex);
 		if (list == null) {
 			return null;
 		}

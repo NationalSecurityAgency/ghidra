@@ -16,16 +16,18 @@
 package ghidra.trace.util;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.*;
-import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.listing.InstructionPcodeOverride;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.RefType;
+import ghidra.trace.model.guest.TracePlatform;
+import ghidra.trace.model.listing.TraceInstruction;
 
-public interface InstructionAdapterFromPrototype extends Instruction {
+public interface InstructionAdapterFromPrototype extends TraceInstruction {
 	default String getFullString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append(getMnemonicString());
@@ -68,7 +70,7 @@ public interface InstructionAdapterFromPrototype extends Instruction {
 		InstructionContext context = getInstructionContext();
 		int opType = prototype.getOpType(opIndex, context);
 		if (OperandType.isAddress(opType)) {
-			return prototype.getAddress(opIndex, context);
+			return getPlatform().mapGuestToHost(prototype.getAddress(opIndex, context));
 		}
 		return null;
 	}
@@ -106,10 +108,12 @@ public interface InstructionAdapterFromPrototype extends Instruction {
 		}
 		StringBuilder sb = new StringBuilder();
 		for (Object opElem : opList) {
-			if (opElem instanceof Address) {
-				Address opAddr = (Address) opElem;
+			if (opElem instanceof Address opAddr) {
 				sb.append("0x");
 				sb.append(opAddr.toString(false));
+			}
+			else if (opElem == null) {
+				sb.append("<null>");
 			}
 			else {
 				sb.append(opElem.toString());
@@ -120,7 +124,23 @@ public interface InstructionAdapterFromPrototype extends Instruction {
 
 	@Override
 	default List<Object> getDefaultOperandRepresentationList(int opIndex) {
-		return getPrototype().getOpRepresentationList(opIndex, getInstructionContext());
+		// TODO: Cache this in the instruction?
+		List<Object> list =
+			getPrototype().getOpRepresentationList(opIndex, getInstructionContext());
+		TracePlatform platform = getPlatform();
+		if (platform.isHost()) {
+			return list;
+		}
+		return list.stream().map(obj -> {
+			if (obj instanceof Address addr) {
+				Address hostAddr = platform.mapGuestToHost(addr);
+				if (hostAddr == null) {
+					return "guest:" + addr.toString(true);
+				}
+				return hostAddr;
+			}
+			return obj;
+		}).collect(Collectors.toList());
 	}
 
 	@Override
