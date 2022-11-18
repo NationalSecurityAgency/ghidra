@@ -24,6 +24,7 @@ import javax.swing.border.BevelBorder;
 
 import docking.*;
 import docking.widgets.label.GDLabel;
+import generic.application.GenericApplicationLayout;
 import generic.theme.GColor;
 import generic.theme.Gui;
 import generic.util.WindowUtilities;
@@ -317,7 +318,7 @@ public class SplashScreen extends JWindow {
 	}
 
 	public static void main(String[] args) throws Exception {
-		ApplicationLayout layout = new DockingApplicationLayout("Splash Screen Main", "1.0");
+		ApplicationLayout layout = new GenericApplicationLayout("Splash Screen Main", "1.0");
 		DockingApplicationConfiguration config = new DockingApplicationConfiguration();
 
 		config.setShowSplashScreen(false);

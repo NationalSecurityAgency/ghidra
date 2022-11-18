@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
+import generic.application.GenericApplicationLayout;
 import generic.theme.ApplicationThemeManager;
 import ghidra.framework.Application;
 import ghidra.framework.ApplicationConfiguration;
@@ -77,7 +78,8 @@ public class GHelpBuilder {
 				return false;
 			}
 		};
-		Application.initializeApplication(new HelpApplicationLayout("Help Builder", "0.1"), config);
+		Application.initializeApplication(new GenericApplicationLayout("Help Builder", "0.1"),
+			config);
 
 		builder.build(args);
 	}
