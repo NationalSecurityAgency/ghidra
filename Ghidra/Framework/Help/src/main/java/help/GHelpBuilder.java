@@ -22,7 +22,7 @@ import java.nio.file.Paths;
 import java.util.*;
 
 import generic.application.GenericApplicationLayout;
-import generic.theme.ApplicationThemeManager;
+import generic.theme.HeadlessThemeManager;
 import ghidra.framework.Application;
 import ghidra.framework.ApplicationConfiguration;
 import help.validator.*;
@@ -70,12 +70,11 @@ public class GHelpBuilder {
 		ApplicationConfiguration config = new ApplicationConfiguration() {
 			@Override
 			protected void initializeApplication() {
-				ApplicationThemeManager.initialize();
-			}
-
-			@Override
-			public boolean isHeadless() {
-				return false;
+				//
+				// We must be headless, as we are utility class.  But, we also need theme properties
+				// to be loaded and correct for the help system to function properly.
+				//
+				HeadlessThemeManager.initialize();
 			}
 		};
 		Application.initializeApplication(new GenericApplicationLayout("Help Builder", "0.1"),

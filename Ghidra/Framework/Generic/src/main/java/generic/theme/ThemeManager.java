@@ -33,34 +33,44 @@ import utilities.util.reflection.ReflectionUtilities;
 
 /**
  * This class manages application themes and their values. The ThemeManager is an abstract
- * base class that has two concrete subclasses (and others for testing purposes) - 
+ * base class that has two concrete subclasses (and others for testing purposes) -
  * StubThemeManager and ApplicationThememManager. The StubThemeManager exists as a placeholder
  * until the ApplicationThemeManager is installed via {@link ApplicationThemeManager#initialize()}.
  * <P>
  * The basic idea is that all the colors, fonts, and icons used in an application should be
- * accessed indirectly via an "id" string. Then the actual color, font, or icon can be changed 
+ * accessed indirectly via an "id" string. Then the actual color, font, or icon can be changed
  * without changing the source code. The default mapping of the id strings to a value is defined
  * in <name>.theme.properties files which are dynamically discovered by searching the module's
  * data directory. Also, these files can optionally define a dark default value for an id which
  * would replace the standard default value in the event that the current theme specifies that it
  * is a dark theme. Themes are used to specify the application's {@link LookAndFeel}, whether or
- * not it is dark, and any customized values for colors, fonts, or icons. There are several 
+ * not it is dark, and any customized values for colors, fonts, or icons. There are several
  * "built-in" themes, one for each supported {@link LookAndFeel}, but additional themes can
- * be defined and stored in the users application home directory as a <name>.theme file. 
+ * be defined and stored in the users application home directory as a <name>.theme file.
  * <P>
- * Clients that just need to access the colors, fonts, and icons from the theme can use the 
- * convenience methods in the {@link Gui} class.  Clients that need to directly manipulate the 
+ * Clients that just need to access the colors, fonts, and icons from the theme can use the
+ * convenience methods in the {@link Gui} class.  Clients that need to directly manipulate the
  * themes and values will need to directly use the ThemeManager which and be retrieved using the
  * static {@link #getInstance()} method.
  */
 
 public abstract class ThemeManager {
+
+	public static final String THEME_DIR = "themes";
+
 	static final Font DEFAULT_FONT = new Font("Dialog", Font.PLAIN, 12);
 	static final Color DEFAULT_COLOR = Color.CYAN;
 
 	protected static ThemeManager INSTANCE;
 
+	protected GTheme activeTheme = getDefaultTheme();
+
+	protected GThemeValueMap javaDefaults = new GThemeValueMap();
+	protected GThemeValueMap systemValues = new GThemeValueMap();
 	protected GThemeValueMap currentValues = new GThemeValueMap();
+
+	protected GThemeValueMap applicationDefaults = new GThemeValueMap();
+	protected GThemeValueMap applicationDarkDefaults = new GThemeValueMap();
 
 	// these notifications are only when the user is manipulating theme values, so rare and at
 	// user speed, so using copy on read
@@ -82,37 +92,66 @@ public abstract class ThemeManager {
 		Gui.setThemeManager(this);
 	}
 
+	protected void loadDefaultThemeValues() {
+		ThemeDefaultsProvider provider = new ThemeDefaultsProvider();
+		applicationDefaults = provider.getDefaults();
+		applicationDarkDefaults = provider.getDarkDefaults();
+	}
+
+	protected void buildCurrentValues() {
+		GThemeValueMap map = new GThemeValueMap();
+
+		map.load(javaDefaults);
+		map.load(systemValues);
+		map.load(applicationDefaults);
+		if (activeTheme.useDarkDefaults()) {
+			map.load(applicationDarkDefaults);
+		}
+		map.load(activeTheme);
+		currentValues = map;
+	}
+
 	/**
 	 * Reloads the defaults from all the discoverable theme.property files.
 	 */
-	public abstract void reloadApplicationDefaults();
+	public void reloadApplicationDefaults() {
+		throw new UnsupportedOperationException();
+	}
 
 	/**
 	 * Restores all the current application back to the values as specified by the active theme.
 	 * In other words, reverts any changes to the active theme that haven't been saved.
 	 */
-	public abstract void restoreThemeValues();
+	public void restoreThemeValues() {
+		throw new UnsupportedOperationException();
+	}
 
 	/**
 	 * Restores the current color value for the given color id to the value established by the
 	 * current theme.
 	 * @param id the color id to restore back to the original theme value
 	 */
-	public abstract void restoreColor(String id);
+	public void restoreColor(String id) {
+		throw new UnsupportedOperationException();
+	}
 
 	/**
 	 * Restores the current font value for the given font id to the value established by the
 	 * current theme.
 	 * @param id the font id to restore back to the original theme value
 	 */
-	public abstract void restoreFont(String id);
+	public void restoreFont(String id) {
+		throw new UnsupportedOperationException();
+	}
 
 	/**
 	 * Restores the current icon value for the given icon id to the value established by the
 	 * current theme.
 	 * @param id the icon id to restore back to the original theme value
 	 */
-	public abstract void restoreIcon(String id);
+	public void restoreIcon(String id) {
+		throw new UnsupportedOperationException();
+	}
 
 	/**
 	 * Returns true if the color associated with the given id has been changed from the current
@@ -121,7 +160,9 @@ public abstract class ThemeManager {
 	 * @return true if the color associated with the given id has been changed from the current
 	 * theme value for that id.
 	 */
-	public abstract boolean isChangedColor(String id);
+	public boolean isChangedColor(String id) {
+		return false;
+	}
 
 	/**
 	 * Returns true if the font associated with the given id has been changed from the current
@@ -130,7 +171,9 @@ public abstract class ThemeManager {
 	 * @return true if the font associated with the given id has been changed from the current
 	 * theme value for that id.
 	 */
-	public abstract boolean isChangedFont(String id);
+	public boolean isChangedFont(String id) {
+		return false;
+	}
 
 	/**
 	 * Returns true if the Icon associated with the given id has been changed from the current
@@ -139,57 +182,75 @@ public abstract class ThemeManager {
 	 * @return true if the Icon associated with the given id has been changed from the current
 	 * theme value for that id.
 	 */
-	public abstract boolean isChangedIcon(String id);
+	public boolean isChangedIcon(String id) {
+		return false;
+	}
 
 	/**
 	 * Sets the application's active theme to the given theme.
 	 * @param theme the theme to make active
 	 */
-	public abstract void setTheme(GTheme theme);
+	public void setTheme(GTheme theme) {
+		throw new UnsupportedOperationException();
+	}
 
 	/**
 	 * Adds the given theme to set of all themes.
 	 * @param newTheme the theme to add
 	 */
-	public abstract void addTheme(GTheme newTheme);
+	public void addTheme(GTheme newTheme) {
+		throw new UnsupportedOperationException();
+	}
 
 	/**
 	 * Removes the theme from the set of all themes. Also, if the theme has an associated
 	 * file, the file will be deleted.
 	 * @param theme the theme to delete
 	 */
-	public abstract void deleteTheme(GTheme theme);
+	public void deleteTheme(GTheme theme) {
+		throw new UnsupportedOperationException();
+	}
 
 	/**
 	 * Returns a set of all known themes.
 	 * @return a set of all known themes.
 	 */
-	public abstract Set<GTheme> getAllThemes();
+	public Set<GTheme> getAllThemes() {
+		throw new UnsupportedOperationException();
+	}
 
 	/**
 	 * Returns a set of all known themes that are supported on the current platform.
 	 * @return a set of all known themes that are supported on the current platform.
 	 */
-	public abstract Set<GTheme> getSupportedThemes();
+	public Set<GTheme> getSupportedThemes() {
+		throw new UnsupportedOperationException();
+	}
 
 	/**
 	 * Returns the active theme.
 	 * @return the active theme.
 	 */
-	public abstract GTheme getActiveTheme();
+	public GTheme getActiveTheme() {
+		return activeTheme;
+	}
 
 	/**
 	 * Returns the {@link LafType} for the currently active {@link LookAndFeel}
 	 * @return the {@link LafType} for the currently active {@link LookAndFeel}
 	 */
-	public abstract LafType getLookAndFeelType();
+	public LafType getLookAndFeelType() {
+		return activeTheme.getLookAndFeelType();
+	}
 
 	/**
 	 * Returns the known theme that has the given name.
 	 * @param themeName the name of the theme to retrieve
 	 * @return the known theme that has the given name
 	 */
-	public abstract GTheme getTheme(String themeName);
+	public GTheme getTheme(String themeName) {
+		throw new UnsupportedOperationException();
+	}
 
 	/**
 	 * Returns a {@link GThemeValueMap} of all current theme values including unsaved changes to the
@@ -206,7 +267,17 @@ public abstract class ThemeManager {
 	 * @return the theme values as defined by the current theme, ignoring any unsaved changes that
 	 * are currently applied to the application
 	 */
-	public abstract GThemeValueMap getThemeValues();
+	public GThemeValueMap getThemeValues() {
+		GThemeValueMap map = new GThemeValueMap();
+		map.load(javaDefaults);
+		map.load(systemValues);
+		map.load(applicationDefaults);
+		if (activeTheme.useDarkDefaults()) {
+			map.load(applicationDarkDefaults);
+		}
+		map.load(activeTheme);
+		return map;
+	}
 
 	/**
 	 * Returns a {@link GThemeValueMap} contains all values that differ from the default
@@ -277,7 +348,9 @@ public abstract class ThemeManager {
 	 * Updates the current value for the font id in the newValue
 	 * @param newValue the new {@link FontValue} to install in the current values.
 	 */
-	public abstract void setFont(FontValue newValue);
+	public void setFont(FontValue newValue) {
+		throw new UnsupportedOperationException();
+	}
 
 	/**
 	 * Updates the current color for the given id.
@@ -303,7 +376,9 @@ public abstract class ThemeManager {
 	 * Updates the current value for the color id in the newValue
 	 * @param newValue the new {@link ColorValue} to install in the current values.
 	 */
-	public abstract void setColor(ColorValue newValue);
+	public void setColor(ColorValue newValue) {
+		throw new UnsupportedOperationException();
+	}
 
 	/**
 	 * Updates the current {@link Icon} for the given id.
@@ -318,25 +393,31 @@ public abstract class ThemeManager {
 	 * Updates the current value for the {@link Icon} id in the newValue
 	 * @param newValue the new {@link IconValue} to install in the current values.
 	 */
-	public abstract void setIcon(IconValue newValue);
+	public void setIcon(IconValue newValue) {
+		throw new UnsupportedOperationException();
+	}
 
 	/**
 	 * gets a UIResource version of the GColor for the given id. Using this method ensures that
-	 * the same instance is used for a given id. This combats some poor code in some of the 
+	 * the same instance is used for a given id. This combats some poor code in some of the
 	 * {@link LookAndFeel}s where the use == in some places to test for equals.
 	 * @param id the id to get a GColorUIResource for
 	 * @return a GColorUIResource for the given id
 	 */
-	public abstract GColorUIResource getGColorUiResource(String id);
+	public GColorUIResource getGColorUiResource(String id) {
+		throw new UnsupportedOperationException();
+	}
 
 	/**
 	 * gets a UIResource version of the GIcon for the given id. Using this method ensures that
-	 * the same instance is used for a given id. This combats some poor code in some of the 
+	 * the same instance is used for a given id. This combats some poor code in some of the
 	 * {@link LookAndFeel}s where the use == in some places to test for equals.
 	 * @param id the id to get a {@link GIconUIResource} for
 	 * @return a GIconUIResource for the given id
 	 */
-	public abstract GIconUIResource getGIconUiResource(String id);
+	public GIconUIResource getGIconUiResource(String id) {
+		throw new UnsupportedOperationException();
+	}
 
 	/**
 	 * Returns the {@link GThemeValueMap} containing all the default theme values defined by the
@@ -344,44 +425,67 @@ public abstract class ThemeManager {
 	 * @return  the {@link GThemeValueMap} containing all the default theme values defined by the
 	 * current {@link LookAndFeel}
 	 */
-	public abstract GThemeValueMap getJavaDefaults();
+	public GThemeValueMap getJavaDefaults() {
+		GThemeValueMap map = new GThemeValueMap();
+		map.load(javaDefaults);
+		return map;
+	}
 
 	/**
 	 * Returns the {@link GThemeValueMap} containing all the dark default values defined
 	 * in theme.properties files. Note that dark defaults includes light defaults that haven't
 	 * been overridden by a dark default with the same id.
-	 * @return the {@link GThemeValueMap} containing all the dark values defined in 
+	 * @return the {@link GThemeValueMap} containing all the dark values defined in
 	 * theme.properties files
 	 */
-	public abstract GThemeValueMap getApplicationDarkDefaults();
+	public GThemeValueMap getApplicationDarkDefaults() {
+		GThemeValueMap map = new GThemeValueMap(applicationDefaults);
+		map.load(applicationDarkDefaults);
+		return map;
+	}
 
 	/**
 	 * Returns the {@link GThemeValueMap} containing all the standard default values defined
-	 * in theme.properties files. 
-	 * @return the {@link GThemeValueMap} containing all the standard values defined in 
+	 * in theme.properties files.
+	 * @return the {@link GThemeValueMap} containing all the standard values defined in
 	 * theme.properties files
 	 */
-	public abstract GThemeValueMap getApplicationLightDefaults();
+	public GThemeValueMap getApplicationLightDefaults() {
+		GThemeValueMap map = new GThemeValueMap(applicationDefaults);
+		return map;
+	}
 
 	/**
 	 * Returns a {@link GThemeValueMap} containing all default values for the current theme. It
 	 * is a combination of application defined defaults and java {@link LookAndFeel} defaults.
 	 * @return the current set of defaults.
 	 */
-	public abstract GThemeValueMap getDefaults();
+	public GThemeValueMap getDefaults() {
+		GThemeValueMap currentDefaults = new GThemeValueMap(javaDefaults);
+		currentDefaults.load(systemValues);
+		currentDefaults.load(applicationDefaults);
+		if (activeTheme.useDarkDefaults()) {
+			currentDefaults.load(applicationDarkDefaults);
+		}
+		return currentDefaults;
+	}
 
 	/**
 	 * Returns true if the given UI object is using the Aqua Look and Feel.
 	 * @param UI the UI to examine.
 	 * @return true if the UI is using Aqua
 	 */
-	public abstract boolean isUsingAquaUI(ComponentUI UI);
+	public boolean isUsingAquaUI(ComponentUI UI) {
+		return activeTheme.getLookAndFeelType() == LafType.MAC;
+	}
 
 	/**
 	 * Returns true if 'Nimbus' is the current Look and Feel
 	 * @return true if 'Nimbus' is the current Look and Feel
 	 */
-	public abstract boolean isUsingNimbusUI();
+	public boolean isUsingNimbusUI() {
+		return activeTheme.getLookAndFeelType() == LafType.NIMBUS;
+	}
 
 	/**
 	 * Adds a {@link ThemeListener} to be notified of theme changes.
@@ -401,28 +505,12 @@ public abstract class ThemeManager {
 	}
 
 	/**
-	 * Returns the default theme for the current platform.
-	 * @return the default theme for the current platform.
-	 */
-	public static GTheme getDefaultTheme() {
-		OperatingSystem OS = Platform.CURRENT_PLATFORM.getOperatingSystem();
-		switch (OS) {
-			case MAC_OS_X:
-				return new MacTheme();
-			case WINDOWS:
-				return new WindowsTheme();
-			case LINUX:
-			case UNSUPPORTED:
-			default:
-				return new NimbusTheme();
-		}
-	}
-
-	/**
 	 * Returns true if there are any unsaved changes to the current theme.
 	 * @return true if there are any unsaved changes to the current theme.
 	 */
-	public abstract boolean hasThemeChanges();
+	public boolean hasThemeChanges() {
+		return false;
+	}
 
 	/**
 	 * Returns true if an color for the given Id has been defined
@@ -457,13 +545,35 @@ public abstract class ThemeManager {
 	 * @param component the component to set/update the font
 	 * @param fontId the id of the font to register with the given component
 	 */
-	public abstract void registerFont(Component component, String fontId);
+	public void registerFont(Component component, String fontId) {
+		// do nothing
+	}
 
 	/**
 	 * Returns true if the current theme use dark default values.
 	 * @return true if the current theme use dark default values.
 	 */
-	public abstract boolean isDarkTheme();
+	public boolean isDarkTheme() {
+		return activeTheme.useDarkDefaults();
+	}
+
+	/**
+	 * Returns the default theme for the current platform.
+	 * @return the default theme for the current platform.
+	 */
+	public static GTheme getDefaultTheme() {
+		OperatingSystem OS = Platform.CURRENT_PLATFORM.getOperatingSystem();
+		switch (OS) {
+			case MAC_OS_X:
+				return new MacTheme();
+			case WINDOWS:
+				return new WindowsTheme();
+			case LINUX:
+			case UNSUPPORTED:
+			default:
+				return new NimbusTheme();
+		}
+	}
 
 	protected void notifyThemeChanged(ThemeEvent event) {
 		for (ThemeListener listener : themeListeners) {
@@ -474,10 +584,10 @@ public abstract class ThemeManager {
 	protected void error(String message) {
 		Throwable t = ReflectionUtilities.createThrowableWithStackOlderThan();
 		StackTraceElement[] trace = t.getStackTrace();
-		StackTraceElement[] filtered =
-			ReflectionUtilities.filterStackTrace(trace, "java.", "theme.Gui", "theme.ThemeManager",
-				"theme.GColor");
+		StackTraceElement[] filtered = ReflectionUtilities.filterStackTrace(trace, "java.",
+			"theme.Gui", "theme.ThemeManager", "theme.GColor");
 		t.setStackTrace(filtered);
 		Msg.error(this, message, t);
 	}
+
 }
