@@ -33,6 +33,7 @@ import javax.swing.tree.TreePath;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.*;
 
+import docking.DialogComponentProvider;
 import docking.action.DockingActionIf;
 import docking.actions.KeyBindingUtils;
 import docking.options.editor.*;
@@ -705,9 +706,41 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 	}
 
+	@Test
+	public void testOptionsVeto() throws Exception {
+
+		Object root = treeModel.getRoot();
+		Object toolNode = getGTreeNode(root, TOOL_NODE_NAME);
+		selectNode(toolNode);
+		assertTrue(!defaultPanel.isShowing());
+
+		ScrollableOptionsEditor simpleOptionsPanel =
+			(ScrollableOptionsEditor) getEditorPanel(toolNode);
+		assertNotNull(simpleOptionsPanel);
+		JComponent comp = simpleOptionsPanel.getComponent();
+		assertTrue(comp.isShowing());
+
+		JTextField field = (JTextField) findPairedComponent(comp, "Max Navigation History Size");
+		assertNotNull(field);
+		String text = getText(field);
+		assertEquals("30", text);
+
+		//
+		// This field has a hard-coded max value of 400.  Set the value higher to trigger a veto
+		// exception.
+		//
+		setText(field, "1000");
+		pressOptionsOk();
+		DialogComponentProvider warningDialog = waitForDialogComponent("Invalid Option Value");
+		pressButtonByText(warningDialog, "OK");
+
+		text = getText(field);
+		assertEquals("30", text);
+	}
+
 //=================================================================================================
 // Inner Classes
-//=================================================================================================	
+//=================================================================================================
 
 	private KeyStroke getKeyBinding(String actionName) throws Exception {
 		OptionsEditor editor = seleNodeWithCustomEditor("Key Bindings");
@@ -876,7 +909,7 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void pressOptionsOk() {
-		pressButtonByName(dialog.getComponent(), "OK", true);
+		pressButtonByName(dialog.getComponent(), "OK", false);
 		waitForSwing();
 	}
 
@@ -1105,7 +1138,8 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 		name = "Favorite Color";
 
-		options.registerOption(name, Palette.RED, null, "description");
+		options.registerThemeColorBinding(name, "color.bg", null, "description");
+		//options.registerOption(name, Palette.RED, null, "description");
 
 		name = "Favorite String";
 		options.registerOption(name, "Foo", null, "description");
@@ -1114,8 +1148,7 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 		name = "Mouse Buttons" + Options.DELIMITER + "Mouse Button To Activate";
 		options.registerOption(name, GhidraOptions.CURSOR_MOUSE_BUTTON_NAMES.MIDDLE, null,
 			"description");
-		options.setEnum(name,
-			GhidraOptions.CURSOR_MOUSE_BUTTON_NAMES.MIDDLE);
+		options.setEnum(name, GhidraOptions.CURSOR_MOUSE_BUTTON_NAMES.MIDDLE);
 
 	}
 
