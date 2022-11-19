@@ -17,6 +17,7 @@ package ghidra.util.table;
 
 import docking.widgets.table.threaded.ThreadedTableModel;
 import ghidra.framework.plugintool.ServiceProvider;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.util.task.TaskMonitor;
 
@@ -63,5 +64,10 @@ public abstract class GhidraProgramTableModel<ROW_TYPE>
 	@Override
 	public Program getDataSource() {
 		return getProgram();
+	}
+
+	// most subclasses will override this to return an address
+	public Address getAddress(int row) {
+		return null;
 	}
 }
