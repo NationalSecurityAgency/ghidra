@@ -512,6 +512,7 @@ public:
   JumpTable *linkJumpTable(PcodeOp *op);		///< Link jump-table with a given BRANCHIND
   JumpTable *findJumpTable(const PcodeOp *op) const;	///< Find a jump-table associated with a given BRANCHIND
   JumpTable *installJumpTable(const Address &addr);	///< Install a new jump-table for the given Address
+  bool earlyJumpTableFail(PcodeOp *op);	///< Try to determine, early, if jump-table analysis will fail
   JumpTable *recoverJumpTable(PcodeOp *op,FlowInfo *flow,int4 &failuremode);
   int4 numJumpTables(void) const { return jumpvec.size(); }	///< Get the number of jump-tables for \b this function
   JumpTable *getJumpTable(int4 i) { return jumpvec[i]; }	///< Get the i-th jump-table
