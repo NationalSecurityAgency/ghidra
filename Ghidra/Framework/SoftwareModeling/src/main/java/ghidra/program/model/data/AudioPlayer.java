@@ -19,38 +19,32 @@ import java.awt.event.MouseEvent;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Clip;
-import javax.sound.sampled.LineEvent;
+import javax.sound.sampled.*;
 import javax.sound.sampled.LineEvent.Type;
-import javax.sound.sampled.LineListener;
-import javax.sound.sampled.LineUnavailableException;
-import javax.sound.sampled.UnsupportedAudioFileException;
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
+import generic.theme.GIcon;
 import ghidra.util.Msg;
-import resources.ResourceManager;
 
 public class AudioPlayer implements Playable, LineListener {
 
-	private static final ImageIcon AUDIO_ICON =
-			ResourceManager.loadImage("images/audio-volume-medium.png");
+	private static final Icon AUDIO_ICON = new GIcon("icon.data.type.audio.player");
 
 	private byte[] bytes;
-	
+
 	public AudioPlayer(byte[] bytes) {
 		this.bytes = bytes;
 	}
 
 	@Override
-	public ImageIcon getImageIcon() {
+	public Icon getImageIcon() {
 		return AUDIO_ICON;
 	}
 
 	@Override
 	public void clicked(MouseEvent event) {
-		try (AudioInputStream stream = AudioSystem.getAudioInputStream(new ByteArrayInputStream(bytes))) {
+		try (AudioInputStream stream =
+			AudioSystem.getAudioInputStream(new ByteArrayInputStream(bytes))) {
 			Clip clip = AudioSystem.getClip();
 			clip.addLineListener(this);
 			clip.open(stream);
@@ -72,6 +66,6 @@ public class AudioPlayer implements Playable, LineListener {
 		if (event.getSource() instanceof Clip clip) {
 			clip.removeLineListener(this);
 			clip.close();
-		}		
+		}
 	}
 }
