@@ -175,9 +175,8 @@ public abstract class AbstractOptions implements Options {
 	}
 
 	private void warnShouldUseTheme(String optionType) {
-		Throwable throwable =
-			ReflectionUtilities.createThrowableWithStackOlderThan(AbstractOptions.class,
-				SubOptions.class);
+		Throwable throwable = ReflectionUtilities
+				.createThrowableWithStackOlderThan(AbstractOptions.class, SubOptions.class);
 		String call = throwable.getStackTrace()[0].toString();
 		Msg.warn(this, "Registering a direct " + optionType + " in the options is deprecated." +
 			" Use registerTheme" + optionType + "Binding() instead!\n Called from " + call + "\n");
@@ -343,8 +342,15 @@ public abstract class AbstractOptions implements Options {
 		Object oldValue = option.getCurrentValue();
 		option.setCurrentValue(newValue);
 
-		if (!notifyOptionChanged(optionName, oldValue, newValue)) {
-			option.setCurrentValue(oldValue);
+		boolean success = false;
+		try {
+			// this can throw an OptionsVetoException
+			success = notifyOptionChanged(optionName, oldValue, newValue);
+		}
+		finally {
+			if (!success) {
+				option.setCurrentValue(oldValue);
+			}
 		}
 	}
 
