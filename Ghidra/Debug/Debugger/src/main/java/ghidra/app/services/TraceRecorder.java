@@ -332,7 +332,7 @@ public interface TraceRecorder {
 	 * @param frameLevel the frame level
 	 * @return the bank, or null
 	 */
-	TargetRegisterBank getTargetRegisterBank(TraceThread thread, int frameLevel);
+	Set<TargetRegisterBank> getTargetRegisterBanks(TraceThread thread, int frameLevel);
 
 	/**
 	 * Get the trace thread corresponding to the given target thread

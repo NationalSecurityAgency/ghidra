@@ -117,7 +117,7 @@ public class DefaultStackRecorder implements ManagedStackRecorder {
 		for (TargetObject p = successor; p != null; p = p.getParent()) {
 			if (p instanceof TargetStackFrame) {
 				if (!PathUtils.isIndex(p.getPath())) {
-					return 0;
+					throw new AssertionError("Invalid path index "+p.getPath());
 				}
 				int index = Integer.decode(p.getIndex());
 				TargetStackFrame frame;
@@ -125,7 +125,10 @@ public class DefaultStackRecorder implements ManagedStackRecorder {
 					frame = stack.get(index);
 				}
 				if (!Objects.equals(p, frame)) {
-					return 0;
+					// NB: This really ought to be an error but the dead frames ask for updates
+					//  after they're dead - until we can figure that out...
+					//throw new AssertionError("Recorder stack has lost synchronization");
+					return -1;
 				}
 				return index;
 			}

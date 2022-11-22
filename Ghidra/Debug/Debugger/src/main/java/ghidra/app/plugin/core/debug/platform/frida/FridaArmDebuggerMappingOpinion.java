@@ -67,7 +67,7 @@ public class FridaArmDebuggerMappingOpinion implements DebuggerMappingOpinion {
 		boolean is64Bit =
 			arch.contains("AARCH64") || arch.contains("arm64") || arch.contains("arm");
 		String os = env.getOperatingSystem();
-		if (os.contains("macos")) {
+		if (os.contains("macos") || os.contains("ios")) {
 			if (is64Bit) {
 				Msg.info(this, "Using os=" + os + " arch=" + arch);
 				return Set.of(new FridaAarch64MacosOffer((TargetProcess) target));
