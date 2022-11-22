@@ -16,6 +16,7 @@
 package ghidra.util.datastruct;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 import org.apache.commons.collections4.IteratorUtils;
 
@@ -25,12 +26,12 @@ import org.apache.commons.collections4.IteratorUtils;
  * number of event notification operations significantly out numbers mutations to this structure
  * (e.g., adding and removing items.
  * <p>
- * An example use cases where using this class is a good fit would be a listener list where
+ * An example use case where using this class is a good fit would be a listener list where
  * listeners are added during initialization, but not after that.   Further, this hypothetical
  * list is used to fire a large number of events.
  * <p>
  * A bad use of this class would be as a container to store widgets where the container the
- * contents are changed often, but iterated over very little.
+ * contents are changed often, but iterated very little.
  * <p>
  * Finally, if this structure is only ever used from a single thread, like the Swing thread, then
  * you do not need the overhead of this class, as the Swing thread synchronous access guarantees
@@ -47,7 +48,7 @@ class CopyOnWriteWeakSet<T> extends WeakSet<T> {
 	}
 
 	@Override
-	public synchronized Iterator<T> iterator() {
+	public Iterator<T> iterator() {
 		return IteratorUtils.unmodifiableIterator(weakHashStorage.keySet().iterator());
 	}
 
@@ -60,26 +61,29 @@ class CopyOnWriteWeakSet<T> extends WeakSet<T> {
 	 * @param it the items
 	 */
 	@Override
-	public void addAll(Iterable<T> it) {
+	public synchronized void addAll(Iterable<T> it) {
 		// only make one copy for the entire set of changes instead of for each change, as calling
 		// add() would do
-		weakHashStorage = new WeakHashMap<>(weakHashStorage);
+		WeakHashMap<T, T> newStorage = new WeakHashMap<>(weakHashStorage);
 		for (T t : it) {
-			weakHashStorage.put(t, null);
+			newStorage.put(t, null);
 		}
+		weakHashStorage = newStorage;
 	}
 
 	@Override
 	public synchronized void add(T t) {
 		maybeWarnAboutAnonymousValue(t);
-		weakHashStorage = new WeakHashMap<>(weakHashStorage);
-		weakHashStorage.put(t, null);
+		WeakHashMap<T, T> newStorage = new WeakHashMap<>(weakHashStorage);
+		newStorage.put(t, null);
+		weakHashStorage = newStorage;
 	}
 
 	@Override
 	public synchronized void remove(T t) {
-		weakHashStorage = new WeakHashMap<>(weakHashStorage);
-		weakHashStorage.remove(t);
+		WeakHashMap<T, T> newStorage = new WeakHashMap<>(weakHashStorage);
+		newStorage.remove(t);
+		weakHashStorage = newStorage;
 	}
 
 	@Override
@@ -88,22 +92,32 @@ class CopyOnWriteWeakSet<T> extends WeakSet<T> {
 	}
 
 	@Override
-	public synchronized Collection<T> values() {
+	public Collection<T> values() {
 		return weakHashStorage.keySet();
 	}
 
 	@Override
-	public synchronized boolean isEmpty() {
+	public boolean isEmpty() {
 		return weakHashStorage.isEmpty();
 	}
 
 	@Override
-	public synchronized int size() {
+	public int size() {
 		return weakHashStorage.size();
 	}
 
 	@Override
-	public synchronized boolean contains(T t) {
+	public boolean contains(T t) {
 		return weakHashStorage.containsKey(t);
+	}
+
+	@Override
+	public Stream<T> stream() {
+		return values().stream();
+	}
+
+	@Override
+	public String toString() {
+		return values().toString();
 	}
 }
