@@ -27,13 +27,14 @@ import ghidra.util.table.GhidraTable;
 
 /**
  * A {@link DockingAction} for showing the most similar function starts in the training
- * set to a possible function start
+ * set to a possible function start 
  */
 public class ShowSimilarStartsAction extends DockingAction {
 	private static final String MENU_TEXT = "Show Similar Function Starts";
 	private static final String ACTION_NAME = "ShowSimilarStartsAction";
 	private static final int NUM_NEIGHBORS = 10;
-	private Program program;
+	private Program trainingSource;
+	private Program targetProgram;
 	private FunctionStartTableModel model;
 	private GhidraTable table;
 	private RandomForestRowObject modelAndParams;
@@ -43,20 +44,22 @@ public class ShowSimilarStartsAction extends DockingAction {
 	/**
 	 * Constructs an action display similar function starts
 	 * @param plugin plugin
-	 * @param program source program
+	 * @param trainingSource source of training data
+	 * @param targetProgram program being searched
 	 * @param table table
 	 * @param model table with action
 	 */
-	public ShowSimilarStartsAction(RandomForestFunctionFinderPlugin plugin, Program program,
-			GhidraTable table, FunctionStartTableModel model) {
+	public ShowSimilarStartsAction(RandomForestFunctionFinderPlugin plugin, Program trainingSource,
+			Program targetProgram, GhidraTable table, FunctionStartTableModel model) {
 		super(ACTION_NAME, plugin.getName());
-		this.program = program;
+		this.trainingSource = trainingSource;
+		this.targetProgram = targetProgram;
 		this.model = model;
 		this.table = table;
 		this.plugin = plugin;
 		this.modelAndParams = model.getRandomForestRowObject();
 		init();
-		finder = new SimilarStartsFinder(program, modelAndParams);
+		finder = new SimilarStartsFinder(trainingSource, targetProgram, modelAndParams);
 	}
 
 	@Override
@@ -74,8 +77,8 @@ public class ShowSimilarStartsAction extends DockingAction {
 		Address potential = model.getAddress(table.getSelectedRow());
 		List<SimilarStartRowObject> closeNeighbors =
 			finder.getSimilarFunctionStarts(potential, NUM_NEIGHBORS);
-		SimilarStartsTableProvider provider = new SimilarStartsTableProvider(plugin, program,
-			potential, closeNeighbors, modelAndParams);
+		SimilarStartsTableProvider provider = new SimilarStartsTableProvider(plugin, trainingSource,
+			targetProgram, potential, closeNeighbors, modelAndParams);
 		plugin.addProvider(provider);
 
 	}

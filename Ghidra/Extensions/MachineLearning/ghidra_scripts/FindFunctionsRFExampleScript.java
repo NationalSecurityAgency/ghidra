@@ -113,7 +113,8 @@ public class FindFunctionsRFExampleScript extends GhidraScript {
 
 		//show the true function starts most similar to one of the false positives
 		if (!falsePositives.isEmpty()) {
-			SimilarStartsFinder finder = new SimilarStartsFinder(currentProgram, best);
+			SimilarStartsFinder finder =
+				new SimilarStartsFinder(currentProgram, currentProgram, best);
 			List<SimilarStartRowObject> neighbors =
 				finder.getSimilarFunctionStarts(falsePositives.get(0).getKey(), 10);
 			printf("\nClosest function starts to false positive at %s :\n",
