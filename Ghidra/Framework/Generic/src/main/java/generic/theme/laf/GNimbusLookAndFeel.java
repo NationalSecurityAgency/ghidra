@@ -24,6 +24,7 @@ import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.nimbus.NimbusLookAndFeel;
 
 import generic.theme.*;
+import generic.theme.laf.nimbus.SelectedTreePainter;
 
 /**
  * Extends the {@link NimbusLookAndFeel} to intercept the {@link #getDefaults()}. Nimbus does 
@@ -49,6 +50,9 @@ public class GNimbusLookAndFeel extends NimbusLookAndFeel {
 	@Override
 	public UIDefaults getDefaults() {
 		UIDefaults defaults = super.getDefaults();
+
+		installCustomPainters(defaults);
+
 		GThemeValueMap javaDefaults = extractJavaDefaults(defaults);
 
 		// replace all colors with GColors
@@ -76,6 +80,13 @@ public class GNimbusLookAndFeel extends NimbusLookAndFeel {
 		defaults.put("Label.textForeground", themeManager.getGColorUiResource("Label.foreground"));
 		themeManager.refreshGThemeValues();
 		return defaults;
+	}
+
+	private void installCustomPainters(UIDefaults defaults) {
+		defaults.put("Tree:TreeCell[Enabled+Selected].backgroundPainter",
+			new SelectedTreePainter());
+		defaults.put("Tree:TreeCell[Focused+Selected].backgroundPainter",
+			new SelectedTreePainter());
 	}
 
 	protected GThemeValueMap extractJavaDefaults(UIDefaults defaults) {
