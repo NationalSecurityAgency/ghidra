@@ -15,14 +15,6 @@
  */
 package ghidra.program.model.data;
 
-import java.awt.event.MouseEvent;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-
-import javax.sound.sampled.*;
-import javax.swing.Icon;
-
-import generic.theme.GIcon;
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryAccessException;
@@ -56,7 +48,7 @@ public class AUDataType extends BuiltIn implements Dynamic {
 				Msg.debug(this, "Invalid AU magic number");
 				return -1;
 			}
-			//Ints always stored as big endian in this format but can be in any kind of program so must get the ints as big endian even when in a little endian program			
+			//Ints always stored as big endian in this format but can be in any kind of program so must get the ints as big endian even when in a little endian program
 			int dataOffset = GhidraBigEndianDataConverter.INSTANCE.getInt(buf, 4);
 
 			int dataSize = GhidraBigEndianDataConverter.INSTANCE.getInt(buf, 8);
@@ -108,36 +100,6 @@ public class AUDataType extends BuiltIn implements Dynamic {
 		return "<AU-Representation>";
 	}
 
-	private static class AUData implements Playable {
-
-		private static final Icon AUDIO_ICON = new GIcon("icon.data.type.au");
-		private byte[] bytes;
-
-		public AUData(byte[] bytes) {
-			this.bytes = bytes;
-		}
-
-		@Override
-		public void clicked(MouseEvent event) {
-
-			try {
-				Clip clip = AudioSystem.getClip();
-				AudioInputStream ais =
-					AudioSystem.getAudioInputStream(new ByteArrayInputStream(bytes));
-				clip.open(ais);
-				clip.start();
-			}
-			catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
-				Msg.debug(this, "Unable to play audio", e);
-			}
-		}
-
-		@Override
-		public Icon getImageIcon() {
-			return AUDIO_ICON;
-		}
-	}
-
 	@Override
 	public Object getValue(MemBuffer buf, Settings settings, int length) {
 		byte[] data = new byte[length];
@@ -145,12 +107,12 @@ public class AUDataType extends BuiltIn implements Dynamic {
 			Msg.error(this, "AU-DataTpe Error: Not enough bytes in memory");
 			return null;
 		}
-		return new AUData(data);
+		return new AudioPlayer(data);
 	}
 
 	@Override
 	public Class<?> getValueClass(Settings settings) {
-		return AUData.class;
+		return AudioPlayer.class;
 	}
 
 	@Override
