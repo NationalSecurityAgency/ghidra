@@ -30,6 +30,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.*;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 public class DecompilerStackProblemsFinderScript extends GhidraScript {
@@ -65,6 +66,7 @@ public class DecompilerStackProblemsFinderScript extends GhidraScript {
 		}
 		finally {
 			callback.dispose();
+			monitor.checkCanceled();
 		}
 
 		TableChooserDialog tableDialog =
@@ -86,7 +88,7 @@ public class DecompilerStackProblemsFinderScript extends GhidraScript {
 	}
 
 	private List<StackErrorRow> findStackErrors(DecompileResults results, TaskMonitor tMonitor)
-			throws Exception {
+			throws CancelledException {
 
 		List<StackErrorRow> rows = new ArrayList<>();
 		HighFunction highFunction = results.getHighFunction();
@@ -96,16 +98,18 @@ public class DecompilerStackProblemsFinderScript extends GhidraScript {
 		AddressSetView body = results.getFunction().getBody();
 		AddressSpace addrSpace = body.getMinAddress().getAddressSpace();
 		Iterator<PcodeOpAST> ops = highFunction.getPcodeOps();
-		ops.forEachRemaining(op -> {
+		while (ops.hasNext()) {
+			tMonitor.checkCanceled();
+			PcodeOp op = ops.next();
 			if (op.getOpcode() != PcodeOp.COPY) {
-				return;
+				continue;
 			}
 			if (!op.getOutput().getAddress().isStackAddress()) {
-				return;
+				continue;
 			}
 			Varnode input = op.getInput(0);
 			if (!input.isConstant()) {
-				return;
+				continue;
 			}
 			try {
 				Address addr = addrSpace.getAddress(input.getOffset());
@@ -117,9 +121,9 @@ public class DecompilerStackProblemsFinderScript extends GhidraScript {
 			catch (AddressOutOfBoundsException e) {
 				//this is can happen when the constant is an encoding of a floating
 				//point value.
-				return;
+				continue;
 			}
-		});
+		}
 		return rows;
 	}
 
@@ -134,7 +138,7 @@ public class DecompilerStackProblemsFinderScript extends GhidraScript {
 		public void configure(DecompInterface decompiler) {
 			decompiler.toggleCCode(false);
 			decompiler.toggleSyntaxTree(true);
-			decompiler.setSimplificationStyle("decompile");
+			decompiler.setSimplificationStyle("normalize");
 			DecompileOptions opts = new DecompileOptions();
 			opts.grabFromProgram(p);
 			decompiler.setOptions(opts);
