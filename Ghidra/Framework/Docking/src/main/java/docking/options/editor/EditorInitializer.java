@@ -17,6 +17,7 @@ package docking.options.editor;
 
 import ghidra.framework.ModuleInitializer;
 import ghidra.framework.options.EnumEditor;
+import ghidra.util.Swing;
 
 import java.awt.Color;
 import java.awt.Font;
@@ -28,6 +29,12 @@ public class EditorInitializer implements ModuleInitializer {
 
 	@Override
 	public void run() {
+		// running this on the Swing thread ensures the SwingThread's ThreadGroupContext is used
+		// when PropertyEditorManager obtains the PropertyEditorFinder during registration
+		Swing.runNow(this::registerEditors);
+	}
+	
+	private void registerEditors() {
 		PropertyEditorManager.registerEditor(String.class, StringEditor.class);
 		PropertyEditorManager.registerEditor(Color.class, ColorEditor.class);
 		PropertyEditorManager.registerEditor(Font.class, FontEditor.class);
