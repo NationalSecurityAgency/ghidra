@@ -1266,10 +1266,15 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 		}
 
 		@Override
-		protected void expandNode(GTreeNode node, TaskMonitor monitor) throws CancelledException {
+		protected void expandNode(GTreeNode node, boolean force, TaskMonitor monitor)
+				throws CancelledException {
 			TreePath treePath = node.getTreePath();
 			Object[] path = treePath.getPath();
 			if (path.length > maxDepth) {
+				return;
+			}
+
+			if (!force && !node.isAutoExpandPermitted()) {
 				return;
 			}
 
@@ -1278,7 +1283,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 				return; // this path hit a function that is already in the path
 			}
 
-			super.expandNode(node, monitor);
+			super.expandNode(node, false, monitor);
 		}
 	}
 

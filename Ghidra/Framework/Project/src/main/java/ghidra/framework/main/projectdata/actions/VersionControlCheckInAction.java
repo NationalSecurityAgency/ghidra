@@ -69,7 +69,7 @@ public class VersionControlCheckInAction extends VersionControlAction {
 
 		List<DomainFile> domainFiles = context.getSelectedFiles();
 		for (DomainFile domainFile : domainFiles) {
-			if (domainFile.isCheckedOut() && domainFile.modifiedSinceCheckout()) {
+			if (domainFile.modifiedSinceCheckout()) {
 				return true; // At least one checked out file selected.
 			}
 		}

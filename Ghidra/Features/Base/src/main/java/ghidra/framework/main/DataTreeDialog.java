@@ -93,7 +93,10 @@ public class DataTreeDialog extends DialogComponentProvider
 	private Integer treeSelectionMode;
 
 	/**
-	 * Construct a new DataTreeDialog.
+	 * Construct a new DataTreeDialog.  This chooser will show all project files.  
+	 * Following linked-folders will only be allowed if a type of {@link #CHOOSE_FOLDER}
+	 * or {@link #OPEN} is specified.  If different behavior is required a filter should 
+	 * be specified using the other constructor. 
 	 *
 	 * @param parent dialog's parent
 	 * @param title title to use
@@ -101,7 +104,7 @@ public class DataTreeDialog extends DialogComponentProvider
 	 * @throws IllegalArgumentException if invalid type is specified
 	 */
 	public DataTreeDialog(Component parent, String title, int type) {
-		this(parent, title, type, null);
+		this(parent, title, type, getDefaultFilter(type));
 	}
 
 	/**
@@ -117,6 +120,20 @@ public class DataTreeDialog extends DialogComponentProvider
 		super(title, true, true, true, false);
 		this.parent = parent;
 		initDataTreeDialog(type, filter);
+	}
+
+	private static DomainFileFilter getDefaultFilter(int type) {
+		if (type == CHOOSE_FOLDER || type == OPEN) {
+			// return filter which forces folder selection and allow navigation into linked-folders
+			return new DomainFileFilter() {
+
+				@Override
+				public boolean accept(DomainFile df) {
+					return true; // show all files (legacy behavior)
+				}
+			};
+		}
+		return null;
 	}
 
 	public void setTreeSelectionMode(int mode) {

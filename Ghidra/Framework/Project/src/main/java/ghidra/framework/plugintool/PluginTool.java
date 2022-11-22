@@ -21,6 +21,7 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.net.URL;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -439,6 +440,18 @@ public abstract class PluginTool extends AbstractDockingTool {
 
 	public boolean acceptDomainFiles(DomainFile[] data) {
 		return pluginMgr.acceptData(data);
+	}
+
+	/**
+	 * Request tool to accept specified URL.  Acceptance of URL depends greatly on the plugins
+	 * confiugred into tool.  If no plugin accepts URL it will be rejected and false returned.
+	 * If a plugin can accept the specified URL it will attempt to process and return true if 
+	 * successful.  The user may be prompted if connecting to the URL requires user authentication.
+	 * @param url read-only resource URL
+	 * @return true if URL accepted and processed else false
+	 */
+	public boolean accept(URL url) {
+		return pluginMgr.accept(url);
 	}
 
 	public void addPropertyChangeListener(PropertyChangeListener l) {

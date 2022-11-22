@@ -147,7 +147,8 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 
 			@Override
 			public boolean isEnabledForContext(ActionContext context) {
-				return currentProgram != null && currentProgram.getDomainFile().canCheckin();
+				return currentProgram != null &&
+					currentProgram.getDomainFile().modifiedSinceCheckout();
 			}
 		};
 

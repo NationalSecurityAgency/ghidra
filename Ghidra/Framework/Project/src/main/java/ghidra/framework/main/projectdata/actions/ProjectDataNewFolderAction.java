@@ -52,6 +52,11 @@ public class ProjectDataNewFolderAction<T extends ProjectTreeContext>
 		return (context.getFolderCount() + context.getFileCount()) == 1;
 	}
 
+	@Override
+	protected boolean isEnabledForContext(T context) {
+		return getFolder(context).isInWritableProject();
+	}
+
 	private void createNewFolder(T context) {
 
 		DomainFolder parentFolder = getFolder(context);

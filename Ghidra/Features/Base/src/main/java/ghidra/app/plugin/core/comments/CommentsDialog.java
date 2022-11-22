@@ -240,10 +240,11 @@ public class CommentsDialog extends DialogComponentProvider implements KeyListen
 	////////////////////////////////////////////////////////////////////
 
 	private AnnotationAdapterWrapper[] getAnnotationAdapterWrappers() {
-		AnnotatedStringHandler[] annotations = Annotation.getAnnotatedStringHandlers();
-		AnnotationAdapterWrapper[] retVal = new AnnotationAdapterWrapper[annotations.length];
-		for (int i = 0; i < annotations.length; i++) {
-			retVal[i] = new AnnotationAdapterWrapper(annotations[i]);
+		List<AnnotatedStringHandler> annotations = Annotation.getAnnotatedStringHandlers();
+		int count = annotations.size();
+		AnnotationAdapterWrapper[] retVal = new AnnotationAdapterWrapper[count];
+		for (int i = 0; i < count; i++) {
+			retVal[i] = new AnnotationAdapterWrapper(annotations.get(i));
 		}
 		return retVal;
 	}

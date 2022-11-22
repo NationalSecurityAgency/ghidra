@@ -36,6 +36,7 @@ src/main/resources/images/disconnected.gif||GHIDRA||reviewed||END|
 src/main/resources/images/disk.png||FAMFAMFAM Icons - CC 2.5||||END|
 src/main/resources/images/face-glasses.png||Tango Icons - Public Domain|||tango icon set|END|
 src/main/resources/images/folder_add.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
+src/main/resources/images/link.png||Crystal Clear Icons - LGPL 2.1||||END|
 src/main/resources/images/lock.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/monitor.png||FAMFAMFAM Icons - CC 2.5|||silk|END|
 src/main/resources/images/noneInTool.gif||GHIDRA||reviewed||END|

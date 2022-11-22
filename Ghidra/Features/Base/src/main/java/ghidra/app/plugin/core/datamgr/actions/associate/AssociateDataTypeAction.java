@@ -38,6 +38,7 @@ import ghidra.app.plugin.core.datamgr.tree.ArchiveNode;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeNode;
 import ghidra.app.plugin.core.datamgr.util.DataTypeTreeCopyMoveTask;
 import ghidra.app.plugin.core.datamgr.util.DataTypeTreeCopyMoveTask.ActionType;
+import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.program.model.data.*;
 import ghidra.util.Msg;
 import ghidra.util.layout.PairLayout;
@@ -85,26 +86,21 @@ public class AssociateDataTypeAction extends DockingAction {
 		return !nodes.isEmpty();
 	}
 
-	private boolean hasSingleModifiableSourceArchive(List<GTreeNode> nodes) {
+	private Archive getSingleDTArchive(List<GTreeNode> nodes) {
 
-		Archive sourceArchive = null;
+		Archive dtArchive = null;
 		for (GTreeNode node : nodes) {
 			Archive archive = findArchive(node);
-			if (sourceArchive == null) {
-				sourceArchive = archive;
+			if (dtArchive == null) {
+				dtArchive = archive;
 				continue;
 			}
 
-			if (sourceArchive != archive) {
-				return false;
+			if (dtArchive != archive) {
+				return null;
 			}
 		}
-
-		if (sourceArchive != null && sourceArchive.isModifiable()) {
-			return true;
-		}
-
-		return false;
+		return dtArchive;
 	}
 
 	private static Archive findArchive(GTreeNode node) {
@@ -134,10 +130,17 @@ public class AssociateDataTypeAction extends DockingAction {
 
 		List<GTreeNode> nodes = ((DataTypesActionContext) context).getSelectedNodes();
 
-		if (!hasSingleModifiableSourceArchive(nodes)) {
-			Msg.showInfo(this, getProviderComponent(), "Multiple Source Archives",
+		Archive dtArchive = getSingleDTArchive(nodes);
+		if (dtArchive == null) {
+			Msg.showInfo(this, getProviderComponent(), "Multiple Data Type Archives",
 				"The currently selected nodes are from multiple archives.\n" +
 					"Please select only nodes from a single archvie.");
+			return;
+		}
+
+		if (!dtArchive.isModifiable()) {
+			DataTypeUtils.showUnmodifiableArchiveErrorMessage(context.getSourceComponent(),
+				"Disassociate Failed", dtArchive.getDataTypeManager());
 			return;
 		}
 

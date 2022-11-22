@@ -368,7 +368,18 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		if (traceChooserDialog != null) {
 			return traceChooserDialog;
 		}
-		DomainFileFilter filter = df -> Trace.class.isAssignableFrom(df.getDomainObjectClass());
+		DomainFileFilter filter = new DomainFileFilter() {
+
+			@Override
+			public boolean accept(DomainFile df) {
+				return Trace.class.isAssignableFrom(df.getDomainObjectClass());
+			}
+
+			@Override
+			public boolean followLinkedFolders() {
+				return false;
+			}
+		};
 
 		// TODO regarding the hack note below, I believe this issue ahs been fixed, but not sure how to test
 		return traceChooserDialog =

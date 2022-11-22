@@ -117,12 +117,6 @@ public class VersionControlDialog extends DialogComponentProvider {
 		return keepFileCB.isSelected();
 	}
 
-	void setCreateKeepFile(boolean selected) {
-		if (!addToVersionControl) {
-			keepFileCB.setSelected(selected);
-		}
-	}
-
 	/**
 	 * Return the comments for the add to version control.
 	 * @return may be the empty string
@@ -133,10 +127,14 @@ public class VersionControlDialog extends DialogComponentProvider {
 
 	/*
 	 * Disable the check box for "keep checked out" because some files are still in use. 
+	 * @param enabled true if checkbox control should be enabled, false if disabled
+	 * @param selected true if default state should be selected, else not-selected
+	 * @param disabledMsg tooltip message if enabled is false, otherwise ignored.
 	 */
-	public void setKeepCheckboxEnabled(boolean enabled) {
+	public void setKeepCheckboxEnabled(boolean enabled, boolean selected, String disabledMsg) {
 		keepCB.setEnabled(enabled);
-		keepCB.setToolTipText(enabled ? "" : "Must keep Checked Out because the file is in use");
+		keepCB.setSelected(selected);
+		keepCB.setToolTipText(enabled ? "" : disabledMsg);
 	}
 
 	private JPanel buildMainPanel() {

@@ -21,6 +21,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import db.*;
 import ghidra.app.util.task.OpenProgramTask;
+import ghidra.app.util.task.OpenProgramTask.OpenProgramRequest;
 import ghidra.feature.vt.api.correlator.program.ImpliedMatchProgramCorrelator;
 import ghidra.feature.vt.api.correlator.program.ManualMatchProgramCorrelator;
 import ghidra.feature.vt.api.impl.*;
@@ -309,7 +310,8 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession, VTC
 
 		TaskLauncher.launch(openTask);
 
-		return openTask.getOpenProgram();
+		OpenProgramRequest openProgram = openTask.getOpenProgram();
+		return openProgram != null ? openProgram.getProgram() : null;
 	}
 
 	@Override

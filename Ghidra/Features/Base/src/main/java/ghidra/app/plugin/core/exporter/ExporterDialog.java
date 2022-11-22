@@ -295,11 +295,15 @@ public class ExporterDialog extends DialogComponentProvider implements AddressFa
 		return comboBox;
 	}
 
+	@SuppressWarnings("unchecked")
 	private List<Exporter> getApplicableExporters() {
 		List<Exporter> list = new ArrayList<>(ClassSearcher.getInstances(Exporter.class));
-		Class<? extends DomainObject> domainObjectClass = domainFile.getDomainObjectClass();
-		list.removeIf(exporter -> !exporter.canExportDomainObject(domainObjectClass));
-		Collections.sort(list, (o1, o2) -> o1.toString().compareTo(o2.toString()));
+		Class<?> domainObjectClass = domainFile.getDomainObjectClass();
+		if (DomainObject.class.isAssignableFrom(domainObjectClass)) {
+			list.removeIf(exporter -> !exporter
+					.canExportDomainObject((Class<? extends DomainObject>) domainObjectClass));
+			Collections.sort(list, (o1, o2) -> o1.toString().compareTo(o2.toString()));
+		}
 		return list;
 	}
 
@@ -422,8 +426,16 @@ public class ExporterDialog extends DialogComponentProvider implements AddressFa
 
 	private void doOpenFile(TaskMonitor monitor) {
 		try {
-			domainObject = domainFile.getImmutableDomainObject(this, DomainFile.DEFAULT_VERSION,
-				TaskMonitor.DUMMY);
+			if (domainFile.isLinkFile()) {
+				// Linked files are always subject to upgrade if needed and do not support
+				// getImmutableDomainObject
+				domainObject =
+					domainFile.getReadOnlyDomainObject(this, DomainFile.DEFAULT_VERSION, monitor);
+			}
+			else {
+				domainObject =
+					domainFile.getImmutableDomainObject(this, DomainFile.DEFAULT_VERSION, monitor);
+			}
 		}
 		catch (VersionException | CancelledException | IOException e) {
 			Msg.showError(this, getComponent(), "Error Opening File",

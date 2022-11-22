@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +16,9 @@
 //Opens all programs under a chosen domain folder, grabs their error count,
 //then sorts in increasing error order and prints them
 //@category FunctionID
+import java.io.IOException;
+import java.util.*;
+
 import generic.stl.Pair;
 import ghidra.app.script.GhidraScript;
 import ghidra.framework.model.DomainFile;
@@ -26,9 +28,6 @@ import ghidra.program.model.listing.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
-
-import java.io.IOException;
-import java.util.*;
 
 public class FindErrors extends GhidraScript {
 
@@ -82,6 +81,10 @@ public class FindErrors extends GhidraScript {
 			if (monitor.isCancelled()) {
 				return;
 			}
+			// Do not follow folder-links or consider program links.  Using content type
+			// to filter is best way to control this.  If program links should be considered
+			// "Program.class.isAssignableFrom(domainFile.getDomainObjectClass())"
+			// should be used.
 			if (domainFile.getContentType().equals(ProgramContentHandler.PROGRAM_CONTENT_TYPE)) {
 				programs.add(domainFile);
 			}

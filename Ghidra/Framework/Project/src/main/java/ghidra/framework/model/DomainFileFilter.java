@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,4 +30,13 @@ public interface DomainFileFilter {
      * 
      */
     public boolean accept(DomainFile df);
+
+	/**
+	 * Determine if linked folders represented by a link-file should be followed.
+	 * If this method is not implemented the default will return {@code true}.
+	 * @return true if linked-folders should be followed or false to ignore.
+	 */
+	public default boolean followLinkedFolders() {
+		return true;
+	}
 }

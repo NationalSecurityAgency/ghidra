@@ -16,10 +16,12 @@
 package ghidra.framework.model;
 
 import java.io.*;
+import java.net.URL;
 import java.util.Set;
 
 import ghidra.framework.plugintool.PluginEvent;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.protocol.ghidra.GhidraURL;
 
 /**
  * Services that the Tool uses.
@@ -73,14 +75,22 @@ public interface ToolServices {
 	public void displaySimilarTool(PluginTool tool, DomainFile domainFile, PluginEvent event);
 
 	/**
-	 * Returns the default tool template used to open the tool.  Here <b>default</b> means the 
-	 * tool that should be used to open the given file, whether defined by the user or the 
-	 * system default.
+	 * Returns the default/preferred tool template which should be used to open the specified 
+	 * domain file, whether defined by the user or the system default.
 	 * 
-	 * @param domainFile The file for which to find the preferred tool.
-	 * @return The preferred tool that should be used to open the given file.
+	 * @param domainFile The file whose preferred tool should be found.
+	 * @return The preferred tool that should be used to open the given file or null if none found.
 	 */
 	public ToolTemplate getDefaultToolTemplate(DomainFile domainFile);
+
+	/**
+	 * Returns the default/preferred tool template which should be used to open the specified 
+	 * domain file content type, whether defined by the user or the system default.
+	 * 
+	 * @param contentType The content type whose preferred tool should be found.
+	 * @return The preferred tool that should be used to open the given file or null if none found.
+	 */
+	public ToolTemplate getDefaultToolTemplate(String contentType);
 
 	/**
 	 * Returns a set of tools that can open the given domain file class.
@@ -108,20 +118,42 @@ public interface ToolServices {
 	public void setContentTypeToolAssociations(Set<ToolAssociationInfo> infos);
 
 	/**
-	 * Launch the default tool; if domainFile is not null, this file will
-	 * be opened in the tool.
-	 * @param domainFile the file to open; may be null
-	 * @return the tool
+	 * Launch the default tool and open the specified domainFile.
+	 * @param domainFile the file to open
+	 * @return the launched tool.  Null returned if a suitable default tool
+	 * for the file content type was not found.
 	 */
 	public PluginTool launchDefaultTool(DomainFile domainFile);
 
 	/**
-	 * Launch the tool with the given name
+	 * Launch the tool with the given name.  A domainFile may be specified and will be opened
+	 * if its content type is supported by the tool.
 	 * @param toolName name of the tool to launch
 	 * @param domainFile the file to open; may be null
-	 * @return the tool
+	 * @return the requested tool or null if the specified tool not found.
 	 */
 	public PluginTool launchTool(String toolName, DomainFile domainFile);
+
+	/**
+	 * Launch the default tool and open the specified Ghidra URL resource.
+	 * The tool choosen well be based upon the content type of the specified resource.
+	 * @param ghidraUrl resource to be opened (see {@link GhidraURL})
+	 * @return the launched tool.  Null returned if a failure occurs while accessing the specified
+	 * resource or a suitable default tool for the file content type was not found.
+	 * @throws IllegalArgumentException if URL protocol is not supported.  Currently, only
+	 * the {@code ghidra} protocol is supported.
+	 */
+	public PluginTool launchDefaultToolWithURL(URL ghidraUrl);
+
+	/**
+	 * Launch the tool with the given name and attempt to open the specified Ghidra URL resource.
+	 * @param toolName name of the tool to launch
+	 * @param ghidraUrl resource to be opened (see {@link GhidraURL})
+	 * @return the requested tool or null if the specified tool not found.
+	 * @throws IllegalArgumentException if URL protocol is not supported.  Currently, only
+	 * the {@code ghidra} protocol is supported.
+	 */
+	public PluginTool launchToolWithURL(String toolName, URL ghidraUrl);
 
 	/**
 	 * Add a listener that will be notified when the default tool specification changes 
