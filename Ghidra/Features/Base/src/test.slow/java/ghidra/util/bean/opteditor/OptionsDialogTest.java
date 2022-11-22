@@ -649,7 +649,6 @@ public class OptionsDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 		Options options = tool.getOptions(ToolConstants.TOOL_OPTIONS);
 
-		Color c = options.getColor("Favorite Color", Palette.RED);
 		String currentValue = options.getString("Favorite String", null);
 		assertEquals("Bar", currentValue);
 

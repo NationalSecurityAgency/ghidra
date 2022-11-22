@@ -117,16 +117,25 @@ public class EditorState implements PropertyChangeListener {
 			return;
 		}
 
-		options.putObject(name, currentValue);
-		Object newValue = options.getObject(name, null);
-		boolean success = Objects.equals(currentValue, newValue);
-		if (success) {
-			originalValue = newValue;
-			currentValue = newValue;
+		//
+		// The call to put() may throw an exception or may choose not to take the new value. Handle
+		// both cases using a finally block along with checking the value after making the put()
+		// call.
+		//
+		try {
+			options.putObject(name, currentValue);
 		}
-		else {
-			editor.setValue(originalValue);
-			currentValue = originalValue;
+		finally {
+			Object newValue = options.getObject(name, null);
+			boolean success = Objects.equals(currentValue, newValue);
+			if (success) {
+				originalValue = newValue;
+				currentValue = newValue;
+			}
+			else {
+				editor.setValue(originalValue);
+				currentValue = originalValue;
+			}
 		}
 	}
 
