@@ -26,8 +26,7 @@ import javax.swing.Icon;
 
 import resources.MultiIcon;
 import resources.ResourceManager;
-import resources.icons.RotateIcon;
-import resources.icons.TranslateIcon;
+import resources.icons.*;
 
 /**
  * Class that can transform one icon into another. Useful for scaling, translating, disabling,
@@ -39,6 +38,8 @@ public class IconModifier {
 	Point translation;
 	boolean disabled;
 	Integer rotation;
+	boolean mirror;	// mirrors the image left to right
+	boolean flip;   // flips the image upside down
 	List<IconValue> overlayIconValues = null;
 
 	/**
@@ -47,12 +48,17 @@ public class IconModifier {
 	 * @param translation if non-null, translates an icon by this amount
 	 * @param rotation if non-null, the amount in degrees to rotate the icon
 	 * @param disabled if true, creates a disabled version of the icon
+	 * @param mirror if true, the image will have its x values swapped (left to right)
+	 * @param flip if true, the image will have its y values swapped (turned upside down)
 	 */
-	public IconModifier(Dimension size, Point translation, Integer rotation, boolean disabled) {
+	public IconModifier(Dimension size, Point translation, Integer rotation,
+			boolean disabled, boolean mirror, boolean flip) {
 		this.size = size;
 		this.translation = translation;
 		this.rotation = rotation;
 		this.disabled = disabled;
+		this.mirror = mirror;
+		this.flip = flip;
 	}
 
 	private IconModifier() {
@@ -93,6 +99,20 @@ public class IconModifier {
 	}
 
 	/**
+	 * Sets the modifier to flip the icon side to side
+	 */
+	public void setMirror() {
+		mirror = true;
+	}
+
+	/**
+	 * Sets the modifier to flip the icon side to side
+	 */
+	public void setFlip() {
+		flip = true;
+	}
+
+	/**
 	 * Modifies the given icon by the any of the modifiers set.
 	 * @param icon the icon to be modified
 	 * @param values the ThemeValueMap needed if the modify action is to overlay other icons. The 
@@ -107,8 +127,14 @@ public class IconModifier {
 		if (disabled) {
 			modified = ResourceManager.getDisabledIcon(modified);
 		}
+		if (mirror) {
+			modified = new ReflectedIcon(modified, true);
+		}
+		if (flip) {
+			modified = new ReflectedIcon(modified, false);
+		}
 		if (rotation != null) {
-			modified = new RotateIcon(icon, rotation);
+			modified = new RotateIcon(modified, rotation);
 		}
 		if (translation != null) {
 			modified = new TranslateIcon(modified, translation.x, translation.y);
@@ -131,6 +157,12 @@ public class IconModifier {
 		StringBuilder builder = new StringBuilder();
 		if (size != null) {
 			builder.append("[" + "size(" + size.width + "," + size.height + ")]");
+		}
+		if (mirror) {
+			builder.append("[mirror]");
+		}
+		if (flip) {
+			builder.append("[flip]");
 		}
 		if (rotation != null) {
 			builder.append("[rotate(" + rotation + ")]");
@@ -195,6 +227,12 @@ public class IconModifier {
 			else if (modifierString.startsWith("move")) {
 				parseMoveModifier(modifier, modifierString);
 			}
+			else if (modifierString.startsWith("mirror")) {
+				parseMirrorModifier(modifier, modifierString);
+			}
+			else if (modifierString.startsWith("flip")) {
+				parseFlipModifier(modifier, modifierString);
+			}
 			else if (modifierString.startsWith("rotate")) {
 				parseRotateModifier(modifier, modifierString);
 			}
@@ -228,7 +266,7 @@ public class IconModifier {
 
 	private boolean hadModifications() {
 		return size != null || translation != null || overlayIconValues != null ||
-			rotation != null || disabled;
+			rotation != null || disabled || mirror || flip;
 	}
 
 	private static void parseDisabledModifier(IconModifier modifier, String modifierString)
@@ -237,6 +275,22 @@ public class IconModifier {
 			throw new ParseException("Illegal Icon modifier: " + modifier, 0);
 		}
 		modifier.setDisabled();
+	}
+
+	private static void parseMirrorModifier(IconModifier modifier, String modifierString)
+			throws ParseException {
+		if (!modifierString.equals("mirror")) {
+			throw new ParseException("Illegal Icon modifier: " + modifier, 0);
+		}
+		modifier.setMirror();
+	}
+
+	private static void parseFlipModifier(IconModifier modifier, String modifierString)
+			throws ParseException {
+		if (!modifierString.equals("flip")) {
+			throw new ParseException("Illegal Icon modifier: " + modifier, 0);
+		}
+		modifier.setFlip();
 	}
 
 	private static void parseRotateModifier(IconModifier modifier, String modifierString)

@@ -84,6 +84,20 @@ public class IconModifierTest {
 	}
 
 	@Test
+	public void testMirrorModifier() throws Exception {
+		IconModifier modifier = IconModifier.parse("[mirror]");
+		Icon modifiedIcon = modifier.modify(baseIcon, values);
+		assertNotEquals(baseIcon, modifiedIcon);
+	}
+
+	@Test
+	public void testFlipModifier() throws Exception {
+		IconModifier modifier = IconModifier.parse("[flip]");
+		Icon modifiedIcon = modifier.modify(baseIcon, values);
+		assertNotEquals(baseIcon, modifiedIcon);
+	}
+
+	@Test
 	public void testOverlayIcon() throws Exception {
 		IconModifier modifier = IconModifier.parse("{images/flag.png}");
 		Icon modifiedIcon = modifier.modify(baseIcon, values);
@@ -179,11 +193,13 @@ public class IconModifierTest {
 	@Test
 	public void testGetSerializationString() {
 		//@formatter:off
-		assertEquals("[size(5,9)]", new IconModifier(new Dimension(5,9), null, null, false).getSerializationString());
-		assertEquals("[move(8,7)]", new IconModifier(null, new Point(8,7), null,false).getSerializationString());
-		assertEquals("[disabled]", new IconModifier(null, null, null, true).getSerializationString());
-		assertEquals("[size(5,0)][move(8,7)][disabled]", new IconModifier(new Dimension(5,0), new Point(8,7), null, true).getSerializationString());
-		assertEquals("[rotate(90)]", new IconModifier(null, null, 90, false).getSerializationString());
+		assertEquals("[size(5,9)]", new IconModifier(new Dimension(5,9), null, null, false, false, false).getSerializationString());
+		assertEquals("[move(8,7)]", new IconModifier(null, new Point(8,7), null,false, false, false).getSerializationString());
+		assertEquals("[disabled]", new IconModifier(null, null, null, true, false, false).getSerializationString());
+		assertEquals("[size(5,0)][move(8,7)][disabled]", new IconModifier(new Dimension(5,0), new Point(8,7), null, true, false, false).getSerializationString());
+		assertEquals("[rotate(90)]", new IconModifier(null, null, 90, false, false, false).getSerializationString());
+		assertEquals("[mirror]", new IconModifier(null, null, null, false, true, false).getSerializationString());
+		assertEquals("[flip]", new IconModifier(null, null, null, false, false, true).getSerializationString());
 		//@formatter:on
 	}
 }
