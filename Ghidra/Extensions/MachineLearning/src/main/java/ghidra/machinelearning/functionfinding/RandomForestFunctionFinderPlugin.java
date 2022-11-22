@@ -30,6 +30,7 @@ import ghidra.app.events.ProgramLocationPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.services.GoToService;
+import ghidra.app.services.ProgramManager;
 import ghidra.framework.options.OptionsChangeListener;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginInfo;
@@ -43,12 +44,12 @@ import ghidra.util.bean.opteditor.OptionsVetoException;
 
 //@formatter:off
 @PluginInfo(
-	status = PluginStatus.UNSTABLE,
+	status = PluginStatus.RELEASED,
 	packageName = MiscellaneousPluginPackage.NAME,
 	category = PluginCategoryNames.ANALYSIS,
 	shortDescription = "Function Finder",
 	description = "Trains a random forest model to find function starts.",
-	servicesRequired = { GoToService.class},
+	servicesRequired = { GoToService.class, ProgramManager.class},
 	eventsProduced = { ProgramLocationPluginEvent.class },
 	eventsConsumed = { ProgramClosedPluginEvent.class}
 	)
@@ -210,10 +211,6 @@ public class RandomForestFunctionFinderPlugin extends ProgramPlugin
 
 	private void displayDialog(NavigatableActionContext c) {
 		if (paramsDialog == null) {
-			paramsDialog = new FunctionStartRFParamsDialog(this);
-		}
-		if (!paramsDialog.getTrainingSource().equals(this.getCurrentProgram())) {
-			paramsDialog.dismissCallback();
 			paramsDialog = new FunctionStartRFParamsDialog(this);
 		}
 		tool.showDialog(paramsDialog, c.getComponentProvider());

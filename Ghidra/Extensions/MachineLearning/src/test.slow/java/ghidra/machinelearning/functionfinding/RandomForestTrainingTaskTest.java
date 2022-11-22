@@ -117,7 +117,7 @@ public class RandomForestTrainingTaskTest extends AbstractProgramBasedTest {
 			RandomForestFunctionFinderPlugin.NON_START, 1, 1, true, TaskMonitor.DUMMY));
 		LabelFactory lf = new LabelFactory();
 		ListDataSource<Label> trainingSource =
-			new ListDataSource<Label>(trainingData, lf, new SimpleDataSourceProvenance("test", lf));
+			new ListDataSource<>(trainingData, lf, new SimpleDataSourceProvenance("test", lf));
 		MutableDataset<Label> trainingSet = new MutableDataset<>(trainingSource);
 
 		//create ensemble with two models which always report FUNC_START  
@@ -199,7 +199,7 @@ public class RandomForestTrainingTaskTest extends AbstractProgramBasedTest {
 			new RandomForestTrainingTask(program, params, x -> rows.add(x), 100);
 		TaskLauncher.launchModal("test", task);
 		assertEquals(1, rows.size());
-		SimilarStartsFinder finder = new SimilarStartsFinder(program, rows.get(0));
+		SimilarStartsFinder finder = new SimilarStartsFinder(program, program, rows.get(0));
 		Address entryAddr = program.getSymbolTable().getSymbols("entry").next().getAddress();
 		List<SimilarStartRowObject> res = finder.getSimilarFunctionStarts(entryAddr, 7);
 		//just verify that the number of elements is correct, each element is a function start,
