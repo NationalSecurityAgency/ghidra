@@ -130,7 +130,7 @@ public class Ext4Analyzer extends FileFormatAnalyzer {
 			monitor.checkCanceled();
 			long inodeTableBlockOffset = groupDescriptors[i].getBg_inode_table_lo() & 0xffffffffL;
 			if( is64Bit ) {
-				inodeTableBlockOffset = (groupDescriptors[i].getBg_inode_table_hi() << 32) | inodeTableBlockOffset;
+				inodeTableBlockOffset = (((long) groupDescriptors[i].getBg_inode_table_hi()) << 32) | inodeTableBlockOffset;
 			}
 			long offset = inodeTableBlockOffset * blockSize;
 			reader.setPointerIndex(offset);
