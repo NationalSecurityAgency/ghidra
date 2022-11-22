@@ -22,7 +22,9 @@ import java.util.Map;
 import SWIG.SBStream;
 import SWIG.SBValue;
 import agent.lldb.model.iface2.LldbModelTargetStackFrameRegister;
-import ghidra.dbg.target.schema.*;
+import ghidra.dbg.target.schema.TargetAttributeType;
+import ghidra.dbg.target.schema.TargetElementType;
+import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.dbg.util.ConversionUtils;
 import ghidra.dbg.util.PathUtils;
 

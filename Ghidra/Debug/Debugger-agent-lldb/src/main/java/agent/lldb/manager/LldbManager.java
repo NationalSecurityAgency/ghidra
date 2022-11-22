@@ -404,7 +404,7 @@ public interface LldbManager extends AutoCloseable, LldbBreakpointInsertions {
 
 	CompletableFuture<?> attach(String url, boolean wait, boolean async);
 
-	CompletableFuture<?> connect(String url, boolean auto, boolean async);
+	CompletableFuture<?> connect(String url, boolean auto, boolean async, boolean kernel);
 
 	CompletableFuture<?> launch(String fileName, List<String> args);
 

@@ -27,6 +27,7 @@ import agent.lldb.model.impl.LldbModelTargetStackImpl;
 import ghidra.dbg.target.*;
 
 public interface LldbModelTargetThread extends //
+		TargetAggregate, //
 		TargetThread, //
 		LldbModelTargetAccessConditioned, //
 		LldbModelTargetExecutionStateful, //

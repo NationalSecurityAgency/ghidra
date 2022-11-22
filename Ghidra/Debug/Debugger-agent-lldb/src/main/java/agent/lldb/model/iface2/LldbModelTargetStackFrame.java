@@ -23,12 +23,14 @@ import SWIG.SBThread;
 import agent.lldb.manager.LldbEventsListenerAdapter;
 import agent.lldb.manager.impl.LldbManagerImpl;
 import agent.lldb.model.iface1.LldbModelSelectableObject;
+import ghidra.dbg.target.TargetAggregate;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.TargetStackFrame;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 
 public interface LldbModelTargetStackFrame extends //
+		TargetAggregate, //
 		TargetStackFrame, //
 		LldbEventsListenerAdapter, //
 		LldbModelSelectableObject {
