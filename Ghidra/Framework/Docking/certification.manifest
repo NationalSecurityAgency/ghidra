@@ -85,6 +85,7 @@ src/main/resources/images/menu16.gif||GHIDRA||reviewed||END|
 src/main/resources/images/note-red.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/note.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/note.yellow.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
+src/main/resources/images/oxygen-edit-redo.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/page.png||FAMFAMFAM Icons - CC 2.5||||END|
 src/main/resources/images/page_code.png||FAMFAMFAM Icons - CC 2.5||||END|
 src/main/resources/images/page_excel.png||FAMFAMFAM Icons - CC 2.5||||END|
@@ -92,7 +93,6 @@ src/main/resources/images/page_go.png||FAMFAMFAM Icons - CC 2.5||||END|
 src/main/resources/images/page_green.png||FAMFAMFAM Icons - CC 2.5||||END|
 src/main/resources/images/play.png||GHIDRA||||END|
 src/main/resources/images/preferences-system-windows.png||Tango Icons - Public Domain||||END|
-src/main/resources/images/redo.png||Crystal Clear Icons - LGPL 2.1||||END|
 src/main/resources/images/software-update-available.png||Tango Icons - Public Domain|||tango icon set|END|
 src/main/resources/images/table.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/tag.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
@@ -100,7 +100,6 @@ src/main/resources/images/text_lowercase.png||FAMFAMFAM Icons - CC 2.5|||famfamf
 src/main/resources/images/textfield_rename.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/tip.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/trash-empty.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
-src/main/resources/images/undo.png||Crystal Clear Icons - LGPL 2.1||||END|
 src/main/resources/images/user-home.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/view-filter.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/warning.help.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
