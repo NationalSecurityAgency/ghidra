@@ -224,4 +224,26 @@ public class StubThemeManager extends ThemeManager {
 		setColor(new ColorValue("color.palette." + paletteId, color));
 	}
 
+	@Override
+	protected ThemeDefaultsProvider getThemeDefaultsProvider() {
+		return new ThemeDefaultsProvider() {
+
+			@Override
+			public GThemeValueMap getDefaults() {
+				return null;
+			}
+
+			@Override
+			public GThemeValueMap getDarkDefaults() {
+				return null;
+			}
+
+			@Override
+			public GThemeValueMap getLookAndFeelDefaults(LafType lafType) {
+				return null;
+			}
+
+		};
+	}
+
 }

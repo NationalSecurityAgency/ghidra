@@ -119,10 +119,12 @@ public class GThemeValueMap {
 	 * @param valueMap the map whose values are to be loaded into this map
 	 */
 	public void load(GThemeValueMap valueMap) {
+		if (valueMap == null) {
+			return;
+		}
 		valueMap.colorMap.values().forEach(v -> addColor(v));
 		valueMap.fontMap.values().forEach(v -> addFont(v));
 		valueMap.iconMap.values().forEach(v -> addIcon(v));
-
 	}
 
 	/**

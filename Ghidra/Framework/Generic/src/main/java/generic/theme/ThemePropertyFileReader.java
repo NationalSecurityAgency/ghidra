@@ -16,6 +16,8 @@
 package generic.theme;
 
 import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
 
 import generic.jar.ResourceFile;
 
@@ -26,6 +28,7 @@ public class ThemePropertyFileReader extends AbstractThemeReader {
 
 	private GThemeValueMap defaults;
 	private GThemeValueMap darkDefaults;
+	private Map<LafType, GThemeValueMap> customSectionsMap = new HashMap<>();
 
 	/**
 	 * Constructor for when the the theme.properties file is a {@link ResourceFile}
@@ -68,6 +71,14 @@ public class ThemePropertyFileReader extends AbstractThemeReader {
 		return darkDefaults == null ? new GThemeValueMap() : darkDefaults;
 	}
 
+	/**
+	 * Returns a map of all the custom (look and feel specific) value maps
+	 * @return a map of all the custom (look and feel specific) value maps
+	 */
+	public Map<LafType, GThemeValueMap> getLookAndFeelSections() {
+		return customSectionsMap;
+	}
+
 	protected void processNoSection(Section section) throws IOException {
 		if (!section.isEmpty()) {
 			error(0, "Theme properties file has values defined outside of a defined section");
@@ -86,4 +97,16 @@ public class ThemePropertyFileReader extends AbstractThemeReader {
 		processValues(darkDefaults, section);
 	}
 
+	@Override
+	protected void processCustomSection(Section section) throws IOException {
+		String name = section.getName();
+		LafType lafType = LafType.fromName(name);
+		if (lafType == null) {
+			error(0, "Unknown Look and Feel section found: " + name);
+			return;
+		}
+		GThemeValueMap customValues = new GThemeValueMap();
+		processValues(customValues, section);
+		customSectionsMap.put(lafType, customValues);
+	}
 }

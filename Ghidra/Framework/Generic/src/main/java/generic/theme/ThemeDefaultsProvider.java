@@ -15,63 +15,29 @@
  */
 package generic.theme;
 
-import java.io.IOException;
-import java.util.List;
-
-import generic.jar.ResourceFile;
-import ghidra.framework.Application;
-import ghidra.util.Msg;
-
 /**
  * Loads all the system theme.property files that contain all the default color, font, and
  * icon values.
  */
-public class ThemeDefaultsProvider {
-
-	private GThemeValueMap defaults = new GThemeValueMap();
-	private GThemeValueMap darkDefaults = new GThemeValueMap();
-
-	ThemeDefaultsProvider() {
-		loadThemeDefaultFiles();
-	}
-
-	/**
-	 * Searches for all the theme.property files and loads them into either the standard
-	 * defaults (light) map or the dark defaults map.
-	 */
-	private void loadThemeDefaultFiles() {
-		defaults.clear();
-		darkDefaults.clear();
-
-		List<ResourceFile> themeDefaultFiles =
-			Application.findFilesByExtensionInApplication(".theme.properties");
-
-		for (ResourceFile resourceFile : themeDefaultFiles) {
-			try {
-				ThemePropertyFileReader reader = new ThemePropertyFileReader(resourceFile);
-				defaults.load(reader.getDefaultValues());
-				darkDefaults.load(reader.getDarkDefaultValues());
-			}
-			catch (IOException e) {
-				Msg.error(this,
-					"Error reading theme properties file: " + resourceFile.getAbsolutePath(), e);
-			}
-		}
-	}
+public interface ThemeDefaultsProvider {
 
 	/**
 	 * Returns the standard defaults {@link GThemeValueMap}
 	 * @return the standard defaults {@link GThemeValueMap}
 	 */
-	public GThemeValueMap getDefaults() {
-		return defaults;
-	}
+	public GThemeValueMap getDefaults();
 
 	/**
 	 * Returns the dark defaults {@link GThemeValueMap}
 	 * @return the dark defaults {@link GThemeValueMap}
 	 */
-	public GThemeValueMap getDarkDefaults() {
-		return darkDefaults;
-	}
+	public GThemeValueMap getDarkDefaults();
+
+	/**
+	 * Returns the defaults specific to a given Look and Feel
+	 * @param lafType the Look and Feel type
+	 * @return  the defaults specific to a given Look and Feel
+	 */
+	public GThemeValueMap getLookAndFeelDefaults(LafType lafType);
+
 }

@@ -41,8 +41,6 @@ public class HeadlessThemeManager extends ThemeManager {
 	}
 
 	private void doInitialize() {
-		loadDefaultThemeValues();
-
 		buildCurrentValues();
 		GColor.refreshAll(currentValues);
 		GIcon.refreshAll(currentValues);

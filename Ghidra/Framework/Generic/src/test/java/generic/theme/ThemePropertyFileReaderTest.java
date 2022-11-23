@@ -20,9 +20,9 @@ import static org.junit.Assert.*;
 
 import java.awt.Color;
 import java.awt.Font;
-import java.io.IOException;
-import java.io.StringReader;
+import java.io.*;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.Icon;
 
@@ -141,9 +141,46 @@ public class ThemePropertyFileReaderTest {
 	}
 
 	@Test
-	public void testParseColorError() throws IOException {
+	public void testLookAndFeelValues() throws IOException {
 		//@formatter:off
 		ThemePropertyFileReader reader = new ThemePropertyFileReader("test", new StringReader(String.join("\n", 
+			"[Defaults]", 
+			"  color.b.1    = white",					
+			"[Dark Defaults]", 
+			"  color.b.1    = black",					
+			"[Metal]",
+			"  color.b.1    = red",
+			"[Nimbus]", 
+			"  color.b.1    = green",
+			"")));
+		//@formatter:on
+
+		GThemeValueMap values = reader.getDefaultValues();
+		assertEquals(1, values.size());
+
+		GThemeValueMap darkValues = reader.getDarkDefaultValues();
+		assertEquals(1, values.size());
+
+		assertEquals(WHITE, getColor(values, "color.b.1"));
+		assertEquals(BLACK, getColor(darkValues, "color.b.1"));
+
+		Map<LafType, GThemeValueMap> customSections = reader.getLookAndFeelSections();
+		assertEquals(2, customSections.size());
+
+		GThemeValueMap customValues = customSections.get(LafType.NIMBUS);
+		assertNotNull(customValues);
+		assertEquals(GREEN, getColor(customValues, "color.b.1"));
+
+		customValues = customSections.get(LafType.METAL);
+		assertNotNull(customValues);
+		assertEquals(RED, getColor(customValues, "color.b.1"));
+
+	}
+
+	@Test
+	public void testParseColorError() throws IOException {
+		//@formatter:off
+		ThemePropertyFileReader reader = new SilentThemePropertyFileReader("test", new StringReader(String.join("\n", 
 			"[Defaults]", 
 			"  color.b.1    = white",					// WHITE
 			"  color.b.2    = sdfsdf",					// RED
@@ -159,7 +196,7 @@ public class ThemePropertyFileReaderTest {
 	@Test
 	public void testParseFontError() throws IOException {
 		//@formatter:off
-		ThemePropertyFileReader reader = new ThemePropertyFileReader("test", new StringReader(String.join("\n", 
+		ThemePropertyFileReader reader = new SilentThemePropertyFileReader("test", new StringReader(String.join("\n", 
 			"[Defaults]", 
 			"  font.b.1    =  Dialog-PLAIN-14",					
 			"  font.b.2    = Dialog-PLANE-13",				
@@ -174,7 +211,7 @@ public class ThemePropertyFileReaderTest {
 	@Test
 	public void testParseFontModiferError() throws IOException {
 		//@formatter:off
-		ThemePropertyFileReader reader = new ThemePropertyFileReader("test", new StringReader(String.join("\n", 
+		ThemePropertyFileReader reader = new SilentThemePropertyFileReader("test", new StringReader(String.join("\n", 
 			"[Defaults]", 
 			"  font.b.1    =  Dialog-PLAIN-14",					
 			"  font.b.2    = (font.b.1[)",				
@@ -188,7 +225,7 @@ public class ThemePropertyFileReaderTest {
 	@Test
 	public void testIconNoRightHandValueError() throws IOException {
 		//@formatter:off
-		ThemePropertyFileReader reader = new ThemePropertyFileReader("test", new StringReader(String.join("\n", 
+		ThemePropertyFileReader reader = new SilentThemePropertyFileReader("test", new StringReader(String.join("\n", 
 			"[Defaults]", 
 			"  icon.b.1    = core.png",					
 			"  icon.b.2    = 	",			
@@ -212,5 +249,18 @@ public class ThemePropertyFileReaderTest {
 	private Icon getIcon(GThemeValueMap values, String id) {
 		IconValue icon = values.getIcon(id);
 		return icon.get(values);
+	}
+
+	private class SilentThemePropertyFileReader extends ThemePropertyFileReader {
+
+		protected SilentThemePropertyFileReader(String source, Reader reader) throws IOException {
+			super(source, reader);
+		}
+
+		@Override
+		protected void outputError(String msg) {
+			// be silent
+		}
+
 	}
 }

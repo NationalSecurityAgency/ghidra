@@ -69,13 +69,12 @@ public class ApplicationThemeManager extends ThemeManager {
 
 	protected void doInitialize() {
 		installFlatLookAndFeels();
-		loadDefaultThemeValues();
 		setTheme(themePreferences.load());
 	}
 
 	@Override
 	public void reloadApplicationDefaults() {
-		loadDefaultThemeValues();
+		themeDefaultsProvider = getThemeDefaultsProvider();
 		buildCurrentValues();
 		lookAndFeelManager.resetAll(javaDefaults);
 		notifyThemeChanged(new AllValuesChangedThemeEvent(false));
@@ -420,5 +419,4 @@ public class ApplicationThemeManager extends ThemeManager {
 		GColor.refreshAll(currentValues);
 		GIcon.refreshAll(currentValues);
 	}
-
 }

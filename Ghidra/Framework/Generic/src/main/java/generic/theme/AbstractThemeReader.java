@@ -27,9 +27,9 @@ import ghidra.util.Msg;
  */
 public abstract class AbstractThemeReader {
 
-	private static final String NO_SECTION = "[No Section]";
-	private static final String DEFAULTS = "[Defaults]";
-	private static final String DARK_DEFAULTS = "[Dark Defaults]";
+	private static final String NO_SECTION = "No Section";
+	private static final String DEFAULTS = "Defaults";
+	private static final String DARK_DEFAULTS = "Dark Defaults";
 
 	private List<String> errors = new ArrayList<>();
 	protected String source;
@@ -60,8 +60,7 @@ public abstract class AbstractThemeReader {
 					processDarkDefaultSection(section);
 					break;
 				default:
-					error(section.getLineNumber(),
-						"Encounded unknown theme file section: " + section.getName());
+					processCustomSection(section);
 			}
 		}
 
@@ -72,6 +71,8 @@ public abstract class AbstractThemeReader {
 	protected abstract void processDefaultSection(Section section) throws IOException;
 
 	protected abstract void processDarkDefaultSection(Section section) throws IOException;
+
+	protected abstract void processCustomSection(Section section) throws IOException;
 
 	protected void processValues(GThemeValueMap valueMap, Section section) {
 		for (String key : section.getKeys()) {
@@ -157,7 +158,8 @@ public abstract class AbstractThemeReader {
 			}
 
 			if (isSectionHeader(line)) {
-				currentSection = new Section(line, reader.getLineNumber());
+				String name = line.substring(1, line.length() - 1);
+				currentSection = new Section(name, reader.getLineNumber());
 				sections.add(currentSection);
 			}
 			else {
@@ -191,6 +193,10 @@ public abstract class AbstractThemeReader {
 		String msg =
 			"Error parsing theme file \"" + source + "\" at line: " + lineNumber + ", " + message;
 		errors.add(msg);
+		outputError(msg);
+	}
+
+	protected void outputError(String msg) {
 		Msg.error(this, msg);
 	}
 
