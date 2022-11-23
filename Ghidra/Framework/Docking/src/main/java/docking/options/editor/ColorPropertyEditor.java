@@ -36,10 +36,8 @@ public class ColorPropertyEditor extends PropertyEditorSupport {
 
 	@Override
 	public Component getCustomEditor() {
-		if (colorChooser != null) {
-			return colorChooser;
-		}
-
+		// always create a new one. Holding on to closed dialogs causes issues if the
+		// theme changes
 		colorChooser = new GhidraColorChooser();
 		colorChooser.getSelectionModel().addChangeListener(e -> colorChanged());
 		return colorChooser;

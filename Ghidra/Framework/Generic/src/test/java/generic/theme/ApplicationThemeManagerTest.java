@@ -49,7 +49,7 @@ public class ApplicationThemeManagerTest {
 	private GTheme NIMBUS_THEME = new NimbusTheme();
 	private GTheme WINDOWS_THEME = new WindowsTheme();
 	private GTheme MAC_THEME = new MacTheme();
-	private ThemeManager themeManager;
+	private ApplicationThemeManager themeManager;
 
 	private boolean errorsExpected;
 
@@ -289,16 +289,6 @@ public class ApplicationThemeManagerTest {
 		// make sure there is only one instance for an id;
 		Color color2 = themeManager.getGColorUiResource("color.test.bg");
 		assertTrue(color == color2);
-	}
-
-	@Test
-	public void testGetGIconUiResource() {
-		Icon icon = themeManager.getGIconUiResource("icon.test.foo");
-		assertTrue(icon instanceof UIResource);
-
-		// make sure there is only one instance for an id;
-		Icon gIcon2 = themeManager.getGIconUiResource("icon.test.foo");
-		assertTrue(icon == gIcon2);
 	}
 
 	@Test

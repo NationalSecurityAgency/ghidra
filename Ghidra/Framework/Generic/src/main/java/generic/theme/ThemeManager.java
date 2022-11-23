@@ -398,28 +398,6 @@ public abstract class ThemeManager {
 	}
 
 	/**
-	 * gets a UIResource version of the GColor for the given id. Using this method ensures that
-	 * the same instance is used for a given id. This combats some poor code in some of the
-	 * {@link LookAndFeel}s where the use == in some places to test for equals.
-	 * @param id the id to get a GColorUIResource for
-	 * @return a GColorUIResource for the given id
-	 */
-	public GColorUIResource getGColorUiResource(String id) {
-		throw new UnsupportedOperationException();
-	}
-
-	/**
-	 * gets a UIResource version of the GIcon for the given id. Using this method ensures that
-	 * the same instance is used for a given id. This combats some poor code in some of the
-	 * {@link LookAndFeel}s where the use == in some places to test for equals.
-	 * @param id the id to get a {@link GIconUIResource} for
-	 * @return a GIconUIResource for the given id
-	 */
-	public GIconUIResource getGIconUiResource(String id) {
-		throw new UnsupportedOperationException();
-	}
-
-	/**
 	 * Returns the {@link GThemeValueMap} containing all the default theme values defined by the
 	 * current {@link LookAndFeel}.
 	 * @return  the {@link GThemeValueMap} containing all the default theme values defined by the
