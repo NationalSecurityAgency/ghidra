@@ -275,7 +275,7 @@ public abstract class LookAndFeelManager {
 		return new ThemeGrouper();
 	}
 
-	private void installPropertiesBackIntoUiDefaults(GThemeValueMap javaDefaults) {
+	protected void installPropertiesBackIntoUiDefaults(GThemeValueMap javaDefaults) {
 		UIDefaults defaults = UIManager.getDefaults();
 
 		GTheme theme = themeManager.getActiveTheme();

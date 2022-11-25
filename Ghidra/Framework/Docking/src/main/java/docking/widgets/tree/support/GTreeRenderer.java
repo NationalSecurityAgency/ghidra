@@ -19,13 +19,14 @@ import java.awt.*;
 
 import javax.swing.Icon;
 import javax.swing.JTree;
-import javax.swing.plaf.ColorUIResource;
+import javax.swing.plaf.UIResource;
 import javax.swing.tree.DefaultTreeCellRenderer;
 
 import docking.widgets.GComponent;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import generic.theme.GColor;
+import generic.theme.GColorUIResource;
 
 public class GTreeRenderer extends DefaultTreeCellRenderer implements GComponent {
 
@@ -87,31 +88,43 @@ public class GTreeRenderer extends DefaultTreeCellRenderer implements GComponent
 		return this;
 	}
 
+	/**
+	 * Overrides this method to ensure that the new background selection color is not
+	 * a {@link GColorUIResource}. Some Look and Feels will ignore color values that extend
+	 * {@link UIResource}, choosing instead their own custom painting behavior. By not using a 
+	 * UIResource, we prevent the Look and Feel from overriding this renderer's color value.
+	 * 
+	 * @param newColor the new background selection color
+	 */
 	@Override
 	public void setBackgroundSelectionColor(Color newColor) {
-		super.setBackgroundSelectionColor(fromUiResource(newColor, "Tree.selectionBackground"));
-	}
-
-	@Override
-	public void setBackgroundNonSelectionColor(Color newColor) {
-		super.setBackgroundNonSelectionColor(fromUiResource(newColor, "Tree.textBackground"));
+		super.setBackgroundSelectionColor(fromUiResource(newColor));
 	}
 
 	/**
-	 * Converts the given color from a {@link ColorUIResource} to a {@link Color}.  This is used
-	 * to deal with the issue that some Look and Feels will not correctly paint with this
-	 * renderer when using UI resource objects.  This behavior can be changed by overriding this
-	 * method.
+	 * Overrides this method to ensure that the new background non-selection color is not
+	 * a {@link GColorUIResource}. Some Look and Feels will ignore color values that extend
+	 * {@link UIResource}, choosing instead their own custom painting behavior. By not using a 
+	 * UIResource, we prevent the Look and Feel from overriding this renderer's color value.
 	 * 
-	 * @param c the source color
-	 * @param defaultKey the GColor key to use if the given color is a ColorUIResource
-	 * @return the new color
+	 * @param newColor the new background non-selection color
 	 */
-	protected Color fromUiResource(Color c, String defaultKey) {
-		if (c instanceof ColorUIResource) {
-			return new GColor(defaultKey);
+	@Override
+	public void setBackgroundNonSelectionColor(Color newColor) {
+		super.setBackgroundNonSelectionColor(fromUiResource(newColor));
+	}
+
+	/**
+	 * Checks and converts any {@link GColorUIResource} to a {@link GColor}
+	 * @param color the color to check if it is a {@link UIResource}
+	 * @return either the given color or if it is a {@link GColorUIResource}, then a plain
+	 * {@link GColor} instance referring to the same theme color  property id.
+	 */
+	protected Color fromUiResource(Color color) {
+		if (color instanceof GColorUIResource uiResource) {
+			return uiResource.toGColor();
 		}
-		return c;
+		return color;
 	}
 
 	protected void updateIconTextGap(Icon icon, int minWidth) {

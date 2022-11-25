@@ -104,4 +104,9 @@ public class NimbusLookAndFeelManager extends LookAndFeelManager {
 		// (see NimbusDefaults for key values that can be changed here)
 	}
 
+	@Override
+	protected void installPropertiesBackIntoUiDefaults(GThemeValueMap javaDefaults) {
+		// do nothing, this was handled when we overrode the getDefaults() method in the 
+		// GNimubusLookAndFeel
+	}
 }

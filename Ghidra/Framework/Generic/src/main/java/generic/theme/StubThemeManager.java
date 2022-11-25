@@ -161,16 +161,6 @@ public class StubThemeManager extends ThemeManager {
 	}
 
 	@Override
-	public GColorUIResource getGColorUiResource(String id) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public GIconUIResource getGIconUiResource(String id) {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public GThemeValueMap getJavaDefaults() {
 		throw new UnsupportedOperationException();
 	}

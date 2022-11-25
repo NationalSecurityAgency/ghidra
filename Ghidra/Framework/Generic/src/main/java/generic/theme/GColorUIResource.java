@@ -15,6 +15,8 @@
  */
 package generic.theme;
 
+import java.awt.Color;
+
 import javax.swing.UIDefaults;
 import javax.swing.plaf.UIResource;
 
@@ -28,6 +30,14 @@ public class GColorUIResource extends GColor implements UIResource {
 
 	public GColorUIResource(String id) {
 		super(id);
+	}
+
+	/**
+	 * Returns a non-UIResource GColor for this GColorUiResource's id
+	 * @return a non-UIResource GColor for this GColorUiResource's id
+	 */
+	public Color toGColor() {
+		return new GColor(getId());
 	}
 
 }
