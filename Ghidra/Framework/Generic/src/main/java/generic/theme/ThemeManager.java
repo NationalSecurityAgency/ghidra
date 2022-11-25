@@ -69,8 +69,7 @@ public abstract class ThemeManager {
 	protected GThemeValueMap systemValues = new GThemeValueMap();
 	protected GThemeValueMap currentValues = new GThemeValueMap();
 
-	protected GThemeValueMap applicationDefaults = new GThemeValueMap();
-	protected GThemeValueMap applicationDarkDefaults = new GThemeValueMap();
+	protected ThemeDefaultsProvider themeDefaultsProvider;
 
 	// these notifications are only when the user is manipulating theme values, so rare and at
 	// user speed, so using copy on read
@@ -86,16 +85,15 @@ public abstract class ThemeManager {
 			// default behavior is only install to INSTANCE if first time
 			INSTANCE = this;
 		}
+		themeDefaultsProvider = getThemeDefaultsProvider();
+	}
+
+	protected ThemeDefaultsProvider getThemeDefaultsProvider() {
+		return new ApplicationThemeDefaultsProvider();
 	}
 
 	protected void installInGui() {
 		Gui.setThemeManager(this);
-	}
-
-	protected void loadDefaultThemeValues() {
-		ThemeDefaultsProvider provider = new ThemeDefaultsProvider();
-		applicationDefaults = provider.getDefaults();
-		applicationDarkDefaults = provider.getDarkDefaults();
 	}
 
 	protected void buildCurrentValues() {
@@ -103,10 +101,11 @@ public abstract class ThemeManager {
 
 		map.load(javaDefaults);
 		map.load(systemValues);
-		map.load(applicationDefaults);
+		map.load(themeDefaultsProvider.getDefaults());
 		if (activeTheme.useDarkDefaults()) {
-			map.load(applicationDarkDefaults);
+			map.load(themeDefaultsProvider.getDarkDefaults());
 		}
+		map.load(themeDefaultsProvider.getLookAndFeelDefaults(getLookAndFeelType()));
 		map.load(activeTheme);
 		currentValues = map;
 	}
@@ -271,10 +270,11 @@ public abstract class ThemeManager {
 		GThemeValueMap map = new GThemeValueMap();
 		map.load(javaDefaults);
 		map.load(systemValues);
-		map.load(applicationDefaults);
+		map.load(themeDefaultsProvider.getDefaults());
 		if (activeTheme.useDarkDefaults()) {
-			map.load(applicationDarkDefaults);
+			map.load(themeDefaultsProvider.getDarkDefaults());
 		}
+		map.load(themeDefaultsProvider.getLookAndFeelDefaults(getLookAndFeelType()));
 		map.load(activeTheme);
 		return map;
 	}
@@ -417,8 +417,9 @@ public abstract class ThemeManager {
 	 * theme.properties files
 	 */
 	public GThemeValueMap getApplicationDarkDefaults() {
-		GThemeValueMap map = new GThemeValueMap(applicationDefaults);
-		map.load(applicationDarkDefaults);
+		GThemeValueMap map = new GThemeValueMap(themeDefaultsProvider.getDefaults());
+		map.load(themeDefaultsProvider.getDarkDefaults());
+		map.load(themeDefaultsProvider.getLookAndFeelDefaults(getLookAndFeelType()));
 		return map;
 	}
 
@@ -429,7 +430,7 @@ public abstract class ThemeManager {
 	 * theme.properties files
 	 */
 	public GThemeValueMap getApplicationLightDefaults() {
-		GThemeValueMap map = new GThemeValueMap(applicationDefaults);
+		GThemeValueMap map = new GThemeValueMap(themeDefaultsProvider.getDefaults());
 		return map;
 	}
 
@@ -441,10 +442,11 @@ public abstract class ThemeManager {
 	public GThemeValueMap getDefaults() {
 		GThemeValueMap currentDefaults = new GThemeValueMap(javaDefaults);
 		currentDefaults.load(systemValues);
-		currentDefaults.load(applicationDefaults);
+		currentDefaults.load(themeDefaultsProvider.getDefaults());
 		if (activeTheme.useDarkDefaults()) {
-			currentDefaults.load(applicationDarkDefaults);
+			currentDefaults.load(themeDefaultsProvider.getDarkDefaults());
 		}
+		currentDefaults.load(themeDefaultsProvider.getLookAndFeelDefaults(getLookAndFeelType()));
 		return currentDefaults;
 	}
 
@@ -454,7 +456,7 @@ public abstract class ThemeManager {
 	 * @return true if the UI is using Aqua
 	 */
 	public boolean isUsingAquaUI(ComponentUI UI) {
-		return activeTheme.getLookAndFeelType() == LafType.MAC;
+		return getLookAndFeelType() == LafType.MAC;
 	}
 
 	/**
@@ -462,7 +464,7 @@ public abstract class ThemeManager {
 	 * @return true if 'Nimbus' is the current Look and Feel
 	 */
 	public boolean isUsingNimbusUI() {
-		return activeTheme.getLookAndFeelType() == LafType.NIMBUS;
+		return getLookAndFeelType() == LafType.NIMBUS;
 	}
 
 	/**

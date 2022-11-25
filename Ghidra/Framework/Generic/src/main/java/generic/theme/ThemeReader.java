@@ -57,8 +57,6 @@ class ThemeReader extends AbstractThemeReader {
 
 	/**
 	 * Assumes the file is a theme file and reads it.
-	 * @return
-	 * @throws IOException
 	 */
 	private GTheme readFileTheme() throws IOException {
 		try (Reader reader = new FileReader(file)) {
@@ -124,6 +122,12 @@ class ThemeReader extends AbstractThemeReader {
 	@Override
 	protected void processDarkDefaultSection(Section section) throws IOException {
 		error(section.getLineNumber(), "[Dark Defaults] section not allowed in theme files!");
+	}
+
+	@Override
+	protected void processCustomSection(Section section) throws IOException {
+		error(section.getLineNumber(),
+			"Custom sections not allowed in theme files! " + section.getName());
 	}
 
 	private void processIconFile(String path, InputStream is) throws IOException {

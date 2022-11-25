@@ -348,9 +348,25 @@ public class ApplicationThemeManagerTest {
 		}
 
 		@Override
-		protected void loadDefaultThemeValues() {
-			this.applicationDefaults = defaultValues;
-			this.applicationDarkDefaults = darkDefaultValues;
+		protected ThemeDefaultsProvider getThemeDefaultsProvider() {
+			return new ThemeDefaultsProvider() {
+
+				@Override
+				public GThemeValueMap getDefaults() {
+					return defaultValues;
+				}
+
+				@Override
+				public GThemeValueMap getDarkDefaults() {
+					return darkDefaultValues;
+				}
+
+				@Override
+				public GThemeValueMap getLookAndFeelDefaults(LafType lafType) {
+					return null;
+				}
+
+			};
 		}
 
 		@Override
