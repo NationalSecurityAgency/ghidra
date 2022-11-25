@@ -336,7 +336,7 @@ Function ID plugin. To do this, from the Code Browser select
   <emphasis role="bold">File -> Configure</emphasis>
   </informalexample>
 Then click on the <emphasis>Configure</emphasis> link under the
-<emphasis role="bold">Function ID</emphasis> section and check the box
+<emphasis role="bold">Ghidra Core</emphasis> section and check the box
 next to "FidPlugin".
 </para>
 </section>
@@ -748,7 +748,7 @@ In order to access the Debug options, the plug-in must be enabled. To do this, f
   <informalexample>
   <emphasis role="bold">File -> Configure</emphasis>
   </informalexample>
-Then click on <emphasis>Configure</emphasis> link under the <emphasis role="bold">Experimental</emphasis>
+Then click on <emphasis>Configure</emphasis> link under the <emphasis role="bold">Developer</emphasis>
 section and check the box next to "FidDebugPlugin".
 </para>
 </section>
