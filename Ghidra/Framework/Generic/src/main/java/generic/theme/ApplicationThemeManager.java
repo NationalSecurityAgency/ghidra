@@ -41,7 +41,6 @@ public class ApplicationThemeManager extends ThemeManager {
 	protected ThemePreferences themePreferences = new ThemePreferences();
 
 	private Map<String, GColorUIResource> gColorMap = new HashMap<>();
-	private Map<String, GIconUIResource> gIconMap = new HashMap<>();
 
 	// stores the original value for ids whose value has changed from the current theme
 	private GThemeValueMap changedValuesMap = new GThemeValueMap();
@@ -237,7 +236,13 @@ public class ApplicationThemeManager extends ThemeManager {
 		lookAndFeelManager.iconsChanged(changedIconIds, newIcon);
 	}
 
-	@Override
+	/**
+	 * Gets a UIResource version of the GColor for the given id. Using this method ensures that
+	 * the same instance is used for a given id. This fixes an issue with some
+	 * {@link LookAndFeel}s that internally use '==' comparisons.
+	 * @param id the id to get a GColorUIResource for
+	 * @return a GColorUIResource for the given id
+	 */
 	public GColorUIResource getGColorUiResource(String id) {
 		GColorUIResource gColor = gColorMap.get(id);
 		if (gColor == null) {
@@ -245,17 +250,6 @@ public class ApplicationThemeManager extends ThemeManager {
 			gColorMap.put(id, gColor);
 		}
 		return gColor;
-	}
-
-	@Override
-	public GIconUIResource getGIconUiResource(String id) {
-
-		GIconUIResource gIcon = gIconMap.get(id);
-		if (gIcon == null) {
-			gIcon = new GIconUIResource(id);
-			gIconMap.put(id, gIcon);
-		}
-		return gIcon;
 	}
 
 	/**
