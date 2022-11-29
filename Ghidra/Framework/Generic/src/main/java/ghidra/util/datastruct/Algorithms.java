@@ -62,33 +62,6 @@ public class Algorithms {
 		return 0; // this means that the search text matches the first element in the lists
 	}
 
-	public static <T> void bubbleSort(List<T> data, int low, int high, Comparator<T> comparator) {
-		try {
-			doBubbleSort(data, low, high, comparator, TaskMonitorAdapter.DUMMY_MONITOR);
-		}
-		catch (CancelledException e) {
-			// do nothing--cancelled
-		}
-	}
-
-	private static <T> void doBubbleSort(List<T> data, int low, int high, Comparator<T> comparator,
-			TaskMonitor monitor) throws CancelledException {
-		for (int i = high; i > low; --i) {
-			monitor.checkCanceled();
-
-			boolean swapped = false;
-			for (int j = low; j < i; j++) {
-				if (comparator.compare(data.get(j), data.get(j + 1)) > 0) {
-					Collections.swap(data, j, j + 1);
-					swapped = true;
-				}
-			}
-			if (!swapped) {
-				return;
-			}
-		}
-	}
-
 	public static <T> void mergeSort(List<T> data, Comparator<T> c, TaskMonitor monitor) {
 		List<T> aux = new ArrayList<T>(data);
 		mergeSort(aux, data, 0, data.size(), c, monitor);
@@ -116,9 +89,9 @@ public class Algorithms {
 		// The only reason this method exists is because we want progress
 		// updates as we sort the list. Java can sort fairly large collections
 		// instantaeously, far better than we can hope to do, so we should
-		// really try to send reasonably large "chunks" to Collections.sort and
-		// track progress at a fairly high level. The number below was chosen on
-		// a whim and gives pretty decent performance.
+		// really try to send reasonably large "chunks" to List's sort and track
+		// progress at a fairly high level. The number below was chosen on a
+		// whim and gives pretty decent performance.
 		if (length < 1024) {
 			dest.subList(low, high).sort(c);
 			return;

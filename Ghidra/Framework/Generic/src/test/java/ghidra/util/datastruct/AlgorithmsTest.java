@@ -54,18 +54,6 @@ public class AlgorithmsTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testBubbleSort() {
-		List<Long> data = getList(new long[] { 5, 8, 10, 2, 10, 3, 3, 7, 10, 23, 0, 15, 22 });
-		int low = 3;
-		int high = 8;
-		Algorithms.bubbleSort(data, low, high, comparator);
-		long[] expected = new long[] { 5, 8, 10, 2, 3, 3, 7, 10, 10, 23, 0, 15, 22 };
-		for (int i = 0; i < expected.length; i++) {
-			assertEquals(new Long(expected[i]), data.get(i));
-		}
-	}
-
-	@Test
 	public void testmergeSort() {
 		List<Long> data = getList(new long[] { 5, 8, 10, 2, 10, 3, 3, 7, 10, 23, 0, 15, 22 });
 		Algorithms.mergeSort(data, comparator, TaskMonitorAdapter.DUMMY_MONITOR);
