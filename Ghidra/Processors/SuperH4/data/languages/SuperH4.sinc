@@ -346,6 +346,9 @@ define token instr(16)
 	N_1   = ( 9,11) # register id
 	N_2   = (10,11) # register id
 	FRN_0 = ( 8,11) # float register id
+        FRN_1 = ( 8,10) # float register id
+        FRN_2 = ( 8,10) # float register id
+        DRN_0 = ( 8,10) # double register id
 	DRN_1 = ( 9,11) # double register id
 	XDN_1 = ( 9,11) # double register id
 	XDRN  = ( 8,11) # float register id
@@ -370,8 +373,21 @@ attach variables [ FRN_0 FRM_0] [
   fr0  fr1  fr2  fr3  fr4  fr5  fr6  fr7  fr8  fr9  fr10  fr11  fr12  fr13  fr14  fr15
 ];
 
+attach variables [ FRN_1 ] [
+  fr0 fr2  fr4  fr6  fr8  fr10  fr12  fr14
+];
+
+attach variables [ FRN_2 ] [
+  fr1  fr3  fr5  fr7  fr9  fr11  fr13  fr15
+];
+
 # attach double registers
 attach variables [ DRN_1 DRM_1 ] [
+  dr0 dr2 dr4 dr6 dr8 dr10 dr12 dr14
+];
+
+# attach double registers
+attach variables [ DRN_0 ] [
   dr0 dr2 dr4 dr6 dr8 dr10 dr12 dr14
 ];
 
@@ -1486,6 +1502,43 @@ N_0txx: r0",@"^N_0  is r0 & N_0 { tmp:4 = N_0; export tmp; }
 	<skip>
 }
 
+# Floating Point Square Reciprocal Approximate
+# pattern 1111nnnn01111101			
+# text	  fsrra <F_REG_N>
+# arch    # arch_sh2a_or_sh3e_up
+:fsrra FRN_0	is
+	OP_0=0xF & FRN_0 & OP_4=0x7D {
+	if (( $(FPSCR_PR) != 0 )) goto inst_next;       
+	FRN_0 = int2float(1 :4) f/ sqrt( FRN_0 );
+}
+
+define pcodeop sin;
+define pcodeop cos;
+
+# Floating Point Sine And Cosine Approximate
+# pattern 1111nnn011111101
+# text	  fsca FPUL,<F_REG_N>
+# arch    # arch_sh2a_or_sh3e_up
+:fsca FPUL,DRN_0 is
+	OP_0=0xF & FPUL & DRN_0 & FRN_1 & FRN_2  & OP_4=0xFD {
+	if (( $(FPSCR_PR) != 0 )) goto inst_next;       
+	
+	angle:4 = int2float(0 :4);    			# float
+        fraction:4 = 0x0000FFFF;			# long
+	
+	fraction = fraction & FPUL;			# extract sub-rotation
+	angle 	 = int2float(fraction);			# convert to float
+	
+	two_pi:4 = 0x40c90fdb;				# 6.2831855.. as 32-bit float
+    angle = (two_pi f* angle) f/ int2float(65536 :4);   # convert to radian
+    
+	local _sin:4 = sin(angle);			# call fake sin & cos
+	local _cos:4 = cos(angle);
+	
+	FRN_1 = float2float(_sin);			# _sin goes to FR[n]
+	FRN_2 = float2float(_cos);           		# _cos goes to FR[n+1]
+}
+
 # Transfer from System Register
 # pattern 1111nnnn00001101
 # text    fsts FPUL,<F_REG_N>
@@ -2273,6 +2326,26 @@ define pcodeop mac_wOp;
 	N_0t = zext($(T_FLAG));
 }
 
+# Move Unaligned Long
+# pattern 0100mmmm10101001
+# text    movua.l @<REG_M>,R0
+# arch    
+:movua.l N_0t_at,r0               is OP_0=0x4 & N_0t_at & r0 & OP_4=0xA9  {
+	r0 = (*:4 ( N_0t_at ));                 
+}
+
+# Move Unaligned Long Pointer
+# pattern 0100mmmm11101001
+# text    movua.l @<REG_M>+,R0
+# arch    
+:movua.l N_0t_at,r0               is OP_0=0x4 & N_0t_at & r0 & OP_4=0xE9 {
+	r0 = (*:4 ( N_0t_at ));
+	N_0t_at = N_0t_at + 4;
+}
+
+:movua.l N_0t_at,r0               is OP_0=0x4 & N_0t_at & N_0=0 & r0 & OP_4=0xE9 {
+	r0 = (*:4 ( N_0t_at ));
+}
 
 # Double-Precision Multiplication
 # pattern 0000nnnnmmmm0111
