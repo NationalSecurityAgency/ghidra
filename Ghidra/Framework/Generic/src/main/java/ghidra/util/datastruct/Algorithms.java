@@ -112,8 +112,15 @@ public class Algorithms {
 
 		monitor.setProgress(low);
 		int length = high - low;
-		if (length < 7) {
-			doBubbleSort(dest, low, high - 1, c, monitor);
+
+		// The only reason this method exists is because we want progress
+		// updates as we sort the list. Java can sort fairly large collections
+		// instantaeously, far better than we can hope to do, so we should
+		// really try to send reasonably large "chunks" to Collections.sort and
+		// track progress at a fairly high level. The number below was chosen on
+		// a whim and gives pretty decent performance.
+		if (length < 1024) {
+			dest.subList(low, high).sort(c);
 			return;
 		}
 
