@@ -28,13 +28,12 @@ import ghidra.util.HelpLocation;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * An implementation of exporter that creates
- * an Binary representation of the program.
+ * An {@link Exporter} that can export memory blocks as raw bytes
  */
 public class BinaryExporter extends Exporter {
 
 	public BinaryExporter() {
-		super("Binary", "bin", new HelpLocation("ExporterPlugin", "binary"));
+		super("Raw Bytes", "bin", new HelpLocation("ExporterPlugin", "binary"));
 	}
 
 	@Override
@@ -53,8 +52,6 @@ public class BinaryExporter extends Exporter {
 			addrSet = memory;
 		}
 
-		FileOutputStream fos = new FileOutputStream(file);
-
 		AddressSet set = new AddressSet(addrSet);
 
 		//skip blocks that are not initialized...
@@ -65,7 +62,7 @@ public class BinaryExporter extends Exporter {
 			}
 		}
 
-		try {
+		try (FileOutputStream fos = new FileOutputStream(file)) {
 			AddressRangeIterator iter = set.getAddressRanges();
 			while (iter.hasNext()) {
 				AddressRange range = iter.next();
@@ -76,9 +73,6 @@ public class BinaryExporter extends Exporter {
 		}
 		catch (MemoryAccessException e) {
 			throw new ExporterException(e);
-		}
-		finally {
-			fos.close();
 		}
 
 		return true;
@@ -91,5 +85,6 @@ public class BinaryExporter extends Exporter {
 
 	@Override
 	public void setOptions(List<Option> options) {
+		// No options
 	}
 }

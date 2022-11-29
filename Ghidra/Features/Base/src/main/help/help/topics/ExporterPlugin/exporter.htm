@@ -22,15 +22,17 @@
     <UL>
       <LI><A href="#ascii">ASCII</A></LI>
 
-      <LI><A href="#binary">Binary</A></LI>
-
       <LI><A href="#c_cpp">C/C++</A></LI>
-
+      
       <LI><A href="#gzf">Ghidra Zip File (.gzf)</A></LI>
 
       <LI><A href="#html">HTML</A></LI>
 
       <LI><A href="#intel_hex">Intel Hex</A></LI>
+      
+      <LI><A href="#original_file">Original File</A></LI>
+      
+      <LI><A href="#binary">Raw Bytes</A></LI>
 
       <LI><A href="#xml">XML Export Format</A></LI>
     </UL>
@@ -238,17 +240,6 @@
           </BLOCKQUOTE>
         </BLOCKQUOTE>
 
-        <H3><A name="binary"><A name="Options_Binary"/></A>Binary</H3>
-
-        <BLOCKQUOTE>
-          <P>Creates a binary file containing only the bytes from each memory block in the program.
-          If the program was originally created using the <B>Binary Importer</B>, then this
-          exporter allows recreation of the original file.</P>
-
-          <P><IMG alt="" border="0" src="../../shared/note.png"> <I>Only initialized memory blocks
-          are included in the output file.</I></P>
-        </BLOCKQUOTE>
-
         <H3><A name="c_cpp"/><A name="Options_C_C__""/>C/C++</H3>
 
         <BLOCKQUOTE>
@@ -284,22 +275,8 @@
             </LI>
           </UL>
         </BLOCKQUOTE>
-        
-        <H3><A name="elf"></A>ELF</H3>
 
-        <BLOCKQUOTE>
-          <P>Writes an ELF program that was imported with the ELF loader back to its original file 
-          layout. Any file-backed bytes that were modified by the user in the program database will 
-          be reflected in the new file.</P>
-
-          <P><IMG alt="" border="0" src="../../shared/note.png"> <I>Writing back a modified Memory 
-          Map is not supported. </I></P>
-          
-          <P><IMG alt="" border="0" src="../../shared/note.png"> <I>Relocation bytes are always
-          restored to their original values, even if the user modifies them.</I></P>
-        </BLOCKQUOTE>
-
-        <H3><A name="gzf"></A>Ghidra Zip File (.gzf)</H3>
+        <H3><A name="gzf"/>Ghidra Zip File (.gzf)</H3>
 
         <BLOCKQUOTE>
           <P>Creates a zip file from a program in your project. You may want to create a zip file
@@ -321,7 +298,7 @@
           the <A href="#ascii_options">ASCII Options</A>.</I></P>
         </BLOCKQUOTE>
 
-        <H3><A name="intel_hex"><A name="Options_Intel_Hex"/></A>Intel Hex</H3>
+        <H3><A name="intel_hex"/><A name="Options_Intel_Hex"/>Intel Hex</H3>
 
         <BLOCKQUOTE>
           <P>The Intel Hex format, a printable file representing memory images, was originally
@@ -345,18 +322,57 @@
           </UL>
         </BLOCKQUOTE>
         
-        <H3><A name="pe"></A>PE</H3>
+        <H3><A name="original_file"/><A name="Options_Original_File"/>Original File</H3>
 
         <BLOCKQUOTE>
-          <P>Writes a PE program that was imported with the PE loader back to its original file 
-          layout. Any file-backed bytes that were modified by the user in the program database will 
-          be reflected in the new file.</P>
+          <P>Writes a program back to its original file layout. By default, any file-backed bytes 
+          that were modified by the user in the program database will be reflected in the new file.
+          Optionally, the program can be written back to its unmodified file bytes, discarding all
+          user modifications.
+          </P>
+          
+          <H4>Original File Options</H4>
+
+          <UL>
+            <LI><B>Export User Byte Modifications</B> - If checked, user byte modifications are
+            preserved in the exported file. If unchecked, no user byte modifications are preserved
+            and the exported file will exactly match the file that was originally imported.</LI>
+          </UL>
+          <UL>
+            <LI><B>Save Multiple File Sources To Directory</B> - If checked, the destination file 
+            will be treated as a directory. Each file source from the program will be saved to this
+            newly created directory with names of the form &lt;directory&gt;.0, &lt;directory&gt;.1,
+            etc. If the program contains multiple file sources and this option is not checked, only 
+            the primary (first) file source will saved to the specified destination file.</LI>
+          </UL>
+          
+          <P><IMG alt="" border="0" src="../../shared/note.png"> <I>This exporter is only
+          operational when the program has at least one file-backed byte source.  This will be 
+          reflected in the <A href="help/topics/MemoryMapPlugin/Memory_Map.htm">Memory Map's</A> 
+          Byte Source column, which entries that begin with <B>File:</B></I></P>
 
           <P><IMG alt="" border="0" src="../../shared/note.png"> <I>Writing back a modified Memory 
           Map is not supported. </I></P>
           
           <P><IMG alt="" border="0" src="../../shared/note.png"> <I>Relocation bytes are always
           restored to their original values, even if the user modifies them.</I></P>
+          
+          <P><IMG alt="" border="0" src="../../shared/warning.png"> <I>Programs written to disk with
+          this exporter may be runnable on your native platform.  Use caution when exporting 
+          potentially malicious programs.</I></P>
+        </BLOCKQUOTE>
+        
+        <H3><A name="binary"/><A name="Options_Binary"/></A>Raw Bytes</H3>
+
+        <BLOCKQUOTE>
+          <P>Creates a binary file containing only the raw bytes from each memory block in the 
+          program. If there are multiple memory blocks, their bytes will be concatenated in the 
+          exported binary file.  If the program was originally created using the <B>Binary 
+          Importer</B> and there is only one memory block, then this exporter allows recreation of 
+          the original file.</P>
+
+          <P><IMG alt="" border="0" src="../../shared/note.png"> <I>Only initialized memory blocks
+          are included in the output file.</I></P>
         </BLOCKQUOTE>
 
         <H3><A name="xml"/><A name="Options_XML"/>XML</H3>
