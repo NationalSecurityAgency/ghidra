@@ -456,6 +456,9 @@ public class ServerAdmin implements GhidraLaunchable {
 			Msg.error(CommandProcessor.class, "Repository not found: " + repName);
 			System.exit(-1);
 		}
+		if (repName.contains(" ")) {
+			args[i] = "\"" + repName + "\"";
+		}
 	}
 
 	/**
