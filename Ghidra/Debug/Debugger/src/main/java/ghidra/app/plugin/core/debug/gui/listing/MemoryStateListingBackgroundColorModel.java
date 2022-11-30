@@ -35,7 +35,7 @@ import ghidra.trace.model.program.TraceProgramView;
 import ghidra.util.ColorUtils;
 
 public class MemoryStateListingBackgroundColorModel implements ListingBackgroundColorModel {
-	private Color defaultBackgroundColor = new GColor("color.bg.debugger.memory.state");
+	private Color defaultBackgroundColor = new GColor("color.bg");
 
 	private AddressIndexMap addressIndexMap;
 	private TraceProgramView view;
