@@ -15,10 +15,9 @@
  */
 package ghidra.feature.vt.gui.actions;
 
-import static ghidra.feature.vt.gui.util.VTOptionDefines.DATA_MATCH_DATA_TYPE;
+import static ghidra.feature.vt.gui.util.VTOptionDefines.*;
 
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 
 import docking.action.MenuData;
 import docking.action.ToolBarData;
@@ -28,9 +27,6 @@ import ghidra.feature.vt.gui.plugin.VTPlugin;
 import ghidra.feature.vt.gui.util.VTMatchApplyChoices.ReplaceDataChoices;
 import ghidra.framework.options.ToolOptions;
 import ghidra.util.HelpLocation;
-import resources.MultiIcon;
-import resources.ResourceManager;
-import resources.icons.TranslateIcon;
 
 /**
  * Action that replaces Data for a version tracking data match, but only if no defined data 
@@ -54,22 +50,9 @@ public class ReplaceFirstMarkupItemAction extends AbstractMarkupItemAction {
 		super(controller, "Apply (Replace First Only)");
 
 		Icon replacedIcon = VTPlugin.REPLACED_ICON;
-		ImageIcon warningIcon = ResourceManager.loadImage("images/warning_obj.png");
-		warningIcon = ResourceManager.getScaledIcon(warningIcon, 12, 12);
-		MultiIcon multiIcon = new MultiIcon(replacedIcon, false);
-		int refreshIconWidth = replacedIcon.getIconWidth();
-		int refreshIconHeight = replacedIcon.getIconHeight();
-		int warningIconWidth = warningIcon.getIconWidth();
-		int warningIconHeight = warningIcon.getIconHeight();
-
-		int x = refreshIconWidth - warningIconWidth;
-		int y = refreshIconHeight - warningIconHeight;
-
-		TranslateIcon translateIcon = new TranslateIcon(warningIcon, x, y);
-		multiIcon.addIcon(translateIcon);
 
 		if (addToToolbar) {
-			setToolBarData(new ToolBarData(multiIcon, MENU_GROUP));
+			setToolBarData(new ToolBarData(replacedIcon, MENU_GROUP));
 		}
 		MenuData menuData =
 			new MenuData(new String[] { "Apply (Replace First Only)" }, replacedIcon, MENU_GROUP);

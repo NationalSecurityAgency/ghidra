@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +15,17 @@
  */
 package ghidra.framework.task.gui.taskview;
 
-import ghidra.framework.task.GScheduledTask;
-import ghidra.framework.task.GTaskGroup;
-import ghidra.framework.task.gui.GProgressBar;
-
 import java.awt.Color;
 import java.awt.Container;
 
 import org.jdesktop.animation.timing.Animator;
 import org.jdesktop.animation.timing.interpolation.PropertySetter;
+
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Palette;
+import ghidra.framework.task.GScheduledTask;
+import ghidra.framework.task.GTaskGroup;
+import ghidra.framework.task.gui.GProgressBar;
 
 public abstract class AbstractTaskInfo implements Comparable<AbstractTaskInfo> {
 	private final boolean useAnimation;
@@ -72,8 +73,8 @@ public abstract class AbstractTaskInfo implements Comparable<AbstractTaskInfo> {
 		if (component == null) {
 			component = new ScheduledTaskPanel(getLabelText(), getIndention());
 			if (useAnimation) {
-				Color startColor = Color.YELLOW;
-				Color endColor = Color.white;
+				Color startColor = Palette.YELLOW;
+				Color endColor = Colors.BACKGROUND;
 				backgroundAnimator =
 					PropertySetter.createAnimator(4000, this, "Background", startColor, endColor);
 				backgroundAnimator.start();
@@ -99,7 +100,7 @@ public abstract class AbstractTaskInfo implements Comparable<AbstractTaskInfo> {
 		getComponent().addProgressBar();
 		if (backgroundAnimator != null) {
 			backgroundAnimator.stop();
-			component.setBackground(Color.WHITE);
+			component.setBackground(Colors.BACKGROUND);
 			backgroundAnimator = null;
 		}
 		return getComponent().getProgressBar();

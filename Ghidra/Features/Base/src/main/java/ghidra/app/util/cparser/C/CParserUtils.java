@@ -19,6 +19,8 @@ import java.io.*;
 import java.util.Arrays;
 import java.util.Iterator;
 
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.cparser.CPP.PreProcessor;
 import ghidra.framework.plugintool.ServiceProvider;
@@ -652,16 +654,16 @@ public class CParserUtils {
 		StringBuffer successFailureBuffer = new StringBuffer();
 		successFailureBuffer.append("<blockquote>");
 		if (errorIndex == 0) {
-			successFailureBuffer.append("<font color=\"red\"><b>");
+			successFailureBuffer.append("<font color=\"" + Messages.ERROR + "\"><b>");
 			successFailureBuffer.append(HTMLUtilities.friendlyEncodeHTML(functionString));
 			successFailureBuffer.append("</b></font>");
 		}
 		else {
-			successFailureBuffer.append("<font color=\"black\">");
+			successFailureBuffer.append("<font color=\"" + Colors.FOREGROUND + "\">");
 			successFailureBuffer.append(
 				HTMLUtilities.friendlyEncodeHTML(functionString.substring(0, errorIndex)));
 			successFailureBuffer.append("</font>");
-			successFailureBuffer.append("<font color=\"red\"><b>");
+			successFailureBuffer.append("<font color=\"" + Messages.ERROR + "\"><b>");
 			successFailureBuffer.append(
 				HTMLUtilities.friendlyEncodeHTML(functionString.substring(errorIndex)));
 			successFailureBuffer.append("</b></font>");

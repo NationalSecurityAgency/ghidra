@@ -18,13 +18,14 @@ package ghidra.program.database;
 import java.io.IOException;
 
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 
 import db.DBConstants;
 import db.DBHandle;
 import db.buffers.BufferFile;
 import db.buffers.ManagedBufferFile;
-import ghidra.framework.data.*;
+import generic.theme.GIcon;
+import ghidra.framework.data.DBContentHandler;
+import ghidra.framework.data.DomainObjectMergeManager;
 import ghidra.framework.model.ChangeSet;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.store.*;
@@ -33,19 +34,24 @@ import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
-import resources.ResourceManager;
 
 /**
  * <code>DataTypeArchiveContentHandler</code> converts between DataTypeArchive instantiations
  * and FolderItem storage.  This class also produces the appropriate Icon for 
  * DataTypeArchive files.
  */
-public class DataTypeArchiveContentHandler extends DBContentHandler {
+public class DataTypeArchiveContentHandler extends DBContentHandler<DataTypeArchiveDB> {
 
-	private static ImageIcon DATA_TYPE_ARCHIVE_ICON;
+	static Icon DATA_TYPE_ARCHIVE_ICON = new GIcon("icon.content.handler.archive.dt");
 
-	private final static String PROGRAM_ICON_PATH = "images/closedBookBlue.png";
 	public final static String DATA_TYPE_ARCHIVE_CONTENT_TYPE = "Archive";
+
+	final static Class<DataTypeArchiveDB> DATA_TYPE_ARCHIVE_DOMAIN_OBJECT_CLASS =
+		DataTypeArchiveDB.class;
+	final static String DATA_TYPE_ARCHIVE_CONTENT_DEFAULT_TOOL = "CodeBrowser";
+
+	private static final DataTypeArchiveLinkContentHandler linkHandler =
+		new DataTypeArchiveLinkContentHandler();
 
 	@Override
 	public long createFile(FileSystem fs, FileSystem userfs, String path, String name,
@@ -60,7 +66,7 @@ public class DataTypeArchiveContentHandler extends DBContentHandler {
 	}
 
 	@Override
-	public DomainObjectAdapter getImmutableObject(FolderItem item, Object consumer, int version,
+	public DataTypeArchiveDB getImmutableObject(FolderItem item, Object consumer, int version,
 			int minChangeVersion, TaskMonitor monitor)
 			throws IOException, VersionException, CancelledException {
 		String contentType = item.getContentType();
@@ -114,7 +120,7 @@ public class DataTypeArchiveContentHandler extends DBContentHandler {
 	}
 
 	@Override
-	public DomainObjectAdapter getReadOnlyObject(FolderItem item, int version, boolean okToUpgrade,
+	public DataTypeArchiveDB getReadOnlyObject(FolderItem item, int version, boolean okToUpgrade,
 			Object consumer, TaskMonitor monitor)
 			throws IOException, VersionException, CancelledException {
 
@@ -169,7 +175,7 @@ public class DataTypeArchiveContentHandler extends DBContentHandler {
 	}
 
 	@Override
-	public DomainObjectAdapter getDomainObject(FolderItem item, FileSystem userfs, long checkoutId,
+	public DataTypeArchiveDB getDomainObject(FolderItem item, FileSystem userfs, long checkoutId,
 			boolean okToUpgrade, boolean recover, Object consumer, TaskMonitor monitor)
 			throws IOException, VersionException, CancelledException {
 
@@ -324,8 +330,8 @@ public class DataTypeArchiveContentHandler extends DBContentHandler {
 	}
 
 	@Override
-	public Class<? extends DomainObject> getDomainObjectClass() {
-		return DataTypeArchiveDB.class;
+	public Class<DataTypeArchiveDB> getDomainObjectClass() {
+		return DATA_TYPE_ARCHIVE_DOMAIN_OBJECT_CLASS;
 	}
 
 	@Override
@@ -340,16 +346,11 @@ public class DataTypeArchiveContentHandler extends DBContentHandler {
 
 	@Override
 	public String getDefaultToolName() {
-		return "CodeBrowser";
+		return DATA_TYPE_ARCHIVE_CONTENT_DEFAULT_TOOL;
 	}
 
 	@Override
 	public Icon getIcon() {
-		synchronized (DataTypeArchiveContentHandler.class) {
-			if (DATA_TYPE_ARCHIVE_ICON == null) {
-				DATA_TYPE_ARCHIVE_ICON = ResourceManager.loadImage(PROGRAM_ICON_PATH);
-			}
-		}
 		return DATA_TYPE_ARCHIVE_ICON;
 	}
 
@@ -363,6 +364,11 @@ public class DataTypeArchiveContentHandler extends DBContentHandler {
 			DomainObject originalObj, DomainObject latestObj) {
 		return DataTypeArchiveMergeManagerFactory.getMergeManager(resultsObj, sourceObj,
 			originalObj, latestObj);
+	}
+
+	@Override
+	public DataTypeArchiveLinkContentHandler getLinkHandler() {
+		return linkHandler;
 	}
 
 }

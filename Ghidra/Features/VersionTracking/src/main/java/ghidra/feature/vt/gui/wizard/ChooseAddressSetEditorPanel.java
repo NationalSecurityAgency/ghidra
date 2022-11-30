@@ -27,12 +27,12 @@ import javax.swing.event.*;
 import docking.widgets.button.GRadioButton;
 import docking.widgets.label.GLabel;
 import docking.widgets.list.GList;
+import generic.theme.GIcon;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.layout.MiddleLayout;
 import ghidra.util.layout.VerticalLayout;
-import resources.ResourceManager;
 
 public class ChooseAddressSetEditorPanel extends JPanel {
 
@@ -40,8 +40,8 @@ public class ChooseAddressSetEditorPanel extends JPanel {
 		ENTIRE_PROGRAM, SELECTION, MANUALLY_DEFINED
 	}
 
-	private static Icon ADD_ICON = ResourceManager.loadImage("images/Plus.png");
-	private static Icon SUBTRACT_ICON = ResourceManager.loadImage("images/list-remove.png");
+	private static Icon ADD_ICON = new GIcon("icon.version.tracking.add");
+	private static Icon SUBTRACT_ICON = new GIcon("icon.version.tracking.subtract");
 
 	private PluginTool tool;
 	private final String name;

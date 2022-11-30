@@ -15,27 +15,12 @@
  */
 package ghidra.app.merge.listing;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Insets;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+import java.awt.*;
+import java.awt.event.*;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.ListIterator;
 
-import javax.swing.BorderFactory;
-import javax.swing.ButtonGroup;
-import javax.swing.JCheckBox;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import javax.swing.JRadioButton;
-import javax.swing.SwingConstants;
+import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeListener;
@@ -44,6 +29,7 @@ import docking.widgets.button.GRadioButton;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GDHtmlLabel;
 import docking.widgets.label.GDLabel;
+import generic.theme.GThemeDefaults.Colors.Java;
 import ghidra.app.merge.util.ConflictUtility;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.datastruct.LongArrayList;
@@ -88,17 +74,11 @@ public class VerticalChoicesPanel extends ConflictPanel {
 	private Insets textVsButtonInsets;
 	private Insets textVsCheckBoxInsets;
 
-	/**
-	 * Creates an empty <CODE>VerticalChoicesPanel</CODE>
-	 */
 	public VerticalChoicesPanel() {
 		super();
 		init();
 	}
 
-	/**
-	 * @param isDoubleBuffered
-	 */
 	public VerticalChoicesPanel(boolean isDoubleBuffered) {
 		super(isDoubleBuffered);
 		init();
@@ -179,8 +159,8 @@ public class VerticalChoicesPanel extends ConflictPanel {
 		JComponent[] headerComps = getRowComponents(0);
 		if (headerComps != null) {
 			// remove the header
-			for (int i = 0; i < headerComps.length; i++) {
-				rowPanel.remove(headerComps[i]);
+			for (JComponent headerComp : headerComps) {
+				rowPanel.remove(headerComp);
 			}
 			headerComps = null;
 			if (rowComps.isEmpty()) {
@@ -196,7 +176,8 @@ public class VerticalChoicesPanel extends ConflictPanel {
 		else {
 			rowTypes.set(0, (long) HEADER);
 		}
-		if ((items != null) && (items.length > 0)) {
+
+		if (items.length > 0) {
 			if (rows.isEmpty()) {
 				rows.add(0, items);
 			}
@@ -209,7 +190,7 @@ public class VerticalChoicesPanel extends ConflictPanel {
 				headerComps[i] = new MyLabel(items[i]);
 				headerComps[i].setName(getComponentName(0, i));
 				setRowComponent(headerComps[i], 0, i, defaultInsets);
-				headerComps[i].setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.BLACK));
+				headerComps[i].setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Java.BORDER));
 			}
 		}
 		rowPanel.validate();
@@ -278,14 +259,11 @@ public class VerticalChoicesPanel extends ConflictPanel {
 		final MyRadioButton firstComp = new MyRadioButton(items[0], conflictOption);
 		group.add(firstComp);
 		firstComp.setName(name);
-		ItemListener itemListener = new ItemListener() {
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				if (listener != null && ((JRadioButton) e.getSource()).isSelected()) {
-					ResolveConflictChangeEvent event =
-						new ResolveConflictChangeEvent(firstComp, row, getSelectedOptions());
-					listener.stateChanged(event);
-				}
+		ItemListener itemListener = e -> {
+			if (listener != null && ((JRadioButton) e.getSource()).isSelected()) {
+				ResolveConflictChangeEvent event =
+					new ResolveConflictChangeEvent(firstComp, row, getSelectedOptions());
+				listener.stateChanged(event);
 			}
 		};
 		firstComp.addItemListener(itemListener);
@@ -315,12 +293,9 @@ public class VerticalChoicesPanel extends ConflictPanel {
 		rows.add(items);
 		MyCheckBox firstComp = new MyCheckBox(items[0], conflictOption);
 		firstComp.setName(name);
-		ItemListener itemListener = new ItemListener() {
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				if (listener != null) {
-					listener.stateChanged(null);
-				}
+		ItemListener itemListener = e -> {
+			if (listener != null) {
+				listener.stateChanged(null);
 			}
 		};
 		firstComp.addItemListener(itemListener);
@@ -432,9 +407,6 @@ public class VerticalChoicesPanel extends ConflictPanel {
 		return count;
 	}
 
-	/**
-	 * @return
-	 */
 	protected int getSelectedOptions() {
 		int option = 0;
 		for (int row = 0; row < rows.size(); row++) {
@@ -449,11 +421,6 @@ public class VerticalChoicesPanel extends ConflictPanel {
 		return option;
 	}
 
-	/**
-	 * @param row
-	 * @param i
-	 * @return
-	 */
 	private JComponent getComponent(int row, int column) {
 		JComponent[] comps = getRowComponents(row);
 		if (column < comps.length) {
@@ -639,8 +606,7 @@ public class VerticalChoicesPanel extends ConflictPanel {
 		int rowCount = rowComps.size();
 		for (int row = 0; row < rowCount; row++) {
 			JComponent[] comps = getRowComponents(row);
-			for (int i = 0; i < comps.length; i++) {
-				JComponent component = comps[i];
+			for (JComponent component : comps) {
 				if (component instanceof MyRadioButton &&
 					((MyRadioButton) component).isSelected()) {
 					conflictOption |= ((MyRadioButton) component).option;
@@ -666,8 +632,8 @@ public class VerticalChoicesPanel extends ConflictPanel {
 	 */
 	@Override
 	public boolean hasChoice() {
-		for (Iterator<Long> iterator = rowTypes.iterator(); iterator.hasNext();) {
-			long rowType = iterator.next().longValue();
+		for (Long rowType2 : rowTypes) {
+			long rowType = rowType2.longValue();
 			if (rowType == RADIO_BUTTON || rowType == CHECK_BOX) {
 				return true;
 			}

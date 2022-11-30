@@ -23,16 +23,18 @@ import docking.*;
 import docking.action.*;
 import docking.menu.DockingCheckboxMenuItemUI;
 import docking.widgets.OptionDialog;
+import generic.theme.GIcon;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.program.model.data.*;
 import ghidra.util.HelpLocation;
-import resources.ResourceManager;
 
 public class BitFieldEditorDialog extends DialogComponentProvider {
 
-	private static final Icon ADD_ICON = ResourceManager.loadImage("images/Plus.png");
-	private static final Icon EDIT_ICON = ResourceManager.loadImage("images/move.png");
-	private static final Icon DELETE_ICON = ResourceManager.loadImage("images/edit-delete.png");
+	//@formatter:off
+	private static final Icon ADD_ICON = new GIcon("icon.plugin.composite.editor.bit.field.dialog.add");
+	private static final Icon EDIT_ICON = new GIcon("icon.plugin.composite.editor.bit.field.dialog.edit");
+	private static final Icon DELETE_ICON = new GIcon("icon.plugin.composite.editor.bit.field.dialog.delete");
+	//@formatter:on
 
 	private DataTypeManagerService dtmService;
 	private Composite composite;

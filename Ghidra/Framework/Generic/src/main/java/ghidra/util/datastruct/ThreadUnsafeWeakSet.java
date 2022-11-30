@@ -17,6 +17,7 @@ package ghidra.util.datastruct;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.stream.Stream;
 
 class ThreadUnsafeWeakSet<T> extends WeakSet<T> {
 
@@ -24,34 +25,22 @@ class ThreadUnsafeWeakSet<T> extends WeakSet<T> {
 		// restrict access; use factory method in base class
 	}
 
-	/**
-	 * Add the given object to the set.
-	 */
 	@Override
 	public void add(T t) {
 		maybeWarnAboutAnonymousValue(t);
 		weakHashStorage.put(t, null);
 	}
 
-	/**
-	 * Remove the given object from the data structure
-	 */
 	@Override
 	public void remove(T t) {
 		weakHashStorage.remove(t);
 	}
 
-	/**
-	 * Remove all elements from this data structure
-	 */
 	@Override
 	public void clear() {
 		weakHashStorage.clear();
 	}
 
-	/**
-	 * Returns an iterator over the elements in this data structure.
-	 */
 	@Override
 	public Iterator<T> iterator() {
 		return weakHashStorage.keySet().iterator();
@@ -81,4 +70,10 @@ class ThreadUnsafeWeakSet<T> extends WeakSet<T> {
 	public String toString() {
 		return weakHashStorage.toString();
 	}
+
+	@Override
+	public Stream<T> stream() {
+		return values().stream();
+	}
+
 }

@@ -18,6 +18,7 @@ package ghidra.test;
 import java.awt.Dialog;
 import java.awt.Window;
 import java.io.*;
+import java.net.URL;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -47,6 +48,7 @@ import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginException;
 import ghidra.framework.project.DefaultProjectManager;
+import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.data.FileDataTypeManager;
 import ghidra.program.model.lang.*;
@@ -874,26 +876,15 @@ public class TestEnv {
 	 * @param domainFile The domain file used to launch the tool; may be null
 	 * @return the tool that is launched
 	 */
-	public PluginTool launchTool(final String toolName, final DomainFile domainFile) {
+	public PluginTool launchTool(String toolName, DomainFile domainFile) {
 		AtomicReference<PluginTool> ref = new AtomicReference<>();
 
 		AbstractGenericTest.runSwing(() -> {
-			boolean wasErrorGUIEnabled = AbstractDockingTest.isUseErrorGUI();
-			AbstractDockingTest.setErrorGUIEnabled(false); // disable the error GUI while launching the tool
-			FrontEndTool frontEndToolInstance = getFrontEndTool();
-
-			Project project = frontEndToolInstance.getProject();
-			ToolServices toolServices = project.getToolServices();
-			PluginTool newTool = toolServices.launchTool(toolName, null);
-			if (newTool == null) {
-				// couldn't find the tool in the workspace...check the test area
-				newTool = launchDefaultToolByName(toolName);
-			}
-
+			PluginTool newTool = doLaunchTool(toolName);
 			ref.set(newTool);
-
-			AbstractDockingTest.setErrorGUIEnabled(wasErrorGUIEnabled);
-			newTool.acceptDomainFiles(new DomainFile[] { domainFile });
+			if (newTool != null) {
+				newTool.acceptDomainFiles(new DomainFile[] { domainFile });
+			}
 		});
 
 		PluginTool launchedTool = ref.get();
@@ -904,6 +895,52 @@ public class TestEnv {
 		// this will make sure that our tool is closed during disposal
 		extraTools.add(launchedTool);
 		return launchedTool;
+	}
+
+	/**
+	 * Launches a tool of the given name using the given Ghidra URL.
+	 * <p>
+	 * Note: the tool returned will have auto save disabled by default.
+	 *
+	 * @param toolName the name of the tool to launch
+	 * @param ghidraUrl The Ghidra URL to be opened in tool (see {@link GhidraURL})
+	 * @return the tool that is launched
+	 */
+	public PluginTool launchToolWithURL(String toolName, URL ghidraUrl) {
+		AtomicReference<PluginTool> ref = new AtomicReference<>();
+
+		AbstractGenericTest.runSwing(() -> {
+			PluginTool newTool = doLaunchTool(toolName);
+			ref.set(newTool);
+			if (newTool != null) {
+				newTool.accept(ghidraUrl);
+			}
+		});
+
+		PluginTool launchedTool = ref.get();
+		if (launchedTool == null) {
+			throw new NullPointerException("Unable to launch the tool: " + toolName);
+		}
+
+		// this will make sure that our tool is closed during disposal
+		extraTools.add(launchedTool);
+		return launchedTool;
+	}
+
+	private PluginTool doLaunchTool(String toolName) {
+		boolean wasErrorGUIEnabled = AbstractDockingTest.isUseErrorGUI();
+		AbstractDockingTest.setErrorGUIEnabled(false); // disable the error GUI while launching the tool
+		FrontEndTool frontEndToolInstance = getFrontEndTool();
+
+		Project project = frontEndToolInstance.getProject();
+		ToolServices toolServices = project.getToolServices();
+		PluginTool newTool = toolServices.launchTool(toolName, null);
+		if (newTool == null) {
+			// couldn't find the tool in the workspace...check the test area
+			newTool = launchDefaultToolByName(toolName);
+		}
+		AbstractDockingTest.setErrorGUIEnabled(wasErrorGUIEnabled);
+		return newTool;
 	}
 
 	/**

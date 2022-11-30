@@ -29,6 +29,8 @@ import docking.DialogComponentProvider;
 import docking.action.DockingAction;
 import docking.widgets.table.*;
 import docking.widgets.table.threaded.ThreadedTableModel;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.nav.NavigatableRemovalListener;
 import ghidra.app.services.GoToService;
@@ -418,7 +420,7 @@ public class TableChooserDialog extends DialogComponentProvider
 
 	private class WrappingCellRenderer extends GhidraTableCellRenderer {
 
-		private Color pendingColor = new Color(192, 192, 192, 75);
+		private Color pendingColor = Palette.LIGHT_GRAY;
 		private TableCellRenderer delegate;
 
 		@Override
@@ -443,7 +445,7 @@ public class TableChooserDialog extends DialogComponentProvider
 			if (sharedPending.contains(ro)) {
 				renderer.setBackground(pendingColor);
 				renderer.setForeground(data.getTable().getSelectionForeground());
-				renderer.setForeground(Color.BLACK);
+				renderer.setForeground(Colors.FOREGROUND);
 			}
 
 			return renderer;

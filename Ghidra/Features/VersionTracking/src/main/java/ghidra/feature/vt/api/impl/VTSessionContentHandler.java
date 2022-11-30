@@ -18,13 +18,14 @@ package ghidra.feature.vt.api.impl;
 import java.io.IOException;
 
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 
 import db.DBHandle;
 import db.OpenMode;
 import db.buffers.BufferFile;
+import generic.theme.GIcon;
 import ghidra.feature.vt.api.db.VTSessionDB;
-import ghidra.framework.data.*;
+import ghidra.framework.data.DBContentHandler;
+import ghidra.framework.data.DomainObjectMergeManager;
 import ghidra.framework.model.ChangeSet;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.store.*;
@@ -33,11 +34,10 @@ import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
-import resources.ResourceManager;
 
-public class VTSessionContentHandler extends DBContentHandler {
-	private static ImageIcon ICON = ResourceManager
-			.getScaledIcon(ResourceManager.loadImage("images/start-here_16.png"), 16, 16);
+public class VTSessionContentHandler extends DBContentHandler<VTSessionDB> {
+
+	private static Icon ICON = new GIcon("icon.version.tracking.session.content.type");
 
 	public final static String CONTENT_TYPE = "VersionTracking";
 
@@ -51,7 +51,6 @@ public class VTSessionContentHandler extends DBContentHandler {
 				"Unsupported domain object: " + domainObject.getClass().getName());
 		}
 		return createFile((VTSessionDB) domainObject, CONTENT_TYPE, fs, path, name, monitor);
-
 	}
 
 	@Override
@@ -76,7 +75,7 @@ public class VTSessionContentHandler extends DBContentHandler {
 	}
 
 	@Override
-	public DomainObjectAdapter getDomainObject(FolderItem item, FileSystem userfs, long checkoutId,
+	public VTSessionDB getDomainObject(FolderItem item, FileSystem userfs, long checkoutId,
 			boolean okToUpgrade, boolean okToRecover, Object consumer, TaskMonitor monitor)
 			throws IOException, CancelledException, VersionException {
 
@@ -121,7 +120,7 @@ public class VTSessionContentHandler extends DBContentHandler {
 	}
 
 	@Override
-	public Class<? extends DomainObject> getDomainObjectClass() {
+	public Class<VTSessionDB> getDomainObjectClass() {
 		return VTSessionDB.class;
 	}
 
@@ -131,7 +130,7 @@ public class VTSessionContentHandler extends DBContentHandler {
 	}
 
 	@Override
-	public DomainObjectAdapter getImmutableObject(FolderItem item, Object consumer, int version,
+	public VTSessionDB getImmutableObject(FolderItem item, Object consumer, int version,
 			int minChangeVersion, TaskMonitor monitor)
 			throws IOException, CancelledException, VersionException {
 
@@ -151,7 +150,7 @@ public class VTSessionContentHandler extends DBContentHandler {
 	}
 
 	@Override
-	public DomainObjectAdapter getReadOnlyObject(FolderItem item, int version, boolean okToUpgrade,
+	public VTSessionDB getReadOnlyObject(FolderItem item, int version, boolean okToUpgrade,
 			Object consumer, TaskMonitor monitor)
 			throws IOException, VersionException, CancelledException {
 

@@ -116,16 +116,23 @@ public class EditorState implements PropertyChangeListener {
 		if (Objects.equals(currentValue, originalValue)) {
 			return;
 		}
-		boolean success = false;
+
+		//
+		// The call to put() may throw an exception or may choose not to take the new value. Handle
+		// both cases using a finally block along with checking the value after making the put()
+		// call.
+		//
 		try {
 			options.putObject(name, currentValue);
-			Object newValue = options.getObject(name, null);
-			originalValue = newValue;
-			currentValue = newValue;
-			success = true;
 		}
 		finally {
-			if (!success) {
+			Object newValue = options.getObject(name, null);
+			boolean success = Objects.equals(currentValue, newValue);
+			if (success) {
+				originalValue = newValue;
+				currentValue = newValue;
+			}
+			else {
 				editor.setValue(originalValue);
 				currentValue = originalValue;
 			}
@@ -145,8 +152,8 @@ public class EditorState implements PropertyChangeListener {
 	public Component getEditorComponent() {
 		if (editor == null) {
 			// can occur if support has been dropped for custom state/option
-			editor = new ErrorPropertyEditor(
-				"Ghidra does not know how to render state: " + name, null);
+			editor =
+				new ErrorPropertyEditor("Ghidra does not know how to render state: " + name, null);
 			return editor.getCustomEditor();
 		}
 		if (editor.supportsCustomEditor()) {
@@ -165,16 +172,14 @@ public class EditorState implements PropertyChangeListener {
 		Class<? extends PropertyEditor> clazz = editor.getClass();
 		String clazzName = clazz.getSimpleName();
 		if (clazzName.startsWith("String")) {
-			// Most likely some kind of string editor with a null value.  Just use a string 
+			// Most likely some kind of string editor with a null value.  Just use a string
 			// property and let the value be empty.
 			return new PropertyText(editor);
 		}
 
 		editor.removePropertyChangeListener(this);
-		editor = new ErrorPropertyEditor(
-			Application.getName() + " does not know how to use PropertyEditor: " +
-				editor.getClass().getName(),
-			null);
+		editor = new ErrorPropertyEditor(Application.getName() +
+			" does not know how to use PropertyEditor: " + editor.getClass().getName(), null);
 		return editor.getCustomEditor();
 	}
 
@@ -184,6 +189,11 @@ public class EditorState implements PropertyChangeListener {
 
 	public String getDescription() {
 		return options.getDescription(name);
+	}
+
+	@Override
+	public String toString() {
+		return "EditorState: " + name + "= " + currentValue;
 	}
 
 }

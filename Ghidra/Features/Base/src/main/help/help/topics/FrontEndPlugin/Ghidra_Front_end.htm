@@ -448,12 +448,11 @@
         <TABLE border="1" width="80%">
           <TBODY>
             <TR>
-              <TD align="center" bgcolor="#00ffff" width="25%">File Status</TD>
+              <TH align="center"  width="25%">File Status</TH>
 
-              <TD align="center" bgcolor="#00ffff" width="20%">Sample Icon in Project Data
-              Tree</TD>
+              <TH align="center" width="20%">Sample Icon</TH>
 
-              <TD align="center" bgcolor="#00ffff" width="40%">Description</TD>
+              <TH align="center"  width="40%">Description</TH>
             </TR>
 
             <TR>
@@ -689,6 +688,54 @@
 
         <P>The tabbed pane for read-only Project data is removed from the Project Window.</P>
       </BLOCKQUOTE>
+      
+      <H3><A name="Create_File_Links"></A>Create Linked Folder or File</H3>
+      
+      <BLOCKQUOTE>
+        <P>This feature allows you to create a folder or file link in your active project to a 
+        corresponding folder or file within a read-only viewed project.  
+        This is done using a Ghidra URL which references the 
+        file in its local or remote storage location.  If the viewed project corresponds to a 
+        viewed repository a remote URL will be used, while other cases will refer to the
+        locally viewed project.  It is possible for links to become broken if the referenced
+        repository, local project or file location are changed.</P>
+        <ol>
+        <li>Select a single folder or file from a viewed READ-ONLY Project Data tree.</li>
+        <li>Right mouse click on the selected tree node and choose the <I>Copy</I> option.</li>
+        <li>Select a destination folder in the active project tree.</li>
+        <li>Right mouse click on the folder and choose the <I>Paste as Link</I> option.
+            <P><IMG src="../../shared/note.png" border="0">Currently, linked-file types are 
+            currently limited to <I>Program</I> and <I>Data Type Archive</I> files 
+            only.  The <I>Past as Link</I> menu item will be disabled for 
+            unsupported file content types or for other unsupported situations such as internal 
+            linking within the same project.</P>
+            </li>
+        </ol>
+        <P>A linked-file may be opened in a tool via the project window in the same fashion that 
+        a normal file is opened (e.g., double-left-mouse-click or drag-n-drop onto a tool box icon).
+        Such a project file may also be opened within a Tool using its <B>File->Open...</B> action
+        and selected from the resulting project file selection dilaog.
+        Clicking on a linked-folder in the active project window will open that location in a
+        <B>READ-ONLY Project Data</B> tree.  The user may be prompted for a shared repository
+        connection password when accessing a linked folder or file.</P>
+        <P>Within a project file chooser dialog a linked-folder may be expanded in a similar fashion
+        to local folders provided any neccessary repository connection can be completed.</P>
+        <P><IMG src="../../shared/note.png" border="0"><B>Add to Version Control...</B> is supported
+        for repository folder and file links only and will be disabled for links to a 
+        local project.</P>
+        <P><IMG src="../../shared/note.png" border="0">Currently, linked-files only provide access
+        to the latest file version and do not facilitate access to older file versions.</P>
+        <P>The project window below shows a Program file-link "Program1" which is linked to the
+        same file in the viewed project.  Hovering the mouse over a linked-file will show the URL 
+        of the linked file or folder.  The chain-link icon decoration indicates such a linked 
+        file or folder.</P>
+        
+        <CENTER>
+          <IMG src= "images/LinkOtherProject.png" border="0">
+        </CENTER>
+        
+      </BLOCKQUOTE>
+      
     </BLOCKQUOTE>
 
     <H2><A name="Workspace"></A>Workspaces</H2>

@@ -312,7 +312,7 @@ public class HeadlessAnalyzer {
 			Object obj = c.getContent();
 			if (!(obj instanceof GhidraURLWrappedContent)) {
 				throw new IOException(
-					"Connect to repository folder failed. Response code: " + c.getResponseCode());
+					"Connect to repository folder failed. Response code: " + c.getStatusCode());
 			}
 			GhidraURLWrappedContent wrappedContent = (GhidraURLWrappedContent) obj;
 			Object content = null;
@@ -336,7 +336,7 @@ public class HeadlessAnalyzer {
 					processWithImport(folder.getPathname(), filesToImport);
 				}
 			}
-			catch (NotFoundException e) {
+			catch (FileNotFoundException e) {
 				throw new IOException("Connect to repository folder failed");
 			}
 			finally {
@@ -369,7 +369,8 @@ public class HeadlessAnalyzer {
 	 * @param rootFolderPath root folder for imports
 	 * @param filesToImport directories and files to be imported (null or empty is acceptable if
 	 *        				we are in -process mode)
-	 * @throws IOException if there was an IO-related problem
+	 * @throws IOException if there was an IO-related problem.  If caused by a failure to obtain a 
+	 * write-lock on the project the exception cause will a {@code LockException}.
 	 */
 	public void processLocal(String projectLocation, String projectName, String rootFolderPath,
 			List<File> filesToImport) throws IOException {
@@ -1107,6 +1108,8 @@ public class HeadlessAnalyzer {
 			return;
 		}
 
+		// Do not follow folder-links or consider program links.  Using content type
+		// to filter is best way to control this.
 		if (!ProgramContentHandler.PROGRAM_CONTENT_TYPE.equals(domFile.getContentType())) {
 			return; // skip non-Program files
 		}
@@ -1275,6 +1278,8 @@ public class HeadlessAnalyzer {
 
 		for (DomainFile domFile : parentFolder.getFiles()) {
 			if (filenamePattern == null || filenamePattern.matcher(domFile.getName()).matches()) {
+				// Do not follow folder-links or consider program links.  Using content type
+				// to filter is best way to control this.
 				if (ProgramContentHandler.PROGRAM_CONTENT_TYPE.equals(domFile.getContentType())) {
 					filesProcessed = true;
 					processFileNoImport(domFile);
@@ -1308,6 +1313,8 @@ public class HeadlessAnalyzer {
 		boolean filesProcessed = false;
 
 		DomainFile domFile = parentFolder.getFile(filename);
+		// Do not follow folder-links or consider program links.  Using content type
+		// to filter is best way to control this.
 		if (domFile != null &&
 			ProgramContentHandler.PROGRAM_CONTENT_TYPE.equals(domFile.getContentType())) {
 			filesProcessed = true;

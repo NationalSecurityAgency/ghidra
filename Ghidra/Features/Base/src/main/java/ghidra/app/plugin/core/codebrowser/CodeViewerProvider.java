@@ -37,6 +37,7 @@ import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.HoverHandler;
 import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
 import docking.widgets.fieldpanel.support.*;
+import generic.theme.GIcon;
 import ghidra.app.nav.*;
 import ghidra.app.plugin.core.clipboard.CodeBrowserClipboardProvider;
 import ghidra.app.plugin.core.codebrowser.actions.*;
@@ -47,6 +48,7 @@ import ghidra.app.util.viewer.field.FieldFactory;
 import ghidra.app.util.viewer.format.*;
 import ghidra.app.util.viewer.listingpanel.*;
 import ghidra.app.util.viewer.multilisting.MultiListingLayoutModel;
+import ghidra.app.util.viewer.options.ListingDisplayOptionsEditor;
 import ghidra.app.util.viewer.util.FieldNavigator;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.NavigatableComponentProviderAdapter;
@@ -56,7 +58,6 @@ import ghidra.program.model.listing.*;
 import ghidra.program.util.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.Swing;
-import resources.ResourceManager;
 
 public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		implements ProgramLocationListener, ProgramSelectionListener, Draggable, Droppable,
@@ -67,12 +68,12 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 	private static final String TITLE = NAME + ": ";
 
 	private static final Icon LISTING_FORMAT_EXPAND_ICON =
-		ResourceManager.loadImage("images/field.header.down.png");
+		new GIcon("icon.plugin.codebrowser.format.expand");
 	private static final Icon LISTING_FORMAT_COLLAPSE_ICON =
-		ResourceManager.loadImage("images/field.header.up.png");
+		new GIcon("icon.plugin.codebrowser.format.collapse");
 
-	private static final Icon HOVER_ON_ICON = ResourceManager.loadImage("images/hoverOn.gif");
-	private static final Icon HOVER_OFF_ICON = ResourceManager.loadImage("images/hoverOff.gif");
+	private static final Icon HOVER_ON_ICON = new GIcon("icon.plugin.codebrowser.hover.on");
+	private static final Icon HOVER_OFF_ICON = new GIcon("icon.plugin.codebrowser.hover.off");
 	private static final String HOVER_MODE = "Hover Mode";
 
 	private static final String DIVIDER_LOCATION = "DividerLocation";
@@ -128,9 +129,9 @@ public class CodeViewerProvider extends NavigatableComponentProviderAdapter
 		// note: the owner has not changed, just the name; remove sometime after version 10
 		String owner = plugin.getName();
 		ComponentProvider.registerProviderNameOwnerChange(OLD_NAME, owner, NAME, owner);
-
+		registerAdjustableFontId(ListingDisplayOptionsEditor.DEFAULT_FONT_ID);
 		setConnected(isConnected);
-		setIcon(ResourceManager.loadImage("images/Browser.gif"));
+		setIcon(new GIcon("icon.plugin.codebrowser.provider"));
 		if (!isConnected) {
 			setTransient();
 		}

@@ -17,6 +17,7 @@ package ghidra.util.bean;
 
 import static org.junit.Assert.*;
 
+import java.awt.Container;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +35,7 @@ import docking.widgets.table.GTable;
 import generic.util.Path;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.filechooser.ExtensionFileFilter;
-import resources.ResourceManager;
+import resources.Icons;
 
 public class PathManagerTest extends AbstractDockingTest {
 
@@ -42,6 +43,10 @@ public class PathManagerTest extends AbstractDockingTest {
 	private GTable table;
 	private JFrame frame;
 	private boolean wasListenerNotified = false;
+	private JButton removeButton;
+	private JButton addButton;
+	private JButton upButton;
+	private JButton downButton;
 
 	@Before
 	public void setUp() throws Exception {
@@ -61,6 +66,11 @@ public class PathManagerTest extends AbstractDockingTest {
 			frame.pack();
 		});
 		frame.setVisible(true);
+		Container panel = pathManager.getComponent();
+		removeButton = findButtonByIcon(panel, Icons.DELETE_ICON);
+		addButton = findButtonByIcon(panel, Icons.ADD_ICON);
+		upButton = findButtonByIcon(panel, Icons.UP_ICON);
+		downButton = findButtonByIcon(panel, Icons.DOWN_ICON);
 	}
 
 	@After
@@ -72,8 +82,6 @@ public class PathManagerTest extends AbstractDockingTest {
 	@Test
 	public void testUpArrow() throws Exception {
 		selectRow(3);
-		JButton upButton = findButtonByIcon(pathManager.getComponent(),
-			ResourceManager.loadImage("images/up.png"));
 		assertNotNull(upButton);
 		pressButton(upButton, true);
 		waitForSwing();
@@ -105,8 +113,6 @@ public class PathManagerTest extends AbstractDockingTest {
 	public void testDownArrow() throws Exception {
 		selectRow(2);
 
-		JButton downButton = findButtonByIcon(pathManager.getComponent(),
-			ResourceManager.loadImage("images/down.png"));
 		assertNotNull(downButton);
 		pressButton(downButton, true);
 		waitForSwing();
@@ -138,30 +144,28 @@ public class PathManagerTest extends AbstractDockingTest {
 	public void testRemove() throws Exception {
 		selectRow(3);
 
-		JButton button = findButtonByIcon(pathManager.getComponent(),
-			ResourceManager.loadImage("images/edit-delete.png"));
-		assertNotNull(button);
-		pressButton(button, true);
+		assertNotNull(removeButton);
+		pressButton(removeButton, true);
 		waitForSwing();
 		int row = table.getSelectedRow();
 		assertEquals(2, row);
 
-		pressButton(button, true);
+		pressButton(removeButton, true);
 		waitForSwing();
 		row = table.getSelectedRow();
 		assertEquals(1, row);
 
-		pressButton(button, true);
+		pressButton(removeButton, true);
 		waitForSwing();
 		row = table.getSelectedRow();
 		assertEquals(0, row);
 
-		pressButton(button, true);
+		pressButton(removeButton, true);
 		waitForSwing();
 		row = table.getSelectedRow();
 		assertEquals(-1, row);
 
-		assertTrue(!button.isEnabled());
+		assertTrue(!removeButton.isEnabled());
 	}
 
 	@Test
@@ -188,10 +192,8 @@ public class PathManagerTest extends AbstractDockingTest {
 			Preferences.LAST_IMPORT_DIRECTORY, GhidraFileChooserMode.FILES_AND_DIRECTORIES, true,
 			new ExtensionFileFilter(new String[] { "h" }, "C Header Files"));
 
-		JButton button = findButtonByIcon(pathManager.getComponent(),
-			ResourceManager.loadImage("images/Plus.png"));
-		assertNotNull(button);
-		pressButton(button, false);
+		assertNotNull(addButton);
+		pressButton(addButton, false);
 
 		waitForSwing();
 		GhidraFileChooser fileChooser = waitForDialogComponent(GhidraFileChooser.class);
@@ -226,10 +228,8 @@ public class PathManagerTest extends AbstractDockingTest {
 			Preferences.LAST_IMPORT_DIRECTORY, GhidraFileChooserMode.FILES_AND_DIRECTORIES, true,
 			new ExtensionFileFilter(new String[] { "h" }, "C Header Files"));
 
-		JButton button = findButtonByIcon(pathManager.getComponent(),
-			ResourceManager.loadImage("images/Plus.png"));
-		assertNotNull(button);
-		pressButton(button, false);
+		assertNotNull(addButton);
+		pressButton(addButton, false);
 
 		waitForSwing();
 		GhidraFileChooser fileChooser = waitForDialogComponent(GhidraFileChooser.class);

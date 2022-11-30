@@ -16,7 +16,6 @@
 package ghidra.app.merge.tree;
 
 import java.awt.BorderLayout;
-import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
 import javax.swing.*;
@@ -27,7 +26,7 @@ import docking.widgets.label.GDLabel;
 import docking.widgets.label.GIconLabel;
 import ghidra.app.merge.MergeConstants;
 import ghidra.program.model.listing.Program;
-import resources.ResourceManager;
+import resources.Icons;
 
 /**
  * Panel to get user input to resolve name conflicts when private name of tree
@@ -129,7 +128,7 @@ class NameConflictsPanel extends JPanel {
 		iconPanel.setLayout(new BoxLayout(iconPanel, BoxLayout.X_AXIS));
 
 		conflictsLabel = new GDLabel("'My' name already exists in Latest Version");
-		ImageIcon icon = ResourceManager.loadImage("images/information.png");
+		Icon icon = Icons.INFO_ICON;
 		iconPanel.add(new GIconLabel(icon));
 		iconPanel.add(Box.createHorizontalStrut(5));
 		iconPanel.add(conflictsLabel);
@@ -158,12 +157,9 @@ class NameConflictsPanel extends JPanel {
 		panel.add(rbPanel, BorderLayout.CENTER);
 
 		add(panel);
-		ItemListener itemListener = new ItemListener() {
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				if (listener != null) {
-					listener.stateChanged(null);
-				}
+		ItemListener itemListener = e -> {
+			if (listener != null) {
+				listener.stateChanged(null);
 			}
 		};
 		keepOtherRB.addItemListener(itemListener);

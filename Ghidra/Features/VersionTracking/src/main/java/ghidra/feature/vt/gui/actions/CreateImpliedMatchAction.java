@@ -17,10 +17,11 @@ package ghidra.feature.vt.gui.actions;
 
 import java.util.List;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import docking.ActionContext;
 import docking.action.*;
+import generic.theme.GIcon;
 import ghidra.feature.vt.api.main.VTMatch;
 import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.feature.vt.gui.plugin.VTPlugin;
@@ -30,7 +31,6 @@ import ghidra.feature.vt.gui.task.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.task.Task;
 import ghidra.util.task.TaskListener;
-import resources.ResourceManager;
 
 public class CreateImpliedMatchAction extends DockingAction {
 
@@ -43,7 +43,7 @@ public class CreateImpliedMatchAction extends DockingAction {
 		this.controller = controller;
 		this.provider = provider;
 
-		ImageIcon icon = ResourceManager.loadImage("images/flag.png");
+		Icon icon = new GIcon("icon.version.tracking.action.create.implied.match");
 		setToolBarData(new ToolBarData(icon, "1"));
 		setPopupMenuData(new MenuData(new String[] { "Accept Implied Match" }, icon, "1"));
 		setHelpLocation(new HelpLocation("VersionTrackingPlugin", "Accept_Implied_Match"));

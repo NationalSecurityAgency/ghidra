@@ -17,24 +17,26 @@ package ghidra.app.util.viewer.field;
 
 import java.awt.*;
 
-import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 
 import docking.widgets.fieldpanel.internal.FieldBackgroundColorManager;
 import docking.widgets.fieldpanel.internal.PaintContext;
 import docking.widgets.fieldpanel.support.*;
+import generic.theme.GIcon;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.EmptyProxy;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.program.model.listing.Data;
-import resources.ResourceManager;
 
 /**
  * FactoryField class for displaying the open/close field.
  */
 public class OpenCloseField implements ListingField {
-	private static final ImageIcon openImage = ResourceManager.loadImage("images/small_minus.png");
-	private static final ImageIcon closedImage = ResourceManager.loadImage("images/small_plus.png");
+	private static final GIcon OPEN_ICON =
+		new GIcon("icon.base.util.viewer.fieldfactory.openclose.open");
+	private static final GIcon CLOSED_ICON =
+		new GIcon("icon.base.util.viewer.fieldfactory.openclose.closed");
 
 	private FieldFactory factory;
 	private int startX;
@@ -42,7 +44,7 @@ public class OpenCloseField implements ListingField {
 	private int fieldWidth;
 	private int heightAbove;
 	private int heightBelow;
-	private ProxyObj proxy;
+	private ProxyObj<?> proxy;
 
 	private boolean isOpen;
 	private int indentLevel;
@@ -61,7 +63,7 @@ public class OpenCloseField implements ListingField {
 	 * @param width the width of this field.
 	 * @param isLast true if the data object is the last subcomponent at its level.
 	 */
-	public OpenCloseField(FieldFactory factory, ProxyObj proxy, int indentLevel,
+	public OpenCloseField(FieldFactory factory, ProxyObj<?> proxy, int indentLevel,
 			FontMetrics metrics, int x, int width, boolean isLast) {
 		this.factory = factory;
 		this.proxy = proxy;
@@ -86,7 +88,7 @@ public class OpenCloseField implements ListingField {
 	}
 
 	@Override
-	public ProxyObj getProxy() {
+	public ProxyObj<?> getProxy() {
 		if (proxy == null) {
 			return EmptyProxy.EMPTY_PROXY;
 		}
@@ -105,7 +107,7 @@ public class OpenCloseField implements ListingField {
 
 	/**
 	 * Sets the yPos relative to the overall layout.
-	 * @param yPos the starting Ypos of the layout row.
+	 * @param yPos the starting Y position of the layout row.
 	 * @param heightAbove the heightAbove the alignment line in the layout row.
 	 * @param heightBelow the heightBelow the alignment line in the layout row.
 	 */
@@ -137,6 +139,7 @@ public class OpenCloseField implements ListingField {
 
 	/**
 	 * Returns the vertical position of this field.
+	 * @return the position
 	 */
 	public int getStartY() {
 		return startY;
@@ -167,16 +170,16 @@ public class OpenCloseField implements ListingField {
 		//
 		if (!context.isPrinting()) {
 			if (isOpen) {
-				g.drawImage(openImage.getImage(), toggleHandleStartX, toggleHandleStartY,
-					context.getBackground(), null);
+				g.drawImage(OPEN_ICON.getImageIcon().getImage(), toggleHandleStartX,
+					toggleHandleStartY, context.getBackground(), null);
 			}
 			else {
-				g.drawImage(closedImage.getImage(), toggleHandleStartX, toggleHandleStartY,
-					context.getBackground(), null);
+				g.drawImage(CLOSED_ICON.getImageIcon().getImage(), toggleHandleStartX,
+					toggleHandleStartY, context.getBackground(), null);
 			}
 		}
 
-		g.setColor(Color.LIGHT_GRAY);
+		g.setColor(Palette.LIGHT_GRAY);
 
 		// draw the vertical lines to the left of the toggle handle (these are shown when
 		// there are vertical bars drawn for inset data)
@@ -340,6 +343,6 @@ public class OpenCloseField implements ListingField {
 //==================================================================================================
 
 	static int getOpenCloseHandleSize() {
-		return openImage.getIconWidth();
+		return OPEN_ICON.getIconWidth();
 	}
 }

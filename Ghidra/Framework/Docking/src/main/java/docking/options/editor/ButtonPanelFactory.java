@@ -20,6 +20,7 @@ import java.awt.*;
 import javax.swing.*;
 import javax.swing.border.Border;
 
+import generic.theme.GThemeDefaults.Colors;
 import resources.ResourceManager;
 
 /**
@@ -99,7 +100,7 @@ public class ButtonPanelFactory {
 	public final static Icon BROWSE_ICON = new Icon() {
 		@Override
 		public void paintIcon(Component c, Graphics g, int x, int y) {
-			g.setColor(Color.BLACK);
+			g.setColor(Colors.FOREGROUND);
 			g.fillRect(x, y + 5, 2, 2);
 			g.fillRect(x + 4, y + 5, 2, 2);
 			g.fillRect(x + 8, y + 5, 2, 2);
@@ -115,10 +116,6 @@ public class ButtonPanelFactory {
 			return 10;
 		}
 	};
-	/**
-	 * Font for the browse button label.
-	 */
-	public final static Font BROWSE_FONT = new Font("Dialog", Font.BOLD, 12);
 
 	/**
 	 * internal values used when creating the panels and buttons

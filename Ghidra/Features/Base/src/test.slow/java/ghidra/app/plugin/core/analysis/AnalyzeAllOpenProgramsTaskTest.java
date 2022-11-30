@@ -429,7 +429,7 @@ public class AnalyzeAllOpenProgramsTaskTest extends AbstractGhidraHeadedIntegrat
 
 		@Override
 		public void close() {
-			runSwing(super::close);
+			runSwing(() -> super.close());
 		}
 	}
 

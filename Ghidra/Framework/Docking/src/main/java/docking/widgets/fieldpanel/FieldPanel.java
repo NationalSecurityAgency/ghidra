@@ -15,7 +15,7 @@
  */
 package docking.widgets.fieldpanel;
 
-import static docking.widgets.EventTrigger.INTERNAL_ONLY;
+import static docking.widgets.EventTrigger.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -38,8 +38,9 @@ import docking.widgets.fieldpanel.listener.*;
 import docking.widgets.fieldpanel.support.*;
 import docking.widgets.indexedscrollpane.IndexScrollListener;
 import docking.widgets.indexedscrollpane.IndexedScrollable;
-import ghidra.util.Msg;
-import ghidra.util.SystemUtilities;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors.Messages;
+import ghidra.util.*;
 
 public class FieldPanel extends JPanel
 		implements IndexedScrollable, LayoutModelListener, ChangeListener {
@@ -51,7 +52,7 @@ public class FieldPanel extends JPanel
 	private boolean inFocus;
 
 	protected BackgroundColorModel backgroundColorModel =
-		new DefaultBackgroundColorModel(Color.WHITE);
+		new DefaultBackgroundColorModel(new GColor("color.bg.fieldpanel"));
 	protected PaintContext paintContext = new PaintContext();
 
 	private AnchoredLayoutHandler layoutHandler;
@@ -415,7 +416,6 @@ public class FieldPanel extends JPanel
 	 */
 	public void setBackgroundColor(Color c) {
 		backgroundColorModel.setDefaultBackgroundColor(c);
-		paintContext.setDefaultBackgroundColor(c);
 	}
 
 	public Color getBackgroundColor(BigInteger index) {
@@ -1152,10 +1152,8 @@ public class FieldPanel extends JPanel
 	}
 
 	private Color blend(Color primary, Color secondary) {
-		int red = (primary.getRed() * 3 + secondary.getRed()) / 4;
-		int green = (primary.getGreen() * 3 + secondary.getGreen()) / 4;
-		int blue = (primary.getBlue() * 3 + secondary.getBlue()) / 4;
-		return new Color(red, green, blue);
+
+		return ColorUtils.blend(primary, secondary, 0.75);
 	}
 
 	private void paintLayoutBackground(Graphics g, Rectangle rect, AnchoredLayout layout,
@@ -1185,7 +1183,7 @@ public class FieldPanel extends JPanel
 		Color defaultBackgroundColor = backgroundColorModel.getDefaultBackgroundColor();
 		g.setColor(defaultBackgroundColor);
 		g.fillRect(r.x, layout.getYPos() - layout.getHeight(), r.width, layout.getHeight());
-		g.setColor(Color.RED);
+		g.setColor(Messages.ERROR);
 		GraphicsUtils.drawString(this, g, "Error Painting Field", r.x, layout.getYPos());
 		Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
 	}
@@ -1238,8 +1236,7 @@ public class FieldPanel extends JPanel
 		if (layout == null) {
 			return null;
 		}
-		Rectangle r =
-			layout.getCursorRect(location.fieldNum, location.row, location.col);
+		Rectangle r = layout.getCursorRect(location.fieldNum, location.row, location.col);
 		return r.getLocation();
 	}
 

@@ -240,6 +240,39 @@ public interface DebugClient extends DebugClientReentrant {
 		}
 	}
 
+	public enum DebugEngCreateFlags implements BitmaskUniverse {
+		DEBUG_ECREATE_PROCESS_DEFAULT(0x00000000),
+		DEBUG_ECREATE_INHERIT_HANDLES(0x00000001),
+		DEBUG_ECREATE_USE_VERIFIER_FLAGS(0x00000002),
+		DEBUG_ECREATE_USE_IMPLICIT_COMMAND_LINE(0x00000004);
+
+		DebugEngCreateFlags(int mask) {
+			this.mask = mask;
+		}
+
+		private final int mask;
+
+		@Override
+		public long getMask() {
+			return mask;
+		}
+	}
+
+	public enum DebugVerifierFlags implements BitmaskUniverse {
+		DEBUG_VERIFIER_DEFAULT(0x00000000);
+
+		DebugVerifierFlags(int mask) {
+			this.mask = mask;
+		}
+
+		private final int mask;
+
+		@Override
+		public long getMask() {
+			return mask;
+		}
+	}
+
 	public enum DebugEndSessionFlags {
 		DEBUG_END_PASSIVE(0x00000000),
 		DEBUG_END_ACTIVE_TERMINATE(0x00000001),
@@ -365,7 +398,10 @@ public interface DebugClient extends DebugClientReentrant {
 	void attachProcess(DebugServerId si, long processId, BitmaskSet<DebugAttachFlags> attachFlags);
 
 	void createProcess(DebugServerId si, String commandLine,
-			BitmaskSet<DebugCreateFlags> createFlags);
+			String initialDirectory, String environment,
+			BitmaskSet<DebugCreateFlags> createFlags,
+			BitmaskSet<DebugEngCreateFlags> engCreateFlags,
+			BitmaskSet<DebugVerifierFlags> verifierFlags);
 
 	void createProcessAndAttach(DebugServerId si, String commandLine,
 			BitmaskSet<DebugCreateFlags> createFlags, int processId,

@@ -18,10 +18,10 @@ package help;
 import java.awt.Component;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Hashtable;
-import java.util.Locale;
+import java.util.*;
 
 import javax.help.*;
+import javax.help.Map;
 import javax.help.Map.ID;
 import javax.help.event.HelpModelEvent;
 import javax.help.plaf.HelpNavigatorUI;
@@ -74,6 +74,9 @@ public class CustomTOCView extends TOCView {
 	}
 
 	public HelpModel getHelpModel() {
+		if (ui == null) {
+			return null;
+		}
 		return ui.getHelpModel();
 	}
 
@@ -140,6 +143,8 @@ public class CustomTOCView extends TOCView {
 	 * Our hook to install our custom cell renderer.
 	 */
 	class CustomTOCNavigatorUI extends BasicTOCNavigatorUI {
+		private static final String ROOT_TOC_ID = "Root";
+
 		public CustomTOCNavigatorUI(JHelpTOCNavigator b) {
 			super(b);
 		}
@@ -181,25 +186,40 @@ public class CustomTOCView extends TOCView {
 			}
 
 			TOCItem item = (TOCItem) treeItem;
-			ID itemID = item.getID();
-			if (itemID == null) {
-				Msg.debug(this, "No help ID for " + item);
-				return;
-			}
-
 			String presentation = item.getPresentation();
 			if (presentation != null) {
 				return; // don't currently support presentations
 			}
 
 			CustomTreeItemDecorator customItem = (CustomTreeItemDecorator) item;
+			ID itemId = getId(customItem, helpModel);
+			if (itemId == null) {
+				Msg.debug(this, "No help ID for " + item);
+				return;
+			}
+
 			String customDisplayText = customItem.getDisplayText();
 			try {
-				helpModel.setCurrentID(itemID, customDisplayText, navigator);
+				helpModel.setCurrentID(itemId, customDisplayText, navigator);
 			}
 			catch (InvalidHelpSetContextException ex) {
 				Msg.error(this, "Exception setting new help item ID", ex);
 			}
+		}
+
+		private ID getId(CustomTreeItemDecorator item, HelpModel helpModel) {
+			ID itemId = item.getID();
+			if (itemId != null) {
+				return itemId;
+			}
+
+			String tocID = item.getTocID();
+			if (Objects.equals(tocID, ROOT_TOC_ID)) {
+				HelpSet hs = helpModel.getHelpSet();
+				return hs.getHomeID();
+			}
+
+			return null;
 		}
 
 		private TOCItem getSelectedItem(TreeSelectionEvent e, JHelpNavigator navigator) {

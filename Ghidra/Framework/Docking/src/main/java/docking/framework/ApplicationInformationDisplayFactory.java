@@ -23,13 +23,18 @@ import javax.swing.*;
 
 import docking.widgets.label.GIconLabel;
 import docking.widgets.label.GLabel;
+import generic.theme.*;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.framework.Application;
 import ghidra.framework.PluggableServiceRegistry;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
-import resources.ResourceManager;
 
 public class ApplicationInformationDisplayFactory {
+
+	private static final String ICON_HOME = "icon.docking.application.home";
+	private static final String ICON_16 = "icon.docking.application.16";
+	private static final String ICON_128 = "icon.docking.application.128";
 
 	static {
 		PluggableServiceRegistry.registerPluggableService(
@@ -70,7 +75,7 @@ public class ApplicationInformationDisplayFactory {
 		return bestImageSoFar;
 	}
 
-	public static ImageIcon getHomeIcon() {
+	public static Icon getHomeIcon() {
 		ApplicationInformationDisplayFactory factory = PluggableServiceRegistry.getPluggableService(
 			ApplicationInformationDisplayFactory.class);
 		return factory.doGetHomeIcon();
@@ -115,13 +120,12 @@ public class ApplicationInformationDisplayFactory {
 		final JPanel panel = new JPanel(new BorderLayout());
 		panel.setPreferredSize(new Dimension(400, 400));
 
-		Color background = Color.BLACK;
-
+		Color background = new GColor("color.bg.splashscreen");
 		panel.setBackground(background);
 
 		JLabel nameLabel = new GLabel(Application.getName());
-		nameLabel.setForeground(new Color(155, 155, 155));
-		Font newFont = new Font("Garamond", Font.BOLD, 35);
+		nameLabel.setForeground(Palette.GRAY);
+		Font newFont = Gui.getFont("font.splash.header.default");
 		nameLabel.setFont(newFont);
 		nameLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		nameLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -139,14 +143,14 @@ public class ApplicationInformationDisplayFactory {
 		return panel;
 	}
 
-	protected ImageIcon getSplashScreenIcon128() {
-		return ResourceManager.loadImage("images/www_128.png");
+	protected Icon getSplashScreenIcon128() {
+		return new GIcon(ICON_128);
 	}
 
 	protected List<Image> doGetWindowIcons() {
 		List<Image> list = new ArrayList<>();
-		list.add(ResourceManager.loadImage("images/www_128.png").getImage());
-		list.add(ResourceManager.loadImage("images/www_16.png").getImage());
+		list.add(new GIcon(ICON_128).getImageIcon().getImage());
+		list.add(new GIcon(ICON_16).getImageIcon().getImage());
 		return list;
 	}
 
@@ -158,8 +162,8 @@ public class ApplicationInformationDisplayFactory {
 		return null;
 	}
 
-	protected ImageIcon doGetHomeIcon() {
-		return ResourceManager.loadImage("images/www_16.png");
+	protected Icon doGetHomeIcon() {
+		return new GIcon(ICON_HOME);
 	}
 
 	protected Runnable doGetHomeCallback() {

@@ -332,32 +332,43 @@ public class FileHeader implements StructConverter {
 			long stringTableOffset = getStringTableOffset();
 			sectionHeaders = new SectionHeader[numberOfSections];
 			for (int i = 0; i < numberOfSections; ++i) {
-				sectionHeaders[i] =
+				SectionHeader section =
 					SectionHeader.readSectionHeader(reader, tmpIndex, stringTableOffset);
+				sectionHeaders[i] = section;
+
+				int pointerToRawData = section.getPointerToRawData();
+				int sizeOfRawData = section.getSizeOfRawData();
 
 				// Ensure PointerToRawData + SizeOfRawData doesn't exceed the length of the file
-				int pointerToRawData = sectionHeaders[i].getPointerToRawData();
-				int sizeOfRawData = (int) Math.min(reader.length() - pointerToRawData,
-					sectionHeaders[i].getSizeOfRawData());
+				if (pointerToRawData >= reader.length()) {
+					sizeOfRawData = 0;
+					Msg.warn(this, "Section " + section.getName() + " begins after end of file!");
+				}
+				else if (pointerToRawData + sizeOfRawData > reader.length()) {
+					sizeOfRawData = (int) (reader.length() - pointerToRawData);
+					Msg.warn(this,
+						String.format("Section %s exceeds file length...truncating from %d to %d",
+							section.getName(), section.getSizeOfRawData(), sizeOfRawData));
+				}
+				section.setSizeOfRawData(sizeOfRawData);
 
 				// Ensure VirtualSize is large enough to accommodate SizeOfRawData, but do not
 				// exceed the next alignment boundary.  We can only do this if the VirtualAddress is
 				// already properly aligned, since we currently don't support moving sections to
 				// different addresses to enforce alignment.
-				int virtualAddress = sectionHeaders[i].getVirtualAddress();
-				int virtualSize = sectionHeaders[i].getVirtualSize();
+				int virtualAddress = section.getVirtualAddress();
+				int virtualSize = section.getVirtualSize();
 				int alignedVirtualAddress = PortableExecutable.computeAlignment(virtualAddress,
 					optHeader.getSectionAlignment());
 				int alignedVirtualSize = PortableExecutable.computeAlignment(virtualSize,
 					optHeader.getSectionAlignment());
 				if (virtualAddress == alignedVirtualAddress) {
 					if (sizeOfRawData > virtualSize) {
-						sectionHeaders[i]
-								.setVirtualSize(Math.min(sizeOfRawData, alignedVirtualSize));
+						section.setVirtualSize(Math.min(sizeOfRawData, alignedVirtualSize));
 					}
 				}
 				else {
-					Msg.warn(this, "Section " + sectionHeaders[i].getName() + " is not aligned!");
+					Msg.warn(this, "Section " + section.getName() + " is not aligned!");
 				}
 				tmpIndex += SectionHeader.IMAGE_SIZEOF_SECTION_HEADER;
 			}

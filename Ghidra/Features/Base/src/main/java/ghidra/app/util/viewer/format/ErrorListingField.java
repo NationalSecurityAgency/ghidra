@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,33 +15,29 @@
  */
 package ghidra.app.util.viewer.format;
 
+import docking.widgets.fieldpanel.field.*;
+import docking.widgets.fieldpanel.support.*;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.util.HighlightProvider;
 import ghidra.app.util.viewer.field.*;
 import ghidra.app.util.viewer.proxy.ProxyObj;
-
-import java.awt.Color;
-
-import docking.widgets.fieldpanel.field.*;
-import docking.widgets.fieldpanel.support.*;
 
 public class ErrorListingField extends ListingTextField {
 
 	private Throwable t;
 
-	private static HighlightProvider myProvider = new HighlightProvider() {
+	private static HighlightProvider myProvider =
+		(text, obj, fieldFactoryClass, cursorTextOffset) -> new Highlight[] {
+			new Highlight(0, text.length() - 1, new GColor("color.bg.error")) };
 
-		public Highlight[] getHighlights(String text, Object obj,
-				Class<? extends FieldFactory> fieldFactoryClass, int cursorTextOffset) {
-			return new Highlight[] { new Highlight(0, text.length() - 1, new Color(245, 158, 158)) };
-		}
-	};
-
-	public ErrorListingField(FieldFactory ff, ProxyObj proxy, int varWidth, Throwable t) {
+	public ErrorListingField(FieldFactory ff, ProxyObj<?> proxy, int varWidth, Throwable t) {
 		super(ff, proxy, createField(ff, proxy, varWidth, t));
 		this.t = t;
 	}
 
-	private static TextField createField(FieldFactory ff, ProxyObj proxy, int varWidth, Throwable t) {
+	private static TextField createField(FieldFactory ff, ProxyObj<?> proxy, int varWidth,
+			Throwable t) {
 		HighlightFactory hlFactory =
 			new FieldHighlightFactory(myProvider, ff.getClass(), proxy.getObject());
 		return new ClippingTextField(ff.getStartX() + varWidth, ff.getWidth(),
@@ -53,7 +48,7 @@ public class ErrorListingField extends ListingTextField {
 		String message = t.getMessage() == null ? t.toString() : t.getMessage();
 		AttributedString as =
 			new AttributedString("*Error*: " + message + ".  Double click for Details.",
-				Color.BLACK, ff.getMetrics());
+				Colors.FOREGROUND, ff.getMetrics());
 		return new TextFieldElement(as, 0, 0);
 	}
 
@@ -61,9 +56,6 @@ public class ErrorListingField extends ListingTextField {
 		return t;
 	}
 
-	/**
-	 * @see ListingTextField#getClickedObject(FieldLocation)
-	 */
 	@Override
 	public Object getClickedObject(FieldLocation fieldLocation) {
 		// overridden to return this object, rather than the lower-level text field

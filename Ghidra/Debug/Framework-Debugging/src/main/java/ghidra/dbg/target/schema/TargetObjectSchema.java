@@ -787,7 +787,12 @@ public interface TargetObjectSchema {
 		List<TargetObjectSchema> schemas = getSuccessorSchemas(path);
 		for (; path != null; path = PathUtils.parent(path)) {
 			TargetObjectSchema schema = schemas.get(path.size());
-			if (schema.getInterfaces().contains(type)) {
+			if (!schema.isCanonicalContainer()) {
+				continue;
+			}
+			TargetObjectSchema deSchema =
+				schema.getContext().getSchema(schema.getDefaultElementSchema());
+			if (deSchema.getInterfaces().contains(type)) {
 				return path;
 			}
 			List<String> inAgg = Private.searchForSuitableContainerInAggregate(schema, type);

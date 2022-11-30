@@ -20,9 +20,9 @@
 	During the help build time, all TOC_Source.xml files will be parsed and	validated to ensure
 	that all <tocref> tags point to valid <tocdef> tags.  From these files will be generated
 	<module name>_TOC.xml files, which are table of contents files written in the format 
-	desired by the JavaHelp system.   Additionally, the genated files will be merged together
+	desired by the JavaHelp system.   Additionally, the generated files will be merged together
 	as they are loaded by the JavaHelp system.  In the end, when displaying help in the Ghidra
-	help GUI, there will be on table of contents that has been created from the definitions in 
+	help GUI, there will be one table of contents that has been created from the definitions in 
 	all of the modules' TOC_Source.xml files.
 
 	
@@ -43,12 +43,25 @@
 	**The URL for the target is relative and should start with 'help/topics'.  This text is 
 	used by the Ghidra help system to provide a universal starting point for all links so that
 	they can be resolved at runtime, across modules.
-	 
+	
 	
 -->
 
 
 <tocroot>
 
-
-</tocroot>                  
+	<!--
+		Note: we have omitted the target url for the root node.  Rather than defining a help page
+		for this node, we allow the system's default 'home id' to be used.  (Any time a help item
+		has no help defined, the 'home id' is displayed.)  When the system's HelpManager loads 
+		GHelpSets, it will specify the 'home id' specific to that application.
+	-->
+	<tocdef id="Root" sortgroup="a" text="Welcome to Help">
+		<tocdef id="Theming" text="Theming" sortgroup="t" target="help/topics/Theming/ThemingOverview.html"> 
+		        <tocdef id="Overview" sortgroup="1" text="Overview" target="help/topics/Theming/ThemingOverview.html"/>
+		        <tocdef id="Editing Themes" sortgroup="2" text="Editing Themes" target="help/topics/Theming/ThemingUserDocs.html"/>
+		        <tocdef id="Architecture" sortgroup="3" text="Architecture" target="help/topics/Theming/ThemingInternals.html"/>
+		        <tocdef id="Developer Documentation" sortgroup="4" text="Developer's Guide" target="help/topics/Theming/ThemingDeveloperDocs.html"/>		        
+	    </tocdef>
+	</tocdef>
+</tocroot>

@@ -1084,41 +1084,4 @@ public interface TargetObject extends Comparable<TargetObject> {
 	public default CompletableFuture<Void> invalidateCaches() {
 		return AsyncUtils.NIL;
 	}
-
-	/**
-	 * Listen for object events
-	 * 
-	 * <p>
-	 * The client must maintain a strong reference to the listener. To allow stale listeners to be
-	 * garbage collected, the implementation should use weak or soft references. That said, the
-	 * client should not rely on the implementation to garbage collect its listeners. All unneeded
-	 * listeners should be removed using {@link #removeListener(TargetObjectListener)}. The
-	 * exception is when an object is invalidated. The client may safely neglect removing any
-	 * listeners it registered with that object. If the object does not keep listeners, i.e., it
-	 * produces no events, this method may do nothing.
-	 * 
-	 * <p>
-	 * Clients ought to listen on the model instead of specific objects, especially since an object
-	 * may emit events immediately after its creation, but before the client has a chance to add a
-	 * listener. Worse yet, the object could be invalidated before the client can retrieve its
-	 * children. Listening on the model ensures the reception of a complete log of events.
-	 * 
-	 * @see DebuggerObjectModel#addModelListener(DebuggerModelListener)
-	 * @param l the listener
-	 */
-	public default void addListener(DebuggerModelListener l) {
-		throw new UnsupportedOperationException();
-	}
-
-	/**
-	 * Remove a listener
-	 * 
-	 * <p>
-	 * If the given listener is not registered with this object, this method does nothing.
-	 * 
-	 * @param l the listener
-	 */
-	public default void removeListener(DebuggerModelListener l) {
-		throw new UnsupportedOperationException();
-	}
 }

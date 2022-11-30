@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import javax.swing.JLabel;
 
 import docking.widgets.table.GTableCellRenderingData;
+import generic.theme.GColor;
 import ghidra.app.plugin.core.navigation.locationreferences.ReferenceUtils;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
@@ -98,6 +99,7 @@ public class ReferencesFromTableModel extends AddressBasedTableModel<ReferenceEn
 		// " << OFFCUT >>"
 		private static final String PLAIN_OFFCUT_TEXT = "<< OFFCUT >>";
 		private static final String HTML_OFFCUT_TEXT = " &lt;&lt; OFFCUT &gt;&gt;";
+		private static final Color OFFCUT_COLOR = new GColor("color.fg.table.offcut.unselected");
 
 		ReferenceTypeTableCellRenderer() {
 			setHTMLRenderingEnabled(true);
@@ -120,7 +122,7 @@ public class ReferencesFromTableModel extends AddressBasedTableModel<ReferenceEn
 			RefType refType = t.getReferenceType();
 			String text = refType.getName();
 			if (t.isOffcut()) {
-				text = "<html>" + HTMLUtilities.colorString(Color.RED, text + HTML_OFFCUT_TEXT);
+				text = "<html>" + HTMLUtilities.colorString(OFFCUT_COLOR, text + HTML_OFFCUT_TEXT);
 			}
 			return text;
 		}

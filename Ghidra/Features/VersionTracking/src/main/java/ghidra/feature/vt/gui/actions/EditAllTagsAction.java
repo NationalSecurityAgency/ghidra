@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +15,22 @@
  */
 package ghidra.feature.vt.gui.actions;
 
+import javax.swing.Icon;
+
+import docking.ActionContext;
+import docking.action.*;
+import generic.theme.GIcon;
 import ghidra.feature.vt.gui.editors.TagEditorDialog;
 import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.feature.vt.gui.plugin.VTPlugin;
 import ghidra.feature.vt.gui.provider.matchtable.VTMatchContext;
 import ghidra.util.HelpLocation;
 
-import javax.swing.Icon;
-
-import resources.ResourceManager;
-import docking.ActionContext;
-import docking.action.*;
-
 public class EditAllTagsAction extends DockingAction {
 
 	private static final String MENU_GROUP = VTPlugin.TAG_MENU_GROUP;
-	private static final Icon EDIT_TAG_ICON = ResourceManager.loadImage("images/tag_blue_edit.png");
+	private static final Icon EDIT_TAG_ICON =
+		new GIcon("icon.version.tracking.action.edit.all.tags");
 	private static final String ACTION_NAME = "Edit VTMatch Tags";
 
 	private final VTController controller;

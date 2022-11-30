@@ -15,20 +15,20 @@
  */
 package docking.widgets.imagepanel.actions;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import docking.ActionContext;
 import docking.action.MenuData;
 import docking.action.ToolBarData;
 import docking.widgets.imagepanel.ImagePanel;
-import resources.ResourceManager;
+import generic.theme.GIcon;
 
 /**
  * An action to re-center the image on a NavigableImagePanel.
  */
 public class ResetTranslationAction extends ImagePanelDockingAction {
 
-	private static final ImageIcon RECENTER_ICON = ResourceManager.loadImage("images/tag.png");
+	private static final Icon RECENTER_ICON = new GIcon("icon.widget.imagepanel.reset");
 
 	public ResetTranslationAction(String owner, ImagePanel imagePanel) {
 		super("Recenter", owner, imagePanel);

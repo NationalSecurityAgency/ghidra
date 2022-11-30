@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.core.instructionsearch.ui;
 
-import java.awt.Color;
 import java.awt.event.*;
 import java.util.List;
 
@@ -23,6 +22,8 @@ import javax.swing.*;
 
 import docking.DockingWindowManager;
 import docking.widgets.EmptyBorderButton;
+import generic.theme.GIcon;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.plugin.core.instructionsearch.InstructionSearchPlugin;
 import ghidra.app.plugin.core.instructionsearch.model.*;
 import ghidra.app.services.GoToService;
@@ -32,6 +33,7 @@ import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.*;
+import resources.Icons;
 import resources.ResourceManager;
 
 /**
@@ -46,15 +48,6 @@ public class InstructionTable extends AbstractInstructionTable {
 
 	// Defines the width/height for all icons on the toolbar
 	private static final int ICON_SIZE = 16;
-
-	private static final String GO_HOME_ICON_OVERLAY = "images/go-home.png";
-	private static final String ADDRESS_ICON_OVERLAY = "images/DOSA_A.png";
-	private static final String SCALAR_ICON_OVERLAY = "images/DOSA_S.png";
-	private static final String OPERAND_ICON_OVERLAY = "images/DOSA_O.png";
-	private static final String UNDEFINED_ICON_OVERLAY = "images/DOSA_D.png";
-	private static final String CLEAR_ICON_OVERLAY = "images/edit-clear.png";
-	private static final String RELOAD_ICON_OVERLAY = "images/reload.png";
-	private static final String MANUAL_ENTRY_ICON_OVERLAY = "images/editbytes.gif";
 
 	// Need to keep track of the column in case the user clicks on the column header and we 
 	// need to display the context menu.
@@ -168,7 +161,9 @@ public class InstructionTable extends AbstractInstructionTable {
 		}
 
 		InstructionTableDataObject[][] dataObjects =
-			new InstructionTableDataObject[dialog.getSearchData().getInstructions().size()][numColumns];
+			new InstructionTableDataObject[dialog.getSearchData()
+					.getInstructions()
+					.size()][numColumns];
 
 		// Loop over all instructions, adding pertinent info to each data object. This could be a long-running
 		// operation so put in a task that can be cancelled.
@@ -285,21 +280,21 @@ public class InstructionTable extends AbstractInstructionTable {
 	}
 
 	private void createGoToAddressBtn(JToolBar buttonToolbar) {
-		Icon icon = ResourceManager.loadImage(GO_HOME_ICON_OVERLAY);
+		Icon icon = Icons.HOME_ICON;
 		Action action = new NavAction("navigation", icon,
 			"Navigate to the address defined by this instruction set");
 		createToolbarButton(buttonToolbar, icon, action, "nav button");
 	}
 
 	private void createMaskClearAllBtn(JToolBar buttonToolbar) {
-		Icon icon = ResourceManager.loadImage(CLEAR_ICON_OVERLAY);
+		Icon icon = Icons.CLEAR_ICON;
 		Icon scaledIcon = ResourceManager.getScaledIcon(icon, ICON_SIZE, ICON_SIZE);
 		Action action = new ClearMasksAction("undefined", scaledIcon, "Unmask all");
 		createToolbarButton(buttonToolbar, icon, action, "unmask all button");
 	}
 
 	private void createReloadBtn(JToolBar buttonToolbar) {
-		Icon icon = ResourceManager.loadImage(RELOAD_ICON_OVERLAY);
+		Icon icon = Icons.REFRESH_ICON;
 		Icon scaledIcon = ResourceManager.getScaledIcon(icon, ICON_SIZE, ICON_SIZE);
 		Action action =
 			new ReloadAction("undefined", scaledIcon, "Load selected instructions from listing");
@@ -307,14 +302,14 @@ public class InstructionTable extends AbstractInstructionTable {
 	}
 
 	private void createManualEditBtn(JToolBar buttonToolbar) {
-		Icon icon = ResourceManager.loadImage(MANUAL_ENTRY_ICON_OVERLAY);
+		Icon icon = new GIcon("icon.plugin.instructiontable.manual.entry");
 		Icon scaledIcon = ResourceManager.getScaledIcon(icon, ICON_SIZE, ICON_SIZE);
 		Action action = new ManualEntryAction("undefined", scaledIcon, "Enter bytes manually");
 		createToolbarButton(buttonToolbar, icon, action, "manual entry");
 	}
 
 	private void createMaskDataBtn(JToolBar buttonToolbar) {
-		Icon icon = ResourceManager.loadImage(UNDEFINED_ICON_OVERLAY);
+		Icon icon = new GIcon("icon.plugin.instructiontable.undefined");
 		Icon scaledIcon = ResourceManager.getScaledIcon(icon, ICON_SIZE, ICON_SIZE);
 		Action action =
 			new MaskUndefinedAction("undefined", scaledIcon, "Mask all non-instructions (data)");
@@ -322,21 +317,21 @@ public class InstructionTable extends AbstractInstructionTable {
 	}
 
 	private void createMaskAddressesBtn(JToolBar buttonToolbar) {
-		Icon icon = ResourceManager.loadImage(ADDRESS_ICON_OVERLAY);
+		Icon icon = new GIcon("icon.plugin.instructiontable.address");
 		Icon scaledIcon = ResourceManager.getScaledIcon(icon, ICON_SIZE, ICON_SIZE);
 		Action action = new MaskAddressesAction("addresses", scaledIcon, "Mask all addresses");
 		createToolbarButton(buttonToolbar, icon, action, "mask addresses button");
 	}
 
 	private void createMaskScalarsBtn(JToolBar buttonToolbar) {
-		Icon icon = ResourceManager.loadImage(SCALAR_ICON_OVERLAY);
+		Icon icon = new GIcon("icon.plugin.instructiontable.scalar");
 		Icon scaledIcon = ResourceManager.getScaledIcon(icon, ICON_SIZE, ICON_SIZE);
 		Action action = new MaskScalarsAction("scalars", scaledIcon, "Mask all scalars");
 		createToolbarButton(buttonToolbar, icon, action, "mask scalars button");
 	}
 
 	private void createMaskOperandsBtn(JToolBar buttonToolbar) {
-		Icon icon = ResourceManager.loadImage(OPERAND_ICON_OVERLAY);
+		Icon icon = new GIcon("icon.plugin.instructiontable.operand");
 		Icon scaledIcon = ResourceManager.getScaledIcon(icon, ICON_SIZE, ICON_SIZE);
 		Action action = new MaskOperandsAction("operands", scaledIcon, "Mask all operands");
 		createToolbarButton(buttonToolbar, icon, action, "mask operands button");
@@ -516,9 +511,10 @@ public class InstructionTable extends AbstractInstructionTable {
 			}
 			else {
 				if (dialog.getMessagePanel() != null) {
-					dialog.getMessagePanel().setMessageText(
-						"Instruction was loaded manually, no address in the listing to navigate to.",
-						Color.BLUE);
+					dialog.getMessagePanel()
+							.setMessageText(
+								"Instruction was loaded manually, no address in the listing to navigate to.",
+								Messages.NORMAL);
 				}
 			}
 		}
@@ -546,7 +542,6 @@ public class InstructionTable extends AbstractInstructionTable {
 	/**
 	 * Creates a new {@link InstructionTableDataObject} for the given operand.
 	 * 
-	 * @param mnemonic the mnemonic ID
 	 * @param col the column in the table
 	 * @param dataObjects the set of data objects to modify
 	 */

@@ -60,4 +60,20 @@ public class RotateIcon implements Icon {
 		}
 		return description;
 	}
+
+	/**
+	 * The source icon being rotated.
+	 * @return the source icon being rotate
+	 */
+	public Icon getSourceIcon() {
+		return icon;
+	}
+
+	/**
+	 * Returns the rotation amount.
+	 * @return the rotation amount
+	 */
+	public int getRotation() {
+		return degrees;
+	}
 }

@@ -21,6 +21,7 @@ import java.awt.Point;
 import javax.swing.text.SimpleAttributeSet;
 
 import docking.widgets.table.threaded.ThreadedTableModelListener;
+import generic.theme.GColor;
 
 /**
  * Panel that shows information about the selected extension in the {@link ExtensionTablePanel}. This
@@ -29,6 +30,17 @@ import docking.widgets.table.threaded.ThreadedTableModelListener;
  * Note: The text is rendered as html to allow proper formatting (colors/font weight).
  */
 class ExtensionDetailsPanel extends AbstractDetailsPanel {
+
+	private static final Color FG_COLOR_AUTHOR =
+		new GColor("color.fg.extensionpanel.details.author");
+	private static final Color FG_COLOR_DATE = new GColor("color.fg.extensionpanel.details.date");
+	private static final Color FG_COLOR_DESCRIPTION =
+		new GColor("color.fg.extensionpanel.details.description");
+	private static final Color FG_COLOR_NAME = new GColor("color.fg.extensionpanel.details.name");
+	private static final Color FG_COLOR_PATH = new GColor("color.fg.extensionpanel.path");
+	private static final Color FG_COLOR_TITLE = new GColor("color.fg.extensionpanel.details.title");
+	private static final Color FG_COLOR_VERSION =
+		new GColor("color.fg.extensionpanel.details.version");
 
 	/** Attribute sets define the visual characteristics for each field */
 	private SimpleAttributeSet nameAttrSet;
@@ -120,12 +132,12 @@ class ExtensionDetailsPanel extends AbstractDetailsPanel {
 
 	@Override
 	protected void createFieldAttributes() {
-		titleAttrSet = createAttributeSet(new Color(140, 0, 0));
-		nameAttrSet = createAttributeSet(new Color(0, 204, 51));
-		descrAttrSet = createAttributeSet(Color.BLUE);
-		authorAttrSet = createAttributeSet(Color.BLUE);
-		createdOnAttrSet = createAttributeSet(Color.BLUE);
-		versionAttrSet = createAttributeSet(Color.BLUE);
-		pathAttrSet = createAttributeSet(Color.BLUE);
+		titleAttrSet = createAttributeSet(FG_COLOR_TITLE);
+		nameAttrSet = createAttributeSet(FG_COLOR_NAME);
+		descrAttrSet = createAttributeSet(FG_COLOR_DESCRIPTION);
+		authorAttrSet = createAttributeSet(FG_COLOR_AUTHOR);
+		createdOnAttrSet = createAttributeSet(FG_COLOR_DATE);
+		versionAttrSet = createAttributeSet(FG_COLOR_VERSION);
+		pathAttrSet = createAttributeSet(FG_COLOR_PATH);
 	}
 }

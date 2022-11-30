@@ -22,15 +22,15 @@ import javax.swing.Icon;
 import javax.swing.JComponent;
 
 import docking.*;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.functiongraph.mvc.FGController;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.util.HelpLocation;
-import resources.ResourceManager;
 
 public class FGSatelliteUndockedProvider extends ComponentProviderAdapter {
 
 	static final String NAME = "Function Graph Satellite";
-	private static final Icon ICON = ResourceManager.loadImage("images/network-wireless-16.png");
+	private static final Icon ICON = new GIcon("icon.functiongraph.action.provider.satellite");
 
 	private FGController controller;
 	private JComponent satelliteComponent;

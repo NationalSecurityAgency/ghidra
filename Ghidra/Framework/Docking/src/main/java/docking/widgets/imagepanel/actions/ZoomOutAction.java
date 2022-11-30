@@ -15,20 +15,20 @@
  */
 package docking.widgets.imagepanel.actions;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import docking.ActionContext;
 import docking.action.MenuData;
 import docking.action.ToolBarData;
 import docking.widgets.imagepanel.ImagePanel;
-import resources.ResourceManager;
+import generic.theme.GIcon;
 
 /**
  * An action to de-zoom the image on a NavigableImagePanel.
  */
 public class ZoomOutAction extends ImagePanelDockingAction {
 
-	private static final ImageIcon ZOOM_OUT_ICON = ResourceManager.loadImage("images/zoom_out.png");
+	private static final Icon ZOOM_OUT_ICON = new GIcon("icon.widget.imagepanel.zoom.out");
 
 	public ZoomOutAction(String owner, ImagePanel imagePanel) {
 		super("Zoom Out", owner, imagePanel);

@@ -22,16 +22,20 @@ import java.util.List;
 
 import javax.swing.*;
 
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors.Java;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 
 public class MemviewPanel extends JPanel implements MouseListener, MouseMotionListener {
 	private static final long serialVersionUID = 1L;
 
+	private Color ARROW_COLOR = new GColor("color.debugger.plugin.plugin.memview.arrow");
+
 	private MemviewProvider provider;
 	private MemviewMap amap;
 	private MemviewMap tmap;
-	private List<MemoryBox> boxList = new ArrayList<MemoryBox>();
+	private List<MemoryBox> boxList = new ArrayList<>();
 
 	private int pressedX;
 	private int pressedY;
@@ -56,11 +60,10 @@ public class MemviewPanel extends JPanel implements MouseListener, MouseMotionLi
 	private Map<Long, Set<MemoryBox>> time2box = new HashMap<>();
 
 	public MemviewPanel(MemviewProvider provider) {
-		super();
 		this.provider = provider;
 		setPreferredSize(new Dimension(barWidth, barHeight));
 		setSize(getPreferredSize());
-		setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
+		setBorder(BorderFactory.createLineBorder(Java.BORDER, 1));
 		setFocusable(true);
 
 		addMouseListener(this);
@@ -129,7 +132,7 @@ public class MemviewPanel extends JPanel implements MouseListener, MouseMotionLi
 			g.translate(currentPixelAddr, currentPixelTime);
 		}
 
-		g.setColor(Color.RED);
+		g.setColor(ARROW_COLOR);
 		g.fillPolygon(locXs, locYs, locXs.length);
 
 		if (vertical) {
@@ -149,7 +152,7 @@ public class MemviewPanel extends JPanel implements MouseListener, MouseMotionLi
 		int y = currentRectangle.y;
 		int w = currentRectangle.width;
 		int h = currentRectangle.height;
-		g.setColor(Color.RED);
+		g.setColor(ARROW_COLOR);
 		g.fillRect(x - 1, y - 1, 1, h + 2);
 		g.fillRect(x - 1, y - 1, w + 2, 1);
 		g.fillRect(x + w + 1, y - 1, 1, h + 2);
@@ -180,17 +183,19 @@ public class MemviewPanel extends JPanel implements MouseListener, MouseMotionLi
 	}
 
 	void updateBoxes() {
-		if (!this.isShowing())
+		if (!this.isShowing()) {
 			return;
+		}
 
-		boxList = new ArrayList<MemoryBox>();
+		boxList = new ArrayList<>();
 		Collection<MemoryBox> boxes = getBoxes();
 		if (boxes == null) {
 			return;
 		}
 		for (MemoryBox box : boxes) {
-			if (box == null)
+			if (box == null) {
 				continue;
+			}
 
 			int bound = vertical ? getHeight() - 1 : getWidth() - 1;
 			box.setAddressBounds(amap, bound);
@@ -374,26 +379,26 @@ public class MemviewPanel extends JPanel implements MouseListener, MouseMotionLi
 
 			Set<MemoryBox> mboxes = addr2box.get(box.getStartAddress());
 			if (mboxes == null) {
-				mboxes = new HashSet<MemoryBox>();
+				mboxes = new HashSet<>();
 			}
 			mboxes.add(box);
 			addr2box.put(box.getStartAddress(), mboxes);
 			mboxes = addr2box.get(box.getStopAddress());
 			if (mboxes == null) {
-				mboxes = new HashSet<MemoryBox>();
+				mboxes = new HashSet<>();
 			}
 			mboxes.add(box);
 			addr2box.put(box.getStopAddress(), mboxes);
 
 			mboxes = time2box.get(box.getStartTime());
 			if (mboxes == null) {
-				mboxes = new HashSet<MemoryBox>();
+				mboxes = new HashSet<>();
 			}
 			mboxes.add(box);
 			time2box.put(box.getStartTime(), mboxes);
 			mboxes = time2box.get(box.getStopTime());
 			if (mboxes == null) {
-				mboxes = new HashSet<MemoryBox>();
+				mboxes = new HashSet<>();
 			}
 			mboxes.add(box);
 			time2box.put(box.getStopTime(), mboxes);
@@ -415,7 +420,7 @@ public class MemviewPanel extends JPanel implements MouseListener, MouseMotionLi
 
 	public void addBoxes(List<MemoryBox> boxes) {
 		if (blist == null) {
-			blist = new ArrayList<MemoryBox>();
+			blist = new ArrayList<>();
 		}
 		for (MemoryBox b : boxes) {
 			if (bmap.containsKey(b.getId())) {
@@ -429,7 +434,7 @@ public class MemviewPanel extends JPanel implements MouseListener, MouseMotionLi
 	}
 
 	public void reset() {
-		blist = new ArrayList<MemoryBox>();
+		blist = new ArrayList<>();
 		bmap.clear();
 		parseBoxes(blist);
 	}
@@ -451,14 +456,16 @@ public class MemviewPanel extends JPanel implements MouseListener, MouseMotionLi
 	}
 
 	public long getAddr(int x, int y) {
-		if (amap == null)
+		if (amap == null) {
 			return 0;
+		}
 		return vertical ? amap.getOffset(y) : amap.getOffset(x);
 	}
 
 	public long getTick(int x, int y) {
-		if (tmap == null)
+		if (tmap == null) {
 			return 0;
+		}
 		return vertical ? tmap.getOffset(x) : tmap.getOffset(y);
 	}
 

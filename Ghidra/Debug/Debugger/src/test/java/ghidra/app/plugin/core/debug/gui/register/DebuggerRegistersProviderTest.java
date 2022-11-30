@@ -38,6 +38,7 @@ import ghidra.app.services.DebuggerStateEditingService.StateEditingMode;
 import ghidra.app.services.TraceRecorder;
 import ghidra.docking.settings.FormatSettingsDefinition;
 import ghidra.docking.settings.Settings;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.util.CodeUnitInsertionException;
@@ -139,9 +140,11 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 			throws CodeUnitInsertionException {
 		TraceCodeSpace regCode =
 			tb.trace.getCodeManager().getCodeRegisterSpace(thread, true);
-		regCode.definedData().create(Lifespan.nowOn(0), pc, PointerDataType.dataType);
-		// TODO: Pointer needs to be to ram, not register space
-		regCode.definedData().create(Lifespan.nowOn(0), r0, r0Struct);
+		DataTypeManager dtm = tb.trace.getDataTypeManager();
+		AddressSpace space = tb.host.getAddressFactory().getDefaultAddressSpace();
+		PointerTypedef ramPtr = new PointerTypedef(null, VoidDataType.dataType, -1, dtm, space);
+		regCode.definedData().create(getPlatform(), Lifespan.nowOn(0), pc, ramPtr);
+		regCode.definedData().create(getPlatform(), Lifespan.nowOn(0), r0, r0Struct);
 	}
 
 	protected void addRegisterTypes(TraceThread thread) throws CodeUnitInsertionException {

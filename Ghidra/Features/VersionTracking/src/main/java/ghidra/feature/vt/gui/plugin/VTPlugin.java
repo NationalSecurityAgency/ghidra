@@ -19,11 +19,13 @@ import java.net.URL;
 import java.util.List;
 import java.util.Set;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JFrame;
 
 import docking.action.DockingActionIf;
 import docking.tool.ToolConstants;
 import docking.wizard.WizardManager;
+import generic.theme.GIcon;
 import ghidra.GhidraOptions;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.colorizer.ColorizingService;
@@ -48,9 +50,7 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.util.*;
 import help.Help;
 import help.HelpService;
-import resources.MultiIcon;
 import resources.ResourceManager;
-import resources.icons.*;
 
 //@formatter:off
 @PluginInfo(
@@ -80,25 +80,10 @@ public class VTPlugin extends Plugin {
 	public static final String UNEDIT_MENU_GROUP = "A_VT_UnEdit";
 	public static final String VT_SETTINGS_MENU_GROUP = "ZZ_VT_SETTINGS";
 
-	public static final Icon UNFILTERED_ICON =
-		ResourceManager.loadImage("images/lightbulb_off.png");
-	public static final Icon FILTERED_ICON = ResourceManager.loadImage("images/lightbulb.png");
-	public static final Icon REPLACED_ICON = ResourceManager.loadImage("images/sync_enabled.png");
-	public static final Icon UNIGNORED_ICON = new IconWrapper() {
-		@Override
-		protected Icon createIcon() {
-			MultiIcon icon = new MultiIcon(new EmptyIcon(16, 16));
-			ImageIcon cancelIcon = ResourceManager.loadImage("images/dialog-cancel.png");
-			ScaledImageIcon scaledCancelIcon =
-				new ScaledImageIcon(cancelIcon, 13, 13);
-			TranslateIcon translatedCancelIcon = new TranslateIcon(scaledCancelIcon, 3, 4);
-			ImageIcon undoIcon = ResourceManager.loadImage("images/undo.png");
-			TranslateIcon translatedUndoIcon = new TranslateIcon(undoIcon, 0, -4);
-			icon.addIcon(translatedUndoIcon);
-			icon.addIcon(translatedCancelIcon);
-			return icon;
-		}
-	};
+	public static final Icon UNFILTERED_ICON = new GIcon("icon.version.tracking.unfiltered");
+	public static final Icon FILTERED_ICON = new GIcon("icon.version.tracking.filtered");
+	public static final Icon REPLACED_ICON = new GIcon("icon.version.tracking.replaced");
+	public static final Icon UNIGNORED_ICON = new GIcon("icon.version.tracking.unignored");
 
 	private VTController controller;
 

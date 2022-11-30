@@ -25,6 +25,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListDataListener;
 
 import docking.widgets.list.GListCellRenderer;
+import generic.theme.GThemeDefaults.Colors;
 import generic.util.WindowUtilities;
 import ghidra.app.plugin.core.console.CodeCompletion;
 
@@ -37,7 +38,7 @@ import ghidra.app.plugin.core.console.CodeCompletion;
 public class CodeCompletionWindow extends JDialog {
 	private static final long serialVersionUID = 1L;
 	/* from ReferenceHoverPlugin */
-	private static final Color BACKGROUND_COLOR = new Color(255, 255, 230);
+	private static final Color BACKGROUND_COLOR = Colors.BACKGROUND_TOOLTIP;
 
 	protected final InterpreterPanel console;
 	protected final JTextPane outputTextField;

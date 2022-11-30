@@ -108,7 +108,14 @@ public interface Options {
 	/**
 	 * Registers an option with a description, help location, and a default value without specifying
 	 * the option type.  This form requires that the default value not be null so that the option
-	 * type can be inferred from the default value.
+	 * type can be inferred from the default value. 
+	 * <P>
+	 * Note, this method should not be used for
+	 * colors and font as doing so will result in those colors and fonts becoming disconnected
+	 * to the current theme. Instead use 
+	 * 
+	 * {@link #registerThemeColorBinding(String, String, HelpLocation, String)} or
+	 * {@link #registerThemeFontBinding(String, String, HelpLocation, String)}.
 	 * @param optionName the name of the option being registered.
 	 * @param defaultValue the defaultValue for the option. The default value must not be
 	 * null so that the OptionType can be determined.  If the default value should be null, use
@@ -123,6 +130,13 @@ public interface Options {
 	/**
 	 * Registers an option with a description, help location, and a optional default value.  With an optional
 	 * default value, an OptionType must be passed as it is otherwise derived from the default value.
+	 * <P>
+	 * Note, this method should not be used for
+	 * colors and font as doing so will result in those colors and fonts becoming disconnected
+	 * to the current theme. Instead use 
+	 * {@link #registerThemeColorBinding(String, String, HelpLocation, String)} or
+	 * {@link #registerThemeFontBinding(String, String, HelpLocation, String)}.
+	 * 
 	 * @param optionName the name of the option being registered.
 	 * @param type the OptionType for this options.
 	 * @param defaultValue the defaultValue for the option. In this version of the method, the default
@@ -136,6 +150,13 @@ public interface Options {
 	/**
 	 * Registers an option with a description, help location, and a optional default value.  With an optional
 	 * default value, an OptionType must be passed as it is otherwise derived from the default value.
+	 * <P>
+	 * Note, this method should not be used for
+	 * colors and font as doing so will result in those colors and fonts becoming disconnected
+	 * to the current theme. Instead use 
+	 * {@link #registerThemeColorBinding(String, String, HelpLocation, String)} or
+	 * {@link #registerThemeFontBinding(String, String, HelpLocation, String)}.
+	 * 
 	 * @param optionName the name of the option being registered.
 	 * @param type the OptionType for this options.
 	 * @param defaultValue the defaultValue for the option. In this version of the method, the default
@@ -148,6 +169,29 @@ public interface Options {
 	 */
 	public void registerOption(String optionName, OptionType type, Object defaultValue,
 			HelpLocation help, String description, PropertyEditor editor);
+
+	/**
+	 * Register/binds the option to a theme color id. Changing the option's color via the options
+	 * Gui will result in directly changing the theme color of the given color id.
+	 * @param optionName the name of the color option
+	 * @param colorId the theme color id whose color value is changed when the option's color is changed
+	 * @param help the HelpLocation for this option
+	 * @param description a description of the option
+	 */
+	public void registerThemeColorBinding(String optionName, String colorId, HelpLocation help,
+			String description);
+
+	/**
+	 * Register/binds the option to a theme font id. Changing the option's font via the options
+	 * Gui will result in directly changing the theme color of the given font id.
+	 * @param optionName the name of the font option
+	 * @param fontId the theme color id whose color value is changed when the option's color 
+	 * is changed
+	 * @param help the HelpLocation for this option
+	 * @param description a description of the option
+	 */
+	public void registerThemeFontBinding(String optionName, String fontId, HelpLocation help,
+			String description);
 
 	/**
 	 * Register the options editor that will handle the editing for all the options or a sub group of options.

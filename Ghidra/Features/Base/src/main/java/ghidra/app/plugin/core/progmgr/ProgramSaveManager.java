@@ -45,9 +45,17 @@ class ProgramSaveManager {
 	ProgramSaveManager(PluginTool tool, ProgramManager programMgr) {
 		this.tool = tool;
 		this.programMgr = programMgr;
-		domainFileFilter = f -> {
-			Class<?> c = f.getDomainObjectClass();
-			return Program.class.isAssignableFrom(c);
+		domainFileFilter = new DomainFileFilter() {
+
+			@Override
+			public boolean accept(DomainFile df) {
+				return Program.class.isAssignableFrom(df.getDomainObjectClass());
+			}
+
+			@Override
+			public boolean followLinkedFolders() {
+				return false; // can't save to linked-folder (read-only)
+			}
 		};
 	}
 
@@ -244,7 +252,8 @@ class ProgramSaveManager {
 			return;
 		}
 		if (existingFile != null) {
-			String msg = "Program " + name + " already exists.\n" + "Do you want to overwrite it?";
+			String msg = existingFile.getContentType() + " file " + name + " already exists.\n" +
+				"Do you want to overwrite it?";
 			if (OptionDialog.showOptionDialog(tool.getToolFrame(), "Duplicate Name", msg,
 				"Overwrite", OptionDialog.QUESTION_MESSAGE) == OptionDialog.CANCEL_OPTION) {
 				return;

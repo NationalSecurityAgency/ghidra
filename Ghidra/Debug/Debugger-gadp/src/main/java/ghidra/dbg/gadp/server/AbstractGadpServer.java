@@ -18,6 +18,7 @@ package ghidra.dbg.gadp.server;
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.nio.channels.AsynchronousSocketChannel;
+import java.util.concurrent.CompletableFuture;
 
 import ghidra.comm.service.AbstractAsyncServer;
 import ghidra.dbg.*;
@@ -30,6 +31,7 @@ public abstract class AbstractGadpServer
 		extends AbstractAsyncServer<AbstractGadpServer, GadpClientHandler>
 		implements DebuggerModelListener {
 	public static final String LISTENING_ON = "GADP Server listening on ";
+	public static final String READY = "GADP Server model ready";
 
 	protected final DebuggerObjectModel model;
 	private boolean exitOnClosed = true;
@@ -40,6 +42,12 @@ public abstract class AbstractGadpServer
 		System.out.println(LISTENING_ON + getLocalAddress());
 
 		model.addModelListener(this);
+	}
+
+	@Override
+	public CompletableFuture<Void> launchAsyncService() {
+		System.out.println(READY);
+		return super.launchAsyncService();
 	}
 
 	public DebuggerObjectModel getModel() {
@@ -70,7 +78,6 @@ public abstract class AbstractGadpServer
 
 	@Override
 	public void modelClosed(DebuggerModelClosedReason reason) {
-		System.err.println("Model closed: " + reason);
 		if (exitOnClosed) {
 			System.exit(0);
 		}

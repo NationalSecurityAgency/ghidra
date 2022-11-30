@@ -38,6 +38,7 @@ import docking.actions.PopupActionProvider;
 import docking.widgets.table.*;
 import docking.widgets.table.ColumnSortState.SortDirection;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
+import generic.theme.GColor;
 import ghidra.app.plugin.core.data.DataSettingsDialog;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
@@ -61,8 +62,7 @@ import ghidra.framework.options.annotation.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeEncodeException;
+import ghidra.program.model.data.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.util.CodeUnitInsertionException;
@@ -472,25 +472,21 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
 
-	@AutoOptionDefined(
-		name = DebuggerResources.OPTION_NAME_COLORS_REGISTER_STALE, //
-		description = "Text color for registers whose value is not known", //
-		help = @HelpInfo(anchor = "colors"))
+	@AutoOptionDefined(name = DebuggerResources.OPTION_NAME_COLORS_REGISTER_STALE, //
+			description = "Text color for registers whose value is not known", //
+			help = @HelpInfo(anchor = "colors"))
 	protected Color registerStaleColor = DebuggerResources.DEFAULT_COLOR_REGISTER_STALE;
-	@AutoOptionDefined(
-		name = DebuggerResources.OPTION_NAME_COLORS_REGISTER_STALE_SEL, //
-		description = "Selected text color for registers whose value is not known", //
-		help = @HelpInfo(anchor = "colors"))
+	@AutoOptionDefined(name = DebuggerResources.OPTION_NAME_COLORS_REGISTER_STALE_SEL, //
+			description = "Selected text color for registers whose value is not known", //
+			help = @HelpInfo(anchor = "colors"))
 	protected Color registerStaleSelColor = DebuggerResources.DEFAULT_COLOR_REGISTER_STALE_SEL;
-	@AutoOptionDefined(
-		name = DebuggerResources.OPTION_NAME_COLORS_REGISTER_CHANGED, //
-		description = "Text color for registers whose value just changed", //
-		help = @HelpInfo(anchor = "colors"))
+	@AutoOptionDefined(name = DebuggerResources.OPTION_NAME_COLORS_REGISTER_CHANGED, //
+			description = "Text color for registers whose value just changed", //
+			help = @HelpInfo(anchor = "colors"))
 	protected Color registerChangesColor = DebuggerResources.DEFAULT_COLOR_REGISTER_CHANGED;
-	@AutoOptionDefined(
-		name = DebuggerResources.OPTION_NAME_COLORS_REGISTER_CHANGED_SEL, //
-		description = "Selected text color for registers whose value just changed", //
-		help = @HelpInfo(anchor = "colors"))
+	@AutoOptionDefined(name = DebuggerResources.OPTION_NAME_COLORS_REGISTER_CHANGED_SEL, //
+			description = "Selected text color for registers whose value just changed", //
+			help = @HelpInfo(anchor = "colors"))
 	protected Color registerChangesSelColor = DebuggerResources.DEFAULT_COLOR_REGISTER_CHANGED_SEL;
 
 	@SuppressWarnings("unused")
@@ -550,7 +546,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			setTitle("[" + DebuggerResources.TITLE_PROVIDER_REGISTERS + "]");
 			setWindowGroup("Debugger.Core.disconnected");
 			setIntraGroupPosition(WindowPosition.STACK);
-			mainPanel.setBorder(BorderFactory.createLineBorder(Color.ORANGE, 2));
+			mainPanel.setBorder(BorderFactory
+					.createLineBorder(new GColor("color.border.provider.disconnected"), 2));
 			setTransient();
 		}
 		else {
@@ -577,6 +574,9 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		mainPanel.add(regsFilterPanel, BorderLayout.SOUTH);
 
 		regsTable.getSelectionModel().addListSelectionListener(evt -> {
+			if (evt.getValueIsAdjusting()) {
+				return;
+			}
 			myActionContext = new DebuggerRegisterActionContext(this,
 				regsFilterPanel.getSelectedItem(), regsTable);
 			contextChanged();
@@ -584,7 +584,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		regsTable.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
-				if (e.getClickCount() == 2) {
+				if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
 					navigateToAddress();
 				}
 			}
@@ -664,7 +664,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		if (data == null || data.getValueClass() != Address.class) {
 			return;
 		}
-		Address address = (Address) TraceRegisterUtils.getValueHackPointer(data);
+		Address address = (Address) data.getValue();
 		if (address == null) {
 			return;
 		}
@@ -920,6 +920,27 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	void writeRegisterDataType(Register register, DataType dataType) {
 		try (UndoableTransaction tid =
 			UndoableTransaction.start(current.getTrace(), "Edit Register Type")) {
+			if (dataType instanceof Pointer ptrType && register.getAddress().isRegisterAddress()) {
+				// Because we're about to use the size, resolve it first
+				ptrType = (Pointer) current.getTrace()
+						.getDataTypeManager()
+						.resolve(dataType, DataTypeConflictHandler.DEFAULT_HANDLER);
+				/**
+				 * TODO: This should be the current platform instead, but it's not clear how to do
+				 * that. The PointerTypedef uses the program (taken from the MemBuffer) to lookup
+				 * the configured address space by name. Might be better if MemBuffer/CodeUnit had
+				 * getAddressFactory(). Still, I'd need guest-platform data units before I could
+				 * override that meaningfully.
+				 */
+				/**
+				 * AddressSpace space =
+				 * current.getPlatform().getAddressFactory().getDefaultAddressSpace();
+				 */
+				AddressSpace space =
+					current.getTrace().getBaseAddressFactory().getDefaultAddressSpace();
+				dataType = new PointerTypedef(null, ptrType.getDataType(), ptrType.getLength(),
+					ptrType.getDataTypeManager(), space);
+			}
 			TraceCodeSpace space = getRegisterMemorySpace(true).getCodeSpace(true);
 			long snap = current.getViewSnap();
 			TracePlatform platform = current.getPlatform();
@@ -986,7 +1007,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		if (data == null) {
 			return null;
 		}
-		return TraceRegisterUtils.getValueRepresentationHackPointer(data);
+		return data.getDefaultValueRepresentation();
 	}
 
 	/**

@@ -15,6 +15,12 @@
  */
 package ghidra.feature.vt.gui.actions;
 
+import javax.swing.Icon;
+
+import docking.ActionContext;
+import docking.action.MenuData;
+import docking.action.ToolBarData;
+import generic.theme.GIcon;
 import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.feature.vt.gui.plugin.VTPlugin;
 import ghidra.feature.vt.gui.provider.functionassociation.FunctionAssociationContext;
@@ -24,19 +30,14 @@ import ghidra.util.HelpLocation;
 import ghidra.util.task.Task;
 import ghidra.util.task.TaskListener;
 
-import javax.swing.Icon;
-
-import resources.ResourceManager;
-import docking.ActionContext;
-import docking.action.*;
-
 /**
  * Action that creates a manual match for the currently selected source and destination functions 
  * in the function association tables and then accepts the match.
  */
 public class CreateManualMatchAndAcceptAction extends AbstractCreateManualMatchAction {
 
-	public static final Icon ICON = ResourceManager.loadImage("images/flag.png");
+	public static final Icon ICON =
+		new GIcon("icon.version.tracking.action.create.and.accept.manual.match");
 
 	/**
 	 * Creates a manual match action that also does an accept of that match.
@@ -48,7 +49,8 @@ public class CreateManualMatchAndAcceptAction extends AbstractCreateManualMatchA
 		setToolBarData(new ToolBarData(ICON, MENU_GROUP));
 		setPopupMenuData(new MenuData(new String[] { "Create And Accept Manual Match" }, ICON));
 		setEnabled(false);
-		setHelpLocation(new HelpLocation("VersionTrackingPlugin", "Create_And_Accept_Manual_Match"));
+		setHelpLocation(
+			new HelpLocation("VersionTrackingPlugin", "Create_And_Accept_Manual_Match"));
 	}
 
 	@Override

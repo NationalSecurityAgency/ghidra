@@ -15,35 +15,20 @@
  */
 package docking.widgets.textfield;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Insets;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
+import java.awt.*;
+import java.awt.event.*;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.JComponent;
-import javax.swing.JTextField;
-import javax.swing.ToolTipManager;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.text.AbstractDocument;
-import javax.swing.text.AttributeSet;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Document;
-import javax.swing.text.DocumentFilter;
+import javax.swing.*;
+import javax.swing.event.*;
+import javax.swing.text.*;
 
 import docking.DockingUtils;
 import docking.util.GraphicsUtils;
+import generic.theme.GThemeDefaults.Colors.Messages;
+import generic.theme.Gui;
 import ghidra.util.SystemUtilities;
 
 /**
@@ -651,13 +636,13 @@ public class IntegerTextField {
 	 */
 	private class MyTextField extends JTextField {
 
-		private Font hintFont = new Font("Monospaced", Font.PLAIN, 10);
+		private static final String FONT_ID = "font.input.hint";
 		private int hintWidth;
 
 		public MyTextField(int columns) {
 			super(columns);
 
-			FontMetrics fontMetrics = getFontMetrics(hintFont);
+			FontMetrics fontMetrics = getFontMetrics(Gui.getFont(FONT_ID));
 			String mode = isHexMode ? "Hex" : "Dec";
 			hintWidth = fontMetrics.stringWidth(mode);
 
@@ -698,8 +683,8 @@ public class IntegerTextField {
 			}
 
 			Font savedFont = g.getFont();
-			g.setFont(hintFont);
-			g.setColor(Color.LIGHT_GRAY);
+			g.setFont(Gui.getFont(FONT_ID));
+			g.setColor(Messages.HINT);
 
 			Dimension size = getSize();
 			Insets insets = getInsets();

@@ -17,7 +17,6 @@ package ghidra.trace.database;
 
 import static org.junit.Assert.*;
 
-import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -29,6 +28,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 
 import db.DBHandle;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.trace.TraceSleighUtils;
@@ -168,7 +168,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	/**
 	 * Get the named register
 	 * 
-	 * @param the platform
+	 * @param platform the platform
 	 * @param name the name
 	 * @return the register or null if it doesn't exist
 	 */
@@ -190,7 +190,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	/**
 	 * Create an address in the given language's default space
 	 * 
-	 * @param lang the langauge
+	 * @param lang the language
 	 * @param offset the offset
 	 * @return the address
 	 */
@@ -252,7 +252,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	}
 
 	/**
-	 * Create an address range: shortcut for {@link new AddressRangeImpl(start, end)}
+	 * Create an address range: shortcut for {@link AddressRangeImpl}
 	 * 
 	 * @param start the start address
 	 * @param end the end address
@@ -444,7 +444,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	 */
 	public DBTraceBookmarkType getOrAddBookmarkType(String name) {
 		DBTraceBookmarkManager manager = trace.getBookmarkManager();
-		return manager.defineBookmarkType(name, null, Color.red, 1);
+		return manager.defineBookmarkType(name, null, Messages.ERROR, 1);
 	}
 
 	/**
@@ -477,7 +477,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	 * 
 	 * @param snap the starting snap
 	 * @param threadName the name of the thread
-	 * @param registerName the name of the regsiter
+	 * @param registerName the name of the register
 	 * @param typeName the name of its type
 	 * @param category the category
 	 * @param comment an optional comment
@@ -549,11 +549,12 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	public DBTraceInstruction addInstruction(long snap, Address start,
 			TracePlatform platform) throws CodeUnitInsertionException {
 		DBTraceCodeManager code = trace.getCodeManager();
-		Language language = platform.getLanguage();
-		Disassembler dis = Disassembler.getDisassembler(language, language.getAddressFactory(),
-			new ConsoleTaskMonitor(), msg -> Msg.info(this, "Listener: " + msg));
+		Language platformLanguage = platform.getLanguage();
+		Disassembler dis =
+			Disassembler.getDisassembler(platformLanguage, platformLanguage.getAddressFactory(),
+				new ConsoleTaskMonitor(), msg -> Msg.info(this, "Listener: " + msg));
 		RegisterValue defaultContextValue = trace.getRegisterContextManager()
-				.getDefaultContext(language)
+				.getDefaultContext(platformLanguage)
 				.getDefaultDisassemblyContext();
 
 		MemBuffer memBuf = platform.getMappedMemBuffer(snap, platform.mapHostToGuest(start));
@@ -725,10 +726,10 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	}
 
 	/**
-	 * Get the language with the given ID, as in {@link LangaugeID}
+	 * Get the language with the given ID, as in {@link LanguageID}
 	 * 
 	 * @param id the ID
-	 * @return the langauge
+	 * @return the language
 	 * @throws LanguageNotFoundException if the language does not exist
 	 */
 	public Language getLanguage(String id) throws LanguageNotFoundException {
@@ -742,7 +743,7 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	 * @param compID the compiler ID as in {@link CompilerSpecID}
 	 * @return the compiler spec
 	 * @throws CompilerSpecNotFoundException if the compiler spec does not exist
-	 * @throws LanguageNotFoundException if the langauge does not exist
+	 * @throws LanguageNotFoundException if the language does not exist
 	 */
 	public CompilerSpec getCompiler(String langID, String compID)
 			throws CompilerSpecNotFoundException, LanguageNotFoundException {

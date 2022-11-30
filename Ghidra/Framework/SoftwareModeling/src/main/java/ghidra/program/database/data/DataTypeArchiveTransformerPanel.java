@@ -23,6 +23,7 @@ import java.io.IOException;
 
 import javax.swing.*;
 
+import docking.options.editor.ButtonPanelFactory;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.label.GHtmlLabel;
@@ -86,7 +87,7 @@ public class DataTypeArchiveTransformerPanel extends JPanel {
 
 		gbc.gridx = 2;
 		gbc.gridwidth = 1;
-		JButton oldBrowseButton = new JButton(DOT_DOT_DOT);
+		JButton oldBrowseButton = ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
 		oldBrowseButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -98,8 +99,6 @@ public class DataTypeArchiveTransformerPanel extends JPanel {
 				}
 			}
 		});
-		Font font = oldBrowseButton.getFont();
-		oldBrowseButton.setFont(new Font(font.getName(), Font.BOLD, font.getSize()));
 		filePanel.add(oldBrowseButton, gbc);
 
 		gbc.gridx = 3;
@@ -125,7 +124,7 @@ public class DataTypeArchiveTransformerPanel extends JPanel {
 
 		gbc.gridx = 2;
 		gbc.gridwidth = 1;
-		JButton newBrowseButton = new JButton(DOT_DOT_DOT);
+		JButton newBrowseButton = ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
 		newBrowseButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -137,8 +136,6 @@ public class DataTypeArchiveTransformerPanel extends JPanel {
 				}
 			}
 		});
-		Font font = newBrowseButton.getFont();
-		newBrowseButton.setFont(new Font(font.getName(), Font.BOLD, font.getSize()));
 		filePanel.add(newBrowseButton, gbc);
 	}
 
@@ -158,7 +155,9 @@ public class DataTypeArchiveTransformerPanel extends JPanel {
 
 		gbc.gridx = 2;
 		gbc.gridwidth = 1;
-		JButton destinationBrowseButton = new JButton(DOT_DOT_DOT);
+		JButton destinationBrowseButton =
+			ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
+
 		destinationBrowseButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -170,8 +169,6 @@ public class DataTypeArchiveTransformerPanel extends JPanel {
 				}
 			}
 		});
-		Font font = destinationBrowseButton.getFont();
-		destinationBrowseButton.setFont(new Font(font.getName(), Font.BOLD, font.getSize()));
 		filePanel.add(destinationBrowseButton, gbc);
 	}
 

@@ -23,15 +23,15 @@ import javax.swing.tree.TreePath;
 import docking.action.KeyBindingData;
 import docking.action.MenuData;
 import docking.widgets.tree.GTreeNode;
+import generic.theme.GIcon;
 import ghidra.framework.main.datatree.*;
-import resources.ResourceManager;
 
 public class ProjectDataCutAction extends ProjectDataCopyCutBaseAction {
-	private static Icon icon = ResourceManager.loadImage("images/edit-cut22.png");
+	private static final Icon ICON = new GIcon("icon.projectdata.cut");
 
 	public ProjectDataCutAction(String owner, String group) {
 		super("Cut", owner);
-		setPopupMenuData(new MenuData(new String[] { "Cut" }, icon, group));
+		setPopupMenuData(new MenuData(new String[] { "Cut" }, ICON, group));
 		setKeyBindingData(new KeyBindingData('X', InputEvent.CTRL_DOWN_MASK));
 		markHelpUnnecessary();
 	}

@@ -15,8 +15,7 @@
  */
 package docking;
 
-import java.awt.Dimension;
-import java.awt.FlowLayout;
+import java.awt.*;
 import java.util.Collections;
 import java.util.Iterator;
 
@@ -24,17 +23,17 @@ import javax.swing.*;
 
 import docking.action.*;
 import docking.menu.*;
+import generic.theme.GColor;
 import ghidra.util.exception.AssertException;
 import ghidra.util.task.SwingUpdateManager;
-import resources.ResourceManager;
 
 /**
  * Manages to toolbar for the dockable components.
  */
 class DockableToolBarManager {
-	private static final ImageIcon CLOSE_ICON = ResourceManager.loadImage("images/close16.gif");
-	private static final ImageIcon MENU_ICON = ResourceManager.loadImage("images/menu16.gif");
-
+	private static final Color BUTTON_COLOR = new GColor("color.fg.button");
+	private static final Icon CLOSE_ICON = new CloseIcon(false, BUTTON_COLOR);
+	private Icon MENU_ICON = new DropDownMenuIcon(BUTTON_COLOR);
 	private GenericHeader dockableHeader;
 	private ToolBarManager toolBarManager;
 

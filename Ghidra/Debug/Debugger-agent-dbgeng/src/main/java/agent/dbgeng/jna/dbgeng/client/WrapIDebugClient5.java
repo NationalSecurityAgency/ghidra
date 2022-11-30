@@ -19,6 +19,7 @@ import com.sun.jna.*;
 import com.sun.jna.platform.win32.WinDef.*;
 import com.sun.jna.platform.win32.WinNT.HRESULT;
 
+import agent.dbgeng.jna.dbgeng.DbgEngNative.DEBUG_CREATE_PROCESS_OPTIONS;
 import agent.dbgeng.jna.dbgeng.event.IDebugEventCallbacksWide;
 import agent.dbgeng.jna.dbgeng.io.IDebugOutputCallbacksWide;
 
@@ -93,7 +94,7 @@ public class WrapIDebugClient5 extends WrapIDebugClient4 implements IDebugClient
 	}
 
 	@Override
-	public HRESULT SetOuutputLinePrefixWide(WString Prefix) {
+	public HRESULT SetOutputLinePrefixWide(WString Prefix) {
 		return _invokeHR(VTIndices5.SET_OUTPUT_LINE_PREFIX_WIDE, getPointer(), Prefix);
 	}
 
@@ -127,7 +128,8 @@ public class WrapIDebugClient5 extends WrapIDebugClient4 implements IDebugClient
 	}
 
 	@Override
-	public HRESULT CreateProcess2Wide(ULONGLONG Server, WString CommandLine, Pointer OptionsBuffer,
+	public HRESULT CreateProcess2Wide(ULONGLONG Server, WString CommandLine,
+			DEBUG_CREATE_PROCESS_OPTIONS OptionsBuffer,
 			ULONG OptionsBufferSize, WString InitialDirectory, WString Environment) {
 		return _invokeHR(VTIndices5.CREATE_PROCESS2_WIDE, getPointer(), Server, CommandLine,
 			OptionsBuffer, OptionsBufferSize, InitialDirectory, Environment);

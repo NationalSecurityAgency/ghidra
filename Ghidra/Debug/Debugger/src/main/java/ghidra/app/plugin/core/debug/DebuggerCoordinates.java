@@ -16,8 +16,7 @@
 package ghidra.app.plugin.core.debug;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Objects;
+import java.util.*;
 
 import org.jdom.Element;
 
@@ -28,6 +27,7 @@ import ghidra.framework.data.ProjectFileManager;
 import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.store.LockException;
 import ghidra.trace.database.DBTraceContentHandler;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
@@ -163,6 +163,7 @@ public class DebuggerCoordinates {
 		return trace.getThreadManager()
 				.getLiveThreads(snap)
 				.stream()
+				.sorted(Comparator.comparing(TraceThread::getKey))
 				.findFirst()
 				.orElse(null);
 	}
@@ -171,7 +172,12 @@ public class DebuggerCoordinates {
 		return resolveThread(trace, TraceSchedule.ZERO);
 	}
 
-	private static TraceObject resolveObject(Trace trace) {
+	private static TraceObject resolveObject(Trace trace, TraceThread thread, Integer frame,
+			TraceSchedule time) {
+		TraceObject object = resolveObject(thread, frame, time);
+		if (object != null) {
+			return object;
+		}
 		return trace.getObjectManager().getRootObject();
 	}
 
@@ -198,7 +204,7 @@ public class DebuggerCoordinates {
 			TraceProgramView newView = resolveView(newTrace);
 			TraceSchedule newTime = null; // Allow later resolution
 			Integer newFrame = resolveFrame(newThread, newTime);
-			TraceObject newObject = resolveObject(newTrace);
+			TraceObject newObject = resolveObject(newTrace, newThread, newFrame, newTime);
 			return new DebuggerCoordinates(newTrace, newPlatform, null, newThread, newView, newTime,
 				newFrame, newObject);
 		}
@@ -242,9 +248,10 @@ public class DebuggerCoordinates {
 				.getObjectByCanonicalPath(TraceObjectKeyPath.of(object.getPath()));
 	}
 
-	private static TraceObject resolveObject(TraceRecorder recorder, TraceSchedule time) {
+	private static TraceObject resolveObject(TraceRecorder recorder, TraceThread thread,
+			Integer frame, TraceSchedule time) {
 		if (recorder.getSnap() != time.getSnap() || !recorder.isSupportsFocus()) {
-			return resolveObject(recorder.getTrace());
+			return resolveObject(recorder.getTrace(), thread, frame, time);
 		}
 		return resolveObject(recorder.getTrace(), recorder.getFocus());
 	}
@@ -266,7 +273,7 @@ public class DebuggerCoordinates {
 			TraceProgramView newView = resolveView(newTrace);
 			TraceSchedule newTime = null; // Allow later resolution
 			Integer newFrame = resolveFrame(newThread, newTime);
-			TraceObject newObject = resolveObject(newTrace);
+			TraceObject newObject = resolveObject(newTrace, newThread, newFrame, newTime);
 			return new DebuggerCoordinates(newTrace, newPlatform, null, newThread, newView, newTime,
 				newFrame, newObject);
 		}
@@ -294,7 +301,8 @@ public class DebuggerCoordinates {
 		TraceThread newThread = thread != null ? thread : resolveThread(newRecorder, newTime);
 		TraceProgramView newView = view != null ? view : resolveView(newTrace, newTime);
 		Integer newFrame = frame != null ? frame : resolveFrame(newRecorder, newThread, newTime);
-		TraceObject newObject = object != null ? object : resolveObject(newRecorder, newTime);
+		TraceObject threadOrFrameObject = resolveObject(newRecorder, newThread, newFrame, newTime);
+		TraceObject newObject = choose(object, threadOrFrameObject);
 		return new DebuggerCoordinates(newTrace, newPlatform, newRecorder, newThread, newView,
 			newTime, newFrame, newObject);
 	}
@@ -332,13 +340,23 @@ public class DebuggerCoordinates {
 	 * 
 	 * @param ancestor the proposed ancestor
 	 * @param successor the proposed successor
-	 * @param time the time to consider (only the snap matters)
 	 * @return true if ancestor is in fact an ancestor of successor at the given time
 	 */
-	private static boolean isAncestor(TraceObject ancestor, TraceObject successor,
-			TraceSchedule time) {
-		return successor.getCanonicalParents(Lifespan.at(time.getSnap()))
-				.anyMatch(p -> p == ancestor);
+	private static boolean isAncestor(TraceObject ancestor, TraceObject successor) {
+		return ancestor.getCanonicalPath().isAncestor(successor.getCanonicalPath());
+	}
+
+	private static TraceObject choose(TraceObject curObj, TraceObject newObj) {
+		if (curObj == null) {
+			return newObj;
+		}
+		if (newObj == null) {
+			return curObj;
+		}
+		if (isAncestor(newObj, curObj)) {
+			return curObj;
+		}
+		return newObj;
 	}
 
 	public DebuggerCoordinates thread(TraceThread newThread) {
@@ -358,9 +376,8 @@ public class DebuggerCoordinates {
 		// Yes, override frame with 0 on thread changes, unless target says otherwise
 		Integer newFrame = resolveFrame(recorder, newThread, newTime);
 		// Yes, forced frame change may also force object change
-		TraceObject ancestor = resolveObject(newThread, newFrame, newTime);
-		TraceObject newObject =
-			object != null && isAncestor(ancestor, object, newTime) ? object : ancestor;
+		TraceObject threadOrFrameObject = resolveObject(newThread, newFrame, newTime);
+		TraceObject newObject = choose(object, threadOrFrameObject);
 		return new DebuggerCoordinates(newTrace, newPlatform, recorder, newThread, newView, newTime,
 			newFrame, newObject);
 	}
@@ -384,9 +401,8 @@ public class DebuggerCoordinates {
 				: resolveThread(trace, recorder, newTime);
 		// This will cause the frame to reset to 0 on every snap change. That's fair....
 		Integer newFrame = resolveFrame(newThread, newTime);
-		TraceObject ancestor = resolveObject(newThread, newFrame, newTime);
-		TraceObject newObject =
-			object != null && isAncestor(ancestor, object, newTime) ? object : ancestor;
+		TraceObject threadOrFrameObject = resolveObject(newThread, newFrame, newTime);
+		TraceObject newObject = choose(object, threadOrFrameObject);
 		return new DebuggerCoordinates(trace, platform, recorder, newThread, view, newTime,
 			newFrame, newObject);
 	}
@@ -398,9 +414,8 @@ public class DebuggerCoordinates {
 		if (Objects.equals(frame, newFrame)) {
 			return this;
 		}
-		TraceObject ancestor = resolveObject(thread, newFrame, getTime());
-		TraceObject newObject =
-			object != null && isAncestor(ancestor, object, getTime()) ? object : ancestor;
+		TraceObject threadOrFrameObject = resolveObject(thread, newFrame, getTime());
+		TraceObject newObject = choose(object, threadOrFrameObject);
 		return new DebuggerCoordinates(trace, platform, recorder, thread, view, time, newFrame,
 			newObject);
 	}
@@ -629,6 +644,7 @@ public class DebuggerCoordinates {
 		ProjectData projData = tool.getProject().getProjectData(projLoc);
 		if (projData == null) {
 			try {
+				// FIXME! orphaned instance - transient in nature
 				projData = new ProjectFileManager(projLoc, false, false);
 			}
 			catch (NotOwnerException e) {
@@ -636,7 +652,7 @@ public class DebuggerCoordinates {
 					"Not project owner: " + projLoc + "(" + pathname + ")");
 				return null;
 			}
-			catch (IOException e) {
+			catch (IOException | LockException e) {
 				Msg.showError(DebuggerCoordinates.class, tool.getToolFrame(), "Trace Open Failed",
 					"Project error: " + e.getMessage());
 				return null;

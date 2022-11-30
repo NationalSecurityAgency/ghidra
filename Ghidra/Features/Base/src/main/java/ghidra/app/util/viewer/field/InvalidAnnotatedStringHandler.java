@@ -15,13 +15,11 @@
  */
 package ghidra.app.util.viewer.field;
 
+import docking.widgets.fieldpanel.field.AttributedString;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.nav.Navigatable;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.listing.Program;
-
-import java.awt.Color;
-
-import docking.widgets.fieldpanel.field.AttributedString;
 
 /**
  * An annotated string handler that is used to display an error message string when there is a
@@ -42,7 +40,7 @@ public class InvalidAnnotatedStringHandler implements AnnotatedStringHandler {
 	@Override
 	public AttributedString createAnnotatedString(AttributedString prototypeString, String[] text,
 			Program program) throws AnnotationException {
-		return new AttributedString(errorText, Color.RED, prototypeString.getFontMetrics(0));
+		return new AttributedString(errorText, Messages.ERROR, prototypeString.getFontMetrics(0));
 	}
 
 	@Override

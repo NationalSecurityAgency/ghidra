@@ -28,6 +28,8 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 
 import docking.widgets.AbstractGCellRenderer;
+import generic.theme.GColor;
+import generic.theme.Gui;
 import ghidra.docking.settings.*;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
@@ -47,6 +49,8 @@ public class GTableCellRenderer extends AbstractGCellRenderer implements TableCe
 	protected static final FloatingPointPrecisionSettingsDefinition FLOATING_POINT_PRECISION_SETTING =
 		FloatingPointPrecisionSettingsDefinition.DEF;
 
+	private static final Color BG_DRAG = new GColor("color.bg.table.row.drag");
+
 	private static DecimalFormat decimalFormat;
 	private static Map<Integer, DecimalFormat> decimalFormatCache;
 
@@ -54,7 +58,13 @@ public class GTableCellRenderer extends AbstractGCellRenderer implements TableCe
 	 * Constructs a new GTableCellRenderer.
 	 */
 	public GTableCellRenderer() {
-
+		// When the Look And Feel changes, renderers are not auto updated because they
+		// are not part of the component tree. So listen for a change to the Look And Feel.
+		Gui.addThemeListener(e -> {
+			if (e.isLookAndFeelChanged()) {
+				updateUI();
+			}
+		});
 	}
 
 	/**
@@ -155,7 +165,7 @@ public class GTableCellRenderer extends AbstractGCellRenderer implements TableCe
 			setForegroundColor(table, model, value);
 
 			if (row == dropRow) {
-				setBackground(Color.CYAN);
+				setBackground(BG_DRAG);
 			}
 			else {
 				setBackground(getOSDependentBackgroundColor(table, row));

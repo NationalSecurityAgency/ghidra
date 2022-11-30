@@ -15,7 +15,8 @@
  */
 package docking.widgets.table.constrainteditor;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
 import java.math.BigInteger;
 
 import javax.swing.*;
@@ -24,6 +25,7 @@ import docking.widgets.label.GDHtmlLabel;
 import docking.widgets.table.constraint.ColumnConstraint;
 import docking.widgets.table.constraint.SingleValueColumnConstraint;
 import docking.widgets.textfield.IntegerTextField;
+import generic.theme.GThemeDefaults.Colors.Messages;
 
 /**
  * A constraint editor for 64 bit unsigned numbers.
@@ -60,7 +62,7 @@ public class UnsignedLongConstraintEditor extends AbstractColumnConstraintEditor
 		panel.add(field.getComponent(), BorderLayout.CENTER);
 		statusLabel = new GDHtmlLabel();
 		panel.add(statusLabel, BorderLayout.SOUTH);
-		statusLabel.setForeground(Color.RED);
+		statusLabel.setForeground(Messages.ERROR);
 		statusLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
 		return panel;

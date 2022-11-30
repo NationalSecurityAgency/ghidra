@@ -25,6 +25,7 @@ import java.util.List;
 import javax.swing.*;
 
 import docking.action.DockingActionIf;
+import generic.theme.GColor;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.services.GoToService;
 import ghidra.app.util.viewer.listingpanel.OverviewProvider;
@@ -40,7 +41,7 @@ import help.Help;
  * Uses an {@link OverviewColorService} to get the appropriate color for an address.
  */
 public class OverviewColorComponent extends JPanel implements OverviewProvider {
-	private static final Color DEFAULT_COLOR = Color.GRAY;
+	private static final Color DEFAULT_COLOR = new GColor("color.bg.plugin.overview.defalt");
 	private OverviewColorService service;
 	private Color[] colors = new Color[0];
 	private final SwingUpdateManager refreshUpdater =
@@ -158,7 +159,7 @@ public class OverviewColorComponent extends JPanel implements OverviewProvider {
 		}
 		BigInteger indexCount = map.getIndexCount();
 		if (indexCount.equals(BigInteger.ZERO)) {
-			Arrays.fill(colors, Color.GRAY);
+			Arrays.fill(colors, DEFAULT_COLOR);
 			repaint();
 			return;
 		}

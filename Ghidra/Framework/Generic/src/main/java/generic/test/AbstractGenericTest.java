@@ -45,6 +45,8 @@ import org.junit.runner.Description;
 import generic.jar.ResourceFile;
 import generic.test.rule.Repeated;
 import generic.test.rule.RepeatedTestRule;
+import generic.theme.GIcon;
+import generic.theme.Gui;
 import generic.util.WindowUtilities;
 import ghidra.GhidraTestApplicationLayout;
 import ghidra.framework.Application;
@@ -55,6 +57,7 @@ import ghidra.util.exception.AssertException;
 import ghidra.util.task.AbstractSwingUpdateManager;
 import ghidra.util.task.SwingUpdateManager;
 import junit.framework.AssertionFailedError;
+import resources.icons.UrlImageIcon;
 import sun.awt.AppContext;
 import utilities.util.FileUtilities;
 import utilities.util.reflection.ReflectionUtilities;
@@ -502,6 +505,41 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 			}
 		}
 		return null;
+	}
+
+	public static <T extends Component> List<T> findComponents(Container parent,
+			Class<T> desiredClass) {
+		return findComponents(parent, desiredClass, false);
+	}
+
+	public static <T extends Component> List<T> findComponents(Container parent,
+			Class<T> desiredClass, boolean checkOwnedWindows) {
+		Component[] comps = parent.getComponents();
+		List<T> list = new ArrayList<>();
+		for (Component element : comps) {
+			if (element == null) {
+				continue;// this started happening in 1.6, not sure why
+			}
+			if (desiredClass.isAssignableFrom(element.getClass())) {
+				list.add(desiredClass.cast(element));
+			}
+			else if (element instanceof Container) {
+				T c = findComponent((Container) element, desiredClass, checkOwnedWindows);
+				if (c != null) {
+					list.add(desiredClass.cast(c));
+				}
+			}
+		}
+		if (checkOwnedWindows && (parent instanceof Window)) {
+			Window[] windows = ((Window) parent).getOwnedWindows();
+			for (int i = windows.length - 1; i >= 0; i--) {
+				Component c = findComponent(windows[i], desiredClass, checkOwnedWindows);
+				if (c != null) {
+					list.add(desiredClass.cast(c));
+				}
+			}
+		}
+		return list;
 	}
 
 	/**
@@ -1584,7 +1622,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 			}
 		});
 		// Fix up the default fonts that Java 1.5.0 changed to Courier, which looked terrible.
-		Font f = new Font("Monospaced", Font.PLAIN, 12);
+		Font f = Gui.getFont("font.monospaced");
 		UIManager.put("PasswordField.font", f);
 		UIManager.put("TextArea.font", f);
 	}
@@ -2047,6 +2085,53 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 			// deleteDir will also delete files
 			FileUtilities.deleteDir(file);
 		}
+	}
+
+	/**
+	 * Asserts that the two colors have the same rgb values (handles GColor)
+	 * @param expected the expected color
+	 * @param actual the actual color
+	 */
+	public void assertColorsEqual(Color expected, Color actual) {
+		if (expected.getRGB() == actual.getRGB()) {
+			return;
+		}
+		fail("Expected: [" + expected.getClass().getSimpleName() + "]" + expected +
+			", but got: [" + actual.getClass().getSimpleName() + "]" + actual);
+	}
+
+	/**
+	 * Asserts that the two icons are or refer to the same icon (handles GIcon)
+	 * @param expected the expected icon
+	 * @param actual the actual icon
+	 */
+	public void assertIconsEqual(Icon expected, Icon actual) {
+		if (expected.equals(actual)) {
+			return;
+		}
+		URL url1 = getURL(expected);
+		URL url2 = getURL(actual);
+
+		if (url1 != null && url1.equals(url2)) {
+			return;
+		}
+		fail("Expected icon [" + expected.getClass().getSimpleName() + "]" + expected.toString() +
+			", but got: [" + actual.getClass().getSimpleName() + "]" + actual.toString());
+	}
+
+	/**
+	 * Gets the URL for the given icon
+	 * @param icon the icon to get a URL for
+	 * @return the URL for the given icon
+	 */
+	public URL getURL(Icon icon) {
+		if (icon instanceof UrlImageIcon urlIcon) {
+			return urlIcon.getUrl();
+		}
+		if (icon instanceof GIcon gIcon) {
+			return gIcon.getUrl();
+		}
+		return null;
 	}
 
 }

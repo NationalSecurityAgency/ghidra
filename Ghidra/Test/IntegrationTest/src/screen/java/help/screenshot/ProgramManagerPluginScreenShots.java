@@ -34,6 +34,7 @@ import docking.options.editor.OptionsDialog;
 import docking.widgets.OptionDialog;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.datamgr.DataTypesProvider;
 import ghidra.app.plugin.core.progmgr.MultiTabPlugin;
@@ -49,7 +50,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskLauncher;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class ProgramManagerPluginScreenShots extends GhidraScreenShotGenerator
 		implements CheckinHandler {
@@ -65,7 +66,7 @@ public class ProgramManagerPluginScreenShots extends GhidraScreenShotGenerator
 		createAndOpenPrograms(2, 1);
 		closeProvider(DataTypesProvider.class);
 		captureToolWindow(900, 400);
-		drawOval(new Color(108, 0, 0), new Rectangle(280, 92, 190, 60), 8);
+		drawOval(Palette.PURPLE, new Rectangle(280, 92, 190, 60), 8);
 
 	}
 
@@ -113,7 +114,7 @@ public class ProgramManagerPluginScreenShots extends GhidraScreenShotGenerator
 		ProjectData projectData = project.getProjectData();
 		projectData.getRootFolder()
 				.createFile("WinHelloCpp.exe", program,
-					TaskMonitorAdapter.DUMMY_MONITOR);
+					TaskMonitor.DUMMY);
 
 		DomainFile df = program.getDomainFile();
 
@@ -146,7 +147,7 @@ public class ProgramManagerPluginScreenShots extends GhidraScreenShotGenerator
 		runSwing(() -> invokeInstanceMethod("advancedButtonCallback", dialog));
 
 		captureDialog(850, 400);
-		closeAllWindowsAndFrames();
+		closeAllWindows();
 	}
 
 	@Test
@@ -156,7 +157,7 @@ public class ProgramManagerPluginScreenShots extends GhidraScreenShotGenerator
 		performAction("Open File", "ProgramManagerPlugin", false);
 
 		captureDialog(500, 400);
-		closeAllWindowsAndFrames();
+		closeAllWindows();
 
 	}
 
@@ -176,7 +177,7 @@ public class ProgramManagerPluginScreenShots extends GhidraScreenShotGenerator
 		rightClick(jTree, rowBounds.x + 25, rowBounds.y + 10);
 		waitForSwing();
 		captureDialog();
-		closeAllWindowsAndFrames();
+		closeAllWindows();
 	}
 
 	@Test
@@ -231,7 +232,7 @@ public class ProgramManagerPluginScreenShots extends GhidraScreenShotGenerator
 		waitForSwing();
 		createAndOpenPrograms(6, 3);
 		captureProvider(CodeViewerProvider.class);
-		drawOval(new Color(108, 0, 0), new Rectangle(440, 16, 70, 50), 8);
+		drawOval(Palette.PURPLE, new Rectangle(440, 16, 70, 50), 8);
 	}
 
 	@Test
@@ -273,7 +274,7 @@ public class ProgramManagerPluginScreenShots extends GhidraScreenShotGenerator
 		});
 
 		captureProvider(CodeViewerProvider.class);
-		drawOval(new Color(108, 0, 0), new Rectangle(221, 16, 140, 50), 8);
+		drawOval(Palette.PURPLE, new Rectangle(221, 16, 140, 50), 8);
 	}
 
 	@Test
@@ -310,7 +311,7 @@ public class ProgramManagerPluginScreenShots extends GhidraScreenShotGenerator
 			String programName = "Program" + (i + 1) + ".exe";
 			list.add(projectData.getRootFolder()
 					.createFile(programName, program,
-						TaskMonitorAdapter.DUMMY_MONITOR));
+						TaskMonitor.DUMMY));
 
 		}
 		program.flushEvents();
@@ -350,7 +351,7 @@ public class ProgramManagerPluginScreenShots extends GhidraScreenShotGenerator
 		TaskLauncher.launchModal(comment, () -> {
 			try {
 				domainFile.addToVersionControl(comment, keepItCheckedOut,
-					TaskMonitorAdapter.DUMMY_MONITOR);
+					TaskMonitor.DUMMY);
 			}
 			catch (CancelledException | IOException e) {
 				throw new RuntimeException(e);
@@ -365,17 +366,11 @@ public class ProgramManagerPluginScreenShots extends GhidraScreenShotGenerator
 		return space.getAddress(offset);
 	}
 
-	/*
-	 * @see ghidra.framework.data.CheckinHandler#getComment()
-	 */
 	@Override
 	public String getComment() {
 		return checkinComment;
 	}
 
-	/*
-	 * @see ghidra.framework.data.CheckinHandler#keepCheckedOut()
-	 */
 	@Override
 	public boolean keepCheckedOut() {
 		return keepCheckedOut;

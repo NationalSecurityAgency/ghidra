@@ -32,16 +32,16 @@ import ghidra.util.exception.AssertException;
 
 /**
  * Class to manage a set of option name/value pairs for a category.
- * 
+ *
  * <p>The values may be primitives or {@link WrappedOption}s that are containers for primitive
  * components.
- * 
+ *
  * <p>The name/value pair has an owner so that the option name can be removed from the Options
  * object when it is no longer being used.
- * 
+ *
  * <p>Note: Property Names can have {@link Options#DELIMITER} characters to create a hierarchy.
  * So too can sub-options accessed via {@link #getOptions(String)}.
- * 
+ *
  * <p>The Options Dialog shows the delimited hierarchy in tree format.
  */
 public class ToolOptions extends AbstractOptions {
@@ -148,7 +148,7 @@ public class ToolOptions extends AbstractOptions {
 	 * Return an XML element for the option names and values.
 	 * Note: only those options which have been explicitly set
 	 * will be included.
-	 * 
+	 *
 	 * @param includeDefaultBindings true to include default key binding values in the xml
 	 * @return the xml root element
 	 */
@@ -421,14 +421,20 @@ public class ToolOptions extends AbstractOptions {
 		NotifyListenersRunnable runnable =
 			new NotifyListenersRunnable(optionName, oldValue, newValue);
 		Swing.runNow(runnable);
-		return !runnable.wasVetoed();
+
+		OptionsVetoException veto = runnable.getVetoException();
+		if (veto != null) {
+			throw veto;
+		}
+
+		return true;
 	}
 
 	private class NotifyListenersRunnable implements Runnable {
 		private String optionName;
 		private Object oldValue;
 		private Object newValue;
-		private boolean vetoed;
+		private OptionsVetoException veto;
 
 		NotifyListenersRunnable(String optionName, Object oldValue, Object newValue) {
 			this.optionName = optionName;
@@ -446,7 +452,7 @@ public class ToolOptions extends AbstractOptions {
 				}
 			}
 			catch (OptionsVetoException e) {
-				vetoed = true;
+				veto = e;
 				for (OptionsChangeListener notifiedListener : notifiedListeners) {
 					notifiedListener.optionsChanged(ToolOptions.this, optionName, newValue,
 						oldValue);
@@ -454,8 +460,8 @@ public class ToolOptions extends AbstractOptions {
 			}
 		}
 
-		public boolean wasVetoed() {
-			return vetoed;
+		OptionsVetoException getVetoException() {
+			return veto;
 		}
 
 	}

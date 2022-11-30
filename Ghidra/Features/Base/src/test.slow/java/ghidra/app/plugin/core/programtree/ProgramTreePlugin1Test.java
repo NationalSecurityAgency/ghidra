@@ -30,6 +30,7 @@ import javax.swing.tree.TreePath;
 import org.junit.*;
 
 import docking.action.DockingActionIf;
+import generic.theme.GIcon;
 import ghidra.app.services.GoToService;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
@@ -43,7 +44,6 @@ import ghidra.program.util.GroupPath;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.Swing;
 import ghidra.util.task.TaskMonitor;
-import resources.ResourceManager;
 
 public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 
@@ -633,7 +633,7 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 
 		int row = getRowForPath(nodes[0].getTreePath());
 		Component comp = getCellRendererComponentForLeaf(nodes[0], row);
-		assertEquals(ResourceManager.loadImage(DnDTreeCellRenderer.VIEWED_FRAGMENT),
+		assertEquals(new GIcon(DnDTreeCellRenderer.VIEWED_FRAGMENT),
 			((JLabel) comp).getIcon());
 	}
 
@@ -676,12 +676,12 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 
 		int row = getRowForPath(node.getTreePath());
 		Component comp = getCellRendererComponentForLeaf(node, row);
-		assertEquals(ResourceManager.loadImage(DnDTreeCellRenderer.VIEWED_FRAGMENT),
+		assertEquals(new GIcon(DnDTreeCellRenderer.VIEWED_FRAGMENT),
 			((JLabel) comp).getIcon());
 
 		row = getRowForPath(n2.getTreePath());
 		comp = getCellRendererComponentForLeaf(n2, row);
-		assertEquals(ResourceManager.loadImage(DnDTreeCellRenderer.VIEWED_FRAGMENT),
+		assertEquals(new GIcon(DnDTreeCellRenderer.VIEWED_FRAGMENT),
 			((JLabel) comp).getIcon());
 
 		setSelectionPaths(new TreePath[] { n2.getTreePath() });
@@ -689,12 +689,12 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 
 		row = getRowForPath(n2.getTreePath());
 		comp = getCellRendererComponentForLeaf(n2, row);
-		assertEquals(ResourceManager.loadImage(DnDTreeCellRenderer.VIEWED_FRAGMENT),
+		assertEquals(new GIcon(DnDTreeCellRenderer.VIEWED_FRAGMENT),
 			((JLabel) comp).getIcon());
 
 		row = getRowForPath(node.getTreePath());
 		getCellRendererComponentForLeaf(node, row);
-		assertEquals(ResourceManager.loadImage(DnDTreeCellRenderer.FRAGMENT),
+		assertEquals(new GIcon(DnDTreeCellRenderer.FRAGMENT),
 			((JLabel) comp).getIcon());
 
 	}
@@ -735,9 +735,9 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 		runSwing(() -> tree.removeFromView(finalNode.getTreePath()));
 
 		int row = getRowForPath(node.getTreePath());
-		Component comp = runSwing(() -> tree.getCellRenderer()
-				.getTreeCellRendererComponent(tree, node, true, false, true, row, false));
-		assertEquals(ResourceManager.loadImage(DnDTreeCellRenderer.CLOSED_FOLDER),
+		Component comp = tree.getCellRenderer()
+				.getTreeCellRendererComponent(tree, node, true, false, true, row, false);
+		assertEquals(new GIcon(DnDTreeCellRenderer.CLOSED_FOLDER),
 			((JLabel) comp).getIcon());
 	}
 
@@ -833,9 +833,10 @@ public class ProgramTreePlugin1Test extends AbstractProgramTreePluginTest {
 		assertTrue(getView().hasSameAddresses(viewMgrService.getCurrentView()));
 
 		int row = getRowForPath(child.getTreePath());
-		Component comp = runSwing(() -> tree.getCellRenderer()
-				.getTreeCellRendererComponent(tree, child, true, false, true, row, false));
-		assertEquals(ResourceManager.loadImage(DnDTreeCellRenderer.VIEWED_FRAGMENT),
+		Component comp = tree.getCellRenderer()
+				.getTreeCellRendererComponent(tree, child, true, false, true, row, false);
+		assertEquals(new GIcon(DnDTreeCellRenderer.VIEWED_FRAGMENT),
+
 			((JLabel) comp).getIcon());
 	}
 

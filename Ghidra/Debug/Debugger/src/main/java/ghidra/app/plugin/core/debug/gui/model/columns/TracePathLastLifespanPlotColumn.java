@@ -31,7 +31,7 @@ public class TracePathLastLifespanPlotColumn
 
 	private final SpanTableCellRenderer<Long> cellRenderer = new SpanTableCellRenderer<>();
 	private final RangeCursorTableHeaderRenderer<Long> headerRenderer =
-		new RangeCursorTableHeaderRenderer<>();
+		new RangeCursorTableHeaderRenderer<>(0L);
 
 	@Override
 	public String getColumnName() {

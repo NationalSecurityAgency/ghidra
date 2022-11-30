@@ -75,7 +75,7 @@ public class TestTargetSession extends DefaultTargetModelRoot
 
 	public void simulateStep(TestTargetThread eventThread) {
 		eventThread.setState(TargetExecutionState.RUNNING);
-		listeners.fire.event(this, eventThread, TargetEventType.STEP_COMPLETED,
+		broadcast().event(this, eventThread, TargetEventType.STEP_COMPLETED,
 			"Test thread completed a step", List.of());
 		eventThread.setState(TargetExecutionState.STOPPED);
 	}

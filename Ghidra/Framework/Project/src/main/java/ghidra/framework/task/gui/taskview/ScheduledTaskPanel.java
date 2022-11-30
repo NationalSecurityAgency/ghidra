@@ -20,6 +20,7 @@ import java.awt.*;
 import javax.swing.*;
 
 import docking.widgets.label.GDLabel;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.framework.task.gui.GProgressBar;
 
 public class ScheduledTaskPanel extends JPanel {
@@ -38,13 +39,13 @@ public class ScheduledTaskPanel extends JPanel {
 		layout = new ScheduledElementLayout();
 		setLayout(layout);
 		label = new GDLabel(labelText);
-		setBackground(Color.WHITE);
+		setBackground(Colors.BACKGROUND);
 		add(label);
 	}
 
 	void addProgressBar() {
 		progressBar = new GProgressBar(null, true, true, false, 12);
-		progressBar.setBackgroundColor(Color.WHITE);
+		progressBar.setBackgroundColor(Colors.BACKGROUND);
 		add(progressBar);
 		layout.clearPreferredSize();
 		invalidate();

@@ -27,6 +27,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.google.common.collect.ImmutableList;
 
 import generic.ComparableTupleRecord;
+import generic.theme.GColor;
 import ghidra.framework.options.annotation.*;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
@@ -165,6 +166,7 @@ public interface AutoOptions {
 			catch (IllegalArgumentException | IllegalAccessException e) {
 				throw new AssertionError(e);
 			}
+
 			OptionType type = annotation.type();
 			if (type == OptionType.NO_TYPE) {
 				type = OptionType.getOptionType(defaultValue);
@@ -175,6 +177,7 @@ public interface AutoOptions {
 					"Could not determine option type from default value: " + f + " = " +
 						defaultValue);
 			}
+
 			String description = annotation.description();
 			Class<? extends PropertyEditor> editorClass = annotation.editor();
 			final PropertyEditor editor;
@@ -191,9 +194,28 @@ public interface AutoOptions {
 						"editor class must have accessible default constructor", e);
 				}
 			}
-			options.registerOption(key.getName(), type, defaultValue, help, description, editor);
-			// TODO: Wish Ghidra would do this upon any option registration
-			options.putObject(key.getName(), defaultValue, type);
+
+			if (defaultValue instanceof GColor gColor) {
+				options.registerThemeColorBinding(key.getName(), gColor.getId(), help, description);
+			}
+			/*
+			else if ( is font option ) {
+			
+				// Note: there is no font value to check against for fonts in the new Theme system.
+				// If annotation fonts are needed, then they should be bound by String id.  Likely, 
+				// annotation fonts are not needed now that have themes.  We also probably no 
+				// longer need annotation colors either. 
+			
+				options.registerThemeFontBinding(description, fontId, help, description);
+			}
+			*/
+			else {
+				options.registerOption(key.getName(), type, defaultValue, help, description,
+					editor);
+				// TODO: Wish Ghidra would do this upon any option registration
+				options.putObject(key.getName(), defaultValue, type);
+			}
+
 		}
 	}
 

@@ -19,17 +19,21 @@ import java.awt.*;
 
 import javax.swing.Icon;
 import javax.swing.JTree;
-import javax.swing.plaf.ColorUIResource;
+import javax.swing.plaf.UIResource;
 import javax.swing.tree.DefaultTreeCellRenderer;
 
 import docking.widgets.GComponent;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
+import generic.theme.GColor;
+import generic.theme.GColorUIResource;
 
 public class GTreeRenderer extends DefaultTreeCellRenderer implements GComponent {
 
-	private static final Color VALID_DROP_TARGET_COLOR = new Color(200, 200, 255);
+	private static final Color VALID_DROP_TARGET_COLOR = new GColor("color.bg.tree.drag");
 	private static final int DEFAULT_MIN_ICON_WIDTH = 22;
+	private static final Color BACKGROUND_UNSELECTED = new GColor("color.bg.tree");
+	private static final Color BACKGROUND_SELECTED = new GColor("color.bg.tree.selected");
 
 	private Object dropTarget;
 	private boolean paintDropTarget;
@@ -40,6 +44,8 @@ public class GTreeRenderer extends DefaultTreeCellRenderer implements GComponent
 
 	public GTreeRenderer() {
 		setHTMLRenderingEnabled(false);
+		setBackgroundNonSelectionColor(BACKGROUND_UNSELECTED);
+		setBackgroundSelectionColor(BACKGROUND_SELECTED);
 	}
 
 	@Override
@@ -82,30 +88,43 @@ public class GTreeRenderer extends DefaultTreeCellRenderer implements GComponent
 		return this;
 	}
 
+	/**
+	 * Overrides this method to ensure that the new background selection color is not
+	 * a {@link GColorUIResource}. Some Look and Feels will ignore color values that extend
+	 * {@link UIResource}, choosing instead their own custom painting behavior. By not using a 
+	 * UIResource, we prevent the Look and Feel from overriding this renderer's color value.
+	 * 
+	 * @param newColor the new background selection color
+	 */
 	@Override
 	public void setBackgroundSelectionColor(Color newColor) {
 		super.setBackgroundSelectionColor(fromUiResource(newColor));
 	}
 
+	/**
+	 * Overrides this method to ensure that the new background non-selection color is not
+	 * a {@link GColorUIResource}. Some Look and Feels will ignore color values that extend
+	 * {@link UIResource}, choosing instead their own custom painting behavior. By not using a 
+	 * UIResource, we prevent the Look and Feel from overriding this renderer's color value.
+	 * 
+	 * @param newColor the new background non-selection color
+	 */
 	@Override
 	public void setBackgroundNonSelectionColor(Color newColor) {
 		super.setBackgroundNonSelectionColor(fromUiResource(newColor));
 	}
 
 	/**
-	 * Converts the given color from a {@link ColorUIResource} to a {@link Color}.  This is used
-	 * to deal with the issue that some Look and Feels will not correctly paint with this
-	 * renderer when using UI resource objects.  This behavior can be changed by overriding this
-	 * method.
-	 * 
-	 * @param c the source color
-	 * @return the new color
+	 * Checks and converts any {@link GColorUIResource} to a {@link GColor}
+	 * @param color the color to check if it is a {@link UIResource}
+	 * @return either the given color or if it is a {@link GColorUIResource}, then a plain
+	 * {@link GColor} instance referring to the same theme color  property id.
 	 */
-	protected Color fromUiResource(Color c) {
-		if (c instanceof ColorUIResource) {
-			return new Color(c.getRGB());
+	protected Color fromUiResource(Color color) {
+		if (color instanceof GColorUIResource uiResource) {
+			return uiResource.toGColor();
 		}
-		return c;
+		return color;
 	}
 
 	protected void updateIconTextGap(Icon icon, int minWidth) {
@@ -140,7 +159,7 @@ public class GTreeRenderer extends DefaultTreeCellRenderer implements GComponent
 			// Bug Alert!:
 			// We must create a new font here and not use deriveFont().  Using derive font has
 			// bugs when calculating the string width for a bold derived font.
-			cachedBoldFont = new Font(font.getFamily(), Font.BOLD, font.getSize());
+			cachedBoldFont = font.deriveFont(Font.BOLD);
 		}
 		return bold ? cachedBoldFont : cachedDefaultFont;
 	}

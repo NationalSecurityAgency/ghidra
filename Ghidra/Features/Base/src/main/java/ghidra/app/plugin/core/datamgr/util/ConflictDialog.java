@@ -16,7 +16,8 @@
 package ghidra.app.plugin.core.datamgr.util;
 
 import java.awt.BorderLayout;
-import java.awt.event.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
 import javax.swing.*;
 
@@ -24,8 +25,8 @@ import docking.DialogComponentProvider;
 import docking.widgets.button.GRadioButton;
 import docking.widgets.label.GIconLabel;
 import docking.widgets.label.GLabel;
+import generic.theme.GIcon;
 import ghidra.util.HelpLocation;
-import resources.ResourceManager;
 
 /**
  * Dialog to get user input on how to handle data type conflicts.
@@ -43,12 +44,12 @@ public class ConflictDialog extends DialogComponentProvider {
 	private JButton applyToAllButton;
 	private int selectedOption = RENAME;
 
-	private ImageIcon INFORM_ICON = ResourceManager.loadImage("images/warning.png");
+	private Icon INFORM_ICON = new GIcon("icon.warning");
 
 	/**
 	 * Constructor
 	 * @param dtName data type name
-	 * @param categoryName category path
+	 * @param categoryPath category path
 	 * @param newDTName new name to resolve conflict
 	 */
 	public ConflictDialog(String dtName, String categoryPath, String newDTName) {
@@ -58,27 +59,18 @@ public class ConflictDialog extends DialogComponentProvider {
 
 		addOKButton();
 		applyToAllButton = new JButton("Apply to All");
-		applyToAllButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				applyToAll = true;
-				close();
-			}
+		applyToAllButton.addActionListener(e -> {
+			applyToAll = true;
+			close();
 		});
 		addButton(applyToAllButton);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.util.bean.GhidraDialog#okCallback()
-	 */
 	@Override
 	protected void okCallback() {
 		close();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.util.bean.GhidraDialog#cancelCallback()
-	 */
 	@Override
 	protected void cancelCallback() {
 		close();
@@ -101,20 +93,17 @@ public class ConflictDialog extends DialogComponentProvider {
 
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 
-		ItemListener listener = new ItemListener() {
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				if (e.getStateChange() == ItemEvent.SELECTED) {
-					Object source = e.getSource();
-					if (source == replaceRB) {
-						selectedOption = REPLACE;
-					}
-					else if (source == useExistingRB) {
-						selectedOption = USE_EXISTING;
-					}
-					else {
-						selectedOption = RENAME;
-					}
+		ItemListener listener = e -> {
+			if (e.getStateChange() == ItemEvent.SELECTED) {
+				Object source = e.getSource();
+				if (source == replaceRB) {
+					selectedOption = REPLACE;
+				}
+				else if (source == useExistingRB) {
+					selectedOption = USE_EXISTING;
+				}
+				else {
+					selectedOption = RENAME;
 				}
 			}
 		};

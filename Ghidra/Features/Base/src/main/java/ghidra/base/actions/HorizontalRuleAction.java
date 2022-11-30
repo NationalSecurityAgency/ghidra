@@ -18,6 +18,7 @@ package ghidra.base.actions;
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.util.HTMLUtilities;
 
 /**
@@ -41,7 +42,8 @@ public class HorizontalRuleAction extends DockingAction {
 		markHelpUnnecessary();
 
 		// The menu name is both names, one over the other, in a small, light grayish font.
-		setMenuBarData(new MenuData(new String[] { "<HTML><CENTER><FONT SIZE=2 COLOR=SILVER>" +
+		setMenuBarData(new MenuData(new String[] { "<HTML><CENTER><FONT SIZE=2 COLOR=\"" +
+			Palette.SILVER + "\">" +
 			fixupFirstAmp(
 				HTMLUtilities.escapeHTML(topName) + "<BR>" + HTMLUtilities.escapeHTML(bottomName)) +
 			"</FONT></CENTER>" }));

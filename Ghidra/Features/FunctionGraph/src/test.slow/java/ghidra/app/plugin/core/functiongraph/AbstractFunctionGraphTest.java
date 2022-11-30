@@ -2082,8 +2082,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 
 	protected void verifyColor(FGVertex vertex, Color expectedColor) {
 		Color currentBackgroundColor = vertex.getBackgroundColor();
-		assertEquals("Color of vertex is not as expected - vertex: " + vertex, expectedColor,
-			currentBackgroundColor);
+		assertColorsEqual(expectedColor, currentBackgroundColor);
 	}
 
 	protected void verifyDefaultColor(FGVertex... vertices) {

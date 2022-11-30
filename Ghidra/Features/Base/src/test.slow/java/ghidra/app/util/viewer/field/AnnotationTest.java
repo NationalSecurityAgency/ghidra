@@ -19,6 +19,8 @@ import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
 
 import java.awt.*;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -28,6 +30,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import docking.widgets.fieldpanel.field.*;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.nav.TestDummyNavigatable;
 import ghidra.app.services.*;
@@ -35,6 +39,8 @@ import ghidra.framework.model.*;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.framework.plugintool.TestDummyServiceProvider;
 import ghidra.framework.project.ProjectDataService;
+import ghidra.framework.protocol.ghidra.GhidraURLConnection;
+import ghidra.framework.store.FileSystem;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
@@ -619,6 +625,60 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
+	public void testGhidraLocalUrlAnnotation_Program_WithAddress() {
+
+		SpyNavigatable spyNavigatable = new SpyNavigatable();
+		SpyServiceProvider spyServiceProvider = new SpyServiceProvider();
+
+		String addresstring = "1001000";
+
+		String pathname = "/a/b/prog";
+		String url = "ghidra:/folder/project?" + pathname + "#" + addresstring;
+		String annotationText = "{@url \"" + url + "\"}";
+		String rawComment = "My comment - " + annotationText;
+		AttributedString prototype = prototype();
+		FieldElement element =
+			CommentUtils.parseTextForAnnotations(rawComment, program, prototype, 0);
+
+		String displayString = element.getText();
+		assertEquals("My comment - " + url, displayString);
+
+		AnnotatedTextFieldElement annotatedElement = getAnnotatedTextFieldElement(element);
+		click(spyNavigatable, spyServiceProvider, annotatedElement);
+
+		assertTrue(spyServiceProvider.programOpened(pathname));
+
+		// Navigation performed by ProgramManager not tested due to use of spyServiceProvider
+	}
+
+	@Test
+	public void testGhidraServerUrlAnnotation_Program_WithAddress() {
+
+		SpyNavigatable spyNavigatable = new SpyNavigatable();
+		SpyServiceProvider spyServiceProvider = new SpyServiceProvider();
+
+		String addresstring = "1001000";
+
+		String pathname = "/a/b/prog";
+		String url = "ghidra://server/repo" + pathname + "#" + addresstring;
+		String annotationText = "{@url \"" + url + "\"}";
+		String rawComment = "My comment - " + annotationText;
+		AttributedString prototype = prototype();
+		FieldElement element =
+			CommentUtils.parseTextForAnnotations(rawComment, program, prototype, 0);
+
+		String displayString = element.getText();
+		assertEquals("My comment - " + url, displayString);
+
+		AnnotatedTextFieldElement annotatedElement = getAnnotatedTextFieldElement(element);
+		click(spyNavigatable, spyServiceProvider, annotatedElement);
+
+		assertTrue(spyServiceProvider.programOpened(pathname));
+
+		// Navigation performed by ProgramManager not tested due to use of spyServiceProvider
+	}
+
+	@Test
 	public void testUnknownAnnotation() {
 		String rawComment = "This is a symbol {@syyyybol bob} annotation";
 		String display = CommentUtils.getDisplayString(rawComment, program);
@@ -670,7 +730,7 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 		FieldElement[] strings = getNumberOfSubFieldElements(fieldElement);
 		assertEquals("Unexpected number of AttributedStrings from comment text.", 2,
 			strings.length);
-		assertEquals("Did not get the expected error annotation string color.", Color.RED,
+		assertEquals("Did not get the expected error annotation string color.", Messages.ERROR,
 			strings[1].getColor(0));
 	}
 
@@ -703,7 +763,7 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 		FieldElement[] strings = getNumberOfSubFieldElements(fieldElement);
 		assertEquals("Unexpected number of AttributedStrings from comment text.", 2,
 			strings.length);
-		assertEquals("Did not get the expected error annotation string color.", Color.RED,
+		assertEquals("Did not get the expected error annotation string color.", Messages.ERROR,
 			strings[1].getColor(0));
 	}
 
@@ -757,7 +817,7 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private AttributedString prototype() {
 		FontMetrics fontMetrics = getFontMetrics();
-		AttributedString prototypeString = new AttributedString("", Color.BLACK, fontMetrics);
+		AttributedString prototypeString = new AttributedString("", Colors.FOREGROUND, fontMetrics);
 		return prototypeString;
 	}
 
@@ -901,13 +961,7 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 		private Set<String> openedPrograms = new HashSet<>();
 		private Set<String> closedPrograms = new HashSet<>();
 
-		@Override
-		public Program openProgram(DomainFile domainFile, int version, int state) {
-			String name = domainFile.getName();
-			String pathname = domainFile.getPathname();
-
-			openedPrograms.add(name);
-
+		private Program generateProgram(String pathname, String name) {
 			try {
 				ProgramBuilder builder = new ProgramBuilder();
 				builder.setName(pathname);
@@ -919,6 +973,39 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 				failWithException("Unable to build program", e);
 				return null;
 			}
+		}
+
+		@Override
+		public Program openProgram(URL ghidraURL, int state) {
+			try {
+				GhidraURLConnection c = new GhidraURLConnection(ghidraURL);
+				String folderpath = c.getFolderPath();
+				String name = c.getFolderItemName();
+				String pathname = folderpath;
+				if (!pathname.endsWith(FileSystem.SEPARATOR)) {
+					pathname += FileSystem.SEPARATOR;
+				}
+				pathname += name;
+				openedPrograms.add(name);
+
+				Program p = generateProgram(pathname, name);
+
+				// NOTE: URL ref navigation not performed
+
+				return p;
+			}
+			catch (MalformedURLException e) {
+				failWithException("Bad URL", e);
+			}
+			return null;
+		}
+
+		@Override
+		public Program openProgram(DomainFile domainFile, int version, int state) {
+			String name = domainFile.getName();
+			String pathname = domainFile.getPathname();
+			openedPrograms.add(name);
+			return generateProgram(pathname, name);
 		}
 
 		@Override

@@ -17,7 +17,9 @@ package ghidra.app.plugin.core.debug.gui.listing;
 
 import static org.junit.Assert.*;
 
-import java.awt.Color;
+import java.awt.Component;
+import java.awt.Point;
+import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -30,9 +32,14 @@ import org.junit.experimental.categories.Category;
 import docking.menu.ActionState;
 import docking.menu.MultiStateDockingAction;
 import docking.widgets.EventTrigger;
+import docking.widgets.fieldpanel.FieldPanel;
 import generic.test.category.NightlyCategory;
+import generic.test.rule.Repeated;
+import generic.theme.GThemeDefaults.Colors;
+import ghidra.app.plugin.assembler.*;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
+import ghidra.app.plugin.core.codebrowser.hover.ReferenceListingHoverPlugin;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
@@ -44,6 +51,7 @@ import ghidra.app.plugin.core.debug.gui.console.DebuggerConsoleProvider.LogRow;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerMissingModuleActionContext;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.services.*;
+import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.async.SwingExecutorService;
 import ghidra.framework.model.*;
 import ghidra.lifecycle.Unfinished;
@@ -51,12 +59,13 @@ import ghidra.plugin.importer.ImporterPlugin;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
-import ghidra.program.util.ProgramLocation;
-import ghidra.program.util.ProgramSelection;
+import ghidra.program.model.listing.Instruction;
+import ghidra.program.util.*;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.database.stack.DBTraceStackManager;
 import ghidra.trace.model.*;
+import ghidra.trace.model.guest.TraceGuestPlatform;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.stack.TraceStack;
@@ -637,7 +646,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		// While we're here, ensure static view didn't track anywhere
 		assertEquals(cur, codePlugin.getCurrentLocation().getAddress());
-		assertListingBackgroundAt(Color.WHITE, codePlugin.getListingPanel(),
+		assertListingBackgroundAt(Colors.BACKGROUND, codePlugin.getListingPanel(),
 			ss.getAddress(0x00601234), 0);
 	}
 
@@ -774,7 +783,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		assertListingBackgroundAt(DebuggerResources.DEFAULT_COLOR_BACKGROUND_STALE,
 			listingProvider.getListingPanel(), tb.addr(0x00401233), 0);
-		assertListingBackgroundAt(Color.WHITE, listingProvider.getListingPanel(),
+		assertListingBackgroundAt(Colors.BACKGROUND, listingProvider.getListingPanel(),
 			tb.addr(0x00401234), 0);
 		assertListingBackgroundAt(DebuggerResources.DEFAULT_COLOR_BACKGROUND_ERROR,
 			listingProvider.getListingPanel(), tb.addr(0x00401235), 0);
@@ -1614,5 +1623,118 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		assertTrue(java.util.List.of(programManager.getAllOpenPrograms()).contains(program));
 		// TODO: Test this independent of this particular action?
 		assertNull(consolePlugin.getLogRow(ctx));
+	}
+
+	protected Instruction placeGuestInstruction(int guestRangeLength) throws Throwable {
+		try (UndoableTransaction tid = tb.startTransaction()) {
+			tb.trace.getMemoryManager()
+					.addRegion("Memory[.text]", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
+						Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
+			TraceGuestPlatform toy = tb.trace.getPlatformManager()
+					.addGuestPlatform(getToyBE64Language().getDefaultCompilerSpec());
+			Address hostEntry = tb.addr(0x00400000);
+			Address guestEntry = tb.addr(toy, 0x00000000);
+			toy.addMappedRange(hostEntry, guestEntry, guestRangeLength);
+
+			Assembler asm = Assemblers.getAssembler(toy.getLanguage());
+			AssemblyBuffer buf = new AssemblyBuffer(asm, guestEntry);
+			buf.assemble("call 0x123");
+			Instruction callInstr =
+				tb.addInstruction(0, hostEntry, toy, ByteBuffer.wrap(buf.getBytes()));
+
+			return callInstr;
+		}
+	}
+
+	@Test
+	public void testGuestInstructionNavigation() throws Throwable {
+		createAndOpenTrace("DATA:BE:64:default");
+
+		Instruction callInstr = placeGuestInstruction(0x1000);
+		traceManager.activateTrace(tb.trace);
+		waitForSwing();
+
+		assertEquals("call 0x00400123", callInstr.toString());
+
+		listingPlugin.goTo(new OperandFieldLocation(tb.trace.getProgramView(), tb.addr(0x00400000),
+			null, null, null, 0, 0));
+		waitForPass(() -> assertEquals(tb.addr(0x00400000), listingPlugin.getCurrentAddress()));
+
+		click(listingPlugin, 2);
+		waitForPass(() -> assertEquals(tb.addr(0x00400123), listingPlugin.getCurrentAddress()));
+	}
+
+	@Test
+	public void testGuestInstructionNavigationUnmapped() throws Throwable {
+		createAndOpenTrace("DATA:BE:64:default");
+
+		Instruction callInstr = placeGuestInstruction(0x100);
+		traceManager.activateTrace(tb.trace);
+		waitForSwing();
+
+		assertEquals("call guest:ram:00000123", callInstr.toString());
+
+		listingPlugin.goTo(new OperandFieldLocation(tb.trace.getProgramView(), tb.addr(0x00400000),
+			null, null, null, 0, 0));
+		waitForPass(() -> assertEquals(tb.addr(0x00400000), listingPlugin.getCurrentAddress()));
+
+		click(listingPlugin, 2); // It should not move, nor crash
+		waitForPass(() -> assertEquals(tb.addr(0x00400000), listingPlugin.getCurrentAddress()));
+	}
+
+	private void triggerPopup(Point cursorPoint, Component eventSource) {
+		moveMouse(eventSource, cursorPoint.x, cursorPoint.y);
+		clickMouse(eventSource, MouseEvent.BUTTON1, cursorPoint.x, cursorPoint.y, 1, 0);
+		moveMouse(eventSource, cursorPoint.x + 5, cursorPoint.y);
+	}
+
+	@Test
+	public void testGuestInstructionHover() throws Throwable {
+		ReferenceListingHoverPlugin hoverPlugin =
+			addPlugin(tool, ReferenceListingHoverPlugin.class);
+		ListingPanel listingPanel = listingProvider.getListingPanel();
+		FieldPanel fieldPanel = listingPanel.getFieldPanel();
+
+		createAndOpenTrace("DATA:BE:64:default");
+
+		Instruction callInstr = placeGuestInstruction(0x1000);
+		traceManager.activateTrace(tb.trace);
+		waitForSwing();
+
+		assertEquals("call 0x00400123", callInstr.toString());
+
+		listingPlugin.goTo(new OperandFieldLocation(tb.trace.getProgramView(), tb.addr(0x00400000),
+			null, null, null, 0, 0));
+		waitForPass(() -> assertEquals(tb.addr(0x00400000), listingPlugin.getCurrentAddress()));
+		Point p = fieldPanel.getCursorPoint();
+		triggerPopup(p, fieldPanel);
+		waitForPass(() -> assertTrue(listingPanel.isHoverShowing()));
+
+		ListingPanel popupPanel = hoverPlugin.getReferenceHoverService().getPanel();
+		assertEquals(tb.addr(0x00400123), popupPanel.getProgramLocation().getAddress());
+	}
+
+	@Test
+	public void testGuestInstructionHoverUnmapped() throws Throwable {
+		addPlugin(tool, ReferenceListingHoverPlugin.class);
+		ListingPanel listingPanel = listingProvider.getListingPanel();
+		FieldPanel fieldPanel = listingPanel.getFieldPanel();
+
+		createAndOpenTrace("DATA:BE:64:default");
+
+		Instruction callInstr = placeGuestInstruction(0x100);
+		traceManager.activateTrace(tb.trace);
+		waitForSwing();
+
+		assertEquals("call guest:ram:00000123", callInstr.toString());
+
+		listingPlugin.goTo(new OperandFieldLocation(tb.trace.getProgramView(), tb.addr(0x00400000),
+			null, null, null, 0, 0));
+		waitForPass(() -> assertEquals(tb.addr(0x00400000), listingPlugin.getCurrentAddress()));
+		Point p = fieldPanel.getCursorPoint();
+		triggerPopup(p, fieldPanel);
+		listingPlugin.updateNow();
+		waitForSwing();
+		assertFalse(listingPanel.isHoverShowing());
 	}
 }

@@ -35,7 +35,7 @@ public abstract class DebuggerTrackedRegisterBackgroundColorModel implements Bac
 
 	// TODO: Seems I should at least rename this option
 	@AutoOptionConsumed(name = DebuggerResources.OPTION_NAME_COLORS_TRACKING_MARKERS)
-	Color trackingColor;
+	Color trackingColor = DebuggerResources.DEFAULT_COLOR_REGISTER_MARKERS;
 	@SuppressWarnings("unused")
 	private final AutoOptions.Wiring autoOptionsWiring;
 

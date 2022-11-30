@@ -44,7 +44,6 @@ import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.filechooser.ExtensionFileFilter;
 import resources.Icons;
-import resources.ResourceManager;
 
 /**
  * Dialog that shows files used for parsing C header files. The profile has a list of 
@@ -341,7 +340,7 @@ class ParseDialog extends DialogComponentProvider {
 			}
 		};
 		saveAction.setEnabled(false);
-		ImageIcon icon = ResourceManager.loadImage("images/disk.png");
+		Icon icon = Icons.SAVE_ICON;
 		String saveGroup = "save";
 		saveAction.setMenuBarData(new MenuData(new String[] { "Save" }, icon, saveGroup));
 		saveAction.setToolBarData(new ToolBarData(icon, saveGroup));
@@ -355,7 +354,7 @@ class ParseDialog extends DialogComponentProvider {
 			}
 		};
 		saveAsAction.setEnabled(true);
-		icon = ResourceManager.loadImage("images/disk_save_as.png");
+		icon = Icons.SAVE_AS_ICON;
 		saveAsAction.setMenuBarData(new MenuData(new String[] { "Save As..." }, icon, saveGroup));
 		saveAsAction.setToolBarData(new ToolBarData(icon, saveGroup));
 		saveAsAction.setDescription("Save profile to new name");
@@ -369,10 +368,10 @@ class ParseDialog extends DialogComponentProvider {
 		};
 
 		clearAction.setEnabled(true);
-		icon = ResourceManager.loadImage("images/erase16.png");
+		icon = Icons.CLEAR_ICON;
 		String clearGroup = "clear";
-		clearAction.setMenuBarData(
-			new MenuData(new String[] { "Clear Profile" }, icon, clearGroup));
+		clearAction
+				.setMenuBarData(new MenuData(new String[] { "Clear Profile" }, icon, clearGroup));
 		clearAction.setToolBarData(new ToolBarData(icon, clearGroup));
 		clearAction.setDescription("Clear profile");
 		addAction(clearAction);
@@ -399,7 +398,7 @@ class ParseDialog extends DialogComponentProvider {
 			}
 		};
 		deleteAction.setEnabled(false);
-		icon = ResourceManager.loadImage("images/edit-delete.png");
+		icon = Icons.DELETE_ICON;
 		String deleteGroup = "Xdelete";
 		deleteAction.setMenuBarData(new MenuData(new String[] { "Delete" }, icon, deleteGroup));
 		deleteAction.setToolBarData(new ToolBarData(icon, deleteGroup));

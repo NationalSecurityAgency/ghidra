@@ -15,6 +15,9 @@
  */
 package ghidra.app.util.viewer.field;
 
+import docking.widgets.fieldpanel.field.AttributedString;
+import generic.theme.GThemeDefaults.Colors.Messages;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.services.GoToService;
 import ghidra.framework.plugintool.ServiceProvider;
@@ -22,18 +25,14 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 
-import java.awt.Color;
-
-import docking.widgets.fieldpanel.field.AttributedString;
-
 /**
  * An annotated string handler that allows handles annotations that begin with
  * {@link #SUPPORTED_ANNOTATIONS}.  This class expects one string following the annotation
  * text that is an address string and will display that string as its display text.
  */
 public class AddressAnnotatedStringHandler implements AnnotatedStringHandler {
-	private static final String INVALID_SYMBOL_TEXT = "@address annotation must have an address"
-		+ "string";
+	private static final String INVALID_SYMBOL_TEXT =
+		"@address annotation must have an address" + "string";
 	private static final String[] SUPPORTED_ANNOTATIONS = { "address", "addr" };
 
 	@Override
@@ -51,7 +50,7 @@ public class AddressAnnotatedStringHandler implements AnnotatedStringHandler {
 		Address address = program.getAddressFactory().getAddress(text[1]);
 
 		if (address == null) {
-			return new AttributedString("No address: " + text[1], Color.RED,
+			return new AttributedString("No address: " + text[1], Messages.ERROR,
 				prototypeString.getFontMetrics(0), false, null);
 		}
 
@@ -69,15 +68,17 @@ public class AddressAnnotatedStringHandler implements AnnotatedStringHandler {
 			prototypeString.getFontMetrics(0), true, prototypeString.getColor(0));
 	}
 
-	private AttributedString createUndecoratedString(AttributedString prototypeString, String[] text) {
+	private AttributedString createUndecoratedString(AttributedString prototypeString,
+			String[] text) {
 		StringBuilder buffer = new StringBuilder();
 		for (String string : text) {
 			buffer.append(string).append(" ");
 		}
 
-		return new AttributedString(buffer.toString(), Color.LIGHT_GRAY,
+		return new AttributedString(buffer.toString(), Palette.LIGHT_GRAY,
 			prototypeString.getFontMetrics(0));
 	}
+
 	@Override
 	public String[] getSupportedAnnotations() {
 		return SUPPORTED_ANNOTATIONS;

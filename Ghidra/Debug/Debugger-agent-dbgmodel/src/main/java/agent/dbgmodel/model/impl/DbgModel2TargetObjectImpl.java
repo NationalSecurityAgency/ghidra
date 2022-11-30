@@ -32,7 +32,6 @@ import agent.dbgmodel.jna.dbgmodel.DbgModelNative.ModelObjectKind;
 import agent.dbgmodel.jna.dbgmodel.DbgModelNative.TypeKind;
 import agent.dbgmodel.manager.DbgManager2Impl;
 import ghidra.async.AsyncUtils;
-import ghidra.dbg.DebuggerModelListener;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
@@ -254,7 +253,8 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 						TargetExecutionStateful stateful = (TargetExecutionStateful) proxy;
 						TargetExecutionState state = stateful.getExecutionState();
 						attrs.put(TargetExecutionStateful.STATE_ATTRIBUTE_NAME, state);
-					} else {
+					}
+					else {
 						attrs.put(TargetExecutionStateful.STATE_ATTRIBUTE_NAME,
 							TargetExecutionState.INACTIVE);
 					}
@@ -410,11 +410,6 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 				ex);
 			return null;
 		});
-	}
-
-	@Override
-	public void removeListener(DebuggerModelListener l) {
-		listeners.remove(l);
 	}
 
 	@Override

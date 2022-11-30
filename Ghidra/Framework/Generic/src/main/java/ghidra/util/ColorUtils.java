@@ -16,6 +16,7 @@
 package ghidra.util;
 
 import java.awt.Color;
+import java.util.Comparator;
 
 public class ColorUtils {
 
@@ -167,28 +168,122 @@ public class ColorUtils {
 	 * @param ratio the amount of the first color to include in the final output
 	 * @return the new color
 	 */
-	public static Color blend(Color c1, Color c2, float ratio) {
+	public static Color blend(Color c1, Color c2, double ratio) {
 		if (c1 == null) {
 			return c2;
 		}
 		if (c2 == null) {
 			return c1;
 		}
-		float rgb1[] = new float[3];
-		float rgb2[] = new float[3];
-		c1.getColorComponents(rgb1);
-		c2.getColorComponents(rgb2);
+		int red = blend(c1.getRed(), c2.getRed(), ratio);
+		int green = blend(c1.getGreen(), c2.getRed(), ratio);
+		int blue = blend(c1.getBlue(), c2.getBlue(), ratio);
+		int alpha = blend(c1.getAlpha(), c2.getAlpha(), ratio);
+		return new Color(red, green, blue, alpha);
+	}
 
-		float inverse = (float) 1.0 - ratio;
+	private static int blend(int colorValue1, int colorValue2, double ratio) {
+		double value = colorValue1 * ratio + colorValue2 * (1.0 - ratio);
+		int result = (int) (value + 0.5);
+		return Math.min(result, 255);
+	}
 
-		//@formatter:off
-		Color color = new Color(
-			rgb1[0] * ratio + rgb2[0] * inverse, 
-			rgb1[1] * ratio + rgb2[1] * inverse,
-			rgb1[2] * ratio + rgb2[2] * inverse);
-		//@formatter:on
+	/**
+	 * Returns a new color that is comprised of the given color's rgb value and the given alpha
+	 * value.
+	 * @param c the color
+	 * @param alpha the alpha
+	 * @return the new color
+	 */
+	public static Color withAlpha(Color c, int alpha) {
+		return new Color(c.getRed(), c.getGreen(), c.getBlue(), alpha);
+	}
 
-		return color;
+	/**
+	 * A color {@link Comparator} for ordering colors.
+	 */
+	public static Comparator<Color> COMPARATOR = new Comparator<Color>() {
+
+		@Override
+		public int compare(Color c1, Color c2) {
+			int alpha1 = c1.getAlpha();
+			int alpha2 = c2.getAlpha();
+
+			if (alpha1 == alpha2) {
+				return getHsbCompareValue(c1) - getHsbCompareValue(c2);
+			}
+			return alpha1 - alpha2;
+		}
+
+		private int getHsbCompareValue(Color v) {
+			// compute a value the compares colors first by hue, then saturation, then brightness
+			// reduce noise by converting float values from 0-1 to integers 0 - 7
+			float[] hsb = Color.RGBtoHSB(v.getRed(), v.getGreen(), v.getBlue(), null);
+			return 100 * (int) (10 * hsb[0]) + 10 * (int) (10 * hsb[1]) + (int) (10 * hsb[2]);
+		}
+
+	};
+
+	/**
+	 * Return the color object given a rgba value that includes the desired alpha value.
+	 * @param rgba value where bits 24-31 are alpha, 16-23 are red, 8-15 are green, 0-7 are
+	 * blue
+	 * @return the color object given a rgba value that includes the desired alpha value
+	 */
+	public static Color getColor(int rgba) {
+		return new Color(rgba, true);
+	}
+
+	/**
+	 * Return an opaque color object given for the given red, green, and blue values.
+	 * @param red the red value (0 - 255)
+	 * @param green the green value (0 - 255)
+	 * @param blue  the blue value (0 - 255)
+	 * @return the color object for the given values
+	 */
+	public static Color getColor(int red, int green, int blue) {
+		return new Color(red, green, blue);
+	}
+
+	/**
+	 * Return the color object given for the given red, green, blue, and alpha values.
+	 * @param red the red value (0 - 255)
+	 * @param green the green value (0 - 255)
+	 * @param blue  the blue value (0 - 255)
+	 * @param alpha the alpha (transparency) value (0 - 255) with 0 being fully transparent and 255 
+	 * being fully opaque opaque
+	 * @return the color object for the given values
+	 */
+	public static Color getColor(int red, int green, int blue, int alpha) {
+		return new Color(red, green, blue, alpha);
+	}
+
+	/**
+	 * Returns an opaque color with the given rgb value. The resulting color will have an alpha
+	 * value of 0xff.
+	 *
+	 * @param rgb the value where bits 16-23 are red, 8-15 are green, 0-7 are blue. Bits 24-31 will
+	 * be set to 0xff.
+	 * @return an opaque color with the given rgb value
+	
+	 */
+	public static Color getOpaqueColor(int rgb) {
+		return new Color(rgb);
+	}
+
+	/**
+	 * Creates a new color by averaging the red, green, blue, and alpha values from the given
+	 * colors.
+	 * @param color1 the first color to average
+	 * @param color2 the second color to average
+	 * @return a new color that is the average of the two given colors
+	 */
+	public static Color average(Color color1, Color color2) {
+		int red = (color1.getRed() + color2.getRed()) / 2;
+		int green = (color1.getGreen() + color2.getGreen()) / 2;
+		int blue = (color1.getBlue() + color2.getBlue()) / 2;
+		int alpha = (color1.getAlpha() + color2.getAlpha()) / 2;
+		return new Color(red, green, blue, alpha);
 	}
 
 	/**

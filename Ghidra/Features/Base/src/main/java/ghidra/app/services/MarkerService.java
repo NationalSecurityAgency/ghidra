@@ -48,9 +48,7 @@ import ghidra.program.model.listing.Program;
  * a program has become deactivated. In this example usage markers are added and removed as the user
  * tabs through open programs.
  */
-@ServiceInfo(
-	defaultProvider = MarkerManagerPlugin.class,
-	description = "Service to manage navigation markers displayed around a scrollable window.")
+@ServiceInfo(defaultProvider = MarkerManagerPlugin.class, description = "Service to manage navigation markers displayed around a scrollable window.")
 public interface MarkerService {
 
 	/**
@@ -209,7 +207,7 @@ public interface MarkerService {
 	 * Sets a marker set for a given group name. Any previous marker set associated with the given
 	 * group name will be removed from this marker service. This method is used to ensure that only
 	 * one marker set is used at any time for a give group.
-	 * 
+	 *
 	 * @param groupName The name to associate the marker set with.
 	 * @param markerSet The marker set to add to this service
 	 * @param program The program with which the markers are associated.
@@ -218,14 +216,26 @@ public interface MarkerService {
 	public void setMarkerForGroup(String groupName, MarkerSet markerSet, Program program);
 
 	/**
+	 * Returns true if the given marker set is the current marker set for the given group.
+	 *
+	 * @param groupName The group name to check
+	 * @param markerSet The marker set to check
+	 * @param program The program with which the markers are associated.
+	 * @return true if the given marker set is the current marker set for the given group
+	 * @see #setMarkerForGroup(String, MarkerSet, Program)
+	 * @see #removeMarkerForGroup(String, MarkerSet, Program)
+	 */
+	public boolean isActiveMarkerForGroup(String groupName, MarkerSet markerSet, Program program);
+
+	/**
 	 * Removes a marker set for a given group name. If the given marker set is not the marker set
 	 * associated with the given group name, then no action will be taken.
-	 * 
+	 *
 	 * @param groupName The name associated the marker set with.
 	 * @param markerSet The marker set to add to this service
-	 * @param program The program with which the markers are associated. May be null if the marker
-	 *            is
+	 * @param program The program with which the markers are associated
 	 * @see #setMarkerForGroup(String, MarkerSet, Program)
+	 * @see #isActiveMarkerForGroup(String, MarkerSet, Program)
 	 */
 	public void removeMarkerForGroup(String groupName, MarkerSet markerSet, Program program);
 
@@ -233,7 +243,7 @@ public interface MarkerService {
 	 * Returns the background color associated with the given program and address. Each markerSet
 	 * that supports background coloring is checked in priority order to see if it wants to specify
 	 * a background color for the given address.
-	 * 
+	 *
 	 * @param program the program to check for a background color.
 	 * @param address the address to check for a background color.
 	 * @return the background color to use for that address or null if no markers contain that
@@ -244,14 +254,14 @@ public interface MarkerService {
 	/**
 	 * Adds a change listener to be notified when markers are added/removed or the addresses in any
 	 * current markerSets are changed
-	 * 
+	 *
 	 * @param listener the listener
 	 */
 	public void addChangeListener(ChangeListener listener);
 
 	/**
 	 * Removes the given change listener from the list of listeners to be notified of changes
-	 * 
+	 *
 	 * @param listener the listener
 	 */
 	public void removeChangeListener(ChangeListener listener);
@@ -260,7 +270,7 @@ public interface MarkerService {
 	 * Sets the listener to be notified when the user double-clicks in the Marker Margin area. Note
 	 * that only one listener is allowed to be set at a time. If an attempt to set a second listener
 	 * occurs, then an IllegalStateException is thrown.
-	 * 
+	 *
 	 * @param listener the listener to be notified or null to remove the current listener
 	 * @throws IllegalStateException if a listener is already set.
 	 */
@@ -270,7 +280,7 @@ public interface MarkerService {
 	 * Create a new marker margin provider. The newly created provider is not added to the UI;
 	 * clients must install the newly created provider themselves. Note that you must keep a strong
 	 * reference to the provider, or it may not receive updates from the service.
-	 * 
+	 *
 	 * @return the new provider
 	 */
 	public MarkerMarginProvider createMarginProvider();
@@ -279,7 +289,7 @@ public interface MarkerService {
 	 * Create a new marker overview provider. The newly created provider is not added to the UI;
 	 * clients must install the newly created provider themselves. Note that you must keep a strong
 	 * reference to the provider, or it may not receive updates from the service.
-	 * 
+	 *
 	 * @return the new provider
 	 */
 	public MarkerOverviewProvider createOverviewProvider();

@@ -37,6 +37,7 @@ import docking.widgets.PopupWindow;
 import docking.widgets.textpane.GHtmlTextPane;
 import docking.widgets.tree.*;
 import docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.datamgr.actions.*;
 import ghidra.app.plugin.core.datamgr.actions.associate.*;
 import ghidra.app.plugin.core.datamgr.archive.*;
@@ -55,12 +56,10 @@ import ghidra.program.model.listing.DataTypeArchive;
 import ghidra.program.model.listing.Program;
 import ghidra.util.*;
 import ghidra.util.task.SwingUpdateManager;
-import resources.ResourceManager;
 import util.HistoryList;
 
 public class DataTypesProvider extends ComponentProviderAdapter {
 
-	private static final String DATA_TYPES_ICON = "images/dataTypes.png";
 	private static final String TITLE = "Data Type Manager";
 	private static final String POINTER_FILTER_STATE = "PointerFilterState";
 	private static final String ARRAY_FILTER_STATE = "ArrayFilterState";
@@ -103,7 +102,7 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		this.plugin = plugin;
 
 		setTitle(TITLE);
-		setIcon(ResourceManager.loadImage(DATA_TYPES_ICON));
+		setIcon(new GIcon("icon.plugin.datatypes.provider"));
 		addToToolbar();
 
 		navigationHistory.setAllowDuplicates(true);
@@ -609,8 +608,15 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		ArchiveNode archiveNode = dataTypeNode.getArchiveNode();
 
 		if (archiveNode instanceof ProjectArchiveNode && !archiveNode.isModifiable()) {
-			Msg.showInfo(getClass(), archiveGTree, "Archive Not Checked Out",
-				"You must checkout this archive before you may edit data types.");
+			ProjectArchiveNode projectArchive = (ProjectArchiveNode) archiveNode;
+			if (projectArchive.getDomainFile().isReadOnly()) {
+				Msg.showInfo(getClass(), archiveGTree, "Read-Only Archive",
+					"You may not edit data type within a read-only project archive.");
+			}
+			else {
+				Msg.showInfo(getClass(), archiveGTree, "Archive Not Checked Out",
+					"You must checkout this archive before you may edit data types.");
+			}
 			return;
 		}
 

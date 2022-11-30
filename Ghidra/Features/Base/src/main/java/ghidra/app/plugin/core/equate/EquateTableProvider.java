@@ -40,11 +40,9 @@ import ghidra.program.model.symbol.Equate;
 import ghidra.util.HelpLocation;
 import ghidra.util.UniversalID;
 import ghidra.util.table.*;
-import resources.ResourceManager;
+import resources.Icons;
 
 public class EquateTableProvider extends ComponentProviderAdapter {
-
-	private final static String DELETE_IMAGE = "images/edit-delete.png";
 
 	private EquateTablePlugin plugin;
 	private GhidraTable equatesTable;
@@ -160,8 +158,8 @@ public class EquateTableProvider extends ComponentProviderAdapter {
 			@Override
 			public void keyReleased(KeyEvent e) {
 				if (e.getKeyCode() == KeyEvent.VK_UP || e.getKeyCode() == KeyEvent.VK_DOWN ||
-						e.getKeyCode() == KeyEvent.VK_PAGE_UP ||
-						e.getKeyCode() == KeyEvent.VK_PAGE_DOWN) {
+					e.getKeyCode() == KeyEvent.VK_PAGE_UP ||
+					e.getKeyCode() == KeyEvent.VK_PAGE_DOWN) {
 					handleEquateTableSelection();
 				}
 			}
@@ -191,7 +189,7 @@ public class EquateTableProvider extends ComponentProviderAdapter {
 						Equate equate = (Equate) table.getValueAt(row, column);
 
 						UniversalID id =
-								new UniversalID(Long.parseLong(equate.getName().split(":")[1]));
+							new UniversalID(Long.parseLong(equate.getName().split(":")[1]));
 						Enum enoom = (Enum) dtm.findDataTypeForID(id);
 						if (enoom != null) {
 							dtms.edit(enoom);
@@ -254,7 +252,7 @@ public class EquateTableProvider extends ComponentProviderAdapter {
 
 		JPanel workPanel = new JPanel(new BorderLayout());
 		JSplitPane splitPane =
-				new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, equatesPanel, referencesPanel);
+			new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, equatesPanel, referencesPanel);
 		splitPane.setResizeWeight(0.5);
 		workPanel.add(splitPane, BorderLayout.CENTER);
 
@@ -269,7 +267,7 @@ public class EquateTableProvider extends ComponentProviderAdapter {
 
 	private void createAction() {
 
-		ImageIcon deleteImage = ResourceManager.loadImage(DELETE_IMAGE);
+		Icon deleteImage = Icons.DELETE_ICON;
 		deleteAction = new DockingAction("Delete Equate", plugin.getName()) {
 			@Override
 			public void actionPerformed(ActionContext context) {
@@ -291,7 +289,7 @@ public class EquateTableProvider extends ComponentProviderAdapter {
 		deleteAction.setHelpLocation(new HelpLocation("EquatePlugin", "Delete Equate"));
 
 		SelectionNavigationAction selectionNavigationAction =
-				new SelectionNavigationAction(plugin, referencesTable);
+			new SelectionNavigationAction(plugin, referencesTable);
 		selectionNavigationAction.setHelpLocation(
 			new HelpLocation(HelpTopics.SEARCH, "Selection_Navigation"));
 

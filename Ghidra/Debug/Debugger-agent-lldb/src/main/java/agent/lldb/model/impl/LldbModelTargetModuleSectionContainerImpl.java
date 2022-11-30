@@ -91,7 +91,9 @@ public class LldbModelTargetModuleSectionContainerImpl extends LldbModelTargetOb
 				}
 			}
 		}
-		module.setRange(new AddressRangeImpl(min, max));
+		if (min != null && max != null) {
+			module.setRange(new AddressRangeImpl(min, max));
+		}
 	}
 
 	public SBModule getModule() {

@@ -17,11 +17,11 @@ package ghidra.app.plugin.core.functiongraph.graph.layout;
 
 import javax.swing.Icon;
 
-import resources.ResourceManager;
+import generic.theme.GIcon;
 
 public abstract class ExperimentalLayoutProvider extends FGLayoutProviderExtensionPoint {
 
-	private static final Icon ICON = ResourceManager.loadImage("images/package_development.png");
+	private static final Icon ICON = new GIcon("icon.functiongraph.layout.experimental");
 
 	@Override
 	public Icon getActionIcon() {

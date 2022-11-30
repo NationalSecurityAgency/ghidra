@@ -25,13 +25,11 @@ import agent.lldb.manager.LldbReason;
 import agent.lldb.model.iface2.LldbModelTargetRegister;
 import agent.lldb.model.iface2.LldbModelTargetStackFrameRegisterBank;
 import ghidra.async.AsyncUtils;
-import ghidra.dbg.DebuggerModelListener;
 import ghidra.dbg.error.DebuggerRegisterAccessException;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
 import ghidra.dbg.util.PathUtils;
-import ghidra.util.datastruct.ListenerSet;
 
 @TargetObjectSchemaInfo(
 	name = "RegisterValueBank",
@@ -66,6 +64,7 @@ public class LldbModelTargetStackFrameRegisterBankImpl
 		requestElements(false);
 	}
 
+	@Override
 	public String getDescription(int level) {
 		SBStream stream = new SBStream();
 		SBValue val = (SBValue) getModelObject();
@@ -105,6 +104,7 @@ public class LldbModelTargetStackFrameRegisterBankImpl
 		return new LldbModelTargetStackFrameRegisterImpl(this, register);
 	}
 
+	@Override
 	public void threadStateChangedSpecific(StateType state, LldbReason reason) {
 		if (state.equals(StateType.eStateStopped)) {
 			requestElements(false).thenAccept(__ -> {
@@ -127,12 +127,9 @@ public class LldbModelTargetStackFrameRegisterBankImpl
 			byte[] bytes = register.getBytes();
 			result.put(regname, bytes);
 		}
-		ListenerSet<DebuggerModelListener> listeners = getListeners();
-		if (listeners != null) {
-			//if (getName().contains("General")) {
-			listeners.fire.registersUpdated(this, result);
-			//}
-		}
+		//if (getName().contains("General")) {
+		broadcast().registersUpdated(this, result);
+		//}
 		return CompletableFuture.completedFuture(result);
 	}
 
@@ -149,7 +146,7 @@ public class LldbModelTargetStackFrameRegisterBankImpl
 			BigInteger val = new BigInteger(1, ent.getValue());
 			reg.getRegister().SetValueFromCString(val.toString());
 		}
-		getListeners().fire.registersUpdated(getProxy(), values);
+		broadcast().registersUpdated(getProxy(), values);
 		return AsyncUtils.NIL;
 	}
 

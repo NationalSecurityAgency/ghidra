@@ -15,10 +15,10 @@
  */
 package ghidra.app.plugin.core.data;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.event.*;
 import java.util.*;
-import java.util.List;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -31,6 +31,7 @@ import javax.swing.text.Document;
 import docking.DialogComponentProvider;
 import docking.widgets.button.GRadioButton;
 import docking.widgets.table.*;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.ToolTipUtils;
 import ghidra.framework.plugintool.PluginTool;
@@ -272,18 +273,17 @@ public class CreateStructureDialog extends DialogComponentProvider {
 		return matchingStylePanel;
 	}
 
-	// toggles whether the structure being created is new, based upon the
-	// name field, or a current structure, based upon a structure in the
-	// table.  This method updates the GUI to reflect the current creation
-	// state.
+	// toggles whether the structure being created is new, based upon the name field, or a current 
+	// structure, based upon a structure in the table.  This method updates the GUI to reflect the 
+	// current creation state.
 	private void setCreateStructureByName(boolean createStructureByName) {
 		if (createStructureByName) {
-			nameBorder.setTitleColor(Color.BLACK);
-			structureBorder.setTitleColor(Color.GRAY);
+			nameBorder.setTitleColor(Colors.FOREGROUND);
+			structureBorder.setTitleColor(Colors.FOREGROUND_DISABLED);
 		}
 		else {
-			nameBorder.setTitleColor(Color.GRAY);
-			structureBorder.setTitleColor(Color.BLACK);
+			nameBorder.setTitleColor(Colors.FOREGROUND_DISABLED);
+			structureBorder.setTitleColor(Colors.FOREGROUND);
 		}
 
 		nameTextField.setEnabled(createStructureByName);
@@ -299,7 +299,7 @@ public class CreateStructureDialog extends DialogComponentProvider {
 	// this class in terms of data contained
 	private void searchForMatchingStructures(final Program program, final Structure structure) {
 
-		SwingUtilities.invokeLater(() -> {
+		Swing.runLater(() -> {
 			// Get the structures from the DataTypeManagers of the
 			// DataTypeManagerService
 			DataTypeManagerService service = pluginTool.getService(DataTypeManagerService.class);

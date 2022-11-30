@@ -113,4 +113,9 @@ public interface HelpService {
 	 *         initializing
 	 */
 	public boolean helpExists();
+
+	/**
+	* Called when a major system even happens, such as changing the system theme.
+	*/
+	public void reload();
 }

@@ -31,6 +31,7 @@ import org.junit.*;
 import docking.action.DockingAction;
 import docking.widgets.fieldpanel.FieldPanel;
 import generic.test.TestUtils;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.marker.MarkerManagerPlugin;
 import ghidra.app.services.*;
@@ -338,20 +339,12 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 			fp.setCursorPosition(BigInteger.valueOf(4), 0, 0, 0);
 		});
 
-		assertEquals(Color.BLUE, getFieldPanelBackgroundColor(fp, BigInteger.ZERO));
-		assertEquals(Color.WHITE, getFieldPanelBackgroundColor(fp, BigInteger.ONE));
 		assertEquals(BigInteger.valueOf(4), fp.getCursorLocation().getIndex());
 
-		Color lineColor = (Color) getInstanceField("CURSOR_LINE_COLOR", CodeBrowserPlugin.class);
-
 		programManager.setCurrentProgram(p2);
-		assertEquals(lineColor, getFieldPanelBackgroundColor(fp, BigInteger.ZERO));
-		assertEquals(Color.WHITE, getFieldPanelBackgroundColor(fp, BigInteger.ONE));
 		assertEquals(BigInteger.ZERO, fp.getCursorLocation().getIndex());
 
 		programManager.setCurrentProgram(p1);
-		assertEquals(Color.BLUE, getFieldPanelBackgroundColor(fp, BigInteger.ZERO));
-		assertEquals(Color.WHITE, getFieldPanelBackgroundColor(fp, BigInteger.ONE));
 		assertEquals(BigInteger.valueOf(4), fp.getCursorLocation().getIndex());
 	}
 
@@ -548,7 +541,7 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	private MarkerSet createMarkers(final Program p) {
 		final AtomicReference<MarkerSet> ref = new AtomicReference<>();
 		runSwing(() -> ref.set(markerService.createPointMarker("Test", "Test", p, 40, false, false,
-			true, Color.BLUE, null)));
+			true, Palette.BLUE, null)));
 		return ref.get();
 	}
 
@@ -556,10 +549,6 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		Window window = windowForComponent(panel);
 		ProgramListPanel listPanel = findComponent(window, ProgramListPanel.class, true);
 		return windowForComponent(listPanel);
-	}
-
-	private Color getFieldPanelBackgroundColor(FieldPanel fp, BigInteger index) {
-		return runSwing(() -> fp.getBackgroundColor(index));
 	}
 
 	private void performPreviousAction() throws Exception {
@@ -613,8 +602,9 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	private void addComment(Program p) {
 		int transactionID = p.startTransaction("test");
 		try {
-			p.getListing().setComment(p.getAddressFactory().getAddress("01000000"),
-				CodeUnit.REPEATABLE_COMMENT, "This is a simple comment change.");
+			p.getListing()
+					.setComment(p.getAddressFactory().getAddress("01000000"),
+						CodeUnit.REPEATABLE_COMMENT, "This is a simple comment change.");
 		}
 		finally {
 			p.endTransaction(transactionID, true);

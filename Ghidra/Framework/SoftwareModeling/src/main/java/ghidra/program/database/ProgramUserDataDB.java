@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.util.*;
 
 import db.*;
-import ghidra.framework.data.ContentHandler;
 import ghidra.framework.data.DomainObjectAdapterDB;
 import ghidra.framework.store.FileSystem;
 import ghidra.program.database.map.AddressMapDB;
@@ -43,6 +42,8 @@ import ghidra.util.task.TaskMonitor;
 class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData {
 
 // TODO: WARNING! This implementation does not properly handle undo/redo in terms of cache invalidation
+
+	private static ProgramContentHandler programContentHandler = new ProgramContentHandler();
 
 	/**
 	 * DB_VERSION should be incremented any time a change is made to the overall
@@ -669,10 +670,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 			else {
 				FileSystem userfs = program.getAssociatedUserFilesystem();
 				if (userfs != null) {
-					ContentHandler contentHandler = getContentHandler(program);
-					if (contentHandler != null) {
-						contentHandler.saveUserDataFile(program, dbh, userfs, monitor);
-					}
+					programContentHandler.saveUserDataFile(program, dbh, userfs, monitor);
 					setChanged(false);
 				}
 			}

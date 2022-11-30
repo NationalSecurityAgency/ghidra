@@ -41,8 +41,7 @@ public class TableUtils {
 	 * @return the string value; null if no value can be fabricated
 	 */
 	public static <ROW_OBJECT> String getTableCellStringValue(RowObjectTableModel<ROW_OBJECT> model,
-			ROW_OBJECT rowObject,
-			int column) {
+			ROW_OBJECT rowObject, int column) {
 
 		// note: this call can be slow when columns dynamically calculate values from the database
 		Object value = model.getColumnValueForRow(rowObject, column);
@@ -87,12 +86,13 @@ public class TableUtils {
 	private static <ROW_OBJECT> String getRenderedColumnValue(RowObjectTableModel<ROW_OBJECT> model,
 			Object columnValue, int columnIndex) {
 
-		if (!(model instanceof DynamicColumnTableModel)) {
+		TableModel unwrappedModel = RowObjectTableModel.unwrap(model);
+		if (!(unwrappedModel instanceof DynamicColumnTableModel)) {
 			return null;
 		}
 
 		DynamicColumnTableModel<ROW_OBJECT> columnBasedModel =
-			(DynamicColumnTableModel<ROW_OBJECT>) model;
+			(DynamicColumnTableModel<ROW_OBJECT>) unwrappedModel;
 		GColumnRenderer<Object> renderer = getColumnRenderer(columnBasedModel, columnIndex);
 		if (renderer == null) {
 			return null;

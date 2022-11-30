@@ -15,19 +15,21 @@
  */
 package ghidra.app.plugin.core.searchtext;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.KeyboardFocusManager;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import docking.*;
 import docking.action.builder.ActionBuilder;
 import docking.tool.ToolConstants;
 import docking.widgets.fieldpanel.support.Highlight;
 import docking.widgets.table.threaded.*;
+import generic.theme.GIcon;
 import ghidra.GhidraOptions;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.*;
@@ -58,7 +60,6 @@ import ghidra.util.*;
 import ghidra.util.bean.opteditor.OptionsVetoException;
 import ghidra.util.table.GhidraProgramTableModel;
 import ghidra.util.task.*;
-import resources.ResourceManager;
 
 /**
  * Plugin to search text as it is displayed in the fields of the Code Browser.
@@ -88,7 +89,7 @@ import resources.ResourceManager;
 public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeListener, TaskListener,
 		NavigatableRemovalListener, DockingContextListener {
 
-	private static final ImageIcon searchIcon = ResourceManager.loadImage("images/searchm_obj.gif");
+	private static final Icon SEARCH_MARKER_ICON = new GIcon("icon.base.search.marker");
 
 	private static final String DESCRIPTION = "Search program text for string";
 	private final static Highlight[] NO_HIGHLIGHTS = new Highlight[0];
@@ -99,8 +100,6 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 	private int searchLimit;
 	private SearchTask currentTask;
 	private String lastSearchedText;
-	private Color highlightColor;
-	private Color currentAddrHighlightColor;
 	private boolean doHighlight;
 	private Navigatable navigatable;
 
@@ -182,7 +181,6 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 
 		if (searchDialog != null && searchDialog.isVisible()) {
 			TaskMonitor taskMonitor = searchDialog.getTaskMonitorComponent();
-			// TODO this can probably be handled by canceling the task below (or vice versa)
 			taskMonitor.cancel();
 			searchDialog.dispose();
 
@@ -332,7 +330,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 		if (navigatable.supportsMarkers()) {
 			return query.showTableWithMarkers(
 				"Search Text - \"" + searchString + "\"  [" + matchType + "]", "Search", model,
-				PluginConstants.SEARCH_HIGHLIGHT_COLOR, searchIcon, "Search", navigatable);
+				PluginConstants.SEARCH_HIGHLIGHT_COLOR, SEARCH_MARKER_ICON, "Search", navigatable);
 		}
 		return query.showTable("Search Text - \"" + searchString + "\"  [" + matchType + "]",
 			"Search", model, "Search", navigatable);
@@ -425,12 +423,6 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 			}
 			searchLimit = newSearchLimit;
 		}
-		else if (optionName.equals(PluginConstants.SEARCH_HIGHLIGHT_CURRENT_COLOR_NAME)) {
-			currentAddrHighlightColor = (Color) newValue;
-		}
-		else if (optionName.equals(PluginConstants.SEARCH_HIGHLIGHT_COLOR_NAME)) {
-			highlightColor = (Color) newValue;
-		}
 		else if (optionName.equals(PluginConstants.SEARCH_HIGHLIGHT_NAME)) {
 			doHighlight = ((Boolean) newValue).booleanValue();
 		}
@@ -443,22 +435,17 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 
 		opt.registerOption(PluginConstants.SEARCH_HIGHLIGHT_NAME, true, loc,
 			"Determines whether to highlight the matched string for a search in the listing.");
-		opt.registerOption(PluginConstants.SEARCH_HIGHLIGHT_COLOR_NAME,
-			PluginConstants.SEARCH_HIGHLIGHT_COLOR, loc,
-			"Color to use when highlighting the matched string for a search in the listing.");
-		opt.registerOption(PluginConstants.SEARCH_HIGHLIGHT_CURRENT_COLOR_NAME,
-			PluginConstants.SEARCH_HIGHLIGHT_COLOR, loc,
-			"Color to use for highlighting when the match string occurs at the current address.");
+		opt.registerThemeColorBinding(PluginConstants.SEARCH_HIGHLIGHT_COLOR_OPTION_NAME,
+			PluginConstants.SEARCH_HIGHLIGHT_COLOR.getId(), null,
+			"The search result highlight color");
+		opt.registerThemeColorBinding(PluginConstants.SEARCH_HIGHLIGHT_CURRENT_COLOR_OPTION_NAME,
+			PluginConstants.SEARCH_HIGHLIGHT_CURRENT_ADDR_COLOR.getId(), null,
+			"The search result highlight color for the currently selected match");
 
 		searchLimit =
 			opt.getInt(GhidraOptions.OPTION_SEARCH_LIMIT, PluginConstants.DEFAULT_SEARCH_LIMIT);
 
 		doHighlight = opt.getBoolean(PluginConstants.SEARCH_HIGHLIGHT_NAME, true);
-		highlightColor = opt.getColor(PluginConstants.SEARCH_HIGHLIGHT_COLOR_NAME,
-			PluginConstants.SEARCH_HIGHLIGHT_COLOR);
-		currentAddrHighlightColor =
-			opt.getColor(PluginConstants.SEARCH_HIGHLIGHT_CURRENT_COLOR_NAME,
-				PluginConstants.SEARCH_HIGHLIGHT_CURRENT_ADDR_COLOR);
 
 		opt.setOptionsHelpLocation(new HelpLocation(HelpTopics.SEARCH, "Search_Text"));
 
@@ -662,12 +649,14 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 				int start = matcher.start();
 				int end = matcher.end() - 1;
 				if (start <= cursorTextOffset && end >= cursorTextOffset) {
-					list.add(new Highlight(start, end, currentAddrHighlightColor));
+					list.add(new Highlight(start, end,
+						PluginConstants.SEARCH_HIGHLIGHT_CURRENT_ADDR_COLOR));
 				}
 				else if (loc == null) { // only add in matches around current match if loc is null
 					// meaning that this is a one at a time search and not a table
 					// of results.
-					list.add(new Highlight(start, end, highlightColor));
+					list.add(new Highlight(start, end,
+						PluginConstants.SEARCH_HIGHLIGHT_CURRENT_ADDR_COLOR));
 				}
 			}
 

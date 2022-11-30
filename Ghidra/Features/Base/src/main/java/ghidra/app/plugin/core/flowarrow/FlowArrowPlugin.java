@@ -642,14 +642,14 @@ public class FlowArrowPlugin extends Plugin implements MarginProvider, OptionsCh
 	private void getOptions() {
 		ToolOptions opt = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_DISPLAY);
 
-		opt.registerOption(OptionsGui.FLOW_ARROW_NON_ACTIVE.getColorOptionName(),
-			OptionsGui.FLOW_ARROW_NON_ACTIVE.getDefaultColor(), null,
+		opt.registerThemeColorBinding(OptionsGui.FLOW_ARROW_NON_ACTIVE.getColorOptionName(),
+			OptionsGui.FLOW_ARROW_NON_ACTIVE.getThemeColorId(), null,
 			"The color for an arrow with no endpoint at the current address");
-		opt.registerOption(OptionsGui.FLOW_ARROW_ACTIVE.getColorOptionName(),
-			OptionsGui.FLOW_ARROW_ACTIVE.getDefaultColor(), null,
+		opt.registerThemeColorBinding(OptionsGui.FLOW_ARROW_ACTIVE.getColorOptionName(),
+			OptionsGui.FLOW_ARROW_ACTIVE.getThemeColorId(), null,
 			"The color for an arrow with an endpoint at the current address");
-		opt.registerOption(OptionsGui.FLOW_ARROW_SELECTED.getColorOptionName(),
-			OptionsGui.FLOW_ARROW_SELECTED.getDefaultColor(), null,
+		opt.registerThemeColorBinding(OptionsGui.FLOW_ARROW_SELECTED.getColorOptionName(),
+			OptionsGui.FLOW_ARROW_SELECTED.getThemeColorId(), null,
 			"The color for an arrow that has been selected by the user");
 
 		Color c = opt.getColor(OptionsGui.BACKGROUND.getColorOptionName(),

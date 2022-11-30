@@ -31,6 +31,8 @@ import edu.uci.ics.jung.algorithms.layout.Layout;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.util.Pair;
 import edu.uci.ics.jung.visualization.VisualizationServer;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.graph.viewer.VisualEdge;
 import ghidra.graph.viewer.VisualVertex;
 import ghidra.graph.viewer.renderer.DebugShape;
@@ -220,6 +222,7 @@ class ArticulatedEdgeRouter<V extends VisualVertex, E extends VisualEdge<V>>
 			return createLineEdge(start, end, edge);
 		}
 
+		@SuppressWarnings("unchecked")
 		E newEdge = (E) edge.cloneEdge(edge.getStart(), edge.getEnd());
 		moveArticulationsAroundVertices(intersectingVertices, newEdge, goLeft);
 
@@ -229,7 +232,6 @@ class ArticulatedEdgeRouter<V extends VisualVertex, E extends VisualEdge<V>>
 	/**
 	 * Returns a mapping edges to vertices that touch them.
 	 * 
-	 * @param viewer the viewer containing the graph
 	 * @param edgeCollection the edges to check for occlusion
 	 * @return a mapping of occluded edges (a subset of the provided edges) to those vertices that
 	 *         occlude them.
@@ -319,35 +321,34 @@ class ArticulatedEdgeRouter<V extends VisualVertex, E extends VisualEdge<V>>
 
 	private Color getRoutingBoxColor(E edge) {
 		if (isTrueEdge(edge)) {
-			return Color.MAGENTA;
+			return Palette.MAGENTA;
 		}
-		return Color.ORANGE;
+		return Palette.ORANGE;
 	}
 
 //
 //	private Color getIntersectingBoxColor(E edge) {
 //		if (isTrueEdge(edge)) {
-//			return Color.RED;
+//			return Palette.RED;
 //		}
-//		return Color.PINK;
+//		return Palette.PINK;
 //	}
 
 	private Color getPhantomEdgeColor(E edge, boolean isLeft) {
 		if (isLeft) {
 			if (isTrueEdge(edge)) {
-				return new Color(0x999900);
+				return new GColor("color.palette.darkkhaki");
 			}
 
-			return new Color(0x009900);
+			return Palette.GREEN;
 		}
 		if (isTrueEdge(edge)) {
-			return new Color(0x3300CC);
+			return new GColor("color.palette.darkblue");
 		}
-		return new Color(0x3399FF);
+		return new GColor("color.palette.dodgerblue");
 	}
 
 	private boolean isTrueEdge(E edge) {
 		return true;
-		// return edge.getFlowType().isJump(); // a jump is a 'true' edge
 	}
 }

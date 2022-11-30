@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.memory;
 
-import static ghidra.lifecycle.Unfinished.TODO;
+import static ghidra.lifecycle.Unfinished.*;
 import static org.junit.Assert.*;
 
 import java.awt.*;
@@ -434,7 +434,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 			}
 			Rectangle cursor = component.getCursorBounds();
 			Color actual = new Color(image.getRGB(cursor.x + 8, cursor.y));
-			assertEquals(expected, actual);
+			assertEquals(expected.getRGB(), actual.getRGB());
 		});
 	}
 

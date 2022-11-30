@@ -24,13 +24,13 @@ import javax.swing.JComponent;
 import docking.*;
 import docking.action.MenuData;
 import docking.action.ToggleDockingAction;
+import generic.theme.GIcon;
 import ghidra.framework.options.SaveState;
 import ghidra.graph.VisualGraph;
 import ghidra.graph.VisualGraphComponentProvider;
 import ghidra.graph.viewer.*;
 import ghidra.graph.viewer.actions.*;
 import ghidra.util.HelpLocation;
-import resources.ResourceManager;
 
 /**
  * A sub-feature that provides a satellite viewer to {@link VisualGraphComponentProvider}s
@@ -52,7 +52,7 @@ public class VgSatelliteFeaturette<V extends VisualVertex,
 	implements VisualGraphFeaturette<V, E, G> {
 //@formatter:on
 
-	private static final Icon ICON = ResourceManager.loadImage("images/network-wireless-16.png");
+	private static final Icon ICON = new GIcon("icon.graph.satellite");
 
 	private static final String DISPLAY_SATELLITE = "DISPLAY_SATELLITE";
 	private static final String DOCK_SATELLITE = "DOCK_SATELLITE";

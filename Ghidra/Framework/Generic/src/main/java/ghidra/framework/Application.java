@@ -29,10 +29,10 @@ import utility.application.ApplicationLayout;
 import utility.module.ModuleUtilities;
 
 /**
- * The Application class provides a variety of static convenience methods for accessing Application 
+ * The Application class provides a variety of static convenience methods for accessing Application
  * elements that can be used once the {@link #initializeApplication} call has been made.
  *
- * <p>In order to initialize an application, an {@link ApplicationLayout} and an 
+ * <p>In order to initialize an application, an {@link ApplicationLayout} and an
  * {@link ApplicationConfiguration} must be provided.  The layout and configuration come in a
  * variety of flavors, and are what makes the Application class usable across a range of tools.
  *
@@ -59,7 +59,7 @@ public class Application {
 
 	/**
 	 * Creates a new application object.  Application is a singleton so this is private.
-	 * 
+	 *
 	 * @param layout The application layout to be used by this application.
 	 * @param configuration The application configuration to be used by this application.
 	 */
@@ -102,8 +102,8 @@ public class Application {
 
 	/**
 	 * Initializes the application.  The static methods of this class cannot be used until the
-	 * application is initialized.  
-	 * 
+	 * application is initialized.
+	 *
 	 * @param layout The application layout to be used by the application.
 	 * @param configuration The application configuration to be used by the application.
 	 */
@@ -123,7 +123,7 @@ public class Application {
 
 	/**
 	 * Checks to see if the application has been initialized.
-	 * 
+	 *
 	 * @return true if the application has been initialized; otherwise, false.
 	 */
 	public static boolean isInitialized() {
@@ -150,12 +150,12 @@ public class Application {
 
 	/**
 	 * If the Application was previously initialized with logging disabled, this method
-	 * may be used to perform delayed logging initialization.  
+	 * may be used to perform delayed logging initialization.
 	 * @param logFile application log file, if null the default <i>application.log</i> will be stored
 	 * within the user's application settings directory
 	 * @param scriptLogFile scripting log file, if null the default <i>script.log</i> will be stored
 	 * within the user's application settings directory
-	 * @throws AssertException if Application has not yet been initialized, or logging 
+	 * @throws AssertException if Application has not yet been initialized, or logging
 	 * was previously configured for the application.
 	 */
 	public static void initializeLogging(File logFile, File scriptLogFile) {
@@ -170,7 +170,7 @@ public class Application {
 		}
 		if (scriptLogFile == null) {
 			// Some clients pass null for the script file, as they do not support scripting.  In
-			// that case, just have the system use the application log as the script log.  This 
+			// that case, just have the system use the application log as the script log.  This
 			// prevents the logging system from creating an oddly named log file.
 			scriptLogFile = logFile;
 		}
@@ -328,8 +328,7 @@ public class Application {
 		return null;
 	}
 
-	private List<ResourceFile> findFilesByExtensionInModule(String moduleName, String extension)
-			throws IllegalArgumentException {
+	private List<ResourceFile> findFilesByExtensionInModule(String moduleName, String extension) {
 		extension = verifyExtension(extension);
 		List<ResourceFile> list = new ArrayList<>();
 		GModule gModule = app.layout.getModules().get(moduleName);
@@ -479,7 +478,7 @@ public class Application {
 			file = getModuleFile(module, "os/" + Platform.WIN_X86_32.getDirectoryName(),
 				exactFilename);
 		}
-		
+
 		// Allow mac_x86_64 to be used for mac_arm_64 as fallback (requires macOS Rosetta 2)
 		if (file == null && Platform.CURRENT_PLATFORM == Platform.MAC_ARM_64) {
 			file = getModuleFile(module, "build/os/" + Platform.MAC_X86_64.getDirectoryName(),
@@ -493,7 +492,7 @@ public class Application {
 		if (file == null) {
 			throw new OSFileNotFoundException(moduleName, exactFilename);
 		}
-		
+
 		return file;
 	}
 
@@ -523,7 +522,7 @@ public class Application {
 		if (file == null && Platform.CURRENT_PLATFORM == Platform.WIN_X86_64) {
 			file = findModuleFile("os/" + Platform.WIN_X86_32.getDirectoryName(), path);
 		}
-		
+
 		// Allow mac_x86_64 to be used for mac_arm_64 as fallback (requires macOS Rosetta 2)
 		if (file == null && Platform.CURRENT_PLATFORM == Platform.MAC_ARM_64) {
 			file = findModuleFile("build/os/" + Platform.MAC_X86_64.getDirectoryName(), path);
@@ -591,19 +590,19 @@ public class Application {
 		return app.layout.getApplicationRootDirs();
 	}
 
-	/** 
+	/**
 	 * Returns the application root directory.   An application root directory is a
-	 * directory containing one or more modules.  In development mode there may be multiple 
-	 * application root directories, which can be retrieved via 
+	 * directory containing one or more modules.  In development mode there may be multiple
+	 * application root directories, which can be retrieved via
 	 * {@link #getApplicationRootDirectories()}.
 	 * <p>
 	 * In an installation of the application, there will only be one application root directory.
 	 * <p>
 	 * <b>Note:  Be sure you understand that there may be multiple application root
-	 * directories in development mode.</b>  In general you should not be using this method for 
-	 * searching for files yourself, but instead using 
-	 * the various <code>find*</code> methods of this class.    
-	 * 
+	 * directories in development mode.</b>  In general you should not be using this method for
+	 * searching for files yourself, but instead using
+	 * the various <code>find*</code> methods of this class.
+	 *
 	 * @return Returns the application root directory.
 	 * @see #getApplicationRootDirectories()
 	 */
@@ -624,11 +623,11 @@ public class Application {
 	/**
 	 * Returns the temporary directory specific to the user and the application.
 	 * Directory has name of &lt;username&gt;-&lt;appname&gt;
-	 * This directory may be removed at system reboot or during periodic 
+	 * This directory may be removed at system reboot or during periodic
 	 * system cleanup of unused temp files.
 	 * This directory is specific to the application name but not the version.
-	 * Resources stored within this directory should utilize some 
-	 * form of access locking or unique naming.  Transient resources should be 
+	 * Resources stored within this directory should utilize some
+	 * form of access locking or unique naming.  Transient resources should be
 	 * deleted when no longer in use.
 	 * @return temp directory
 	 */
@@ -639,12 +638,12 @@ public class Application {
 
 	/**
 	 * Returns the cache directory specific to the user and the application.
-	 * The intention is for directory contents to be preserved, however the 
+	 * The intention is for directory contents to be preserved, however the
 	 * specific location is platform specific and contents may be removed when
 	 * not in use and may in fact be the same directory the user temp directory.
 	 * This directory is specific to the application name but not the version.
-	 * Resources stored within this directory should utilize some 
-	 * form of access locking and/or unique naming. 
+	 * Resources stored within this directory should utilize some
+	 * form of access locking and/or unique naming.
 	 * @return cache directory
 	 */
 	public static File getUserCacheDirectory() {
@@ -672,7 +671,7 @@ public class Application {
 	 * Returns the installation directory.  In an installation, there is only one application root
 	 * and its parent is the installation directory.  If not an installation, then this call doesn't
 	 * really make sense, but it will return the parent of the first installation root.
-	 * @return
+	 * @return the directory
 	 */
 	public static ResourceFile getInstallationDirectory() {
 		checkAppInitialized();
@@ -697,8 +696,8 @@ public class Application {
 	 */
 	public static boolean isTestBuild() {
 		checkAppInitialized();
-		String value = app.layout.getApplicationProperties().getProperty(
-			ApplicationProperties.TEST_RELEASE_PROPERTY);
+		String value = app.layout.getApplicationProperties()
+				.getProperty(ApplicationProperties.TEST_RELEASE_PROPERTY);
 		if (value == null) {
 			return false;
 		}
@@ -707,7 +706,7 @@ public class Application {
 
 	/**
 	 * Checks whether or not the application is in "single jar" mode.
-	 * 
+	 *
 	 * @return true if the application is in "single jar" mode; otherwise, false.
 	 */
 	public static boolean inSingleJarMode() {
@@ -818,8 +817,7 @@ public class Application {
 	 * @param extension the filename extension for which to find file.s
 	 * @return a list of all files with the given extension that are located in the named module.
 	 */
-	public static List<ResourceFile> findFilesByExtension(String moduleName, String extension)
-			throws IllegalArgumentException {
+	public static List<ResourceFile> findFilesByExtension(String moduleName, String extension) {
 		checkAppInitialized();
 		return app.findFilesByExtensionInModule(moduleName, extension);
 	}
@@ -839,6 +837,7 @@ public class Application {
 	/**
 	 * Returns the directory relative to the calling class's module's data directory.
 	 * @param relativePath the path relative the module's data directory
+	 * @return the directory
 	 * @throws FileNotFoundException if the directory does not exist.
 	 * @throws IOException if an error occurred trying to access the directory.
 	 */
@@ -857,8 +856,9 @@ public class Application {
 	/**
 	 * Return the directory relative the the name module's data directory. (i.e. "/data" will
 	 * be prepended to the given path)
-	 * @param moduleName the name of the module. 
+	 * @param moduleName the name of the module.
 	 * @param relativePath the path relative to the module's data directory.
+	 * @return @return the directory
 	 * @throws FileNotFoundException if the directory does not exist
 	 * @throws IOException if an error occurred trying to access the directory.
 	 */
@@ -870,8 +870,9 @@ public class Application {
 
 	/**
 	 * Return the directory relative the the name module's directory.
-	 * @param moduleName the name of the module. 
+	 * @param moduleName the name of the module.
 	 * @param relativePath the path relative to the module's root directory.
+	 * @return the directory
 	 * @throws FileNotFoundException if the directory does not exist
 	 * @throws IOException if an error occurred trying to access the directory.
 	 */
@@ -884,6 +885,7 @@ public class Application {
 	/**
 	 * Returns the file relative to the calling class's module's data directory
 	 * @param relativeDataPath the path relative the to module's data directory
+	 * @return the file
 	 * @throws FileNotFoundException if the file or module does not exist.
 	 */
 	public static ResourceFile getModuleDataFile(String relativeDataPath)
@@ -902,6 +904,7 @@ public class Application {
 	 * be prepended to the give path)
 	 * @param moduleName the name of the module.
 	 * @param relativeDataPath the path relative to the module's data directory.
+	 * @return the file
 	 * @throws FileNotFoundException if the file does not exist.
 	 */
 	public static ResourceFile getModuleDataFile(String moduleName, String relativeDataPath)
@@ -914,6 +917,7 @@ public class Application {
 	 * Returns the file relative to the named module's directory.
 	 * @param moduleName the name of the module.
 	 * @param relativePath the path relative to the module's data directory.
+	 * @return the file
 	 * @throws FileNotFoundException if the file does not exist.
 	 */
 	public static ResourceFile getModuleFile(String moduleName, String relativePath)
@@ -924,7 +928,7 @@ public class Application {
 
 	/**
 	 * Returns the OS specific file within the given module with the given name.
-	 * 
+	 *
 	 * @param moduleName the name of the module
 	 * @param exactFilename the name of the OS file within the module.
 	 * @return the OS specific file.
@@ -938,7 +942,7 @@ public class Application {
 	/**
 	 * Returns the specified OS specific file.  It is first searched for in the calling class's
 	 * module.  If it is not found there, it is searched for in all modules.
-	 * 
+	 *
 	 * @param exactFilename the name of the OS specific file.
 	 * @return the OS specific file.
 	 * @throws OSFileNotFoundException if the file does not exist.
@@ -953,7 +957,7 @@ public class Application {
 				// not found in my module...fall through
 			}
 		}
-		
+
 		// We are either not in a module (perhaps script?) or it was not found in my module
 		return app.getOSFileInAnyModule(exactFilename);
 	}

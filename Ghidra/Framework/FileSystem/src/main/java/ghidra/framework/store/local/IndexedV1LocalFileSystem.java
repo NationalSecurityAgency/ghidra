@@ -46,7 +46,7 @@ public class IndexedV1LocalFileSystem extends IndexedLocalFileSystem {
 	 * @throws FileNotFoundException if specified rootPath does not exist
 	 * @throws IOException if error occurs while reading/writing index files
 	 */
-	IndexedV1LocalFileSystem(String rootPath, boolean isVersioned, boolean readOnly,
+	protected IndexedV1LocalFileSystem(String rootPath, boolean isVersioned, boolean readOnly,
 			boolean enableAsyncronousDispatching, boolean create) throws IOException {
 		super(rootPath, isVersioned, readOnly, enableAsyncronousDispatching, create);
 	}
@@ -134,6 +134,7 @@ public class IndexedV1LocalFileSystem extends IndexedLocalFileSystem {
 
 	@Override
 	public FolderItem getItem(String fileID) throws IOException, UnsupportedOperationException {
+		checkDisposed();
 		if (fileIdMap == null) {
 			return null;
 		}

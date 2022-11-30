@@ -28,6 +28,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.label.GDHtmlLabel;
 import docking.widgets.list.GList;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors;
 import generic.util.WindowUtilities;
 import ghidra.util.StringUtilities;
 import ghidra.util.SystemUtilities;
@@ -61,7 +63,7 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 	private static final int DEFAULT_MAX_UPDATE_DELAY = 2000;
 	private static final int MIN_HEIGHT = 300;
 	private static final int MIN_WIDTH = 200;
-	protected static final Color TOOLTIP_WINDOW_BGCOLOR = new Color(255, 255, 225);
+	protected static final Color PREVIEW_WINDOW_BGCOLOR = Colors.BACKGROUND;
 
 	private JWindow toolTipWindow; // delayed initialization for parenting
 	private JWindow matchingWindow; // delayed initialization for parenting
@@ -154,7 +156,7 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 	protected void setPreviewPaneAttributes() {
 		previewLabel = new GDHtmlLabel();
 		previewLabel.setOpaque(true);
-		previewLabel.setBackground(TOOLTIP_WINDOW_BGCOLOR);
+		previewLabel.setBackground(PREVIEW_WINDOW_BGCOLOR);
 		previewLabel.setVerticalAlignment(SwingConstants.TOP);
 		previewLabel.setFocusable(false);
 	}
@@ -341,7 +343,7 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 			updateWindowLocation();
 			showMatchingWindow();
 
-			getPreviewPaneComponent().setBackground(TOOLTIP_WINDOW_BGCOLOR);
+			getPreviewPaneComponent().setBackground(PREVIEW_WINDOW_BGCOLOR);
 			toolTipWindow.setVisible(hasPreview());
 		}
 	}
@@ -573,7 +575,9 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 		matchingWindow.setFocusable(false);
 		JScrollPane scrollPane = new JScrollPane();
 		scrollPane.setBorder(
-			BorderFactory.createBevelBorder(BevelBorder.RAISED, Color.GRAY, Color.BLACK));
+			BorderFactory.createBevelBorder(BevelBorder.RAISED,
+				new GColor("color.border.bevel.highlight"),
+				new GColor("color.border.bevel.shadow")));
 		scrollPane.setFocusable(false);
 		scrollPane.getVerticalScrollBar().setFocusable(false);
 		scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);

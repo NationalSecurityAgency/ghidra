@@ -17,6 +17,8 @@ package ghidra.app.plugin.core.debug.gui.memview;
 
 import java.awt.Color;
 
+import generic.theme.GColor;
+
 public enum MemviewBoxType {
 	INSTRUCTIONS,
 	PROCESS,
@@ -35,21 +37,21 @@ public enum MemviewBoxType {
 	BREAKPOINT;
 
 	Color[] colors = { //
-		new Color(128, 000, 000), // INSTRUCTIONS
-		new Color(200, 200, 255), // PROCESS
-		new Color(200, 255, 255), // THREAD
-		Color.GREEN, //new Color(000, 150, 200), // MODULE
-		Color.YELLOW, //new Color(000, 150, 200), // REGION
-		Color.MAGENTA, //new Color(050, 100, 255), // IMAGE
-		Color.LIGHT_GRAY, // VIRTUAL_ALLOC
-		Color.BLUE, // HEAP_CREATE
-		new Color(000, 100, 050), // HEAP_ALLOC
-		new Color(100, 000, 150), // POOL
-		Color.CYAN, // STACK
-		Color.LIGHT_GRAY, // PERFINFO
-		Color.DARK_GRAY, // READ_MEMORY
-		Color.BLUE,  // WRITE_MEMORY
-		Color.RED,  // WRITE_MEMORY
+		new GColor("color.debugger.plugin.memview.box.type.instructions"),
+		new GColor("color.debugger.plugin.memview.box.type.process"),
+		new GColor("color.debugger.plugin.memview.box.type.thread"),
+		new GColor("color.debugger.plugin.memview.box.type.module"),
+		new GColor("color.debugger.plugin.memview.box.type.region"),
+		new GColor("color.debugger.plugin.memview.box.type.image"),
+		new GColor("color.debugger.plugin.memview.box.type.virtual.alloc"),
+		new GColor("color.debugger.plugin.memview.box.type.heap.create"),
+		new GColor("color.debugger.plugin.memview.box.type.heap.alloc"),
+		new GColor("color.debugger.plugin.memview.box.type.pool"),
+		new GColor("color.debugger.plugin.memview.box.type.stack"),
+		new GColor("color.debugger.plugin.memview.box.type.perfinfo"),
+		new GColor("color.debugger.plugin.memview.box.type.read.memory"),
+		new GColor("color.debugger.plugin.memview.box.type.write.memory"),
+		new GColor("color.debugger.plugin.memview.box.type.breakpoint"),
 	};
 
 	public Color getColor() {

@@ -17,20 +17,19 @@ package ghidra.app.plugin.core.compositeeditor;
 
 import java.awt.event.KeyEvent;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 import javax.swing.KeyStroke;
 
 import docking.ActionContext;
 import docking.action.KeyBindingData;
-import ghidra.util.Msg;
+import generic.theme.GIcon;
 import ghidra.util.exception.UsrException;
-import resources.ResourceManager;
 
 public class ClearAction extends CompositeEditorTableAction {
 
 	public final static String ACTION_NAME = "Clear Components";
 	private final static String GROUP_NAME = COMPONENT_ACTION_GROUP;
-	private final static ImageIcon ICON = ResourceManager.loadImage("images/erase16.png");
+	private final static Icon ICON = new GIcon("icon.plugin.composite.editor.clear");
 	private final static String[] POPUP_PATH = new String[] { "Clear" };
 	private final static KeyStroke KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_C, 0);
 
@@ -46,10 +45,6 @@ public class ClearAction extends CompositeEditorTableAction {
 	public void actionPerformed(ActionContext context) {
 		try {
 			model.clearSelectedComponents();
-		}
-		catch (OutOfMemoryError memExc) {
-			String errMsg = "Couldn't clear components. Out of memory.";
-			Msg.showError(this, null, "Out of Memory", errMsg, memExc);
 		}
 		catch (UsrException ue) {
 			model.setStatus(ue.getMessage());

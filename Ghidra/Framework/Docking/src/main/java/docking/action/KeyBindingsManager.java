@@ -24,7 +24,7 @@ import javax.swing.Action;
 import javax.swing.KeyStroke;
 
 import docking.*;
-import ghidra.util.ReservedKeyBindings;
+import generic.util.action.ReservedKeyBindings;
 import ghidra.util.exception.AssertException;
 
 /**

@@ -20,7 +20,6 @@ import java.util.concurrent.CompletableFuture;
 
 import com.sun.jdi.*;
 
-import ghidra.async.AsyncUtils;
 import ghidra.dbg.target.TargetStack;
 import ghidra.dbg.target.schema.*;
 import ghidra.util.Msg;
@@ -104,9 +103,6 @@ public class JdiModelTargetStack extends JdiModelTargetObjectImpl
 	 * @return null
 	 */
 	protected CompletableFuture<?> update() {
-		if (!isObserved()) {
-			return AsyncUtils.NIL;
-		}
 		return fetchElements(true).exceptionally(e -> {
 			Msg.error(this, "Could not update stack " + this + " on STOPPED");
 			return null;
@@ -114,6 +110,6 @@ public class JdiModelTargetStack extends JdiModelTargetObjectImpl
 	}
 
 	public void invalidateRegisterCaches() {
-		listeners.fire.invalidateCacheRequested(this);
+		broadcast().invalidateCacheRequested(this);
 	}
 }

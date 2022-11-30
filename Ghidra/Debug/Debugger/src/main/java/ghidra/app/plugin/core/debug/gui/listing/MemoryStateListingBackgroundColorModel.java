@@ -19,6 +19,7 @@ import java.awt.Color;
 import java.math.BigInteger;
 import java.util.Map.Entry;
 
+import generic.theme.GColor;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.util.viewer.listingpanel.ListingBackgroundColorModel;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
@@ -34,17 +35,17 @@ import ghidra.trace.model.program.TraceProgramView;
 import ghidra.util.ColorUtils;
 
 public class MemoryStateListingBackgroundColorModel implements ListingBackgroundColorModel {
-	private Color defaultBackgroundColor = Color.WHITE;
+	private Color defaultBackgroundColor = new GColor("color.bg.debugger.memory.state");
 
 	private AddressIndexMap addressIndexMap;
 	private TraceProgramView view;
 	private TraceMemoryManager memory;
 
 	@AutoOptionConsumed(name = DebuggerResources.OPTION_NAME_COLORS_ERROR_MEMORY)
-	private Color errorColor;
+	private Color errorColor = DebuggerResources.DEFAULT_COLOR_BACKGROUND_ERROR;
 	@AutoOptionConsumed(name = DebuggerResources.OPTION_NAME_COLORS_STALE_MEMORY)
-	private Color unknownColor;
-	private Color unknownBlendedColor;
+	private GColor unknownColor = DebuggerResources.DEFAULT_COLOR_BACKGROUND_STALE;
+	private Color unknownBlendedColor = unknownColor.withAlpha(127);
 	@SuppressWarnings("unused")
 	private final AutoOptions.Wiring autoOptionsWiring;
 
@@ -80,7 +81,7 @@ public class MemoryStateListingBackgroundColorModel implements ListingBackground
 
 	@AutoOptionConsumed(name = DebuggerResources.OPTION_NAME_COLORS_STALE_MEMORY)
 	protected void setUnknownColor(Color unknownColor) {
-		computeUnknownBlendedColor(unknownColor, defaultBackgroundColor);
+		// computeUnknownBlendedColor(unknownColor, defaultBackgroundColor);
 	}
 
 	protected Color getUnknownColor(Address address) {
@@ -116,7 +117,7 @@ public class MemoryStateListingBackgroundColorModel implements ListingBackground
 	@Override
 	public void setDefaultBackgroundColor(Color c) {
 		defaultBackgroundColor = c;
-		computeUnknownBlendedColor(unknownColor, c);
+		// computeUnknownBlendedColor(unknownColor, c);
 	}
 
 	@Override

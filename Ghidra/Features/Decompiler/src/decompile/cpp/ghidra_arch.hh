@@ -97,6 +97,7 @@ class ArchitectureGhidra : public Architecture {
   virtual void buildStringManager(DocumentStorage &store);
   virtual void buildConstantPool(DocumentStorage &store);
   virtual void buildContext(DocumentStorage &store);
+  virtual void buildSymbols(DocumentStorage &store);
   virtual void buildSpecFile(DocumentStorage &store);
   virtual void modifySpaces(Translate *trans) {}	// This is handled directly by GhidraTranslate::initialize
   virtual void postSpecFile(void);

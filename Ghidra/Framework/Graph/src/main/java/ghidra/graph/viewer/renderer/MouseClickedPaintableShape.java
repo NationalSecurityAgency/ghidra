@@ -19,12 +19,14 @@ import java.awt.Color;
 import java.awt.Point;
 import java.awt.geom.Ellipse2D;
 
+import generic.theme.GThemeDefaults.Colors.Palette;
+
 /**
  * A debugging shape painter that allows the user to see where a mouse clicked happened.
  */
 public class MouseClickedPaintableShape extends PaintableShape {
 
-	private static final Color DEFAULT_COLOR = new Color(255, 200, 0, 127); // orangish
+	private static final Color DEFAULT_COLOR = Palette.ORANGE.withAlpha(127);
 
 	public MouseClickedPaintableShape(Point p, double tx, double ty) {
 		this(p, tx, ty, DEFAULT_COLOR);

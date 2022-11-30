@@ -29,6 +29,7 @@ import edu.uci.ics.jung.visualization.VisualizationServer.Paintable;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.control.AbstractGraphMousePlugin;
 import edu.uci.ics.jung.visualization.picking.PickedState;
+import generic.theme.GThemeDefaults.Colors.Palette;
 
 /** 
  * PickingGraphMousePlugin supports the picking of graph elements
@@ -94,7 +95,7 @@ public class JungPickingGraphMousePlugin<V, E> extends AbstractGraphMousePlugin
 	/**
 	 * color for the picking rectangle
 	 */
-	protected Color lensColor = Color.cyan;
+	protected Color lensColor = Palette.CYAN;
 
 	/**
 	 * create an instance with default settings

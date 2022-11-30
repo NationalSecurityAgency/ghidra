@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,29 +17,55 @@ package resources.icons;
 
 import java.awt.Component;
 import java.awt.Graphics;
+import java.util.Objects;
 
 import javax.swing.Icon;
 
-public class EmptyIcon  implements Icon {
+public class EmptyIcon implements Icon {
 
-    private int width;
-    private int height;
-    
-    public EmptyIcon( int width, int height ) {
-        this.width = width;
-        this.height = height;
-    }
-    
-    public int getIconHeight() {
-        return height;
-    }
+	private int width;
+	private int height;
 
-    public int getIconWidth() {
-        return width;
-    }
+	public EmptyIcon(int width, int height) {
+		this.width = width;
+		this.height = height;
+	}
 
-    public void paintIcon( Component c, Graphics g, int x, int y ) {
-        // no-op
-    }
+	public int getIconHeight() {
+		return height;
+	}
+
+	public int getIconWidth() {
+		return width;
+	}
+
+	public void paintIcon(Component c, Graphics g, int x, int y) {
+		// no-op
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(height, width);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		EmptyIcon other = (EmptyIcon) obj;
+		return height == other.height && width == other.width;
+	}
+
+	@Override
+	public String toString() {
+		return "EmptyIcon(" + width + "," + height + ")";
+	}
 
 }

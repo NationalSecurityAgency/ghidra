@@ -20,13 +20,28 @@ import static ghidra.service.graph.VertexShape.*;
 
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.service.graph.*;
-import ghidra.util.WebColors;
 
 /** 
  * {@link GraphDisplayOptions} for {@link PCodeDfgGraphType}
  */
 public class PCodeDfgDisplayOptions extends GraphDisplayOptions {
 	public static final String SHAPE_ATTRIBUTE = "Shape";
+
+	// @formatter:off
+	private static final String BG_VERTEX_DEFAULT = "color.bg.decompiler.pcode.dfg.vertex.default";
+	private static final String BG_VERTEX_SELECTED ="color.bg.decompiler.pcode.dfg.vertex.selected";
+	private static final String BG_VERTEX_CONSTANT ="color.bg.decompiler.pcode.dfg.vertex.constant";
+	private static final String BG_VERTEX_REGISTER ="color.bg.decompiler.pcode.dfg.vertex.register";
+	private static final String BG_VERTEX_UNIQUE ="color.bg.decompiler.pcode.dfg.vertex.unique";
+	private static final String BG_VERTEX_PERSISTENT ="color.bg.decompiler.pcode.dfg.vertex.persistent";
+	private static final String BG_VERTEX_ADDRESS_TIED ="color.bg.decompiler.pcode.dfg.vertex.address.tied";
+	private static final String BG_VERTEX_OP ="color.bg.decompiler.pcode.dfg.vertex.op";
+
+	private static final String BG_EDGE_DEFAULT ="color.bg.decompiler.pcode.dfg.edge.default";
+	private static final String BG_EDGE_SELECTED ="color.bg.decompiler.pcode.dfg.edge.selected";
+	private static final String BG_EDGE_WITHIN_BLOCK ="color.bg.decompiler.pcode.dfg.edge.within.block";
+	private static final String BG_EDGE_BETWEEN_BLOCKS ="color.bg.decompiler.pcode.dfg.edge.between.blocks";
+	// @formatter:on
 
 	/**
 	 * constructor
@@ -39,10 +54,10 @@ public class PCodeDfgDisplayOptions extends GraphDisplayOptions {
 	@Override
 	protected void initializeDefaults() {
 		setDefaultVertexShape(ELLIPSE);
-		setDefaultVertexColor(WebColors.RED);
-		setDefaultEdgeColor(WebColors.NAVY);
-		setVertexSelectionColor(WebColors.DEEP_PINK);
-		setEdgeSelectionColor(WebColors.DEEP_PINK);
+		setDefaultVertexColor(BG_VERTEX_DEFAULT);
+		setDefaultEdgeColor(BG_EDGE_DEFAULT);
+		setVertexSelectionColor(BG_VERTEX_SELECTED);
+		setEdgeSelectionColor(BG_EDGE_SELECTED);
 		setDefaultLayoutAlgorithmName(LayoutAlgorithmNames.MIN_CROSS_COFFMAN_GRAHAM);
 		setUsesIcons(false);
 		setArrowLength(15);
@@ -50,16 +65,18 @@ public class PCodeDfgDisplayOptions extends GraphDisplayOptions {
 		setVertexShapeOverrideAttributeKey(SHAPE_ATTRIBUTE);
 		setMaxNodeCount(1000);
 
-		configureVertexType(DEFAULT_VERTEX, VertexShape.ELLIPSE, WebColors.RED);
-		configureVertexType(CONSTANT, VertexShape.ELLIPSE, WebColors.DARK_GREEN);
-		configureVertexType(REGISTER, VertexShape.ELLIPSE, WebColors.NAVY);
-		configureVertexType(UNIQUE, VertexShape.ELLIPSE, WebColors.BLACK);
-		configureVertexType(PERSISTENT, VertexShape.ELLIPSE, WebColors.DARK_ORANGE);
-		configureVertexType(ADDRESS_TIED, VertexShape.ELLIPSE, WebColors.ORANGE);
-		configureVertexType(OP, VertexShape.ELLIPSE, WebColors.RED);
+		configureVertexType(DEFAULT_VERTEX, VertexShape.ELLIPSE, BG_VERTEX_DEFAULT);
+		configureVertexType(CONSTANT, VertexShape.ELLIPSE, BG_VERTEX_CONSTANT);
+		configureVertexType(REGISTER, VertexShape.ELLIPSE, BG_VERTEX_REGISTER);
+		configureVertexType(UNIQUE, VertexShape.ELLIPSE, BG_VERTEX_UNIQUE);
+		configureVertexType(PERSISTENT, VertexShape.ELLIPSE, BG_VERTEX_PERSISTENT);
+		configureVertexType(ADDRESS_TIED, VertexShape.ELLIPSE, BG_VERTEX_ADDRESS_TIED);
+		configureVertexType(OP, VertexShape.ELLIPSE, BG_VERTEX_OP);
 
-		configureEdgeType(DEFAULT_EDGE, WebColors.BLUE);
-		configureEdgeType(WITHIN_BLOCK, WebColors.BLACK);
-		configureEdgeType(BETWEEN_BLOCKS, WebColors.RED);
+		configureEdgeType(DEFAULT_EDGE, BG_EDGE_DEFAULT);
+		configureEdgeType(WITHIN_BLOCK, BG_EDGE_WITHIN_BLOCK);
+		configureEdgeType(BETWEEN_BLOCKS, BG_EDGE_BETWEEN_BLOCKS);
+
+		setFont("font.decompiler.pcode.dfg");
 	}
 }

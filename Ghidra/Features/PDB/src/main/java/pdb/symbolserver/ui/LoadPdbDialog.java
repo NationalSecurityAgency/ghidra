@@ -41,6 +41,9 @@ import docking.widgets.label.GIconLabel;
 import docking.widgets.label.GLabel;
 import docking.widgets.textfield.HexOrDecimalInput;
 import docking.widgets.textfield.HintTextField;
+import generic.theme.GIcon;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.util.bin.format.pdb.PdbParser;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbIdentifiers;
 import ghidra.app.util.pdb.pdbapplicator.PdbApplicatorControl;
@@ -56,7 +59,6 @@ import ghidra.util.task.*;
 import pdb.PdbPlugin;
 import pdb.symbolserver.*;
 import resources.Icons;
-import resources.ResourceManager;
 
 /**
  * A dialog that allows the user to pick or search for a Pdb file for a program.
@@ -64,10 +66,8 @@ import resources.ResourceManager;
 public class LoadPdbDialog extends DialogComponentProvider {
 
 	private static final String LAST_PDBFILE_PREFERENCE_KEY = "Pdb.LastFile";
-	static final Icon MATCH_OK_ICON =
-		ResourceManager.loadImage("images/checkmark_green.gif", 16, 16);
-	static final Icon MATCH_BAD_ICON =
-		ResourceManager.loadImage("images/emblem-important.png", 16, 16);
+	static final Icon MATCH_OK_ICON = new GIcon("icon.checkmark.green");
+	static final Icon MATCH_BAD_ICON = Icons.ERROR_ICON;
 	public static final GhidraFileFilter PDB_FILES_FILTER =
 		ExtensionFileFilter.forExtensions("Microsoft Program Databases", "pdb", "pd_", "pdb.xml");
 
@@ -172,7 +172,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 	protected void dialogShown() {
 		cancelButton.requestFocusInWindow();
 
-		if ( getCurrentSymbolFileInfo() != null ) {
+		if (getCurrentSymbolFileInfo() != null) {
 			searchForPdbs(false);
 		}
 	}
@@ -377,7 +377,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		programNameTextField.setEditable(false);
 		programNameTextField.setText(program.getName());
 
-		pdbPathTextField = new BetterNonEditableTextField(20, "Missing", Color.red);
+		pdbPathTextField = new BetterNonEditableTextField(20, "Missing", Colors.ERROR);
 		pdbPathTextField.setEditable(false);
 		pdbPathTextField.setText(programSymbolFileInfo.getPath());
 		pdbPathTextField.getDocument().addDocumentListener(docListener);
@@ -399,7 +399,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 					new HelpLocation(PdbPlugin.PDB_PLUGIN_HELP_TOPIC,
 						SymbolFilePanel.SEARCH_OPTIONS_HELP_ANCHOR));
 
-		pdbUniqueIdTextField = new BetterNonEditableTextField(36, "Missing", Color.red);
+		pdbUniqueIdTextField = new BetterNonEditableTextField(36, "Missing", Colors.ERROR);
 		pdbUniqueIdTextField.setEditable(false);
 		pdbUniqueIdTextField.setText(programSymbolFileInfo.getUniqifierString());
 		pdbUniqueIdTextField.setToolTipText(
@@ -889,10 +889,9 @@ public class LoadPdbDialog extends DialogComponentProvider {
 			Container parent = getParent();
 			if (parent != null && !isEditable()) {
 				Color bg = parent.getBackground();
-				// mint a new Color object to avoid it being
-				// ignored because the parent handed us a DerivedColor
-				// instance
-				return new Color(bg.getRGB());
+				// mint a new Color object to avoid it being ignored because the parent handed us a 
+				// DerivedColor instance
+				return ColorUtils.getColor(bg.getRGB());
 			}
 			return super.getBackground();
 		}
@@ -909,7 +908,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 			}
 
 			Graphics2D g2 = (Graphics2D) g;
-			g2.setColor(hintColor != null ? hintColor : Color.LIGHT_GRAY);
+			g2.setColor(hintColor != null ? hintColor : Messages.HINT);
 			g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
 			Dimension size = getSize();
@@ -931,10 +930,9 @@ public class LoadPdbDialog extends DialogComponentProvider {
 			Container parent = getParent();
 			if (parent != null && !isEditable()) {
 				Color bg = parent.getBackground();
-				// mint a new Color object to avoid it being
-				// ignored because the parent handed us a DerivedColor
-				// instance
-				return new Color(bg.getRGB());
+				// mint a new Color object to avoid it being ignored because the parent handed us a 
+				// DerivedColor instance
+				return ColorUtils.getColor(bg.getRGB());
 			}
 			return super.getBackground();
 		}

@@ -52,6 +52,8 @@ import docking.menu.MultiStateDockingAction;
 import docking.options.editor.OptionsDialog;
 import docking.widgets.EventTrigger;
 import docking.widgets.OptionDialog;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors;
 import generic.util.WindowUtilities;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
@@ -77,6 +79,8 @@ public class DefaultGraphDisplay implements GraphDisplay {
 
 	private static final Dimension PREFERRED_VIEW_SIZE = new Dimension(1000, 1000);
 	private static final Dimension PREFERRED_LAYOUT_SIZE = new Dimension(3000, 3000);
+
+	private static Color BACKGROUND_COLOR = new GColor("color.bg.graph");
 
 	// layout algorithm categories
 	static final String MIN_CROSS = "Hierarchical MinCross";
@@ -187,8 +191,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		if (graphDisplayProvider.getDefaultSatelliteState()) {
 			viewer.getComponent().add(satelliteViewer.getComponent());
 		}
-		layoutTransitionManager =
-			new LayoutTransitionManager(viewer, this::isRoot, graphRenderer);
+		layoutTransitionManager = new LayoutTransitionManager(viewer, this::isRoot, graphRenderer);
 
 		viewer.getComponent().addComponentListener(new ComponentAdapter() {
 			@Override
@@ -203,9 +206,9 @@ public class DefaultGraphDisplay implements GraphDisplay {
 			}
 		});
 
-		viewer.setInitialDimensionFunction(InitialDimensionFunction
-				.builder(viewer.getRenderContext().getVertexBoundsFunction())
-				.build());
+		viewer.setInitialDimensionFunction(
+			InitialDimensionFunction.builder(viewer.getRenderContext().getVertexBoundsFunction())
+					.build());
 		createToolbarActions();
 		createPopupActions();
 		connectSelectionStateListeners();
@@ -260,9 +263,8 @@ public class DefaultGraphDisplay implements GraphDisplay {
 				}
 			};
 
-		MutableTransformer transformer = viewer.getRenderContext()
-				.getMultiLayerTransformer()
-				.getTransformer(VIEW);
+		MutableTransformer transformer =
+			viewer.getRenderContext().getMultiLayerTransformer().getTransformer(VIEW);
 
 		MagnifyShapeTransformer shapeTransformer = MagnifyShapeTransformer.builder(lens)
 				// this lens' delegate is the viewer's VIEW layer, abandoned above
@@ -283,23 +285,21 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		viewer.removePostRenderPaintable(singleSelectedVertexPaintable);
 
 		// for highlighting of multiple selected vertices
-		this.multiSelectedVertexPaintable =
-			MultiSelectedVertexPaintable.builder(viewer)
-					.selectionStrokeMin(15.f)
-					.selectionPaint(getSelectedVertexColor())
-					.useBounds(true)
-					.useOval(true)
-					.highlightScale(1.15)
-					.fillHighlight(false)
-					.build();
+		this.multiSelectedVertexPaintable = MultiSelectedVertexPaintable.builder(viewer)
+				.selectionStrokeMin(15.f)
+				.selectionPaint(getSelectedVertexColor())
+				.useBounds(true)
+				.useOval(true)
+				.highlightScale(1.15)
+				.fillHighlight(false)
+				.build();
 
 		// manages highlight painting of a single selected vertex
-		this.singleSelectedVertexPaintable =
-			SingleSelectedVertexPaintable.builder(viewer)
-					.selectionStrokeMin(4.f)
-					.selectionPaint(getSelectedVertexColor())
-					.selectedVertexFunction(vs -> this.focusedVertex)
-					.build();
+		this.singleSelectedVertexPaintable = SingleSelectedVertexPaintable.builder(viewer)
+				.selectionStrokeMin(4.f)
+				.selectionPaint(getSelectedVertexColor())
+				.selectedVertexFunction(vs -> this.focusedVertex)
+				.build();
 
 		// draws the selection highlights
 		viewer.addPreRenderPaintable(multiSelectedVertexPaintable);
@@ -352,8 +352,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 				.buildAndInstallLocal(componentProvider);
 
 		// create an icon button to reset the view transformations to identity (scaled to layout)
-		new ActionBuilder("Reset View", ACTION_OWNER)
-				.description("Fit Graph to Window")
+		new ActionBuilder("Reset View", ACTION_OWNER).description("Fit Graph to Window")
 				.toolBarIcon(DefaultDisplayGraphIcons.FIT_TO_WINDOW)
 				.onAction(context -> centerAndScale())
 				.buildAndInstallLocal(componentProvider);
@@ -363,8 +362,8 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		ToggleDockingAction lensToggle = new ToggleActionBuilder("View Magnifier", ACTION_OWNER)
 				.description("Show View Magnifier")
 				.toolBarIcon(DefaultDisplayGraphIcons.VIEW_MAGNIFIER_ICON)
-				.onAction(context -> magnifyViewSupport.activate(
-					((AbstractButton) context.getSourceObject()).isSelected()))
+				.onAction(context -> magnifyViewSupport
+						.activate(((AbstractButton) context.getSourceObject()).isSelected()))
 				.build();
 		magnifyViewSupport.addItemListener(
 			itemEvent -> lensToggle.setSelected(itemEvent.getStateChange() == ItemEvent.SELECTED));
@@ -388,40 +387,35 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	}
 
 	private void createPopupActions() {
-		new ActionBuilder("Select Vertex", ACTION_OWNER)
-				.popupMenuPath("Select Vertex")
+		new ActionBuilder("Select Vertex", ACTION_OWNER).popupMenuPath("Select Vertex")
 				.popupMenuGroup("selection", "1")
 				.withContext(VertexGraphActionContext.class)
 				.enabledWhen(c -> !isSelected(c.getClickedVertex()))
 				.onAction(c -> viewer.getSelectedVertexState().select(c.getClickedVertex()))
 				.buildAndInstallLocal(componentProvider);
 
-		new ActionBuilder("Deselect Vertex", ACTION_OWNER)
-				.popupMenuPath("Deselect Vertex")
+		new ActionBuilder("Deselect Vertex", ACTION_OWNER).popupMenuPath("Deselect Vertex")
 				.popupMenuGroup("selection", "2")
 				.withContext(VertexGraphActionContext.class)
 				.enabledWhen(c -> isSelected(c.getClickedVertex()))
 				.onAction(c -> viewer.getSelectedVertexState().deselect(c.getClickedVertex()))
 				.buildAndInstallLocal(componentProvider);
 
-		new ActionBuilder("Select Edge", ACTION_OWNER)
-				.popupMenuPath("Select Edge")
+		new ActionBuilder("Select Edge", ACTION_OWNER).popupMenuPath("Select Edge")
 				.popupMenuGroup("selection", "1")
 				.withContext(EdgeGraphActionContext.class)
 				.enabledWhen(c -> !isSelected(c.getClickedEdge()))
 				.onAction(c -> selectEdge(c.getClickedEdge()))
 				.buildAndInstallLocal(componentProvider);
 
-		new ActionBuilder("Deselect Edge", ACTION_OWNER)
-				.popupMenuPath("Deselect Edge")
+		new ActionBuilder("Deselect Edge", ACTION_OWNER).popupMenuPath("Deselect Edge")
 				.popupMenuGroup("selection", "2")
 				.withContext(EdgeGraphActionContext.class)
 				.enabledWhen(c -> isSelected(c.getClickedEdge()))
 				.onAction(c -> deselectEdge(c.getClickedEdge()))
 				.buildAndInstallLocal(componentProvider);
 
-		new ActionBuilder("Edge Source", ACTION_OWNER)
-				.popupMenuPath("Go To Edge Source")
+		new ActionBuilder("Edge Source", ACTION_OWNER).popupMenuPath("Go To Edge Source")
 				.popupMenuGroup("Go To")
 				.withContext(EdgeGraphActionContext.class)
 				.onAction(c -> {
@@ -430,8 +424,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 				})
 				.buildAndInstallLocal(componentProvider);
 
-		new ActionBuilder("Edge Target", ACTION_OWNER)
-				.popupMenuPath("Go To Edge Target")
+		new ActionBuilder("Edge Target", ACTION_OWNER).popupMenuPath("Go To Edge Target")
 				.popupMenuGroup("Go To")
 				.withContext(EdgeGraphActionContext.class)
 				.onAction(c -> {
@@ -440,12 +433,12 @@ public class DefaultGraphDisplay implements GraphDisplay {
 				})
 				.buildAndInstallLocal(componentProvider);
 
-		hideSelectedAction = new ToggleActionBuilder("Hide Selected", ACTION_OWNER)
-				.popupMenuPath("Hide Selected")
-				.popupMenuGroup("z", "1")
-				.description("Toggles whether or not to show selected vertices and edges")
-				.onAction(c -> manageVertexDisplay())
-				.buildAndInstallLocal(componentProvider);
+		hideSelectedAction =
+			new ToggleActionBuilder("Hide Selected", ACTION_OWNER).popupMenuPath("Hide Selected")
+					.popupMenuGroup("z", "1")
+					.description("Toggles whether or not to show selected vertices and edges")
+					.onAction(c -> manageVertexDisplay())
+					.buildAndInstallLocal(componentProvider);
 
 		hideUnselectedAction = new ToggleActionBuilder("Hide Unselected", ACTION_OWNER)
 				.popupMenuPath("Hide Unselected")
@@ -454,8 +447,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 				.onAction(c -> manageVertexDisplay())
 				.buildAndInstallLocal(componentProvider);
 
-		new ActionBuilder("Invert Selection", ACTION_OWNER)
-				.popupMenuPath("Invert Selection")
+		new ActionBuilder("Invert Selection", ACTION_OWNER).popupMenuPath("Invert Selection")
 				.popupMenuGroup("z", "3")
 				.description("Inverts the current selection")
 				.onAction(c -> invertSelection())
@@ -493,8 +485,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 				.onAction(c -> growSelection(getAllComponentVerticesFromSelected()))
 				.buildAndInstallLocal(componentProvider);
 
-		new ActionBuilder("Clear Selection", ACTION_OWNER)
-				.popupMenuPath("Clear Selection")
+		new ActionBuilder("Clear Selection", ACTION_OWNER).popupMenuPath("Clear Selection")
 				.popupMenuGroup("z", "5")
 				.keyBinding("escape")
 				.enabledWhen(c -> hasSelection())
@@ -516,8 +507,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 				.onAction(c -> groupSelectedVertices())
 				.buildAndInstallLocal(componentProvider);
 
-		new ActionBuilder("Expand Selected", ACTION_OWNER)
-				.popupMenuPath("Expand Selected Vertices")
+		new ActionBuilder("Expand Selected", ACTION_OWNER).popupMenuPath("Expand Selected Vertices")
 				.popupMenuGroup("zz", "6")
 				.description("Expands all selected collapsed vertices into their previous form")
 				.onAction(c -> ungroupSelectedVertices())
@@ -579,8 +569,8 @@ public class DefaultGraphDisplay implements GraphDisplay {
 
 	private void askToNameGroupVertex(AttributedVertex vertex) {
 		String name = vertex.getName();
-		String userName = OptionDialog.showInputMultilineDialog(null, "Enter Group Vertex Text",
-			"Text", name);
+		String userName =
+			OptionDialog.showInputMultilineDialog(null, "Enter Group Vertex Text", "Text", name);
 
 		updateVertexName(vertex, userName != null ? userName : name);
 	}
@@ -602,8 +592,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	}
 
 	private boolean hasSelection() {
-		return !(viewer.getSelectedVertices().isEmpty() &&
-			viewer.getSelectedEdges().isEmpty());
+		return !(viewer.getSelectedVertices().isEmpty() && viewer.getSelectedEdges().isEmpty());
 	}
 
 	private boolean isSelected(AttributedVertex v) {
@@ -648,15 +637,11 @@ public class DefaultGraphDisplay implements GraphDisplay {
 
 	// select all the edges that connect the supplied vertices
 	private void selectEdgesConnecting(Collection<AttributedVertex> vertices) {
-		Set<AttributedEdge> edges = graph.edgeSet()
-				.stream()
-				.filter(
-					e -> {
-						AttributedVertex source = graph.getEdgeSource(e);
-						AttributedVertex target = graph.getEdgeTarget(e);
-						return vertices.contains(source) && vertices.contains(target);
-					})
-				.collect(Collectors.toSet());
+		Set<AttributedEdge> edges = graph.edgeSet().stream().filter(e -> {
+			AttributedVertex source = graph.getEdgeSource(e);
+			AttributedVertex target = graph.getEdgeTarget(e);
+			return vertices.contains(source) && vertices.contains(target);
+		}).collect(Collectors.toSet());
 		viewer.getSelectedEdgeState().select(edges);
 	}
 
@@ -813,12 +798,9 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	private SatelliteVisualizationViewer<AttributedVertex, AttributedEdge> createSatelliteViewer(
 			VisualizationViewer<AttributedVertex, AttributedEdge> parentViewer) {
 		Dimension viewerSize = parentViewer.getSize();
-		Dimension satelliteSize = new Dimension(
-			viewerSize.width / 4, viewerSize.height / 4);
+		Dimension satelliteSize = new Dimension(viewerSize.width / 4, viewerSize.height / 4);
 		final SatelliteVisualizationViewer<AttributedVertex, AttributedEdge> satellite =
-			SatelliteVisualizationViewer.builder(parentViewer)
-					.viewSize(satelliteSize)
-					.build();
+			SatelliteVisualizationViewer.builder(parentViewer).viewSize(satelliteSize).build();
 
 		//
 		// JUNGRAPHT CHANGE 3
@@ -1044,7 +1026,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 				.elements(vertices)
 				.maxFactor(.05)
 				.buttonSupplier(JRadioButton::new)
-				.paintFunction(v -> Color.BLACK)
+				.paintFunction(v -> Colors.FOREGROUND)
 				.build();
 
 		vertexFilters.addItemListener(item -> {
@@ -1062,7 +1044,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 				.elements(edges)
 				.maxFactor(.01)
 				.buttonSupplier(JRadioButton::new)
-				.paintFunction(e -> Color.BLACK)
+				.paintFunction(e -> Colors.FOREGROUND)
 				.build();
 
 		edgeFilters.addItemListener(item -> {
@@ -1124,10 +1106,8 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		componentProvider.setTitle(title);
 		int count = graph.getVertexCount();
 		if (count > options.getMaxNodeCount()) {
-			Msg.showWarn(this, null, "Graph Not Rendered - Too many nodes!",
-				"Exceeded limit of " + options.getMaxNodeCount() + " nodes.\n\n  Graph contained " +
-					count +
-					" nodes!");
+			Msg.showWarn(this, null, "Graph Not Rendered - Too many nodes!", "Exceeded limit of " +
+				options.getMaxNodeCount() + " nodes.\n\n  Graph contained " + count + " nodes!");
 			graph = new AttributedGraph("Aborted", graph.getGraphType(), "Too Many Nodes");
 			graph.addVertex("1", "Graph Aborted");
 		}
@@ -1293,7 +1273,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		graphRenderer.initializeViewer(vv);
 
 		vv.getComponent().requestFocus();
-		vv.setBackground(Color.WHITE);
+		vv.setBackground(BACKGROUND_COLOR);
 		MouseListener[] mouseListeners = vv.getComponent().getMouseListeners();
 		for (MouseListener mouseListener : mouseListeners) {
 			vv.getComponent().removeMouseListener(mouseListener);
@@ -1334,8 +1314,8 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	public void addAction(DockingActionIf action) {
 
 		if (containsAction(action)) {
-			Msg.warn(this, "Action with same name and owner already exixts in graph: " +
-				action.getFullName());
+			Msg.warn(this,
+				"Action with same name and owner already exixts in graph: " + action.getFullName());
 			return;
 		}
 
@@ -1387,20 +1367,17 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		MutableSelectedState<AttributedVertex> selectedVertexState =
 			viewer.getSelectedVertexState();
 		if (hideSelected && hideUnselected) {
-			viewer.getRenderContext()
-					.setVertexIncludePredicate(v -> false);
+			viewer.getRenderContext().setVertexIncludePredicate(v -> false);
 		}
 		else if (hideSelected) {
 			viewer.getRenderContext()
 					.setVertexIncludePredicate(Predicate.not(selectedVertexState::isSelected));
 		}
 		else if (hideUnselected) {
-			viewer.getRenderContext()
-					.setVertexIncludePredicate(selectedVertexState::isSelected);
+			viewer.getRenderContext().setVertexIncludePredicate(selectedVertexState::isSelected);
 		}
 		else {
-			viewer.getRenderContext()
-					.setVertexIncludePredicate(v -> true);
+			viewer.getRenderContext().setVertexIncludePredicate(v -> true);
 		}
 		viewer.repaint();
 	}
@@ -1467,8 +1444,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		@Override
 		public AttributedVertex getVertex(MouseEvent event) {
 
-			LayoutModel<AttributedVertex> layoutModel =
-				vv.getVisualizationModel().getLayoutModel();
+			LayoutModel<AttributedVertex> layoutModel = vv.getVisualizationModel().getLayoutModel();
 			Point2D p = vv.getTransformSupport().inverseTransform(vv, event.getPoint());
 			AttributedVertex vertex =
 				vv.getPickSupport().getVertex(layoutModel, p.getX(), p.getY());
@@ -1477,8 +1453,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 
 		@Override
 		public AttributedEdge getEdge(MouseEvent event) {
-			LayoutModel<AttributedVertex> layoutModel =
-				vv.getVisualizationModel().getLayoutModel();
+			LayoutModel<AttributedVertex> layoutModel = vv.getVisualizationModel().getLayoutModel();
 			Point2D p = vv.getTransformSupport().inverseTransform(vv, event.getPoint());
 			AttributedEdge edge = vv.getPickSupport().getEdge(layoutModel, p.getX(), p.getY());
 			return edge;

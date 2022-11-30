@@ -20,7 +20,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -30,6 +30,8 @@ import docking.widgets.fieldpanel.*;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.FieldSelection;
+import generic.theme.GColor;
+import generic.theme.GIcon;
 import ghidra.GhidraOptions;
 import ghidra.app.events.ProgramHighlightPluginEvent;
 import ghidra.app.events.ProgramSelectionPluginEvent;
@@ -55,21 +57,27 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.*;
-import resources.ResourceManager;
 
 public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> extends Plugin
 		implements CodeViewerService, CodeFormatService, OptionsChangeListener, FormatModelListener,
 		DomainObjectListener, CodeBrowserPluginInterface {
 
-	private static final Color CURSOR_LINE_COLOR = GhidraOptions.DEFAULT_CURSOR_LINE_COLOR;
-	private static final String CURSOR_COLOR = "Cursor.Cursor Color - Focused";
-	private static final String UNFOCUSED_CURSOR_COLOR = "Cursor.Cursor Color - Unfocused";
-	private static final String BLINK_CURSOR = "Cursor.Blink Cursor";
-	private static final String MOUSE_WHEEL_HORIZONTAL_SCROLLING = "Mouse.Horizontal Scrolling";
+	private static final String CURSOR_COLOR_OPTIONS_NAME = "Cursor.Cursor Color - Focused";
+	private static final String UNFOCUSED_CURSOR_COLOR_OPTIONS_NAME =
+		"Cursor.Cursor Color - Unfocused";
+	private static final String BLINK_CURSOR_OPTIONS_NAME = "Cursor.Blink Cursor";
+	private static final String MOUSE_WHEEL_HORIZONTAL_SCROLLING_OPTIONS_NAME =
+		"Mouse.Horizontal Scrolling";
+
+	//@formatter:off
+	private static final GColor FOCUSED_CURSOR_COLOR = new GColor("color.cursor.focused.listing");
+	private static final GColor UNFOCUSED_CURSOR_COLOR = new GColor("color.cursor.unfocused.listing");
+	private static final GColor CURRENT_LINE_HIGHLIGHT_COLOR = new GColor("color.bg.currentline.listing");
+	//@formatter:on
 
 	// - Icon -
-	private ImageIcon CURSOR_LOC_ICON =
-		ResourceManager.loadImage("images/cursor_arrow_flipped.gif");
+	private static final Icon CURSOR_LOC_ICON =
+		new GIcon("icon.plugin.codebrowser.cursor.location");
 	protected final P connectedProvider;
 	protected List<P> disconnectedProviders = new ArrayList<>();
 	protected FormatManager formatMgr;
@@ -406,15 +414,15 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 					highlightMarkers.setMarkerColor(color);
 				}
 			}
-			else if (optionName.equals(CURSOR_COLOR)) {
+			else if (optionName.equals(CURSOR_COLOR_OPTIONS_NAME)) {
 				Color color = ((Color) newValue);
 				fieldPanel.setFocusedCursorColor(color);
 			}
-			else if (optionName.equals(UNFOCUSED_CURSOR_COLOR)) {
+			else if (optionName.equals(UNFOCUSED_CURSOR_COLOR_OPTIONS_NAME)) {
 				Color color = ((Color) newValue);
 				fieldPanel.setNonFocusCursorColor(color);
 			}
-			else if (optionName.equals(BLINK_CURSOR)) {
+			else if (optionName.equals(BLINK_CURSOR_OPTIONS_NAME)) {
 				Boolean isBlinkCursor = ((Boolean) newValue);
 				fieldPanel.setBlinkCursor(isBlinkCursor);
 			}
@@ -430,7 +438,7 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 					currentCursorMarkers.setColoringBackground(isHighlightCursorLine);
 				}
 			}
-			else if (optionName.equals(MOUSE_WHEEL_HORIZONTAL_SCROLLING)) {
+			else if (optionName.equals(MOUSE_WHEEL_HORIZONTAL_SCROLLING_OPTIONS_NAME)) {
 				fieldPanel.setHorizontalScrollingEnabled((Boolean) newValue);
 			}
 
@@ -547,26 +555,32 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 		HelpLocation helpLocation = new HelpLocation(getName(), "Selection Colors");
 		fieldOptions.getOptions("Selection Colors").setOptionsHelpLocation(helpLocation);
 
-		fieldOptions.registerOption(GhidraOptions.OPTION_SELECTION_COLOR,
-			GhidraOptions.DEFAULT_SELECTION_COLOR, helpLocation,
+		fieldOptions.registerThemeColorBinding(GhidraOptions.OPTION_SELECTION_COLOR,
+			GhidraOptions.DEFAULT_SELECTION_COLOR.getId(), helpLocation,
 			"The selection color in the browser.");
-		fieldOptions.registerOption(GhidraOptions.OPTION_HIGHLIGHT_COLOR,
-			GhidraOptions.DEFAULT_HIGHLIGHT_COLOR, helpLocation,
+		fieldOptions.registerThemeColorBinding(GhidraOptions.OPTION_HIGHLIGHT_COLOR,
+			GhidraOptions.DEFAULT_HIGHLIGHT_COLOR.getId(), helpLocation,
 			"The highlight color in the browser.");
 
-		fieldOptions.registerOption(CURSOR_COLOR, Color.RED, helpLocation,
+		fieldOptions.registerThemeColorBinding(CURSOR_COLOR_OPTIONS_NAME,
+			FOCUSED_CURSOR_COLOR.getId(),
+			helpLocation,
 			"The color of the cursor in the browser.");
-		fieldOptions.registerOption(UNFOCUSED_CURSOR_COLOR, Color.PINK, helpLocation,
+		fieldOptions.registerThemeColorBinding(UNFOCUSED_CURSOR_COLOR_OPTIONS_NAME,
+			UNFOCUSED_CURSOR_COLOR.getId(),
+			helpLocation,
 			"The color of the cursor in the browser when the browser does not have focus.");
-		fieldOptions.registerOption(BLINK_CURSOR, true, helpLocation,
+		fieldOptions.registerOption(BLINK_CURSOR_OPTIONS_NAME, true, helpLocation,
 			"When selected, the cursor will blink when the containing window is focused.");
-		fieldOptions.registerOption(GhidraOptions.HIGHLIGHT_CURSOR_LINE_COLOR, CURSOR_LINE_COLOR,
-			helpLocation, "The background color of the line where the cursor is located");
+		fieldOptions.registerThemeColorBinding(GhidraOptions.HIGHLIGHT_CURSOR_LINE_COLOR,
+			CURRENT_LINE_HIGHLIGHT_COLOR.getId(), helpLocation,
+			"The background color of the line where the cursor is located");
 		fieldOptions.registerOption(GhidraOptions.HIGHLIGHT_CURSOR_LINE, true, helpLocation,
 			"Toggles highlighting background color of line containing the cursor");
 
 		helpLocation = new HelpLocation(getName(), "Keyboard_Controls_Shift");
-		fieldOptions.registerOption(MOUSE_WHEEL_HORIZONTAL_SCROLLING, true, helpLocation,
+		fieldOptions.registerOption(MOUSE_WHEEL_HORIZONTAL_SCROLLING_OPTIONS_NAME, true,
+			helpLocation,
 			"Enables horizontal scrolling by holding the Shift key while " +
 				"using the mouse scroll wheel");
 
@@ -581,28 +595,29 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 		}
 
 		color =
-			fieldOptions.getColor(GhidraOptions.OPTION_HIGHLIGHT_COLOR, new Color(255, 255, 180));
+			fieldOptions.getColor(GhidraOptions.OPTION_HIGHLIGHT_COLOR,
+				GhidraOptions.DEFAULT_HIGHLIGHT_COLOR);
 		MarkerSet highlightMarkers = getHighlightMarkers(currentProgram);
 		fieldPanel.setHighlightColor(color);
 		if (highlightMarkers != null) {
 			highlightMarkers.setMarkerColor(color);
 		}
 
-		color = fieldOptions.getColor(CURSOR_COLOR, Color.RED);
+		color = fieldOptions.getColor(CURSOR_COLOR_OPTIONS_NAME, FOCUSED_CURSOR_COLOR);
 		fieldPanel.setFocusedCursorColor(color);
 
-		color = fieldOptions.getColor(UNFOCUSED_CURSOR_COLOR, Color.PINK);
+		color = fieldOptions.getColor(UNFOCUSED_CURSOR_COLOR_OPTIONS_NAME, UNFOCUSED_CURSOR_COLOR);
 		fieldPanel.setNonFocusCursorColor(color);
 
-		Boolean isBlinkCursor = fieldOptions.getBoolean(BLINK_CURSOR, true);
+		Boolean isBlinkCursor = fieldOptions.getBoolean(BLINK_CURSOR_OPTIONS_NAME, true);
 		fieldPanel.setBlinkCursor(isBlinkCursor);
 
 		boolean horizontalScrollingEnabled =
-			fieldOptions.getBoolean(MOUSE_WHEEL_HORIZONTAL_SCROLLING, true);
+			fieldOptions.getBoolean(MOUSE_WHEEL_HORIZONTAL_SCROLLING_OPTIONS_NAME, true);
 		fieldPanel.setHorizontalScrollingEnabled(horizontalScrollingEnabled);
 
-		cursorHighlightColor =
-			fieldOptions.getColor(GhidraOptions.HIGHLIGHT_CURSOR_LINE_COLOR, CURSOR_LINE_COLOR);
+		cursorHighlightColor = fieldOptions.getColor(GhidraOptions.HIGHLIGHT_CURSOR_LINE_COLOR,
+			CURRENT_LINE_HIGHLIGHT_COLOR);
 
 		isHighlightCursorLine = fieldOptions.getBoolean(GhidraOptions.HIGHLIGHT_CURSOR_LINE, true);
 	}

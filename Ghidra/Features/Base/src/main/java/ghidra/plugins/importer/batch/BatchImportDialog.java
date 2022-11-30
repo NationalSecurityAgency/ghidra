@@ -38,6 +38,7 @@ import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.label.GDLabel;
 import docking.widgets.table.*;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.services.ProgramManager;
 import ghidra.formats.gfilesystem.FSRL;
 import ghidra.formats.gfilesystem.FileSystemService;
@@ -537,7 +538,8 @@ public class BatchImportDialog extends DialogComponentProvider {
 			protected String getText(Object value) {
 				BatchGroupLoadSpec bgls = (BatchGroupLoadSpec) value;
 				return (bgls != null) ? bgls.toString()
-						: "<html><font size=\"-2\" color=\"gray\">Click to set language</font>";
+						: "<html><font size=\"-2\" color=\"" + Messages.HINT +
+							"\">Click to set language</font>";
 			}
 		};
 

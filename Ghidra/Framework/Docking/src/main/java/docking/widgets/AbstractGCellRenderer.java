@@ -20,8 +20,12 @@ import java.awt.*;
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.border.Border;
+import javax.swing.plaf.UIResource;
 
 import docking.widgets.label.GDHtmlLabel;
+import generic.theme.GColor;
+import generic.theme.GColorUIResource;
+import generic.theme.GThemeDefaults.Colors.Palette;
 
 /**
  * A common base class for list and table renderer objects, unifying the Ghidra look and feel.
@@ -31,8 +35,8 @@ import docking.widgets.label.GDHtmlLabel;
  *
  */
 public abstract class AbstractGCellRenderer extends GDHtmlLabel {
-
-	private static final Color ALTERNATE_BACKGROUND_COLOR = new Color(237, 243, 254);
+	private static final Color BACKGROUND_COLOR = new GColor("color.bg.table.row");
+	private static final Color ALT_BACKGROUND_COLOR = new GColor("color.bg.table.row.alt");
 
 	/** Allows the user to disable alternating row colors on JLists and JTables */
 	private static final String DISABLE_ALTERNATING_ROW_COLORS_PROPERTY =
@@ -56,7 +60,7 @@ public abstract class AbstractGCellRenderer extends GDHtmlLabel {
 	public AbstractGCellRenderer() {
 		noFocusBorder = BorderFactory.createEmptyBorder(0, 5, 0, 5);
 		Border innerBorder = BorderFactory.createEmptyBorder(0, 4, 0, 4);
-		Border outerBorder = BorderFactory.createLineBorder(Color.YELLOW, 1);
+		Border outerBorder = BorderFactory.createLineBorder(Palette.YELLOW, 1);
 		focusBorder = BorderFactory.createCompoundBorder(outerBorder, innerBorder);
 		setBorder(noFocusBorder);
 
@@ -118,7 +122,7 @@ public abstract class AbstractGCellRenderer extends GDHtmlLabel {
 		super.setFont(f);
 		defaultFont = f;
 		fixedWidthFont = new Font("monospaced", defaultFont.getStyle(), defaultFont.getSize());
-		boldFont = new Font(defaultFont.getName(), Font.BOLD, defaultFont.getSize());
+		boldFont = f.deriveFont(Font.BOLD);
 	}
 
 	protected void superSetFont(Font font) {
@@ -156,7 +160,7 @@ public abstract class AbstractGCellRenderer extends GDHtmlLabel {
 	}
 
 	protected Color getDefaultBackgroundColor() {
-		return Color.WHITE;
+		return BACKGROUND_COLOR;
 	}
 
 	protected Color getBackgroundColorForRow(int row) {
@@ -164,7 +168,7 @@ public abstract class AbstractGCellRenderer extends GDHtmlLabel {
 		if ((row & 1) == 1) {
 			return getDefaultBackgroundColor();
 		}
-		return ALTERNATE_BACKGROUND_COLOR;
+		return ALT_BACKGROUND_COLOR;
 	}
 
 // ==================================================================================================
@@ -266,4 +270,44 @@ public abstract class AbstractGCellRenderer extends GDHtmlLabel {
 	public void firePropertyChange(String propertyName, boolean oldValue, boolean newValue) {
 		// stub
 	}
+
+	/**
+	 * Overrides this method to ensure that the new foreground color is not
+	 * a {@link GColorUIResource}. Some Look and Feels will ignore color values that extend
+	 * {@link UIResource}, choosing instead their own custom painting behavior. By not using a 
+	 * UIResource, we prevent the Look and Feel from overriding this renderer's color value.
+	 *  
+	 * @param fg the new foreground color
+	 */
+	@Override
+	public void setForeground(Color fg) {
+		super.setForeground(fromUiResource(fg));
+	}
+
+	/**
+	 * Overrides this method to ensure that the new background color is not
+	 * a {@link GColorUIResource}. Some Look and Feels will ignore color values that extend
+	 * {@link UIResource}, choosing instead their own custom painting behavior. By not using a 
+	 * UIResource, we prevent the Look and Feel from overriding this renderer's color value.
+	 * 
+	 * @param bg the new background color
+	 */
+	@Override
+	public void setBackground(Color bg) {
+		super.setBackground(fromUiResource(bg));
+	}
+
+	/**
+	 * Checks and converts any {@link GColorUIResource} to a {@link GColor}
+	 * @param color the color to check if it is a {@link UIResource}
+	 * @return either the given color or if it is a {@link GColorUIResource}, then a plain
+	 * {@link GColor} instance referring to the same theme color  property id.
+	 */
+	private Color fromUiResource(Color color) {
+		if (color instanceof GColorUIResource uiResource) {
+			return uiResource.toGColor();
+		}
+		return color;
+	}
+
 }

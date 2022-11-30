@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +15,6 @@
  */
 package ghidra.util.table;
 
-import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.Program;
-import ghidra.program.model.mem.Memory;
-import ghidra.program.model.symbol.ExternalLocation;
-import ghidra.program.model.symbol.Symbol;
-
 import java.awt.Color;
 import java.awt.Font;
 
@@ -29,12 +22,23 @@ import javax.swing.JTable;
 import javax.swing.table.TableModel;
 
 import docking.widgets.table.GTableCellRenderer;
+import generic.theme.GColor;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.mem.Memory;
+import ghidra.program.model.symbol.ExternalLocation;
+import ghidra.program.model.symbol.Symbol;
 
 public class GhidraTableCellRenderer extends GTableCellRenderer {
 
 	// Defaults as defined by OptionsGui class - would be nice to use the tool options
-	private static final Color BAD_REF_ADDR_COLOR = Color.red;
-	private static final Color EXT_REF_RESOLVED_COLOR = Color.CYAN.darker().darker();
+	private static final Color BAD_REF_ADDR_COLOR = new GColor("color.fg.listing.ref.bad");
+	private static final Color EXT_REF_RESOLVED_COLOR =
+		new GColor("color.fg.listing.ref.ext.resolved");
+	public Color SELECTED_CELL_COLOR = new GColor("color.bg.table.selected.ghidratable");
+	public Color BAD_EQUATE_COLOR = new GColor("color.fg.table.ghidratable.equate.bad");
+	public Color EQUATE_COLOR = new GColor("color.fg.table.ghidratable.equate");
+	public Color SUGGESTION_COLOR = new GColor("color.fg.table.ghidratable.suggestion");
 
 	public GhidraTableCellRenderer() {
 		// default constructor

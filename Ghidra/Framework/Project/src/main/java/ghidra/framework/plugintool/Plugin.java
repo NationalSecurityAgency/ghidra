@@ -15,6 +15,7 @@
  */
 package ghidra.framework.plugintool;
 
+import java.net.URL;
 import java.util.*;
 
 import docking.ComponentProvider;
@@ -327,6 +328,17 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 	 * @return boolean true if can accept
 	 */
 	public boolean acceptData(DomainFile[] data) {
+		return false;
+	}
+
+	/**
+	 * Request plugin to process URL if supported.  Actual processing may be delayed and 
+	 * interaction with user may occur (e.g., authentication, approval, etc.).
+	 * <p>
+	 * @param url data URL
+	 * @return boolean true if this plugin can process URL.
+	 */
+	public boolean accept(URL url) {
 		return false;
 	}
 

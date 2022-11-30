@@ -38,6 +38,8 @@ dependencies {
 	api 'org.bouncycastle:bcpkix-jdk15on:1.69' // requires bcutil and bcprov
 	api 'org.bouncycastle:bcprov-jdk15on:1.69'
 	api 'org.bouncycastle:bcutil-jdk15on:1.69'
+	api 'com.formdev:flatlaf:2.6'
+	
 
 	compileOnly "junit:junit:4.12"
 }

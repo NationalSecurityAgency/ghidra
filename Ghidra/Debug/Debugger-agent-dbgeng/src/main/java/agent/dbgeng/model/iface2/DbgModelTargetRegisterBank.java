@@ -25,12 +25,10 @@ import agent.dbgeng.manager.DbgThread;
 import agent.dbgeng.manager.impl.*;
 import ghidra.async.AsyncUtils;
 import ghidra.async.TypeSpec;
-import ghidra.dbg.DebuggerModelListener;
 import ghidra.dbg.error.DebuggerRegisterAccessException;
 import ghidra.dbg.target.TargetRegisterBank;
 import ghidra.dbg.util.ConversionUtils;
 import ghidra.util.Msg;
-import ghidra.util.datastruct.ListenerSet;
 
 public interface DbgModelTargetRegisterBank extends DbgModelTargetObject, TargetRegisterBank {
 
@@ -91,10 +89,8 @@ public interface DbgModelTargetRegisterBank extends DbgModelTargetObject, Target
 					reg.setModified(value.toString(16).equals(oldval));
 				}
 			}
-			ListenerSet<DebuggerModelListener> listeners = getListeners();
-			if (listeners != null) {
-				listeners.fire.registersUpdated(getProxy(), result);
-			}
+
+			broadcast().registersUpdated(getProxy(), result);
 			return result;
 		});
 	}
@@ -126,7 +122,7 @@ public interface DbgModelTargetRegisterBank extends DbgModelTargetObject, Target
 			getParentThread().getThread().writeRegisters(toWrite).handle(seq::next);
 			// TODO: Should probably filter only effective and normalized writes in the callback
 		}).then(seq -> {
-			getListeners().fire.registersUpdated(getProxy(), values);
+			broadcast().registersUpdated(getProxy(), values);
 			seq.exit();
 		}).finish();
 	}

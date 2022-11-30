@@ -10,3 +10,4 @@ MODULE FILE LICENSE: lib/gson-2.9.0.jar Apache License 2.0
 MODULE FILE LICENSE: lib/bcpkix-jdk15on-1.69.jar Bouncy Castle License
 MODULE FILE LICENSE: lib/bcprov-jdk15on-1.69.jar Bouncy Castle License
 MODULE FILE LICENSE: lib/bcutil-jdk15on-1.69.jar Bouncy Castle License
+MODULE FILE LICENSE: lib/flatlaf-2.6.jar Apache License 2.0

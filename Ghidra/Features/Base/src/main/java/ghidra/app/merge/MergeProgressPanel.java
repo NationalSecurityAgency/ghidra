@@ -16,17 +16,18 @@
 package ghidra.app.merge;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.util.HashMap;
+import java.util.Map;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 
 import docking.widgets.label.GIconLabel;
 import docking.widgets.label.GLabel;
+import generic.theme.GIcon;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.util.Msg;
 import ghidra.util.layout.VerticalLayout;
-import resources.ResourceManager;
 
 /**
  * The MergeProgressPanel displays the name of each merge phase along with an icon indicating
@@ -34,11 +35,10 @@ import resources.ResourceManager;
  */
 public class MergeProgressPanel extends JPanel {
 
-	public static ImageIcon DEFINED_ICON = ResourceManager.loadImage("images/bullet_green.png");
-	public static ImageIcon IN_PROGRESS_ICON = ResourceManager.loadImage("images/right.png");
-	public static ImageIcon COMPLETED_ICON =
-		ResourceManager.loadImage("images/checkmark_green.gif");
-	private HashMap<String, JLabel> imageMap = new HashMap<>();
+	public static Icon DEFINED_ICON = new GIcon("icon.plugin.merge.status.pending");
+	public static Icon IN_PROGRESS_ICON = new GIcon("icon.plugin.merge.status.in.progress");
+	public static Icon COMPLETED_ICON = new GIcon("icon.plugin.merge.status.complete");
+	private Map<String, JLabel> imageMap = new HashMap<>();
 	private static int INDENT_IN_PIXELS = 20;
 
 	/**
@@ -52,7 +52,7 @@ public class MergeProgressPanel extends JPanel {
 	private JPanel getProgressTitlePanel() {
 		JPanel phasesTitlePanel = new JPanel();
 		Border insideBorder = BorderFactory.createEmptyBorder(0, 0, 2, 0);
-		Border outsideBorder = BorderFactory.createMatteBorder(0, 0, 2, 0, Color.BLUE);
+		Border outsideBorder = BorderFactory.createMatteBorder(0, 0, 2, 0, Palette.BLUE);
 		Border compoundBorder = BorderFactory.createCompoundBorder(outsideBorder, insideBorder);
 		phasesTitlePanel.setBorder(compoundBorder);
 		BoxLayout bl = new BoxLayout(phasesTitlePanel, BoxLayout.X_AXIS);
@@ -139,9 +139,6 @@ public class MergeProgressPanel extends JPanel {
 		return buf.toString();
 	}
 
-	/**
-	 * @param args
-	 */
 	public static void main(String[] args) {
 		MergeProgressPanel panel = new MergeProgressPanel();
 

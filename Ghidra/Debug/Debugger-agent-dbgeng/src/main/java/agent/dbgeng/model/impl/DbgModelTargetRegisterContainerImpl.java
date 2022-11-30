@@ -134,7 +134,7 @@ public class DbgModelTargetRegisterContainerImpl extends DbgModelTargetObjectImp
 				changeAttrs(reg, value);
 			}
 			this.values = result;
-			listeners.fire.registersUpdated(getProxy(), result);
+			broadcast().registersUpdated(getProxy(), result);
 			return result;
 		}));
 	}
@@ -159,7 +159,7 @@ public class DbgModelTargetRegisterContainerImpl extends DbgModelTargetObjectImp
 			return thread.writeRegisters(toWrite);
 			// TODO: Should probably filter only effective and normalized writes in the callback
 		}).thenAccept(__ -> {
-			listeners.fire.registersUpdated(getProxy(), values);
+			broadcast().registersUpdated(getProxy(), values);
 		}));
 	}
 

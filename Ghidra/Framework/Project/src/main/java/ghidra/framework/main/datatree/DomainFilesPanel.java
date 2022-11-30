@@ -25,6 +25,7 @@ import javax.swing.*;
 
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.list.ListPanel;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.framework.model.DomainFile;
 
 /**
@@ -52,7 +53,7 @@ class DomainFilesPanel extends JPanel {
 		for (int i = 0; i < fileList.size(); i++) {
 			DomainFile df = fileList.get(i);
 			checkboxes[i] = new GCheckBox(df.getPathname(), true);
-			checkboxes[i].setBackground(Color.white);
+			checkboxes[i].setBackground(Colors.BACKGROUND);
 		}
 
 		//

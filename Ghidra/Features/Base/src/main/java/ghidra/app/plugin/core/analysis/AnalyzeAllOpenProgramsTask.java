@@ -25,6 +25,7 @@ import javax.swing.text.html.HTMLEditorKit;
 
 import docking.widgets.OptionDialog;
 import docking.widgets.label.GLabel;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.GhidraOptions;
 import ghidra.app.services.ProgramManager;
 import ghidra.framework.model.DomainObject;
@@ -270,7 +271,7 @@ class AnalyzeAllOpenProgramsTask extends Task {
 
 		appendTableHeader(buffy);
 
-		String specialFontOpen = "<B><font color=\"green\">";
+		String specialFontOpen = "<B><font color=\"" + Palette.GREEN.toHexString() + "\">";
 		String specialFontClose = "</font></B>";
 
 		for (Program program : validList) {

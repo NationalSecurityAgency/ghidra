@@ -115,9 +115,9 @@ public class DebuggerMemoryByteViewerComponent extends ByteViewerComponent
 	private final DebuggerMemoryBytesPanel panel;
 
 	@AutoOptionConsumed(name = DebuggerResources.OPTION_NAME_COLORS_ERROR_MEMORY)
-	private Color errorColor;
+	private Color errorColor = DebuggerResources.DEFAULT_COLOR_BACKGROUND_ERROR;
 	@AutoOptionConsumed(name = DebuggerResources.OPTION_NAME_COLORS_STALE_MEMORY)
-	private Color unknownColor;
+	private Color unknownColor = DebuggerResources.DEFAULT_COLOR_BACKGROUND_STALE;
 	@SuppressWarnings("unused")
 	private final AutoOptions.Wiring autoOptionsWiring;
 

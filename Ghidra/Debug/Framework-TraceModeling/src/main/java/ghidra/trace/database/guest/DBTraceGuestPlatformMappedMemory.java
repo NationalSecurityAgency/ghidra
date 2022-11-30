@@ -381,7 +381,7 @@ public class DBTraceGuestPlatformMappedMemory implements Memory {
 			int savedLimit = buffer.limit();
 			try {
 				buffer.limit(buffer.position() + lenToRead);
-				hostSpace.getBytes(snap, hostCur, buffer);
+				hostSpace.getViewBytes(snap, hostCur, buffer);
 			}
 			finally {
 				buffer.limit(savedLimit);

@@ -18,12 +18,13 @@ package ghidra.program.database;
 import java.io.IOException;
 
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 
 import db.*;
 import db.buffers.BufferFile;
 import db.buffers.ManagedBufferFile;
-import ghidra.framework.data.*;
+import generic.theme.GIcon;
+import ghidra.framework.data.DBWithUserDataContentHandler;
+import ghidra.framework.data.DomainObjectMergeManager;
 import ghidra.framework.model.ChangeSet;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.store.*;
@@ -32,19 +33,22 @@ import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
-import resources.ResourceManager;
 
 /**
  * <code>ProgramContentHandler</code> converts between Program instantiations
  * and FolderItem storage.  This class also produces the appropriate Icon for 
  * Program files.
  */
-public class ProgramContentHandler extends DBContentHandler {
-
-	// scale just a bit to make a nice, slender document
-	public static ImageIcon PROGRAM_ICON = ResourceManager.loadImage("images/program_obj.png");
+public class ProgramContentHandler extends DBWithUserDataContentHandler<ProgramDB> {
 
 	public static final String PROGRAM_CONTENT_TYPE = "Program";
+
+	public static Icon PROGRAM_ICON = new GIcon("icon.content.handler.program");
+
+	static final Class<ProgramDB> PROGRAM_DOMAIN_OBJECT_CLASS = ProgramDB.class;
+	static final String PROGRAM_CONTENT_DEFAULT_TOOL = "CodeBrowser";
+
+	private static final ProgramLinkContentHandler linkHandler = new ProgramLinkContentHandler();
 
 	@Override
 	public long createFile(FileSystem fs, FileSystem userfs, String path, String name,
@@ -54,11 +58,12 @@ public class ProgramContentHandler extends DBContentHandler {
 		if (!(obj instanceof ProgramDB)) {
 			throw new IOException("Unsupported domain object: " + obj.getClass().getName());
 		}
-		return createFile((ProgramDB) obj, PROGRAM_CONTENT_TYPE, fs, path, name, monitor);
+		return createFile((ProgramDB) obj, PROGRAM_CONTENT_TYPE, fs, path, name,
+			monitor);
 	}
 
 	@Override
-	public DomainObjectAdapter getImmutableObject(FolderItem item, Object consumer, int version,
+	public ProgramDB getImmutableObject(FolderItem item, Object consumer, int version,
 			int minChangeVersion, TaskMonitor monitor)
 			throws IOException, VersionException, CancelledException {
 		String contentType = item.getContentType();
@@ -82,13 +87,7 @@ public class ProgramContentHandler extends DBContentHandler {
 		catch (Field.UnsupportedFieldException e) {
 			throw new VersionException(false);
 		}
-		catch (VersionException e) {
-			throw e;
-		}
-		catch (IOException e) {
-			throw e;
-		}
-		catch (CancelledException e) {
+		catch (VersionException | IOException | CancelledException e) {
 			throw e;
 		}
 		catch (Throwable t) {
@@ -115,7 +114,7 @@ public class ProgramContentHandler extends DBContentHandler {
 	}
 
 	@Override
-	public DomainObjectAdapter getReadOnlyObject(FolderItem item, int version, boolean okToUpgrade,
+	public ProgramDB getReadOnlyObject(FolderItem item, int version, boolean okToUpgrade,
 			Object consumer, TaskMonitor monitor)
 			throws IOException, VersionException, CancelledException {
 
@@ -141,13 +140,7 @@ public class ProgramContentHandler extends DBContentHandler {
 		catch (Field.UnsupportedFieldException e) {
 			throw new VersionException(false);
 		}
-		catch (VersionException e) {
-			throw e;
-		}
-		catch (IOException e) {
-			throw e;
-		}
-		catch (CancelledException e) {
+		catch (VersionException | IOException | CancelledException e) {
 			throw e;
 		}
 		catch (Throwable t) {
@@ -175,7 +168,7 @@ public class ProgramContentHandler extends DBContentHandler {
 	}
 
 	@Override
-	public DomainObjectAdapter getDomainObject(FolderItem item, FileSystem userfs, long checkoutId,
+	public ProgramDB getDomainObject(FolderItem item, FileSystem userfs, long checkoutId,
 			boolean okToUpgrade, boolean recover, Object consumer, TaskMonitor monitor)
 			throws IOException, VersionException, CancelledException {
 
@@ -207,13 +200,7 @@ public class ProgramContentHandler extends DBContentHandler {
 		catch (Field.UnsupportedFieldException e) {
 			throw new VersionException(false);
 		}
-		catch (VersionException e) {
-			throw e;
-		}
-		catch (IOException e) {
-			throw e;
-		}
-		catch (CancelledException e) {
+		catch (VersionException | IOException | CancelledException e) {
 			throw e;
 		}
 		catch (Throwable t) {
@@ -311,10 +298,7 @@ public class ProgramContentHandler extends DBContentHandler {
 			program = new ProgramDB(dbh, openMode, null, this);
 			return getProgramChangeSet(program, bf);
 		}
-		catch (VersionException e) {
-			throw e;
-		}
-		catch (IOException e) {
+		catch (VersionException | IOException e) {
 			throw e;
 		}
 		catch (Throwable t) {
@@ -339,8 +323,8 @@ public class ProgramContentHandler extends DBContentHandler {
 	}
 
 	@Override
-	public Class<? extends DomainObject> getDomainObjectClass() {
-		return ProgramDB.class;
+	public Class<ProgramDB> getDomainObjectClass() {
+		return PROGRAM_DOMAIN_OBJECT_CLASS;
 	}
 
 	@Override
@@ -350,12 +334,12 @@ public class ProgramContentHandler extends DBContentHandler {
 
 	@Override
 	public String getContentTypeDisplayString() {
-		return "Program";
+		return PROGRAM_CONTENT_TYPE;
 	}
 
 	@Override
 	public String getDefaultToolName() {
-		return "CodeBrowser";
+		return PROGRAM_CONTENT_DEFAULT_TOOL;
 	}
 
 	@Override
@@ -373,6 +357,11 @@ public class ProgramContentHandler extends DBContentHandler {
 			DomainObject originalObj, DomainObject latestObj) {
 		return ProgramMultiUserMergeManagerFactory.getMergeManager(resultsObj, sourceObj,
 			originalObj, latestObj);
+	}
+
+	@Override
+	public ProgramLinkContentHandler getLinkHandler() {
+		return linkHandler;
 	}
 
 }

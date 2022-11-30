@@ -21,8 +21,8 @@ import java.util.Hashtable;
 
 import javax.swing.ImageIcon;
 
-import generic.Images;
 import resources.ResourceManager;
+import resources.icons.UnresolvedIcon;
 
 /**
  * Container class for an icon and its location. If the location is
@@ -65,7 +65,7 @@ public class ToolIconURL implements Comparable<ToolIconURL> {
 	 */
 	public ToolIconURL(String location) {
 		if (location == null) {
-			location = Images.BOMB;
+			location = ResourceManager.BOMB;
 		}
 		this.location = location;
 
@@ -76,7 +76,7 @@ public class ToolIconURL implements Comparable<ToolIconURL> {
 		// is it absolute, or in resources by the given path?
 		baseIcon = ResourceManager.loadImage(iconLocation);
 
-		if (baseIcon == ResourceManager.getDefaultIcon()) {
+		if (baseIcon instanceof UnresolvedIcon) {
 			// ...must not be, look for it in our 'special' locations
 			baseIcon = loadFromKnownImageResources(iconLocation);
 		}
@@ -143,8 +143,7 @@ public class ToolIconURL implements Comparable<ToolIconURL> {
 			return image;
 		}
 
-		return ResourceManager.getScaledIcon(unscaledIcon, SMALL_ICON_SIZE,
-			SMALL_ICON_SIZE);
+		return ResourceManager.getScaledIcon(unscaledIcon, SMALL_ICON_SIZE, SMALL_ICON_SIZE);
 	}
 
 	private ImageIcon getLargeIcon(ImageIcon unscaledIcon) {
@@ -167,12 +166,11 @@ public class ToolIconURL implements Comparable<ToolIconURL> {
 
 		// O.K., we will scale the icon.  However, if it is the default icon, we know we have 
 		// a 'large' version of that.
-		if (unscaledIcon == ResourceManager.getDefaultIcon()) {
-			return ResourceManager.loadImage(Images.BIG_BOMB);
+		if (unscaledIcon instanceof UnresolvedIcon) {
+			return ResourceManager.loadImage(ResourceManager.BIG_BOMB);
 		}
 
-		return ResourceManager.getScaledIcon(unscaledIcon, LARGE_ICON_SIZE,
-			LARGE_ICON_SIZE);
+		return ResourceManager.getScaledIcon(unscaledIcon, LARGE_ICON_SIZE, LARGE_ICON_SIZE);
 	}
 
 	private ImageIcon findCompatibleImageForSize(String imagePath, int desiredSize) {
@@ -191,11 +189,7 @@ public class ToolIconURL implements Comparable<ToolIconURL> {
 			name += location.substring(dotIndex);
 		}
 
-		ImageIcon image = getImageIcon(name);
-		if (image != null) {
-			return image;
-		}
-		return null;
+		return getImageIcon(name);
 	}
 
 	private String stripSizeOffName(String name) {
@@ -217,12 +211,8 @@ public class ToolIconURL implements Comparable<ToolIconURL> {
 	}
 
 	private ImageIcon getImageIcon(String name) {
-		ImageIcon image = ResourceManager.loadImage(name);
-		ImageIcon defaultIcon = ResourceManager.getDefaultIcon();
-		if (image == defaultIcon) {
-			if (!name.startsWith("images")) {
-				return getImageIcon("images/" + name);
-			}
+		ImageIcon image = ResourceManager.findIcon(name);
+		if (image instanceof UnresolvedIcon) {
 			return null;
 		}
 		return image;
@@ -289,16 +279,8 @@ public class ToolIconURL implements Comparable<ToolIconURL> {
 	 * @param name name of the icon
 	 */
 	private ImageIcon loadFromKnownImageResources(String name) {
-		// first look in special location for tool icons
 		String filename = "defaultTools/images/" + name;
-		ImageIcon image = ResourceManager.loadImage(filename);
-
-		// if we can't find the icon in the special tool icon location, then look in general images.
-		if (image == ResourceManager.getDefaultIcon()) {
-			filename = "images/" + name;
-			image = ResourceManager.loadImage(filename);
-		}
-		return image;
+		return ResourceManager.loadImage(filename);
 	}
 
 	private void checkAnimated(ImageIcon imgIcon) {

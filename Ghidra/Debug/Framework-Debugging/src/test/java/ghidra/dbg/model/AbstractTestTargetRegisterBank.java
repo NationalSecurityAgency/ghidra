@@ -64,7 +64,7 @@ public abstract class AbstractTestTargetRegisterBank<P extends TestTargetObject>
 		}
 		populateObjectValues(result, "Read registers");
 		return model.gateFuture(descs.getModel().future(result).thenApply(__ -> {
-			listeners.fire.registersUpdated(this, result);
+			broadcast().registersUpdated(this, result);
 			return result;
 		}));
 	}
@@ -90,7 +90,7 @@ public abstract class AbstractTestTargetRegisterBank<P extends TestTargetObject>
 		}
 		populateObjectValues(updates, "Write registers");
 		future.thenAccept(__ -> {
-			listeners.fire.registersUpdated(this, updates);
+			broadcast().registersUpdated(this, updates);
 		});
 		return model.gateFuture(future);
 	}

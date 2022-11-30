@@ -18,11 +18,12 @@ package ghidra.app.plugin.core.navigation;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import docking.DockingUtils;
 import docking.action.*;
 import docking.tool.ToolConstants;
+import generic.theme.GIcon;
 import ghidra.app.context.ProgramLocationActionContext;
 import ghidra.app.nav.PreviousRangeAction;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -30,20 +31,20 @@ import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
-import resources.ResourceManager;
 
 public class PreviousSelectedRangeAction extends PreviousRangeAction {
+
+	private Icon ICON = new GIcon("icon.plugin.navigation.selection.range.previous");
 
 	public PreviousSelectedRangeAction(PluginTool tool, String ownerName,
 			NavigationOptions navOptions) {
 		super(tool, "Previous Selected Range", ownerName, navOptions);
 
-		ImageIcon icon = ResourceManager.loadImage("images/PreviousSelectionBlock16.gif");
 		setMenuBarData(new MenuData(new String[] { ToolConstants.MENU_NAVIGATION,
-			"Previous Selected Range" }, icon, PluginCategoryNames.NAVIGATION,
+			"Previous Selected Range" }, ICON, PluginCategoryNames.NAVIGATION,
 			MenuData.NO_MNEMONIC, NextPrevSelectedRangePlugin.ACTION_SUB_GROUP));
 
-		setToolBarData(new ToolBarData(icon, ToolConstants.TOOLBAR_GROUP_THREE,
+		setToolBarData(new ToolBarData(ICON, ToolConstants.TOOLBAR_GROUP_THREE,
 			NextPrevSelectedRangePlugin.ACTION_SUB_GROUP));
 		setKeyBindingData(
 			new KeyBindingData(KeyEvent.VK_CLOSE_BRACKET, DockingUtils.CONTROL_KEY_MODIFIER_MASK |

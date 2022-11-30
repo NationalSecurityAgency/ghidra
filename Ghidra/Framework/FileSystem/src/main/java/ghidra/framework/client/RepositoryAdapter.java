@@ -158,8 +158,10 @@ public class RepositoryAdapter implements RemoteAdapterListener {
 
 	/**
 	 * Attempt to connect to the server.
+	 * @throws RepositoryNotFoundException if named repository does not exist
+	 * @throws IOException if IO error occurs
 	 */
-	public void connect() throws IOException {
+	public void connect() throws RepositoryNotFoundException, IOException {
 		synchronized (serverAdapter) {
 			if (repository != null) {
 				try {
@@ -180,7 +182,7 @@ public class RepositoryAdapter implements RemoteAdapterListener {
 				unexpectedDisconnect = false;
 				if (repository == null) {
 					noSuchRepository = true;
-					throw new IOException("Repository '" + name + "': not found");
+					throw new RepositoryNotFoundException("Repository '" + name + "': not found");
 				}
 				Msg.info(this, "Connected to repository '" + name + "'");
 				changeDispatcher.start();

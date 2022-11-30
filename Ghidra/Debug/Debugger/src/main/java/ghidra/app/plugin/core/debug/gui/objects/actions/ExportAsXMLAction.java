@@ -20,7 +20,7 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jdom.Document;
@@ -29,16 +29,16 @@ import org.jdom.Element;
 import docking.action.KeyBindingData;
 import docking.action.MenuData;
 import docking.widgets.filechooser.GhidraFileChooserMode;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.debug.gui.objects.DebuggerObjectsProvider;
 import ghidra.app.plugin.core.debug.gui.objects.ObjectContainer;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
 import ghidra.util.xml.XmlUtilities;
-import resources.ResourceManager;
 
 public class ExportAsXMLAction extends ImportExportAsAction {
 
-	protected ImageIcon ICON_XML = ResourceManager.loadImage("images/text-xml.png");
+	protected static final Icon ICON_XML = new GIcon("icon.debugger.display.export.xml");
 
 	public ExportAsXMLAction(PluginTool tool, String owner, DebuggerObjectsProvider provider) {
 		super("ExportAsXML", tool, owner, provider);

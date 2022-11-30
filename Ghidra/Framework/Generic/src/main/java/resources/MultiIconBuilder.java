@@ -52,7 +52,7 @@ public class MultiIconBuilder {
 	 * @return this builder (for chaining)
 	 */
 	public MultiIconBuilder addIcon(Icon icon, int w, int h, QUADRANT quandrant) {
-		ImageIcon scaled = ResourceManager.getScaledIcon(icon, w, h);
+		Icon scaled = ResourceManager.getScaledIcon(icon, w, h);
 
 		int x = (multiIcon.getIconWidth() - scaled.getIconWidth()) * quandrant.x;
 		int y = (multiIcon.getIconHeight() - scaled.getIconHeight()) * quandrant.y;
@@ -75,7 +75,7 @@ public class MultiIconBuilder {
 	 * @return this builder (for chaining)
 	 */
 	public MultiIconBuilder addIcon(Icon icon, int w, int h, int x, int y) {
-		ImageIcon scaled = ResourceManager.getScaledIcon(icon, w, h);
+		Icon scaled = ResourceManager.getScaledIcon(icon, w, h);
 		TranslateIcon txIcon = new TranslateIcon(scaled, x, y);
 		multiIcon.addIcon(txIcon);
 		return this;
@@ -125,6 +125,16 @@ public class MultiIconBuilder {
 	 */
 	public MultiIconBuilder addLowerLeftIcon(Icon icon, int w, int h) {
 		return addIcon(icon, w, h, QUADRANT.LL);
+	}
+
+	// TODO
+	public MultiIconBuilder addCenteredIcon(Icon icon) {
+		int x = (multiIcon.getIconWidth() - icon.getIconWidth()) / 2;
+		int y = (multiIcon.getIconHeight() - icon.getIconHeight()) / 2;
+
+		TranslateIcon txIcon = new TranslateIcon(icon, x, y);
+		multiIcon.addIcon(txIcon);
+		return this;
 	}
 
 	/**

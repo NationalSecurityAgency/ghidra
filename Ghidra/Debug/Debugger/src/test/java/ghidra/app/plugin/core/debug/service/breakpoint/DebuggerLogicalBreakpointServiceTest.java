@@ -1421,16 +1421,13 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		LogicalBreakpoint lb = Unique.assertOne(breakpointService.getAllBreakpoints());
 
 		// Simulate a step, which should also cause snap advance in recorder
-		long oldSnap = recorder1.getSnap();
 		mb.testModel.session.simulateStep(mb.testThread1);
-		waitOn(mb.testModel.flushEvents());
-		// NB. recorder may have its own threads / queues
-		waitForPass(() -> assertTrue(recorder1.getSnap() > oldSnap));
+		waitRecorder(recorder1);
 
 		waitOn(lb.delete());
 
 		waitForPass(() -> {
-			assertTrue(breakpointService.getAllBreakpoints().isEmpty());
+			assertEquals(0, breakpointService.getAllBreakpoints().size());
 		});
 	}
 

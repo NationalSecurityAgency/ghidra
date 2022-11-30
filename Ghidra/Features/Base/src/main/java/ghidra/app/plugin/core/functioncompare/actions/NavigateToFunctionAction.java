@@ -18,7 +18,7 @@ package ghidra.app.plugin.core.functioncompare.actions;
 import java.awt.event.*;
 import java.util.List;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import docking.action.ToggleDockingAction;
 import docking.action.ToolBarData;
@@ -48,7 +48,7 @@ public class NavigateToFunctionAction extends ToggleDockingAction {
 
 	private GoToService goToService;
 
-	private static final ImageIcon NAV_FUNCTION_ICON = Icons.NAVIGATE_ON_INCOMING_EVENT_ICON;
+	private static final Icon NAV_FUNCTION_ICON = Icons.NAVIGATE_ON_INCOMING_EVENT_ICON;
 
 	/**
 	 * Constructor
@@ -64,10 +64,9 @@ public class NavigateToFunctionAction extends ToggleDockingAction {
 		setSelected(false);
 		ToolBarData newToolBarData = new ToolBarData(NAV_FUNCTION_ICON);
 		setToolBarData(newToolBarData);
-		setDescription(
-			HTMLUtilities.toHTML("Toggle <b>On</b> means to navigate to whatever " +
-				"function is selected in the comparison panel, when focus changes or" +
-				"a new function is selected."));
+		setDescription(HTMLUtilities.toHTML("Toggle <b>On</b> means to navigate to whatever " +
+			"function is selected in the comparison panel, when focus changes or" +
+			"a new function is selected."));
 		setHelpLocation(
 			new HelpLocation(MultiFunctionComparisonPanel.HELP_TOPIC, "Navigate_To_Function"));
 

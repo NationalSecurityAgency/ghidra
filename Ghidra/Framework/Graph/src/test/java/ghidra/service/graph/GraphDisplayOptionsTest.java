@@ -18,17 +18,18 @@ package ghidra.service.graph;
 import static org.junit.Assert.*;
 
 import java.awt.Color;
+import java.awt.Font;
 import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
 
-import docking.FakeDockingTool;
+import generic.theme.*;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
 import ghidra.util.HelpLocation;
-import ghidra.util.WebColors;
 
 public class GraphDisplayOptionsTest {
 
@@ -37,10 +38,26 @@ public class GraphDisplayOptionsTest {
 
 	@Before
 	public void setUp() {
+		// create a dummy theme manager that defines values for use in this test
+		DummyThemeManager themeManager = new DummyThemeManager();
+
+		// create a new graph definition and options using theme properties
 		List<String> vertexTypes = Arrays.asList("V1", "V2", "V3");
 		List<String> edgeTypes = Arrays.asList("E1", "E2", "E3");
 		graphType = new GraphType("Test", "Test Description", vertexTypes, edgeTypes);
 		options = new GraphDisplayOptions(graphType);
+		options.setVertexColor("V1", "color.V1");
+		options.setVertexColor("V2", "color.V2");
+		options.setVertexColor("V3", "color.V3");
+		options.setEdgeColor("E1", "color.E1");
+		options.setEdgeColor("E2", "color.E2");
+		options.setEdgeColor("E3", "color.E3");
+		options.setDefaultEdgeColor("color.edge.default");
+		options.setDefaultVertexColor("color.vertex.default");
+		options.setEdgeSelectionColor("color.edge.selected");
+		options.setVertexSelectionColor("color.vertex.selected");
+		options.setFont("font.graph");
+
 	}
 
 	@Test
@@ -51,14 +68,14 @@ public class GraphDisplayOptionsTest {
 
 	@Test
 	public void testSetAndGetDefaultVertexColor() {
-		options.setDefaultVertexColor(Color.MAGENTA);
-		assertEquals(Color.MAGENTA, options.getDefaultVertexColor());
+		options.setDefaultVertexColor(Palette.RED);
+		assertEquals(Palette.RED, options.getDefaultVertexColor());
 	}
 
 	@Test
 	public void testSetAndGetDefaultEdgeColor() {
-		options.setDefaultEdgeColor(Color.MAGENTA);
-		assertEquals(Color.MAGENTA, options.getDefaultEdgeColor());
+		options.setDefaultEdgeColor(Palette.RED);
+		assertEquals(Palette.RED, options.getDefaultEdgeColor());
 	}
 
 	@Test
@@ -131,62 +148,62 @@ public class GraphDisplayOptionsTest {
 
 	@Test
 	public void testGetVertexColor() {
-		options.setVertexColor("V1", Color.RED);
-		options.setVertexColor("V2", Color.GREEN);
+		options.setVertexColor("V1", Palette.RED);
+		options.setVertexColor("V2", Palette.GREEN);
 		AttributedVertex vertex = new AttributedVertex("Foo");
 
 		assertEquals(options.getDefaultVertexColor(), options.getVertexColor(vertex));
 
 		vertex.setVertexType("V1");
-		assertEquals(Color.RED, options.getVertexColor(vertex));
+		assertEquals(Palette.RED, options.getVertexColor(vertex));
 
 		vertex.setVertexType("V2");
-		assertEquals(Color.GREEN, options.getVertexColor(vertex));
+		assertEquals(Palette.GREEN, options.getVertexColor(vertex));
 	}
 
 	@Test
 	public void testGetVertexColorWithOverride() {
-		options.setVertexColor("V1", Color.RED);
-		options.setVertexColor("V2", Color.GREEN);
+		options.setVertexColor("V1", Palette.RED);
+		options.setVertexColor("V2", Palette.GREEN);
 		options.setVertexColorOverrideAttributeKey("Color");
 		AttributedVertex vertex = new AttributedVertex("Foo");
 
 		vertex.setVertexType("V1");
-		assertEquals(Color.RED, options.getVertexColor(vertex));
+		assertEquals(Palette.RED, options.getVertexColor(vertex));
 
-		vertex.setAttribute("Color", WebColors.toString(Color.BLUE));
+		vertex.setAttribute("Color", Palette.BLUE.toString());
 
-		assertEquals(Color.BLUE, options.getVertexColor(vertex));
+		assertEquals(Palette.BLUE.getRGB(), options.getVertexColor(vertex).getRGB());
 	}
 
 	@Test
 	public void testGetEdgeColor() {
-		options.setEdgeColor("E1", Color.RED);
-		options.setEdgeColor("E2", Color.GREEN);
+		options.setEdgeColor("E1", Palette.RED);
+		options.setEdgeColor("E2", Palette.GREEN);
 		AttributedEdge edge = new AttributedEdge("1");
 		assertEquals(options.getDefaultEdgeColor(), options.getEdgeColor(edge));
 
 		edge.setEdgeType("E1");
-		assertEquals(Color.RED, options.getEdgeColor(edge));
+		assertEquals(Palette.RED, options.getEdgeColor(edge));
 
 		edge.setEdgeType("E2");
-		assertEquals(Color.GREEN, options.getEdgeColor(edge));
+		assertEquals(Palette.GREEN, options.getEdgeColor(edge));
 	}
 
 	@Test
 	public void testGetEdgeColorWithOverride() {
-		options.setEdgeColor("E1", Color.RED);
-		options.setEdgeColor("E2", Color.GREEN);
+		options.setEdgeColor("E1", Palette.RED);
+		options.setEdgeColor("E2", Palette.GREEN);
 		options.setEdgeColorOverrideAttributeKey("Color");
 		AttributedEdge edge = new AttributedEdge("1");
 		assertEquals(options.getDefaultEdgeColor(), options.getEdgeColor(edge));
 
 		edge.setEdgeType("E1");
-		assertEquals(Color.RED, options.getEdgeColor(edge));
+		assertEquals(Palette.RED, options.getEdgeColor(edge));
 
-		edge.setAttribute("Color", WebColors.toString(Color.BLUE));
+		edge.setAttribute("Color", Palette.BLUE.toString());
 
-		assertEquals(Color.BLUE, options.getEdgeColor(edge));
+		assertEquals(Palette.BLUE.getRGB(), options.getEdgeColor(edge).getRGB());
 	}
 
 	@Test
@@ -205,9 +222,10 @@ public class GraphDisplayOptionsTest {
 
 	@Test
 	public void testGetVertexColorForType() {
-		assertEquals(options.getDefaultVertexColor(), options.getVertexColor("V1"));
-		options.setVertexColor("V1", Color.RED);
-		assertEquals(Color.RED, options.getVertexColor("V1"));
+		assertEquals(options.getDefaultVertexColor().getRGB(),
+			options.getVertexColor("V1").getRGB());
+		options.setVertexColor("V1", Palette.RED);
+		assertEquals(Palette.RED.getRGB(), options.getVertexColor("V1").getRGB());
 	}
 
 	@Test
@@ -220,8 +238,8 @@ public class GraphDisplayOptionsTest {
 	@Test
 	public void testGetEdgeColorForType() {
 		assertEquals(options.getDefaultEdgeColor(), options.getEdgeColor("V1"));
-		options.setEdgeColor("E1", Color.RED);
-		assertEquals(Color.RED, options.getEdgeColor("E1"));
+		options.setEdgeColor("E1", Palette.RED);
+		assertEquals(Palette.RED, options.getEdgeColor("E1"));
 	}
 
 	@Test
@@ -236,8 +254,8 @@ public class GraphDisplayOptionsTest {
 		Options vertexColorOptions = graphDisplayOptions.getOptions("Vertex Colors");
 		List<String> leafOptionNames = vertexColorOptions.getLeafOptionNames();
 		assertEquals(Arrays.asList("V1", "V2", "V3"), leafOptionNames);
-		assertEquals(options.getDefaultVertexColor(),
-			vertexColorOptions.getColor("V1", Color.WHITE));
+		assertEquals(options.getDefaultVertexColor().getRGB(),
+			vertexColorOptions.getColor("V1", Palette.BLACK).getRGB());
 
 		Options vertexShapeOptions = graphDisplayOptions.getOptions("Vertex Shapes");
 		leafOptionNames = vertexShapeOptions.getLeafOptionNames();
@@ -248,8 +266,8 @@ public class GraphDisplayOptionsTest {
 		Options edgeColorOptions = graphDisplayOptions.getOptions("Edge Colors");
 		leafOptionNames = edgeColorOptions.getLeafOptionNames();
 		assertEquals(Arrays.asList("E1", "E2", "E3"), leafOptionNames);
-		assertEquals(options.getDefaultEdgeColor(),
-			edgeColorOptions.getColor("E1", Color.WHITE));
+		assertEquals(options.getDefaultEdgeColor().getRGB(),
+			edgeColorOptions.getColor("E1", Palette.WHITE).getRGB());
 
 		Options miscellaneousOptions = graphDisplayOptions.getOptions("Miscellaneous");
 		leafOptionNames = miscellaneousOptions.getLeafOptionNames();
@@ -260,22 +278,44 @@ public class GraphDisplayOptionsTest {
 
 	}
 
-	@Test
-	public void testChangingToolOptionsAffectsGraph() {
-		FakeDockingTool tool = new FakeDockingTool();
-		ToolOptions toolOptions = tool.getOptions("Graph");
-		options.registerOptions(toolOptions, null);
-		options.initializeFromOptions(tool);
+	// Create a ThemeManager that it not fully initialized for speed. This class provides
+	// fake property theme values.
+	class DummyThemeManager extends StubThemeManager {
+		DummyThemeManager() {
+			installTestValues();
+			installExpectedValues();
+			installInGui();
+		}
 
-		AttributedVertex vertex = new AttributedVertex("Foo");
-		vertex.setVertexType("V1");
-		assertEquals(Color.BLUE, options.getVertexColor(vertex));
+		private void installExpectedValues() {
+			setColor(new ColorValue("color.vertex.selected", Color.BLACK));
+			setColor(new ColorValue("color.edge.selected", Color.BLACK));
+			setColor(new ColorValue("color.graphdisplay.vertex.default", Color.BLACK));
+			setColor(new ColorValue("color.graphdisplay.edge.default", Color.BLACK));
+			setFont(new FontValue("font.graph", new Font("monospaced", Font.PLAIN, 12)));
 
-		Options graphDisplayOptions = toolOptions.getOptions(options.getRootOptionsName());
-		Options vertexColorOptions = graphDisplayOptions.getOptions("Vertex Colors");
-		vertexColorOptions.setColor("V1", Color.CYAN);
+		}
 
-		assertEquals(Color.CYAN, options.getVertexColor(vertex));
+		protected void installTestValues() {
+			setColor(new ColorValue("color.V1", Color.BLACK));
+			setColor(new ColorValue("color.V2", Color.BLACK));
+			setColor(new ColorValue("color.V3", Color.BLACK));
+			setColor(new ColorValue("color.E1", Color.BLACK));
+			setColor(new ColorValue("color.E2", Color.BLACK));
+			setColor(new ColorValue("color.E3", Color.BLACK));
+			setColor(new ColorValue("color.edge.default", Color.BLACK));
+			setColor(new ColorValue("color.vertex.default", Color.BLACK));
+			setColor(new ColorValue("color.edge.selected", Color.BLACK));
+			setColor(new ColorValue("color.vertex.selected", Color.BLACK));
+			setColor(new ColorValue("color.graphdisplay.vertex.selected", Color.BLACK));
+			setColor(new ColorValue("color.graphdisplay.edge.selected", Color.BLACK));
+			setColor(new ColorValue("color.vertex.selected", Color.BLACK));
+			setColor(new ColorValue("color.vertex.selected", Color.BLACK));
+
+			setFont(new FontValue("font.graph", new Font("monospaced", Font.PLAIN, 12)));
+			setFont(
+				new FontValue("font.graphdisplay.default", new Font("monospaced", Font.PLAIN, 12)));
+		}
+
 	}
-
 }

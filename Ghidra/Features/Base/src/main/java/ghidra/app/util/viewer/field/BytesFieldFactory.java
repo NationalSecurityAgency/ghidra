@@ -27,6 +27,7 @@ import java.math.BigInteger;
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.RowColLocation;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.util.HighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
@@ -46,8 +47,8 @@ import ghidra.util.HelpLocation;
 public class BytesFieldFactory extends FieldFactory {
 	private static final int CHARS_IN_BYTE = 2;
 	public static final String FIELD_NAME = "Bytes";
-	public static final Color DEFAULT_COLOR = Color.BLUE;
-	public static final Color ALIGNMENT_BYTES_COLOR = Color.gray;
+	public static final Color DEFAULT_COLOR = Palette.BLUE;
+	public static final Color ALIGNMENT_BYTES_COLOR = Palette.GRAY;
 	public final static String GROUP_TITLE = "Bytes Field";
 	public final static String MAX_DISPLAY_LINES_MSG =
 		GROUP_TITLE + Options.DELIMITER + "Maximum Lines To Display";
@@ -79,7 +80,7 @@ public class BytesFieldFactory extends FieldFactory {
 	/**
 	 * Constructor
 	 * @param model the model that the field belongs to.
-	 * @param hsProvider the HightLightStringProvider.
+	 * @param hlProvider the HightLightStringProvider.
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */

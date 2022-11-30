@@ -33,7 +33,7 @@ import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.*;
 import ghidra.util.layout.*;
-import resources.ResourceManager;
+import resources.Icons;
 
 public class FilterDialog extends DialogComponentProvider {
 	private NewSymbolFilter filter;
@@ -162,7 +162,7 @@ public class FilterDialog extends DialogComponentProvider {
 		advancedPanel = new JPanel(new BorderLayout());
 
 		JPanel infoPanel = new JPanel(new HorizontalLayout(20));
-		Icon icon = ResourceManager.loadImage("images/information.png");
+		Icon icon = Icons.INFO_ICON;
 
 		infoPanel.add(new GIconLabel(icon));
 		infoPanel.add(new GHtmlLabel(

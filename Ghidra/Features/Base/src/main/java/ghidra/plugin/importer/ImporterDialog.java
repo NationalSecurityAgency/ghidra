@@ -15,14 +15,13 @@
  */
 package ghidra.plugin.importer;
 
-import java.util.*;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
+import java.util.*;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -38,6 +37,7 @@ import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.dialogs.MultiLineMessageDialog;
 import docking.widgets.label.GLabel;
 import docking.widgets.list.GListCellRenderer;
+import generic.theme.GIcon;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.util.*;
 import ghidra.app.util.bin.ByteProvider;
@@ -56,7 +56,6 @@ import ghidra.util.*;
 import ghidra.util.layout.PairLayout;
 import ghidra.util.layout.VerticalLayout;
 import ghidra.util.task.TaskBuilder;
-import resources.ResourceManager;
 
 /**
  * Dialog for importing a file into Ghidra as a program.
@@ -244,7 +243,7 @@ public class ImporterDialog extends DialogComponentProvider {
 		});
 
 		Font font = languageButton.getFont();
-		languageButton.setFont(new Font(font.getName(), Font.BOLD, font.getSize()));
+		languageButton.setFont(font.deriveFont(Font.BOLD));
 
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.add(languageTextField, BorderLayout.CENTER);
@@ -279,7 +278,7 @@ public class ImporterDialog extends DialogComponentProvider {
 	private Component buildLoaderInfoButton() {
 		JPanel panel = new JPanel(new BorderLayout());
 		EmptyBorderButton helpButton =
-			new EmptyBorderButton(ResourceManager.loadImage("images/information.png"));
+			new EmptyBorderButton(new GIcon("icon.information"));
 		helpButton.setToolTipText("Show list of supported format/loaders");
 
 		helpButton.addActionListener(e -> showSupportedImportFormats());

@@ -38,7 +38,6 @@ import ghidra.program.database.ProgramDB;
 import ghidra.util.*;
 import ghidra.util.exception.UsrException;
 import ghidra.util.task.TaskLauncher;
-import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * Main Ghidra application class. Creates
@@ -73,7 +72,6 @@ public class GhidraRun implements GhidraLaunchable {
 		Runnable mainTask = () -> {
 
 			GhidraApplicationConfiguration configuration = new GhidraApplicationConfiguration();
-			configuration.setTaskMonitor(new StatusReportingTaskMonitor());
 			Application.initializeApplication(layout, configuration);
 
 			log = LogManager.getLogger(GhidraRun.class);
@@ -241,17 +239,5 @@ public class GhidraRun implements GhidraLaunchable {
 
 	private class GhidraProjectManager extends DefaultProjectManager {
 		// this exists just to allow access to the constructor
-	}
-}
-
-class StatusReportingTaskMonitor extends TaskMonitorAdapter {
-	@Override
-	public synchronized void setCancelEnabled(boolean enable) {
-		// Not permitted
-	}
-
-	@Override
-	public void setMessage(String message) {
-		SplashScreen.updateSplashScreenStatus(message);
 	}
 }

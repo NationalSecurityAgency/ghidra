@@ -42,6 +42,6 @@ public class HighlightToken {
 
 	@Override
 	public String toString() {
-		return token.toString() + "; color=" + color;
+		return token.toString() + "; highlight=" + color;
 	}
 }

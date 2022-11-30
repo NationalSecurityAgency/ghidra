@@ -25,6 +25,7 @@ import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GDHtmlLabel;
 import docking.widgets.table.constraint.ColumnConstraint;
 import docking.widgets.table.constraint.EnumColumnConstraint;
+import generic.theme.GThemeDefaults.Colors.Messages;
 
 /**
  * A constraint editor for enumerated-type values;
@@ -79,7 +80,7 @@ public class EnumConstraintEditor<T extends Enum<T>> extends AbstractColumnConst
 		outerPanel.add(panel, BorderLayout.CENTER);
 
 		infoLabel = new GDHtmlLabel("");
-		infoLabel.setForeground(Color.GRAY);
+		infoLabel.setForeground(Messages.HINT);
 		infoLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		outerPanel.add(infoLabel, BorderLayout.SOUTH);
 

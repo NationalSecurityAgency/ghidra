@@ -16,7 +16,6 @@
 package ghidra.app.plugin.core.checksums;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,14 +24,14 @@ import javax.swing.*;
 import docking.ActionContext;
 import docking.action.*;
 import docking.widgets.label.GDLabel;
+import generic.theme.GIcon;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.context.ProgramContextAction;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.util.HelpLocation;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.task.TaskLauncher;
-import resources.Icons;
-import resources.ResourceManager;
 
 /**
  * Provider to invoke computation of various checksums and display them in a table.
@@ -97,7 +96,7 @@ public class ComputeChecksumsProvider extends ComponentProviderAdapter {
 		errorStatus = new GDLabel(" ");
 		errorStatus.setName("message");
 		errorStatus.setHorizontalAlignment(SwingConstants.CENTER);
-		errorStatus.setForeground(Color.RED);
+		errorStatus.setForeground(Colors.ERROR);
 		errorStatus.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
 		main.add(errorStatus, BorderLayout.SOUTH);
 
@@ -233,7 +232,8 @@ public class ComputeChecksumsProvider extends ComponentProviderAdapter {
 		};
 		computeAction.setHelpLocation(new HelpLocation("ComputeChecksumsPlugin", "compute"));
 		computeAction.setEnabled(true);
-		computeAction.setToolBarData(new ToolBarData(Icons.REFRESH_ICON, null));
+		computeAction
+				.setToolBarData(new ToolBarData(new GIcon("icon.plugin.checksum.compute"), null));
 		computeAction.setDescription("Refreshes checksums");
 
 		selectionAction = new ToggleDockingAction("On Selection", plugin.getName()) {
@@ -251,7 +251,7 @@ public class ComputeChecksumsProvider extends ComponentProviderAdapter {
 		selectionAction.setHelpLocation(new HelpLocation("ComputeChecksumsPlugin", "On_Selection"));
 		selectionAction.setEnabled(plugin.hasSelection());
 		selectionAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/NextSelectionBlock16.gif"), null));
+			new ToolBarData(new GIcon("icon.plugin.checksum.select"), null));
 		selectionAction.setDescription("When toggled, generates checksums on " +
 			"selection. Otherwise checksums are generated over the entire program");
 
@@ -269,7 +269,7 @@ public class ComputeChecksumsProvider extends ComponentProviderAdapter {
 		showHexAction.setHelpLocation(new HelpLocation("ComputeChecksumsPlugin", "As_Hex"));
 		showHexAction.setEnabled(true);
 		showHexAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/hexData.png"), null));
+			new ToolBarData(new GIcon("icon.plugin.checksum.show.hex"), null));
 		showHexAction.setDescription("Toggle to show the hex values instead of decimal values.");
 
 		xorAction = new ToggleDockingAction("XOR Checksum Values", plugin.getName()) {
@@ -289,7 +289,7 @@ public class ComputeChecksumsProvider extends ComponentProviderAdapter {
 		xorAction.setHelpLocation(new HelpLocation("ComputeChecksumsPlugin", "xor"));
 		xorAction.setEnabled(true);
 		xorAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/xor.png"), null));
+			new ToolBarData(new GIcon("icon.plugin.checksum.xor"), null));
 		xorAction.setDescription("Toggle to recompute values with a xor operation.");
 
 		carryAction = new ToggleDockingAction("Carry Checksum Values", plugin.getName()) {
@@ -310,7 +310,7 @@ public class ComputeChecksumsProvider extends ComponentProviderAdapter {
 		carryAction.setHelpLocation(new HelpLocation("ComputeChecksumsPlugin", "carry"));
 		carryAction.setEnabled(true);
 		carryAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/carry.png"), null));
+			new ToolBarData(new GIcon("icon.plugin.checksum.carry"), null));
 		carryAction.setDescription("Toggle to recompute values with a carry operation.");
 
 		onesCompAction = new ToggleDockingAction("Ones Complement", plugin.getName()) {
@@ -330,7 +330,7 @@ public class ComputeChecksumsProvider extends ComponentProviderAdapter {
 		onesCompAction.setHelpLocation(new HelpLocation("ComputeChecksumsPlugin", "ones_comp"));
 		onesCompAction.setEnabled(true);
 		onesCompAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/onesComplement.png"), null));
+			new ToolBarData(new GIcon("icon.plugin.checksum.ones.complement"), null));
 		onesCompAction.setDescription("Toggle to recompute values with a one's complement.");
 
 		twosCompAction = new ToggleDockingAction("Twos Complement", plugin.getName()) {
@@ -350,7 +350,7 @@ public class ComputeChecksumsProvider extends ComponentProviderAdapter {
 		twosCompAction.setHelpLocation(new HelpLocation("ComputeChecksumsPlugin", "twos_comp"));
 		twosCompAction.setEnabled(true);
 		twosCompAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/twosComplement.png"), null));
+			new ToolBarData(new GIcon("icon.plugin.checksum.twos.complement"), null));
 		twosCompAction.setDescription("Toggle to recompute values with a two's complement.");
 
 		tool.addLocalAction(this, onesCompAction);

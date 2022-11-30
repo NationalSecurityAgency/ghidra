@@ -22,6 +22,7 @@ import org.apache.logging.log4j.Level;
 
 import docking.widgets.table.GTableCellRenderer;
 import docking.widgets.table.GTableCellRenderingData;
+import generic.theme.GColor;
 
 /**
  * Renderer for the {@link FVTable} that will set the background color based on
@@ -30,12 +31,14 @@ import docking.widgets.table.GTableCellRenderingData;
  */
 public class LogLevelTableCellRenderer extends GTableCellRenderer {
 
-	private static final Color TRACE_COLOR = Color.WHITE;
-	private static final Color DEBUG_COLOR = new Color(135, 191, 212);
-	private static final Color INFO_COLOR = new Color(225, 225, 225);
-	private static final Color WARN_COLOR = new Color(255, 236, 50);
-	private static final Color ERROR_COLOR = Color.RED;
-	private static final Color FATAL_COLOR = Color.RED.darker();
+	private static final Color TRACE_COLOR = new GColor("color.bg.logviwer.table.trace");
+	private static final Color DEBUG_COLOR = new GColor("color.bg.logviwer.table.debug");
+	private static final Color INFO_COLOR = new GColor("color.bg.logviwer.table.info");
+	private static final Color WARN_COLOR = new GColor("color.bg.logviwer.table.warn");
+	private static final Color ERROR_COLOR = new GColor("color.bg.logviwer.table.error");
+	private static final Color FATAL_COLOR = new GColor("color.bg.logviwer.table.fatal");
+	private static final Color FG = new GColor("color.fg.logviewer.table");
+	private static final Color FG_SELECTED = new GColor("color.fg.logviewer.table.selected");
 
 	@Override
 	public Component getTableCellRendererComponent(GTableCellRenderingData data) {
@@ -44,7 +47,7 @@ public class LogLevelTableCellRenderer extends GTableCellRenderer {
 
 		Object value = data.getValue();
 
-		setForeground(Color.black);
+		setForeground(data.isSelected() ? FG_SELECTED : FG);
 
 		if (value.toString().equalsIgnoreCase(Level.DEBUG.toString())) {
 			setBackground(DEBUG_COLOR);

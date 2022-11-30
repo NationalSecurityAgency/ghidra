@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,18 +15,10 @@
  */
 package ghidra.program.model.data;
 
-import java.awt.event.MouseEvent;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-
-import javax.sound.sampled.*;
-import javax.swing.ImageIcon;
-
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.Msg;
-import resources.ResourceManager;
 
 public class AIFFDataType extends BuiltIn implements Dynamic {
 
@@ -104,37 +96,6 @@ public class AIFFDataType extends BuiltIn implements Dynamic {
 		return "<AIFF-Representation>";
 	}
 
-	private static class AIFFData implements Playable {
-
-		private static final ImageIcon AUDIO_ICON =
-			ResourceManager.loadImage("images/audio-volume-medium.png");
-		private byte[] bytes;
-
-		public AIFFData(byte[] bytes) {
-			this.bytes = bytes;
-		}
-
-		@Override
-		public void clicked(MouseEvent event) {
-
-			try {
-				Clip clip = AudioSystem.getClip();
-				AudioInputStream ais =
-					AudioSystem.getAudioInputStream(new ByteArrayInputStream(bytes));
-				clip.open(ais);
-				clip.start();
-			}
-			catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
-				Msg.debug(this, "Unable to play audio", e);
-			}
-		}
-
-		@Override
-		public ImageIcon getImageIcon() {
-			return AUDIO_ICON;
-		}
-	}
-
 	@Override
 	public Object getValue(MemBuffer buf, Settings settings, int length) {
 		byte[] data = new byte[length];
@@ -142,12 +103,12 @@ public class AIFFDataType extends BuiltIn implements Dynamic {
 			Msg.error(this, "AIFF-Sound error: Not enough bytes in memory");
 			return null;
 		}
-		return new AIFFData(data);
+		return new AudioPlayer(data);
 	}
 
 	@Override
 	public Class<?> getValueClass(Settings settings) {
-		return AIFFData.class;
+		return AudioPlayer.class;
 	}
 
 	@Override

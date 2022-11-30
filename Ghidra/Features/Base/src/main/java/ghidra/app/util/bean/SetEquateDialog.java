@@ -148,17 +148,17 @@ public class SetEquateDialog extends DialogComponentProvider {
 				int refCount = eqRowObject.getRefCount();
 				if (refCount > 0) {
 					if (eqRowObject.getEntryName().contains(EquateManager.ERROR_TAG)) {
-						c.setForeground(isSelected ? Color.WHITE : Color.RED);
+						c.setForeground(isSelected ? this.SELECTED_CELL_COLOR : this.BAD_EQUATE_COLOR);
 					}
 					else {
 						Equate e = eqRowObject.getEquate();
 						if (e != null && !e.isEnumBased()) {
-							c.setForeground(isSelected ? Color.WHITE : Color.BLUE.brighter());
+							c.setForeground(isSelected ? this.SELECTED_CELL_COLOR : this.EQUATE_COLOR);
 						}
 					}
 				}
 				else {
-					c.setForeground(isSelected ? Color.WHITE : Color.GRAY.darker());
+					c.setForeground(isSelected ? this.SELECTED_CELL_COLOR : this.SUGGESTION_COLOR);
 				}
 				return c;
 			}

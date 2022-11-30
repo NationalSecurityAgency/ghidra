@@ -17,11 +17,18 @@ package help;
 
 import static org.junit.Assert.*;
 
+import java.io.File;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import org.junit.Test;
+
+import generic.theme.ApplicationThemeManager;
+import ghidra.GhidraTestApplicationLayout;
+import ghidra.framework.ApplicationConfiguration;
+import utility.application.ApplicationLayout;
 
 public class HelpBuildUtilsTest extends AbstractHelpTest {
 
@@ -31,6 +38,22 @@ public class HelpBuildUtilsTest extends AbstractHelpTest {
 
 	public HelpBuildUtilsTest() {
 		super();
+	}
+
+	@Override
+	protected ApplicationLayout createApplicationLayout() throws IOException {
+		return new GhidraTestApplicationLayout(new File(getTestDirectoryPath()));
+	}
+
+	@Override
+	protected ApplicationConfiguration createApplicationConfiguration() {
+		ApplicationConfiguration configuration = new ApplicationConfiguration() {
+			@Override
+			public boolean isHeadless() {
+				return false;
+			}
+		};
+		return configuration;
 	}
 
 	@Test
@@ -78,6 +101,7 @@ public class HelpBuildUtilsTest extends AbstractHelpTest {
 
 	@Test
 	public void testLocateReferences_Icons() throws URISyntaxException {
+		ApplicationThemeManager.initialize();
 		Path sourceFile = Paths.get(HTML_FILE_PATH);
 		String reference = "Icons.REFRESH_ICON"; // see Icons class
 		ImageLocation location = HelpBuildUtils.locateImageReference(sourceFile, reference);

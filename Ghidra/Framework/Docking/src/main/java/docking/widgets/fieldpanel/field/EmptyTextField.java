@@ -23,6 +23,7 @@ import docking.widgets.fieldpanel.internal.FieldBackgroundColorManager;
 import docking.widgets.fieldpanel.internal.PaintContext;
 import docking.widgets.fieldpanel.support.DefaultRowColLocation;
 import docking.widgets.fieldpanel.support.RowColLocation;
+import generic.theme.GThemeDefaults.Colors.Palette;
 
 /**
  * A Text field that is blank.
@@ -55,6 +56,7 @@ public class EmptyTextField implements Field {
 	/**
 	 * Returns true if the cursor is allowed past the last character.  This
 	 * field always returns false since there is no text.
+	 * @returns true if the cursor is allowed past the last character
 	 */
 	public boolean isAllowCursorAtEnd() {
 		return false;
@@ -168,6 +170,7 @@ public class EmptyTextField implements Field {
 	 * @param color the new foreground color.
 	 */
 	public void setForeground(Color color) {
+		// cannot change foreground
 	}
 
 	/**
@@ -178,7 +181,7 @@ public class EmptyTextField implements Field {
 	 * was called.
 	 */
 	public Color getForeground() {
-		return Color.WHITE;
+		return Palette.NO_COLOR;
 	}
 
 	@Override

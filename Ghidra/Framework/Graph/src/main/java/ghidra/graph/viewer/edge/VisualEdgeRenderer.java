@@ -18,6 +18,7 @@ package ghidra.graph.viewer.edge;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
+import java.util.Objects;
 
 import javax.swing.JComponent;
 
@@ -34,6 +35,7 @@ import edu.uci.ics.jung.visualization.transform.LensTransformer;
 import edu.uci.ics.jung.visualization.transform.MutableTransformer;
 import edu.uci.ics.jung.visualization.transform.shape.GraphicsDecorator;
 import edu.uci.ics.jung.visualization.util.VertexShapeFactory;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.graph.VisualGraph;
 import ghidra.graph.viewer.VisualEdge;
 import ghidra.graph.viewer.VisualVertex;
@@ -75,6 +77,15 @@ import ghidra.graph.viewer.vertex.VisualGraphVertexShapeTransformer;
  * have to be changed, such as the {@link AbstractVisualGraphLayout}, which needs the centering
  * offsets to handle vertex clipping.
  *
+ * <P>When painting edges this renderer will paint colors based on the following states: default, 
+ * emphasized, hovered, focused and selected.   A focused edge is one that is part of the path 
+ * between focused vertices(such as when the vertex is hovered), whereas a selected edge is one 
+ * that has been selected by the user (see {@link VisualEdge} for details).   An edge is 
+ * 'emphasized' when the user mouses over the edge (which is when the edge is hovered, not when the 
+ * vertex is hovered.  Each of these states may have a different color that can be changed by 
+ * calling the various setter methods on this renderer.  When painting, these colors are used along 
+ * with various different strokes to paint in an overlay fashion.
+ * 
  * @param <V> the vertex type
  * @param <E> the edge type
  */
@@ -88,8 +99,10 @@ public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends Visua
 
 	private float dashingPatternOffset;
 
-	private Color defaultBaseColor = Color.BLACK;
-	private Color defaultHighlightColor = Color.GRAY;
+	private Function<E, Color> drawColorTransformer = e -> Palette.BLACK;
+	private Function<E, Color> focusedColorTransformer = e -> Palette.GRAY;
+	private Function<E, Color> selectedColorTransformer = e -> Palette.GRAY;
+	private Function<E, Color> hoveredColorTransformer = e -> Palette.LIGHT_GRAY;
 
 	private VisualEdgeArrowRenderingSupport<V, E> arrowRenderingSupport =
 		new VisualEdgeArrowRenderingSupport<>();
@@ -106,20 +119,77 @@ public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends Visua
 		this.dashingPatternOffset = dashingPatterOffset;
 	}
 
-	public void setBaseColor(Color color) {
-		this.defaultBaseColor = color;
+	/**
+	 * Sets the color provider to use when drawing this edge.  This is also the color used to paint 
+	 * an 'emphasized' edge. 
+	 * @param transformer the color provider
+	 */
+	public void setDrawColorTransformer(Function<E, Color> transformer) {
+		this.drawColorTransformer = Objects.requireNonNull(transformer);
 	}
 
-	public Color getBaseColor(Graph<V, E> g, E e) {
-		return defaultBaseColor;
+	/**
+	 * Returns the current draw color.  This is also the color used to paint an 'emphasized' edge.
+	 * @param g the graph
+	 * @param e the edge 
+	 * @return the color
+	 */
+	public Color getDrawColor(Graph<V, E> g, E e) {
+		return this.drawColorTransformer.apply(e);
 	}
 
-	public void setHighlightColor(Color highlightColor) {
-		this.defaultHighlightColor = highlightColor;
+	/**
+	 * Sets the color provider to use when drawing this edge when the edge is focused. 
+	 * @param transformer the color provider
+	 */
+	public void setFocusedColorTransformer(Function<E, Color> transformer) {
+		this.focusedColorTransformer = Objects.requireNonNull(transformer);
 	}
 
-	public Color getHighlightColor(Graph<V, E> g, E e) {
-		return defaultHighlightColor;
+	/**
+	 * Returns the current color to use when the edge is focused.
+	 * @param g the graph
+	 * @param e the edge 
+	 * @return the color
+	 */
+	public Color getFocusedColor(Graph<V, E> g, E e) {
+		return focusedColorTransformer.apply(e);
+	}
+
+	/**
+	 * Sets the color provider to use when drawing this edge when the edge is selected. 
+	 * @param transformer the color provider
+	 */
+	public void setSelectedColorTransformer(Function<E, Color> transformer) {
+		this.selectedColorTransformer = Objects.requireNonNull(transformer);
+	}
+
+	/**
+	 * Returns the current color to use when the edge is selected.
+	 * @param g the graph
+	 * @param e the edge 
+	 * @return the color
+	 */
+	public Color getSelectedColor(Graph<V, E> g, E e) {
+		return selectedColorTransformer.apply(e);
+	}
+
+	/**
+	 * Sets the color provider to use when drawing this edge when the edge is in the hovered path.
+	 * @param transformer the color provider
+	 */
+	public void setHoveredColorTransformer(Function<E, Color> transformer) {
+		this.hoveredColorTransformer = Objects.requireNonNull(transformer);
+	}
+
+	/**
+	 * Returns the current color to use when the edge is in the hovered path.
+	 * @param g the graph
+	 * @param e the edge 
+	 * @return the color
+	 */
+	public Color getHoveredColor(Graph<V, E> g, E e) {
+		return hoveredColorTransformer.apply(e);
 	}
 
 	// template method
@@ -167,12 +237,13 @@ public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends Visua
 		boolean isSelected = isSelected(e);
 		boolean isEmphasized = isEmphasiszed(e);
 
-		Color highlightColor = getHighlightColor(graph, e);
-		Color baseColor = getBaseColor(graph, e);
-		Color hoveredColor = highlightColor;
-		Color focusedColor = baseColor;
-		Color selectedColor = highlightColor.darker(); // note: we can do better for selected color
-		Color selectedAccentColor = highlightColor;
+		Color drawColor = getDrawColor(graph, e);
+		Color focusedColor = getFocusedColor(graph, e);
+		Color selectedColor = getSelectedColor(graph, e);
+		Color hoveredColor = getHoveredColor(graph, e);
+
+		// this can be changed if clients wish to set a separate color for the hovered state
+		Color selectedAccentColor = hoveredColor;
 
 		float scale = Math.min(scalex, scaley);
 
@@ -218,65 +289,13 @@ public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends Visua
 		BasicStroke selectedAccentStroke = getSelectedAccentStroke(e, scale);
 		BasicStroke empahsisStroke = getEmphasisStroke(e, scale);
 
-		//
-		// Fill
-		// 
-		Paint fillPaint = rc.getEdgeFillPaintTransformer().apply(e);
-		if (fillPaint != null) {
-			// basic shape
-			g.setPaint(fillPaint);
-			g.fill(edgeShape);
-
-			// Currently, graphs with complicated edge shapes (those with articulations) do not
-			// use a fill paint.  If we execute this code with articulated edges, the display 
-			// looks unusual.   So, for now, only 'fill' with these effects when the client has
-			// explicitly used a fill paint transformer.
-			if (isEmphasized) {
-				Stroke saveStroke = g.getStroke();
-				g.setPaint(fillPaint);
-				g.setStroke(empahsisStroke);
-				g.fill(edgeShape);
-				g.setStroke(saveStroke);
-			}
-
-			if (isInHoveredPath) {
-				Stroke saveStroke = g.getStroke();
-				g.setPaint(hoveredColor);
-				g.setStroke(hoverStroke);
-				g.fill(edgeShape);
-				g.setStroke(saveStroke);
-			}
-
-			if (isInFocusedPath) {
-				Stroke saveStroke = g.getStroke();
-				g.setPaint(focusedColor);
-				g.setStroke(focusedStroke);
-				g.fill(edgeShape);
-				g.setStroke(saveStroke);
-			}
-
-			if (isSelected) {
-				Stroke saveStroke = g.getStroke();
-				g.setPaint(selectedColor);
-				g.setStroke(selectedStroke);
-				g.fill(edgeShape);
-				g.setStroke(saveStroke);
-			}
-		}
-
-		//
-		// Draw
-		//
-		Paint drawPaint = rc.getEdgeDrawPaintTransformer().apply(e);
-		if (drawPaint != null) {
-			// basic shape
-			g.setPaint(drawPaint);
-			g.draw(edgeShape);
-		}
+		// basic shape
+		g.setPaint(drawColor);
+		g.draw(edgeShape);
 
 		if (isEmphasized) {
 			Stroke saveStroke = g.getStroke();
-			g.setPaint(drawPaint);
+			g.setPaint(drawColor);
 			g.setStroke(empahsisStroke);
 			g.draw(edgeShape);
 			g.setStroke(saveStroke);
@@ -313,7 +332,7 @@ public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends Visua
 
 		// debug - draw a box around the edge
 		//Rectangle shapeBounds = edgeShape.getBounds();
-		//g.setPaint(Color.ORANGE);
+		//g.setPaint(Palette.ORANGE);
 		//g.draw(shapeBounds);
 
 		// can add this feature as needed to speed up painting 
@@ -352,13 +371,13 @@ public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends Visua
 			return;
 		}
 
-		Paint arrowFillPaint = rc.getArrowFillPaintTransformer().apply(e);
-		Paint arrowDrawPaint = rc.getArrowDrawPaintTransformer().apply(e);
+		Paint arrowDrawPaint = drawColor;
+		Paint arrowFillPaint = arrowDrawPaint;
 		Shape arrow = rc.getEdgeArrowTransformer().apply(context);
 		arrow = scaleArrowForBetterVisibility(rc, arrow);
 		arrow = at.createTransformedShape(arrow);
 
-		// basic shape
+		// basic arrow shape
 		g.setPaint(arrowFillPaint);
 		g.fill(arrow);
 		g.setPaint(arrowDrawPaint);
@@ -420,7 +439,7 @@ public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends Visua
 	 * @param y2 the end vertex point y; layout space
 	 * @param isLoop true if the start == end, which is a self-loop
 	 * @param vertexShape the vertex shape (used in the case of a loop to draw a circle from the 
-	 *              shape to itself)
+	 * 		  shape to itself)
 	 * @return the edge shape
 	 */
 	public abstract Shape getEdgeShape(RenderContext<V, E> rc, Graph<V, E> graph, E e, float x1,

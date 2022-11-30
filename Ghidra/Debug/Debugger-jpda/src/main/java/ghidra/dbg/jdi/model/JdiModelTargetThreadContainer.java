@@ -77,7 +77,7 @@ public class JdiModelTargetThreadContainer extends JdiModelTargetObjectImpl
 		TargetExecutionState targetState = targetThread.convertState(state);
 		targetThread.threadStateChanged(targetState);
 		TargetEventType eventType = getEventType(reason);
-		getListeners().fire.event(this, targetThread, eventType,
+		broadcast().event(this, targetThread, eventType,
 			"Thread " + targetThread.getName() + " state changed", List.of(targetThread));
 	}
 

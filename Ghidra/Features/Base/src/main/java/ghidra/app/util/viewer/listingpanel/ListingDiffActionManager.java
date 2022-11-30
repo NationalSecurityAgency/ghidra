@@ -19,11 +19,11 @@ import javax.swing.Icon;
 
 import docking.ActionContext;
 import docking.action.*;
+import generic.theme.GIcon;
 import ghidra.program.util.ListingDiff;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.HelpLocation;
 import resources.MultiIcon;
-import resources.ResourceManager;
 
 /**
  * Manages the actions that control a ListingDiff.
@@ -31,15 +31,16 @@ import resources.ResourceManager;
 public class ListingDiffActionManager {
 
 	private static final String HELP_TOPIC = "FunctionComparison";
-	private static final Icon NOT_ICON = ResourceManager.loadImage("images/no_small.png");
-	private static final Icon BYTE_DIFFS_ICON = ResourceManager.loadImage("images/binaryData.gif");
+
+	//@formatter:off
+	private static final Icon NOT_ICON = new GIcon("icon.base.util.listingdiff.diffs.not");
+	private static final Icon BYTE_DIFFS_ICON = new GIcon("icon.base.util.listingdiff.diffs.byte");
 	private static final Icon NO_BYTE_DIFFS_ICON = new MultiIcon(BYTE_DIFFS_ICON, NOT_ICON);
-	private static final Icon DIFF_CONSTANTS_ICON =
-		ResourceManager.loadImage("images/class.png");
+	private static final Icon DIFF_CONSTANTS_ICON = new GIcon("icon.base.util.listingdiff.diffs.constants");
 	private static final Icon IGNORE_CONSTANTS_ICON = new MultiIcon(DIFF_CONSTANTS_ICON, NOT_ICON);
-	private static final Icon DIFF_REGISTERS_ICON =
-		ResourceManager.loadImage("images/registerGroup.png");
+	private static final Icon DIFF_REGISTERS_ICON = new GIcon("icon.base.util.listingdiff.diffs.registers");
 	private static final Icon IGNORE_REGISTERS_ICON = new MultiIcon(DIFF_REGISTERS_ICON, NOT_ICON);
+	//@formatter:on
 
 	private static final String ACTION_GROUP = "A4_Diff";
 	private DockingAction toggleIgnoreByteDiffsAction;
@@ -89,8 +90,8 @@ public class ListingDiffActionManager {
 
 		ToggleIgnoreByteDiffsAction() {
 			super("Toggle Ignore Byte Diffs", "DualListing");
-			setDescription(HTMLUtilities.toHTML("If selected, difference highlights should\n"
-				+ "ignore Byte differences."));
+			setDescription(HTMLUtilities.toHTML(
+				"If selected, difference highlights should\n" + "ignore Byte differences."));
 			setEnabled(true);
 			setPopupMenuData(new MenuData(new String[] { "Ignore Bytes As Differences" },
 				BYTE_DIFFS_ICON,
@@ -117,8 +118,8 @@ public class ListingDiffActionManager {
 
 		ToggleIgnoreConstantsAction() {
 			super("Toggle Ignore Constants", "DualListing");
-			setDescription(HTMLUtilities.toHTML("If selected, difference highlights should\n"
-				+ "ignore operand Constants."));
+			setDescription(HTMLUtilities.toHTML(
+				"If selected, difference highlights should\n" + "ignore operand Constants."));
 			setEnabled(true);
 			setPopupMenuData(new MenuData(
 				new String[] { "Ignore Operand Constants As Differences" },
@@ -146,8 +147,8 @@ public class ListingDiffActionManager {
 
 		ToggleIgnoreRegisterNamesAction() {
 			super("Toggle Ignore Register Names", "DualListing");
-			setDescription(HTMLUtilities.toHTML("If selected, difference highlights should\n"
-				+ "ignore operand Registers."));
+			setDescription(HTMLUtilities.toHTML(
+				"If selected, difference highlights should\n" + "ignore operand Registers."));
 			setEnabled(true);
 			setPopupMenuData(new MenuData(
 				new String[] { "Ignore Operand Registers As Differences" },

@@ -19,9 +19,9 @@ import javax.swing.Icon;
 
 import docking.ActionContext;
 import docking.action.ToolBarData;
+import generic.theme.GIcon;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.program.model.data.*;
-import resources.ResourceManager;
 
 /**
  * Shows the editor's data type in the UI using the {@link DataTypeManagerService}.
@@ -31,14 +31,13 @@ public class ShowDataTypeInTreeAction extends CompositeEditorTableAction {
 	// This action should go after the row-based actions, which have this group:
 	// 3_COMPONENT_EDITOR_ACTION
 	private static final String TOOLBAR_GROUP = "4_COMPONENT_EDITOR_ACTION";
-	private static final Icon ICON = ResourceManager.loadImage("images/go-home.png");
+	private static final Icon ICON = new GIcon("icon.plugin.composite.editor.show.type");
 
 	public ShowDataTypeInTreeAction(CompositeEditorProvider provider) {
 		super(provider, "Show In Data Type Manager", TOOLBAR_GROUP, null /*popupPath*/,
 			null /*menuPath*/, ICON);
 
-		setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/go-home.png"), TOOLBAR_GROUP));
+		setToolBarData(new ToolBarData(ICON, TOOLBAR_GROUP));
 	}
 
 	@Override

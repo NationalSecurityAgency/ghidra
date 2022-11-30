@@ -15,19 +15,19 @@
  */
 package docking.widgets.imagepanel.actions;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import docking.ActionContext;
 import docking.action.ToolBarData;
 import docking.widgets.imagepanel.ImagePanel;
-import resources.ResourceManager;
+import generic.theme.GIcon;
 
 /**
  * An action to reset the zoom of a NavigableImagePanel.
  */
 public class ZoomResetAction extends ImagePanelDockingAction {
 
-	private static final ImageIcon ZOOM_ICON = ResourceManager.loadImage("images/zoom.png");
+	private static final Icon ZOOM_ICON = new GIcon("icon.widget.imagepanel.reset");
 
 	public ZoomResetAction(String owner, ImagePanel imagePanel) {
 		super("Reset Zoom", owner, imagePanel);

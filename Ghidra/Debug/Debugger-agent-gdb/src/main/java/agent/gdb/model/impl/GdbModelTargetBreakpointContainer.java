@@ -102,7 +102,7 @@ public class GdbModelTargetBreakpointContainer
 				spec + " (pc=" + frame.getProgramCounter() + ")");
 			//return; // Not ideal, but eb == null should be fine, since the spec holds the actions 
 		}
-		listeners.fire.breakpointHit(this, frame.thread, frame, spec, loc);
+		broadcast().breakpointHit(this, frame.thread, frame, spec, loc);
 		spec.breakpointHit(frame, loc);
 		return loc;
 	}

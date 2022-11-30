@@ -15,13 +15,13 @@
  */
 package ghidra.app.util.viewer.field;
 
-import java.awt.Color;
 import java.math.BigInteger;
 import java.util.*;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.RowColLocation;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.util.HighlightProvider;
 import ghidra.app.util.XReferenceUtils;
 import ghidra.app.util.viewer.format.FieldFormatModel;
@@ -101,7 +101,7 @@ public class VariableXRefFieldFactory extends XRefFieldFactory {
 		int totalXrefs = xrefs.size() + offcuts.size();
 		boolean tooMany = totalXrefs > maxXRefs;
 
-		AttributedString delimiter = new AttributedString(delim, Color.BLACK, getMetrics());
+		AttributedString delimiter = new AttributedString(delim, Colors.FOREGROUND, getMetrics());
 
 		FieldElement[] elements = new FieldElement[tooMany ? maxXRefs : totalXrefs];
 		int count = 0;

@@ -30,6 +30,7 @@ import ghidra.util.Msg;
  * {@link LazyImageIcon} that is created from a URL to an icon file.
  */
 public class UrlImageIcon extends LazyImageIcon {
+	private String originalPath;
 	private URL imageUrl;
 
 	/**
@@ -38,12 +39,25 @@ public class UrlImageIcon extends LazyImageIcon {
 	 * @param url the {@link URL} to an icon resource file
 	 */
 	public UrlImageIcon(String path, URL url) {
-		super(path);
+		super(url.toExternalForm());
+		this.originalPath = Objects.requireNonNull(path);
 		this.imageUrl = Objects.requireNonNull(url);
 	}
 
+	/**
+	 * Returns the URL that was used to create this icon
+	 * @return  the URL that was used to create this icon
+	 */
 	public URL getUrl() {
 		return imageUrl;
+	}
+
+	/**
+	 * Returns the original path that was used to generate the URL (e.g. images/foo.png)
+	 * @return  the original path that was used to generate the URL (e.g. images/foo.png)
+	 */
+	public String getOriginalPath() {
+		return originalPath;
 	}
 
 	@Override
@@ -82,4 +96,25 @@ public class UrlImageIcon extends LazyImageIcon {
 		}
 		return null;
 	}
+
+	@Override
+	public int hashCode() {
+		return imageUrl.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		UrlImageIcon other = (UrlImageIcon) obj;
+		return Objects.equals(imageUrl, other.imageUrl);
+	}
+
 }

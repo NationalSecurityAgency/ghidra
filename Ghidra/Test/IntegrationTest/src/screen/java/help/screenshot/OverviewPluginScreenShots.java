@@ -19,6 +19,8 @@ import java.awt.*;
 
 import org.junit.Test;
 
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.overview.OverviewColorLegendDialog;
 import ghidra.app.plugin.core.overview.OverviewColorPlugin;
@@ -54,9 +56,9 @@ public class OverviewPluginScreenShots extends GhidraScreenShotGenerator {
 		});
 
 		captureIsolatedProvider(CodeViewerProvider.class, 700, 400);
-		padImage(new Color(0, 0, 0, 0), 10, 0, 50, 0);
-		drawOval(Color.RED, new Rectangle(630, 2, 40, 40), 3);
-		drawOval(Color.RED, new Rectangle(668, 55, 40, 240), 3);
+		padImage(Palette.NO_COLOR, 10, 0, 50, 0);
+		drawOval(Palette.RED, new Rectangle(630, 2, 40, 40), 3);
+		drawOval(Palette.RED, new Rectangle(668, 55, 40, 240), 3);
 	}
 
 	@Test
@@ -74,7 +76,7 @@ public class OverviewPluginScreenShots extends GhidraScreenShotGenerator {
 	public void testEntropyLegend() {
 		EntropyOverviewOptionsManager options =
 			new EntropyOverviewOptionsManager(tool, entropyService);
-		Palette palette = options.getPalette();
+		OverviewPalette palette = options.getPalette();
 		LegendPanel legendPanel = new LegendPanel();
 		legendPanel.setPalette(palette);
 		OverviewColorLegendDialog legendDialog =
@@ -126,18 +128,18 @@ public class OverviewPluginScreenShots extends GhidraScreenShotGenerator {
 		image = createEmptyImage(width + margin * 2, height + margin * 2);
 
 		Point p = new Point(margin, margin + smallFontHeight);
-		drawText(sumTop, Color.BLACK, p, smallFont);
+		drawText(sumTop, Colors.FOREGROUND, p, smallFont);
 
 		p.y += bigMetrics.getAscent() - bigMetrics.getDescent() / 2;
-		drawText(sum, Color.BLACK, p, bigFont);
+		drawText(sum, Colors.FOREGROUND, p, bigFont);
 
 		p.y += smallFontHeight;
-		drawText(sumBottom, Color.BLACK, p, smallFont);
+		drawText(sumBottom, Colors.FOREGROUND, p, smallFont);
 
 		p.x += bigMetrics.stringWidth(sum);
 		p.y = margin + smallFontHeight + bigFontHeight / 2 + metrics.getHeight() / 2 -
 			bigMetrics.getDescent() / 2;
-		drawText(equation, Color.BLACK, p, mediumFont);
+		drawText(equation, Colors.FOREGROUND, p, mediumFont);
 
 	}
 

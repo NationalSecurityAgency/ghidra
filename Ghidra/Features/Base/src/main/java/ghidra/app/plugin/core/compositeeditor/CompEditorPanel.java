@@ -30,6 +30,7 @@ import docking.widgets.OptionDialog;
 import docking.widgets.button.GRadioButton;
 import docking.widgets.fieldpanel.support.FieldSelection;
 import docking.widgets.label.GDLabel;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.plugin.core.compositeeditor.BitFieldPlacementComponent.BitAttributes;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Composite;
@@ -394,7 +395,9 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		String alignmentToolTip =
 			"<HTML>The <B>align</B> control allows the overall minimum alignment of this<BR>" +
 				"data type to be specified.  The actual computed alignment<BR>" +
-				"may be any multiple of this value.   <font color=blue size=\"-2\">(&lt;F1&gt; for help)</HTML>";
+				"may be any multiple of this value.   " +
+				"<font color=\"" + Palette.BLUE.toHexString() +
+				"\" size=\"-2\">(&lt;F1&gt; for help)</HTML>";
 		alignPanel.setToolTipText(alignmentToolTip);
 
 		addMinimumAlignmentComponents();
@@ -570,7 +573,8 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		infoPanel.add(actualAlignmentPanel, gridBagConstraints);
 
 		actualAlignmentValueTextField = new JTextField(8);
-		actualAlignmentValueTextField.setText("" + ((CompEditorModel) model).getActualAlignment());
+		actualAlignmentValueTextField
+				.setText(Integer.toString(((CompEditorModel) model).getActualAlignment()));
 		actualAlignmentValueTextField.setToolTipText(actualAlignmentToolTip);
 		actualAlignmentValueTextField.setEditable(false);
 		if (helpManager != null) {
@@ -586,7 +590,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		gridBagConstraints.gridx = 3;
 		gridBagConstraints.gridy = 3;
 		infoPanel.add(actualAlignmentValueTextField, gridBagConstraints);
-		actualAlignmentValueTextField.setBackground(new Color(getBackground().getRGB()));
+		actualAlignmentValueTextField.setBackground(getBackground());
 	}
 
 	private void setupPacking() {
@@ -669,8 +673,11 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	private void setupPackingEnablementButton() {
 		packingEnablementButton.setName("Packing Enablement");
 		String packingToolTipText =
-			"<HTML>Enable packing when details of all components are known (including sizing and alignment).<BR>" +
-				"Disable packing when Reverse Engineering composite.   <font color=blue size=\"-2\">(&lt;F1&gt; for help)</font></HTML>";
+			"<HTML>Enable packing when details of all components are known (including sizing and" +
+				" alignment).<BR>" +
+				"Disable packing when Reverse Engineering composite.   " +
+				"<font color=\"" + Palette.BLUE.toHexString() +
+				"\" size=\"-2\">(&lt;F1&gt; for help)</font></HTML>";
 		packingEnablementButton.addActionListener(e -> {
 			((CompEditorModel) model).setPackingType(
 				packingEnablementButton.isSelected() ? PackingType.DEFAULT : PackingType.DISABLED,
@@ -708,8 +715,9 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		explicitPackingButton.addActionListener(e -> chooseByValuePacking());
 		explicitPackingButton.setToolTipText(packingToolTipText);
 		if (helpManager != null) {
-			helpManager.registerHelp(explicitPackingButton, new HelpLocation(provider.getHelpTopic(),
-				provider.getHelpName() + "_" + "Pack"));
+			helpManager.registerHelp(explicitPackingButton,
+				new HelpLocation(provider.getHelpTopic(),
+					provider.getHelpName() + "_" + "Pack"));
 		}
 
 		explicitPackingTextField.setName("Packing Value");
@@ -831,7 +839,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 		}
 		else {
 			// not editable - use same background as panel
-			sizeTextField.setBackground(new Color(getBackground().getRGB()));
+			sizeTextField.setBackground(getBackground());
 		}
 	}
 

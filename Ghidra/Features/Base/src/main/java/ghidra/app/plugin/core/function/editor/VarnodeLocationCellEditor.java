@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.core.function.editor;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.*;
 import java.math.BigInteger;
@@ -28,6 +27,7 @@ import javax.swing.table.TableCellEditor;
 
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.textfield.IntegerTextField;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.util.AddressInput;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOutOfBoundsException;
@@ -44,12 +44,7 @@ class VarnodeLocationCellEditor extends AbstractCellEditor implements TableCellE
 	private AddressInput addressInput;
 	private IntegerTextField offsetInput;
 
-	private Comparator<Register> registerWrapperComparator = new Comparator<Register>() {
-		@Override
-		public int compare(Register r1, Register r2) {
-			return r1.toString().compareToIgnoreCase(r2.toString());
-		}
-	};
+	private Comparator<Register> registerWrapperComparator = (r1, r2) -> r1.toString().compareToIgnoreCase(r2.toString());
 	private VarnodeInfo currentVarnode;
 	private int maxRegisterSize;
 
@@ -146,12 +141,7 @@ class VarnodeLocationCellEditor extends AbstractCellEditor implements TableCellE
 		if (address != null) {
 			addressInput.setAddress(address);
 		}
-		addressInput.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				stopCellEditing();
-			}
-		});
+		addressInput.addActionListener(e -> stopCellEditing());
 		return addressInput;
 	}
 
@@ -162,14 +152,9 @@ class VarnodeLocationCellEditor extends AbstractCellEditor implements TableCellE
 		if (address != null) {
 			offsetInput.setValue(address.getOffset());
 		}
-		offsetInput.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				stopCellEditing();
-			}
-		});
+		offsetInput.addActionListener(e -> stopCellEditing());
 		JComponent component = offsetInput.getComponent();
-		component.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
+		component.setBorder(BorderFactory.createLineBorder(Palette.GRAY, 1));
 		return component;
 	}
 
@@ -215,12 +200,7 @@ class VarnodeLocationCellEditor extends AbstractCellEditor implements TableCellE
 			}
 		});
 
-		combo.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				stopCellEditing();
-			}
-		});
+		combo.addActionListener(e -> stopCellEditing());
 
 		return combo;
 	}

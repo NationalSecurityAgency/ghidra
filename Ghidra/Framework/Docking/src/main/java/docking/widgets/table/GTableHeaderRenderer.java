@@ -17,96 +17,151 @@ package docking.widgets.table;
 
 import java.awt.*;
 import java.awt.font.TextAttribute;
-import java.awt.geom.Rectangle2D;
 import java.text.AttributedString;
 
 import javax.swing.*;
-import javax.swing.border.*;
+import javax.swing.border.Border;
 import javax.swing.table.*;
 
-import docking.widgets.label.GDLabel;
+import generic.theme.*;
 import resources.*;
 import resources.icons.EmptyIcon;
 import resources.icons.TranslateIcon;
 
-/**
- * The header renderer for GhidraTable.
- * If the table model implements <code>SortedTableModel</code>, then
- * an icon will be displayed in the header of the currently sorted
- * column representing ascending and descending order.
- */
-public class GTableHeaderRenderer extends JPanel implements TableCellRenderer {
+public class GTableHeaderRenderer extends DefaultTableCellRenderer {
+
+	private static final Color SORT_NUMBER_FG_COLOR = new GColor("color.fg");
+
 	private static final int PADDING_FOR_COLUMN_NUMBER = 10;
-
-	private static final Color PRIMARY_SORT_GRADIENT_START = new Color(205, 227, 244);
-	private static final Color PRIMARY_SORT_GRADIENT_END = new Color(126, 186, 233);
-	private static final Color DEFAULT_GRADIENT_START = Color.WHITE;
-	private static final Color DEFAULT_GRADIENT_END = new Color(215, 215, 215);
-
 	private static final Icon UP_ICON =
 		ResourceManager.getScaledIcon(Icons.SORT_ASCENDING_ICON, 14, 14);
 	private static final Icon DOWN_ICON =
 		ResourceManager.getScaledIcon(Icons.SORT_DESCENDING_ICON, 14, 14);
 	private static final int DEFAULT_MIN_HEIGHT = UP_ICON.getIconHeight();
 
+	private static final Icon EMPTY_ICON = new EmptyIcon(0, 0);
 	private static final Icon FILTER_ICON =
-		ResourceManager.getScaledIcon(ResourceManager.loadImage("images/filter_off.png"), 12, 12);
+		ResourceManager.getScaledIcon(new GIcon("icon.widget.filterpanel.filter.off"), 12, 12);
 
-	private JLabel textLabel = new GDLabel();
-	private JLabel iconLabel = new GDLabel();
-	private Icon helpIcon = null;
-	private CustomPaddingBorder customBorder;
+	private static final Icon PENDING_ICON = new GIcon("icon.widget.table.header.pending");
+
+	private Icon primaryIcon = EMPTY_ICON;
+	private Icon helpIcon = EMPTY_ICON;
 	protected boolean isPaintingPrimarySortColumn;
 
-	public GTableHeaderRenderer() {
-		super();
+	private TableCellRenderer delegate;
 
-		textLabel.setHorizontalTextPosition(SwingConstants.LEFT);
-		iconLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+	@Override
+	public Component getTableCellRendererComponent(JTable table, Object value,
+			boolean isSelected, boolean hasFocus, int row, int column) {
 
-		textLabel.setBorder(createOSSpecificBorder());
+		JTableHeader header = table.getTableHeader();
+		delegate = header.getDefaultRenderer();
 
-		setLayout(new BorderLayout());
-		add(textLabel, BorderLayout.CENTER);
-		add(iconLabel, BorderLayout.EAST);
+		Component rendererComponent =
+			delegate.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
-		// controls spacing on multiple platforms
-		customBorder = new CustomPaddingBorder();
-		setBorder(customBorder);
+		int modelIndex = table.convertColumnIndexToModel(column);
+		TableModel model = table.getModel();
+		VariableColumnTableModel variableModel = VariableColumnTableModel.from(model);
+		if (variableModel != null) {
+			String text = variableModel.getColumnDisplayName(modelIndex);
+			if (rendererComponent instanceof JLabel) {
+				((JLabel) rendererComponent).setText(text);
+			}
+		}
+
+		primaryIcon = getIcon(model, modelIndex);
+		helpIcon = getHelpIcon(table, column);
+
+		return this;
 	}
 
 	@Override
-	// overridden to paint our help icon over the other components
-	protected void paintChildren(Graphics g) {
-		super.paintChildren(g);
-		paintHelpIcon(g);
+	public void setBounds(int x, int y, int w, int h) {
+		super.setBounds(x, y, w, h);
+		((Component) delegate).setBounds(x, y, w, h);
 	}
 
-	private void paintHelpIcon(Graphics g) {
-		if (helpIcon == null) {
-			return;
+	@Override
+	public void paint(Graphics g) {
+
+		JLabel label = (JLabel) delegate;
+		String text = label.getText();
+		String clippedText = checkForClipping(label, text);
+		if (!text.equals(clippedText)) {
+			label.setText(clippedText);
 		}
 
-		Point paintPoint = getHelpIconLocation();
-		helpIcon.paintIcon(this, g, paintPoint.x, paintPoint.y);
+		label.paint(g);
+
+		// paint our items after the delegate call so that we paint on top
+		super.paint(g);
+	}
+
+	private String checkForClipping(JLabel label, String text) {
+
+		Point helpPoint = getHelpIconLocation();
+		int padding = 10;
+		int iconStartX = helpPoint.x - primaryIcon.getIconWidth() - padding;
+
+		FontMetrics metrics = label.getFontMetrics(label.getFont());
+		int horizontalAlignment = label.getHorizontalAlignment();
+		Rectangle bounds = label.getBounds();
+		int availableWidth = iconStartX + primaryIcon.getIconWidth();
+		if (horizontalAlignment == CENTER) {
+			availableWidth = iconStartX - padding;
+		}
+
+		String clippedText = SwingUtilities.layoutCompoundLabel(
+			label,
+			metrics,
+			text,
+			primaryIcon,
+			label.getVerticalAlignment(),
+			label.getHorizontalAlignment(),
+			label.getVerticalTextPosition(),
+			label.getHorizontalTextPosition(),
+			new Rectangle(0, 0, availableWidth, bounds.height),
+			new Rectangle(iconStartX, 0, primaryIcon.getIconWidth(), bounds.height),
+			new Rectangle(0, 0, iconStartX, bounds.height),
+			label.getIconTextGap());
+		return clippedText;
+	}
+
+	@Override
+	protected void paintChildren(Graphics g) {
+
+		// The help icon paints at the end of the cell; place the main icon to the left of that
+		Point helpPoint = getHelpIconLocation();
+		int offset = 4;
+		int x = helpPoint.x - primaryIcon.getIconWidth() - offset;
+		int y = getIconStartY(primaryIcon.getIconHeight());
+		primaryIcon.paintIcon(this, g, x, y);
+
+		helpIcon.paintIcon(this, g, helpPoint.x, helpPoint.y);
 	}
 
 	private Point getHelpIconLocation() {
+
+		int right = getWidth();
+		int offset = 2;
+		int helpIconWidth = GTableHeader.HELP_ICON_HEIGHT;
+
 		// we want the icon on the right-hand size of the header, at the top
-		int primaryWidth = iconLabel.getWidth();
-		int overlayWidth = helpIcon.getIconWidth();
-
-		// this point is relative to the iconLabel...
-		Point paintPoint = new Point(primaryWidth - overlayWidth, 0);
-
-		// ...make the point relative to the parent (this renderer)
-		return SwingUtilities.convertPoint(iconLabel, paintPoint, this);
+		int x = right - helpIconWidth - offset;
+		int y = offset; // down a bit
+		return new Point(x, y);
 	}
 
 	@Override
 	// overridden to enforce a minimum height for the icon we use
 	public Dimension getPreferredSize() {
 		Dimension preferredSize = super.getPreferredSize();
+		if (delegate != null) {
+			return ((Component) delegate).getPreferredSize();
+		}
+
 		Border currentBorder = getBorder();
 		int minHeight = DEFAULT_MIN_HEIGHT;
 		if (currentBorder != null) {
@@ -117,47 +172,19 @@ public class GTableHeaderRenderer extends JPanel implements TableCellRenderer {
 		return preferredSize;
 	}
 
-	@Override
-	public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
-			boolean hasFocus, int row, int column) {
-
-		isPaintingPrimarySortColumn = false; // reset
-		Icon icon = null;
-		String text = (value == null) ? "" : value.toString();
-
-		JTableHeader header = table.getTableHeader();
-		setForeground(header.getForeground());
-		setFont(header.getFont());
-
-		// remap the column index to the models column index
-		int modelIndex = table.convertColumnIndexToModel(column);
-		TableModel model = table.getModel();
-
-		icon = getIcon(model, modelIndex);
-
-		VariableColumnTableModel variableModel = VariableColumnTableModel.from(model);
-		if (variableModel != null) {
-			text = variableModel.getColumnDisplayName(modelIndex);
-		}
-		updateHelpIcon(table, column, icon);
-		iconLabel.setIcon(icon);
-		textLabel.setText(text);
-
-		setOuterBorder(customBorder, column);
-
-		setOpaque(false);
-		return this;
-	}
-
 	private Icon getIcon(TableModel model, int columnModelIndex) {
 		Icon icon = null;
 		if (model instanceof SortedTableModel) {
 			icon = getSortIcon(icon, columnModelIndex, model);
 		}
 		if (isColumnFiltered(model, columnModelIndex)) {
-			icon = combineIcons(icon, FILTER_ICON);
+			icon = combineIcons(FILTER_ICON, icon);
 		}
-		return icon;
+
+		if (icon != null) {
+			return icon;
+		}
+		return EMPTY_ICON;
 	}
 
 	private Icon combineIcons(Icon icon1, Icon icon2) {
@@ -167,9 +194,16 @@ public class GTableHeaderRenderer extends JPanel implements TableCellRenderer {
 		if (icon2 == null) {
 			return icon1;
 		}
-		MultiIcon icon = new MultiIcon(new EmptyIcon(28, 14));
-		icon.addIcon(icon2);
-		icon.addIcon(new TranslateIcon(icon1, 14, 0));
+
+		int padding = 2;
+		int w1 = icon1.getIconWidth();
+		int w2 = icon2.getIconWidth();
+		int h1 = icon1.getIconHeight();
+		int fullWidth = w1 + padding + w2;
+		MultiIcon icon = new MultiIcon(new EmptyIcon(fullWidth, h1));
+		icon.addIcon(icon1);
+		int rightShift = w1 + padding;
+		icon.addIcon(new TranslateIcon(icon2, rightShift, 0));
 		return icon;
 	}
 
@@ -185,66 +219,26 @@ public class GTableHeaderRenderer extends JPanel implements TableCellRenderer {
 		return tableFilter.hasColumnFilter(columnModelIndex);
 	}
 
-	private void setOuterBorder(CustomPaddingBorder border, int column) {
-		if (paintAquaHeaders()) {
-			if (column == 0) {
-				customBorder.setOuterBorder(new NoSidesLineBorder(Color.GRAY));
-				return;
-			}
-			customBorder.setOuterBorder(new NoRightSideLineBorder(Color.GRAY));
-		}
-		else {
-			customBorder.setOuterBorder(UIManager.getBorder("TableHeader.cellBorder"));
-		}
-	}
+	private Icon getHelpIcon(JTable table, int currentColumnIndex) {
 
-	private boolean paintAquaHeaders() {
-		return true;
-		// For now we always use the custom --it actually makes the various LaFs look nicer
-		// return DockingWindowsLookAndFeelUtils.isUsingAquaUI(getUI());
-	}
-
-	@Override
-	protected void paintComponent(Graphics g) {
-		Graphics2D g2d = (Graphics2D) g;
-
-		Paint backgroundColor = getBackgroundPaint();
-		Paint oldPaint = g2d.getPaint();
-
-		g2d.setPaint(backgroundColor);
-		g2d.fillRect(0, 0, getWidth(), getHeight());
-
-		g2d.setPaint(oldPaint);
-		super.paintComponent(g);
-	}
-
-	protected Paint getBackgroundPaint() {
-		if (isPaintingPrimarySortColumn) {
-			return new GradientPaint(0, 0, PRIMARY_SORT_GRADIENT_START, 0, getHeight() - 11,
-				PRIMARY_SORT_GRADIENT_END, true);
-		}
-		return new GradientPaint(0, 0, DEFAULT_GRADIENT_START, 0, getHeight() - 11,
-			DEFAULT_GRADIENT_END, true);
-	}
-
-	private void updateHelpIcon(JTable table, int currentColumnIndex, Icon icon) {
 		JTableHeader tableHeader = table.getTableHeader();
 		if (!(tableHeader instanceof GTableHeader)) {
-			helpIcon = null;
-			return;
+			return EMPTY_ICON;
 		}
 
 		GTableHeader tooltipTableHeader = (GTableHeader) tableHeader;
 		int hoveredColumnIndex = tooltipTableHeader.getHoveredHeaderColumnIndex();
 		if (hoveredColumnIndex != currentColumnIndex) {
-			helpIcon = null;
-			return;
+			return EMPTY_ICON;
 		}
 
-		helpIcon = tooltipTableHeader.getHelpIcon();
+		Icon icon = tooltipTableHeader.getHelpIcon();
+		if (icon != null) {
+			return icon;
+		}
+		return EMPTY_ICON;
 	}
 
-	// checked before this method is called
 	private Icon getSortIcon(Icon icon, int realIndex, TableModel model) {
 		SortedTableModel sortedModel = (SortedTableModel) model;
 		TableSortState columnSortStates = sortedModel.getTableSortState();
@@ -298,81 +292,41 @@ public class GTableHeaderRenderer extends JPanel implements TableCellRenderer {
 		}
 
 		if (isPendingSort) {
-			icon = ResourceManager.loadImage("images/hourglass.png");
+			icon = PENDING_ICON;
 		}
 
 		return icon;
 	}
 
-	/**
-	 * Returns true if sorted in ascending order, false if descending.
-	 * @return true if sorted in ascending order, false if descending
-	 */
-	public boolean isSortedAscending() {
-		return iconLabel.getIcon() == UP_ICON;
-	}
+	private int getIconStartY(int iconHeight) {
 
-	boolean isTextOccluded() {
-		return textLabel.getPreferredSize().getWidth() > textLabel.getWidth();
-	}
-
-	private Border createOSSpecificBorder() {
-		if (paintAquaHeaders()) {
-			return new EmptyBorder(1, 2, 1, 2);
-		}
-		return new EmptyBorder(0, 2, 0, 2);
+		int height = getHeight();
+		int middle = height / 2;
+		int halfHeight = iconHeight / 2;
+		int y = middle - halfHeight;
+		return y;
 	}
 
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
 
-	private class CustomPaddingBorder extends CompoundBorder {
-		private CustomPaddingBorder() {
-			insideBorder = createOSSpecificBorder();
-		}
-
-		void setOuterBorder(Border border) {
-			outsideBorder = border;
-		}
-	}
-
-	private class NoRightSideLineBorder extends LineBorder {
-		NoRightSideLineBorder(Color color) {
-			super(color);
-		}
-
-		@Override
-		public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-			// take advantage of our clipping by telling our parent to paint at a point that will
-			// be clipped
-			super.paintBorder(c, g, x, y, width + 1, height);
-		}
-	}
-
-	private class NoSidesLineBorder extends LineBorder {
-		NoSidesLineBorder(Color color) {
-			super(color);
-		}
-
-		@Override
-		public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-			// take advantage of our clipping by telling our parent to paint at a point that will
-			// be clipped
-			super.paintBorder(c, g, x - 1, y, width + 5, height);
-		}
-	}
-
 	private class NumberPainterIcon implements Icon {
 
+		private static final String FONT_ID = "font.table.header.number";
 		private final int iconWidth;
+		private int numberWidth;
 		private final int iconHeight;
 		private final String numberText;
 
 		public NumberPainterIcon(int width, int height, String numberText) {
-			iconWidth = width;
-			iconHeight = height;
+			this.iconWidth = width;
+			this.iconHeight = height;
 			this.numberText = numberText;
+
+			Font font = Gui.getFont(FONT_ID);
+			FontMetrics fontMetrics = getFontMetrics(font);
+			numberWidth = fontMetrics.stringWidth(numberText);
 		}
 
 		@Override
@@ -382,35 +336,34 @@ public class GTableHeaderRenderer extends JPanel implements TableCellRenderer {
 
 		@Override
 		public int getIconWidth() {
-			return iconWidth;
+			return iconWidth + numberWidth;
 		}
 
 		@Override
 		public void paintIcon(Component c, Graphics g, int x, int y) {
-			int fontSize = 12;
-			String fontFamily = "arial";
-			Font font = new Font(fontFamily, Font.BOLD, fontSize);
+
+			Font font = Gui.getFont(FONT_ID);
 			g.setFont(font);
 			FontMetrics fontMetrics = g.getFontMetrics();
-			Rectangle2D stringBounds = fontMetrics.getStringBounds(numberText, g);
-			int numberWidth = (int) stringBounds.getWidth();
 			int numberHeight = fontMetrics.getAscent();
 
-			int insetPadding = 2;
+			int padding = 2;
 
 			// draw the number on the right...
-			int startX = x + (iconWidth - numberWidth) - insetPadding;
+			int startX = x + (iconWidth - numberWidth) + padding;
 
-			// ...and in the upper portion
-			int textBaseline = numberHeight;
+			// ...and at the same start y as the sort icon
+			int iconY = getIconStartY(iconHeight);
+			int textBaseline = iconY + numberHeight - padding;
 
 			AttributedString as = new AttributedString(numberText);
-			as.addAttribute(TextAttribute.FOREGROUND, Color.BLACK);
+			as.addAttribute(TextAttribute.FOREGROUND, SORT_NUMBER_FG_COLOR);
 			as.addAttribute(TextAttribute.WEIGHT, TextAttribute.WEIGHT_BOLD);
-			as.addAttribute(TextAttribute.FAMILY, fontFamily);
-			as.addAttribute(TextAttribute.SIZE, (float) fontSize);
+			as.addAttribute(TextAttribute.FAMILY, font.getFamily());
+			as.addAttribute(TextAttribute.SIZE, font.getSize2D());
 
 			g.drawString(as.getIterator(), startX, textBaseline);
+
 		}
 
 	}

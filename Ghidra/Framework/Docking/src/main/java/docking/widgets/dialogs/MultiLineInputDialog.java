@@ -25,6 +25,7 @@ import docking.DialogComponentProvider;
 import docking.DockingUtils;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.framework.OperatingSystem;
 import ghidra.framework.Platform;
 
@@ -87,7 +88,7 @@ public class MultiLineInputDialog extends DialogComponentProvider {
 		Font smallerFont = font.deriveFont(12F);
 		Font smallItalicFont = smallerFont.deriveFont(Font.ITALIC);
 		hintLabel.setFont(smallItalicFont);
-		hintLabel.setForeground(Color.LIGHT_GRAY);
+		hintLabel.setForeground(Messages.HINT);
 
 		dataPanel.add(messageLabel, BorderLayout.NORTH);
 		dataPanel.add(new JScrollPane(inputTextArea), BorderLayout.CENTER);

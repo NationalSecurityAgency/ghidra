@@ -35,6 +35,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.MarkerLocation;
 import ghidra.program.util.ProgramLocation;
+import ghidra.util.ColorUtils;
 import ghidra.util.Swing;
 import ghidra.util.datastruct.SortedRangeList;
 
@@ -262,7 +263,7 @@ abstract class MarkerSetImpl implements MarkerSet {
 		int red = (c.getRed() + 3 * COLOR_VALUE) / 4;
 		int green = (c.getGreen() + 3 * COLOR_VALUE) / 4;
 		int blue = (c.getBlue() + 3 * COLOR_VALUE) / 4;
-		return new Color(red, green, blue);
+		return ColorUtils.getColor(red, green, blue);
 	}
 
 	@Override

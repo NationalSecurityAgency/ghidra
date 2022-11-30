@@ -21,6 +21,7 @@ import java.math.BigInteger;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.util.HighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
@@ -39,7 +40,7 @@ import ghidra.util.exception.AssertException;
   */
 public class AddressFieldFactory extends FieldFactory {
 	public static final String FIELD_NAME = "Address";
-	public static final Color DEFAULT_COLOR = Color.BLACK;
+	public static final Color DEFAULT_COLOR = Colors.FOREGROUND;
 	private final static String GROUP_TITLE = "Address Field";
 	public final static String DISPLAY_BLOCK_NAME =
 		GROUP_TITLE + Options.DELIMITER + "Display Block Name";

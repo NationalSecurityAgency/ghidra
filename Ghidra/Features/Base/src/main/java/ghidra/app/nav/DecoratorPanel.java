@@ -20,24 +20,24 @@ import java.awt.Color;
 
 import javax.swing.*;
 
+import generic.theme.GColor;
+
 public class DecoratorPanel extends JPanel {
-    
+
+	private static final Color DISCONNECTED = new GColor("color.border.provider.disconnected");
+
 	public DecoratorPanel(JComponent component, boolean isConnected) {
 		setLayout(new BorderLayout());
 		add(component);
-		setConnected( isConnected );
-	}
-	
-	public void setConnected( boolean isConnected ) {
-		if ( !isConnected ) {
-			setBorder( BorderFactory.createLineBorder( Color.ORANGE, 2 ) );
-		}
-		else {
-			setBorder( BorderFactory.createEmptyBorder() );
-		}
+		setConnected(isConnected);
 	}
 
-//	public void setNorthPanel(JComponent comp) {
-//		add(comp, BorderLayout.NORTH);
-//	}
+	public void setConnected(boolean isConnected) {
+		if (!isConnected) {
+			setBorder(BorderFactory.createLineBorder(DISCONNECTED, 2));
+		}
+		else {
+			setBorder(BorderFactory.createEmptyBorder());
+		}
+	}
 }

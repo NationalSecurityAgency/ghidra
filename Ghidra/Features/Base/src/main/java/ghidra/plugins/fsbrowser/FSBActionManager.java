@@ -16,13 +16,12 @@
 package ghidra.plugins.fsbrowser;
 
 import static ghidra.formats.gfilesystem.fileinfo.FileAttributeType.*;
-import static java.util.Map.entry;
-
-import java.util.*;
-import java.util.function.Function;
+import static java.util.Map.*;
 
 import java.awt.Component;
 import java.io.*;
+import java.util.*;
+import java.util.function.Function;
 
 import javax.swing.*;
 
@@ -31,6 +30,7 @@ import org.apache.commons.io.FilenameUtils;
 import docking.action.DockingAction;
 import docking.action.builder.ActionBuilder;
 import docking.widgets.OptionDialog;
+import docking.widgets.SelectFromListDialog;
 import docking.widgets.dialogs.MultiLineMessageDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;

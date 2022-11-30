@@ -292,7 +292,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 			hexComp.setCursorPosition(l.getIndex(), l.getFieldNum(), 0, 0);
 		});
 
-		assertEquals(ByteViewerComponentProvider.DEFAULT_EDIT_COLOR,
+		assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR,
 			((ByteField) hexComp.getCurrentField()).getForeground());
 	}
 
@@ -342,7 +342,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 		// does not support editing
 		Color fg = ((ByteField) c.getCurrentField()).getForeground();
 		if (fg != null) {
-			assertEquals(ByteViewerComponentProvider.DEFAULT_CURRENT_CURSOR_COLOR, fg);
+			assertEquals(ByteViewerComponentProvider.CURSOR_ACTIVE_COLOR, fg);
 		}
 	}
 
@@ -391,7 +391,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 		// does not support editing
 		Color fg = ((ByteField) c.getCurrentField()).getForeground();
 		if (fg != null) {
-			assertEquals(ByteViewerComponentProvider.DEFAULT_CURRENT_CURSOR_COLOR, fg);
+			assertEquals(ByteViewerComponentProvider.CURSOR_ACTIVE_COLOR, fg);
 		}
 	}
 
@@ -436,7 +436,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 			intComp.setCursorPosition(l.getIndex(), l.getFieldNum(), 0, 0);
 		});
 		// color should indicate the edit
-		assertEquals(ByteViewerComponentProvider.DEFAULT_EDIT_COLOR,
+		assertEquals(ByteViewerComponentProvider.CHANGED_VALUE_COLOR,
 			((ByteField) intComp.getCurrentField()).getForeground());
 	}
 

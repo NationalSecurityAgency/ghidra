@@ -71,7 +71,7 @@ public class GdbModelTargetInferiorContainer
 	@Override
 	public void inferiorExited(GdbInferior inf, GdbCause cause) {
 		GdbModelTargetInferior inferior = getTargetInferior(inf);
-		parent.getListeners().fire.event(parent, null, TargetEventType.PROCESS_EXITED,
+		broadcast().event(parent, null, TargetEventType.PROCESS_EXITED,
 			"Inferior " + inf.getId() + " exited code=" + inf.getExitCode(), List.of(inferior));
 		inferior.inferiorExited(inf.getExitCode());
 	}
@@ -89,7 +89,7 @@ public class GdbModelTargetInferiorContainer
 	public void threadCreated(GdbThread thread, GdbCause cause) {
 		GdbModelTargetInferior inferior = getTargetInferior(thread.getInferior());
 		GdbModelTargetThread targetThread = inferior.threads.threadCreated(thread);
-		parent.getListeners().fire.event(parent, targetThread, TargetEventType.THREAD_CREATED,
+		broadcast().event(parent, targetThread, TargetEventType.THREAD_CREATED,
 			"Thread " + thread.getId() + " started", List.of(targetThread));
 	}
 
@@ -98,7 +98,7 @@ public class GdbModelTargetInferiorContainer
 		GdbModelTargetInferior inferior = getTargetInferior(inf);
 		GdbModelTargetThread targetThread =
 			inferior.threads.getCachedElements().get(GdbModelTargetThread.indexThread(threadId));
-		parent.getListeners().fire.event(parent, targetThread, TargetEventType.THREAD_EXITED,
+		broadcast().event(parent, targetThread, TargetEventType.THREAD_EXITED,
 			"Thread " + threadId + " exited", List.of(targetThread));
 		inferior.threads.threadExited(threadId);
 	}
@@ -107,7 +107,7 @@ public class GdbModelTargetInferiorContainer
 	public void libraryLoaded(GdbInferior inf, String name, GdbCause cause) {
 		GdbModelTargetInferior inferior = getTargetInferior(inf);
 		GdbModelTargetModule module = inferior.modules.libraryLoaded(name);
-		parent.getListeners().fire.event(parent, null, TargetEventType.MODULE_LOADED,
+		broadcast().event(parent, null, TargetEventType.MODULE_LOADED,
 			"Library " + name + " loaded", List.of(module));
 	}
 
@@ -115,7 +115,7 @@ public class GdbModelTargetInferiorContainer
 	public void libraryUnloaded(GdbInferior inf, String name, GdbCause cause) {
 		GdbModelTargetInferior inferior = getTargetInferior(inf);
 		GdbModelTargetModule module = inferior.modules.getTargetModuleIfPresent(name);
-		parent.getListeners().fire.event(parent, null, TargetEventType.MODULE_UNLOADED,
+		broadcast().event(parent, null, TargetEventType.MODULE_UNLOADED,
 			"Library " + name + " unloaded", List.of(module));
 		inferior.modules.libraryUnloaded(name);
 	}

@@ -18,7 +18,8 @@ package ghidra.app.plugin.core.navigation;
 import java.awt.event.*;
 import java.util.Iterator;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.KeyStroke;
 
 import docking.ActionContext;
 import docking.action.*;
@@ -26,6 +27,7 @@ import docking.menu.ActionState;
 import docking.menu.MultiStateDockingAction;
 import docking.tool.ToolConstants;
 import docking.widgets.EventTrigger;
+import generic.theme.GIcon;
 import generic.util.image.ImageUtils;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.context.NavigatableActionContext;
@@ -45,26 +47,21 @@ public class NextPreviousBookmarkAction extends MultiStateDockingAction<String> 
 	public static final String ALL_BOOKMARK_TYPES = "All Bookmark Types";
 
 	private static final Icon INVERTED_OVERLAY_ICON =
-		ImageUtils.makeTransparent(ResourceManager.loadImage("images/dialog-cancel.png"), .5f);
+		ImageUtils.makeTransparent(Icons.NOT_ALLOWED_ICON, .5f);
 
 	private PluginTool tool;
 	private boolean isForward = true;
 	private boolean isInverted;
 
-	private static final ImageIcon BOOKMARK_ICON = ResourceManager.getScaledIcon(
-		ResourceManager.loadImage("images/B.gif"), 16, 16);
-	private static final ImageIcon BOOKMARK_ANALYSIS_ICON =
-		ResourceManager.loadImage("images/applications-system.png");
-	private static final ImageIcon BOOKMARK_ERROR_ICON =
-		ResourceManager.loadImage("images/edit-delete.png");
-	private static final ImageIcon BOOKMARK_INFO_ICON =
-		ResourceManager.loadImage("images/information.png");
-	private static final ImageIcon BOOKMARK_NOTE_ICON =
-		ResourceManager.loadImage("images/notes.gif");
-	private static final ImageIcon BOOKMARK_WARNING_ICON =
-		ResourceManager.loadImage("images/warning.png");
-	private static final ImageIcon BOOKMARK_UNKNOWN_ICON =
-		ResourceManager.loadImage("images/unknown.gif");
+	//@formatter:off
+	private static final Icon BOOKMARK_ICON = new GIcon("icon.plugin.navigation.bookmark");
+	private static final Icon BOOKMARK_ANALYSIS_ICON = new GIcon("icon.plugin.navigation.bookmark.analysis");
+	private static final Icon BOOKMARK_ERROR_ICON = new GIcon("icon.plugin.navigation.bookmark.error");
+	private static final Icon BOOKMARK_INFO_ICON = new GIcon("icon.plugin.navigation.bookmark.info");
+	private static final Icon BOOKMARK_NOTE_ICON = new GIcon("icon.plugin.navigation.bookmark.note");
+	private static final Icon BOOKMARK_WARNING_ICON = new GIcon("icon.plugin.navigation.bookmark.warning");
+	private static final Icon BOOKMARK_UNKNOWN_ICON = new GIcon("icon.plugin.navigation.bookmark.unknown");
+	//@formatter:on
 
 	public NextPreviousBookmarkAction(PluginTool tool, String owner, String subGroup) {
 		super("Next Bookmark", owner);

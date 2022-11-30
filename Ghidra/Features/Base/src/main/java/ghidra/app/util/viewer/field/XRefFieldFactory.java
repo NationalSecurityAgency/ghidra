@@ -27,6 +27,7 @@ import javax.swing.event.ChangeListener;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.*;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.util.HighlightProvider;
 import ghidra.app.util.XReferenceUtils;
 import ghidra.app.util.viewer.format.FieldFormatModel;
@@ -428,7 +429,7 @@ public class XRefFieldFactory extends FieldFactory {
 			HighlightFactory hlFactory) {
 
 		FontMetrics metrics = getMetrics();
-		AttributedString delimiter = new AttributedString(delim, Color.BLACK, metrics);
+		AttributedString delimiter = new AttributedString(delim, Colors.FOREGROUND, metrics);
 
 		int row = 0;
 		List<FieldElement> elements = new ArrayList<>();
@@ -490,7 +491,7 @@ public class XRefFieldFactory extends FieldFactory {
 			HighlightFactory hlFactory) {
 
 		FontMetrics metrics = getMetrics();
-		AttributedString delimiter = new AttributedString(delim, Color.BLACK, metrics);
+		AttributedString delimiter = new AttributedString(delim, Colors.FOREGROUND, metrics);
 		int row = startRow;
 		List<XrefFieldElement> elements = new ArrayList<>();
 		for (Reference ref : xrefs) {
@@ -542,7 +543,7 @@ public class XRefFieldFactory extends FieldFactory {
 		CodeUnit cu = (CodeUnit) obj;
 		Program program = cu.getProgram();
 		FontMetrics metrics = getMetrics();
-		AttributedString delimiter = new AttributedString(delim, Color.BLACK, metrics);
+		AttributedString delimiter = new AttributedString(delim, Colors.FOREGROUND, metrics);
 
 		Set<Reference> offcutSet = new HashSet<>(offcuts);
 		Predicate<Reference> isOffcut = r -> offcutSet.contains(r);

@@ -24,7 +24,6 @@ import ghidra.app.util.viewer.options.ScreenElement;
 import ghidra.framework.options.Options;
 import ghidra.program.model.listing.Parameter;
 import ghidra.program.model.listing.Variable;
-import ghidra.util.SystemUtilities;
 
 public abstract class AbstractVariableFieldFactory extends FieldFactory {
 
@@ -110,7 +109,7 @@ public abstract class AbstractVariableFieldFactory extends FieldFactory {
 			Object newValue) {
 
 		if (optionName.equals(FONT_OPTION_NAME)) {
-			baseFont = SystemUtilities.adjustForFontSizeOverride((Font) newValue);
+			baseFont = (Font) newValue;
 			setMetrics(baseFont, parameterFieldOptions[CUSTOM_PARAM_INDEX]);
 			setMetrics(baseFont, parameterFieldOptions[DYNAMIC_PARAM_INDEX]);
 		}
@@ -133,7 +132,7 @@ public abstract class AbstractVariableFieldFactory extends FieldFactory {
 	private void setMetrics(Font newFont, ParameterFieldOptions paramFieldOptions) {
 		paramFieldOptions.defaultMetrics = Toolkit.getDefaultToolkit().getFontMetrics(newFont);
 		for (int i = 0; i < paramFieldOptions.fontMetrics.length; i++) {
-			Font font = new Font(newFont.getFamily(), i, newFont.getSize());
+			Font font = newFont.deriveFont(i); // i is looping over the 4 font styles PLAIN, BOLD, ITALIC, and BOLDITALIC
 			paramFieldOptions.fontMetrics[i] = Toolkit.getDefaultToolkit().getFontMetrics(font);
 		}
 	}

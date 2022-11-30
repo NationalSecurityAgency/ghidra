@@ -15,7 +15,8 @@
  */
 package docking.widgets.table.constrainteditor;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
 
 import javax.swing.*;
 
@@ -26,6 +27,7 @@ import docking.widgets.spinner.IntegerSpinner;
 import docking.widgets.table.constraint.ColumnConstraint;
 import docking.widgets.table.constraint.SingleValueColumnConstraint;
 import docking.widgets.textfield.IntegerTextField;
+import generic.theme.GThemeDefaults.Colors.Messages;
 
 /**
  * A constraint editor for specifying comparison with a single integer-type value (Byte, Short,
@@ -73,7 +75,7 @@ public class IntegerConstraintEditor<T extends Number> extends AbstractColumnCon
 		panel.add(spinner.getSpinner(), BorderLayout.CENTER);
 		statusLabel = new GDHtmlLabel();
 		panel.add(statusLabel, BorderLayout.SOUTH);
-		statusLabel.setForeground(Color.RED);
+		statusLabel.setForeground(Messages.ERROR);
 		statusLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
 		return panel;

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +15,19 @@
  */
 package ghidra.app.plugin.debug;
 
-import ghidra.framework.plugintool.ComponentProviderAdapter;
-import ghidra.framework.plugintool.PluginTool;
-import ghidra.util.Msg;
-
 import java.awt.Point;
 import java.util.Date;
 
 import javax.swing.*;
 
-import resources.ResourceManager;
 import docking.ActionContext;
 import docking.WindowPosition;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
+import ghidra.framework.plugintool.ComponentProviderAdapter;
+import ghidra.framework.plugintool.PluginTool;
+import ghidra.util.Msg;
+import resources.Icons;
 
 public class DomainFolderChangesDisplayComponentProvider extends ComponentProviderAdapter {
 	private JTextArea textArea;
@@ -72,7 +70,7 @@ public class DomainFolderChangesDisplayComponentProvider extends ComponentProvid
 			}
 		};
 		clearAction.setEnabled(true);
-		ImageIcon icon = ResourceManager.loadImage("images/erase16.png");
+		Icon icon = Icons.CLEAR_ICON;
 		clearAction.setToolBarData(new ToolBarData(icon));
 		addLocalAction(clearAction);
 	}

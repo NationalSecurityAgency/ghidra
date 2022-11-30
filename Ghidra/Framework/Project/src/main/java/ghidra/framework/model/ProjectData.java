@@ -39,6 +39,7 @@ public interface ProjectData {
 
 	/**
 	 * Returns the root folder of the project.
+	 * @return root {@link DomainFolder} within project.
 	 */
 	public DomainFolder getRootFolder();
 
@@ -111,15 +112,6 @@ public interface ProjectData {
 	public DomainFile getFileByID(String fileID);
 
 	/**
-	 * Get a URL for a shared domain file which is available 
-	 * within a remote repository.
-	 * @param path the absolute path of domain file relative to the root folder.
-	 * @return URL object for accessing shared file from outside of a project, or
-	 * null if file does not exist or is not shared.
-	 */
-	public URL getSharedFileURL(String path);
-
-	/**
 	 * Transform the specified name into an acceptable folder or file item name.  Only an individual folder
 	 * or file name should be specified, since any separators will be stripped-out.
 	 * NOTE: Uniqueness of name within the intended target folder is not considered.
@@ -130,6 +122,7 @@ public interface ProjectData {
 
 	/**
 	 * Returns the projectLocator for the this ProjectData.
+	 * @return project locator object
 	 */
 	public ProjectLocator getProjectLocator();
 
@@ -150,12 +143,14 @@ public interface ProjectData {
 	 * Sync the Domain folder/file structure with the underlying file structure.
 	 * @param force if true all folders will be be visited and refreshed, if false
 	 * only those folders previously visited will be refreshed.
+	 * @throws IOException if an IO error occurs
 	 */
 	public void refresh(boolean force) throws IOException;
 
 	/**
 	 * Returns User object associated with remote repository or null if a remote repository
 	 * is not used.
+	 * @return current remote user identity or null
 	 */
 	public User getUser();
 

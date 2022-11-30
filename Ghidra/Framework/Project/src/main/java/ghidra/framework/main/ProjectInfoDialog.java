@@ -30,6 +30,7 @@ import docking.widgets.OptionDialog;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
 import docking.wizard.WizardManager;
+import generic.theme.GIcon;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.framework.client.*;
 import ghidra.framework.data.ConvertFileSystem;
@@ -45,7 +46,6 @@ import ghidra.util.layout.VerticalLayout;
 import ghidra.util.task.*;
 import help.Help;
 import help.HelpService;
-import resources.ResourceManager;
 
 /**
  * Dialog to show project information. Allows the user to convert a local project to a shared project,
@@ -54,7 +54,7 @@ import resources.ResourceManager;
  */
 public class ProjectInfoDialog extends DialogComponentProvider {
 
-	private final static Icon CONVERT_ICON = ResourceManager.loadImage("images/wand.png");
+	private final static Icon CONVERT_ICON = new GIcon("icon.project.info.convert");
 	public final static String CHANGE = "Change Shared Project Info...";
 	final static String CONVERT = "Convert to Shared...";
 
@@ -405,7 +405,7 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 			Msg.showInfo(getClass(), getComponent(),
 				"Cannot Convert/Upgrade Project Storage with Open Files",
 				"Found " + openCount + " open project file(s).\n" +
-				"Before your project can be converted, you must close\n" +
+					"Before your project can be converted, you must close\n" +
 					"all open project files and tools.");
 			return;
 		}
@@ -450,7 +450,7 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 			Msg.showInfo(getClass(), getComponent(),
 				"Cannot Convert Project with Open Files",
 				"Found " + openCount + " open project file(s).\n" +
-				"Before your project can be converted, you must close\n" +
+					"Before your project can be converted, you must close\n" +
 					"all open project files and tools.");
 			return;
 		}
@@ -599,7 +599,8 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 			}
 		}
 
-		private boolean useForcedCheckoutTransition(TaskMonitor monitor) throws CancelledException, IOException {
+		private boolean useForcedCheckoutTransition(TaskMonitor monitor)
+				throws CancelledException, IOException {
 			if (repository == null) {
 				return false;
 			}
@@ -610,7 +611,7 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 				!projectData.hasInvalidCheckouts(checkoutFiles, newRepository, monitor)) {
 				return false;
 			}
-			
+
 			if (OptionDialog.showOptionDialog(getComponent(), "Terminate Unrecognized Checkouts",
 				"One or more project file checkouts are not recognized by the selected repository.\n" +
 					"These checkouts will be terminated and a local .keep file created." +
@@ -624,7 +625,7 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 
 				throw new CancelledException();
 			}
-			
+
 			// Must force termination if not connected to current repository
 			return !repository.isConnected();
 		}

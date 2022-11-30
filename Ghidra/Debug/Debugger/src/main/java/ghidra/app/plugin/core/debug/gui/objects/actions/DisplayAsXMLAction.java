@@ -18,12 +18,13 @@ package ghidra.app.plugin.core.debug.gui.objects.actions;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import org.jdom.Element;
 
 import docking.action.KeyBindingData;
 import docking.action.MenuData;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.debug.gui.objects.DebuggerObjectsProvider;
 import ghidra.app.plugin.core.debug.gui.objects.ObjectContainer;
 import ghidra.app.services.ConsoleService;
@@ -31,12 +32,11 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.xml.XmlUtilities;
-import resources.ResourceManager;
 
 public class DisplayAsXMLAction extends DisplayAsAction {
 
 	protected ConsoleService consoleService;
-	protected ImageIcon ICON_XML = ResourceManager.loadImage("images/text-xml.png");;
+	protected static final Icon ICON_XML = new GIcon("icon.debugger.display.xml");
 
 	public DisplayAsXMLAction(PluginTool tool, String owner, DebuggerObjectsProvider provider) {
 		super("DisplayXml", tool, owner, provider);

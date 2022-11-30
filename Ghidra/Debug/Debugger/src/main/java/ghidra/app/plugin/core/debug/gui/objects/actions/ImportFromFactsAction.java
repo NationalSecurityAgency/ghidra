@@ -20,26 +20,26 @@ import java.awt.event.KeyEvent;
 import java.io.*;
 import java.util.*;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 import javax.swing.SwingUtilities;
 
 import docking.ActionContext;
 import docking.action.KeyBindingData;
 import docking.action.MenuData;
 import docking.widgets.filechooser.GhidraFileChooserMode;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.debug.gui.objects.DebuggerObjectsProvider;
 import ghidra.app.plugin.core.debug.gui.objects.ObjectContainer;
 import ghidra.app.plugin.core.debug.gui.objects.components.DummyTargetObject;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
-import resources.ResourceManager;
 
 public class ImportFromFactsAction extends ImportExportAsAction {
 
-	protected ImageIcon ICON_FACTS = ResourceManager.loadImage("images/closedFolder.png");
+	protected static final Icon ICON_FACTS = new GIcon("icon.debugger.display.import.facts");
 	private Map<String, Map<String, String>> maps =
-		new LinkedHashMap<String, Map<String, String>>();
+		new LinkedHashMap<>();
 
 	public ImportFromFactsAction(PluginTool tool, String owner, DebuggerObjectsProvider provider) {
 		super("ImportFromFacts", tool, owner, provider);
@@ -75,7 +75,7 @@ public class ImportFromFactsAction extends ImportExportAsAction {
 					for (File f : dir.listFiles()) {
 						BufferedReader reader =
 							new BufferedReader(new InputStreamReader(new FileInputStream(f)));
-						Map<String, String> map = new LinkedHashMap<String, String>();
+						Map<String, String> map = new LinkedHashMap<>();
 						String name = f.getName();
 						name = name.substring(0, name.indexOf(ExportAsFactsAction.fileExt2));
 						maps.put(name, map);

@@ -47,6 +47,9 @@ import docking.widgets.table.threaded.ThreadedTableModel;
 import docking.widgets.tree.GTree;
 import generic.jar.ResourceFile;
 import generic.test.AbstractGenericTest;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Java;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import generic.util.image.ImageUtils;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.core.analysis.AnalysisOptionsDialog;
@@ -76,6 +79,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramSelection;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
+import ghidra.util.ColorUtils;
 import ghidra.util.exception.AssertException;
 import resources.ResourceManager;
 
@@ -420,7 +424,7 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 				captureComponent(window);
 			}
 		}
-		drawBorder(Color.BLACK);
+		drawBorder(Java.BORDER);
 	}
 
 	public JPopupMenu getPopupMenu() {
@@ -784,20 +788,20 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 		BufferedImage combinedImage =
 			new BufferedImage(rect.width, rect.height, BufferedImage.TYPE_INT_ARGB);
 		Graphics g = combinedImage.getGraphics();
-		g.setColor(Color.WHITE);
+		g.setColor(Palette.WHITE);
 		g.fillRect(0, 0, rect.width, rect.height);
 
 		for (Component component : comps) {
 			int pad = 6;
 			Point p = component.getLocationOnScreen();
-			g.setColor(new Color(250, 250, 250));
+			g.setColor(ColorUtils.getOpaqueColor(0xfafafa)); // just slightly not white
 			g.fillRoundRect(p.x - rect.x - pad, p.y - rect.y - pad, component.getWidth() + pad * 2,
 				component.getHeight() + pad * 2, pad * 2, pad * 2);
 		}
 		for (Component component : comps) {
 			int pad = 3;
 			Point p = component.getLocationOnScreen();
-			g.setColor(new Color(240, 240, 240));
+			g.setColor(ColorUtils.getOpaqueColor(0xf0f0f0)); // faint gray
 			g.fillRoundRect(p.x - rect.x - pad, p.y - rect.y - pad, component.getWidth() + pad * 2,
 				component.getHeight() + pad * 2, pad * 2, pad * 2);
 		}
@@ -1372,7 +1376,7 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 	}
 
 	public void drawRectangleWithDropShadowAround(JComponent component, Color color, int padding) {
-		Rectangle r = drawRectangleAround(component, Color.BLACK, padding);
+		Rectangle r = drawRectangleAround(component, Java.BORDER, padding);
 
 		// move it back a bit to create the drop-shadow effect
 		r.x -= padding;
@@ -1594,7 +1598,7 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 	public Image takeSnippet(Rectangle bounds) {
 		int margin = 20;
 		int topMargin = 4;
-		padImage(Color.WHITE, 0, margin, 0, margin);
+		padImage(Colors.BACKGROUND, 0, margin, 0, margin);
 		int rise = 8;
 		bounds.width += 2 * margin;
 
@@ -1625,7 +1629,7 @@ public abstract class AbstractScreenShotGenerator extends AbstractGhidraHeadedIn
 
 		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-		g2.setColor(Color.BLACK);
+		g2.setColor(Java.BORDER);
 		g2.setStroke(new BasicStroke(3f));
 		g2.draw(topPath);
 		g2.draw(bottomPath);

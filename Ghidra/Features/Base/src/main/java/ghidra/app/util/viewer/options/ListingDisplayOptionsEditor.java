@@ -21,6 +21,7 @@ import java.beans.PropertyChangeListener;
 
 import javax.swing.JComponent;
 
+import generic.theme.Gui;
 import ghidra.GhidraOptions;
 import ghidra.framework.options.*;
 
@@ -28,7 +29,7 @@ import ghidra.framework.options.*;
  * Class for editing Listing display properties.
  */
 public class ListingDisplayOptionsEditor implements OptionsEditor {
-	public static final Font DEFAULT_FONT = new Font("Monospaced", Font.PLAIN, 12);
+	public static final String DEFAULT_FONT_ID = "font.listing.base";
 
 	private OptionsGui optionsGui;
 	private Options options;
@@ -53,11 +54,11 @@ public class ListingDisplayOptionsEditor implements OptionsEditor {
 
 	private void registerOptions() {
 		String prefix = "Sets the ";
-		options.registerOption(GhidraOptions.OPTION_BASE_FONT, DEFAULT_FONT, null,
-			prefix + GhidraOptions.OPTION_BASE_FONT);
+		options.registerThemeFontBinding(GhidraOptions.OPTION_BASE_FONT,
+			DEFAULT_FONT_ID, null, prefix + GhidraOptions.OPTION_BASE_FONT);
 		for (ScreenElement element : OptionsGui.elements) {
 			String colorOptionName = element.getColorOptionName();
-			options.registerOption(colorOptionName, element.getDefaultColor(), null,
+			options.registerThemeColorBinding(colorOptionName, element.getThemeColorId(), null,
 				prefix + colorOptionName);
 			String styleOptionName = element.getStyleOptionName();
 			options.registerOption(styleOptionName, -1, null, prefix + styleOptionName);
@@ -68,7 +69,7 @@ public class ListingDisplayOptionsEditor implements OptionsEditor {
 	public void apply() {
 		if (optionsGui != null) {
 
-			Font font = options.getFont(GhidraOptions.OPTION_BASE_FONT, DEFAULT_FONT);
+			Font font = Gui.getFont(DEFAULT_FONT_ID);
 			Font newFont = optionsGui.getBaseFont();
 			if (!newFont.equals(font)) {
 				options.setFont(GhidraOptions.OPTION_BASE_FONT, newFont);
@@ -123,7 +124,7 @@ public class ListingDisplayOptionsEditor implements OptionsEditor {
 	@Override
 	public JComponent getEditorComponent(Options editableOptions,
 			EditorStateFactory editorStateFactory) {
-		Font font = options.getFont(GhidraOptions.OPTION_BASE_FONT, DEFAULT_FONT);
+		Font font = Gui.getFont(DEFAULT_FONT_ID);
 		for (ScreenElement element : OptionsGui.elements) {
 			Color c = options.getColor(element.getColorOptionName(), element.getDefaultColor());
 			int style = options.getInt(element.getStyleOptionName(), -1);

@@ -21,7 +21,7 @@ import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
@@ -33,6 +33,7 @@ import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.GTreeSelectionEvent;
 import docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin;
 import docking.widgets.tree.support.GTreeSelectionListener;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.debug.gui.objects.DebuggerObjectsProvider;
 import ghidra.app.plugin.core.debug.gui.objects.ObjectContainer;
 import ghidra.async.AsyncUtils;
@@ -40,14 +41,13 @@ import ghidra.async.TypeSpec;
 import ghidra.dbg.DebugModelConventions;
 import ghidra.dbg.target.TargetAccessConditioned;
 import ghidra.dbg.target.TargetObject;
-import ghidra.util.*;
+import ghidra.util.Msg;
+import ghidra.util.Swing;
 import ghidra.util.task.SwingUpdateManager;
-import resources.ResourceManager;
 
 public class ObjectTree implements ObjectPane {
 
-	public static final ImageIcon ICON_TREE =
-		ResourceManager.loadImage("images/object-unpopulated.png");
+	public static final Icon ICON_TREE = new GIcon("icon.debugger.tree.object");
 
 	private ObjectNode root;
 	private GTree tree;
@@ -118,16 +118,12 @@ public class ObjectTree implements ObjectPane {
 			}
 		});
 		tree.setCellRenderer(new ObjectTreeCellRenderer(root.getProvider()));
-		tree.setDataTransformer(new FilterTransformer<GTreeNode>() {
-
-			@Override
-			public List<String> transform(GTreeNode t) {
-				if (t instanceof ObjectNode) {
-					ObjectNode node = (ObjectNode) t;
-					return List.of(node.getContainer().getDecoratedName());
-				}
-				return null;
+		tree.setDataTransformer(t -> {
+			if (t instanceof ObjectNode) {
+				ObjectNode node = (ObjectNode) t;
+				return List.of(node.getContainer().getDecoratedName());
 			}
+			return null;
 		});
 		tree.addTreeExpansionListener(new TreeExpansionListener() {
 
@@ -329,7 +325,7 @@ public class ObjectTree implements ObjectPane {
 		}
 
 		Set<ObjectContainer> currentChildren = container.getCurrentChildren();
-		List<GTreeNode> childList = new ArrayList<GTreeNode>();
+		List<GTreeNode> childList = new ArrayList<>();
 
 		node.setRestructured(false);
 		for (ObjectContainer c : currentChildren) {
@@ -404,7 +400,6 @@ public class ObjectTree implements ObjectPane {
 		DebuggerObjectsProvider provider = getProvider();
 		ObjectContainer oc = node.getContainer();
 		provider.deleteFromMap(oc);
-		oc.getTargetObject().removeListener(provider.getListener());
 		nodeMap.remove(path(node.getContainer()));
 	}
 

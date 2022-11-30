@@ -55,7 +55,6 @@ public class VersionControlScreenShots extends GhidraScreenShotGenerator {
 
 		VersionControlDialog dialog = new VersionControlDialog(false);
 		dialog.setCurrentFileName(FrontEndTestEnv.PROGRAM_A);
-		dialog.setKeepCheckboxEnabled(true);
 		runSwing(() -> tool.showDialog(dialog), false);
 
 		VersionControlDialog d = waitForDialogComponent(VersionControlDialog.class);

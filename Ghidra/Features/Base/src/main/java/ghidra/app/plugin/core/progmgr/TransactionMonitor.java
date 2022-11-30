@@ -22,17 +22,17 @@ import java.util.List;
 
 import javax.swing.*;
 
+import generic.theme.GIcon;
 import ghidra.framework.data.DomainObjectAdapterDB;
 import ghidra.framework.model.Transaction;
 import ghidra.framework.model.TransactionListener;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HTMLUtilities;
-import resources.ResourceManager;
 
 class TransactionMonitor extends JComponent implements TransactionListener {
 
-	private static ImageIcon busyIcon;
+	private static Icon busyIcon;
 	private static Dimension prefSize;
 
 	ProgramDB program;
@@ -40,7 +40,7 @@ class TransactionMonitor extends JComponent implements TransactionListener {
 
 	TransactionMonitor() {
 		super();
-		busyIcon = ResourceManager.loadImage("images/editbytes.gif");
+		busyIcon = new GIcon("icon.plugin.programmanager.busy");
 		prefSize = new Dimension(busyIcon.getIconWidth(), busyIcon.getIconHeight());
 		ToolTipManager.sharedInstance().registerComponent(this);
 	}
@@ -60,27 +60,18 @@ class TransactionMonitor extends JComponent implements TransactionListener {
 		repaint();
 	}
 
-	/**
-	 * @see ghidra.framework.model.TransactionListener#transactionStarted(ghidra.framework.data.DomainObjectAdapterDB, ghidra.framework.model.Transaction)
-	 */
 	@Override
 	public void transactionStarted(DomainObjectAdapterDB domainObj, Transaction tx) {
 		lastTx = tx;
 		repaint();
 	}
 
-	/**
-	 * @see ghidra.framework.model.TransactionListener#transactionEnded(ghidra.framework.data.DomainObjectAdapterDB)
-	 */
 	@Override
 	public void transactionEnded(DomainObjectAdapterDB domainObj) {
 		lastTx = null;
 		repaint();
 	}
 
-	/**
-	 * @see ghidra.framework.model.TransactionListener#undoStackChanged(ghidra.framework.data.DomainObjectAdapterDB)
-	 */
 	@Override
 	public void undoStackChanged(DomainObjectAdapterDB domainObj) {
 		// don't care
@@ -91,17 +82,11 @@ class TransactionMonitor extends JComponent implements TransactionListener {
 		// don't care
 	}
 
-	/**
-	 * @see java.awt.Component#getPreferredSize()
-	 */
 	@Override
 	public Dimension getPreferredSize() {
 		return new Dimension(prefSize);
 	}
 
-	/**
-	 * @see javax.swing.JComponent#paintComponent(java.awt.Graphics)
-	 */
 	@Override
 	protected void paintComponent(Graphics g) {
 		g.setColor(getBackground());
@@ -111,9 +96,6 @@ class TransactionMonitor extends JComponent implements TransactionListener {
 		}
 	}
 
-	/**
-	 * @see javax.swing.JComponent#getToolTipText()
-	 */
 	@Override
 	public String getToolTipText() {
 		if (lastTx != null) {

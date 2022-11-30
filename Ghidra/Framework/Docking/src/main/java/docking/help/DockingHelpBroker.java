@@ -37,6 +37,7 @@ import org.jdesktop.animation.timing.TimingTargetAdapter;
 import docking.framework.ApplicationInformationDisplayFactory;
 import docking.util.AnimationPainter;
 import docking.util.AnimationUtils;
+import generic.theme.GColor;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
@@ -398,7 +399,7 @@ public class DockingHelpBroker extends GHelpBroker {
 
 	private class LocationHintPainter implements AnimationPainter {
 
-		private Color color = new Color(100, 100, 255, 100);
+		private Color color = new GColor("color.bg.help.hint");
 		private Shape paintShape;
 
 		LocationHintPainter(Shape paintShape) {
@@ -450,11 +451,11 @@ public class DockingHelpBroker extends GHelpBroker {
 			/*
 			 	// Debug
 			Shape box = scaler.createTransformedShape(b);
-			g2d.setColor(Color.GREEN);
+			g2d.setColor(Palette.GREEN);
 			g2d.fill(box);
-
+			
 			box = transform.createTransformedShape(box);
-			g2d.setColor(Color.YELLOW);
+			g2d.setColor(Palette.YELLOW);
 			g2d.fill(box);
 			*/
 

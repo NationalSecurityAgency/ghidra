@@ -16,12 +16,13 @@
 // An example of how to color the listing background 
 //@category Examples
 
+import java.awt.Color;
+
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.plugin.core.colorizer.ColorizingService;
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
-
-import java.awt.Color;
 
 public class ExampleColorScript extends GhidraScript {
 
@@ -34,10 +35,10 @@ public class ExampleColorScript extends GhidraScript {
 		}
 
 		if (currentSelection != null) {
-			service.setBackgroundColor(currentSelection, new Color(255, 200, 200));
+			service.setBackgroundColor(currentSelection, Palette.PINK);
 		}
 		else if (currentAddress != null) {
-			service.setBackgroundColor(currentAddress, currentAddress, new Color(255, 200, 200));
+			service.setBackgroundColor(currentAddress, currentAddress, Palette.PINK);
 		}
 		else {
 			println("No selection or current address to color");

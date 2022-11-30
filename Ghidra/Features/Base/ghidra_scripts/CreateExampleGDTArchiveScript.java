@@ -203,7 +203,7 @@ public class CreateExampleGDTArchiveScript extends GhidraScript {
 				"certif.h",
 				"certmod.h",
 				"certpol.h",
-				"certpoleng.h   ",
+				"certpoleng.h",
 				"certsrv.h",
 				"certview.h",
 				"credssp.h",
@@ -422,12 +422,12 @@ public class CreateExampleGDTArchiveScript extends GhidraScript {
 				"#http.h", // included by something else
 				
 				"# IP Helper",
-				"#icmpapi.h",  // Something wrong with IP_ADDR
 				"ifdef.h",
 				"inaddr.h",
 				"ip2string.h",
 				"ipexport.h",
 				"iphlpapi.h",
+				"icmpapi.h",  // Must be included after iphlpapi.h
 				"iprtrmib.h",
 				"iptypes.h",
 				"netioapi.h",

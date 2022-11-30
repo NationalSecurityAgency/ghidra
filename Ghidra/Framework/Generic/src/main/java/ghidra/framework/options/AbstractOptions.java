@@ -25,6 +25,7 @@ import java.util.*;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
+import generic.theme.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.WeakDataStructureFactory;
@@ -59,6 +60,8 @@ public abstract class AbstractOptions implements Options {
 	protected Map<String, OptionsEditor> optionsEditorMap;
 	protected Map<String, HelpLocation> categoryHelpMap;
 	protected Map<String, AliasBinding> aliasMap;
+	protected ThemeListener themeListener;
+	protected Map<String, String> themeToOptionMap = new HashMap<>();
 
 	protected AbstractOptions(String name) {
 		this.name = name;
@@ -67,7 +70,8 @@ public abstract class AbstractOptions implements Options {
 		optionsEditorMap = new HashMap<>();
 		categoryHelpMap = new HashMap<>();
 		aliasMap = new HashMap<>();
-
+		themeListener = this::themeChanged;
+		Gui.addThemeListener(themeListener);
 	}
 
 	protected abstract Option createRegisteredOption(String optionName, OptionType type,
@@ -135,6 +139,20 @@ public abstract class AbstractOptions implements Options {
 			throw new IllegalArgumentException(
 				"Can't register an option of type: " + OptionType.NO_TYPE);
 		}
+
+		if (type == OptionType.COLOR_TYPE) {
+			warnShouldUseTheme("Color");
+		}
+		if (type == OptionType.FONT_TYPE) {
+			warnShouldUseTheme("font");
+		}
+
+		if (!type.isCompatible(defaultValue)) {
+			throw new IllegalStateException(
+				"Given default value does not match the given OptionType! OptionType = " + type +
+					", defaultValue = " + defaultValue);
+		}
+
 		if (type == OptionType.CUSTOM_TYPE && editor == null) {
 			throw new IllegalStateException(
 				"Can't register a custom option without a property editor");
@@ -144,7 +162,7 @@ public abstract class AbstractOptions implements Options {
 				ReflectionUtilities.createJavaFilteredThrowable());
 		}
 
-		Option currentOption = getExistingComptibleOption(optionName, type, defaultValue);
+		Option currentOption = getExistingComptibleOption(optionName, type);
 		if (currentOption != null) {
 			currentOption.updateRegistration(description, help, defaultValue, editor);
 			return;
@@ -156,8 +174,45 @@ public abstract class AbstractOptions implements Options {
 		valueMap.put(optionName, option);
 	}
 
-	private Option getExistingComptibleOption(String optionName, OptionType type,
-			Object defaultValue) {
+	private void warnShouldUseTheme(String optionType) {
+		Throwable throwable = ReflectionUtilities
+				.createThrowableWithStackOlderThan(AbstractOptions.class, SubOptions.class);
+		String call = throwable.getStackTrace()[0].toString();
+		Msg.warn(this, "Registering a direct " + optionType + " in the options is deprecated." +
+			" Use registerTheme" + optionType + "Binding() instead!\n Called from " + call + "\n");
+	}
+
+	@Override
+	public void registerThemeColorBinding(String optionName, String colorId, HelpLocation help,
+			String description) {
+		Option currentOption = getExistingComptibleOption(optionName, OptionType.COLOR_TYPE);
+		if (currentOption != null && currentOption instanceof ThemeColorOption) {
+			currentOption.updateRegistration(description, help, null, null);
+			return;
+		}
+		description += " (Theme Color: " + colorId + ")";
+		Option option = new ThemeColorOption(optionName, colorId, description, help);
+		valueMap.put(optionName, option);
+	}
+
+	@Override
+	public void registerThemeFontBinding(String optionName, String fontId, HelpLocation help,
+			String description) {
+		if (Gui.getFont(fontId) == null) {
+			throw new IllegalArgumentException("Invalid theme font id: \"" + fontId + "\"");
+		}
+		Option currentOption = getExistingComptibleOption(optionName, OptionType.FONT_TYPE);
+		if (currentOption != null && currentOption instanceof ThemeFontOption) {
+			currentOption.updateRegistration(description, help, null, null);
+			return;
+		}
+		description += " (Theme Font: " + fontId + ")";
+		Option option = new ThemeFontOption(optionName, fontId, description, help);
+		themeToOptionMap.put(fontId, optionName);
+		valueMap.put(optionName, option);
+	}
+
+	private Option getExistingComptibleOption(String optionName, OptionType type) {
 
 		// There are several cases where an existing option may exist when registering an option
 		// 1) the option was accessed before it was registered
@@ -173,22 +228,12 @@ public abstract class AbstractOptions implements Options {
 		if (option == null) {
 			return null;
 		}
-
-		if (!isCompatibleOption(option, type, defaultValue)) {
+		if (option.getOptionType() != type) {
 			Msg.error(this, "Registered option incompatible with existing option: " + optionName,
 				new AssertException());
 			return null;
 		}
 		return option;
-	}
-
-	private boolean isCompatibleOption(Option option, OptionType type, Object defaultValue) {
-		if (option.getOptionType() != type) {
-			return false;
-		}
-		Object optionValue = option.getValue(null);
-		return optionValue == null || defaultValue == null ||
-			optionValue.getClass().equals(defaultValue.getClass());
 	}
 
 	@Override
@@ -297,8 +342,15 @@ public abstract class AbstractOptions implements Options {
 		Object oldValue = option.getCurrentValue();
 		option.setCurrentValue(newValue);
 
-		if (!notifyOptionChanged(optionName, oldValue, newValue)) {
-			option.setCurrentValue(oldValue);
+		boolean success = false;
+		try {
+			// this can throw an OptionsVetoException
+			success = notifyOptionChanged(optionName, oldValue, newValue);
+		}
+		finally {
+			if (!success) {
+				option.setCurrentValue(oldValue);
+			}
 		}
 	}
 
@@ -700,7 +752,16 @@ public abstract class AbstractOptions implements Options {
 			return true;
 		}
 
-		return SUPPORTED_CLASSES.contains(obj.getClass());
+		if (SUPPORTED_CLASSES.contains(obj.getClass())) {
+			return true;
+		}
+		// check for extended classes
+		for (Class<?> class1 : SUPPORTED_CLASSES) {
+			if (class1.isAssignableFrom(obj.getClass())) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -796,6 +857,22 @@ public abstract class AbstractOptions implements Options {
 	public List<String> getLeafOptionNames() {
 		Set<String> leafNames = getLeaves(getOptionNames());
 		return new ArrayList<>(leafNames);
+	}
+
+	private void themeChanged(ThemeEvent e) {
+		// We are only sending out OptionsChangedEvents in response to Font theme changes. We
+		// don't notify options changed for colors because we expect clients are using GColor
+		// which updates automatically, so should need to be notified via options.
+
+		if (!e.hasAnyFontChanged()) {
+			return;
+		}
+		for (String fontId : themeToOptionMap.keySet()) {
+			if (e.isFontChanged(fontId)) {
+				String optionName = themeToOptionMap.get(fontId);
+				notifyOptionChanged(optionName, null, Gui.getFont(fontId));
+			}
+		}
 	}
 
 //==================================================================================================

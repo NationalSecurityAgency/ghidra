@@ -18,11 +18,13 @@ package ghidra.trace.database;
 import java.io.IOException;
 
 import javax.swing.Icon;
+import javax.swing.ImageIcon;
 
 import db.DBHandle;
 import db.buffers.BufferFile;
 import db.buffers.ManagedBufferFile;
-import ghidra.framework.data.*;
+import ghidra.framework.data.DBWithUserDataContentHandler;
+import ghidra.framework.data.DomainObjectMergeManager;
 import ghidra.framework.model.ChangeSet;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.store.*;
@@ -34,8 +36,15 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
-public class DBTraceContentHandler extends DBContentHandler {
+public class DBTraceContentHandler extends DBWithUserDataContentHandler<DBTrace> {
 	public static final String TRACE_CONTENT_TYPE = "Trace";
+
+	public static ImageIcon TRACE_ICON = Trace.TRACE_ICON;
+
+	static final Class<DBTrace> TRACE_DOMAIN_OBJECT_CLASS = DBTrace.class;
+	static final String TRACE_CONTENT_DEFAULT_TOOL = "Debugger";
+
+	private static final DBTraceLinkContentHandler linkHandler = new DBTraceLinkContentHandler();
 
 	@Override
 	public long createFile(FileSystem fs, FileSystem userfs, String path, String name,
@@ -48,7 +57,7 @@ public class DBTraceContentHandler extends DBContentHandler {
 	}
 
 	@Override
-	public DomainObjectAdapter getImmutableObject(FolderItem item, Object consumer, int version,
+	public DBTrace getImmutableObject(FolderItem item, Object consumer, int version,
 			int minChangeVersion, TaskMonitor monitor)
 			throws IOException, CancelledException, VersionException {
 		String contentType = item.getContentType();
@@ -96,7 +105,7 @@ public class DBTraceContentHandler extends DBContentHandler {
 	}
 
 	@Override
-	public DomainObjectAdapter getReadOnlyObject(FolderItem item, int version, boolean okToUpgrade,
+	public DBTrace getReadOnlyObject(FolderItem item, int version, boolean okToUpgrade,
 			Object consumer, TaskMonitor monitor)
 			throws IOException, VersionException, CancelledException {
 		String contentType = item.getContentType();
@@ -146,7 +155,7 @@ public class DBTraceContentHandler extends DBContentHandler {
 	}
 
 	@Override
-	public DomainObjectAdapter getDomainObject(FolderItem item, FileSystem userfs, long checkoutId,
+	public DBTrace getDomainObject(FolderItem item, FileSystem userfs, long checkoutId,
 			boolean okToUpgrade, boolean recover, Object consumer, TaskMonitor monitor)
 			throws IOException, CancelledException, VersionException {
 		String contentType = item.getContentType();
@@ -296,8 +305,8 @@ public class DBTraceContentHandler extends DBContentHandler {
 	}
 
 	@Override
-	public Class<? extends DomainObject> getDomainObjectClass() {
-		return DBTrace.class;
+	public Class<DBTrace> getDomainObjectClass() {
+		return TRACE_DOMAIN_OBJECT_CLASS;
 	}
 
 	@Override
@@ -312,12 +321,12 @@ public class DBTraceContentHandler extends DBContentHandler {
 
 	@Override
 	public String getDefaultToolName() {
-		return "Debugger";
+		return TRACE_CONTENT_DEFAULT_TOOL;
 	}
 
 	@Override
 	public Icon getIcon() {
-		return Trace.TRACE_ICON;
+		return TRACE_ICON;
 	}
 
 	@Override
@@ -330,5 +339,10 @@ public class DBTraceContentHandler extends DBContentHandler {
 			DomainObject originalObj, DomainObject latestObj) {
 		// TODO:
 		return null;
+	}
+
+	@Override
+	public DBTraceLinkContentHandler getLinkHandler() {
+		return linkHandler;
 	}
 }

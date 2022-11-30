@@ -19,6 +19,8 @@ import java.awt.Color;
 import java.util.*;
 import java.util.Map.Entry;
 
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.plugin.core.functiongraph.FunctionGraphPlugin;
 import ghidra.app.plugin.core.functiongraph.graph.layout.FGLayoutOptions;
 import ghidra.framework.options.Options;
@@ -85,24 +87,21 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 		"Signals that any user color changes to a group vertex will apply that same color to " +
 			"all grouped vertices as well.";
 
-	public static final Color DEFAULT_VERTEX_BACKGROUND_COLOR = Color.WHITE;
-	public static final Color DEFAULT_GROUP_BACKGROUND_COLOR = new Color(226, 255, 155);
-	private static final Color HOVER_HIGHLIGHT_FALL_THROUGH_COLOR = new Color(255, 127, 127);
-	private static final Color HOVER_HIGHLIGHT_UNCONDITIONAL_COLOR = new Color(127, 127, 255);
-	private static final Color HOVER_HIGHLIGHT_CONDITIONAL_COLOR = Color.GREEN;
-
-	private Color defaultVertexBackgroundColor = DEFAULT_VERTEX_BACKGROUND_COLOR;
-
 	private boolean updateGroupColorsAutomatically = true;
-	private Color defaultGroupBackgroundColor = DEFAULT_GROUP_BACKGROUND_COLOR;
 
-	private Color fallthroughEdgeColor = Color.RED;
-	private Color unconditionalJumpEdgeColor = Color.BLUE;
-	private Color conditionalJumpEdgeColor = Color.GREEN.darker().darker();
+	//@formatter:off
+	public static final Color DEFAULT_GROUP_BACKGROUND_COLOR = new GColor("color.bg.functiongraph.vertex.group");
+	private GColor defaultVertexBackgroundColor = new GColor("color.bg.functiongraph");
+	private GColor defaultGroupBackgroundColor = new GColor("color.bg.functiongraph.vertex.group");
 
-	private Color fallthroughEdgeHighlightColor = HOVER_HIGHLIGHT_FALL_THROUGH_COLOR;
-	private Color unconditionalJumpEdgeHighlightColor = HOVER_HIGHLIGHT_UNCONDITIONAL_COLOR;
-	private Color conditionalJumpEdgeHighlightColor = HOVER_HIGHLIGHT_CONDITIONAL_COLOR;
+	private GColor fallthroughEdgeColor = new GColor("color.bg.functiongraph.edge.fall.through");
+	private GColor conditionalJumpEdgeColor = new GColor("color.bg.functiongraph.edge.jump.conditional");
+	private GColor unconditionalJumpEdgeColor = new GColor("color.bg.functiongraph.edge.jump.unconditional");
+
+	private GColor fallthroughEdgeHighlightColor = new GColor("color.bg.functiongraph.edge.fall.through.highlight");
+	private GColor conditionalJumpEdgeHighlightColor = new GColor("color.bg.functiongraph.edge.jump.conditional.highlight");
+	private GColor unconditionalJumpEdgeHighlightColor = new GColor("color.bg.functiongraph.edge.jump.unconditional.highlight");
+	//@formatter:on
 
 	private boolean useFullSizeTooltip = false;
 
@@ -174,10 +173,12 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 		options.registerOption(USE_CONDENSED_LAYOUT_KEY, useCondensedLayout(),
 			new HelpLocation(OWNER, "Layout_Compressing"), USE_CONDENSED_LAYOUT_DESCRIPTION);
 
-		options.registerOption(DEFAULT_VERTEX_BACKGROUND_COLOR_KEY, DEFAULT_VERTEX_BACKGROUND_COLOR,
+		options.registerThemeColorBinding(DEFAULT_VERTEX_BACKGROUND_COLOR_KEY,
+			defaultVertexBackgroundColor.getId(),
 			help, DEFAULT_VERTEX_BACKGROUND_COLOR_DESCRPTION);
 
-		options.registerOption(DEFAULT_GROUP_BACKGROUND_COLOR_KEY, DEFAULT_GROUP_BACKGROUND_COLOR,
+		options.registerThemeColorBinding(DEFAULT_GROUP_BACKGROUND_COLOR_KEY,
+			defaultGroupBackgroundColor.getId(),
 			help, DEFAULT_GROUP_BACKGROUND_COLOR_DESCRPTION);
 
 		options.registerOption(UPDATE_GROUP_AND_UNGROUP_COLORS, updateGroupColorsAutomatically,
@@ -186,24 +187,27 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 		options.registerOption(USE_FULL_SIZE_TOOLTIP_KEY, useFullSizeTooltip, help,
 			USE_FULL_SIZE_TOOLTIP_DESCRIPTION);
 
-		options.registerOption(EDGE_COLOR_CONDITIONAL_JUMP_KEY, conditionalJumpEdgeColor, help,
-			"Conditional jump edge color");
+		options.registerThemeColorBinding(EDGE_COLOR_CONDITIONAL_JUMP_KEY,
+			conditionalJumpEdgeColor.getId(), help, "Conditional jump edge color");
 
-		options.registerOption(EDGE_UNCONDITIONAL_JUMP_COLOR_KEY, unconditionalJumpEdgeColor, help,
+		options.registerThemeColorBinding(EDGE_UNCONDITIONAL_JUMP_COLOR_KEY,
+			unconditionalJumpEdgeColor.getId(), help,
 			"Unconditional jump edge color");
 
-		options.registerOption(EDGE_FALLTHROUGH_COLOR_KEY, fallthroughEdgeColor, help,
+		options.registerThemeColorBinding(EDGE_FALLTHROUGH_COLOR_KEY, fallthroughEdgeColor.getId(),
+			help,
 			"Fallthrough edge color");
 
-		options.registerOption(EDGE_CONDITIONAL_JUMP_HIGHLIGHT_COLOR_KEY,
-			conditionalJumpEdgeHighlightColor, help,
+		options.registerThemeColorBinding(EDGE_CONDITIONAL_JUMP_HIGHLIGHT_COLOR_KEY,
+			conditionalJumpEdgeHighlightColor.getId(), help,
 			"Conditional jump edge color when highlighting the reachablity of a vertex");
 
-		options.registerOption(EDGE_UNCONDITIONAL_JUMP_HIGHLIGHT_COLOR_KEY,
-			unconditionalJumpEdgeHighlightColor, help,
+		options.registerThemeColorBinding(EDGE_UNCONDITIONAL_JUMP_HIGHLIGHT_COLOR_KEY,
+			unconditionalJumpEdgeHighlightColor.getId(), help,
 			"Unconditional jump edge color when highlighting the reachablity of a vertex");
 
-		options.registerOption(EDGE_FALLTHROUGH_HIGHLIGHT_COLOR_KEY, fallthroughEdgeHighlightColor,
+		options.registerThemeColorBinding(EDGE_FALLTHROUGH_HIGHLIGHT_COLOR_KEY,
+			fallthroughEdgeHighlightColor.getId(),
 			help, "Fallthrough edge color when highlighting the reachablity of a vertex");
 
 	}
@@ -213,35 +217,12 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 
 		super.loadOptions(options);
 
-		conditionalJumpEdgeColor =
-			options.getColor(EDGE_COLOR_CONDITIONAL_JUMP_KEY, conditionalJumpEdgeColor);
-
-		unconditionalJumpEdgeColor =
-			options.getColor(EDGE_UNCONDITIONAL_JUMP_COLOR_KEY, unconditionalJumpEdgeColor);
-
-		fallthroughEdgeColor = options.getColor(EDGE_FALLTHROUGH_COLOR_KEY, fallthroughEdgeColor);
-
-		conditionalJumpEdgeHighlightColor = options.getColor(
-			EDGE_CONDITIONAL_JUMP_HIGHLIGHT_COLOR_KEY, conditionalJumpEdgeHighlightColor);
-
-		unconditionalJumpEdgeHighlightColor = options.getColor(
-			EDGE_UNCONDITIONAL_JUMP_HIGHLIGHT_COLOR_KEY, unconditionalJumpEdgeHighlightColor);
-
-		fallthroughEdgeHighlightColor =
-			options.getColor(EDGE_FALLTHROUGH_HIGHLIGHT_COLOR_KEY, fallthroughEdgeHighlightColor);
-
 		relayoutOption = options.getEnum(RELAYOUT_OPTIONS_KEY, relayoutOption);
 
 		navigationHistoryChoice =
 			options.getEnum(NAVIGATION_HISTORY_KEY, NavigationHistoryChoices.VERTEX_CHANGES);
 
 		useFullSizeTooltip = options.getBoolean(USE_FULL_SIZE_TOOLTIP_KEY, useFullSizeTooltip);
-
-		defaultVertexBackgroundColor =
-			options.getColor(DEFAULT_VERTEX_BACKGROUND_COLOR_KEY, DEFAULT_VERTEX_BACKGROUND_COLOR);
-
-		defaultGroupBackgroundColor =
-			options.getColor(DEFAULT_GROUP_BACKGROUND_COLOR_KEY, DEFAULT_GROUP_BACKGROUND_COLOR);
 
 		updateGroupColorsAutomatically =
 			options.getBoolean(UPDATE_GROUP_AND_UNGROUP_COLORS, updateGroupColorsAutomatically);
@@ -266,7 +247,7 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 			return getConditionalJumpEdgeColor();
 		}
 
-		return Color.BLACK;
+		return Palette.BLACK;
 	}
 
 	public Color getHighlightColor(FlowType flowType) {
@@ -280,7 +261,7 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 			return getConditionalJumpEdgeHighlightColor();
 		}
 
-		return Color.BLACK;
+		return Palette.BLACK;
 	}
 
 	public boolean optionChangeRequiresRelayout(String optionName) {

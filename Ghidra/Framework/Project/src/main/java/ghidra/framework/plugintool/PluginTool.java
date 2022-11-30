@@ -21,12 +21,12 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.net.URL;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-import javax.swing.ImageIcon;
-import javax.swing.JComponent;
+import javax.swing.*;
 
 import org.jdom.Element;
 
@@ -161,7 +161,8 @@ public abstract class PluginTool extends AbstractDockingTool {
 			String name, boolean isDockable, boolean hasStatus, boolean isModal) {
 		this.project = project;
 		this.projectManager = projectManager;
-		this.toolServices = toolServices;
+		this.toolServices = toolServices == null ? new ToolServicesAdapter() : toolServices;
+
 		propertyChangeMgr = new PropertyChangeSupport(this);
 		optionsMgr = new OptionsManager(this);
 		winMgr = createDockingWindowManager(isDockable, hasStatus, isModal);
@@ -214,7 +215,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 
 	protected void installHomeButton() {
 
-		ImageIcon homeIcon = ApplicationInformationDisplayFactory.getHomeIcon();
+		Icon homeIcon = ApplicationInformationDisplayFactory.getHomeIcon();
 		if (homeIcon == null) {
 			Msg.debug(this,
 				"If you would like a button to show the Front End, then set the home icon");
@@ -439,6 +440,18 @@ public abstract class PluginTool extends AbstractDockingTool {
 
 	public boolean acceptDomainFiles(DomainFile[] data) {
 		return pluginMgr.acceptData(data);
+	}
+
+	/**
+	 * Request tool to accept specified URL.  Acceptance of URL depends greatly on the plugins
+	 * confiugred into tool.  If no plugin accepts URL it will be rejected and false returned.
+	 * If a plugin can accept the specified URL it will attempt to process and return true if 
+	 * successful.  The user may be prompted if connecting to the URL requires user authentication.
+	 * @param url read-only resource URL
+	 * @return true if URL accepted and processed else false
+	 */
+	public boolean accept(URL url) {
+		return pluginMgr.accept(url);
 	}
 
 	public void addPropertyChangeListener(PropertyChangeListener l) {
@@ -1119,10 +1132,13 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 * 	<LI>notify the project tool services that this tool is going away.
 	 * </OL>
 	 */
-
 	@Override
 	public void close() {
-		if (canClose(false) && pluginMgr.saveData()) {
+		close(false);
+	}
+
+	protected void close(boolean isExiting) {
+		if (canClose(isExiting) && pluginMgr.saveData()) {
 			doClose();
 		}
 	}
@@ -1314,6 +1330,9 @@ public abstract class PluginTool extends AbstractDockingTool {
 		this.project = project;
 		if (project != null) {
 			toolServices = project.getToolServices();
+		}
+		else {
+			toolServices = new ToolServicesAdapter();
 		}
 	}
 

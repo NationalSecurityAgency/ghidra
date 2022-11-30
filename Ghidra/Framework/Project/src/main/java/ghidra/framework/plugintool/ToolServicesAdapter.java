@@ -16,6 +16,7 @@
 package ghidra.framework.plugintool;
 
 import java.io.*;
+import java.net.URL;
 import java.util.Set;
 
 import ghidra.framework.model.*;
@@ -62,6 +63,11 @@ public class ToolServicesAdapter implements ToolServices {
 	}
 
 	@Override
+	public ToolTemplate getDefaultToolTemplate(String contentType) {
+		return null;
+	}
+
+	@Override
 	public PluginTool[] getRunningTools() {
 		return null;
 	}
@@ -78,6 +84,16 @@ public class ToolServicesAdapter implements ToolServices {
 
 	@Override
 	public PluginTool launchTool(String toolName, DomainFile domainFile) {
+		return null;
+	}
+
+	@Override
+	public PluginTool launchDefaultToolWithURL(URL url) {
+		return null;
+	}
+
+	@Override
+	public PluginTool launchToolWithURL(String toolName, URL url) {
 		return null;
 	}
 

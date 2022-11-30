@@ -926,6 +926,9 @@ public class GadpClientServerTest implements AsyncTestUtils {
 
 	@Test
 	public void testGetAvailableWithObjectGettingListener() throws Throwable {
+		var l = new Object() {
+			TargetObject avail;
+		};
 		List<ElementsChangedInvocation> invocations = new ArrayList<>();
 		// Any listener which calls .get on a child ref would do....
 		// This object-getting listener is the pattern that revealed this problem, though.
@@ -933,18 +936,21 @@ public class GadpClientServerTest implements AsyncTestUtils {
 			@Override
 			public void elementsChanged(TargetObject parent, Collection<String> removed,
 					Map<String, ? extends TargetObject> added) {
+				if (parent != l.avail) {
+					return;
+				}
 				invocations.add(new ElementsChangedInvocation(parent, removed, added));
 			}
 		};
 		AsynchronousSocketChannel socket = socketChannel();
 		try (ServerRunner runner = new ServerRunner()) {
 			GadpClient client = new GadpClient("Test", socket);
+			client.addModelListener(listener);
 			waitOn(AsyncUtils.completable(TypeSpec.VOID, socket::connect,
 				runner.server.getLocalAddress()));
 			waitOn(client.connect());
-			TargetObject avail = waitOn(client.fetchModelObject(List.of("Available")));
-			avail.addListener(listener);
-			Map<String, ? extends TargetObject> elements = waitOn(avail.fetchElements());
+			l.avail = waitOn(client.fetchModelObject(List.of("Available")));
+			Map<String, ? extends TargetObject> elements = waitOn(l.avail.fetchElements());
 			Msg.debug(this, "Elements: " + elements);
 			waitOn(client.close());
 		}
@@ -957,13 +963,18 @@ public class GadpClientServerTest implements AsyncTestUtils {
 	public void testFocus() throws Throwable {
 		// Interesting because it involves a non-object-valued attribute (link)
 		// Need to check callback as well as getAttributes
-
+		var l = new Object() {
+			TargetObject session;
+		};
 		CompletableFuture<List<String>> focusPath = new CompletableFuture<>();
 		AtomicBoolean failed = new AtomicBoolean();
 		DebuggerModelListener focusListener =
 			new AnnotatedDebuggerAttributeListener(MethodHandles.lookup()) {
 				@AttributeCallback(TargetFocusScope.FOCUS_ATTRIBUTE_NAME)
 				public void focusChanged(TargetObject object, TargetObject focused) {
+					if (object != l.session) {
+						return;
+					}
 					Msg.info(this, "Focus changed to " + focused);
 					if (!focusPath.complete(focused.getPath())) {
 						failed.set(true);
@@ -973,11 +984,12 @@ public class GadpClientServerTest implements AsyncTestUtils {
 		AsynchronousSocketChannel socket = socketChannel();
 		try (ServerRunner runner = new ServerRunner()) {
 			GadpClient client = new GadpClient("Test", socket);
+			client.addModelListener(focusListener);
+
 			waitOn(AsyncUtils.completable(TypeSpec.VOID, socket::connect,
 				runner.server.getLocalAddress()));
 			waitOn(client.connect());
-			TargetObject session = waitOn(client.fetchModelObject(List.of()));
-			session.addListener(focusListener);
+			l.session = waitOn(client.fetchModelObject(List.of()));
 			TargetObject procCont = waitOn(client.fetchModelObject(List.of("Processes")));
 			assertTrue(procCont.getInterfaceNames().contains("Launcher"));
 			TargetLauncher launcher = procCont.as(TargetLauncher.class);
@@ -1017,19 +1029,30 @@ public class GadpClientServerTest implements AsyncTestUtils {
 
 	@Test
 	public void testSubscribeLaunchForChildrenChanged() throws Throwable {
-		ElementsChangedListener elemL = new ElementsChangedListener();
+		var l = new Object() {
+			TargetObject procContainer;
+		};
+		ElementsChangedListener elemL = new ElementsChangedListener() {
+			@Override
+			public void elementsChanged(TargetObject parent, Collection<String> removed,
+					Map<String, ? extends TargetObject> added) {
+				if (parent != l.procContainer) {
+					return;
+				}
+				super.elementsChanged(parent, removed, added);
+			}
+		};
 
 		AsynchronousSocketChannel socket = socketChannel();
 		try (ServerRunner runner = new ServerRunner()) {
 			GadpClient client = new GadpClient("Test", socket);
-
+			client.addModelListener(elemL);
 			waitOn(AsyncUtils.completable(TypeSpec.VOID, socket::connect,
 				runner.server.getLocalAddress()));
 			waitOn(client.connect());
-			TargetObject procContainer = waitOn(client.fetchModelObject(List.of("Processes")));
-			assertTrue(procContainer.getInterfaceNames().contains("Launcher"));
-			procContainer.addListener(elemL);
-			TargetLauncher launcher = procContainer.as(TargetLauncher.class);
+			l.procContainer = waitOn(client.fetchModelObject(List.of("Processes")));
+			assertTrue(l.procContainer.getInterfaceNames().contains("Launcher"));
+			TargetLauncher launcher = l.procContainer.as(TargetLauncher.class);
 			waitOn(launcher.launch(
 				Map.of(TargetCmdLineLauncher.CMDLINE_ARGS_NAME, "/bin/echo Hello, World!")));
 			waitOn(elemL.count.waitValue(1));
@@ -1038,7 +1061,7 @@ public class GadpClientServerTest implements AsyncTestUtils {
 
 			assertEquals(1, elemL.invocations.size());
 			ElementsChangedInvocation eci = elemL.invocations.get(0);
-			assertEquals(procContainer, eci.parent);
+			assertEquals(l.procContainer, eci.parent);
 			assertEquals(List.of(), List.copyOf(eci.removed));
 			assertEquals(1, eci.added.size());
 			Entry<String, ? extends TargetObject> ent = eci.added.entrySet().iterator().next();
@@ -1107,20 +1130,31 @@ public class GadpClientServerTest implements AsyncTestUtils {
 
 	@Test
 	public void testReplaceAttribute() throws Throwable {
-		AttributesChangedListener attrL = new AttributesChangedListener();
+		var l = new Object() {
+			TargetObject echoAvail;
+		};
+		AttributesChangedListener attrL = new AttributesChangedListener() {
+			@Override
+			public void attributesChanged(TargetObject parent, Collection<String> removed,
+					Map<String, ?> added) {
+				if (parent != l.echoAvail) {
+					return;
+				}
+				super.attributesChanged(parent, removed, added);
+			}
+		};
 
 		try (AsynchronousSocketChannel socket = socketChannel();
 				ServerRunner runner = new ServerRunner()) {
 			GadpClient client = new GadpClient("Test", socket);
+			client.addModelListener(attrL);
 			waitOn(AsyncUtils.completable(TypeSpec.VOID, socket::connect,
 				runner.server.getLocalAddress()));
 			waitOn(client.connect());
 
-			TargetObject echoAvail =
-				waitOn(client.fetchModelObject(PathUtils.parse("Available[1]")));
-			echoAvail.addListener(attrL);
+			l.echoAvail = waitOn(client.fetchModelObject(PathUtils.parse("Available[1]")));
 			assertEquals(Map.ofEntries(Map.entry("pid", 1), Map.entry("cmd", "echo"),
-				Map.entry("_display", "[1]")), waitOn(echoAvail.fetchAttributes()));
+				Map.entry("_display", "[1]")), waitOn(l.echoAvail.fetchAttributes()));
 
 			TestGadpTargetAvailable ssEchoAvail =
 				runner.server.model.session.available.getCachedElements().get("1");
@@ -1132,10 +1166,10 @@ public class GadpClientServerTest implements AsyncTestUtils {
 			waitOn(attrL.count.waitValue(1));
 
 			assertEquals(Map.ofEntries(Map.entry("cmd", "echo"), Map.entry("args", "Hello, World!"),
-				Map.entry("_display", "[1]")), echoAvail.getCachedAttributes());
+				Map.entry("_display", "[1]")), l.echoAvail.getCachedAttributes());
 
 			AttributesChangedInvocation changed = Unique.assertOne(attrL.invocations);
-			assertSame(echoAvail, changed.parent);
+			assertSame(l.echoAvail, changed.parent);
 			assertEquals(Set.of("pid"), Set.copyOf(changed.removed));
 			assertEquals(Map.ofEntries(Map.entry("args", "Hello, World!")), changed.added);
 		}

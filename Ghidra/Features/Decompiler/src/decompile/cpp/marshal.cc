@@ -1036,7 +1036,7 @@ AttributeId ATTRIB_VAL = AttributeId("val",24);
 AttributeId ATTRIB_VALUE = AttributeId("value",25);
 AttributeId ATTRIB_WORDSIZE = AttributeId("wordsize",26);
 
-AttributeId ATTRIB_UNKNOWN = AttributeId("XMLunknown",148); // Number serves as next open index
+AttributeId ATTRIB_UNKNOWN = AttributeId("XMLunknown",149); // Number serves as next open index
 
 ElementId ELEM_DATA = ElementId("data",1);
 ElementId ELEM_INPUT = ElementId("input",2);

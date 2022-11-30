@@ -144,7 +144,7 @@ public class GGlassPane extends JComponent {
 //        Rectangle bounds = getBounds();
 //        Graphics2D g2 = (Graphics2D) g;
 //        g2.setComposite( AlphaComposite.getInstance( AlphaComposite.SrcOver.getRule(), 0.5f ) );
-//        g2.setColor( Color.BLUE );
+//        g2.setColor( Palette.BLUE );
 //        g2.fill( bounds );
 	}
 

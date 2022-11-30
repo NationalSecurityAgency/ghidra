@@ -35,31 +35,30 @@ public class WebColorsTest {
 
 	@Test
 	public void testColorToStringFromColorWithNoDefinedEntry() {
-		assertEquals("#0123EF", WebColors.toString(new Color(0x01, 0x23, 0xEF)));
+		assertEquals("#0123ef", WebColors.toString(new Color(0x01, 0x23, 0xef)));
 	}
 
 	@Test
-	public void testGetColorFromName() {
+	public void testGetColor() {
 		assertEquals(WebColors.NAVY, WebColors.getColor("Navy"));
-	}
-
-	@Test
-	public void testGetColorFromHexString() {
 		assertEquals(WebColors.NAVY, WebColors.getColor("0x000080"));
-	}
-
-	@Test
-	public void testGetColorFromHexString2() {
 		assertEquals(WebColors.NAVY, WebColors.getColor("#000080"));
+		assertEquals(WebColors.NAVY, WebColors.getColor("rgb(0,0,128)"));
+		assertEquals(WebColors.NAVY, WebColors.getColor("rgba(0,0,128,1.0)"));
+		assertEquals(WebColors.NAVY, WebColors.getColor("rgba(0,0,128, 255)"));
+
+		assertEquals(new Color(0x123456), WebColors.getColor("0x123456"));
+		assertEquals(new Color(0x80102030, true), WebColors.getColor("rgba(16, 32, 48, 0.5)"));
+
+		assertNull(WebColors.getColor("asdfasdfas"));
 	}
 
 	@Test
-	public void testGetColorWithNoDefinedValue() {
-		assertEquals(new Color(0x12, 0x34, 0x56), WebColors.getColor("0x123456"));
-	}
-
-	@Test
-	public void testGetColorByBadName() {
-		assertNull(WebColors.getColor("ABCDEFG"));
+	public void testColorWithAlphaRoundTrip() {
+		Color c = new Color(0x44112233, true);
+		assertEquals(0x44, c.getAlpha());
+		String string = WebColors.toString(c, false);
+		Color parsed = WebColors.getColor(string);
+		assertEquals(c, parsed);
 	}
 }

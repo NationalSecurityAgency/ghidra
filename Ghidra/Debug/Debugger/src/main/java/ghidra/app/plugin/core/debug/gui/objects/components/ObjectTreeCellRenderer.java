@@ -15,32 +15,27 @@
  */
 package ghidra.app.plugin.core.debug.gui.objects.components;
 
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Font;
+import java.awt.*;
 import java.util.Map;
 
 import javax.swing.JTree;
 import javax.swing.tree.TreePath;
 
 import docking.widgets.tree.support.GTreeRenderer;
+import generic.theme.GThemeDefaults.Colors.Tables;
+import generic.theme.Gui;
 import ghidra.app.plugin.core.debug.gui.objects.DebuggerObjectsProvider;
 import ghidra.app.plugin.core.debug.gui.objects.ObjectContainer;
 import ghidra.dbg.target.TargetExecutionStateful;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.target.TargetObject;
-import ghidra.util.SystemUtilities;
 
 // TODO: In the new scheme, I'm not sure this is applicable anymore.
 class ObjectTreeCellRenderer extends GTreeRenderer {
+	private static final String FONT_ID = "font.debugger.object.tree.renderer";
 
 	private final DebuggerObjectsProvider provider;
-	private Font defaultFont = SystemUtilities.adjustForFontSizeOverride(new Font("Tahoma", Font.PLAIN, 11));
-	private Font unsubscribedFont = SystemUtilities.adjustForFontSizeOverride(new Font("Tahoma", Font.ITALIC, 11));
 
-	/**
-	 * @param provider
-	 */
 	public ObjectTreeCellRenderer(DebuggerObjectsProvider provider) {
 		this.provider = provider;
 	}
@@ -90,7 +85,7 @@ class ObjectTreeCellRenderer extends GTreeRenderer {
 			if (container.isSubscribed()) {
 				Color color = provider
 						.getColor(DebuggerObjectsProvider.OPTION_NAME_SUBSCRIBED_FOREGROUND_COLOR);
-				if (!color.equals(Color.BLACK)) {
+				if (!color.equals(Tables.FG_UNSELECTED)) {
 					component.setForeground(color);
 				}
 			}
@@ -100,11 +95,15 @@ class ObjectTreeCellRenderer extends GTreeRenderer {
 				if (last instanceof ObjectNode) {
 					ObjectContainer selection = ((ObjectNode) last).getContainer();
 					if (container.equals(selection)) {
-						component.setForeground(Color.WHITE);
+						component.setForeground(Tables.FG_SELECTED);
 					}
 				}
 			}
-			component.setFont(container.isSubscribed() ? defaultFont : unsubscribedFont);
+			Font font = Gui.getFont(FONT_ID);
+			if (container.isSubscribed()) {
+				font = font.deriveFont(Font.ITALIC);
+			}
+			component.setFont(font);
 		}
 		return component;
 	}

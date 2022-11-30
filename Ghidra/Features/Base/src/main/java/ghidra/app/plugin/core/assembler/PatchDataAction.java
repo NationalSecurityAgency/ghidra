@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.core.assembler;
 
-import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyListener;
@@ -26,6 +25,7 @@ import docking.action.KeyBindingData;
 import docking.action.MenuData;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.support.FieldLocation;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.program.database.util.ProgramTransaction;
 import ghidra.program.model.address.*;
@@ -56,7 +56,7 @@ public class PatchDataAction extends AbstractPatchAction {
 		setKeyBindingData(new KeyBindingData(KEYBIND_PATCH_DATA));
 		setHelpLocation(new HelpLocation(owner.getName(), "patch_data"));
 
-		input.setBorder(BorderFactory.createLineBorder(Color.RED, 2));
+		input.setBorder(BorderFactory.createLineBorder(Colors.ERROR, 2));
 
 		init();
 	}

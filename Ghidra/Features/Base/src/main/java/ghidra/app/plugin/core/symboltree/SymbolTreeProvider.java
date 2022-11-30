@@ -33,6 +33,7 @@ import docking.widgets.tree.*;
 import docking.widgets.tree.support.GTreeNodeTransferable;
 import docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin;
 import docking.widgets.tree.tasks.GTreeBulkTask;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.symboltree.actions.*;
 import ghidra.app.plugin.core.symboltree.nodes.*;
 import ghidra.framework.model.*;
@@ -46,12 +47,11 @@ import ghidra.program.util.*;
 import ghidra.util.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.*;
-import resources.ResourceManager;
 
 public class SymbolTreeProvider extends ComponentProviderAdapter {
 
-	private static final ImageIcon ICON = ResourceManager.loadImage("images/sitemap_color.png");
-	private final static String NAME = "Symbol Tree";
+	private static final Icon ICON = new GIcon("icon.plugin.symboltree.provider");
+	private static final String NAME = "Symbol Tree";
 
 	private ClipboardOwner clipboardOwner;
 	private Clipboard localClipboard;// temporary clipboard used for the "cut" operation

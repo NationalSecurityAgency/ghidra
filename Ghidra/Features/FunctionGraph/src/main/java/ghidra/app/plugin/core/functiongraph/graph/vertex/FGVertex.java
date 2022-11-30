@@ -20,6 +20,7 @@ import java.awt.event.MouseEvent;
 
 import javax.swing.JComponent;
 
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.plugin.core.functiongraph.graph.FGEdge;
 import ghidra.app.plugin.core.functiongraph.graph.FGVertexType;
 import ghidra.app.plugin.core.functiongraph.mvc.FGController;
@@ -39,7 +40,7 @@ import ghidra.program.util.ProgramSelection;
  */
 public interface FGVertex extends VisualVertex {
 
-	static final Color TOOLTIP_BACKGROUND_COLOR = new Color(255, 255, 230);
+	static final Color TOOLTIP_BACKGROUND_COLOR = Colors.BACKGROUND_TOOLTIP;
 
 	public FGVertex cloneVertex(FGController newController);
 

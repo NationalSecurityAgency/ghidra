@@ -25,6 +25,7 @@ import javax.swing.event.*;
 import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.*;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.script.ScriptInfo;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.UserSearchUtils;
@@ -271,7 +272,8 @@ public class ScriptSelectionEditor {
 				// show the keybinding at the top softly so the user can quickly see it without
 				// it interfering with the overall description
 				buffy.append("<P>");
-				buffy.append("<FONT COLOR=\"GRAY\"><I>&nbsp;");
+				buffy.append("<FONT COLOR=\"" +
+					Palette.GRAY.toHexString() + "\"><I>&nbsp;");
 				buffy.append(keyBinding.toString());
 				buffy.append("</I></FONT>");
 				buffy.append("<P><P>");

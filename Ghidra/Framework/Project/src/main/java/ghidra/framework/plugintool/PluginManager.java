@@ -15,6 +15,7 @@
  */
 package ghidra.framework.plugintool;
 
+import java.net.URL;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -46,6 +47,23 @@ class PluginManager {
 	boolean acceptData(DomainFile[] data) {
 		for (Plugin p : pluginList) {
 			if (p.acceptData(data)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Identify plugin which will accept specified URL.  If no plugin accepts URL it will be 
+	 * rejected and false returned. If a plugin can accept the specified URL it will attempt to 
+	 * process and return true if successful.  
+	 * The user may be prompted if connecting to the URL requires user authentication.
+	 * @param url read-only resource URL
+	 * @return true if URL accepted and processed else false
+	 */
+	boolean accept(URL url) {
+		for (Plugin p : pluginList) {
+			if (p.accept(url)) {
 				return true;
 			}
 		}

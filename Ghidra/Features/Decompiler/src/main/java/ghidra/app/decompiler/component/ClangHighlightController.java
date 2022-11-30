@@ -25,6 +25,7 @@ import org.apache.commons.collections4.map.LazyMap;
 import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
+import generic.theme.GColor;
 import ghidra.app.decompiler.*;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.pcode.HighFunction;
@@ -63,7 +64,8 @@ import util.CollectionUtils;
  */
 public abstract class ClangHighlightController {
 
-	public static Color DEFAULT_HIGHLIGHT_COLOR = new Color(255, 255, 0, 128);
+	public static Color DEFAULT_HIGHLIGHT_COLOR =
+		new GColor("color.bg.decompiler.highlights.default");
 
 	public static ClangHighlightController dummyIfNull(ClangHighlightController c) {
 		if (c == null) {

@@ -19,8 +19,6 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.KeyEvent;
 import java.io.*;
-import java.util.Iterator;
-import java.util.List;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -32,35 +30,20 @@ import docking.ActionContext;
 import docking.ComponentProvider;
 import docking.action.*;
 import docking.actions.KeyBindingUtils;
-import docking.options.editor.FontPropertyEditor;
+import docking.options.editor.FontEditor;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
-import ghidra.framework.options.SaveState;
+import generic.theme.*;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.FixedSizeStack;
-import resources.ResourceManager;
+import resources.Icons;
 
 public class TextEditorComponentProvider extends ComponentProviderAdapter {
 	private static final String TITLE = "Text Editor";
-
+	private static final String FONT_ID = "font.plugin.service.text.editor";
 	private static final int MAX_UNDO_REDO_SIZE = 50;
-
-	static Font defaultFont = new Font("monospaced", Font.PLAIN, 12);
-
-	static void restoreState(SaveState saveState) {
-		String name = saveState.getString("DEFAULT_FONT_NAME", "Monospaced");
-		int style = saveState.getInt("DEFAULT_FONT_STYLE", Font.PLAIN);
-		int size = saveState.getInt("DEFAULT_FONT_SIZE", 12);
-		defaultFont = new Font(name, style, size);
-	}
-
-	static void saveState(SaveState saveState) {
-		saveState.putString("DEFAULT_FONT_NAME", defaultFont.getName());
-		saveState.putInt("DEFAULT_FONT_STYLE", defaultFont.getStyle());
-		saveState.putInt("DEFAULT_FONT_SIZE", defaultFont.getSize());
-	}
 
 	private TextEditorManagerPlugin plugin;
 	private GhidraFileChooser chooser;
@@ -200,7 +183,7 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 		};
 		undoAction.setDescription("Undo");
 		undoAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/undo.png"), "UndoRedo"));
+			new ToolBarData(new GIcon("icon.undo"), "UndoRedo"));
 		undoAction.setEnabled(false);
 		plugin.getTool().addLocalAction(this, undoAction);
 
@@ -218,7 +201,7 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 		};
 		redoAction.setDescription("Redo");
 		redoAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/redo.png"), "UndoRedo"));
+			new ToolBarData(new GIcon("icon.redo"), "UndoRedo"));
 		redoAction.setEnabled(false);
 		plugin.getTool().addLocalAction(this, redoAction);
 
@@ -236,7 +219,7 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 		};
 		saveAction.setDescription("Save");
 		saveAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/disk.png"), "Save"));
+			new ToolBarData(Icons.SAVE_ICON, "Save"));
 		saveAction.setEnabled(false);
 		plugin.getTool().addLocalAction(this, saveAction);
 
@@ -254,7 +237,7 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 		};
 		saveAsAction.setDescription("Save As...");
 		saveAsAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/disk_save_as.png"), "Save"));
+			new ToolBarData(Icons.SAVE_AS_ICON, "Save"));
 		saveAsAction.setEnabled(true);
 		plugin.getTool().addLocalAction(this, saveAsAction);
 
@@ -265,7 +248,7 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 			}
 		};
 		fontAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/text_lowercase.png"), "ZZFont"));
+			new ToolBarData(new GIcon("icon.font"), "ZZFont"));
 		fontAction.setDescription("Select Font");
 		fontAction.setEnabled(true);
 		plugin.getTool().addLocalAction(this, fontAction);
@@ -287,17 +270,10 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 	}
 
 	protected void doSelectFont() {
-		FontPropertyEditor editor = new FontPropertyEditor();
-		editor.setValue(defaultFont);
+		FontEditor editor = new FontEditor();
+		editor.setValue(Gui.getFont(FONT_ID));
 		editor.showDialog();
-		defaultFont = (Font) editor.getValue();
-
-		List<TextEditorComponentProvider> values = plugin.getEditors();
-		Iterator<TextEditorComponentProvider> iterator = values.iterator();
-		while (iterator.hasNext()) {
-			TextEditorComponentProvider editorComponent = iterator.next();
-			editorComponent.textarea.setFont(defaultFont);
-		}
+		ThemeManager.getInstance().setFont(FONT_ID, (Font) editor.getValue());
 	}
 
 	private void save() {
@@ -390,8 +366,7 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 
 		private KeyMasterTextArea(String text) {
 			super(text);
-
-			setFont(defaultFont);
+			Gui.registerFont(this, FONT_ID);
 			setName("EDITOR");
 			setWrapStyleWord(false);
 			Document document = getDocument();

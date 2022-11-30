@@ -27,7 +27,9 @@ import org.apache.commons.lang3.StringUtils;
 import docking.options.editor.ButtonPanelFactory;
 import docking.widgets.label.GDLabel;
 import docking.wizard.*;
+import generic.theme.*;
 import ghidra.app.util.task.OpenProgramTask;
+import ghidra.app.util.task.OpenProgramTask.OpenProgramRequest;
 import ghidra.framework.main.DataTreeDialog;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;
@@ -36,7 +38,6 @@ import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
 import ghidra.util.InvalidNameException;
 import ghidra.util.task.TaskLauncher;
-import resources.ResourceManager;
 
 /**
  * Version tracking wizard panel to create a new session.
@@ -44,8 +45,8 @@ import resources.ResourceManager;
 public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 
 	private static final int MAX_LENGTH_FOR_VT_SESSION_NAME = 20;
-	private static final Icon SWAP_ICON = ResourceManager.loadImage("images/doubleArrowUpDown.png");
-	private static final Icon INFO_ICON = ResourceManager.loadImage("images/information.png");
+	private static final Icon SWAP_ICON = new GIcon("icon.version.tracking.new.session.swap");
+	private static final Icon INFO_ICON = new GIcon("icon.version.tracking.new.session.info");
 
 	private JTextField sourceField;
 	private JTextField destinationField;
@@ -73,14 +74,12 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 		folderLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 		folderLabel.setToolTipText("The folder to store the new Version Tracking Session");
 		folderNameField = new JTextField();
-		folderNameField.setFont(new Font("Monospaced", Font.PLAIN, 12));
+		Gui.registerFont(folderNameField, GThemeDefaults.Ids.Fonts.MONOSPACED);
 		folderNameField.setEditable(false); // force user to browse to choose
 
 		JButton browseFolderButton =
 			ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
 		browseFolderButton.addActionListener(e -> browseDataTreeFolders());
-		Font font = browseFolderButton.getFont();
-		browseFolderButton.setFont(new Font(font.getName(), Font.BOLD, font.getSize()));
 
 		JLabel newSessionLabel = new GDLabel("New Session Name: ");
 		newSessionLabel.setToolTipText("The name for the new Version Tracking Session");
@@ -385,8 +384,8 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 
 		OpenProgramTask openProgramTask = new OpenProgramTask(programInfo.getFile(), tool);
 		new TaskLauncher(openProgramTask, tool.getActiveWindow());
-		Program program = openProgramTask.getOpenProgram();
-		programInfo.setProgram(program);
+		OpenProgramRequest openProgram = openProgramTask.getOpenProgram();
+		programInfo.setProgram(openProgram != null ? openProgram.getProgram() : null);
 	}
 
 	@Override

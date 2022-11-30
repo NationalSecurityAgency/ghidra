@@ -15,22 +15,21 @@
  */
 package ghidra.feature.vt.gui.actions;
 
-import ghidra.feature.vt.gui.plugin.VTController;
-import ghidra.feature.vt.gui.plugin.VTPlugin;
-import ghidra.feature.vt.gui.wizard.VTNewSessionWizardManager;
-import ghidra.util.HelpLocation;
-
 import javax.swing.Icon;
 
-import resources.ResourceManager;
 import docking.ActionContext;
 import docking.action.*;
 import docking.tool.ToolConstants;
 import docking.widgets.OptionDialog;
 import docking.wizard.WizardManager;
+import generic.theme.GIcon;
+import ghidra.feature.vt.gui.plugin.VTController;
+import ghidra.feature.vt.gui.plugin.VTPlugin;
+import ghidra.feature.vt.gui.wizard.VTNewSessionWizardManager;
+import ghidra.util.HelpLocation;
 
 public class CreateVersionTrackingSessionAction extends DockingAction {
-	public static Icon NEW_ICON = ResourceManager.loadImage("images/start-here_16.png");
+	public static Icon NEW_ICON = new GIcon("icon.version.tracking.action.create.session");
 	private final VTController controller;
 
 	public CreateVersionTrackingSessionAction(VTController controller) {

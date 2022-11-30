@@ -15,9 +15,10 @@
  */
 package ghidra.app.plugin.core.analysis;
 
-import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import java.math.BigInteger;
 
 import generic.concurrent.*;
 import ghidra.app.cmd.function.CreateFunctionCmd;
@@ -115,8 +116,11 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 				return true;
 			}
 
+			monitor.checkCanceled();
 			runDecompilerAnalysis(program, definedFunctions, monitor);
+			monitor.checkCanceled();
 			runDecompilerAnalysis(program, undefinedFunctions, monitor);
+			monitor.checkCanceled();
 		}
 		catch (CancelledException ce) {
 			throw ce;

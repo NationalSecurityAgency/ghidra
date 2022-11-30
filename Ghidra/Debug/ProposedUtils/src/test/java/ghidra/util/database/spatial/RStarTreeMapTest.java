@@ -17,7 +17,6 @@ package ghidra.util.database.spatial;
 
 import static org.junit.Assert.*;
 
-import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -41,6 +40,8 @@ import com.google.common.collect.Iterators;
 
 import db.DBHandle;
 import db.DBRecord;
+import generic.theme.GThemeDefaults.Colors.Palette;
+import ghidra.util.ColorUtils;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
@@ -565,13 +566,13 @@ public class RStarTreeMapTest {
 
 				public void selectColor(Graphics g, NodeType type) {
 					if (type.isLeaf()) {
-						g.setColor(new Color(1, 0, 0, 0.5f).darker());
+						g.setColor(ColorUtils.getColor(179, 0, 0, 128));
 					}
 					else if (type.isLeafParent()) {
-						g.setColor(new Color(0, 1, 0, 0.5f).darker());
+						g.setColor(ColorUtils.getColor(0, 179, 0, 128));
 					}
 					else {
-						g.setColor(new Color(0, 0, 1, 0.5f).darker());
+						g.setColor(ColorUtils.getColor(0, 0, 179, 128));
 					}
 				}
 
@@ -581,14 +582,14 @@ public class RStarTreeMapTest {
 						return;
 					}
 					drawPath(g, getParentOf(nr));
-					g.setColor(Color.BLACK);
+					g.setColor(Palette.BLACK);
 					drawRect(g, nr.getShape(), false);
 				}
 
 				public void drawPath(Graphics g, DBIntRectStringDataRecord dr) {
 					System.out.println("Selected: " + dr);
 					drawPath(g, getParentOf(dr));
-					g.setColor(Color.BLACK);
+					g.setColor(Palette.BLACK);
 					drawRect(g, dr.getBounds(), false);
 				}
 
@@ -609,7 +610,7 @@ public class RStarTreeMapTest {
 						@Override
 						protected VisitResult visitData(DBIntRectNodeRecord parent,
 								DBIntRectStringDataRecord d, boolean included) {
-							g.setColor(new Color(0, 0, 0, 0.5f));
+							g.setColor(ColorUtils.getColor(0, 0, 0, 128));
 							drawRect(g, d.getShape(), true);
 							return VisitResult.NEXT;
 						}
@@ -875,7 +876,6 @@ public class RStarTreeMapTest {
 		List<Pair<IntRect, String>> entries = generateRandom(rect(0, 100, 0, 100), 10, 10, 1000);
 		Consumer<List<Pair<IntRect, String>>> inserter = list -> {
 			try (UndoableTransaction tid = UndoableTransaction.start(obj, "AddRandom")) {
-				int i = 0;
 				for (Entry<IntRect, String> ent : list) {
 					obj.map.put(ent.getKey(), ent.getValue());
 					// Note, underlying tree is not synchronized, but map is

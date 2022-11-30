@@ -17,10 +17,12 @@ package ghidra.app.plugin.core.bookmark;
 
 import java.awt.Color;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import org.apache.commons.lang3.StringUtils;
 
+import generic.theme.GColor;
+import generic.theme.GIcon;
 import ghidra.app.services.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
@@ -28,7 +30,6 @@ import ghidra.program.model.listing.*;
 import ghidra.program.util.MarkerLocation;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.Swing;
-import resources.ResourceManager;
 
 /**
  * Handles navigation/display of bookmarks in the browser marker margins.
@@ -37,13 +38,12 @@ public class BookmarkNavigator {
 
 	private static final int BIG_CHANGE = 1000;
 
-	final static ImageIcon NOTE_ICON = ResourceManager.loadImage("images/notes.gif");
-	final static ImageIcon INFO_ICON = ResourceManager.loadImage("images/information.png");
-	final static ImageIcon WARNING_ICON = ResourceManager.loadImage("images/warning.png");
-	final static ImageIcon ERROR_ICON = ResourceManager.loadImage("images/edit-delete.png");
-	final static ImageIcon ANALYSIS_ICON =
-		ResourceManager.loadImage("images/applications-system.png");
-	final static ImageIcon DEFAULT_ICON = ResourceManager.loadImage("images/unknown.gif");
+	final static Icon NOTE_ICON = new GIcon("icon.plugin.bookmark.type.note");
+	final static Icon INFO_ICON = new GIcon("icon.plugin.bookmark.type.info");
+	final static Icon WARNING_ICON = new GIcon("icon.plugin.bookmark.type.warning");
+	final static Icon ERROR_ICON = new GIcon("icon.plugin.bookmark.type.error");
+	final static Icon ANALYSIS_ICON = new GIcon("icon.plugin.bookmark.type.analysis");
+	final static Icon DEFAULT_ICON = new GIcon("icon.plugin.bookmark.type.default");
 
 	final static int NOTE_PRIORITY = MarkerService.BOOKMARK_PRIORITY;
 	final static int ERROR_PRIORITY = MarkerService.BOOKMARK_PRIORITY + BIG_CHANGE;
@@ -52,12 +52,12 @@ public class BookmarkNavigator {
 	final static int ANALYSIS_PRIORITY = MarkerService.BOOKMARK_PRIORITY + 6;
 	final static int DEFAULT_PRIORITY = MarkerService.BOOKMARK_PRIORITY + 8;
 
-	final static Color NOTE_COLOR = new Color(128, 0, 255);     // Purple
-	final static Color INFO_COLOR = new Color(0, 255, 255);     // Cyan
-	final static Color WARNING_COLOR = new Color(255, 196, 51); // Dark Yellow
-	final static Color ERROR_COLOR = new Color(204, 0, 51);     // Dark Red
-	final static Color ANALYSIS_COLOR = new Color(255, 128, 0); // Orange
-	final static Color DEFAULT_COLOR = new Color(255, 0, 255);  // Magenta
+	final static Color NOTE_COLOR = new GColor("color.bg.plugin.bookmark.note");
+	final static Color INFO_COLOR = new GColor("color.bg.plugin.bookmark.info");
+	final static Color WARNING_COLOR = new GColor("color.bg.plugin.bookmark.warning");
+	final static Color ERROR_COLOR = new GColor("color.bg.plugin.bookmark.error");
+	final static Color ANALYSIS_COLOR = new GColor("color.bg.plugin.bookmark.analysis");
+	final static Color DEFAULT_COLOR = new GColor("color.bg.plugin.bookmark.default");
 
 	private String type;
 	private MarkerService markerService;
@@ -80,7 +80,7 @@ public class BookmarkNavigator {
 			priority = DEFAULT_PRIORITY;
 		}
 
-		ImageIcon icon = bmt.getIcon();
+		Icon icon = bmt.getIcon();
 		if (icon == null) {
 			icon = DEFAULT_ICON;
 		}

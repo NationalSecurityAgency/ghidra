@@ -15,17 +15,17 @@
  */
 package ghidra.examples.graph;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.ToolBarData;
+import generic.theme.GIcon;
 import ghidra.app.ExamplesPluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.util.HelpLocation;
-import resources.ResourceManager;
 
 /**
  * Sample plugin to demonstrate a plugin with a dockable GUI graph component
@@ -64,8 +64,7 @@ public class SampleGraphPlugin extends Plugin {
 				showProvider();
 			}
 		};
-
-		ImageIcon icon = ResourceManager.loadImage("images/applications-development.png");
+		Icon icon = new GIcon("icon.sample.action.show.graph");
 		showProviderAction.setToolBarData(new ToolBarData(icon, "View"));
 		showProviderAction.setHelpLocation(DEFAULT_HELP);
 		tool.addAction(showProviderAction);
@@ -74,7 +73,6 @@ public class SampleGraphPlugin extends Plugin {
 	private void showProvider() {
 		provider.setVisible(true);
 	}
-
 
 	@Override
 	protected void dispose() {

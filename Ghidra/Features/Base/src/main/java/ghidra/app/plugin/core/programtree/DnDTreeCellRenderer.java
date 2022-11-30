@@ -19,10 +19,14 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.*;
 
-import javax.swing.*;
+import javax.swing.Icon;
+import javax.swing.JTree;
 import javax.swing.tree.DefaultTreeCellRenderer;
 
 import docking.widgets.GComponent;
+import generic.theme.GColor;
+import generic.theme.GIcon;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.program.model.listing.Group;
 import resources.ResourceManager;
 
@@ -30,11 +34,10 @@ import resources.ResourceManager;
  * Cell renderer for the drag and drop tree.
  */
 class DnDTreeCellRenderer extends DefaultTreeCellRenderer {
+	private static final Color BACKGROUND_UNSELECTED = new GColor("color.bg.tree");
+	private static final Color BACKGROUND_SELECTED = new GColor("color.bg.tree.selected");
 
-	private static final String DOCS = "images/openBookBlue.png";
 	private static final String DISABLED_DOCS = "DisabledDocument.gif";
-	static final String FRAGMENT = "images/codeNotInView.gif";
-	private static final String EMPTY_FRAGMENT = "images/emptyFragment.gif";
 	private static final String DISABLED_FRAGMENT = "DisabledFragment";
 	private static final String DISABLED_VIEWED_FRAGMENT = "DisabledViewedFragment";
 	private static final String DISABLED_EMPTY_FRAGMENT = "DisabledEmptyFragment";
@@ -46,13 +49,18 @@ class DnDTreeCellRenderer extends DefaultTreeCellRenderer {
 	private static final String DISABLED_CLOSED_FOLDER = "DisabledClosedFolder";
 	private static final String DISABLED_OPEN_FOLDER = "DisabledOpenedFolder";
 
-	static final String VIEWED_FRAGMENT = "images/codeInView.gif";
-	static final String VIEWED_EMPTY_FRAGMENT = "images/emptyFragmentInView.gif";
-	static final String VIEWED_CLOSED_FOLDER = "images/closedFolderInView.png";
-	static final String VIEWED_OPEN_FOLDER = "images/openFolderInView.png";
-	static final String VIEWED_CLOSED_FOLDER_WITH_DESC = "images/closedDescendantsInView.png";
-	static final String CLOSED_FOLDER = "images/closedFolder.png"; // closed folder not in view
-	static final String OPEN_FOLDER = "images/openFolder.png";
+	private static final String DOCS = "icon.plugin.programtree.docs";
+	static final String FRAGMENT = "icon.plugin.programtree.fragment";
+	private static final String EMPTY_FRAGMENT = "icon.plugin.programtree.fragment.empty";
+
+	static final String VIEWED_FRAGMENT = "icon.plugin.programtree.fragment.viewed";
+	static final String VIEWED_EMPTY_FRAGMENT = "icon.plugin.programtree.fragment.viewed.empty";
+	static final String VIEWED_CLOSED_FOLDER = "icon.plugin.programtree.fragment.closed.folder";
+	static final String VIEWED_OPEN_FOLDER = "icon.plugin.programtree.fragment.open.folder";
+	static final String VIEWED_CLOSED_FOLDER_WITH_DESC =
+		"icon.plugin.programtree.fragment.viewed.closed.folder.with.description";
+	static final String CLOSED_FOLDER = "icon.plugin.programtree.closed.folder";
+	static final String OPEN_FOLDER = "icon.plugin.programtree.open.folder";
 
 	private Map<String, Icon> iconMap;
 
@@ -67,8 +75,8 @@ class DnDTreeCellRenderer extends DefaultTreeCellRenderer {
 	 */
 	DnDTreeCellRenderer() {
 		super();
-		defaultNonSelectionColor = getBackgroundNonSelectionColor();
-		defaultSelectionColor = getBackgroundSelectionColor();
+		defaultNonSelectionColor = BACKGROUND_UNSELECTED;
+		defaultSelectionColor = BACKGROUND_SELECTED;
 		rowForFeedback = -1;
 
 		// disable HTML rendering
@@ -142,7 +150,7 @@ class DnDTreeCellRenderer extends DefaultTreeCellRenderer {
 
 	/**
 	 * Set colors for background according to the draw feedback state.
-	 * @param selected 
+	 * @param selected true if selected
 	 * @param row row of the node
 	 * @param node node to render
 	 * @param dtree tree
@@ -307,24 +315,21 @@ class DnDTreeCellRenderer extends DefaultTreeCellRenderer {
 	private void loadImages() {
 		// try to load icon images
 		iconMap = new HashMap<>();
-		String[] filenames =
+		String[] iconIds =
 			{ DOCS, FRAGMENT, EMPTY_FRAGMENT, VIEWED_FRAGMENT, VIEWED_EMPTY_FRAGMENT,
-				VIEWED_CLOSED_FOLDER, VIEWED_OPEN_FOLDER, VIEWED_CLOSED_FOLDER_WITH_DESC, // descendants in view
-				CLOSED_FOLDER, // closed folder not in view
-				OPEN_FOLDER, // opened folder not in the view
+				VIEWED_CLOSED_FOLDER, VIEWED_OPEN_FOLDER, VIEWED_CLOSED_FOLDER_WITH_DESC,
+				CLOSED_FOLDER, OPEN_FOLDER,
 			};
-		String[] disabledFilenames = { DISABLED_DOCS, DISABLED_FRAGMENT, DISABLED_EMPTY_FRAGMENT,
+		String[] disabledNames = { DISABLED_DOCS, DISABLED_FRAGMENT, DISABLED_EMPTY_FRAGMENT,
 			DISABLED_VIEWED_EMPTY_FRAGMENT, DISABLED_VIEWED_FRAGMENT, DISABLED_VIEWED_CLOSED_FOLDER,
 			DISABLED_VIEWED_OPEN_FOLDER, DISABLED_VIEWED_CLOSED_FOLDER_WITH_DESC,
 			DISABLED_CLOSED_FOLDER, DISABLED_OPEN_FOLDER, };
 
-		for (int i = 0; i < filenames.length; i++) {
-			ImageIcon icon = ResourceManager.loadImage(filenames[i]);
-			if (icon != null) {
-				iconMap.put(filenames[i], icon);
-				Icon disabledIcon = getDisabledIcon(filenames[i], icon);
-				iconMap.put(disabledFilenames[i], disabledIcon);
-			}
+		for (int i = 0; i < iconIds.length; i++) {
+			GIcon icon = new GIcon(iconIds[i]);
+			iconMap.put(iconIds[i], icon);
+			Icon disabledIcon = getDisabledIcon(iconIds[i], icon);
+			iconMap.put(disabledNames[i], disabledIcon);
 		}
 	}
 
@@ -337,13 +342,13 @@ class DnDTreeCellRenderer extends DefaultTreeCellRenderer {
 		return dim;
 	}
 
-	static Icon getDisabledIcon(String imageName, ImageIcon icon) {
-		Image cutImage = icon.getImage();
+	static Icon getDisabledIcon(String imageName, GIcon icon) {
+		Image cutImage = icon.getImageIcon().getImage();
 		BufferedImage bufferedImage = new BufferedImage(cutImage.getWidth(null),
 			cutImage.getHeight(null), BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g2d = bufferedImage.createGraphics();
 		g2d.drawImage(cutImage, 0, 0, null);
-		g2d.setColor(new Color(255, 255, 255, 128));
+		g2d.setColor(Colors.DISABLED);
 		g2d.fillRect(0, 0, bufferedImage.getWidth(), bufferedImage.getHeight());
 		return ResourceManager.getImageIconFromImage(imageName, bufferedImage);
 	}

@@ -79,10 +79,10 @@ public class AddViewToProjectTest extends AbstractGhidraHeadlessIntegrationTest 
 
 		try {
 			URL view = GhidraURL.makeURL(DIRECTORY_NAME, PROJECT_VIEW1);
-			project.addProjectView(view);
+			project.addProjectView(view, true);
 
 			// add another view that will be removed to test the remove
-			project.addProjectView(GhidraURL.makeURL(DIRECTORY_NAME, PROJECT_VIEW2));
+			project.addProjectView(GhidraURL.makeURL(DIRECTORY_NAME, PROJECT_VIEW2), true);
 
 			// validate the view was added to project
 			ProjectLocator[] projViews = project.getProjectViews();

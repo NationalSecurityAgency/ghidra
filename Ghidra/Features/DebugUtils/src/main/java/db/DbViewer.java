@@ -27,11 +27,11 @@ import javax.swing.table.TableModel;
 
 import db.buffers.LocalBufferFile;
 import docking.framework.DockingApplicationConfiguration;
-import docking.framework.DockingApplicationLayout;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
+import generic.application.GenericApplicationLayout;
 import ghidra.app.plugin.debug.dbtable.DbLargeTableModel;
 import ghidra.app.plugin.debug.dbtable.DbSmallTableModel;
 import ghidra.framework.Application;
@@ -238,7 +238,7 @@ public class DbViewer extends JFrame {
 	 * @param table
 	 * @return arrays containing statistics. Element 0 provides
 	 * statsitics for primary table, element 1 provides combined
-	 * statsitics for all index tables.  Remaining array elements 
+	 * statsitics for all index tables.  Remaining array elements
 	 * should be ignored since they have been combined into element 1.
 	 */
 	private TableStatistics[] getStats(Table table) {
@@ -268,7 +268,7 @@ public class DbViewer extends JFrame {
 	 */
 	public static void main(String[] args) throws IOException {
 
-		ApplicationLayout layout = new DockingApplicationLayout("DB Viewer", "1.0");
+		ApplicationLayout layout = new GenericApplicationLayout("DB Viewer", "1.0");
 
 		DockingApplicationConfiguration configuration = new DockingApplicationConfiguration();
 		configuration.setShowSplashScreen(false);

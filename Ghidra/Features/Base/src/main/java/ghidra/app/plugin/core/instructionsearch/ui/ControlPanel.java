@@ -15,11 +15,13 @@
  */
 package ghidra.app.plugin.core.instructionsearch.ui;
 
-import java.awt.*;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 
+import generic.theme.GThemeDefaults.Colors.Java;
 import ghidra.app.plugin.core.instructionsearch.InstructionSearchPlugin;
 
 /**
@@ -31,11 +33,6 @@ public class ControlPanel extends JPanel {
 	private SelectionScopeWidget rangeWidget;
 	private SearchDirectionWidget directionWidget;
 
-	/**
-	 * 
-	 * @param plugin
-	 * @param dialog
-	 */
 	public ControlPanel(InstructionSearchPlugin plugin, InstructionSearchDialog dialog) {
 		setLayout(new GridBagLayout());
 
@@ -60,21 +57,13 @@ public class ControlPanel extends JPanel {
 		gbc.weightx = 1.0;
 		this.add(directionWidget, gbc);
 
-		this.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+		this.setBorder(BorderFactory.createLineBorder(Java.BORDER));
 	}
 
-	/**
-	 * 
-	 * @return
-	 */
 	public SelectionScopeWidget getRangeWidget() {
 		return this.rangeWidget;
 	}
 
-	/**
-	 * 
-	 * @return
-	 */
 	public SearchDirectionWidget getDirectionWidget() {
 		return this.directionWidget;
 	}

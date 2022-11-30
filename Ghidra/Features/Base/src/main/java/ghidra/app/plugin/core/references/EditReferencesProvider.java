@@ -35,6 +35,9 @@ import docking.dnd.DropTgtAdapter;
 import docking.dnd.Droppable;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.table.*;
+import generic.theme.GColor;
+import generic.theme.GIcon;
+import generic.theme.GThemeDefaults.Colors.Tables;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.util.SelectionTransferData;
 import ghidra.app.util.SelectionTransferable;
@@ -52,31 +55,31 @@ import ghidra.util.HelpLocation;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.task.SwingUpdateManager;
 import resources.Icons;
-import resources.ResourceManager;
 
 public class EditReferencesProvider extends ComponentProviderAdapter
 		implements DomainObjectListener, ChangeListener {
 
 	private static final String ADD_REFS_GROUP = "AddReferences";
 
+	//@formatter:off
 	private static final HelpLocation HELP =
 		new HelpLocation("ReferencesPlugin", "View_Edit_References_From");
 
-	private static Icon ADD_ICON = ResourceManager.loadImage("images/Plus.png");
-	private static Icon EDIT_ICON = ResourceManager.loadImage("images/editbytes.gif");
-	private static Icon DELETE_ICON = ResourceManager.loadImage("images/edit-delete.png");
-	private static Icon RECV_LOCATION_ICON = Icons.NAVIGATE_ON_INCOMING_EVENT_ICON;
-	//private static Icon RECV_LOCATION_OFF_ICON = ResourceManager.loadImage("images/locationInOff.gif");
-	private static Icon SEND_LOCATION_ICON = Icons.NAVIGATE_ON_OUTGOING_EVENT_ICON;
-	//private static Icon SEND_LOCATION_OFF_ICON = ResourceManager.loadImage("images/locationOutOff.gif");
-	private static Icon HOME_ICON = ResourceManager.loadImage("images/go-home.png");
-	private static Icon SELECT_ICON = ResourceManager.loadImage("images/text_align_justify.png");
+	private static final Icon ADD_ICON = Icons.ADD_ICON;
+	private static final Icon EDIT_ICON = new GIcon("icon.base.edit.bytes");
+	private static final Icon DELETE_ICON = Icons.DELETE_ICON;
+	private static final Icon RECV_LOCATION_ICON = Icons.NAVIGATE_ON_INCOMING_EVENT_ICON;
+	private static final Icon SEND_LOCATION_ICON = Icons.NAVIGATE_ON_OUTGOING_EVENT_ICON;
+	private static final Icon HOME_ICON = Icons.HOME_ICON;
+	private static final Icon SELECT_ICON = Icons.MAKE_SELECTION_ICON;
+	//@formatter:on
 
 	private static final String TITLE_PREFIX = "References Editor ";
 
 	static int MNEMONIC_OPINDEX = ReferenceManager.MNEMONIC;
 
-	static Color HIGHLIGHT_COLOR = new Color(205, 205, 205);
+	static Color BG_COLOR_ACTIVE_OPERAND =
+		new GColor("color.bg.plugin.references.table.active.operand");
 
 	private static final DataFlavor[] ACCEPTABLE_DROP_FLAVORS =
 		new DataFlavor[] { SelectionTransferable.localProgramSelectionFlavor };
@@ -132,8 +135,9 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 			if (currentCodeUnit != null) {
 				Memory memory = currentCodeUnit.getProgram().getMemory();
 				try {
-					Object data = e.getTransferable().getTransferData(
-						SelectionTransferable.localProgramSelectionFlavor);
+					Object data = e.getTransferable()
+							.getTransferData(
+								SelectionTransferable.localProgramSelectionFlavor);
 					AddressSetView view = ((SelectionTransferData) data).getAddressSet();
 					if (memory.contains(view)) {
 						return true;
@@ -530,7 +534,7 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 	private Data findComponent(Data data, Address addr) {
 		while (addr.compareTo(data.getMinAddress()) >= 0) {
 			long offset = addr.subtract(data.getMinAddress());
-			Data d = data.getComponentAt((int) offset);
+			Data d = data.getComponentContaining((int) offset);
 			if (d == null) {
 				break;
 			}
@@ -954,8 +958,8 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 
 			if (!isSelected) {
 				if (ref.getOperandIndex() == instrPanel.getSelectedOpIndex()) {
-					cb.setBackground(HIGHLIGHT_COLOR);
-					setBackground(HIGHLIGHT_COLOR);
+					cb.setBackground(BG_COLOR_ACTIVE_OPERAND);
+					setBackground(BG_COLOR_ACTIVE_OPERAND);
 					cb.setOpaque(true);
 				}
 			}
@@ -1004,7 +1008,7 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 			else {
 				if (ref.getOperandIndex() == instrPanel.getSelectedOpIndex()) {
 					checkbox.setForeground(table.getForeground());
-					checkbox.setBackground(HIGHLIGHT_COLOR);
+					checkbox.setBackground(BG_COLOR_ACTIVE_OPERAND);
 					checkbox.setOpaque(true);
 				}
 				else {
@@ -1022,8 +1026,7 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 
 		RefCellTextRenderer() {
 			defaultFont = getFont();
-			boldFont = new Font(defaultFont.getName(), defaultFont.getStyle() | Font.BOLD,
-				defaultFont.getSize());
+			boldFont = defaultFont.deriveFont(defaultFont.getStyle() | Font.BOLD);
 			setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 0));
 		}
 
@@ -1047,7 +1050,7 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 
 			if (isSelected) {
 				if (bad) {
-					setForeground(Color.pink);
+					setForeground(Tables.FG_ERROR_SELECTED);
 					setFont(boldFont);
 				}
 				else {
@@ -1060,14 +1063,14 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 				// set color to red if address does not exist in memory
 
 				if (bad) {
-					setForeground(Color.red);
+					setForeground(Tables.FG_ERROR_UNSELECTED);
 					setFont(boldFont);
 				}
 				else {
 					setFont(defaultFont);
 				}
 				if (ref.getOperandIndex() == instrPanel.getSelectedOpIndex()) {
-					setBackground(HIGHLIGHT_COLOR);
+					setBackground(BG_COLOR_ACTIVE_OPERAND);
 					setOpaque(true);
 				}
 			}

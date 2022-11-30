@@ -15,15 +15,14 @@
  */
 package ghidra.app.merge.listing;
 
-import java.awt.Color;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 import javax.swing.SwingUtilities;
-import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.merge.*;
 import ghidra.app.util.HelpTopics;
 import ghidra.program.database.function.FunctionManagerDB;
@@ -102,7 +101,6 @@ public class FunctionTagMerger implements MergeResolver, ListingMergeConstants {
 	// the middle of resolving multiple conflicts.
 	private long currentlyMergingTagID;
 
-
 	/**
 	 * Constructor.
 	 * 
@@ -159,7 +157,6 @@ public class FunctionTagMerger implements MergeResolver, ListingMergeConstants {
 			conflictPanel.clear();
 		}
 	}
-
 
 	@Override
 	public void merge(TaskMonitor monitor) throws Exception {
@@ -270,7 +267,7 @@ public class FunctionTagMerger implements MergeResolver, ListingMergeConstants {
 			// If the source program tag doesn't exist then the user has chosen to 
 			// keep a deleted tag, so make sure the corresponding tag in Result
 			// is deleted as well. 
-			if (tag == null ) {
+			if (tag == null) {
 				if (resultTag != null) {
 					resultTag.delete();
 				}
@@ -279,8 +276,9 @@ public class FunctionTagMerger implements MergeResolver, ListingMergeConstants {
 			// If the source tag exists, but the Result tag doesn't, we have to create a new
 			// one in Result.
 			else if (resultTag == null) {
-				functionManagerDBResult.getFunctionTagManager().createFunctionTag(tag.getName(),
-					tag.getComment());
+				functionManagerDBResult.getFunctionTagManager()
+						.createFunctionTag(tag.getName(),
+							tag.getComment());
 			}
 
 			// If the source tag exists and Result tag exists, just update the tag 
@@ -409,7 +407,7 @@ public class FunctionTagMerger implements MergeResolver, ListingMergeConstants {
 						functionTag.setName(tagMy.getName());
 						functionTag.setComment(tagMy.getComment());
 					}
-					
+
 				}
 			}
 		}
@@ -574,37 +572,29 @@ public class FunctionTagMerger implements MergeResolver, ListingMergeConstants {
 	private void showMergePanel(long id, TaskMonitor monitor) {
 
 		try {
-			final ChangeListener changeListener = new ChangeListener() {
-				@Override
-				public void stateChanged(ChangeEvent e) {
-					conflictOption = conflictPanel.getSelectedOptions();
-					if (conflictOption == ASK_USER || conflictOption == CANCELED) {
-						if (mergeManager != null) {
-							mergeManager.setApplyEnabled(false);
-						}
-						return;
-					}
+			final ChangeListener changeListener = e -> {
+				conflictOption = conflictPanel.getSelectedOptions();
+				if (conflictOption == ASK_USER || conflictOption == CANCELED) {
 					if (mergeManager != null) {
-						mergeManager.clearStatusText();
+						mergeManager.setApplyEnabled(false);
 					}
-					try {
-						merge(conflictOption, monitor);
-						if (mergeManager != null) {
-							mergeManager.setApplyEnabled(true);
-						}
+					return;
+				}
+				if (mergeManager != null) {
+					mergeManager.clearStatusText();
+				}
+				try {
+					merge(conflictOption, monitor);
+					if (mergeManager != null) {
+						mergeManager.setApplyEnabled(true);
 					}
-					catch (CancelledException e1) {
-						// user cancel - no need to log
-					}
+				}
+				catch (CancelledException e1) {
+					// user cancel - no need to log
+				}
 
-				}
 			};
-			SwingUtilities.invokeAndWait(new Runnable() {
-				@Override
-				public void run() {
-					setupConflictPanel(id, changeListener, monitor);
-				}
-			});
+			SwingUtilities.invokeAndWait(() -> setupConflictPanel(id, changeListener, monitor));
 		}
 		catch (InterruptedException | InvocationTargetException e) {
 			Msg.error(this, "Unexpected error showing merge panel for tag " + id, e);
@@ -712,19 +702,20 @@ public class FunctionTagMerger implements MergeResolver, ListingMergeConstants {
 	 * @return
 	 */
 	private String getConflictInfo(TaskMonitor monitor) {
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append(
 			"<center><b>" + "Resolving conflict " + (monitor.getProgress() + 1) + " of " +
 				tagConflicts.size() + "</b></center>");
 		buf.append(HTMLUtilities.HTML_NEW_LINE);
 		buf.append("Tag Id:");
 		buf.append(HTMLUtilities.spaces(21));
-		buf.append(HTMLUtilities.colorString(Color.BLUE, String.valueOf(currentlyMergingTagID)));
+		buf.append(
+			HTMLUtilities.colorString(Messages.NORMAL, String.valueOf(currentlyMergingTagID)));
 		buf.append(HTMLUtilities.HTML_NEW_LINE);
 		buf.append("Reason for Conflict:");
 		buf.append(HTMLUtilities.spaces(1));
 		buf.append(
-			HTMLUtilities.colorString(Color.BLUE, tagConflicts.get(currentlyMergingTagID)));
+			HTMLUtilities.colorString(Messages.NORMAL, tagConflicts.get(currentlyMergingTagID)));
 		buf.append(HTMLUtilities.HTML_NEW_LINE);
 		buf.append(HTMLUtilities.HTML_NEW_LINE);
 

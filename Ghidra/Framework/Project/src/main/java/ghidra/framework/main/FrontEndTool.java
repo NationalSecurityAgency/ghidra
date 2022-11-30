@@ -352,7 +352,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 	@Override
 	public void close() {
-		exit();
+		close(true);
 	}
 
 	/**

@@ -147,7 +147,7 @@ public class GdbModelTargetSession extends DefaultTargetModelRoot
 			default:
 				throw new AssertionError();
 		}
-		listeners.fire.consoleOutput(this, dbgChannel, out);
+		broadcast().consoleOutput(this, dbgChannel, out);
 	}
 
 	@Override

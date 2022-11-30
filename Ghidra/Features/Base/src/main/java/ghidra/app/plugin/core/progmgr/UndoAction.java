@@ -27,7 +27,7 @@ public class UndoAction extends AbstractUndoRedoAction {
 	public static final String SUBGROUP = "1Undo";
 
 	public UndoAction(ProgramManagerPlugin plugin, PluginTool tool) {
-		super(tool, plugin, "Undo", "images/undo.png", "ctrl Z", SUBGROUP);
+		super(tool, plugin, "Undo", "icon.undo", "ctrl Z", SUBGROUP);
 	}
 
 	@Override

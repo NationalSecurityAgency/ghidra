@@ -58,4 +58,29 @@ public class TranslateIcon implements Icon {
 	public String toString() {
 		return getClass().getSimpleName() + "[" + ResourceManager.getIconName(icon) + "]";
 	}
+
+	// for testing
+	/**
+	 * Returns the icon that is being translated
+	 * @return the icon that is being translated
+	 */
+	public Icon getBaseIcon() {
+		return icon;
+	}
+
+	/**
+	 * Returns the amount the icon is being translated on the x axis;
+	 * @return the amount the icon is being translated on the x axis;
+	 */
+	public int getX() {
+		return translateX;
+	}
+
+	/**
+	 * Returns the amount the icon is being translated on the y axis;
+	 * @return the amount the icon is being translated on the y axis;
+	 */
+	public int getY() {
+		return translateY;
+	}
 }

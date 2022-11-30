@@ -20,7 +20,6 @@ import java.io.*;
 import ghidra.app.util.bin.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.mem.*;
-import ghidra.util.Conv;
 import ghidra.util.DataConverter;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -535,7 +534,7 @@ public class SectionHeader implements StructConverter, ByteArrayConverter {
 		EnumDataType characteristicsEnum = new EnumDataType("SectionFlags", 4);
 		characteristicsEnum.setCategoryPath(new CategoryPath("/PE"));
 		for (SectionFlags flag : SectionFlags.values()) {
-			characteristicsEnum.add(flag.name(), Conv.intToLong(flag.getMask()));
+			characteristicsEnum.add(flag.name(), Integer.toUnsignedLong(flag.getMask()));
 		}
 		struct.add(characteristicsEnum, "Characteristics", null);
 		struct.setCategoryPath(new CategoryPath("/PE"));

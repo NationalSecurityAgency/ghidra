@@ -33,7 +33,7 @@ import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.annotation.HelpInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.PointerDataType;
+import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.trace.model.*;
@@ -225,9 +225,12 @@ public class DisassembleAtPcDebuggerBot implements DebuggerBot {
 			try (UndoableTransaction tid =
 				UndoableTransaction.start(trace, "Disassemble: PC is code pointer")) {
 				TraceCodeSpace regCode = codeManager.getCodeRegisterSpace(thread, frameLevel, true);
+				// TODO: Should be same platform as pc, not necessarily base
+				AddressSpace space = trace.getBaseAddressFactory().getDefaultAddressSpace();
+				PointerTypedef type = new PointerTypedef(null, VoidDataType.dataType,
+					pc.getMinimumByteSize(), null, space);
 				try {
-					pcUnit = regCode.definedData()
-							.create(Lifespan.nowOn(pcSnap), pc, PointerDataType.dataType);
+					pcUnit = regCode.definedData().create(Lifespan.nowOn(pcSnap), pc, type);
 				}
 				catch (CodeUnitInsertionException e) {
 					// I guess something's already there. Leave it, then!
@@ -235,11 +238,8 @@ public class DisassembleAtPcDebuggerBot implements DebuggerBot {
 					pcUnit = regCode.definedData().getForRegister(pcSnap, pc);
 				}
 			}
-			if (pcUnit != null) {
-				Address pcVal = (Address) TraceRegisterUtils.getValueHackPointer(pcUnit);
-				if (pcVal != null) {
-					disassemble(pcVal, thread, memSnap);
-				}
+			if (pcUnit != null && pcUnit.getValue() instanceof Address pcVal) {
+				disassemble(pcVal, thread, memSnap);
 			}
 		}
 
