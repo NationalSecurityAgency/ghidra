@@ -588,7 +588,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		WatchRow row = prepareTestEditTarget("r1");
 		TraceThread thread = recorder.getTraceThread(mb.testThread1);
 		// Sanity check
-		assertFalse(recorder.isRegisterOnTarget(thread, r1));
+		assertNull(recorder.isRegisterOnTarget(tb.host, thread, 0, r1));
 
 		assertFalse(row.isRawValueEditable());
 		runSwingWithException(() -> row.setRawValueString("0x1234"));

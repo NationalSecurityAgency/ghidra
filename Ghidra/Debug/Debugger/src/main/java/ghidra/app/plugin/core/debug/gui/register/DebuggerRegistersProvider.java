@@ -880,11 +880,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		}
 		StateEditor editor = editingService.createStateEditor(current);
 		if (!editor.isRegisterEditable(rv.getRegister())) {
-			rv = combineWithTraceBaseRegisterValue(rv);
-		}
-		if (!editor.isRegisterEditable(rv.getRegister())) {
 			Msg.showError(this, getComponent(), "Edit Register",
-				"Neither the register nor its base can be edited.");
+				"Neither the register nor any parent can be edited.");
 			return;
 		}
 
@@ -903,13 +900,6 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			return null;
 		});
 		return;
-	}
-
-	private RegisterValue combineWithTraceBaseRegisterValue(RegisterValue rv) {
-		TraceMemorySpace regs = getRegisterMemorySpace(false);
-		TracePlatform platform = current.getPlatform();
-		long snap = current.getViewSnap();
-		return TraceRegisterUtils.combineWithTraceBaseRegisterValue(rv, platform, snap, regs, true);
 	}
 
 	/**

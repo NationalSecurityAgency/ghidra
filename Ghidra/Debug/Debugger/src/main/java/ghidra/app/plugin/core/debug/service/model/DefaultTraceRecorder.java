@@ -547,6 +547,19 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	}
 
 	@Override
+	public Register isRegisterOnTarget(TracePlatform platform, TraceThread thread, int frameLevel,
+			Register register) {
+		// NOTE: This pays no heed to frameLevel, but caller does require level==0 for now.
+		Collection<Register> onTarget = getRegisterMapper(thread).getRegistersOnTarget();
+		for (; register != null; register = register.getParentRegister()) {
+			if (onTarget.contains(register)) {
+				return register;
+			}
+		}
+		return null;
+	}
+
+	@Override
 	public CompletableFuture<Void> writeThreadRegisters(TracePlatform platform, TraceThread thread,
 			int frameLevel, Map<Register, RegisterValue> values) {
 		DefaultThreadRecorder rec = getThreadRecorder(thread);

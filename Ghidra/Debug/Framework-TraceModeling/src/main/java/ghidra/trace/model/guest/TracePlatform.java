@@ -185,6 +185,17 @@ public interface TracePlatform {
 	/**
 	 * Get the expected path where an object defining the register value would be
 	 * 
+	 * @param schema the schema of the register container
+	 * @param path the path to the register container
+	 * @param name the name of the register on the target
+	 * @return the path matcher, possibly empty
+	 */
+	PathMatcher getConventionalRegisterPath(TargetObjectSchema schema, List<String> path,
+			String name);
+
+	/**
+	 * Get the expected path where an object defining the register value would be
+	 * 
 	 * <p>
 	 * This will check for a label in the host physical space, allowing a mapper to specify an
 	 * alternative register object name. See {@link #addRegisterMapOverride(Register, String)}.
