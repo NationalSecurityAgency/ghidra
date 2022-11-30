@@ -47,12 +47,12 @@ public class ThemeUtils {
 	public static boolean askToSaveThemeChanges(ThemeManager themeManager) {
 		if (themeManager.hasThemeChanges()) {
 			int result = OptionDialog.showYesNoCancelDialog(null, "Save Theme Changes?",
-				"You have made changes to the theme.\n Do you want save your changes?");
+				"You have made changes to the theme.\n Do you want to save your changes?");
 			if (result == OptionDialog.CANCEL_OPTION) {
 				return false;
 			}
 			if (result == OptionDialog.YES_OPTION) {
-				return ThemeUtils.saveThemeChanges(themeManager);
+				return saveThemeChanges(themeManager);
 			}
 			themeManager.reloadApplicationDefaults();
 		}
@@ -108,19 +108,21 @@ public class ThemeUtils {
 	}
 
 	static void importTheme(ThemeManager themeManager, File themeFile) {
-		if (!ThemeUtils.askToSaveThemeChanges(themeManager)) {
+		if (!askToSaveThemeChanges(themeManager)) {
 			return;
 		}
 		GTheme startingTheme = themeManager.getActiveTheme();
 		try {
-			GTheme imported = GTheme.loadTheme(themeFile);
-			// by setting the theme, we can let the normal save handle all the edge cases
+			//
+			// By setting the theme, we can let the normal save handle all the edge cases,
 			// such as if a theme with that names exists and if so, should it be overwritten?
 			// Also, the imported theme may contain default values which we don't want to save. So
 			// by going through the usual save mechanism, only values that differ from defaults
 			// be saved.
+			//
+			GTheme imported = GTheme.loadTheme(themeFile);
 			themeManager.setTheme(imported);
-			if (!ThemeUtils.saveThemeChanges(themeManager)) {
+			if (!saveThemeChanges(themeManager)) {
 				themeManager.setTheme(startingTheme);
 			}
 		}
@@ -137,7 +139,7 @@ public class ThemeUtils {
 	 * @param themeManager the ThemeManager that actually does the export
 	 */
 	public static void exportTheme(ThemeManager themeManager) {
-		if (!ThemeUtils.askToSaveThemeChanges(themeManager)) {
+		if (!askToSaveThemeChanges(themeManager)) {
 			return;
 		}
 		boolean hasExternalIcons = !themeManager.getActiveTheme().getExternalIconFiles().isEmpty();
@@ -178,12 +180,14 @@ public class ThemeUtils {
 		}
 		if (themeManager.getActiveTheme().equals(selectedTheme)) {
 			Msg.showWarn(ThemeUtils.class, null, "Delete Failed",
-				"Can't delete the current theme.");
+				"Cannot delete the active theme.");
 			return;
 		}
+
 		GTheme fileTheme = selectedTheme;
-		int result = OptionDialog.showYesNoDialog(null, "Delete Theme: " + fileTheme.getName(),
-			"Are you sure you want to delete theme " + fileTheme.getName());
+		int result =
+			OptionDialog.showYesNoDialog(null, "Delete Theme: " + fileTheme.getName() + "?",
+				"Are you sure you want to delete theme " + fileTheme.getName());
 		if (result == OptionDialog.YES_OPTION) {
 			themeManager.deleteTheme(fileTheme);
 		}
@@ -235,9 +239,7 @@ public class ThemeUtils {
 				"Error writing theme file: " + newTheme.getFile().getAbsolutePath(), e);
 			return false;
 		}
-
 		return true;
-
 	}
 
 	private static File getSaveFile(String themeName) {

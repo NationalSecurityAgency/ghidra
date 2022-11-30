@@ -69,21 +69,21 @@ public class ThemeDialog extends DialogComponentProvider {
 	}
 
 	private void createActions() {
-		DockingAction reloadDefaultsAction = new ActionBuilder("Reload Ghidra Defaults", getTitle())
+		DockingAction reloadDefaultsAction = new ActionBuilder("Reload Theme Defaults", getTitle())
 				.toolBarIcon(new GIcon("icon.refresh"))
 				.helpLocation(new HelpLocation("Theming", "Reload_Ghidra_Defaults"))
 				.onAction(e -> reloadDefaultsCallback())
 				.build();
 		addAction(reloadDefaultsAction);
 
-		DockingAction resetValueAction = new ActionBuilder("Restore Value", getTitle())
-				.popupMenuPath("Restore Value")
-				.withContext(ThemeTableContext.class)
-				.enabledWhen(c -> c.isChanged())
-				.popupWhen(c -> true)
-				.helpLocation(new HelpLocation("Theming", "Restore_Value"))
-				.onAction(c -> c.getThemeValue().installValue(themeManager))
-				.build();
+		DockingAction resetValueAction =
+			new ActionBuilder("Restore Value", getTitle()).popupMenuPath("Restore Value")
+					.withContext(ThemeTableContext.class)
+					.enabledWhen(c -> c.isChanged())
+					.popupWhen(c -> true)
+					.helpLocation(new HelpLocation("Theming", "Restore_Value"))
+					.onAction(c -> c.getThemeValue().installValue(themeManager))
+					.build();
 		addAction(resetValueAction);
 	}
 
@@ -97,8 +97,8 @@ public class ThemeDialog extends DialogComponentProvider {
 
 	private boolean handleChanges() {
 		if (themeManager.hasThemeChanges()) {
-			int result = OptionDialog.showYesNoCancelDialog(null, "Close Theme Dialog",
-				"You have changed the theme.\n Do you want save your changes?");
+			int result = OptionDialog.showYesNoCancelDialog(null, "Save Theme Changes?",
+				"You have changed the theme.\n Do you want to save your changes?");
 			if (result == OptionDialog.CANCEL_OPTION) {
 				return false;
 			}
@@ -116,24 +116,22 @@ public class ThemeDialog extends DialogComponentProvider {
 
 	private void restoreCallback() {
 		if (themeManager.hasThemeChanges()) {
-			int result = OptionDialog.showYesNoDialog(null, "Restore Theme Values",
-				"Are you sure you want to discard all your changes?");
-			if (result == OptionDialog.NO_OPTION) {
-				return;
+			int result = OptionDialog.showYesNoDialog(null, "Discard Theme Changes?",
+				"This will discard all of your theme changes. Continue?");
+			if (result == OptionDialog.YES_OPTION) {
+				themeManager.restoreThemeValues();
 			}
 		}
-		themeManager.restoreThemeValues();
 	}
 
 	private void reloadDefaultsCallback() {
 		if (themeManager.hasThemeChanges()) {
-			int result = OptionDialog.showYesNoDialog(null, "Reload Ghidra Default Values",
-				"This will discard all your theme changes. Continue?");
-			if (result == OptionDialog.NO_OPTION) {
-				return;
+			int result = OptionDialog.showYesNoDialog(null, "Reload Default Theme Values?",
+				"This will discard all of your theme changes. Continue?");
+			if (result == OptionDialog.YES_OPTION) {
+				themeManager.reloadApplicationDefaults();
 			}
 		}
-		themeManager.reloadApplicationDefaults();
 	}
 
 	private void reset() {
@@ -154,14 +152,15 @@ public class ThemeDialog extends DialogComponentProvider {
 			Swing.runLater(() -> updateCombo());
 			return;
 		}
-		String themeName = (String) e.getItem();
 
+		String themeName = (String) e.getItem();
 		Swing.runLater(() -> {
 			GTheme theme = themeManager.getTheme(themeName);
 			themeManager.setTheme(theme);
 			if (theme.getLookAndFeelType() == LafType.GTK) {
 				setStatusText(
-					"Warning - Themes using the GTK LookAndFeel do not support changing java component colors, fonts or icons.",
+					"Warning - Themes using the GTK LookAndFeel do not support changing java " +
+						"component colors, fonts or icons.",
 					MessageType.ERROR);
 			}
 			else {
@@ -240,7 +239,7 @@ public class ThemeDialog extends DialogComponentProvider {
 		restoreButton.setMnemonic('R');
 		restoreButton.setName("Restore");
 		restoreButton.addActionListener(e -> restoreCallback());
-		restoreButton.setToolTipText("Restores all values to current theme");
+		restoreButton.setToolTipText("Restores all previous values to current theme");
 		return restoreButton;
 	}
 
@@ -280,7 +279,7 @@ public class ThemeDialog extends DialogComponentProvider {
 		return contextProvider.getActionContext(event);
 	}
 
-	class DialogThemeListener implements ThemeListener {
+	private class DialogThemeListener implements ThemeListener {
 		@Override
 		public void themeChanged(ThemeEvent event) {
 			if (event.haveAllValuesChanged()) {
