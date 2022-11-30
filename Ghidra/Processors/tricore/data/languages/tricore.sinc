@@ -6824,9 +6824,9 @@ macro multiply_u_u(mres0, rega, regb, n) {
 # NOR.T D[c], D[a], pos1, D[b], pos2 (BIT)
 :nor.t Rd2831,Rd0811,const1620Z,Rd1215,const2327Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x87 ; Rd2831 & const1620Z & const2327Z & op2122=0x2
 {
-	local tmp = (Rd0811 >> const1620Z) & 1;
-	local tmp2 = (Rd1215 >> const2327Z) & 1;
-	Rd2831 = ~(tmp | tmp2);
+	local tmp = Rd0811 >> const1620Z;
+	local tmp2 = Rd1215 >> const2327Z;
+	Rd2831 = ~(tmp | tmp2) & 1;
 }
 
 @if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
