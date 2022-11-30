@@ -270,7 +270,7 @@ public class DBTraceMemorySpace
 
 	@Override
 	public DBTraceCodeSpace getCodeSpace(boolean createIfAbsent) {
-		if (space.isRegisterSpace()) {
+		if (space.isRegisterSpace() && !space.isOverlaySpace()) {
 			return trace.getCodeManager().getCodeRegisterSpace(thread, frameLevel, createIfAbsent);
 		}
 		return trace.getCodeManager().getCodeSpace(space, createIfAbsent);
