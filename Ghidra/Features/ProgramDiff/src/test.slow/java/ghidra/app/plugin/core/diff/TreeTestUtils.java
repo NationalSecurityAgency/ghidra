@@ -22,7 +22,7 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
 import docking.widgets.tree.GTreeNode;
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGuiTest;
 
 public class TreeTestUtils {
 	public static TreePath findTreePathToText(JTree tree, String text) {
@@ -57,7 +57,7 @@ public class TreeTestUtils {
 	 */
 	public static void selectTreeNodeByText(final JTree tree, final String text) {
 
-		AbstractGenericTest.runSwing(new Runnable() {
+		AbstractGuiTest.runSwing(new Runnable() {
 			@Override
 			public void run() {
 				TreePath path = findTreePathToText(tree, text);
@@ -68,9 +68,9 @@ public class TreeTestUtils {
 			}
 		});
 
-		AbstractGenericTest.waitForSwing();
+		AbstractGuiTest.waitForSwing();
 
-		AbstractGenericTest.runSwing(new Runnable() {
+		AbstractGuiTest.runSwing(new Runnable() {
 			@Override
 			public void run() {
 				TreePath path = findTreePathToText(tree, text);

@@ -22,8 +22,6 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-import ghidra.util.HTMLUtilities;
-
 public class FileLocker {
 
 	private static final String META_TAG = "<META> ";
@@ -111,10 +109,10 @@ public class FileLocker {
 		for (String name : PROPERTY_KEYS) {
 			buf.append("<tr><td>");
 			buf.append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
-			buf.append(HTMLUtilities.escapeHTML(name));
+			buf.append(name);
 			buf.append(": ");
 			buf.append("</td><td>");
-			buf.append(HTMLUtilities.escapeHTML(existingLockProperties.get(name).toString()));
+			buf.append(existingLockProperties.get(name).toString());
 			buf.append("</td></tr>");
 		}
 		buf.append("</table>");

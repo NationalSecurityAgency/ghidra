@@ -44,7 +44,6 @@ import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.visualization.VisualizationModel;
 import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.picking.PickedState;
-import generic.test.AbstractGenericTest;
 import generic.test.TestUtils;
 import ghidra.app.cmd.label.AddLabelCmd;
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
@@ -2312,11 +2311,11 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 	}
 
 	protected void swing(Runnable r) {
-		AbstractGenericTest.runSwing(r);
+		runSwing(r);
 	}
 
 	protected <T> T swing(Supplier<T> s) {
-		return AbstractGenericTest.runSwing(s);
+		return runSwing(s);
 	}
 
 	static class DummyTransferable implements Transferable {

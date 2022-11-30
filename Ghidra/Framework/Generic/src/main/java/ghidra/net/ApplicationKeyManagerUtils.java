@@ -26,6 +26,7 @@ import java.util.*;
 import javax.net.ssl.*;
 import javax.security.auth.DestroyFailedException;
 import javax.security.auth.x500.X500Principal;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.style.RFC4519Style;
@@ -60,6 +61,10 @@ public class ApplicationKeyManagerUtils {
 
 	public static final String BEGIN_CERT = "-----BEGIN CERTIFICATE-----";
 	public static final String END_CERT = "-----END CERTIFICATE-----";
+
+	public static final String[] PKCS_FILE_EXTENSIONS = new String[] { "p12", "pks", "pfx" };
+	public static final FileNameExtensionFilter PKCS_FILENAME_FILTER =
+		new FileNameExtensionFilter("PKCS Key File", PKCS_FILE_EXTENSIONS);
 
 	static {
 		/**
@@ -356,21 +361,21 @@ public class ApplicationKeyManagerUtils {
 			long durationMs = (long) durationDays * MILLISECONDS_PER_DAY;
 			Date notAfter = new Date(notBefore.getTime() + durationMs);
 			BigInteger serialNumber = new BigInteger(128, random);
-			
+
 //			JcaX509ExtensionUtils x509Utils = new JcaX509ExtensionUtils();
-			
+
 			X509v3CertificateBuilder certificateBuilder = new X509v3CertificateBuilder(caX500Name,
 				serialNumber, notBefore, notAfter, x500Name, bcPk);
 			certificateBuilder
 //					.addExtension(Extension.subjectKeyIdentifier, true, x509Utils.createSubjectKeyIdentifier(bcPk))
 					.addExtension(Extension.keyUsage, true, keyUsage);
-			
+
 			if (caEntry == null) {
 				certificateBuilder
 						.addExtension(Extension.basicConstraints, true, new BasicConstraints(1));
 //						.addExtension(Extension.authorityKeyIdentifier, true, x509Utils.createAuthorityKeyIdentifier(bcPk));
 			}
-			
+
 			ContentSigner contentSigner =
 				new JcaContentSignerBuilder(SIGNING_ALGORITHM).build(issuerKey);
 

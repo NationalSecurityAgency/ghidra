@@ -32,8 +32,6 @@ rootProject.createJsondocs.exclude '**/pcodeCPort/**'
 rootProject.prepDev.dependsOn compileJava
 
 dependencies {
-	api project(':Generic')
-	api project(':FileSystem')
 	api project(':Project')
 	api project(':Graph')
 	

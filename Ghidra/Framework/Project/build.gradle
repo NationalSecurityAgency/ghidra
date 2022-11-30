@@ -24,11 +24,7 @@ apply plugin: 'eclipse'
 eclipse.project.name = 'Framework Project'
 
 dependencies {
-	api project(':Generic')
-	api project(':DB')
-	api project(':Docking')
 	api project(':FileSystem')
-	api project(':Utility')
 	
 	testImplementation project(path: ':Generic', configuration: 'testArtifacts')
 	api "org.apache.commons:commons-compress:1.21"

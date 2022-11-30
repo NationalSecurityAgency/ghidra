@@ -24,10 +24,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.Before;
 import org.junit.Test;
 
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGuiTest;
 import ghidra.util.SystemUtilities;
 
-public class SwingUpdateManagerTest extends AbstractGenericTest {
+public class SwingUpdateManagerTest extends AbstractGuiTest {
 	private static final int MIN_DELAY = 500;
 	private static final int MAX_DELAY = 1000;
 	private volatile int runnableCalled;

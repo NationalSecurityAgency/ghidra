@@ -22,6 +22,7 @@ import java.util.*;
 
 import generic.jar.ResourceFile;
 import generic.test.AbstractGenericTest;
+import generic.test.AbstractGuiTest;
 import ghidra.app.cmd.data.CreateDataCmd;
 import ghidra.app.cmd.disassemble.ArmDisassembleCommand;
 import ghidra.app.cmd.disassemble.DisassembleCommand;
@@ -216,7 +217,7 @@ public class ProgramBuilder {
 	private void flushEvents() {
 		program.flushEvents();
 		if (!SystemUtilities.isInHeadlessMode()) {
-			AbstractGenericTest.waitForSwing();
+			AbstractGuiTest.waitForSwing();
 		}
 	}
 

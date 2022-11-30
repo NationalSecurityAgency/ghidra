@@ -38,13 +38,7 @@ configurations {
 }
 
 dependencies {
-	api project(':Utility')
-	api project(':Generic')
-	api project(':Docking')
-	api project(':Graph')
 	api project(':SoftwareModeling')
-	api project(':DB')
-	api project(':Help')
 
 	api 'org.apache.felix:org.apache.felix.framework:7.0.3'
 	api 'com.github.rotty3000:phidias:0.3.7'
