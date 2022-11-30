@@ -30,13 +30,13 @@ import javax.swing.KeyStroke;
 import org.jdom.Element;
 import org.junit.*;
 
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGuiTest;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.util.HelpLocation;
 import ghidra.util.bean.opteditor.OptionsVetoException;
 import ghidra.util.exception.InvalidInputException;
 
-public class OptionsTest extends AbstractGenericTest {
+public class OptionsTest extends AbstractGuiTest {
 
 	public enum FRUIT {
 		Apple, Orange, Pear

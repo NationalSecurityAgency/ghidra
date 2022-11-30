@@ -22,7 +22,7 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGuiTest;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
@@ -32,7 +32,7 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.VariableStorage;
 import ghidra.util.exception.InvalidInputException;
 
-public class StorageEditorModelTest extends AbstractGenericTest {
+public class StorageEditorModelTest extends AbstractGuiTest {
 
 	protected static final int REQUIRE_SIZE = 8;
 	protected StorageAddressModel model;

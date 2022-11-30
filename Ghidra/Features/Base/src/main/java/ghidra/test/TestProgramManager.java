@@ -21,8 +21,7 @@ import java.util.*;
 import db.DBConstants;
 import db.DBHandle;
 import db.buffers.BufferFile;
-import generic.test.AbstractGTest;
-import generic.test.AbstractGenericTest;
+import generic.test.*;
 import ghidra.app.util.xml.*;
 import ghidra.framework.data.DomainObjectAdapterDB;
 import ghidra.framework.model.*;
@@ -243,7 +242,7 @@ public class TestProgramManager {
 		while (true) {
 			try {
 				DomainFile df = folder.createFile(name, gzf, TaskMonitor.DUMMY);
-				AbstractGenericTest.waitForPostedSwingRunnables();
+				AbstractGuiTest.waitForPostedSwingRunnables();
 				DomainObject dobj = df.getDomainObject(this, true, false, null);
 				try {
 					if (dobj.isChanged()) {

@@ -18,13 +18,10 @@ package docking.widgets.fieldpanel;
 import org.junit.Test;
 
 import docking.widgets.fieldpanel.internal.ColorRangeMap;
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGuiTest;
 import generic.theme.GThemeDefaults.Colors.Palette;
 
-public class ColorRangeMapTest extends AbstractGenericTest {
-	public ColorRangeMapTest() {
-		super();
-	}
+public class ColorRangeMapTest extends AbstractGuiTest {
 
 	@Test
 	public void testPaint1() {

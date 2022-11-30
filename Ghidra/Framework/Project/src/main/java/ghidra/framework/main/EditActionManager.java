@@ -24,12 +24,20 @@ import docking.tool.ToolConstants;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import ghidra.net.ApplicationKeyManagerFactory;
+import ghidra.net.ApplicationKeyManagerUtils;
 import ghidra.util.HelpLocation;
+import ghidra.util.filechooser.ExtensionFileFilter;
+import ghidra.util.filechooser.GhidraFileFilter;
 
 /**
  * Helper class to manage the actions on the Edit menu.
  */
 class EditActionManager {
+	/**
+	 * PKCS Private Key/Certificate File Filter
+	 */
+	public static final GhidraFileFilter CERTIFICATE_FILE_FILTER =
+		new ExtensionFileFilter(ApplicationKeyManagerUtils.PKCS_FILE_EXTENSIONS, "PKCS Key File");
 
 	private FrontEndPlugin plugin;
 	private FrontEndTool tool;
@@ -170,7 +178,7 @@ class EditActionManager {
 		GhidraFileChooser fileChooser = new GhidraFileChooser(tool.getToolFrame());
 		fileChooser.setTitle("Select Certificate (req'd for PKI authentication only)");
 		fileChooser.setApproveButtonText("Set Certificate");
-		fileChooser.setFileFilter(ApplicationKeyManagerFactory.CERTIFICATE_FILE_FILTER);
+		fileChooser.setFileFilter(CERTIFICATE_FILE_FILTER);
 		fileChooser.setFileSelectionMode(GhidraFileChooser.FILES_ONLY);
 		fileChooser.setHelpLocation(new HelpLocation(plugin.getName(), "Set_PKI_Certificate"));
 		return fileChooser;

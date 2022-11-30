@@ -22,12 +22,12 @@ import java.util.*;
 
 import org.junit.*;
 
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGuiTest;
 import ghidra.framework.model.*;
 import ghidra.framework.options.Options;
 import ghidra.framework.store.LockException;
 
-public class PairedTransactionTest extends AbstractGenericTest {
+public class PairedTransactionTest extends AbstractGuiTest {
 
 	DummyDomainObject obj1;
 	DummyDomainObject obj2;

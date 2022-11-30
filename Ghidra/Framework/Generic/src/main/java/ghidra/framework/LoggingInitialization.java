@@ -24,7 +24,6 @@ import org.apache.logging.log4j.core.LoggerContext;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.AssertException;
-import resources.ResourceManager;
 
 public class LoggingInitialization {
 
@@ -90,7 +89,7 @@ public class LoggingInitialization {
 			loggingConfigFilename = DEVELOPMENT_LOGGING_CONFIGURATION_FILE;
 		}
 
-		return ResourceManager.getResource(loggingConfigFilename);
+		return LoggingInitialization.class.getClassLoader().getResource(loggingConfigFilename);
 	}
 
 	private static URL getLogFileFromSystemProperty() {
@@ -100,7 +99,7 @@ public class LoggingInitialization {
 		}
 
 		// first see if the given filename is something that is in our classpath
-		URL resource = ResourceManager.getResource(configString);
+		URL resource = LoggingInitialization.class.getClassLoader().getResource(configString);
 		if (resource != null) {
 			return resource;
 		}

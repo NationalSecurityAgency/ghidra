@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.*;
 
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGuiTest;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.store.LockException;
@@ -131,7 +131,7 @@ public class ProjectTestUtils {
 			Msg.warn(ProjectTestUtils.class, "deleteLockFile(): " + "unable to delete file " +
 				lockFile.getAbsolutePath() + "- trying again.");
 			for (int i = 0; i < 6; i++) {
-				AbstractGenericTest.waitForPostedSwingRunnables();
+				AbstractGuiTest.waitForPostedSwingRunnables();
 				try {
 					Thread.sleep(1000);
 				}
