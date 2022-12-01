@@ -358,4 +358,33 @@ public class RandomForestTrainingTaskTest extends AbstractProgramBasedTest {
 		assertTrue(data.getTestNegative().contains(definedData));
 	}
 
+	@Test
+	public void testExhaustingFunctionInteriors() throws CancelledException {
+		params = new FunctionStartRFParams(program);
+		params.setMaxStarts(5);
+		int tooBig = 10;
+		Address begin = program.getSymbolTable().getSymbols("entry").next().getAddress();
+		AddressSet entries = new AddressSet();
+		for (int i = 0; i < 10; ++i) {
+			entries.add(begin.add(i));
+		}
+		AddressSet interiors = new AddressSet();
+		for (int i = 10; i < 25; ++i) {
+			interiors.add(begin.add(i));
+		}
+		AddressSet definedData = new AddressSet();
+		for (int i = 25; i < 30; ++i) {
+			definedData.add(begin.add(i));
+		}
+		RandomForestTrainingTask task = new RandomForestTrainingTask(program, params, null,
+			RandomForestFunctionFinderPlugin.TEST_SET_MAX_SIZE_DEFAULT);
+		TrainingAndTestData data =
+			task.getTrainingAndTestData(entries, interiors, definedData, tooBig, TaskMonitor.DUMMY);
+		assertTrue(data.getTrainingPositive().getNumAddresses() == 5);
+		assertTrue(data.getTestPositive().getNumAddresses() == 5);
+		assertTrue(data.getTestPositive().union(data.getTrainingPositive()).equals(entries));
+		assertTrue(data.getTrainingNegative().equals(interiors));
+		assertTrue(data.getTestNegative().equals(definedData));
+	}
+
 }
