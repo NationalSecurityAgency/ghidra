@@ -495,6 +495,13 @@ public class GTable extends JTable {
 			return; // must be initializing
 		}
 
+		// don't try to update if we are not in window hierarchy
+		// as this will cause look and feel issues
+		Window window = SwingUtilities.windowForComponent(this);
+		if (window == null) {
+			return;
+		}
+
 		int linesPerRow = getLinesPerRow();
 		int preferredHeight = calculatePreferredRowHeight();
 		int newHeight = linesPerRow * preferredHeight;
@@ -694,7 +701,7 @@ public class GTable extends JTable {
 			addColumn(newColumn);
 		}
 
-		for (int i = 0; i < columnCount; i++ ) {
+		for (int i = 0; i < columnCount; i++) {
 			TableCellRenderer headerRenderer = getHeaderRendererOverride(i);
 			if (headerRenderer != null) {
 				tableColumnModel.getColumn(i).setHeaderRenderer(headerRenderer);

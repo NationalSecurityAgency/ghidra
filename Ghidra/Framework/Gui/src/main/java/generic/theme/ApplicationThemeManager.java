@@ -130,12 +130,12 @@ public class ApplicationThemeManager extends ThemeManager {
 			lookAndFeelManager = lafType.getLookAndFeelManager(this);
 			try {
 				lookAndFeelManager.installLookAndFeel();
-				themePreferences.save(theme);
 				notifyThemeChanged(new AllValuesChangedThemeEvent(true));
 			}
 			catch (Exception e) {
 				Msg.error(this, "Error setting LookAndFeel: " + lafType.getName(), e);
 			}
+			themePreferences.save(theme);
 		}
 		currentValues.checkForUnresolvedReferences();
 	}
@@ -192,12 +192,12 @@ public class ApplicationThemeManager extends ThemeManager {
 		updateChangedValuesMap(currentValue, newValue);
 
 		currentValues.addFont(newValue);
-		notifyThemeChanged(new FontChangedThemeEvent(currentValues, newValue));
 
 		// update all java LookAndFeel fonts affected by this changed
 		String id = newValue.getId();
 		Set<String> changedFontIds = findChangedJavaFontIds(id);
 		lookAndFeelManager.fontsChanged(changedFontIds);
+		notifyThemeChanged(new FontChangedThemeEvent(currentValues, newValue));
 	}
 
 	@Override
@@ -208,12 +208,8 @@ public class ApplicationThemeManager extends ThemeManager {
 		}
 		updateChangedValuesMap(currentValue, newValue);
 		currentValues.addColor(newValue);
+		lookAndFeelManager.colorsChanged();
 		notifyThemeChanged(new ColorChangedThemeEvent(currentValues, newValue));
-
-		// now update the ui
-		if (lookAndFeelManager != null) {
-			lookAndFeelManager.colorsChanged();
-		}
 	}
 
 	@Override
@@ -225,7 +221,6 @@ public class ApplicationThemeManager extends ThemeManager {
 		updateChangedValuesMap(currentValue, newValue);
 
 		currentValues.addIcon(newValue);
-		notifyThemeChanged(new IconChangedThemeEvent(currentValues, newValue));
 
 		// now update the ui
 		// update all java LookAndFeel icons affected by this changed
@@ -233,6 +228,7 @@ public class ApplicationThemeManager extends ThemeManager {
 		Set<String> changedIconIds = findChangedJavaIconIds(id);
 		Icon newIcon = newValue.get(currentValues);
 		lookAndFeelManager.iconsChanged(changedIconIds, newIcon);
+		notifyThemeChanged(new IconChangedThemeEvent(currentValues, newValue));
 	}
 
 	/**

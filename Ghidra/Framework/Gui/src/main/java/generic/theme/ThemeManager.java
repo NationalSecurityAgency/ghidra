@@ -30,6 +30,7 @@ import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import resources.ResourceManager;
 import utilities.util.reflection.ReflectionUtilities;
+import utility.function.Callback;
 
 /**
  * This class manages application themes and their values. The ThemeManager is an abstract
