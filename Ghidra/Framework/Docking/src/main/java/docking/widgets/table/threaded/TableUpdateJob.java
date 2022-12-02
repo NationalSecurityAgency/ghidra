@@ -21,7 +21,6 @@ import java.util.*;
 
 import docking.widgets.table.*;
 import ghidra.util.*;
-import ghidra.util.datastruct.Algorithms;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -59,6 +58,7 @@ public class TableUpdateJob<T> {
 		ADD_REMOVING,
 		SORTING,
 		APPLYING,
+		CANCELLED,
 		DONE
 	}
 	//@formatter:on
@@ -279,6 +279,9 @@ public class TableUpdateJob<T> {
 				pendingRequestedState = null;
 				monitor.clearCanceled();
 			}
+			else if (currentState != CANCELLED) {
+				setState(CANCELLED);
+			}
 			else {
 				setState(DONE);
 			}
@@ -314,6 +317,7 @@ public class TableUpdateJob<T> {
 			case SORTING:
 				return APPLYING;
 			case APPLYING:
+			case CANCELLED:
 			default:
 				return DONE;
 		}
@@ -340,6 +344,9 @@ public class TableUpdateJob<T> {
 				break;
 			case APPLYING:
 				applyData();
+				break;
+			case CANCELLED:
+				notifyCancelled();
 				break;
 			default:
 		}
@@ -512,10 +519,15 @@ public class TableUpdateJob<T> {
 
 		int size = data.size();
 		monitor.setMessage("Sorting " + model.getName() + " (" + size + " rows)" + "...");
-		monitor.initialize(size);
 
 		Comparator<T> comparator = newSortContext.getComparator();
-		Algorithms.mergeSort(data, comparator, monitor);
+		Comparator<T> monitoredComparator = new MonitoredComparator<>(comparator, monitor, size);
+		try {
+			Collections.sort(data, monitoredComparator);
+		}
+		catch (SortCancelledException e) {
+			// do nothing, the old data will remain
+		}
 
 		monitor.setMessage("Done sorting");
 	}
@@ -664,6 +676,13 @@ public class TableUpdateJob<T> {
 		}
 	}
 
+	private void notifyCancelled() {
+		Swing.runNow(() -> {
+			model.backgroundWorkCancelled();
+		});
+
+	}
+
 	public synchronized void cancel() {
 		isFired = true; // let the job die, ignoring any issues that may arise
 		pendingRequestedState = DONE;
@@ -681,5 +700,47 @@ public class TableUpdateJob<T> {
 			buffy.append('\t').append(state).append('\n');
 		}
 		return buffy.toString();
+	}
+
+	/**
+	 * Wraps a comparator<T> to add progress monitoring and cancel checking
+	 *
+	 * @param <T> The type of data being sorted
+	 */
+	private static class MonitoredComparator<T> implements Comparator<T> {
+		private Comparator<T> delegate;
+		private TaskMonitor monitor;
+		private long comparisonCount;
+		private long expectedComparisons;
+
+		MonitoredComparator(Comparator<T> delegate, TaskMonitor monitor, int size) {
+			this.delegate = delegate;
+			this.monitor = monitor;
+			// After testing the number of comparisons needed to sort random data for the 
+			// sort used by Collections, the max seems to be less then  O(N (log(n)-1).
+			// This seems to be a reasonable approximation for random data. For sorted data
+			// the number drops to exactly N-1 comparisons, but that just means the progress
+			// bar only be part way complete when the sort completes.
+
+			// log base 2 of N = natural log N / natural log 2
+			long logN = (long) (Math.log(size) / Math.log(2));
+			expectedComparisons = size * (logN - 1);
+			expectedComparisons = Math.max(1, expectedComparisons); // make sure it is never 0
+			monitor.initialize(100);
+		}
+
+		@Override
+		public int compare(T o1, T o2) {
+			if (monitor.isCancelled()) {
+				throw new SortCancelledException();
+			}
+			long percentCompleted = ++comparisonCount * 100 / expectedComparisons;
+			monitor.setProgress(percentCompleted);
+			return delegate.compare(o1, o2);
+		}
+	}
+
+	private static class SortCancelledException extends RuntimeException {
+		// special version of RuntimeException for MontitoredComparator
 	}
 }
