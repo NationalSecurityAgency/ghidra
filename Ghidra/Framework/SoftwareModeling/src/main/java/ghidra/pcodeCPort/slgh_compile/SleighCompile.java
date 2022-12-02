@@ -488,6 +488,8 @@ public class SleighCompile extends SleighBase {
 		}
 		for (int i = 0; i < tables.size(); ++i) {
 			if (tables.get(i).isError()) {
+				reportError(tables.get(i).getLocation(),
+					"Problem in table: '" + tables.get(i).getName());
 				errors += 1;
 			}
 			if (tables.get(i).getPattern() == null) {

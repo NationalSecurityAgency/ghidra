@@ -2135,8 +2135,11 @@ void SleighCompile::checkCaseSensitivity(void)
       SleighSymbol *oldsym = (*check.first).second;
       ostringstream s;
       s << "Name collision: " << sym->getName() << " --- ";
+      s << "Duplicate symbol " << oldsym->getName();
       const Location *oldLocation = getLocation(oldsym);
-      s << "Duplicate symbol " << oldsym->getName() << " defined at " << oldLocation->format();
+      if (oldLocation != (Location *) 0x0) {
+        s << " defined at " << oldLocation->format();
+      }
       const Location *location = getLocation(sym);
       reportError(location,s.str());
     }
@@ -2190,13 +2193,13 @@ const Location *SleighCompile::getLocation(Constructor *ctor) const
 }
 
 /// \param sym is the given symbol
-/// \return the filename and line number
+/// \return the filename and line number or null if location not found
 const Location *SleighCompile::getLocation(SleighSymbol *sym) const
 
 {
   try {
     return &symbolLocationMap.at(sym);
-  } catch (const std::exception &e) {
+  } catch (const std::out_of_range &e) {
     return NULL;
   }
 }
@@ -2678,7 +2681,7 @@ void SleighCompile::attachValues(vector<SleighSymbol *> *symlist,vector<intb> *n
     if (patval->maxValue() + 1 != numlist->size()) {
       ostringstream msg;
       msg << "Attach value '" + sym->getName();
-      msg << "' (range 0.." << patval->maxValue() << ") is wrong size for list (of " << numlist->size() << " entries";
+      msg << "' (range 0.." << patval->maxValue() << ") is wrong size for list (of " << numlist->size() << " entries)";
       reportError(getCurrentLocation(), msg.str());
     }
     symtab.replaceSymbol(sym, new ValueMapSymbol(sym->getName(),patval,*numlist));
