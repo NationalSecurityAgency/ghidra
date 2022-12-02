@@ -275,10 +275,10 @@
     <symbol name="P0.1" address="BITS:81"/>
     <symbol name="P0.2" address="BITS:82"/>
     <symbol name="P0.3" address="BITS:83"/>
-    <symbol name="P0.4" address="BITS:84/>
-    <symbol name="P0.5" address="BITS:85/>
-    <symbol name="P0.6" address="BITS:86/>
-    <symbol name="P0.7" address="BITS:87/>
+    <symbol name="P0.4" address="BITS:84"/>
+    <symbol name="P0.5" address="BITS:85"/>
+    <symbol name="P0.6" address="BITS:86"/>
+    <symbol name="P0.7" address="BITS:87"/>
     <symbol name="IT0" address="BITS:88"/>
     <symbol name="IE0" address="BITS:89"/>
     <symbol name="IT1" address="BITS:8a"/>
