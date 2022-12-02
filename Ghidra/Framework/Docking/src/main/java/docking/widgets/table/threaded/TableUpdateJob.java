@@ -68,8 +68,8 @@ public class TableUpdateJob<T> {
 
 	private TableData<T> sourceData;
 	private TableData<T> updatedData;
-	private boolean disableSubFiltering = SystemUtilities.getBooleanProperty(
-		RowObjectFilterModel.SUB_FILTERING_DISABLED_PROPERTY, false);
+	private boolean disableSubFiltering = SystemUtilities
+			.getBooleanProperty(RowObjectFilterModel.SUB_FILTERING_DISABLED_PROPERTY, false);
 
 	private volatile boolean reloadData;
 	private volatile boolean doForceSort;
@@ -100,7 +100,7 @@ public class TableUpdateJob<T> {
 	/**
 	 * Meant to be called by subclasses, not clients.  This method will trigger this job not to
 	 * load data, but rather to use the given data.
-	 * 
+	 *
 	 * @param data The data to process.
 	 */
 	protected void setData(TableData<T> data) {
@@ -111,7 +111,7 @@ public class TableUpdateJob<T> {
 	 * Allows the precise disabling of the filter operation.  For example, when the user sorts, no
 	 * filtering is needed.  If the filter has changed, then a filter will take place, regardless
 	 * of the state of this variable.
-	 * 
+	 *
 	 * @param force false to reuse the current filter, if possible.
 	 */
 	protected void setForceFilter(boolean force) {
@@ -163,7 +163,7 @@ public class TableUpdateJob<T> {
 	/**
 	 * Adds the Add/Remove item to the list of items to be processed in the add/remove phase. This
 	 * call is not allowed on running jobs, only pending jobs.
-	 * 
+	 *
 	 * @param item the add/remove item to add to the list of items to be processed in the
 	 *        add/remove phase of this job.
 	 * @param maxAddRemoveCount the maximum number of add/remove jobs to queue before performing a
@@ -388,7 +388,7 @@ public class TableUpdateJob<T> {
 	 * Since much memory could be consumed, we provide an option in the tool to disable this reuse
 	 * of filtered data.  When not in use, each filter change will perform a full refilter.  This
 	 * is not an issue for tables with moderate to small-sized datasets.
-	 * 
+	 *
 	 * @return the initial data to use for future filter and sort operations.
 	 */
 	private TableData<T> pickExistingTableData() {
@@ -527,6 +527,13 @@ public class TableUpdateJob<T> {
 		}
 		catch (SortCancelledException e) {
 			// do nothing, the old data will remain
+		}
+		catch (Exception e) {
+			// We added this to catch an issue if the sort comparators violate the contract of
+			// Comparator.  TimSort will throw an exception in this case.  We have decided to not
+			// throw the exception.  This will allow the currently loaded data to be used, albeit
+			// unsorted.
+			Msg.error(this, "Unable to finish table sorting", e);
 		}
 
 		monitor.setMessage("Done sorting");
@@ -716,7 +723,7 @@ public class TableUpdateJob<T> {
 		MonitoredComparator(Comparator<T> delegate, TaskMonitor monitor, int size) {
 			this.delegate = delegate;
 			this.monitor = monitor;
-			// After testing the number of comparisons needed to sort random data for the 
+			// After testing the number of comparisons needed to sort random data for the
 			// sort used by Collections, the max seems to be less then  O(N (log(n)-1).
 			// This seems to be a reasonable approximation for random data. For sorted data
 			// the number drops to exactly N-1 comparisons, but that just means the progress
