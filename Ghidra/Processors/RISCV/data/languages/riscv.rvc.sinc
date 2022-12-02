@@ -355,11 +355,13 @@
 	*[ram]:4 ea = crs2:4;
 }
 
-# c.unimp  00000000 0000ffff SIMPLE (0, 0) 
-:c.unimp  is cop0001=0x0 & cop1315=0x0 & cop0212=0x0
-{
-	trap();
-}
+# c.unimp  00000000 0000ffff SIMPLE (0, 0)
+# would be better not to decode as it is used as padding
+#
+# :c.unimp  is cop0001=0x0 & cop1315=0x0 & cop0212=0x0
+#{
+#	trap();
+#}
 
 # c.xor Cs,Ct 00008c21 0000fc63 SIMPLE (0, 0) 
 :c.xor cr0709s,cr0204s is cr0204s & cr0709s & cop0001=0x1 & cop1315=0x4 & cop0506=0x1 & cop1012=0x3

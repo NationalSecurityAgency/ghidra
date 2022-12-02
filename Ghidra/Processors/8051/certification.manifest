@@ -1,19 +1,19 @@
 ##VERSION: 2.0
 Module.manifest||GHIDRA||||END|
 data/languages/80251.cspec||GHIDRA||||END|
-data/languages/80251.pspec||GHIDRA||reviewed||END|
+data/languages/80251.pspec||GHIDRA||||END|
 data/languages/80251.sinc||GHIDRA||||END|
 data/languages/80251.slaspec||GHIDRA||||END|
 data/languages/80390.cspec||GHIDRA||||END|
 data/languages/80390.slaspec||GHIDRA||||END|
 data/languages/8051.cspec||GHIDRA||||END|
 data/languages/8051.ldefs||GHIDRA||||END|
-data/languages/8051.pspec||GHIDRA||reviewed||END|
+data/languages/8051.pspec||GHIDRA||||END|
 data/languages/8051.slaspec||GHIDRA||||END|
 data/languages/8051_archimedes.cspec||GHIDRA||||END|
 data/languages/8051_main.sinc||GHIDRA||||END|
 data/languages/mx51.cspec||GHIDRA||||END|
-data/languages/mx51.pspec||GHIDRA||reviewed||END|
+data/languages/mx51.pspec||GHIDRA||||END|
 data/languages/mx51.sinc||GHIDRA||||END|
 data/languages/mx51.slaspec||GHIDRA||||END|
 data/languages/old/8051v1.lang||GHIDRA||reviewed||END|
