@@ -179,14 +179,10 @@ public abstract class AbstractEditFunctionSignatureDialog extends DialogComponen
 		mainPanel.add(buildSignaturePanel());
 		mainPanel.add(buildAttributePanel());
 		if (allowCallFixup) {
-			installCallFixupWidget(mainPanel);
+			JPanel callFixupPanel = buildCallFixupPanel();
+			mainPanel.add(callFixupPanel != null ? callFixupPanel : buildSpacerPanel());
 		}
 		return mainPanel;
-	}
-
-	private void installCallFixupWidget(JPanel parentPanel) {
-		JPanel callFixupPanel = buildCallFixupPanel();
-		parentPanel.add(callFixupPanel != null ? callFixupPanel : buildSpacerPanel());
 	}
 
 	private JPanel buildSignaturePanel() {
@@ -251,10 +247,6 @@ public abstract class AbstractEditFunctionSignatureDialog extends DialogComponen
 	}
 
 	private JPanel buildCallFixupPanel() {
-
-		if (allowCallFixup) {
-			return null;
-		}
 
 		JPanel callFixupPanel = new JPanel();
 		callFixupPanel.setLayout(new BoxLayout(callFixupPanel, BoxLayout.X_AXIS));
