@@ -347,16 +347,24 @@ public class DWARFFunctionImporter {
 	private void updateFunctionSignatureWithFormalParams(Function gfunc, List<Parameter> params,
 			DataType returnType, boolean varArgs, DIEAggregate diea) {
 		try {
+			String callingConventionName = null;
 			ReturnParameterImpl returnVar = new ReturnParameterImpl(returnType, currentProgram);
 			try {
+				if (!params.isEmpty() && Function.THIS_PARAM_NAME.equals(params.get(0).getName())) {
+					// this handles the common / simple case.  More nuanced cases where the param
+					// didn't have the correct "this" name, but were marked with DW_AT_object_pointer
+					// or DW_AT_artifical won't be handled by this.
+					callingConventionName = GenericCallingConvention.thiscall.getDeclarationName();
+				}
+
 				gfunc.setVarArgs(varArgs);
-				gfunc.updateFunction(null, returnVar, params,
+				gfunc.updateFunction(callingConventionName, returnVar, params,
 					FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, SourceType.IMPORTED);
 			}
 			catch (DuplicateNameException e) {
 				// try again after adjusting param names
 				setUniqueParameterNames(gfunc, params);
-				gfunc.updateFunction(null, returnVar, params,
+				gfunc.updateFunction(callingConventionName, returnVar, params,
 					FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, SourceType.IMPORTED);
 			}
 		}
