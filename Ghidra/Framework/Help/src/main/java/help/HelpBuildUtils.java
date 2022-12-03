@@ -509,10 +509,7 @@ public class HelpBuildUtils {
 
 	private static URI resolve(Path sourceFile, String ref) throws URISyntaxException {
 		URI resolved;
-		if (ref.startsWith("help/topics")) {
-			resolved = new URI(ref);  // help system syntax
-		}
-		else if (ref.startsWith("help/")) {
+		if (ref.startsWith("help/")) {
 			resolved = new URI(ref);  // help system syntax
 		}
 		else {
@@ -569,8 +566,14 @@ public class HelpBuildUtils {
 			return ImageLocation.createRuntimeLocation(sourceFile, ref, resolved, path);
 		}
 		if (Gui.hasIcon(ref)) {
+
+			// 
+			// Wrap the GIcon inside of an IconProvider, as that class can handle a null URL 
+			// returned from GIcon. (This can happen if the GIcon is based on a modified icon.)
+			//
 			GIcon gIcon = new GIcon(ref);
-			URL url = gIcon.getUrl();
+			IconProvider iconProvider = new IconProvider(gIcon, gIcon.getUrl());
+			URL url = iconProvider.getOrCreateUrl();
 			URI resolved = url.toURI();
 			Path path = toPath(resolved);
 			return ImageLocation.createRuntimeLocation(sourceFile, ref, resolved, path);
