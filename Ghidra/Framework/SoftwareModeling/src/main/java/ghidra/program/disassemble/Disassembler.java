@@ -664,11 +664,17 @@ public class Disassembler implements DisassemblerConflictHandler {
 		Address fallThruAddr = firstBlock.getStartAddress(); // allow us to enter loop with initial block
 
 		InstructionBlock nextBlock;
+		SkipManager m = SkipManager.getInstance();
 		while ((nextBlock = disassemblerQueue.getNextBlockToBeDisassembled(fallThruAddr,
 			programMemBuffer.getMemory(), monitor)) != null) {
 
 			Address blockAddr = disassemblerQueue.getDisassemblyAddress();
-
+			boolean shouldSkip = m.shouldSkip(blockAddr.getOffset());
+			if (shouldSkip) {
+				programMemBuffer.setPosition(blockAddr);
+				fallThruAddr = nextBlock.getFallThrough();
+				continue;
+			}
 			if (!disassemblerContext.isFlowActive()) {
 				disassemblerContext.flowStart(blockAddr);
 			}

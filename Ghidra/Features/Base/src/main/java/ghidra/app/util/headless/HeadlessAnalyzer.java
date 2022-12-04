@@ -874,7 +874,7 @@ public class HeadlessAnalyzer {
 					Class<?> c = Class.forName(className, true, classLoaderForDotClassScripts);
 
 					// Get parent folder to pass to GhidraScript
-					File parentFile = new File(c.getResource(c.getSimpleName() + ".class").toURI())
+					File parentFile = new File(c.getResource(c.getSimpleName() + ".class").getPath())
 							.getParentFile();
 
 					currScript = (GhidraScript) c.getConstructor().newInstance();
