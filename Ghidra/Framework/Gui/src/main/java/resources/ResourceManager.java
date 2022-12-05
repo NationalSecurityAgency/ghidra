@@ -431,18 +431,19 @@ public class ResourceManager {
 	 * @return the name
 	 */
 	public static String getIconName(Icon icon) {
-		String iconName = icon.toString();
-
 		if (icon instanceof FileBasedIcon) {
 			return ((FileBasedIcon) icon).getFilename();
 		}
 		if (icon instanceof ImageIcon) {
-			iconName = ((ImageIcon) icon).getDescription();
+			return ((ImageIcon) icon).getDescription();
 		}
 		if (icon instanceof GIcon) {
 			return ((GIcon) icon).getId();
 		}
-		return iconName;
+		if (icon instanceof TranslateIcon) {
+			return getIconName(((TranslateIcon) icon).getBaseIcon());
+		}
+		return icon.toString();
 	}
 
 	/**

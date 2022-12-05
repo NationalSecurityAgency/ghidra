@@ -95,6 +95,10 @@ public class GIcon implements Icon {
 		else if (icon instanceof RotateIcon rotateIcon) {
 			return getUrl(rotateIcon.getSourceIcon());
 		}
+		else if (icon instanceof GIcon) {
+			return getUrl(((GIcon) icon).delegate);
+		}
+		// else if (icon instanceof MultiIcon) {
 		return null;
 
 	}

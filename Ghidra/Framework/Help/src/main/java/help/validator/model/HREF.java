@@ -19,6 +19,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 
+import ghidra.util.HelpLocation;
 import help.HelpBuildUtils;
 import help.validator.location.HelpModuleLocation;
 
@@ -43,7 +44,7 @@ public class HREF implements Comparable<HREF> {
 		this.lineNumber = lineNum;
 
 		URI resolved;
-		if (href.startsWith("help/topics")) {
+		if (href.startsWith(HelpLocation.HELP_TOPICS)) {
 			resolved = new URI(href);
 		}
 		else {
@@ -97,7 +98,10 @@ public class HREF implements Comparable<HREF> {
 		return href;
 	}
 
-	/** The relative help path to the destination of this HREF */
+	/** 
+	 * The relative help path to the destination of this HREF
+	 * @return the relative help path to the destination of this HREF
+	 */
 	public Path getReferenceFileHelpPath() {
 		return relativePath;
 	}

@@ -26,6 +26,20 @@ import resources.ResourceManager;
  */
 public class HelpLocation {
 
+	/**
+	 * A special prefix used in the 'src' attribute if links and images to signal to the framework
+	 * to locate the given resource.  Using this allows cross-module help references to be relative,
+	 * starting with this prefix.
+	 */
+	public static final String HELP_TOPICS = "help/topics/";
+
+	/**
+	 * A special prefix used in the 'src' attribute if links and images to signal to the framework
+	 * to locate the given resource.  This is meant to be used with shared help resources, such
+	 * as images.
+	 */
+	public static final String HELP_SHARED = "help/shared";
+
 	private String id;
 	private URL url;
 
@@ -148,17 +162,17 @@ public class HelpLocation {
 
 	private URL findHelpResource(String topicPath) {
 		if (topicPath.indexOf(".htm") >= 0) {
-			return ResourceManager.getResource("/help/topics/" + topicPath);
+			return ResourceManager.getResource("/" + HELP_TOPICS + topicPath);
 		}
 
 		String filename = topicPath + ".htm";
-		URL fileURL = ResourceManager.getResource("/help/topics/" + filename);
+		URL fileURL = ResourceManager.getResource("/" + HELP_TOPICS + filename);
 		if (fileURL != null) {
 			return fileURL;
 		}
 
 		filename = topicPath + ".html";
-		fileURL = ResourceManager.getResource("/help/topics/" + filename);
+		fileURL = ResourceManager.getResource("/" + HELP_TOPICS + filename);
 		if (fileURL != null) {
 			return fileURL;
 		}

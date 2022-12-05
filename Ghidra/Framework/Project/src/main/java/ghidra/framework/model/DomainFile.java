@@ -22,13 +22,13 @@ import java.util.Map;
 
 import javax.swing.Icon;
 
+import generic.theme.GIcon;
 import ghidra.framework.client.NotConnectedException;
 import ghidra.framework.data.*;
 import ghidra.framework.store.*;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
-import resources.ResourceManager;
 
 /**
  * <code>DomainFile</code> provides a storage interface for project files.  A 
@@ -38,8 +38,7 @@ import resources.ResourceManager;
  */
 public interface DomainFile extends Comparable<DomainFile> {
 
-	public static final Icon UNSUPPORTED_FILE_ICON =
-		ResourceManager.loadImage("images/unknownFile.gif");
+	public static final Icon UNSUPPORTED_FILE_ICON = new GIcon("icon.domain.file.uknown");
 
 	/**
 	* Use with getDomainObject to request the default version.  The default version is
@@ -96,7 +95,7 @@ public interface DomainFile extends Comparable<DomainFile> {
 	 * @return remote Ghidra URL for this file or null
 	 */
 	public URL getSharedProjectURL();
-	
+
 	/**
 	 * Returns the local storage location for the project that this DomainFile belongs to.
 	 * @return the location
