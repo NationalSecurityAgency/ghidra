@@ -444,8 +444,8 @@ public abstract class PluginTool extends AbstractDockingTool {
 
 	/**
 	 * Request tool to accept specified URL.  Acceptance of URL depends greatly on the plugins
-	 * confiugred into tool.  If no plugin accepts URL it will be rejected and false returned.
-	 * If a plugin can accept the specified URL it will attempt to process and return true if 
+	 * configured into tool.  If no plugin accepts URL it will be rejected and false returned.
+	 * If a plugin can accept the specified URL it will attempt to process and return true if
 	 * successful.  The user may be prompted if connecting to the URL requires user authentication.
 	 * @param url read-only resource URL
 	 * @return true if URL accepted and processed else false
