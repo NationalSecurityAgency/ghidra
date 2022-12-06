@@ -2199,8 +2199,8 @@ const Location *SleighCompile::getLocation(SleighSymbol *sym) const
 {
   try {
     return &symbolLocationMap.at(sym);
-  } catch (const std::out_of_range &e) {
-    return NULL;
+  } catch (const out_of_range &e) {
+    return nullptr;
   }
 }
 
