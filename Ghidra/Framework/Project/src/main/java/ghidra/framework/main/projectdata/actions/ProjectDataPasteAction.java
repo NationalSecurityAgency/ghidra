@@ -26,6 +26,7 @@ import docking.action.MenuData;
 import docking.widgets.tree.GTreeNode;
 import generic.theme.GIcon;
 import ghidra.framework.main.datatree.*;
+import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskLauncher;
 
@@ -36,7 +37,7 @@ public class ProjectDataPasteAction extends ProjectDataCopyCutBaseAction {
 		super("Paste", owner);
 		setPopupMenuData(new MenuData(new String[] { "Paste" }, ICON, group));
 		setKeyBindingData(new KeyBindingData('V', InputEvent.CTRL_DOWN_MASK));
-		markHelpUnnecessary();
+		setHelpLocation(new HelpLocation("FrontEndPlugin", "Paste"));
 	}
 
 	@Override
