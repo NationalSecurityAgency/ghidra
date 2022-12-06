@@ -185,7 +185,8 @@ public class Icons {
 			if (url != null) {
 				return url;
 			}
-			Msg.debug(Icons.class, "Unable to get URL for icon");
+			// this can happen for MultiIcons; leaving in for future debug
+			// Msg.debug(Icons.class, "Unable to get URL for icon: " + icon, new Throwable());
 		}
 		return null;
 	}

@@ -28,11 +28,11 @@ import ghidra.framework.main.datatree.*;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;
 import ghidra.util.Msg;
+import resources.Icons;
 import resources.MultiIcon;
-import resources.ResourceManager;
 
 public class ProjectDataPasteLinkAction extends ProjectTreeAction {
-	private static Icon baseIcon = ResourceManager.loadImage("images/page_paste.png");
+	private static Icon baseIcon = Icons.PASTE_ICON;
 
 	public ProjectDataPasteLinkAction(String owner, String group) {
 		super("Paste Link", owner);
