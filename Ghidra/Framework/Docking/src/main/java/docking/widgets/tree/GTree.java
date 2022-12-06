@@ -333,6 +333,10 @@ public class GTree extends JPanel implements BusyListener, ThemeListener {
 	 * @return the saved state
 	 */
 	public GTreeState getTreeState() {
+		GTreeNode root = getViewRoot();
+		if (root == null) {
+			return null; // this can happen during initialization
+		}
 		return new GTreeState(this);
 	}
 
