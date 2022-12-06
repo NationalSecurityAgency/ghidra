@@ -554,6 +554,9 @@ public interface TraceRecorder {
 		TraceMemorySpace regs =
 			getTrace().getMemoryManager().getMemoryRegisterSpace(thread, frameLevel, false);
 		Register parent = isRegisterOnTarget(platform, thread, frameLevel, register);
+		if (parent == null) {
+			throw new IllegalArgumentException("Cannot find register " + register + " on target");
+		}
 		rv = TraceRegisterUtils.combineWithTraceParentRegisterValue(parent, rv, platform, getSnap(),
 			regs, true);
 		return writeThreadRegisters(platform, thread, frameLevel, Map.of(rv.getRegister(), rv));
