@@ -24,7 +24,7 @@ import java.util.Arrays;
 
 
 /**
- * Converts byte values to Ascii representation.
+ * Converts byte values to C64 Charset representation.
  */
 
  public class C64CharsetShiftedFormatModel implements UniversalDataFormatModel {

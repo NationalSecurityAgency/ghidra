@@ -24,7 +24,7 @@ import java.util.Arrays;
 
 
 /**
- * Converts byte values to Ascii representation.
+ * Converts byte values to PETSCII representation.
  */
 
  public class PETSCIIUnshiftedFormatModel implements UniversalDataFormatModel {
