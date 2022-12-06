@@ -22,7 +22,6 @@ import ghidra.util.HelpLocation;
 import java.math.BigInteger;
 import java.util.Arrays;
 
-
 /**
  * Converts byte values to PETSCII representation.
  */
