@@ -47,7 +47,7 @@ public class SpaceFieldFactory extends FieldFactory {
 	/**
 	 * Constructor
 	 * @param model the model that the field belongs to.
-	 * @param hsProvider the HightLightStringProvider.
+	 * @param hlProvider the HightLightStringProvider.
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
@@ -84,8 +84,8 @@ public class SpaceFieldFactory extends FieldFactory {
 				fes[i] = new TextFieldElement(as, 0, 0);
 			}
 
-			return ListingTextField.createMultilineTextField(this, proxy, fes,
-				startX + varWidth, width, n + 1, hlProvider);
+			return ListingTextField.createMultilineTextField(this, proxy, fes, startX + varWidth,
+				width, n + 1, hlProvider);
 
 		}
 		return null;
@@ -153,5 +153,4 @@ public class SpaceFieldFactory extends FieldFactory {
 			ToolOptions displayOptions, ToolOptions fieldOptions) {
 		return new SpaceFieldFactory(formatModel, provider, displayOptions, fieldOptions);
 	}
-
 }

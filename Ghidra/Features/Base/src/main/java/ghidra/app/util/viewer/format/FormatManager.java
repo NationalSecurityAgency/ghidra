@@ -107,9 +107,7 @@ public class FormatManager implements OptionsChangeListener {
 	}
 
 	public FormatManager createClone() {
-		ToolOptions newDisplayOptions = displayOptions.copy();
-		ToolOptions newFieldOptions = fieldOptions.copy();
-		FormatManager newManager = new FormatManager(newDisplayOptions, newFieldOptions);
+		FormatManager newManager = new FormatManager(displayOptions, fieldOptions);
 		SaveState saveState = new SaveState();
 		saveState(saveState);
 		newManager.readState(saveState);
@@ -848,10 +846,17 @@ public class FormatManager implements OptionsChangeListener {
 
 	@Override
 	public void optionsChanged(ToolOptions options, String name, Object oldValue, Object newValue) {
-		for (int i = 0; i < NUM_MODELS; i++) {
-			models[i].optionsChanged(options, name, oldValue, newValue);
+		if (options == displayOptions) {
+			for (int i = 0; i < NUM_MODELS; i++) {
+				models[i].displayOptionsChanged(options, name, oldValue, newValue);
+			}
 		}
-		getArrayDisplayOptions(options);
+		else if (options == fieldOptions) {
+			for (int i = 0; i < NUM_MODELS; i++) {
+				models[i].fieldOptionsChanged(options, name, oldValue, newValue);
+			}
+			getArrayDisplayOptions(options);
+		}
 
 		modelChanged(null);
 	}
