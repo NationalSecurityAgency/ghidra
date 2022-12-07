@@ -2209,13 +2209,13 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 		assertEquals("/Category1/Category2/CoolUnion\n" + 
 			"pack(disabled)\n" + 
 			"Union CoolUnion {\n" + 
-			"   0   qword   8   null   \"\"\n" + 
+			"   0   qword   8      \"\"\n" + 
 			"   0   byte:4(4)   1   BF1   \"my bf1\"\n" + 
 			"   0   byte:2(6)   1   BF2   \"my bf2\"\n" + 
-			"   0   word   2   null   \"\"\n" + 
-			"   0   undefined * * * * *   4   null   \"\"\n" + 
-			"   0   DLL_Table   96   null   \"\"\n" + 
-			"   0   DLL_Table *32   4   null   \"\"\n" + 
+			"   0   word   2      \"\"\n" + 
+			"   0   undefined * * * * *   4      \"\"\n" + 
+			"   0   DLL_Table   96      \"\"\n" + 
+			"   0   DLL_Table *32   4      \"\"\n" + 
 			"}\n" + 
 			"Size = 96   Actual Alignment = 1\n", union.toString());
 		//@formatter:on
