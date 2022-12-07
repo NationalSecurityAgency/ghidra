@@ -1291,6 +1291,11 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 
 	private void saveTaskTimes() {
 
+		Program p = program; // program may get cleared by domain object change event
+		if (p == null || p.isClosed()) {
+			return;
+		}
+
 		StoredAnalyzerTimes times = StoredAnalyzerTimes.getStoredAnalyzerTimes(program);
 
 		String taskNames[] = getTimedTasks();
