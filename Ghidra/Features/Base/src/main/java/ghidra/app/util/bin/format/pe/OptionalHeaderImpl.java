@@ -143,9 +143,6 @@ public class OptionalHeaderImpl implements OptionalHeader {
 	protected int startIndex;
 	private long startOfDataDirs;
 
-	protected long originalImageBase;
-	protected boolean wasRebased;
-
 	OptionalHeaderImpl(NTHeader ntHeader, BinaryReader reader, int startIndex) throws IOException {
 		this.ntHeader = ntHeader;
 		this.reader = reader;
@@ -180,11 +177,6 @@ public class OptionalHeaderImpl implements OptionalHeader {
 	@Override
 	public long getImageBase() {
 		return imageBase;
-	}
-
-	@Override
-	public long getOriginalImageBase() {
-		return originalImageBase;
 	}
 
 	@Override
@@ -515,23 +507,10 @@ public class OptionalHeaderImpl implements OptionalHeader {
 		if (is64bit()) {
 			baseOfData = -1;//not used
 			imageBase = reader.readNextLong();
-			if (imageBase <= 0 && !is64bit()) {
-				Msg.warn(this, "Non-standard image base: 0x" + Long.toHexString(imageBase));
-				originalImageBase = imageBase;
-				imageBase = 0x10000;
-				wasRebased = true;
-			}
 		}
 		else {
 			baseOfData = reader.readNextInt();
-			int imgBase = reader.readNextInt();
-			imageBase = imgBase & Conv.INT_MASK;
-			if (imgBase <= 0) {
-				Msg.warn(this, "Non-standard image base " + Integer.toHexString(imgBase));
-				originalImageBase = imageBase;
-				imageBase = 0x10000;
-				wasRebased = true;
-			}
+			imageBase = Integer.toUnsignedLong(reader.readNextInt());
 		}
 
 		sectionAlignment = reader.readNextInt();
@@ -742,11 +721,6 @@ public class OptionalHeaderImpl implements OptionalHeader {
 				e.printStackTrace();
 			}
 		}
-	}
-
-	@Override
-	public boolean wasRebased() {
-		return wasRebased;
 	}
 
 	@Override
