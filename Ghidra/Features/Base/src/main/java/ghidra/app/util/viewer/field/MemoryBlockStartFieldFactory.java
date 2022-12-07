@@ -23,7 +23,6 @@ import java.util.List;
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.RowColLocation;
-import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.util.HighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
@@ -42,14 +41,12 @@ import ghidra.program.util.ProgramLocation;
 public class MemoryBlockStartFieldFactory extends FieldFactory {
 
 	private static final String FIELD_NAME = "Memory Block Start";
-	private static final Color BLOCK_COLOR = Palette.getColor("indigo");
 
 	/**
 	 * Constructor
 	 */
 	public MemoryBlockStartFieldFactory() {
 		super(FIELD_NAME);
-		color = BLOCK_COLOR;
 	}
 
 	/**
@@ -62,7 +59,6 @@ public class MemoryBlockStartFieldFactory extends FieldFactory {
 	private MemoryBlockStartFieldFactory(FieldFormatModel model, HighlightProvider hlProvider,
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
-		color = BLOCK_COLOR;
 	}
 
 	/**
@@ -187,15 +183,6 @@ public class MemoryBlockStartFieldFactory extends FieldFactory {
 			fieldOptions);
 	}
 
-	/**
-	 * Creates a comment to be show at the beginning of each block that shows the following:
-	 *   - block name
-	 *   - block type
-	 *   - block start/end address (size)
-	 *   - block comment
-	 * 
-	 * @param cu
-	 */
 	protected List<AttributedString> createBlockStartText(CodeUnit cu) {
 
 		List<AttributedString> lines = new ArrayList<>();
@@ -227,7 +214,7 @@ public class MemoryBlockStartFieldFactory extends FieldFactory {
 		String line1 = block.getName() + " " + type;
 		String line2 = block.getComment();
 		String line3 = block.getStart().toString(true) + "-" + block.getEnd().toString(true);
-
+		Color color = ListingColors.BLOCK_START;
 		AttributedString borderAS = new AttributedString("//", color, getMetrics());
 		lines.add(borderAS);
 		lines.add(new AttributedString("// " + line1, color, getMetrics()));
@@ -240,12 +227,6 @@ public class MemoryBlockStartFieldFactory extends FieldFactory {
 		return lines;
 	}
 
-	/**
-	 * Creates {@link FieldElement} instances for each given {@link AttributedString}.
-	 * 
-	 * @param attributedStrings
-	 * @return
-	 */
 	private FieldElement[] createFieldElements(List<AttributedString> attributedStrings) {
 		List<FieldElement> elements = new ArrayList<>();
 		int lineNum = 0;
@@ -261,23 +242,4 @@ public class MemoryBlockStartFieldFactory extends FieldFactory {
 
 		return elementsArray;
 	}
-
-	/**
-	 * Returns the length of the longest string in the given list.
-	 * 
-	 * @param lines
-	 * @return
-	 */
-	private int getLongestLineSize(String... lines) {
-
-		int longest = 0;
-		for (String line : lines) {
-			if (line.length() > longest) {
-				longest = line.length();
-			}
-		}
-		return longest;
-
-	}
-
 }

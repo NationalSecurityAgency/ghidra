@@ -181,18 +181,20 @@ public class ToolOptions extends AbstractOptions {
 	private void writeWrappedOptions(boolean includeDefaultBindings, Element root) {
 		for (String optionName : valueMap.keySet()) {
 			Option option = valueMap.get(optionName);
-			if (includeDefaultBindings || !option.isDefault()) {
+			if (option instanceof ThemeColorOption || option instanceof ThemeFontOption) {
+				// theme values are saved by the theme, no need to save them to the options
+				continue;
+			}
 
+			if (includeDefaultBindings || !option.isDefault()) {
 				Object value = option.getCurrentValue();
 				if (isSupportedBySaveState(value)) {
-					// handled above
-					continue;
+					continue; // handled above
 				}
 
 				WrappedOption wrappedOption = wrapOption(option);
 				if (wrappedOption == null) {
-					// cannot write an option without a value to determine its type
-					continue;
+					continue; // cannot write an option without a value to determine its type
 				}
 
 				SaveState ss = new SaveState(WRAPPED_OPTION_NAME);

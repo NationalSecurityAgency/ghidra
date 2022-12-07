@@ -27,7 +27,6 @@ import java.math.BigInteger;
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.RowColLocation;
-import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.util.HighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
@@ -47,8 +46,6 @@ import ghidra.util.HelpLocation;
 public class BytesFieldFactory extends FieldFactory {
 	private static final int CHARS_IN_BYTE = 2;
 	public static final String FIELD_NAME = "Bytes";
-	public static final Color DEFAULT_COLOR = Palette.BLUE;
-	public static final Color ALIGNMENT_BYTES_COLOR = Palette.GRAY;
 	public final static String GROUP_TITLE = "Bytes Field";
 	public final static String MAX_DISPLAY_LINES_MSG =
 		GROUP_TITLE + Options.DELIMITER + "Maximum Lines To Display";
@@ -211,10 +208,11 @@ public class BytesFieldFactory extends FieldFactory {
 
 		FieldElement[] aStrings = new FieldElement[fieldElementLength + extraLen];
 
-		buildAttributedByteValues(aStrings, 0, bytes, length, 0, color, extraLen != 0);
+		buildAttributedByteValues(aStrings, 0, bytes, length, 0, ListingColors.BYTES,
+			extraLen != 0);
 		if (extraLen != 0) {
 			buildAttributedByteValues(aStrings, fieldElementLength, alignmentBytes,
-				alignmentBytes.length, residual, ALIGNMENT_BYTES_COLOR, false);
+				alignmentBytes.length, residual, ListingColors.BYTES_ALIGNMENT, false);
 		}
 
 		return ListingTextField.createPackedTextField(this, proxy, aStrings, startX + varWidth,
@@ -432,11 +430,6 @@ public class BytesFieldFactory extends FieldFactory {
 			return new FieldLocation(index, fieldNum, rcl.row(), rcl.col());
 		}
 		return null;
-	}
-
-	@Override
-	public Color getDefaultColor() {
-		return DEFAULT_COLOR;
 	}
 
 	@Override

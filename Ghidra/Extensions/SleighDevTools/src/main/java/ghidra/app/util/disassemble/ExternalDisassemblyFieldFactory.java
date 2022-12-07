@@ -21,8 +21,8 @@ import java.util.List;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
+import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors.Messages;
-import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.util.HighlightProvider;
 import ghidra.app.util.viewer.field.*;
 import ghidra.app.util.viewer.format.FieldFormatModel;
@@ -35,6 +35,7 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.util.classfinder.ClassSearcher;
 
 public class ExternalDisassemblyFieldFactory extends FieldFactory {
+	public static final GColor COLOR = new GColor("color.fg.listing.disassembly.external");
 
 	private static List<ExternalDisassembler> availableDisassemblers;
 
@@ -63,12 +64,6 @@ public class ExternalDisassemblyFieldFactory extends FieldFactory {
 	private ExternalDisassemblyFieldFactory(FieldFormatModel model, HighlightProvider hlProvider,
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
-	}
-
-	@Override
-	public void fieldOptionsChanged(Options options, String optionName, Object oldValue,
-			Object newValue) {
-		// have no options
 	}
 
 	@Override
@@ -131,7 +126,7 @@ public class ExternalDisassemblyFieldFactory extends FieldFactory {
 			if (disassembly == null) {
 				return null;
 			}
-			AttributedString text = new AttributedString(disassembly, Palette.BLACK, getMetrics());
+			AttributedString text = new AttributedString(disassembly, COLOR, getMetrics());
 			FieldElement fieldElement = new TextFieldElement(text, 0, 0);
 			return ListingTextField.createSingleLineTextField(this, proxy, fieldElement,
 				startX + varWidth, width, hlProvider);

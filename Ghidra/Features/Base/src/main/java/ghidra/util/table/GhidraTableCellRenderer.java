@@ -23,6 +23,7 @@ import javax.swing.table.TableModel;
 
 import docking.widgets.table.GTableCellRenderer;
 import generic.theme.GColor;
+import ghidra.app.util.viewer.field.ListingColors;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
@@ -31,10 +32,6 @@ import ghidra.program.model.symbol.Symbol;
 
 public class GhidraTableCellRenderer extends GTableCellRenderer {
 
-	// Defaults as defined by OptionsGui class - would be nice to use the tool options
-	private static final Color BAD_REF_ADDR_COLOR = new GColor("color.fg.listing.ref.bad");
-	private static final Color EXT_REF_RESOLVED_COLOR =
-		new GColor("color.fg.listing.ref.ext.resolved");
 	public Color SELECTED_CELL_COLOR = new GColor("color.bg.table.selected.ghidratable");
 	public Color BAD_EQUATE_COLOR = new GColor("color.fg.table.ghidratable.equate.bad");
 	public Color EQUATE_COLOR = new GColor("color.fg.table.ghidratable.equate");
@@ -67,14 +64,14 @@ public class GhidraTableCellRenderer extends GTableCellRenderer {
 	protected void setForegroundColor(JTable table, TableModel model, Object value) {
 		if (isExternalAdress(value)) {
 			if (isResolvedExternalAddress(model, (Address) value)) {
-				setForeground(EXT_REF_RESOLVED_COLOR);
+				setForeground(ListingColors.EXT_REF_RESOLVED);
 			}
 			else {
-				setForeground(BAD_REF_ADDR_COLOR);
+				setForeground(ListingColors.EXT_REF_UNRESOLVED);
 			}
 		}
 		else if (isValueOutOfMemoryAddress(model, value)) {
-			setForeground(BAD_REF_ADDR_COLOR);
+			setForeground(ListingColors.REF_BAD);
 		}
 		else {
 			setForeground(table.getForeground());

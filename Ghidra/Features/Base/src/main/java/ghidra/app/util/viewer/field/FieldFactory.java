@@ -19,12 +19,9 @@ import java.awt.*;
 import java.math.BigInteger;
 
 import docking.widgets.fieldpanel.support.FieldLocation;
-import generic.theme.GThemeDefaults.Colors;
-import generic.theme.GThemeDefaults.Colors.Palette;
 import generic.theme.Gui;
 import ghidra.app.util.HighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
-import ghidra.app.util.viewer.options.OptionsGui;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
@@ -48,8 +45,6 @@ public abstract class FieldFactory implements ExtensionPoint {
 	protected String name;
 	protected int startX;
 	protected int width;
-	protected Color color;
-	protected Color underlineColor = Palette.BLUE;
 	private FontMetrics defaultMetrics;
 	private FontMetrics[] fontMetrics = new FontMetrics[4];
 	protected Font baseFont;
@@ -59,7 +54,6 @@ public abstract class FieldFactory implements ExtensionPoint {
 
 	protected String colorOptionName;
 	protected String styleOptionName;
-	protected Options displayOptions;
 
 	/**
 	 * Base constructor
@@ -79,26 +73,23 @@ public abstract class FieldFactory implements ExtensionPoint {
 
 		width = 100;
 
-		this.displayOptions = displayOptions;
-		initDisplayOptions();
+		initDisplayOptions(displayOptions);
+		initFieldOptions(fieldOptions);
+	}
 
+	protected void initFieldOptions(Options fieldOptions) {
 		fieldOptions.getOptions(name)
 				.setOptionsHelpLocation(new HelpLocation("CodeBrowserPlugin", name));
 	}
 
-	protected void initDisplayOptions() {
+	protected void initDisplayOptions(Options displayOptions) {
 		baseFont = Gui.getFont(BASE_LISTING_FONT_ID);
 		// For most fields (defined in optionsGui) these will be set. But "ad hoc" fields won't,
 		// so register something.  A second registration won't change the original
 
-		displayOptions.registerThemeColorBinding(colorOptionName, Colors.FOREGROUND.getId(), null,
-			"Sets the " + colorOptionName);
 		displayOptions.registerOption(styleOptionName, -1, null, "Sets the " + style);
 
-		color = displayOptions.getColor(colorOptionName, getDefaultColor());
 		style = displayOptions.getInt(styleOptionName, -1);
-		underlineColor = displayOptions.getColor(OptionsGui.UNDERLINE.getColorOptionName(),
-			OptionsGui.UNDERLINE.getDefaultColor());
 		setMetrics(baseFont);
 	}
 
@@ -108,24 +99,6 @@ public abstract class FieldFactory implements ExtensionPoint {
 	 */
 	public FieldFactory(String name) {
 		this.name = name;
-	}
-
-	/**
-	 * Notification that the Options have changed.
-	 * @param options the Options object that changed. Will be either the display
-	 * options or the field options.
-	 * @param optionName the name of the property that changed.
-	 * @param oldValue the old value of the property.
-	 * @param newValue the new value of the property.
-	 */
-	public void optionsChanged(Options options, String optionName, Object oldValue,
-			Object newValue) {
-		if (options == displayOptions) {
-			displayOptionsChanged(options, optionName, oldValue, newValue);
-		}
-		else {
-			fieldOptionsChanged(options, optionName, oldValue, newValue);
-		}
 	}
 
 	/**
@@ -161,15 +134,9 @@ public abstract class FieldFactory implements ExtensionPoint {
 			baseFont = SystemUtilities.adjustForFontSizeOverride((Font) newValue);
 			setMetrics(baseFont);
 		}
-		else if (optionName.equals(colorOptionName)) {
-			color = (Color) newValue;
-		}
 		else if (optionName.equals(styleOptionName)) {
 			style = options.getInt(optionName, -1);
 			setMetrics(baseFont);
-		}
-		else if (optionName.equals(OptionsGui.UNDERLINE.getColorOptionName())) {
-			underlineColor = (Color) newValue;
 		}
 		model.update();
 	}
@@ -192,14 +159,6 @@ public abstract class FieldFactory implements ExtensionPoint {
 	 */
 	public String getFieldName() {
 		return name;
-	}
-
-	/**
-	 * Returns the default field color.
-	 * @return the color.
-	 */
-	public Color getDefaultColor() {
-		return Colors.FOREGROUND;
 	}
 
 	/**
