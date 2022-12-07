@@ -95,7 +95,7 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 
 	private DataTypeManagerHandler dataTypeManagerHandler;
 	private DataTypesProvider provider;
-	private OpenVersionedFileDialog openDialog;
+	private OpenVersionedFileDialog<DataTypeArchive> openDialog;
 
 	private Map<String, DockingAction> recentlyOpenedArchiveMap;
 	private Map<String, DockingAction> installArchiveMap;
@@ -587,8 +587,8 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 				}
 			};
 			openDialog =
-				new OpenVersionedFileDialog(tool, "Open Project Data Type Archive",
-					df -> DataTypeArchive.class.isAssignableFrom(df.getDomainObjectClass()));
+				new OpenVersionedFileDialog<>(tool, "Open Project Data Type Archive",
+					DataTypeArchive.class);
 			openDialog.setHelpLocation(new HelpLocation(HelpTopics.PROGRAM, "Open_File_Dialog"));
 			openDialog.addOkActionListener(listener);
 		}

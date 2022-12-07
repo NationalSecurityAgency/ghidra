@@ -21,14 +21,14 @@
        program in order to get another user's changes into your program.
     </p>
     <h2>
-      <a name="Open_Close_Program_View"></a>
-      Opening and Closing the Second Program
+      <a name="Open_Close_Diff_View"></a>
+      Opening and Closing the Diff View
     </h2>
     <blockquote>
       <p>The <b>Open/Close Diff View</b> icon 
          <img src="images/table_relationship.png" alt=""> 
          in the Code Browser tool bar is used for both opening and closing 
-         the second program in the Code Browser. This is one of two ways to open the Diff
+         a second program in the Code Browser Diff panel. This is one of two ways to open the Diff
          tool. The other is the menu action, <span style="font-weight: bold;">Tools</span>
             <b>
               <img src="../../shared/arrow.gif" alt="-&gt;" border="0">
@@ -70,9 +70,9 @@
               <img src="../../shared/arrow.gif" alt="-&gt;" border="0">
               Program Differences...
             </b>. This is one of two ways to open the Diff
-         tool. The other is the <b>Open/Close Program Diff </b> icon 
+         tool. The other is the <b>Open/Close Diff View</b> icon 
          <img src="images/table_relationship.png" alt=""> 
-         in the Code Browser tool bar which is described above in <b>Open/Close Diff View</b>.
+         in the Code Browser tool bar which is described above in <b>Opening and Closing the Diff View</b>.
          The following describes using the menu action to open the Diff tool.
       </p>
       <p>With a program open in the Code Browser tool, do the following to
@@ -100,13 +100,26 @@
             defined. In other words, they should be the same type of program
             (i.e. based on the same program language).<br>
             <img src="../../shared/tip.png" alt="">
-            If you wish to Diff against a previous version of a 
-            <b>versioned program, </b>select the <b>History&gt;&gt;</b> 
-            button of a program. Select the versioned program from the tree. 
-            Next select the desired version of the program from the history 
-            list on the right side of the dialog.<br>
+            If you wish to Diff against a specific version of a 
+            <b>versioned program</b>, a specific version may be seleected from the 
+            <b>Version History</b> table.  The project file history panel is displayed
+            when the <b>History&gt;&gt;</b> button is clicked.  
+            Select the versioned program from the tree. 
+            Next select the desired version of the program from the <b>Version History</b> 
+            table on the right side of the dialog.<br>
             <div align="center">
               <img src="images/SelectOtherVersionedProgram.png" alt=""> <br>
+            </div>
+
+             <img src="../../shared/tip.png" alt="">
+            If you wish to Diff against another program which is already open in the same tool
+            you can select a compatible program from the <b>Open Programs</b> tab.  Programs
+            which are not compatible (e.g., different architecture) are not shown in the table.
+            The <b>Open Programs</b> tab is not available if compatible open programs are not 
+            found.  You may return to the project file tree selection panel by clicking the 
+            <b>Project Files</b> tab.
+            <div align="center">
+              <img src="images/SelectOpenProgram.png" alt=""> <br>
             </div>
         </li>
         <li>Click the <b>OK</b> button.</li>
@@ -269,7 +282,7 @@
           </tr>
           <tr>
             <td align="left" valign="top" width="16">
-              <a href="#Open_Close_Program_View">
+              <a href="#Open_Close_Diff_View">
                 <img src="images/table_relationship.png" alt="" border="0">
               </a>
             </td>
