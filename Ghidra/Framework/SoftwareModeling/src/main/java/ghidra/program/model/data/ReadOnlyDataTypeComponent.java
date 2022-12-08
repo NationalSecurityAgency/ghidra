@@ -114,11 +114,6 @@ public class ReadOnlyDataTypeComponent implements DataTypeComponent, Serializabl
 	}
 
 	@Override
-	public String getDefaultFieldName() {
-		return "field_" + getOrdinal();
-	}
-
-	@Override
 	public void setFieldName(String fieldName) throws DuplicateNameException {
 		// ignore - read-only
 	}

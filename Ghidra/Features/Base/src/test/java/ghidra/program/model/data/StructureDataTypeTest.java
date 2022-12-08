@@ -510,7 +510,7 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"pack()\n" + 
 			"Structure TestStruct {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-			"   2   word   2   null   \"Comment2\"\n" + 
+			"   2   word   2      \"Comment2\"\n" + 
 			"   4   byte   1   field4   \"Comment4\"\n" + 
 			"   5   char[0]   0   flex   \"FlexComment\"\n" + 
 			"}\n" + 
@@ -525,7 +525,7 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"pack()\n" + 
 			"Structure TestStruct {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-			"   2   word   2   null   \"Comment2\"\n" + 
+			"   2   word   2      \"Comment2\"\n" + 
 			"   4   byte   1   field4   \"Comment4\"\n" + 
 			"   8   int[0]   0   flex   \"FlexComment\"\n" + 
 			"}\n" + 
@@ -552,7 +552,7 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"   4   int:0(0)   0      \"zero bitfield 1\"\n" + 
 			"   4   int:3(0)   1   bf2   \"bf1Comment\"\n" + 
 			"   5   byte   1   field1   \"Comment1\"\n" + 
-			"   6   word   2   null   \"Comment2\"\n" + 
+			"   6   word   2      \"Comment2\"\n" + 
 			"   8   byte   1   field4   \"Comment4\"\n" + 
 			"}\n" + 
 			"Size = 12   Actual Alignment = 4", struct);
@@ -569,7 +569,7 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"   4   int:0(0)   0      \"zero bitfield 2\"\n" + 
 			"   4   int:3(0)   1   bf2   \"bf1Comment\"\n" + 
 			"   5   byte   1   field1   \"Comment1\"\n" + 
-			"   6   word   2   null   \"Comment2\"\n" + 
+			"   6   word   2      \"Comment2\"\n" + 
 			"   8   byte   1   field4   \"Comment4\"\n" + 
 			"}\n" + 
 			"Size = 12   Actual Alignment = 4", struct);
@@ -586,13 +586,13 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"pack(disabled)\n" + 
 			"Structure TestStruct {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-			"   1   word   2   null   \"Comment2\"\n" + 
+			"   1   word   2      \"Comment2\"\n" + 
 			"   3   dword   4   field3   \"\"\n" + 
 			"   7   byte   1   field4   \"Comment4\"\n" + 
 			"   8   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
-//			"   9   undefined   1   null   \"\"\n" + 
-//			"   10   undefined   1   null   \"\"\n" + 
-//			"   11   undefined   1   null   \"\"\n" + 
+//			"   9   undefined   1      \"\"\n" + 
+//			"   10   undefined   1      \"\"\n" + 
+//			"   11   undefined   1      \"\"\n" + 
 			"}\n" + 
 			"Size = 12   Actual Alignment = 1", struct);
 		//@formatter:on
@@ -604,14 +604,14 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"pack(disabled)\n" + 
 			"Structure TestStruct {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-			"   1   word   2   null   \"Comment2\"\n" + 
+			"   1   word   2      \"Comment2\"\n" + 
 			"   3   dword   4   field3   \"\"\n" + 
 			"   7   byte   1   field4   \"Comment4\"\n" + 
 			"   8   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
 			"   8   int:3(3)   1   bf2   \"bf2Comment\"\n" + 
-//			"   9   undefined   1   null   \"\"\n" + 
-//			"   10   undefined   1   null   \"\"\n" + 
-//			"   11   undefined   1   null   \"\"\n" + 
+//			"   9   undefined   1      \"\"\n" + 
+//			"   10   undefined   1      \"\"\n" + 
+//			"   11   undefined   1      \"\"\n" + 
 			"}\n" + 
 			"Size = 12   Actual Alignment = 1", struct);
 		//@formatter:on
@@ -627,15 +627,15 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"pack(disabled)\n" + 
 			"Structure TestStruct {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-			"   1   word   2   null   \"Comment2\"\n" + 
+			"   1   word   2      \"Comment2\"\n" + 
 			"   3   dword   4   field3   \"\"\n" + 
 			"   7   byte   1   field4   \"Comment4\"\n" + 
-//			"   8   undefined   1   null   \"\"\n" + 
-//			"   9   undefined   1   null   \"\"\n" + 
+//			"   8   undefined   1      \"\"\n" + 
+//			"   9   undefined   1      \"\"\n" + 
 			"   10   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
-//			"   11   undefined   1   null   \"\"\n" + 
-//			"   12   undefined   1   null   \"\"\n" + 
-//			"   13   undefined   1   null   \"\"\n" + 
+//			"   11   undefined   1      \"\"\n" + 
+//			"   12   undefined   1      \"\"\n" + 
+//			"   13   undefined   1      \"\"\n" + 
 			"}\n" + 
 			"Size = 14   Actual Alignment = 1", struct);
 		//@formatter:on
@@ -647,16 +647,16 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"pack(disabled)\n" + 
 			"Structure TestStruct {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-			"   1   word   2   null   \"Comment2\"\n" + 
+			"   1   word   2      \"Comment2\"\n" + 
 			"   3   dword   4   field3   \"\"\n" + 
 			"   7   byte   1   field4   \"Comment4\"\n" + 
-//			"   8   undefined   1   null   \"\"\n" + 
-//			"   9   undefined   1   null   \"\"\n" + 
+//			"   8   undefined   1      \"\"\n" + 
+//			"   9   undefined   1      \"\"\n" + 
 			"   10   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
 			"   10   int:3(3)   1   bf2   \"bf2Comment\"\n" + 
-//			"   11   undefined   1   null   \"\"\n" + 
-//			"   12   undefined   1   null   \"\"\n" + 
-//			"   13   undefined   1   null   \"\"\n" + 
+//			"   11   undefined   1      \"\"\n" + 
+//			"   12   undefined   1      \"\"\n" + 
+//			"   13   undefined   1      \"\"\n" + 
 			"}\n" + 
 			"Size = 14   Actual Alignment = 1", struct);
 		//@formatter:on
@@ -672,12 +672,12 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"pack(disabled)\n" + 
 			"Structure TestStruct {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-//			"   1   undefined   1   null   \"\"\n" + 
+//			"   1   undefined   1      \"\"\n" + 
 			"   2   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
-//			"   3   undefined   1   null   \"\"\n" + 
-//			"   4   undefined   1   null   \"\"\n" + 
-//			"   5   undefined   1   null   \"\"\n" + 
-			"   6   word   2   null   \"Comment2\"\n" + 
+//			"   3   undefined   1      \"\"\n" + 
+//			"   4   undefined   1      \"\"\n" + 
+//			"   5   undefined   1      \"\"\n" + 
+			"   6   word   2      \"Comment2\"\n" + 
 			"   8   dword   4   field3   \"\"\n" + 
 			"   12   byte   1   field4   \"Comment4\"\n" + 
 			"}\n" + 
@@ -691,13 +691,13 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"pack(disabled)\n" + 
 			"Structure TestStruct {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-//			"   1   undefined   1   null   \"\"\n" + 
+//			"   1   undefined   1      \"\"\n" + 
 			"   2   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
 			"   2   int:3(3)   1   bf2   \"bf2Comment\"\n" + 
-//			"   3   undefined   1   null   \"\"\n" + 
-//			"   4   undefined   1   null   \"\"\n" + 
-//			"   5   undefined   1   null   \"\"\n" + 
-			"   6   word   2   null   \"Comment2\"\n" + 
+//			"   3   undefined   1      \"\"\n" + 
+//			"   4   undefined   1      \"\"\n" + 
+//			"   5   undefined   1      \"\"\n" + 
+			"   6   word   2      \"Comment2\"\n" + 
 			"   8   dword   4   field3   \"\"\n" + 
 			"   12   byte   1   field4   \"Comment4\"\n" + 
 			"}\n" + 
@@ -711,12 +711,12 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"pack(disabled)\n" + 
 			"Structure TestStruct {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-//			"   1   undefined   1   null   \"\"\n" + 
+//			"   1   undefined   1      \"\"\n" + 
 			"   2   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
 			"   2   int:3(3)   1   bf2   \"bf2Comment\"\n" + 
 			"   2   int:15(6)   3   bf3   \"bf3Comment\"\n" + 
-//			"   5   undefined   1   null   \"\"\n" + 
-			"   6   word   2   null   \"Comment2\"\n" + 
+//			"   5   undefined   1      \"\"\n" + 
+			"   6   word   2      \"Comment2\"\n" + 
 			"   8   dword   4   field3   \"\"\n" + 
 			"   12   byte   1   field4   \"Comment4\"\n" + 
 			"}\n" + 
@@ -739,12 +739,12 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"pack(disabled)\n" + 
 			"Structure TestStruct {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-//			"   1   undefined   1   null   \"\"\n" + 
+//			"   1   undefined   1      \"\"\n" + 
 			"   2   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
 			"   2   int:3(3)   1   bf2   \"bf2Comment\"\n" + 
 			"   2   int:15(6)   3   bf3   \"bf3Comment\"\n" + 
 			"   4   int:11(5)   2   bf4   \"bf4Comment\"\n" + 
-			"   6   word   2   null   \"Comment2\"\n" + 
+			"   6   word   2      \"Comment2\"\n" + 
 			"   8   dword   4   field3   \"\"\n" + 
 			"   12   byte   1   field4   \"Comment4\"\n" + 
 			"}\n" + 
@@ -773,12 +773,12 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"pack(disabled)\n" + 
 			"Structure TestStruct {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-//			"   1   undefined   1   null   \"\"\n" + 
+//			"   1   undefined   1      \"\"\n" + 
 			"   2   int:3(5)   1   bf1   \"bf1Comment\"\n" + 
-//			"   3   undefined   1   null   \"\"\n" + 
-//			"   4   undefined   1   null   \"\"\n" + 
-//			"   5   undefined   1   null   \"\"\n" + 
-			"   6   word   2   null   \"Comment2\"\n" + 
+//			"   3   undefined   1      \"\"\n" + 
+//			"   4   undefined   1      \"\"\n" + 
+//			"   5   undefined   1      \"\"\n" + 
+			"   6   word   2      \"Comment2\"\n" + 
 			"   8   dword   4   field3   \"\"\n" + 
 			"   12   byte   1   field4   \"Comment4\"\n" + 
 			"}\n" + 
@@ -792,13 +792,13 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"pack(disabled)\n" + 
 			"Structure TestStruct {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-//			"   1   undefined   1   null   \"\"\n" + 
+//			"   1   undefined   1      \"\"\n" + 
 			"   2   int:3(5)   1   bf1   \"bf1Comment\"\n" + 
 			"   2   int:3(2)   1   bf2   \"bf2Comment\"\n" + 
-//			"   3   undefined   1   null   \"\"\n" + 
-//			"   4   undefined   1   null   \"\"\n" + 
-//			"   5   undefined   1   null   \"\"\n" + 
-			"   6   word   2   null   \"Comment2\"\n" + 
+//			"   3   undefined   1      \"\"\n" + 
+//			"   4   undefined   1      \"\"\n" + 
+//			"   5   undefined   1      \"\"\n" + 
+			"   6   word   2      \"Comment2\"\n" + 
 			"   8   dword   4   field3   \"\"\n" + 
 			"   12   byte   1   field4   \"Comment4\"\n" + 
 			"}\n" + 
@@ -812,12 +812,12 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"pack(disabled)\n" + 
 			"Structure TestStruct {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-//			"   1   undefined   1   null   \"\"\n" + 
+//			"   1   undefined   1      \"\"\n" + 
 			"   2   int:3(5)   1   bf1   \"bf1Comment\"\n" + 
 			"   2   int:3(2)   1   bf2   \"bf2Comment\"\n" + 
 			"   2   int:15(3)   3   bf3   \"bf3Comment\"\n" + 
-//			"   5   undefined   1   null   \"\"\n" + 
-			"   6   word   2   null   \"Comment2\"\n" + 
+//			"   5   undefined   1      \"\"\n" + 
+			"   6   word   2      \"Comment2\"\n" + 
 			"   8   dword   4   field3   \"\"\n" + 
 			"   12   byte   1   field4   \"Comment4\"\n" + 
 			"}\n" + 
@@ -831,12 +831,12 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"pack(disabled)\n" + 
 			"Structure TestStruct {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-//			"   1   undefined   1   null   \"\"\n" + 
+//			"   1   undefined   1      \"\"\n" + 
 			"   2   int:3(5)   1   bf1   \"bf1Comment\"\n" + 
 			"   2   int:3(2)   1   bf2   \"bf2Comment\"\n" + 
 			"   2   int:15(3)   3   bf3   \"bf3Comment\"\n" + 
 			"   4   int:11(0)   2   bf4   \"bf4Comment\"\n" + 
-			"   6   word   2   null   \"Comment2\"\n" + 
+			"   6   word   2      \"Comment2\"\n" + 
 			"   8   dword   4   field3   \"\"\n" + 
 			"   12   byte   1   field4   \"Comment4\"\n" + 
 			"}\n" + 
@@ -859,13 +859,13 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"pack(disabled)\n" + 
 			"Structure TestStruct {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-//			"   1   undefined   1   null   \"\"\n" + 
-			"   2   float   4   null   \"\"\n" + 
+//			"   1   undefined   1      \"\"\n" + 
+			"   2   float   4      \"\"\n" + 
 			"   6   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
 			"   6   int:3(3)   1   bf2   \"bf2Comment\"\n" + 
 			"   6   int:15(6)   3   bf3   \"bf3Comment\"\n" + 
 			"   8   int:11(5)   2   bf4   \"bf4Comment\"\n" + 
-			"   10   word   2   null   \"Comment2\"\n" + 
+			"   10   word   2      \"Comment2\"\n" + 
 			"   12   dword   4   field3   \"\"\n" + 
 			"   16   byte   1   field4   \"Comment4\"\n" + 
 			"}\n" + 
@@ -1083,12 +1083,12 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"pack(disabled)\n" + 
 			"Structure TestStruct {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-//					"   1   undefined   1   null   \"\"\n" + 
+//					"   1   undefined   1      \"\"\n" + 
 			"   2   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
 			"   2   int:3(3)   1   bf2   \"bf2Comment\"\n" + 
 			"   2   int:15(6)   3   bf3   \"bf3Comment\"\n" + 
 			"   4   int:11(5)   2   bf4   \"bf4Comment\"\n" + 
-			"   6   word   2   null   \"Comment2\"\n" + 
+			"   6   word   2      \"Comment2\"\n" + 
 			"   8   dword   4   field3   \"\"\n" + 
 			"   12   byte   1   field4   \"Comment4\"\n" + 
 			"}\n" + 
@@ -1102,10 +1102,10 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"pack(disabled)\n" + 
 			"Structure TestStruct {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-//					"   1   undefined   1   null   \"\"\n" + 
-//					"   2   undefined   1   null   \"\"\n" + 
-//					"   3   undefined   1   null   \"\"\n" + 
-//					"   4   undefined   1   null   \"\"\n" + 
+//					"   1   undefined   1      \"\"\n" + 
+//					"   2   undefined   1      \"\"\n" + 
+//					"   3   undefined   1      \"\"\n" + 
+//					"   4   undefined   1      \"\"\n" + 
 			"   5   dword   4   field3   \"\"\n" + 
 			"   9   byte   1   field4   \"Comment4\"\n" + 
 			"}\n" + 
@@ -1143,12 +1143,12 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"pack(disabled)\n" + 
 			"Structure TestStruct {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-//			"   1   undefined   1   null   \"\"\n" + 
+//			"   1   undefined   1      \"\"\n" + 
 			"   2   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
 			"   2   int:3(3)   1   bf2   \"bf2Comment\"\n" + 
 			"   2   int:15(6)   3   bf3   \"bf3Comment\"\n" + 
 			"   4   int:11(5)   2   bf4   \"bf4Comment\"\n" + 
-			"   6   word   2   null   \"Comment2\"\n" + 
+			"   6   word   2      \"Comment2\"\n" + 
 			"   8   dword   4   field3   \"\"\n" + 
 			"   12   byte   1   field4   \"Comment4\"\n" + 
 			"}\n" + 
@@ -1162,7 +1162,7 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"pack(disabled)\n" + 
 			"Structure TestStruct {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-//			"   1   undefined   1   null   \"\"\n" + 
+//			"   1   undefined   1      \"\"\n" + 
 			"   2   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
 			"   2   int:3(3)   1   bf2   \"bf2Comment\"\n" + 
 			"   2   int:15(6)   3   bf3   \"bf3Comment\"\n" + 
@@ -1180,7 +1180,7 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"pack(disabled)\n" + 
 			"Structure TestStruct {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-//			"   1   undefined   1   null   \"\"\n" + 
+//			"   1   undefined   1      \"\"\n" + 
 			"   2   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
 			"   2   int:15(6)   3   bf3   \"bf3Comment\"\n" + 
 			"   4   int:11(5)   2   bf4   \"bf4Comment\"\n" + 
@@ -1197,9 +1197,9 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"pack(disabled)\n" + 
 			"Structure TestStruct {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-//			"   1   undefined   1   null   \"\"\n" + 
+//			"   1   undefined   1      \"\"\n" + 
 			"   2   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
-//			"   3   undefined   1   null   \"\"\n" + 
+//			"   3   undefined   1      \"\"\n" + 
 			"   4   int:11(5)   2   bf4   \"bf4Comment\"\n" + 
 			"   6   dword   4   field3   \"\"\n" + 
 			"   10   byte   1   field4   \"Comment4\"\n" + 
@@ -1214,11 +1214,11 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"pack(disabled)\n" + 
 			"Structure TestStruct {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-//			"   1   undefined   1   null   \"\"\n" + 
+//			"   1   undefined   1      \"\"\n" + 
 			"   2   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
-//			"   3   undefined   1   null   \"\"\n" + 
-//			"   4   undefined   1   null   \"\"\n" + 
-//			"   5   undefined   1   null   \"\"\n" + 
+//			"   3   undefined   1      \"\"\n" + 
+//			"   4   undefined   1      \"\"\n" + 
+//			"   5   undefined   1      \"\"\n" + 
 			"   6   dword   4   field3   \"\"\n" + 
 			"   10   byte   1   field4   \"Comment4\"\n" + 
 			"}\n" + 
@@ -1232,11 +1232,11 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"pack(disabled)\n" + 
 			"Structure TestStruct {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-//			"   1   undefined   1   null   \"\"\n" + 
-//			"   2   undefined   1   null   \"\"\n" + 
-//			"   3   undefined   1   null   \"\"\n" + 
-//			"   4   undefined   1   null   \"\"\n" + 
-//			"   5   undefined   1   null   \"\"\n" + 
+//			"   1   undefined   1      \"\"\n" + 
+//			"   2   undefined   1      \"\"\n" + 
+//			"   3   undefined   1      \"\"\n" + 
+//			"   4   undefined   1      \"\"\n" + 
+//			"   5   undefined   1      \"\"\n" + 
 			"   6   dword   4   field3   \"\"\n" + 
 			"   10   byte   1   field4   \"Comment4\"\n" + 
 			"}\n" + 
@@ -1250,10 +1250,10 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"pack(disabled)\n" + 
 			"Structure TestStruct {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-//			"   1   undefined   1   null   \"\"\n" + 
-//			"   2   undefined   1   null   \"\"\n" + 
-//			"   3   undefined   1   null   \"\"\n" + 
-//			"   4   undefined   1   null   \"\"\n" + 
+//			"   1   undefined   1      \"\"\n" + 
+//			"   2   undefined   1      \"\"\n" + 
+//			"   3   undefined   1      \"\"\n" + 
+//			"   4   undefined   1      \"\"\n" + 
 			"   5   dword   4   field3   \"\"\n" + 
 			"   9   byte   1   field4   \"Comment4\"\n" + 
 			"}\n" + 
@@ -1483,7 +1483,7 @@ public class StructureDataTypeTest extends AbstractGTest {
 		* pack(disabled)
 		* Structure TestStruct {
 		*    0   byte   1   field1   "Comment1"
-		*    1   word   2   null   "Comment2"
+		*    1   word   2      "Comment2"
 		*    3   dword   4   field3   ""
 		*    7   byte   1   field4   "Comment4"
 		* }
@@ -1491,7 +1491,7 @@ public class StructureDataTypeTest extends AbstractGTest {
 		*/
 
 		DataTypeComponent dtc = struct.getComponentAt(3);
-		assertEquals("  2  3  dword  4  field3  null", dtc.toString());
+		assertEquals("  2  3  dword  4  field3  ", dtc.toString());
 
 		dtc = struct.getComponentAt(4); // offcut
 		assertNull(dtc);
@@ -1512,7 +1512,7 @@ public class StructureDataTypeTest extends AbstractGTest {
 		* pack(disabled)
 		* Structure TestStruct {
 		*    0   byte   1   field1   "Comment1"
-		*    1   word   2   null   "Comment2"
+		*    1   word   2      "Comment2"
 		*    3   dword   4   field3   ""
 		*    7   byte   1   field4   "Comment4"
 		*    8   char[0]   0   zarray1   ""
@@ -1523,7 +1523,7 @@ public class StructureDataTypeTest extends AbstractGTest {
 		*/
 
 		dtc = struct.getComponentAt(8);
-		assertEquals("  5  8  long  4  field4  null", dtc.toString());
+		assertEquals("  5  8  long  4  field4  ", dtc.toString());
 
 		dtc = struct.getComponentAt(9); // offcut
 		assertNull(dtc);
@@ -1539,7 +1539,7 @@ public class StructureDataTypeTest extends AbstractGTest {
 		 * pack(disabled)
 		 * Structure Test {
 		 *    0   byte   1   field1   "Comment1"
-		 *    2   word   2   null   "Comment2"
+		 *    2   word   2      "Comment2"
 		 *    4   dword   4   field3   ""
 		 *    8   byte   1   field4   "Comment4"
 		 *    9   char[0]   0   zarray1   ""
@@ -1557,14 +1557,14 @@ public class StructureDataTypeTest extends AbstractGTest {
 		struct.setPackingEnabled(false);
 
 		dtc = struct.getComponentAt(9); // undefined at offset of zero-length component
-		assertEquals("  5  9  undefined  1  null  null", dtc.toString());
+		assertEquals("  5  9  undefined  1    ", dtc.toString());
 
 	}
 
 	@Test
 	public void testGetComponentContaining() {
 		DataTypeComponent dtc = struct.getComponentContaining(4);
-		assertEquals("  2  3  dword  4  field3  null", dtc.toString());
+		assertEquals("  2  3  dword  4  field3  ", dtc.toString());
 
 		assertEquals(8, struct.getLength());
 
@@ -1582,7 +1582,7 @@ public class StructureDataTypeTest extends AbstractGTest {
 		* pack(disabled)
 		* Structure TestStruct {
 		*    0   byte   1   field1   "Comment1"
-		*    1   word   2   null   "Comment2"
+		*    1   word   2      "Comment2"
 		*    3   dword   4   field3   ""
 		*    7   byte   1   field4   "Comment4"
 		*    8   char[0]   0   zarray1   ""
@@ -1593,10 +1593,10 @@ public class StructureDataTypeTest extends AbstractGTest {
 		*/
 
 		dtc = struct.getComponentContaining(8);
-		assertEquals("  5  8  long  4  field4  null", dtc.toString());
+		assertEquals("  5  8  long  4  field4  ", dtc.toString());
 
 		dtc = struct.getComponentContaining(9); // offcut
-		assertEquals("  5  8  long  4  field4  null", dtc.toString());
+		assertEquals("  5  8  long  4  field4  ", dtc.toString());
 
 		dtc = struct.getComponentContaining(12); // end-of-struct
 		assertNull(dtc);
@@ -1609,7 +1609,7 @@ public class StructureDataTypeTest extends AbstractGTest {
 		 * pack(disabled)
 		 * Structure Test {
 		 *    0   byte   1   field1   "Comment1"
-		 *    2   word   2   null   "Comment2"
+		 *    2   word   2      "Comment2"
 		 *    4   dword   4   field3   ""
 		 *    8   byte   1   field4   "Comment4"
 		 *    9   char[0]   0   zarray1   ""
@@ -1627,14 +1627,14 @@ public class StructureDataTypeTest extends AbstractGTest {
 		struct.setPackingEnabled(false);
 
 		dtc = struct.getComponentContaining(9); // undefined at offset of zero-length component
-		assertEquals("  5  9  undefined  1  null  null", dtc.toString());
+		assertEquals("  5  9  undefined  1    ", dtc.toString());
 
 	}
 
 	@Test
 	public void testGetComponentsContaining() {
 		List<DataTypeComponent> components = struct.getComponentsContaining(4);
-		assertEquals("[  2  3  dword  4  field3  null]", components.toString());
+		assertEquals("[  2  3  dword  4  field3  ]", components.toString());
 
 		struct.add(new ArrayDataType(CharDataType.dataType, 0, -1), "zarray1", null);
 		struct.add(new LongDataType(), "field4", null);
@@ -1651,7 +1651,7 @@ public class StructureDataTypeTest extends AbstractGTest {
 		 * pack(disabled)
 		 * Structure Test {
 		 *    0   byte   1   field1   "Comment1"
-		 *    2   word   2   null   "Comment2"
+		 *    2   word   2      "Comment2"
 		 *    4   dword   4   field3   ""
 		 *    8   byte   1   field4   "Comment4"
 		 *    9   char[0]   0   zarray1   ""
@@ -1663,14 +1663,14 @@ public class StructureDataTypeTest extends AbstractGTest {
 
 		// DatatypeComponent.toString: <ordinal> <offset> <dtname> <length> <fieldname> <comment>
 		components = struct.getComponentsContaining(9);
-		assertEquals("[  5  9  char[0]  0  zarray1  null,   6  9  undefined  1  null  null]",
+		assertEquals("[  5  9  char[0]  0  zarray1  ,   6  9  undefined  1    ]",
 			components.toString());
 
 		components = struct.getComponentsContaining(10);
-		assertEquals("[  7  10  undefined  1  null  null]", components.toString());
+		assertEquals("[  7  10  undefined  1    ]", components.toString());
 
 		components = struct.getComponentsContaining(16);
-		assertEquals("[  10  16  long[0]  0  zarray2  null]", components.toString());
+		assertEquals("[  10  16  long[0]  0  zarray2  ]", components.toString());
 
 	}
 
@@ -1953,14 +1953,14 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"pack(disabled)\n" + 
 			"Structure TestStruct {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-			"   1   word   2   null   \"Comment2\"\n" + 
+			"   1   word   2      \"Comment2\"\n" + 
 			"   3   dword   4   field3   \"\"\n" + 
 			"   7   byte   1   field4   \"Comment4\"\n" + 
-//			"   8   undefined   1   null   \"\"\n" + 
+//			"   8   undefined   1      \"\"\n" + 
 			"   9   Foo:4(0)   1   MyBit1   \"bitComment1\"\n" + 
 			"   9   Foo:3(4)   1   MyBit2   \"bitComment2\"\n" + 
 			"   9   Foo:2(7)   2   MyBit3   \"bitComment3\"\n" + 
-//			"   11   undefined   1   null   \"\"\n" + 
+//			"   11   undefined   1      \"\"\n" + 
 			"   12   Foo[0]   0   myFlex   \"flexComment\"\n" + 
 			"}\n" + 
 			"Size = 12   Actual Alignment = 1", struct);
@@ -1978,14 +1978,14 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"pack(disabled)\n" + 
 			"Structure bigStruct {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-			"   1   word   2   null   \"Comment2\"\n" + 
+			"   1   word   2      \"Comment2\"\n" + 
 			"   3   dword   4   field3   \"\"\n" + 
 			"   7   byte   1   field4   \"Comment4\"\n" + 
-//			"   8   undefined   1   null   \"\"\n" + 
+//			"   8   undefined   1      \"\"\n" + 
 			"   9   Foo:4(0)   1   MyBit1   \"bitComment1\"\n" + 
 			"   9   Foo:3(4)   1   MyBit2   \"bitComment2\"\n" + 
 			"   9   Foo:2(7)   2   MyBit3   \"bitComment3\"\n" + 
-//			"   11   undefined   1   null   \"\"\n" + 
+//			"   11   undefined   1      \"\"\n" + 
 			"   12   Foo[0]   0   myFlex   \"flexComment\"\n" + 
 			"}\n" + 
 			"Size = 12   Actual Alignment = 1", newStruct);
