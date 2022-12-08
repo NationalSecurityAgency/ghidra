@@ -63,6 +63,14 @@ public class OriginalFileExporter extends Exporter {
 	}
 
 	@Override
+	public boolean canExportDomainObject(DomainObject domainObject) {
+		if (domainObject instanceof Program program) {
+			return !program.getMemory().getAllFileBytes().isEmpty();
+		}
+		return false;
+	}
+
+	@Override
 	public boolean export(File file, DomainObject domainObj, AddressSetView addrSet,
 			TaskMonitor monitor) throws IOException, ExporterException {
 

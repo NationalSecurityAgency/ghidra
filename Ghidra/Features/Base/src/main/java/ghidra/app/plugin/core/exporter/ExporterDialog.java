@@ -295,13 +295,12 @@ public class ExporterDialog extends DialogComponentProvider implements AddressFa
 		return comboBox;
 	}
 
-	@SuppressWarnings("unchecked")
 	private List<Exporter> getApplicableExporters() {
 		List<Exporter> list = new ArrayList<>(ClassSearcher.getInstances(Exporter.class));
 		Class<?> domainObjectClass = domainFile.getDomainObjectClass();
+		DomainObject domainObj = getDomainObject(TaskMonitor.DUMMY);
 		if (DomainObject.class.isAssignableFrom(domainObjectClass)) {
-			list.removeIf(exporter -> !exporter
-					.canExportDomainObject((Class<? extends DomainObject>) domainObjectClass));
+			list.removeIf(exporter -> !exporter.canExportDomainObject(domainObj));
 			Collections.sort(list, (o1, o2) -> o1.toString().compareTo(o2.toString()));
 		}
 		return list;
