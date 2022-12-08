@@ -25,6 +25,7 @@ import docking.action.MenuData;
 import generic.theme.GIcon;
 import ghidra.framework.main.datatree.DataTreeClipboardUtils;
 import ghidra.framework.main.datatree.FrontEndProjectTreeContext;
+import ghidra.util.HelpLocation;
 
 public class ProjectDataCopyAction extends ProjectDataCopyCutBaseAction {
 	private static final Icon icon = new GIcon("icon.projectdata.copy");
@@ -33,7 +34,7 @@ public class ProjectDataCopyAction extends ProjectDataCopyCutBaseAction {
 		super("Copy", owner);
 		setPopupMenuData(new MenuData(new String[] { "Copy" }, icon, group));
 		setKeyBindingData(new KeyBindingData('C', InputEvent.CTRL_DOWN_MASK));
-		markHelpUnnecessary();
+		setHelpLocation(new HelpLocation("FrontEndPlugin", "Copy"));
 	}
 
 	@Override

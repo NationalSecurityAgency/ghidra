@@ -49,12 +49,12 @@ src/main/resources/images/down.png||GHIDRA||||END|
 src/main/resources/images/dragon16.gif||GHIDRA||||END|
 src/main/resources/images/edit-cut.png||Tango Icons - Public Domain|||tango icon set|END|
 src/main/resources/images/edit-cut22.png||Tango Icons - Public Domain|||tango icon set|END|
+src/main/resources/images/edit-delete.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/emblem-important.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/erase16.png||GHIDRA||||END|
 src/main/resources/images/error.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
 src/main/resources/images/exec.png||Crystal Clear Icons - LGPL 2.1||||END|
 src/main/resources/images/expand_all.png||GHIDRA||||END|
-src/main/resources/images/face-monkey16.png||Tango Icons - Public Domain|||originally face-monkey from tango|END|
 src/main/resources/images/flag.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/go-home.png||Tango Icons - Public Domain|||tango icon set|END|
 src/main/resources/images/greenDragon16.png||GHIDRA||||END|

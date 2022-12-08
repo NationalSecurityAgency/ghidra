@@ -30,7 +30,7 @@ import docking.widgets.OptionDialog;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import generic.test.AbstractGTest;
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGuiTest;
 import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.main.SharedProjectUtil;
 import ghidra.framework.main.datatree.*;
@@ -80,7 +80,7 @@ public class FrontEndTestEnv {
 		// assume read-only project views are not active and only active 
 		// project tree is present
 		DataTree tree =
-			AbstractGenericTest.findComponent(frontEndTool.getToolFrame(), DataTree.class);
+			AbstractGuiTest.findComponent(frontEndTool.getToolFrame(), DataTree.class);
 		projectTreeHelper = new DataTreeHelper(tree, true);
 
 		Project project = frontEndTool.getProject();
@@ -168,19 +168,19 @@ public class FrontEndTestEnv {
 	}
 
 	public void waitForSwing() {
-		AbstractGenericTest.waitForSwing();
+		AbstractGuiTest.waitForSwing();
 	}
 
 	private void runSwing(Runnable r) {
-		AbstractGenericTest.runSwing(r);
+		AbstractGuiTest.runSwing(r);
 	}
 
 	private void runSwing(Runnable r, boolean wait) {
-		AbstractGenericTest.runSwing(r, wait);
+		AbstractGuiTest.runSwing(r, wait);
 	}
 
 	private void waitForTasks() {
-		AbstractGenericTest.waitForTasks();
+		AbstractGuiTest.waitForTasks();
 	}
 
 	public void setTreeSelection(final TreePath[] paths) throws Exception {
@@ -237,8 +237,8 @@ public class FrontEndTestEnv {
 
 		assertTrue(node.getDomainFile().isCheckedOut());
 
-		AbstractGenericTest.waitForSwing();
-		AbstractGenericTest.waitForTasks();
+		AbstractGuiTest.waitForSwing();
+		AbstractGuiTest.waitForTasks();
 
 		Program program =
 			(Program) node.getDomainFile().getDomainObject(this, true, false, TaskMonitor.DUMMY);
@@ -305,7 +305,7 @@ public class FrontEndTestEnv {
 		ActionContext context = provider.getActionContext(null);
 		AbstractDockingTest.performAction(terminateCheckoutAction, context, false);
 		OptionDialog optDialog = AbstractDockingTest.waitForDialogComponent(OptionDialog.class);
-		AbstractGenericTest.pressButtonByText(optDialog.getComponent(), "Yes", true);
+		AbstractGuiTest.pressButtonByText(optDialog.getComponent(), "Yes", true);
 		waitForTasks();
 		waitForSwing();
 	}
@@ -323,7 +323,8 @@ public class FrontEndTestEnv {
 	}
 
 	public List<PluginTool> getTools() {
-		PluginTool[] tools = frontEndTool.getProject().getToolManager().getActiveWorkspace().getTools();
+		PluginTool[] tools =
+			frontEndTool.getProject().getToolManager().getActiveWorkspace().getTools();
 		return new ArrayList<>(Arrays.asList(tools));
 	}
 
@@ -371,9 +372,9 @@ public class FrontEndTestEnv {
 		}
 
 		JButton okButton =
-			(JButton) AbstractGenericTest.findAbstractButtonByText(dialog.getComponent(), "OK");
+			(JButton) AbstractGuiTest.findAbstractButtonByText(dialog.getComponent(), "OK");
 		assertNotNull(okButton);
-		AbstractGenericTest.pressButton(okButton);
+		AbstractGuiTest.pressButton(okButton);
 		waitForTasks();
 		DomainFile df = node.getDomainFile();
 
@@ -441,7 +442,7 @@ public class FrontEndTestEnv {
 	 */
 	public DataTreeHelper getReadOnlyProjectTreeHelper(String tabName) {
 		String dataTreeName = "Data Tree: " + tabName;
-		DataTree tree = (DataTree) AbstractGenericTest
+		DataTree tree = (DataTree) AbstractGuiTest
 				.findComponentByName(frontEndTool.getToolFrame(), dataTreeName);
 		return tree != null ? new DataTreeHelper(tree, true) : null;
 	}
@@ -451,7 +452,7 @@ public class FrontEndTestEnv {
 	 * @return READ-ONLY project view tree helper for first view found or null if none displayed
 	 */
 	public DataTreeHelper getFirstReadOnlyProjectTreeHelper() {
-		for (DataTree tree : AbstractGenericTest.findComponents(frontEndTool.getToolFrame(),
+		for (DataTree tree : AbstractGuiTest.findComponents(frontEndTool.getToolFrame(),
 			DataTree.class)) {
 			if (tree.getName().startsWith("Data Tree:")) {
 				return new DataTreeHelper(tree, true);

@@ -93,7 +93,8 @@ public class DebuggerStateEditingServicePlugin extends AbstractDebuggerPlugin
 				return false;
 			}
 			TraceRecorder recorder = coordinates.getRecorder();
-			return recorder.isVariableOnTarget(coordinates.getThread(), address, length);
+			return recorder.isVariableOnTarget(coordinates.getPlatform(), coordinates.getThread(),
+				coordinates.getFrame(), address, length);
 		}
 
 		protected boolean isTraceVariableEditable(DebuggerCoordinates coordinates, Address address,
@@ -103,6 +104,10 @@ public class DebuggerStateEditingServicePlugin extends AbstractDebuggerPlugin
 
 		protected boolean isEmulatorVariableEditable(DebuggerCoordinates coordinates,
 				Address address, int length) {
+			if (coordinates.getThread() == null) {
+				// A limitation in TraceSchedule, which is used to manifest patches
+				return false;
+			}
 			if (!isTraceVariableEditable(coordinates, address, length)) {
 				return false;
 			}
@@ -198,6 +203,7 @@ public class DebuggerStateEditingServicePlugin extends AbstractDebuggerPlugin
 			TraceThread thread = coordinates.getThread();
 			if (thread == null) {
 				// TODO: Well, technically, only for register edits
+				// It's a limitation in TraceSchedule. Every step requires a thread
 				throw new IllegalArgumentException("Emulator edits require a thread.");
 			}
 			Language language = coordinates.getPlatform().getLanguage();

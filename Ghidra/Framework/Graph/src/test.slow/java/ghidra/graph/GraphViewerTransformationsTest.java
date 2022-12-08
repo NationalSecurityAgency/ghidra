@@ -25,7 +25,7 @@ import org.junit.*;
 
 import edu.uci.ics.jung.algorithms.layout.DAGLayout;
 import edu.uci.ics.jung.algorithms.layout.Layout;
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGuiTest;
 import ghidra.graph.graphs.*;
 import ghidra.graph.support.*;
 import ghidra.graph.viewer.GraphViewerUtils;
@@ -60,7 +60,7 @@ public class GraphViewerTransformationsTest {
 	}
 
 	protected void swing(Runnable r) {
-		AbstractGenericTest.runSwing(r);
+		AbstractGuiTest.runSwing(r);
 	}
 
 	private TestVisualGraph buildGraph() {
@@ -196,7 +196,7 @@ public class GraphViewerTransformationsTest {
 
 		// TODO move up the Swing methods? ...to reduce dependencies on slow startup stuff?
 
-		AbstractGenericTest.runSwing(() -> GraphViewerUtils.setGraphScale(viewer, d));
-		AbstractGenericTest.waitForSwing();
+		AbstractGuiTest.runSwing(() -> GraphViewerUtils.setGraphScale(viewer, d));
+		AbstractGuiTest.waitForSwing();
 	}
 }

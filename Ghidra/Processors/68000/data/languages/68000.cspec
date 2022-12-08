@@ -27,8 +27,20 @@
   </global>
   <stackpointer register="SP" space="ram"/>
   <default_proto>
-    <prototype name="__stdcall" extrapop="4" stackshift="4">
+    <prototype name="__stdcall" extrapop="4" stackshift="4" strategy="register">
       <input>
+        <pentry minsize="1" maxsize="4" metatype="ptr">
+          <register name="A0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4" metatype="ptr">
+          <register name="A1"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="D0"/>
+        </pentry>
+        <pentry minsize="1" maxsize="4">
+          <register name="D1"/>
+        </pentry>
         <pentry minsize="1" maxsize="500" align="4">
           <addr offset="4" space="stack"/>
         </pentry>

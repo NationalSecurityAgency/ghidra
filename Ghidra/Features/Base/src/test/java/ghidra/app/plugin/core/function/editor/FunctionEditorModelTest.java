@@ -21,7 +21,7 @@ import java.util.List;
 
 import org.junit.*;
 
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGuiTest;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.cparser.C.ParseException;
 import ghidra.program.database.ProgramBuilder;
@@ -34,7 +34,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.util.exception.InvalidInputException;
 
-public class FunctionEditorModelTest extends AbstractGenericTest {
+public class FunctionEditorModelTest extends AbstractGuiTest {
 
 	private FunctionEditorModel model;
 	private volatile boolean dataChangeCalled;

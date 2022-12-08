@@ -25,6 +25,7 @@ import docking.action.DockingActionIf;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import generic.test.AbstractGenericTest;
+import generic.test.AbstractGuiTest;
 import ghidra.app.plugin.core.datamgr.archive.*;
 import ghidra.app.plugin.core.datamgr.tree.ArchiveNode;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeArchiveGTree;
@@ -125,7 +126,7 @@ public class DataTypeTestUtils {
 				// who cares?
 			}
 		}
-		AbstractGenericTest.waitForPostedSwingRunnables();
+		AbstractGuiTest.waitForPostedSwingRunnables();
 	}
 
 	public static ArchiveNode openArchive(String archiveName, boolean checkout,
@@ -239,14 +240,14 @@ public class DataTypeTestUtils {
 
 	public static void performAction(DockingActionIf action, Program program, GTree tree,
 			boolean wait) {
-		AbstractGenericTest.runSwing(() -> {
+		AbstractGuiTest.runSwing(() -> {
 			ActionContext context =
 				new DataTypesActionContext(null, program, (DataTypeArchiveGTree) tree, null, true);
 			action.actionPerformed(context);
 		}, wait);
 
 		if (!SwingUtilities.isEventDispatchThread()) {
-			AbstractGenericTest.waitForSwing();
+			AbstractGuiTest.waitForSwing();
 		}
 	}
 
@@ -255,14 +256,14 @@ public class DataTypeTestUtils {
 	}
 
 	public static void performAction(DockingActionIf action, GTree tree, boolean wait) {
-		AbstractGenericTest.runSwing(() -> {
+		AbstractGuiTest.runSwing(() -> {
 			ActionContext context =
 				new DataTypesActionContext(null, null, (DataTypeArchiveGTree) tree, null, true);
 			action.actionPerformed(context);
 		}, wait);
 
 		if (!SwingUtilities.isEventDispatchThread()) {
-			AbstractGenericTest.waitForSwing();
+			AbstractGuiTest.waitForSwing();
 		}
 	}
 

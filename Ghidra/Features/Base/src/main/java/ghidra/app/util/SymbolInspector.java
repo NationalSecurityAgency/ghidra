@@ -434,13 +434,7 @@ public class SymbolInspector implements OptionsChangeListener {
 		if (se == null) {
 			return Colors.BACKGROUND;
 		}
-		String optionName = se.getColorOptionName();
-		Color color = (Color) cache.get(optionName);
-		if (color == null) {
-			color = optionsObject.getColor(se.getColorOptionName(), se.getDefaultColor());
-			cache.put(optionName, color);
-		}
-		return color;
+		return se.getDefaultColor();
 	}
 
 	private int getStyle(ScreenElement se) {
@@ -450,7 +444,7 @@ public class SymbolInspector implements OptionsChangeListener {
 		String optionName = se.getStyleOptionName();
 		Integer style = (Integer) cache.get(optionName);
 		if (style == null) {
-			style = Integer.valueOf(optionsObject.getInt(se.getStyleOptionName(), -1));
+			style = optionsObject.getInt(optionName, -1);
 			cache.put(optionName, style);
 		}
 		return style.intValue();

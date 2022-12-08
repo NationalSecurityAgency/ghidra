@@ -22,8 +22,7 @@ import java.util.*;
 import javax.swing.*;
 
 import docking.action.*;
-import generic.theme.Gui;
-import generic.theme.ThemeManager;
+import generic.theme.*;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
 import help.HelpDescriptor;
@@ -117,6 +116,8 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 
 	private String registeredFontId;
 
+	private ThemeListener themeListener = this::themeChanged;
+
 	/**
 	 * Creates a new component provider with a default location of {@link WindowPosition#WINDOW}.
 	 * @param tool The tool will manage and show this provider
@@ -145,6 +146,8 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 		this.contextType = contextType;
 
 		recordInception();
+
+		Gui.addThemeListener(themeListener);
 	}
 
 	/**
@@ -169,6 +172,24 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 
 		boolean supportsKeyBindings = !isTransient;
 		showProviderAction = new ShowProviderAction(supportsKeyBindings);
+	}
+
+	private void themeChanged(ThemeEvent e) {
+		if (!e.isLookAndFeelChanged()) {
+			return;  // we only care if the Look and Feel changes
+		}
+
+		if (isVisible()) {
+			// if we are visible, then we don't need to update as the system updates all 
+			// visible components
+			return;
+		}
+
+		// update this providers components ui for the new Look and Feel
+		JComponent component = getComponent();
+		if (component != null) {
+			SwingUtilities.updateComponentTreeUI(component);
+		}
 	}
 
 	/**

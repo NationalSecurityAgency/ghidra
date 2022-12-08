@@ -29,6 +29,63 @@ extern AttributeId ATTRIB_SYMREF;	///< Marshaling attribute "symref"
 
 extern ElementId ELEM_HIGH;		///< Marshaling element \<high>
 
+class HighVariable;			///< Forward declaration
+class VariablePiece;			///< Forward declaration
+
+/// \brief A collection of HighVariable objects that overlap
+///
+/// A HighVariable represents a variable or partial variable that is manipulated as a unit by the (de)compiler.
+/// A formal Symbol may be manipulated using multiple HighVariables that in principal can overlap. For a set of
+/// HighVariable objects that mutually overlap, a VariableGroup is a central access point for information about
+/// the intersections.  The information is used in particular to extend HighVariable Cover objects to take into
+/// account the intersections.
+class VariableGroup {
+  friend class VariablePiece;
+
+  /// \brief Compare two VariablePiece pointers by offset then by size
+  struct PieceCompareByOffset {
+    bool operator()(const VariablePiece *a,const VariablePiece *b) const;	///< Comparison operator
+  };
+
+  set<VariablePiece *,PieceCompareByOffset> pieceSet;	///< The set of VariablePieces making up \b this group
+public:
+  bool empty(void) const { return pieceSet.empty(); }	///< Return \b true if \b this group has no pieces
+  void addPiece(VariablePiece *piece);		///< Add a new piece to \b this group
+  void removePiece(VariablePiece *piece);	///< Remove a piece from \b this group
+};
+
+/// \brief Information about how a HighVariable fits into a larger group or Symbol
+///
+/// This is an extension to a HighVariable object that is assigned if the HighVariable is part of a
+/// group of mutually overlapping HighVariables. It describes the overlaps and how they affect the HighVariable Cover.
+class VariablePiece {
+  friend class VariableGroup;
+  VariableGroup *group;			///< Group to which \b this piece belongs
+  HighVariable *high;			///< HighVariable owning \b this piece
+  int4 groupOffset;			///< Byte offset of \b this piece within the group
+  int4 size;				///< Number of bytes in \b this piece
+  mutable vector<const VariablePiece *> intersection;	///< List of VariablePieces \b this piece intersects with
+  mutable Cover cover;			///< Extended cover for the piece, taking into account intersections
+public:
+  VariablePiece(HighVariable *h,int4 offset,HighVariable *grp=(HighVariable *)0);
+  ~VariablePiece(void);			///< Destructor
+  HighVariable *getHigh(void) const { return high; }	///< Get the HighVariable associate with \b this piece
+  VariableGroup *getGroup(void) const { return group; }	///< Get the central group
+  int4 getOffset(void) const { return groupOffset; }	///< Get the offset of \b this within its group
+  int4 getSize(void) const { return size; }		///< Return the number of bytes in \b this piece.
+  const Cover &getCover(void) const { return cover; }	///< Get the cover associated with \b this piece.
+  int4 numIntersection(void) const { return intersection.size(); }	///< Get number of pieces \b this intersects with
+  const VariablePiece *getIntersection(int4 i) const { return intersection[i]; }	///< Get i-th piece \b this intersects with
+  void markIntersectionDirty(void) const;	///< Mark all pieces as needing intersection recalculation
+  void markExtendCoverDirty(void) const;	///< Mark all intersecting pieces as having a dirty extended cover
+  void updateIntersections(void) const;	///< Calculate intersections with other pieces in the group
+  void updateCover(void) const;	///< Calculate extended cover based on intersections
+  void adjustOffset(int4 amt);	///< Adjust every piece's offset by the given amount
+  void transferGroup(VariableGroup *newGroup);	///< Transfer \b this piece to another VariableGroup
+  void setHigh(HighVariable *newHigh) { high = newHigh; }	///< Move ownership of \b this to another HighVariable
+  void combineOtherGroup(VariablePiece *op2,vector<HighVariable *> &mergePairs);	///< Combine two VariableGroups
+};
+
 /// \brief A high-level variable modeled as a list of low-level variables, each written once
 ///
 /// In the Static Single Assignment (SSA) representation of a function's data-flow, the Varnode
@@ -57,23 +114,28 @@ public:
     copy_in1 = 0x20,		///< There exists at least 1 COPY into \b this HighVariable from other HighVariables
     copy_in2 = 0x40,		///< There exists at least 2 COPYs into \b this HighVariable from other HighVariables
     type_finalized = 0x80,	///< Set if a final data-type is locked in and dirtying is disabled
-    unmerged = 0x100		///< Set if part of a multi-entry Symbol but did not get merged with other SymbolEntrys
+    unmerged = 0x100,		///< Set if part of a multi-entry Symbol but did not get merged with other SymbolEntrys
+    intersectdirty = 0x200,	///< Set if intersections with other HighVariables needs to be recomputed
+    extendcoverdirty = 0x400	///< Set if extended cover needs to be recomputed
   };
 private:
   friend class Varnode;
   friend class Merge;
+  friend class VariablePiece;
   vector<Varnode *> inst;		///< The member Varnode objects making up \b this HighVariable
   int4 numMergeClasses;			///< Number of different speculative merge classes in \b this
   mutable uint4 highflags;		///< Dirtiness flags
   mutable uint4 flags;			///< Boolean properties inherited from Varnode members
   mutable Datatype *type;		///< The data-type for \b this
   mutable Varnode *nameRepresentative;	///< The storage location used to generate a Symbol name
-  mutable Cover wholecover;		///< The ranges of code addresses covered by this HighVariable
+  mutable Cover internalCover;		///< The ranges of code addresses covered by this HighVariable
+  mutable VariablePiece *piece;		///< Additional info about intersections with other pieces (if non-null)
   mutable Symbol *symbol;		///< The Symbol \b this HighVariable is tied to
   mutable int4 symboloffset;		///< -1=perfect symbol match >=0, offset
   int4 instanceIndex(const Varnode *vn) const;	///< Find the index of a specific Varnode member
   void updateFlags(void) const;		///< (Re)derive boolean properties of \b this from the member Varnodes
-  void updateCover(void) const;		///< (Re)derive the cover of \b this from the member Varnodes
+  void updateInternalCover(void) const;	///< (Re)derive the internal cover of \b this from the member Varnodes
+  void updateCover(void) const;		///< (Re)derive the external cover of \b this, as a union of internal covers
   void updateType(void) const;		///< (Re)derive the data-type for \b this from the member Varnodes
   void updateSymbol(void) const;	///< (Re)derive the Symbol and offset for \b this from member Varnodes
   void setCopyIn1(void) const { highflags |= copy_in1; }	///< Mark the existence of one COPY into \b this
@@ -82,27 +144,34 @@ private:
   bool hasCopyIn1(void) const { return ((highflags&copy_in1)!=0); }	///< Is there at least one COPY into \b this
   bool hasCopyIn2(void) const { return ((highflags&copy_in2)!=0); }	///< Is there at least two COPYs into \b this
   void remove(Varnode *vn);				///< Remove a member Varnode from \b this
-  void merge(HighVariable *tv2,bool isspeculative);	///< Merge another HighVariable into \b this
+  void mergeInternal(HighVariable *tv2,bool isspeculative);	///< Merge another HighVariable into \b this
+  void merge(HighVariable *tv2,bool isspeculative);	///< Merge with another HighVariable taking into account groups
   void setSymbol(Varnode *vn) const;		///< Update Symbol information for \b this from the given member Varnode
   void setSymbolReference(Symbol *sym,int4 off);	///< Attach a reference to a Symbol to \b this
+  void transferPiece(HighVariable *tv2);		///< Transfer ownership of another's VariablePiece to \b this
   void flagsDirty(void) const { highflags |= flagsdirty | namerepdirty; }	///< Mark the boolean properties as \e dirty
-  void coverDirty(void) const { highflags |= coverdirty; }	///< Mark the cover as \e dirty
+  void coverDirty(void) const;					///< Mark the cover as \e dirty
   void typeDirty(void) const { highflags |= typedirty; }	///< Mark the data-type as \e dirty
+  void symbolDirty(void) const { highflags |= symboldirty; }	///< Mark the symbol as \e dirty
   void setUnmerged(void) const { highflags |= unmerged; }	///< Mark \b this as having merge problems
+  bool isCoverDirty(void) const;	///< Is the cover returned by getCover() up-to-date
 public:
   HighVariable(Varnode *vn);		///< Construct a HighVariable with a single member Varnode
+  ~HighVariable(void);			///< Destructor
   Datatype *getType(void) const { updateType(); return type; }	///< Get the data-type
+  const Cover &getCover(void) const;	///< Get cover data for \b this variable
   Symbol *getSymbol(void) const { updateSymbol(); return symbol; }	///< Get the Symbol associated with \b this or null
   SymbolEntry *getSymbolEntry(void) const;			/// Get the SymbolEntry mapping to \b this or null
   int4 getSymbolOffset(void) const { return symboloffset; }	///< Get the Symbol offset associated with \b this
   int4 numInstances(void) const { return inst.size(); }		///< Get the number of member Varnodes \b this has
   Varnode *getInstance(int4 i) const { return inst[i]; }	///< Get the i-th member Varnode
   void finalizeDatatype(Datatype *tp);		///< Set a final datatype for \b this variable
+  void groupWith(int4 off,HighVariable *hi2);		///< Put \b this and another HighVariable in the same intersection group
 
   /// \brief Print details of the cover for \b this (for debug purposes)
   ///
   /// \param s is the output stream
-  void printCover(ostream &s) const { if ((highflags&HighVariable::coverdirty)==0) wholecover.print(s); else s << "Cover dirty"; }
+  void printCover(ostream &s) const { if ((highflags&HighVariable::coverdirty)==0) internalCover.print(s); else s << "Cover dirty"; }
 
   void printInfo(ostream &s) const;		///< Print information about \b this HighVariable to stream
   bool hasName(void) const;			///< Check if \b this HighVariable can be named
@@ -145,5 +214,34 @@ public:
   static bool compareJustLoc(const Varnode *a,const Varnode *b);	///< Compare based on storage location
   static int4 markExpression(Varnode *vn,vector<HighVariable *> &highList);	///< Mark and collect variables in expression
 };
+
+/// The internal cover is marked as dirty. If \b this is a piece of a VariableGroup, it and all the other
+/// HighVariables it intersects with are marked as having a dirty extended cover.
+inline void HighVariable::coverDirty(void) const
+
+{
+  highflags |= coverdirty;
+  if (piece != (VariablePiece *)0)
+    piece->markExtendCoverDirty();
+}
+
+/// The cover could either by the internal one or the extended one if \b this is part of a Variable Group.
+/// \return \b true if the cover needs to be recomputed.
+inline bool HighVariable::isCoverDirty(void) const
+
+{
+  return ((highflags & (coverdirty | extendcoverdirty)) != 0);
+}
+
+/// The returns the internal cover unless \b this is part of a VariableGroup, in which case the
+/// extended cover is returned.
+/// \return the cover associated with \b this variable
+inline const Cover &HighVariable::getCover(void) const
+
+{
+  if (piece == (VariablePiece *)0)
+    return internalCover;
+  return piece->getCover();
+}
 
 #endif

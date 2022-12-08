@@ -35,172 +35,81 @@ import docking.widgets.fieldpanel.listener.LayoutModelListener;
 import docking.widgets.fieldpanel.support.*;
 import docking.widgets.indexedscrollpane.IndexedScrollPane;
 import docking.widgets.label.GDLabel;
-import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import generic.theme.GThemeDefaults.Colors.Tables;
 import ghidra.GhidraOptions;
+import ghidra.app.util.viewer.field.ListingColors;
+import ghidra.app.util.viewer.field.ListingColors.*;
 import ghidra.util.SystemUtilities;
 
 /**
  * Class for displaying and manipulating field colors and fonts.
  */
 public class OptionsGui extends JPanel {
-	private static final long serialVersionUID = 1L;
 	private static final Highlight[] NO_HIGHLIGHTS = new Highlight[0];
 	private static final HighlightFactory hlFactory =
 		(field, text, cursorTextOffset) -> NO_HIGHLIGHTS;
 
-	public static final ScreenElement BACKGROUND =
-		new ScreenElement("Background", new GColor("color.bg.listing"));
-	public static final ScreenElement COMMENT_AUTO =
-		new ScreenElement("Comment, Automatic", new GColor("color.fg.listing.comment.auto"));
-	public static final ScreenElement ADDRESS =
-		new ScreenElement("Address", new GColor("color.fg.listing.address"));
-
-	public static final ScreenElement BAD_REF_ADDR =
-		new ScreenElement("Bad Reference Address", new GColor("color.fg.listing.ref.bad"));
-
-	public static final ScreenElement BYTES =
-		new ScreenElement("Bytes", new GColor("color.fg.listing.bytes"));
-
-	public static final ScreenElement CONSTANT =
-		new ScreenElement("Constant", new GColor("color.fg.listing.constant"));
-
-	public static final ScreenElement LABELS_UNREFD = new ScreenElement("Labels, Unreferenced",
-		new GColor("color.fg.listing.label.unreferenced"));
-
-	public static final ScreenElement ENTRY_POINT =
-		new ScreenElement("Entry Point", new GColor("color.fg.listing.entrypoint"));
-
-	public static final ScreenElement COMMENT_EOL = new ScreenElement("Comment, EOL", "EOL Comment",
-		new GColor("color.fg.listing.comment.auto"));
-
-	public static final ScreenElement EXT_REF_RESOLVED = new ScreenElement(
-		"External Reference, Resolved", new GColor("color.fg.listing.ref.ext.resolved"));
-
-	public static final ScreenElement FIELD_NAME =
-		new ScreenElement("Field Name", new GColor("color.fg.listing.fieldname"));
-
-	public static final ScreenElement FUN_CALL_FIXUP =
-		new ScreenElement("Function Call-Fixup", new GColor("color.fg.listing.function.callfixup"));
-
-	public static final ScreenElement FUN_NAME =
-		new ScreenElement("Function Name", new GColor("color.fg.listing.function.name"));
-
-	public static final ScreenElement FUN_PARAMS =
-		new ScreenElement("Function Parameters", new GColor("color.fg.listing.function.param"));
-
-	public static final ScreenElement FUN_TAG =
-		new ScreenElement("Function Tag", new GColor("color.fg.listing.function.tag"));
-
-	public static final ScreenElement FUN_AUTO_PARAMS = new ScreenElement(
-		"Function Auto-Parameters", new GColor("color.fg.listing.function.param.auto"));
-
-	public static final ScreenElement FUN_RET_TYPE = new ScreenElement("Function Return Type",
-		new GColor("color.fg.listing.function.return.type"));
-
-	public static final ScreenElement COMMENT_REPEATABLE =
-		new ScreenElement("Comment, Repeatable", new GColor("color.fg.listing.comment.repeatable"));
-
-	public static final ScreenElement COMMENT_REF_REPEAT = new ScreenElement(
-		"Comment, Referenced Repeatable", new GColor("color.fg.listing.comment.ref.repeatable"));
-
-	public static final ScreenElement LABELS_LOCAL =
-		new ScreenElement("Labels, Local", new GColor("color.fg.listing.label.local"));
-
-	public static final ScreenElement MNEMONIC_OVERRIDE =
-		new ScreenElement("Mnemonic, Override", new GColor("color.fg.listing.mnemonic.override"));
-
-	public static final ScreenElement MNEMONIC =
-		new ScreenElement("Mnemonic", new GColor("color.fg.listing.mnemonic"));
-
-	public static final ScreenElement UNIMPL = new ScreenElement("Unimplemented Mnemonic",
-		new GColor("color.fg.listing.mnemonic.unimplemented"));
-
-	public static final ScreenElement FLOW_ARROW_NON_ACTIVE = new ScreenElement(
-		"Flow Arrow, Not Active", new GColor("color.fg.listing.flow.arrow.inactive"));
-
-	public static final ScreenElement FLOW_ARROW_ACTIVE =
-		new ScreenElement("Flow Arrow, Active", new GColor("color.fg.listing.flow.arrow.active"));
-
-	public static final ScreenElement FLOW_ARROW_SELECTED = new ScreenElement(
-		"Flow Arrow, Selected", new GColor("color.fg.listing.flow.arrow.selected"));
-
-	public static final ScreenElement LABELS_NON_PRIMARY =
-		new ScreenElement("Labels, Non-primary", new GColor("color.fg.listing.label.non.primary"));
-
-	public static final ScreenElement COMMENT_PLATE = new ScreenElement("Comment, Plate",
-		"Plate Comment", new GColor("color.fg.listing.comment.plate"));
-
-	public static final ScreenElement COMMENT_POST = new ScreenElement("Comment, Post",
-		"Post-Comment", new GColor("color.fg.listing.comment.post"));
-
-	public static final ScreenElement COMMENT_PRE = new ScreenElement("Comment, Pre", "Pre-Comment",
-		new GColor("color.fg.listing.comment.pre"));
-
-	public static final ScreenElement LABELS_PRIMARY =
-		new ScreenElement("Labels, Primary", new GColor("color.fg.listing.label.primary"));
-
-	public static final ScreenElement SEPARATOR =
-		new ScreenElement("Separator", new GColor("color.fg.listing.separator"));
-
-	public static final ScreenElement VARIABLE =
-		new ScreenElement("Variable", new GColor("color.fg.listing.variable"));
-
-	public static final ScreenElement PARAMETER_CUSTOM = new ScreenElement(
-		"Parameter, Custom Storage", new GColor("color.fg.listing.function.param.custom"));
-
-	public static final ScreenElement PARAMETER_DYNAMIC = new ScreenElement(
-		"Parameter, Dynamic Storage", new GColor("color.fg.listing.function.param.dynamic"));
-
-	public static final ScreenElement VERSION_TRAK =
-		new ScreenElement("Version Track", new GColor("color.fg.listing.version.tracking"));
-
-	public static final ScreenElement XREF =
-		new ScreenElement("XRef", new GColor("color.fg.listing.xref"));
-
-	public static final ScreenElement XREF_OFFCUT =
-		new ScreenElement("XRef, Offcut", new GColor("color.fg.listing.xref.offcut"));
-
-	public static final ScreenElement XREF_READ =
-		new ScreenElement("XRef Read", new GColor("color.fg.listing.xref.read"));
-
-	public static final ScreenElement XREF_WRITE =
-		new ScreenElement("XRef Write", new GColor("color.fg.listing.xref.write"));
-
-	public static final ScreenElement XREF_OTHER =
-		new ScreenElement("XRef Other", new GColor("color.fg.listing.xref.other"));
-
-	public static final ScreenElement REGISTERS =
-		new ScreenElement("Registers", new GColor("color.fg.listing.register"));
-
-	public static final ScreenElement UNDERLINE =
-		new ScreenElement("Underline", new GColor("color.fg.listing.underline"));
-
-	public static final ScreenElement PCODE_LINE_LABEL =
-		new ScreenElement("P-code Line Label", new GColor("color.fg.listing.pcode.label"));
-
-	public static final ScreenElement PCODE_ADDR_SPACE =
-		new ScreenElement("P-code Address Space", new GColor("color.fg.listing.pcode.space"));
-
-	public static final ScreenElement PCODE_RAW_VARNODE =
-		new ScreenElement("P-code Raw Varnode", new GColor("color.fg.listing.pcode.varnode"));
-
-	public static final ScreenElement PCODE_USEROP =
-		new ScreenElement("P-code Userop", new GColor("color.fg.listing.pcode.userop"));
+	// @formatter:off
+	public static final ScreenElement BACKGROUND = new ScreenElement("Background", ListingColors.BACKGROUND);
+	public static final ScreenElement COMMENT_AUTO = new ScreenElement("Comment, Automatic", CommentColors.AUTO);
+	public static final ScreenElement ADDRESS = new ScreenElement("Address", ListingColors.ADDRESS);
+	public static final ScreenElement BAD_REF_ADDR = new ScreenElement("Bad Reference Address", ListingColors.REF_BAD);
+	public static final ScreenElement BYTES = new ScreenElement("Bytes", ListingColors.BYTES);
+	public static final ScreenElement CONSTANT = new ScreenElement("Constant", ListingColors.CONSTANT);
+	public static final ScreenElement LABELS_UNREFD = new ScreenElement("Labels, Unreferenced", LabelColors.UNREFERENCED);
+	public static final ScreenElement ENTRY_POINT = new ScreenElement("Entry Point", ListingColors.EXT_ENTRY_POINT);
+	public static final ScreenElement COMMENT_EOL = new ScreenElement("Comment, EOL", "EOL Comment", CommentColors.EOL);
+	public static final ScreenElement EXT_REF_RESOLVED = new ScreenElement("External Reference, Resolved", ListingColors.EXT_REF_RESOLVED);
+	public static final ScreenElement FIELD_NAME = new ScreenElement("Field Name", ListingColors.FIELD_NAME);
+	public static final ScreenElement FUN_CALL_FIXUP = new ScreenElement("Function Call-Fixup", FunctionColors.CALL_FIXUP);
+	public static final ScreenElement FUN_NAME = new ScreenElement("Function Name", FunctionColors.NAME);
+	public static final ScreenElement FUN_PARAMS = new ScreenElement("Function Parameters", FunctionColors.PARAM);
+	public static final ScreenElement FUN_TAG = new ScreenElement("Function Tag", FunctionColors.TAG);
+	public static final ScreenElement FUN_AUTO_PARAMS = new ScreenElement("Function Auto-Parameters", FunctionColors.PARAM_AUTO);
+	public static final ScreenElement FUN_RET_TYPE = new ScreenElement("Function Return Type", FunctionColors.RETURN_TYPE);
+	public static final ScreenElement COMMENT_REPEATABLE = new ScreenElement("Comment, Repeatable", CommentColors.REPEATABLE);
+	public static final ScreenElement COMMENT_REF_REPEAT = new ScreenElement("Comment, Referenced Repeatable", CommentColors.REF_REPEATABLE);
+	public static final ScreenElement LABELS_LOCAL = new ScreenElement("Labels, Local", LabelColors.LOCAL);
+	public static final ScreenElement MNEMONIC = new ScreenElement("Mnemonic", MnemonicColors.NORMAL);
+	public static final ScreenElement MNEMONIC_OVERRIDE = new ScreenElement("Mnemonic, Override", MnemonicColors.OVERRIDE);
+	public static final ScreenElement MNEMONIC_UNIMPL = new ScreenElement("Unimplemented Mnemonic", MnemonicColors.UNIMPLEMENTED);
+	public static final ScreenElement FLOW_ARROW_ACTIVE = new ScreenElement("Flow Arrow, Active", FlowArrowColors.ACTIVE);
+	public static final ScreenElement FLOW_ARROW_NON_ACTIVE = new ScreenElement("Flow Arrow, Not Active", FlowArrowColors.INACTIVE);
+	public static final ScreenElement FLOW_ARROW_SELECTED = new ScreenElement("Flow Arrow, Selected", FlowArrowColors.SELECTED);
+	public static final ScreenElement LABELS_PRIMARY = new ScreenElement("Labels, Primary", LabelColors.PRIMARY);
+	public static final ScreenElement LABELS_NON_PRIMARY = new ScreenElement("Labels, Non-primary", LabelColors.NON_PRIMARY);
+	public static final ScreenElement COMMENT_PLATE = new ScreenElement("Comment, Plate", "Plate Comment", CommentColors.PLATE);
+	public static final ScreenElement COMMENT_POST = new ScreenElement("Comment, Post", "Post-Comment", CommentColors.POST);
+	public static final ScreenElement COMMENT_PRE = new ScreenElement("Comment, Pre", "Pre-Comment", CommentColors.PRE);
+	public static final ScreenElement SEPARATOR = new ScreenElement("Separator", ListingColors.SEPARATOR);
+	public static final ScreenElement VARIABLE = new ScreenElement("Variable", FunctionColors.VARIABLE);
+	public static final ScreenElement PARAMETER_CUSTOM = new ScreenElement("Parameter, Custom Storage", FunctionColors.PARAM_CUSTOM);
+	public static final ScreenElement PARAMETER_DYNAMIC = new ScreenElement("Parameter, Dynamic Storage", FunctionColors.PARAM_DYNAMIC);
+	public static final ScreenElement XREF = new ScreenElement("XRef", XrefColors.DEFAULT);
+	public static final ScreenElement XREF_OFFCUT = new ScreenElement("XRef, Offcut", XrefColors.OFFCUT);
+	public static final ScreenElement XREF_READ = new ScreenElement("XRef Read", XrefColors.READ);
+	public static final ScreenElement XREF_WRITE = new ScreenElement("XRef Write", XrefColors.WRITE);
+	public static final ScreenElement XREF_OTHER = new ScreenElement("XRef Other", XrefColors.OTHER);
+	public static final ScreenElement REGISTERS = new ScreenElement("Registers", ListingColors.REGISTER);
+	public static final ScreenElement UNDERLINE = new ScreenElement("Underline", ListingColors.UNDERLINE);
+	public static final ScreenElement PCODE_LINE_LABEL = new ScreenElement("P-code Line Label", PcodeColors.LABEL);
+	public static final ScreenElement PCODE_ADDR_SPACE = new ScreenElement("P-code Address Space", PcodeColors.ADDRESS_SPACE);
+	public static final ScreenElement PCODE_RAW_VARNODE = new ScreenElement("P-code Raw Varnode", PcodeColors.VARNODE);
+	public static final ScreenElement PCODE_USEROP = new ScreenElement("P-code Userop", PcodeColors.USEROP);
 
 	//@formatter:on
 
-	static ScreenElement[] elements = { ADDRESS, BACKGROUND, BAD_REF_ADDR, BYTES, COMMENT_AUTO,
-		COMMENT_EOL, COMMENT_PLATE, COMMENT_POST, COMMENT_PRE, COMMENT_REPEATABLE,
-		COMMENT_REF_REPEAT, CONSTANT, ENTRY_POINT, EXT_REF_RESOLVED, FIELD_NAME, FLOW_ARROW_ACTIVE,
-		FLOW_ARROW_NON_ACTIVE, FLOW_ARROW_SELECTED, FUN_CALL_FIXUP, FUN_NAME, FUN_PARAMS,
-		FUN_AUTO_PARAMS, FUN_RET_TYPE,
-		FUN_TAG, LABELS_LOCAL, LABELS_NON_PRIMARY, LABELS_PRIMARY, LABELS_UNREFD, MNEMONIC,
-		MNEMONIC_OVERRIDE, PARAMETER_CUSTOM, PARAMETER_DYNAMIC, PCODE_LINE_LABEL, PCODE_ADDR_SPACE,
-		PCODE_RAW_VARNODE, PCODE_USEROP, REGISTERS, SEPARATOR, UNDERLINE, UNIMPL, VARIABLE,
-		VERSION_TRAK, XREF, XREF_OFFCUT, XREF_READ, XREF_WRITE, XREF_OTHER };
+	static ScreenElement[] elements =
+		{ ADDRESS, BACKGROUND, BAD_REF_ADDR, BYTES, COMMENT_AUTO, COMMENT_EOL, COMMENT_PLATE,
+			COMMENT_POST, COMMENT_PRE, COMMENT_REPEATABLE, COMMENT_REF_REPEAT, CONSTANT,
+			ENTRY_POINT, EXT_REF_RESOLVED, FIELD_NAME, FLOW_ARROW_ACTIVE, FLOW_ARROW_NON_ACTIVE,
+			FLOW_ARROW_SELECTED, FUN_CALL_FIXUP, FUN_NAME, FUN_PARAMS, FUN_AUTO_PARAMS,
+			FUN_RET_TYPE, FUN_TAG, LABELS_LOCAL, LABELS_NON_PRIMARY, LABELS_PRIMARY, LABELS_UNREFD,
+			MNEMONIC, MNEMONIC_OVERRIDE, PARAMETER_CUSTOM, PARAMETER_DYNAMIC, PCODE_LINE_LABEL,
+			PCODE_ADDR_SPACE, PCODE_RAW_VARNODE, PCODE_USEROP, REGISTERS, SEPARATOR, UNDERLINE,
+			MNEMONIC_UNIMPL, VARIABLE, XREF, XREF_OFFCUT, XREF_READ, XREF_WRITE, XREF_OTHER };
 
 	private Map<Integer, FontMetrics> metricsMap = new HashMap<>();
 

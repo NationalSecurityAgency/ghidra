@@ -20,6 +20,7 @@ import java.io.IOException;
 import db.*;
 import db.buffers.BufferFile;
 import generic.test.AbstractGenericTest;
+import generic.test.AbstractGuiTest;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.framework.data.GhidraFolder;
 import ghidra.framework.model.DomainFile;
@@ -158,7 +159,7 @@ public abstract class AbstractMTFModel {
 		}
 		if (resultProgram != null) {
 			resultProgram.flushEvents();
-			AbstractGenericTest.waitForSwing();
+			AbstractGuiTest.waitForSwing();
 			resultProgram.release(this);
 			resultProgram = null;
 		}

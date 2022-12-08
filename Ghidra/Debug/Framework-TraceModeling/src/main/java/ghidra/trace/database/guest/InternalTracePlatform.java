@@ -102,13 +102,19 @@ public interface InternalTracePlatform extends TracePlatform {
 
 	@Override
 	default PathMatcher getConventionalRegisterPath(TargetObjectSchema schema, List<String> path,
-			Register register) {
+			String name) {
 		PathMatcher matcher = schema.searchFor(TargetRegister.class, path, true);
 		if (matcher.isEmpty()) {
 			return matcher;
 		}
-		String name = getConventionalRegisterObjectName(register);
 		return matcher.applyKeys(Align.RIGHT, List.of(name));
+	}
+
+	@Override
+	default PathMatcher getConventionalRegisterPath(TargetObjectSchema schema, List<String> path,
+			Register register) {
+		return getConventionalRegisterPath(schema, path,
+			getConventionalRegisterObjectName(register));
 	}
 
 	@Override

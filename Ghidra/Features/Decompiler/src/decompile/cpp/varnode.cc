@@ -352,6 +352,22 @@ void Varnode::clearFlags(uint4 fl) const
   }
 }
 
+/// For \b this Varnode and any others attached to the same HighVariable,
+/// remove any SymbolEntry reference and associated properties.
+void Varnode::clearSymbolLinks(void)
+
+{
+  bool foundEntry = false;
+  for(int4 i=0;i<high->numInstances();++i) {
+    Varnode *vn = high->getInstance(i);
+    foundEntry = foundEntry || (vn->mapentry != (SymbolEntry *)0);
+    vn->mapentry = (SymbolEntry *)0;
+    vn->clearFlags(Varnode::namelock | Varnode::typelock | Varnode::mapped);
+  }
+  if (foundEntry)
+    high->symbolDirty();
+}
+
 /// Directly change the defining PcodeOp and set appropriate dirty bits
 /// \param op is the pointer to the new PcodeOp, which can be \b null
 void Varnode::setDef(PcodeOp *op)
@@ -859,6 +875,135 @@ bool Varnode::copyShadow(const Varnode *op2) const
     op2 = op2->getDef()->getIn(0);
     if (vn == op2) return true;	// If the source is the same then this and op2 are same
   }
+  return false;
+}
+
+/// \brief Try to find a SUBPIECE operation producing the value in \b this from the given \b whole Varnode
+///
+/// The amount of truncation producing \b this must be known apriori. Allow for COPY and MULTIEQUAL operations
+/// in the flow path from \b whole to \b this.  This method will search recursively through branches
+/// of MULTIEQUAL up to a maximum depth.
+/// \param leastByte is the number of least significant bytes being truncated from \b whole to get \b this
+/// \param whole is the given whole Varnode
+/// \param recurse is the current depth of recursion
+/// \return \b true if \b this and \b whole have the prescribed SUBPIECE relationship
+bool Varnode::findSubpieceShadow(int4 leastByte,const Varnode *whole,int4 recurse) const
+
+{
+  const Varnode *vn = this;
+  while( vn->isWritten() && vn->getDef()->code() == CPUI_COPY)
+    vn = vn->getDef()->getIn(0);
+  if (!vn->isWritten()) {
+    if (vn->isConstant()) {
+      while( whole->isWritten() && whole->getDef()->code() == CPUI_COPY)
+        whole = whole->getDef()->getIn(0);
+      if (!whole->isConstant()) return false;
+      uintb off = whole->getOffset() >> leastByte*8;
+      off &= calc_mask(vn->getSize());
+      return (off == vn->getOffset());
+   }
+    return false;
+  }
+  OpCode opc = vn->getDef()->code();
+  if (opc == CPUI_SUBPIECE) {
+    const Varnode *tmpvn = vn->getDef()->getIn(0);
+    int4 off = (int4)vn->getDef()->getIn(1)->getOffset();
+    if (off != leastByte || tmpvn->getSize() != whole->getSize())
+      return false;
+    if (tmpvn == whole) return true;
+    while(tmpvn->isWritten() && tmpvn->getDef()->code() == CPUI_COPY) {
+      tmpvn = tmpvn->getDef()->getIn(0);
+      if (tmpvn == whole) return true;
+    }
+  }
+  else if (opc == CPUI_MULTIEQUAL) {
+    recurse += 1;
+    if (recurse > 1) return false;	// Truncate the recursion at maximum depth
+    while( whole->isWritten() && whole->getDef()->code() == CPUI_COPY)
+      whole = whole->getDef()->getIn(0);
+    if (!whole->isWritten()) return false;
+    const PcodeOp *bigOp = whole->getDef();
+    if (bigOp->code() != CPUI_MULTIEQUAL) return false;
+    const PcodeOp *smallOp = vn->getDef();
+    if (bigOp->getParent() != smallOp->getParent()) return false;
+    // Recurse search through all branches of the two MULTIEQUALs
+    for(int4 i=0;i<smallOp->numInput();++i) {
+      if (!smallOp->getIn(i)->findSubpieceShadow(leastByte, bigOp->getIn(i), recurse))
+	return false;
+    }
+    return true;	// All branches were copy shadows
+  }
+  return false;
+}
+
+bool Varnode::findPieceShadow(int4 leastByte,const Varnode *piece) const
+
+{
+  const Varnode *vn = this;
+  while( vn->isWritten() && vn->getDef()->code() == CPUI_COPY)
+    vn = vn->getDef()->getIn(0);
+  if (!vn->isWritten()) return false;
+  OpCode opc = vn->getDef()->code();
+  if (opc == CPUI_PIECE) {
+    const Varnode *tmpvn = vn->getDef()->getIn(1);	// Least significant part
+    if (leastByte >= tmpvn->getSize()) {
+      leastByte -= tmpvn->getSize();
+      tmpvn = vn->getDef()->getIn(0);
+    }
+    else {
+      if (piece->getSize() + leastByte > tmpvn->getSize()) return false;
+    }
+    if (leastByte == 0 && tmpvn->getSize() == piece->getSize()) {
+      if (tmpvn == piece) return true;
+      while(tmpvn->isWritten() && tmpvn->getDef()->code() == CPUI_COPY) {
+	tmpvn = tmpvn->getDef()->getIn(0);
+	if (tmpvn == piece) return true;
+      }
+      return false;
+    }
+    // CPUI_PIECE input is too big, recursively search for another CPUI_PIECE
+    return tmpvn->findPieceShadow(leastByte, piece);
+  }
+  return false;
+}
+
+/// For \b this and another Varnode, establish that either:
+///  - bigger = CONCAT(smaller,..) or
+///  - smaller = SUBPIECE(bigger)
+///
+/// Check through COPY chains and verify that the form of the CONCAT or SUBPIECE matches
+/// a given relative offset between the Varnodes.
+/// \param op2 is the Varnode to compare to \b this
+/// \param relOff is the putative relative byte offset of \b this to \b op2
+/// \return \b true if one Varnode is contained, as a value, in the other
+bool Varnode::partialCopyShadow(const Varnode *op2,int4 relOff) const
+
+{
+  const Varnode *vn;
+
+  if (size < op2->size) {
+    vn = this;
+  }
+  else if (size > op2->size) {
+    vn = op2;
+    op2 = this;
+    relOff = -relOff;
+  }
+  else
+    return false;
+  if (relOff < 0)
+    return false;		// Not proper containment
+  if (relOff + vn->getSize() > op2->getSize())
+    return false;		// Not proper containment
+
+  bool bigEndian = getSpace()->isBigEndian();
+  int4 leastByte = bigEndian ? (op2->getSize() - vn->getSize()) - relOff : relOff;
+  if (vn->findSubpieceShadow(leastByte, op2, 0))
+    return true;
+
+  if (op2->findPieceShadow(leastByte, vn))
+    return true;
+
   return false;
 }
 
@@ -1469,6 +1614,44 @@ VarnodeLocSet::const_iterator VarnodeBank::endLoc(int4 s,const Address &addr,
   searchvn.size = 0;
   searchvn.flags = Varnode::input;
   return iter;
+}
+
+/// \brief Given start, return maximal range of overlapping Varnodes
+///
+/// Advance the iterator until no Varnodes after the iterator intersect any Varnodes
+/// from the initial Varnode through the current iterator.  The range is returned as pairs
+/// of iterators to subranges. One subrange for each set of Varnodes with the same size and starting address.
+/// A final iterator to the next Varnode after the overlapping set is also passed back.
+/// \param iter is an iterator to the given start Varnode
+/// \param bounds holds the array of iterator pairs passed back
+/// \return the union of Varnode flags across the range
+uint4 VarnodeBank::overlapLoc(VarnodeLocSet::const_iterator iter,vector<VarnodeLocSet::const_iterator> &bounds) const
+
+{
+  Varnode *vn = *iter;
+  AddrSpace *spc = vn->getSpace();
+  uintb off = vn->getOffset();
+  uintb maxoff = off + (vn->getSize() - 1);
+  uint4 flags = vn->getFlags();
+  bounds.push_back(iter);
+  iter = endLoc(vn->getSize(),vn->getAddr(),Varnode::written);
+  bounds.push_back(iter);
+  while(iter != loc_tree.end()) {
+    vn = *iter;
+    if (vn->getSpace() != spc || vn->getOffset() > maxoff)
+      break;
+    if (vn->isFree()) {
+      iter = endLoc(vn->getSize(),vn->getAddr(),0);
+      continue;
+    }
+    maxoff = vn->getOffset() + (vn->getSize() - 1);
+    flags |= vn->getFlags();
+    bounds.push_back(iter);
+    iter = endLoc(vn->getSize(),vn->getAddr(),Varnode::written);
+    bounds.push_back(iter);
+  }
+  bounds.push_back(iter);
+  return flags;
 }
 
 /// \brief Beginning of varnodes with set definition property

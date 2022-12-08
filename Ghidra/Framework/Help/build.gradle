@@ -23,8 +23,7 @@ apply plugin: 'eclipse'
 eclipse.project.name = 'Framework Help'
 
 dependencies {
-	api project(':Utility')
-	api project(':Generic')
+	api project(':Gui')
 	
 	api 'net.java.dev.timingframework:timingframework:1.0'
 	

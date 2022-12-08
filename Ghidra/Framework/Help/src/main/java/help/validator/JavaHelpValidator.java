@@ -95,7 +95,8 @@ public class JavaHelpValidator {
 		Map<HelpFile, Map<String, List<AnchorDefinition>>> duplicateAnchors =
 			helpCollection.getDuplicateAnchorsByFile();
 		debug("\tHelp files with duplicate anchors: " + duplicateAnchors.size());
-		for (Entry<HelpFile, Map<String, List<AnchorDefinition>>> entry : duplicateAnchors.entrySet()) {
+		for (Entry<HelpFile, Map<String, List<AnchorDefinition>>> entry : duplicateAnchors
+				.entrySet()) {
 			HelpFile helpFile = entry.getKey();
 			Map<String, List<AnchorDefinition>> list = entry.getValue();
 			linkDatabase.addDuplicateAnchors(
@@ -174,16 +175,59 @@ public class JavaHelpValidator {
 
 	private Path findPathInModules(IMG img) {
 
-		String rawSrc = img.getSrcAttribute();
-		Collection<ResourceFile> moduleRoots = Application.getModuleRootDirectories();
-		for (ResourceFile root : moduleRoots) {
-			ResourceFile resourceDir = new ResourceFile(root, "src/main/resources");
-			Path toCheck = makePath(resourceDir, rawSrc);
+		String src = img.getSrcAttribute();
+
+		// TODO upcoming 'shared' unification
+//		if (src.startsWith(HelpLocation.HELP_IMAGES)) {
+		if (src.startsWith("../../shared/")) {
+
+			// this prefix is a signal to look for images in a special directory inside of the 
+			// modules instead of help
+			String imagePath = "help/" + src.substring("../../".length());
+
+			ResourceFile myModule = Application.getMyModuleRootDirectory();
+			ResourceFile resourceDir = new ResourceFile(myModule, "src/main/resources");
+			Path toCheck = makePath(resourceDir, imagePath);
+			if (toCheck != null) {
+				return toCheck;
+			}
+
+			// now try removing the 'shared' portion altogether
+			imagePath = "images/" + src.substring("../../shared/".length());
+			Path path = doFindPathInModules(imagePath);
+			if (path != null) {
+				return path;
+			}
+
+			// TODO upcoming 'shared' unification
+//			Path path = doFindPathInModules(imagePath);
+//			if (path != null) {
+//				return path;
+//			}
+		}
+
+		// TODO upcoming 'shared' unification - fix the few of these that are left-over in the html
+		if (src.startsWith("../images/")) {
+			String imagePath = src.substring("../".length());
+			Path toCheck = doFindPathInModules(imagePath);
 			if (toCheck != null) {
 				return toCheck;
 			}
 		}
 
+		return doFindPathInModules(src);
+	}
+
+	private Path doFindPathInModules(String path) {
+
+		Collection<ResourceFile> moduleRoots = Application.getModuleRootDirectories();
+		for (ResourceFile root : moduleRoots) {
+			ResourceFile resourceDir = new ResourceFile(root, "src/main/resources");
+			Path toCheck = makePath(resourceDir, path);
+			if (toCheck != null) {
+				return toCheck;
+			}
+		}
 		return null;
 	}
 

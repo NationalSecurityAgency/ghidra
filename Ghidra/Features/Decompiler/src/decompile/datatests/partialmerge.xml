@@ -1,0 +1,64 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+    Contrived examples of propagating a partial varnode (a structure field) when
+    the whole varnode (the whole structure) is also being manipulated.
+-->
+<bytechunk space="ram" offset="0x1006a7" readonly="true">
+              8b1dc3ffffff48893d
+bcffffff83c30a89d8c300008b05aeff
+ffff01f048893da5ffffff83c00ac3
+</bytechunk>
+<bytechunk space="ram" offset="0x1006e6" readonly="true">
+            4883ec104889e766e893
+008b1c244889e766e8890089d8c30000
+8b1d6affffff488b3d63ffffff66e873
+0089d8c34883ec10488b0551ffffff48
+8904244889e766e85a008b5c24044889
+e766e84f0089d84883c410c348893d2d
+ffffff83fe0a7f0c66e838008b051eff
+ffffeb0a66e8b8fd8b0512ffffff83c0
+07c3
+</bytechunk>
+<symbol space="ram" offset="0x1006a7" name="readpartial"/>
+<symbol space="ram" offset="0x1006bc" name="read_expr_interfere"/>
+<symbol space="ram" offset="0x100700" name="readpartial_callinterfere"/>
+<symbol space="ram" offset="0x100714" name="readpartialstack_inbetween"/>
+<symbol space="ram" offset="0x10073c" name="partial_restore"/>
+</binaryimage>
+<script>
+  <com>parse line struct highlow { int4 a; int4 b; };</com>
+  <com>map addr r0x100670 highlow glob1</com>
+  <com>lo fu readpartial</com>
+  <com>map hash r0x1006a7 3f9001cf6a int4 a_simple</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu read_expr_interfere</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu readpartial_callinterfere</com>
+  <com>map hash r0x100700 3fc348d857 int4 a_call</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu readpartialstack_inbetween</com>
+  <com>map addr s0xfffffffffffffff0 highlow hilo_stack</com>
+  <com>map hash r0x10072a 3ff1b7c944 int4 b_between</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu partial_restore</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Partial Merge #1" min="1" max="1">a_simple = glob1\.a;</stringmatch>
+<stringmatch name="Partial Merge #2" min="1" max="1">return a_simple \+ 10;</stringmatch>
+<stringmatch name="Partial Merge #3" min="0" max="0">return glob1\.a \+ 10;</stringmatch>
+<stringmatch name="Partial Merge #4" min="1" max="1">param_2 = glob1\.a \+ param_2;</stringmatch>
+<stringmatch name="Partial Merge #5" min="1" max="1">return param_2 \+ 10;</stringmatch>
+<stringmatch name="Partial Merge #6" min="1" max="1">a_call = glob1\.a;</stringmatch>
+<stringmatch name="Partial Merge #7" min="1" max="1">return a_call;</stringmatch>
+<stringmatch name="Partial Merge #8" min="1" max="1">return a_call;</stringmatch>
+<stringmatch name="Partial Merge #9" min="1" max="1">b_between = hilo_stack\.b;</stringmatch>
+<stringmatch name="Partial Merge #10" min="1" max="1">return b_between;</stringmatch>
+<stringmatch name="Partial Merge #11" min="1" max="1">return glob1\.a \+ 7;</stringmatch>
+</decompilertest>

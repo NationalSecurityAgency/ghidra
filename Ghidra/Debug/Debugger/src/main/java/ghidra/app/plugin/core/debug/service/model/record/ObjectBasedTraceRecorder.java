@@ -29,6 +29,7 @@ import ghidra.app.services.TraceRecorderListener;
 import ghidra.async.AsyncFence;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.AnnotatedDebuggerAttributeListener;
+import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.error.DebuggerMemoryAccessException;
 import ghidra.dbg.error.DebuggerModelAccessException;
 import ghidra.dbg.target.*;
@@ -539,6 +540,73 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 
 	protected static byte[] encodeValue(int byteLength, BigInteger value) {
 		return Utils.bigIntegerToBytes(value, byteLength, true);
+	}
+
+	protected TargetRegisterBank isExactRegisterOnTarget(TracePlatform platform,
+			TargetRegisterContainer regContainer, String name) {
+		PathMatcher matcher =
+			platform.getConventionalRegisterPath(regContainer.getSchema(), List.of(), name);
+		for (TargetObject targetObject : matcher.getCachedSuccessors(regContainer).values()) {
+			if (!(targetObject instanceof TargetRegister targetRegister)) {
+				continue;
+			}
+			DebuggerObjectModel model = targetRegister.getModel();
+			List<String> pathBank = model.getRootSchema()
+					.searchForAncestor(TargetRegisterBank.class, targetRegister.getPath());
+			if (pathBank == null ||
+				!(model.getModelObject(pathBank) instanceof TargetRegisterBank targetBank)) {
+				continue;
+			}
+			return targetBank;
+		}
+		return null;
+	}
+
+	protected TargetRegisterBank isExactRegisterOnTarget(TracePlatform platform, TraceThread thread,
+			int frameLevel, Register register) {
+		TargetRegisterContainer regContainer = getTargetRegisterContainer(thread, frameLevel);
+		if (regContainer == null) {
+			return null;
+		}
+		TargetRegisterBank result;
+		String name = platform.getConventionalRegisterObjectName(register);
+		result = isExactRegisterOnTarget(platform, regContainer, name);
+		if (result != null) {
+			return result;
+		}
+		// Not totally case insensitive, but the sane cases
+		String upperName = name.toUpperCase();
+		if (!name.equals(upperName)) {
+			result = isExactRegisterOnTarget(platform, regContainer, upperName);
+			if (result != null) {
+				return result;
+			}
+		}
+		String lowerName = name.toLowerCase();
+		if (!name.equals(lowerName)) {
+			result = isExactRegisterOnTarget(platform, regContainer, lowerName);
+			if (result != null) {
+				return result;
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public Register isRegisterOnTarget(TracePlatform platform, TraceThread thread, int frameLevel,
+			Register register) {
+		for (; register != null; register = register.getParentRegister()) {
+			TargetRegisterBank targetBank =
+				isExactRegisterOnTarget(platform, thread, frameLevel, register);
+			if (targetBank != null) {
+				/**
+				 * TODO: A way to ask the target which registers are modifiable, but
+				 * "isRegisterOnTarget" does not necessarily imply for writing
+				 */
+				return register;
+			}
+		}
+		return null;
 	}
 
 	@Override

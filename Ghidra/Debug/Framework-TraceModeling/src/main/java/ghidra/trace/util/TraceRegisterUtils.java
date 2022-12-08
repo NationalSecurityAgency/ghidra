@@ -140,24 +140,31 @@ public enum TraceRegisterUtils {
 		return new RegisterValue(register, addr.getOffsetAsBigInteger());
 	}
 
-	public static RegisterValue combineWithTraceBaseRegisterValue(RegisterValue rv,
-			TracePlatform platform, long snap, TraceMemorySpace regs, boolean requireKnown) {
+	public static RegisterValue combineWithTraceParentRegisterValue(Register parent,
+			RegisterValue rv, TracePlatform platform, long snap, TraceMemorySpace regs,
+			boolean requireKnown) {
 		Register reg = rv.getRegister();
-		if (reg.isBaseRegister()) {
+		if (reg == parent) {
 			return rv;
 		}
 		if (regs == null) {
 			if (requireKnown) {
-				throw new IllegalStateException("Must fetch base register before setting a child");
+				throw new IllegalStateException("Must fetch " + parent + " before setting " + reg);
 			}
-			return rv.getBaseRegisterValue();
+			return rv.getRegisterValue(parent);
 		}
 		if (requireKnown) {
-			if (TraceMemoryState.KNOWN != regs.getState(platform, snap, reg.getBaseRegister())) {
-				throw new IllegalStateException("Must fetch base register before setting a child");
+			if (TraceMemoryState.KNOWN != regs.getState(platform, snap, parent)) {
+				throw new IllegalStateException("Must fetch " + parent + " before setting " + reg);
 			}
 		}
-		return regs.getValue(platform, snap, reg.getBaseRegister()).combineValues(rv);
+		return regs.getValue(platform, snap, parent).combineValues(rv);
+	}
+
+	public static RegisterValue combineWithTraceBaseRegisterValue(RegisterValue rv,
+			TracePlatform platform, long snap, TraceMemorySpace regs, boolean requireKnown) {
+		return combineWithTraceParentRegisterValue(rv.getRegister().getBaseRegister(), rv, platform,
+			snap, regs, requireKnown);
 	}
 
 	public static ByteBuffer prepareBuffer(Register register) {

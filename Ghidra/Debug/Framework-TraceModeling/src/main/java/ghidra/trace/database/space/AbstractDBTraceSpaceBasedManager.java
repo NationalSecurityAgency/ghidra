@@ -40,7 +40,6 @@ import ghidra.util.LockHold;
 import ghidra.util.Msg;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
-import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
@@ -207,8 +206,9 @@ public abstract class AbstractDBTraceSpaceBasedManager<M extends DBTraceSpaceBas
 
 	protected M getForRegisterSpace(TraceThread thread, int frameLevel, boolean createIfAbsent) {
 		trace.getThreadManager().assertIsMine(thread);
-		if (thread instanceof TraceObjectThread objThread) {
-			return getForRegisterSpaceObjectThread(objThread, frameLevel, createIfAbsent);
+		if (trace.getObjectManager().hasSchema()) {
+			return getForRegisterSpaceObjectThread((TraceObjectThread) thread, frameLevel,
+				createIfAbsent);
 		}
 		Pair<TraceThread, Integer> frame = ImmutablePair.of(thread, frameLevel);
 		if (!createIfAbsent) {

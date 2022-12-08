@@ -25,6 +25,7 @@ import docking.action.MenuData;
 import docking.widgets.tree.GTreeNode;
 import generic.theme.GIcon;
 import ghidra.framework.main.datatree.*;
+import ghidra.util.HelpLocation;
 
 public class ProjectDataCutAction extends ProjectDataCopyCutBaseAction {
 	private static final Icon ICON = new GIcon("icon.projectdata.cut");
@@ -33,7 +34,7 @@ public class ProjectDataCutAction extends ProjectDataCopyCutBaseAction {
 		super("Cut", owner);
 		setPopupMenuData(new MenuData(new String[] { "Cut" }, ICON, group));
 		setKeyBindingData(new KeyBindingData('X', InputEvent.CTRL_DOWN_MASK));
-		markHelpUnnecessary();
+		setHelpLocation(new HelpLocation("FrontEndPlugin", "Cut"));
 	}
 
 	@Override

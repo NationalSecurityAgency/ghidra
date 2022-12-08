@@ -454,5 +454,4 @@ public class LabelFieldFactory extends FieldFactory {
 			ToolOptions pDisplayOptions, ToolOptions fieldOptions) {
 		return new LabelFieldFactory(formatModel, provider, pDisplayOptions, fieldOptions);
 	}
-
 }

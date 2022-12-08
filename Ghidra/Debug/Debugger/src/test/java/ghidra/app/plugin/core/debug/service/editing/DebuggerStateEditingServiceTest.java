@@ -30,6 +30,7 @@ import ghidra.app.services.DebuggerStateEditingService;
 import ghidra.app.services.DebuggerStateEditingService.StateEditingMode;
 import ghidra.app.services.DebuggerStateEditingService.StateEditor;
 import ghidra.app.services.TraceRecorder;
+import ghidra.async.AsyncUtils.TemperamentalRunnable;
 import ghidra.dbg.target.TargetRegisterBank;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.mem.MemoryAccessException;
@@ -61,6 +62,27 @@ public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebugge
 		return tb.trace.getPlatformManager().getHostPlatform();
 	}
 
+	/**
+	 * Verify that the given action (usually a lambda) throws an exception
+	 * 
+	 * <p>
+	 * This fulfills the same use case as the {@link Test#expected()} attribute, but allows more
+	 * precise verification of which code in the test causes the exception.
+	 */
+	<E extends Throwable> E expecting(Class<E> cls, TemperamentalRunnable action) {
+		try {
+			action.run();
+			fail("Expected exception type " + cls + ", but got no error.");
+		}
+		catch (Throwable e) {
+			if (cls.isInstance(e)) {
+				return cls.cast(e);
+			}
+			fail("Expection exception type " + cls + ", but got " + e);
+		}
+		throw new AssertionError();
+	}
+
 	@Before
 	public void setUpEditorTest() throws Exception {
 		editingService = addPlugin(tool, DebuggerStateEditingServicePlugin.class);
@@ -72,7 +94,7 @@ public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebugge
 		rvHigh1234 = new RegisterValue(r0h, BigInteger.valueOf(1234));
 	}
 
-	@Test(expected = IllegalArgumentException.class)
+	@Test
 	public void testWriteEmuMemoryNoThreadErr() throws Throwable {
 		/**
 		 * TODO: It'd be nice if this worked, since memory edits don't really require a thread
@@ -86,10 +108,13 @@ public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebugge
 		editingService.setCurrentMode(tb.trace, StateEditingMode.WRITE_EMULATOR);
 
 		StateEditor editor = createStateEditor();
-		waitOn(editor.setVariable(tb.addr(0x00400000), tb.arr(1, 2, 3, 4)));
+		assertFalse(editor.isVariableEditable(tb.addr(0x00400000), 4));
+		expecting(IllegalArgumentException.class, () -> {
+			waitOn(editor.setVariable(tb.addr(0x00400000), tb.arr(1, 2, 3, 4)));
+		});
 	}
 
-	@Test(expected = IllegalArgumentException.class)
+	@Test
 	public void testWriteEmuRegisterNoThreadErr() throws Throwable {
 		createAndOpenTrace();
 		editingService.setCurrentMode(tb.trace, StateEditingMode.WRITE_EMULATOR);
@@ -98,7 +123,10 @@ public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebugge
 		waitForSwing();
 
 		StateEditor editor = createStateEditor();
-		waitOn(editor.setRegister(rv1234));
+		assertFalse(editor.isRegisterEditable(r0));
+		expecting(IllegalArgumentException.class, () -> {
+			waitOn(editor.setRegister(rv1234));
+		});
 	}
 
 	@Test
@@ -114,6 +142,7 @@ public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebugge
 		waitForSwing();
 
 		StateEditor editor = createStateEditor();
+		assertTrue(editor.isVariableEditable(tb.addr(0x00400000), 4));
 		waitOn(editor.setVariable(tb.addr(0x00400000), tb.arr(1, 2, 3, 4)));
 		waitForSwing();
 
@@ -140,6 +169,7 @@ public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebugge
 		waitForSwing();
 
 		StateEditor editor = createStateEditor();
+		assertTrue(editor.isRegisterEditable(r0));
 		waitOn(editor.setRegister(rv1234));
 		waitForSwing();
 
@@ -178,6 +208,7 @@ public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebugge
 		waitForPass(() -> assertEquals(step1, traceManager.getCurrent().getTime()));
 
 		StateEditor editor = createStateEditor();
+		assertTrue(editor.isVariableEditable(tb.addr(0x00600000), 4));
 		waitOn(editor.setVariable(tb.addr(0x00600000), tb.arr(1, 2, 3, 4)));
 		waitForSwing();
 
@@ -216,6 +247,7 @@ public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebugge
 		waitForPass(() -> assertEquals(step1, traceManager.getCurrent().getTime()));
 
 		StateEditor editor = createStateEditor();
+		assertTrue(editor.isRegisterEditable(r0));
 		waitOn(editor.setRegister(rv1234));
 		waitForSwing();
 
@@ -243,7 +275,9 @@ public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebugge
 		waitForSwing();
 
 		StateEditor editor = createStateEditor();
+		assertTrue(editor.isVariableEditable(tb.addr(0x00400000), 4));
 		waitOn(editor.setVariable(tb.addr(0x00400000), tb.arr(1, 2, 3, 4)));
+		assertTrue(editor.isVariableEditable(tb.addr(0x00400002), 4));
 		waitOn(editor.setVariable(tb.addr(0x00400002), tb.arr(5, 6, 7, 8)));
 		waitForSwing();
 
@@ -271,6 +305,7 @@ public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebugge
 		waitForSwing();
 
 		StateEditor editor = createStateEditor();
+		assertTrue(editor.isRegisterEditable(r0));
 		waitOn(editor.setRegister(rv1234));
 		waitOn(editor.setRegister(rv5678));
 		waitForSwing();
@@ -295,6 +330,7 @@ public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebugge
 		waitForSwing();
 
 		StateEditor editor = createStateEditor();
+		assertTrue(editor.isVariableEditable(tb.addr(0x00400000), 4));
 		// NB. Editor creates its own transaction
 		waitOn(editor.setVariable(tb.addr(0x00400000), tb.arr(1, 2, 3, 4)));
 		waitForSwing();
@@ -308,7 +344,7 @@ public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebugge
 		assertArrayEquals(tb.arr(1, 2, 3, 4), buf.array());
 	}
 
-	@Test(expected = IllegalArgumentException.class)
+	@Test
 	public void testWriteTraceRegisterNoThreadErr() throws Throwable {
 		// NB. Definitely no thread required
 		createAndOpenTrace();
@@ -317,8 +353,11 @@ public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebugge
 		waitForSwing();
 
 		StateEditor editor = createStateEditor();
+		assertFalse(editor.isRegisterEditable(r0));
 		// NB. Editor creates its own transaction
-		waitOn(editor.setRegister(rv1234));
+		expecting(IllegalArgumentException.class, () -> {
+			waitOn(editor.setRegister(rv1234));
+		});
 	}
 
 	@Test
@@ -336,6 +375,7 @@ public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebugge
 		waitForSwing();
 
 		StateEditor editor = createStateEditor();
+		assertTrue(editor.isRegisterEditable(r0));
 		// NB. Editor creates its own transaction
 		waitOn(editor.setRegister(rv1234));
 		waitForSwing();
@@ -360,6 +400,7 @@ public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebugge
 		editingService.setCurrentMode(recorder.getTrace(), StateEditingMode.WRITE_TARGET);
 
 		StateEditor editor = createStateEditor();
+		assertTrue(editor.isVariableEditable(tb.addr(0x00400000), 4));
 		waitOn(editor.setVariable(tb.addr(0x00400000), tb.arr(1, 2, 3, 4)));
 
 		assertArrayEquals(mb.arr(1, 2, 3, 4),
@@ -379,6 +420,7 @@ public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebugge
 		editingService.setCurrentMode(recorder.getTrace(), StateEditingMode.WRITE_TARGET);
 
 		StateEditor editor = createStateEditor();
+		assertTrue(editor.isRegisterEditable(r0));
 		waitOn(editor.setRegister(rv1234));
 
 		assertArrayEquals(mb.arr(0, 0, 0, 0, 0, 0, 4, 0xd2), waitOn(bank.readRegister("r0")));
@@ -397,6 +439,7 @@ public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebugge
 		editingService.setCurrentMode(recorder.getTrace(), StateEditingMode.WRITE_TARGET);
 
 		StateEditor editor = createStateEditor();
+		assertTrue(editor.isRegisterEditable(r0));
 		waitOn(editor.setRegister(rv1234));
 		waitForPass(() -> {
 			TraceMemorySpace regs =
@@ -405,12 +448,13 @@ public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebugge
 			RegisterValue value = regs.getValue(getPlatform(), traceManager.getCurrentSnap(), r0);
 			assertEquals(rv1234, value);
 		});
+		assertTrue(editor.isRegisterEditable(r0h));
 		waitOn(editor.setRegister(rvHigh1234));
 
 		assertArrayEquals(mb.arr(0, 0, 4, 0xd2, 0, 0, 4, 0xd2), waitOn(bank.readRegister("r0")));
 	}
 
-	@Test(expected = MemoryAccessException.class)
+	@Test
 	public void testWriteTargetMemoryNotPresentErr() throws Throwable {
 		TraceRecorder recorder = recordAndWaitSync();
 		traceManager.openTrace(tb.trace);
@@ -422,10 +466,13 @@ public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebugge
 		traceManager.activateSnap(traceManager.getCurrentSnap() - 1);
 
 		StateEditor editor = createStateEditor();
-		waitOn(editor.setVariable(tb.addr(0x00400000), tb.arr(1, 2, 3, 4)));
+		assertFalse(editor.isVariableEditable(tb.addr(0x00400000), 4));
+		expecting(MemoryAccessException.class, () -> {
+			waitOn(editor.setVariable(tb.addr(0x00400000), tb.arr(1, 2, 3, 4)));
+		});
 	}
 
-	@Test(expected = MemoryAccessException.class)
+	@Test
 	public void testWriteTargetRegisterNotPresentErr() throws Throwable {
 		TraceRecorder recorder = recordAndWaitSync();
 		traceManager.openTrace(tb.trace);
@@ -437,46 +484,61 @@ public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebugge
 		traceManager.activateSnap(traceManager.getCurrentSnap() - 1);
 
 		StateEditor editor = createStateEditor();
-		waitOn(editor.setRegister(rv1234));
+		assertFalse(editor.isRegisterEditable(r0));
+		expecting(MemoryAccessException.class, () -> {
+			waitOn(editor.setRegister(rv1234));
+		});
 	}
 
-	@Test(expected = MemoryAccessException.class)
+	@Test
 	public void testWriteTargetMemoryNotAliveErr() throws Throwable {
 		createAndOpenTrace();
 		activateTrace();
 		editingService.setCurrentMode(tb.trace, StateEditingMode.WRITE_TARGET);
 
 		StateEditor editor = createStateEditor();
-		waitOn(editor.setVariable(tb.addr(0x00400000), tb.arr(1, 2, 3, 4)));
+		assertFalse(editor.isVariableEditable(tb.addr(0x00400000), 4));
+		expecting(MemoryAccessException.class, () -> {
+			waitOn(editor.setVariable(tb.addr(0x00400000), tb.arr(1, 2, 3, 4)));
+		});
 	}
 
-	@Test(expected = MemoryAccessException.class)
+	@Test
 	public void testWriteTargetRegisterNotAliveErr() throws Throwable {
 		createAndOpenTrace();
 		activateTrace();
 		editingService.setCurrentMode(tb.trace, StateEditingMode.WRITE_TARGET);
 
 		StateEditor editor = createStateEditor();
-		waitOn(editor.setRegister(rv1234));
+		assertFalse(editor.isRegisterEditable(r0));
+		expecting(MemoryAccessException.class, () -> {
+			waitOn(editor.setRegister(rv1234));
+		});
 	}
 
-	@Test(expected = MemoryAccessException.class)
+	@Test
 	public void testWriteReadOnlyMemoryErr() throws Throwable {
 		createAndOpenTrace();
 		activateTrace();
 		editingService.setCurrentMode(tb.trace, StateEditingMode.READ_ONLY);
 
 		StateEditor editor = createStateEditor();
-		waitOn(editor.setVariable(tb.addr(0x00400000), tb.arr(1, 2, 3, 4)));
+		assertFalse(editor.isVariableEditable(tb.addr(0x00400000), 4));
+		expecting(MemoryAccessException.class, () -> {
+			waitOn(editor.setVariable(tb.addr(0x00400000), tb.arr(1, 2, 3, 4)));
+		});
 	}
 
-	@Test(expected = MemoryAccessException.class)
+	@Test
 	public void testWriteReadOnlyRegisterErr() throws Throwable {
 		createAndOpenTrace();
 		activateTrace();
 		editingService.setCurrentMode(tb.trace, StateEditingMode.READ_ONLY);
 
 		StateEditor editor = createStateEditor();
-		waitOn(editor.setRegister(rv1234));
+		assertFalse(editor.isRegisterEditable(r0));
+		expecting(MemoryAccessException.class, () -> {
+			waitOn(editor.setRegister(rv1234));
+		});
 	}
 }

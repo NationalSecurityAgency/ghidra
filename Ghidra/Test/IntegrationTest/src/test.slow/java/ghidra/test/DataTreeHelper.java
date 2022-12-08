@@ -25,7 +25,7 @@ import docking.test.AbstractDockingTest;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import generic.test.AbstractGTest;
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGuiTest;
 import ghidra.framework.main.datatable.ProjectDataContext;
 import ghidra.framework.main.datatree.*;
 import ghidra.framework.model.DomainFile;
@@ -104,7 +104,7 @@ public class DataTreeHelper {
 	}
 
 	public void clearTreeSelection() {
-		AbstractGenericTest.runSwing(() -> tree.clearSelection());
+		AbstractGuiTest.runSwing(() -> tree.clearSelection());
 	}
 
 	public void setTreeSelection(final TreePath[] paths) throws Exception {

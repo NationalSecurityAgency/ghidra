@@ -553,22 +553,26 @@ public interface TraceRecorder {
 			Utils.bytesToBigInteger(data, data.length, register.isBigEndian(), false));
 		TraceMemorySpace regs =
 			getTrace().getMemoryManager().getMemoryRegisterSpace(thread, frameLevel, false);
-		rv = TraceRegisterUtils.combineWithTraceBaseRegisterValue(rv, platform, getSnap(), regs,
-			true);
+		Register parent = isRegisterOnTarget(platform, thread, frameLevel, register);
+		if (parent == null) {
+			throw new IllegalArgumentException("Cannot find register " + register + " on target");
+		}
+		rv = TraceRegisterUtils.combineWithTraceParentRegisterValue(parent, rv, platform, getSnap(),
+			regs, true);
 		return writeThreadRegisters(platform, thread, frameLevel, Map.of(rv.getRegister(), rv));
 	}
 
 	/**
 	 * Check if the given register exists on target (is mappable) for the given thread
 	 * 
+	 * @param platform the platform whose language defines the registers
 	 * @param thread the thread whose registers to examine
+	 * @param frameLevel the frame, usually 0.
 	 * @param register the register to check
-	 * @return true if the given register is known for the given thread on target
+	 * @return the smallest parent register known for the given thread on target, or null
 	 */
-	default boolean isRegisterOnTarget(TraceThread thread, Register register) {
-		Collection<Register> onTarget = getRegisterMapper(thread).getRegistersOnTarget();
-		return onTarget.contains(register) || onTarget.contains(register.getBaseRegister());
-	}
+	Register isRegisterOnTarget(TracePlatform platform, TraceThread thread, int frameLevel,
+			Register register);
 
 	/**
 	 * Check if the given trace address exists in target memory
@@ -583,21 +587,29 @@ public interface TraceRecorder {
 	/**
 	 * Check if a given variable (register or memory) exists on target
 	 * 
+	 * @param platform the platform whose language defines the registers
 	 * @param thread if a register, the thread whose registers to examine
+	 * @param frameLevel the frame, usually 0.
 	 * @param address the address of the variable
 	 * @param size the size of the variable. Ignored for memory
 	 * @return true if the variable can be mapped to the target
 	 */
-	default boolean isVariableOnTarget(TraceThread thread, Address address, int size) {
+	default boolean isVariableOnTarget(TracePlatform platform, TraceThread thread, int frameLevel,
+			Address address, int size) {
 		if (address.isMemoryAddress()) {
 			return isMemoryOnTarget(address);
 		}
-		Register register = getTrace().getBaseLanguage().getRegister(address, size);
+		Register register = platform.getLanguage().getRegister(address, size);
 		if (register == null) {
 			throw new IllegalArgumentException("Cannot identify the (single) register: " + address);
 		}
 
-		return isRegisterOnTarget(thread, register);
+		// TODO: Can any debugger modify regs up the stack?
+		if (frameLevel != 0) {
+			return false;
+		}
+
+		return isRegisterOnTarget(platform, thread, frameLevel, register) != null;
 	}
 
 	/**

@@ -28,7 +28,6 @@ import ghidra.program.database.data.ProjectDataTypeManager;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
 import ghidra.util.Msg;
-import ghidra.util.datastruct.Algorithms;
 import ghidra.util.exception.AssertException;
 import resources.MultiIcon;
 import resources.ResourceManager;
@@ -322,10 +321,10 @@ public class DataTypeUtils {
 		searchTextStart = prepareSearchText(searchTextStart);
 		searchTextEnd = prepareSearchText(searchTextEnd);
 
-		int startIndex = Algorithms.binarySearchWithDuplicates(dataTypeList, searchTextStart,
+		int startIndex = binarySearchWithDuplicates(dataTypeList, searchTextStart,
 			DATA_TYPE_LOOKUP_COMPARATOR);
 
-		int endIndex = Algorithms.binarySearchWithDuplicates(dataTypeList, searchTextEnd,
+		int endIndex = binarySearchWithDuplicates(dataTypeList, searchTextEnd,
 			DATA_TYPE_LOOKUP_COMPARATOR);
 
 		return dataTypeList.subList(startIndex, endIndex);
@@ -454,6 +453,41 @@ public class DataTypeUtils {
 		}
 		Msg.showInfo(DataTypeUtils.class, parent, title, msg);
 	}
+
+	public static int binarySearchWithDuplicates(List<DataType> data,
+			String searchItem, Comparator<Object> comparator) {
+		int index = Collections.binarySearch(data, searchItem, comparator);
+
+		// the binary search returns a negative, incremented position if there is no match in the
+		// list for the given search
+		if (index < 0) {
+			index = -index - 1;
+		}
+		else {
+			index = findTrueStartIndex(searchItem, data, index, comparator);
+		}
+		return index;
+	}
+
+	// finds the index of the first element in the given list--this is used in conjunction with
+	// the binary search, which doesn't produce the desired results when searching lists with 
+	// duplicates
+
+	private static int findTrueStartIndex(String searchItem, List<DataType> dataList,
+			int startIndex, Comparator<Object> comparator) {
+		if (startIndex < 0) {
+			return startIndex;
+		}
+
+		for (int i = startIndex; i >= 0; i--) {
+			if (comparator.compare(dataList.get(i), searchItem) != 0) {
+				return ++i; // previous index
+			}
+		}
+
+		return 0; // this means that the search text matches the first element in the lists
+	}
+
 }
 
 //==================================================================================================

@@ -33,7 +33,6 @@ import org.junit.Test;
 
 import docking.test.AbstractDockingTest;
 import edu.uci.ics.jung.visualization.RenderContext;
-import generic.test.AbstractGenericTest;
 import generic.test.TestUtils;
 import generic.util.WindowUtilities;
 import ghidra.graph.graphs.*;
@@ -481,7 +480,7 @@ public class GraphComponentTest extends AbstractVisualGraphTest {
 	}
 
 	private void press(String name) {
-		AbstractGenericTest.pressButtonByName(graphComponent.getComponent(), name, true);
+		pressButtonByName(graphComponent.getComponent(), name, true);
 	}
 
 	private AbstractTestVertex pickNonEditableVertex() {

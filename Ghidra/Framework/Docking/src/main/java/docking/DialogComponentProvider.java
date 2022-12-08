@@ -32,7 +32,7 @@ import docking.event.mouse.GMouseListenerAdapter;
 import docking.menu.DialogToolbarButton;
 import docking.util.AnimationUtils;
 import docking.widgets.label.GDHtmlLabel;
-import generic.theme.GColor;
+import generic.theme.*;
 import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
@@ -103,6 +103,7 @@ public class DialogComponentProvider
 	private boolean isTransient = false;
 
 	private Dimension defaultSize;
+	private ThemeListener themeListener = this::themeChanged;
 
 	/**
 	 * Constructor for a DialogComponentProvider that will be modal and will include a status line and
@@ -177,6 +178,8 @@ public class DialogComponentProvider
 		installEscapeAction();
 
 		doInitialize();
+
+		Gui.addThemeListener(themeListener);
 	}
 
 	private void installEscapeAction() {
@@ -339,6 +342,20 @@ public class DialogComponentProvider
 		if (component.isFocusable()) {
 			component.addMouseListener(popupHandler);
 		}
+	}
+
+	private void themeChanged(ThemeEvent ev) {
+		if (!ev.isLookAndFeelChanged()) {
+			return;  // we only care if the Look and Feel changes
+		}
+
+		// if we are visible, then we don't need to update as the system updates all 
+		// visible components
+		if (isVisible()) {
+			return;
+		}
+		Component component = dialog != null ? dialog : rootPanel;
+		SwingUtilities.updateComponentTreeUI(component);
 	}
 
 	private void uninstallMouseListener(Component comp) {
@@ -888,6 +905,7 @@ public class DialogComponentProvider
 	}
 
 	public void dispose() {
+		Gui.removeThemeListener(themeListener);
 		cancelCurrentTask();
 		close();
 		popupManager.dispose();

@@ -27,16 +27,18 @@ import ghidra.framework.main.datatable.ProjectTreeAction;
 import ghidra.framework.main.datatree.*;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;
+import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
+import resources.Icons;
 import resources.MultiIcon;
-import resources.ResourceManager;
 
 public class ProjectDataPasteLinkAction extends ProjectTreeAction {
-	private static Icon baseIcon = ResourceManager.loadImage("images/page_paste.png");
+	private static Icon baseIcon = Icons.PASTE_ICON;
 
 	public ProjectDataPasteLinkAction(String owner, String group) {
 		super("Paste Link", owner);
 		setPopupMenuData(new MenuData(new String[] { "Paste as Link" }, getIcon(), group));
+		setHelpLocation(new HelpLocation("FrontEndPlugin", "Create_File_Links"));
 	}
 
 	private static Icon getIcon() {

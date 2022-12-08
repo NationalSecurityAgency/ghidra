@@ -24,7 +24,6 @@ apply plugin: 'eclipse'
 eclipse.project.name = 'Framework Docking'
 
 dependencies {
-	api project(':Generic')
 	api project(':Help')
 	
 	// include code from src/test in Generic

@@ -495,7 +495,13 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 
 			// check if the srcString is a defined theme icon id
 			if (Gui.hasIcon(srcString)) {
-				return new GIcon(srcString).getUrl();
+				// 
+				// Wrap the GIcon inside of an IconProvider, as that class can handle a null URL 
+				// returned from GIcon. (This can happen if the GIcon is based on a modified icon.)
+				//
+				GIcon gIcon = new GIcon(srcString);
+				IconProvider iconProvider = new IconProvider(gIcon, gIcon.getUrl());
+				return iconProvider.getOrCreateUrl();
 			}
 
 			if (isJavaCode(srcString)) {

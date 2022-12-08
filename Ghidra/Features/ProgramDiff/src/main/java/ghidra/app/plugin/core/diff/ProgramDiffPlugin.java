@@ -295,7 +295,8 @@ public class ProgramDiffPlugin extends ProgramPlugin
 			AddressIndexMap p2IndexMap = new AddressIndexMap(p1AddressSetAsP2);
 			markerManager.getOverviewProvider().setProgram(secondaryDiffProgram, p2IndexMap);
 			fp.setBackgroundColorModel(
-				new MarkerServiceBackgroundColorModel(markerManager, p2IndexMap));
+				new MarkerServiceBackgroundColorModel(markerManager, secondaryDiffProgram,
+					p2IndexMap));
 
 			currentSelection = previousP1Selection;
 			p2DiffHighlight = previousP2DiffHighlight;

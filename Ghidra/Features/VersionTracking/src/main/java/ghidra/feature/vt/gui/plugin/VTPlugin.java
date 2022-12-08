@@ -83,7 +83,6 @@ public class VTPlugin extends Plugin {
 	public static final Icon UNFILTERED_ICON = new GIcon("icon.version.tracking.unfiltered");
 	public static final Icon FILTERED_ICON = new GIcon("icon.version.tracking.filtered");
 	public static final Icon REPLACED_ICON = new GIcon("icon.version.tracking.replaced");
-	public static final Icon UNIGNORED_ICON = new GIcon("icon.version.tracking.unignored");
 
 	private VTController controller;
 

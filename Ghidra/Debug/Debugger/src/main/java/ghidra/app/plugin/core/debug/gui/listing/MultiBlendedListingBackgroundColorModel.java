@@ -27,7 +27,7 @@ import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.util.ColorUtils.ColorBlender;
 
 public class MultiBlendedListingBackgroundColorModel implements ListingBackgroundColorModel {
-	private static final Color BG_COLOR_EMPTY = new GColor("color.bg.debugger.listing.blended");
+	private static final Color BG_COLOR_EMPTY = new GColor("color.bg");
 
 	private final List<BackgroundColorModel> models = new ArrayList<>();
 

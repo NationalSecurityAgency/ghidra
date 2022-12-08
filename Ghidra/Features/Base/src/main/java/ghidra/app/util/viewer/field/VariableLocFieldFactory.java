@@ -15,7 +15,6 @@
  */
 package ghidra.app.util.viewer.field;
 
-import java.awt.Color;
 import java.awt.FontMetrics;
 import java.math.BigInteger;
 
@@ -27,7 +26,6 @@ import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.util.HighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
-import ghidra.app.util.viewer.options.OptionsGui;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.app.util.viewer.proxy.VariableProxy;
 import ghidra.framework.options.Options;
@@ -150,10 +148,5 @@ public class VariableLocFieldFactory extends AbstractVariableFieldFactory {
 	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider provider,
 			ToolOptions toolOptions, ToolOptions fieldOptions) {
 		return new VariableLocFieldFactory(formatModel, provider, toolOptions, fieldOptions);
-	}
-
-	@Override
-	public Color getDefaultColor() {
-		return OptionsGui.VARIABLE.getDefaultColor();
 	}
 }

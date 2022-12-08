@@ -33,8 +33,6 @@ import ghidra.security.KeyStorePasswordProvider;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.filechooser.ExtensionFileFilter;
-import ghidra.util.filechooser.GhidraFileFilter;
 
 /**
  * <code>ApplicationKeyManagerFactory</code> provides application keystore management
@@ -57,12 +55,6 @@ public class ApplicationKeyManagerFactory {
 	 * if it has been set.
 	 */
 	public static final String KEYSTORE_PASSWORD_PROPERTY = "ghidra.password";
-
-	/**
-	 * PKCS Private Key/Certificate File Filter
-	 */
-	public static final GhidraFileFilter CERTIFICATE_FILE_FILTER =
-		new ExtensionFileFilter(ApplicationKeyStore.PKCS_FILE_EXTENSIONS, "PKCS Key File");
 
 	public static final String DEFAULT_PASSWORD = "changeme";
 
