@@ -56,7 +56,7 @@ public class DiffSaveSettingsTest extends DiffApplyTestAdapter {
 		diffListingPanel = diffPlugin.getListingPanel();
 		fp1 = cb.getFieldPanel();
 		fp2 = diffListingPanel.getFieldPanel();
-		openClosePgm2 = (ToggleDockingAction) getAction(diffPlugin, "Open/Close Program View");
+		openClosePgm2 = (ToggleDockingAction) getAction(diffPlugin, "Open/Close Diff View");
 	}
 
 	private void showNewTool() throws Exception {
@@ -73,7 +73,7 @@ public class DiffSaveSettingsTest extends DiffApplyTestAdapter {
 		diffListingPanel = diffPlugin.getListingPanel();
 		fp1 = cb.getFieldPanel();
 		fp2 = diffListingPanel.getFieldPanel();
-		openClosePgm2 = (ToggleDockingAction) getAction(diffPlugin, "Open/Close Program View");
+		openClosePgm2 = (ToggleDockingAction) getAction(diffPlugin, "Open/Close Diff View");
 	}
 
 	@Override

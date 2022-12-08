@@ -43,7 +43,8 @@ import ghidra.app.plugin.core.programtree.ProgramTreePlugin;
 import ghidra.app.services.ProgramManager;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.framework.main.*;
-import ghidra.framework.model.*;
+import ghidra.framework.model.DomainFile;
+import ghidra.framework.model.DomainFolder;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
@@ -479,7 +480,7 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 		diffListingPanel = diffPlugin.getListingPanel();
 		fp1 = cb.getFieldPanel();
 		fp2 = diffListingPanel.getFieldPanel();
-		openClosePgm2 = (ToggleDockingAction) getAction(diffPlugin, "Open/Close Program View");
+		openClosePgm2 = (ToggleDockingAction) getAction(diffPlugin, "Open/Close Diff View");
 
 		tool.addPlugin(ProgramTreePlugin.class.getName());
 		pt = env.getPlugin(ProgramTreePlugin.class);
@@ -664,10 +665,8 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 
 	void pickSecondProgram(final Program program2) {
 
-		program2.addConsumer(diffPlugin);
-
 		OpenVersionedFileDialogTestFake dialog = new OpenVersionedFileDialogTestFake(program2);
-		diffPlugin.setOpenDiffProgramDialog(dialog);
+		diffPlugin.setDiffOpenVersionedFileDialog(dialog);
 
 		launchDiffByAction();
 
@@ -1154,13 +1153,13 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 // Inner Classes
 //==================================================================================================
 
-	private class OpenVersionedFileDialogTestFake extends OpenVersionedFileDialog {
+	private class OpenVersionedFileDialogTestFake extends OpenVersionedFileDialog<Program> {
 
 		private ActionListener listener;
 		private Program chosenProgram;
 
 		OpenVersionedFileDialogTestFake(Program program) {
-			super(tool, "Select Other Program", null);
+			super(tool, "Select Other Program", Program.class);
 			this.chosenProgram = program;
 		}
 
@@ -1183,7 +1182,10 @@ public class DiffTestAdapter extends AbstractGhidraHeadedIntegrationTest {
 		}
 
 		@Override
-		public DomainObject getVersionedDomainObject(Object consumer, boolean readOnly) {
+		public Program getDomainObject(Object consumer, boolean readOnly) {
+			if (chosenProgram != null) {
+				chosenProgram.addConsumer(consumer);
+			}
 			return chosenProgram;
 		}
 
