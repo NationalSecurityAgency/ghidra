@@ -63,6 +63,7 @@ public class PcodeFieldFactory extends FieldFactory {
 		formatter = new AttributedStringPcodeFormatter();
 
 		setOptions(fieldOptions);
+		formatter.setFontMetrics(getMetrics());
 	}
 
 	@Override
