@@ -212,6 +212,17 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 		return null;
 	}
 
+	@Override
+	protected boolean doSaveTool() {
+		// This method is overridden to allow the FrontEndTool to perform custom saving.
+		// The super.doSaveTool is designed to save tools to the user's tool chest directory. The 
+		// FrontEndTool saves its state directly in the user's settings directory and includes
+		// the entire project's state such as what tools were running and data states for each
+		// running tool.
+		saveToolConfigurationToDisk();
+		return true;
+	}
+
 	void saveToolConfigurationToDisk() {
 		ToolTemplate template = saveToolToToolTemplate();
 		Element root = new Element(FRONT_END_TOOL_XML_NAME);
@@ -346,7 +357,6 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 	@Override
 	public void exit() {
-		saveToolConfigurationToDisk();
 		plugin.exitGhidra();
 	}
 
