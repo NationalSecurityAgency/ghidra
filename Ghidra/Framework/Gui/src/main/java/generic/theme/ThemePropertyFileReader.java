@@ -26,9 +26,10 @@ import generic.jar.ResourceFile;
  */
 public class ThemePropertyFileReader extends AbstractThemeReader {
 
-	private GThemeValueMap defaults;
-	private GThemeValueMap darkDefaults;
+	private GThemeValueMap defaults = new GThemeValueMap();
+	private GThemeValueMap darkDefaults = new GThemeValueMap();
 	private Map<LafType, GThemeValueMap> customSectionsMap = new HashMap<>();
+	private boolean defaultSectionProcessed;
 
 	/**
 	 * Constructor for when the the theme.properties file is a {@link ResourceFile}
@@ -41,7 +42,6 @@ public class ThemePropertyFileReader extends AbstractThemeReader {
 		try (Reader reader = new InputStreamReader(file.getInputStream())) {
 			read(reader);
 		}
-
 	}
 
 	/**
@@ -60,7 +60,7 @@ public class ThemePropertyFileReader extends AbstractThemeReader {
 	 * @return the map of standard defaults values.
 	 */
 	public GThemeValueMap getDefaultValues() {
-		return defaults == null ? new GThemeValueMap() : defaults;
+		return defaults;
 	}
 
 	/**
@@ -68,7 +68,7 @@ public class ThemePropertyFileReader extends AbstractThemeReader {
 	 * @return the map of dark defaults values.
 	 */
 	public GThemeValueMap getDarkDefaultValues() {
-		return darkDefaults == null ? new GThemeValueMap() : darkDefaults;
+		return darkDefaults;
 	}
 
 	/**
@@ -81,20 +81,26 @@ public class ThemePropertyFileReader extends AbstractThemeReader {
 
 	protected void processNoSection(Section section) throws IOException {
 		if (!section.isEmpty()) {
-			error(0, "Theme properties file has values defined outside of a defined section");
+			error(section.getLineNumber(),
+				"Theme properties file has values defined outside of a defined section");
 		}
 	}
 
 	@Override
 	protected void processDefaultSection(Section section) throws IOException {
-		defaults = new GThemeValueMap();
+		defaultSectionProcessed = true;
 		processValues(defaults, section);
 	}
 
 	@Override
 	protected void processDarkDefaultSection(Section section) throws IOException {
-		darkDefaults = new GThemeValueMap();
+		if (!defaultSectionProcessed) {
+			error(section.getLineNumber(),
+				"Defaults section must be defined before Dark Defaults section!");
+			return;
+		}
 		processValues(darkDefaults, section);
+		validate("Dark Defaults", darkDefaults);
 	}
 
 	@Override
@@ -102,11 +108,42 @@ public class ThemePropertyFileReader extends AbstractThemeReader {
 		String name = section.getName();
 		LafType lafType = LafType.fromName(name);
 		if (lafType == null) {
-			error(0, "Unknown Look and Feel section found: " + name);
+			error(section.getLineNumber(), "Unknown Look and Feel section found: " + name);
+			return;
+		}
+		if (!defaultSectionProcessed) {
+			error(section.getLineNumber(),
+				"Defaults section must be defined before " + name + " section!");
 			return;
 		}
 		GThemeValueMap customValues = new GThemeValueMap();
 		processValues(customValues, section);
 		customSectionsMap.put(lafType, customValues);
+		validate(name, customValues);
 	}
+
+	private void validate(String name, GThemeValueMap valuesMap) {
+		for (String id : valuesMap.getColorIds()) {
+			if (!defaults.containsColor(id)) {
+				reportMissingDefaultsError("Color", name, id);
+			}
+		}
+		for (String id : valuesMap.getFontIds()) {
+			if (!defaults.containsFont(id)) {
+				reportMissingDefaultsError("Font", name, id);
+			}
+		}
+		for (String id : valuesMap.getIconIds()) {
+			if (!defaults.containsIcon(id)) {
+				reportMissingDefaultsError("Icon", name, id);
+			}
+		}
+	}
+
+	private void reportMissingDefaultsError(String type, String name, String id) {
+		String message = type + " id found in \"" + name +
+			"\" section, but not defined in \"Defaults\" section: " + id;
+		error(-1, message);
+	}
+
 }

@@ -317,4 +317,27 @@ public class GThemeValueMap {
 		}
 	}
 
+	/**
+	 * Returns the set of all color ids in this map
+	 * @return  the set of all color ids in this map
+	 */
+	public Set<String> getColorIds() {
+		return colorMap.keySet();
+	}
+
+	/**
+	 * Returns the set of all font ids in this map
+	 * @return  the set of all font ids in this map
+	 */
+	public Set<String> getFontIds() {
+		return fontMap.keySet();
+	}
+
+	/**
+	 * Returns the set of all icon ids in this map
+	 * @return  the set of all icon ids in this map
+	 */
+	public Set<String> getIconIds() {
+		return iconMap.keySet();
+	}
 }
