@@ -30,6 +30,7 @@ import ghidra.app.cmd.function.CreateFunctionCmd;
 import ghidra.app.cmd.label.AddLabelCmd;
 import ghidra.app.cmd.label.CreateNamespacesCmd;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
+import ghidra.app.plugin.processors.sleigh.SleighLanguageProvider;
 import ghidra.app.util.NamespaceUtils;
 import ghidra.app.util.SymbolPath;
 import ghidra.framework.options.Options;
@@ -46,7 +47,6 @@ import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.*;
-import ghidra.program.util.DefaultLanguageService;
 import ghidra.program.util.GhidraProgramUtilities;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.*;
@@ -83,6 +83,7 @@ public class ProgramBuilder {
 	protected static final String _TOY_LANGUAGE_PREFIX = "Toy:";
 
 	private static final Map<String, Language> LANGUAGE_CACHE = new HashMap<>();
+	private static SleighLanguageProvider languageProvider;
 
 	private ProgramDB program;
 
@@ -247,11 +248,21 @@ public class ProgramBuilder {
 		}
 	}
 
+	private static synchronized LanguageProvider getLanguageProvider() throws Exception {
+		if (languageProvider == null) {
+			languageProvider = new SleighLanguageProvider();
+		}
+		return languageProvider;
+	}
+
 	private Language getLanguage(String languageId) throws Exception {
 		Language language = LANGUAGE_CACHE.get(languageId);
 		if (language == null) {
-			language =
-				DefaultLanguageService.getLanguageService().getLanguage(new LanguageID(languageId));
+			LanguageID id = new LanguageID(languageId);
+			language = getLanguageProvider().getLanguage(id);
+			if (language == null) {
+				throw new LanguageNotFoundException(id);
+			}
 			LANGUAGE_CACHE.put(languageId, language);
 		}
 		return language;
