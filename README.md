@@ -46,8 +46,8 @@ To create the latest development build for your platform from this source reposi
 * [JDK 17 64-bit][jdk17]
 * [Gradle 7.3+][gradle]
 * make, gcc, and g++ (Linux/macOS-only)
-* [Microsoft Visual Studio][vs] or [Microsoft C++ Build Tools][vcbuildtools] with the following
-  components installed (Windows-only):
+* [Microsoft Visual Studio][vs] 2017+ or [Microsoft C++ Build Tools][vcbuildtools] with the
+  following components installed (Windows-only):
   - MSVC
   - Windows SDK
   - C++ ATL
