@@ -247,13 +247,13 @@ RiX: Rind is Rind {
   export *[EXTMEM]:1 Rind;
 }
 PData: @A is A {
-  local addr:2 = inst_next; addr[0,7] = A; export *[CODE]:1 addr;
+  local addr:2 = inst_next; addr[0,8] = A; export *[CODE]:1 addr;
 }
 P3Data: @A is A {
-  local addr:2 = 0x300; addr[0,7] = A; export *[CODE]:1 addr;
+  local addr:2 = 0x300; addr[0,8] = A; export *[CODE]:1 addr;
 }
 AddrInd: PData is PData {
-  local addr:2 = inst_next; addr[0,7] = PData; export *[CODE]:1 addr;
+  local addr:2 = inst_next; addr[0,8] = PData; export *[CODE]:1 addr;
 }
 Ab: abit is abit {
   local bit:1 = (A>>abit)&1; export bit;
