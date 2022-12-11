@@ -28,8 +28,12 @@ define register offset=0x00 size=1 [ A SP ];
 define register offset=0x10 size=1 [ R0 R1 R2 R3 R4 R5 R6 R7 ];
 @endif
 define register offset=0x20 size=2 [ PC ];
-define register offset=0x30 size=1 [ C AC F0 F1 BS DBF ];  # single bit
+define register offset=0x30 size=1 [ C AC F0 F1 BS ];  # single bit
 
+define register offset=0x80 size=4 bankreg;
+define context bankreg
+  DBF=(0,0)
+;
 
 ################################################################
 # Tokens
@@ -510,9 +514,9 @@ RniI: Imm is Imm {
 :RRC A          is ophi=6 & oplo=7 & A {
   rotc(A&1, (A>>1)|(C<<7));
 }
-:SEL dbf        is (ophi=14 | ophi=15) & oplo=5 & dbf {
-  DBF = dbf;
-}
+:SEL dbf        is (ophi=14 | ophi=15) & oplo=5 & dbf
+	[ DBF=dbf; globalset(inst_next,DBF); ]
+{}
 :SEL bs         is (ophi=12 | ophi=13) & oplo=5 & bs {
   setbank(bs);
 }
