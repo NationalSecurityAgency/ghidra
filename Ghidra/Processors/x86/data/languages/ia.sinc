@@ -2171,7 +2171,8 @@ define pcodeop clflush;
 # CLGI:  clear global interrupt flag (GIF); while GIF is zero, all external interrupts are disabled.
 :CLGI                   is vexMode=0 & byte=0x0f; byte=0x01; byte=0xDD                      { clgi(); }
 :CLI			is vexMode=0 & byte=0xfa						{ IF = 0; }
-:CLTS			is vexMode=0 & byte=0x0f; byte=0x06					{ }
+define pcodeop clts;
+:CLTS			is vexMode=0 & byte=0x0f; byte=0x06				{ CR0 = CR0 & ~(0x8); }
 
 define pcodeop clzero;
 
@@ -2228,7 +2229,9 @@ define pcodeop clzero;
 :CMPSD^repe^repetail eseDI8,dseSI8  is $(LONGMODE_ON) & vexMode=0 & repe & repetail & opsize=2 & byte=0xa7 & dseSI8 & eseDI8 { build repe; build eseDI8; build dseSI8; subflags(dseSI8,eseDI8); local diff=dseSI8-eseDI8; resultflags(diff); build repetail; }
 @endif
 
-:CMPXCHG rm8,Reg8  is vexMode=0 & byte=0xf; byte=0xa6; rm8 & Reg8 ...           { }
+define pcodeop _cmpxchg;
+:CMPXCHG rm8,Reg8  is vexMode=0 & byte=0xf; byte=0xa6; rm8 & Reg8 ...           { _cmpxchg(rm8, Reg8); } #deprecated after 486
+:CMPXCHG rm16,Reg16  is vexMode=0 & byte=0xf; byte=0xa7; rm16 & Reg16 ...       { _cmpxchg(rm16, Reg16); } #deprecated after 486
 :CMPXCHG rm8,Reg8  is vexMode=0 & byte=0xf; byte=0xb0; rm8 & Reg8 ...           { subflags(AL,rm8); local tmp=AL-rm8; resultflags(tmp);
                                           local diff = rm8^Reg8; rm8 = rm8 ^ (ZF*diff);
                                           diff = AL ^ rm8; AL = AL ^ ((ZF==0)*diff); }
@@ -3849,8 +3852,10 @@ define pcodeop invalidInstructionException;
 :UD1  Reg32, rm32 is vexMode=0 & byte=0x0f; byte=0xb9; rm32 & Reg32 ...           { invalidInstructionException(); goto inst_start; }
 :UD2              is vexMode=0 & byte=0xf; byte=0xb                               { invalidInstructionException(); goto inst_start; }
 
-:VERR rm16      is vexMode=0 & byte=0xf; byte=0x0; rm16 & reg_opcode=4 ...      { }
-:VERW rm16      is vexMode=0 & byte=0xf; byte=0x0; rm16 & reg_opcode=5 ...      { }
+define pcodeop verr;
+define pcodeop verw;
+:VERR rm16      is vexMode=0 & byte=0xf; byte=0x0; rm16 & reg_opcode=4 ...      { ZF = verr(); }
+:VERW rm16      is vexMode=0 & byte=0xf; byte=0x0; rm16 & reg_opcode=5 ...      { ZF = verw(); }
 
 # MFL added VMX opcodes
 #
@@ -4109,6 +4114,12 @@ define pcodeop fcos;
                                                                  
 :FDECSTP		    is vexMode=0 & byte=0xD9; byte=0xF6					{ fdec(); FPUStatusWord = FPUStatusWord & 0xfeff; C0 = 0; }  #Clear C0
 
+# Legacy 8087 instructions. Still valid but treated as NOP instructions.
+:FDISI              is vexMode=0 & byte=0x9B; byte=0xDB; byte=0xE1 {}
+:FNDISI             is vexMode=0 & byte=0xDB; byte=0xE1            {}
+:FENI               is vexMode=0 & byte=0x9B; byte=0xDB; byte=0xE0 {}
+:FNENI              is vexMode=0 & byte=0xDB; byte=0xE0            {}
+
 :FDIV spec_m32      is vexMode=0 & byte=0xD8; reg_opcode=6 ... & spec_m32            { ST0 = ST0 f/ float2float(spec_m32); }    
 :FDIV spec_m64      is vexMode=0 & byte=0xDC; reg_opcode=6 ... & spec_m64            { ST0 = ST0 f/ float2float(spec_m64); }    
 :FDIV ST0,freg      is vexMode=0 & byte=0xD8; frow=15 & fpage=0 & freg & ST0        { ST0 = ST0 f/ freg; }            
@@ -4127,8 +4138,9 @@ define pcodeop fcos;
 :FIDIVR spec_m32    is vexMode=0 & byte=0xDA; reg_opcode=7 ... & spec_m32            { ST0 = int2float(spec_m32) f/ ST0; }      
 :FIDIVR spec_m16    is vexMode=0 & byte=0xDE; reg_opcode=7 ... & spec_m16            { ST0 = int2float(spec_m16) f/ ST0; }      
 
-:FFREE freg         is vexMode=0 & byte=0xDD; frow=12 & fpage=0 & freg          { }  # Set freg to invalid value
-:FFREEP freg        is vexMode=0 & byte=0xDF; frow=12 & fpage=0 & freg          { fpop(); }  # FFREE and pop
+define pcodeop ffree;
+:FFREE freg         is vexMode=0 & byte=0xDD; frow=12 & fpage=0 & freg          { FPUTagWord = ffree(freg); }  # Set freg to invalid value
+:FFREEP freg        is vexMode=0 & byte=0xDF; frow=12 & fpage=0 & freg          { FPUTagWord = ffree(freg); fpop(); }  # FFREE and pop
                                                                   
 :FICOM spec_m16     is vexMode=0 & byte=0xDE; reg_opcode=2 ... & spec_m16            { local tmp = int2float(spec_m16); fcom(tmp); }          
 :FICOM spec_m32     is vexMode=0 & byte=0xDA; reg_opcode=2 ... & spec_m32            { local tmp = int2float(spec_m32); fcom(tmp); }          
@@ -4153,7 +4165,17 @@ define pcodeop fcos;
                                           C2 = 0;                 
                                           C3 = 0; }                           
 
-:FNINIT         is vexMode=0 & byte=0xDB; byte=0xE3                 { }
+:FNINIT         is vexMode=0 & byte=0xDB; byte=0xE3                 {
+										  FPUControlWord = 0x037f;        
+                                          FPUStatusWord = 0x0000;         
+                                          FPUTagWord = 0xffff;            
+                                          FPUDataPointer = 0x00000000;        
+                                          FPUInstructionPointer = 0x00000000;     
+                                          FPULastInstructionOpcode = 0x0000;  
+                                          C0 = 0;                 
+                                          C1 = 0;                 
+                                          C2 = 0;                 
+                                          C3 = 0; }          
 
 :FIST spec_m16       is vexMode=0 & byte=0xDF; (mod != 0b11 & reg_opcode=2) ... & spec_m16            { tmp:10 = round(ST0); spec_m16 = trunc(tmp); }                    
 :FIST spec_m32       is vexMode=0 & byte=0xDB; (mod != 0b11 & reg_opcode=2) ... & spec_m32            { tmp:10 = round(ST0); spec_m32 = trunc(tmp); }            
