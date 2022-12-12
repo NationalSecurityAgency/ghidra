@@ -30,7 +30,8 @@ public interface LanguageProvider extends ExtensionPoint {
 	 * Returns the language with the given name or null if no language has that name
 	 * 
 	 * @param languageId the name of the language to be retrieved
-	 * @return the {@link Language} with the given name
+	 * @return the {@link Language} with the given name or null if not found
+	 * @throws RuntimeException if language instantiation error occurs
 	 */
 	Language getLanguage(LanguageID languageId);
 

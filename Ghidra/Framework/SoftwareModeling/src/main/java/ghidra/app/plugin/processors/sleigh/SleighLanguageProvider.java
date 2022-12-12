@@ -62,12 +62,26 @@ public class SleighLanguageProvider implements LanguageProvider {
 
 	public final static String LANGUAGE_DIR_NAME = "languages";
 
-	public SleighLanguageProvider() throws Exception {
-		createLanguages();
+	private static SleighLanguageProvider instance; // sleigh language provider instance (singleton)
+
+	public static synchronized SleighLanguageProvider getSleighLanguageProvider() {
+		if (instance == null) {
+			instance = new SleighLanguageProvider();
+			try {
+				instance.createLanguages();
+			}
+			catch (Exception e) {
+				Msg.error(SleighLanguageProvider.class,
+					"Sleigh language provider initiailization failed", e);
+			}
+		}
+		return instance;
 	}
 
-	public SleighLanguageProvider(ResourceFile ldefsFile) throws Exception {
-		createLanguages(ldefsFile);
+	/**
+	 * Construct sleigh language provider (singleton)
+	 */
+	private SleighLanguageProvider() {
 	}
 
 	private void createLanguages() throws Exception {
@@ -96,7 +110,11 @@ public class SleighLanguageProvider implements LanguageProvider {
 
 	@Override
 	public Language getLanguage(LanguageID languageId) {
-		return getNewSleigh(languageId);
+		Language language = languages.get(languageId);
+		if (language == null) {
+			language = getNewSleigh(languageId);
+		}
+		return language;
 	}
 
 	@Override
@@ -104,7 +122,7 @@ public class SleighLanguageProvider implements LanguageProvider {
 		return languages.get(languageId) != null;
 	}
 
-	private Language getNewSleigh(LanguageID languageId) {
+	private SleighLanguage getNewSleigh(LanguageID languageId) {
 		SleighLanguageDescription description = descriptions.get(languageId);
 		SleighLanguage lang = languages.get(languageId);
 		if (lang == null) {
