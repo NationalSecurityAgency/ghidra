@@ -15,7 +15,7 @@
  */
 package help;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -75,15 +75,12 @@ public abstract class AbstractHelpTest extends AbstractGenericTest {
 
 		// HelpFile wants to read one of these, so put one there
 		createEmpty_TOC_Source_File(helpDir);
-		createSharedDir(helpDir);
+		createImageDir(helpDir);
 	}
 
-	protected Path createSharedDir(Path helpDir) throws IOException {
-		Path sharedDir = helpDir.resolve("shared");
+	protected Path createImageDir(Path helpDir) throws IOException {
+		Path sharedDir = helpDir.resolve("images");
 		Files.createDirectory(sharedDir);
-
-		Path css = sharedDir.resolve("Frontpage.css");
-		Files.createFile(css);
 
 		Path png = sharedDir.resolve("test.png");
 		Files.createFile(png);
@@ -121,12 +118,12 @@ public abstract class AbstractHelpTest extends AbstractGenericTest {
 	       "<HTML>\n" + 
 		   "<HEAD>\n" + 
 		   "<TITLE>Configure Tool</TITLE>\n" + 
-		   "<LINK rel=\"stylesheet\" type=\"text/css\" href=\"../../shared/Frontpage.css\">\n" +
+		   "<LINK rel=\"stylesheet\" type=\"text/css\" href=\"help/shared/DefaultStyle.css\">\n" +
 		   "</HEAD>\n" +
 		   
 		   "<BODY>\n" + 
 		   "    <H1><A name=\""+anchor+"\"></A>Configure Tool</H1>\n" +
-		   "    Some text with reference to shared image <IMG src=\"../../shared/test.png\">\n" +
+		   "    Some text with reference to shared image <IMG src=\"help/shared/note.png\">\n" +
 		   "    \n" +
 		   "</BODY>\n" +
 		   "</HTML>\n";
@@ -147,7 +144,7 @@ public abstract class AbstractHelpTest extends AbstractGenericTest {
 	       "<HTML>\n" + 
 		   "<HEAD>\n" + 
 		   "<TITLE>Configure Tool</TITLE>\n" + 
-		   "<LINK rel=\"stylesheet\" type=\"text/css\" href=\"../../shared/Frontpage.css\">\n" +
+		   "<LINK rel=\"stylesheet\" type=\"text/css\" href=\"help/shared/DefaultStyle.css\">\n" +
 		   "</HEAD>\n" +
 		   
 		   "<BODY>\n" + 
@@ -174,7 +171,7 @@ public abstract class AbstractHelpTest extends AbstractGenericTest {
 	       "<HTML>\n" + 
 		   "<HEAD>\n" + 
 		   "<TITLE>Configure Tool</TITLE>\n" + 
-		   "<LINK rel=\"stylesheet\" type=\"text/css\" href=\"../../shared/Frontpage.css\">\n" +
+		   "<LINK rel=\"stylesheet\" type=\"text/css\" href=\"help/shared/DefaultStyle.css\">\n" +
 		   "</HEAD>\n" +
 		   
 		   "<BODY>\n" + 

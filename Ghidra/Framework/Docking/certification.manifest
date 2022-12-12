@@ -32,7 +32,6 @@ src/main/resources/images/StackFrame_Red.png||GHIDRA||reviewed||END|
 src/main/resources/images/accessories-text-editor.png||Tango Icons - Public Domain||||END|
 src/main/resources/images/application-vnd.oasis.opendocument.spreadsheet-template.png||Oxygen Icons - LGPL 3.0|||oxygen|END|
 src/main/resources/images/application_xp.png||FAMFAMFAM Icons - CC 2.5|||fam fam|END|
-src/main/resources/images/arrow.gif||GHIDRA||||END|
 src/main/resources/images/bullet_delete.png||FAMFAMFAM Icons - CC 2.5||||END|
 src/main/resources/images/check.png||GHIDRA||||END|
 src/main/resources/images/close16.gif||GHIDRA||reviewed||END|
@@ -78,8 +77,6 @@ src/main/resources/images/mail-folder-outbox.png||Oxygen Icons - LGPL 3.0|||Oxyg
 src/main/resources/images/mail-receive.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/media-playback-start.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/menu16.gif||GHIDRA||reviewed||END|
-src/main/resources/images/note.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
-src/main/resources/images/note.yellow.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/oxygen-edit-redo.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/page_code.png||FAMFAMFAM Icons - CC 2.5||||END|
 src/main/resources/images/page_excel.png||FAMFAMFAM Icons - CC 2.5||||END|
@@ -93,7 +90,6 @@ src/main/resources/images/table_relationship.png||FAMFAMFAM Icons - CC 2.5|||fam
 src/main/resources/images/tag.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/text_lowercase.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/textfield_rename.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
-src/main/resources/images/tip.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/trash-empty.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/user-home.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/view-filter.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|

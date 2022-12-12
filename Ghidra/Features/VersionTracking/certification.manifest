@@ -9,17 +9,12 @@ data/version.tracking.theme.properties||GHIDRA||||END|
 src/main/docs/VTClasses.png||GHIDRA||reviewed||END|
 src/main/docs/VTGuiImpl.png||GHIDRA||reviewed||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||reviewed||END|
-src/main/help/help/shared/arrow.gif||GHIDRA||reviewed||END|
-src/main/help/help/shared/close16.gif||GHIDRA||reviewed||END|
-src/main/help/help/shared/note.png||Oxygen Icons - LGPL 3.0|||oxygen|END|
-src/main/help/help/shared/note.yellow.png||Oxygen Icons - LGPL 3.0|||oxygen|END|
-src/main/help/help/shared/tip.png||Oxygen Icons - LGPL 3.0|||oxygen|END|
 src/main/help/help/topics/VersionTrackingPlugin/VT_Correlators.html||GHIDRA||||END|
-src/main/help/help/topics/VersionTrackingPlugin/VT_Preconditions.html||GHIDRA||reviewed||END|
+src/main/help/help/topics/VersionTrackingPlugin/VT_Preconditions.html||GHIDRA||||END|
 src/main/help/help/topics/VersionTrackingPlugin/VT_Tool.html||GHIDRA||||END|
-src/main/help/help/topics/VersionTrackingPlugin/VT_Wizard.html||GHIDRA||reviewed||END|
-src/main/help/help/topics/VersionTrackingPlugin/VT_Workflow.html||GHIDRA||reviewed||END|
-src/main/help/help/topics/VersionTrackingPlugin/Version_Tracking_Intro.html||GHIDRA||reviewed||END|
+src/main/help/help/topics/VersionTrackingPlugin/VT_Wizard.html||GHIDRA||||END|
+src/main/help/help/topics/VersionTrackingPlugin/VT_Workflow.html||GHIDRA||||END|
+src/main/help/help/topics/VersionTrackingPlugin/Version_Tracking_Intro.html||GHIDRA||||END|
 src/main/help/help/topics/VersionTrackingPlugin/images/ActionsMenu_DropDown.png||GHIDRA||reviewed||END|
 src/main/help/help/topics/VersionTrackingPlugin/images/ApplyAdd.png||GHIDRA|||Captured on Mac using Grab.|END|
 src/main/help/help/topics/VersionTrackingPlugin/images/ApplyReplace.png||GHIDRA|||Captured on Mac using Grab.|END|

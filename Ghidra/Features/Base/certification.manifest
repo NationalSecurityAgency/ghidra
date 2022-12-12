@@ -95,11 +95,6 @@ data/x86_linux_syscall_numbers||GHIDRA||||END|
 ghidra_scripts/AskScript.properties||GHIDRA||||END|
 ghidra_scripts/world.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|
-src/main/help/help/shared/arrow.gif||GHIDRA||||END|
-src/main/help/help/shared/close16.gif||GHIDRA||||END|
-src/main/help/help/shared/note.png||Oxygen Icons - LGPL 3.0|||renamed from flag-green.png|END|
-src/main/help/help/shared/note.yellow.png||Oxygen Icons - LGPL 3.0|||renamed from flag-yellow.png|END|
-src/main/help/help/shared/tip.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0) Renamed version of help-hint.png|END|
 src/main/help/help/topics/About/About_Ghidra.htm||GHIDRA||||END|
 src/main/help/help/topics/About/About_Program_File.htm||GHIDRA||||END|
 src/main/help/help/topics/About/images/About_Program.png||GHIDRA||||END|
@@ -214,7 +209,7 @@ src/main/help/help/topics/DataTypePreviewPlugin/images/Data_Type_Preview.png||GH
 src/main/help/help/topics/DataWindowPlugin/data_window.htm||GHIDRA||||END|
 src/main/help/help/topics/DataWindowPlugin/images/DataWindow.png||GHIDRA||||END|
 src/main/help/help/topics/DataWindowPlugin/images/DataWindowFilter.png||GHIDRA||||END|
-src/main/help/help/topics/DbViewerPlugin/DbViewer.htm||GHIDRA||reviewed||END|
+src/main/help/help/topics/DbViewerPlugin/DbViewer.htm||GHIDRA||||END|
 src/main/help/help/topics/DbViewerPlugin/images/DatabaseViewer.png||GHIDRA||||END|
 src/main/help/help/topics/DisassembledViewPlugin/DisassembledViewPlugin.htm||GHIDRA||||END|
 src/main/help/help/topics/DisassembledViewPlugin/images/DisassembledViewPluginMain.png||GHIDRA||||END|
@@ -229,7 +224,6 @@ src/main/help/help/topics/DockingWindows/images/leftArrow.png||GHIDRA||||END|
 src/main/help/help/topics/DockingWindows/images/resize.png||GHIDRA||||END|
 src/main/help/help/topics/DockingWindows/images/rightArrow.png||GHIDRA||||END|
 src/main/help/help/topics/DockingWindows/images/upArrow.png||GHIDRA||||END|
-src/main/help/help/topics/DockingWindows/images/window.png||GHIDRA||||END|
 src/main/help/help/topics/EclipseIntegration/EclipseIntegration.htm||GHIDRA||||END|
 src/main/help/help/topics/EquatePlugin/Equates.htm||GHIDRA||||END|
 src/main/help/help/topics/EquatePlugin/images/AfterApplyEnum.png||GHIDRA||||END|
@@ -249,9 +243,9 @@ src/main/help/help/topics/FallThroughPlugin/Override_Fallthrough.htm||GHIDRA||||
 src/main/help/help/topics/FallThroughPlugin/images/SetFallThrough.png||GHIDRA||||END|
 src/main/help/help/topics/FileSystemBrowserPlugin/FileSystemBrowserPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/FlowSelection/Selection_By_Flow.html||GHIDRA||||END|
-src/main/help/help/topics/FrontEndPlugin/Archive_Project.htm||GHIDRA||reviewed||END|
+src/main/help/help/topics/FrontEndPlugin/Archive_Project.htm||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/Close_Project.htm||GHIDRA||||END|
-src/main/help/help/topics/FrontEndPlugin/Connecting_Tools.htm||GHIDRA||reviewed||END|
+src/main/help/help/topics/FrontEndPlugin/Connecting_Tools.htm||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/Creating_a_Project.htm||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/Deleting_a_Ghidra_Project.htm||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/Edit_Plugin_Path.htm||GHIDRA||||END|
@@ -260,10 +254,10 @@ src/main/help/help/topics/FrontEndPlugin/Ghidra_Front_end.htm||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/Ghidra_Front_end_Menus.htm||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/Opening_a_Ghidra_Project.htm||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/Project_Info.htm||GHIDRA||||END|
-src/main/help/help/topics/FrontEndPlugin/Re-opening_a_Project.htm||GHIDRA||reviewed||END|
-src/main/help/help/topics/FrontEndPlugin/Restore_Project.htm||GHIDRA||reviewed||END|
+src/main/help/help/topics/FrontEndPlugin/Re-opening_a_Project.htm||GHIDRA||||END|
+src/main/help/help/topics/FrontEndPlugin/Restore_Project.htm||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/Saving_a_Ghidra_Project.htm||GHIDRA||||END|
-src/main/help/help/topics/FrontEndPlugin/ShowMemoryUsage.htm||GHIDRA||reviewed||END|
+src/main/help/help/topics/FrontEndPlugin/ShowMemoryUsage.htm||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/ArchiveFileExists.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/ArchiveProject.png||GHIDRA||||END|
 src/main/help/help/topics/FrontEndPlugin/images/ChangeAccessList.png||GHIDRA||||END|
@@ -354,7 +348,7 @@ src/main/help/help/topics/ImporterPlugin/images/ImporterDialog.png||GHIDRA||||EN
 src/main/help/help/topics/ImporterPlugin/images/LanguagePickerDialog.png||GHIDRA||||END|
 src/main/help/help/topics/ImporterPlugin/images/SearchPathsDialog.png||GHIDRA||||END|
 src/main/help/help/topics/ImporterPlugin/importer.htm||GHIDRA||||END|
-src/main/help/help/topics/Intro/GhidraFunctionality.htm||GHIDRA||reviewed||END|
+src/main/help/help/topics/Intro/GhidraFunctionality.htm||GHIDRA||||END|
 src/main/help/help/topics/Intro/GhidraSupport.htm||GHIDRA||||END|
 src/main/help/help/topics/Intro/Intro.htm||GHIDRA||||END|
 src/main/help/help/topics/Intro/images/Empty_ghidra.png||GHIDRA||||END|
@@ -386,7 +380,7 @@ src/main/help/help/topics/MemoryMapPlugin/images/MemoryMap.png||GHIDRA||||END|
 src/main/help/help/topics/MemoryMapPlugin/images/MoveMemory.png||GHIDRA||||END|
 src/main/help/help/topics/MemoryMapPlugin/images/SetImageBaseDialog.png||GHIDRA||||END|
 src/main/help/help/topics/MemoryMapPlugin/images/SplitMemoryBlock.png||GHIDRA||||END|
-src/main/help/help/topics/Misc/Appendix.htm||GHIDRA||reviewed||END|
+src/main/help/help/topics/Misc/Appendix.htm||GHIDRA||||END|
 src/main/help/help/topics/Misc/Tips.htm||NONE||||END|
 src/main/help/help/topics/Misc/Welcome_to_Ghidra_Help.htm||GHIDRA||||END|
 src/main/help/help/topics/Navigation/Navigation.htm||GHIDRA||||END|
@@ -403,10 +397,10 @@ src/main/help/help/topics/OverviewPlugin/images/OverviewPanel.png||GHIDRA||||END
 src/main/help/help/topics/PrintingPlugin/Printing.htm||GHIDRA||||END|
 src/main/help/help/topics/PrintingPlugin/images/PrintOptions.png||GHIDRA||||END|
 src/main/help/help/topics/Program/Ghidra_Programs.htm||GHIDRA||||END|
-src/main/help/help/topics/ProgramManagerPlugin/Closing_Program_Files.htm||GHIDRA||reviewed||END|
+src/main/help/help/topics/ProgramManagerPlugin/Closing_Program_Files.htm||GHIDRA||||END|
 src/main/help/help/topics/ProgramManagerPlugin/Navigating_Program_Files.htm||GHIDRA||||END|
 src/main/help/help/topics/ProgramManagerPlugin/Opening_Program_Files.htm||GHIDRA|||'Open Program' graphic contains 'wcbiema'|END|
-src/main/help/help/topics/ProgramManagerPlugin/Program_Annotation.htm||GHIDRA||reviewed||END|
+src/main/help/help/topics/ProgramManagerPlugin/Program_Annotation.htm||GHIDRA||||END|
 src/main/help/help/topics/ProgramManagerPlugin/Program_Options_Dialog.htm||GHIDRA||||END|
 src/main/help/help/topics/ProgramManagerPlugin/Saving_Program_Files.htm||GHIDRA||||END|
 src/main/help/help/topics/ProgramManagerPlugin/images/ClosedTab.png||GHIDRA||||END|
@@ -565,8 +559,8 @@ src/main/help/help/topics/Tables/images/MultipleColumnSortDialog.png||GHIDRA||||
 src/main/help/help/topics/Tables/images/SelectColumnsDialog.png||GHIDRA||||END|
 src/main/help/help/topics/Tool/Configure_Tool.htm||GHIDRA||||END|
 src/main/help/help/topics/Tool/Ghidra_Tool_Administration.htm||GHIDRA||||END|
-src/main/help/help/topics/Tool/ShowLog.htm||GHIDRA||reviewed|References wcbiema in screen snapshot|END|
-src/main/help/help/topics/Tool/Tip_Of_The_Day.htm||GHIDRA||reviewed||END|
+src/main/help/help/topics/Tool/ShowLog.htm||GHIDRA|||References wcbiema in screen snapshot|END|
+src/main/help/help/topics/Tool/Tip_Of_The_Day.htm||GHIDRA||||END|
 src/main/help/help/topics/Tool/ToolOptions_Dialog.htm||GHIDRA||||END|
 src/main/help/help/topics/Tool/Undo_Redo.htm||GHIDRA||||END|
 src/main/help/help/topics/Tool/images/ConfigTool.png||GHIDRA||||END|

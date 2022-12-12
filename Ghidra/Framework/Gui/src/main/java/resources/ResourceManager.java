@@ -521,10 +521,12 @@ public class ResourceManager {
 		ImageIcon icon = iconMap.get(iconPath);
 		if (icon == null) {
 			icon = doLoadIcon(iconPath);
-			iconMap.put(iconPath, icon == null ? DEFAULT_ICON : icon);
+			if (icon != null) {
+				iconMap.put(iconPath, icon);
+			}
 		}
 
-		return icon == DEFAULT_ICON ? null : icon;
+		return icon;
 	}
 
 	/**
@@ -538,7 +540,9 @@ public class ResourceManager {
 		ImageIcon icon = iconMap.get(iconPath);
 		if (icon == null) {
 			icon = doLoadIcon(iconPath);
-			iconMap.put(iconPath, icon == null ? DEFAULT_ICON : icon);
+			if (icon != null) {
+				iconMap.put(iconPath, icon);
+			}
 		}
 		return icon == null ? new UnresolvedIcon(iconPath, DEFAULT_ICON) : icon;
 	}

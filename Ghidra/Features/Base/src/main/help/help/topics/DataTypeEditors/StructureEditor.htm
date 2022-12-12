@@ -6,7 +6,7 @@
     "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
 
     <TITLE>Data Structure Editor</TITLE>
-    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
   </HEAD>
 
   <BODY lang="EN-US">
@@ -60,7 +60,7 @@
         structure or array component changing it into its component parts.<BR>
         </LI>
 
-        <LI><I>Pull Down Menu</I>: The <IMG src="../../shared/menu16.gif" alt=""> icon at the top
+        <LI><I>Pull Down Menu</I>: The <IMG src="images/menu16.gif" alt=""> icon at the top
         of the editor provides additional editor actions. These are: show the category path of a
         component's data type, edit a component's data type, edit the fields of a component, apply
         a cycle group or favorite.<BR>
@@ -96,7 +96,7 @@
       the changes from the editor back to the program or archive.<BR>
       </P>
 
-      <P><IMG src="../../shared/note.png" alt=""> If editor changes to a structure or union are
+      <P><IMG src="help/shared/note.png" alt=""> If editor changes to a structure or union are
       applied and it is assigned to data in the program, all data items with the structure or union
       as the data type now have the new data type. In other words, the size or composition of those
       data items in the program will have changed due to the apply.</P>
@@ -115,7 +115,7 @@
     <H2>Closing the Editor</H2>
 
     <BLOCKQUOTE>
-      <P>Select the Close dockable component icon <IMG src="../../shared/close16.gif" alt=""> in
+      <P>Select the Close dockable component icon <IMG src="help/shared/close16.gif" alt=""> in
       the toolbar to exit from the editor. If you have unsaved changes to your data type, a dialog
       will ask if you want to save the changes.</P>
     </BLOCKQUOTE>
@@ -261,7 +261,7 @@
         </LI>
       </UL>
 
-      <P><IMG alt="Note:" src="../../shared/note.png"> The equivalent of having <I>no C/C++ code aligned/alignas
+      <P><IMG alt="Note:" src="help/shared/note.png"> The equivalent of having <I>no C/C++ code aligned/alignas
       attribute</I> on the structure or union is to choose <B>default</B>. The equivalent for the C code
       <i>aligned</i> attribute without a value is to choose <B>machine</B> alignment. The
       equivalent of <I>aligned(4)</I> or <I>alignas(4)</I> is to specify an explicit alignment <B>value</B> of 4.</P>
@@ -298,10 +298,10 @@
       of the <B>pack</B> setting.  The <B>align</B> setting will not influence interior component placement 
       as does the <B>pack</B> setting.<BR>
       </P>
-	  <P><IMG alt="Note:" src="../../shared/note.png"> The placement of bitfields may be influenced
+	  <P><IMG alt="Note:" src="help/shared/note.png"> The placement of bitfields may be influenced
 	  based upon the specified pack value based upon the compiler specification.<BR>
       </P>
-      <P><IMG alt="Note:" src="../../shared/note.png"> The equivalent of having <I>no C #pragma
+      <P><IMG alt="Note:" src="help/shared/note.png"> The equivalent of having <I>no C #pragma
       pack attribute</I> on the structure or union is to choose <B>default</B>. The equivalent for a C
       code attribute of <I>#pragma pack()</I> without a value is to specify a <B>pack value</B> of
       <B>1</B>. The equivalent of <I># pragma</I> <I>pack(4)</I> is to specify a <B>pack value</B>
@@ -375,12 +375,12 @@
       	</ul>
     </BLOCKQUOTE>
     
-    <P><IMG alt="Note:" src="../../shared/note.png">While packing of bitfields within packed 
+    <P><IMG alt="Note:" src="help/shared/note.png">While packing of bitfields within packed 
     structures is controlled by the compiler specification (e.g., data organization), bit-packing
     order is currently fixed based upon endianess.  Little-endian packs starting with bit-0 (lsb)
     while big-endian packs starting with bit-7 (msb).</P>
     
-    <P><IMG alt="Note:" src="../../shared/note.png">The use of bitfield components is not 
+    <P><IMG alt="Note:" src="help/shared/note.png">The use of bitfield components is not 
     currently reflected in decompiler results or assembly markup. </P>
 
 	<H2><A name="Structure_Editor_Flex_Array"></A>Zero-Element / Flexible Array Components</H2>
@@ -395,7 +395,7 @@
     equal to the length of the structure. When packing is enabled such a component may influence the 
     overall alignment of the structure and its length.
   
-    <P><IMG alt="Note:" src="../../shared/note.png">The use of flexible array components is not 
+    <P><IMG alt="Note:" src="help/shared/note.png">The use of flexible array components is not 
     currently reflected in decompiler results or listing reference markup. Its primary purpose 
     if to reflect the C/C++ source definition of a structure with correct alignment and structure sizing.</P>
     
@@ -539,7 +539,7 @@
         will be equal to the length of the component being cleared.</LI>
       </OL>
 
-      <P><IMG src="../../shared/note.png" alt=""> Clearing a component will also erase its Field
+      <P><IMG src="help/shared/note.png" alt=""> Clearing a component will also erase its Field
       Name and Comment.</P>
     </BLOCKQUOTE>
 
@@ -574,7 +574,7 @@
     </BLOCKQUOTE>
 
     <BLOCKQUOTE>
-      <P><IMG src="../../shared/note.png" alt=""> In a structure, an array can be created from a
+      <P><IMG src="help/shared/note.png" alt=""> In a structure, an array can be created from a
       selection of multiple components. The data type of the first component in the selection will
       be used for the data type in the array.</P>
 
@@ -657,7 +657,7 @@
       menu action (right mouse-click) <B>Add Bitfield</B> may be selected to launch the 
       <a href="#Structure_Bitfield_Editor">Bitfield Editor</a> for a new bitfield.</P>
       
-      <P><IMG alt="Note:" src="../../shared/note.png"> A direct text entry of a bitfield
+      <P><IMG alt="Note:" src="help/shared/note.png"> A direct text entry of a bitfield
       datatype may be specified within the table datatype column (e.g., char:1), although it 
       will always be placed at a default offset.</P>
       
@@ -700,7 +700,7 @@
       except on <i>undefined</i> components.</P>
     </BLOCKQUOTE>
 
-    <P><IMG src="../../shared/tip.png" alt="" border="0"> To rearrange the order of the component
+    <P><IMG src="help/shared/tip.png" alt="" border="0"> To rearrange the order of the component
     fields position the cursor over the header for the table column. Left mouse click and drag the
     column left or right to its new position.</P>
     <BR>
@@ -781,7 +781,7 @@
       which allows you to easily enter a data type or select/modify an existing one from one of the open
       datatype managers. It can also be Undefined, a pointer to a datatype, or an array.</P>
  
-       <P><IMG alt="Note:" src="../../shared/note.png"> Certain restrictions may apply when specifying 
+       <P><IMG alt="Note:" src="help/shared/note.png"> Certain restrictions may apply when specifying 
        or modifying a component's datatype which could cause a modification to fail.  Some common restrictions include
        but are not limited to:</P>
        
@@ -909,7 +909,7 @@
       is associated with the Byte cycle group. This group is Byte, Word, DWord, and QWord.</P>
 
       <BLOCKQUOTE>
-        <P><IMG src="../../shared/note.png" alt=""> A single row of the component table must be
+        <P><IMG src="help/shared/note.png" alt=""> A single row of the component table must be
         selected to cycle a data type.</P>
       </BLOCKQUOTE>
 
@@ -931,7 +931,7 @@
         </OL>
 
         <BLOCKQUOTE>
-          <P><IMG src="../../shared/tip.png" alt="" border="0"> Cycle groups can also be applied
+          <P><IMG src="help/shared/tip.png" alt="" border="0"> Cycle groups can also be applied
           from the component table's popup menu under <B>Cycle</B>.</P>
         </BLOCKQUOTE>
 
@@ -946,7 +946,7 @@
         </OL>
 
         <BLOCKQUOTE>
-          <P><IMG src="../../shared/tip.png" alt="" border="0"> When the current component data
+          <P><IMG src="help/shared/tip.png" alt="" border="0"> When the current component data
           type is not in the cycle group of the desired data type, pressing the cycle group key of
           the desired data type will change the component to the first data type in the desired
           cycle group. The data type can then be cycled to any other data type in the group.</P>
@@ -978,7 +978,7 @@
         currently work on a Mac. On a Mac try using the Alt key to insert rather than the Ctrl key. 
         The "+" should then appear at the drop site.</P>
 
-        <P><IMG src="../../shared/note.png" alt="">When a data type is dropped on a pointer
+        <P><IMG src="help/shared/note.png" alt="">When a data type is dropped on a pointer
         component, the component becomes a pointer of that data type instead of simply being
         replaced by that data type. For example, dropping a Byte on a Pointer results in a Byte*,
         which is a pointer to a Byte. Drag and Drop is discussed further in <A href=
@@ -997,11 +997,11 @@
       contiguous selection. Therefore, individual favorites are only enabled when they can be
       applied (i.e. they fit at the selection and the selection is contiguous).</P>
 
-      <P><IMG src="../../shared/note.png" alt=""> When a favorite data type is applied to a pointer
+      <P><IMG src="help/shared/note.png" alt=""> When a favorite data type is applied to a pointer
       component, the component becomes a pointer of that data type instead of simply being replaced
       by that data type.</P>
 
-      <P><IMG src="../../shared/tip.png" alt="" border="0"> If you right mouse click on a component
+      <P><IMG src="help/shared/tip.png" alt="" border="0"> If you right mouse click on a component
       where there is no selection, the selection becomes a single component selection containing
       that component and the popup menu will appear.</P>
 
@@ -1036,7 +1036,7 @@
         click the OK button.<BR>
         </P>
 
-        <P><IMG src="../../shared/tip.png" alt=""> For information about drag and drop with
+        <P><IMG src="help/shared/tip.png" alt=""> For information about drag and drop with
         pointers, see <A href="#DragNDrop">Drag and Drop Basics</A>.</P>
 
         <H3>Favorites</H3>
@@ -1044,7 +1044,7 @@
         <P>Right mouse click on the empty row at the end of the table and pull right to see the
         Favorites. Select the favorite from the popup and it is added as the last component.</P>
 
-        <P><IMG src="../../shared/tip.png" alt=""> For information about Pointers as a Favorite,
+        <P><IMG src="help/shared/tip.png" alt=""> For information about Pointers as a Favorite,
         see <A href="#Structure_Editor_Favorite">Favorites Basics</A>.</P>
       </BLOCKQUOTE>
     </BLOCKQUOTE>
@@ -1072,7 +1072,7 @@
           </LI>
         </OL>
 
-        <P><IMG src="../../shared/note.png" alt=""> For information about drag and drop with
+        <P><IMG src="help/shared/note.png" alt=""> For information about drag and drop with
         pointers, see <A href="#DragNDrop">Drag and Drop Basics</A>.</P>
       </BLOCKQUOTE>
     </BLOCKQUOTE>
@@ -1113,7 +1113,7 @@
           selection are created to replace the selection. In a non-packed structure any left over
           bytes in the selection will become <i>undefined</i> components.</P>
 
-          <P><IMG src="../../shared/note.png" alt=""> For information about drag and drop with
+          <P><IMG src="help/shared/note.png" alt=""> For information about drag and drop with
           pointers, see <A href="#DragNDrop">Drag and Drop Basics</A>.</P>
         </BLOCKQUOTE>
 
@@ -1122,7 +1122,7 @@
         <BLOCKQUOTE>
           <H4>Single Component Selected</H4>
 
-          <P><IMG src="../../shared/tip.png" alt="" border="0"> If you right mouse click on a
+          <P><IMG src="help/shared/tip.png" alt="" border="0"> If you right mouse click on a
           component where there is no selection, the selection becomes a single component selection
           containing that component and the popup menu will appear.</P>
 
@@ -1144,7 +1144,7 @@
           doesn't matter. The selection becomes as many of the data type as will fit and left over
           bytes become <i>undefined</i> components for a non-packed structure.</P>
 
-          <P><IMG src="../../shared/note.png" alt=""> For information about Pointers as a Favorite,
+          <P><IMG src="help/shared/note.png" alt=""> For information about Pointers as a Favorite,
           see <A href="#Structure_Editor_Favorite">Favorites Basics</A>.</P>
         </BLOCKQUOTE>
       </BLOCKQUOTE>
@@ -1212,7 +1212,7 @@
       whether the numbers are displayed in hexadecimal or decimal. Changing this only affects the
       current editor where it is changed.</P>
 
-      <P><IMG src="../../shared/note.png" alt=""> The Union Editor does not display offsets since
+      <P><IMG src="help/shared/note.png" alt=""> The Union Editor does not display offsets since
       they are always zero.</P>
 
       <P>To switch between decimal and hexadecimal display of numeric values in the current
@@ -1241,7 +1241,7 @@
       settings:</P>
 
       <UL>
-        <LI>From the tool's menu select <B>Edit</B> <IMG src="../../shared/arrow.gif" alt="-&gt;"
+        <LI>From the tool's menu select <B>Edit</B> <IMG src="help/shared/arrow.gif" alt="-&gt;"
         border="0"> <B>Tool Options...</B> which displays the <A href=
         "help/topics/Tool/ToolOptions_Dialog.htm">Tool Options Dialog.</A><BR>
         </LI>
@@ -1339,7 +1339,7 @@
     </DIV>
 	<BR>
 	
-    <P><IMG alt="Tip:" src="../../shared/tip.png"> A component zoom feature is provided which can 
+    <P><IMG alt="Tip:" src="help/shared/tip.png"> A component zoom feature is provided which can 
     allow the user to increase the visual bit size allowing for component labels to be shown 
     as size permits.  While with the mouse cursor is over a component, use mouse wheel while the 
     Shift key is depressed.</P>
@@ -1377,11 +1377,11 @@
     	<P><B>Comment</B> - (optional) specifies the structure component comment to be assigned to
     	the bitfield.  This entry utilizes a simple text entry field.</P>
     
-    	<P><IMG alt="Tip:" src="../../shared/tip.png"> The bitfield offset and size may be fully 
+    	<P><IMG alt="Tip:" src="help/shared/tip.png"> The bitfield offset and size may be fully 
     	specified by using the mouse.  Clicking and dragging over the visual bit-range where the bitfield 
     	should reside will adjust these settings.</P>
     
-    	<P><IMG alt="Note:" src="../../shared/note.png"> Within the Bitfield Editor the bit
+    	<P><IMG alt="Note:" src="help/shared/note.png"> Within the Bitfield Editor the bit
     	size may not exceed the size of the Base Datatype based upon the structure's 
     	associated compiler convention (i.e., 
     	data organization).  Since archives use default 
@@ -1393,7 +1393,7 @@
     	components, structure component sizing may change when moving between a datatype archive and 
     	a target program.</P>  
     	
-    	<P><IMG alt="Note:" src="../../shared/note.png"> It is important to note that the retained bitfield
+    	<P><IMG alt="Note:" src="help/shared/note.png"> It is important to note that the retained bitfield
     	storage specification (byte offset, component byte size, bit offset) will utilize the smallest possible 
     	values while preserving bitfield positioning within the structure.  The allocation unit offset and size
     	conveyed by the editor are for editor use only.</P> 

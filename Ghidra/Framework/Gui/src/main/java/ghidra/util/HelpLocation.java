@@ -38,7 +38,7 @@ public class HelpLocation {
 	 * to locate the given resource.  This is meant to be used with shared help resources, such
 	 * as images.
 	 */
-	public static final String HELP_SHARED = "help/shared";
+	public static final String HELP_SHARED = "help/shared/";
 
 	private String id;
 	private URL url;
@@ -189,6 +189,7 @@ public class HelpLocation {
 
 	/**
 	 * Returns the topic name/path if known, otherwise null.
+	 * @return the topic name/path if known, otherwise null.
 	 */
 	public String getTopic() {
 		return topic;
@@ -196,6 +197,7 @@ public class HelpLocation {
 
 	/**
 	 * Returns the topic anchor name if known, otherwise null.
+	 * @return the topic anchor name if known, otherwise null.
 	 */
 	public String getAnchor() {
 		return anchor;

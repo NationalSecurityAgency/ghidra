@@ -14,7 +14,6 @@ data/android/eclipse-classpath||GHIDRA||reviewed||END|
 data/android/eclipse-project||GHIDRA||reviewed||END|
 data/crypto/README.txt||GHIDRA||||END|
 data/languages/apport.opinion||GHIDRA||||END|
-data/languages/dumpfile.opinion||GHIDRA||||END|
 data/languages/minidump.opinion||GHIDRA||||END|
 data/languages/pagedump.opinion||GHIDRA||||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|
