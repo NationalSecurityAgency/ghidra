@@ -24,7 +24,7 @@ import javax.swing.event.DocumentListener;
 
 import org.apache.commons.lang3.StringUtils;
 
-import docking.options.editor.ButtonPanelFactory;
+import docking.widgets.button.BrowseButton;
 import docking.widgets.label.GDLabel;
 import docking.wizard.*;
 import generic.theme.*;
@@ -58,7 +58,7 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 	private DomainFolder folder;
 	private PluginTool tool;
 
-	// All program info objects that the user may have opened while using the wizard.  We keep 
+	// All program info objects that the user may have opened while using the wizard.  We keep
 	// these around to avoid reopening them and any accompanying upgrading that may be required.
 	// These will be released when the wizard is finished.
 	private Map<DomainFile, ProgramInfo> allProgramInfos = new HashMap<>();
@@ -77,8 +77,7 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 		Gui.registerFont(folderNameField, GThemeDefaults.Ids.Fonts.MONOSPACED);
 		folderNameField.setEditable(false); // force user to browse to choose
 
-		JButton browseFolderButton =
-			ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
+		JButton browseFolderButton = new BrowseButton();
 		browseFolderButton.addActionListener(e -> browseDataTreeFolders());
 
 		JLabel newSessionLabel = new GDLabel("New Session Name: ");
@@ -466,7 +465,7 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 	}
 
 	private JButton createSourceBrowseButton() {
-		JButton button = ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
+		JButton button = new BrowseButton();
 		button.setName("SOURCE_BUTTON");
 		button.addActionListener(e -> {
 			DomainFile programFile = VTWizardUtils.chooseDomainFile(NewSessionPanel.this,
@@ -479,7 +478,7 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 	}
 
 	private JButton createDestinationBrowseButton() {
-		JButton button = ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
+		JButton button = new BrowseButton();
 		button.setName("DESTINATION_BUTTON");
 		button.addActionListener(e -> {
 			DomainFile programFile = VTWizardUtils.chooseDomainFile(NewSessionPanel.this,

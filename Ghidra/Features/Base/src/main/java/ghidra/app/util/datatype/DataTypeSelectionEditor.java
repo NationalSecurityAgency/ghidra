@@ -21,8 +21,8 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.tree.TreePath;
 
-import docking.options.editor.ButtonPanelFactory;
 import docking.widgets.DropDownSelectionTextField;
+import docking.widgets.button.BrowseButton;
 import ghidra.app.plugin.core.datamgr.util.DataTypeChooserDialog;
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.app.services.DataTypeManagerService;
@@ -133,7 +133,7 @@ public class DataTypeSelectionEditor extends AbstractCellEditor {
 
 		selectionField.setBorder(UIManager.getBorder("Table.focusCellHighlightBorder"));
 
-		browseButton = ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
+		browseButton = new BrowseButton();
 		browseButton.setToolTipText("Browse the Data Manager");
 		browseButton.addActionListener(e -> showDataTypeBrowser());
 

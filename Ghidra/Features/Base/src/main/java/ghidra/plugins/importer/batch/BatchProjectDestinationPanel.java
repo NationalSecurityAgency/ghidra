@@ -19,7 +19,7 @@ import java.awt.*;
 
 import javax.swing.*;
 
-import docking.options.editor.ButtonPanelFactory;
+import docking.widgets.button.BrowseButton;
 import docking.widgets.label.GDLabel;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.main.DataTreeDialog;
@@ -53,7 +53,7 @@ class BatchProjectDestinationPanel extends JPanel {
 		JLabel folderLabel = new GDLabel("Destination Folder");
 		folderLabel.setLabelFor(folderNameTextField);
 
-		JButton browseButton = ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
+		JButton browseButton = new BrowseButton();
 		browseButton.addActionListener(e -> browseFolders());
 		//ImporterUtils.changeFontToBold(browseButton);
 

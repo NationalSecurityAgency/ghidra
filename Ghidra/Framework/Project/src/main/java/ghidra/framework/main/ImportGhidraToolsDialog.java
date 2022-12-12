@@ -26,7 +26,6 @@ import javax.swing.*;
 import javax.swing.border.TitledBorder;
 
 import docking.DialogComponentProvider;
-import docking.options.editor.ButtonPanelFactory;
 import docking.tool.ToolConstants;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.list.ListPanel;
@@ -38,15 +37,10 @@ import ghidra.util.HelpLocation;
 
 class ImportGhidraToolsDialog extends DialogComponentProvider {
 
-	private final static String SELECT_ALL = "Select All";
-	private final static String DESELECT_ALL = "Select None";
-
 	private ListPanel listPanel;
 	private JPanel mainPanel;
 	private GCheckBox[] checkboxes;
 	private String[] tools;
-	private JButton selectAllButton;
-	private JButton deselectAllButton;
 	private FrontEndTool tool;
 	private boolean cancelled = false;
 
@@ -66,8 +60,6 @@ class ImportGhidraToolsDialog extends DialogComponentProvider {
 
 		addOKButton();
 		addCancelButton();
-
-		addListeners();
 	}
 
 	void showDialog() {
@@ -103,40 +95,18 @@ class ImportGhidraToolsDialog extends DialogComponentProvider {
 		panel.setLayout(new BorderLayout());
 		JPanel availableToolsPanel = new JPanel(new BorderLayout());
 
-		//
-		// Create Button Panel
-		//
-		selectAllButton = new JButton(SELECT_ALL);
-		selectAllButton.setMnemonic('A');
-		deselectAllButton = new JButton(DESELECT_ALL);
-		deselectAllButton.setMnemonic('N');
+		SelectPanel myButtonPanel = new SelectPanel(e -> selectAll(), e -> deselectAll());
 
-		JPanel buttonPanel = ButtonPanelFactory.createButtonPanel(
-			new JButton[] { selectAllButton, deselectAllButton });
-
-		//
-		// List Panel
-		//
 		listPanel = new ListPanel();
 		listPanel.setCellRenderer(new DataCellRenderer());
 		listPanel.setMouseListener(new ListMouseListener());
 
-		// Layout Main Panel
-		availableToolsPanel.add(buttonPanel, BorderLayout.EAST);
+		availableToolsPanel.add(myButtonPanel, BorderLayout.EAST);
 		availableToolsPanel.add(listPanel, BorderLayout.CENTER);
 		availableToolsPanel.setBorder(new TitledBorder("Available Tools"));
 
 		panel.add(availableToolsPanel, BorderLayout.CENTER);
 		return panel;
-	}
-
-	/**
-	 * Add listeners to the buttons.
-	 */
-	private void addListeners() {
-		selectAllButton.addActionListener(e -> selectAll());
-
-		deselectAllButton.addActionListener(e -> deselectAll());
 	}
 
 	/**
