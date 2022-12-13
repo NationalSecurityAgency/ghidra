@@ -15,7 +15,7 @@
   </default_symbols>
   
   <default_memory_blocks>
-    <memory_block name="ZERO_PAGE" start_address="0x0002" length="0x00fe" initialized="false"/>
+    <memory_block name="ZERO_PAGE" start_address="0x0000" length="0x00fe" initialized="false"/>
     <memory_block name="STACK" start_address="0x0100" length="0x0100" initialized="false"/>
   </default_memory_blocks>
   
