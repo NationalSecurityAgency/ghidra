@@ -264,7 +264,7 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 	}
 
 	private void waitForDialogToClose(DockingDialog dockingDialog) {
-		waitForCondition(() -> !dialog.isShowing(), "Dialog did not close!");
+		waitForCondition(() -> !dockingDialog.isShowing(), "Dialog did not close!");
 		waitForSwing();
 	}
 
