@@ -19,13 +19,12 @@ import java.math.BigInteger;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
+import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors;
-import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.cmd.function.CallDepthChangeInfo;
 import ghidra.app.util.HighlightProvider;
 import ghidra.app.util.viewer.field.*;
 import ghidra.app.util.viewer.format.FieldFormatModel;
-import ghidra.app.util.viewer.options.OptionsGui;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
@@ -36,6 +35,7 @@ import ghidra.program.util.StackDepthFieldLocation;
 
 public class StackDepthFieldFactory extends FieldFactory {
 	public static final String FIELD_NAME = "Stack Depth";
+	public static final GColor COLOR = new GColor("color.fg.listing.stack.depth");
 	private Address lastEntry = null;
 	private CallDepthChangeInfo depth = null;
 	private long lastModNumber = -1;
@@ -47,9 +47,6 @@ public class StackDepthFieldFactory extends FieldFactory {
 	private StackDepthFieldFactory(FieldFormatModel model, HighlightProvider hsProvider,
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, model, hsProvider, displayOptions, fieldOptions);
-		color = displayOptions.getColor(OptionsGui.BYTES.getColorOptionName(),
-			OptionsGui.BYTES.getDefaultColor());
-
 	}
 
 	@Override
@@ -88,7 +85,7 @@ public class StackDepthFieldFactory extends FieldFactory {
 		// This can be used to display the value of any register symbolically flowing over the program.
 		// depthString = depth.getRegValueRepresentation(cu.getMinAddress(), cu.getProgram().getRegister("ESP"));
 
-		AttributedString as = new AttributedString(depthString, Palette.BLUE, getMetrics());
+		AttributedString as = new AttributedString(depthString, COLOR, getMetrics());
 
 		Integer overrideDepth =
 			CallDepthChangeInfo.getStackDepthChange(cu.getProgram(), cu.getMinAddress());
@@ -166,5 +163,4 @@ public class StackDepthFieldFactory extends FieldFactory {
 		}
 		return (category == FieldFormatModel.INSTRUCTION_OR_DATA);
 	}
-
 }

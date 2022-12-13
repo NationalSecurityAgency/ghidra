@@ -18,6 +18,7 @@ package ghidra.app.util.viewer.field;
 import java.awt.*;
 
 import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.viewer.field.ListingColors.FunctionColors;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.options.OptionsGui;
 import ghidra.app.util.viewer.options.ScreenElement;
@@ -29,26 +30,16 @@ public abstract class AbstractVariableFieldFactory extends FieldFactory {
 
 	private static class ParameterFieldOptions {
 		private final ScreenElement element;
-		Color color;
 		FontMetrics defaultMetrics;
 		FontMetrics[] fontMetrics = new FontMetrics[4];
 		int style = -1;
 
 		ParameterFieldOptions(ScreenElement element) {
 			this.element = element;
-			color = element.getDefaultColor();
-		}
-
-		String getColorOptionName() {
-			return element.getColorOptionName();
 		}
 
 		String getStyleOptionName() {
 			return element.getStyleOptionName();
-		}
-
-		Color getDefaultColor() {
-			return element.getDefaultColor();
 		}
 	}
 
@@ -76,8 +67,6 @@ public abstract class AbstractVariableFieldFactory extends FieldFactory {
 	protected AbstractVariableFieldFactory(String name, FieldFormatModel model,
 			HighlightProvider highlightProvider, Options displayOptions, Options fieldOptions) {
 		super(name, model, highlightProvider, displayOptions, fieldOptions);
-
-		initDisplayOptions(displayOptions);
 	}
 
 	protected void initDisplayOptions(Options displayOptions) {
@@ -86,7 +75,7 @@ public abstract class AbstractVariableFieldFactory extends FieldFactory {
 		colorOptionName = "Variable Color";
 		styleOptionName = "Variable Style";
 
-		super.initDisplayOptions();
+		super.initDisplayOptions(displayOptions);
 
 		parameterFieldOptions = new ParameterFieldOptions[2];
 		parameterFieldOptions[CUSTOM_PARAM_INDEX] =
@@ -95,9 +84,6 @@ public abstract class AbstractVariableFieldFactory extends FieldFactory {
 			new ParameterFieldOptions(OptionsGui.PARAMETER_DYNAMIC);
 
 		for (int i = 0; i < 2; i++) {
-			parameterFieldOptions[i].color =
-				displayOptions.getColor(parameterFieldOptions[i].getColorOptionName(),
-					parameterFieldOptions[i].getDefaultColor());
 			parameterFieldOptions[i].style =
 				displayOptions.getInt(parameterFieldOptions[i].getStyleOptionName(), -1);
 			setMetrics(baseFont, parameterFieldOptions[i]);
@@ -115,10 +101,7 @@ public abstract class AbstractVariableFieldFactory extends FieldFactory {
 		}
 		else {
 			for (int i = 0; i < 2; i++) {
-				if (optionName.equals(parameterFieldOptions[i].getColorOptionName())) {
-					parameterFieldOptions[i].color = (Color) newValue;
-				}
-				else if (optionName.equals(styleOptionName)) {
+				if (optionName.equals(styleOptionName)) {
 					parameterFieldOptions[i].style = options.getInt(optionName, -1);
 					setMetrics(baseFont, parameterFieldOptions[i]);
 				}
@@ -139,11 +122,10 @@ public abstract class AbstractVariableFieldFactory extends FieldFactory {
 
 	protected Color getColor(Variable var) {
 		if (var instanceof Parameter) {
-			int index = var.getFunction().hasCustomVariableStorage() ? CUSTOM_PARAM_INDEX
-					: DYNAMIC_PARAM_INDEX;
-			return parameterFieldOptions[index].color;
+			return var.getFunction().hasCustomVariableStorage() ? FunctionColors.PARAM_CUSTOM
+					: FunctionColors.PARAM_DYNAMIC;
 		}
-		return color;
+		return FunctionColors.PARAM;
 	}
 
 	protected FontMetrics getMetrics(Variable var) {

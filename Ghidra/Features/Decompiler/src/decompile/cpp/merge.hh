@@ -83,6 +83,8 @@ class Merge {
   vector<PcodeOp *> copyTrims;	///< COPY ops inserted to facilitate merges
   bool updateHigh(HighVariable *a); ///< Make sure given HighVariable's Cover is up-to-date
   void purgeHigh(HighVariable *high); ///< Remove cached intersection tests for a given HighVariable
+  static void gatherBlockVarnodes(HighVariable *a,int4 blk,const Cover &cover,vector<Varnode *> &res);
+  static bool testBlockIntersection(HighVariable *a,int4 blk,const Cover &cover,int4 relOff,const vector<Varnode *> &blist);
   bool blockIntersection(HighVariable *a,HighVariable *b,int4 blk);
   static bool mergeTestRequired(HighVariable *high_out,HighVariable *high_in);
   static bool mergeTestAdjacent(HighVariable *high_out,HighVariable *high_in);
@@ -96,6 +98,7 @@ class Merge {
   void collectCovering(vector<Varnode *> &vlist,HighVariable *high,PcodeOp *op);
   bool collectCorrectable(const vector<Varnode *> &vlist,list<PcodeOp *> &oplist,vector<int4> &slotlist,
 			   PcodeOp *op);
+  void moveIntersectTests(HighVariable *high1,HighVariable *high2);
   PcodeOp *allocateCopyTrim(Varnode *inVn,const Address &addr,PcodeOp *trimOp);
   void snipReads(Varnode *vn,list<PcodeOp *> &markedop);
   void snipIndirect(PcodeOp *indop);
@@ -148,7 +151,7 @@ public:
 inline bool Merge::compareHighByBlock(const HighVariable *a,const HighVariable *b)
 
 {
-  int4 result = a->wholecover.compareTo(b->wholecover);
+  int4 result = a->getCover().compareTo(b->getCover());
   if ( result == 0 ) {
     Varnode *v1 = a->getInstance( 0 );
     Varnode *v2 = b->getInstance( 0 );

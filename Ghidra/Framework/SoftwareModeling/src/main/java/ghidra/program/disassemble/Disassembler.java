@@ -1387,21 +1387,26 @@ public class Disassembler implements DisassemblerConflictHandler {
 			return;
 		}
 
+		boolean markAsError = true;
+
 		Address flowFrom = conflict.getFlowFromAddress();
 		String flowMsg = flowFrom != null ? (" (flow from " + flowFrom + ")") : "";
 		Address markAddr = address;
 		if (!isBookmarkAllowed(markAddr)) {
 			if (flowFrom != null) {
 				markAddr = flowFrom;
+				if (conflict.getInstructionErrorType() == InstructionErrorType.MEMORY &&
+					address.getOffset() == 0) {
+					markAsError = false;
+				}
 			}
 			else {
 				return;
 			}
 		}
 
-		bmMgr.setBookmark(markAddr, BookmarkType.ERROR, ERROR_BOOKMARK_CATEGORY,
-			conflict.getConflictMessage() + flowMsg);
-
+		bmMgr.setBookmark(markAddr, markAsError ? BookmarkType.ERROR : BookmarkType.WARNING,
+			ERROR_BOOKMARK_CATEGORY, conflict.getConflictMessage() + flowMsg);
 	}
 
 	private boolean isBookmarkAllowed(Address addr) {

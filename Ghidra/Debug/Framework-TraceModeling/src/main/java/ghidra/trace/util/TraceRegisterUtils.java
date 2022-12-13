@@ -154,7 +154,7 @@ public enum TraceRegisterUtils {
 			return rv.getRegisterValue(parent);
 		}
 		if (requireKnown) {
-			if (TraceMemoryState.KNOWN != regs.getState(platform, snap, reg.getBaseRegister())) {
+			if (TraceMemoryState.KNOWN != regs.getState(platform, snap, parent)) {
 				throw new IllegalStateException("Must fetch " + parent + " before setting " + reg);
 			}
 		}

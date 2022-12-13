@@ -15,13 +15,10 @@
  */
 package ghidra.app.util.viewer.field;
 
-import java.awt.Color;
 import java.math.BigInteger;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
-import generic.theme.GThemeDefaults.Colors;
-import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.util.HighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
@@ -40,7 +37,6 @@ import ghidra.program.util.ProgramLocation;
 public class ParallelInstructionFieldFactory extends FieldFactory {
 
 	public static final String FIELD_NAME = "Parallel ||";
-	public static final Color DEFAULT_COLOR = Palette.BLUE;
 
 	/**
 	 * Default constructor.
@@ -59,12 +55,6 @@ public class ParallelInstructionFieldFactory extends FieldFactory {
 	private ParallelInstructionFieldFactory(FieldFormatModel model, HighlightProvider hsProvider,
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, model, hsProvider, displayOptions, fieldOptions);
-	}
-
-	@Override
-	public void fieldOptionsChanged(Options options, String optionName, Object oldValue,
-			Object newValue) {
-		// don't care
 	}
 
 	/**
@@ -92,8 +82,8 @@ public class ParallelInstructionFieldFactory extends FieldFactory {
 			return null;
 		}
 
-		AttributedString as =
-			new AttributedString(fieldText, color, getMetrics(), false, underlineColor);
+		AttributedString as = new AttributedString(fieldText, ListingColors.PARALLEL_INSTRUCTION,
+			getMetrics(), false, ListingColors.UNDERLINE);
 		FieldElement text = new TextFieldElement(as, 0, 0);
 		return ListingTextField.createSingleLineTextField(this, proxy, text, startX + varWidth,
 			width, hlProvider);
@@ -131,10 +121,5 @@ public class ParallelInstructionFieldFactory extends FieldFactory {
 			ToolOptions toolOptinos, ToolOptions fieldOptions) {
 		return new ParallelInstructionFieldFactory(formatModel, hsProvider, toolOptinos,
 			fieldOptions);
-	}
-
-	@Override
-	public Color getDefaultColor() {
-		return Colors.FOREGROUND;
 	}
 }

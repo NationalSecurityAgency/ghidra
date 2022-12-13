@@ -35,7 +35,6 @@ import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.label.GLabel;
 import docking.widgets.table.*;
-import generic.theme.GColor;
 import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors;
 import generic.theme.GThemeDefaults.Colors.*;
@@ -43,6 +42,7 @@ import generic.util.WindowUtilities;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.ToolTipUtils;
 import ghidra.app.util.cparser.C.CParserUtils;
+import ghidra.app.util.viewer.field.ListingColors.FunctionColors;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Function;
@@ -54,8 +54,6 @@ import ghidra.util.layout.VerticalLayout;
 import resources.Icons;
 
 public class FunctionEditorDialog extends DialogComponentProvider implements ModelChangeListener {
-	private static final Color FG_COLOR_THUNK =
-		new GColor("color.fg.plugin.function.editor.dialog.thunk");
 
 	private FunctionEditorModel model;
 	private DocumentListener nameFieldDocumentListener;
@@ -215,7 +213,7 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 			BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Java.BORDER),
 				BorderFactory.createEmptyBorder(0, 5, 0, 5));
 		thunkedText.setBorder(border);
-		thunkedText.setForeground(FG_COLOR_THUNK);
+		thunkedText.setForeground(FunctionColors.THUNK);
 		thunkedPanel.add(thunkedText);
 		return thunkedPanel;
 	}
@@ -304,8 +302,8 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 
 		signatureTextField.setTabListener(tabListener);
 
-		signatureTextField.setChangeListener(
-			e -> model.setSignatureFieldText(signatureTextField.getText()));
+		signatureTextField
+				.setChangeListener(e -> model.setSignatureFieldText(signatureTextField.getText()));
 		return panel;
 	}
 
@@ -334,9 +332,8 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 			message += "<BR><BR>";
 		}
 
-		message = HTMLUtilities.wrapAsHTML(
-			message + "<CENTER><B>Do you want to continue editing or " +
-				"abort your changes?</B></CENTER>");
+		message = HTMLUtilities.wrapAsHTML(message +
+			"<CENTER><B>Do you want to continue editing or " + "abort your changes?</B></CENTER>");
 		int result = OptionDialog.showOptionNoCancelDialog(rootPanel, "Invalid Function Signature",
 			message, "Continue Editing", "Abort Changes", OptionDialog.ERROR_MESSAGE);
 		return result == OptionDialog.OPTION_TWO; // Option 2 is to abort
@@ -372,8 +369,8 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		noReturnCheckBox = new GCheckBox("No Return");
 		noReturnCheckBox.addItemListener(e -> model.setNoReturn(noReturnCheckBox.isSelected()));
 		storageCheckBox = new GCheckBox("Use Custom Storage");
-		storageCheckBox.addItemListener(
-			e -> model.setUseCustomizeStorage(storageCheckBox.isSelected()));
+		storageCheckBox
+				.addItemListener(e -> model.setUseCustomizeStorage(storageCheckBox.isSelected()));
 		panel.add(noReturnCheckBox);
 		panel.add(storageCheckBox);
 		panel.setBorder(BorderFactory.createTitledBorder("Function Attributes:"));
@@ -386,8 +383,8 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 		String[] names = new String[callingConventionNames.size()];
 		callingConventionComboBox = new GComboBox<>(callingConventionNames.toArray(names));
 		callingConventionComboBox.setSelectedItem(model.getCallingConventionName());
-		callingConventionComboBox.addItemListener(e -> model.setCallingConventionName(
-			(String) callingConventionComboBox.getSelectedItem()));
+		callingConventionComboBox.addItemListener(e -> model
+				.setCallingConventionName((String) callingConventionComboBox.getSelectedItem()));
 		return callingConventionComboBox;
 	}
 
@@ -400,8 +397,8 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 
 		callFixupComboBox.addItem(FunctionEditorModel.NONE_CHOICE);
 		if (callFixupNames.length != 0) {
-			callFixupComboBox.setToolTipText(
-				"Select call-fixup as defined by compiler specification");
+			callFixupComboBox
+					.setToolTipText("Select call-fixup as defined by compiler specification");
 			for (String element : callFixupNames) {
 				callFixupComboBox.addItem(element);
 			}
@@ -760,15 +757,13 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 					setToolTipText("Invalid Parameter Storage");
 				}
 				else {
-					setForeground(
-						isSelected ? table.getSelectionForeground() : Colors.FOREGROUND);
+					setForeground(isSelected ? table.getSelectionForeground() : Colors.FOREGROUND);
 					setToolTipText("");
 				}
 				setText(storage.toString());
 			}
 			else {
-				setForeground(
-					isSelected ? table.getSelectionForeground() : Colors.FOREGROUND);
+				setForeground(isSelected ? table.getSelectionForeground() : Colors.FOREGROUND);
 				setText("");
 				setToolTipText(null);
 			}

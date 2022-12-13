@@ -692,6 +692,8 @@ src/main/resources/images/FilterArrays.png||GHIDRA||||END|
 src/main/resources/images/FilterPointers.png||GHIDRA|||Modified version of fingerPointer.png|END|
 src/main/resources/images/FunctionScope.gif||GHIDRA||||END|
 src/main/resources/images/GHIDRA_1.png||GHIDRA||||END|
+src/main/resources/images/GHIDRA_2.png||GHIDRA||||END|
+src/main/resources/images/GHIDRA_3.png||GHIDRA||||END|
 src/main/resources/images/GHIDRA_Splash.png||GHIDRA||||END|
 src/main/resources/images/I.gif||GHIDRA||||END|
 src/main/resources/images/L.gif||GHIDRA||||END|

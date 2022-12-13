@@ -17,10 +17,6 @@ package ghidra.app.plugin.core.disassembler;
 
 import static org.junit.Assert.*;
 
-import java.awt.Font;
-import java.util.HashMap;
-import java.util.Map;
-
 import javax.swing.JList;
 import javax.swing.ListModel;
 
@@ -28,12 +24,9 @@ import org.junit.*;
 
 import docking.ComponentProvider;
 import docking.widgets.fieldpanel.FieldPanel;
-import generic.theme.GThemeDefaults.Colors.Palette;
-import ghidra.GhidraOptions;
 import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
-import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginEvent;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
@@ -52,10 +45,6 @@ public class DisassembledViewPluginTest extends AbstractGhidraHeadedIntegrationT
 	private Program program;
 	private ProgramPlugin plugin;
 
-	public DisassembledViewPluginTest() {
-		super();
-	}
-
 	@Before
 	public void setUp() throws Exception {
 
@@ -71,19 +60,15 @@ public class DisassembledViewPluginTest extends AbstractGhidraHeadedIntegrationT
 
 	@After
 	public void tearDown() throws Exception {
-
-		if (program != null) {
-			env.release(program);
-		}
 		env.dispose();
 		env = null;
 	}
 
 	/**
-	 * Tests the plugins response to 
+	 * Tests the plugins response to
 	 * {@link ghidra.app.events.ProgramLocationPluginEvent}s.  This plugin is
 	 * driven off of these events.
-	 * 
+	 *
 	 * @throws Exception If there is a problem opening the program.
 	 */
 	@Test
@@ -108,7 +93,7 @@ public class DisassembledViewPluginTest extends AbstractGhidraHeadedIntegrationT
 		assertTrue("The component provider does not have data when it " + "should.",
 			(modelOne.getSize() != 0));
 
-		// make sure we process the event in order to show the user the 
+		// make sure we process the event in order to show the user the
 		// preview
 		CodeBrowserPlugin cbPlugin = getPlugin(tool, CodeBrowserPlugin.class);
 
@@ -131,12 +116,12 @@ public class DisassembledViewPluginTest extends AbstractGhidraHeadedIntegrationT
 		assertEquals("The component provider has data when it is not visible.", 0,
 			list.getModel().getSize());
 
-		// show the plugin so that it will get the program location change 
+		// show the plugin so that it will get the program location change
 		// data
 		tool.showComponentProvider(componentProvider, true);
 		waitForSwing();
 
-		// test that sending a bad address will not return any results or 
+		// test that sending a bad address will not return any results or
 		// throw any exceptions
 		Memory memory = program.getMemory();
 		MemoryBlock textBlock = memory.getBlock(".text");
@@ -169,7 +154,7 @@ public class DisassembledViewPluginTest extends AbstractGhidraHeadedIntegrationT
 
 	/**
 	 * Tests the plugins response to {@link ProgramSelectionPluginEvent}s.
-	 * 
+	 *
 	 * @throws Exception If there is a problem opening the program.
 	 */
 	@Test
@@ -183,13 +168,13 @@ public class DisassembledViewPluginTest extends AbstractGhidraHeadedIntegrationT
 		JList<?> list = (JList<?>) getInstanceField("contentList", componentProvider);
 		ListModel<?> listContents = list.getModel();
 
-		// make sure that nothing happens on a single-selection     
+		// make sure that nothing happens on a single-selection
 		plugin.processEvent(createProgramSelectionEvent(false));
 
 		assertTrue("The list is not the same after processing a " + "single-selection event.",
 			compareListData(listContents, list.getModel()));
 
-		// make sure that the component display is cleared when there is a 
+		// make sure that the component display is cleared when there is a
 		// multiple-selection
 		plugin.processEvent(createProgramSelectionEvent(true));
 
@@ -199,67 +184,9 @@ public class DisassembledViewPluginTest extends AbstractGhidraHeadedIntegrationT
 	}
 
 	/**
-	 * Tests the plugin's response to changes in the user display preferences
-	 * as they are changed in the Options for the code browser.
-	 * 
-	 * @throws Exception If there is a problem opening the program.
-	 */
-	@Test
-	public void testDisplayConfiguration() throws Exception {
-		// test that the display characteristics change with the Options
-		// values
-
-		openProgram("notepad");
-
-		tool.showComponentProvider(componentProvider, true);
-		waitForSwing();
-
-		String[] fieldNames =
-			{ "selectedAddressColor", "addressForegroundColor", "backgroundColor", "font" };
-
-		// get the current display options
-		Map<String, Object> optionsMap = new HashMap<>();
-
-		for (String fieldName : fieldNames) {
-			optionsMap.put(fieldName, getInstanceField(fieldName, componentProvider));
-		}
-
-		// change the global options for the plugin's display options
-		Options opt = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS);
-
-		// get and change each options of interest
-		String optionToChange = GhidraOptions.OPTION_SELECTION_COLOR;
-		opt.setColor(optionToChange, Palette.LIME);
-
-		// the rest of the options to change are stored under a different
-		// options node
-		opt = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_DISPLAY);
-
-		optionToChange = (String) getInstanceField("ADDRESS_COLOR_OPTION", componentProvider);
-		opt.setColor(optionToChange, Palette.GOLD);
-
-		optionToChange = (String) getInstanceField("BACKGROUND_COLOR_OPTION", componentProvider);
-		opt.setColor(optionToChange, Palette.LAVENDER);
-
-		optionToChange = (String) getInstanceField("ADDRESS_FONT_OPTION", componentProvider);
-		Font currentFont = opt.getFont(optionToChange, (Font) optionsMap.get("font"));
-		opt.setFont(optionToChange, currentFont.deriveFont((float) currentFont.getSize() + 1));
-
-		// now make sure that the changes have been propagated
-		for (String fieldName : fieldNames) {
-
-			Object newValue = getInstanceField(fieldName, componentProvider);
-
-			assertTrue("The old value has not changed in response to " +
-				"changing the options.  Value: " + fieldName,
-				!(newValue.equals(optionsMap.get(fieldName))));
-		}
-	}
-
-	/**
 	 * Creates a {@link ProgramSelectionPluginEvent} to simulate selecting a
 	 * single address or multiple addresses in the code browser plugin.
-	 * 
+	 *
 	 * @param  multiSelection True creates an event for multiple selections.
 	 * @return The created event.
 	 */
@@ -278,7 +205,7 @@ public class DisassembledViewPluginTest extends AbstractGhidraHeadedIntegrationT
 
 	/**
 	 * Simulates a user click in the code browser plugin.
-	 * 
+	 *
 	 * @param cbp The code browser plugin instance to click.
 	 */
 	private void simulateButtonPress(final CodeBrowserPlugin cbp) {
@@ -286,9 +213,9 @@ public class DisassembledViewPluginTest extends AbstractGhidraHeadedIntegrationT
 	}
 
 	/**
-	 * Moves the code browser's display down a page, as if the user had 
+	 * Moves the code browser's display down a page, as if the user had
 	 * pressed the page down button.
-	 * 
+	 *
 	 * @param fieldPanel The field panel display of the code browser.
 	 */
 	private void pageDown(final FieldPanel fieldPanel) {
@@ -297,9 +224,9 @@ public class DisassembledViewPluginTest extends AbstractGhidraHeadedIntegrationT
 
 	/**
 	 * Compares the two given lists based upon the contents being the same
-	 * in terms of order and by comparing via the 
+	 * in terms of order and by comparing via the
 	 * {@link Object#equals(Object)} method.
-	 * 
+	 *
 	 * @param  modelOne The first list contents to compare
 	 * @param  modelTwo The second list contents to compare
 	 * @return True if both lists hold the equal contents in the same order.

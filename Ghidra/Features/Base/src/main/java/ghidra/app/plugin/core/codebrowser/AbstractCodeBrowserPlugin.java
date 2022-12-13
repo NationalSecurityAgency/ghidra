@@ -40,12 +40,10 @@ import ghidra.app.plugin.core.codebrowser.hover.ListingHoverService;
 import ghidra.app.services.*;
 import ghidra.app.util.HighlightProvider;
 import ghidra.app.util.ProgramDropProvider;
-import ghidra.app.util.viewer.field.ListingField;
-import ghidra.app.util.viewer.field.ListingTextField;
+import ghidra.app.util.viewer.field.*;
 import ghidra.app.util.viewer.format.*;
 import ghidra.app.util.viewer.listingpanel.*;
 import ghidra.app.util.viewer.options.ListingDisplayOptionsEditor;
-import ghidra.app.util.viewer.options.OptionsGui;
 import ghidra.app.util.viewer.util.AddressIndexMap;
 import ghidra.framework.model.*;
 import ghidra.framework.options.*;
@@ -112,7 +110,7 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 		connectedProvider = createProvider(formatMgr, true);
 		tool.showComponentProvider(connectedProvider, true);
 		initOptions(fieldOptions);
-		initDisplayOptions(displayOptions);
+		connectedProvider.getListingPanel().setTextBackgroundColor(ListingColors.BACKGROUND);
 		initMiscellaneousOptions();
 		displayOptions.addOptionsChangeListener(this);
 		fieldOptions.addOptionsChangeListener(this);
@@ -385,13 +383,7 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 			Object newValue) {
 
 		ListingPanel listingPanel = connectedProvider.getListingPanel();
-		if (options.getName().equals(GhidraOptions.CATEGORY_BROWSER_DISPLAY)) {
-			if (optionName.equals(OptionsGui.BACKGROUND.getColorOptionName())) {
-				Color c = (Color) newValue;
-				listingPanel.setTextBackgroundColor(c);
-			}
-		}
-		else if (options.getName().equals(GhidraOptions.CATEGORY_BROWSER_FIELDS)) {
+		if (options.getName().equals(GhidraOptions.CATEGORY_BROWSER_FIELDS)) {
 
 			FieldPanel fieldPanel = listingPanel.getFieldPanel();
 			if (optionName.equals(GhidraOptions.OPTION_SELECTION_COLOR)) {
@@ -563,12 +555,9 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 			"The highlight color in the browser.");
 
 		fieldOptions.registerThemeColorBinding(CURSOR_COLOR_OPTIONS_NAME,
-			FOCUSED_CURSOR_COLOR.getId(),
-			helpLocation,
-			"The color of the cursor in the browser.");
+			FOCUSED_CURSOR_COLOR.getId(), helpLocation, "The color of the cursor in the browser.");
 		fieldOptions.registerThemeColorBinding(UNFOCUSED_CURSOR_COLOR_OPTIONS_NAME,
-			UNFOCUSED_CURSOR_COLOR.getId(),
-			helpLocation,
+			UNFOCUSED_CURSOR_COLOR.getId(), helpLocation,
 			"The color of the cursor in the browser when the browser does not have focus.");
 		fieldOptions.registerOption(BLINK_CURSOR_OPTIONS_NAME, true, helpLocation,
 			"When selected, the cursor will blink when the containing window is focused.");
@@ -580,8 +569,7 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 
 		helpLocation = new HelpLocation(getName(), "Keyboard_Controls_Shift");
 		fieldOptions.registerOption(MOUSE_WHEEL_HORIZONTAL_SCROLLING_OPTIONS_NAME, true,
-			helpLocation,
-			"Enables horizontal scrolling by holding the Shift key while " +
+			helpLocation, "Enables horizontal scrolling by holding the Shift key while " +
 				"using the mouse scroll wheel");
 
 		Color color = fieldOptions.getColor(GhidraOptions.OPTION_SELECTION_COLOR,
@@ -594,9 +582,8 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 			selectionMarkers.setMarkerColor(color);
 		}
 
-		color =
-			fieldOptions.getColor(GhidraOptions.OPTION_HIGHLIGHT_COLOR,
-				GhidraOptions.DEFAULT_HIGHLIGHT_COLOR);
+		color = fieldOptions.getColor(GhidraOptions.OPTION_HIGHLIGHT_COLOR,
+			GhidraOptions.DEFAULT_HIGHLIGHT_COLOR);
 		MarkerSet highlightMarkers = getHighlightMarkers(currentProgram);
 		fieldPanel.setHighlightColor(color);
 		if (highlightMarkers != null) {
@@ -620,12 +607,6 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 			CURRENT_LINE_HIGHLIGHT_COLOR);
 
 		isHighlightCursorLine = fieldOptions.getBoolean(GhidraOptions.HIGHLIGHT_CURSOR_LINE, true);
-	}
-
-	private void initDisplayOptions(Options displayOptions) {
-		Color color = displayOptions.getColor(OptionsGui.BACKGROUND.getColorOptionName(),
-			OptionsGui.BACKGROUND.getDefaultColor());
-		connectedProvider.getListingPanel().setTextBackgroundColor(color);
 	}
 
 	private void initMiscellaneousOptions() {

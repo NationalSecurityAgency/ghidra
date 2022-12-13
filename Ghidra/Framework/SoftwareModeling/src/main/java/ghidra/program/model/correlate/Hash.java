@@ -19,30 +19,38 @@ package ghidra.program.model.correlate;
  * This encodes the main hash value for an n-gram, and the number of Instructions hashed
  *
  */
-public  class Hash implements Comparable<Hash> {
+public class Hash implements Comparable<Hash> {
 	// Initial accumulator values for the hash functions.  Should be non-zero for the CRC, but value doesn't matter otherwise
 	public static final int SEED = 22222;
 	public static final int ALTERNATE_SEED = 11111;	// Must be different from SEED
 
 	protected int value;		// Actual hash value
 	protected int size;		// Number of instructions involved in hash
-	
+
 	@Override
 	public int compareTo(Hash o) {
-		return Long.compare(value, o.value);
+		int cmp = Integer.compare(value, o.value);
+		if (cmp == 0) {
+			return Integer.compare(size, o.size);
+		}
+		return cmp;
 	}
-	
+
 	@Override
 	public boolean equals(Object obj) {
-		return value == ((Hash)obj).value;
+		Hash o = (Hash) obj;
+		if (value != o.value) {
+			return false;
+		}
+		return (size == o.size);
 	}
-	
+
 	@Override
 	public int hashCode() {
 		return value;
 	}
-	
-	public Hash(int val,int sz) {
+
+	public Hash(int val, int sz) {
 		value = val;
 		size = sz;
 	}

@@ -20,6 +20,7 @@ import java.math.BigInteger;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
+import generic.theme.GColor;
 import ghidra.app.util.HighlightProvider;
 import ghidra.app.util.viewer.field.*;
 import ghidra.app.util.viewer.format.FieldFormatModel;
@@ -34,6 +35,7 @@ import ghidra.program.util.ProgramLocation;
 
 public class EntropyFieldFactory extends FieldFactory {
 	public static final String FIELD_NAME = "Entropy";
+	public static final GColor COLOR = new GColor("color.fg.listing.bytes.entropy");
 	StringBuffer sb = new StringBuffer();
 
 	/**
@@ -80,19 +82,19 @@ public class EntropyFieldFactory extends FieldFactory {
 			}
 			entropy = calcEntropy(bytes, 0, bytes.length);
 			float[] hsbvals = Color.RGBtoHSB(255, 0, 0, null);
-			color =
+			Color color =
 				Color.getHSBColor(hsbvals[0], hsbvals[1], (float) (hsbvals[1] * (entropy / 8.0)));
+			String str = "" + (int) ((entropy / 8.0) * 100);
+			AttributedString text = new AttributedString(str, color, getMetrics());
+
+			FieldElement fieldElement = new TextFieldElement(text, 0, 0);
+			return ListingTextField.createSingleLineTextField(this, proxy, fieldElement,
+				startX + varWidth, width, hlProvider);
 		}
 		catch (MemoryAccessException e) {
 			return null;
 		}
 
-		String str = "" + (int) ((entropy / 8.0) * 100);
-		AttributedString text = new AttributedString(str, color, getMetrics());
-
-		FieldElement fieldElement = new TextFieldElement(text, 0, 0);
-		return ListingTextField.createSingleLineTextField(this, proxy, fieldElement,
-			startX + varWidth, width, hlProvider);
 	}
 
 	private double calcEntropy(byte[] b, int start, int len) {
@@ -153,8 +155,8 @@ public class EntropyFieldFactory extends FieldFactory {
 
 	@Override
 	public FieldFactory newInstance(FieldFormatModel myModel, HighlightProvider myHlProvider,
-			ToolOptions displayOptions, ToolOptions fieldOptions) {
-		return new EntropyFieldFactory(myModel, myHlProvider, displayOptions, fieldOptions);
+			ToolOptions displayOptions1, ToolOptions fieldOptions) {
+		return new EntropyFieldFactory(myModel, myHlProvider, displayOptions1, fieldOptions);
 	}
 
 }

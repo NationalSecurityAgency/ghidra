@@ -54,7 +54,7 @@ public class ScreenElement {
 		return style;
 	}
 
-	public Color getDefaultColor() {
+	public GColor getDefaultColor() {
 		return defaultColor;
 	}
 

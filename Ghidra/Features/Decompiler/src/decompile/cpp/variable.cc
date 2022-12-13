@@ -23,6 +23,170 @@ AttributeId ATTRIB_SYMREF = AttributeId("symref",68);
 
 ElementId ELEM_HIGH = ElementId("high",82);
 
+/// Compare by offset within the group, then by size.
+/// \param op2 is the other piece to compare with \b this
+/// \return \b true if \b this should be ordered before the other piece
+bool VariableGroup::PieceCompareByOffset::operator()(const VariablePiece *a,const VariablePiece *b) const
+
+{
+  if (a->getOffset() != b->getOffset())
+    return (a->getOffset() < b->getOffset());
+  return (a->getSize() < b->getSize());
+}
+
+/// The VariablePiece takes partial ownership of \b this, via refCount.
+/// \param piece is the new piece to add
+void VariableGroup::addPiece(VariablePiece *piece)
+
+{
+  piece->group = this;
+  if (!pieceSet.insert(piece).second)
+    throw LowlevelError("Duplicate VariablePiece");
+}
+
+void VariableGroup::removePiece(VariablePiece *piece)
+
+{
+  pieceSet.erase(piece);
+}
+
+/// Construct piece given a HighVariable and its position within the whole.
+/// If \b this is the first piece in the group, allocate a new VariableGroup object.
+/// \param h is the given HighVariable to treat as a piece
+/// \param offset is the byte offset of the piece within the whole
+/// \param grp is another HighVariable in the whole, or null if \b this is the first piece
+VariablePiece::VariablePiece(HighVariable *h,int4 offset,HighVariable *grp)
+
+{
+  high = h;
+  groupOffset = offset;
+  size = h->getInstance(0)->getSize();
+  if (grp != (HighVariable *)0)
+    group = grp->piece->getGroup();
+  else
+    group = new VariableGroup();
+  group->addPiece(this);
+}
+
+VariablePiece::~VariablePiece(void)
+
+{
+  group->removePiece(this);
+  if (group->empty())
+    delete group;
+  else
+    markIntersectionDirty();
+}
+
+void VariablePiece::markIntersectionDirty(void) const
+
+{
+  set<VariablePiece *,VariableGroup::PieceCompareByOffset>::const_iterator iter;
+
+  for(iter=group->pieceSet.begin();iter!=group->pieceSet.end();++iter)
+    (*iter)->high->highflags |= (HighVariable::intersectdirty | HighVariable::extendcoverdirty);
+}
+
+void VariablePiece::markExtendCoverDirty(void) const
+
+{
+  if ((high->highflags & HighVariable::intersectdirty)!=0)
+    return;	// intersection list itself is dirty, extended covers will be recomputed anyway
+  for(int4 i=0;i<intersection.size();++i) {
+    intersection[i]->high->highflags |= HighVariable::extendcoverdirty;
+  }
+  high->highflags |= HighVariable::extendcoverdirty;
+}
+
+/// Compute list of exactly the HighVariable pieces that intersect with \b this.
+void VariablePiece::updateIntersections(void) const
+
+{
+  if ((high->highflags & HighVariable::intersectdirty)==0) return;
+  set<VariablePiece *,VariableGroup::PieceCompareByOffset>::const_iterator iter;
+
+  int4 endOffset = groupOffset + size;
+  intersection.clear();
+  for(iter=group->pieceSet.begin();iter!=group->pieceSet.end();++iter) {
+    VariablePiece *otherPiece = *iter;
+    if (otherPiece == this) continue;
+    if (endOffset <= otherPiece->groupOffset) continue;
+    int4 otherEndOffset = otherPiece->groupOffset + otherPiece->size;
+    if (groupOffset >= otherEndOffset) continue;
+    intersection.push_back(otherPiece);
+  }
+  high->highflags &= ~(uint4)HighVariable::intersectdirty;
+}
+
+/// Union internal covers of all pieces intersecting with \b this.
+void VariablePiece::updateCover(void) const
+
+{
+  if ((high->highflags & (HighVariable::coverdirty | HighVariable::extendcoverdirty))==0) return;
+  high->updateInternalCover();
+  cover = high->internalCover;
+  for(int4 i=0;i<intersection.size();++i) {
+    const HighVariable *high = intersection[i]->high;
+    high->updateInternalCover();
+    cover.merge(high->internalCover);
+  }
+  high->highflags &= ~(uint4)HighVariable::extendcoverdirty;
+}
+
+/// \param amt is the given amout to add to offset
+void VariablePiece::adjustOffset(int4 amt)
+
+{
+  set<VariablePiece *,VariableGroup::PieceCompareByOffset>::iterator iter;
+
+  for(iter=group->pieceSet.begin();iter!=group->pieceSet.end();++iter) {
+    (*iter)->groupOffset += amt;
+  }
+}
+
+/// If there are no remaining references to the old VariableGroup it is deleted.
+/// \param newGropu is the new VariableGroup to transfer \b this to
+void VariablePiece::transferGroup(VariableGroup *newGroup)
+
+{
+  group->removePiece(this);
+  if (group->empty())
+    delete group;
+  newGroup->addPiece(this);
+}
+
+/// Combine the VariableGroup associated with the given other VariablePiece and the VariableGroup of \b this
+/// into one group. Combining in this way requires pieces of the same size and offset to be merged. This
+/// method does not do the merging but passes back a list of HighVariable pairs that need to be merged.
+/// The first element in the pair will have its VariablePiece in the new group, and the second element
+/// will have its VariablePiece freed in preparation for the merge.
+/// Offsets are adjusted so that \b this and the given other piece have the same offset;
+/// \param op2 is the given other VariablePiece
+/// \param mergePairs passes back the collection of HighVariable pairs that must be merged
+void VariablePiece::combineOtherGroup(VariablePiece *op2,vector<HighVariable *> &mergePairs)
+
+{
+  int4 diff = groupOffset - op2->groupOffset;	// Add to op2, or subtract from this
+  if (diff > 0)
+    op2->adjustOffset(diff);
+  else if (diff < 0)
+    adjustOffset(-diff);
+  set<VariablePiece *,VariableGroup::PieceCompareByOffset>::iterator iter = op2->group->pieceSet.begin();
+  set<VariablePiece *,VariableGroup::PieceCompareByOffset>::iterator enditer = op2->group->pieceSet.end();
+  while(iter != enditer) {
+    VariablePiece *piece = *iter;
+    set<VariablePiece *,VariableGroup::PieceCompareByOffset>::iterator matchiter = group->pieceSet.find(piece);
+    if (matchiter != group->pieceSet.end()) {
+      mergePairs.push_back((*matchiter)->high);
+      mergePairs.push_back(piece->high);
+      piece->high->piece = (VariablePiece *)0;	// Detach HighVariable from its original VariablePiece
+      delete piece;
+    }
+    else
+      piece->transferGroup(group);
+  }
+}
+
 /// The new instance starts off with no associate Symbol and all properties marked as \e dirty.
 /// \param vn is the single Varnode member
 HighVariable::HighVariable(Varnode *vn)
@@ -32,6 +196,7 @@ HighVariable::HighVariable(Varnode *vn)
   highflags = flagsdirty | namerepdirty | typedirty | coverdirty;
   flags = 0;
   type = (Datatype *)0;
+  piece = (VariablePiece *)0;
   symbol = (Symbol *)0;
   nameRepresentative = (Varnode *)0;
   symboloffset = -1;
@@ -39,6 +204,13 @@ HighVariable::HighVariable(Varnode *vn)
   vn->setHigh( this, numMergeClasses-1 );
   if (vn->getSymbolEntry() != (SymbolEntry *)0)
     setSymbol(vn);
+}
+
+HighVariable::~HighVariable(void)
+
+{
+  if (piece != (VariablePiece *)0)
+    delete piece;
 }
 
 /// The given Varnode \b must be a member and \b must have a non-null SymbolEntry
@@ -82,19 +254,41 @@ void HighVariable::setSymbolReference(Symbol *sym,int4 off)
   highflags &= ~((uint4)symboldirty);
 }
 
+void HighVariable::transferPiece(HighVariable *tv2)
+
+{
+  piece = tv2->piece;
+  tv2->piece = (VariablePiece *)0;
+  piece->setHigh(this);
+  highflags |= (tv2->highflags & (intersectdirty | extendcoverdirty));
+  tv2->highflags &= ~(uint4)(intersectdirty | extendcoverdirty);
+}
+
 /// Only update if the cover is marked as \e dirty.
 /// Merge the covers of all Varnode instances.
+void HighVariable::updateInternalCover(void) const
+
+{
+  if ((highflags & coverdirty) != 0) {
+    internalCover.clear();
+    if (inst[0]->hasCover()) {
+      for(int4 i = 0;i < inst.size();++i)
+	internalCover.merge(*inst[i]->getCover());
+    }
+    highflags &= ~coverdirty;
+  }
+}
+
 /// This is \b only called by the Merge class which knows when to call it properly.
 void HighVariable::updateCover(void) const
 
 {
-  if ((highflags & coverdirty)==0) return; // Cover info is upto date
-  highflags &= ~coverdirty;
-
-  wholecover.clear();
-  if (!inst[0]->hasCover()) return;
-  for(int4 i=0;i<inst.size();++i)
-    wholecover.merge(*inst[i]->getCover());
+  if (piece == (VariablePiece *)0)
+    updateInternalCover();
+  else {
+    piece->updateIntersections();
+    piece->updateCover();
+  }
 }
 
 /// Only update if flags are marked as \e dirty.
@@ -175,15 +369,14 @@ void HighVariable::updateSymbol(void) const
   highflags &= ~((uint4)symboldirty);
   vector<Varnode *>::const_iterator iter;
   symbol = (Symbol *)0;
-  Varnode *vn = (Varnode *)0;
 
   for(iter=inst.begin();iter!=inst.end();++iter) {
-    Varnode *tmpvn = *iter;
-    if (tmpvn->getSymbolEntry() != (SymbolEntry *)0)
-      vn = tmpvn;
+    Varnode *vn = *iter;
+    if (vn->getSymbolEntry() != (SymbolEntry *)0) {
+      setSymbol(vn);
+      return;
+    }
   }
-  if (vn != (Varnode *)0)
-    setSymbol(vn);
 }
 
 /// Compare two Varnode objects based just on their storage address
@@ -276,6 +469,8 @@ void HighVariable::remove(Varnode *vn)
       highflags |= (flagsdirty|namerepdirty|coverdirty|typedirty);
       if (vn->getSymbolEntry() != (SymbolEntry *)0)
 	highflags |= symboldirty;
+      if (piece != (VariablePiece *)0)
+	piece->markExtendCoverDirty();
       return;
     }
   }
@@ -305,15 +500,48 @@ void HighVariable::finalizeDatatype(Datatype *tp)
   highflags |= type_finalized;
 }
 
+/// If one of the HighVariables is already in a group, the other HighVariable is added to this group.
+/// \param off is the relative byte offset of \b this with the other HighVariable
+/// \param hi2 is the other HighVariable
+void HighVariable::groupWith(int4 off,HighVariable *hi2)
+
+{
+  if (piece == (VariablePiece *)0 && hi2->piece == (VariablePiece *)0) {
+    hi2->piece = new VariablePiece(hi2,0);
+    piece = new VariablePiece(this,off,hi2);
+    hi2->piece->markIntersectionDirty();
+    return;
+  }
+  if (piece == (VariablePiece *)0) {
+    if ((hi2->highflags & intersectdirty) == 0)
+      hi2->piece->markIntersectionDirty();
+    highflags |= intersectdirty | extendcoverdirty;
+    off += hi2->piece->getOffset();
+    piece = new VariablePiece(this,off,hi2);
+  }
+  else if (hi2->piece == (VariablePiece *)0) {
+    int4 hi2Off = piece->getOffset() - off;
+    if (hi2Off < 0) {
+      piece->adjustOffset(-hi2Off);
+      hi2Off = 0;
+    }
+    if ((highflags & intersectdirty) == 0)
+      piece->markIntersectionDirty();
+    hi2->highflags |= intersectdirty | extendcoverdirty;
+    hi2->piece = new VariablePiece(hi2,hi2Off,this);
+  }
+  else {
+    throw LowlevelError("Cannot group HighVariables that are already grouped");
+  }
+}
+
 /// The lists of members are merged and the other HighVariable is deleted.
 /// \param tv2 is the other HighVariable to merge into \b this
 /// \param isspeculative is \b true to keep the new members in separate \e merge classes
-void HighVariable::merge(HighVariable *tv2,bool isspeculative)
+void HighVariable::mergeInternal(HighVariable *tv2,bool isspeculative)
 
 {
   int4 i;
-
-  if (tv2 == this) return;
 
   highflags |= (flagsdirty|namerepdirty|typedirty);
   if (tv2->symbol != (Symbol *)0) {		// Check if we inherit a Symbol
@@ -345,11 +573,52 @@ void HighVariable::merge(HighVariable *tv2,bool isspeculative)
   tv2->inst.clear();
 
   if (((highflags&coverdirty)==0)&&((tv2->highflags&coverdirty)==0))
-    wholecover.merge(tv2->wholecover);
+    internalCover.merge(tv2->internalCover);
   else
     highflags |= coverdirty;
 
   delete tv2;
+}
+
+/// The HighVariables are merged internally as with mergeInternal.  If \b this is part of a VariableGroup,
+/// extended covers of the group may be affected.  If both HighVariables are part of separate groups,
+/// the groups are combined into one, which may induce additional HighVariable pairs within the group to be merged.
+/// In all cases, the other HighVariable is deleted.
+/// \param tv2 is the other HighVariable to merge into \b this
+/// \param isspeculative is \b true to keep the new members in separate \e merge classes
+void HighVariable::merge(HighVariable *tv2,bool isspeculative)
+
+{
+  if (tv2 == this) return;
+
+  if (piece == (VariablePiece *)0 && tv2->piece == (VariablePiece *)0) {
+    mergeInternal(tv2,isspeculative);
+    return;
+  }
+  if (tv2->piece == (VariablePiece *)0) {
+    // Keep group that this is already in
+    piece->markExtendCoverDirty();
+    mergeInternal(tv2,isspeculative);
+    return;
+  }
+  if (piece == (VariablePiece *)0) {
+    // Move ownership of the VariablePiece object from the HighVariable that will be freed
+    transferPiece(tv2);
+    piece->markExtendCoverDirty();
+    mergeInternal(tv2,isspeculative);
+    return;
+  }
+  // Reaching here both HighVariables are part of a group
+  throw LowlevelError("Merging variables in separate groups not supported");
+//  vector<HighVariable *> mergePairs;
+//  piece->combineOtherGroup(tv2->piece, mergePairs);
+//  for(int4 i=0;i<mergePairs.size();i+=2) {
+//    HighVariable *high1 = mergePairs[i];
+//    HighVariable *high2 = mergePairs[i+1];
+// // Need to deal with cached intersect tests herev
+//    high1->mergeInternal(high2, isspeculative);
+//  }
+//  piece->markIntersectionDirty();
 }
 
 /// All Varnode objects are assigned a HighVariable, including those that don't get names like

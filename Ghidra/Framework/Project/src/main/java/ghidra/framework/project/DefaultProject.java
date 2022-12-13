@@ -497,7 +497,8 @@ public class DefaultProject implements Project {
 					addProjectView(url, true);
 				}
 				catch (IOException e) {
-					Msg.error(this, e.getMessage());
+					Msg.error(this, "Project view not opended (" + GhidraURL.getDisplayString(url) +
+						"): " + e.getMessage());
 				}
 			}
 			it = root.getChildren(OPEN_REPOSITORY_VIEW_XML_NAME).iterator();
@@ -509,7 +510,8 @@ public class DefaultProject implements Project {
 					addProjectView(url, true);
 				}
 				catch (IOException e) {
-					Msg.error(this, e.getMessage());
+					Msg.error(this, "Project view not opended (" + GhidraURL.getDisplayString(url) +
+						"): " + e.getMessage());
 				}
 			}
 

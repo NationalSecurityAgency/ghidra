@@ -26,6 +26,7 @@ src/main/help/help/topics/Diff/images/DiffApplySettings.png||GHIDRA||||END|
 src/main/help/help/topics/Diff/images/DiffApplySettingsPopup.png||GHIDRA||reviewed||END|
 src/main/help/help/topics/Diff/images/DiffDetails.png||GHIDRA||||END|
 src/main/help/help/topics/Diff/images/DiffSelect16.png||GHIDRA||reviewed||END|
+src/main/help/help/topics/Diff/images/SelectOpenProgram.png||GHIDRA||||END|
 src/main/help/help/topics/Diff/images/SelectOtherProgram.png||GHIDRA||||END|
 src/main/help/help/topics/Diff/images/SelectOtherVersionedProgram.png||GHIDRA||||END|
 src/main/help/help/topics/Diff/images/disk.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
@@ -44,5 +45,4 @@ src/main/resources/images/eraser_arrow16.png||GHIDRA||||END|
 src/main/resources/images/pencil16.png||GHIDRA||reviewed||END|
 src/main/resources/images/pencil_arrow16.png||GHIDRA||reviewed||END|
 src/main/resources/images/settings16.gif||GHIDRA||reviewed||END|
-src/main/resources/images/table_relationship.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/xmag.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|

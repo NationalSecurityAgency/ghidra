@@ -135,7 +135,9 @@ public abstract class LinkHandler<T extends DomainObjectAdapterDB> extends DBCon
 	@Override
 	public T getImmutableObject(FolderItem item, Object consumer, int version, int minChangeVersion,
 			TaskMonitor monitor) throws IOException, CancelledException, VersionException {
-		throw new UnsupportedOperationException("link-file does not support getImmutableObject");
+		//throw new UnsupportedOperationException("link-file does not support getImmutableObject");
+		// See GP-2903
+		return getReadOnlyObject(item, version, true, consumer, monitor);
 	}
 
 	@Override

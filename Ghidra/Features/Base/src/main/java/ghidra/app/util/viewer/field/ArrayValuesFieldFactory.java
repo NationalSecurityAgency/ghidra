@@ -18,23 +18,16 @@ package ghidra.app.util.viewer.field;
 import java.beans.PropertyEditor;
 import java.math.BigInteger;
 
-import docking.widgets.fieldpanel.field.AttributedString;
-import docking.widgets.fieldpanel.field.FieldElement;
-import docking.widgets.fieldpanel.field.TextFieldElement;
+import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.RowColLocation;
 import ghidra.app.util.HighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.app.util.viewer.proxy.ProxyObj;
-import ghidra.framework.options.CustomOption;
-import ghidra.framework.options.OptionType;
-import ghidra.framework.options.Options;
-import ghidra.framework.options.ToolOptions;
+import ghidra.framework.options.*;
 import ghidra.program.model.data.DataType;
-import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.listing.Data;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
 import ghidra.util.exception.AssertException;
@@ -110,7 +103,8 @@ public class ArrayValuesFieldFactory extends FieldFactory {
 			Data child = parent.getComponent(index++);
 			boolean isLastItem = isLastLine && (i == itemCount - 1);
 			String value = getDisplayValue(child, !isLastItem);
-			AttributedString as = new AttributedString(value, color, getMetrics());
+			AttributedString as =
+				new AttributedString(value, ListingColors.ARRAY_VALUES, getMetrics());
 			aStrings[i] = new TextFieldElement(as, i, 0);
 		}
 		return ListingTextField.createPackedTextField(this, proxy, aStrings, startX + varWidth,

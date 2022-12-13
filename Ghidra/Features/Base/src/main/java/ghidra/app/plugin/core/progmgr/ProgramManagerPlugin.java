@@ -83,7 +83,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 	private MultiProgramManager programMgr;
 	private ProgramSaveManager programSaveMgr;
 	private int transactionID = -1;
-	private OpenVersionedFileDialog openDialog;
+	private OpenVersionedFileDialog<Program> openDialog;
 	private boolean locked = false;
 	private UndoAction undoAction;
 	private RedoAction redoAction;
@@ -617,9 +617,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 					doOpenProgram(domainFile, version, OPEN_CURRENT);
 				}
 			};
-			openDialog = new OpenVersionedFileDialog(tool, "Open Program", f -> {
-				return Program.class.isAssignableFrom(f.getDomainObjectClass());
-			});
+			openDialog = new OpenVersionedFileDialog<>(tool, "Open Program", Program.class);
 			openDialog.setHelpLocation(new HelpLocation(HelpTopics.PROGRAM, "Open_File_Dialog"));
 			openDialog.addOkActionListener(listener);
 		}
