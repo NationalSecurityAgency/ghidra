@@ -19,10 +19,10 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 
 import docking.ActionContext;
 import docking.WindowPosition;
-import docking.options.editor.ButtonPanelFactory;
 import docking.util.image.ToolIconURL;
 import docking.widgets.OptionDialog;
 import docking.widgets.label.*;
@@ -40,8 +40,8 @@ import ghidra.util.layout.VerticalLayout;
 
 /**
  * Component that displays merge components as needed.
- * 
- * 
+ *
+ *
  */
 class MergeManagerProvider extends ComponentProviderAdapter {
 
@@ -238,8 +238,19 @@ class MergeManagerProvider extends ComponentProviderAdapter {
 		cancelButton = new JButton("Cancel");
 		cancelButton.addActionListener(e -> cancelCallback(false));
 
-		JPanel panel = ButtonPanelFactory.createButtonPanel(
-			new JButton[] { applyButton, cancelButton }, ButtonPanelFactory.X_AXIS);
+		JPanel panel = new JPanel();
+		JPanel subPanel = new JPanel();
+		panel.add(subPanel);
+
+		subPanel.setLayout(new GridLayout(1, 0, 10, 0));
+
+		int top = 8;
+		int side = 20;
+		Border inside = BorderFactory.createEmptyBorder(top, side, top, side);
+		subPanel.setBorder(inside);
+
+		subPanel.add(applyButton);
+		subPanel.add(cancelButton);
 
 		return panel;
 	}

@@ -31,8 +31,8 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import docking.DialogComponentProvider;
-import docking.options.editor.ButtonPanelFactory;
 import docking.widgets.EmptyBorderButton;
+import docking.widgets.button.BrowseButton;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.dialogs.MultiLineMessageDialog;
 import docking.widgets.label.GLabel;
@@ -212,7 +212,7 @@ public class ImporterDialog extends DialogComponentProvider {
 		folderNameTextField = new JTextField();
 		folderNameTextField.setEditable(false);
 		folderNameTextField.setFocusable(false);
-		folderButton = ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
+		folderButton = new BrowseButton();
 		folderButton.addActionListener(e -> chooseProjectFolder());
 
 		JPanel panel = new JPanel(new BorderLayout());
@@ -226,7 +226,7 @@ public class ImporterDialog extends DialogComponentProvider {
 		languageTextField.setEditable(false);
 		languageTextField.setFocusable(false);
 
-		languageButton = ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
+		languageButton = new BrowseButton();
 		languageButton.addActionListener(e -> {
 			Object selectedItem = loaderComboBox.getSelectedItem();
 			if (selectedItem instanceof Loader) {
@@ -277,8 +277,7 @@ public class ImporterDialog extends DialogComponentProvider {
 
 	private Component buildLoaderInfoButton() {
 		JPanel panel = new JPanel(new BorderLayout());
-		EmptyBorderButton helpButton =
-			new EmptyBorderButton(new GIcon("icon.information"));
+		EmptyBorderButton helpButton = new EmptyBorderButton(new GIcon("icon.information"));
 		helpButton.setToolTipText("Show list of supported format/loaders");
 
 		helpButton.addActionListener(e -> showSupportedImportFormats());
