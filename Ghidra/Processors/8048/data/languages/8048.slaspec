@@ -1,4 +1,20 @@
 # sleigh specification file for Intel 8048
+#
+# The MCS-48 family can only handle a 4kB (12 bits) address space.
+# However, some applications use a custom method to access multiple
+# banks of 4kB, such as an IO pin driving extra address lines on an
+# external ROM IC.
+#
+# To be able to parse those non-standard >4kB ROMs, this implementation
+# keeps track of 16-bit addresses by simply preserving the upper 4 bits
+# (see Addr8 and Addr12 constructors).
+#
+# To redirect the flow to a different 4kB bank, it is necessary to manually
+# set a flow override (with Fallthrough->Set) on the specific instruction.
+#
+# That cannot really be automated at this level because there is no "standard"
+# mechanism for external bank control.
+
 
 
 # Do not take BS into account when decompiling
@@ -268,10 +284,10 @@ Data: "#"^data is data {
 Imm: Data is oplo=3; Data {
   export Data;
 }
-Addr8: addr is addr8 [ addr = (inst_next $and 0xf00)+addr8; ] {
+Addr8: addr is addr8 [ addr = (inst_next $and 0xff00)+addr8; ] {
   export *[CODE]:1 addr;
 }
-Addr12: addr is aopaddr & adata [ addr = (DBF*2048)+(aopaddr*256)+adata; ] {
+Addr12: addr is aopaddr & adata [ addr = (inst_next & 0xf000) + (DBF*0x800) + (aopaddr*256)+adata; ] {
   export *[CODE]:1 addr;
 }
 Bus: "BUS" is epsilon {
