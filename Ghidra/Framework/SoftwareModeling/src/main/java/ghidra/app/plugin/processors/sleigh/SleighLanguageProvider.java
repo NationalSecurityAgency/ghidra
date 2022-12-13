@@ -109,23 +109,15 @@ public class SleighLanguageProvider implements LanguageProvider {
 	}
 
 	@Override
-	public Language getLanguage(LanguageID languageId) {
-		Language language = languages.get(languageId);
-		if (language == null) {
-			language = getNewSleigh(languageId);
-		}
-		return language;
-	}
-
-	@Override
 	public boolean isLanguageLoaded(LanguageID languageId) {
 		return languages.get(languageId) != null;
 	}
 
-	private SleighLanguage getNewSleigh(LanguageID languageId) {
+	@Override
+	public Language getLanguage(LanguageID languageId) {
 		SleighLanguageDescription description = descriptions.get(languageId);
 		SleighLanguage lang = languages.get(languageId);
-		if (lang == null) {
+		if (lang == null && description != null) {
 			try {
 				lang = new SleighLanguage(description);
 				languages.put(languageId, lang);
