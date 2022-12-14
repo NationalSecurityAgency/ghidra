@@ -309,7 +309,7 @@ public abstract class AbstractThemeReader {
 				return;
 			}
 			if (properties.containsKey(key)) {
-				error(lineNumber, "Duplicate key found in this file!: " + key + "\"");
+				error(lineNumber, "Duplicate key found in this file!: \"" + key + "\"");
 				return;
 			}
 			properties.put(key, value);

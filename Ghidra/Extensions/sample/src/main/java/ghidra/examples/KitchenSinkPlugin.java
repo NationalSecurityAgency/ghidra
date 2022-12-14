@@ -15,12 +15,12 @@
  */
 package ghidra.examples;
 
-import java.awt.Event;
 import java.awt.event.KeyEvent;
 
 import javax.swing.*;
 
 import docking.ActionContext;
+import docking.DockingUtils;
 import docking.action.*;
 import generic.theme.GIcon;
 import ghidra.app.ExamplesPluginPackage;
@@ -73,11 +73,7 @@ public class KitchenSinkPlugin extends ProgramPlugin {
 
 	private void setupServices() {
 		registerServiceProvided(HelloWorldService.class,
-			new HelloWorldService() {
-				public void sayHello() {
-					announce("Hello");
-				}
-			});
+			(HelloWorldService) () -> announce("Hello"));
 	}
 
 	private void setupActions() {
@@ -95,7 +91,8 @@ public class KitchenSinkPlugin extends ProgramPlugin {
 			new MenuData(new String[] { "Misc", "Hello World" }, prevImage, helloGroup));
 		action.setPopupMenuData(
 			new MenuData(new String[] { "Hello World" }, prevImage, helloGroup));
-		action.setKeyBindingData(new KeyBindingData(KeyStroke.getKeyStroke('H', Event.CTRL_MASK)));
+		action.setKeyBindingData(new KeyBindingData(
+			KeyStroke.getKeyStroke('H', DockingUtils.CONTROL_KEY_MODIFIER_MASK)));
 		action.setToolBarData(new ToolBarData(prevImage, helloGroup));
 		action.setDescription("Hello World");
 		action.setHelpLocation(new HelpLocation("SampleHelpTopic", "KS_Hello_World"));
@@ -114,7 +111,8 @@ public class KitchenSinkPlugin extends ProgramPlugin {
 		action.setMenuBarData(
 			new MenuData(new String[] { "Misc", "Hello Program" }, nextImage, helloGroup));
 		action.setKeyBindingData(
-			new KeyBindingData(KeyStroke.getKeyStroke(KeyEvent.VK_P, Event.CTRL_MASK)));
+			new KeyBindingData(
+				KeyStroke.getKeyStroke(KeyEvent.VK_P, DockingUtils.CONTROL_KEY_MODIFIER_MASK)));
 		action.setToolBarData(new ToolBarData(nextImage, helloGroup));
 		action.setDescription("Hello Program");
 		action.setHelpLocation(new HelpLocation("SampleHelpTopic", "KS_Hello_Program"));

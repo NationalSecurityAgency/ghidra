@@ -544,7 +544,7 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 	private Color unimplColor = new GColor("color.fg.listing.mnemonic.unimplemented");
 	private Color separatorColor = new GColor("color.fg.listing.separator");
 	private Color lineLabelColor = new GColor("color.fg.listing.pcode.label");
-	private Color spaceColor = new GColor("color.fg.listing.pcode.space");
+	private Color spaceColor = new GColor("color.fg.listing.pcode.address.space");
 	private Color rawColor = new GColor("color.fg.listing.pcode.varnode");
 	private Color useropColor = new GColor("color.fg.listing.pcode.userop");
 
