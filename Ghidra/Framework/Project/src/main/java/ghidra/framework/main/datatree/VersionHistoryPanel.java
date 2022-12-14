@@ -38,7 +38,7 @@ import docking.widgets.OptionDialog;
 import docking.widgets.table.*;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.framework.client.ClientUtil;
-import ghidra.framework.main.GetVersionedObjectTask;
+import ghidra.framework.main.GetDomainObjectTask;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.store.ItemCheckoutStatus;
@@ -143,31 +143,36 @@ public class VersionHistoryPanel extends JPanel implements Draggable {
 	}
 
 	/**
-	 * Get the domain object for the selected version.
-	 * @param consumer the consumer
-	 * @param readOnly true if read only
-	 * @return null if there is no selection
+	 * Get the selected {@link Version}.
+	 * @return selected {@link Version} or null if no selection
 	 */
-	public DomainObject getSelectedVersion(Object consumer, boolean readOnly) {
+	public Version getSelectedVersion() {
 		int row = table.getSelectedRow();
 		if (row >= 0) {
-			Version version = tableModel.getVersionAt(row);
-			return getVersionedObject(consumer, version.getVersion(), readOnly);
+			return tableModel.getVersionAt(row);
 		}
 		return null;
 	}
 
+	/**
+	 * Determine if a version selection has been made.
+	 * @return true if version selection has been made, esle false
+	 */
 	public boolean isVersionSelected() {
 		return !table.getSelectionModel().isSelectionEmpty();
 	}
 
+	/**
+	 * Get the selected version number or {@link DomainFile#DEFAULT_VERSION} if no selection.
+	 * @return selected version number
+	 */
 	public int getSelectedVersionNumber() {
 		int row = table.getSelectedRow();
 		if (row >= 0) {
 			Version version = tableModel.getVersionAt(row);
 			return version.getVersion();
 		}
-		return -1;
+		return DomainFile.DEFAULT_VERSION;
 	}
 
 	@Override
@@ -260,11 +265,11 @@ public class VersionHistoryPanel extends JPanel implements Draggable {
 		dragSource.createDefaultDragGestureRecognizer(table, dragAction, dragGestureAdapter);
 	}
 
-	private DomainObject getVersionedObject(Object consumer, int versionNumber, boolean readOnly) {
-		GetVersionedObjectTask task =
-			new GetVersionedObjectTask(consumer, domainFile, versionNumber, readOnly);
+	private DomainObject getVersionedObject(Object consumer, int versionNumber, boolean immutable) {
+		GetDomainObjectTask task =
+			new GetDomainObjectTask(consumer, domainFile, versionNumber, immutable);
 		tool.execute(task, 1000);
-		return task.getVersionedObject();
+		return task.getDomainObject();
 	}
 
 	private void delete() {
@@ -337,13 +342,17 @@ public class VersionHistoryPanel extends JPanel implements Draggable {
 		Version version = tableModel.getVersionAt(row);
 		DomainObject versionedObj = getVersionedObject(this, version.getVersion(), true);
 		if (versionedObj != null) {
-			if (toolName != null) {
-				tool.getToolServices().launchTool(toolName, versionedObj.getDomainFile());
+			try {
+				if (toolName != null) {
+					tool.getToolServices().launchTool(toolName, versionedObj.getDomainFile());
+				}
+				else {
+					tool.getToolServices().launchDefaultTool(versionedObj.getDomainFile());
+				}
 			}
-			else {
-				tool.getToolServices().launchDefaultTool(versionedObj.getDomainFile());
+			finally {
+				versionedObj.release(this);
 			}
-			versionedObj.release(this);
 		}
 	}
 

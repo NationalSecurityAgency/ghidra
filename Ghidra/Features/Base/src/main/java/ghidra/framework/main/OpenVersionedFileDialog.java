@@ -100,13 +100,17 @@ public class OpenVersionedFileDialog<T extends DomainObject> extends DataTreeDia
 	/**
 	 * Get the selected domain object for read-only or immutable use.
 	 * If an existing open object is selected its original mode applies but consumer will 
-	 * be added.
-	 * @param consumer consumer
-	 * @param readOnly true if the domain object should be opened read only, versus immutable
-	 * @return null if a file was not selected
+	 * be added.  The caller/consumer is responsible for releasing the returned domain object
+	 * when done using it (see {@link DomainObject#release(Object)}).
+	 * @param consumer domain object consumer
+	 * @param immutable true if the domain object should be opened immutable, else false for
+	 * read-only.  Immutable mode should not be used for content that will be modified.  If 
+	 * read-only indicated an upgrade will always be performed if required.
+	 * @return opened domain object or null if a file was not selected or if open failed to 
+	 * complete.
 	 */
 	@SuppressWarnings("unchecked") // relies on content class filter
-	public T getDomainObject(Object consumer, boolean readOnly) {
+	public T getDomainObject(Object consumer, boolean immutable) {
 		T dobj = null;
 		if (usingOpenProgramList()) {
 			dobj = getSelectedOpenDomainObject();
@@ -115,20 +119,19 @@ public class OpenVersionedFileDialog<T extends DomainObject> extends DataTreeDia
 			}
 			return dobj;
 		}
+		int version = DomainFile.DEFAULT_VERSION;
 		if (historyPanel != null) {
-			dobj = (T) historyPanel.getSelectedVersion(consumer, readOnly);
+			version = historyPanel.getSelectedVersionNumber();
 		}
-		if (dobj == null) {
-			DomainFile domainFile = getDomainFile();
-			if (domainFile != null) {
-				GetVersionedObjectTask task =
-					new GetVersionedObjectTask(consumer, domainFile, DomainFile.DEFAULT_VERSION,
-						readOnly);
-				tool.execute(task, 1000);
-				return (T) task.getVersionedObject();
-			}
+
+		DomainFile domainFile = getDomainFile();
+		if (domainFile != null) {
+			GetDomainObjectTask task =
+				new GetDomainObjectTask(consumer, domainFile, version, immutable);
+			tool.execute(task, 1000);
+			return (T) task.getDomainObject();
 		}
-		return dobj;
+		return null;
 	}
 
 	/**
