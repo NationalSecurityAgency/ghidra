@@ -683,7 +683,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 					if (dataSize > 0) {
 						MemoryBlockUtils.createUninitializedBlock(prog, false, sectionName, address,
 							dataSize, "", "", r, w, x, log);
-						sectionToAddress.put(sections[i], address);
+						sectionToAddress.putIfAbsent(sections[i], address);
 					}
 				}
 
