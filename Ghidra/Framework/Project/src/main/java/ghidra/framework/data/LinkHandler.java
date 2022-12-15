@@ -20,7 +20,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Map;
 
-import javax.help.UnsupportedOperationException;
 import javax.swing.Icon;
 
 import generic.theme.GIcon;
@@ -45,9 +44,6 @@ import ghidra.util.task.TaskMonitor;
  */
 public abstract class LinkHandler<T extends DomainObjectAdapterDB> extends DBContentHandler<T> {
 	
-	// TODO: Need to improve by making this meta data on file instead of database content.
-	//       Metadata use would eliminate need for DB but we lack support for non-DB files.
-
 	public static final String URL_METADATA_KEY = "link.url";
 
 	// 16x16 link icon where link is placed in lower-left corner
@@ -76,15 +72,29 @@ public abstract class LinkHandler<T extends DomainObjectAdapterDB> extends DBCon
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public final T getReadOnlyObject(FolderItem item, int version, boolean okToUpgrade,
 			Object consumer, TaskMonitor monitor)
 			throws IOException, VersionException, CancelledException {
-
 		if (!okToUpgrade) {
-			throw new IllegalArgumentException("okToUpgrade must be true");
+			throw new UnsupportedOperationException("okToUpgrade must be true for link-file");
 		}
+		return getObject(item, version, consumer, monitor, false);
+	}
+
+	@Override
+	public T getImmutableObject(FolderItem item, Object consumer, int version, int minChangeVersion,
+			TaskMonitor monitor) throws IOException, CancelledException, VersionException {
+		if (minChangeVersion != -1) {
+			throw new UnsupportedOperationException("minChangeVersion must be -1 for link-file");
+		}
+		return getObject(item, version, consumer, monitor, true);
+	}
+
+	@SuppressWarnings("unchecked")
+	private T getObject(FolderItem item, int version, Object consumer, TaskMonitor monitor,
+			boolean immutable)
+			throws IOException, VersionException, CancelledException {
 
 		URL url = getURL(item);
 		
@@ -112,10 +122,11 @@ public abstract class LinkHandler<T extends DomainObjectAdapterDB> extends DBCon
 			DomainFile linkedFile = (DomainFile) content;
 			if (!getDomainObjectClass().isAssignableFrom(linkedFile.getDomainObjectClass())) {
 				throw new BadLinkException(
-					"Excepted " + getDomainObjectClass() + " but linked to " +
+					"Expected " + getDomainObjectClass() + " but linked to " +
 						linkedFile.getDomainObjectClass());
 			}
-			return (T) linkedFile.getReadOnlyDomainObject(consumer, version, monitor);
+			return immutable ? (T) linkedFile.getImmutableDomainObject(consumer, version, monitor)
+					: (T) linkedFile.getReadOnlyDomainObject(consumer, version, monitor);
 		}
 		finally {
 			if (content != null) {
@@ -128,16 +139,8 @@ public abstract class LinkHandler<T extends DomainObjectAdapterDB> extends DBCon
 	public final T getDomainObject(FolderItem item, FileSystem userfs, long checkoutId,
 			boolean okToUpgrade, boolean okToRecover, Object consumer, TaskMonitor monitor)
 			throws IOException, CancelledException, VersionException {
-		// Always upgrade if needed for read-only object
-		return getReadOnlyObject(item, DomainFile.DEFAULT_VERSION, true, consumer, monitor);
-	}
-
-	@Override
-	public T getImmutableObject(FolderItem item, Object consumer, int version, int minChangeVersion,
-			TaskMonitor monitor) throws IOException, CancelledException, VersionException {
-		//throw new UnsupportedOperationException("link-file does not support getImmutableObject");
-		// See GP-2903
-		return getReadOnlyObject(item, version, true, consumer, monitor);
+		// getReadOnlyObject or getImmutableObject should be used
+		throw new UnsupportedOperationException("link-file does not support getDomainObject");
 	}
 
 	@Override

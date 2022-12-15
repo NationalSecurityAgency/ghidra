@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.diff;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.List;
@@ -51,6 +50,7 @@ import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.app.util.viewer.listingpanel.*;
 import ghidra.app.util.viewer.util.AddressIndexMap;
 import ghidra.app.util.viewer.util.FieldNavigator;
+import ghidra.framework.main.GetDomainObjectTask;
 import ghidra.framework.main.OpenVersionedFileDialog;
 import ghidra.framework.model.*;
 import ghidra.framework.options.*;
@@ -60,7 +60,8 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.util.*;
 import ghidra.util.*;
-import ghidra.util.exception.*;
+import ghidra.util.exception.AssertException;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
 import help.Help;
 import help.HelpService;
@@ -1143,7 +1144,7 @@ public class ProgramDiffPlugin extends ProgramPlugin
 			tool.clearStatusInfo();
 			JComponent component = dialog.getComponent();
 
-			Program dobj = dialog.getDomainObject(ProgramDiffPlugin.this, false);
+			Program dobj = dialog.getDomainObject(ProgramDiffPlugin.this, true);
 			if (dobj != null) {
 				if (openSecondProgram(dobj, component)) {
 					dialog.close();
@@ -1151,9 +1152,6 @@ public class ProgramDiffPlugin extends ProgramPlugin
 				}
 				return;
 			}
-
-			displayStatus(component, "Can't Open Selected Program",
-				"Please select a file, not a folder.", OptionDialog.INFORMATION_MESSAGE);
 		});
 		dialog.showComponent();
 	}
@@ -1531,16 +1529,19 @@ public class ProgramDiffPlugin extends ProgramPlugin
 	}
 
 	private boolean openSecondProgram(DomainFile df) {
+		if (!Program.class.isAssignableFrom(df.getDomainObjectClass())) {
+			Msg.error(this, "Failed to launch Diff for non-Program file: " + df.getName());
+			return false;
+		}
 
-		OpenSecondProgramTask task = new OpenSecondProgramTask(df);
+		GetDomainObjectTask task =
+			new GetDomainObjectTask(this, df, DomainFile.DEFAULT_VERSION, true);
 		new TaskLauncher(task, tool.getToolFrame(), 500);
 		// block until the task completes
 
-		if (!task.wasCanceled()) {
-			Program newProgram = task.getDiffProgram();
-			if (newProgram != null) {
-				return openSecondProgram(newProgram, null);
-			}
+		Program newProgram = (Program) task.getDomainObject();
+		if (newProgram != null) {
+			return openSecondProgram(newProgram, null);
 		}
 		return false;
 	}
@@ -1848,71 +1849,6 @@ public class ProgramDiffPlugin extends ProgramPlugin
 					EventTrigger.GUI_ACTION);
 				updatePgm2Enablement();
 			}
-		}
-	}
-
-	private class OpenSecondProgramTask extends Task {
-		private DomainFile domainFile;
-		private Program diffProgram;
-		private TaskMonitor monitor;
-
-		OpenSecondProgramTask(DomainFile domainFile) {
-			super("Opening Program for Diff", true, true, true);
-			this.domainFile = domainFile;
-		}
-
-		@Override
-		public void run(TaskMonitor tm) {
-			this.monitor = tm;
-			try {
-				try {
-					monitor.setMessage("Waiting on program file...");
-					diffProgram =
-						(Program) domainFile.getImmutableDomainObject(ProgramDiffPlugin.this,
-							DomainFile.DEFAULT_VERSION, monitor);
-				}
-				catch (VersionException e) {
-					if (e.isUpgradable()) {
-						try {
-							diffProgram =
-								(Program) domainFile.getReadOnlyDomainObject(ProgramDiffPlugin.this,
-									DomainFile.DEFAULT_VERSION, monitor);
-						}
-						catch (VersionException exc) {
-							Msg.showError(this, null, "Error Getting Diff Program",
-								"Getting read only file failed");
-						}
-						catch (IOException exc) {
-							if (!monitor.isCancelled()) {
-								Msg.showError(this, null, "Error Getting Diff Program",
-									"Getting read only file failed", exc);
-							}
-						}
-					}
-					else {
-						Msg.showError(this, null, "Error Getting Diff Program",
-							"File cannot be upgraded.");
-
-					}
-				}
-				catch (IOException e) {
-					Msg.showError(this, null, "Error Getting Diff Program",
-						"Getting read only file failed", e);
-				}
-			}
-			catch (CancelledException e) {
-				// For now do nothing if user cancels
-			}
-
-			monitor.setMessage("");
-		}
-
-		boolean wasCanceled() {
-			return monitor.isCancelled();
-		}
-
-		Program getDiffProgram() {
-			return diffProgram;
 		}
 	}
 
