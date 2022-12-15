@@ -25,12 +25,12 @@ import java.util.Collections;
 import java.util.List;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import docking.DialogComponentProvider;
-import docking.options.editor.ButtonPanelFactory;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.label.GDLabel;
@@ -43,22 +43,23 @@ import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.filechooser.ExtensionFileFilter;
 import ghidra.util.filechooser.GhidraFileFilter;
+import resources.Icons;
+import resources.ResourceManager;
 
 /**
  * Dialog for editing the Plugin path and Jar directory path preferences.
- * 
+ *
  * <p>The Plugin Path and Jar directory path are locations where Ghidra searches
  * for plugins to load. The Plugin Path is specified exactly as a Java Classpath
- * is specified.  When changes are made to these fields in the dialog, the 
+ * is specified.  When changes are made to these fields in the dialog, the
  * preferences file is updated and written to disk. The preferences file is
  * located in the .ghidra directory in the user's home directory.
- * 
+ *
  */
 class EditPluginPathDialog extends DialogComponentProvider {
 
 	static final String ADD_DIR_BUTTON_TEXT = "Add Dir ...";
 	static final String ADD_JAR_BUTTON_TEXT = "Add Jar ...";
-	private final static int SIDE_MARGIN = 5;
 	private final static Color INVALID_PATH_COLOR = Tables.FG_ERROR_UNSELECTED;
 	private final static Color INVALID_SELECTED_PATH_COLOR = Tables.FG_ERROR_SELECTED;
 	private final static Color STATUS_MESSAGE_COLOR = Messages.NORMAL;
@@ -267,10 +268,13 @@ class EditPluginPathDialog extends DialogComponentProvider {
 
 	private JPanel buildPluginPathsPanel() {
 		// create the UP and DOWN arrows panel
-		upButton = ButtonPanelFactory.createButton(ButtonPanelFactory.ARROW_UP_TYPE);
+		upButton = new JButton(Icons.UP_ICON);
+		upButton.setDisabledIcon(ResourceManager.getDisabledIcon(Icons.UP_ICON));
 		upButton.setName("UpArrow");
 		upButton.addActionListener(e -> handleSelection(UP));
-		downButton = ButtonPanelFactory.createButton(ButtonPanelFactory.ARROW_DOWN_TYPE);
+
+		downButton = new JButton(Icons.DOWN_ICON);
+		downButton.setDisabledIcon(ResourceManager.getDisabledIcon(Icons.DOWN_ICON));
 		downButton.setName("DownArrow");
 		downButton.addActionListener(e -> handleSelection(DOWN));
 		JPanel arrowButtonsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
@@ -278,17 +282,33 @@ class EditPluginPathDialog extends DialogComponentProvider {
 		arrowButtonsPanel.add(downButton);
 
 		// create the Add and Remove panel
-		JButton addJarButton = ButtonPanelFactory.createButton(ADD_JAR_BUTTON_TEXT);
+		JButton addJarButton = new JButton(ADD_JAR_BUTTON_TEXT);
 		addJarButton.addActionListener(e -> addJarCallback());
-		JButton addDirButton = ButtonPanelFactory.createButton(ADD_DIR_BUTTON_TEXT);
+		JButton addDirButton = new JButton(ADD_DIR_BUTTON_TEXT);
 		addDirButton.addActionListener(e -> addDirCallback());
-		removeButton = ButtonPanelFactory.createButton("Remove");
+		removeButton = new JButton("Remove");
 		removeButton.addActionListener(e -> handleSelection(REMOVE));
 		Dimension d = addJarButton.getPreferredSize();
 		addDirButton.setPreferredSize(d);
 		removeButton.setPreferredSize(d);
-		JPanel otherButtonsPanel = ButtonPanelFactory.createButtonPanel(
-			new JButton[] { addJarButton, addDirButton, removeButton }, SIDE_MARGIN);
+
+		//
+		// Button panel for adding and removing jar files
+		//
+		JPanel otherButtonsPanel = new JPanel();
+		JPanel subPanel = new JPanel();
+		otherButtonsPanel.add(subPanel);
+		int buttonGap = 10;
+		subPanel.setLayout(new GridLayout(0, 1, 0, buttonGap));
+
+		int top = 8;
+		int side = 5;
+		Border inside = BorderFactory.createEmptyBorder(top, side, top, side);
+		subPanel.setBorder(inside);
+
+		subPanel.add(addJarButton);
+		subPanel.add(addDirButton);
+		subPanel.add(removeButton);
 
 		// put the right-side buttons panel together
 		JPanel listButtonPanel = new JPanel(new BorderLayout(0, 0));

@@ -773,6 +773,7 @@ public class HTMLUtilities {
 			new Rectangle(-size.width, -size.height, size.width * 2, size.height * 10);
 
 		TextLayoutGraphics g = new TextLayoutGraphics();
+
 		g.setClip(bounds);
 		label.paint(g);
 		g.flush();

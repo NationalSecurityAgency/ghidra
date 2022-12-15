@@ -100,8 +100,10 @@ public interface DataTypeComponent {
 	public void setComment(String comment);
 
 	/**
-	 * Get the name of the field name as a component of a Data Type.
-	 * @return the name as a component of another Data Type.
+	 * Get this component's field name within its parent.
+	 * If this method returns null {@link #getDefaultFieldName()} can be used to obtain a default 
+	 * generated field name.
+	 * @return this component's field name within its parent or null if one has not been set.
 	 */
 	public String getFieldName();
 
@@ -118,12 +120,12 @@ public interface DataTypeComponent {
 	public void setFieldName(String fieldName) throws DuplicateNameException;
 
 	/**
-	 * Returns a default Field name.  Used only if a field name is not set.
-	 * @return default field name
+	 * Returns a default field name for this component.  Used only if a field name is not set.
+	 * @return default field name (may be null for nameless fields such as a zero-length bitfield). 
 	 */
 	public default String getDefaultFieldName() {
 		if (isZeroBitFieldComponent()) {
-			return "";
+			return null;
 		}
 		String name = DEFAULT_FIELD_NAME_PREFIX + getOrdinal();
 		if (getParent() instanceof Structure) {

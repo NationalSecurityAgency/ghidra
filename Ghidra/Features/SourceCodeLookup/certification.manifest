@@ -2,14 +2,4 @@
 ##MODULE IP: Oxygen Icons - LGPL 3.0
 Module.manifest||GHIDRA||reviewed||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|
-src/main/help/help/shared/arrow.gif||GHIDRA||reviewed||END|
-src/main/help/help/shared/close16.gif||GHIDRA||reviewed||END|
-src/main/help/help/shared/menu16.gif||GHIDRA||reviewed||END|
-src/main/help/help/shared/note-red.png||Oxygen Icons - LGPL 3.0|||Oxygen|END|
-src/main/help/help/shared/note.png||Oxygen Icons - LGPL 3.0|||Oxygen|END|
-src/main/help/help/shared/note.yellow.png||Oxygen Icons - LGPL 3.0|||Oxygen|END|
-src/main/help/help/shared/redo.png||GHIDRA||reviewed||END|
-src/main/help/help/shared/tip.png||Oxygen Icons - LGPL 3.0|||Oxygen|END|
-src/main/help/help/shared/undo.png||GHIDRA||reviewed||END|
-src/main/help/help/shared/warning.png||Oxygen Icons - LGPL 3.0|||Oxygen|END|
 src/main/help/help/topics/SourceCodeLookupPlugin/Source_Code_Lookup.html||GHIDRA||||END|

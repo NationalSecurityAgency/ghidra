@@ -23,7 +23,7 @@ import java.io.IOException;
 
 import javax.swing.*;
 
-import docking.options.editor.ButtonPanelFactory;
+import docking.widgets.button.BrowseButton;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.label.GHtmlLabel;
@@ -47,7 +47,6 @@ public class DataTypeArchiveTransformerPanel extends JPanel {
 	private JCheckBox useOldFileIDCheckBox;
 
 	public DataTypeArchiveTransformerPanel() {
-		super();
 		initialize();
 	}
 
@@ -87,7 +86,7 @@ public class DataTypeArchiveTransformerPanel extends JPanel {
 
 		gbc.gridx = 2;
 		gbc.gridwidth = 1;
-		JButton oldBrowseButton = ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
+		JButton oldBrowseButton = new BrowseButton();
 		oldBrowseButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -124,7 +123,7 @@ public class DataTypeArchiveTransformerPanel extends JPanel {
 
 		gbc.gridx = 2;
 		gbc.gridwidth = 1;
-		JButton newBrowseButton = ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
+		JButton newBrowseButton = new BrowseButton();
 		newBrowseButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -155,8 +154,7 @@ public class DataTypeArchiveTransformerPanel extends JPanel {
 
 		gbc.gridx = 2;
 		gbc.gridwidth = 1;
-		JButton destinationBrowseButton =
-			ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
+		JButton destinationBrowseButton = new BrowseButton();
 
 		destinationBrowseButton.addActionListener(new ActionListener() {
 			@Override

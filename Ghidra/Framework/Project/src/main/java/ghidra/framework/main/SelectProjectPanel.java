@@ -25,7 +25,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.Document;
 
-import docking.options.editor.ButtonPanelFactory;
+import docking.widgets.button.BrowseButton;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.label.GDLabel;
@@ -45,7 +45,7 @@ import ghidra.util.layout.VerticalLayout;
  * Panel that allows the project directory and name to be specified for a
  * new project. A checkbox indicates whether the project should be created
  * as a shared project.
- * 
+ *
  */
 class SelectProjectPanel extends AbstractWizardJPanel {
 
@@ -178,7 +178,7 @@ class SelectProjectPanel extends AbstractWizardJPanel {
 		projectNameField.getDocument().addDocumentListener(docListener);
 		directoryField.getDocument().addDocumentListener(docListener);
 
-		browseButton = ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
+		browseButton = new BrowseButton();
 		browseButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -186,7 +186,7 @@ class SelectProjectPanel extends AbstractWizardJPanel {
 			}
 		});
 
-//		sharedProjectCB = new GCheckBox("Project can be Shared with Others"); 
+//		sharedProjectCB = new GCheckBox("Project can be Shared with Others");
 //		sharedProjectCB.addItemListener(new ItemListener() {
 //			public void itemStateChanged(ItemEvent e) {
 //				panelManager.getWizardManager().validityChanged();

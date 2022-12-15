@@ -36,7 +36,8 @@ import ghidra.app.plugin.processors.sleigh.template.ConstructTpl;
 import ghidra.app.plugin.processors.sleigh.template.HandleTpl;
 import ghidra.framework.Application;
 import ghidra.framework.ApplicationConfiguration;
-import ghidra.program.model.lang.LanguageID;
+import ghidra.program.model.lang.*;
+import ghidra.program.util.DefaultLanguageService;
 import ghidra.util.Msg;
 import ghidra.xml.XmlPullParser;
 import ghidra.xml.XmlPullParserFactory;
@@ -182,6 +183,11 @@ public class SolverTest {
 		AssemblyResolution e = AssemblyResolvedPatterns.fromString("ins:X7:X8", "Test", null);
 		assertEquals(e, res);
 	}
+	
+	private static Language getLanguage(String languageName) throws LanguageNotFoundException {
+		LanguageService languageService = DefaultLanguageService.getLanguageService();
+		return languageService.getLanguage(new LanguageID(languageName));
+	}
 
 	public static Constructor findConstructor(String langId, String subtableName, String patternStr)
 			throws Exception {
@@ -189,7 +195,7 @@ public class SolverTest {
 			Application.initializeApplication(new GhidraApplicationLayout(),
 				new ApplicationConfiguration());
 		}
-		SleighLanguageProvider provider = new SleighLanguageProvider();
+		SleighLanguageProvider provider = SleighLanguageProvider.getSleighLanguageProvider();
 		SleighLanguage lang = (SleighLanguage) provider.getLanguage(new LanguageID(langId));
 		AtomicReference<Constructor> consref = new AtomicReference<>();
 		SleighLanguages.traverseConstructors(lang, new ConstructorEntryVisitor() {
@@ -213,7 +219,7 @@ public class SolverTest {
 			Application.initializeApplication(new GhidraApplicationLayout(),
 				new ApplicationConfiguration());
 		}
-		SleighLanguageProvider provider = new SleighLanguageProvider();
+		SleighLanguageProvider provider = SleighLanguageProvider.getSleighLanguageProvider();
 		SleighLanguage lang = (SleighLanguage) provider.getLanguage(new LanguageID(langId));
 		AtomicReference<Constructor> consref = new AtomicReference<>();
 		SleighLanguages.traverseConstructors(lang, new ConstructorEntryVisitor() {

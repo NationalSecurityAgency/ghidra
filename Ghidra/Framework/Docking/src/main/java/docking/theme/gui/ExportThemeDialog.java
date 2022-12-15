@@ -23,7 +23,7 @@ import java.io.IOException;
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
-import docking.options.editor.ButtonPanelFactory;
+import docking.widgets.button.BrowseButton;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
@@ -138,7 +138,7 @@ public class ExportThemeDialog extends DialogComponentProvider {
 		fileTextField.setText(file.getAbsolutePath());
 		fileTextField.setEditable(false);
 		fileTextField.setFocusable(false);
-		JButton folderButton = ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
+		JButton folderButton = new BrowseButton();
 		folderButton.addActionListener(e -> chooseFile());
 
 		JPanel panel = new JPanel(new BorderLayout());

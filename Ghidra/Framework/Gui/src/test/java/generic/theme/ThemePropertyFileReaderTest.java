@@ -91,6 +91,14 @@ public class ThemePropertyFileReaderTest {
 	public void testDarkDefaults() throws IOException {
 		//@formatter:off
 		ThemePropertyFileReader reader = new ThemePropertyFileReader("test", new StringReader(String.join("\n", 
+			"[Defaults]", 
+			"  color.b.1    = red",				
+			"  color.b.2    = red",				
+			"  color.b.3    = red",			
+			"  color.b.4    = red",			
+			"  color.b.5 	= red",			
+			"  color.b.6 	= red",		
+			"  color.b.7    = red",				
 			"[Dark Defaults]", 
 			"  color.b.1    = white",					// WHITE
 			"  color.b.2    = #ff0000",					// RED
@@ -189,7 +197,7 @@ public class ThemePropertyFileReaderTest {
 		List<String> errors = reader.getErrors();
 		assertEquals(1, errors.size());
 		assertEquals(
-			"Error parsing theme file \"test\" at line: 3, Could not parse Color value: sdfsdf",
+			"Error parsing theme file \"test\" at line: 3. Could not parse Color value: sdfsdf",
 			errors.get(0));
 	}
 
@@ -233,6 +241,73 @@ public class ThemePropertyFileReaderTest {
 		//@formatter:on
 		List<String> errors = reader.getErrors();
 		assertEquals(1, errors.size());
+
+	}
+
+	@Test
+	public void testColorIdDefinedInNonDefaultsSectionOnly() throws IOException {
+		//@formatter:off
+		ThemePropertyFileReader reader = new SilentThemePropertyFileReader("test", new StringReader(String.join("\n", 
+			"[Defaults]", 
+			"  color.foo = red",
+			"[Dark Defaults]",
+			"  color.bar = blue",
+			"")));
+		//@formatter:on
+		List<String> errors = reader.getErrors();
+		assertEquals(1, errors.size());
+		assertEquals(
+			"Error parsing theme file \"test\". Color id found in \"Dark Defaults\" section, but not defined in \"Defaults\" section: color.bar",
+			errors.get(0));
+	}
+
+	@Test
+	public void testFontIdDefinedInNonDefaultsSectionOnly() throws IOException {
+		//@formatter:off
+		ThemePropertyFileReader reader = new SilentThemePropertyFileReader("test", new StringReader(String.join("\n", 
+			"[Defaults]",
+			"[Dark Defaults]",
+			"  font.bar = dialog-PLAIN-14",
+			"")));
+		//@formatter:on
+		List<String> errors = reader.getErrors();
+		assertEquals(1, errors.size());
+		assertEquals(
+			"Error parsing theme file \"test\". Font id found in \"Dark Defaults\" section, but not defined in \"Defaults\" section: font.bar",
+			errors.get(0));
+	}
+
+	@Test
+	public void testIconIdDefinedInNonDefaultsSectionOnly() throws IOException {
+		//@formatter:off
+		ThemePropertyFileReader reader = new SilentThemePropertyFileReader("test", new StringReader(String.join("\n", 
+			"[Defaults]",
+			"[Dark Defaults]",
+			"  icon.bar = core.png",
+			"")));
+		//@formatter:on
+		List<String> errors = reader.getErrors();
+		assertEquals(1, errors.size());
+		assertEquals(
+			"Error parsing theme file \"test\". Icon id found in \"Dark Defaults\" section, but not defined in \"Defaults\" section: icon.bar",
+			errors.get(0));
+	}
+
+	@Test
+	public void testDefaultSectionMustBeFirst() throws Exception {
+		//@formatter:off
+		ThemePropertyFileReader reader = new SilentThemePropertyFileReader("test", new StringReader(String.join("\n", 
+			"[Dark Defaults]", 
+			"  color.foo = red",
+			"[Defaults]",
+			"  color.bar = blue",
+			"")));
+		//@formatter:on
+		List<String> errors = reader.getErrors();
+		assertEquals(1, errors.size());
+		assertEquals(
+			"Error parsing theme file \"test\" at line: 1. Defaults section must be defined before Dark Defaults section!",
+			errors.get(0));
 
 	}
 

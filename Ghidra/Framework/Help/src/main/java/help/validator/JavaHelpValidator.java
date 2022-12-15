@@ -22,6 +22,7 @@ import java.util.Map.Entry;
 
 import generic.jar.ResourceFile;
 import ghidra.framework.Application;
+import ghidra.util.HelpLocation;
 import help.HelpBuildUtils;
 import help.validator.links.*;
 import help.validator.location.HelpModuleCollection;
@@ -176,40 +177,13 @@ public class JavaHelpValidator {
 	private Path findPathInModules(IMG img) {
 
 		String src = img.getSrcAttribute();
-
-		// TODO upcoming 'shared' unification
-//		if (src.startsWith(HelpLocation.HELP_IMAGES)) {
-		if (src.startsWith("../../shared/")) {
+		if (src.startsWith(HelpLocation.HELP_SHARED)) {
 
 			// this prefix is a signal to look for images in a special directory inside of the 
 			// modules instead of help
-			String imagePath = "help/" + src.substring("../../".length());
-
 			ResourceFile myModule = Application.getMyModuleRootDirectory();
 			ResourceFile resourceDir = new ResourceFile(myModule, "src/main/resources");
-			Path toCheck = makePath(resourceDir, imagePath);
-			if (toCheck != null) {
-				return toCheck;
-			}
-
-			// now try removing the 'shared' portion altogether
-			imagePath = "images/" + src.substring("../../shared/".length());
-			Path path = doFindPathInModules(imagePath);
-			if (path != null) {
-				return path;
-			}
-
-			// TODO upcoming 'shared' unification
-//			Path path = doFindPathInModules(imagePath);
-//			if (path != null) {
-//				return path;
-//			}
-		}
-
-		// TODO upcoming 'shared' unification - fix the few of these that are left-over in the html
-		if (src.startsWith("../images/")) {
-			String imagePath = src.substring("../".length());
-			Path toCheck = doFindPathInModules(imagePath);
+			Path toCheck = makePath(resourceDir, src);
 			if (toCheck != null) {
 				return toCheck;
 			}

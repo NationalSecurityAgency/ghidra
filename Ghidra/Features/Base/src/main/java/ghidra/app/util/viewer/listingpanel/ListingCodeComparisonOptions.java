@@ -104,19 +104,23 @@ public class ListingCodeComparisonOptions {
 		HelpLocation help = new HelpLocation(HELP_TOPIC, "Options");
 		options.setOptionsHelpLocation(help);
 
-		options.registerOption(BYTE_DIFFS_COLOR_KEY, DEFAULT_BYTE_DIFFS_COLOR, help,
-			DEFAULT_BYTE_DIFFS_BACKGROUND_COLOR_DESCRIPTION);
+		options.registerThemeColorBinding(BYTE_DIFFS_COLOR_KEY, "color.bg.listing.comparison.bytes",
+			help, DEFAULT_BYTE_DIFFS_BACKGROUND_COLOR_DESCRIPTION);
 
-		options.registerOption(MNEMONIC_DIFFS_COLOR_KEY, DEFAULT_MNEMONIC_DIFFS_COLOR, help,
-			DEFAULT_MNEMONIC_DIFFS_BACKGROUND_COLOR_DESCRIPTION);
+		options.registerThemeColorBinding(MNEMONIC_DIFFS_COLOR_KEY,
+			"color.bg.listing.comparison.mnemonic",
+			help, DEFAULT_MNEMONIC_DIFFS_BACKGROUND_COLOR_DESCRIPTION);
 
-		options.registerOption(OPERAND_DIFFS_COLOR_KEY, DEFAULT_OPERAND_DIFFS_COLOR, help,
+		options.registerThemeColorBinding(OPERAND_DIFFS_COLOR_KEY,
+			"color.bg.listing.comparison.operand", help,
 			DEFAULT_OPERAND_DIFFS_BACKGROUND_COLOR_DESCRIPTION);
 
-		options.registerOption(DIFF_CODE_UNITS_COLOR_KEY, DEFAULT_DIFF_CODE_UNITS_COLOR, help,
+		options.registerThemeColorBinding(DIFF_CODE_UNITS_COLOR_KEY,
+			"color.bg.listing.comparison.code.units.diff", help,
 			DEFAULT_DIFF_CODE_UNITS_BACKGROUND_COLOR_DESCRIPTION);
 
-		options.registerOption(UNMATCHED_CODE_UNITS_COLOR_KEY, DEFAULT_UNMATCHED_CODE_UNITS_COLOR,
+		options.registerThemeColorBinding(UNMATCHED_CODE_UNITS_COLOR_KEY,
+			"color.bg.listing.comparison.code.units.unmatched",
 			help, DEFAULT_UNMATCHED_CODE_UNITS_BACKGROUND_COLOR_DESCRIPTION);
 	}
 

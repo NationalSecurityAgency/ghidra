@@ -497,8 +497,9 @@ public class TextLayoutGraphics extends Graphics2D {
 
 	@Override
 	public AffineTransform getTransform() {
-		// stub
-		return null;
+		// Some UIs (e.g. FlatLookAndFeel) expect a transform to be applied in some situations
+		// depending on high resolution monitor settings
+		return new AffineTransform();
 	}
 
 	@Override

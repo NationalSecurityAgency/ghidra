@@ -195,7 +195,11 @@ public interface CompositeInternal extends Composite {
 				buffer.append(")");
 			}
 			buffer.append(pad + dtc.getLength());
-			buffer.append(pad + dtc.getFieldName());
+			String name = dtc.getFieldName();
+			if (name == null) {
+				name = "";
+			}
+			buffer.append(pad + name);
 			String comment = dtc.getComment();
 			if (comment == null) {
 				comment = "";

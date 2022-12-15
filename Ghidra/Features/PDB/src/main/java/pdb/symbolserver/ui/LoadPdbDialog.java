@@ -31,8 +31,8 @@ import javax.swing.event.DocumentListener;
 import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
 import docking.event.mouse.GMouseListenerAdapter;
-import docking.options.editor.ButtonPanelFactory;
 import docking.widgets.OptionDialog;
+import docking.widgets.button.BrowseButton;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.filechooser.GhidraFileChooser;
@@ -83,7 +83,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 	 * Shows a modal dialog to the user, allowing them to pick or search for a Pdb
 	 * file.<p>
 	 * The selected file and parser options are returned in a LoadPdbResults instance.
-	 * 
+	 *
 	 * @param program the Ghidra {@link Program} that has Pdb info
 	 * @return LoadPdbResults instance with the selected file and options, or null if canceled
 	 */
@@ -147,7 +147,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 
 	/**
 	 * Creates a new instance of the LoadPdbDialog class.
-	 * 
+	 *
 	 * @param program the ghidra {@link Program} that is loading the Pdb
 	 */
 	public LoadPdbDialog(Program program) {
@@ -164,8 +164,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 	private void updateSymbolServerServiceInstanceFromPreferences() {
 		symbolServerInstanceCreatorContext =
 			SymbolServerInstanceCreatorRegistry.getInstance().getContext(program);
-		symbolServerService =
-			PdbPlugin.getSymbolServerService(symbolServerInstanceCreatorContext);
+		symbolServerService = PdbPlugin.getSymbolServerService(symbolServerInstanceCreatorContext);
 	}
 
 	@Override
@@ -185,7 +184,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 
 	/**
 	 * For screenshot use only
-	 * 
+	 *
 	 * @param options set of {@link FindOption} enum
 	 */
 	public void setSearchOptions(Set<FindOption> options) {
@@ -201,7 +200,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 	 * Sets the contents of the search results table.
 	 * <p>
 	 * Public only for screenshot usage, treat as private otherwise.
-	 * 
+	 *
 	 * @param results list of {@link SymbolFileLocation}s to add to results
 	 * @param findOptions the options used to search
 	 */
@@ -214,7 +213,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 	 * Selects a row in the results table.
 	 * <p>
 	 * Public only for screenshot usage.  Treat as private.
-	 * 
+	 *
 	 * @param symbolFileLocation {@link SymbolFileLocation} to select in results table
 	 */
 	public void selectRowByLocation(SymbolFileLocation symbolFileLocation) {
@@ -242,21 +241,17 @@ public class LoadPdbDialog extends DialogComponentProvider {
 	}
 
 	private String getSymbolFileToolText(SymbolFileLocation symbolFileLocation) {
-		return symbolFileLocation != null
-				? String.format(
-					"<html><table>" +
-						"<tr><td>PDB Name:</td><td><b>%s</b></td></tr>" +
-						"<tr><td>Path:</td><td><b>%s</b></td></tr>" +
-						"<tr><td>GUID/ID:</td><td><b>%s</b></td></tr>" +
-						"<tr><td>Age:</td><td><b>%x</b></td></tr>" +
-						"<tr><td>Is Exact Match:</td><td><b>%b</b></td</tr>" +
-						"</table>",
-					HTMLUtilities.escapeHTML(symbolFileLocation.getFileInfo().getName()),
-					HTMLUtilities.escapeHTML(symbolFileLocation.getLocationStr()),
-					symbolFileLocation.getFileInfo().getUniqueName(),
-					symbolFileLocation.getFileInfo().getIdentifiers().getAge(),
-					symbolFileLocation.getFileInfo().isExactMatch(programSymbolFileInfo))
-				: null;
+		return symbolFileLocation != null ? String.format(
+			"<html><table>" + "<tr><td>PDB Name:</td><td><b>%s</b></td></tr>" +
+				"<tr><td>Path:</td><td><b>%s</b></td></tr>" +
+				"<tr><td>GUID/ID:</td><td><b>%s</b></td></tr>" +
+				"<tr><td>Age:</td><td><b>%x</b></td></tr>" +
+				"<tr><td>Is Exact Match:</td><td><b>%b</b></td</tr>" + "</table>",
+			HTMLUtilities.escapeHTML(symbolFileLocation.getFileInfo().getName()),
+			HTMLUtilities.escapeHTML(symbolFileLocation.getLocationStr()),
+			symbolFileLocation.getFileInfo().getUniqueName(),
+			symbolFileLocation.getFileInfo().getIdentifiers().getAge(),
+			symbolFileLocation.getFileInfo().isExactMatch(programSymbolFileInfo)) : null;
 	}
 
 	private void updateButtonEnablement() {
@@ -334,7 +329,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 
 		updateStatusText();
 		updateButtonEnablement();
-		// later dialogShow() will be called 
+		// later dialogShow() will be called
 	}
 
 	private void buildSymbolFilePanel() {
@@ -395,18 +390,15 @@ public class LoadPdbDialog extends DialogComponentProvider {
 			}
 		});
 		DockingWindowManager.getHelpService()
-				.registerHelp(overridePdbPathCheckBox,
-					new HelpLocation(PdbPlugin.PDB_PLUGIN_HELP_TOPIC,
-						SymbolFilePanel.SEARCH_OPTIONS_HELP_ANCHOR));
+				.registerHelp(overridePdbPathCheckBox, new HelpLocation(
+					PdbPlugin.PDB_PLUGIN_HELP_TOPIC, SymbolFilePanel.SEARCH_OPTIONS_HELP_ANCHOR));
 
 		pdbUniqueIdTextField = new BetterNonEditableTextField(36, "Missing", Colors.ERROR);
 		pdbUniqueIdTextField.setEditable(false);
 		pdbUniqueIdTextField.setText(programSymbolFileInfo.getUniqifierString());
-		pdbUniqueIdTextField.setToolTipText(
-			"<html>PDB GUID - 32 hexadecimal characters:<br>" +
-				"&nbsp;&nbsp;<b>'012345678-0123-0123-0123-0123456789ABC'</b> (with or without dashes) or<br>" +
-				"PDB Signature ID - 8 hexadecimal characters:<br>" +
-				"&nbsp;&nbsp;<b>'11223344'</b>");
+		pdbUniqueIdTextField.setToolTipText("<html>PDB GUID - 32 hexadecimal characters:<br>" +
+			"&nbsp;&nbsp;<b>'012345678-0123-0123-0123-0123456789ABC'</b> (with or without dashes) or<br>" +
+			"PDB Signature ID - 8 hexadecimal characters:<br>" + "&nbsp;&nbsp;<b>'11223344'</b>");
 		pdbUniqueIdTextField.getDocument().addDocumentListener(docListener);
 
 		overridePdbUniqueIdCheckBox = new GCheckBox();
@@ -422,9 +414,8 @@ public class LoadPdbDialog extends DialogComponentProvider {
 			}
 		});
 		DockingWindowManager.getHelpService()
-				.registerHelp(overridePdbUniqueIdCheckBox,
-					new HelpLocation(PdbPlugin.PDB_PLUGIN_HELP_TOPIC,
-						SymbolFilePanel.SEARCH_OPTIONS_HELP_ANCHOR));
+				.registerHelp(overridePdbUniqueIdCheckBox, new HelpLocation(
+					PdbPlugin.PDB_PLUGIN_HELP_TOPIC, SymbolFilePanel.SEARCH_OPTIONS_HELP_ANCHOR));
 
 		pdbAgeTextField = new BetterNonEditableHexTextField(8);
 		pdbAgeTextField.setAllowNegative(false);
@@ -446,9 +437,8 @@ public class LoadPdbDialog extends DialogComponentProvider {
 			}
 		});
 		DockingWindowManager.getHelpService()
-				.registerHelp(overridePdbAgeCheckBox,
-					new HelpLocation(PdbPlugin.PDB_PLUGIN_HELP_TOPIC,
-						SymbolFilePanel.SEARCH_OPTIONS_HELP_ANCHOR));
+				.registerHelp(overridePdbAgeCheckBox, new HelpLocation(
+					PdbPlugin.PDB_PLUGIN_HELP_TOPIC, SymbolFilePanel.SEARCH_OPTIONS_HELP_ANCHOR));
 
 		programPdbPanel = new JPanel(new PairLayout(5, 5));
 		programPdbPanel.setBorder(BorderFactory.createTitledBorder("Program PDB Information"));
@@ -474,7 +464,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		pdbLocationTextField = new HintTextField("Browse [...] for PDB file or use 'Advanced'");
 		pdbLocationTextField.setEditable(false);
 
-		choosePdbLocationButton = ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
+		choosePdbLocationButton = new BrowseButton();
 		choosePdbLocationButton.addActionListener(e -> choosePdbFile());
 
 		exactMatchIconLabel = new GIconLabel(Icons.EMPTY_ICON);
@@ -523,9 +513,8 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		universalParserButton
 				.setToolTipText("Platform-independent PDB analyzer (No PDB.XML support).");
 		msdiaParserButton = new JRadioButton("MSDIA");
-		msdiaParserButton.setToolTipText(
-			"<html>Legacy PDB Analyzer.<br>" +
-				"Requires MS DIA-SDK for raw PDB processing (Windows only), or preprocessed PDB.XML file.");
+		msdiaParserButton.setToolTipText("<html>Legacy PDB Analyzer.<br>" +
+			"Requires MS DIA-SDK for raw PDB processing (Windows only), or preprocessed PDB.XML file.");
 		universalParserButton.setSelected(true);
 		universalParserButton.addActionListener(l);
 		msdiaParserButton.addActionListener(l);
@@ -546,8 +535,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		parserOptionsPanel.setBorder(BorderFactory.createTitledBorder("PDB Parser"));
 		DockingWindowManager.getHelpService()
 				.registerHelp(parserOptionsPanel,
-					new HelpLocation(PdbPlugin.PDB_PLUGIN_HELP_TOPIC,
-						"PDB Parser Panel"));
+					new HelpLocation(PdbPlugin.PDB_PLUGIN_HELP_TOPIC, "PDB Parser Panel"));
 
 		parserOptionsPanel.add(new GLabel("Parser:"));
 		parserOptionsPanel.add(radioButtons);
@@ -564,16 +552,16 @@ public class LoadPdbDialog extends DialogComponentProvider {
 		loadPdbButton.setName("Load");
 
 		loadPdbButton.addActionListener(e -> {
-			if (selectedSymbolFile == null ||
-				(!selectedSymbolFile.isExactMatch(programSymbolFileInfo) &&
-					OptionDialog.showYesNoDialog(loadPdbButton, "Mismatched Pdb File Warning",
-						"<html>The selected file is not an exact match for the current program.<br>" +
-							"Note: <b>Invalid disassembly may be produced!</b><br>" +
-							"Continue anyway?") != OptionDialog.YES_OPTION)) {
+			if (selectedSymbolFile == null || (!selectedSymbolFile
+					.isExactMatch(programSymbolFileInfo) &&
+				OptionDialog.showYesNoDialog(loadPdbButton, "Mismatched Pdb File Warning",
+					"<html>The selected file is not an exact match for the current program.<br>" +
+						"Note: <b>Invalid disassembly may be produced!</b><br>" +
+						"Continue anyway?") != OptionDialog.YES_OPTION)) {
 				return;
 			}
-			executeMonitoredRunnable("Prepare Selected Symbol File",
-				true, true, 0, this::prepareSelectedSymbolFileAndClose);
+			executeMonitoredRunnable("Prepare Selected Symbol File", true, true, 0,
+				this::prepareSelectedSymbolFileAndClose);
 		});
 		addButton(loadPdbButton);
 
@@ -701,9 +689,8 @@ public class LoadPdbDialog extends DialogComponentProvider {
 				if (pdbSymbolFileInfo == null) {
 					pdbSymbolFileInfo = makeUnknownSymbolFileInstance(file.getName());
 				}
-				SymbolFileLocation symbolFileLocation =
-					SameDirSymbolStore.createManuallySelectedSymbolFileLocation(file,
-						pdbSymbolFileInfo);
+				SymbolFileLocation symbolFileLocation = SameDirSymbolStore
+						.createManuallySelectedSymbolFileLocation(file, pdbSymbolFileInfo);
 				Swing.runLater(() -> {
 					setSearchResults(List.of(symbolFileLocation), null);
 					setSelectedPdbFile(symbolFileLocation);
@@ -719,9 +706,9 @@ public class LoadPdbDialog extends DialogComponentProvider {
 	}
 
 	private void setPdbLocationValue(SymbolFileLocation symbolFileLocation, File file) {
-		boolean isExactMatch = symbolFileLocation != null
-				? symbolFileLocation.isExactMatch(programSymbolFileInfo)
-				: false;
+		boolean isExactMatch =
+			symbolFileLocation != null ? symbolFileLocation.isExactMatch(programSymbolFileInfo)
+					: false;
 		pdbLocationTextField.setText(file != null ? file.getPath() : "");
 		pdbLocationTextField.setToolTipText(getSymbolFileToolText(symbolFileLocation));
 		exactMatchIconLabel
@@ -757,7 +744,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 	 * Use this status text scheme instead of {@link #setStatusText(String)} if
 	 * there are multiple locations that need to provide a status message at the
 	 * bottom of the dialog.
-	 * 
+	 *
 	 * @param supplier StatusText supplier
 	 */
 	private void addStatusTextSupplier(Supplier<StatusText> supplier) {
@@ -769,7 +756,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 	 * Polls all {@link #addStatusTextSupplier(Supplier) registered} StatusText suppliers and
 	 * sets the status message at the bottom of the dialog to the resulting message.
 	 * <p>
-	 * Not compatible with {@link #setStatusText(String)}.  Either use it, or this. 
+	 * Not compatible with {@link #setStatusText(String)}.  Either use it, or this.
 	 */
 	private void updateStatusText() {
 		StringBuilder sb = new StringBuilder();
@@ -815,7 +802,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 	 * Execute a non-modal task that has progress and can be cancelled.
 	 * <p>
 	 * See {@link #executeProgressTask(Task, int)}.
-	 * 
+	 *
 	 * @param taskTitle String title of task
 	 * @param canCancel boolean flag, if true task can be canceled by the user
 	 * @param hasProgress boolean flag, if true the task has a progress meter
@@ -823,8 +810,8 @@ public class LoadPdbDialog extends DialogComponentProvider {
 	 * progress
 	 * @param runnable {@link MonitoredRunnable} to run
 	 */
-	private void executeMonitoredRunnable(String taskTitle, boolean canCancel,
-			boolean hasProgress, int delay, MonitoredRunnable runnable) {
+	private void executeMonitoredRunnable(String taskTitle, boolean canCancel, boolean hasProgress,
+			int delay, MonitoredRunnable runnable) {
 		Task task = new Task(taskTitle, canCancel, hasProgress, false) {
 			@Override
 			public void run(TaskMonitor monitor) throws CancelledException {
@@ -889,7 +876,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 			Container parent = getParent();
 			if (parent != null && !isEditable()) {
 				Color bg = parent.getBackground();
-				// mint a new Color object to avoid it being ignored because the parent handed us a 
+				// mint a new Color object to avoid it being ignored because the parent handed us a
 				// DerivedColor instance
 				return ColorUtils.getColor(bg.getRGB());
 			}
@@ -930,7 +917,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 			Container parent = getParent();
 			if (parent != null && !isEditable()) {
 				Color bg = parent.getBackground();
-				// mint a new Color object to avoid it being ignored because the parent handed us a 
+				// mint a new Color object to avoid it being ignored because the parent handed us a
 				// DerivedColor instance
 				return ColorUtils.getColor(bg.getRGB());
 			}

@@ -26,7 +26,7 @@ import java.util.Map;
  */
 public abstract class WebColors {
 	private static final Map<String, Color> nameToColorMap = new HashMap<>();
-	private static final Map<Color, String> colorToNameMap = new HashMap<>();
+	private static final Map<Integer, String> colorToNameMap = new HashMap<>();
 
 	//@formatter:off
 	public static final Color BLACK = registerColor("Black", Color.black);
@@ -180,7 +180,7 @@ public abstract class WebColors {
 	 * Tries to find a color for the given String value. The String value can either be
 	 * a hex string (see {@link Color#decode(String)}) or a web color name as defined
 	 * above
-	 * 
+	 *
 	 * @param value the string value to interpret as a color
 	 * @param defaultColor a default color to return if the string can't be converted to a color
 	 * @return a color for the given string value or the default color if the string can't be translated
@@ -195,7 +195,7 @@ public abstract class WebColors {
 	 * the color name will be returned. Otherwise, it will return a hex string for the color as
 	 * follows. If the color has an non-opaque alpha value, it will be of the form #rrggbb. If
 	 * it has an alpha value,then the format will be #rrggbbaa.
-	 * 
+	 *
 	 * @param color the color to convert to a string.
 	 * @return the string representation for the given color.
 	 */
@@ -208,7 +208,7 @@ public abstract class WebColors {
 	 * is true, the name of the color will be returned. OOtherwise, it will return a hex string for the color as
 	 * follows. If the color has an non-opaque alpha value, it will be of the form #rrggbb. If
 	 * it has an alpha value ,then the format will be #rrggbbaa.
-	 * 
+	 *
 	 * @param color the color to convert to a string.
 	 * @param useNameIfPossible if true, the name of the color will be returned if the color is
 	 * a WebColor
@@ -216,7 +216,7 @@ public abstract class WebColors {
 	 */
 	public static String toString(Color color, boolean useNameIfPossible) {
 		if (useNameIfPossible) {
-			String name = colorToNameMap.get(color);
+			String name = colorToNameMap.get(color.getRGB());
 			if (name != null) {
 				return name;
 			}
@@ -235,12 +235,12 @@ public abstract class WebColors {
 	 * @return the WebColor name for the given color. Returns null if the color is not a WebColor
 	 */
 	public static String toWebColorName(Color color) {
-		return colorToNameMap.get(color);
+		return colorToNameMap.get(color.getRGB());
 	}
 
 	private static Color registerColor(String name, Color color) {
 		nameToColorMap.put(name.toLowerCase(), color);
-		colorToNameMap.put(color, name);
+		colorToNameMap.put(color.getRGB(), name);
 		return color;
 	}
 
@@ -290,12 +290,12 @@ public abstract class WebColors {
 	 * <pre>
 	 * #rrggbb
 	 * #rrggbbaa
-	 * 0xrrggbb 
+	 * 0xrrggbb
 	 * 0xrrggbbaa
-	 * </pre> 
-	 * 
+	 * </pre>
+	 *
 	 * Each of the hex digits "rr", "gg", "bb", and "aa" specify the red, green, blue, and alpha
-	 * values respectively. 
+	 * values respectively.
 	 * <br><br>
 	 *
 	 * @param hexString the string to parse into a color.
@@ -337,7 +337,7 @@ public abstract class WebColors {
 	 * <pre>
 	 * rgb(red, green, blue)
 	 * rgb(red, green, blue, alpha)
-	 * </pre> 
+	 * </pre>
 	 * Each of the values "red", "green", "blue", and "alpha" must be integer values between 0-255
 	 * <br><br>
 	 * @param rgbString the string to parse into a color.

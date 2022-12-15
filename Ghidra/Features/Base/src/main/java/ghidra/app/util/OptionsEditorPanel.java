@@ -28,7 +28,7 @@ import javax.swing.event.DocumentListener;
 import org.apache.commons.collections4.map.LazyMap;
 
 import docking.DockingWindowManager;
-import docking.options.editor.ButtonPanelFactory;
+import docking.widgets.button.BrowseButton;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.label.GLabel;
@@ -244,10 +244,10 @@ public class OptionsEditorPanel extends JPanel {
 		JPanel panel = new JPanel(new BorderLayout());
 		JTextField textField = new JTextField();
 		textField.setEditable(false);
-		JButton button = ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
+		JButton button = new BrowseButton();
 		button.addActionListener(e -> {
-			DataTreeDialog dataTreeDialog = new DataTreeDialog(this,
-				"Choose a project folder", DataTreeDialog.CHOOSE_FOLDER);
+			DataTreeDialog dataTreeDialog =
+				new DataTreeDialog(this, "Choose a project folder", DataTreeDialog.CHOOSE_FOLDER);
 			dataTreeDialog.setSelectedFolder(null);
 			dataTreeDialog.showComponent();
 			DomainFolder folder = dataTreeDialog.getDomainFolder();

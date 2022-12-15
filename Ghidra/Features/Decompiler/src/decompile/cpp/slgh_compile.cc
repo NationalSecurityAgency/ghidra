@@ -1945,8 +1945,10 @@ void SleighCompile::buildPatterns(void)
     errors += 1;
   }
   for(int4 i=0;i<tables.size();++i) {
-    if (tables[i]->isError())
+    if (tables[i]->isError()) {
+      reportError(getLocation(tables[i]), "Problem in table '"+tables[i]->getName() + "':" + msg.str());
       errors += 1;
+    }
     if (tables[i]->getPattern() == (TokenPattern *)0) {
       reportWarning(getLocation(tables[i]), "Unreferenced table '"+tables[i]->getName() + "'");
     }
@@ -2133,8 +2135,11 @@ void SleighCompile::checkCaseSensitivity(void)
       SleighSymbol *oldsym = (*check.first).second;
       ostringstream s;
       s << "Name collision: " << sym->getName() << " --- ";
+      s << "Duplicate symbol " << oldsym->getName();
       const Location *oldLocation = getLocation(oldsym);
-      s << "Duplicate symbol " << oldsym->getName() << " defined at " << oldLocation->format();
+      if (oldLocation != (Location *) 0x0) {
+        s << " defined at " << oldLocation->format();
+      }
       const Location *location = getLocation(sym);
       reportError(location,s.str());
     }
@@ -2188,11 +2193,15 @@ const Location *SleighCompile::getLocation(Constructor *ctor) const
 }
 
 /// \param sym is the given symbol
-/// \return the filename and line number
+/// \return the filename and line number or null if location not found
 const Location *SleighCompile::getLocation(SleighSymbol *sym) const
 
 {
-  return &symbolLocationMap.at(sym);
+  try {
+    return &symbolLocationMap.at(sym);
+  } catch (const out_of_range &e) {
+    return nullptr;
+  }
 }
 
 /// The current filename and line number are placed into a Location object
@@ -2241,7 +2250,7 @@ void SleighCompile::reportError(const Location* loc, const string &msg)
 void SleighCompile::reportError(const string &msg)
 
 {
-  cerr << "ERROR   " << msg << endl;
+  cerr << filename.back() << ":" << lineno.back() << " - ERROR " << msg << endl;
   errors += 1;
   if (errors > 1000000) {
     cerr << "Too many errors: Aborting" << endl;
@@ -2670,7 +2679,10 @@ void SleighCompile::attachValues(vector<SleighSymbol *> *symlist,vector<intb> *n
     if (sym == (ValueSymbol *)0) continue;
     PatternValue *patval = sym->getPatternValue();
     if (patval->maxValue() + 1 != numlist->size()) {
-      reportError(getCurrentLocation(), "Attach value '" + sym->getName() + "' is wrong size for list");
+      ostringstream msg;
+      msg << "Attach value '" + sym->getName();
+      msg << "' (range 0.." << patval->maxValue() << ") is wrong size for list (of " << numlist->size() << " entries)";
+      reportError(getCurrentLocation(), msg.str());
     }
     symtab.replaceSymbol(sym, new ValueMapSymbol(sym->getName(),patval,*numlist));
   }
@@ -2695,7 +2707,10 @@ void SleighCompile::attachNames(vector<SleighSymbol *> *symlist,vector<string> *
     if (sym == (ValueSymbol *)0) continue;
     PatternValue *patval = sym->getPatternValue();
     if (patval->maxValue() + 1 != names->size()) {
-      reportError(getCurrentLocation(), "Attach name '" + sym->getName() + "' is wrong size for list");
+      ostringstream msg;
+      msg << "Attach name '" + sym->getName();
+      msg << "' (range 0.." << patval->maxValue() << ") is wrong size for list (of " << names->size() << " entries)";
+      reportError(getCurrentLocation(), msg.str());
     }
     symtab.replaceSymbol(sym,new NameSymbol(sym->getName(),patval,*names));
   }
@@ -2720,7 +2735,10 @@ void SleighCompile::attachVarnodes(vector<SleighSymbol *> *symlist,vector<Sleigh
     if (sym == (ValueSymbol *)0) continue;
     PatternValue *patval = sym->getPatternValue();
     if (patval->maxValue() + 1 != varlist->size()) {
-      reportError(getCurrentLocation(), "Attach varnode '" + sym->getName() + "' is wrong size for list");
+      ostringstream msg;
+      msg << "Attach varnode '" + sym->getName();
+      msg << "' (range 0.." << patval->maxValue() << ") is wrong size for list (of " << varlist->size() << " entries)";
+      reportError(getCurrentLocation(), msg.str());
     }
     int4 sz = 0;      
     for(int4 j=0;j<varlist->size();++j) {

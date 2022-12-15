@@ -30,7 +30,6 @@ import docking.util.AnimationUtils;
 import docking.widgets.VariableHeightPanel;
 import docking.widgets.label.GDLabel;
 import generic.theme.GColor;
-import generic.theme.GThemeDefaults.Colors;
 import generic.theme.GThemeDefaults.Colors.Java;
 import generic.theme.GThemeDefaults.Colors.Palette;
 
@@ -106,7 +105,7 @@ public class GenericHeader extends JPanel {
 
 	/**
 	 * Signals whether or not to break the toolbar actions into multiple rows.  The default is
-	 * to wrap as necessary.  
+	 * to wrap as necessary.
 	 * @param noWrap true signals not to break the actions into multiple rows
 	 */
 	public void setNoWrapToolbar(boolean noWrap) {
@@ -292,7 +291,7 @@ public class GenericHeader extends JPanel {
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	public class TitleFlasher {
 
@@ -349,7 +348,7 @@ public class GenericHeader extends JPanel {
 			setFocusable(false);
 			titleLabel = new GDLabel();
 			titleLabel.setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 0));
-			titleLabel.setForeground(Colors.FOREGROUND);
+			titleLabel.setForeground(inactiveForeground);
 			titleLabel.setFocusable(false);
 			add(titleLabel, BorderLayout.CENTER);
 		}
@@ -371,13 +370,17 @@ public class GenericHeader extends JPanel {
 			Graphics2D g2d = (Graphics2D) g;
 			Rectangle r = getBounds();
 
+			// use full color from 0 to the gradient start so the title text is painted over the
+			// full color, which makes it a bit more readable
+			int gradientStartOffset = 100;
+			int x = r.x + gradientStartOffset;
+			int y = r.y;
 			GradientPaint gp;
 			if (isSelected) {
-				gp = new GradientPaint(r.x, r.y, focusColor, r.x + r.width, r.y, getBackground());
+				gp = new GradientPaint(x, y, focusColor, r.x + r.width, r.y, getBackground());
 			}
 			else {
-				gp = new GradientPaint(r.x, r.y, nonFocusColor, r.x + r.width, r.y,
-					getBackground());
+				gp = new GradientPaint(x, y, nonFocusColor, r.x + r.width, r.y, getBackground());
 			}
 
 			g2d.setPaint(gp);

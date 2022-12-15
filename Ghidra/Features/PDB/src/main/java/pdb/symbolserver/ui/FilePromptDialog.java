@@ -25,8 +25,8 @@ import javax.swing.event.DocumentListener;
 
 import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
-import docking.options.editor.ButtonPanelFactory;
 import docking.widgets.OptionDialog;
+import docking.widgets.button.BrowseButton;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.label.GHtmlLabel;
@@ -36,7 +36,7 @@ import ghidra.util.layout.PairLayout;
 /**
  * Non-public, package-only dialog that prompts the user to enter a path
  * in a text field (similar to an {@link OptionDialog}) and allows them to click
- * a "..." browse button to pick the file and/or directory via a 
+ * a "..." browse button to pick the file and/or directory via a
  * {@link GhidraFileChooser} dialog.
  */
 class FilePromptDialog extends DialogComponentProvider {
@@ -44,8 +44,8 @@ class FilePromptDialog extends DialogComponentProvider {
 	/**
 	 * Prompts the user to enter the path to a directory,
 	 * or to pick it using a browser dialog.
-	 * 
-	 * @param title the dialog title 
+	 *
+	 * @param title the dialog title
 	 * @param prompt HTML enabled prompt
 	 * @param initialValue initial value to pre-populate the input field with
 	 * @return the {@link File} the user entered / picked, or null if canceled
@@ -59,14 +59,14 @@ class FilePromptDialog extends DialogComponentProvider {
 	 * Prompts the user to entry the path to a file and/or directory,
 	 * or to pick it using a browser dialog.
 	 * <p>
-	 * 
-	 * @param title the dialog title 
+	 *
+	 * @param title the dialog title
 	 * @param prompt HTML enabled prompt
 	 * @param chooseButtonText text of the choose button in the browser dialog
 	 * @param directory the initial directory of the browser dialog
 	 * @param initialFileValue the initial value to pre-populate the input field with
 	 * @param chooserMode {@link GhidraFileChooserMode} of the browser dialog
-	 * @param fileFilters optional {@link GhidraFileFilter filters} 
+	 * @param fileFilters optional {@link GhidraFileFilter filters}
 	 * @return the {@link File} the user entered / picked, or null if canceled
 	 */
 	public static File chooseFile(String title, String prompt, String chooseButtonText,
@@ -123,7 +123,7 @@ class FilePromptDialog extends DialogComponentProvider {
 				updateButtonEnablement();
 			}
 		});
-		JButton browseButton = ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
+		JButton browseButton = new BrowseButton();
 		browseButton.addActionListener(e -> browse());
 
 		JPanel textFieldWithButtonPanel = new JPanel(new BorderLayout());
