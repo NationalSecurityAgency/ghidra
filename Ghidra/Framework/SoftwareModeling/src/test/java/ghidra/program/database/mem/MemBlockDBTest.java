@@ -25,9 +25,7 @@ import org.junit.*;
 
 import db.DBConstants;
 import db.DBHandle;
-import generic.jar.ResourceFile;
 import generic.test.AbstractGenericTest;
-import ghidra.framework.Application;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.map.AddressMapDB;
 import ghidra.program.model.address.*;
@@ -1024,14 +1022,9 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		return addressFactory.getDefaultAddressSpace().getAddress(offset);
 	}
 
-	private Language getLanguage(String languageName) throws Exception {
-
-		ResourceFile ldefFile = Application.getModuleDataFile("Toy", "languages/toy.ldefs");
-		if (ldefFile != null) {
-			LanguageService languageService = DefaultLanguageService.getLanguageService(ldefFile);
-			Language language = languageService.getLanguage(new LanguageID(languageName));
-			return language;
-		}
-		throw new LanguageNotFoundException("Unsupported test language: " + languageName);
+	private static Language getLanguage(String languageName) throws LanguageNotFoundException {
+		LanguageService languageService = DefaultLanguageService.getLanguageService();
+		return languageService.getLanguage(new LanguageID(languageName));
 	}
+
 }

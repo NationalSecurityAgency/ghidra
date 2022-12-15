@@ -53,9 +53,9 @@ import ghidra.util.datastruct.Stack;
 public class ListingHighlightProvider
 		implements ButtonPressedListener, OptionsChangeListener, HighlightProvider {
 	//@formatter:off
-	private static final GColor DEFAULT_HIGHLIGHT_COLOR = new GColor("color.fg.listing.highlighter.default");
-	private static final GColor DEFAULT_SCOPED_READ_COLOR = new GColor("color.fg.listing.highlighter.scoped.read");
-	private static final GColor DEFAULT_SCOPED_WRITE_COLOR = new GColor("color.fg.listing.highlighter.scoped.write");
+	private static final GColor DEFAULT_HIGHLIGHT_COLOR = new GColor("color.bg.listing.highlighter.default");
+	private static final GColor DEFAULT_SCOPED_READ_COLOR = new GColor("color.bg.listing.highlighter.scoped.read");
+	private static final GColor DEFAULT_SCOPED_WRITE_COLOR = new GColor("color.bg.listing.highlighter.scoped.write");
 	private static final String DISPLAY_HIGHLIGHT_NAME = CURSOR_HIGHLIGHT_GROUP + DELIMITER + "Enabled";
 	private static final String SCOPED_WRITE_HIGHLIGHT_COLOR = CURSOR_HIGHLIGHT_GROUP + DELIMITER + "Scoped Write Highlight Color";
 	private static final String SCOPED_READ_HIGHLIGHT_COLOR = CURSOR_HIGHLIGHT_GROUP + DELIMITER + "Scoped Read Highlight Color";
@@ -869,8 +869,7 @@ public class ListingHighlightProvider
 		ToolOptions opt = tool.getOptions(CATEGORY_BROWSER_FIELDS);
 		HelpLocation hl = new HelpLocation("CodeBrowserPlugin", "Cursor_Text_Highlight");
 
-		opt.registerThemeColorBinding(HIGHLIGHT_COLOR_NAME,
-			DEFAULT_HIGHLIGHT_COLOR.getId(), hl,
+		opt.registerThemeColorBinding(HIGHLIGHT_COLOR_NAME, DEFAULT_HIGHLIGHT_COLOR.getId(), hl,
 			"The color to use to highlight text.");
 		opt.registerThemeColorBinding(SCOPED_WRITE_HIGHLIGHT_COLOR,
 			DEFAULT_SCOPED_WRITE_COLOR.getId(), hl,

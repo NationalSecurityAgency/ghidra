@@ -218,6 +218,9 @@ public class EquateTest extends AbstractDecompilerTest {
 		// Make sure the named equate applies to the negative number in the decompiler window
 		// NOT the positive variant in the listing
 		verifyMatch("MYMINUS", "MYMINUS", 0x1002862, false);
+		Equate equate = program.getEquateTable().getEquate("MYMINUS");
+		// Table value should be sign-extended version of original scalar
+		assertEquals(equate.getValue(), 0xffffffffffffffc8L);
 	}
 
 	@Test

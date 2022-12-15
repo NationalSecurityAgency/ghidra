@@ -166,6 +166,7 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 			return renderer;
 		}
 
+		@Override
 		public Comparator<ResolvedColor> getComparator() {
 			return (v1, v2) -> {
 				if (v1 == null && v2 == null) {
@@ -201,6 +202,11 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 
 			String text = getValueText(resolved);
 			Color color = resolved == null ? GThemeDefaults.Colors.BACKGROUND : resolved.color();
+
+			String webName = WebColors.toWebColorName(color);
+			String hex = WebColors.toString(color, false);
+			String toolTipText = (webName == null ? "" : webName.toLowerCase()) + " " + hex;
+			label.setToolTipText(toolTipText);
 			label.setText(text);
 			label.setIcon(new SwatchIcon(color, label.getForeground()));
 			label.setOpaque(true);
@@ -258,6 +264,8 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 		}
 	}
 
-	record ResolvedColor(String id, String refId, Color color) {/**/}
+	record ResolvedColor(String id, String refId, Color color) {
+		//
+	}
 
 }

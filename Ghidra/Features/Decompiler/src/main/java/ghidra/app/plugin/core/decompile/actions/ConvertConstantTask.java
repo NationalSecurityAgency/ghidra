@@ -41,9 +41,10 @@ import utility.function.Callback;
 public class ConvertConstantTask implements Callback {
 	private DecompilerActionContext context;
 	private Program program;
+	private long equateValue;			// Primary value of the equate
+	private int equateSize;				// The number of bytes in the Varnode constant being equated
 	private Address convertAddress;		// The primary address of the Equate
 	private String convertName;			// The primary name to use in the Equate table
-	private Varnode convertVn;			// The Varnode holding the constant value being equated
 	private long convertHash;			// A dynamic hash locating the constant Varnode in data-flow
 	private int convertIndex;			// The scalar index associated with the primary Equate (or -1)
 	private boolean convertSigned;
@@ -54,7 +55,8 @@ public class ConvertConstantTask implements Callback {
 	private long altValue;				// Alternate value 
 
 	public ConvertConstantTask(Varnode vn, boolean isSigned) {
-		convertVn = vn;
+		equateValue = signExtendValue(isSigned, vn.getOffset(), vn.getSize());
+		equateSize = vn.getSize();
 		convertSigned = isSigned;
 	}
 
@@ -64,18 +66,39 @@ public class ConvertConstantTask implements Callback {
 	 * @param name is the primary Equate name
 	 * @param addr is the primary address of the Equate
 	 * @param vn is the constant Varnode being equated
+	 * @param isSigned is true if the equate value is considered signed
 	 * @param hash is the dynamic hash
 	 * @param index is the operand index if the Equate is known to label an instruction operand
 	 */
 	public ConvertConstantTask(DecompilerActionContext context, String name, Address addr,
-			Varnode vn, long hash, int index) {
+			Varnode vn, boolean isSigned, long hash, int index) {
 		this.context = context;
 		program = context.getProgram();
 		convertName = name;
 		convertAddress = addr;
-		convertVn = vn;
+		equateValue = signExtendValue(isSigned, vn.getOffset(), vn.getSize());
+		equateSize = vn.getSize();
+		convertSigned = isSigned;
 		convertHash = hash;
 		convertIndex = index;
+	}
+
+	/**
+	 * Negative equates must be sign extended to 64-bits to be properly stored in the table.
+	 * Compute the proper 64-bit value of a constant given its signedness and the number
+	 * of bytes used to store the constant.
+	 * @param isSigned is true if the equate is considered signed
+	 * @param value is the (unsigned) form of the constant
+	 * @param size is the number of bytes used to store the constant
+	 * @return the 64-bit extended value
+	 */
+	public static long signExtendValue(boolean isSigned, long value, int size) {
+		if (isSigned && size < 8) {
+			int sa = (8 /* sizeof(long) */ - size) * 8 /* bits per byte */;
+			value <<= sa;
+			value >>= sa;
+		}
+		return value;
 	}
 
 	/**
@@ -96,14 +119,14 @@ public class ConvertConstantTask implements Callback {
 	 * @return the primary value being equated
 	 */
 	public long getValue() {
-		return convertVn.getOffset();
+		return equateValue;
 	}
 
 	/**
 	 * @return the size of constant (Varnode) being equated
 	 */
 	public int getSize() {
-		return convertVn.getSize();
+		return equateSize;
 	}
 
 	/**
@@ -168,14 +191,14 @@ public class ConvertConstantTask implements Callback {
 		EquateTable equateTable = program.getEquateTable();
 		Equate equate = equateTable.getEquate(convertName);
 
-		if (equate != null && equate.getValue() != convertVn.getOffset()) {
+		if (equate != null && equate.getValue() != equateValue) {
 			String msg = "Equate named " + convertName + " already exists with value of " +
 				equate.getValue() + ".";
 			throw new DuplicateNameException(msg);
 		}
 
 		if (equate == null) {
-			equate = equateTable.createEquate(convertName, convertVn.getOffset());
+			equate = equateTable.createEquate(convertName, equateValue);
 		}
 
 		// Add reference to existing equate

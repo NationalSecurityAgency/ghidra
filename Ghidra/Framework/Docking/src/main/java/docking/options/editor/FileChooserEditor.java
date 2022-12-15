@@ -26,6 +26,7 @@ import javax.swing.event.DocumentListener;
 
 import org.apache.commons.lang3.StringUtils;
 
+import docking.widgets.button.BrowseButton;
 import docking.widgets.filechooser.GhidraFileChooser;
 
 /**
@@ -105,7 +106,7 @@ public class FileChooserEditor extends PropertyEditorSupport {
 			setLayout(bl);
 
 			textField.setText(currentFileValue != null ? currentFileValue.getAbsolutePath() : "");
-			browseButton = ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
+			browseButton = new BrowseButton();
 
 			add(textField);
 			add(Box.createHorizontalStrut(5));

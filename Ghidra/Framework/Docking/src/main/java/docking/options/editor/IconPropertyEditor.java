@@ -28,6 +28,7 @@ import org.apache.commons.io.FileUtils;
 
 import docking.theme.gui.ProtectedIcon;
 import docking.widgets.*;
+import docking.widgets.button.BrowseButton;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.label.GDLabel;
@@ -126,7 +127,7 @@ public class IconPropertyEditor extends PropertyEditorSupport {
 			};
 			dropDown.addDropDownSelectionChoiceListener(choiceListener);
 			panel.add(dropDown, BorderLayout.CENTER);
-			JButton browseButton = ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
+			JButton browseButton = new BrowseButton();
 			panel.add(browseButton, BorderLayout.EAST);
 			browseButton.addActionListener(e -> browse());
 

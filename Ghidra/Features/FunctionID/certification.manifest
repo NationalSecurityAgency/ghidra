@@ -9,7 +9,6 @@ src/main/doc/fid_common.xsl||GHIDRA||||END|
 src/main/doc/fid_html.xsl||GHIDRA||||END|
 src/main/doc/fid_pdf.xsl||GHIDRA||||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|
-src/main/help/help/shared/arrow.gif||GHIDRA||reviewed||END|
 src/main/help/help/topics/FunctionID/FunctionID.html||GHIDRA||||END|
 src/main/help/help/topics/FunctionID/FunctionIDDebug.html||GHIDRA||||END|
 src/main/help/help/topics/FunctionID/FunctionIDPlugin.html||GHIDRA||||END|
@@ -18,4 +17,3 @@ src/main/help/help/topics/FunctionID/images/DetachAttachedFidDb.png||GHIDRA||||E
 src/main/help/help/topics/FunctionID/images/FIDSearch.png||GHIDRA||||END|
 src/main/help/help/topics/FunctionID/images/FIDmatch.png||GHIDRA||||END|
 src/main/help/help/topics/FunctionID/images/PopulateFidDbFromPrograms1.png||GHIDRA|||Directory name includes sid|END|
-src/main/resources/images/vcard.png||Nuvola Icons - LGPL 2.1||||END|

@@ -133,10 +133,7 @@ public class AlignedStructureInspector extends AlignedStructurePacker {
 
 		@Override
 		public String getDefaultFieldName() {
-			if (isZeroBitFieldComponent()) {
-				return "";
-			}
-			return DEFAULT_FIELD_NAME_PREFIX + "_0x" + Integer.toHexString(getOffset());
+			return component.getDefaultFieldName();
 		}
 
 		@Override

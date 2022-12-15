@@ -37,9 +37,9 @@ import org.junit.*;
 
 import docking.DialogComponentProvider;
 import docking.DockingDialog;
-import docking.options.editor.ButtonPanelFactory;
 import docking.widgets.DropDownSelectionTextField;
 import docking.widgets.DropDownTextFieldDataModel;
+import docking.widgets.button.BrowseButton;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import generic.test.AbstractGTest;
@@ -194,8 +194,9 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 		assertTrue("The dialog was not made visible when tool.showDialog() was called.",
 			dialog.isVisible());
 
-		final JButton browseButton = findButtonByIcon(dialog, ButtonPanelFactory.BROWSE_ICON);
-		pressButton(browseButton);
+		AbstractButton browseButton =
+			findAbstractButtonByName(dialog.getComponent(), BrowseButton.NAME);
+		pressButton(browseButton, false);
 
 		Window window = waitForWindow("Data Type Chooser");
 
@@ -241,7 +242,7 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 			doubleNode.getDataType().getName(), dataType.getName());
 
 		// show the dialog again and cancel and make sure that the user selection is null
-		pressButton(browseButton);
+		pressButton(browseButton, false);
 		window = waitForWindow("Data Type Chooser");
 		assertTrue("The data type selection tree was not shown after pressing the browse button",
 			(window instanceof DockingDialog));
@@ -263,11 +264,7 @@ public class DataTypeSelectionDialogTest extends AbstractGhidraHeadedIntegration
 	}
 
 	private void waitForDialogToClose(DockingDialog dockingDialog) {
-		int count = 0;
-		while (dockingDialog.isShowing() && count < 500) {
-			sleep(50);
-		}
-		assertTrue("Dialog did not close!", !dockingDialog.isShowing());
+		waitForCondition(() -> !dockingDialog.isShowing(), "Dialog did not close!");
 		waitForSwing();
 	}
 

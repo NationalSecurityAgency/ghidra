@@ -101,14 +101,25 @@ abstract public class Exporter implements ExtensionPoint {
 	}
 
 	/**
-	 * Returns true if this exporter knows how to export the given domain object.  For example,
+	 * Returns true if this exporter knows how to export the given domain object type.  For example,
 	 * some exporters know how to export programs, other exporters can export project data type
 	 * archives.
 	 * @param domainObjectClass the class of the domain object to test for exporting.
-	 * @return true if this exporter knows how to export the given domain object.
+	 * @return true if this exporter knows how to export the given domain object type.
+	 * @deprecated use {@link #canExportDomainObject(DomainObject)}
 	 */
+	@Deprecated(since = "10.3", forRemoval = true)
 	public boolean canExportDomainObject(Class<? extends DomainObject> domainObjectClass) {
 		return Program.class.isAssignableFrom(domainObjectClass);
+	}
+
+	/**
+	 * Returns true if this exporter knows how to export the given domain object.
+	 * @param domainObject the domain object to test for exporting.
+	 * @return true if this exporter knows how to export the given domain object.
+	 */
+	public boolean canExportDomainObject(DomainObject domainObject) {
+		return canExportDomainObject(domainObject.getClass());
 	}
 
 	/**

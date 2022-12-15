@@ -810,7 +810,7 @@ public class AssemblyDualTextField {
 
 			AssemblyDualTextField input = new AssemblyDualTextField();
 
-			SleighLanguageProvider provider = new SleighLanguageProvider();
+			SleighLanguageProvider provider = SleighLanguageProvider.getSleighLanguageProvider();
 			SleighLanguage lang = (SleighLanguage) provider.getLanguage(DEMO_LANG_ID);
 			curAddr = lang.getDefaultSpace().getAddress(0);
 

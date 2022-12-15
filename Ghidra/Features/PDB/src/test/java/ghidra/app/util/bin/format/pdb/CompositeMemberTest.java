@@ -224,7 +224,7 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 			"/struct\n" + 
 			"pack()\n" + 
 			"Structure struct {\n" + 
-			"   0   struct_u_0   1   null   \"\"\n" + 
+			"   0   struct_u_0   1      \"\"\n" + 
 			"}\n" + 
 			"Size = 1   Actual Alignment = 1\n" + 
 			"/struct/struct_u_0\n" + 
@@ -508,8 +508,8 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 			"/struct\n" + 
 			"pack()\n" + 
 			"Structure struct {\n" + 
-			"   0   struct_u_0   1   null   \"\"\n" + 
-			"   8   struct_u_8   8   null   \"\"\n" + 
+			"   0   struct_u_0   1      \"\"\n" + 
+			"   8   struct_u_8   8      \"\"\n" + 
 			"}\n" + 
 			"Size = 16   Actual Alignment = 8\n" + 
 			"/struct/struct_u_0\n" + 
@@ -702,11 +702,11 @@ public class CompositeMemberTest extends AbstractGhidraHeadlessIntegrationTest
 			"/MoreComplicated_s\n" + 
 			"pack()\n" + 
 			"Structure MoreComplicated_s {\n" + 
-			"   0   MoreComplicated_s_u_0   1   null   \"\"\n" + 
-			"   8   MoreComplicated_s_u_8   8   null   \"\"\n" + 
-			"   16   MoreComplicated_s_u_16   16   null   \"\"\n" + 
+			"   0   MoreComplicated_s_u_0   1      \"\"\n" + 
+			"   8   MoreComplicated_s_u_8   8      \"\"\n" + 
+			"   16   MoreComplicated_s_u_16   16      \"\"\n" + 
 			"   32   char[10]   10   beef   \"\"\n" + 
-			"   44   MoreComplicated_s_u_44   12   null   \"\"\n" + 
+			"   44   MoreComplicated_s_u_44   12      \"\"\n" + 
 			"}\n" + 
 			"Size = 56   Actual Alignment = 8\n" + 
 			"/MoreComplicated_s/MoreComplicated_s_u_0\n" + 

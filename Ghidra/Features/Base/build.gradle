@@ -155,7 +155,7 @@ def createTipsHelpFile(input, output) {
 		<html>
 		<head>
 			<title>Ghidra Tips</title>
-			<link rel="stylesheet" type="text/css" href="../../shared/Frontpage.css" />
+			<link rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css" />
 		</head>
 		<body>
 			<h1><a name="Tips"></a>Ghidra Tips of the Day</h1>

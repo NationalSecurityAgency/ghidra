@@ -6,7 +6,7 @@
     "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
 
     <TITLE>Theming User Documentation</TITLE>
-    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
   </HEAD>
 
   <BODY>
@@ -109,7 +109,7 @@
 
       <P>To change the current theme, first bring up the <A href="#Edit_Theme">Theme Dialog</A>.
       The Theme Dialog can be invoked from the main application menu using the
-      <B>Edit</B><IMG alt="" src="images/arrow.gif" border="0"><B>Theme</B> menu. From the Theme 
+      <B>Edit</B><IMG alt="" src="help/shared/arrow.gif" border="0"><B>Theme</B> menu. From the Theme 
       Dialog you can select a theme from the combo box at the top.</P>
 
       <H3>Modifying Theme Values</H3>
@@ -117,15 +117,15 @@
       <P>All the colors, fonts, and icons that have been registered with the theme API can be 
       modified using the <A href="#Edit_Theme">Theme Dialog</A>. The Theme Dialog can be invoked 
       from the main application menu using the
-      <B>Edit</B><IMG alt="" src="images/arrow.gif" border="0"><B>Theme</B> menu. Choose the
+      <B>Edit</B><IMG alt="" src="help/shared/arrow.gif" border="0"><B>Theme</B> menu. Choose the
       tab for the appropriate type and double-click on the ID column or Current Value column of the
       item you want to change. An editor for that type will appear.</P>
 
-      <H3>Reseting Theme Values</H3>
+      <H3>Reseting Theme Values<A NAME="Restore_Value"></A></H3>
 
       <P>To reset an individual value back to its original theme value, from the 
       main application menu invoke the <A href=
-      "#Edit_Theme">Theme Dialog</A> using the <B>Edit</B> <IMG alt="" src="images/arrow.gif"
+      "#Edit_Theme">Theme Dialog</A> using the <B>Edit</B> <IMG alt="" src="help/shared/arrow.gif"
       border="0"><B>Theme</B> menu. Choose the
       tab for the appropriate type and right-click on the row of the value you want to reset, then 
       choose the <B>Restore Value</B> menu item.</P>
@@ -134,8 +134,8 @@
 
       <P>To reset all values back to the original values established by the current theme, from the 
       main application menu invoke
-      the <B>Edit</B><IMG alt="" src="images/arrow.gif" border="0"><B>Theme Actions</B> <IMG
-      alt="" src="images/arrow.gif" border="0"><B>Reset Theme Values</B> menu.</P>
+      the <B>Edit</B><IMG alt="" src="help/shared/arrow.gif" border="0"><B>Theme Actions</B> <IMG
+      alt="" src="help/shared/arrow.gif" border="0"><B>Reset Theme Values</B> menu.</P>
 
       <H3>Saving Themes</H3>
 
@@ -149,8 +149,8 @@
 
       <P>To delete a custom saved theme, from the main application menu invoke the 
       <B>Edit</B><IMG alt="" src=
-      "images/arrow.gif" border="0"><B>Theme Actions</B> <IMG alt="" src=
-      "images/arrow.gif" border="0"><B>Delete Theme...</B> menu. This will bring up a dialog
+      "help/shared/arrow.gif" border="0"><B>Theme Actions</B> <IMG alt="" src=
+      "help/shared/arrow.gif" border="0"><B>Delete Theme...</B> menu. This will bring up a dialog
       with a list of themes that can be deleted. Select the theme to delete and press the <B>Ok</B>
       button.</P>
 
@@ -158,8 +158,8 @@
 
       <P>To export a theme so that it can be shared with others, from the 
       main application menu invoke the <B>Edit</B> <IMG alt=""
-      src="images/arrow.gif" border="0"><B>Theme Actions</B> <IMG alt="" src=
-      "images/arrow.gif" border="0"><B>Export Theme...</B> menu. You will first be asked if
+      src="help/shared/arrow.gif" border="0"><B>Theme Actions</B> <IMG alt="" src=
+      "help/shared/arrow.gif" border="0"><B>Export Theme...</B> menu. You will first be asked if
       you want to export as a regular theme file or as a Zip file. The Zip file option is useful if
       the current theme has icon values that are not included with standard application. In that case,
       the Zip file will include those non-standard icon files.</P>
@@ -167,13 +167,13 @@
       <H3>Importing Themes<A name="Import_Theme"></A></H3>
 
       <P>To import a theme, from the main application menu
-      invoke the <B>Edit</B> <IMG alt="" src="images/arrow.gif" border=
-      "0"><B>Theme Actions</B> <IMG alt="" src="images/arrow.gif" border="0"><B>Import
+      invoke the <B>Edit</B> <IMG alt="" src="help/shared/arrow.gif" border=
+      "0"><B>Theme Actions</B> <IMG alt="" src="help/shared/arrow.gif" border="0"><B>Import
       Theme...</B> menu. A file chooser dialog will appear allowing the user to choose a theme file
       to import. The selected file can be either a standard theme file or a Zip file containing the
       theme file and any non-standard icon files defined by that theme.</P>
 
-      <H3>Reloading Default Values</H3>
+      <H3>Reloading Default Values<A NAME="Reload_Ghidra_Defaults"></A></H3>
 
       <P>This action causes Ghidra to reload all theme default values. It is really only useful
       for developers who are actively making changes to theme.properties files. To activate this

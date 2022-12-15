@@ -26,8 +26,8 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 import docking.DialogComponentProvider;
-import docking.options.editor.ButtonPanelFactory;
 import docking.widgets.OptionDialog;
+import docking.widgets.button.BrowseButton;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
@@ -128,7 +128,7 @@ public class GraphExporterDialog extends DialogComponentProvider {
 
 		});
 
-		fileChooserButton = ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
+		fileChooserButton = new BrowseButton();
 		fileChooserButton.addActionListener(e -> chooseDestinationFile());
 
 		JPanel panel = new JPanel(new BorderLayout());
@@ -262,8 +262,7 @@ public class GraphExporterDialog extends DialogComponentProvider {
 	private boolean doExport() {
 
 		AtomicBoolean success = new AtomicBoolean();
-		TaskLauncher.launchModal("Exporting Graph",
-			monitor -> success.set(tryExport(monitor)));
+		TaskLauncher.launchModal("Exporting Graph", monitor -> success.set(tryExport(monitor)));
 		return success.get();
 	}
 

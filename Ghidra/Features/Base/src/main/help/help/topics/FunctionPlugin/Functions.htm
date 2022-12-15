@@ -8,7 +8,7 @@
     <META name="ProgId" content="FrontPage.Editor.Document">
 
     <TITLE>Functions</TITLE>
-    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
   </HEAD>
 
   <BODY>
@@ -98,14 +98,14 @@
       </OL>
 
       <BLOCKQUOTE>
-        <P><I><IMG src="../../shared/tip.png"> As part of creating a function, function parameters
+        <P><I><IMG src="help/shared/tip.png"> As part of creating a function, function parameters
         and local variables may also be created. See <A href="Variables.htm">Variables</A> for the
         operations on variables.</I></P>
 
-        <P><I><IMG src="../../shared/tip.png"> Functions may be automatically created via <A href=
+        <P><I><IMG src="help/shared/tip.png"> Functions may be automatically created via <A href=
         "../AutoAnalysisPlugin/AutoAnalysis.htm">Auto Analysis</A>.</I></P>
 
-        <P><I><IMG src="../../shared/note.png"> If a function starts with an unconditional jump
+        <P><I><IMG src="help/shared/note.png"> If a function starts with an unconditional jump
         instruction, the function will be created as a <A href="#ThunkFunctions">Thunk Function</A>
         if possible.</I></P>
       </BLOCKQUOTE>
@@ -119,9 +119,9 @@
       determine the function body. The resulting code may not be contiguous.</P>
 
       <BLOCKQUOTE>
-        <P><I><IMG src="../../shared/tip.png"> To see the body of the function that has been
+        <P><I><IMG src="help/shared/tip.png"> To see the body of the function that has been
         defined, place the cursor on the first instruction within the function and choose
-        <B>Select</B><IMG src="../../shared/arrow.gif"> <B>Functions</B> from the Code Browser's
+        <B>Select</B><IMG src="help/shared/arrow.gif"> <B>Functions</B> from the Code Browser's
         main menu.</I></P>
       </BLOCKQUOTE>
 
@@ -144,7 +144,7 @@
       variables. See <A href="../ReferencesPlugin/References_from.htm#stackRefs"><FONT
       color="#ff0000">Stack References</FONT></A> on how to add stack variables.</P>
 
-      <P><B>Select</B><IMG src="../../shared/arrow.gif"> <B>Subroutines</B> will display the scope
+      <P><B>Select</B><IMG src="help/shared/arrow.gif"> <B>Subroutines</B> will display the scope
       of a subroutine from any address within the scope of the subroutine. It is helpful to use the
       <B>Subroutines</B> option to determine what the potential scope of a function would be if you
       create it.<BR>
@@ -173,7 +173,7 @@
          The cursor can be on any field at the entry point of the function.</LI>
 
         <LI>Right-mouse-click, select the <B>Function</B><IMG src=
-        "../../shared/arrow.gif"><B>Re-create Function</B> popup menu item</LI>
+        "help/shared/arrow.gif"><B>Re-create Function</B> popup menu item</LI>
       </OL>
 
       <P>To Re Create a Function, with a forced new body</P>
@@ -184,11 +184,11 @@
          The cursor can be on any field at the entry point of the function.</LI>
 
         <LI>Right-mouse-click, select the <B>Function</B><IMG src=
-        "../../shared/arrow.gif"><B>Re-create Function</B> popup menu item</LI>
+        "help/shared/arrow.gif"><B>Re-create Function</B> popup menu item</LI>
       </OL>
       
       <BLOCKQUOTE>
-        <P><I><IMG src="../../shared/tip.png"> Recreating a function will kick off auto-analysis
+        <P><I><IMG src="help/shared/tip.png"> Recreating a function will kick off auto-analysis
         on the function if there are any changes to the function's body.  New parameters or
         locals may be created since more code may now be part of the function's body. See <A href=
         "Variables.htm">Variables</A> for the operations on variables.</I></P>
@@ -211,7 +211,7 @@
       Renaming the <I>thunk</I> allows the thunk to have a name which
       differs from the thunked-function. Local variables are not supported for <I>thunk</I> functions.
       
-      <p><IMG src="../../shared/note.png"> Within the Code Browser, double-clicking on a <I>thunk</I> 
+      <p><IMG src="help/shared/note.png"> Within the Code Browser, double-clicking on a <I>thunk</I> 
       function name will navigate to the associated <I>thunked</i> function, while
        <I>thunked</I> functions will display back-references (i.e., XREFs) to
       the associated <I>thunk</I> functions with a Ref-Type of 'T'.</p>
@@ -238,7 +238,7 @@
         function.<BR>
          The cursor can be on any field at the entry point of the function.</LI>
 
-        <LI>Right-mouse-click, select the <B>Function</B><IMG src="../../shared/arrow.gif"><B>Set
+        <LI>Right-mouse-click, select the <B>Function</B><IMG src="help/shared/arrow.gif"><B>Set
         Thunked Function...</B> popup menu item</LI>
 
         <LI>The user will be prompted to specify the <I>thunked</I> function by label or address. The
@@ -252,7 +252,7 @@
         function.<BR>
          The cursor can be on any field at the entry point of the function.</LI>
 
-        <LI>Right-mouse-click, select the <B>Function</B><IMG src="../../shared/arrow.gif"><B>Revert
+        <LI>Right-mouse-click, select the <B>Function</B><IMG src="help/shared/arrow.gif"><B>Revert
         Thunk Function...</B> popup menu item</LI>
 
         <LI>The user will be prompted to confirm the action.</LI>
@@ -282,7 +282,7 @@
       <P>From either the <A href="../SymbolTablePlugin/symbol_table.htm">Symbol Table</A> or 
       <A href="../SymbolTreePlugin/SymbolTree.htm">Symbol Tree</A>, an existing <I>External Function</I> 
       may be modified using the <B>Function</B><IMG src=
-            "../../shared/arrow.gif"><A href="Variables.htm#Edit_Function">Edit 
+            "help/shared/arrow.gif"><A href="Variables.htm#Edit_Function">Edit 
             Function...</A> popup action on the selected function node.</P>
       
       <P>Creating an <A href="../ReferencesPlugin/References_from.htm#extRefPanel">External Reference</A> 
@@ -327,7 +327,7 @@
       <OL start="1" type="1">
         <LI>Right-mouse-click on the function header in the Code Browser</LI>
 
-        <LI>Select the <B>Function</B><IMG src="../../shared/arrow.gif"><B>Rename Function</B>
+        <LI>Select the <B>Function</B><IMG src="help/shared/arrow.gif"><B>Rename Function</B>
         popup menu item</LI>
 
         <LI>Enter the new function name and/or namespace, click OK. The name may also be entered
@@ -356,7 +356,7 @@
       <OL>
         <LI>Right mouse-click on the function header</LI>
 
-        <LI>Select the <B>Function</B><IMG src="../../shared/arrow.gif"><B>Delete Function</B>
+        <LI>Select the <B>Function</B><IMG src="help/shared/arrow.gif"><B>Delete Function</B>
         popup menu item</LI>
       </OL>
 
@@ -392,7 +392,7 @@
       <UL>
         <LI>Right mouse-click on the function header</LI>
 
-        <LI>Select the <B>Function</B><IMG src="../../shared/arrow.gif"><B>Edit Function
+        <LI>Select the <B>Function</B><IMG src="help/shared/arrow.gif"><B>Edit Function
         Purge...</B> popup menu item</LI>
 
         <LI>Enter the new function purge size in the dialog that appears</LI>

@@ -80,13 +80,8 @@ public class Icons {
 
 	public static final Icon MAKE_SELECTION_ICON = new GIcon("icon.make.selection");
 
-	// Not necessarily re-usable, but this is needed for the help system; these should 
-	// probably be moved to the client that uses them, while updating the
-	// help system to use them there.
 	public static final Icon ARROW_DOWN_RIGHT_ICON = new GIcon("icon.arrow.down.right");
 	public static final Icon ARROW_UP_LEFT_ICON = new GIcon("icon.arrow.up.left");
-	public static final Icon FILTER_NOT_ACCEPTED_ICON = new GIcon("icon.filter.not.accepted");
-	public static final Icon APPLY_BLOCKED_MATCH_ICON = new GIcon("icon.blocked.match");
 
 	/**
 	 * Returns true if the given string is a Java code snippet that references this class

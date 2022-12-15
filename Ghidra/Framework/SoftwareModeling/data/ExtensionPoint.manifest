@@ -1,6 +1,5 @@
 AnnotationHandler
 RelocationHandler
-LanguageProvider
 LanguageTranslator
 Constraint
 DataType
