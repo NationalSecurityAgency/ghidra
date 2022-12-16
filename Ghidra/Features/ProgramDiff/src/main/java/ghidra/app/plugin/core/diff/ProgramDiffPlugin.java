@@ -99,7 +99,7 @@ public class ProgramDiffPlugin extends ProgramPlugin
 	private static final String SELECTION_GROUP = "Selection Colors";
 	private static final String DIFF_HIGHLIGHT_COLOR_NAME =
 		SELECTION_GROUP + Options.DELIMITER + "Difference Color";
-	private GColor diffHighlightColor = new GColor("color.bg.programdiff.highlight");
+	private GColor diffHighlightColor = new GColor("color.bg.plugin.programdiff.highlight");
 	private Color cursorHighlightColor = GhidraOptions.DEFAULT_CURSOR_LINE_COLOR;
 	protected static final HelpService help = Help.getHelpService();
 

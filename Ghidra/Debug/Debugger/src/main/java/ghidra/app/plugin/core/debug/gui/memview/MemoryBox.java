@@ -36,7 +36,7 @@ public class MemoryBox {
 	protected long stopAddr = -1;
 	protected long startTime;
 	protected long stopTime = -1;
-	protected Color color = new GColor("color.bg.debugger.memview.box");
+	protected Color color = new GColor("color.debugger.plugin.memview.box");
 
 	protected int pixAstart;
 	protected int pixAend;

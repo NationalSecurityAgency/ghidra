@@ -189,7 +189,7 @@ public class SampleTableProvider extends ComponentProviderAdapter implements Opt
 				return SwingUtilities.isDescendingFrom((Component) sourceObject, filterTable);
 			}
 		};
-		icon = new GIcon("icons.sample.plugin.action.save");
+		icon = new GIcon("icon.sample.plugin.action.save");
 		saveTableDataAction.setToolBarData(new ToolBarData(icon));
 		saveTableDataAction.setPopupMenuData(new MenuData(new String[] { "Save Data" }));
 

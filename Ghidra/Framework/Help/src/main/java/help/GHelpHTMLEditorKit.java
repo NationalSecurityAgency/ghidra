@@ -21,8 +21,8 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.*;
 import java.net.*;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,8 +34,7 @@ import javax.swing.text.html.*;
 import javax.swing.text.html.HTML.Tag;
 
 import generic.jar.ResourceFile;
-import generic.theme.GIcon;
-import generic.theme.Gui;
+import generic.theme.*;
 import ghidra.framework.Application;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.Msg;
@@ -62,6 +61,25 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 	private static final Pattern FONT_SIZE_PATTERN = Pattern.compile("font-size:\\s*(\\d{1,2})");
 	private static final String HELP_WINDOW_ZOOM_FACTOR = "HELP.WINDOW.FONT.SIZE.MODIFIER";
 	private static int fontSizeModifier;
+
+	/**
+	 * A mapping of known style sheet colors to convert from the values in the style sheet to colors
+	 * defined in the system theme.
+	 */
+	private static final Map<String, GColor> colorsById = new HashMap<>();
+	static {
+		colorsById.put("h1", new GColor("color.fg.help.selector.h1"));
+		colorsById.put("h2", new GColor("color.fg.help.selector.h2"));
+		colorsById.put("h3", new GColor("color.fg.help.selector.h3"));
+		colorsById.put("p.providedbyplugin",
+			new GColor("color.fg.help.selector.p.provided.by.plugin"));
+		colorsById.put("p.relatedtopic",
+			new GColor("color.fg.help.selector.p.related.topic"));
+		colorsById.put("th", new GColor("color.fg.help.selector.th"));
+		colorsById.put("code", new GColor("color.fg.help.selector.code"));
+		colorsById.put("code.path", new GColor("color.fg.help.selector.code.path"));
+	}
+	private static final Pattern COLOR_PATTERN = Pattern.compile("(color:\\s*#{0,1}\\w+;)");
 
 	private HyperlinkListener[] delegateListeners = null;
 	private HyperlinkListener resolverHyperlinkListener;
@@ -279,11 +297,19 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 			return null;
 		}
 
-		StringBuffer buffy = new StringBuffer();
+		StringBuilder buffy = new StringBuilder();
 		try {
 			List<String> lines = FileUtilities.getLines(url);
 			for (String line : lines) {
-				changePixels(line, fontSizeModifier, buffy);
+
+				StringBuilder lineBuilder = new StringBuilder();
+				changePixels(line, fontSizeModifier, lineBuilder);
+
+				String updatedLine = lineBuilder.toString();
+				lineBuilder.delete(0, lineBuilder.length());
+				changeColor(updatedLine, lineBuilder);
+
+				buffy.append(lineBuilder.toString());
 				buffy.append('\n');
 			}
 		}
@@ -296,7 +322,31 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 		return reader;
 	}
 
-	private void changePixels(String line, int amount, StringBuffer buffy) {
+	private void changeColor(String line, StringBuilder buffy) {
+
+		int blockStart = line.indexOf("{");
+		if (blockStart == -1) {
+			buffy.append(line);
+			return;
+		}
+
+		String cssSelector = line.substring(0, blockStart).trim();
+		cssSelector = cssSelector.toLowerCase(); // normalize
+		GColor gColor = colorsById.get(cssSelector);
+		if (gColor == null) {
+			buffy.append(line);
+			return;
+		}
+
+		Matcher matcher = COLOR_PATTERN.matcher(line);
+		if (matcher.find()) {
+			matcher.appendReplacement(buffy, "color: " + gColor.toHexString() + ";");
+		}
+
+		matcher.appendTail(buffy);
+	}
+
+	private void changePixels(String line, int amount, StringBuilder buffy) {
 
 		Matcher matcher = FONT_SIZE_PATTERN.matcher(line);
 		while (matcher.find()) {
