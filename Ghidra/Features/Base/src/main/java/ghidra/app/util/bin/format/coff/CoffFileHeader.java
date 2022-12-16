@@ -271,6 +271,39 @@ public class CoffFileHeader implements StructConverter {
 		return _aoutHeader;
 	}
 
+	/**
+	 * Tests if this {@link CoffFileHeader} is valid.
+	 * <p>
+	 * To avoid false positives when the machine type is 
+	 * {@link CoffMachineType#IMAGE_FILE_MACHINE_UNKNOWN}, we do an additional check on some extra
+	 * bytes at the beginning of the given {@link ByteProvider} to make sure the entire file isn't
+	 * all 0's.
+	 * 
+	 * @param provider The {@link ByteProvider} that this {@link CoffFileHeader} was created from
+	 * @return True if this is a is a valid {@link CoffFileHeader}; otherwise, false
+	 * @throws IOException if there was an IO-related issue
+	 */
+	public boolean isValid(ByteProvider provider) throws IOException {
+		final int COFF_NULL_SANITY_CHECK_LEN = 64;
+		
+		if (getMagic() == CoffMachineType.IMAGE_FILE_MACHINE_UNKNOWN /* ie. == 0 */ &&
+			provider.length() > COFF_NULL_SANITY_CHECK_LEN) {
+			byte[] headerBytes = provider.readBytes(0, COFF_NULL_SANITY_CHECK_LEN);
+			boolean allZeros = true;
+			for (byte b : headerBytes) {
+				allZeros = (b == 0);
+				if (!allZeros) {
+					break;
+				}
+			}
+			if (allZeros) {
+				return false;
+			}
+		}
+
+		return CoffMachineType.isMachineTypeDefined(getMagic());
+	}
+
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		Structure struct = new StructureDataType(StructConverterUtil.parseName(getClass()), 0);

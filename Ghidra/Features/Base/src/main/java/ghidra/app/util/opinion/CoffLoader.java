@@ -46,7 +46,6 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 	public final static String COFF_NAME = "Common Object File Format (COFF)";
 	public static final String FAKE_LINK_OPTION_NAME = "Attempt to link sections located at 0x0";
 	static final boolean FAKE_LINK_OPTION_DEFAULT = true;
-	private static final int COFF_NULL_SANITY_CHECK_LEN = 64;
 
 	// where do sections start if they're all zero???  this affects object files
 	// and if we're high enough (!!!) the scalar operand analyzer will work
@@ -103,25 +102,7 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 
 		CoffFileHeader header = new CoffFileHeader(provider);
 
-		// Check to prevent false positives when the file is full of '\0' bytes.
-		// If the machine type is unknown (0), check the first 64 bytes of the file and bail if
-		// they are also all 0.
-		if (header.getMagic() == CoffMachineType.IMAGE_FILE_MACHINE_UNKNOWN /* ie. == 0 */ &&
-			provider.length() > COFF_NULL_SANITY_CHECK_LEN) {
-			byte[] headerBytes = provider.readBytes(0, COFF_NULL_SANITY_CHECK_LEN);
-			boolean allZeros = true;
-			for (byte b : headerBytes) {
-				allZeros = (b == 0);
-				if (!allZeros) {
-					break;
-				}
-			}
-			if (allZeros) {
-				return loadSpecs;
-			}
-		}
-
-		if (CoffMachineType.isMachineTypeDefined(header.getMagic())) {
+		if (header.isValid(provider)) {
 			header.parseSectionHeaders(provider);
 
 			if (isVisualStudio(header) != isMicrosoftFormat()) {
