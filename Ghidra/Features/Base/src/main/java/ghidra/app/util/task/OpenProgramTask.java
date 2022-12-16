@@ -169,18 +169,7 @@ public class OpenProgramTask extends Task {
 		String path = url != null ? url.toString() : domainFile.getPathname();
 		Object obj = null;
 		try {
-
 			obj = domainFile.getReadOnlyDomainObject(consumer, version, taskMonitor);
-
-			if (obj == null) {
-				String errorMessage = "Can't open " + contentType + " - \"" + path + "\"";
-				if (version != DomainFile.DEFAULT_VERSION) {
-					errorMessage += " version " + version;
-				}
-
-				Msg.showError(this, null, "File Not Found", errorMessage);
-			}
-			
 		}
 		catch (CancelledException e) {
 			// we don't care, the task has been cancelled

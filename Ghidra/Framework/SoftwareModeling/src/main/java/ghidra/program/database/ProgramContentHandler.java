@@ -145,7 +145,6 @@ public class ProgramContentHandler extends DBWithUserDataContentHandler<ProgramD
 		}
 		catch (Throwable t) {
 			Msg.error(this, "getReadOnlyObject failed", t);
-			t.printStackTrace();
 			String msg = t.getMessage();
 			if (msg == null) {
 				msg = t.toString();
