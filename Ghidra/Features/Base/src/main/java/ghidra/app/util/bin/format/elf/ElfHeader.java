@@ -2070,14 +2070,14 @@ public class ElfHeader implements StructConverter, Writeable {
 			throw new IOException(
 				"Unsupported program header count serialization: " + e_phnum);
 		}
-		raf.write(dc.getBytes(e_phnum));
+		raf.write(dc.getBytes((short) e_phnum));
 		raf.write(dc.getBytes(e_shentsize));
 		if (e_shnum >= Short.toUnsignedInt(ElfSectionHeaderConstants.SHN_LORESERVE)) {
 			throw new IOException(
 				"Unsupported section header count serialization: " + e_shnum);
 		}
-		raf.write(dc.getBytes(e_shnum));
-		raf.write(dc.getBytes(e_shstrndx));
+		raf.write(dc.getBytes((short) e_shnum));
+		raf.write(dc.getBytes((short) e_shstrndx));
 	}
 
 	/**
