@@ -118,20 +118,22 @@ public class ThemeDialog extends DialogComponentProvider {
 		if (themeManager.hasThemeChanges()) {
 			int result = OptionDialog.showYesNoDialog(null, "Discard Theme Changes?",
 				"This will discard all of your theme changes. Continue?");
-			if (result == OptionDialog.YES_OPTION) {
-				themeManager.restoreThemeValues();
+			if (result != OptionDialog.YES_OPTION) {
+				return;
 			}
 		}
+		themeManager.restoreThemeValues();
 	}
 
 	private void reloadDefaultsCallback() {
 		if (themeManager.hasThemeChanges()) {
 			int result = OptionDialog.showYesNoDialog(null, "Reload Default Theme Values?",
 				"This will discard all of your theme changes. Continue?");
-			if (result == OptionDialog.YES_OPTION) {
-				themeManager.reloadApplicationDefaults();
+			if (result != OptionDialog.YES_OPTION) {
+				return;
 			}
 		}
+		themeManager.reloadApplicationDefaults();
 	}
 
 	private void reset() {

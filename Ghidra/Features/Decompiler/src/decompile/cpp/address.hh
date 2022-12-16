@@ -479,7 +479,7 @@ inline bool Range::contains(const Address &addr) const {
 
 /// \param size is the desired size in bytes
 /// \return a value appropriate for masking off the first \e size bytes
-inline uintb calc_mask(int4 size) { return uintbmasks[(size<8)? size : 8]; }
+inline uintb calc_mask(int4 size) { return uintbmasks[((uint4)size) < 8  ? size : 8]; }
 
 /// Perform a CPUI_INT_RIGHT on the given val
 /// \param val is the value to shift

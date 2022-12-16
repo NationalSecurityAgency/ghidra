@@ -20,9 +20,7 @@ import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Test;
 
-import generic.jar.ResourceFile;
 import generic.test.AbstractGenericTest;
-import ghidra.framework.Application;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.*;
@@ -39,14 +37,9 @@ public class VariableUtilitiesTest extends AbstractGenericTest {
 		program = new ProgramDB("Test", language, compilerSpec, this);
 	}
 
-	private Language getLanguage(String languageName) throws Exception {
-		ResourceFile ldefFile = Application.getModuleDataFile("Toy", "languages/toy.ldefs");
-		if (ldefFile != null) {
-			LanguageService languageService = DefaultLanguageService.getLanguageService(ldefFile);
-			Language language = languageService.getLanguage(new LanguageID(languageName));
-			return language;
-		}
-		throw new LanguageNotFoundException("Unsupported test language: " + languageName);
+	private static Language getLanguage(String languageName) throws LanguageNotFoundException {
+		LanguageService languageService = DefaultLanguageService.getLanguageService();
+		return languageService.getLanguage(new LanguageID(languageName));
 	}
 
 	@Test

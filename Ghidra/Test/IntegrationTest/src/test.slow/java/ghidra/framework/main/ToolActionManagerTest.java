@@ -154,7 +154,7 @@ public class ToolActionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		final ToolButton cbButton = findToolButton(frontEndTool.getToolFrame(), "Untitled", false);
 		runSwing(() -> cbButton.doClick());
 
-		// the button click triggers an animation, and then launches the tool, so we must wait 
+		// the button click triggers an animation, and then launches the tool, so we must wait
 		// for the window to appear
 		Window window = waitForWindow("Untitled(2)");
 		assertNotNull(window);
@@ -175,8 +175,8 @@ public class ToolActionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		int count = tc.getToolCount();
 
 		String toolNamePrefix = "TestCodeBrowser";
-		final File cbFile = ResourceManager.getResourceFile(
-			"defaultTools/" + toolNamePrefix + ToolUtils.TOOL_EXTENSION);
+		final File cbFile = ResourceManager
+				.getResourceFile("defaultTools/" + toolNamePrefix + ToolUtils.TOOL_EXTENSION);
 		assertNotNull(cbFile);
 
 		DockingActionIf importAction = getAction("Import Tool");
@@ -218,7 +218,7 @@ public class ToolActionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		Project project = frontEndTool.getProject();
 		DataTree tree = findComponent(frontEndTool.getToolFrame(), DataTree.class);
 
-// TODO: move to method		
+// TODO: move to method
 		DomainFolder rootFolder = project.getProjectData().getRootFolder();
 		Program p = buildProgram("notepad");
 		rootFolder.createFile("notepad", p, TaskMonitor.DUMMY);
@@ -344,7 +344,7 @@ public class ToolActionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		//
 		// edit the association
 		//
-		// find the 'Program' entry		
+		// find the 'Program' entry
 		rowCount = associationTable.getRowCount();
 		programRow = -1;
 		for (int i = 0; i < rowCount; i++) {
@@ -413,7 +413,7 @@ public class ToolActionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 			assertTrue(!cb.isSelected());
 		}
 
-		final JButton selectAllButton = (JButton) getInstanceField("selectAllButton", d);
+		JButton selectAllButton = findButtonByText(d, "Select All");
 		runSwing(() -> selectAllButton.doClick());
 
 		pressButtonByText(d, "OK");
@@ -433,8 +433,8 @@ public class ToolActionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 		newList.removeAll(origList);
 		runSwing(() -> {
-			for (int i = 0; i < newList.size(); i++) {
-				tc.remove(newList.get(i));
+			for (String element : newList) {
+				tc.remove(element);
 			}
 		});
 		assertEquals(origList.size(), tc.getToolCount());

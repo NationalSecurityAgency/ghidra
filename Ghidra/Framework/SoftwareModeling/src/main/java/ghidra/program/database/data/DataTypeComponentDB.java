@@ -208,10 +208,7 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 
 	@Override
 	public String getFieldName() {
-		if (isZeroBitFieldComponent()) {
-			return "";
-		}
-		if (record != null) {
+		if (record != null && !isZeroBitFieldComponent()) {
 			return record.getString(ComponentDBAdapter.COMPONENT_FIELD_NAME_COL);
 		}
 		return null;

@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.assembler.sleigh;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,14 +24,13 @@ import org.junit.*;
 
 import generic.test.AbstractGenericTest;
 import ghidra.app.plugin.assembler.*;
-import ghidra.app.plugin.processors.sleigh.SleighLanguageProvider;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.util.ProgramTransaction;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
-import ghidra.program.model.lang.Language;
-import ghidra.program.model.lang.LanguageID;
+import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
+import ghidra.program.util.DefaultLanguageService;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -44,9 +42,8 @@ public class PublicAPITest extends AbstractGenericTest {
 
 	@Before
 	public void setUp() throws Exception {
-		SleighLanguageProvider provider = new SleighLanguageProvider();
-		x86 = provider.getLanguage(new LanguageID("x86:LE:64:default"));
-		toy = provider.getLanguage(new LanguageID("Toy:BE:64:default"));
+		x86 = getLanguage("x86:LE:64:default");
+		toy = getLanguage("Toy:BE:64:default");
 	}
 
 	@After
@@ -54,6 +51,11 @@ public class PublicAPITest extends AbstractGenericTest {
 		if (program != null) {
 			program.release(this);
 		}
+	}
+	
+	private static Language getLanguage(String languageName) throws LanguageNotFoundException {
+		LanguageService languageService = DefaultLanguageService.getLanguageService();
+		return languageService.getLanguage(new LanguageID(languageName));
 	}
 
 	@Test

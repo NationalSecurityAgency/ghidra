@@ -89,3 +89,4 @@ gradlew.*
 # Ignore logs and core dumps
 *.log
 core.*
+!core.png

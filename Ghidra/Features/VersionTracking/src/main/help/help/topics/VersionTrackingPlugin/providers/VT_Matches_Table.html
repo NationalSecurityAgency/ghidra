@@ -7,7 +7,7 @@
 
     <TITLE>Version Tracking Matches Table</TITLE>
     <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
-    <LINK rel="stylesheet" type="text/css" href="../../../shared/Frontpage.css">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
   </HEAD>
 
   <BODY lang="EN-US">
@@ -76,14 +76,14 @@
 	        <TR>
 	          <TD valign="top">REJECTED</TD>
 	
-	          <TD valign="top"><IMG src="../images/dialog-cancel.png"></TD>
+	          <TD valign="top"><IMG src="images/dialog-cancel.png"></TD>
 	
 	          <TD valign="top">The match has been rejected by the user.</TD>
 	        </TR>
 	        <TR>
 	          <TD valign="top"><a name="blocked"></a>BLOCKED</TD>
 	
-	          <TD valign="top"><IMG src="../images/kgpg.png"></TD>
+	          <TD valign="top"><IMG src="images/kgpg.png"></TD>
 	
 	          <TD valign="top">
 	          The match can't be accepted because a conflicting match has been accepted.
@@ -96,7 +96,7 @@
 	        <TR>
 	          <TD valign="top">ACCEPTED</TD>
 	
-	          <TD valign="top"><IMG src="../images/flag.png"></TD>
+	          <TD valign="top"><IMG src="images/flag.png"></TD>
 	
 	          <TD valign="top">The match has been accepted.</TD>
 	        </TR>
@@ -274,49 +274,49 @@
 	    <BLOCKQUOTE>
 	      
 	      <P align="left"><A name="Accept_Match"></A>The <b>Accept Match</b> 
-	      	<IMG src="../images/flag.png" border="0">
+	      	<IMG src="images/flag.png" border="0">
 	      	action marks a match (and all matches that have the same association) as being 
 	      	accepted.  All competing matches will become blocked. 
 	      	<a href="help/topics/VersionTrackingPlugin/providers/VT_Apply_Options.html#Match_Accept_Options">
-	      	There are options</a> to auto-apply
+	      	There are options</a> to auto-apply 
 	      	function names and create implied matches when accepting a match.</P>      
 	      
 	      <P align="left"><A name="Apply_Blocked_Match"></A>The <b>Apply Blocked Match</b> 
-	      	<IMG src="Icons.APPLY_BLOCKED_MATCH_ICON" border="0">
+	      	<IMG src="icon.version.tracking.action.match.apply.blocked" border="0" />
 	      	action will clear conflicting matches and then apply the match, which had been blocked 
 	      	by those conflicts, and its markup items  
 	      	<a href="help/topics/VersionTrackingPlugin/providers/VT_Apply_Options.html#Match_Apply_Options">
 	      	according to the apply settings</a>.</P>      
 	      
 	      <P align="left"><A name="Apply_Markup"></A>The <b>Apply Markup</b> 
-	      	<IMG src="../images/checkmark_green.gif" border="0">
+	      	<IMG src="images/checkmark_green.gif" border="0">
 	      	action will attempt to apply all the markup items for the match 
 	      	<a href="help/topics/VersionTrackingPlugin/providers/VT_Apply_Options.html#Match_Apply_Options">
 	      	according to the apply settings</a>.  
 	      	If the match is not already accepted, it will first be marked as accepted.</P>      
 	      
 	      <P align="left"><A name="Reject_Match"></A>The <b>Reject Match</b> 
-	      	<IMG src="../images/dialog-cancel.png" border="0">
+	      	<IMG src="images/dialog-cancel.png" border="0">
 	     	action will mark the match as rejected.</P>     
 	      
 	       <P align="left"><A name="Choose_Tag"></A>The <b>Choose Match Tag</b> 
-	       	<IMG src="../images/tag_blue.png" border="0">
+	       	<IMG src="images/tag_blue.png" border="0">
 	    		action allows the user to set a user-defined tag that has been created via the <A href=
 	      "#Edit_Tag">Edit Tag</A> action.</P>
 	      
 	      <P align="left"><A name="Remove_Tag"></A>The <b>Remove Match Tag</b> 
-	      	<IMG src="../images/tag_blue_delete.png" border="0">
+	      	<IMG src="images/tag_blue_delete.png" border="0">
 	      	action removes any tag associated with the selected match(es) </P>
 	      
 	      <P align="left"><A name="Edit_Tag"></A>The <b>Edit Tag</b> 
-	      	<IMG src="../images/tag_blue_edit.png" border="0">
+	      	<IMG src="images/tag_blue_edit.png" border="0">
 	     	action allows the user to manage (create and delete) custom tags that can be applied to
 	      	matches.</P>
 	
-	      <P align="left"><A name="Clear_Match"></A>The <b>Clear Match</b> <IMG src="../images/undo-apply.png" border="0">
+	      <P align="left"><A name="Clear_Match"></A>The <b>Clear Match</b> <IMG src="images/undo-apply.png" border="0">
 	      action will reset the match to unaccepted and undo any applied markup.</P>
 	      
-	      <P align="left"><A name="Remove_Match"></A>The <b>Remove Match</b> <IMG src="../images/edit-delete.png" border="0">
+	      <P align="left"><A name="Remove_Match"></A>The <b>Remove Match</b> <IMG src="images/edit-delete.png" border="0">
 	      action will remove a manually created match from the matches table.</P>
 	      
 	      <P align="left"><A name="Make_Selections"></A>The <b>Make Selections</b> <IMG src="Icons.MAKE_SELECTION_ICON" border="0">
@@ -324,7 +324,7 @@
 
 
 		 <P align="left"><A name="Match_Table_Selection"></A>The <b>Table Selection Mode</b>  
-		 	<IMG src="../images/table_gear.png" border="0"> allows you to change the behavior
+		 	<IMG src="images/table_gear.png" border="0"> allows you to change the behavior
 		 	of the match table with regard to how it tracks table selections as you apply 
 		 	matches.
 		 </p>
@@ -334,7 +334,7 @@
 				 As you make changes to a match, the table will update.   Sometimes as the table 
 				 updates the changed match will disappear from the table (for example, if your filter
 				 settings are setup to hide applied matches and you have just applied a match).  The 
-				 default behavior (<IMG src="../images/table_gear.png" border="0">) is to keep 
+				 default behavior (<IMG src="images/table_gear.png" border="0">) is to keep 
 				 the table selection on the same row, regardless of whether
 				 the match changes its position in the table or is removed from the table altogether.					 	
 			    </P>
@@ -351,7 +351,7 @@
 			        </TR>
 			        
 			        <TR>
-			        	<TD valign="top" align="center"><IMG src="../images/table_gear.png" border="0"></TD>
+			        	<TD valign="top" align="center"><IMG src="images/table_gear.png" border="0"></TD>
 			        	<TD nowrap valign="top">Track Selected Index</TD>
 			        	<TD valign="top">Causes the match table to maintain the selection for 
 			        		the selected <b>row</b>.  So, for example, if you change a match, and that 
@@ -361,7 +361,7 @@
 			        </TR>
 			        
 			        <TR>
-			        	<TD valign="top" align="center"><IMG src="../images/table_go.png" border="0"></TD>
+			        	<TD valign="top" align="center"><IMG src="images/table_go.png" border="0"></TD>
 			        	<TD nowrap valign="top">Track Selected Match</TD>
 			        	<TD valign="top">Causes the match table to maintain the selection for 
 			        		the selected <b>match</b>.  So, for example, if you change a match, 
@@ -371,7 +371,7 @@
 			        </TR>
 			        
 			        <TR>
-			        	<TD valign="top" align="center"><IMG src="../images/table_delete.png" border="0"></TD>
+			        	<TD valign="top" align="center"><IMG src="images/table_delete.png" border="0"></TD>
 			        	<TD nowrap valign="top">No Selection Tracking</TD>
 			        	<TD valign="top">In this state the table will not restore selections.  
 			        			If changes are made to matches, the selection will be lost.
@@ -385,7 +385,7 @@
 			
 
 
-	      <P align="left"><A name="Match_Table_Settings"></A>The <b>Settings</b> <IMG src="../images/settings16.gif" border="0">
+	      <P align="left"><A name="Match_Table_Settings"></A>The <b>Settings</b> <IMG src="images/settings16.gif" border="0">
 	      action will bring up the version tracking accept and apply options.</P>
 	
 	    </BLOCKQUOTE>
@@ -411,9 +411,9 @@
 	      
 	      </P>
 	
-	      <P>Finally, the <IMG src="../images/view-filter.png" border="0"> will show the ancillary filters
+	      <P>Finally, the <IMG src="images/view-filter.png" border="0"> will show the ancillary filters
 	      available. The table below lists and describes the available filters. When an ancillary
-	      filter is applied, the icon will change to <IMG src="../images/lightbulb.png" border="0"> .
+	      filter is applied, the icon will change to <IMG src="images/lightbulb.png" border="0"> .
 	      Further, the icon may occasionally flash as a reminder that there is a filter applied.</P>
 		<BR>
 	      <TABLE border="1" width="90%">

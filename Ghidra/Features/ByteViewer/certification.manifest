@@ -5,11 +5,6 @@ Module.manifest||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||reviewed||END|
 data/byteviewer.theme.properties||GHIDRA||||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||reviewed||END|
-src/main/help/help/shared/arrow.gif||GHIDRA||reviewed||END|
-src/main/help/help/shared/close16.gif||GHIDRA||reviewed||END|
-src/main/help/help/shared/note.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0). Renamed from flag-green.png.|END|
-src/main/help/help/shared/note.yellow.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0). Renamed from flag-yellow.png.|END|
-src/main/help/help/shared/tip.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0). Renamed from help-hint.png.|END|
 src/main/help/help/topics/ByteViewerPlugin/ByteViewerOptions.htm||GHIDRA||||END|
 src/main/help/help/topics/ByteViewerPlugin/The_Byte_Viewer.htm||GHIDRA||||END|
 src/main/help/help/topics/ByteViewerPlugin/images/ByteViewer.png||GHIDRA||||END|

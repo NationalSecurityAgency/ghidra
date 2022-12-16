@@ -26,9 +26,9 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.*;
 
 import docking.DialogComponentProvider;
-import docking.options.editor.ButtonPanelFactory;
 import docking.util.image.ToolIconURL;
 import docking.widgets.OptionDialog;
+import docking.widgets.button.BrowseButton;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.label.GLabel;
 import ghidra.framework.model.*;
@@ -111,7 +111,7 @@ public class SaveToolConfigDialog extends DialogComponentProvider implements Lis
 	/**
 	 * Display the "Save Tool Configuration As..." dialog;
 	 * blocks until user hits the "Cancel" button.
-	 * 
+	 *
 	 * @param name original name for the tool
 	 */
 	public void show(String name, String newDefaultName) {
@@ -269,7 +269,7 @@ public class SaveToolConfigDialog extends DialogComponentProvider implements Lis
 	}
 
 	/**
-	 * Create a panel that has text fields for entering a 
+	 * Create a panel that has text fields for entering a
 	 * name and tool description
 	 */
 	private JPanel createToolFieldPanel() {
@@ -312,7 +312,7 @@ public class SaveToolConfigDialog extends DialogComponentProvider implements Lis
 		iconField = new JTextField(12);
 		iconField.setName("IconName");
 
-		browseButton = ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
+		browseButton = new BrowseButton();
 
 		JPanel panel = new JPanel(new BorderLayout(5, 0));
 		panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));

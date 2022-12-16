@@ -3,7 +3,7 @@
 <HTML>
   <HEAD>
     <TITLE>Navigation</TITLE>
-    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
   </HEAD>
 
   <BODY>
@@ -34,7 +34,7 @@
       <H3>To Perform a Go To:&nbsp;</H3>
 
       <OL>
-        <LI>In the menu-bar of a tool, select <B>Navigation <IMG src="../../shared/arrow.gif"
+        <LI>In the menu-bar of a tool, select <B>Navigation <IMG src="help/shared/arrow.gif"
         border="0"> Go To...</B></LI>
 
         <LI>The <I>Go To</I> dialog will be displayed, as shown below:</LI>
@@ -74,7 +74,7 @@
         <P>Enter an address into the text area of the dialog. The value entered will be assumed to
         be in hexadecimal. That is, "0x1000" and "1000" are the same value.</P>
 
-        <P><I><IMG src="../../shared/note.png" border="0">When the program has multiple address
+        <P><I><IMG src="help/shared/note.png" border="0">When the program has multiple address
         spaces and the destination address is ambiguous (based on the current location), a query
         results dialog will be displayed.</I></P>
 
@@ -195,7 +195,7 @@
           sensitive option.&nbsp; If more than one match is found, they are displayed in a Query
           Results dialog.</P>
 
-          <P><IMG src="../../shared/note.png" border="0">Even if the case sensitive option is off,
+          <P><IMG src="help/shared/note.png" border="0">Even if the case sensitive option is off,
           if a label has an exact match, no other labels will be found.<BR>
           </P>
         </BLOCKQUOTE>
@@ -209,7 +209,7 @@
           stored, but are generated on the fly because of a reference to that location.) If
           this option is off, only defined labels are searched. 
 
-          <P><IMG src="../../shared/note.png" border="0"> Turning off this option can result in
+          <P><IMG src="help/shared/note.png" border="0"> Turning off this option can result in
            significantly faster results in larger programs.</P><BR>
           </P>
           
@@ -226,11 +226,11 @@
         assumed to be in decimal unless it is preceeded by <B>0x</B>. That is, "file(0x1000)" and 
         "file(1000)" are different values.</P>
 
-        <P><I><IMG src="../../shared/note.png" border="0">Ghidra does not support storing source 
+        <P><I><IMG src="help/shared/note.png" border="0">Ghidra does not support storing source 
         file bytes for all file formats. Searching for a file offset in these programs will always 
         yield no results.</I></P>
         
-        <P><I><IMG src="../../shared/note.png" border="0">When the program has multiple file byte
+        <P><I><IMG src="help/shared/note.png" border="0">When the program has multiple file byte
         sources and the destination address is ambiguous, a query results dialog will be displayed.
         </I></P>
       </BLOCKQUOTE>
@@ -415,7 +415,7 @@
       current cursor location and proceeds either forward (next) or backwards (previous).</P>
 
 	  <BLOCKQUOTE>
-      <P><IMG src="../../shared/note.png" border="0">When searching for Instructions, Data or
+      <P><IMG src="help/shared/note.png" border="0">When searching for Instructions, Data or
       Undefined items, Ghidra will skip all contiguous items of the same type. For example, if the
       cursor is on an address with an Instruction, and you go to the next Instruction, then all
       Instructions immediately following the current one will be skipped until a non-Instruction is
@@ -645,7 +645,7 @@
           href="help/topics/Search/Search_Program_Text.htm">Program Text</A>, etc)</LI>
         </UL>
 
-        <P><IMG src="../../shared/note.png" border="0">The <IMG src="images/left.png" border="0">
+        <P><IMG src="help/shared/note.png" border="0">The <IMG src="images/left.png" border="0">
         button is only enabled after performing a <IMG src="images/right.png" border="0"></P>
       </BLOCKQUOTE>
 
@@ -661,7 +661,7 @@
         
       		<BLOCKQUOTE>
         	<P>
-        	<IMG src="../../shared/note.png" border="0">The behavior of the previous action will
+        	<IMG src="help/shared/note.png" border="0">The behavior of the previous action will
         	vary slightly depending upon what component is focused.  It is possible for a 
         	non-Listing view to be showing a function that is not the current function in the 
         	Listing.  In this case, if the Listing has focus, then the previously visited function
@@ -676,7 +676,7 @@
 
       <BLOCKQUOTE>
         <P>To clear the navigation history stack, select <B>Navigation <IMG src=
-        "../../shared/arrow.gif" border="0"> Clear History</B></P>
+        "help/shared/arrow.gif" border="0"> Clear History</B></P>
 
         <P>After clearing the history, the <IMG src="images/left.png" border="0">&nbsp;and <IMG
         src="images/right.png" border="0"> buttons are disabled</P>

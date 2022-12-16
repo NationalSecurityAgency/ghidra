@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.assembler.sleigh;
 
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.util.*;
 
@@ -72,7 +72,7 @@ public abstract class AssemblyTestCase extends AbstractGenericTest {
 	public void setUp() throws Exception {
 		LanguageID langID = getLanguageID();
 		if (!setupLangID.equals(langID.toString())) {
-			SleighLanguageProvider provider = new SleighLanguageProvider();
+			SleighLanguageProvider provider = SleighLanguageProvider.getSleighLanguageProvider();
 			lang = (SleighLanguage) provider.getLanguage(langID);
 			context = new AssemblyDefaultContext(lang);
 			setupLangID = langID.toString();

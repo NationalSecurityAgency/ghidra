@@ -7,7 +7,7 @@
 
     <TITLE>Data Type Manager</TITLE>
     <META http-equiv="content-type" content="text/html; charset=windows-1252">
-    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
     <META name="generator" content="Microsoft FrontPage 4.0">
   </HEAD>
 
@@ -109,7 +109,7 @@
       path.</P>
     
 	<BLOCKQUOTE>
-    <P><IMG src="../../shared/note.png" alt="">In the unlikely event that new data type class files
+    <P><IMG src="help/shared/note.png" alt="">In the unlikely event that new data type class files
     or jar files are added while Ghidra is running, there is a refresh action which will find and
     add the new data types to the "built-in" archive.</P>
     </BLOCKQUOTE>
@@ -145,7 +145,7 @@
     <BLOCKQUOTE>
       <P>Besides being stored in archives, data types are also stored inside programs.</P>
 
-      <P><IMG src="../../shared/note.png" alt="">Any data type used in a program must be stored in
+      <P><IMG src="help/shared/note.png" alt="">Any data type used in a program must be stored in
       that program even if it originally came from an archive.</P>
 
       <P>Because of this, the "same" data types can live in more than one archive or program and
@@ -226,7 +226,7 @@
       from the actual archive and the change time on a data type, Ghidra can determine if data
       types are <I>out-of-sync</I> with their corresponding data type in a program or other
       archive.</P>
-      <P><IMG src="../../shared/note.png" alt="">
+      <P><IMG src="help/shared/note.png" alt="">
       The data type tree will indicate data types that have a source archive association
       by displaying the name of the source archive in parenthesis after the data type name.</P>
       <BLOCKQUOTE>
@@ -359,7 +359,7 @@
         <H3><A name="Open_File_Data_Type_Archive"></A>Opening a File Data Type Archive</H3>
 
         <BLOCKQUOTE>
-          <P>From the local menu <IMG src="../../shared/menu16.gif" alt=""> , select <I><B>Open
+          <P>From the local menu <IMG src="images/menu16.gif" alt=""> , select <I><B>Open
           File Archive...</B></I>. A file chooser will appear. Use the file chooser to find and select
           the data type archive to open. A new node will appear in the tree for the newly opened
           archive. Also, the directory containing the newly opened archive will be added to the
@@ -369,7 +369,7 @@
         <H3><A name="Open_Project_Data_Type_Archive"></A>Opening a Project Data Type Archive</H3>
 
 	        <BLOCKQUOTE>
-        <P>From the local menu <IMG src="../../shared/menu16.gif" alt=""> , select <I><B>Open
+        <P>From the local menu <IMG src="images/menu16.gif" alt=""> , select <I><B>Open
         Project Archive...</B></I>. A Ghidra project data type archive chooser will appear. This
         chooser will show all the project archives in the current project. Use the chooser to find
         and select the project data type archive to open. A new node will appear in the tree for
@@ -380,7 +380,7 @@
         <H3><A name="New_File_Data_Type_Archive"></A>Creating a New File Data Type Archive</H3>
 
         <BLOCKQUOTE>
-          <P>From the local menu <IMG src="../../shared/menu16.gif" alt=""> , select <I><B>New
+          <P>From the local menu <IMG src="images/menu16.gif" alt=""> , select <I><B>New
           File Archive...</B></I>. A file chooser will appear. Use the file chooser to select a
           directory and enter a name for the new archive. If an archive already exists with that
           name, a dialog will appear asking if the existing archive should be over-written. A new
@@ -392,14 +392,14 @@
         Archive</H3>
 
 	    <BLOCKQUOTE>
-        <P>From the local menu <IMG src="../../shared/menu16.gif" alt=""> , select <I><B>New
+        <P>From the local menu <IMG src="images/menu16.gif" alt=""> , select <I><B>New
         Project Archive...</B></I>. A Ghidra project data type archive chooser will appear. Use the
         chooser to select a folder and enter a name for the new archive. A new node will appear in
         the tree for the newly created archive.<BR>
         </P>
 
 	        <BLOCKQUOTE>
-        <P><IMG alt="" src="../../shared/tip.png">You can also create a new Project Data Type
+        <P><IMG alt="" src="help/shared/tip.png">You can also create a new Project Data Type
         Archive by dragging a File Data Type Archive (.gdt) file onto the <A href=
         "../FrontEndPlugin/Ghidra_Front_end.htm">Ghidra Project Window</A>. This will create a new
         Project Data Type Archive populated with the same data types as the dragged File Data Type
@@ -501,12 +501,12 @@
 
           <P>To update the datatypes, right-click on the node that needs updating and select 
           <B>Update Datatypes From</B> <I><B><IMG src=
-          "../../shared/arrow.gif" alt=""></B> <B>&lt;Source Archive
+          "help/shared/arrow.gif" alt=""></B> <B>&lt;Source Archive
           Name&gt;.</B></I> The Update Data Types dialog will be shown allowing you to select
           the datatypes to update.</P>
 
           <BLOCKQUOTE>
-            <P><IMG alt="" src="../../shared/warning.png">Ghidra uses time stamps and flags to
+            <P><IMG alt="" src="help/shared/warning.png">Ghidra uses time stamps and flags to
             determine if an archive is out-of-sync. This can result in Ghidra indicating the
             archive needs updating when actually it does not. For example, if a data type is
             changed and then changed back, it will cause Ghidra to think the data type was changed.
@@ -527,18 +527,18 @@
 
           <P>To commit the datatypes, right-click on the node that contains the changed datatypes
           and select <B>Commit Datatypes To</B> <I><B><IMG src=
-          "../../shared/arrow.gif" alt=""></B> <B>&lt;Source Archive
+          "help/shared/arrow.gif" alt=""></B> <B>&lt;Source Archive
           Name&gt;.</B></I> The Commit Data Types dialog will be shown allowing you to select
           the datatypes to commit.</P>
 
-          <P><IMG alt="" src="../../shared/warning.png">Ghidra uses time stamps and flags to determine
+          <P><IMG alt="" src="help/shared/warning.png">Ghidra uses time stamps and flags to determine
           if an archive is out-of-sync. This can result in Ghidra indicating the archive needs
           committing when actually it does not. For example, if a data type is changed and then
           changed back, it will cause Ghidra to think the data type was changed. In this case,
           invoking the commit action will cause Ghidra to search for commits, but when it finds
           none, a message dialog will appear indicating that no changes were detected.</P>
 
-          <P><IMG alt="" src="../../shared/note.png">
+          <P><IMG alt="" src="help/shared/note.png">
           The source archive must be editable in order to commit File archives must be <A href=
           "data_type_manager_description.htm#open_for_editing">open for editing</A> and project
           archives that are under version control must be checked-out.</P>
@@ -555,7 +555,7 @@
 
           <P>To revert the datatypes, right-click on the node that contains the changed datatypes
           and select <B>Revert Datatypes To</B> <I><B><IMG src=
-          "../../shared/arrow.gif" alt=""></B> <B>&lt;Source Archive
+          "help/shared/arrow.gif" alt=""></B> <B>&lt;Source Archive
           Name&gt;.</B></I> The Revert Data Types dialog will be shown allowing you to select
           the datatypes to revert.</P>
         </BLOCKQUOTE>
@@ -571,7 +571,7 @@
 
           <P>To disassociate datatypes, right-click on the node that contains the datatypes and
           select <B>Disassociate Datatypes From</B> <I><B><IMG
-          src="../../shared/arrow.gif" alt=""></B> <B>&lt;Source
+          src="help/shared/arrow.gif" alt=""></B> <B>&lt;Source
           Archive Name&gt;.</B></I> The Revert Data Types dialog will be shown allowing you to
           select the datatypes to revert.</P>
         </BLOCKQUOTE>
@@ -589,7 +589,7 @@
           <P>To refresh sync indicators for datatypes associated with a particular source archive,
           right-click on the node that contains the datatypes and select 
           <B>Refresh Sync Indicators For</B> <I><B><IMG src=
-          "../../shared/arrow.gif" alt=""></B> <B>&lt;Source Archive
+          "help/shared/arrow.gif" alt=""></B> <B>&lt;Source Archive
           Name&gt;.</B></I> &lt;
           </P>
         </BLOCKQUOTE>
@@ -619,7 +619,7 @@
 
         <BLOCKQUOTE>
           <P>Right-click on the category where the new category is to be created. Select the
-          <I><B>New<IMG src="../../shared/arrow.gif" alt=""> Category</B></I> action and a new
+          <I><B>New<IMG src="help/shared/arrow.gif" alt=""> Category</B></I> action and a new
           category named "New Category" will be created.<BR>
           </P>
         </BLOCKQUOTE>
@@ -716,7 +716,7 @@
         types and so on, until finally they are built on the primitive types (the built-in data
         types.)</P>
 
-        <P><IMG src="../../shared/note.yellow.png" alt="">Built-in types have several restrictions. They
+        <P><IMG src="help/shared/note.yellow.png" alt="">Built-in types have several restrictions. They
         always live in the root category of an archive and they can't be renamed.</P>
 
         <H3><A name="applying_datatypes"></A>Applying Data Types to a Program</H3>
@@ -756,7 +756,7 @@
             </TBODY>
           </TABLE>
 
-          <P><IMG src="../../shared/note.png" alt="">Applying a data type from an archive will
+          <P><IMG src="help/shared/note.png" alt="">Applying a data type from an archive will
           automatically add that data type to the program's archive. Also, the archive will become
           associated with the program and automatically be opened whenever the program is
           opened.</P>
@@ -774,10 +774,10 @@
 
           <P>Structures, unions, enums, and function definitions can be created by right-clicking
           on the category where the new type should be located, and then choosing either the
-          <B><I>New<IMG src="../../shared/arrow.gif" alt=""> Structure</I>, <I>New<IMG src=
-          "../../shared/arrow.gif" alt=""> Union</I>,</B> <I><B>New<IMG src=
-          "../../shared/arrow.gif" alt=""> Enum</B></I> or <I><B>New<IMG src=
-          "../../shared/arrow.gif" alt=""> Function Definition</B></I> action respectively. Each of
+          <B><I>New<IMG src="help/shared/arrow.gif" alt=""> Structure</I>, <I>New<IMG src=
+          "help/shared/arrow.gif" alt=""> Union</I>,</B> <I><B>New<IMG src=
+          "help/shared/arrow.gif" alt=""> Enum</B></I> or <I><B>New<IMG src=
+          "help/shared/arrow.gif" alt=""> Function Definition</B></I> action respectively. Each of
           these actions will bring up an appropriate editor (<A href=
           "../DataTypeEditors/StructureEditor.htm"><FONT color="#0000ff">structure
           editor</FONT></A> for structures and unions, the <A href=
@@ -787,12 +787,12 @@
           <BLOCKQUOTE>
 			<H4>Creating a Typedef</H4>
             <P>Creating a new <B>typedef</B> is even easier. Right-click on the data type to be
-            typedef'ed and select the <I><B>New<IMG src="../../shared/arrow.gif" alt=""> Typedef on
+            typedef'ed and select the <I><B>New<IMG src="help/shared/arrow.gif" alt=""> Typedef on
             XYZ</B></I> action. A new typedef will be created on the <I>XYZ</I> data type in the
             same category as the original data type.<BR>
             </P>
 
-            <P>Alternatively, you can click <I><B>New<IMG src="../../shared/arrow.gif" alt="">
+            <P>Alternatively, you can click <I><B>New<IMG src="help/shared/arrow.gif" alt="">
               Typedef...</B></I>, which will show a dialog that allows you to choose a typedef name
               and the data type from which the typedef will be created.<SUP>*</SUP> This action can
               also be executed from any folder instead of directly on another data type.
@@ -812,11 +812,11 @@
             </P>
              
 			<H4>Creating a Pointer</H4>
-            <P>To create a <B>pointer</B>, you can click <I><B>New<IMG src="../../shared/arrow.gif"
+            <P>To create a <B>pointer</B>, you can click <I><B>New<IMG src="help/shared/arrow.gif"
             alt=""> Pointer to XYZ</B></I>. A new pointer will be created to the <I>XYZ</I> data
             type in the same category as the original data type.<SUP>*</SUP></P>
 
-            <P><IMG src="../../shared/note.png" alt=""><SUP>*</SUP>If you create a typedef or
+            <P><IMG src="help/shared/note.png" alt=""><SUP>*</SUP>If you create a typedef or
             pointer to a data type in the <B>Built-in Data Type Manager</B>, the newly created type
             will be placed in program's data type manager at the root category.</P>
 
@@ -1058,11 +1058,11 @@
         </BLOCKQUOTE>
 
         <BLOCKQUOTE>
-          <P><IMG src="../../shared/note.png" alt="" border="0"> The favorites are identified by
+          <P><IMG src="help/shared/note.png" alt="" border="0"> The favorites are identified by
           name and must be unique, so you cannot have data type "fred" in one "categoryA" marked as
           a favorite and "fred" in "categoryB" also marked as a favorite.</P>
 
-          <P><IMG src="../../shared/tip.png" alt="" border="0"> Any data type from any archive
+          <P><IMG src="help/shared/tip.png" alt="" border="0"> Any data type from any archive
           type (Program, BuildInTypes, or archive) can be marked as a favorite and used as such,
           however, only those marked in the <I><B>BuiltInTypes</B></I> category will be saved as
           part of your tool's state when you close the Project or exit Ghidra. Your list of
@@ -1102,12 +1102,12 @@
         the absolute address that the pointer refers to.</LI>
         </UL>
         
-        <P><IMG src="../../shared/note.png" alt="" border="0">All Typedef Settings must be established on
+        <P><IMG src="help/shared/note.png" alt="" border="0">All Typedef Settings must be established on
         a Typedef before such a type is applied to Data or referenced by other types.  This is highly recommended
         since the side-affects of using such a modified typedef will not be updated to reflect subsequent changes.
         </P>
         
-        <P><IMG src="../../shared/note.png" alt="" border="0"> Full support for the above Pointer-Typedef
+        <P><IMG src="help/shared/note.png" alt="" border="0"> Full support for the above Pointer-Typedef
         Settings within analysis and decompilation will evolve over time.  We also hope to improve
         naming concerns for such typedefs and to replace the use of custom BuiltIn data types which would 
         be better modeled as a Pointer.</P>

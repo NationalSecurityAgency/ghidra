@@ -17,7 +17,8 @@ package help.validator;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
 import ghidra.util.exception.AssertException;
@@ -29,8 +30,7 @@ import help.validator.model.IMG;
 public class ReferenceTagProcessor extends TagProcessor {
 
 	private static final String EOL = System.getProperty("line.separator");
-	private static final String STYLESHEET_FILENAME = "Frontpage.css";
-	private static final String STYLESHEET_PATHNAME = "shared/" + STYLESHEET_FILENAME;
+	private static final String STYLESHEET_FILENAME = "DefaultStyle.css";
 
 	private Path htmlFile;
 	private Set<Path> styleSheets = new HashSet<>();
@@ -47,17 +47,10 @@ public class ReferenceTagProcessor extends TagProcessor {
 		this.help = help;
 		this.anchorManager = anchorManager;
 
-		//
-		// Note: currently all help being built has the required stylesheet living under
-		// <help dir>/shared/<stylesheet name>
-		//
-		// If we ever need a more robust styling mechanism, then this code would need to be
-		// updated to know how to search for the referenced stylesheet
-		Path helpPath = help.getHelpLocation();
-		FileSystem fs = helpPath.getFileSystem();
-		Path relativeSSPath = fs.getPath(STYLESHEET_PATHNAME);
-		defaultStyleSheet = helpPath.resolve(relativeSSPath);
-		if (Files.notExists(helpPath)) {
+		Path sharedHelpDir = HelpBuildUtils.getSharedHelpDirectory();
+		defaultStyleSheet = sharedHelpDir.resolve(Path.of(STYLESHEET_FILENAME));
+
+		if (Files.notExists(defaultStyleSheet)) {
 			throw new AssertException("Cannot find expected stylesheet: " + defaultStyleSheet);
 		}
 	}

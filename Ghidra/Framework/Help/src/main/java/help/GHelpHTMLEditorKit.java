@@ -53,7 +53,7 @@ import utilities.util.FileUtilities;
  */
 public class GHelpHTMLEditorKit extends HTMLEditorKit {
 
-	private static final String G_HELP_STYLE_SHEET = "Frontpage.css";
+	private static final String G_HELP_STYLE_SHEET = "DefaultStyle.css";
 	private static final String DARK_G_HELP_STYLE_SHEET = "DarkStyle.css";
 
 	private static final Pattern EXTERNAL_URL_PATTERN = Pattern.compile("https?://.*");

@@ -36,10 +36,6 @@ public class HelpBuildUtilsTest extends AbstractHelpTest {
 	private static final String TOPIC_AND_FILENAME = "FooTopic/FooFile.html";
 	private static final String HTML_FILE_PATH = HELP_TOPIC_PATH + '/' + TOPIC_AND_FILENAME;
 
-	public HelpBuildUtilsTest() {
-		super();
-	}
-
 	@Override
 	protected ApplicationLayout createApplicationLayout() throws IOException {
 		return new GhidraTestApplicationLayout(new File(getTestDirectoryPath()));

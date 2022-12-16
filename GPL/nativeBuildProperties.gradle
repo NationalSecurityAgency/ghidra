@@ -71,7 +71,7 @@ task CheckToolChain {
 		if (isCurrentWindows()) {
 			// ensure that required MS Visual Studio is installed
 			if (!VISUAL_STUDIO_INSTALL_DIR) {
-				throw new GradleException("Visual Studio not found!");
+				throw new GradleException("Supported Windows native toolchain not found!");
 			}	
 		}
 	}

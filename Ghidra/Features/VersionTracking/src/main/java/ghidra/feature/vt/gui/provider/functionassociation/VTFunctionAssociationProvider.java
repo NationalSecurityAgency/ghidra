@@ -61,7 +61,6 @@ import ghidra.program.util.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.SystemUtilities;
 import ghidra.util.table.*;
-import resources.Icons;
 
 /**
  * Provider for the version tracking function association table. 
@@ -77,6 +76,8 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 	private static final String NO_SESSION = "None";
 	private static final Icon SHOW_LISTINGS_ICON =
 		new GIcon("icon.version.tracking.action.show.listings");
+	public static final Icon FILTER_NOT_ACCEPTED_ICON =
+		new GIcon("icon.version.tracking.action.function.filter.not.accepted");
 	private static final String SHOW_COMPARE_ACTION_GROUP = "A9_ShowCompare"; // "A9_" forces to right of other dual view actions in toolbar.
 
 	private static final Color FG_ERROR = new GColor("color.fg.error");
@@ -171,7 +172,7 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 
 		ActionState<FilterSettings> unacceptedOnlyActionState =
 			new ActionState<>("Show Only Unaccepted Match Functions",
-				Icons.FILTER_NOT_ACCEPTED_ICON, SHOW_UNACCEPTED);
+				FILTER_NOT_ACCEPTED_ICON, SHOW_UNACCEPTED);
 		unacceptedOnlyActionState.setHelpLocation(
 			new HelpLocation("VersionTrackingPlugin", "Show_Unaccepted_Functions"));
 
@@ -218,7 +219,7 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 	}
 
 	@Override
-	public List<DockingActionIf> getPopupActions(Tool tool, ActionContext context) {
+	public List<DockingActionIf> getPopupActions(Tool t, ActionContext context) {
 		if (context.getComponentProvider() == this) {
 			ListingCodeComparisonPanel dualListingPanel =
 				functionComparisonPanel.getDualListingPanel();

@@ -3,7 +3,7 @@
   <head>
     <title>The Diff Tool</title>
     <meta http-equiv="content-type" content="text/html; charset=windows-1252">
-    <link rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <link rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
   </head>
   <body>
     <h1>
@@ -21,17 +21,17 @@
        program in order to get another user's changes into your program.
     </p>
     <h2>
-      <a name="Open_Close_Program_View"></a>
-      Opening and Closing the Second Program
+      <a name="Open_Close_Diff_View"></a>
+      Opening and Closing the Diff View
     </h2>
     <blockquote>
       <p>The <b>Open/Close Diff View</b> icon 
          <img src="images/table_relationship.png" alt=""> 
          in the Code Browser tool bar is used for both opening and closing 
-         the second program in the Code Browser. This is one of two ways to open the Diff
+         a second program in the Code Browser Diff panel. This is one of two ways to open the Diff
          tool. The other is the menu action, <span style="font-weight: bold;">Tools</span>
             <b>
-              <img src="../../shared/arrow.gif" alt="-&gt;" border="0">
+              <img src="help/shared/arrow.gif" alt="-&gt;" border="0">
               Program Differences...
             </b>
             which is described later under <b>Viewing Program Differences</b>.
@@ -67,12 +67,12 @@
     <blockquote>
     <p>A Diff can be opened from the menu action, <span style="font-weight: bold;">Tools</span>
             <b>
-              <img src="../../shared/arrow.gif" alt="-&gt;" border="0">
+              <img src="help/shared/arrow.gif" alt="-&gt;" border="0">
               Program Differences...
             </b>. This is one of two ways to open the Diff
-         tool. The other is the <b>Open/Close Program Diff </b> icon 
+         tool. The other is the <b>Open/Close Diff View</b> icon 
          <img src="images/table_relationship.png" alt=""> 
-         in the Code Browser tool bar which is described above in <b>Open/Close Diff View</b>.
+         in the Code Browser tool bar which is described above in <b>Opening and Closing the Diff View</b>.
          The following describes using the menu action to open the Diff tool.
       </p>
       <p>With a program open in the Code Browser tool, do the following to
@@ -82,7 +82,7 @@
         <li>From the Code Browser, select 
             <span style="font-weight: bold;">Tools</span>
             <b>
-              <img src="../../shared/arrow.gif" alt="-&gt;" border="0">
+              <img src="help/shared/arrow.gif" alt="-&gt;" border="0">
               Program Differences...
             </b>
             .
@@ -95,18 +95,33 @@
       <ol start="3" type="1">
         <li>From the <i>Select Other Program</i> dialog select the second
             program to be viewed and compared with the tool's program.<br>
-            <img src="../../shared/note.png" alt="" border="0">
+            <img src="help/shared/note.png" alt="" border="0">
             The second program must have the same address spaces
             defined. In other words, they should be the same type of program
             (i.e. based on the same program language).<br>
-            <img src="../../shared/tip.png" alt="">
-            If you wish to Diff against a previous version of a 
-            <b>versioned program, </b>select the <b>History&gt;&gt;</b> 
-            button of a program. Select the versioned program from the tree. 
-            Next select the desired version of the program from the history 
-            list on the right side of the dialog.<br>
+
+            <img src="help/shared/tip.png" alt="">
+            If you wish to Diff against a specific version of a 
+            <b>versioned program</b>, a specific version may be selected from the 
+            <b>Version History</b> table.  The project file history panel is displayed
+            when the <b>History&gt;&gt;</b> button is clicked.  
+            Select the versioned program from the tree. 
+            Next select the desired version of the program from the <b>Version History</b> 
+            table on the right side of the dialog.<br>
+            
             <div align="center">
               <img src="images/SelectOtherVersionedProgram.png" alt=""> <br>
+            </div>
+
+             <img src="help/shared/tip.png" alt="">
+            If you wish to Diff against another program which is already open in the same tool
+            you can select a compatible program from the <b>Open Programs</b> tab.  Programs
+            which are not compatible (e.g., different architecture) are not shown in the table.
+            The <b>Open Programs</b> tab is not available if compatible open programs are not 
+            found.  You may return to the project file tree selection panel by clicking the 
+            <b>Project Files</b> tab.
+            <div align="center">
+              <img src="images/SelectOpenProgram.png" alt=""> <br>
             </div>
         </li>
         <li>Click the <b>OK</b> button.</li>
@@ -134,7 +149,7 @@
             highlighted.
         </li>
       </ol>
-      <p><img src="../../shared/note.png" alt="" border="0"> 
+      <p><img src="help/shared/note.png" alt="" border="0"> 
          The selected program is displayed as the second program in
          the browser. Only the portion of the second program that matches the
          address set of the current view is displayed. Highlighted code units in
@@ -156,11 +171,11 @@
          both programs is still controlled by the program tree for the tool's
          program. In other words, the second program's view will only show
          addresses that match those viewed for the tool's program.<br>
-         <img src="../../shared/tip.png" alt="">
+         <img src="help/shared/tip.png" alt="">
          Notice that the difference highlights are light orange above. The selected
          difference is green. These are only the default colors. They can be
          changed from the tool's Options dialog (<b>Edit</b>
-         <img src="../../shared/arrow.gif" alt="-&gt;"> 
+         <img src="help/shared/arrow.gif" alt="-&gt;"> 
          <b>O</b><b>ptions...</b>, open the <b>Listing Fields</b> folder,
          and select <b>Selection Colors</b>, double click on the <b>Difference</b>
          color).<br>
@@ -269,7 +284,7 @@
           </tr>
           <tr>
             <td align="left" valign="top" width="16">
-              <a href="#Open_Close_Program_View">
+              <a href="#Open_Close_Diff_View">
                 <img src="images/table_relationship.png" alt="" border="0">
               </a>
             </td>
@@ -331,7 +346,7 @@
          Pressing the <b>Cancel</b> button will remove the <i>Determine Program Differences</i>
          dialog without performing the Program Diff.
       </p>
-      <p><img src="../../shared/tip.png" alt="" border="0"> 
+      <p><img src="help/shared/tip.png" alt="" border="0"> 
          If the two programs being compared are large, determining
          program differences can be time consuming. If you are not interested in
          all of the differences in the program, you can reduce the amount of
@@ -402,7 +417,7 @@
       </blockquote>
       <p><b>Program Context</b> - detect any code units where the values
          of the program context registers differ.<br>
-         <img src="../../shared/note.png" alt="" border="0">
+         <img src="help/shared/note.png" alt="" border="0">
          If the two programs contexts don't have the same registers
          defined, the program context is disabled and can't be compared between
          the programs.
@@ -494,7 +509,7 @@
          <img src="images/table_relationship.png" alt=""> will bring the tab 
          containing the Diff to the front.&nbsp;<br>
          If you attempt to start a Diff using <b>Tools</b>
-         <img src="../../shared/arrow.gif" alt=""> <b>Program Differences...</b> 
+         <img src="help/shared/arrow.gif" alt=""> <b>Program Differences...</b> 
          in the tool menu and a Diff is already being performed, the status bar
          will indicate the name of the program that currently has a Diff.<br>
       </p>
@@ -506,19 +521,19 @@
           Listing toolbar when the Program Diff is actively being displayed.
         </li>
         <li>Selecting the <b>Close Window</b> icon&nbsp;
-          <img src="../../shared/close16.gif" alt=""> from the
+          <img src="help/shared/close16.gif" alt=""> from the
           Listing toolbar when the Program Diff is actively being displayed.
           (Normally this will close the current program, but when Diff is active
           this closes the Diff.)
         </li>
         <li>Closing the Diff's program via the Tool's menu, <b>File</b>
-          <img src="../../shared/arrow.gif" alt=""><b>Close</b>,
+          <img src="help/shared/arrow.gif" alt=""><b>Close</b>,
           when the Diff is actively displayed. (In this case the Diff is closed
           along with the current program.)
         </li>
         <li>Exiting the Tool or Ghidra will also terminate an active Diff.</li>
       </ul>
-      <p><img src="../../shared/note.png" alt="" border="0">
+      <p><img src="help/shared/note.png" alt="" border="0">
          Hovering the mouse over the <b>Diff View</b> icon provides a tooltip 
          indicating whether the current action is  
          <i>Open Diff View</i>, <i>Close Diff View</i>, or <i>Bring Diff View to Front</i>.
@@ -600,7 +615,7 @@
          Program Differences</b> icon <img src="images/Diff16.png" alt="">
          , the current <i>Diff Apply Settings</i> will not be affected by the
          defaults.<br>
-         <img src="../../shared/note.png" alt="">
+         <img src="help/shared/note.png" alt="">
          The Default Diff Apply Settings can also be set by changing the 
          <a href="#DiffApplySettingsToolOptions">
            Diff Default Apply Settings tool options
@@ -609,7 +624,7 @@
       </p>
       <p><a name="Set_All_To_Ignore"></a> <a name="Set_All_To_Replace"></a> 
          <a name="Set_All_To_Merge"></a> The <i>Diff Apply Settings</i> toolbar menu
-         <img src="../../shared/menu16.gif" alt=""> also has actions for changing 
+         <img src="images/menu16.gif" alt=""> also has actions for changing 
          all the apply settings at once. They are:<br>
       </p>
     </blockquote>
@@ -698,7 +713,7 @@
          uncheck the <b>Limit to Selection</b> box. It switches between the 
          addresses in common between the two programs and those in the selection.
       </p>
-      <p><img src="../../shared/note.png" alt="" border="0"> 
+      <p><img src="help/shared/note.png" alt="" border="0"> 
          Once you press the <b> OK</b> button on the <i> Program
          Difference Settings</i> dialog, the Program Diff is performed against
          the indicated address ranges (address set). You can make a selection in
@@ -755,7 +770,7 @@
         </p>
       </blockquote>
       <blockquote>
-        <p><img src="../../shared/tip.png" alt="" border="0"> 
+        <p><img src="help/shared/tip.png" alt="" border="0"> 
            Some of the difference markers may overlap in the right margin. 
            Therefore, it is best to use the markers for navigation to a
            region where there are differences and then use the 
@@ -806,7 +821,7 @@
            be used to extend the selection.
         </li>
         </ul>
-        <p><img src="../../shared/tip.png" alt="" border="0"> 
+        <p><img src="help/shared/tip.png" alt="" border="0"> 
            When differences are applied from the second program to
            the tool's program, only selected code units in the current view will
            be applied.
@@ -958,7 +973,7 @@
       <p> The selected code units will be ignored. This means they will no
          longer be highlighted as a difference. The Diff will then navigate to the next difference and select it.
       </p>
-      <p><img src="../../shared/note.png" border="0"> Once a code unit is
+      <p><img src="help/shared/note.png" border="0"> Once a code unit is
          ignored, it will no longer be marked
          in the browser with a change bar and will no longer be highlighted. If
          you Determine Program Differences, any previously ignored items where
@@ -1002,7 +1017,7 @@
       <div align="center"><img src="images/DiffDetails.png" alt="">&nbsp; <br>
         <div align="left">
           <p>
-            <img src="../../shared/note.png" alt="" border="0">
+            <img src="help/shared/note.png" alt="" border="0">
             When the <b>Automatically Update Details</b> check box is
             selected, the Diff Details will update automatically to show the 
             differences at the current location whenever the current address 
@@ -1011,7 +1026,7 @@
             by the CodeBrowser.
          </p>
           <p>
-            <img src="../../shared/note.png" alt="" border="0">
+            <img src="help/shared/note.png" alt="" border="0">
             When the <b>Only Show Expected Difference Types</b> check box is
             selected, the Diff Details will only show Diff Details for the types 
             of Differences that you chose to look for when you determined your differences.
@@ -1020,7 +1035,7 @@
             seeking.
          </p>
          <p>
-            <img src="../../shared/note.png" alt="" border="0">
+            <img src="help/shared/note.png" alt="" border="0">
             If you modify the program at the current location after the Diff
             Details are displayed, press the <b>Refresh</b> button 
             <img src="Icons.REFRESH_ICON" alt="""> 
@@ -1071,7 +1086,7 @@
       </p>
       <ul>
         <li>From the tool's menu select <b>Edit</b>
-          <img src="../../shared/arrow.gif" alt="-&gt;" border="0">
+          <img src="help/shared/arrow.gif" alt="-&gt;" border="0">
           <B>Tool Options...</b> which displays the 
           <a href="help/topics/Tool/ToolOptions_Dialog.htm">
             Tool Options Dialog.<br>

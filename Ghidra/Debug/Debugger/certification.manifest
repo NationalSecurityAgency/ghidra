@@ -8,12 +8,6 @@ Module.manifest||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
 data/debugger.theme.properties||GHIDRA||||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|
-src/main/help/help/shared/arrow.gif||GHIDRA||||END|
-src/main/help/help/shared/close16.gif||GHIDRA||||END|
-src/main/help/help/shared/note-red.png||Oxygen Icons - LGPL 3.0||||END|
-src/main/help/help/shared/note.png||Oxygen Icons - LGPL 3.0||||END|
-src/main/help/help/shared/note.yellow.png||Oxygen Icons - LGPL 3.0||||END|
-src/main/help/help/shared/tip.png||Oxygen Icons - LGPL 3.0||||END|
 src/main/help/help/topics/Debugger/Debugger.html||GHIDRA||||END|
 src/main/help/help/topics/Debugger/GettingStarted.html||GHIDRA||||END|
 src/main/help/help/topics/Debugger/Troubleshooting.html||GHIDRA||||END|
@@ -39,7 +33,6 @@ src/main/help/help/topics/DebuggerMemoryBytesPlugin/DebuggerMemoryBytesPlugin.ht
 src/main/help/help/topics/DebuggerMemoryBytesPlugin/images/DebuggerMemoryBytesPlugin.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerMemviewPlugin/DebuggerMemviewPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerMemviewPlugin/images/DebuggerMemviewPlugin.png||GHIDRA||||END|
-src/main/help/help/topics/DebuggerMemviewPlugin/images/DebuggerMemviewPlugin_old.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerModelServicePlugin/DebuggerModelServicePlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerModulesPlugin/DebuggerModulesPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerModulesPlugin/images/DebuggerModuleMapProposalDialog.png||GHIDRA||||END|

@@ -276,8 +276,8 @@ public abstract class ConvertConstantAction extends AbstractDecompilerAction {
 				Msg.error(this, "Symbol does not have matching entry in equate table");
 				return null;
 			}
-			task = new ConvertConstantTask(context, equateName, convertAddr, convertVn, convertHash,
-				convertIndex);
+			task = new ConvertConstantTask(context, equateName, convertAddr, convertVn,
+				convertIsSigned, convertHash, convertIndex);
 		}
 		else {
 			PcodeOp op = convertVn.getLoneDescend();
@@ -285,8 +285,8 @@ public abstract class ConvertConstantAction extends AbstractDecompilerAction {
 
 			DynamicHash dynamicHash = new DynamicHash(convertVn, 0);
 			convertHash = dynamicHash.getHash();
-			task = new ConvertConstantTask(context, equateName, convertAddr, convertVn, convertHash,
-				-1);
+			task = new ConvertConstantTask(context, equateName, convertAddr, convertVn,
+				convertIsSigned, convertHash, -1);
 			try {
 				ScalarMatch scalarMatch = findScalarMatch(context.getProgram(), convertAddr,
 					convertVn, TaskMonitor.DUMMY);
@@ -296,14 +296,14 @@ public abstract class ConvertConstantAction extends AbstractDecompilerAction {
 					if (size == 0) {
 						size = 1;
 					}
+					value = ConvertConstantTask.signExtendValue(convertIsSigned, value, size);
 					String altName = getEquateName(value, size, convertIsSigned, null);
 					if (altName == null) {
 						altName = equateName;
 					}
 					// Don't create a named equate if the varnode and the instruction operand differ
 					// as the name was selected specifically for the varnode
-					if (convertType != EquateSymbol.FORMAT_DEFAULT ||
-						value == convertVn.getOffset()) {
+					if (convertType != EquateSymbol.FORMAT_DEFAULT || value == task.getValue()) {
 						task.setAlternate(altName, scalarMatch.refAddr, scalarMatch.opIndex, value);
 					}
 				}

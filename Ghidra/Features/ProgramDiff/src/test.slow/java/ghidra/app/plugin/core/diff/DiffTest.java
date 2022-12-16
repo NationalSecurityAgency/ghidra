@@ -659,7 +659,7 @@ public class DiffTest extends DiffTestAdapter {
 		assertEquals(true, isShowingDiff());
 		// Check action enablement.
 		checkDiffAction("View Program Differences", true, true);
-		checkDiffAction("Open/Close Program View", true, true);
+		checkDiffAction("Open/Close Diff View", true, true);
 		checkDiffAction("Apply Differences", true, false);
 		checkDiffAction("Apply Differences and Goto Next Difference", true, false);
 		checkDiffAction("Ignore Selection and Goto Next Difference", true, false);
@@ -777,13 +777,13 @@ public class DiffTest extends DiffTestAdapter {
 
 		assertEquals(true, isDiffing());
 		assertEquals(true, isShowingDiff());
-		checkDiffAction("Open/Close Program View", true, true);
+		checkDiffAction("Open/Close Diff View", true, true);
 
 		//
 		// Different tab--still enabled
 		//
 		selectTab(panel, program3);
-		checkDiffAction("Open/Close Program View", true, true);
+		checkDiffAction("Open/Close Diff View", true, true);
 
 		clickDiffButton();
 		assertTrue("Not diffing after clicking the diff button when on a non-diff tab",
@@ -794,7 +794,7 @@ public class DiffTest extends DiffTestAdapter {
 		//
 		// Diff tab--still enabled
 		//
-		checkDiffAction("Open/Close Program View", true, true);
+		checkDiffAction("Open/Close Diff View", true, true);
 
 		clickDiffButton();
 
