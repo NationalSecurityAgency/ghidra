@@ -135,8 +135,12 @@ public class ElfHeader implements StructConverter, Writeable {
 
 	protected void initElfHeader() throws ElfException {
 		try {
+			if (provider.length() < INITIAL_READ_LEN) {
+				throw new ElfException("Not enough bytes to be a valid ELF executable.");
+			}
+			byte[] initialBytes = provider.readBytes(0, INITIAL_READ_LEN);
 
-			determineHeaderEndianess();
+			determineHeaderEndianess(initialBytes);
 
 			// reader uses unbounded provider wrapper to allow handling of missing/truncated headers
 			reader = new BinaryReader(new UnlimitedByteProviderWrapper(provider),
@@ -1346,21 +1350,21 @@ public class ElfHeader implements StructConverter, Writeable {
 		return false;
 	}
 
-	private void determineHeaderEndianess() throws ElfException, IOException {
-
-		if (provider.length() < INITIAL_READ_LEN) {
-			throw new ElfException("Not enough bytes to be a valid ELF executable.");
-		}
-
+	private void determineHeaderEndianess(byte ident_data) throws ElfException {
 		hasLittleEndianHeaders = true;
-		byte[] bytes = provider.readBytes(0, INITIAL_READ_LEN);
-		if (bytes[ElfConstants.EI_DATA] == ElfConstants.ELF_DATA_BE) {
+
+		if (ident_data == ElfConstants.ELF_DATA_BE) {
 			hasLittleEndianHeaders = false;
 		}
-		else if (bytes[ElfConstants.EI_DATA] != ElfConstants.ELF_DATA_LE) {
+		else if (ident_data != ElfConstants.ELF_DATA_LE) {
 			errorConsumer.accept("Invalid EI_DATA, assuming little-endian headers (EI_DATA=0x" +
-				Integer.toHexString(bytes[ElfConstants.EI_DATA]) + ")");
+				Integer.toHexString(ident_data) + ")");
 		}
+	}
+
+	private void determineHeaderEndianess(byte[] bytes) throws ElfException {
+		determineHeaderEndianess(bytes[ElfConstants.EI_DATA]);
+
 		if (!hasLittleEndianHeaders && bytes[ElfConstants.EI_NIDENT] != 0) {
 			// Header endianess sanity check
 			// Some toolchains always use little endian Elf Headers
