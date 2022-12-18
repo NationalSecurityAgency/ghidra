@@ -2162,7 +2162,8 @@ define pcodeop clflush;
 	clflush(m8);
 }
 
-:CLAC           is vexMode=0 & byte=0x0F; byte=0x01; byte=0xCA { AC = 0; }
+define pcodeop clac;
+:CLAC           is vexMode=0 & byte=0x0F; byte=0x01; byte=0xCA { clac(); AC = 0; }
 
 :CLC			is vexMode=0 & byte=0xf8						{ CF = 0; }
 :CLD			is vexMode=0 & byte=0xfc						{ DF = 0; }
@@ -3757,7 +3758,8 @@ define pcodeop skinit;
 :SMSW rm64      is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf; byte=0x01; rm64 & reg_opcode=4 ...  { rm64 = CR0; }
 @endif
 
-:STAC           is vexMode=0 & byte=0x0f; byte=0x01; byte=0xcb  { AC = 1; }
+define pcodeop stac;
+:STAC           is vexMode=0 & byte=0x0f; byte=0x01; byte=0xcb  { stac(); AC = 1; }
 :STC            is vexMode=0 & byte=0xf9                        { CF = 1; }
 :STD            is vexMode=0 & byte=0xfd                        { DF = 1; }
 # MFL:  AMD instruction
