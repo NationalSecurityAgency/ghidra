@@ -24,6 +24,8 @@ import ghidra.program.database.ProgramDB;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.DataTypeConflictHandler.ConflictResult;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
+import ghidra.util.UniversalID;
+import ghidra.util.UniversalIdGenerator;
 
 /**
  * Tests for the {@link DataTypeConflictHandler conflict handler} stuff.
@@ -153,7 +155,7 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	/**
-	 * Tests the {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER RESORAAH}
+	 * Tests the {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER}
 	 * conflict handler to ensure that adding a empty conflicting structure resolves to a previous
 	 * populated structure.
 	 */
@@ -168,7 +170,7 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	/**
-	 * Tests the {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER RESORAAH}
+	 * Tests the {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER}
 	 * conflict handler to ensure that adding a populated structure replaces an existing
 	 * 'empty' structure.  'Empty' means either 0 byte length or 1 byte length structs
 	 * as previous versions of Ghidra did not allow truly empty structs.
@@ -227,7 +229,7 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	/**
-	 * Tests the {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER RESORAAH}
+	 * Tests the {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER}
 	 * conflict handler to ensure that adding a conflicting typedef to a conflicting stub structure 
 	 * (when there is already a typedef to a populated structure) correctly uses the 
 	 * existing populated structure and existing typedef to the populated structure.
@@ -253,7 +255,7 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	/**
-	 * Tests the {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER RESORAAH}
+	 * Tests the {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER}
 	 * conflict handler to ensure that adding truly conflicting structures and typedefs
 	 * are treated as new data types and are renamed to a different name when added.
 	 */
@@ -283,7 +285,7 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	/**
-	 * Tests the {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER RESORAAH}
+	 * Tests the {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER}
 	 * conflict handler when adding a conflicting typedef impl that is referred to multiple 
 	 * times during a single addDataType() call.
 	 * <p>
@@ -328,7 +330,7 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	/**
-	 * Tests the {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER RESORAAH}
+	 * Tests the {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER}
 	 * conflict handler  when adding a conflicting typedef impl (but equiv) that is referred to multiple 
 	 * times during a single addDataType() call.
 	 * <p>
@@ -368,7 +370,7 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	/**
-	 * Tests the {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER RESORAAH}
+	 * Tests the {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER}
 	 * conflict handler when adding a typedef to a populated when there is already a typedef
 	 * to a stub structure.  
 	 */
@@ -397,7 +399,7 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	/**
 	 * Tests the
-	 * {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER RESORAAH}
+	 * {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER}
 	 * conflict handler to be sure that, if all else is the same, the packed version is chosen
 	 * over the non-packed version.
 	 * <p>
@@ -422,7 +424,7 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	/**
 	 * Tests the
-	 * {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER RESORAAH}
+	 * {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER}
 	 * conflict handler to be sure that, if all else is the same, the packed version is chosen
 	 * over the non-packed version.
 	 * <p>
@@ -447,7 +449,7 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	/**
 	 * Tests the
-	 * {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER RESORAAH}
+	 * {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER}
 	 * conflict handler to be sure that, if all else is the same, the new non-packed version is
 	 * chosen over the existing non-packed version.
 	 * <p>
@@ -476,7 +478,7 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	/**
 	 * Tests the
-	 * {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER RESORAAH}
+	 * {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER}
 	 * conflict handler to be sure that, if all else is the same, the new non-packed version is
 	 * chosen over the existing packed version.
 	 * <p>
@@ -505,7 +507,7 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	/**
 	 * Tests the
-	 * {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER RESORAAH}
+	 * {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER}
 	 * conflict handler to be sure that, if all else is the same, the packed version is chosen
 	 * over the non-packed version.
 	 * <p>
@@ -515,24 +517,147 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testResolveDataTypeNonStructConflict() throws Exception {
 		DataTypeManager dtm = new StandAloneDataTypeManager("Test");
 		int id = dtm.startTransaction("");
-		Category otherRoot = dataMgr.getRootCategory();
-		Category subc = otherRoot.createCategory("subc");
+		try {
+			Category otherRoot = dataMgr.getRootCategory();
+			Category subc = otherRoot.createCategory("subc");
 
-		EnumDataType e = new EnumDataType(subc.getCategoryPath(), "Enum", 2);
+			EnumDataType e = new EnumDataType(subc.getCategoryPath(), "Enum", 2);
 
-		DataType resolvedEnum =
-			dtm.resolve(e, DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
-		assertTrue(e.isEquivalent(resolvedEnum));
-		assertEquals("/subc/Enum", resolvedEnum.getPathName());
+			DataType resolvedEnum =
+				dtm.resolve(e,
+					DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
+			assertTrue(e.isEquivalent(resolvedEnum));
+			assertEquals("/subc/Enum", resolvedEnum.getPathName());
 
-		e.add("xyz", 1);
+			e.add("xyz", 1);
 
-		resolvedEnum =
-			dtm.resolve(e, DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
-		assertTrue(e.isEquivalent(resolvedEnum));
-		assertEquals("/subc/Enum.conflict", resolvedEnum.getPathName());
+			resolvedEnum =
+				dtm.resolve(e,
+					DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
+			assertTrue(e.isEquivalent(resolvedEnum));
+			assertEquals("/subc/Enum.conflict", resolvedEnum.getPathName());
+		}
+		finally {
+			dtm.endTransaction(id, true);
+			dtm.close();
+		}
+	}
 
-		dtm.endTransaction(id, true);
-		dtm.close();
+	/**
+	 * Tests the
+	 * {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER}
+	 * conflict handler to be sure that and empty local structure will be replaced by
+	 * a structure with source.
+	 * <p>
+	 * Success is the source version is chosen over the empty local version.
+	 */
+	@Test
+	public void testChooseStructWithSourceOverExistingEmptyStructures() throws Exception {
+
+		Structure struct = new StructureDataType(root, "TestStruct", 0, dataMgr);
+		struct = (Structure) dataMgr.resolve(struct, null);
+
+		SourceArchive source = new DummySourceArchive("Test");
+
+		Structure structWithSource = new StructureDataType(root, "TestStruct", 0, dataMgr);
+		structWithSource.setSourceArchive(source);
+		structWithSource.add(ByteDataType.dataType);
+
+		structWithSource = (Structure) dataMgr.resolve(structWithSource,
+			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER);
+
+		assertEquals("TestStruct", structWithSource.getName());
+		assertTrue(struct == structWithSource);
+		SourceArchive sourceArchive = struct.getSourceArchive();
+		assertEquals(source.getSourceArchiveID(), sourceArchive.getSourceArchiveID());
+		assertEquals(source.getName(), sourceArchive.getName());
+	}
+
+	@Test
+	public void testResolvePointerConflict() {
+
+		DataType ptr1 =
+			new PointerDataType(new TypedefDataType("size_t", UnsignedIntegerDataType.dataType));
+		DataType ptr2 =
+			new PointerDataType(new TypedefDataType("size_t", IntegerDataType.dataType));
+
+		DataType ptr1resolved = dataMgr.resolve(ptr1, DataTypeConflictHandler.DEFAULT_HANDLER);
+		assertEquals("size_t *", ptr1resolved.getName());
+
+		DataType ptr2resolvedA = dataMgr.resolve(ptr2, DataTypeConflictHandler.KEEP_HANDLER);
+		assertTrue(ptr2resolvedA == ptr1resolved);
+
+		DataType ptr2resolvedB = dataMgr.resolve(ptr2, DataTypeConflictHandler.DEFAULT_HANDLER);
+		assertEquals("size_t.conflict *", ptr2resolvedB.getName());
+
+		DataType ptr2resolvedC = dataMgr.resolve(ptr2, DataTypeConflictHandler.REPLACE_HANDLER);
+		assertTrue(ptr2resolvedC == ptr2resolvedB);
+	}
+
+	@Test
+	public void testResolveArrayConflict() {
+
+		DataType array1 =
+			new ArrayDataType(new TypedefDataType("size_t", UnsignedIntegerDataType.dataType), 2,
+				-1);
+		DataType array2 =
+			new ArrayDataType(new TypedefDataType("size_t", IntegerDataType.dataType), 2, -1);
+
+		DataType array1resolved = dataMgr.resolve(array1, DataTypeConflictHandler.DEFAULT_HANDLER);
+		assertEquals("size_t[2]", array1resolved.getName());
+
+		DataType array2resolvedA = dataMgr.resolve(array2, DataTypeConflictHandler.KEEP_HANDLER);
+		assertTrue(array2resolvedA == array1resolved);
+
+		DataType array2resolvedB = dataMgr.resolve(array2, DataTypeConflictHandler.DEFAULT_HANDLER);
+		assertEquals("size_t.conflict[2]", array2resolvedB.getName());
+
+		DataType array2resolvedC = dataMgr.resolve(array2, DataTypeConflictHandler.REPLACE_HANDLER);
+		assertTrue(array2resolvedC == array2resolvedB);
+	}
+
+	private static class DummySourceArchive implements SourceArchive {
+
+		private final UniversalID id;
+		private final String archiveName;
+
+		public DummySourceArchive(String archiveName) {
+			this.id = UniversalIdGenerator.nextID();
+			this.archiveName = archiveName;
+		}
+
+		public ArchiveType getArchiveType() {
+			return ArchiveType.FILE;
+		}
+
+		public String getDomainFileID() {
+			return null;
+		}
+
+		public long getLastSyncTime() {
+			return 0;
+		}
+
+		public String getName() {
+			return archiveName;
+		}
+
+		public UniversalID getSourceArchiveID() {
+			return id;
+		}
+
+		public boolean isDirty() {
+			return false;
+		}
+
+		public void setDirtyFlag(boolean dirty) {
+		}
+
+		public void setLastSyncTime(long time) {
+		}
+
+		public void setName(String name) {
+		}
+
 	}
 }
