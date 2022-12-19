@@ -30,7 +30,6 @@ import docking.widgets.label.GLabel;
 
 public class FindDialog extends DialogComponentProvider {
 
-	private JTextField textField;
 	private GhidraComboBox<String> comboBox;
 
 	private FindDialogSearcher searcher;
@@ -74,11 +73,8 @@ public class FindDialog extends DialogComponentProvider {
 		comboBox.setEditable(true);
 		comboBox.addActionListener(e -> doSearch(true));
 
-		ComboBoxEditor editor = comboBox.getEditor();
-		textField = (JTextField) editor.getEditorComponent();
-
-		textField.setColumns(20);
-		textField.getDocument().addDocumentListener(new DocumentListener() {
+		comboBox.setColumns(20);
+		comboBox.addDocumentListener(new DocumentListener() {
 			@Override
 			public void changedUpdate(DocumentEvent e) {
 				handleDocumentUpdate();
@@ -95,7 +91,7 @@ public class FindDialog extends DialogComponentProvider {
 			}
 
 			private void handleDocumentUpdate() {
-				String text = textField.getText();
+				String text = comboBox.getText();
 				enableButtons(text.length() != 0);
 			}
 		});
@@ -104,7 +100,7 @@ public class FindDialog extends DialogComponentProvider {
 
 		// associate this label with a mnemonic key that activates the text field
 		findLabel.setDisplayedMnemonic(KeyEvent.VK_N);
-		findLabel.setLabelFor(textField);
+		comboBox.associateLabel(findLabel);
 
 		JPanel mainPanel = new JPanel(new BorderLayout());
 		JPanel textPanel = new JPanel();
@@ -133,7 +129,7 @@ public class FindDialog extends DialogComponentProvider {
 
 	@Override
 	protected void dialogClosed() {
-		textField.setText("");
+		comboBox.setText("");
 	}
 
 	public void next() {
@@ -152,7 +148,7 @@ public class FindDialog extends DialogComponentProvider {
 
 		clearStatusText();
 		boolean useRegex = regexRadioButton.isSelected();
-		String searchText = textField.getText();
+		String searchText = comboBox.getText();
 
 		CursorPosition cursorPosition = searcher.getCursorPosition();
 		SearchLocation searchLocation =
@@ -216,7 +212,7 @@ public class FindDialog extends DialogComponentProvider {
 
 	String getText() {
 		if (isVisible()) {
-			return textField.getText();
+			return comboBox.getText();
 		}
 		return null;
 	}
@@ -226,12 +222,12 @@ public class FindDialog extends DialogComponentProvider {
 	}
 
 	public void setSearchText(String text) {
-		String searchText = text == null ? textField.getText() : text;
+		String searchText = text == null ? comboBox.getText() : text;
 		comboBox.setSelectedItem(searchText);
 	}
 
 	public String getSearchText() {
-		return textField.getText();
+		return comboBox.getText();
 	}
 
 	public void setHistory(List<String> history) {

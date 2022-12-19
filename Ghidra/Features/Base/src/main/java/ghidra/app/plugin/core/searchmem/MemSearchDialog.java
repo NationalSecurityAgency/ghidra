@@ -72,7 +72,6 @@ class MemSearchDialog extends DialogComponentProvider {
 	private JButton nextButton;
 	private JButton previousButton;
 	private JButton allButton;
-	private JTextField valueField;
 	private GhidraComboBox<String> valueComboBox;
 	private List<String> history = new LinkedList<>();
 	private JLabel hexSeqField;
@@ -120,11 +119,11 @@ class MemSearchDialog extends DialogComponentProvider {
 	}
 
 	void setBytes(byte[] bytes) {
-		if (valueField != null) {
-			valueField.setText(null);
+		if (valueComboBox != null) {
+			valueComboBox.setText(null);
 		}
 		String convertBytesToString = NumericUtilities.convertBytesToString(bytes, " ");
-		valueField.setText(convertBytesToString);
+		valueComboBox.setText(convertBytesToString);
 	}
 
 	void setAlignment(int alignment) {
@@ -132,7 +131,7 @@ class MemSearchDialog extends DialogComponentProvider {
 	}
 
 	public void setSearchText(String maskedString) {
-		valueField.setText(maskedString);
+		valueComboBox.setText(maskedString);
 		updateDisplay();
 	}
 
@@ -196,7 +195,7 @@ class MemSearchDialog extends DialogComponentProvider {
 
 	@Override
 	protected void dismissCallback() {
-		valueField.setText(null);
+		valueComboBox.setText(null);
 		hexSeqField.setText(null);
 		cancelCurrentTask();
 		close();
@@ -204,8 +203,8 @@ class MemSearchDialog extends DialogComponentProvider {
 
 	void show(ComponentProvider provider) {
 		clearStatusText();
-		valueField.requestFocus();
-		valueField.selectAll();
+		valueComboBox.requestFocus();
+		valueComboBox.selectAll();
 		PluginTool tool = plugin.getTool();
 		tool.showDialog(MemSearchDialog.this, provider);
 	}
@@ -256,7 +255,7 @@ class MemSearchDialog extends DialogComponentProvider {
 			if (plugin.searchOnce(new SearchInfo(searchData, 1,
 				searchSelectionRadioButton.isSelected(), forward, alignment, allBlocks.isSelected(),
 				createCodeUnitSearchInfo(), plugin.createTaskListener()))) {
-				addToHistory(valueField.getText());
+				addToHistory(valueComboBox.getText());
 				setStatusText("Searching...");
 				isSearching = true;
 				updateSearchButtonEnablement();
@@ -284,7 +283,7 @@ class MemSearchDialog extends DialogComponentProvider {
 			if (plugin.searchAll(new SearchAllSearchInfo(searchData, plugin.getSearchLimit(),
 				searchSelectionRadioButton.isSelected(), true, alignment, allBlocks.isSelected(),
 				createCodeUnitSearchInfo()))) {
-				addToHistory(valueField.getText());
+				addToHistory(valueComboBox.getText());
 				setStatusText("Searching...");
 				isSearching = true;
 				updateSearchButtonEnablement();
@@ -307,11 +306,9 @@ class MemSearchDialog extends DialogComponentProvider {
 		inputPanel.setLayout(new GridLayout(0, 1));
 		valueComboBox = new GhidraComboBox<>();
 		valueComboBox.setEditable(true);
-
-		valueField = (JTextField) valueComboBox.getEditor().getEditorComponent();
-		valueField.setToolTipText(currentFormat.getToolTip());
-		valueField.setDocument(new RestrictedInputDocument());
-		valueField.addActionListener(ev -> {
+		valueComboBox.setToolTipText(currentFormat.getToolTip());
+		valueComboBox.setDocument(new RestrictedInputDocument());
+		valueComboBox.addActionListener(ev -> {
 			if (nextButton.isEnabled()) {
 				nextPreviousCallback(true);
 			}
@@ -666,17 +663,17 @@ class MemSearchDialog extends DialogComponentProvider {
 
 		setEndianEnabled(currentFormat.usesEndieness());
 		updateSearchButtonEnablement();
-		valueField.setToolTipText(currentFormat.getToolTip());
+		valueComboBox.setToolTipText(currentFormat.getToolTip());
 	}
 
 	private void updateSearchData() {
 		currentFormat.setEndieness(bigEndian.isSelected());
-		SearchData inputData = currentFormat.getSearchData(valueField.getText());
-		if (valueField.getText().trim().length() != 0 && inputData.isValidInputData()) {
+		SearchData inputData = currentFormat.getSearchData(valueComboBox.getText());
+		if (valueComboBox.getText().trim().length() != 0 && inputData.isValidInputData()) {
 			updateSearchData(inputData);
 		}
 		else {
-			valueField.setText("");
+			valueComboBox.setText("");
 			updateSearchData(DEFAULT_SEARCH_DATA);
 		}
 	}
@@ -722,8 +719,8 @@ class MemSearchDialog extends DialogComponentProvider {
 			String match = handleHistoryMatch(currentText, proposedText);
 			if (match != null) {
 				super.insertString(offs, match.substring(beforeOffset.length()), a);
-				valueField.setSelectionStart(proposedText.length());
-				valueField.setSelectionEnd(match.length());
+				valueComboBox.setSelectionStart(proposedText.length());
+				valueComboBox.setSelectionEnd(match.length());
 				return;
 			}
 
