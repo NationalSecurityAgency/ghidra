@@ -39,7 +39,6 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.Swing;
-import ghidra.util.exception.AssertException;
 import ghidra.util.layout.VerticalLayout;
 
 /**
@@ -49,8 +48,8 @@ public class AddEditDialog extends DialogComponentProvider {
 	private static final int MAX_RETENTION = 10;
 	private PluginTool tool;
 	private TitledBorder nameBorder;
-	private JComboBox<String> labelNameChoices;
-	private JComboBox<NamespaceWrapper> namespaceChoices;
+	private GhidraComboBox<String> labelNameChoices;
+	private GhidraComboBox<NamespaceWrapper> namespaceChoices;
 	private JCheckBox entryPointCheckBox;
 	private JCheckBox primaryCheckBox;
 
@@ -339,8 +338,7 @@ public class AddEditDialog extends DialogComponentProvider {
 		Namespace currentNamespace = program.getSymbolTable().getNamespace(addr);
 
 		// no symbol or not editing a function symbol
-		if ((symbol == null) ||
-			(symbol != null && symbol.getSymbolType() != SymbolType.FUNCTION)) {
+		if ((symbol == null) || (symbol != null && symbol.getSymbolType() != SymbolType.FUNCTION)) {
 			// walk the tree of namespaces and collect all of the items
 			for (; (currentNamespace != globalNamespace); currentNamespace =
 				currentNamespace.getParentNamespace()) {
@@ -377,8 +375,7 @@ public class AddEditDialog extends DialogComponentProvider {
 	 */
 	private void selectNamespace() {
 		if (symbol != null && symbol.getParentNamespace() != null) {
-			namespaceChoices
-					.setSelectedItem(new NamespaceWrapper(symbol.getParentNamespace()));
+			namespaceChoices.setSelectedItem(new NamespaceWrapper(symbol.getParentNamespace()));
 			return;
 		}
 
@@ -389,12 +386,12 @@ public class AddEditDialog extends DialogComponentProvider {
 		// functions and labels in functions will use the local namespace
 		if (functionSymbol != null) {
 			if (symbol != null && symbol.equals(functionSymbol)) {
-				namespaceChoices.setSelectedItem(
-					new NamespaceWrapper(functionSymbol.getParentNamespace()));
+				namespaceChoices
+						.setSelectedItem(new NamespaceWrapper(functionSymbol.getParentNamespace()));
 			}
 			else if (functionSymbol.getSource() == SourceType.DEFAULT) {
-				namespaceChoices.setSelectedItem(
-					new NamespaceWrapper(functionSymbol.getParentNamespace()));
+				namespaceChoices
+						.setSelectedItem(new NamespaceWrapper(functionSymbol.getParentNamespace()));
 			}
 			else { // there is a function at the current address
 				namespaceChoices.setSelectedItem(new NamespaceWrapper(localNamespace));
@@ -409,8 +406,8 @@ public class AddEditDialog extends DialogComponentProvider {
 			}
 			else { // not in a function
 				if (symbol != null) { // editing a label
-					namespaceChoices.setSelectedItem(
-						new NamespaceWrapper(symbol.getParentNamespace()));
+					namespaceChoices
+							.setSelectedItem(new NamespaceWrapper(symbol.getParentNamespace()));
 				}
 				else {
 					// use the global namespace and *not* the lowest-level namespace
@@ -473,8 +470,7 @@ public class AddEditDialog extends DialogComponentProvider {
 		if (s.getSymbolType() == SymbolType.FUNCTION) {
 			String title;
 			if (s.isExternal()) {
-				ExternalLocation extLoc =
-					program.getExternalManager().getExternalLocation(s);
+				ExternalLocation extLoc = program.getExternalManager().getExternalLocation(s);
 				Address fnAddr = extLoc.getAddress();
 				title = "Rename External Function";
 				if (fnAddr != null) {
@@ -597,12 +593,7 @@ public class AddEditDialog extends DialogComponentProvider {
 	}
 
 	private String getText() {
-		Component comp = labelNameChoices.getEditor().getEditorComponent();
-		if (comp instanceof JTextField) {
-			JTextField textField = (JTextField) comp;
-			return textField.getText().trim();
-		}
-		throw new AssertException("Using an uneditable JComboBox - this class must be updated.");
+		return labelNameChoices.getText();
 	}
 
 	public class NamespaceWrapper {
