@@ -78,7 +78,7 @@ public class FVToolBar extends JToolBar {
 	private class ScrollLockAction extends AbstractAction {
 
 		public ScrollLockAction() {
-			super("FVScrollLockAction", new GIcon("icon.version.control.dialog.add"));
+			super("FVScrollLockAction", new GIcon("icon.logviewer.toolbar.scroll.lock"));
 			putValue(SHORT_DESCRIPTION, "Scroll Lock");
 		}
 

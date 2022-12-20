@@ -8,6 +8,7 @@
 ##MODULE IP: Tango Icons - Public Domain
 .classpath||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
+data/gui.palette.theme.properties||GHIDRA||||END|
 data/gui.theme.properties||GHIDRA||||END|
 src/main/java/ghidra/framework/options/package.html||GHIDRA||||END|
 src/main/java/ghidra/util/layout/package.html||GHIDRA||||END|

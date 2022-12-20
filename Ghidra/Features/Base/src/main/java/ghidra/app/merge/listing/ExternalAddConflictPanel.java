@@ -60,8 +60,8 @@ class ExternalAddConflictPanel extends JPanel implements CodeFormatService {
 	public static final String MERGE_BOTH_BUTTON_NAME =
 		ExternalFunctionMerger.MERGE_BOTH_BUTTON_NAME;
 
-	private static final Icon HIDE_ICON = new GIcon("icons.base.listing.conflict.collapse");
-	private static final Icon SHOW_ICON = new GIcon("icons.base.listing.conflict.expand");
+	private static final Icon HIDE_ICON = new GIcon("icon.plugin.merge.conflict.collapse");
+	private static final Icon SHOW_ICON = new GIcon("icon.plugin.merge.conflict.expand");
 
 	private DomainObjectMergeManager mergeManager;
 	private int totalConflicts;

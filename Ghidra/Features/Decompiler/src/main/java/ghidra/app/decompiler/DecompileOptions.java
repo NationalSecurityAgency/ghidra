@@ -350,7 +350,7 @@ public class DecompileOptions {
 	private static final GColor BACKGROUND_COLOR = new GColor(BACKGROUND_COLOR_ID);
 
 	// Color applied to a token to indicate warning/error
-	private final static Color ERROR_COLOR = new GColor("color.fg.decompiler.comment");
+	private final static Color ERROR_COLOR = new GColor("color.fg.decompiler.error");
 
 	final static String FONT_MSG = "Display.Font";
 	public final static String DEFAULT_FONT_ID = "font.decompiler";
