@@ -60,6 +60,7 @@ import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.*;
+import ghidra.util.database.DomainObjectLockHold;
 import ghidra.util.datastruct.CollectionChangeListener;
 import ghidra.util.exception.*;
 import ghidra.util.task.*;
@@ -86,9 +87,11 @@ import ghidra.util.task.*;
 	})
 public class DebuggerTraceManagerServicePlugin extends Plugin
 		implements DebuggerTraceManagerService {
-	private static final AutoConfigState.ClassHandler<DebuggerTraceManagerServicePlugin> CONFIG_STATE_HANDLER =
-		AutoConfigState.wireHandler(DebuggerTraceManagerServicePlugin.class,
-			MethodHandles.lookup());
+
+	private static final AutoConfigState.ClassHandler<DebuggerTraceManagerServicePlugin> //
+	CONFIG_STATE_HANDLER = AutoConfigState.wireHandler(DebuggerTraceManagerServicePlugin.class,
+		MethodHandles.lookup());
+
 	private static final String KEY_TRACE_COUNT = "NUM_TRACES";
 	private static final String PREFIX_OPEN_TRACE = "OPEN_TRACE_";
 	private static final String KEY_CURRENT_COORDS = "CURRENT_COORDS";
@@ -861,7 +864,14 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		}
 	}
 
-	public static CompletableFuture<Void> saveTrace(PluginTool tool, Trace trace) {
+	protected static DomainObjectLockHold maybeLock(Trace trace, boolean lock) {
+		if (!lock) {
+			return null;
+		}
+		return DomainObjectLockHold.forceLock(trace, false, "Auto Save");
+	}
+
+	public static CompletableFuture<Void> saveTrace(PluginTool tool, Trace trace, boolean force) {
 		tool.prepareToSave(trace);
 		CompletableFuture<Void> future = new CompletableFuture<>();
 		// TODO: Get all the nuances for this correct...
@@ -870,7 +880,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			new TaskLauncher(new Task("Save Trace", true, true, true) {
 				@Override
 				public void run(TaskMonitor monitor) throws CancelledException {
-					try {
+					try (DomainObjectLockHold hold = maybeLock(trace, force)) {
 						trace.getDomainFile().save(monitor);
 						future.complete(null);
 					}
@@ -912,10 +922,9 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 
 			final String finalFilename = filename;
 			new TaskLauncher(new Task("Save New Trace", true, true, true) {
-
 				@Override
 				public void run(TaskMonitor monitor) throws CancelledException {
-					try {
+					try (DomainObjectLockHold hold = maybeLock(trace, force)) {
 						traces.createFile(finalFilename, trace, monitor);
 						trace.save("Initial save", monitor);
 						future.complete(null);
@@ -945,19 +954,22 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 						future.completeExceptionally(e);
 					}
 				}
-
 			});
 		}
 		return future;
 	}
 
-	@Override
-	public CompletableFuture<Void> saveTrace(Trace trace) {
+	public CompletableFuture<Void> saveTrace(Trace trace, boolean force) {
 		if (isDisposed()) {
 			Msg.error(this, "Cannot save trace after manager disposal! Data may have been lost.");
 			return AsyncUtils.NIL;
 		}
-		return saveTrace(tool, trace);
+		return saveTrace(tool, trace, force);
+	}
+
+	@Override
+	public CompletableFuture<Void> saveTrace(Trace trace) {
+		return saveTrace(trace, false);
 	}
 
 	protected void doTraceClosed(Trace trace) {
