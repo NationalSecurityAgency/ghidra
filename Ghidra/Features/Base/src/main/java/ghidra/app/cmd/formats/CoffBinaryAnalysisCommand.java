@@ -30,7 +30,6 @@ import ghidra.program.flatapi.FlatProgramAPI;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.Memory;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.NotEmptyException;
 import ghidra.util.task.TaskMonitor;
@@ -52,10 +51,10 @@ public class CoffBinaryAnalysisCommand extends FlatProgramAPI
 			if (!BinaryLoader.BINARY_NAME.equals(format)) {
 				return false;
 			}
-			Memory memory = program.getMemory();
-			short magic =
-				memory.getShort(program.getAddressFactory().getDefaultAddressSpace().getAddress(0));
-			return CoffMachineType.isMachineTypeDefined(magic);
+
+			ByteProvider provider =
+				MemoryByteProvider.createDefaultAddressSpaceByteProvider(program, false);
+			return CoffFileHeader.isValid(provider);
 		}
 		catch (Exception e) {
 			return false;

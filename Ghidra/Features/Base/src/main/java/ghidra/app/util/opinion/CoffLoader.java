@@ -46,14 +46,11 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 	public final static String COFF_NAME = "Common Object File Format (COFF)";
 	public static final String FAKE_LINK_OPTION_NAME = "Attempt to link sections located at 0x0";
 	static final boolean FAKE_LINK_OPTION_DEFAULT = true;
-	private static final int COFF_NULL_SANITY_CHECK_LEN = 64;
 
 	// where do sections start if they're all zero???  this affects object files
 	// and if we're high enough (!!!) the scalar operand analyzer will work
 	// properly with external symbols laid down
 	private static final int EMPTY_START_OFFSET = 0x2000;
-
-	private static final long MIN_BYTE_LENGTH = 22;
 
 	/**
 	 * @return true if this loader assumes the Microsoft variant of the COFF format
@@ -97,47 +94,27 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 	public Collection<LoadSpec> findSupportedLoadSpecs(ByteProvider provider) throws IOException {
 		List<LoadSpec> loadSpecs = new ArrayList<>();
 
-		if (provider.length() < MIN_BYTE_LENGTH) {
+		if (!CoffFileHeader.isValid(provider)) {
 			return loadSpecs;
 		}
 
 		CoffFileHeader header = new CoffFileHeader(provider);
+		header.parseSectionHeaders(provider);
 
-		// Check to prevent false positives when the file is full of '\0' bytes.
-		// If the machine type is unknown (0), check the first 64 bytes of the file and bail if
-		// they are also all 0.
-		if (header.getMagic() == CoffMachineType.IMAGE_FILE_MACHINE_UNKNOWN /* ie. == 0 */ &&
-			provider.length() > COFF_NULL_SANITY_CHECK_LEN) {
-			byte[] headerBytes = provider.readBytes(0, COFF_NULL_SANITY_CHECK_LEN);
-			boolean allZeros = true;
-			for (byte b : headerBytes) {
-				allZeros = (b == 0);
-				if (!allZeros) {
-					break;
-				}
-			}
-			if (allZeros) {
-				return loadSpecs;
-			}
+		if (isVisualStudio(header) != isMicrosoftFormat()) {
+			// Only one of the CoffLoader/MSCoffLoader will survive this check
+			return loadSpecs;
+		}
+		String secondary = isCLI(header) ? "cli" : Integer.toString(header.getFlags() & 0xffff);
+		List<QueryResult> results =
+			QueryOpinionService.query(getName(), header.getMachineName(), secondary);
+		for (QueryResult result : results) {
+			loadSpecs.add(new LoadSpec(this, header.getImageBase(isMicrosoftFormat()), result));
+		}
+		if (loadSpecs.isEmpty()) {
+			loadSpecs.add(new LoadSpec(this, header.getImageBase(false), true));
 		}
 
-		if (CoffMachineType.isMachineTypeDefined(header.getMagic())) {
-			header.parseSectionHeaders(provider);
-
-			if (isVisualStudio(header) != isMicrosoftFormat()) {
-				// Only one of the CoffLoader/MSCoffLoader will survive this check
-				return loadSpecs;
-			}
-			String secondary = isCLI(header) ? "cli" : Integer.toString(header.getFlags() & 0xffff);
-			List<QueryResult> results =
-				QueryOpinionService.query(getName(), header.getMachineName(), secondary);
-			for (QueryResult result : results) {
-				loadSpecs.add(new LoadSpec(this, header.getImageBase(isMicrosoftFormat()), result));
-			}
-			if (loadSpecs.isEmpty()) {
-				loadSpecs.add(new LoadSpec(this, header.getImageBase(false), true));
-			}
-		}
 		return loadSpecs;
 	}
 
