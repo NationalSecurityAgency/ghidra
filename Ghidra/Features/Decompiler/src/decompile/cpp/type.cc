@@ -1924,13 +1924,13 @@ const TypeField *TypePartialUnion::findTruncation(int4 off,int4 sz,const PcodeOp
   return container->findTruncation(off + offset, sz, op, slot, newoff);
 }
 
-int4 TypePartialUnion::numDepend(void)
+int4 TypePartialUnion::numDepend(void) const
 
 {
   return container->numDepend();
 }
 
-Datatype *TypePartialUnion::getDepend(int4 index)
+Datatype *TypePartialUnion::getDepend(int4 index) const
 
 {
   // Treat dependents as coming from the underlying union
@@ -3481,6 +3481,31 @@ TypePointer *TypeFactory::getTypePointerWithSpace(Datatype *ptrTo,AddrSpace *spc
   tp.id = Datatype::hashName(nm);
   TypePointer *res = (TypePointer *)findAdd(tp);
   return res;
+}
+
+/// Drill down into nested data-types until we get to a data-type that exactly matches the
+/// given offset and size, and return this data-type.  Any \e union data-type encountered
+/// terminates the process and a partial union data-type is constructed and returned.
+/// If the range indicated by the offset and size contains only a partial field or crosses
+/// field boundaries, null is returned.
+/// \param ct is the structured data-type
+/// \param offset is the starting byte offset for the piece
+/// \param size is the number of bytes in the piece
+/// \return the data-type of the piece or null
+Datatype *TypeFactory::getExactPiece(Datatype *ct,int4 offset,int4 size)
+
+{
+  uintb newOff = offset;
+  while(ct != (Datatype *)0 && ct->getSize() > size && ct->getMetatype() != TYPE_UNION) {
+    ct = ct->getSubType(newOff, &newOff);
+  }
+  if (ct == (Datatype *)0 || ct->getSize() < size)
+    return (Datatype *)0;
+  if (ct->getSize() == size)
+    return ct;
+  if (ct->getMetatype() == TYPE_UNION)	// If we hit a containing union
+    return getTypePartialUnion((TypeUnion *)ct, newOff, size);
+  return (Datatype *)0;
 }
 
 /// The indicated Datatype object is removed from this container.
