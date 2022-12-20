@@ -128,7 +128,6 @@ public abstract class AbstractProgramLoader implements Loader {
 		boolean success = false;
 		try {
 			monitor.checkCanceled();
-			List<LoadedProgram> programsToFixup = new ArrayList<>();
 			for (LoadedProgram loadedProgram : loadedPrograms) {
 				monitor.checkCanceled();
 
@@ -157,7 +156,6 @@ public abstract class AbstractProgramLoader implements Loader {
 				if (createProgramFile(program, loadedProgram.destinationFolder(), domainFileName,
 					messageLog, monitor)) {
 					results.add(program);
-					programsToFixup.add(loadedProgram);
 				}
 				else {
 					program.release(consumer); // some kind of exception happened; see MessageLog
@@ -165,7 +163,7 @@ public abstract class AbstractProgramLoader implements Loader {
 			}
 
 			// Subclasses can perform custom post-load fix-ups
-			postLoadProgramFixups(programsToFixup, options, messageLog, monitor);
+			postLoadProgramFixups(loadedPrograms, options, messageLog, monitor);
 
 			success = true;
 		}
