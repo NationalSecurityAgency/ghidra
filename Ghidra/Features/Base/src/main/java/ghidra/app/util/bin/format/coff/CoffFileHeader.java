@@ -56,7 +56,7 @@ public class CoffFileHeader implements StructConverter {
 		}
 	}
 
-	private BinaryReader getBinaryReader(ByteProvider provider) {
+	private static BinaryReader getBinaryReader(ByteProvider provider) {
 		BinaryReader reader = new BinaryReader(provider, true/*COFF is always LE!!!*/);
 		return reader;
 	}
@@ -272,21 +272,28 @@ public class CoffFileHeader implements StructConverter {
 	}
 
 	/**
-	 * Tests if this {@link CoffFileHeader} is valid.
+	 * Tests if the given {@link ByteProvider} is a valid {@link CoffFileHeader}.
 	 * <p>
 	 * To avoid false positives when the machine type is 
 	 * {@link CoffMachineType#IMAGE_FILE_MACHINE_UNKNOWN}, we do an additional check on some extra
 	 * bytes at the beginning of the given {@link ByteProvider} to make sure the entire file isn't
 	 * all 0's.
 	 * 
-	 * @param provider The {@link ByteProvider} that this {@link CoffFileHeader} was created from
+	 * @param provider The {@link ByteProvider} to check
 	 * @return True if this is a is a valid {@link CoffFileHeader}; otherwise, false
 	 * @throws IOException if there was an IO-related issue
 	 */
-	public boolean isValid(ByteProvider provider) throws IOException {
+	public static boolean isValid(ByteProvider provider) throws IOException {
+		final int MIN_BYTE_LENGTH = 22;
 		final int COFF_NULL_SANITY_CHECK_LEN = 64;
-		
-		if (getMagic() == CoffMachineType.IMAGE_FILE_MACHINE_UNKNOWN /* ie. == 0 */ &&
+
+		if (provider.length() < MIN_BYTE_LENGTH) {
+			return false;
+		}
+
+		short magic = getBinaryReader(provider).readShort(0);
+
+		if (magic == CoffMachineType.IMAGE_FILE_MACHINE_UNKNOWN /* ie. == 0 */ &&
 			provider.length() > COFF_NULL_SANITY_CHECK_LEN) {
 			byte[] headerBytes = provider.readBytes(0, COFF_NULL_SANITY_CHECK_LEN);
 			boolean allZeros = true;
@@ -301,7 +308,7 @@ public class CoffFileHeader implements StructConverter {
 			}
 		}
 
-		return CoffMachineType.isMachineTypeDefined(getMagic());
+		return CoffMachineType.isMachineTypeDefined(magic);
 	}
 
 	@Override

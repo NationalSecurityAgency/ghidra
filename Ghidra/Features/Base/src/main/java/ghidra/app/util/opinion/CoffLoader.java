@@ -52,8 +52,6 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 	// properly with external symbols laid down
 	private static final int EMPTY_START_OFFSET = 0x2000;
 
-	private static final long MIN_BYTE_LENGTH = 22;
-
 	/**
 	 * @return true if this loader assumes the Microsoft variant of the COFF format
 	 */
@@ -96,29 +94,27 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 	public Collection<LoadSpec> findSupportedLoadSpecs(ByteProvider provider) throws IOException {
 		List<LoadSpec> loadSpecs = new ArrayList<>();
 
-		if (provider.length() < MIN_BYTE_LENGTH) {
+		if (!CoffFileHeader.isValid(provider)) {
 			return loadSpecs;
 		}
 
 		CoffFileHeader header = new CoffFileHeader(provider);
+		header.parseSectionHeaders(provider);
 
-		if (header.isValid(provider)) {
-			header.parseSectionHeaders(provider);
-
-			if (isVisualStudio(header) != isMicrosoftFormat()) {
-				// Only one of the CoffLoader/MSCoffLoader will survive this check
-				return loadSpecs;
-			}
-			String secondary = isCLI(header) ? "cli" : Integer.toString(header.getFlags() & 0xffff);
-			List<QueryResult> results =
-				QueryOpinionService.query(getName(), header.getMachineName(), secondary);
-			for (QueryResult result : results) {
-				loadSpecs.add(new LoadSpec(this, header.getImageBase(isMicrosoftFormat()), result));
-			}
-			if (loadSpecs.isEmpty()) {
-				loadSpecs.add(new LoadSpec(this, header.getImageBase(false), true));
-			}
+		if (isVisualStudio(header) != isMicrosoftFormat()) {
+			// Only one of the CoffLoader/MSCoffLoader will survive this check
+			return loadSpecs;
 		}
+		String secondary = isCLI(header) ? "cli" : Integer.toString(header.getFlags() & 0xffff);
+		List<QueryResult> results =
+			QueryOpinionService.query(getName(), header.getMachineName(), secondary);
+		for (QueryResult result : results) {
+			loadSpecs.add(new LoadSpec(this, header.getImageBase(isMicrosoftFormat()), result));
+		}
+		if (loadSpecs.isEmpty()) {
+			loadSpecs.add(new LoadSpec(this, header.getImageBase(false), true));
+		}
+
 		return loadSpecs;
 	}
 
