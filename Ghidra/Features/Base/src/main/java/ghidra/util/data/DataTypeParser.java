@@ -483,6 +483,12 @@ public class DataTypeParser {
 				continue;
 			}
 
+			char n = nextIndex + 1 < dataTypeString.length() ? dataTypeString.charAt(nextIndex + 1) : '\0';
+			if (c == ':' && n == ':') {
+				nextIndex += 2;
+				continue;
+			}
+
 			if (c == '*' || c == '[' || c == ':' || c == '{') {
 				return dataTypeString.substring(0, nextIndex).trim();
 			}
