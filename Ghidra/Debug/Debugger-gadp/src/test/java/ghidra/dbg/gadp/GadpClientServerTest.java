@@ -384,7 +384,7 @@ public class GadpClientServerTest implements AsyncTestUtils {
 	}
 
 	private static final TargetParameterMap ORDERED_PARAMS = TargetMethod.makeParameters(
-		ParameterDescription.create(String.class, "H", true, "", "H", "H"),
+		ParameterDescription.create(String.class, "H", true, null, "H", "H"),
 		ParameterDescription.create(String.class, "e", true, "", "e", "e"),
 		ParameterDescription.create(String.class, "l", true, "", "l", "l"),
 		ParameterDescription.create(String.class, "m", true, "", "l", "l"),
@@ -868,6 +868,9 @@ public class GadpClientServerTest implements AsyncTestUtils {
 
 			assertEquals("HelmoWprnd",
 				params.values().stream().map(p -> p.name).collect(Collectors.joining()));
+
+			assertNull(params.get("H").defaultValue);
+			assertEquals("", params.get("e").defaultValue);
 
 			waitOn(client.close());
 		}
