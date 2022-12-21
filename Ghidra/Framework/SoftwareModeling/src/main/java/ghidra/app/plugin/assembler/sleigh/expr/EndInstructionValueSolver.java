@@ -43,6 +43,11 @@ public class EndInstructionValueSolver extends AbstractExpressionSolver<EndInstr
 			AssemblyResolvedPatterns cur, Set<SolverHint> hints, String description) {
 		throw new AssertionError(
 			"INTERNAL: Should never be asked to solve for " + AssemblyTreeResolver.INST_NEXT);
+		/**
+		 * I suppose we could instead throw NeedsBackfillExcpeiton(INST_NEXT) here, too, but this
+		 * serves as a sanity check on the SLEIGH spec. I can't think of a good reason to try to
+		 * solve INST_NEXT == const.
+		 */
 	}
 
 	@Override
