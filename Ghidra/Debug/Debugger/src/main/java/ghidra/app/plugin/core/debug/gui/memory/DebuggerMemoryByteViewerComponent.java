@@ -29,8 +29,6 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.colors.*;
 import ghidra.app.plugin.core.debug.gui.colors.MultiSelectionBlendedLayoutBackgroundColorManager.ColoredFieldSelection;
 import ghidra.app.plugin.core.format.DataFormatModel;
-import ghidra.framework.options.AutoOptions;
-import ghidra.framework.options.annotation.AutoOptionConsumed;
 import ghidra.program.model.address.*;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.TraceMemoryState;
@@ -114,12 +112,8 @@ public class DebuggerMemoryByteViewerComponent extends ByteViewerComponent
 
 	private final DebuggerMemoryBytesPanel panel;
 
-	@AutoOptionConsumed(name = DebuggerResources.OPTION_NAME_COLORS_ERROR_MEMORY)
-	private Color errorColor = DebuggerResources.DEFAULT_COLOR_BACKGROUND_ERROR;
-	@AutoOptionConsumed(name = DebuggerResources.OPTION_NAME_COLORS_STALE_MEMORY)
-	private Color unknownColor = DebuggerResources.DEFAULT_COLOR_BACKGROUND_STALE;
-	@SuppressWarnings("unused")
-	private final AutoOptions.Wiring autoOptionsWiring;
+	private Color errorColor = DebuggerResources.COLOR_BACKGROUND_ERROR;
+	private Color unknownColor = DebuggerResources.COLOR_BACKGROUND_STALE;
 
 	private final List<SelectionGenerator> selectionGenerators;
 
@@ -129,8 +123,6 @@ public class DebuggerMemoryByteViewerComponent extends ByteViewerComponent
 		super(vpanel, layoutModel, model, bytesPerLine, fm);
 		// TODO: I don't care much for this reverse path
 		this.panel = vpanel;
-
-		autoOptionsWiring = AutoOptions.wireOptionsConsumed(vpanel.getProvider().getPlugin(), this);
 
 		selectionGenerators = List.of(
 			new SelectionHighlightSelectionGenerator(),

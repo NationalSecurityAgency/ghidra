@@ -44,7 +44,6 @@ import docking.widgets.table.DefaultEnumeratedColumnTableModel;
 import docking.widgets.tree.GTree;
 import generic.jar.ResourceFile;
 import generic.theme.GColor;
-import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
@@ -68,7 +67,7 @@ import ghidra.dbg.util.PathUtils;
 import ghidra.framework.model.Project;
 import ghidra.framework.options.AutoOptions;
 import ghidra.framework.options.SaveState;
-import ghidra.framework.options.annotation.*;
+import ghidra.framework.options.annotation.AutoOptionDefined;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
@@ -90,6 +89,29 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	public static final String PATH_JOIN_CHAR = ".";
 	//private static final String AUTOUPDATE_ATTRIBUTE_NAME = "autoupdate";
 
+	public static final Color COLOR_FOREGROUND =
+		new GColor("color.fg.debugger.plugin.objects.default");
+	public static final Color COLOR_BACKGROUND =
+		new GColor("color.bg.debugger.plugin.objects.default");
+	public static final Color COLOR_FOREGROUND_INVISIBLE =
+		new GColor("color.fg.debugger.plugin.objects.invisible");
+	public static final Color COLOR_FOREGROUND_INVALIDATED =
+		new GColor("color.fg.debugger.plugin.objects.invalidated");
+	public static final Color COLOR_FOREGROUND_MODIFIED =
+		new GColor("color.fg.debugger.plugin.objects.modified");
+	public static final Color COLOR_FOREGROUND_SUBSCRIBED =
+		new GColor("color.fg.debugger.plugin.objects.subscribed");
+	public static final Color COLOR_FOREGROUND_ERROR =
+		new GColor("color.fg.debugger.plugin.objects.error");
+	public static final Color COLOR_FOREGROUND_INTRINSIC =
+		new GColor("color.fg.debugger.plugin.objects.intrinsic");
+	public static final Color COLOR_FOREGROUND_TARGET =
+		new GColor("color.fg.debugger.plugin.objects.target");
+	public static final Color COLOR_FOREGROUND_ACCESSOR =
+		new GColor("color.fg.debugger.plugin.objects.accessor");
+	public static final Color COLOR_FOREGROUND_LINK =
+		new GColor("color.fg.debugger.plugin.objects.link");
+
 	private static final AutoConfigState.ClassHandler<DebuggerObjectsProvider> CONFIG_STATE_HANDLER =
 		AutoConfigState.wireHandler(DebuggerObjectsProvider.class, MethodHandles.lookup());
 
@@ -110,93 +132,9 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
 
-	public static final String OPTION_NAME_DEFAULT_FOREGROUND_COLOR = "Object Colors.Default";
-	public static final String OPTION_NAME_MODIFIED_FOREGROUND_COLOR = "Object Colors.Modifed";
-	public static final String OPTION_NAME_SUBSCRIBED_FOREGROUND_COLOR = "Object Colors.Subscribed";
-	public static final String OPTION_NAME_INVISIBLE_FOREGROUND_COLOR =
-		"Object Colors.Invisible (when toggled on)";
-	public static final String OPTION_NAME_INVALIDATED_FOREGROUND_COLOR =
-		"Object Colors.Invalidated";
-	public static final String OPTION_NAME_ERROR_FOREGROUND_COLOR = "Object Colors.Errors";
-	public static final String OPTION_NAME_INTRINSIC_FOREGROUND_COLOR = "Object Colors.Intrinsics";
-	public static final String OPTION_NAME_TARGET_FOREGROUND_COLOR = "Object Colors.Targets";
-	public static final String OPTION_NAME_ACCESSOR_FOREGROUND_COLOR = "Object Colors.Accessors";
-	public static final String OPTION_NAME_LINK_FOREGROUND_COLOR = "Object Colors.Links";
-	public static final String OPTION_NAME_DEFAULT_BACKGROUND_COLOR = "Object Colors.Background";
-
-	@AutoOptionDefined( //
-			name = OPTION_NAME_DEFAULT_FOREGROUND_COLOR, //
-			description = "The default foreground color of items in the objects tree", //
-			help = @HelpInfo(anchor = "colors") //
-	)
-	Color defaultForegroundColor = new GColor("color.fg.debugger.plugin.objects.default");
-	@AutoOptionDefined( //
-			name = OPTION_NAME_DEFAULT_BACKGROUND_COLOR, //
-			description = "The default background color of items in the objects tree", //
-			help = @HelpInfo(anchor = "colors") //
-	)
-	Color defaultBackgroundColor = new GColor("color.bg.debugger.plugin.objects.default");
-
-	@AutoOptionDefined( //
-			name = OPTION_NAME_INVISIBLE_FOREGROUND_COLOR, //
-			description = "The foreground color for items normally not visible (toggleable)", //
-			help = @HelpInfo(anchor = "colors") //
-	)
-	Color invisibleForegroundColor = new GColor("color.fg.debugger.plugin.objects.invisible");
-	@AutoOptionDefined( //
-			name = OPTION_NAME_INVALIDATED_FOREGROUND_COLOR, //
-			description = "The foreground color for items no longer valid", //
-			help = @HelpInfo(anchor = "colors") //
-	)
-	Color invalidatedForegroundColor = new GColor("color.fg.debugger.plugin.objects.invalidated");
-	@AutoOptionDefined( //
-			name = OPTION_NAME_MODIFIED_FOREGROUND_COLOR, //
-			description = "The foreground color for modified items in the objects tree", //
-			help = @HelpInfo(anchor = "colors") //
-	)
-	Color modifiedForegroundColor = new GColor("color.fg.debugger.plugin.objects.modified");
-	@AutoOptionDefined( //
-			name = OPTION_NAME_SUBSCRIBED_FOREGROUND_COLOR, //
-			description = "The foreground color for subscribed items in the objects tree", //
-			help = @HelpInfo(anchor = "colors") //
-	)
-	Color subscribedForegroundColor = new GColor("color.fg.debugger.plugin.objects.subscribed");
-	@AutoOptionDefined( //
-			name = OPTION_NAME_ERROR_FOREGROUND_COLOR, //
-			description = "The foreground color for items in error", //
-			help = @HelpInfo(anchor = "colors") //
-	)
-	Color errorForegroundColor = new GColor("color.fg.debugger.plugin.objects.error");
-	@AutoOptionDefined( //
-			name = OPTION_NAME_INTRINSIC_FOREGROUND_COLOR, //
-			description = "The foreground color for intrinsic items in the objects tree", //
-			help = @HelpInfo(anchor = "colors") //
-	)
-	Color intrinsicForegroundColor = new GColor("color.fg.debugger.plugin.objects.intrinsic");
-	@AutoOptionDefined( //
-			name = OPTION_NAME_TARGET_FOREGROUND_COLOR, //
-			description = "The foreground color for target object items in the objects tree", //
-			help = @HelpInfo(anchor = "colors") //
-	)
-	Color targetForegroundColor = new GColor("color.fg.debugger.plugin.objects.target");
-	@AutoOptionDefined( //
-			name = OPTION_NAME_ACCESSOR_FOREGROUND_COLOR, //
-			description = "The foreground color for property accessor items in the objects tree", //
-			help = @HelpInfo(anchor = "colors") //
-	)
-	Color accessorForegroundColor = new GColor("color.fg.debugger.plugin.objects.accessor");
-	@AutoOptionDefined( //
-			name = OPTION_NAME_LINK_FOREGROUND_COLOR, //
-			description = "The foreground color for links to items in the objects tree", //
-			help = @HelpInfo(anchor = "colors") //
-	)
-	Color linkForegroundColor = new GColor("color.fg.debugger.plugin.objects.link");
-
-	@AutoOptionDefined( //
-			name = "Default Extended Step", //
-			description = "The default string for the extended step command" //
-	//help = @HelpInfo(anchor = "colors") //
-	)
+	@AutoOptionDefined(
+		name = "Default Extended Step",
+		description = "The default string for the extended step command")
 	String extendedStep = "";
 
 	@SuppressWarnings("unused")
@@ -372,94 +310,6 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 
 	JComponent getContextObject() {
 		return pane == null ? null : pane.getPrincipalComponent();
-	}
-
-	@AutoOptionConsumed(name = OPTION_NAME_DEFAULT_BACKGROUND_COLOR)
-	private void setDefaultBackgroundColor(Color color) {
-		defaultBackgroundColor = color;
-		if (pane != null) {
-			pane.getComponent().repaint();
-		}
-	}
-
-	@AutoOptionConsumed(name = OPTION_NAME_DEFAULT_FOREGROUND_COLOR)
-	private void setDefaultForegroundColor(Color color) {
-		defaultForegroundColor = color;
-		if (pane != null) {
-			pane.getComponent().repaint();
-		}
-	}
-
-	@AutoOptionConsumed(name = OPTION_NAME_ACCESSOR_FOREGROUND_COLOR)
-	private void setAccessorForegroundColor(Color color) {
-		accessorForegroundColor = color;
-		if (pane != null) {
-			pane.getComponent().repaint();
-		}
-	}
-
-	@AutoOptionConsumed(name = OPTION_NAME_ERROR_FOREGROUND_COLOR)
-	private void setErrorForegroundColor(Color color) {
-		errorForegroundColor = color;
-		if (pane != null) {
-			pane.getComponent().repaint();
-		}
-	}
-
-	@AutoOptionConsumed(name = OPTION_NAME_INTRINSIC_FOREGROUND_COLOR)
-	private void setIntrinsicForegroundColor(Color color) {
-		intrinsicForegroundColor = color;
-		if (pane != null) {
-			pane.getComponent().repaint();
-		}
-	}
-
-	@AutoOptionConsumed(name = OPTION_NAME_INVISIBLE_FOREGROUND_COLOR)
-	private void setInvisibleForegroundColor(Color color) {
-		invisibleForegroundColor = color;
-		if (pane != null) {
-			pane.getComponent().repaint();
-		}
-	}
-
-	@AutoOptionConsumed(name = OPTION_NAME_INVALIDATED_FOREGROUND_COLOR)
-	private void setInvalidatedForegroundColor(Color color) {
-		invalidatedForegroundColor = color;
-		if (pane != null) {
-			pane.getComponent().repaint();
-		}
-	}
-
-	@AutoOptionConsumed(name = OPTION_NAME_LINK_FOREGROUND_COLOR)
-	private void setLinkForegroundColor(Color color) {
-		linkForegroundColor = color;
-		if (pane != null) {
-			pane.getComponent().repaint();
-		}
-	}
-
-	@AutoOptionConsumed(name = OPTION_NAME_MODIFIED_FOREGROUND_COLOR)
-	private void setModifiedForegroundColor(Color color) {
-		modifiedForegroundColor = color;
-		if (pane != null) {
-			pane.getComponent().repaint();
-		}
-	}
-
-	@AutoOptionConsumed(name = OPTION_NAME_SUBSCRIBED_FOREGROUND_COLOR)
-	private void setSubscribedForegroundColor(Color color) {
-		subscribedForegroundColor = color;
-		if (pane != null) {
-			pane.getComponent().repaint();
-		}
-	}
-
-	@AutoOptionConsumed(name = OPTION_NAME_TARGET_FOREGROUND_COLOR)
-	private void setTargetForegroundColor(Color color) {
-		targetForegroundColor = color;
-		if (pane != null) {
-			pane.getComponent().repaint();
-		}
 	}
 
 	public void setProgram(Program program) {
@@ -2003,35 +1853,6 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 
 	public void setLocalOnly(boolean localOnly) {
 		this.selectionOnly = localOnly;
-	}
-
-	public Color getColor(String name) {
-		switch (name) {
-			case OPTION_NAME_ACCESSOR_FOREGROUND_COLOR:
-				return accessorForegroundColor;
-			case OPTION_NAME_DEFAULT_BACKGROUND_COLOR:
-				return defaultBackgroundColor;
-			case OPTION_NAME_DEFAULT_FOREGROUND_COLOR:
-				return defaultForegroundColor;
-			case OPTION_NAME_ERROR_FOREGROUND_COLOR:
-				return errorForegroundColor;
-			case OPTION_NAME_INTRINSIC_FOREGROUND_COLOR:
-				return intrinsicForegroundColor;
-			case OPTION_NAME_INVISIBLE_FOREGROUND_COLOR:
-				return invisibleForegroundColor;
-			case OPTION_NAME_INVALIDATED_FOREGROUND_COLOR:
-				return invalidatedForegroundColor;
-			case OPTION_NAME_MODIFIED_FOREGROUND_COLOR:
-				return modifiedForegroundColor;
-			case OPTION_NAME_SUBSCRIBED_FOREGROUND_COLOR:
-				return subscribedForegroundColor;
-			case OPTION_NAME_LINK_FOREGROUND_COLOR:
-				return linkForegroundColor;
-			case OPTION_NAME_TARGET_FOREGROUND_COLOR:
-				return targetForegroundColor;
-			default:
-				return Colors.FOREGROUND;
-		}
 	}
 
 	public boolean isAutorecord() {

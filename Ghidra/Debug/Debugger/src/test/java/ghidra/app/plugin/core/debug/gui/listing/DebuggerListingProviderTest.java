@@ -596,7 +596,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		traceManager.activateThread(thread);
 		waitForSwing();
 
-		assertListingBackgroundAt(DebuggerResources.DEFAULT_COLOR_REGISTER_MARKERS,
+		assertListingBackgroundAt(DebuggerResources.COLOR_REGISTER_MARKERS,
 			listingProvider.getListingPanel(), tb.addr(0x00401234), 0);
 	}
 
@@ -634,7 +634,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		traceManager.activateThread(thread);
 		waitForSwing();
 
-		assertListingBackgroundAt(DebuggerResources.DEFAULT_COLOR_REGISTER_MARKERS,
+		assertListingBackgroundAt(DebuggerResources.COLOR_REGISTER_MARKERS,
 			codePlugin.getListingPanel(), ss.getAddress(0x00601234), 0);
 
 		// For verifying static view didn't move
@@ -781,11 +781,11 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
 
-		assertListingBackgroundAt(DebuggerResources.DEFAULT_COLOR_BACKGROUND_STALE,
+		assertListingBackgroundAt(DebuggerResources.COLOR_BACKGROUND_STALE,
 			listingProvider.getListingPanel(), tb.addr(0x00401233), 0);
 		assertListingBackgroundAt(Colors.BACKGROUND, listingProvider.getListingPanel(),
 			tb.addr(0x00401234), 0);
-		assertListingBackgroundAt(DebuggerResources.DEFAULT_COLOR_BACKGROUND_ERROR,
+		assertListingBackgroundAt(DebuggerResources.COLOR_BACKGROUND_ERROR,
 			listingProvider.getListingPanel(), tb.addr(0x00401235), 0);
 	}
 

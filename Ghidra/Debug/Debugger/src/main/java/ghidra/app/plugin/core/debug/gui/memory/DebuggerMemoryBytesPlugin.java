@@ -15,9 +15,6 @@
  */
 package ghidra.app.plugin.core.debug.gui.memory;
 
-import static ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
-
-import java.awt.Color;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -32,14 +29,11 @@ import ghidra.app.plugin.core.byteviewer.*;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.*;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.NewMemoryAction;
 import ghidra.app.plugin.core.debug.gui.action.LocationTrackingSpec;
 import ghidra.app.plugin.core.debug.gui.action.NoneLocationTrackingSpec;
 import ghidra.app.services.*;
-import ghidra.framework.options.AutoOptions;
 import ghidra.framework.options.SaveState;
-import ghidra.framework.options.annotation.AutoOptionConsumed;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -82,21 +76,11 @@ public class DebuggerMemoryBytesPlugin
 	@SuppressWarnings("unused")
 	private AutoService.Wiring autoServiceWiring;
 
-	@AutoOptionConsumed(name = OPTION_NAME_COLORS_STALE_MEMORY)
-	private Color staleMemoryColor = DebuggerResources.DEFAULT_COLOR_BACKGROUND_STALE;
-	@AutoOptionConsumed(name = OPTION_NAME_COLORS_ERROR_MEMORY)
-	private Color errorMemoryColor = DebuggerResources.DEFAULT_COLOR_BACKGROUND_ERROR;
-	@AutoOptionConsumed(name = OPTION_NAME_COLORS_TRACKING_MARKERS)
-	private Color trackingColor = DebuggerResources.DEFAULT_COLOR_REGISTER_MARKERS;
-	@SuppressWarnings("unused")
-	private AutoOptions.Wiring autoOptionsWiring;
-
 	private DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
 
 	public DebuggerMemoryBytesPlugin(PluginTool tool) {
 		super(tool);
 		autoServiceWiring = AutoService.wireServicesProvidedAndConsumed(this);
-		autoOptionsWiring = AutoOptions.wireOptions(this);
 
 		createActions();
 	}

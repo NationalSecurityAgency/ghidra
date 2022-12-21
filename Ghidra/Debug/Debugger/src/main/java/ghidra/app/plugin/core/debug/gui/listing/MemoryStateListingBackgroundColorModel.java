@@ -24,34 +24,25 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.util.viewer.listingpanel.ListingBackgroundColorModel;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.app.util.viewer.util.AddressIndexMap;
-import ghidra.framework.options.AutoOptions;
-import ghidra.framework.options.annotation.AutoOptionConsumed;
-import ghidra.framework.plugintool.Plugin;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.program.TraceProgramView;
-import ghidra.util.ColorUtils;
 
 public class MemoryStateListingBackgroundColorModel implements ListingBackgroundColorModel {
+	private static final Color COLOR_BACKGROUND_ERROR = DebuggerResources.COLOR_BACKGROUND_ERROR;
+	private static final GColor COLOR_BACKGROUND_UNKNOWN = DebuggerResources.COLOR_BACKGROUND_STALE;
+	private static final Color COLOR_BACKGROUND_UNKNOWN_BLENDED =
+		COLOR_BACKGROUND_UNKNOWN.withAlpha(127);
+
 	private Color defaultBackgroundColor = new GColor("color.bg");
 
 	private AddressIndexMap addressIndexMap;
 	private TraceProgramView view;
 	private TraceMemoryManager memory;
 
-	@AutoOptionConsumed(name = DebuggerResources.OPTION_NAME_COLORS_ERROR_MEMORY)
-	private Color errorColor = DebuggerResources.DEFAULT_COLOR_BACKGROUND_ERROR;
-	@AutoOptionConsumed(name = DebuggerResources.OPTION_NAME_COLORS_STALE_MEMORY)
-	private GColor unknownColor = DebuggerResources.DEFAULT_COLOR_BACKGROUND_STALE;
-	private Color unknownBlendedColor = unknownColor.withAlpha(127);
-	@SuppressWarnings("unused")
-	private final AutoOptions.Wiring autoOptionsWiring;
-
-	public MemoryStateListingBackgroundColorModel(Plugin plugin,
-			ListingPanel listingPanel) {
-		autoOptionsWiring = AutoOptions.wireOptions(plugin, this);
+	public MemoryStateListingBackgroundColorModel(ListingPanel listingPanel) {
 		modelDataChanged(listingPanel);
 	}
 
@@ -73,28 +64,23 @@ public class MemoryStateListingBackgroundColorModel implements ListingBackground
 			case UNKNOWN:
 				return getUnknownColor(address);
 			case ERROR:
-				return errorColor;
+				return COLOR_BACKGROUND_ERROR;
 			default:
 				return defaultBackgroundColor;
 		}
-	}
-
-	@AutoOptionConsumed(name = DebuggerResources.OPTION_NAME_COLORS_STALE_MEMORY)
-	protected void setUnknownColor(Color unknownColor) {
-		// computeUnknownBlendedColor(unknownColor, defaultBackgroundColor);
 	}
 
 	protected Color getUnknownColor(Address address) {
 		Entry<TraceAddressSnapRange, TraceMemoryState> ent =
 			memory.getViewMostRecentStateEntry(view.getSnap(), address);
 		if (ent == null || ent.getValue() != TraceMemoryState.KNOWN) {
-			return unknownColor;
+			return COLOR_BACKGROUND_UNKNOWN;
 		}
 		TraceMemoryRegion region = memory.getRegionContaining(ent.getKey().getY1(), address);
 		if (region != null && !region.isWrite()) {
-			return unknownBlendedColor;
+			return COLOR_BACKGROUND_UNKNOWN_BLENDED;
 		}
-		return unknownColor;
+		return COLOR_BACKGROUND_UNKNOWN;
 	}
 
 	@Override
@@ -102,22 +88,9 @@ public class MemoryStateListingBackgroundColorModel implements ListingBackground
 		return defaultBackgroundColor;
 	}
 
-	protected synchronized void computeUnknownBlendedColor(Color unkCol, Color defBg) {
-		if (unkCol == null) {
-			unknownBlendedColor = defBg;
-		}
-		else if (defBg == null) {
-			unknownBlendedColor = unkCol;
-		}
-		else {
-			unknownBlendedColor = ColorUtils.blend(unkCol, defBg, 0.1f);
-		}
-	}
-
 	@Override
 	public void setDefaultBackgroundColor(Color c) {
 		defaultBackgroundColor = c;
-		// computeUnknownBlendedColor(unknownColor, c);
 	}
 
 	@Override

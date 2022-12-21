@@ -49,8 +49,7 @@ class ObjectTreeCellRenderer extends GTreeRenderer {
 			ObjectNode node = (ObjectNode) value;
 			ObjectContainer container = node.getContainer();
 			setText(container.getDecoratedName());
-			component.setForeground(
-				provider.getColor(DebuggerObjectsProvider.OPTION_NAME_DEFAULT_FOREGROUND_COLOR));
+			component.setForeground(provider.COLOR_FOREGROUND);
 			TargetObject targetObject = container.getTargetObject();
 			if (targetObject != null) {
 				Map<String, ?> attrs = targetObject.getCachedAttributes();
@@ -63,28 +62,22 @@ class ObjectTreeCellRenderer extends GTreeRenderer {
 				}
 			}
 			if (!node.isVisible() && !provider.isHideIntrinsics()) {
-				component.setForeground(provider
-						.getColor(DebuggerObjectsProvider.OPTION_NAME_INVISIBLE_FOREGROUND_COLOR));
+				component.setForeground(provider.COLOR_FOREGROUND_INVISIBLE);
 			}
 			if (container.getTargetObject() instanceof TargetExecutionStateful) {
 				TargetExecutionStateful stateful = (TargetExecutionStateful) targetObject;
 				if (stateful.getExecutionState().equals(TargetExecutionState.TERMINATED)) {
-					component.setForeground(provider
-							.getColor(
-								DebuggerObjectsProvider.OPTION_NAME_INVALIDATED_FOREGROUND_COLOR));
+					component.setForeground(provider.COLOR_FOREGROUND_INVALIDATED);
 				}
 			}
 			if (container.isLink()) {
-				component.setForeground(
-					provider.getColor(DebuggerObjectsProvider.OPTION_NAME_LINK_FOREGROUND_COLOR));
+				component.setForeground(provider.COLOR_FOREGROUND_LINK);
 			}
 			if (container.isModified()) {
-				component.setForeground(provider
-						.getColor(DebuggerObjectsProvider.OPTION_NAME_MODIFIED_FOREGROUND_COLOR));
+				component.setForeground(provider.COLOR_FOREGROUND_MODIFIED);
 			}
 			if (container.isSubscribed()) {
-				Color color = provider
-						.getColor(DebuggerObjectsProvider.OPTION_NAME_SUBSCRIBED_FOREGROUND_COLOR);
+				Color color = provider.COLOR_FOREGROUND_SUBSCRIBED;
 				if (!color.equals(Tables.FG_UNSELECTED)) {
 					component.setForeground(color);
 				}
@@ -111,20 +104,16 @@ class ObjectTreeCellRenderer extends GTreeRenderer {
 	private void setColor(Component component, String kind) {
 		switch (kind) {
 			case "OBJECT_PROPERTY_ACCESSOR":
-				component.setForeground(provider
-						.getColor(DebuggerObjectsProvider.OPTION_NAME_ACCESSOR_FOREGROUND_COLOR));
+				component.setForeground(provider.COLOR_FOREGROUND);
 				break;
 			case "OBJECT_INTRINSIC":
-				component.setForeground(provider
-						.getColor(DebuggerObjectsProvider.OPTION_NAME_INTRINSIC_FOREGROUND_COLOR));
+				component.setForeground(provider.COLOR_FOREGROUND_INTRINSIC);
 				break;
 			case "OBJECT_TARGET_OBJECT":
-				component.setForeground(
-					provider.getColor(DebuggerObjectsProvider.OPTION_NAME_TARGET_FOREGROUND_COLOR));
+				component.setForeground(provider.COLOR_FOREGROUND_TARGET);
 				break;
 			case "OBJECT_ERROR":
-				component.setForeground(
-					provider.getColor(DebuggerObjectsProvider.OPTION_NAME_ERROR_FOREGROUND_COLOR));
+				component.setForeground(provider.COLOR_FOREGROUND_ERROR);
 				break;
 		}
 	}

@@ -20,7 +20,6 @@ import java.awt.Graphics;
 import java.util.HashMap;
 import java.util.Map;
 
-import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors.Java;
 import ghidra.program.model.address.AddressRange;
 import ghidra.trace.model.Lifespan;
@@ -36,7 +35,6 @@ public class MemoryBox {
 	protected long stopAddr = -1;
 	protected long startTime;
 	protected long stopTime = -1;
-	protected Color color = new GColor("color.debugger.plugin.memview.box");
 
 	protected int pixAstart;
 	protected int pixAend;
@@ -44,6 +42,7 @@ public class MemoryBox {
 	protected int pixTstart;
 	protected int pixTend;
 	protected int boundT;
+	protected final Color color;
 
 	protected boolean current;
 
@@ -90,19 +89,6 @@ public class MemoryBox {
 
 	public Color getColor() {
 		return color;
-	}
-
-	public void setColor(Color color) {
-		this.color = color;
-	}
-
-	public void setColor(Color base, int type) {
-		setColor(new Color(base.getRed(), (base.getGreen() + type) % 255, base.getBlue()));
-	}
-
-	public void setColor(Color base, int type, int src) {
-		setColor(new Color(base.getRed(), (base.getGreen() + type * 8) % 255,
-			(base.getBlue() + src * 16) % 255));
 	}
 
 	public int getAddressPixelStart() {

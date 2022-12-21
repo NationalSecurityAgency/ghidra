@@ -127,10 +127,10 @@ public class DebuggerCopyPlanTests extends AbstractGhidraHeadedDebuggerGUITest {
 		IntRangeMap map =
 			program.getIntRangeMap(PropertyBasedBackgroundColorModel.COLOR_PROPERTY_NAME);
 		AddressSet staleSet =
-			map.getAddressSet(DebuggerResources.DEFAULT_COLOR_BACKGROUND_STALE.getRGB());
+			map.getAddressSet(DebuggerResources.COLOR_BACKGROUND_STALE.getRGB());
 		assertEquals(tb.set(tb.range(stSpace, 0x00401001, 0x0040ffff)), staleSet);
 		AddressSet errorSet =
-			map.getAddressSet(DebuggerResources.DEFAULT_COLOR_BACKGROUND_ERROR.getRGB());
+			map.getAddressSet(DebuggerResources.COLOR_BACKGROUND_ERROR.getRGB());
 		assertEquals(tb.set(tb.range(stSpace, 0x00401000, 0x00401000)), errorSet);
 	}
 

@@ -43,8 +43,6 @@ import ghidra.app.services.*;
 import ghidra.app.services.DebuggerListingService.LocationTrackingSpecChangeListener;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.async.AsyncUtils;
-import ghidra.framework.options.AutoOptions;
-import ghidra.framework.options.annotation.AutoOptionConsumed;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -58,19 +56,26 @@ import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.Msg;
 
-@PluginInfo(shortDescription = "Compare memory state between times in a trace", description = "Provides a side-by-side diff view between snapshots (points in time) in a " +
-	"trace. The comparison is limited to raw bytes.", category = PluginCategoryNames.DEBUGGER, packageName = DebuggerPluginPackage.NAME, status = PluginStatus.RELEASED, eventsConsumed = {
+@PluginInfo(
+	shortDescription = "Compare memory state between times in a trace",
+	description = "Provides a side-by-side diff view between snapshots (points in time) in a " +
+		"trace. The comparison is limited to raw bytes.",
+	category = PluginCategoryNames.DEBUGGER,
+	packageName = DebuggerPluginPackage.NAME,
+	status = PluginStatus.RELEASED,
+	eventsConsumed = {
 		TraceClosedPluginEvent.class,
-	}, eventsProduced = {}, servicesRequired = {
+	},
+	eventsProduced = {},
+	servicesRequired = {
 		DebuggerListingService.class,
-	}, servicesProvided = {})
+	},
+	servicesProvided = {})
 public class DebuggerTraceViewDiffPlugin extends AbstractDebuggerPlugin {
+	static final Color COLOR_DIFF = new GColor("color.bg.debugger.diff.marker");
+
 	protected static final String MARKER_NAME = "Trace Diff";
 	protected static final String MARKER_DESCRIPTION = "Difference between snapshots in this trace";
-
-	public static final String DIFF_COLOR_CATEGORY = "Listing Fields";
-	public static final String DIFF_COLOR_NAME = "Selection Colors.Difference Color";
-	public static final Color DEFAULT_DIFF_COLOR = new GColor("color.bg.debugger.diff.marker");
 
 	protected class ListingCoordinationListener implements CoordinatedListingPanelListener {
 		@Override
@@ -125,11 +130,6 @@ public class DebuggerTraceViewDiffPlugin extends AbstractDebuggerPlugin {
 	//@AutoServiceConsumed via method
 	private MarkerService markerService;
 
-	@AutoOptionConsumed(category = DIFF_COLOR_CATEGORY, name = DIFF_COLOR_NAME)
-	private Color diffColor = DEFAULT_DIFF_COLOR;
-	@SuppressWarnings("unused")
-	private final AutoOptions.Wiring autoOptions;
-
 	protected final DebuggerTimeSelectionDialog timeDialog;
 
 	protected ToggleDockingAction actionCompare;
@@ -154,8 +154,6 @@ public class DebuggerTraceViewDiffPlugin extends AbstractDebuggerPlugin {
 
 	public DebuggerTraceViewDiffPlugin(PluginTool tool) {
 		super(tool);
-		autoOptions = AutoOptions.wireOptions(this);
-
 		timeDialog = new DebuggerTimeSelectionDialog(tool);
 		trackingTrait = new ForAltListingTrackingTrait();
 		createActions();
@@ -426,12 +424,11 @@ public class DebuggerTraceViewDiffPlugin extends AbstractDebuggerPlugin {
 			diffMarkersL = null;
 			return;
 		}
-		Color diffColor = this.diffColor == null ? DEFAULT_DIFF_COLOR : this.diffColor;
 		TraceProgramView viewL = traceManager.getCurrentView();
 		diffMarkersL = markerService.createAreaMarker(MARKER_NAME, MARKER_DESCRIPTION, viewL, 0,
-			true, true, true, diffColor, true);
+			true, true, true, COLOR_DIFF, true);
 		diffMarkersR = markerService.createAreaMarker(MARKER_NAME, MARKER_DESCRIPTION, viewR, 0,
-			true, true, true, diffColor, true);
+			true, true, true, COLOR_DIFF, true);
 		return;
 	}
 
@@ -483,16 +480,6 @@ public class DebuggerTraceViewDiffPlugin extends AbstractDebuggerPlugin {
 
 		if (this.markerService != null) {
 			this.markerService.addChangeListener(markerChangeListener);
-		}
-	}
-
-	@AutoOptionConsumed(category = DIFF_COLOR_CATEGORY, name = DIFF_COLOR_NAME)
-	private void setDiffColor(Color diffColor) {
-		if (diffMarkersL != null) {
-			diffMarkersL.setMarkerColor(diffColor);
-		}
-		if (diffMarkersR != null) {
-			diffMarkersR.setMarkerColor(diffColor);
 		}
 	}
 
