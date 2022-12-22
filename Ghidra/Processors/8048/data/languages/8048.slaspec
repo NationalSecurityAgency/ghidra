@@ -91,6 +91,8 @@ attach variables ri [ R0 R1 ];
 attach names rn [ R0 R1 R2 R3 R4 R5 R6 R7 ];
 attach names ri [ R0 R1 ];
 @endif
+
+attach names abit ["0" "1" "2" "3" "4" "5" "6" "7"];
 attach names dbf     [ MB0 MB1 ];
 attach names bs      [ RB0 RB1 ];
 attach names pp      [ BUS P1 P2 _ ];
