@@ -1311,13 +1311,18 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	public void dataTypeChanged(DataTypeManager dtm, DataTypePath path) {
 		try {
 
+			DataTypeManager originalDTM = getOriginalDataTypeManager();
+			if (originalDTM == null) {
+				// editor unloaded
+				return;
+			}
+
 			if (dtm instanceof CompositeViewerDataTypeManager) {
 				// required to detect settings changes
 				componentEdited();
 				return;
 			}
 
-			DataTypeManager originalDTM = getOriginalDataTypeManager();
 			if (dtm != originalDTM) {
 				return; // Different DTM than the one for this data type.
 			}
