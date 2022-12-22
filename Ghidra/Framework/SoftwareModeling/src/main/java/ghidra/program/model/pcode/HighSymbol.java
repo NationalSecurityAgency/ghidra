@@ -166,15 +166,23 @@ public class HighSymbol {
 	/**
 	 * Associate a particular HighVariable with this symbol. This is used to link the symbol
 	 * into the decompiler's description of how a function manipulates a particular symbol.
+	 * Multiple partial HighVariables may get associated with the same HighSymbol.  The HighSymbol
+	 * keeps a reference to the biggest HighVariable passed to this method.
 	 * @param high is the associated HighVariable
 	 */
-	public void setHighVariable(HighVariable high) {
-		this.highVariable = high;
+	void setHighVariable(HighVariable high) {
+		if (highVariable != null) {
+			if (highVariable.getSize() >= high.getSize()) {
+				return;
+			}
+		}
+		highVariable = high;
 	}
 
 	/**
-	 * Get the HighVariable associate with this symbol if any.  This allows the user to go straight
-	 * into the decompiler's function to see how the symbol gets manipulated.
+	 * Get the HighVariable associate with this symbol if any.  The symbol may have multiple
+	 * partial HighVariables associated with it. This method returns the biggest one, which
+	 * may not be the same size as the symbol itself.
 	 * @return the associated HighVariable or null
 	 */
 	public HighVariable getHighVariable() {

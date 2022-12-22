@@ -1,0 +1,81 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+    Examples of entire structures built out of PIECE and ZEXT operations.
+    We should see the individual fields being read/assigned and not CONCAT or ZEXT inlines.
+-->
+<bytechunk space="ram" offset="0x100783" readonly="true">
+      4883ec0889f84889f748c1e720
+4809c7e812ffffff4883c408c348c1e6
+2089f84809f0c30fb7c648c1e0104889
+c60fb7c70fb7d248c1e2204809f048c1
+e1304809d04809c8c35389f366893d4f
+082000488b3d46082000e806ffffff66
+891d400820005bc389f8c3
+</bytechunk>
+<bytechunk space="ram" offset="0x100847" readonly="true">
+              554889e5897dec8b45
+ec8945f8c745fc00000000488b45f85d
+c3
+</bytechunk>
+<symbol space="ram" offset="0x1006aa" name="structparam"/>
+<symbol space="ram" offset="0x1006e5" name="structshort"/>
+<symbol space="ram" offset="0x100783" name="concatregparam"/>
+<symbol space="ram" offset="0x10079d" name="concatreturn"/>
+<symbol space="ram" offset="0x1007a7" name="concatreturnshort"/>
+<symbol space="ram" offset="0x1007c9" name="replaceshort"/>
+<symbol space="ram" offset="0x1007e8" name="zerofield"/>
+<symbol space="ram" offset="0x100847" name="zerofield2"/>
+</binaryimage>
+<script>
+  <com>parse line struct foo { int4 A; int4 B; };</com>
+  <com>parse line struct fooshort { int2 a; int2 b; int2 c; int2 d; };</com>
+  <com>map addr r0x301020 fooshort globshort</com>
+  <com>parse line extern void structparam(foo param_1);</com>
+  <com>parse line extern void structshort(fooshort param_1);</com>
+  <com>parse line extern void concatregparam(int4 regp1,int4 regp2);</com>
+  <com>parse line extern foo concatreturn(int4 retp1,int4 retp2);</com>
+  <com>parse line extern fooshort concatreturnshort(int2 short1,int2 short2,int2 short3,int2 short4);</com>
+  <com>parse line extern void replaceshort(int2 replace1,int2 replace2);</com>
+  <com>parse line extern foo zerofield(int4 zero1);</com>
+  <com>parse line extern foo zerofield2(int4 zero_two1);</com>
+  <com>lo fu concatregparam</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu concatreturn</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu concatreturnshort</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu replaceshort</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu zerofield</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu zerofield2</com>
+  <com>map hash r0x10085b 7df6374cc45 foo footwo</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Concat #1" min="0" max="0">CONCAT</stringmatch>
+<stringmatch name="Concat #2" min="0" max="0">ZEXT</stringmatch>
+<stringmatch name="Concat #3" min="1" max="1">fVar1\.A = regp1;</stringmatch>
+<stringmatch name="Concat #4" min="1" max="1">fVar1\.B = regp2;</stringmatch>
+<stringmatch name="Concat #5" min="1" max="1">fVar1\.A = retp1;</stringmatch>
+<stringmatch name="Concat #6" min="1" max="1">fVar1\.B = retp2;</stringmatch>
+<stringmatch name="Concat #7" min="1" max="1">fVar1\.a = short1;</stringmatch>
+<stringmatch name="Concat #8" min="1" max="1">fVar1\.b = short2;</stringmatch>
+<stringmatch name="Concat #9" min="1" max="1">fVar1\.c = short3;</stringmatch>
+<stringmatch name="Concat #10" min="1" max="1">fVar1\.d = short4;</stringmatch>
+<stringmatch name="Concat #11" min="1" max="1">globshort\.b = replace1;</stringmatch>
+<stringmatch name="Concat #12" min="1" max="1">globshort\.d = replace2;</stringmatch>
+<stringmatch name="Concat #13" min="0" max="0">globshort\.a =</stringmatch>
+<stringmatch name="Concat #14" min="0" max="0">globshort\.c =</stringmatch>
+<stringmatch name="Concat #15" min="1" max="1">fVar1\.A = zero1;</stringmatch>
+<stringmatch name="Concat #16" min="1" max="1">fVar1\.B = 0;</stringmatch>
+<stringmatch name="Concat #17" min="1" max="1">footwo\.A = zero_two1;</stringmatch>
+<stringmatch name="Concat #18" min="1" max="1">footwo\.B = 0;</stringmatch>
+</decompilertest>

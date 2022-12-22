@@ -241,7 +241,8 @@ public class DebuggerConnectDialog extends DialogComponentProvider
 		synchronized (this) {
 			futureConnect = factory.build();
 		}
-		futureConnect.thenAcceptAsync(m -> {
+		futureConnect.thenCompose(m -> m.fetchModelRoot()).thenAcceptAsync(r -> {
+			DebuggerObjectModel m = r.getModel();
 			modelService.addModel(m);
 			setStatusText("");
 			close();

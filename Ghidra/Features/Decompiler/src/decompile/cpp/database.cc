@@ -2043,6 +2043,7 @@ void ScopeInternal::clearUnlocked(void)
 	  renameSymbol(sym,buildUndefinedName());
 	}
       }
+      clearAttribute(sym, Varnode::nolocalalias);	// Clear any calculated attributes
       if (sym->isSizeTypeLocked())
 	resetSizeLockType(sym);
     }

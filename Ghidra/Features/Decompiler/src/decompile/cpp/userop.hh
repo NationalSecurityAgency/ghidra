@@ -44,6 +44,7 @@ extern ElementId ELEM_SEGMENTOP;	///< Marshaling element \<segmentop>
 /// its CALLOTHER index.  A facility for reading in implementation details is provided via decode().
 class UserPcodeOp {
 public:
+  /// \brief Enumeration of different boolean properties that can be assigned to a CALLOTHER
   enum userop_flags {
     annotation_assignment = 1,	///< Displayed as assignment, `in1 = in2`, where the first parameter is an annotation
     no_operator = 2		///< Don't emit special token, just emit the first input parameter as expression

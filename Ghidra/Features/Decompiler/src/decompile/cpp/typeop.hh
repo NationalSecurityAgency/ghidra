@@ -749,7 +749,6 @@ public:
 				  int4 inslot,int4 outslot);
   virtual string getOperatorName(const PcodeOp *op) const;
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opSubpiece(op); }
-  static const TypeField *testExtraction(bool useHigh,const PcodeOp *op,Datatype *&parent,int4 &offset);
   static int4 computeByteOffsetForComposite(const PcodeOp *op);
 };
 

@@ -109,7 +109,8 @@ public:
     indirectstorage = 0x8000000, ///< Is this Varnode storing a pointer to the actual symbol
     hiddenretparm = 0x10000000,	 ///< Does this varnode point to the return value storage location
     incidental_copy = 0x20000000, ///< Do copies of this varnode happen as a side-effect
-    autolive_hold = 0x40000000	///< Temporarily block dead-code removal of \b this
+    autolive_hold = 0x40000000,	///< Temporarily block dead-code removal of \b this
+    proto_partial = 0x80000000	///< Varnode is getting PIECEd together into an (unmapped) structure
   };
   /// Additional boolean properties on a Varnode
   enum addl_flags {
@@ -250,6 +251,7 @@ public:
   bool isUnaffected(void) const { return ((flags&Varnode::unaffected)!=0); } ///< Is \b this a value that is supposed to be preserved across the function?
   bool isSpacebase(void) const { return ((flags&Varnode::spacebase)!=0); } ///< Is this location used to store the base point for a virtual address space?
   bool isReturnAddress(void) const { return ((flags&Varnode::return_address)!=0); } ///< Is this storage for a calls return address?
+  bool isProtoPartial(void) const { return ((flags&Varnode::proto_partial)!=0); } ///< Is \b this getting pieced together into a larger whole
   bool isPtrCheck(void) const { return ((addlflags&Varnode::ptrcheck)!=0); } ///< Has \b this been checked as a constant pointer to a mapped symbol?
   bool isPtrFlow(void) const { return ((addlflags&Varnode::ptrflow)!=0); } ///< Does this varnode flow to or from a known pointer
   bool isSpacebasePlaceholder(void) const { return ((addlflags&Varnode::spacebase_placeholder)!=0); } ///< Is \b this used specifically to track stackpointer values?
@@ -318,6 +320,8 @@ public:
   void clearWriteMask(void) { addlflags &= ~Varnode::writemask; } ///< Clear the mark indicating \b this is not a true write
   void setAutoLiveHold(void) { flags |= Varnode::autolive_hold; }	///< Place temporary hold on dead code removal
   void clearAutoLiveHold(void) { flags &= ~Varnode::autolive_hold; }	///< Clear temporary hold on dead code removal
+  void setProtoPartial(void) { flags |= Varnode::proto_partial; }	///< Mark \b this gets pieced into larger structure
+  void clearProtoPartial(void) { flags &= ~Varnode::proto_partial; }	///< Clear mark indicating \b this gets pieced into larger structure
   void setUnsignedPrint(void) { addlflags |= Varnode::unsignedprint; } ///< Force \b this to be printed as unsigned
   void setLongPrint(void) { addlflags |= Varnode::longprint; }	///< Force \b this to be printed as a \e long token
   void setStopUpPropagation(void) { addlflags |= Varnode::stop_uppropagation; }	///< Stop up-propagation thru \b this
@@ -334,6 +338,7 @@ public:
   bool findSubpieceShadow(int4 leastByte,const Varnode *whole,int4 recurse) const;
   bool findPieceShadow(int4 leastByte,const Varnode *piece) const;
   bool partialCopyShadow(const Varnode *op2,int4 relOff) const;	///< Is one of \b this or \b op2 a partial copy of the other?
+  Datatype *getStructuredType(void) const;	///< Get structure/array/union that \b this is a piece of
   void encode(Encoder &encoder) const; ///< Encode a description of \b this to a stream
   static bool comparePointers(const Varnode *a,const Varnode *b) { return (*a < *b); }	///< Compare Varnodes as pointers
   static void printRaw(ostream &s,const Varnode *vn);	///< Print raw info about a Varnode to stream

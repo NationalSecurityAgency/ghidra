@@ -1929,18 +1929,20 @@ string TypeOpSubpiece::getOperatorName(const PcodeOp *op) const
 Datatype *TypeOpSubpiece::getOutputToken(const PcodeOp *op,CastStrategy *castStrategy) const
 
 {
+  const Varnode *outvn = op->getOut();
+  const TypeField *field;
+  Datatype *ct = op->getIn(0)->getHighTypeReadFacing(op);
   int4 offset;
-  Datatype *parent;
-  const Varnode *vn = op->getOut();
-  const TypeField *field = testExtraction(true, op, parent, offset);
+  int4 byteOff = computeByteOffsetForComposite(op);
+ field = ct->findTruncation(byteOff,outvn->getSize(),op,1,offset);	// Use artificial slot
   if (field != (const TypeField *)0) {
-    if (vn->getSize() == field->type->getSize())
+    if (outvn->getSize() == field->type->getSize())
       return field->type;
   }
-  Datatype *dt = vn->getHighTypeDefFacing();	// SUBPIECE prints as cast to whatever its output is
+  Datatype *dt = outvn->getHighTypeDefFacing();	// SUBPIECE prints as cast to whatever its output is
   if (dt->getMetatype() != TYPE_UNKNOWN)
     return dt;
-  return tlst->getBase(vn->getSize(),TYPE_INT);	// If output is unknown, treat as cast to int
+  return tlst->getBase(outvn->getSize(),TYPE_INT);	// If output is unknown, treat as cast to int
 }
 
 Datatype *TypeOpSubpiece::propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn,Varnode *outvn,
@@ -1967,30 +1969,6 @@ Datatype *TypeOpSubpiece::propagateType(Datatype *alttype,PcodeOp *op,Varnode *i
     return field->type;
   }
   return (Datatype *)0;
-}
-
-/// \brief Test if the given SUBPIECE PcodeOp is acting as a field extraction operator
-///
-/// For packed structures with small fields,  SUBPIECE may be used to extract the field.
-/// Test if the HighVariable being truncated is a structure and if the truncation produces
-/// part of a \e single field.  If so return the TypeField descriptor, and pass back the parent
-/// structure and the number of least significant bytes that have been truncated from the field.
-/// \param useHigh is \b true if the HighVariable data-type is checked, otherwise the Varnode data-type is used
-/// \param op is the given SUBPIECE PcodeOp
-/// \param parent holds the parent Datatype being passed back
-/// \param offset holds the LSB offset being passed back
-/// \return the TypeField if a field is being extracted or null otherwise
-const TypeField *TypeOpSubpiece::testExtraction(bool useHigh,const PcodeOp *op,Datatype *&parent,int4 &offset)
-
-{
-  const Varnode *vn = op->getIn(0);
-  Datatype *ct = useHigh ? vn->getHighTypeReadFacing(op) : vn->getTypeReadFacing(op);
-  type_metatype meta = ct->getMetatype();
-  if (meta != TYPE_STRUCT && meta != TYPE_UNION && meta != TYPE_PARTIALUNION)
-    return (const TypeField *)0;
-  parent = ct;
-  int4 byteOff = computeByteOffsetForComposite(op);
-  return ct->findTruncation(byteOff,op->getOut()->getSize(),op,1,offset);	// Use artificial slot
 }
 
 /// \brief Compute the byte offset into an assumed composite data-type produced by the given CPUI_SUBPIECE

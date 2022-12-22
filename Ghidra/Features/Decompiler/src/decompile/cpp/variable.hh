@@ -179,6 +179,7 @@ public:
   Varnode *getInputVarnode(void) const;		///< Find (the) input member Varnode
   Varnode *getTypeRepresentative(void) const;	///< Get a member Varnode with the strongest data-type
   Varnode *getNameRepresentative(void) const;	///< Get a member Varnode that dictates the naming of \b this HighVariable
+  Varnode *getPartial(void) const;		///< Find the first member that can act as partial symbol storage
   int4 getNumMergeClasses(void) const { return numMergeClasses; }	///< Get the number of speculative merges for \b this
   bool isMapped(void) const { updateFlags(); return ((flags&Varnode::mapped)!=0); }	///< Return \b true if \b this is mapped
   bool isPersist(void) const { updateFlags(); return ((flags&Varnode::persist)!=0); }	///< Return \b true if \b this is a global variable
@@ -189,6 +190,7 @@ public:
   bool isConstant(void) const { updateFlags(); return ((flags&Varnode::constant)!=0); }	///< Return \b true if \b this is a constant
   bool isUnaffected(void) const { updateFlags(); return ((flags&Varnode::unaffected)!=0); }	///< Return \b true if \b this is an \e unaffected register
   bool isExtraOut(void) const { updateFlags(); return ((flags&(Varnode::indirect_creation|Varnode::addrtied))==Varnode::indirect_creation); }	///< Return \b true if \b this is an extra output
+  bool isPartial(void) const { updateFlags(); return ((flags&(Varnode::addrtied|Varnode::proto_partial))!=0); }	///< Return \b true if \b this is potential partial symbol
   void setMark(void) const { flags |= Varnode::mark; }		///< Set the mark on this variable
   void clearMark(void) const { flags &= ~Varnode::mark; }	///< Clear the mark on this variable
   bool isMark(void) const { return ((flags&Varnode::mark)!=0); }	///< Return \b true if \b this is marked
@@ -205,6 +207,7 @@ public:
   bool isUnattached(void) const { return inst.empty(); }	///< Return \b true if \b this has no member Varnode
   bool isTypeLock(void) const { updateType(); return ((flags & Varnode::typelock)!=0); }	///< Return \b true if \b this is \e typelocked
   bool isNameLock(void) const { updateFlags(); return ((flags & Varnode::namelock)!=0); }	///< Return \b true if \b this is \e namelocked
+  bool sameGroup(const HighVariable *op2) const;	///< Return \b true if \b and other variable are parts of the same variable
   void encode(Encoder &encoder) const;		///< Encode \b this variable to stream as a \<high> element
 #ifdef MERGEMULTI_DEBUG
   void verifyCover(void) const;

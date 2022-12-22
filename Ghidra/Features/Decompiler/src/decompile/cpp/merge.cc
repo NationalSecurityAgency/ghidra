@@ -112,9 +112,18 @@ bool Merge::mergeTestRequired(HighVariable *high_out,HighVariable *high_in)
       return false;			// Map to different parts of same symbol
   }
 
-  // Currently don't allow merging of variables that are in separate overlapping collections
-  if (high_out->piece != (VariablePiece *)0 && high_in->piece != (VariablePiece *)0)
-    return false;
+  if (high_out->piece != (VariablePiece *)0 || high_in->piece != (VariablePiece *)0) {
+    // Currently don't allow merging of variables that are in separate overlapping collections
+    if (high_out->piece != (VariablePiece *)0 && high_in->piece != (VariablePiece *)0)
+      return false;
+    if (symbolIn != symbolOut) {	// If we know symbols are involved, and not both the same symbol
+      // Treat piece as if it were a separate symbol
+      if (symbolIn != (Symbol *)0 && high_out->piece != (VariablePiece *)0)
+	return false;	// effectively different symbols
+      if (symbolOut != (Symbol *)0 && high_in->piece != (VariablePiece *)0)
+	return false;	// effectively different symbols
+    }
+  }
 
   return true;
 }
@@ -184,7 +193,19 @@ bool Merge::mergeTestSpeculative(HighVariable *high_out,HighVariable *high_in)
   return true;
 }
 
-/// \brief A test if the given Varnode can ever be merged
+/// \brief Test if the given Varnode that \e must be merged, \e can be merged.
+///
+/// If it cannot be merged, throw an exception.
+/// \param vn is the given Varnode
+void Merge::mergeTestMust(Varnode *vn)
+
+{
+  if (vn->hasCover() && !vn->isImplied())
+    return;
+  throw LowlevelError("Cannot force merge of range");
+}
+
+/// \brief Test if the given Varnode can ever be merged.
 ///
 /// Some Varnodes (constants, annotations, implied, spacebase) are never merged with another
 /// Varnode.
@@ -196,6 +217,7 @@ bool Merge::mergeTestBasic(Varnode *vn)
   if (vn == (Varnode *)0) return false;
   if (!vn->hasCover()) return false;
   if (vn->isImplied()) return false;
+  if (vn->isProtoPartial()) return false;
   if (vn->isSpacebase()) return false;
   return true;
 }
@@ -242,18 +264,12 @@ void Merge::mergeRangeMust(VarnodeLocSet::const_iterator startiter,VarnodeLocSet
   Varnode *vn;
 
   vn = *startiter++;
-  if (!mergeTestBasic(vn)) {
-    if (!vn->isSpacebase())
-      throw LowlevelError("Cannot force merge of range");
-  }
+  mergeTestMust(vn);
   high = vn->getHigh();
   for(;startiter!=enditer;++startiter) {
     vn = *startiter;
     if (vn->getHigh() == high) continue;
-    if (!mergeTestBasic(vn)) {
-      if (!vn->isSpacebase())
-	throw LowlevelError("Cannot force merge of range");
-    }
+    mergeTestMust(vn);
     if (!merge(high,vn->getHigh(),false))
       throw LowlevelError("Forced merge caused intersection");
   }
@@ -933,6 +949,19 @@ void Merge::mergeMultiEntry(void)
   }
 }
 
+/// \brief Run through CONCAT tree roots and group each tree
+///
+void Merge::groupPartials(void)
+
+{
+  for(int4 i=0;i<protoPartial.size();++i) {
+    PcodeOp *op = protoPartial[i];
+    if (op->isDead()) continue;
+    if (!op->isPartialRoot()) continue;
+    groupPartialRoot(op->getOut());
+  }
+}
+
 /// \brief Speculatively merge Varnodes that are input/output to the same p-code op
 ///
 /// If a single p-code op has an input and output HighVariable that share the same data-type,
@@ -1324,6 +1353,37 @@ void Merge::processHighRedundantCopy(HighVariable *high)
   }
 }
 
+/// \brief Group the different nodes of a CONCAT tree into a VariableGroup
+///
+/// This formally labels all the Varnodes in the tree as overlapping pieces of the same variable.
+/// The tree is reconstructed from the root Varnode.
+/// \param vn is the root Varnode
+void Merge::groupPartialRoot(Varnode *vn)
+
+{
+  HighVariable *high = vn->getHigh();
+  if (high->numInstances() != 1) return;
+  vector<PieceNode> pieces;
+
+  int4 baseOffset = 0;
+  SymbolEntry *entry = vn->getSymbolEntry();
+  if (entry != (SymbolEntry *)0) {
+    baseOffset = entry->getOffset();
+  }
+
+  PieceNode::gatherPieces(pieces, vn, vn->getDef(), baseOffset);
+  for(int4 i=0;i<pieces.size();++i) {
+    Varnode *nodeVn = pieces[i].getVarnode();
+    // Make sure each node is still marked and hasn't merged with anything else
+    if (!nodeVn->isProtoPartial()) return;
+    if (nodeVn->getHigh()->numInstances() != 1) return;
+  }
+  for(int4 i=0;i<pieces.size();++i) {
+    Varnode *nodeVn = pieces[i].getVarnode();
+    nodeVn->getHigh()->groupWith(pieces[i].getTypeOffset() - baseOffset,high);
+  }
+}
+
 /// \brief Try to reduce/eliminate COPYs produced by the merge trimming process
 ///
 /// In order to force merging of certain Varnodes, extra COPY operations may be inserted
@@ -1396,12 +1456,19 @@ void Merge::markInternalCopies(void)
       h1 = op->getOut()->getHigh();
       h2 = op->getIn(0)->getHigh();
       h3 = op->getIn(1)->getHigh();
-      if (!h1->isAddrTied()) break;
-      if (!h2->isAddrTied()) break;
-      if (!h3->isAddrTied()) break;
-      v1 = h1->getTiedVarnode();
-      v2 = h2->getTiedVarnode();
-      v3 = h3->getTiedVarnode();
+      if (!h2->isPartial()) break;
+      if (!h3->isPartial()) break;
+      v2 = h2->getPartial();
+      v3 = h3->getPartial();
+      if (v2->isAddrTied()) {
+	if (!h1->isAddrTied()) break;
+	v1 = h1->getTiedVarnode();
+      }
+      else {
+	if (op->getIn(0) != v2) break;
+	if (op->getIn(1) != v3) break;
+	v1 = op->getOut();
+      }
       if (v3->overlap(*v1) != 0) break;
       if (v2->overlap(*v1) != v3->getSize()) break;
       data.opMarkNonPrinting(op);
@@ -1409,10 +1476,16 @@ void Merge::markInternalCopies(void)
     case CPUI_SUBPIECE:
       h1 = op->getOut()->getHigh();
       h2 = op->getIn(0)->getHigh();
-      if (!h1->isAddrTied()) break;
-      if (!h2->isAddrTied()) break;
-      v1 = h1->getTiedVarnode();
-      v2 = h2->getTiedVarnode();
+      if (!h1->isPartial()) break;
+      v1 = h1->getPartial();
+      if (v1->isAddrTied()) {
+	if (!h2->isAddrTied()) break;
+	v2 = h2->getTiedVarnode();
+      }
+      else {
+	if (!h1->sameGroup(h2)) break;
+	v2 = op->getIn(0);
+      }
       val = op->getIn(1)->getOffset();
       if (v1->overlap(*v2) != val) break;
       data.opMarkNonPrinting(op);
@@ -1430,6 +1503,17 @@ void Merge::markInternalCopies(void)
 #ifdef MERGEMULTI_DEBUG
   verifyHighCovers();
 #endif
+}
+
+/// \brief Register an unmapped CONCAT stack with the merge process
+///
+/// The given Varnode must be the root of a tree of CPUI_PIECE operations as produced by
+/// PieceNode::gatherPieces.  These will be grouped together into a single variable.
+/// \param vn is the given root Varnode
+void Merge::registerProtoPartialRoot(Varnode *vn)
+
+{
+  protoPartial.push_back(vn->getDef());
 }
 
 /// \brief Translate any intersection tests for \e high2 into tests for \e high1
@@ -1546,6 +1630,17 @@ void Merge::purgeHigh(HighVariable *high)
   ++iterlast;			// Restore original range (with possibly new open endpoint)
   
   highedgemap.erase(iterfirst,iterlast);
+}
+
+/// \brief Clear the any cached data from the last merge process
+///
+/// Free up resources used by cached intersection tests etc.
+void Merge::clear(void)
+
+{
+  highedgemap.clear();
+  copyTrims.clear();
+  protoPartial.clear();
 }
 
 /// \brief Test the intersection of two HighVariables and cache the result

@@ -19,7 +19,8 @@ import static org.junit.Assert.*;
 
 import java.awt.Component;
 import java.awt.Container;
-import java.awt.event.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Date;
 import java.util.Random;
@@ -974,8 +975,7 @@ public class SearchTextPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void searchOnce(JTextField tf) throws Exception {
-		ActionListener listener = tf.getActionListeners()[0];
-		runSwing(() -> listener.actionPerformed(null));
+		triggerEnter(tf);
 	}
 
 	private void searchBackOnce(SearchTextDialog dialog) throws Exception {

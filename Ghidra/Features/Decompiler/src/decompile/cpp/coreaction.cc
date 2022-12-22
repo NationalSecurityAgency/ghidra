@@ -2830,7 +2830,7 @@ int4 ActionNameVars::apply(Funcdata &data)
 /// and that it needs special printing.
 /// \param vn is the given Varnode
 /// \param maxref is the maximum number of references to consider before forcing explicitness
-/// \return -1 if given Varnode should be marked explicit, the number of descendants otherwise
+/// \return -1 or -2 if given Varnode should be marked explicit, the number of descendants otherwise
 int4 ActionMarkExplicit::baseExplicit(Varnode *vn,int4 maxref)
 
 {
@@ -2850,29 +2850,53 @@ int4 ActionMarkExplicit::baseExplicit(Varnode *vn,int4 maxref)
     if (def->code() == CPUI_SUBPIECE) {
       Varnode *vin = def->getIn(0);
       if (vin->isAddrTied()) {
-	if (vn->overlap(*vin) == def->getIn(1)->getOffset())
-	  return -1;		// Should be explicit, will be a copymarker and not printed
+        if (vn->overlap(*vin) == def->getIn(1)->getOffset())
+          return -1;		// Should be explicit, will be a copymarker and not printed
       }
     }
-    // (Part of) an addrtied location into itself is hopefully implicit
-    bool shouldbeimplicit = true;
-    for(iter=vn->beginDescend();iter!=vn->endDescend();++iter) {
-      PcodeOp *op = *iter;
-      if ((op->code()!=CPUI_INT_ZEXT)&&(op->code()!=CPUI_PIECE)) {
-	shouldbeimplicit = false;
-	break;
-      }
-      Varnode *vnout = op->getOut();
-      if ((!vnout->isAddrTied())||(0!=vnout->contains(*vn))) {
-	shouldbeimplicit = false;
-	break;
+    PcodeOp *useOp = vn->loneDescend();
+    if (useOp == (PcodeOp *)0) return -1;
+    if (useOp->code() == CPUI_INT_ZEXT) {
+      Varnode *vnout = useOp->getOut();
+      if ((!vnout->isAddrTied())||(0!=vnout->contains(*vn)))
+	return -1;
+    }
+    else if (useOp->code() == CPUI_PIECE) {
+      Varnode *rootVn = PieceNode::findRoot(vn);
+      if (vn == rootVn) return -1;
+      Datatype *ct = rootVn->getStructuredType();
+      if (ct != (Datatype *)0) {
+	// Getting PIECEd into a structured thing.  Unless vn is a leaf, it should be implicit
+	if (def->code() != CPUI_PIECE) return -1;
+	if (vn->loneDescend() == (PcodeOp *)0) return -1;
+	Varnode *vn0 = def->getIn(0);
+	Varnode *vn1 = def->getIn(1);
+	Address addr = vn->getAddr();
+	if (!addr.getSpace()->isBigEndian())
+	  addr = addr + vn1->getSize();
+	if (addr != vn0->getAddr()) return -1;
+	addr = vn->getAddr();
+	if (addr.getSpace()->isBigEndian())
+	  addr = addr + vn0->getSize();
+	if (addr != vn1->getAddr()) return -1;
+	// If we reach here vn is a non-leaf in a CONCAT tree and should be implicit
       }
     }
-    if (!shouldbeimplicit) return -1;
+    else {
+      return -1;
+    }
   }
   else if (vn->isMapped()) {
     // If NOT addrtied but is still mapped, there must be either a first use (register) mapping
     // or a dynamic mapping causing the bit to be set. In either case, it should probably be explicit
+    return -1;
+  }
+  else if (vn->isProtoPartial() && def->code() != CPUI_PIECE) {
+    // Varnode is part of structure. Write to structure should be an explicit statement
+    return -1;
+  }
+  else if (def->code() == CPUI_PIECE && def->getIn(0)->isProtoPartial() && !vn->isProtoPartial()) {
+    // The base of PIECE operations building a structure
     return -1;
   }
   if (vn->hasNoDescend()) return -1;	// Must have at least one descendant
@@ -5069,7 +5093,6 @@ void ActionDatabase::universalAction(Architecture *conf)
 	actprop->addRule( new RuleShiftAnd("analysis") );
 	actprop->addRule( new RuleConcatZero("analysis") );
 	actprop->addRule( new RuleConcatLeftShift("analysis") );
-	actprop->addRule( new RuleEmbed("analysis") );
 	actprop->addRule( new RuleSubZext("analysis") );
 	actprop->addRule( new RuleSubCancel("analysis") );
 	actprop->addRule( new RuleShiftSub("analysis") );
@@ -5181,6 +5204,7 @@ void ActionDatabase::universalAction(Architecture *conf)
     actcleanup->addRule( new RuleSubRight("cleanup") );
     actcleanup->addRule( new RulePtrsubCharConstant("cleanup") );
     actcleanup->addRule( new RuleExtensionPush("cleanup") );
+    actcleanup->addRule( new RulePieceStructure("cleanup") );
   }
   act->addAction( actcleanup );
 

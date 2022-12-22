@@ -86,9 +86,9 @@ public interface DebuggerResources {
 
 	Icon ICON_STEP_INTO = new GIcon("icon.debugger.step.into");
 	Icon ICON_STEP_OVER = new GIcon("icon.debugger.step.over");
-	Icon ICON_SKIP_OVER = new GIcon("icon.debugger.step.back");
+	Icon ICON_SKIP_OVER = new GIcon("icon.debugger.skip.over");
 	Icon ICON_STEP_FINISH = new GIcon("icon.debugger.step.finish");
-	Icon ICON_STEP_BACK = new GIcon("icon.debugger.skip.over");
+	Icon ICON_STEP_BACK = new GIcon("icon.debugger.step.back");
 	Icon ICON_STEP_LAST = new GIcon("icon.debugger.step.last");
 
 	Icon ICON_SNAP_FORWARD = new GIcon("icon.debugger.snap.forward");

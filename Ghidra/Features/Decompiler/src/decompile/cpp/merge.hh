@@ -81,6 +81,7 @@ class Merge {
   Funcdata &data;		///< The function containing the Varnodes to be merged
   map<HighEdge,bool> highedgemap; ///< A cache of intersection tests, sorted by HighVariable pair
   vector<PcodeOp *> copyTrims;	///< COPY ops inserted to facilitate merges
+  vector<PcodeOp *> protoPartial;	///< Roots of unmapped CONCAT trees
   bool updateHigh(HighVariable *a); ///< Make sure given HighVariable's Cover is up-to-date
   void purgeHigh(HighVariable *high); ///< Remove cached intersection tests for a given HighVariable
   static void gatherBlockVarnodes(HighVariable *a,int4 blk,const Cover &cover,vector<Varnode *> &res);
@@ -89,6 +90,7 @@ class Merge {
   static bool mergeTestRequired(HighVariable *high_out,HighVariable *high_in);
   static bool mergeTestAdjacent(HighVariable *high_out,HighVariable *high_in);
   static bool mergeTestSpeculative(HighVariable *high_out,HighVariable *high_in);
+  static void mergeTestMust(Varnode *vn);
   static bool mergeTestBasic(Varnode *vn);
   static void findSingleCopy(HighVariable *high,vector<Varnode *> &singlelist);
   static bool compareHighByBlock(const HighVariable *a,const HighVariable *b);
@@ -116,8 +118,10 @@ class Merge {
   void markRedundantCopies(HighVariable *high,vector<PcodeOp *> &copy,int4 pos,int4 size);
   void processHighDominantCopy(HighVariable *high);
   void processHighRedundantCopy(HighVariable *high);
+  void groupPartialRoot(Varnode *vn);
 public:
   Merge(Funcdata &fd) : data(fd) {} ///< Construct given a specific function
+  void clear(void);
   bool intersection(HighVariable *a,HighVariable *b);
   bool inflateTest(Varnode *a,HighVariable *high);
   void inflate(Varnode *a,HighVariable *high);
@@ -127,11 +131,13 @@ public:
   void mergeByDatatype(VarnodeLocSet::const_iterator startiter,VarnodeLocSet::const_iterator enditer);
   void mergeAddrTied(void);
   void mergeMarker(void);
+  void groupPartials(void);
   void mergeAdjacent(void);
   void mergeMultiEntry(void);
   bool hideShadows(HighVariable *high);
   void processCopyTrims(void);
   void markInternalCopies(void);
+  void registerProtoPartialRoot(Varnode *vn);
 #ifdef MERGEMULTI_DEBUG
   void verifyHighCovers(void);
 #endif

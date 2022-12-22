@@ -22,13 +22,11 @@
 package ghidra.app.plugin.core.bookmark;
 
 import java.awt.*;
-import java.awt.event.*;
 import java.util.Arrays;
 
 import javax.swing.*;
 
 import docking.DialogComponentProvider;
-import docking.DockingUtils;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GIconLabel;
@@ -36,6 +34,7 @@ import docking.widgets.label.GLabel;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.util.HelpLocation;
+import ghidra.util.layout.PairLayout;
 
 public class CreateBookmarkDialog extends DialogComponentProvider {
 
@@ -43,27 +42,26 @@ public class CreateBookmarkDialog extends DialogComponentProvider {
 	private Program program;
 	private Address address;
 
-	private JTextField locationTextField;
-	private JComboBox<String> categoryComboBox;
-	private JTextField categoryTextField;
-	private JTextField commentTextField;
+	private GhidraComboBox<String> categoryComboBox;
+	private JTextField descriptionTextField;
 	private JCheckBox selectionCB;
+	private boolean hasSelection;
 
 	CreateBookmarkDialog(BookmarkPlugin plugin, CodeUnit cu, boolean hasSelection) {
 		super(BookmarkType.NOTE + " Bookmark", true, true, true, false);
 
 		this.plugin = plugin;
+		this.hasSelection = hasSelection;
 		this.program = plugin.getCurrentProgram();
 		this.address = cu.getMinAddress();
 
-		this.addWorkPanel(buildWorkPanel(hasSelection));
+		this.addWorkPanel(buildMainPanel());
 		this.addOKButton();
 		this.addCancelButton();
 
-		this.populateDisplay(cu.getComment(CodeUnit.EOL_COMMENT));
+		initializeDescription(cu);
 
-		commentTextField.selectAll();
-		setFocusComponent(commentTextField);
+		setFocusComponent(categoryComboBox);
 		setHelpLocation(new HelpLocation("BookmarkPlugin", "CreateBookmarkDialog"));
 	}
 
@@ -78,9 +76,8 @@ public class CreateBookmarkDialog extends DialogComponentProvider {
 	@Override
 	protected void okCallback() {
 
-		JTextField textField = (JTextField) categoryComboBox.getEditor().getEditorComponent();
-		String cat = textField.getText();
-		String com = commentTextField.getText();
+		String cat = categoryComboBox.getText();
+		String com = descriptionTextField.getText();
 
 		// Create user Note Bookmark
 		if (selectionCB.isSelected()) {
@@ -93,127 +90,65 @@ public class CreateBookmarkDialog extends DialogComponentProvider {
 		cancelCallback();
 	}
 
-	private JPanel buildWorkPanel(boolean hasSelection) {
-		KeyListener listener = new KeyAdapter() {
-			@Override
-			public void keyPressed(KeyEvent e) {
-				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-					Object src = e.getSource();
-					if (src == locationTextField) {
-						categoryComboBox.requestFocus();
-						categoryTextField.requestFocus();
-					}
-					else if (src == categoryComboBox || src == categoryTextField) {
-						commentTextField.requestFocus();
-					}
-					else if (src == commentTextField) {
-						okCallback();
-					}
-				}
-			}
-		};
+	private JPanel buildMainPanel() {
+		JPanel panel = new JPanel(new BorderLayout());
+		panel.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 10));
+		panel.add(buildIconLabel(), BorderLayout.WEST);
+		panel.add(buildCentralPanel(), BorderLayout.CENTER);
+		panel.add(buildCheckboxPanel(), BorderLayout.SOUTH);
 
-		// Some items in the dialog change depending on whether we have multiple selection
-		// ranges, so capture that information here.
-		int ranges = 0;
-		if (hasSelection) {
-			ranges = plugin.getProgramSelection().getNumAddressRanges();
-		}
+		return panel;
+	}
 
-		locationTextField = new JTextField(50);
-		locationTextField.setText(address.toString());
-		if (hasSelection && ranges > 1) {
-			locationTextField.setText(address.toString() + " (plus " + (ranges - 1) + " more)");
-		}
-		locationTextField.setCaretPosition(0);
-		locationTextField.setEditable(false);
-		DockingUtils.setTransparent(locationTextField);
-		locationTextField.setMinimumSize(locationTextField.getPreferredSize());
-		locationTextField.addKeyListener(listener);
+	private JPanel buildCheckboxPanel() {
+		selectionCB = new GCheckBox("Bookmark Top of Each Selection", hasSelection);
+		selectionCB.setEnabled(getSelectionRangeCount() > 1);
+		JPanel panel = new JPanel();
+		panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+		panel.add(selectionCB);
+		return panel;
+	}
+
+	private Component buildCentralPanel() {
+		JPanel panel = new JPanel(new PairLayout(3, 5));
 
 		categoryComboBox = new GhidraComboBox<>(getModel());
 		categoryComboBox.setEditable(true);
-		categoryComboBox.addKeyListener(listener);
+		descriptionTextField = new JTextField(20);
 
-		categoryTextField = (JTextField) categoryComboBox.getEditor().getEditorComponent();
-		categoryTextField.addKeyListener(listener);
+		panel.add(new JLabel("Address: ", SwingConstants.RIGHT));
+		panel.add(new GLabel(buildLocationString()));
 
-		commentTextField = new JTextField(20);
-		commentTextField.addKeyListener(listener);
+		panel.add(new JLabel("Category: ", SwingConstants.RIGHT));
+		panel.add(categoryComboBox);
 
-		selectionCB = new GCheckBox("Bookmark Top of Each Selection", hasSelection);
-		selectionCB.setEnabled(false);
-		if (hasSelection) {
-			selectionCB.setEnabled(ranges > 1);
+		panel.add(new JLabel("Description: ", SwingConstants.RIGHT));
+		panel.add(descriptionTextField);
+
+		return panel;
+	}
+
+	private String buildLocationString() {
+		int ranges = getSelectionRangeCount();
+		if (ranges > 1) {
+			return address.toString() + " (plus " + (ranges - 1) + " more)";
 		}
+		return address.toString();
+	}
 
-		JPanel mainPanel = new JPanel(new GridBagLayout());
-		GridBagConstraints gbc = new GridBagConstraints();
-		gbc.insets = new Insets(5, 5, 0, 5);
-
-		gbc.gridx = 1;
-		gbc.gridy = 1;
-		gbc.weightx = 0;
-		gbc.weighty = 0;
-		gbc.fill = GridBagConstraints.NONE;
-		gbc.anchor = GridBagConstraints.EAST;
-		mainPanel.add(new GLabel("Category: ", SwingConstants.RIGHT), gbc);
-
-		gbc.gridx = 2;
-		gbc.gridy = 1;
-		gbc.weightx = 0;
-		gbc.weighty = 0;
-		gbc.fill = GridBagConstraints.HORIZONTAL;
-		gbc.anchor = GridBagConstraints.WEST;
-		mainPanel.add(categoryComboBox, gbc);
-
-		gbc.gridx = 1;
-		gbc.gridy = 0;
-		gbc.weightx = 0;
-		gbc.weighty = 0;
-		gbc.fill = GridBagConstraints.NONE;
-		gbc.anchor = GridBagConstraints.EAST;
-		mainPanel.add(new GLabel("Address: ", SwingConstants.RIGHT), gbc);
-
-		gbc.gridx = 2;
-		gbc.gridy = 0;
-		gbc.weightx = 0;
-		gbc.weighty = 0;
-		gbc.fill = GridBagConstraints.NONE;
-		gbc.anchor = GridBagConstraints.WEST;
-		mainPanel.add(locationTextField, gbc);
-
-		gbc.gridx = 1;
-		gbc.gridy = 2;
-		gbc.weightx = 0;
-		gbc.weighty = 0;
-		gbc.fill = GridBagConstraints.NONE;
-		gbc.anchor = GridBagConstraints.EAST;
-		mainPanel.add(new GLabel("Description: ", SwingConstants.RIGHT), gbc);
-
-		gbc.gridx = 2;
-		gbc.gridy = 2;
-		gbc.weightx = 1.0;
-		gbc.weighty = 0;
-		gbc.fill = GridBagConstraints.HORIZONTAL;
-		gbc.anchor = GridBagConstraints.WEST;
-		mainPanel.add(commentTextField, gbc);
-
+	private JLabel buildIconLabel() {
 		Icon icon = BookmarkNavigator.NOTE_ICON;
 		JLabel imageLabel = new GIconLabel(icon);
 		imageLabel.setPreferredSize(
 			new Dimension(icon.getIconWidth() + 20, icon.getIconHeight() + 20));
+		return imageLabel;
+	}
 
-		JPanel selectionPanel = new JPanel();
-		selectionPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
-		selectionPanel.add(selectionCB);
-
-		JPanel workPanel = new JPanel(new BorderLayout());
-		workPanel.add(mainPanel, BorderLayout.CENTER);
-		workPanel.add(imageLabel, BorderLayout.WEST);
-		workPanel.add(selectionPanel, BorderLayout.SOUTH);
-
-		return workPanel;
+	private int getSelectionRangeCount() {
+		if (hasSelection) {
+			return plugin.getProgramSelection().getNumAddressRanges();
+		}
+		return 0;
 	}
 
 	/**
@@ -230,24 +165,27 @@ public class CreateBookmarkDialog extends DialogComponentProvider {
 		return new DefaultComboBoxModel<>(array);
 	}
 
-	private void populateDisplay(String defaultComment) {
-
-		if (defaultComment == null) {
-			defaultComment = "";
-		}
-		else {
-			defaultComment = defaultComment.replace('\n', ' ');
-		}
+	private void initializeDescription(CodeUnit codeUnit) {
+		String defaultComment = getEolComment(codeUnit);
 
 		BookmarkManager bmMgr = program.getBookmarkManager();
 		Bookmark[] bookmarks = bmMgr.getBookmarks(address, BookmarkType.NOTE);
 		if (bookmarks.length != 0) {
 			categoryComboBox.setSelectedItem(bookmarks[0].getCategory());
-			commentTextField.setText(bookmarks[0].getComment());
+			descriptionTextField.setText(bookmarks[0].getComment());
 		}
 		else {
-			commentTextField.setText(defaultComment);
+			descriptionTextField.setText(defaultComment);
 		}
-		commentTextField.setCaretPosition(0);
+		descriptionTextField.setCaretPosition(0);
+		descriptionTextField.selectAll();
+	}
+
+	private String getEolComment(CodeUnit codeUnit) {
+		String comment = codeUnit.getComment(CodeUnit.EOL_COMMENT);
+		if (comment == null) {
+			return "";
+		}
+		return comment.replace('\n', ' ');
 	}
 }
