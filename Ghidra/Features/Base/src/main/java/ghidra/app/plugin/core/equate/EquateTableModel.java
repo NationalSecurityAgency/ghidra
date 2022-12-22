@@ -200,8 +200,8 @@ class EquateTableModel extends GDynamicColumnTableModel<Equate, Object> {
 		}
 
 		@Override
-		public String getValue(Equate rowObject, Settings settings, Object data,
-				ServiceProvider sp) throws IllegalArgumentException {
+		public String getValue(Equate rowObject, Settings settings, Object data, ServiceProvider sp)
+				throws IllegalArgumentException {
 			return rowObject.getDisplayName();
 		}
 
@@ -251,8 +251,8 @@ class EquateTableModel extends GDynamicColumnTableModel<Equate, Object> {
 		}
 
 		@Override
-		public Long getValue(Equate rowObject, Settings settings, Object data,
-				ServiceProvider sp) throws IllegalArgumentException {
+		public Long getValue(Equate rowObject, Settings settings, Object data, ServiceProvider sp)
+				throws IllegalArgumentException {
 
 			FormatSettingsDefinition formatDef = FormatSettingsDefinition.DEF;
 
