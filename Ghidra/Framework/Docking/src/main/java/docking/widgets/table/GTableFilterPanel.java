@@ -26,6 +26,7 @@ import javax.swing.event.*;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.jdom.Element;
 
 import docking.DockingWindowManager;
@@ -67,7 +68,7 @@ import utility.function.Callback;
  * <p>
  *
  * <u>Filtering</u><br>
- * The filtering behavior is controlled by the filter button displayed to the right of this 
+ * The filtering behavior is controlled by the filter button displayed to the right of this
  * panel's text field.
  * <p>
  *
@@ -104,7 +105,7 @@ import utility.function.Callback;
  *     To get a row count that is always all of the model's data, call
  *     {@link #getUnfilteredRowCount()}.
  * </ul>
- * 
+ *
  * @param <ROW_OBJECT> the row object type for this given table and model
  */
 public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
@@ -690,16 +691,67 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 
 	/**
 	 * Select the given row object.  No selection will be made if the object is filtered out of
-	 * view.
+	 * view.   Passing {@code null} will clear the selection.
 	 *
 	 * @param t the row object to select
 	 */
 	public void setSelectedItem(ROW_OBJECT t) {
+		if (t == null) {
+			table.clearSelection();
+			return;
+		}
+
 		int viewRow = textFilterModel.getViewIndex(t);
 		if (viewRow >= 0) {
 			table.setRowSelectionInterval(viewRow, viewRow);
 			scrollToSelectedRow();
 		}
+	}
+
+	/**
+	 * Select the given row objects.  No selection will be made if the objects are filtered out of
+	 * view.  Passing a {@code null} list or an empty list will clear the selection.
+	 *
+	 * @param items the row objects to select
+	 */
+	public void setSelectedItems(List<ROW_OBJECT> items) {
+
+		if (CollectionUtils.isEmpty(items)) {
+			table.clearSelection();
+			return;
+		}
+
+		ListSelectionModel selectionModel = table.getSelectionModel();
+		int mode = selectionModel.getSelectionMode();
+		if (mode == ListSelectionModel.SINGLE_SELECTION) {
+			// take the last item to mimic what the selection model does internally
+			ROW_OBJECT item = items.get(items.size() - 1);
+			int viewRow = textFilterModel.getViewIndex(item);
+			table.setRowSelectionInterval(viewRow, viewRow);
+			return;
+		}
+
+		//
+		// For ListSelectionModel SINGLE_INTERVAL_SELECTION and MULTIPLE_INTERVAL_SELECTION, the
+		// model will update any selection given to it to match the current mode.
+		//
+		List<Integer> rows = new ArrayList<>();
+		for (ROW_OBJECT item : items) {
+			int viewRow = textFilterModel.getViewIndex(item);
+			if (viewRow >= 0) {
+				rows.add(viewRow);
+			}
+		}
+		if (rows.isEmpty()) {
+			return; // items may be filtered out of view
+		}
+
+		selectionModel.setValueIsAdjusting(true);
+		selectionModel.clearSelection();
+		for (int row : rows) {
+			selectionModel.addSelectionInterval(row, row);
+		}
+		selectionModel.setValueIsAdjusting(false);
 	}
 
 	/**
@@ -915,7 +967,7 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 	 * a filter panel, then each provider will share the same filter settings when that provider
 	 * is created.  If this is not what you want, then you need to override this method to
 	 * generate a unique key for each provider.
-	 * 
+	 *
 	 * @param jTable the table
 	 * @return a key used to store user filter configuration state.
 	 */
@@ -992,7 +1044,7 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	private abstract class ColumnFilterActionState
 			extends ActionState<ColumnBasedTableFilter<ROW_OBJECT>> {
