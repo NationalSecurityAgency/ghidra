@@ -133,6 +133,7 @@ private:
   bool injectSubFunction(FuncCallSpecs *fc);		///< Perform \e injection replacing the CALL at the given call site
   void checkContainedCall(void);
   void checkMultistageJumptables(void);
+  void recoverJumpTables(vector<JumpTable *> &newTables,vector<PcodeOp *> &notreached);
   void deleteCallSpec(FuncCallSpecs *fc);		///< Remove the given call site from the list for \b this function
   void truncateIndirectJump(PcodeOp *op,int4 failuremode);  	///< Treat indirect jump as indirect call that never returns
   static bool isInArray(vector<PcodeOp *> &array,PcodeOp *op);
