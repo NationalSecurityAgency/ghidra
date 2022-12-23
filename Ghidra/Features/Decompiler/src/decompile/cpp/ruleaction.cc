@@ -4643,6 +4643,8 @@ int4 RuleSubZext::applyOp(PcodeOp *op,Funcdata &data)
     basevn = subop->getIn(0);
     if (basevn->isFree()) return 0;
     if (basevn->getSize() != op->getOut()->getSize()) return 0;	// Truncating then extending to same size
+    if (basevn->getSize() > sizeof(uintb))
+      return 0;
     if (subop->getIn(1)->getOffset() != 0) { // If truncating from middle
       if (subvn->loneDescend() != op) return 0; // and there is no other use of the truncated value
       Varnode *newvn = data.newUnique(basevn->getSize(),(Datatype *)0);
