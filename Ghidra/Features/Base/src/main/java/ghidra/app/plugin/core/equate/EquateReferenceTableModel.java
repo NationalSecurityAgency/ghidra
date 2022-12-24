@@ -32,7 +32,6 @@ class EquateReferenceTableModel extends GDynamicColumnTableModel<EquateReference
 
 	private EquateTablePlugin plugin;
 	private List<EquateReference> referenceList = new ArrayList<>();
-	private Equate currentEquate = null;
 
 	EquateReferenceTableModel(EquateTablePlugin plugin) {
 		super(plugin.getTool());
@@ -70,18 +69,11 @@ class EquateReferenceTableModel extends GDynamicColumnTableModel<EquateReference
 		return null;
 	}
 
-	Equate getEquate() {
-		return currentEquate;
-	}
-
 	void setEquate(Equate equate) {
-		this.currentEquate = equate;
-
-		populateReferences();
+		populateReferences(equate);
 	}
 
-
-	private void populateReferences() {
+	private void populateReferences(Equate equate) {
 		referenceList.clear();
 
 		Program program = getProgram();
@@ -90,14 +82,11 @@ class EquateReferenceTableModel extends GDynamicColumnTableModel<EquateReference
 		}
 
 		EquateTable equateTable = program.getEquateTable();
-		if (equateTable == null || currentEquate == null) {
+		if (equateTable == null || equate == null) {
 			return;
 		}
 
-		// @formatter:off
-		Arrays.asList(currentEquate.getReferences())
-			.forEach(r -> referenceList.add(r));
-		// @formatter:on
+		referenceList.addAll(Arrays.asList(equate.getReferences()));
 
 		fireTableDataChanged();
 	}
@@ -131,7 +120,7 @@ class EquateReferenceTableModel extends GDynamicColumnTableModel<EquateReference
 
 		@Override
 		public Address getValue(EquateReference rowObject, Settings settings, Object data,
-				ServiceProvider serviceProvider) throws IllegalArgumentException {
+				ServiceProvider sp) throws IllegalArgumentException {
 			return rowObject.getAddress();
 		}
 
@@ -147,7 +136,7 @@ class EquateReferenceTableModel extends GDynamicColumnTableModel<EquateReference
 
 		@Override
 		public Short getValue(EquateReference rowObject, Settings settings, Object data,
-				ServiceProvider serviceProvider) throws IllegalArgumentException {
+				ServiceProvider sp) throws IllegalArgumentException {
 			return rowObject.getOpIndex();
 		}
 

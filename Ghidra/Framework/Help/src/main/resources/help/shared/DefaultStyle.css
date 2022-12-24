@@ -15,21 +15,48 @@
  */
 /*
 									WARNING!
-    This file is copied to all help directories.  If you change this file, you must copy it 
-    to each src/main/help/help/shared directory.									
-									
-	
 	Java Help Note:  JavaHelp does not accept sizes (like in 'margin-top') in anything but 
 	px (pixel) or with no type marking. 
+
+ 	The blockquote tag is used heavily to control indentation throughout the help docs.  Place the
+ 	blockquote tag around other elements to create a standard indentation.  The default values of 
+ 	blockquote are:
+
+		blockquote {
+		  display: block;
+		  margin-top: 1em;
+		  margin-bottom: 1em;
+		  margin-left: 40px;
+		  margin-right: 40px;
+		}	
 
 */ 
 
 body { margin-bottom: 50px; margin-left: 10px; margin-right: 10px; margin-top: 10px; } /* some padding to improve readability */ 
-li { font-family:times new roman; font-size:14pt; }
+
+/* 
+	Add some indentation for lists to show their relation to the preceding text.   The value is
+	chosen based on the left margin of the body and the blockquote.
+*/
+ul { margin-left: 50px; } 
+ol { margin-left: 50px; }
+li { font-family:times new roman; font-size:14pt; margin-left: 5px; }
+
+
 h1 { color:#000080; font-family:times new roman; font-size:36pt; font-style:italic; font-weight:bold; text-align:center; }
 h2 { margin: 10px; margin-top: 20px; color:#984c4c; font-family:times new roman; font-size:18pt; font-weight:bold; }
 h3 { margin-left: 10px; margin-top: 20px; color:#0000ff; font-family:times new roman; font-size:14pt; font-weight:bold;  }
 h4 { margin-left: 10px; margin-top: 20px; font-family:times new roman; font-size:14pt; font-style:italic; }
+ 
+
+/*
+	A class to be used for showing screenshot style images. These images will have padding above
+	and below the image and will be centered.  To apply this to a file path, use this syntax:
+	    <DIV class="image"><IMG src="..." /></DIV>
+*/
+div.image { margin-top: 20px; margin-bottom: 40px; text-align: center; }
+
+
  
 /*
 	 P tag code.  Most of the help files nest P tags inside of blockquote tags (the was the 
@@ -40,11 +67,10 @@ h4 { margin-left: 10px; margin-top: 20px; font-family:times new roman; font-size
 */
 p { margin-left: 40px; font-family:times new roman; font-size:14pt; }
 blockquote p { margin-left: 10px; }
-
 p.providedbyplugin { color:#7f7f7f; margin-left: 10px; font-size:14pt; margin-top:100px  }
-p.ProvidedByPlugin { color:#7f7f7f; margin-left: 10px; font-size:14pt; margin-top:100px }
 p.relatedtopic { color:#800080; margin-left: 10px; font-size:14pt; }
-p.RelatedTopic { color:#800080; margin-left: 10px; font-size:14pt; }
+p.image { margin-top: 100; margin-bottom: 100; }
+
 
 /* 
 	We wish for a tables to have space between it and the preceding element, so that text
@@ -54,6 +80,8 @@ p.RelatedTopic { color:#800080; margin-left: 10px; font-size:14pt; }
 table { margin-left: 20px; margin-top: 10px; width: 80%;}
 td { font-family:times new roman; font-size:14pt; vertical-align: top; }
 th { font-family:times new roman; font-size:14pt; font-weight:bold; background-color: #EDF3FE; }
+
+
 
 /*
 	Code-like formatting for things such as file system paths and proper names of classes, 

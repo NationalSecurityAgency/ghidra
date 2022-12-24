@@ -17,9 +17,6 @@ package ghidra.app.plugin.core.equate;
 
 import static org.junit.Assert.*;
 
-import java.awt.Rectangle;
-import java.util.*;
-
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
@@ -40,7 +37,6 @@ import ghidra.program.util.OperandFieldLocation;
 import ghidra.program.util.ProgramLocation;
 import ghidra.test.*;
 import ghidra.util.table.GhidraTable;
-import util.CollectionUtils;
 
 /**
  * Tests for the equate table plugin.
@@ -112,16 +108,6 @@ public class EquateTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	@After
 	public void tearDown() throws Exception {
 		env.dispose();
-	}
-
-	@Test
-	public void testEquateTableView() throws Exception {
-		// verify that the equate table shows the equates and the references
-		assertNotNull(refsTable);
-		assertNotNull(refsModel);
-		assertEquals(1, refsModel.getRowCount());
-
-		checkTableValues();
 	}
 
 	@Test
@@ -368,37 +354,6 @@ public class EquateTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	private void redo() throws Exception {
 		redo(program);
 		waitForProgram(program);
-	}
-
-	private void checkTableValues() throws Exception {
-		Iterator<Equate> iter = et.getEquates();
-		List<Equate> list = CollectionUtils.asList(iter);
-
-		Collections.sort(list, (e1, e2) -> e1.getName().compareTo(e2.getName()));
-		assertEquals(list.size(), equatesModel.getRowCount());
-
-		TableCellRenderer nameRenderer = getRenderer(EquateTableModel.NAME_COL);
-		TableCellRenderer valueRenderer = getRenderer(EquateTableModel.VALUE_COL);
-		TableCellRenderer refCountRenderer = getRenderer(EquateTableModel.REFS_COL);
-
-		for (int i = 0; i < list.size(); i++) {
-
-			Equate eq = list.get(i);
-			Rectangle rect = equatesTable.getCellRect(i, EquateTableModel.NAME_COL, true);
-			runSwing(() -> equatesTable.scrollRectToVisible(rect));
-
-			String value = getRenderedValue(nameRenderer, i, EquateTableModel.NAME_COL);
-			assertEquals("Name not equal at index: " + i, eq.getName(), value);
-
-			// The value column is default-rendered as hex
-			value = getRenderedValue(valueRenderer, i, EquateTableModel.VALUE_COL);
-			assertEquals("Value not equal at index: " + i, Long.toHexString(eq.getValue()) + "h",
-				value);
-
-			value = getRenderedValue(refCountRenderer, i, EquateTableModel.REFS_COL);
-			assertEquals("Reference count not equal at index: " + i,
-				Integer.toString(eq.getReferenceCount()), value);
-		}
 	}
 
 	private String getRenderedValue(TableCellRenderer renderer, int row, int column) {
