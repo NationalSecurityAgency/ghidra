@@ -98,7 +98,7 @@ public class GListCellRenderer<E> extends AbstractGCellRenderer implements ListC
 				setBackground(Palette.CYAN);
 			}
 			else {
-				setBackground(getOSDependentBackgroundColor(list, index));
+				setBackground(getAlternatingBackgroundColor(list, index));
 			}
 		}
 

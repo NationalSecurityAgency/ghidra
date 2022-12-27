@@ -28,6 +28,7 @@ import java.util.List;
 
 import javax.swing.*;
 import javax.swing.event.*;
+import javax.swing.plaf.TableUI;
 import javax.swing.table.*;
 
 import docking.*;
@@ -39,6 +40,7 @@ import docking.widgets.OptionDialog;
 import docking.widgets.dialogs.SettingsDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import generic.theme.GIcon;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.docking.settings.*;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.*;
@@ -92,11 +94,22 @@ public class GTable extends JTable {
 
 	private AutoLookup autoLookup = createAutoLookup();
 
-	/** A list of default renderers created by this table */
-	protected List<TableCellRenderer> defaultGTableRendererList = new ArrayList<>();
 	private boolean htmlRenderingEnabled;
 	private String preferenceKey;
 
+	private MouseListener selectRowListener = new MouseAdapter() {
+		@Override
+		public void mousePressed(MouseEvent e) {
+			if (e.getButton() == MouseEvent.BUTTON3) {
+				int row = rowAtPoint(e.getPoint());
+				if (row >= 0) {
+					if (!isRowSelected(row)) {
+						setRowSelectionInterval(row, row);
+					}
+				}
+			}
+		}
+	};
 	private GTableMouseListener headerMouseListener;
 	private JPopupMenu tableHeaderPopupMenu;
 	private boolean columnHeaderPopupEnabled = true;
@@ -118,7 +131,7 @@ public class GTable extends JTable {
 	 * Constructs a new GTable
 	 */
 	public GTable() {
-		init();
+		// default constructor
 	}
 
 	/**
@@ -127,6 +140,11 @@ public class GTable extends JTable {
 	 */
 	public GTable(TableModel dm) {
 		super(dm);
+	}
+
+	@Override
+	public void setUI(TableUI ui) {
+		super.setUI(ui);
 		init();
 	}
 
@@ -418,6 +436,9 @@ public class GTable extends JTable {
 	}
 
 	private void init() {
+
+		setBackground(Colors.BACKGROUND);
+
 		ToolTipManager.sharedInstance().unregisterComponent(this);
 		ToolTipManager.sharedInstance().registerComponent(this);
 		setTableHeader(new GTableHeader(this));
@@ -434,25 +455,18 @@ public class GTable extends JTable {
 
 		setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
 
-		addMouseListener(new MouseAdapter() {
-			@Override
-			public void mousePressed(MouseEvent e) {
-				if (e.getButton() == MouseEvent.BUTTON3) {
-					int row = rowAtPoint(e.getPoint());
-					if (row >= 0) {
-						if (!isRowSelected(row)) {
-							setRowSelectionInterval(row, row);
-						}
-					}
-				}
-			}
-		});
+		removeMouseListener(selectRowListener);
+		addMouseListener(selectRowListener);
 
 		removeActionKeyStrokes();
 
 		// updating the row height requires the 'isInitialized' to be set, so do it first
 		isInitialized = true;
 		initializeRowHeight();
+
+		// this call is needed if the UI is switched, as we must tell the parent scroll pane that
+		// the header has been changed
+		configureEnclosingScrollPane();
 	}
 
 	private void removeActionKeyStrokes() {
@@ -627,9 +641,11 @@ public class GTable extends JTable {
 			return renderer; // already wrapped
 		}
 		if (renderer instanceof GTableCellRenderer) {
-			setDefaultRenderer(columnClass, renderer);
+			// not sure why this was here; keeping around for a bit just in case
+			// setDefaultRenderer(columnClass, renderer);
 			return renderer;
 		}
+
 		DefaultTableCellRendererWrapper wrapper = new DefaultTableCellRendererWrapper(renderer);
 		setDefaultRenderer(columnClass, wrapper); // cache for later use    	
 		return wrapper;
@@ -649,13 +665,10 @@ public class GTable extends JTable {
 		setDefaultRenderer(Short.class, gTableCellRenderer);
 		setDefaultRenderer(Integer.class, gTableCellRenderer);
 		setDefaultRenderer(Long.class, gTableCellRenderer);
-
 		setDefaultRenderer(Float.class, gTableCellRenderer);
 		setDefaultRenderer(Double.class, gTableCellRenderer);
 
 		setDefaultRenderer(Boolean.class, new GBooleanCellRenderer());
-
-		defaultGTableRendererList.add(gTableCellRenderer);
 	}
 
 	private void disableGridLines() {
@@ -788,14 +801,6 @@ public class GTable extends JTable {
 	 *         HTML content, which they do not do by default.</li>
 	 * </ul>
 	 * <p>
-	 * As mentioned above, this class only enables/disables the HTML rendering on
-	 * {@link GTableCellRenderer} instances that were created by this class (or subclasses)
-	 * during initialization in {@link #initDefaultRenderers()} and that have been added to the
-	 * {@link #defaultGTableRendererList}.  If users of this class have changed or added new
-	 * renderers, then those renderers will not be changed by calling this method.  Typically,
-	 * this method should be called just after created an instance of this class, which will work
-	 * as described by this method.
-	 * <p>
 	 * HTML rendering is disabled by default.
 	 *
 	 * @param enable true to enable HTML rendering; false to disable it
@@ -803,9 +808,9 @@ public class GTable extends JTable {
 	public void setHTMLRenderingEnabled(boolean enable) {
 		htmlRenderingEnabled = enable;
 
-		for (TableCellRenderer renderer : defaultGTableRendererList) {
-			if (renderer instanceof GTableCellRenderer) {
-				GTableCellRenderer gRenderer = (GTableCellRenderer) renderer;
+		Collection<Object> renderers = defaultRenderersByColumnClass.values();
+		for (Object object : renderers) {
+			if (object instanceof GTableCellRenderer gRenderer) {
 				gRenderer.setHTMLRenderingEnabled(enable);
 			}
 		}

@@ -55,6 +55,10 @@ public class GTableHeaderRenderer extends DefaultTableCellRenderer {
 	public Component getTableCellRendererComponent(JTable table, Object value,
 			boolean isSelected, boolean hasFocus, int row, int column) {
 
+		if (table == null) {
+			return this; // not sure when this can happen, but Java class protect against this case
+		}
+
 		JTableHeader header = table.getTableHeader();
 		delegate = header.getDefaultRenderer();
 

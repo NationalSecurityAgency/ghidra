@@ -217,6 +217,9 @@ public class GTree extends JPanel implements BusyListener, ThemeListener {
 	}
 
 	private void init() {
+
+		setBackground(BACKGROUND);
+
 		tree = new AutoScrollTree(model);
 
 		setLayout(new BorderLayout());

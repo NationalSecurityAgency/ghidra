@@ -168,7 +168,7 @@ public class GTableCellRenderer extends AbstractGCellRenderer implements TableCe
 				setBackground(BG_DRAG);
 			}
 			else {
-				setBackground(getOSDependentBackgroundColor(table, row));
+				setBackground(getAlternatingBackgroundColor(table, row));
 			}
 		}
 
