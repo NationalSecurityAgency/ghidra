@@ -338,6 +338,7 @@ public class OmfFileHeader extends OmfRecord {
 				header.externsymbols.add((OmfExternalSymbol)record);
 				break;
 			case PUBDEF:
+			case LPUBDEF:
 				header.symbols.add((OmfSymbolRecord)record);
 				break;
 			case LINNUM:
