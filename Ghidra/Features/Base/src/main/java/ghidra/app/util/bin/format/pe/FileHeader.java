@@ -318,7 +318,7 @@ public class FileHeader implements StructConverter {
 		return ptrToSections;
 	}
 
-	void processSections(OptionalHeader optHeader) throws IOException {
+	void processSections(OptionalHeader optHeader, boolean symbolsProcessed) throws IOException {
 		long oldIndex = reader.getPointerIndex();
 
 		int tmpIndex = getPointerToSections();
@@ -329,7 +329,7 @@ public class FileHeader implements StructConverter {
 			Msg.error(this, "File alignment == 0: section processing skipped");
 		}
 		else {
-			long stringTableOffset = getStringTableOffset();
+			long stringTableOffset = symbolsProcessed ? getStringTableOffset() : -1;
 			sectionHeaders = new SectionHeader[numberOfSections];
 			for (int i = 0; i < numberOfSections; ++i) {
 				SectionHeader section =
