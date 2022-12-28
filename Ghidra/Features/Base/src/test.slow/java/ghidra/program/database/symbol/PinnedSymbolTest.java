@@ -106,7 +106,7 @@ public class PinnedSymbolTest extends AbstractGhidraHeadlessIntegrationTest {
 
 		Memory memory = program.getMemory();
 		MemoryBlock block = memory.getBlock(addr(0));
-		memory.moveBlock(block, addr(moveAmount), TaskMonitorAdapter.DUMMY_MONITOR);
+		memory.moveBlock(block, addr(moveAmount), TaskMonitor.DUMMY);
 
 		checkProcessorSymbolsInPlace(EXPECTED_PROCESSOR_SYMBOLS + EXPECTED_USER_SYMBOLS + 1);
 
@@ -136,7 +136,7 @@ public class PinnedSymbolTest extends AbstractGhidraHeadlessIntegrationTest {
 
 		Memory memory = program.getMemory();
 		MemoryBlock block = memory.getBlock(addr(0));
-		memory.removeBlock(block, TaskMonitorAdapter.DUMMY_MONITOR);
+		memory.removeBlock(block, TaskMonitor.DUMMY);
 
 		checkProcessorSymbolsInPlace(EXPECTED_PROCESSOR_SYMBOLS + 1);
 
@@ -308,7 +308,7 @@ public class PinnedSymbolTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	private void createMemBlock() throws Exception {
 		byte[] bytesOne = new byte[100];
-		TaskMonitor m = TaskMonitorAdapter.DUMMY_MONITOR;
+		TaskMonitor m = TaskMonitor.DUMMY;
 		program.getMemory().createInitializedBlock("B1", addr(0),
 			new ByteArrayInputStream(bytesOne), bytesOne.length, m, false);
 

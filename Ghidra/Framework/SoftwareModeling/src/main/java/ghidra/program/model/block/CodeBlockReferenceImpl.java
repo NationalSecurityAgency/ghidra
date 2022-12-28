@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +18,7 @@ package ghidra.program.model.block;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.symbol.FlowType;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  *  CodeBlockReferenceImpl implements a CodeBlockReference.
@@ -99,7 +98,7 @@ public class CodeBlockReferenceImpl implements CodeBlockReference {
 			CodeBlockModel model = blockHave.getModel();
 			try {
 				blockNeeded =
-					model.getFirstCodeBlockContaining(addrInBlock, TaskMonitorAdapter.DUMMY_MONITOR);
+					model.getFirstCodeBlockContaining(addrInBlock, TaskMonitor.DUMMY);
 			}
 			catch (CancelledException e) {
 				// can't happen, dummy monitor can't be canceled

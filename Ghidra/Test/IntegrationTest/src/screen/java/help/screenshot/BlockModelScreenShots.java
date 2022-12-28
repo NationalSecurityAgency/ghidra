@@ -38,7 +38,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.block.*;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class BlockModelScreenShots extends GhidraScreenShotGenerator {
 
@@ -104,7 +104,7 @@ public class BlockModelScreenShots extends GhidraScreenShotGenerator {
 			CodeBlockIterator iterator;
 			try {
 				iterator = basicBlockModel.getCodeBlocksContaining(addressSet,
-					TaskMonitorAdapter.DUMMY_MONITOR);
+					TaskMonitor.DUMMY);
 
 				while (iterator.hasNext()) {
 					CodeBlock block = iterator.next();

@@ -33,7 +33,7 @@ import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.Lock;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class AddressRangeMapDBTest extends AbstractGhidraHeadedIntegrationTest
 		implements ErrorHandler {
@@ -280,7 +280,7 @@ public class AddressRangeMapDBTest extends AbstractGhidraHeadedIntegrationTest
 
 			try {
 				map.moveAddressRange(addr(0x0100000000L), addr(0x0100001000L), 0x1000,
-					TaskMonitorAdapter.DUMMY_MONITOR);
+					TaskMonitor.DUMMY);
 			}
 			catch (CancelledException e) {
 				Assert.fail();

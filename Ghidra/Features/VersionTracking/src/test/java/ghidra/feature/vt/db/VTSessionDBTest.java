@@ -71,7 +71,7 @@ public class VTSessionDBTest extends VTBaseTestCase {
 //		
 //		GhidraProject project = GhidraProject.createProject( "C:\\Temp\\", "GhidrProject", true );
 //		DomainFolder rootFolder = project.getRootFolder();
-//		DomainFile file = rootFolder.createFile( "foop", db, TaskMonitorAdapter.DUMMY_MONITOR );
+//		DomainFile file = rootFolder.createFile( "foop", db, TaskMonitor.DUMMY );
 //		
 //		Program sourceProgram = db.getSourceProgram();
 //		Program destinationProgram = db.getDestinationProgram();
@@ -79,7 +79,7 @@ public class VTSessionDBTest extends VTBaseTestCase {
 //		db.close();
 //		
 //		DomainObject domainObject = file.getDomainObject( null, false, false, 
-//			TaskMonitorAdapter.DUMMY_MONITOR );
+//			TaskMonitor.DUMMY );
 //		assertTrue( domainObject instanceof VTSessionDB );
 //		assertEquals( "foop", domainObject.getName() );
 //		

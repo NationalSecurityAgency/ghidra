@@ -2237,7 +2237,7 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 				try {
 					BookmarkManager bookMgr = program.getBookmarkManager();
 					Address addr = addr(program, "0x004010a0");
-					bookMgr.removeBookmarks(new AddressSet(addr), TaskMonitorAdapter.DUMMY_MONITOR);
+					bookMgr.removeBookmarks(new AddressSet(addr), TaskMonitor.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -2567,12 +2567,12 @@ public class RepositoryScreenShots extends AbstractListingMergeManagerTest {
 
 		FrontEndTool frontEndTool = env.showFrontEndTool();
 		DomainFolder rootFolder = frontEndTool.getProject().getProjectData().getRootFolder();
-		TaskMonitor dummyMonitor = TaskMonitorAdapter.DUMMY_MONITOR;
+		TaskMonitor dummyMonitor = TaskMonitor.DUMMY;
 		DomainFile myTestArchiveDF =
 			env.restoreDataTypeArchive("MyTestArchive.gdt", rootFolder);
 		final DataTypeArchive myTestArchive =
 			(DataTypeArchiveDB) myTestArchiveDF.getDomainObject(this, true, false,
-				TaskMonitorAdapter.DUMMY_MONITOR);
+				TaskMonitor.DUMMY);
 
 		final CategoryPath sourceCatPath = new CategoryPath("/Category1/Category2/Category5");
 		final DataType floatStruct =

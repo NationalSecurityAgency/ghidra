@@ -49,7 +49,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskLauncher;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class ProgramManagerPluginScreenShots extends GhidraScreenShotGenerator
 		implements CheckinHandler {
@@ -113,7 +113,7 @@ public class ProgramManagerPluginScreenShots extends GhidraScreenShotGenerator
 		ProjectData projectData = project.getProjectData();
 		projectData.getRootFolder()
 				.createFile("WinHelloCpp.exe", program,
-					TaskMonitorAdapter.DUMMY_MONITOR);
+					TaskMonitor.DUMMY);
 
 		DomainFile df = program.getDomainFile();
 
@@ -310,7 +310,7 @@ public class ProgramManagerPluginScreenShots extends GhidraScreenShotGenerator
 			String programName = "Program" + (i + 1) + ".exe";
 			list.add(projectData.getRootFolder()
 					.createFile(programName, program,
-						TaskMonitorAdapter.DUMMY_MONITOR));
+						TaskMonitor.DUMMY));
 
 		}
 		program.flushEvents();
@@ -350,7 +350,7 @@ public class ProgramManagerPluginScreenShots extends GhidraScreenShotGenerator
 		TaskLauncher.launchModal(comment, () -> {
 			try {
 				domainFile.addToVersionControl(comment, keepItCheckedOut,
-					TaskMonitorAdapter.DUMMY_MONITOR);
+					TaskMonitor.DUMMY);
 			}
 			catch (CancelledException | IOException e) {
 				throw new RuntimeException(e);

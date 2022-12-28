@@ -227,7 +227,7 @@ public class FieldHeader extends JTabbedPane implements ChangeListener {
 //		try {
 //			ClassSearcher.setXmlRestoreFile(GenericRunInfo.getUserDataDirPath() +
 //				File.separatorChar + "TestClasses.xml");
-//			ClassSearcher.search(false, TaskMonitorAdapter.DUMMY_MONITOR);
+//			ClassSearcher.search(false, TaskMonitor.DUMMY);
 //		}
 //		catch (CancelledException e) {
 //			// can't happen--dummy monitor
