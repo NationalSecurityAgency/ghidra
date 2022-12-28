@@ -27,7 +27,7 @@ import db.buffers.BufferFile;
 import db.buffers.LocalBufferFile;
 import generic.jar.ResourceFile;
 import generic.test.AbstractGenericTest;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 import utilities.util.FileUtilities;
 
 public class PackedDatabaseTest extends AbstractGenericTest {
@@ -107,7 +107,7 @@ public class PackedDatabaseTest extends AbstractGenericTest {
 		assertTrue(packedDbFile.exists());
 
 		// Open packed db as read-only and verify content
-		db = PackedDatabase.getPackedDatabase(packedDbFile, TaskMonitorAdapter.DUMMY_MONITOR);
+		db = PackedDatabase.getPackedDatabase(packedDbFile, TaskMonitor.DUMMY);
 		assertEquals("MyContent", db.getContentType());
 		dbh = (PackedDBHandle) db.open(null);
 
@@ -133,7 +133,7 @@ public class PackedDatabaseTest extends AbstractGenericTest {
 		db.dispose();
 
 		// open for update
-		db = PackedDatabase.getPackedDatabase(packedDbFile, true, TaskMonitorAdapter.DUMMY_MONITOR);
+		db = PackedDatabase.getPackedDatabase(packedDbFile, true, TaskMonitor.DUMMY);
 		dbh = (PackedDBHandle) db.openForUpdate(null);
 
 		// add record - hold for update
@@ -146,7 +146,7 @@ public class PackedDatabaseTest extends AbstractGenericTest {
 		dbh.save(null);
 
 		// Test concurrent access by another user
-		db2 = PackedDatabase.getPackedDatabase(packedDbFile, TaskMonitorAdapter.DUMMY_MONITOR);
+		db2 = PackedDatabase.getPackedDatabase(packedDbFile, TaskMonitor.DUMMY);
 		assertEquals("MyContent", db2.getContentType());
 
 		// Second update access should fail
@@ -183,7 +183,7 @@ public class PackedDatabaseTest extends AbstractGenericTest {
 		assertTrue(packedDbFile.exists());
 
 		// Open packed db as read-only
-		db = PackedDatabase.getPackedDatabase(packedDbFile, true, TaskMonitorAdapter.DUMMY_MONITOR);
+		db = PackedDatabase.getPackedDatabase(packedDbFile, true, TaskMonitor.DUMMY);
 		assertEquals("MyContent", db.getContentType());
 		dbh = (PackedDBHandle) db.open(null);
 		assertEquals(id, dbh.getDatabaseId());
@@ -205,7 +205,7 @@ public class PackedDatabaseTest extends AbstractGenericTest {
 			db.dispose();
 
 			// Open packed db as read-only
-			db = PackedDatabase.getPackedDatabase(anotherNewFile, TaskMonitorAdapter.DUMMY_MONITOR);
+			db = PackedDatabase.getPackedDatabase(anotherNewFile, TaskMonitor.DUMMY);
 			assertEquals("MyContent", db.getContentType());
 			dbh = (PackedDBHandle) db.open(null);
 			assertEquals(newId, dbh.getDatabaseId());
@@ -228,7 +228,7 @@ public class PackedDatabaseTest extends AbstractGenericTest {
 		assertTrue(packedDbFile.exists());
 
 		// Open packed db as read-only and verify content
-		db = PackedDatabase.getPackedDatabase(packedDbFile, true, TaskMonitorAdapter.DUMMY_MONITOR);
+		db = PackedDatabase.getPackedDatabase(packedDbFile, true, TaskMonitor.DUMMY);
 		File dbDir = (File) getInstanceField("dbDir", db);
 		File tmpDbDir = new File(dbDir.getParentFile(), dbDir.getName() + ".delete");
 
@@ -252,7 +252,7 @@ public class PackedDatabaseTest extends AbstractGenericTest {
 		assertTrue(packedDbFile.exists());
 
 		// Open packed db as read-only and verify content
-		db = PackedDatabase.getPackedDatabase(packedDbFile, TaskMonitorAdapter.DUMMY_MONITOR);
+		db = PackedDatabase.getPackedDatabase(packedDbFile, TaskMonitor.DUMMY);
 		File dbDir = (File) getInstanceField("dbDir", db);
 		File tmpDbDir = new File(dbDir.getParentFile(), dbDir.getName() + ".delete");
 
@@ -276,11 +276,11 @@ public class PackedDatabaseTest extends AbstractGenericTest {
 		assertTrue(packedDbFile.exists());
 
 		// Open packed db as read-only and verify content
-		db = PackedDatabase.getPackedDatabase(packedDbFile, true, TaskMonitorAdapter.DUMMY_MONITOR);
+		db = PackedDatabase.getPackedDatabase(packedDbFile, true, TaskMonitor.DUMMY);
 		File dbDir = (File) getInstanceField("dbDir", db);
 		File tmpDbDir = new File(dbDir.getParentFile(), dbDir.getName() + ".delete");
 
-		dbh = (PackedDBHandle) db.open(TaskMonitorAdapter.DUMMY_MONITOR);
+		dbh = (PackedDBHandle) db.open(TaskMonitor.DUMMY);
 
 		assertTrue(dbDir.isDirectory());
 		assertTrue(!tmpDbDir.exists());
@@ -311,10 +311,10 @@ public class PackedDatabaseTest extends AbstractGenericTest {
 
 		try {
 			// Open packed db as read-only and verify content
-			db = PackedDatabase.getPackedDatabase(commaFile, TaskMonitorAdapter.DUMMY_MONITOR);
+			db = PackedDatabase.getPackedDatabase(commaFile, TaskMonitor.DUMMY);
 			File dbDir = (File) getInstanceField("dbDir", db);
 
-			dbh = (PackedDBHandle) db.open(TaskMonitorAdapter.DUMMY_MONITOR);
+			dbh = (PackedDBHandle) db.open(TaskMonitor.DUMMY);
 
 			assertTrue(dbDir.isDirectory());
 			assertTrue(cache.isInCache(dbFile));
@@ -325,7 +325,7 @@ public class PackedDatabaseTest extends AbstractGenericTest {
 			assertTrue(dbDir.exists());
 			assertTrue(cache.isInCache(dbFile));
 
-			PackedDatabase cachedDB = cache.getCachedDB(dbFile, TaskMonitorAdapter.DUMMY_MONITOR);
+			PackedDatabase cachedDB = cache.getCachedDB(dbFile, TaskMonitor.DUMMY);
 			assertNotNull(cachedDB);
 			cachedDB.dispose();
 
@@ -333,8 +333,8 @@ public class PackedDatabaseTest extends AbstractGenericTest {
 			assertTrue(cache.isInCache(dbFile));
 
 			// reopen
-			db = PackedDatabase.getPackedDatabase(commaFile, TaskMonitorAdapter.DUMMY_MONITOR);
-			dbh = (PackedDBHandle) db.open(TaskMonitorAdapter.DUMMY_MONITOR);
+			db = PackedDatabase.getPackedDatabase(commaFile, TaskMonitor.DUMMY);
+			dbh = (PackedDBHandle) db.open(TaskMonitor.DUMMY);
 
 			assertEquals(dbDir, getInstanceField("dbDir", db));
 
@@ -364,11 +364,11 @@ public class PackedDatabaseTest extends AbstractGenericTest {
 
 		try {
 			// Open packed db as read-only and verify content
-			db = PackedDatabase.getPackedDatabase(packedDbFile, TaskMonitorAdapter.DUMMY_MONITOR);
+			db = PackedDatabase.getPackedDatabase(packedDbFile, TaskMonitor.DUMMY);
 			File dbDir = (File) getInstanceField("dbDir", db);
 			File tmpDbDir = new File(dbDir.getParentFile(), dbDir.getName() + ".delete");
 
-			dbh = (PackedDBHandle) db.open(TaskMonitorAdapter.DUMMY_MONITOR);
+			dbh = (PackedDBHandle) db.open(TaskMonitor.DUMMY);
 
 			assertTrue(dbDir.isDirectory());
 			assertTrue(!tmpDbDir.exists());
@@ -394,7 +394,7 @@ public class PackedDatabaseTest extends AbstractGenericTest {
 		assertTrue(packedDbFile.exists());
 
 		// Open packed db as read-only and verify content
-		db = PackedDatabase.getPackedDatabase(packedDbFile, true, TaskMonitorAdapter.DUMMY_MONITOR);
+		db = PackedDatabase.getPackedDatabase(packedDbFile, true, TaskMonitor.DUMMY);
 		File dbDir = (File) getInstanceField("dbDir", db);
 		File tmpDbDir = new File(dbDir.getParentFile(), dbDir.getName() + ".delete");
 
@@ -405,13 +405,13 @@ public class PackedDatabaseTest extends AbstractGenericTest {
 
 		BufferFile bf = null;
 
-		dbh = (PackedDBHandle) db.open(TaskMonitorAdapter.DUMMY_MONITOR);
+		dbh = (PackedDBHandle) db.open(TaskMonitor.DUMMY);
 
 		assertTrue(dbDir.isDirectory());
 		assertTrue(!tmpDbDir.exists());
 
 		bf = new LocalBufferFile(tmpFile1, dbh.getBufferSize());
-		dbh.saveAs(bf, false, TaskMonitorAdapter.DUMMY_MONITOR);
+		dbh.saveAs(bf, false, TaskMonitor.DUMMY);
 		assertTrue(bf.isReadOnly());
 		bf.dispose();
 
@@ -422,7 +422,7 @@ public class PackedDatabaseTest extends AbstractGenericTest {
 		assertTrue(tmpFile1.exists()); // still in-use
 
 		bf = new LocalBufferFile(tmpFile2, dbh.getBufferSize());
-		dbh.saveAs(bf, true, TaskMonitorAdapter.DUMMY_MONITOR);
+		dbh.saveAs(bf, true, TaskMonitor.DUMMY);
 		assertTrue(bf.isReadOnly());
 
 		assertTrue(tmpFile1.exists()); // no longer in-use

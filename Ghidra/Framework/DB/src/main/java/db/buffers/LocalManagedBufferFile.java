@@ -607,7 +607,7 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 	@Override
 	public synchronized ManagedBufferFile getSaveFile() throws IOException {
 		try {
-			return getSaveFile(TaskMonitorAdapter.DUMMY_MONITOR);
+			return getSaveFile(TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
 			// unexpected

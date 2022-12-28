@@ -278,7 +278,7 @@ public class ProgramMemoryUtil {
 			TaskMonitor monitor) throws CancelledException {
 
 		if (monitor == null) {
-			monitor = TaskMonitorAdapter.DUMMY_MONITOR;
+			monitor = TaskMonitor.DUMMY;
 		}
 
 		Memory memory = program.getMemory();
@@ -421,7 +421,7 @@ public class ProgramMemoryUtil {
 			CodeUnit codeUnit, TaskMonitor monitor) {
 
 		if (monitor == null) {
-			monitor = TaskMonitorAdapter.DUMMY_MONITOR;
+			monitor = TaskMonitor.DUMMY;
 		}
 
 		AddressSet toAddressSet =
@@ -490,7 +490,7 @@ public class ProgramMemoryUtil {
 			int alignment, Address toAddress, TaskMonitor monitor) throws CancelledException {
 
 		if (monitor == null) {
-			monitor = TaskMonitorAdapter.DUMMY_MONITOR;
+			monitor = TaskMonitor.DUMMY;
 		}
 
 		byte[] addressBytes = getDirectAddressBytes(program, toAddress);
@@ -634,7 +634,7 @@ public class ProgramMemoryUtil {
 			Address toAddress, TaskMonitor monitor) throws CancelledException {
 
 		if (monitor == null) {
-			monitor = TaskMonitorAdapter.DUMMY_MONITOR;
+			monitor = TaskMonitor.DUMMY;
 		}
 
 		Memory memory = program.getMemory();

@@ -286,7 +286,7 @@ public class PartitionCodeSubModel implements SubroutineBlockModel {
 		// Determine if block is terminal
 		try {
 			CodeBlockReferenceIterator iter =
-				new SubroutineDestReferenceIterator(block, TaskMonitorAdapter.DUMMY_MONITOR);
+				new SubroutineDestReferenceIterator(block, TaskMonitor.DUMMY);
 			while (iter.hasNext()) {
 				if (!iter.next().getFlowType().isCall()) {
 					return RefType.FLOW;

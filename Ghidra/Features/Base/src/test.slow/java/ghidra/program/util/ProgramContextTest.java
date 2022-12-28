@@ -82,7 +82,7 @@ public class ProgramContextTest extends AbstractGhidraHeadedIntegrationTest {
 			Address start = addr(0);
 			try {
 				mem.createInitializedBlock("first", start, 100, (byte) 0,
-					TaskMonitorAdapter.DUMMY_MONITOR, false);
+					TaskMonitor.DUMMY, false);
 			}
 			catch (Exception e) {
 				Assert.fail("TestProgramContext: couldn't add block to memory");

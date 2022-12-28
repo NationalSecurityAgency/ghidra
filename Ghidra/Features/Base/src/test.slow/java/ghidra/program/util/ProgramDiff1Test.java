@@ -686,7 +686,7 @@ public class ProgramDiff1Test extends AbstractGhidraHeadedIntegrationTest {
 		programDiff.setFilter(new ProgramDiffFilter(ProgramDiffFilter.USER_DEFINED_DIFFS));
 		AddressSetView expectedSet = (AddressSet) invokeInstanceMethod("adjustCodeUnitAddressSet",
 			programDiff, new Class[] { AddressSetView.class, Listing.class, TaskMonitor.class },
-			new Object[] { as, p1.getListing(), TaskMonitorAdapter.DUMMY_MONITOR });
+			new Object[] { as, p1.getListing(), TaskMonitor.DUMMY });
 		AddressSetView diffSet = programDiff.getDifferences(programDiff.getFilter(), null);
 		assertEquals(expectedSet, diffSet);
 	}

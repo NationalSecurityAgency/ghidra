@@ -18,16 +18,12 @@
 import java.io.File;
 import java.io.IOException;
 
-import db.DBHandle;
-import db.DBRecord;
-import db.RecordIterator;
-import db.Schema;
-import db.Table;
+import db.*;
 import ghidra.app.script.GhidraScript;
 import ghidra.framework.store.db.PackedDBHandle;
 import ghidra.framework.store.db.PackedDatabase;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class RepackFid extends GhidraScript {
 
@@ -61,8 +57,8 @@ public class RepackFid extends GhidraScript {
 	protected void run() throws Exception {
 		File file = askFile("Select FID database file to repack","OK");
 		PackedDatabase pdb;
-		pdb = PackedDatabase.getPackedDatabase(file, false, TaskMonitorAdapter.DUMMY_MONITOR);
-		DBHandle handle = pdb.open(TaskMonitorAdapter.DUMMY_MONITOR);
+		pdb = PackedDatabase.getPackedDatabase(file, false, TaskMonitor.DUMMY);
+		DBHandle handle = pdb.open(TaskMonitor.DUMMY);
 		File saveFile = askFile("Select name for copy","OK");
 		PackedDBHandle newHandle = new PackedDBHandle(pdb.getContentType());
 
@@ -72,7 +68,7 @@ public class RepackFid extends GhidraScript {
 			copyTable(tables[i],newHandle);
 			newHandle.endTransaction(transactionID, true);			
 		}
-		newHandle.saveAs(pdb.getContentType(), saveFile.getParentFile(),saveFile.getName(), TaskMonitorAdapter.DUMMY_MONITOR);
+		newHandle.saveAs(pdb.getContentType(), saveFile.getParentFile(),saveFile.getName(), TaskMonitor.DUMMY);
 		newHandle.close();
 	}
 }

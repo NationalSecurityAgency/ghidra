@@ -212,7 +212,7 @@ public class MatchInfo {
 		try {
 			correlatedDestinationRange =
 				addressTranslator.getCorrelatedDestinationRange(sourceAddress,
-					TaskMonitorAdapter.DUMMY_MONITOR);
+					TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
 			// check for null below

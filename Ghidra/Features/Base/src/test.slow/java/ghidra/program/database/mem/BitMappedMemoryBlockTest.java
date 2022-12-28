@@ -25,7 +25,7 @@ import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Test for the BitMemoryBlock for the database implementation.
@@ -60,7 +60,7 @@ public class BitMappedMemoryBlockTest extends AbstractGhidraHeadedIntegrationTes
 		transactionID = program.startTransaction("Test");
 
 		block = memory.createInitializedBlock("BYTE_BLOCK", byteSpace.getAddress(0), bytes.length,
-			(byte) 0, TaskMonitorAdapter.DUMMY_MONITOR, false);
+			(byte) 0, TaskMonitor.DUMMY, false);
 		memory.setBytes(block.getStart(), bytes);
 	}
 
