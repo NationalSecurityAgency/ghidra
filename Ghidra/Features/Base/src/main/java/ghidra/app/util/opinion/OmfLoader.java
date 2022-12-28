@@ -115,7 +115,7 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 		OmfFileHeader header = null;
 		BinaryReader reader = OmfFileHeader.createReader(provider);
 		try {
-			header = OmfFileHeader.parse(reader, monitor);
+			header = OmfFileHeader.parse(reader, monitor, log);
 			header.resolveNames();
 			header.sortSegmentDataBlocks();
 			OmfFileHeader.doLinking(IMAGE_BASE, header.getSegments(), header.getGroups());
