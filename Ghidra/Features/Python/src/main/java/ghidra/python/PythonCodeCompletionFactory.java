@@ -194,7 +194,7 @@ public class PythonCodeCompletionFactory {
 			PyObject pyObj) {
 		return newCodeCompletion(description, insertion, pyObj, "");
 	}
-	
+
 	/**
 	 * Creates a new CodeCompletion from the given Python objects.
 	 * 
@@ -235,7 +235,7 @@ public class PythonCodeCompletionFactory {
 				}
 			}
 		}
-		
+
 		int charsToRemove = userInput.length();
 		return new CodeCompletion(description, insertion, comp, charsToRemove);
 	}
@@ -249,18 +249,6 @@ public class PythonCodeCompletionFactory {
 		includeTypes = options.getBoolean(INCLUDE_TYPES_LABEL, INCLUDE_TYPES_DEFAULT);
 		options.registerOption(INCLUDE_TYPES_LABEL, INCLUDE_TYPES_DEFAULT, null,
 			INCLUDE_TYPES_DESCRIPTION);
-
-		Iterator<?> iter = classes.iterator();
-		while (iter.hasNext()) {
-			Class<?> currentClass = (Class<?>) iter.next();
-			options.registerOption(
-				COMPLETION_LABEL + Options.DELIMITER + getSimpleName(currentClass),
-				classToColorMap.get(currentClass), null,
-				"Color to use for " + classDescription.get(currentClass) + ".");
-			classToColorMap.put(currentClass,
-				options.getColor(COMPLETION_LABEL + Options.DELIMITER + getSimpleName(currentClass),
-					classToColorMap.get(currentClass)));
-		}
 	}
 
 	/**
@@ -279,13 +267,7 @@ public class PythonCodeCompletionFactory {
 	 */
 	public static void changeOptions(Options options, String name, Object oldValue,
 			Object newValue) {
-		String classSimpleName = name.substring((COMPLETION_LABEL + Options.DELIMITER).length());
-		Class<?> klass = simpleNameToClass.get(classSimpleName);
-
-		if (classToColorMap.containsKey(klass)) {
-			classToColorMap.put(klass, (Color) newValue);
-		}
-		else if (name.equals(INCLUDE_TYPES_LABEL)) {
+		if (name.equals(INCLUDE_TYPES_LABEL)) {
 			includeTypes = ((Boolean) newValue).booleanValue();
 		}
 		else {

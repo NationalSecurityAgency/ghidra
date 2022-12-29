@@ -50,8 +50,9 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 		"This is the font that will be used in the Console.  " +
 			"Double-click the font example to change it.";
 
-	private static final Color NORMAL_COLOR = new GColor("color.fg.interpreterpanel");
-	private static final Color ERROR_COLOR = new GColor("color.fg.interpreterpanel.error");
+	private static final Color NORMAL_COLOR = new GColor("color.fg.interpreterconsole");
+	private static final Color ERROR_COLOR = new GColor("color.fg.interpreterconsole.error");
+	private static final Color BG_COLOR = new GColor("color.bg.interpreterconsole");
 
 	public enum TextType {
 		STDOUT, STDERR, STDIN;
@@ -126,6 +127,10 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 		promptTextPane = new JTextPane();
 		inputTextPane = new JTextPane();
 		inputTextPane.setName("Interpreter Input Field");
+
+		outputTextPane.setBackground(BG_COLOR);
+		promptTextPane.setBackground(BG_COLOR);
+		inputTextPane.setBackground(BG_COLOR);
 
 		history = new HistoryManagerImpl();
 
