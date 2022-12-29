@@ -23,6 +23,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 import docking.DialogComponentProvider;
+import docking.widgets.button.GButton;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.trace.model.Trace;
@@ -72,11 +73,11 @@ public class DebuggerTimeSelectionDialog extends DialogComponentProvider {
 			scheduleText = new JTextField();
 			hbox.add(scheduleText);
 			hbox.add(new JLabel("Ticks: "));
-			hbox.add(tickBack = new JButton(DebuggerResources.ICON_STEP_BACK));
-			hbox.add(tickStep = new JButton(DebuggerResources.ICON_STEP_INTO));
+			hbox.add(tickBack = new GButton(DebuggerResources.ICON_STEP_BACK));
+			hbox.add(tickStep = new GButton(DebuggerResources.ICON_STEP_INTO));
 			hbox.add(new JLabel("Ops: "));
-			hbox.add(opBack = new JButton(DebuggerResources.ICON_STEP_BACK));
-			hbox.add(opStep = new JButton(DebuggerResources.ICON_STEP_INTO));
+			hbox.add(opBack = new GButton(DebuggerResources.ICON_STEP_BACK));
+			hbox.add(opStep = new GButton(DebuggerResources.ICON_STEP_INTO));
 			workPanel.add(hbox, BorderLayout.NORTH);
 		}
 

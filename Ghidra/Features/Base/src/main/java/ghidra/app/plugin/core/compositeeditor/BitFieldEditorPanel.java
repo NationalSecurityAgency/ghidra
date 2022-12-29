@@ -27,6 +27,7 @@ import com.google.common.base.Predicate;
 import docking.ActionContext;
 import docking.widgets.DropDownSelectionTextField;
 import docking.widgets.OptionDialog;
+import docking.widgets.button.GButton;
 import docking.widgets.label.GDLabel;
 import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors;
@@ -126,13 +127,13 @@ public class BitFieldEditorPanel extends JPanel {
 
 		JPanel panel = new JPanel(new HorizontalLayout(5));
 
-		decrementButton = new JButton(DECREMENT_ICON);
+		decrementButton = new GButton(DECREMENT_ICON);
 		decrementButton.setFocusable(false);
 		decrementButton.setToolTipText("Decrement allocation unit offset");
 		decrementButton.addActionListener(e -> adjustAllocationOffset(-1));
 		panel.add(decrementButton);
 
-		incrementButton = new JButton(INCREMENT_ICON);
+		incrementButton = new GButton(INCREMENT_ICON);
 		incrementButton.setFocusable(false);
 		incrementButton.setToolTipText("Increment allocation unit offset");
 		incrementButton.addActionListener(e -> adjustAllocationOffset(1));

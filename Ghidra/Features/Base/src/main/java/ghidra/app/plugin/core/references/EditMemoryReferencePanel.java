@@ -29,6 +29,7 @@ import javax.swing.table.AbstractTableModel;
 import org.jdom.Element;
 
 import docking.DropDownMenuIcon;
+import docking.widgets.button.GButton;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GDLabel;
@@ -104,7 +105,7 @@ class EditMemoryReferencePanel extends EditReferencePanel {
 
 		toAddressField = new AddressInput();
 
-		addrHistoryButton = new JButton(MENU_ICON);
+		addrHistoryButton = new GButton(MENU_ICON);
 		addrHistoryButton.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent e) {

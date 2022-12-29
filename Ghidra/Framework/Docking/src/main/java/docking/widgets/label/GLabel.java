@@ -140,7 +140,7 @@ public class GLabel extends JLabel implements GComponent {
 	 * <p>
 	 * If the user has a type of "GLabel", they will see the deprecated warning on calls to setText().
 	 * <p>
-	 * If there are calls to setText() after the initial value has been set by the ctor, a
+	 * If there are calls to setText() after the initial value has been set by the constructor, a
 	 * warning will be printed in the log.
 	 * <p>
 	 * @param text string this label will display 

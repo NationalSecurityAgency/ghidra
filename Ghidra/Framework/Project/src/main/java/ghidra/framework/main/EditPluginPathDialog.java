@@ -31,6 +31,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import docking.DialogComponentProvider;
+import docking.widgets.button.GButton;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.label.GDLabel;
@@ -44,7 +45,6 @@ import ghidra.util.Msg;
 import ghidra.util.filechooser.ExtensionFileFilter;
 import ghidra.util.filechooser.GhidraFileFilter;
 import resources.Icons;
-import resources.ResourceManager;
 
 /**
  * Dialog for editing the Plugin path and Jar directory path preferences.
@@ -268,13 +268,11 @@ class EditPluginPathDialog extends DialogComponentProvider {
 
 	private JPanel buildPluginPathsPanel() {
 		// create the UP and DOWN arrows panel
-		upButton = new JButton(Icons.UP_ICON);
-		upButton.setDisabledIcon(ResourceManager.getDisabledIcon(Icons.UP_ICON));
+		upButton = new GButton(Icons.UP_ICON);
 		upButton.setName("UpArrow");
 		upButton.addActionListener(e -> handleSelection(UP));
 
-		downButton = new JButton(Icons.DOWN_ICON);
-		downButton.setDisabledIcon(ResourceManager.getDisabledIcon(Icons.DOWN_ICON));
+		downButton = new GButton(Icons.DOWN_ICON);
 		downButton.setName("DownArrow");
 		downButton.addActionListener(e -> handleSelection(DOWN));
 		JPanel arrowButtonsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
@@ -282,11 +280,11 @@ class EditPluginPathDialog extends DialogComponentProvider {
 		arrowButtonsPanel.add(downButton);
 
 		// create the Add and Remove panel
-		JButton addJarButton = new JButton(ADD_JAR_BUTTON_TEXT);
+		JButton addJarButton = new GButton(ADD_JAR_BUTTON_TEXT);
 		addJarButton.addActionListener(e -> addJarCallback());
-		JButton addDirButton = new JButton(ADD_DIR_BUTTON_TEXT);
+		JButton addDirButton = new GButton(ADD_DIR_BUTTON_TEXT);
 		addDirButton.addActionListener(e -> addDirCallback());
-		removeButton = new JButton("Remove");
+		removeButton = new GButton("Remove");
 		removeButton.addActionListener(e -> handleSelection(REMOVE));
 		Dimension d = addJarButton.getPreferredSize();
 		addDirButton.setPreferredSize(d);

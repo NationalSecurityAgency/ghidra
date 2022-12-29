@@ -30,6 +30,7 @@ import javax.swing.table.TableColumn;
 import docking.DockingWindowManager;
 import docking.widgets.OptionDialog;
 import docking.widgets.button.BrowseButton;
+import docking.widgets.button.GButton;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.label.GHtmlLabel;
@@ -566,7 +567,7 @@ class SymbolServerPanel extends JPanel {
 
 	private static JButton createImageButton(Icon buttonIcon, String alternateText) {
 
-		JButton button = new JButton(buttonIcon);
+		JButton button = new GButton(buttonIcon);
 		button.setToolTipText(alternateText);
 		button.setPreferredSize(BUTTON_SIZE);
 
