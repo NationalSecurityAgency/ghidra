@@ -132,7 +132,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 			processImports(optionalHeader, program, monitor, log);
 			processDelayImports(optionalHeader, program, monitor, log);
 			processRelocations(optionalHeader, program, monitor, log);
-			processDebug(optionalHeader, ntHeader, sectionToAddress, program, monitor);
+			processDebug(optionalHeader, ntHeader, sectionToAddress, program, options, monitor);
 			processProperties(optionalHeader, program, monitor);
 			processComments(program.getListing(), monitor);
 			processSymbols(ntHeader, sectionToAddress, program, monitor, log);
@@ -818,7 +818,8 @@ public class PeLoader extends AbstractPeDebugLoader {
 	}
 
 	private void processDebug(OptionalHeader optionalHeader, NTHeader ntHeader,
-			Map<SectionHeader, Address> sectionToAddress, Program program, TaskMonitor monitor) {
+			Map<SectionHeader, Address> sectionToAddress, Program program, List<Option> options,
+			TaskMonitor monitor) {
 		if (monitor.isCancelled()) {
 			return;
 		}
@@ -840,7 +841,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 			return;
 		}
 
-		processDebug(parser, ntHeader, sectionToAddress, program, monitor);
+		processDebug(parser, ntHeader, sectionToAddress, program, options, monitor);
 	}
 
 	@Override
