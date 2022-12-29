@@ -79,6 +79,7 @@ public class ThemePropertyFileReader extends AbstractThemeReader {
 		return customSectionsMap;
 	}
 
+	@Override
 	protected void processNoSection(Section section) throws IOException {
 		if (!section.isEmpty()) {
 			error(section.getLineNumber(),
@@ -125,17 +126,26 @@ public class ThemePropertyFileReader extends AbstractThemeReader {
 	private void validate(String name, GThemeValueMap valuesMap) {
 		for (String id : valuesMap.getColorIds()) {
 			if (!defaults.containsColor(id)) {
-				reportMissingDefaultsError("Color", name, id);
+				ColorValue value = valuesMap.getColor(id);
+				if (!value.isExternal()) {
+					reportMissingDefaultsError("Color", name, id);
+				}
 			}
 		}
 		for (String id : valuesMap.getFontIds()) {
 			if (!defaults.containsFont(id)) {
-				reportMissingDefaultsError("Font", name, id);
+				FontValue value = valuesMap.getFont(id);
+				if (!value.isExternal()) {
+					reportMissingDefaultsError("Font", name, id);
+				}
 			}
 		}
 		for (String id : valuesMap.getIconIds()) {
 			if (!defaults.containsIcon(id)) {
-				reportMissingDefaultsError("Icon", name, id);
+				IconValue value = valuesMap.getIcon(id);
+				if (!value.isExternal()) {
+					reportMissingDefaultsError("Icon", name, id);
+				}
 			}
 		}
 	}

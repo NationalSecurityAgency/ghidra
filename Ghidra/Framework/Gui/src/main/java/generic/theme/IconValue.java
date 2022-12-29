@@ -75,18 +75,23 @@ public class IconValue extends ThemeValue<Icon> {
 	}
 
 	@Override
+	public String getSerializationString() {
+		String outputId = toExternalId(id);
+		return outputId + " = " + getValueOutput();
+	}
+
+	@Override
+	public boolean isExternal() {
+		return !id.startsWith(ICON_ID_PREFIX);
+	}
+
+	@Override
 	public Icon get(GThemeValueMap values) {
 		Icon icon = super.get(values);
 		if (modifier != null) {
 			return modifier.modify(icon, values);
 		}
 		return icon;
-	}
-
-	@Override
-	public String getSerializationString() {
-		String outputId = toExternalId(id);
-		return outputId + " = " + getValueOutput();
 	}
 
 	/** 
@@ -197,10 +202,10 @@ public class IconValue extends ThemeValue<Icon> {
 	}
 
 	@Override
-	protected Icon getUnresolvedReferenceValue(String id, String unresolvedId) {
+	protected Icon getUnresolvedReferenceValue(String primaryId, String unresolvedId) {
 		Msg.warn(this,
 			"Could not resolve indirect icon path for \"" + unresolvedId +
-				"\" for primary id \"" + id + "\", using last resort default");
+				"\" for primary id \"" + primaryId + "\", using last resort default");
 		return LAST_RESORT_DEFAULT;
 	}
 

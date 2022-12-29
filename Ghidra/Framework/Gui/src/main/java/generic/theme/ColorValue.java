@@ -61,6 +61,11 @@ public class ColorValue extends ThemeValue<Color> {
 		return outputId + " = " + getSerializedValue();
 	}
 
+	@Override
+	public boolean isExternal() {
+		return !id.startsWith(COLOR_ID_PREFIX);
+	}
+
 	/** 
 	 * Returns true if the given key string is a valid external key for a color value
 	 * @param key the key string to test
@@ -93,7 +98,7 @@ public class ColorValue extends ThemeValue<Color> {
 	}
 
 	@Override
-	protected Color getUnresolvedReferenceValue(String id, String unresolvedId) {
+	protected Color getUnresolvedReferenceValue(String primaryId, String unresolvedId) {
 
 		Throwable t = ReflectionUtilities.createThrowableWithStackOlderThan();
 		StackTraceElement[] trace = t.getStackTrace();
@@ -104,7 +109,7 @@ public class ColorValue extends ThemeValue<Color> {
 
 		Msg.error(this,
 			"Could not resolve indirect color path for \"" + unresolvedId +
-				"\" for primary id \"" + id + "\", using last resort default",
+				"\" for primary id \"" + primaryId + "\", using last resort default",
 			t);
 		return LAST_RESORT_DEFAULT;
 	}
