@@ -1938,9 +1938,9 @@ public class FlatProgramAPI {
 	}
 
 	/**
-	 * Returns the 'byte' value at the specified address in memory.
+	 * Returns the signed 'byte' value at the specified address in memory.
 	 * @param address the address
-	 * @return the 'byte' value at the specified address in memory
+	 * @return the signed 'byte' value at the specified address in memory
 	 * @throws MemoryAccessException if the memory is not readable
 	 */
 	public final byte getByte(Address address) throws MemoryAccessException {
@@ -1948,11 +1948,11 @@ public class FlatProgramAPI {
 	}
 
 	/**
-	 * Reads length number of bytes starting at the specified address.
+	 * Reads length number of signed bytes starting at the specified address.
 	 * Note: this could be inefficient if length is large
 	 * @param address the address to start reading
 	 * @param length the number of bytes to read
-	 * @return an array of bytes
+	 * @return an array of signed bytes
 	 * @throws MemoryAccessException if memory does not exist or is uninitialized
 	 * @see ghidra.program.model.mem.Memory
 	 */
