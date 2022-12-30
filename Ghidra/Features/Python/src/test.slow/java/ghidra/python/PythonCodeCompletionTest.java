@@ -61,6 +61,8 @@ public class PythonCodeCompletionTest extends AbstractGhidraHeadedIntegrationTes
 			        return self.id
 			    def getName(self):
 			        return self.name
+			    def getClone(self):
+			        return Employee(self.id, self.name)
 
 			employee = Employee(42, "Bob")
 				""".stripIndent();
@@ -69,6 +71,7 @@ public class PythonCodeCompletionTest extends AbstractGhidraHeadedIntegrationTes
 	public TemporaryFolder tempScriptFolder = new TemporaryFolder();
 
 	private GhidraPythonInterpreter interpreter;
+	private boolean includeOnlyPrefixCompletions = true;
 
 	@Before
 	public void setUp() throws Exception {
@@ -129,6 +132,17 @@ public class PythonCodeCompletionTest extends AbstractGhidraHeadedIntegrationTes
 		assertCharsToRemoveEqualsTo(testCase, "e".length());
 	}
 
+	@Test
+	public void testNonPrefixCompletions() {
+		includeOnlyPrefixCompletions = false;
+
+		// In the "non-prefix" mode, the list will include all completions that contain the word
+		// being completed. They won't be restricted to those that only begin with it.
+		assertCompletionsInclude("Bool", List.of("my_bool"));
+		assertCompletionsInclude("employee.ID", List.of("getId", "id"));
+		assertCompletionsInclude("employee.getClone().nam", List.of("getName", "name"));
+	}
+
 	private void assertCompletionsInclude(String command, Collection<String> expectedCompletions) {
 		Set<String> completions = getCodeCompletions(command)
 				.stream()
@@ -157,7 +171,8 @@ public class PythonCodeCompletionTest extends AbstractGhidraHeadedIntegrationTes
 			caretPos = command.length(); 
 		}
 
-		return interpreter.getCommandCompletions(command, false, caretPos);
+		return interpreter.getCommandCompletions(command, false, caretPos,
+			includeOnlyPrefixCompletions);
 	}
 
 	private void executePythonProgram(String code) {
