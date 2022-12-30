@@ -21,6 +21,7 @@ import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
+import javax.swing.plaf.UIResource;
 
 import com.google.common.base.Predicate;
 
@@ -465,7 +466,13 @@ public class BitFieldEditorPanel extends JPanel {
 		JScrollPane scrollPane =
 			new JScrollPane(placementComponent, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER,
 				ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-		scrollPane.getViewport().setBackground(getBackground());
+
+		Color bg = getBackground();
+		if (bg instanceof UIResource) {
+			// Nimbus does not honor the color if it is a UIResource
+			bg = new Color(bg.getRGB());
+		}
+		scrollPane.getViewport().setBackground(bg);
 		scrollPane.setBorder(null);
 
 		bitViewPanel.add(scrollPane);

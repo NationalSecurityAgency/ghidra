@@ -437,7 +437,12 @@ public class ResourceManager {
 		if (icon instanceof ImageIcon) {
 			return ((ImageIcon) icon).getDescription();
 		}
-		if (icon instanceof GIcon) {
+		if (icon instanceof GIcon gIcon) {
+			Icon delegateIcon = gIcon.getDelegate();
+			String name = getIconName(delegateIcon);
+			if (name != null) {
+				return name;
+			}
 			return ((GIcon) icon).getId();
 		}
 		if (icon instanceof TranslateIcon) {
