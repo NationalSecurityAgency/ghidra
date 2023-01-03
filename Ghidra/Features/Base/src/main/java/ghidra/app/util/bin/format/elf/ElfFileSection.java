@@ -15,6 +15,8 @@
  */
 package ghidra.app.util.bin.format.elf;
 
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.MemoryLoadable;
 
 public interface ElfFileSection extends MemoryLoadable {
@@ -38,11 +40,57 @@ public interface ElfFileSection extends MemoryLoadable {
 	 * @return length of file section in bytes
 	 */
 	public long getFileSize();
-	
+
+	/**
+	 * Length of memory section in bytes
+	 * @return length of memory section in bytes
+	 */
+	default public long getMemorySize() {
+		return getFileSize();
+	}
+
 	/**
 	 * Size of each structured entry in bytes
 	 * @return entry size or -1 if variable
 	 */
 	public long getEntrySize();
 
+	/**
+	 * Binary reader for this file section
+	 * @return Binary reader
+	 */
+	public BinaryReader getReader();
+
+	/**
+	 * Byte provider for this file section
+	 * @return Byte provider
+	 */
+	default public ByteProvider getByteProvider() {
+		return getReader().getByteProvider();
+	}
+
+	/**
+	 * Create a subsection from this file section
+	 * @param offset Offset of subsection from beginning of this file section
+	 * @param size Length of subsection
+	 * @return file subsection
+	 */
+	default public ElfFileSection subSection(long offset, long size) {
+		return subSection(offset, size, getEntrySize());
+	}
+
+	/**
+	 * Create a subsection from this file section
+	 * @param offset Offset of subsection from beginning of this file section
+	 * @param size Length of subsection
+	 * @param entrySize Entry size for this subsection
+	 * @return file subsection
+	 */
+	default public ElfFileSection subSection(long offset, long size, long entrySize) {
+		if (offset == 0 && size == getMemorySize() && entrySize == getEntrySize()) {
+			return this;
+		}
+
+		return new ElfFileSectionWrapper(this, offset, size, entrySize);
+	}
 }
