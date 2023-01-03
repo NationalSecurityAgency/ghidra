@@ -78,6 +78,7 @@ public class ElfHeader implements StructConverter, Writeable {
 	private boolean parsed = false;
 	private boolean parsedSectionHeaders = false;
 
+	private Long preLinkImageBase = null;
 	private ElfSectionHeader section0 = null;
 	private ElfSectionHeader[] sectionHeaders = new ElfSectionHeader[0];
 	private ElfProgramHeader[] programHeaders = new ElfProgramHeader[0];
@@ -310,6 +311,8 @@ public class ElfHeader implements StructConverter, Writeable {
 
 		parsed = true;
 
+		parsePreLinkImageBase();
+
 		parseProgramHeaders();
 
 		parseSectionHeaders();
@@ -347,12 +350,7 @@ public class ElfHeader implements StructConverter, Writeable {
 		// addresses in the default space?  Should loads into
 		// data space have the same adjustment?
 
-		long base = getPreLinkImageBase();
-		if (base == -1) {
-			base = 0;
-		}
-
-		return base + address;
+		return address + (preLinkImageBase != null ? preLinkImageBase : 0L);
 	}
 
 	/**
@@ -368,12 +366,7 @@ public class ElfHeader implements StructConverter, Writeable {
 		// addresses in the default space?  Should loads into
 		// data space have the same adjustment?
 
-		long base = getPreLinkImageBase();
-		if (base == -1) {
-			base = 0;
-		}
-
-		return address - base;
+		return address - (preLinkImageBase != null ? preLinkImageBase : 0L);
 	}
 
 	protected HashMap<Integer, ElfProgramHeaderType> getProgramHeaderTypeMap() {
@@ -1089,6 +1082,21 @@ public class ElfHeader implements StructConverter, Writeable {
 		}
 	}
 
+	/**
+	 * Some elfs can get pre-linked to an OS. At the very end a "PRE " string is
+	 * appended with the image base load address set.
+	 */
+	protected void parsePreLinkImageBase() throws IOException {
+		long fileLength = reader.getByteProvider().length();
+
+		int preLinkImageBaseInt = reader.readInt(fileLength - 8);
+		String preLinkMagicString = reader.readAsciiString(fileLength - 4, 4).trim();
+
+		if (preLinkMagicString.equals("PRE")) {
+			preLinkImageBase = Integer.toUnsignedLong(preLinkImageBaseInt);
+		}
+	}
+
 	protected void parseSectionHeaders()
 			throws IOException {
 		if (reader == null) {
@@ -1258,9 +1266,8 @@ public class ElfHeader implements StructConverter, Writeable {
 
 		elfImageBase = 0L;
 
-		long base = getPreLinkImageBase();
-		if (base != -1) {
-			elfImageBase = base;
+		if (preLinkImageBase != null) {
+			elfImageBase = preLinkImageBase;
 		}
 		else {
 			int n = Math.min(programHeaders.length, MAX_HEADERS_TO_CHECK_FOR_IMAGEBASE);
@@ -1284,7 +1291,7 @@ public class ElfHeader implements StructConverter, Writeable {
 	 * @return true if image has been pre-linked
 	 */
 	public boolean isPreLinked() {
-		if (getPreLinkImageBase() != -1L) {
+		if (preLinkImageBase != null) {
 			return true;
 		}
 		if (dynamicTable != null) {
@@ -1293,39 +1300,6 @@ public class ElfHeader implements StructConverter, Writeable {
 			}
 		}
 		return false;
-	}
-
-	private Long preLinkImageBase = null;
-
-	/**
-	 *  Some elfs can get pre-linked to an OS.
-	 *     At the very end a "PRE " string is appended with the image base load address
-	 *     set.  Try there if none of the images told us where to load.
-	 * @return -1 - if the imagebase is not a pre-link image base.
-	 */
-	private long getPreLinkImageBase() {
-		if (preLinkImageBase != null) {
-			return preLinkImageBase;
-		}
-		preLinkImageBase = -1L;
-		try {
-			long fileLength = reader.getByteProvider().length();
-
-			// not enough bytes
-			if (fileLength < 8) {
-				return -1;
-			}
-			int preLinkImageBaseInt = reader.readInt(fileLength - 8);
-			String preLinkMagicString = reader.readAsciiString(fileLength - 4, 4).trim();
-
-			if (preLinkMagicString.equals("PRE")) {
-				preLinkImageBase = Integer.toUnsignedLong(preLinkImageBaseInt);
-			}
-		}
-		catch (IOException e) {
-			Msg.error(this, "Elf prelink read failure", e);
-		}
-		return preLinkImageBase;
 	}
 
 	public boolean isSectionLoaded(ElfSectionHeader section) {
