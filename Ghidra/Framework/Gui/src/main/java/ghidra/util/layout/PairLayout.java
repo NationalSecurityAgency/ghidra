@@ -75,24 +75,24 @@ public class PairLayout implements LayoutManager {
 	 */
 	@Override
 	public Dimension preferredLayoutSize(Container parent) {
-		computeSizes(parent);
-		int rowCount = (parent.getComponentCount() + 1) / 2;
+		int visibleRowCount = computeSizes(parent);
 		Insets insets = parent.getInsets();
 		Dimension d = new Dimension(0, 0);
 		d.width = leftColumnWidth + hgap + preferredRightColumnWidth + insets.left + insets.right;
-		d.height = rowHeight * rowCount + vgap * (rowCount - 1) + insets.top + insets.bottom;
+		d.height =
+			rowHeight * visibleRowCount + vgap * (visibleRowCount - 1) + insets.top + insets.bottom;
 		return d;
 	}
 
 	@Override
 	public Dimension minimumLayoutSize(Container parent) {
 		// resulting min width equals the label column's (leftColumnWidth) width
-		computeSizes(parent);
-		int rowCount = (parent.getComponentCount() + 1) / 2;
+		int visibleRowCount = computeSizes(parent);
 		Insets insets = parent.getInsets();
 		Dimension d = new Dimension(0, 0);
 		d.width = leftColumnWidth + hgap + insets.left + insets.right;
-		d.height = rowHeight * rowCount + vgap * (rowCount - 1) + insets.top + insets.bottom;
+		d.height =
+			rowHeight * visibleRowCount + vgap * (visibleRowCount - 1) + insets.top + insets.bottom;
 		return d;
 	}
 
@@ -113,6 +113,9 @@ public class PairLayout implements LayoutManager {
 			leftColumnComponent.setBounds(x, y, leftColumnWidth, rowHeight);
 			if (componentCount > i * 2 + 1) {
 				Component rightColumnComponent = parent.getComponent(i * 2 + 1);
+				if (!leftColumnComponent.isVisible() && !rightColumnComponent.isVisible()) {
+					continue;
+				}
 				rightColumnComponent.setBounds(x + leftColumnWidth + hgap, y, rightColumnWidth,
 					rowHeight);
 				y += rowHeight + vgap;
@@ -120,9 +123,10 @@ public class PairLayout implements LayoutManager {
 		}
 	}
 
-	private void computeSizes(Container parent) {
+	private int computeSizes(Container parent) {
 		int componentCount = parent.getComponentCount();
 		int rowCount = (componentCount + 1) / 2;
+		int visibleRowCount = 0;
 
 		leftColumnWidth = 0;
 		rowHeight = 0;
@@ -138,9 +142,13 @@ public class PairLayout implements LayoutManager {
 				d = rightColumnComponent.getPreferredSize();
 				rowHeight = Math.max(rowHeight, d.height);
 				preferredRightColumnWidth = Math.max(preferredRightColumnWidth, d.width);
+				if (!leftColumnComponent.isVisible() && !rightColumnComponent.isVisible()) {
+					continue;	// don't count this row
+				}
 			}
+			visibleRowCount++;
 		}
-
+		return visibleRowCount;
 	}
 
 }
