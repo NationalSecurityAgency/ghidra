@@ -27,6 +27,7 @@ import javax.swing.border.BevelBorder;
 
 import docking.DialogComponentProvider;
 import docking.widgets.OptionDialog;
+import docking.widgets.button.GButton;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
 import docking.wizard.WizardManager;
@@ -253,7 +254,7 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 		JLabel connectLabel = new GDLabel("Connection Status:", SwingConstants.RIGHT);
 		panel.add(connectLabel);
 
-		connectionButton = new JButton(
+		connectionButton = new GButton(
 			isConnected ? FrontEndPlugin.CONNECTED_ICON : FrontEndPlugin.DISCONNECTED_ICON);
 		connectionButton.addActionListener(e -> connect());
 		connectionButton.setName("Connect Button");

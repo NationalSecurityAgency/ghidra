@@ -31,6 +31,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import docking.*;
 import docking.widgets.OptionDialog;
+import docking.widgets.button.GButton;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.label.GLabel;
@@ -440,10 +441,10 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 	private Component buildButtonPanel() {
 		JPanel panel = new JPanel(new VerticalLayout(5));
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-		addButton = new JButton(Icons.ADD_ICON);
-		removeButton = new JButton(Icons.DELETE_ICON);
-		upButton = new JButton(new GIcon("icon.up"));
-		downButton = new JButton(new GIcon("icon.down"));
+		addButton = new GButton(Icons.ADD_ICON);
+		removeButton = new GButton(Icons.DELETE_ICON);
+		upButton = new GButton(new GIcon("icon.up"));
+		downButton = new GButton(new GIcon("icon.down"));
 		addButton.setToolTipText("Add parameter");
 		removeButton.setToolTipText("Delete selected parameters");
 		upButton.setToolTipText("Move selected parameter up");

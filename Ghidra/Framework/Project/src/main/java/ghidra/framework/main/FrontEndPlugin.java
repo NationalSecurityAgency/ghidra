@@ -32,6 +32,7 @@ import docking.action.MenuData;
 import docking.tool.ToolConstants;
 import docking.widgets.OkDialog;
 import docking.widgets.OptionDialog;
+import docking.widgets.button.GButton;
 import docking.widgets.dialogs.InputDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
@@ -697,7 +698,7 @@ public class FrontEndPlugin extends Plugin
 		RepositoryAdapter repository = project.getRepository();
 		User user = null;
 		boolean isConnected = repository.isConnected();
-		connectionButton = new JButton(isConnected ? CONNECTED_ICON : DISCONNECTED_ICON);
+		connectionButton = new GButton(isConnected ? CONNECTED_ICON : DISCONNECTED_ICON);
 		connectionButton.addActionListener(e -> connect());
 
 		connectionButton.setContentAreaFilled(false);
