@@ -375,7 +375,7 @@ public class ElfDefaultGotPltMarkup {
 			long imageBaseAdj = elfLoadHelper.getImageBaseWordAdjustmentOffset();
 			if (dynamicTable != null && imageBaseAdj != 0) {
 				long entry1Value = elfLoadHelper.getOriginalValue(gotStart, false);
-				if (entry1Value == dynamicTable.getAddressOffset()) {
+				if (entry1Value == dynamicTable.getVirtualAddress()) {
 					// TODO: record artificial relative relocation for reversion/export concerns
 					entry1Value += imageBaseAdj; // adjust first entry value
 					if (elf.is64Bit()) {

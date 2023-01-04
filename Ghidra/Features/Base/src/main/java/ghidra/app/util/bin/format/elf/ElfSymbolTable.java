@@ -294,12 +294,12 @@ public class ElfSymbolTable implements ElfFileSection, ByteArrayConverter {
 	}
 
 	@Override
-	public long getLength() {
+	public long getFileSize() {
 		return length;
 	}
 
 	@Override
-	public long getAddressOffset() {
+	public long getVirtualAddress() {
 		return addrOffset;
 	}
 
@@ -318,8 +318,8 @@ public class ElfSymbolTable implements ElfFileSection, ByteArrayConverter {
 	}
 
 	@Override
-	public int getEntrySize() {
-		return (int) entrySize;
+	public long getEntrySize() {
+		return entrySize;
 	}
 
 // Comments are repetitive - should refer to Elf documentation 
@@ -349,7 +349,7 @@ public class ElfSymbolTable implements ElfFileSection, ByteArrayConverter {
 			struct.add(QWORD, "st_value", null);
 			struct.add(QWORD, "st_size", null);
 		}
-		int sizeRemaining = getEntrySize() - struct.getLength();
+		int sizeRemaining = (int) getEntrySize() - struct.getLength();
 		if (sizeRemaining > 0) {
 			struct.add(new ArrayDataType(ByteDataType.dataType, sizeRemaining, 1), "st_unknown",
 				null);

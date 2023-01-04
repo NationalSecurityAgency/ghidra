@@ -756,7 +756,7 @@ public class ElfHeader implements StructConverter, Writeable {
 					stringTableSectionHeader.getOffset(), stringTableSectionHeader.getAddress(),
 					stringTableSectionHeader.getSize());
 				stringTableList.add(stringTable);
-				if (stringTable.getAddressOffset() == dynamicStringTableAddr) {
+				if (stringTable.getVirtualAddress() == dynamicStringTableAddr) {
 					dynamicStringTable = stringTable;
 				}
 			}
@@ -900,7 +900,7 @@ public class ElfHeader implements StructConverter, Writeable {
 					symbolTableSectionHeader.getEntrySize(), stringTable, symbolSectionIndexTable,
 					isDyanmic);
 				symbolTableList.add(symbolTable);
-				if (symbolTable.getAddressOffset() == dynamicSymbolTableAddr) {
+				if (symbolTable.getVirtualAddress() == dynamicSymbolTableAddr) {
 					dynamicSymbolTable = symbolTable; // remember dynamic symbol table
 				}
 			}

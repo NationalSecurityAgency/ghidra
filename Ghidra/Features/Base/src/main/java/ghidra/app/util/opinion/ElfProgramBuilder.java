@@ -910,7 +910,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			Address sectionLoadAddr = findLoadAddress(sectionToBeRelocated, 0);
 			if (sectionLoadAddr == null) {
 				log("Failed to identify relocation base address for relocation table 0x" +
-					relocationTable.getAddressOffset() + " [section: " +
+					relocationTable.getVirtualAddress() + " [section: " +
 					sectionToBeRelocated.getNameAsString() + "]");
 				monitor.incrementProgress(relocationTable.getRelocationCount());
 				return;
@@ -1527,7 +1527,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			}
 			else {
 				symbolTableAddr =
-					findLoadAddress(elfSymbolTable.getFileOffset(), elfSymbolTable.getLength());
+					findLoadAddress(elfSymbolTable.getFileOffset(), elfSymbolTable.getFileSize());
 			}
 
 			ElfSymbol[] symbols = elfSymbolTable.getSymbols();
@@ -2687,7 +2687,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 		long totalLength = 0;
 		for (ElfStringTable stringTable : stringTables) {
-			totalLength += stringTable.getLength();
+			totalLength += stringTable.getFileSize();
 		}
 		monitor.initialize(totalLength);
 
@@ -2706,17 +2706,17 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			if (stringTableAddr == null) {
 //				log("Failed to locate string table at file offset 0x" +
 //					Long.toHexString(stringTable.getFileOffset()));
-				monitor.incrementProgress(stringTable.getLength()); // skipping table
+				monitor.incrementProgress(stringTable.getFileSize()); // skipping table
 				continue;
 			}
 
 			AddressRange rangeConstraint = getMarkupMemoryRangeConstraint(stringTableAddr);
 			if (rangeConstraint == null) {
-				monitor.incrementProgress(stringTable.getLength()); // skipping table
+				monitor.incrementProgress(stringTable.getFileSize()); // skipping table
 				continue;
 			}
 
-			long tblLength = stringTable.getLength();
+			long tblLength = stringTable.getFileSize();
 			long limit = Math.min(tblLength, rangeConstraint.getLength());
 			if (limit < tblLength) {
 				monitor.incrementProgress(tblLength - limit);

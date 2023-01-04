@@ -25,7 +25,7 @@ public interface ElfFileSection extends StructConverter {
 	 * applied, although will not reflect any change in the image base.
 	 * @return default memory address offset where data should be loaded
 	 */
-	public long getAddressOffset();
+	public long getVirtualAddress();
 
 	/**
 	 * Offset within file where section bytes are specified
@@ -37,12 +37,12 @@ public interface ElfFileSection extends StructConverter {
 	 * Length of file section in bytes
 	 * @return length of file section in bytes
 	 */
-	public long getLength();
+	public long getFileSize();
 	
 	/**
 	 * Size of each structured entry in bytes
 	 * @return entry size or -1 if variable
 	 */
-	public int getEntrySize();
+	public long getEntrySize();
 
 }

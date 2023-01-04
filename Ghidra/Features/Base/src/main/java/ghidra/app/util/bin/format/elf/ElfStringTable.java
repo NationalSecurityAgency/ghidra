@@ -72,7 +72,7 @@ public class ElfStringTable implements ElfFileSection {
 	}
 
 	@Override
-	public long getAddressOffset() {
+	public long getVirtualAddress() {
 		return header.adjustAddressForPrelink(addrOffset);
 	}
 
@@ -91,12 +91,12 @@ public class ElfStringTable implements ElfFileSection {
 	}
 
 	@Override
-	public long getLength() {
+	public long getFileSize() {
 		return length;
 	}
 
 	@Override
-	public int getEntrySize() {
+	public long getEntrySize() {
 		return -1;
 	}
 

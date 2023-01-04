@@ -190,7 +190,7 @@ public class ElfDynamicTable implements ElfFileSection {
 	}
 
 	@Override
-	public long getAddressOffset() {
+	public long getVirtualAddress() {
 		return addrOffset;
 	}
 
@@ -240,12 +240,12 @@ public class ElfDynamicTable implements ElfFileSection {
 	}
 
 	@Override
-	public long getLength() {
+	public long getFileSize() {
 		return dynamics.size() * getEntrySize();
 	}
 
 	@Override
-	public int getEntrySize() {
+	public long getEntrySize() {
 		return header.is32Bit() ? 8 : 16;
 	}
 
@@ -256,8 +256,8 @@ public class ElfDynamicTable implements ElfFileSection {
 	 */
 	public byte[] toBytes(DataConverter dc)
 			throws ArrayIndexOutOfBoundsException {
-		byte[] data = new byte[(int) getLength()];
-		int entrySize = getEntrySize();
+		byte[] data = new byte[(int) getFileSize()];
+		int entrySize = (int) getEntrySize();
 		for (int i = 0; i < dynamics.size(); i++) {
 			ElfDynamic dyn = dynamics.get(i);
 			dyn.write(data, i * entrySize, dc);
