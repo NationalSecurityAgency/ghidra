@@ -21,6 +21,7 @@ import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteArrayConverter;
+import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.bin.format.dwarf4.LEB128;
 import ghidra.program.model.data.ArrayDataType;
 import ghidra.program.model.data.DataType;
@@ -30,7 +31,7 @@ import ghidra.util.Msg;
 /**
  * A container class to hold ELF relocations.
  */
-public class ElfRelocationTable implements ElfFileSection, ByteArrayConverter {
+public class ElfRelocationTable implements ByteArrayConverter, StructConverter {
 
 	public enum TableFormat {
 		DEFAULT, ANDROID, RELR;
@@ -323,12 +324,10 @@ public class ElfRelocationTable implements ElfFileSection, ByteArrayConverter {
 		return bytes;
 	}
 
-	@Override
 	public long getFileSize() {
 		return length;
 	}
 
-	@Override
 	public long getVirtualAddress() {
 		return addrOffset;
 	}
@@ -346,12 +345,10 @@ public class ElfRelocationTable implements ElfFileSection, ByteArrayConverter {
 		return format == TableFormat.RELR;
 	}
 
-	@Override
 	public long getFileOffset() {
 		return fileOffset;
 	}
 
-	@Override
 	public long getEntrySize() {
 		return entrySize;
 	}

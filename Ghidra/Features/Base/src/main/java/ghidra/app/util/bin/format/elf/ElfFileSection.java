@@ -15,9 +15,9 @@
  */
 package ghidra.app.util.bin.format.elf;
 
-import ghidra.app.util.bin.StructConverter;
+import ghidra.app.util.bin.format.MemoryLoadable;
 
-public interface ElfFileSection extends StructConverter {
+public interface ElfFileSection extends MemoryLoadable {
 	
 	/**
 	 * Preferred memory address offset where data should be loaded.

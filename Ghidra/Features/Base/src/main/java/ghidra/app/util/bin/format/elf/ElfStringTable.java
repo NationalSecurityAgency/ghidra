@@ -18,10 +18,11 @@ package ghidra.app.util.bin.format.elf;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.StructConverter;
 import ghidra.program.model.data.DataType;
 import ghidra.util.exception.DuplicateNameException;
 
-public class ElfStringTable implements ElfFileSection {
+public class ElfStringTable implements StructConverter {
 
 	private ElfHeader header;
 
@@ -71,7 +72,6 @@ public class ElfStringTable implements ElfFileSection {
 		return null;
 	}
 
-	@Override
 	public long getVirtualAddress() {
 		return header.adjustAddressForPrelink(addrOffset);
 	}
@@ -85,17 +85,14 @@ public class ElfStringTable implements ElfFileSection {
 		return stringTableSection;
 	}
 
-	@Override
 	public long getFileOffset() {
 		return fileOffset;
 	}
 
-	@Override
 	public long getFileSize() {
 		return length;
 	}
 
-	@Override
 	public long getEntrySize() {
 		return -1;
 	}

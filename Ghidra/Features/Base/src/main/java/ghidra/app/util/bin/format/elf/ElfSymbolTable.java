@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteArrayConverter;
+import ghidra.app.util.bin.StructConverter;
 import ghidra.program.model.data.*;
 import ghidra.util.DataConverter;
 import ghidra.util.exception.DuplicateNameException;
@@ -29,7 +30,7 @@ import ghidra.util.exception.DuplicateNameException;
 /**
  * A container class to hold ELF symbols.
  */
-public class ElfSymbolTable implements ElfFileSection, ByteArrayConverter {
+public class ElfSymbolTable implements ByteArrayConverter, StructConverter {
 
 	private ElfStringTable stringTable;
 	private ElfSectionHeader symbolTableSection; // may be null
@@ -293,12 +294,10 @@ public class ElfSymbolTable implements ElfFileSection, ByteArrayConverter {
 		return bytes;
 	}
 
-	@Override
 	public long getFileSize() {
 		return length;
 	}
 
-	@Override
 	public long getVirtualAddress() {
 		return addrOffset;
 	}
@@ -312,12 +311,10 @@ public class ElfSymbolTable implements ElfFileSection, ByteArrayConverter {
 		return symbolTableSection;
 	}
 
-	@Override
 	public long getFileOffset() {
 		return fileOffset;
 	}
 
-	@Override
 	public long getEntrySize() {
 		return entrySize;
 	}

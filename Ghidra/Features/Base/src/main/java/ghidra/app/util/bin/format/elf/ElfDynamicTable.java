@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.*;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.StructConverter;
 import ghidra.program.model.data.*;
 import ghidra.util.DataConverter;
 import ghidra.util.exception.DuplicateNameException;
@@ -34,7 +35,7 @@ import ghidra.util.exception.NotFoundException;
  * using {@link ElfHeader#adjustAddressForPrelink(long)}.  If a pre-link adjustment is not applicable, 
  * this adjustment will have no affect.
  */
-public class ElfDynamicTable implements ElfFileSection {
+public class ElfDynamicTable implements StructConverter {
 
 	private List<ElfDynamic> dynamics = new ArrayList<ElfDynamic>();
 
@@ -184,12 +185,10 @@ public class ElfDynamicTable implements ElfFileSection {
 		return getDynamicValue(type.value);
 	}
 
-	@Override
 	public long getFileOffset() {
 		return fileOffset;
 	}
 
-	@Override
 	public long getVirtualAddress() {
 		return addrOffset;
 	}
@@ -239,12 +238,10 @@ public class ElfDynamicTable implements ElfFileSection {
 		return dynamicTagEnum;
 	}
 
-	@Override
 	public long getFileSize() {
 		return dynamics.size() * getEntrySize();
 	}
 
-	@Override
 	public long getEntrySize() {
 		return header.is32Bit() ? 8 : 16;
 	}
