@@ -246,6 +246,10 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 		});
 	}
 
+	protected int[] getSelection() {
+		return runSwing(() -> getTable().getSelectedRows());
+	}
+
 	private String arrayToString(int[] values) {
 		StringBuilder buf = new StringBuilder();
 		for (int value : values) {

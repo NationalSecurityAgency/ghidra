@@ -37,7 +37,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		try {
 			DataTypeManager dataTypeManager = cat.getDataTypeManager();
 			if (dt.getDataTypeManager() != dataTypeManager) {
-				dt = (Structure) dt.clone(dataTypeManager);
+				dt = dt.clone(dataTypeManager);
 			}
 			CategoryPath categoryPath = cat.getCategoryPath();
 			if (!dt.getCategoryPath().equals(categoryPath)) {
@@ -59,7 +59,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 			model = provider.getModel();
 //				model.setLocked(false);
 		});
-//		assertTrue(!model.isLocked());
+//		assertFalse(model.isLocked());
 		getActions();
 	}
 
@@ -123,7 +123,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 				}
 			});
 			waitForSwing();
-			assertTrue(!complexStructure.isEquivalent(model.viewComposite));
+			assertFalse(complexStructure.isEquivalent(model.viewComposite));
 
 			// Apply the changes
 			invoke(applyAction);
@@ -137,7 +137,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 				deleteAction.actionPerformed(new ActionContext());// Must be undefined before it can delete.
 			});
 			waitForSwing();
-			assertTrue(!complexStructure.isEquivalent(model.viewComposite));
+			assertFalse(complexStructure.isEquivalent(model.viewComposite));
 
 			// Undo the apply
 			undo(program, false);
@@ -147,7 +147,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 			pressButton(dialog, "No");
 			dialog.dispose();
 			dialog = null;
-			assertTrue(!complexStructure.isEquivalent(model.viewComposite));
+			assertFalse(complexStructure.isEquivalent(model.viewComposite));
 
 			// Redo the apply
 			redo(program, false);
@@ -157,7 +157,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 			pressButton(dialog, "No");
 			dialog.dispose();
 			dialog = null;
-			assertTrue(!complexStructure.isEquivalent(model.viewComposite));
+			assertFalse(complexStructure.isEquivalent(model.viewComposite));
 		}
 		finally {
 			dialog = null;
@@ -208,7 +208,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 				}
 			});
 			waitForSwing();
-			assertTrue(!complexStructure.isEquivalent(model.viewComposite));
+			assertFalse(complexStructure.isEquivalent(model.viewComposite));
 
 			// Verify the editor provider is displayed.
 			String mySubTitle = getProviderSubTitle(myS1Structure);
@@ -224,7 +224,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 			assertNull(dialog);
 
 			// Verify the editor provider is gone.
-			assertTrue(!isProviderShown(tool.getToolFrame(), "Structure Editor", mySubTitle));
+			assertFalse(isProviderShown(tool.getToolFrame(), "Structure Editor", mySubTitle));
 		}
 		finally {
 			dialog = null;
@@ -232,7 +232,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		}
 	}
 
-	// Test add a structure containing inner struct, start to edit inner struct, and then undo the 
+	// Test add a structure containing inner struct, start to edit inner struct, and then undo the
 	// program so it goes away. This should close the edit session.
 	@Test
 	public void testProgramRestoreRemovesEditedDtComp() throws Exception {
@@ -279,7 +279,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 				}
 			}, false);
 			waitForSwing();
-			assertTrue(!complexStructure.isEquivalent(model.viewComposite));
+			assertFalse(complexStructure.isEquivalent(model.viewComposite));
 
 			// Verify the editor provider is displayed.
 			String mySubTitle = getProviderSubTitle(myS2Structure);
@@ -295,7 +295,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 			assertNull(dialog);
 
 			// Verify the editor provider is gone.
-			assertTrue(!isProviderShown(tool.getToolFrame(), "Structure Editor", mySubTitle));
+			assertFalse(isProviderShown(tool.getToolFrame(), "Structure Editor", mySubTitle));
 		}
 		finally {
 			dialog = null;
@@ -303,7 +303,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		}
 	}
 
-	// Test add a structure, start to edit a structure that contains it, and then undo the program 
+	// Test add a structure, start to edit a structure that contains it, and then undo the program
 	// so it goes away. The editor stays since the structure existed previously, but editor reloads.
 	@Test
 	public void testProgramRestoreRemovesEditedComponentDtYes() throws Exception {
@@ -343,7 +343,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 				}
 			});
 			waitForSwing();
-			assertTrue(!emptyStructure.isEquivalent(model.viewComposite));
+			assertFalse(emptyStructure.isEquivalent(model.viewComposite));
 
 			// Verify the editor provider is displayed.
 			String mySubTitle = getProviderSubTitle(emptyStructure);
@@ -371,7 +371,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		}
 	}
 
-	// Test add a structure, start to edit a structure that contains it, and then undo the program 
+	// Test add a structure, start to edit a structure that contains it, and then undo the program
 	// so it goes away. The editor stays since the structure existed previously, but doesn't reload.
 	@Test
 	public void testProgramRestoreRemovesEditedComponentDtNo() throws Exception {
@@ -411,7 +411,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 				}
 			});
 			waitForSwing();
-			assertTrue(!emptyStructure.isEquivalent(model.viewComposite));
+			assertFalse(emptyStructure.isEquivalent(model.viewComposite));
 
 			// Verify the editor provider is displayed.
 			String mySubTitle = getProviderSubTitle(emptyStructure);
@@ -426,7 +426,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 			pressButton(dialog, "No");
 			dialog.dispose();
 			dialog = null;
-			assertTrue(!emptyStructure.isEquivalent(model.viewComposite));
+			assertFalse(emptyStructure.isEquivalent(model.viewComposite));
 
 			// Verify the editor provider is still on screen.
 			assertTrue(
@@ -459,7 +459,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 				}
 			});
 			waitForSwing();
-			assertTrue(!complexStructure.isEquivalent(model.viewComposite));
+			assertFalse(complexStructure.isEquivalent(model.viewComposite));
 			// Apply the changes
 			invoke(applyAction);
 			assertTrue(complexStructure.isEquivalent(model.viewComposite));
@@ -491,7 +491,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 
 		runSwing(() -> provider.closeComponent());
 
-		assertTrue(!tool.isVisible(provider));
+		assertFalse(tool.isVisible(provider));
 		assertTrue(complexStructure.isEquivalent(dt));
 	}
 
@@ -515,7 +515,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		});
 		waitForSwing();
 		DataType newDt = model.viewComposite.clone(null);
-		assertTrue(!complexStructure.isEquivalent(model.viewComposite));
+		assertFalse(complexStructure.isEquivalent(model.viewComposite));
 
 		assertTrue(complexStructure.isEquivalent(oldDt));
 		runSwing(() -> provider.closeComponent(), false);
@@ -525,15 +525,15 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		assertNotNull(dialog);
 		pressButton(dialog, "Yes");
 		dialog.dispose();
-		dialog = null;
-		assertTrue(!tool.isVisible(provider));
+
+		assertFalse(tool.isVisible(provider));
 		assertTrue(complexStructure.isEquivalent(newDt));
-		assertTrue(!complexStructure.isEquivalent(oldDt));
+		assertFalse(complexStructure.isEquivalent(oldDt));
 	}
 
 	@Test
 	public void testCloseEditorAndNoSave() throws Exception {
-		Window dialog;
+
 		init(complexStructure, pgmTestCat, false);
 		DataType oldDt = model.viewComposite.clone(null);
 
@@ -551,18 +551,10 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		}, false);
 		waitForSwing();
 		DataType newDt = model.viewComposite.clone(null);
-		assertTrue(!complexStructure.isEquivalent(model.viewComposite));
+		assertFalse(complexStructure.isEquivalent(model.viewComposite));
 
-		runSwingLater(() -> provider.closeComponent());
-		waitForSwing();
-
-		dialog = waitForWindow("Save Structure Editor Changes?");
-		assertNotNull(dialog);
-		pressButton(dialog, "No");
-		dialog.dispose();
-		dialog = null;
-		assertTrue(!tool.isVisible(provider));
-		assertTrue(!complexStructure.isEquivalent(newDt));
+		closeProviderIgnoringChanges();
+		assertFalse(complexStructure.isEquivalent(newDt));
 		assertTrue(complexStructure.isEquivalent(oldDt));
 	}
 
@@ -585,7 +577,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		});
 		waitForSwing();
 		DataType newDt = model.viewComposite.clone(null);
-		assertTrue(!complexStructure.isEquivalent(model.viewComposite));
+		assertFalse(complexStructure.isEquivalent(model.viewComposite));
 
 		runSwingLater(() -> provider.closeComponent());
 		waitForSwing();
@@ -596,7 +588,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		dialog.dispose();
 		dialog = null;
 		assertTrue(tool.isVisible(provider));
-		assertTrue(!complexStructure.isEquivalent(model.viewComposite));
+		assertFalse(complexStructure.isEquivalent(model.viewComposite));
 		assertTrue(newDt.isEquivalent(model.viewComposite));
 	}
 
@@ -702,7 +694,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		waitForBusyTool(tool);
 		waitForSwing();
 		// Editor should be closed.
-		assertTrue(!tool.isVisible(provider));
+		assertFalse(tool.isVisible(provider));
 		assertTrue(complexStructure.isEquivalent(oldDt));
 
 		// Re-open the editor
@@ -740,7 +732,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		waitForBusyTool(tool);
 		waitForSwing();
 		// Editor should be closed.
-		assertTrue(!tool.isVisible(provider));
+		assertFalse(tool.isVisible(provider));
 		assertTrue(complexStructure.isEquivalent(oldDt));
 		// Re-open the editor
 		init(complexStructure, pgmTestCat, false);
@@ -755,4 +747,52 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		assertEquals("325", model.getLengthAsString());
 	}
 
+	@Test
+	public void testExternalChangeMaintainsSelection() throws Exception {
+		env.showTool();
+		runSwing(() -> {
+			installProvider(new StructureEditorProvider(plugin, complexStructure, false));
+			model = provider.getModel();
+		});
+
+		assertNotNull(provider);
+		assertTrue(tool.isVisible(provider));
+		assertTrue(complexStructure.isEquivalent(model.viewComposite));
+
+		Composite dt = model.viewComposite;
+
+		// set selected row
+		int row = 2;
+		setSelection(new int[] { row });
+
+		// update data type
+		int editRow = 4; // offset 8; 'simpleUnion'
+		String newFieldName = "newFieldName";
+		tx(program, () -> {
+			DataTypeComponent dtc = dt.getComponent(editRow);
+			dtc.setFieldName(newFieldName);
+		});
+
+		// verify editor is updated
+		assertEquals(newFieldName, model.getValueAt(editRow, model.getNameColumn()));
+
+		// verify selection has not changed
+		int[] rows = getSelection();
+		assertEquals(1, rows.length);
+		assertEquals(row, rows[0]);
+
+		closeProviderIgnoringChanges();
+	}
+
+	private void closeProviderIgnoringChanges() {
+
+		runSwingLater(() -> provider.closeComponent());
+
+		Window dialog = waitForWindow("Save Structure Editor Changes?");
+		assertNotNull(dialog);
+		pressButton(dialog, "No");
+		dialog.dispose();
+
+		assertFalse(tool.isVisible(provider));
+	}
 }

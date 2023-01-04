@@ -80,7 +80,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	@Override
 	public boolean apply() throws InvalidDataTypeException {
 
-		// commit changes for any fields under edit 
+		// commit changes for any fields under edit
 		if (isEditingField()) {
 			endFieldEditing();
 		}
@@ -135,7 +135,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 
 //==================================================================================================
 // OVERRIDDEN METHODS FOR THE SELECTION
-//==================================================================================================	
+//==================================================================================================
 
 	/**
 	 * Returns true if the GUI has the blank last line selected
@@ -341,12 +341,12 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 
 	/**
 	 * Delete the components at the specified indices.
-	 * 
+	 *
 	 * <br> Note: this method does not fix the selection based on lock mode
 	 * and does not perform any edit notification.
 	 *
 	 * @param rows array with each row (component) index to delete
-	 * @throws CancelledException if cancelled 
+	 * @throws CancelledException if cancelled
 	 */
 	private void delete(int[] rows) throws CancelledException {
 
@@ -366,7 +366,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 
 		viewComposite.delete(rowSet);
 
-		// Not sure if this is the right behavior.  Assuming the deleted rows were selected, 
+		// Not sure if this is the right behavior.  Assuming the deleted rows were selected,
 		// restore the selection to be the first row that was deleted so that the UI leaves the
 		// user's selection close to where it was.
 		if (rows.length > 0) {
@@ -401,7 +401,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	 * @param startRowIndex index of the starting row for the components to delete.
 	 * @param endRowIndex index of the ending row (inclusive) for the components to delete.
 	 * @param monitor the task monitor
-	 * @throws CancelledException if the work was cancelled 
+	 * @throws CancelledException if the work was cancelled
 	 */
 	void deleteComponentRange(int startRowIndex, int endRowIndex, TaskMonitor monitor)
 			throws CancelledException {
@@ -456,13 +456,13 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	/**
 	 * Inserts a new datatype at the specified index into this composite
 	 * and adjusts the selection.
-	 * @param rowIndex the index where the new datatype is to be inserted.	
+	 * @param rowIndex the index where the new datatype is to be inserted.
 	 * @param dataType the datatype to insert.
 	 * @param length the length to associate with the datatype.
 	 * @param name the field name to associate with this component.
 	 * @param comment the comment to associate with this component.
 	 * @return the componentDataType created.
-	 * @throws InvalidDataTypeException if the dataType.getLength() is positive 
+	 * @throws InvalidDataTypeException if the dataType.getLength() is positive
 	 * and does not match the given length parameter.
 	 */
 	protected abstract DataTypeComponent insert(int rowIndex, DataType dataType, int length,
@@ -520,7 +520,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 
 	/**
 	 *  Insert the named data type before the specified index.
-	 *  Returns null, if the inserted component is an Undefined byte 
+	 *  Returns null, if the inserted component is an Undefined byte
 	 *  and it gets consumed by the component before it.
 	 *
 	 * @param rowIndex index of the row (component).
@@ -685,7 +685,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 
 	/**
 	 * Replaces the current component at the specified index with one that
-	 * is the indicated data type and size. It also sets the new component's 
+	 * is the indicated data type and size. It also sets the new component's
 	 * name and comment as indicated.
 	 * @param rowIndex the index of row where the data type should be replaced.
 	 * @param dataType the new datatype.
@@ -693,7 +693,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	 * @param name the field name to associate with this component.
 	 * @param comment the comment to associate with this component.
 	 * @return the componentDataType created.
-	 * @throws InvalidDataTypeException if the dataType.getLength() is positive 
+	 * @throws InvalidDataTypeException if the dataType.getLength() is positive
 	 * and does not match the given length parameter.
 	 */
 	protected abstract DataTypeComponent replace(int rowIndex, DataType dataType, int length,
@@ -793,10 +793,10 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		checkIsAllowableDataType(datatype);
 
 		//
-		// Note: if the range being replaced is large enough, then the UI could lock-up.  If we 
-		//       find that is the case, then we can update this method to take in a task monitor 
+		// Note: if the range being replaced is large enough, then the UI could lock-up.  If we
+		//       find that is the case, then we can update this method to take in a task monitor
 		//       and update the clients accordingly.  For now, it does not seem worth the effort.
-		// 
+		//
 		TaskMonitor monitor = TaskMonitor.DUMMY;
 
 		replaceRange(startRowIndex, endRowIndex, datatype, length, monitor);
@@ -862,8 +862,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	protected abstract void replaceOriginalComponents();
 
 	@Override
-	protected void checkIsAllowableDataType(DataType datatype)
-			throws InvalidDataTypeException {
+	protected void checkIsAllowableDataType(DataType datatype) throws InvalidDataTypeException {
 
 		super.checkIsAllowableDataType(datatype);
 
@@ -1082,7 +1081,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	 * until the end of the composite. There must be at least one undefined data type to return true.
 	 *
 	 * @param rowIndex the index of the row to begin checking for undefined data types.
-	 * @return true if an undefined data type is at the indicated row index and all components 
+	 * @return true if an undefined data type is at the indicated row index and all components
 	 * from there to the end of the composite are undefined data types.
 	 */
 	protected boolean onlyUndefinedsUntilEnd(int rowIndex) {
@@ -1111,7 +1110,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	 * Cause the component at the specified index to consume undefined bytes
 	 * that follow it.
 	 * Note: this method adjusts the selection.
-	 * 
+	 *
 	 * @param rowIndex the row index
 	 * @return the number of Undefined bytes consumed.
 	 */
@@ -1300,12 +1299,8 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	}
 
 //==================================================================================================
-// End of methods for determining if a type of edit action is allowed.
-//==================================================================================================	
-
-//==================================================================================================
 // Override CompositeViewerModel CategoryChangeListener methods
-//==================================================================================================	
+//==================================================================================================
 
 	@Override
 	public void dataTypeChanged(DataTypeManager dtm, DataTypePath path) {
@@ -1340,8 +1335,8 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 					return;
 				}
 				// Return if the original is already changing. Need this since there
-				// can be multiple change notifications from a single data type update 
-				// event due to replaceWith(), setLastChangeTime() and 
+				// can be multiple change notifications from a single data type update
+				// event due to replaceWith(), setLastChangeTime() and
 				// setLastChangeTimeInSource() each firing dataTypeChanged().
 				if (originalIsChanging) {
 					return;
@@ -1430,8 +1425,8 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 						"\", which is a sub-component of \"" + getOriginalDataTypeName() + "\".";
 					setStatus(msg, true);
 				}
-				// NOTE: depending upon event sequence and handling a 
-				// re-load may have occured and replcement may be uneccessary
+				// NOTE: depending upon event sequence and handling a
+				// re-load may have occurred and replacement may be unnecessary
 				try {
 					viewDTM.replaceDataType(dt, newDataType, true);
 				}
@@ -1492,7 +1487,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 
 //==================================================================================================
 // End of Override CompositeViewerModel CategoryChangeListener methods
-//==================================================================================================	
+//==================================================================================================
 
 	@Override
 	public void fireTableDataChanged() {
@@ -1504,9 +1499,9 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	}
 
 	/**
-	 * Determine the maximum number of duplicates that can be created for 
+	 * Determine the maximum number of duplicates that can be created for
 	 * the component at the indicated index. The duplicates would follow
-	 * the component. The number allowed depends on how many fit based on 
+	 * the component. The number allowed depends on how many fit based on
 	 * the current lock/unlock state of the editor.
 	 * <br>Note: This method doesn't care whether there is a selection or not.
 	 *
@@ -1524,7 +1519,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 		}
 		DataType dt = getComponent(rowIndex).getDataType();
 		int maxDups = Integer.MAX_VALUE;
-		// If editModel is showing undefined bytes (non-packed) 
+		// If editModel is showing undefined bytes (non-packed)
 		// then constrain by number of undefined bytes that follow.
 		if (isShowingUndefinedBytes() && (dt != DataType.DEFAULT)) {
 			int numBytes = getNumUndefinedBytesAt(rowIndex + 1);
@@ -1534,7 +1529,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	}
 
 	/**
-	 * Determine the maximum number of array elements that can be created for 
+	 * Determine the maximum number of array elements that can be created for
 	 * the current selection. The array data type is assumed to become the
 	 * data type of the first component in the selection. The current selection
 	 * must be contiguous or 0 is returned.
@@ -1578,7 +1573,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 	}
 
 	/**
-	 * Return the last number of duplicates the user entered when prompted for 
+	 * Return the last number of duplicates the user entered when prompted for
 	 * creating duplicates of a component.
 	 */
 	@Override
