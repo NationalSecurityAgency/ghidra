@@ -708,7 +708,7 @@ public class ElfHeader implements StructConverter, Writeable {
 
 			ElfProgramHeader loadHeader = getProgramLoadHeaderContaining(vaddr);
 			if (loadHeader != null) {
-				long dynamicTableOffset = loadHeader.getOffset() +
+				long dynamicTableOffset = loadHeader.getFileOffset() +
 					(dynamicHeaders[0].getVirtualAddress() - loadHeader.getVirtualAddress());
 				dynamicTable = new ElfDynamicTable(reader, this, dynamicTableOffset,
 					dynamicHeaders[0].getVirtualAddress());
@@ -725,7 +725,7 @@ public class ElfHeader implements StructConverter, Writeable {
 			ElfProgramHeader loadHeader =
 				getProgramLoadHeaderContaining(dynamicSections[0].getAddress());
 			if (loadHeader != null) {
-				long dynamicTableOffset = loadHeader.getOffset() +
+				long dynamicTableOffset = loadHeader.getFileOffset() +
 					(dynamicSections[0].getAddress() - loadHeader.getVirtualAddress());
 				dynamicTable = new ElfDynamicTable(reader, this, dynamicTableOffset,
 					dynamicSections[0].getAddress());
@@ -1758,7 +1758,7 @@ public class ElfHeader implements StructConverter, Writeable {
 				programHeader.isInvalidOffset()) {
 				continue;
 			}
-			long start = programHeader.getOffset();
+			long start = programHeader.getFileOffset();
 			long end = start + (programHeader.getFileSize() - 1);
 			if (offset >= start && offset <= end) {
 				return programHeader;

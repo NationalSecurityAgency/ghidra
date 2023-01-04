@@ -233,7 +233,7 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 			Data d = array.getComponent(i);
 			d.setComment(CodeUnit.EOL_COMMENT, programHeaders[i].getComment());
 
-			Address addr = addr(programHeaders[i].getOffset());
+			Address addr = addr(programHeaders[i].getFileOffset());
 
 			createLabel(addr, programHeaders[i].getTypeAsString(), true, SourceType.ANALYSIS);
 		}
@@ -244,7 +244,7 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 		for (ElfProgramHeader programHeader : elf.getProgramHeaders(
 			ElfProgramHeaderConstants.PT_INTERP)) {
 			monitor.checkCanceled();
-			long offset = programHeader.getOffset();
+			long offset = programHeader.getFileOffset();
 			if (offset == 0) {
 				Msg.warn(this, " Dynamic table appears to have been stripped from binary");
 				return;
