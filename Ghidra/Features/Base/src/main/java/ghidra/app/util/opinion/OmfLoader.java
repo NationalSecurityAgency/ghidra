@@ -17,6 +17,7 @@ package ghidra.app.util.opinion;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
@@ -46,7 +47,7 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 	public final static long IMAGE_BASE = 0x2000; // Base offset to start loading segments
 	public final static long MAX_UNINITIALIZED_FILL = 0x2000;	// Maximum zero bytes added to pad initialized segments
 
-	private ArrayList<OmfSymbol> externsyms = null;
+	private ArrayList<OmfSymbol> externsyms = new ArrayList<>();
 
 	/**
 	 * OMF usually stores a string describing the compiler that produced it in a
@@ -134,8 +135,8 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 
 		try {
 			processSegmentHeaders(reader, header, program, monitor, log);
-			processExternalSymbols(header, program, monitor, log);
 			processPublicSymbols(header, program, monitor, log);
+			processExternalSymbols(header, program, monitor, log);
 			processRelocations(header, program, monitor, log);
 		}
 		catch (AddressOverflowException e) {
@@ -149,13 +150,13 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 	 * @param log will receive the error message
 	 * @param state is the relocation record that could not be processed
 	 */
-	private void relocationError(Program program, MessageLog log, OmfFixupRecord.FixupState state) {
+	private void relocationError(Program program, MessageLog log, Address addr, int type) {
 		String message;
-		if (state.locAddress != null) {
-			message = "Unable to process relocation at " + state.locAddress + " with type 0x" +
-				Integer.toHexString(state.locationType);
-			program.getBookmarkManager().setBookmark(state.locAddress, BookmarkType.ERROR,
-				"Relocations", message);
+		if (addr != null) {
+			message = "Unable to process relocation at " + addr + " with type 0x" +
+				Integer.toHexString(type);
+			program.getBookmarkManager()
+				.setBookmark(addr, BookmarkType.ERROR, "Relocations", message);
 		}
 		else {
 			message = "Badly broken relocation";
@@ -172,100 +173,163 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 	 */
 	private void processRelocations(OmfFileHeader header, Program program, TaskMonitor monitor,
 			MessageLog log) {
-		ArrayList<OmfFixupRecord> fixups = header.getFixups();
-		OmfFixupRecord.FixupState state =
-			new OmfFixupRecord.FixupState(header, externsyms, program.getLanguage());
+		Language language = program.getLanguage();
+//		OmfFixupRecord.Subrecord[] frameThreads = new Subrecord[4];
+		OmfFixupRecord.Subrecord[] targetThreads = new Subrecord[4];
+		ArrayList<OmfGroupRecord> groups = header.getGroups();
+		long targetAddr;		// Address of item being referred to
+		Address locAddress;		// Location of data to be patched
 		DataConverter converter = DataConverter.getInstance(!header.isLittleEndian());
 
-		for (OmfFixupRecord fixup : fixups) {
-			state.currentFixupRecord = fixup;
-			Subrecord[] subrecs = fixup.getSubrecords();
-			Memory memory = program.getMemory();
-			for (Subrecord subrec : subrecs) {
+		monitor.setMessage("Process relocations...");
+		Memory memory = program.getMemory();
+		for (OmfFixupRecord fixup : header.getFixups()) {
+			for (Subrecord subrec : fixup.getSubrecords()) {
 				if (monitor.isCancelled()) {
 					break;
 				}
-
-				if (subrec.isThread()) {
-					((OmfFixupRecord.ThreadSubrecord) subrec).updateState(state);
+				if (subrec.isThreadSubrecord()) {
+					if (!subrec.isFrameInSubThread()) {
+						targetThreads[subrec.getThreadNum()] = subrec;
+					}
 				}
 				else {
 					long finalvalue = -1;
 					byte[] origbytes = null;
+					int method, index, locationType = -1;
+					locAddress = null;
 
 					try {
-						OmfFixupRecord.FixupSubrecord fixsub =
-							(OmfFixupRecord.FixupSubrecord) subrec;
-						state.clear();
-						fixsub.resolveFixup(state);
-						if (state.targetState == -1 || state.locAddress == null) {
-							relocationError(program, log, state);
+						if (subrec.isTargetThread()) {
+							Subrecord rec = targetThreads[subrec.getFixThreadNum()];
+							method = subrec.getFixMethodWithSub(rec);
+							index = rec.getIndex();
+						}
+						else {
+							method = subrec.getFixMethod();
+							index = subrec.getTargetDatum();
+						}
+						switch (method) {
+							case 0:			// Index is for a segment
+							case 4:			// segment only, no displacement
+								targetAddr = header.resolveSegment(index).getStartAddress();
+								break;
+							case 1:			// Index is for a group
+							case 5:			// group only, no displacement
+								targetAddr = groups.get(index - 1).getStartAddress();
+								break;
+							case 2:			// Index is for an external symbol
+							case 6:			// external only, no displacement
+								OmfSymbol symbol = externsyms.get(index - 1);
+								targetAddr = symbol.getAddress().getOffset();
+								break;
+							case 3:			// Not supported by many linkers
+							default:
+								log.appendMsg(
+									"Unsupported target method " + Integer.toString(method));
+								continue;
+						}
+						if (method < 3)
+							targetAddr += subrec.getTargetDisplacement();
+						locationType = subrec.getLocationType();
+						OmfSegmentHeader seg =
+								header.resolveSegment(fixup.getDataBlock().getSegmentIndex());
+						locAddress = seg.getAddress(language)
+								.add(
+									fixup.getDataBlock().getDataOffset() +
+									subrec.getDataRecordOffset());
+						if (locAddress == null) {
+							log.appendMsg("Couldn't find address for fixup");
 							continue;
 						}
-
-						switch (state.locationType) {
-							case 0: // Low-order byte
-								origbytes = new byte[1];
-								memory.getBytes(state.locAddress, origbytes);
-								finalvalue = state.targetState;
-								if (state.M) {
-									finalvalue += origbytes[0];
-								}
-								else {
-									finalvalue -= (state.locAddress.getOffset() + 1);
-								}
-								memory.setByte(state.locAddress, (byte) finalvalue);
-								break;
-							case 1: // 16-bit offset
-							case 5: // 16-bit loader-resolved offset (treated same as 1)
-								origbytes = new byte[2];
-								memory.getBytes(state.locAddress, origbytes);
-								finalvalue = state.targetState;
-								if (state.M) {
-									finalvalue += converter.getShort(origbytes);
-								}
-								else {
-									finalvalue -= (state.locAddress.getOffset() + 2);
-								}
-								memory.setShort(state.locAddress, (short) finalvalue);
-								break;
-							// case 2: // 16-bit base -- logical segment base (selector)
-							// case 3: // 32-bit Long pointer (16-bit base:16-bit offset
-							case 4: // High-order byte (high byte of 16-bit offset)
-							case 9: // 32-bit offset
-							case 13: // 32-bit loader-resolved offset (treated same as 9)
-								origbytes = new byte[4];
-								memory.getBytes(state.locAddress, origbytes);
-								finalvalue = state.targetState;
-								if (state.M) {
-									finalvalue += converter.getInt(origbytes);
-								}
-								else {
-									finalvalue -= (state.locAddress.getOffset() + 4);
-								}
-								memory.setInt(state.locAddress, (int) finalvalue);
-								break;
-							// case 11: // 48-bit pointer (16-bit base:32-bit offset)
-							default:
-								log.appendMsg("Unsupported relocation type " +
-									Integer.toString(state.locationType) + " at 0x" +
-									Long.toHexString(state.locAddress.getOffset()));
-								break;
+						finalvalue = targetAddr;
+						switch (locationType) {
+						case 0: // Low-order byte
+							origbytes = new byte[1];
+							memory.getBytes(locAddress, origbytes);
+							if (subrec.isSegmentRelative()) {
+								finalvalue += origbytes[0];
+							}
+							else {
+								finalvalue -= (locAddress.getOffset() + 1);
+							}
+							memory.setByte(locAddress, (byte) finalvalue);
+							break;
+						case 1: // 16-bit offset
+						case 5: // 16-bit loader-resolved offset (treated same as 1)
+							origbytes = new byte[2];
+							memory.getBytes(locAddress, origbytes);
+							if (subrec.isSegmentRelative()) {
+								finalvalue += converter.getShort(origbytes);
+							}
+							else {
+								finalvalue -= (locAddress.getOffset() + 2);
+							}
+							memory.setShort(locAddress, (short) finalvalue);
+							break;
+						case 2: // 16-bit base -- logical segment base (selector)
+							if (!subrec.isSegmentRelative()) {
+								// Segment can't be self relative
+								relocationError(program, log, locAddress, locationType);
+								continue;
+							}
+							origbytes = new byte[2];
+							memory.getBytes(locAddress, origbytes);
+							finalvalue += converter.getShort(origbytes) << 4;
+							finalvalue >>= 4; // Convert address to segment
+							memory.setShort(locAddress, (short) finalvalue);
+							break;
+						case 3: // 32-bit far pointer (16-bit segment:16-bit offset)
+							if (!subrec.isSegmentRelative()) {
+								// Far can't be self relative
+								relocationError(program, log, locAddress, locationType);
+								continue;
+							}
+							origbytes = new byte[4];
+							memory.getBytes(locAddress, origbytes);
+							finalvalue += converter.getInt(origbytes);
+							// Convert to segment:offset in 64K blocks 
+							finalvalue =
+									((finalvalue & 0xffff0000L) << 12) | (finalvalue & 0xffff);
+							memory.setInt(locAddress, (int) finalvalue);
+							break;
+						// case 11: // 48-bit far pointer (16-bit segment:32-bit offset)
+						case 4: // High-order byte (high byte of 16-bit offset)
+						case 9: // 32-bit offset
+						case 13: // 32-bit loader-resolved offset (treated same as 9)
+							origbytes = new byte[4];
+							memory.getBytes(locAddress, origbytes);
+							if (subrec.isSegmentRelative()) {
+								finalvalue += converter.getInt(origbytes);
+							}
+							else {
+								finalvalue -= (locAddress.getOffset() + 4);
+							}
+							memory.setInt(locAddress, (int) finalvalue);
+							break;
+						default:
+							log.appendMsg("Unsupported relocation type " +
+								Integer.toString(locationType) + " at 0x" +
+								Long.toHexString(locAddress.getOffset()));
+							break;
 						}
 					}
 					catch (MemoryAccessException e) {
-						relocationError(program, log, state);
+						relocationError(program, log, locAddress, locationType);
 						continue;
 					}
 					catch (OmfException e) {
-						relocationError(program, log, state);
+						relocationError(program, log, locAddress, locationType);
+						continue;
+					}
+					catch (IndexOutOfBoundsException e) {
+						relocationError(program, log, locAddress, locationType);
 						continue;
 					}
 					long[] values = new long[1];
 					values[0] = finalvalue;
 					program.getRelocationTable()
-							.add(state.locAddress, Status.APPLIED,
-								state.locationType, values, origbytes, null);
+						.add(locAddress, Status.APPLIED, locationType, values, origbytes, null);
 				}
 			}
 		}
@@ -493,10 +557,13 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 			return;
 		}
 		Address externalAddressStart = externalAddress;
-		externsyms = new ArrayList<>();
-
 		SymbolTable symbolTable = program.getSymbolTable();
 		Language language = program.getLanguage();
+
+		Map<String, OmfSymbol> publicSymbols = header.getPublicSymbols()
+				.stream()
+				.flatMap(symbolRec -> symbolRec.getSymbols().stream())
+				.collect(Collectors.toMap(sym -> sym.getName(), java.util.function.Function.identity()));
 
 		monitor.setMessage("Creating External Symbols");
 
@@ -505,6 +572,12 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 			for (OmfSymbol symbol : symbolrec.getSymbols()) {
 				if (monitor.isCancelled()) {
 					break;
+				}
+				OmfSymbol public_symbol = publicSymbols.get(symbol.getName());
+				if (public_symbol != null) {
+					// Use existing public symbol
+					externsyms.add(public_symbol);
+					continue;
 				}
 				Address address = null;
 				if (symbol.getSegmentRef() != 0) { // Look for special Borland segment symbols

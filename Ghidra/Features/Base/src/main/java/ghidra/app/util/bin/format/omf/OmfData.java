@@ -22,17 +22,37 @@ import ghidra.app.util.bin.BinaryReader;
 /**
  * Object representing data loaded directly into the final image.
  */
-public interface OmfData extends Comparable<OmfData> {
+public abstract class OmfData extends OmfRecord implements Comparable<OmfData> {
+	protected int segmentIndex;
+	protected long dataOffset;
+
+	/**
+	 * @return get the segments index for this datablock
+	 */
+	public int getSegmentIndex() {
+		return segmentIndex;
+	}
 
 	/**
 	 * @return the starting offset, within the loaded image, of this data
 	 */
-	public long getDataOffset();
+	public long getDataOffset() {
+		return dataOffset;
+	}
+
+	/**
+	 * Compare datablocks by data offset
+	 * @return -1 for lower address, 0 for same adress, 1 for higher address
+	 */
+	@Override
+	public int compareTo(OmfData o) {
+		return Long.compare(dataOffset, o.dataOffset);
+	}
 
 	/**
 	 * @return the length of this data in bytes
 	 */
-	public int getLength();
+	abstract public int getLength();
 
 	/**
 	 * Create a byte array holding the data represented by this object. The length
@@ -41,10 +61,10 @@ public interface OmfData extends Comparable<OmfData> {
 	 * @return allocated and filled byte array
 	 * @throws IOException for problems accessing data through the reader
 	 */
-	public byte[] getByteArray(BinaryReader reader) throws IOException;
+	abstract public byte[] getByteArray(BinaryReader reader) throws IOException;
 
 	/**
 	 * @return true if this is a block entirely of zeroes
 	 */
-	public boolean isAllZeroes();
+	abstract public boolean isAllZeroes();
 }
