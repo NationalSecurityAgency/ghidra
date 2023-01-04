@@ -2632,7 +2632,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 					else if (dynamicType.valueType == ElfDynamicValueType.STRING) {
 						ElfStringTable dynamicStringTable = elf.getDynamicStringTable();
 						if (dynamicStringTable != null) {
-							String str = dynamicStringTable.readString(elf.getReader(), value);
+							String str = dynamicStringTable.readString(value);
 							if (str != null && str.length() != 0) {
 								valueData.setComment(CodeUnit.EOL_COMMENT, str);
 							}
@@ -2687,7 +2687,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 		long totalLength = 0;
 		for (ElfStringTable stringTable : stringTables) {
-			totalLength += stringTable.getFileSize();
+			totalLength += stringTable.getFileSection().getMemorySize();
 		}
 		monitor.initialize(totalLength);
 
@@ -2696,27 +2696,27 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 			Address stringTableAddr = null;
 
-			ElfSectionHeader section = stringTable.getTableSectionHeader();
-			if (section != null) {
+			ElfFileSection section = stringTable.getFileSection();
+			if (section instanceof ElfSectionHeader) {
 				stringTableAddr = findLoadAddress(section, 0);
 			}
 			else {
-				stringTableAddr = findLoadAddress(stringTable.getFileOffset(), 1);
+				stringTableAddr = findLoadAddress(section.getFileOffset(), 1);
 			}
 			if (stringTableAddr == null) {
 //				log("Failed to locate string table at file offset 0x" +
 //					Long.toHexString(stringTable.getFileOffset()));
-				monitor.incrementProgress(stringTable.getFileSize()); // skipping table
+				monitor.incrementProgress(section.getMemorySize()); // skipping table
 				continue;
 			}
 
 			AddressRange rangeConstraint = getMarkupMemoryRangeConstraint(stringTableAddr);
 			if (rangeConstraint == null) {
-				monitor.incrementProgress(stringTable.getFileSize()); // skipping table
+				monitor.incrementProgress(section.getMemorySize()); // skipping table
 				continue;
 			}
 
-			long tblLength = stringTable.getFileSize();
+			long tblLength = section.getMemorySize();
 			long limit = Math.min(tblLength, rangeConstraint.getLength());
 			if (limit < tblLength) {
 				monitor.incrementProgress(tblLength - limit);

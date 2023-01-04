@@ -26,75 +26,46 @@ public class ElfStringTable implements StructConverter {
 
 	private ElfHeader header;
 
-	private ElfSectionHeader stringTableSection; // may be null
-	private long fileOffset;
-	private long addrOffset;
-	private long length;
+	private ElfFileSection fileSection;
+	private BinaryReader reader;
 
 	/**
 	 * Construct and parse an Elf string table
 	 * @param header elf header
-	 * @param stringTableSection string table section header or null if associated with a dynamic table entry
-	 * @param fileOffset symbol table file offset
-	 * @param addrOffset memory address of symbol table (should already be adjusted for prelink)
-	 * @param length length of symbol table in bytes of -1 if unknown
+	 * @param fileSection string table file section
 	 */
-	public ElfStringTable(ElfHeader header, ElfSectionHeader stringTableSection, long fileOffset,
-			long addrOffset, long length) {
+	public ElfStringTable(ElfHeader header, ElfFileSection fileSection) {
 		this.header = header;
-		this.stringTableSection = stringTableSection;
-		this.fileOffset = fileOffset;
-		this.addrOffset = addrOffset;
-		this.length = length;
+		this.fileSection = fileSection;
+		this.reader = fileSection.getReader();
 	}
 
 	/**
 	 * Read string from table at specified relative table offset
-	 * @param reader byte reader
 	 * @param stringOffset table relative string offset
 	 * @return string or null on error
 	 */
-	public String readString(BinaryReader reader, long stringOffset) {
-		if (fileOffset < 0) {
-			return null;
-		}
+	public String readString(long stringOffset) {
 		try {
-			if (stringOffset >= length) {
+			if (stringOffset >= fileSection.getMemorySize()) {
 				throw new IOException("String read beyond table bounds");
 			}
-			return reader.readUtf8String(fileOffset + stringOffset).trim();
+			return reader.readUtf8String(stringOffset).trim();
 		}
 		catch (IOException e) {
 			header.logError(
 				"Failed to read Elf String at offset 0x" + Long.toHexString(stringOffset) +
-					" within String Table at offset 0x" + Long.toHexString(fileOffset));
+					" within String Table at offset 0x" + Long.toHexString(fileSection.getFileOffset()));
 		}
 		return null;
 	}
 
-	public long getVirtualAddress() {
-		return header.adjustAddressForPrelink(addrOffset);
-	}
-
 	/**
-	 * Get section header which corresponds to this table, or null
-	 * if only associated with a dynamic table entry
-	 * @return string table section header or null
+	 * Get file section which corresponds to this table
+	 * @return string table section section
 	 */
-	public ElfSectionHeader getTableSectionHeader() {
-		return stringTableSection;
-	}
-
-	public long getFileOffset() {
-		return fileOffset;
-	}
-
-	public long getFileSize() {
-		return length;
-	}
-
-	public long getEntrySize() {
-		return -1;
+	public ElfFileSection getFileSection() {
+		return fileSection;
 	}
 
 	@Override

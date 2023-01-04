@@ -324,7 +324,7 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 			BinaryReader reader, Program program) {
 		ElfStringTable dynamicStringTable = elf.getDynamicStringTable();
 		if (dynamicStringTable != null) {
-			String str = dynamicStringTable.readString(reader, dynamic.getValue());
+			String str = dynamicStringTable.readString(dynamic.getValue());
 			if (str != null && str.length() != 0) {
 				data.setComment(CodeUnit.EOL_COMMENT, str);
 			}

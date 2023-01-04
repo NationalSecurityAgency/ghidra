@@ -682,7 +682,7 @@ public class ElfHeader implements StructConverter, Writeable {
 			if (dynamicStringTable != null) {
 				try {
 					dynamicLibraryNames[i] =
-						dynamicStringTable.readString(reader, needed[i].getValue());
+						dynamicStringTable.readString(needed[i].getValue());
 				}
 				catch (Exception e) {
 					// ignore
@@ -743,11 +743,9 @@ public class ElfHeader implements StructConverter, Writeable {
 		ArrayList<ElfStringTable> stringTableList = new ArrayList<>();
 		for (ElfSectionHeader stringTableSectionHeader : sectionHeaders) {
 			if (stringTableSectionHeader.getType() == ElfSectionHeaderConstants.SHT_STRTAB) {
-				ElfStringTable stringTable = new ElfStringTable(this, stringTableSectionHeader,
-					stringTableSectionHeader.getFileOffset(), stringTableSectionHeader.getVirtualAddress(),
-					stringTableSectionHeader.getFileSize());
+				ElfStringTable stringTable = new ElfStringTable(this, stringTableSectionHeader);
 				stringTableList.add(stringTable);
-				if (stringTable.getVirtualAddress() == dynamicStringTableAddr) {
+				if (stringTableSectionHeader.getVirtualAddress() == dynamicStringTableAddr) {
 					dynamicStringTable = stringTable;
 				}
 			}
@@ -788,9 +786,8 @@ public class ElfHeader implements StructConverter, Writeable {
 				return null;
 			}
 
-			return new ElfStringTable(this, null,
-				stringTableLoadHeader.getOffset(dynamicStringTableAddr), dynamicStringTableAddr,
-				stringTableSize);
+			ElfFileSection fileSection = stringTableLoadHeader.subSection(dynamicStringTableAddr - stringTableLoadHeader.getVirtualAddress(), stringTableSize);
+			return new ElfStringTable(this, fileSection);
 		}
 		catch (NotFoundException e) {
 			throw new AssertException(e);
@@ -1790,7 +1787,7 @@ public class ElfHeader implements StructConverter, Writeable {
 	 */
 	public ElfStringTable getStringTable(ElfSectionHeader section) {
 		for (ElfStringTable stringTable : stringTables) {
-			if (stringTable.getFileOffset() == section.getFileOffset()) {
+			if (stringTable.getFileSection().getFileOffset() == section.getFileOffset()) {
 				return stringTable;
 			}
 		}

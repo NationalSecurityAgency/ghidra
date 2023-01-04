@@ -232,7 +232,7 @@ public class ElfSymbol implements ByteArrayConverter {
 	 */
 	public void initSymbolName(BinaryReader reader, ElfStringTable stringTable) {
 		if (nameAsString == null && stringTable != null) {
-			nameAsString = stringTable.readString(reader, st_name);
+			nameAsString = stringTable.readString(st_name);
 		}
 	}
 
