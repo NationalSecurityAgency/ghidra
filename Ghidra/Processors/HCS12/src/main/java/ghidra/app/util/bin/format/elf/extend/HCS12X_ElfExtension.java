@@ -83,7 +83,7 @@ public class HCS12X_ElfExtension extends ElfExtension {
 
 		AddressSpace space = getPreferredSectionAddressSpace(elfLoadHelper, elfSectionHeader);
 
-		long addrWordOffset = elfSectionHeader.getAddress();
+		long addrWordOffset = elfSectionHeader.getVirtualAddress();
 
 		if (space == program.getAddressFactory().getDefaultAddressSpace()) {
 			addrWordOffset += elfLoadHelper.getImageBaseWordAdjustmentOffset();

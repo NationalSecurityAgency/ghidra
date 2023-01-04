@@ -20,8 +20,11 @@ import java.util.HashMap;
 import java.io.*;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.ByteArrayProvider;
+import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.ByteProviderWrapper;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.MemoryLoadable;
+import ghidra.app.util.bin.UnlimitedByteProviderWrapper;
 import ghidra.app.util.bin.format.Writeable;
 import ghidra.program.model.data.*;
 import ghidra.program.model.mem.MemoryAccessException;
@@ -70,7 +73,7 @@ import ghidra.util.StringUtilities;
  * </pre>
  */
 
-public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoadable {
+public class ElfSectionHeader implements ElfFileSection, StructConverter, Writeable {
 
 	int sh_name;
 	int sh_type;
@@ -93,7 +96,6 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 
 	public ElfSectionHeader(BinaryReader reader, ElfHeader header)
 			throws IOException {
-		this.reader = reader;
 		this.header = header;
 
 		sh_name = reader.readNextInt();
@@ -124,6 +126,18 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 			sh_entsize = reader.readNextLong();
 		}
 		//checkSize();
+
+		ByteProvider provider;
+		if (sh_type == ElfSectionHeaderConstants.SHT_NULL) {
+			provider = ByteProvider.EMPTY_BYTEPROVIDER;
+		}
+		else if (sh_type == ElfSectionHeaderConstants.SHT_NOBITS || isInvalidOffset()) {
+			provider = new ByteArrayProvider(new byte[(int) sh_size]);
+		}
+		else {
+			provider = new UnlimitedByteProviderWrapper(reader.getByteProvider(), sh_offset, sh_size);
+		}
+		this.reader = new BinaryReader(provider, reader.isLittleEndian());
 	}
 
 	ElfSectionHeader(ElfHeader header, MemoryBlock block, int sh_name, long imageBase)
@@ -224,7 +238,7 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 	 * should reside. Otherwise, the member contains 0.
 	 * @return the address of the section in memory
 	 */
-	public long getAddress() {
+	public long getVirtualAddress() {
 		return header.adjustAddressForPrelink(sh_addr);
 	}
 
@@ -246,6 +260,7 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 	 * section does not hold a table of fixed-size entries.
 	 * @return the section entry size
 	 */
+	@Override
 	public long getEntrySize() {
 		return sh_entsize;
 	}
@@ -329,10 +344,6 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 	}
 
 	void updateName() {
-		if (reader == null) {
-			throw new UnsupportedOperationException("This ElfSectionHeader does not have a reader");
-		}
-
 		ElfSectionHeader[] sections = header.getSections();
 		int e_shstrndx = header.e_shstrndx();
 		name = null;
@@ -340,10 +351,9 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 			if (sh_name >= 0 && e_shstrndx > 0 && e_shstrndx < sections.length) {
 				// read section name from string table
 				if (!sections[e_shstrndx].isInvalidOffset()) {
-					long stringTableOffset = sections[e_shstrndx].getOffset();
-					long offset = stringTableOffset + sh_name;
-					if (offset < reader.length()) {
-						name = reader.readAsciiString(stringTableOffset + sh_name);
+					BinaryReader reader = sections[e_shstrndx].getReader();
+					if (sh_name < reader.length()) {
+						name = reader.readAsciiString(sh_name);
 						if ("".equals(name)) {
 							name = null;
 						}
@@ -393,7 +403,7 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 	 * file.
 	 * @return byte offset from the beginning of the file to the first byte in the section
 	 */
-	public long getOffset() {
+	public long getFileOffset() {
 		return sh_offset;
 	}
 
@@ -422,7 +432,7 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 	 * SHT_NOBITS may have a non-zero size, but it occupies no space in the file.
 	 * @return the section's size in bytes
 	 */
-	public long getSize() {
+	public long getFileSize() {
 		return sh_size;
 	}
 

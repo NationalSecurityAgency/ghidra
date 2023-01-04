@@ -491,7 +491,7 @@ public class ElfHeader implements StructConverter, Writeable {
 				sectionHeaderType == ElfSectionHeaderConstants.SHT_ANDROID_RELR) {
 
 				for (ElfRelocationTable relocTable : relocationTableList) {
-					if (relocTable.getFileOffset() == section.getOffset()) {
+					if (relocTable.getFileOffset() == section.getFileOffset()) {
 						return; // skip reloc table previously parsed as dynamic entry
 					}
 				}
@@ -545,7 +545,7 @@ public class ElfHeader implements StructConverter, Writeable {
 				}
 
 				ElfRelocationTable relocTable = new ElfRelocationTable(reader,
-					this, section, section.getOffset(), section.getAddress(), section.getSize(),
+					this, section, section.getFileOffset(), section.getVirtualAddress(), section.getFileSize(),
 					section.getEntrySize(), addendTypeReloc, symbolTable, sectionToBeRelocated,
 					format);
 
@@ -723,12 +723,12 @@ public class ElfHeader implements StructConverter, Writeable {
 		if (dynamicSections.length == 1) {
 
 			ElfProgramHeader loadHeader =
-				getProgramLoadHeaderContaining(dynamicSections[0].getAddress());
+				getProgramLoadHeaderContaining(dynamicSections[0].getVirtualAddress());
 			if (loadHeader != null) {
 				long dynamicTableOffset = loadHeader.getFileOffset() +
-					(dynamicSections[0].getAddress() - loadHeader.getVirtualAddress());
+					(dynamicSections[0].getVirtualAddress() - loadHeader.getVirtualAddress());
 				dynamicTable = new ElfDynamicTable(reader, this, dynamicTableOffset,
-					dynamicSections[0].getAddress());
+					dynamicSections[0].getVirtualAddress());
 				return;
 			}
 		}
@@ -753,8 +753,8 @@ public class ElfHeader implements StructConverter, Writeable {
 		for (ElfSectionHeader stringTableSectionHeader : sectionHeaders) {
 			if (stringTableSectionHeader.getType() == ElfSectionHeaderConstants.SHT_STRTAB) {
 				ElfStringTable stringTable = new ElfStringTable(this, stringTableSectionHeader,
-					stringTableSectionHeader.getOffset(), stringTableSectionHeader.getAddress(),
-					stringTableSectionHeader.getSize());
+					stringTableSectionHeader.getFileOffset(), stringTableSectionHeader.getVirtualAddress(),
+					stringTableSectionHeader.getFileSize());
 				stringTableList.add(stringTable);
 				if (stringTable.getVirtualAddress() == dynamicStringTableAddr) {
 					dynamicStringTable = stringTable;
@@ -832,19 +832,19 @@ public class ElfHeader implements StructConverter, Writeable {
 		}
 
 		// determine number of 32-bit index elements for int[]
-		int count = (int) (symbolSectionIndexHeader.getSize() / 4);
+		int count = (int) (symbolSectionIndexHeader.getFileSize() / 4);
 		int[] indexTable = new int[count];
 
 		long ptr = reader.getPointerIndex();
 		try {
-			reader.setPointerIndex(symbolSectionIndexHeader.getOffset());
+			reader.setPointerIndex(symbolSectionIndexHeader.getFileOffset());
 			for (int i = 0; i < count; i++) {
 				indexTable[i] = reader.readNextInt();
 			}
 		}
 		catch (IOException e) {
 			errorConsumer.accept("Failed to read symbol section index table at 0x" +
-				Long.toHexString(symbolSectionIndexHeader.getOffset()) + ": " +
+				Long.toHexString(symbolSectionIndexHeader.getFileOffset()) + ": " +
 				symbolSectionIndexHeader.getNameAsString());
 		}
 		finally {
@@ -895,8 +895,8 @@ public class ElfHeader implements StructConverter, Writeable {
 					getExtendedSymbolSectionIndexTable(symbolTableSectionHeader);
 
 				ElfSymbolTable symbolTable = new ElfSymbolTable(reader, this,
-					symbolTableSectionHeader, symbolTableSectionHeader.getOffset(),
-					symbolTableSectionHeader.getAddress(), symbolTableSectionHeader.getSize(),
+					symbolTableSectionHeader, symbolTableSectionHeader.getFileOffset(),
+					symbolTableSectionHeader.getVirtualAddress(), symbolTableSectionHeader.getFileSize(),
 					symbolTableSectionHeader.getEntrySize(), stringTable, symbolSectionIndexTable,
 					isDyanmic);
 				symbolTableList.add(symbolTable);
@@ -1306,11 +1306,11 @@ public class ElfHeader implements StructConverter, Writeable {
 		if (section.getType() == ElfSectionHeaderConstants.SHT_NULL) {
 			return false;
 		}
-		long sectionStart = section.getAddress();
+		long sectionStart = section.getVirtualAddress();
 		if (sectionStart == 0) {
 			return false;
 		}
-		long sectionEnd = section.getSize() - 1 + sectionStart;
+		long sectionEnd = section.getFileSize() - 1 + sectionStart;
 		for (ElfProgramHeader segment : programHeaders) {
 			if (segment.getType() != ElfProgramHeaderConstants.PT_LOAD) {
 				continue;
@@ -1588,7 +1588,7 @@ public class ElfHeader implements StructConverter, Writeable {
 			if (!sectionHeader.isAlloc()) {
 				continue;
 			}
-			if (sectionHeader.getAddress() == address) {
+			if (sectionHeader.getVirtualAddress() == address) {
 				return sectionHeader;
 			}
 		}
@@ -1607,8 +1607,8 @@ public class ElfHeader implements StructConverter, Writeable {
 			if (!sectionHeader.isAlloc()) {
 				continue;
 			}
-			long start = sectionHeader.getAddress();
-			long end = start + sectionHeader.getSize();
+			long start = sectionHeader.getVirtualAddress();
+			long end = start + sectionHeader.getFileSize();
 			if (start <= address && address <= end) {
 				return sectionHeader;
 			}
@@ -1630,11 +1630,11 @@ public class ElfHeader implements StructConverter, Writeable {
 				section.isInvalidOffset()) {
 				continue;
 			}
-			long size = section.getSize();
+			long size = section.getFileSize();
 			if (size == 0) {
 				continue;
 			}
-			long start = section.getOffset();
+			long start = section.getFileOffset();
 			long end = start + size - 1;
 			if (fileOffset >= start && maxOffset <= end) {
 				return section;
@@ -1799,7 +1799,7 @@ public class ElfHeader implements StructConverter, Writeable {
 	 */
 	public ElfStringTable getStringTable(ElfSectionHeader section) {
 		for (ElfStringTable stringTable : stringTables) {
-			if (stringTable.getFileOffset() == section.getOffset()) {
+			if (stringTable.getFileOffset() == section.getFileOffset()) {
 				return stringTable;
 			}
 		}
@@ -1833,7 +1833,7 @@ public class ElfHeader implements StructConverter, Writeable {
 			return null;
 		}
 		for (ElfSymbolTable symbolTable : symbolTables) {
-			if (symbolTable.getFileOffset() == symbolTableSection.getOffset()) {
+			if (symbolTable.getFileOffset() == symbolTableSection.getFileOffset()) {
 				return symbolTable;
 			}
 		}
@@ -1855,7 +1855,7 @@ public class ElfHeader implements StructConverter, Writeable {
 	 * @return the relocation table associated to the specified section header
 	 */
 	public ElfRelocationTable getRelocationTable(ElfSectionHeader relocSection) {
-		return getRelocationTableAtOffset(relocSection.getOffset());
+		return getRelocationTableAtOffset(relocSection.getFileOffset());
 	}
 
 	/**

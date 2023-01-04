@@ -104,11 +104,11 @@ public class OatFileSystem extends GFileSystemBase {
 			if (roDataSection == null) {
 				throw new IOException("rodata section does not exist.");
 			}
-			baseOffset = roDataSection.getOffset();
+			baseOffset = roDataSection.getFileOffset();
 
 			monitor.setMessage("Parsing OAT header...");
 			ByteProviderWrapper wrapper =
-				new ByteProviderWrapper(provider, baseOffset, roDataSection.getSize());
+				new ByteProviderWrapper(provider, baseOffset, roDataSection.getFileSize());
 			BinaryReader reader = new BinaryReader(wrapper, elf.isLittleEndian());
 			OatHeader oatHeader = OatHeaderFactory.newOatHeader(reader);
 			OatHeaderFactory.parseOatHeader(oatHeader, null, reader, monitor, new MessageLog());

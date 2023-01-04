@@ -176,7 +176,7 @@ public class PIC30_ElfExtension extends ElfExtension {
 
 	@Override
 	public long getAdjustedSize(ElfSectionHeader section) {
-		long rawSize = section.getSize();
+		long rawSize = section.getFileSize();
 		return isDataLoad(section) ? getAdjustedDataLoadSize(rawSize) : rawSize;
 	}
 

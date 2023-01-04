@@ -143,8 +143,8 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 		for (ElfSectionHeader stringSection : stringSections) {
 			monitor.checkCanceled();
 			try {
-				Address addr = addr(stringSection.getOffset());
-				Address maxAddr = addr.addNoWrap(stringSection.getSize() - 1);
+				Address addr = addr(stringSection.getFileOffset());
+				Address maxAddr = addr.addNoWrap(stringSection.getMemorySize() - 1);
 
 				MemoryBlock block = memory.getBlock(addr);
 				if (block == null) {
@@ -188,15 +188,15 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 
 			CodeUnit cu = listing.getCodeUnitAt(addr(offset));
 			cu.setComment(CodeUnit.PLATE_COMMENT,
-				"#" + i + ") " + name + " at 0x" + Long.toHexString(sections[i].getAddress()));
+				"#" + i + ") " + name + " at 0x" + Long.toHexString(sections[i].getVirtualAddress()));
 
 			if (sections[i].getType() == ElfSectionHeaderConstants.SHT_NOBITS ||
-				sections[i].getSize() == 0 || sections[i].isInvalidOffset()) {
+				sections[i].getMemorySize() == 0 || sections[i].isInvalidOffset()) {
 				continue;
 			}
 
-			Address dataStart = addr(sections[i].getOffset());
-			createFragment(name + "_DATA", dataStart, sections[i].getSize());
+			Address dataStart = addr(sections[i].getFileOffset());
+			createFragment(name + "_DATA", dataStart, sections[i].getMemorySize());
 
 			try {
 				createLabel(dataStart, name, true, SourceType.ANALYSIS);
@@ -207,7 +207,7 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 
 			cu = listing.getCodeUnitAt(dataStart);
 			cu.setComment(CodeUnit.PRE_COMMENT, sections[i].getNameAsString() + " Size: 0x" +
-				Long.toHexString(sections[i].getSize()));
+				Long.toHexString(sections[i].getMemorySize()));
 		}
 	}
 
