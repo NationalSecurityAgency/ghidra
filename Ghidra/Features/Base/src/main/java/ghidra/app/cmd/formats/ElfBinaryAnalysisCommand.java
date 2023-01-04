@@ -407,14 +407,14 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 		ElfRelocationTable[] relocationTables = elf.getRelocationTables();
 		for (ElfRelocationTable relocationTable : relocationTables) {
 			monitor.checkCanceled();
-			ElfSectionHeader relocationSection = relocationTable.getTableSectionHeader();
+			ElfFileSection relocationSection = relocationTable.getFileSection();
 			String relocSectionName = "<section-not-found>";
-			if (relocationSection != null) {
-				relocSectionName = relocationSection.getNameAsString();
+			if (relocationSection instanceof ElfSectionHeader) {
+				relocSectionName = ((ElfSectionHeader) relocationSection).getNameAsString();
 			}
 
 			//		elf.getSection(relocationTable.getFileOffset()); // may be null
-			Address relocationTableAddress = addr(relocationTable.getFileOffset());
+			Address relocationTableAddress = addr(relocationSection.getFileOffset());
 			try {
 				DataType dataType = relocationTable.toDataType();
 				if (dataType != null) {

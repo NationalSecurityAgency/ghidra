@@ -882,12 +882,12 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 		Address relocTableAddr = null;
 
-		ElfSectionHeader section = relocationTable.getTableSectionHeader();
-		if (section != null) {
+		ElfFileSection section = relocationTable.getFileSection();
+		if (section instanceof ElfSectionHeader) {
 			relocTableAddr = findLoadAddress(section, 0);
 		}
 		else {
-			relocTableAddr = findLoadAddress(relocationTable.getFileOffset(), 1);
+			relocTableAddr = findLoadAddress(section.getFileOffset(), 1);
 		}
 
 		/**
@@ -910,7 +910,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			Address sectionLoadAddr = findLoadAddress(sectionToBeRelocated, 0);
 			if (sectionLoadAddr == null) {
 				log("Failed to identify relocation base address for relocation table 0x" +
-					relocationTable.getVirtualAddress() + " [section: " +
+					relocationTable.getFileSection().getVirtualAddress() + " [section: " +
 					sectionToBeRelocated.getNameAsString() + "]");
 				monitor.incrementProgress(relocationTable.getRelocationCount());
 				return;
@@ -945,9 +945,10 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 		boolean unableToApplyRelocs = relocationTable.isMissingRequiredSymbolTable();
 		if (unableToApplyRelocs) {
-			ElfSectionHeader tableSectionHeader = relocationTable.getTableSectionHeader();
-			String relocTableName =
-				tableSectionHeader != null ? tableSectionHeader.getNameAsString() : "dynamic";
+			ElfFileSection tableSectionHeader = relocationTable.getFileSection();
+			String relocTableName = tableSectionHeader instanceof ElfSectionHeader
+				? ((ElfSectionHeader) tableSectionHeader).getNameAsString()
+				: "dynamic";
 			ElfSectionHeader sectionToBeRelocated = relocationTable.getSectionToBeRelocated();
 			String relocaBaseName =
 				sectionToBeRelocated != null ? sectionToBeRelocated.getNameAsString() : "PT_LOAD";

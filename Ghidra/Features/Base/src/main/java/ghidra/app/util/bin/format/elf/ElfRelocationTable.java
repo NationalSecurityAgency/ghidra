@@ -43,11 +43,7 @@ public class ElfRelocationTable implements ByteArrayConverter, StructConverter {
 
 	private ElfSymbolTable symbolTable;
 
-	private ElfSectionHeader relocTableSection; // may be null
-	private long fileOffset;
-	private long addrOffset;
-	private long length;
-	private long entrySize;
+	private ElfFileSection fileSection;
 
 	private boolean addendTypeReloc;
 
@@ -57,29 +53,19 @@ public class ElfRelocationTable implements ByteArrayConverter, StructConverter {
 
 	/**
 	 * Construct an Elf Relocation Table
-	 * @param reader byte provider reader
 	 * @param header elf header
-	 * @param relocTableSection relocation table section header or null if associated with a dynamic table entry
-	 * @param fileOffset relocation table file offset
-	 * @param addrOffset memory address of relocation table (should already be adjusted for prelink)
-	 * @param length length of relocation table in bytes
-	 * @param entrySize size of each relocation entry in bytes
+	 * @param fileSection relocation table section header or null if associated with a dynamic table entry
 	 * @param addendTypeReloc true if addend type relocation table
 	 * @param symbolTable associated symbol table (may be null if not applicable)
 	 * @param sectionToBeRelocated or null for dynamic relocation table
 	 * @param format table format
 	 * @throws IOException if an IO or parse error occurs
 	 */
-	public ElfRelocationTable(BinaryReader reader, ElfHeader header,
-			ElfSectionHeader relocTableSection, long fileOffset, long addrOffset, long length,
-			long entrySize, boolean addendTypeReloc, ElfSymbolTable symbolTable,
+	public ElfRelocationTable(ElfHeader header, ElfFileSection fileSection,
+			boolean addendTypeReloc, ElfSymbolTable symbolTable,
 			ElfSectionHeader sectionToBeRelocated, TableFormat format) throws IOException {
 
-		this.relocTableSection = relocTableSection;
-		this.fileOffset = fileOffset;
-		this.addrOffset = addrOffset;
-		this.length = length;
-		this.entrySize = entrySize;
+		this.fileSection = fileSection;
 		this.addendTypeReloc = addendTypeReloc;
 		this.elfHeader = header;
 		this.format = format;
@@ -87,8 +73,7 @@ public class ElfRelocationTable implements ByteArrayConverter, StructConverter {
 		this.sectionToBeRelocated = sectionToBeRelocated;
 		this.symbolTable = symbolTable;
 
-		long ptr = reader.getPointerIndex();
-		reader.setPointerIndex(fileOffset);
+		BinaryReader reader = fileSection.getReader();
 
 		List<ElfRelocation> relocList;
 		if (format == TableFormat.RELR) {
@@ -101,8 +86,6 @@ public class ElfRelocationTable implements ByteArrayConverter, StructConverter {
 			relocList = parseStandardRelocations(reader);
 		}
 
-		reader.setPointerIndex(ptr);
-
 		relocs = new ElfRelocation[relocList.size()];
 		relocList.toArray(relocs);
 	}
@@ -113,23 +96,24 @@ public class ElfRelocationTable implements ByteArrayConverter, StructConverter {
 	 */
 	public boolean isMissingRequiredSymbolTable() {
 		if (symbolTable == null) {
-			// relocTableSection is may only be null for dynamic relocation table which must
+			// fileSection is may only be null for dynamic relocation table which must
 			// have a symbol table.  All other section-based relocation tables require a symbol
 			// table if link != 0.  NOTE: There is the possibility that a symbol table is required
 			// when link==0 which may result in relocation processing errors if it is missing.
-			return relocTableSection == null || relocTableSection.getLink() != 0;
+			return !(fileSection instanceof ElfSectionHeader) || ((ElfSectionHeader) fileSection).getLink() != 0;
 		}
 		return false;
 	}
 
 	private List<ElfRelocation> parseStandardRelocations(BinaryReader reader)
 			throws IOException {
+		long entrySize = fileSection.getEntrySize();
 
 		List<ElfRelocation> relocations = new ArrayList<>();
 		if (entrySize <= 0) {
 			entrySize = ElfRelocation.getStandardRelocationEntrySize(elfHeader.is64Bit(), addendTypeReloc);
 		}
-		int nRelocs = (int) (length / entrySize);
+		int nRelocs = (int) (fileSection.getMemorySize() / entrySize);
 		for (int relocationIndex = 0; relocationIndex < nRelocs; ++relocationIndex) {
 			relocations.add(ElfRelocation.createElfRelocation(reader, elfHeader, relocationIndex,
 				addendTypeReloc));
@@ -138,17 +122,18 @@ public class ElfRelocationTable implements ByteArrayConverter, StructConverter {
 	}
 
 	private long readNextRelrEntry(BinaryReader reader) throws IOException {
-		return entrySize == 8 ? reader.readNextLong() : reader.readNextUnsignedInt();
+		return fileSection.getEntrySize() == 8 ? reader.readNextLong() : reader.readNextUnsignedInt();
 	}
 
 	private long addRelrEntry(long offset, List<ElfRelocation> relocList) throws IOException {
 		relocList.add(ElfRelocation.createElfRelocation(elfHeader, relocList.size(),
 			addendTypeReloc, offset, 0, 0));
-		return offset + entrySize;
+		return offset + fileSection.getEntrySize();
 	}
 
 	private long addRelrEntries(long baseOffset, long entry, List<ElfRelocation> relocList)
 			throws IOException {
+		long entrySize = fileSection.getEntrySize();
 		long offset = baseOffset;
 		while (entry != 0) {
 			entry >>>= 1;
@@ -164,12 +149,13 @@ public class ElfRelocationTable implements ByteArrayConverter, StructConverter {
 
 	private List<ElfRelocation> parseRelrRelocations(BinaryReader reader)
 			throws IOException {
+		long entrySize = fileSection.getEntrySize();
 
 		// NOTE: Current implementation supports an entrySize of 8 or 4.  This could be 
 		// made more flexable if needed (applies to ElfRelrRelocationTableDataType as well)
 
 		List<ElfRelocation> relocList = new ArrayList<>();
-		long remaining = length; // limit to number of bytes specified for RELR table
+		long remaining = fileSection.getMemorySize(); // limit to number of bytes specified for RELR table
 
 		long offset = readNextRelrEntry(reader);
 		offset = addRelrEntry(offset, relocList);
@@ -324,39 +310,25 @@ public class ElfRelocationTable implements ByteArrayConverter, StructConverter {
 		return bytes;
 	}
 
-	public long getFileSize() {
-		return length;
-	}
-
-	public long getVirtualAddress() {
-		return addrOffset;
-	}
-
 	/**
-	 * Get section header which corresponds to this table, or null
-	 * if only associated with a dynamic table entry
-	 * @return relocation table section header or null
+	 * Get file section which corresponds to this table
+	 * @return relocation table file section
 	 */
-	public ElfSectionHeader getTableSectionHeader() {
-		return relocTableSection;
+	public ElfFileSection getFileSection() {
+		return fileSection;
 	}
 
 	public boolean isRelrTable() {
 		return format == TableFormat.RELR;
 	}
 
-	public long getFileOffset() {
-		return fileOffset;
-	}
-
-	public long getEntrySize() {
-		return entrySize;
-	}
-
 	@Override
 	public DataType toDataType() throws IOException {
+		long length = fileSection.getMemorySize();
+		long entrySize = fileSection.getEntrySize();
+
 		if (format == TableFormat.RELR) {
-			String relrStructureName = "Elf_RelrRelocationTable_" + Long.toHexString(addrOffset);
+			String relrStructureName = "Elf_RelrRelocationTable_" + Long.toHexString(fileSection.getVirtualAddress());
 			return new ElfRelrRelocationTableDataType(relrStructureName, (int) length,
 				(int) entrySize);
 		}
