@@ -37,12 +37,13 @@ import ghidra.util.table.column.GColumnRenderer;
 public class AnalysisEnablementTableModel
 		extends GDynamicColumnTableModel<AnalyzerEnablementState, Object> {
 
+	//@formatter:off
 	private static Color FG_COLOR_PROTOTYPE = new GColor("color.fg.analysis.options.prototype");
+	private static Color FG_COLOR_PROTOTYPE_SELECTED = new GColor("color.fg.analysis.options.prototype.selected");
 
-	private static Color BG_COLOR_NOT_DEFAULT_ENABLEMENT =
-		new GColor("color.bg.analysis.options.not.default.enablement");
-	private static Color BG_COLOR_NOT_DEFAULT_ENABLEMENT_SELECTED =
-		new GColor("color.bg.analysis.options.not.default.enablement.selected");
+	private static Color BG_COLOR_NOT_DEFAULT_ENABLEMENT = new GColor("color.bg.analysis.options.not.default.enablement");
+	private static Color BG_COLOR_NOT_DEFAULT_ENABLEMENT_SELECTED = new GColor("color.bg.analysis.options.not.default.enablement.selected");
+	//@formatter:on
 
 	private List<AnalyzerEnablementState> analyzerStates;
 	private AnalysisPanel panel;
@@ -209,9 +210,8 @@ public class AnalysisEnablementTableModel
 
 			String analyzerName = (String) value;
 			if (analyzerName.endsWith(AnalysisPanel.PROTOTYPE)) {
-				if (!data.isSelected()) {
-					component.setForeground(FG_COLOR_PROTOTYPE);
-				}
+				Color c = data.isSelected() ? FG_COLOR_PROTOTYPE_SELECTED : FG_COLOR_PROTOTYPE;
+				component.setForeground(c);
 			}
 
 			AnalyzerEnablementState state = (AnalyzerEnablementState) data.getRowObject();

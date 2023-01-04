@@ -933,6 +933,7 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 
 		RefCellBooleanRenderer() {
 			// cb.setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 0));
+			cb.setOpaque(true);
 		}
 
 		@Override
@@ -953,14 +954,13 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 				enabled = tableModel.isCellEditable(row, column);
 			}
 			cb.setEnabled(enabled);
-			cb.setOpaque(false);
 			cb.setFont(table.getFont());
+			cb.setBackground(getBackground());
 
 			if (!isSelected) {
 				if (ref.getOperandIndex() == instrPanel.getSelectedOpIndex()) {
 					cb.setBackground(BG_COLOR_ACTIVE_OPERAND);
 					setBackground(BG_COLOR_ACTIVE_OPERAND);
-					cb.setOpaque(true);
 				}
 			}
 

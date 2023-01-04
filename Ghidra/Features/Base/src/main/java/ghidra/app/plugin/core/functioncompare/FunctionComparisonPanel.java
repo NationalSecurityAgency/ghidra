@@ -47,7 +47,7 @@ import help.Help;
 import help.HelpService;
 
 /**
- * A panel for displaying {@link Function functions}, {@link Data data}, or 
+ * A panel for displaying {@link Function functions}, {@link Data data}, or
  * {@link AddressSet address sets} side-by-side for comparison purposes
  * <p>
  * Note: This is strictly for a one-to-one comparison; if multiple items are to
@@ -84,7 +84,7 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param provider the GUI provider that includes this panel
 	 * @param tool the tool containing this panel
 	 * @param leftFunction the function displayed in the left side of the panel
@@ -108,7 +108,7 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 
 	/**
 	 * Load the given functions into the views of this panel
-	 * 
+	 *
 	 * @param leftFunction The function for the left side of the panel
 	 * @param rightFunction The function for the right side of the panel
 	 */
@@ -126,7 +126,7 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 
 	/**
 	 * Load the given data into the views of this panel
-	 * 
+	 *
 	 * @param leftData The data for the left side of the panel
 	 * @param rightData The data for the right side of the panel
 	 */
@@ -137,20 +137,19 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 		CodeComparisonPanel<? extends FieldPanelCoordinator> activePanel =
 			getActiveComparisonPanel();
 		if (activePanel != null) {
-			activePanel.loadData(leftComparisonData.getData(),
-				rightComparisonData.getData());
+			activePanel.loadData(leftComparisonData.getData(), rightComparisonData.getData());
 		}
 	}
 
 	/**
-	 * Load the given addresses of the indicated programs into the views of 
+	 * Load the given addresses of the indicated programs into the views of
 	 * this panel
-	 * 
+	 *
 	 * @param leftProgram the program for the left side of the panel
 	 * @param rightProgram the program for the right side of the panel
-	 * @param leftAddresses addresses for the info to display in the left side 
+	 * @param leftAddresses addresses for the info to display in the left side
 	 * of the panel
-	 * @param rightAddresses addresses for the info to display in the right 
+	 * @param rightAddresses addresses for the info to display in the right
 	 * side of the panel
 	 */
 	public void loadAddresses(Program leftProgram, Program rightProgram,
@@ -170,7 +169,7 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 
 	/**
 	 * Get the actions for this FunctionComparisonPanel
-	 * 
+	 *
 	 * @return an array containing the actions
 	 */
 	public DockingAction[] getActions() {
@@ -180,7 +179,7 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 
 	/**
 	 * Gets a description to help distinguish this comparison panel from others
-	 * 
+	 *
 	 * @return the description
 	 */
 	public String getDescription() {
@@ -190,12 +189,10 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 		Data rightData = rightComparisonData.getData();
 
 		if (leftFunc != null && rightFunc != null) {
-			return leftFunc.getName(true) + " & " +
-				rightFunc.getName(true);
+			return leftFunc.getName(true) + " & " + rightFunc.getName(true);
 		}
 		if (leftData != null && rightData != null) {
-			return leftData.getDataType().getName() + " & " +
-				rightData.getDataType().getName();
+			return leftData.getDataType().getName() + " & " + rightData.getDataType().getName();
 		}
 
 		// Otherwise give a simple description for address sets
@@ -221,7 +218,7 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 	/**
 	 * Returns true if the comparison window has no information to display in
 	 * either the left or right panel
-	 * 
+	 *
 	 * @return true if the comparison window has no information to display
 	 */
 	public boolean isEmpty() {
@@ -229,9 +226,9 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 	}
 
 	/**
-	 * Gets the ListingCodeComparisonPanel being displayed by this panel 
+	 * Gets the ListingCodeComparisonPanel being displayed by this panel
 	 * if one exists
-	 * 
+	 *
 	 * @return the comparison panel or null
 	 */
 	public ListingCodeComparisonPanel getDualListingPanel() {
@@ -258,7 +255,7 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 
 	/**
 	 * Set the current tabbed panel to be the component with the given name
-	 * 
+	 *
 	 * @param name name of view to set as the current tab
 	 * @return true if the named view was found in the provider map
 	 */
@@ -276,7 +273,7 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 
 	/**
 	 * Get the name of the current comparison panel being viewed
-	 * 
+	 *
 	 * @return the tab name, or null if there is nothing selected
 	 */
 	public String getCurrentComponentName() {
@@ -289,13 +286,14 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 
 	/**
 	 * Get the number of views in the tabbed pane
+	 * @return the number of views in the tabbed pane
 	 */
 	int getNumberOfTabbedComponents() {
 		return tabNameToComponentMap.size();
 	}
 
 	/**
-	 * Remove all views in the tabbed pane 
+	 * Remove all views in the tabbed pane
 	 */
 	public void dispose() {
 		tool.removeComponentProvider(provider);
@@ -355,7 +353,7 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 
 	/**
 	 * Returns the comparison panel that is in the selected tab
-	 * 
+	 *
 	 * @return the currently selected comparison panel, or null if nothing
 	 * selected
 	 */
@@ -373,7 +371,7 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 
 	/**
 	 * Returns the comparison data object for the left panel
-	 * 
+	 *
 	 * @return the comparison data object for the left panel
 	 */
 	public FunctionComparisonData getLeftComparisonData() {
@@ -382,7 +380,7 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 
 	/**
 	 * Returns the comparison data object for the right panel
-	 * 
+	 *
 	 * @return the comparison data object for the right panel
 	 */
 	public FunctionComparisonData getRightComparisonData() {
@@ -391,7 +389,7 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 
 	/**
 	 * Gets the function currently displayed in the left side of this panel
-	 * 
+	 *
 	 * @return the left function or null
 	 */
 	public Function getLeftFunction() {
@@ -400,7 +398,7 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 
 	/**
 	 * Sets the function to display in the left side of this panel
-	 * 
+	 *
 	 * @param function the function to display
 	 */
 	protected void setLeftFunction(Function function) {
@@ -409,7 +407,7 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 
 	/**
 	 * Gets the function currently displayed in the right side of this panel
-	 * 
+	 *
 	 * @return the right function or null
 	 */
 	public Function getRightFunction() {
@@ -418,7 +416,7 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 
 	/**
 	 * Sets the function to display in the right side of this panel
-	 * 
+	 *
 	 * @param function the function to display
 	 */
 	protected void setRightFunction(Function function) {
@@ -427,7 +425,7 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 
 	/**
 	 * Gets the data displayed in the left side of this panel
-	 * 
+	 *
 	 * @return the left data or null
 	 */
 	public Data getLeftData() {
@@ -436,7 +434,7 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 
 	/**
 	 * Gets the data displayed in the right side of this panel
-	 * 
+	 *
 	 * @return the right data
 	 */
 	public Data getRightData() {
@@ -444,9 +442,9 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 	}
 
 	/**
-	 * Enables/disables mouse navigation for all the CodeComparisonPanels 
+	 * Enables/disables mouse navigation for all the CodeComparisonPanels
 	 * displayed by this panel
-	 * 
+	 *
 	 * @param enabled true to enable mouse navigation in the panels
 	 */
 	public void setMouseNavigationEnabled(boolean enabled) {
@@ -456,9 +454,9 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 	}
 
 	/**
-	 * Sets up the FunctionComparisonPanel and which CodeComparisonPanel is currently 
+	 * Sets up the FunctionComparisonPanel and which CodeComparisonPanel is currently
 	 * displayed based on the specified saveState
-	 * 
+	 *
 	 * @param prefix identifier to prepend to any save state names to make them unique
 	 * @param saveState the save state for retrieving information
 	 */
@@ -475,9 +473,9 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 	}
 
 	/**
-	 * Saves the information to the save state about the FunctionComparisonPanel and 
+	 * Saves the information to the save state about the FunctionComparisonPanel and
 	 * which CodeComparisonPanel is currently displayed
-	 * 
+	 *
 	 * @param prefix identifier to prepend to any save state names to make them unique
 	 * @param saveState the save state where the information gets written
 	 */
@@ -494,9 +492,9 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 	}
 
 	/**
-	 * Gets all actions for the FunctionComparisonPanel and all CodeComparisonPanels in this 
+	 * Gets all actions for the FunctionComparisonPanel and all CodeComparisonPanels in this
 	 * FunctionComparisonPanel
-	 * 
+	 *
 	 * @return the code comparison actions
 	 */
 	public DockingAction[] getCodeComparisonActions() {
@@ -517,9 +515,9 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 	}
 
 	/**
-	 * Sets the prefixes that are to be prepended to the title displayed for each side of 
+	 * Sets the prefixes that are to be prepended to the title displayed for each side of
 	 * each CodeComparisonPanel
-	 * 
+	 *
 	 * @param leftTitlePrefix the prefix to prepend to the left titles
 	 * @param rightTitlePrefix the prefix to prepend to the right titles
 	 */
@@ -535,7 +533,7 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 
 	/**
 	 * Returns the action context for a given mouse event and provider
-	 * 
+	 *
 	 * @param event the mouse event
 	 * @param componentProvider the component provider
 	 * @return the action context
@@ -548,13 +546,34 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 		if (dualListingPanel != null && dualListingPanel.isAncestorOf(sourceComponent)) {
 			return dualListingPanel.getActionContext(event, componentProvider);
 		}
+
+		CodeComparisonPanel<? extends FieldPanelCoordinator> activePanel =
+			getFocusedComparisonPanel();
+		if (activePanel != null) {
+			return activePanel.getActionContext(componentProvider, event);
+		}
+
+		return null;
+	}
+
+	private CodeComparisonPanel<? extends FieldPanelCoordinator> getFocusedComparisonPanel() {
+		Component focused = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+		if (focused != null) {
+			for (CodeComparisonPanel<? extends FieldPanelCoordinator> codeComparisonPanel : codeComparisonPanels) {
+				JComponent component = codeComparisonPanel.getComponent();
+				boolean isParent = SwingUtilities.isDescendingFrom(focused, component);
+				if (isParent) {
+					return codeComparisonPanel;
+				}
+			}
+		}
 		return null;
 	}
 
 	/**
-	 * Determines if the layouts of the views are synchronized with respect 
+	 * Determines if the layouts of the views are synchronized with respect
 	 * to scrolling and location
-	 * 
+	 *
 	 * @return true if scrolling is synchronized between the two views
 	 */
 	public final boolean isScrollingSynced() {
@@ -563,8 +582,8 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 
 	/**
 	 * Sets whether or not scrolling is synchronized
-	 * 
-	 * @param syncScrolling true means synchronize scrolling and location 
+	 *
+	 * @param syncScrolling true means synchronize scrolling and location
 	 * between the two views
 	 */
 	public void setScrollingSyncState(boolean syncScrolling) {
@@ -583,7 +602,7 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 
 	/**
 	 * Gets the currently displayed CodeComparisonPanel
-	 * 
+	 *
 	 * @return the current panel or null.
 	 */
 	public CodeComparisonPanel<? extends FieldPanelCoordinator> getDisplayedPanel() {
@@ -603,7 +622,7 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 
 	/**
 	* Get the current code comparison panel being viewed
-	* 
+	*
 	* @return null if there is no code comparison panel
 	*/
 	CodeComparisonPanel<? extends FieldPanelCoordinator> getCurrentComponent() {
@@ -612,7 +631,7 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 
 	/**
 	 * Returns true if the clicked object is a tab
-	 * 
+	 *
 	 * @param event the mouse event
 	 * @return true if the clicked object is a tab
 	 */
@@ -664,7 +683,7 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 
 	/**
 	 * Discovers the CodeComparisonPanels which are extension points
-	 * 
+	 *
 	 * @return the CodeComparisonPanels which are extension points
 	 */
 	private List<CodeComparisonPanel<? extends FieldPanelCoordinator>> getCodeComparisonPanels() {
@@ -673,7 +692,7 @@ public class FunctionComparisonPanel extends JPanel implements ChangeListener {
 			Set<CodeComparisonPanel<? extends FieldPanelCoordinator>> instances =
 				createAllPossibleCodeComparisonPanels();
 
-			// Put all panels in CodeComparisonPanel list; at same time, get a 
+			// Put all panels in CodeComparisonPanel list; at same time, get a
 			// list of superseded panels.
 			ArrayList<Class<? extends CodeComparisonPanel<? extends FieldPanelCoordinator>>> classesOfPanelsToSupersede =
 				new ArrayList<>();
