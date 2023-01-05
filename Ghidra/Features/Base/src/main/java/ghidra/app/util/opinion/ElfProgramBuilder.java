@@ -1521,13 +1521,13 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 			Address symbolTableAddr = null;
 
-			ElfSectionHeader symbolTableSection = elfSymbolTable.getTableSectionHeader();
-			if (symbolTableSection != null) {
-				symbolTableAddr = findLoadAddress(symbolTableSection, 0);
+			ElfFileSection section = elfSymbolTable.getFileSection();
+			if (section instanceof ElfSectionHeader) {
+				symbolTableAddr = findLoadAddress(section, 0);
 			}
 			else {
 				symbolTableAddr =
-					findLoadAddress(elfSymbolTable.getFileOffset(), elfSymbolTable.getFileSize());
+					findLoadAddress(section.getFileOffset(), section.getFileSize());
 			}
 
 			ElfSymbol[] symbols = elfSymbolTable.getSymbols();

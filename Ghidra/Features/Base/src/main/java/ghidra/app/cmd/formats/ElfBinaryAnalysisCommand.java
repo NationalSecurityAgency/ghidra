@@ -362,7 +362,7 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 		for (ElfSymbolTable symbolTable2 : symbolTables) {
 			monitor.checkCanceled();
 
-			Address symbolTableAddr = addr(symbolTable2.getFileOffset());
+			Address symbolTableAddr = addr(symbolTable2.getFileSection().getFileOffset());
 
 			try {
 				DataType symbolTableDT = symbolTable2.toDataType();
@@ -386,7 +386,7 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 				}
 
 				try {
-					Address currAddr = symbolTableAddr.add(j * symbolTable2.getEntrySize());
+					Address currAddr = symbolTableAddr.add(j * symbolTable2.getFileSection().getEntrySize());
 					listing.setComment(currAddr, CodeUnit.EOL_COMMENT,
 						name + " at 0x" + Long.toHexString(symbols[j].getValue()));
 				}
