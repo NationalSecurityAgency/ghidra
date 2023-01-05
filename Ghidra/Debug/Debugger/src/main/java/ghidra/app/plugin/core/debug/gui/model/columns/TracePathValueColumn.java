@@ -64,8 +64,8 @@ public class TracePathValueColumn extends AbstractDynamicTableColumn<PathRow, Pa
 		}
 	}
 
-	private Color diffColor = DebuggerResources.DEFAULT_COLOR_VALUE_CHANGED;
-	private Color diffColorSel = DebuggerResources.DEFAULT_COLOR_VALUE_CHANGED_SEL;
+	private Color diffColor = DebuggerResources.COLOR_VALUE_CHANGED;
+	private Color diffColorSel = DebuggerResources.COLOR_VALUE_CHANGED_SEL;
 
 	@Override
 	public String getColumnName() {

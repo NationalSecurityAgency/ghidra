@@ -145,9 +145,9 @@ public class DebuggerTraceViewDiffPluginTest extends AbstractGhidraHeadedDebugge
 
 		waitOn(traceDiffPlugin.startComparison(TraceSchedule.snap(1)));
 
-		assertListingBackgroundAt(DebuggerTraceViewDiffPlugin.DEFAULT_DIFF_COLOR,
+		assertListingBackgroundAt(DebuggerTraceViewDiffPlugin.COLOR_DIFF,
 			traceDiffPlugin.altListingPanel, tb.addr(0x00400123), 0);
-		assertListingBackgroundAt(DebuggerTraceViewDiffPlugin.DEFAULT_DIFF_COLOR,
+		assertListingBackgroundAt(DebuggerTraceViewDiffPlugin.COLOR_DIFF,
 			listingProvider.getListingPanel(), tb.addr(0x00400123), 0);
 
 		AddressSetView expected = tb.set(tb.range(0x00400123, 0x0040012a));

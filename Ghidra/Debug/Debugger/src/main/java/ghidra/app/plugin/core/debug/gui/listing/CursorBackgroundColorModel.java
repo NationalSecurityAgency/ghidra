@@ -35,7 +35,6 @@ class CursorBackgroundColorModel implements ListingBackgroundColorModel {
 	private ListingPanel listingPanel;
 	private AddressIndexMap addressIndexMap;
 
-	@AutoOptionConsumed(category = {}, name = GhidraOptions.HIGHLIGHT_CURSOR_LINE_COLOR)
 	private Color cursorLineColor = GhidraOptions.DEFAULT_CURSOR_LINE_COLOR;
 	@AutoOptionConsumed(category = {}, name = GhidraOptions.HIGHLIGHT_CURSOR_LINE)
 	private boolean doHighlight = true;

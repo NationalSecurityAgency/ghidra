@@ -18,14 +18,11 @@ package ghidra.app.plugin.core.debug.gui.listing;
 import ghidra.app.plugin.core.debug.gui.colors.DebuggerTrackedRegisterBackgroundColorModel;
 import ghidra.app.util.viewer.listingpanel.ListingBackgroundColorModel;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
-import ghidra.framework.plugintool.Plugin;
 
 public abstract class DebuggerTrackedRegisterListingBackgroundColorModel
 		extends DebuggerTrackedRegisterBackgroundColorModel implements ListingBackgroundColorModel {
 
-	public DebuggerTrackedRegisterListingBackgroundColorModel(Plugin plugin,
-			ListingPanel listingPanel) {
-		super(plugin);
+	public DebuggerTrackedRegisterListingBackgroundColorModel(ListingPanel listingPanel) {
 		modelDataChanged(listingPanel);
 	}
 

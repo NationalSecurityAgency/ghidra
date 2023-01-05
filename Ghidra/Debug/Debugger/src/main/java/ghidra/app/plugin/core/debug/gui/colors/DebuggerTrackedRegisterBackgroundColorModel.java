@@ -21,9 +21,6 @@ import java.math.BigInteger;
 import docking.widgets.fieldpanel.support.BackgroundColorModel;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.util.viewer.util.AddressIndexMap;
-import ghidra.framework.options.AutoOptions;
-import ghidra.framework.options.annotation.AutoOptionConsumed;
-import ghidra.framework.plugintool.Plugin;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
@@ -33,15 +30,7 @@ public abstract class DebuggerTrackedRegisterBackgroundColorModel implements Bac
 	protected Program program;
 	protected AddressIndexMap addressIndexMap;
 
-	// TODO: Seems I should at least rename this option
-	@AutoOptionConsumed(name = DebuggerResources.OPTION_NAME_COLORS_TRACKING_MARKERS)
-	Color trackingColor = DebuggerResources.DEFAULT_COLOR_REGISTER_MARKERS;
-	@SuppressWarnings("unused")
-	private final AutoOptions.Wiring autoOptionsWiring;
-
-	public DebuggerTrackedRegisterBackgroundColorModel(Plugin plugin) {
-		autoOptionsWiring = AutoOptions.wireOptions(plugin, this);
-	}
+	private final Color trackingColor = DebuggerResources.COLOR_REGISTER_MARKERS;
 
 	/**
 	 * Get the location which is to be highlighted as "tracked."

@@ -15,9 +15,8 @@
  */
 package ghidra.app.plugin.core.debug.gui.listing;
 
-import static ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
+import static ghidra.app.plugin.core.debug.gui.DebuggerResources.GROUP_TRANSIENT_VIEWS;
 
-import java.awt.Color;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -39,10 +38,7 @@ import ghidra.app.plugin.core.debug.gui.action.NoneLocationTrackingSpec;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
-import ghidra.framework.options.AutoOptions;
 import ghidra.framework.options.SaveState;
-import ghidra.framework.options.annotation.AutoOptionDefined;
-import ghidra.framework.options.annotation.HelpInfo;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -131,27 +127,6 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 	@SuppressWarnings("unused")
 	private AutoService.Wiring autoServiceWiring;
 
-	@AutoOptionDefined(
-		name = OPTION_NAME_COLORS_STALE_MEMORY,
-		description = "Color of memory addresses whose content is not known in the view's " +
-			"snap",
-		help = @HelpInfo(anchor = "colors"))
-	private Color staleMemoryColor = DEFAULT_COLOR_BACKGROUND_STALE;
-	@AutoOptionDefined( //
-		name = OPTION_NAME_COLORS_ERROR_MEMORY, //
-		description = "Color of memory addresses whose content could not be read in the " +
-			"view's snap", //
-		help = @HelpInfo(anchor = "colors"))
-	private Color errorMemoryColor = DEFAULT_COLOR_BACKGROUND_ERROR;
-	// NOTE: Static programs are marked via markerSet. Dynamic are marked via custom color model
-	@AutoOptionDefined( //
-		name = OPTION_NAME_COLORS_TRACKING_MARKERS, //
-		description = "Background color for locations referred to by a tracked register", //
-		help = @HelpInfo(anchor = "colors"))
-	private Color trackingColor = DEFAULT_COLOR_REGISTER_MARKERS;
-	@SuppressWarnings("unused")
-	private AutoOptions.Wiring autoOptionsWiring;
-
 	private final SuppressableCallback<Void> cbProgramLocationEvents = new SuppressableCallback<>();
 	private final SuppressableCallback<Void> cbProgramSelectionEvents =
 		new SuppressableCallback<>();
@@ -161,7 +136,6 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 	public DebuggerListingPlugin(PluginTool tool) {
 		super(tool);
 		autoServiceWiring = AutoService.wireServicesProvidedAndConsumed(this);
-		autoOptionsWiring = AutoOptions.wireOptions(this);
 
 		createActions();
 	}
@@ -171,7 +145,7 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 			ListingPanel listingPanel) {
 		MultiBlendedListingBackgroundColorModel colorModel =
 			new MultiBlendedListingBackgroundColorModel();
-		colorModel.addModel(new MemoryStateListingBackgroundColorModel(this, listingPanel));
+		colorModel.addModel(new MemoryStateListingBackgroundColorModel(listingPanel));
 		colorModel.addModel(new CursorBackgroundColorModel(this, listingPanel));
 		return colorModel;
 	}

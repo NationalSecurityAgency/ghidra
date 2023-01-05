@@ -77,8 +77,8 @@ public class ObjectsTreePanel extends JPanel {
 	protected boolean showPrimitives = false;
 	protected boolean showMethods = false;
 
-	protected Color diffColor = DebuggerResources.DEFAULT_COLOR_VALUE_CHANGED;
-	protected Color diffColorSel = DebuggerResources.DEFAULT_COLOR_VALUE_CHANGED_SEL;
+	protected Color diffColor = DebuggerResources.COLOR_VALUE_CHANGED;
+	protected Color diffColorSel = DebuggerResources.COLOR_VALUE_CHANGED_SEL;
 
 	public ObjectsTreePanel() {
 		super(new BorderLayout());
