@@ -101,6 +101,26 @@ public class LaunchProperties {
 	}
 
 	/**
+	 * Gets a {@link List} of VM arguments to use for the launch for the current 
+	 * {@link Platform platform}.
+	 * 
+	 * @return A {@link List} of VM arguments to use for the launch for the current
+	 *   {@link Platform}
+	 */
+	public List<String> getVmArgList() {
+		List<String> ret = new ArrayList<>();
+		List<String> vmargList = propertyMap.get(VMARGS);
+		if (vmargList != null) {
+			ret.addAll(vmargList);
+		}
+		List<String> vmargPlatformList = propertyMap.get(VMARGS_PLATFORM);
+		if (vmargPlatformList != null) {
+			ret.addAll(vmargPlatformList);
+		}
+		return ret;
+	}
+
+	/**
 	 * Parses and gets the launch properties from the given launch properties file.
 	 * 
 	 * @param launchPropertiesFile The file to get the launch properties from.

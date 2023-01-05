@@ -32,8 +32,8 @@ function showUsage() {
 	echo "   <max-memory>: maximum memory heap size in MB (e.g., 768M or 2G).  Use empty \"\" if default"
 	echo "                 should be used.  This will generally be upto 1/4 of the physical memory available"
 	echo "                 to the OS."
-	echo "   <vmarg-list>: pass-thru args (e.g.,  \"-Xmx512M -Dmyvar=1 -DanotherVar=2\") - use"
-	echo "                 empty \"\" if vmargs not needed"
+	echo "   <vmarg-list>: pass-thru args (e.g.,  \"-Xmx512M -Dmyvar=1 -DanotherVar=2\"). Use"
+	echo "                 empty \"\" if vmargs not needed.  Spaces are not supported."
 	echo "   <app-classname>: application classname (e.g., ghidra.GhidraRun )"
 	echo "   <app-args>...: arguments to be passed to the application"
 	echo " "
@@ -44,10 +44,12 @@ function showUsage() {
 }
 
 
-VMARG_LIST=
+VMARGS_FROM_CALLER=         # Passed in from the outer script as one long string, no spaces
+VMARGS_FROM_LAUNCH_SH=()    # Defined in this script, added to array
+VMARGS_FROM_LAUNCH_PROPS=() # Retrieved from LaunchSupport, added to array
+
 ARGS=()
 INDEX=0
-
 WHITESPACE="[[:space:]]"
 
 for AA in "$@"
@@ -72,17 +74,13 @@ do
 			;;
 		5)
 			if [ "$AA" != "" ]; then
-				VMARG_LIST=$AA
+				VMARGS_FROM_CALLER=$AA
 			fi
 			;;
 		6)
 			CLASSNAME=$AA
 			;;
 		*)
-			# Preserve quoted arguments
-			if [[ $AA =~ $WHITESPACE ]]; then
-				AA="\"$AA\""
-		    fi
 			ARGS[${#ARGS[@]}]=$AA
 			;;
 	esac
@@ -147,20 +145,21 @@ fi
 JAVA_CMD="${JAVA_HOME}/bin/java"
 
 # Get the configurable VM arguments from the launch properties
-VMARG_LIST+=" $(java -cp "${LS_CPATH}" LaunchSupport "${INSTALL_DIR}" -vmargs)"
+while IFS= read -r line; do
+	VMARGS_FROM_LAUNCH_PROPS+=("$line")
+done < <(java -cp "${LS_CPATH}" LaunchSupport "${INSTALL_DIR}" -vmargs)
 
 # Add extra macOS VM arguments
 if [ "$(uname -s)" = "Darwin" ]; then
-	VMARG_LIST+=" -Xdock:name=${APPNAME}"
+	VMARGS_FROM_LAUNCH_SH+=("-Xdock:name=${APPNAME}")
 fi
 
 # Set Max Heap Size if specified
 if [ "${MAXMEM}" != "" ]; then
-	VMARG_LIST+=" -Xmx${MAXMEM}"
+	VMARGS_FROM_LAUNCH_SH+=("-Xmx${MAXMEM}")
 fi
 
 BACKGROUND=false
-
 if [ "${MODE}" = "debug" ] || [ "${MODE}" = "debug-suspend" ]; then
 	
 	SUSPEND=n
@@ -173,8 +172,8 @@ if [ "${MODE}" = "debug" ] || [ "${MODE}" = "debug-suspend" ]; then
 		SUSPEND=y
 	fi
 	 
-	VMARG_LIST+=" -Dlog4j.configurationFile=\"${DEBUG_LOG4J}\""  
-	VMARG_LIST+=" -agentlib:jdwp=transport=dt_socket,server=y,suspend=${SUSPEND},address=${DEBUG_ADDRESS}"
+	VMARGS_FROM_LAUNCH_SH+=("-Dlog4j.configurationFile=${DEBUG_LOG4J}")
+	VMARGS_FROM_LAUNCH_SH+=("-agentlib:jdwp=transport=dt_socket,server=y,suspend=${SUSPEND},address=${DEBUG_ADDRESS}")
 	
 
 elif [ "${MODE}" = "fg" ]; then
@@ -189,7 +188,7 @@ else
 fi
 
 if [ "${BACKGROUND}" = true ]; then
-	eval "\"${JAVA_CMD}\" ${VMARG_LIST} -showversion -cp \"${CPATH}\" ghidra.Ghidra ${CLASSNAME} ${ARGS[@]}" &>/dev/null &
+	"${JAVA_CMD}" "${VMARGS_FROM_LAUNCH_PROPS[@]}" "${VMARGS_FROM_LAUNCH_SH[@]}" ${VMARGS_FROM_CALLER} -showversion -cp "${CPATH}" ghidra.Ghidra ${CLASSNAME} "${ARGS[@]}" &>/dev/null &
 	
 	# If our process dies immediately, output something so the user knows to run in debug mode.
 	# Otherwise they'll never see any error output from background mode.
@@ -202,7 +201,7 @@ if [ "${BACKGROUND}" = true ]; then
 	fi
 	exit 0
 else
-	eval "(set -o noglob; \"${JAVA_CMD}\" ${VMARG_LIST} -showversion -cp \"${CPATH}\" ghidra.Ghidra ${CLASSNAME} ${ARGS[@]})"
+	set -o noglob; "${JAVA_CMD}" "${VMARGS_FROM_LAUNCH_PROPS[@]}" "${VMARGS_FROM_LAUNCH_SH[@]}" ${VMARGS_FROM_CALLER} -showversion -cp "${CPATH}" ghidra.Ghidra ${CLASSNAME} "${ARGS[@]}"
 	exit $?
 fi
 
