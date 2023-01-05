@@ -2588,10 +2588,10 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				return;
 			}
 
-			dynamicTableAddress = findLoadAddress(dynamicTable.getFileOffset(), 1);
+			dynamicTableAddress = findLoadAddress(dynamicTable.getFileSection().getFileOffset(), 1);
 			if (dynamicTableAddress == null) {
 				log("Failed to locate dynamic table at file offset 0x" +
-					Long.toHexString(dynamicTable.getFileOffset()));
+					Long.toHexString(dynamicTable.getFileSection().getFileOffset()));
 				return;
 			}
 

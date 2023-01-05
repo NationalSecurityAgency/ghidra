@@ -270,7 +270,7 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 		}
 
 		try {
-			Address addr = addr(dynamicTable.getFileOffset());
+			Address addr = addr(dynamicTable.getFileSection().getFileOffset());
 
 			program.getSymbolTable().createLabel(addr, "_DYNAMIC", SourceType.ANALYSIS);
 

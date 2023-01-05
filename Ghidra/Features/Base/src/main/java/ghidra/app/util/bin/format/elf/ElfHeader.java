@@ -701,17 +701,16 @@ public class ElfHeader implements StructConverter, Writeable {
 			// The p_offset may not refer to the start of the DYNAMIC table so we must use
 			// p_vaddr to find it relative to a PT_LOAD segment
 			long vaddr = dynamicHeaders[0].getVirtualAddress();
-			if (vaddr == 0 || dynamicHeaders[0].getFileSize() == 0) {
+			long size = dynamicHeaders[0].getFileSize();
+			if (vaddr == 0 || size == 0) {
 				Msg.warn(this, "ELF Dynamic table appears to have been stripped from binary");
 				return;
 			}
 
 			ElfProgramHeader loadHeader = getProgramLoadHeaderContaining(vaddr);
 			if (loadHeader != null) {
-				long dynamicTableOffset = loadHeader.getFileOffset() +
-					(dynamicHeaders[0].getVirtualAddress() - loadHeader.getVirtualAddress());
-				dynamicTable = new ElfDynamicTable(reader, this, dynamicTableOffset,
-					dynamicHeaders[0].getVirtualAddress());
+				ElfFileSection section = loadHeader.subSection(vaddr - loadHeader.getVirtualAddress(), size);
+				dynamicTable = new ElfDynamicTable(this, section);
 				return;
 			}
 		}
@@ -722,15 +721,7 @@ public class ElfHeader implements StructConverter, Writeable {
 		ElfSectionHeader[] dynamicSections = getSections(ElfSectionHeaderConstants.SHT_DYNAMIC);
 		if (dynamicSections.length == 1) {
 
-			ElfProgramHeader loadHeader =
-				getProgramLoadHeaderContaining(dynamicSections[0].getVirtualAddress());
-			if (loadHeader != null) {
-				long dynamicTableOffset = loadHeader.getFileOffset() +
-					(dynamicSections[0].getVirtualAddress() - loadHeader.getVirtualAddress());
-				dynamicTable = new ElfDynamicTable(reader, this, dynamicTableOffset,
-					dynamicSections[0].getVirtualAddress());
-				return;
-			}
+			dynamicTable = new ElfDynamicTable(this, dynamicSections[0]);
 		}
 
 	}

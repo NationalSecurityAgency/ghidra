@@ -40,20 +40,13 @@ public class ElfDynamicTable implements StructConverter {
 	private List<ElfDynamic> dynamics = new ArrayList<ElfDynamic>();
 
 	private ElfHeader header;
-	private long fileOffset;
-	private long addrOffset;
+	private ElfFileSection fileSection;
 
-	public ElfDynamicTable(BinaryReader reader, ElfHeader header,
-			long fileOffset, long addrOffset) throws IOException {
-
-		long oldptr = reader.getPointerIndex();
-
+	public ElfDynamicTable(ElfHeader header, ElfFileSection fileSection) throws IOException {
 		this.header = header;
-		this.fileOffset = fileOffset;
-		this.addrOffset = addrOffset;
+		this.fileSection = fileSection;
 
-		reader.setPointerIndex(fileOffset);
-
+		BinaryReader reader = fileSection.getReader();
 		// Collect set of all _DYNAMIC array tags specified in .dynamic section
 		while (true) {
 			ElfDynamic dyn = new ElfDynamic(reader, header);
@@ -62,8 +55,6 @@ public class ElfDynamicTable implements StructConverter {
 				break;
 			}
 		}
-
-		reader.setPointerIndex(oldptr);
 	}
 
 	/**
@@ -185,12 +176,8 @@ public class ElfDynamicTable implements StructConverter {
 		return getDynamicValue(type.value);
 	}
 
-	public long getFileOffset() {
-		return fileOffset;
-	}
-
-	public long getVirtualAddress() {
-		return addrOffset;
+	public ElfFileSection getFileSection() {
+		return fileSection;
 	}
 
 	@Override
