@@ -104,8 +104,11 @@ public class CategoryNode extends DataTypeTreeNode {
 		if (getClass() != o.getClass()) {
 			return false;
 		}
+
 		CategoryNode otherNode = (CategoryNode) o;
-		if (!category.equals(otherNode.category)) {
+		CategoryPath otherPath = otherNode.getCategory().getCategoryPath();
+		CategoryPath path = getCategory().getCategoryPath();
+		if (!path.equals(otherPath)) {
 			return false;
 		}
 		return name.equals(otherNode.name);
