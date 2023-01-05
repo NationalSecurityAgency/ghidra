@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 #include "test.hh"
-
-#include <algorithm>
-
 #include "libdecomp.hh"
 
 vector<UnitTest *> UnitTest::tests;
