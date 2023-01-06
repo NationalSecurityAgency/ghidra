@@ -21,6 +21,7 @@ import java.util.Objects;
 
 import javax.swing.Icon;
 
+import generic.theme.GIcon;
 import ghidra.util.ColorUtils;
 
 /**
@@ -171,9 +172,20 @@ public class MultiIcon implements Icon {
 			if (buffy.length() > 0) {
 				buffy.append(", ");
 			}
-			buffy.append(ResourceManager.getIconName(icon));
-		}
 
+			String name = getIconId(icon);
+			if (name == null) {
+				name = ResourceManager.getIconName(icon);
+			}
+			buffy.append(name);
+		}
 		return buffy.toString();
+	}
+
+	private String getIconId(Icon icon) {
+		if (icon instanceof GIcon gIcon) {
+			return gIcon.getId();
+		}
+		return null;
 	}
 }
