@@ -114,7 +114,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 
 		hadChanges = false;
 
-		if (lastCompositeId != originalCompositeId) {
+		if (originalCompositeId == -1 || lastCompositeId != originalCompositeId) {
 			// only clear the selection if loading a new type
 			setSelection(new FieldSelection());
 		}

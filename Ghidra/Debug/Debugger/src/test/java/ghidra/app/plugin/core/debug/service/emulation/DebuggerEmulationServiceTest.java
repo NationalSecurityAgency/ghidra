@@ -256,7 +256,7 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerGU
 				false);
 
 			// NOTE: qword ptr [0x00600800] is RIP-relative
-			asm.assemble(addrText, "MOV RAX, qword ptr [0x00600800]");
+			asm.assemble(addrText, "MOV RAX, qword ptr [RIP + 0x2007f9]");
 			memory.setLong(addr(program, 0x00600800), 0xdeadbeefcafebabeL);
 		}
 
