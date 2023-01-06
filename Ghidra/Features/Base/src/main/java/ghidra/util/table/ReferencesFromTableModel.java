@@ -114,13 +114,14 @@ public class ReferencesFromTableModel extends AddressBasedTableModel<ReferenceEn
 			ReferenceEndpoint rowObject = (ReferenceEndpoint) data.getValue();
 			String text = asString(rowObject);
 			label.setText(text);
+			label.setToolTipText(rowObject.getReferenceType().getName());
 
 			return label;
 		}
 
 		private String asString(ReferenceEndpoint t) {
 			RefType refType = t.getReferenceType();
-			String text = refType.getName();
+			String text = refType.getDisplayString();
 			if (t.isOffcut()) {
 				text = "<html>" + HTMLUtilities.colorString(OFFCUT_COLOR, text + HTML_OFFCUT_TEXT);
 			}
@@ -130,7 +131,7 @@ public class ReferencesFromTableModel extends AddressBasedTableModel<ReferenceEn
 		@Override
 		public String getFilterString(ReferenceEndpoint t, Settings settings) {
 			RefType refType = t.getReferenceType();
-			String text = refType.getName();
+			String text = refType.getDisplayString();
 			if (t.isOffcut()) {
 				return text + PLAIN_OFFCUT_TEXT;
 			}
