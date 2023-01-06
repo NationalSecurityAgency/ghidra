@@ -30,6 +30,7 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.plaf.TableUI;
 import javax.swing.table.*;
+import javax.swing.text.JTextComponent;
 
 import docking.*;
 import docking.action.*;
@@ -933,14 +934,17 @@ public class GTable extends JTable {
 	 * displayed. However, the editor component will not have a focus. This method has been
 	 * overridden to request focus on the editor component.
 	 *
-	 * @see javax.swing.JTable#editCellAt(int, int)
+	 * @see javax.swing.JTable#editCellAt(int, int, EventObject)
 	 */
 	@Override
-	public boolean editCellAt(int row, int column) {
-		boolean editAtCell = super.editCellAt(row, column);
+	public boolean editCellAt(int row, int column, EventObject e) {
+		boolean editAtCell = super.editCellAt(row, column, e);
 		if (editAtCell) {
 			Component editor = getEditorComponent();
-			editor.requestFocus();
+			editor.requestFocusInWindow();
+			if (editor instanceof JTextComponent textComponent) {
+				textComponent.selectAll();
+			}
 		}
 		return editAtCell;
 	}
