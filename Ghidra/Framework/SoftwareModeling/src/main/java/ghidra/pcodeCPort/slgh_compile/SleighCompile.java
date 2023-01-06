@@ -925,13 +925,28 @@ public class SleighCompile extends SleighBase {
 
 	public void addTokenField(Location location, TokenSymbol sym, FieldQuality qual) {
 		entry("addTokenField", location, sym, qual);
+		if (qual.high < qual.low) {
+			reportError(location, "Field '" + qual.name + "' starts at " +
+				Integer.toString(qual.low) + " and ends at " + Integer.toString(qual.high));
+		}
+		if (sym.getToken().getSize() * 8 <= qual.high) {
+			reportError(location, "Field '" + qual.name + "' high must be less than token size");
+		}
 		TokenField field =
 			new TokenField(location, sym.getToken(), qual.signext, qual.low, qual.high);
 		addSymbol(new ValueSymbol(location, qual.name, field));
 	}
 
-	public boolean addContextField(VarnodeSymbol sym, FieldQuality qual) {
+	public boolean addContextField(Location location, VarnodeSymbol sym, FieldQuality qual) {
 		entry("addContextField", sym, qual);
+		if (qual.high < qual.low) {
+			reportError(location, "Context field '" + qual.name + "' starts at " +
+				Integer.toString(qual.low) + " and ends at " + Integer.toString(qual.high));
+		}
+		if (sym.getSize() * 8 <= qual.high) {
+			reportError(location,
+				"Context field '" + qual.name + "' high must be less than context size");
+		}
 		if (contextlock) {
 			return false; // Context layout has already been satisfied
 		}

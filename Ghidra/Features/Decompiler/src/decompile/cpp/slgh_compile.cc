@@ -2488,6 +2488,16 @@ TokenSymbol *SleighCompile::defineToken(string *name,uintb *sz,int4 endian)
 void SleighCompile::addTokenField(TokenSymbol *sym,FieldQuality *qual)
 
 {
+  if (qual->high < qual->low) {
+    ostringstream s;
+    s << "Field '" << qual->name << "' starts at " << qual->low <<  " and ends at " << qual->high;
+    reportError(getCurrentLocation(), s.str());
+  }
+  if (sym->getToken()->getSize() * 8 <= qual->high) {
+    ostringstream s;
+    s << "Field '" << qual->name << "' high must be less than token size";
+    reportError(getCurrentLocation(), s.str());
+  }
   TokenField *field = new TokenField(sym->getToken(),qual->signext,qual->low,qual->high);
   addSymbol(new ValueSymbol(qual->name,field));
   delete qual;
@@ -2500,6 +2510,16 @@ void SleighCompile::addTokenField(TokenSymbol *sym,FieldQuality *qual)
 bool SleighCompile::addContextField(VarnodeSymbol *sym,FieldQuality *qual)
 
 {
+  if (qual->high < qual->low) {
+    ostringstream s;
+    s << "Context field '" << qual->name << "' starts at " << qual->low <<  " and ends at " << qual->high;
+    reportError(getCurrentLocation(), s.str());
+  }
+  if (sym->getSize() * 8 <= qual->high) {
+    ostringstream s;
+    s << "Context field '" << qual->name << "' high must be less than context size";
+    reportError(getCurrentLocation(), s.str());
+  }
   if (contextlock)
     return false;		// Context layout has already been satisfied
 
