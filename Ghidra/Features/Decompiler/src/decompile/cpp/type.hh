@@ -222,6 +222,7 @@ public:
   int4 typeOrder(const Datatype &op) const { if (this==&op) return 0; return compare(op,10); }	///< Order this with -op- datatype
   int4 typeOrderBool(const Datatype &op) const;	///< Order \b this with -op-, treating \e bool data-type as special
   void encodeRef(Encoder &encoder) const;	///< Encode a reference of \b this to a stream
+  bool isPieceStructured(void) const;		///< Does \b this data-type consist of separate pieces?
   static uint4 encodeIntegerFormat(const string &val);
   static string decodeIntegerFormat(uint4 val);
 };
@@ -501,8 +502,8 @@ public:
   TypeUnion *getParentUnion(void) const { return container; }	///< Get the union which \b this is part of
   virtual void printRaw(ostream &s) const;			///< Print a description of the type to stream
   virtual const TypeField *findTruncation(int4 off,int4 sz,const PcodeOp *op,int4 slot,int4 &newoff) const;
-  virtual int4 numDepend(void);
-  virtual Datatype *getDepend(int4 index);
+  virtual int4 numDepend(void) const;
+  virtual Datatype *getDepend(int4 index) const;
   virtual int4 compare(const Datatype &op,int4 level) const;
   virtual int4 compareDependency(const Datatype &op) const;
   virtual Datatype *clone(void) const { return new TypePartialUnion(*this); }
@@ -691,6 +692,7 @@ public:
   TypePointerRel *getTypePointerRel(TypePointer *parentPtr,Datatype *ptrTo,int4 off);	///< Get pointer offset relative to a container
   TypePointerRel *getTypePointerRel(int4 sz,Datatype *parent,Datatype *ptrTo,int4 ws,int4 off,const string &nm);
   TypePointer *getTypePointerWithSpace(Datatype *ptrTo,AddrSpace *spc,const string &nm);
+  Datatype *getExactPiece(Datatype *ct,int4 offset,int4 size);	///< Get the data-type associated with piece of a structured data-type
   void destroyType(Datatype *ct);				///< Remove a data-type from \b this
   Datatype *concretize(Datatype *ct);				///< Convert given data-type to concrete form
   void dependentOrder(vector<Datatype *> &deporder) const;	///< Place all data-types in dependency order
@@ -743,6 +745,18 @@ inline int4 Datatype::typeOrderBool(const Datatype &op) const
   if (metatype == TYPE_BOOL) return 1;		// Never prefer bool over other data-types
   if (op.metatype == TYPE_BOOL) return -1;
   return compare(op,10);
+}
+
+/// If a value with \b this data-type is put together from multiple pieces, is it better to display
+/// this construction as a sequence of separate assignments or as a single concatenation.
+/// Generally a TYPE_STRUCT or TYPE_ARRAY should be represented with separate assignments.
+/// \return \b true if the data-type is put together with multiple assignments
+inline bool Datatype::isPieceStructured(void) const
+
+{
+//  if (metatype == TYPE_STRUCT || metatype == TYPE_ARRAY || metatype == TYPE_UNION ||
+//      metatype == TYPE_PARTIALUNION || metatype == TYPE_PARTIALSTRUCT)
+  return (metatype <= TYPE_ARRAY);
 }
 
 inline TypeArray::TypeArray(int4 n,Datatype *ao) : Datatype(n*ao->getSize(),TYPE_ARRAY)

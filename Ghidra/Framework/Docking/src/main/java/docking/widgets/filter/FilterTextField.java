@@ -24,6 +24,7 @@ import javax.swing.event.DocumentListener;
 
 import docking.DockingUtils;
 import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.util.SystemUtilities;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
@@ -49,8 +50,8 @@ public class FilterTextField extends JPanel {
 
 	/*package*/ static Color UNEDITABLE_BACKGROUND_COLOR = new GColor("color.bg.uneditable");
 
-	private Color noFlashBgColor;
-	private Color noFlashFgColor;
+	private Color noFlashBgColor = Colors.BACKGROUND;
+	private Color noFlashFgColor = Colors.FOREGROUND;
 
 	/** Signals the last flash time (used to prevent excessive flashing) */
 	private long lastFlashTime = 0;
@@ -89,6 +90,8 @@ public class FilterTextField extends JPanel {
 		super(new BorderLayout());
 
 		textField.setColumns(columns);
+		textField.setBackground(noFlashBgColor);
+		textField.setForeground(noFlashFgColor);
 
 		setFocusComponent(component);
 
@@ -157,20 +160,6 @@ public class FilterTextField extends JPanel {
 		flashTimer.restart();
 	}
 
-	private Color getDefaultBgColor() {
-		if (noFlashBgColor == null) {
-			noFlashBgColor = textField.getBackground();  // lazy init to default bg color
-		}
-		return noFlashBgColor;
-	}
-
-	private Color getDefaultFgColor() {
-		if (noFlashFgColor == null) {
-			noFlashFgColor = textField.getForeground();  // lazy init to default fg color
-		}
-		return noFlashFgColor;
-	}
-
 	/**
 	 * This method will signal to the users if a filter is currently applied (has text).  For
 	 * example, the default implementation will 'flash' the filter by changing its background
@@ -224,16 +213,11 @@ public class FilterTextField extends JPanel {
 	}
 
 	private void updateColor() {
-		// this is purposely done here (before the isEditable() check below) in order to make
-		// sure that the default color has been properly initialized
-		Color defaultBackgroundColor = getDefaultBgColor();
-		Color defaultFgColor = getDefaultFgColor();
-
 		Color bgColor = UNEDITABLE_BACKGROUND_COLOR;
-		Color fgColor = getDefaultFgColor();
+		Color fgColor = noFlashFgColor;
 		if (isEditable() && isEnabled()) {
-			bgColor = hasText ? FILTERED_BACKGROUND_COLOR : defaultBackgroundColor;
-			fgColor = hasText ? FILTERED_FOREGROUND_COLOR : defaultFgColor;
+			bgColor = hasText ? FILTERED_BACKGROUND_COLOR : noFlashBgColor;
+			fgColor = hasText ? FILTERED_FOREGROUND_COLOR : noFlashFgColor;
 		}
 
 		doSetBackground(bgColor);

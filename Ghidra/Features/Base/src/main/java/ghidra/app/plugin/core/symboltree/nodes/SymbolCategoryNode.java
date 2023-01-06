@@ -173,7 +173,7 @@ public abstract class SymbolCategoryNode extends SymbolTreeNode {
 		Namespace parentNamespace = symbol.getParentNamespace();
 		Symbol namespaceSymbol = parentNamespace.getSymbol();
 		SymbolNode key = SymbolNode.createNode(namespaceSymbol, program);
-		parentNode = findSymbolTreeNode(key, false, TaskMonitorAdapter.DUMMY_MONITOR);
+		parentNode = findSymbolTreeNode(key, false, TaskMonitor.DUMMY);
 		if (parentNode == null) {
 			return null;
 		}

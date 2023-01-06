@@ -27,7 +27,7 @@ import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class RegisterVariableReferencesTest extends AbstractGhidraHeadedIntegrationTest {
 
@@ -58,7 +58,7 @@ public class RegisterVariableReferencesTest extends AbstractGhidraHeadedIntegrat
 		functionMgr = program.getFunctionManager();
 		transactionID = program.startTransaction("Test");
 		program.getMemory().createInitializedBlock("code", addr(0), 10000, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+			TaskMonitor.DUMMY, false);
 	}
 
     @After

@@ -20,8 +20,10 @@ import java.util.HashSet;
 import java.util.List;
 
 import javax.swing.*;
-import javax.swing.event.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
+import docking.widgets.button.GButton;
 import docking.widgets.label.GDLabel;
 import generic.theme.GIcon;
 import ghidra.program.model.address.*;
@@ -81,10 +83,10 @@ public class AddressSetEditorPanel extends JPanel {
 		maxAddressField.addChangeListener(listener);
 		maxAddressPanel.add(maxAddressField, BorderLayout.CENTER);
 		maxAddressPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
-		addRangeButton = new JButton(ADD_ICON);
+		addRangeButton = new GButton(ADD_ICON);
 		addRangeButton.addActionListener(e -> addRange());
 		addRangeButton.setToolTipText("Add the range to the set of included addresses");
-		subtractRangeButton = new JButton(SUBTRACT_ICON);
+		subtractRangeButton = new GButton(SUBTRACT_ICON);
 		subtractRangeButton.addActionListener(e -> subtractRange());
 		subtractRangeButton.setToolTipText("Remove the range from the set of included addresses");
 
@@ -116,7 +118,7 @@ public class AddressSetEditorPanel extends JPanel {
 		bottomButtons = new JPanel();
 		bottomButtons.setLayout(new MiddleLayout());
 
-		removeRangeButton = new JButton("Remove Selected Range(s)");
+		removeRangeButton = new GButton("Remove Selected Range(s)");
 		removeRangeButton.addActionListener(e -> removeRange());
 
 		bottomButtons.add(removeRangeButton);

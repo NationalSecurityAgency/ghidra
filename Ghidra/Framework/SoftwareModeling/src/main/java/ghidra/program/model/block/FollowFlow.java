@@ -143,7 +143,7 @@ public class FollowFlow {
 			boolean forward) {
 
 		if (monitor == null) {
-			monitor = TaskMonitorAdapter.DUMMY_MONITOR; // create dummy monitor
+			monitor = TaskMonitor.DUMMY; // create dummy monitor
 		}
 
 		// Create a new address set to hold the entire flow.

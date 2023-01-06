@@ -4764,13 +4764,13 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
    goto [pc];
 }
 
-Pcrel: [cloc,Rm0003]  is Rm0003 & thc0404=0 [ cloc = inst_next; ] 
+Pcrel: [pc,Rm0003]  is Rm0003 & thc0404=0 & pc
 {
-   local tmp = Rm0003; tmp = cloc + tmp; val:1 = *tmp; tmp = zext(val); export tmp;
+   local tmp = Rm0003; tmp = inst_next + tmp; val:1 = *tmp; tmp = zext(val); export tmp;
 }
-Pcrel: [cloc,Rm0003]  is Rm0003 & thc0404=1 [ cloc = inst_next; ] 
+Pcrel: [pc,Rm0003]  is Rm0003 & thc0404=1 & pc
 {
-   local tmp = Rm0003; tmp = cloc + (tmp * 2); val:2 = *tmp; tmp = zext(val); export tmp;
+   local tmp = Rm0003; tmp = inst_next + (tmp * 2); val:2 = *tmp; tmp = zext(val); export tmp;
 }
 
 :tbb^ItCond  Pcrel    is TMode=1 & ItCond & op4=0xe8d & thc0003=15; op8=0xf0 & thc0507=0 & thc0404=0 & Pcrel

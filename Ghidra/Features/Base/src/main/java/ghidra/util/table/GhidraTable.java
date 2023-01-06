@@ -70,11 +70,9 @@ public class GhidraTable extends GTable {
 		GhidraTableCellRenderer ghidraTableCellRenderer = new GhidraTableCellRenderer();
 		setDefaultRenderer(String.class, ghidraTableCellRenderer);
 		setDefaultRenderer(Enum.class, ghidraTableCellRenderer);
-		defaultGTableRendererList.add(ghidraTableCellRenderer);
 
 		PreviewDataTableCellRenderer previewRenderer = new PreviewDataTableCellRenderer();
 		setDefaultRenderer(PreviewTableCellData.class, previewRenderer);
-		defaultGTableRendererList.add(previewRenderer);
 	}
 
 	/**

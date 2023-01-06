@@ -46,7 +46,7 @@ public abstract class AbstractColumnConstraintEditor<T> implements ColumnConstra
 	/** Color indicating a valid value is defined by the editor widget(s) */
 	protected static final Color VALID_INPUT_COLOR = Colors.BACKGROUND;
 	/** Color indicating a invalid value is defined by the editor widget(s) */
-	protected static final Color INVALID_INPUT_COLOR = new GColor("docking.palette.mistyrose");
+	protected static final Color INVALID_INPUT_COLOR = new GColor("color.palette.mistyrose");
 
 	/**
 	 * Constructor.

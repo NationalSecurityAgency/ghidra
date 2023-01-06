@@ -20,6 +20,7 @@ import java.awt.event.ActionListener;
 
 import javax.swing.*;
 
+import docking.widgets.button.GButton;
 import generic.theme.GIcon;
 import resources.Icons;
 
@@ -128,6 +129,10 @@ public class FunctionTagButtonPanel extends JPanel {
 
 		setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 		setMaximumSize(new Dimension(30, 300));
+
+		addBtn.setEnabled(false);
+		removeBtn.setEnabled(false);
+		deleteBtn.setEnabled(false);
 	}
 
 	/**
@@ -140,7 +145,7 @@ public class FunctionTagButtonPanel extends JPanel {
 	 * @return the new button
 	 */
 	private JButton createButton(String name, Icon icon, String tooltip, ActionListener action) {
-		JButton button = new JButton(name);
+		JButton button = new GButton(name);
 		button.setName(name);
 		button.setToolTipText(tooltip);
 		button.setIcon(icon);

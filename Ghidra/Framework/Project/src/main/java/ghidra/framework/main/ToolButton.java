@@ -370,9 +370,9 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 	}
 
 	private DomainObject getVersionedObject(DomainFile file, int versionNumber) {
-		GetVersionedObjectTask task = new GetVersionedObjectTask(this, file, versionNumber);
+		GetDomainObjectTask task = new GetDomainObjectTask(this, file, versionNumber);
 		plugin.getTool().execute(task, 250);
-		return task.getVersionedObject();
+		return task.getDomainObject();
 	}
 
 //==================================================================================================

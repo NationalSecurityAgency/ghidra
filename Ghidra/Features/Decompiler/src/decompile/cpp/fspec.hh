@@ -963,7 +963,8 @@ public:
 class UnknownProtoModel : public ProtoModel {
   ProtoModel *placeholderModel;		///< The model whose behavior \b this adopts as a behavior placeholder
 public:
-  UnknownProtoModel(const string &nm,ProtoModel *placeHold) : ProtoModel(nm,*placeHold) { placeholderModel = placeHold; }
+  UnknownProtoModel(const string &nm,ProtoModel *placeHold) : ProtoModel(nm,*placeHold) {
+    placeholderModel = placeHold; }	///< Constructor
   ProtoModel *getPlaceholderModel(void) const { return placeholderModel; }	///< Retrieve the placeholder model
   virtual bool isUnknown(void) const { return true; }
 };

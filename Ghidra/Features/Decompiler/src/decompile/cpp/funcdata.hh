@@ -115,7 +115,7 @@ class Funcdata {
   void pushMultiequals(BlockBasic *bb);		///< Push MULTIEQUAL Varnodes of the given block into the output block
   void clearBlocks(void);			///< Clear all basic blocks
   void structureReset(void);			///< Calculate initial basic block structures (after a control-flow change)
-  int4 stageJumpTable(JumpTable *jt,PcodeOp *op,FlowInfo *flow);
+  int4 stageJumpTable(Funcdata &partial,JumpTable *jt,PcodeOp *op,FlowInfo *flow);
   void switchOverJumpTables(const FlowInfo &flow);	///< Convert jump-table addresses to basic block indices
   void clearJumpTables(void);			///< Clear any jump-table information
 
@@ -414,6 +414,7 @@ public:
   void clearDeadOps(void) { obank.destroyDead(); }		///< Delete any dead PcodeOps
   void remapVarnode(Varnode *vn,Symbol *sym,const Address &usepoint);
   void remapDynamicVarnode(Varnode *vn,Symbol *sym,const Address &usepoint,uint8 hash);
+  void linkProtoPartial(Varnode *vn);				///< Find or create Symbol and a partial mapping
   Symbol *linkSymbol(Varnode *vn);				///< Find or create Symbol associated with given Varnode
   Symbol *linkSymbolReference(Varnode *vn);			///< Discover and attach Symbol to a constant reference
   Varnode *findLinkedVarnode(SymbolEntry *entry) const;	///< Find a Varnode matching the given Symbol mapping
@@ -515,7 +516,7 @@ public:
   JumpTable *linkJumpTable(PcodeOp *op);		///< Link jump-table with a given BRANCHIND
   JumpTable *findJumpTable(const PcodeOp *op) const;	///< Find a jump-table associated with a given BRANCHIND
   JumpTable *installJumpTable(const Address &addr);	///< Install a new jump-table for the given Address
-  JumpTable *recoverJumpTable(PcodeOp *op,FlowInfo *flow,int4 &failuremode);
+  JumpTable *recoverJumpTable(Funcdata &partial,PcodeOp *op,FlowInfo *flow,int4 &failuremode);
   int4 numJumpTables(void) const { return jumpvec.size(); }	///< Get the number of jump-tables for \b this function
   JumpTable *getJumpTable(int4 i) { return jumpvec[i]; }	///< Get the i-th jump-table
   void removeJumpTable(JumpTable *jt);			///< Remove/delete the given jump-table

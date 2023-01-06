@@ -19,7 +19,8 @@ import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-import javax.swing.*;
+import javax.swing.BorderFactory;
+import javax.swing.JPanel;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 
@@ -30,12 +31,10 @@ import ghidra.program.model.data.DataTypeComponent;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
 
-
 class RenameDataFieldDialog extends DialogComponentProvider {
 
-	private JComboBox<?> recentChoices;
-	private JTextField choiceTextField;
-	
+	private GhidraComboBox<?> recentChoices;
+
 	private DataTypeComponent component;
 	private DataPlugin plugin;
 	private Program program;
@@ -54,18 +53,18 @@ class RenameDataFieldDialog extends DialogComponentProvider {
 	public void setDataComponent(Program program, DataTypeComponent component, String name) {
 		this.component = component;
 		this.program = program;
-		choiceTextField.setText(name);
-		choiceTextField.selectAll();
+		recentChoices.setText(name);
+		recentChoices.selectAll();
 	}
 
-    @Override
-    protected void okCallback() {
+	@Override
+	protected void okCallback() {
 		close();
-		
-		RenameDataFieldCmd cmd = new RenameDataFieldCmd(component, choiceTextField.getText());
+
+		RenameDataFieldCmd cmd = new RenameDataFieldCmd(component, recentChoices.getText());
 		plugin.getTool().execute(cmd, program);
 		program = null;
-    }
+	}
 
 	@Override
 	protected void cancelCallback() {
@@ -73,30 +72,29 @@ class RenameDataFieldDialog extends DialogComponentProvider {
 		close();
 	}
 
-    private JPanel create() {
+	private JPanel create() {
 		recentChoices = new GhidraComboBox<>();
-        recentChoices.setEditable(true);
+		recentChoices.setEditable(true);
 
 		JPanel mainPanel = new JPanel(new BorderLayout());
 		JPanel topPanel = new JPanel(new BorderLayout());
-		
+
 		Border border = BorderFactory.createTitledBorder("Data Field Name");
 		topPanel.setBorder(border);
-			
+
 		mainPanel.add(topPanel, BorderLayout.NORTH);
 
 		topPanel.add(recentChoices, BorderLayout.NORTH);
 
-        choiceTextField = (JTextField)recentChoices.getEditor().getEditorComponent();
-        setFocusComponent(choiceTextField);
-        choiceTextField.addActionListener(new ActionListener() {
+		setFocusComponent(recentChoices);
+		recentChoices.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				okCallback();
 			}
-        });
-	    mainPanel.setBorder(new EmptyBorder(5,5,5,5));
+		});
+		mainPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 
 		return mainPanel;
-    }
+	}
 
 }

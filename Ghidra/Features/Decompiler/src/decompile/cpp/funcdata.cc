@@ -101,6 +101,7 @@ void Funcdata::clear(void)
   clearJumpTables();
   // Do not clear overrides
   heritage.clear();
+  covermerge.clear();
 #ifdef OPACTION_DEBUG
   opactdbg_count = 0;
 #endif

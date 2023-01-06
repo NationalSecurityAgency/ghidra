@@ -91,9 +91,9 @@ public abstract class AbstractInstructionTable extends GhidraTable {
 	 * Returns the data object at the given cell location. We need to check
 	 * first to make sure the row/col values map to a valid cell.
 	 * 
-	 * @param row
-	 * @param col
-	 * @return
+	 * @param row the row
+	 * @param col the column
+	 * @return the value
 	 */
 	public InstructionTableDataObject getCellData(int row, int col) {
 		if (getModel() == null) {
@@ -118,10 +118,6 @@ public abstract class AbstractInstructionTable extends GhidraTable {
 		return renderer;
 	}
 
-	/**
-	 * 
-	 * @return
-	 */
 	public JToolBar getToolbar() {
 		return this.toolbar;
 	}
@@ -132,13 +128,16 @@ public abstract class AbstractInstructionTable extends GhidraTable {
 	 */
 	@Override
 	protected void initDefaultRenderers() {
+		super.initDefaultRenderers();
 		setDefaultRenderer(InstructionTableDataObject.class, renderer);
-		defaultGTableRendererList.add(renderer);
 	}
 
 	/**
 	 * Returns the value of the {@link InstructionTableDataObject} for the given
 	 * cell (indicated by row and column name).
+	 * @param row the row
+	 * @param colName the column name
+	 * @return the value
 	 */
 	protected String getColumnValue(int row, String colName) {
 		for (int i = 0; i < this.getColumnCount(); i++) {
@@ -161,11 +160,13 @@ public abstract class AbstractInstructionTable extends GhidraTable {
 	/**
 	 * Clients must implement to create all the data objects used to render the
 	 * table.
+	 * @return the row objects
 	 */
 	protected abstract InstructionTableDataObject[][] createDataObjects();
 
 	/**
 	 * Clients must implement to have a toolbar visible above the table.
+	 * @return the toolbar
 	 */
 	protected abstract JToolBar createToolbar();
 

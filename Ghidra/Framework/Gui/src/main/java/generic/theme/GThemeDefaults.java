@@ -24,13 +24,11 @@ import java.awt.Color;
  *  Colors.Java.BORDER
  */
 public class GThemeDefaults {
-	public static final String STANDARD_DEFAULTS = "Standard Defaults";  // core defaults map name
-	public static final String DARK = "Dark";          // defaults map name for dark based themes
 
 	public static class Ids {
 
 		public static class Java {
-			public static final String BORDER = "system.color.border"; // TODO
+			public static final String BORDER = "system.color.border";
 		}
 
 		public static class Fonts {

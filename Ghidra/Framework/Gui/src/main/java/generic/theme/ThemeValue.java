@@ -42,6 +42,13 @@ public abstract class ThemeValue<T> implements Comparable<ThemeValue<T>> {
 	}
 
 	/**
+	 * True if this value is one that is one that is defined outside of the application, such as a 
+	 * Java Look and Feel key.
+	 * @return true if external
+	 */
+	public abstract boolean isExternal();
+
+	/**
 	 * Returns the identifier for this ThemeValue.
 	 * @return the identifier for this ThemeValue.
 	 */
@@ -189,11 +196,11 @@ public abstract class ThemeValue<T> implements Comparable<ThemeValue<T>> {
 
 	/**
 	 * Returns the T to be used if the indirect reference couldn't be resolved.
-	 * @param id the id we are trying to get a value foe
+	 * @param primaryId the id we are trying to get a value for
 	 * @param unresolvedId the reference id that couldn't be resolved 
 	 * @return the default value to be used if the indirect reference couldn't be resolved.
 	 */
-	protected abstract T getUnresolvedReferenceValue(String id, String unresolvedId);
+	protected abstract T getUnresolvedReferenceValue(String primaryId, String unresolvedId);
 
 	/**
 	 * Returns the ThemeValue referred to by this ThemeValue. Needs to be overridden by

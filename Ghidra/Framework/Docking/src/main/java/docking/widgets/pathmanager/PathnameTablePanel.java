@@ -24,6 +24,7 @@ import java.util.Objects;
 import javax.swing.*;
 
 import docking.widgets.OptionDialog;
+import docking.widgets.button.GButton;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.table.*;
@@ -157,24 +158,24 @@ public class PathnameTablePanel extends JPanel {
 
 	private void create() {
 
-		upButton = new JButton(Icons.UP_ICON);
+		upButton = new GButton(Icons.UP_ICON);
 		upButton.setName("UpArrow");
 		upButton.setToolTipText("Move the selected path up in list");
 		upButton.addActionListener(e -> up());
-		downButton = new JButton(Icons.DOWN_ICON);
+		downButton = new GButton(Icons.DOWN_ICON);
 		downButton.setName("DownArrow");
 		downButton.setToolTipText("Move the selected path down in list");
 		downButton.addActionListener(e -> down());
-		addButton = new JButton(Icons.ADD_ICON);
+		addButton = new GButton(Icons.ADD_ICON);
 		addButton.setName("AddPath");
 		addButton.setToolTipText("Display file chooser to select files to add");
 		addButton.addActionListener(e -> add());
-		removeButton = new JButton(Icons.DELETE_ICON);
+		removeButton = new GButton(Icons.DELETE_ICON);
 		removeButton.setName("RemovePath");
 		removeButton.setToolTipText("Remove selected path(s) from list");
 		removeButton.addActionListener(e -> remove());
 
-		resetButton = new JButton(RESET_ICON);
+		resetButton = new GButton(RESET_ICON);
 		resetButton.setName("RefreshPaths");
 		resetButton.setToolTipText("Resets path list to the default values");
 		resetButton.addActionListener(e -> reset());

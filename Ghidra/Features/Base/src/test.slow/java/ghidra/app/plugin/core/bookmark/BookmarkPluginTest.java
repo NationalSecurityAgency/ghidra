@@ -404,7 +404,7 @@ public class BookmarkPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull("Could not find the Create Bookmark dialog", d);
 		runSwing(() -> {
 			JTextField commentTextField =
-				(JTextField) AbstractGenericTest.getInstanceField("commentTextField", d);
+				(JTextField) AbstractGenericTest.getInstanceField("descriptionTextField", d);
 			commentTextField.setText("My Comment");
 			JComboBox<?> categoryComboBox =
 				(JComboBox<?>) AbstractGenericTest.getInstanceField("categoryComboBox", d);

@@ -16,8 +16,7 @@
 package docking.action;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 
 import javax.swing.*;
@@ -29,6 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import docking.ActionContext;
 import docking.DockingWindowManager;
+import generic.theme.GColor;
 import generic.util.action.ReservedKeyBindings;
 import ghidra.util.Msg;
 
@@ -154,6 +154,15 @@ public class ComponentThemeInspectorAction extends DockingAction {
 			spacer = "\t";
 		}
 
+		String bgText = Objects.toString(bg);
+		if (bg instanceof GColor gColor) {
+			bgText = gColor.toDebugString();
+		}
+		String fgText = Objects.toString(fg);
+		if (fg instanceof GColor gColor) {
+			fgText = gColor.toDebugString();
+		}
+
 		String tabs = '\n' + StringUtils.repeat(' ', (indent * 3));
 		buffy.append(tabs)
 				.append(indentMarker)
@@ -161,11 +170,11 @@ public class ComponentThemeInspectorAction extends DockingAction {
 				.append(tabs)
 				.append(spacer)
 				.append("bg: ")
-				.append(bg)
+				.append(bgText)
 				.append(tabs)
 				.append(spacer)
 				.append("fg: ")
-				.append(fg)
+				.append(fgText)
 				.append('\n');
 	}
 

@@ -34,7 +34,8 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
 import ghidra.test.ClassicSampleX86ProgramBuilder;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
+import junit.framework.TestCase;
 
 /**
  * <CODE>ProgramDiffTest</CODE> tests the <CODE>ProgramDiff</CODE> class
@@ -489,7 +490,7 @@ public class ProgramDiff4Test extends AbstractProgramDiffTest {
 		AddressSetView diffs;
 	
 		// before ignore it should detect diffs.
-		diffs = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		diffs = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertTrue(diffs.contains(addr(p1, 0x01006420)));
 		assertTrue(diffs.contains(addr(p1, 0x010059a3)));
 	
@@ -506,7 +507,7 @@ public class ProgramDiff4Test extends AbstractProgramDiffTest {
 	
 		// ignore set is used by the Diff.
 		diffs = programDiff.getDifferences(new ProgramDiffFilter(ProgramDiffFilter.ALL_DIFFS),
-			TaskMonitorAdapter.DUMMY_MONITOR);
+			TaskMonitor.DUMMY);
 		assertTrue(!diffs.contains(addr(p1, 0x01006420)) && !diffs.contains(addr(p1, 0x010059a3)));
 	
 		// ignore set can be cleared.
@@ -534,7 +535,7 @@ public class ProgramDiff4Test extends AbstractProgramDiffTest {
 		AddressSetView diffs;
 	
 		// before limiting it should detect diffs.
-		diffs = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		diffs = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertTrue(diffs.contains(addr(p1, 0x01006420)));
 		assertTrue(diffs.contains(addr(p1, 0x010059a3)));
 	
@@ -547,7 +548,7 @@ public class ProgramDiff4Test extends AbstractProgramDiffTest {
 	
 		// ignore set is used by the Diff.
 		diffs = programDiff.getDifferences(new ProgramDiffFilter(ProgramDiffFilter.ALL_DIFFS),
-			TaskMonitorAdapter.DUMMY_MONITOR);
+			TaskMonitor.DUMMY);
 		assertTrue(!diffs.contains(addr(p1, 0x01006420)) && !diffs.contains(addr(p1, 0x010059a3)));
 	}
 
@@ -833,7 +834,7 @@ public class ProgramDiff4Test extends AbstractProgramDiffTest {
 		AddressSetView diffs;
 	
 		// before restricting it should detect diffs.
-		diffs = programDiff.getDifferences(TaskMonitorAdapter.DUMMY_MONITOR);
+		diffs = programDiff.getDifferences(TaskMonitor.DUMMY);
 		assertTrue(diffs.contains(addr(p1, 0x01006420)));
 		assertTrue(diffs.contains(addr(p1, 0x010059a3)));
 	
@@ -849,7 +850,7 @@ public class ProgramDiff4Test extends AbstractProgramDiffTest {
 	
 		// ignore set is used by the Diff.
 		diffs = programDiff.getDifferences(new ProgramDiffFilter(ProgramDiffFilter.ALL_DIFFS),
-			TaskMonitorAdapter.DUMMY_MONITOR);
+			TaskMonitor.DUMMY);
 		assertTrue(!diffs.contains(addr(p1, 0x01006420)) && !diffs.contains(addr(p1, 0x010059a3)));
 	
 		// restricted set can be cleared.

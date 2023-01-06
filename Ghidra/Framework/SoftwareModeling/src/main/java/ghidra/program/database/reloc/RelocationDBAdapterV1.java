@@ -30,7 +30,7 @@ class RelocationDBAdapterV1 extends RelocationDBAdapter {
 	private final static int V1_TYPE_COL = 0;
 
 //	final static Schema SCHEMA = new Schema(
-//		RelocationDBAdapterV4.VERSION, "Address", new Field[] { IntField.INSTANCE },
+//		RelocationDBAdapterV1.VERSION, "Address", new Field[] { IntField.INSTANCE },
 //		new String[] { "Type" });
 
 	private Table relocTable;

@@ -19,7 +19,6 @@ import static org.junit.Assert.*;
 
 import java.awt.Component;
 import java.awt.Container;
-import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -216,31 +215,29 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 
 		goToService.goTo(new ProgramLocation(program, getAddr(0x01002c92)));
 
-		ActionListener listener = tf.getActionListeners()[0];
-		runSwing(() -> {
-			tf.setText("eax");
-			listener.actionPerformed(null);
-		});
+		triggerText(tf, "eax");
+		triggerEnter(tf);
 		waitForSearchTasks(dialog);
+
 		ProgramLocation loc = cbPlugin.getCurrentLocation();
 		assertTrue(loc instanceof CommentFieldLocation);
 		assertEquals(CodeUnit.PLATE_COMMENT, ((CommentFieldLocation) loc).getCommentType());
 		assertEquals(cu.getMinAddress(), loc.getAddress());
 
-		runSwing(() -> listener.actionPerformed(null));
+		triggerEnter(tf);
 		waitForSearchTasks(dialog);
 
 		loc = cbPlugin.getCurrentLocation();
 		assertTrue(loc instanceof CommentFieldLocation);
 		assertEquals(CodeUnit.PRE_COMMENT, ((CommentFieldLocation) loc).getCommentType());
 
-		runSwing(() -> listener.actionPerformed(null));
+		triggerEnter(tf);
 		waitForSearchTasks(dialog);
 		loc = cbPlugin.getCurrentLocation();
 		assertTrue(loc instanceof LabelFieldLocation);
 		assertEquals(3, ((LabelFieldLocation) loc).getCharOffset());
 
-		runSwing(() -> listener.actionPerformed(null));
+		triggerEnter(tf);
 		waitForSearchTasks(dialog);
 
 		loc = cbPlugin.getCurrentLocation();
@@ -248,14 +245,14 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(0, ((OperandFieldLocation) loc).getOperandIndex());
 		assertEquals(cu.getMinAddress(), loc.getAddress());
 
-		runSwing(() -> listener.actionPerformed(null));
+		triggerEnter(tf);
 		waitForSearchTasks(dialog);
 		loc = cbPlugin.getCurrentLocation();
 		assertTrue(loc instanceof CommentFieldLocation);
 		assertEquals(CodeUnit.EOL_COMMENT, ((CommentFieldLocation) loc).getCommentType());
 		assertEquals(cu.getMinAddress(), loc.getAddress());
 
-		runSwing(() -> listener.actionPerformed(null));
+		triggerEnter(tf);
 		waitForSearchTasks(dialog);
 		loc = cbPlugin.getCurrentLocation();
 		assertTrue(loc instanceof CommentFieldLocation);
@@ -286,10 +283,8 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		JCheckBox cb = (JCheckBox) findAbstractButtonByText(container, "Functions");
 		setToggleButtonSelected(cb, true);
 
-		runSwing(() -> {
-			tf.setText("sscanf");
-			searchButton.getActionListeners()[0].actionPerformed(null);
-		});
+		triggerText(tf, "sscanf");
+		triggerEnter(searchButton);
 
 		waitForSearchTasks(dialog);
 
@@ -297,20 +292,19 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(loc instanceof CommentFieldLocation);
 		assertEquals(CodeUnit.PLATE_COMMENT, ((CommentFieldLocation) loc).getCommentType());
 
-		ActionListener listener = searchButton.getActionListeners()[0];
-		runSwing(() -> listener.actionPerformed(null));
+		triggerEnter(searchButton);
 
 		waitForSearchTasks(dialog);
 		loc = cbPlugin.getCurrentLocation();
 		assertTrue(loc instanceof FunctionSignatureFieldLocation);
 
-		runSwing(() -> listener.actionPerformed(null));
+		triggerEnter(searchButton);
 
 		waitForSearchTasks(dialog);
 		loc = cbPlugin.getCurrentLocation();
 		assertTrue(loc instanceof VariableCommentFieldLocation);
 
-		runSwing(() -> listener.actionPerformed(null));
+		triggerEnter(searchButton);
 
 		waitForSearchTasks(dialog);
 		loc = cbPlugin.getCurrentLocation();
@@ -505,11 +499,8 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		setToggleButtonSelected(cb, true);
 
 		String searchText = "param_";
-		runSwing(() -> {
-			tf.setText(searchText);
-			ActionListener[] listeners = tf.getActionListeners();
-			listeners[0].actionPerformed(null);
-		});
+		triggerText(tf, searchText);
+		triggerEnter(tf);
 		waitForSearchTasks(dialog);
 
 		ProgramLocation loc = plugin.getNavigatable().getLocation();

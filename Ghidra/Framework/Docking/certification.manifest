@@ -9,7 +9,6 @@
 ##MODULE IP: Tango Icons - Public Domain
 Module.manifest||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
-data/docking.palette.theme.properties||GHIDRA||||END|
 data/docking.theme.properties||GHIDRA||||END|
 src/main/help/help/TOC_Source.xml||GHIDRA||||END|
 src/main/help/help/topics/Misc/Welcome_to_Help.htm||GHIDRA||||END|

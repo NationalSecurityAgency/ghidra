@@ -305,6 +305,12 @@ public:
   virtual void decode(Decoder &decoder);
 };
 
+/// \brief A Symbol that forces a particular \e union field at a particular point in the body of a function
+///
+/// This is an internal Symbol that users can create if they want to force a particular interpretation of a
+/// a \e union data-type.  It attaches to data-flow via the DynamicHash mechanism, which also allows it to attach
+/// to a specific read or write of the target Varnode.  Different reads (or write) of the same Varnode can have
+/// different symbols attached.  The Symbol's associated data-type will be the desired \e union to force.
 class UnionFacetSymbol : public Symbol {
   int4 fieldNum;			///< Particular field to associate with Symbol access
 public:

@@ -24,8 +24,9 @@ AttributeId ATTRIB_SYMREF = AttributeId("symref",68);
 ElementId ELEM_HIGH = ElementId("high",82);
 
 /// Compare by offset within the group, then by size.
-/// \param op2 is the other piece to compare with \b this
-/// \return \b true if \b this should be ordered before the other piece
+/// \param a is the first piece to compare
+/// \param b is the other piece to compare
+/// \return \b true if \b a should be ordered before the \b b
 bool VariableGroup::PieceCompareByOffset::operator()(const VariablePiece *a,const VariablePiece *b) const
 
 {
@@ -145,7 +146,7 @@ void VariablePiece::adjustOffset(int4 amt)
 }
 
 /// If there are no remaining references to the old VariableGroup it is deleted.
-/// \param newGropu is the new VariableGroup to transfer \b this to
+/// \param newGroup is the new VariableGroup to transfer \b this to
 void VariablePiece::transferGroup(VariableGroup *newGroup)
 
 {
@@ -227,15 +228,26 @@ void HighVariable::setSymbol(Varnode *vn) const
     }
   }
   symbol = entry->getSymbol();
-  if (entry->isDynamic())	// Dynamic symbols match whole variable
+  if (vn->isProtoPartial()) {
+    Varnode *rootVn = PieceNode::findRoot(vn);
+    if (rootVn == vn)
+      throw LowlevelError("Partial varnode does not match symbol");
+
+    symboloffset = vn->getAddr().overlap(0,rootVn->getAddr(),rootVn->getSize());
+    SymbolEntry *entry = rootVn->getSymbolEntry();
+    if (entry != (SymbolEntry *)0)
+      symboloffset += entry->getOffset();
+  }
+  else if (entry->isDynamic())	// Dynamic symbols (that aren't partials) match whole variable
     symboloffset = -1;
   else if (symbol->getCategory() == Symbol::equate)
     symboloffset = -1;			// For equates, we don't care about size
   else if (symbol->getType()->getSize() == vn->getSize() &&
       entry->getAddr() == vn->getAddr() && !entry->isPiece())
     symboloffset = -1;			// A matching entry
-  else
+  else {
     symboloffset = vn->getAddr().overlap(0,entry->getAddr(),symbol->getType()->getSize()) + entry->getOffset();
+  }
 
   highflags &= ~((uint4)symboldirty);		// We are no longer dirty
 }
@@ -453,6 +465,21 @@ Varnode *HighVariable::getNameRepresentative(void) const
       nameRepresentative = vn;
   }
   return nameRepresentative;
+}
+
+/// Find the first member that is either address tied or marked as a proto partial.
+/// \return a member Varnode acting as partial storage or null if none exist
+Varnode *HighVariable::getPartial(void) const
+
+{
+  int4 i;
+
+  for(i=0;i<inst.size();++i) {
+    Varnode *vn = inst[i];
+    if (vn->isAddrTied() || vn->isProtoPartial())
+      return vn;
+  }
+  return (Varnode *)0;
 }
 
 /// Search for the given Varnode and cut it out of the list, marking all properties as \e dirty.
@@ -724,6 +751,15 @@ int4 HighVariable::instanceIndex(const Varnode *vn) const
     if (inst[i] == vn) return i;
 
   return -1;
+}
+
+/// \param op2 is the other HighVariable to compare with \b this
+/// \return \b true if they are in the same group
+bool HighVariable::sameGroup(const HighVariable *op2) const
+
+{
+  if (piece == (VariablePiece *)0 || op2->piece == (VariablePiece *)0) return false;
+  return (piece->getGroup() == op2->piece->getGroup());
 }
 
 /// \param encoder is the stream encoder

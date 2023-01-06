@@ -21,11 +21,13 @@ import java.util.List;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
+import javax.swing.border.CompoundBorder;
 
 import docking.*;
 import docking.widgets.label.GDLabel;
 import generic.application.GenericApplicationLayout;
 import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors;
 import generic.theme.Gui;
 import generic.util.WindowUtilities;
 import ghidra.framework.Application;
@@ -40,6 +42,7 @@ import utility.application.ApplicationLayout;
 public class SplashScreen extends JWindow {
 
 	private static final Color BG_COLOR = new GColor("color.bg.splashscreen");
+	private static final Color FG_COLOR = new GColor("color.fg.splashscreen");
 
 	private static final String FONT_ID = "font.splash.status";
 
@@ -308,8 +311,13 @@ public class SplashScreen extends JWindow {
 		Gui.registerFont(statusLabel, FONT_ID);
 		statusLabel.setFont(Gui.getFont(FONT_ID));
 
-		statusLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 2, 10));
+		CompoundBorder border =
+			BorderFactory.createCompoundBorder(BorderFactory.createLoweredBevelBorder(),
+				BorderFactory.createEmptyBorder(0, 5, 2, 5));
+		statusLabel.setBorder(border);
 		statusLabel.setOpaque(true);
+		statusLabel.setBackground(Colors.BACKGROUND);
+		statusLabel.setForeground(Colors.FOREGROUND);
 		return statusLabel;
 	}
 

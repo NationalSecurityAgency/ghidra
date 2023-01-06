@@ -383,6 +383,7 @@ public abstract class ComponentProvider implements HelpDescriptor, ActionContext
 	public void closeComponent() {
 		if (isTransient) {
 			removeFromTool();
+			Gui.removeThemeListener(themeListener);
 		}
 		else {
 			setVisible(false);

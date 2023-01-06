@@ -28,7 +28,7 @@ import ghidra.program.model.mem.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.NotFoundException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * 
@@ -460,7 +460,7 @@ public class FragmentTest extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			MemoryBlock block =
 				memory.createInitializedBlock(name, start, length, (byte) 0,
-					TaskMonitorAdapter.DUMMY_MONITOR, false);
+					TaskMonitor.DUMMY, false);
 			return block;
 
 		}

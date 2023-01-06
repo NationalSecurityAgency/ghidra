@@ -493,6 +493,11 @@ public abstract class CompositeEditorPanel extends JPanel
 	}
 
 	public void domainObjectRestored(DataTypeManagerDomainObject domainObject) {
+		DataTypeManager originalDTM = model.getOriginalDataTypeManager();
+		if (originalDTM == null) {
+			// editor unloaded
+			return;
+		}
 		boolean reload = true;
 		String objectType = "domain object";
 		if (domainObject instanceof Program) {
@@ -501,7 +506,7 @@ public abstract class CompositeEditorPanel extends JPanel
 		else if (domainObject instanceof DataTypeArchive) {
 			objectType = "data type archive";
 		}
-		DataType dt = model.getOriginalDataTypeManager().getDataType(model.getCompositeID());
+		DataType dt = originalDTM.getDataType(model.getCompositeID());
 		if (dt instanceof Composite) {
 			Composite composite = (Composite) dt;
 			String origDtPath = composite.getPathName();

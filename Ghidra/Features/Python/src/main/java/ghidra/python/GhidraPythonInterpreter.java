@@ -332,7 +332,7 @@ public class GhidraPythonInterpreter extends InteractiveInterpreter {
 	 *
 	 * @param script The script whose class hierarchy is to be used for injection.
 	 */
-	private void injectScriptHierarchy(PythonScript script) {
+	void injectScriptHierarchy(PythonScript script) {
 
 		if (script == null) {
 			return;

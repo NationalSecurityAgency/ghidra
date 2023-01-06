@@ -21,12 +21,14 @@ import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
+import javax.swing.plaf.UIResource;
 
 import com.google.common.base.Predicate;
 
 import docking.ActionContext;
 import docking.widgets.DropDownSelectionTextField;
 import docking.widgets.OptionDialog;
+import docking.widgets.button.GButton;
 import docking.widgets.label.GDLabel;
 import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors;
@@ -126,13 +128,13 @@ public class BitFieldEditorPanel extends JPanel {
 
 		JPanel panel = new JPanel(new HorizontalLayout(5));
 
-		decrementButton = new JButton(DECREMENT_ICON);
+		decrementButton = new GButton(DECREMENT_ICON);
 		decrementButton.setFocusable(false);
 		decrementButton.setToolTipText("Decrement allocation unit offset");
 		decrementButton.addActionListener(e -> adjustAllocationOffset(-1));
 		panel.add(decrementButton);
 
-		incrementButton = new JButton(INCREMENT_ICON);
+		incrementButton = new GButton(INCREMENT_ICON);
 		incrementButton.setFocusable(false);
 		incrementButton.setToolTipText("Increment allocation unit offset");
 		incrementButton.addActionListener(e -> adjustAllocationOffset(1));
@@ -465,7 +467,13 @@ public class BitFieldEditorPanel extends JPanel {
 		JScrollPane scrollPane =
 			new JScrollPane(placementComponent, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER,
 				ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-		scrollPane.getViewport().setBackground(getBackground());
+
+		Color bg = getBackground();
+		if (bg instanceof UIResource) {
+			// Nimbus does not honor the color if it is a UIResource
+			bg = new Color(bg.getRGB());
+		}
+		scrollPane.getViewport().setBackground(bg);
 		scrollPane.setBorder(null);
 
 		bitViewPanel.add(scrollPane);

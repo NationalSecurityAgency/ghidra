@@ -1305,7 +1305,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 		// if vtable is in external block don't try to create it because the full table isn't there
 		// but is external
-		if (program.getMemory().getBlock(vtableAddress).getName().equals("EXTERNAL")) {
+		if (program.getMemory().isExternalBlockAddress(vtableAddress)) {
 			return vtableAddress;
 		}
 
@@ -3075,7 +3075,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	}
 
 	private boolean hasExternalBlock() {
-		MemoryBlock externalBlock = program.getMemory().getBlock("EXTERNAL");
+		MemoryBlock externalBlock = program.getMemory().getBlock(MemoryBlock.EXTERNAL_BLOCK_NAME);
 		if (externalBlock == null) {
 			return false;
 		}

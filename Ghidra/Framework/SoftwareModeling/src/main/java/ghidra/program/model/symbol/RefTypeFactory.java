@@ -31,6 +31,7 @@ import ghidra.util.datastruct.IntObjectHashtable;
 /**
  * Factory class to create RefType objects.
  */
+@SuppressWarnings("deprecation")
 public class RefTypeFactory {
 
 	private static final IntObjectHashtable<RefType> REFTYPE_LOOKUP_BY_TYPE_MAP =
@@ -73,6 +74,8 @@ public class RefTypeFactory {
 		REFTYPE_LOOKUP_BY_TYPE_MAP.put(RefType.READ_IND.getValue(), RefType.READ_IND);
 		REFTYPE_LOOKUP_BY_TYPE_MAP.put(RefType.WRITE_IND.getValue(), RefType.WRITE_IND);
 		REFTYPE_LOOKUP_BY_TYPE_MAP.put(RefType.READ_WRITE_IND.getValue(), RefType.READ_WRITE_IND);
+		REFTYPE_LOOKUP_BY_TYPE_MAP.put(RefType.__STACK_READ, RefType.READ); // re-mapping required for upgrade use
+		REFTYPE_LOOKUP_BY_TYPE_MAP.put(RefType.__STACK_WRITE, RefType.WRITE); // re-mapping required for upgrade use
 		REFTYPE_LOOKUP_BY_TYPE_MAP.put(RefType.EXTERNAL_REF.getValue(), RefType.EXTERNAL_REF);
 		REFTYPE_LOOKUP_BY_TYPE_MAP.put(RefType.__CALL_OVERRIDE_UNCONDITIONAL,
 			RefType.CALL_OVERRIDE_UNCONDITIONAL);

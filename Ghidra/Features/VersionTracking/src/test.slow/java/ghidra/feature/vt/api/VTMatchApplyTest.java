@@ -433,7 +433,7 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		// Now test the unapply
 		//
 		ClearMatchTask unapplyTask = new ClearMatchTask(controller, matches);
-		unapplyTask.run(TaskMonitorAdapter.DUMMY_MONITOR);
+		unapplyTask.run(TaskMonitor.DUMMY);
 		newSymbols = symbolTable.getSymbols(labelAddress);
 		expectedSymbols = new Symbol[] { destinationSymbol1 };
 		assertTrue("New label does not match the source label",
@@ -1064,7 +1064,7 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 
 		MatchInfo matchInfo = controller.getMatchInfo(match);
 		Collection<VTMarkupItem> markupItems =
-			matchInfo.getAppliableMarkupItems(TaskMonitorAdapter.DUMMY_MONITOR);
+			matchInfo.getAppliableMarkupItems(TaskMonitor.DUMMY);
 
 		List<VTMarkupItem> itemsToApply = new ArrayList<>();
 		for (VTMarkupItem item : markupItems) {

@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.service.model;
 
-import static ghidra.app.plugin.core.debug.gui.DebuggerResources.showError;
+import static ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
@@ -61,15 +61,8 @@ import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.datastruct.CollectionChangeListener;
 import ghidra.util.datastruct.ListenerSet;
 
-@PluginInfo(
-	shortDescription = "Debugger models manager service",
-	description = "Manage debug sessions, connections, and trace recording",
-	category = PluginCategoryNames.DEBUGGER,
-	packageName = DebuggerPluginPackage.NAME,
-	status = PluginStatus.HIDDEN,
-	servicesRequired = {},
-	servicesProvided = {
-		DebuggerModelService.class, })
+@PluginInfo(shortDescription = "Debugger models manager service", description = "Manage debug sessions, connections, and trace recording", category = PluginCategoryNames.DEBUGGER, packageName = DebuggerPluginPackage.NAME, status = PluginStatus.HIDDEN, servicesRequired = {}, servicesProvided = {
+	DebuggerModelService.class, })
 public class DebuggerModelServicePlugin extends Plugin
 		implements DebuggerModelServiceInternal, ApplicationLevelOnlyPlugin {
 
@@ -111,7 +104,7 @@ public class DebuggerModelServicePlugin extends Plugin
 				proxy.fireFocusEvent(focused);
 			}
 		}
-	};
+	}
 
 	protected class ListenerOnRecorders implements TraceRecorderListener {
 		@Override
@@ -186,6 +179,7 @@ public class DebuggerModelServicePlugin extends Plugin
 	protected void createActions() {
 		actionDisconnectAll = DisconnectAllAction.builder(this, this)
 				.menuPath("Debugger", DisconnectAllAction.NAME)
+				.menuIcon(null) // our pattern is to no use icons in the main app window
 				.onAction(this::activatedDisconnectAll)
 				.buildAndInstall(tool);
 	}

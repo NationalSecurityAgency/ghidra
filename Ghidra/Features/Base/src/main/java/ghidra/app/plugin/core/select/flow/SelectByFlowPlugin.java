@@ -244,7 +244,7 @@ public class SelectByFlowPlugin extends Plugin implements OptionsChangeListener 
 		Program program = context.getProgram();
 		AddressSet selectionAddressSet = null;
 		if (monitor == null) {
-			monitor = TaskMonitorAdapter.DUMMY_MONITOR;
+			monitor = TaskMonitor.DUMMY;
 		}
 
 		monitor.setMessage("Computing Selection...");

@@ -58,18 +58,23 @@ public class FontValue extends ThemeValue<Font> {
 	}
 
 	@Override
+	public String getSerializationString() {
+		String outputId = toExternalId(id);
+		return outputId + " = " + getValueOutput();
+	}
+
+	@Override
+	public boolean isExternal() {
+		return !id.startsWith(FONT_ID_PREFIX);
+	}
+
+	@Override
 	public Font get(GThemeValueMap values) {
 		Font font = super.get(values);
 		if (modifier != null) {
 			return modifier.modify(font);
 		}
 		return font;
-	}
-
-	@Override
-	public String getSerializationString() {
-		String outputId = toExternalId(id);
-		return outputId + " = " + getValueOutput();
 	}
 
 	private String getValueOutput() {
@@ -107,7 +112,7 @@ public class FontValue extends ThemeValue<Font> {
 	 * @param key the key to associate the parsed value with
 	 * @param value the font value to parse
 	 * @return a FontValue with the given key and the parsed value
-	 * @throws ParseException 
+	 * @throws ParseException if there is an exception parsing 
 	 */
 	public static FontValue parse(String key, String value) throws ParseException {
 		String id = fromExternalId(key);
@@ -148,10 +153,10 @@ public class FontValue extends ThemeValue<Font> {
 	}
 
 	@Override
-	protected Font getUnresolvedReferenceValue(String id, String unresolvedId) {
+	protected Font getUnresolvedReferenceValue(String primaryId, String unresolvedId) {
 		Msg.warn(this,
 			"Could not resolve indirect font path for \"" + unresolvedId +
-				"\" for primary id \"" + id + "\", using last resort default");
+				"\" for primary id \"" + primaryId + "\", using last resort default");
 		return LAST_RESORT_DEFAULT;
 	}
 

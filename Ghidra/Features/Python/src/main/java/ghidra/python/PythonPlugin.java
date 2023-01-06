@@ -226,8 +226,14 @@ public class PythonPlugin extends ProgramPlugin
 
 		// Setup the PythonScript describing the state of the interactive prompt.
 		// This allows things like currentProgram and currentAddress to dynamically reflect
-		// what's happening in the listing.
+		// what's happening in the listing.  Injecting the script hierarchy early here allows
+		// code completion to work before commands are entered.
 		interactiveScript = new PythonScript();
+		interactiveScript.set(
+			new GhidraState(tool, tool.getProject(), getCurrentProgram(), getProgramLocation(),
+				getProgramSelection(), getProgramHighlight()),
+			interactiveTaskMonitor, new PrintWriter(getConsole().getStdOut()));
+		interpreter.injectScriptHierarchy(interactiveScript);
 		interactiveTaskMonitor = new PythonInteractiveTaskMonitor(console.getStdOut());
 
 		// Start the input thread that receives python commands to execute.

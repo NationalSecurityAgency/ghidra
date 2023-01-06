@@ -102,17 +102,11 @@ public abstract class AbstractGCellRenderer extends GDHtmlLabel {
 	 * @param row The row being rendered.
 	 * @return the color
 	 */
-	protected Color getOSDependentBackgroundColor(JComponent parent, int row) {
+	protected Color getAlternatingBackgroundColor(JComponent parent, int row) {
 
 		if (!shouldAlternateRowBackgroundColor()) {
 			return getDefaultBackgroundColor();
 		}
-
-// For now we always alternate row colors--it actually makes the various LaFs look nicer
-// Leaving the above call in the code so that it can be later found by reference
-//		if (!DockingWindowsLookAndFeelUtils.isUsingAquaUI(parent.getUI())) {
-//			return parent.getBackground();
-//		}
 
 		return getBackgroundColorForRow(row);
 	}

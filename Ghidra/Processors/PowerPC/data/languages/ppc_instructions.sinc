@@ -1918,7 +1918,7 @@
 	local tmpfB = fB;
 	zero:4=0;
 	fD=fC;
-	if (tmpfA f> int2float(zero)) goto inst_next;
+	if (tmpfA f>= int2float(zero)) goto inst_next;
 	fD=tmpfB;
 }
 
@@ -1929,9 +1929,10 @@
 	local tmpfB = fB;
 	zero:4=0;
 	fD=fC;
-	cr1flags();
-	if (tmpfA f> int2float(zero)) goto inst_next;
+	if (tmpfA f>= int2float(zero)) goto <end>;
 	fD=tmpfB;
+<end>
+	cr1flags();
 }
 
 #fsqrt f0r,fr0	0xfc 00 00 2c

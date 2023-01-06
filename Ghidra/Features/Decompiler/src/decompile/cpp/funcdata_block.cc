@@ -481,47 +481,48 @@ JumpTable *Funcdata::installJumpTable(const Address &addr)
 ///   - 2 = \b likely \b thunk failure
 ///   - 3 = no legal flows to the BRANCHIND failure
 ///
+/// \param partial is a function object for caching analysis
 /// \param jt is the jump-table object to populate
 /// \param op is the BRANCHIND p-code op to analyze
 /// \param flow is the existing flow information
 /// \return the success/failure code
-int4 Funcdata::stageJumpTable(JumpTable *jt,PcodeOp *op,FlowInfo *flow)
+int4 Funcdata::stageJumpTable(Funcdata &partial,JumpTable *jt,PcodeOp *op,FlowInfo *flow)
 
 {
-  PcodeOp *partop = (PcodeOp *)0;
-  string oldactname;
+  if (!partial.isJumptableRecoveryOn()) {
+    // Do full analysis on the table if we haven't before
+    partial.flags |= jumptablerecovery_on; // Mark that this Funcdata object is dedicated to jumptable recovery
+    partial.truncatedFlow(this,flow);
 
-  ostringstream s1;
-  s1 << name << "@@jump@";
-  op->getAddr().printRaw(s1);
-
-  Funcdata partial(s1.str(),localmap->getParent(),baseaddr,(FunctionSymbol *)0);
-  partial.flags |= jumptablerecovery_on; // Mark that this Funcdata object is dedicated to jumptable recovery
-  partial.truncatedFlow(this,flow);
-
-  partop = partial.findOp(op->getSeqNum());
-
-  if ((partop==(PcodeOp *)0) ||
-      (partop->code() != CPUI_BRANCHIND)||
-      (partop->getAddr() != op->getAddr()))
-    throw LowlevelError("Error recovering jumptable: Bad partial clone");
-
-  oldactname = glb->allacts.getCurrentName(); // Save off old action
-  glb->allacts.setCurrent("jumptable");
-  try {
+    string oldactname = glb->allacts.getCurrentName(); // Save off old action
+    try {
+      glb->allacts.setCurrent("jumptable");
 #ifdef OPACTION_DEBUG
-    if (jtcallback != (void (*)(Funcdata &orig,Funcdata &fd))0)
-      (*jtcallback)(*this,partial);  // Alternative reset/perform
-    else {
+      if (jtcallback != (void (*)(Funcdata &orig,Funcdata &fd))0)
+	(*jtcallback)(*this,partial);  // Alternative reset/perform
+      else {
 #endif
-    glb->allacts.getCurrent()->reset( partial );
-    glb->allacts.getCurrent()->perform( partial ); // Simplify the partial function
+      glb->allacts.getCurrent()->reset( partial );
+      glb->allacts.getCurrent()->perform( partial ); // Simplify the partial function
 #ifdef OPACTION_DEBUG
+      }
+#endif
+      glb->allacts.setCurrent(oldactname); // Restore old action
     }
-#endif
-    glb->allacts.setCurrent(oldactname); // Restore old action
-    if (partop->isDead())	// Indirectop we were trying to recover was eliminated as dead code (unreachable)
-      return 0;			// Return jumptable as 
+    catch(LowlevelError &err) {
+      glb->allacts.setCurrent(oldactname);
+      warning(err.explain,op->getAddr());
+      return 1;
+    }
+  }
+  PcodeOp *partop = partial.findOp(op->getSeqNum());
+
+  if (partop==(PcodeOp *)0 || partop->code() != CPUI_BRANCHIND || partop->getAddr() != op->getAddr())
+    throw LowlevelError("Error recovering jumptable: Bad partial clone");
+  if (partop->isDead())	// Indirectop we were trying to recover was eliminated as dead code (unreachable)
+    return 0;			// Return jumptable as
+
+  try {
     jt->setLoadCollect(flow->doesJumpRecord());
     jt->setIndirectOp(partop);
     if (jt->getStage()>0)
@@ -529,16 +530,13 @@ int4 Funcdata::stageJumpTable(JumpTable *jt,PcodeOp *op,FlowInfo *flow)
     else
       jt->recoverAddresses(&partial); // Analyze partial to recover jumptable addresses
   }
-  catch(JumptableNotReachableError &err) {
-    glb->allacts.setCurrent(oldactname);
+  catch(JumptableNotReachableError &err) {	// Thrown by recoverAddresses
     return 3;
   }
-  catch(JumptableThunkError &err) {
-    glb->allacts.setCurrent(oldactname);
+  catch(JumptableThunkError &err) {		// Thrown by recoverAddresses
     return 2;
   }
   catch(LowlevelError &err) {
-    glb->allacts.setCurrent(oldactname);
     warning(err.explain,op->getAddr());
     return 1;
   }
@@ -552,11 +550,12 @@ int4 Funcdata::stageJumpTable(JumpTable *jt,PcodeOp *op,FlowInfo *flow)
 /// to the copy, and the resulting data-flow tree is examined to enumerate possible values
 /// of the input Varnode to the given BRANCHIND PcodeOp.  This information is stored in a
 /// JumpTable object.
+/// \param partial is the Funcdata copy to perform analysis on if necessary
 /// \param op is the given BRANCHIND PcodeOp
 /// \param flow is current flow information for \b this function
 /// \param failuremode will hold the final success/failure code (0=success)
 /// \return the recovered JumpTable or NULL if there was no success
-JumpTable *Funcdata::recoverJumpTable(PcodeOp *op,FlowInfo *flow,int4 &failuremode)
+JumpTable *Funcdata::recoverJumpTable(Funcdata &partial,PcodeOp *op,FlowInfo *flow,int4 &failuremode)
 
 {
   JumpTable *jt;
@@ -568,7 +567,7 @@ JumpTable *Funcdata::recoverJumpTable(PcodeOp *op,FlowInfo *flow,int4 &failuremo
       if (jt->getStage() != 1)
 	return jt;		// Previously calculated jumptable (NOT an override and NOT incomplete)
     }
-    failuremode = stageJumpTable(jt,op,flow); // Recover based on override information
+    failuremode = stageJumpTable(partial,jt,op,flow); // Recover based on override information
     if (failuremode != 0)
       return (JumpTable *)0;
     jt->setIndirectOp(op);	// Relink table back to original op
@@ -578,7 +577,7 @@ JumpTable *Funcdata::recoverJumpTable(PcodeOp *op,FlowInfo *flow,int4 &failuremo
   if ((flags & jumptablerecovery_dont)!=0)
     return (JumpTable *)0;	// Explicitly told not to recover jumptables
   JumpTable trialjt(glb);
-  failuremode = stageJumpTable(&trialjt,op,flow);
+  failuremode = stageJumpTable(partial,&trialjt,op,flow);
   if (failuremode != 0)
     return (JumpTable *)0;
   //  if (trialjt.is_twostage())

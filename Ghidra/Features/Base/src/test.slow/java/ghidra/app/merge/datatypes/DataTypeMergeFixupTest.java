@@ -22,7 +22,7 @@ import org.junit.Test;
 import ghidra.program.database.OriginalProgramModifierListener;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.data.*;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Data type merge tests with fixup for data types added in My program.
@@ -85,7 +85,7 @@ public class DataTypeMergeFixupTest extends AbstractDataTypeMergeTest {
 				int transactionID = program.startTransaction("delete inner struct");
 				try {
 					// Remove inner struct
-					dtm.remove(inner, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(inner, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -245,7 +245,7 @@ public class DataTypeMergeFixupTest extends AbstractDataTypeMergeTest {
 				int transactionID = program.startTransaction("delete inner struct");
 				try {
 					// Remove inner struct
-					dtm.remove(inner, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(inner, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -360,7 +360,7 @@ public class DataTypeMergeFixupTest extends AbstractDataTypeMergeTest {
 				int transactionID = program.startTransaction("delete inner struct");
 				try {
 					// Remove inner struct
-					dtm.remove(inner, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(inner, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				finally {

@@ -26,7 +26,7 @@ import javax.swing.table.TableCellEditor;
 
 import docking.ActionContext;
 import docking.action.*;
-import docking.widgets.OptionDialog;
+import docking.action.builder.ActionBuilder;
 import docking.widgets.label.GLabel;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.app.services.DataTypeManagerService;
@@ -61,7 +61,7 @@ public class EquateTableProvider extends ComponentProviderAdapter {
 		this.plugin = plugin;
 		mainPanel = createWorkPanel();
 		addToTool();
-		createAction();
+		createActions();
 	}
 
 	@Override
@@ -107,18 +107,12 @@ public class EquateTableProvider extends ComponentProviderAdapter {
 
 	void updateEquates() {
 		// restore selection after update
-		int row = equatesTable.getSelectedRow();
+		List<Equate> selectedItems = equatesFilterPanel.getSelectedItems();
 
 		equatesModel.update();
 
-		int rows = equatesTable.getRowCount();
-		if (row < 0 || row >= rows) {
-			row = 0;
-		}
+		equatesFilterPanel.setSelectedItems(selectedItems);
 
-		if (rows > 0) {
-			equatesTable.setRowSelectionInterval(row, row);
-		}
 		handleEquateTableSelection();
 	}
 
@@ -165,43 +159,6 @@ public class EquateTableProvider extends ComponentProviderAdapter {
 			}
 		});
 
-		// Allows for the user to double click on an equate to rename it from a data type editor
-		// dialog if the equate is based off of an enum data type.
-		equatesTable.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent evt) {
-				if (evt.getClickCount() == 2) {
-					DataTypeManager dtm = plugin.getProgram().getDataTypeManager();
-					Object obj = evt.getSource();
-					if (obj instanceof GhidraTable) {
-						GhidraTable table = (GhidraTable) obj;
-						int row = table.rowAtPoint(evt.getPoint());
-						int column = table.columnAtPoint(evt.getPoint());
-
-						if (!table.isCellEditable(row, column)) {
-							return;
-						}
-
-						DataTypeManagerService dtms = tool.getService(DataTypeManagerService.class);
-						if (dtms == null) {
-							return;
-						}
-						Equate equate = (Equate) table.getValueAt(row, column);
-
-						UniversalID id =
-							new UniversalID(Long.parseLong(equate.getName().split(":")[1]));
-						Enum enoom = (Enum) dtm.findDataTypeForID(id);
-						if (enoom != null) {
-							dtms.edit(enoom);
-						}
-						else {
-							showDeleteEquateOptionDialog();
-						}
-					}
-				}
-			}
-		});
-
 		equatesTable.getSelectionModel().addListSelectionListener(e -> {
 			if (e.getValueIsAdjusting()) {
 				return;
@@ -212,7 +169,7 @@ public class EquateTableProvider extends ComponentProviderAdapter {
 		equatesTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 		equatesTable.setPreferredScrollableViewportSize(new Dimension(350, 150));
 		equatesTable.setRowSelectionAllowed(true);
-		equatesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		equatesTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
 		equatesFilterPanel = new GhidraTableFilterPanel<>(equatesTable, equatesModel);
 
@@ -222,8 +179,6 @@ public class EquateTableProvider extends ComponentProviderAdapter {
 		equatesPanel.add(new GLabel("Equates", SwingConstants.CENTER), BorderLayout.NORTH);
 		equatesPanel.add(equatesTablePane, BorderLayout.CENTER);
 		equatesPanel.add(equatesFilterPanel, BorderLayout.SOUTH);
-
-		//////////////////////////////////////////////////////////////
 
 		referencesModel = new EquateReferenceTableModel(plugin);
 
@@ -248,8 +203,6 @@ public class EquateTableProvider extends ComponentProviderAdapter {
 		referencesPanel.add(new GLabel("References", SwingConstants.CENTER), "North");
 		referencesPanel.add(referencesTablePane, "Center");
 
-		//////////////////////////////////////////////////////////////
-
 		JPanel workPanel = new JPanel(new BorderLayout());
 		JSplitPane splitPane =
 			new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, equatesPanel, referencesPanel);
@@ -260,12 +213,47 @@ public class EquateTableProvider extends ComponentProviderAdapter {
 	}
 
 	private void handleEquateTableSelection() {
+
+		int[] rows = equatesTable.getSelectedRows();
+		if (rows.length > 1) {
+			referencesTable.clearSelection();
+			referencesModel.setEquate(null);
+			return;
+		}
+
 		Equate equate = equatesFilterPanel.getSelectedItem();
 		referencesTable.clearSelection();
 		referencesModel.setEquate(equate);
 	}
 
-	private void createAction() {
+	private void createActions() {
+
+		//@formatter:off
+		String group = "Popup Group";
+		new ActionBuilder("Show Enum", plugin.getName())
+			.popupMenuGroup(group)
+			.popupMenuPath("Show Enum")
+			.popupWhen(c -> true)
+			.enabledWhen(c -> getEnum(getSelectedEquate()) != null)
+			.onAction(c -> {
+				DataTypeManagerService dtms = tool.getService(DataTypeManagerService.class);
+				if (dtms != null) {
+					dtms.setDataTypeSelected(getEnum(getSelectedEquate()));
+				}
+			})
+			.helpLocation(new HelpLocation("EquatePlugin", "Show_Enum"))
+			.buildAndInstallLocal(this);
+
+		new ActionBuilder("Edit Enum", plugin.getName())
+			.popupMenuGroup(group)
+			.popupMenuPath("Edit Enum")
+			.popupWhen(c -> true)
+			.enabledWhen(c -> getEnum(getSelectedEquate()) != null)
+			.onAction(c -> edit(getEnum(getSelectedEquate())))
+			.helpLocation(new HelpLocation("EquatePlugin", "Edit_Enum"))
+			.buildAndInstallLocal(this);
+
+		//@formatter:on
 
 		Icon deleteImage = Icons.DELETE_ICON;
 		deleteAction = new DockingAction("Delete Equate", plugin.getName()) {
@@ -290,22 +278,56 @@ public class EquateTableProvider extends ComponentProviderAdapter {
 
 		SelectionNavigationAction selectionNavigationAction =
 			new SelectionNavigationAction(plugin, referencesTable);
-		selectionNavigationAction.setHelpLocation(
-			new HelpLocation(HelpTopics.SEARCH, "Selection_Navigation"));
+		selectionNavigationAction
+				.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, "Selection_Navigation"));
 
 		tool.addLocalAction(this, deleteAction);
 		tool.addLocalAction(this, selectionNavigationAction);
 	}
 
-	private void delete() {
+	private Equate getSelectedEquate() {
+		if (equatesTable.getSelectedRowCount() != 1) {
+			return null;
+		}
 
-		List<Equate> equates = equatesFilterPanel.getSelectedItems();
+		return equatesFilterPanel.getSelectedItem();
+	}
+
+	private Enum getEnum(Equate equate) {
+		if (equate == null) {
+			return null;
+		}
+
+		if (!equate.isEnumBased()) {
+			return null;
+		}
+
+		DataTypeManagerService dtms = tool.getService(DataTypeManagerService.class);
+		if (dtms == null) {
+			return null;
+		}
+
+		DataTypeManager dtm = plugin.getProgram().getDataTypeManager();
+		UniversalID id = equate.getEnumUUID();
+		Enum enoom = (Enum) dtm.findDataTypeForID(id);
+		return enoom;
+	}
+
+	private void edit(Enum enoom) {
+		DataTypeManagerService dtms = tool.getService(DataTypeManagerService.class);
+		if (dtms != null) {
+			dtms.edit(enoom);
+		}
+	}
+
+	private void delete() {
 
 		TableCellEditor cellEditor = equatesTable.getCellEditor();
 		if (cellEditor != null) {
 			cellEditor.stopCellEditing();
 		}
 
+		List<Equate> equates = equatesFilterPanel.getSelectedItems();
 		plugin.deleteEquates(equates);
 	}
 
@@ -315,15 +337,6 @@ public class EquateTableProvider extends ComponentProviderAdapter {
 		}
 		else {
 			referencesTable.removeNavigation();
-		}
-	}
-
-	private void showDeleteEquateOptionDialog() {
-		String message = "Data type not found. Would you like to delete this equate?";
-		int choice = OptionDialog.showOptionDialogWithCancelAsDefaultButton(equatesFilterPanel,
-			"Delete Equate", message, "Delete Equate", OptionDialog.ERROR_MESSAGE);
-		if (choice == OptionDialog.OPTION_ONE) {
-			delete();
 		}
 	}
 

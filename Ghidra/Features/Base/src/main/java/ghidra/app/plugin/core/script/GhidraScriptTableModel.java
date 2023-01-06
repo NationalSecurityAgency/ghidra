@@ -259,7 +259,7 @@ class GhidraScriptTableModel extends GDynamicColumnTableModel<ResourceFile, Obje
 				label.setText(null);
 				label.setToolTipText(null);
 
-				ImageIcon icon = (ImageIcon) data.getValue();
+				Icon icon = (Icon) data.getValue();
 				label.setIcon(null);
 				if (icon != null) {
 					label.setIcon(icon);

@@ -35,6 +35,7 @@ class TipOfTheDayDialog extends DialogComponentProvider {
 	private static final String FONT_ID = "font.plugin.tips";
 	private static final String FONT_LABEL_ID = "font.plugin.tips.label";
 	private static final int _24_HOURS = 86400000;
+
 	private TipOfTheDayPlugin plugin;
 	private JCheckBox showTipsCheckbox;
 	private JButton nextTipButton;
@@ -61,15 +62,16 @@ class TipOfTheDayDialog extends DialogComponentProvider {
 		tipArea.setWrapStyleWord(true);
 		tipArea.setLineWrap(true);
 		tipArea.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+		tipArea.setBackground(Colors.BACKGROUND);
 
 		JScrollPane tipScroll = new JScrollPane(tipArea);
 		tipScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		tipScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-		tipScroll.setBorder(null);
+		tipScroll.setBorder(BorderFactory.createEmptyBorder());
 		tipScroll.setPreferredSize(tipArea.getPreferredSize());
 
 		showTipsCheckbox = new GCheckBox("Show Tips on Startup?");
-		showTipsCheckbox.setSelected(true); // TODO (FixMe) Moved this before its listener to prevent project save for now.
+		showTipsCheckbox.setSelected(true); // before adding the listener to prevent project save
 		showTipsCheckbox.addItemListener(e -> showTipsChanged());
 
 		nextTipButton = new JButton("Next Tip");
@@ -88,9 +90,10 @@ class TipOfTheDayDialog extends DialogComponentProvider {
 			BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10),
 				BorderFactory.createLineBorder(Java.BORDER));
 		panel.setBorder(panelBorder);
-		panel.setBackground(Colors.BACKGROUND);
 
 		JLabel label = new GLabel("Did you know...", tipIcon, SwingConstants.LEFT);
+		label.setBackground(Colors.BACKGROUND);
+		label.setOpaque(true);
 		Gui.registerFont(label, FONT_LABEL_ID);
 		panel.add(label, BorderLayout.NORTH);
 
