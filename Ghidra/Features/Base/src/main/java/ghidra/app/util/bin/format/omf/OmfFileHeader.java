@@ -332,6 +332,10 @@ public class OmfFileHeader extends OmfRecord {
 				header.evaluateComdef(comdef);
 				header.externsymbols.add((OmfExternalSymbol) record);
 			}
+			else if (record instanceof OmfComdatExternalSymbol comdat) {
+				((OmfComdatExternalSymbol)record).loadNames(header.nameList);
+				header.externsymbols.add((OmfExternalSymbol)record);
+			}
 			else if (record instanceof OmfExternalSymbol external) {
 				header.externsymbols.add(external);
 			}
