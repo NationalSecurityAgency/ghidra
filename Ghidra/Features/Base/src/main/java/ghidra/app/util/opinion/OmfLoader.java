@@ -25,8 +25,11 @@ import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.omf.*;
 import ghidra.app.util.bin.format.omf.OmfFixupRecord.Subrecord;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressOutOfBoundsException;
 import ghidra.program.model.address.AddressOverflowException;
+import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.Undefined;
 import ghidra.program.model.lang.Language;
@@ -390,12 +393,14 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 				break;
 			}
 			Address addrBase = null;
+			boolean tagFunction = false;
 			if (symbolrec.getSegmentIndex() != 0) {
 				// TODO: What does it mean if both the segment and group index are non-zero?
 				//     Is the segment index group relative?
 				//     For now we assume if a segment index is present, we don't need the group index
 				OmfSegmentHeader baseSegment = segments.get(symbolrec.getSegmentIndex() - 1);
 				addrBase = baseSegment.getAddress(language);
+				tagFunction = baseSegment.isCode();
 			}
 			else if (symbolrec.getGroupIndex() != 0) {
 				OmfGroupRecord baseGroup = groups.get(symbolrec.getGroupIndex() - 1);
@@ -409,10 +414,24 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 			int numSymbols = symbolrec.numSymbols();
 			for (int i = 0; i < numSymbols; ++i) {
 				OmfSymbol symbol = symbolrec.getSymbol(i);
-				Address address = addrBase.add(symbol.getOffset());
-				symbol.setAddress(address);
+				try {
+					Address address = addrBase.add(symbol.getOffset());
+					symbol.setAddress(address);
 
-				createSymbol(symbol, address, symbolTable, log);
+					createSymbol(symbol, address, symbolTable, log);
+					if (tagFunction) {
+						// Create a dummy function so that EntryPointAnalyzer will disassemble it
+						try {
+							program.getFunctionManager().createFunction(symbol.getName(), address, new AddressSet(address), SourceType.IMPORTED);
+						} catch (OverlappingFunctionException e) {
+							log.appendMsg("Function already exists at address " + address.toString() + ": " + e.toString());
+						} catch (InvalidInputException e) {
+							log.appendMsg("Unable to create function with invalid name " + symbol.getName() + ": " + e.toString());
+						}
+					}
+				} catch (AddressOutOfBoundsException e) {
+					log.appendMsg("Unable to create symbol " + symbol.getName() + ": " + e.toString());
+				}
 			}
 		}
 	}
