@@ -15,15 +15,13 @@
  */
 package ghidra.app.plugin.core.debug.service.modules;
 
-import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 
 import ghidra.app.plugin.core.debug.utils.ProgramURLUtils;
 import ghidra.app.services.MapEntry;
-import ghidra.framework.data.OpenedDomainFile;
-import ghidra.framework.model.*;
-import ghidra.framework.store.FileSystem;
+import ghidra.framework.model.DomainFile;
+import ghidra.framework.model.ProjectData;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Library;
 import ghidra.program.model.listing.Program;
@@ -33,9 +31,6 @@ import ghidra.trace.model.*;
 import ghidra.trace.model.modules.*;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.util.Msg;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.VersionException;
-import ghidra.util.task.TaskMonitor;
 
 public enum DebuggerStaticMappingUtils {
 	;
@@ -45,121 +40,50 @@ public enum DebuggerStaticMappingUtils {
 		return null;
 	}
 
-	public static DomainFile resolve(DomainFolder folder, String path) {
-		StringBuilder fullPath = new StringBuilder(folder.getPathname());
-		if (!fullPath.toString().endsWith(FileSystem.SEPARATOR)) {
-			// Only root should end with /, anyway
-			fullPath.append(FileSystem.SEPARATOR_CHAR);
-		}
-		fullPath.append(path);
-		return folder.getProjectData().getFile(fullPath.toString());
-	}
-
-	public static Set<DomainFile> findPrograms(String modulePath, DomainFolder folder) {
-		// TODO: If not found, consider filenames with space + extra info
-		while (folder != null) {
-			DomainFile found = resolve(folder, modulePath);
-			if (found != null) {
-				return Set.of(found);
-			}
-			folder = folder.getParent();
-		}
-		return Set.of();
-	}
-
-	public static Set<DomainFile> findProgramsByPathOrName(String modulePath,
-			DomainFolder folder) {
-		Set<DomainFile> found = findPrograms(modulePath, folder);
-		if (!found.isEmpty()) {
-			return found;
-		}
-		int idx = modulePath.lastIndexOf(FileSystem.SEPARATOR);
-		if (idx == -1) {
-			return Set.of();
-		}
-		found = findPrograms(modulePath.substring(idx + 1), folder);
-		if (!found.isEmpty()) {
-			return found;
-		}
-		return Set.of();
-	}
-
-	public static Set<DomainFile> findProgramsByPathOrName(String modulePath, Project project) {
-		return findProgramsByPathOrName(modulePath, project.getProjectData().getRootFolder());
-	}
-
-	protected static String normalizePath(String path) {
-		path = path.replace('\\', FileSystem.SEPARATOR_CHAR);
-		while (path.startsWith(FileSystem.SEPARATOR)) {
-			path = path.substring(1);
-		}
-		return path;
-	}
-
-	public static Set<DomainFile> findProbableModulePrograms(TraceModule module, Project project) {
-		// TODO: Consider folders containing existing mapping destinations
-		DomainFile df = module.getTrace().getDomainFile();
-		String modulePath = normalizePath(module.getName());
-		if (df == null) {
-			return findProgramsByPathOrName(modulePath, project);
-		}
-		DomainFolder parent = df.getParent();
-		if (parent == null) {
-			return findProgramsByPathOrName(modulePath, project);
-		}
-		return findProgramsByPathOrName(modulePath, parent);
-	}
-
-	protected static void collectLibraries(ProjectData project, Program cur, Set<Program> col,
-			TaskMonitor monitor) throws CancelledException {
-		if (!col.add(cur)) {
+	protected static void collectLibraries(ProjectData project, DomainFile cur,
+			Set<DomainFile> col) {
+		if (!Program.class.isAssignableFrom(cur.getDomainObjectClass()) || !col.add(cur)) {
 			return;
 		}
-		ExternalManager externs = cur.getExternalManager();
-		for (String extName : externs.getExternalLibraryNames()) {
-			monitor.checkCanceled();
-			Library lib = externs.getExternalLibrary(extName);
-			String libPath = lib.getAssociatedProgramPath();
-			if (libPath == null) {
-				continue;
+		Set<String> paths = new HashSet<>();
+		try (PeekOpenedDomainObject peek = new PeekOpenedDomainObject(cur)) {
+			if (!(peek.object instanceof Program program)) {
+				return;
 			}
-			DomainFile libFile = project.getFile(libPath);
+			ExternalManager externalManager = program.getExternalManager();
+			for (String libraryName : externalManager.getExternalLibraryNames()) {
+				Library library = externalManager.getExternalLibrary(libraryName);
+				String path = library.getAssociatedProgramPath();
+				if (path != null) {
+					paths.add(path);
+				}
+			}
+		}
+
+		for (String libraryPath : paths) {
+			DomainFile libFile = project.getFile(libraryPath);
 			if (libFile == null) {
-				Msg.info(DebuggerStaticMappingUtils.class,
-					"Referenced external program not found: " + libPath);
 				continue;
 			}
-			try (OpenedDomainFile<Program> program =
-				OpenedDomainFile.open(Program.class, libFile, monitor)) {
-				collectLibraries(project, program.content, col, monitor);
-			}
-			catch (ClassCastException e) {
-				Msg.info(DebuggerStaticMappingUtils.class,
-					"Referenced external program is not a program: " + libPath + " is " +
-						libFile.getDomainObjectClass());
-				continue;
-			}
-			catch (VersionException | CancelledException | IOException e) {
-				Msg.info(DebuggerStaticMappingUtils.class,
-					"Referenced external program could not be opened: " + e);
-				continue;
-			}
+			collectLibraries(project, libFile, col);
 		}
 	}
 
 	/**
-	 * Recursively collect external programs, i.e., libraries, starting at the given seed
+	 * Recursively collect external programs, i.e., libraries, starting at the given seeds
 	 * 
-	 * @param seed the seed, usually the executable
-	 * @param monitor a monitor to cancel the process
-	 * @return the set of found programs, including the seed
-	 * @throws CancelledException if cancelled by the monitor
+	 * <p>
+	 * This will only descend into domain files that are already opened. This will only include
+	 * results whose content type is a {@link Program}.
+	 * 
+	 * @param seeds the seeds, usually including the executable
+	 * @return the set of found domain files, including the seeds
 	 */
-	public static Set<Program> collectLibraries(Program seed, TaskMonitor monitor)
-			throws CancelledException {
-		Set<Program> result = new LinkedHashSet<>();
-		collectLibraries(seed.getDomainFile().getParent().getProjectData(), seed, result,
-			monitor);
+	public static Set<DomainFile> collectLibraries(Collection<DomainFile> seeds) {
+		Set<DomainFile> result = new LinkedHashSet<>();
+		for (DomainFile seed : seeds) {
+			collectLibraries(seed.getParent().getProjectData(), seed, result);
+		}
 		return result;
 	}
 

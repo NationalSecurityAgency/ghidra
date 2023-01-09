@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.debug.gui.console;
 
+import java.util.List;
+
 import javax.swing.Icon;
 
 import org.apache.logging.log4j.Level;
@@ -118,6 +120,11 @@ public class DebuggerConsolePlugin extends Plugin implements DebuggerConsoleServ
 	@Override
 	public boolean logContains(ActionContext context) {
 		return provider.logContains(context);
+	}
+
+	@Override
+	public List<ActionContext> getActionContexts() {
+		return provider.getActionContexts();
 	}
 
 	@Override
