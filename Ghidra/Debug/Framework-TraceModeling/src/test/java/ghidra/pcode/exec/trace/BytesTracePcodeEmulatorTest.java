@@ -327,7 +327,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 					""",
 				List.of(
 					// First instruction undoes the modification above
-					"XOR byte ptr [RIP], 0xcc",  // 7 bytes
+					"XOR byte ptr [RIP + 0x0], 0xcc",  // 7 bytes
 					"MOV EAX,0xdeadbeef"));            // 5 bytes
 
 			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0);
