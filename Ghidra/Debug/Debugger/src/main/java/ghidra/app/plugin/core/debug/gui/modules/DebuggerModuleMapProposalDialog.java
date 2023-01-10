@@ -48,7 +48,8 @@ public class DebuggerModuleMapProposalDialog
 				? e.getToProgram().getName()
 				: e.getToProgram().getDomainFile().getName())),
 		STATIC_BASE("Static Base", Address.class, e -> e.getToProgram().getImageBase()),
-		SIZE("Size", Long.class, e -> e.getModuleRange().getLength());
+		SIZE("Size", Long.class, e -> e.getModuleRange().getLength()),
+		MEMORIZE("Memorize", Boolean.class, ModuleMapEntry::isMemorize, ModuleMapEntry::setMemorize);
 
 		private final String header;
 		private final Class<?> cls;

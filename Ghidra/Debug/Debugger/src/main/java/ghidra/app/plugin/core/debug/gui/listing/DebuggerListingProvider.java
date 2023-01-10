@@ -29,6 +29,7 @@ import javax.swing.event.ChangeListener;
 import org.apache.commons.lang3.StringUtils;
 import org.jdom.Element;
 
+import docking.ActionContext;
 import docking.WindowPosition;
 import docking.action.DockingAction;
 import docking.action.ToggleDockingAction;
@@ -60,8 +61,7 @@ import ghidra.framework.plugintool.AutoConfigState;
 import ghidra.framework.plugintool.AutoService;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
@@ -121,13 +121,8 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 					return;
 				}
 				doMarkTrackedLocation();
+				cleanMissingModuleMessages(affectedTraces);
 			});
-
-			/**
-			 * TODO: Remove "missing" entry in modules dialog, if present? There's some nuance here,
-			 * because the trace presenting the mapping may not be the same as the trace that missed
-			 * the module originally. I'm tempted to just leave it and let the user remove it.
-			 */
 		}
 	}
 
@@ -845,6 +840,10 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		if (loc == null) { // Redundant?
 			return;
 		}
+		AddressSpace space = loc.getAddress().getAddressSpace();
+		if (space == null) {
+			return; // Is this NO_ADDRESS or something?
+		}
 		if (mappingService == null) {
 			return;
 		}
@@ -873,22 +872,21 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 			modMan.getSectionsAt(snap, address).stream().map(s -> s.getModule()))
 				.collect(Collectors.toSet());
 
-		// Attempt to open probable matches. All others, attempt to import
+		// Attempt to open probable matches. All others, list to import
 		// TODO: What if sections are not presented?
 		for (TraceModule mod : modules) {
-			Set<DomainFile> matches = mappingService.findProbableModulePrograms(mod);
-			if (matches.isEmpty()) {
+			DomainFile match = mappingService.findBestModuleProgram(space, mod);
+			if (match == null) {
 				missing.add(mod);
 			}
 			else {
-				toOpen.addAll(matches);
+				toOpen.add(match);
 			}
 		}
 		if (programManager != null && !toOpen.isEmpty()) {
 			for (DomainFile df : toOpen) {
 				// Do not presume a goTo is about to happen. There are no mappings, yet.
-				doTryOpenProgram(df, DomainFile.DEFAULT_VERSION,
-					ProgramManager.OPEN_VISIBLE);
+				doTryOpenProgram(df, DomainFile.DEFAULT_VERSION, ProgramManager.OPEN_VISIBLE);
 			}
 		}
 
@@ -903,10 +901,39 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 				new DebuggerMissingModuleActionContext(mod));
 		}
 		/**
-		 * Once the programs are opened, including those which are successfully imported, the
-		 * section mapper should take over, eventually invoking callbacks to our mapping change
-		 * listener.
+		 * Once the programs are opened, including those which are successfully imported, the mapper
+		 * bot should take over, eventually invoking callbacks to our mapping change listener.
 		 */
+	}
+
+	protected boolean isMapped(AddressRange range) {
+		if (range == null) {
+			return false;
+		}
+		return mappingService.getStaticLocationFromDynamic(
+			new ProgramLocation(getProgram(), range.getMinAddress())) != null;
+	}
+
+	protected void cleanMissingModuleMessages(Set<Trace> affectedTraces) {
+		nextCtx: for (ActionContext ctx : consoleService.getActionContexts()) {
+			if (!(ctx instanceof DebuggerMissingModuleActionContext mmCtx)) {
+				continue;
+			}
+			TraceModule module = mmCtx.getModule();
+			if (!affectedTraces.contains(module.getTrace())) {
+				continue;
+			}
+			if (isMapped(module.getRange())) {
+				consoleService.removeFromLog(mmCtx);
+				continue;
+			}
+			for (TraceSection section : module.getSections()) {
+				if (isMapped(section.getRange())) {
+					consoleService.removeFromLog(mmCtx);
+					continue nextCtx;
+				}
+			}
+		}
 	}
 
 	public void setTrackingSpec(LocationTrackingSpec spec) {
