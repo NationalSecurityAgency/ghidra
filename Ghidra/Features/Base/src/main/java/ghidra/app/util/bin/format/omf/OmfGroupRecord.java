@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,21 +28,21 @@ public class OmfGroupRecord extends OmfRecord {
 	private String groupName;
 	private long vma = -1;		// Assigned (by linker) starting address of the whole group
 	private GroupSubrecord[] group;
-	
+
 	public OmfGroupRecord(BinaryReader reader) throws IOException {
 		readRecordHeader(reader);
 		long max = reader.getPointerIndex() + getRecordLength() - 1;
 		groupNameIndex = OmfRecord.readIndex(reader);
 		ArrayList<GroupSubrecord> grouplist = new ArrayList<GroupSubrecord>();
-		while(reader.getPointerIndex() < max) {
+		while (reader.getPointerIndex() < max) {
 			GroupSubrecord subrec = GroupSubrecord.read(reader);
 			grouplist.add(subrec);
 		}
 		readCheckSumByte(reader);
-		group = new GroupSubrecord[ grouplist.size() ];
+		group = new GroupSubrecord[grouplist.size()];
 		grouplist.toArray(group);
 	}
-	
+
 	public String getName() {
 		return groupName;
 	}
@@ -51,48 +50,50 @@ public class OmfGroupRecord extends OmfRecord {
 	public void setStartAddress(long val) {
 		vma = val;
 	}
-	
+
 	public long getStartAddress() {
 		return vma;
 	}
-	
+
 	/**
 	 * This is the segment selector needed for this object
-	 * @return
+	 * @return The segment selector
 	 */
 	public int getFrameDatum() {
 		return 0;				// TODO:  Need to fill in a real segment selector
 	}
-	
+
 	public int numSegments() {
 		return group.length;
 	}
-	
+
 	public byte getSegmentComponentType(int i) {
 		return group[i].componentType;
 	}
-	
+
 	public int getSegmentIndex(int i) {
 		return group[i].segmentIndex;
 	}
-	
+
 	public Address getAddress(Language language) {
 		AddressSpace addrSpace = language.getDefaultSpace();
-		return addrSpace.getAddress(vma);		
+		return addrSpace.getAddress(vma);
 	}
-	
+
 	public void resolveNames(ArrayList<String> nameList) throws OmfException {
-		if (groupNameIndex <= 0)
+		if (groupNameIndex <= 0) {
 			throw new OmfException("Cannot have unused group name");
-		if (groupNameIndex > nameList.size())
+		}
+		if (groupNameIndex > nameList.size()) {
 			throw new OmfException("Group name index out of bounds");
+		}
 		groupName = nameList.get(groupNameIndex - 1);
 	}
-	
+
 	public static class GroupSubrecord {
 		private byte componentType;
 		private int segmentIndex;
-		
+
 		public static GroupSubrecord read(BinaryReader reader) throws IOException {
 			GroupSubrecord subrec = new GroupSubrecord();
 			subrec.componentType = reader.readNextByte();

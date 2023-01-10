@@ -16,25 +16,19 @@
 package ghidra.app.util.bin.format.omf;
 
 import java.io.IOException;
-import java.util.ArrayList;
 
 import ghidra.app.util.bin.BinaryReader;
 
-public class OmfNamesRecord extends OmfRecord {
-	private ArrayList<String> name;
+public class OmfUnsupportedRecord extends OmfRecord {
 
-	public OmfNamesRecord(BinaryReader reader) throws IOException {
+	/**
+	 * Create a new {@link OmfUnsupportedRecord}
+	 *  
+	 * @param reader A {@link BinaryReader} positioned at the start of the record
+	 * @throws IOException If an IO-related error occurred
+	 */
+	public OmfUnsupportedRecord(BinaryReader reader) throws IOException {
 		readRecordHeader(reader);
-		long max = reader.getPointerIndex() + getRecordLength() - 1;
-		name = new ArrayList<String>();
-		while (reader.getPointerIndex() < max) {
-			String nm = OmfRecord.readString(reader);
-			name.add(nm);
-		}
-		readCheckSumByte(reader);
-	}
-
-	public void appendNames(ArrayList<String> namelist) {
-		namelist.addAll(name);
+		reader.setPointerIndex(reader.getPointerIndex() + getRecordLength());
 	}
 }
