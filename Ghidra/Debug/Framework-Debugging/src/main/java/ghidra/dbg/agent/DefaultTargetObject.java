@@ -198,7 +198,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 	@Override
 	public Map<String, E> getCachedElements() {
 		synchronized (model.lock) {
-			return Map.copyOf(elements);
+			return elements == null ? Map.of() : Map.copyOf(elements);
 		}
 	}
 
@@ -394,7 +394,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 	@Override
 	public Map<String, ?> getCachedAttributes() {
 		synchronized (model.lock) {
-			return Map.copyOf(attributes);
+			return attributes == null ? Map.of() : Map.copyOf(attributes);
 		}
 	}
 
@@ -406,7 +406,8 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 	@Override
 	public Object getCachedAttribute(String name) {
 		synchronized (model.lock) {
-			return attributes.get(name);
+			// Could get called during object's constructor
+			return attributes == null ? null : attributes.get(name);
 		}
 	}
 
