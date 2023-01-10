@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: NO
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,36 +16,19 @@
 package ghidra.app.util.bin.format.omf;
 
 import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
 
 public class OmfUnsupportedRecord extends OmfRecord {
-	private long offset;
-	private boolean logMessage;
 
-	/***
-	 * Skip an unsupported OMF record.
+	/**
+	 * Create a new {@link OmfUnsupportedRecord}
 	 *  
-	 * @param reader The byte stream with the unsupported record to skip
-	 * @throws IOException
+	 * @param reader A {@link BinaryReader} positioned at the start of the record
+	 * @throws IOException If an IO-related error occurred
 	 */
-	public OmfUnsupportedRecord(BinaryReader reader, boolean log) throws IOException {
+	public OmfUnsupportedRecord(BinaryReader reader) throws IOException {
 		readRecordHeader(reader);
-		offset = reader.getPointerIndex();
-		logMessage = log;
-
 		reader.setPointerIndex(reader.getPointerIndex() + getRecordLength());
 	}
-
-	public boolean doLogMessage() {
-		return logMessage;
-	}
-
-	/***
-	 * Get a message suitable for logging about this record
-	 * @return String Message text about record
-	 */
-	public String getMessage() {
-		return "Unsupported OMF record of type " + Long.toHexString((getRecordType() & 0xff)) + " of length " + getRecordLength() + " at " + offset;
-	}
-
 }

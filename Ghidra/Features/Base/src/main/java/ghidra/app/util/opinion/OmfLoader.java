@@ -38,7 +38,6 @@ import ghidra.util.DataConverter;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 public class OmfLoader extends AbstractProgramWrapperLoader {
 	public final static String OMF_NAME = "Relocatable Object Module Format (OMF)";
@@ -284,7 +283,6 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 	 * @param reader is a reader for the underlying file
 	 * @param header is the OMF file header
 	 * @param program is the Program
-	 * @param mbu is the block creation utility
 	 * @param monitor is checked for cancellation
 	 * @param log receives error messages
 	 * @throws AddressOverflowException if the underlying data stream causes an address to wrap

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,46 +22,46 @@ public class OmfSymbol {
 	private int typeIndex;
 	private int dataType;		// 0=unused
 	private int byteLength;		// 0=unused
-	private int segmentRef=0;		// Symbol is really reference to extra segment
+	private int segmentRef = 0;	// Symbol is really reference to extra segment
 	private long offset;
 	private Address address;
-	
-	public OmfSymbol(String name,int type,long off,int dT,int bL) {
+
+	public OmfSymbol(String name, int type, long off, int dT, int bL) {
 		symbolName = name;
 		typeIndex = type;
 		offset = off;
 		dataType = dT;
 		byteLength = bL;
 	}
-	
+
 	public String getName() {
 		return symbolName;
 	}
-	
+
 	public int getDataType() {
 		return dataType;
 	}
-	
+
 	public long getOffset() {
 		return offset;
 	}
-	
+
 	public int getSegmentRef() {
 		return segmentRef;
 	}
-	
+
 	public void setSegmentRef(int val) {
 		segmentRef = val;
 	}
-	
+
 	public void setAddress(Address addr) {
 		address = addr;
 	}
-	
+
 	public Address getAddress() {
 		return address;
 	}
-	
+
 	public int getFrameDatum() {
 		return 0;					// This is currently unused
 	}

@@ -15,9 +15,8 @@
  */
 package ghidra.app.util.bin.format.omf;
 
-import java.util.ArrayList;
-
 import java.io.IOException;
+import java.util.ArrayList;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
@@ -27,8 +26,8 @@ import ghidra.util.task.TaskMonitor;
 public class OmfFileHeader extends OmfRecord {
 
 	private String objectName;		// Name of the object module
-	private String libModuleName=null;	// Name of the module (within a library)
-	private String translator=null;		// Usually the compiler/linker used to produce this object
+	private String libModuleName = null;	// Name of the module (within a library)
+	private String translator = null;		// Usually the compiler/linker used to produce this object
 	private boolean isLittleEndian;
 	private ArrayList<String> nameList = new ArrayList<String>();	// Indexable List of segment, group, ... names
 	private ArrayList<OmfSegmentHeader> segments = new ArrayList<OmfSegmentHeader>();
@@ -132,11 +131,11 @@ public class OmfFileHeader extends OmfRecord {
 	 */
 	public void sortSegmentDataBlocks() {
 		if (extraSeg != null) {
-			for(int i=0;i<extraSeg.size();++i) {
+			for (int i = 0; i < extraSeg.size(); ++i) {
 				segments.add(extraSeg.get(i));
 			}
 		}
-		for(int i=0;i<segments.size();++i) {
+		for (int i = 0; i < segments.size(); ++i) {
 			segments.get(i).sortData();
 		}
 	}
@@ -150,16 +149,16 @@ public class OmfFileHeader extends OmfRecord {
 		int index = datablock.getSegmentIndex();
 		int subindex = -1;
 		OmfSegmentHeader segment;
-		if ((index & 0x4000)!=0) {
+		if ((index & 0x4000) != 0) {
 			subindex = index & 0x3fff;
 			index = 1;
 			segment = createOrFindBorlandSegment(subindex, 1);
 		}
 		else {
-			if ((index <=0)||(index>segments.size())) {
+			if ((index <= 0) || (index > segments.size())) {
 				throw new OmfException("Bad segment index");
 			}
-			segment = segments.get(index-1);
+			segment = segments.get(index - 1);
 		}
 		if (subindex != -1) {
 			segment.appendEnumeratedData(datablock);
@@ -180,18 +179,18 @@ public class OmfFileHeader extends OmfRecord {
 	public OmfSegmentHeader resolveSegment(int index) throws OmfException {
 		int subindex = -1;
 		OmfSegmentHeader res;
-		if ((index & 0x4000)!=0) {
+		if ((index & 0x4000) != 0) {
 			subindex = index & 0x3fff;
-			if ((subindex<=0)||(subindex>extraSeg.size())) {
+			if ((subindex <= 0) || (subindex > extraSeg.size())) {
 				throw new OmfException("Bad extra segment index");
 			}
 			res = extraSeg.get(subindex - 1);
 			return res;
 		}
-		if ((index <=0)||(index>segments.size())) {
+		if ((index <= 0) || (index > segments.size())) {
 			throw new OmfException("Bad segment index");
 		}
-		res = segments.get(index-1);
+		res = segments.get(index - 1);
 		return res;
 	}
 
@@ -202,11 +201,11 @@ public class OmfFileHeader extends OmfRecord {
 	 * @throws OmfException if any name indices are malformed
 	 */
 	public void resolveNames() throws OmfException {
-		for(int i=0;i<segments.size();++i) {
+		for (int i = 0; i < segments.size(); ++i) {
 			segments.get(i).resolveNames(nameList);
 		}
 		// extraSeg segments already have names
-		for(int i=0;i<groups.size();++i) {
+		for (int i = 0; i < groups.size(); ++i) {
 			groups.get(i).resolveNames(nameList);
 		}
 	}
@@ -220,17 +219,17 @@ public class OmfFileHeader extends OmfRecord {
 	 * @param datatype is the type of (new) segment
 	 * @return the corresponding OmfSegmentHeader
 	 */
-	private OmfSegmentHeader createOrFindBorlandSegment(int index,int datatype) {
+	private OmfSegmentHeader createOrFindBorlandSegment(int index, int datatype) {
 		if (extraSeg == null) {
 			extraSeg = new ArrayList<OmfSegmentHeader>();
 		}
-		while(extraSeg.size() < index) {
+		while (extraSeg.size() < index) {
 			extraSeg.add(null);
 		}
-		OmfSegmentHeader segment = extraSeg.get(index-1);
+		OmfSegmentHeader segment = extraSeg.get(index - 1);
 		if (segment == null) {
-			segment = new OmfSegmentHeader(index,datatype); 
-			extraSeg.set(index-1,segment);
+			segment = new OmfSegmentHeader(index, datatype);
+			extraSeg.set(index - 1, segment);
 		}
 		return segment;
 	}
@@ -239,9 +238,9 @@ public class OmfFileHeader extends OmfRecord {
 		OmfSymbol[] coms = comdef.getSymbols();
 		for (OmfSymbol sym : coms) {
 			int dt = sym.getDataType();
-			if (dt >0 && dt < 0x60) {		// A special borland segment symbol
-				int count = (extraSeg==null) ? 1 : extraSeg.size()+1;
-				createOrFindBorlandSegment(count,dt);
+			if (dt > 0 && dt < 0x60) {		// A special borland segment symbol
+				int count = (extraSeg == null) ? 1 : extraSeg.size() + 1;
+				createOrFindBorlandSegment(count, dt);
 				sym.setSegmentRef(count);
 
 			}
@@ -257,53 +256,24 @@ public class OmfFileHeader extends OmfRecord {
 	 * @throws IOException for problems reading program data
 	 * @throws OmfException for malformed records
 	 */
-	public static OmfFileHeader scan(BinaryReader reader,TaskMonitor monitor,boolean initialCommentsOnly) throws IOException, OmfException {
+	public static OmfFileHeader scan(BinaryReader reader, TaskMonitor monitor,
+			boolean initialCommentsOnly) throws IOException, OmfException {
 		OmfRecord record = OmfRecord.readRecord(reader);
 		if (!(record instanceof OmfFileHeader)) {
 			throw new OmfException("Object file does not start with proper header");
 		}
-		OmfFileHeader header = (OmfFileHeader)record;
-		while(!(record instanceof OmfModuleEnd)) {
-			if (monitor.isCancelled()) {
-				break;					// Return what we have
-			}
+		OmfFileHeader header = (OmfFileHeader) record;
+
+		while (true) {
 			record = OmfRecord.readRecord(reader);
-			if(record instanceof OmfCommentRecord coment) {
-				byte commentClass = coment.getCommentClass();
-				if (commentClass == OmfCommentRecord.COMMENT_CLASS_TRANSLATOR) {
-					header.translator = coment.getValue();
-				}
-				else if (commentClass == OmfCommentRecord.COMMENT_CLASS_LIBMOD) {
-					header.libModuleName = coment.getValue();
-				}
-			} else if(initialCommentsOnly) {
+
+			if (monitor.isCancelled()) {
 				break;
 			}
-		}
-		return header;
-	}
-
-	/**
-	 * Parse the entire object file
-	 * @param reader is the byte stream
-	 * @param monitor is checked for cancel button
-	 * @return the header record as root of object
-	 * @throws IOException for problems reading data
-	 * @throws OmfException for malformed records
-	 */
-	public static OmfFileHeader parse(BinaryReader reader,TaskMonitor monitor, MessageLog log) throws IOException, OmfException {
-		OmfRecord record = OmfRecord.readRecord(reader);
-		if (!(record instanceof OmfFileHeader)) {
-			throw new OmfException("Object file does not start with proper header");
-		}
-		OmfFileHeader header = (OmfFileHeader)record;
-		Object lastDataBlock = null;
-
-		while(!(record instanceof OmfModuleEnd)) {
-			if (monitor.isCancelled()) {
-				break;					// Return what we have
+			if (record instanceof OmfModuleEnd) {
+				break;
 			}
-			record = OmfRecord.readRecord(reader);
+
 			if (record instanceof OmfCommentRecord comment) {
 				byte commentClass = comment.getCommentClass();
 				if (commentClass == OmfCommentRecord.COMMENT_CLASS_TRANSLATOR) {
@@ -312,38 +282,96 @@ public class OmfFileHeader extends OmfRecord {
 				else if (commentClass == OmfCommentRecord.COMMENT_CLASS_LIBMOD) {
 					header.libModuleName = comment.getValue();
 				}
-			} else if(record instanceof OmfModuleEnd) {
-				// We are not currently examining the end module record
-				//				header.endModule = end;
-			} else if(record instanceof OmfComdefRecord comdef) {
+			}
+			else if (initialCommentsOnly) {
+				break;
+			}
+		}
+		return header;
+	}
+
+	/**
+	 * Parse the entire object file
+	 * 
+	 * @param reader is the byte stream
+	 * @param monitor is checked for cancel button
+	 * @param log the log
+	 * @return the header record as root of object
+	 * @throws IOException for problems reading data
+	 * @throws OmfException for malformed records
+	 */
+	public static OmfFileHeader parse(BinaryReader reader, TaskMonitor monitor, MessageLog log)
+			throws IOException, OmfException {
+		OmfRecord record = OmfRecord.readRecord(reader);
+		if (!(record instanceof OmfFileHeader)) {
+			throw new OmfException("Object file does not start with proper header");
+		}
+		OmfFileHeader header = (OmfFileHeader) record;
+		Object lastDataBlock = null;
+
+		while (true) {
+			record = OmfRecord.readRecord(reader);
+
+			if (monitor.isCancelled()) {
+				break;
+			}
+			if (record instanceof OmfModuleEnd) {
+				break;
+			}
+
+			if (record instanceof OmfCommentRecord comment) {
+				byte commentClass = comment.getCommentClass();
+				if (commentClass == OmfCommentRecord.COMMENT_CLASS_TRANSLATOR) {
+					header.translator = comment.getValue();
+				}
+				else if (commentClass == OmfCommentRecord.COMMENT_CLASS_LIBMOD) {
+					header.libModuleName = comment.getValue();
+				}
+			}
+			else if (record instanceof OmfComdefRecord comdef) {
 				header.evaluateComdef(comdef);
-				header.externsymbols.add((OmfExternalSymbol)record);
-			} else if(record instanceof OmfExternalSymbol external) {
+				header.externsymbols.add((OmfExternalSymbol) record);
+			}
+			else if (record instanceof OmfExternalSymbol external) {
 				header.externsymbols.add(external);
-			} else if(record instanceof OmfSymbolRecord symbol) {
+			}
+			else if (record instanceof OmfSymbolRecord symbol) {
 				header.symbols.add(symbol);
-			} else if(record instanceof OmfNamesRecord names) {
+			}
+			else if (record instanceof OmfNamesRecord names) {
 				names.appendNames(header.nameList); // Keep names, otherwise don't save record
-			} else if(record instanceof OmfSegmentHeader seghead) {
+			}
+			else if (record instanceof OmfSegmentHeader seghead) {
 				header.segments.add(seghead);
-			} else if(record instanceof OmfGroupRecord group) {
+			}
+			else if (record instanceof OmfGroupRecord group) {
 				header.groups.add(group);
-			} else if(record instanceof OmfFixupRecord fixuprec) {
+			}
+			else if (record instanceof OmfFixupRecord fixuprec) {
 				fixuprec.setDataBlock(lastDataBlock);
 				header.fixup.add(fixuprec);
-			} else if(record instanceof OmfEnumeratedData enumheader) {
+			}
+			else if (record instanceof OmfEnumeratedData enumheader) {
 				header.addEnumeratedBlock(enumheader);
 				lastDataBlock = enumheader;
-			} else if(record instanceof OmfIteratedData iterheader) {
-				if (iterheader.getSegmentIndex() <= 0 || iterheader.getSegmentIndex() > header.segments.size()) {
+			}
+			else if (record instanceof OmfIteratedData iterheader) {
+				if (iterheader.getSegmentIndex() <= 0 ||
+					iterheader.getSegmentIndex() > header.segments.size()) {
 					throw new OmfException("Bad segment index on LIDATA");
 				}
-				OmfSegmentHeader segheader2 = header.segments.get(iterheader.getSegmentIndex()-1);
+				OmfSegmentHeader segheader2 = header.segments.get(iterheader.getSegmentIndex() - 1);
 				segheader2.addIteratedData(iterheader);
 				lastDataBlock = iterheader;
-			} else if(record instanceof OmfUnsupportedRecord unsupported) {
-				if(unsupported.doLogMessage())
-					log.appendMsg(unsupported.getMessage());
+			}
+			else if (record instanceof OmfUnsupportedRecord) {
+				logRecord("Unsupported OMF record", record, log);
+			}
+			else if (record instanceof OmfObsoleteRecord) {
+				logRecord("Obsolete OMF record", record, log);
+			}
+			else if (record instanceof OmfUnknownRecord) {
+				logRecord("Unknown OMF record", record, log);
 			}
 		}
 		return header;
@@ -357,7 +385,8 @@ public class OmfFileHeader extends OmfRecord {
 	 * @param groups is the list of specific segments that are grouped together in memory
 	 * @throws OmfException for malformed index/alignment/combining fields
 	 */
-	public static void doLinking(long startAddress,ArrayList<OmfSegmentHeader> segments,ArrayList<OmfGroupRecord> groups) throws OmfException {
+	public static void doLinking(long startAddress, ArrayList<OmfSegmentHeader> segments,
+			ArrayList<OmfGroupRecord> groups) throws OmfException {
 		// Link anything in groups first
 		for (int i = 0; i < groups.size(); ++i) {
 			OmfGroupRecord group = groups.get(i);
@@ -367,14 +396,15 @@ public class OmfFileHeader extends OmfRecord {
 				try {
 					OmfSegmentHeader segment = segments.get(index - 1);
 					startAddress = segment.relocateSegment(startAddress, -1);
-				} catch (IndexOutOfBoundsException ex) {
+				}
+				catch (IndexOutOfBoundsException ex) {
 					throw new OmfException(ex.getMessage());
 				}
 			}
 		}
 
 		// Fill in any remaining segments
-		for(int i=0;i<segments.size();++i) {
+		for (int i = 0; i < segments.size(); ++i) {
 			OmfSegmentHeader segment = segments.get(i);
 			if (segment.getStartAddress() != -1) {
 				continue;		// Address already assigned
@@ -382,7 +412,7 @@ public class OmfFileHeader extends OmfRecord {
 
 			startAddress = segment.relocateSegment(startAddress, -1);
 			// Look for any segments with same name,class which should be officially "combined" with this segment
-			for(int j=i+1;j<segments.size();++j) {
+			for (int j = i + 1; j < segments.size(); ++j) {
 				OmfSegmentHeader combineSeg = segments.get(j);
 				if (combineSeg.getStartAddress() != -1) {
 					continue;
@@ -397,17 +427,17 @@ public class OmfFileHeader extends OmfRecord {
 				if (C == 0) {
 					continue;			// Private segment
 				}
-				if (C==2 || C==4 || C==7) {
+				if (C == 2 || C == 4 || C == 7) {
 					startAddress = combineSeg.relocateSegment(startAddress, -1);
 				}
-				else if (C==5) {
+				else if (C == 5) {
 					startAddress = combineSeg.relocateSegment(startAddress, 1);
 				}
 				else {
 					throw new OmfException("Combine type not supported");
 				}
 			}
-		}		
+		}
 	}
 
 	/**
@@ -435,6 +465,10 @@ public class OmfFileHeader extends OmfRecord {
 	 * @return the new reader
 	 */
 	public static BinaryReader createReader(ByteProvider provider) {
-		return new BinaryReader(provider,true/* Always little endian */);
+		return new BinaryReader(provider, true/* Always little endian */);
+	}
+
+	private static void logRecord(String description, OmfRecord record, MessageLog log) {
+		log.appendMsg(description + " (" + record + ")");
 	}
 }
