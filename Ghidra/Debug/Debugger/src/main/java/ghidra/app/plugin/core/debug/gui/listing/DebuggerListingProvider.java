@@ -915,6 +915,9 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	}
 
 	protected void cleanMissingModuleMessages(Set<Trace> affectedTraces) {
+		if (consoleService == null) {
+			return;
+		}
 		nextCtx: for (ActionContext ctx : consoleService.getActionContexts()) {
 			if (!(ctx instanceof DebuggerMissingModuleActionContext mmCtx)) {
 				continue;
