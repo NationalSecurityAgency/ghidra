@@ -32,7 +32,7 @@ public class GTableHeaderRenderer extends DefaultTableCellRenderer {
 
 	private static final Color SORT_NUMBER_FG_COLOR = new GColor("color.fg");
 
-	private static final int PADDING_FOR_COLUMN_NUMBER = 10;
+	private static final int PADDING_FOR_COLUMN_NUMBER = 8;
 	private static final Icon UP_ICON =
 		ResourceManager.getScaledIcon(Icons.SORT_ASCENDING_ICON, 14, 14);
 	private static final Icon DOWN_ICON =
@@ -52,8 +52,8 @@ public class GTableHeaderRenderer extends DefaultTableCellRenderer {
 	private TableCellRenderer delegate;
 
 	@Override
-	public Component getTableCellRendererComponent(JTable table, Object value,
-			boolean isSelected, boolean hasFocus, int row, int column) {
+	public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+			boolean hasFocus, int row, int column) {
 
 		if (table == null) {
 			return this; // not sure when this can happen, but Java class protect against this case
@@ -95,6 +95,9 @@ public class GTableHeaderRenderer extends DefaultTableCellRenderer {
 		String clippedText = checkForClipping(label, text);
 		if (!text.equals(clippedText)) {
 			label.setText(clippedText);
+
+			// set the tooltips on us, the wrapper renderer, since Java will ask us for the tooltip
+			setToolTipText(text);
 		}
 
 		label.paint(g);
@@ -106,30 +109,34 @@ public class GTableHeaderRenderer extends DefaultTableCellRenderer {
 	private String checkForClipping(JLabel label, String text) {
 
 		Point helpPoint = getHelpIconLocation();
-		int padding = 10;
-		int iconStartX = helpPoint.x - primaryIcon.getIconWidth() - padding;
+		int padding = 5;
 
-		FontMetrics metrics = label.getFontMetrics(label.getFont());
-		int horizontalAlignment = label.getHorizontalAlignment();
-		Rectangle bounds = label.getBounds();
-		int availableWidth = iconStartX + primaryIcon.getIconWidth();
-		if (horizontalAlignment == CENTER) {
-			availableWidth = iconStartX - padding;
+		int iconWidth = primaryIcon.getIconWidth();
+		if (iconWidth == 0) {
+			// no icon; no padding needed
+			padding = 0;
 		}
 
-		String clippedText = SwingUtilities.layoutCompoundLabel(
-			label,
-			metrics,
-			text,
-			primaryIcon,
-			label.getVerticalAlignment(),
-			label.getHorizontalAlignment(),
-			label.getVerticalTextPosition(),
-			label.getHorizontalTextPosition(),
-			new Rectangle(0, 0, availableWidth, bounds.height),
-			new Rectangle(iconStartX, 0, primaryIcon.getIconWidth(), bounds.height),
-			new Rectangle(0, 0, iconStartX, bounds.height),
+		int iconStartX = helpPoint.x - iconWidth - padding;
+
+		FontMetrics metrics = label.getFontMetrics(label.getFont());
+		Rectangle bounds = label.getBounds();
+
+		// the icon x is calculated from the right; some padding so the text does not hit the icon
+		int availableTextWidth = iconStartX - padding;
+
+		//@formatter:off
+		Rectangle viewBounds = new Rectangle(0, 0, availableTextWidth, bounds.height);
+		Rectangle iconResult = new Rectangle();
+		Rectangle textResult = new Rectangle();
+		String clippedText = SwingUtilities.layoutCompoundLabel(label, metrics, text, primaryIcon,
+			label.getVerticalAlignment(), label.getHorizontalAlignment(),
+			label.getVerticalTextPosition(), label.getHorizontalTextPosition(),
+			viewBounds,
+			iconResult,
+			textResult,
 			label.getIconTextGap());
+		//@formatter:on
 		return clippedText;
 	}
 

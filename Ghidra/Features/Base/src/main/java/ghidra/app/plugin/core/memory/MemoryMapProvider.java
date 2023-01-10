@@ -149,7 +149,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 			new GTableTextCellEditor(new MaxLengthField(MAX_SIZE)));
 
 		memPane = new JScrollPane(memTable);
-		memTable.setPreferredScrollableViewportSize(new Dimension(570, 105));
+		memTable.setPreferredScrollableViewportSize(new Dimension(700, 105));
 
 		memTable.addMouseListener(new MouseHandler());
 
@@ -326,7 +326,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 	/**
 	 * Enable/disable the expand up/down actions according to the selected
 	 * block.
-	 * 
+	 *
 	 * @param numSelected number of blocks selected
 	 */
 	private void enableExpandActions(int numSelected) {
@@ -434,15 +434,15 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 
 		column = memTable.getColumn(MemoryMapModel.VOLATILE_COL);
 		if (column != null) {
-			column.setMaxWidth(57);
-			column.setMinWidth(57);
+			column.setMaxWidth(65);
+			column.setMinWidth(65);
 			column.setResizable(false);
 		}
 
 		column = memTable.getColumn(MemoryMapModel.OVERLAY_COL);
 		if (column != null) {
-			column.setMaxWidth(55);
-			column.setMinWidth(55);
+			column.setMaxWidth(65);
+			column.setMinWidth(65);
 			column.setResizable(false);
 		}
 
@@ -454,8 +454,8 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 
 		column = memTable.getColumn(MemoryMapModel.INIT_COL);
 		if (column != null) {
-			column.setMaxWidth(68);
-			column.setMinWidth(68);
+			column.setMaxWidth(80);
+			column.setMinWidth(80);
 			column.setResizable(false);
 		}
 	}
@@ -545,7 +545,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 	 * Pop up a dialog to expand the block either up or down; "up" means make a
 	 * block have a lesser starting address; "down" means to make the block have
 	 * a greater ending address.
-	 * 
+	 *
 	 * @param dialogType either ExpandBlockDialog.EXPAND_UP or
 	 *            ExpandBlockDialog.EXPAND_DOWN.
 	 */
@@ -602,7 +602,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 
 	/**
 	 * Show the dialog to expand a memory block.
-	 * 
+	 *
 	 * @param dialogType expand up or down
 	 * @param block block to expand
 	 */
