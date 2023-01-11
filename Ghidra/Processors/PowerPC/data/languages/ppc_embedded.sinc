@@ -49,13 +49,12 @@
 	dataCacheBlockClearToZero(ea);
 }
 
-@ifndef IS_ISA
-# this is equilent to "mbar 0"
-#eieio 			0x7c 00 06 ac
-:eieio			is OP=31 & BITS_21_25=0 & BITS_16_20=0 & BITS_11_15=0 & XOP_1_10=854 & BIT_0=0
-{
-	enforceInOrderExecutionIO();
-}
+@ifdef IS_ISA
+# binutils: 476.d 474:  7c 00 06 ac     mbar
+# binutils: 476.d 47c:  7c 20 06 ac     mbar    1
+# "mbar",	X(31,854),	X_MASK, BOOKE|PPCA2|PPC476, PPCNONE,	{MO}
+define pcodeop mbarOp;
+:mbar MO is OP=31 & XOP_1_10=854 & MO  { mbarOp(); }
 @endif
 
 #icbi r0,r0		0x7c 00 07 ac
