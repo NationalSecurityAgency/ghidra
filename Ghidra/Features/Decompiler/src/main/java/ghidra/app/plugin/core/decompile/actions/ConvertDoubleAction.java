@@ -15,68 +15,59 @@
  */
 package ghidra.app.plugin.core.decompile.actions;
 
+import java.math.BigDecimal;
+
 import docking.action.MenuData;
 import ghidra.app.plugin.core.decompile.DecompilePlugin;
 import ghidra.app.util.HelpTopics;
+import ghidra.pcode.floatformat.*;
+import ghidra.program.model.data.DataOrganization;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.EquateSymbol;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.util.HelpLocation;
-import ghidra.util.StringUtilities;
 
-/**
- * Convert a selected constant in the decompiler to a binary representation.
- */
-public class ConvertBinaryAction extends ConvertConstantAction {
+public class ConvertDoubleAction extends ConvertConstantAction {
 
-	public ConvertBinaryAction(DecompilePlugin plugin) {
-		super(plugin, "Convert To Binary", EquateSymbol.FORMAT_BIN);
+	public ConvertDoubleAction(DecompilePlugin plugin) {
+		super(plugin, "Convert To Double", EquateSymbol.FORMAT_DOUBLE);
 		setHelpLocation(new HelpLocation(HelpTopics.DECOMPILER, "ActionConvert"));
-		setPopupMenuData(new MenuData(new String[] { "Binary" }, "Decompile"));
+		setPopupMenuData(new MenuData(new String[] { "Double" }, "Decompile"));
 	}
 
 	@Override
 	public String getMenuPrefix() {
-		return "Binary: ";
+		return "Double: ";
 	}
 
 	@Override
 	public String getMenuDisplay(long value, int size, boolean isSigned, Program program) {
-		Scalar scalar = new Scalar(size * 8, value);
-		long v;
-		String prefix = "0b";
-		if (isSigned) {
-			v = scalar.getSignedValue();
-			if (v < 0) {
-				v = -v;
-				prefix = "-0b";
-			}
-		}
-		else {
-			v = scalar.getUnsignedValue();
-
-		}
-		String bitString = Long.toBinaryString(v);
-		int bitlen = bitString.length();
-		if (bitlen <= 8) {
-			bitlen = 8;
-		}
-		else if (bitlen <= 16) {
-			bitlen = 16;
-		}
-		else if (bitlen <= 32) {
-			bitlen = 32;
-		}
-		else {
-			bitlen = 64;
-		}
-		return prefix + StringUtilities.pad(bitString, '0', bitlen);
+		return getText(value, size, isSigned, program);
 	}
 
 	@Override
 	public String getEquateName(long value, int size, boolean isSigned, Program program) {
-		String valueStr = Long.toBinaryString(value);
-		valueStr = StringUtilities.pad(valueStr, '0', size * 8);
-		return valueStr + "b";
+		return getText(value, size, isSigned, program);
+	}
+
+	private String getText(long value, int size, boolean isSigned, Program program) {
+		DataOrganization organization = program.getDataTypeManager().getDataOrganization();
+		int doubleSize = organization.getDoubleSize();
+		Scalar scalar = new Scalar(size * 8, value);
+		BigDecimal bd = value(doubleSize, scalar);
+		if (bd != null) {
+			return bd.toString();
+		}
+		return null;
+	}
+
+	private static BigDecimal value(int size, Scalar s) {
+		try {
+			FloatFormat format = FloatFormatFactory.getFloatFormat(size);
+			return format.round(format.getHostFloat(s.getBigInteger()));
+		}
+		catch (UnsupportedFloatFormatException e) {
+			return null;
+		}
 	}
 }

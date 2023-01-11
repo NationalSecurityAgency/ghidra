@@ -98,7 +98,7 @@ public class ConvertCharAction extends ConvertConstantAction {
 	}
 
 	@Override
-	public String getMenuDisplay(long value, int size, boolean isSigned) {
+	public String getMenuDisplay(long value, int size, boolean isSigned, Program program) {
 		StringBuilder buffer = new StringBuilder();
 		if (size > 1) {
 			buffer.append('L');
