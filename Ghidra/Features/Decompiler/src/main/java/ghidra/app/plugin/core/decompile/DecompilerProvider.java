@@ -388,7 +388,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 	/**
 	 * Sets the current program and adds/removes itself as a domainObjectListener
-	 * 
+	 *
 	 * @param newProgram the new program or null to clear out the current program.
 	 */
 	void doSetProgram(Program newProgram) {
@@ -429,7 +429,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	 * sets the current location for this provider. If the provider is not visible, it does not pass
 	 * it on to the controller. When the component is later shown, the current location will then be
 	 * passed to the controller.
-	 * 
+	 *
 	 * @param loc the location to compile and set the cursor.
 	 * @param viewerPosition if non-null the position at which to scroll the view.
 	 */
@@ -914,6 +914,12 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		ConvertDecAction convertDecAction = new ConvertDecAction(plugin);
 		setGroupInfo(convertDecAction, convertGroup, subGroupPosition++);
 
+		ConvertFloatAction convertFloatAction = new ConvertFloatAction(plugin);
+		setGroupInfo(convertFloatAction, convertGroup, subGroupPosition++);
+
+		ConvertDoubleAction convertDoubleAction = new ConvertDoubleAction(plugin);
+		setGroupInfo(convertDoubleAction, convertGroup, subGroupPosition++);
+
 		ConvertHexAction convertHexAction = new ConvertHexAction(plugin);
 		setGroupInfo(convertHexAction, convertGroup, subGroupPosition++);
 
@@ -1000,6 +1006,8 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		addLocalAction(removeAllSecondadryHighlightsAction);
 		addLocalAction(convertBinaryAction);
 		addLocalAction(convertDecAction);
+		addLocalAction(convertFloatAction);
+		addLocalAction(convertDoubleAction);
 		addLocalAction(convertHexAction);
 		addLocalAction(convertOctAction);
 		addLocalAction(convertCharAction);
