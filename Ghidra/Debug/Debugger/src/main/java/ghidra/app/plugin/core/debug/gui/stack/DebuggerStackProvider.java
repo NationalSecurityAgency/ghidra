@@ -16,30 +16,48 @@
 package ghidra.app.plugin.core.debug.gui.stack;
 
 import java.awt.BorderLayout;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.Objects;
 
-import javax.swing.JComponent;
-import javax.swing.JPanel;
+import javax.swing.*;
 
 import org.apache.commons.lang3.ArrayUtils;
 
 import docking.ActionContext;
 import docking.WindowPosition;
+import docking.action.DockingAction;
+import docking.action.builder.ActionBuilder;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
+import ghidra.app.plugin.core.debug.stack.UnwindStackCommand;
 import ghidra.app.services.DebuggerStaticMappingService;
-import ghidra.framework.plugintool.AutoService;
-import ghidra.framework.plugintool.ComponentProviderAdapter;
+import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.util.HelpLocation;
 
 public class DebuggerStackProvider extends ComponentProviderAdapter {
+
+	public interface UnwindStackAction {
+		String NAME = "Unwind from frame 0";
+		String DESCRIPTION = "Unwind the stack, placing frames in the dynamic listing";
+		String HELP_ANCHOR = "unwind_stack";
+		KeyStroke KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_U, 0);
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName).description(DESCRIPTION)
+					.menuPath(DebuggerPluginPackage.NAME, "Analysis", NAME)
+					.keyBinding(KEY_STROKE)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
 
 	protected static boolean sameCoordinates(DebuggerCoordinates a, DebuggerCoordinates b) {
 		if (!Objects.equals(a.getTrace(), b.getTrace())) {
@@ -71,6 +89,8 @@ public class DebuggerStackProvider extends ComponentProviderAdapter {
 	/*testing*/ DebuggerStackPanel panel;
 	/*testing*/ DebuggerLegacyStackPanel legacyPanel;
 
+	DockingAction actionUnwindStack;
+
 	public DebuggerStackProvider(DebuggerStackPlugin plugin) {
 		super(plugin.getTool(), DebuggerResources.TITLE_PROVIDER_STACK, plugin.getName());
 		this.plugin = plugin;
@@ -96,7 +116,14 @@ public class DebuggerStackProvider extends ComponentProviderAdapter {
 	}
 
 	protected void createActions() {
-		// TODO: Anything?
+		actionUnwindStack = UnwindStackAction.builder(plugin)
+				.enabledWhen(ctx -> current.getTrace() != null)
+				.onAction(this::activatedUnwindStack)
+				.buildAndInstall(tool);
+	}
+
+	private void activatedUnwindStack(ActionContext ignored) {
+		new UnwindStackCommand(tool, current).run(tool, current.getTrace());
 	}
 
 	@Override

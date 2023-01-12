@@ -215,12 +215,12 @@ public class PcodeExecutor<T> {
 			badOp(op);
 			return;
 		}
-		if (b instanceof UnaryOpBehavior) {
-			executeUnaryOp(op, (UnaryOpBehavior) b);
+		if (b instanceof UnaryOpBehavior unOp) {
+			executeUnaryOp(op, unOp);
 			return;
 		}
-		if (b instanceof BinaryOpBehavior) {
-			executeBinaryOp(op, (BinaryOpBehavior) b);
+		if (b instanceof BinaryOpBehavior binOp) {
+			executeBinaryOp(op, binOp);
 			return;
 		}
 		switch (op.getOpcode()) {
@@ -240,7 +240,7 @@ public class PcodeExecutor<T> {
 				executeIndirectBranch(op, frame);
 				return;
 			case PcodeOp.CALL:
-				executeCall(op, frame);
+				executeCall(op, frame, library);
 				return;
 			case PcodeOp.CALLIND:
 				executeIndirectCall(op, frame);
@@ -349,12 +349,12 @@ public class PcodeExecutor<T> {
 		Varnode inOffset = op.getInput(1);
 		T offset = state.getVar(inOffset, reason);
 		checkLoad(space, offset);
-		Varnode outvar = op.getOutput();
+		Varnode outVar = op.getOutput();
 
-		T out = state.getVar(space, offset, outvar.getSize(), true, reason);
-		T mod = arithmetic.modAfterLoad(outvar.getSize(), inOffset.getSize(), offset,
-			outvar.getSize(), out);
-		state.setVar(outvar, mod);
+		T out = state.getVar(space, offset, outVar.getSize(), true, reason);
+		T mod = arithmetic.modAfterLoad(outVar.getSize(), inOffset.getSize(), offset,
+			outVar.getSize(), out);
+		state.setVar(outVar, mod);
 	}
 
 	/**
@@ -506,7 +506,7 @@ public class PcodeExecutor<T> {
 	 * @param op the op
 	 * @param frame the frame
 	 */
-	public void executeCall(PcodeOp op, PcodeFrame frame) {
+	public void executeCall(PcodeOp op, PcodeFrame frame, PcodeUseropLibrary<T> library) {
 		Address target = op.getInput(0).getAddress();
 		branchToOffset(arithmetic.fromConst(target.getOffset(), pointerSize), frame);
 		branchToAddress(target);

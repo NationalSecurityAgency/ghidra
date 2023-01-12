@@ -31,4 +31,14 @@ public class RequireHasKnownTraceCachedWriteBytesPcodeExecutorState
 	public RequireHasKnownTraceCachedWriteBytesPcodeExecutorState(PcodeTraceDataAccess data) {
 		super(new RequireHasKnownTraceCachedWriteBytesPcodeExecutorStatePiece(data));
 	}
+
+	protected RequireHasKnownTraceCachedWriteBytesPcodeExecutorState(
+			TracePcodeExecutorStatePiece<byte[], byte[]> piece) {
+		super(piece);
+	}
+
+	@Override
+	public RequireHasKnownTraceCachedWriteBytesPcodeExecutorState fork() {
+		return new RequireHasKnownTraceCachedWriteBytesPcodeExecutorState(piece.fork());
+	}
 }

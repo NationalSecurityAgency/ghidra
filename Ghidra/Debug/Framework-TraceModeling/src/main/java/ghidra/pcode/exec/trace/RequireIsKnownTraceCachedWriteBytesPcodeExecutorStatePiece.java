@@ -16,6 +16,7 @@
 package ghidra.pcode.exec.trace;
 
 import ghidra.pcode.exec.AccessPcodeExecutionException;
+import ghidra.pcode.exec.PcodeExecutorStatePiece;
 import ghidra.pcode.exec.trace.data.PcodeTraceDataAccess;
 import ghidra.program.model.address.*;
 import ghidra.trace.model.memory.TraceMemorySpace;
@@ -32,6 +33,17 @@ public class RequireIsKnownTraceCachedWriteBytesPcodeExecutorStatePiece
 
 	public RequireIsKnownTraceCachedWriteBytesPcodeExecutorStatePiece(PcodeTraceDataAccess data) {
 		super(data);
+	}
+
+	protected RequireIsKnownTraceCachedWriteBytesPcodeExecutorStatePiece(PcodeTraceDataAccess data,
+			AbstractSpaceMap<CachedSpace> spaceMap) {
+		super(data, spaceMap);
+	}
+
+	@Override
+	public RequireIsKnownTraceCachedWriteBytesPcodeExecutorStatePiece fork() {
+		return new RequireIsKnownTraceCachedWriteBytesPcodeExecutorStatePiece(data,
+			spaceMap.fork());
 	}
 
 	/**

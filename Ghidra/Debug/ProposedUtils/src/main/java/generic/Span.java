@@ -912,7 +912,7 @@ public interface Span<N, S extends Span<N, S>> extends Comparable<S> {
 		 * @param max the upper endpoint of the span
 		 * @return the sub map
 		 */
-		protected SortedMap<N, Entry<S, V>> subMap(N min, N max) {
+		protected NavigableMap<N, Entry<S, V>> subMap(N min, N max) {
 			Entry<N, Entry<S, V>> adjEnt = spanTree.floorEntry(min);
 			if (adjEnt != null && adjEnt.getValue().getKey().contains(min)) {
 				min = adjEnt.getKey();

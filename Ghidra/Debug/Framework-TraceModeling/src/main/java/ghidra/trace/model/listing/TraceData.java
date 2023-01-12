@@ -30,6 +30,9 @@ public interface TraceData extends TraceCodeUnit, Data {
 	TraceData getComponentAt(int offset);
 
 	@Override
+	TraceData getComponentContaining(int offset);
+
+	@Override
 	TraceData getComponent(int[] componentPath);
 
 	@Override

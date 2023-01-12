@@ -39,6 +39,7 @@ import ghidra.app.plugin.core.debug.gui.action.LocationTrackingSpec;
 import ghidra.app.plugin.core.debug.gui.listing.MultiBlendedListingBackgroundColorModel;
 import ghidra.app.plugin.core.debug.gui.time.DebuggerTimeSelectionDialog;
 import ghidra.app.plugin.core.debug.utils.BackgroundUtils.PluginToolExecutorService;
+import ghidra.app.plugin.core.debug.utils.BackgroundUtils.PluginToolExecutorService.TaskOpt;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerListingService.LocationTrackingSpecChangeListener;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
@@ -58,12 +59,21 @@ import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.Msg;
 
-@PluginInfo(shortDescription = "Compare memory state between times in a trace", description = "Provides a side-by-side diff view between snapshots (points in time) in a " +
-	"trace. The comparison is limited to raw bytes.", category = PluginCategoryNames.DEBUGGER, packageName = DebuggerPluginPackage.NAME, status = PluginStatus.RELEASED, eventsConsumed = {
+@PluginInfo(
+	shortDescription = "Compare memory state between times in a trace",
+	description = "Provides a side-by-side diff view between snapshots (points in time) in a " +
+		"trace. The comparison is limited to raw bytes.",
+	category = PluginCategoryNames.DEBUGGER,
+	packageName = DebuggerPluginPackage.NAME,
+	status = PluginStatus.RELEASED,
+	eventsConsumed = {
 		TraceClosedPluginEvent.class,
-	}, eventsProduced = {}, servicesRequired = {
+	},
+	eventsProduced = {},
+	servicesRequired = {
 		DebuggerListingService.class,
-	}, servicesProvided = {})
+	},
+	servicesProvided = {})
 public class DebuggerTraceViewDiffPlugin extends AbstractDebuggerPlugin {
 	protected static final String MARKER_NAME = "Trace Diff";
 	protected static final String MARKER_DESCRIPTION = "Difference between snapshots in this trace";
@@ -223,7 +233,8 @@ public class DebuggerTraceViewDiffPlugin extends AbstractDebuggerPlugin {
 		DebuggerCoordinates current = traceManager.getCurrent();
 		DebuggerCoordinates alternate = traceManager.resolveTime(time);
 		PluginToolExecutorService toolExecutorService =
-			new PluginToolExecutorService(tool, "Computing diff", true, true, false, 500);
+			new PluginToolExecutorService(tool, "Computing diff", null, 500,
+				TaskOpt.HAS_PROGRESS, TaskOpt.CAN_CANCEL);
 		return traceManager.materialize(alternate).thenApplyAsync(snap -> {
 			clearMarkers();
 			TraceProgramView altView = alternate.getTrace().getFixedProgramView(snap);

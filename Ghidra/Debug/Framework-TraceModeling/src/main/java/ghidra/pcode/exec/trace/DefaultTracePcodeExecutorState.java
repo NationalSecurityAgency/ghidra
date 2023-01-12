@@ -45,6 +45,11 @@ public class DefaultTracePcodeExecutorState<T> extends DefaultPcodeExecutorState
 	}
 
 	@Override
+	public DefaultTracePcodeExecutorState<T> fork() {
+		return new DefaultTracePcodeExecutorState<>(piece.fork());
+	}
+
+	@Override
 	public void writeDown(PcodeTraceDataAccess into) {
 		piece.writeDown(into);
 	}

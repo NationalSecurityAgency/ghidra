@@ -16,11 +16,12 @@
 package ghidra.pcode.exec.trace;
 
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 import generic.ULongSpan;
 import generic.ULongSpan.ULongSpanSet;
-import ghidra.pcode.exec.AbstractBytesPcodeExecutorStatePiece;
-import ghidra.pcode.exec.BytesPcodeExecutorStateSpace;
+import ghidra.generic.util.datastruct.SemisparseByteArray;
+import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.trace.BytesTracePcodeExecutorStatePiece.CachedSpace;
 import ghidra.pcode.exec.trace.data.PcodeTraceDataAccess;
 import ghidra.program.model.address.*;
@@ -41,11 +42,23 @@ public class BytesTracePcodeExecutorStatePiece
 
 	protected static class CachedSpace
 			extends BytesPcodeExecutorStateSpace<PcodeTraceDataAccess> {
-		protected final AddressSet written = new AddressSet();
+		protected final AddressSet written;
 
 		public CachedSpace(Language language, AddressSpace space, PcodeTraceDataAccess backing) {
 			// Backing could be null, so we need language parameter
 			super(language, space, backing);
+			this.written = new AddressSet();
+		}
+
+		protected CachedSpace(Language language, AddressSpace space, PcodeTraceDataAccess backing,
+				SemisparseByteArray bytes, AddressSet written) {
+			super(language, space, backing, bytes);
+			this.written = written;
+		}
+
+		@Override
+		public CachedSpace fork() {
+			return new CachedSpace(language, space, backing, bytes.fork(), new AddressSet(written));
 		}
 
 		@Override
@@ -118,9 +131,20 @@ public class BytesTracePcodeExecutorStatePiece
 		this.data = data;
 	}
 
+	protected BytesTracePcodeExecutorStatePiece(PcodeTraceDataAccess data,
+			AbstractSpaceMap<CachedSpace> spaceMap) {
+		super(data.getLanguage(), spaceMap);
+		this.data = data;
+	}
+
 	@Override
 	public PcodeTraceDataAccess getData() {
 		return data;
+	}
+
+	@Override
+	public BytesTracePcodeExecutorStatePiece fork() {
+		return new BytesTracePcodeExecutorStatePiece(data, spaceMap.fork());
 	}
 
 	@Override
@@ -139,6 +163,14 @@ public class BytesTracePcodeExecutorStatePiece
 	 */
 	protected class TraceBackedSpaceMap
 			extends CacheingSpaceMap<PcodeTraceDataAccess, CachedSpace> {
+		public TraceBackedSpaceMap() {
+			super();
+		}
+
+		protected TraceBackedSpaceMap(Map<AddressSpace, CachedSpace> spaces) {
+			super(spaces);
+		}
+
 		@Override
 		protected PcodeTraceDataAccess getBacking(AddressSpace space) {
 			return data;
@@ -147,6 +179,16 @@ public class BytesTracePcodeExecutorStatePiece
 		@Override
 		protected CachedSpace newSpace(AddressSpace space, PcodeTraceDataAccess backing) {
 			return new CachedSpace(language, space, backing);
+		}
+
+		@Override
+		public TraceBackedSpaceMap fork() {
+			return new TraceBackedSpaceMap(fork(spaces));
+		}
+
+		@Override
+		public CachedSpace fork(CachedSpace s) {
+			return s.fork();
 		}
 	}
 

@@ -30,30 +30,30 @@ import ghidra.pcode.exec.trace.data.PcodeTraceDataAccess;
 public class PairedTracePcodeExecutorState<L, R> extends PairedPcodeExecutorState<L, R>
 		implements TracePcodeExecutorState<Pair<L, R>> {
 
-	private final TracePcodeExecutorStatePiece<L, L> left;
-	private final TracePcodeExecutorStatePiece<L, R> right;
+	private final PairedTracePcodeExecutorStatePiece<L, L, R> piece;
 
 	public PairedTracePcodeExecutorState(PairedTracePcodeExecutorStatePiece<L, L, R> piece) {
 		super(piece);
-		this.left = piece.getLeft();
-		this.right = piece.getRight();
+		this.piece = piece;
 	}
 
 	public PairedTracePcodeExecutorState(TracePcodeExecutorState<L> left,
 			TracePcodeExecutorStatePiece<L, R> right) {
-		super(left, right);
-		this.left = left;
-		this.right = right;
+		this(new PairedTracePcodeExecutorStatePiece<>(left, right));
 	}
 
 	@Override
 	public PcodeTraceDataAccess getData() {
-		return left.getData();
+		return piece.getData();
+	}
+
+	@Override
+	public PairedTracePcodeExecutorState<L, R> fork() {
+		return new PairedTracePcodeExecutorState<>(piece.fork());
 	}
 
 	@Override
 	public void writeDown(PcodeTraceDataAccess into) {
-		left.writeDown(into);
-		right.writeDown(into);
+		piece.writeDown(into);
 	}
 }

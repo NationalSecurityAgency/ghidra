@@ -32,7 +32,7 @@ import ghidra.util.Msg;
  * @param <B> if this space is a cache, the type of object backing this space
  */
 public class BytesPcodeExecutorStateSpace<B> {
-	protected final SemisparseByteArray bytes = new SemisparseByteArray();
+	protected final SemisparseByteArray bytes;
 	protected final Language language; // for logging diagnostics
 	protected final AddressSpace space;
 	protected final B backing;
@@ -48,6 +48,19 @@ public class BytesPcodeExecutorStateSpace<B> {
 		this.language = language;
 		this.space = space;
 		this.backing = backing;
+		this.bytes = new SemisparseByteArray();
+	}
+
+	protected BytesPcodeExecutorStateSpace(Language language, AddressSpace space, B backing,
+			SemisparseByteArray bytes) {
+		this.language = language;
+		this.space = space;
+		this.backing = backing;
+		this.bytes = bytes;
+	}
+
+	public BytesPcodeExecutorStateSpace<B> fork() {
+		return new BytesPcodeExecutorStateSpace<>(language, space, backing, bytes.fork());
 	}
 
 	/**
@@ -146,6 +159,21 @@ public class BytesPcodeExecutorStateSpace<B> {
 			warnUninit(stillUninit);
 		}
 		return readBytes(offset, size, reason);
+	}
+
+	public Map<Register, byte[]> getRegisterValues(List<Register> registers) {
+		Map<Register, byte[]> result = new HashMap<>();
+		for (Register reg : registers) {
+			long min = reg.getAddress().getOffset();
+			long max = min + reg.getNumBytes();
+			if (!bytes.isInitialized(min, max)) {
+				continue;
+			}
+			byte[] data = new byte[reg.getNumBytes()];
+			bytes.getData(min, data);
+			result.put(reg, data);
+		}
+		return result;
 	}
 
 	public void clear() {

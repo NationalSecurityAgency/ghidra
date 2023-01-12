@@ -30,4 +30,13 @@ public class BytesPcodeExecutorState extends DefaultPcodeExecutorState<byte[]> {
 		super(new BytesPcodeExecutorStatePiece(language),
 			BytesPcodeArithmetic.forLanguage(language));
 	}
+
+	protected BytesPcodeExecutorState(PcodeExecutorStatePiece<byte[], byte[]> piece) {
+		super(piece);
+	}
+
+	@Override
+	public BytesPcodeExecutorState fork() {
+		return new BytesPcodeExecutorState(piece.fork());
+	}
 }

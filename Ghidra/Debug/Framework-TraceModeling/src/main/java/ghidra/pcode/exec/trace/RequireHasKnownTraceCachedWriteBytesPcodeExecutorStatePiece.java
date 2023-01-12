@@ -40,6 +40,17 @@ public class RequireHasKnownTraceCachedWriteBytesPcodeExecutorStatePiece
 		super(data);
 	}
 
+	protected RequireHasKnownTraceCachedWriteBytesPcodeExecutorStatePiece(PcodeTraceDataAccess data,
+			AbstractSpaceMap<CachedSpace> spaceMap) {
+		super(data, spaceMap);
+	}
+
+	@Override
+	public RequireHasKnownTraceCachedWriteBytesPcodeExecutorStatePiece fork() {
+		return new RequireHasKnownTraceCachedWriteBytesPcodeExecutorStatePiece(data,
+			spaceMap.fork());
+	}
+
 	@Override
 	protected AddressSetView getKnown(PcodeTraceDataAccess backing) {
 		return backing.getKnownBefore();

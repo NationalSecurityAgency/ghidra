@@ -82,7 +82,22 @@ public class TaintTracePcodeExecutorStatePiece
 					PcodeTracePropertyAccess<String> backing) {
 				return new TaintTraceSpace(space, property);
 			}
+
+			@Override
+			public AbstractSpaceMap<TaintTraceSpace> fork() {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public TaintTraceSpace fork(TaintTraceSpace s) {
+				throw new UnsupportedOperationException();
+			}
 		};
+	}
+
+	@Override
+	public TaintTracePcodeExecutorStatePiece fork() {
+		throw new UnsupportedOperationException();
 	}
 
 	/**

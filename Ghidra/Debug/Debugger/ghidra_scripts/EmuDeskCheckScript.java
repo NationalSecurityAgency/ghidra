@@ -143,11 +143,11 @@ public class EmuDeskCheckScript extends GhidraScript implements FlatDebuggerAPI 
 			protected BytesPcodeThread createThread(String name) {
 				return new BytesPcodeThread(name, this) {
 					TraceThread thread = trace.getThreadManager().getLiveThreadByPath(snap, name);
-					PcodeExecutor<Pair<byte[], Address>> inspector =
+					PcodeExecutor<Pair<byte[], ValueLocation>> inspector =
 						new PcodeExecutor<>(language,
 							new PairedPcodeArithmetic<>(arithmetic,
-								AddressOfPcodeArithmetic.INSTANCE),
-							state.paired(new AddressOfPcodeExecutorStatePiece(language)),
+								LocationPcodeArithmetic.forEndian(language.isBigEndian())),
+							state.paired(new LocationPcodeExecutorStatePiece(language)),
 							Reason.INSPECT);
 
 					{
@@ -169,7 +169,7 @@ public class EmuDeskCheckScript extends GhidraScript implements FlatDebuggerAPI 
 					}
 
 					public CheckRow createRow() {
-						List<Pair<byte[], Address>> values = new ArrayList<>();
+						List<Pair<byte[], ValueLocation>> values = new ArrayList<>();
 						for (PcodeExpression exp : compiled) {
 							values.add(exp.evaluate(inspector));
 						}
@@ -254,17 +254,17 @@ public class EmuDeskCheckScript extends GhidraScript implements FlatDebuggerAPI 
 	class CheckRow implements AddressableRowObject {
 		private final TraceSchedule schedule;
 		private final Address pc;
-		private final List<Pair<byte[], Address>> values;
+		private final List<Pair<byte[], ValueLocation>> values;
 
 		public CheckRow(TraceSchedule schedule, Address pc,
-				List<Pair<byte[], Address>> values) {
+				List<Pair<byte[], ValueLocation>> values) {
 			this.schedule = schedule;
 			this.pc = pc;
 			this.values = values;
 		}
 
 		@Override
-		public Address getAddress() {
+		public Address getAddress() { // Instruction address
 			TraceProgramView view = getCurrentView();
 			if (view == null) {
 				return Address.NO_ADDRESS;
@@ -352,8 +352,8 @@ public class EmuDeskCheckScript extends GhidraScript implements FlatDebuggerAPI 
 
 		private Object getObjectValue(CheckRow r) {
 			try {
-				Pair<byte[], Address> p = r.values.get(index);
-				Address addr = p.getRight();
+				Pair<byte[], ValueLocation> p = r.values.get(index);
+				Address addr = p.getRight() == null ? null : p.getRight().getAddress();
 				byte[] bytes = p.getLeft();
 				return type.getValue(new ByteMemBufferImpl(addr, bytes, isBigEndian),
 					watch.settings, bytes.length);
@@ -365,8 +365,8 @@ public class EmuDeskCheckScript extends GhidraScript implements FlatDebuggerAPI 
 
 		private String getStringValue(CheckRow r) {
 			try {
-				Pair<byte[], Address> p = r.values.get(index);
-				Address addr = p.getRight();
+				Pair<byte[], ValueLocation> p = r.values.get(index);
+				Address addr = p.getRight() == null ? null : p.getRight().getAddress();
 				byte[] bytes = p.getLeft();
 				return type.getRepresentation(new ByteMemBufferImpl(addr, bytes, isBigEndian),
 					watch.settings, bytes.length);

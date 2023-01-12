@@ -22,7 +22,7 @@
  <td><link linkend="cpui_int_sub">INT_SUB</link></td>
  <td><link linkend="cpui_float_equal">FLOAT_EQUAL</link></td>
 </tr>
-<tr>
+<tr>P
  <td></td>
  <td><link linkend="cpui_store">STORE</link></td>
  <td><link linkend="cpui_int_carry">INT_CARRY</link></td>

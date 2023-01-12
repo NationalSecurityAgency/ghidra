@@ -38,6 +38,9 @@ public interface TracePcodeExecutorStatePiece<A, T> extends PcodeExecutorStatePi
 	 */
 	PcodeTraceDataAccess getData();
 
+	@Override
+	TracePcodeExecutorStatePiece<A, T> fork();
+
 	/**
 	 * Write the accumulated values (cache) into the given trace
 	 * 

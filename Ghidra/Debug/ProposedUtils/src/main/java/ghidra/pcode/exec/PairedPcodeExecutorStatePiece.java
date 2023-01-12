@@ -15,12 +15,15 @@
  */
 package ghidra.pcode.exec;
 
+import java.util.*;
+
 import org.apache.commons.lang3.tuple.Pair;
 
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Language;
+import ghidra.program.model.lang.Register;
 import ghidra.program.model.mem.MemBuffer;
 
 /**
@@ -86,6 +89,26 @@ public class PairedPcodeExecutorStatePiece<A, L, R>
 	@Override
 	public PcodeArithmetic<Pair<L, R>> getArithmetic() {
 		return arithmetic;
+	}
+
+	@Override
+	public Map<Register, Pair<L, R>> getRegisterValues() {
+		Map<Register, L> leftRVs = left.getRegisterValues();
+		Map<Register, R> rightRVs = right.getRegisterValues();
+		Set<Register> union = new HashSet<>();
+		union.addAll(leftRVs.keySet());
+		union.addAll(rightRVs.keySet());
+		Map<Register, Pair<L, R>> result = new HashMap<>();
+		for (Register k : union) {
+			result.put(k, Pair.of(leftRVs.get(k), rightRVs.get(k)));
+		}
+		return result;
+	}
+
+	@Override
+	public PairedPcodeExecutorStatePiece<A, L, R> fork() {
+		return new PairedPcodeExecutorStatePiece<>(left.fork(), right.fork(), addressArithmetic,
+			arithmetic);
 	}
 
 	@Override

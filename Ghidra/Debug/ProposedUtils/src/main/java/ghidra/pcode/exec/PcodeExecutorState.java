@@ -37,6 +37,9 @@ public interface PcodeExecutorState<T> extends PcodeExecutorStatePiece<T, T> {
 		return getArithmetic();
 	}
 
+	@Override
+	PcodeExecutorState<T> fork();
+
 	/**
 	 * Use this state as the control, paired with the given auxiliary state.
 	 * 

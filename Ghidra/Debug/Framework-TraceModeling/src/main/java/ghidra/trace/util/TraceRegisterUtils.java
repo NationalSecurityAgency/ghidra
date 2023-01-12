@@ -200,7 +200,7 @@ public enum TraceRegisterUtils {
 	public static void requireByteBound(Register register) {
 		if (!isByteBound(register)) {
 			throw new IllegalArgumentException(
-				"Cannot work with sub-byte registers. Consider a parent, instead.");
+				"Cannot work with sub-byte registers. Consider a parent instead.");
 		}
 	}
 }

@@ -15,7 +15,10 @@
  */
 package ghidra.pcode.exec.trace;
 
+import java.util.Map;
+
 import generic.ULongSpan.ULongSpanSet;
+import ghidra.generic.util.datastruct.SemisparseByteArray;
 import ghidra.pcode.exec.trace.data.PcodeTraceDataAccess;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
@@ -36,6 +39,17 @@ public abstract class AbstractCheckedTraceCachedWriteBytesPcodeExecutorStatePiec
 		public CheckedCachedSpace(Language language, AddressSpace space,
 				PcodeTraceDataAccess backing) {
 			super(language, space, backing);
+		}
+
+		protected CheckedCachedSpace(Language language, AddressSpace space,
+				PcodeTraceDataAccess backing, SemisparseByteArray bytes, AddressSet written) {
+			super(language, space, backing, bytes, written);
+		}
+
+		@Override
+		public CachedSpace fork() {
+			return new CheckedCachedSpace(language, space, backing, bytes.fork(),
+				new AddressSet(written));
 		}
 
 		@Override
@@ -59,14 +73,34 @@ public abstract class AbstractCheckedTraceCachedWriteBytesPcodeExecutorStatePiec
 		super(data);
 	}
 
+	protected AbstractCheckedTraceCachedWriteBytesPcodeExecutorStatePiece(PcodeTraceDataAccess data,
+			AbstractSpaceMap<CachedSpace> spaceMap) {
+		super(data, spaceMap);
+	}
+
+	protected class CheckedCachedSpaceMap extends TraceBackedSpaceMap {
+		public CheckedCachedSpaceMap() {
+			super();
+		}
+
+		protected CheckedCachedSpaceMap(Map<AddressSpace, CachedSpace> spaces) {
+			super(spaces);
+		}
+
+		@Override
+		protected CachedSpace newSpace(AddressSpace space, PcodeTraceDataAccess backing) {
+			return new CheckedCachedSpace(language, space, backing);
+		}
+
+		@Override
+		public CheckedCachedSpaceMap fork() {
+			return new CheckedCachedSpaceMap(fork(spaces));
+		}
+	}
+
 	@Override
 	protected AbstractSpaceMap<CachedSpace> newSpaceMap() {
-		return new TraceBackedSpaceMap() {
-			@Override
-			protected CachedSpace newSpace(AddressSpace space, PcodeTraceDataAccess backing) {
-				return new CheckedCachedSpace(language, space, backing);
-			}
-		};
+		return new CheckedCachedSpaceMap();
 	}
 
 	/**
