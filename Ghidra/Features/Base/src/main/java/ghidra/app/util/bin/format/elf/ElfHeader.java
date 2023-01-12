@@ -236,7 +236,7 @@ public class ElfHeader implements StructConverter, Writeable {
 	private int readExtendedProgramHeaderCount() throws IOException {
 		ElfSectionHeader s = getSection0();
 		if (s != null && s.getType() == ElfSectionHeaderConstants.SHT_NULL) {
-			int val = s.getInfo();
+			int val = s.sh_info;
 			return val < 0 ? 0 : val;
 		}
 		return 0;
@@ -252,7 +252,7 @@ public class ElfHeader implements StructConverter, Writeable {
 	private int readExtendedSectionHeaderCount() throws IOException {
 		ElfSectionHeader s = getSection0();
 		if (s != null && s.getType() == ElfSectionHeaderConstants.SHT_NULL) {
-			long val = s.getSize();
+			long val = s.sh_size;
 			return (val < 0 || val > Integer.MAX_VALUE) ? 0 : (int) val;
 		}
 		return 0;
@@ -268,7 +268,7 @@ public class ElfHeader implements StructConverter, Writeable {
 	private int readExtendedSectionHeaderStringTableIndex() throws IOException {
 		ElfSectionHeader s = getSection0();
 		if (s != null && s.getType() == ElfSectionHeaderConstants.SHT_NULL) {
-			int val = s.getLink();
+			int val = s.sh_link;
 			return val < 0 ? 0 : val;
 		}
 		return 0;

@@ -72,16 +72,16 @@ import ghidra.util.StringUtilities;
 
 public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoadable {
 
-	private int sh_name;
-	private int sh_type;
-	private long sh_flags;
-	private long sh_addr;
-	private long sh_offset;
-	private long sh_size;
-	private int sh_link;
-	private int sh_info;
-	private long sh_addralign;
-	private long sh_entsize;
+	int sh_name;
+	int sh_type;
+	long sh_flags;
+	long sh_addr;
+	long sh_offset;
+	long sh_size;
+	int sh_link;
+	int sh_info;
+	long sh_addralign;
+	long sh_entsize;
 
 	private BinaryReader reader;
 
