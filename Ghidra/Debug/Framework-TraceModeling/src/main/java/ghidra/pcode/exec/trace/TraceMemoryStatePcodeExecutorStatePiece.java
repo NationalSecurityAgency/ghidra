@@ -15,6 +15,8 @@
  */
 package ghidra.pcode.exec.trace;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import generic.ULongSpan;
@@ -23,6 +25,7 @@ import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.trace.data.PcodeTraceDataAccess;
 import ghidra.program.model.address.*;
+import ghidra.program.model.lang.Register;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.memory.TraceMemoryState;
@@ -42,7 +45,7 @@ import ghidra.trace.model.memory.TraceMemoryState;
 public class TraceMemoryStatePcodeExecutorStatePiece extends
 		AbstractLongOffsetPcodeExecutorStatePiece<byte[], TraceMemoryState, AddressSpace> {
 
-	protected final MutableULongSpanMap<TraceMemoryState> unique = new DefaultULongSpanMap<>();
+	protected final MutableULongSpanMap<TraceMemoryState> unique;
 	protected final PcodeTraceDataAccess data;
 
 	/**
@@ -55,6 +58,22 @@ public class TraceMemoryStatePcodeExecutorStatePiece extends
 			BytesPcodeArithmetic.forLanguage(data.getLanguage()),
 			TraceMemoryStatePcodeArithmetic.INSTANCE);
 		this.data = data;
+		this.unique = new DefaultULongSpanMap<>();
+	}
+
+	protected TraceMemoryStatePcodeExecutorStatePiece(PcodeTraceDataAccess data,
+			MutableULongSpanMap<TraceMemoryState> unique) {
+		super(data.getLanguage(), BytesPcodeArithmetic.forLanguage(data.getLanguage()),
+			TraceMemoryStatePcodeArithmetic.INSTANCE);
+		this.data = data;
+		this.unique = unique;
+	}
+
+	@Override
+	public TraceMemoryStatePcodeExecutorStatePiece fork() {
+		MutableULongSpanMap<TraceMemoryState> copyUnique = new DefaultULongSpanMap<>();
+		copyUnique.putAll(unique);
+		return new TraceMemoryStatePcodeExecutorStatePiece(data, copyUnique);
 	}
 
 	protected AddressRange range(AddressSpace space, long offset, int size) {
@@ -105,6 +124,17 @@ public class TraceMemoryStatePcodeExecutorStatePiece extends
 	@Override
 	protected TraceMemoryState getFromNullSpace(int size, Reason reason) {
 		return TraceMemoryState.UNKNOWN;
+	}
+
+	@Override
+	protected Map<Register, TraceMemoryState> getRegisterValuesFromSpace(AddressSpace s,
+			List<Register> registers) {
+		return Map.of();
+	}
+
+	@Override
+	public Map<Register, TraceMemoryState> getRegisterValues() {
+		return Map.of();
 	}
 
 	@Override

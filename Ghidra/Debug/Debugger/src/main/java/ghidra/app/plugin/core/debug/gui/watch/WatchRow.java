@@ -126,7 +126,7 @@ public class WatchRow {
 			prevValue = prevExec == null ? null : compiled.evaluate(prevExec);
 
 			TracePlatform platform = provider.current.getPlatform();
-			value = fullValue.bytes();
+			value = fullValue.bytes().bytes();
 			error = null;
 			state = fullValue.state();
 			// TODO: Optional column for guest address?

@@ -29,6 +29,7 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
 import ghidra.app.plugin.core.debug.event.TraceOpenedPluginEvent;
+import ghidra.app.plugin.core.debug.stack.*;
 import ghidra.app.plugin.core.debug.utils.*;
 import ghidra.app.services.*;
 import ghidra.app.services.ModuleMapProposal.ModuleMapEntry;

@@ -15,8 +15,7 @@
  */
 package ghidra.pcode.exec.trace;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import javax.help.UnsupportedOperationException;
 
@@ -24,6 +23,7 @@ import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.trace.data.PcodeTraceDataAccess;
 import ghidra.program.model.address.*;
+import ghidra.program.model.lang.Register;
 import ghidra.program.model.mem.MemBuffer;
 
 /**
@@ -43,7 +43,7 @@ public class AddressesReadTracePcodeExecutorStatePiece
 		implements TracePcodeExecutorStatePiece<byte[], AddressSetView> {
 
 	protected final PcodeTraceDataAccess data;
-	private final Map<Long, AddressSetView> unique = new HashMap<>();
+	private final Map<Long, AddressSetView> unique;
 
 	/**
 	 * Construct the state piece
@@ -54,6 +54,15 @@ public class AddressesReadTracePcodeExecutorStatePiece
 		super(data.getLanguage(), BytesPcodeArithmetic.forLanguage(data.getLanguage()),
 			AddressesReadPcodeArithmetic.INSTANCE);
 		this.data = data;
+		this.unique = new HashMap<>();
+	}
+
+	protected AddressesReadTracePcodeExecutorStatePiece(PcodeTraceDataAccess data,
+			Map<Long, AddressSetView> unique) {
+		super(data.getLanguage(), BytesPcodeArithmetic.forLanguage(data.getLanguage()),
+			AddressesReadPcodeArithmetic.INSTANCE);
+		this.data = data;
+		this.unique = unique;
 	}
 
 	@Override
@@ -67,8 +76,24 @@ public class AddressesReadTracePcodeExecutorStatePiece
 	}
 
 	@Override
+	public AddressesReadTracePcodeExecutorStatePiece fork() {
+		return new AddressesReadTracePcodeExecutorStatePiece(data, new HashMap<>(unique));
+	}
+
+	@Override
 	public void writeDown(PcodeTraceDataAccess into) {
 		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	protected Map<Register, AddressSetView> getRegisterValuesFromSpace(AddressSpace s,
+			List<Register> registers) {
+		return Map.of();
+	}
+
+	@Override
+	public Map<Register, AddressSetView> getRegisterValues() {
+		return Map.of();
 	}
 
 	@Override

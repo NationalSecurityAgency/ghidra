@@ -13,8 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package docking.widgets;
+package ghidra.app.plugin.core.debug.stack;
 
-public class ExpanderArrowExpansionVetoException extends Exception {
+/**
+ * An exception to indicate failed or incomplete stack uwinding
+ */
+public class UnwindException extends RuntimeException {
+	public UnwindException(String message) {
+		super(message);
+	}
 
+	public UnwindException(String message, UnwindException cause) {
+		super(message, cause);
+	}
 }

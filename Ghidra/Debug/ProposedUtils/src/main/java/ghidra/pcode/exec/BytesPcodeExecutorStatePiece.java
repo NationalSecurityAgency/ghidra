@@ -15,6 +15,8 @@
  */
 package ghidra.pcode.exec;
 
+import java.util.Map;
+
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Language;
 
@@ -33,13 +35,43 @@ public class BytesPcodeExecutorStatePiece
 		super(language);
 	}
 
+	protected BytesPcodeExecutorStatePiece(Language language,
+			AbstractSpaceMap<BytesPcodeExecutorStateSpace<Void>> spaceMap) {
+		super(language, spaceMap);
+	}
+
+	@Override
+	public BytesPcodeExecutorStatePiece fork() {
+		return new BytesPcodeExecutorStatePiece(language, spaceMap.fork());
+	}
+
+	class BytesSpaceMap extends SimpleSpaceMap<BytesPcodeExecutorStateSpace<Void>> {
+		BytesSpaceMap() {
+			super();
+		}
+
+		BytesSpaceMap(Map<AddressSpace, BytesPcodeExecutorStateSpace<Void>> spaces) {
+			super(spaces);
+		}
+
+		@Override
+		protected BytesPcodeExecutorStateSpace<Void> newSpace(AddressSpace space) {
+			return new BytesPcodeExecutorStateSpace<>(language, space, null);
+		}
+
+		@Override
+		public AbstractSpaceMap<BytesPcodeExecutorStateSpace<Void>> fork() {
+			return new BytesSpaceMap(fork(spaces));
+		}
+
+		@Override
+		public BytesPcodeExecutorStateSpace<Void> fork(BytesPcodeExecutorStateSpace<Void> s) {
+			return s.fork();
+		}
+	}
+
 	@Override
 	protected AbstractSpaceMap<BytesPcodeExecutorStateSpace<Void>> newSpaceMap() {
-		return new SimpleSpaceMap<>() {
-			@Override
-			protected BytesPcodeExecutorStateSpace<Void> newSpace(AddressSpace space) {
-				return new BytesPcodeExecutorStateSpace<>(language, space, null);
-			}
-		};
+		return new BytesSpaceMap();
 	}
 }

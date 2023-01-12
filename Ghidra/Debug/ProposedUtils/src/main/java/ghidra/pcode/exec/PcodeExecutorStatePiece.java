@@ -15,6 +15,7 @@
  */
 package ghidra.pcode.exec;
 
+import java.util.Map;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
@@ -86,6 +87,13 @@ public interface PcodeExecutorStatePiece<A, T> {
 	 * @return the arithmetic
 	 */
 	PcodeArithmetic<T> getArithmetic();
+
+	/**
+	 * Create a deep copy of this state
+	 * 
+	 * @return the copy
+	 */
+	PcodeExecutorStatePiece<A, T> fork();
 
 	/**
 	 * Set the value of a register variable
@@ -218,6 +226,16 @@ public interface PcodeExecutorStatePiece<A, T> {
 	default T getVar(Address address, int size, boolean quantize, Reason reason) {
 		return getVar(address.getAddressSpace(), address.getOffset(), size, quantize, reason);
 	}
+
+	/**
+	 * Get all register values known to this state
+	 * 
+	 * <p>
+	 * When the state acts as a cache, it should only return those cached.
+	 * 
+	 * @return a map of registers and their values
+	 */
+	Map<Register, T> getRegisterValues();
 
 	/**
 	 * Bind a buffer of concrete bytes at the given start address

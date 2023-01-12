@@ -15,10 +15,13 @@
  */
 package ghidra.pcode.exec;
 
+import java.util.Map;
+
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Language;
+import ghidra.program.model.lang.Register;
 import ghidra.program.model.mem.MemBuffer;
 
 /**
@@ -52,6 +55,16 @@ public class DefaultPcodeExecutorState<T> implements PcodeExecutorState<T> {
 	}
 
 	@Override
+	public PcodeArithmetic<T> getArithmetic() {
+		return arithmetic;
+	}
+
+	@Override
+	public DefaultPcodeExecutorState<T> fork() {
+		return new DefaultPcodeExecutorState<>(piece.fork(), arithmetic);
+	}
+
+	@Override
 	public T getVar(AddressSpace space, T offset, int size, boolean quantize, Reason reason) {
 		return piece.getVar(space, offset, size, quantize, reason);
 	}
@@ -62,8 +75,8 @@ public class DefaultPcodeExecutorState<T> implements PcodeExecutorState<T> {
 	}
 
 	@Override
-	public PcodeArithmetic<T> getArithmetic() {
-		return arithmetic;
+	public Map<Register, T> getRegisterValues() {
+		return piece.getRegisterValues();
 	}
 
 	@Override

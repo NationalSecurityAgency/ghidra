@@ -17,8 +17,9 @@ package ghidra.generic.util.datastruct;
 
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import generic.ULongSpan;
 import generic.ULongSpan.*;
@@ -62,8 +63,33 @@ public class SemisparseByteArray {
 	/** The size of blocks used internally to store array values */
 	public static final int BLOCK_SIZE = 0x1000;
 
-	private final Map<Long, byte[]> blocks = new HashMap<>();
-	private final MutableULongSpanSet defined = new DefaultULongSpanSet();
+	private final Map<Long, byte[]> blocks;
+	private final MutableULongSpanSet defined;
+
+	public SemisparseByteArray() {
+		this.blocks = new HashMap<>();
+		this.defined = new DefaultULongSpanSet();
+	}
+
+	protected SemisparseByteArray(Map<Long, byte[]> blocks, MutableULongSpanSet defined) {
+		this.blocks = blocks;
+		this.defined = defined;
+	}
+
+	static byte[] copyArr(Map.Entry<?, byte[]> ent) {
+		byte[] b = ent.getValue();
+		return Arrays.copyOf(b, b.length);
+	}
+
+	public synchronized SemisparseByteArray fork() {
+		// TODO Could use some copy-on-write optimization here and in parents
+		Map<Long, byte[]> copyBlocks = blocks.entrySet()
+				.stream()
+				.collect(Collectors.toMap(Entry::getKey, SemisparseByteArray::copyArr));
+		MutableULongSpanSet copyDefined = new DefaultULongSpanSet();
+		copyDefined.addAll(defined);
+		return new SemisparseByteArray(copyBlocks, copyDefined);
+	}
 
 	/**
 	 * Clear the array

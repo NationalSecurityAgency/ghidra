@@ -60,6 +60,11 @@ public class DirectBytesTracePcodeExecutorState extends DefaultTracePcodeExecuto
 		super(new DirectBytesTracePcodeExecutorStatePiece(data));
 	}
 
+	protected DirectBytesTracePcodeExecutorState(
+			TracePcodeExecutorStatePiece<byte[], byte[]> piece) {
+		super(piece);
+	}
+
 	/**
 	 * Create the state
 	 * 
@@ -82,5 +87,10 @@ public class DirectBytesTracePcodeExecutorState extends DefaultTracePcodeExecuto
 	public PcodeExecutorState<Pair<byte[], TraceMemoryState>> withMemoryState() {
 		return new PairedPcodeExecutorState<>(this,
 			new TraceMemoryStatePcodeExecutorStatePiece(getData()));
+	}
+
+	@Override
+	public DirectBytesTracePcodeExecutorState fork() {
+		return new DirectBytesTracePcodeExecutorState(piece.fork());
 	}
 }

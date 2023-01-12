@@ -22,32 +22,45 @@ import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Language;
+import ghidra.program.model.lang.Register;
 import ghidra.program.model.mem.MemBuffer;
 
 /**
- * An auxiliary state piece that reports the address of the control value
+ * An auxiliary state piece that reports the location of the control value
  * 
  * <p>
  * This is intended for use as the right side of a {@link PairedPcodeExecutorState} or
  * {@link PairedPcodeExecutorStatePiece}. Except for unique spaces, sets are ignored, and gets
- * simply echo back the address of the requested read. In unique spaces, the "address of" is treated
- * as the value, so that values transiting unique space can correctly have their source addresses
+ * simply echo back the location of the requested read. In unique spaces, the "location" is treated
+ * as the value, so that values transiting unique space can correctly have their source locations
  * reported.
  */
-public class AddressOfPcodeExecutorStatePiece
-		implements PcodeExecutorStatePiece<byte[], Address> {
+public class LocationPcodeExecutorStatePiece
+		implements PcodeExecutorStatePiece<byte[], ValueLocation> {
 	private final Language language;
+	private final LocationPcodeArithmetic arithmetic;
 	private final BytesPcodeArithmetic addressArithmetic;
-	private final Map<Long, Address> unique = new HashMap<>();
+	private final Map<Long, ValueLocation> unique;
 
 	/**
-	 * Construct an "address of" state piece
+	 * Construct a "location" state piece
 	 * 
 	 * @param isBigEndian true if the control language is big endian
 	 */
-	public AddressOfPcodeExecutorStatePiece(Language language) {
+	public LocationPcodeExecutorStatePiece(Language language) {
 		this.language = language;
-		this.addressArithmetic = BytesPcodeArithmetic.forEndian(language.isBigEndian());
+		boolean isBigEndian = language.isBigEndian();
+		this.arithmetic = LocationPcodeArithmetic.forEndian(isBigEndian);
+		this.addressArithmetic = BytesPcodeArithmetic.forEndian(isBigEndian);
+		this.unique = new HashMap<>();
+	}
+
+	protected LocationPcodeExecutorStatePiece(Language language,
+			BytesPcodeArithmetic addressArithmetic, Map<Long, ValueLocation> unique) {
+		this.language = language;
+		this.arithmetic = LocationPcodeArithmetic.forEndian(language.isBigEndian());
+		this.addressArithmetic = addressArithmetic;
+		this.unique = unique;
 	}
 
 	@Override
@@ -61,12 +74,19 @@ public class AddressOfPcodeExecutorStatePiece
 	}
 
 	@Override
-	public PcodeArithmetic<Address> getArithmetic() {
-		return AddressOfPcodeArithmetic.INSTANCE;
+	public PcodeArithmetic<ValueLocation> getArithmetic() {
+		return arithmetic;
 	}
 
 	@Override
-	public void setVar(AddressSpace space, byte[] offset, int size, boolean quantize, Address val) {
+	public LocationPcodeExecutorStatePiece fork() {
+		return new LocationPcodeExecutorStatePiece(language, addressArithmetic,
+			new HashMap<>(unique));
+	}
+
+	@Override
+	public void setVar(AddressSpace space, byte[] offset, int size, boolean quantize,
+			ValueLocation val) {
 		if (!space.isUniqueSpace()) {
 			return;
 		}
@@ -76,18 +96,23 @@ public class AddressOfPcodeExecutorStatePiece
 	}
 
 	@Override
-	public Address getVar(AddressSpace space, byte[] offset, int size, boolean quantize,
+	public ValueLocation getVar(AddressSpace space, byte[] offset, int size, boolean quantize,
 			Reason reason) {
 		long lOffset = addressArithmetic.toLong(offset, Purpose.LOAD);
 		if (!space.isUniqueSpace()) {
-			return space.getAddress(lOffset);
+			return ValueLocation.fromVarnode(space.getAddress(lOffset), size);
 		}
 		return unique.get(lOffset);
 	}
 
 	@Override
+	public Map<Register, ValueLocation> getRegisterValues() {
+		return Map.of();
+	}
+
+	@Override
 	public MemBuffer getConcreteBuffer(Address address, Purpose purpose) {
-		throw new ConcretionError("Cannot make 'address of' concrete buffers", purpose);
+		throw new ConcretionError("Cannot make 'location' concrete buffers", purpose);
 	}
 
 	@Override

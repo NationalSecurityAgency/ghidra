@@ -49,5 +49,60 @@
 
       <LI>Comment - a user-modifiable comment.</LI>
     </UL>
+
+    <H2>Action</H2>
+
+    <P>The stack plugin provides a single action:</P>
+
+    <H3><A name="unwind_stack">Unwind Stack (U)</A></H3>
+
+    <P>This action is in the main menu: <SPAN class="menu">Debugger &rarr; Analysis &rarr; Unwind
+    from frame 0</SPAN>. It attempts to unwind the current thread's stack segment, creating frame
+    data units in the listing. It starts by reading the program counter and stack pointer from the
+    innermost frame of the current thread. It then maps the program counter to the program database
+    and analyzes the function containing it. If successful, it can determine the frame's base
+    address and locate variables, saved registers, and the return address. Knowing the return
+    address and frame depth, it can derive the program counter and stack pointer of the next frame
+    and unwind it in the same manner. This proceeds until analysis fails or the stack segment is
+    exhausted. For best results, ensure you have imported and opened the Ghidra program database
+    for every module, or at least the subset you expect to see in your stack. To view the results,
+    navigate to or follow the stack pointer in a Dynamic Listing.</P>
+
+    <TABLE width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center" width="100%"><IMG alt="" border="1" src=
+          "images/DebuggerStackUnwindInListing.png"></TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <P>Each call record generates a structure data unit derived from the function's frame. The
+    exact contents of the structure depend on the current program counter within that function.
+    Only those entries actually allocated at the program counter are included. Each field in that
+    structure can be one of five kinds:</P>
+
+    <UL>
+      <LI><B>Local stack variable:</B> These are named with the <CODE>local_</CODE> prefix. They
+      correspond exactly to those entries found in the function's stack frame in the program
+      database.</LI>
+
+      <LI><B>Stack parameter:</B> These are named with the <CODE>param_</CODE> prefix. They
+      correspond exactly to those entries found in the function's stack frame in the program
+      database.</LI>
+
+      <LI><B>Return address:</B> This is named <CODE>return_address</CODE>. It is determined by
+      interpreting the function's machine code.</LI>
+
+      <LI><B>Saved register:</B> These are named with the <CODE>saved_</CODE> prefix. They are
+      determined by interpreting the function's machine code.</LI>
+
+      <LI><B>Slack space:</B> These are named with the <CODE>offset_</CODE> prefix (or
+      <CODE>posOff_</CODE> for positive offsets). They represent unused or unknown entries.</LI>
+    </UL>
+
+    <P>The frame entries are not automatically updated when a function's frame changes in a program
+    database. To update the unwind after changing a function's stack frame, you must unwind
+    again.</P>
   </BODY>
 </HTML>

@@ -16,7 +16,7 @@
 package ghidra.app.plugin.core.debug.service.emulation;
 
 import ghidra.app.plugin.core.debug.service.emulation.data.PcodeDebuggerRegistersAccess;
-import ghidra.pcode.exec.trace.DefaultTracePcodeExecutorState;
+import ghidra.pcode.exec.trace.*;
 
 /**
  * A state composing a single {@link RWTargetRegistersPcodeExecutorStatePiece}
@@ -30,5 +30,15 @@ public class RWTargetRegistersPcodeExecutorState extends DefaultTracePcodeExecut
 	 */
 	public RWTargetRegistersPcodeExecutorState(PcodeDebuggerRegistersAccess data, Mode mode) {
 		super(new RWTargetRegistersPcodeExecutorStatePiece(data, mode));
+	}
+
+	protected RWTargetRegistersPcodeExecutorState(
+			TracePcodeExecutorStatePiece<byte[], byte[]> piece) {
+		super(piece);
+	}
+
+	@Override
+	public RWTargetRegistersPcodeExecutorState fork() {
+		return new RWTargetRegistersPcodeExecutorState(piece.fork());
 	}
 }

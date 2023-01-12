@@ -39,6 +39,7 @@ import ghidra.app.plugin.core.debug.gui.action.LocationTrackingSpec;
 import ghidra.app.plugin.core.debug.gui.listing.MultiBlendedListingBackgroundColorModel;
 import ghidra.app.plugin.core.debug.gui.time.DebuggerTimeSelectionDialog;
 import ghidra.app.plugin.core.debug.utils.BackgroundUtils.PluginToolExecutorService;
+import ghidra.app.plugin.core.debug.utils.BackgroundUtils.PluginToolExecutorService.TaskOpt;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerListingService.LocationTrackingSpecChangeListener;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
@@ -221,7 +222,8 @@ public class DebuggerTraceViewDiffPlugin extends AbstractDebuggerPlugin {
 		DebuggerCoordinates current = traceManager.getCurrent();
 		DebuggerCoordinates alternate = traceManager.resolveTime(time);
 		PluginToolExecutorService toolExecutorService =
-			new PluginToolExecutorService(tool, "Computing diff", true, true, false, 500);
+			new PluginToolExecutorService(tool, "Computing diff", null, 500,
+				TaskOpt.HAS_PROGRESS, TaskOpt.CAN_CANCEL);
 		return traceManager.materialize(alternate).thenApplyAsync(snap -> {
 			clearMarkers();
 			TraceProgramView altView = alternate.getTrace().getFixedProgramView(snap);

@@ -15,12 +15,16 @@
  */
 package ghidra.pcode.emu.taint;
 
+import java.util.List;
+import java.util.Map;
+
 import ghidra.pcode.emu.taint.plain.TaintSpace;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Language;
+import ghidra.program.model.lang.Register;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.taint.model.TaintVec;
 
@@ -116,6 +120,11 @@ public abstract class AbstractTaintPcodeExecutorStatePiece<S extends TaintSpace>
 		return space.get(offset, size);
 	}
 
+	@Override
+	protected Map<Register, TaintVec> getRegisterValuesFromSpace(S space, List<Register> registers) {
+		return space.getRegisterValues(registers);
+	}
+	
 	@Override
 	public void clear() {
 		for (S space : spaceMap.values()) {
