@@ -51,9 +51,11 @@ public interface ElfFileSection extends MemoryLoadable {
 
 	/**
 	 * Size of each structured entry in bytes
-	 * @return entry size or -1 if variable
+	 * @return entry size or 0 if variable
 	 */
-	public long getEntrySize();
+	default public long getEntrySize() {
+		return 0;
+	}
 
 	/**
 	 * Binary reader for this file section
