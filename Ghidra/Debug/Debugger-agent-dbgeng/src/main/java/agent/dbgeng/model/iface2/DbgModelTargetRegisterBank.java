@@ -21,7 +21,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
-import agent.dbgeng.manager.DbgThread;
+import agent.dbgeng.manager.*;
 import agent.dbgeng.manager.impl.*;
 import ghidra.async.AsyncUtils;
 import ghidra.async.TypeSpec;
@@ -101,6 +101,7 @@ public interface DbgModelTargetRegisterBank extends DbgModelTargetObject, Target
 	}
 
 	public default CompletableFuture<Void> doWriteRegistersNamed(Map<String, byte[]> values) {
+		DbgManagerImpl manager = getManager();
 		DbgThread thread = getParentThread().getThread();
 		return AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
 			requestNativeElements().handle(seq::nextIgnore);
@@ -122,6 +123,8 @@ public interface DbgModelTargetRegisterBank extends DbgModelTargetObject, Target
 			getParentThread().getThread().writeRegisters(toWrite).handle(seq::next);
 			// TODO: Should probably filter only effective and normalized writes in the callback
 		}).then(seq -> {
+			manager.getEventListeners().fire.threadStateChanged(thread, thread.getState(),
+				DbgCause.Causes.UNCLAIMED, DbgReason.Reasons.NONE);
 			broadcast().registersUpdated(getProxy(), values);
 			seq.exit();
 		}).finish();
