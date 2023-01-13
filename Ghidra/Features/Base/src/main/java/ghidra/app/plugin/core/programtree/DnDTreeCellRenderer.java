@@ -36,6 +36,7 @@ import resources.ResourceManager;
 class DnDTreeCellRenderer extends DefaultTreeCellRenderer {
 	private static final Color BACKGROUND_UNSELECTED = new GColor("color.bg.tree");
 	private static final Color BACKGROUND_SELECTED = new GColor("color.bg.tree.selected");
+	private static final Color FOREGROUND_SELECTED = new GColor("color.fg.tree.selected");
 
 	private static final String DISABLED_DOCS = "DisabledDocument.gif";
 	private static final String DISABLED_FRAGMENT = "DisabledFragment";
@@ -68,6 +69,7 @@ class DnDTreeCellRenderer extends DefaultTreeCellRenderer {
 	private Color defaultNonSelectionColor;
 	private Color selectionForDragColor;
 	private Color nonSelectionForDragColor;
+	private Color defaultTextSelectionColor;
 	private int rowForFeedback;
 
 	/**
@@ -77,6 +79,7 @@ class DnDTreeCellRenderer extends DefaultTreeCellRenderer {
 		super();
 		defaultNonSelectionColor = BACKGROUND_UNSELECTED;
 		defaultSelectionColor = BACKGROUND_SELECTED;
+		defaultTextSelectionColor = FOREGROUND_SELECTED;
 		rowForFeedback = -1;
 
 		// disable HTML rendering
@@ -168,12 +171,14 @@ class DnDTreeCellRenderer extends DefaultTreeCellRenderer {
 			}
 			else {
 				setBackgroundSelectionColor(defaultSelectionColor);
+				setTextSelectionColor(defaultTextSelectionColor);
 				setBackgroundNonSelectionColor(defaultNonSelectionColor);
 			}
 			setToolTipText(null);
 		}
 		else {
 			setBackgroundSelectionColor(defaultSelectionColor);
+			setTextSelectionColor(defaultTextSelectionColor);
 			setBackgroundNonSelectionColor(defaultNonSelectionColor);
 			setToolTipText(dtree.getToolTipText(node));
 		}
@@ -315,11 +320,9 @@ class DnDTreeCellRenderer extends DefaultTreeCellRenderer {
 	private void loadImages() {
 		// try to load icon images
 		iconMap = new HashMap<>();
-		String[] iconIds =
-			{ DOCS, FRAGMENT, EMPTY_FRAGMENT, VIEWED_FRAGMENT, VIEWED_EMPTY_FRAGMENT,
-				VIEWED_CLOSED_FOLDER, VIEWED_OPEN_FOLDER, VIEWED_CLOSED_FOLDER_WITH_DESC,
-				CLOSED_FOLDER, OPEN_FOLDER,
-			};
+		String[] iconIds = { DOCS, FRAGMENT, EMPTY_FRAGMENT, VIEWED_FRAGMENT, VIEWED_EMPTY_FRAGMENT,
+			VIEWED_CLOSED_FOLDER, VIEWED_OPEN_FOLDER, VIEWED_CLOSED_FOLDER_WITH_DESC, CLOSED_FOLDER,
+			OPEN_FOLDER, };
 		String[] disabledNames = { DISABLED_DOCS, DISABLED_FRAGMENT, DISABLED_EMPTY_FRAGMENT,
 			DISABLED_VIEWED_EMPTY_FRAGMENT, DISABLED_VIEWED_FRAGMENT, DISABLED_VIEWED_CLOSED_FOLDER,
 			DISABLED_VIEWED_OPEN_FOLDER, DISABLED_VIEWED_CLOSED_FOLDER_WITH_DESC,

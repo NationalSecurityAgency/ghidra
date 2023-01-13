@@ -43,11 +43,11 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 	private GThemeValueMap defaultValues;
 	private GThemeValueMap lightDefaultValues;
 	private GThemeValueMap darkDefaultValues;
-	private ThemeManager themeManager;
+	private GThemeValuesCache valuesCache;
 
-	public ThemeColorTableModel(ThemeManager themeManager) {
+	public ThemeColorTableModel(GThemeValuesCache valuesProvider) {
 		super(new ServiceProviderStub());
-		this.themeManager = themeManager;
+		this.valuesCache = valuesProvider;
 		load();
 	}
 
@@ -55,7 +55,7 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 	 * Reloads the just the current values shown in the table. Called whenever a color changes.
 	 */
 	public void reloadCurrent() {
-		currentValues = themeManager.getCurrentValues();
+		currentValues = valuesCache.getCurrentValues();
 		colors = currentValues.getColors();
 		fireTableDataChanged();
 	}
@@ -74,12 +74,12 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 	}
 
 	private void load() {
-		currentValues = themeManager.getCurrentValues();
+		currentValues = valuesCache.getCurrentValues();
 		colors = currentValues.getColors();
-		themeValues = themeManager.getThemeValues();
-		defaultValues = themeManager.getDefaults();
-		lightDefaultValues = themeManager.getApplicationLightDefaults();
-		darkDefaultValues = themeManager.getApplicationDarkDefaults();
+		themeValues = valuesCache.getThemeValues();
+		defaultValues = valuesCache.getDefaultValues();
+		lightDefaultValues = valuesCache.getLightValues();
+		darkDefaultValues = valuesCache.getDarkValues();
 
 	}
 
@@ -110,7 +110,7 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 		return null;
 	}
 
-	class IdColumn extends AbstractDynamicTableColumn<ColorValue, String, Object> {
+	private class IdColumn extends AbstractDynamicTableColumn<ColorValue, String, Object> {
 
 		@Override
 		public String getColumnName() {
@@ -129,7 +129,8 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 		}
 	}
 
-	class ValueColumn extends AbstractDynamicTableColumn<ColorValue, ResolvedColor, Object> {
+	private class ValueColumn
+			extends AbstractDynamicTableColumn<ColorValue, ResolvedColor, Object> {
 		private ThemeColorRenderer renderer;
 		private String name;
 		private Supplier<GThemeValueMap> valueSupplier;
@@ -236,7 +237,7 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 
 	}
 
-	static class SwatchIcon implements Icon {
+	private static class SwatchIcon implements Icon {
 		private Color color;
 		private Color border;
 
@@ -264,8 +265,5 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 		}
 	}
 
-	record ResolvedColor(String id, String refId, Color color) {
-		//
-	}
-
+	private record ResolvedColor(String id, String refId, Color color) { /**/ }
 }

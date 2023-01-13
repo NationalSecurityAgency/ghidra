@@ -40,7 +40,7 @@ public class SplitPanel extends JPanel {
 		this.rightComp = rightComp;
 		this.isHorizontal = isHorizontal;
 		divider = new Divider();
-		divider.setBackground(new GColor("SplitPane.background"));
+		divider.setBackground(new GColor("laf.color.SplitPane.background"));
 		add(leftComp);
 		add(divider);
 		add(rightComp);

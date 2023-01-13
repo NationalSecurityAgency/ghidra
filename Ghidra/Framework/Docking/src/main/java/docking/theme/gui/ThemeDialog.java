@@ -51,6 +51,8 @@ public class ThemeDialog extends DialogComponentProvider {
 
 	private ThemeManager themeManager;
 
+	private GThemeValuesCache valuesCache;
+
 	public ThemeDialog(ThemeManager themeManager) {
 		super("Theme Dialog", false);
 		this.themeManager = themeManager;
@@ -227,12 +229,17 @@ public class ThemeDialog extends DialogComponentProvider {
 
 	private Component buildTabedTables() {
 		tabbedPane = new JTabbedPane();
-		colorTable = new ThemeColorTable(themeManager);
-		fontTable = new ThemeFontTable(themeManager);
-		iconTable = new ThemeIconTable(themeManager);
+
+		valuesCache = new GThemeValuesCache(themeManager);
+
+		colorTable = new ThemeColorTable(themeManager, valuesCache);
+		iconTable = new ThemeIconTable(themeManager, valuesCache);
+		fontTable = new ThemeFontTable(themeManager, valuesCache);
+
 		tabbedPane.add("Colors", colorTable);
 		tabbedPane.add("Fonts", fontTable);
 		tabbedPane.add("Icons", iconTable);
+
 		return tabbedPane;
 	}
 
@@ -284,6 +291,7 @@ public class ThemeDialog extends DialogComponentProvider {
 	private class DialogThemeListener implements ThemeListener {
 		@Override
 		public void themeChanged(ThemeEvent event) {
+			valuesCache.clear();
 			if (event.haveAllValuesChanged()) {
 				reset();
 				return;

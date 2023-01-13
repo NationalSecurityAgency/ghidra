@@ -16,28 +16,27 @@
 package generic.theme;
 
 /**
- * Loads all the system theme.property files that contain all the default color, font, and
- * icon values.
+ * Provides theme default values, such as those loaded from {@code *.theme.property} files.
  */
-public interface ThemeDefaultsProvider {
+public interface ApplicationThemeDefaults {
 
 	/**
-	 * Returns the standard defaults {@link GThemeValueMap}
-	 * @return the standard defaults {@link GThemeValueMap}
+	 * Returns the light default {@link GThemeValueMap}
+	 * @return the light default {@link GThemeValueMap}
 	 */
-	public GThemeValueMap getDefaults();
+	public GThemeValueMap getLightValues();
 
 	/**
-	 * Returns the dark defaults {@link GThemeValueMap}
-	 * @return the dark defaults {@link GThemeValueMap}
+	 * Returns the dark default {@link GThemeValueMap}
+	 * @return the dark default {@link GThemeValueMap}
 	 */
-	public GThemeValueMap getDarkDefaults();
+	public GThemeValueMap getDarkValues();
 
 	/**
-	 * Returns the defaults specific to a given Look and Feel
+	 * Returns the default values specific to a given Look and Feel
 	 * @param lafType the Look and Feel type
-	 * @return  the defaults specific to a given Look and Feel
+	 * @return the default values specific to a given Look and Feel
 	 */
-	public GThemeValueMap getLookAndFeelDefaults(LafType lafType);
+	public GThemeValueMap getLookAndFeelValues(LafType lafType);
 
 }

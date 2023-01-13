@@ -215,21 +215,21 @@ public class StubThemeManager extends ThemeManager {
 	}
 
 	@Override
-	protected ThemeDefaultsProvider getThemeDefaultsProvider() {
-		return new ThemeDefaultsProvider() {
+	protected ApplicationThemeDefaults getApplicationDefaults() {
+		return new ApplicationThemeDefaults() {
 
 			@Override
-			public GThemeValueMap getDefaults() {
+			public GThemeValueMap getLightValues() {
 				return null;
 			}
 
 			@Override
-			public GThemeValueMap getDarkDefaults() {
+			public GThemeValueMap getDarkValues() {
 				return null;
 			}
 
 			@Override
-			public GThemeValueMap getLookAndFeelDefaults(LafType lafType) {
+			public GThemeValueMap getLookAndFeelValues(LafType lafType) {
 				return null;
 			}
 

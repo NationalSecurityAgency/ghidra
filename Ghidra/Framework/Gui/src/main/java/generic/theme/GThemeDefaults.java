@@ -15,6 +15,8 @@
  */
 package generic.theme;
 
+import static generic.theme.SystemThemeIds.*;
+
 import java.awt.Color;
 
 /** TODO doc how clients should use this in their code, with
@@ -24,18 +26,9 @@ import java.awt.Color;
  *  Colors.Java.BORDER
  */
 public class GThemeDefaults {
-
 	public static class Ids {
 
-		public static class Java {
-			public static final String BORDER = "system.color.border";
-		}
-
 		public static class Fonts {
-			public static final String STANDARD = "font.standard";
-			public static final String BOLD = "font.bold";
-			public static final String ITALIC = "font.italic";
-			public static final String BOLD_ITALIC = "font.bold.italic";
 			public static final String MONOSPACED = "font.monospaced";
 		}
 	}
@@ -44,11 +37,23 @@ public class GThemeDefaults {
 	 * Colors mapped to system values
 	 */
 	public static class Colors {
+		//@formatter:off
+
+		// standard color concepts defined by LookAndFeel
+		public static final GColor BG_CONTROL = new GColor(BG_CONTROL_ID);
+		public static final GColor BG_VIEW = new GColor(BG_VIEW_ID);
+		public static final GColor BG_TOOLTIP = new GColor(BG_TOOLTIP_ID);
+		public static final GColor BG_VIEW_SELECTED = new GColor(BG_VIEW_SELECTED_ID);
+		public static final GColor BG_BORDER = new GColor(BG_BORDER_ID);
+
+		public static final GColor FG_CONTROL = new GColor(FG_CONTROL_ID);
+		public static final GColor FG_VIEW = new GColor(FG_VIEW_ID);
+		public static final GColor FG_TOOLTIP = new GColor(FG_TOOLTIP_ID);
+		public static final GColor FG_VIEW_SELECTED = new GColor(FG_VIEW_SELECTED_ID);
+		public static final GColor FG_DISABLED = new GColor(FG_DISABLED_ID);
 
 		// generic color concepts
-		//@formatter:off
 		public static final GColor BACKGROUND = new GColor("color.bg");
-		public static final GColor BACKGROUND_TOOLTIP = new GColor("color.bg.tooltip");
 		public static final GColor CURSOR = new GColor("color.cursor.focused");
 		public static final GColor DISABLED = new GColor("color.palette.disabled");
 		public static final GColor ERROR = new GColor("color.fg.error"); // TODO replace most uses of this with Messages.ERROR
@@ -57,7 +62,7 @@ public class GThemeDefaults {
 		//@formatter:on
 
 		public static class Java {
-			public static final GColor BORDER = new GColor(Ids.Java.BORDER);
+			public static final GColor BORDER = BG_BORDER;
 		}
 
 		public static class Tables {

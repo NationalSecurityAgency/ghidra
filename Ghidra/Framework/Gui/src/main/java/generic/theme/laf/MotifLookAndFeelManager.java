@@ -15,7 +15,10 @@
  */
 package generic.theme.laf;
 
-import generic.theme.*;
+import javax.swing.UIDefaults;
+
+import generic.theme.ApplicationThemeManager;
+import generic.theme.LafType;
 
 /**
  * Motif {@link LookAndFeelManager}. Specialized so that it can return the Motif installer
@@ -24,11 +27,11 @@ public class MotifLookAndFeelManager extends LookAndFeelManager {
 
 	public MotifLookAndFeelManager(ApplicationThemeManager themeManager) {
 		super(LafType.MOTIF, themeManager);
-		// establish system color to LookAndFeel colors
-		systemToLafMap.addColor(new ColorValue(SYSTEM_APP_BACKGROUND_COLOR_ID, "control"));
-		systemToLafMap.addColor(new ColorValue(SYSTEM_WIDGET_BACKGROUND_COLOR_ID, "window"));
-		systemToLafMap.addColor(new ColorValue(SYSTEM_TOOLTIP_BACKGROUND_COLOR_ID, "info"));
-		systemToLafMap.addColor(new ColorValue(SYSTEM_BORDER_COLOR_ID, "activeCaptionBorder"));
+	}
+
+	@Override
+	protected UiDefaultsMapper getUiDefaultsMapper(UIDefaults defaults) {
+		return new MotifUiDefaultsMapper(defaults);
 	}
 
 	@Override
@@ -46,10 +49,4 @@ public class MotifLookAndFeelManager extends LookAndFeelManager {
 		setKeyBinding("PASTE", "ctrl V", UIPrefixValues);
 		setKeyBinding("CUT", "ctrl X", UIPrefixValues);
 	}
-
-	@Override
-	protected ThemeGrouper getThemeGrouper() {
-		return new MotifThemeGrouper();
-	}
-
 }

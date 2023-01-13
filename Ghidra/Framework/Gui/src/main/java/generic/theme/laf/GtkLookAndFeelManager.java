@@ -15,6 +15,8 @@
  */
 package generic.theme.laf;
 
+import javax.swing.UIDefaults;
+
 import generic.theme.ApplicationThemeManager;
 import generic.theme.LafType;
 
@@ -25,5 +27,10 @@ public class GtkLookAndFeelManager extends LookAndFeelManager {
 
 	public GtkLookAndFeelManager(ApplicationThemeManager themeManager) {
 		super(LafType.GTK, themeManager);
+	}
+
+	@Override
+	protected UiDefaultsMapper getUiDefaultsMapper(UIDefaults defaults) {
+		return new GtkUiDefaultsMapper(defaults);
 	}
 }

@@ -37,6 +37,8 @@ import ghidra.util.datastruct.WeakStore;
  * set the default value by adding this line "color.mywidget.bg = white".
  */
 public class GColor extends Color {
+	private static final int MISSING_COLOR_RGB = 0x808080;
+
 	// keeps a weak reference to all uses of GColor, so their cached color value can be refreshed 
 	private static WeakStore<GColor> inUseColors = new WeakStore<>();
 
@@ -50,11 +52,22 @@ public class GColor extends Color {
 	 * @param id the id used to lookup the current value for this color
 	 */
 	public GColor(String id) {
-		super(0x808080);
+		super(MISSING_COLOR_RGB);
 		this.id = id;
 		delegate = Gui.getColor(id);
 		inUseColors.add(this);
+	}
 
+	/**
+	 * Copy constructor. Used primarily to convert a GColorUiResource to a GColor without having to 
+	 * lookup the color which can cause errors during theme transitions.
+	 * @param gColor the gColor to copy
+	 */
+	protected GColor(GColor gColor) {
+		super(MISSING_COLOR_RGB);
+		this.id = gColor.id;
+		delegate = gColor.delegate;
+		inUseColors.add(this);
 	}
 
 	private GColor(String id, int alpha) {

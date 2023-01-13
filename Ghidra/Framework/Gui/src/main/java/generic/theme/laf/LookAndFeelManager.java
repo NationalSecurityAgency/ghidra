@@ -36,32 +36,14 @@ import ghidra.util.SystemUtilities;
  */
 public abstract class LookAndFeelManager {
 
-	/**
-	 * These are color ids (see {@link GColor} used to represent general concepts that
-	 * application developers can use to get the color for that concept as defined by
-	 * a specific {@link LookAndFeel}. This class will define some standard default
-	 * mappings in the constructor, but it is expected that each specific LookAndFeelManager
-	 * will override these mappings with values appropriate for that LookAndFeel.
-	 */
-	protected static final String SYSTEM_APP_BACKGROUND_COLOR_ID = "system.color.bg.application";
-	protected static final String SYSTEM_WIDGET_BACKGROUND_COLOR_ID = "system.color.bg.widget";
-	protected static final String SYSTEM_TOOLTIP_BACKGROUND_COLOR_ID = "system.color.bg.tooltip";
-	protected static final String SYSTEM_BORDER_COLOR_ID = "system.color.border";
-
 	private LafType laf;
 	private Map<String, ComponentFontRegistry> fontRegistryMap = new HashMap<>();
-	protected GThemeValueMap systemToLafMap = new GThemeValueMap();
 	protected ApplicationThemeManager themeManager;
+	protected Map<String, String> normalizedIdToLafIdMap;
 
 	protected LookAndFeelManager(LafType laf, ApplicationThemeManager themeManager) {
 		this.laf = laf;
 		this.themeManager = themeManager;
-
-		// establish system color to LookAndFeel colors
-		systemToLafMap.addColor(new ColorValue(SYSTEM_APP_BACKGROUND_COLOR_ID, "control"));
-		systemToLafMap.addColor(new ColorValue(SYSTEM_WIDGET_BACKGROUND_COLOR_ID, "control"));
-		systemToLafMap.addColor(new ColorValue(SYSTEM_TOOLTIP_BACKGROUND_COLOR_ID, "control"));
-		systemToLafMap.addColor(new ColorValue(SYSTEM_BORDER_COLOR_ID, "controlShadow"));
 	}
 
 	/**
@@ -85,10 +67,8 @@ public abstract class LookAndFeelManager {
 	public void installLookAndFeel() throws ClassNotFoundException, InstantiationException,
 			IllegalAccessException, UnsupportedLookAndFeelException {
 
-		cleanUiDefaults();
-		themeManager.setSystemDefaults(systemToLafMap);
 		doInstallLookAndFeel();
-		installJavaDefaults();
+		processJavaDefaults();
 		fixupLookAndFeelIssues();
 		installGlobalProperties();
 		installCustomLookAndFeelActions();
@@ -119,10 +99,14 @@ public abstract class LookAndFeelManager {
 		UIDefaults defaults = UIManager.getDefaults();
 		for (FontValue fontValue : fonts) {
 			String id = fontValue.getId();
+			String lafId = normalizedIdToLafIdMap.get(id);
+			if (lafId == null) {
+				continue;
+			}
 			Font correctFont = Gui.getFont(id);
 			Font storedFont = defaults.getFont(id);
 			if (correctFont != null && !correctFont.equals(storedFont)) {
-				defaults.put(id, correctFont);
+				defaults.put(lafId, toUiResource(correctFont));
 			}
 		}
 	}
@@ -132,10 +116,11 @@ public abstract class LookAndFeelManager {
 		UIDefaults defaults = UIManager.getDefaults();
 		for (IconValue iconValue : icons) {
 			String id = iconValue.getId();
+			String lafId = normalizedIdToLafIdMap.get(id);
 			Icon correctIcon = Gui.getIcon(id);
 			Icon storedIcon = defaults.getIcon(id);
 			if (correctIcon != null && !correctIcon.equals(storedIcon)) {
-				defaults.put(id, correctIcon);
+				defaults.put(lafId, correctIcon);
 			}
 		}
 	}
@@ -154,14 +139,16 @@ public abstract class LookAndFeelManager {
 	 * @param newIcon the new icon to use for the given set of icon ids
 	 */
 	public void iconsChanged(Set<String> changedIconIds, Icon newIcon) {
+		UIDefaults defaults = UIManager.getDefaults();
 		if (!(newIcon instanceof UIResource)) {
 			newIcon = new IconUIResource(newIcon);
 		}
+		for (String changedIconId : changedIconIds) {
+			String lafIconId = normalizedIdToLafIdMap.get(changedIconId);
+			defaults.put(lafIconId, newIcon);
+		}
+
 		if (!changedIconIds.isEmpty()) {
-			UIDefaults defaults = UIManager.getDefaults();
-			for (String javaIconId : changedIconIds) {
-				defaults.put(javaIconId, newIcon);
-			}
 			updateComponentUis();
 		}
 		themeManager.refreshGThemeValues();
@@ -173,16 +160,22 @@ public abstract class LookAndFeelManager {
 	 * @param changedJavaFontIds the set of Java Font ids that are affected by this change
 	 */
 	public void fontsChanged(Set<String> changedJavaFontIds) {
-		if (!changedJavaFontIds.isEmpty()) {
-			UIDefaults defaults = UIManager.getDefaults();
-			for (String javaFontId : changedJavaFontIds) {
-				// even though all these derive from the new font, they might be different
-				// because of FontModifiers.
-				Font font = Gui.getFont(javaFontId);
-				defaults.put(javaFontId, new FontUIResource(font));
+		UIDefaults defaults = UIManager.getDefaults();
+		for (String changedFontId : changedJavaFontIds) {
+			// even though all these derive from the new font, they might be different
+			// because of FontModifiers.
+			Font font = Gui.getFont(changedFontId);
+			String lafFontId = normalizedIdToLafIdMap.get(changedFontId);
+			if (lafFontId != null) {
+				// lafFontId is null for group ids
+				defaults.put(lafFontId, new FontUIResource(font));
 			}
+		}
+
+		if (!changedJavaFontIds.isEmpty()) {
 			updateComponentUis();
 		}
+
 		updateAllRegisteredComponentFonts();
 		repaintAll();
 	}
@@ -212,26 +205,9 @@ public abstract class LookAndFeelManager {
 		register.addComponent(component);
 	}
 
-	/**
-	 * Returns a color that is not a {@link UIResource}.
-	 * @param color the color to return an non UIResource color for
-	 * @return  a color that is not a {@link UIResource}.
-	 */
-	public static Color fromUiResource(Color color) {
-		if (color.getClass() == Color.class) {
-			return color;
-		}
-		return new Color(color.getRGB(), true);
-	}
-
-	/**
-	 * Returns a font that is not a {@link UIResource}.
-	 * @param font the font to return an non UIResource font for
-	 * @return  a font that is not a {@link UIResource}.
-	 */
-	public static Font fromUiResource(Font font) {
-		if (font instanceof UIResource) {
-			return new FontNonUiResource(font);
+	private Font toUiResource(Font font) {
+		if (!(font instanceof UIResource)) {
+			return new FontUIResource(font);
 		}
 		return font;
 	}
@@ -261,80 +237,21 @@ public abstract class LookAndFeelManager {
 	}
 
 	/**
-	 * Extracts java default colors, fonts, and icons and stores them in {@link Gui}.
+	 * Extracts java default colors, fonts, and icons and stores them in the 
+	 * {@link ThemeManager} and updates the {@link UIDefaults} by installing GColors for all
+	 * color values and installing any overridden fonts or icons.
 	 */
-	private void installJavaDefaults() {
-		GThemeValueMap javaDefaults = extractJavaDefaults();
-		ThemeGrouper grouper = getThemeGrouper();
-		grouper.group(javaDefaults);
+	protected void processJavaDefaults() {
+		UIDefaults defaults = UIManager.getDefaults();
+		UiDefaultsMapper uiDefaultsMapper = getUiDefaultsMapper(defaults);
+
+		GThemeValueMap javaDefaults = uiDefaultsMapper.getJavaDefaults();
 		themeManager.setJavaDefaults(javaDefaults);
-		installPropertiesBackIntoUiDefaults(javaDefaults);
+		uiDefaultsMapper.installValuesIntoUIDefaults(themeManager.getApplicationOverrides());
+		normalizedIdToLafIdMap = uiDefaultsMapper.getNormalizedIdToLafIdMap();
 	}
 
-	protected ThemeGrouper getThemeGrouper() {
-		return new ThemeGrouper();
-	}
-
-	protected void installPropertiesBackIntoUiDefaults(GThemeValueMap javaDefaults) {
-		UIDefaults defaults = UIManager.getDefaults();
-
-		GTheme theme = themeManager.getActiveTheme();
-
-		// we replace java default colors with GColor equivalents so that we
-		// can change colors without having to reinstall ui on each component
-		// This trick only works for colors. Fonts and icons don't universally
-		// allow being wrapped like colors do.
-		for (ColorValue colorValue : javaDefaults.getColors()) {
-			String id = colorValue.getId();
-			defaults.put(id, themeManager.getGColorUiResource(id));
-		}
-
-		// put fonts back into defaults in case they have been changed by the current theme
-		for (FontValue fontValue : javaDefaults.getFonts()) {
-			String id = fontValue.getId();
-			FontValue themeValue = theme.getFont(id);
-			if (themeValue != null) {
-				Font font = Gui.getFont(id);
-				defaults.put(id, new FontUIResource(font));
-			}
-		}
-
-		// put icons back into defaults in case they have been changed by the current theme
-		for (IconValue iconValue : javaDefaults.getIcons()) {
-			String id = iconValue.getId();
-			IconValue themeValue = theme.getIcon(id);
-			if (themeValue != null) {
-				// because some icons are weird, put raw icons into defaults, only use GIcons for
-				// setting Icons explicitly on components
-				Icon icon = Gui.getIcon(id);
-				defaults.put(id, icon);
-			}
-		}
-	}
-
-	protected GThemeValueMap extractJavaDefaults() {
-		UIDefaults defaults = UIManager.getDefaults();
-		GThemeValueMap values = new GThemeValueMap();
-		// for now, just doing color properties.
-		List<String> ids = getLookAndFeelIdsForType(defaults, Color.class);
-		for (String id : ids) {
-			// convert UIResource color to regular colors so if used, they don't get wiped
-			// out when we update the UIs
-			values.addColor(new ColorValue(id, fromUiResource(UIManager.getColor(id))));
-		}
-		ids = getLookAndFeelIdsForType(defaults, Font.class);
-		for (String id : ids) {
-			// convert UIResource fonts to regular fonts so if used, they don't get wiped
-			// out when we update UIs
-			values.addFont(new FontValue(id, fromUiResource(UIManager.getFont(id))));
-		}
-		ids = getLookAndFeelIdsForType(defaults, Icon.class);
-		for (String id : ids) {
-			Icon icon = UIManager.getIcon(id);
-			values.addIcon(new IconValue(id, icon));
-		}
-		return values;
-	}
+	protected abstract UiDefaultsMapper getUiDefaultsMapper(UIDefaults defaults);
 
 	protected String findLookAndFeelClassName(String lookAndFeelName) {
 		LookAndFeelInfo[] installedLookAndFeels = UIManager.getInstalledLookAndFeels();
@@ -461,26 +378,6 @@ public abstract class LookAndFeelManager {
 		installGlobalLookAndFeelAttributes();
 		installGlobalFontSizeOverride();
 		installPopupMenuSettingsOverride();
-	}
-
-	private void cleanUiDefaults() {
-		GThemeValueMap javaDefaults = themeManager.getJavaDefaults();
-		if (javaDefaults == null) {
-			return;
-		}
-		UIDefaults defaults = UIManager.getDefaults();
-		for (ColorValue colorValue : javaDefaults.getColors()) {
-			String id = colorValue.getId();
-			defaults.put(id, null);
-		}
-		for (FontValue fontValue : javaDefaults.getFonts()) {
-			String id = fontValue.getId();
-			defaults.put(id, null);
-		}
-		for (IconValue iconValue : javaDefaults.getIcons()) {
-			String id = iconValue.getId();
-			defaults.put(id, null);
-		}
 	}
 
 	/**

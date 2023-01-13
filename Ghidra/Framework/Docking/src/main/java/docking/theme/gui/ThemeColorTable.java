@@ -43,14 +43,14 @@ public class ThemeColorTable extends JPanel implements ActionContextProvider {
 	private GFilterTable<ColorValue> filterTable;
 	private ThemeManager themeManager;
 
-	public ThemeColorTable(ThemeManager themeManager) {
+	public ThemeColorTable(ThemeManager themeManager, GThemeValuesCache valuesProvider) {
 		super(new BorderLayout());
 		this.themeManager = themeManager;
-		colorTableModel = new ThemeColorTableModel(themeManager);
+		colorTableModel = new ThemeColorTableModel(valuesProvider);
 
 		filterTable = new GFilterTable<>(colorTableModel);
 		table = filterTable.getTable();
-		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		table.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
 
 		table.addKeyListener(new KeyAdapter() {
 			@Override
