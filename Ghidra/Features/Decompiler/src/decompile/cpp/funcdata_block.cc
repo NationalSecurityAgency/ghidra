@@ -570,10 +570,11 @@ bool Funcdata::earlyJumpTableFail(PcodeOp *op)
 	OpCode opc = op->code();
 	if (opc == CPUI_CALLOTHER) {
 	  int4 id = (int4)op->getIn(0)->getOffset();
-	  InjectedUserOp *userOp = dynamic_cast<InjectedUserOp *>(glb->userops.getOp(id));
-	  if (userOp != (InjectedUserOp *)0) {
+	  UserPcodeOp *userOp = glb->userops.getOp(id);
+	  if (dynamic_cast<InjectedUserOp *>(userOp) != (InjectedUserOp *)0)
 	    return false;	// Don't try to back track through injection
-	  }
+	  if (dynamic_cast<JumpAssistOp *>(userOp) != (JumpAssistOp *)0)
+	    return false;
 	  if (outhit)
 	    return true;	// Address formed via uninjected CALLOTHER, analysis will fail
 	  // Assume CALLOTHER will not interfere with address and continue backtracking
