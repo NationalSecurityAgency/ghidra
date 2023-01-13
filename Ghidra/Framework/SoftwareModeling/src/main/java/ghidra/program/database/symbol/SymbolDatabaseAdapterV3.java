@@ -265,6 +265,12 @@ class SymbolDatabaseAdapterV3 extends SymbolDatabaseAdapter {
 	}
 
 	@Override
+	RecordIterator scanSymbolsByName(String startName) throws IOException {
+		StringField field = new StringField(startName);
+		return symbolTable.indexIterator(SYMBOL_NAME_COL, field, null, true);
+	}
+
+	@Override
 	RecordIterator getSymbolsByNameAndNamespace(String name, long id) throws IOException {
 		// create a range of hash fields for all symbols with this name and namespace id over all
 		// possible addresses

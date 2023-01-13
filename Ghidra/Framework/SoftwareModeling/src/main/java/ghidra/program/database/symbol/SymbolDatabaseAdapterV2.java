@@ -230,6 +230,13 @@ class SymbolDatabaseAdapterV2 extends SymbolDatabaseAdapter {
 	}
 
 	@Override
+	RecordIterator scanSymbolsByName(String startName) throws IOException {
+		StringField field = new StringField(startName);
+		RecordIterator it = symbolTable.indexIterator(SYMBOL_NAME_COL, field, null, true);
+		return new V2ConvertedRecordIterator(it);
+	}
+
+	@Override
 	Address getMaxSymbolAddress(AddressSpace space) throws IOException {
 		if (space.isMemorySpace()) {
 			AddressIndexKeyIterator addressKeyIterator = new AddressIndexKeyIterator(symbolTable,
