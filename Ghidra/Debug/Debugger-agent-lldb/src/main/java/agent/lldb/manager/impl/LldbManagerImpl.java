@@ -59,7 +59,7 @@ public class LldbManagerImpl implements LldbManager {
 			System.loadLibrary(lldb);
 		}
 		catch (UnsatisfiedLinkError ule) {
-			Msg.error(LldbManagerImpl.class, "java.library.path => " + libPath);
+			Msg.error(LldbManagerImpl.class, ule.getMessage());
 			Msg.error(LldbManagerImpl.class,
 				"liblldb not found - add relevant java.library.path to support/launch.properties");
 		}
@@ -67,7 +67,7 @@ public class LldbManagerImpl implements LldbManager {
 			System.loadLibrary("lldb-java");
 		}
 		catch (UnsatisfiedLinkError ule) {
-			Msg.error(LldbManagerImpl.class, "java.library.path => " + libPath);
+			Msg.error(LldbManagerImpl.class, ule.getMessage());
 			Msg.error(LldbManagerImpl.class,
 				"liblldb-java not found - add relevant java.library.path to support/launch.properties");
 		}
