@@ -3152,29 +3152,41 @@ define pcodeop lswxOp;
 	cr1flags();
 }
 
-# This instruction is not exclusive to 64 bit processors, per page 1259 of the PowerISA manual.
-# However, it does seem to require 64 bit registers, so it is currently restricted to 64 bit machines.
+# This instruction is not exclusive to 64 bit processors, per page 1405 of the PowerISA manual.
+# Prior to the Power ISA introduction, PowerPC architecture had 32-bit versions of the MSR in 32-bit implementations.
+# Since this instruction requires 64-bit processsors, it is currently restricted to 64 bit machines.
+# mtmsrd varies from processor to processor. This version is consistent with PowerISA v2.07B
 @ifdef BIT_64
 #mtmsrd r0,0		0x7c 00 01 64
 :mtmsrd S,0		is $(NOTVLE) & OP=31 & S & BITS_17_20=0 & MSR_L=0 & BITS_11_15=0 & XOP_1_10=178 & BIT_0=0
 {
-	bit0:8 = S >> 63 & 1;
-	bit1:8 = S >> 62 & 1;
-	bit49:8 = (S >> 14)& 1;	
-	bit59:8 = (S >> 4) & 1;	
-	tmp:8 = S & 0x6fffffffffff6fcf;  
-	tmp = tmp & ((bit0 | bit1) << 63);
-	tmp = tmp & ((bit59 | bit49) << 5);
-	MSR = MSR & 0xefffffff00009020 | tmp;
+	local bit59:$(REGISTER_SIZE) = (S >> 4)  & 1;	#bit 59
+	local bit58:$(REGISTER_SIZE) = (S >> 5)  & 1;	#bit 58
+	local bit49:$(REGISTER_SIZE) = (S >> 14) & 1;	#bit 49
+	local bit48:$(REGISTER_SIZE) = (S >> 15) & 1;	#bit 48
+	
+	local bits2931:$(REGISTER_SIZE) = zext(S[32,3]); #bits 29-31
+	local mbits2931:$(REGISTER_SIZE) = zext(MSR[32,3]); #bits 29-31
+	local cond = (mbits2931 != 0x2)|(bits2931 != 0);
+	bits2931 = (zext(cond) * bits2931) + (zext(!cond) * mbits2931);
+	local mask:$(REGISTER_SIZE) =0xeffffff8ffff6fce;
+	tmp:8 = S & mask; #preserves (RS) 0:2 4:40 42:47 49:50 52:57 60:62
+
+	tmp = tmp | (bits2931) << 32;
+	tmp = tmp | ((bit48 | bit49) << 15); # MSR 48 <- (RS) 48 | (RS) 49
+	tmp = tmp | ((bit58 | bit49) << 5);  # MSR 58 <- (RS) 58 | (RS) 49
+	tmp = tmp | ((bit59 | bit49) << 4);  # MSR 59 <- (RS) 59 | (RS) 49
+	MSR = (MSR & ~mask) | tmp;
 }
 
 #mtmsrd r0,1		0x7c 01 01 64
 :mtmsrd S,1		is $(NOTVLE) & OP=31 & S & BITS_17_20=0 & MSR_L=1 & BITS_11_15=0 & XOP_1_10=178 & BIT_0=0 
 {
-	mask:8 = 0x000000000000fffe & S;
+	mask:$(REGISTER_SIZE) = 0x8002;
 	MSR = (MSR & ~mask) | (S & mask);
 }
 @endif
+
 CRM_val: crmval is CRM [crmval = CRM+0;] {export *[const]:1 crmval;}
 #mtocrf 10,r0		0x7c 21 01 20
 :mtocrf CRM_val,S	is OP=31 & S & BIT_20=1 & CRM_val & CRM0 & CRM1 & CRM2 & CRM3 & CRM4 & CRM5 & CRM6 & CRM7 & BIT_11=0 & XOP_1_10=144 & BIT_0=0 

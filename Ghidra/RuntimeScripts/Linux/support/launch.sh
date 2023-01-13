@@ -145,7 +145,7 @@ fi
 JAVA_CMD="${JAVA_HOME}/bin/java"
 
 # Get the configurable VM arguments from the launch properties
-while IFS= read -r line; do
+while IFS=$'\r\n' read -r line; do
 	VMARGS_FROM_LAUNCH_PROPS+=("$line")
 done < <(java -cp "${LS_CPATH}" LaunchSupport "${INSTALL_DIR}" -vmargs)
 

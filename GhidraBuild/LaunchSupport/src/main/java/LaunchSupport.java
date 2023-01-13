@@ -291,7 +291,8 @@ public class LaunchSupport {
 			return EXIT_FAILURE;
 		}
 
-		javaConfig.getLaunchProperties().getVmArgList().forEach(arg -> System.out.println(arg));
+		// Force newline style to make cross-platform parsing consistent
+		javaConfig.getLaunchProperties().getVmArgList().forEach(e -> System.out.print(e + "\r\n"));
 		return EXIT_SUCCESS;
 	}
 }
