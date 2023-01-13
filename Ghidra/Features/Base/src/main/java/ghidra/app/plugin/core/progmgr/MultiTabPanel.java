@@ -35,7 +35,7 @@ import ghidra.util.layout.HorizontalLayout;
 import resources.Icons;
 
 /**
- * Panel to show a "tab" for an object. ChangeListeners are notified when a tab is selected. 
+ * Panel to show a "tab" for an object. ChangeListeners are notified when a tab is selected.
  */
 public class MultiTabPanel extends JPanel {
 	private static final String FONT_TABS_ID = "font.plugin.tabs";
@@ -49,17 +49,13 @@ public class MultiTabPanel extends JPanel {
 	private final static Icon HIGHLIGHT_CLOSE_ICON = new GIcon("icon.plugin.programmanager.close.highlight");
 	private final static Icon LIST_ICON = new GIcon("icon.plugin.programmanager.list");
 	private final static Icon TRANSIENT_ICON = new GIcon("icon.plugin.programmanager.transient");
-	//@formatter:on
 
-	private final static Color TEXT_SELECTION_COLOR =
-		new GColor("color.fg.listing.tabs.text.selected");
-	private final static Color TEXT_NON_SELECTION_COLOR =
-		new GColor("color.fg.listing.tabs.text.unselected");
+	private final static Color TEXT_SELECTION_COLOR = new GColor("color.fg.listing.tabs.text.selected");
+	private final static Color TEXT_NON_SELECTION_COLOR = new GColor("color.fg.listing.tabs.text.unselected");
 	private final static Color BG_SELECTION_COLOR = SELECTED_TAB_COLOR;
-	private final static Color BG_NON_SELECTION_COLOR =
-		new GColor("color.bg.listing.tabs.unselected");
-	private static final Color BG_COLOR_MORE_TABS_HOVER =
-		new GColor("color.bg.listing.tabs.more.tabs.hover");
+	private final static Color BG_NON_SELECTION_COLOR = new GColor("color.bg.listing.tabs.unselected");
+	private static final Color BG_COLOR_MORE_TABS_HOVER = new GColor("color.bg.listing.tabs.more.tabs.hover");
+	//@formatter:on
 
 	private static final String DEFAULT_HIDDEN_COUNT_STR = "99";
 
@@ -85,7 +81,6 @@ public class MultiTabPanel extends JPanel {
 	private boolean ignoreFocus;
 
 	MultiTabPanel(MultiTabPlugin multiTabPlugin) {
-		super();
 		this.multiTabPlugin = multiTabPlugin;
 		setLayout(new HorizontalLayout(0));
 
@@ -145,7 +140,7 @@ public class MultiTabPanel extends JPanel {
 	}
 
 	/**
-	 * Refresh label displayed in the tab for the given object. 
+	 * Refresh label displayed in the tab for the given object.
 	 * @param program object associated with a tab
 	 */
 	void refresh(Program program) {
@@ -555,8 +550,8 @@ public class MultiTabPanel extends JPanel {
 			newVisibleTabList.add(panel);
 		}
 
-		// check for the boundary condition where all elements would fit in the display if we 
-		// don't show the label indicating tabs are hidden.  The boundary case is when there 
+		// check for the boundary condition where all elements would fit in the display if we
+		// don't show the label indicating tabs are hidden.  The boundary case is when there
 		// is only one hidden element that could potentially be put into the view
 		if (allTabsList.size() - newVisibleTabList.size() == 1) {
 			TabPanel lastPanel = allTabsList.get(allTabsList.size() - 1);
@@ -599,7 +594,7 @@ public class MultiTabPanel extends JPanel {
 			usedWidth += panel.getPreferredSize().width;
 		}
 
-		// remove items from the end of the visible list until we have room for the current tab         
+		// remove items from the end of the visible list until we have room for the current tab
 		for (int i = newVisibleTabList.size() - 1; i >= 0; i--) {
 			TabPanel lastPanel = newVisibleTabList.remove(i);
 			int width = lastPanel.getPreferredSize().width;
@@ -790,7 +785,7 @@ public class MultiTabPanel extends JPanel {
 		list.addFocusListener(new FocusAdapter() {
 			@Override
 			public void focusLost(FocusEvent focusEvent) {
-				// close the window when the user focuses another component 
+				// close the window when the user focuses another component
 				if (focusEvent.getOppositeComponent() != filterField) {
 					hideListWindowDueToFocusChange();
 				}
@@ -912,7 +907,7 @@ public class MultiTabPanel extends JPanel {
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	private class TabPanel extends JPanel {
 		private Color defaultBgColor;
@@ -963,7 +958,7 @@ public class MultiTabPanel extends JPanel {
 		}
 	}
 
-	// a panel that paints below it's bounds in order to connect the panel and the border 
+	// a panel that paints below it's bounds in order to connect the panel and the border
 	// below it visually
 	private class SelectedPanel extends TabPanel {
 		private SelectedPanel(Color backgroundColor, Program program, JLabel nameLabel,
@@ -1005,8 +1000,8 @@ public class MultiTabPanel extends JPanel {
 		}
 	}
 
-	// This class doesn't paint the bottom border in order to make the object appear to be 
-	// connected to the component below.  This class also paints its side borders below its 
+	// This class doesn't paint the bottom border in order to make the object appear to be
+	// connected to the component below.  This class also paints its side borders below its
 	// bounds for the same reason.
 	class BottomlessBevelBorder extends BevelBorder {
 		public BottomlessBevelBorder() {
@@ -1014,7 +1009,7 @@ public class MultiTabPanel extends JPanel {
 		}
 
 		@Override
-		// overridden to reduce the space below, since there is no component	    
+		// overridden to reduce the space below, since there is no component
 		public Insets getBorderInsets(Component c) {
 			Insets borderInsets = super.getBorderInsets(c);
 			borderInsets.bottom = 0;
@@ -1079,7 +1074,7 @@ public class MultiTabPanel extends JPanel {
 			g.setColor(getHighlightOuterColor(c));
 			g.drawLine(0, h - 1, w - 1, h - 1);
 
-			// bottom inner         
+			// bottom inner
 			g.setColor(getShadowInnerColor(c));
 
 			g.translate(-x, -y);

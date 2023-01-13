@@ -58,7 +58,7 @@ public class MultiTabPlugin extends Plugin implements DomainObjectListener {
 	// Unusual Code Alert!: We can't initialize these in the fields above because calling
 	// DockingUtils calls into Swing code.  Further, we don't want Swing code being accessed
 	// when the Plugin classes are loaded, as they get loaded in the headless environment.
-	// 
+	//
 	private final KeyStroke NEXT_TAB_KEYSTROKE =
 		KeyStroke.getKeyStroke(KeyEvent.VK_F9, DockingUtils.CONTROL_KEY_MODIFIER_MASK);
 	private final KeyStroke PREVIOUS_TAB_KEYSTROKE =
@@ -96,14 +96,14 @@ public class MultiTabPlugin extends Plugin implements DomainObjectListener {
 		goToProgramAction.setMenuBarData(
 			new MenuData(new String[] { ToolConstants.MENU_NAVIGATION, "Go To Program..." }, null,
 				ToolConstants.MENU_NAVIGATION_GROUP_WINDOWS, MenuData.NO_MNEMONIC, firstGroup));
-		goToProgramAction.setKeyBindingData(
-			new KeyBindingData(KeyEvent.VK_F7, InputEvent.CTRL_DOWN_MASK));
+		goToProgramAction
+				.setKeyBindingData(new KeyBindingData(KeyEvent.VK_F7, InputEvent.CTRL_DOWN_MASK));
 
 		goToProgramAction.setEnabled(false);
 		goToProgramAction.setDescription(
 			"Shows the program selection dialog with the current program selected");
-		goToProgramAction.setHelpLocation(
-			new HelpLocation("ProgramManagerPlugin", "Go_To_Program"));
+		goToProgramAction
+				.setHelpLocation(new HelpLocation("ProgramManagerPlugin", "Go_To_Program"));
 
 		goToNextProgramAction = new DockingAction("Go To Next Program", getName()) {
 			@Override
@@ -133,7 +133,7 @@ public class MultiTabPlugin extends Plugin implements DomainObjectListener {
 		goToPreviousProgramAction.setHelpLocation(
 			new HelpLocation("ProgramManagerPlugin", "Go_To_Next_And_Previous_Program"));
 
-		// this timer is to give the user time to select successive programs before activating one 
+		// this timer is to give the user time to select successive programs before activating one
 		selectHighlightedProgramTimer = new Timer(750, e -> selectHighlightedProgram());
 		selectHighlightedProgramTimer.setRepeats(false);
 
@@ -146,11 +146,11 @@ public class MultiTabPlugin extends Plugin implements DomainObjectListener {
 		goToLastActiveProgramAction.setMenuBarData(new MenuData(
 			new String[] { ToolConstants.MENU_NAVIGATION, "Go To Last Active Program" }, null,
 			ToolConstants.MENU_NAVIGATION_GROUP_WINDOWS, MenuData.NO_MNEMONIC, secondGroup));
-		goToLastActiveProgramAction.setKeyBindingData(
-			new KeyBindingData(KeyEvent.VK_F6, InputEvent.CTRL_DOWN_MASK));
+		goToLastActiveProgramAction
+				.setKeyBindingData(new KeyBindingData(KeyEvent.VK_F6, InputEvent.CTRL_DOWN_MASK));
 		goToLastActiveProgramAction.setEnabled(false);
-		goToLastActiveProgramAction.setDescription(
-			"Activates the last program used before the current program");
+		goToLastActiveProgramAction
+				.setDescription("Activates the last program used before the current program");
 		goToLastActiveProgramAction.setHelpLocation(
 			new HelpLocation("ProgramManagerPlugin", "Go_To_Last_Active_Program"));
 
@@ -192,10 +192,31 @@ public class MultiTabPlugin extends Plugin implements DomainObjectListener {
 	String getStringUsedInList(Program program) {
 		DomainFile df = program.getDomainFile();
 		String changeIndicator = program.isChanged() ? "*" : "";
+		String pathString = getShortPath(df);
 		if (!df.isInWritableProject()) {
-			return df.toString() + " [Read-Only]" + changeIndicator;
+			return pathString + " [Read-Only]" + changeIndicator;
 		}
-		return df.toString() + changeIndicator;
+		return pathString + changeIndicator;
+	}
+
+	private String getShortPath(DomainFile df) {
+		String pathString = df.toString();
+		int length = pathString.length();
+		if (length < 100) {
+			return pathString;
+		}
+
+		String[] pathParts = pathString.split("/");
+		if (pathParts.length == 2) { // at least 2 for project name and filename
+			return pathString;
+		}
+
+		String projectName = df.getProjectLocator().getName();
+		int parentFolderIndex = pathParts.length - 2;
+		String parentName = pathParts[parentFolderIndex];
+		String filename = df.getName();
+		pathString = projectName + ":/.../" + parentName + "/" + filename;
+		return pathString;
 	}
 
 	String getToolTip(Program program) {
