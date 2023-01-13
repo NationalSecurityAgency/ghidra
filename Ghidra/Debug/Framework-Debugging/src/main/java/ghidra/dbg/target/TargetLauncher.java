@@ -139,4 +139,5 @@ public interface TargetLauncher extends TargetObject {
 	 * @return a future which completes when the command is completed
 	 */
 	public CompletableFuture<Void> launch(Map<String, ?> args);
+
 }

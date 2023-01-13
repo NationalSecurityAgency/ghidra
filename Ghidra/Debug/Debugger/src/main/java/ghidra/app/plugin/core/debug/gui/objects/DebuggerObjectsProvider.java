@@ -59,7 +59,6 @@ import ghidra.dbg.error.DebuggerMemoryAccessException;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetConsole.Channel;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
-import ghidra.dbg.target.TargetLauncher.TargetCmdLineLauncher;
 import ghidra.dbg.target.TargetMethod.ParameterDescription;
 import ghidra.dbg.target.TargetSteppable.TargetStepKind;
 import ghidra.dbg.util.DebuggerCallbackReorderer;
@@ -1335,38 +1334,32 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		if (currentProgram == null) {
 			return;
 		}
-		performAction(context, true, TargetLauncher.class, launcher -> {
-			// TODO: A generic or pluggable way of deriving the launch arguments
-			return launcher.launch(Map.of(
-				TargetCmdLineLauncher.CMDLINE_ARGS_NAME, currentProgram.getExecutablePath()));
-		}, "Couldn't launch");
+		performLaunchAction(context, false);
 	}
 
 	public void performLaunch(ActionContext context) {
-		performAction(context, true, TargetLauncher.class, launcher -> {
+		performLaunchAction(context, true);
+	}
 
-			Map<String, ?> args = launchOffer.getLauncherArgs(launcher, true);
-			if (args == null) {
-				// Cancelled
-				return AsyncUtils.NIL;
-			}
-			return launcher.launch(args);
-			/*
-			String argsKey = TargetCmdLineLauncher.CMDLINE_ARGS_NAME;
-			String path = (currentProgram != null) ? currentProgram.getExecutablePath() : null;
-			launchDialog.setCurrentContext(path);
-			String cmdlineArgs = launchDialog.getMemorizedArgument(argsKey, String.class);
-			if (cmdlineArgs == null) {
-				cmdlineArgs = path;
-				launchDialog.setMemorizedArgument(argsKey, String.class,
-					cmdlineArgs);
-			}
-			Map<String, ?> args = launchDialog.promptArguments(launcher.getParameters());
-			if (args == null) {
-				return AsyncUtils.NIL;
-			}
-			return launcher.launch(args);
-			*/
+	private void performLaunchAction(ActionContext context, boolean p) {
+		performAction(context, true, TargetLauncher.class, launcher -> {
+			var locals = new Object() {
+				boolean prompt = p;
+			};
+			return AsyncUtils.loop(TypeSpec.VOID, (loop) -> {
+				Map<String, ?> args = launchOffer.getLauncherArgs(launcher, locals.prompt);
+				if (args == null) {
+					// Cancelled
+					loop.exit();
+				}
+				else {
+					launcher.launch(args).thenAccept(loop::exit).exceptionally(ex -> {
+						loop.repeat();
+						return null;
+					});
+				}
+				locals.prompt = true;
+			});
 		}, "Couldn't launch");
 	}
 

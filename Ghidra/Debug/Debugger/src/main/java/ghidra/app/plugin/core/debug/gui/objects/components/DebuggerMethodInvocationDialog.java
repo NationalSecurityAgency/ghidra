@@ -19,9 +19,7 @@ import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.beans.*;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.*;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -32,6 +30,7 @@ import org.apache.commons.lang3.tuple.MutablePair;
 import org.jdom.Element;
 
 import docking.DialogComponentProvider;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.utils.MiscellaneousUtils;
 import ghidra.dbg.target.TargetMethod;
 import ghidra.dbg.target.TargetMethod.ParameterDescription;
@@ -92,6 +91,8 @@ public class DebuggerMethodInvocationDialog extends DialogComponentProvider
 	private PairLayout layout;
 
 	protected JButton invokeButton;
+	protected JButton resetButton;
+	protected boolean resetRequested;
 
 	private final PluginTool tool;
 	private Map<String, ParameterDescription<?>> parameters;
@@ -105,7 +106,7 @@ public class DebuggerMethodInvocationDialog extends DialogComponentProvider
 		super(title, true, false, true, false);
 		this.tool = tool;
 
-		populateComponents(buttonText, buttonIcon);
+		populateComponents(buttonText, buttonIcon, "Reset", DebuggerResources.ICON_REFRESH);
 		setRememberSize(false);
 	}
 
@@ -126,7 +127,8 @@ public class DebuggerMethodInvocationDialog extends DialogComponentProvider
 		populateOptions();
 	}
 
-	private void populateComponents(String buttonText, Icon buttonIcon) {
+	private void populateComponents(String buttonText, Icon buttonIcon,
+			String resetText, Icon resetIcon) {
 		panel = new JPanel(new BorderLayout());
 		panel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
@@ -144,19 +146,31 @@ public class DebuggerMethodInvocationDialog extends DialogComponentProvider
 
 		invokeButton = new JButton(buttonText, buttonIcon);
 		addButton(invokeButton);
+		resetButton = new JButton(resetText, resetIcon);
+		addButton(resetButton);
 		addCancelButton();
 
 		invokeButton.addActionListener(this::invoke);
+		resetButton.addActionListener(this::reset);
+		resetRequested = false;
 	}
 
 	@Override
 	protected void cancelCallback() {
 		this.arguments = null;
+		this.resetRequested = false;
 		close();
 	}
 
 	private void invoke(ActionEvent evt) {
 		this.arguments = TargetMethod.validateArguments(parameters, collectArguments(), false);
+		this.resetRequested = false;
+		close();
+	}
+
+	private void reset(ActionEvent evt) {
+		this.arguments = new LinkedHashMap<>();
+		this.resetRequested = true;
 		close();
 	}
 
@@ -175,7 +189,8 @@ public class DebuggerMethodInvocationDialog extends DialogComponentProvider
 				Msg.warn(this, "No editor for " + type + "? Trying String instead");
 				editor = PropertyEditorManager.findEditor(String.class);
 			}
-			editor.setValue(computeMemorizedValue(param));
+			Object val = computeMemorizedValue(param);
+			editor.setValue(val);
 			editor.addPropertyChangeListener(this);
 			pairPanel.add(MiscellaneousUtils.getEditorComponent(editor));
 			// TODO: How to handle parameter with choices?
@@ -184,10 +199,14 @@ public class DebuggerMethodInvocationDialog extends DialogComponentProvider
 	}
 
 	protected Map<String, ?> collectArguments() {
-		return paramEditors.keySet()
-				.stream()
-				.collect(Collectors.toMap(param -> param.name,
-					param -> memorized.get(NameTypePair.fromParameter(param))));
+		Map<String, Object> map = new LinkedHashMap<>();
+		for (ParameterDescription<?> param : paramEditors.keySet()) {
+			Object val = memorized.get(NameTypePair.fromParameter(param));
+			if (val != null) {
+				map.put(param.name, val);
+			}
+		}
+		return map;
 	}
 
 	public Map<String, ?> getArguments() {
@@ -196,6 +215,9 @@ public class DebuggerMethodInvocationDialog extends DialogComponentProvider
 
 	public <T> void setMemorizedArgument(String name, Class<T> type, T value) {
 		//name = addContext(name, currentContext);
+		if (value == null) {
+			return;
+		}
 		memorized.put(new NameTypePair(name, type), value);
 	}
 
@@ -237,6 +259,10 @@ public class DebuggerMethodInvocationDialog extends DialogComponentProvider
 				Msg.error(this, "Error restoring memorized parameter " + name, e);
 			}
 		}
+	}
+
+	public boolean isResetRequested() {
+		return resetRequested;
 	}
 
 }

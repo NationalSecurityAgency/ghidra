@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.service.model;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.util.Collection;
 import java.util.List;
@@ -35,7 +35,7 @@ public class TestDebuggerProgramLaunchOpinion implements DebuggerProgramLaunchOp
 
 	public static class TestDebuggerProgramLaunchOffer implements DebuggerProgramLaunchOffer {
 		@Override
-		public CompletableFuture<LaunchResult> launchProgram(TaskMonitor monitor, boolean prompt,
+		public CompletableFuture<LaunchResult> launchProgram(TaskMonitor monitor, PromptMode prompt,
 				LaunchConfigurator configurator) {
 			return CompletableFuture
 					.completedFuture(LaunchResult.totalFailure(new AssertionError()));
