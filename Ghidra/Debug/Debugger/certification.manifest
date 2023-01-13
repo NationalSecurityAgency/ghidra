@@ -129,7 +129,6 @@ src/main/resources/images/resume.png||GHIDRA||||END|
 src/main/resources/images/seek-present.png||GHIDRA||||END|
 src/main/resources/images/select-registers.png||GHIDRA||||END|
 src/main/resources/images/skipover.png||GHIDRA||||END|
-src/main/resources/images/stack.png||GHIDRA||||END|
 src/main/resources/images/stepback.png||GHIDRA||||END|
 src/main/resources/images/stepinto.png||GHIDRA||||END|
 src/main/resources/images/steplast.png||GHIDRA||||END|
