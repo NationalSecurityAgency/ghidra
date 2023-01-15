@@ -61,7 +61,7 @@ public class ElfLoaderOptionsFactory {
 
 		ElfHeader elf = new ElfHeader(provider, null);
 
-		long imageBase = elf.findImageBase();
+		long imageBase = elf.getImageBase();
 		if (imageBase == 0 && (elf.isRelocatable() || elf.isSharedObject())) {
 			imageBase = elf.is64Bit() ? IMAGE64_BASE_DEFAULT : IMAGE_BASE_DEFAULT;
 		}
