@@ -83,7 +83,6 @@ public class ElfBinaryAnalysisCommand extends FlatProgramAPI
 			MemoryByteProvider.createDefaultAddressSpaceByteProvider(program, false);
 		try {
 			ElfHeader elf = new ElfHeader(provider, msg -> messages.appendMsg(msg));
-			elf.parse();
 
 			processElfHeader(elf, listing);
 			processProgramHeaders(elf, listing);

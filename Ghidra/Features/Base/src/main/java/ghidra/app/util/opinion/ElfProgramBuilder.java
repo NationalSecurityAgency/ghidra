@@ -79,6 +79,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	private MessageLog log;
 
 	private ElfHeader elf;
+	private ByteProvider byteProvider;
 	private FileBytes fileBytes;
 
 	private Listing listing;
@@ -86,10 +87,11 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 	private HashMap<ElfSymbol, Address> symbolMap = new HashMap<>();
 
-	protected ElfProgramBuilder(ElfHeader elf, Program program, List<Option> options,
-			MessageLog log) {
+	protected ElfProgramBuilder(ByteProvider byteProvider, Program program,
+			List<Option> options, MessageLog log) {
 		super(program);
-		this.elf = elf;
+		this.elf = null;
+		this.byteProvider = byteProvider;
 		this.options = options;
 		this.log = log;
 		memory = program.getMemory();
@@ -106,17 +108,16 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		return elf;
 	}
 
-	static void loadElf(ElfHeader elf, Program program, List<Option> options, MessageLog log,
-			TaskMonitor monitor) throws IOException, CancelledException {
-		ElfProgramBuilder elfProgramBuilder = new ElfProgramBuilder(elf, program, options, log);
+	static void loadElf(ByteProvider byteProvider, Program program, List<Option> options,
+			MessageLog log, TaskMonitor monitor) throws IOException, CancelledException, ElfException {
+		ElfProgramBuilder elfProgramBuilder = new ElfProgramBuilder(byteProvider, program, options, log);
 		elfProgramBuilder.load(monitor);
 	}
 
-	protected void load(TaskMonitor monitor) throws IOException, CancelledException {
-
-		monitor.setMessage("Completing ELF header parsing...");
+	protected void load(TaskMonitor monitor) throws IOException, CancelledException, ElfException {
+		monitor.setMessage("Parsing ELF file...");
 		monitor.setCancelEnabled(false);
-		elf.parse();
+		elf = new ElfHeader(byteProvider, msg -> log.appendMsg(msg));
 		monitor.setCancelEnabled(true);
 
 		int id = program.startTransaction("Load ELF program");
@@ -126,8 +127,6 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 			setImageBase();
 			program.setExecutableFormat(ElfLoader.ELF_NAME);
-
-			ByteProvider byteProvider = elf.getByteProvider();
 
 			createFileBytes(byteProvider, monitor);
 
@@ -1576,7 +1575,6 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 						new ObfuscatedFileByteProvider(tmpFile, null, AccessMode.READ)) {
 
 						ElfHeader minidebugElf = new ElfHeader(debugDataBP, null);
-						minidebugElf.parse();
 
 						ElfSymbolTable[] minidebugSymbolTables = minidebugElf.getSymbolTables();
 						int debugSymbolsCount = 0;
@@ -3541,7 +3539,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	 */
 	private InputStream getInitializedBlockInputStream(MemoryLoadable loadable, Address start,
 			long fileOffset, long dataLength) throws IOException {
-		InputStream dataInput = elf.getByteProvider().getInputStream(fileOffset);
+		InputStream dataInput = byteProvider.getInputStream(fileOffset);
 		return elf.getLoadAdapter()
 				.getFilteredLoadInputStream(this, loadable, start, dataLength, dataInput);
 	}

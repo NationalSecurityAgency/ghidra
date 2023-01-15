@@ -143,8 +143,7 @@ public class ElfLoader extends AbstractLibrarySupportLoader {
 			throws IOException, CancelledException {
 
 		try {
-			ElfHeader elf = new ElfHeader(provider, msg -> log.appendMsg(msg));
-			ElfProgramBuilder.loadElf(elf, program, options, log, monitor);
+			ElfProgramBuilder.loadElf(provider, program, options, log, monitor);
 		}
 		catch (ElfException e) {
 			throw new IOException(e.getMessage());

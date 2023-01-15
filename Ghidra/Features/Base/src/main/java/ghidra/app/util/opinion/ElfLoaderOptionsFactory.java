@@ -15,6 +15,7 @@
  */
 package ghidra.app.util.opinion;
 
+import java.io.IOException;
 import java.util.List;
 
 import ghidra.app.util.Option;
@@ -51,7 +52,7 @@ public class ElfLoaderOptionsFactory {
 	}
 
 	static void addOptions(List<Option> options, ByteProvider provider, LoadSpec loadSpec)
-			throws ElfException, LanguageNotFoundException {
+			throws ElfException, IOException {
 
 		// NOTE: add-to-program is not supported
 

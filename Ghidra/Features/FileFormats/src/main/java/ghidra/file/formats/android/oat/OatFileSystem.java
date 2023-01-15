@@ -55,7 +55,6 @@ public class OatFileSystem extends GFileSystemBase {
 
 			if (magicMatch) {
 				ElfHeader elf = new ElfHeader(provider, null);
-				elf.parse();
 
 				ElfSymbolTable dynamicSymbolTable = elf.getDynamicSymbolTable();
 				if (dynamicSymbolTable != null) {
@@ -97,7 +96,6 @@ public class OatFileSystem extends GFileSystemBase {
 			monitor.setMessage("Parsing ELF header...");
 			monitor.incrementProgress(1);
 			ElfHeader elf = new ElfHeader(provider, null);
-			elf.parse();
 			monitor.incrementProgress(1);
 
 			ElfSectionHeader roDataSection = elf.getSection(ElfSectionHeaderConstants.dot_rodata);

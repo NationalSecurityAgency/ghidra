@@ -85,17 +85,10 @@ public class ARM_ElfExtension extends ElfExtension {
 		// if enabled PC Bias must be factored in explicitly during relocation processing
 		boolean enablePcBiasOption = false;
 
-		try {
-			elf.parse(); // ensure ELF is fully parsed to query section data
-
-			// Enable PC Bias use if Green Hills (GHS) detected
-			ElfSectionHeader section = elf.getSection(".ghsinfo");
-			if (section != null) {
-				enablePcBiasOption = true;
-			}
-		}
-		catch (IOException e) {
-			Msg.warn(this, "Failed to fully parse ELF headers to formulate ARM import options");
+		// Enable PC Bias use if Green Hills (GHS) detected
+		ElfSectionHeader section = elf.getSection(".ghsinfo");
+		if (section != null) {
+			enablePcBiasOption = true;
 		}
 
 		options.add(new Option(APPLY_PC_BIAS_TO_RELATIVE_RELOCATIONS_OPTION_NAME,
