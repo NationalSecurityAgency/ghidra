@@ -64,14 +64,14 @@ class ShowComponentAction extends DockingAction
 			icon = EMPTY_ICON;
 		}
 
-		if (subMenuName != null) {
-			setMenuBarData(
-				new MenuData(new String[] { MENU_WINDOW, subMenuName, placeholder.getFullTitle() },
-					icon, "Permanent"));
-		}
-		else {
-			setMenuBarData(new MenuData(new String[] { MENU_WINDOW, title }, icon, "Permanent"));
-		}
+		String[] menuPath = subMenuName != null
+				? new String[] { MENU_WINDOW, subMenuName, "temporary_placeholder" }
+				: new String[] { MENU_WINDOW, "temporary_placeholder" };
+		MenuData menuData = new MenuData(menuPath, icon, "Permanent");
+		// defer setting the menu name until after the ctor so we can specify it using
+		// MenuData.setMenuItemNamePlain(), which won't parse the string for '&'s.
+		menuData.setMenuItemNamePlain(subMenuName != null ? placeholder.getFullTitle() : title);
+		setMenuBarData(menuData);
 
 		// keybinding data used to show the binding in the menu
 		ComponentProvider provider = placeholder.getProvider();

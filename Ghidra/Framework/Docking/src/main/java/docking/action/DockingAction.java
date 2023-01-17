@@ -15,11 +15,12 @@
  */
 package docking.action;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
+
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 import javax.swing.*;
 

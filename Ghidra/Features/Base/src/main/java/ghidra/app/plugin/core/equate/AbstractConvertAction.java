@@ -76,7 +76,9 @@ public abstract class AbstractConvertAction extends ListingContextAction {
 		if (menuName == null) {
 			return false;
 		}
-		getPopupMenuData().setMenuItemName(menuName);
+
+		getPopupMenuData().setMenuItemNamePlain(menuName);
+
 		return true;
 	}
 
@@ -155,4 +157,6 @@ public abstract class AbstractConvertAction extends ListingContextAction {
 		}
 		return buf.toString();
 	}
+
+
 }

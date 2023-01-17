@@ -15,9 +15,10 @@
  */
 package ghidra.app.plugin.core.decompile.actions;
 
+import java.util.List;
+
 import java.awt.Font;
 import java.awt.FontMetrics;
-import java.util.List;
 
 import javax.swing.JMenuItem;
 
@@ -331,7 +332,8 @@ public abstract class ConvertConstantAction extends AbstractDecompilerAction {
 			return false;
 		}
 		String menuString = getStandardLengthString(getMenuPrefix()) + convDisplay;
-		getPopupMenuData().setMenuItemName(menuString);
+		getPopupMenuData().setMenuItemNamePlain(menuString);
+
 		return true;
 	}
 
