@@ -17,18 +17,9 @@ package generic.theme.laf;
 
 import javax.swing.UIDefaults;
 
-import generic.theme.ApplicationThemeManager;
-import generic.theme.LafType;
+public class MacUiDefaultsMapper extends UiDefaultsMapper {
 
-public class WindowsLookAndFeelManager extends LookAndFeelManager {
-
-	public WindowsLookAndFeelManager(ApplicationThemeManager themeManager) {
-		super(LafType.WINDOWS, themeManager);
+	protected MacUiDefaultsMapper(UIDefaults defaults) {
+		super(defaults);
 	}
-
-	@Override
-	protected UiDefaultsMapper getUiDefaultsMapper(UIDefaults defaults) {
-		return new WindowsUiDefaultsMapper(defaults);
-	}
-
 }

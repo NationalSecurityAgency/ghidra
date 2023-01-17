@@ -15,21 +15,18 @@
  */
 package generic.theme.laf;
 
-import generic.theme.GThemeValueMap;
+import javax.swing.UIDefaults;
 
-/**
- * Adds specialized groupings unique to the Motif LookAndFeel
- */
-public class MotifThemeGrouper extends ThemeGrouper {
-	public MotifThemeGrouper() {
+public class MotifUiDefaultsMapper extends UiDefaultsMapper {
 
+	protected MotifUiDefaultsMapper(UIDefaults defaults) {
+		super(defaults);
 	}
 
 	@Override
-	public void group(GThemeValueMap values) {
-		defineCustomFontGroup("font.monospaced", "Spinner.font", values);
-
-		super.group(values);
+	protected void registerIgnoredLafIds() {
+		super.registerIgnoredLafIds();
+		ignoredLafIds.add("controlLightShadow");
 	}
 
 }

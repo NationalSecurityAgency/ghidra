@@ -15,20 +15,27 @@
  */
 package generic.theme.laf;
 
+import static generic.theme.SystemThemeIds.*;
+
 import javax.swing.UIDefaults;
 
-import generic.theme.ApplicationThemeManager;
-import generic.theme.LafType;
+public class MetalUiDefaultsMapper extends UiDefaultsMapper {
 
-public class WindowsLookAndFeelManager extends LookAndFeelManager {
-
-	public WindowsLookAndFeelManager(ApplicationThemeManager themeManager) {
-		super(LafType.WINDOWS, themeManager);
+	protected MetalUiDefaultsMapper(UIDefaults defaults) {
+		super(defaults);
 	}
 
 	@Override
-	protected UiDefaultsMapper getUiDefaultsMapper(UIDefaults defaults) {
-		return new WindowsUiDefaultsMapper(defaults);
+	protected void registerIgnoredLafIds() {
+		super.registerIgnoredLafIds();
+		ignoredLafIds.add("textInactiveText");
+	}
+
+	@Override
+	protected void assignSystemColorValues() {
+		super.assignSystemColorValues();
+		assignSystemColorFromLafId(FG_DISABLED_ID, "Label.disabledForeground");
+		assignSystemColorFromLafId(FG_VIEW_ID, "windowText");
 	}
 
 }

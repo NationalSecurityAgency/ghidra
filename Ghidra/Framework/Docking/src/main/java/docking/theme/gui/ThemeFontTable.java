@@ -43,11 +43,11 @@ public class ThemeFontTable extends JPanel implements ActionContextProvider {
 	private GFilterTable<FontValue> filterTable;
 	private ThemeManager themeManager;
 
-	public ThemeFontTable(ThemeManager themeManager) {
+	public ThemeFontTable(ThemeManager themeManager, GThemeValuesCache valuesProvider) {
 		super(new BorderLayout());
 		this.themeManager = themeManager;
 
-		fontTableModel = new ThemeFontTableModel(themeManager);
+		fontTableModel = new ThemeFontTableModel(valuesProvider);
 		filterTable = new GFilterTable<>(fontTableModel);
 		table = filterTable.getTable();
 		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);

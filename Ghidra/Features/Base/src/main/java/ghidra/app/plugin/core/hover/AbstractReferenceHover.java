@@ -46,7 +46,7 @@ import ghidra.util.bean.opteditor.OptionsVetoException;
 public abstract class AbstractReferenceHover extends AbstractConfigurableHover {
 
 	private static final int WINDOW_OFFSET = 50;
-	private static final Color BACKGROUND_COLOR = Colors.BACKGROUND_TOOLTIP;
+	private static final Color BACKGROUND_COLOR = Colors.BG_TOOLTIP;
 	private static final Color FG_COLOR_NOT_IN_MEMORY = new GColor("color.fg.hint");
 
 	private CodeFormatService codeFormatService;
@@ -128,8 +128,7 @@ public abstract class AbstractReferenceHover extends AbstractConfigurableHover {
 		String widthOptionName = optionName + Options.DELIMITER + "Dialog Width";
 		String heightOptionName = optionName + Options.DELIMITER + "Dialog Height";
 
-		if (optionName.equals(widthOptionName) ||
-			optionName.equals(heightOptionName)) {
+		if (optionName.equals(widthOptionName) || optionName.equals(heightOptionName)) {
 			int dialogWidth = options.getInt(widthOptionName, 600);
 			if (dialogWidth <= 0) {
 				throw new OptionsVetoException(

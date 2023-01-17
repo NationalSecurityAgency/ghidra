@@ -26,13 +26,13 @@ import ghidra.util.Msg;
  * Loads all the system theme.property files that contain all the default color, font, and
  * icon values.
  */
-public class ApplicationThemeDefaultsProvider implements ThemeDefaultsProvider {
+public class PropertyFileThemeDefaults implements ApplicationThemeDefaults {
 
 	private GThemeValueMap defaults = new GThemeValueMap();
 	private GThemeValueMap darkDefaults = new GThemeValueMap();
 	private Map<LafType, GThemeValueMap> lafDefaultsMap = new HashMap<>();
 
-	ApplicationThemeDefaultsProvider() {
+	PropertyFileThemeDefaults() {
 		loadThemeDefaultFiles();
 	}
 
@@ -69,17 +69,17 @@ public class ApplicationThemeDefaultsProvider implements ThemeDefaultsProvider {
 	}
 
 	@Override
-	public GThemeValueMap getDefaults() {
+	public GThemeValueMap getLightValues() {
 		return defaults;
 	}
 
 	@Override
-	public GThemeValueMap getDarkDefaults() {
+	public GThemeValueMap getDarkValues() {
 		return darkDefaults;
 	}
 
 	@Override
-	public GThemeValueMap getLookAndFeelDefaults(LafType lafType) {
+	public GThemeValueMap getLookAndFeelValues(LafType lafType) {
 		return lafDefaultsMap.get(lafType);
 	}
 

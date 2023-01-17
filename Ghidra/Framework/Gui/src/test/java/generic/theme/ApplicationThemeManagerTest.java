@@ -23,12 +23,10 @@ import java.awt.Font;
 import java.net.URL;
 import java.util.*;
 
-import javax.swing.Icon;
-import javax.swing.JLabel;
+import javax.swing.*;
 import javax.swing.plaf.UIResource;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import generic.theme.builtin.*;
 import resources.ResourceManager;
@@ -71,6 +69,12 @@ public class ApplicationThemeManagerTest {
 		darkDefaultValues.addColor(new ColorValue("color.test.bg", BLACK));
 		darkDefaultValues.addColor(new ColorValue("color.test.fg", BLUE));
 		themeManager = new DummyApplicationThemeManager();
+	}
+
+	@After
+	public void cleanupUIDefaults() {
+		UIDefaults defaults = UIManager.getDefaults();
+		defaults.clear();
 	}
 
 	@Test
@@ -348,21 +352,21 @@ public class ApplicationThemeManagerTest {
 		}
 
 		@Override
-		protected ThemeDefaultsProvider getThemeDefaultsProvider() {
-			return new ThemeDefaultsProvider() {
+		protected ApplicationThemeDefaults getApplicationDefaults() {
+			return new ApplicationThemeDefaults() {
 
 				@Override
-				public GThemeValueMap getDefaults() {
+				public GThemeValueMap getLightValues() {
 					return defaultValues;
 				}
 
 				@Override
-				public GThemeValueMap getDarkDefaults() {
+				public GThemeValueMap getDarkValues() {
 					return darkDefaultValues;
 				}
 
 				@Override
-				public GThemeValueMap getLookAndFeelDefaults(LafType lafType) {
+				public GThemeValueMap getLookAndFeelValues(LafType lafType) {
 					return null;
 				}
 

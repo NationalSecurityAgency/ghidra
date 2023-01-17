@@ -15,6 +15,8 @@
  */
 package generic.theme;
 
+import java.awt.Color;
+import java.awt.Font;
 import java.io.File;
 import java.net.URL;
 import java.util.*;
@@ -340,4 +342,50 @@ public class GThemeValueMap {
 	public Set<String> getIconIds() {
 		return iconMap.keySet();
 	}
+
+	/**
+	 * Returns the resolved color, following indirections as need to get the color ultimately
+	 * assigned to the given id.
+	 * @param id the id for which to get a color
+	 * @return the resolved color, following indirections as need to get the color ultimately
+	 * assigned to the given id.
+	 */
+	public Color getResolvedColor(String id) {
+		ColorValue colorValue = colorMap.get(id);
+		if (colorValue != null) {
+			return colorValue.get(this);
+		}
+		return null;
+	}
+
+	/**
+	 * Returns the resolved font, following indirections as need to get the font ultimately
+	 * assigned to the given id.
+	 * @param id the id for which to get a font
+	 * @return the resolved font, following indirections as need to get the font ultimately
+	 * assigned to the given id
+	 */
+	public Font getResolvedFont(String id) {
+		FontValue fontValue = fontMap.get(id);
+		if (fontValue != null) {
+			return fontValue.get(this);
+		}
+		return null;
+	}
+
+	/**
+	 * Returns the resolved icon, following indirections as need to get the icon ultimately
+	 * assigned to the given id.
+	 * @param id the id for which to get an icon
+	 * @return the resolved icon, following indirections as need to get the icon ultimately
+	 * assigned to the given id
+	 */
+	public Icon getResolvedIcon(String id) {
+		IconValue iconValue = iconMap.get(id);
+		if (iconValue != null) {
+			return iconValue.get(this);
+		}
+		return null;
+	}
+
 }

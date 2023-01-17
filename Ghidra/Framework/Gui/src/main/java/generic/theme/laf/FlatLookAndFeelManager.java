@@ -15,18 +15,16 @@
  */
 package generic.theme.laf;
 
+import javax.swing.UIDefaults;
 import javax.swing.UIManager;
 
-import generic.theme.*;
+import generic.theme.ApplicationThemeManager;
+import generic.theme.LafType;
 
 public class FlatLookAndFeelManager extends LookAndFeelManager {
 
 	public FlatLookAndFeelManager(LafType laf, ApplicationThemeManager themeManager) {
 		super(laf, themeManager);
-
-		// establish system color to LookAndFeel colors
-		systemToLafMap.addColor(new ColorValue(SYSTEM_WIDGET_BACKGROUND_COLOR_ID, "text"));
-		systemToLafMap.addColor(new ColorValue(SYSTEM_TOOLTIP_BACKGROUND_COLOR_ID, "info"));
 	}
 
 	@Override
@@ -39,7 +37,10 @@ public class FlatLookAndFeelManager extends LookAndFeelManager {
 	}
 
 	@Override
-	protected ThemeGrouper getThemeGrouper() {
-		return new FlatThemeGrouper();
+	protected UiDefaultsMapper getUiDefaultsMapper(UIDefaults defaults) {
+		if (getLookAndFeelType() == LafType.FLAT_DARK) {
+			return new FlatDarkUiDefaultsMapper(defaults);
+		}
+		return new FlatUiDefaultsMapper(defaults);
 	}
 }

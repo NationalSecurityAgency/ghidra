@@ -73,7 +73,7 @@ public class ApplicationThemeManager extends ThemeManager {
 
 	@Override
 	public void reloadApplicationDefaults() {
-		themeDefaultsProvider = getThemeDefaultsProvider();
+		applicationDefaults = getApplicationDefaults();
 		buildCurrentValues();
 		lookAndFeelManager.resetAll(javaDefaults);
 		notifyThemeChanged(new AllValuesChangedThemeEvent(false));
@@ -127,6 +127,7 @@ public class ApplicationThemeManager extends ThemeManager {
 		if (theme.hasSupportedLookAndFeel()) {
 			activeTheme = theme;
 			LafType lafType = theme.getLookAndFeelType();
+			cleanUiDefaults();		// clear out any values previous themes may have installed
 			lookAndFeelManager = lafType.getLookAndFeelManager(this);
 			try {
 				lookAndFeelManager.installLookAndFeel();
@@ -245,20 +246,6 @@ public class ApplicationThemeManager extends ThemeManager {
 			gColorMap.put(id, gColor);
 		}
 		return gColor;
-	}
-
-	/**
-	 * Sets specially defined system UI values.  These values are created by the application as a
-	 * convenience for mapping generic concepts to values that differ by Look and Feel.  This allows
-	 * clients to use 'system' properties without knowing the actual Look and Feel terms.
-	 *
-	 * <p>For example, 'system.color.border' defaults to 'controlShadow', but maps to 'nimbusBorder'
-	 * in the Nimbus Look and Feel.
-	 *
-	 * @param map the map
-	 */
-	public void setSystemDefaults(GThemeValueMap map) {
-		systemValues = map;
 	}
 
 	/**
@@ -408,5 +395,10 @@ public class ApplicationThemeManager extends ThemeManager {
 	public void refreshGThemeValues() {
 		GColor.refreshAll(currentValues);
 		GIcon.refreshAll(currentValues);
+	}
+
+	private void cleanUiDefaults() {
+		UIDefaults defaults = UIManager.getDefaults();
+		defaults.clear();
 	}
 }

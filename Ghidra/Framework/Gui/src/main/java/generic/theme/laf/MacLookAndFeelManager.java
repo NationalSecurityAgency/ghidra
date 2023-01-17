@@ -15,6 +15,8 @@
  */
 package generic.theme.laf;
 
+import javax.swing.UIDefaults;
+
 import generic.theme.ApplicationThemeManager;
 import generic.theme.LafType;
 
@@ -25,7 +27,7 @@ public class MacLookAndFeelManager extends LookAndFeelManager {
 	}
 
 	@Override
-	protected ThemeGrouper getThemeGrouper() {
-		return new MacThemeGrouper();
+	protected UiDefaultsMapper getUiDefaultsMapper(UIDefaults defaults) {
+		return new MacUiDefaultsMapper(defaults);
 	}
 }
