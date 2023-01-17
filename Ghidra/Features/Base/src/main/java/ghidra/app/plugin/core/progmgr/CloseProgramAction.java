@@ -42,9 +42,10 @@ public class CloseProgramAction extends AbstractProgramNameSwitchingAction {
 			setDescription("Close Program");
 		}
 		else {
-			String programName = "'" + program.getDomainFile().getName() + "'";
-			getMenuBarData().setMenuItemName("&Close " + programName);
-			setDescription("<html>Close " + HTMLUtilities.escapeHTML(programName));
+			String progName = program.getDomainFile().getName();
+			getMenuBarData().setMenuItemNamePlain("Close '%s'".formatted(progName));
+			getMenuBarData().setMnemonic('C');
+			setDescription("<html>Close '%s'".formatted(HTMLUtilities.escapeHTML(progName)));
 		}
 	}
 
