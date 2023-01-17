@@ -590,7 +590,7 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 	public CompletableFuture<VariableValueTable> fillVariableValueTable(VariableValueTable table,
 			ProgramLocation programLocation, DebuggerCoordinates current,
 			FieldLocation fieldLocation, Field field, List<String> warnings) {
-		if (traceManager == null || mappingService == null) {
+		if (traceManager == null || mappingService == null || current.getPlatform() == null) {
 			return null;
 		}
 		VariableEvaluator eval;
