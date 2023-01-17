@@ -113,8 +113,11 @@ public abstract class AbstractGadpLocalDebuggerModelFactory implements DebuggerM
 			try {
 				ProcessBuilder builder = new ProcessBuilder();
 				List<String> cmd = new ArrayList<>();
-				cmd.add("java");
-				cmd.addAll(List.of("-cp", System.getProperty("java.class.path")));
+				String javaCommand = System.getProperty("java.home") + File.separator + "bin" +
+					File.separator + "java";
+				cmd.add(javaCommand);
+				cmd.add("-cp");
+				cmd.add(System.getProperty("java.class.path"));
 				if (jdwpPort >= 0) {
 					cmd.add("-agentlib:jdwp=server=y,transport=dt_socket,address=" + jdwpPort +
 						",suspend=" + (jdwpSuspend ? "y" : "n"));
