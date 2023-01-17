@@ -15,6 +15,7 @@
  */
 package ghidra.app.util.bin.format.macho.relocation;
 
+import ghidra.app.util.bin.format.RelocationException;
 import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.bin.format.macho.commands.NList;
 import ghidra.app.util.bin.format.macho.commands.SymbolTableCommand;
@@ -25,7 +26,6 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolUtilities;
 import ghidra.util.NumericUtilities;
-import ghidra.util.exception.NotFoundException;
 
 /**
  * A representation of a single Mach-O relocation that the {@link MachoRelocationHandler} will use
@@ -144,9 +144,9 @@ public class MachoRelocation {
 	 * Gets the {@link Address} of the relocation target
 	 * 
 	 * @return The {@link Address} of the relocation target
-	 * @throws NotFoundException If the {@link Address} of the relocation target could not be found
+	 * @throws RelocationException If the {@link Address} of the relocation target could not be found
 	 */
-	public Address getTargetAddress() throws NotFoundException {
+	public Address getTargetAddress() throws RelocationException {
 		if (targetSymbol != null) {
 			return targetSymbol.getAddress();
 		}
@@ -156,17 +156,17 @@ public class MachoRelocation {
 		if (targetPointer != null) {
 			return targetPointer;
 		}
-		throw new NotFoundException("Relocation target not found");
+		throw new RelocationException("Relocation target not found");
 	}
 	
 	/**
 	 * Gets the {@link Address} of the extra relocation target
 	 * 
 	 * @return The {@link Address} of the extra relocation target
-	 * @throws NotFoundException If the {@link Address} of the extra relocation target could not be 
+	 * @throws RelocationException If the {@link Address} of the extra relocation target could not be 
 	 *   found (of if there wasn't an extra relocation target).
 	 */
-	public Address getTargetAddressExtra() throws NotFoundException {
+	public Address getTargetAddressExtra() throws RelocationException {
 		if (targetSymbolExtra != null) {
 			return targetSymbolExtra.getAddress();
 		}
@@ -176,7 +176,7 @@ public class MachoRelocation {
 		if (targetPointerExtra != null) {
 			return targetPointerExtra;
 		}
-		throw new NotFoundException("Extra relocation target not found");
+		throw new RelocationException("Extra relocation target not found");
 	}
 	
 	/**

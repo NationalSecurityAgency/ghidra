@@ -35,6 +35,7 @@ import ghidra.program.model.data.StringDataType;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
+import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.reloc.RelocationTable;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
@@ -655,15 +656,15 @@ public class NeLoader extends AbstractOrdinalSupportLoader {
 				}
 
 				int relocType = reloc.getType();
+				int byteLength = SegmentRelocation.TYPE_LENGTHS[relocType];
 
 				do {
+					// TODO: it appears that offset may be a far-offset and not always a segment-offset
 					SegmentedAddress address = space.getAddress(segment, offset);
 					try {
-						byte[] bytes = new byte[SegmentRelocation.TYPE_LENGTHS[relocType]];
-						memory.getBytes(address, bytes);
-
-						relocTable.add(address, relocType, reloc.getValues(), bytes, null);
 						offset = relocate(memory, reloc, address, relocAddr);
+						relocTable.add(address, Status.APPLIED, relocType, reloc.getValues(),
+							byteLength, null);
 					}
 					catch (MemoryAccessException e) {
 						log.appendMsg("Relocation does not exist in memory: " + relocAddr);

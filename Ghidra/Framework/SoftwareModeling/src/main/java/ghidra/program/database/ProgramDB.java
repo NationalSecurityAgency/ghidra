@@ -107,9 +107,11 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	 *                            TypeDefSettingsDefinition.  Added DataTypeManager versioning 
 	 *                            support.  Added support for auto-named TypeDef datatypes.
 	 *                            Transitioned string data translation storage to use address-based 
-	 *                            property map (StringTranslations).   
+	 *                            property map (StringTranslations).
+	 * 19-Jan-2023 - version 26   Improved relocation data records to incorporate status and 
+	 *                            byte-length when original FileBytes should be used.
 	 */
-	static final int DB_VERSION = 25;
+	static final int DB_VERSION = 26;
 
 	/**
 	 * UPGRADE_REQUIRED_BFORE_VERSION should be changed to DB_VERSION anytime the
@@ -129,6 +131,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	public static final int EXTERNAL_FUNCTIONS_ADDED_VERSION = 17;
 	public static final int COMPOUND_VARIABLE_STORAGE_ADDED_VERSION = 18;
 	public static final int AUTO_PARAMETERS_ADDED_VERSION = 19;
+	public static final int RELOCATION_STATUS_ADDED_VERSION = 26;
 
 	private static final String DATA_MAP_TABLE_NAME = "Program";
 

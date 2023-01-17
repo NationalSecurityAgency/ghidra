@@ -26,6 +26,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.reloc.RelocationResult;
 import ghidra.util.exception.*;
 
 /**
@@ -85,12 +86,14 @@ public class ElfRelocationContext {
 	 * All relocation entries must be processed in the order they appear within the table.
 	 * @param relocation relocation to be processed
 	 * @param relocationAddress relocation address where it should be applied
+	 * @return applied relocation result
 	 */
-	public final void processRelocation(ElfRelocation relocation, Address relocationAddress) {
+	public final RelocationResult processRelocation(ElfRelocation relocation,
+			Address relocationAddress) {
 
 		if (handler == null) {
 			handleNoHandlerError(relocation, relocationAddress);
-			return;
+			return RelocationResult.FAILURE;
 		}
 
 		int symbolIndex = relocation.getSymbolIndex();
@@ -98,21 +101,22 @@ public class ElfRelocationContext {
 		if (sym == null) {
 			ElfRelocationHandler.markAsUnhandled(program, relocationAddress, relocation.getType(),
 				symbolIndex, "index " + symbolIndex, getLog());
-			return;
+			return RelocationResult.FAILURE;
 		}
 		if (sym.isTLS()) {
 			handleUnsupportedTLSRelocation(relocation, relocationAddress, sym);
-			return;
+			return RelocationResult.FAILURE;
 		}
 
 		try {
-			handler.relocate(this, relocation, relocationAddress);
+			return handler.relocate(this, relocation, relocationAddress);
 		}
 		catch (MemoryAccessException | NotFoundException e) {
 			loadHelper.log(e);
 			ElfRelocationHandler.markAsUnhandled(program, relocationAddress, relocation.getType(),
 				symbolIndex, sym.getNameAsString(), getLog());
 		}
+		return RelocationResult.FAILURE;
 	}
 
 	/**

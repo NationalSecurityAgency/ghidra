@@ -22,6 +22,7 @@ import ghidra.program.database.map.AddressKeyRecordIterator;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.util.exception.VersionException;
 
 class RelocationDBAdapterV1 extends RelocationDBAdapter {
@@ -29,6 +30,7 @@ class RelocationDBAdapterV1 extends RelocationDBAdapter {
 
 	private final static int V1_TYPE_COL = 0;
 
+/* Do not remove the following commented out schema! It shows the version 1 relocation table schema. */
 //	final static Schema SCHEMA = new Schema(
 //		RelocationDBAdapterV1.VERSION, "Address", new Field[] { IntField.INSTANCE },
 //		new String[] { "Type" });
@@ -43,8 +45,8 @@ class RelocationDBAdapterV1 extends RelocationDBAdapter {
 	 * @throws IOException if database IO error occurs
 	 * @throws VersionException throw if table schema is not V1
 	 */
-	RelocationDBAdapterV1(DBHandle handle, AddressMap addrMap) throws IOException,
-			VersionException {
+	RelocationDBAdapterV1(DBHandle handle, AddressMap addrMap)
+			throws IOException, VersionException {
 		this.addrMap = addrMap;
 		relocTable = handle.getTable(TABLE_NAME);
 		if (relocTable == null || relocTable.getSchema().getVersion() != VERSION) {
@@ -53,7 +55,8 @@ class RelocationDBAdapterV1 extends RelocationDBAdapter {
 	}
 
 	@Override
-	void add(Address addrKey, int type, long[] values, byte[] bytes, String symbolName) {
+	void add(Address addrKey, byte flags, int type, long[] values, byte[] bytes,
+			String symbolName) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -88,6 +91,7 @@ class RelocationDBAdapterV1 extends RelocationDBAdapter {
 		}
 		DBRecord newRec = SCHEMA.createRecord(rec.getKey());
 		newRec.setLongValue(ADDR_COL, rec.getKey()); // key was encoded address
+		newRec.setByteValue(FLAGS_COL, getFlags(Status.UNKNOWN, 0));
 		newRec.setIntValue(TYPE_COL, rec.getIntValue(V1_TYPE_COL));
 		return newRec;
 	}

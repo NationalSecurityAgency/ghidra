@@ -23,6 +23,7 @@ import java.util.*;
 import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.StructConverter;
+import ghidra.app.util.bin.format.RelocationException;
 import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.bin.format.macho.commands.*;
 import ghidra.app.util.bin.format.macho.commands.ExportTrie.ExportEntry;
@@ -42,6 +43,8 @@ import ghidra.program.model.lang.Processor;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
+import ghidra.program.model.reloc.Relocation.Status;
+import ghidra.program.model.reloc.RelocationResult;
 import ghidra.program.model.reloc.RelocationTable;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
@@ -1284,38 +1287,50 @@ public class MachoProgramBuilder {
  			Address address = relocationMap.get(relocationInfo);
  			MachoRelocation relocation = null;
 
+			RelocationResult result = RelocationResult.FAILURE;
  			if (handler == null) {
  				handleRelocationError(address, String.format(
  					"No relocation handler for machine type 0x%x to process relocation at %s with type 0x%x",
  					machoHeader.getCpuType(), address, relocationInfo.getType()));
  			}
  			else {
+				relocation = handler.isPairedRelocation(relocationInfo)
+						? new MachoRelocation(program, machoHeader, address, relocationInfo,
+							iter.next())
+						: new MachoRelocation(program, machoHeader, address, relocationInfo);
  				try {
- 					relocation = handler.isPairedRelocation(relocationInfo)
- 							? new MachoRelocation(program, machoHeader, address, relocationInfo,
- 								iter.next())
- 							: new MachoRelocation(program, machoHeader, address, relocationInfo);
- 					handler.relocate(relocation);
+					result = handler.relocate(relocation);
+
+					if (result.status() == Status.UNSUPPORTED) {
+						handleRelocationError(address,
+							String.format("Relocation type 0x%x at address %s is not supported",
+								relocationInfo.getType(), address));
+					}
 				}
 				catch (MemoryAccessException e) {
  					handleRelocationError(address, String.format(
- 						"Error accessing memory at address %s.  Relocation failed.", address));
+						"Relocation failure at address %s: error accessing memory.", address));
  				}
- 				catch (NotFoundException e) {
- 					handleRelocationError(address,
- 						String.format("Relocation type 0x%x at address %s is not supported: %s",
- 							relocationInfo.getType(), address, e.getMessage()));
- 				}
- 				catch (AddressOutOfBoundsException e) {
- 					handleRelocationError(address,
- 						String.format("Error computing relocation at address %s.", address));
+				catch (RelocationException e) {
+					handleRelocationError(address, String.format(
+						"Relocation failure at address %s: %s", address, e.getMessage()));
+				}
+				catch (Exception e) { // handle unexpected exceptions
+					String msg = e.getMessage();
+					if (msg == null) {
+						msg = e.toString();
+					}
+					msg = String.format("Relocation failure at address %s: %s", address, msg);
+					handleRelocationError(address, msg);
+					Msg.error(this, msg, e);
  				}
 			}
 			program.getRelocationTable()
-				.add(address, relocationInfo.getType(), new long[] { relocationInfo.getValue(),
+					.add(address, result.status(), relocationInfo.getType(),
+						new long[] { relocationInfo.getValue(),
 					relocationInfo.getLength(), relocationInfo.isPcRelocated() ? 1 : 0,
 					relocationInfo.isExternal() ? 1 : 0, relocationInfo.isScattered() ? 1 : 0 },
-						null, relocation.getTargetDescription());
+						result.byteLength(), relocation.getTargetDescription());
 		}
 	}
 	
@@ -1325,7 +1340,7 @@ public class MachoProgramBuilder {
  	 * @param address The address of the relocation error
  	 * @param message The error message
  	 */
- 	private void handleRelocationError(Address address, String message) {
+	private void handleRelocationError(Address address, String message) {
  		program.getBookmarkManager()
  				.setBookmark(address, BookmarkType.ERROR, "Relocations", message);
  		log.appendMsg(message);
@@ -1783,10 +1798,21 @@ public class MachoProgramBuilder {
 			}
 
 			if (!start || !program.getRelocationTable().hasRelocation(chainLoc)) {
-				addRelocationTableEntry(chainLoc,
-					(start ? 0x8000 : 0x4000) | (isAuthenticated ? 4 : 0) | (isBound ? 2 : 0) | 1,
-					newChainValue, symName);
-				DyldChainedPtr.setChainValue(memory, chainLoc, pointerFormat, newChainValue);
+				int byteLength = 0;
+				Status status = Status.FAILURE;
+				try {
+					RelocationResult result =
+						DyldChainedPtr.setChainValue(memory, chainLoc, pointerFormat,
+							newChainValue);
+					status = result.status();
+					byteLength = result.byteLength();
+				}
+				finally {
+					addRelocationTableEntry(chainLoc, status,
+						(start ? 0x8000 : 0x4000) | (isAuthenticated ? 4 : 0) | (isBound ? 2 : 0) |
+							1,
+						newChainValue, byteLength, symName);
+				}
 			}
 			// delay creating data until after memory has been changed
 			unchainedLocList.add(chainLoc);
@@ -1797,11 +1823,12 @@ public class MachoProgramBuilder {
 		}
 	}
 
-	private void addRelocationTableEntry(Address chainLoc, int type, long chainValue, String name) {
+	private void addRelocationTableEntry(Address chainLoc, Status status, int type, long chainValue,
+			int byteLength, String name) {
 		if (shouldAddChainedFixupsRelocations) {
 			// Add entry to relocation table for the pointer fixup
 			program.getRelocationTable()
-					.add(chainLoc, type, new long[] { chainValue }, null, name);
+					.add(chainLoc, status, type, new long[] { chainValue }, byteLength, name);
 		}
 	}
 
@@ -1871,12 +1898,20 @@ public class MachoProgramBuilder {
 		// Add entry to relocation table for the pointer fixup
 		byte origBytes[] = new byte[8];
 		memory.getBytes(pointerAddr, origBytes);
-		program.getRelocationTable()
-				.add(pointerAddr, (int) fixedPointerType, new long[] { fixedPointerValue },
-					origBytes, null);
 
-		// Fixup the pointer
-		memory.setLong(pointerAddr, fixedPointerValue);
+		boolean success = false;
+		try {
+			// Fixup the pointer
+			memory.setLong(pointerAddr, fixedPointerValue);
+			success = true;
+		}
+		finally {
+			Status status = success ? Status.APPLIED : Status.FAILURE;
+			program.getRelocationTable()
+					.add(pointerAddr, status, (int) fixedPointerType,
+						new long[] { fixedPointerValue },
+						origBytes, null);
+		}
 	}
 
 	/**

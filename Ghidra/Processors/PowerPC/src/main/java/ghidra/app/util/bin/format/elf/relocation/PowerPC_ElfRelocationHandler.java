@@ -29,6 +29,8 @@ import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.ContextChangeException;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
+import ghidra.program.model.reloc.RelocationResult;
+import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.symbol.*;
 import ghidra.util.exception.*;
 
@@ -46,7 +48,8 @@ public class PowerPC_ElfRelocationHandler extends ElfRelocationHandler {
 	}
 
 	@Override
-	public void relocate(ElfRelocationContext elfRelocationContext, ElfRelocation relocation,
+	public RelocationResult relocate(ElfRelocationContext elfRelocationContext,
+			ElfRelocation relocation,
 			Address relocationAddress) throws MemoryAccessException, NotFoundException {
 
 		PowerPC_ElfRelocationContext ppcRelocationContext =
@@ -54,7 +57,7 @@ public class PowerPC_ElfRelocationHandler extends ElfRelocationHandler {
 
 		ElfHeader elf = ppcRelocationContext.getElfHeader();
 		if (elf.e_machine() != ElfConstants.EM_PPC || !elf.is32Bit()) {
-			return;
+			return RelocationResult.FAILURE;
 		}
 
 		Program program = ppcRelocationContext.getProgram();
@@ -62,7 +65,7 @@ public class PowerPC_ElfRelocationHandler extends ElfRelocationHandler {
 
 		int type = relocation.getType();
 		if (type == PowerPC_ElfRelocationConstants.R_PPC_NONE) {
-			return;
+			return RelocationResult.SKIPPED;
 		}
 		int symbolIndex = relocation.getSymbolIndex();
 
@@ -72,6 +75,7 @@ public class PowerPC_ElfRelocationHandler extends ElfRelocationHandler {
 			markAsError(program, relocationAddress, Long.toString(type), null,
 				"Unsupported language for 32-bit PowerPC relocation",
 				ppcRelocationContext.getLog());
+			// TODO: should we return failure status?
 		}
 
 		// NOTE: Based upon glibc source it appears that PowerPC only uses RELA relocations
@@ -100,11 +104,13 @@ public class PowerPC_ElfRelocationHandler extends ElfRelocationHandler {
 		int oldValue = memory.getInt(relocationAddress);
 		int newValue = 0;
 
+		int byteLength = 4; // most relocations affect 4-bytes (change if different)
+
 		switch (type) {
 			case PowerPC_ElfRelocationConstants.R_PPC_COPY:
 				markAsWarning(program, relocationAddress, "R_PPC_COPY", symbolName,
 					symbolIndex, "Runtime copy not supported", elfRelocationContext.getLog());
-				break;
+				return RelocationResult.SKIPPED;
 			case PowerPC_ElfRelocationConstants.R_PPC_ADDR32:
 			case PowerPC_ElfRelocationConstants.R_PPC_UADDR32:
 			case PowerPC_ElfRelocationConstants.R_PPC_GLOB_DAT:
@@ -126,10 +132,12 @@ public class PowerPC_ElfRelocationHandler extends ElfRelocationHandler {
 			case PowerPC_ElfRelocationConstants.R_PPC_ADDR16_LO:
 				newValue = symbolValue + addend;
 				memory.setShort(relocationAddress, (short) newValue);
+				byteLength = 2;
 				break;
 			case PowerPC_ElfRelocationConstants.R_PPC_ADDR16_HI:
 				newValue = (symbolValue + addend) >> 16;
 				memory.setShort(relocationAddress, (short) newValue);
+				byteLength = 2;
 				break;
 			/**
 			 * 
@@ -163,6 +171,7 @@ public class PowerPC_ElfRelocationHandler extends ElfRelocationHandler {
 			case PowerPC_ElfRelocationConstants.R_PPC_ADDR16_HA:
 				newValue = (symbolValue + addend + 0x8000) >> 16;
 				memory.setShort(relocationAddress, (short) newValue);
+				byteLength = 2;
 				break;
 			case PowerPC_ElfRelocationConstants.R_PPC_ADDR14:
 			case PowerPC_ElfRelocationConstants.R_PPC_ADDR14_BRTAKEN:
@@ -220,6 +229,7 @@ public class PowerPC_ElfRelocationHandler extends ElfRelocationHandler {
 					// and we may only have room in the plt for two instructions.
 					markAsUnhandled(program, relocationAddress, type, symbolIndex, symbolName,
 						ppcRelocationContext.getLog());
+					return RelocationResult.FAILURE;
 				}
 				break;
 			case PowerPC_ElfRelocationConstants.R_PPC_EMB_SDA21:
@@ -255,13 +265,13 @@ public class PowerPC_ElfRelocationHandler extends ElfRelocationHandler {
 						markAsError(program, relocationAddress, type, symbolName,
 							"Unsupported relocation for external symbol",
 							ppcRelocationContext.getLog());
-						break;
+						return RelocationResult.FAILURE;
 					}
 				}
 				if (gprID == null || sdaBase == null) {
 					markAsError(program, relocationAddress, type, symbolName,
 						"Failed to identfy appropriate data block", ppcRelocationContext.getLog());
-					break;
+					return RelocationResult.FAILURE;
 				}
 
 				newValue = (symbolValue - sdaBase + addend) & 0xffff;
@@ -273,8 +283,9 @@ public class PowerPC_ElfRelocationHandler extends ElfRelocationHandler {
 			default:
 				markAsUnhandled(program, relocationAddress, type, symbolIndex, symbolName,
 					ppcRelocationContext.getLog());
-				break;
+				return RelocationResult.UNSUPPORTED;
 		}
+		return new RelocationResult(Status.APPLIED, byteLength);
 	}
 
 	/**

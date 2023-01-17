@@ -37,6 +37,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.reloc.RelocationTable;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.AddressSetPropertyMap;
@@ -305,7 +306,8 @@ public class PeLoader extends AbstractPeDebugLoader {
 			int baseAddr = reloc.getVirtualAddress();
 			for (int i = 0; i < reloc.getCount(); ++i) {
 				long addr = optionalHeader.getImageBase() + baseAddr + reloc.getOffset(i);
-				relocTable.add(space.getAddress(addr), reloc.getType(i), null, null, null);
+				relocTable.add(space.getAddress(addr), Status.SKIPPED, reloc.getType(i), null, null,
+					null);
 			}
 		}
 	}

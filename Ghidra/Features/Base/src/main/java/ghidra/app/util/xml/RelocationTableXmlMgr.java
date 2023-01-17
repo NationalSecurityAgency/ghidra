@@ -19,11 +19,13 @@ import java.util.Iterator;
 import java.util.StringTokenizer;
 
 import org.apache.commons.lang3.StringUtils;
+import org.xml.sax.SAXParseException;
 
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.reloc.Relocation;
+import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.reloc.RelocationTable;
 import ghidra.util.XmlProgramUtilities;
 import ghidra.util.exception.CancelledException;
@@ -42,15 +44,14 @@ class RelocationTableXmlMgr {
 		this.log = log;
 	}
 
-	void read(XmlPullParser parser, TaskMonitor monitor) throws CancelledException {
+	void read(XmlPullParser parser, TaskMonitor monitor)
+			throws SAXParseException, CancelledException {
 		RelocationTable relocTable = program.getRelocationTable();
 		AddressFactory factory = program.getAddressFactory();
 
 		XmlElement element = parser.next();
 		while (true) {
-			if (monitor.isCancelled()) {
-				throw new CancelledException();
-			}
+			monitor.checkCanceled();
 			element = parser.next();
 			if (!element.getName().equals("RELOCATION")) {
 				break;
@@ -70,7 +71,29 @@ class RelocationTableXmlMgr {
 				byte[] bytes = unpackBytes(element.getAttribute("BYTES")); // optional
 				String symbolName = element.getAttribute("SYMBOL_NAME"); // optional
 
-				relocTable.add(addr, type, values, bytes, symbolName);
+				String statusAttr = element.getAttribute("STATUS");
+				Status status = Status.UNKNOWN;
+				if (statusAttr != null) {
+					try {
+						status = Status.valueOf(statusAttr.toUpperCase());
+					}
+					catch (IllegalArgumentException e) {
+						throw new SAXParseException("Invalid relocation status: " + statusAttr,
+							null, null, parser.getLineNumber(), parser.getColumnNumber());
+					}
+				}
+				if (bytes == null) {
+					if (status != null && status.hasBytes()) {
+						log.appendMsg("Relocation at " + addrStr +
+							" missing required bytes - forced UNKNOWN status.");
+						status = Status.UNKNOWN;
+					}
+				}
+				else if (status == null) {
+					status = type == 0 ? Status.APPLIED_OTHER : Status.APPLIED;
+				}
+
+				relocTable.add(addr, status, type, values, bytes, symbolName);
 			}
 			catch (Exception e) {
 				log.appendException(e);
@@ -83,6 +106,9 @@ class RelocationTableXmlMgr {
 	}
 
 	private long[] unpackLongs(String attrValue) {
+		if (attrValue == null) {
+			return null;
+		}
 		StringTokenizer st = new StringTokenizer(attrValue, ",");
 		long[] values = new long[st.countTokens()];
 		int index = 0;

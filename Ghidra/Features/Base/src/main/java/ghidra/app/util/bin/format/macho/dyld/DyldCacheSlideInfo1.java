@@ -138,8 +138,6 @@ public class DyldCacheSlideInfo1 extends DyldCacheSlideInfoCommon {
 
 		List<Address> unchainedLocList = new ArrayList<>(1024);
 
-		byte origBytes[] = new byte[8];
-
 		monitor.setMessage("Fixing V1 chained data page pointers...");
 
 		monitor.setMaximum(entries_count);
@@ -174,8 +172,7 @@ public class DyldCacheSlideInfo1 extends DyldCacheSlideInfoCommon {
 
 							// not actually changing bytes, so not really a relocation, but a relocate-able place
 							if (addRelocations) {
-								addRelocationTableEntry(program, addr, 0x1000, value, origBytes,
-									null);
+								addRelocationTableEntry(program, addr, 0x1000, value, 8, null);
 							}
 							//memory.setLong(addr, value);
 
