@@ -7155,42 +7155,39 @@ define pcodeop pshufb;
 :PSHUFB         XmmReg1, XmmReg2 is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x38; byte=0x00; xmmmod = 3 & XmmReg1 & XmmReg2 { XmmReg1=pshufb(XmmReg1,XmmReg2); }
 
 # determine the total shift required by the bit fields in a shuffle opcode
-Order0: order0	is imm8 [ order0 = (( imm8       & 0x3) << 5); ] { export *[const]:1 order0; } 
-Order1: order1	is imm8 [ order1 = (((imm8 >> 2) & 0x3) << 5); ] { export *[const]:1 order1; } 
-Order2: order2	is imm8 [ order2 = (((imm8 >> 4) & 0x3) << 5); ] { export *[const]:1 order2; } 
-Order3: order3	is imm8 [ order3 = (((imm8 >> 6) & 0x3) << 5); ] { export *[const]:1 order3; } 
+Order0: order0  is imm8 [ order0 = ( imm8       & 0x3); ] { export *[const]:1 order0; }
+Order1: order1  is imm8 [ order1 = ((imm8 >> 2) & 0x3); ] { export *[const]:1 order1; }
+Order2: order2  is imm8 [ order2 = ((imm8 >> 4) & 0x3); ] { export *[const]:1 order2; }
+Order3: order3  is imm8 [ order3 = ((imm8 >> 6) & 0x3); ] { export *[const]:1 order3; }
+
+macro shuffle_4(dest,ord,c0,c1,c2,c3){
+    dest = zext(ord == 0) * c0 + zext(ord == 1) * c1 + zext(ord == 2) * c2 + zext(ord == 3) * c3;
+}
 
 :PSHUFD         XmmReg1, m128, imm8     is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x70; (m128 & XmmReg1 ...); imm8 & Order0 & Order1 & Order2 & Order3
 {
-    shifted:16 = m128 >> Order0;   
-    XmmReg1[0,32] = shifted:4;
-    
-    shifted = m128 >> Order1;   
-    XmmReg1[32,32] = shifted:4;
+    local c0 = m128[0,32];
+    local c1 = m128[32,32];
+    local c2 = m128[64,32];
+    local c3 = m128[96,32];
 
-    shifted = m128 >> Order2;   
-    XmmReg1[64,32] = shifted:4;
-
-    shifted = m128 >> Order3;   
-    XmmReg1[96,32] = shifted:4;
+    shuffle_4(XmmReg1[0,32],Order0,c0,c1,c2,c3);
+    shuffle_4(XmmReg1[32,32],Order1,c0,c1,c2,c3);
+    shuffle_4(XmmReg1[64,32],Order2,c0,c1,c2,c3);
+    shuffle_4(XmmReg1[96,32],Order3,c0,c1,c2,c3);
 }
 
 :PSHUFD         XmmReg1, XmmReg2, imm8  is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x70; xmmmod=3 & XmmReg1 & XmmReg2 ; imm8 & Order0 & Order1 & Order2 & Order3
 {
-    #in case XmmReg1 and XmmReg2 are the same register
-    local original_XmmReg2:16 = XmmReg2;
-    
-    shifted:16 = original_XmmReg2 >> Order0;   
-    XmmReg1[0,32] = shifted:4;
-    
-    shifted = original_XmmReg2 >> Order1;   
-    XmmReg1[32,32] = shifted:4;
+    local c0 = XmmReg2[0,32];
+    local c1 = XmmReg2[32,32];
+    local c2 = XmmReg2[64,32];
+    local c3 = XmmReg2[96,32];
 
-    shifted = original_XmmReg2 >> Order2;   
-    XmmReg1[64,32] = shifted:4;
-
-    shifted = original_XmmReg2 >> Order3;   
-    XmmReg1[96,32] = shifted:4;
+    shuffle_4(XmmReg1[0,32],Order0,c0,c1,c2,c3);
+    shuffle_4(XmmReg1[32,32],Order1,c0,c1,c2,c3);
+    shuffle_4(XmmReg1[64,32],Order2,c0,c1,c2,c3);
+    shuffle_4(XmmReg1[96,32],Order3,c0,c1,c2,c3);
 }
 
 define pcodeop pshufhw;
@@ -8023,42 +8020,38 @@ define pcodeop shufpd;
 
 :SHUFPS  XmmReg, m128, imm8  is vexMode=0 & mandover=0 & byte=0x0F; byte=0xC6; (m128 & XmmReg ...); imm8 & Order0 & Order1 & Order2 & Order3
 {
-    shifted:16 = XmmReg >> Order0;   
-    tempA:4 = shifted:4;
-    
-    shifted = XmmReg >> Order1;   
-    tempB:4 = shifted:4;
+    local m128_c0 = m128[0,32];
+    local m128_c1 = m128[32,32];
+    local m128_c2 = m128[64,32];
+    local m128_c3 = m128[96,32];
 
-    shifted = m128 >> Order2;   
-    tempC:4 = shifted:4;
+    local xmm_c0 = XmmReg[0,32];
+    local xmm_c1 = XmmReg[32,32];
+    local xmm_c2 = XmmReg[64,32];
+    local xmm_c3 = XmmReg[96,32];
 
-    shifted = m128 >> Order3;   
-    tempD:4 = shifted:4;
-
-    XmmReg[0,32] = tempA;
-    XmmReg[32,32] = tempB;
-    XmmReg[64,32] = tempC;
-    XmmReg[96,32] = tempD;
+    shuffle_4(XmmReg[0,32],Order0,xmm_c0,xmm_c1,xmm_c2,xmm_c3);
+    shuffle_4(XmmReg[32,32],Order1,xmm_c0,xmm_c1,xmm_c2,xmm_c3);
+    shuffle_4(XmmReg[64,32],Order2,m128_c0,m128_c1,m128_c2,m128_c3);
+    shuffle_4(XmmReg[96,32],Order3,m128_c0,m128_c1,m128_c2,m128_c3);
 }
 
 :SHUFPS  XmmReg1, XmmReg2, imm8  is vexMode=0 & mandover=0 & byte=0x0F; byte=0xC6; xmmmod=3 & XmmReg1 & XmmReg2; imm8 & Order0 & Order1 & Order2 & Order3
 {
-    shifted:16 = XmmReg1 >> Order0;   
-    tempA:4 = shifted:4;
-    
-    shifted = XmmReg1 >> Order1;   
-    tempB:4 = shifted:4;
+    local xmm1_c0 = XmmReg1[0,32];
+    local xmm1_c1 = XmmReg1[32,32];
+    local xmm1_c2 = XmmReg1[64,32];
+    local xmm1_c3 = XmmReg1[96,32];
 
-    shifted = XmmReg2 >> Order2;   
-    tempC:4 = shifted:4;
+    local xmm2_c0 = XmmReg2[0,32];
+    local xmm2_c1 = XmmReg2[32,32];
+    local xmm2_c2 = XmmReg2[64,32];
+    local xmm2_c3 = XmmReg2[96,32];
 
-    shifted = XmmReg2 >> Order3;   
-    tempD:4 = shifted:4;
-    
-    XmmReg1[0,32] = tempA;
-    XmmReg1[32,32] = tempB;
-    XmmReg1[64,32] = tempC;
-    XmmReg1[96,32] = tempD;
+    shuffle_4(XmmReg1[0,32],Order0,xmm1_c0,xmm1_c1,xmm1_c2,xmm1_c3);
+    shuffle_4(XmmReg1[32,32],Order1,xmm1_c0,xmm1_c1,xmm1_c2,xmm1_c3);
+    shuffle_4(XmmReg1[64,32],Order2,xmm2_c0,xmm2_c1,xmm2_c2,xmm2_c3);
+    shuffle_4(XmmReg1[96,32],Order3,xmm2_c0,xmm2_c1,xmm2_c2,xmm2_c3);
 }
 
 define pcodeop sqrtpd;
