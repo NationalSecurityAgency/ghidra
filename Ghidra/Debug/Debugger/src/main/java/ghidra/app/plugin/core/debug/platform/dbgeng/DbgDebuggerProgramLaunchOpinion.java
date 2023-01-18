@@ -37,7 +37,6 @@ public class DbgDebuggerProgramLaunchOpinion implements DebuggerProgramLaunchOpi
 		protected List<String> getLauncherPath() {
 			return PathUtils.parse("");
 		}
-
 	}
 
 	protected class InVmDbgengDebuggerProgramLaunchOffer
@@ -133,7 +132,7 @@ public class DbgDebuggerProgramLaunchOpinion implements DebuggerProgramLaunchOpi
 		}
 		List<DebuggerProgramLaunchOffer> offers = new ArrayList<>();
 		for (DebuggerModelFactory factory : service.getModelFactories()) {
-			if (!factory.isCompatible()) {
+			if (!factory.isCompatible(program)) {
 				continue;
 			}
 			String clsName = factory.getClass().getName();

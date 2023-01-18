@@ -20,7 +20,7 @@ import static org.junit.Assume.assumeTrue;
 
 import java.io.File;
 
-import agent.gdb.gadp.GdbLocalDebuggerModelFactory;
+import agent.gdb.gadp.GdbGadpDebuggerModelFactory;
 import agent.gdb.model.AbstractGdbModelHost;
 import ghidra.dbg.DebuggerModelFactory;
 import ghidra.util.SystemUtilities;
@@ -30,6 +30,6 @@ class GadpGdbModelHost extends AbstractGdbModelHost {
 	public DebuggerModelFactory getModelFactory() {
 		assumeFalse("Not ready for CI", SystemUtilities.isInTestingBatchMode());
 		assumeTrue("GDB cannot be found", new File("/usr/bin/gdb").canExecute());
-		return new GdbLocalDebuggerModelFactory();
+		return new GdbGadpDebuggerModelFactory();
 	}
 }

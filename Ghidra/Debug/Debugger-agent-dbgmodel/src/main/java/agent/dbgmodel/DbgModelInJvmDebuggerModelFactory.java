@@ -23,15 +23,14 @@ import agent.dbgmodel.model.impl.DbgModel2Impl;
 import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.util.ConfigurableFactory.FactoryDescription;
+import ghidra.program.model.listing.Program;
 
-/**
- * Note this is in the testing source because it's not meant to be shipped in the release.... That
- * may change if it proves stable, though, no?
- */
-@FactoryDescription( //
-	brief = "IN-VM MS dbgmodel local debugger", //
-	htmlDetails = "Launch a dbgmodel session in this same JVM" //
-)
+@FactoryDescription(
+	brief = "MS dbgmodel.dll (WinDbg Preview)",
+	htmlDetails = """
+			Connect to the Microsoft Debug Model.
+			This is the same engine that powers WinDbg 2.
+			This will access the native API, which may put Ghidra's JVM at risk.""")
 public class DbgModelInJvmDebuggerModelFactory implements DebuggerModelFactory {
 
 	protected String remote = "none"; // Require user to start server
@@ -53,8 +52,18 @@ public class DbgModelInJvmDebuggerModelFactory implements DebuggerModelFactory {
 	}
 
 	@Override
-	public boolean isCompatible() {
-		return System.getProperty("os.name").toLowerCase().contains("windows");
+	public int getPriority(Program program) {
+		// TODO: Might instead look for the DLL
+		if (!System.getProperty("os.name").toLowerCase().contains("windows")) {
+			return -1;
+		}
+		if (program != null) {
+			String exe = program.getExecutablePath();
+			if (exe == null || exe.isBlank()) {
+				return -1;
+			}
+		}
+		return 70;
 	}
 
 	public String getAgentTransport() {

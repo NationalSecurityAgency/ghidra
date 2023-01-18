@@ -34,10 +34,12 @@ import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.services.DebuggerModelService;
+import ghidra.app.services.ProgramManager;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.framework.plugintool.AutoService;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
+import ghidra.program.model.listing.Program;
 
 public class DebuggerTargetsProvider extends ComponentProviderAdapter {
 
@@ -107,7 +109,9 @@ public class DebuggerTargetsProvider extends ComponentProviderAdapter {
 		public void actionPerformed(ActionContext context) {
 			// NB. Drop the future on the floor, because the UI will report issues.
 			// Cancellation should be ignored.
-			modelService.showConnectDialog();
+			ProgramManager programManager = tool.getService(ProgramManager.class);
+			Program program = programManager == null ? null : programManager.getCurrentProgram();
+			modelService.showConnectDialog(program);
 		}
 
 		@Override

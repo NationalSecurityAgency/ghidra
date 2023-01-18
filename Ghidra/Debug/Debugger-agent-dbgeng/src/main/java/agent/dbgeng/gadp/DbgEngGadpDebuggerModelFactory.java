@@ -13,20 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package agent.lldb.gadp;
+package agent.dbgeng.gadp;
 
 import java.util.List;
 
 import ghidra.dbg.gadp.server.AbstractGadpLocalDebuggerModelFactory;
 import ghidra.dbg.util.ConfigurableFactory.FactoryDescription;
-import ghidra.util.classfinder.ExtensionPointProperties;
+import ghidra.program.model.listing.Program;
 
-@FactoryDescription( //
-	brief = "LLVM lldb local agent via GADP/TCP", //
-	htmlDetails = "Launch a new agent using LLVM's lldb." //
-)
-@ExtensionPointProperties(priority = 100)
-public class LldbLocalDebuggerModelFactory extends AbstractGadpLocalDebuggerModelFactory {
+@FactoryDescription(
+	brief = "MS dbgeng.dll (WinDbg) via GADP",
+	htmlDetails = """
+			Connect to the Microsoft Debug Engine.
+			This is the same engine that powers WinDbg.
+			This is best for most Windows userspace and kernel targets.
+			Kernel debugging is still experimental.
+			This will protect Ghidra's JVM by using a subprocess to access the native API.""")
+public class DbgEngGadpDebuggerModelFactory extends AbstractGadpLocalDebuggerModelFactory {
 
 	protected String remote = "none"; // Require user to start server
 	@FactoryOption("DebugConnect options (.server)")
@@ -39,9 +42,18 @@ public class LldbLocalDebuggerModelFactory extends AbstractGadpLocalDebuggerMode
 		Property.fromAccessors(String.class, this::getAgentTransport, this::setAgentTransport);
 
 	@Override
-	public boolean isCompatible() {
-		String osname = System.getProperty("os.name");
-		return osname.contains("Mac OS X") || osname.contains("Linux") || osname.contains("Windows");
+	public int getPriority(Program program) {
+		// TODO: Might instead look for the DLL
+		if (!System.getProperty("os.name").toLowerCase().contains("windows")) {
+			return -1;
+		}
+		if (program != null) {
+			String exe = program.getExecutablePath();
+			if (exe == null || exe.isBlank()) {
+				return -1;
+			}
+		}
+		return 60;
 	}
 
 	public String getAgentTransport() {
@@ -62,11 +74,11 @@ public class LldbLocalDebuggerModelFactory extends AbstractGadpLocalDebuggerMode
 
 	@Override
 	protected String getThreadName() {
-		return "Local LLDB Agent stdout";
+		return "Local dbgeng.dll Agent stdout";
 	}
 
 	protected Class<?> getServerClass() {
-		return LldbGadpServer.class;
+		return DbgEngGadpServer.class;
 	}
 
 	@Override
@@ -74,5 +86,12 @@ public class LldbLocalDebuggerModelFactory extends AbstractGadpLocalDebuggerMode
 		cmd.add(getServerClass().getCanonicalName());
 		cmd.addAll(List.of("-H", host));
 		cmd.addAll(List.of("-p", Integer.toString(port)));
+		//cmd.addAll(List.of("-t", transport));
+		if (!remote.equals("none")) {
+			cmd.addAll(List.of("-r", remote));
+		}
+		if (!transport.equals("none")) {
+			cmd.addAll(List.of("-t", transport));
+		}
 	}
 }
