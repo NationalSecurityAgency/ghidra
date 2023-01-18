@@ -905,13 +905,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			});
 		}
 		else {
-			String filename = trace.getName();
 			DomainFolder root = tool.getProject().getProjectData().getRootFolder();
-			DomainFile existing = root.getFile(filename);
-			for (int i = 1; existing != null; i++) {
-				filename = trace.getName() + "." + i;
-				existing = root.getFile(filename);
-			}
 			DomainFolder traces;
 			try {
 				traces = createOrGetFolder(tool, "Save New Trace", root, NEW_TRACES_FOLDER_NAME);
@@ -920,12 +914,20 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 				throw new AssertionError(e);
 			}
 
-			final String finalFilename = filename;
 			new TaskLauncher(new Task("Save New Trace", true, true, true) {
 				@Override
 				public void run(TaskMonitor monitor) throws CancelledException {
+					String filename = trace.getName();
 					try (DomainObjectLockHold hold = maybeLock(trace, force)) {
-						traces.createFile(finalFilename, trace, monitor);
+						for (int i = 1;; i++) {
+							try {
+								traces.createFile(filename, trace, monitor);
+								break;
+							}
+							catch (DuplicateFileException e) {
+								filename = trace.getName() + "." + i;
+							}
+						}
 						trace.save("Initial save", monitor);
 						future.complete(null);
 					}
