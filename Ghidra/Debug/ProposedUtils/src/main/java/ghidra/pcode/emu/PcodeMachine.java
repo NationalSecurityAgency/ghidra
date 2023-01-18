@@ -20,9 +20,9 @@ import java.util.Collection;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.emu.DefaultPcodeThread.PcodeEmulationLibrary;
 import ghidra.pcode.exec.*;
+import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRange;
+import ghidra.program.model.address.*;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 
@@ -32,6 +32,28 @@ import ghidra.program.model.pcode.Varnode;
  * @param <T> the type of objects in the machine's state
  */
 public interface PcodeMachine<T> {
+
+	/**
+	 * Specifies whether or not to interrupt on p-code breakpoints
+	 */
+	enum SwiMode {
+		/**
+		 * Heed {@link PcodeEmulationLibrary#emu_swi()} calls
+		 */
+		ACTIVE,
+		/**
+		 * Ignore all {@link PcodeEmulationLibrary#emu_swi()} calls
+		 */
+		IGNORE_ALL,
+		/**
+		 * Ignore {@link PcodeEmulationLibrary#emu_swi()} calls for one p-code step
+		 * 
+		 * <p>
+		 * The mode is reset to {@link #ACTIVE} after one p-code step, whether or not that step
+		 * causes an SWI.
+		 */
+		IGNORE_STEP,
+	}
 
 	/**
 	 * The kind of access breakpoint
@@ -85,6 +107,25 @@ public interface PcodeMachine<T> {
 	 * @return the arithmetic
 	 */
 	PcodeArithmetic<T> getArithmetic();
+
+	/**
+	 * Change the efficacy of p-code breakpoints
+	 * 
+	 * <p>
+	 * This is used to prevent breakpoints from interrupting at inappropriate times, e.g., upon
+	 * continuing from a breakpoint.
+	 * 
+	 * @param mode the new mode
+	 * @see #withSoftwareInterruptMode(SwiMode)
+	 */
+	void setSoftwareInterruptMode(SwiMode mode);
+
+	/**
+	 * Get the current software interrupt mode
+	 * 
+	 * @return the mode
+	 */
+	SwiMode getSoftwareInterruptMode();
 
 	/**
 	 * Get the userop library common to all threads in the machine.

@@ -51,7 +51,8 @@ import ghidra.framework.options.annotation.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.program.model.address.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
@@ -576,17 +577,11 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 				return false;
 			}
 			ProgramLocation loc = getSingleLocationFromContext(context);
-			if (!(loc.getProgram() instanceof TraceProgramView)) {
+			if (!(loc.getProgram() instanceof TraceProgramView view)) {
 				return true;
 			}
-			TraceRecorder recorder = getRecorderFromContext(context);
-			if (recorder == null) {
-				return false;
-			}
-			if (!recorder.getSupportedBreakpointKinds().containsAll(kinds)) {
-				return false;
-			}
-			return true;
+			Set<TraceBreakpointKind> supported = getSupportedKindsFromTrace(view.getTrace());
+			return supported.containsAll(kinds);
 		}
 	}
 
@@ -720,6 +715,8 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 	private DebuggerTraceManagerService traceManager;
 	@AutoServiceConsumed
 	private DebuggerConsoleService consoleService;
+	@AutoServiceConsumed
+	private DebuggerStateEditingService editingService;
 	// @AutoServiceConsumed via method
 	DecompilerMarginService decompilerMarginService;
 	@SuppressWarnings("unused")
@@ -830,66 +827,67 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 		}
 	}
 
-	protected TraceRecorder getRecorderFromContext(ActionContext context) {
-		if (modelService == null) {
-			return null;
-		}
-		Trace trace = getTraceFromContext(context);
-		return modelService.getRecorder(trace);
-	}
-
-	protected Set<TraceRecorder> getRecordersFromContext(ActionContext context) {
-		TraceRecorder single = getRecorderFromContext(context);
+	protected Set<Trace> getTracesFromContext(ActionContext context) {
+		Trace single = getTraceFromContext(context);
 		if (single != null) {
 			return Set.of(single);
 		}
-		if (mappingService == null || modelService == null) {
+		if (mappingService == null) {
 			return Set.of();
 		}
 		ProgramLocation loc = getSingleLocationFromContext(context);
-		if (loc == null || loc.getProgram() instanceof TraceProgramView) {
+		assert !(loc.getProgram() instanceof TraceProgramView);
+		if (loc == null) {
 			return Set.of();
 		}
 		Set<TraceLocation> mappedLocs = mappingService.getOpenMappedLocations(loc);
 		if (mappedLocs == null || mappedLocs.isEmpty()) {
 			return Set.of();
 		}
-		Set<TraceRecorder> result = new HashSet<>();
+		Set<Trace> result = new HashSet<>();
 		for (TraceLocation tloc : mappedLocs) {
-			TraceRecorder rec = modelService.getRecorder(tloc.getTrace());
-			if (rec != null) {
-				result.add(rec);
-			}
+			result.add(tloc.getTrace());
 		}
 		return result;
 	}
 
-	protected boolean contextHasRecorder(ActionContext ctx) {
-		return getRecorderFromContext(ctx) != null;
-	}
-
 	protected boolean contextCanManipulateBreakpoints(ActionContext ctx) {
-		if (breakpointService == null) {
-			return false;
-		}
-		if (!contextHasLocation(ctx)) {
-			return false;
-		}
-		// Programs, or live traces, but not dead traces
-		if (contextHasTrace(ctx) && !contextHasRecorder(ctx)) {
+		if (breakpointService == null || !contextHasLocation(ctx)) {
 			return false;
 		}
 		return true;
 	}
 
-	protected Set<TraceBreakpointKind> getSupportedKindsFromContext(ActionContext context) {
-		Set<TraceRecorder> recorders = getRecordersFromContext(context);
-		if (recorders.isEmpty()) {
+	protected Set<TraceBreakpointKind> getSupportedKindsFromTrace(Trace trace) {
+		StateEditingMode mode = editingService == null ? StateEditingMode.DEFAULT
+				: editingService.getCurrentMode(trace);
+		if (mode.useEmulatedBreakpoints()) {
 			return EnumSet.allOf(TraceBreakpointKind.class);
 		}
-		return recorders.stream()
-				.flatMap(rec -> rec.getSupportedBreakpointKinds().stream())
-				.collect(Collectors.toSet());
+		if (modelService == null) {
+			return Set.of();
+		}
+		TraceRecorder recorder = modelService.getRecorder(trace);
+		if (recorder == null) {
+			return Set.of();
+		}
+		return recorder.getSupportedBreakpointKinds();
+	}
+
+	protected Set<TraceBreakpointKind> getSupportedKindsFromContext(ActionContext context) {
+		Set<Trace> traces = getTracesFromContext(context);
+		if (traces.isEmpty()) {
+			return EnumSet.allOf(TraceBreakpointKind.class);
+		}
+		Set<TraceBreakpointKind> result = new HashSet<>();
+		for (Trace t : traces) {
+			result.addAll(getSupportedKindsFromTrace(t));
+			if (result.size() == TraceBreakpointKind.COUNT) {
+				// Short circuit if saturated
+				return result;
+			}
+		}
+		return result;
 	}
 
 	protected void doToggleBreakpointsAt(String title, ActionContext context) {

@@ -32,9 +32,12 @@ import ghidra.util.exception.DuplicateNameException;
 		TargetObject.DISPLAY_ATTRIBUTE_NAME,
 		TargetBreakpointLocation.RANGE_ATTRIBUTE_NAME,
 		TraceObjectBreakpointLocation.KEY_COMMENT,
+		TraceObjectBreakpointLocation.KEY_EMU_ENABLED,
 	})
 public interface TraceObjectBreakpointLocation extends TraceBreakpoint, TraceObjectInterface {
 	String KEY_COMMENT = "_comment";
+	String KEY_EMU_ENABLED = "_emu_enabled";
+	String KEY_EMU_SLEIGH = "_emu_sleigh";
 
 	TraceObjectBreakpointSpec getSpecification();
 
@@ -47,6 +50,10 @@ public interface TraceObjectBreakpointLocation extends TraceBreakpoint, TraceObj
 	void setKinds(Lifespan lifespan, Collection<TraceBreakpointKind> kinds);
 
 	void setEnabled(Lifespan lifespan, boolean enabled);
+
+	void setEmuEnabled(Lifespan lifespan, boolean emuEnabled);
+
+	void setEmuSleigh(Lifespan lifespan, String sleigh);
 
 	void setComment(Lifespan lifespan, String comment);
 }

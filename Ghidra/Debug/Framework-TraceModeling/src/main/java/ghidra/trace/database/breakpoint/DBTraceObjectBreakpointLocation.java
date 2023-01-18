@@ -15,13 +15,13 @@
  */
 package ghidra.trace.database.breakpoint;
 
-import java.util.Collection;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.util.PathMatcher;
+import ghidra.pcode.exec.SleighUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.trace.database.target.*;
@@ -208,6 +208,11 @@ public class DBTraceObjectBreakpointLocation
 				object.setValue(Lifespan.span(snap, getClearedSnap()),
 					TargetBreakpointSpec.ENABLED_ATTRIBUTE_NAME, enabled);
 			}
+			Set<TraceBreakpointKind> asSet =
+				kinds instanceof Set<TraceBreakpointKind> yes ? yes : Set.copyOf(kinds);
+			if (!Objects.equals(asSet, getKinds())) {
+				this.setKinds(Lifespan.span(snap, getClearedSnap()), asSet);
+			}
 			return this;
 		}
 	}
@@ -297,8 +302,55 @@ public class DBTraceObjectBreakpointLocation
 
 	@Override
 	public String getComment() {
-		return TraceObjectInterfaceUtils.getValue(object, getPlacedSnap(), KEY_COMMENT,
-			String.class, "");
+		try (LockHold hold = object.getTrace().lockRead()) {
+			return TraceObjectInterfaceUtils.getValue(object, getPlacedSnap(), KEY_COMMENT,
+				String.class, "");
+		}
+	}
+
+	@Override
+	public void setEmuEnabled(Lifespan lifespan, boolean emuEnabled) {
+		object.setValue(lifespan, KEY_EMU_ENABLED, emuEnabled ? null : false);
+	}
+
+	@Override
+	public void setEmuEnabled(boolean emuEnabled) {
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			setEmuEnabled(getLifespan(), emuEnabled);
+		}
+	}
+
+	@Override
+	public boolean isEmuEnabled(long snap) {
+		try (LockHold hold = object.getTrace().lockRead()) {
+			return TraceObjectInterfaceUtils.getValue(object, getPlacedSnap(), KEY_EMU_ENABLED,
+				Boolean.class, true);
+		}
+	}
+
+	@Override
+	public void setEmuSleigh(Lifespan lifespan, String sleigh) {
+		if (sleigh == null || SleighUtils.UNCONDITIONAL_BREAK.equals(sleigh)) {
+			object.setValue(lifespan, KEY_EMU_SLEIGH, null);
+		}
+		else {
+			object.setValue(lifespan, KEY_EMU_SLEIGH, sleigh.trim());
+		}
+	}
+
+	@Override
+	public void setEmuSleigh(String sleigh) {
+		try (LockHold hold = object.getTrace().lockWrite()) {
+			setEmuSleigh(getLifespan(), sleigh);
+		}
+	}
+
+	@Override
+	public String getEmuSleigh() {
+		try (LockHold hold = object.getTrace().lockRead()) {
+			return TraceObjectInterfaceUtils.getValue(object, getPlacedSnap(), KEY_EMU_SLEIGH,
+				String.class, SleighUtils.UNCONDITIONAL_BREAK);
+		}
 	}
 
 	@Override

@@ -53,6 +53,7 @@ import ghidra.app.plugin.core.debug.gui.objects.components.*;
 import ghidra.app.plugin.core.debug.mapping.DebuggerMemoryMapper;
 import ghidra.app.script.*;
 import ghidra.app.services.*;
+import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
 import ghidra.async.*;
 import ghidra.dbg.*;
 import ghidra.dbg.error.DebuggerMemoryAccessException;
@@ -1489,7 +1490,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		//this.recorder = rec;
 		Trace trace = rec.getTrace();
 		traceManager.openTrace(trace);
-		traceManager.activateTrace(trace);
+		traceManager.activate(traceManager.resolveTrace(trace), ActivationCause.START_RECORDING);
 	}
 
 	public void stopRecording(TargetObject targetObject) {

@@ -100,7 +100,7 @@ public class DBTraceBreakpointSpace implements DBTraceSpaceBased {
 			}
 			DBTraceBreakpoint breakpoint =
 				breakpointMapSpace.put(new ImmutableTraceAddressSnapRange(range, lifespan), null);
-			breakpoint.set(path, path, threads, kinds, enabled, comment);
+			breakpoint.set(path, path, threads, kinds, enabled, true, comment);
 			trace.setChanged(
 				new TraceChangeRecord<>(TraceBreakpointChangeType.ADDED, this, breakpoint));
 			return breakpoint;

@@ -45,7 +45,6 @@ import ghidra.app.plugin.core.decompile.DecompilerProvider;
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerEmulationService.EmulationResult;
-import ghidra.app.services.DebuggerStateEditingService.StateEditingMode;
 import ghidra.app.services.DebuggerStateEditingService.StateEditor;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.async.AsyncTestUtils;
@@ -259,7 +258,7 @@ public class VariableValueHoverPluginScreenShots extends GhidraScreenShotGenerat
 		}
 		waitForDomainObject(tb.trace);
 
-		editingService.setCurrentMode(tb.trace, StateEditingMode.WRITE_TRACE);
+		editingService.setCurrentMode(tb.trace, StateEditingMode.RW_TRACE);
 		StateEditor editor = editingService.createStateEditor(tb.trace);
 
 		DebuggerCoordinates atSetup = traceManager.getCurrent();

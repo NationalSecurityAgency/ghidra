@@ -38,9 +38,10 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Bookmark;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
-import ghidra.trace.model.DefaultTraceLocation;
-import ghidra.trace.model.Trace;
+import ghidra.trace.database.ToyDBTraceBuilder;
+import ghidra.trace.model.*;
 import ghidra.trace.model.breakpoint.*;
+import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.TraceStaticMapping;
 import ghidra.util.Msg;
@@ -1551,5 +1552,126 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		// TODO: This is more a test for the marker plugin, no?
 		waitForPass(
 			() -> assertEquals(State.MIXED, lbEx.computeState().sameAdddress(lbRw.computeState())));
+	}
+
+	protected void addTextMappingDead(Program p, ToyDBTraceBuilder tb) throws Throwable {
+		addProgramTextBlock(p);
+		try (UndoableTransaction tid = tb.startTransaction()) {
+			TraceMemoryRegion textRegion = tb.trace.getMemoryManager()
+					.addRegion("Processes[1].Memory[bin:.text]", Lifespan.nowOn(0),
+						tb.range(0x55550000, 0x55550fff),
+						Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
+			DebuggerStaticMappingUtils.addMapping(
+				new DefaultTraceLocation(tb.trace, null, textRegion.getLifespan(),
+					textRegion.getMinAddress()),
+				new ProgramLocation(p, addr(p, 0x00400000)), 0x1000,
+				false);
+		}
+	}
+
+	protected void addEnabledProgramBreakpointWithSleigh(Program p) {
+		try (UndoableTransaction tid =
+			UndoableTransaction.start(p, "Create bookmark bp with sleigh")) {
+			enBm = p.getBookmarkManager()
+					.setBookmark(addr(p, 0x00400123),
+						LogicalBreakpoint.BREAKPOINT_ENABLED_BOOKMARK_TYPE, "SW_EXECUTE;1",
+						"{sleigh: 'r0=0xbeef;'}");
+		}
+	}
+
+	@Test
+	public void testMapThenAddProgramBreakpointWithSleighThenEnableOnTraceCopiesSleigh()
+			throws Throwable {
+		createTrace();
+		traceManager.openTrace(tb.trace);
+		createProgramFromTrace();
+		intoProject(program);
+		programManager.openProgram(program);
+
+		addTextMappingDead(program, tb);
+		waitForSwing();
+
+		addEnabledProgramBreakpointWithSleigh(program);
+		LogicalBreakpoint lb = waitForValue(() -> Unique.assertAtMostOne(
+			breakpointService.getBreakpointsAt(program, addr(program, 0x00400123))));
+
+		assertEquals("r0=0xbeef;", lb.getEmuSleigh());
+
+		waitOn(lb.enable());
+		waitForSwing();
+
+		TraceBreakpoint bpt = Unique.assertOne(
+			tb.trace.getBreakpointManager().getBreakpointsAt(0, tb.addr(0x55550123)));
+		assertEquals("r0=0xbeef;", bpt.getEmuSleigh());
+	}
+
+	@Test
+	public void testAddProgramBreakpointWithSleighThenMapThenEnableOnTraceCopiesSleigh()
+			throws Throwable {
+		createTrace();
+		traceManager.openTrace(tb.trace);
+		createProgramFromTrace();
+		intoProject(program);
+		programManager.openProgram(program);
+
+		addEnabledProgramBreakpointWithSleigh(program);
+		LogicalBreakpoint lb = waitForValue(() -> Unique.assertAtMostOne(
+			breakpointService.getBreakpointsAt(program, addr(program, 0x00400123))));
+
+		assertEquals("r0=0xbeef;", lb.getEmuSleigh());
+
+		addTextMappingDead(program, tb);
+		lb = waitForPass(() -> {
+			LogicalBreakpoint newLb = Unique.assertOne(
+				breakpointService.getBreakpointsAt(program, addr(program, 0x00400123)));
+			assertTrue(newLb.getMappedTraces().contains(tb.trace));
+			return newLb;
+		});
+
+		waitOn(lb.enable());
+		waitForSwing();
+
+		TraceBreakpoint bpt = Unique.assertOne(
+			tb.trace.getBreakpointManager().getBreakpointsAt(0, tb.addr(0x55550123)));
+		assertEquals("r0=0xbeef;", bpt.getEmuSleigh());
+	}
+
+	@Test
+	public void testAddTraceBreakpointSetSleighThenMapThenSaveToProgramCopiesSleigh()
+			throws Throwable {
+		// TODO: What if already mapped?
+		// Not sure I care about tb.setEmuSleigh() out of band
+
+		createTrace();
+		traceManager.openTrace(tb.trace);
+		createProgramFromTrace();
+		intoProject(program);
+		programManager.openProgram(program);
+
+		try (UndoableTransaction tid = tb.startTransaction()) {
+			TraceBreakpoint bpt = tb.trace.getBreakpointManager()
+					.addBreakpoint("Processes[1].Breakpoints[0]", Lifespan.nowOn(0),
+						tb.addr(0x55550123),
+						Set.of(), Set.of(TraceBreakpointKind.SW_EXECUTE),
+						false /* emuEnabled defaults to true */, "");
+			bpt.setEmuSleigh("r0=0xbeef;");
+		}
+		LogicalBreakpoint lb = waitForValue(() -> Unique.assertAtMostOne(
+			breakpointService.getBreakpointsAt(tb.trace, tb.addr(0x55550123))));
+
+		assertEquals("r0=0xbeef;", lb.getEmuSleigh());
+
+		addTextMappingDead(program, tb);
+		lb = waitForPass(() -> {
+			LogicalBreakpoint newLb = Unique.assertOne(
+				breakpointService.getBreakpointsAt(program, addr(program, 0x00400123)));
+			assertTrue(newLb.getMappedTraces().contains(tb.trace));
+			return newLb;
+		});
+
+		lb.enableForProgram();
+		waitForSwing();
+
+		assertEquals("{\"sleigh\":\"r0\\u003d0xbeef;\"}", lb.getProgramBookmark().getComment());
 	}
 }

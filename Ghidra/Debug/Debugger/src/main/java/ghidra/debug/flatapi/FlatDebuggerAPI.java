@@ -30,7 +30,6 @@ import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOf
 import ghidra.app.script.GhidraScript;
 import ghidra.app.script.GhidraState;
 import ghidra.app.services.*;
-import ghidra.app.services.DebuggerStateEditingService.StateEditingMode;
 import ghidra.app.services.DebuggerStateEditingService.StateEditor;
 import ghidra.dbg.AnnotatedDebuggerAttributeListener;
 import ghidra.dbg.DebuggerObjectModel;
@@ -766,9 +765,9 @@ public interface FlatDebuggerAPI {
 	}
 
 	/**
-	 * Apply the given SLEIGH patch to the emulator
+	 * Apply the given Sleigh patch to the emulator
 	 * 
-	 * @param sleigh the SLEIGH source, without terminating semicolon
+	 * @param sleigh the Sleigh source, without terminating semicolon
 	 * @param monitor a monitor for the emulation
 	 * @return true if successful, false otherwise
 	 * @throws CancelledException if the user cancelled via the given monitor

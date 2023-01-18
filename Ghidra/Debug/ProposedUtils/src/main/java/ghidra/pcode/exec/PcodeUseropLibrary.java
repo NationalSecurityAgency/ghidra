@@ -101,7 +101,7 @@ public interface PcodeUseropLibrary<T> {
 		 * Get the name of the userop.
 		 * 
 		 * <p>
-		 * This is the symbol assigned to the userop when compiling new SLEIGH code. It cannot
+		 * This is the symbol assigned to the userop when compiling new Sleigh code. It cannot
 		 * conflict with existing userops (except those declared, but not defined, by the executor's
 		 * language) or other symbols of the executor's language. If this userop is to be used
 		 * generically across many languages, choose an unlikely name. Conventionally, these start

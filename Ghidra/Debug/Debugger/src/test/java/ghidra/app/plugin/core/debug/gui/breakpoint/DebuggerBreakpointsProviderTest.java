@@ -34,6 +34,8 @@ import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.gui.breakpoint.DebuggerBreakpointsProvider.LogicalBreakpointTableModel;
 import ghidra.app.plugin.core.debug.gui.console.DebuggerConsolePlugin;
+import ghidra.app.plugin.core.debug.service.editing.DebuggerStateEditingServicePlugin;
+import ghidra.app.plugin.core.debug.service.emulation.ProgramEmulationUtils;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.services.*;
 import ghidra.app.services.LogicalBreakpoint.State;
@@ -41,12 +43,14 @@ import ghidra.dbg.model.TestTargetProcess;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.dbg.target.TargetBreakpointSpecContainer;
 import ghidra.framework.store.LockException;
+import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryConflictException;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
+import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.SystemUtilities;
 import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.CancelledException;
@@ -681,5 +685,111 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 				AbstractClearSelectedBreakpointsAction.NAME));
 
 		// NOTE: With no selection, no actions (even table built-in) apply, so no menu
+	}
+
+	@Test
+	public void testEmuBreakpointState() throws Throwable {
+		addPlugin(tool, DebuggerStateEditingServicePlugin.class);
+
+		createProgram();
+		intoProject(program);
+		programManager.openProgram(program);
+		waitForSwing();
+
+		addStaticMemoryAndBreakpoint();
+		waitForProgram(program);
+
+		LogicalBreakpointRow row = waitForValue(
+			() -> Unique.assertAtMostOne(breakpointsProvider.breakpointTableModel.getModelData()));
+		assertEquals(State.INEFFECTIVE_ENABLED, row.getState());
+
+		// Do our own launch, so that object mode is enabled during load (region creation)
+		createTrace(program.getLanguageID().getIdAsString());
+		try (UndoableTransaction startTransaction = tb.startTransaction()) {
+			TraceSnapshot initial = tb.trace.getTimeManager().getSnapshot(0, true);
+			ProgramEmulationUtils.loadExecutable(initial, program);
+			Address pc = program.getMinAddress();
+			ProgramEmulationUtils.doLaunchEmulationThread(tb.trace, 0, program, pc, pc);
+		}
+
+		traceManager.openTrace(tb.trace);
+		traceManager.activateTrace(tb.trace);
+		waitForSwing();
+		waitOn(mappingService.changesSettled());
+		waitOn(breakpointService.changesSettled());
+		waitForSwing();
+
+		row = waitForValue(
+			() -> Unique.assertAtMostOne(breakpointsProvider.breakpointTableModel.getModelData()));
+		assertEquals(State.INEFFECTIVE_ENABLED, row.getState());
+
+		row.setEnabled(true);
+		waitForSwing();
+
+		row = waitForValue(
+			() -> Unique.assertAtMostOne(breakpointsProvider.breakpointTableModel.getModelData()));
+		assertEquals(State.ENABLED, row.getState());
+	}
+
+	@Test
+	public void testTablesAndStatesWhenhModeChanges() throws Throwable {
+		DebuggerStateEditingService editingService =
+			addPlugin(tool, DebuggerStateEditingServicePlugin.class);
+
+		createTestModel();
+		mb.createTestProcessesAndThreads();
+		TraceRecorder recorder = modelService.recordTarget(mb.testProcess1,
+			createTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
+		Trace trace = recorder.getTrace();
+		createProgramFromTrace(trace);
+		intoProject(trace);
+		intoProject(program);
+
+		mb.testProcess1.addRegion("bin:.text", mb.rng(0x55550000, 0x55550fff), "rx");
+		waitRecorder(recorder);
+		addMapping(trace, program);
+		addStaticMemoryAndBreakpoint();
+		programManager.openProgram(program);
+		traceManager.openTrace(trace);
+		waitForSwing();
+
+		LogicalBreakpointRow lbRow1 = waitForPass(() -> {
+			LogicalBreakpointRow newRow =
+				Unique.assertOne(breakpointsProvider.breakpointTableModel.getModelData());
+			LogicalBreakpoint lb = newRow.getLogicalBreakpoint();
+			assertEquals(program, lb.getProgram());
+			assertEquals(Set.of(trace), lb.getMappedTraces());
+			assertEquals(Set.of(), lb.getParticipatingTraces());
+			assertEquals(State.INEFFECTIVE_ENABLED, newRow.getState());
+			return newRow;
+		});
+
+		editingService.setCurrentMode(trace, StateEditingMode.RW_EMULATOR);
+		lbRow1.setEnabled(true);
+		TraceBreakpoint emuBpt = waitForValue(
+			() -> Unique.assertAtMostOne(trace.getBreakpointManager().getAllBreakpoints()));
+		assertNull(recorder.getTargetBreakpoint(emuBpt));
+
+		LogicalBreakpointRow lbRow2 =
+			Unique.assertOne(breakpointsProvider.breakpointTableModel.getModelData());
+		waitForPass(() -> assertEquals(State.ENABLED, lbRow2.getState()));
+
+		waitForPass(() -> {
+			BreakpointLocationRow newRow =
+				Unique.assertOne(breakpointsProvider.locationTableModel.getModelData());
+			assertEquals(State.ENABLED, newRow.getState());
+		});
+
+		for (int i = 0; i < 3; i++) {
+			editingService.setCurrentMode(trace, StateEditingMode.RO_TARGET);
+			waitOn(breakpointService.changesSettled());
+			waitForSwing();
+			assertEquals(0, breakpointsProvider.locationTableModel.getModelData().size());
+
+			editingService.setCurrentMode(trace, StateEditingMode.RW_EMULATOR);
+			waitOn(breakpointService.changesSettled());
+			waitForSwing();
+			assertEquals(1, breakpointsProvider.locationTableModel.getModelData().size());
+		}
 	}
 }

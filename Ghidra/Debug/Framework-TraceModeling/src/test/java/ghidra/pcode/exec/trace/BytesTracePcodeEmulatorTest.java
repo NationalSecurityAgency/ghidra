@@ -312,7 +312,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 	 * This may not reflect the semantics of an actual processor in these situations, since they may
 	 * have instruction caching. Emulating such semantics is TODO, if at all. NB. This also tests
 	 * that PC-relative addressing works, since internally the emulator advances the counter after
-	 * execution of each instruction. Addressing is computed by the SLEIGH instruction parser and
+	 * execution of each instruction. Addressing is computed by the Sleigh instruction parser and
 	 * encoded as a constant deref in the p-code.
 	 */
 	@Test

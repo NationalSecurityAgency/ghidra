@@ -16,19 +16,27 @@
 package ghidra.app.plugin.core.debug.event;
 
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
+import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
 import ghidra.framework.plugintool.PluginEvent;
 
 public class TraceActivatedPluginEvent extends PluginEvent {
+	
 	static final String NAME = "Trace Location";
 
 	private final DebuggerCoordinates coordinates;
+	private final ActivationCause cause;
 
-	public TraceActivatedPluginEvent(String source, DebuggerCoordinates coordinates) {
+	public TraceActivatedPluginEvent(String source, DebuggerCoordinates coordinates, ActivationCause cause) {
 		super(source, NAME);
 		this.coordinates = coordinates;
+		this.cause = cause;
 	}
 
 	public DebuggerCoordinates getActiveCoordinates() {
 		return coordinates;
+	}
+
+	public ActivationCause getCause() {
+		return cause;
 	}
 }

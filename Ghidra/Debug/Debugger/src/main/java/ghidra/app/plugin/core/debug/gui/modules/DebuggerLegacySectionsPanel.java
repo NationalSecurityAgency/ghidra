@@ -130,7 +130,7 @@ public class DebuggerLegacySectionsPanel extends JPanel {
 
 		public SectionTableModel(PluginTool tool) {
 			super(tool, "Sections", SectionTableColumns.class, TraceSection::getObjectKey,
-				SectionRow::new);
+				SectionRow::new, SectionRow::getSection);
 		}
 
 		@Override

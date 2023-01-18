@@ -21,32 +21,19 @@ import java.util.concurrent.*;
 
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.*;
-import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
-import ghidra.app.plugin.core.debug.event.TraceOpenedPluginEvent;
+import ghidra.app.plugin.core.debug.event.*;
 import ghidra.app.services.*;
-import ghidra.async.AsyncUtils;
+import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRange;
-import ghidra.program.model.lang.Language;
-import ghidra.program.model.lang.Register;
 import ghidra.program.model.mem.*;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.Trace.TraceProgramViewListener;
-import ghidra.trace.model.guest.TracePlatform;
-import ghidra.trace.model.memory.TraceMemoryOperations;
-import ghidra.trace.model.memory.TraceMemorySpace;
-import ghidra.trace.model.program.*;
-import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.model.time.schedule.PatchStep;
-import ghidra.trace.model.time.schedule.TraceSchedule;
-import ghidra.trace.util.TraceRegisterUtils;
-import ghidra.util.database.UndoableTransaction;
+import ghidra.trace.model.program.TraceProgramView;
+import ghidra.trace.model.program.TraceProgramViewMemory;
 import ghidra.util.datastruct.ListenerSet;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
 
 @PluginInfo(
 	shortDescription = "Debugger machine-state editing service plugin",
@@ -56,6 +43,7 @@ import ghidra.util.task.TaskMonitor;
 	status = PluginStatus.RELEASED,
 	eventsConsumed = {
 		TraceOpenedPluginEvent.class,
+		TraceActivatedPluginEvent.class,
 		TraceClosedPluginEvent.class,
 	},
 	servicesRequired = {
@@ -73,158 +61,14 @@ public class DebuggerStateEditingServicePlugin extends AbstractDebuggerPlugin
 		public boolean isVariableEditable(Address address, int length) {
 			DebuggerCoordinates coordinates = getCoordinates();
 			Trace trace = coordinates.getTrace();
-
-			switch (getCurrentMode(trace)) {
-				case READ_ONLY:
-					return false;
-				case WRITE_TARGET:
-					return isTargetVariableEditable(coordinates, address, length);
-				case WRITE_TRACE:
-					return isTraceVariableEditable(coordinates, address, length);
-				case WRITE_EMULATOR:
-					return isEmulatorVariableEditable(coordinates, address, length);
-			}
-			throw new AssertionError();
-		}
-
-		protected boolean isTargetVariableEditable(DebuggerCoordinates coordinates, Address address,
-				int length) {
-			if (!coordinates.isAliveAndPresent()) {
-				return false;
-			}
-			TraceRecorder recorder = coordinates.getRecorder();
-			return recorder.isVariableOnTarget(coordinates.getPlatform(), coordinates.getThread(),
-				coordinates.getFrame(), address, length);
-		}
-
-		protected boolean isTraceVariableEditable(DebuggerCoordinates coordinates, Address address,
-				int length) {
-			return address.isMemoryAddress() || coordinates.getThread() != null;
-		}
-
-		protected boolean isEmulatorVariableEditable(DebuggerCoordinates coordinates,
-				Address address, int length) {
-			if (coordinates.getThread() == null) {
-				// A limitation in TraceSchedule, which is used to manifest patches
-				return false;
-			}
-			if (!isTraceVariableEditable(coordinates, address, length)) {
-				return false;
-			}
-			// TODO: Limitation from using Sleigh for patching
-			Register ctxReg = coordinates.getTrace().getBaseLanguage().getContextBaseRegister();
-			if (ctxReg == Register.NO_CONTEXT) {
-				return true;
-			}
-			AddressRange ctxRange = TraceRegisterUtils.rangeForRegister(ctxReg);
-			if (ctxRange.contains(address)) {
-				return false;
-			}
-			return true;
+			return getCurrentMode(trace).isVariableEditable(coordinates, address, length);
 		}
 
 		@Override
 		public CompletableFuture<Void> setVariable(Address address, byte[] data) {
 			DebuggerCoordinates coordinates = getCoordinates();
 			Trace trace = coordinates.getTrace();
-
-			StateEditingMode mode = getCurrentMode(trace);
-			switch (mode) {
-				case READ_ONLY:
-					return CompletableFuture
-							.failedFuture(new MemoryAccessException("Read-only mode"));
-				case WRITE_TARGET:
-					return writeTargetVariable(coordinates, address, data);
-				case WRITE_TRACE:
-					return writeTraceVariable(coordinates, address, data);
-				case WRITE_EMULATOR:
-					return writeEmulatorVariable(coordinates, address, data);
-			}
-			throw new AssertionError();
-		}
-
-		protected CompletableFuture<Void> writeTargetVariable(DebuggerCoordinates coordinates,
-				Address address, byte[] data) {
-			TraceRecorder recorder = coordinates.getRecorder();
-			if (recorder == null) {
-				return CompletableFuture
-						.failedFuture(new MemoryAccessException("Trace has no live target"));
-			}
-			if (!coordinates.isPresent()) {
-				return CompletableFuture
-						.failedFuture(new MemoryAccessException("View is not the present"));
-			}
-			return recorder.writeVariable(coordinates.getPlatform(), coordinates.getThread(),
-				coordinates.getFrame(), address, data);
-		}
-
-		protected CompletableFuture<Void> writeTraceVariable(DebuggerCoordinates coordinates,
-				Address guestAddress, byte[] data) {
-			Trace trace = coordinates.getTrace();
-			TracePlatform platform = coordinates.getPlatform();
-			long snap = coordinates.getViewSnap();
-			Address hostAddress = platform.mapGuestToHost(guestAddress);
-			if (hostAddress == null) {
-				throw new IllegalArgumentException(
-					"Guest address " + guestAddress + " is not mapped");
-			}
-			TraceMemoryOperations memOrRegs;
-			Address overlayAddress;
-			try (UndoableTransaction txid =
-				UndoableTransaction.start(trace, "Edit Variable")) {
-				if (hostAddress.isRegisterAddress()) {
-					TraceThread thread = coordinates.getThread();
-					if (thread == null) {
-						throw new IllegalArgumentException("Register edits require a thread.");
-					}
-					TraceMemorySpace regs = trace.getMemoryManager()
-							.getMemoryRegisterSpace(thread, coordinates.getFrame(),
-								true);
-					memOrRegs = regs;
-					overlayAddress = regs.getAddressSpace().getOverlayAddress(hostAddress);
-				}
-				else {
-					memOrRegs = trace.getMemoryManager();
-					overlayAddress = hostAddress;
-				}
-				if (memOrRegs.putBytes(snap, overlayAddress,
-					ByteBuffer.wrap(data)) != data.length) {
-					return CompletableFuture.failedFuture(new MemoryAccessException());
-				}
-			}
-			return AsyncUtils.NIL;
-		}
-
-		protected CompletableFuture<Void> writeEmulatorVariable(DebuggerCoordinates coordinates,
-				Address address, byte[] data) {
-			if (!(coordinates.getView() instanceof TraceVariableSnapProgramView)) {
-				throw new IllegalArgumentException("Cannot emulate using a Fixed Program View");
-			}
-			TraceThread thread = coordinates.getThread();
-			if (thread == null) {
-				// TODO: Well, technically, only for register edits
-				// It's a limitation in TraceSchedule. Every step requires a thread
-				throw new IllegalArgumentException("Emulator edits require a thread.");
-			}
-			Language language = coordinates.getPlatform().getLanguage();
-			TraceSchedule time = coordinates.getTime()
-					.patched(thread, language, PatchStep.generateSleigh(language, address, data));
-
-			DebuggerCoordinates withTime = coordinates.time(time);
-			Long found = traceManager.findSnapshot(withTime);
-			// Materialize it on the same thread (even if swing)
-			// It shouldn't take long, since we're only appending one step.
-			if (found == null) {
-				// TODO: Could still do it async on another thread, no?
-				// Not sure it buys anything, since program view will call .get on swing thread
-				try {
-					emulationSerivce.emulate(coordinates.getPlatform(), time, TaskMonitor.DUMMY);
-				}
-				catch (CancelledException e) {
-					throw new AssertionError(e);
-				}
-			}
-			return traceManager.activateAndNotify(withTime, false);
+			return getCurrentMode(trace).setVariable(tool, coordinates, address, data);
 		}
 	}
 
@@ -356,10 +200,6 @@ public class DebuggerStateEditingServicePlugin extends AbstractDebuggerPlugin
 
 	//@AutoServiceConsumed // via method
 	private DebuggerTraceManagerService traceManager;
-	@AutoServiceConsumed
-	private DebuggerEmulationService emulationSerivce;
-	@AutoServiceConsumed
-	private DebuggerModelService modelService;
 
 	protected final ListenerForEditorInstallation listenerForEditorInstallation =
 		new ListenerForEditorInstallation();
@@ -367,8 +207,6 @@ public class DebuggerStateEditingServicePlugin extends AbstractDebuggerPlugin
 	public DebuggerStateEditingServicePlugin(PluginTool tool) {
 		super(tool);
 	}
-
-	private static final StateEditingMode DEFAULT_MODE = StateEditingMode.WRITE_TARGET;
 
 	private final Map<Trace, StateEditingMode> currentModes = new HashMap<>();
 
@@ -378,23 +216,23 @@ public class DebuggerStateEditingServicePlugin extends AbstractDebuggerPlugin
 	@Override
 	public StateEditingMode getCurrentMode(Trace trace) {
 		synchronized (currentModes) {
-			return currentModes.getOrDefault(Objects.requireNonNull(trace), DEFAULT_MODE);
+			return currentModes.getOrDefault(Objects.requireNonNull(trace),
+				StateEditingMode.DEFAULT);
 		}
 	}
 
 	@Override
-	public void setCurrentMode(Trace trace, StateEditingMode mode) {
-		boolean fire = false;
+	public void setCurrentMode(Trace trace, StateEditingMode newMode) {
+		StateEditingMode oldMode;
 		synchronized (currentModes) {
-			StateEditingMode old =
-				currentModes.getOrDefault(Objects.requireNonNull(trace), DEFAULT_MODE);
-			if (mode != old) {
-				currentModes.put(trace, mode);
-				fire = true;
+			oldMode =
+				currentModes.getOrDefault(Objects.requireNonNull(trace), StateEditingMode.DEFAULT);
+			if (newMode != oldMode) {
+				currentModes.put(trace, newMode);
 			}
 		}
-		if (fire) {
-			listeners.fire.modeChanged(trace, mode);
+		if (newMode != oldMode) {
+			listeners.fire.modeChanged(trace, newMode);
 			tool.contextChanged(null);
 		}
 	}
@@ -422,6 +260,29 @@ public class DebuggerStateEditingServicePlugin extends AbstractDebuggerPlugin
 	@Override
 	public StateEditingMemoryHandler createStateEditor(TraceProgramView view) {
 		return new FollowsViewStateEditor(view);
+	}
+
+	protected void coordinatesActivated(DebuggerCoordinates coordinates, ActivationCause cause) {
+		if (cause != ActivationCause.USER) {
+			return;
+		}
+		Trace trace = coordinates.getTrace();
+		if (trace == null) {
+			return;
+		}
+		StateEditingMode oldMode;
+		StateEditingMode newMode;
+		synchronized (currentModes) {
+			oldMode = currentModes.getOrDefault(trace, StateEditingMode.DEFAULT);
+			newMode = oldMode.modeOnChange(coordinates);
+			if (newMode != oldMode) {
+				currentModes.put(trace, newMode);
+			}
+		}
+		if (newMode != oldMode) {
+			listeners.fire.modeChanged(trace, newMode);
+			tool.contextChanged(null);
+		}
 	}
 
 	protected void installMemoryEditor(TraceProgramView view) {
@@ -481,13 +342,14 @@ public class DebuggerStateEditingServicePlugin extends AbstractDebuggerPlugin
 	@Override
 	public void processEvent(PluginEvent event) {
 		super.processEvent(event);
-		if (event instanceof TraceOpenedPluginEvent) {
-			TraceOpenedPluginEvent ev = (TraceOpenedPluginEvent) event;
-			installAllMemoryEditors(ev.getTrace());
+		if (event instanceof TraceOpenedPluginEvent evt) {
+			installAllMemoryEditors(evt.getTrace());
 		}
-		else if (event instanceof TraceClosedPluginEvent) {
-			TraceClosedPluginEvent ev = (TraceClosedPluginEvent) event;
-			uninstallAllMemoryEditors(ev.getTrace());
+		else if (event instanceof TraceActivatedPluginEvent evt) {
+			coordinatesActivated(evt.getActiveCoordinates(), evt.getCause());
+		}
+		else if (event instanceof TraceClosedPluginEvent evt) {
+			uninstallAllMemoryEditors(evt.getTrace());
 		}
 	}
 

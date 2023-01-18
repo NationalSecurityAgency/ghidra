@@ -146,7 +146,7 @@ public class DebuggerLegacyModulesPanel extends JPanel {
 
 		public ModuleTableModel(PluginTool tool) {
 			super(tool, "Modules", ModuleTableColumns.class, TraceModule::getObjectKey,
-				ModuleRow::new);
+				ModuleRow::new, ModuleRow::getModule);
 		}
 
 		@Override

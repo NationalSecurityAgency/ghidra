@@ -40,6 +40,7 @@ import ghidra.app.plugin.core.debug.mapping.*;
 import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOffer;
 import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOpinion;
 import ghidra.app.services.*;
+import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
 import ghidra.async.AsyncFence;
 import ghidra.dbg.*;
 import ghidra.dbg.target.*;
@@ -459,7 +460,8 @@ public class DebuggerModelServicePlugin extends Plugin
 		if (traceManager != null) {
 			Trace trace = recorder.getTrace();
 			traceManager.openTrace(trace);
-			traceManager.activateTrace(trace);
+			traceManager.activate(traceManager.resolveTrace(trace),
+				ActivationCause.ACTIVATE_DEFAULT);
 		}
 		return recorder;
 	}

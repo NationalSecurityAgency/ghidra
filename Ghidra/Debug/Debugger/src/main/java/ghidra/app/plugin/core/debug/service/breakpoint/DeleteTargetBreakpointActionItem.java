@@ -15,37 +15,14 @@
  */
 package ghidra.app.plugin.core.debug.service.breakpoint;
 
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
-import ghidra.dbg.target.TargetTogglable;
+import ghidra.dbg.target.TargetDeletable;
 
-public class DisableBreakpointActionItem implements BreakpointActionItem {
-	private final TargetTogglable togglable;
-
-	public DisableBreakpointActionItem(TargetTogglable togglable) {
-		this.togglable = togglable;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (!(obj instanceof DisableBreakpointActionItem)) {
-			return false;
-		}
-		DisableBreakpointActionItem that = (DisableBreakpointActionItem) obj;
-		if (this.togglable != that.togglable) {
-			return false;
-		}
-		return true;
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(getClass(), togglable);
-	}
-
+public record DeleteTargetBreakpointActionItem(TargetDeletable deletable)
+		implements BreakpointActionItem {
 	@Override
 	public CompletableFuture<Void> execute() {
-		return togglable.disable();
+		return deletable.delete();
 	}
 }

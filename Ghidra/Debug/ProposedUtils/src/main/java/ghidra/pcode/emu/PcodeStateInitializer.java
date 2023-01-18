@@ -22,7 +22,7 @@ import ghidra.util.classfinder.ExtensionPoint;
  * An extension for preparing execution state for sleigh emulation
  * 
  * <p>
- * As much as possible, it's highly-recommended to use SLEIGH execution to perform any
+ * As much as possible, it's highly-recommended to use Sleigh execution to perform any
  * modifications. This will help it remain agnostic to various state types.
  * 
  * <p>
@@ -40,7 +40,7 @@ public interface PcodeStateInitializer extends ExtensionPoint {
 
 	/**
 	 * The machine's memory state has just been initialized, and additional initialization is needed
-	 * for SLEIGH execution
+	 * for Sleigh execution
 	 * 
 	 * <p>
 	 * There's probably not much preparation of memory
@@ -53,11 +53,11 @@ public interface PcodeStateInitializer extends ExtensionPoint {
 
 	/**
 	 * The thread's register state has just been initialized, and additional initialization is
-	 * needed for SLEIGH execution
+	 * needed for Sleigh execution
 	 * 
 	 * <p>
 	 * Initialization generally consists of setting "virtual" registers using data from the real
-	 * ones. Virtual registers are those specified in the SLEIGH, but which don't actually exist on
+	 * ones. Virtual registers are those specified in the Sleigh, but which don't actually exist on
 	 * the target processor. Often, they exist to simplify static analysis, but unfortunately cause
 	 * a minor headache for dynamic execution.
 	 * 
