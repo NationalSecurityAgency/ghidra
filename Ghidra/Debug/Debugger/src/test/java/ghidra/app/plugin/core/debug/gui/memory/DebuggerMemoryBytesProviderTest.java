@@ -463,7 +463,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		traceManager.activateThread(thread);
 		waitForSwing();
 
-		assertViewerBackgroundAt(DebuggerResources.DEFAULT_COLOR_REGISTER_MARKERS,
+		assertViewerBackgroundAt(DebuggerResources.COLOR_REGISTER_MARKERS,
 			memBytesProvider.getByteViewerPanel(), tb.addr(0x00401234));
 	}
 
@@ -561,11 +561,11 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		waitForSwing();
 
 		// TODO: Colors should be blended with cursor color....
-		assertViewerBackgroundAt(DebuggerResources.DEFAULT_COLOR_BACKGROUND_STALE,
+		assertViewerBackgroundAt(DebuggerResources.COLOR_BACKGROUND_STALE,
 			memBytesProvider.getByteViewerPanel(), tb.addr(0x00401233));
 		assertViewerBackgroundAt(GhidraOptions.DEFAULT_CURSOR_LINE_COLOR,
 			memBytesProvider.getByteViewerPanel(), tb.addr(0x00401234));
-		assertViewerBackgroundAt(DebuggerResources.DEFAULT_COLOR_BACKGROUND_ERROR,
+		assertViewerBackgroundAt(DebuggerResources.COLOR_BACKGROUND_ERROR,
 			memBytesProvider.getByteViewerPanel(), tb.addr(0x00401235));
 	}
 

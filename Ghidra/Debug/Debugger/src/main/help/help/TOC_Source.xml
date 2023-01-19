@@ -153,8 +153,12 @@
 			        sortgroup="n"
 			        target="help/topics/DebuggerWatchesPlugin/DebuggerWatchesPlugin.html" />
 
-			<tocdef id="DebuggerControlPlugin" text="Control and Machine State"
+			<tocdef id="VariableValueHoverPlugin" text="Variable Hovers"
 			        sortgroup="n1"
+			        target="help/topics/VariableValueHoverPlugin/VariableValueHoverPlugin.html" />
+
+			<tocdef id="DebuggerControlPlugin" text="Control and Machine State"
+			        sortgroup="n2"
 			        target="help/topics/DebuggerControlPlugin/DebuggerControlPlugin.html" />
 
 			<tocdef id="DebuggerMemviewPlugin" text="Memview Plot"

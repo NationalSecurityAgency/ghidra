@@ -21,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import agent.dbgeng.manager.*;
+import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.manager.impl.DbgRegister;
 import agent.dbgeng.model.iface2.*;
 import ghidra.async.AsyncUtils;
@@ -141,6 +142,7 @@ public class DbgModelTargetRegisterContainerImpl extends DbgModelTargetObjectImp
 
 	@Override
 	public CompletableFuture<Void> writeRegistersNamed(Map<String, byte[]> values) {
+		DbgManagerImpl manager = getManager();
 		return model.gateFuture(thread.listRegisters().thenCompose(regs -> {
 			return requestElements(false);
 		}).thenCompose(__ -> {
@@ -159,6 +161,8 @@ public class DbgModelTargetRegisterContainerImpl extends DbgModelTargetObjectImp
 			return thread.writeRegisters(toWrite);
 			// TODO: Should probably filter only effective and normalized writes in the callback
 		}).thenAccept(__ -> {
+			manager.getEventListeners().fire.threadStateChanged(thread, thread.getState(),
+				DbgCause.Causes.UNCLAIMED, DbgReason.Reasons.NONE);
 			broadcast().registersUpdated(getProxy(), values);
 		}));
 	}

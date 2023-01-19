@@ -1382,9 +1382,8 @@ public class DbgManagerImpl implements DbgManager {
 		BitmaskSet<DebugVerifierFlags> vf =
 			new BitmaskSet<DebugVerifierFlags>(DebugVerifierFlags.class,
 				vfVal == null ? 0 : vfVal);
-		execute(new DbgLaunchProcessCommand(this, args,
-			initDir, env, cf, ef, vf));
-		return AsyncUtils.NIL;
+		return execute(new DbgLaunchProcessCommand(this, args,
+			initDir, env, cf, ef, vf)).thenApply(__ -> null);
 	}
 
 	public CompletableFuture<?> openFile(Map<String, ?> args) {

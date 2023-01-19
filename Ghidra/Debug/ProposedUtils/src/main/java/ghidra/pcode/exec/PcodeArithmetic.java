@@ -160,11 +160,68 @@ public interface PcodeArithmetic<T> {
 	 * @param op
 	 * @param in1
 	 * @param in2
-	 * @return
+	 * @return the output value
 	 */
 	default T binaryOp(PcodeOp op, T in1, T in2) {
 		return binaryOp(op.getOpcode(), op.getOutput().getSize(), op.getInput(0).getSize(), in1,
 			op.getInput(1).getSize(), in2);
+	}
+
+	/**
+	 * Apply the {@link PcodeOp#PTRADD} operator to the given inputs
+	 * 
+	 * <p>
+	 * The "pointer add" op takes three operands: base, index, size; and is used as a more compact
+	 * representation of array index address computation. The {@code size} operand must be constant.
+	 * Suppose {@code arr} is an array whose elements are {@code size} bytes each, and the address
+	 * of its first element is {@code base}. The decompiler would likely render the
+	 * {@link PcodeOp#PTRADD} op as {@code &arr[index]}. An equivalent SLEIGH expression is
+	 * {@code base + index*size}.
+	 * 
+	 * <p>
+	 * NOTE: This op is always a result of decompiler simplification, not low p-code generation, and
+	 * so are not ordinarily used by a {@link PcodeExecutor}.
+	 * 
+	 * @param sizeout the size (in bytes) of the output variable
+	 * @param sizeinBase the size (in bytes) of the variable used for the array's base address
+	 * @param inBase the value used as the array's base address
+	 * @param sizeinIndex the size (in bytes) of the variable used for the index
+	 * @param inIndex the value used as the index
+	 * @param inSize the size of each array element in bytes
+	 * @return the output value
+	 */
+	default T ptrAdd(int sizeout, int sizeinBase, T inBase, int sizeinIndex, T inIndex,
+			int inSize) {
+		T indexSized = binaryOp(PcodeOp.INT_MULT, sizeout,
+			sizeinIndex, inIndex, 4, fromConst(inSize, 4));
+		return binaryOp(PcodeOp.INT_ADD, sizeout,
+			sizeinBase, inBase, sizeout, indexSized);
+	}
+
+	/**
+	 * Apply the {@link PcodeOp#PTRSUB} operator to the given inputs
+	 * 
+	 * <p>
+	 * The "pointer subfield" op takes two operands: base, offset; and is used as a more specific
+	 * representation of structure field address computation. Its behavior is exactly equivalent to
+	 * {@link PcodeOp#INT_ADD}. Suppose {@code st} is a structure pointer with a field {@code f}
+	 * located {@link offset} bytes into the structure, and {@code st} has the value {@code base}.
+	 * The decompiler would likely render the {@link PcodeOp#PTRSUB} op as {@code &st->f}. An
+	 * equivalent SLEIGH expression is {@code base + offset}.
+	 * 
+	 * <p>
+	 * NOTE: This op is always a result of decompiler simplification, not low p-code generation, and
+	 * so are not ordinarily used by a {@link PcodeExecutor}.
+	 * 
+	 * @param sizeout the size (in bytes) of the output variable
+	 * @param sizeinBase the size (in bytes) of the variable used for the structure's base address
+	 * @param inBase the value used as the structure's base address
+	 * @param sizeinOffset the size (in bytes) of the variable used for the offset
+	 * @param inOffset the value used as the offset
+	 * @return the output value
+	 */
+	default T ptrSub(int sizeout, int sizeinBase, T inBase, int sizeinOffset, T inOffset) {
+		return binaryOp(PcodeOp.INT_ADD, sizeout, sizeinBase, inBase, sizeinOffset, inOffset);
 	}
 
 	/**

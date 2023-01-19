@@ -61,8 +61,15 @@ import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.datastruct.CollectionChangeListener;
 import ghidra.util.datastruct.ListenerSet;
 
-@PluginInfo(shortDescription = "Debugger models manager service", description = "Manage debug sessions, connections, and trace recording", category = PluginCategoryNames.DEBUGGER, packageName = DebuggerPluginPackage.NAME, status = PluginStatus.HIDDEN, servicesRequired = {}, servicesProvided = {
-	DebuggerModelService.class, })
+@PluginInfo(
+	shortDescription = "Debugger models manager service",
+	description = "Manage debug sessions, connections, and trace recording",
+	category = PluginCategoryNames.DEBUGGER,
+	packageName = DebuggerPluginPackage.NAME,
+	status = PluginStatus.HIDDEN,
+	servicesRequired = {},
+	servicesProvided = {
+		DebuggerModelService.class, })
 public class DebuggerModelServicePlugin extends Plugin
 		implements DebuggerModelServiceInternal, ApplicationLevelOnlyPlugin {
 
@@ -239,7 +246,10 @@ public class DebuggerModelServicePlugin extends Plugin
 			}
 			model.addModelListener(forRemovalAndFocusListener);
 			TargetObject root = model.getModelRoot();
-			if (!root.isValid()) {
+			// root == null, probably means we're between model construction
+			// and root construction, but the model was not closed, so no need
+			// to invalidate
+			if (root != null && !root.isValid()) {
 				forRemovalAndFocusListener.invalidated(root, root,
 					"Invalidated before or during add to service");
 			}

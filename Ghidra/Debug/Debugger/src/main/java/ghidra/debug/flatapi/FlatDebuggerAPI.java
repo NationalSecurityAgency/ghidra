@@ -1491,7 +1491,7 @@ public interface FlatDebuggerAPI {
 	default LaunchResult launch(DebuggerProgramLaunchOffer offer, String commandLine,
 			TaskMonitor monitor) {
 		try {
-			return waitOn(offer.launchProgram(monitor, false, new LaunchConfigurator() {
+			return waitOn(offer.launchProgram(monitor, PromptMode.NEVER, new LaunchConfigurator() {
 				@Override
 				public Map<String, ?> configureLauncher(TargetLauncher launcher,
 						Map<String, ?> arguments, RelPrompt relPrompt) {
@@ -1514,7 +1514,7 @@ public interface FlatDebuggerAPI {
 	 */
 	default LaunchResult launch(DebuggerProgramLaunchOffer offer, TaskMonitor monitor) {
 		try {
-			return waitOn(offer.launchProgram(monitor, false));
+			return waitOn(offer.launchProgram(monitor, PromptMode.NEVER));
 		}
 		catch (InterruptedException | ExecutionException | TimeoutException e) {
 			// TODO: This is not ideal, since it's likely partially completed

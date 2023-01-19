@@ -118,6 +118,9 @@ public interface Scheduler {
 				TickStep slice = nextSlice(trace);
 				eventThread = slice.getThread(tm, eventThread);
 				emuThread = machine.getThread(eventThread.getPath(), true);
+				if (emuThread.getFrame() != null) {
+					emuThread.finishInstruction();
+				}
 				for (int i = 0; i < slice.tickCount; i++) {
 					monitor.checkCanceled();
 					emuThread.stepInstruction();

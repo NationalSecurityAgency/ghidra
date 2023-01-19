@@ -30,7 +30,8 @@ import ghidra.program.model.address.AddressRange;
 public class MemviewPanel extends JPanel implements MouseListener, MouseMotionListener {
 	private static final long serialVersionUID = 1L;
 
-	private Color ARROW_COLOR = new GColor("color.debugger.plugin.plugin.memview.arrow");
+	private static final Color ARROW_COLOR =
+		new GColor("color.debugger.plugin.plugin.memview.arrow");
 
 	private MemviewProvider provider;
 	private MemviewMap amap;

@@ -41,10 +41,10 @@ public class ThemeIconTable extends JPanel implements ActionContextProvider {
 	private GFilterTable<IconValue> filterTable;
 	private ThemeManager themeManager;
 
-	public ThemeIconTable(ThemeManager themeManager) {
+	public ThemeIconTable(ThemeManager themeManager, GThemeValuesCache valuesProvider) {
 		super(new BorderLayout());
 		this.themeManager = themeManager;
-		iconTableModel = new ThemeIconTableModel(themeManager);
+		iconTableModel = new ThemeIconTableModel(valuesProvider);
 		filterTable = new GFilterTable<>(iconTableModel);
 		table = filterTable.getTable();
 		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);

@@ -84,6 +84,7 @@ public class DefaultModuleMapProposal
 		}
 
 		protected AddressRange moduleRange;
+		protected boolean memorize = false;
 
 		/**
 		 * Construct a module map entry
@@ -145,6 +146,16 @@ public class DefaultModuleMapProposal
 			catch (AddressOverflowException e) {
 				throw new AssertionError(e);
 			}
+		}
+
+		@Override
+		public boolean isMemorize() {
+			return memorize;
+		}
+
+		@Override
+		public void setMemorize(boolean memorize) {
+			this.memorize = memorize;
 		}
 	}
 

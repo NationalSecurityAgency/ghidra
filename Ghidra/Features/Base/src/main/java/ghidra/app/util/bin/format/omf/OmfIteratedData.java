@@ -34,7 +34,7 @@ public class OmfIteratedData extends OmfRecord implements OmfData {
 		segmentIndex = OmfRecord.readIndex(reader);
 		dataOffset = OmfRecord.readInt2Or4(reader, hasBigFields);
 		ArrayList<DataBlock> blocklist = new ArrayList<DataBlock>();
-		while(reader.getPointerIndex() < max) {
+		while (reader.getPointerIndex() < max) {
 			DataBlock block = DataBlock.read(reader, hasBigFields);
 			blocklist.add(block);
 		}
@@ -42,7 +42,7 @@ public class OmfIteratedData extends OmfRecord implements OmfData {
 		datablock = new DataBlock[blocklist.size()];
 		blocklist.toArray(datablock);
 	}
-	
+
 	public int getSegmentIndex() {
 		return segmentIndex;
 	}
@@ -99,22 +99,22 @@ public class OmfIteratedData extends OmfRecord implements OmfData {
 		private int blockCount;
 		private byte[] simpleBlock = null;
 		private DataBlock[] nestedBlock = null;
-		
-		public static DataBlock read(BinaryReader reader,boolean hasBigFields) throws IOException {
+
+		public static DataBlock read(BinaryReader reader, boolean hasBigFields) throws IOException {
 			DataBlock subblock = new DataBlock();
 			subblock.repeatCount = OmfRecord.readInt2Or4(reader, hasBigFields);
 			subblock.blockCount = reader.readNextShort() & 0xffff;
 			if (subblock.blockCount == 0) {
 				int size = reader.readNextByte() & 0xff;
-				subblock.simpleBlock = new byte[ size ];
-				for(int i=0;i<size;++i) {
+				subblock.simpleBlock = new byte[size];
+				for (int i = 0; i < size; ++i) {
 					subblock.simpleBlock[i] = reader.readNextByte();
 				}
 			}
 			else {
 				subblock.nestedBlock = new DataBlock[subblock.blockCount];
-				for(int i=0;i<subblock.blockCount;++i) {
-					subblock.nestedBlock[i] = read(reader,hasBigFields);		// Recursive definition
+				for (int i = 0; i < subblock.blockCount; ++i) {
+					subblock.nestedBlock[i] = read(reader, hasBigFields);		// Recursive definition
 				}
 			}
 			return subblock;

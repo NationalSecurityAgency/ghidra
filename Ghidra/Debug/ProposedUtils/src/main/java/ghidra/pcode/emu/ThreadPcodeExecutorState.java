@@ -15,7 +15,7 @@
  */
 package ghidra.pcode.emu;
 
-import java.util.Objects;
+import java.util.*;
 
 import ghidra.pcode.exec.PcodeArithmetic;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
@@ -23,6 +23,7 @@ import ghidra.pcode.exec.PcodeExecutorState;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Language;
+import ghidra.program.model.lang.Register;
 import ghidra.program.model.mem.MemBuffer;
 
 /**
@@ -62,6 +63,11 @@ public class ThreadPcodeExecutorState<T> implements PcodeExecutorState<T> {
 		return arithmetic;
 	}
 
+	@Override
+	public ThreadPcodeExecutorState<T> fork() {
+		return new ThreadPcodeExecutorState<>(sharedState.fork(), localState.fork());
+	}
+
 	/**
 	 * Decide whether or not access to the given space is directed to thread-local state
 	 * 
@@ -87,6 +93,14 @@ public class ThreadPcodeExecutorState<T> implements PcodeExecutorState<T> {
 			return localState.getVar(space, offset, size, quantize, reason);
 		}
 		return sharedState.getVar(space, offset, size, quantize, reason);
+	}
+
+	@Override
+	public Map<Register, T> getRegisterValues() {
+		Map<Register, T> result = new HashMap<>();
+		result.putAll(localState.getRegisterValues());
+		result.putAll(sharedState.getRegisterValues());
+		return result;
 	}
 
 	@Override

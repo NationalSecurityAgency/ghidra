@@ -15,6 +15,8 @@
  */
 package generic.theme.laf;
 
+import javax.swing.UIDefaults;
+
 import generic.theme.ApplicationThemeManager;
 import generic.theme.LafType;
 
@@ -22,5 +24,10 @@ public class MetalLookAndFeelManager extends LookAndFeelManager {
 
 	public MetalLookAndFeelManager(ApplicationThemeManager themeManager) {
 		super(LafType.METAL, themeManager);
+	}
+
+	@Override
+	protected UiDefaultsMapper getUiDefaultsMapper(UIDefaults defaults) {
+		return new MetalUiDefaultsMapper(defaults);
 	}
 }

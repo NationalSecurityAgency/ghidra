@@ -109,6 +109,49 @@ public class DataTypeParserTest extends AbstractEditorTest {
 	}
 
 	@Test
+	public void testParse_TypeWithNamespaceAndTemplate() throws Exception {
+
+		String typeName = "A::B::C::templated_name<int, void*, A::B::C::custom_type>";
+		StructureDataType structure = new StructureDataType(typeName, 0);
+		PointerDataType pointer = new PointerDataType(structure);
+		String pointerName = pointer.getName();
+
+		tx(program, () -> {
+			programDTM.resolve(structure, null);
+		});
+
+		DataTypeParser parser = new DataTypeParser(dtmService, AllowedDataTypes.ALL);
+		DataType dt = parser.parse(pointerName);
+		assertNotNull(dt);
+		assertTrue(dt.isEquivalent(pointer));
+	}
+
+	@Test
+	public void testParse_Bitfield() throws Exception {
+
+		TypeDef td = new TypedefDataType("foo", ByteDataType.dataType);
+
+		tx(program, () -> {
+			programDTM.resolve(td, null);
+		});
+
+		DataTypeParser parser =
+			new DataTypeParser(programDTM, programDTM, dtmService,
+				AllowedDataTypes.SIZABLE_DYNAMIC_AND_BITFIELD);
+		DataType dt = parser.parse("byte:3");
+		assertTrue(dt instanceof BitFieldDataType);
+		BitFieldDataType bfdt = (BitFieldDataType) dt;
+		assertEquals(3, bfdt.getBitSize());
+		assertTrue(ByteDataType.dataType.isEquivalent(bfdt.getBaseDataType()));
+
+		dt = parser.parse("foo:3");
+		assertTrue(dt instanceof BitFieldDataType);
+		bfdt = (BitFieldDataType) dt;
+		assertEquals(3, bfdt.getBitSize());
+		assertTrue(td.isEquivalent(bfdt.getBaseDataType()));
+	}
+
+	@Test
 	public void testValidDataTypeSyntax() {
 		checkValidDt("byte");
 		checkValidDt("pointer");

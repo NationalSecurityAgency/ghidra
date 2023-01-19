@@ -133,7 +133,7 @@ public class EditWindow extends JWindow {
 	private void create() {
 		textField = new JTextField(" ");
 		JPanel panel = new JPanel(new BorderLayout());
-		Color bgColor = Colors.BACKGROUND_TOOLTIP;
+		Color bgColor = Colors.BG_TOOLTIP;
 		panel.setBackground(bgColor);
 		panel.add(textField, BorderLayout.CENTER);
 

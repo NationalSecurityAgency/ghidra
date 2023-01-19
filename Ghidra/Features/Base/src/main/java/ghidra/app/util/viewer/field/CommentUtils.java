@@ -136,6 +136,24 @@ public class CommentUtils {
 		Function<Annotation, Annotation> noFixing = Function.identity();
 		return doParseTextForAnnotations(text, noFixing, program, prototypeString, row);
 	}
+	
+	/**
+	 * Sanitizes the given text, removing or replacing illegal characters.
+	 * <p>
+	 * Each illegal character is handled as follows:
+	 * <ul>
+	 *   <li>null character (\0) -> remove</li>
+	 * </ul>
+	 * 
+	 * @param text The text to sanitize
+	 * @return The sanitized text, or null if the given text was null
+	 */
+	public static String sanitize(String text) {
+		if (text == null) {
+			return null;
+		}
+		return text.replaceAll("\0", "");
+	}
 
 	/**
 	 * Parses the given text looking for annotations. 

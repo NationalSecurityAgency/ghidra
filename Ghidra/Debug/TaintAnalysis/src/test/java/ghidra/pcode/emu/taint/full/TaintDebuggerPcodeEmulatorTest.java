@@ -15,8 +15,7 @@
  */
 package ghidra.pcode.emu.taint.full;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.util.Set;
 
@@ -120,7 +119,7 @@ public class TaintDebuggerPcodeEmulatorTest extends AbstractGhidraHeadedDebugger
 			Assembler asm = Assemblers.getAssembler(program);
 
 			// NOTE: qword ptr [0x00400800] is RIP-relative
-			asm.assemble(tb.addr(0x00400000), "MOV RAX, qword ptr [0x00400800]");
+			asm.assemble(tb.addr(0x00400000), "MOV RAX, qword ptr [RIP + 0x7f9]");
 		}
 
 		TraceSchedule time = TraceSchedule.parse("0:t0-1");

@@ -78,6 +78,7 @@ public class DbgModelTargetProcessLaunchConnectorImpl extends DbgModelTargetObje
 		map.put("cf", cf);
 		map.put("ef", ef);
 		map.put("vf", vf);
+		// Innocuous comment: up-up-down-down-left-right-left-right-B-A
 		return map;
 	}
 
@@ -91,11 +92,4 @@ public class DbgModelTargetProcessLaunchConnectorImpl extends DbgModelTargetObje
 		return getManager().launch(args);
 	}
 
-//	public CompletableFuture<Void> launch(List<String> args) {
-//		return AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
-//			getManager().launch(args).handle(seq::nextIgnore);
-//		}).finish().exceptionally((exc) -> {
-//			throw new DebuggerUserException("Launch failed for " + args);
-//		});
-//	}
 }

@@ -51,6 +51,20 @@ public interface ModuleMapProposal extends MapProposal<TraceModule, Program, Mod
 		 * @param program the program
 		 */
 		void setProgram(Program program);
+
+		/**
+		 * Check if the user would like to memorize this mapping for future traces
+		 * 
+		 * @return true to memorize
+		 */
+		boolean isMemorize();
+
+		/**
+		 * Set whether this mapping should be memorized for future traces
+		 * 
+		 * @param memorize true to memorize
+		 */
+		void setMemorize(boolean memorize);
 	}
 
 	/**

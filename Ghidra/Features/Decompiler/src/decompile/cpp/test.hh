@@ -54,7 +54,7 @@ struct UnitTest {
     tests.push_back(this);
   }
 
-  static void run(std::set<std::string> &testNames);	///< Run all the instantiated tests
+  static int run(std::set<std::string> &testNames);	///< Run all the instantiated tests
 };
 
 

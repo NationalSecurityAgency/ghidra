@@ -212,23 +212,14 @@ fielddef
 	}
 	:	^(t=OP_FIELDDEF n=unbound_identifier["field"] s=integer e=integer {
 			if (n != null) {
-                long start = $s.value.longValue();
-                long finish = $e.value.longValue();
-                if (finish < start) {
-                    reportError(find($t), "field '" + $n.value.getText() + "' starts at " + start + " and ends at " + finish);
-                }
                 $fielddef::fieldQuality = new FieldQuality($n.value.getText(), find($t), $s.value.longValue(), $e.value.longValue());
 			}
 		} fieldmods) {
 			if ($fielddef.size() > 0 && $fielddef::fieldQuality != null) {
 				if ($tokendef.size() > 0 && $tokendef::tokenSymbol != null) {
-					if ($tokendef::tokenSymbol.getToken().getSize()*8 <= $fielddef::fieldQuality.high) {
-						reportError(find($t), "field high must be less than token size");
-					} else {
-						sc.addTokenField(find(n), $tokendef::tokenSymbol, $fielddef::fieldQuality);
-					}
+					sc.addTokenField(find(n), $tokendef::tokenSymbol, $fielddef::fieldQuality);
 				} else if ($contextdef.size() > 0 && $contextdef::varnode != null) {
-					if (!sc.addContextField($contextdef::varnode, $fielddef::fieldQuality)) {
+					if (!sc.addContextField(find(n), $contextdef::varnode, $fielddef::fieldQuality)) {
 						reportError(find($t), "all context definitions must come before constructors");
 					}
 				}

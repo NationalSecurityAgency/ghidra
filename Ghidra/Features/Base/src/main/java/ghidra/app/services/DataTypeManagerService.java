@@ -47,7 +47,7 @@ public interface DataTypeManagerService extends DataTypeQueryService {
 	/**
 	 * Get the data types marked as favorites that will show up on
 	 * a popup menu.
-	 * @return list of favorite datatypess
+	 * @return list of favorite datatypes
 	 */
 	public List<DataType> getFavorites();
 

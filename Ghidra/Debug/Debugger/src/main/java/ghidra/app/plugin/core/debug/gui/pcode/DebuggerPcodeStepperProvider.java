@@ -71,6 +71,36 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 	private static final FontRenderContext METRIC_FRC =
 		new FontRenderContext(new AffineTransform(), false, false);
 
+	private static final Color COLOR_BACKGROUND =
+		new GColor("color.bg.listing");
+	private static final Color COLOR_BACKGROUND_CURSOR =
+		new GColor("color.bg.currentline.listing");
+	private static final Color COLOR_BACKGROUND_COUNTER =
+		new GColor("color.debugger.plugin.resources.pcode.counter");
+
+	private static final Color COLOR_FOREGROUND_ADDRESS =
+		new GColor("color.fg.listing.address");
+	private static final Color COLOR_FOREGROUND_REGISTER =
+		new GColor("color.fg.listing.register");
+	private static final Color COLOR_FOREGROUND_SCALAR =
+		new GColor("color.fg.listing.constant");
+	private static final Color COLOR_FOREGROUND_LOCAL =
+		new GColor("color.fg.listing.label.local");
+	private static final Color COLOR_FOREGROUND_MNEMONIC =
+		new GColor("color.fg.listing.mnemonic");
+	private static final Color COLOR_FOREGROUND_UNIMPL =
+		new GColor("color.fg.listing.mnemonic.unimplemented");
+	private static final Color COLOR_FOREGROUND_SEPARATOR =
+		new GColor("color.fg.listing.separator");
+	private static final Color COLOR_FOREGROUND_LINE_LABEL =
+		new GColor("color.fg.listing.pcode.label");
+	private static final Color COLOR_FOREGROUND_SPACE =
+		new GColor("color.fg.listing.pcode.address.space");
+	private static final Color COLOR_FOREGROUND_RAW =
+		new GColor("color.fg.listing.pcode.varnode");
+	private static final Color COLOR_FOREGROUND_USEROP =
+		new GColor("color.fg.listing.pcode.userop");
+
 	private static final String SPAN_ADDRESS = "addr";
 	private static final String SPAN_REGISTER = "reg";
 	private static final String SPAN_SCALAR = "scalar";
@@ -228,7 +258,8 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 			PcodeRow row = (PcodeRow) data.getRowObject();
 			if (data.isSelected()) {
 				if (row.isNext()) {
-					Color blend = ColorUtils.blend(counterColor, cursorColor, 0.5f);
+					Color blend =
+						ColorUtils.blend(COLOR_BACKGROUND_COUNTER, COLOR_BACKGROUND_CURSOR, 0.5f);
 					if (blend != null) {
 						setBackground(blend);
 					}
@@ -236,7 +267,7 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 				// else background is already set. Leave it alone
 			}
 			else if (row.isNext()) {
-				setBackground(counterColor);
+				setBackground(COLOR_BACKGROUND_COUNTER);
 			}
 			else {
 				setBackground(pcodeTable.getBackground());
@@ -531,23 +562,6 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 	@SuppressWarnings("unused")
 	private AutoService.Wiring autoServiceWiring;
 
-	private Color counterColor = DebuggerResources.DEFAULT_COLOR_PCODE_COUNTER;
-
-	private Color backgroundColor = new GColor("color.bg.listing");
-	private Color cursorColor = new GColor("color.bg.currentline.listing");
-
-	private Color addressColor = new GColor("color.fg.listing.address");
-	private Color registerColor = new GColor("color.fg.listing.register");
-	private Color scalarColor = new GColor("color.fg.listing.constant");
-	private Color localColor = new GColor("color.fg.listing.label.local");
-	private Color mnemonicColor = new GColor("color.fg.listing.mnemonic");
-	private Color unimplColor = new GColor("color.fg.listing.mnemonic.unimplemented");
-	private Color separatorColor = new GColor("color.fg.listing.separator");
-	private Color lineLabelColor = new GColor("color.fg.listing.pcode.label");
-	private Color spaceColor = new GColor("color.fg.listing.pcode.address.space");
-	private Color rawColor = new GColor("color.fg.listing.pcode.varnode");
-	private Color useropColor = new GColor("color.fg.listing.pcode.userop");
-
 	JSplitPane mainPanel = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 
 	final UniqueTableModel uniqueTableModel;
@@ -586,17 +600,17 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 
 	protected String computeStyle() {
 		StringBuilder sb = new StringBuilder("<html><head><style>");
-		sb.append(createColoredStyle(SPAN_ADDRESS, addressColor));
-		sb.append(createColoredStyle(SPAN_REGISTER, registerColor));
-		sb.append(createColoredStyle(SPAN_SCALAR, scalarColor));
-		sb.append(createColoredStyle(SPAN_LOCAL, localColor));
-		sb.append(createColoredStyle(SPAN_MNEMONIC, mnemonicColor));
-		sb.append(createColoredStyle(SPAN_UNIMPL, unimplColor));
-		sb.append(createColoredStyle(SPAN_SEPARATOR, separatorColor));
-		sb.append(createColoredStyle(SPAN_LINE_LABEL, lineLabelColor));
-		sb.append(createColoredStyle(SPAN_SPACE, spaceColor));
-		sb.append(createColoredStyle(SPAN_RAW, rawColor));
-		sb.append(createColoredStyle(SPAN_USEROP, useropColor));
+		sb.append(createColoredStyle(SPAN_ADDRESS, COLOR_FOREGROUND_ADDRESS));
+		sb.append(createColoredStyle(SPAN_REGISTER, COLOR_FOREGROUND_REGISTER));
+		sb.append(createColoredStyle(SPAN_SCALAR, COLOR_FOREGROUND_SCALAR));
+		sb.append(createColoredStyle(SPAN_LOCAL, COLOR_FOREGROUND_LOCAL));
+		sb.append(createColoredStyle(SPAN_MNEMONIC, COLOR_FOREGROUND_MNEMONIC));
+		sb.append(createColoredStyle(SPAN_UNIMPL, COLOR_FOREGROUND_UNIMPL));
+		sb.append(createColoredStyle(SPAN_SEPARATOR, COLOR_FOREGROUND_SEPARATOR));
+		sb.append(createColoredStyle(SPAN_LINE_LABEL, COLOR_FOREGROUND_LINE_LABEL));
+		sb.append(createColoredStyle(SPAN_SPACE, COLOR_FOREGROUND_SPACE));
+		sb.append(createColoredStyle(SPAN_RAW, COLOR_FOREGROUND_RAW));
+		sb.append(createColoredStyle(SPAN_USEROP, COLOR_FOREGROUND_USEROP));
 		sb.append("</style></head>"); // NB. </html> should already be at end
 		return sb.toString();
 	}
@@ -619,8 +633,8 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 		JPanel pcodeTablePanel = new JPanel(new BorderLayout());
 		pcodeTable = new GhidraTable(pcodeTableModel);
 		pcodeTablePanel.add(pcodeTable, BorderLayout.CENTER);
-		pcodeTable.setBackground(backgroundColor);
-		pcodeTable.setSelectionBackground(cursorColor);
+		pcodeTable.setBackground(COLOR_BACKGROUND);
+		pcodeTable.setSelectionBackground(COLOR_BACKGROUND_CURSOR);
 
 		JScrollPane pcodeScrollPane = new JScrollPane(pcodeTablePanel,
 			ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
@@ -640,8 +654,8 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 		mainPanel.setRightComponent(uniquePanel);
 
 		pcodeTable.setTableHeader(null);
-		pcodeTable.setBackground(backgroundColor);
-		pcodeTable.setSelectionBackground(cursorColor);
+		pcodeTable.setBackground(COLOR_BACKGROUND);
+		pcodeTable.setSelectionBackground(COLOR_BACKGROUND_CURSOR);
 		pcodeTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		pcodeTable.getSelectionModel().addListSelectionListener(evt -> {
 			if (evt.getValueIsAdjusting()) {

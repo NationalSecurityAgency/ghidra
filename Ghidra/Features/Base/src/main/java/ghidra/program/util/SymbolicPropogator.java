@@ -15,12 +15,12 @@
  */
 package ghidra.program.util;
 
-import java.math.BigInteger;
 import java.util.*;
+
+import java.math.BigInteger;
 
 import org.apache.commons.collections4.map.LRUMap;
 
-import generic.util.UnsignedDataUtils;
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.cmd.function.CallDepthChangeInfo;
 import ghidra.pcode.opbehavior.*;
@@ -1319,7 +1319,7 @@ public class SymbolicPropogator {
 						val2 = vContext.getValue(in[1], false, evaluator);
 						lval1 = vContext.getConstant(val1, evaluator);
 						lval2 = vContext.getConstant(val2, evaluator);
-						lresult = UnsignedDataUtils.unsignedLessThan(lval1, lval2) ? 1 : 0;
+						lresult = Long.compareUnsigned(lval1, lval2) < 0 ? 1 : 0;
 						result = vContext.createConstantVarnode(lresult, val1.getSize());
 						vContext.putValue(out, result, mustClearAll);
 						break;
@@ -1340,7 +1340,7 @@ public class SymbolicPropogator {
 						val2 = vContext.getValue(in[1], false, evaluator);
 						lval1 = vContext.getConstant(val1, evaluator);
 						lval2 = vContext.getConstant(val2, evaluator);
-						lresult = UnsignedDataUtils.unsignedLessThanOrEqual(lval1, lval2) ? 1 : 0;
+						lresult = Long.compareUnsigned(lval1, lval2) <= 0 ? 1 : 0;
 						result = vContext.createConstantVarnode(lresult, val1.getSize());
 						vContext.putValue(out, result, mustClearAll);
 						break;
@@ -1693,7 +1693,7 @@ public class SymbolicPropogator {
 	}
 	
 	private InjectPayload findPcodeInjection(Program prog, PcodeInjectLibrary snippetLibrary, long callOtherIndex) {
-		InjectPayload payload = (InjectPayload) injectPayloadCache.get(callOtherIndex);
+		InjectPayload payload = injectPayloadCache.get(callOtherIndex);
 		
 		// has a payload value for the pcode callother index
 		if (payload != null) {

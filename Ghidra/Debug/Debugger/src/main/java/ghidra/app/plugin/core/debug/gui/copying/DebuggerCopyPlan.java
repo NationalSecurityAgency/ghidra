@@ -96,9 +96,9 @@ public class DebuggerCopyPlan {
 					s -> s == TraceMemoryState.ERROR);
 				AddressSetView staleSet = rngAsSet.subtract(knownSet).subtract(errorSet);
 				setShifted(map, fromRange.getMinAddress(), intoAddress, errorSet,
-					DebuggerResources.DEFAULT_COLOR_BACKGROUND_ERROR.getRGB());
+					DebuggerResources.COLOR_BACKGROUND_ERROR.getRGB());
 				setShifted(map, fromRange.getMinAddress(), intoAddress, staleSet,
-					DebuggerResources.DEFAULT_COLOR_BACKGROUND_STALE.getRGB());
+					DebuggerResources.COLOR_BACKGROUND_STALE.getRGB());
 			}
 
 			public void setShifted(IntRangeMap map, Address src, Address dst, AddressSetView set,

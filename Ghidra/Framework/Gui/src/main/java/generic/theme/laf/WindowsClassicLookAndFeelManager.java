@@ -15,6 +15,8 @@
  */
 package generic.theme.laf;
 
+import javax.swing.UIDefaults;
+
 import generic.theme.ApplicationThemeManager;
 import generic.theme.LafType;
 
@@ -22,5 +24,10 @@ public class WindowsClassicLookAndFeelManager extends LookAndFeelManager {
 
 	public WindowsClassicLookAndFeelManager(ApplicationThemeManager themeManager) {
 		super(LafType.WINDOWS_CLASSIC, themeManager);
+	}
+
+	@Override
+	protected UiDefaultsMapper getUiDefaultsMapper(UIDefaults defaults) {
+		return new WindowsClassicUiDefaultsMapper(defaults);
 	}
 }

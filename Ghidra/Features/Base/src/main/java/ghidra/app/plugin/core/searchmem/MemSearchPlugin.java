@@ -593,7 +593,7 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 				JComponent resultsTable = provider.getComponent();
 				Msg.showInfo(getClass(), resultsTable, "Search Limit Exceeded!",
 					"Stopped search after finding " + matchCount + " matches.\n" +
-						"The Search limit can be changed in the Edit->Options, under Tool Options");
+						"The search limit can be changed at Edit->Tool Options, under Search.");
 			}
 
 			// suggestion to not close search dialog.  TODO remove  next line in future versions.

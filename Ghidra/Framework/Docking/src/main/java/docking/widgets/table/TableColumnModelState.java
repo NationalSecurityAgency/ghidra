@@ -39,13 +39,13 @@ import ghidra.util.task.SwingUpdateManager;
  * possible.
  * <p>
  * The basic outline of how this class works:<br>
- * 
+ *
  * This class loads and save table column state via requests made by clients like the {@link GTable} or
  * the {@link GTableColumnModel}.  These requests are in response to direct users actions (like
- * showing a new column) or to table changes (like column resizing).  There are few things that 
- * make this code tricky.  Namely, when a change notification comes from the subsystem and not 
- * direct user intervention, we do not know if the change was motived by the user directly or 
- * by programmatic table configuration.  We would prefer to only save data when the user makes 
+ * showing a new column) or to table changes (like column resizing).  There are few things that
+ * make this code tricky.  Namely, when a change notification comes from the subsystem and not
+ * direct user intervention, we do not know if the change was motived by the user directly or
+ * by programmatic table configuration.  We would prefer to only save data when the user makes
  * changes, but we can not always know the source of the change.  For example, column resizing
  * can happen due to user dragging or due to the table subsystem performing a column layout.
  * <p>
@@ -56,7 +56,7 @@ import ghidra.util.task.SwingUpdateManager;
  * For 1, we ignore all changes until the table has been shown for the first time.  For 2, we use
  * SwingUpdate managers.
  * <p>
- * The complicated part is that we allow clients to add columns at any time.  If they do so 
+ * The complicated part is that we allow clients to add columns at any time.  If they do so
  * after the table has been made visible, then we cannot ignore the event like we do when the
  * table has not yet been realized.  In our world view, the uniqueness of a table is based upon
  * it's class and its columns.  Thus, when a column is added or removed, it becomes a different
@@ -164,7 +164,21 @@ public class TableColumnModelState implements SortListener {
 			return;
 		}
 
+		if (isTableModelDisposed()) {
+			// This can happen if a client manually disposes its model directly instead of calling
+			// GTable.dispose().  In that case, there is nothing to save.
+			return;
+		}
+
 		doSaveState(saveToXML());
+	}
+
+	private boolean isTableModelDisposed() {
+		TableModel tableModel = table.getUnwrappedTableModel();
+		if (tableModel instanceof AbstractGTableModel<?> gTableModel) {
+			return gTableModel.isDisposed();
+		}
+		return false;
 	}
 
 	private void doSaveState(Element xmlElement) {
@@ -312,6 +326,13 @@ public class TableColumnModelState implements SortListener {
 	}
 
 	private void doRestoreState() {
+
+		if (isTableModelDisposed()) {
+			// This can happen if a client manually disposes its model directly instead of calling
+			// GTable.dispose().  Not sure if this can happen, but since we buffer restore
+			// requests, it is possible.
+			return;
+		}
 
 		restoring = true;
 

@@ -82,6 +82,7 @@ public class AssemblySelector {
 	 */
 	public Collection<AssemblyParseResult> filterParse(Collection<AssemblyParseResult> parse)
 			throws AssemblySyntaxException {
+		syntaxErrors.clear();
 		boolean gotOne = false;
 		for (AssemblyParseResult pr : parse) {
 			if (pr.isError()) {
@@ -95,6 +96,26 @@ public class AssemblySelector {
 			throw new AssemblySyntaxException(syntaxErrors);
 		}
 		return parse;
+	}
+
+	protected List<AssemblyResolvedPatterns> filterCompatibleAndSort(AssemblyResolutionResults rr,
+			AssemblyPatternBlock ctx) throws AssemblySemanticException {
+		semanticErrors.clear();
+		List<AssemblyResolvedPatterns> sorted = new ArrayList<>();
+		// Select only non-erroneous results whose contexts are compatible.
+		for (AssemblyResolution ar : rr) {
+			if (ar.isError()) {
+				semanticErrors.add((AssemblyResolvedError) ar);
+				continue;
+			}
+			AssemblyResolvedPatterns rc = (AssemblyResolvedPatterns) ar;
+			sorted.add(rc);
+		}
+		if (sorted.isEmpty()) {
+			throw new AssemblySemanticException(semanticErrors);
+		}
+		sorted.sort(compareBySizeThenBits);
+		return sorted;
 	}
 
 	/**
@@ -117,21 +138,7 @@ public class AssemblySelector {
 	 */
 	public AssemblyResolvedPatterns select(AssemblyResolutionResults rr,
 			AssemblyPatternBlock ctx) throws AssemblySemanticException {
-		List<AssemblyResolvedPatterns> sorted = new ArrayList<>();
-		// Select only non-erroneous results whose contexts are compatible.
-		for (AssemblyResolution ar : rr) {
-			if (ar.isError()) {
-				semanticErrors.add((AssemblyResolvedError) ar);
-				continue;
-			}
-			AssemblyResolvedPatterns rc = (AssemblyResolvedPatterns) ar;
-			sorted.add(rc);
-		}
-		if (sorted.isEmpty()) {
-			throw new AssemblySemanticException(semanticErrors);
-		}
-		// Sort them
-		sorted.sort(compareBySizeThenBits);
+		List<AssemblyResolvedPatterns> sorted = filterCompatibleAndSort(rr, ctx);
 
 		// Pick just the first
 		AssemblyResolvedPatterns res = sorted.get(0);

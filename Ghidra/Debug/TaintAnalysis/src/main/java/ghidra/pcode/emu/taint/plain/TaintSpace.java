@@ -15,10 +15,10 @@
  */
 package ghidra.pcode.emu.taint.plain;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import ghidra.pcode.emu.taint.trace.TaintTraceSpace;
+import ghidra.program.model.lang.Register;
 import ghidra.taint.model.TaintSet;
 import ghidra.taint.model.TaintVec;
 
@@ -111,5 +111,21 @@ public class TaintSpace {
 
 	public void clear() {
 		taints.clear();
+	}
+
+	public Map<Register, TaintVec> getRegisterValues(List<Register> registers) {
+		Map<Register, TaintVec> result = new HashMap<>();
+		for (Register r : registers) {
+			long offset = r.getAddress().getOffset();
+			TaintVec vec = new TaintVec(r.getNumBytes());
+			for (int i = 0; i < vec.length; i++) {
+				TaintSet s = taints.get(offset + i);
+				if (s == null) {
+					continue;
+				}
+			}
+			result.put(r, vec);
+		}
+		return result;
 	}
 }

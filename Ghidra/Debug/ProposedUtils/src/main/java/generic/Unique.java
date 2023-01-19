@@ -24,6 +24,16 @@ import java.util.stream.Stream;
  */
 public interface Unique {
 
+	static <T> T assertAtMostOne(T[] arr) {
+		if (arr.length == 0) {
+			return null;
+		}
+		if (arr.length == 1) {
+			return arr[0];
+		}
+		throw new AssertionError("Expected at most one. Got many: " + List.of(arr));
+	}
+
 	/**
 	 * Assert that exactly one element is in an iterable and get that element
 	 * 

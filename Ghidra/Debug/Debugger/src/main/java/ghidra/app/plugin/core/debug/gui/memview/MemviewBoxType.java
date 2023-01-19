@@ -20,45 +20,29 @@ import java.awt.Color;
 import generic.theme.GColor;
 
 public enum MemviewBoxType {
-	INSTRUCTIONS,
-	PROCESS,
-	THREAD,
-	MODULE,
-	REGION,
-	IMAGE,
-	VIRTUAL_ALLOC,
-	HEAP_CREATE,
-	HEAP_ALLOC,
-	POOL,
-	STACK,
-	PERFINFO,
-	READ_MEMORY,
-	WRITE_MEMORY,
-	BREAKPOINT;
+	INSTRUCTIONS(new GColor("color.debugger.plugin.memview.box.type.instructions")),
+	PROCESS(new GColor("color.debugger.plugin.memview.box.type.process")),
+	THREAD(new GColor("color.debugger.plugin.memview.box.type.thread")),
+	MODULE(new GColor("color.debugger.plugin.memview.box.type.module")),
+	REGION(new GColor("color.debugger.plugin.memview.box.type.region")),
+	IMAGE(new GColor("color.debugger.plugin.memview.box.type.image")),
+	VIRTUAL_ALLOC(new GColor("color.debugger.plugin.memview.box.type.virtual.alloc")),
+	HEAP_CREATE(new GColor("color.debugger.plugin.memview.box.type.heap.create")),
+	HEAP_ALLOC(new GColor("color.debugger.plugin.memview.box.type.heap.alloc")),
+	POOL(new GColor("color.debugger.plugin.memview.box.type.pool")),
+	STACK(new GColor("color.debugger.plugin.memview.box.type.stack")),
+	PERFINFO(new GColor("color.debugger.plugin.memview.box.type.perfinfo")),
+	READ_MEMORY(new GColor("color.debugger.plugin.memview.box.type.read.memory")),
+	WRITE_MEMORY(new GColor("color.debugger.plugin.memview.box.type.write.memory")),
+	BREAKPOINT(new GColor("color.debugger.plugin.memview.box.type.breakpoint"));
 
-	Color[] colors = { //
-		new GColor("color.debugger.plugin.memview.box.type.instructions"),
-		new GColor("color.debugger.plugin.memview.box.type.process"),
-		new GColor("color.debugger.plugin.memview.box.type.thread"),
-		new GColor("color.debugger.plugin.memview.box.type.module"),
-		new GColor("color.debugger.plugin.memview.box.type.region"),
-		new GColor("color.debugger.plugin.memview.box.type.image"),
-		new GColor("color.debugger.plugin.memview.box.type.virtual.alloc"),
-		new GColor("color.debugger.plugin.memview.box.type.heap.create"),
-		new GColor("color.debugger.plugin.memview.box.type.heap.alloc"),
-		new GColor("color.debugger.plugin.memview.box.type.pool"),
-		new GColor("color.debugger.plugin.memview.box.type.stack"),
-		new GColor("color.debugger.plugin.memview.box.type.perfinfo"),
-		new GColor("color.debugger.plugin.memview.box.type.read.memory"),
-		new GColor("color.debugger.plugin.memview.box.type.write.memory"),
-		new GColor("color.debugger.plugin.memview.box.type.breakpoint"),
-	};
+	private final Color color;
 
-	public Color getColor() {
-		return colors[this.ordinal()];
+	private MemviewBoxType(Color color) {
+		this.color = color;
 	}
 
-	public void setColor(Color color) {
-		colors[this.ordinal()] = color;
+	public Color getColor() {
+		return color;
 	}
 }

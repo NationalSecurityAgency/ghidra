@@ -39,8 +39,8 @@ public class ConvertDecAction extends ConvertConstantAction {
 	}
 
 	@Override
-	public String getMenuDisplay(long value, int size, boolean isSigned) {
-		return getEquateName(value, size, isSigned, null);
+	public String getMenuDisplay(long value, int size, boolean isSigned, Program program) {
+		return getEquateName(value, size, isSigned, program);
 	}
 
 	@Override

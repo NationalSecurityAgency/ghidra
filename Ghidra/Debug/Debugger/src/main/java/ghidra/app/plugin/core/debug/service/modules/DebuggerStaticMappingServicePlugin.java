@@ -29,6 +29,7 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
 import ghidra.app.plugin.core.debug.event.TraceOpenedPluginEvent;
+import ghidra.app.plugin.core.debug.stack.*;
 import ghidra.app.plugin.core.debug.utils.*;
 import ghidra.app.services.*;
 import ghidra.app.services.ModuleMapProposal.ModuleMapEntry;
@@ -545,9 +546,12 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	private Set<Trace> affectedTraces = new HashSet<>();
 	private Set<Program> affectedPrograms = new HashSet<>();
 
+	private final ProgramModuleIndexer programModuleIndexer;
+
 	public DebuggerStaticMappingServicePlugin(PluginTool tool) {
 		super(tool);
 		this.autoWiring = AutoService.wireServicesProvidedAndConsumed(this);
+		this.programModuleIndexer = new ProgramModuleIndexer(tool);
 
 		changeDebouncer.addListener(this::fireChangeListeners);
 		tool.getProject().getProjectData().addDomainFolderChangeListener(this);
@@ -783,6 +787,23 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	public void addModuleMappings(Collection<ModuleMapEntry> entries, TaskMonitor monitor,
 			boolean truncateExisting) throws CancelledException {
 		addMappings(entries, monitor, truncateExisting, "Add module mappings");
+
+		Map<Program, List<ModuleMapEntry>> entriesByProgram = new HashMap<>();
+		for (ModuleMapEntry entry : entries) {
+			if (entry.isMemorize()) {
+				entriesByProgram.computeIfAbsent(entry.getToProgram(), p -> new ArrayList<>())
+						.add(entry);
+			}
+		}
+		for (Map.Entry<Program, List<ModuleMapEntry>> ent : entriesByProgram.entrySet()) {
+			try (UndoableTransaction tid =
+				UndoableTransaction.start(ent.getKey(), "Memorize module mapping")) {
+				for (ModuleMapEntry entry : ent.getValue()) {
+					ProgramModuleIndexer.addModulePaths(entry.getToProgram(),
+						List.of(entry.getModule().getName()));
+				}
+			}
+		}
 	}
 
 	@Override
@@ -979,8 +1000,8 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	}
 
 	@Override
-	public Set<DomainFile> findProbableModulePrograms(TraceModule module) {
-		return DebuggerStaticMappingUtils.findProbableModulePrograms(module, tool.getProject());
+	public DomainFile findBestModuleProgram(AddressSpace space, TraceModule module) {
+		return programModuleIndexer.getBestMatch(space, module, programManager.getCurrentProgram());
 	}
 
 	@Override

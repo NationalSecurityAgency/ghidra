@@ -28,6 +28,7 @@ import docking.ActionContext;
 import docking.Tool;
 import docking.action.*;
 import docking.actions.PopupActionProvider;
+import generic.theme.GColor;
 import ghidra.app.context.ProgramLocationActionContext;
 import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.margin.LineNumberDecompilerMarginProvider;
@@ -80,6 +81,15 @@ import ghidra.util.Msg;
 	})
 public class DebuggerBreakpointMarkerPlugin extends Plugin
 		implements PopupActionProvider {
+
+	private static final Color COLOR_BREAKPOINT_ENABLED_MARKER =
+		new GColor("color.debugger.plugin.resources.breakpoint.marker.enabled");
+	private static final Color COLOR_BREAKPOINT_DISABLED_MARKER =
+		new GColor("color.debugger.plugin.resources.breakpoint.marker.disabled");
+	private static final Color COLOR_BREAKPOINT_INEFF_EN_MARKER =
+		new GColor("color.debugger.plugin.resources.breakpoint.marker.enabled.ineffective");
+	private static final Color COLOR_BREAKPOINT_INEFF_DIS_MARKER =
+		new GColor("color.debugger.plugin.resources.breakpoint.marker.disabled.ineffective");
 
 	protected static ProgramLocation getSingleLocationFromContext(ActionContext context) {
 		if (context == null) {
@@ -291,11 +301,11 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 	protected Color colorForState(State state) {
 		return state.isEnabled()
 				? state.isEffective()
-						? breakpointEnabledMarkerColor
-						: breakpointIneffEnMarkerColor
+						? COLOR_BREAKPOINT_ENABLED_MARKER
+						: COLOR_BREAKPOINT_INEFF_EN_MARKER
 				: state.isEffective()
-						? breakpointDisabledMarkerColor
-						: breakpointIneffDisMarkerColor;
+						? COLOR_BREAKPOINT_DISABLED_MARKER
+						: COLOR_BREAKPOINT_INEFF_DIS_MARKER;
 	}
 
 	protected boolean stateColorsBackground(State state) {
@@ -376,12 +386,10 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 			if (!(program instanceof TraceProgramView)) {
 				BookmarkManager manager = program.getBookmarkManager();
 				manager.defineType(LogicalBreakpoint.BREAKPOINT_ENABLED_BOOKMARK_TYPE,
-					DebuggerResources.ICON_BLANK,
-					DebuggerResources.DEFAULT_COLOR_ENABLED_BREAKPOINT_MARKERS,
+					DebuggerResources.ICON_BLANK, COLOR_BREAKPOINT_ENABLED_MARKER,
 					MarkerService.BREAKPOINT_PRIORITY - 1);
 				manager.defineType(LogicalBreakpoint.BREAKPOINT_DISABLED_BOOKMARK_TYPE,
-					DebuggerResources.ICON_BLANK,
-					DebuggerResources.DEFAULT_COLOR_ENABLED_BREAKPOINT_MARKERS,
+					DebuggerResources.ICON_BLANK, COLOR_BREAKPOINT_DISABLED_MARKER,
 					MarkerService.BREAKPOINT_PRIORITY - 1);
 			}
 
@@ -401,42 +409,6 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 			return new DualMarkerSet(markerService, state.display, state.display, program,
 				MarkerService.BREAKPOINT_PRIORITY, true, true, stateColorsBackground(state),
 				colorForState(state), state.icon, true);
-		}
-
-		public void setEnabledMarkerColor(Color color) {
-			for (State state : State.values()) {
-				if (state == State.NONE || !state.isEnabled() || !state.isEffective()) {
-					continue;
-				}
-				getMarkerSet(state).setMarkerColor(color);
-			}
-		}
-
-		public void setDisabledMarkerColor(Color color) {
-			for (State state : State.values()) {
-				if (state == State.NONE || state.isEnabled() || !state.isEffective()) {
-					continue;
-				}
-				getMarkerSet(state).setMarkerColor(color);
-			}
-		}
-
-		public void setIneffectiveEnabledMarkerColor(Color color) {
-			for (State state : State.values()) {
-				if (state == State.NONE || !state.isEnabled() || state.isEffective()) {
-					continue;
-				}
-				getMarkerSet(state).setMarkerColor(color);
-			}
-		}
-
-		public void setIneffectiveDisabledMarkerColor(Color color) {
-			for (State state : State.values()) {
-				if (state == State.NONE || state.isEnabled() || state.isEffective()) {
-					continue;
-				}
-				getMarkerSet(state).setMarkerColor(color);
-			}
 		}
 
 		public void setEnabledColoringBackground(boolean coloringBackground) {
@@ -754,25 +726,11 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 	private final AutoService.Wiring autoServiceWiring;
 
 	@AutoOptionDefined(
-		name = DebuggerResources.OPTION_NAME_COLORS_ENABLED_BREAKPOINT_MARKERS, //
-		description = "Background color for memory at an enabled breakpoint", //
-		help = @HelpInfo(anchor = "colors"))
-	private Color breakpointEnabledMarkerColor =
-		DebuggerResources.DEFAULT_COLOR_ENABLED_BREAKPOINT_MARKERS;
-
-	@AutoOptionDefined(
 		name = DebuggerResources.OPTION_NAME_COLORS_ENABLED_BREAKPOINT_COLORING_BACKGROUND, //
 		description = "Whether or not to color background for memory at an enabled breakpoint", //
 		help = @HelpInfo(anchor = "colors"))
 	private boolean breakpointEnabledColoringBackground =
 		DebuggerResources.DEFAULT_COLOR_ENABLED_BREAKPOINT_COLORING_BACKGROUND;
-
-	@AutoOptionDefined(
-		name = DebuggerResources.OPTION_NAME_COLORS_DISABLED_BREAKPOINT_MARKERS, //
-		description = "Background color for memory at a disabled breakpoint", //
-		help = @HelpInfo(anchor = "colors"))
-	private Color breakpointDisabledMarkerColor =
-		DebuggerResources.DEFAULT_COLOR_DISABLED_BREAKPOINT_MARKERS;
 
 	@AutoOptionDefined(
 		name = DebuggerResources.OPTION_NAME_COLORS_DISABLED_BREAKPOINT_COLORING_BACKGROUND, //
@@ -782,25 +740,11 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 		DebuggerResources.DEFAULT_COLOR_DISABLED_BREAKPOINT_COLORING_BACKGROUND;
 
 	@AutoOptionDefined(
-		name = DebuggerResources.OPTION_NAME_COLORS_INEFF_EN_BREAKPOINT_MARKERS, //
-		description = "Background color for memory at an enabled, but ineffective, breakpoint", //
-		help = @HelpInfo(anchor = "colors"))
-	private Color breakpointIneffEnMarkerColor =
-		DebuggerResources.DEFAULT_COLOR_INEFF_EN_BREAKPOINT_MARKERS;
-
-	@AutoOptionDefined(
 		name = DebuggerResources.OPTION_NAME_COLORS_INEFF_EN_BREAKPOINT_COLORING_BACKGROUND, //
 		description = "Whether or not to color background for memory at an enabled, but ineffective, breakpoint", //
 		help = @HelpInfo(anchor = "colors"))
 	private boolean breakpointIneffEnColoringBackground =
 		DebuggerResources.DEFAULT_COLOR_INEFF_EN_BREAKPOINT_COLORING_BACKGROUND;
-
-	@AutoOptionDefined(
-		name = DebuggerResources.OPTION_NAME_COLORS_INEFF_DIS_BREAKPOINT_MARKERS, //
-		description = "Background color for memory at an disabled, but ineffective, breakpoint", //
-		help = @HelpInfo(anchor = "colors"))
-	private Color breakpointIneffDisMarkerColor =
-		DebuggerResources.DEFAULT_COLOR_INEFF_DIS_BREAKPOINT_MARKERS;
 
 	@AutoOptionDefined(
 		name = DebuggerResources.OPTION_NAME_COLORS_INEFF_DIS_BREAKPOINT_COLORING_BACKGROUND, //
@@ -854,25 +798,11 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 		createActions();
 	}
 
-	@AutoOptionConsumed(name = DebuggerResources.OPTION_NAME_COLORS_ENABLED_BREAKPOINT_MARKERS)
-	private void setEnabledBreakpointMarkerColor(Color breakpointMarkerColor) {
-		for (BreakpointMarkerSets markers : markersByProgram.values()) {
-			markers.setEnabledMarkerColor(breakpointMarkerColor);
-		}
-	}
-
 	@AutoOptionConsumed(
 		name = DebuggerResources.OPTION_NAME_COLORS_ENABLED_BREAKPOINT_COLORING_BACKGROUND)
 	private void setEnabledBreakpointMarkerBackground(boolean breakpointColoringBackground) {
 		for (BreakpointMarkerSets markers : markersByProgram.values()) {
 			markers.setEnabledColoringBackground(breakpointColoringBackground);
-		}
-	}
-
-	@AutoOptionConsumed(name = DebuggerResources.OPTION_NAME_COLORS_DISABLED_BREAKPOINT_MARKERS)
-	private void setDisabledBreakpointMarkerColor(Color breakpointMarkerColor) {
-		for (BreakpointMarkerSets markers : markersByProgram.values()) {
-			markers.setDisabledMarkerColor(breakpointMarkerColor);
 		}
 	}
 
@@ -885,26 +815,10 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 	}
 
 	@AutoOptionConsumed(
-		name = DebuggerResources.OPTION_NAME_COLORS_INEFF_EN_BREAKPOINT_MARKERS)
-	private void setIneffectiveEBreakpointMarkerColor(Color breakpointMarkerColor) {
-		for (BreakpointMarkerSets markers : markersByProgram.values()) {
-			markers.setIneffectiveEnabledMarkerColor(breakpointMarkerColor);
-		}
-	}
-
-	@AutoOptionConsumed(
 		name = DebuggerResources.OPTION_NAME_COLORS_INEFF_EN_BREAKPOINT_COLORING_BACKGROUND)
 	private void setIneffectiveEBreakpointMarkerBackground(boolean breakpointColoringBackground) {
 		for (BreakpointMarkerSets markers : markersByProgram.values()) {
 			markers.setIneffectiveEnabledColoringBackground(breakpointColoringBackground);
-		}
-	}
-
-	@AutoOptionConsumed(
-		name = DebuggerResources.OPTION_NAME_COLORS_INEFF_DIS_BREAKPOINT_MARKERS)
-	private void setIneffectiveDBreakpointMarkerColor(Color breakpointMarkerColor) {
-		for (BreakpointMarkerSets markers : markersByProgram.values()) {
-			markers.setIneffectiveDisabledMarkerColor(breakpointMarkerColor);
 		}
 	}
 

@@ -39,6 +39,7 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources.DebugProgramAction;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.DisconnectAllAction;
 import ghidra.app.plugin.core.debug.mapping.DebuggerTargetTraceMapper;
 import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOffer;
+import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOffer.PromptMode;
 import ghidra.app.plugin.core.debug.utils.BackgroundUtils;
 import ghidra.app.services.*;
 import ghidra.async.AsyncUtils;
@@ -88,7 +89,7 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 		new DebuggerProgramLaunchOffer() {
 			@Override
 			public CompletableFuture<LaunchResult> launchProgram(TaskMonitor monitor,
-					boolean prompt, LaunchConfigurator configurator) {
+					PromptMode prompt, LaunchConfigurator configurator) {
 				throw new AssertionError("Who clicked me?");
 			}
 
@@ -330,7 +331,8 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 		return offers.sorted(Comparator.comparingInt(o -> -mrl.indexOf(o.getConfigName())));
 	}
 
-	private void debugProgram(DebuggerProgramLaunchOffer offer, Program program, boolean prompt) {
+	private void debugProgram(DebuggerProgramLaunchOffer offer, Program program,
+			PromptMode prompt) {
 		BackgroundUtils.asyncModal(tool, offer.getButtonTitle(), true, true, m -> {
 			List<String> recent = new ArrayList<>(readMostRecentLaunches(program));
 			recent.remove(offer.getConfigName());
@@ -360,7 +362,7 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 		if (offer == null || program == null) {
 			return;
 		}
-		debugProgram(offer, program, false);
+		debugProgram(offer, program, PromptMode.ON_ERROR);
 	}
 
 	private void debugProgramStateActivated(ActionState<DebuggerProgramLaunchOffer> offer,
@@ -375,7 +377,7 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 		if (program == null) {
 			return;
 		}
-		debugProgram(offer, program, true);
+		debugProgram(offer, program, PromptMode.ALWAYS);
 	}
 
 	private void updateActionDebugProgram() {

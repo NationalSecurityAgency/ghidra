@@ -57,7 +57,7 @@ public interface Composite extends DataType {
 
 	/**
 	 * Returns an array of Data Type Components that make up this composite including
-	 * undefined filler components which may be present within a Structure whch has packing disabled.
+	 * undefined filler components which may be present within a Structure which has packing disabled.
 	 * The number of components corresponds to {@link #getNumComponents()}.
 	 * @return array all components
 	 */

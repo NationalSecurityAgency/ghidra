@@ -81,7 +81,7 @@ public class ThemeUtilsTest extends AbstractDockingTest {
 	@Test
 	public void testImportThemeWithCurrentChangesCancelled() throws IOException {
 		assertEquals("Nimbus Theme", themeManager.getActiveTheme().getName());
-		themeManager.setColor("Panel.background", testColor);
+		themeManager.setColor("laf.color.Panel.background", testColor);
 		assertTrue(themeManager.hasThemeChanges());
 
 		File themeFile = createThemeFile("Bob");
@@ -99,7 +99,7 @@ public class ThemeUtilsTest extends AbstractDockingTest {
 		assertEquals("Nimbus Theme", themeManager.getActiveTheme().getName());
 
 		// make a change in the current theme, so you get asked to save
-		themeManager.setColor("Panel.background", testColor);
+		themeManager.setColor("laf.color.Panel.background", testColor);
 		assertTrue(themeManager.hasThemeChanges());
 
 		File themeFile = createThemeFile("Bob");
@@ -122,7 +122,7 @@ public class ThemeUtilsTest extends AbstractDockingTest {
 		assertEquals("Nimbus Theme", themeManager.getActiveTheme().getName());
 
 		// make a change in the current theme, so you get asked to save
-		themeManager.setColor("Panel.background", testColor);
+		themeManager.setColor("laf.color.Panel.background", testColor);
 		assertTrue(themeManager.hasThemeChanges());
 
 		File bobThemeFile = createThemeFile("Bob");

@@ -15,9 +15,10 @@
  */
 package ghidra.app.plugin.core.decompile.actions;
 
+import java.util.List;
+
 import java.awt.Font;
 import java.awt.FontMetrics;
-import java.util.List;
 
 import javax.swing.JMenuItem;
 
@@ -297,7 +298,8 @@ public abstract class ConvertConstantAction extends AbstractDecompilerAction {
 						size = 1;
 					}
 					value = ConvertConstantTask.signExtendValue(convertIsSigned, value, size);
-					String altName = getEquateName(value, size, convertIsSigned, null);
+					String altName =
+						getEquateName(value, size, convertIsSigned, context.getProgram());
 					if (altName == null) {
 						altName = equateName;
 					}
@@ -321,12 +323,17 @@ public abstract class ConvertConstantAction extends AbstractDecompilerAction {
 		if (task == null) {
 			return false;
 		}
-		String convDisplay = getMenuDisplay(task.getValue(), task.getSize(), task.isSigned());
+		String convDisplay =
+			getMenuDisplay(task.getValue(), task.getSize(), task.isSigned(), context.getProgram());
+		if (convDisplay == null) {
+			return false;
+		}
 		if (convDisplay.equals(context.getTokenAtCursor().getText())) {
 			return false;
 		}
 		String menuString = getStandardLengthString(getMenuPrefix()) + convDisplay;
-		getPopupMenuData().setMenuItemName(menuString);
+		getPopupMenuData().setMenuItemNamePlain(menuString);
+
 		return true;
 	}
 
@@ -355,9 +362,10 @@ public abstract class ConvertConstantAction extends AbstractDecompilerAction {
 	 * @param value is the actual value
 	 * @param size is the number of bytes used for the constant Varnode
 	 * @param isSigned is true if the constant represents a signed data-type
+	 * @param program the program
 	 * @return the formatted String
 	 */
-	public abstract String getMenuDisplay(long value, int size, boolean isSigned);
+	public abstract String getMenuDisplay(long value, int size, boolean isSigned, Program program);
 
 	/**
 	 * Construct the name of the Equate, either absolutely for a conversion or

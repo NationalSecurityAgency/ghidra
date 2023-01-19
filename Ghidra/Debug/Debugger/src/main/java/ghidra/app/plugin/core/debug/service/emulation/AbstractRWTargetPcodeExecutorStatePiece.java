@@ -15,11 +15,14 @@
  */
 package ghidra.app.plugin.core.debug.service.emulation;
 
+import java.util.Map;
 import java.util.concurrent.*;
 
 import ghidra.app.plugin.core.debug.service.emulation.data.PcodeDebuggerDataAccess;
+import ghidra.generic.util.datastruct.SemisparseByteArray;
 import ghidra.pcode.exec.AccessPcodeExecutionException;
 import ghidra.pcode.exec.trace.BytesTracePcodeExecutorStatePiece;
+import ghidra.pcode.exec.trace.data.PcodeTraceDataAccess;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.model.memory.TraceMemoryState;
@@ -42,6 +45,11 @@ public abstract class AbstractRWTargetPcodeExecutorStatePiece
 		public AbstractRWTargetCachedSpace(Language language, AddressSpace space,
 				PcodeDebuggerDataAccess backing) {
 			super(language, space, backing);
+		}
+
+		protected AbstractRWTargetCachedSpace(Language language, AddressSpace space,
+				PcodeTraceDataAccess backing, SemisparseByteArray bytes, AddressSet written) {
+			super(language, space, backing, bytes, written);
 		}
 
 		protected abstract void fillUninitialized(AddressSet uninitialized);
@@ -99,6 +107,20 @@ public abstract class AbstractRWTargetPcodeExecutorStatePiece
 	 */
 	protected abstract class TargetBackedSpaceMap
 			extends CacheingSpaceMap<PcodeDebuggerDataAccess, CachedSpace> {
+
+		public TargetBackedSpaceMap() {
+			super();
+		}
+
+		protected TargetBackedSpaceMap(Map<AddressSpace, CachedSpace> spaces) {
+			super(spaces);
+		}
+
+		@Override
+		public CachedSpace fork(CachedSpace s) {
+			return s.fork();
+		}
+
 		@Override
 		protected PcodeDebuggerDataAccess getBacking(AddressSpace space) {
 			return data;

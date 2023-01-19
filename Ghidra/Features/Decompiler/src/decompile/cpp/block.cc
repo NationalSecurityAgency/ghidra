@@ -2616,6 +2616,70 @@ bool BlockBasic::noInterveningStatement(PcodeOp *first,int4 path,PcodeOp *last)
   return false;
 }
 
+/// If there exists a CPUI_MULTIEQUAL PcodeOp in the given basic block that takes this exact list of Varnodes
+/// as its inputs, return that PcodeOp. Otherwise return null.
+/// \param varArray is the exact list of Varnodes
+/// \param bl is the basic block
+/// \return the MULTIEQUAL or null
+PcodeOp *BlockBasic::findMultiequal(const vector<Varnode *> &varArray)
+
+{
+  Varnode *vn = varArray[0];
+  PcodeOp *op;
+  list<PcodeOp *>::const_iterator iter = vn->beginDescend();
+  for(;;) {
+    op = *iter;
+    if (op->code() == CPUI_MULTIEQUAL && op->getParent() == this)
+      break;
+    ++iter;
+    if (iter == vn->endDescend())
+      return (PcodeOp *)0;
+  }
+  for(int4 i=0;i<op->numInput();++i) {
+    if (op->getIn(i) != varArray[i])
+      return (PcodeOp *)0;
+  }
+  return op;
+}
+
+/// Each Varnode must be defined by a PcodeOp with the same OpCode.  The Varnode, within the array, is replaced
+/// with the input Varnode in the indicated slot.
+/// \param varArray is the given array of Varnodes
+/// \param slot is the indicated slot
+/// \return \true if all the Varnodes are defined in the same way
+bool BlockBasic::liftVerifyUnroll(vector<Varnode *> &varArray,int4 slot)
+
+{
+  OpCode opc;
+  Varnode *cvn;
+  Varnode *vn = varArray[0];
+  if (!vn->isWritten()) return false;
+  PcodeOp *op = vn->getDef();
+  opc = op->code();
+  if (op->numInput() == 2) {
+    cvn = op->getIn(1-slot);
+    if (!cvn->isConstant()) return false;
+  }
+  else
+    cvn = (Varnode *)0;
+  varArray[0] = op->getIn(slot);
+  for(int4 i=1;i<varArray.size();++i) {
+    vn = varArray[i];
+    if (!vn->isWritten()) return false;
+    op = vn->getDef();
+    if (op->code() != opc) return false;
+
+    if (cvn != (Varnode *)0) {
+      Varnode *cvn2 = op->getIn(1-slot);
+      if (!cvn2->isConstant()) return false;
+      if (cvn->getSize() != cvn2->getSize()) return false;
+      if (cvn->getOffset() != cvn2->getOffset()) return false;
+    }
+    varArray[i] = op->getIn(slot);
+  }
+  return true;
+}
+
 void BlockCopy::printHeader(ostream &s) const
 
 {

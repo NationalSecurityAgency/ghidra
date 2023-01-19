@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,20 +22,21 @@ import ghidra.app.util.bin.BinaryReader;
 public class OmfModuleEnd extends OmfRecord {
 	private byte moduleType;
 	private OmfFixupRecord.FixupTarget startAddress;
-	
+
 	public OmfModuleEnd(BinaryReader reader) throws IOException {
 		readRecordHeader(reader);
 		moduleType = reader.readNextByte();
-		if (hasStartAddress())
-			startAddress = OmfFixupRecord.FixupTarget.readFixupTarget(reader,hasBigFields());
+		if (hasStartAddress()) {
+			startAddress = OmfFixupRecord.FixupTarget.readFixupTarget(reader, hasBigFields());
+		}
 		readCheckSumByte(reader);
 	}
-	
+
 	public boolean isMainProgramModule() {
-		return ((moduleType & 0x80)!=0);
+		return ((moduleType & 0x80) != 0);
 	}
-	
+
 	public boolean hasStartAddress() {
-		return ((moduleType & 0x40)!=0);
+		return ((moduleType & 0x40) != 0);
 	}
 }

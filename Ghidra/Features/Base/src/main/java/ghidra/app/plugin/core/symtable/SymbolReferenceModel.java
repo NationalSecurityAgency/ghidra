@@ -15,12 +15,10 @@
  */
 package ghidra.app.plugin.core.symtable;
 
-import java.awt.Component;
 import java.util.Iterator;
 
-import javax.swing.JLabel;
-
-import docking.widgets.table.*;
+import docking.widgets.table.DiscoverableTableUtils;
+import docking.widgets.table.TableColumnDescriptor;
 import ghidra.app.services.BlockModelService;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.PluginTool;
@@ -34,8 +32,6 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.util.datastruct.Accumulator;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.table.AddressBasedTableModel;
-import ghidra.util.table.column.AbstractGhidraColumnRenderer;
-import ghidra.util.table.column.GColumnRenderer;
 import ghidra.util.table.field.*;
 import ghidra.util.task.TaskMonitor;
 
@@ -79,7 +75,7 @@ public class SymbolReferenceModel extends AddressBasedTableModel<Reference> {
 		descriptor.addVisibleColumn(
 			DiscoverableTableUtils.adaptColumForModel(this, new ReferenceFromLabelTableColumn()));
 		descriptor.addVisibleColumn(new SubroutineTableColumn());
-		descriptor.addVisibleColumn(new AccessTableColumn());
+		descriptor.addVisibleColumn(new ReferenceTypeTableColumn());
 		descriptor.addVisibleColumn(
 			DiscoverableTableUtils.adaptColumForModel(this, new ReferenceFromPreviewTableColumn()));
 
@@ -240,32 +236,6 @@ public class SymbolReferenceModel extends AddressBasedTableModel<Reference> {
 		}
 	}
 
-	private static String getReferenceType(RefType type) {
-		if (type == RefType.THUNK) {
-			return "Thunk";
-		}
-
-		if (type.isRead() && type.isWrite()) {
-			return "RW";
-		}
-		if (type.isRead()) {
-			return "Read";
-		}
-		if (type.isWrite()) {
-			return "Write";
-		}
-		if (type.isData()) {
-			return "Data";
-		}
-		if (type.isCall()) {
-			return "Call";
-		}
-		if (type.isJump()) {
-			return (type.isConditional() ? "Branch" : "Jump");
-		}
-		return "Unknown";
-	}
-
 	private static Symbol getSymbol(Address fromAddress, String symbolName,
 			BlockModelService blockModelService, Program program) {
 
@@ -372,57 +342,6 @@ public class SymbolReferenceModel extends AddressBasedTableModel<Reference> {
 			}
 
 			return null;
-		}
-	}
-
-	private static class AccessTableColumn
-			extends AbstractProgramBasedDynamicTableColumn<Reference, RefType> {
-
-		private AccessCellRenderer accessRenderer = new AccessCellRenderer();
-
-		@Override
-		public String getColumnName() {
-			return "Access";
-		}
-
-		@Override
-		public RefType getValue(Reference rowObject, Settings settings, Program program,
-				ServiceProvider serviceProvider) throws IllegalArgumentException {
-
-			Listing listing = program.getListing();
-			RefType referenceType = rowObject.getReferenceType();
-			if (referenceType == RefType.INDIRECTION) {
-				Instruction instruction = listing.getInstructionAt(rowObject.getFromAddress());
-				if (instruction != null) {
-					FlowType flowType = instruction.getFlowType();
-					return flowType;
-				}
-			}
-			return referenceType;
-		}
-
-		@Override
-		public GColumnRenderer<RefType> getColumnRenderer() {
-			return accessRenderer;
-		}
-
-		private class AccessCellRenderer extends AbstractGhidraColumnRenderer<RefType> {
-
-			@Override
-			public Component getTableCellRendererComponent(GTableCellRenderingData data) {
-
-				JLabel label = (JLabel) super.getTableCellRendererComponent(data);
-
-				RefType refType = (RefType) data.getValue();
-				label.setText(getReferenceType(refType));
-
-				return label;
-			}
-
-			@Override
-			public String getFilterString(RefType t, Settings settings) {
-				return getReferenceType(t);
-			}
 		}
 	}
 }

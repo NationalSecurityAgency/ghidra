@@ -44,7 +44,7 @@ import ghidra.util.exception.*;
 public abstract class CompositeEditorModel extends CompositeViewerModel implements EditorModel {
 
 	/**
-	 * Whether or not an apply is occurring. Need to ignore changes to the 
+	 * Whether or not an apply is occurring. Need to ignore changes to the
 	 * original structure, if apply is causing them.
 	 */
 	protected boolean applyingFieldEdit = false;
@@ -85,6 +85,8 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 				"Datatype " + dataType.getName() + " doesn't have a data type manager specified.");
 		}
 
+		long lastCompositeId = originalCompositeId;
+
 		if (isEditingField()) {
 			endFieldEditing();
 		}
@@ -111,7 +113,12 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		originalDTM.addDataTypeManagerListener(this);
 
 		hadChanges = false;
-		setSelection(new FieldSelection());
+
+		if (originalCompositeId == -1 || lastCompositeId != originalCompositeId) {
+			// only clear the selection if loading a new type
+			setSelection(new FieldSelection());
+		}
+
 		clearStatus();
 		compositeInfoChanged();
 		fireTableDataChanged();
@@ -121,9 +128,9 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 	}
 
 	/**
-	 * Create view composite with the appropriate datatype manager and 
+	 * Create view composite with the appropriate datatype manager and
 	 * changes listener(s) if required.
-	 * 
+	 *
 	 * @param original original composite being loaded
 	 * @return view composite to used by model
 	 */
@@ -136,10 +143,10 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 
 		// Clone all settings some of which do not get resolved.
 
-		// NOTE: It is important to note that the editor will allow modification of component 
-		// default settings, however the underlying datatype default settings may not get copied 
+		// NOTE: It is important to note that the editor will allow modification of component
+		// default settings, however the underlying datatype default settings may not get copied
 		// as they get resolved into the view datatype manager.  This may result in the incorrect
-		// underlying datatype default setting value being presented when adjusting component 
+		// underlying datatype default setting value being presented when adjusting component
 		// default settings.
 		cloneAllComponentSettings(original, composite);
 
@@ -180,7 +187,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 	 * @param rowIndex index of the row (component)
 	 * @param dt the data type to be placed at the row index
 	 * @return a new data type instance
-	 * @throws InvalidDataTypeException if the resulting data type is not allowed to be 
+	 * @throws InvalidDataTypeException if the resulting data type is not allowed to be
 	 * added at the indicated index
 	 * @throws CancelledException if cancelled
 	 */
@@ -253,7 +260,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 	 * Gets called to update/validate the current editable location in the table.
 	 * @param value the new cell value
 	 * @param rowIndex the index of the row in the component table.
-	 * @param columnIndex the column index for the table cell in the 
+	 * @param columnIndex the column index for the table cell in the
 	 * current model.
 	 * @return true if the field was updated or validated successfully.
 	 */
@@ -289,7 +296,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 
 //==================================================================================================
 // METHODS FOR CHANGING THE COMPOSITE
-//==================================================================================================	
+//==================================================================================================
 
 	/**
 	 * Called whenever the edit state of the data structure changes.
@@ -308,7 +315,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 	 *  Sets the name for the structure being edited.
 	 *
 	 * @param name the new name.
-	 * 
+	 *
 	 * @throws DuplicateNameException if the name already exists.
 	 */
 	@Override
@@ -433,11 +440,11 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 	}
 
 	/**
-	 * Resolves the data type against the indicated data type manager using the specified 
-	 * conflictHandler.  Transactions should have already been initiated prior to calling this 
-	 * method.   If not then override this method to perform the transaction code around the 
+	 * Resolves the data type against the indicated data type manager using the specified
+	 * conflictHandler.  Transactions should have already been initiated prior to calling this
+	 * method.   If not then override this method to perform the transaction code around the
 	 * resolve.
-	 * 
+	 *
 	 * @param dt the data type to be resolved
 	 * @param resolveDtm the data type manager to resolve the data type against
 	 * @param conflictHandler the handler to be used for any conflicts encountered while resolving
@@ -693,7 +700,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 
 //==================================================================================================
 // METHODS FOR THE FIELD EDITING
-//==================================================================================================	
+//==================================================================================================
 
 	@Override
 	public boolean beginEditingField(int rowIndex, int columnIndex) {
@@ -777,10 +784,10 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 	}
 
 	/**
-	 * This gets the next data type in the cycle that fits in place of the 
+	 * This gets the next data type in the cycle that fits in place of the
 	 * currently selected component. If the currently selected component's data
-	 * type is not in the cycle group, then the first data type that fits from 
-	 * the cycle group is returned. If no new data type from the cycle group 
+	 * type is not in the cycle group, then the first data type that fits from
+	 * the cycle group is returned. If no new data type from the cycle group
 	 * fits at the selected component, null is returned.
 	 *
 	 * @param cycleGroup the cycle group of data types to choose from.
@@ -854,13 +861,12 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 	/**
 	 * Determine if the data type is a valid one to place into the current structure being edited.
 	 * If invalid, an exception will be thrown.
-	 * 
+	 *
 	 * @param datatype the data type
 	 * @throws InvalidDataTypeException if the structure being edited is part
 	 *         of the data type being inserted or doesn't have a valid size.
 	 */
-	protected void checkIsAllowableDataType(DataType datatype)
-			throws InvalidDataTypeException {
+	protected void checkIsAllowableDataType(DataType datatype) throws InvalidDataTypeException {
 		if (!allowsZeroLengthComponents() && DataTypeComponent.usesZeroLengthComponent(datatype)) {
 			throw new InvalidDataTypeException(
 				"Zero-length datatype not permitted: " + datatype.getName());
@@ -1024,9 +1030,9 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 	}
 
 	/**
-	 * If the component at the indicated index is a composite data type, 
+	 * If the component at the indicated index is a composite data type,
 	 * this gets the number of components that it contains.
-	 * 
+	 *
 	 * @param rowIndex the index of the component in the editor.
 	 * @return the number of sub-components or 0.
 	 */
@@ -1080,7 +1086,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 
 //==================================================================================================
 // End of methods for determining if a type of edit action is allowed
-//==================================================================================================	
+//==================================================================================================
 
 	/**
 	 *  Saves the current selection in the structure components viewing area.
@@ -1105,7 +1111,7 @@ public abstract class CompositeEditorModel extends CompositeViewerModel implemen
 		}
 
 		// Normally if the user makes a new selection, we want to end any field editing
-		// that is in progress, but if we are fixing up the selection during a beginEdit 
+		// that is in progress, but if we are fixing up the selection during a beginEdit
 		// then don't end field editing since we are in a transition state.
 		if (!stillBeginningEdit) {
 			endFieldEditing();

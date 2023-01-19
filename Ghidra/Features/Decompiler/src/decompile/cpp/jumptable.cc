@@ -502,6 +502,46 @@ uintb JumpBasic::backup2Switch(Funcdata *fd,uintb output,Varnode *outvn,Varnode 
   return output;
 }
 
+/// If the Varnode has a restricted range due to masking via INT_AND, the maximum value of this range is returned.
+/// Otherwise, 0 is returned, indicating that the Varnode can take all possible values.
+/// \param vn is the given Varnode
+/// \return the maximum value or 0
+uintb JumpBasic::getMaxValue(Varnode *vn)
+
+{
+  uintb maxValue = 0;		// 0 indicates maximum possible value
+  if (!vn->isWritten())
+    return maxValue;
+  PcodeOp *op = vn->getDef();
+  if (op->code() == CPUI_INT_AND) {
+    Varnode *constvn = op->getIn(1);
+    if (constvn->isConstant()) {
+      maxValue = coveringmask( constvn->getOffset() );
+      maxValue = (maxValue + 1) & calc_mask(vn->getSize());
+    }
+  }
+  else if (op->code() == CPUI_MULTIEQUAL) {	// Its possible the AND is duplicated across multiple blocks
+    int4 i;
+    for(i=0;i<op->numInput();++i) {
+      Varnode *subvn = op->getIn(i);
+      if (!subvn->isWritten()) break;
+      PcodeOp *andOp = subvn->getDef();
+      if (andOp->code() != CPUI_INT_AND) break;
+      Varnode *constvn = andOp->getIn(1);
+      if (!constvn->isConstant()) break;
+      if (maxValue < constvn->getOffset())
+	maxValue = constvn->getOffset();
+    }
+    if (i == op->numInput()) {
+      maxValue = coveringmask( maxValue );
+      maxValue = (maxValue + 1) & calc_mask(vn->getSize());
+    }
+    else
+      maxValue = 0;
+  }
+  return maxValue;
+}
+
 /// \brief Calculate the initial set of Varnodes that might be switch variables
 ///
 /// Paths that terminate at the given PcodeOp are calculated and organized
@@ -566,7 +606,8 @@ static bool matching_constants(Varnode *vn1,Varnode *vn2)
 /// \param path is the specific branch to take from the CBRANCH to reach the switch
 /// \param rng is the range of values causing the switch path to be taken
 /// \param v is the Varnode holding the value controlling the CBRANCH
-GuardRecord::GuardRecord(PcodeOp *bOp,PcodeOp *rOp,int4 path,const CircleRange &rng,Varnode *v)
+/// \param unroll is \b true if the guard is duplicated across multiple blocks
+GuardRecord::GuardRecord(PcodeOp *bOp,PcodeOp *rOp,int4 path,const CircleRange &rng,Varnode *v,bool unr)
 
 {
   cbranch = bOp;
@@ -575,6 +616,7 @@ GuardRecord::GuardRecord(PcodeOp *bOp,PcodeOp *rOp,int4 path,const CircleRange &
   range = rng;
   vn = v;
   baseVn = quasiCopy(v,bitsPreserved);		// Look for varnode whose bits are copied
+  unrolled = unr;
 }
 
 /// \brief Determine if \b this guard applies to the given Varnode
@@ -1020,7 +1062,12 @@ void JumpBasic::analyzeGuards(BlockBasic *bl,int4 pathout)
     else {
       pathout = -1;		// Make sure not to use pathout next time around
       for(;;) {
-	if (bl->sizeIn() != 1) return; // Assume only 1 path to switch
+	if (bl->sizeIn() != 1) {
+	  if (bl->sizeIn() > 1)
+	    checkUnrolledGuard(bl, maxpullback, usenzmask);
+	  return;
+	}
+	// Only 1 flow path to the switch
 	prevbl = (BlockBasic *)bl->getIn(0);
 	if (prevbl->sizeOut() != 1) break; // Is it possible to deviate from switch path in this block
 	bl = prevbl;		// If not, back up to next block
@@ -1077,17 +1124,7 @@ void JumpBasic::calcRange(Varnode *vn,CircleRange &rng) const
   else if (vn->isWritten() && vn->getDef()->isBoolOutput())
     rng = CircleRange(0,2,1,1);	// Only 0 or 1 possible
   else {			// Should we go ahead and use nzmask in all cases?
-    uintb maxValue = 0;		// Every possible value
-    if (vn->isWritten()) {
-      PcodeOp *andop = vn->getDef();
-      if (andop->code() == CPUI_INT_AND) {
-	Varnode *constvn = andop->getIn(1);
-	if (constvn->isConstant()) {
-	  maxValue = coveringmask( constvn->getOffset() );
-	  maxValue = (maxValue + 1) & calc_mask(vn->getSize());
-	}
-      }
-    }
+    uintb maxValue = getMaxValue(vn);
     stride = getStride(vn);
     rng = CircleRange(0,maxValue,vn->getSize(),stride);
   }
@@ -1203,8 +1240,9 @@ void JumpBasic::markFoldableGuards(void)
   int4 bitsPreserved;
   Varnode *baseVn = GuardRecord::quasiCopy(vn, bitsPreserved);
   for(int4 i=0;i<selectguards.size();++i) {
-    if (selectguards[i].valueMatch(vn,baseVn,bitsPreserved)==0) {
-      selectguards[i].clear();		// Indicate this is not a true guard
+    GuardRecord &guardRecord(selectguards[i]);
+    if (guardRecord.valueMatch(vn,baseVn,bitsPreserved)==0 || guardRecord.isUnrolled()) {
+      guardRecord.clear();		// Indicate this guard was not used or should not be folded
     }
   }
 }
@@ -1241,6 +1279,75 @@ bool JumpBasic::flowsOnlyToModel(Varnode *vn,PcodeOp *trailOp)
       return false;
   }
   return true;
+}
+
+/// All CBRANCHs in addition to flowing to the given block, must also flow to another common block,
+/// and each boolean value must select between the given block and the common block in the same way.
+/// If this flow exists, \b true is returned and the boolean Varnode inputs to each CBRANCH are passed back.
+/// \param varArray will hold the input Varnodes being passed back
+/// \param bl is the given block
+/// \return \b true if the common CBRANCH flow exists across all incoming blocks
+bool JumpBasic::checkCommonCbranch(vector<Varnode *> &varArray,BlockBasic *bl)
+
+{
+  BlockBasic *curBlock = (BlockBasic *)bl->getIn(0);
+  PcodeOp *op  = curBlock->lastOp();
+  if (op == (PcodeOp *)0 || op->code() != CPUI_CBRANCH)
+    return false;
+  int4 outslot = bl->getInRevIndex(0);
+  bool isOpFlip = op->isBooleanFlip();
+  varArray.push_back(op->getIn(1));	// Pass back boolean input to CBRANCH
+  for(int4 i=1;i<bl->sizeIn();++i) {
+    curBlock = (BlockBasic *)bl->getIn(i);
+    op = curBlock->lastOp();
+    if (op == (PcodeOp *)0 || op->code() != CPUI_CBRANCH)
+      return false;				// All blocks must end with CBRANCH
+    if (op->isBooleanFlip() != isOpFlip)
+      return false;
+    if (outslot != bl->getInRevIndex(i))
+      return false;				// Boolean value must have some meaning
+    varArray.push_back(op->getIn(1));		// Pass back boolean input to CBRANCH
+  }
+  return true;
+}
+
+/// \brief Check for a guard that has been unrolled across multiple blocks
+///
+/// A guard calculation can be duplicated across multiple blocks that all branch to the basic block
+/// performing the final BRANCHIND.  In this case, the switch variable is also duplicated across multiple Varnodes
+/// that are all inputs to a MULTIEQUAL whose output is used for the final BRANCHIND calculation.  This method
+/// looks for this situation and creates a GuardRecord associated with this MULTIEQUAL output.
+/// \param bl is the basic block on the path to the switch with multiple incoming flows
+/// \param maxpullback is the maximum number of times to pull back from the guard CBRANCH to the putative switch variable
+/// \param usenzmask is \b true if the NZMASK should be used as part of the pull-back operation
+void JumpBasic::checkUnrolledGuard(BlockBasic *bl,int4 maxpullback,bool usenzmask)
+
+{
+  vector<Varnode *> varArray;
+  if (!checkCommonCbranch(varArray,bl))
+    return;
+  int4 indpath = bl->getInRevIndex(0);
+  bool toswitchval = (indpath == 1);
+  PcodeOp *cbranch = ((BlockBasic *)bl->getIn(0))->lastOp();
+  if (cbranch->isBooleanFlip())
+    toswitchval = !toswitchval;
+  CircleRange rng(toswitchval);
+  int4 indpathstore = bl->getIn(0)->getFlipPath() ? 1-indpath : indpath;
+  PcodeOp *readOp = cbranch;
+  for(int4 j=0;j<maxpullback;++j) {
+    PcodeOp *multiOp = bl->findMultiequal(varArray);
+    if (multiOp != (PcodeOp *)0) {
+      selectguards.push_back(GuardRecord(cbranch,readOp,indpathstore,rng,multiOp->getOut(),true));
+    }
+    Varnode *markup;		// Throw away markup information
+    Varnode *vn = varArray[0];
+    if (!vn->isWritten()) break;
+    PcodeOp *readOp = vn->getDef();
+    vn = rng.pullBack(readOp,&markup,usenzmask);
+    if (vn == (Varnode *)0) break;
+    if (rng.isEmpty()) break;
+    if (!BlockBasic::liftVerifyUnroll(varArray, readOp->getSlot(vn))) break;
+  }
 }
 
 bool JumpBasic::foldInOneGuard(Funcdata *fd,GuardRecord &guard,JumpTable *jump)

@@ -179,8 +179,14 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 				System.err.println("processAdded - null");
 				return;
 			}
+			DbgModelTargetProcessContainer container =
+				(DbgModelTargetProcessContainer) targetProcess.getParent();
+			DelegateDbgModel2TargetObject delegate =
+				(DelegateDbgModel2TargetObject) container.getDelegate();
+			delegate.init();
+
 			broadcast().event(getProxy(), null, TargetEventType.PROCESS_CREATED,
-				"Process " + proc.getId() + " started " + "notepad.exe" + " pid=" + proc.getPid(),
+				"Process " + proc.getId() + " started " + " pid=" + proc.getPid(),
 				List.of(targetProcess));
 		});
 	}
@@ -193,6 +199,12 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 				System.err.println("threadCreated - null");
 				return;
 			}
+			DbgModelTargetThreadContainer container =
+				(DbgModelTargetThreadContainer) targetThread.getParent();
+			DelegateDbgModel2TargetObject cdelegate =
+				(DelegateDbgModel2TargetObject) container.getDelegate();
+			cdelegate.init();
+
 			broadcast().event(getProxy(), targetThread, TargetEventType.THREAD_CREATED,
 				"Thread " + thread.getId() + " started", List.of(targetThread));
 			DelegateDbgModel2TargetObject delegate =

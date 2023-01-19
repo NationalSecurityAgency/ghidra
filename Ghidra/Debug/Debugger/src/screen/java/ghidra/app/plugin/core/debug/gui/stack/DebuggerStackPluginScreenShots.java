@@ -15,31 +15,63 @@
  */
 package ghidra.app.plugin.core.debug.gui.stack;
 
+import java.io.IOException;
+import java.math.BigInteger;
+import java.util.List;
+import java.util.Set;
+
 import org.junit.*;
 
+import generic.Unique;
+import ghidra.app.plugin.assembler.*;
+import ghidra.app.plugin.core.debug.DebuggerCoordinates;
+import ghidra.app.plugin.core.debug.gui.action.SPLocationTrackingSpec;
+import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
+import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
+import ghidra.app.plugin.core.debug.service.editing.DebuggerStateEditingServicePlugin;
+import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationServicePlugin;
+import ghidra.app.plugin.core.debug.service.emulation.ProgramEmulationUtils;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
+import ghidra.app.plugin.core.debug.stack.*;
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
 import ghidra.app.services.*;
+import ghidra.app.services.DebuggerEmulationService.EmulationResult;
+import ghidra.app.services.DebuggerStateEditingService.StateEditingMode;
+import ghidra.app.services.DebuggerStateEditingService.StateEditor;
+import ghidra.async.AsyncTestUtils;
 import ghidra.framework.model.DomainFolder;
+import ghidra.framework.model.DomainObject;
+import ghidra.pcode.exec.DebuggerPcodeUtils.WatchValue;
+import ghidra.program.database.ProgramDB;
+import ghidra.program.disassemble.Disassembler;
 import ghidra.program.model.address.*;
-import ghidra.program.model.listing.FunctionManager;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.data.UnsignedIntegerDataType;
+import ghidra.program.model.lang.*;
+import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.Function.FunctionUpdateType;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.util.ProgramLocation;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.DefaultTraceLocation;
 import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.model.time.schedule.Scheduler;
+import ghidra.util.InvalidNameException;
+import ghidra.util.Msg;
 import ghidra.util.database.UndoableTransaction;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.ConsoleTaskMonitor;
 import ghidra.util.task.TaskMonitor;
 import help.screenshot.GhidraScreenShotGenerator;
 
-public class DebuggerStackPluginScreenShots extends GhidraScreenShotGenerator {
+public class DebuggerStackPluginScreenShots extends GhidraScreenShotGenerator
+		implements AsyncTestUtils {
 
 	ProgramManager programManager;
 	DebuggerTraceManagerService traceManager;
@@ -124,5 +156,183 @@ public class DebuggerStackPluginScreenShots extends GhidraScreenShotGenerator {
 		traceManager.activateThread(thread);
 
 		captureIsolatedProvider(DebuggerStackProvider.class, 600, 300);
+	}
+
+	protected ConsoleTaskMonitor monitor = new ConsoleTaskMonitor();
+
+	// TODO: Propose this replace waitForProgram
+	public static void waitForDomainObject(DomainObject object) {
+		object.flushEvents();
+		waitForSwing();
+	}
+
+	protected void intoProject(DomainObject obj) {
+		waitForDomainObject(obj);
+		DomainFolder rootFolder = tool.getProject()
+				.getProjectData()
+				.getRootFolder();
+		waitForCondition(() -> {
+			try {
+				rootFolder.createFile(obj.getName(), obj, monitor);
+				return true;
+			}
+			catch (InvalidNameException | CancelledException e) {
+				throw new AssertionError(e);
+			}
+			catch (IOException e) {
+				// Usually "object is busy". Try again.
+				return false;
+			}
+		});
+	}
+
+	protected void createProgram(Language lang, CompilerSpec cSpec) throws IOException {
+		program = new ProgramDB("fibonacci", lang, cSpec, this);
+	}
+
+	protected void createProgram(String languageID, String cSpecID) throws IOException {
+		Language language = getLanguageService().getLanguage(new LanguageID(languageID));
+		CompilerSpec cSpec = cSpecID == null ? language.getDefaultCompilerSpec()
+				: language.getCompilerSpecByID(new CompilerSpecID(cSpecID));
+		createProgram(language, cSpec);
+	}
+
+	Address retInstr;
+
+	protected Register register(String name) {
+		return program.getLanguage().getRegister(name);
+	}
+
+	protected Function createFibonacciProgramX86_32() throws Throwable {
+		createProgram("x86:LE:32:default", "gcc");
+		intoProject(program);
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Assemble")) {
+			Address entry = addr(program, 0x00400000);
+			program.getMemory()
+					.createInitializedBlock(".text", entry, 0x1000, (byte) 0, monitor, false);
+			Assembler asm =
+				Assemblers.getAssembler(program.getLanguage(), StackUnwinderTest.NO_16BIT_CALLS);
+			AssemblyBuffer buf = new AssemblyBuffer(asm, entry);
+
+			buf.assemble("PUSH EBP");
+			buf.assemble("MOV EBP, ESP");
+
+			buf.assemble("CMP dword ptr [EBP+8], 1");
+			Address jumpBase = buf.getNext();
+			buf.assemble("JBE 0x" + buf.getNext());
+
+			// Recursive case. Let EDX be sum
+			// sum = fib(n - 1)
+			buf.assemble("MOV ECX, dword ptr [EBP+8]");
+			buf.assemble("DEC ECX");
+			buf.assemble("PUSH ECX"); // pass n - 1
+			buf.assemble("CALL 0x" + entry);
+			buf.assemble("ADD ESP, 4"); // Clear parameters
+			buf.assemble("MOV EDX, EAX");
+			// sum += fib(n - 2)
+			buf.assemble("MOV ECX, dword ptr [EBP+8]");
+			buf.assemble("SUB ECX, 2");
+			buf.assemble("PUSH EDX"); // Caller Save EDX
+			buf.assemble("PUSH ECX"); // pass n - 2
+			buf.assemble("CALL 0x" + entry);
+			buf.assemble("ADD ESP, 4"); // Clear parameters
+			buf.assemble("POP EDX"); // Restore EDX
+			buf.assemble("ADD EAX, EDX");
+
+			Address labelRet = buf.getNext();
+			buf.assemble("LEAVE");
+			retInstr = buf.getNext();
+			buf.assemble("RET");
+
+			Address labelBase = buf.getNext();
+			buf.assemble(jumpBase, "JBE 0x" + labelBase);
+			buf.assemble("MOV EAX, dword ptr [EBP+8]");
+			buf.assemble("JMP 0x" + labelRet);
+
+			byte[] bytes = buf.getBytes();
+			program.getMemory().setBytes(entry, bytes);
+
+			Disassembler dis = Disassembler.getDisassembler(program, monitor, null);
+			dis.disassemble(entry, null);
+
+			Function function = program.getFunctionManager()
+					.createFunction("fib", entry,
+						new AddressSet(entry, entry.add(bytes.length - 1)),
+						SourceType.USER_DEFINED);
+
+			function.updateFunction("__cdecl",
+				new ReturnParameterImpl(UnsignedIntegerDataType.dataType, program),
+				List.of(
+					new ParameterImpl("n", UnsignedIntegerDataType.dataType, program)),
+				FunctionUpdateType.DYNAMIC_STORAGE_FORMAL_PARAMS, true, SourceType.ANALYSIS);
+			// NOTE: The decompiler doesn't actually use sum.... For some reason, it re-uses n
+			// Still, in the tests, I can use uVar1 (EAX) as a register variable
+			function.addLocalVariable(
+				new LocalVariableImpl("sum", 0, UnsignedIntegerDataType.dataType, register("EDX"),
+					program),
+				SourceType.USER_DEFINED);
+			return function;
+		}
+	}
+
+	@Test
+	public void testCaptureDebuggerStackUnwindInListing() throws Throwable {
+		addPlugin(tool, DebuggerListingPlugin.class);
+
+		DebuggerStateEditingService editingService =
+			addPlugin(tool, DebuggerStateEditingServicePlugin.class);
+		DebuggerEmulationService emuService = addPlugin(tool, DebuggerEmulationServicePlugin.class);
+
+		Function function = createFibonacciProgramX86_32();
+		Address entry = function.getEntryPoint();
+
+		programManager.openProgram(program);
+
+		tb.close();
+		tb = new ToyDBTraceBuilder(
+			ProgramEmulationUtils.launchEmulationTrace(program, entry, this));
+		tb.trace.release(this);
+		TraceThread thread = Unique.assertOne(tb.trace.getThreadManager().getAllThreads());
+		traceManager.openTrace(tb.trace);
+		traceManager.activateThread(thread);
+		waitForSwing();
+
+		editingService.setCurrentMode(tb.trace, StateEditingMode.WRITE_TRACE);
+		StateEditor editor = editingService.createStateEditor(tb.trace);
+
+		DebuggerCoordinates atSetup = traceManager.getCurrent();
+		StackUnwinder unwinder = new StackUnwinder(tool, atSetup.getPlatform());
+		AnalysisUnwoundFrame<WatchValue> frameAtSetup = unwinder.start(atSetup, monitor);
+
+		Parameter param1 = function.getParameter(0);
+		waitOn(frameAtSetup.setValue(editor, param1, BigInteger.valueOf(9)));
+		waitOn(frameAtSetup.setReturnAddress(editor, tb.addr(0xdeadbeef)));
+		waitForTasks();
+
+		try (UndoableTransaction tid = tb.startTransaction()) {
+			tb.trace.getBreakpointManager()
+					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), retInstr,
+						Set.of(),
+						Set.of(TraceBreakpointKind.SW_EXECUTE), true, "unwind stack");
+		}
+
+		EmulationResult result = emuService.run(atSetup.getPlatform(), atSetup.getTime(), monitor,
+			Scheduler.oneThread(thread));
+		Msg.debug(this, "Broke after " + result.schedule());
+
+		traceManager.activateTime(result.schedule());
+		waitForTasks();
+		DebuggerCoordinates tallest = traceManager.getCurrent();
+		try (UndoableTransaction tid = tb.startTransaction()) {
+			new UnwindStackCommand(tool, tallest).applyTo(tb.trace, monitor);
+		}
+		waitForDomainObject(tb.trace);
+
+		DebuggerListingProvider listingProvider =
+			waitForComponentProvider(DebuggerListingProvider.class);
+		listingProvider.setTrackingSpec(SPLocationTrackingSpec.INSTANCE);
+		waitForSwing();
+		
+		captureIsolatedProvider(listingProvider, 800, 600);
 	}
 }

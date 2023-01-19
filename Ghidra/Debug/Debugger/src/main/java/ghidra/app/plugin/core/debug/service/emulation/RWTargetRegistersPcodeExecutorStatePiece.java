@@ -15,10 +15,12 @@
  */
 package ghidra.app.plugin.core.debug.service.emulation;
 
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import ghidra.app.plugin.core.debug.service.emulation.data.PcodeDebuggerDataAccess;
 import ghidra.app.plugin.core.debug.service.emulation.data.PcodeDebuggerRegistersAccess;
+import ghidra.generic.util.datastruct.SemisparseByteArray;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.model.memory.TraceMemoryState;
@@ -62,6 +64,19 @@ public class RWTargetRegistersPcodeExecutorStatePiece
 			this.backing = backing;
 		}
 
+		protected RWTargetRegistersCachedSpace(Language language, AddressSpace space,
+				PcodeDebuggerRegistersAccess backing, SemisparseByteArray bytes,
+				AddressSet written) {
+			super(language, space, backing, bytes, written);
+			this.backing = backing;
+		}
+
+		@Override
+		public RWTargetRegistersCachedSpace fork() {
+			return new RWTargetRegistersCachedSpace(language, uniqueSpace, backing, bytes.fork(),
+				new AddressSet(written));
+		}
+
 		@Override
 		protected void fillUninitialized(AddressSet uninitialized) {
 			if (space.isUniqueSpace()) {
@@ -98,14 +113,29 @@ public class RWTargetRegistersPcodeExecutorStatePiece
 		this.mode = mode;
 	}
 
+	class WRTargetRegistersSpaceMap extends TargetBackedSpaceMap {
+		public WRTargetRegistersSpaceMap() {
+			super();
+		}
+
+		protected WRTargetRegistersSpaceMap(Map<AddressSpace, CachedSpace> spaceMap) {
+			super(spaceMap);
+		}
+
+		@Override
+		public AbstractSpaceMap<CachedSpace> fork() {
+			return new WRTargetRegistersSpaceMap(fork(spaces));
+		}
+
+		@Override
+		protected CachedSpace newSpace(AddressSpace space, PcodeDebuggerDataAccess data) {
+			return new RWTargetRegistersCachedSpace(language, space,
+				(PcodeDebuggerRegistersAccess) data);
+		}
+	}
+
 	@Override
 	protected AbstractSpaceMap<CachedSpace> newSpaceMap() {
-		return new TargetBackedSpaceMap() {
-			@Override
-			protected CachedSpace newSpace(AddressSpace space, PcodeDebuggerDataAccess data) {
-				return new RWTargetRegistersCachedSpace(language, space,
-					(PcodeDebuggerRegistersAccess) data);
-			}
-		};
+		return new WRTargetRegistersSpaceMap();
 	}
 }

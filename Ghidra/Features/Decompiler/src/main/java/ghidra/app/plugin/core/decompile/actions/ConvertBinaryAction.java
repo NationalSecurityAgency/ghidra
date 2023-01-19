@@ -41,7 +41,7 @@ public class ConvertBinaryAction extends ConvertConstantAction {
 	}
 
 	@Override
-	public String getMenuDisplay(long value, int size, boolean isSigned) {
+	public String getMenuDisplay(long value, int size, boolean isSigned, Program program) {
 		Scalar scalar = new Scalar(size * 8, value);
 		long v;
 		String prefix = "0b";

@@ -16,10 +16,13 @@
 package ghidra.pcode.exec;
 
 import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.Map;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Language;
+import ghidra.program.model.lang.Register;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.util.Msg;
@@ -74,7 +77,7 @@ public abstract class AbstractBytesPcodeExecutorStatePiece<S extends BytesPcodeE
 		}
 	}
 
-	protected final AbstractSpaceMap<S> spaceMap = newSpaceMap();
+	protected final AbstractSpaceMap<S> spaceMap;
 
 	/**
 	 * Construct a state for the given language
@@ -83,6 +86,11 @@ public abstract class AbstractBytesPcodeExecutorStatePiece<S extends BytesPcodeE
 	 */
 	public AbstractBytesPcodeExecutorStatePiece(Language language) {
 		this(language, BytesPcodeArithmetic.forLanguage(language));
+	}
+
+	protected AbstractBytesPcodeExecutorStatePiece(Language language,
+			AbstractSpaceMap<S> spaceMap) {
+		this(language, BytesPcodeArithmetic.forLanguage(language), spaceMap);
 	}
 
 	/**
@@ -94,6 +102,13 @@ public abstract class AbstractBytesPcodeExecutorStatePiece<S extends BytesPcodeE
 	public AbstractBytesPcodeExecutorStatePiece(Language language,
 			PcodeArithmetic<byte[]> arithmetic) {
 		super(language, arithmetic, arithmetic);
+		spaceMap = newSpaceMap();
+	}
+
+	protected AbstractBytesPcodeExecutorStatePiece(Language language,
+			PcodeArithmetic<byte[]> arithmetic, AbstractSpaceMap<S> spaceMap) {
+		super(language, arithmetic, arithmetic);
+		this.spaceMap = spaceMap;
 	}
 
 	/**
@@ -136,6 +151,11 @@ public abstract class AbstractBytesPcodeExecutorStatePiece<S extends BytesPcodeE
 				" of " + size + " bytes)");
 		}
 		return read;
+	}
+
+	@Override
+	protected Map<Register, byte[]> getRegisterValuesFromSpace(S s, List<Register> registers) {
+		return s.getRegisterValues(registers);
 	}
 
 	@Override

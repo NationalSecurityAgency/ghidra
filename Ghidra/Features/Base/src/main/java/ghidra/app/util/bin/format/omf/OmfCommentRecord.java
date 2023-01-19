@@ -31,7 +31,7 @@ public class OmfCommentRecord extends OmfRecord {
 	private byte commentType;
 	private byte commentClass;
 	private String value;
-	
+
 	public OmfCommentRecord(BinaryReader reader) throws IOException {
 		readRecordHeader(reader);
 		commentType = reader.readNextByte();
@@ -45,11 +45,15 @@ public class OmfCommentRecord extends OmfRecord {
 		}
 		readCheckSumByte(reader);
 	}
-	
+
+	public byte getCommentType() {
+		return commentType;
+	}
+
 	public byte getCommentClass() {
 		return commentClass;
 	}
-	
+
 	public String getValue() {
 		return value;
 	}

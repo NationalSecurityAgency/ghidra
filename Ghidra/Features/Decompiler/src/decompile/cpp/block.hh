@@ -413,6 +413,8 @@ public:
   list<PcodeOp *>::const_iterator endOp(void) const { return op.end(); }	///< Return an iterator to the end of the PcodeOps
   bool emptyOp(void) const { return op.empty(); }		///< Return \b true if \b block contains no operations
   static bool noInterveningStatement(PcodeOp *first,int4 path,PcodeOp *last);
+  PcodeOp *findMultiequal(const vector<Varnode *> &varArray);		///< Find MULTIEQUAL with given inputs
+  static bool liftVerifyUnroll(vector<Varnode *> &varArray,int4 slot);	///< Verify given Varnodes are defined with same PcodeOp
 };
 
 /// \brief This class is used to mirror the BlockBasic objects in the fixed control-flow graph for a function

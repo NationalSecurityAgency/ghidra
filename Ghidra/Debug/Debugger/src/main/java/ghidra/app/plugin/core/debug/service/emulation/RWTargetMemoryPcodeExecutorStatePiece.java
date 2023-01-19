@@ -15,10 +15,12 @@
  */
 package ghidra.app.plugin.core.debug.service.emulation;
 
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import ghidra.app.plugin.core.debug.service.emulation.data.PcodeDebuggerDataAccess;
 import ghidra.app.plugin.core.debug.service.emulation.data.PcodeDebuggerMemoryAccess;
+import ghidra.generic.util.datastruct.SemisparseByteArray;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.model.memory.TraceMemoryState;
@@ -64,6 +66,18 @@ public class RWTargetMemoryPcodeExecutorStatePiece
 				PcodeDebuggerMemoryAccess backing) {
 			super(language, space, backing);
 			this.backing = backing;
+		}
+
+		protected RWTargetMemoryCachedSpace(Language language, AddressSpace space,
+				PcodeDebuggerMemoryAccess backing, SemisparseByteArray bytes, AddressSet written) {
+			super(language, space, backing, bytes, written);
+			this.backing = backing;
+		}
+
+		@Override
+		public RWTargetMemoryCachedSpace fork() {
+			return new RWTargetMemoryCachedSpace(language, space, backing, bytes.fork(),
+				new AddressSet(written));
 		}
 
 		@Override
@@ -114,14 +128,29 @@ public class RWTargetMemoryPcodeExecutorStatePiece
 		this.mode = mode;
 	}
 
+	class WRTargetMemorySpaceMap extends TargetBackedSpaceMap {
+		public WRTargetMemorySpaceMap() {
+			super();
+		}
+
+		protected WRTargetMemorySpaceMap(Map<AddressSpace, CachedSpace> spaceMap) {
+			super(spaceMap);
+		}
+
+		@Override
+		public AbstractSpaceMap<CachedSpace> fork() {
+			return new WRTargetMemorySpaceMap(fork(spaces));
+		}
+
+		@Override
+		protected CachedSpace newSpace(AddressSpace space, PcodeDebuggerDataAccess data) {
+			return new RWTargetMemoryCachedSpace(language, space,
+				(PcodeDebuggerMemoryAccess) data);
+		}
+	}
+
 	@Override
 	protected AbstractSpaceMap<CachedSpace> newSpaceMap() {
-		return new TargetBackedSpaceMap() {
-			@Override
-			protected CachedSpace newSpace(AddressSpace space, PcodeDebuggerDataAccess data) {
-				return new RWTargetMemoryCachedSpace(language, space,
-					(PcodeDebuggerMemoryAccess) data);
-			}
-		};
+		return new WRTargetMemorySpaceMap();
 	}
 }

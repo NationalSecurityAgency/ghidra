@@ -82,6 +82,21 @@ public interface DebuggerProgramLaunchOffer {
 		AFTER;
 	}
 
+	public enum PromptMode {
+		/**
+		 * The user is always prompted for parameters.
+		 */
+		ALWAYS,
+		/**
+		 * The user is never prompted for parameters.
+		 */
+		NEVER,
+		/**
+		 * The user is prompted after an error.
+		 */
+		ON_ERROR;
+	}
+
 	/**
 	 * Callbacks for custom configuration when launching a program
 	 */
@@ -118,7 +133,7 @@ public interface DebuggerProgramLaunchOffer {
 	 * @param configurator the configuration callbacks
 	 * @return a future which completes when the program is launched
 	 */
-	CompletableFuture<LaunchResult> launchProgram(TaskMonitor monitor, boolean prompt,
+	CompletableFuture<LaunchResult> launchProgram(TaskMonitor monitor, PromptMode prompt,
 			LaunchConfigurator configurator);
 
 	/**
@@ -128,7 +143,7 @@ public interface DebuggerProgramLaunchOffer {
 	 * @param prompt if the user should be prompted to confirm launch parameters
 	 * @return a future which completes when the program is launched
 	 */
-	default CompletableFuture<LaunchResult> launchProgram(TaskMonitor monitor, boolean prompt) {
+	default CompletableFuture<LaunchResult> launchProgram(TaskMonitor monitor, PromptMode prompt) {
 		return launchProgram(monitor, prompt, LaunchConfigurator.NOP);
 	}
 

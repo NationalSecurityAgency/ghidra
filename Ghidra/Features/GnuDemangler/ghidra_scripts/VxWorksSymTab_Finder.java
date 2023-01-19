@@ -240,7 +240,7 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 
 			case 3:
 
-				// Version 5.5
+				// Version 5.5, possibly 5.3 as well
 				//
 				// Total length: 0x10 bytes
 				//    0x00    uint symHashNode	// NULL
@@ -256,7 +256,20 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 				dt.replaceAtOffset(0x0c, ushortType, 2, "symGroup", "");
 				dt.replaceAtOffset(0x0e, byteType, 1, "symType", "");
 				break;
-
+			case 4:
+				// version 5.0
+				// sizeof = 0x0e bytes
+				//    0x00    uint symHashNode	// NULL
+				//    0x04    char *symNameOff
+				//    0x08    void *symLocOff
+				//    0x0c    uchar symType
+				//    0x0d    uchar undef
+				dt = new StructureDataType("SYMBOL", 0x0e);
+				dt.replaceAtOffset(0, uintType, 4, "symHashNode", "");
+				dt.replaceAtOffset(4, charPtrType, 4, "symNameOff", "");
+				dt.replaceAtOffset(8, voidPtrType, 4, "symLocOff", "");
+				dt.replaceAtOffset(0x0c, byteType, 1, "symType", "");
+				break;
 			default:
 
 				return null;

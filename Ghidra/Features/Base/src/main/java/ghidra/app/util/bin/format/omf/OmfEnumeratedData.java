@@ -31,11 +31,11 @@ public class OmfEnumeratedData extends OmfRecord implements OmfData {
 		segmentIndex = OmfRecord.readIndex(reader);
 		dataOffset = OmfRecord.readInt2Or4(reader, hasBigFields()) & 0xffffffffL;
 		streamOffset = reader.getPointerIndex();
-		streamLength = getRecordLength() - 1 - (int)(streamOffset - start);
-		reader.setPointerIndex(streamOffset + streamLength); 	// Skip over the data when reading header
+		streamLength = getRecordLength() - 1 - (int) (streamOffset - start);
+		reader.setPointerIndex(streamOffset + streamLength); // Skip over the data when reading header
 		readCheckSumByte(reader);
 	}
-	
+
 	public int getSegmentIndex() {
 		return segmentIndex;
 	}
@@ -49,7 +49,7 @@ public class OmfEnumeratedData extends OmfRecord implements OmfData {
 	public int getLength() {
 		return streamLength;
 	}
-	
+
 	@Override
 	public int compareTo(OmfData o) {
 		long otherOffset = o.getDataOffset();

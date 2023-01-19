@@ -15,7 +15,8 @@
  */
 package ghidra.app.plugin.core.debug.gui.model;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.KeyboardFocusManager;
 import java.awt.event.*;
 import java.lang.invoke.MethodHandles;
 import java.util.List;
@@ -41,9 +42,7 @@ import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTreeModel.AbstractNode;
 import ghidra.app.plugin.core.debug.gui.model.PathTableModel.PathRow;
 import ghidra.app.services.DebuggerTraceManagerService;
-import ghidra.framework.options.AutoOptions;
 import ghidra.framework.options.SaveState;
-import ghidra.framework.options.annotation.*;
 import ghidra.framework.plugintool.AutoConfigState;
 import ghidra.framework.plugintool.AutoService;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField;
@@ -53,7 +52,8 @@ import ghidra.trace.model.target.*;
 import ghidra.util.Msg;
 
 public class DebuggerModelProvider extends ComponentProvider implements SaveableProvider {
-
+	private static final GColor COLOR_BORDER_DISCONNECTED =
+		new GColor("color.border.provider.disconnected");
 	private static final AutoConfigState.ClassHandler<DebuggerModelProvider> CONFIG_STATE_HANDLER =
 		AutoConfigState.wireHandler(DebuggerModelProvider.class, MethodHandles.lookup());
 	private static final String KEY_DEBUGGER_COORDINATES = "DebuggerCoordinates";
@@ -77,15 +77,6 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 	protected DebuggerTraceManagerService traceManager;
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
-
-	@AutoOptionDefined(description = "Text color for values that have just changed", name = DebuggerResources.OPTION_NAME_COLORS_VALUE_CHANGED, help = @HelpInfo(anchor = "colors"))
-	private Color diffColor = DebuggerResources.DEFAULT_COLOR_VALUE_CHANGED;
-
-	@AutoOptionDefined(description = "Select text color for values that have just changed", name = DebuggerResources.OPTION_NAME_COLORS_VALUE_CHANGED_SEL, help = @HelpInfo(anchor = "colors"))
-	private Color diffColorSel = DebuggerResources.DEFAULT_COLOR_VALUE_CHANGED_SEL;
-
-	@SuppressWarnings("unused")
-	private final AutoOptions.Wiring autoOptionsWiring;
 
 	@AutoConfigStateField
 	private boolean limitToSnap = false;
@@ -121,7 +112,6 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 	public DebuggerModelProvider(DebuggerModelPlugin plugin, boolean isClone) {
 		super(plugin.getTool(), DebuggerResources.TITLE_PROVIDER_MODEL, plugin.getName());
 		this.autoServiceWiring = AutoService.wireServicesConsumed(plugin, this);
-		this.autoOptionsWiring = AutoOptions.wireOptions(plugin, this);
 		this.plugin = plugin;
 		this.isClone = isClone;
 
@@ -138,8 +128,7 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 			setTitle("[" + DebuggerResources.TITLE_PROVIDER_MODEL + "]");
 			setWindowGroup("Debugger.Core.disconnected");
 			setIntraGroupPosition(WindowPosition.STACK);
-			mainPanel.setBorder(BorderFactory
-					.createLineBorder(new GColor("color.border.provider.disconnected"), 2));
+			mainPanel.setBorder(BorderFactory.createLineBorder(COLOR_BORDER_DISCONNECTED, 2));
 			setTransient();
 		}
 		else {
@@ -636,28 +625,6 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 
 	public boolean isShowMethodsInTree() {
 		return showMethodsInTree;
-	}
-
-	@AutoOptionConsumed(name = DebuggerResources.OPTION_NAME_COLORS_VALUE_CHANGED)
-	public void setDiffColor(Color diffColor) {
-		if (Objects.equals(this.diffColor, diffColor)) {
-			return;
-		}
-		this.diffColor = diffColor;
-		objectsTreePanel.setDiffColor(diffColor);
-		elementsTablePanel.setDiffColor(diffColor);
-		attributesTablePanel.setDiffColor(diffColor);
-	}
-
-	@AutoOptionConsumed(name = DebuggerResources.OPTION_NAME_COLORS_VALUE_CHANGED_SEL)
-	public void setDiffColorSel(Color diffColorSel) {
-		if (Objects.equals(this.diffColorSel, diffColorSel)) {
-			return;
-		}
-		this.diffColorSel = diffColorSel;
-		objectsTreePanel.setDiffColorSel(diffColorSel);
-		elementsTablePanel.setDiffColorSel(diffColorSel);
-		attributesTablePanel.setDiffColorSel(diffColorSel);
 	}
 
 	protected void setTreeSelection(TraceObjectKeyPath path, EventOrigin origin) {

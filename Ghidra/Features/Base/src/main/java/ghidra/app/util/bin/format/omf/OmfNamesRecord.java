@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,18 +22,18 @@ import ghidra.app.util.bin.BinaryReader;
 
 public class OmfNamesRecord extends OmfRecord {
 	private ArrayList<String> name;
-	
+
 	public OmfNamesRecord(BinaryReader reader) throws IOException {
 		readRecordHeader(reader);
-		long max = reader.getPointerIndex() + getRecordLength() -1;
+		long max = reader.getPointerIndex() + getRecordLength() - 1;
 		name = new ArrayList<String>();
-		while(reader.getPointerIndex() < max) {
+		while (reader.getPointerIndex() < max) {
 			String nm = OmfRecord.readString(reader);
 			name.add(nm);
 		}
 		readCheckSumByte(reader);
 	}
-	
+
 	public void appendNames(ArrayList<String> namelist) {
 		namelist.addAll(name);
 	}

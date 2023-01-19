@@ -39,11 +39,11 @@ public class ThemeIconTableModel extends GDynamicColumnTableModel<IconValue, Obj
 	private GThemeValueMap currentValues;
 	private GThemeValueMap themeValues;
 	private GThemeValueMap defaultValues;
-	private ThemeManager themeManager;
+	private GThemeValuesCache valuesProvider;
 
-	public ThemeIconTableModel(ThemeManager themeManager) {
+	public ThemeIconTableModel(GThemeValuesCache valuesProvider) {
 		super(new ServiceProviderStub());
-		this.themeManager = themeManager;
+		this.valuesProvider = valuesProvider;
 		load();
 	}
 
@@ -51,7 +51,7 @@ public class ThemeIconTableModel extends GDynamicColumnTableModel<IconValue, Obj
 	 * Reloads the just the current values shown in the table. Called whenever an icon changes.
 	 */
 	public void reloadCurrent() {
-		currentValues = themeManager.getCurrentValues();
+		currentValues = valuesProvider.getCurrentValues();
 		icons = currentValues.getIcons();
 		fireTableDataChanged();
 	}
@@ -66,10 +66,10 @@ public class ThemeIconTableModel extends GDynamicColumnTableModel<IconValue, Obj
 	}
 
 	private void load() {
-		currentValues = themeManager.getCurrentValues();
+		currentValues = valuesProvider.getCurrentValues();
 		icons = currentValues.getIcons();
-		themeValues = themeManager.getThemeValues();
-		defaultValues = themeManager.getDefaults();
+		themeValues = valuesProvider.getThemeValues();
+		defaultValues = valuesProvider.getDefaultValues();
 	}
 
 	@Override
@@ -97,7 +97,16 @@ public class ThemeIconTableModel extends GDynamicColumnTableModel<IconValue, Obj
 		return null;
 	}
 
-	class IdColumn extends AbstractDynamicTableColumn<IconValue, String, Object> {
+	/**
+	 * Returns the original value for the id as defined by the current theme
+	 * @param id the resource id to get a font value for
+	 * @return  the original value for the id as defined by the current theme
+	 */
+	public IconValue getThemeValue(String id) {
+		return themeValues.getIcon(id);
+	}
+
+	private class IdColumn extends AbstractDynamicTableColumn<IconValue, String, Object> {
 
 		@Override
 		public String getColumnName() {
@@ -116,7 +125,8 @@ public class ThemeIconTableModel extends GDynamicColumnTableModel<IconValue, Obj
 		}
 	}
 
-	class IconValueColumn extends AbstractDynamicTableColumn<IconValue, ResolvedIcon, Object> {
+	private class IconValueColumn
+			extends AbstractDynamicTableColumn<IconValue, ResolvedIcon, Object> {
 		private ThemeIconRenderer renderer;
 		private String name;
 		private Supplier<GThemeValueMap> valueSupplier;
@@ -232,14 +242,6 @@ public class ThemeIconTableModel extends GDynamicColumnTableModel<IconValue, Obj
 		}
 	}
 
-	record ResolvedIcon(String id, String refId, Icon icon) {/**/}
+	private record ResolvedIcon(String id, String refId, Icon icon) {/**/}
 
-	/**
-	 * Returns the original value for the id as defined by the current theme
-	 * @param id the resource id to get a font value for
-	 * @return  the original value for the id as defined by the current theme
-	 */
-	public IconValue getThemeValue(String id) {
-		return themeValues.getIcon(id);
-	}
 }

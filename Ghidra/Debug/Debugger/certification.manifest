@@ -68,6 +68,7 @@ src/main/help/help/topics/DebuggerRegistersPlugin/images/DebuggerAvailableRegist
 src/main/help/help/topics/DebuggerRegistersPlugin/images/DebuggerRegistersPlugin.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerStackPlugin/DebuggerStackPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerStackPlugin/images/DebuggerStackPlugin.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerStackPlugin/images/DebuggerStackUnwindInListing.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerStaticMappingPlugin/DebuggerStaticMappingPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerStaticMappingPlugin/images/DebuggerStaticMappingPlugin.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerTargetsPlugin/DebuggerTargetsPlugin.html||GHIDRA||||END|
@@ -83,6 +84,10 @@ src/main/help/help/topics/DebuggerTraceViewDiffPlugin/images/DebuggerTimeSelecti
 src/main/help/help/topics/DebuggerTraceViewDiffPlugin/images/DebuggerTraceViewDiffPlugin.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerWatchesPlugin/DebuggerWatchesPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerWatchesPlugin/images/DebuggerWatchesPlugin.png||GHIDRA||||END|
+src/main/help/help/topics/VariableValueHoverPlugin/VariableValueHoverPlugin.html||GHIDRA||||END|
+src/main/help/help/topics/VariableValueHoverPlugin/images/VariableValueHoverPluginBrowser.png||GHIDRA||||END|
+src/main/help/help/topics/VariableValueHoverPlugin/images/VariableValueHoverPluginDecompiler.png||GHIDRA||||END|
+src/main/help/help/topics/VariableValueHoverPlugin/images/VariableValueHoverPluginListing.png||GHIDRA||||END|
 src/main/resources/defaultTools/Debugger.tool||GHIDRA||||END|
 src/main/resources/images/add.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/attach.png||GHIDRA||||END|
@@ -124,7 +129,6 @@ src/main/resources/images/resume.png||GHIDRA||||END|
 src/main/resources/images/seek-present.png||GHIDRA||||END|
 src/main/resources/images/select-registers.png||GHIDRA||||END|
 src/main/resources/images/skipover.png||GHIDRA||||END|
-src/main/resources/images/stack.png||GHIDRA||||END|
 src/main/resources/images/stepback.png||GHIDRA||||END|
 src/main/resources/images/stepinto.png||GHIDRA||||END|
 src/main/resources/images/steplast.png||GHIDRA||||END|

@@ -278,8 +278,8 @@ public class LaunchSupport {
 
 	/**
 	 * Handles getting the VM arguments. If they are successfully determined, they are printed
-	 * to STDOUT as a string that can be added to the command line, and an exit code that 
-	 * indicates success is returned. 
+	 * to STDOUT as a new-line delimited string that can be parsed and added to the command line, 
+	 * and an exit code that indicates success is returned. 
 	
 	 * @param javaConfig The Java configuration that defines what we support.  
 	 * @return A suggested exit code based on whether or not the VM arguments were successfully
@@ -291,7 +291,8 @@ public class LaunchSupport {
 			return EXIT_FAILURE;
 		}
 
-		System.out.println(javaConfig.getLaunchProperties().getVmArgs());
+		// Force newline style to make cross-platform parsing consistent
+		javaConfig.getLaunchProperties().getVmArgList().forEach(e -> System.out.print(e + "\r\n"));
 		return EXIT_SUCCESS;
 	}
 }

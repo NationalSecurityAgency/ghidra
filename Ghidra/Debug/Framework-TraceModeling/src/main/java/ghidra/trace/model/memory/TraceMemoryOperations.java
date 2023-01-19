@@ -334,6 +334,29 @@ public interface TraceMemoryOperations {
 			AddressRange range);
 
 	/**
+	 * Check if a range addresses are all known
+	 * 
+	 * @param snap the time
+	 * @param range the range to examine
+	 * @return true if the entire range is {@link TraceMemoryState#KNOWN}
+	 */
+	default boolean isKnown(long snap, AddressRange range) {
+		Collection<Entry<TraceAddressSnapRange, TraceMemoryState>> states = getStates(snap, range);
+		if (states.isEmpty()) {
+			return false;
+		}
+		if (states.size() != 1) {
+			return false;
+		}
+		AddressRange entryRange = states.iterator().next().getKey().getRange();
+		if (!entryRange.contains(range.getMinAddress()) ||
+			!entryRange.contains(range.getMaxAddress())) {
+			return false;
+		}
+		return true;
+	}
+
+	/**
 	 * Break a range of addresses into smaller ranges each mapped to its most recent state at the
 	 * given time
 	 * 

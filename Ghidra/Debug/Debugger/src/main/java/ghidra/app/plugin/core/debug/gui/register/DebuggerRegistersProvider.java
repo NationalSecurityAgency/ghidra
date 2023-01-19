@@ -58,7 +58,6 @@ import ghidra.framework.model.DomainObject;
 import ghidra.framework.model.DomainObjectChangeRecord;
 import ghidra.framework.options.AutoOptions;
 import ghidra.framework.options.SaveState;
-import ghidra.framework.options.annotation.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.program.model.address.*;
@@ -87,6 +86,17 @@ import ghidra.util.task.TaskMonitor;
 
 public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		implements DebuggerProvider, PopupActionProvider {
+	private static final GColor COLOR_BORDER_DISCONNECTED =
+		new GColor("color.border.provider.disconnected");
+	private static final Color COLOR_FOREGROUND_STALE =
+		new GColor("color.debugger.plugin.resources.register.stale");
+	private static final Color COLOR_FOREGROUND_STALE_SEL =
+		new GColor("color.debugger.plugin.resources.register.stale.selected");
+	private static final Color COLOR_FOREGROUND_CHANGED =
+		new GColor("color.debugger.plugin.resources.register.changed");
+	private static final Color COLOR_FOREGROUND_CHANGED_SEL =
+		new GColor("color.debugger.plugin.resources.register.changed.selected");
+
 	private static final String KEY_DEBUGGER_COORDINATES = "DebuggerCoordinates";
 
 	interface ClearRegisterType {
@@ -398,18 +408,18 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			RegisterRow row = (RegisterRow) data.getRowObject();
 			if (!row.isKnown()) {
 				if (data.isSelected()) {
-					setForeground(registerStaleSelColor);
+					setForeground(COLOR_FOREGROUND_STALE_SEL);
 				}
 				else {
-					setForeground(registerStaleColor);
+					setForeground(COLOR_FOREGROUND_STALE);
 				}
 			}
 			else if (row.isChanged()) {
 				if (data.isSelected()) {
-					setForeground(registerChangesSelColor);
+					setForeground(COLOR_FOREGROUND_CHANGED_SEL);
 				}
 				else {
-					setForeground(registerChangesColor);
+					setForeground(COLOR_FOREGROUND_CHANGED);
 				}
 			}
 			return this;
@@ -472,23 +482,6 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
 
-	@AutoOptionDefined(name = DebuggerResources.OPTION_NAME_COLORS_REGISTER_STALE, //
-			description = "Text color for registers whose value is not known", //
-			help = @HelpInfo(anchor = "colors"))
-	protected Color registerStaleColor = DebuggerResources.DEFAULT_COLOR_REGISTER_STALE;
-	@AutoOptionDefined(name = DebuggerResources.OPTION_NAME_COLORS_REGISTER_STALE_SEL, //
-			description = "Selected text color for registers whose value is not known", //
-			help = @HelpInfo(anchor = "colors"))
-	protected Color registerStaleSelColor = DebuggerResources.DEFAULT_COLOR_REGISTER_STALE_SEL;
-	@AutoOptionDefined(name = DebuggerResources.OPTION_NAME_COLORS_REGISTER_CHANGED, //
-			description = "Text color for registers whose value just changed", //
-			help = @HelpInfo(anchor = "colors"))
-	protected Color registerChangesColor = DebuggerResources.DEFAULT_COLOR_REGISTER_CHANGED;
-	@AutoOptionDefined(name = DebuggerResources.OPTION_NAME_COLORS_REGISTER_CHANGED_SEL, //
-			description = "Selected text color for registers whose value just changed", //
-			help = @HelpInfo(anchor = "colors"))
-	protected Color registerChangesSelColor = DebuggerResources.DEFAULT_COLOR_REGISTER_CHANGED_SEL;
-
 	@SuppressWarnings("unused")
 	private final AutoOptions.Wiring autoOptionsWiring;
 
@@ -546,8 +539,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			setTitle("[" + DebuggerResources.TITLE_PROVIDER_REGISTERS + "]");
 			setWindowGroup("Debugger.Core.disconnected");
 			setIntraGroupPosition(WindowPosition.STACK);
-			mainPanel.setBorder(BorderFactory
-					.createLineBorder(new GColor("color.border.provider.disconnected"), 2));
+			mainPanel.setBorder(BorderFactory.createLineBorder(COLOR_BORDER_DISCONNECTED, 2));
 			setTransient();
 		}
 		else {
@@ -1361,32 +1353,6 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			}
 			return ExceptionUtils.rethrow(ex);
 		}).thenApply(__ -> null);
-	}
-
-	private void repaintTable() {
-		if (regsTable != null) {
-			regsTable.repaint();
-		}
-	}
-
-	@AutoOptionConsumed(name = DebuggerResources.OPTION_NAME_COLORS_REGISTER_STALE)
-	private void setRegisterStaleColor(Color color) {
-		repaintTable();
-	}
-
-	@AutoOptionConsumed(name = DebuggerResources.OPTION_NAME_COLORS_REGISTER_STALE_SEL)
-	private void setRegisterStaleSelColor(Color color) {
-		repaintTable();
-	}
-
-	@AutoOptionConsumed(name = DebuggerResources.OPTION_NAME_COLORS_REGISTER_CHANGED)
-	private void setRegisterChangesColor(Color color) {
-		repaintTable();
-	}
-
-	@AutoOptionConsumed(name = DebuggerResources.OPTION_NAME_COLORS_REGISTER_CHANGED_SEL)
-	private void setRegisterChangesSelColor(Color color) {
-		repaintTable();
 	}
 
 	protected String formatAddressInfo(Address address) {

@@ -666,6 +666,9 @@ usimm8_64: val is imm8 & imm8_7=1 [ val = 0xffffffffffffff00 | imm8; ] { export 
 #usimm16_32: imm16 is imm16 & imm16_15=0 { export *[const]:4 imm16; }
 #usimm16_32: val is imm16 & imm16_15=1 [ val = 0xffff0000 | imm16; ] { export *[const]:4 val; }
 
+# RIP/EIP relative address - NOTE: export of size 0 is intentional so it may be adjusted
+pcRelSimm32: addr	is simm32 [ addr=inst_next+simm32; ] { export addr; }
+
 # 16-bit addressing modes   (the offset portion)
 addr16: [BX + SI]		is mod=0 & r_m=0 & BX & SI		{ local tmp=BX+SI; export tmp; }
 addr16: [BX + DI]		is mod=0 & r_m=1 & BX & DI		{ local tmp=BX+DI; export tmp; }
@@ -693,16 +696,16 @@ addr16: [BP + imm16]  is mod=2 & r_m=6 & BP; imm16        { local tmp=BP+imm16; 
 addr16: [BX + imm16]  is mod=2 & r_m=7 & BX; imm16        { local tmp=BX+imm16; export tmp; }
 
 # 32-bit addressing modes   (the offset portion)
-addr32: [Rmr32]							is mod=0 & Rmr32  							{ export Rmr32; }
-addr32: [Rmr32 + simm8_32]				is mod=1 & Rmr32; simm8_32       			{ local tmp=Rmr32+simm8_32; export tmp; }
-addr32: [Rmr32]							is mod=1 & r_m!=4 & Rmr32; simm8=0			{ export Rmr32; }
-addr32: [Rmr32 + imm32]					        is mod=2 & Rmr32; imm32                      { local tmp=Rmr32+imm32; export tmp; }
+addr32: [Rmr32]							is mod=0 & Rmr32  							 { export Rmr32; }
+addr32: [Rmr32 + simm8_32]				is mod=1 & Rmr32; simm8_32       			 { local tmp=Rmr32+simm8_32; export tmp; }
+addr32: [Rmr32]							is mod=1 & r_m!=4 & Rmr32; simm8=0			 { export Rmr32; }
+addr32: [Rmr32 + imm32]					is mod=2 & Rmr32; imm32                      { local tmp=Rmr32+imm32; export tmp; }
 addr32: [Rmr32]							is mod=2 & r_m!=4 & Rmr32; imm32=0           { export Rmr32; }
 addr32: [imm32]							is mod=0 & r_m=5; imm32                      { export *[const]:4 imm32; }
 addr32: [Base + Index*ss]				is mod=0 & r_m=4; Index & Base & ss          { local tmp=Base+Index*ss; export tmp; }
 addr32: [Base]							is mod=0 & r_m=4; index=4 & Base             { export Base; }
-addr32: [Index*ss + imm32]				        is mod=0 & r_m=4; Index & base=5 & ss; imm32 { local tmp=imm32+Index*ss; export tmp; }
-addr32: [imm32]							is mod=0 & r_m=4; index=4 & base=5; imm32     { export *[const]:4 imm32; }
+addr32: [Index*ss + imm32]				is mod=0 & r_m=4; Index & base=5 & ss; imm32 { local tmp=imm32+Index*ss; export tmp; }
+addr32: [imm32]							is mod=0 & r_m=4; index=4 & base=5; imm32    { export *[const]:4 imm32; }
 addr32: [Base + Index*ss + simm8_32]	is mod=1 & r_m=4; Index & Base & ss; simm8_32    { local tmp=simm8_32+Base+Index*ss; export tmp; }
 addr32: [Base + simm8_32]				is mod=1 & r_m=4; index=4 & Base; simm8_32   { local tmp=simm8_32+Base; export tmp; }
 addr32: [Base + Index*ss]				is mod=1 & r_m=4; Index & Base & ss; simm8=0 { local tmp=Base+Index*ss; export tmp; }
@@ -712,11 +715,11 @@ addr32: [Base + imm32]					is mod=2 & r_m=4; index=4 & Base; imm32      { local 
 addr32: [Base + Index*ss]				is mod=2 & r_m=4; Index & Base & ss; imm32=0 { local tmp=Base+Index*ss; export tmp; }
 addr32: [Base]							is mod=2 & r_m=4; index=4 & Base; imm32=0    { export Base; }
 @ifdef IA64
-addr32: [riprel]						is bit64=1 & mod=0 & r_m=4; index=4 & base=5; simm32 [ riprel=inst_next+simm32; ] { export *[const]:4 riprel; }
+addr32: [RIP + simm32]					is bit64=1 & mod=0 & r_m=4; index=4 & base=5; simm32 & RIP & pcRelSimm32 { export *[const]:4 pcRelSimm32; }
 
-Addr32_64: [eiprel]						is mod=0 & r_m=5; simm32	[ eiprel=inst_next+simm32; ] { export *[const]:8 eiprel; }
-Addr32_64: [imm32]		is mod=0 & r_m=4; index=4 & base=5; imm32    { export *[const]:8 imm32; }
-Addr32_64: addr32		is addr32									 { tmp:8 = sext(addr32); export tmp; }
+Addr32_64: [EIP + simm32]				is mod=0 & r_m=5; simm32 & EIP & pcRelSimm32 { export *[const]:8 pcRelSimm32; }
+Addr32_64: [imm32]						is mod=0 & r_m=4; index=4 & base=5; imm32    { export *[const]:8 imm32; }
+Addr32_64: addr32						is addr32									 { tmp:8 = sext(addr32); export tmp; }
 	
 @endif
 
@@ -728,7 +731,7 @@ addr64: [Rmr64 + simm8_64]				is mod=1 & Rmr64; simm8_64                        
 addr64: [Rmr64 + simm32_64]				is mod=2 & Rmr64; simm32_64                        { local tmp=Rmr64+simm32_64; export tmp; }
 addr64: [Rmr64]							is mod=1 & r_m!=4 & Rmr64; simm8=0                 { export Rmr64; }
 addr64: [Rmr64]							is mod=2 & r_m!=4 & Rmr64; simm32=0                { export Rmr64; }
-addr64: [riprel]						is mod=0 & r_m=5; simm32 [ riprel=inst_next+simm32; ] { export *[const]:8 riprel; }
+addr64: [RIP + simm32]					is mod=0 & r_m=5; simm32 & RIP & pcRelSimm32       { export *[const]:8 pcRelSimm32; }
 addr64: [Base64 + Index64*ss]			is mod=0 & r_m=4; Index64 & Base64 & ss            { local tmp=Base64+Index64*ss; export tmp; }
 addr64: [Base64]						is mod=0 & r_m=4; rexXprefix=0 & index64=4 & Base64    { export Base64; }
 addr64: [simm32_64 + Index64*ss]		is mod=0 & r_m=4; Index64 & base64=5 & ss; simm32_64   { local tmp=simm32_64+Index64*ss; export tmp; }
