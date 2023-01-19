@@ -129,6 +129,14 @@
                 <attribute name="name"/>
                 <attribute name="address"/>
                 <optional>
+                  <attribute name="volatile">
+                    <ref name="boolean_type"/>
+                  </attribute>
+                </optional>
+                <optional>
+                  <attribute name="size"/>
+                </optional>
+                <optional>
                   <attribute name="entry">
                     <ref name="boolean_type"/>
                   </attribute>

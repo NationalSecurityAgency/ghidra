@@ -37,7 +37,6 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.InvalidAddressException;
 import ghidra.program.model.mem.MemoryConflictException;
 import ghidra.program.model.symbol.*;
-import ghidra.program.model.util.AddressLabelInfo;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.program.util.GhidraProgramUtilities;
 import ghidra.util.*;
@@ -519,9 +518,7 @@ public abstract class AbstractProgramLoader implements Loader {
 			for (Register reg : lang.getRegisters()) {
 				Address addr = reg.getAddress();
 				if (addr.isMemoryAddress()) {
-					AddressLabelInfo info = new AddressLabelInfo(addr, reg.getName(),
-						reg.isBaseRegister(), SourceType.IMPORTED);
-					createSymbol(program, info, true);
+					createSymbol(program, reg.getName(), addr, false, true, true);
 				}
 			}
 			// optionally create default symbols defined by pspec
@@ -529,7 +526,7 @@ public abstract class AbstractProgramLoader implements Loader {
 				boolean anchorSymbols = shouldAnchorSymbols(options);
 				List<AddressLabelInfo> labels = lang.getDefaultSymbols();
 				for (AddressLabelInfo info : labels) {
-					createSymbol(program, info, anchorSymbols);
+					createSymbol(program, info.getLabel(), info.getAddress(), info.isEntry(), info.isPrimary(), anchorSymbols);
 				}
 			}
 			GhidraProgramUtilities.removeAnalyzedFlag(program);
@@ -539,42 +536,24 @@ public abstract class AbstractProgramLoader implements Loader {
 		}
 	}
 
-	private void createSymbol(Program program, AddressLabelInfo info, boolean anchorSymbols) {
+	private static void createSymbol(Program program, String labelname, Address address, boolean isEntry, boolean isPrimary, boolean anchorSymbols) {
 		SymbolTable symTable = program.getSymbolTable();
-		Address addr = info.getAddress();
+		Address addr = address;
 		Symbol s = symTable.getPrimarySymbol(addr);
 		try {
-			if (s == null || s.getSource() == SourceType.IMPORTED) {
-				Namespace namespace = program.getGlobalNamespace();
-				if (info.getScope() != null) {
-					namespace = info.getScope();
-				}
-				s = symTable.createLabel(addr, info.getLabel(), namespace, info.getSource());
-				if (info.isEntry()) {
-					symTable.addExternalEntryPoint(addr);
-				}
-				if (info.isPrimary()) {
-					s.setPrimary();
-				}
-				if (anchorSymbols) {
-					s.setPinned(true);
-				}
+			Namespace namespace = program.getGlobalNamespace();
+			s = symTable.createLabel(addr, labelname, namespace, SourceType.IMPORTED);
+			if (isEntry) {
+				symTable.addExternalEntryPoint(addr);
 			}
-			else if (s.getSource() == SourceType.DEFAULT) {
-				String labelName = info.getLabel();
-				if (s.getSymbolType() == SymbolType.FUNCTION) {
-					Function f = (Function) s.getObject();
-					f.setName(labelName, SourceType.IMPORTED);
-				}
-				else {
-					s.setName(labelName, SourceType.IMPORTED);
-				}
-				if (anchorSymbols) {
-					s.setPinned(true);
-				}
+			if (isPrimary) {
+				s.setPrimary();
+			}
+			if (anchorSymbols) {
+				s.setPinned(true);
 			}
 		}
-		catch (DuplicateNameException | InvalidInputException e) {
+		catch (InvalidInputException e) {
 			// Nothing to do
 		}
 	}
