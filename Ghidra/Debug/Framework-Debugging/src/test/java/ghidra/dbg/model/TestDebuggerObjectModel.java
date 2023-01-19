@@ -156,6 +156,11 @@ public class TestDebuggerObjectModel extends EmptyDebuggerObjectModel {
 		return TestTargetRegister.fromLanguageRegister(container, register);
 	}
 
+	protected TestTargetRegister newTestTargetRegister(TestTargetRegisterContainer container,
+			String index, Register register) {
+		return TestTargetRegister.fromLanguageRegister(container, index, register);
+	}
+
 	protected TestTargetThreadContainer newTestTargetThreadContainer(TestTargetProcess process) {
 		return new TestTargetThreadContainer(process);
 	}

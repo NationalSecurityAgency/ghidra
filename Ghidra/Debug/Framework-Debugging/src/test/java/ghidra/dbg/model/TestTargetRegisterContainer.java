@@ -61,6 +61,11 @@ public class TestTargetRegisterContainer
 	public TestTargetRegister addRegister(Register register) {
 		TestTargetRegister tr =
 			getModel().newTestTargetRegister(this, Objects.requireNonNull(register));
+		doAddRegister(tr, register);
+		return tr;
+	}
+
+	protected void doAddRegister(TestTargetRegister tr, Register register) {
 		String reason = "Added " + register + " from Ghidra language";
 		changeElements(List.of(), List.of(tr), reason);
 		List<AbstractTestTargetRegisterBank<?>> banks;
@@ -70,6 +75,12 @@ public class TestTargetRegisterContainer
 		for (AbstractTestTargetRegisterBank<?> bank : banks) {
 			bank.addRegisterDescs(List.of(tr), reason);
 		}
+	}
+
+	public TestTargetRegister addRegister(String index, Register register) {
+		TestTargetRegister tr =
+			getModel().newTestTargetRegister(this, index, Objects.requireNonNull(register));
+		doAddRegister(tr, register);
 		return tr;
 	}
 

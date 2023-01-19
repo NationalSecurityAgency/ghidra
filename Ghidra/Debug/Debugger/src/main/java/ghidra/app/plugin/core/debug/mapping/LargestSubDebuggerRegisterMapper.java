@@ -40,7 +40,7 @@ public class LargestSubDebuggerRegisterMapper extends DefaultDebuggerRegisterMap
 	}
 
 	@Override
-	protected boolean testTraceRegister(Register lReg) {
+	protected boolean includeTraceRegister(Register lReg) {
 		return true;
 	}
 
@@ -123,7 +123,7 @@ public class LargestSubDebuggerRegisterMapper extends DefaultDebuggerRegisterMap
 			return null;
 		}
 		Register lReg = subs.last(); // largest
-		return targetRegs.get(normalizeName(lReg.getName()));
+		return super.traceToTarget(lReg);
 	}
 
 	@Override
@@ -156,7 +156,7 @@ public class LargestSubDebuggerRegisterMapper extends DefaultDebuggerRegisterMap
 			Msg.warn(this, "Potential register cache aliasing: " + lReg + " vs " + subs.last());
 			/**
 			 * After testing, there is a problem with data truncation. If, e.g., EAX is sent,
-			 * followed by AX, and we expand to fill RAX, the we're going to truncate the upper 16
+			 * followed by AX, and we expand to fill RAX, then we're going to truncate the upper 16
 			 * bits of EAX :( . To avoid this, we'll only map the largest register from target to
 			 * trace. We'll still warn as a courtesy, but we'll abort the mapping.
 			 */
@@ -164,7 +164,7 @@ public class LargestSubDebuggerRegisterMapper extends DefaultDebuggerRegisterMap
 		}
 		/**
 		 * TODO: A mapping with masks may be useful in the future, but as it is, the trace database
-		 * will reject it. Furthermore, we'd still want to mark the whole base register is known,
+		 * will reject it. Furthermore, we'd still want to mark the whole base register as known,
 		 * which is not intuitive, and makes me worry about that method.
 		 */
 		// return new RegisterValue(lReg, new BigInteger(1,value)).getBaseRegisterValue();

@@ -543,9 +543,9 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 	}
 
 	protected TargetRegisterBank isExactRegisterOnTarget(TracePlatform platform,
-			TargetRegisterContainer regContainer, String name) {
+			TargetRegisterContainer regContainer, Register register) {
 		PathMatcher matcher =
-			platform.getConventionalRegisterPath(regContainer.getSchema(), List.of(), name);
+			platform.getConventionalRegisterPath(regContainer.getSchema(), List.of(), register);
 		for (TargetObject targetObject : matcher.getCachedSuccessors(regContainer).values()) {
 			if (!(targetObject instanceof TargetRegister targetRegister)) {
 				continue;
@@ -568,28 +568,7 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 		if (regContainer == null) {
 			return null;
 		}
-		TargetRegisterBank result;
-		String name = platform.getConventionalRegisterObjectName(register);
-		result = isExactRegisterOnTarget(platform, regContainer, name);
-		if (result != null) {
-			return result;
-		}
-		// Not totally case insensitive, but the sane cases
-		String upperName = name.toUpperCase();
-		if (!name.equals(upperName)) {
-			result = isExactRegisterOnTarget(platform, regContainer, upperName);
-			if (result != null) {
-				return result;
-			}
-		}
-		String lowerName = name.toLowerCase();
-		if (!name.equals(lowerName)) {
-			result = isExactRegisterOnTarget(platform, regContainer, lowerName);
-			if (result != null) {
-				return result;
-			}
-		}
-		return null;
+		return isExactRegisterOnTarget(platform, regContainer, register);
 	}
 
 	@Override

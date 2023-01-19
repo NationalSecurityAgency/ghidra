@@ -33,6 +33,10 @@ public class PathMatcher implements PathPredicates {
 		patterns.add(pattern);
 	}
 
+	public void addAll(PathMatcher matcher) {
+		patterns.addAll(matcher.patterns);
+	}
+
 	@Override
 	public String toString() {
 		return String.format("<PathMatcher\n  %s\n>", StringUtils.join(patterns, "\n  "));

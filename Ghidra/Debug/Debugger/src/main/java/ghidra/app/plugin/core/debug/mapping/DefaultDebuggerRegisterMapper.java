@@ -51,16 +51,30 @@ public class DefaultDebuggerRegisterMapper implements DebuggerRegisterMapper {
 		collectFilteredLanguageRegs();
 	}
 
-	protected boolean testTraceRegister(Register lReg) {
+	protected boolean includeTraceRegister(Register lReg) {
 		return lReg.isBaseRegister();
 	}
 
 	protected synchronized void collectFilteredLanguageRegs() {
 		for (Register lReg : language.getRegisters()) {
-			if (!testTraceRegister(lReg)) {
+			if (!includeTraceRegister(lReg)) {
 				continue;
 			}
-			filtLanguageRegs.put(normalizeName(lReg.getName()), lReg);
+			putLanguageRegister(filtLanguageRegs, lReg);
+		}
+	}
+
+	protected synchronized void putLanguageRegister(Map<String, Register> map, Register lReg) {
+		map.put(normalizeName(lReg.getName()), lReg);
+		for (String alias : lReg.getAliases()) {
+			map.put(normalizeName(alias), lReg);
+		}
+	}
+
+	protected synchronized void removeLanguageRegister(Map<String, Register> map, Register lReg) {
+		map.remove(normalizeName(lReg.getName()));
+		for (String alias : lReg.getAliases()) {
+			map.remove(normalizeName(alias));
 		}
 	}
 
@@ -70,7 +84,7 @@ public class DefaultDebuggerRegisterMapper implements DebuggerRegisterMapper {
 		if (lReg == null) {
 			return null;
 		}
-		languageRegs.put(name, lReg);
+		putLanguageRegister(languageRegs, lReg);
 		return lReg;
 	}
 
@@ -81,7 +95,7 @@ public class DefaultDebuggerRegisterMapper implements DebuggerRegisterMapper {
 			return null;
 		}
 		targetRegs.put(name, tReg);
-		languageRegs.put(name, lReg);
+		putLanguageRegister(languageRegs, lReg);
 		return lReg;
 	}
 
@@ -92,7 +106,7 @@ public class DefaultDebuggerRegisterMapper implements DebuggerRegisterMapper {
 			return null;
 		}
 		targetRegs.remove(name);
-		languageRegs.remove(name);
+		removeLanguageRegister(languageRegs, lReg);
 		return lReg;
 	}
 
@@ -115,7 +129,17 @@ public class DefaultDebuggerRegisterMapper implements DebuggerRegisterMapper {
 
 	@Override
 	public synchronized TargetRegister traceToTarget(Register lReg) {
-		return targetRegs.get(normalizeName(lReg.getName()));
+		TargetRegister tReg = targetRegs.get(normalizeName(lReg.getName()));
+		if (tReg != null) {
+			return tReg;
+		}
+		for (String alias : lReg.getAliases()) {
+			tReg = targetRegs.get(normalizeName(alias));
+			if (tReg != null) {
+				return tReg;
+			}
+		}
+		return null;
 	}
 
 	@Override
