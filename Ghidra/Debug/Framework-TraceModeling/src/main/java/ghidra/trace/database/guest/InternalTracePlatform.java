@@ -15,8 +15,7 @@
  */
 package ghidra.trace.database.guest;
 
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.TargetRegister;
@@ -80,41 +79,58 @@ public interface InternalTracePlatform extends TracePlatform {
 		return result;
 	}
 
+	default List<String> listRegNames(Register register) {
+		Set<String> result = new LinkedHashSet<>();
+		result.add(register.getName());
+		result.add(register.getName().toUpperCase());
+		result.add(register.getName().toLowerCase());
+		for (String alias : register.getAliases()) {
+			result.add(alias);
+			result.add(alias.toUpperCase());
+			result.add(alias.toLowerCase());
+		}
+		return List.copyOf(result);
+	}
+
 	@Override
-	default String getConventionalRegisterObjectName(Register register) {
+	default Collection<String> getConventionalRegisterObjectNames(Register register) {
 		Address pmin = mapGuestToHost(register.getAddress());
 		if (pmin == null) {
-			return register.getName();
+			return listRegNames(register);
 		}
 		TraceSymbolManager symbolManager = getTrace().getSymbolManager();
 		TraceNamespaceSymbol nsRegMap = symbolManager.namespaces().getGlobalNamed(regMap(register));
-		Collection<? extends TraceLabelSymbol> labels = symbolManager.labels()
+		Collection<String> labels = symbolManager.labels()
 				.getAt(0, null, pmin, false)
 				.stream()
 				.filter(s -> s.getParentNamespace() == nsRegMap)
+				.map(TraceSymbol::getName)
 				.toList();
-		if (labels.isEmpty()) {
-			return register.getName();
+		if (!labels.isEmpty()) {
+			return labels;
 		}
-		// primary is listed first, so take it
-		return labels.iterator().next().getName();
+		return listRegNames(register);
 	}
 
 	@Override
 	default PathMatcher getConventionalRegisterPath(TargetObjectSchema schema, List<String> path,
-			String name) {
+			Collection<String> names) {
 		PathMatcher matcher = schema.searchFor(TargetRegister.class, path, true);
 		if (matcher.isEmpty()) {
 			return matcher;
 		}
-		return matcher.applyKeys(Align.RIGHT, List.of(name));
+		PathMatcher result = new PathMatcher();
+		for (String name:names) {
+			result.addAll(matcher.applyKeys(Align.RIGHT, List.of(name)));
+		}
+		return result;
 	}
 
 	@Override
 	default PathMatcher getConventionalRegisterPath(TargetObjectSchema schema, List<String> path,
 			Register register) {
 		return getConventionalRegisterPath(schema, path,
-			getConventionalRegisterObjectName(register));
+			getConventionalRegisterObjectNames(register));
 	}
 
 	@Override
@@ -155,6 +171,11 @@ public interface InternalTracePlatform extends TracePlatform {
 			TraceNamespaceSymbol nsRegMap = namespaces.getGlobalNamed(regMap);
 			if (nsRegMap == null) {
 				nsRegMap = namespaces.add(regMap, globals, SourceType.USER_DEFINED);
+			}
+			TraceLabelSymbol exists = symbolManager.labels()
+					.getChildWithNameAt(objectName, getIntKey(), null, hostAddr, nsRegMap);
+			if (exists != null) {
+				return exists;
 			}
 			return symbolManager.labels()
 					.create(0, null, hostAddr, objectName, nsRegMap, SourceType.USER_DEFINED);

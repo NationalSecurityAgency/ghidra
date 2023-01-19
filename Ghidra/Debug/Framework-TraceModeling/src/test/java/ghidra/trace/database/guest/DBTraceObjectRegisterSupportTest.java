@@ -459,4 +459,23 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 		assertMatches("Targets[0].Threads[0].Registers.User[r0]",
 			b.host.getConventionalRegisterPath(overlay, b.reg("r0")));
 	}
+
+	@Test
+	public void testPlatformGetConventionalRegisterPathAlias() throws Throwable {
+		AddressSpace registers = b.trace.getBaseAddressFactory().getRegisterSpace();
+		AddressSpace overlay;
+		Register r0;
+		try (UndoableTransaction tid = b.startTransaction()) {
+			root = manager.createRootObject(ctx.getSchema(new SchemaName("Session"))).getChild();
+			r0 = b.language.getRegister("r0");
+			overlay = b.trace.getMemoryManager()
+					.createOverlayAddressSpace("Targets[0].Threads[0].Registers", registers);
+		}
+
+		PathMatcher matcher = b.host.getConventionalRegisterPath(overlay, r0);
+		assertMatches("Targets[0].Threads[0].Registers.User[r0]", matcher);
+		assertMatches("Targets[0].Threads[0].Registers.User[a0]", matcher);
+		assertMatches("Targets[0].Threads[0].Registers.User[R0]", matcher);
+		assertMatches("Targets[0].Threads[0].Registers.User[A0]", matcher);
+	}
 }
