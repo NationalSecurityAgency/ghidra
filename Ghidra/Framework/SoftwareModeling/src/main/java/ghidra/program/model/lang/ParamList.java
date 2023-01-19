@@ -38,7 +38,7 @@ public interface ParamList {
 
 	/**
 	 * Given a list of datatypes, calculate the storage locations used for passing those datatypes
-	 * @param prog is the active progra
+	 * @param prog is the active program
 	 * @param proto is the list of datatypes
 	 * @param res is the vector for holding the VariableStorage corresponding to datatypes
 	 * @param addAutoParams if true add/process auto-parameters

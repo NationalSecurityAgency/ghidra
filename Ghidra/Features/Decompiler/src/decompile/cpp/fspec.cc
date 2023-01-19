@@ -553,7 +553,7 @@ ParamListStandard::ParamListStandard(const ParamListStandard &op2)
   maxdelay = op2.maxdelay;
   pointermax = op2.pointermax;
   thisbeforeret = op2.thisbeforeret;
-  resourceTwoStart = op2.resourceTwoStart;
+  resourceStart = op2.resourceStart;
   populateResolver();
 }
 
@@ -686,12 +686,13 @@ void ParamListStandard::assignMap(const vector<Datatype *> &proto,TypeFactory &t
       res.back().type = pointertp;
       res.back().flags = ParameterPieces::indirectstorage;
     }
-    else
+    else {
       res.back().addr = assignAddress(proto[i],status);
+      res.back().type = proto[i];
+      res.back().flags = 0;
+    }
     if (res.back().addr.isInvalid())
       throw ParamUnassignedError("Cannot assign parameter address for " + proto[i]->getName());
-    res.back().type = proto[i];
-    res.back().flags = 0;
   }
 }
 
@@ -818,39 +819,33 @@ void ParamListStandard::buildTrialMap(ParamActive *active) const
   active->sortTrials();
 }
 
-/// \brief Calculate the range of trials in each of the two resource sections
+/// \brief Calculate the range of trials in each resource sections
 ///
 /// The trials must already be mapped, which should put them in group order.  The sections
-/// split at the group given by \b resourceTwoStart.  We pass back the range of trial indices
-/// for each section.  If \b resourceTwoStart is 0, then there is really only one section, and
-/// the empty range [0,0] is passed back for the second section.
+/// split at the groups given by \b resourceStart.  We pass back the starting index for
+/// each range of trials.
 /// \param active is the given set of parameter trials
-/// \param oneStart will pass back the index of the first trial in the first section
-/// \param oneStop will pass back the index (+1) of the last trial in the first section
-/// \param twoStart will pass back the index of the first trial in the second section
-/// \param twoStop will pass back the index (+1) of the last trial in the second section
-void ParamListStandard::separateSections(ParamActive *active,int4 &oneStart,int4 &oneStop,int4 &twoStart,int4 &twoStop) const
+/// \param trialStart will hold the starting index for each range of trials
+void ParamListStandard::separateSections(ParamActive *active,vector<int4> &trialStart) const
 
 {
   int4 numtrials = active->getNumTrials();
-  if (resourceTwoStart == 0) {
-    // Only one section
-    oneStart = 0;
-    oneStop = numtrials;
-    twoStart = 0;
-    twoStop = 0;
-    return;
-  }
-  int4 i=0;
-  for(;i<numtrials;++i) {
-    ParamTrial &curtrial(active->getTrial(i));
+  int4 currentTrial = 0;
+  int4 nextGroup = resourceStart[1];
+  int4 nextSection = 2;
+  trialStart.push_back(currentTrial);
+  for(;currentTrial<numtrials;++currentTrial) {
+    ParamTrial &curtrial(active->getTrial(currentTrial));
     if (curtrial.getEntry()==(const ParamEntry *)0) continue;
-    if (curtrial.getEntry()->getGroup() >= resourceTwoStart) break;
+    if (curtrial.getEntry()->getGroup() >= nextGroup) {
+      if (nextSection > resourceStart.size())
+	throw LowlevelError("Missing next resource start");
+      nextGroup = resourceStart[nextSection];
+      nextSection += 1;
+      trialStart.push_back(currentTrial);
+    }
   }
-  oneStart = 0;
-  oneStop = i;
-  twoStart = i;
-  twoStop = numtrials;
+  trialStart.push_back(numtrials);
 }
 
 /// \brief Mark all the trials within the indicated groups as \e not \e used, except for one specified index
@@ -1116,15 +1111,19 @@ void ParamListStandard::populateResolver(void)
 void ParamListStandard::parsePentry(Decoder &decoder,vector<EffectRecord> &effectlist,
 				    int4 groupid,bool normalstack,bool autokill,bool splitFloat,bool grouped)
 {
+  type_metatype lastMeta = TYPE_UNION;
+  if (!entry.empty()) {
+    lastMeta = entry.back().isGrouped() ? TYPE_UNKNOWN : entry.back().getType();
+  }
   entry.emplace_back(groupid);
   entry.back().decode(decoder,normalstack,grouped,entry);
   if (splitFloat) {
-    if (!grouped && entry.back().getType() == TYPE_FLOAT) {
-      if (resourceTwoStart >= 0)
-	throw LowlevelError("parameter list floating-point entries must come first");
+    type_metatype currentMeta = grouped ? TYPE_UNKNOWN : entry.back().getType();
+    if (lastMeta != currentMeta) {
+      if (lastMeta > currentMeta)
+	throw LowlevelError("parameter list entries must be ordered by metatype");
+      resourceStart.push_back(groupid);
     }
-    else if (resourceTwoStart < 0)
-      resourceTwoStart = groupid; // First time we have seen an integer slot
   }
   AddrSpace *spc = entry.back().getSpace();
   if (spc->getType() == IPTR_SPACEBASE)
@@ -1173,16 +1172,23 @@ void ParamListStandard::fillinMap(ParamActive *active) const
 
 {
   if (active->getNumTrials() == 0) return; // No trials to check
+  if (entry.empty())
+    throw LowlevelError("Cannot derive parameter storage for prototype model without parameter entries");
 
   buildTrialMap(active); // Associate varnodes with sorted list of parameter locations
 
   forceExclusionGroup(active);
-  int4 oneStart,oneStop,twoStart,twoStop;
-  separateSections(active,oneStart,oneStop,twoStart,twoStop);
-  forceNoUse(active,oneStart,oneStop);
-  forceNoUse(active,twoStart,twoStop);	    // Definitely not used -- overrides active
-  forceInactiveChain(active,2,oneStart,oneStop,0);	// Chains of inactivity override later actives
-  forceInactiveChain(active,2,twoStart,twoStop,resourceTwoStart);
+  vector<int4> trialStart;
+  separateSections(active,trialStart);
+  int4 numSection = trialStart.size() - 1;
+  for(int4 i=0;i<numSection;++i) {
+    // Definitely not used -- overrides active
+    forceNoUse(active,trialStart[i],trialStart[i+1]);
+  }
+  for(int4 i=0;i<numSection;++i) {
+    // Chains of inactivity override later actives
+    forceInactiveChain(active,2,trialStart[i],trialStart[i+1],resourceStart[i]);
+  }
 
   // Mark every active trial as used
   for(int4 i=0;i<active->getNumTrials();++i) {
@@ -1354,7 +1360,6 @@ void ParamListStandard::decode(Decoder &decoder,vector<EffectRecord> &effectlist
       splitFloat = decoder.readBool();
     }
   }
-  resourceTwoStart = splitFloat ? -1 : 0;
   for(;;) {
     uint4 subId = decoder.peekElement();
     if (subId == 0) break;
@@ -1366,6 +1371,7 @@ void ParamListStandard::decode(Decoder &decoder,vector<EffectRecord> &effectlist
     }
   }
   decoder.closeElement(elemId);
+  resourceStart.push_back(numgroup);
   calcDelay();
   populateResolver();
 }

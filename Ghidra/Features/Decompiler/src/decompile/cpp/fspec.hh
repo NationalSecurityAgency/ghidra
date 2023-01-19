@@ -284,7 +284,7 @@ class ParamActive {
   bool needsfinalcheck;		///< Should a final pass be made on trials (to take into account control-flow changes)
   bool recoversubcall;		///< True if \b this is being used to recover prototypes of a sub-function call
 public:
-  ParamActive(bool recoversub);	///< Constructor an empty container
+  ParamActive(bool recoversub);	///< Construct an empty container
   void clear(void);		///< Reset to an empty container
   void registerTrial(const Address &addr,int4 sz);		///< Add a new trial to the container
   int4 getNumTrials(void) const { return trial.size(); }	///< Get the number of trials in \b this container
@@ -558,7 +558,7 @@ protected:
   int4 maxdelay;			///< Maximum heritage delay across all parameters
   int4 pointermax; 			///< If non-zero, maximum size of a data-type before converting to a pointer
   bool thisbeforeret;			///< Does a \b this parameter come before a hidden return parameter
-  int4 resourceTwoStart;		///< If there are two resource sections, the group of the first entry in the second section
+  vector<int4> resourceStart;		///< The starting group for each resource section
   list<ParamEntry> entry;		///< The ordered list of parameter entries
   vector<ParamEntryResolver *> resolverMap;	///< Map from space id to resolver
   AddrSpace *spacebase;			///< Address space containing relative offset parameters
@@ -566,7 +566,7 @@ protected:
   Address assignAddress(const Datatype *tp,vector<int4> &status) const;	///< Assign storage for given parameter data-type
   const ParamEntry *selectUnreferenceEntry(int4 grp,type_metatype prefType) const;	///< Select entry to fill an unreferenced param
   void buildTrialMap(ParamActive *active) const;	///< Build map from parameter trials to model ParamEntrys
-  void separateSections(ParamActive *active,int4 &oneStart,int4 &oneStop,int4 &twoStart,int4 &twoStop) const;
+  void separateSections(ParamActive *active,vector<int4> &trialStart) const;
   static void markGroupNoUse(ParamActive *active,int4 groupUpper,int4 groupStart,int4 index);
   static void markBestInactive(ParamActive *active,int4 group,int4 groupStart,type_metatype prefType);
   static void forceExclusionGroup(ParamActive *active);
