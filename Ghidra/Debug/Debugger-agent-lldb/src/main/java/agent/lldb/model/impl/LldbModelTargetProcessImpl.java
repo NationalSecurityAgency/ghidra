@@ -24,6 +24,7 @@ import agent.lldb.lldb.DebugClient;
 import agent.lldb.manager.LldbCause;
 import agent.lldb.manager.LldbReason;
 import agent.lldb.manager.cmd.*;
+import agent.lldb.manager.impl.LldbManagerImpl;
 import agent.lldb.model.iface1.LldbModelTargetFocusScope;
 import agent.lldb.model.iface2.*;
 import ghidra.async.AsyncUtils;
@@ -214,12 +215,18 @@ public class LldbModelTargetProcessImpl extends LldbModelTargetObjectImpl
 
 	@Override
 	public CompletableFuture<Void> step(TargetStepKind kind) {
-		return getManager().execute(new LldbStepCommand(getManager(), null, kind, null));
+		LldbManagerImpl manager = getManager();
+		SBProcess currentProcess = manager.getCurrentProcess();
+		SBThread thread = currentProcess == null ? null : currentProcess.GetSelectedThread();
+		return getManager().execute(new LldbStepCommand(manager, thread, kind, null));
 	}
 
 	@Override
 	public CompletableFuture<Void> step(Map<String, ?> args) {
-		return getManager().execute(new LldbStepCommand(getManager(), null, null, args));
+		LldbManagerImpl manager = getManager();
+		SBProcess currentProcess = manager.getCurrentProcess();
+		SBThread thread = currentProcess == null ? null : currentProcess.GetSelectedThread();
+		return getManager().execute(new LldbStepCommand(manager, thread, null, args));
 	}
 
 	@Override

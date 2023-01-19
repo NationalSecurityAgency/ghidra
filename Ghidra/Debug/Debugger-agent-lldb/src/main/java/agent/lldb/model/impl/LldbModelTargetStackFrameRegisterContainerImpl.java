@@ -15,6 +15,7 @@
  */
 package agent.lldb.model.impl;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -23,7 +24,10 @@ import java.util.stream.Collectors;
 import SWIG.SBValue;
 import SWIG.StateType;
 import agent.lldb.manager.LldbReason;
-import agent.lldb.model.iface2.*;
+import agent.lldb.model.iface2.LldbModelTargetObject;
+import agent.lldb.model.iface2.LldbModelTargetRegisterBank;
+import agent.lldb.model.iface2.LldbModelTargetStackFrameRegisterBank;
+import agent.lldb.model.iface2.LldbModelTargetStackFrameRegisterContainer;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
@@ -62,7 +66,10 @@ public class LldbModelTargetStackFrameRegisterContainerImpl
 	@Override
 	public CompletableFuture<Void> requestAttributes(boolean refresh) {
 		return getManager().listStackFrameRegisterBanks(frame.getFrame()).thenAccept(banks -> {
-			List<TargetObject> targetBanks;
+			if (banks.isEmpty()) {
+				return;
+			}
+			List<TargetObject> targetBanks = new ArrayList<>();
 			synchronized (this) {
 				targetBanks = banks.values()
 						.stream()

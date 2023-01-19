@@ -113,7 +113,7 @@ public class DebugClientImpl implements DebugClient {
 	}
 
 	@Override
-	public SBProcess connectRemote(DebugServerId si, String key, boolean auto, boolean async) {
+	public SBProcess connectRemote(DebugServerId si, String key, boolean auto, boolean async, boolean kernel) {
 		SBListener listener = new SBListener();
 		SBError error = new SBError();
 		session = createNullSession();
@@ -121,7 +121,8 @@ public class DebugClientImpl implements DebugClient {
 			((LldbManagerImpl) manager).addSessionIfAbsent(session);
 			return null;
 		}
-		SBProcess process = session.ConnectRemote(listener, key, null, error);
+		String plugin = kernel ? "kdb-remote" : "gdb-remote";
+		SBProcess process = session.ConnectRemote(listener, key, plugin, error);
 		if (!error.Success()) {
 			Msg.error(this, error.GetType() + " while attaching to " + key);
 			SBStream stream = new SBStream();
@@ -261,7 +262,7 @@ public class DebugClientImpl implements DebugClient {
 
 	@Override
 	public Map<String, SBTarget> listSessions() {
-		if (sessionsAreImmutable) {
+		if (isSessionImmutable()) {
 			return manager.getKnownSessions();
 		}
 		Map<String, SBTarget> map = new HashMap<>();
@@ -533,6 +534,10 @@ public class DebugClientImpl implements DebugClient {
 		if (res.GetOutputSize() > 0) {
 			ocb.output(DebugOutputFlags.DEBUG_OUTPUT_NORMAL.ordinal(), res.GetOutput());
 		}
+	}
+
+	public boolean isSessionImmutable() {
+		return sessionsAreImmutable;
 	}
 
 }

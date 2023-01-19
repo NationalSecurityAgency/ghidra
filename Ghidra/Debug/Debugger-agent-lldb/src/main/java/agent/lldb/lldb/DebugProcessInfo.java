@@ -52,5 +52,17 @@ public class DebugProcessInfo {
 	public BitmaskSet<?> getFlags() {
 		return new BitmaskSet<>(DebugClient.ChangeProcessState.class, event.GetType());
 	}
+	
+//	public SBFrame getFrame() {
+//		SBFrame frame = event == null ? null : SBThread.GetStackFrameFromEvent(event);
+//		if (frame != null) {
+//			return frame;
+//		}
+//		frame = thread.GetSelectedFrame();
+//		if (frame != null) {
+//			return frame;
+//		}
+//		return thread.GetFrameAtIndex(0);		
+//	}
 
 }

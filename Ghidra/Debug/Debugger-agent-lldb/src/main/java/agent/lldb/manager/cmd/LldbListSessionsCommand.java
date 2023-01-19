@@ -48,7 +48,9 @@ public class LldbListSessionsCommand extends AbstractLldbCommand<Map<String, SBT
 			if (updatedSessions.containsKey(id)) {
 				continue; // Do nothing, we're in sync
 			}
-			manager.removeSession(id, Causes.UNCLAIMED);
+			if (!id.equals("0") || !updatedSessions.isEmpty()) {
+				manager.removeSession(id, Causes.UNCLAIMED);
+			}
 		}
 		return allSessions;
 	}

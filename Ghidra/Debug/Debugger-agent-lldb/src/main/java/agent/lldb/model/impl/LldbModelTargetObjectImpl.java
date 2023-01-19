@@ -44,7 +44,7 @@ public class LldbModelTargetObjectImpl extends DefaultTargetObject<TargetObject,
 	public LldbModelTargetObjectImpl(AbstractLldbModel impl, TargetObject parent, String name,
 			String typeHint) {
 		super(impl, parent, name, typeHint);
-		this.setModelObject(((LldbModelTargetObject) parent).getModelObject());
+		inheritModelObject((LldbModelTargetObject) parent);
 		getManager().addStateListener(accessListener);
 	}
 
@@ -52,7 +52,6 @@ public class LldbModelTargetObjectImpl extends DefaultTargetObject<TargetObject,
 			Object modelObject,
 			String typeHint) {
 		super(impl, parent, name, typeHint);
-		//((LldbModelTargetObject) parent).addMapObject(modelObject, this);
 		this.setModelObject(modelObject);
 		getManager().addStateListener(accessListener);
 	}
@@ -116,6 +115,7 @@ public class LldbModelTargetObjectImpl extends DefaultTargetObject<TargetObject,
 				exec = TargetExecutionState.INACTIVE;
 				break;
 			}
+			case 1: // eStateUnloaded
 			case 2: // eStateConnected
 			case 3: // eStateAttaching
 			case 4: // eStateLaunching
@@ -144,7 +144,6 @@ public class LldbModelTargetObjectImpl extends DefaultTargetObject<TargetObject,
 				onExit();
 				break;
 			}
-			case 1: // eStateUnloaded
 			case 8: // eStateCrashed
 			{
 				getModel().close();
@@ -231,6 +230,10 @@ public class LldbModelTargetObjectImpl extends DefaultTargetObject<TargetObject,
 		return modelObject;
 	}
 
+	public void inheritModelObject(LldbModelTargetObject parent) {
+		this.modelObject = parent.getModelObject();
+	}
+
 	@Override
 	public void setModelObject(Object modelObject) {
 		if (modelObject != null) {
@@ -244,7 +247,8 @@ public class LldbModelTargetObjectImpl extends DefaultTargetObject<TargetObject,
 		if (object == null) {
 			return;
 		}
-		objectMap.put(DebugClient.getModelKey(object), targetObject);
+		String modelKey = DebugClient.getModelKey(object);
+		objectMap.put(modelKey, targetObject);
 	}
 
 	@Override
