@@ -36,30 +36,48 @@ public class ElfRelocationContext {
 
 	protected final ElfRelocationHandler handler;
 	protected final ElfLoadHelper loadHelper;
-	protected final ElfRelocationTable relocationTable;
-	private ElfSymbolTable symbolTable; // may be null
-	private ElfSymbol nullSymbol; // corresponds to symbolIndex==0 when no symbolTable
 	protected final Map<ElfSymbol, Address> symbolMap;
 	protected final Program program;
+
+	protected ElfRelocationTable relocationTable;
+	protected ElfSymbolTable symbolTable; // may be null
+
+	private ElfSymbol nullSymbol; // corresponds to symbolIndex==0 when no symbolTable
 
 	/**
 	 * Relocation context for a specific Elf image and relocation table
 	 * @param handler relocation handler or null if not available
 	 * @param loadHelper the elf load helper
-	 * @param relocationTable Elf relocation table
 	 * @param symbolMap Elf symbol placement map
 	 */
 	protected ElfRelocationContext(ElfRelocationHandler handler, ElfLoadHelper loadHelper,
-			ElfRelocationTable relocationTable, Map<ElfSymbol, Address> symbolMap) {
+			Map<ElfSymbol, Address> symbolMap) {
 		this.handler = handler;
 		this.loadHelper = loadHelper;
-		this.relocationTable = relocationTable;
-		symbolTable = relocationTable.getAssociatedSymbolTable();
+		this.symbolMap = symbolMap;
+		this.program = loadHelper.getProgram();
+	}
+
+	/**
+	 * Invoked at start of relocation processing for specified table.
+	 * The method {@link #endRelocationTableProcessing()} will be invoked after last relocation
+	 * is processed.
+	 * @param relocTable relocation table
+	 */
+	public void startRelocationTableProcessing(ElfRelocationTable relocTable) {
+		this.relocationTable = relocTable;
+		symbolTable = relocTable.getAssociatedSymbolTable();
 		if (symbolTable == null) {
 			nullSymbol = ElfSymbol.createNullSymbol(loadHelper.getElfHeader());
 		}
-		this.symbolMap = symbolMap;
-		this.program = loadHelper.getProgram();
+	}
+
+	/**
+	 * Invoked at end of relocation processing for current relocation table.
+	 * See {@link #startRelocationTableProcessing(ElfRelocationTable)}.
+	 */
+	public void endRelocationTableProcessing() {
+		this.relocationTable = null;
 	}
 
 	/**
@@ -130,20 +148,19 @@ public class ElfRelocationContext {
 	/**
 	 * Get a relocation context for a specfic Elf image and relocation table
 	 * @param loadHelper Elf load helper
-	 * @param relocationTable Elf relocation table
 	 * @param symbolMap Elf symbol placement map
 	 * @return relocation context or null
 	 */
 	public static ElfRelocationContext getRelocationContext(ElfLoadHelper loadHelper,
-			ElfRelocationTable relocationTable, Map<ElfSymbol, Address> symbolMap) {
+			Map<ElfSymbol, Address> symbolMap) {
 		ElfHeader elf = loadHelper.getElfHeader();
 		ElfRelocationContext context = null;
 		ElfRelocationHandler handler = ElfRelocationHandlerFactory.getHandler(elf);
 		if (handler != null) {
-			context = handler.createRelocationContext(loadHelper, relocationTable, symbolMap);
+			context = handler.createRelocationContext(loadHelper, symbolMap);
 		}
 		if (context == null) {
-			context = new ElfRelocationContext(handler, loadHelper, relocationTable, symbolMap);
+			context = new ElfRelocationContext(handler, loadHelper, symbolMap);
 		}
 		return context;
 	}
