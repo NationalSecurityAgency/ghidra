@@ -41,8 +41,8 @@ public class PowerPC_ElfRelocationHandler extends ElfRelocationHandler {
 
 	@Override
 	public PowerPC_ElfRelocationContext createRelocationContext(ElfLoadHelper loadHelper,
-			ElfRelocationTable relocationTable, Map<ElfSymbol, Address> symbolMap) {
-		return new PowerPC_ElfRelocationContext(this, loadHelper, relocationTable, symbolMap);
+			Map<ElfSymbol, Address> symbolMap) {
+		return new PowerPC_ElfRelocationContext(this, loadHelper, symbolMap);
 	}
 
 	@Override
@@ -286,9 +286,8 @@ public class PowerPC_ElfRelocationHandler extends ElfRelocationHandler {
 		private Integer sda2Base;
 
 		protected PowerPC_ElfRelocationContext(ElfRelocationHandler handler,
-				ElfLoadHelper loadHelper, ElfRelocationTable relocationTable,
-				Map<ElfSymbol, Address> symbolMap) {
-			super(handler, loadHelper, relocationTable, symbolMap);
+				ElfLoadHelper loadHelper, Map<ElfSymbol, Address> symbolMap) {
+			super(handler, loadHelper, symbolMap);
 		}
 
 		/**

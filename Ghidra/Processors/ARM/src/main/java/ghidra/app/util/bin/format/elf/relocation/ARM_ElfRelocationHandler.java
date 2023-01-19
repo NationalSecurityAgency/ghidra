@@ -28,8 +28,8 @@ public class ARM_ElfRelocationHandler extends ElfRelocationHandler {
 
 	@Override
 	public ARM_ElfRelocationContext createRelocationContext(ElfLoadHelper loadHelper,
-			ElfRelocationTable relocationTable, Map<ElfSymbol, Address> symbolMap) {
-		return new ARM_ElfRelocationContext(this, loadHelper, relocationTable, symbolMap);
+			Map<ElfSymbol, Address> symbolMap) {
+		return new ARM_ElfRelocationContext(this, loadHelper, symbolMap);
 	}
 
 	@Override

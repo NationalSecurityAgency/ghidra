@@ -794,88 +794,95 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			log("ELF relocation handler extension not found!  Unable to process relocations.");
 		}
 
-		Address defaultBase = getDefaultAddress(elf.adjustAddressForPrelink(0));
-		AddressSpace defaultSpace = defaultBase.getAddressSpace();
-		long defaultBaseOffset = defaultBase.getAddressableWordOffset();
-
 		int totalCount = 0;
 		for (ElfRelocationTable relocationTable : relocationTables) {
 			totalCount += relocationTable.getRelocationCount();
 		}
 		monitor.initialize(totalCount);
 
-		for (ElfRelocationTable relocationTable : relocationTables) {
-
-			monitor.checkCanceled();
-
-			Address relocTableAddr = null;
-
-			ElfSectionHeader section = relocationTable.getTableSectionHeader();
-			if (section != null) {
-				relocTableAddr = findLoadAddress(section, 0);
+		ElfRelocationContext context = null;
+		if (processRelocations) {
+			context = ElfRelocationContext.getRelocationContext(this, symbolMap);
+		}
+		try {
+			for (ElfRelocationTable relocationTable : relocationTables) {
+				monitor.checkCanceled();
+				processRelocationTable(relocationTable, context, monitor);
 			}
-			else {
-				relocTableAddr = findLoadAddress(relocationTable.getFileOffset(), 1);
-			}
-
-			/**
-			 * Cases:
-			 * 1. elf.isRelocatable()
-			 * 	a) sectionToBeRelocated null (may be NULL section?)
-			 *  b) sectionToBeRelocated known - offset relative to section load address
-			 *
-			 * 2. !elf.isRelocatable()
-			 *  a) sectionToBeRelocated null (may be NULL section?)
-			 *  b) sectionToBeRelocated known - offset relative to image base
-			 */
-
-			AddressSpace relocationSpace = defaultSpace;
-			long baseOffset = defaultBaseOffset;
-
-			ElfSectionHeader sectionToBeRelocated = relocationTable.getSectionToBeRelocated();
-			if (sectionToBeRelocated != null) {
-				// relocation offsets are relative to start of section load address
-				Address sectionLoadAddr = findLoadAddress(sectionToBeRelocated, 0);
-				if (sectionLoadAddr == null) {
-					log("Failed to identify relocation base address for relocation table 0x" +
-						relocationTable.getAddressOffset() + " [section: " +
-						sectionToBeRelocated.getNameAsString() + "]");
-					monitor.incrementProgress(relocationTable.getRelocationCount());
-					continue;
-				}
-				relocationSpace = sectionLoadAddr.getAddressSpace();
-				if (elf.isRelocatable()) {
-					baseOffset = sectionLoadAddr.getAddressableWordOffset();
-				}
-				else if (relocationSpace != defaultSpace) {
-					baseOffset = 0;
-				}
-			}
-
-			if (relocTableAddr != null) {
-				markupRelocationTable(relocTableAddr, relocationTable, monitor);
-			}
-
-			ElfRelocationContext context = null;
-			if (processRelocations) {
-				context =
-					ElfRelocationContext.getRelocationContext(this, relocationTable, symbolMap);
-			}
-			try {
-				processRelocationTable(relocationTable, context, relocationSpace, baseOffset,
-					monitor);
-			}
-			finally {
-				if (context != null) {
-					context.dispose();
-				}
+		}
+		finally {
+			if (context != null) {
+				context.dispose();
 			}
 		}
 	}
 
 	private void processRelocationTable(ElfRelocationTable relocationTable,
+			ElfRelocationContext context, TaskMonitor monitor) throws CancelledException {
+
+		Address defaultBase = getDefaultAddress(elf.adjustAddressForPrelink(0));
+		AddressSpace defaultSpace = defaultBase.getAddressSpace();
+		long defaultBaseOffset = defaultBase.getAddressableWordOffset();
+
+		Address relocTableAddr = null;
+
+		ElfSectionHeader section = relocationTable.getTableSectionHeader();
+		if (section != null) {
+			relocTableAddr = findLoadAddress(section, 0);
+		}
+		else {
+			relocTableAddr = findLoadAddress(relocationTable.getFileOffset(), 1);
+		}
+
+		/**
+		 * Cases:
+		 * 1. elf.isRelocatable()
+		 * 	a) sectionToBeRelocated null (may be NULL section?)
+		 *  b) sectionToBeRelocated known - offset relative to section load address
+		 *
+		 * 2. !elf.isRelocatable()
+		 *  a) sectionToBeRelocated null (may be NULL section?)
+		 *  b) sectionToBeRelocated known - offset relative to image base
+		 */
+
+		AddressSpace relocationSpace = defaultSpace;
+		long baseOffset = defaultBaseOffset;
+
+		ElfSectionHeader sectionToBeRelocated = relocationTable.getSectionToBeRelocated();
+		if (sectionToBeRelocated != null) {
+			// relocation offsets are relative to start of section load address
+			Address sectionLoadAddr = findLoadAddress(sectionToBeRelocated, 0);
+			if (sectionLoadAddr == null) {
+				log("Failed to identify relocation base address for relocation table 0x" +
+					relocationTable.getAddressOffset() + " [section: " +
+					sectionToBeRelocated.getNameAsString() + "]");
+				monitor.incrementProgress(relocationTable.getRelocationCount());
+				return;
+			}
+			relocationSpace = sectionLoadAddr.getAddressSpace();
+			if (elf.isRelocatable()) {
+				baseOffset = sectionLoadAddr.getAddressableWordOffset();
+			}
+			else if (relocationSpace != defaultSpace) {
+				baseOffset = 0;
+			}
+		}
+
+		if (relocTableAddr != null) {
+			markupRelocationTable(relocTableAddr, relocationTable, monitor);
+		}
+
+		processRelocationTableEntries(relocationTable, context, relocationSpace, baseOffset,
+				monitor);
+	}
+
+	private void processRelocationTableEntries(ElfRelocationTable relocationTable,
 			ElfRelocationContext context, AddressSpace relocationSpace, long baseWordOffset,
 			TaskMonitor monitor) throws CancelledException {
+
+		if (context != null) {
+			context.startRelocationTableProcessing(relocationTable);
+		}
 
 		ElfSymbolTable symbolTable = relocationTable.getAssociatedSymbolTable();
 		ElfRelocation[] relocs = relocationTable.getRelocations();
@@ -970,10 +977,14 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				}
 			}
 			finally {
-				// Save relocation data
+				// Save relocation data - uses original FileBytes
 				program.getRelocationTable()
 						.add(relocAddr, reloc.getType(), values, null, symbolName);
 			}
+		}
+
+		if (context != null) {
+			context.endRelocationTableProcessing();
 		}
 	}
 
@@ -996,20 +1007,24 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	}
 
 	@Override
-	public boolean addFakeRelocTableEntry(Address address, int length)
-			throws AddressOverflowException {
-		Address maxAddr = address.addNoWrap(length - 1);
-		RelocationTable relocationTable = program.getRelocationTable();
-		List<Relocation> relocations = relocationTable.getRelocations(address);
-		if (!relocations.isEmpty()) {
-			return false;
+	public boolean addFakeRelocTableEntry(Address address, int length) {
+		try {
+			Address maxAddr = address.addNoWrap(length - 1);
+			RelocationTable relocationTable = program.getRelocationTable();
+			List<Relocation> relocations = relocationTable.getRelocations(address);
+			if (!relocations.isEmpty()) {
+				return false;
+			}
+			Address nextRelocAddr = relocationTable.getRelocationAddressAfter(address);
+			if (nextRelocAddr == null || nextRelocAddr.compareTo(maxAddr) > 0) {
+				relocationTable.add(address, 0, new long[0], null, null);
+				return true;
+			}
 		}
-		Address nextRelocAddr = relocationTable.getRelocationAddressAfter(address);
-		if (nextRelocAddr != null && nextRelocAddr.compareTo(maxAddr) <= 0) {
-			return false;
+		catch (AddressOverflowException e) {
+			Msg.error(this, "Failed to generate fake relocation data at " + address, e);
 		}
-		relocationTable.add(address, 0, new long[0], null, null);
-		return true;
+		return false;
 	}
 
 	/**
@@ -1420,7 +1435,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			block.setWrite(true);
 			block.setSourceName(BLOCK_SOURCE_NAME);
 			block.setComment(
-				"NOTE: This block is artificial and is used to make relocations work correctly");
+				"NOTE: This block is artificial and allows ELF Relocations to work correctly");
 		}
 		catch (Exception e) {
 			log("Error creating external memory block: " + " - " + getMessage(e));
@@ -1546,6 +1561,14 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				// NO_ADDRESS signifies external symbol to be allocated to EXTERNAL block
 				boolean usingFakeExternal = false;
 				if (address == Address.NO_ADDRESS) {
+
+					if (ElfConstants.GOT_SYMBOL_NAME.equals(symName)) {
+						// Do not assign GOT symbol to the EXTERNAL block.
+						// This is likely an object module which is not fully linked.
+						// It is very likely relocation handler will need to allocate a GOT
+						// for any GOT-based relocations.
+						continue;
+					}
 
 					if (StringUtils.isBlank(symName)) {
 						continue;
@@ -3200,7 +3223,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				throw new AssertException("unexpected", e);
 			}
 		}
-		Symbol gotSym = SymbolUtilities.getLabelOrFunctionSymbol(program, "_GLOBAL_OFFSET_TABLE_",
+		Symbol gotSym =
+			SymbolUtilities.getLabelOrFunctionSymbol(program, ElfConstants.GOT_SYMBOL_NAME,
 			err -> log(err));
 		if (gotSym != null) {
 			return gotSym.getAddress().getAddressableWordOffset();

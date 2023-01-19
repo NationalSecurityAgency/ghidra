@@ -36,8 +36,6 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 //	private static final int TP_OFFSET = 0x7000;
 //	private static final int DTP_OFFSET = 0x8000;
 
-//	private static final String GOT_SYMBOL_NAME = "_GLOBAL_OFFSET_TABLE_";
-
 	@Override
 	public boolean canRelocate(ElfHeader elf) {
 		return elf.e_machine() == ElfConstants.EM_MIPS;
@@ -45,8 +43,8 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 
 	@Override
 	public MIPS_ElfRelocationContext createRelocationContext(ElfLoadHelper loadHelper,
-			ElfRelocationTable relocationTable, Map<ElfSymbol, Address> symbolMap) {
-		return new MIPS_ElfRelocationContext(this, loadHelper, relocationTable, symbolMap);
+			Map<ElfSymbol, Address> symbolMap) {
+		return new MIPS_ElfRelocationContext(this, loadHelper, symbolMap);
 	}
 
 	@Override
@@ -1061,12 +1059,37 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 		private Address lastSymbolAddr;
 
 		MIPS_ElfRelocationContext(MIPS_ElfRelocationHandler handler, ElfLoadHelper loadHelper,
-				ElfRelocationTable relocationTable, Map<ElfSymbol, Address> symbolMap) {
-			super(handler, loadHelper, relocationTable, symbolMap);
+				Map<ElfSymbol, Address> symbolMap) {
+			super(handler, loadHelper, symbolMap);
 		}
 
-		// TODO: move section GOT creation into ElfRelocationContext to make it
-		// available to other relocation handlers
+		@Override
+		public void endRelocationTableProcessing() {
+
+			// Mark all deferred relocations which were never processed
+			for (MIPS_DeferredRelocation reloc : hi16list) {
+				reloc.markUnprocessed(this, "LO16 Relocation");
+			}
+			hi16list.clear();
+			for (MIPS_DeferredRelocation reloc : got16list) {
+				reloc.markUnprocessed(this, "LO16 Relocation");
+			}
+			got16list.clear();
+
+			// Generate the section GOT table if required
+			createGot();
+
+			sectionGotLimits = null;
+			sectionGotAddress = null;
+			lastSectionGotEntryAddress = null;
+			nextSectionGotEntryAddress = null;
+			gotMap = null;
+			useSavedAddend = false;
+			savedAddendHasError = false;
+			lastSymbolAddr = null;
+
+			super.endRelocationTableProcessing();
+		}
 
 		private void allocateSectionGot() {
 			int alignment = getLoadAdapter().getLinkageBlockAlignment();
@@ -1155,7 +1178,7 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 		 * Determine if the next relocation has the same offset.
 		 * If true, the computed value should be stored to savedAddend and
 		 * useSaveAddend set true.
-		 * @param relocIndex current relocation index
+		 * @param relocation current relocation
 		 * @return true if next relocation has same offset
 		 */
 		boolean nextRelocationHasSameOffset(ElfRelocation relocation) {
@@ -1193,7 +1216,7 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 
 		private String getSectionGotName() {
 			String sectionName = relocationTable.getSectionToBeRelocated().getNameAsString();
-			return "%got" + sectionName;
+			return ElfRelocationHandler.GOT_BLOCK_NAME + sectionName;
 		}
 
 		/**
@@ -1204,12 +1227,12 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 				return;
 			}
 			int size = (int) lastSectionGotEntryAddress.subtract(sectionGotAddress) + 1;
-			String sectionName = relocationTable.getSectionToBeRelocated().getNameAsString();
 			String blockName = getSectionGotName();
 			try {
 				MemoryBlock block = MemoryBlockUtils.createInitializedBlock(program, false,
-					blockName, sectionGotAddress, size, "GOT for " + sectionName + " section",
-					"MIPS-Elf Loader", true, false, false, loadHelper.getLog());
+					blockName, sectionGotAddress, size,
+					"NOTE: This block is artificial and allows ELF Relocations to work correctly",
+					"Elf Loader", true, false, false, loadHelper.getLog());
 				DataConverter converter =
 					program.getMemory().isBigEndian() ? BigEndianDataConverter.INSTANCE
 							: LittleEndianDataConverter.INSTANCE;
@@ -1301,24 +1324,6 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 		 */
 		void addGOT16Relocation(MIPS_DeferredRelocation got16reloc) {
 			got16list.add(got16reloc);
-		}
-
-		@Override
-		public void dispose() {
-			// Mark all deferred relocations which were never processed
-			for (MIPS_DeferredRelocation reloc : hi16list) {
-				reloc.markUnprocessed(this, "LO16 Relocation");
-			}
-			hi16list.clear();
-			for (MIPS_DeferredRelocation reloc : got16list) {
-				reloc.markUnprocessed(this, "LO16 Relocation");
-			}
-			got16list.clear();
-
-			// Generate the section GOT table if required
-			createGot();
-
-			super.dispose();
 		}
 	}
 
