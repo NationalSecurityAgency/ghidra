@@ -426,8 +426,8 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 	}
 
 	@Override
-	public TargetRegisterBank getTargetRegisterBank(TraceThread thread, int frameLevel) {
-		return objectRecorder.getTargetFrameInterface(thread, frameLevel, TargetRegisterBank.class);
+	public Set<TargetRegisterBank> getTargetRegisterBanks(TraceThread thread, int frameLevel) {
+		return Set.of(objectRecorder.getTargetFrameInterface(thread, frameLevel, TargetRegisterBank.class));
 	}
 
 	@Override

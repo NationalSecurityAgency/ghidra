@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import java.util.Set;
+
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.services.*;
@@ -69,10 +71,12 @@ public class RefreshRegistersScript extends GhidraScript {
 		// Now, we need to get the relevant recorder
 		TraceRecorder recorder = modelService.getRecorder(current.getTrace());
 		// There's a chance of an NPE here if there is no "current frame"
-		TargetRegisterBank bank =
-			recorder.getTargetRegisterBank(current.getThread(), current.getFrame());
-		// Now do the same to the bank as before
-		bank.invalidateCaches().get();
-		bank.fetchElements(true).get();
+		Set<TargetRegisterBank> banks =
+			recorder.getTargetRegisterBanks(current.getThread(), current.getFrame());
+		for (TargetRegisterBank bank : banks) {
+			// Now do the same to the bank as before
+			bank.invalidateCaches().get();
+			bank.fetchElements(true).get();
+		}
 	}
 }

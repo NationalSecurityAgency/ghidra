@@ -95,7 +95,7 @@ public class FridaDebuggerPlatformOpinion extends AbstractDebuggerPlatformOpinio
 		}
 		String lcOS = os.toLowerCase();
 		boolean isLinux = lcOS.contains("linux");
-		boolean isMacOS = lcOS.contains("darwin") || lcOS.contains("macos");
+		boolean isMacOS = lcOS.contains("darwin") || lcOS.contains("macos") || lcOS.contains("ios");
 		boolean isWindows = lcOS.contains("windows");
 		String lcArch = arch.toLowerCase();
 		// "arm" subsumes "arm64"

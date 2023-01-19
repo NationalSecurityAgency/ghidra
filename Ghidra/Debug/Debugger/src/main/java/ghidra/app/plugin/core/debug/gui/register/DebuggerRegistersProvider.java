@@ -1296,8 +1296,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			return AsyncUtils.NIL;
 		}
 		toRead.retainAll(regMapper.getRegistersOnTarget());
-		TargetRegisterBank bank = recorder.getTargetRegisterBank(traceThread, current.getFrame());
-		if (bank == null || !bank.isValid()) {
+		Set<TargetRegisterBank> banks = recorder.getTargetRegisterBanks(traceThread, current.getFrame());
+		if (banks == null || banks.isEmpty()) {
 			Msg.error(this, "Current frame's bank does not exist");
 			return AsyncUtils.NIL;
 		}
@@ -1320,10 +1320,10 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		if (recorder.getSnap() != current.getSnap()) {
 			return AsyncUtils.NIL;
 		}
-		if (current.getFrame() == 0) {
-			// Should have been pushed by model. non-zero frames are poll-only
-			return AsyncUtils.NIL;
-		}
+//		if (current.getFrame() == 0) {
+//			// Should have been pushed by model. non-zero frames are poll-only
+//			return AsyncUtils.NIL;
+//		}
 		TraceThread traceThread = current.getThread();
 		TargetThread targetThread = recorder.getTargetThread(traceThread);
 		if (targetThread == null) {

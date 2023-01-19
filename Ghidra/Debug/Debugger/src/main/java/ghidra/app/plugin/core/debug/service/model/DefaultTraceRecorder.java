@@ -232,7 +232,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	}
 
 	@Override
-	public TargetRegisterBank getTargetRegisterBank(TraceThread thread, int frameLevel) {
+	public Set<TargetRegisterBank> getTargetRegisterBanks(TraceThread thread, int frameLevel) {
 		DefaultThreadRecorder rec = getThreadRecorder(thread);
 		return rec.getTargetRegisterBank(thread, frameLevel);
 	}
