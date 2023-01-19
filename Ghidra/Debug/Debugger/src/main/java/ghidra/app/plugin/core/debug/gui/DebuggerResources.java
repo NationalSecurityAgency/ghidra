@@ -174,17 +174,6 @@ public interface DebuggerResources {
 	Icon ICON_DIFF_PREV = new GIcon("icon.debugger.diff.previous");
 	Icon ICON_DIFF_NEXT = new GIcon("icon.debugger.diff.next");
 
-	Icon ICON_EDIT_MODE_READ_ONLY = new GIcon("icon.debugger.edit.mode.read.only");
-	Icon ICON_EDIT_MODE_WRITE_TARGET = new GIcon("icon.debugger.edit.mode.write.target");
-	Icon ICON_EDIT_MODE_WRITE_TRACE = new GIcon("icon.debugger.edit.mode.write.trace");
-	Icon ICON_EDIT_MODE_WRITE_EMULATOR =
-		new GIcon("icon.debugger.edit.mode.write.emulator");
-
-	String NAME_EDIT_MODE_READ_ONLY = "Control Target w/ Edits Disabled";
-	String NAME_EDIT_MODE_WRITE_TARGET = "Control Target";
-	String NAME_EDIT_MODE_WRITE_TRACE = "Control Trace";
-	String NAME_EDIT_MODE_WRITE_EMULATOR = "Control Emulator";
-
 	HelpLocation HELP_PACKAGE = new HelpLocation("Debugger", "package");
 
 	String HELP_ANCHOR_PLUGIN = "plugin";
@@ -419,7 +408,7 @@ public interface DebuggerResources {
 
 		public AbstractConnectAction(Plugin owner) {
 			super(NAME, owner.getName());
-			setDescription("Create a new connection to an debugging agent");
+			setDescription("Create a new connection to a debugging agent");
 			setHelpLocation(new HelpLocation(owner.getName(), HELP_ANCHOR));
 		}
 	}
@@ -1660,23 +1649,6 @@ public interface DebuggerResources {
 		}
 	}
 
-	interface SeekTracePresentAction {
-		String NAME = "Seek Trace Present";
-		String DESCRIPTION = "Track the tool to the latest snap";
-		Icon ICON = ICON_SEEK_PRESENT;
-		String GROUP = "zz";
-		String HELP_ANCHOR = "seek_trace_present";
-
-		static ToggleActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ToggleActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.toolBarIcon(ICON)
-					.toolBarGroup(GROUP)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
 	// TODO: Perhaps to reduce overloading of "snapshot" we should use "event" instead?
 	interface RenameSnapshotAction {
 		String NAME = "Rename Current Snapshot";
@@ -1708,22 +1680,6 @@ public interface DebuggerResources {
 			return new ToggleActionBuilder(NAME, ownerName).description(DESCRIPTION)
 					.menuPath(NAME)
 					.menuIcon(ICON)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface GoToTimeAction {
-		String NAME = "Go To Time";
-		String DESCRIPTION = "Go to a specific time, optionally using emulation";
-		Icon ICON = ICON_TIME;
-		String HELP_ANCHOR = "goto_time";
-
-		static ActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName).description(DESCRIPTION)
-					.menuPath(NAME)
-					.menuIcon(ICON)
-					.keyBinding("CTRL SHIFT T")
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}

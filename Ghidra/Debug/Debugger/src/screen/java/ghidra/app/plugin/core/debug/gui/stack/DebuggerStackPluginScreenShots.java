@@ -38,7 +38,6 @@ import ghidra.app.plugin.core.debug.stack.*;
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerEmulationService.EmulationResult;
-import ghidra.app.services.DebuggerStateEditingService.StateEditingMode;
 import ghidra.app.services.DebuggerStateEditingService.StateEditor;
 import ghidra.async.AsyncTestUtils;
 import ghidra.framework.model.DomainFolder;
@@ -297,7 +296,7 @@ public class DebuggerStackPluginScreenShots extends GhidraScreenShotGenerator
 		traceManager.activateThread(thread);
 		waitForSwing();
 
-		editingService.setCurrentMode(tb.trace, StateEditingMode.WRITE_TRACE);
+		editingService.setCurrentMode(tb.trace, StateEditingMode.RW_TRACE);
 		StateEditor editor = editingService.createStateEditor(tb.trace);
 
 		DebuggerCoordinates atSetup = traceManager.getCurrent();

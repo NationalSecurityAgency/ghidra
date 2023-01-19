@@ -32,6 +32,7 @@ import ghidra.app.plugin.core.debug.event.*;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.mapping.DebuggerPlatformMapper;
 import ghidra.app.services.*;
+import ghidra.app.services.DebuggerStateEditingService.StateEditingModeChangeListener;
 import ghidra.async.*;
 import ghidra.async.AsyncConfigFieldCodec.BooleanAsyncConfigFieldCodec;
 import ghidra.dbg.target.*;
@@ -112,7 +113,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			if (supportsFocus(recorder)) {
 				// TODO: Same for stack frame? I can't imagine it's as common as this....
 				if (thread == recorder.getTraceThreadForSuccessor(recorder.getFocus())) {
-					activate(current.thread(thread));
+					activate(current.thread(thread), ActivationCause.SYNC_MODEL);
 				}
 				return;
 			}
@@ -122,16 +123,18 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			if (current.getThread() != null) {
 				return;
 			}
-			activate(current.thread(thread));
+			activate(current.thread(thread), ActivationCause.ACTIVATE_DEFAULT);
 		}
 
 		private void threadDeleted(TraceThread thread) {
-			DebuggerCoordinates last = lastCoordsByTrace.get(trace);
-			if (last != null && last.getThread() == thread) {
-				lastCoordsByTrace.remove(trace);
+			synchronized (listenersByTrace) {
+				DebuggerCoordinates last = lastCoordsByTrace.get(trace);
+				if (last != null && last.getThread() == thread) {
+					lastCoordsByTrace.remove(trace);
+				}
 			}
 			if (current.getThread() == thread) {
-				activate(current.thread(null));
+				activate(current.thread(null), ActivationCause.ACTIVATE_DEFAULT);
 			}
 		}
 
@@ -146,7 +149,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			if (!object.isRoot()) {
 				return;
 			}
-			activate(current.object(object));
+			activate(current.object(object), ActivationCause.SYNC_MODEL);
 		}
 	}
 
@@ -231,16 +234,31 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		}
 	}
 
+	class ForFollowPresentListener implements StateEditingModeChangeListener {
+		@Override
+		public void modeChanged(Trace trace, StateEditingMode mode) {
+			if (trace != current.getTrace() || !mode.followsPresent()) {
+				return;
+			}
+			TraceRecorder curRecorder = current.getRecorder();
+			if (curRecorder == null) {
+				return;
+			}
+			// TODO: Also re-sync focused thread/frame?
+			activateNoFocus(current.snap(curRecorder.getSnap()), ActivationCause.FOLLOW_PRESENT);
+		}
+	}
+
 	protected final Map<Trace, DebuggerCoordinates> lastCoordsByTrace = new WeakHashMap<>();
 	protected final Map<Trace, ListenerForTraceChanges> listenersByTrace = new WeakHashMap<>();
 	protected final Set<Trace> tracesView = Collections.unmodifiableSet(listenersByTrace.keySet());
 
 	private final ForRecordersListener forRecordersListener = new ForRecordersListener();
+	private final ForFollowPresentListener forFollowPresentListener =
+		new ForFollowPresentListener();
 
 	protected DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
 	protected TargetObject curObj;
-	@AutoConfigStateField(codec = BooleanAsyncConfigFieldCodec.class)
-	protected final AsyncReference<Boolean, Void> autoActivatePresent = new AsyncReference<>(true);
 	@AutoConfigStateField(codec = BooleanAsyncConfigFieldCodec.class)
 	protected final AsyncReference<Boolean, Void> saveTracesByDefault = new AsyncReference<>(true);
 	@AutoConfigStateField(codec = BooleanAsyncConfigFieldCodec.class)
@@ -254,6 +272,8 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	private DebuggerEmulationService emulationService;
 	@AutoServiceConsumed
 	private DebuggerPlatformService platformService;
+	// @AutoServiceConsumed via method
+	private DebuggerStateEditingService editingService;
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
 
@@ -448,6 +468,17 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		}
 	}
 
+	@AutoServiceConsumed
+	private void setEditingService(DebuggerStateEditingService editingService) {
+		if (this.editingService != null) {
+			this.editingService.removeModeChangeListener(forFollowPresentListener);
+		}
+		this.editingService = editingService;
+		if (this.editingService != null) {
+			this.editingService.addModeChangeListener(forFollowPresentListener);
+		}
+	}
+
 	@Override
 	public Class<?>[] getSupportedDataTypes() {
 		return new Class<?>[] { Trace.class };
@@ -574,20 +605,38 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 				return false;
 			}
 		}
-		activateNoFocus(getCurrentFor(trace).object(obj));
+		activateNoFocus(getCurrentFor(trace).object(obj), ActivationCause.SYNC_MODEL);
 		return true;
 	}
 
+	private boolean isFollowsPresent(Trace trace) {
+		StateEditingMode mode = editingService == null
+				? StateEditingMode.DEFAULT
+				: editingService.getCurrentMode(trace);
+		return mode.followsPresent();
+	}
+
 	protected void doTraceRecorderAdvanced(TraceRecorder recorder, long snap) {
-		if (!autoActivatePresent.get()) {
+		Trace trace = recorder.getTrace();
+		if (!isFollowsPresent(trace)) {
 			return;
 		}
-		if (recorder.getTrace() != current.getTrace()) {
-			// TODO: Could advance view, which might be desirable anyway
-			// Would also obviate checks in resolveCoordinates and updateCurrentRecorder
+		if (trace != current.getTrace()) {
+			/**
+			 * The snap needs to match upon re-activating this trace, lest it look like the user
+			 * intentionally navigated to the past, causing the mode to switch away from target.
+			 */
+			DebuggerCoordinates inactive = null;
+			synchronized (listenersByTrace) {
+				DebuggerCoordinates curForTrace = getCurrentFor(trace);
+				inactive = curForTrace.snap(snap);
+				lastCoordsByTrace.put(trace, inactive);
+			}
+			trace.getProgramView().setSnap(snap);
+			firePluginEvent(new TraceInactiveCoordinatesPluginEvent(getName(), inactive));
 			return;
 		}
-		activateSnap(snap);
+		activate(resolveSnap(snap), ActivationCause.FOLLOW_PRESENT);
 	}
 
 	protected TracePlatform getPlatformForMapper(Trace trace, TraceObject object,
@@ -607,7 +656,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			lastCoordsByTrace.put(trace, adj);
 			if (trace == current.getTrace()) {
 				current = adj;
-				fireLocationEvent(adj);
+				fireLocationEvent(adj, ActivationCause.MAPPER_CHANGED);
 			}
 		}
 	}
@@ -628,12 +677,10 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			return;
 		}
 		DebuggerCoordinates toActivate = current.recorder(recorder);
-		if (autoActivatePresent.get()) {
-			activate(toActivate.snap(recorder.getSnap()));
+		if (isFollowsPresent(current.getTrace())) {
+			toActivate = toActivate.snap(recorder.getSnap());
 		}
-		else {
-			activate(toActivate);
-		}
+		activate(toActivate, ActivationCause.FOLLOW_PRESENT);
 	}
 
 	@Override
@@ -740,10 +787,11 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		return emulationService.backgroundEmulate(coordinates.getPlatform(), coordinates.getTime());
 	}
 
-	protected CompletableFuture<Void> prepareViewAndFireEvent(DebuggerCoordinates coordinates) {
+	protected CompletableFuture<Void> prepareViewAndFireEvent(DebuggerCoordinates coordinates,
+			ActivationCause cause) {
 		TraceVariableSnapProgramView varView = (TraceVariableSnapProgramView) coordinates.getView();
 		if (varView == null) { // Should only happen with NOWHERE
-			fireLocationEvent(coordinates);
+			fireLocationEvent(coordinates, cause);
 			return AsyncUtils.NIL;
 		}
 		return materialize(coordinates).thenAcceptAsync(snap -> {
@@ -751,12 +799,12 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 				return; // We navigated elsewhere before emulation completed
 			}
 			varView.setSnap(snap);
-			fireLocationEvent(coordinates);
+			fireLocationEvent(coordinates, cause);
 		}, SwingExecutorService.MAYBE_NOW);
 	}
 
-	protected void fireLocationEvent(DebuggerCoordinates coordinates) {
-		firePluginEvent(new TraceActivatedPluginEvent(getName(), coordinates));
+	protected void fireLocationEvent(DebuggerCoordinates coordinates, ActivationCause cause) {
+		firePluginEvent(new TraceActivatedPluginEvent(getName(), coordinates, cause));
 	}
 
 	@Override
@@ -980,7 +1028,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			//Msg.debug(this, "Remaining Consumers of " + trace + ": " + trace.getConsumerList());
 		}
 		if (current.getTrace() == trace) {
-			activate(DebuggerCoordinates.NOWHERE);
+			activate(DebuggerCoordinates.NOWHERE, ActivationCause.ACTIVATE_DEFAULT);
 		}
 		else {
 			contextChanged();
@@ -1004,7 +1052,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	@Override
 	protected void dispose() {
 		super.dispose();
-		activate(DebuggerCoordinates.NOWHERE);
+		activate(DebuggerCoordinates.NOWHERE, ActivationCause.ACTIVATE_DEFAULT);
 		synchronized (listenersByTrace) {
 			Iterator<Trace> it = listenersByTrace.keySet().iterator();
 			while (it.hasNext()) {
@@ -1027,12 +1075,12 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		return elem.toString();
 	}
 
-	protected void activateNoFocus(DebuggerCoordinates coordinates) {
+	protected void activateNoFocus(DebuggerCoordinates coordinates, ActivationCause cause) {
 		DebuggerCoordinates resolved = doSetCurrent(coordinates);
 		if (resolved == null) {
 			return;
 		}
-		prepareViewAndFireEvent(resolved);
+		prepareViewAndFireEvent(resolved, cause);
 	}
 
 	protected static boolean isSameFocus(DebuggerCoordinates prev, DebuggerCoordinates resolved) {
@@ -1082,7 +1130,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 
 	@Override
 	public CompletableFuture<Void> activateAndNotify(DebuggerCoordinates coordinates,
-			boolean syncTargetFocus) {
+			ActivationCause cause, boolean syncTargetFocus) {
 		DebuggerCoordinates prev;
 		DebuggerCoordinates resolved;
 
@@ -1098,7 +1146,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		if (resolved == null) {
 			return AsyncUtils.NIL;
 		}
-		CompletableFuture<Void> future = prepareViewAndFireEvent(resolved);
+		CompletableFuture<Void> future = prepareViewAndFireEvent(resolved, cause);
 		if (!syncTargetFocus) {
 			return future;
 		}
@@ -1118,12 +1166,8 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	}
 
 	@Override
-	public void activate(DebuggerCoordinates coordinates) {
-		activateAndNotify(coordinates, true); // Drop future on floor
-	}
-
-	public void activateNoFocusChange(DebuggerCoordinates coordinates) {
-		activateAndNotify(coordinates, false); // Drop future on floor
+	public void activate(DebuggerCoordinates coordinates, ActivationCause cause) {
+		activateAndNotify(coordinates, cause, true); // Drop future on floor
 	}
 
 	@Override
@@ -1167,38 +1211,6 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	@Override
 	public DebuggerCoordinates resolveObject(TraceObject object) {
 		return current.object(object);
-	}
-
-	@Override
-	public void setAutoActivatePresent(boolean enabled) {
-		autoActivatePresent.set(enabled, null);
-		TraceRecorder curRecorder = current.getRecorder();
-		if (enabled) {
-			// TODO: Re-sync focus. This wasn't working. Not sure it's appropriate anyway.
-			/*if (synchronizeFocus && curRef != null) {
-				if (doModelObjectFocused(curRef, false)) {
-					return;
-				}
-			}*/
-			if (curRecorder != null) {
-				activateNoFocus(current.snap(curRecorder.getSnap()));
-			}
-		}
-	}
-
-	@Override
-	public boolean isAutoActivatePresent() {
-		return autoActivatePresent.get();
-	}
-
-	@Override
-	public void addAutoActivatePresentChangeListener(BooleanChangeAdapter listener) {
-		autoActivatePresent.addChangeListener(listener);
-	}
-
-	@Override
-	public void removeAutoActivatePresentChangeListener(BooleanChangeAdapter listener) {
-		autoActivatePresent.removeChangeListener(listener);
 	}
 
 	@Override
@@ -1315,17 +1327,20 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 
 	@Override
 	public void readDataState(SaveState saveState) {
-		int traceCount = saveState.getInt(KEY_TRACE_COUNT, 0);
-		for (int index = 0; index < traceCount; index++) {
-			String stateName = PREFIX_OPEN_TRACE + index;
-			// Trace will be opened by readDataState, resolve causes update to focus and view
-			DebuggerCoordinates coords =
-				DebuggerCoordinates.readDataState(tool, saveState, stateName);
-			if (coords.getTrace() != null) {
-				lastCoordsByTrace.put(coords.getTrace(), coords);
+		synchronized (listenersByTrace) {
+			int traceCount = saveState.getInt(KEY_TRACE_COUNT, 0);
+			for (int index = 0; index < traceCount; index++) {
+				String stateName = PREFIX_OPEN_TRACE + index;
+				// Trace will be opened by readDataState, resolve causes update to focus and view
+				DebuggerCoordinates coords =
+					DebuggerCoordinates.readDataState(tool, saveState, stateName);
+				if (coords.getTrace() != null) {
+					lastCoordsByTrace.put(coords.getTrace(), coords);
+				}
 			}
 		}
 
-		activate(DebuggerCoordinates.readDataState(tool, saveState, KEY_CURRENT_COORDS));
+		activate(DebuggerCoordinates.readDataState(tool, saveState, KEY_CURRENT_COORDS),
+			ActivationCause.RESTORE_STATE);
 	}
 }

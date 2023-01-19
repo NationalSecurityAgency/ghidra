@@ -137,6 +137,18 @@ public class DebuggerBreakpointsPluginScreenShots extends GhidraScreenShotGenera
 				new DefaultTraceLocation(trace3, null, Lifespan.nowOn(0), addr(trace3, 0x7fac0000)),
 				new ProgramLocation(program, addr(program, 0x00400000)), 0x00010000, false);
 		}
+		waitForSwing();
+
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add breakpoint")) {
+			program.getBookmarkManager()
+					.setBookmark(addr(program, 0x00401234),
+						LogicalBreakpoint.BREAKPOINT_ENABLED_BOOKMARK_TYPE, "SW_EXECUTE;1",
+						"before connect");
+			program.getBookmarkManager()
+					.setBookmark(addr(program, 0x00604321),
+						LogicalBreakpoint.BREAKPOINT_ENABLED_BOOKMARK_TYPE, "WRITE;4",
+						"write version");
+		}
 
 		TargetBreakpointSpecContainer bc1 =
 			waitFor(() -> Unique.assertAtMostOne(recorder1.collectBreakpointContainers(null)),
@@ -155,17 +167,6 @@ public class DebuggerBreakpointsPluginScreenShots extends GhidraScreenShotGenera
 		TraceBreakpoint bpt = waitForValue(() -> Unique.assertAtMostOne(
 			trace3.getBreakpointManager()
 					.getBreakpointsAt(recorder3.getSnap(), addr(trace3, 0x7fac1234))));
-
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add breakpoint")) {
-			program.getBookmarkManager()
-					.setBookmark(addr(program, 0x00401234),
-						LogicalBreakpoint.BREAKPOINT_ENABLED_BOOKMARK_TYPE, "SW_EXECUTE;1",
-						"before connect");
-			program.getBookmarkManager()
-					.setBookmark(addr(program, 0x00604321),
-						LogicalBreakpoint.BREAKPOINT_ENABLED_BOOKMARK_TYPE, "WRITE;4",
-						"write version");
-		}
 
 		waitForPass(() -> {
 			Set<LogicalBreakpoint> allBreakpoints = breakpointService.getAllBreakpoints();

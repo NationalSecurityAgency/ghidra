@@ -17,6 +17,7 @@ package docking.widgets.table;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -37,13 +38,15 @@ public class RowWrappedEnumeratedColumnTableModel<C extends Enum<C> & Enumerated
 		extends DefaultEnumeratedColumnTableModel<C, R> {
 	private final Function<T, K> keyFunc;
 	private final Function<T, R> wrapper;
+	private final Function<R, T> getter;
 	private final Map<K, R> map = new HashMap<>();
 
 	public RowWrappedEnumeratedColumnTableModel(PluginTool tool, String name, Class<C> colType,
-			Function<T, K> keyFunc, Function<T, R> wrapper) {
+			Function<T, K> keyFunc, Function<T, R> wrapper, Function<R, T> getter) {
 		super(tool, name, colType);
 		this.keyFunc = keyFunc;
 		this.wrapper = wrapper;
+		this.getter = getter;
 	}
 
 	protected synchronized R addRowFor(T t) {
@@ -128,6 +131,11 @@ public class RowWrappedEnumeratedColumnTableModel<C extends Enum<C> & Enumerated
 		}
 		delete(r);
 		return r;
+	}
+
+	public synchronized void deleteItemsWith(Predicate<T> predicate) {
+		List<R> deleted = deleteWith(r -> predicate.test(getter.apply(r)));
+		map.values().removeAll(deleted);
 	}
 
 	public synchronized void deleteAllItems(Collection<T> c) {

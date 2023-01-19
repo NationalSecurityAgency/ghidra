@@ -30,9 +30,9 @@ public class DebouncedRowWrappedEnumeratedColumnTableModel<C extends Enum<C> & E
 	AsyncDebouncer<Void> debouncer = new AsyncDebouncer<Void>(AsyncTimer.DEFAULT_TIMER, 100);
 
 	public DebouncedRowWrappedEnumeratedColumnTableModel(PluginTool tool, String name,
-			Class<C> colType,
-			Function<T, K> keyFunc, Function<T, R> wrapper) {
-		super(tool, name, colType, keyFunc, wrapper);
+			Class<C> colType, Function<T, K> keyFunc, Function<T, R> wrapper,
+			Function<R, T> getter) {
+		super(tool, name, colType, keyFunc, wrapper, getter);
 
 		debouncer.addListener(this::settled);
 	}

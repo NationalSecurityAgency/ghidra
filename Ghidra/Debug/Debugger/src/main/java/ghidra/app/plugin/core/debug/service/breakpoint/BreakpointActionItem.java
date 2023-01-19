@@ -17,6 +17,36 @@ package ghidra.app.plugin.core.debug.service.breakpoint;
 
 import java.util.concurrent.CompletableFuture;
 
+import ghidra.async.AsyncUtils;
+import ghidra.program.model.address.*;
+
+/**
+ * An invocation is planning an action on a breakpoint
+ * 
+ * @see BreakpointActionSet
+ */
 public interface BreakpointActionItem {
+	/**
+	 * Compute a range from an address and length
+	 * 
+	 * @param address the min address
+	 * @param length the length
+	 * @return the range
+	 */
+	default AddressRange range(Address address, long length) {
+		try {
+			return new AddressRangeImpl(address, length);
+		}
+		catch (AddressOverflowException e) {
+			throw new AssertionError(e);
+		}
+	}
+
+	/**
+	 * Perform the action
+	 * 
+	 * @return the future for the action. Synchronous invocations can just return
+	 *         {@link AsyncUtils#NIL}.
+	 */
 	public CompletableFuture<Void> execute();
 }

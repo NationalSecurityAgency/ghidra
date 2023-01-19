@@ -15,37 +15,19 @@
  */
 package ghidra.app.plugin.core.debug.service.breakpoint;
 
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
-import ghidra.dbg.target.TargetTogglable;
+import ghidra.async.AsyncUtils;
+import ghidra.trace.model.breakpoint.TraceBreakpoint;
+import ghidra.util.database.UndoableTransaction;
 
-public class EnableBreakpointActionItem implements BreakpointActionItem {
-	private final TargetTogglable togglable;
-
-	public EnableBreakpointActionItem(TargetTogglable togglable) {
-		this.togglable = togglable;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (!(obj instanceof EnableBreakpointActionItem)) {
-			return false;
-		}
-		EnableBreakpointActionItem that = (EnableBreakpointActionItem) obj;
-		if (this.togglable != that.togglable) {
-			return false;
-		}
-		return true;
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(getClass(), togglable);
-	}
-
+public record EnableEmuBreakpointActionItem(TraceBreakpoint bpt) implements BreakpointActionItem {
 	@Override
 	public CompletableFuture<Void> execute() {
-		return togglable.enable();
+		try (UndoableTransaction tid =
+			UndoableTransaction.start(bpt.getTrace(), "Enable Emulated Breakpoint")) {
+			bpt.setEmuEnabled(true);
+		}
+		return AsyncUtils.NIL;
 	}
 }

@@ -28,12 +28,10 @@ import org.junit.experimental.categories.Category;
 import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.thread.DebuggerLegacyThreadsPanel.ThreadTableColumns;
-import ghidra.app.services.TraceRecorder;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.thread.TraceThreadManager;
-import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.TraceTimeManager;
 import ghidra.util.database.UndoableTransaction;
 
@@ -400,53 +398,4 @@ public class DebuggerThreadsProviderLegacyTest extends AbstractGhidraHeadedDebug
 		assertEquals(6, threadsProvider.legacyPanel.headerRenderer.getCursorPosition().longValue());
 	}
 
-	@Test
-	public void testActionSeekTracePresent() throws Exception {
-		assertTrue(threadsProvider.actionSeekTracePresent.isSelected());
-
-		createAndOpenTrace();
-		addThreads();
-		traceManager.activateTrace(tb.trace);
-		waitForSwing();
-
-		assertEquals(0, traceManager.getCurrentSnap());
-
-		try (UndoableTransaction tid = tb.startTransaction()) {
-			tb.trace.getTimeManager().createSnapshot("Next snapshot");
-		}
-		waitForDomainObject(tb.trace);
-
-		// Not live, so no seek
-		assertEquals(0, traceManager.getCurrentSnap());
-
-		tb.close();
-
-		createTestModel();
-		mb.createTestProcessesAndThreads();
-		// Threads needs registers to be recognized by the recorder
-		mb.createTestThreadRegisterBanks();
-
-		TraceRecorder recorder = modelService.recordTargetAndActivateTrace(mb.testProcess1,
-			createTargetTraceMapper(mb.testProcess1));
-		Trace trace = recorder.getTrace();
-
-		// Wait till two threads are observed in the database
-		waitForPass(() -> assertEquals(2, trace.getThreadManager().getAllThreads().size()));
-		waitForSwing();
-
-		TraceSnapshot snapshot = recorder.forceSnapshot();
-		waitForDomainObject(trace);
-
-		assertEquals(snapshot.getKey(), traceManager.getCurrentSnap());
-
-		performAction(threadsProvider.actionSeekTracePresent);
-		waitForSwing();
-
-		assertFalse(threadsProvider.actionSeekTracePresent.isSelected());
-
-		recorder.forceSnapshot();
-		waitForSwing();
-
-		assertEquals(snapshot.getKey(), traceManager.getCurrentSnap());
-	}
 }

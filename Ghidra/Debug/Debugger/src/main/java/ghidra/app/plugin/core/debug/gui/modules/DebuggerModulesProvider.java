@@ -513,10 +513,6 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	protected static boolean isLegacy(Trace trace) {
-		return trace != null && trace.getObjectManager().getRootSchema() == null;
-	}
-
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
 		if (myActionContext == null) {
@@ -1026,7 +1022,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 
 		current = coordinates;
 
-		if (isLegacy(coordinates.getTrace())) {
+		if (Trace.isLegacy(coordinates.getTrace())) {
 			modulesPanel.coordinatesActivated(DebuggerCoordinates.NOWHERE);
 			sectionsPanel.coordinatesActivated(DebuggerCoordinates.NOWHERE);
 			legacyModulesPanel.coordinatesActivated(coordinates);
@@ -1057,7 +1053,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 	}
 
 	public void setSelectedModules(Set<TraceModule> sel) {
-		if (isLegacy(current.getTrace())) {
+		if (Trace.isLegacy(current.getTrace())) {
 			legacyModulesPanel.setSelectedModules(sel);
 		}
 		else {
@@ -1066,7 +1062,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 	}
 
 	public void setSelectedSections(Set<TraceSection> sel) {
-		if (isLegacy(current.getTrace())) {
+		if (Trace.isLegacy(current.getTrace())) {
 			legacySectionsPanel.setSelectedSections(sel);
 		}
 		else {

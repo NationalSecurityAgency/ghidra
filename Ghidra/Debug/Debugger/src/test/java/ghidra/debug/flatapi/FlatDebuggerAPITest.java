@@ -44,7 +44,6 @@ import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOf
 import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOffer.LaunchResult;
 import ghidra.app.script.GhidraState;
 import ghidra.app.services.*;
-import ghidra.app.services.DebuggerStateEditingService.StateEditingMode;
 import ghidra.app.services.LogicalBreakpoint.State;
 import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.DebuggerObjectModel;
@@ -690,7 +689,7 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 	@Test
 	public void testWriteMemoryGivenContext() throws Throwable {
 		createTraceWithBinText();
-		editingService.setCurrentMode(tb.trace, StateEditingMode.WRITE_TRACE);
+		editingService.setCurrentMode(tb.trace, StateEditingMode.RW_TRACE);
 
 		assertTrue(flat.writeMemory(tb.trace, 0, tb.addr(0x00400123), tb.arr(3, 2, 1)));
 		ByteBuffer buf = ByteBuffer.allocate(3);
@@ -701,7 +700,7 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 	@Test
 	public void testWriteMemoryCurrentContext() throws Throwable {
 		createTraceWithBinText();
-		editingService.setCurrentMode(tb.trace, StateEditingMode.WRITE_TRACE);
+		editingService.setCurrentMode(tb.trace, StateEditingMode.RW_TRACE);
 
 		assertTrue(flat.writeMemory(tb.addr(0x00400123), tb.arr(3, 2, 1)));
 		ByteBuffer buf = ByteBuffer.allocate(3);
@@ -712,7 +711,7 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 	@Test
 	public void testWriteRegisterGivenContext() throws Throwable {
 		TraceThread thread = createTraceWithThreadAndStack(true);
-		editingService.setCurrentMode(tb.trace, StateEditingMode.WRITE_TRACE);
+		editingService.setCurrentMode(tb.trace, StateEditingMode.RW_TRACE);
 		traceManager.activateThread(thread);
 		waitForSwing();
 
@@ -728,7 +727,7 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 	@Test
 	public void testWriteRegisterCurrentContext() throws Throwable {
 		TraceThread thread = createTraceWithThreadAndStack(true);
-		editingService.setCurrentMode(tb.trace, StateEditingMode.WRITE_TRACE);
+		editingService.setCurrentMode(tb.trace, StateEditingMode.RW_TRACE);
 		traceManager.activateThread(thread);
 		waitForSwing();
 

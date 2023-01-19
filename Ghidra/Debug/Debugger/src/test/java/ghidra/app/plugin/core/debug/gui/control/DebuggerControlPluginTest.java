@@ -48,7 +48,6 @@ import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationServicePl
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerEmulationService.CachedEmulator;
 import ghidra.app.services.DebuggerEmulationService.EmulationResult;
-import ghidra.app.services.DebuggerStateEditingService.StateEditingMode;
 import ghidra.dbg.model.*;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.TargetSteppable.TargetStepKind;
@@ -73,8 +72,8 @@ import ghidra.util.database.UndoableTransaction;
  * 
  * <p>
  * In these and other machine-state-editing integration tests, we use
- * {@link StateEditingMode#WRITE_EMULATOR} as a stand-in for any mode. We also use
- * {@link StateEditingMode#READ_ONLY} just to verify the mode is heeded. Other modes may be tested
+ * {@link StateEditingMode#RW_EMULATOR} as a stand-in for any mode. We also use
+ * {@link StateEditingMode#RO_TARGET} just to verify the mode is heeded. Other modes may be tested
  * if bugs crop up in various combinations.
  */
 public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITest {
@@ -294,7 +293,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITe
 	@Test
 	public void testEmulateResumeAction() throws Throwable {
 		TraceThread thread = createToyLoopTrace();
-		editingService.setCurrentMode(tb.trace, StateEditingMode.WRITE_EMULATOR);
+		editingService.setCurrentMode(tb.trace, StateEditingMode.RW_EMULATOR);
 
 		traceManager.activateThread(thread);
 		waitForSwing();
@@ -311,7 +310,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITe
 	@Test
 	public void testEmulateInterruptAction() throws Throwable {
 		TraceThread thread = createToyLoopTrace();
-		editingService.setCurrentMode(tb.trace, StateEditingMode.WRITE_EMULATOR);
+		editingService.setCurrentMode(tb.trace, StateEditingMode.RW_EMULATOR);
 
 		traceManager.activateThread(thread);
 		waitForSwing();
@@ -333,7 +332,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITe
 	@Test
 	public void testEmulateStepBackAction() throws Throwable {
 		TraceThread thread = createToyLoopTrace();
-		editingService.setCurrentMode(tb.trace, StateEditingMode.WRITE_EMULATOR);
+		editingService.setCurrentMode(tb.trace, StateEditingMode.RW_EMULATOR);
 
 		traceManager.activateThread(thread);
 		waitForSwing();
@@ -352,7 +351,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITe
 	@Test
 	public void testEmulateStepIntoAction() throws Throwable {
 		TraceThread thread = createToyLoopTrace();
-		editingService.setCurrentMode(tb.trace, StateEditingMode.WRITE_EMULATOR);
+		editingService.setCurrentMode(tb.trace, StateEditingMode.RW_EMULATOR);
 
 		traceManager.activateThread(thread);
 		waitForSwing();
@@ -365,7 +364,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITe
 	@Test
 	public void testEmulateSkipOverAction() throws Throwable {
 		TraceThread thread = createToyLoopTrace();
-		editingService.setCurrentMode(tb.trace, StateEditingMode.WRITE_EMULATOR);
+		editingService.setCurrentMode(tb.trace, StateEditingMode.RW_EMULATOR);
 
 		traceManager.activateThread(thread);
 		waitForSwing();
@@ -386,7 +385,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITe
 	@Test
 	public void testTraceSnapBackwardAction() throws Throwable {
 		create2SnapTrace();
-		editingService.setCurrentMode(tb.trace, StateEditingMode.WRITE_TRACE);
+		editingService.setCurrentMode(tb.trace, StateEditingMode.RW_TRACE);
 
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
@@ -403,7 +402,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITe
 	@Test
 	public void testTraceSnapForwardAction() throws Throwable {
 		create2SnapTrace();
-		editingService.setCurrentMode(tb.trace, StateEditingMode.WRITE_TRACE);
+		editingService.setCurrentMode(tb.trace, StateEditingMode.RW_TRACE);
 
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
@@ -444,14 +443,14 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITe
 		assertTrue(controlPlugin.actionEditMode.isEnabled());
 
 		runSwing(() -> controlPlugin.actionEditMode
-				.setCurrentActionStateByUserData(StateEditingMode.READ_ONLY));
-		assertEquals(StateEditingMode.READ_ONLY, editingService.getCurrentMode(tb.trace));
+				.setCurrentActionStateByUserData(StateEditingMode.RO_TARGET));
+		assertEquals(StateEditingMode.RO_TARGET, editingService.getCurrentMode(tb.trace));
 		assertFalse(
 			helper.patchInstructionAction.isAddToPopup(listingProvider.getActionContext(null)));
 
 		runSwing(() -> controlPlugin.actionEditMode
-				.setCurrentActionStateByUserData(StateEditingMode.WRITE_EMULATOR));
-		assertEquals(StateEditingMode.WRITE_EMULATOR, editingService.getCurrentMode(tb.trace));
+				.setCurrentActionStateByUserData(StateEditingMode.RW_EMULATOR));
+		assertEquals(StateEditingMode.RW_EMULATOR, editingService.getCurrentMode(tb.trace));
 
 		assertTrue(
 			helper.patchInstructionAction.isAddToPopup(listingProvider.getActionContext(null)));
@@ -494,13 +493,13 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITe
 		assertTrue(controlPlugin.actionEditMode.isEnabled());
 
 		runSwing(() -> controlPlugin.actionEditMode
-				.setCurrentActionStateByUserData(StateEditingMode.READ_ONLY));
-		assertEquals(StateEditingMode.READ_ONLY, editingService.getCurrentMode(tb.trace));
+				.setCurrentActionStateByUserData(StateEditingMode.RO_TARGET));
+		assertEquals(StateEditingMode.RO_TARGET, editingService.getCurrentMode(tb.trace));
 		assertFalse(helper.patchDataAction.isAddToPopup(listingProvider.getActionContext(null)));
 
 		runSwing(() -> controlPlugin.actionEditMode
-				.setCurrentActionStateByUserData(StateEditingMode.WRITE_EMULATOR));
-		assertEquals(StateEditingMode.WRITE_EMULATOR, editingService.getCurrentMode(tb.trace));
+				.setCurrentActionStateByUserData(StateEditingMode.RW_EMULATOR));
+		assertEquals(StateEditingMode.RW_EMULATOR, editingService.getCurrentMode(tb.trace));
 
 		goTo(listingProvider.getListingPanel(), new ProgramLocation(view, tb.addr(0x00400123)));
 		assertTrue(helper.patchDataAction.isAddToPopup(listingProvider.getActionContext(null)));
@@ -545,15 +544,15 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITe
 		assertTrue(controlPlugin.actionEditMode.isEnabled());
 
 		runSwing(() -> controlPlugin.actionEditMode
-				.setCurrentActionStateByUserData(StateEditingMode.READ_ONLY));
-		assertEquals(StateEditingMode.READ_ONLY, editingService.getCurrentMode(tb.trace));
+				.setCurrentActionStateByUserData(StateEditingMode.RO_TARGET));
+		assertEquals(StateEditingMode.RO_TARGET, editingService.getCurrentMode(tb.trace));
 		ctx = listingProvider.getActionContext(null);
 		assertTrue(pasteAction.isAddToPopup(ctx));
 		assertFalse(pasteAction.isEnabledForContext(ctx));
 
 		runSwing(() -> controlPlugin.actionEditMode
-				.setCurrentActionStateByUserData(StateEditingMode.WRITE_EMULATOR));
-		assertEquals(StateEditingMode.WRITE_EMULATOR, editingService.getCurrentMode(tb.trace));
+				.setCurrentActionStateByUserData(StateEditingMode.RW_EMULATOR));
+		assertEquals(StateEditingMode.RW_EMULATOR, editingService.getCurrentMode(tb.trace));
 
 		goTo(listingPlugin.getListingPanel(), new ProgramLocation(view, tb.addr(0x00400123)));
 		ctx = listingProvider.getActionContext(null);

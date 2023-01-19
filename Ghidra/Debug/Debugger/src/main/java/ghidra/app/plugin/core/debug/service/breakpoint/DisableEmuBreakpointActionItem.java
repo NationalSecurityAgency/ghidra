@@ -15,37 +15,20 @@
  */
 package ghidra.app.plugin.core.debug.service.breakpoint;
 
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
-import ghidra.dbg.target.TargetDeletable;
+import ghidra.async.AsyncUtils;
+import ghidra.trace.model.breakpoint.TraceBreakpoint;
+import ghidra.util.database.UndoableTransaction;
 
-public class DeleteBreakpointActionItem implements BreakpointActionItem {
-	private final TargetDeletable deletable;
-
-	public DeleteBreakpointActionItem(TargetDeletable deletable) {
-		this.deletable = deletable;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (!(obj instanceof DeleteBreakpointActionItem)) {
-			return false;
-		}
-		DeleteBreakpointActionItem that = (DeleteBreakpointActionItem) obj;
-		if (this.deletable != that.deletable) {
-			return false;
-		}
-		return true;
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(getClass(), deletable);
-	}
-
+public record DisableEmuBreakpointActionItem(TraceBreakpoint bpt)
+		implements BreakpointActionItem {
 	@Override
 	public CompletableFuture<Void> execute() {
-		return deletable.delete();
+		try (UndoableTransaction tid =
+			UndoableTransaction.start(bpt.getTrace(), "Disable Emulated Breakpoint")) {
+			bpt.setEmuEnabled(false);
+		}
+		return AsyncUtils.NIL;
 	}
 }

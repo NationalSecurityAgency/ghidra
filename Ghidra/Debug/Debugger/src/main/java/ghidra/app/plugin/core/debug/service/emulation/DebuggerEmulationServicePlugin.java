@@ -41,7 +41,8 @@ import ghidra.async.AsyncLazyMap;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.pcode.emu.PcodeMachine.AccessKind;
+import ghidra.pcode.emu.PcodeMachine.*;
+import ghidra.pcode.exec.InjectionErrorPcodeExecutionException;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
@@ -191,7 +192,12 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 
 		@Override
 		protected EmulationResult compute(TaskMonitor monitor) throws CancelledException {
-			return doRun(from, monitor, scheduler);
+			EmulationResult result = doRun(from, monitor, scheduler);
+			if (result.error() instanceof InjectionErrorPcodeExecutionException) {
+				Msg.showError(this, null, "Breakpoint Emulation Error",
+					"Compilation error in user-provided breakpoint Sleigh code.");
+			}
+			return result;
 		}
 	}
 
@@ -260,6 +266,8 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 	private DebuggerPlatformService platformService;
 	@AutoServiceConsumed
 	private DebuggerStaticMappingService staticMappings;
+	@AutoServiceConsumed
+	private DebuggerStateEditingService editingService;
 	@SuppressWarnings("unused")
 	private AutoService.Wiring autoServiceWiring;
 
@@ -359,6 +367,9 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 			trace = ProgramEmulationUtils.launchEmulationTrace(program, ctx.getAddress(), this);
 			traceManager.openTrace(trace);
 			traceManager.activateTrace(trace);
+			if (editingService != null) {
+				editingService.setCurrentMode(trace, StateEditingMode.RW_EMULATOR);
+			}
 		}
 		catch (IOException e) {
 			Msg.showError(this, null, actionEmulateProgram.getDescription(),
@@ -544,7 +555,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 		for (AddressSpace as : trace.getBaseAddressFactory().getAddressSpaces()) {
 			for (TraceBreakpoint bpt : bm.getBreakpointsIntersecting(span,
 				new AddressRangeImpl(as.getMinAddress(), as.getMaxAddress()))) {
-				if (!bpt.isEnabled(snap)) {
+				if (!bpt.isEmuEnabled(snap)) {
 					continue;
 				}
 				Set<TraceBreakpointKind> kinds = bpt.getKinds();
@@ -554,7 +565,14 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 				boolean isRead = kinds.contains(TraceBreakpointKind.READ);
 				boolean isWrite = kinds.contains(TraceBreakpointKind.WRITE);
 				if (isExecute) {
-					emu.addBreakpoint(bpt.getMinAddress(), "1:1");
+					try {
+						emu.inject(bpt.getMinAddress(), bpt.getEmuSleigh());
+					}
+					catch (Exception e) { // This is a bit broad...
+						Msg.error(this,
+							"Error compiling breakpoint Sleigh at " + bpt.getMinAddress(), e);
+						emu.inject(bpt.getMinAddress(), "emu_injection_err();");
+					}
 				}
 				if (isRead && isWrite) {
 					emu.addAccessBreakpoint(bpt.getRange(), AccessKind.RW);
@@ -592,6 +610,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 				emu.clearAllInjects();
 				emu.clearAccessBreakpoints();
 				emu.setSuspended(false);
+				installBreakpoints(key.trace, key.time.getSnap(), be.ce.emulator());
 
 				monitor.initialize(time.totalTickCount() - prevKey.time.totalTickCount());
 				createRegisterSpaces(trace, time, monitor);
@@ -603,6 +622,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 		DebuggerPcodeMachine<?> emu = emulatorFactory.create(tool, platform, time.getSnap(),
 			modelService == null ? null : modelService.getRecorder(trace));
 		try (BusyEmu be = new BusyEmu(new CachedEmulator(key.trace, emu))) {
+			installBreakpoints(key.trace, key.time.getSnap(), be.ce.emulator());
 			monitor.initialize(time.totalTickCount());
 			createRegisterSpaces(trace, time, monitor);
 			monitor.setMessage("Emulating");
@@ -627,7 +647,15 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 	protected TraceSnapshot writeToScratch(CacheKey key, CachedEmulator ce) {
 		try (UndoableTransaction tid = UndoableTransaction.start(key.trace, "Emulate")) {
 			TraceSnapshot destSnap = findScratch(key.trace, key.time);
-			ce.emulator().writeDown(key.platform, destSnap.getKey(), key.time.getSnap());
+			try {
+				ce.emulator().writeDown(key.platform, destSnap.getKey(), key.time.getSnap());
+			}
+			catch (Throwable e) {
+				Msg.showError(this, null, "Emulate",
+					"There was an issue writing the emulation result to trace trace. " +
+						"The displayed state may be inaccurate and/or incomplete.",
+					e);
+			}
 			return destSnap;
 		}
 	}
@@ -643,10 +671,11 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 	protected EmulationResult doRun(CacheKey key, TaskMonitor monitor, Scheduler scheduler)
 			throws CancelledException {
 		try (BusyEmu be = doEmulateFromCached(key, monitor)) {
-			installBreakpoints(key.trace, key.time.getSnap(), be.ce.emulator());
 			TraceThread eventThread = key.time.getEventThread(key.trace);
+			be.ce.emulator().setSoftwareInterruptMode(SwiMode.IGNORE_STEP);
 			RunResult result = scheduler.run(key.trace, eventThread, be.ce.emulator(), monitor);
 			key = new CacheKey(key.platform, key.time.advanced(result.schedule()));
+			Msg.info(this, "Stopped emulation at " + key.time);
 			TraceSnapshot destSnap = writeToScratch(key, be.ce);
 			cacheEmulator(key, be.ce);
 			return new RecordEmulationResult(key.time, destSnap.getKey(), result.error());

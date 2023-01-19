@@ -132,14 +132,16 @@ public interface Scheduler {
 		}
 		catch (PcodeExecutionException e) {
 			completedSteps = completedSteps.steppedForward(eventThread, completedTicks);
-			if (emuThread.getInstruction() == null) {
+			PcodeFrame frame = emuThread.getFrame();
+			if (frame == null) {
 				return new RecordRunResult(completedSteps, e);
 			}
-			PcodeFrame frame = e.getFrame();
 			// Rewind one so stepping retries the op causing the error
-			int count = frame.count() - 1;
-			if (frame == null || count == 0) {
-				// If we've decoded, but could execute the first op, just drop the p-code steps
+			frame.stepBack();
+			int count = frame.count();
+			if (count == 0) {
+				// If we've decoded, but could not execute the first op, just drop the p-code steps
+				emuThread.dropInstruction();
 				return new RecordRunResult(completedSteps, e);
 			}
 			// The +1 accounts for the decode step

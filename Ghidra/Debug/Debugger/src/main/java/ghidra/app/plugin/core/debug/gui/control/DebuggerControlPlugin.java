@@ -42,8 +42,8 @@ import ghidra.app.plugin.core.debug.service.emulation.DebuggerPcodeMachine;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerEmulationService.CachedEmulator;
 import ghidra.app.services.DebuggerEmulationService.EmulatorStateListener;
-import ghidra.app.services.DebuggerStateEditingService.StateEditingMode;
 import ghidra.app.services.DebuggerStateEditingService.StateEditingModeChangeListener;
+import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.target.*;
@@ -210,11 +210,11 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 		String GROUP = DebuggerResources.GROUP_CONTROL;
 	}
 
-	interface EditModeAction {
-		String NAME = "Edit Mode";
-		String DESCRIPTION = "Choose what to edit in dynamic views";
+	interface ControlModeAction {
+		String NAME = "Control Mode";
+		String DESCRIPTION = "Choose what to control and edit in dynamic views";
 		String GROUP = DebuggerResources.GROUP_CONTROL;
-		String HELP_ANCHOR = "edit_mode";
+		String HELP_ANCHOR = "control_mode";
 
 		static MultiStateActionBuilder<StateEditingMode> builder(Plugin owner) {
 			String ownerName = owner.getName();
@@ -606,12 +606,13 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 
 	protected Set<DockingAction> getActionSet(StateEditingMode mode) {
 		switch (mode) {
-			case READ_ONLY:
-			case WRITE_TARGET:
+			case RO_TARGET:
+			case RW_TARGET:
 				return actionsTarget;
-			case WRITE_TRACE:
+			case RO_TRACE:
+			case RW_TRACE:
 				return actionsTrace;
-			case WRITE_EMULATOR:
+			case RW_EMULATOR:
 				return actionsEmulate;
 			default:
 				throw new AssertionError();
@@ -639,7 +640,7 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 	}
 
 	protected void createActions() {
-		actionEditMode = EditModeAction.builder(this)
+		actionEditMode = ControlModeAction.builder(this)
 				.enabled(false)
 				.enabledWhen(c -> current.getTrace() != null)
 				.onActionStateChanged(this::activateEditMode)
@@ -867,7 +868,7 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 		DebuggerCoordinates current = this.current;
 		emulationService.backgroundRun(current.getPlatform(), current.getTime(),
 			Scheduler.oneThread(current.getThread())).thenAcceptAsync(r -> {
-				traceManager.activate(current.time(r.schedule()));
+				traceManager.activate(current.time(r.schedule()), ActivationCause.USER);
 			}, AsyncUtils.SWING_EXECUTOR).exceptionally(ex -> {
 				Msg.showError(this, null, "Emulate", "Error emulating", ex);
 				return null;
@@ -974,10 +975,10 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 		// TODO: We're sort of piggy-backing our mode onto that of the editing service.
 		// Seems we should have our own?
 		if (editingService == null) {
-			return StateEditingMode.READ_ONLY;
+			return StateEditingMode.DEFAULT;
 		}
 		if (current.getTrace() == null) {
-			return StateEditingMode.READ_ONLY;
+			return StateEditingMode.DEFAULT;
 		}
 		return editingService.getCurrentMode(current.getTrace());
 	}

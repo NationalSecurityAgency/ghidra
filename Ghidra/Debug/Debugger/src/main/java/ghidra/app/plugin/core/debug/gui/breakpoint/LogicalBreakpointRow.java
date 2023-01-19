@@ -22,6 +22,7 @@ import ghidra.app.services.LogicalBreakpoint.Mode;
 import ghidra.app.services.LogicalBreakpoint.State;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainObject;
+import ghidra.pcode.exec.SleighUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
@@ -137,6 +138,11 @@ public class LogicalBreakpointRow {
 			return lb.getTraceBreakpoints(provider.currentTrace).size();
 		}
 		return lb.getTraceBreakpoints().size();
+	}
+
+	public boolean hasSleigh() {
+		String sleigh = lb.getEmuSleigh();
+		return sleigh != null && !SleighUtils.UNCONDITIONAL_BREAK.equals(sleigh);
 	}
 
 	/**
