@@ -76,7 +76,7 @@ public class SleighLanguageProvider implements LanguageProvider {
 	 */
 	private SleighLanguageProvider() {
 		try {
-			instance.createLanguages();
+			createLanguages();
 		}
 		catch (Exception e) {
 			Msg.error(SleighLanguageProvider.class,
