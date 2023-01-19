@@ -426,7 +426,7 @@ public class CParser {
 
                     hasNoComponents = (dtComp.getNumDefinedComponents() == 0 ? true : false);
 
-                    hasSameSourceArchive = dt.getSourceArchive().equals(dtMgr.getLocalSourceArchive());
+                    hasSameSourceArchive = Objects.equals(dt.getSourceArchive(), dtMgr.getLocalSourceArchive());
             }
 
             // make sure comp is a Composite, if existing dt is empty, in same category and archive
