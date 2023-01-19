@@ -36,11 +36,12 @@ class DomainFilesPanel extends JPanel {
 
 	private List<DomainFile> fileList;
 	private GCheckBox[] checkboxes;
-	private ListPanel listPanel;
+	private ListPanel<JCheckBox> listPanel;
 
 	/**
 	 * Constructor
 	 * @param fileList list of DomainFile objects
+	 * @param listTitle the title
 	 */
 	DomainFilesPanel(List<DomainFile> fileList, String listTitle) {
 		super();
@@ -59,7 +60,7 @@ class DomainFilesPanel extends JPanel {
 		//
 		// List Panel
 		//
-		listPanel = new ListPanel();
+		listPanel = new ListPanel<>();
 		listPanel.setCellRenderer(new DataCellRenderer());
 		listPanel.setMouseListener(new ListMouseListener());
 		if (listTitle != null) {
@@ -121,7 +122,7 @@ class DomainFilesPanel extends JPanel {
 				return;
 			}
 
-			JList list = (JList) e.getSource();
+			JList<?> list = (JList<?>) e.getSource();
 			int index = list.locationToIndex(e.getPoint());
 			if (index < 0) {
 				return;

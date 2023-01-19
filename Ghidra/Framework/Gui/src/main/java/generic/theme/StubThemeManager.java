@@ -19,6 +19,7 @@ import static ghidra.util.WebColors.*;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.util.List;
 import java.util.Set;
 
 import javax.swing.plaf.ComponentUI;
@@ -58,11 +59,6 @@ public class StubThemeManager extends ThemeManager {
 		addPalette("white", WHITE);
 		addPalette("yellow", YELLOW);
 
-	}
-
-	@Override
-	public void reloadApplicationDefaults() {
-		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -121,7 +117,7 @@ public class StubThemeManager extends ThemeManager {
 	}
 
 	@Override
-	public Set<GTheme> getSupportedThemes() {
+	public List<GTheme> getSupportedThemes() {
 		throw new UnsupportedOperationException();
 	}
 

@@ -42,7 +42,7 @@ public class SaveDialog extends DialogComponentProvider implements ListSelection
 	private GhidraScriptProvider provider;
 
 	private List<ResourceFile> paths;
-	private ListPanel listPanel;
+	private ListPanel<ResourceFile> listPanel;
 	private JTextField nameField;
 	private boolean cancelled;
 
@@ -113,7 +113,7 @@ public class SaveDialog extends DialogComponentProvider implements ListSelection
 			listModel.addElement(dir);
 		}
 
-		listPanel = new ListPanel();
+		listPanel = new ListPanel<>();
 		listPanel.setName("PATH_LIST");
 		listPanel.setListModel(listModel);
 		listPanel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);

@@ -199,6 +199,7 @@ public class ThemeColorTableModel extends GDynamicColumnTableModel<ColorValue, O
 		@Override
 		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 			JLabel label = (JLabel) super.getTableCellRendererComponent(data);
+			setFont(Gui.getFont("font.monospaced"));
 			ResolvedColor resolved = (ResolvedColor) data.getValue();
 
 			String text = getValueText(resolved);
