@@ -551,10 +551,17 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		return coordinates.platform(platform);
 	}
 
-	protected DebuggerCoordinates doSetCurrent(DebuggerCoordinates newCurrent) {
+	protected DebuggerCoordinates doSetCurrent(DebuggerCoordinates newCurrent,
+			ActivationCause cause) {
 		newCurrent = newCurrent == null ? DebuggerCoordinates.NOWHERE : newCurrent;
 		newCurrent = fillInRecorder(newCurrent.getTrace(), newCurrent);
 		newCurrent = fillInPlatform(newCurrent);
+		if (cause == ActivationCause.START_RECORDING || cause == ActivationCause.FOLLOW_PRESENT) {
+			TraceRecorder recorder = newCurrent.getRecorder();
+			if (recorder != null) {
+				newCurrent = newCurrent.snap(recorder.getSnap());
+			}
+		}
 		synchronized (listenersByTrace) {
 			if (current.equals(newCurrent)) {
 				return null;
@@ -687,7 +694,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	public void processEvent(PluginEvent event) {
 		super.processEvent(event);
 		if (event instanceof TraceActivatedPluginEvent ev) {
-			doSetCurrent(ev.getActiveCoordinates());
+			doSetCurrent(ev.getActiveCoordinates(), ev.getCause());
 		}
 		else if (event instanceof TraceClosedPluginEvent ev) {
 			doTraceClosed(ev.getTrace());
@@ -800,7 +807,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			}
 			varView.setSnap(snap);
 			fireLocationEvent(coordinates, cause);
-		}, SwingExecutorService.MAYBE_NOW);
+		}, SwingExecutorService.LATER); // Not MAYBE_NOW lest snap events get out of order
 	}
 
 	protected void fireLocationEvent(DebuggerCoordinates coordinates, ActivationCause cause) {
@@ -1076,7 +1083,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	}
 
 	protected void activateNoFocus(DebuggerCoordinates coordinates, ActivationCause cause) {
-		DebuggerCoordinates resolved = doSetCurrent(coordinates);
+		DebuggerCoordinates resolved = doSetCurrent(coordinates, cause);
 		if (resolved == null) {
 			return;
 		}
@@ -1142,7 +1149,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			}
 		}
 		prev = current;
-		resolved = doSetCurrent(coordinates);
+		resolved = doSetCurrent(coordinates, cause);
 		if (resolved == null) {
 			return AsyncUtils.NIL;
 		}
