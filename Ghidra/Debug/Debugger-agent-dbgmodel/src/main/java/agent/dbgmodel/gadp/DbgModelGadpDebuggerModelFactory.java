@@ -15,16 +15,17 @@
  */
 package agent.dbgmodel.gadp;
 
-import agent.dbgeng.gadp.DbgEngLocalDebuggerModelFactory;
+import agent.dbgeng.gadp.DbgEngGadpDebuggerModelFactory;
 import ghidra.dbg.util.ConfigurableFactory.FactoryDescription;
-import ghidra.util.classfinder.ExtensionPointProperties;
+import ghidra.program.model.listing.Program;
 
-@FactoryDescription( //
-		brief = "MS dbgmodel.dll (WinDbg 2) local agent via GADP/TCP", //
-		htmlDetails = "Launch a new agent using the Microsoft Debug Model (best for WinDbg 2)." //
-)
-@ExtensionPointProperties(priority = 90)
-public class DbgModelLocalDebuggerModelFactory extends DbgEngLocalDebuggerModelFactory {
+@FactoryDescription(
+	brief = "MS dbgmodel.dll (WinDbg Preview) via GADP/TCP",
+	htmlDetails = """
+			Connect to the Microsoft Debug Model.
+			This is the same engine that powers WinDbg 2.
+			This will protect Ghidra's JVM by using a subprocess to access the native API.""")
+public class DbgModelGadpDebuggerModelFactory extends DbgEngGadpDebuggerModelFactory {
 
 	@Override
 	protected String getThreadName() {
@@ -34,5 +35,20 @@ public class DbgModelLocalDebuggerModelFactory extends DbgEngLocalDebuggerModelF
 	@Override
 	protected Class<?> getServerClass() {
 		return DbgModelGadpServer.class;
+	}
+
+	@Override
+	public int getPriority(Program program) {
+		// TODO: Might instead look for the DLL
+		if (!System.getProperty("os.name").toLowerCase().contains("windows")) {
+			return -1;
+		}
+		if (program != null) {
+			String exe = program.getExecutablePath();
+			if (exe == null || exe.isBlank()) {
+				return -1;
+			}
+		}
+		return 50;
 	}
 }

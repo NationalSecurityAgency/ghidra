@@ -13,29 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package agent.lldb;
+package agent.lldb.gadp;
 
-import java.util.concurrent.CompletableFuture;
+import java.util.List;
 
-import agent.lldb.model.impl.LldbModelImpl;
-import ghidra.dbg.DebuggerModelFactory;
-import ghidra.dbg.DebuggerObjectModel;
+import ghidra.dbg.gadp.server.AbstractGadpLocalDebuggerModelFactory;
 import ghidra.dbg.util.ConfigurableFactory.FactoryDescription;
 import ghidra.program.model.listing.Program;
 
 @FactoryDescription(
-	brief = "lldb",
+	brief = "lldb via GADP",
 	htmlDetails = """
 			Connect to lldb.
 			This is best for most macOS and iOS targets, but supports many others.
-			This will access the native API, which may put Ghidra's JVM at risk.""")
-public class LldbInJvmDebuggerModelFactory implements DebuggerModelFactory {
-
-	@Override
-	public CompletableFuture<? extends DebuggerObjectModel> build() {
-		LldbModelImpl model = new LldbModelImpl();
-		return model.startLLDB(new String[] {}).thenApply(__ -> model);
-	}
+			This will protect Ghidra's JVM by using a subprocess to access the native API.""")
+public class LldbGadpDebuggerModelFactory extends AbstractGadpLocalDebuggerModelFactory {
 
 	@Override
 	public int getPriority(Program program) {
@@ -50,7 +42,22 @@ public class LldbInJvmDebuggerModelFactory implements DebuggerModelFactory {
 				return -1;
 			}
 		}
-		return 40;
+		return 35;
 	}
 
+	@Override
+	protected String getThreadName() {
+		return "Local LLDB Agent stdout";
+	}
+
+	protected Class<?> getServerClass() {
+		return LldbGadpServer.class;
+	}
+
+	@Override
+	protected void completeCommandLine(List<String> cmd) {
+		cmd.add(getServerClass().getCanonicalName());
+		cmd.addAll(List.of("-H", host));
+		cmd.addAll(List.of("-p", Integer.toString(port)));
+	}
 }

@@ -95,7 +95,7 @@ public class FridaDebuggerProgramLaunchOpinion implements DebuggerProgramLaunchO
 		}
 		List<DebuggerProgramLaunchOffer> offers = new ArrayList<>();
 		for (DebuggerModelFactory factory : service.getModelFactories()) {
-			if (!factory.isCompatible()) {
+			if (!factory.isCompatible(program)) {
 				continue;
 			}
 			String clsName = factory.getClass().getName();

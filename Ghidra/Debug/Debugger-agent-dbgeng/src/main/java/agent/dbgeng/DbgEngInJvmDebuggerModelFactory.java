@@ -23,15 +23,16 @@ import agent.dbgeng.model.impl.DbgModelImpl;
 import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.util.ConfigurableFactory.FactoryDescription;
+import ghidra.program.model.listing.Program;
 
-/**
- * Note this is in the testing source because it's not meant to be shipped in the release.... That
- * may change if it proves stable, though, no?
- */
-@FactoryDescription( //
-	brief = "IN-VM MS dbgeng local debugger", //
-	htmlDetails = "Launch a dbgeng session in this same JVM" //
-)
+@FactoryDescription(
+	brief = "MS dbgeng.dll (WinDbg)",
+	htmlDetails = """
+			Connect to the Microsoft Debug Engine.
+			This is the same engine that powers WinDbg.
+			This is best for most Windows userspace and kernel targets.
+			Kernel debugging is still experimental.
+			This will access the native API, which may put Ghidra's JVM at risk.""")
 public class DbgEngInJvmDebuggerModelFactory implements DebuggerModelFactory {
 
 	protected String remote = "none"; // Require user to start server
@@ -53,8 +54,18 @@ public class DbgEngInJvmDebuggerModelFactory implements DebuggerModelFactory {
 	}
 
 	@Override
-	public boolean isCompatible() {
-		return System.getProperty("os.name").toLowerCase().contains("windows");
+	public int getPriority(Program program) {
+		// TODO: Might instead look for the DLL
+		if (!System.getProperty("os.name").toLowerCase().contains("windows")) {
+			return -1;
+		}
+		if (program != null) {
+			String exe = program.getExecutablePath();
+			if (exe == null || exe.isBlank()) {
+				return -1;
+			}
+		}
+		return 80;
 	}
 
 	public String getAgentTransport() {

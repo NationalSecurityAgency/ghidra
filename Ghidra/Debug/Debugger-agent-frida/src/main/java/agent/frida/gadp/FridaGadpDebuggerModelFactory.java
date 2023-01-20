@@ -13,29 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package agent.lldb;
+package agent.frida.gadp;
 
-import java.util.concurrent.CompletableFuture;
+import java.util.List;
 
-import agent.lldb.model.impl.LldbModelImpl;
-import ghidra.dbg.DebuggerModelFactory;
-import ghidra.dbg.DebuggerObjectModel;
+import ghidra.dbg.gadp.server.AbstractGadpLocalDebuggerModelFactory;
 import ghidra.dbg.util.ConfigurableFactory.FactoryDescription;
 import ghidra.program.model.listing.Program;
 
 @FactoryDescription(
-	brief = "lldb",
+	brief = "PROTOTYPE: Frida via GADP",
 	htmlDetails = """
-			Connect to lldb.
-			This is best for most macOS and iOS targets, but supports many others.
-			This will access the native API, which may put Ghidra's JVM at risk.""")
-public class LldbInJvmDebuggerModelFactory implements DebuggerModelFactory {
-
-	@Override
-	public CompletableFuture<? extends DebuggerObjectModel> build() {
-		LldbModelImpl model = new LldbModelImpl();
-		return model.startLLDB(new String[] {}).thenApply(__ -> model);
-	}
+			Connect to Frida.
+			This is an experimental connector. Use at your own risk.
+			This will protect Ghidra's JVM by using a subprocess to access the native API.""")
+public class FridaGadpDebuggerModelFactory extends AbstractGadpLocalDebuggerModelFactory {
 
 	@Override
 	public int getPriority(Program program) {
@@ -50,7 +42,22 @@ public class LldbInJvmDebuggerModelFactory implements DebuggerModelFactory {
 				return -1;
 			}
 		}
-		return 40;
+		return 25;
 	}
 
+	@Override
+	protected String getThreadName() {
+		return "Local Frida Agent stdout";
+	}
+
+	protected Class<?> getServerClass() {
+		return FridaGadpServer.class;
+	}
+
+	@Override
+	protected void completeCommandLine(List<String> cmd) {
+		cmd.add(getServerClass().getCanonicalName());
+		cmd.addAll(List.of("-H", host));
+		cmd.addAll(List.of("-p", Integer.toString(port)));
+	}
 }

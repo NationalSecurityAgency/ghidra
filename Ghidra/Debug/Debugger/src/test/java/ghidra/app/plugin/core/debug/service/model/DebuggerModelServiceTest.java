@@ -473,15 +473,15 @@ public class DebuggerModelServiceTest extends AbstractGhidraHeadedDebuggerGUITes
 		DebuggerConnectDialog dialog = waitForDialogComponent(DebuggerConnectDialog.class);
 
 		FactoryEntry fe = (FactoryEntry) dialog.dropdownModel.getSelectedItem();
-		assertEquals(mb.testFactory, fe.factory);
+		assertEquals(mb.testFactory, fe.factory());
 
 		assertEquals(TestDebuggerModelFactory.FAKE_DETAILS_HTML, dialog.description.getText());
 
-		Component[] components = dialog.pairPanel.getComponents();
+		Component[] components = dialog.gridPanel.getComponents();
 
 		assertTrue(components[0] instanceof JLabel);
 		JLabel label = (JLabel) components[0];
-		assertEquals(TestDebuggerModelFactory.FAKE_OPTION_NAME, label.getText());
+		assertEquals("<html>" + TestDebuggerModelFactory.FAKE_OPTION_NAME, label.getText());
 
 		assertTrue(components[1] instanceof JTextField);
 		JTextField field = (JTextField) components[1];
@@ -518,7 +518,7 @@ public class DebuggerModelServiceTest extends AbstractGhidraHeadedDebuggerGUITes
 		DebuggerConnectDialog connectDialog = waitForDialogComponent(DebuggerConnectDialog.class);
 
 		FactoryEntry fe = (FactoryEntry) connectDialog.dropdownModel.getSelectedItem();
-		assertEquals(mb.testFactory, fe.factory);
+		assertEquals(mb.testFactory, fe.factory());
 
 		pressButtonByText(connectDialog, AbstractConnectAction.NAME, true);
 		// NOTE: testModel is null. Don't use #createTestModel(), which adds to service

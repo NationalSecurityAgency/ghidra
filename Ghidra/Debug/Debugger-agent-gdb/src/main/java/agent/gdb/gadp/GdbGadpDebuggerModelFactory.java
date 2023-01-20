@@ -22,14 +22,17 @@ import agent.gdb.manager.GdbManager;
 import ghidra.dbg.gadp.server.AbstractGadpLocalDebuggerModelFactory;
 import ghidra.dbg.util.ConfigurableFactory.FactoryDescription;
 import ghidra.dbg.util.ShellUtils;
-import ghidra.util.classfinder.ExtensionPointProperties;
+import ghidra.program.model.listing.Program;
 
-@FactoryDescription( //
-	brief = "GNU gdb local agent via GADP/TCP", //
-	htmlDetails = "Launch a new agent using GDB. This may start a new session or join an existing one." //
-)
-@ExtensionPointProperties(priority = 100)
-public class GdbLocalDebuggerModelFactory extends AbstractGadpLocalDebuggerModelFactory {
+@FactoryDescription(
+	brief = "gdb via GADP",
+	htmlDetails = """
+			Connect to gdb.
+			This is best for most Linux and Unix userspace targets, and many embedded targets.
+			This will protect Ghidra's JVM by using a subprocess to access the native API.
+			If you are using <b>gdbserver</b>, you must connect to gdb first (consider the non-GADP
+			connector), then use <code>target remote ...</code> to connect to your target.""")
+public class GdbGadpDebuggerModelFactory extends AbstractGadpLocalDebuggerModelFactory {
 
 	private String gdbCmd = GdbManager.DEFAULT_GDB_CMD;
 	@FactoryOption("GDB launch command")
@@ -44,9 +47,17 @@ public class GdbLocalDebuggerModelFactory extends AbstractGadpLocalDebuggerModel
 	// TODO: newLine option?
 
 	@Override
-	public boolean isCompatible() {
-		// TODO: Could potentially support GDB on Windows, but the pty thing would need porting.
-		return GdbCompatibility.INSTANCE.isCompatible(gdbCmd);
+	public int getPriority(Program program) {
+		if (!GdbCompatibility.INSTANCE.isCompatible(gdbCmd)) {
+			return -1;
+		}
+		if (program != null) {
+			String exe = program.getExecutablePath();
+			if (exe == null || exe.isBlank()) {
+				return -1;
+			}
+		}
+		return 60;
 	}
 
 	public String getGdbCommand() {

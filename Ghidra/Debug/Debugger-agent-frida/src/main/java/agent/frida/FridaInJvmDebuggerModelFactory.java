@@ -21,17 +21,14 @@ import agent.frida.model.impl.FridaModelImpl;
 import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.util.ConfigurableFactory.FactoryDescription;
-import ghidra.util.classfinder.ExtensionPointProperties;
+import ghidra.program.model.listing.Program;
 
-/**
- * Note this is in the testing source because it's not meant to be shipped in the release.... That
- * may change if it proves stable, though, no?
- */
-@FactoryDescription( //
-	brief = "IN-VM Frida local debugger", //
-	htmlDetails = "Launch a Frida session in this same JVM" //
-)
-@ExtensionPointProperties(priority = 80)
+@FactoryDescription(
+	brief = "PROTOTYPE: Frida",
+	htmlDetails = """
+			Connect to Frida.
+			This is an experimental connector. Use at your own risk.
+			This will access the native API, which may put Ghidra's JVM at risk.""")
 public class FridaInJvmDebuggerModelFactory implements DebuggerModelFactory {
 
 	@Override
@@ -41,9 +38,18 @@ public class FridaInJvmDebuggerModelFactory implements DebuggerModelFactory {
 	}
 
 	@Override
-	public boolean isCompatible() {
-		String osname = System.getProperty("os.name");
-		return osname.contains("Mac OS X") || osname.contains("Linux") || osname.contains("Windows");
+	public int getPriority(Program program) {
+		String osname = System.getProperty("os.name").toLowerCase();
+		if (!(osname.contains("mac os x") || osname.contains("linux") ||
+			osname.contains("windows"))) {
+			return -1;
+		}
+		if (program != null) {
+			String exe = program.getExecutablePath();
+			if (exe == null || exe.isBlank()) {
+				return -1;
+			}
+		}
+		return 30;
 	}
-
 }

@@ -24,10 +24,14 @@ import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.util.ShellUtils;
 import ghidra.dbg.util.ConfigurableFactory.FactoryDescription;
+import ghidra.program.model.listing.Program;
 
 @FactoryDescription(
-	brief = "GNU gdb via SSH",
-	htmlDetails = "Launch a GDB session over an SSH connection")
+	brief = "gdb via SSH",
+	htmlDetails = """
+			Connect to gdb using SSH.
+			This is best for remote Linux and Unix userspace targets when gdb is installed on the
+			remote host.""")
 public class GdbOverSshDebuggerModelFactory implements DebuggerModelFactory {
 
 	private String gdbCmd = "/usr/bin/gdb";
@@ -91,8 +95,14 @@ public class GdbOverSshDebuggerModelFactory implements DebuggerModelFactory {
 	}
 
 	@Override
-	public boolean isCompatible() {
-		return true;
+	public int getPriority(Program program) {
+		if (program != null) {
+			String exe = program.getExecutablePath();
+			if (exe == null || exe.isBlank()) {
+				return -1;
+			}
+		}
+		return 75;
 	}
 
 	public String getGdbCommand() {
