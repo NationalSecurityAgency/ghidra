@@ -19,8 +19,6 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.Writeable;
 import ghidra.app.util.bin.format.ne.InvalidWindowsHeaderException;
 import ghidra.app.util.bin.format.ne.WindowsHeader;
 import ghidra.app.util.bin.format.pe.InvalidNTHeaderException;
@@ -61,10 +59,12 @@ import ghidra.util.exception.DuplicateNameException;
  *
  * 
  */
-public class DOSHeader extends OldDOSHeader implements StructConverter, Writeable {
+public class DOSHeader extends OldDOSHeader {
+	
     /** The name to use when converting into a structure data type. */
     public final static String NAME = "IMAGE_DOS_HEADER";
-    public final static int SIZEOF_DOS_HEADER   = 64;
+    
+	public final static int SIZEOF_DOS_HEADER = 64;
 
     private short [] e_res = new short[4];     // Reserved words
     private short e_oemid;                     // OEM identifier (for e_oeminfo)
@@ -74,12 +74,11 @@ public class DOSHeader extends OldDOSHeader implements StructConverter, Writeabl
 
 	private byte [] stubBytes;
 
-	private BinaryReader reader;
-
     /**
-     * Constructs a new DOS header.
-     * @param reader the binary reader
-     */
+	 * Constructs a new DOS header.
+	 * @param reader the binary reader
+	 * @throws IOException if there was an IO-related error
+	 */
 	public DOSHeader(BinaryReader reader) throws IOException {
 		super(reader);
     }

@@ -51,8 +51,8 @@ public class OldDOSHeader implements StructConverter, Writeable {
 
 	/** The name to use when converting into a structure data type. */
 	public static final String NAME = "OLD_IMAGE_DOS_HEADER";
+
 	public static final int IMAGE_DOS_SIGNATURE = 0x5A4D;
-	public static final int SIZEOF_DOS_HEADER = 28;
 	
 	private short e_magic;
 	private short e_cblp;
@@ -68,11 +68,13 @@ public class OldDOSHeader implements StructConverter, Writeable {
 	private short e_cs;
 	private short e_lfarlc;
 	private short e_ovno;
+
 	protected BinaryReader reader;
 
 	/**
 	 * Constructs a new DOS header.
 	 * @param reader the binary reader
+	 * @throws IOException if there was an IO-related error
 	 */
 	public OldDOSHeader(BinaryReader reader) throws IOException {
 	    this.reader = reader;
@@ -223,9 +225,6 @@ public class OldDOSHeader implements StructConverter, Writeable {
 	    return e_magic == IMAGE_DOS_SIGNATURE;
 	}
 
-	/**
-	 * @see ghidra.app.util.bin.StructConverter#toDataType()
-	 */
 	@Override
 	public DataType toDataType() throws DuplicateNameException {
 		StructureDataType struct = new StructureDataType(getName(), 0);
@@ -301,9 +300,6 @@ public class OldDOSHeader implements StructConverter, Writeable {
 	    e_ovno        = reader.readNextShort();
 	}
 
-	/**
-	 * @see ghidra.app.util.bin.format.Writeable#write(java.io.RandomAccessFile, ghidra.util.DataConverter)
-	 */
 	@Override
 	public void write(RandomAccessFile raf, DataConverter dc) throws IOException {
 		raf.write(dc.getBytes(e_magic));
