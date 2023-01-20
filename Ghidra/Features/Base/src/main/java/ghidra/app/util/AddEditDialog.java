@@ -15,9 +15,9 @@
  */
 package ghidra.app.util;
 
-import java.awt.BorderLayout;
-import java.awt.Component;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.border.*;
@@ -523,7 +523,21 @@ public class AddEditDialog extends DialogComponentProvider {
 	 * Define the Main panel for the dialog here.
 	 */
 	private JPanel create() {
-		labelNameChoices = new GhidraComboBox<>();
+		labelNameChoices = new GhidraComboBox<>() {
+			@Override
+			public Dimension getPreferredSize() {
+				Dimension size = super.getPreferredSize();
+				// change the preferred size to use the width determined by the # of columns in 
+				// combo box editor instead of the largest item in the combo box data model to 
+				// prevent the dialog from growing huge when a large label gets added to its recent
+				// items
+				Dimension editorSize = getEditor().getEditorComponent().getPreferredSize();
+				size.width = editorSize.width;
+				return size;
+			}
+		};
+		// the  number of columns determines the default width of the add/edit label dialog
+		labelNameChoices.setColumnCount(20);
 		labelNameChoices.setName("label.name.choices");
 		GhidraComboBox<NamespaceWrapper> comboBox = new GhidraComboBox<>();
 		comboBox.setEnterKeyForwarding(true);
