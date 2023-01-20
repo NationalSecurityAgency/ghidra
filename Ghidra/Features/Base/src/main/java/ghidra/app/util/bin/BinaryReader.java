@@ -51,6 +51,30 @@ public class BinaryReader {
 	 */
 	public final static int SIZEOF_LONG = 8;
 
+	/**
+	 * Reads and returns an object from the current position in the specified BinaryReader.
+	 * <p>
+	 * When reading from the BinaryReader, use "readNext" methods to consume the location where
+	 * the object was located.
+	 * <p>
+	 * See {@link #get(BinaryReader)}
+	 * 
+	 * @param <T> the type of object that will be returned
+	 */
+	public interface ReaderFunction<T> {
+		/**
+		 * Reads from the specified {@link BinaryReader} and returns a new object instance.
+		 * <p>
+		 * When reading from the BinaryReader, use "readNext" methods to consume the location where
+		 * the object was located.
+		 *  
+		 * @param reader {@link BinaryReader}
+		 * @return new object
+		 * @throws IOException if error reading
+		 */
+		T get(BinaryReader reader) throws IOException;
+	}
+
 	private final ByteProvider provider;
 	private DataConverter converter;
 	private long currentIndex;
@@ -254,8 +278,6 @@ public class BinaryReader {
 		return (int) (currentIndex - prevIndex);
 	}
 
-	////////////////////////////////////////////////////////////////////
-
 	/**
 	 * A convenience method for setting the index using a 32 bit integer.
 	 * 
@@ -403,6 +425,32 @@ public class BinaryReader {
 	}
 
 	/**
+	 * Returns the signed value of the integer (of the specified length) at the current index.
+	 * 
+	 * @param len the number of bytes that the integer occupies, 1 to 8
+	 * @return value of requested length, with sign bit extended, in a long
+	 * @throws IOException 
+	 */
+	public long readNextValue(int len) throws IOException {
+		long result = readValue(currentIndex, len);
+		currentIndex += len;
+		return result;
+	}
+
+	/**
+	 * Returns the unsigned value of the integer (of the specified length) at the current index.
+	 * 
+	 * @param len the number of bytes that the integer occupies, 1 to 8
+	 * @return unsigned value of requested length, in a long
+	 * @throws IOException 
+	 */
+	public long readNextUnsignedValue(int len) throws IOException {
+		long result = readUnsignedValue(currentIndex, len);
+		currentIndex += len;
+		return result;
+	}
+
+	/**
 	 * Reads a null terminated US-ASCII string starting at the current index,
 	 * advancing the current index by the length of the string that was found.
 	 * <p>
@@ -508,7 +556,6 @@ public class BinaryReader {
 	 * Trailing null terminator characters will be removed.  (suitable for reading
 	 * a string from a fixed length field that is padded with trailing null chars)
 	 * <p>
-	 * @param index the index where the string begins
 	 * @param charCount the number of charLen character elements to read
 	 * @param charset {@link Charset}, see {@link StandardCharsets}
 	 * @param charLen number of bytes in each character
@@ -579,6 +626,25 @@ public class BinaryReader {
 		return l;
 	}
 
+	/**
+	 * Reads an unsigned int32 value, and returns it as a java int (instead of a java long).
+	 * <p>
+	 * If the value is outside the range of 0..Integer.MAX_VALUE, an InvalidDataException is thrown.
+	 * <p>
+	 * Useful for reading uint32 values that are going to be used in java to allocate arrays or
+	 * other similar cases where the value must be a java integer.
+	 *    
+	 * @return the uint32 value read from the stream, if it fits into the range [0..MAX_VALUE] 
+	 * of a java integer 
+	 * @throws IOException if there was an error reading
+	 * @throws InvalidDataException if value can not be held in a java integer
+	 */
+	public int readNextUnsignedIntExact() throws IOException, InvalidDataException {
+		long i = readNextUnsignedInt();
+		ensureInt32u(i);
+		return (int) i;
+	}
+
 	//--------------------------------------------------------------------------------------------
 	// String stuff
 	//--------------------------------------------------------------------------------------------
@@ -608,6 +674,7 @@ public class BinaryReader {
 				break; // fall thru to throw new EOF(unterminate string)
 			}
 		}
+		// we've wrapped around the end of a 64bit address space and curPos is less than starting position
 		throw new EOFException("Unterminated string at 0x%s..0x%s"
 				.formatted(Long.toUnsignedString(index, 16), Long.toUnsignedString(curPos, 16)));
 	}
@@ -846,9 +913,8 @@ public class BinaryReader {
 	/**
 	 * Returns the signed value of the integer (of the specified length) at the specified offset.
 	 * 
-	 * @param index offset the offset from the membuffers origin (the address that it is set at) 
-	 * @param len the number of bytes that the integer occupies.  Valid values are 1 (byte), 2 (short),
-	 * 4 (int), 8 (long)
+	 * @param index where the value begins 
+	 * @param len the number of bytes that the integer occupies, 1 to 8
 	 * @return value of requested length, with sign bit extended, in a long
 	 * @throws IOException 
 	 */
@@ -860,9 +926,8 @@ public class BinaryReader {
 	/**
 	 * Returns the unsigned value of the integer (of the specified length) at the specified offset.
 	 * 
-	 * @param index offset the offset from the membuffers origin (the address that it is set at) 
-	 * @param len the number of bytes that the integer occupies.  Valid values are 1 (byte), 2 (short),
-	 * 4 (int), 8 (long)
+	 * @param index where the value begins 
+	 * @param len the number of bytes that the integer occupies, 1 to 8
 	 * @return unsigned value of requested length, in a long
 	 * @throws IOException 
 	 */
@@ -952,6 +1017,66 @@ public class BinaryReader {
 	 */
 	public ByteProvider getByteProvider() {
 		return provider;
+	}
+
+	/**
+	 * Reads a variable length / unknown format integer from the current position, using the
+	 * supplied reader function, returning it (if it fits) as a 32 bit java integer.
+	 * 
+	 * @param func {@link ReaderFunction}
+	 * @return signed int32
+	 * @throws IOException if error reading or if the value does not fit into a 32 bit java int
+	 * @throws InvalidDataException if value can not be held in a java integer
+	 */
+	public int readNextVarInt(ReaderFunction<Long> func) throws IOException, InvalidDataException {
+		long value = func.get(this);
+		ensureInt32s(value);
+		return (int) value;
+	}
+
+	/**
+	 * Reads a variable length / unknown format unsigned integer from the current position, using
+	 * the supplied reader function, returning it (if it fits) as a 32 bit java integer.
+	 * 
+	 * @param func {@link ReaderFunction}
+	 * @return unsigned int32
+	 * @throws IOException if error reading data
+	 * @throws InvalidDataException if value can not be held in a java integer
+	 */
+	public int readNextUnsignedVarIntExact(ReaderFunction<Long> func)
+			throws IOException, InvalidDataException {
+		long value = func.get(this);
+		ensureInt32u(value);
+		return (int) value;
+	}
+
+	/**
+	 * Reads an object from the current position, using the supplied reader function.
+	 * 
+	 * @param <T> type of the object that will be returned
+	 * @param func {@link ReaderFunction} that will read and return an object
+	 * @return new object of type T
+	 * @throws IOException if error reading
+	 */
+	public <T> T readNext(ReaderFunction<T> func) throws IOException {
+		T obj = func.get(this);
+		return obj;
+	}
+
+	//-------------------------------------------------------------------------------------
+	private static void ensureInt32u(long value) throws InvalidDataException {
+		if (value < 0 || value > Integer.MAX_VALUE) {
+			throw new InvalidDataException(
+				"Value out of range for positive java 32 bit unsigned int: %s"
+					.formatted(Long.toUnsignedString(value)));
+		}
+	}
+
+	private static void ensureInt32s(long value) throws InvalidDataException {
+		if (value < Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
+			throw new InvalidDataException(
+				"Value out of range for java 32 bit signed int: %d".formatted(value));
+		}
 	}
 
 }

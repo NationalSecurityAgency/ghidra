@@ -15,11 +15,12 @@
  */
 package ghidra.app.util.opinion;
 
+import java.util.*;
+
 import java.io.*;
 import java.math.BigInteger;
 import java.nio.file.AccessMode;
 import java.text.NumberFormat;
-import java.util.*;
 
 import org.apache.commons.compress.compressors.xz.XZCompressorInputStream;
 import org.apache.commons.lang3.StringUtils;
@@ -31,6 +32,7 @@ import ghidra.app.util.bin.format.MemoryLoadable;
 import ghidra.app.util.bin.format.elf.*;
 import ghidra.app.util.bin.format.elf.ElfDynamicType.ElfDynamicValueType;
 import ghidra.app.util.bin.format.elf.extend.ElfLoadAdapter;
+import ghidra.app.util.bin.format.elf.info.ElfInfoProducer;
 import ghidra.app.util.bin.format.elf.relocation.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
@@ -182,11 +184,11 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			markupHashTable(monitor);
 			markupGnuHashTable(monitor);
 			markupGnuXHashTable(monitor);
-			markupGnuBuildId(monitor);
-			markupGnuDebugLink(monitor);
 
 			processGNU(monitor);
 			adjustReadOnlyMemoryRegions(monitor);
+
+			markupElfInfoProducers(monitor);
 
 			success = true;
 		}
@@ -2300,35 +2302,12 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 //		return new AddressRangeImpl(alignedAddress, freeRange.getMaxAddress());
 //	}
 
-	private void markupGnuBuildId(TaskMonitor monitor) {
+	private void markupElfInfoProducers(TaskMonitor monitor) throws CancelledException {
+		List<ElfInfoProducer> elfInfoProducers = ElfInfoProducer.getElfInfoProducers(this);
+		for (ElfInfoProducer elfInfoProducer : elfInfoProducers) {
+			monitor.checkCanceled();
 
-		ElfSectionHeader sh = elf.getSection(".note.gnu.build-id");
-		Address addr = findLoadAddress(sh, 0);
-		if (addr == null) {
-			return;
-		}
-		try {
-			listing.createData(addr,
-				new GnuBuildIdSection(program.getDataTypeManager(), sh.getSize()));
-		}
-		catch (Exception e) {
-			log("Failed to properly markup Gnu Build-Id at " + addr + ": " + getMessage(e));
-		}
-	}
-
-	private void markupGnuDebugLink(TaskMonitor monitor) {
-
-		ElfSectionHeader sh = elf.getSection(".gnu_debuglink");
-		Address addr = findLoadAddress(sh, 0);
-		if (addr == null) {
-			return;
-		}
-		try {
-			listing.createData(addr,
-				new GnuDebugLinkSection(program.getDataTypeManager(), sh.getSize()));
-		}
-		catch (Exception e) {
-			log("Failed to properly markup Gnu DebugLink at " + addr + ": " + getMessage(e));
+			elfInfoProducer.markupElfInfo(monitor);
 		}
 	}
 
