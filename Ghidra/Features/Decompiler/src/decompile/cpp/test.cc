@@ -32,17 +32,17 @@ int UnitTest::run(set<string> &testNames)
     if (testNames.size() > 0 && testNames.find(t->name) == testNames.end()) {
       continue;
     }
-    std::cerr << "testing : " << t->name << " ..." << std::endl;
+    cerr << "testing : " << t->name << " ..." << endl;
     ++total;
     try {
       t->func();
       ++passed;
-      std::cerr << "  passed." << std::endl;
+      cerr << "  passed." << endl;
     } catch(...) {
     }
   }
-  std::cerr << "==============================" << std::endl;
-  std::cerr << passed << "/" << total << " tests passed." << std::endl;
+  cerr << "==============================" << endl;
+  cerr << passed << "/" << total << " tests passed." << endl;
   return total - passed;
 }
 

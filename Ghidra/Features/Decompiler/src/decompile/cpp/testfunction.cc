@@ -24,7 +24,7 @@ void FunctionTestProperty::startTest(void) const
 void FunctionTestProperty::processLine(const string &line) const
 
 {
-  if (regex_search(line,pattern))
+  if (std::regex_search(line,pattern))
     count += 1;
 }
 
@@ -42,7 +42,7 @@ void FunctionTestProperty::restoreXml(const Element *el)
   s1 >> minimumMatch;
   istringstream s2(el->getAttributeValue("max"));
   s2 >> maximumMatch;
-  pattern = regex(el->getContent());
+  pattern = std::regex(el->getContent());
 }
 
 void ConsoleCommands::readLine(string &line)

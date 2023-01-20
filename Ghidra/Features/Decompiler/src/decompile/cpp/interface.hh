@@ -20,14 +20,21 @@
 #define __INTERFACE__
 
 #include "capability.hh"
-#include <string>
 #include <map>
 #include <algorithm>
 #include <fstream>
 #include <sstream>
 #include <cstdio>
 
-using namespace std;
+using std::map;
+using std::istream;
+using std::ostream;
+using std::ifstream;
+using std::ofstream;
+using std::istringstream;
+using std::endl;
+using std::ws;
+using std::ios_base;
 
 #ifdef __REMOTE_SOCKET__
 

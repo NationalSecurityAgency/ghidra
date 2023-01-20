@@ -22,6 +22,10 @@
 #include <iostream>
 #include <sstream>
 
+using std::cout;
+using std::cerr;
+using std::out_of_range;
+
 /// \brief A helper class to associate a \e named Constructor section with its symbol scope
 ///
 /// A Constructor can contain multiple named sections of p-code.  There is a \e main
