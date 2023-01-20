@@ -1669,11 +1669,11 @@ public interface DebuggerResources {
 		}
 	}
 
-	interface SynchronizeFocusAction {
-		String NAME = "Synchronize Focus";
+	interface SynchronizeTargetAction {
+		String NAME = "Synchronize Target Activation";
 		String DESCRIPTION = "Synchronize trace activation with debugger focus/select";
 		Icon ICON = ICON_SYNC;
-		String HELP_ANCHOR = "sync_focus";
+		String HELP_ANCHOR = "sync_target";
 
 		static ToggleActionBuilder builder(Plugin owner) {
 			String ownerName = owner.getName();

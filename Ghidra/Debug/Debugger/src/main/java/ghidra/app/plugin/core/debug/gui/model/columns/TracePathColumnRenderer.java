@@ -15,30 +15,26 @@
  */
 package ghidra.app.plugin.core.debug.gui.model.columns;
 
-import docking.widgets.table.AbstractDynamicTableColumn;
+import java.awt.Component;
+
+import docking.widgets.table.GTableCellRenderingData;
 import ghidra.app.plugin.core.debug.gui.model.PathTableModel.PathRow;
-import ghidra.dbg.util.PathUtils;
 import ghidra.docking.settings.Settings;
-import ghidra.framework.plugintool.ServiceProvider;
-import ghidra.trace.model.Trace;
-import ghidra.util.table.column.GColumnRenderer;
+import ghidra.util.table.column.AbstractGColumnRenderer;
 
-public class TracePathStringColumn extends AbstractDynamicTableColumn<PathRow, String, Trace> {
-	private final TracePathColumnRenderer<String> renderer = new TracePathColumnRenderer<>();
-
+public class TracePathColumnRenderer<T> extends AbstractGColumnRenderer<T> {
 	@Override
-	public String getColumnName() {
-		return "Path";
+	public String getFilterString(T t, Settings settings) {
+		return t == null ? "<null>" : t.toString();
 	}
 
 	@Override
-	public GColumnRenderer<String> getColumnRenderer() {
-		return renderer;
-	}
-
-	@Override
-	public String getValue(PathRow rowObject, Settings settings, Trace data,
-			ServiceProvider serviceProvider) throws IllegalArgumentException {
-		return PathUtils.toString(rowObject.getPath().getKeyList());
+	public Component getTableCellRendererComponent(GTableCellRenderingData data) {
+		super.getTableCellRendererComponent(data);
+		PathRow row = (PathRow) data.getRowObject();
+		if (row.isCurrent()) {
+			setBold();
+		}
+		return this;
 	}
 }

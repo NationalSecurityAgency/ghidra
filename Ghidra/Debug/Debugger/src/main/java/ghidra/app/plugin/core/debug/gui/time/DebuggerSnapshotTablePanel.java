@@ -16,19 +16,20 @@
 package ghidra.app.plugin.core.debug.gui.time;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import javax.swing.*;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
+import javax.swing.table.*;
 
 import com.google.common.collect.Collections2;
 
 import docking.widgets.table.*;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
+import ghidra.docking.settings.Settings;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.trace.model.Trace;
@@ -37,6 +38,7 @@ import ghidra.trace.model.TraceDomainObjectListener;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.TraceTimeManager;
 import ghidra.util.table.GhidraTableFilterPanel;
+import ghidra.util.table.column.AbstractGColumnRenderer;
 
 public class DebuggerSnapshotTablePanel extends JPanel {
 
@@ -131,6 +133,23 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 		}
 	}
 
+	final TableCellRenderer boldCurrentRenderer = new AbstractGColumnRenderer<Object>() {
+		@Override
+		public String getFilterString(Object t, Settings settings) {
+			return t == null ? "<null>" : t.toString();
+		}
+
+		@Override
+		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
+			super.getTableCellRendererComponent(data);
+			SnapshotRow row = (SnapshotRow) data.getRowObject();
+			if (row != null && row.getSnap() == currentSnap) {
+				setBold();
+			}
+			return this;
+		}
+	};
+
 	protected final EnumeratedColumnTableModel<SnapshotRow> snapshotTableModel;
 	protected final GTable snapshotTable;
 	protected final GhidraTableFilterPanel<SnapshotRow> snapshotFilterPanel;
@@ -155,14 +174,19 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 		TableColumnModel columnModel = snapshotTable.getColumnModel();
 		TableColumn snapCol = columnModel.getColumn(SnapshotTableColumns.SNAP.ordinal());
 		snapCol.setPreferredWidth(40);
+		snapCol.setCellRenderer(boldCurrentRenderer);
 		TableColumn timeCol = columnModel.getColumn(SnapshotTableColumns.TIMESTAMP.ordinal());
 		timeCol.setPreferredWidth(200);
+		timeCol.setCellRenderer(boldCurrentRenderer);
 		TableColumn etCol = columnModel.getColumn(SnapshotTableColumns.EVENT_THREAD.ordinal());
 		etCol.setPreferredWidth(40);
+		etCol.setCellRenderer(boldCurrentRenderer);
 		TableColumn schdCol = columnModel.getColumn(SnapshotTableColumns.SCHEDULE.ordinal());
 		schdCol.setPreferredWidth(60);
+		schdCol.setCellRenderer(boldCurrentRenderer);
 		TableColumn descCol = columnModel.getColumn(SnapshotTableColumns.DESCRIPTION.ordinal());
 		descCol.setPreferredWidth(200);
+		descCol.setCellRenderer(boldCurrentRenderer);
 	}
 
 	private void addNewListeners() {
@@ -260,5 +284,6 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 			return;
 		}
 		snapshotFilterPanel.setSelectedItem(row);
+		snapshotTableModel.fireTableDataChanged();
 	}
 }

@@ -30,7 +30,6 @@ import ghidra.dbg.target.TargetExecutionStateful;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.target.TargetObject;
 
-// TODO: In the new scheme, I'm not sure this is applicable anymore.
 class ObjectTreeCellRenderer extends GTreeRenderer {
 	private static final String FONT_ID = "font.debugger.object.tree.renderer";
 
@@ -45,12 +44,17 @@ class ObjectTreeCellRenderer extends GTreeRenderer {
 			boolean leaf, int row, boolean focus) {
 		Component component =
 			super.getTreeCellRendererComponent(t, value, sel, exp, leaf, row, focus);
-		if (value instanceof ObjectNode) {
-			ObjectNode node = (ObjectNode) value;
+		if (value instanceof ObjectNode node) {
 			ObjectContainer container = node.getContainer();
 			setText(container.getDecoratedName());
 			component.setForeground(provider.COLOR_FOREGROUND);
 			TargetObject targetObject = container.getTargetObject();
+			if (container.isSubscribed()) {
+				Color color = provider.COLOR_FOREGROUND_SUBSCRIBED;
+				if (!color.equals(Tables.FG_UNSELECTED)) {
+					component.setForeground(color);
+				}
+			}
 			if (targetObject != null) {
 				Map<String, ?> attrs = targetObject.getCachedAttributes();
 				String kind = (String) attrs.get(TargetObject.KIND_ATTRIBUTE_NAME);
@@ -76,12 +80,6 @@ class ObjectTreeCellRenderer extends GTreeRenderer {
 			if (container.isModified()) {
 				component.setForeground(provider.COLOR_FOREGROUND_MODIFIED);
 			}
-			if (container.isSubscribed()) {
-				Color color = provider.COLOR_FOREGROUND_SUBSCRIBED;
-				if (!color.equals(Tables.FG_UNSELECTED)) {
-					component.setForeground(color);
-				}
-			}
 			TreePath path = t.getSelectionPath();
 			if (path != null) {
 				Object last = path.getLastPathComponent();
@@ -93,8 +91,8 @@ class ObjectTreeCellRenderer extends GTreeRenderer {
 				}
 			}
 			Font font = Gui.getFont(FONT_ID);
-			if (container.isSubscribed()) {
-				font = font.deriveFont(Font.ITALIC);
+			if (container.isFocused()) {
+				font = font.deriveFont(Font.BOLD);
 			}
 			component.setFont(font);
 		}

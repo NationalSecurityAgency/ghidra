@@ -112,26 +112,26 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 	public void activateObjectsMode() throws Exception {
 		// NOTE the use of index='1' allowing object-based managers to ID unique path
-		ctx = XmlSchemaContext.deserialize("" + //
-			"<context>" + //
-			"    <schema name='Session' elementResync='NEVER' attributeResync='ONCE'>" + //
-			"        <attribute name='Processes' schema='ProcessContainer' />" + //
-			"    </schema>" + //
-			"    <schema name='ProcessContainer' canonical='yes' elementResync='NEVER' " + //
-			"            attributeResync='ONCE'>" + //
-			"        <element index='1' schema='Process' />" + // <---- NOTE HERE
-			"    </schema>" + //
-			"    <schema name='Process' elementResync='NEVER' attributeResync='ONCE'>" + //
-			"        <attribute name='Threads' schema='ThreadContainer' />" + //
-			"    </schema>" + //
-			"    <schema name='ThreadContainer' canonical='yes' elementResync='NEVER' " + //
-			"            attributeResync='ONCE'>" + //
-			"        <element schema='Thread' />" + //
-			"    </schema>" + //
-			"    <schema name='Thread' elementResync='NEVER' attributeResync='NEVER'>" + //
-			"        <interface name='Thread' />" + //
-			"    </schema>" + //
-			"</context>");
+		ctx = XmlSchemaContext.deserialize("""
+				<context>
+				    <schema name='Session' elementResync='NEVER' attributeResync='ONCE'>
+				        <attribute name='Processes' schema='ProcessContainer' />
+				    </schema>
+				    <schema name='ProcessContainer' canonical='yes' elementResync='NEVER'
+				            attributeResync='ONCE'>
+				        <element index='1' schema='Process' />
+				    </schema>
+				    <schema name='Process' elementResync='NEVER' attributeResync='ONCE'>
+				        <attribute name='Threads' schema='ThreadContainer' />
+				    </schema>
+				    <schema name='ThreadContainer' canonical='yes' elementResync='NEVER'
+				            attributeResync='ONCE'>
+				        <element schema='Thread' />
+				    </schema>
+				    <schema name='Thread' elementResync='NEVER' attributeResync='NEVER'>
+				        <interface name='Thread' />
+				    </schema>
+				</context>""");
 
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			tb.trace.getObjectManager().createRootObject(ctx.getSchema(new SchemaName("Session")));
@@ -521,25 +521,18 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	}
 
 	@Test
-	public void testSelectThreadInTableActivatesThread() throws Exception {
+	public void testDoubleClickThreadInTableActivatesThread() throws Exception {
 		createAndOpenTrace();
 		addThreads();
 		traceManager.activateTrace(tb.trace);
 		waitForDomainObject(tb.trace);
 		waitForTasks();
 
-		waitForPass(() -> {
-			assertThreadsPopulated();
-			assertThreadSelected(thread1); // Manager selects default if not live
-		});
+		waitForPass(() -> assertThreadsPopulated());
 
 		GhidraTable table = QueryPanelTestHelper.getTable(provider.panel);
-		clickTableCellWithButton(table, 1, 0, MouseEvent.BUTTON1);
-
-		waitForPass(() -> {
-			assertThreadSelected(thread2);
-			assertEquals(thread2, traceManager.getCurrentThread());
-		});
+		clickTableCell(table, 1, 0, 2);
+		assertEquals(thread2, traceManager.getCurrentThread());
 	}
 
 	@Test

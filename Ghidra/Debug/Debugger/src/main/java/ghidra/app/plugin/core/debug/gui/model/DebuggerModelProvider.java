@@ -47,6 +47,7 @@ import ghidra.framework.plugintool.AutoConfigState;
 import ghidra.framework.plugintool.AutoService;
 import ghidra.framework.plugintool.annotation.AutoConfigStateField;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.*;
 import ghidra.util.Msg;
@@ -155,7 +156,8 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 			public boolean verify(JComponent input) {
 				try {
 					TraceObjectKeyPath path = TraceObjectKeyPath.parse(pathField.getText());
-					setPath(path, pathField, EventOrigin.USER_GENERATED);
+					setPath(path);
+					objectsTreePanel.setSelectedKeyPaths(List.of(path));
 					return true;
 				}
 				catch (IllegalArgumentException e) {
@@ -168,7 +170,7 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 		ActionListener gotoPath = evt -> {
 			try {
 				TraceObjectKeyPath path = TraceObjectKeyPath.parse(pathField.getText());
-				setPath(path, pathField, EventOrigin.USER_GENERATED);
+				activatePath(path);
 				KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner();
 			}
 			catch (IllegalArgumentException e) {
@@ -238,20 +240,30 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 				myActionContext = null;
 			}
 			contextChanged();
-
 			if (sel.size() != 1) {
-				// TODO: Multiple paths? PathMatcher can do it, just have to parse
-				// Just leave whatever was there.
 				return;
 			}
 			TraceObjectValue value = sel.get(0).getValue();
-			TraceObjectKeyPath path = value.getCanonicalPath();
-
-			// Prevent activation when selecting a link
-			EventOrigin origin =
-				value.isCanonical() ? evt.getEventOrigin() : EventOrigin.API_GENERATED;
-			setPath(path, objectsTreePanel, origin);
+			setPath(value.getCanonicalPath(), objectsTreePanel);
 		});
+		objectsTreePanel.tree.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
+					activateObjectSelectedInTree();
+				}
+			}
+		});
+		objectsTreePanel.tree.tree().addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+					activateObjectSelectedInTree();
+					e.consume(); // lest is select the next row down
+				}
+			}
+		});
+
 		elementsTablePanel.addSelectionListener(evt -> {
 			if (evt.getValueIsAdjusting()) {
 				return;
@@ -278,9 +290,6 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 			}
 			TraceObject object = value.getChild();
 			attributesTablePanel.setQuery(ModelQuery.attributesOf(object.getCanonicalPath()));
-			if (value.isCanonical()) {
-				activatePath(object.getCanonicalPath());
-			}
 		});
 		attributesTablePanel.addSelectionListener(evt -> {
 			if (evt.getValueIsAdjusting()) {
@@ -297,15 +306,6 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 				myActionContext = null;
 			}
 			contextChanged();
-
-			if (sel.size() != 1) {
-				return;
-			}
-			TraceObjectValue value = sel.get(0).getPath().getLastEntry();
-			// "canonical" implies "object"
-			if (value != null && value.isCanonical()) {
-				activatePath(value.getCanonicalPath());
-			}
 		});
 
 		elementsTablePanel.addCellActivationListener(elementActivationListener);
@@ -313,6 +313,19 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 
 		elementsTablePanel.addSeekListener(seekListener);
 		attributesTablePanel.addSeekListener(seekListener);
+	}
+
+	private void activateObjectSelectedInTree() {
+		List<AbstractNode> sel = objectsTreePanel.getSelectedItems();
+		if (sel.size() != 1) {
+			// TODO: Multiple paths? PathMatcher can do it, just have to parse
+			// Just leave whatever was there.
+			return;
+		}
+		TraceObjectValue value = sel.get(0).getValue();
+		if (value.getValue() instanceof TraceObject child) {
+			activatePath(child.getCanonicalPath());
+		}
 	}
 
 	@Override
@@ -352,11 +365,10 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 		if (row == null) {
 			return;
 		}
-		if (!(row instanceof ObjectRow)) {
+		if (!(row instanceof ObjectRow objectRow)) {
 			return;
 		}
-		ObjectRow objectRow = (ObjectRow) row;
-		setPath(objectRow.getTraceObject().getCanonicalPath());
+		activatePath(objectRow.getTraceObject().getCanonicalPath());
 	}
 
 	private void activatedAttributesTable() {
@@ -365,11 +377,10 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 			return;
 		}
 		Object value = row.getValue();
-		if (!(value instanceof TraceObject)) {
+		if (!(value instanceof TraceObject object)) {
 			return;
 		}
-		TraceObject object = (TraceObject) value;
-		setPath(object.getCanonicalPath());
+		activatePath(object.getCanonicalPath());
 	}
 
 	private void activatedCloneWindow() {
@@ -419,7 +430,8 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 		if (values.size() != 1) {
 			return;
 		}
-		setPath(values.get(0).getChild().getCanonicalPath(), null, EventOrigin.USER_GENERATED);
+		TraceObjectKeyPath canonicalPath = values.get(0).getChild().getCanonicalPath();
+		setPath(canonicalPath);
 	}
 
 	@Override
@@ -476,11 +488,15 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 		elementsTablePanel.goToCoordinates(coords);
 		attributesTablePanel.goToCoordinates(coords);
 
+		checkPath();
+
+		if (isClone) {
+			return;
+		}
 		// NOTE: The plugin only calls this on the connected provider
 		// When cloning or restoring state, we MUST still consider the object
 		TraceObject object = coords.getObject();
 		if (object == null) {
-			checkPath();
 			return;
 		}
 		if (attributesTablePanel.trySelect(object)) {
@@ -490,14 +506,15 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 			return;
 		}
 		if (findAsParent(object) != null) {
-			checkPath();
 			return;
 		}
 		TraceObjectKeyPath sibling = findAsSibling(object);
 		if (sibling != null) {
+			objectsTreePanel.setSelectedKeyPaths(List.of(sibling));
 			setPath(sibling);
 		}
 		else {
+			objectsTreePanel.setSelectedObject(object);
 			setPath(object.getCanonicalPath());
 		}
 	}
@@ -509,46 +526,50 @@ public class DebuggerModelProvider extends ComponentProvider implements Saveable
 	}
 
 	protected void activatePath(TraceObjectKeyPath path) {
-		if (isClone) {
-			return;
-		}
 		Trace trace = current.getTrace();
 		if (trace != null) {
 			TraceObject object = trace.getObjectManager().getObjectByCanonicalPath(path);
 			if (object != null) {
 				traceManager.activateObject(object);
+				return;
+			}
+			object = trace.getObjectManager()
+					.getObjectsByPath(Lifespan.at(current.getSnap()), path)
+					.findFirst()
+					.orElse(null);
+			if (object != null) {
+				traceManager.activateObject(object);
+				return;
 			}
 		}
 	}
 
-	protected void setPath(TraceObjectKeyPath path, JComponent source, EventOrigin origin) {
+	protected void setPath(TraceObjectKeyPath path, JComponent source) {
 		if (Objects.equals(this.path, path) && getTreeSelection() != null) {
 			return;
 		}
 		this.path = path;
-		if (source != pathField) {
-			pathField.setText(path.toString());
-		}
+
 		if (source != objectsTreePanel) {
 			setTreeSelection(path);
 		}
-		if (origin == EventOrigin.USER_GENERATED) {
-			activatePath(path);
-		}
+
+		pathField.setText(path.toString());
+		objectsTreePanel.repaint();
 		elementsTablePanel.setQuery(ModelQuery.elementsOf(path));
 		attributesTablePanel.setQuery(ModelQuery.attributesOf(path));
 
 		checkPath();
 	}
 
+	public void setPath(TraceObjectKeyPath path) {
+		setPath(path, null);
+	}
+
 	protected void checkPath() {
 		if (objectsTreePanel.getNode(path) == null) {
 			plugin.getTool().setStatusInfo("No such object at path " + path, true);
 		}
-	}
-
-	public void setPath(TraceObjectKeyPath path) {
-		setPath(path, null, EventOrigin.API_GENERATED);
 	}
 
 	public TraceObjectKeyPath getPath() {

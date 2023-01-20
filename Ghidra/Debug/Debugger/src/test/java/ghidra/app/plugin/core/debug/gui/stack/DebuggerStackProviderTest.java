@@ -29,6 +29,7 @@ import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueProperty;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
+import ghidra.app.plugin.core.debug.gui.model.QueryPanelTestHelper;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.services.DebuggerStaticMappingService;
@@ -488,33 +489,6 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 	}
 
 	@Test
-	public void testSelectRowActivateFrame() throws Exception {
-		createAndOpenTrace();
-
-		TraceObjectThread thread = addThread(1);
-		TraceObjectStack stack = addStack(thread);
-		addStackFrames(stack);
-		waitForDomainObject(tb.trace);
-
-		traceManager.activateObject(thread.getObject());
-		waitForTasks();
-
-		waitForPass(() -> assertProviderPopulated());
-
-		TraceObject frame0 = stack.getObject().getElement(0, 0).getChild();
-		TraceObject frame1 = stack.getObject().getElement(0, 1).getChild();
-		List<ValueRow> allItems = stackProvider.panel.getAllItems();
-
-		stackProvider.panel.setSelectedItem(allItems.get(1));
-		waitForTasks();
-		waitForPass(() -> assertEquals(frame1, traceManager.getCurrentObject()));
-
-		stackProvider.panel.setSelectedItem(allItems.get(0));
-		waitForTasks();
-		waitForPass(() -> assertEquals(frame0, traceManager.getCurrentObject()));
-	}
-
-	@Test
 	public void testActivateFrameSelectsRow() throws Exception {
 		createAndOpenTrace();
 
@@ -539,6 +513,32 @@ public class DebuggerStackProviderTest extends AbstractGhidraHeadedDebuggerGUITe
 		traceManager.activateObject(frame0);
 		waitForTasks();
 		waitForPass(() -> assertEquals(allItems.get(0), stackProvider.panel.getSelectedItem()));
+	}
+
+	@Test
+	public void testDoubleClickRowActivateFrame() throws Exception {
+		createAndOpenTrace();
+
+		TraceObjectThread thread = addThread(1);
+		TraceObjectStack stack = addStack(thread);
+		addStackFrames(stack);
+		waitForDomainObject(tb.trace);
+
+		traceManager.activateObject(thread.getObject());
+		waitForTasks();
+
+		waitForPass(() -> assertProviderPopulated());
+
+		TraceObject frame0 = stack.getObject().getElement(0, 0).getChild();
+		TraceObject frame1 = stack.getObject().getElement(0, 1).getChild();
+
+		clickTableCell(QueryPanelTestHelper.getTable(stackProvider.panel), 1, 0, 2);
+		waitForTasks();
+		waitForPass(() -> assertEquals(frame1, traceManager.getCurrentObject()));
+
+		clickTableCell(QueryPanelTestHelper.getTable(stackProvider.panel), 0, 0, 2);
+		waitForTasks();
+		waitForPass(() -> assertEquals(frame0, traceManager.getCurrentObject()));
 	}
 
 	@Test

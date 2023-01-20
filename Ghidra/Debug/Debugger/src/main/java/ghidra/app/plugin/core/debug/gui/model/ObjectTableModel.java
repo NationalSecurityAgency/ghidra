@@ -181,6 +181,8 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 	public interface ValueRow {
 		String getKey();
 
+		TraceObject currentObject();
+
 		long currentSnap();
 
 		long previousSnap();
@@ -211,6 +213,8 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 		 * @return true if they differ, i.e., should be rendered in red
 		 */
 		boolean isModified();
+
+		boolean isCurrent();
 
 		default <T> ValueAttribute<T> getAttribute(String attributeName, Class<T> type) {
 			return new ValueAttribute<>(this, attributeName, type);
@@ -248,6 +252,11 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 		@Override
 		public long currentSnap() {
 			return getSnap();
+		}
+
+		@Override
+		public TraceObject currentObject() {
+			return getCurrentObject();
 		}
 
 		@Override
@@ -313,6 +322,11 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 		public boolean isAttributeModified(String attributeName) {
 			return false;
 		}
+
+		@Override
+		public boolean isCurrent() {
+			return false;
+		}
 	}
 
 	protected class ObjectRow extends AbstractValueRow {
@@ -366,6 +380,15 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 		public boolean isAttributeModified(String attributeName) {
 			return isValueModified(getAttributeEntry(attributeName));
 		}
+
+		@Override
+		public boolean isCurrent() {
+			TraceObject current = getCurrentObject();
+			if (current == null) {
+				return false;
+			}
+			return object.getCanonicalPath().isAncestor(current.getCanonicalPath());
+		}
 	}
 
 	protected ValueRow rowForValue(TraceObjectValue value) {
@@ -375,45 +398,12 @@ public class ObjectTableModel extends AbstractQueryTableModel<ValueRow> {
 		return new PrimitiveRow(value);
 	}
 
-	protected static class ColKey {
+	protected record ColKey(String name, Class<?> type) {
 		public static ColKey fromSchema(SchemaContext ctx, AttributeSchema attributeSchema) {
 			String name = attributeSchema.getName();
 			Class<?> type =
 				TraceValueObjectAttributeColumn.computeAttributeType(ctx, attributeSchema);
 			return new ColKey(name, type);
-		}
-
-		private final String name;
-		private final Class<?> type;
-		private final int hash;
-
-		public ColKey(String name, Class<?> type) {
-			this.name = name;
-			this.type = type;
-			this.hash = Objects.hash(name, type);
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (obj == this) {
-				return true;
-			}
-			if (!(obj instanceof ColKey)) {
-				return false;
-			}
-			ColKey that = (ColKey) obj;
-			if (!Objects.equals(this.name, that.name)) {
-				return false;
-			}
-			if (this.type != that.type) {
-				return false;
-			}
-			return true;
-		}
-
-		@Override
-		public int hashCode() {
-			return hash;
 		}
 	}
 

@@ -101,6 +101,7 @@ public abstract class AbstractQueryTableModel<T> extends ThreadedTableModel<T, T
 
 	private Trace trace;
 	private long snap;
+	private TraceObject curObject;
 	private Trace diffTrace;
 	private long diffSnap;
 	private ModelQuery query;
@@ -171,6 +172,23 @@ public abstract class AbstractQueryTableModel<T> extends ThreadedTableModel<T, T
 	@Override
 	public long getSnap() {
 		return snap;
+	}
+
+	protected void currentObjectChanged() {
+		refresh();
+	}
+
+	public void setCurrentObject(TraceObject curObject) {
+		if (this.curObject == curObject) {
+			return;
+		}
+		this.curObject = curObject;
+
+		currentObjectChanged();
+	}
+
+	public TraceObject getCurrentObject() {
+		return curObject;
 	}
 
 	protected void diffTraceChanged() {

@@ -738,6 +738,11 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 	}
 
 	@Override
+	public boolean isSupportsActivation() {
+		return objectRecorder.isSupportsActivation;
+	}
+
+	@Override
 	public TargetObject getFocus() {
 		return curFocus;
 	}
@@ -761,6 +766,28 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 			}
 		}
 		Msg.info(this, "Could not find suitable focus scope for " + focus);
+		return CompletableFuture.completedFuture(false);
+	}
+
+	@Override
+	public CompletableFuture<Boolean> requestActivation(TargetObject active) {
+		for (TargetActiveScope scope : objectRecorder.collectTargetSuccessors(target,
+			TargetActiveScope.class)) {
+			if (PathUtils.isAncestor(scope.getPath(), active.getPath())) {
+				return scope.requestActivation(active).thenApply(__ -> true).exceptionally(ex -> {
+					ex = AsyncUtils.unwrapThrowable(ex);
+					String msg = "Could not activate " + active + ": " + ex.getMessage();
+					if (ex instanceof DebuggerModelAccessException) {
+						Msg.info(this, msg);
+					}
+					else {
+						Msg.error(this, msg, ex);
+					}
+					return false;
+				});
+			}
+		}
+		Msg.info(this, "Could not find suitable active scope for " + active);
 		return CompletableFuture.completedFuture(false);
 	}
 

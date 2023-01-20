@@ -67,8 +67,8 @@ import ghidra.util.exception.*;
 import ghidra.util.task.*;
 
 @PluginInfo(
-	shortDescription = "Debugger Trace View Management Plugin",
-	description = "Manages UI Components, Wrappers, Focus, etc.",
+	shortDescription = "Debugger Trace Management Plugin",
+	description = "Manages the set of open traces, current views, etc.",
 	category = PluginCategoryNames.DEBUGGER,
 	packageName = DebuggerPluginPackage.NAME,
 	status = PluginStatus.RELEASED,
@@ -244,8 +244,13 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			if (curRecorder == null) {
 				return;
 			}
-			// TODO: Also re-sync focused thread/frame?
-			activateNoFocus(current.snap(curRecorder.getSnap()), ActivationCause.FOLLOW_PRESENT);
+			DebuggerCoordinates coords = current;
+			TargetObject focus = curRecorder.getFocus();
+			if (focus != null && synchronizeActive.get()) {
+				coords = coords.object(focus);
+			}
+			coords = coords.snap(curRecorder.getSnap());
+			activateAndNotify(coords, ActivationCause.FOLLOW_PRESENT, false);
 		}
 	}
 
@@ -262,7 +267,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	@AutoConfigStateField(codec = BooleanAsyncConfigFieldCodec.class)
 	protected final AsyncReference<Boolean, Void> saveTracesByDefault = new AsyncReference<>(true);
 	@AutoConfigStateField(codec = BooleanAsyncConfigFieldCodec.class)
-	protected final AsyncReference<Boolean, Void> synchronizeFocus = new AsyncReference<>(true);
+	protected final AsyncReference<Boolean, Void> synchronizeActive = new AsyncReference<>(true);
 	@AutoConfigStateField(codec = BooleanAsyncConfigFieldCodec.class)
 	protected final AsyncReference<Boolean, Void> autoCloseOnTerminate = new AsyncReference<>(true);
 
@@ -585,7 +590,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 
 	protected boolean doModelObjectFocused(TargetObject obj, boolean requirePresent) {
 		curObj = obj;
-		if (!synchronizeFocus.get()) {
+		if (!synchronizeActive.get()) {
 			return false;
 		}
 		if (requirePresent && !current.isDeadOrPresent()) {
@@ -612,7 +617,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 				return false;
 			}
 		}
-		activateNoFocus(getCurrentFor(trace).object(obj), ActivationCause.SYNC_MODEL);
+		activateAndNotify(getCurrentFor(trace).object(obj), ActivationCause.SYNC_MODEL, false);
 		return true;
 	}
 
@@ -1086,14 +1091,6 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		return elem.toString();
 	}
 
-	protected void activateNoFocus(DebuggerCoordinates coordinates, ActivationCause cause) {
-		DebuggerCoordinates resolved = doSetCurrent(coordinates, cause);
-		if (resolved == null) {
-			return;
-		}
-		prepareViewAndFireEvent(resolved, cause);
-	}
-
 	protected static boolean isSameFocus(DebuggerCoordinates prev, DebuggerCoordinates resolved) {
 		if (!Objects.equals(prev.getObject(), resolved.getObject())) {
 			return false;
@@ -1110,7 +1107,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		return true;
 	}
 
-	protected static TargetObject translateToFocus(DebuggerCoordinates prev,
+	protected static TargetObject translateToTarget(DebuggerCoordinates prev,
 			DebuggerCoordinates resolved) {
 		if (!resolved.isAliveAndPresent()) {
 			return null;
@@ -1141,7 +1138,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 
 	@Override
 	public CompletableFuture<Void> activateAndNotify(DebuggerCoordinates coordinates,
-			ActivationCause cause, boolean syncTargetFocus) {
+			ActivationCause cause, boolean syncTarget) {
 		DebuggerCoordinates prev;
 		DebuggerCoordinates resolved;
 
@@ -1158,21 +1155,21 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			return AsyncUtils.NIL;
 		}
 		CompletableFuture<Void> future = prepareViewAndFireEvent(resolved, cause);
-		if (!syncTargetFocus) {
+		if (!syncTarget) {
 			return future;
 		}
-		if (!synchronizeFocus.get()) {
+		if (!synchronizeActive.get()) {
 			return future;
 		}
 		TraceRecorder recorder = resolved.getRecorder();
 		if (recorder == null) {
 			return future;
 		}
-		TargetObject focus = translateToFocus(prev, resolved);
-		if (focus == null || !focus.isValid()) {
+		TargetObject activate = translateToTarget(prev, resolved);
+		if (activate == null || !activate.isValid()) {
 			return future;
 		}
-		recorder.requestFocus(focus);
+		recorder.requestActivation(activate);
 		return future;
 	}
 
@@ -1225,24 +1222,24 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	}
 
 	@Override
-	public void setSynchronizeFocus(boolean enabled) {
-		synchronizeFocus.set(enabled, null);
+	public void setSynchronizeActive(boolean enabled) {
+		synchronizeActive.set(enabled, null);
 		// TODO: Which action to take here, if any?
 	}
 
 	@Override
-	public boolean isSynchronizeFocus() {
-		return synchronizeFocus.get();
+	public boolean isSynchronizeActive() {
+		return synchronizeActive.get();
 	}
 
 	@Override
-	public void addSynchronizeFocusChangeListener(BooleanChangeAdapter listener) {
-		synchronizeFocus.addChangeListener(listener);
+	public void addSynchronizeActiveChangeListener(BooleanChangeAdapter listener) {
+		synchronizeActive.addChangeListener(listener);
 	}
 
 	@Override
-	public void removeSynchronizeFocusChangeListener(BooleanChangeAdapter listener) {
-		synchronizeFocus.removeChangeListener(listener);
+	public void removeSynchronizeActiveChangeListener(BooleanChangeAdapter listener) {
+		synchronizeActive.removeChangeListener(listener);
 	}
 
 	@Override

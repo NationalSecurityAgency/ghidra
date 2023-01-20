@@ -152,7 +152,7 @@ public class GTreeRenderer extends DefaultTreeCellRenderer implements GComponent
 	}
 
 	// allows us to change the font to bold as needed without erasing the original font
-	private Font getFont(boolean bold) {
+	protected Font getFont(boolean bold) {
 		Font font = getFont();
 		// check if someone set a  new font on the renderer
 		if (font != cachedDefaultFont && font != cachedBoldFont) {

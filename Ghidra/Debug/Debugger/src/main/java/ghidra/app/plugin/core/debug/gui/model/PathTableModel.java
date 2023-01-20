@@ -95,6 +95,17 @@ public class PathTableModel extends AbstractQueryTableModel<PathRow> {
 			// Root is canonical
 			return last == null || last.isCanonical();
 		}
+
+		public boolean isCurrent() {
+			TraceObject current = getCurrentObject();
+			if (current == null) {
+				return false;
+			}
+			if (!(getValue() instanceof TraceObject child)) {
+				return false;
+			}
+			return child.getCanonicalPath().isAncestor(current.getCanonicalPath());
+		}
 	}
 
 	public PathTableModel(Plugin plugin) {

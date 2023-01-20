@@ -88,6 +88,7 @@ public abstract class DisplayAsAction extends DockingAction {
 					provider.getModel(), container, isTree);
 				container.propagateProvider(p);
 				p.update(container);
+				p.setFocus(null, provider.getFocus());
 			}
 			catch (Exception e) {
 				e.printStackTrace();

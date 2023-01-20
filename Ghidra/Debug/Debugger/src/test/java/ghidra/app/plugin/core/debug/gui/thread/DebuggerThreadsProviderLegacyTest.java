@@ -364,21 +364,16 @@ public class DebuggerThreadsProviderLegacyTest extends AbstractGhidraHeadedDebug
 	}
 
 	@Test
-	public void testSelectThreadInTableActivatesThread() throws Exception {
+	public void testDoubleClickThreadInTableActivatesThread() throws Exception {
 		createAndOpenTrace();
 		addThreads();
 		traceManager.activateTrace(tb.trace);
 		waitForDomainObject(tb.trace);
 
 		assertThreadsPopulated();
-		assertThreadSelected(thread1); // Manager selects default if not live
 
-		clickTableCellWithButton(threadsProvider.legacyPanel.threadTable, 1, 0, MouseEvent.BUTTON1);
-
-		waitForPass(() -> {
-			assertThreadSelected(thread2);
-			assertEquals(thread2, traceManager.getCurrentThread());
-		});
+		clickTableCell(threadsProvider.legacyPanel.threadTable, 1, 0, 2);
+		assertEquals(thread2, traceManager.getCurrentThread());
 	}
 
 	@Test
@@ -397,5 +392,4 @@ public class DebuggerThreadsProviderLegacyTest extends AbstractGhidraHeadedDebug
 
 		assertEquals(6, threadsProvider.legacyPanel.headerRenderer.getCursorPosition().longValue());
 	}
-
 }

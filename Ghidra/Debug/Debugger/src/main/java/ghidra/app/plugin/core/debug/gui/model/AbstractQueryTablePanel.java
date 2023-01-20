@@ -65,7 +65,7 @@ public abstract class AbstractQueryTablePanel<T, M extends AbstractQueryTableMod
 		table.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
-				if (e.getClickCount() == 2) {
+				if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
 					fireCellActivated();
 				}
 			}
@@ -90,13 +90,16 @@ public abstract class AbstractQueryTablePanel<T, M extends AbstractQueryTableMod
 		DebuggerCoordinates previous = current;
 		this.current = coords;
 		if (previous.getSnap() == current.getSnap() &&
-			previous.getTrace() == current.getTrace()) {
+			previous.getTrace() == current.getTrace() &&
+			previous.getObject() == current.getObject()) {
 			return;
 		}
 		tableModel.setDiffTrace(previous.getTrace());
 		tableModel.setTrace(current.getTrace());
 		tableModel.setDiffSnap(previous.getSnap());
 		tableModel.setSnap(current.getSnap());
+		// current object is used only for bolding
+		tableModel.setCurrentObject(current.getObject());
 		if (limitToSnap) {
 			tableModel.setSpan(Lifespan.at(current.getSnap()));
 		}

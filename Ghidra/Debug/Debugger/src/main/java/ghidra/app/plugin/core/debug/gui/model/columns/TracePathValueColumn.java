@@ -50,6 +50,9 @@ public class TracePathValueColumn extends AbstractDynamicTableColumn<PathRow, Pa
 			setText(row.getHtmlDisplay());
 			setToolTipText(row.getToolTip());
 			setForeground(getForegroundFor(data.getTable(), row.isModified(), data.isSelected()));
+			if (row.isCurrent()) {
+				setBold();
+			}
 			return this;
 		}
 

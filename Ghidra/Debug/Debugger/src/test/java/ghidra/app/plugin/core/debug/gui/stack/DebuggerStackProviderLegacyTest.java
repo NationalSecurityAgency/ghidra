@@ -17,11 +17,11 @@ package ghidra.app.plugin.core.debug.gui.stack;
 
 import static org.junit.Assert.*;
 
-import java.awt.event.MouseEvent;
 import java.math.BigInteger;
 import java.util.List;
 
-import org.junit.*;
+import org.junit.Before;
+import org.junit.Test;
 
 import generic.Unique;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
@@ -405,32 +405,6 @@ public class DebuggerStackProviderLegacyTest extends AbstractGhidraHeadedDebugge
 	}
 
 	@Test
-	@Ignore("TODO") // Not sure why this fails under Gradle but not my IDE
-	public void testSelectRowActivatesFrame() throws Exception {
-		createAndOpenTrace();
-
-		TraceThread thread = addThread("Processes[1].Threads[1]");
-		TraceStack stack = addStack(thread);
-		addStackFrames(stack);
-		waitForDomainObject(tb.trace);
-
-		traceManager.activateThread(thread);
-		waitForSwing();
-
-		assertProviderPopulated();
-
-		clickTableCellWithButton(stackProvider.legacyPanel.stackTable, 0, 0, MouseEvent.BUTTON1);
-		waitForSwing();
-
-		assertEquals(0, traceManager.getCurrentFrame());
-
-		clickTableCellWithButton(stackProvider.legacyPanel.stackTable, 1, 0, MouseEvent.BUTTON1);
-		waitForSwing();
-
-		assertEquals(1, traceManager.getCurrentFrame());
-	}
-
-	@Test
 	public void testActivateFrameSelectsRow() throws Exception {
 		createAndOpenTrace();
 
@@ -453,6 +427,27 @@ public class DebuggerStackProviderLegacyTest extends AbstractGhidraHeadedDebugge
 		waitForSwing();
 
 		assertEquals(1, stackProvider.legacyPanel.stackTable.getSelectedRow());
+	}
+
+	@Test
+	public void testDoubleClickRowActivatesFrame() throws Exception {
+		createAndOpenTrace();
+
+		TraceThread thread = addThread("Processes[1].Threads[1]");
+		TraceStack stack = addStack(thread);
+		addStackFrames(stack);
+		waitForDomainObject(tb.trace);
+
+		traceManager.activateThread(thread);
+		waitForSwing();
+
+		assertProviderPopulated();
+
+		clickTableCell(stackProvider.legacyPanel.stackTable, 0, 0, 2);
+		assertEquals(0, traceManager.getCurrentFrame());
+
+		clickTableCell(stackProvider.legacyPanel.stackTable, 1, 0, 2);
+		assertEquals(1, traceManager.getCurrentFrame());
 	}
 
 	@Test

@@ -54,6 +54,9 @@ public class TraceValueValColumn extends AbstractDynamicTableColumn<ValueRow, Va
 				setToolTipText(row.getToolTip());
 				setForeground(
 					getForegroundFor(data.getTable(), row.isModified(), data.isSelected()));
+				if (row.isCurrent()) {
+					setBold();
+				}
 			}
 			catch (TraceClosedException e) {
 				setText("ERROR: Trace Closed");

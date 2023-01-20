@@ -287,31 +287,6 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerGUITes
 	}
 
 	@Test
-	public void testSelectRowActivatesSnap() throws Exception {
-		createSnaplessTrace();
-		traceManager.openTrace(tb.trace);
-		addSnapshots();
-		waitForDomainObject(tb.trace);
-
-		assertProviderEmpty();
-
-		traceManager.activateTrace(tb.trace);
-		waitForSwing();
-
-		List<SnapshotRow> data = timeProvider.mainPanel.snapshotTableModel.getModelData();
-
-		timeProvider.mainPanel.snapshotFilterPanel.setSelectedItem(data.get(0));
-		waitForSwing();
-
-		assertEquals(0, traceManager.getCurrentSnap());
-
-		timeProvider.mainPanel.snapshotFilterPanel.setSelectedItem(data.get(1));
-		waitForSwing();
-
-		assertEquals(10, traceManager.getCurrentSnap());
-	}
-
-	@Test
 	public void testActivateSnapSelectsRow() throws Exception {
 		createSnaplessTrace();
 		traceManager.openTrace(tb.trace);
@@ -339,6 +314,25 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerGUITes
 		waitForSwing();
 
 		assertNull(timeProvider.mainPanel.snapshotFilterPanel.getSelectedItem());
+	}
+
+	@Test
+	public void testDoubleClickRowActivatesSnap() throws Exception {
+		createSnaplessTrace();
+		traceManager.openTrace(tb.trace);
+		addSnapshots();
+		waitForDomainObject(tb.trace);
+
+		assertProviderEmpty();
+
+		traceManager.activateTrace(tb.trace);
+		waitForSwing();
+
+		clickTableCell(timeProvider.mainPanel.snapshotTable, 0, 0, 2);
+		assertEquals(0, traceManager.getCurrentSnap());
+
+		clickTableCell(timeProvider.mainPanel.snapshotTable, 1, 0, 2);
+		assertEquals(10, traceManager.getCurrentSnap());
 	}
 
 	@Test
