@@ -46,7 +46,7 @@ import ghidra.util.task.*;
  */
 public class SaveDataDialog extends DialogComponentProvider {
 
-	private ListPanel listPanel;
+	private ListPanel<JCheckBox> listPanel;
 	private JPanel mainPanel;
 	private GCheckBox[] checkboxes;
 	private List<DomainFile> files;
@@ -156,7 +156,7 @@ public class SaveDataDialog extends DialogComponentProvider {
 
 		SelectPanel myButtonPanel = new SelectPanel(e -> selectAll(), e -> deselectAll());
 
-		listPanel = new ListPanel();
+		listPanel = new ListPanel<>();
 		listPanel.setCellRenderer(new DataCellRenderer());
 		listPanel.setMouseListener(new ListMouseListener());
 

@@ -72,15 +72,11 @@ public class ApplicationThemeManager extends ThemeManager {
 	}
 
 	@Override
-	public void reloadApplicationDefaults() {
-		applicationDefaults = getApplicationDefaults();
-		buildCurrentValues();
-		lookAndFeelManager.resetAll(javaDefaults);
-		notifyThemeChanged(new AllValuesChangedThemeEvent(false));
-	}
-
-	@Override
 	public void restoreThemeValues() {
+		if (activeLafType != activeTheme.getLookAndFeelType()) {
+			setLookAndFeel(activeTheme.getLookAndFeelType(), activeTheme.useDarkDefaults());
+		}
+		applicationDefaults = getApplicationDefaults();
 		buildCurrentValues();
 		lookAndFeelManager.resetAll(javaDefaults);
 		notifyThemeChanged(new AllValuesChangedThemeEvent(false));
@@ -126,19 +122,41 @@ public class ApplicationThemeManager extends ThemeManager {
 	public void setTheme(GTheme theme) {
 		if (theme.hasSupportedLookAndFeel()) {
 			activeTheme = theme;
-			LafType lafType = theme.getLookAndFeelType();
+			activeLafType = theme.getLookAndFeelType();
+			useDarkDefaults = theme.useDarkDefaults();
+
 			cleanUiDefaults();		// clear out any values previous themes may have installed
-			lookAndFeelManager = lafType.getLookAndFeelManager(this);
+			lookAndFeelManager = activeLafType.getLookAndFeelManager(this);
 			try {
 				lookAndFeelManager.installLookAndFeel();
 				notifyThemeChanged(new AllValuesChangedThemeEvent(true));
 			}
 			catch (Exception e) {
-				Msg.error(this, "Error setting LookAndFeel: " + lafType.getName(), e);
+				Msg.error(this, "Error setting Look and Feel: " + activeLafType.getName(), e);
 			}
 			themePreferences.save(theme);
 		}
 		currentValues.checkForUnresolvedReferences();
+	}
+
+	@Override
+	public void setLookAndFeel(LafType lafType, boolean useDarkDefaults) {
+		if (!lafType.isSupported()) {
+			Msg.error(this, "Attempted to set unsupported Look and Feel: " + lafType);
+			return;
+		}
+		this.activeLafType = lafType;
+		this.useDarkDefaults = useDarkDefaults;
+
+		cleanUiDefaults();
+		lookAndFeelManager = lafType.getLookAndFeelManager(this);
+		try {
+			lookAndFeelManager.installLookAndFeel();
+			notifyThemeChanged(new AllValuesChangedThemeEvent(true));
+		}
+		catch (Exception e) {
+			Msg.error(this, "Error setting Look and Feel: " + lafType.getName(), e);
+		}
 	}
 
 	@Override
@@ -166,14 +184,15 @@ public class ApplicationThemeManager extends ThemeManager {
 	}
 
 	@Override
-	public Set<GTheme> getSupportedThemes() {
+	public List<GTheme> getSupportedThemes() {
 		loadThemes();
-		Set<GTheme> supported = new HashSet<>();
+		List<GTheme> supported = new ArrayList<>();
 		for (GTheme theme : allThemes) {
 			if (theme.hasSupportedLookAndFeel()) {
 				supported.add(theme);
 			}
 		}
+		Collections.sort(supported, (t1, t2) -> t1.getName().compareTo(t2.getName()));
 		return supported;
 	}
 
@@ -262,7 +281,13 @@ public class ApplicationThemeManager extends ThemeManager {
 
 	@Override
 	public boolean hasThemeChanges() {
-		return !changedValuesMap.isEmpty();
+		if (!changedValuesMap.isEmpty()) {
+			return true;
+		}
+		if (lookAndFeelManager.getLookAndFeelType() != activeTheme.getLookAndFeelType()) {
+			return true;
+		}
+		return false;
 	}
 
 	@Override

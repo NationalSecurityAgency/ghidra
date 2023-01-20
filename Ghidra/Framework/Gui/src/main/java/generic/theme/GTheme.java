@@ -47,7 +47,7 @@ public class GTheme extends GThemeValueMap {
 	 * @param name the name for this GTheme
 	 */
 	public GTheme(String name) {
-		this(name, LafType.getDefaultLookAndFeel(), false);
+		this(name, LafType.getDefaultLookAndFeel());
 
 	}
 
@@ -55,23 +55,22 @@ public class GTheme extends GThemeValueMap {
 	 * Creates a new empty GTheme with the given name, {@link LookAndFeel}, and whether or not to
 	 * use dark defaults.
 	 * @param name the name for the new GTheme
-	 * @param lookAndFeel the look and feel type used by this theme
-	 * @param useDarkDefaults determines whether or  
+	 * @param lafType the look and feel type used by this theme
 	 */
-	public GTheme(String name, LafType lookAndFeel, boolean useDarkDefaults) {
-		this(null, name, lookAndFeel, useDarkDefaults);
+	public GTheme(String name, LafType lafType) {
+		this(null, name, lafType, lafType.usesDarkDefaults());
 	}
 
 	/**
 	 * Constructor for creating a GTheme with an associated File. 
 	 * @param file the file that this theme will save to
 	 * @param name the name of the new theme
-	 * @param lookAndFeel the {@link LafType} for the new theme
+	 * @param lafType the {@link LafType} for the new theme
 	 * @param useDarkDefaults true if this new theme uses dark defaults
 	 */
-	public GTheme(File file, String name, LafType lookAndFeel, boolean useDarkDefaults) {
+	public GTheme(File file, String name, LafType lafType, boolean useDarkDefaults) {
 		this.name = name;
-		this.lookAndFeel = lookAndFeel;
+		this.lookAndFeel = lafType;
 		this.useDarkDefaults = useDarkDefaults;
 		this.file = file;
 	}
@@ -215,6 +214,14 @@ public class GTheme extends GThemeValueMap {
 	public void save() throws IOException {
 		ThemeWriter writer = new ThemeWriter(this);
 		writer.writeThemeToFile(file);
+	}
+
+	/**
+	 * Returns true if this theme can not be changed
+	 * @return true if this theme can not be changed
+	 */
+	public boolean isReadOnly() {
+		return false;
 	}
 
 	/**

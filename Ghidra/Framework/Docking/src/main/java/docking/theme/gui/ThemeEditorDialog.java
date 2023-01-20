@@ -19,7 +19,6 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.event.*;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import javax.swing.*;
 
@@ -35,12 +34,11 @@ import ghidra.util.*;
 /**
  * Primary dialog for editing Themes.
  */
-public class ThemeDialog extends DialogComponentProvider {
-	private static ThemeDialog INSTANCE;
+public class ThemeEditorDialog extends DialogComponentProvider {
+	private static ThemeEditorDialog INSTANCE;
 
 	private JButton saveButton;
-	private JButton restoreButton;
-	private GhidraComboBox<String> combo;
+	private GhidraComboBox<LafType> combo;
 	private ItemListener comboListener = this::themeComboChanged;
 	private ThemeListener listener = new DialogThemeListener();
 	private JTabbedPane tabbedPane;
@@ -53,14 +51,13 @@ public class ThemeDialog extends DialogComponentProvider {
 
 	private GThemeValuesCache valuesCache;
 
-	public ThemeDialog(ThemeManager themeManager) {
-		super("Theme Dialog", false);
+	public ThemeEditorDialog(ThemeManager themeManager) {
+		super("Configure Theme: " + themeManager.getActiveTheme().getName(), false);
 		this.themeManager = themeManager;
 		addWorkPanel(createMainPanel());
 
 		addDismissButton();
 		addButton(createSaveButton());
-		addButton(createRestoreButton());
 
 		setPreferredSize(1100, 500);
 		setRememberSize(false);
@@ -71,10 +68,30 @@ public class ThemeDialog extends DialogComponentProvider {
 	}
 
 	private void createActions() {
-		DockingAction reloadDefaultsAction = new ActionBuilder("Reload Theme Defaults", getTitle())
+
+		DockingAction incrementFontsAction = new ActionBuilder("Increment All Fonts", getTitle())
+				.toolBarIcon(new GIcon("icon.theme.font.increment"))
+				.description("Increases all font sizes by 1")
+				.helpLocation(new HelpLocation("Theming", "Increment_Fonts"))
+				.onAction(e -> adjustFonts(1))
+				.build();
+		addAction(incrementFontsAction);
+
+		DockingAction decrementFontsAction = new ActionBuilder("Decrement All Fonts", getTitle())
+				.toolBarIcon(new GIcon("icon.theme.font.decrement"))
+				.toolBarGroup("A")
+				.description("Decreases all font sizes by 1")
+				.helpLocation(new HelpLocation("Theming", "Decrement_Fonts"))
+				.onAction(e -> adjustFonts(-1))
+				.build();
+		addAction(decrementFontsAction);
+
+		DockingAction reloadDefaultsAction = new ActionBuilder("Restore Theme Values", getTitle())
 				.toolBarIcon(new GIcon("icon.refresh"))
-				.helpLocation(new HelpLocation("Theming", "Reload_Ghidra_Defaults"))
-				.onAction(e -> reloadDefaultsCallback())
+				.toolBarGroup("B")
+				.description("Reloads default values and restores theme to its original values.")
+				.helpLocation(new HelpLocation("Theming", "Reload_Theme"))
+				.onAction(e -> restoreCallback())
 				.build();
 		addAction(reloadDefaultsAction);
 
@@ -89,10 +106,13 @@ public class ThemeDialog extends DialogComponentProvider {
 		addAction(resetValueAction);
 	}
 
+	private void adjustFonts(int amount) {
+		themeManager.adjustFonts(amount);
+	}
+
 	@Override
 	protected void dismissCallback() {
 		if (handleChanges()) {
-			INSTANCE = null;
 			close();
 		}
 	}
@@ -118,7 +138,7 @@ public class ThemeDialog extends DialogComponentProvider {
 
 	private void restoreCallback() {
 		if (themeManager.hasThemeChanges()) {
-			int result = OptionDialog.showYesNoDialog(null, "Discard Theme Changes?",
+			int result = OptionDialog.showYesNoDialog(null, "Restore Theme Values?",
 				"This will discard all of your theme changes. Continue?");
 			if (result != OptionDialog.YES_OPTION) {
 				return;
@@ -127,23 +147,11 @@ public class ThemeDialog extends DialogComponentProvider {
 		themeManager.restoreThemeValues();
 	}
 
-	private void reloadDefaultsCallback() {
-		if (themeManager.hasThemeChanges()) {
-			int result = OptionDialog.showYesNoDialog(null, "Reload Default Theme Values?",
-				"This will discard all of your theme changes. Continue?");
-			if (result != OptionDialog.YES_OPTION) {
-				return;
-			}
-		}
-		themeManager.reloadApplicationDefaults();
-	}
-
 	private void reset() {
 		colorTable.reloadAll();
 		fontTable.reloadAll();
 		iconTable.reloadAll();
 		updateButtons();
-		updateCombo();
 	}
 
 	private void themeComboChanged(ItemEvent e) {
@@ -152,16 +160,11 @@ public class ThemeDialog extends DialogComponentProvider {
 			return;
 		}
 
-		if (!ThemeUtils.askToSaveThemeChanges(themeManager)) {
-			Swing.runLater(() -> updateCombo());
-			return;
-		}
-
-		String themeName = (String) e.getItem();
+		LafType lafType = (LafType) e.getItem();
 		Swing.runLater(() -> {
-			GTheme theme = themeManager.getTheme(themeName);
-			themeManager.setTheme(theme);
-			if (theme.getLookAndFeelType() == LafType.GTK) {
+
+			themeManager.setLookAndFeel(lafType, lafType.usesDarkDefaults());
+			if (lafType == LafType.GTK) {
 				setStatusText(
 					"Warning - Themes using the GTK LookAndFeel do not support changing java " +
 						"component colors, fonts or icons.",
@@ -179,7 +182,6 @@ public class ThemeDialog extends DialogComponentProvider {
 	private void updateButtons() {
 		boolean hasChanges = themeManager.hasThemeChanges();
 		saveButton.setEnabled(hasChanges);
-		restoreButton.setEnabled(hasChanges);
 	}
 
 	private JComponent createMainPanel() {
@@ -199,32 +201,24 @@ public class ThemeDialog extends DialogComponentProvider {
 		return panel;
 	}
 
-	private void updateCombo() {
-		Set<GTheme> supportedThemes = themeManager.getSupportedThemes();
-		List<String> themeNames =
-			supportedThemes.stream().map(t -> t.getName()).collect(Collectors.toList());
-		Collections.sort(themeNames);
-		combo.removeItemListener(comboListener);
-		combo.setModel(new DefaultComboBoxModel<String>(new Vector<String>(themeNames)));
-		combo.setSelectedItem(themeManager.getActiveTheme().getName());
-		combo.addItemListener(comboListener);
-	}
-
 	private Component buildThemeCombo() {
 		JPanel panel = new JPanel();
-		Set<GTheme> supportedThemes = themeManager.getSupportedThemes();
-		List<String> themeNames =
-			supportedThemes.stream().map(t -> t.getName()).collect(Collectors.toList());
-		Collections.sort(themeNames);
+		List<LafType> lafs = getSupportedLookAndFeels();
 
-		combo = new GhidraComboBox<>(themeNames);
-		combo.setSelectedItem(themeManager.getActiveTheme().getName());
+		combo = new GhidraComboBox<>(lafs);
+		combo.setSelectedItem(themeManager.getActiveTheme().getLookAndFeelType());
 		combo.addItemListener(comboListener);
 
-		panel.add(new JLabel("Theme: "), BorderLayout.WEST);
+		panel.add(new JLabel("Look And Feel: "), BorderLayout.WEST);
 		panel.add(combo);
 		panel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
 		return panel;
+	}
+
+	private List<LafType> getSupportedLookAndFeels() {
+		LafType[] lafTypes = LafType.values();
+		Comparator<LafType> comparator = (a, b) -> a.getName().compareTo(b.getName());
+		return Arrays.stream(lafTypes).filter(laf -> laf.isSupported()).sorted(comparator).toList();
 	}
 
 	private Component buildTabedTables() {
@@ -241,15 +235,6 @@ public class ThemeDialog extends DialogComponentProvider {
 		tabbedPane.add("Icons", iconTable);
 
 		return tabbedPane;
-	}
-
-	private JButton createRestoreButton() {
-		restoreButton = new JButton("Restore");
-		restoreButton.setMnemonic('R');
-		restoreButton.setName("Restore");
-		restoreButton.addActionListener(e -> restoreCallback());
-		restoreButton.setToolTipText("Restores all previous values to current theme");
-		return restoreButton;
 	}
 
 	private JButton createSaveButton() {
@@ -270,15 +255,19 @@ public class ThemeDialog extends DialogComponentProvider {
 			INSTANCE.toFront();
 			return;
 		}
-		INSTANCE = new ThemeDialog(themeManager);
+		INSTANCE = new ThemeEditorDialog(themeManager);
 		DockingWindowManager.showDialog(INSTANCE);
+	}
 
+	public static ThemeEditorDialog getRunningInstance() {
+		return INSTANCE;
 	}
 
 	@Override
 	public void close() {
 		Gui.removeThemeListener(listener);
 		super.close();
+		INSTANCE = null;
 	}
 
 	@Override

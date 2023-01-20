@@ -27,6 +27,6 @@ import generic.theme.LafType;
 public class WindowsTheme extends DiscoverableGTheme {
 
 	public WindowsTheme() {
-		super("Windows Theme", LafType.WINDOWS, false);
+		super("Windows Theme", LafType.WINDOWS);
 	}
 }

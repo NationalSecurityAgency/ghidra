@@ -311,9 +311,8 @@ public class SplashScreen extends JWindow {
 		Gui.registerFont(statusLabel, FONT_ID);
 		statusLabel.setFont(Gui.getFont(FONT_ID));
 
-		CompoundBorder border =
-			BorderFactory.createCompoundBorder(BorderFactory.createLoweredBevelBorder(),
-				BorderFactory.createEmptyBorder(0, 5, 2, 5));
+		CompoundBorder border = BorderFactory.createCompoundBorder(
+			BorderFactory.createLoweredBevelBorder(), BorderFactory.createEmptyBorder(0, 5, 2, 5));
 		statusLabel.setBorder(border);
 		statusLabel.setOpaque(true);
 		statusLabel.setBackground(Colors.BACKGROUND);

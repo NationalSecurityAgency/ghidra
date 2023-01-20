@@ -26,7 +26,7 @@ import generic.theme.LafType;
 public class FlatLightTheme extends DiscoverableGTheme {
 
 	public FlatLightTheme() {
-		super("Flat Light Theme", LafType.FLAT_LIGHT, false);
+		super("Flat Light Theme", LafType.FLAT_LIGHT);
 	}
 
 }

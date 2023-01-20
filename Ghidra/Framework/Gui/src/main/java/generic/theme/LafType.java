@@ -33,15 +33,21 @@ public enum LafType {
 	GTK("GTK+"),
 	MOTIF("CDE/Motif"),
 	FLAT_LIGHT("Flat Light"),
-	FLAT_DARK("Flat Dark"),
+	FLAT_DARK("Flat Dark", true),
 	WINDOWS("Windows"),
 	WINDOWS_CLASSIC("Windows Classic"),
 	MAC("Mac OS X");
 
 	private String name;
+	private boolean usesDarkDefaults;
 
 	private LafType(String name) {
+		this(name, false);
+	}
+
+	private LafType(String name, boolean usesDarkDefaults) {
 		this.name = name;
+		this.usesDarkDefaults = usesDarkDefaults;
 	}
 
 	/**
@@ -50,6 +56,16 @@ public enum LafType {
 	 */
 	public String getName() {
 		return name;
+	}
+
+	/**
+	 * Returns true if the LookAndFeel represented by this LafType uses application dark 
+	 * default values.
+	 * @return  true if the LookAndFeel represented by this LafType uses application dark 
+	 * default values.
+	 */
+	public boolean usesDarkDefaults() {
+		return usesDarkDefaults;
 	}
 
 	/**
@@ -134,5 +150,10 @@ public enum LafType {
 			default:
 				return NIMBUS;
 		}
+	}
+
+	@Override
+	public String toString() {
+		return getName();
 	}
 }
