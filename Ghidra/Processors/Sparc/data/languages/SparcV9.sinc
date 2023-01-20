@@ -374,10 +374,11 @@ ea: [regorimm]      is rs1=0 & regorimm       { export regorimm; } # special cas
 ea: [RS1+regorimm]  is RS1 & regorimm         { local tmp = RS1+regorimm; export tmp; }
 ea: [RS1]           is RS1 & i=1 & simm13=0x0 { export RS1; } #special case when adding zero
 
-retea: [regorimm]      is rs1=0 & regorimm                     { export regorimm; }
-retea: [RS1+regorimm]  is RS1 & regorimm                       { local tmp = RS1+regorimm; export tmp; }
-retea: [RS1]           is RS1 & i=1 & simm13=0x0               { export RS1; } #special case when adding zero
-retea:                 is rs1 & rs1_zero=31 & i=1 & simm13=0x8 { local tmp = rs1 + 0x8; export tmp; } # typical return from CALL instruction (suppress display)
+retea: regorimm      is rs1=0 & i=0 & regorimm                 { local tmp = regorimm; export tmp; }
+retea: regorimm      is rs1=0 & i=1 & regorimm                 { export *:$(SIZE) regorimm; } 
+retea: RS1+regorimm  is RS1 & regorimm                         { local tmp = RS1+regorimm; export tmp; }
+retea: RS1           is RS1 & i=1 & simm13=0x0                 { local tmp = RS1; export tmp; } #special case when adding zero
+retea:               is rs1 & rs1_zero=31 & i=1 & simm13=0x8   { local tmp = rs1 + 0x8; export tmp; } # typical return from CALL instruction (suppress display)
 
 ea_alt: [RS1+RS2] imm_asi  is i=0 & RS1 & RS2 & imm_asi    { local tmp1:1 = imm_asi; local tmp = RS1+RS2+segment(tmp1); export tmp; }
 ea_alt: [RS1+simm13] %ASI  is i=1 & RS1 & simm13 & ASI     { local tmp = RS1+simm13+segment(ASI); export tmp; }
@@ -942,7 +943,7 @@ attach variables [ rs_asr ] [ Y     _          CCR   _     TICK        _        
                              
 # ASR read registers
 rsASR: "%"^ASI   	is  rs_asr=3 & ASI	{ tmp:$(SIZE) = zext(ASI); export tmp; }
-rsASR: "%"^PC		is  rs_asr=5 & PC 	{ export inst_start; }
+rsASR: "%"^PC		is  rs_asr=5 & PC 	{ tmp:$(SIZE) = inst_start; export tmp; }
 rsASR: "%"^FPRS  	is  rs_asr=6 & FPRS	{ tmp:$(SIZE) = zext(FPRS); export tmp; }
 rsASR: "%"^rs_asr	is  rs_asr        	{ export rs_asr; }
 
@@ -983,18 +984,16 @@ sethidisp: "%hi("^hi^")"  is udisp22 [hi=udisp22<<10;] { export *[const]:$(SIZE)
 :restore  RS1,regorimm,RD            is op=0x2 & RD & op3=0x3d & RS1 & regorimm { local tmp = RS1 + regorimm; restore(); didrestore=1; RD = tmp; }
 :restore                             is op=0x2 & rd=0 & op3=0x3d                {                             restore(); didrestore=1; }
 
-:return  retea                       is op=0x2 & op3=0x39 & retea { restore(); delayslot(1); didrestore=1; return [retea]; }
+:return  retea                       is op=0x2 & op3=0x39 & retea { build retea; restore(); delayslot(1); didrestore=1; return [retea]; }
 
-jmplreloff: reloc  is rd [reloc=inst_start+8;] { export reloc; }
+:jmpl    retea,RD                    is op=0x2 & RD & op3=0x38 & retea { build retea; RD = inst_start; delayslot(1);  goto [retea]; }
 
-:jmpl    retea,RD                    is op=0x2 & RD & op3=0x38 & retea & jmplreloff { RD = inst_start; delayslot(1);  goto [retea]; }
+# special case where link register is loaded with return address; functions as indirect call
+:jmpl    retea,RD                    is op=0x2 & RD & prd=15 & op3=0x38 & retea { build retea; RD = inst_start; delayslot(1); call [retea]; }
 
-# special case where link register is loaded with return address
-:jmpl    retea,RD                    is op=0x2 & RD & prd=15 & op3=0x38 & retea & jmplreloff { RD = inst_start; delayslot(1); call [retea]; }
-
-:jmpl    retea                       is op=0x2 & rd=0 & op3=0x38 & retea { o7=inst_start; delayslot(1);  goto [retea]; }
-:ret                                 is op=0x2 & rd=0 & rs1=31 & op3=0x38 & i=1 & simm13=8 & retea   { delayslot(1); return [retea]; }
-:retl                                is op=0x2 & rd=0 & rs1=15 & op3=0x38 & i=1 & simm13=8 & retea   { delayslot(1); return [retea]; }
+:jmpl    retea                       is op=0x2 & rd=0 & op3=0x38 & retea { build retea; delayslot(1);  goto [retea]; }
+:ret                                 is op=0x2 & rd=0 & rs1=31 & op3=0x38 & i=1 & simm13=8 & retea   { build retea; delayslot(1); return [retea]; }
+:retl                                is op=0x2 & rd=0 & rs1=15 & op3=0x38 & i=1 & simm13=8 & retea   { build retea; delayslot(1); return [retea]; }
 
 casa_ea: [RS1]imm_asi  is i=0 & RS1 & imm_asi { local tmp1:1 = imm_asi; local tmp = RS1+segment(tmp1); export tmp; }
 casa_ea: [RS1]%ASI     is i=1 & RS1 & ASI     { local tmp = RS1+segment(ASI); export tmp; }
