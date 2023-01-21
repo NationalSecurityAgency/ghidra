@@ -18,6 +18,7 @@
 #include "address.hh"
 
 #include <cmath>
+#include <limits>
 using std::ldexp;
 using std::frexp;
 using std::signbit;
