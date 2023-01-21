@@ -107,10 +107,9 @@ public class ParamListStandard implements ParamList {
 				continue;	// -tp- does not fit in this entry
 			}
 			if (element.isExclusion()) {
-				int maxgrp = grp + element.getGroupSize();
-				for (int j = grp; j < maxgrp; ++j) {
+				for (int group : element.getAllGroups()) {
 					// For an exclusion entry
-					status[j] = -1;			// some number of groups are taken up
+					status[group] = -1;			// some number of groups are taken up
 				}
 				if (element.isFloatExtended()) {
 					sz = element.getSize();			// Still use the entire container size, when assigning storage
@@ -264,7 +263,8 @@ public class ParamListStandard implements ParamList {
 		if (pentry.getSpace().isStackSpace()) {
 			spacebase = pentry.getSpace();
 		}
-		int maxgroup = pentry.getGroup() + pentry.getGroupSize();
+		int[] groupSet = pentry.getAllGroups();
+		int maxgroup = groupSet[groupSet.length - 1] + 1;
 		if (maxgroup > numgroup) {
 			numgroup = maxgroup;
 		}
@@ -379,7 +379,7 @@ public class ParamListStandard implements ParamList {
 		ParamEntry curentry = entry[num];
 		res.slot = curentry.getSlot(loc, 0);
 		if (curentry.isExclusion()) {
-			res.slotsize = curentry.getGroupSize();
+			res.slotsize = curentry.getAllGroups().length;
 		}
 		else {
 			res.slotsize = ((size - 1) / curentry.getAlign()) + 1;

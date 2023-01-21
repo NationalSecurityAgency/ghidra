@@ -101,8 +101,7 @@ public:
 private:
   uint4 flags;			///< Boolean properties of the parameter
   type_metatype type;		///< Data-type class that this entry must match
-  int4 group;			///< Group of (mutually exclusive) entries that this entry belongs to
-  int4 groupsize;		///< The number of consecutive groups taken by the entry
+  vector<int4> groupSet;	///< Group(s) \b this entry belongs to
   AddrSpace *spaceid;		///< Address space containing the range
   uintb addressbase;		///< Starting offset of the range
   int4 size;			///< Size of the range in bytes
@@ -117,9 +116,10 @@ private:
   /// \brief Is the logical value left-justified within its container
   bool isLeftJustified(void) const { return (((flags&force_left_justify)!=0)||(!spaceid->isBigEndian())); }
 public:
-  ParamEntry(int4 grp) { group=grp; }			///< Constructor for use with decode
-  int4 getGroup(void) const { return group; }		///< Get the group id \b this belongs to
-  int4 getGroupSize(void) const { return groupsize; }	///< Get the number of groups occupied by \b this
+  ParamEntry(int4 grp) { groupSet.push_back(grp); }	///< Constructor for use with decode
+  int4 getGroup(void) const { return groupSet[0]; }	///< Get the group id \b this belongs to
+  const vector<int4> &getAllGroups(void) const { return groupSet; }	///< Get all group numbers \b this overlaps
+  bool groupOverlap(const ParamEntry &op2) const;	///< Check if \b this and op2 occupy any of the same groups
   int4 getSize(void) const { return size; }		///< Get the size of the memory range in bytes.
   int4 getMinSize(void) const { return minsize; }	///< Get the minimum size of a logical value contained in \b this
   int4 getAlign(void) const { return alignment; }	///< Get the alignment of \b this entry
@@ -567,7 +567,7 @@ protected:
   const ParamEntry *selectUnreferenceEntry(int4 grp,type_metatype prefType) const;	///< Select entry to fill an unreferenced param
   void buildTrialMap(ParamActive *active) const;	///< Build map from parameter trials to model ParamEntrys
   void separateSections(ParamActive *active,vector<int4> &trialStart) const;
-  static void markGroupNoUse(ParamActive *active,int4 groupUpper,int4 groupStart,int4 index);
+  static void markGroupNoUse(ParamActive *active,int4 activeTrial,int4 trialStart);
   static void markBestInactive(ParamActive *active,int4 group,int4 groupStart,type_metatype prefType);
   static void forceExclusionGroup(ParamActive *active);
   static void forceNoUse(ParamActive *active,int4 start,int4 stop);
