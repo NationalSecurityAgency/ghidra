@@ -52,8 +52,8 @@ public class OmfLibraryRecord extends OmfRecord {
 	public ArrayList<MemberHeader> getMemberHeaders() {
 		return members;
 	}
-
-	public static boolean checkMagicNumer(BinaryReader reader) throws IOException {
+	
+	public static boolean checkMagicNumber(BinaryReader reader) throws IOException {
 		byte type = reader.readNextByte();
 		if (type != (byte) 0xF0) {
 			return false;
