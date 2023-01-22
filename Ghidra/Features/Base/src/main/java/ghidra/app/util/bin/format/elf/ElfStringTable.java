@@ -16,8 +16,11 @@
 package ghidra.app.util.bin.format.elf;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.MutableByteProvider;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.program.model.data.DataType;
 import ghidra.util.exception.DuplicateNameException;
@@ -58,6 +61,24 @@ public class ElfStringTable implements StructConverter {
 					" within String Table at offset 0x" + Long.toHexString(fileSection.getFileOffset()));
 		}
 		return null;
+	}
+
+	/**
+	 * Append a string at the end of the string table
+	 * @param str String to append
+	 * @return index of string
+	 */
+	public int add(String str) throws IOException {
+		ByteProvider byteProvider = reader.getByteProvider();
+		if (!(byteProvider instanceof MutableByteProvider)) {
+			throw new IOException("Backing byte provider isn't mutable");
+		}
+
+		MutableByteProvider mutableByteProvider = (MutableByteProvider) byteProvider;
+		int strIndex = (int) mutableByteProvider.length();
+		mutableByteProvider.writeBytes(strIndex, StandardCharsets.UTF_8.encode(str + '\0').array());
+
+		return strIndex;
 	}
 
 	/**
