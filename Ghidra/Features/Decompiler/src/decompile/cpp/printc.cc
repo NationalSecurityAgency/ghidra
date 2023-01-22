@@ -102,6 +102,8 @@ const string PrintC::KEYWORD_RETURN = "return";
 const string PrintC::KEYWORD_NEW = "new";
 const string PrintC::typePointerRelToken = "ADJ";
 
+int4 printIndex = 0;
+
 // Constructing this registers the capability
 PrintCCapability PrintCCapability::printCCapability;
 
@@ -1515,6 +1517,9 @@ void PrintC::resetDefaultsPrintC(void)
   option_nocasts = false;
   option_NULL = false;
   option_unplaced = false;
+  option_indentationStyle = indentation_style_kr;
+  option_indentationStyleTracking = false;
+  printIndex = 0;
   setCStyleComments();
 }
 
@@ -2045,7 +2050,7 @@ void PrintC::emitStructDefinition(const TypeStruct *ct)
   emit->print("typedef struct",EmitMarkup::keyword_color);
   emit->spaces(1);
   int4 id = emit->startIndent();
-  emit->print(OPEN_CURLY);
+  emitFormattedStartBrace(id,0);
   emit->tagLine();
   iter = ct->beginField();
   while(iter!=ct->endField()) {
@@ -2060,7 +2065,7 @@ void PrintC::emitStructDefinition(const TypeStruct *ct)
   }
   emit->stopIndent(id);
   emit->tagLine();
-  emit->print(CLOSE_CURLY);
+  emitFormattedCloseBrace(0);
   emit->spaces(1);
   emit->print(ct->getDisplayName());
   emit->print(SEMICOLON);
@@ -2084,7 +2089,7 @@ void PrintC::emitEnumDefinition(const TypeEnum *ct)
   emit->print("typedef enum",EmitMarkup::keyword_color);
   emit->spaces(1);
   int4 id = emit->startIndent();
-  emit->print(OPEN_CURLY);
+  emitFormattedStartBrace(id,0);
   emit->tagLine();
   iter = ct->beginEnum();
   while(iter!=ct->endEnum()) {
@@ -2103,7 +2108,7 @@ void PrintC::emitEnumDefinition(const TypeEnum *ct)
   popMod();
   emit->stopIndent(id);
   emit->tagLine();
-  emit->print(CLOSE_CURLY);
+  emitFormattedCloseBrace(0);
   emit->spaces(1);
   emit->print(ct->getDisplayName());
   emit->print(SEMICOLON);
@@ -2281,6 +2286,29 @@ void PrintC::setCommentStyle(const string &nm)
     setCPlusPlusStyleComments();
   else
     throw LowlevelError("Unknown comment style. Use \"c\" or \"cplusplus\"");
+}
+
+void PrintC::setIndentationStyle(const string &nm)
+
+{
+  if (nm=="kr") {
+    option_indentationStyle = indentation_style_kr;
+    option_indentationStyleTracking = false;
+  }
+  else if (nm=="kr_track") {
+    option_indentationStyle = indentation_style_kr;
+    option_indentationStyleTracking = true;
+  }
+  else if (nm=="allman") {
+    option_indentationStyle = indentation_style_allman;
+    option_indentationStyleTracking = false;
+  }
+  else if (nm=="allman_track") {
+    option_indentationStyle = indentation_style_allman;
+    option_indentationStyleTracking = true;
+  }
+  else
+    throw LowlevelError("Unknown indentation style. Use \"kr\", \"kr_track\", \"allman\" or \"allman_track\"");
 }
 
 /// \brief Emit the definition of the given data-type
@@ -2578,6 +2606,8 @@ void PrintC::docFunction(const Funcdata *fd)
     emit->tagLine();
     emit->tagLine();
     int4 id = emit->startIndent();
+    // Intentionally not using a formatted start brace
+    // Currently supported indentation styles both place a function's opening brace on a new line
     emit->print(OPEN_CURLY);
     emitLocalVarDecls(fd);
     if (isSet(flat))
@@ -2800,7 +2830,11 @@ void PrintC::emitBlockCondition(const BlockCondition *bl)
 void PendingBrace::callback(Emit *emit)
 
 {
+  // emit->tagLine() fails here. But it is needed for Allman style ...
   emit->print(PrintC::OPEN_CURLY);
+  if (this->comment.length() > 0) {
+    emit->print(this->comment,EmitMarkup::comment_color);
+  }
   indentId = emit->startIndent();
 }
 
@@ -2810,6 +2844,9 @@ void PrintC::emitBlockIf(const BlockIf *bl)
   const PcodeOp *op;
   PendingBrace pendingBrace;
 
+  int4 blockPrintIndex = bl->getPrintIndex();
+  if (option_indentationStyleTracking)
+    pendingBrace.setComment(PrintLanguage::makeComment(to_string(blockPrintIndex)));
   if (isSet(pending_brace))
     emit->setPendingPrint(&pendingBrace);
 
@@ -2826,6 +2863,7 @@ void PrintC::emitBlockIf(const BlockIf *bl)
   condBlock->emit(this);
   popMod();
   emitCommentBlockTree(condBlock);
+
   if (emit->hasPendingPrint(&pendingBrace))	// If we issued a brace but it did not emit
     emit->cancelPendingPrint();			// Cancel the brace in order to have "else if" syntax
   else
@@ -2846,18 +2884,22 @@ void PrintC::emitBlockIf(const BlockIf *bl)
     setMod(no_branch);
     emit->spaces(1);
     int4 id = emit->startIndent();
-    emit->print(OPEN_CURLY);
+    printIndex++;
+    ((FlowBlock*)bl)->setPrintIndex(printIndex);
+    emitFormattedStartBrace(id,printIndex);
     int4 id1 = emit->beginBlock(bl->getBlock(1));
     bl->getBlock(1)->emit(this);
     emit->endBlock(id1);
     emit->stopIndent(id);
     emit->tagLine();
-    emit->print(CLOSE_CURLY);
+    emitFormattedCloseBrace(bl->getPrintIndex());
     if (bl->getSize() == 3) {
       emit->tagLine();
       emit->print(KEYWORD_ELSE,EmitMarkup::keyword_color);
       emit->spaces(1);
       FlowBlock *elseBlock = bl->getBlock(2);
+      printIndex++;
+      elseBlock->setPrintIndex(printIndex);
       if (elseBlock->getType() == FlowBlock::t_if) {
 	// Attempt to merge the "else" and "if" syntax
 	setMod(pending_brace);
@@ -2867,13 +2909,16 @@ void PrintC::emitBlockIf(const BlockIf *bl)
       }
       else {
 	int4 id2 = emit->startIndent();
-	emit->print(OPEN_CURLY);
+	// printIndex must be saved because printIndex or elseBlock->getPrintIndex()
+	// can be increased and emitFormattedCloseBrace could show wrong tracking info
+	int4 printIndex_ = printIndex;
+	emitFormattedStartBrace(id2,printIndex_);
 	int4 id3 = emit->beginBlock(elseBlock);
 	elseBlock->emit(this);
 	emit->endBlock(id3);
 	emit->stopIndent(id2);
 	emit->tagLine();
-	emit->print(CLOSE_CURLY);
+	emitFormattedCloseBrace(printIndex_);
       }
     }
   }
@@ -2881,7 +2926,7 @@ void PrintC::emitBlockIf(const BlockIf *bl)
   if (pendingBrace.getIndentId() >= 0) {
     emit->stopIndent(pendingBrace.getIndentId());
     emit->tagLine();
-    emit->print(CLOSE_CURLY);
+    emitFormattedCloseBrace(blockPrintIndex);
   }
 }
 
@@ -2928,14 +2973,16 @@ void PrintC::emitForLoop(const BlockWhileDo *bl)
   emit->closeParen(CLOSE_PAREN,id1);
   emit->spaces(1);
   indent = emit->startIndent();
-  emit->print(OPEN_CURLY);
+  printIndex++;
+  ((FlowBlock*)bl)->setPrintIndex(printIndex);
+  emitFormattedStartBrace(indent,printIndex);
   setMod(no_branch); // Dont print goto at bottom of clause
   int4 id2 = emit->beginBlock(bl->getBlock(1));
   bl->getBlock(1)->emit(this);
   emit->endBlock(id2);
   emit->stopIndent(indent);
   emit->tagLine();
-  emit->print(CLOSE_CURLY);
+  emitFormattedCloseBrace(bl->getPrintIndex());
   popMod();
 }
 
@@ -2969,7 +3016,9 @@ void PrintC::emitBlockWhileDo(const BlockWhileDo *bl)
     emit->closeParen(CLOSE_PAREN,id1);
     emit->spaces(1);
     indent = emit->startIndent();
-    emit->print(OPEN_CURLY);
+    printIndex++;
+    ((FlowBlock*)bl)->setPrintIndex(printIndex);
+    emitFormattedStartBrace(indent,printIndex);
     pushMod();
     setMod(no_branch);
     condBlock->emit(this);
@@ -3000,7 +3049,9 @@ void PrintC::emitBlockWhileDo(const BlockWhileDo *bl)
     emit->closeParen(CLOSE_PAREN,id1);
     emit->spaces(1);
     indent = emit->startIndent();
-    emit->print(OPEN_CURLY);
+    printIndex++;
+    ((FlowBlock*)condBlock)->setPrintIndex(printIndex);
+    emitFormattedStartBrace(indent,printIndex);
   }
   setMod(no_branch); // Dont print goto at bottom of clause
   int4 id2 = emit->beginBlock(bl->getBlock(1));
@@ -3008,8 +3059,8 @@ void PrintC::emitBlockWhileDo(const BlockWhileDo *bl)
   emit->endBlock(id2);
   emit->stopIndent(indent);
   emit->tagLine();
-  emit->print(CLOSE_CURLY);
   popMod();
+  emitFormattedCloseBrace(bl->getPrintIndex());
 }
 
 void PrintC::emitBlockDoWhile(const BlockDoWhile *bl)
@@ -3025,7 +3076,9 @@ void PrintC::emitBlockDoWhile(const BlockDoWhile *bl)
   emit->print(KEYWORD_DO,EmitMarkup::keyword_color);
   emit->spaces(1);
   int4 id = emit->startIndent();
-  emit->print(OPEN_CURLY);
+  printIndex++;
+  ((FlowBlock*)bl)->setPrintIndex(printIndex);
+  emitFormattedStartBrace(id,printIndex);
   pushMod();
   int4 id2 = emit->beginBlock(bl->getBlock(0));
   setMod(no_branch);
@@ -3043,6 +3096,9 @@ void PrintC::emitBlockDoWhile(const BlockDoWhile *bl)
   bl->getBlock(0)->emit(this);
   emit->print(SEMICOLON);
   popMod();
+  if (option_indentationStyleTracking) {
+    emit->print(PrintLanguage::makeComment(to_string(printIndex)),EmitMarkup::comment_color);
+  }
 }
 
 void PrintC::emitBlockInfLoop(const BlockInfLoop *bl)
@@ -3057,13 +3113,15 @@ void PrintC::emitBlockInfLoop(const BlockInfLoop *bl)
   emit->print(KEYWORD_DO,EmitMarkup::keyword_color);
   emit->spaces(1);
   int4 id = emit->startIndent();
-  emit->print(OPEN_CURLY);
+  printIndex++;
+  ((FlowBlock*)bl)->setPrintIndex(printIndex);
+  emitFormattedStartBrace(id,printIndex);
   int4 id1 = emit->beginBlock(bl->getBlock(0));
   bl->getBlock(0)->emit(this);
   emit->endBlock(id1);
   emit->stopIndent(id);
   emit->tagLine();
-  emit->print(CLOSE_CURLY);
+  emitFormattedCloseBrace(0);
   emit->spaces(1);
   op = bl->getBlock(0)->lastOp();
   emit->tagOp(KEYWORD_WHILE,EmitMarkup::keyword_color,op);
@@ -3074,6 +3132,9 @@ void PrintC::emitBlockInfLoop(const BlockInfLoop *bl)
   emit->closeParen(CLOSE_PAREN,id2);
   emit->print(SEMICOLON);
   popMod();
+  if (option_indentationStyleTracking) {
+    emit->print(PrintLanguage::makeComment(to_string(bl->getPrintIndex())),EmitMarkup::comment_color);
+  }
 }
 
 /// Given a \e switch block and an index indicating a particular \e case block,
@@ -3279,30 +3340,79 @@ void PrintC::emitBlockSwitch(const BlockSwitch *bl)
   bl->getSwitchBlock()->emit(this);
   popMod();
   emit->spaces(1);
-  emit->print(OPEN_CURLY);
+  printIndex++;
+  ((FlowBlock *)bl)->setPrintIndex(printIndex);
+  int id = emit->startIndent();
+  emitFormattedStartBrace(id,printIndex);
 
   for(int4 i=0;i<bl->getNumCaseBlocks();++i) {
     emitSwitchCase(i,bl);
-    int4 id = emit->startIndent();
+    int4 id2 = emit->startIndent();
     if (bl->getGotoType(i)!=0) {
       emit->tagLine();
       emitGotoStatement(bl->getBlock(0),bl->getCaseBlock(i),bl->getGotoType(i));
     }
     else {
       bl2 = bl->getCaseBlock(i);
-      int4 id2 = emit->beginBlock(bl2);
+      int4 id3 = emit->beginBlock(bl2);
       bl2->emit(this);
       if (bl->isExit(i)&&(i!=bl->getNumCaseBlocks()-1)) {	// Blocks that formally exit the switch
 	emit->tagLine();
 	emitGotoStatement(bl2,(const FlowBlock *)0,FlowBlock::f_break_goto); // need an explicit break statement
       }
-      emit->endBlock(id2);
+      emit->endBlock(id3);
     }
-    emit->stopIndent(id);
+    emit->stopIndent(id2);
   }
+  emit->stopIndent(id);
   emit->tagLine();
-  emit->print(CLOSE_CURLY);
+  emitFormattedCloseBrace(bl->getPrintIndex());
   popMod();
+}
+
+/// \brief Emits an opening brace according to the indentation style selected in options
+///
+/// \param indent is the current indent level
+/// \param index is the index of current starting block
+void PrintC::emitFormattedStartBrace(int4 indent,int4 index)
+
+{
+  string idString;
+  if (index && option_indentationStyleTracking)
+    idString = PrintLanguage::makeComment(to_string(index));
+  else
+    idString = "";
+  switch(option_indentationStyle) {
+  case indentation_style_allman:
+    // Reduce one layer of indentation, emit new line, emit opening brace, update new indentation
+    if (indent) {
+      emit->stopIndent(indent);
+    }
+    emit->tagLine();
+    emit->print(OPEN_CURLY);
+    emit->print(idString,EmitMarkup::comment_color);
+    emit->startIndent();
+    break;
+  case indentation_style_kr:
+    // Emit opening brace, indentation is unaffected
+    emit->print(OPEN_CURLY);
+    emit->print(idString,EmitMarkup::comment_color);
+    break;
+  default:
+    throw LowlevelError("Unknown indentation style");
+  }
+}
+
+/// \brief Emits an opening brace according to the indentation style selected in options
+///
+/// \param index is the index of current closing block
+void PrintC::emitFormattedCloseBrace(int4 index)
+
+{
+  string idString = PrintLanguage::makeComment(to_string(index));
+  emit->print(CLOSE_CURLY);
+  if (index && option_indentationStyleTracking)
+    emit->print(idString,EmitMarkup::comment_color);
 }
 
 /// \brief Create a generic function name base on the entry point address

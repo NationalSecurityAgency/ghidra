@@ -308,116 +308,119 @@ public record ElementId(String name, int id) {
 	public static final ElementId ELEM_PARAM2 = new ElementId("param2", 203);
 	public static final ElementId ELEM_PARAM3 = new ElementId("param3", 204);
 	public static final ElementId ELEM_PROTOEVAL = new ElementId("protoeval", 205);
-	public static final ElementId ELEM_SETACTION = new ElementId("setaction", 206);
-	public static final ElementId ELEM_SETLANGUAGE = new ElementId("setlanguage", 207);
-	public static final ElementId ELEM_STRUCTALIGN = new ElementId("structalign", 208);
-	public static final ElementId ELEM_TOGGLERULE = new ElementId("togglerule", 209);
-	public static final ElementId ELEM_WARNING = new ElementId("warning", 210);
+	public static final ElementId ELEM_INDENTATIONSTYLE = new ElementId("indentationstyle", 206);
+	public static final ElementId ELEM_SETACTION = new ElementId("setaction", 207);
+	public static final ElementId ELEM_SETLANGUAGE = new ElementId("setlanguage", 208);
+	public static final ElementId ELEM_STRUCTALIGN = new ElementId("structalign", 209);
+	public static final ElementId ELEM_TOGGLERULE = new ElementId("togglerule", 210);
+	public static final ElementId ELEM_WARNING = new ElementId("warning", 211);
 
 	// jumptable
-	public static final ElementId ELEM_BASICOVERRIDE = new ElementId("basicoverride", 211);
-	public static final ElementId ELEM_DEST = new ElementId("dest", 212);
-	public static final ElementId ELEM_JUMPTABLE = new ElementId("jumptable", 213);
-	public static final ElementId ELEM_LOADTABLE = new ElementId("loadtable", 214);
-	public static final ElementId ELEM_NORMADDR = new ElementId("normaddr", 215);
-	public static final ElementId ELEM_NORMHASH = new ElementId("normhash", 216);
-	public static final ElementId ELEM_STARTVAL = new ElementId("startval", 217);
+	public static final ElementId ELEM_BASICOVERRIDE = new ElementId("basicoverride", 212);
+	public static final ElementId ELEM_DEST = new ElementId("dest", 213);
+	public static final ElementId ELEM_JUMPTABLE = new ElementId("jumptable", 214);
+	public static final ElementId ELEM_LOADTABLE = new ElementId("loadtable", 215);
+	public static final ElementId ELEM_NORMADDR = new ElementId("normaddr", 216);
+	public static final ElementId ELEM_NORMHASH = new ElementId("normhash", 217);
+	public static final ElementId ELEM_STARTVAL = new ElementId("startval", 218);
 
 	// override
-	public static final ElementId ELEM_DEADCODEDELAY = new ElementId("deadcodedelay", 218);
-	public static final ElementId ELEM_FLOW = new ElementId("flow", 219);
-	public static final ElementId ELEM_FORCEGOTO = new ElementId("forcegoto", 220);
-	public static final ElementId ELEM_INDIRECTOVERRIDE = new ElementId("indirectoverride", 221);
-	public static final ElementId ELEM_MULTISTAGEJUMP = new ElementId("multistagejump", 222);
-	public static final ElementId ELEM_OVERRIDE = new ElementId("override", 223);
-	public static final ElementId ELEM_PROTOOVERRIDE = new ElementId("protooverride", 224);
+	public static final ElementId ELEM_DEADCODEDELAY = new ElementId("deadcodedelay", 219);
+	public static final ElementId ELEM_FLOW = new ElementId("flow", 220);
+	public static final ElementId ELEM_FORCEGOTO = new ElementId("forcegoto", 221);
+	public static final ElementId ELEM_INDIRECTOVERRIDE = new ElementId("indirectoverride", 222);
+	public static final ElementId ELEM_MULTISTAGEJUMP = new ElementId("multistagejump", 223);
+	public static final ElementId ELEM_OVERRIDE = new ElementId("override", 224);
+	public static final ElementId ELEM_PROTOOVERRIDE = new ElementId("protooverride", 225);
 
 	// prefersplit
-	public static final ElementId ELEM_PREFERSPLIT = new ElementId("prefersplit", 225);
+	public static final ElementId ELEM_PREFERSPLIT = new ElementId("prefersplit", 226);
 
 	// callgraph
-	public static final ElementId ELEM_CALLGRAPH = new ElementId("callgraph", 226);
-	public static final ElementId ELEM_NODE = new ElementId("node", 227);
+	public static final ElementId ELEM_CALLGRAPH = new ElementId("callgraph", 227);
+	public static final ElementId ELEM_NODE = new ElementId("node", 228);
 
 	// varmap
-	public static final ElementId ELEM_LOCALDB = new ElementId("localdb", 228);
+	public static final ElementId ELEM_LOCALDB = new ElementId("localdb", 229);
 
 	// ghidra_process
-	public static final ElementId ELEM_DOC = new ElementId("doc", 229);
+	public static final ElementId ELEM_DOC = new ElementId("doc", 230);
 
 	// loadimage_xml
-//	public static final ElementId ELEM_BINARYIMAGE = new ElementId("binaryimage", 230);
-//	public static final ElementId ELEM_BYTECHUNK = new ElementId("bytechunk", 231);
+//	public static final ElementId ELEM_BINARYIMAGE = new ElementId("binaryimage", 231);
+//	public static final ElementId ELEM_BYTECHUNK = new ElementId("bytechunk", 232);
 
 	// sleigh_arch
-//	public static final ElementId ELEM_COMPILER = new ElementId("compiler", 232);
-//	public static final ElementId ELEM_DESCRIPTION = new ElementId("description", 233);
-//	public static final ElementId ELEM_LANGUAGE = new ElementId("language", 234);
-//	public static final ElementId ELEM_LANGUAGE_DEFINITIONS =
-//		new ElementId("language_definitions", 235);
+//	public static final ElementId ELEM_COMPILER = new ElementId("compiler", 233);
+//	public static final ElementId ELEM_DESCRIPTION = new ElementId("description", 234);
+//	public static final ElementId ELEM_LANGUAGE = new ElementId("language", 235);
+//	public static final ElementId ELEM_LANGUAGE_DEFINITIONS = new ElementId("language_definitions", 236);
 
 	// xml_arch
-//	public static final ElementId ELEM_XML_SAVEFILE = new ElementId("xml_savefile", 236);
+//	public static final ElementId ELEM_XML_SAVEFILE = new ElementId("xml_savefile", 237);
 
 	// raw_arch
-//	public static final ElementId ELEM_RAW_SAVEFILE = new ElementId("raw_savefile", 237);
+//	public static final ElementId ELEM_RAW_SAVEFILE = new ElementId("raw_savefile", 238);
+
+	// bfd_arch
+//	public static final ElemendId ELEM_BFD_SAVEFILE = new ElementId("bfd_savefile", 239);
 
 	// ghidra_arch
-	public static final int COMMAND_ISNAMEUSED = 239;
+	public static final int COMMAND_ISNAMEUSED = 240;
 	public static final ElementId ELEM_COMMAND_ISNAMEUSED =
 		new ElementId("command_isnameused", COMMAND_ISNAMEUSED);
-	public static final int COMMAND_GETBYTES = 240;
+	public static final int COMMAND_GETBYTES = 241;
 	public static final ElementId ELEM_COMMAND_GETBYTES =
 		new ElementId("command_getbytes", COMMAND_GETBYTES);
-	public static final int COMMAND_GETCALLFIXUP = 241;
+	public static final int COMMAND_GETCALLFIXUP = 242;
 	public static final ElementId ELEM_COMMAND_GETCALLFIXUP =
 		new ElementId("command_getcallfixup", COMMAND_GETCALLFIXUP);
-	public static final int COMMAND_GETCALLMECH = 242;
+	public static final int COMMAND_GETCALLMECH = 243;
 	public static final ElementId ELEM_COMMAND_GETCALLMECH =
 		new ElementId("command_getcallmech", COMMAND_GETCALLMECH);
-	public static final int COMMAND_GETCALLOTHERFIXUP = 243;
+	public static final int COMMAND_GETCALLOTHERFIXUP = 244;
 	public static final ElementId ELEM_COMMAND_GETCALLOTHERFIXUP =
 		new ElementId("command_getcallotherfixup", COMMAND_GETCALLOTHERFIXUP);
-	public static final int COMMAND_GETCODELABEL = 244;
+	public static final int COMMAND_GETCODELABEL = 245;
 	public static final ElementId ELEM_COMMAND_GETCODELABEL =
 		new ElementId("command_getcodelabel", COMMAND_GETCODELABEL);
-	public static final int COMMAND_GETCOMMENTS = 245;
+	public static final int COMMAND_GETCOMMENTS = 246;
 	public static final ElementId ELEM_COMMAND_GETCOMMENTS =
 		new ElementId("command_getcomments", COMMAND_GETCOMMENTS);
-	public static final int COMMAND_GETCPOOLREF = 246;
+	public static final int COMMAND_GETCPOOLREF = 247;
 	public static final ElementId ELEM_COMMAND_GETCPOOLREF =
 		new ElementId("command_getcpoolref", COMMAND_GETCPOOLREF);
-	public static final int COMMAND_GETDATATYPE = 247;
+	public static final int COMMAND_GETDATATYPE = 248;
 	public static final ElementId ELEM_COMMAND_GETDATATYPE =
 		new ElementId("command_getdatatype", COMMAND_GETDATATYPE);
-	public static final int COMMAND_GETEXTERNALREF = 248;
+	public static final int COMMAND_GETEXTERNALREF = 249;
 	public static final ElementId ELEM_COMMAND_GETEXTERNALREF =
 		new ElementId("command_getexternalref", COMMAND_GETEXTERNALREF);
-	public static final int COMMAND_GETMAPPEDSYMBOLS = 249;
+	public static final int COMMAND_GETMAPPEDSYMBOLS = 250;
 	public static final ElementId ELEM_COMMAND_GETMAPPEDSYMBOLS =
 		new ElementId("command_getmappedsymbols", COMMAND_GETMAPPEDSYMBOLS);
-	public static final int COMMAND_GETNAMESPACEPATH = 250;
+	public static final int COMMAND_GETNAMESPACEPATH = 251;
 	public static final ElementId ELEM_COMMAND_GETNAMESPACEPATH =
 		new ElementId("command_getnamespacepath", COMMAND_GETNAMESPACEPATH);
-	public static final int COMMAND_GETPCODE = 251;
+	public static final int COMMAND_GETPCODE = 252;
 	public static final ElementId ELEM_COMMAND_GETPCODE =
 		new ElementId("command_getpcode", COMMAND_GETPCODE);
-	public static final int COMMAND_GETPCODEEXECUTABLE = 252;
+	public static final int COMMAND_GETPCODEEXECUTABLE = 253;
 	public static final ElementId ELEM_COMMAND_GETPCODEEXECUTABLE =
 		new ElementId("command_getpcodeexecutable", COMMAND_GETPCODEEXECUTABLE);
-	public static final int COMMAND_GETREGISTER = 253;
+	public static final int COMMAND_GETREGISTER = 254;
 	public static final ElementId ELEM_COMMAND_GETREGISTER =
 		new ElementId("command_getregister", COMMAND_GETREGISTER);
-	public static final int COMMAND_GETREGISTERNAME = 254;
+	public static final int COMMAND_GETREGISTERNAME = 255;
 	public static final ElementId ELEM_COMMAND_GETREGISTERNAME =
 		new ElementId("command_getregistername", COMMAND_GETREGISTERNAME);
-	public static final int COMMAND_GETSTRINGDATA = 255;
+	public static final int COMMAND_GETSTRINGDATA = 256;
 	public static final ElementId ELEM_COMMAND_GETSTRINGDATA =
 		new ElementId("command_getstring", COMMAND_GETSTRINGDATA);
-	public static final int COMMAND_GETTRACKEDREGISTERS = 256;
+	public static final int COMMAND_GETTRACKEDREGISTERS = 257;
 	public static final ElementId ELEM_COMMAND_GETTRACKEDREGISTERS =
 		new ElementId("command_gettrackedregisters", COMMAND_GETTRACKEDREGISTERS);
-	public static final int COMMAND_GETUSEROPNAME = 257;
+	public static final int COMMAND_GETUSEROPNAME = 258;
 	public static final ElementId ELEM_COMMAND_GETUSEROPNAME =
 		new ElementId("command_getuseropname", COMMAND_GETUSEROPNAME);
 

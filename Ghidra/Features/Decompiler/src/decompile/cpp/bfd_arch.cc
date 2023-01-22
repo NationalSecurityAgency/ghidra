@@ -21,7 +21,7 @@ namespace ghidra {
 // Constructing this object registers capability
 BfdArchitectureCapability BfdArchitectureCapability::bfdArchitectureCapability;
 
-ElementId ELEM_BFD_SAVEFILE = ElementId("bfd_savefile",238);
+ElementId ELEM_BFD_SAVEFILE = ElementId("bfd_savefile",239);
 
 BfdArchitectureCapability::BfdArchitectureCapability(void)
 

@@ -52,12 +52,13 @@ ElementId ELEM_PARAM1 = ElementId("param1",202);
 ElementId ELEM_PARAM2 = ElementId("param2",203);
 ElementId ELEM_PARAM3 = ElementId("param3",204);
 ElementId ELEM_PROTOEVAL = ElementId("protoeval",205);
-ElementId ELEM_SETACTION = ElementId("setaction",206);
-ElementId ELEM_SETLANGUAGE = ElementId("setlanguage",207);
+ElementId ELEM_INDENTATIONSTYLE = ElementId("indentationstyle",206);
+ElementId ELEM_SETACTION = ElementId("setaction",207);
+ElementId ELEM_SETLANGUAGE = ElementId("setlanguage",208);
 ElementId ELEM_SPLITDATATYPE = ElementId("splitdatatype",270);
-ElementId ELEM_STRUCTALIGN = ElementId("structalign",208);
-ElementId ELEM_TOGGLERULE = ElementId("togglerule",209);
-ElementId ELEM_WARNING = ElementId("warning",210);
+ElementId ELEM_STRUCTALIGN = ElementId("structalign",209);
+ElementId ELEM_TOGGLERULE = ElementId("togglerule",210);
+ElementId ELEM_WARNING = ElementId("warning",211);
 ElementId ELEM_JUMPTABLEMAX = ElementId("jumptablemax",271);
 ElementId ELEM_NANIGNORE = ElementId("nanignore",272);
 
@@ -117,6 +118,7 @@ OptionDatabase::OptionDatabase(Architecture *g)
   registerOption(new OptionCommentStyle());
   registerOption(new OptionCommentHeader());
   registerOption(new OptionCommentInstruction());
+  registerOption(new OptionIndentationStyle());
   registerOption(new OptionIntegerFormat());
   registerOption(new OptionCurrentAction());
   registerOption(new OptionAllowContextSet());
@@ -583,6 +585,18 @@ string OptionCommentInstruction::apply(Architecture *glb,const string &p1,const 
   string prop;
   prop = toggle ? "on" : "off";
   return "Instruction comment type "+p1+" turned "+prop;
+}
+
+/// \class OptionIndentationStyle
+/// \brief Set the style of indentation emitted by the decompiler
+///
+/// The first parameter is either "allman", or "kr", other styles could be
+/// supported in the future
+string OptionIndentationStyle::apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const
+
+{
+	glb->print->setIndentationStyle(p1);
+	return "Indentation style set to "+p1;
 }
 
 /// \class OptionIntegerFormat

@@ -20,8 +20,8 @@ namespace ghidra {
 
 AttributeId ATTRIB_ARCH = AttributeId("arch",135);
 
-ElementId ELEM_BINARYIMAGE = ElementId("binaryimage",230);
-ElementId ELEM_BYTECHUNK = ElementId("bytechunk",231);
+ElementId ELEM_BINARYIMAGE = ElementId("binaryimage",231);
+ElementId ELEM_BYTECHUNK = ElementId("bytechunk",232);
 
 /// \param f is the (path to the) underlying XML file
 /// \param el is the parsed form of the file

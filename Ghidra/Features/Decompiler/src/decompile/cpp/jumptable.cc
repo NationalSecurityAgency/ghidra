@@ -23,13 +23,13 @@ namespace ghidra {
 AttributeId ATTRIB_LABEL = AttributeId("label",131);
 AttributeId ATTRIB_NUM = AttributeId("num",132);
 
-ElementId ELEM_BASICOVERRIDE = ElementId("basicoverride",211);
-ElementId ELEM_DEST = ElementId("dest",212);
-ElementId ELEM_JUMPTABLE = ElementId("jumptable",213);
-ElementId ELEM_LOADTABLE = ElementId("loadtable",214);
-ElementId ELEM_NORMADDR = ElementId("normaddr",215);
-ElementId ELEM_NORMHASH = ElementId("normhash",216);
-ElementId ELEM_STARTVAL = ElementId("startval",217);
+ElementId ELEM_BASICOVERRIDE = ElementId("basicoverride",212);
+ElementId ELEM_DEST = ElementId("dest",213);
+ElementId ELEM_JUMPTABLE = ElementId("jumptable",214);
+ElementId ELEM_LOADTABLE = ElementId("loadtable",215);
+ElementId ELEM_NORMADDR = ElementId("normaddr",216);
+ElementId ELEM_NORMHASH = ElementId("normhash",217);
+ElementId ELEM_STARTVAL = ElementId("startval",218);
 
 /// \param encoder is the stream encoder
 void LoadTable::encode(Encoder &encoder) const

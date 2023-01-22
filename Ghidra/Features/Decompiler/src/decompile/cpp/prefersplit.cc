@@ -18,7 +18,7 @@
 
 namespace ghidra {
 
-ElementId ELEM_PREFERSPLIT = ElementId("prefersplit",225);
+ElementId ELEM_PREFERSPLIT = ElementId("prefersplit",226);
 
 bool PreferSplitRecord::operator<(const PreferSplitRecord &op2) const
 

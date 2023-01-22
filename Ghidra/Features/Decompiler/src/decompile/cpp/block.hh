@@ -122,6 +122,7 @@ private:
   FlowBlock *immed_dom;		///< Immediate dominating block
   FlowBlock *copymap;		///< Back reference to a BlockCopy of \b this
   int4 index;			///< Reference index for this block (reverse post order)
+  int4 printIndex = 0;		///< Print index for this block
   int4 visitcount;		///< A count of visits of this node for various algorithms
   int4 numdesc;			///< Number of descendants of this block in spanning tree (+1)
   vector<BlockEdge> intothis;	///< Blocks which (can) fall into this block
@@ -158,6 +159,8 @@ public:
   FlowBlock(void);				///< Construct a block with no edges
   virtual ~FlowBlock(void) {}			///< Destructor
   int4 getIndex(void) const { return index; }	///< Get the index assigned to \b this block
+  int4 getPrintIndex(void) const { return printIndex; }		///< Get the unique print index assigned to \b this block
+  void setPrintIndex(int4 printindex) { printIndex = printindex; } ///< Set the unique print index for \b this block
   FlowBlock *getParent(void) { return parent; }	///< Get the parent FlowBlock of \b this
   FlowBlock *getImmedDom(void) const { return immed_dom; }	///< Get the immediate dominator FlowBlock
   FlowBlock *getCopyMap(void) const { return copymap; }		///< Get the mapped FlowBlock

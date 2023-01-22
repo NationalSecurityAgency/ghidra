@@ -440,6 +440,7 @@ public:
   bool emitsMarkup(void) const { return emit->emitsMarkup(); }		///< Does the low-level emitter, emit markup
   void setMarkup(bool val);						///< Set whether the low-level emitter, emits markup
   void setFlat(bool val);						///< Set whether nesting code structure should be emitted
+  std::string makeComment(std::string val);
 
   virtual void initializeFromArchitecture(void)=0;		///< Initialize architecture specific aspects of printer
   virtual void adjustTypeOperators(void)=0;			///< Set basic data-type information for p-code operators
@@ -453,6 +454,11 @@ public:
   /// then it will choose from among the schemes it knows
   /// \param nm is the configuration description
   virtual void setCommentStyle(const string &nm)=0;
+
+  /// \brief Set the indentation style used in the decompiler output
+  ///
+  /// \param nm is the configuration description
+  virtual void setIndentationStyle(const string &nm)=0;
 
   /// \brief Emit definitions of data-types
   ///

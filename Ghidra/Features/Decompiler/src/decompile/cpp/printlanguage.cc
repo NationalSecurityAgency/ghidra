@@ -665,6 +665,17 @@ void PrintLanguage::setFlat(bool val)
     mods &= ~flat;
 }
 
+string PrintLanguage::makeComment(string val)
+
+{
+  string ret;
+  ret.append(" ");
+  ret.append(commentstart);
+  ret.append(val);
+  ret.append(commentend);
+  return ret;
+}
+
 void PrintLanguage::resetDefaults(void)
 
 {

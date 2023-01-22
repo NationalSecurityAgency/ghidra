@@ -18,8 +18,8 @@
 
 namespace ghidra {
 
-ElementId ELEM_CALLGRAPH = ElementId("callgraph",226);
-ElementId ELEM_NODE = ElementId("node",227);
+ElementId ELEM_CALLGRAPH = ElementId("callgraph",227);
+ElementId ELEM_NODE = ElementId("node",228);
 
 void CallGraphEdge::encode(Encoder &encoder) const
 

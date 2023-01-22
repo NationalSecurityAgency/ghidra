@@ -17,7 +17,7 @@
 
 namespace ghidra {
 
-ElementId ELEM_RAW_SAVEFILE = ElementId("raw_savefile",237);
+ElementId ELEM_RAW_SAVEFILE = ElementId("raw_savefile",238);
 
 // Constructing this object registers the capability
 RawBinaryArchitectureCapability RawBinaryArchitectureCapability::rawBinaryArchitectureCapability;

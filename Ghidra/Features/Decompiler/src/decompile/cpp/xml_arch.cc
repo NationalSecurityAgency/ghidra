@@ -17,7 +17,7 @@
 
 namespace ghidra {
 
-ElementId ELEM_XML_SAVEFILE = ElementId("xml_savefile",236);
+ElementId ELEM_XML_SAVEFILE = ElementId("xml_savefile",237);
 
 // Constructing the singleton registers the capability
 XmlArchitectureCapability XmlArchitectureCapability::xmlArchitectureCapability;
