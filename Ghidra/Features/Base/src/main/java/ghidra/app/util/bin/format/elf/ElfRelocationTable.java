@@ -253,6 +253,13 @@ public class ElfRelocationTable implements ByteArrayConverter, StructConverter {
 		return relocations;
 	}
 
+	public void addRelocation(ElfRelocation relocation) {
+		ElfRelocation[] tmp = new ElfRelocation[relocs.length + 1];
+		System.arraycopy(relocs, 0, tmp, 0, relocs.length);
+		tmp[tmp.length - 1] = relocation;
+		relocs = tmp;
+	}
+
 	/**
 	 * @return true if has addend relocations, otherwise addend extraction from
 	 * relocation target may be required
