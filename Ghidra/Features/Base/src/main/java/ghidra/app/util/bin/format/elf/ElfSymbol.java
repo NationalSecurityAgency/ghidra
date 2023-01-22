@@ -599,36 +599,46 @@ public class ElfSymbol implements ByteArrayConverter {
 	 */
 	@Override
 	public byte[] toBytes(DataConverter dc) {
-		// FIXME! BUG!! Symbols can exist without a dynamic table !!
-		ElfDynamicTable dynamic = header.getDynamicTable();
-		int syment = 0;
+		int syment = header.is32Bit() ? 16 : 24;
 		try {
-			syment = (int) dynamic.getDynamicValue(ElfDynamicType.DT_SYMENT);
+			ElfDynamicTable dynamic = header.getDynamicTable();
+			if (dynamic != null) {
+				syment = (int) dynamic.getDynamicValue(ElfDynamicType.DT_SYMENT);
+			}
 		}
-		catch (NotFoundException e) {
+		catch (Exception e) {
 			throw new RuntimeException(e);//should never happen!
 		}
 		byte[] bytes = new byte[syment];
 		int index = 0;
-		dc.putInt(bytes, 0, st_name);
-		index += 4;
 		if (header.is32Bit()) {
+			dc.putInt(bytes, 0, st_name);
+			index += 4;
 			dc.putInt(bytes, index, (int) st_value);
 			index += 4;
 			dc.putInt(bytes, index, (int) st_size);
 			index += 4;
+			bytes[index] = st_info;
+			index += 1;
+			bytes[index] = st_other;
+			index += 1;
+			dc.putShort(bytes, index, st_shndx);
+			index += 2;
 		}
 		else {
+			dc.putInt(bytes, 0, st_name);
+			index += 4;
+			bytes[index] = st_info;
+			index += 1;
+			bytes[index] = st_other;
+			index += 1;
+			dc.putShort(bytes, index, st_shndx);
+			index += 2;
 			dc.putLong(bytes, index, st_value);
 			index += 8;
 			dc.putLong(bytes, index, st_size);
 			index += 8;
 		}
-		bytes[index] = st_info;
-		index += 1;
-		bytes[index] = st_other;
-		index += 1;
-		dc.putShort(bytes, index, st_shndx);
 		return bytes;
 	}
 
