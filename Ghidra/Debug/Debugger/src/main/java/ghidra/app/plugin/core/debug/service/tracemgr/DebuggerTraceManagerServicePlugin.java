@@ -807,7 +807,9 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			}
 			varView.setSnap(snap);
 			fireLocationEvent(coordinates, cause);
-		}, SwingExecutorService.LATER); // Not MAYBE_NOW lest snap events get out of order
+		}, cause == ActivationCause.EMU_STATE_EDIT
+				? SwingExecutorService.MAYBE_NOW // ProgramView may call .get on Swing thread
+				: SwingExecutorService.LATER); // Respect event order
 	}
 
 	protected void fireLocationEvent(DebuggerCoordinates coordinates, ActivationCause cause) {

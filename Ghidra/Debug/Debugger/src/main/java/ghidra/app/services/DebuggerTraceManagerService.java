@@ -62,6 +62,10 @@ public interface DebuggerTraceManagerService {
 		 */
 		FOLLOW_PRESENT,
 		/**
+		 * The tool is activating scratch coordinates to display an emulator state change
+		 */
+		EMU_STATE_EDIT,
+		/**
 		 * The change was caused by a change to the mapper selection, probably indirectly by the
 		 * user
 		 */

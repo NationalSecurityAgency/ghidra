@@ -230,7 +230,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 				return;
 			}
 			try {
-				info.trackTraceBreakpoint(c.a, tb, false);
+				info.trackTraceBreakpoint(c.a, tb, getMode(info.trace), false);
 			}
 			catch (TrackedTooSoonException e) {
 				Msg.info(this,
@@ -243,7 +243,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 				return;
 			}
 			try {
-				info.trackTraceBreakpoint(c.a, tb, true);
+				info.trackTraceBreakpoint(c.a, tb, getMode(info.trace), true);
 			}
 			catch (TrackedTooSoonException e) {
 				Msg.info(this,
@@ -269,7 +269,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 			}
 			else {
 				try {
-					info.trackTraceBreakpoint(c.a, tb, false);
+					info.trackTraceBreakpoint(c.a, tb, getMode(info.trace), false);
 				}
 				catch (TrackedTooSoonException e) {
 					Msg.info(this, "Ignoring " + tb +
@@ -553,28 +553,17 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 			}
 			Collection<TraceBreakpoint> visible = new ArrayList<>();
 			for (AddressRange range : trace.getBaseAddressFactory().getAddressSet()) {
-				Collection<? extends TraceBreakpoint> breaks = trace
-						.getBreakpointManager()
-						.getBreakpointsIntersecting(Lifespan.at(snap), range);
-				if (mode.useEmulatedBreakpoints()) {
-					visible.addAll(breaks);
-				}
-				else {
-					for (TraceBreakpoint tb : breaks) {
-						if (recorder.getTargetBreakpoint(tb) != null) {
-							visible.add(tb);
-						}
-					}
-				}
+				visible.addAll(trace.getBreakpointManager()
+						.getBreakpointsIntersecting(Lifespan.at(snap), range));
 			}
-			trackTraceBreakpoints(a, visible);
+			trackTraceBreakpoints(a, visible, mode);
 		}
 
 		protected void trackTraceBreakpoints(AddCollector a,
-				Collection<TraceBreakpoint> breakpoints) {
+				Collection<TraceBreakpoint> breakpoints, StateEditingMode mode) {
 			for (TraceBreakpoint tb : breakpoints) {
 				try {
-					trackTraceBreakpoint(a, tb, false);
+					trackTraceBreakpoint(a, tb, mode, false);
 				}
 				catch (TrackedTooSoonException e) {
 					// This can still happen during reload (on OBJECT_RESTORED)
@@ -597,8 +586,13 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 				new DefaultTraceLocation(trace, null, Lifespan.at(snap), tb.getMinAddress()));
 		}
 
-		protected void trackTraceBreakpoint(AddCollector a, TraceBreakpoint tb, boolean forceUpdate)
+		protected void trackTraceBreakpoint(AddCollector a, TraceBreakpoint tb,
+				StateEditingMode mode, boolean forceUpdate)
 				throws TrackedTooSoonException {
+			if (!mode.useEmulatedBreakpoints() &&
+				(recorder == null || recorder.getTargetBreakpoint(tb) == null)) {
+				return;
+			}
 			Address traceAddr = tb.getMinAddress();
 			ProgramLocation progLoc = computeStaticLocation(tb);
 			LogicalBreakpointInternal lb;
