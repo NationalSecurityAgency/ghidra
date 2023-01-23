@@ -28,6 +28,6 @@ public class MetalLookAndFeelManager extends LookAndFeelManager {
 
 	@Override
 	protected UiDefaultsMapper getUiDefaultsMapper(UIDefaults defaults) {
-		return new MetalUiDefaultsMapper(defaults);
+		return new UiDefaultsMapper(defaults);
 	}
 }
