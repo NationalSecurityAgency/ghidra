@@ -51,7 +51,14 @@ public class DebugBreakpointImpl1 implements DebugBreakpointInternal {
 	@Override
 	public void remove() {
 		control.removeBreakpoint(jnaBreakpoint);
+		// If we do this here, dispose will fail
+		//jnaBreakpoint = null;
+	}
+
+	@Override
+	public void dispose() {
 		// Prevent accidental access. Will be released during GC. NPE is better than segfault.
+		CACHE.remove(jnaBreakpoint.getPointer());
 		jnaBreakpoint = null;
 	}
 
@@ -184,4 +191,5 @@ public class DebugBreakpointImpl1 implements DebugBreakpointInternal {
 	public void setDataParameters(int size, BreakAccess... access) {
 		setDataParameters(size, BitmaskSet.of(access));
 	}
+
 }

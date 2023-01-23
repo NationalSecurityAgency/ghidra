@@ -299,7 +299,12 @@ public class DbgBreakpointInfo {
 		}
 	}
 
-	/*public long getAddressAsLong() {
-		return locations.get(0).addrAsLong();
-	}*/ // getOffset instead
+	public void remove() {
+		bpt.remove();
+	}
+
+	public void dispose() {
+		bpt.dispose();
+	}
+
 }

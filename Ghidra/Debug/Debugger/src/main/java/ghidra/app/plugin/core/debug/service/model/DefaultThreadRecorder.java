@@ -164,15 +164,17 @@ public class DefaultThreadRecorder implements ManagedThreadRecorder {
 		if (regMapper == null) {
 			throw new IllegalStateException("Have not found register descriptions for " + thread);
 		}
-		if (!regMapper.getRegistersOnTarget().containsAll(registers)) {
-			throw new IllegalArgumentException(
-				"All given registers must be recognized by the target");
+		List<TargetRegister> tRegs = registers.stream()
+				.map(regMapper::traceToTarget)
+				.filter(Objects::nonNull)
+				.collect(Collectors.toList());
+		if (tRegs.size() < registers.size()) {
+			Msg.warn(this,
+				"All requested registers must be recognized by the model as registers");
 		}
 		if (registers.isEmpty()) {
 			return CompletableFuture.completedFuture(Map.of());
 		}
-		List<TargetRegister> tRegs =
-			registers.stream().map(regMapper::traceToTarget).collect(Collectors.toList());
 
 		Set<TargetRegisterBank> banks = getTargetRegisterBank(thread, frameLevel);
 		if (banks == null) {

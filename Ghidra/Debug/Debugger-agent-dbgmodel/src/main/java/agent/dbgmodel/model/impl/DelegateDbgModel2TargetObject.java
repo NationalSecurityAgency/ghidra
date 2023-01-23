@@ -263,7 +263,14 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 			}
 		}
 		if (proxy instanceof TargetExecutionStateful) {
-			setExecutionState(exec, "Refreshed");
+			if (proxy instanceof DbgModelTargetSession) {
+				if (state != DbgState.EXIT) {
+					setExecutionState(exec, "Refreshed");
+				}
+			}
+			else {
+				setExecutionState(exec, "Refreshed");
+			}
 		}
 	}
 
@@ -306,6 +313,7 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 			return;
 		}
 		if (proxy instanceof DbgModelTargetRegisterContainer || //
+			proxy instanceof DbgModelTargetRegisterBank || //
 			proxy.getName().equals("Stack") ||
 			proxy.getName().equals("Debug")) {
 			requestAttributes(false);
@@ -403,9 +411,11 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 			List<DelegateDbgModel2TargetObject> delegates = new ArrayList<>();
 			TargetObject stack =
 				(TargetObject) getCachedAttribute("Stack");
-			DbgModelTargetStack frames =
-				(DbgModelTargetStack) stack.getCachedAttribute("Frames");
-			delegates.add((DelegateDbgModel2TargetObject) frames.getDelegate());
+			if (stack != null) {
+				DbgModelTargetStack frames =
+					(DbgModelTargetStack) stack.getCachedAttribute("Frames");
+				delegates.add((DelegateDbgModel2TargetObject) frames.getDelegate());
+			}
 			DbgModelTargetRegisterContainer container =
 				(DbgModelTargetRegisterContainer) getCachedAttribute("Registers");
 			delegates.add((DelegateDbgModel2TargetObject) container.getDelegate());

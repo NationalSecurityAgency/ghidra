@@ -454,6 +454,7 @@
 		<attribute name="rdi" schema="RegisterDescriptor" required="yes" />
 		<attribute name="rsi" schema="RegisterDescriptor" required="yes" />
 		<attribute name="rip" schema="RegisterDescriptor" required="yes" />
+		<attribute name="rbp" schema="RegisterDescriptor" required="yes" />
 		<attribute name="rsp" schema="RegisterDescriptor" required="yes" />
 		<attribute name="r8" schema="RegisterDescriptor" required="yes" />
 		<attribute name="r9" schema="RegisterDescriptor" required="yes" />
@@ -464,6 +465,31 @@
 		<attribute name="r14" schema="RegisterDescriptor" required="yes" />
 		<attribute name="r15" schema="RegisterDescriptor" required="yes" />
 		<attribute name="efl" schema="RegisterDescriptor" required="yes" />
+		<attribute name="dr0" schema="RegisterDescriptor" required="no" />
+		<attribute name="dr1" schema="RegisterDescriptor" required="no" />
+		<attribute name="dr2" schema="RegisterDescriptor" required="no" />
+		<attribute name="dr3" schema="RegisterDescriptor" required="no" />
+		<attribute name="dr6" schema="RegisterDescriptor" required="no" />
+		<attribute name="dr7" schema="RegisterDescriptor" required="no" />
+		<attribute name="cs" schema="RegisterDescriptor" required="no" />
+		<attribute name="ds" schema="RegisterDescriptor" required="no" />
+		<attribute name="es" schema="RegisterDescriptor" required="no" />
+		<attribute name="fs" schema="RegisterDescriptor" required="no" />
+		<attribute name="gs" schema="RegisterDescriptor" required="no" />
+		<attribute name="ss" schema="RegisterDescriptor" required="no" />
+		<attribute name="af" schema="RegisterDescriptor" required="no" />
+		<attribute name="cf" schema="RegisterDescriptor" required="no" />
+		<attribute name="df" schema="RegisterDescriptor" required="no" />
+		<attribute name="if" schema="RegisterDescriptor" required="no" />
+		<attribute name="of" schema="RegisterDescriptor" required="no" />
+		<attribute name="pf" schema="RegisterDescriptor" required="no" />
+		<attribute name="sf" schema="RegisterDescriptor" required="no" />
+		<attribute name="tf" schema="RegisterDescriptor" required="no" />
+		<attribute name="zf" schema="RegisterDescriptor" required="no" />
+		<attribute name="iopl" schema="RegisterDescriptor" required="no" />
+		<attribute name="vif" schema="RegisterDescriptor" required="no" />
+		<attribute name="vip" schema="RegisterDescriptor" required="no" />
+		<attribute name="rflags" schema="RegisterDescriptor" required="no" />
 		<attribute schema="OBJECT" />
 	</schema>
 	<schema name="Stack" canonical="yes" elementResync="NEVER" attributeResync="NEVER">

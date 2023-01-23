@@ -156,6 +156,10 @@ public class ModelObjectImpl implements ModelObjectInternal {
 			Msg.debug(this, searchKey + " cannot be read");
 			return null;
 		}
+		if (hr.equals(COMUtilsExtra.E_NOINTERFACE)) {
+			Msg.debug(this, searchKey + " missing interface");
+			return null;
+		}
 		COMUtils.checkRC(hr);
 
 		ModelObject retval = getObjectWithMetadata(ppObject, ppMetadata);

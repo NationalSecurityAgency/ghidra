@@ -19,10 +19,16 @@ import agent.dbgeng.jna.dbgeng.breakpoint.IDebugBreakpoint3;
 
 public class DebugBreakpointImpl3 extends DebugBreakpointImpl2 {
 	@SuppressWarnings("unused")
-	private final IDebugBreakpoint3 jnaBreakpoint;
+	private IDebugBreakpoint3 jnaBreakpoint;
 
 	public DebugBreakpointImpl3(IDebugBreakpoint3 jnaBreakpoint) {
 		super(jnaBreakpoint);
 		this.jnaBreakpoint = jnaBreakpoint;
+	}
+
+	@Override
+	public void dispose() {
+		super.dispose();
+		jnaBreakpoint = null;
 	}
 }

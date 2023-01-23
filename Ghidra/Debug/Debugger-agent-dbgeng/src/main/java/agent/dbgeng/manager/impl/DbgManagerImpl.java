@@ -144,14 +144,18 @@ public class DbgManagerImpl implements DbgManager {
 	public DbgThreadImpl getThreadComputeIfAbsent(DebugThreadId id, DbgProcessImpl process,
 			int tid, boolean fire) {
 		synchronized (threads) {
-			if (!threads.containsKey(id)) {
-				DbgThreadImpl thread = new DbgThreadImpl(this, process, id, tid);
-				thread.add();
-				if (fire) {
-					Causes cause = DbgCause.Causes.UNCLAIMED;
-					getEventListeners().fire.threadCreated(thread, cause);
-					getEventListeners().fire.threadSelected(thread, null, cause);
+			if (threads.containsKey(id)) {
+				DbgThreadImpl existingThread = threads.get(id);
+				if (existingThread.getTid() == tid) {
+					return existingThread;
 				}
+			}
+			DbgThreadImpl thread = new DbgThreadImpl(this, process, id, tid);
+			thread.add();
+			if (fire) {
+				Causes cause = DbgCause.Causes.UNCLAIMED;
+				getEventListeners().fire.threadCreated(thread, cause);
+				getEventListeners().fire.threadSelected(thread, null, cause);
 			}
 			return threads.get(id);
 		}
@@ -218,12 +222,16 @@ public class DbgManagerImpl implements DbgManager {
 
 	public DbgProcessImpl getProcessComputeIfAbsent(DebugProcessId id, int pid, boolean fire) {
 		synchronized (processes) {
-			if (!processes.containsKey(id)) {
-				DbgProcessImpl process = new DbgProcessImpl(this, id, pid);
-				process.add();
-				if (fire) {
-					getEventListeners().fire.processAdded(process, DbgCause.Causes.UNCLAIMED);
+			if (processes.containsKey(id)) {
+				DbgProcessImpl existingProc = processes.get(id);
+				if (existingProc.getPid() == pid) {
+					return existingProc;
 				}
+			}
+			DbgProcessImpl process = new DbgProcessImpl(this, id, pid);
+			process.add();
+			if (fire) {
+				getEventListeners().fire.processAdded(process, DbgCause.Causes.UNCLAIMED);
 			}
 			return processes.get(id);
 		}
@@ -730,7 +738,7 @@ public class DbgManagerImpl implements DbgManager {
 		int tid = so.getCurrentThreadSystemId();
 		DbgThreadImpl thread = getThreadComputeIfAbsent(eventId, process, tid, true);
 		getEventListeners().fire.eventSelected(evt, evt.getCause());
-		//getEventListeners().fire.threadCreated(thread, DbgCause.Causes.UNCLAIMED);
+		getEventListeners().fire.threadCreated(thread, DbgCause.Causes.UNCLAIMED);
 		getEventListeners().fire.threadSelected(thread, null, evt.getCause());
 
 		String key = Integer.toHexString(eventId.id);
@@ -1105,6 +1113,11 @@ public class DbgManagerImpl implements DbgManager {
 			long bptId = evt.getId();
 			if (bptId == DbgEngUtil.DEBUG_ANY_ID.longValue()) {
 				changeBreakpoints();
+				for (DbgBreakpointInfo bptInfo : breakpoints.values()) {
+					if (bptInfo.getProc().equals(currentProcess)) {
+						doBreakpointDeleted(bptInfo.getNumber(), evt.getCause());
+					}
+				}
 			}
 			else {
 				DebugBreakpoint bpt = getControl().getBreakpointById((int) bptId);
@@ -1112,17 +1125,27 @@ public class DbgManagerImpl implements DbgManager {
 					doBreakpointDeleted(bptId, evt.getCause());
 					return;
 				}
-				DbgBreakpointInfo knownBreakpoint = getKnownBreakpoint(bptId);
+				DbgBreakpointInfo knownBreakpoint = breakpoints.get(bptId);
 				if (knownBreakpoint == null) {
 					breakpointInfo = new DbgBreakpointInfo(bpt, getCurrentProcess());
 					if (breakpointInfo.getOffset() != null) {
-						doBreakpointCreated(breakpointInfo, evt.getCause());
+						addKnownBreakpoint(breakpointInfo, false);
+						// NB: we don't want to create this here as the address is 0s
+						//doBreakpointCreated(breakpointInfo, evt.getCause());
 					}
 					return;
 				}
 				breakpointInfo = knownBreakpoint;
+				Long initOffset = breakpointInfo.getOffset();
 				breakpointInfo.setBreakpoint(bpt);
-				doBreakpointModified(breakpointInfo, evt.getCause());
+				if (!breakpointInfo.getOffset().equals(0L)) {
+					if (initOffset.equals(0L)) {
+						doBreakpointCreated(breakpointInfo, evt.getCause());
+					}
+					else {
+						doBreakpointModified(breakpointInfo, evt.getCause());
+					}
+				}
 			}
 		}
 	}
@@ -1145,7 +1168,7 @@ public class DbgManagerImpl implements DbgManager {
 	 */
 	@Internal
 	public void doBreakpointCreated(DbgBreakpointInfo newInfo, DbgCause cause) {
-		addKnownBreakpoint(newInfo, false);
+		addKnownBreakpoint(newInfo, true);
 		getEventListeners().fire.breakpointCreated(newInfo, cause);
 	}
 
@@ -1174,6 +1197,7 @@ public class DbgManagerImpl implements DbgManager {
 			return;
 		}
 		getEventListeners().fire.breakpointDeleted(oldInfo, cause);
+		oldInfo.dispose();
 	}
 
 	protected void doBreakpointModifiedSameLocations(DbgBreakpointInfo newInfo,
