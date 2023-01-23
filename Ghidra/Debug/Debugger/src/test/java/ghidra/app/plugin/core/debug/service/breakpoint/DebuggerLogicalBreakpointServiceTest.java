@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.core.debug.service.breakpoint;
 
-import static ghidra.lifecycle.Unfinished.TODO;
 import static org.junit.Assert.*;
 
 import java.util.*;
@@ -26,6 +25,7 @@ import org.junit.*;
 
 import generic.Unique;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.service.editing.DebuggerStateEditingServicePlugin;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.services.*;
 import ghidra.app.services.LogicalBreakpoint.State;
@@ -547,16 +547,6 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		assertTrue(breakpointService.getAllBreakpoints().isEmpty());
 	}
 
-	/**
-	 * TODO: When "resume recording" is implemented, consider that a "new" trace may already have
-	 * breakpoints
-	 */
-	@Test
-	@Ignore
-	public void testRecordTraceWithBreakpoints() {
-		TODO();
-	}
-
 	@Test
 	public void testRecordTraceThenOpenTraceThenAddBreakpoint() throws Throwable {
 		startRecorder1();
@@ -718,16 +708,6 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 		waitForSwing();
 
 		assertLogicalBreakpointForMappedSoftwareBreakpoint(trace);
-	}
-
-	/**
-	 * TODO: When "resume recording" is implemented, consider that a "new" trace may already have
-	 * mappings
-	 */
-	@Test
-	@Ignore
-	public void testOpenProgramWithBookmarkThenRecordTraceWithMapping() {
-		TODO();
 	}
 
 	@Test
@@ -1639,11 +1619,15 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 	@Test
 	public void testAddTraceBreakpointSetSleighThenMapThenSaveToProgramCopiesSleigh()
 			throws Throwable {
+		DebuggerStateEditingService editingService =
+			addPlugin(tool, DebuggerStateEditingServicePlugin.class);
+
 		// TODO: What if already mapped?
 		// Not sure I care about tb.setEmuSleigh() out of band
 
 		createTrace();
 		traceManager.openTrace(tb.trace);
+		editingService.setCurrentMode(tb.trace, StateEditingMode.RW_EMULATOR);
 		createProgramFromTrace();
 		intoProject(program);
 		programManager.openProgram(program);

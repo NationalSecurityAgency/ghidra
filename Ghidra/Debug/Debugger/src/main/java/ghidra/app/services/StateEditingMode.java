@@ -319,7 +319,7 @@ public enum StateEditingMode {
 					throw new AssertionError(e);
 				}
 			}
-			return traceManager.activateAndNotify(withTime, ActivationCause.USER, false);
+			return traceManager.activateAndNotify(withTime, ActivationCause.EMU_STATE_EDIT, false);
 		}
 
 		@Override

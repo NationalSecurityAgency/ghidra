@@ -454,39 +454,24 @@ public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebugge
 	}
 
 	@Test
-	public void testWriteTargetMemoryNotPresentErr() throws Throwable {
+	public void testWriteTargetRequiresPresent() throws Throwable {
 		TraceRecorder recorder = recordAndWaitSync();
 		traceManager.openTrace(tb.trace);
 		activateTrace();
 		traceManager.activateThread(recorder.getTraceThread(mb.testThread1));
 		waitForSwing();
-		editingService.setCurrentMode(recorder.getTrace(), StateEditingMode.RW_TARGET);
 
-		traceManager.activateSnap(traceManager.getCurrentSnap() - 1);
-
-		StateEditor editor = createStateEditor();
-		assertFalse(editor.isVariableEditable(tb.addr(0x00400000), 4));
-		expecting(MemoryAccessException.class, () -> {
-			waitOn(editor.setVariable(tb.addr(0x00400000), tb.arr(1, 2, 3, 4)));
-		});
-	}
-
-	@Test
-	public void testWriteTargetRegisterNotPresentErr() throws Throwable {
-		TraceRecorder recorder = recordAndWaitSync();
-		traceManager.openTrace(tb.trace);
-		activateTrace();
-		traceManager.activateThread(recorder.getTraceThread(mb.testThread1));
+		editingService.setCurrentMode(tb.trace, StateEditingMode.RW_TARGET);
 		waitForSwing();
-		editingService.setCurrentMode(recorder.getTrace(), StateEditingMode.RW_TARGET);
+		assertEquals(recorder.getSnap(), traceManager.getCurrentSnap());
 
 		traceManager.activateSnap(traceManager.getCurrentSnap() - 1);
+		waitForSwing();
+		assertEquals(StateEditingMode.RW_EMULATOR, editingService.getCurrentMode(tb.trace));
 
-		StateEditor editor = createStateEditor();
-		assertFalse(editor.isRegisterEditable(r0));
-		expecting(MemoryAccessException.class, () -> {
-			waitOn(editor.setRegister(rv1234));
-		});
+		editingService.setCurrentMode(tb.trace, StateEditingMode.RW_TARGET);
+		waitForSwing();
+		assertEquals(recorder.getSnap(), traceManager.getCurrentSnap());
 	}
 
 	@Test
@@ -494,6 +479,7 @@ public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebugge
 		createAndOpenTrace();
 		activateTrace();
 		editingService.setCurrentMode(tb.trace, StateEditingMode.RW_TARGET);
+		waitForSwing();
 
 		StateEditor editor = createStateEditor();
 		assertFalse(editor.isVariableEditable(tb.addr(0x00400000), 4));
@@ -507,6 +493,7 @@ public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebugge
 		createAndOpenTrace();
 		activateTrace();
 		editingService.setCurrentMode(tb.trace, StateEditingMode.RW_TARGET);
+		waitForSwing();
 
 		StateEditor editor = createStateEditor();
 		assertFalse(editor.isRegisterEditable(r0));
