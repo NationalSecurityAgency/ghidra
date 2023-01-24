@@ -527,7 +527,8 @@ public interface TraceRecorder {
 			return writeMemory(address, data);
 		}
 		if (address.isRegisterAddress()) {
-			return writeRegister(platform, thread, frameLevel, address, data);
+			return writeRegister(platform, Objects.requireNonNull(thread), frameLevel, address,
+				data);
 		}
 		throw new IllegalArgumentException("Address is not in a recognized space: " + address);
 	}
@@ -598,6 +599,9 @@ public interface TraceRecorder {
 			Address address, int size) {
 		if (address.isMemoryAddress()) {
 			return isMemoryOnTarget(address);
+		}
+		if (thread == null) { // register-space addresses require a thread
+			return false;
 		}
 		Register register = platform.getLanguage().getRegister(address, size);
 		if (register == null) {
