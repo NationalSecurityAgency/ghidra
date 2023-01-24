@@ -30,6 +30,7 @@ import ghidra.app.cmd.data.CreateDataCmd;
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.plugin.core.bookmark.BookmarkEditCmd;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
+import ghidra.app.services.GoToService;
 import ghidra.framework.cmd.CompoundCmd;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramBuilder;
@@ -85,6 +86,7 @@ public class NextPrevCodeUnitPluginTest extends AbstractGhidraHeadedIntegrationT
 		nextBookmark = (MultiStateDockingAction<String>) getAction(p, "Next Bookmark");
 
 		cb = env.getPlugin(CodeBrowserPlugin.class);
+		goTo(program.getMinAddress());
 	}
 
 	@After
@@ -112,8 +114,7 @@ public class NextPrevCodeUnitPluginTest extends AbstractGhidraHeadedIntegrationT
 		addType("0100102a", "15 00", new DWordDataType());
 	}
 
-	private void addType(String addrString, String bytes, DataType dt)
-			throws Exception {
+	private void addType(String addrString, String bytes, DataType dt) throws Exception {
 		builder.setBytes(addrString, bytes);
 		builder.applyDataType(addrString, dt);
 	}
@@ -938,4 +939,10 @@ public class NextPrevCodeUnitPluginTest extends AbstractGhidraHeadedIntegrationT
 		});
 	}
 
+	private void goTo(Address a) throws Exception {
+		GoToService goToService = tool.getService(GoToService.class);
+		goToService.goTo(a);
+		cb.updateNow();
+		waitForSwing();
+	}
 }

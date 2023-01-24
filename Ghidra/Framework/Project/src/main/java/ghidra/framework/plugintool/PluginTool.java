@@ -121,6 +121,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 
 	private boolean isConfigurable = true;
 	protected boolean isDisposed = false;
+	private boolean restoringDataState;
 
 	/**
 	 * Construct a new PluginTool.
@@ -574,8 +575,14 @@ public abstract class PluginTool extends AbstractDockingTool {
 	}
 
 	public void restoreDataStateFromXml(Element root) {
-		pluginMgr.restoreDataStateFromXml(root);
-		setConfigChanged(false);
+		restoringDataState = true;
+		try {
+			pluginMgr.restoreDataStateFromXml(root);
+			setConfigChanged(false);
+		}
+		finally {
+			restoringDataState = false;
+		}
 	}
 
 	public Element saveDataStateToXml(boolean savingProject) {
@@ -1500,6 +1507,10 @@ public abstract class PluginTool extends AbstractDockingTool {
 			return;
 		}
 		super.contextChanged(provider);
+	}
+
+	public boolean isRestoringDataState() {
+		return restoringDataState;
 	}
 
 //==================================================================================================
