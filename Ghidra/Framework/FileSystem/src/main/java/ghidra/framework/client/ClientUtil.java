@@ -108,7 +108,7 @@ public class ClientUtil {
 
 		host = host.trim().toLowerCase();
 		try {
-			host = InetNameLookup.getCanonicalHostName(host);
+			InetNameLookup.getCanonicalHostName(host);
 		}
 		catch (UnknownHostException e) {
 			Msg.warn(ClientUtil.class, "Failed to resolve hostname for " + host);
@@ -151,7 +151,7 @@ public class ClientUtil {
 		host = host.trim().toLowerCase();
 		String hostAddr = host;
 		try {
-			hostAddr = InetNameLookup.getCanonicalHostName(host);
+			InetNameLookup.getCanonicalHostName(host);
 		}
 		catch (UnknownHostException e) {
 			throw new IOException("Repository server lookup failed: " + host);
