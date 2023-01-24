@@ -1,0 +1,59 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+    Examples of varnode values being used at points where they are known to be constant.
+    The use should be replaced with a constant Varnode in most cases.  The example in
+    condconst_conn is a situation where the varnode should not be replace.
+-->
+<bytechunk space="ram" offset="0x1006fa" readonly="true">
+                    554889e54889
+7df88975f48955f0894dec837df40075
+0e8b55f48b45f001c2488b45f8891048
+8b45f8488d50048b45f48902837df40a
+750d488b45f8488d50088b45f4890283
+7dec077412488b45f84883c00c8b55ec
+83c2088910eb10488b45f84883c0108b
+55ec83c2098910905dc3554889e5897d
+fc837dfc0075098b45fc890594082000
+8b45fc890597082000837dfc0a75128b
+45fc8905800820008b45fc89057b0820
+00905dc3554889e5897dec8975e8c745
+fc0a000000837dec007517837de80a75
+088b45ec8945fceb0fc745fc14000000
+eb068b45ec8945fc8b45fc5dc3
+</bytechunk>
+<symbol space="ram" offset="0x1006fa" name="condconst1"/>
+<symbol space="ram" offset="0x10076a" name="condconst_copy"/>
+<symbol space="ram" offset="0x1007a4" name="condconst_conn"/>
+</binaryimage>
+<script>
+  <com>parse line extern void condconst1(int4 *ptr,int4 a,int4 b,int4 c);</com>
+  <com>parse line extern void condconst_copy(int4 d);</com>
+  <com>parse line extern int4 condconst_conn(int4 x,int4 y);</com>
+  <com>map addr r0x301014 int4 glob1</com>
+  <com>map addr r0x301020 int4 glob2</com>
+  <com>map addr r0x301018 int4 glob3</com>
+  <com>map addr r0x30101c int4 glob4</com>
+  <com>lo fu condconst1</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu condconst_copy</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>lo fu condconst_conn</com>
+  <com>decompile</com>
+  <com>print C</com>
+</script>
+<stringmatch name="Conditional Constant #1" min="1" max="1">\*ptr = b;</stringmatch>
+<stringmatch name="Conditional Constant #2" min="1" max="1">ptr\[1\] = a;</stringmatch>
+<stringmatch name="Conditional Constant #3" min="1" max="1">ptr\[2\] = 10;</stringmatch>
+<stringmatch name="Conditional Constant #4" min="1" max="1">ptr\[3\] = c \+ 8;</stringmatch>
+<stringmatch name="Conditional Constant #5" min="1" max="1">ptr\[4\] = 0x10;</stringmatch>
+<stringmatch name="Conditional Constant #6" min="1" max="1">glob1 = 0;</stringmatch>
+<stringmatch name="Conditional Constant #7" min="1" max="1">glob2 = d;</stringmatch>
+<stringmatch name="Conditional Constant #8" min="1" max="1">glob3 = 10;</stringmatch>
+<stringmatch name="Conditional Constant #9" min="1" max="1">glob4 = 10;</stringmatch>
+<stringmatch name="Conditional Constant #10" min="1" max="1">iStack_c = x;</stringmatch>
+<stringmatch name="Conditional Constant #11" min="1" max="1">iStack_c = 0x14;</stringmatch>
+<stringmatch name="Conditional Constant #12" min="0" max="0">iStack_c = 10;</stringmatch>
+</decompilertest>
