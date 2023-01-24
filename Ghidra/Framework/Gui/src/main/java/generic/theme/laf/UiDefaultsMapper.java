@@ -221,24 +221,34 @@ public class UiDefaultsMapper {
 	}
 
 	/**
-	 * Defines the values to assign to all the system color ids based on the system ids
-	 * defined in the {@link BasicLookAndFeel}
+	 * Defines the values to assign to all the system color ids based on the best representative
+	 * value defined in the {@link BasicLookAndFeel}
 	 */
 	protected void assignSystemColorValues() {
+		// Originally, these values were assigned to the corresponding concepts as defined
+		// in the BasicLookAndFeel such as "control", "text", etc. Unfortunately, those
+		// conventions are rarely used by specific
+		// look and feels and most look and feels needed to override this method and put in 
+		// different values. However, it was discovered that using a representative component
+		// value worked much better. So each Look and Feel was examined and those component values
+		// chosen here are the ones that seemed to work for the most look and feels. If a
+		// specific look and feel needs different values, this class is designed to be subclassed
+		// where the values can be overridden. See the NimbusUiDefaultsMapper as an example.
 
-		assignSystemColorFromLafId(BG_CONTROL_ID, "control");
-		assignSystemColorFromLafId(FG_CONTROL_ID, "controlText");
-		assignSystemColorFromLafId(BG_BORDER_ID, "controlShadow");
+		assignSystemColorFromLafId(BG_CONTROL_ID, "Button.background");
+		assignSystemColorFromLafId(FG_CONTROL_ID, "Button.foreground");
+		assignSystemColorFromLafId(BG_BORDER_ID, "InternalFrame.borderColor");
 
-		assignSystemColorFromLafId(BG_VIEW_ID, "window");
-		assignSystemColorFromLafId(FG_VIEW_ID, "windowText");
-		assignSystemColorFromLafId(BG_VIEW_SELECTED_ID, "textHighlight");
-		assignSystemColorFromLafId(FG_VIEW_SELECTED_ID, "textHighlightText");
+		assignSystemColorFromLafId(BG_VIEW_ID, "TextArea.background");
+		assignSystemColorFromLafId(FG_VIEW_ID, "TextArea.foreground");
+		assignSystemColorFromLafId(BG_VIEW_SELECTED_ID, "TextArea.selectionBackground");
+		assignSystemColorFromLafId(FG_VIEW_SELECTED_ID, "TextArea.selectionForeground");
 
-		assignSystemColorFromLafId(FG_DISABLED_ID, "textInactiveText");
+		assignSystemColorFromLafId(FG_DISABLED_ID, "Label.disabledForeground");
 
-		assignSystemColorFromLafId(BG_TOOLTIP_ID, "info");
-		assignSystemColorFromLafId(FG_TOOLTIP_ID, "infoText");
+		assignSystemColorFromLafId(BG_TOOLTIP_ID, "ToolTip.background");
+		assignSystemColorFromLafId(FG_TOOLTIP_ID, "ToolTip.foreground");
+
 	}
 
 	/**

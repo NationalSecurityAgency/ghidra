@@ -28,7 +28,7 @@ public class WindowsLookAndFeelManager extends LookAndFeelManager {
 
 	@Override
 	protected UiDefaultsMapper getUiDefaultsMapper(UIDefaults defaults) {
-		return new WindowsUiDefaultsMapper(defaults);
+		return new UiDefaultsMapper(defaults);
 	}
 
 }

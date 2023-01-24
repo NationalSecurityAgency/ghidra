@@ -28,6 +28,6 @@ public class MacLookAndFeelManager extends LookAndFeelManager {
 
 	@Override
 	protected UiDefaultsMapper getUiDefaultsMapper(UIDefaults defaults) {
-		return new MacUiDefaultsMapper(defaults);
+		return new UiDefaultsMapper(defaults);
 	}
 }
