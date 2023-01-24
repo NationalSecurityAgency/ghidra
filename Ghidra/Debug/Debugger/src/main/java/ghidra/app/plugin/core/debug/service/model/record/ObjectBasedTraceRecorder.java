@@ -427,7 +427,8 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 
 	@Override
 	public Set<TargetRegisterBank> getTargetRegisterBanks(TraceThread thread, int frameLevel) {
-		return Set.of(objectRecorder.getTargetFrameInterface(thread, frameLevel, TargetRegisterBank.class));
+		return Set.of(
+			objectRecorder.getTargetFrameInterface(thread, frameLevel, TargetRegisterBank.class));
 	}
 
 	@Override
@@ -504,7 +505,7 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 	protected TargetRegisterContainer getTargetRegisterContainer(TraceThread thread,
 			int frameLevel) {
 		if (!(thread instanceof TraceObjectThread tot)) {
-			throw new AssertionError();
+			throw new AssertionError("thread = " + thread);
 		}
 		TraceObject objThread = tot.getObject();
 		TraceObject regContainer = objThread.queryRegisterContainer(frameLevel);

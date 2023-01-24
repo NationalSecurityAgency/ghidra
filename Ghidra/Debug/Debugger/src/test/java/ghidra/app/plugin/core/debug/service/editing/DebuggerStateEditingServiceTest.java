@@ -432,13 +432,13 @@ public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebugge
 			(TargetRegisterBank) mb.testThread1.getCachedAttribute("RegisterBank");
 		traceManager.openTrace(tb.trace);
 		activateTrace();
-		TraceThread thread = recorder.getTraceThread(mb.testThread1);
+		TraceThread thread = waitForValue(() -> recorder.getTraceThread(mb.testThread1));
 		traceManager.activateThread(thread);
 		waitForSwing();
 		editingService.setCurrentMode(recorder.getTrace(), StateEditingMode.RW_TARGET);
 
 		StateEditor editor = createStateEditor();
-		assertTrue(editor.isRegisterEditable(r0));
+		waitForPass(() -> assertTrue(editor.isRegisterEditable(r0)));
 		waitOn(editor.setRegister(rv1234));
 		waitForPass(() -> {
 			TraceMemorySpace regs =
@@ -447,7 +447,7 @@ public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebugge
 			RegisterValue value = regs.getValue(getPlatform(), traceManager.getCurrentSnap(), r0);
 			assertEquals(rv1234, value);
 		});
-		assertTrue(editor.isRegisterEditable(r0h));
+		waitForPass(() -> assertTrue(editor.isRegisterEditable(r0h)));
 		waitOn(editor.setRegister(rvHigh1234));
 
 		assertArrayEquals(mb.arr(0, 0, 4, 0xd2, 0, 0, 4, 0xd2), waitOn(bank.readRegister("r0")));
@@ -478,6 +478,7 @@ public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebugge
 	public void testWriteTargetMemoryNotAliveErr() throws Throwable {
 		createAndOpenTrace();
 		activateTrace();
+		waitForSwing();
 		editingService.setCurrentMode(tb.trace, StateEditingMode.RW_TARGET);
 		waitForSwing();
 
@@ -492,6 +493,7 @@ public class DebuggerStateEditingServiceTest extends AbstractGhidraHeadedDebugge
 	public void testWriteTargetRegisterNotAliveErr() throws Throwable {
 		createAndOpenTrace();
 		activateTrace();
+		waitForSwing();
 		editingService.setCurrentMode(tb.trace, StateEditingMode.RW_TARGET);
 		waitForSwing();
 
