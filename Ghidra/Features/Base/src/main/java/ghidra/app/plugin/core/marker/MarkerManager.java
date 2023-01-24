@@ -416,7 +416,7 @@ public class MarkerManager implements MarkerService {
 	}
 
 	private Color getBackgroundColor(Program program, MarkerSetCacheEntry entry, Address address) {
-		return entry.getBackgroundColor(address);
+		return entry == null ? null : entry.getBackgroundColor(address);
 	}
 
 	public GoToService getGoToService() {

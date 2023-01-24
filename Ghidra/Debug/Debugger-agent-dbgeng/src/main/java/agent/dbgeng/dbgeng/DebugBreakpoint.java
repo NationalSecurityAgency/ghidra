@@ -132,4 +132,6 @@ public interface DebugBreakpoint {
 	void setDataParameters(int size, BitmaskSet<BreakAccess> access);
 
 	void setDataParameters(int size, BreakAccess... access);
+
+	void dispose();
 }
