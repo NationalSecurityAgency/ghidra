@@ -327,7 +327,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 					""",
 				List.of(
 					// First instruction undoes the modification above
-					"XOR byte ptr [RIP + 0x0], 0xcc",  // 7 bytes
+					"XOR byte ptr [0x00400007], 0xcc",  // 7 bytes
 					"MOV EAX,0xdeadbeef"));            // 5 bytes
 
 			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0);
@@ -600,7 +600,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 					*:8 0x00600000:8 = 0xfedcba9876543210;
 					""",
 				List.of(
-					"MOVAPS XMM0, xmmword ptr [RIP + 0x1ffff9]"));
+					"MOVAPS XMM0, xmmword ptr [0x00600000]"));
 
 			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0);
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
