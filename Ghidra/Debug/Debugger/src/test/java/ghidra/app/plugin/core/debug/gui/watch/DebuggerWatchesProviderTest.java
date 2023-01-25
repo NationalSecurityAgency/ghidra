@@ -297,7 +297,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	}
 
 	@Test
-	public void testLiveCausesReads() throws Exception {
+	public void testLiveCausesReads() throws Throwable {
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 		bank = mb.testThread1.addRegisterBank();
@@ -311,6 +311,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		recorder = modelService.recordTarget(mb.testProcess1,
 			createTargetTraceMapper(mb.testProcess1), ActionSource.AUTOMATIC);
+		waitRecorder(recorder);
 		Trace trace = recorder.getTrace();
 		TraceThread thread = waitForValue(() -> recorder.getTraceThread(mb.testThread1));
 
