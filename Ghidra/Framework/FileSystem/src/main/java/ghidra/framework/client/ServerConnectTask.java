@@ -123,6 +123,16 @@ class ServerConnectTask extends Task {
 		return subj;
 	}
 
+	private static String getPreferredHostname(String name) {
+		try {
+			return InetNameLookup.getCanonicalHostName(name);
+		}
+		catch (UnknownHostException e) {
+			Msg.warn(ServerConnectTask.class, "Failed to resolve hostname for " + name);
+		}
+		return name;
+	}
+
 	private static boolean isSSLHandshakeCancelled(SSLHandshakeException e) throws IOException {
 		if (e.getMessage().indexOf("bad_certificate") > 0) {
 			if (ApplicationKeyManagerFactory.getPreferredKeyStore() == null) {
@@ -265,7 +275,7 @@ class ServerConnectTask extends Task {
 				}
 			}
 
-			String serverName = server.getServerName();
+			String serverName = getPreferredHostname(server.getServerName());
 			AnonymousCallback onlyAnonymousCb = null;
 			while (true) {
 				try {
