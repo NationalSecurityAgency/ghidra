@@ -18,13 +18,10 @@ package agent.dbgeng.model.iface2;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import agent.dbgeng.manager.DbgEventsListenerAdapter;
-import agent.dbgeng.manager.DbgStackFrame;
+import agent.dbgeng.manager.*;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
-import agent.dbgeng.manager.impl.DbgThreadImpl;
 import agent.dbgeng.model.iface1.DbgModelSelectableObject;
 import ghidra.async.AsyncUtils;
-import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.TargetStackFrame;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
@@ -51,7 +48,8 @@ public interface DbgModelTargetStackFrame extends //
 	@Override
 	public default CompletableFuture<Void> setActive() {
 		DbgManagerImpl manager = getManager();
-		DbgThreadImpl thread = manager.getCurrentThread();
+		DbgModelTargetThread targetThread = getParentThread();
+		DbgThread thread = targetThread.getThread();
 		String name = this.getName();
 		String stripped = name.substring(1, name.length() - 1);
 		int index = Integer.decode(stripped);
@@ -111,10 +109,6 @@ public interface DbgModelTargetStackFrame extends //
 
 	public void setFrame(DbgStackFrame frame);
 
-	public TargetObject getThread();
-
 	public Address getPC();
-
-	public DbgModelTargetProcess getProcess();
 
 }

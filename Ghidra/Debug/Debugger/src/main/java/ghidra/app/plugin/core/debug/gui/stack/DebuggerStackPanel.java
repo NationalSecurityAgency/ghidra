@@ -17,7 +17,7 @@ package ghidra.app.plugin.core.debug.gui.stack;
 
 import java.util.List;
 
-import javax.swing.event.ListSelectionEvent;
+import javax.swing.JTable;
 import javax.swing.event.ListSelectionListener;
 
 import docking.widgets.table.AbstractDynamicTableColumn;
@@ -43,8 +43,6 @@ import ghidra.trace.model.Trace;
 import ghidra.trace.model.stack.TraceObjectStackFrame;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
-import utilities.util.SuppressableCallback;
-import utilities.util.SuppressableCallback.Suppression;
 
 public class DebuggerStackPanel extends AbstractObjectsTableBasedPanel<TraceObjectStackFrame>
 		implements ListSelectionListener, CellActivationListener {
@@ -109,8 +107,6 @@ public class DebuggerStackPanel extends AbstractObjectsTableBasedPanel<TraceObje
 	@AutoServiceConsumed
 	protected DebuggerTraceManagerService traceManager;
 
-	private final SuppressableCallback<Void> cbFrameSelected = new SuppressableCallback<>();
-
 	public DebuggerStackPanel(DebuggerStackProvider provider) {
 		super(provider.plugin, provider, TraceObjectStackFrame.class);
 		this.provider = provider;
@@ -139,21 +135,16 @@ public class DebuggerStackPanel extends AbstractObjectsTableBasedPanel<TraceObje
 		super.coordinatesActivated(coordinates);
 		TraceObject object = coordinates.getObject();
 		if (object != null) {
-			try (Suppression supp = cbFrameSelected.suppress(null)) {
-				trySelectAncestor(object);
-			}
+			trySelectAncestor(object);
 		}
 	}
 
 	@Override
-	public void valueChanged(ListSelectionEvent e) {
-		super.valueChanged(e);
-		if (e.getValueIsAdjusting()) {
-			return;
-		}
+	public void cellActivated(JTable table) {
+		// No super
 		ValueRow item = getSelectedItem();
 		if (item != null) {
-			cbFrameSelected.invoke(() -> traceManager.activateObject(item.getValue().getChild()));
+			traceManager.activateObject(item.getValue().getChild());
 		}
 	}
 }

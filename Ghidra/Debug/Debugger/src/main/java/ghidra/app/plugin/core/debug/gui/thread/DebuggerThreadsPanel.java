@@ -17,9 +17,10 @@ package ghidra.app.plugin.core.debug.gui.thread;
 
 import java.util.List;
 
-import javax.swing.event.ListSelectionEvent;
+import javax.swing.JTable;
 
 import docking.widgets.table.RangeCursorTableHeaderRenderer.SeekListener;
+import docking.widgets.table.threaded.ThreadedTableModelListener;
 import docking.widgets.table.TableColumnDescriptor;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.model.*;
@@ -37,8 +38,6 @@ import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.model.thread.TraceObjectThread;
-import utilities.util.SuppressableCallback;
-import utilities.util.SuppressableCallback.Suppression;
 
 public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceObjectThread> {
 
@@ -166,8 +165,6 @@ public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 	@AutoServiceConsumed
 	protected DebuggerTraceManagerService traceManager;
 
-	private final SuppressableCallback<Void> cbThreadSelected = new SuppressableCallback<>();
-
 	private final SeekListener seekListener = pos -> {
 		long snap = Math.round(pos);
 		if (current.getTrace() == null || snap < 0) {
@@ -180,11 +177,22 @@ public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 		super(provider.plugin, provider, TraceObjectThread.class);
 		setLimitToSnap(false); // TODO: Toggle for this?
 
-		tableModel.addTableModelListener(e -> {
-			// This seems a bit heavy handed
-			trySelectCurrentThread();
-		});
 		addSeekListener(seekListener);
+
+		tableModel.addThreadedTableModelListener(new ThreadedTableModelListener() {
+			@Override
+			public void loadingStarted() {
+			}
+
+			@Override
+			public void loadingFinished(boolean wasCancelled) {
+				trySelectCurrentThread();
+			}
+
+			@Override
+			public void loadPending() {
+			}
+		});
 	}
 
 	@Override
@@ -211,11 +219,10 @@ public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 
 	private void trySelectCurrentThread() {
 		TraceObject object = current.getObject();
-		if (object != null) {
-			try (Suppression supp = cbThreadSelected.suppress(null)) {
-				trySelectAncestor(object);
-			}
+		if (object == null) {
+			return;
 		}
+		trySelectAncestor(object);
 	}
 
 	@Override
@@ -225,21 +232,11 @@ public class DebuggerThreadsPanel extends AbstractObjectsTableBasedPanel<TraceOb
 	}
 
 	@Override
-	public void valueChanged(ListSelectionEvent e) {
-		super.valueChanged(e);
-		if (e.getValueIsAdjusting()) {
-			return;
-		}
+	public void cellActivated(JTable table) {
+		// No super
 		ValueRow item = getSelectedItem();
 		if (item != null) {
-			cbThreadSelected.invoke(() -> {
-				if (current.getTrace() != item.getValue().getTrace()) {
-					// Prevent timing issues during navigation from causing trace changes
-					// Thread table should never cause trace change anyway
-					return;
-				}
-				traceManager.activateObject(item.getValue().getChild());
-			});
+			traceManager.activateObject(item.getValue().getChild());
 		}
 	}
 }

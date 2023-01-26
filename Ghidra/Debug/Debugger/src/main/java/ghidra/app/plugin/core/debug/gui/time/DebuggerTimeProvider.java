@@ -17,7 +17,7 @@ package ghidra.app.plugin.core.debug.gui.time;
 
 import static ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.lang.invoke.MethodHandles;
 import java.util.Objects;
 
@@ -146,9 +146,32 @@ public class DebuggerTimeProvider extends ComponentProviderAdapter {
 				return;
 			}
 			myActionContext = new DebuggerSnapActionContext(current.getTrace(), snap);
-			traceManager.activateSnap(snap);
 			contextChanged();
 		});
+		mainPanel.snapshotTable.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
+					activateSelectedSnapshot();
+				}
+			}
+		});
+		mainPanel.snapshotTable.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+					activateSelectedSnapshot();
+					e.consume(); // lest it select the next row down
+				}
+			}
+		});
+	}
+
+	private void activateSelectedSnapshot() {
+		Long snap = mainPanel.getSelectedSnapshot();
+		if (snap != null && traceManager != null) {
+			traceManager.activateSnap(snap);
+		}
 	}
 
 	protected void createActions() {

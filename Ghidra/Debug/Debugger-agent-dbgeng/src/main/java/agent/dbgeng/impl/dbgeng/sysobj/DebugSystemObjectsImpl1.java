@@ -71,7 +71,7 @@ public class DebugSystemObjectsImpl1 implements DebugSystemObjectsInternal {
 	@Override
 	public void setCurrentThreadId(DebugThreadId id) {
 		HRESULT hr = jnaSysobj.SetCurrentThreadId(new ULONG(id.id));
-		if (!hr.equals(COMUtilsExtra.E_UNEXPECTED)) {
+		if (!hr.equals(COMUtilsExtra.E_UNEXPECTED) && !hr.equals(COMUtilsExtra.E_NOINTERFACE)) {
 			COMUtils.checkRC(hr);
 		}
 	}

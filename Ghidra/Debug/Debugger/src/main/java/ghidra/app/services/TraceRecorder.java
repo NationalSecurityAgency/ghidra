@@ -723,6 +723,13 @@ public interface TraceRecorder {
 	boolean isSupportsFocus();
 
 	/**
+	 * Check if the target is subject to a {@link TargetActiveScope}.
+	 * 
+	 * @return true if an applicable scope is found, false otherwise.
+	 */
+	boolean isSupportsActivation();
+
+	/**
 	 * Get the last-focused object as observed by this recorder
 	 * 
 	 * @impNote While focus events are not recorded in the trace, it's most fitting to process these
@@ -747,6 +754,14 @@ public interface TraceRecorder {
 	 * @return a future which completes with true if the operation was successful, false otherwise.
 	 */
 	CompletableFuture<Boolean> requestFocus(TargetObject focus);
+
+	/**
+	 * Request activation of a successor of the target
+	 * 
+	 * @param active the object to activate
+	 * @return a future which completes with true if the operation was successful, false otherwise.
+	 */
+	CompletableFuture<Boolean> requestActivation(TargetObject active);
 
 	/**
 	 * Wait for pending transactions finish execution.

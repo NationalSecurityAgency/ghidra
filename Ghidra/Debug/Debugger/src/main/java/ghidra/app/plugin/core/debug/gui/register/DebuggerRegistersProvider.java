@@ -1296,7 +1296,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			return AsyncUtils.NIL;
 		}
 		toRead.retainAll(regMapper.getRegistersOnTarget());
-		Set<TargetRegisterBank> banks = recorder.getTargetRegisterBanks(traceThread, current.getFrame());
+		Set<TargetRegisterBank> banks =
+			recorder.getTargetRegisterBanks(traceThread, current.getFrame());
 		if (banks == null || banks.isEmpty()) {
 			Msg.error(this, "Current frame's bank does not exist");
 			return AsyncUtils.NIL;
@@ -1341,16 +1342,9 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		}
 		return future.exceptionally(ex -> {
 			ex = AsyncUtils.unwrapThrowable(ex);
-			if (ex instanceof DebuggerModelAccessException) {
-				String msg =
-					"Could not read target registers for selected thread: " + ex.getMessage();
-				Msg.info(this, msg);
-				plugin.getTool().setStatusInfo(msg);
-			}
-			else {
-				Msg.showError(this, getComponent(), "Read Target Registers",
-					"Could not read target registers for selected thread", ex);
-			}
+			String msg = "Could not read target registers for selected thread: " + ex.getMessage();
+			Msg.info(this, msg);
+			plugin.getTool().setStatusInfo(msg);
 			return ExceptionUtils.rethrow(ex);
 		}).thenApply(__ -> null);
 	}

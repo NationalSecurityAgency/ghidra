@@ -53,8 +53,8 @@
 
     <H2>Navigating Threads</H2>
 
-    <P>Selecting a thread in the table will navigate to (or "activate" or "focus") that thread.
-    Windows which are sensitive to the current thread will update. Notably, the <A href=
+    <P>Double-clicking a thread in the table will navigate to (or "activate" or "focus") that
+    thread. Windows which are sensitive to the current thread will update. Notably, the <A href=
     "help/topics/DebuggerRegistersPlugin/DebuggerRegistersPlugin.html">Registers</A> window will
     display the activated thread's register values. <A href=
     "help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html">Listing</A> windows with
@@ -88,15 +88,15 @@
 
     <H2>Actions</H2>
 
-    <H3><A name="sync_focus"></A>Synchronize Trace and Target Focus</H3>
+    <H3><A name="sync_target"></A>Synchronize Trace and Target Activation</H3>
 
     <P>This toggle is always available and is enabled by default. While enabled, any changes in
     navigation coordinates are translated, to the extent possible, and sent to the connected
     debugger. This may, for example, issue <CODE>thread</CODE> and/or <CODE>frame</CODE> commands
-    to GDB so that commands typed into its CLI will refer to the same thread and frame as is
-    focused in Ghidra. Conversely, any debugger events which indicate a change in focus are
-    translated, to the extent possible, into navigation coordinates and activated in Ghidra. For
-    example, if the user issues a <CODE>frame</CODE> command to the CLI of a GDB connection, then
-    Ghidra will navigate to that same frame.</P>
+    to GDB so that commands typed into its CLI will refer to the same thread and frame as is active
+    in Ghidra. Conversely, any target events which indicate a change in activation are translated,
+    to the extent possible, into navigation coordinates and activated in Ghidra. For example, if
+    the user issues a <CODE>frame</CODE> command to the CLI of a GDB connection, then Ghidra will
+    navigate to that same frame.</P>
   </BODY>
 </HTML>

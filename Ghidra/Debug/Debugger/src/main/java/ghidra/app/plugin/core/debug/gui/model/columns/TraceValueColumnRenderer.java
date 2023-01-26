@@ -15,31 +15,26 @@
  */
 package ghidra.app.plugin.core.debug.gui.model.columns;
 
-import docking.widgets.table.AbstractDynamicTableColumn;
+import java.awt.Component;
+
+import docking.widgets.table.GTableCellRenderingData;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.docking.settings.Settings;
-import ghidra.framework.plugintool.ServiceProvider;
-import ghidra.trace.model.Lifespan.LifeSet;
-import ghidra.trace.model.Trace;
-import ghidra.util.table.column.GColumnRenderer;
+import ghidra.util.table.column.AbstractGColumnRenderer;
 
-public class TraceValueLifeColumn
-		extends AbstractDynamicTableColumn<ValueRow, LifeSet, Trace> {
-	private final TraceValueColumnRenderer<LifeSet> renderer = new TraceValueColumnRenderer<>();
-
+public class TraceValueColumnRenderer<T> extends AbstractGColumnRenderer<T> {
 	@Override
-	public String getColumnName() {
-		return "Life";
+	public String getFilterString(T t, Settings settings) {
+		return t == null ? "<null>" : t.toString();
 	}
 
 	@Override
-	public GColumnRenderer<LifeSet> getColumnRenderer() {
-		return renderer;
-	}
-
-	@Override
-	public LifeSet getValue(ValueRow rowObject, Settings settings, Trace data,
-			ServiceProvider serviceProvider) throws IllegalArgumentException {
-		return rowObject.getLife();
+	public Component getTableCellRendererComponent(GTableCellRenderingData data) {
+		super.getTableCellRendererComponent(data);
+		ValueRow row = (ValueRow) data.getRowObject();
+		if (row.isCurrent()) {
+			setBold();
+		}
+		return this;
 	}
 }

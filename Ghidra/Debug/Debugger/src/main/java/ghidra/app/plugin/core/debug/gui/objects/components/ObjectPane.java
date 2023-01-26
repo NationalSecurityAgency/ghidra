@@ -23,7 +23,6 @@ import ghidra.app.plugin.core.debug.gui.objects.ObjectContainer;
 import ghidra.dbg.target.TargetObject;
 
 public interface ObjectPane {
-
 	public ObjectContainer getContainer();
 
 	public TargetObject getTargetObject();
@@ -46,6 +45,7 @@ public interface ObjectPane {
 
 	public void setFocus(TargetObject object, TargetObject focused);
 
-	public void setRoot(ObjectContainer root, TargetObject targetObject);
+	public void setSelectedObject(TargetObject object);
 
+	public void setRoot(ObjectContainer root, TargetObject targetObject);
 }

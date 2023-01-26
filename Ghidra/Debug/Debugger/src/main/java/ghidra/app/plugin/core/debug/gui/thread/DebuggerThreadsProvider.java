@@ -29,7 +29,7 @@ import docking.action.*;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources.SynchronizeFocusAction;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources.SynchronizeTargetAction;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.ToToggleSelectionListener;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerTraceManagerService.BooleanChangeAdapter;
@@ -106,8 +106,8 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
 
-	private final BooleanChangeAdapter synchronizeFocusChangeListener =
-		this::changedSynchronizeFocus;
+	private final BooleanChangeAdapter synchronizeTargetChangeListener =
+		this::changedSynchronizeTarget;
 
 	private final ForSnapsListener forSnapsListener = new ForSnapsListener();
 
@@ -119,7 +119,7 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 	DebuggerLegacyThreadsPanel legacyPanel;
 
 	DockingAction actionSaveTrace;
-	ToggleDockingAction actionSyncFocus;
+	ToggleDockingAction actionSyncTarget;
 
 	ActionContext myActionContext;
 
@@ -149,13 +149,13 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 	@AutoServiceConsumed
 	public void setTraceManager(DebuggerTraceManagerService traceManager) {
 		if (this.traceManager != null) {
-			this.traceManager.removeSynchronizeFocusChangeListener(synchronizeFocusChangeListener);
+			this.traceManager.removeSynchronizeActiveChangeListener(synchronizeTargetChangeListener);
 		}
 		this.traceManager = traceManager;
 		if (traceManager != null) {
-			traceManager.addSynchronizeFocusChangeListener(synchronizeFocusChangeListener);
-			if (actionSyncFocus != null) {
-				actionSyncFocus.setSelected(traceManager.isSynchronizeFocus());
+			traceManager.addSynchronizeActiveChangeListener(synchronizeTargetChangeListener);
+			if (actionSyncTarget != null) {
+				actionSyncTarget.setSelected(traceManager.isSynchronizeActive());
 			}
 		}
 		contextChanged();
@@ -236,27 +236,27 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 	}
 
 	protected void createActions() {
-		actionSyncFocus = SynchronizeFocusAction.builder(plugin)
-				.selected(traceManager != null && traceManager.isSynchronizeFocus())
+		actionSyncTarget = SynchronizeTargetAction.builder(plugin)
+				.selected(traceManager != null && traceManager.isSynchronizeActive())
 				.enabledWhen(c -> traceManager != null)
-				.onAction(c -> toggleSyncFocus(actionSyncFocus.isSelected()))
+				.onAction(c -> toggleSyncFocus(actionSyncTarget.isSelected()))
 				.buildAndInstallLocal(this);
-		traceManager.addSynchronizeFocusChangeListener(toToggleSelectionListener =
-			new ToToggleSelectionListener(actionSyncFocus));
+		traceManager.addSynchronizeActiveChangeListener(toToggleSelectionListener =
+			new ToToggleSelectionListener(actionSyncTarget));
 	}
 
-	private void changedSynchronizeFocus(boolean value) {
-		if (actionSyncFocus == null || actionSyncFocus.isSelected()) {
+	private void changedSynchronizeTarget(boolean value) {
+		if (actionSyncTarget == null || actionSyncTarget.isSelected()) {
 			return;
 		}
-		actionSyncFocus.setSelected(value);
+		actionSyncTarget.setSelected(value);
 	}
 
 	private void toggleSyncFocus(boolean enabled) {
 		if (traceManager == null) {
 			return;
 		}
-		traceManager.setSynchronizeFocus(enabled);
+		traceManager.setSynchronizeActive(enabled);
 	}
 
 	@Override

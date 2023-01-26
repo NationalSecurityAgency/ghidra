@@ -26,10 +26,6 @@ import ghidra.dbg.target.TargetSteppable.TargetStepKindSet;
 import ghidra.dbg.target.schema.SchemaContext;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.target.schema.TargetObjectSchema.AttributeSchema;
-import ghidra.docking.settings.Settings;
-import ghidra.framework.plugintool.ServiceProvider;
-import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject;
 
 /**

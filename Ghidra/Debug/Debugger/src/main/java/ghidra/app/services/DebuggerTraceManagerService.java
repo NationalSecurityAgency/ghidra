@@ -54,7 +54,7 @@ public interface DebuggerTraceManagerService {
 		 */
 		START_RECORDING,
 		/**
-		 * The change was driven by the model focus, possibly indirectly by the user
+		 * The change was driven by the model activation, possibly indirectly by the user
 		 */
 		SYNC_MODEL,
 		/**
@@ -281,11 +281,11 @@ public interface DebuggerTraceManagerService {
 	 * 
 	 * @param coordinates the desired coordinates
 	 * @param cause the cause of the activation
-	 * @param syncTargetFocus true synchronize the current target to the same coordinates
+	 * @param syncTarget true synchronize the current target to the same coordinates
 	 * @return a future which completes when emulation and navigation is complete
 	 */
 	CompletableFuture<Void> activateAndNotify(DebuggerCoordinates coordinates,
-			ActivationCause cause, boolean syncTargetFocus);
+			ActivationCause cause, boolean syncTarget);
 
 	/**
 	 * Activate the given coordinates, caused by the user
@@ -314,7 +314,7 @@ public interface DebuggerTraceManagerService {
 	 * 
 	 * <p>
 	 * The manager may use a variety of sources of context including the current trace, the last
-	 * coordinates for a trace, the target's last/current focus, the list of active threads, etc.
+	 * coordinates for a trace, the target's last/current activation, the list of live threads, etc.
 	 * 
 	 * @param trace the trace
 	 * @return the best coordinates
@@ -448,32 +448,32 @@ public interface DebuggerTraceManagerService {
 	}
 
 	/**
-	 * Control whether trace activation is synchronized with debugger focus/select
+	 * Control whether trace activation is synchronized with debugger activation
 	 * 
 	 * @param enabled true to synchronize, false otherwise
 	 */
-	void setSynchronizeFocus(boolean enabled);
+	void setSynchronizeActive(boolean enabled);
 
 	/**
-	 * Check whether trace activation is synchronized with debugger focus/select
+	 * Check whether trace activation is synchronized with debugger activation
 	 * 
 	 * @return true if synchronized, false otherwise
 	 */
-	boolean isSynchronizeFocus();
+	boolean isSynchronizeActive();
 
 	/**
-	 * Add a listener for changes to focus synchronization enablement
+	 * Add a listener for changes to activation synchronization enablement
 	 * 
 	 * @param listener the listener to receive change notifications
 	 */
-	void addSynchronizeFocusChangeListener(BooleanChangeAdapter listener);
+	void addSynchronizeActiveChangeListener(BooleanChangeAdapter listener);
 
 	/**
-	 * Remove a listener for changes to focus synchronization enablement
+	 * Remove a listener for changes to activation synchronization enablement
 	 * 
 	 * @param listener the listener receiving change notifications
 	 */
-	void removeSynchronizeFocusChangeListener(BooleanChangeAdapter listener);
+	void removeSynchronizeActiveChangeListener(BooleanChangeAdapter listener);
 
 	/**
 	 * Control whether traces should be saved by default

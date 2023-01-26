@@ -150,6 +150,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	protected Map<Long, Trace> traces = new HashMap<>();
 	protected Trace currentTrace;
 	protected DebuggerObjectModel currentModel;
+	private TargetObject targetFocus;
 	// NB: We're getting rid of this because the ObjectsProvider is beating the trace
 	//  to the punch and causing the pattern-matcher to fail
 	// private TraceRecorder recorder;  
@@ -562,17 +563,14 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			synchronized (targetMap) {
 				targetMap.put(key, container);
 				refSet.add(targetObject);
+				if (targetObject instanceof TargetConfigurable) {
+					configurables.add((TargetConfigurable) targetObject);
+				}
 			}
 			if (targetObject instanceof TargetInterpreter) {
 				TargetInterpreter interpreter = (TargetInterpreter) targetObject;
 				getPlugin().showConsole(interpreter);
-				DebugModelConventions.findSuitable(TargetFocusScope.class, targetObject)
-						.thenAccept(f -> {
-							setFocus(f, targetObject);
-						});
-			}
-			if (targetObject instanceof TargetConfigurable) {
-				configurables.add((TargetConfigurable) targetObject);
+				pane.setSelectedObject(targetObject);
 			}
 		}
 	}
@@ -591,7 +589,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	}
 
 	public ObjectContainer getContainerByPath(List<String> path) {
-		return targetMap.get(PathUtils.toString(path));
+		return targetMap.get(PathUtils.toString(path, PATH_JOIN_CHAR));
 	}
 
 	static List<ObjectContainer> getContainersFromObjects(Map<String, ?> objectMap,
@@ -1724,13 +1722,13 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		@AttributeCallback(TargetExecutionStateful.STATE_ATTRIBUTE_NAME)
 		public void executionStateChanged(TargetObject object, TargetExecutionState state) {
 			//this.state = state;
-			plugin.getTool().contextChanged(DebuggerObjectsProvider.this);
+			contextChanged();
 		}
 
 		@AttributeCallback(TargetFocusScope.FOCUS_ATTRIBUTE_NAME)
 		public void focusChanged(TargetObject object, TargetObject focused) {
 			plugin.setFocus(object, focused);
-			plugin.getTool().contextChanged(DebuggerObjectsProvider.this);
+			contextChanged();
 		}
 
 		@Override
@@ -1824,8 +1822,11 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		if (focused.getModel() != currentModel) {
 			return;
 		}
+		this.targetFocus = focused;
 		if (isStopped(focused) || isUpdateWhileRunning()) {
-			pane.setFocus(object, focused);
+			if (pane != null) {
+				pane.setFocus(object, focused);
+			}
 		}
 	}
 
@@ -1911,9 +1912,9 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		return listener.queue.in;
 	}
 
-	public void navigateToSelectedObject(TargetObject object, Object value) {
-		if (listingService == null || listingService == null) {
-			return;
+	public Address navigateToSelectedObject(TargetObject object, Object value) {
+		if (listingService == null || modelService == null) {
+			return null;
 		}
 		// TODO: Could probably inspect schema for any attribute of type Address[Range], or String
 		if (value == null) {
@@ -1926,7 +1927,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			value = object.getCachedAttribute(TargetObject.VALUE_ATTRIBUTE_NAME);
 		}
 		if (value == null) {
-			return;
+			return null;
 		}
 
 		Address addr = null;
@@ -1947,13 +1948,14 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			if (recorder == null) {
 				recorder = modelService.getRecorder(currentTrace);
 				if (recorder == null) {
-					return;
+					return addr;
 				}
 			}
 			DebuggerMemoryMapper memoryMapper = recorder.getMemoryMapper();
 			Address traceAddr = memoryMapper.targetToTrace(addr);
 			listingService.goTo(traceAddr, true);
 		}
+		return addr;
 	}
 
 	private Address stringToAddress(TargetObject selectedObject, Address addr, String sval) {
@@ -1975,5 +1977,9 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 
 	public boolean isUpdateWhileRunning() {
 		return updateWhileRunning;
+	}
+
+	public TargetObject getFocus() {
+		return targetFocus;
 	}
 }
