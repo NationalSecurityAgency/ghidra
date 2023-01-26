@@ -1572,8 +1572,9 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 	 * Create a memory reference to the given address to mark it as
 	 * an external entry point.
 	 * @param toAddr the address at which to make an external entry point
+	 * @throws IllegalArgumentException if a non-memory address is specified
 	 */
-	public void addExternalEntryPointRef(Address toAddr) {
+	public void addExternalEntryPointRef(Address toAddr) throws IllegalArgumentException {
 		if (!toAddr.isMemoryAddress()) {
 			throw new IllegalArgumentException("Entry point address must be memory address");
 		}

@@ -15,13 +15,14 @@
  */
 package ghidra.trace.database.symbol;
 
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.Collections2;
 
 import generic.CatenatedCollection;
 import ghidra.trace.model.symbol.*;
+import ghidra.util.MergeSortingIterator;
 
 public class DBTraceSymbolMultipleTypesView<T extends AbstractDBTraceSymbol>
 		implements TraceSymbolView<T> {
@@ -72,5 +73,12 @@ public class DBTraceSymbolMultipleTypesView<T extends AbstractDBTraceSymbol>
 	public Collection<? extends T> getWithMatchingName(String glob, boolean caseSensitive) {
 		return new CatenatedCollection<>(
 			Collections2.transform(parts, p -> p.getWithMatchingName(glob, caseSensitive)));
+	}
+
+	@Override
+	public Iterator<? extends T> scanByName(String startName) {
+		List<Iterator<? extends T>> iterators =
+			parts.stream().map(p -> p.scanByName(startName)).collect(Collectors.toList());
+		return new MergeSortingIterator<>(iterators, Comparator.comparing(s -> s.getName()));
 	}
 }

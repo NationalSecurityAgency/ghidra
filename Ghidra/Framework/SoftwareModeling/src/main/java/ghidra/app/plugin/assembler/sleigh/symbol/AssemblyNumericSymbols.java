@@ -16,7 +16,9 @@
 package ghidra.app.plugin.assembler.sleigh.symbol;
 
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Map.Entry;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
@@ -30,8 +32,7 @@ import ghidra.program.model.symbol.*;
  * A context to hold various symbols offered to the assembler, usable where numbers are expected.
  */
 public final class AssemblyNumericSymbols {
-	public static final AssemblyNumericSymbols EMPTY =
-		new AssemblyNumericSymbols(Map.of(), Map.of(), Map.of());
+	public static final AssemblyNumericSymbols EMPTY = new AssemblyNumericSymbols();
 
 	/**
 	 * Collect labels derived from memory-mapped registers in a language
@@ -42,7 +43,8 @@ public final class AssemblyNumericSymbols {
 	 * @param labels the destination map
 	 * @param language the language
 	 */
-	private static void collectLanguageLabels(Map<String, Set<Address>> labels, Language language) {
+	private static NavigableMap<String, Set<Address>> collectLanguageLabels(Language language) {
+		NavigableMap<String, Set<Address>> labels = new TreeMap<>();
 		for (Register reg : language.getRegisters()) {
 			// TODO/HACK: There ought to be a better mechanism describing suitable symbolic
 			// substitutions for a given operand.
@@ -50,42 +52,25 @@ public final class AssemblyNumericSymbols {
 				labels.computeIfAbsent(reg.getName(), n -> new HashSet<>()).add(reg.getAddress());
 			}
 		}
+		return labels;
 	}
 
-	/**
-	 * Collect labels from the program's database
-	 * 
-	 * @param labels the destination map
-	 * @param program the source program
-	 */
-	private static void collectProgramLabels(Map<String, Set<Address>> labels, Program program) {
-		final SymbolIterator it = program.getSymbolTable().getAllSymbols(true);
-		while (it.hasNext()) {
-			Symbol sym = it.next();
-			SymbolType symbolType = sym.getSymbolType();
-			if (symbolType == SymbolType.LABEL) {
-				if (sym.isExternal()) {
-					continue;
-				}
-				labels.computeIfAbsent(sym.getName(), n -> new HashSet<>()).add(sym.getAddress());
-			}
-			else if (symbolType == SymbolType.FUNCTION) {
-				if (!sym.getAddress().isExternalAddress()) {
-					labels.computeIfAbsent(sym.getName(), n -> new HashSet<>())
-							.add(sym.getAddress());
-				}
-				Function function = (Function) sym.getObject();
-				Address[] thunks = function.getFunctionThunkAddresses(true);
-				if (thunks != null) {
-					for (Address t : thunks) {
-						if (!t.isExternalAddress()) {
-							labels.computeIfAbsent(sym.getName(), n -> new HashSet<>()).add(t);
-						}
-					}
-				}
-			}
-			// Ignore other symbol types
+	private static Stream<Address> streamAddresses(Symbol sym) {
+		SymbolType symbolType = sym.getSymbolType();
+		if (symbolType == SymbolType.LABEL) {
+			return Stream.of(sym.getAddress());
 		}
+		if (symbolType == SymbolType.FUNCTION) {
+			Function function = (Function) sym.getObject();
+			Address[] thunks = function.getFunctionThunkAddresses(true);
+			return thunks == null ? Stream.of(sym.getAddress())
+					: Stream.concat(Stream.of(sym.getAddress()), Stream.of(thunks));
+		}
+		return Stream.of();
+	}
+
+	private static Stream<Address> streamNonExternalAddresses(Symbol sym) {
+		return streamAddresses(sym).filter(a -> !a.isExternalAddress());
 	}
 
 	/**
@@ -94,13 +79,15 @@ public final class AssemblyNumericSymbols {
 	 * @param equates the destination map
 	 * @param programthe source program
 	 */
-	private static void collectProgramEquates(Map<String, Set<Long>> equates, Program program) {
+	private static NavigableMap<String, Set<Long>> collectProgramEquates(Program program) {
+		NavigableMap<String, Set<Long>> equates = new TreeMap<>();
 		final Iterator<Equate> it = program.getEquateTable().getEquates();
 		while (it.hasNext()) {
 			Equate eq = it.next();
 			// Thought is: If that's what the user sees, then that's what the user will type!
 			equates.computeIfAbsent(eq.getDisplayName(), n -> new HashSet<>()).add(eq.getValue());
 		}
+		return equates;
 	}
 
 	/**
@@ -110,84 +97,60 @@ public final class AssemblyNumericSymbols {
 	 * @return the symbols
 	 */
 	public static AssemblyNumericSymbols fromLanguage(Language language) {
-		Map<String, Set<Address>> labels = new HashMap<>();
-		collectLanguageLabels(labels, language);
-		return forMaps(Map.of(), labels);
+		return new AssemblyNumericSymbols(language);
 	}
 
 	/**
 	 * Get symbols from a program (and its language)
 	 * 
-	 * <p>
-	 * TODO: It might be nice to cache these and use a listener to keep the maps up to date. Will
-	 * depend on interactive performance.
-	 * 
 	 * @param program the program
 	 * @return the symbols
 	 */
 	public static AssemblyNumericSymbols fromProgram(Program program) {
-		Map<String, Set<Long>> equates = new HashMap<>();
-		Map<String, Set<Address>> labels = new HashMap<>();
-		collectLanguageLabels(labels, program.getLanguage());
-		collectProgramLabels(labels, program);
-		collectProgramEquates(equates, program);
-		return forMaps(equates, labels);
+		return new AssemblyNumericSymbols(program);
 	}
 
-	/**
-	 * Get symbols for the given equate and label maps
-	 * 
-	 * @param equates the equates
-	 * @param labels the labels
-	 * @return the symbols
-	 */
-	public static AssemblyNumericSymbols forMaps(Map<String, Set<Long>> equates,
-			Map<String, Set<Address>> labels) {
-		return new AssemblyNumericSymbols(Map.copyOf(equates), Map.copyOf(labels),
-			groupBySpace(labels));
+	public final NavigableMap<String, Set<Long>> programEquates;
+	public final NavigableMap<String, Set<Address>> languageLabels;
+	private final Program program;
+
+	private AssemblyNumericSymbols() {
+		this.program = null;
+		this.programEquates = new TreeMap<>();
+		this.languageLabels = new TreeMap<>();
 	}
 
-	private static Map<AddressSpace, Map<String, Set<Address>>> groupBySpace(
-			Map<String, Set<Address>> labels) {
-		Map<AddressSpace, Map<String, Set<Address>>> result = new HashMap<>();
-		for (Map.Entry<String, Set<Address>> entry : labels.entrySet()) {
-			for (Address addr : entry.getValue()) {
-				result.computeIfAbsent(addr.getAddressSpace(), as -> new HashMap<>())
-						.computeIfAbsent(entry.getKey(), k -> new TreeSet<>())
-						.add(addr);
-			}
-		}
-		return Collections.unmodifiableMap(result);
+	private AssemblyNumericSymbols(Language language) {
+		this.program = null;
+		this.programEquates = new TreeMap<>();
+		this.languageLabels = collectLanguageLabels(language);
 	}
 
-	private final NavigableSet<String> all = new TreeSet<>();
-	public final Map<String, Set<Long>> equates;
-	public final Map<String, Set<Address>> labels;
-	public final Map<AddressSpace, Map<String, Set<Address>>> labelsBySpace;
-
-	private AssemblyNumericSymbols(Map<String, Set<Long>> equates, Map<String, Set<Address>> labels,
-			Map<AddressSpace, Map<String, Set<Address>>> labelsBySpace) {
-		this.equates = equates;
-		this.labels = labels;
-		this.labelsBySpace = labelsBySpace;
-		all.addAll(equates.keySet());
-		all.addAll(labels.keySet());
+	private AssemblyNumericSymbols(Program program) {
+		this.program = program;
+		this.programEquates = collectProgramEquates(program);
+		this.languageLabels = collectLanguageLabels(program.getLanguage());
 	}
 
 	/**
 	 * Choose any symbol with the given name
 	 * 
 	 * <p>
-	 * This will check equates first, then labels. If an equate is found, its value is returned. If
-	 * a label is found, its addressable word offset is returned.
+	 * This will order equates first, then program labels, then language labels. For addresses, the
+	 * value is its addressable word offset.
 	 * 
 	 * @param name the name
 	 * @return the value, or null
 	 */
 	public Set<Long> chooseAll(String name) {
 		Set<Long> result = new TreeSet<>();
-		result.addAll(equates.getOrDefault(name, Set.of()));
-		for (Address address : labels.getOrDefault(name, Set.of())) {
+		result.addAll(programEquates.getOrDefault(name, Set.of()));
+		if (program != null) {
+			StreamSupport.stream(program.getSymbolTable().getSymbols(name).spliterator(), false)
+					.flatMap(sym -> streamNonExternalAddresses(sym))
+					.forEach(a -> result.add(a.getAddressableWordOffset()));
+		}
+		for (Address address : languageLabels.getOrDefault(name, Set.of())) {
 			result.add(address.getAddressableWordOffset());
 		}
 		return result;
@@ -201,11 +164,20 @@ public final class AssemblyNumericSymbols {
 	 * @return the addressable word offset of the found label, or null
 	 */
 	public Set<Long> chooseBySpace(String name, AddressSpace space) {
-		return labelsBySpace.getOrDefault(space, Map.of())
-				.getOrDefault(name, Set.of())
-				.stream()
-				.map(a -> a.getAddressableWordOffset())
-				.collect(Collectors.toSet());
+		Set<Long> result = new TreeSet<>();
+		if (program != null) {
+			StreamSupport.stream(program.getSymbolTable().getSymbols(name).spliterator(), false)
+					.flatMap(sym -> streamAddresses(sym))
+					.filter(a -> a.getAddressSpace() == space)
+					.forEach(a -> result.add(a.getAddressableWordOffset()));
+		}
+		for (Address address : languageLabels.getOrDefault(name, Set.of())) {
+			if (address.getAddressSpace() != space) {
+				continue;
+			}
+			result.add(address.getAddressableWordOffset());
+		}
+		return result;
 	}
 
 	/**
@@ -228,23 +200,59 @@ public final class AssemblyNumericSymbols {
 		return chooseBySpace(name, space);
 	}
 
-	private Collection<String> suggestFrom(String got, Collection<String> keys, int max,
-			boolean sorted) {
-		Set<String> result = new HashSet<>();
+	private void suggestFrom(List<String> result, String got, NavigableSet<String> keys, int max) {
 		int count = 0;
-		for (String label : keys) {
-			if (count >= max) {
-				break;
+		for (String k : keys.tailSet(got)) {
+			if (count >= max || !k.startsWith(got)) {
+				return;
 			}
-			if (label.startsWith(got)) {
-				result.add(label);
-				count++;
-			}
-			else if (sorted) {
-				break;
-			}
+			result.add(k);
+			count++;
 		}
-		return result;
+	}
+
+	private void suggestFromBySpace(List<String> result, String got,
+			NavigableMap<String, Set<Address>> labels, int max, AddressSpace space) {
+		int count = 0;
+		for (Entry<String, Set<Address>> ent : labels.entrySet()) {
+			if (count >= max || !ent.getKey().startsWith(got)) {
+				return;
+			}
+			if (!ent.getValue().stream().anyMatch(a -> a.getAddressSpace() == space)) {
+				continue;
+			}
+			result.add(ent.getKey());
+			count++;
+		}
+	}
+
+	private void suggestFromProgramAny(List<String> result, String got, int max) {
+		int count = 0;
+		for (Symbol s : program.getSymbolTable().scanSymbolsByName(got)) {
+			if (count >= max || !s.getName().startsWith(got)) {
+				return;
+			}
+			if (streamNonExternalAddresses(s).findAny().isEmpty()) {
+				continue;
+			}
+			result.add(s.getName());
+			count++;
+		}
+	}
+
+	private void suggestFromProgramBySpace(List<String> result, String got, int max,
+			AddressSpace space) {
+		int count = 0;
+		for (Symbol s : program.getSymbolTable().scanSymbolsByName(got)) {
+			if (count >= max || !s.getName().startsWith(got)) {
+				return;
+			}
+			if (!streamAddresses(s).anyMatch(a -> a.getAddressSpace() == space)) {
+				continue;
+			}
+			result.add(s.getName());
+			count++;
+		}
 	}
 
 	/**
@@ -255,7 +263,18 @@ public final class AssemblyNumericSymbols {
 	 * @return the collection of symbol names
 	 */
 	public Collection<String> suggestAny(String got, int max) {
-		return suggestFrom(got, all.tailSet(got), max, true);
+		List<String> result = new ArrayList<>();
+		suggestFrom(result, got, languageLabels.navigableKeySet(), max);
+		if (program == null) {
+			return result;
+		}
+		suggestFrom(result, got, programEquates.navigableKeySet(), max);
+		suggestFromProgramAny(result, got, max);
+		Collections.sort(result);
+		if (result.size() > max) {
+			return result.subList(0, max);
+		}
+		return result;
 	}
 
 	/**
@@ -267,12 +286,17 @@ public final class AssemblyNumericSymbols {
 	 * @return the collection of symbol names
 	 */
 	public Collection<String> suggestBySpace(String got, AddressSpace space, int max) {
-		Map<String, Set<Address>> forSpace = labelsBySpace.get(space);
-		if (forSpace == null) {
-			return Set.of();
+		List<String> result = new ArrayList<>();
+		suggestFromBySpace(result, got, languageLabels, max, space);
+		if (program == null) {
+			return result;
 		}
-		// TODO: Should I sort these, perhaps lazily, to speed search?
-		return suggestFrom(got, forSpace.keySet(), max, false);
+		suggestFromProgramBySpace(result, got, max, space);
+		Collections.sort(result);
+		if (result.size() > max) {
+			return result.subList(0, max);
+		}
+		return result;
 	}
 
 	/**

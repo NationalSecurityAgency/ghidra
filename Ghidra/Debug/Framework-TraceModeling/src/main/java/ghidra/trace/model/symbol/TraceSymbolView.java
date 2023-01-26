@@ -16,6 +16,7 @@
 package ghidra.trace.model.symbol;
 
 import java.util.Collection;
+import java.util.Iterator;
 
 public interface TraceSymbolView<T extends TraceSymbol> {
 
@@ -55,4 +56,6 @@ public interface TraceSymbolView<T extends TraceSymbol> {
 	 * @return the collection of matching symbols
 	 */
 	Collection<? extends T> getWithMatchingName(String glob, boolean caseSensitive);
+
+	Iterator<? extends T> scanByName(String startName);
 }

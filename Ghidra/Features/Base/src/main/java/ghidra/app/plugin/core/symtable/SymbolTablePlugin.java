@@ -722,7 +722,7 @@ public class SymbolTablePlugin extends Plugin implements DomainObjectListener {
 				}
 			}
 			else if (toAddr.isMemoryAddress() && symProvider.isShowingDynamicSymbols()) {
-				long dynamicSymbolId = symbolTable.getDynamicSymbolID(reference.getToAddress());
+				long dynamicSymbolId = symbolTable.getDynamicSymbolID(toAddr);
 				symProvider.symbolRemoved(dynamicSymbolId);
 				refProvider.symbolRemoved(dynamicSymbolId);
 			}
