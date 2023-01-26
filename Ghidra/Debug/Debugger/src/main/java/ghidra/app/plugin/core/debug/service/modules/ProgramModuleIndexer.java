@@ -317,7 +317,7 @@ public class ProgramModuleIndexer implements DomainFolderChangeAdapter {
 		}
 	}
 
-	private DomainFile selectBest(List<IndexEntry> entries, Set<DomainFile> libraries,
+	private DomainFile selectBest(Collection<IndexEntry> entries, Set<DomainFile> libraries,
 			Map<DomainFolder, Integer> folderUses, Program currentProgram) {
 		if (currentProgram != null) {
 			DomainFile currentFile = currentProgram.getDomainFile();
@@ -359,7 +359,11 @@ public class ProgramModuleIndexer implements DomainFolderChangeAdapter {
 		return projectData.getFileByID(entries.stream().max(comparator).get().dfID);
 	}
 
-	public DomainFile getBestMatch(AddressSpace space, TraceModule module, Program currentProgram) {
+	public DomainFile getBestMatch(AddressSpace space, TraceModule module, Program currentProgram,
+			Collection<IndexEntry> entries) {
+		if (entries.isEmpty()) {
+			return null;
+		}
 		Map<DomainFolder, Integer> folderUses = new HashMap<>();
 		Set<DomainFile> alreadyMapped = module.getTrace()
 				.getStaticMappingManager()
@@ -379,17 +383,43 @@ public class ProgramModuleIndexer implements DomainFolderChangeAdapter {
 						folderUses.compute(folder, (f, c) -> c == null ? 1 : (c + 1));
 					}
 				});
+		return selectBest(entries, libraries, folderUses, currentProgram);
+	}
 
+	public DomainFile getBestMatch(TraceModule module, Program currentProgram,
+			Collection<IndexEntry> entries) {
+		return getBestMatch(module.getBase().getAddressSpace(), module, currentProgram, entries);
+	}
+
+	public List<IndexEntry> getBestEntries(TraceModule module) {
 		String modulePathName = module.getName().toLowerCase();
 		List<IndexEntry> entries = new ArrayList<>(index.getByName(modulePathName));
 		if (!entries.isEmpty()) {
-			return selectBest(entries, libraries, folderUses, currentProgram);
+			return entries;
 		}
 		String moduleFileName = new File(modulePathName).getName();
 		entries.addAll(index.getByName(moduleFileName));
-		if (!entries.isEmpty()) {
-			return selectBest(entries, libraries, folderUses, currentProgram);
+		return entries;
+	}
+
+	public DomainFile getBestMatch(AddressSpace space, TraceModule module, Program currentProgram) {
+		return getBestMatch(space, module, currentProgram, getBestEntries(module));
+	}
+
+	public Collection<IndexEntry> filter(Collection<IndexEntry> entries,
+			Collection<? extends Program> programs) {
+		Collection<IndexEntry> result = new ArrayList<>();
+		for (IndexEntry e : entries) {
+			DomainFile df = projectData.getFileByID(e.dfID);
+			if (df == null) {
+				continue;
+			}
+			try (PeekOpenedDomainObject peek = new PeekOpenedDomainObject(df)) {
+				if (programs.contains(peek.object)) {
+					result.add(e);
+				}
+			}
 		}
-		return null;
+		return result;
 	}
 }
