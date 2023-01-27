@@ -162,7 +162,7 @@ public class ClientUtil {
 		if (port == 0) {
 			port = GhidraServerHandle.DEFAULT_PORT;
 		}
-		ServerInfo server = new ServerInfo(hostAddr, null, port);
+		ServerInfo server = new ServerInfo(hostAddr, port);
 		RepositoryServerAdapter serverAdapter = serverHandles.remove(server);
 		if (serverAdapter != null) {
 			serverAdapter.disconnect();
