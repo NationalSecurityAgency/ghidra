@@ -21,7 +21,7 @@ import javax.swing.tree.TreePath;
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
-import docking.widgets.label.GHtmlLabel;
+import docking.widgets.label.GLabel;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
@@ -112,7 +112,7 @@ public class ReplaceDataTypeAction extends DockingAction {
 				updatedPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 10, 0));
 				updatedPanel.setLayout(new VerticalLayout(5));
 
-				GHtmlLabel label = new GHtmlLabel("<html>Choose the relacment data type: ");
+				GLabel label = new GLabel("Choose the relacement data type: ");
 				label.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
 				updatedPanel.add(label);
 
