@@ -360,7 +360,7 @@ public class ProjectFileManager implements ProjectData {
 		if (info == null) {
 			return;
 		}
-		properties.putString(SERVER_NAME, info.getServerName());
+		properties.putString(SERVER_NAME, info.getOriginalServerName());
 		properties.putString(REPOSITORY_NAME, rep.getName());
 		properties.putInt(PORT_NUMBER, info.getPortNumber());
 		properties.writeState();

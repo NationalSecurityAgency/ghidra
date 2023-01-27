@@ -25,23 +25,37 @@ import java.io.Serializable;
 public class ServerInfo implements Serializable {
 
 	private final String host;
+	private final String originalHost;
 	private final int portNumber;
 	
 	/**
 	 * Construct a new ServerInfo object
-	 * @param host host name
+	 * @param originalHost original host name (as entered by a user)
+	 * @param host host name (potentially canonicalized)
 	 * @param portNumber port number
 	 */
-	public ServerInfo(String host, int portNumber) {
+	public ServerInfo(String originalHost, String host, int portNumber) {
+		this.originalHost = originalHost;
 		this.host = host;
 		this.portNumber = portNumber;
 	}
+
+	public ServerInfo(String host, int portNumber) {
+		this(host, host, portNumber);
+	}
 	
 	/**
-	 * Get the server name.
+	 * Get the (canonical) server name.
 	 */
 	public String getServerName() {
 		return host;
+	}
+
+	/**
+	 * Get the (original) server name.
+	 */
+	public String getOriginalServerName() {
+		return this.originalHost;
 	}
 
 	/**

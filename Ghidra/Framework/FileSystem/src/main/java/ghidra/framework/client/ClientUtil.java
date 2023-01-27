@@ -106,9 +106,11 @@ public class ClientUtil {
 		// ensure that default callback is setup if possible
 		getClientAuthenticator();
 
+		String canonicalHost = null;
+
 		host = host.trim().toLowerCase();
 		try {
-			host = InetNameLookup.getCanonicalHostName(host);
+			canonicalHost = InetNameLookup.getCanonicalHostName(host);
 		}
 		catch (UnknownHostException e) {
 			Msg.warn(ClientUtil.class, "Failed to resolve hostname for " + host);
@@ -118,7 +120,7 @@ public class ClientUtil {
 			port = GhidraServerHandle.DEFAULT_PORT;
 		}
 
-		ServerInfo server = new ServerInfo(host, port);
+		ServerInfo server = new ServerInfo(host, canonicalHost, port);
 
 		RepositoryServerAdapter rsa;
 		synchronized (serverHandles) {
@@ -160,7 +162,7 @@ public class ClientUtil {
 		if (port == 0) {
 			port = GhidraServerHandle.DEFAULT_PORT;
 		}
-		ServerInfo server = new ServerInfo(hostAddr, port);
+		ServerInfo server = new ServerInfo(hostAddr, null, port);
 		RepositoryServerAdapter serverAdapter = serverHandles.remove(server);
 		if (serverAdapter != null) {
 			serverAdapter.disconnect();

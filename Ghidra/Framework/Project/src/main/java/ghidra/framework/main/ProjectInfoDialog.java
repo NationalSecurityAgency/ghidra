@@ -221,7 +221,7 @@ public class ProjectInfoDialog extends DialogComponentProvider {
 		boolean isConnected = false;
 		if (repository != null) {
 			info = repository.getServerInfo();
-			serverName = info.getServerName();
+			serverName = info.getOriginalServerName();
 			repositoryName = repository.getName();
 			portNumberStr = Integer.toString(info.getPortNumber());
 			isConnected = repository.isConnected();
