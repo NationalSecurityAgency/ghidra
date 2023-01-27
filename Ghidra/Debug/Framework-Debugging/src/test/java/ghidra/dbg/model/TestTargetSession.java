@@ -28,7 +28,8 @@ import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.program.model.address.AddressSpace;
 
 public class TestTargetSession extends DefaultTargetModelRoot
-		implements TestTargetObject, TargetFocusScope, TargetEventScope, TargetLauncher {
+		implements TestTargetObject, TargetActiveScope, TargetFocusScope, TargetEventScope,
+		TargetLauncher {
 
 	public final TestTargetEnvironment environment;
 	public final TestTargetProcessContainer processes;
@@ -66,6 +67,14 @@ public class TestTargetSession extends DefaultTargetModelRoot
 	}
 
 	@Override
+	public CompletableFuture<Void> requestActivation(TargetObject obj) {
+		return model.gateFuture(getModel().future(null).thenAccept(__ -> {
+			changeAttributes(List.of(), List.of(), Map.of(FOCUS_ATTRIBUTE_NAME, obj),
+				"Activation requested");
+		}));
+	}
+
+	@Override
 	public CompletableFuture<Void> requestFocus(TargetObject obj) {
 		return model.gateFuture(getModel().future(null).thenAccept(__ -> {
 			changeAttributes(List.of(), List.of(), Map.of(FOCUS_ATTRIBUTE_NAME, obj),
@@ -82,7 +91,6 @@ public class TestTargetSession extends DefaultTargetModelRoot
 
 	@Override
 	public CompletableFuture<Void> launch(Map<String, ?> args) {
-		// TODO: Record the request and allow tests to complete it?
 		return AsyncUtils.NIL;
 	}
 }
