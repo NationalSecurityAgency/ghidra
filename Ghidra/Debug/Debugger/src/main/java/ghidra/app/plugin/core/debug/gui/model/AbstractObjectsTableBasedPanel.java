@@ -36,6 +36,7 @@ import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.program.util.ProgramSelection;
+import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectInterface;
 
@@ -89,6 +90,12 @@ public abstract class AbstractObjectsTableBasedPanel<U extends TraceObjectInterf
 
 	public void coordinatesActivated(DebuggerCoordinates coordinates) {
 		TraceObject object = coordinates.getObject();
+		if (object == null) {
+			Trace trace = coordinates.getTrace();
+			if (trace != null) {
+				object = trace.getObjectManager().getRootObject();
+			}
+		}
 		setQuery(object == null ? ModelQuery.EMPTY : computeQuery(object));
 		goToCoordinates(coordinates);
 	}

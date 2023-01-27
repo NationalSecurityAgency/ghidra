@@ -641,7 +641,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 			DebuggerCoordinates inactive = null;
 			synchronized (listenersByTrace) {
 				DebuggerCoordinates curForTrace = getCurrentFor(trace);
-				inactive = curForTrace.snap(snap);
+				inactive = curForTrace.snapNoResolve(snap);
 				lastCoordsByTrace.put(trace, inactive);
 			}
 			trace.getProgramView().setSnap(snap);
