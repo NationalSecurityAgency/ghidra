@@ -155,6 +155,38 @@ public class EncodeDecodeTest extends AbstractGenericTest {
 		decoder.closeElement(el);
 	}
 
+	private void testMixedAttributes(Encoder encoder, Decoder decoder)
+			throws DecoderException, IOException {
+		encoder.openElement(ELEM_ADDR);
+		encoder.writeSignedInteger(ATTRIB_ALIGN, 456);
+		encoder.writeString(ATTRIB_EXTRAPOP, "unknown");
+		encoder.closeElement(ELEM_ADDR);
+		ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+		encoder.writeTo(outStream);
+		ByteArrayInputStream inStream = new ByteArrayInputStream(outStream.toByteArray());
+		decoder.open(1 << 20, "testMixedAttributes");
+		decoder.ingestStream(inStream);
+		decoder.endIngest();
+		int alignVal = -1;
+		int extrapopVal = -1;
+		int el = decoder.openElement(ELEM_ADDR);
+		for (;;) {
+			int attribId = decoder.getNextAttributeId();
+			if (attribId == 0) {
+				break;
+			}
+			if (attribId == ATTRIB_ALIGN.id()) {
+				alignVal = (int) decoder.readSignedIntegerExpectString("00blah", 700);
+			}
+			else if (attribId == ATTRIB_EXTRAPOP.id()) {
+				extrapopVal = (int) decoder.readSignedIntegerExpectString("unknown", 800);
+			}
+		}
+		decoder.closeElement(el);
+		assertEquals(alignVal, 456);
+		assertEquals(extrapopVal, 800);
+	}
+
 	private void testAttributes(Encoder encoder, Decoder decoder)
 			throws DecoderException, IOException
 
@@ -399,6 +431,14 @@ public class EncodeDecodeTest extends AbstractGenericTest {
 		encoder.clear();
 		PackedDecode decoder = new PackedDecode(addrFactory);
 		testUnsignedAttributes(encoder, decoder);
+	}
+
+	@Test
+	public void marshalMixedPacked() throws DecoderException, IOException {
+		PackedEncode encoder = new PackedEncode();
+		encoder.clear();
+		PackedDecode decoder = new PackedDecode(addrFactory);
+		testMixedAttributes(encoder, decoder);
 	}
 
 	@Test
