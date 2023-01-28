@@ -190,6 +190,20 @@ public class ElfSectionHeader implements ElfFileSection, StructConverter, Writea
 		sh_offset = -1;
 	}
 
+	ElfSectionHeader(ElfHeader header, String name, int type, long flags, int link, int info,
+			long addressAlignment, long entrySize, ByteProvider data) {
+		this.sh_type = type;
+		this.sh_flags = flags;
+		this.sh_link = link;
+		this.sh_info = info;
+		this.sh_addralign = addressAlignment;
+		this.sh_entsize = entrySize;
+
+		this.header = header;
+		this.name = name;
+		this.reader = new BinaryReader(data, header.isLittleEndian());
+	}
+
 	/**
 	 * Return ElfHeader associated with this section
 	 * @return ElfHeader

@@ -1217,6 +1217,40 @@ public class ElfHeader implements StructConverter, Writeable {
 		return false;
 	}
 
+	public ElfHeader(byte e_ident_class, byte e_ident_data, byte e_ident_version,
+			byte e_ident_osabi, byte e_ident_abiversion, short e_type, short e_machine,
+			int e_version, long e_entry, int e_flags) throws ElfException {
+		this.e_ident_magic_num = ElfConstants.MAGIC_NUM;
+		this.e_ident_magic_str = ElfConstants.MAGIC_STR;
+		this.e_ident_class = e_ident_class;
+		this.e_ident_data = e_ident_data;
+		this.e_ident_version = e_ident_version;
+		this.e_ident_osabi = e_ident_osabi;
+		this.e_ident_abiversion = e_ident_abiversion;
+		this.e_ident_pad = new byte[PAD_LENGTH];
+
+		determineHeaderEndianess(e_ident_data);
+		if (!is32Bit() && !is64Bit()) {
+			throw new ElfException(
+				"Only 32-bit and 64-bit ELF headers are supported (EI_CLASS=0x" +
+					Integer.toHexString(e_ident_class) + ")");
+		}
+
+		this.e_type = e_type;
+		this.e_machine = e_machine;
+		this.e_version = e_version;
+		this.e_entry = e_entry;
+		this.e_phoff = 0;
+		this.e_shoff = 0;
+		this.e_flags = e_flags;
+		this.e_ehsize = (short) (is32Bit() ? 52 : 64);
+		this.e_phentsize = (short) (is32Bit() ? 32 : 56);
+		this.e_phnum = 0;
+		this.e_shentsize = (short) (is32Bit() ? 40 : 64);
+		this.e_shnum = 0;
+		this.e_shstrndx = 0;
+	}
+
 	private void determineHeaderEndianess(byte ident_data) throws ElfException {
 		hasLittleEndianHeaders = true;
 
@@ -1868,44 +1902,87 @@ public class ElfHeader implements StructConverter, Writeable {
 	}
 
 	/**
-	 * Adds a new section using the specified memory block.
-	 * The memory block is used to setting the address and size.
-	 * As well as, setting the data.
-	 * @param block the memory block
-	 * @param sh_name the byte index into the string table where the name begins
-	 * @return the newly created section
-	 * @throws MemoryAccessException if any of the requested memory block bytes are uninitialized.
+	 * Create a new section header, create the associated table class (if applicable) and add them to this ElfHeader.
+	 * @param name Name of the section
+	 * @param type Type of this section
+	 * @param flags Flags for this section
+	 * @param link Linked section header, or null
+	 * @param info Information field for this section
+	 * @param addressAlignment Address alignment for this section
+	 * @param entrySize Entry size for this section
+	 * @param data Initial data for this section
+	 * @return newly created section
+	 * @throws IOException
 	 */
-	public ElfSectionHeader addSection(MemoryBlock block, int sh_name)
-			throws MemoryAccessException {
-		ElfSectionHeader newSection = new ElfSectionHeader(this, block, sh_name, getImageBase());
-		addSection(newSection);
-		return newSection;
+	public ElfSectionHeader createSectionHeader(String name, int type, long flags,
+			ElfSectionHeader link, int info, long addressAlignment, long entrySize,
+			ByteProvider data) throws IOException {
+		int linkNum = link != null ? Arrays.asList(sectionHeaders).indexOf(link) : 0;
+
+		ElfSectionHeader section = new ElfSectionHeader(this, name, type, flags,
+			linkNum, info, addressAlignment, entrySize, data);
+
+		addSection(section);
+		if (type == ElfSectionHeaderConstants.SHT_STRTAB) {
+			List<ElfStringTable> stringTableList = new ArrayList<>(Arrays.asList(stringTables));
+			stringTableList.add(new ElfStringTable(this, section));
+			stringTables = stringTableList.toArray(new ElfStringTable[0]);
+		}
+		else if (type == ElfSectionHeaderConstants.SHT_SYMTAB) {
+			ElfStringTable stringTable = getStringTable(link);
+			List<ElfSymbolTable> symbolTableList = new ArrayList<>(Arrays.asList(symbolTables));
+			symbolTableList.add(new ElfSymbolTable(this, section, stringTable, null, false));
+			symbolTables = symbolTableList.toArray(new ElfSymbolTable[0]);
+		}
+		else if (type == ElfSectionHeaderConstants.SHT_REL ||
+			type == ElfSectionHeaderConstants.SHT_RELA ||
+			type == ElfSectionHeaderConstants.SHT_RELR ||
+			type == ElfSectionHeaderConstants.SHT_ANDROID_REL ||
+			type == ElfSectionHeaderConstants.SHT_ANDROID_RELA ||
+			type == ElfSectionHeaderConstants.SHT_ANDROID_RELR) {
+			ElfSectionHeader relocatedSection = sectionHeaders[info];
+			boolean addendTypeReloc = (type == ElfSectionHeaderConstants.SHT_RELA ||
+				type == ElfSectionHeaderConstants.SHT_ANDROID_RELA);
+
+			ElfRelocationTable.TableFormat format = TableFormat.DEFAULT;
+			if (type == ElfSectionHeaderConstants.SHT_ANDROID_REL ||
+				type == ElfSectionHeaderConstants.SHT_ANDROID_RELA) {
+				format = TableFormat.ANDROID;
+			}
+			else if (type == ElfSectionHeaderConstants.SHT_RELR ||
+				type == ElfSectionHeaderConstants.SHT_ANDROID_RELR) {
+				format = TableFormat.RELR;
+			}
+
+			ElfSymbolTable symbolTable = getSymbolTable(link);
+			List<ElfRelocationTable> relocationTableList =
+				new ArrayList<>(Arrays.asList(relocationTables));
+			relocationTableList.add(
+				new ElfRelocationTable(this, section, addendTypeReloc, symbolTable,
+					relocatedSection, format));
+			relocationTables = relocationTableList.toArray(new ElfRelocationTable[0]);
+		}
+
+		return section;
 	}
 
-	/**
-	 * Adds a new section the specifed name and name index.
-	 * The type of the section will be SHT_PROGBITS.
-	 * @param name the actual name of the new section
-	 * @param sh_name the byte index into the string table where the name begins
-	 * @return the newly created section
-	 */
-	public ElfSectionHeader addSection(String name, int sh_name) {
-		return addSection(name, sh_name, ElfSectionHeaderConstants.SHT_PROGBITS);
-	}
+	public void createSectionNameStringTable(String name) throws IOException {
+		if (e_shstrndx != 0) {
+			throw new RuntimeException("Section name string table already created");
+		}
 
-	/**
-	 * Adds a new section the specifed name and name index.
-	 * The type of the section will be SHT_PROGBITS.
-	 * @param name the actual name of the new section
-	 * @param sh_name the byte index into the string table where the name begins
-	 * @param type the type of the new section
-	 * @return the newly created section
-	 */
-	public ElfSectionHeader addSection(String name, int sh_name, int type) {
-		ElfSectionHeader newSection = new ElfSectionHeader(this, name, sh_name, type);
-		addSection(newSection);
-		return newSection;
+		e_shstrndx = e_shnum;
+		MutableByteProvider shstrtabProvider = new ByteArrayMutableByteProvider();
+		ElfSectionHeader shstrtab = createSectionHeader(name, ElfSectionHeaderConstants.SHT_STRTAB,
+			0, null, 0, 1, 0, shstrtabProvider);
+		ElfStringTable shStringTable = getStringTable(shstrtab);
+
+		for (ElfSectionHeader section : sectionHeaders) {
+			String sectionName = section.getNameAsString();
+			int strIndex = shStringTable.add(sectionName);
+
+			section.sh_name = strIndex;
+		}
 	}
 
 	/**
