@@ -376,10 +376,16 @@ public class ElfRelocation implements ByteArrayConverter, StructConverter {
 		if (is32bit) {
 			dc.putInt(bytes, 0, (int) r_offset);
 			dc.putInt(bytes, 4, (int) r_info);
+			if (hasAddend) {
+				dc.putInt(bytes, 8, (int) r_addend);
+			}
 		}
 		else {
 			dc.putLong(bytes, 0, r_offset);
 			dc.putLong(bytes, 8, r_info);
+			if (hasAddend) {
+				dc.putLong(bytes, 16, r_addend);
+			}
 		}
 		return bytes;
 	}
