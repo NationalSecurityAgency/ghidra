@@ -1726,7 +1726,7 @@ public class ElfHeader implements StructConverter, Writeable {
 	 */
 	public ElfStringTable getStringTable(ElfSectionHeader section) {
 		for (ElfStringTable stringTable : stringTables) {
-			if (stringTable.getFileSection().getFileOffset() == section.getFileOffset()) {
+			if (stringTable.getFileSection() == section) {
 				return stringTable;
 			}
 		}
@@ -1752,15 +1752,15 @@ public class ElfHeader implements StructConverter, Writeable {
 	/**
 	 * Returns the symbol table associated to the specified section header.
 	 * Or, null if one does not exist.
-	 * @param symbolTableSection symbol table section header
+	 * @param section symbol table section header
 	 * @return the symbol table associated to the specified section header
 	 */
-	public ElfSymbolTable getSymbolTable(ElfSectionHeader symbolTableSection) {
-		if (symbolTableSection == null) {
+	public ElfSymbolTable getSymbolTable(ElfSectionHeader section) {
+		if (section == null) {
 			return null;
 		}
 		for (ElfSymbolTable symbolTable : symbolTables) {
-			if (symbolTable.getFileSection().getFileOffset() == symbolTableSection.getFileOffset()) {
+			if (symbolTable.getFileSection() == section) {
 				return symbolTable;
 			}
 		}
@@ -1778,11 +1778,19 @@ public class ElfHeader implements StructConverter, Writeable {
 	/**
 	 * Returns the relocation table associated to the specified section header,
 	 * or null if one does not exist.
-	 * @param relocSection section header corresponding to relocation table
+	 * @param section section header corresponding to relocation table
 	 * @return the relocation table associated to the specified section header
 	 */
-	public ElfRelocationTable getRelocationTable(ElfSectionHeader relocSection) {
-		return getRelocationTableAtOffset(relocSection.getFileOffset());
+	public ElfRelocationTable getRelocationTable(ElfSectionHeader section) {
+		if (section == null) {
+			return null;
+		}
+		for (ElfRelocationTable relocationTable : relocationTables) {
+			if (relocationTable.getFileSection() == section) {
+				return relocationTable;
+			}
+		}
+		return null;
 	}
 
 	/**
