@@ -148,6 +148,48 @@ public class ElfSymbol implements ByteArrayConverter {
 		return new ElfSymbol(header, "", 0, 0, 0, (byte) 0, (byte) 0, (short) 0, 0, null);
 	}
 
+	/**
+	 * Creates a new defined symbol, related to a section.
+	 * @param header the corresponding ELF header
+	 * @param symbolTable the symbol table
+	 * @param nameAsString name of the symbol
+	 * @param name index of the symbol's name in the string table
+	 * @param value value of this symbol
+	 * @param size size of this symbol
+	 * @param type type of this symbol
+	 * @param binding binding for this symbol
+	 * @param visibility visibility for this symbol
+	 * @param sectionHeaderIndex index of the section header that contains this symbol
+	 * @param symbolIndex index of this symbol in the symbol table
+	 * @return created symbol
+	 */
+	public static ElfSymbol createDefinedSymbol(ElfHeader header, ElfSymbolTable symbolTable,
+			String nameAsString, int name, long value, long size, byte type, byte binding,
+			byte visibility, short sectionHeaderIndex, int symbolIndex) {
+		byte info = (byte) (type | (binding << 4));
+		byte other = visibility;
+
+		return new ElfSymbol(header, nameAsString, name, value, size, info, other,
+			sectionHeaderIndex, symbolIndex, symbolTable);
+	}
+
+	/**
+	 * Creates a new undefined symbol
+	 * @param header the corresponding ELF header
+	 * @param symbolTable the symbol table
+	 * @param nameAsString name of the symbol
+	 * @param name index of the symbol's name in the string table
+	 * @param symbolIndex index of this symbol in the symbol table
+	 * @return created symbol
+	 */
+	public static ElfSymbol createUndefinedSymbol(ElfHeader header, ElfSymbolTable symbolTable,
+			String nameAsString, int name, int symbolIndex) {
+		byte info = (byte) (STT_NOTYPE | (STB_GLOBAL << 4));
+
+		return new ElfSymbol(header, nameAsString, name, 0, 0, info, STV_DEFAULT, (short) 0,
+			symbolIndex, symbolTable);
+	}
+
 	private ElfSymbol(ElfHeader header, String nameAsString, int name, long value, long size,
 			byte info, byte other, short sectionHeaderIndex, int symbolIndex,
 			ElfSymbolTable symbolTable) {
