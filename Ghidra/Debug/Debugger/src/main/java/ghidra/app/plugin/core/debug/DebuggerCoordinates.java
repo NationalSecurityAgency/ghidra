@@ -400,7 +400,7 @@ public class DebuggerCoordinates {
 	 * @return exactly these same coordinates with the snap/time changed
 	 */
 	public DebuggerCoordinates snapNoResolve(long snap) {
-		if (time.isSnapOnly() && time.getSnap() == snap) {
+		if (time != null && time.isSnapOnly() && time.getSnap() == snap) {
 			return this;
 		}
 		TraceSchedule newTime = TraceSchedule.snap(snap);
