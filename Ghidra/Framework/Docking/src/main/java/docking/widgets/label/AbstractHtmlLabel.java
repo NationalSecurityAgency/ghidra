@@ -64,7 +64,7 @@ public abstract class AbstractHtmlLabel extends JLabel
 	public void setText(String text) {
 
 		// do not pass <html> up to the parent so that it does not install its own html rendering
-		if (text.toLowerCase().startsWith(HTML_TAG)) {
+		if (text != null && text.toLowerCase().startsWith(HTML_TAG)) {
 			text = text.substring(HTML_TAG.length());
 		}
 
@@ -81,9 +81,15 @@ public abstract class AbstractHtmlLabel extends JLabel
 
 	private void updateHtmlView() {
 
+		String text = getText();
+		if (text == null) {
+			putClientProperty(BasicHTML.propertyKey, null);
+			return;
+		}
+
 		// We need to add the html text back for our html editor kit to render html.  Install our
 		// own View by the BasicHTML.propertyKey key so that the paint method uses it.
-		View customHtmlView = createHTMLView(HTML_TAG + getText());
+		View customHtmlView = createHTMLView(HTML_TAG + text);
 		putClientProperty(BasicHTML.propertyKey, customHtmlView);
 	}
 
