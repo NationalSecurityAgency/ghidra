@@ -30,6 +30,7 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.lang.InsufficientBytesException;
 import ghidra.util.Msg;
 import ghidra.util.exception.*;
+import ghidra.util.task.TaskLauncher;
 import ghidra.util.task.TaskMonitor;
 
 class StructureEditorModel extends CompEditorModel {
@@ -687,7 +688,7 @@ class StructureEditorModel extends CompEditorModel {
 		}
 
 		FieldRange currentRange = getSelectedRangeContaining(currentIndex);
-		// if the index isn't in the selection or is in a range of only 
+		// if the index isn't in the selection or is in a range of only
 		// one row then we want to handle it the same.
 		boolean isOneComponent =
 			(currentRange == null) || (currentRange.getStart().getIndex().intValue() +
@@ -786,10 +787,10 @@ class StructureEditorModel extends CompEditorModel {
 
 	/**
 	 * Gets the maximum number of bytes available for a data type that is added at the indicated
-	 * index. This can vary based on whether or not it is in a selection. 
-	 * <br>In unlocked mode, the size is unrestricted when no selection or single row selection. 
+	 * index. This can vary based on whether or not it is in a selection.
+	 * <br>In unlocked mode, the size is unrestricted when no selection or single row selection.
 	 * Multi-row selection always limits the size.
-	 * <br>In locked mode, single row selection is limited to selected row plus undefined bytes 
+	 * <br>In locked mode, single row selection is limited to selected row plus undefined bytes
 	 * following it that can be absorbed.
 	 *
 	 * @param rowIndex index of the row in the editor's composite data type table.
@@ -803,7 +804,7 @@ class StructureEditorModel extends CompEditorModel {
 		}
 		DataTypeComponent comp = getComponent(rowIndex);
 		FieldRange currentRange = getSelectedRangeContaining(rowIndex);
-		// if the index isn't in the selection or is in a range of only 
+		// if the index isn't in the selection or is in a range of only
 		// one row then we want to handle it the same.
 		boolean isOneComponent =
 			(currentRange == null) || (currentRange.getStart().getIndex().intValue() +
@@ -825,9 +826,9 @@ class StructureEditorModel extends CompEditorModel {
 	}
 
 	/**
-	 * Gets the maximum number of bytes available for a new data type that 
+	 * Gets the maximum number of bytes available for a new data type that
 	 * will replace the current data type at the indicated index.
-	 * If there isn't a component with the indicated index, the max length 
+	 * If there isn't a component with the indicated index, the max length
 	 * will be determined by the lock mode.
 	 *
 	 * @param currentIndex index of the component in the structure.
@@ -1096,12 +1097,12 @@ class StructureEditorModel extends CompEditorModel {
 		return !viewComposite.isPackingEnabled();
 	}
 
-	public void createInternalStructure(TaskMonitor monitor)
-			throws InvalidDataTypeException, UsrException {
+	void createInternalStructure() throws UsrException {
 
 		if (selection.getNumRanges() != 1) {
 			throw new UsrException("Can only create structure on a contiguous selection.");
 		}
+
 		FieldRange fieldRange = selection.getFieldRange(0);
 		int minRow = fieldRange.getStart().getIndex().intValue();
 		int maxRow = fieldRange.getEnd().getIndex().intValue();
@@ -1120,35 +1121,54 @@ class StructureEditorModel extends CompEditorModel {
 		if (isEditingField()) {
 			endFieldEditing();
 		}
-		DataTypeManager originalDTM = getOriginalDataTypeManager();
+
+		DataTypeManager originalDtm = getOriginalDataTypeManager();
 		String baseName = "struct";
 		CategoryPath originalCategoryPath = getOriginalCategoryPath();
 		String uniqueName = viewDTM.getUniqueName(originalCategoryPath, baseName);
-		DataType conflictingDt = originalDTM.getDataType(originalCategoryPath, uniqueName);
+		DataType conflictingDt = originalDtm.getDataType(originalCategoryPath, uniqueName);
 		while (conflictingDt != null) {
 			// pull the data type into the view data type manager with the conflicting name.
 			viewDTM.resolve(conflictingDt, DataTypeConflictHandler.DEFAULT_HANDLER);
 			// Try to get another unique name.
 			uniqueName = viewDTM.getUniqueName(originalCategoryPath, baseName);
-			conflictingDt = originalDTM.getDataType(originalCategoryPath, uniqueName);
+			conflictingDt = originalDtm.getDataType(originalCategoryPath, uniqueName);
 		}
 
 		String specifiedName =
-			showNameDialog(uniqueName, originalCategoryPath, viewComposite.getName(), originalDTM);
+			showNameDialog(uniqueName, originalCategoryPath, viewComposite.getName(), originalDtm);
 		if (specifiedName == null) {
 			return;
 		}
-		uniqueName = specifiedName;
+
+		TaskLauncher.launchModal("Create Structure", monitor -> {
+			try {
+				doCreateInternalStructure(originalDtm, originalCategoryPath, specifiedName,
+					monitor);
+			}
+			catch (UsrException e) {
+				setStatus(e.getMessage(), true);
+			}
+		});
+	}
+
+	private void doCreateInternalStructure(DataTypeManager dtm, CategoryPath categoryPath,
+			String name, TaskMonitor monitor)
+			throws InvalidDataTypeException, UsrException {
 
 		int length = 0;
-		final StructureDataType structureDataType =
-			new StructureDataType(originalCategoryPath, uniqueName, length, originalDTM);
+		StructureDataType structureDataType =
+			new StructureDataType(categoryPath, name, length, dtm);
 
 		// adopt pack setting from current structure
 		structureDataType.setPackingEnabled(isPackingEnabled());
 		if (getPackingType() == PackingType.EXPLICIT) {
 			structureDataType.setExplicitPackingValue(getExplicitPackingValue());
 		}
+
+		FieldRange fieldRange = selection.getFieldRange(0);
+		int minRow = fieldRange.getStart().getIndex().intValue();
+		int maxRow = fieldRange.getEnd().getIndex().intValue();
 
 		// Get data type components to make into structure.
 		DataTypeComponent firstDtc = null;
@@ -1165,7 +1185,6 @@ class StructureEditorModel extends CompEditorModel {
 
 			DataType dt = component.getDataType();
 			int compLength = component.getLength();
-
 			length += compLength;
 
 			if (!structureDataType.isPackingEnabled() && component.isBitFieldComponent()) {
@@ -1182,6 +1201,7 @@ class StructureEditorModel extends CompEditorModel {
 
 			lastDtc = component;
 		}
+
 		DataType addedDataType = createDataTypeInOriginalDTM(structureDataType);
 		if (viewComposite.isPackingEnabled()) {
 			deleteSelectedComponents();
@@ -1207,7 +1227,7 @@ class StructureEditorModel extends CompEditorModel {
 		}
 	}
 
-	public String showNameDialog(final String defaultName, final CategoryPath catPath,
+	private String showNameDialog(final String defaultName, final CategoryPath catPath,
 			final String parentStructureName, final DataTypeManager applyDTM) {
 		InputDialogListener listener = dialog -> {
 			String name = dialog.getValue();
@@ -1259,7 +1279,7 @@ class StructureEditorModel extends CompEditorModel {
 
 	/**
 	 * Unpackage the selected component in the structure or array. This means replace the structure
-	 * with the data types for its component parts. For an array replace the array with the data type 
+	 * with the data types for its component parts. For an array replace the array with the data type
 	 * for each array element.
 	 * If the component isn't a structure or union then returns false.
 	 * @param rowIndex the row
