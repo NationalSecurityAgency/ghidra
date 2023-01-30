@@ -216,17 +216,13 @@ public class LldbModelTargetProcessImpl extends LldbModelTargetObjectImpl
 	@Override
 	public CompletableFuture<Void> step(TargetStepKind kind) {
 		LldbManagerImpl manager = getManager();
-		SBProcess currentProcess = manager.getCurrentProcess();
-		SBThread thread = currentProcess == null ? null : currentProcess.GetSelectedThread();
-		return getManager().execute(new LldbStepCommand(manager, thread, kind, null));
+		return getManager().execute(new LldbStepCommand(manager, null, kind, null));
 	}
 
 	@Override
 	public CompletableFuture<Void> step(Map<String, ?> args) {
 		LldbManagerImpl manager = getManager();
-		SBProcess currentProcess = manager.getCurrentProcess();
-		SBThread thread = currentProcess == null ? null : currentProcess.GetSelectedThread();
-		return getManager().execute(new LldbStepCommand(manager, thread, null, args));
+		return getManager().execute(new LldbStepCommand(manager, null, null, args));
 	}
 
 	@Override

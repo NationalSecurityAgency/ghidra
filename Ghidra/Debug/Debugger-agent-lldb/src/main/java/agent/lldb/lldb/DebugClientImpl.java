@@ -116,12 +116,13 @@ public class DebugClientImpl implements DebugClient {
 	public SBProcess connectRemote(DebugServerId si, String key, boolean auto, boolean async, boolean kernel) {
 		SBListener listener = new SBListener();
 		SBError error = new SBError();
-		session = createNullSession();
 		if (!auto) {
+			session = createNullSession();
 			((LldbManagerImpl) manager).addSessionIfAbsent(session);
 			return null;
 		}
 		String plugin = kernel ? "kdb-remote" : "gdb-remote";
+		session = connectSession("");
 		SBProcess process = session.ConnectRemote(listener, key, plugin, error);
 		if (!error.Success()) {
 			Msg.error(this, error.GetType() + " while attaching to " + key);
