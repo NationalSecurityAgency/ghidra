@@ -187,12 +187,12 @@ public abstract class AbstractVarnodeEvaluator<T> implements VarnodeEvaluator<T>
 	/**
 	 * Evaluate variable storage, providing an "identity" value
 	 * 
+	 * @param program the program containing the variable storage
 	 * @param storage the storage to evaluate
 	 * @param identity the value if storage had no varnodes
 	 * @return the value of the storage
 	 */
-	protected T evaluateStorage(VariableStorage storage, T identity) {
-		Program program = storage.getProgram();
+	protected T evaluateStorage(Program program, VariableStorage storage, T identity) {
 		int total = storage.size();
 		T value = identity;
 		for (Varnode vn : storage.getVarnodes()) {

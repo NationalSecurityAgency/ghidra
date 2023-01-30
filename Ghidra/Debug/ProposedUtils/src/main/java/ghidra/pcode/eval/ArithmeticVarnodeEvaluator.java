@@ -17,7 +17,7 @@ package ghidra.pcode.eval;
 
 import java.util.Map;
 
-import ghidra.pcode.exec.*;
+import ghidra.pcode.exec.PcodeArithmetic;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.opbehavior.BinaryOpBehavior;
 import ghidra.pcode.opbehavior.UnaryOpBehavior;
@@ -75,8 +75,8 @@ public abstract class ArithmeticVarnodeEvaluator<T> extends AbstractVarnodeEvalu
 	}
 
 	@Override
-	public T evaluateStorage(VariableStorage storage) {
-		return evaluateStorage(storage, arithmetic.fromConst(0, storage.size()));
+	public T evaluateStorage(Program program, VariableStorage storage) {
+		return evaluateStorage(program, storage, arithmetic.fromConst(0, storage.size()));
 	}
 
 	@Override

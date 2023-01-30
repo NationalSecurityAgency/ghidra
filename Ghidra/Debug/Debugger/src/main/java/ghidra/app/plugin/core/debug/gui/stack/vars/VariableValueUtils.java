@@ -159,8 +159,8 @@ public enum VariableValueUtils {
 		}
 
 		@Override
-		public Boolean evaluateStorage(VariableStorage storage) {
-			return evaluateStorage(storage, false);
+		public Boolean evaluateStorage(Program program, VariableStorage storage) {
+			return evaluateStorage(program, storage, false);
 		}
 	}
 
@@ -347,13 +347,15 @@ public enum VariableValueUtils {
 	/**
 	 * Check if evaluation of the given storage will require a frame
 	 * 
+	 * @param program the program containing the variable storage
 	 * @param storage the storage to evaluate
 	 * @param symbolStorage the leaves of evaluation, usually storage used by symbols in scope. See
 	 *            {@link #collectSymbolStorage(ClangLine)}
 	 * @return true if a frame is required, false otherwise
 	 */
-	public static boolean requiresFrame(VariableStorage storage, AddressSetView symbolStorage) {
-		return new RequiresFrameEvaluator(symbolStorage).evaluateStorage(storage);
+	public static boolean requiresFrame(Program program, VariableStorage storage,
+			AddressSetView symbolStorage) {
+		return new RequiresFrameEvaluator(symbolStorage).evaluateStorage(program, storage);
 	}
 
 	/**

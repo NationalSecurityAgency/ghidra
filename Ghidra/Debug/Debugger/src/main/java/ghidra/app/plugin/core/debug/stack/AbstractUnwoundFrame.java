@@ -271,14 +271,14 @@ public abstract class AbstractUnwoundFrame<T> implements UnwoundFrame<T> {
 	protected abstract Address applyBase(long offset);
 
 	@Override
-	public T getValue(VariableStorage storage) {
+	public T getValue(Program program, VariableStorage storage) {
 		SavedRegisterMap registerMap = computeRegisterMap();
 		return new FrameVarnodeValueGetter<T>(state.getArithmetic()) {
 			@Override
 			protected T evaluateMemory(Address address, int size) {
 				return registerMap.getVar(state, address, size, Reason.INSPECT);
 			}
-		}.evaluateStorage(storage);
+		}.evaluateStorage(program, storage);
 	}
 
 	@Override
@@ -289,14 +289,14 @@ public abstract class AbstractUnwoundFrame<T> implements UnwoundFrame<T> {
 	}
 
 	@Override
-	public T evaluate(VariableStorage storage, AddressSetView symbolStorage) {
+	public T evaluate(Program program, VariableStorage storage, AddressSetView symbolStorage) {
 		SavedRegisterMap registerMap = computeRegisterMap();
 		return new FrameVarnodeEvaluator<T>(state.getArithmetic(), symbolStorage) {
 			@Override
 			protected T evaluateMemory(Address address, int size) {
 				return registerMap.getVar(state, address, size, Reason.INSPECT);
 			}
-		}.evaluateStorage(storage);
+		}.evaluateStorage(program, storage);
 	}
 
 	@Override
@@ -311,8 +311,8 @@ public abstract class AbstractUnwoundFrame<T> implements UnwoundFrame<T> {
 	}
 
 	@Override
-	public CompletableFuture<Void> setValue(StateEditor editor, VariableStorage storage,
-			BigInteger value) {
+	public CompletableFuture<Void> setValue(StateEditor editor, Program program,
+			VariableStorage storage, BigInteger value) {
 		SavedRegisterMap registerMap = computeRegisterMap();
 		ByteBuffer buf = ByteBuffer.wrap(Utils.bigIntegerToBytes(value, storage.size(), true));
 		AsyncFence fence = new AsyncFence();
@@ -334,10 +334,10 @@ public abstract class AbstractUnwoundFrame<T> implements UnwoundFrame<T> {
 			}
 
 			@Override
-			public ByteBuffer evaluateStorage(VariableStorage storage) {
-				return evaluateStorage(storage, buf);
+			public ByteBuffer evaluateStorage(Program program, VariableStorage storage) {
+				return evaluateStorage(program, storage, buf);
 			}
-		}.evaluateStorage(storage);
+		}.evaluateStorage(program, storage);
 		return fence.ready();
 	}
 

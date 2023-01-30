@@ -149,10 +149,11 @@ public interface UnwoundFrame<T> {
 	 * <b>WARNING:</b> Never invoke this method from the Swing thread. The state could be associated
 	 * with a live session, and this may block to retrieve live state.
 	 * 
+	 * @param program the program containing the variable storage
 	 * @param storage the storage
 	 * @return the value
 	 */
-	T getValue(VariableStorage storage);
+	T getValue(Program program, VariableStorage storage);
 
 	/**
 	 * Get the value of the variable from the frame
@@ -166,7 +167,7 @@ public interface UnwoundFrame<T> {
 	 * @return the value
 	 */
 	default T getValue(Variable variable) {
-		return getValue(variable.getVariableStorage());
+		return getValue(variable.getProgram(), variable.getVariableStorage());
 	}
 
 	/**
@@ -198,11 +199,12 @@ public interface UnwoundFrame<T> {
 	 * with a live session, and this may block to retrieve live state.
 	 * 
 	 * @see VariableValueUtils#collectSymbolStorage(ClangLine)
+	 * @param program the program containing the variable storage
 	 * @param storage the storage to evaluate
 	 * @param symbolStorage the terminal storage, usually that of symbols
 	 * @return the value
 	 */
-	T evaluate(VariableStorage storage, AddressSetView symbolStorage);
+	T evaluate(Program program, VariableStorage storage, AddressSetView symbolStorage);
 
 	/**
 	 * Evaluate the output for the given p-code op, ascending until symbol storage is reached
@@ -227,11 +229,13 @@ public interface UnwoundFrame<T> {
 	 * stack.
 	 * 
 	 * @param editor the editor for setting values
+	 * @param program the program containing the variable storage
 	 * @param storage the storage to modify
 	 * @param value the desired value
 	 * @return a future which completes when the necessary commands have all completed
 	 */
-	CompletableFuture<Void> setValue(StateEditor editor, VariableStorage storage, BigInteger value);
+	CompletableFuture<Void> setValue(StateEditor editor, Program program, VariableStorage storage,
+			BigInteger value);
 
 	/**
 	 * Set the value of the given variable
@@ -244,7 +248,7 @@ public interface UnwoundFrame<T> {
 	 */
 	default CompletableFuture<Void> setValue(StateEditor editor, Variable variable,
 			BigInteger value) {
-		return setValue(editor, variable.getVariableStorage(), value);
+		return setValue(editor, variable.getProgram(), variable.getVariableStorage(), value);
 	}
 
 	/**

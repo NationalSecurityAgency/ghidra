@@ -310,7 +310,7 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 				}
 				if (variable != null) {
 					return fillFrameStorage(frame, variable.getName(), variable.getDataType(),
-						variable.getVariableStorage());
+						variable.getProgram(), variable.getVariableStorage());
 				}
 				Address dynAddr = frame.getBasePointer().add(stackAddress.getOffset());
 				TraceCodeUnit unit = current.getTrace()
@@ -377,7 +377,7 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 
 				if (variable != null) {
 					return fillFrameStorage(frame, variable.getName(), variable.getDataType(),
-						variable.getVariableStorage());
+						variable.getProgram(), variable.getVariableStorage());
 				}
 
 				if (frame.getLevel() == 0) {
@@ -418,16 +418,17 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 		}
 
 		public CompletableFuture<VariableValueTable> fillStorage(Function function, String name,
-				DataType type, VariableStorage storage, AddressSetView symbolStorage) {
+				DataType type, Program program, VariableStorage storage,
+				AddressSetView symbolStorage) {
 			return executeBackground(monitor -> {
 				UnwoundFrame<WatchValue> frame =
-					VariableValueUtils.requiresFrame(storage, symbolStorage)
+					VariableValueUtils.requiresFrame(program, storage, symbolStorage)
 							? eval.getStackFrame(function, warnings, monitor)
 							: eval.getGlobalsFakeFrame();
 				if (frame == null) {
 					throw new UnwindException("Cannot find frame for " + function);
 				}
-				return fillFrameStorage(frame, name, type, storage);
+				return fillFrameStorage(frame, name, type, program, storage);
 			});
 		}
 
@@ -459,14 +460,14 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 		}
 
 		public VariableValueTable fillFrameStorage(UnwoundFrame<WatchValue> frame, String name,
-				DataType type, VariableStorage storage) {
+				DataType type, Program program, VariableStorage storage) {
 			table.add(new NameRow(name));
 			if (!frame.isFake()) {
 				table.add(new FrameRow(frame));
 			}
 			table.add(new StorageRow(storage));
 			table.add(new TypeRow(type));
-			WatchValue value = frame.getValue(storage);
+			WatchValue value = frame.getValue(program, storage);
 			return fillWatchValue(frame, storage.getMinAddress(), type, value);
 		}
 
@@ -486,8 +487,7 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 		}
 
 		public CompletableFuture<VariableValueTable> fillHighVariable(HighVariable hVar,
-				String name,
-				AddressSetView symbolStorage) {
+				String name, AddressSetView symbolStorage) {
 			Function function = hVar.getHighFunction().getFunction();
 			VariableStorage storage = VariableValueUtils.fabricateStorage(hVar);
 			if (storage.isUniqueStorage()) {
@@ -496,7 +496,8 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 				table.add(new ValueRow("(Unique)", TraceMemoryState.KNOWN));
 				return CompletableFuture.completedFuture(table);
 			}
-			return fillStorage(function, name, hVar.getDataType(), storage, symbolStorage);
+			return fillStorage(function, name, hVar.getDataType(), function.getProgram(), storage,
+				symbolStorage);
 		}
 
 		public CompletableFuture<VariableValueTable> fillHighVariable(HighVariable hVar,
@@ -521,7 +522,7 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 		public CompletableFuture<VariableValueTable> fillComposite(HighSymbol hSym,
 				HighVariable hVar, AddressSetView symbolStorage) {
 			return fillStorage(hVar.getHighFunction().getFunction(), hSym.getName(),
-				hSym.getDataType(), hSym.getStorage(), symbolStorage);
+				hSym.getDataType(), hSym.getProgram(), hSym.getStorage(), symbolStorage);
 		}
 
 		public CompletableFuture<VariableValueTable> fillToken(ClangToken token) {
@@ -582,7 +583,7 @@ public class VariableValueHoverService extends AbstractConfigurableHover
 					throw new UnwindException("Cannot find frame for " + function);
 				}
 				return fillFrameStorage(frame, variable.getName(), variable.getDataType(),
-					variable.getVariableStorage());
+					variable.getProgram(), variable.getVariableStorage());
 			});
 		}
 	}
