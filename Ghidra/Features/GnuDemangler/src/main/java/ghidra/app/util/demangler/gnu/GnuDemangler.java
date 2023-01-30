@@ -23,6 +23,7 @@ import ghidra.app.util.demangler.*;
 import ghidra.app.util.opinion.ElfLoader;
 import ghidra.app.util.opinion.MachoLoader;
 import ghidra.framework.Application;
+import ghidra.framework.options.Options;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.listing.Program;
 
@@ -48,6 +49,12 @@ public class GnuDemangler implements Demangler {
 
 		String executableFormat = program.getExecutableFormat();
 		if (isELF(executableFormat) || isMacho(executableFormat)) {
+			return true;
+		}
+		
+		Options options = program.getOptions("Program Information");
+		String compiler = options.getString("Compiler", null);
+		if(compiler != null && compiler.contains("gcc")) {
 			return true;
 		}
 
