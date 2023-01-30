@@ -459,7 +459,6 @@ public abstract class MufomType {
 	public static final int ieee_unknown_7_enum = 0x07;
 	public static final int ieee_unknown_12_enum = 0x0c;
 	public static final int ieee_unknown_16_enum = 0x10;
-	public static final int ieee_static_variable_enum = 0x13;
 
 	public static final int ieee_execution_tool_version_enum = 0x36;
 	public static final int ieee_unknown_56_enum = 0x38;
