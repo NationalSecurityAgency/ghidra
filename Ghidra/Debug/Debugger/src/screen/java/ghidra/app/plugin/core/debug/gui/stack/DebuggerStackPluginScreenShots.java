@@ -28,7 +28,7 @@ import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.action.SPLocationTrackingSpec;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
-import ghidra.app.plugin.core.debug.service.editing.DebuggerStateEditingServicePlugin;
+import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
 import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationServicePlugin;
 import ghidra.app.plugin.core.debug.service.emulation.ProgramEmulationUtils;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
@@ -38,7 +38,7 @@ import ghidra.app.plugin.core.debug.stack.*;
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerEmulationService.EmulationResult;
-import ghidra.app.services.DebuggerStateEditingService.StateEditor;
+import ghidra.app.services.DebuggerControlService.StateEditor;
 import ghidra.async.AsyncTestUtils;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.model.DomainObject;
@@ -278,8 +278,7 @@ public class DebuggerStackPluginScreenShots extends GhidraScreenShotGenerator
 	public void testCaptureDebuggerStackUnwindInListing() throws Throwable {
 		addPlugin(tool, DebuggerListingPlugin.class);
 
-		DebuggerStateEditingService editingService =
-			addPlugin(tool, DebuggerStateEditingServicePlugin.class);
+		DebuggerControlService controlService = addPlugin(tool, DebuggerControlServicePlugin.class);
 		DebuggerEmulationService emuService = addPlugin(tool, DebuggerEmulationServicePlugin.class);
 
 		Function function = createFibonacciProgramX86_32();
@@ -296,8 +295,8 @@ public class DebuggerStackPluginScreenShots extends GhidraScreenShotGenerator
 		traceManager.activateThread(thread);
 		waitForSwing();
 
-		editingService.setCurrentMode(tb.trace, StateEditingMode.RW_TRACE);
-		StateEditor editor = editingService.createStateEditor(tb.trace);
+		controlService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
+		StateEditor editor = controlService.createStateEditor(tb.trace);
 
 		DebuggerCoordinates atSetup = traceManager.getCurrent();
 		StackUnwinder unwinder = new StackUnwinder(tool, atSetup.getPlatform());
@@ -331,7 +330,7 @@ public class DebuggerStackPluginScreenShots extends GhidraScreenShotGenerator
 			waitForComponentProvider(DebuggerListingProvider.class);
 		listingProvider.setTrackingSpec(SPLocationTrackingSpec.INSTANCE);
 		waitForSwing();
-		
+
 		captureIsolatedProvider(listingProvider, 800, 600);
 	}
 }

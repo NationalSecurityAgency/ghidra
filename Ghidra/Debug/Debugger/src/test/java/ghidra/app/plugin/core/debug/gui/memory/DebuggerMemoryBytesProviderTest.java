@@ -48,7 +48,7 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.FollowsCurrentThreadAction;
 import ghidra.app.plugin.core.debug.gui.action.*;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
-import ghidra.app.plugin.core.debug.service.editing.DebuggerStateEditingServicePlugin;
+import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
 import ghidra.app.services.*;
 import ghidra.async.SwingExecutorService;
 import ghidra.program.model.address.*;
@@ -74,7 +74,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 	protected DebuggerMemoryBytesPlugin memBytesPlugin;
 	protected DebuggerMemoryBytesProvider memBytesProvider;
 
-	protected DebuggerStateEditingService editingService;
+	protected DebuggerControlService editingService;
 
 	@Before
 	public void setUpMemoryBytesProviderTest() throws Exception {
@@ -82,7 +82,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		memBytesProvider = waitForComponentProvider(DebuggerMemoryBytesProvider.class);
 		memBytesProvider.setVisible(true);
 
-		editingService = addPlugin(tool, DebuggerStateEditingServicePlugin.class);
+		editingService = addPlugin(tool, DebuggerControlServicePlugin.class);
 	}
 
 	protected void goToDyn(Address address) {
@@ -1100,7 +1100,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 			createTargetTraceMapper(mb.testProcess1));
 		Trace trace = recorder.getTrace();
 
-		editingService.setCurrentMode(trace, StateEditingMode.RW_TARGET);
+		editingService.setCurrentMode(trace, ControlMode.RW_TARGET);
 		DockingActionIf actionEdit = getAction(memBytesPlugin, "Enable/Disable Byteviewer Editing");
 
 		mb.testProcess1.addRegion("exe:.text", mb.rng(0x55550000, 0x5555ffff), "rx");
@@ -1132,7 +1132,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 			createTargetTraceMapper(mb.testProcess1));
 		Trace trace = recorder.getTrace();
 
-		editingService.setCurrentMode(trace, StateEditingMode.RW_TRACE);
+		editingService.setCurrentMode(trace, ControlMode.RW_TRACE);
 		DockingActionIf actionEdit = getAction(memBytesPlugin, "Enable/Disable Byteviewer Editing");
 
 		mb.testProcess1.addRegion("exe:.text", mb.rng(0x55550000, 0x5555ffff), "rx");
@@ -1179,7 +1179,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 			createTargetTraceMapper(mb.testProcess1));
 		Trace trace = recorder.getTrace();
 
-		editingService.setCurrentMode(trace, StateEditingMode.RW_TARGET);
+		editingService.setCurrentMode(trace, ControlMode.RW_TARGET);
 
 		mb.testProcess1.addRegion("exe:.text", mb.rng(0x55550000, 0x5555ffff), "rx");
 		waitFor(() -> !trace.getMemoryManager().getAllRegions().isEmpty());

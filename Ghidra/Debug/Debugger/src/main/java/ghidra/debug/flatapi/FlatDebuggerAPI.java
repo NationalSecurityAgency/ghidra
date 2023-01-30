@@ -30,7 +30,7 @@ import ghidra.app.plugin.core.debug.service.model.launch.DebuggerProgramLaunchOf
 import ghidra.app.script.GhidraScript;
 import ghidra.app.script.GhidraState;
 import ghidra.app.services.*;
-import ghidra.app.services.DebuggerStateEditingService.StateEditor;
+import ghidra.app.services.DebuggerControlService.StateEditor;
 import ghidra.dbg.AnnotatedDebuggerAttributeListener;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.target.*;
@@ -1182,40 +1182,40 @@ public interface FlatDebuggerAPI {
 	}
 
 	/**
-	 * Get the state editing service
+	 * Get the control service
 	 * 
 	 * @return the service
 	 */
-	default DebuggerStateEditingService getEditingService() {
-		return requireService(DebuggerStateEditingService.class);
+	default DebuggerControlService getControlService() {
+		return requireService(DebuggerControlService.class);
 	}
 
 	/**
-	 * Set the editing mode of the given trace
+	 * Set the control mode of the given trace
 	 * 
 	 * @param trace the trace
 	 * @param mode the mode
 	 */
-	default void setEditingMode(Trace trace, StateEditingMode mode) {
-		requireService(DebuggerStateEditingService.class).setCurrentMode(trace, mode);
+	default void setControlMode(Trace trace, ControlMode mode) {
+		requireService(DebuggerControlService.class).setCurrentMode(trace, mode);
 	}
 
 	/**
-	 * Set the editing mode of the current trace
+	 * Set the control mode of the current trace
 	 * 
 	 * @param mode the mode
 	 */
-	default void setEditingMode(StateEditingMode mode) {
-		setEditingMode(requireCurrentTrace(), mode);
+	default void setControlMode(ControlMode mode) {
+		setControlMode(requireCurrentTrace(), mode);
 	}
 
 	/**
-	 * Create a state editor for the given context, adhering to its current editing mode
+	 * Create a state editor for the given context, adhering to its current control mode
 	 * 
 	 * @return the editor
 	 */
 	default StateEditor createStateEditor(DebuggerCoordinates coordinates) {
-		return getEditingService().createStateEditor(coordinates);
+		return getControlService().createStateEditor(coordinates);
 	}
 
 	/**
@@ -1226,7 +1226,7 @@ public interface FlatDebuggerAPI {
 	 * @return the editor
 	 */
 	default StateEditor createStateEditor(Trace trace, long snap) {
-		return getEditingService().createStateEditor(getTraceManager()
+		return getControlService().createStateEditor(getTraceManager()
 				.resolveTrace(trace)
 				.snap(snap));
 	}
@@ -1240,14 +1240,14 @@ public interface FlatDebuggerAPI {
 	 * @return the editor
 	 */
 	default StateEditor createStateEditor(TraceThread thread, int frame, long snap) {
-		return getEditingService().createStateEditor(getTraceManager()
+		return getControlService().createStateEditor(getTraceManager()
 				.resolveThread(thread)
 				.snap(snap)
 				.frame(frame));
 	}
 
 	/**
-	 * Create a state editor for the current context, adhering to the current editing mode
+	 * Create a state editor for the current context, adhering to the current control mode
 	 * 
 	 * @return the editor
 	 */
@@ -1260,7 +1260,7 @@ public interface FlatDebuggerAPI {
 	 * 
 	 * <p>
 	 * The success or failure of this method depends on a few factors. First is the user-selected
-	 * editing mode for the trace. See {@link #setEditingMode(StateEditingMode)}. In read-only mode,
+	 * control mode for the trace. See {@link #setControlMode(ControlMode)}. In read-only mode,
 	 * this will always fail. When editing traces, a write almost always succeeds. Exceptions would
 	 * probably indicate I/O errors. When editing via emulation, a write should almost always
 	 * succeed. Second, when editing the target, the state of the target matters. If the trace has
@@ -1288,7 +1288,7 @@ public interface FlatDebuggerAPI {
 	}
 
 	/**
-	 * Patch memory of the given target, according to its current editing mode
+	 * Patch memory of the given target, according to its current control mode
 	 * 
 	 * <p>
 	 * If you intend to apply several patches, consider using {@link #createStateEditor(Trace,long)}
@@ -1305,7 +1305,7 @@ public interface FlatDebuggerAPI {
 	}
 
 	/**
-	 * Patch memory of the current target, according to the current editing mode
+	 * Patch memory of the current target, according to the current control mode
 	 * 
 	 * <p>
 	 * If you intend to apply several patches, consider using {@link #createStateEditor()} and
@@ -1324,7 +1324,7 @@ public interface FlatDebuggerAPI {
 	 * 
 	 * <p>
 	 * The success or failure of this methods depends on a few factors. First is the user-selected
-	 * editing mode for the trace. See {@link #setEditingMode(StateEditingMode)}. In read-only mode,
+	 * control mode for the trace. See {@link #setControlMode(ControlMode)}. In read-only mode,
 	 * this will always fail. When editing traces, a write almost always succeeds. Exceptions would
 	 * probably indicate I/O errors. When editing via emulation, a write should only fail if the
 	 * register is not accessible to Sleigh, e.g., the context register. Second, when editing the
@@ -1351,7 +1351,7 @@ public interface FlatDebuggerAPI {
 	}
 
 	/**
-	 * Patch a register of the given context, according to its current editing mode
+	 * Patch a register of the given context, according to its current control mode
 	 * 
 	 * <p>
 	 * If you intend to apply several patches, consider using
@@ -1369,7 +1369,7 @@ public interface FlatDebuggerAPI {
 	}
 
 	/**
-	 * Patch a register of the given context, according to its current editing mode
+	 * Patch a register of the given context, according to its current control mode
 	 * 
 	 * @see #writeRegister(TraceThread, int, long, RegisterValue)
 	 * @throws IllegalArgumentException if the register name is invalid
@@ -1381,7 +1381,7 @@ public interface FlatDebuggerAPI {
 	}
 
 	/**
-	 * Patch a register of the current thread, according to the current editing mode
+	 * Patch a register of the current thread, according to the current control mode
 	 * 
 	 * <p>
 	 * If you intend to apply several patches, consider using {@link #createStateEditor()} and
@@ -1396,7 +1396,7 @@ public interface FlatDebuggerAPI {
 	}
 
 	/**
-	 * Patch a register of the current thread, according to the current editing mode
+	 * Patch a register of the current thread, according to the current control mode
 	 * 
 	 * @see #writeRegister(RegisterValue)
 	 * @throws IllegalArgumentException if the register name is invalid

@@ -36,7 +36,7 @@ import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.service.breakpoint.DebuggerLogicalBreakpointServicePlugin;
-import ghidra.app.plugin.core.debug.service.editing.DebuggerStateEditingServicePlugin;
+import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
 import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationServicePlugin;
 import ghidra.app.plugin.core.debug.service.model.TestDebuggerProgramLaunchOpinion.TestDebuggerProgramLaunchOffer;
 import ghidra.app.plugin.core.debug.service.model.launch.AbstractDebuggerProgramLaunchOffer;
@@ -129,7 +129,7 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 	protected DebuggerStaticMappingService mappingService;
 	protected DebuggerEmulationService emulationService;
 	protected DebuggerListingService listingService;
-	protected DebuggerStateEditingService editingService;
+	protected DebuggerControlService editingService;
 	protected FlatDebuggerAPI flat;
 
 	@Before
@@ -138,7 +138,7 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 		mappingService = tool.getService(DebuggerStaticMappingService.class);
 		emulationService = addPlugin(tool, DebuggerEmulationServicePlugin.class);
 		listingService = addPlugin(tool, DebuggerListingPlugin.class);
-		editingService = addPlugin(tool, DebuggerStateEditingServicePlugin.class);
+		editingService = addPlugin(tool, DebuggerControlServicePlugin.class);
 		flat = new TestFlatAPI();
 	}
 
@@ -689,7 +689,7 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 	@Test
 	public void testWriteMemoryGivenContext() throws Throwable {
 		createTraceWithBinText();
-		editingService.setCurrentMode(tb.trace, StateEditingMode.RW_TRACE);
+		editingService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
 
 		assertTrue(flat.writeMemory(tb.trace, 0, tb.addr(0x00400123), tb.arr(3, 2, 1)));
 		ByteBuffer buf = ByteBuffer.allocate(3);
@@ -700,7 +700,7 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 	@Test
 	public void testWriteMemoryCurrentContext() throws Throwable {
 		createTraceWithBinText();
-		editingService.setCurrentMode(tb.trace, StateEditingMode.RW_TRACE);
+		editingService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
 
 		assertTrue(flat.writeMemory(tb.addr(0x00400123), tb.arr(3, 2, 1)));
 		ByteBuffer buf = ByteBuffer.allocate(3);
@@ -711,7 +711,7 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 	@Test
 	public void testWriteRegisterGivenContext() throws Throwable {
 		TraceThread thread = createTraceWithThreadAndStack(true);
-		editingService.setCurrentMode(tb.trace, StateEditingMode.RW_TRACE);
+		editingService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
 		traceManager.activateThread(thread);
 		waitForSwing();
 
@@ -727,7 +727,7 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 	@Test
 	public void testWriteRegisterCurrentContext() throws Throwable {
 		TraceThread thread = createTraceWithThreadAndStack(true);
-		editingService.setCurrentMode(tb.trace, StateEditingMode.RW_TRACE);
+		editingService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
 		traceManager.activateThread(thread);
 		waitForSwing();
 

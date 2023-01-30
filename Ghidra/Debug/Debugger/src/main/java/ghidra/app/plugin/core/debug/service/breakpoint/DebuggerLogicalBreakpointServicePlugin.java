@@ -31,7 +31,7 @@ import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.*;
 import ghidra.app.services.*;
-import ghidra.app.services.DebuggerStateEditingService.StateEditingModeChangeListener;
+import ghidra.app.services.DebuggerControlService.ControlModeChangeListener;
 import ghidra.app.services.LogicalBreakpoint.State;
 import ghidra.async.SwingExecutorService;
 import ghidra.dbg.target.TargetBreakpointLocation;
@@ -187,9 +187,9 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		}
 	}
 
-	protected class TrackModesListener implements StateEditingModeChangeListener {
+	protected class TrackModesListener implements ControlModeChangeListener {
 		@Override
-		public void modeChanged(Trace trace, StateEditingMode mode) {
+		public void modeChanged(Trace trace, ControlMode mode) {
 			processChange(c -> evtModeChanged(c, trace), "modeChanged");
 		}
 	}
@@ -516,7 +516,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 			 * snap has changed to where it's no longer present, because the mapping to static space
 			 * has changed or become invalid, or because it has no live breakpoint in target mode.
 			 */
-			StateEditingMode mode = getMode(trace);
+			ControlMode mode = getMode(trace);
 			for (Set<LogicalBreakpointInternal> set : List
 					.copyOf(breakpointsByAddress.values())) {
 				for (LogicalBreakpointInternal lb : Set.copyOf(set)) {
@@ -547,7 +547,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		}
 
 		protected void trackTraceBreakpoints(AddCollector a) {
-			StateEditingMode mode = getMode(trace);
+			ControlMode mode = getMode(trace);
 			if (!mode.useEmulatedBreakpoints() && recorder == null) {
 				return;
 			}
@@ -560,7 +560,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		}
 
 		protected void trackTraceBreakpoints(AddCollector a,
-				Collection<TraceBreakpoint> breakpoints, StateEditingMode mode) {
+				Collection<TraceBreakpoint> breakpoints, ControlMode mode) {
 			for (TraceBreakpoint tb : breakpoints) {
 				try {
 					trackTraceBreakpoint(a, tb, mode, false);
@@ -587,7 +587,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		}
 
 		protected void trackTraceBreakpoint(AddCollector a, TraceBreakpoint tb,
-				StateEditingMode mode, boolean forceUpdate)
+				ControlMode mode, boolean forceUpdate)
 				throws TrackedTooSoonException {
 			if (!mode.useEmulatedBreakpoints() &&
 				(recorder == null || recorder.getTargetBreakpoint(tb) == null)) {
@@ -803,7 +803,7 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 	// @AutoServiceConsumed via method
 	private DebuggerStaticMappingService mappingService;
 	// @AutoServiceConsumed via method
-	private DebuggerStateEditingService editingService;
+	private DebuggerControlService controlService;
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
 
@@ -921,13 +921,13 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 	}
 
 	@AutoServiceConsumed
-	public void setEditingService(DebuggerStateEditingService editingService) {
-		if (this.editingService != null) {
-			this.editingService.removeModeChangeListener(modeListener);
+	private void setControlService(DebuggerControlService editingService) {
+		if (this.controlService != null) {
+			this.controlService.removeModeChangeListener(modeListener);
 		}
-		this.editingService = editingService;
-		if (this.editingService != null) {
-			this.editingService.addModeChangeListener(modeListener);
+		this.controlService = editingService;
+		if (this.controlService != null) {
+			this.controlService.addModeChangeListener(modeListener);
 		}
 	}
 
@@ -1248,16 +1248,16 @@ public class DebuggerLogicalBreakpointServicePlugin extends Plugin
 		}, (actions, lbi) -> lbi.planDelete(actions, trace));
 	}
 
-	private StateEditingMode getMode(Trace trace) {
-		return editingService == null
-				? StateEditingMode.DEFAULT
-				: editingService.getCurrentMode(trace);
+	private ControlMode getMode(Trace trace) {
+		return controlService == null
+				? ControlMode.DEFAULT
+				: controlService.getCurrentMode(trace);
 	}
 
 	private void planActOnLoc(BreakpointActionSet actions, TraceBreakpoint tb,
 			BiConsumer<BreakpointActionSet, TargetBreakpointLocation> targetLocConsumer,
 			BiConsumer<BreakpointActionSet, TraceBreakpoint> emuLocConsumer) {
-		StateEditingMode mode = getMode(tb.getTrace());
+		ControlMode mode = getMode(tb.getTrace());
 		if (mode.useEmulatedBreakpoints()) {
 			planActOnLocEmu(actions, tb, emuLocConsumer);
 		}

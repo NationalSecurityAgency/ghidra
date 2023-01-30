@@ -25,7 +25,7 @@ import org.junit.*;
 
 import generic.Unique;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
-import ghidra.app.plugin.core.debug.service.editing.DebuggerStateEditingServicePlugin;
+import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.services.*;
 import ghidra.app.services.LogicalBreakpoint.State;
@@ -1619,15 +1619,15 @@ public class DebuggerLogicalBreakpointServiceTest extends AbstractGhidraHeadedDe
 	@Test
 	public void testAddTraceBreakpointSetSleighThenMapThenSaveToProgramCopiesSleigh()
 			throws Throwable {
-		DebuggerStateEditingService editingService =
-			addPlugin(tool, DebuggerStateEditingServicePlugin.class);
+		DebuggerControlService editingService =
+			addPlugin(tool, DebuggerControlServicePlugin.class);
 
 		// TODO: What if already mapped?
 		// Not sure I care about tb.setEmuSleigh() out of band
 
 		createTrace();
 		traceManager.openTrace(tb.trace);
-		editingService.setCurrentMode(tb.trace, StateEditingMode.RW_EMULATOR);
+		editingService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
 		createProgramFromTrace();
 		intoProject(program);
 		programManager.openProgram(program);

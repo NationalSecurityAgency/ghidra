@@ -20,7 +20,7 @@ import java.util.concurrent.CompletableFuture;
 
 import ghidra.app.decompiler.ClangLine;
 import ghidra.app.plugin.core.debug.gui.stack.vars.VariableValueUtils;
-import ghidra.app.services.DebuggerStateEditingService.StateEditor;
+import ghidra.app.services.DebuggerControlService.StateEditor;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.lang.Register;

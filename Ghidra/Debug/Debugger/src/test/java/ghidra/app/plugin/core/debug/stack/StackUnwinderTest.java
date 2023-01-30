@@ -40,7 +40,7 @@ import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.stack.vars.*;
 import ghidra.app.plugin.core.debug.gui.stack.vars.VariableValueRow.*;
-import ghidra.app.plugin.core.debug.service.editing.DebuggerStateEditingServicePlugin;
+import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
 import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationServicePlugin;
 import ghidra.app.plugin.core.debug.service.emulation.ProgramEmulationUtils;
 import ghidra.app.plugin.core.debug.stack.StackUnwindWarning.*;
@@ -49,7 +49,7 @@ import ghidra.app.plugin.core.decompile.DecompilerProvider;
 import ghidra.app.plugin.core.disassembler.DisassemblerPlugin;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerEmulationService.EmulationResult;
-import ghidra.app.services.DebuggerStateEditingService.StateEditor;
+import ghidra.app.services.DebuggerControlService.StateEditor;
 import ghidra.app.util.viewer.field.FieldFactory;
 import ghidra.app.util.viewer.field.ListingField;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
@@ -119,7 +119,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 	ListingPanel staticListing;
 	DebuggerListingPlugin listingPlugin;
 	ListingPanel dynamicListing;
-	DebuggerStateEditingService editingService;
+	DebuggerControlService editingService;
 	DebuggerEmulationService emuService;
 	DecompilerProvider decompilerProvider;
 	DecompilerPanel decompilerPanel;
@@ -675,8 +675,8 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 		addPlugin(tool, DebuggerListingPlugin.class);
 		addPlugin(tool, DisassemblerPlugin.class);
 		addPlugin(tool, DecompilePlugin.class);
-		DebuggerStateEditingService editingService =
-			addPlugin(tool, DebuggerStateEditingServicePlugin.class);
+		DebuggerControlService editingService =
+			addPlugin(tool, DebuggerControlServicePlugin.class);
 		DebuggerEmulationService emuService = addPlugin(tool, DebuggerEmulationServicePlugin.class);
 
 		Function function = createSumSquaresProgramX86_32();
@@ -691,7 +691,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 		traceManager.activateThread(thread);
 		waitForSwing();
 
-		editingService.setCurrentMode(tb.trace, StateEditingMode.RW_TRACE);
+		editingService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
 		StateEditor editor = editingService.createStateEditor(tb.trace);
 
 		DebuggerCoordinates atSetup = traceManager.getCurrent();
@@ -735,8 +735,8 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 		addPlugin(tool, DebuggerListingPlugin.class);
 		addPlugin(tool, DisassemblerPlugin.class);
 		addPlugin(tool, DecompilePlugin.class);
-		DebuggerStateEditingService editingService =
-			addPlugin(tool, DebuggerStateEditingServicePlugin.class);
+		DebuggerControlService editingService =
+			addPlugin(tool, DebuggerControlServicePlugin.class);
 		DebuggerEmulationService emuService = addPlugin(tool, DebuggerEmulationServicePlugin.class);
 
 		Function function = createFibonacciProgramX86_32();
@@ -751,7 +751,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 		traceManager.activateThread(thread);
 		waitForSwing();
 
-		editingService.setCurrentMode(tb.trace, StateEditingMode.RW_TRACE);
+		editingService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
 		StateEditor editor = editingService.createStateEditor(tb.trace);
 
 		DebuggerCoordinates atSetup = traceManager.getCurrent();
@@ -872,7 +872,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 		dynamicListing = listingPlugin.getProvider().getListingPanel();
 		addPlugin(tool, DisassemblerPlugin.class);
 		addPlugin(tool, DecompilePlugin.class);
-		editingService = addPlugin(tool, DebuggerStateEditingServicePlugin.class);
+		editingService = addPlugin(tool, DebuggerControlServicePlugin.class);
 		emuService = addPlugin(tool, DebuggerEmulationServicePlugin.class);
 
 		decompilerProvider = waitForComponentProvider(DecompilerProvider.class);
@@ -894,7 +894,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 		traceManager.activateThread(thread);
 		waitForSwing();
 
-		editingService.setCurrentMode(tb.trace, StateEditingMode.RW_TRACE);
+		editingService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
 		StateEditor editor = editingService.createStateEditor(tb.trace);
 
 		DebuggerCoordinates atSetup = traceManager.getCurrent();
@@ -944,7 +944,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 		traceManager.activateThread(thread);
 		waitForSwing();
 
-		editingService.setCurrentMode(tb.trace, StateEditingMode.RW_TRACE);
+		editingService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
 		StateEditor editor = editingService.createStateEditor(tb.trace);
 		// Move stack where it shows in UI. Not required, but nice for debugging.
 		Register sp = program.getCompilerSpec().getStackPointer();
@@ -988,7 +988,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 		traceManager.activateThread(thread);
 		waitForSwing();
 
-		editingService.setCurrentMode(tb.trace, StateEditingMode.RW_TRACE);
+		editingService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
 		StateEditor editor = editingService.createStateEditor(tb.trace);
 		// Move stack where it shows in UI. Not required, but nice for debugging.
 		Register sp = program.getCompilerSpec().getStackPointer();
@@ -1032,7 +1032,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 		traceManager.activateThread(thread);
 		waitForSwing();
 
-		editingService.setCurrentMode(tb.trace, StateEditingMode.RW_TRACE);
+		editingService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
 		StateEditor editor = editingService.createStateEditor(tb.trace);
 		// Move stack where it shows in UI. Not required, but nice for debugging.
 		Register sp = program.getCompilerSpec().getStackPointer();

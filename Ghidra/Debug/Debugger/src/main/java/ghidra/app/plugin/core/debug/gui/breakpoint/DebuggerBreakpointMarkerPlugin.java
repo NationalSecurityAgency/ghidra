@@ -716,7 +716,7 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 	@AutoServiceConsumed
 	private DebuggerConsoleService consoleService;
 	@AutoServiceConsumed
-	private DebuggerStateEditingService editingService;
+	private DebuggerControlService controlService;
 	// @AutoServiceConsumed via method
 	DecompilerMarginService decompilerMarginService;
 	@SuppressWarnings("unused")
@@ -859,8 +859,8 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 	}
 
 	protected Set<TraceBreakpointKind> getSupportedKindsFromTrace(Trace trace) {
-		StateEditingMode mode = editingService == null ? StateEditingMode.DEFAULT
-				: editingService.getCurrentMode(trace);
+		ControlMode mode = controlService == null ? ControlMode.DEFAULT
+				: controlService.getCurrentMode(trace);
 		if (mode.useEmulatedBreakpoints()) {
 			return EnumSet.allOf(TraceBreakpointKind.class);
 		}

@@ -228,7 +228,7 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	@AutoServiceConsumed
 	private DebuggerConsoleService consoleService;
 	@AutoServiceConsumed
-	private DebuggerStateEditingService editingService;
+	private DebuggerControlService controlService;
 	@AutoServiceConsumed
 	private ProgramManager programManager;
 	@AutoServiceConsumed
@@ -362,14 +362,14 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 
 	@Override
 	public boolean isReadOnly() {
-		if (editingService == null) {
+		if (controlService == null) {
 			return true;
 		}
 		Trace trace = current.getTrace();
 		if (trace == null) {
 			return true;
 		}
-		StateEditingMode mode = editingService.getCurrentMode(trace);
+		ControlMode mode = controlService.getCurrentMode(trace);
 		return !mode.canEdit(current);
 	}
 

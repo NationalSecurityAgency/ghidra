@@ -18,7 +18,7 @@ package ghidra.app.services;
 import java.util.concurrent.CompletableFuture;
 
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
-import ghidra.app.plugin.core.debug.service.editing.DebuggerStateEditingServicePlugin;
+import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
 import ghidra.framework.plugintool.ServiceInfo;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.Address;
@@ -28,11 +28,11 @@ import ghidra.trace.model.Trace;
 import ghidra.trace.model.program.TraceProgramView;
 
 @ServiceInfo(
-	defaultProvider = DebuggerStateEditingServicePlugin.class,
+	defaultProvider = DebuggerControlServicePlugin.class,
 	description = "Centralized service for modifying machine states")
-public interface DebuggerStateEditingService {
+public interface DebuggerControlService {
 	interface StateEditor {
-		DebuggerStateEditingService getService();
+		DebuggerControlService getService();
 
 		DebuggerCoordinates getCoordinates();
 
@@ -55,17 +55,17 @@ public interface DebuggerStateEditingService {
 	interface StateEditingMemoryHandler extends StateEditor, LiveMemoryHandler {
 	}
 
-	interface StateEditingModeChangeListener {
-		void modeChanged(Trace trace, StateEditingMode mode);
+	interface ControlModeChangeListener {
+		void modeChanged(Trace trace, ControlMode mode);
 	}
 
-	StateEditingMode getCurrentMode(Trace trace);
+	ControlMode getCurrentMode(Trace trace);
 
-	void setCurrentMode(Trace trace, StateEditingMode mode);
+	void setCurrentMode(Trace trace, ControlMode mode);
 
-	void addModeChangeListener(StateEditingModeChangeListener listener);
+	void addModeChangeListener(ControlModeChangeListener listener);
 
-	void removeModeChangeListener(StateEditingModeChangeListener listener);
+	void removeModeChangeListener(ControlModeChangeListener listener);
 
 	StateEditor createStateEditor(DebuggerCoordinates coordinates);
 

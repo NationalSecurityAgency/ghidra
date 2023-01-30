@@ -339,7 +339,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 	@AutoServiceConsumed
 	private DebuggerTraceManagerService traceManager; // For goto time (emu mods)
 	@AutoServiceConsumed
-	protected DebuggerStateEditingService editingService;
+	protected DebuggerControlService controlService;
 	@AutoServiceConsumed
 	DebuggerStaticMappingService mappingService;
 	@SuppressWarnings("unused")

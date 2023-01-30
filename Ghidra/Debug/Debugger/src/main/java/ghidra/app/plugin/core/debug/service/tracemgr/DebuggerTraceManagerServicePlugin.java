@@ -32,7 +32,7 @@ import ghidra.app.plugin.core.debug.event.*;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.mapping.DebuggerPlatformMapper;
 import ghidra.app.services.*;
-import ghidra.app.services.DebuggerStateEditingService.StateEditingModeChangeListener;
+import ghidra.app.services.DebuggerControlService.ControlModeChangeListener;
 import ghidra.async.*;
 import ghidra.async.AsyncConfigFieldCodec.BooleanAsyncConfigFieldCodec;
 import ghidra.dbg.target.*;
@@ -234,9 +234,9 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		}
 	}
 
-	class ForFollowPresentListener implements StateEditingModeChangeListener {
+	class ForFollowPresentListener implements ControlModeChangeListener {
 		@Override
-		public void modeChanged(Trace trace, StateEditingMode mode) {
+		public void modeChanged(Trace trace, ControlMode mode) {
 			if (trace != current.getTrace() || !mode.followsPresent()) {
 				return;
 			}
@@ -278,7 +278,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	@AutoServiceConsumed
 	private DebuggerPlatformService platformService;
 	// @AutoServiceConsumed via method
-	private DebuggerStateEditingService editingService;
+	private DebuggerControlService controlService;
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
 
@@ -474,13 +474,13 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	}
 
 	@AutoServiceConsumed
-	private void setEditingService(DebuggerStateEditingService editingService) {
-		if (this.editingService != null) {
-			this.editingService.removeModeChangeListener(forFollowPresentListener);
+	private void setControlService(DebuggerControlService editingService) {
+		if (this.controlService != null) {
+			this.controlService.removeModeChangeListener(forFollowPresentListener);
 		}
-		this.editingService = editingService;
-		if (this.editingService != null) {
-			this.editingService.addModeChangeListener(forFollowPresentListener);
+		this.controlService = editingService;
+		if (this.controlService != null) {
+			this.controlService.addModeChangeListener(forFollowPresentListener);
 		}
 	}
 
@@ -622,9 +622,9 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	}
 
 	private boolean isFollowsPresent(Trace trace) {
-		StateEditingMode mode = editingService == null
-				? StateEditingMode.DEFAULT
-				: editingService.getCurrentMode(trace);
+		ControlMode mode = controlService == null
+				? ControlMode.DEFAULT
+				: controlService.getCurrentMode(trace);
 		return mode.followsPresent();
 	}
 

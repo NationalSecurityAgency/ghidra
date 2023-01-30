@@ -24,6 +24,7 @@ import javax.swing.Icon;
 
 import docking.ActionContext;
 import docking.action.*;
+import docking.menu.HorizontalRuleAction;
 import docking.menu.MultiActionDockingAction;
 import docking.tool.ToolConstants;
 import generic.theme.GIcon;
@@ -37,7 +38,6 @@ import ghidra.app.services.GoToService;
 import ghidra.app.services.NavigationHistoryService;
 import ghidra.app.util.HelpTopics;
 import ghidra.app.util.viewer.field.BrowserCodeUnitFormat;
-import ghidra.base.actions.HorizontalRuleAction;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;

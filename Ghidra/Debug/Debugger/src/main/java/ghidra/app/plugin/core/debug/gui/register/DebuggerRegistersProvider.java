@@ -46,7 +46,7 @@ import ghidra.app.plugin.core.debug.gui.DebuggerProvider;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.mapping.DebuggerRegisterMapper;
 import ghidra.app.services.*;
-import ghidra.app.services.DebuggerStateEditingService.StateEditor;
+import ghidra.app.services.DebuggerControlService.StateEditor;
 import ghidra.async.AsyncLazyValue;
 import ghidra.async.AsyncUtils;
 import ghidra.base.widgets.table.DataTypeTableCellEditor;
@@ -476,7 +476,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	@AutoServiceConsumed
 	private DebuggerListingService listingService;
 	@AutoServiceConsumed
-	private DebuggerStateEditingService editingService;
+	private DebuggerControlService controlService;
 	@AutoServiceConsumed
 	private MarkerService markerService; // TODO: Mark address types (separate plugin?)
 	@SuppressWarnings("unused")
@@ -845,10 +845,10 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		if (!isEditsEnabled()) {
 			return false;
 		}
-		if (editingService == null) {
+		if (controlService == null) {
 			return false;
 		}
-		StateEditor editor = editingService.createStateEditor(current);
+		StateEditor editor = controlService.createStateEditor(current);
 		return editor.isRegisterEditable(register);
 	}
 
@@ -866,11 +866,11 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	}
 
 	void writeRegisterValue(RegisterValue rv) {
-		if (editingService == null) {
-			Msg.showError(this, getComponent(), "Edit Register", "No editing service.");
+		if (controlService == null) {
+			Msg.showError(this, getComponent(), "Edit Register", "No control service.");
 			return;
 		}
-		StateEditor editor = editingService.createStateEditor(current);
+		StateEditor editor = controlService.createStateEditor(current);
 		if (!editor.isRegisterEditable(rv.getRegister())) {
 			Msg.showError(this, getComponent(), "Edit Register",
 				"Neither the register nor any parent can be edited.");

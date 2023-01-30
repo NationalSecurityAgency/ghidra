@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.debug.service.editing;
+package ghidra.app.plugin.core.debug.service.control;
 
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -36,8 +36,8 @@ import ghidra.trace.model.program.TraceProgramViewMemory;
 import ghidra.util.datastruct.ListenerSet;
 
 @PluginInfo(
-	shortDescription = "Debugger machine-state editing service plugin",
-	description = "Centralizes machine-state editing across the tool",
+	shortDescription = "Debugger control and machine-state editing service plugin",
+	description = "Centralizes control and machine-state editing across the tool",
 	category = PluginCategoryNames.DEBUGGER,
 	packageName = DebuggerPluginPackage.NAME,
 	status = PluginStatus.RELEASED,
@@ -51,10 +51,10 @@ import ghidra.util.datastruct.ListenerSet;
 		DebuggerEmulationService.class,
 	},
 	servicesProvided = {
-		DebuggerStateEditingService.class,
+		DebuggerControlService.class,
 	})
-public class DebuggerStateEditingServicePlugin extends AbstractDebuggerPlugin
-		implements DebuggerStateEditingService {
+public class DebuggerControlServicePlugin extends AbstractDebuggerPlugin
+		implements DebuggerControlService {
 
 	protected abstract class AbstractStateEditor implements StateEditor {
 		@Override
@@ -80,8 +80,8 @@ public class DebuggerStateEditingServicePlugin extends AbstractDebuggerPlugin
 		}
 
 		@Override
-		public DebuggerStateEditingService getService() {
-			return DebuggerStateEditingServicePlugin.this;
+		public DebuggerControlService getService() {
+			return DebuggerControlServicePlugin.this;
 		}
 
 		@Override
@@ -98,8 +98,8 @@ public class DebuggerStateEditingServicePlugin extends AbstractDebuggerPlugin
 		}
 
 		@Override
-		public DebuggerStateEditingService getService() {
-			return DebuggerStateEditingServicePlugin.this;
+		public DebuggerControlService getService() {
+			return DebuggerControlServicePlugin.this;
 		}
 
 		@Override
@@ -121,8 +121,8 @@ public class DebuggerStateEditingServicePlugin extends AbstractDebuggerPlugin
 		}
 
 		@Override
-		public DebuggerStateEditingService getService() {
-			return DebuggerStateEditingServicePlugin.this;
+		public DebuggerControlService getService() {
+			return DebuggerControlServicePlugin.this;
 		}
 
 		@Override
@@ -204,29 +204,27 @@ public class DebuggerStateEditingServicePlugin extends AbstractDebuggerPlugin
 	protected final ListenerForEditorInstallation listenerForEditorInstallation =
 		new ListenerForEditorInstallation();
 
-	public DebuggerStateEditingServicePlugin(PluginTool tool) {
+	public DebuggerControlServicePlugin(PluginTool tool) {
 		super(tool);
 	}
 
-	private final Map<Trace, StateEditingMode> currentModes = new HashMap<>();
+	private final Map<Trace, ControlMode> currentModes = new HashMap<>();
 
-	private final ListenerSet<StateEditingModeChangeListener> listeners =
-		new ListenerSet<>(StateEditingModeChangeListener.class);
+	private final ListenerSet<ControlModeChangeListener> listeners =
+		new ListenerSet<>(ControlModeChangeListener.class);
 
 	@Override
-	public StateEditingMode getCurrentMode(Trace trace) {
+	public ControlMode getCurrentMode(Trace trace) {
 		synchronized (currentModes) {
-			return currentModes.getOrDefault(Objects.requireNonNull(trace),
-				StateEditingMode.DEFAULT);
+			return currentModes.getOrDefault(Objects.requireNonNull(trace), ControlMode.DEFAULT);
 		}
 	}
 
 	@Override
-	public void setCurrentMode(Trace trace, StateEditingMode newMode) {
-		StateEditingMode oldMode;
+	public void setCurrentMode(Trace trace, ControlMode newMode) {
+		ControlMode oldMode;
 		synchronized (currentModes) {
-			oldMode =
-				currentModes.getOrDefault(Objects.requireNonNull(trace), StateEditingMode.DEFAULT);
+			oldMode = currentModes.getOrDefault(Objects.requireNonNull(trace), ControlMode.DEFAULT);
 			if (newMode != oldMode) {
 				currentModes.put(trace, newMode);
 			}
@@ -238,12 +236,12 @@ public class DebuggerStateEditingServicePlugin extends AbstractDebuggerPlugin
 	}
 
 	@Override
-	public void addModeChangeListener(StateEditingModeChangeListener listener) {
+	public void addModeChangeListener(ControlModeChangeListener listener) {
 		listeners.add(listener);
 	}
 
 	@Override
-	public void removeModeChangeListener(StateEditingModeChangeListener listener) {
+	public void removeModeChangeListener(ControlModeChangeListener listener) {
 		listeners.remove(listener);
 	}
 
@@ -270,10 +268,10 @@ public class DebuggerStateEditingServicePlugin extends AbstractDebuggerPlugin
 		if (trace == null) {
 			return;
 		}
-		StateEditingMode oldMode;
-		StateEditingMode newMode;
+		ControlMode oldMode;
+		ControlMode newMode;
 		synchronized (currentModes) {
-			oldMode = currentModes.getOrDefault(trace, StateEditingMode.DEFAULT);
+			oldMode = currentModes.getOrDefault(trace, ControlMode.DEFAULT);
 			newMode = oldMode.modeOnChange(coordinates);
 			if (newMode != oldMode) {
 				currentModes.put(trace, newMode);

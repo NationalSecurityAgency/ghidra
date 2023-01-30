@@ -34,7 +34,7 @@ import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.gui.breakpoint.DebuggerBreakpointsProvider.LogicalBreakpointTableModel;
 import ghidra.app.plugin.core.debug.gui.console.DebuggerConsolePlugin;
-import ghidra.app.plugin.core.debug.service.editing.DebuggerStateEditingServicePlugin;
+import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
 import ghidra.app.plugin.core.debug.service.emulation.ProgramEmulationUtils;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.services.*;
@@ -689,7 +689,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 
 	@Test
 	public void testEmuBreakpointState() throws Throwable {
-		addPlugin(tool, DebuggerStateEditingServicePlugin.class);
+		addPlugin(tool, DebuggerControlServicePlugin.class);
 
 		createProgram();
 		intoProject(program);
@@ -733,8 +733,8 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 
 	@Test
 	public void testTablesAndStatesWhenhModeChanges() throws Throwable {
-		DebuggerStateEditingService editingService =
-			addPlugin(tool, DebuggerStateEditingServicePlugin.class);
+		DebuggerControlService controlService =
+			addPlugin(tool, DebuggerControlServicePlugin.class);
 
 		createTestModel();
 		mb.createTestProcessesAndThreads();
@@ -764,7 +764,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 			return newRow;
 		});
 
-		editingService.setCurrentMode(trace, StateEditingMode.RW_EMULATOR);
+		controlService.setCurrentMode(trace, ControlMode.RW_EMULATOR);
 		lbRow1.setEnabled(true);
 		TraceBreakpoint emuBpt = waitForValue(
 			() -> Unique.assertAtMostOne(trace.getBreakpointManager().getAllBreakpoints()));
@@ -781,12 +781,12 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 		});
 
 		for (int i = 0; i < 3; i++) {
-			editingService.setCurrentMode(trace, StateEditingMode.RO_TARGET);
+			controlService.setCurrentMode(trace, ControlMode.RO_TARGET);
 			waitOn(breakpointService.changesSettled());
 			waitForSwing();
 			assertEquals(0, breakpointsProvider.locationTableModel.getModelData().size());
 
-			editingService.setCurrentMode(trace, StateEditingMode.RW_EMULATOR);
+			controlService.setCurrentMode(trace, ControlMode.RW_EMULATOR);
 			waitOn(breakpointService.changesSettled());
 			waitForSwing();
 			assertEquals(1, breakpointsProvider.locationTableModel.getModelData().size());
