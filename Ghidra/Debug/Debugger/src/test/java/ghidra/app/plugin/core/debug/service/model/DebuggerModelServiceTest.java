@@ -361,15 +361,18 @@ public class DebuggerModelServiceTest extends AbstractGhidraHeadedDebuggerGUITes
 	}
 
 	@Test
-	public void testGetTraceThreadWithTarget() throws Exception {
+	public void testGetTraceThreadWithTarget() throws Throwable {
 		createTestModel();
 		mb.createTestProcessesAndThreads();
 
-		modelService.recordTarget(mb.testProcess1, createTargetTraceMapper(mb.testProcess1),
-			ActionSource.AUTOMATIC);
+		TraceRecorder recorder =
+			modelService.recordTarget(mb.testProcess1, createTargetTraceMapper(mb.testProcess1),
+				ActionSource.AUTOMATIC);
+		waitRecorder(recorder);
 
 		// The most complicated case, lest I want another dimension in a cross product
 		mb.createTestThreadStacksAndFramesHaveRegisterBanks();
+		waitRecorder(recorder);
 
 		waitForPass(() -> {
 			TraceThread traceThread = modelService.getTraceThread(mb.testProcess1, mb.testThread1);
