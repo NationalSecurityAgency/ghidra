@@ -305,7 +305,11 @@ public interface DebugClient extends DebugClientReentrant {
 		}
 		if (modelObject instanceof SBFrame) {
 			SBFrame frame = (SBFrame) modelObject;
-			return Long.toString(frame.GetFrameID());
+			int frameId = (int)frame.GetFrameID();
+			if (frameId < 0) {
+				frameId = 0;
+			}
+			return Integer.toString(frameId);
 		}
 		if (modelObject instanceof SBValue) {
 			SBValue val = (SBValue) modelObject;

@@ -1553,22 +1553,31 @@ public class LldbManagerImpl implements LldbManager {
 			eventThread = SBThread.GetThreadFromEvent(currentEvent);
 			if (eventThread != null && eventThread.IsValid()) {
 				currentThread = eventThread;
+				Msg.warn(this, "defaulting to event thread");
 				return currentThread;
 			}
 		}
 		if (currentProcess == null) {
 			currentProcess = eventProcess = currentSession.GetProcess();
-		}
-		if (currentThread == null || !currentThread.IsValid()) {
-			currentProcess = currentSession.GetProcess();
-			for (int i = 0; i < currentProcess.GetNumThreads(); i++) {
-				SBThread thread = currentProcess.GetThreadAtIndex(i);
-				if (thread.IsValid()) {
-					currentThread = thread;
-					break;
-				}
+			if (currentProcess == null) {
+				return null;
 			}
 		}
+		currentThread = currentProcess.GetSelectedThread();
+		if (currentThread != null && currentThread.IsValid()) {
+			Msg.warn(this, "defaulting to active thread");
+			return currentThread;
+		}
+		
+		for (int i = 0; i < currentProcess.GetNumThreads(); i++) {
+			SBThread thread = currentProcess.GetThreadAtIndex(i);
+			if (thread.IsValid()) {
+				Msg.warn(this, "defaulting to thread "+i);
+				currentThread = thread;
+				break;
+			}
+		}
+		
 		return currentThread;
 	}
 

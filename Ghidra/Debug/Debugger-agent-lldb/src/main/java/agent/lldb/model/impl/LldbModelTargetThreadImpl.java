@@ -138,12 +138,12 @@ public class LldbModelTargetThreadImpl extends LldbModelTargetObjectImpl
 
 	@Override
 	public CompletableFuture<Void> step(TargetStepKind kind) {
-		return getModel().gateFuture(getManager().execute(new LldbStepCommand(getManager(), null, kind, null)));
+		return getModel().gateFuture(getManager().execute(new LldbStepCommand(getManager(), getThread(), kind, null)));
 	}
 
 	@Override
 	public CompletableFuture<Void> step(Map<String, ?> args) {
-		return getModel().gateFuture(getManager().execute(new LldbStepCommand(getManager(), null, null, args)));
+		return getModel().gateFuture(getManager().execute(new LldbStepCommand(getManager(), getThread(), null, args)));
 	}
 
 	@Override
