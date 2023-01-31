@@ -1,0 +1,7 @@
+##VERSION: 2.0
+Module.manifest||GHIDRA||||END|
+data/languages/BPF.cspec||GHIDRA||||END|
+data/languages/BPF.ldefs||GHIDRA||||END|
+data/languages/BPF.pspec||GHIDRA||||END|
+data/languages/BPF.sinc||GHIDRA||||END|
+data/languages/BPF_le.slaspec||GHIDRA||||END|
