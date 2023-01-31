@@ -16,6 +16,7 @@
 package ghidra.app.services;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
@@ -47,12 +48,13 @@ import ghidra.util.task.TaskMonitor;
 /**
  * The control / state editing modes
  */
-public enum StateEditingMode {
+public enum ControlMode {
 	/**
 	 * Control actions, breakpoint commands are directed to the target, but state edits are
 	 * rejected.
 	 */
-	RO_TARGET("Control Target w/ Edits Disabled", new GIcon("icon.debugger.edit.mode.ro.target")) {
+	RO_TARGET("Control Target w/ Edits Disabled", new GIcon(
+		"icon.debugger.control.mode.ro.target")) {
 		@Override
 		public boolean followsPresent() {
 			return true;
@@ -86,14 +88,14 @@ public enum StateEditingMode {
 		}
 
 		@Override
-		public StateEditingMode getAlternative(DebuggerCoordinates coordinates) {
+		public ControlMode getAlternative(DebuggerCoordinates coordinates) {
 			return RO_TRACE;
 		}
 	},
 	/**
 	 * Control actions, breakpoint commands, and state edits are all directed to the target.
 	 */
-	RW_TARGET("Control Target", new GIcon("icon.debugger.edit.mode.rw.target")) {
+	RW_TARGET("Control Target", new GIcon("icon.debugger.control.mode.rw.target")) {
 		@Override
 		public boolean followsPresent() {
 			return true;
@@ -142,7 +144,7 @@ public enum StateEditingMode {
 		}
 
 		@Override
-		public StateEditingMode getAlternative(DebuggerCoordinates coordinates) {
+		public ControlMode getAlternative(DebuggerCoordinates coordinates) {
 			return RW_EMULATOR;
 		}
 	},
@@ -150,7 +152,7 @@ public enum StateEditingMode {
 	 * Control actions activate trace snapshots, breakpoint commands are directed to the emulator,
 	 * and state edits are rejected.
 	 */
-	RO_TRACE("Control Trace w/ Edits Disabled", new GIcon("icon.debugger.edit.mode.ro.trace")) {
+	RO_TRACE("Control Trace w/ Edits Disabled", new GIcon("icon.debugger.control.mode.ro.trace")) {
 		@Override
 		public boolean followsPresent() {
 			return false;
@@ -182,7 +184,7 @@ public enum StateEditingMode {
 	 * Control actions activate trace snapshots, breakpoint commands are directed to the emulator,
 	 * and state edits modify the current trace snapshot.
 	 */
-	RW_TRACE("Control Trace", new GIcon("icon.debugger.edit.mode.rw.trace")) {
+	RW_TRACE("Control Trace", new GIcon("icon.debugger.control.mode.rw.trace")) {
 		@Override
 		public boolean followsPresent() {
 			return false;
@@ -249,7 +251,7 @@ public enum StateEditingMode {
 	 * Edits are accomplished by appending patch steps to the current schedule and activating that
 	 * schedule.
 	 */
-	RW_EMULATOR("Control Emulator", new GIcon("icon.debugger.edit.mode.rw.emulator")) {
+	RW_EMULATOR("Control Emulator", new GIcon("icon.debugger.control.mode.rw.emulator")) {
 		@Override
 		public boolean followsPresent() {
 			return false;
@@ -328,12 +330,13 @@ public enum StateEditingMode {
 		}
 	};
 
-	public static final StateEditingMode DEFAULT = RO_TARGET;
+	public static final List<ControlMode> ALL = List.of(values());
+	public static final ControlMode DEFAULT = RO_TARGET;
 
 	public final String name;
 	public final Icon icon;
 
-	private StateEditingMode(String name, Icon icon) {
+	private ControlMode(String name, Icon icon) {
 		this.name = name;
 		this.icon = icon;
 	}
@@ -408,7 +411,7 @@ public enum StateEditingMode {
 	 * @param coordinates the new coordinates
 	 * @return the new mode
 	 */
-	public StateEditingMode getAlternative(DebuggerCoordinates coordinates) {
+	public ControlMode getAlternative(DebuggerCoordinates coordinates) {
 		throw new AssertionError("INTERNAL: Non-selectable mode must provide alternative");
 	}
 
@@ -422,7 +425,7 @@ public enum StateEditingMode {
 	 * @param coordinates the new coordinates
 	 * @return the mode
 	 */
-	public StateEditingMode modeOnChange(DebuggerCoordinates coordinates) {
+	public ControlMode modeOnChange(DebuggerCoordinates coordinates) {
 		if (isSelectable(coordinates)) {
 			return this;
 		}

@@ -267,7 +267,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 	@AutoServiceConsumed
 	private DebuggerStaticMappingService staticMappings;
 	@AutoServiceConsumed
-	private DebuggerStateEditingService editingService;
+	private DebuggerControlService controlService;
 	@SuppressWarnings("unused")
 	private AutoService.Wiring autoServiceWiring;
 
@@ -367,8 +367,8 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 			trace = ProgramEmulationUtils.launchEmulationTrace(program, ctx.getAddress(), this);
 			traceManager.openTrace(trace);
 			traceManager.activateTrace(trace);
-			if (editingService != null) {
-				editingService.setCurrentMode(trace, StateEditingMode.RW_EMULATOR);
+			if (controlService != null) {
+				controlService.setCurrentMode(trace, ControlMode.RW_EMULATOR);
 			}
 		}
 		catch (IOException e) {

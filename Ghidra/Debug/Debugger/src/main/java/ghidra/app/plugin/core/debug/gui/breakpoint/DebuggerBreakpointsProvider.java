@@ -37,7 +37,7 @@ import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.services.*;
-import ghidra.app.services.DebuggerStateEditingService.StateEditingModeChangeListener;
+import ghidra.app.services.DebuggerControlService.ControlModeChangeListener;
 import ghidra.app.services.LogicalBreakpoint.State;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.plugintool.*;
@@ -57,7 +57,7 @@ import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
 
 public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
-		implements LogicalBreakpointsChangeListener, StateEditingModeChangeListener {
+		implements LogicalBreakpointsChangeListener, ControlModeChangeListener {
 
 	protected enum LogicalBreakpointTableColumns
 		implements EnumeratedTableColumn<LogicalBreakpointTableColumns, LogicalBreakpointRow> {
@@ -672,7 +672,7 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 	@AutoServiceConsumed
 	private DebuggerConsoleService consoleService;
 	// @AutoServiceConsumed via method
-	private DebuggerStateEditingService editingService;
+	private DebuggerControlService controlService;
 	@AutoServiceConsumed
 	private GoToService goToService;
 	@SuppressWarnings("unused")
@@ -784,18 +784,18 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 	}
 
 	@AutoServiceConsumed
-	private void setEditingService(DebuggerStateEditingService editingService) {
-		if (this.editingService != null) {
-			this.editingService.removeModeChangeListener(this);
+	private void setControlService(DebuggerControlService editingService) {
+		if (this.controlService != null) {
+			this.controlService.removeModeChangeListener(this);
 		}
-		this.editingService = editingService;
-		if (this.editingService != null) {
-			this.editingService.addModeChangeListener(this);
+		this.controlService = editingService;
+		if (this.controlService != null) {
+			this.controlService.addModeChangeListener(this);
 		}
 	}
 
 	@Override
-	public void modeChanged(Trace trace, StateEditingMode mode) {
+	public void modeChanged(Trace trace, ControlMode mode) {
 		Swing.runIfSwingOrRunLater(() -> {
 			reloadBreakpointLocations(trace);
 			contextChanged();
@@ -860,9 +860,9 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 	}
 
 	private void loadBreakpointLocations(Trace trace) {
-		StateEditingMode mode = editingService == null
-				? StateEditingMode.DEFAULT
-				: editingService.getCurrentMode(trace);
+		ControlMode mode = controlService == null
+				? ControlMode.DEFAULT
+				: controlService.getCurrentMode(trace);
 		DebuggerCoordinates currentFor = traceManager.getCurrentFor(trace);
 		TraceRecorder recorder = currentFor.getRecorder();
 		if (!mode.useEmulatedBreakpoints() && recorder == null) {
@@ -1197,7 +1197,7 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 	}
 
 	private boolean isAllInvolvedTracesUsingEmulatedBreakpoints(ActionContext ctx) {
-		if (editingService == null) {
+		if (controlService == null) {
 			return false;
 		}
 		Set<Trace> traces = new HashSet<>();
@@ -1223,7 +1223,7 @@ public class DebuggerBreakpointsProvider extends ComponentProviderAdapter
 			return false;
 		}
 		for (Trace trace : traces) {
-			if (!editingService.getCurrentMode(trace).useEmulatedBreakpoints()) {
+			if (!controlService.getCurrentMode(trace).useEmulatedBreakpoints()) {
 				return false;
 			}
 		}

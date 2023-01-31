@@ -146,6 +146,16 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 		actionStates.addAll(newStates);
 	}
 
+	/**
+	 * Check if the given state can be selected
+	 * 
+	 * @param state the state to check
+	 * @return true (the default) if selectable, false to disable
+	 */
+	protected boolean isStateEnabled(ActionState<T> state) {
+		return true;
+	}
+
 	protected List<DockingActionIf> getStateActions() {
 		updateStates();
 		List<DockingActionIf> actions = new ArrayList<>(actionStates.size());
@@ -154,6 +164,8 @@ public abstract class MultiStateDockingAction<T> extends DockingAction {
 			DockingActionIf a = useCheckboxForIcons
 					? new ActionStateToggleAction(actionState, isSelected)
 					: new ActionStateAction(actionState, isSelected);
+			boolean isEnabled = isStateEnabled(actionState);
+			a.setEnabled(isEnabled);
 			actions.add(a);
 		}
 		return actions;

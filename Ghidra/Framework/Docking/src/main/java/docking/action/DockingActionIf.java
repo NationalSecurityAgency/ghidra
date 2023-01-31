@@ -15,6 +15,7 @@
  */
 package docking.action;
 
+import java.awt.Component;
 import java.beans.PropertyChangeListener;
 import java.util.Set;
 
@@ -280,6 +281,21 @@ public interface DockingActionIf extends HelpDescriptor {
 	 * @return a JMenuItem for placement in either the menu bar or a popup menu.
 	 */
 	public JMenuItem createMenuItem(boolean isPopup);
+
+	/**
+	 * Returns a component to represent this action in the menu.
+	 * <p>
+	 * Typically, this is the menu item that triggers the action. However, some actions may wish to
+	 * use components other than menu items. For example, they may produce component for helping to
+	 * organize the menu visually.
+	 * @param isPopup true if the action should use its Popup MenuData, else it uses the MenuBar
+	 * MenuData.
+	 * @return the component
+	 * @see #createMenuItem(boolean)
+	 */
+	public default Component createMenuComponent(boolean isPopup) {
+		return createMenuItem(isPopup);
+	}
 
 	/**
 	 * Determines whether this action should be added to a window (either the main window or a

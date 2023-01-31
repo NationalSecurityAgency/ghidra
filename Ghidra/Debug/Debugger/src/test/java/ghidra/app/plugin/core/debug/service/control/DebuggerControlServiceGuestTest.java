@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.debug.service.editing;
+package ghidra.app.plugin.core.debug.service.control;
 
 import java.io.IOException;
 import java.util.Set;
@@ -30,7 +30,7 @@ import ghidra.trace.model.guest.TraceGuestPlatform;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.util.database.UndoableTransaction;
 
-public class DebuggerStateEditingServiceGuestTest extends DebuggerStateEditingServiceTest {
+public class DebuggerControlServiceGuestTest extends DebuggerControlServiceTest {
 	protected TraceGuestPlatform platform;
 
 	public void createToyPlatform() {

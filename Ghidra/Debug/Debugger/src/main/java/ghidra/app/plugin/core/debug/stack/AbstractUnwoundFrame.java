@@ -23,7 +23,7 @@ import java.util.concurrent.CompletableFuture;
 import org.apache.commons.lang3.ArrayUtils;
 
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
-import ghidra.app.services.DebuggerStateEditingService.StateEditor;
+import ghidra.app.services.DebuggerControlService.StateEditor;
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.async.AsyncFence;
 import ghidra.framework.plugintool.PluginTool;

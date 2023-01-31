@@ -34,7 +34,7 @@ import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
-import ghidra.app.plugin.core.debug.service.editing.DebuggerStateEditingServicePlugin;
+import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
 import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationServicePlugin;
 import ghidra.app.plugin.core.debug.service.emulation.ProgramEmulationUtils;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
@@ -45,7 +45,7 @@ import ghidra.app.plugin.core.decompile.DecompilerProvider;
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerEmulationService.EmulationResult;
-import ghidra.app.services.DebuggerStateEditingService.StateEditor;
+import ghidra.app.services.DebuggerControlService.StateEditor;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.async.AsyncTestUtils;
 import ghidra.framework.model.DomainFolder;
@@ -227,8 +227,7 @@ public class VariableValueHoverPluginScreenShots extends GhidraScreenShotGenerat
 		addPlugin(tool, DebuggerListingPlugin.class);
 		addPlugin(tool, VariableValueHoverPlugin.class);
 
-		DebuggerStateEditingService editingService =
-			addPlugin(tool, DebuggerStateEditingServicePlugin.class);
+		DebuggerControlService controlService = addPlugin(tool, DebuggerControlServicePlugin.class);
 		DebuggerEmulationService emuService = addPlugin(tool, DebuggerEmulationServicePlugin.class);
 
 		Function function = createFibonacciProgramX86_32();
@@ -258,8 +257,8 @@ public class VariableValueHoverPluginScreenShots extends GhidraScreenShotGenerat
 		}
 		waitForDomainObject(tb.trace);
 
-		editingService.setCurrentMode(tb.trace, StateEditingMode.RW_TRACE);
-		StateEditor editor = editingService.createStateEditor(tb.trace);
+		controlService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
+		StateEditor editor = controlService.createStateEditor(tb.trace);
 
 		DebuggerCoordinates atSetup = traceManager.getCurrent();
 		StackUnwinder unwinder = new StackUnwinder(tool, atSetup.getPlatform());

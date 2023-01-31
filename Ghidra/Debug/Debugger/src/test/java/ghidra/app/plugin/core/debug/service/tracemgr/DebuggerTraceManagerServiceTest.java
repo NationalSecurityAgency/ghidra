@@ -26,7 +26,7 @@ import org.junit.experimental.categories.Category;
 import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
-import ghidra.app.plugin.core.debug.service.editing.DebuggerStateEditingServicePlugin;
+import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
 import ghidra.app.services.*;
 import ghidra.dbg.model.TestTargetStack;
 import ghidra.dbg.model.TestTargetStackFrameHasRegisterBank;
@@ -47,12 +47,12 @@ import ghidra.util.database.UndoableTransaction;
 @Category(NightlyCategory.class) // this may actually be an @PortSensitive test
 public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebuggerGUITest {
 
-	protected DebuggerStateEditingService editingService;
+	protected DebuggerControlService editingService;
 
 	@Before
 	public void setUpTraceManagerTest() throws Exception {
-		addPlugin(tool, DebuggerStateEditingServicePlugin.class);
-		editingService = tool.getService(DebuggerStateEditingService.class);
+		addPlugin(tool, DebuggerControlServicePlugin.class);
+		editingService = tool.getService(DebuggerControlService.class);
 	}
 
 	@Test
@@ -359,7 +359,7 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 		traceManager.activateTrace(trace);
 		waitForSwing();
 
-		assertEquals(StateEditingMode.RO_TARGET, editingService.getCurrentMode(trace));
+		assertEquals(ControlMode.RO_TARGET, editingService.getCurrentMode(trace));
 		long initSnap = recorder.getSnap();
 		assertEquals(initSnap, traceManager.getCurrentSnap());
 
@@ -369,7 +369,7 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 		assertEquals(initSnap + 1, recorder.getSnap());
 		assertEquals(initSnap + 1, traceManager.getCurrentSnap());
 
-		editingService.setCurrentMode(trace, StateEditingMode.RO_TRACE);
+		editingService.setCurrentMode(trace, ControlMode.RO_TRACE);
 
 		recorder.forceSnapshot();
 		waitForSwing();
@@ -377,7 +377,7 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 		assertEquals(initSnap + 2, recorder.getSnap());
 		assertEquals(initSnap + 1, traceManager.getCurrentSnap());
 
-		editingService.setCurrentMode(trace, StateEditingMode.RO_TARGET);
+		editingService.setCurrentMode(trace, ControlMode.RO_TARGET);
 		waitForSwing();
 
 		assertEquals(initSnap + 2, recorder.getSnap());

@@ -21,16 +21,15 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.swing.Icon;
 import javax.swing.KeyStroke;
 
 import docking.ActionContext;
 import docking.DockingContextListener;
-import docking.action.DockingAction;
-import docking.action.DockingActionIf;
-import docking.action.builder.*;
+import docking.action.*;
+import docking.action.builder.AbstractActionBuilder;
+import docking.action.builder.ActionBuilder;
 import docking.menu.ActionState;
 import docking.menu.MultiStateDockingAction;
 import docking.widgets.EventTrigger;
@@ -40,9 +39,9 @@ import ghidra.app.plugin.core.debug.event.*;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.service.emulation.DebuggerPcodeMachine;
 import ghidra.app.services.*;
+import ghidra.app.services.DebuggerControlService.ControlModeChangeListener;
 import ghidra.app.services.DebuggerEmulationService.CachedEmulator;
 import ghidra.app.services.DebuggerEmulationService.EmulatorStateListener;
-import ghidra.app.services.DebuggerStateEditingService.StateEditingModeChangeListener;
 import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.DebuggerObjectModel;
@@ -71,7 +70,7 @@ import ghidra.util.*;
 		ModelObjectFocusedPluginEvent.class,
 	},
 	servicesRequired = {
-		DebuggerStateEditingService.class,
+		DebuggerControlService.class,
 		DebuggerTraceManagerService.class,
 	})
 public class DebuggerControlPlugin extends AbstractDebuggerPlugin
@@ -210,22 +209,37 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 		String GROUP = DebuggerResources.GROUP_CONTROL;
 	}
 
-	interface ControlModeAction {
-		String NAME = "Control Mode";
-		String DESCRIPTION = "Choose what to control and edit in dynamic views";
-		String GROUP = DebuggerResources.GROUP_CONTROL;
-		String HELP_ANCHOR = "control_mode";
+	protected class ControlModeAction extends MultiStateDockingAction<ControlMode> {
+		public static final String NAME = "Control Mode";
+		public static final String DESCRIPTION = "Choose what to control and edit in dynamic views";
+		public static final String GROUP = DebuggerResources.GROUP_CONTROL;
+		public static final String HELP_ANCHOR = "control_mode";
 
-		static MultiStateActionBuilder<StateEditingMode> builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new MultiStateActionBuilder<StateEditingMode>(NAME, ownerName)
-					.description(DESCRIPTION)
-					.toolBarIcon(DebuggerResources.ICON_BLANK) // Docs say required
-					.toolBarGroup(GROUP, "")
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR))
-					.addStates(Stream.of(StateEditingMode.values())
-							.map(m -> new ActionState<>(m.name, m.icon, m))
-							.collect(Collectors.toList()));
+		public ControlModeAction() {
+			super(NAME, DebuggerControlPlugin.this.getName());
+			setDescription(DESCRIPTION);
+			setToolBarData(new ToolBarData(DebuggerResources.ICON_BLANK, GROUP, ""));
+			setHelpLocation(new HelpLocation(getOwner(), HELP_ANCHOR));
+			setActionStates(ControlMode.ALL.stream()
+					.map(m -> new ActionState<>(m.name, m.icon, m))
+					.collect(Collectors.toList()));
+			setEnabled(false);
+		}
+
+		@Override
+		public boolean isEnabledForContext(ActionContext context) {
+			return current.getTrace() != null;
+		}
+
+		@Override
+		protected boolean isStateEnabled(ActionState<ControlMode> state) {
+			return state.getUserData().isSelectable(current);
+		}
+
+		@Override
+		public void actionStateChanged(ActionState<ControlMode> newActionState,
+				EventTrigger trigger) {
+			activateControlMode(newActionState, trigger);
 		}
 	}
 
@@ -546,7 +560,7 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 		}
 	};
 
-	private final StateEditingModeChangeListener listenerForModeChanges = this::modeChanged;
+	private final ControlModeChangeListener listenerForModeChanges = this::modeChanged;
 	private final EmulatorStateListener listenerForEmuStateChanges = new EmulatorStateListener() {
 		@Override
 		public void running(CachedEmulator emu) {
@@ -561,7 +575,7 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 
 	protected DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
 
-	protected MultiStateDockingAction<StateEditingMode> actionEditMode;
+	protected MultiStateDockingAction<ControlMode> actionControlMode;
 
 	DockingAction actionTargetResume;
 	DockingAction actionTargetInterrupt;
@@ -592,7 +606,7 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 	@AutoServiceConsumed
 	private DebuggerTraceManagerService traceManager;
 	// @AutoServiceConsumed // via method
-	private DebuggerStateEditingService editingService;
+	private DebuggerControlService controlService;
 	// @AutoServiceConsumed // via method
 	private DebuggerEmulationService emulationService;
 
@@ -604,7 +618,7 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 		createActions();
 	}
 
-	protected Set<DockingAction> getActionSet(StateEditingMode mode) {
+	protected Set<DockingAction> getActionSet(ControlMode mode) {
 		switch (mode) {
 			case RO_TARGET:
 			case RW_TARGET:
@@ -623,7 +637,7 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 		return getActionSet(computeCurrentEditingMode());
 	}
 
-	protected void updateActionsEnabled(StateEditingMode mode) {
+	protected void updateActionsEnabled(ControlMode mode) {
 		for (DockingAction action : getActionSet(mode)) {
 			action.setEnabled(action.isEnabledForContext(context));
 		}
@@ -640,11 +654,8 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 	}
 
 	protected void createActions() {
-		actionEditMode = ControlModeAction.builder(this)
-				.enabled(false)
-				.enabledWhen(c -> current.getTrace() != null)
-				.onActionStateChanged(this::activateEditMode)
-				.buildAndInstall(tool);
+		actionControlMode = new ControlModeAction();
+		tool.addAction(actionControlMode);
 
 		actionTargetResume = TargetResumeAction.builder(this)
 				.enabledWhenTarget(this::isActionTargetResumeEnabled)
@@ -720,19 +731,19 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 		updateActions();
 	}
 
-	protected void activateEditMode(ActionState<StateEditingMode> state, EventTrigger trigger) {
+	protected void activateControlMode(ActionState<ControlMode> state, EventTrigger trigger) {
 		if (current.getTrace() == null) {
 			return;
 		}
-		if (editingService == null) {
+		if (controlService == null) {
 			return;
 		}
-		editingService.setCurrentMode(current.getTrace(), state.getUserData());
+		controlService.setCurrentMode(current.getTrace(), state.getUserData());
 		// TODO: Limit selectable modes?
 		// No sense showing Write Target, if the trace can never be live, again....
 	}
 
-	private void modeChanged(Trace trace, StateEditingMode mode) {
+	private void modeChanged(Trace trace, ControlMode mode) {
 		Swing.runIfSwingOrRunLater(() -> {
 			if (current.getTrace() == trace) {
 				updateActions();
@@ -971,16 +982,14 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 		updateActions();
 	}
 
-	private StateEditingMode computeCurrentEditingMode() {
-		// TODO: We're sort of piggy-backing our mode onto that of the editing service.
-		// Seems we should have our own?
-		if (editingService == null) {
-			return StateEditingMode.DEFAULT;
+	private ControlMode computeCurrentEditingMode() {
+		if (controlService == null) {
+			return ControlMode.DEFAULT;
 		}
 		if (current.getTrace() == null) {
-			return StateEditingMode.DEFAULT;
+			return ControlMode.DEFAULT;
 		}
-		return editingService.getCurrentMode(current.getTrace());
+		return controlService.getCurrentMode(current.getTrace());
 	}
 
 	private void hideActions(Collection<? extends DockingActionIf> actions) {
@@ -1009,8 +1018,8 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 	}
 
 	private void updateActions() {
-		StateEditingMode mode = computeCurrentEditingMode();
-		actionEditMode.setCurrentActionStateByUserData(mode);
+		ControlMode mode = computeCurrentEditingMode();
+		actionControlMode.setCurrentActionStateByUserData(mode);
 
 		Set<DockingAction> actions = getActionSet(mode);
 		for (Set<DockingAction> set : actionSets) {
@@ -1033,19 +1042,19 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 	}
 
 	@AutoServiceConsumed
-	protected void setEditingService(DebuggerStateEditingService editingService) {
-		if (this.editingService != null) {
-			this.editingService.removeModeChangeListener(listenerForModeChanges);
+	private void setControlService(DebuggerControlService editingService) {
+		if (this.controlService != null) {
+			this.controlService.removeModeChangeListener(listenerForModeChanges);
 		}
-		this.editingService = editingService;
-		if (this.editingService != null) {
-			this.editingService.addModeChangeListener(listenerForModeChanges);
+		this.controlService = editingService;
+		if (this.controlService != null) {
+			this.controlService.addModeChangeListener(listenerForModeChanges);
 		}
 		updateActions();
 	}
 
 	@AutoServiceConsumed
-	protected void setEmulationService(DebuggerEmulationService emulationService) {
+	private void setEmulationService(DebuggerEmulationService emulationService) {
 		if (this.emulationService != null) {
 			this.emulationService.removeStateListener(listenerForEmuStateChanges);
 		}

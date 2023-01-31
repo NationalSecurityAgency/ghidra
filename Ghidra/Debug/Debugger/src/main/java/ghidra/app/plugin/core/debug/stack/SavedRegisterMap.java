@@ -20,7 +20,7 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 
-import ghidra.app.services.DebuggerStateEditingService.StateEditor;
+import ghidra.app.services.DebuggerControlService.StateEditor;
 import ghidra.async.AsyncFence;
 import ghidra.pcode.eval.ArithmeticVarnodeEvaluator;
 import ghidra.pcode.exec.PcodeArithmetic;

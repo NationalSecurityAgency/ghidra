@@ -78,9 +78,9 @@ class TraceBreakpointSet {
 		this.recorder = recorder;
 	}
 
-	private StateEditingMode getStateEditingMode() {
-		DebuggerStateEditingService service = tool.getService(DebuggerStateEditingService.class);
-		return service == null ? StateEditingMode.DEFAULT : service.getCurrentMode(trace);
+	private ControlMode getControlMode() {
+		DebuggerControlService service = tool.getService(DebuggerControlService.class);
+		return service == null ? ControlMode.DEFAULT : service.getCurrentMode(trace);
 	}
 
 	private long getSnap() {
@@ -139,7 +139,7 @@ class TraceBreakpointSet {
 	 */
 	public TraceMode computeMode() {
 		TraceMode mode = TraceMode.NONE;
-		if (getStateEditingMode().useEmulatedBreakpoints()) {
+		if (getControlMode().useEmulatedBreakpoints()) {
 			for (IDHashed<TraceBreakpoint> bpt : breakpoints) {
 				mode = mode.combine(computeEmuMode(bpt.obj));
 				if (mode == TraceMode.MISSING) {
@@ -169,7 +169,7 @@ class TraceBreakpointSet {
 	 * @return the mode
 	 */
 	public TraceMode computeMode(TraceBreakpoint bpt) {
-		return getStateEditingMode().useEmulatedBreakpoints()
+		return getControlMode().useEmulatedBreakpoints()
 				? computeEmuMode(bpt)
 				: computeTargetMode(bpt);
 	}
@@ -318,7 +318,7 @@ class TraceBreakpointSet {
 			Collection<TraceBreakpointKind> kinds) {
 		long snap = getSnap();
 		if (breakpoints.isEmpty()) {
-			if (recorder == null || getStateEditingMode().useEmulatedBreakpoints()) {
+			if (recorder == null || getControlMode().useEmulatedBreakpoints()) {
 				planPlaceEmu(actions, snap, length, kinds);
 			}
 			else {
@@ -326,7 +326,7 @@ class TraceBreakpointSet {
 			}
 		}
 		else {
-			if (recorder == null || getStateEditingMode().useEmulatedBreakpoints()) {
+			if (recorder == null || getControlMode().useEmulatedBreakpoints()) {
 				planEnableEmu(actions);
 			}
 			else {
@@ -384,7 +384,7 @@ class TraceBreakpointSet {
 	 */
 	public void planDisable(BreakpointActionSet actions, long length,
 			Collection<TraceBreakpointKind> kinds) {
-		if (getStateEditingMode().useEmulatedBreakpoints()) {
+		if (getControlMode().useEmulatedBreakpoints()) {
 			planDisableEmu(actions);
 		}
 		else {
@@ -427,7 +427,7 @@ class TraceBreakpointSet {
 	 */
 	public void planDelete(BreakpointActionSet actions, long length,
 			Set<TraceBreakpointKind> kinds) {
-		if (getStateEditingMode().useEmulatedBreakpoints()) {
+		if (getControlMode().useEmulatedBreakpoints()) {
 			planDeleteEmu(actions);
 		}
 		else {

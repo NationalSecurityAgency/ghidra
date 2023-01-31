@@ -43,7 +43,7 @@ import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.mapping.DebuggerTargetTraceMapper;
 import ghidra.app.plugin.core.debug.mapping.ObjectBasedDebuggerTargetTraceMapper;
-import ghidra.app.plugin.core.debug.service.editing.DebuggerStateEditingServicePlugin;
+import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
 import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationServicePlugin;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerEmulationService.CachedEmulator;
@@ -71,15 +71,14 @@ import ghidra.util.database.UndoableTransaction;
  * Tests for target control and state editing
  * 
  * <p>
- * In these and other machine-state-editing integration tests, we use
- * {@link StateEditingMode#RW_EMULATOR} as a stand-in for any mode. We also use
- * {@link StateEditingMode#RO_TARGET} just to verify the mode is heeded. Other modes may be tested
- * if bugs crop up in various combinations.
+ * In these and other control service integration tests, we use {@link ControlMode#RW_EMULATOR} as a
+ * stand-in for any mode. We also use {@link ControlMode#RO_TARGET} just to verify the mode is
+ * heeded. Other modes may be tested if bugs crop up in various combinations.
  */
 public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITest {
 
 	DebuggerListingPlugin listingPlugin;
-	DebuggerStateEditingService editingService;
+	DebuggerControlService controlService;
 	DebuggerEmulationService emulationService;
 	DebuggerControlPlugin controlPlugin;
 
@@ -88,7 +87,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITe
 	@Before
 	public void setUpControlTest() throws Exception {
 		listingPlugin = addPlugin(tool, DebuggerListingPlugin.class);
-		editingService = addPlugin(tool, DebuggerStateEditingServicePlugin.class);
+		controlService = addPlugin(tool, DebuggerControlServicePlugin.class);
 		emulationService = addPlugin(tool, DebuggerEmulationServicePlugin.class);
 		controlPlugin = addPlugin(tool, DebuggerControlPlugin.class);
 
@@ -293,7 +292,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITe
 	@Test
 	public void testEmulateResumeAction() throws Throwable {
 		TraceThread thread = createToyLoopTrace();
-		editingService.setCurrentMode(tb.trace, StateEditingMode.RW_EMULATOR);
+		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
 
 		traceManager.activateThread(thread);
 		waitForSwing();
@@ -310,7 +309,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITe
 	@Test
 	public void testEmulateInterruptAction() throws Throwable {
 		TraceThread thread = createToyLoopTrace();
-		editingService.setCurrentMode(tb.trace, StateEditingMode.RW_EMULATOR);
+		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
 
 		traceManager.activateThread(thread);
 		waitForSwing();
@@ -332,7 +331,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITe
 	@Test
 	public void testEmulateStepBackAction() throws Throwable {
 		TraceThread thread = createToyLoopTrace();
-		editingService.setCurrentMode(tb.trace, StateEditingMode.RW_EMULATOR);
+		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
 
 		traceManager.activateThread(thread);
 		waitForSwing();
@@ -351,7 +350,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITe
 	@Test
 	public void testEmulateStepIntoAction() throws Throwable {
 		TraceThread thread = createToyLoopTrace();
-		editingService.setCurrentMode(tb.trace, StateEditingMode.RW_EMULATOR);
+		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
 
 		traceManager.activateThread(thread);
 		waitForSwing();
@@ -364,7 +363,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITe
 	@Test
 	public void testEmulateSkipOverAction() throws Throwable {
 		TraceThread thread = createToyLoopTrace();
-		editingService.setCurrentMode(tb.trace, StateEditingMode.RW_EMULATOR);
+		controlService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
 
 		traceManager.activateThread(thread);
 		waitForSwing();
@@ -385,7 +384,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITe
 	@Test
 	public void testTraceSnapBackwardAction() throws Throwable {
 		create2SnapTrace();
-		editingService.setCurrentMode(tb.trace, StateEditingMode.RW_TRACE);
+		controlService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
 
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
@@ -402,7 +401,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITe
 	@Test
 	public void testTraceSnapForwardAction() throws Throwable {
 		create2SnapTrace();
-		editingService.setCurrentMode(tb.trace, StateEditingMode.RW_TRACE);
+		controlService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
 
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
@@ -418,7 +417,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITe
 		DebuggerDisassemblerPlugin disassemblerPlugin =
 			addPlugin(tool, DebuggerDisassemblerPlugin.class);
 
-		assertFalse(controlPlugin.actionEditMode.isEnabled());
+		assertFalse(controlPlugin.actionControlMode.isEnabled());
 
 		createAndOpenTrace();
 		TraceVariableSnapProgramView view = tb.trace.getProgramView();
@@ -440,17 +439,17 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITe
 			() -> listingProvider.goTo(view, new ProgramLocation(view, tb.addr(0x00400123))));
 		waitForSwing();
 
-		assertTrue(controlPlugin.actionEditMode.isEnabled());
+		assertTrue(controlPlugin.actionControlMode.isEnabled());
 
-		runSwing(() -> controlPlugin.actionEditMode
-				.setCurrentActionStateByUserData(StateEditingMode.RO_TARGET));
-		assertEquals(StateEditingMode.RO_TARGET, editingService.getCurrentMode(tb.trace));
+		runSwing(() -> controlPlugin.actionControlMode
+				.setCurrentActionStateByUserData(ControlMode.RO_TARGET));
+		assertEquals(ControlMode.RO_TARGET, controlService.getCurrentMode(tb.trace));
 		assertFalse(
 			helper.patchInstructionAction.isAddToPopup(listingProvider.getActionContext(null)));
 
-		runSwing(() -> controlPlugin.actionEditMode
-				.setCurrentActionStateByUserData(StateEditingMode.RW_EMULATOR));
-		assertEquals(StateEditingMode.RW_EMULATOR, editingService.getCurrentMode(tb.trace));
+		runSwing(() -> controlPlugin.actionControlMode
+				.setCurrentActionStateByUserData(ControlMode.RW_EMULATOR));
+		assertEquals(ControlMode.RW_EMULATOR, controlService.getCurrentMode(tb.trace));
 
 		assertTrue(
 			helper.patchInstructionAction.isAddToPopup(listingProvider.getActionContext(null)));
@@ -469,7 +468,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITe
 	public void testPatchDataActionInDynamicListingEmu() throws Throwable {
 		AssemblerPlugin assemblerPlugin = addPlugin(tool, AssemblerPlugin.class);
 
-		assertFalse(controlPlugin.actionEditMode.isEnabled());
+		assertFalse(controlPlugin.actionControlMode.isEnabled());
 
 		createAndOpenTrace();
 		TraceVariableSnapProgramView view = tb.trace.getProgramView();
@@ -490,16 +489,16 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITe
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
 
-		assertTrue(controlPlugin.actionEditMode.isEnabled());
+		assertTrue(controlPlugin.actionControlMode.isEnabled());
 
-		runSwing(() -> controlPlugin.actionEditMode
-				.setCurrentActionStateByUserData(StateEditingMode.RO_TARGET));
-		assertEquals(StateEditingMode.RO_TARGET, editingService.getCurrentMode(tb.trace));
+		runSwing(() -> controlPlugin.actionControlMode
+				.setCurrentActionStateByUserData(ControlMode.RO_TARGET));
+		assertEquals(ControlMode.RO_TARGET, controlService.getCurrentMode(tb.trace));
 		assertFalse(helper.patchDataAction.isAddToPopup(listingProvider.getActionContext(null)));
 
-		runSwing(() -> controlPlugin.actionEditMode
-				.setCurrentActionStateByUserData(StateEditingMode.RW_EMULATOR));
-		assertEquals(StateEditingMode.RW_EMULATOR, editingService.getCurrentMode(tb.trace));
+		runSwing(() -> controlPlugin.actionControlMode
+				.setCurrentActionStateByUserData(ControlMode.RW_EMULATOR));
+		assertEquals(ControlMode.RW_EMULATOR, controlService.getCurrentMode(tb.trace));
 
 		goTo(listingProvider.getListingPanel(), new ProgramLocation(view, tb.addr(0x00400123)));
 		assertTrue(helper.patchDataAction.isAddToPopup(listingProvider.getActionContext(null)));
@@ -525,7 +524,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITe
 		CodeViewerProvider listingProvider = listingPlugin.getProvider();
 		DockingActionIf pasteAction = getLocalAction(listingProvider, "Paste");
 
-		assertFalse(controlPlugin.actionEditMode.isEnabled());
+		assertFalse(controlPlugin.actionControlMode.isEnabled());
 
 		createAndOpenTrace();
 		TraceVariableSnapProgramView view = tb.trace.getProgramView();
@@ -541,18 +540,18 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITe
 
 		ActionContext ctx;
 
-		assertTrue(controlPlugin.actionEditMode.isEnabled());
+		assertTrue(controlPlugin.actionControlMode.isEnabled());
 
-		runSwing(() -> controlPlugin.actionEditMode
-				.setCurrentActionStateByUserData(StateEditingMode.RO_TARGET));
-		assertEquals(StateEditingMode.RO_TARGET, editingService.getCurrentMode(tb.trace));
+		runSwing(() -> controlPlugin.actionControlMode
+				.setCurrentActionStateByUserData(ControlMode.RO_TARGET));
+		assertEquals(ControlMode.RO_TARGET, controlService.getCurrentMode(tb.trace));
 		ctx = listingProvider.getActionContext(null);
 		assertTrue(pasteAction.isAddToPopup(ctx));
 		assertFalse(pasteAction.isEnabledForContext(ctx));
 
-		runSwing(() -> controlPlugin.actionEditMode
-				.setCurrentActionStateByUserData(StateEditingMode.RW_EMULATOR));
-		assertEquals(StateEditingMode.RW_EMULATOR, editingService.getCurrentMode(tb.trace));
+		runSwing(() -> controlPlugin.actionControlMode
+				.setCurrentActionStateByUserData(ControlMode.RW_EMULATOR));
+		assertEquals(ControlMode.RW_EMULATOR, controlService.getCurrentMode(tb.trace));
 
 		goTo(listingPlugin.getListingPanel(), new ProgramLocation(view, tb.addr(0x00400123)));
 		ctx = listingProvider.getActionContext(null);
