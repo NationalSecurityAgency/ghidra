@@ -634,7 +634,8 @@ public class DBTraceMemorySpace
 		if (!remaining.isEmpty()) {
 			lastSnap.snap = Long.MAX_VALUE;
 			for (AddressRange rng : remaining) {
-				changed.add(new ImmutableTraceAddressSnapRange(rng, Lifespan.nowOn(loc.snap)));
+				changed.add(
+					new ImmutableTraceAddressSnapRange(rng, Lifespan.nowOnMaybeScratch(loc.snap)));
 			}
 		}
 		buf.position(pos);

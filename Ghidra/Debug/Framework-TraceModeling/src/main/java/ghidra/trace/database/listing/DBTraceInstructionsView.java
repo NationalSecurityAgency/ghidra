@@ -23,11 +23,11 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.lang.InstructionError.InstructionErrorType;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.trace.database.context.DBTraceRegisterContextManager;
 import ghidra.trace.database.context.DBTraceRegisterContextSpace;
 import ghidra.trace.database.guest.InternalTracePlatform;
-import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.TraceCodeChangeType;
 import ghidra.trace.model.guest.TracePlatform;
@@ -59,6 +59,7 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 		private final Address errorAddress;
 		private final InstructionError conflict;
 		private final CodeUnit conflictCodeUnit;
+		private final boolean overwrite;
 
 		protected int count = 0;
 
@@ -75,10 +76,11 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 		 * @param errorAddress the address of the first error in the block, if any
 		 * @param conflict a description of the error, if any
 		 * @param conflictCodeUnit if a conflict, the code unit that already exists
+		 * @param overwrite true to overwrite existing defined units
 		 */
 		private InstructionBlockAdder(Set<Address> skipDelaySlots, Lifespan lifespan,
 				InternalTracePlatform platform, InstructionBlock block, Address errorAddress,
-				InstructionError conflict, CodeUnit conflictCodeUnit) {
+				InstructionError conflict, CodeUnit conflictCodeUnit, boolean overwrite) {
 			this.skipDelaySlots = skipDelaySlots;
 			this.lifespan = lifespan;
 			this.platform = platform;
@@ -86,20 +88,113 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 			this.errorAddress = errorAddress;
 			this.conflict = conflict;
 			this.conflictCodeUnit = conflictCodeUnit;
+			this.overwrite = overwrite;
+		}
+
+		protected void truncateOrDelete(TraceInstruction exists) {
+			if (exists.getStartSnap() < lifespan.lmin()) {
+				exists.setEndSnap(lifespan.lmin());
+			}
+			else {
+				exists.delete();
+			}
+		}
+
+		protected boolean isSuitable(Instruction candidate, Instruction protoInstr) {
+			try {
+				return candidate.getPrototype().equals(protoInstr.getPrototype()) &&
+					Arrays.equals(candidate.getBytes(), protoInstr.getBytes()) &&
+					candidate.isFallThroughOverridden() == protoInstr.isFallThroughOverridden() &&
+					Objects.equals(candidate.getFallThrough(), protoInstr.getFallThrough()) &&
+					candidate.getFlowOverride() == protoInstr.getFlowOverride();
+			}
+			catch (MemoryAccessException e) {
+				throw new AssertionError(e);
+			}
+		}
+
+		protected Instruction doAdjustExisting(Address address, Instruction protoInstr)
+				throws AddressOverflowException, CancelledException, CodeUnitInsertionException {
+			DBTraceInstruction exists = getAt(lifespan.lmin(), address);
+			if (exists == null || exists.getLength() != protoInstr.getLength()) {
+				AddressRange range =
+					new AddressRangeImpl(protoInstr.getAddress(), protoInstr.getLength());
+				space.definedUnits.clear(lifespan, range, false, TaskMonitor.DUMMY);
+				return null;
+			}
+			if (!isSuitable(exists, protoInstr)) {
+				truncateOrDelete(exists);
+				return null;
+			}
+			long curEnd = exists.getEndSnap();
+			if (curEnd < lifespan.lmax()) {
+				AddressRange range =
+					new AddressRangeImpl(protoInstr.getAddress(), protoInstr.getLength());
+				long endSnap = computeTruncatedMax(lifespan, exists, range);
+				exists.setEndSnap(endSnap);
+			}
+			return exists;
+		}
+
+		/**
+		 * Check the preceding unit and see if it can be extended to "create" the desired one
+		 * 
+		 * <p>
+		 * For overwrite, the caller should first use
+		 * {@link #doAdjustExisting(Address, InstructionPrototype, Instruction)}.
+		 * 
+		 * @param address the starting address of the instruction
+		 * @param protoInstr the prototype instruction
+		 * @return the extended instruction, if it was a match
+		 * @throws AddressOverflowException should never
+		 * @throws CodeUnitInsertionException if there's no room to extend the preceding unit
+		 */
+		protected Instruction doExtendPreceding(Address address, Instruction protoInstr)
+				throws AddressOverflowException, CodeUnitInsertionException {
+			if (!lifespan.minIsFinite()) {
+				return null;
+			}
+			DBTraceInstruction prec = getAt(lifespan.lmin() - 1, address);
+			if (prec == null || prec.getLength() != protoInstr.getLength()) {
+				return null;
+			}
+			if (!isSuitable(prec, protoInstr)) {
+				return null;
+			}
+			AddressRange range =
+				new AddressRangeImpl(protoInstr.getAddress(), protoInstr.getLength());
+			long endSnap = computeTruncatedMax(lifespan, prec, range);
+			if (!lifespan.contains(endSnap)) {
+				// We can't extend it far enough
+				return null;
+			}
+			prec.setEndSnap(endSnap);
+			return prec;
 		}
 
 		/**
 		 * Store the given instruction in the database
 		 * 
 		 * @param address the address of the instruction
-		 * @param prototype the instruction prototype
 		 * @param protoInstr the parsed (usually pseudo) instruction
 		 * @return the created instruction
 		 */
-		protected Instruction doCreateInstruction(Address address,
-				InstructionPrototype prototype, Instruction protoInstr) {
+		protected Instruction doCreateInstruction(Address address, Instruction protoInstr) {
 			try {
-				Instruction created = doCreate(lifespan, address, platform, prototype, protoInstr);
+				if (overwrite) {
+					Instruction exists = doAdjustExisting(address, protoInstr);
+					if (exists != null) {
+						return exists;
+					}
+				}
+
+				Instruction prec = doExtendPreceding(address, protoInstr);
+				if (prec != null) {
+					return prec;
+				}
+
+				Instruction created =
+					doCreate(lifespan, address, platform, protoInstr.getPrototype(), protoInstr);
 				// copy override settings to replacement instruction
 				if (protoInstr.isFallThroughOverridden()) {
 					created.setFallThrough(protoInstr.getFallThrough());
@@ -110,9 +205,9 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 				}
 				return created;
 			}
-			catch (CodeUnitInsertionException | AddressOverflowException e) {
-				// End address already computed when protoInstr created.
-				// We've also already checked for conflicts
+			catch (AddressOverflowException | // End address already checked via protoInstr
+					CodeUnitInsertionException | // We've already checked for conflicts
+					CancelledException e) { // There's no monitor to cancel
 				throw new AssertionError(e);
 			}
 		}
@@ -160,8 +255,7 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 				}
 
 				if (!skipDelaySlots.contains(startAddress)) {
-					InstructionPrototype prototype = protoInstr.getPrototype();
-					if (!areDelaySlots && prototype.hasDelaySlots()) {
+					if (!areDelaySlots && protoInstr.getPrototype().hasDelaySlots()) {
 						// Reverse their order then add them. This ensures pcode can be generated
 						// for the delay-slotted instruction upon its creation.
 						Deque<Instruction> delayed =
@@ -172,8 +266,7 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 						lastInstruction = replaceIfNotNull(lastInstruction,
 							doAddInstructions(delayed.iterator(), true));
 					}
-					lastInstruction =
-						doCreateInstruction(startAddress, prototype, protoInstr);
+					lastInstruction = doCreateInstruction(startAddress, protoInstr);
 				}
 				if (errorAddress != null && conflictCodeUnit == null &&
 					errorAddress.compareTo(startAddress) <= 0) {
@@ -259,23 +352,8 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 		Address endAddress = address.addNoWrap(prototype.getLength() - 1);
 		AddressRangeImpl createdRange = new AddressRangeImpl(address, endAddress);
 
-		// First, truncate lifespan to the next code unit when upper bound is max
-		if (!lifespan.maxIsFinite()) {
-			lifespan = space.instructions.truncateSoonestDefined(lifespan, createdRange);
-			lifespan = space.definedData.truncateSoonestDefined(lifespan, createdRange);
-		}
-
-		// Second, truncate lifespan to the next change of bytes in the range
-		// Then, check that against existing code units.
-		DBTraceMemorySpace memSpace =
-			space.trace.getMemoryManager().getMemorySpace(space.space, true);
-		long endSnap = memSpace.getFirstChange(lifespan, createdRange);
-		if (endSnap == Long.MIN_VALUE) {
-			endSnap = lifespan.lmax();
-		}
-		else {
-			endSnap--;
-		}
+		// Truncate, then check that against existing code units.
+		long endSnap = computeTruncatedMax(lifespan, null, createdRange);
 		TraceAddressSnapRange tasr =
 			new ImmutableTraceAddressSnapRange(createdRange, lifespan.withMax(endSnap));
 
@@ -289,8 +367,8 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 		DBTraceInstruction created = space.instructionMapSpace.put(tasr, null);
 		created.set(platform, prototype, context);
 
-		cacheForContaining.notifyNewEntry(lifespan, createdRange, created);
-		cacheForSequence.notifyNewEntry(lifespan, createdRange, created);
+		cacheForContaining.notifyNewEntry(tasr.getLifespan(), createdRange, created);
+		cacheForSequence.notifyNewEntry(tasr.getLifespan(), createdRange, created);
 		space.undefinedData.invalidateCache();
 
 		// TODO: Save the context register into the context manager? Flow it?
@@ -348,14 +426,19 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 	 * @param skipDelaySlots the addresses of delay-slotted instructions to skip
 	 * @param platform the instructions' platform (language, compiler)
 	 * @param block the block of instructions to add
+	 * @param overwrite true to overwrite existing defined units
 	 * @return the adder, or null
 	 */
-	protected InstructionBlockAdder startAddingBlock(Lifespan lifespan,
-			Set<Address> skipDelaySlots, InternalTracePlatform platform, InstructionBlock block) {
+	protected InstructionBlockAdder startAddingBlock(Lifespan lifespan, Set<Address> skipDelaySlots,
+			InternalTracePlatform platform, InstructionBlock block, boolean overwrite) {
+		if (overwrite) {
+			return new InstructionBlockAdder(skipDelaySlots, lifespan, platform, block, null, null,
+				null, overwrite);
+		}
 		InstructionError conflict = block.getInstructionConflict();
 		if (conflict == null) {
 			return new InstructionBlockAdder(skipDelaySlots, lifespan, platform, block, null, null,
-				null);
+				null, overwrite);
 		}
 		Address errorAddress = conflict.getInstructionAddress();
 		if (errorAddress == null) {
@@ -363,13 +446,13 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 		}
 		if (!conflict.getInstructionErrorType().isConflict) {
 			return new InstructionBlockAdder(skipDelaySlots, lifespan, platform, block,
-				errorAddress, conflict, null);
+				errorAddress, conflict, null, overwrite);
 		}
 		long startSnap = lifespan.lmin();
 		CodeUnit conflictCodeUnit =
 			space.definedUnits.getAt(startSnap, conflict.getConflictAddress());
 		return new InstructionBlockAdder(skipDelaySlots, lifespan, platform, block, errorAddress,
-			conflict, conflictCodeUnit);
+			conflict, conflictCodeUnit, overwrite);
 	}
 
 	/**
@@ -468,19 +551,14 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 		try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
 			long startSnap = lifespan.lmin();
 			Set<Address> skipDelaySlots = new HashSet<>();
-			if (overwrite) {
-				for (AddressRange range : instructionSet.getAddressSet()) {
-					space.definedUnits.clear(lifespan, range, false, TaskMonitor.DUMMY);
-				}
-			}
-			else {
+			if (!overwrite) {
 				checkInstructionSet(startSnap, instructionSet, skipDelaySlots);
 			}
 
 			// Add blocks
 			for (InstructionBlock block : instructionSet) {
 				InstructionBlockAdder adder =
-					startAddingBlock(lifespan, skipDelaySlots, dbPlatform, block);
+					startAddingBlock(lifespan, skipDelaySlots, dbPlatform, block, overwrite);
 				if (adder == null) {
 					continue;
 				}
@@ -495,9 +573,6 @@ public class DBTraceInstructionsView extends AbstractBaseDBTraceDefinedUnitsView
 				}
 			}
 			return result;
-		}
-		catch (CancelledException e) {
-			throw new AssertionError(e); // No actual monitor
 		}
 		catch (AddressOverflowException e) {
 			// Better have skipped any delay-slotted instructions whose delays overflowed
