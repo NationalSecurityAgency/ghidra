@@ -69,8 +69,7 @@ public class NextPrevAddressPlugin extends Plugin {
 
 	private static final String PREVIOUS_ACTION_NAME = "Previous Location in History";
 	private static final String NEXT_ACTION_NAME = "Next Location in History";
-	private static final String PREVIOUS_FUNCTION_ACTION_NAME =
-		"Previous Function in History";
+	private static final String PREVIOUS_FUNCTION_ACTION_NAME = "Previous Function in History";
 	private static final String NEXT_FUNCTION_ACTION_NAME = "Next Function in History";
 	private static final String[] CLEAR_MENUPATH = { "Navigation", "Clear History" };
 
@@ -112,6 +111,10 @@ public class NextPrevAddressPlugin extends Plugin {
 
 	DockingAction getNextFunctionAction() {
 		return nextFunctionAction;
+	}
+
+	DockingAction getClearHistoryAction() {
+		return clearAction;
 	}
 
 //==================================================================================================

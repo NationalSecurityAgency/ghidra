@@ -151,8 +151,13 @@ public interface SymbolTable {
 	 * @param namespace the namespace of the symbol to retrieve. May be null which indicates the
 	 *            global namespace.
 	 * @return the symbol which matches the specified criteria or null if not found
+<<<<<<< Upstream, based on origin/master
 	 * @throws IllegalArgumentException if the given parent namespace is from a different program
 	 *             than that of this symbol table
+=======
+	 * @throws IllegalArgumentException namespace which does not correspond to this 
+	 * symbol table's program.
+>>>>>>> ba3dc0f GP-2141 adding feature for better starting location when opening a program.
 	 * @see #getGlobalSymbol(String, Address) for a convenience method if the namespace is the
 	 *      global namespace.
 	 */
@@ -204,16 +209,28 @@ public interface SymbolTable {
 	 * default source type) since it mirrors the name and parent namespace of the function it
 	 * thunks.
 	 * 
+<<<<<<< Upstream, based on origin/master
 	 * @param name the name of the symbols to search for
 	 * @param namespace the namespace to search. If null, then the global namespace is assumed.
 	 * @return a list of all the label or function symbols with the given name in the given parent
 	 *         namespace
 	 * @throws IllegalArgumentException if the given parent namespace is from a different program
 	 *         than that of this symbol table
+=======
+	 * <p>NOTE: This method will not return a default thunk (i.e., thunk function symbol with default source type)
+	 * since it mirrors the name and parent namespace of the function it thunks.</p>
+	 * 
+	 * @param name the name of the symbols to search for.
+	 * @param namespace the namespace to search.  If null, then the global namespace is assumed.
+	 * @return a list of all the label or function symbols with the given name in the given namespace.
+	 * @throws IllegalArgumentException namespace which does not correspond to this 
+	 * symbol table's program.
+>>>>>>> ba3dc0f GP-2141 adding feature for better starting location when opening a program.
 	 */
 	public List<Symbol> getLabelOrFunctionSymbols(String name, Namespace namespace);
 
 	/**
+<<<<<<< Upstream, based on origin/master
 	 * Get a generic namespace symbol with the given name in the given parent namespace
 	 * 
 	 * @param name the name of the namespace symbol to retrieve
@@ -221,6 +238,14 @@ public interface SymbolTable {
 	 * @return the symbol, or null
 	 * @throws IllegalArgumentException if the given parent namespace is from a different program
 	 *         than that of this symbol table
+=======
+	 * Returns a generic namespace symbol with the given name in the given namespace.
+	 * @param name the name of the namespace symbol to retrieve.
+	 * @param namespace the namespace containing the symbol to retrieve.
+	 * @return a generic namespace symbol with the given name in the given namespace.
+	 * @throws IllegalArgumentException namespace which does not correspond to this 
+	 * symbol table's program.
+>>>>>>> ba3dc0f GP-2141 adding feature for better starting location when opening a program.
 	 */
 	public Symbol getNamespaceSymbol(String name, Namespace namespace);
 
@@ -233,6 +258,7 @@ public interface SymbolTable {
 	public Symbol getLibrarySymbol(String name);
 
 	/**
+<<<<<<< Upstream, based on origin/master
 	 * Get the class symbol with the given name in the given namespace
 	 * 
 	 * @param name the name of the class
@@ -240,10 +266,19 @@ public interface SymbolTable {
 	 * @return the class symbol with the given name in the given namespace
 	 * @throws IllegalArgumentException if the given parent namespace is from a different program
 	 *         than that of this symbol table
+=======
+	 * Returns the class symbol with the given name in the given namespace.
+	 * @param name the name of the class.
+	 * @param namespace the namespace to search for the class.
+	 * @return the class symbol with the given name in the given namespace.
+	 * @throws IllegalArgumentException namespace which does not correspond to this 
+	 * symbol table's program.
+>>>>>>> ba3dc0f GP-2141 adding feature for better starting location when opening a program.
 	 */
 	public Symbol getClassSymbol(String name, Namespace namespace);
 
 	/**
+<<<<<<< Upstream, based on origin/master
 	 * Get the parameter symbol with the given name in the given namespace
 	 * 
 	 * @param name the name of the parameter
@@ -251,10 +286,19 @@ public interface SymbolTable {
 	 * @return the parameter symbol with the given name in the given namespace
 	 * @throws IllegalArgumentException if the given parent namespace is from a different program
 	 *         than that of this symbol table
+=======
+	 * Returns the parameter symbol with the given name in the given namespace.
+	 * @param name the name of the parameter.
+	 * @param namespace the namespace (function) to search for the class.
+	 * @return the parameter symbol with the given name in the given namespace.
+	 * @throws IllegalArgumentException namespace which does not correspond to this 
+	 * symbol table's program.
+>>>>>>> ba3dc0f GP-2141 adding feature for better starting location when opening a program.
 	 */
 	public Symbol getParameterSymbol(String name, Namespace namespace);
 
 	/**
+<<<<<<< Upstream, based on origin/master
 	 * Get the local variable symbol with the given name in the given namespace
 	 * 
 	 * @param name the name of the local variable
@@ -262,6 +306,14 @@ public interface SymbolTable {
 	 * @return the local variable symbol with the given name in the given namespace
 	 * @throws IllegalArgumentException if the given parent namespace is from a different program
 	 *         than that of this symbol table
+=======
+	 * Returns the local variable symbol with the given name in the given namespace.
+	 * @param name the name of the local variable.
+	 * @param namespace the namespace (function) to search for the class.
+	 * @return the local variable symbol with the given name in the given namespace.
+	 * @throws IllegalArgumentException namespace which does not correspond to this 
+	 * symbol table's program.
+>>>>>>> ba3dc0f GP-2141 adding feature for better starting location when opening a program.
 	 */
 	public Symbol getLocalVariableSymbol(String name, Namespace namespace);
 
@@ -276,11 +328,22 @@ public interface SymbolTable {
 	 * <b>NOTE:</b> The resulting iterator will not return default thunks (i.e., thunk function
 	 * symbol with default source type).
 	 * 
+<<<<<<< Upstream, based on origin/master
 	 * @param name the name of the symbols to retrieve
 	 * @param namespace the namespace to search for symbols
 	 * @return a list of symbols which satisfy specified criteria
 	 * @throws IllegalArgumentException if the given parent namespace is from a different program
 	 *         than that of this symbol table
+=======
+	 * <p>NOTE: The resulting iterator will not return default thunks (i.e.,
+	 * thunk function symbol with default source type).</p>
+	 * 
+	 * @param name the name of the symbols to retrieve.
+	 * @param namespace the namespace to search for symbols.
+	 * @return all symbols which satisfy specified criteria
+	 * @throws IllegalArgumentException namespace which does not correspond to this 
+	 * symbol table's program.
+>>>>>>> ba3dc0f GP-2141 adding feature for better starting location when opening a program.
 	 */
 	public List<Symbol> getSymbols(String name, Namespace namespace);
 
@@ -296,6 +359,7 @@ public interface SymbolTable {
 	public Symbol getVariableSymbol(String name, Function function);
 
 	/**
+<<<<<<< Upstream, based on origin/master
 	 * Get the namespace with the given name in the given parent namespace.
 	 * <p>
 	 * The returned namespace can be a generic namespace ({@link SymbolType#NAMESPACE}, 
@@ -310,6 +374,16 @@ public interface SymbolTable {
 	 * @return the namespace with the given name in the given parent namespace
 	 * @throws IllegalArgumentException if the given parent namespace is from a different program
 	 *         than that of this symbol table
+=======
+	 * Returns the namespace with the given name in the given parent namespace.  The namespace
+	 * returned can be either a generic namespace or a class or library.  It does not include
+	 * functions.
+	 * @param name the name of the namespace to be retrieved.
+	 * @param namespace the parent namespace of the namespace to be retrieved.
+	 * @return the namespace with the given name in the given parent namespace.
+	 * @throws IllegalArgumentException namespace which does not correspond to this 
+	 * symbol table's program.
+>>>>>>> ba3dc0f GP-2141 adding feature for better starting location when opening a program.
 	 */
 	public Namespace getNamespace(String name, Namespace namespace);
 
@@ -405,10 +479,20 @@ public interface SymbolTable {
 	 * <b>NOTE:</b> The resulting iterator will not return default thunks (i.e., thunk function
 	 * symbol with default source type).
 	 * 
+<<<<<<< Upstream, based on origin/master
 	 * @param namespace the namespace to search for symbols
 	 * @return an iterator over the symbols
 	 * @throws IllegalArgumentException if the given parent namespace is from a different program
 	 *             than that of this symbol table
+=======
+	 * <p>NOTE: The resulting iterator will not return default thunks (i.e.,
+	 * thunk function symbol with default source type).</p>
+	 * 
+	 * @param namespace the namespace to search for symbols.
+	 * @return symbol iterator
+	 * @throws IllegalArgumentException namespace which does not correspond to this 
+	 * symbol table's program.
+>>>>>>> ba3dc0f GP-2141 adding feature for better starting location when opening a program.
 	 */
 	public SymbolIterator getSymbols(Namespace namespace);
 
