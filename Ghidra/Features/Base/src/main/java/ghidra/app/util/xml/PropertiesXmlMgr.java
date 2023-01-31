@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,15 @@
  */
 package ghidra.app.util.xml;
 
+import java.awt.Color;
+import java.awt.Font;
+import java.io.File;
+import java.util.*;
+
+import javax.swing.KeyStroke;
+
+import org.xml.sax.SAXParseException;
+
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.*;
 import ghidra.program.model.address.*;
@@ -27,15 +35,6 @@ import ghidra.util.task.TaskMonitor;
 import ghidra.util.xml.*;
 import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
-
-import java.awt.Color;
-import java.awt.Font;
-import java.io.File;
-import java.util.*;
-
-import javax.swing.KeyStroke;
-
-import org.xml.sax.SAXParseException;
 
 class PropertiesXmlMgr {
 
@@ -406,7 +405,7 @@ class PropertiesXmlMgr {
 					case CUSTOM_TYPE:
 						attrs.addAttribute("TYPE", "custom");
 						CustomOption custom = propList.getCustomOption(name, null);
-						xmlString = OptionType.KEYSTROKE_TYPE.convertObjectToString(custom);
+						xmlString = OptionType.CUSTOM_TYPE.convertObjectToString(custom);
 						attrs.addAttribute("VALUE", XmlUtilities.escapeElementEntities(xmlString));
 						break;
 					case BYTE_ARRAY_TYPE:
