@@ -182,6 +182,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	ImportFromXMLAction importFromXMLAction;
 	ImportFromFactsAction importFromFactsAction;
 	OpenWinDbgTraceAction openTraceAction;
+	SetTimeoutAction setTimeoutAction;
 
 	private ToggleDockingAction actionToggleBase;
 	private ToggleDockingAction actionToggleSubscribe;
@@ -204,6 +205,8 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	private boolean updateWhileRunning = true;
 	@AutoConfigStateField
 	private boolean suppressDescent = false;
+	@AutoConfigStateField
+	private int nodeTimeout = 60;
 
 	Set<TargetConfigurable> configurables = new HashSet<>();
 	private String lastMethod = "";
@@ -857,7 +860,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			.buildAndInstallLocal(this);
 		
 		groupTargetIndex++;
-
+		
 		/*
 		actionSuppressDescent = new ToggleActionBuilder("Automatically populate containers", plugin.getName())
 			.menuPath("Maintenance","&Auto-populate")
@@ -1222,6 +1225,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		importFromXMLAction = new ImportFromXMLAction(tool, plugin.getName(), this);
 		importFromFactsAction = new ImportFromFactsAction(tool, plugin.getName(), this);
 		openTraceAction = new OpenWinDbgTraceAction(tool, plugin.getName(), this);
+		setTimeoutAction = new SetTimeoutAction(tool, plugin.getName(), this);
 	}
 
 	//@formatter:on
@@ -1858,6 +1862,14 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		this.autoRecord = autorecord;
 	}
 
+	public int getNodeTimeout() {
+		return nodeTimeout;
+	}
+
+	public void setNodeTimeout(int timeout) {
+		this.nodeTimeout = timeout;
+	}
+
 	public void updateActions(ObjectContainer providerContainer) {
 		TargetObject obj = getSelectedObject();
 		if (obj != null) {
@@ -1889,6 +1901,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		actionToggleAutoRecord.setSelected(autoRecord);
 		actionToggleHideIntrinsics.setSelected(hideIntrinsics);
 		actionToggleSelectionOnly.setSelected(selectionOnly);
+		setTimeoutAction.setNodeTimeout(nodeTimeout);
 
 		methodDialog.readConfigState(saveState);
 	}
