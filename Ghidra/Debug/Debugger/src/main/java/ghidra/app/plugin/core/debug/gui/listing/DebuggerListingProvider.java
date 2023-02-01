@@ -1050,6 +1050,7 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 				consoleService.removeResolutionAction(actionOpenProgram);
 			}
 		}
+		removeOldStaticTrackingMarker();
 	}
 
 	protected DebuggerCoordinates adjustCoordinates(DebuggerCoordinates coordinates) {
