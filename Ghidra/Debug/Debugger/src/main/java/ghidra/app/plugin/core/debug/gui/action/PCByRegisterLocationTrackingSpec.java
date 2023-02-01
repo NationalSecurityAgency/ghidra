@@ -53,6 +53,11 @@ public enum PCByRegisterLocationTrackingSpec implements RegisterLocationTracking
 	}
 
 	@Override
+	public String getLocationLabel() {
+		return "pc";
+	}
+
+	@Override
 	public AddressSpace computeDefaultAddressSpace(DebuggerCoordinates coordinates) {
 		return coordinates.getPlatform().getLanguage().getDefaultSpace();
 	}

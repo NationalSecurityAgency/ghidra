@@ -58,6 +58,11 @@ public enum PCLocationTrackingSpec implements LocationTrackingSpec, LocationTrac
 	}
 
 	@Override
+	public String getLocationLabel() {
+		return "pc";
+	}
+
+	@Override
 	public LocationTracker getTracker() {
 		return this;
 	}

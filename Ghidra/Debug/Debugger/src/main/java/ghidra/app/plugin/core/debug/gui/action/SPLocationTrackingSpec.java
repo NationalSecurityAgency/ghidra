@@ -44,6 +44,11 @@ public enum SPLocationTrackingSpec implements RegisterLocationTrackingSpec {
 	}
 
 	@Override
+	public String getLocationLabel() {
+		return "sp";
+	}
+
+	@Override
 	public Register computeRegister(DebuggerCoordinates coordinates) {
 		TracePlatform platform = coordinates.getPlatform();
 		if (platform == null) {
