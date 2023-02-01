@@ -18,7 +18,6 @@ package ghidra.app.util.opinion;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.*;
-import java.util.Map.Entry;
 
 import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
@@ -26,7 +25,6 @@ import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.mz.*;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.framework.model.DomainObject;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
@@ -50,11 +48,6 @@ import ghidra.util.task.TaskMonitor;
  */
 public class MzLoader extends AbstractLibrarySupportLoader {
 	public final static String MZ_NAME = "Old-style DOS Executable (MZ)";
-
-	/** Option to control how memory blocks are formed */
-	public static final String CREATE_BLOCKS_FROM_RELOC_SEGS_OPTION_NAME =
-		"Create memory blocks from relocation segments";
-	static final boolean CREATE_BLOCKS_FROM_RELOC_SEGS_OPTION_DEFAULT = true;
 
 	private final static String ENTRY_NAME = "entry";
 	private final static int INITIAL_SEGMENT_VAL = 0x1000;
@@ -100,10 +93,12 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 		MzExecutable mz = new MzExecutable(provider);
 
 		try {
+			Set<RelocationFixup> relocationFixups = getRelocationFixups(space, mz, log, monitor);
+
 			markupHeaders(program, fileBytes, mz, log, monitor);
-			processMemoryBlocks(program, fileBytes, space, mz, options, log, monitor);
+			processMemoryBlocks(program, fileBytes, space, mz, relocationFixups, log, monitor);
 			adjustSegmentStarts(program, monitor);
-			processRelocations(program, space, mz, log, monitor);
+			processRelocations(program, space, mz, relocationFixups, log, monitor);
 			processEntryPoint(program, space, mz, log, monitor);
 			processRegisters(program, mz, log, monitor);
 		}
@@ -119,35 +114,6 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 	}
 
 	@Override
-	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
-			DomainObject domainObject, boolean loadIntoProgram) {
-		List<Option> list =
-			super.getDefaultOptions(provider, loadSpec, domainObject, loadIntoProgram);
-		if (!loadIntoProgram) {
-			list.add(new Option(CREATE_BLOCKS_FROM_RELOC_SEGS_OPTION_NAME,
-				CREATE_BLOCKS_FROM_RELOC_SEGS_OPTION_DEFAULT, Boolean.class,
-				Loader.COMMAND_LINE_ARG_PREFIX + "-blocksFromRelocationSegments"));
-		}
-		return list;
-	}
-
-	@Override
-	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program) {
-		if (options != null) {
-			for (Option option : options) {
-				String name = option.getName();
-				if (name.equals(CREATE_BLOCKS_FROM_RELOC_SEGS_OPTION_NAME)) {
-					if (!Boolean.class.isAssignableFrom(option.getValueClass())) {
-						return "Invalid type for option: " + name + " - " + option.getValueClass();
-					}
-				}
-			}
-		}
-		return super.validateOptions(provider, loadSpec, options, program);
-	}
-
-	@Override
 	public String getName() {
 		return MZ_NAME;
 	}
@@ -156,6 +122,15 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 	public int getTierPriority() {
 		return 60; // we are less priority than PE!  Important for AutoImporter
 	}
+
+	/**
+	 * Stores a relocation's fixup information
+	 * 
+	 * @param address The {@link SegmentedAddress} of the relocation
+	 * @param fileOffset The file offset of the relocation
+	 * @param segment The fixed-up segment after the relocation is applied
+	 */
+	private record RelocationFixup(SegmentedAddress address, int fileOffset, int segment) {}
 
 	private void markupHeaders(Program program, FileBytes fileBytes, MzExecutable mz,
 			MessageLog log, TaskMonitor monitor) {
@@ -193,39 +168,17 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 	}
 
 	private void processMemoryBlocks(Program program, FileBytes fileBytes,
-			SegmentedAddressSpace space, MzExecutable mz, List<Option> options, MessageLog log,
-			TaskMonitor monitor) throws Exception {
+			SegmentedAddressSpace space, MzExecutable mz, Set<RelocationFixup> relocationFixups,
+			MessageLog log, TaskMonitor monitor) throws Exception {
 		monitor.setMessage("Processing memory blocks...");
 
 		OldDOSHeader header = mz.getHeader();
 		BinaryReader reader = mz.getBinaryReader();
 
-		// If not creating memory blocks based on relocation segments, just make 1 big block for
-		// code, and 1 for data
-		if (!shouldCreateBlocksFromRelocationSegments(options)) {
-			int headerSize = paragraphsToBytes(header.e_cparhdr());
-			int loadModuleSize = pagesToBytes(header.e_cp() - 1) + header.e_cblp() - headerSize;
-			MemoryBlock codeBlock = MemoryBlockUtils.createInitializedBlock(program, false, "CODE",
-				space.getAddress(INITIAL_SEGMENT_VAL, 0), fileBytes, headerSize, loadModuleSize, "",
-				"mz", true, true, true, log);
-
-			int extraAllocSize = paragraphsToBytes(header.e_minalloc());
-			if (extraAllocSize > 0) {
-				MemoryBlockUtils.createUninitializedBlock(program, false, "DATA",
-					codeBlock.getEnd().add(1), extraAllocSize, "", "mz", true, true, false, log);
-
-			}
-			return;
-		}
-
-		// Use relocations to discover what segments are in use
+		// Use relocations to discover what segments are in use.
+		// We also know about our desired load module segment, so add that too.	
 		Set<SegmentedAddress> knownSegments = new TreeSet<>();
-		Map<SegmentedAddress, Integer> relocationMap = getRelocationMap(space, mz, monitor);
-		for (SegmentedAddress addr : relocationMap.keySet()) {
-			knownSegments.add(space.getAddress(addr.getSegment(), 0));
-		}
-
-		// We also know about our desired load module segment, so add that
+		relocationFixups.forEach(rf -> knownSegments.add(space.getAddress(rf.segment, 0)));
 		knownSegments.add(space.getAddress(INITIAL_SEGMENT_VAL, 0));
 
 		// Allocate an initialized memory block for each segment we know about
@@ -288,7 +241,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 					extraByteCount, endOffset));
 		}
 
-		// Allocate an uninitialized memory block for extra minumum required data space
+		// Allocate an uninitialized memory block for extra minimum required data space
 		if (lastBlock != null) {
 			int extraAllocSize = paragraphsToBytes(header.e_minalloc());
 			if (extraAllocSize > 0) {
@@ -342,31 +295,25 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 	}
 
 	private void processRelocations(Program program, SegmentedAddressSpace space, MzExecutable mz,
-			MessageLog log, TaskMonitor monitor) throws Exception {
+			Set<RelocationFixup> relocationFixups, MessageLog log, TaskMonitor monitor)
+			throws Exception {
 		monitor.setMessage("Processing relocations...");
-
-		BinaryReader reader = mz.getBinaryReader();
 		Memory memory = program.getMemory();
 
-		Map<SegmentedAddress, Integer> relocationMap = getRelocationMap(space, mz, monitor);
-		for (Entry<SegmentedAddress, Integer> entry : relocationMap.entrySet()) {
-			SegmentedAddress relocationAddress = entry.getKey();
-			int relocationFileOffset = entry.getValue();
-
+		for (RelocationFixup relocationFixup : relocationFixups) {
+			SegmentedAddress relocationAddress = relocationFixup.address();
 			try {
-				int value = Short.toUnsignedInt(reader.readShort(relocationFileOffset));
-				int fixupAddrSeg = (value + INITIAL_SEGMENT_VAL) & 0xffff;
 				byte[] origBytes = new byte[2];
 				memory.getBytes(relocationAddress, origBytes);
-				memory.setShort(relocationAddress, (short) fixupAddrSeg);
+				memory.setShort(relocationAddress, (short) relocationFixup.segment());
 
 				// Add to relocation table
 				program.getRelocationTable()
 						.add(relocationAddress, 0, new long[] { relocationAddress.getSegment(),
 							relocationAddress.getSegmentOffset() }, origBytes, null);
 			}
-			catch (AddressOutOfBoundsException | IOException | MemoryAccessException e) {
-				log.appendMsg(String.format("Failed to process relocation: %s (%s)",
+			catch (AddressOutOfBoundsException | MemoryAccessException e) {
+				log.appendMsg(String.format("Failed to apply relocation: %s (%s)",
 					relocationAddress, e.getMessage()));
 			}
 		}
@@ -402,6 +349,8 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 			return;
 		}
 
+		// TODO: can better do this in an analyzer on the entry point
+		//       might work in some cases.
 		DataConverter converter = LittleEndianDataConverter.INSTANCE;
 		boolean shouldSetDS = false;
 		long dsValue = 0;
@@ -437,12 +386,19 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 				BigInteger.valueOf(
 					Integer.toUnsignedLong((header.e_ss() + INITIAL_SEGMENT_VAL) & 0xffff)));
 
-			BigInteger csValue = BigInteger.valueOf(
-				Integer.toUnsignedLong(((SegmentedAddress) entry.getAddress()).getSegment()));
+
 
 			for (MemoryBlock block : program.getMemory().getBlocks()) {
 				Address start = block.getStart();
 				Address end = block.getEnd();
+				
+				if (!(start.getAddressSpace() instanceof SegmentedAddressSpace)) {
+					continue;
+				}
+				
+				BigInteger csValue = BigInteger.valueOf(
+						Integer.toUnsignedLong(((SegmentedAddress) start).getSegment()));
+				
 				context.setValue(cs, start, end, csValue);
 				if (shouldSetDS) {
 					context.setValue(ds, start, end, BigInteger.valueOf(dsValue));
@@ -455,22 +411,22 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 	}
 
 	/**
-	 * Gets a {@link Map} of relocation {@link SegmentedAddress addresses} to file offsets, adjusted
-	 * to where the image is loaded into memory
+	 * Gets a {@link Set} of {@link RelocationFixup relocation fixups}, adjusted to where the image
+	 * is loaded into memory
 	 * 
 	 * @param space The address space
 	 * @param mz The {@link MzExecutable}
 	 * @param monitor A monitor
-	 * @return A {@link Map} of relocation {@link SegmentedAddress addresses} to file offsets,
-	 *   adjusted to where the image is loaded into memory
+	 * @return A {@link Set} of {@link RelocationFixup relocation fixups}, adjusted to where the 
+	 *   image is loaded into memory
 	 * @throws CancelledException If the action was cancelled
 	 */
-	private Map<SegmentedAddress, Integer> getRelocationMap(SegmentedAddressSpace space,
-			MzExecutable mz,
-			TaskMonitor monitor) throws CancelledException {
-		Map<SegmentedAddress, Integer> addresses = new TreeMap<>();
+	private Set<RelocationFixup> getRelocationFixups(SegmentedAddressSpace space,
+			MzExecutable mz, MessageLog log, TaskMonitor monitor) throws CancelledException {
+		Set<RelocationFixup> fixups = new HashSet<>();
 
 		OldDOSHeader header = mz.getHeader();
+		BinaryReader reader = mz.getBinaryReader();
 
 		for (MzRelocation relocation : mz.getRelocations()) {
 			monitor.checkCanceled();
@@ -482,10 +438,20 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 			int relocationFileOffset = addressToFileOffset(relativeSegment, off, header);
 			SegmentedAddress relocationAddress =
 				space.getAddress((relativeSegment + INITIAL_SEGMENT_VAL) & 0xffff, off);
-			addresses.put(relocationAddress, relocationFileOffset);
+
+			try {
+				int value = Short.toUnsignedInt(reader.readShort(relocationFileOffset));
+				int relocatedSegment = (value + INITIAL_SEGMENT_VAL) & 0xffff;
+				fixups.add(
+					new RelocationFixup(relocationAddress, relocationFileOffset, relocatedSegment));
+			}
+			catch (AddressOutOfBoundsException | IOException e) {
+				log.appendMsg(String.format("Failed to process relocation: %s (%s)",
+					relocationAddress, e.getMessage()));
+			}
 		}
 
-		return addresses;
+		return fixups;
 	}
 
 	/**
@@ -519,25 +485,4 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 	private int pagesToBytes(int pages) {
 		return pages << 9;
 	}
-
-	/**
-	 * Checks to see if memory blocks should be created based on segments referenced in relocation
-	 * table entries
-	 * 
-	 * @param options A {@link List} of {@link Option}s
-	 * @return True if memory blocks should be created based on segments reference in relocation
-	 *   table entries; otherwise, false
-	 */
-	private boolean shouldCreateBlocksFromRelocationSegments(List<Option> options) {
-		if (options != null) {
-			for (Option option : options) {
-				String optName = option.getName();
-				if (optName.equals(CREATE_BLOCKS_FROM_RELOC_SEGS_OPTION_NAME)) {
-					return (Boolean) option.getValue();
-				}
-			}
-		}
-		return CREATE_BLOCKS_FROM_RELOC_SEGS_OPTION_DEFAULT;
-	}
-
 }
