@@ -20,7 +20,6 @@ import java.nio.ByteBuffer;
 import db.DBRecord;
 import ghidra.program.model.address.Address;
 import ghidra.trace.database.DBTrace;
-import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
@@ -123,8 +122,13 @@ public abstract class AbstractDBTraceCodeUnit<T extends AbstractDBTraceCodeUnit<
 			}
 			// Copy from the cache
 			int toCopyFromCache =
-				Math.max(0, Math.min(byteCache.position() - addressOffset, buffer.remaining()));
-			buffer.put(byteCache.array(), addressOffset, toCopyFromCache);
+				Math.min(byteCache.position() - addressOffset, buffer.remaining());
+			if (toCopyFromCache > 0) {
+				buffer.put(byteCache.array(), addressOffset, toCopyFromCache);
+			}
+			else {
+				toCopyFromCache = 0;
+			}
 			if (byteCache.position() >= end) {
 				return toCopyFromCache;
 			}

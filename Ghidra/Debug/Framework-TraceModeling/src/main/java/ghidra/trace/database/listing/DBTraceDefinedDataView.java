@@ -131,21 +131,8 @@ public class DBTraceDefinedDataView extends AbstractBaseDBTraceDefinedUnitsView<
 			Address endAddress = address.addNoWrap(length - 1);
 			AddressRangeImpl createdRange = new AddressRangeImpl(address, endAddress);
 
-			// First, truncate lifespan to the next code unit when upper bound is max
-			if (!lifespan.maxIsFinite()) {
-				lifespan = space.instructions.truncateSoonestDefined(lifespan, createdRange);
-				lifespan = space.definedData.truncateSoonestDefined(lifespan, createdRange);
-			}
-
-			// Second, extend to the next change of bytes in the range within lifespan
-			// Then, check that against existing code units.
-			long endSnap = memSpace.getFirstChange(lifespan, createdRange);
-			if (endSnap == Long.MIN_VALUE) {
-				endSnap = lifespan.lmax();
-			}
-			else {
-				endSnap--;
-			}
+			// Truncate, then check that against existing code units.
+			long endSnap = computeTruncatedMax(lifespan, null, createdRange);
 			TraceAddressSnapRange tasr = new ImmutableTraceAddressSnapRange(createdRange,
 				Lifespan.span(startSnap, endSnap));
 			if (!space.undefinedData.coversRange(tasr)) {
@@ -158,13 +145,13 @@ public class DBTraceDefinedDataView extends AbstractBaseDBTraceDefinedUnitsView<
 			}
 
 			long dataTypeID = space.dataTypeManager.getResolvedID(dataType);
-			DBTraceData created = space.dataMapSpace.put(tasr, null);
+			DBTraceData created = mapSpace.put(tasr, null);
 			// TODO: data units with a guest platform
 			created.set(space.trace.getPlatformManager().getHostPlatform(), dataTypeID);
 			// TODO: Explicitly remove undefined from cache, or let weak refs take care of it?
 
-			cacheForContaining.notifyNewEntry(lifespan, createdRange, created);
-			cacheForSequence.notifyNewEntry(lifespan, createdRange, created);
+			cacheForContaining.notifyNewEntry(tasr.getLifespan(), createdRange, created);
+			cacheForSequence.notifyNewEntry(tasr.getLifespan(), createdRange, created);
 			space.undefinedData.invalidateCache();
 
 			if (dataType instanceof Composite || dataType instanceof Array ||

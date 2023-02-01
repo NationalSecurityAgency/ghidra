@@ -1276,6 +1276,15 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 	}
 
 	/**
+	 * Get the name of the table backing this store
+	 * 
+	 * @return the name
+	 */
+	public String getTableName() {
+		return tableName;
+	}
+
+	/**
 	 * Invalidate this store's cache
 	 * 
 	 * <p>

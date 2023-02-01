@@ -82,7 +82,7 @@ public abstract class AbstractConstraintsTree< //
 	protected abstract NR createNodeEntry(DBCachedObjectStore<NR> store, DBRecord record);
 
 	protected void init() {
-		assert root == null;
+		// assert root == null;
 		root = getOrCreateRoot();
 		leafLevel = computeLeafLevel();
 	}
@@ -843,6 +843,7 @@ public abstract class AbstractConstraintsTree< //
 					throw new AssertionError(
 						"Leaf node " + n + " cannot contain nodes " + nodeChildren);
 				}
+				break;
 		}
 
 		// Check that child count matches by counting over iterator
@@ -911,9 +912,6 @@ public abstract class AbstractConstraintsTree< //
 					" out of sync: cache=" + cachedChildren + " db=" + databasedChildren);
 			}
 		}
-		if (leafLevel != computeLeafLevel()) {
-			throw new AssertionError("Leaf level is incorrect");
-		}
 		visit(null, new TreeRecordVisitor() {
 			@Override
 			protected VisitResult beginNode(NR parent, NR n, QueryInclusion inclusion) {
@@ -927,6 +925,9 @@ public abstract class AbstractConstraintsTree< //
 				return VisitResult.NEXT;
 			}
 		}, false);
+		if (leafLevel != computeLeafLevel()) {
+			throw new AssertionError("Leaf level is incorrect");
+		}
 	}
 
 	public abstract AbstractConstraintsTreeSpatialMap<DS, DR, NS, T, Q> asSpatialMap();
@@ -945,6 +946,7 @@ public abstract class AbstractConstraintsTree< //
 			cachedNodeChildren.clear();
 			dataStore.invalidateCache();
 			nodeStore.invalidateCache();
+			init();
 		}
 	}
 }

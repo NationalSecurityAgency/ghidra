@@ -272,7 +272,7 @@ public class PcodeExecutor<T> {
 			throw e;
 		}
 		catch (Exception e) {
-			throw new PcodeExecutionException("Exception during pcode execution", frame, e);
+			throw new PcodeExecutionException(e.getMessage(), frame, e);
 		}
 	}
 

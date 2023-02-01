@@ -299,21 +299,28 @@ public class DBTraceAddressSnapRangePropertyMapTree<T, DR extends AbstractDBTrac
 			return range;
 		}
 
-		@SuppressWarnings({ "unchecked", "hiding" })
+		@SuppressWarnings("unchecked")
 		protected void doSetRange(AddressRange range) {
+			long newMinOffset = tree.mapSpace.assertInSpace(range.getMinAddress());
+			long newMaxOffset = range.getMaxAddress().getOffset();
+			if (minOffset == newMinOffset && maxOffset == newMaxOffset) {
+				return;
+			}
 			@SuppressWarnings("rawtypes")
 			DBTraceAddressSnapRangePropertyMapTree tree = this.tree;
-			long newMinOffset = tree.mapSpace.assertInSpace(range.getMinAddress());
 			tree.doUnparentEntry(this);
 			minOffset = newMinOffset;
-			maxOffset = range.getMaxAddress().getOffset();
+			maxOffset = newMaxOffset;
 			update(MIN_ADDRESS_COLUMN, MAX_ADDRESS_COLUMN);
 			this.range = range;
 			tree.doInsertDataEntry(this);
 		}
 
-		@SuppressWarnings({ "unchecked", "hiding" })
+		@SuppressWarnings("unchecked")
 		protected void doSetLifespan(Lifespan lifespan) {
+			if (minSnap == lifespan.lmin() && maxSnap == lifespan.lmax()) {
+				return;
+			}
 			@SuppressWarnings("rawtypes")
 			DBTraceAddressSnapRangePropertyMapTree tree = this.tree;
 			tree.doUnparentEntry(this);

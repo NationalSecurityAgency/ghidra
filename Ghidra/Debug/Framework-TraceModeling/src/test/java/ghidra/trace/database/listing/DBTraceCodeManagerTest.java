@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 import org.junit.*;
@@ -172,6 +173,23 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 	}
 
 	@Test
+	public void testPutBytesInScratchLeavesStaticDataUntouched() throws CodeUnitInsertionException {
+		try (UndoableTransaction tid = b.startTransaction()) {
+			TraceData d0at4000 =
+				b.addData(0, b.addr(0x4000), IntegerDataType.dataType, b.buf(1, 2, 3, 4));
+			assertEquals(Lifespan.nowOn(0), d0at4000.getLifespan());
+			assertEquals(new Scalar(32, 0x01020304), d0at4000.getValue());
+
+			b.trace.getMemoryManager().putBytes(-10, b.addr(0x4000), b.buf(5, 6, 7, 8));
+			TraceData d10at4000 =
+				b.trace.getCodeManager().definedData().getContaining(10, b.addr(0x4000));
+			assertSame(d0at4000, d10at4000);
+			assertEquals(Lifespan.nowOn(0), d10at4000.getLifespan());
+			assertEquals(new Scalar(32, 0x01020304), d10at4000.getValue());
+		}
+	}
+
+	@Test
 	public void testPutBytesDeletesDynamicData() throws CodeUnitInsertionException {
 		try (UndoableTransaction tid = b.startTransaction()) {
 			TraceData d4000 =
@@ -289,6 +307,110 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 			catch (CodeUnitInsertionException e) {
 				// pass
 			}
+		}
+	}
+
+	@Test
+	public void testOverlapErrorsMultithreaded() throws Throwable {
+		ArrayList<CompletableFuture<Integer>> creators = new ArrayList<>();
+		for (int i = 0; i < 10; i++) {
+			creators.add(CompletableFuture.supplyAsync(() -> {
+				try (UndoableTransaction tid = b.startTransaction()) {
+					b.trace.getCodeManager()
+							.definedData()
+							.create(Lifespan.ALL, b.addr(0x4000), IntegerDataType.dataType);
+					return 0;
+				}
+				catch (CodeUnitInsertionException e) {
+					return 1;
+				}
+			}));
+		}
+		CompletableFuture.allOf(creators.toArray(CompletableFuture[]::new)).get();
+		assertEquals(9, creators.stream()
+				.mapToInt(c -> c.getNow(null))
+				.reduce(Integer::sum)
+				.orElse(-1));
+	}
+
+	@Test
+	public void testOverlapAllowedAfterAbort() throws Throwable {
+		try (UndoableTransaction tid = b.startTransaction()) {
+			b.trace.getCodeManager()
+					.definedData()
+					.create(Lifespan.ALL, b.addr(0x4000), IntegerDataType.dataType);
+			tid.abort();
+		}
+		try (UndoableTransaction tid = b.startTransaction()) {
+			b.trace.getCodeManager()
+					.definedData()
+					.create(Lifespan.ALL, b.addr(0x4000), IntegerDataType.dataType);
+		}
+	}
+
+	public void testOverlapErrAfterInvalidate() throws Throwable {
+		try (UndoableTransaction tid = b.startTransaction()) {
+			b.trace.getCodeManager()
+					.definedData()
+					.create(Lifespan.ALL, b.addr(0x4000), IntegerDataType.dataType);
+		}
+		b.trace.undo();
+		b.trace.redo();
+		try (UndoableTransaction tid = b.startTransaction()) {
+			b.trace.getCodeManager()
+					.definedData()
+					.create(Lifespan.ALL, b.addr(0x4000), IntegerDataType.dataType);
+			fail();
+		}
+		catch (CodeUnitInsertionException e) {
+			// pass
+		}
+	}
+
+	/**
+	 * This test is interesting because the pointer type def causes an update to the data type
+	 * settings <em>while the unit is still being created</em>. This will invalidate the trace's
+	 * caches. All of them, including the defined data units, which can become the cause of many
+	 * timing issues.
+	 */
+	@Test
+	public void testOverlapErrWithDataTypeSettings() throws Throwable {
+		AddressSpace space = b.trace.getBaseAddressFactory().getDefaultAddressSpace();
+		PointerTypedef type = new PointerTypedef(null, VoidDataType.dataType, 8, null, space);
+		try (UndoableTransaction tid = b.startTransaction()) {
+			b.trace.getCodeManager()
+					.definedData()
+					.create(Lifespan.ALL, b.addr(0x4000), type);
+		}
+		try (UndoableTransaction tid = b.startTransaction()) {
+			b.trace.getCodeManager()
+					.definedData()
+					.create(Lifespan.ALL, b.addr(0x4000), type);
+			fail();
+		}
+		catch (CodeUnitInsertionException e) {
+			// pass
+		}
+	}
+
+	@Test
+	public void testOverlapErrAfterSetEndSnap() throws Throwable {
+		try (UndoableTransaction tid = b.startTransaction()) {
+			DBTraceDataAdapter data = b.trace.getCodeManager()
+					.definedData()
+					.create(Lifespan.ALL, b.addr(0x4000), IntegerDataType.dataType);
+			assertEquals(Lifespan.before(0), data.getLifespan());
+			data.setEndSnap(-10);
+			assertEquals(Lifespan.before(-9), data.getLifespan());
+		}
+		try (UndoableTransaction tid = b.startTransaction()) {
+			b.trace.getCodeManager()
+					.definedData()
+					.create(Lifespan.ALL, b.addr(0x4000), IntegerDataType.dataType);
+			fail();
+		}
+		catch (CodeUnitInsertionException e) {
+			// pass
 		}
 	}
 
@@ -1538,7 +1660,8 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 			coversTwoWays(manager.definedData(), Lifespan.span(0, 5), b.range(0x4000, 0x4007)));
 		assertTrue(
 			coversTwoWays(manager.definedData(), Lifespan.span(0, 9), b.range(0x4001, 0x4003)));
-		assertFalse(intersectsTwoWays(manager.definedData(), Lifespan.ALL, b.range(0x0000, 0x3fff)));
+		assertFalse(
+			intersectsTwoWays(manager.definedData(), Lifespan.ALL, b.range(0x0000, 0x3fff)));
 		assertFalse(
 			intersectsTwoWays(manager.definedData(), Lifespan.ALL, b.range(0x4008, -0x0001)));
 		assertFalse(intersectsTwoWays(manager.definedData(), Lifespan.toNow(-1), all));

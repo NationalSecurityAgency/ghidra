@@ -15,9 +15,7 @@
  */
 package ghidra.trace.database.module;
 
-import static ghidra.lifecycle.Unfinished.TODO;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.io.File;
 import java.util.*;
@@ -334,7 +332,6 @@ public class DBTraceModuleManagerTest extends AbstractGhidraHeadlessIntegrationT
 	}
 
 	@Test
-	@Ignore("GP-479")
 	public void testUndoIdentitiesPreserved() throws Exception {
 		TraceModule mod1;
 		try (UndoableTransaction tid = b.startTransaction()) {
@@ -351,8 +348,7 @@ public class DBTraceModuleManagerTest extends AbstractGhidraHeadlessIntegrationT
 
 		b.trace.undo();
 
-		assertEquals(mod1, assertOne(moduleManager.getModulesByPath("Modules[first]")));
-		TODO(); // TODO: mod1 should still be identical to that in database
+		assertSame(mod1, assertOne(moduleManager.getModulesByPath("Modules[first]")));
 		assertTrue(moduleManager.getModulesByPath("Modules[second]").isEmpty());
 	}
 
