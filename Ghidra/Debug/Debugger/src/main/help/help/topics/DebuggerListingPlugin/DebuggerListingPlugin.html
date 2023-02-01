@@ -94,10 +94,12 @@
 
     <P>This action is always available on all dynamic listings. It configures automatic navigation
     for the dynamic listing. When location tracking is enabled, the listing is automatically
-    navigated to an address computed from the trace's or target's machine state. The address (and
-    its corresponding static address) are also highlighted in green. The computed address is
-    affected by the tool's current "coordinates," that is the selected thread, frame, and point in
-    time. The options are pluggable, but currently consist of:</P>
+    navigated to an address computed from the trace's or target's machine state. The address is
+    displayed in the top right of the viewer. That address and its corresponding static address are
+    also highlighted in green in the listing. If the address cannot be located in the listing, the
+    address is displayed in red. The computed address is affected by the tool's current
+    "coordinates," that is the selected thread, frame, and point in time. The options are
+    pluggable, but currently consist of:</P>
 
     <UL>
       <LI>Do Not Track - disables automatic navigation.</LI>

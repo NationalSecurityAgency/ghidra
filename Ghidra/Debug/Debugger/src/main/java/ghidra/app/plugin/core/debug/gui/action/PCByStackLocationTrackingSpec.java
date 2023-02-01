@@ -56,6 +56,11 @@ public enum PCByStackLocationTrackingSpec implements LocationTrackingSpec, Locat
 	}
 
 	@Override
+	public String getLocationLabel() {
+		return "pc";
+	}
+
+	@Override
 	public LocationTracker getTracker() {
 		return this;
 	}

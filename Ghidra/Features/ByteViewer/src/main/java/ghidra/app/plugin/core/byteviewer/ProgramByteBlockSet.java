@@ -220,7 +220,7 @@ public class ProgramByteBlockSet implements ByteBlockSet {
 	/**
 	 * Given an address, get the byte block info.
 	 */
-	protected ByteBlockInfo getByteBlockInfo(Address address) {
+	public ByteBlockInfo getByteBlockInfo(Address address) {
 
 		if (!program.getMemory().contains(address)) {
 			// this block set is out of date...eventually a new

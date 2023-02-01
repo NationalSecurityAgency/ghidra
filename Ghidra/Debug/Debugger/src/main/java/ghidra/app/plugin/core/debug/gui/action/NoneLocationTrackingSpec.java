@@ -54,6 +54,11 @@ public enum NoneLocationTrackingSpec implements LocationTrackingSpec, LocationTr
 	}
 
 	@Override
+	public String getLocationLabel() {
+		return null;
+	}
+
+	@Override
 	public LocationTracker getTracker() {
 		return this;
 	}
