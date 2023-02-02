@@ -20,6 +20,8 @@ package ghidra.app.util.bin.format.elf;
  */
 public interface ElfConstants {
 
+	public static final String GOT_SYMBOL_NAME = "_GLOBAL_OFFSET_TABLE_";
+
 	// ELF Identification Area Indexes
 
 	/**Length of the File ID*/

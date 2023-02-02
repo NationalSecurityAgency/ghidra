@@ -35,6 +35,18 @@
     because it descends from an inferior or process. In almost every case, the selection directly
     or indirectly determines the set of valid or enabled actions.</P>
 
+    <P>The tree will display the active object, e.g., the current thread, and its ancestors in
+    <B>bold</B> font. By default, this is also the selected object. To activate a different object,
+    double-click it or select it and press ENTER. This will command the debugger and the rest of
+    the UI to make that object the current object. For example, double-clicking the 2nd thread
+    would be equivalent to <CODE>thread 2</CODE> in GDB, or <CODE>~2s</CODE> in WinDbg. The actions
+    apply to the <EM>selected</EM> object, which may differ from the <EM>active</EM> object. For
+    example, suppose Thread 1 is active. If you click "Step Into," it will command the debugger to
+    step Thread 1. If you select (but do not activate) Thread 2 and click "Step Into," it will
+    command the debugger to step Thread 2, even though Thread 1 is still the active thread. Likely,
+    Thread 2 will become active during the Step Into command, but that behavior is determined by
+    the model implementation.</P>
+
     <P>The application of these special properties to each object to determine its behavior and
     relevant actions allows all objects to be treated generically. This feature has several
     powerful implications. All objects may be represented in many ways, and one representation may
@@ -169,6 +181,12 @@
     or using the <A href=
     "help/topics/DebuggerBreakpointMarkerPlugin/DebuggerBreakpointMarkerPlugin.html">Breakpoint
     Marker</A> actions from the disassembly listings.</P>
+
+    <H3><A name="toggle_option"></A><IMG alt="" src="images/system-switch-user.png"> Toggle
+    Option</H3>
+
+    <P>Toggle an object. This may apply to a breakpoint or to configuration options provided in the
+    model tree.</P>
 
     <H2>Actions for Trace Management</H2>
 
@@ -328,6 +346,11 @@
     <P>By default, events are passed to the Objects Viewer even while the target is running. The
     resulting changes in the GUI may be distracting for some. To disable updates to the Objects
     Viewer, toggle "Updates While Running" off.</P>
+
+    <H3><A name="set_node_timout">Set Node Timeout</A></H3>
+
+    <P>Set the default value for the timeout used when expanding a node, i.e. populating its
+    children.</P>
 
     <H2><A name="color"></A>Color Options</H2>
 

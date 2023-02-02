@@ -59,6 +59,14 @@ public class LldbModelTargetSessionAttributesPlatformImpl extends LldbModelTarge
 
 		session = (SBTarget) getModelObject();
 		String[] triple = session.GetTriple().split("-");
+		String arch = "x86_64";
+		String manufacturer = "unknown";
+		String os = System.getProperty("os.name").toLowerCase();
+		if (triple.length == 3) {
+			arch = triple[0];
+			manufacturer = triple[1];
+			os = triple[2];
+		}
 		ByteOrder order = session.GetByteOrder();
 		SBPlatform platform = session.GetPlatform();
 
@@ -78,9 +86,9 @@ public class LldbModelTargetSessionAttributesPlatformImpl extends LldbModelTarge
 		}
 
 		changeAttributes(List.of(), List.of(), Map.of( //
-			ARCH_ATTRIBUTE_NAME, triple[0], //
-			MANUFACTURER_ATTRIBUTE_NAME, triple[1], //
-			OS_ATTRIBUTE_NAME, triple[2], //
+			ARCH_ATTRIBUTE_NAME, arch, //
+			MANUFACTURER_ATTRIBUTE_NAME, manufacturer, //
+			OS_ATTRIBUTE_NAME, os, //
 			OS_DESC_ATTRIBUTE_NAME, desc, //
 			DEBUGGER_ATTRIBUTE_NAME, "lldb", //
 			OS_MM_ATTRIBUTE_NAME, major + ":" + minor, //

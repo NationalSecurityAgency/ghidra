@@ -66,7 +66,9 @@ public class MultiToolTraceListenerManager<L extends AbstractMultiToolTraceListe
 	}
 
 	public synchronized void traceClosed(PluginTool tool, Trace trace) {
-		if (listenersByTrace.get(trace).closedBy(tool)) {
+		L listener = listenersByTrace.get(trace);
+		// It should never be null, but somehow it happened, so....
+		if (listener != null && listener.closedBy(tool)) {
 			listenersByTrace.remove(trace).dispose();
 		}
 	}

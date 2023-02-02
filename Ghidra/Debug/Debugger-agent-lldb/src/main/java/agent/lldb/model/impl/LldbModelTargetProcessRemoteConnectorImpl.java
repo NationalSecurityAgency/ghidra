@@ -67,7 +67,7 @@ public class LldbModelTargetProcessRemoteConnectorImpl extends LldbModelTargetOb
 			String.class, "Host", true, "localhost", "Host", "host for connection");
 		map.put("Host", p0);
 		ParameterDescription<String> p1 = ParameterDescription.create(
-			String.class, "Port", true, "12345", "Port", "port for connection");
+			String.class, "Port", true, "1234", "Port", "port for connection");
 		map.put("Port", p1);
 		ParameterDescription<Boolean> p2 = ParameterDescription.create(
 			Boolean.class, "Auto", false, true, "Auto", "connect automatically");
@@ -75,6 +75,9 @@ public class LldbModelTargetProcessRemoteConnectorImpl extends LldbModelTargetOb
 		ParameterDescription<Boolean> p3 = ParameterDescription.create(
 			Boolean.class, "Async", false, true, "Async", "connect asynchronously");
 		map.put("Async", p3);
+		ParameterDescription<Boolean> p4 = ParameterDescription.create(
+			Boolean.class, "Kernel", false, false, "Kernel", "use kernel plugin");
+		map.put("Kernel", p4);
 		return map;
 	}
 
@@ -90,8 +93,9 @@ public class LldbModelTargetProcessRemoteConnectorImpl extends LldbModelTargetOb
 		String url = "connect://" + host + ":" + port;
 		Boolean auto = (Boolean) args.get("Auto");
 		Boolean async = (Boolean) args.get("Async");
+		Boolean kernel = (Boolean) args.get("Kernel");
 		return AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
-			getManager().connect(url, auto, async).handle(seq::nextIgnore);
+			getManager().connect(url, auto, async, kernel).handle(seq::nextIgnore);
 		}).finish().exceptionally((exc) -> {
 			throw new DebuggerUserException("Launch failed for " + args);
 		});

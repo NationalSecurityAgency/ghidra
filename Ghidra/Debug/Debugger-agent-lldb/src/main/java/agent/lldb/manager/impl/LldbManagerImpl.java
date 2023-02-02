@@ -228,10 +228,8 @@ public class LldbManagerImpl implements LldbManager {
 				if (process.IsValid()) {
 					DebugProcessInfo info = new DebugProcessInfo(process);
 					if (!map.containsKey(id)) {
-						if (!info.state.equals(StateType.eStateUnloaded)) {
-							getClient().processEvent(new LldbProcessCreatedEvent(info));
-							map.put(id, process);
-						}
+						getClient().processEvent(new LldbProcessCreatedEvent(info));
+						map.put(id, process);
 					}
 					else {
 						getClient().processEvent(new LldbProcessReplacedEvent(info));
@@ -1442,7 +1440,13 @@ public class LldbManagerImpl implements LldbManager {
 	@Override
 	public void sendInterruptNow() {
 		Msg.info(this, "Interrupting");
-		currentSession.GetProcess().SendAsyncInterrupt();
+		SBProcess proc = currentSession.GetProcess();
+		if (proc.IsValid()) {
+			proc.SendAsyncInterrupt();
+		}
+		else {
+			getClient().execute("process signal SIGINT");
+		}
 	}
 
 	@Override
@@ -1477,8 +1481,8 @@ public class LldbManagerImpl implements LldbManager {
 	}
 
 	@Override
-	public CompletableFuture<?> connect(String url, boolean auto, boolean async) {
-		return execute(new LldbRemoteConnectionCommand(this, url, auto, async));
+	public CompletableFuture<?> connect(String url, boolean auto, boolean async, boolean kernel) {
+		return execute(new LldbRemoteConnectionCommand(this, url, auto, async, kernel));
 	}
 
 	@Override
@@ -1542,14 +1546,39 @@ public class LldbManagerImpl implements LldbManager {
 	}
 
 	public SBThread getCurrentThread() {
-		if (currentThread != null && !currentThread.IsValid()) {
-			currentProcess = currentSession.GetProcess();
-			for (int i = 0; i < currentProcess.GetNumThreads(); i++) {
-				SBThread thread = currentProcess.GetThreadAtIndex(i);
-			}
-			currentThread = SBThread.GetThreadFromEvent(currentEvent);
+		if (currentThread != null && currentThread.IsValid()) {
+			return currentThread;
 		}
-		return currentThread != null ? currentThread : eventThread;
+		if (currentEvent != null) {
+			eventThread = SBThread.GetThreadFromEvent(currentEvent);
+			if (eventThread != null && eventThread.IsValid()) {
+				currentThread = eventThread;
+				Msg.warn(this, "defaulting to event thread");
+				return currentThread;
+			}
+		}
+		if (currentProcess == null) {
+			currentProcess = eventProcess = currentSession.GetProcess();
+			if (currentProcess == null) {
+				return null;
+			}
+		}
+		currentThread = currentProcess.GetSelectedThread();
+		if (currentThread != null && currentThread.IsValid()) {
+			Msg.warn(this, "defaulting to active thread");
+			return currentThread;
+		}
+		
+		for (int i = 0; i < currentProcess.GetNumThreads(); i++) {
+			SBThread thread = currentProcess.GetThreadAtIndex(i);
+			if (thread.IsValid()) {
+				Msg.warn(this, "defaulting to thread "+i);
+				currentThread = thread;
+				break;
+			}
+		}
+		
+		return currentThread;
 	}
 
 	public void setCurrentThread(SBThread thread) {

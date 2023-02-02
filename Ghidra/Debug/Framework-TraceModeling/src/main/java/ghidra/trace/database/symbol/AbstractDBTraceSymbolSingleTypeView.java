@@ -88,6 +88,10 @@ public abstract class AbstractDBTraceSymbolSingleTypeView<T extends AbstractDBTr
 		return Collections2.filter(view, s -> predicate.test(s.name));
 	}
 
+	public Iterator<? extends T> scanByName(String startName) {
+		return symbolsByName.tail(startName, true).values().iterator();
+	}
+
 	public T getByKey(long key) {
 		return store.getObjectAt(key);
 	}

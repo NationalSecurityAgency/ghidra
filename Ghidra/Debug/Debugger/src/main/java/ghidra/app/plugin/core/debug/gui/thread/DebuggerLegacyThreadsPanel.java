@@ -16,14 +16,14 @@
 package ghidra.app.plugin.core.debug.gui.thread;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.event.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
+import javax.swing.table.*;
 
 import docking.ActionContext;
 import docking.widgets.table.*;
@@ -32,6 +32,7 @@ import docking.widgets.table.RangeCursorTableHeaderRenderer.SeekListener;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerSnapActionContext;
 import ghidra.app.services.DebuggerTraceManagerService;
+import ghidra.docking.settings.Settings;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.model.DomainObjectChangeRecord;
 import ghidra.framework.plugintool.AutoService;
@@ -45,8 +46,7 @@ import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.database.ObjectKey;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
-import utilities.util.SuppressableCallback;
-import utilities.util.SuppressableCallback.Suppression;
+import ghidra.util.table.column.AbstractGColumnRenderer;
 
 public class DebuggerLegacyThreadsPanel extends JPanel {
 
@@ -120,7 +120,8 @@ public class DebuggerLegacyThreadsPanel extends JPanel {
 
 		public ThreadTableModel(DebuggerThreadsProvider provider) {
 			super(provider.getTool(), "Threads", ThreadTableColumns.class,
-				TraceThread::getObjectKey, t -> new ThreadRow(provider.modelService, t));
+				TraceThread::getObjectKey, t -> new ThreadRow(provider.modelService, t),
+				ThreadRow::getThread);
 		}
 	}
 
@@ -174,12 +175,27 @@ public class DebuggerLegacyThreadsPanel extends JPanel {
 
 	private final ForThreadsListener forThreadsListener = new ForThreadsListener();
 
-	private final SuppressableCallback<Void> cbCoordinateActivation = new SuppressableCallback<>();
-
 	/* package access for testing */
 	final SpanTableCellRenderer<Long> spanRenderer = new SpanTableCellRenderer<>();
 	final RangeCursorTableHeaderRenderer<Long> headerRenderer =
 		new RangeCursorTableHeaderRenderer<>(0L);
+
+	final TableCellRenderer boldCurrentRenderer = new AbstractGColumnRenderer<Object>() {
+		@Override
+		public String getFilterString(Object t, Settings settings) {
+			return t == null ? "<null>" : t.toString();
+		}
+
+		@Override
+		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
+			super.getTableCellRendererComponent(data);
+			ThreadRow row = (ThreadRow) data.getRowObject();
+			if (row != null && row.getThread() == current.getThread()) {
+				setBold();
+			}
+			return this;
+		}
+	};
 
 	final ThreadTableModel threadTableModel;
 	final GTable threadTable;
@@ -207,6 +223,23 @@ public class DebuggerLegacyThreadsPanel extends JPanel {
 		myActionContext = new DebuggerSnapActionContext(current.getTrace(), current.getViewSnap());
 
 		threadTable.getSelectionModel().addListSelectionListener(this::threadRowSelected);
+		threadTable.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
+					activateSelectedThread();
+				}
+			}
+		});
+		threadTable.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+					activateSelectedThread();
+					e.consume(); // lest it select the next row down
+				}
+			}
+		});
 		threadTable.addFocusListener(new FocusAdapter() {
 			@Override
 			public void focusGained(FocusEvent e) {
@@ -223,14 +256,19 @@ public class DebuggerLegacyThreadsPanel extends JPanel {
 		TableColumnModel columnModel = threadTable.getColumnModel();
 		TableColumn colName = columnModel.getColumn(ThreadTableColumns.NAME.ordinal());
 		colName.setPreferredWidth(100);
+		colName.setCellRenderer(boldCurrentRenderer);
 		TableColumn colCreated = columnModel.getColumn(ThreadTableColumns.CREATED.ordinal());
 		colCreated.setPreferredWidth(10);
+		colCreated.setCellRenderer(boldCurrentRenderer);
 		TableColumn colDestroyed = columnModel.getColumn(ThreadTableColumns.DESTROYED.ordinal());
 		colDestroyed.setPreferredWidth(10);
+		colDestroyed.setCellRenderer(boldCurrentRenderer);
 		TableColumn colState = columnModel.getColumn(ThreadTableColumns.STATE.ordinal());
 		colState.setPreferredWidth(20);
+		colState.setCellRenderer(boldCurrentRenderer);
 		TableColumn colComment = columnModel.getColumn(ThreadTableColumns.COMMENT.ordinal());
 		colComment.setPreferredWidth(100);
+		colComment.setCellRenderer(boldCurrentRenderer);
 		TableColumn colPlot = columnModel.getColumn(ThreadTableColumns.PLOT.ordinal());
 		colPlot.setPreferredWidth(200);
 		colPlot.setCellRenderer(spanRenderer);
@@ -280,19 +318,13 @@ public class DebuggerLegacyThreadsPanel extends JPanel {
 	}
 
 	private void doSetThread(TraceThread thread) {
-		ThreadRow row = threadFilterPanel.getSelectedItem();
-		TraceThread curThread = row == null ? null : row.getThread();
-		if (curThread == thread) {
-			return;
+		if (thread != null) {
+			threadFilterPanel.setSelectedItem(threadTableModel.getRow(thread));
 		}
-		try (Suppression supp = cbCoordinateActivation.suppress(null)) {
-			if (thread != null) {
-				threadFilterPanel.setSelectedItem(threadTableModel.getRow(thread));
-			}
-			else {
-				threadTable.clearSelection();
-			}
+		else {
+			threadTable.clearSelection();
 		}
+		threadTableModel.fireTableDataChanged();
 	}
 
 	private void doSetSnap(long snap) {
@@ -323,9 +355,13 @@ public class DebuggerLegacyThreadsPanel extends JPanel {
 		if (e.getValueIsAdjusting()) {
 			return;
 		}
+		setThreadRowActionContext();
+	}
+
+	private void activateSelectedThread() {
 		ThreadRow row = setThreadRowActionContext();
 		if (row != null && traceManager != null) {
-			cbCoordinateActivation.invoke(() -> traceManager.activateThread(row.getThread()));
+			traceManager.activateThread(row.getThread());
 		}
 	}
 

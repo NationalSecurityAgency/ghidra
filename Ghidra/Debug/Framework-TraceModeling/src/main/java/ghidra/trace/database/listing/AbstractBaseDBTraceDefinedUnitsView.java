@@ -20,12 +20,14 @@ import java.util.Map.Entry;
 
 import ghidra.program.model.address.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.trace.database.*;
+import ghidra.trace.database.DBTraceCacheForContainingQueries;
 import ghidra.trace.database.DBTraceCacheForContainingQueries.GetKey;
+import ghidra.trace.database.DBTraceCacheForSequenceQueries;
 import ghidra.trace.database.context.DBTraceRegisterContextSpace;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapAddressSetView;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapSpace;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
+import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.TraceCodeChangeType;
 import ghidra.trace.model.listing.TraceBaseDefinedUnitsView;
@@ -359,20 +361,28 @@ public abstract class AbstractBaseDBTraceDefinedUnitsView<T extends AbstractDBTr
 	 * Select a sub-lifespan from that given so that the box does not overlap an existing unit
 	 * 
 	 * <p>
-	 * The selected lifespan will have the same start snap at that given. The box is the bounding
+	 * The selected lifespan will have the same start snap as that given. The box is the bounding
 	 * box of a unit the client is trying to create.
 	 * 
 	 * @param span the lifespan of the box
+	 * @param extending if applicable, the unit whose lifespan is being extended
 	 * @param range the address range of the box
 	 * @return the selected sub-lifespan
 	 * @throws CodeUnitInsertionException if the start snap is contained in an existing unit
 	 */
-	protected Lifespan truncateSoonestDefined(Lifespan span, AddressRange range)
-			throws CodeUnitInsertionException {
+	protected Lifespan truncateSoonestDefined(Lifespan span, AbstractDBTraceCodeUnit<?> extending,
+			AddressRange range) throws CodeUnitInsertionException {
+		final Lifespan toScan;
+		if (extending == null) {
+			toScan = span;
+		}
+		else {
+			assert span.lmax() > extending.getEndSnap();
+			toScan = span.withMin(extending.getEndSnap() + 1);
+		}
 		T truncateBy =
-			mapSpace.reduce(TraceAddressSnapRangeQuery.intersecting(range, span)
-					.starting(
-						Rectangle2DDirection.BOTTOMMOST))
+			mapSpace.reduce(TraceAddressSnapRangeQuery.intersecting(range, toScan)
+					.starting(Rectangle2DDirection.BOTTOMMOST))
 					.firstValue();
 		if (truncateBy == null) {
 			return span;
@@ -380,7 +390,25 @@ public abstract class AbstractBaseDBTraceDefinedUnitsView<T extends AbstractDBTr
 		if (truncateBy.getStartSnap() <= span.lmin()) {
 			throw new CodeUnitInsertionException("Code units cannot overlap");
 		}
-		return Lifespan.span(span.lmin(), truncateBy.getStartSnap() - 1);
+		return span.withMax(truncateBy.getStartSnap() - 1);
+	}
+
+	protected long computeTruncatedMax(Lifespan lifespan, T extending, AddressRange range)
+			throws CodeUnitInsertionException {
+		// First, truncate lifespan to the next code unit when upper bound is max
+		if (!lifespan.maxIsFinite()) {
+			lifespan = space.instructions.truncateSoonestDefined(lifespan, extending, range);
+			lifespan = space.definedData.truncateSoonestDefined(lifespan, extending, range);
+		}
+		// Second, truncate lifespan to the next change of bytes in the range
+		DBTraceMemorySpace memSpace =
+			space.trace.getMemoryManager().getMemorySpace(space.space, true);
+		Lifespan fullSpan = extending == null ? lifespan : lifespan.bound(extending.getLifespan());
+		long endSnap = memSpace.getFirstChange(fullSpan, range);
+		if (endSnap == Long.MIN_VALUE) {
+			return lifespan.lmax();
+		}
+		return endSnap - 1;
 	}
 
 	/**

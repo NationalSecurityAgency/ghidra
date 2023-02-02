@@ -17,12 +17,17 @@ package ghidra.app.plugin.core.debug.gui.listing;
 
 import static ghidra.app.plugin.core.debug.gui.DebuggerResources.ICON_REGISTER_MARKER;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.lang.invoke.MethodHandles;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -36,6 +41,7 @@ import docking.action.ToggleDockingAction;
 import docking.menu.MultiStateDockingAction;
 import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.support.ViewerPosition;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.nav.ListingPanelContainer;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.codebrowser.MarkerServiceBackgroundColorModel;
@@ -52,7 +58,6 @@ import ghidra.app.plugin.core.marker.MarkerMarginProvider;
 import ghidra.app.plugin.core.marker.MarkerOverviewProvider;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerListingService.LocationTrackingSpecChangeListener;
-import ghidra.app.services.DebuggerStateEditingService.StateEditingMode;
 import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.framework.model.DomainFile;
@@ -194,6 +199,8 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		@Override
 		protected void specChanged(LocationTrackingSpec spec) {
 			updateTitle();
+			trackingLabel.setText("");
+			trackingLabel.setForeground(Colors.FOREGROUND);
 			trackingSpecChangeListeners.fire.locationTrackingSpecChanged(spec);
 		}
 
@@ -229,7 +236,7 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	@AutoServiceConsumed
 	private DebuggerConsoleService consoleService;
 	@AutoServiceConsumed
-	private DebuggerStateEditingService editingService;
+	private DebuggerControlService controlService;
 	@AutoServiceConsumed
 	private ProgramManager programManager;
 	@AutoServiceConsumed
@@ -271,6 +278,7 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		new ListenerSet<>(LocationTrackingSpecChangeListener.class);
 
 	protected final DebuggerLocationLabel locationLabel = new DebuggerLocationLabel();
+	protected final JLabel trackingLabel = new JLabel();
 
 	protected final MultiBlendedListingBackgroundColorModel colorModel;
 	protected final MarkerSetChangeListener markerChangeListener = new MarkerSetChangeListener();
@@ -317,7 +325,10 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 
 		addDisplayListener(readsMemTrait.getDisplayListener());
 
-		this.setNorthComponent(locationLabel);
+		JPanel northPanel = new JPanel(new BorderLayout());
+		northPanel.add(locationLabel, BorderLayout.WEST);
+		northPanel.add(trackingLabel, BorderLayout.EAST);
+		this.setNorthComponent(northPanel);
 		if (isConnected) {
 			setTitle(DebuggerResources.TITLE_PROVIDER_LISTING);
 		}
@@ -326,6 +337,15 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		}
 		updateTitle(); // Actually, the subtitle
 		setHelpLocation(DebuggerResources.HELP_PROVIDER_LISTING);
+
+		trackingLabel.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
+					doGoToTracked();
+				}
+			}
+		});
 	}
 
 	@Override
@@ -363,14 +383,14 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 
 	@Override
 	public boolean isReadOnly() {
-		if (editingService == null) {
+		if (controlService == null) {
 			return true;
 		}
 		Trace trace = current.getTrace();
 		if (trace == null) {
 			return true;
 		}
-		StateEditingMode mode = editingService.getCurrentMode(trace);
+		ControlMode mode = controlService.getCurrentMode(trace);
 		return !mode.canEdit(current);
 	}
 
@@ -1021,6 +1041,16 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		return trackedStatic;
 	}
 
+	protected void goToAndUpdateTrackingLabel(TraceProgramView curView, ProgramLocation loc) {
+		trackingLabel.setText(trackingTrait.computeLabelText());
+		if (goTo(curView, loc)) {
+			trackingLabel.setForeground(Colors.FOREGROUND);
+		}
+		else {
+			trackingLabel.setForeground(Colors.ERROR);
+		}
+	}
+
 	protected void doGoToTracked() {
 		ProgramLocation loc = trackingTrait.getTrackedLocation();
 		ProgramLocation trackedStatic = doMarkTrackedLocation();
@@ -1030,13 +1060,13 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		TraceProgramView curView = current.getView();
 		if (!syncTrait.isAutoSyncCursorWithStaticListing() || trackedStatic == null) {
 			Swing.runIfSwingOrRunLater(() -> {
-				goTo(curView, loc);
+				goToAndUpdateTrackingLabel(curView, loc);
 				doCheckCurrentModuleMissing();
 			});
 		}
 		else {
 			Swing.runIfSwingOrRunLater(() -> {
-				goTo(curView, loc);
+				goToAndUpdateTrackingLabel(curView, loc);
 				doCheckCurrentModuleMissing();
 				plugin.fireStaticLocationEvent(trackedStatic);
 			});
@@ -1081,6 +1111,10 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	public void coordinatesActivated(DebuggerCoordinates coordinates) {
 		DebuggerCoordinates adjusted = adjustCoordinates(coordinates);
 		goToCoordinates(adjusted);
+		if (adjusted.getTrace() == null) {
+			trackingLabel.setText("");
+			trackingLabel.setForeground(Colors.FOREGROUND);
+		}
 	}
 
 	public void traceClosed(Trace trace) {

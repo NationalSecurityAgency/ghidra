@@ -48,10 +48,8 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.FollowsCurrentThreadAction;
 import ghidra.app.plugin.core.debug.gui.action.*;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
-import ghidra.app.plugin.core.debug.service.editing.DebuggerStateEditingServicePlugin;
-import ghidra.app.services.DebuggerStateEditingService;
-import ghidra.app.services.DebuggerStateEditingService.StateEditingMode;
-import ghidra.app.services.TraceRecorder;
+import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
+import ghidra.app.services.*;
 import ghidra.async.SwingExecutorService;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
@@ -76,7 +74,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 	protected DebuggerMemoryBytesPlugin memBytesPlugin;
 	protected DebuggerMemoryBytesProvider memBytesProvider;
 
-	protected DebuggerStateEditingService editingService;
+	protected DebuggerControlService editingService;
 
 	@Before
 	public void setUpMemoryBytesProviderTest() throws Exception {
@@ -84,7 +82,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		memBytesProvider = waitForComponentProvider(DebuggerMemoryBytesProvider.class);
 		memBytesProvider.setVisible(true);
 
-		editingService = addPlugin(tool, DebuggerStateEditingServicePlugin.class);
+		editingService = addPlugin(tool, DebuggerControlServicePlugin.class);
 	}
 
 	protected void goToDyn(Address address) {
@@ -510,6 +508,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		 * Assure ourselves the block under test is not on screen
 		 */
 		waitForPass(() -> {
+			goToDyn(addr(trace, 0x55551800));
 			AddressSetView visible = memBytesProvider.readsMemTrait.getVisible();
 			assertFalse(visible.isEmpty());
 			assertFalse(visible.contains(addr(trace, 0x55550000)));
@@ -1101,10 +1100,11 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 			createTargetTraceMapper(mb.testProcess1));
 		Trace trace = recorder.getTrace();
 
-		editingService.setCurrentMode(trace, StateEditingMode.WRITE_TARGET);
+		editingService.setCurrentMode(trace, ControlMode.RW_TARGET);
 		DockingActionIf actionEdit = getAction(memBytesPlugin, "Enable/Disable Byteviewer Editing");
 
 		mb.testProcess1.addRegion("exe:.text", mb.rng(0x55550000, 0x5555ffff), "rx");
+		waitRecorder(recorder);
 		waitFor(() -> !trace.getMemoryManager().getAllRegions().isEmpty());
 
 		byte[] data = new byte[4];
@@ -1132,11 +1132,16 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 			createTargetTraceMapper(mb.testProcess1));
 		Trace trace = recorder.getTrace();
 
-		editingService.setCurrentMode(trace, StateEditingMode.WRITE_TRACE);
+		editingService.setCurrentMode(trace, ControlMode.RW_TRACE);
 		DockingActionIf actionEdit = getAction(memBytesPlugin, "Enable/Disable Byteviewer Editing");
 
 		mb.testProcess1.addRegion("exe:.text", mb.rng(0x55550000, 0x5555ffff), "rx");
+		waitRecorder(recorder);
 		waitFor(() -> !trace.getMemoryManager().getAllRegions().isEmpty());
+
+		// Because mode is RW_TRACE, we're not necessarily at recorder's snap
+		traceManager.activateSnap(recorder.getSnap());
+		waitForSwing();
 
 		byte[] data = new byte[4];
 		performAction(actionEdit);
@@ -1174,7 +1179,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 			createTargetTraceMapper(mb.testProcess1));
 		Trace trace = recorder.getTrace();
 
-		editingService.setCurrentMode(trace, StateEditingMode.WRITE_TARGET);
+		editingService.setCurrentMode(trace, ControlMode.RW_TARGET);
 
 		mb.testProcess1.addRegion("exe:.text", mb.rng(0x55550000, 0x5555ffff), "rx");
 		waitFor(() -> !trace.getMemoryManager().getAllRegions().isEmpty());

@@ -285,8 +285,9 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 		List<String> xpath = new ArrayList<>();
 		xpath.addAll(objPath);
 		xpath.addAll(ext);
+		// NB: fetchModelObject may have to be called with false
 		return AsyncUtils.sequence(TypeSpec.cls(DbgModelTargetObject.class)).then(seq -> {
-			getModel().fetchModelObject(xpath).handle(seq::next);
+			getModel().fetchModelObject(xpath, false).handle(seq::next);
 		}, TypeSpec.cls(TargetObject.class)).then((pobj, seq) -> {
 			if (pobj == null) {
 				seq.exit();

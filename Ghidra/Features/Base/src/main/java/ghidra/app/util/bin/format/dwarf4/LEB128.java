@@ -229,6 +229,23 @@ public class LEB128 {
 	}
 
 	/**
+	 * Reads a LEB128 number from the BinaryReader and returns it as a java 64 bit long int.
+	 * <p>
+	 * Large unsigned integers that use all 64 bits are be returned in a java native
+	 * 'long' type, which is signed.  It is up to the caller to treat the value as unsigned.
+	 * <p>
+	 * Large integers that use more than 64 bits will cause an IOException to be thrown.
+	 * <p>
+	 * @param reader {@link BinaryReader} to read bytes from
+	 * @return long integer value
+	 * @throws IOException if an I/O error occurs or value is outside the range of a java
+	 * 64 bit int 
+	 */
+	public static long readUnsignedAsLong(BinaryReader reader) throws IOException {
+		return readAsLong(reader, false);
+	}
+
+	/**
 	 * Decodes a LEB128 number from a byte array and returns it as a long.
 	 * <p>
 	 * See {@link #readAsLong(BinaryReader, boolean)}.

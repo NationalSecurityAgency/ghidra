@@ -107,8 +107,8 @@ public class PIC30_ElfRelocationHandler extends ElfRelocationHandler {
 
 	@Override
 	public PIC30_ElfRelocationContext createRelocationContext(ElfLoadHelper loadHelper,
-			ElfRelocationTable relocationTable, Map<ElfSymbol, Address> symbolMap) {
-		return new PIC30_ElfRelocationContext(this, loadHelper, relocationTable, symbolMap);
+			Map<ElfSymbol, Address> symbolMap) {
+		return new PIC30_ElfRelocationContext(this, loadHelper, symbolMap);
 	}
 	
 	private boolean isEDSVariant(ElfRelocationContext elfRelocationContext) {

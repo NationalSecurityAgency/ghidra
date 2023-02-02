@@ -50,10 +50,11 @@ public interface VarnodeEvaluator<T> {
 	 * concatenated. The lower-indexed varnodes in storage are the more significant pieces, similar
 	 * to big endian.
 	 * 
+	 * @param program the program containing the variable storage
 	 * @param storage the storage
 	 * @return the value of the storage
 	 */
-	T evaluateStorage(VariableStorage storage);
+	T evaluateStorage(Program program, VariableStorage storage);
 
 	/**
 	 * Evaluate a high p-code op

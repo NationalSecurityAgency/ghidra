@@ -21,7 +21,7 @@
 
 #include <string>
 
-using namespace std;
+using std::string;
 
 /// \brief The op-code defining a specific p-code operation (PcodeOp)
 ///

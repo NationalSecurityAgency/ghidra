@@ -232,7 +232,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	}
 
 	@Override
-	public TargetRegisterBank getTargetRegisterBank(TraceThread thread, int frameLevel) {
+	public Set<TargetRegisterBank> getTargetRegisterBanks(TraceThread thread, int frameLevel) {
 		DefaultThreadRecorder rec = getThreadRecorder(thread);
 		return rec.getTargetRegisterBank(thread, frameLevel);
 	}
@@ -387,13 +387,31 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		return findFocusScope() != null;
 	}
 
+	@Override
+	public boolean isSupportsActivation() {
+		return findActiveScope() != null;
+	}
+
 	// NOTE: This may require the scope to be an ancestor of the target
 	// That should be fine
 	protected TargetFocusScope findFocusScope() {
 		List<String> path = target.getModel()
 				.getRootSchema()
 				.searchForSuitable(TargetFocusScope.class, target.getPath());
+		if (path == null) {
+			return null;
+		}
 		return (TargetFocusScope) target.getModel().getModelObject(path);
+	}
+
+	protected TargetActiveScope findActiveScope() {
+		List<String> path = target.getModel()
+				.getRootSchema()
+				.searchForSuitable(TargetActiveScope.class, target.getPath());
+		if (path == null) {
+			return null;
+		}
+		return (TargetActiveScope) target.getModel().getModelObject(path);
 	}
 
 	@Override
@@ -419,8 +437,8 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	@Override
 	public CompletableFuture<Boolean> requestFocus(TargetObject focus) {
 		if (!isSupportsFocus()) {
-			return CompletableFuture
-					.failedFuture(new IllegalArgumentException("Target does not support focus"));
+			return CompletableFuture.failedFuture(
+				new IllegalArgumentException("Target does not support focus"));
 		}
 		if (!PathUtils.isAncestor(getTarget().getPath(), focus.getPath())) {
 			return CompletableFuture.failedFuture(new IllegalArgumentException(
@@ -441,6 +459,36 @@ public class DefaultTraceRecorder implements TraceRecorder {
 			}
 			else {
 				Msg.error(this, "Could not focus " + focus, ex);
+			}
+			return false;
+		});
+	}
+
+	@Override
+	public CompletableFuture<Boolean> requestActivation(TargetObject active) {
+		if (!isSupportsActivation()) {
+			return CompletableFuture.failedFuture(
+				new IllegalArgumentException("Target does not support activation"));
+		}
+		if (!PathUtils.isAncestor(getTarget().getPath(), active.getPath())) {
+			return CompletableFuture.failedFuture(new IllegalArgumentException(
+				"Requested activation path is not a successor of the target"));
+		}
+		TargetActiveScope activeScope = findActiveScope();
+		if (!PathUtils.isAncestor(activeScope.getPath(), active.getPath())) {
+			// This should be rare, if not forbidden
+			return CompletableFuture.failedFuture(new IllegalArgumentException(
+				"Requested activation path is not a successor of the focus scope"));
+		}
+		return activeScope.requestActivation(active).thenApply(__ -> true).exceptionally(ex -> {
+			ex = AsyncUtils.unwrapThrowable(ex);
+			String msg = "Could not activate " + active + ": " + ex.getMessage();
+			plugin.getTool().setStatusInfo(msg);
+			if (ex instanceof DebuggerModelAccessException) {
+				Msg.info(this, msg);
+			}
+			else {
+				Msg.error(this, "Could not activate " + active, ex);
 			}
 			return false;
 		});

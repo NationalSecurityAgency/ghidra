@@ -409,7 +409,7 @@ class PropertiesXmlMgr {
 					case CUSTOM_TYPE:
 						attrs.addAttribute("TYPE", "custom");
 						CustomOption custom = propList.getCustomOption(name, null);
-						xmlString = OptionType.KEYSTROKE_TYPE.convertObjectToString(custom);
+						xmlString = OptionType.CUSTOM_TYPE.convertObjectToString(custom);
 						attrs.addAttribute("VALUE", XmlUtilities.escapeElementEntities(xmlString));
 						break;
 					case BYTE_ARRAY_TYPE:

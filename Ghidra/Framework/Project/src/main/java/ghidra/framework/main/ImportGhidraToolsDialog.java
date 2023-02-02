@@ -37,7 +37,7 @@ import ghidra.util.HelpLocation;
 
 class ImportGhidraToolsDialog extends DialogComponentProvider {
 
-	private ListPanel listPanel;
+	private ListPanel<JCheckBox> listPanel;
 	private JPanel mainPanel;
 	private GCheckBox[] checkboxes;
 	private String[] tools;
@@ -97,7 +97,7 @@ class ImportGhidraToolsDialog extends DialogComponentProvider {
 
 		SelectPanel myButtonPanel = new SelectPanel(e -> selectAll(), e -> deselectAll());
 
-		listPanel = new ListPanel();
+		listPanel = new ListPanel<>();
 		listPanel.setCellRenderer(new DataCellRenderer());
 		listPanel.setMouseListener(new ListMouseListener());
 

@@ -22,6 +22,7 @@ import org.junit.Test;
 import docking.theme.gui.*;
 import generic.theme.*;
 import generic.theme.GThemeDefaults.Colors.Palette;
+import ghidra.app.plugin.gui.ThemeChooserDialog;
 import resources.ResourceManager;
 
 public class ThemingScreenShots extends GhidraScreenShotGenerator {
@@ -34,9 +35,15 @@ public class ThemingScreenShots extends GhidraScreenShotGenerator {
 	}
 
 	@Test
-	public void testThemeDialog() {
-		showDialogWithoutBlocking(tool, new ThemeDialog(themeManager));
+	public void testThemeEditorDialog() {
+		showDialogWithoutBlocking(tool, new ThemeEditorDialog(themeManager));
 		captureDialog(1000, 500);
+	}
+
+	@Test
+	public void testThemeChooserDialog() {
+		showDialogWithoutBlocking(tool, new ThemeChooserDialog(themeManager));
+		captureDialog(250, 250);
 	}
 
 	@Test
@@ -63,7 +70,8 @@ public class ThemingScreenShots extends GhidraScreenShotGenerator {
 	public void testIconEditor() {
 		IconValueEditor editor = new IconValueEditor(e -> {
 			/**/});
-		IconValue value = new IconValue("icon.bomb", ResourceManager.getDefaultIcon());
+		IconValue value =
+			new IconValue("icon.reload", ResourceManager.loadIcon("images/reload.png"));
 		themeManager.setIcon(value);
 		editor.editValue(value);
 		captureDialog();

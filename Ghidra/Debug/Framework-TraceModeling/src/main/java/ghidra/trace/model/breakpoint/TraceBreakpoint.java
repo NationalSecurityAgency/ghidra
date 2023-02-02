@@ -28,7 +28,6 @@ import ghidra.util.exception.DuplicateNameException;
  * A breakpoint in a trace
  */
 public interface TraceBreakpoint extends TraceUniqueObject {
-
 	/**
 	 * Get the trace containing this breakpoint
 	 * 
@@ -161,9 +160,29 @@ public interface TraceBreakpoint extends TraceUniqueObject {
 	/**
 	 * Check whether this breakpoint is enabled or disabled at the given snap
 	 * 
+	 * @param snap the snap
 	 * @return true if enabled, false if disabled
 	 */
 	boolean isEnabled(long snap);
+
+	/**
+	 * Set whether this breakpoint is enabled or disabled for emulation
+	 * 
+	 * <p>
+	 * This change applies to the entire lifespan of the record. It's not intended to record a
+	 * history, but to toggle the breakpoint in the integrated emulator.
+	 * 
+	 * @param enabled true if enabled, false if disabled
+	 */
+	void setEmuEnabled(boolean enabled);
+
+	/**
+	 * Check whether this breakpoint is enabled or disabled for emulation at the given snap
+	 * 
+	 * @param snap the snap
+	 * @return true if enabled, false if disabled
+	 */
+	boolean isEmuEnabled(long snap);
 
 	/**
 	 * Set the kinds included in this breakpoint
@@ -212,6 +231,36 @@ public interface TraceBreakpoint extends TraceUniqueObject {
 	 * @return the comment, possibly {@code null}
 	 */
 	String getComment();
+
+	/**
+	 * Set Sleigh source to replace the breakpointed instruction in emulation
+	 * 
+	 * <p>
+	 * The default is simply "<code>{@link PcodeEmulationLibrary#emu_swi() emu_swi()};
+	 * {@link PcodeEmulationLibrary#emu_exec_decoded() emu_exec_decoded()};</code>", effectively a
+	 * non-conditional breakpoint followed by execution of the actual instruction. Modifying this
+	 * allows clients to create conditional breakpoints or simply override or inject additional
+	 * logic into an emulated target.
+	 * 
+	 * <p>
+	 * <b>NOTE:</b> This current has no effect on access breakpoints, but only execution
+	 * breakpoints.
+	 * 
+	 * <p>
+	 * If the specified source fails to compile during emulator set-up, this will fall back to
+	 * {@link PcodeEmulationLibrary#emu_err
+	 * 
+	 * @see #DEFAULT_SLEIGH
+	 * @param sleigh the Sleigh source
+	 */
+	void setEmuSleigh(String sleigh);
+
+	/**
+	 * Get the Sleigh source that replaces the breakpointed instruction in emulation
+	 * 
+	 * @return the Sleigh source
+	 */
+	String getEmuSleigh();
 
 	/**
 	 * Delete this breakpoint from the trace

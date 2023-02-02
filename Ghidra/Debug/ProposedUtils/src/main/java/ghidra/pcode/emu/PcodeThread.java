@@ -19,6 +19,7 @@ import java.util.List;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.emu.DefaultPcodeThread.PcodeEmulationLibrary;
+import ghidra.pcode.emu.PcodeMachine.SwiMode;
 import ghidra.pcode.exec.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.Register;

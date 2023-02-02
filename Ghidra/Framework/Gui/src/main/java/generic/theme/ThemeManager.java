@@ -16,6 +16,7 @@
 package generic.theme;
 
 import java.awt.*;
+import java.util.List;
 import java.util.Set;
 
 import javax.swing.Icon;
@@ -61,9 +62,13 @@ public abstract class ThemeManager {
 	static final Font DEFAULT_FONT = new Font("Dialog", Font.PLAIN, 12);
 	static final Color DEFAULT_COLOR = Color.CYAN;
 
+	private static final int MIN_FONT_SIZE = 3;
+
 	protected static ThemeManager INSTANCE;
 
 	protected GTheme activeTheme = getDefaultTheme();
+	protected LafType activeLafType = activeTheme.getLookAndFeelType();
+	protected boolean useDarkDefaults = activeTheme.useDarkDefaults();
 
 	protected GThemeValueMap javaDefaults = new GThemeValueMap();
 	protected GThemeValueMap currentValues = new GThemeValueMap();
@@ -100,19 +105,12 @@ public abstract class ThemeManager {
 
 		map.load(javaDefaults);
 		map.load(applicationDefaults.getLightValues());
-		if (activeTheme.useDarkDefaults()) {
+		if (useDarkDefaults) {
 			map.load(applicationDefaults.getDarkValues());
 		}
 		map.load(applicationDefaults.getLookAndFeelValues(getLookAndFeelType()));
 		map.load(activeTheme);
 		currentValues = map;
-	}
-
-	/**
-	 * Reloads the defaults from all the discoverable theme.property files.
-	 */
-	public void reloadApplicationDefaults() {
-		throw new UnsupportedOperationException();
 	}
 
 	/**
@@ -192,6 +190,19 @@ public abstract class ThemeManager {
 	}
 
 	/**
+	 * Sets the current {@link LookAndFeel}. This is used by theme editors to allow users to
+	 * see the effects of changing LookAndFeels when configuring a theme. Setting this different
+	 * from the activeTheme's LookAndFeel setting means the the current theme is in an unsaved
+	 * state and causes the {@link #hasThemeChanges()} method to return true.
+	 * @param lafType the {@link LafType} to set the LookAndFeel to
+	 * @param useDarkDefaults true if the application should used dark defaults with this
+	 * LookAndFeel
+	 */
+	public void setLookAndFeel(LafType lafType, boolean useDarkDefaults) {
+		throw new UnsupportedOperationException();
+	}
+
+	/**
 	 * Adds the given theme to set of all themes.
 	 * @param newTheme the theme to add
 	 */
@@ -220,7 +231,7 @@ public abstract class ThemeManager {
 	 * Returns a set of all known themes that are supported on the current platform.
 	 * @return a set of all known themes that are supported on the current platform.
 	 */
-	public Set<GTheme> getSupportedThemes() {
+	public List<GTheme> getSupportedThemes() {
 		throw new UnsupportedOperationException();
 	}
 
@@ -237,7 +248,7 @@ public abstract class ThemeManager {
 	 * @return the {@link LafType} for the currently active {@link LookAndFeel}
 	 */
 	public LafType getLookAndFeelType() {
-		return activeTheme.getLookAndFeelType();
+		return activeLafType;
 	}
 
 	/**
@@ -268,7 +279,7 @@ public abstract class ThemeManager {
 		GThemeValueMap map = new GThemeValueMap();
 		map.load(javaDefaults);
 		map.load(applicationDefaults.getLightValues());
-		if (activeTheme.useDarkDefaults()) {
+		if (useDarkDefaults) {
 			map.load(applicationDefaults.getDarkValues());
 		}
 		map.load(applicationDefaults.getLookAndFeelValues(getLookAndFeelType()));
@@ -439,7 +450,7 @@ public abstract class ThemeManager {
 	public GThemeValueMap getApplicationOverrides() {
 		GThemeValueMap currentDefaults = new GThemeValueMap();
 		currentDefaults.load(applicationDefaults.getLightValues());
-		if (activeTheme.useDarkDefaults()) {
+		if (useDarkDefaults) {
 			currentDefaults.load(applicationDefaults.getDarkValues());
 		}
 		currentDefaults.load(applicationDefaults.getLookAndFeelValues(getLookAndFeelType()));
@@ -454,7 +465,7 @@ public abstract class ThemeManager {
 	public GThemeValueMap getDefaults() {
 		GThemeValueMap currentDefaults = new GThemeValueMap(javaDefaults);
 		currentDefaults.load(applicationDefaults.getLightValues());
-		if (activeTheme.useDarkDefaults()) {
+		if (useDarkDefaults) {
 			currentDefaults.load(applicationDefaults.getDarkValues());
 		}
 		currentDefaults.load(applicationDefaults.getLookAndFeelValues(getLookAndFeelType()));
@@ -545,7 +556,7 @@ public abstract class ThemeManager {
 	 * @return true if the current theme use dark default values.
 	 */
 	public boolean isDarkTheme() {
-		return activeTheme.useDarkDefaults();
+		return useDarkDefaults;
 	}
 
 	/**
@@ -581,4 +592,21 @@ public abstract class ThemeManager {
 		Msg.error(this, message, t);
 	}
 
+	/**
+	 * Adjust the size of all fonts by the given amount.
+	 * @param amount the number to add to the current font size;
+	 */
+	public void adjustFonts(int amount) {
+		List<FontValue> fonts = currentValues.getFonts();
+		for (FontValue fontValue : fonts) {
+			Font directFont = fontValue.getRawValue();
+			if (directFont == null) {
+				continue;  // indirect fonts will be handled when its referenced font is handled
+			}
+			int currentSize = directFont.getSize();
+			int newSize = Math.max(MIN_FONT_SIZE, currentSize += amount);
+			setFont(fontValue.getId(), directFont.deriveFont((float) newSize));
+		}
+
+	}
 }

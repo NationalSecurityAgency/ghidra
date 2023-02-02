@@ -15,6 +15,8 @@
  */
 package ghidra.app.util.bin.format.elf.relocation;
 
+import java.util.Map;
+
 import ghidra.app.util.bin.format.elf.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
@@ -35,6 +37,12 @@ public class X86_64_ElfRelocationHandler extends ElfRelocationHandler {
 	}
 
 	@Override
+	public X86_64_ElfRelocationContext createRelocationContext(ElfLoadHelper loadHelper,
+			Map<ElfSymbol, Address> symbolMap) {
+		return new X86_64_ElfRelocationContext(this, loadHelper, symbolMap);
+	}
+
+	@Override
 	public void relocate(ElfRelocationContext elfRelocationContext, ElfRelocation relocation,
 			Address relocationAddress) throws MemoryAccessException, NotFoundException {
 
@@ -45,6 +53,9 @@ public class X86_64_ElfRelocationHandler extends ElfRelocationHandler {
 
 		Program program = elfRelocationContext.getProgram();
 		Memory memory = program.getMemory();
+
+		X86_64_ElfRelocationContext x86RelocationContext =
+			(X86_64_ElfRelocationContext) elfRelocationContext;
 
 		int type = relocation.getType();
 		if (type == X86_64_ElfRelocationConstants.R_X86_64_NONE) {
@@ -120,9 +131,15 @@ public class X86_64_ElfRelocationHandler extends ElfRelocationHandler {
 				memory.setLong(relocationAddress, value);
 				break;
 			case X86_64_ElfRelocationConstants.R_X86_64_GOTOFF64:
-				long dotgot = elfRelocationContext.getGOTValue();
-				value = symbolValue + addend - dotgot;
-				memory.setLong(relocationAddress, value);
+				try {
+					long dotgot = elfRelocationContext.getGOTValue();
+					value = symbolValue + addend - dotgot;
+					memory.setLong(relocationAddress, value);
+				}
+				catch (NotFoundException e) {
+					markAsError(program, relocationAddress, "R_X86_64_GOTOFF64", symbolName,
+						e.getMessage(), elfRelocationContext.getLog());
+				}
 				break;
 			case X86_64_ElfRelocationConstants.R_X86_64_32:  // this one complains for unsigned overflow
 			case X86_64_ElfRelocationConstants.R_X86_64_32S: // this one complains for signed overflow
@@ -143,36 +160,112 @@ public class X86_64_ElfRelocationHandler extends ElfRelocationHandler {
 			// Thread Local Symbol relocations (unimplemented concept)
 			case X86_64_ElfRelocationConstants.R_X86_64_DTPMOD64:
 				markAsWarning(program, relocationAddress, "R_X86_64_DTPMOD64", symbolName,
-					symbolIndex, "Thread Local Symbol relocation not support",
+					symbolIndex, "Thread Local Symbol relocation not supported",
 					elfRelocationContext.getLog());
 				break;
 			case X86_64_ElfRelocationConstants.R_X86_64_DTPOFF64:
 				markAsWarning(program, relocationAddress, "R_X86_64_DTPOFF64", symbolName,
-					symbolIndex, "Thread Local Symbol relocation not support",
+					symbolIndex, "Thread Local Symbol relocation not supported",
 					elfRelocationContext.getLog());
 				break;
 			case X86_64_ElfRelocationConstants.R_X86_64_TPOFF64:
 				markAsWarning(program, relocationAddress, "R_X86_64_TPOFF64", symbolName,
-					symbolIndex, "Thread Local Symbol relocation not support",
+					symbolIndex, "Thread Local Symbol relocation not supported",
 					elfRelocationContext.getLog());
 				break;
 			case X86_64_ElfRelocationConstants.R_X86_64_TLSDESC:
 				markAsWarning(program, relocationAddress, "R_X86_64_TLSDESC", symbolName,
-					symbolIndex, "Thread Local Symbol relocation not support",
+					symbolIndex, "Thread Local Symbol relocation not supported",
 					elfRelocationContext.getLog());
 				break;
 
 			// cases which do not use symbol value
 
 			case X86_64_ElfRelocationConstants.R_X86_64_GOTPC32:
-				dotgot = elfRelocationContext.getGOTValue();
-				value = dotgot + addend - offset;
+				try {
+					long dotgot = elfRelocationContext.getGOTValue();
+					value = dotgot + addend - offset;
+					memory.setInt(relocationAddress, (int) value);
+				}
+				catch (NotFoundException e) {
+					markAsError(program, relocationAddress, "R_X86_64_GOTPC32", symbolName,
+						e.getMessage(), elfRelocationContext.getLog());
+				}
+				break;
+
+
+			case X86_64_ElfRelocationConstants.R_X86_64_GOTPCRELX:
+			case X86_64_ElfRelocationConstants.R_X86_64_REX_GOTPCRELX:
+
+				// Check for supported Relax cases (assumes non-PIC)
+				// Assumes non-PIC treatment is OK and attempts 
+				// indirect-to-direct instruction transformation
+
+				Address opAddr = relocationAddress.subtract(2);
+				Address modRMAddr = relocationAddress.subtract(1);
+				Address directValueAddr = null;
+
+				byte op = memory.getByte(opAddr);
+				byte modRM = memory.getByte(modRMAddr);
+
+				byte symbolType = sym.getType();
+				if (symbolType < ElfSymbol.STT_NOTYPE || symbolType > ElfSymbol.STT_COMMON) {
+					// do not transform instruction for OS-specific symbol types
+				}
+				else if (op == (byte) 0x8b) { // check for MOV op
+					// convert to LEA op
+					elfRelocationContext.getLoadHelper().addFakeRelocTableEntry(opAddr, 2);
+					memory.setByte(opAddr, (byte) 0x8d); // direct LEA op
+					directValueAddr = relocationAddress;
+				}
+				else if (op == (byte) 0xff) { // check for possible JMP/CALL op
+					if (modRM == (byte) 0x25) { // check for indirect JMP op
+						// convert to direct JMP op
+						// must compensate for shorter instruction by appending NOP
+						elfRelocationContext.getLoadHelper().addFakeRelocTableEntry(opAddr, 2);
+						memory.setByte(opAddr, (byte) 0xe9); // direct JMP op
+						memory.setByte(relocationAddress.add(3), (byte) 0x90); // append NOP
+						directValueAddr = modRMAddr;
+						addend += 1;
+					}
+					else if (modRM == (byte) 0x15) { // check for indirect CALL instruction
+						// convert to direct CALL instruction
+						// use of addr32 prefix allows use of single instruction
+						elfRelocationContext.getLoadHelper().addFakeRelocTableEntry(opAddr, 2);
+						memory.setByte(opAddr, (byte) 0x67); // addr32 prefix
+						memory.setByte(modRMAddr, (byte) 0xe8); // direct CALL op
+						directValueAddr = relocationAddress;
+					}
+				}
+				if (directValueAddr != null) {
+					value = symbolValue + addend - offset;
+					memory.setInt(directValueAddr, (int) value);
+					break;
+				}
+
+				// If instruction not handled as relaxed instruction
+				// Let R_X86_64_GOTPCREL case handle as simple GOTPCREL relocation.
+
+			case X86_64_ElfRelocationConstants.R_X86_64_GOTPCREL:
+				Address symbolGotAddress = x86RelocationContext.getGotEntryAddress(symbolValue);
+				if (symbolGotAddress == null) {
+					markAsError(program, relocationAddress, type, symbolName,
+						"GOT allocation failure", elfRelocationContext.getLog());
+					break;
+				}
+				value = symbolGotAddress.getOffset() + addend - offset;
 				memory.setInt(relocationAddress, (int) value);
 				break;
-			case X86_64_ElfRelocationConstants.R_X86_64_GOTPCREL:
-				dotgot = elfRelocationContext.getGOTValue();
-				value = symbolValue + dotgot + addend - offset;
-				memory.setInt(relocationAddress, (int) value);
+
+			case X86_64_ElfRelocationConstants.R_X86_64_GOTPCREL64:
+				symbolGotAddress = x86RelocationContext.getGotEntryAddress(symbolValue);
+				if (symbolGotAddress == null) {
+					markAsError(program, relocationAddress, "R_X86_64_GOTPCREL64", symbolName,
+						"GOT allocation failure", elfRelocationContext.getLog());
+					break;
+				}
+				value = symbolGotAddress.getOffset() + addend - offset;
+				memory.setLong(relocationAddress, value);
 				break;
 
 			case X86_64_ElfRelocationConstants.R_X86_64_RELATIVE:

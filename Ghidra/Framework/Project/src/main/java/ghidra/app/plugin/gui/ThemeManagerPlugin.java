@@ -16,8 +16,9 @@
 package ghidra.app.plugin.gui;
 
 import docking.action.builder.ActionBuilder;
-import docking.theme.gui.ThemeDialog;
+import docking.theme.gui.ThemeEditorDialog;
 import docking.theme.gui.ThemeUtils;
+import generic.theme.GTheme;
 import generic.theme.ThemeManager;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.framework.main.ApplicationLevelOnlyPlugin;
@@ -48,46 +49,73 @@ public class ThemeManagerPlugin extends Plugin implements ApplicationLevelOnlyPl
 	@Override
 	protected void init() {
 		String owner = getName();
-		String themeSubMenu = "Theme Actions";
-
 		String group = "theme";
-		new ActionBuilder("Edit Theme", owner)
-				.menuPath("Edit", "Theme")
+
+		new ActionBuilder("Switch Theme", owner).menuPath("Edit", "Theme", "Switch...")
 				.menuGroup(group, "1")
-				.helpLocation(new HelpLocation("Theming", "Edit_Theme"))
-				.onAction(e -> ThemeDialog.editTheme(themeManager))
+				.helpLocation(new HelpLocation("Theming", "Switch_Theme"))
+				.onAction(e -> switchTheme())
 				.buildAndInstall(tool);
 
-		new ActionBuilder("Reset", owner)
-				.menuPath("Edit", themeSubMenu, "Reset Theme Values")
+		new ActionBuilder("Configure", owner).menuPath("Edit", "Theme", "Configure...")
 				.menuGroup(group, "2")
-				.helpLocation(new HelpLocation("Theming", "Reset_Theme_Values"))
-				.onAction(e -> ThemeUtils.resetThemeToDefault(themeManager))
+				.helpLocation(new HelpLocation("Theming", "Edit_Theme"))
+				.onAction(e -> configure())
 				.buildAndInstall(tool);
 
-		new ActionBuilder("Import Theme", owner)
-				.menuPath("Edit", themeSubMenu, "Import...")
+		new ActionBuilder("New Theme", owner).menuPath("Edit", "Theme", "New...")
 				.menuGroup(group, "3")
+				.helpLocation(new HelpLocation("Theming", "New_Theme"))
+				.onAction(e -> createNewTheme())
+				.buildAndInstall(tool);
+
+		new ActionBuilder("Import Theme", owner).menuPath("Edit", "Theme", "Import...")
+				.menuGroup(group, "4")
 				.helpLocation(new HelpLocation("Theming", "Import_Theme"))
 				.onAction(e -> ThemeUtils.importTheme(themeManager))
 				.buildAndInstall(tool);
 
-		new ActionBuilder("Export Theme", owner)
-				.menuPath("Edit", themeSubMenu, "Export...")
-				.menuGroup(group, "4")
+		new ActionBuilder("Export Theme", owner).menuPath("Edit", "Theme", "Export...")
+				.menuGroup(group, "5")
 				.helpLocation(new HelpLocation("Theming", "Export_Theme"))
 				.onAction(e -> ThemeUtils.exportTheme(themeManager))
 				.buildAndInstall(tool);
 
-		new ActionBuilder("Delete Theme", owner)
-				.menuPath("Edit", themeSubMenu, "Delete...")
-				.menuGroup(group, "5")
+		new ActionBuilder("Delete Theme", owner).menuPath("Edit", "Theme", "Delete...")
+				.menuGroup(group, "6")
 				.helpLocation(new HelpLocation("Theming", "Delete_Theme"))
 				.onAction(e -> ThemeUtils.deleteTheme(themeManager))
 				.buildAndInstall(tool);
 
-		tool.setMenuGroup(new String[] { "Edit", themeSubMenu }, group, "2");
+	}
 
+	private void switchTheme() {
+		ThemeChooserDialog dialog = new ThemeChooserDialog(themeManager);
+		tool.showDialog(dialog);
+	}
+
+	private void createNewTheme() {
+		if (!ThemeUtils.askToSaveThemeChanges(themeManager)) {
+			return;  // user cancelled
+		}
+
+		CreateThemeDialog dialog = new CreateThemeDialog(themeManager);
+		GTheme newTheme = dialog.getNewTheme(tool, "New Theme");
+		if (newTheme != null) {
+			themeManager.addTheme(newTheme);
+			themeManager.setTheme(newTheme);
+			configure();
+		}
+	}
+
+	private void configure() {
+		ThemeEditorDialog dialog = ThemeEditorDialog.getRunningInstance();
+		if (dialog != null) {
+			dialog.toFront();
+			return;
+		}
+
+		ThemeEditorDialog.editTheme(themeManager);
 	}
 
 	@Override

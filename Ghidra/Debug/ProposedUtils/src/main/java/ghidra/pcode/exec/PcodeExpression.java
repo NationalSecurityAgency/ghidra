@@ -23,7 +23,7 @@ import ghidra.pcodeCPort.slghsymbol.UserOpSymbol;
 import ghidra.program.model.pcode.PcodeOp;
 
 /**
- * A p-code program derived from, i.e., implementing, a SLEIGH expression
+ * A p-code program that evaluates a Sleigh expression
  */
 public class PcodeExpression extends PcodeProgram {
 	public static final String RESULT_NAME = "___result";

@@ -24,6 +24,7 @@ import SWIG.SBFrame;
 import SWIG.StateType;
 import agent.lldb.manager.LldbReason;
 import agent.lldb.model.iface2.*;
+import ghidra.async.AsyncUtils;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
@@ -58,6 +59,9 @@ public class LldbModelTargetStackImpl extends LldbModelTargetObjectImpl
 	@Override
 	public CompletableFuture<Void> requestElements(boolean refresh) {
 		return getManager().listStackFrames(thread.getThread()).thenAccept(f -> {
+			if (f.isEmpty()) {
+				return;
+			}
 			List<TargetObject> frames;
 			synchronized (this) {
 				frames =

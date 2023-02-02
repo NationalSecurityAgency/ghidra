@@ -42,8 +42,8 @@ import ghidra.util.Msg;
  * resulting program. Many utility methods are declared public here because they, well, they have
  * utility. The main public methods of this class, however, all start with {@code compile}....
  */
-public class SleighProgramCompiler {
-
+public enum SleighProgramCompiler {
+	;
 	private static final String EXPRESSION_SOURCE_NAME = "expression";
 	public static final String NIL_SYMBOL_NAME = "__nil";
 

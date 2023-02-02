@@ -258,6 +258,13 @@ public class DebuggerTrackLocationTrait {
 		});
 	}
 
+	public String computeLabelText() {
+		if (spec == null || trackedLocation == null) {
+			return "";
+		}
+		return spec.getLocationLabel() + " = " + trackedLocation.getByteAddress();
+	}
+
 	protected void doTrack() {
 		computeTrackedLocation().thenAccept(loc -> {
 			trackedLocation = loc;

@@ -131,14 +131,10 @@ public class DebuggerStackProvider extends ComponentProviderAdapter {
 		return mainPanel;
 	}
 
-	protected static boolean isLegacy(Trace trace) {
-		return trace != null && trace.getObjectManager().getRootSchema() == null;
-	}
-
 	@Override
 	public ActionContext getActionContext(MouseEvent event) {
 		final ActionContext context;
-		if (isLegacy(current.getTrace())) {
+		if (Trace.isLegacy(current.getTrace())) {
 			context = legacyPanel.getActionContext();
 		}
 		else {
@@ -167,7 +163,7 @@ public class DebuggerStackProvider extends ComponentProviderAdapter {
 
 		current = coordinates;
 
-		if (isLegacy(coordinates.getTrace())) {
+		if (Trace.isLegacy(coordinates.getTrace())) {
 			panel.coordinatesActivated(DebuggerCoordinates.NOWHERE);
 			legacyPanel.coordinatesActivated(coordinates);
 			if (ArrayUtils.indexOf(mainPanel.getComponents(), legacyPanel) == -1) {

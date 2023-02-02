@@ -107,7 +107,13 @@ public class ThemeUtilsTest extends AbstractDockingTest {
 		OptionDialog dialog = waitForDialogComponent(OptionDialog.class);
 		assertNotNull(dialog);
 		assertEquals("Save Theme Changes?", dialog.getTitle());
+		pressButtonByText(dialog, "Save");
+
+		dialog = waitForDialogComponent(OptionDialog.class);
+		assertNotNull(dialog);
+		assertEquals("Unmodifiable Theme", dialog.getTitle());
 		pressButtonByText(dialog, "Yes");
+
 		InputDialog inputDialog = waitForDialogComponent(InputDialog.class);
 		assertNotNull(inputDialog);
 		runSwing(() -> inputDialog.setValue("Joe"));
@@ -131,7 +137,7 @@ public class ThemeUtilsTest extends AbstractDockingTest {
 		OptionDialog dialog = waitForDialogComponent(OptionDialog.class);
 		assertNotNull(dialog);
 		assertEquals("Save Theme Changes?", dialog.getTitle());
-		pressButtonByText(dialog, "No");
+		pressButtonByText(dialog, "Abort");
 		waitForSwing();
 		assertEquals("Bob", themeManager.getActiveTheme().getName());
 	}

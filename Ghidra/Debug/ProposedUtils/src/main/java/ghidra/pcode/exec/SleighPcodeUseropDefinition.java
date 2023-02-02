@@ -22,7 +22,7 @@ import ghidra.pcode.exec.PcodeUseropLibrary.PcodeUseropDefinition;
 import ghidra.program.model.pcode.Varnode;
 
 /**
- * A p-code userop defined using SLEIGH source
+ * A p-code userop defined using Sleigh source
  *
  * @param <T> no type in particular, except to match any executor
  */
@@ -107,7 +107,7 @@ public class SleighPcodeUseropDefinition<T> implements PcodeUseropDefinition<T> 
 		 * <p>
 		 * NOTE: Compilation of the sleigh source is delayed until the first invocation, since the
 		 * compiler must know about the varnodes used as parameters. TODO: There may be some way to
-		 * template it at the p-code level instead of the SLEIGH source level.
+		 * template it at the p-code level instead of the Sleigh source level.
 		 * 
 		 * @param <T> no particular type, except to match the executor
 		 * @return the definition

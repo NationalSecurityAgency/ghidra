@@ -426,8 +426,9 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 	}
 
 	@Override
-	public TargetRegisterBank getTargetRegisterBank(TraceThread thread, int frameLevel) {
-		return objectRecorder.getTargetFrameInterface(thread, frameLevel, TargetRegisterBank.class);
+	public Set<TargetRegisterBank> getTargetRegisterBanks(TraceThread thread, int frameLevel) {
+		return Set.of(
+			objectRecorder.getTargetFrameInterface(thread, frameLevel, TargetRegisterBank.class));
 	}
 
 	@Override
@@ -504,7 +505,7 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 	protected TargetRegisterContainer getTargetRegisterContainer(TraceThread thread,
 			int frameLevel) {
 		if (!(thread instanceof TraceObjectThread tot)) {
-			throw new AssertionError();
+			throw new AssertionError("thread = " + thread);
 		}
 		TraceObject objThread = tot.getObject();
 		TraceObject regContainer = objThread.queryRegisterContainer(frameLevel);
@@ -543,9 +544,9 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 	}
 
 	protected TargetRegisterBank isExactRegisterOnTarget(TracePlatform platform,
-			TargetRegisterContainer regContainer, String name) {
+			TargetRegisterContainer regContainer, Register register) {
 		PathMatcher matcher =
-			platform.getConventionalRegisterPath(regContainer.getSchema(), List.of(), name);
+			platform.getConventionalRegisterPath(regContainer.getSchema(), List.of(), register);
 		for (TargetObject targetObject : matcher.getCachedSuccessors(regContainer).values()) {
 			if (!(targetObject instanceof TargetRegister targetRegister)) {
 				continue;
@@ -568,28 +569,7 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 		if (regContainer == null) {
 			return null;
 		}
-		TargetRegisterBank result;
-		String name = platform.getConventionalRegisterObjectName(register);
-		result = isExactRegisterOnTarget(platform, regContainer, name);
-		if (result != null) {
-			return result;
-		}
-		// Not totally case insensitive, but the sane cases
-		String upperName = name.toUpperCase();
-		if (!name.equals(upperName)) {
-			result = isExactRegisterOnTarget(platform, regContainer, upperName);
-			if (result != null) {
-				return result;
-			}
-		}
-		String lowerName = name.toLowerCase();
-		if (!name.equals(lowerName)) {
-			result = isExactRegisterOnTarget(platform, regContainer, lowerName);
-			if (result != null) {
-				return result;
-			}
-		}
-		return null;
+		return isExactRegisterOnTarget(platform, regContainer, register);
 	}
 
 	@Override
@@ -758,6 +738,11 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 	}
 
 	@Override
+	public boolean isSupportsActivation() {
+		return objectRecorder.isSupportsActivation;
+	}
+
+	@Override
 	public TargetObject getFocus() {
 		return curFocus;
 	}
@@ -781,6 +766,28 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 			}
 		}
 		Msg.info(this, "Could not find suitable focus scope for " + focus);
+		return CompletableFuture.completedFuture(false);
+	}
+
+	@Override
+	public CompletableFuture<Boolean> requestActivation(TargetObject active) {
+		for (TargetActiveScope scope : objectRecorder.collectTargetSuccessors(target,
+			TargetActiveScope.class)) {
+			if (PathUtils.isAncestor(scope.getPath(), active.getPath())) {
+				return scope.requestActivation(active).thenApply(__ -> true).exceptionally(ex -> {
+					ex = AsyncUtils.unwrapThrowable(ex);
+					String msg = "Could not activate " + active + ": " + ex.getMessage();
+					if (ex instanceof DebuggerModelAccessException) {
+						Msg.info(this, msg);
+					}
+					else {
+						Msg.error(this, msg, ex);
+					}
+					return false;
+				});
+			}
+		}
+		Msg.info(this, "Could not find suitable active scope for " + active);
 		return CompletableFuture.completedFuture(false);
 	}
 

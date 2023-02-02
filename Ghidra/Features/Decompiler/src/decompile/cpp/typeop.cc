@@ -15,7 +15,6 @@
  */
 #include "typeop.hh"
 #include "funcdata.hh"
-#include <cmath>
 
 /// \param inst will hold the array of TypeOp objects, indexed on op-code
 /// \param tlst is the corresponding TypeFactory for the Architecture

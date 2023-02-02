@@ -16,7 +16,7 @@
 package agent.dbgeng.model.gadp;
 
 import agent.dbgeng.dbgeng.DbgEngTest;
-import agent.dbgeng.gadp.DbgEngLocalDebuggerModelFactory;
+import agent.dbgeng.gadp.DbgEngGadpDebuggerModelFactory;
 import agent.dbgeng.model.AbstractDbgengModelHost;
 import ghidra.dbg.DebuggerModelFactory;
 
@@ -24,6 +24,6 @@ public class GadpDbgengModelHost extends AbstractDbgengModelHost {
 	@Override
 	public DebuggerModelFactory getModelFactory() {
 		DbgEngTest.assumeDbgengDLLLoadable();
-		return new DbgEngLocalDebuggerModelFactory();
+		return new DbgEngGadpDebuggerModelFactory();
 	}
 }

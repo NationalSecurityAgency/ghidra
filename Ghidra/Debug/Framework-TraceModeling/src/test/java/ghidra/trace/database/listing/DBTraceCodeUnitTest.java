@@ -761,6 +761,18 @@ public class DBTraceCodeUnitTest extends AbstractGhidraHeadlessIntegrationTest
 		assertEquals(4, data.getBytes(buf, 0));
 		assertArrayEquals(b.arr(1, 2, 3, 4), buf.array());
 
+		buf = ByteBuffer.allocate(1);
+		assertEquals(1, data.getBytes(buf, 4));
+		assertArrayEquals(b.arr(0xeb), buf.array());
+
+		buf = ByteBuffer.allocate(1);
+		assertEquals(1, data.getBytes(buf, 5));
+		assertArrayEquals(b.arr(0xfe), buf.array());
+
+		buf = ByteBuffer.allocate(4);
+		assertEquals(4, data.getBytes(buf, 2));
+		assertArrayEquals(b.arr(3, 4, 0xeb, 0xfe), buf.array());
+
 		assertArrayEquals(b.arr(1, 2, 3, 4), data.getBytes());
 
 		byte[] arr = new byte[6];

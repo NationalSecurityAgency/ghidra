@@ -24,12 +24,18 @@ import com.sun.jna.platform.win32.COM.COMUtils;
 import agent.dbgeng.jna.dbgeng.breakpoint.IDebugBreakpoint2;
 
 public class DebugBreakpointImpl2 extends DebugBreakpointImpl1 {
-	@SuppressWarnings("unused")
-	private final IDebugBreakpoint2 jnaBreakpoint;
+
+	private IDebugBreakpoint2 jnaBreakpoint;
 
 	public DebugBreakpointImpl2(IDebugBreakpoint2 jnaBreakpoint) {
 		super(jnaBreakpoint);
 		this.jnaBreakpoint = jnaBreakpoint;
+	}
+
+	@Override
+	public void dispose() {
+		super.dispose();
+		jnaBreakpoint = null;
 	}
 
 	@Override

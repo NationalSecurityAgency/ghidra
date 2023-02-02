@@ -53,8 +53,8 @@
 
     <H2>Navigating Threads</H2>
 
-    <P>Selecting a thread in the table will navigate to (or "activate" or "focus") that thread.
-    Windows which are sensitive to the current thread will update. Notably, the <A href=
+    <P>Double-clicking a thread in the table will navigate to (or "activate" or "focus") that
+    thread. Windows which are sensitive to the current thread will update. Notably, the <A href=
     "help/topics/DebuggerRegistersPlugin/DebuggerRegistersPlugin.html">Registers</A> window will
     display the activated thread's register values. <A href=
     "help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html">Listing</A> windows with
@@ -82,113 +82,21 @@
       <LI>Comment - a user-modifiable comment about the thread.</LI>
 
       <LI>Plot - a graphical representation of the thread's lifespan. Unlike other column headers,
-      clicking and dragging in this one will navigate through time. To rearrange this column, hold
-      SHIFT while dragging.</LI>
+      clicking and dragging in this one will navigate trace snapshots. To rearrange this column,
+      hold SHIFT while dragging.</LI>
     </UL>
 
-    <H2>Navigating Time</H2>
+    <H2>Actions</H2>
 
-    <P>The user can navigate through time within the current trace by using the caret in the plot
-    column header. There are also actions for "stepping the trace" forward and backward. See the <A
-    href="help/topics/DebuggerTimePlugin/DebuggerTimePlugin.html">Time</A> window for a way to
-    display and navigate to specific events in the trace's timeline. Note that stepping away from
-    the present will prevent most windows from interacting with the live target. While some
-    components and scripts may interact with the target and record things "into the present," such
-    updates may not appear on screen until the user steps back to the present. Stepping the trace
-    does not affect the target, except that viewing the present requires querying the live target,
-    which can perturb its state.</P>
-
-    <H3><A name="step_trace_snap_backward"></A><IMG alt="" src="images/arrow_up.png">Step Trace
-    Snap Backward</H3>
-
-    <P>This action is available when there exists a snapshot previous to the current. It steps the
-    trace backward to the previous snapshot, causing most windows to display the recorded data from
-    the new point in time.</P>
-
-    <H3><A name="step_trace_snap_forward"></A><IMG alt="" src="images/arrow_down.png">Step Trace
-    Snap Forward</H3>
-
-    <P>This action is available when there exists a snapshot ahead of the current. It steps the
-    trace forward to the next snapshot, causing most windows to display the recorded data from the
-    new point in time.</P>
-
-    <H3><A name="emu_trace_tick_backward"></A><IMG alt="" src="images/stepback.png">Emulate Trace
-    Tick Backward</H3>
-
-    <P>This action is available when the current point in time includes emulated steps. It steps
-    the trace backward to the previous tick.</P>
-
-    <H3><A name="emu_trace_tick_forward"></A><IMG alt="" src="images/stepinto.png">Emulate Trace
-    Tick Forward</H3>
-
-    <P>This action is available when a thread is selected. It steps the current thread forward to
-    the next tick, using emulation. Note that emulation does not affect the target. Furthermore,
-    emulation may halt early if it encounters certain instructions or causes an exception.</P>
-
-    <H3><A name="emu_trace_skip_tick_forward"></A><IMG alt="" src="images/skipover.png">Emulate
-    Trace Skip Tick Forward</H3>
-
-    <P>This action is available when a thread is selected. It steps the current thread forward by
-    skipping the next instruction, using emulation. Note that emulation does not affect the target.
-    Furthermore, emulation may halt early if it encounters certain instructions or causes an
-    exception. This action may be used skip subroutines; <B>however</B>, the stack may require
-    additional patching, e.g., to clean up stack parameters, depending on the calling convention.
-    This action <EM>does not</EM> perform those patches automatically. It only advances the program
-    counter. You may use <A href="#goto_time">Go To Time</A> to append the require stack patch,
-    e.g., <CODE>t0-{RSP=RSP+8}</CODE>.</P>
-
-    <H3><A name="seek_trace_present"></A><IMG alt="" src="images/seek-present.png">Seek Trace to
-    Present</H3>
-
-    <P>This toggle is always available and is enabled by default. When first enabled, if the
-    current trace is live, it immediately steps the trace to the present. Furthermore, as long as
-    it is enabled and the current trace is live, whenever the recorder steps forward, the tool
-    steps with it. In most cases, this option should remain on, otherwise stepping the target will
-    not cause any windows to update. Toggling it off then on is a quick way to return to the
-    present after browsing the past.</P>
-
-    <H3><A name="goto_time"></A>Go To Time</H3>
-
-    <P>This action is available when a trace is active. It prompts for a <B>Time Schedule</B>
-    expression. This is the same form as the expression in the title bar of the threads window. In
-    many cases, it is simply the snapshot number, e.g., <CODE>3</CODE>, which will go to the
-    snapshot with key 3. It may optionally include an emulation schedule, for example,
-    <CODE>3:10</CODE> will use snapshot 3 for an emulator's initial state and step 10 machine
-    instructions on snapshot 3's event thread. If the snapshot does not give an event thread, then
-    the thread must be specified in the expression, e.g., <CODE>3:t1-10</CODE>. That expression
-    will start at snapshot 3, get the thread with key 1, and step it 10 machine instructions. The
-    stepping commands can be repeated any number of times, separated by semicolons, to step threads
-    in a specified sequence, e.g., <CODE>3:t1-10;t2-5</CODE> will do the same as before, then get
-    thread 2 and step it 5 times.</P>
-
-    <P>The emulator's state can also be modified by the schedule. Instead of specifying a number of
-    steps, write a <B>Sleigh</B> statement, e.g., <CODE>3:t1-{r0=0x1234};10</CODE>. This will start
-    at snapshot 3, patch thread 1's r0 to 0x1234, then step 10 instructions. Like stepping
-    commands, the thread may be omitted for Sleigh commands. Each command without a thread
-    specified implicitly uses the one from the previous command, or in the case of the first
-    command, the event thread. Only one Sleigh statement is permitted per command.</P>
-
-    <P>A second command sequence may be appended, following a dot, to command the emulator at the
-    level of p-code operations as well. This is particularly useful when debugging a processor
-    specification. See also the <A href=
-    "help/topics/DebuggerPcodeStepperPlugin/DebuggerPcodeStepperPlugin.html">P-code Stepper</A>
-    window. For example, <CODE>3:2.10</CODE> will start at snapshot 3 and step the event thread 2
-    machine instructions, followed by 10 p-code operations. The same thread-by-thread sequencing
-    and state patching commands are allowed in the p-code command sequence. The <EM>entire</EM>
-    instruction sequence precedes the entire p-code sequence, i.e., only a single dot is allowed.
-    Once the expression enters p-code mode, it cannot re-enter instruction mode.</P>
-
-    <H2>Other Actions</H2>
-
-    <H3><A name="sync_focus"></A>Synchronize Trace and Target Focus</H3>
+    <H3><A name="sync_target"></A>Synchronize Trace and Target Activation</H3>
 
     <P>This toggle is always available and is enabled by default. While enabled, any changes in
     navigation coordinates are translated, to the extent possible, and sent to the connected
     debugger. This may, for example, issue <CODE>thread</CODE> and/or <CODE>frame</CODE> commands
-    to GDB so that commands typed into its CLI will refer to the same thread and frame as is
-    focused in Ghidra. Conversely, any debugger events which indicate a change in focus are
-    translated, to the extent possible, into navigation coordinates and activated in Ghidra. For
-    example, if the user issues a <CODE>frame</CODE> command to the CLI of a GDB connection, then
-    Ghidra will navigate to that same frame.</P>
+    to GDB so that commands typed into its CLI will refer to the same thread and frame as is active
+    in Ghidra. Conversely, any target events which indicate a change in activation are translated,
+    to the extent possible, into navigation coordinates and activated in Ghidra. For example, if
+    the user issues a <CODE>frame</CODE> command to the CLI of a GDB connection, then Ghidra will
+    navigate to that same frame.</P>
   </BODY>
 </HTML>

@@ -56,8 +56,10 @@ public abstract class TraceValueObjectPropertyColumn<T>
 			ValueProperty<T> p = (ValueProperty<T>) data.getValue();
 			setText(p.getHtmlDisplay());
 			setToolTipText(p.getToolTip());
-
 			setForeground(getForegroundFor(data.getTable(), p.isModified(), data.isSelected()));
+			if (p.getRow().isCurrent()) {
+				setBold();
+			}
 			return this;
 		}
 

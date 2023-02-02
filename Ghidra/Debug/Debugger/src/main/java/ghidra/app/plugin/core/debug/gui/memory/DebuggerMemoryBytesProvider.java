@@ -16,9 +16,14 @@
 package ghidra.app.plugin.core.debug.gui.memory;
 
 import java.awt.BorderLayout;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.lang.invoke.MethodHandles;
 import java.math.BigInteger;
 import java.util.*;
+
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -26,6 +31,7 @@ import docking.action.DockingAction;
 import docking.action.ToggleDockingAction;
 import docking.menu.MultiStateDockingAction;
 import docking.widgets.fieldpanel.support.ViewerPosition;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.plugin.core.byteviewer.*;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerLocationLabel;
@@ -121,6 +127,8 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 		@Override
 		protected void specChanged(LocationTrackingSpec spec) {
 			updateTitle();
+			trackingLabel.setText("");
+			trackingLabel.setForeground(Colors.FOREGROUND);
 		}
 	}
 
@@ -165,6 +173,7 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 	protected ForMemoryBytesReadsMemoryTrait readsMemTrait;
 
 	protected final DebuggerLocationLabel locationLabel = new DebuggerLocationLabel();
+	protected final JLabel trackingLabel = new JLabel();
 
 	@AutoConfigStateField
 	protected boolean followsCurrentThread = true;
@@ -191,7 +200,11 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 		autoServiceWiring = AutoService.wireServicesConsumed(plugin, this);
 		createActions();
 		addDisplayListener(readsMemTrait.getDisplayListener());
-		decorationComponent.add(locationLabel, BorderLayout.NORTH);
+
+		JPanel northPanel = new JPanel(new BorderLayout());
+		northPanel.add(locationLabel, BorderLayout.WEST);
+		northPanel.add(trackingLabel, BorderLayout.EAST);
+		decorationComponent.add(northPanel, BorderLayout.NORTH);
 
 		goToTrait.goToCoordinates(current);
 		trackingTrait.goToCoordinates(current);
@@ -199,6 +212,15 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 		locationLabel.goToCoordinates(current);
 
 		setHelpLocation(DebuggerResources.HELP_PROVIDER_MEMORY_BYTES);
+
+		trackingLabel.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
+					doGoToTracked();
+				}
+			}
+		});
 	}
 
 	@Override
@@ -347,9 +369,17 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 
 	@Override
 	public boolean goTo(Program gotoProgram, ProgramLocation location) {
-		boolean result = super.goTo(gotoProgram, location);
-		locationLabel.goToAddress(location == null ? null : location.getAddress());
-		return result;
+		if (location == null) {
+			return false;
+		}
+		if (blockSet.getByteBlockInfo(location.getAddress()) == null) {
+			return false;
+		}
+		if (!super.goTo(gotoProgram, location)) {
+			return false;
+		}
+		locationLabel.goToAddress(location.getAddress());
+		return true;
 	}
 
 	protected void removeOldListeners() {
@@ -394,6 +424,10 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 	public void coordinatesActivated(DebuggerCoordinates coordinates) {
 		DebuggerCoordinates adjusted = adjustCoordinates(coordinates);
 		goToCoordinates(adjusted);
+		if (adjusted.getTrace() == null) {
+			trackingLabel.setText("");
+			trackingLabel.setForeground(Colors.FOREGROUND);
+		}
 	}
 
 	public void traceClosed(Trace trace) {
@@ -434,6 +468,16 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 		return readsMemTrait.getAutoSpec();
 	}
 
+	protected void goToAndUpdateTrackingLabel(TraceProgramView curView, ProgramLocation loc) {
+		trackingLabel.setText(trackingTrait.computeLabelText());
+		if (goTo(curView, loc)) {
+			trackingLabel.setForeground(Colors.FOREGROUND);
+		}
+		else {
+			trackingLabel.setForeground(Colors.ERROR);
+		}
+	}
+
 	protected void doGoToTracked() {
 		if (editModeAction.isSelected()) {
 			return;
@@ -444,7 +488,7 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 		}
 		TraceProgramView curView = current.getView();
 		Swing.runIfSwingOrRunLater(() -> {
-			goTo(curView, loc);
+			goToAndUpdateTrackingLabel(curView, loc);
 		});
 	}
 

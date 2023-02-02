@@ -139,6 +139,22 @@ public class ProgramBuilder {
 		setAnalyzed(true);
 		program.setTemporary(true); // ignore changes
 	}
+	
+	/**
+	 * Construct program builder using a full language object rather than a language id string
+	 * @param name program name
+	 * @param language Language object
+	 * @param compilerSpecID compiler specification ID (if null default spec will be used)
+	 * @param consumer program consumer (if null this builder will be used as consumer and must be disposed to release program)
+	 * @throws Exception if there is an exception creating the program
+	 */
+	public ProgramBuilder(String name, Language language)
+			throws Exception {
+		CompilerSpec compilerSpec = language.getDefaultCompilerSpec();
+		program = new ProgramDB(name, language, compilerSpec, this);
+		setAnalyzed(true);
+		program.setTemporary(true); // ignore changes
+	}
 
 	/**
 	 * Perform complete analysis on the built program.

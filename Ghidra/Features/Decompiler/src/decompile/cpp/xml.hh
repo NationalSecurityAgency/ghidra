@@ -25,7 +25,14 @@
 #include <vector>
 #include <map>
 
-using namespace std;
+using std::string;
+using std::vector;
+using std::map;
+using std::istream;
+using std::ostream;
+using std::ifstream;
+using std::dec;
+using std::hex;
 
 /// \brief The \e attributes for a single XML element
 ///

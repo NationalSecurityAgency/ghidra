@@ -46,15 +46,17 @@ public class ThemeUtils {
 	 */
 	public static boolean askToSaveThemeChanges(ThemeManager themeManager) {
 		if (themeManager.hasThemeChanges()) {
-			int result = OptionDialog.showYesNoCancelDialog(null, "Save Theme Changes?",
-				"You have made changes to the theme.\n Do you want to save your changes?");
+			int result = OptionDialog.showOptionDialog(null, "Save Theme Changes?",
+				"You have made changes to the current theme.\n" +
+					" Do you want to save or abort your changes",
+				"Save", "Abort");
 			if (result == OptionDialog.CANCEL_OPTION) {
 				return false;
 			}
-			if (result == OptionDialog.YES_OPTION) {
+			if (result == OptionDialog.OPTION_ONE) {
 				return saveThemeChanges(themeManager);
 			}
-			themeManager.reloadApplicationDefaults();
+			themeManager.restoreThemeValues();
 		}
 		return true;
 	}
@@ -70,6 +72,9 @@ public class ThemeUtils {
 		String name = activeTheme.getName();
 
 		while (!canSaveToName(themeManager, name)) {
+			if (shouldCancelSave(themeManager, name)) {
+				return false;
+			}
 			name = getNameFromUser(name);
 			if (name == null) {
 				return false;
@@ -78,14 +83,21 @@ public class ThemeUtils {
 		return saveCurrentValues(themeManager, name);
 	}
 
-	/**
-	 * Resets the theme to the default, handling the case where the current theme has changes.
-	 * @param themeManager the theme manager
-	 */
-	public static void resetThemeToDefault(ThemeManager themeManager) {
-		if (askToSaveThemeChanges(themeManager)) {
-			themeManager.setTheme(ThemeManager.getDefaultTheme());
+	private static boolean shouldCancelSave(ThemeManager themeManager, String name) {
+		if (name.isBlank()) {
+			int result = OptionDialog.showOptionNoCancelDialog(null, "Invalid Theme Name",
+				"The theme name can't be blank!\nDo you want to enter a new name?", "Yes", "Cancel",
+				OptionDialog.QUESTION_MESSAGE);
+			return result != OptionDialog.OPTION_ONE;
 		}
+		GTheme existing = themeManager.getTheme(name);
+		if (existing instanceof DiscoverableGTheme) {
+			int result = OptionDialog.showOptionNoCancelDialog(null, "Unmodifiable Theme",
+				"The current theme is unmodifiable!\nDo you want to save as a new theme?", "Yes",
+				"Cancel", OptionDialog.QUESTION_MESSAGE);
+			return result != OptionDialog.OPTION_ONE;
+		}
+		return false;
 	}
 
 	/**
@@ -199,9 +211,12 @@ public class ThemeUtils {
 		return inputDialog.getValue();
 	}
 
-	private static boolean canSaveToName(ThemeManager themeManager, String name) {
+	public static Boolean canSaveToName(ThemeManager themeManager, String name) {
+		if (name.isBlank()) {
+			return false;
+		}
 		GTheme existing = themeManager.getTheme(name);
-		// if no theme exists with that name, then we are save to save it
+		// if no theme exists with that name, then we are safe to save it
 		if (existing == null) {
 			return true;
 		}
@@ -225,9 +240,19 @@ public class ThemeUtils {
 		if (!file.exists()) {
 			Msg.info(ThemeUtils.class, "Saving theme to " + file);
 		}
+		LafType lafType = activeTheme.getLookAndFeelType();
+		boolean useDarkDefaults = activeTheme.useDarkDefaults();
 
-		GTheme newTheme = new GTheme(file, themeName, activeTheme.getLookAndFeelType(),
-			activeTheme.useDarkDefaults());
+		LafType currentLafType = themeManager.getLookAndFeelType();
+
+		// if the user has change the lookAndFeel from the current active theme, then
+		// save it as the lookAndFeel for the newly saved theme
+		if (currentLafType != activeTheme.getLookAndFeelType()) {
+			lafType = currentLafType;
+			useDarkDefaults = lafType.usesDarkDefaults();
+		}
+
+		GTheme newTheme = new GTheme(file, themeName, lafType, useDarkDefaults);
 		newTheme.load(themeManager.getNonDefaultValues());
 		try {
 			newTheme.save();
@@ -242,7 +267,7 @@ public class ThemeUtils {
 		return true;
 	}
 
-	private static File getSaveFile(String themeName) {
+	public static File getSaveFile(String themeName) {
 		File dir = Application.getUserSettingsDirectory();
 		File themeDir = new File(dir, ThemeManager.THEME_DIR);
 		if (!themeDir.exists()) {

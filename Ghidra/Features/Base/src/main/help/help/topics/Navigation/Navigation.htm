@@ -25,6 +25,9 @@
 
       <LI>&nbsp;&nbsp; Use the <A href="#Navigation_History">Navigation History</A> to return to a
       previously visited location</LI>
+      <LI>&nbsp;&nbsp; Specify a specific <A href="#Starting_Program_Location">Program Start 
+      Location</A> when 
+      opening a program</LI>
     </UL>
     </BLOCKQUOTE>
 
@@ -734,10 +737,6 @@
 	<H2><A NAME="Navigation_Options"></A>Navigation Options</H2>
 	
 	<BLOCKQUOTE>
-	
-	
-
-
 
 	    <P>
 		<B>'Go To' in Current Program Only</B> -
@@ -787,6 +786,32 @@
 		next range.  You may use this option to navigate to both the top and the bottom of each
 		range being navigated.
 		</P>
+		
+ 		<H3><A name="Starting_Program_Location"></A>Starting Program Location Options</H3>
+ 		<P>The staring location for newly opened programs can be configured using the following 
+ 		options:</P>
+ 		<BLOCKQUOTE>
+ 		    <P><B>Start At</B> - Choose a starting program location option:
+ 		    <UL>
+ 		    	<LI>Lowest Address - The program will open at the lowest address.</LI>
+ 		    	<LI>Lowest Code Block Address - The program will open at the firest executable
+ 		    	 memory block. If no executable block found, it will go to lowest address.</LI>
+ 		    	<LI>Preferred Symbol Name - The program will open at the first symbol name it
+ 		    	finds that matches a name in the "Start Symbols" option. If no symbol is found,
+ 		    	it will try the lowest code block, and finally the lowest address.</LI>
+ 		    </UL>
+
+ 		    <P><B>Start Symbols</B> - A comma separated list of symbol names to be be used as the
+ 		    starting location for the program if the "Preferred Symbol Name" option is selected 
+ 		    above. The first matching symbol found will be used as the starting location for
+ 		    newly opened programs.</P>
+
+ 		    <P><B>Use Underscores</B> - If selected, each of the preferred symbols listed above
+ 		    will also be searched for with either one or two underscores prepended to the name. For 
+ 		    example, if selected, it will search for "_main" and "__main" in addition to "main" 
+ 		    when trying to find a starting symbol.</P>
+			
+ 		</BLOCKQUOTE>
 		
 	</BLOCKQUOTE>
 	

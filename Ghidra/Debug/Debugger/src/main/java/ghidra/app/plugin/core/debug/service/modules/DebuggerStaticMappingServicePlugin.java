@@ -29,7 +29,7 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
 import ghidra.app.plugin.core.debug.event.TraceOpenedPluginEvent;
-import ghidra.app.plugin.core.debug.stack.*;
+import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingProposals.ModuleMapProposalGenerator;
 import ghidra.app.plugin.core.debug.utils.*;
 import ghidra.app.services.*;
 import ghidra.app.services.ModuleMapProposal.ModuleMapEntry;
@@ -547,11 +547,13 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	private Set<Program> affectedPrograms = new HashSet<>();
 
 	private final ProgramModuleIndexer programModuleIndexer;
+	private final ModuleMapProposalGenerator moduleMapProposalGenerator;
 
 	public DebuggerStaticMappingServicePlugin(PluginTool tool) {
 		super(tool);
 		this.autoWiring = AutoService.wireServicesProvidedAndConsumed(this);
 		this.programModuleIndexer = new ProgramModuleIndexer(tool);
+		this.moduleMapProposalGenerator = new ModuleMapProposalGenerator(programModuleIndexer);
 
 		changeDebouncer.addListener(this::fireChangeListeners);
 		tool.getProject().getProjectData().addDomainFolderChangeListener(this);
@@ -1006,63 +1008,65 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 
 	@Override
 	public ModuleMapProposal proposeModuleMap(TraceModule module, Program program) {
-		return DebuggerStaticMappingProposals.proposeModuleMap(module, program);
+		return moduleMapProposalGenerator.proposeMap(module, program);
 	}
 
 	@Override
 	public ModuleMapProposal proposeModuleMap(TraceModule module,
 			Collection<? extends Program> programs) {
-		return DebuggerStaticMappingProposals.proposeModuleMap(module, orderCurrentFirst(programs));
+		return moduleMapProposalGenerator.proposeBestMap(module, orderCurrentFirst(programs));
 	}
 
 	@Override
 	public Map<TraceModule, ModuleMapProposal> proposeModuleMaps(
 			Collection<? extends TraceModule> modules, Collection<? extends Program> programs) {
-		return DebuggerStaticMappingProposals.proposeModuleMaps(modules,
-			orderCurrentFirst(programs));
+		return moduleMapProposalGenerator.proposeBestMaps(modules, orderCurrentFirst(programs));
 	}
 
 	@Override
 	public SectionMapProposal proposeSectionMap(TraceSection section, Program program,
 			MemoryBlock block) {
-		return DebuggerStaticMappingProposals.proposeSectionMap(section, program, block);
+		return new DefaultSectionMapProposal(section, program, block);
 	}
 
 	@Override
 	public SectionMapProposal proposeSectionMap(TraceModule module, Program program) {
-		return DebuggerStaticMappingProposals.proposeSectionMap(module, program);
+		return DebuggerStaticMappingProposals.SECTIONS.proposeMap(module, program);
 	}
 
 	@Override
 	public SectionMapProposal proposeSectionMap(TraceModule module,
 			Collection<? extends Program> programs) {
-		return DebuggerStaticMappingProposals.proposeSectionMap(module,
+		return DebuggerStaticMappingProposals.SECTIONS.proposeBestMap(module,
 			orderCurrentFirst(programs));
 	}
 
 	@Override
 	public Map<TraceModule, SectionMapProposal> proposeSectionMaps(
 			Collection<? extends TraceModule> modules, Collection<? extends Program> programs) {
-		return DebuggerStaticMappingProposals.proposeSectionMaps(modules,
+		return DebuggerStaticMappingProposals.SECTIONS.proposeBestMaps(modules,
 			orderCurrentFirst(programs));
 	}
 
 	@Override
 	public RegionMapProposal proposeRegionMap(TraceMemoryRegion region, Program program,
 			MemoryBlock block) {
-		return DebuggerStaticMappingProposals.proposeRegionMap(region, program, block);
+		return new DefaultRegionMapProposal(region, program, block);
 	}
 
 	@Override
 	public RegionMapProposal proposeRegionMap(Collection<? extends TraceMemoryRegion> regions,
 			Program program) {
-		return DebuggerStaticMappingProposals.proposeRegionMap(regions, program);
+		return DebuggerStaticMappingProposals.REGIONS
+				.proposeMap(Collections.unmodifiableCollection(regions), program);
 	}
 
 	@Override
 	public Map<Collection<TraceMemoryRegion>, RegionMapProposal> proposeRegionMaps(
 			Collection<? extends TraceMemoryRegion> regions,
 			Collection<? extends Program> programs) {
-		return DebuggerStaticMappingProposals.proposeRegionMaps(regions, programs);
+		Set<Set<TraceMemoryRegion>> groups =
+			DebuggerStaticMappingProposals.groupRegionsByLikelyModule(regions);
+		return DebuggerStaticMappingProposals.REGIONS.proposeBestMaps(groups, programs);
 	}
 }

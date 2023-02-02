@@ -26,14 +26,13 @@ import com.google.gson.JsonElement;
 
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.attributes.TargetDataType;
+import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetAttacher.TargetAttachKind;
 import ghidra.dbg.target.TargetAttacher.TargetAttachKindSet;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.dbg.target.TargetBreakpointSpecContainer.TargetBreakpointKindSet;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
-import ghidra.dbg.target.TargetFocusScope;
 import ghidra.dbg.target.TargetMethod.TargetParameterMap;
-import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.TargetSteppable.TargetStepKind;
 import ghidra.dbg.target.TargetSteppable.TargetStepKindSet;
 import ghidra.dbg.target.schema.TargetObjectSchema;
@@ -53,6 +52,7 @@ class ObjectRecorder {
 	protected final ObjectBasedTraceRecorder recorder;
 	protected final TraceObjectManager objectManager;
 	protected final boolean isSupportsFocus;
+	protected final boolean isSupportsActivation;
 
 	private final BidiMap<IDKeyed<TargetObject>, IDKeyed<TraceObject>> objectMap =
 		new DualHashBidiMap<>();
@@ -62,6 +62,7 @@ class ObjectRecorder {
 		this.objectManager = recorder.trace.getObjectManager();
 		TargetObjectSchema schema = recorder.target.getSchema();
 		this.isSupportsFocus = !schema.searchFor(TargetFocusScope.class, false).isEmpty();
+		this.isSupportsActivation = !schema.searchFor(TargetActiveScope.class, false).isEmpty();
 
 		try (UndoableTransaction tid =
 			UndoableTransaction.start(recorder.trace, "Create root")) {

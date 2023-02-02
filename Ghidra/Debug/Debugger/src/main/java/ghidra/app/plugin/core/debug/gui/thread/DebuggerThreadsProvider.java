@@ -26,11 +26,11 @@ import org.apache.commons.lang3.ArrayUtils;
 import docking.ActionContext;
 import docking.WindowPosition;
 import docking.action.*;
-import docking.widgets.dialogs.InputDialog;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources.SynchronizeTargetAction;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources.ToToggleSelectionListener;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerTraceManagerService.BooleanChangeAdapter;
 import ghidra.framework.model.DomainObject;
@@ -42,8 +42,6 @@ import ghidra.trace.model.Trace;
 import ghidra.trace.model.Trace.TraceSnapshotChangeType;
 import ghidra.trace.model.TraceDomainObjectListener;
 import ghidra.trace.model.time.TraceSnapshot;
-import ghidra.trace.model.time.schedule.TraceSchedule;
-import ghidra.util.Msg;
 
 public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 
@@ -108,10 +106,8 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
 
-	private final BooleanChangeAdapter activatePresentChangeListener =
-		this::changedAutoActivatePresent;
-	private final BooleanChangeAdapter synchronizeFocusChangeListener =
-		this::changedSynchronizeFocus;
+	private final BooleanChangeAdapter synchronizeTargetChangeListener =
+		this::changedSynchronizeTarget;
 
 	private final ForSnapsListener forSnapsListener = new ForSnapsListener();
 
@@ -123,9 +119,7 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 	DebuggerLegacyThreadsPanel legacyPanel;
 
 	DockingAction actionSaveTrace;
-	ToggleDockingAction actionSeekTracePresent;
-	ToggleDockingAction actionSyncFocus;
-	DockingAction actionGoToTime;
+	ToggleDockingAction actionSyncTarget;
 
 	ActionContext myActionContext;
 
@@ -155,19 +149,13 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 	@AutoServiceConsumed
 	public void setTraceManager(DebuggerTraceManagerService traceManager) {
 		if (this.traceManager != null) {
-			this.traceManager
-					.removeAutoActivatePresentChangeListener(activatePresentChangeListener);
-			this.traceManager.removeSynchronizeFocusChangeListener(synchronizeFocusChangeListener);
+			this.traceManager.removeSynchronizeActiveChangeListener(synchronizeTargetChangeListener);
 		}
 		this.traceManager = traceManager;
 		if (traceManager != null) {
-			traceManager.addAutoActivatePresentChangeListener(activatePresentChangeListener);
-			traceManager.addSynchronizeFocusChangeListener(synchronizeFocusChangeListener);
-			if (actionSeekTracePresent != null) {
-				actionSeekTracePresent.setSelected(traceManager.isAutoActivatePresent());
-			}
-			if (actionSyncFocus != null) {
-				actionSyncFocus.setSelected(traceManager.isSynchronizeFocus());
+			traceManager.addSynchronizeActiveChangeListener(synchronizeTargetChangeListener);
+			if (actionSyncTarget != null) {
+				actionSyncTarget.setSelected(traceManager.isSynchronizeActive());
 			}
 		}
 		contextChanged();
@@ -176,10 +164,6 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 	@AutoServiceConsumed
 	public void setEmulationService(DebuggerEmulationService emulationService) {
 		contextChanged();
-	}
-
-	private boolean isLegacy(Trace trace) {
-		return trace != null && trace.getObjectManager().getRootSchema() == null;
 	}
 
 	public void coordinatesActivated(DebuggerCoordinates coordinates) {
@@ -191,7 +175,7 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 		current = coordinates;
 
 		traceTabs.coordinatesActivated(coordinates);
-		if (isLegacy(coordinates.getTrace())) {
+		if (Trace.isLegacy(coordinates.getTrace())) {
 			panel.coordinatesActivated(DebuggerCoordinates.NOWHERE);
 			legacyPanel.coordinatesActivated(coordinates);
 			if (ArrayUtils.indexOf(mainPanel.getComponents(), legacyPanel) == -1) {
@@ -252,71 +236,27 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 	}
 
 	protected void createActions() {
-		actionSeekTracePresent = SeekTracePresentAction.builder(plugin)
-				.enabledWhen(this::isSeekTracePresentEnabled)
-				.onAction(this::toggledSeekTracePresent)
-				.selected(traceManager == null ? false : traceManager.isAutoActivatePresent())
-				.buildAndInstallLocal(this);
-
-		actionSyncFocus = SynchronizeFocusAction.builder(plugin)
-				.selected(traceManager != null && traceManager.isSynchronizeFocus())
+		actionSyncTarget = SynchronizeTargetAction.builder(plugin)
+				.selected(traceManager != null && traceManager.isSynchronizeActive())
 				.enabledWhen(c -> traceManager != null)
-				.onAction(c -> toggleSyncFocus(actionSyncFocus.isSelected()))
+				.onAction(c -> toggleSyncFocus(actionSyncTarget.isSelected()))
 				.buildAndInstallLocal(this);
-		actionGoToTime = GoToTimeAction.builder(plugin)
-				.enabledWhen(c -> current.getTrace() != null)
-				.onAction(c -> activatedGoToTime())
-				.buildAndInstallLocal(this);
-		traceManager.addSynchronizeFocusChangeListener(toToggleSelectionListener =
-			new ToToggleSelectionListener(actionSyncFocus));
+		traceManager.addSynchronizeActiveChangeListener(toToggleSelectionListener =
+			new ToToggleSelectionListener(actionSyncTarget));
 	}
 
-	private boolean isSeekTracePresentEnabled(ActionContext context) {
-		return traceManager != null;
-	}
-
-	private void toggledSeekTracePresent(ActionContext context) {
-		if (traceManager == null) {
+	private void changedSynchronizeTarget(boolean value) {
+		if (actionSyncTarget == null || actionSyncTarget.isSelected()) {
 			return;
 		}
-		traceManager.setAutoActivatePresent(actionSeekTracePresent.isSelected());
-	}
-
-	private void changedAutoActivatePresent(boolean value) {
-		if (actionSeekTracePresent == null || actionSeekTracePresent.isSelected()) {
-			return;
-		}
-		actionSeekTracePresent.setSelected(value);
-	}
-
-	private void changedSynchronizeFocus(boolean value) {
-		if (actionSyncFocus == null || actionSyncFocus.isSelected()) {
-			return;
-		}
-		actionSyncFocus.setSelected(value);
+		actionSyncTarget.setSelected(value);
 	}
 
 	private void toggleSyncFocus(boolean enabled) {
 		if (traceManager == null) {
 			return;
 		}
-		traceManager.setSynchronizeFocus(enabled);
-	}
-
-	private void activatedGoToTime() {
-		InputDialog dialog =
-			new InputDialog("Go To Time", "Schedule:", current.getTime().toString());
-		tool.showDialog(dialog);
-		if (dialog.isCanceled()) {
-			return;
-		}
-		try {
-			TraceSchedule time = TraceSchedule.parse(dialog.getValue());
-			traceManager.activateTime(time);
-		}
-		catch (IllegalArgumentException e) {
-			Msg.showError(this, getComponent(), "Go To Time", "Could not parse schedule");
-		}
+		traceManager.setSynchronizeActive(enabled);
 	}
 
 	@Override

@@ -16,6 +16,10 @@
 #include <iostream>
 #include <cstdlib>
 
+using std::cin;
+using std::cout;
+using std::cerr;
+
 #include "libdecomp.hh"
 
 class IfcLoadFile : public IfaceDecompCommand {

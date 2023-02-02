@@ -392,6 +392,22 @@ public class DebuggerCoordinates {
 		return time(TraceSchedule.snap(snap));
 	}
 
+	/**
+	 * Get these same coordinates with time replace by the given snap-only schedule, and DO NOT
+	 * resolve or adjust anything else
+	 * 
+	 * @param snap the new snap
+	 * @return exactly these same coordinates with the snap/time changed
+	 */
+	public DebuggerCoordinates snapNoResolve(long snap) {
+		if (time != null && time.isSnapOnly() && time.getSnap() == snap) {
+			return this;
+		}
+		TraceSchedule newTime = TraceSchedule.snap(snap);
+		return new DebuggerCoordinates(trace, platform, recorder, thread, view, newTime, frame,
+			object);
+	}
+
 	public DebuggerCoordinates time(TraceSchedule newTime) {
 		if (trace == null) {
 			return NOWHERE;

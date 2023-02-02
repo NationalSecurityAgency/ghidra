@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.service.model.launch;
 
-import static ghidra.async.AsyncUtils.*;
+import static ghidra.async.AsyncUtils.loop;
 
 import java.io.IOException;
 import java.util.*;
@@ -31,6 +31,7 @@ import org.jdom.JDOMException;
 
 import ghidra.app.plugin.core.debug.gui.objects.components.DebuggerMethodInvocationDialog;
 import ghidra.app.services.*;
+import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
 import ghidra.app.services.ModuleMapProposal.ModuleMapEntry;
 import ghidra.async.*;
 import ghidra.dbg.*;
@@ -553,7 +554,8 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 			Trace trace = recorder.getTrace();
 			Swing.runLater(() -> {
 				traceManager.openTrace(trace);
-				traceManager.activateTrace(trace);
+				traceManager.activate(traceManager.resolveTrace(trace),
+					ActivationCause.START_RECORDING);
 			});
 		}
 		return recorder;

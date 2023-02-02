@@ -24,6 +24,7 @@ import javax.swing.Icon;
 
 import docking.ActionContext;
 import docking.action.*;
+import docking.menu.HorizontalRuleAction;
 import docking.menu.MultiActionDockingAction;
 import docking.tool.ToolConstants;
 import generic.theme.GIcon;
@@ -37,7 +38,6 @@ import ghidra.app.services.GoToService;
 import ghidra.app.services.NavigationHistoryService;
 import ghidra.app.util.HelpTopics;
 import ghidra.app.util.viewer.field.BrowserCodeUnitFormat;
-import ghidra.base.actions.HorizontalRuleAction;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -69,8 +69,7 @@ public class NextPrevAddressPlugin extends Plugin {
 
 	private static final String PREVIOUS_ACTION_NAME = "Previous Location in History";
 	private static final String NEXT_ACTION_NAME = "Next Location in History";
-	private static final String PREVIOUS_FUNCTION_ACTION_NAME =
-		"Previous Function in History";
+	private static final String PREVIOUS_FUNCTION_ACTION_NAME = "Previous Function in History";
 	private static final String NEXT_FUNCTION_ACTION_NAME = "Next Function in History";
 	private static final String[] CLEAR_MENUPATH = { "Navigation", "Clear History" };
 
@@ -112,6 +111,10 @@ public class NextPrevAddressPlugin extends Plugin {
 
 	DockingAction getNextFunctionAction() {
 		return nextFunctionAction;
+	}
+
+	DockingAction getClearHistoryAction() {
+		return clearAction;
 	}
 
 //==================================================================================================

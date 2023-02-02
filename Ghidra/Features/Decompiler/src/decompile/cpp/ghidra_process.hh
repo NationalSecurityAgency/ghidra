@@ -27,6 +27,9 @@
 #include <iostream>
 #include <csignal>
 
+using std::cin;
+using std::cout;
+
 class GhidraCommand;
 
 extern ElementId ELEM_DOC;		///< Marshaling element \<doc>

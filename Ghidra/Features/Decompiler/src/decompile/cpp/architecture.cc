@@ -22,6 +22,7 @@
 #endif
 #ifdef CPUI_STATISTICS
 #include <cmath>
+using std::sqrt;
 #endif
 
 vector<ArchitectureCapability *> ArchitectureCapability::thelist;

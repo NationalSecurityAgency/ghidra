@@ -122,6 +122,13 @@ public interface LocationTrackingSpec {
 	String computeTitle(DebuggerCoordinates coordinates);
 
 	/**
+	 * Get the name used in the location tracking label
+	 * 
+	 * @return the label
+	 */
+	String getLocationLabel();
+
+	/**
 	 * Get (or create) the actual location tracking logic
 	 * 
 	 * <p>

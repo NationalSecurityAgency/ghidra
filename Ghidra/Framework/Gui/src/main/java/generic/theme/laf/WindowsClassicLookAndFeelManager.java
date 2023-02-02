@@ -28,6 +28,6 @@ public class WindowsClassicLookAndFeelManager extends LookAndFeelManager {
 
 	@Override
 	protected UiDefaultsMapper getUiDefaultsMapper(UIDefaults defaults) {
-		return new WindowsClassicUiDefaultsMapper(defaults);
+		return new UiDefaultsMapper(defaults);
 	}
 }

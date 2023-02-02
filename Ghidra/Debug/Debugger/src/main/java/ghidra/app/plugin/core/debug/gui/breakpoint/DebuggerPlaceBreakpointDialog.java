@@ -52,6 +52,8 @@ public class DebuggerPlaceBreakpointDialog extends DialogComponentProvider {
 	private JTextField fieldLength;
 	private JComboBox<String> fieldKinds;
 	private JTextField fieldName;
+	private PluginTool tool;
+	private String statusText = null;
 
 	public DebuggerPlaceBreakpointDialog() {
 		super(AbstractSetBreakpointAction.NAME, true, true, true, false);
@@ -150,10 +152,12 @@ public class DebuggerPlaceBreakpointDialog extends DialogComponentProvider {
 		this.fieldLength.setText(Long.toUnsignedString(length));
 		this.fieldKinds.setSelectedItem(TraceBreakpointKindSet.encode(kinds));
 		this.fieldName.setText("");
+		this.tool = tool;
 
 		validateAddress();
 
 		setTitle(title);
+		statusText = null;
 		tool.showDialog(this);
 	}
 
@@ -181,13 +185,20 @@ public class DebuggerPlaceBreakpointDialog extends DialogComponentProvider {
 		name = fieldName.getText();
 
 		ProgramLocation loc = new ProgramLocation(program, address);
-		service.placeBreakpointAt(loc, length, kinds, name).thenAccept(__ -> {
-			close();
-		}).exceptionally(ex -> {
+		service.placeBreakpointAt(loc, length, kinds, name).exceptionally(ex -> {
 			ex = AsyncUtils.unwrapThrowable(ex);
-			setStatusText(ex.getMessage(), MessageType.ERROR, true);
+			statusText = ex.getMessage(); // will be set when dialog is shown later
+			tool.showDialog(this);
 			return null;
 		});
+		close();
+	}
+
+	@Override
+	protected void dialogShown() {
+		if (statusText != null) {
+			setStatusText(statusText, MessageType.ERROR, true);
+		}
 	}
 
 	/* testing */

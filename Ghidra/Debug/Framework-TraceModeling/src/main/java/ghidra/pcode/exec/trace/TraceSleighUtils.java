@@ -59,7 +59,7 @@ public enum TraceSleighUtils {
 			new DirectBytesTracePcodeExecutorState(platform, snap, thread, frame);
 		Language language = platform.getLanguage();
 		if (!(language instanceof SleighLanguage)) {
-			throw new IllegalArgumentException("TracePlatform must use a SLEIGH language");
+			throw new IllegalArgumentException("TracePlatform must use a Sleigh language");
 		}
 		return new PcodeExecutor<>((SleighLanguage) language,
 			BytesPcodeArithmetic.forLanguage(language), state, Reason.INSPECT);
@@ -99,7 +99,7 @@ public enum TraceSleighUtils {
 		PcodeExecutorState<Pair<byte[], TraceMemoryState>> paired = state.withMemoryState();
 		Language language = platform.getLanguage();
 		if (!(language instanceof SleighLanguage)) {
-			throw new IllegalArgumentException("TracePlatform must use a SLEIGH language");
+			throw new IllegalArgumentException("TracePlatform must use a Sleigh language");
 		}
 		return new PcodeExecutor<>((SleighLanguage) language, new PairedPcodeArithmetic<>(
 			BytesPcodeArithmetic.forLanguage(language), TraceMemoryStatePcodeArithmetic.INSTANCE),

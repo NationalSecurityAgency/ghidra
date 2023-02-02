@@ -20,7 +20,8 @@
 #include <list>
 #include <unordered_map>
 
-using namespace std;
+using std::list;
+using std::unordered_map;
 
 /// \brief An annotation for a data element to being transferred to/from a stream
 ///

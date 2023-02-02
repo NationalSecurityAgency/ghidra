@@ -22,16 +22,15 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import ghidra.app.plugin.core.debug.service.modules.ProgramModuleIndexer.IndexEntry;
 import ghidra.app.services.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.framework.model.DomainFile;
 import ghidra.graph.*;
 import ghidra.graph.jung.JungDirectedGraph;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.mem.MemoryBlock;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.TraceModule;
-import ghidra.trace.model.modules.TraceSection;
 import ghidra.util.Msg;
 
 public enum DebuggerStaticMappingProposals {
@@ -72,12 +71,28 @@ public enum DebuggerStaticMappingProposals {
 		return false;
 	}
 
-	protected abstract static class ProposalGenerator<F, T, J, MP extends MapProposal<?, ?, ?>> {
+	protected interface ProposalGenerator<F, T, MP extends MapProposal<?, ?, ?>> {
+		MP proposeMap(F from, T to);
+
+		MP proposeBestMap(F from, Collection<? extends T> tos);
+
+		Map<F, MP> proposeBestMaps(Collection<? extends F> froms, Collection<? extends T> tos);
+	}
+
+	protected abstract static class AbstractProposalGenerator //
+	<F, T, J, MP extends MapProposal<?, ?, ?>> {
 		protected abstract MP proposeMap(F from, T to);
 
 		protected abstract J computeFromJoinKey(F from);
 
 		protected abstract boolean isJoined(J key, T to);
+
+		protected Collection<T> filterJoined(J key, Collection<? extends T> tos) {
+			return tos.stream()
+					.filter(t -> isJoined(key, t))
+					// Need to preserve order here
+					.collect(Collectors.toCollection(LinkedHashSet::new));
+		}
 
 		protected MP proposeBestMap(F from, Collection<? extends T> tos) {
 			double bestScore = -1;
@@ -99,10 +114,7 @@ public enum DebuggerStaticMappingProposals {
 			Map<F, MP> result = new LinkedHashMap<>();
 			for (F f : froms) {
 				J joinKey = computeFromJoinKey(f);
-				Set<T> joined = tos.stream()
-						.filter(t -> isJoined(joinKey, t))
-						// Need to preserve order here
-						.collect(Collectors.toCollection(LinkedHashSet::new));
+				Collection<T> joined = filterJoined(joinKey, tos);
 				MP map = proposeBestMap(f, joined);
 				if (map != null) {
 					result.put(f, map);
@@ -113,41 +125,47 @@ public enum DebuggerStaticMappingProposals {
 	}
 
 	protected static class ModuleMapProposalGenerator
-			extends ProposalGenerator<TraceModule, Program, String, ModuleMapProposal> {
+			implements ProposalGenerator<TraceModule, Program, ModuleMapProposal> {
+		private final ProgramModuleIndexer indexer;
+
+		public ModuleMapProposalGenerator(ProgramModuleIndexer indexer) {
+			this.indexer = indexer;
+		}
+
 		@Override
-		protected ModuleMapProposal proposeMap(TraceModule from, Program to) {
+		public ModuleMapProposal proposeMap(TraceModule from, Program to) {
 			return new DefaultModuleMapProposal(from, to);
 		}
 
 		@Override
-		protected String computeFromJoinKey(TraceModule from) {
-			return getLastLower(from.getName());
+		public ModuleMapProposal proposeBestMap(TraceModule from,
+				Collection<? extends Program> tos) {
+			Collection<IndexEntry> entries = indexer.filter(indexer.getBestEntries(from), tos);
+			DomainFile df = indexer.getBestMatch(from, null, entries);
+			if (df == null) {
+				return null;
+			}
+			try (PeekOpenedDomainObject peek = new PeekOpenedDomainObject(df)) {
+				return proposeMap(from, (Program) peek.object);
+			}
 		}
 
 		@Override
-		protected boolean isJoined(String key, Program to) {
-			return namesContain(to, key);
+		public Map<TraceModule, ModuleMapProposal> proposeBestMaps(
+				Collection<? extends TraceModule> froms, Collection<? extends Program> tos) {
+			Map<TraceModule, ModuleMapProposal> result = new LinkedHashMap<>();
+			for (TraceModule f : froms) {
+				ModuleMapProposal map = proposeBestMap(f, tos);
+				if (map != null) {
+					result.put(f, map);
+				}
+			}
+			return result;
 		}
 	}
 
-	protected static final ModuleMapProposalGenerator MODULES = new ModuleMapProposalGenerator();
-
-	public static ModuleMapProposal proposeModuleMap(TraceModule module, Program program) {
-		return MODULES.proposeMap(module, program);
-	}
-
-	public static ModuleMapProposal proposeModuleMap(TraceModule module,
-			Collection<? extends Program> programs) {
-		return MODULES.proposeBestMap(module, programs);
-	}
-
-	public static Map<TraceModule, ModuleMapProposal> proposeModuleMaps(
-			Collection<? extends TraceModule> modules, Collection<? extends Program> programs) {
-		return MODULES.proposeBestMaps(modules, programs);
-	}
-
 	protected static class SectionMapProposalGenerator
-			extends ProposalGenerator<TraceModule, Program, String, SectionMapProposal> {
+			extends AbstractProposalGenerator<TraceModule, Program, String, SectionMapProposal> {
 		@Override
 		protected SectionMapProposal proposeMap(TraceModule from, Program to) {
 			return new DefaultSectionMapProposal(from, to);
@@ -164,29 +182,8 @@ public enum DebuggerStaticMappingProposals {
 		}
 	}
 
-	protected static final SectionMapProposalGenerator SECTIONS = new SectionMapProposalGenerator();
-
-	public static SectionMapProposal proposeSectionMap(TraceSection section, Program program,
-			MemoryBlock block) {
-		return new DefaultSectionMapProposal(section, program, block);
-	}
-
-	public static SectionMapProposal proposeSectionMap(TraceModule module, Program program) {
-		return SECTIONS.proposeMap(module, program);
-	}
-
-	public static SectionMapProposal proposeSectionMap(TraceModule module,
-			Collection<? extends Program> programs) {
-		return SECTIONS.proposeBestMap(module, programs);
-	}
-
-	public static Map<TraceModule, SectionMapProposal> proposeSectionMaps(
-			Collection<? extends TraceModule> modules, Collection<? extends Program> programs) {
-		return SECTIONS.proposeBestMaps(modules, programs);
-	}
-
 	protected static class RegionMapProposalGenerator extends
-			ProposalGenerator<Collection<TraceMemoryRegion>, Program, Set<String>, //
+			AbstractProposalGenerator<Collection<TraceMemoryRegion>, Program, Set<String>, //
 					RegionMapProposal> {
 
 		@Override
@@ -209,18 +206,9 @@ public enum DebuggerStaticMappingProposals {
 		}
 	}
 
+	// TODO: Should these also take advantage of the program-module index?
+	protected static final SectionMapProposalGenerator SECTIONS = new SectionMapProposalGenerator();
 	protected static final RegionMapProposalGenerator REGIONS = new RegionMapProposalGenerator();
-
-	public static RegionMapProposal proposeRegionMap(TraceMemoryRegion region, Program program,
-			MemoryBlock block) {
-		return new DefaultRegionMapProposal(region, program, block);
-	}
-
-	public static RegionMapProposal proposeRegionMap(
-			Collection<? extends TraceMemoryRegion> regions,
-			Program program) {
-		return REGIONS.proposeMap(Collections.unmodifiableCollection(regions), program);
-	}
 
 	public static RegionMapProposal proposeRegionMap(
 			Collection<? extends TraceMemoryRegion> regions,
@@ -276,12 +264,5 @@ public enum DebuggerStaticMappingProposals {
 		return groupByComponents(regions, r -> getLikelyModulesFromName(r), (m1, m2) -> {
 			return m1.stream().anyMatch(m2::contains);
 		});
-	}
-
-	public static Map<Collection<TraceMemoryRegion>, RegionMapProposal> proposeRegionMaps(
-			Collection<? extends TraceMemoryRegion> regions,
-			Collection<? extends Program> programs) {
-		Set<Set<TraceMemoryRegion>> groups = groupRegionsByLikelyModule(regions);
-		return REGIONS.proposeBestMaps(groups, programs);
 	}
 }

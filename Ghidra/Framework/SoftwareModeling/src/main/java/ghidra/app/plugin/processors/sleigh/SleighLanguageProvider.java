@@ -67,21 +67,31 @@ public class SleighLanguageProvider implements LanguageProvider {
 	public static synchronized SleighLanguageProvider getSleighLanguageProvider() {
 		if (instance == null) {
 			instance = new SleighLanguageProvider();
-			try {
-				instance.createLanguages();
-			}
-			catch (Exception e) {
-				Msg.error(SleighLanguageProvider.class,
-					"Sleigh language provider initiailization failed", e);
-			}
 		}
 		return instance;
 	}
 
 	/**
-	 * Construct sleigh language provider (singleton)
+	 * Construct sleigh language provider (singleton use)
 	 */
 	private SleighLanguageProvider() {
+		try {
+			createLanguages();
+		}
+		catch (Exception e) {
+			Msg.error(SleighLanguageProvider.class,
+				"Sleigh language provider initiailization failed", e);
+		}
+	}
+
+	/**
+	 * Construct language provider (intended for test use only)
+	 * @param ldefsFile language definitions file
+	 * @throws SAXException if parse error occurs
+	 * @throws IOException if IO error occurs
+	 */
+	SleighLanguageProvider(ResourceFile ldefsFile) throws SAXException, IOException {
+		createLanguages(ldefsFile);
 	}
 
 	private void createLanguages() throws Exception {
@@ -91,7 +101,7 @@ public class SleighLanguageProvider implements LanguageProvider {
 		}
 	}
 
-	private void createLanguages(ResourceFile file) throws Exception {
+	private void createLanguages(ResourceFile file) throws SAXException, IOException {
 		try {
 			SleighLanguageValidator.validateLdefsFile(file);
 			createLanguageDescriptions(file);
@@ -168,7 +178,8 @@ public class SleighLanguageProvider implements LanguageProvider {
 		return d;
 	}
 
-	private void createLanguageDescriptions(final ResourceFile specFile) throws Exception {
+	private void createLanguageDescriptions(final ResourceFile specFile)
+			throws SAXException, IOException {
 		ErrorHandler errHandler = new ErrorHandler() {
 			@Override
 			public void error(SAXParseException exception) throws SAXException {

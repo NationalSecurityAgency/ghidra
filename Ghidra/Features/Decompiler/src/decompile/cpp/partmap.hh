@@ -199,7 +199,7 @@ template<typename _linetype,typename _valuetype>
 #if 0
 
 #include <iostream>
-using namespace std;
+using std::cout;
 
 int main(int argc,char **argv)
 

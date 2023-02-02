@@ -53,6 +53,16 @@ import resources.ResourceManager;
 public interface Trace extends DataTypeManagerDomainObject {
 	ImageIcon TRACE_ICON = ResourceManager.loadImage("images/video-x-generic16.png");
 
+	/**
+	 * TEMPORARY: An a/b switch while both table- (legacy) and object-mode traces are supported
+	 * 
+	 * @param trace the trace, or null
+	 * @return true if the trace is non-null and has no root schema
+	 */
+	public static boolean isLegacy(Trace trace) {
+		return trace != null && trace.getObjectManager().getRootSchema() == null;
+	}
+
 	public static final class TraceObjectChangeType<T, U>
 			extends DefaultTraceChangeType<T, U> {
 		/**

@@ -15,6 +15,7 @@
  */
 package ghidra.trace.model.guest;
 
+import java.util.Collection;
 import java.util.List;
 
 import ghidra.dbg.target.TargetObject;
@@ -171,27 +172,29 @@ public interface TracePlatform {
 	AddressRange getConventionalRegisterRange(AddressSpace overlay, Register register);
 
 	/**
-	 * Get the name or index of the register object for the given platform register
+	 * Get the names or indices of the register object for the given platform register
 	 * 
 	 * <p>
 	 * This will check for a label in the host physical space, allowing a mapper to specify an
-	 * alternative register object name. See {@link #addRegisterMapOverride(Register, String)}.
+	 * alternative register object name. See {@link #addRegisterMapOverride(Register, String)}. If
+	 * one exists, then only that name is returned. Otherwise, the given register's names and
+	 * aliases are all returned as defined and in all-upper and all-lower case.
 	 * 
 	 * @param register the platform register
 	 * @return the mapped name
 	 */
-	String getConventionalRegisterObjectName(Register register);
+	Collection<String> getConventionalRegisterObjectNames(Register register);
 
 	/**
 	 * Get the expected path where an object defining the register value would be
 	 * 
 	 * @param schema the schema of the register container
 	 * @param path the path to the register container
-	 * @param name the name of the register on the target
+	 * @param names the possible names of the register on the target
 	 * @return the path matcher, possibly empty
 	 */
 	PathMatcher getConventionalRegisterPath(TargetObjectSchema schema, List<String> path,
-			String name);
+			Collection<String> names);
 
 	/**
 	 * Get the expected path where an object defining the register value would be

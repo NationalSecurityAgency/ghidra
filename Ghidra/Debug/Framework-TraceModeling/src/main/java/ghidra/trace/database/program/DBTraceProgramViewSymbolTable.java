@@ -381,6 +381,11 @@ public class DBTraceProgramViewSymbolTable implements SymbolTable {
 	}
 
 	@Override
+	public SymbolIterator scanSymbolsByName(String startName) {
+		return new SymbolIteratorAdapter(symbolManager.allSymbols().scanByName(startName));
+	}
+
+	@Override
 	public int getNumSymbols() {
 		return symbolManager.allSymbols().size(true);
 	}

@@ -270,8 +270,18 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 	}
 
 	@Override
+	public CompletableFuture<DebuggerObjectModel> showConnectDialog() {
+		return delegate.doShowConnectDialog(tool, null, null);
+	}
+
+	@Override
+	public CompletableFuture<DebuggerObjectModel> showConnectDialog(Program program) {
+		return delegate.doShowConnectDialog(tool, null, program);
+	}
+
+	@Override
 	public CompletableFuture<DebuggerObjectModel> showConnectDialog(DebuggerModelFactory factory) {
-		return delegate.doShowConnectDialog(tool, factory);
+		return delegate.doShowConnectDialog(tool, factory, null);
 	}
 
 	@Override

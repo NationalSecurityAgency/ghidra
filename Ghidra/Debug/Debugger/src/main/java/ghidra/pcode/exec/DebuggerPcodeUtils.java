@@ -16,11 +16,8 @@
 package ghidra.pcode.exec;
 
 import java.math.BigInteger;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-
-import org.bouncycastle.util.Arrays;
 
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.service.emulation.*;
@@ -214,7 +211,7 @@ public enum DebuggerPcodeUtils {
 			if (this.bigEndian != that.bigEndian) {
 				return false;
 			}
-			return Arrays.areEqual(this.bytes, that.bytes);
+			return Arrays.equals(this.bytes, that.bytes);
 		}
 
 		/**

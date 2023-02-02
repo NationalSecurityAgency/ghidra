@@ -22,126 +22,145 @@
       </TBODY>
     </TABLE>
 
-    <P>The breakpoints window tabulates and manipulates breakpoints among all live and traced
-    targets. Only address-based breakpoints are tabulated. For other traps, e.g., "break on
+    <P>The breakpoints window tabulates and manipulates breakpoints among all traces, including
+    live targets. Only address-based breakpoints are tabulated. For other traps, e.g., "break on
     exception," see the <A href=
     "help/topics/DebuggerObjectsPlugin/DebuggerObjectsPlugin.html">Objects Window</A>. Breakpoints
     can also be manipulated from address-based views, especially the disassembly listings. See <A
     href=
     "help/topics/DebuggerBreakpointMarkerPlugin/DebuggerBreakpointMarkerPlugin.html">Breakpoints in
-    the Listings</A>. Display of breakpoints in other views, e.g., the decompiler, is not yet
-    implemented.</P>
+    the Listings</A>.</P>
 
-    <P>Individual breakpoint locations from among the targets are consolidated into logical
+    <P>Individual breakpoint locations from among the traces are consolidated into logical
     breakpoints, based on their addresses in the static listing. The static locations are typically
     stored as bookmarks in their respective Ghidra programs, comprising the current breakpoint set.
     See the <A href=
     "help/topics/DebuggerStaticMappingPlugin/DebuggerStaticMappingPlugin.html">Static Mappings</A>
     window for the finer details of address mapping. A breakpoint which cannot be mapped to a
     static address becomes its own logical breakpoint at its dynamic address. The top table of the
-    provider displays logical breakpoints; the bottom table displays breakpoint locations.
-    <B>NOTE:</B> The breakpoints window cannot display or manipulate breakpoints from a target
-    until that target is recorded into a trace. Furthermore, dead traces are not included. Nor are
-    breakpoints from the past included, even when viewing past machine state.</P>
+    provider displays logical breakpoints; the bottom table displays individual trace breakpoint
+    locations. <B>NOTE:</B> The breakpoints window cannot display or manipulate breakpoints from a
+    live target until that target is recorded into a trace. Only those breakpoints visible at the
+    current snapshot of each trace are included. For live targets, this is typically the latest
+    snapshot, i.e., the present.</P>
 
     <P>Depending on what is supported by the connected debugger, breakpoints can trap a target when
     an address or range is executed, read, or written; using software or hardware mechanisms. In
-    case of "read" or "write," debuggers may differ in terminology, e.g., GDB might call them
-    "watchpoints," but Ghidra still calls these "breakpoints." Some debuggers allow the user to
-    specify a breakpoint location other than by address, but ultimately each specification is
-    realized by 0 or more addressable locations. To accommodate this, the <A href=
+    the case of "read" or "write" breakpoints, debuggers may differ in terminology. For example,
+    GDB might call them "watchpoints," but Ghidra still calls these "breakpoints." Some debuggers
+    allow the user to specify a breakpoint location other than by address, but ultimately each
+    specification is realized by 0 or more addressable locations. To accommodate this, the <A href=
     "help/topics/DebuggerObjectsPlugin/DebuggerObjectsPlugin.html">Objects</A> window will
     typically display a list of specifications, each listing its locations as children. However,
-    the grouping of breakpoint locations into logical breakpoints by this manager is done
-    <EM>without respect</EM> to the specifications. Often the specification is at a higher stratum
-    than Ghidra natively understands, e.g., the source filename and line number, and so such
-    specifications are not relevant. Note, however, that the model might not permit locations to be
-    manipulated independently of their specification, which may limit how the manager can operate
-    on each breakpoint location.</P>
+    the grouping of breakpoint locations into logical breakpoints by Ghidra's breakpoint manager is
+    done <EM>without respect to</EM> the debugger's specifications. A specification may be at a
+    higher stratum than Ghidra natively understands, e.g., the source filename and line number, and
+    so such specifications are not relevant. Also note that the debugger might not permit locations
+    to be manipulated independently of their specifications. This may limit how Ghidra can operate,
+    since in that case, it must configure the specification, which may affect more locations than
+    intended.</P>
+
+    <P>When the <A href="help/topics/DebuggerControlPlugin/DebuggerControlPlugin.html">control
+    mode</A> is set to "trace" or "emulator," it is possible to rewind the trace to past snapshots
+    and examine old breakpoints. You may also emulate from those snapshots, even if the target is
+    no longer alive. By default, those historical breakpoints are disabled in the integrated
+    emulator, but they can be toggled in the usual ways. In addition, the locations can be
+    manipulated independently, since the emulator has its own breakpoint set. Emulated breakpoints
+    can be configured with conditions expressed in Sleigh using the <A href="#set_condition">Set
+    Condition</A> action, or configured to replace the instruction's semantics altogether using the
+    <A href="#set_injection">Set Injection</A> action.</P>
 
     <P>Because of the logical grouping of breakpoints, it is possible for a breakpoint to be in a
     mixed or inconsistent state. This happens quite commonly, e.g., when a breakpoint is placed in
-    a Ghidra program before that program is mapped in any traced target. Once mapped in, the
-    location of that breakpoint in the trace is computed and noted as missing. A logical breakpoint
-    without any location in a trace (i.e., on an actual target) is called <EM>ineffective</EM> and
-    is drawn in grey, e.g.: <IMG alt="" src="images/breakpoint-enable-ineff.png">. An enabled
-    logical breakpoint having a disabled location is called <EM>inconsistent</EM> and its icon will
-    include an exclamation mark: <IMG alt="" src="images/breakpoint-overlay-inconsistent.png">. A
-    disabled logical breakpoint having an enabled location is similarly inconsistent. Toggling an
-    ineffective or inconsistent logical breakpoint enables and/or places all its locations, aiming
-    for a consistent enabled state. Toggling it again disables all locations.</P>
+    a Ghidra program before that program is mapped to any trace. Once mapped, the location of that
+    breakpoint in the trace is computed and noted as missing. A logical breakpoint without any
+    location in a trace is called <EM>ineffective</EM> and is drawn in grey, e.g.: <IMG alt="" src=
+    "images/breakpoint-enable-ineff.png">. An enabled logical breakpoint having a disabled location
+    is called <EM>inconsistent</EM> and its icon will include an exclamation mark: <IMG alt="" src=
+    "images/breakpoint-overlay-inconsistent.png">. A disabled logical breakpoint having an enabled
+    location is similarly inconsistent. Toggling an ineffective or inconsistent logical breakpoint
+    enables and/or places all its mapped locations, aiming for a consistent enabled state. Toggling
+    it again disables all locations.</P>
 
     <H2>Tables and Columns</H2>
 
     <P>The top table, which lists logical breakpoints, has the following columns:</P>
 
     <UL>
-      <LI>State - displays an icon indicating the state of the breakpoint. If rendered in grey, the
-      breakpoint has no locations, i.e., it is ineffective. If rendered with an exclamation mark
-      overlay, the breakpoint is inconsistent. Clicking the icon toggles the breakpoint.</LI>
+      <LI><B>State:</B> displays an icon indicating the state of the breakpoint. If rendered in
+      grey, the breakpoint has no locations, i.e., it is ineffective. If rendered with an
+      exclamation mark overlay, the breakpoint is inconsistent. Clicking the icon toggles the
+      breakpoint.</LI>
 
         <UL style="list-style-type: none">
-          <LI><IMG alt="" src="images/breakpoint-enable.png"> Enabled: The logical breakpoint,
-          including all its locations, is enabled.</LI>
+          <LI><IMG alt="" src="images/breakpoint-enable.png"> <B>Enabled:</B> The logical
+          breakpoint, including all its locations, is enabled.</LI>
 
-          <LI><IMG alt="" src="images/breakpoint-disable.png"> Disabled: The logical breakpoint,
-          including all its locations, is disabled.</LI>
+          <LI><IMG alt="" src="images/breakpoint-disable.png"> <B>Disabled:</B> The logical
+          breakpoint, including all its locations, is disabled.</LI>
 
-          <LI><IMG alt="" src="images/breakpoint-mixed.png"> Mixed: (Listing only) Two logical
-          breakpoints at the same address have different states.</LI>
+          <LI><IMG alt="" src="images/breakpoint-mixed.png"> <B>Mixed:</B> (Listing only) Two
+          logical breakpoints at the same address have different states.</LI>
         </UL>
 
-      <LI>Name - gives the user-defined name of the breakpoint. This cell is only populated and
-      modifiable when the breakpoint is bookmarked in a program, since the name is associated with
-      the static location.</LI>
+      <LI><B>Name:</B> gives the user-defined name of the breakpoint. This cell is only populated
+      and modifiable when the breakpoint is bookmarked in a program, since the name is associated
+      with the static location.</LI>
 
-      <LI>Address - gives the address of the breakpoint. This is typically the static address. If
-      the breakpoint cannot be mapped to a static address, this is its dynamic address.</LI>
+      <LI><B>Address:</B> gives the address of the breakpoint. This is typically the static
+      address. If the breakpoint cannot be mapped to a static address, this is its dynamic
+      address.</LI>
 
-      <LI>Image - gives the name of the static image, i.e., Ghidra program. If the breakpoint
+      <LI><B>Image:</B> gives the name of the static image, i.e., Ghidra program. If the breakpoint
       cannot be mapped to a static location, this is blank.</LI>
 
-      <LI>Length - usually 1. For access breakpoints, this is the length of the address range (in
-      bytes).</LI>
+      <LI><B>Length:</B> usually 1. For access breakpoints, this is the length in bytes of the
+      address range.</LI>
 
-      <LI>Kinds - indicates the kind(s) of breakpoint: SW_EXECUTE, HW_EXECUTE, READ, and/or
+      <LI><B>Kinds:</B> indicates the kind(s) of breakpoint: SW_EXECUTE, HW_EXECUTE, READ, and/or
       WRITE.</LI>
 
-      <LI>Locations - counts the number of locations included in this logical breakpoint, applying
-      the trace filter if active. Note that a logical breakpoint with 0 locations is
+      <LI><B>Locations:</B> counts the number of locations included in this logical breakpoint,
+      applying the trace filter if active. Note that a logical breakpoint with 0 locations is
       ineffective.</LI>
+
+      <LI><B>Sleigh:</B> indicates whether or not the breakpoint has a customized Sleigh
+      configuration. This is only relevant for emulation.</LI>
     </UL>
 
     <P>The bottom table, which lists breakpoint locations, has the following columns:</P>
 
     <UL>
-      <LI>State - displays an icon indicating the state of the location. If rendered with an
+      <LI><B>State:</B> displays an icon indicating the state of the location. If rendered with an
       exclamation mark overlay, the location does not agree with its logical breakpoint, or it
       cannot be bookmarked. Clicking the icon toggles the location.</LI>
 
         <UL style="list-style-type: none">
-          <LI><IMG alt="" src="images/breakpoint-enable.png"> Enabled: The location is
+          <LI><IMG alt="" src="images/breakpoint-enable.png"> <B>Enabled:</B> The location is
           enabled.</LI>
 
-          <LI><IMG alt="" src="images/breakpoint-disable.png"> Disabled: The location is
+          <LI><IMG alt="" src="images/breakpoint-disable.png"> <B>Disabled:</B> The location is
           disabled.</LI>
 
-          <LI><IMG alt="" src="images/breakpoint-mixed.png"> Mixed: (Listing only) Two locations at
-          the same address have different states.</LI>
+          <LI><IMG alt="" src="images/breakpoint-mixed.png"> <B>Mixed:</B> (Listing only) Two
+          locations at the same address have different states.</LI>
         </UL>
 
-      <LI>Name - displays the name given to the location by the connected debugger. This field is
-      user modifiable.</LI>
-
-      <LI>Address - gives the dynamic address of this location.</LI>
-
-      <LI>Trace - gives the name of the location's trace.</LI>
-
-      <LI>Threads - (hidden by default) if the breakpoint applies to a limited set of threads,
-      gives the list of threads.</LI>
-
-      <LI>Comment - gives a user comment &mdash; the specification's expression by default. This
+      <LI><B>Name:</B> displays the name given to the location by the connected debugger. This
       field is user modifiable.</LI>
+
+      <LI><B>Address:</B> gives the dynamic address of this location.</LI>
+
+      <LI><B>Trace:</B> gives the name of the location's trace.</LI>
+
+      <LI><B>Threads:</B> (hidden by default) if the breakpoint applies to a limited set of
+      threads, gives the list of threads.</LI>
+
+      <LI><B>Comment:</B> gives a user comment &mdash; the specification's expression by default.
+      This field is user modifiable.</LI>
+
+      <LI><B>Sleigh:</B> (hidden by default) indicates whether or not the location has a customized
+      Sleigh configuration. This is only relevant for emulation.</LI>
     </UL>
 
     <H2>Breakpoint Actions</H2>
@@ -193,6 +212,124 @@
 
     <P>This action is always available. <FONT color="red">Use with caution!</FONT> It deletes every
     breakpoint.</P>
+
+    <H3><A name="set_condition"></A>Set Condition (Emulator)</H3>
+
+    <P>This action is available when all selected locations are emulated execution breakpoints.
+    (Conditional access breakpoints are not yet implemented.) It sets the condition using a Sleigh
+    expression that when true will trap the emulator. When false, the emulator continues past the
+    breakpoint without interruption. Sleigh operates similarly to C: zero is considered false,
+    while everything else is considered true. The dialog provides syntax checking, but does not
+    verify the semantics. If the breakpoint condition is not semantically correct, then the
+    breakpoint behaves as if unconditional; it will interrupt the emulator then indicate the
+    semantic error. To trap unconditionally (the default) use <CODE>1:1</CODE>. Otherwise, use a
+    boolean Sleigh expression, such as <CODE>RAX &gt;= 0x1000</CODE>. Sleigh conditions are rather
+    expressive. For example, on an x86 target, you might place a breakpoint at the entry of a
+    function and set the condition to <CODE>(*:8 RSP) &amp; 0xfff00000 == 0x00400000</CODE>. This
+    will break on calls to the function from any address matching <CODE>0x004?????</CODE>.</P>
+
+    <H3><A name="set_injection"></A>Set Injection (Emulator)</H3>
+
+    <P>This action is available when all selected locations are emulated execution breakpoints.
+    (Injections on access breakpoints are not yet implemented.) It replaces the instruction's usual
+    Sleigh semantics with those entered into the dialog. The Sleigh syntax is the same as used in
+    the processor language's Sleigh specification (<CODE>.slaspec</CODE> and <CODE>.sinc</CODE>
+    files). The dialog provides syntax checking, but does not verify the semantics. If the
+    injection is not semantically correct, then the breakpoint behaves as if unconditional; it will
+    interrupt the emulator then indicate the semantic error. <B>NOTE:</B> The semantics at the
+    breakpoint address are <EM>completely</EM> replaced, ignoring the original instruction
+    entirely. This includes its control flow behavior, even fall through. The replacement semantics
+    <EM>must</EM> provide control flow behavior, or else the emulator's program counter will not
+    advance, and the same injection will be executed repeatedly. Here are three ways to provide
+    control flow:</P>
+
+    <UL>
+      <LI>Call the <CODE>emu_exec_decoded()</CODE> userop: This is probably the most common method,
+      and is usually the last Sleigh statement in the injected semantics. This userop, which is
+      defined by the emulator, instructs it to decode and execute the instruction at the program
+      counter, effectively incorporating the original instruction's semantics. If this is not the
+      last statement of the injection, please consider: If the instruction transfers control, the
+      remainder of the injection is <EM>not</EM> executed. If the instruction falls through, the
+      remainder of the injection <EM>is</EM> executed.</LI>
+
+      <LI>Call the <CODE>emu_skip_decoded()</CODE> userop: This is a less common method, and is
+      usually the last Sleigh statement in the injected semantics. This userop, which is defined by
+      the emulator, instructs it to decode but skip the instruction at the program counter.
+      (Decoding is necessary to determine the instruction's length.) Use this when the intent is to
+      replace the original instruction's semantics. This will ensure the program counter advances
+      without actually executing the original instruction. No matter the original instruction's
+      control flow, this imposes fall through. It may be used to skip over function calls or
+      jumps.</LI>
+
+      <LI>Use a control transfer statement: This is probably the second most common method, and
+      includes the Sleigh keywords <CODE>call</CODE>, <CODE>goto</CODE>, and <CODE>return</CODE>.
+      Note that just as in processor specifications, a control transfer statement will be the last
+      statement executed for the injection. It immediately sets the program counter, skipping the
+      remainder of the injection.</LI>
+    </UL>
+
+    <P>Here are a few examples:</P>
+
+    <UL>
+      <LI>
+        An unconditional breakpoint. This is the default injection. The first statement calls the
+        <CODE>emu_swi()</CODE> "emulator software interrupt" userop, which is defined by the
+        emulator. The second statement incorporates the semantics of the original instruction: 
+<PRE>
+emu_swi();
+emu_exec_decoded();
+</PRE>
+      </LI>
+
+      <LI>
+        A conditional breakpoint for <CODE>RAX &gt;= 0x1000</CODE>. This is a simple extension of
+        the unconditional breakpoint. The <CODE>emu_swi()</CODE> call is skipped if the inverse of
+        the condition is true: 
+<PRE>
+if RAX &lt; 0x1000 goto &lt;L1&gt;;
+  emu_swi();
+&lt;L1&gt;
+emu_exec_decoded();
+</PRE>
+      </LI>
+
+      <LI>
+        Stub a function, returning 0. This depends on the architecture and calling convention. Take
+        the AMD64 System V calling convention for example &mdash;
+        <CODE>x86:LE:64:default:gcc</CODE>. The injection, located at the function's entry or in
+        the program linkage table, would place the return value into the expected storage location
+        then replicate the behavior of <CODE>RET</CODE>: 
+<PRE>
+RAX = 0;
+RIP = *:8 RSP;
+RSP = RSP + 8;
+return [RIP];
+</PRE>
+      </LI>
+
+      <LI>
+        Force a <CODE>JZ</CODE> to be taken, without modifying the image. This depends on the
+        architecture. Take x86 for example. The injection, located on the conditional jump, would
+        simply set the flag accordingly then execute the original instruction: 
+<PRE>
+ZF = 1;
+emu_exec_decoded();
+</PRE>
+        Alternatively, suppose the example instruction is <CODE>JZ 0x00401234</CODE>. Then, the
+        injection can jump straight to the target: 
+<PRE>
+goto [0x00401234];
+</PRE>
+      </LI>
+
+      <LI>
+        Force a <CODE>JZ</CODE> to fall through, without modifying the image. The injection,
+        located on the conditional jump, would simply skip the instruction: 
+<PRE>
+emu_skip_decoded();
+</PRE>
+      </LI>
+    </UL>
 
     <H2>Filter Actions</H2>
 

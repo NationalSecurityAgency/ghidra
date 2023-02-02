@@ -38,6 +38,12 @@ import ghidra.util.exception.NotFoundException;
  */
 abstract public class ElfRelocationHandler implements ExtensionPoint {
 
+	/**
+	 * Fabricated Global Offset Table (GOT) name/prefix to be used when processing an object module
+	 * and a GOT must be fabricated to allow relocation processing.
+	 */
+	public static final String GOT_BLOCK_NAME = "%got";
+
 	abstract public boolean canRelocate(ElfHeader elf);
 
 	/**
@@ -55,12 +61,11 @@ abstract public class ElfRelocationHandler implements ExtensionPoint {
 	 * Relocation context for a specific Elf image and relocation table.  The relocation context
 	 * is used to process relocations and manage any data required to process relocations.
 	 * @param loadHelper Elf load helper
-	 * @param relocationTable Elf relocation table
 	 * @param symbolMap Elf symbol placement map
 	 * @return relocation context or null if unsupported
 	 */
 	public ElfRelocationContext createRelocationContext(ElfLoadHelper loadHelper,
-			ElfRelocationTable relocationTable, Map<ElfSymbol, Address> symbolMap) {
+			Map<ElfSymbol, Address> symbolMap) {
 		return null;
 	}
 

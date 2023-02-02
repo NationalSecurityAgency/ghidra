@@ -18,6 +18,7 @@ package ghidra.trace.model.time.schedule;
 import java.util.*;
 
 import ghidra.pcode.emu.PcodeMachine;
+import ghidra.pcode.emu.PcodeMachine.SwiMode;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
@@ -25,9 +26,18 @@ import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
+/**
+ * A sequence of emulator stepping commands, essentially comprising a "point in time."
+ */
 public class TraceSchedule implements Comparable<TraceSchedule> {
 	public static final TraceSchedule ZERO = TraceSchedule.snap(0);
 
+	/**
+	 * Create a schedule that consists solely of a snapshot
+	 * 
+	 * @param snap the snapshot key
+	 * @return the schedule
+	 */
 	public static final TraceSchedule snap(long snap) {
 		return new TraceSchedule(snap, new Sequence(), new Sequence());
 	}
@@ -337,11 +347,10 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	 */
 	public void execute(Trace trace, PcodeMachine<?> machine, TaskMonitor monitor)
 			throws CancelledException {
+		machine.setSoftwareInterruptMode(SwiMode.IGNORE_ALL);
 		TraceThread lastThread = getEventThread(trace);
-		lastThread =
-			steps.execute(trace, lastThread, machine, Stepper.instruction(), monitor);
-		lastThread =
-			pSteps.execute(trace, lastThread, machine, Stepper.pcode(), monitor);
+		lastThread = steps.execute(trace, lastThread, machine, Stepper.instruction(), monitor);
+		lastThread = pSteps.execute(trace, lastThread, machine, Stepper.pcode(), monitor);
 	}
 
 	/**
@@ -380,6 +389,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 			TaskMonitor monitor) throws CancelledException {
 		TraceThread lastThread = position.getLastThread(trace);
 		Sequence remains = steps.relativize(position.steps);
+		machine.setSoftwareInterruptMode(SwiMode.IGNORE_ALL);
 		if (remains.isNop()) {
 			Sequence pRemains = this.pSteps.relativize(position.pSteps);
 			lastThread =
@@ -388,8 +398,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 		else {
 			lastThread =
 				remains.execute(trace, lastThread, machine, Stepper.instruction(), monitor);
-			lastThread =
-				pSteps.execute(trace, lastThread, machine, Stepper.pcode(), monitor);
+			lastThread = pSteps.execute(trace, lastThread, machine, Stepper.pcode(), monitor);
 		}
 	}
 

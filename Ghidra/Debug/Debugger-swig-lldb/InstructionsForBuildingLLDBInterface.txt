@@ -4,27 +4,26 @@ To do this:
 (1) check the version for your copy of lldb:
 	lldb --version
 	
-If you have a version other than the most current (release/14.x), you will need to either 
-install v14 or generate the JNI interface for the version you have.
+If you have a version other than the most current (release/14.x), you will need to generate the JNI interface for the version you have.
 
 (2a) To install LLVM/lldb version 14:
 	- git clone https://github.com/llvm/llvm-project.git
 	- git checkout release/14.x
+	
+IF YOU WISH TO BUILD LLDB:
 	- cd llvm-project
 	- mkdir build && cd build
-	- cmake -G Ninja -DLLVM_ENABLE_PROJECTS="clang;libcxx;lldb" -DCMAKE_BUILD_TYPE=Release -DLLVM_USE_LINKER=gold ../llvm
+	- cmake -G Ninja -DLLVM_ENABLE_PROJECTS="clang;lldb" -DCMAKE_BUILD_TYPE=Release -DLLDB_INCLUDE_TESTS=off ../llvm
+	(on macos, you may also want to include -DLLDB_CODESIGN_IDENTIY="lldb_codesign")
 	- ninja lldb
 	- ninja lldb-server
 	- ninja install
 	
 (2b) To generate the JNI for your version
-	- git clone https://github.com/llvm/llvm-project.git
-	- git checkout release/YOUR_VERSION.x
-	- export LLVM_HOME=/path_to_llvm-project
-	
 	- cd Ghidra/Debug/Debugger-swig-lldb
 	- gradle generateSwig
 	- cp -r build/generated/src/main src
+	- If you are using the source (vs. a distribution), delete build/generated/src/main afterwards.
 
 If you have the most current version or have completed step (2), you can:
 
@@ -33,6 +32,7 @@ If you have the most current version or have completed step (2), you can:
 	- export LLVM_HOME=/path_to_llvm-project
 	- export LLVM_BUILD=/path_to_llvm_build_directory_or_whatever_contains_lib/liblldb.(so/dylib/dll)
 	 (for Windows, these vars should have the drive: prefix and probably not have spaces)
+	 NB: If you have built lldb from source, you may need to "ln -s liblldb.x.x.x.so/.dylb liblldb.so/.dylib".
 	- cd Ghidra/Debug/Debugger-swig-lldb
 	- gradle build
 	
@@ -53,8 +53,16 @@ TROUBLESHOOTING:
 (5) Link errors can also be caused by different architectures or platforms for the libraries.
 (6) You may need to set up the development environment before running gradle:
 		gradle -I gradle/support/fetchDependencies.gradle init
-(7) If you are using the homebrew installation of lldb, you may need to modify buildNatives.gradle 
-    to reflect the homebrew directory structure, e.g. $llvm_dir/lldb/include -> $llvm_dir/include.
+(7) If you are using the homebrew installation of lldb, you may need to modify build.gradle or 
+    buildNatives.gradle to reflect the homebrew directory structure, 
+    e.g. $llvm_dir/lldb/include -> $llvm_dir/include.
+(8) If you are compiling on macos, make sure you are compiling only the versions supported by your 
+    platform (by editing build.gradle or buildNatives.gradle).
+(9) If you are running with a very current version of swig, e.g. 4.1 or later, you may have to:
+	- edit llvm-project/lldb/bindings/interface/SBValueList.i and remove the two references to nothreadallow.
+	- edit the build.gradle or buildNatives.gradle and remove -D__STDC_LIMIT_MACROS
+	
+
     
     
     

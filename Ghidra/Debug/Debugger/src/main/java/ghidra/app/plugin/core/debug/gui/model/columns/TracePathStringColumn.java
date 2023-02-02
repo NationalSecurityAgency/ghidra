@@ -21,11 +21,19 @@ import ghidra.dbg.util.PathUtils;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.trace.model.Trace;
+import ghidra.util.table.column.GColumnRenderer;
 
 public class TracePathStringColumn extends AbstractDynamicTableColumn<PathRow, String, Trace> {
+	private final TracePathColumnRenderer<String> renderer = new TracePathColumnRenderer<>();
+
 	@Override
 	public String getColumnName() {
 		return "Path";
+	}
+
+	@Override
+	public GColumnRenderer<String> getColumnRenderer() {
+		return renderer;
 	}
 
 	@Override

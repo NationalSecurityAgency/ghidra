@@ -5,7 +5,7 @@
     <META name="generator" content=
     "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
 
-    <TITLE>Debugger: Model Service</TITLE>
+    <TITLE>Debugger: Emulation Service</TITLE>
     <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
     <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
   </HEAD>
@@ -26,20 +26,21 @@
 
     <P>This action is available whenever a program is active. It will create a new trace suitable
     for "pure emulation" of the current program starting at the current address. More precisely, it
-    will open a new blank trace, initializes it with the current program's memory map, allocates a
-    stack, and creates a thread whose program counter is initialized to the current address and
-    whose registers are initialized to the register context at the current address. Optionally, any
-    other initialization can be done by manually modifying the trace in the UI, or using a script.
-    The trace and/or p-code stepping actions can then be used to emulate.</P>
+    will open a new blank trace, initialize it with the current program's memory map, allocate a
+    stack, and create a thread whose program counter is initialized to the current address and
+    whose registers are initialized to the register context at that address. Optionally, any other
+    initialization can be done by manually modifying the trace in the UI, or using a script. The <A
+    href="help/topics/DebuggerControlPlugin/DebuggerControlPlugin.html#emu_actions">emulator
+    controls</A> can then be used.</P>
 
     <H3><A name="add_emulated_thread"></A> Add Emulated Thread</H3>
 
     <P>This action is available whenever a "pure emulation" trace is active. It spawns a new thread
-    in the current trace suitable for emulating starting at the current address. More precisely, it
-    allocates another stack and creates a new thread whose program counter is initialized to the
-    current address and whose registers are initialized to the register context at the current
-    address. Optionally, other registers can be initialized via the UI or a script. The new thread
-    is activated so that stepping actions will affect it by default.</P>
+    in the current trace suitable for emulation starting at the current address. More precisely, it
+    will allocate another stack and create a new thread whose program counter is initialized to the
+    current address and whose registers are initialized to the register context at that address.
+    Optionally, other registers can be initialized via the UI or a script. The new thread is
+    activated so that control actions will affect it by default.</P>
 
     <H3><A name="configure_emulator"></A> Configure Emulator</H3>
 

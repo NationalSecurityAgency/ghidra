@@ -48,7 +48,6 @@ public class FlatDarkUiDefaultsMapper extends FlatUiDefaultsMapper {
 		// our view background color so that they look like normal editable widgets
 		//
 		overrideColor("ComboBox.background", BG_VIEW_ID);
-		overrideColor("ComboBox.background", BG_VIEW_ID);
 		overrideColor("EditorPane.background", BG_VIEW_ID);
 		overrideColor("FormattedTextField.background", BG_VIEW_ID);
 		overrideColor("List.background", BG_VIEW_ID);
@@ -60,9 +59,9 @@ public class FlatDarkUiDefaultsMapper extends FlatUiDefaultsMapper {
 		overrideColor("Tree.background", BG_VIEW_ID);
 		overrideColor("Tree.textBackground", BG_VIEW_ID);
 		overrideColor("TextArea.background", BG_VIEW_ID);
-		overrideColor("TextArea.foreground", BG_VIEW_ID);
+		overrideColor("TextArea.foreground", FG_VIEW_ID);
 		overrideColor("TextPane.background", BG_VIEW_ID);
-		overrideColor("TextPane.foreground", BG_VIEW_ID);
+		overrideColor("TextPane.foreground", FG_VIEW_ID);
 	}
 
 }

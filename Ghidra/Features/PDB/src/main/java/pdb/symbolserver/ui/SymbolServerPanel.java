@@ -111,12 +111,11 @@ class SymbolServerPanel extends JPanel {
 		JPanel buttonPanel = buildButtonPanel();
 		JScrollPane tableScrollPane = buildTable();
 		defaultConfigNotice = new JPanel();
-		defaultConfigNotice
-				.add(new GHtmlLabel(
-					"<html><center><font color=\"" + Colors.ERROR.toHexString() + "\"><br>" +
-						"Missing / invalid configuration.<br><br>" +
-						"Using default search location:<br>" + "Program's Import Location<br>",
-					SwingConstants.CENTER));
+		GHtmlLabel label = new GHtmlLabel("<html><center><font color=\"" +
+			Colors.ERROR.toHexString() + "\"><br>Missing / invalid configuration.<br><br>" +
+			"Using default search location:<br>Program's Import Location<br>");
+		label.setHorizontalAlignment(SwingConstants.CENTER);
+		defaultConfigNotice.add(label);
 		defaultConfigNotice.setPreferredSize(tableScrollPane.getPreferredSize());
 
 		additionalSearchLocationsPanel = new JPanel();

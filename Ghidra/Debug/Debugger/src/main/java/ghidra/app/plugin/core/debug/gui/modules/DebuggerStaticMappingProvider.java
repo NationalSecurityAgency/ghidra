@@ -101,7 +101,8 @@ public class DebuggerStaticMappingProvider extends ComponentProviderAdapter
 
 		public MappingTableModel(PluginTool tool) {
 			super(tool, "Mappings", StaticMappingTableColumns.class,
-				TraceStaticMapping::getObjectKey, StaticMappingRow::new);
+				TraceStaticMapping::getObjectKey, StaticMappingRow::new,
+				StaticMappingRow::getMapping);
 		}
 	}
 

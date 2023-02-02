@@ -95,6 +95,11 @@ public class WatchLocationTrackingSpec implements LocationTrackingSpec {
 		return "&(" + expression + ")";
 	}
 
+	@Override
+	public String getLocationLabel() {
+		return "&watch";
+	}
+
 	/**
 	 * The tracking logic for a watch (Sleigh expression)
 	 */

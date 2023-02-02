@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.debug.gui.model;
 import java.util.*;
 
 import ghidra.app.plugin.PluginCategoryNames;
+import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.TraceActivatedPluginEvent;
 import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
@@ -112,12 +113,20 @@ public class DebuggerModelPlugin extends Plugin {
 		return Collections.unmodifiableList(disconnectedProviders);
 	}
 
+	private void coordinatesActivated(DebuggerCoordinates current) {
+		connectedProvider.coordinatesActivated(current);
+		synchronized (disconnectedProviders) {
+			for (DebuggerModelProvider p : disconnectedProviders) {
+				p.coordinatesActivated(current);
+			}
+		}
+	}
+
 	@Override
 	public void processEvent(PluginEvent event) {
 		super.processEvent(event);
-		if (event instanceof TraceActivatedPluginEvent) {
-			TraceActivatedPluginEvent ev = (TraceActivatedPluginEvent) event;
-			connectedProvider.coordinatesActivated(ev.getActiveCoordinates());
+		if (event instanceof TraceActivatedPluginEvent ev) {
+			coordinatesActivated(ev.getActiveCoordinates());
 		}
 		if (event instanceof TraceClosedPluginEvent) {
 			TraceClosedPluginEvent ev = (TraceClosedPluginEvent) event;

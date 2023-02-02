@@ -16,23 +16,20 @@
 package ghidra.app.plugin.core.debug.gui.stack;
 
 import java.awt.BorderLayout;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.Component;
+import java.awt.event.*;
 import java.util.*;
 import java.util.function.*;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
+import javax.swing.table.*;
 
-import docking.widgets.table.CustomToStringCellRenderer;
-import docking.widgets.table.DefaultEnumeratedColumnTableModel;
+import docking.widgets.table.*;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.services.*;
-import ghidra.dbg.DebugModelConventions;
-import ghidra.dbg.target.TargetStackFrame;
+import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.AutoService;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
@@ -52,8 +49,7 @@ import ghidra.trace.util.TraceRegisterUtils;
 import ghidra.util.Swing;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
-import utilities.util.SuppressableCallback;
-import utilities.util.SuppressableCallback.Suppression;
+import ghidra.util.table.column.AbstractGColumnRenderer;
 
 public class DebuggerLegacyStackPanel extends JPanel {
 
@@ -202,8 +198,6 @@ public class DebuggerLegacyStackPanel extends JPanel {
 
 	@AutoServiceConsumed
 	private DebuggerTraceManagerService traceManager;
-	// @AutoServiceConsumed  by method
-	private DebuggerModelService modelService;
 	// @AutoServiceConsumed via method
 	DebuggerStaticMappingService mappingService;
 	@AutoServiceConsumed
@@ -213,6 +207,23 @@ public class DebuggerLegacyStackPanel extends JPanel {
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
 
+	final TableCellRenderer boldCurrentRenderer = new AbstractGColumnRenderer<Object>() {
+		@Override
+		public String getFilterString(Object t, Settings settings) {
+			return t == null ? "<null>" : t.toString();
+		}
+
+		@Override
+		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
+			super.getTableCellRendererComponent(data);
+			StackFrameRow row = (StackFrameRow) data.getRowObject();
+			if (row != null && row.getFrameLevel() == current.getFrame()) {
+				setBold();
+			}
+			return this;
+		}
+	};
+
 	// Table rows access this for function name resolution
 	DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
 	private Trace currentTrace; // Copy for transition
@@ -221,8 +232,6 @@ public class DebuggerLegacyStackPanel extends JPanel {
 
 	private ForStackListener forStackListener = new ForStackListener();
 	private ForFunctionsListener forFunctionsListener = new ForFunctionsListener();
-
-	private final SuppressableCallback<Void> cbFrameSelected = new SuppressableCallback<>();
 
 	protected final StackTableModel stackTableModel;
 	protected GhidraTable stackTable;
@@ -246,33 +255,23 @@ public class DebuggerLegacyStackPanel extends JPanel {
 				return;
 			}
 			contextChanged();
-			activateSelectedFrame();
 		});
 
 		stackTable.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
-				if (e.getClickCount() < 2 || e.getButton() != MouseEvent.BUTTON1) {
-					return;
+				if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
+					activateSelectedFrame();
 				}
-				if (listingService == null) {
-					return;
-				}
-				if (myActionContext == null) {
-					return;
-				}
-				Address pc = myActionContext.getFrame().getProgramCounter();
-				if (pc == null) {
-					return;
-				}
-				listingService.goTo(pc, true);
 			}
-
+		});
+		stackTable.addKeyListener(new KeyAdapter() {
 			@Override
-			public void mouseReleased(MouseEvent e) {
-				int selectedRow = stackTable.getSelectedRow();
-				StackFrameRow row = stackTableModel.getRowObject(selectedRow);
-				rowActivated(row);
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+					activateSelectedFrame();
+					e.consume(); // lest it select the next row down
+				}
 			}
 		});
 
@@ -281,8 +280,14 @@ public class DebuggerLegacyStackPanel extends JPanel {
 
 		TableColumn levelCol = columnModel.getColumn(StackTableColumns.LEVEL.ordinal());
 		levelCol.setPreferredWidth(25);
-		TableColumn baseCol = columnModel.getColumn(StackTableColumns.PC.ordinal());
-		baseCol.setCellRenderer(CustomToStringCellRenderer.MONO_OBJECT);
+		levelCol.setCellRenderer(boldCurrentRenderer);
+		TableColumn pcCol = columnModel.getColumn(StackTableColumns.PC.ordinal());
+		pcCol.setCellRenderer(CustomToStringCellRenderer.MONO_OBJECT);
+		pcCol.setCellRenderer(boldCurrentRenderer);
+		TableColumn funcCol = columnModel.getColumn(StackTableColumns.FUNCTION.ordinal());
+		funcCol.setCellRenderer(boldCurrentRenderer);
+		TableColumn commCol = columnModel.getColumn(StackTableColumns.COMMENT.ordinal());
+		commCol.setCellRenderer(boldCurrentRenderer);
 	}
 
 	protected void contextChanged() {
@@ -293,37 +298,13 @@ public class DebuggerLegacyStackPanel extends JPanel {
 	}
 
 	protected void activateSelectedFrame() {
-		// TODO: Action to toggle sync?
 		if (myActionContext == null) {
 			return;
 		}
 		if (traceManager == null) {
 			return;
 		}
-		cbFrameSelected.invoke(() -> {
-			traceManager.activateFrame(myActionContext.getFrame().getFrameLevel());
-		});
-	}
-
-	private void rowActivated(StackFrameRow row) {
-		if (row == null) {
-			return;
-		}
-		TraceStackFrame frame = row.frame;
-		if (frame == null) {
-			return;
-		}
-		TraceThread thread = frame.getStack().getThread();
-		Trace trace = thread.getTrace();
-		TraceRecorder recorder = modelService.getRecorder(trace);
-		if (recorder == null) {
-			return;
-		}
-		TargetStackFrame targetFrame = recorder.getTargetStackFrame(thread, frame.getLevel());
-		if (targetFrame == null || !targetFrame.isValid()) {
-			return;
-		}
-		DebugModelConventions.requestActivation(targetFrame);
+		traceManager.activateFrame(myActionContext.getFrame().getFrameLevel());
 	}
 
 	protected void updateStack() {
@@ -344,8 +325,6 @@ public class DebuggerLegacyStackPanel extends JPanel {
 		}
 
 		stackTableModel.fireTableDataChanged();
-
-		selectCurrentFrame();
 	}
 
 	protected void doSetCurrentStack(TraceStack stack) {
@@ -411,7 +390,6 @@ public class DebuggerLegacyStackPanel extends JPanel {
 		else {
 			doSetCurrentStack(stack);
 		}
-		selectCurrentFrame();
 	}
 
 	private void removeOldListeners() {
@@ -441,29 +419,22 @@ public class DebuggerLegacyStackPanel extends JPanel {
 		current = coordinates;
 		doSetTrace(current.getTrace());
 		loadStack();
+		selectCurrentFrame();
 	}
 
 	protected void selectCurrentFrame() {
-		try (Suppression supp = cbFrameSelected.suppress(null)) {
-			StackFrameRow row =
-				stackTableModel.findFirst(r -> r.getFrameLevel() == current.getFrame());
-			if (row == null) {
-				// Strange
-				stackTable.clearSelection();
-			}
-			else {
-				stackFilterPanel.setSelectedItem(row);
-			}
+		StackFrameRow row = stackTableModel.findFirst(r -> r.getFrameLevel() == current.getFrame());
+		if (row == null) {
+			// Strange
+			stackTable.clearSelection();
+		}
+		else {
+			stackFilterPanel.setSelectedItem(row);
 		}
 	}
 
 	public DebuggerStackActionContext getActionContext() {
 		return myActionContext;
-	}
-
-	@AutoServiceConsumed
-	public void setModelService(DebuggerModelService modelService) {
-		this.modelService = modelService;
 	}
 
 	@AutoServiceConsumed

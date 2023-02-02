@@ -33,7 +33,7 @@ import ghidra.trace.model.program.TraceProgramView;
 
 @ServiceInfo( //
 	defaultProvider = DebuggerLogicalBreakpointServicePlugin.class,
-	description = "Aggregate breakpoints for programs and live traces")
+	description = "Aggregate breakpoints for programs and traces")
 public interface DebuggerLogicalBreakpointService {
 	/**
 	 * Get all logical breakpoints known to the tool.
@@ -54,11 +54,11 @@ public interface DebuggerLogicalBreakpointService {
 	NavigableMap<Address, Set<LogicalBreakpoint>> getBreakpoints(Program program);
 
 	/**
-	 * Get a map of addresses to collected logical breakpoints (at present) for a given trace.
+	 * Get a map of addresses to collected logical breakpoints for a given trace.
 	 * 
 	 * <p>
-	 * The trace must be associated with a live target. The returned map collects live breakpoints
-	 * in the recorded target, using trace breakpoints from the recorder's current snapshot.
+	 * The map only includes breakpoints visible in the trace's primary view. Visibility depends on
+	 * the view's snapshot.
 	 * 
 	 * @param trace the trace database
 	 * @return the map of logical breakpoints
@@ -78,12 +78,11 @@ public interface DebuggerLogicalBreakpointService {
 	Set<LogicalBreakpoint> getBreakpointsAt(Program program, Address address);
 
 	/**
-	 * Get the collected logical breakpoints (at present) at the given trace location.
+	 * Get the collected logical breakpoints at the given trace location.
 	 * 
 	 * <p>
-	 * The trace must be associated with a live target. The returned collection includes live
-	 * breakpoints in the recorded target, using trace breakpoints from the recorders' current
-	 * snapshot.
+	 * The set only includes breakpoints visible in the trace's primary view. Visibility depends on
+	 * the view's snapshot.
 	 * 
 	 * @param trace the trace database
 	 * @param address the address
@@ -95,8 +94,8 @@ public interface DebuggerLogicalBreakpointService {
 	 * Get the logical breakpoint of which the given trace breakpoint is a part
 	 * 
 	 * <p>
-	 * If the given trace breakpoint is not part of any logical breakpoint, e.g., because it is not
-	 * on a live target, then null is returned.
+	 * If the given trace breakpoint is not part of any logical breakpoint, e.g., because the trace
+	 * is not opened in the tool or events are still being processed, then null is returned.
 	 * 
 	 * @param bpt the trace breakpoint
 	 * @return the logical breakpoint, or null
@@ -108,8 +107,8 @@ public interface DebuggerLogicalBreakpointService {
 	 * 
 	 * <p>
 	 * The {@code program} field for the location may be either a program database (static image) or
-	 * a view for a trace associated with a live target. If it is the latter, the view's current
-	 * snapshot is ignored, in favor of the associated recorder's current snapshot.
+	 * a view for a trace. If it is the latter, the view's snapshot is ignored in favor of the
+	 * trace's primary view's snapshot.
 	 * 
 	 * <p>
 	 * If {@code program} is a static image, this is equivalent to using
@@ -252,8 +251,7 @@ public interface DebuggerLogicalBreakpointService {
 	}
 
 	/**
-	 * Create an enabled breakpoint at the given program location and each mapped live trace
-	 * location.
+	 * Create an enabled breakpoint at the given program location and each mapped trace location.
 	 * 
 	 * <p>
 	 * The implementation should take care not to create the same breakpoint multiple times. The
@@ -278,12 +276,12 @@ public interface DebuggerLogicalBreakpointService {
 	 * this is the case, the breakpoint will have no name.
 	 * 
 	 * <p>
-	 * Note, the debugger ultimately determines the placement behavior. If it is managing multiple
-	 * targets, it is possible the breakpoint will be effective in another trace. This fact should
-	 * be reflected correctly in the resulting logical markings once all resulting events have been
-	 * processed.
+	 * Note for live targets, the debugger ultimately determines the placement behavior. If it is
+	 * managing multiple targets, it is possible the breakpoint will be effective in another trace.
+	 * This fact should be reflected correctly in the resulting logical markings once all resulting
+	 * events have been processed.
 	 * 
-	 * @param trace the given trace, which must be live
+	 * @param trace the given trace
 	 * @param address the address in the trace (as viewed in the present)
 	 * @param length size of the breakpoint, may be ignored by debugger
 	 * @param kinds the kinds of breakpoint
@@ -367,7 +365,7 @@ public interface DebuggerLogicalBreakpointService {
 	CompletableFuture<Void> deleteAll(Collection<LogicalBreakpoint> col, Trace trace);
 
 	/**
-	 * Presuming the given locations are live, enable them
+	 * Enable the given locations
 	 * 
 	 * @param col the trace breakpoints
 	 * @return a future which completes when the command has been processed
@@ -375,7 +373,7 @@ public interface DebuggerLogicalBreakpointService {
 	CompletableFuture<Void> enableLocs(Collection<TraceBreakpoint> col);
 
 	/**
-	 * Presuming the given locations are live, disable them
+	 * Disable the given locations
 	 * 
 	 * @param col the trace breakpoints
 	 * @return a future which completes when the command has been processed
@@ -383,7 +381,7 @@ public interface DebuggerLogicalBreakpointService {
 	CompletableFuture<Void> disableLocs(Collection<TraceBreakpoint> col);
 
 	/**
-	 * Presuming the given locations are live, delete them
+	 * Delete the given locations
 	 * 
 	 * @param col the trace breakpoints
 	 * @return a future which completes when the command has been processed

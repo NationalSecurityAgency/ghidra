@@ -1265,6 +1265,7 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		createExternalFunction("7");
 		createExternalLabel("8");
 
+		// test restricted address range
 		AddressSet set = new AddressSet(addr(0), addr(50));
 		set.addRange(addr(300), addr(350));
 		set.addRange(addr(500), addr(1000));
@@ -1275,22 +1276,48 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		// External space before memory space
 		Symbol s = it.next();
 		assertNotNull(s);
-		assertEquals("7", s.getName());
+		assertEquals("Test::7", s.getName(true));
 		assertEquals(extAddr(1), s.getAddress());
 		s = it.next();
 		assertNotNull(s);
-		assertEquals("8", s.getName());
+		assertEquals("Test::8", s.getName(true));
 		assertEquals(extAddr(2), s.getAddress());
 
 		s = it.next();
 		assertNotNull(s);
+		assertEquals("3", s.getName(true));
 		assertEquals(addr(300), s.getAddress());
 		s = it.next();
 		assertNotNull(s);
+		assertEquals("5", s.getName(true));
 		assertEquals(addr(500), s.getAddress());
 
 		assertTrue(!it.hasNext());
 		assertNull(it.next());
+
+		// test all memory/external
+		it = st.getPrimarySymbolIterator((AddressSetView) null, true);
+
+		assertTrue(it.hasNext());
+		s = it.next();
+		assertNotNull(s);
+		assertEquals("Test::7", s.getName(true));
+
+		assertTrue(it.hasNext());
+		s = it.next();
+		assertNotNull(s);
+		assertEquals("Test::8", s.getName(true));
+
+		for (int i = 1; i <= 6; i++) {
+			assertTrue(it.hasNext());
+			s = it.next();
+			assertNotNull(s);
+			assertEquals(Integer.toString(i), s.getName(true));
+		}
+
+		assertTrue(!it.hasNext());
+		assertNull(it.next());
+
 	}
 
 	@Test
@@ -1433,12 +1460,31 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		createLabel(addr(100), "1");
 		createLabel(addr(200), "2");
 		createLabel(addr(300), "3");
+		Function extFunc = createExternalFunction("X");
+		createExternalLabel("Y");
 
 		Function f1 = createFunction("A", addr(150));
 		Function f2 = createFunction("B", addr(250));
 
-		SymbolIterator it =
-			st.getSymbols(new AddressSet(addr(0), addr(5000)), SymbolType.FUNCTION, true);
+		// test over constrained address set
+		AddressSet set = new AddressSet(addr(0), addr(200));
+		set.addRange(AddressSpace.EXTERNAL_SPACE.getMinAddress(),
+			AddressSpace.EXTERNAL_SPACE.getMaxAddress());
+
+		SymbolIterator it = st.getSymbols(set, SymbolType.FUNCTION, true);
+
+		assertTrue(it.hasNext());
+		assertEquals(extFunc.getSymbol(), it.next());
+
+		assertTrue(it.hasNext());
+		assertEquals(f1.getSymbol(), it.next());
+
+		assertFalse(it.hasNext());
+
+		it = st.getSymbols(null, SymbolType.FUNCTION, true);
+
+		assertTrue(it.hasNext());
+		assertEquals(extFunc.getSymbol(), it.next());
 
 		assertTrue(it.hasNext());
 		assertEquals(f1.getSymbol(), it.next());
@@ -2440,11 +2486,11 @@ public class SymbolManagerTest extends AbstractGhidraHeadedIntegrationTest {
 				.getSymbol();
 	}
 
-	private Symbol createExternalFunction(String name)
+	private Function createExternalFunction(String name)
 			throws InvalidInputException, DuplicateNameException {
 		ExternalManager externalManager = program.getExternalManager();
 		return externalManager.addExtFunction("Test", name, null, SourceType.USER_DEFINED)
-				.getSymbol();
+				.getFunction();
 	}
 
 }

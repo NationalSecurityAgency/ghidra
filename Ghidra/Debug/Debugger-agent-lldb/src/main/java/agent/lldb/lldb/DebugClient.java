@@ -305,7 +305,11 @@ public interface DebugClient extends DebugClientReentrant {
 		}
 		if (modelObject instanceof SBFrame) {
 			SBFrame frame = (SBFrame) modelObject;
-			return Long.toHexString(frame.GetFrameID());
+			int frameId = (int)frame.GetFrameID();
+			if (frameId < 0) {
+				frameId = 0;
+			}
+			return Integer.toString(frameId);
 		}
 		if (modelObject instanceof SBValue) {
 			SBValue val = (SBValue) modelObject;
@@ -351,7 +355,6 @@ public interface DebugClient extends DebugClientReentrant {
 			case 0:	// eStateInvalid
 				return TargetExecutionState.RUNNING;
 			case 1: // eStateUnloaded
-				return TargetExecutionState.INACTIVE;
 			case 2: // eStateConnected
 			case 3: // eStateAttaching
 			case 4: // eStateLaunching
@@ -385,7 +388,7 @@ public interface DebugClient extends DebugClientReentrant {
 
 	SBProcess attachProcess(DebugServerId si, int keyType, String key, boolean wait, boolean async);
 
-	SBProcess connectRemote(DebugServerId localServer, String key, boolean auto, boolean async);
+	SBProcess connectRemote(DebugServerId localServer, String key, boolean auto, boolean async, boolean kernel);
 
 	SBProcess createProcess(DebugServerId si, String fileName);
 

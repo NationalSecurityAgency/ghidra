@@ -85,7 +85,8 @@ public class ObjectNode extends GTreeSlowLoadingNode {  //extends GTreeNode
 				if (cf != null) {
 					// NB: We're allowed to do this because we're guaranteed to be 
 					//   in our own thread by the GTreeSlowLoadingNode
-					ObjectContainer oc = cf.get(60, TimeUnit.SECONDS);
+					ObjectContainer oc =
+						cf.get(tree.getProvider().getNodeTimeout(), TimeUnit.SECONDS);
 					return tree.update(oc);
 				}
 			}

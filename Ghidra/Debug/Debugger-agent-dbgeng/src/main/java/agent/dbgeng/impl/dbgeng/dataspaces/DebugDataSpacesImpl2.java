@@ -44,6 +44,9 @@ public class DebugDataSpacesImpl2 extends DebugDataSpacesImpl1 {
 		if (hr.equals(COMUtilsExtra.E_NOTIMPLEMENTED)) {
 			return null;
 		}
+		if (hr.equals(COMUtilsExtra.E_NOINTERFACE)) {
+			return null;
+		}
 		COMUtils.checkRC(hr);
 
 		return new DebugMemoryBasicInformation(pInfo.BaseAddress.longValue(),

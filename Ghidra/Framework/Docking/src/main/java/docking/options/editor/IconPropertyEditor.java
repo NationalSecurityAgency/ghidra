@@ -102,10 +102,44 @@ public class IconPropertyEditor extends PropertyEditorSupport {
 		}
 
 		private void updateDropDownDataModel(Icon icon) {
-			Set<Icon> icons = ResourceManager.getLoadedUrlIcons();
+			Set<Icon> icons = getCoreIcons();
 			icons.add(icon);
 			dataModel.setData(new ArrayList<>(icons));
 			dropDown.setSelectedValue(icon);
+		}
+
+		/**
+		 * Returns all icons loaded by core Ghidra modules. For this use, we only want to use
+		 * icons that are part of a standard distribution because if they are exported, they may
+		 * not be available on import. Non-core icons can be used by picking them from the file
+		 * system.
+		 * @Return all icons loaded by core Ghidra modules
+		 */
+		private Set<Icon> getCoreIcons() {
+			Set<Icon> loadedIcons = ResourceManager.getLoadedIcons();
+			Set<Icon> filtered = new HashSet<>();
+			for (Icon icon : loadedIcons) {
+				if (isCoreIcon(icon)) {
+					filtered.add(icon);
+				}
+			}
+			return filtered;
+		}
+
+		private boolean isCoreIcon(Icon icon) {
+			if (icon instanceof UrlImageIcon urlIcon) {
+				String path = urlIcon.getUrl().getPath();
+				if (path.contains("Ghidra/Framework")) {
+					return true;
+				}
+				if (path.contains("Ghidra/Features")) {
+					return true;
+				}
+				if (path.contains("Ghidra/Debug")) {
+					return true;
+				}
+			}
+			return false;
 		}
 
 		private void build() {

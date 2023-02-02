@@ -33,7 +33,7 @@ public class PickProviderDialog extends DialogComponentProvider {
 	private static String lastSelectedProviderDescription;
 
 	private List<GhidraScriptProvider> providers;
-	private ListPanel listPanel;
+	private ListPanel<GhidraScriptProvider> listPanel;
 	private JComponent parent;
 	private boolean wasCancelled;
 
@@ -61,11 +61,12 @@ public class PickProviderDialog extends DialogComponentProvider {
 	 * @param testItems values to populate model with
 	 * @param defaultItem the default selection
 	 */
-	public PickProviderDialog(List<String> testItems, String defaultItem) {
+	public PickProviderDialog(List<GhidraScriptProvider> testItems,
+			GhidraScriptProvider defaultItem) {
 		super("New Script: Type");
 
-		DefaultListModel<String> listModel = new DefaultListModel<>();
-		for (String item : testItems) {
+		DefaultListModel<GhidraScriptProvider> listModel = new DefaultListModel<>();
+		for (GhidraScriptProvider item : testItems) {
 			listModel.addElement(item);
 		}
 
@@ -143,8 +144,8 @@ public class PickProviderDialog extends DialogComponentProvider {
 		close();
 	}
 
-	private JPanel buildWorkPanel(DefaultListModel<?> listModel) {
-		listPanel = new ListPanel();
+	private JPanel buildWorkPanel(DefaultListModel<GhidraScriptProvider> listModel) {
+		listPanel = new ListPanel<>();
 		listPanel.setListModel(listModel);
 		listPanel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		listPanel.setSelectedIndex(0);

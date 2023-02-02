@@ -81,7 +81,7 @@ public class LldbModelTargetBreakpointContainerImpl extends LldbModelTargetObjec
 		LldbModelImpl impl = (LldbModelImpl) model;
 		impl.deleteModelObject(info);
 		changeElements(List.of( //
-			DebugClient.getId(getModelObject()) //
+			DebugClient.getId(info) //
 		), List.of(), Map.of(), "Deleted");
 	}
 

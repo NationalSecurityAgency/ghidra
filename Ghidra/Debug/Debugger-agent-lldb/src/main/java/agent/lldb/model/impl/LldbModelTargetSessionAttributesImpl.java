@@ -57,6 +57,14 @@ public class LldbModelTargetSessionAttributesImpl extends LldbModelTargetObjectI
 
 		SBTarget target = (SBTarget) session.getModelObject();
 		String[] triple = target.GetTriple().split("-");
+		String arch = "x86_64";
+		String manufacturer = "unknown";
+		String os = System.getProperty("os.name").toLowerCase();
+		if (triple.length == 3) {
+			arch = triple[0];
+			manufacturer = triple[1];
+			os = triple[2];
+		} 
 		ByteOrder order = target.GetByteOrder();
 		String orderStr = "invalid";
 		if (order.equals(ByteOrder.eByteOrderLittle)) {
@@ -73,9 +81,9 @@ public class LldbModelTargetSessionAttributesImpl extends LldbModelTargetObjectI
 			platformAttributes, //
 			environment //
 		), Map.of( //
-			ARCH_ATTRIBUTE_NAME, triple[0], //
+			ARCH_ATTRIBUTE_NAME, arch, //
 			DEBUGGER_ATTRIBUTE_NAME, "lldb", //
-			OS_ATTRIBUTE_NAME, triple[2], //
+			OS_ATTRIBUTE_NAME, os, //
 			ENDIAN_ATTRIBUTE_NAME, orderStr //
 		), "Initialized");
 

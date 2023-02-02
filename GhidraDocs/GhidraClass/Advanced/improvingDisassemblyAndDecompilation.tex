@@ -5,7 +5,6 @@
 \usepackage{hyperref}
 
 %TODO: x64 cspec double pairs in xmm0, xmm1
-%multi-dimensional array notation?
 
 \mode<presentation>
 {
@@ -81,7 +80,6 @@
 
 \author{}
 \title{}
-
 \begin{frame}
 \frametitle{Table of Contents}
 \tableofcontents[sections={1-5},hideallsubsections]
@@ -120,7 +118,7 @@
 
 \section{Improving Disassembly}
 
-\subsection{Evaluating Analysis: The Entropy and Overview Windows}
+\subsection{Evaluating Analysis: The Entropy and Overview Sidebars}
 
 \begin{frame}
 \begin{block}{Evaluation} 
@@ -160,7 +158,7 @@ do drastic things like halting the execution of the program.
 \item Open and analyze the file \textbf{noReturn}. Note: for all exercises, use the default analyzers unless otherwise specified.
 \item Open the \textbf{Bookmarks} window and examine the \textbf{Error} bookmarks. There should be two errors.
 \item These errors are due to one non-returning function that Ghidra doesn't know about.  Identify this function and mark it as non-returning (right-click on the name of the function in
-the decompiler, select \textbf{Edit Function Signature} and select the \textbf{No Return} box).
+the decompiler, select \textbf{Edit Function Signature}, and then check the \textbf{No Return} box).
 \item Verify that the errors are corrected after marking the function as non-returning.
 \end{enumerate}
 \end{block}
@@ -202,11 +200,11 @@ start of a function.
 \begin{frame}
 \begin{block}{Finding Functions}
 \begin{itemize}
-\item Ghidra has an experimental plugin for exploring how functions already found in a program begin and using that information to find additional functions.
-\item To enable it from the Code Browser: \textbf{File} $\rightarrow$ \textbf{Configure...}, click on the (upper right) plug icon, and select the 
-\textbf{Function Bit Patterns Explorer} plugin.
-\item Then select \textbf{Tools} $\rightarrow$ \textbf{Explore Function Bit Patterns} from the Code Browser.
-\item Hovering over something in the tool and pressing \textbf{F1} will bring up the Ghidra help (this works for most parts of Ghidra).
+\item Ghidra has an experimental extension for finding additional functions in a program by training models on the functions that have already been found.
+\item To use it, first enable the \textbf{MachineLearning} extension from the Project Window via \textbf{File} $\rightarrow$ \textbf{Install Extensions...}
+\item Restart Ghidra, then ensure that the \textbf{RandomForestFunctionFinderPlugin} is enabled in the Code Browser 
+(\textbf{File} $\rightarrow$ \textbf{Configure...} then click on the plug icon in the upper right). 
+\item Then select \textbf{Search} $\rightarrow$ \textbf{For Code and Functions...} from the Code Browser.
 \end{itemize}
 \end{block}
 \end{frame}
@@ -215,8 +213,7 @@ start of a function.
 \begin{frame}
 \begin{block}{Finding Functions}
 \begin{itemize}
-\item The general strategy is to explore the instruction trees and byte sequences, select/combine/mine for interesting patterns, then send them to the \textbf{Pattern Clipboard} for
-evaluation.  See the help for details.
+\item The general strategy is to train several models using different choices of parameters, then select and apply the best one.  See the help for details.
 \item Another useful feature is the \textbf{Disassembled View} (accessed through the \textbf{Window} menu of the Code Browser).  This allows you to see what the bytes at the current
 address would disassemble to without actually disassembling them.
 \end{itemize}
@@ -231,15 +228,15 @@ address would disassemble to without actually disassembling them.
 \begin{frame}
 \begin{block}{Defining Data Types}
 \begin{itemize}
-\item One of the best ways to clean up the decompiled code is to define data structures.
-\item You can do this manually through the \textbf{Data Type Manager}.
+\item One of the best ways to clean up the decompiled code is to define/apply data types.
+\item You can define types manually through the \textbf{Data Type Manager}.
 \item You can also have Ghidra help you by right-clicking on a variable in the decompiler view and selecting 
 \begin{itemize}
 \item \textbf{Auto Create (Class) Structure}, or 
 \item \textbf{Auto Fill in (Class) Structure}.
 \end{itemize}
-\item Note: If you happen to have a C header file, you can parse data types from it by selecting \textbf{File} $\rightarrow$ \textbf{Parse C Source...} from the Code Browser
-(doesn't support C++ header files yet).
+\item Note: If you happen to have a C header file, you can parse data types from it by selecting \textbf{File} $\rightarrow$ \textbf{Parse C Source...} 
+from the Code Browser (doesn't support C++ header files yet).
 \end{itemize}
 \end{block}
 \end{frame}
@@ -386,8 +383,8 @@ by right-clicking on \textbf{animals} in the \textbf{Data Type Manager} and sele
 \setcounter{enumi}{3}
 \item Now, right-click on \textbf{animals} in the \textbf{Data Type Manager} and select \textbf{New} $\rightarrow$ \textbf{Structure...}
 \item Give the new structure the name \textbf{Animal\_vftable}.
-\item Fill in the structure with the data types corresponding to the virtual functions of the class \textbf{Animal}.  You can do this by double-clicking in an entry in 
-the \textbf{DataType} column and entering a name of a virtual function.  
+\item Fill in the structure with the data types corresponding to the virtual functions of the class \textbf{Animal}.  You can do this by double-clicking 
+on an entry in the \textbf{DataType} column and entering a name used when creating a function definition.  
 \item[] Notes:
 \begin{itemize}
 \item The order of the functions in the vftable is the same as the order they are called in the source code snippet.
@@ -409,9 +406,8 @@ the \textbf{DataType} column and entering a name of a virtual function.
 \item Apply the three function definition data types to the pointers in the table in the appropriate order.
 \item Select the table in the Listing, right-click, \textbf{Data}~$\rightarrow$~\textbf{Create Structure}
 \end{itemize}
-\item In main, re-type the variable passed to \textbf{printInfo} to have type \textbf{Animal *} and re-name it to \textbf{a}.
-\item Right-click on \textbf{a} and select \textbf{Auto Fill in Structure} (note that this does not say \textbf{Auto Create Structure} since Ghidra automatically created a default empty
-\textbf{Animal} structure).
+\item In main, re-type the variable passed to \textbf{printInfo} to have type \textbf{Animal *} and rename it to \textbf{a}. Note that this will eliminate the
+cast to \textbf{Animal *} of the argument passed to \textbf{printInfo}.
 \end{enumerate}
 \end{block}
 \end{frame}
@@ -419,7 +415,8 @@ the \textbf{DataType} column and entering a name of a virtual function.
 \begin{frame}
 \begin{block}{Exercise: Virtual Function Tables}
 \begin{enumerate}
-\setcounter{enumi}{9}
+\setcounter{enumi}{8}
+\item Right-click on \textbf{a} and select \textbf{Auto Fill in Structure} (note that this does not say \textbf{Auto Create Structure} since Ghidra automatically created a default empty \textbf{Animal} structure).
 \item Finally, edit the \textbf{Animal} structure itself so that the first field is an element of type \textbf{Animal\_vftable *} with name \textbf{Animal\_vftable}.
 \item Verify that the virtual function names appear in the decompilation of \textbf{main}.
 \end{enumerate}
@@ -441,10 +438,11 @@ the \textbf{DataType} column and entering a name of a virtual function.
 \begin{frame}
 \begin{block}{Refresher on Function Signatures in Ghidra:}
 \begin{itemize}
-\item Sometimes the signature of a function shown in the Listing (or in the \textbf{Functions} window) will not match the signature shown in the decompiler.
-\item This happens because the decompiler performs its own analysis to determine the function's signature.
-\item The decompiler re-analyzes the function each time it is decompiled.  
-\item The signature shown in the Listing is created when the function is (re-)created.  This is the signature that is stored in the Ghidra program database.
+\item In order to decompile \textbf{foo}, the decompiler needs to know the signatures of \textbf{foo} and any callees.
+\item If a needed signature has been saved to the program database by the user or by a ``high confidence'' analyzer (e.g., recognized as a library function), the
+decompiler will used the saved signature. 
+\item Otherwise, the decompiler will apply local heuristics to determine any needed signatures.  In this case, the signature of \textbf{foo} in the decompiler
+can differ from the one shown in the Listing, and two different calls to \textbf{bar} within \textbf{foo} could have different signatures.   
 \end{itemize}
 \end{block}
 \end{frame}
@@ -452,15 +450,26 @@ the \textbf{DataType} column and entering a name of a virtual function.
 \begin{frame}
 \begin{block}{Refresher on Function Signatures in Ghidra:}
 \begin{itemize}
-\item To transfer the decompiler's signature to the Listing, right-click on the function in the decompiler and select \textbf{Commit Params/Return}. The transfered signature will be
-saved to the program database.
-\item The situation is the same for the local variables of a function: right-click on the function in the decompiler and select \textbf{Commit Locals}. 
-\item[] Note: Usually it's better not to commit locals and instead to let the decompiler assign types to them automatically.  Committing locals can
-interfere with type propagation.
-\item Editing a function's signature manually, from either the Listing or the decompiler, commits the new signature to the program database.
+\item The default signature shown in the Listing is created when the function is (re-)created.  This is the signature that is stored in the Ghidra program database 
+(possibly with low confidence).
+\item To save the signature shown in the decompiler, right-click in the decompiler window and select \textbf{Commit Params/Return}. 
+\item Note that editing a function's signature manually, from either the Listing or the decompiler, commits the new signature to the program database.
 \end{itemize}
 \end{block}
 \end{frame}
+
+\begin{frame}
+\begin{block}{Refresher on Function Signatures in Ghidra:}
+\begin{itemize}
+\item To save the names of the local variables of a function to the program database, right-click in the decompiler window and select \textbf{Commit Local Names}. 
+\item Note that this action does not commit the type of the local variables. You can re-type a local variable to save the type, but oftentimes it is better to let
+the decompiler figure out the types of local variables on its own.  See the ``Forcing Data-types'' entry in the Ghidra help for more information. 
+
+\end{itemize}
+\end{block}
+\end{frame}
+
+
 
 \subsection{The Decompiler Parameter ID Analyzer}
 \begin{frame}
@@ -505,9 +514,9 @@ In other cases you should edit the signature of the called function directly.
 \begin{frame}
 \begin{block}{Exercise: Overriding Signatures}
 \begin{enumerate}
-\item Open and analyze the file \textbf{override.so}, then navigate to the function \textbf{overrideSignature}.  Override the signature of the call to \textbf{printf}, 
-if necessary, using the format string to determine number and types of the parameters to the call. Some of the parameters to \textbf{printf} are global variables; determine
-and apply their types. 
+\item Open and analyze the file \textbf{override.so}, then navigate to the function \textbf{overrideSignature}.  Override the signature of the call 
+to \textbf{printf}, if necessary, using the format string to determine number and types of the parameters to the call. Some of the parameters to 
+\textbf{printf} are global variables; determine and apply their types. 
 \end{enumerate}
 \end{block}
 \end{frame}
@@ -524,6 +533,8 @@ and apply their types.
 \item[] ~~~~\textbf{b}: \textbf{long}
 \item[] ~~~~\textbf{c}: \textbf{double}
 \item[] ~~~~\textbf{d}: \textbf{char *}
+\item Note: The \textbf{Variadic Function Signature Override} analyzer will do this analysis for you.  It's disabled by default, but you can 
+run it as a one-shot analyzer.
 \end{itemize}
 \end{block}
 \end{frame}
@@ -557,9 +568,11 @@ and apply their types.
 \begin{block}{Exercise: Custom Calling Conventions}
 \begin{enumerate}
 \setcounter{enumi}{5}
-\item Click on the entries in the \textbf{Storage} column to set the storage for each parameter/return value.
+\item Each row in the \textbf{Function Variables} table corresponds to a function parameter or return. Click on the entries in the \textbf{Storage} 
+column to set the storage for each entry.
 \item In the resulting \textbf{Storage Address Editor} window, click \textbf{Add} to add storage, then click on each
-table entry to modify.
+table entry to modify. In general, there can be several locations assigned to one parameter. For example, a given parameter might be a structure that is passed
+in several registers due to its size.  However, for this exercise, you will only need one location per parameter.
 \item You might find it helpful to remove some of the variable references Ghidra adds in the Listing, particularly to stack variables.  To do this, \textbf{Edit} 
 $\rightarrow$ \textbf{Tool Options} $\rightarrow$ \textbf{Listing Fields} $\rightarrow$ \textbf{Operands Field} from the Code Browser.
 \end{enumerate}
@@ -581,8 +594,8 @@ $\rightarrow$ \textbf{Tool Options} $\rightarrow$ \textbf{Listing Fields} $\righ
 \begin{frame}
 \begin{block}{Multiple Storage Locations}
 \begin{itemize}
-\item You may have noticed that you can add multiple storage locations for one parameter when editing a function signature.
-\item This is used (for example) for functions which return \textbf{register pairs}.
+\item As mentioned previously, you can add multiple storage locations for a single parameter or return when editing a function signature.
+\item A relatively common use of this is for functions that return \textbf{register pairs}.
 \end{itemize}
 \end{block}
 \end{frame}
@@ -752,9 +765,9 @@ For Block Type, select \textbf{Overlay} from the drop-down menu.
 \setcounter{enumi}{3}
 \item Next, go to address \texttt{0x1} in \textbf{syscall\_block} and create a function (in the Listing, select both the address and the \texttt{??} and press \texttt{f}).
 \item Edit this new function to give it the name \textbf{write} and the \textbf{syscall} calling convention.
-\item If you happen to know the parameters and their types you can add them.  Altervatively, select the new function \textbf{write} in the Code Browser, right-click on 
+\item If you happen to know the parameters and their types you can add them.  Alternatively, select the new function \textbf{write} in the Code Browser, right-click on 
 \textbf{generic\_clib\_64} in the \textbf{Data Type Manager}, and select \textbf{Apply Function Data Types}
-\item[] Note: the function we've created has no body. It's essentially an address to hang a function signature and to get cross-references.
+\item[] Note: the function we've created has no body. It's essentially an address to store a function signature and to get cross-references.
 \end{enumerate}
 \end{block}
 \end{frame}
@@ -794,7 +807,7 @@ but you might have to supply your own data type archive.
 \begin{block}{Fixing Switch Statements}
 \begin{itemize}
 \item Sometimes you will see warnings in the decompiler view stating that there are too many branches to recover a jumptable. 
-\item One reason for this is that there actually is a jump table, but the decompiler can't determine bounds on the switch variable.
+\item One reason for this is that there actually is a jumptable, but the decompiler can't determine bounds on the switch variable.
 \item In such cases, you can add the jump targets manually and then run the script \textbf{SwitchOverride.java}. 
 \item Note: To find such locations in a program, run the script \textbf{FindUnrecoveredSwitchesScript.java}.
 \end{itemize}
@@ -921,7 +934,7 @@ determine statically.
 \begin{block}{Exercise: Jumps Within Instructions}
 \begin{enumerate}
 \item Open and analyze the file \textbf{jumpWithinInstruction}, then navigate to the function \textbf{main}.
-\item You should see an error in the disassemly but correct decompilation (with a warning).  What's going on?
+\item You should see an error in the disassembly but correct decompilation (with a warning).  What's going on?
 \end{enumerate}
 \end{block}
 \end{frame}
@@ -989,7 +1002,7 @@ in the Listing.  Verify that the changes are reflected in the decompiler.
 \begin{frame}
 \begin{block}{Volatile Data}
 \begin{itemize}
-\item Marking a data element as volatile tells the decompile to assume that the value of a variable could change at any time.
+\item Marking a data element as volatile tells the decompiler to assume that the value of a variable could change at any time.
 \item This can prevent certain simplifications.
 \end{itemize}
 \end{block}
@@ -1020,6 +1033,7 @@ of the function \textbf{main} (make sure to re-enable unreachable code eliminati
 
 \section{Improving Decompilation: Setting Register Values}
 
+\subsection{How and Why to Set Register Values}
 \begin{frame}
 \begin{block}{Setting Register Values}
 \begin{itemize}
@@ -1033,7 +1047,7 @@ understand a function.  The decompiler will perform additional transformations, 
 \end{frame}
 
 \begin{frame}
-\begin{block}{Exercise: Global Variables}
+\begin{block}{Exercise: Global Variables in Registers}
 \begin{enumerate}
 \item Open and analyze the file \textbf{globalRegVars.so}, then navigate to the function \textbf{initRegisterPointerVar}.  
 \item This function stores the address of a global variable into a register.  Determine the address and the register.
@@ -1049,8 +1063,9 @@ understand a function.  The decompiler will perform additional transformations, 
 \begin{frame}
 \begin{block}{Exercise: Simplifying Transformations}
 \begin{enumerate}
-\item Open and analyze the file \textbf{setRegister}, then navigate to the function \textbf{switchFunc}.  Set the switch variable (in \textbf{RDI}) to a few different values and
-observe the effect on the decompiled code.
+\item Open and analyze the file \textbf{setRegister}, then navigate to the function \textbf{switchFunc}.  Set the switch variable (in \textbf{RDI}) to a few 
+different values and observe the effect on the decompiled code (recall that you must set the register value at the function entry point for it to be sent
+to the decompiler).
 \end{enumerate}
 \end{block}
 \end{frame}
@@ -1080,14 +1095,27 @@ observe the effect on the decompiled code.
 \end{block}
 \end{frame}
 
+\begin{frame}
+\begin{block}{Return Addresses Assigned to Local Variables}
+\begin{itemize}
+\item Another indication of an error when decompiling \textbf{foo} is a line such as
+\item[] \textbf{uVar1 = 0x12345678} 
+\item[] where 0x12345678 is an address in the body of \textbf{foo}.  This usually means that there's a problem with the decompiler's stack analysis.
+\end{itemize}
+\end{block}
+\end{frame}
+
 \subsection{Potential Causes}
 \begin{frame}
 \begin{block}{Potential Causes}
 \begin{enumerate}
-\item The decompiler has a function signature wrong (either the signature of the function being decompiled or one of its callees). 
-\item A common situation is some kind of size mismatch, for example, the decompiler thinks that a call returns a 32-bit value but sees all of \textbf{RAX} being used.  
-But then where did the high 32 bits come from?
+\item The decompiler has a function signature or calling convention wrong (for the function being decompiled or one of its callees). 
+\begin{itemize}
+\item A common situation is some kind of size mismatch, for example, the decompiler thinks that a call returns a 32-bit value but sees all of 
+\textbf{RAX} being used. But then where did the high 32 bits come from?
+\end{itemize}
 \item There's a register that actually contains a global parameter or is set as the side effect of a called function.
+\item There's a function that should be marked as non-returning.
 \end{enumerate}
 \end{block}
 \end{frame}
@@ -1102,6 +1130,7 @@ But then where did the high 32 bits come from?
 \item correcting function signatures
 \item correcting sizes of data types
 \item marking functions as inline
+\item marking functions as non-returning.
 \end{itemize}
 \item For example, if you see \textbf{in\_RAX} in the decompiled view, you should check if there's a call to a function whose return type is mistakenly marked as \textbf{void}.
 \end{itemize}
@@ -1112,10 +1141,21 @@ But then where did the high 32 bits come from?
 \begin{block}{Useful Tools}
 \begin{itemize}
 \item Script: \textbf{FindPotentialDecompilerProblems.java}: Decompiles all functions in a program, looks for problems, and displays them in a navigable table.
-\item Script: \textbf{CompareFunctionSizesScript.java}: Decompiles all functions in a program and displays a table which contains the size of each function (in instructions) and
-the size of each decompiled function (in Pcode operations). If a function has many instructions but the decompiled version is small, there could be an incorrect assumption regarding
-the return value.
-\item From the Code Browser, \textbf{Edit} $\rightarrow$ \textbf{Tool Options...} $\rightarrow$ \textbf{Decompiler} $\rightarrow$ \textbf{Analysis} $\rightarrow$ uncheck \textbf{Eliminate unreachable code}: might help diagnose issues.
+\item Script: \textbf{CompareFunctionSizesScript.java}: Decompiles all functions in a program and displays a table which contains the size of each function 
+(in instructions) and the size of each decompiled function (in Pcode operations). If a function has many instructions but the decompiled version is small, 
+there could be an incorrect assumption regarding the return value.
+\end{itemize}
+\end{block}
+\end{frame}
+
+
+\begin{frame}
+\begin{block}{Useful Tools}
+\begin{itemize}
+\item Script: \textbf{DecompilerStackProblemsFinderScript.java}: Decompiles all functions in a program and displays information about any local variables assigned
+values that are also addresses within the corresponding function's body.
+\item From the Code Browser, \textbf{Edit} $\rightarrow$ \textbf{Tool Options...} $\rightarrow$ \textbf{Decompiler} $\rightarrow$ \textbf{Analysis} 
+$\rightarrow$ uncheck \textbf{Eliminate unreachable code}: might help diagnose issues.
 \end{itemize}
 \end{block}
 \end{frame}

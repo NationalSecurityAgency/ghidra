@@ -17,7 +17,8 @@ package ghidra.app.util.bin.format.elf.relocation;
 
 import java.util.Map;
 
-import ghidra.app.util.bin.format.elf.*;
+import ghidra.app.util.bin.format.elf.ElfLoadHelper;
+import ghidra.app.util.bin.format.elf.ElfSymbol;
 import ghidra.app.util.bin.format.elf.extend.ARM_ElfExtension;
 import ghidra.program.model.address.Address;
 
@@ -26,9 +27,8 @@ class ARM_ElfRelocationContext extends ElfRelocationContext {
 	private final boolean applyPcBiasToRelativeRelocations;
 
 	protected ARM_ElfRelocationContext(ElfRelocationHandler handler, ElfLoadHelper loadHelper,
-			ElfRelocationTable relocationTable,
 			Map<ElfSymbol, Address> symbolMap) {
-		super(handler, loadHelper, relocationTable, symbolMap);
+		super(handler, loadHelper, symbolMap);
 
 		applyPcBiasToRelativeRelocations =
 			loadHelper.getOption(ARM_ElfExtension.APPLY_PC_BIAS_TO_RELATIVE_RELOCATIONS_OPTION_NAME,

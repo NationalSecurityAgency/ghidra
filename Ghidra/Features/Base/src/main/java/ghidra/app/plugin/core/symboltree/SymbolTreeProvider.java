@@ -196,7 +196,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 
 	protected void treeNodeCollapsed(TreePath path) {
 		Object lastPathComponent = path.getLastPathComponent();
-		if (lastPathComponent instanceof SymbolCategoryNode) {
+		if (lastPathComponent instanceof SymbolCategoryNode && !tree.hasFilterText()) {
 			tree.runTask(m -> ((SymbolCategoryNode) lastPathComponent).unloadChildren());
 		}
 	}

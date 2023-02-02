@@ -34,12 +34,11 @@ import ghidra.app.plugin.core.assembler.AssemblerPluginTestHelper;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
-import ghidra.app.plugin.core.debug.service.editing.DebuggerStateEditingServicePlugin;
+import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
 import ghidra.app.plugin.core.debug.service.platform.DebuggerPlatformServicePlugin;
 import ghidra.app.plugin.core.debug.service.workflow.DebuggerWorkflowServiceProxyPlugin;
 import ghidra.app.plugin.core.debug.workflow.DisassembleAtPcDebuggerBot;
 import ghidra.app.services.*;
-import ghidra.app.services.DebuggerStateEditingService.StateEditingMode;
 import ghidra.dbg.target.TargetEnvironment;
 import ghidra.dbg.target.schema.SchemaContext;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
@@ -406,12 +405,11 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 	@Test
 	public void testCurrentAssembleActionHostArm() throws Throwable {
 		// Assemble actions will think read-only otherwise
-		DebuggerStateEditingService editingService =
-			addPlugin(tool, DebuggerStateEditingServicePlugin.class);
+		DebuggerControlService controlService = addPlugin(tool, DebuggerControlServicePlugin.class);
 
 		createLegacyTrace("ARM:LE:32:v8", 0x00400000, () -> tb.buf(0x00, 0x00, 0x00, 0x00));
 		Address start = tb.addr(0x00400000);
-		editingService.setCurrentMode(tb.trace, StateEditingMode.WRITE_TRACE);
+		controlService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
 
 		// Ensure the mapper is added to the trace
 		assertNotNull(platformService.getMapper(tb.trace, null, 0));
@@ -438,13 +436,12 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 	@Test
 	public void testCurrentAssembleActionHostThumb() throws Throwable {
 		// Assemble actions will think read-only otherwise
-		DebuggerStateEditingService editingService =
-			addPlugin(tool, DebuggerStateEditingServicePlugin.class);
+		DebuggerControlService controlService = addPlugin(tool, DebuggerControlServicePlugin.class);
 
 		// Don't cheat here and choose v8T!
 		createLegacyTrace("ARM:LE:32:v8", 0x00400000, () -> tb.buf(0x00, 0x00));
 		Address start = tb.addr(0x00400000);
-		editingService.setCurrentMode(tb.trace, StateEditingMode.WRITE_TRACE);
+		controlService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
 
 		// Ensure the mapper is added to the trace
 		assertNotNull(platformService.getMapper(tb.trace, null, 0));
@@ -475,13 +472,12 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 	@Test
 	public void testCurrentAssembleActionGuestArm() throws Throwable {
 		// Assemble actions will think read-only otherwise
-		DebuggerStateEditingService editingService =
-			addPlugin(tool, DebuggerStateEditingServicePlugin.class);
+		DebuggerControlService controlService = addPlugin(tool, DebuggerControlServicePlugin.class);
 
 		TraceObjectThread thread =
 			createPolyglotTrace("armv8le", 0x00400000, () -> tb.buf(0x00, 0x00, 0x00, 0x00));
 		Address start = tb.addr(0x00400000);
-		editingService.setCurrentMode(tb.trace, StateEditingMode.WRITE_TRACE);
+		controlService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
 
 		// Ensure the mapper is added to the trace
 		assertNotNull(platformService.getMapper(tb.trace, thread.getObject(), 0));
@@ -510,13 +506,12 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 	@Test
 	public void testCurrentAssembleActionGuestThumb() throws Throwable {
 		// Assemble actions will think read-only otherwise
-		DebuggerStateEditingService editingService =
-			addPlugin(tool, DebuggerStateEditingServicePlugin.class);
+		DebuggerControlService controlService = addPlugin(tool, DebuggerControlServicePlugin.class);
 
 		TraceObjectThread thread =
 			createPolyglotTrace("armv8le", 0x00400000, () -> tb.buf(0x00, 0x00));
 		Address start = tb.addr(0x00400000);
-		editingService.setCurrentMode(tb.trace, StateEditingMode.WRITE_TRACE);
+		controlService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
 
 		// Ensure the mapper is added to the trace
 		assertNotNull(platformService.getMapper(tb.trace, thread.getObject(), 0));
@@ -568,12 +563,11 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 	@Test
 	public void testFixedAssembleActionsHostArm() throws Throwable {
 		// Assemble actions will think read-only otherwise
-		DebuggerStateEditingService editingService =
-			addPlugin(tool, DebuggerStateEditingServicePlugin.class);
+		DebuggerControlService controlService = addPlugin(tool, DebuggerControlServicePlugin.class);
 
 		createLegacyTrace("ARM:LE:32:v8", 0x00400000, () -> tb.buf());
 		Address start = tb.addr(0x00400000);
-		editingService.setCurrentMode(tb.trace, StateEditingMode.WRITE_TRACE);
+		controlService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
 
 		// Ensure the mapper is added to the trace
 		assertNotNull(platformService.getMapper(tb.trace, null, 0));
@@ -588,12 +582,11 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 	@Test
 	public void testFixedAssembleActionsGuestArm() throws Throwable {
 		// Assemble actions will think read-only otherwise
-		DebuggerStateEditingService editingService =
-			addPlugin(tool, DebuggerStateEditingServicePlugin.class);
+		DebuggerControlService controlService = addPlugin(tool, DebuggerControlServicePlugin.class);
 
 		TraceObjectThread thread = createPolyglotTrace("armv8le", 0x00400000, () -> tb.buf());
 		Address start = tb.addr(0x00400000);
-		editingService.setCurrentMode(tb.trace, StateEditingMode.WRITE_TRACE);
+		controlService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
 
 		// Ensure the mapper is added to the trace
 		assertNotNull(platformService.getMapper(tb.trace, thread.getObject(), 0));
@@ -608,12 +601,11 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 	@Test
 	public void testFixedAssembleActionsGuestThumb() throws Throwable {
 		// Assemble actions will think read-only otherwise
-		DebuggerStateEditingService editingService =
-			addPlugin(tool, DebuggerStateEditingServicePlugin.class);
+		DebuggerControlService controlService = addPlugin(tool, DebuggerControlServicePlugin.class);
 
 		TraceObjectThread thread = createPolyglotTrace("armv8le", 0x00400000, () -> tb.buf());
 		Address start = tb.addr(0x00400000);
-		editingService.setCurrentMode(tb.trace, StateEditingMode.WRITE_TRACE);
+		controlService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
 
 		// Ensure the mapper is added to the trace
 		assertNotNull(platformService.getMapper(tb.trace, thread.getObject(), 0));

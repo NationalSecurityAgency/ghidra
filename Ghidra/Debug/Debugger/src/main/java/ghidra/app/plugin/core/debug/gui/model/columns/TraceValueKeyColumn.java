@@ -23,8 +23,11 @@ import ghidra.dbg.util.PathUtils.TargetObjectKeyComparator;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.trace.model.Trace;
+import ghidra.util.table.column.GColumnRenderer;
 
 public class TraceValueKeyColumn extends AbstractDynamicTableColumn<ValueRow, String, Trace> {
+	private final TraceValueColumnRenderer<String> renderer = new TraceValueColumnRenderer<>();
+
 	@Override
 	public String getColumnName() {
 		return "Key";
@@ -34,6 +37,11 @@ public class TraceValueKeyColumn extends AbstractDynamicTableColumn<ValueRow, St
 	public String getValue(ValueRow rowObject, Settings settings, Trace data,
 			ServiceProvider serviceProvider) throws IllegalArgumentException {
 		return rowObject.getKey();
+	}
+
+	@Override
+	public GColumnRenderer<String> getColumnRenderer() {
+		return renderer;
 	}
 
 	@Override

@@ -121,7 +121,21 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		 */
 		@PcodeUserop
 		public void emu_swi() {
-			throw new InterruptPcodeExecutionException(null, null);
+			thread.swi();
+		}
+
+		/**
+		 * Notify the client of a failed Sleigh inject compilation.
+		 * 
+		 * <p>
+		 * To avoid pestering the client during emulator set-up, a service may effectively defer
+		 * notifying the user of Sleigh compilation errors by replacing the erroneous injects with
+		 * calls to this p-code op. Then, only if and when an erroneous inject is encountered will
+		 * the client be notified.
+		 */
+		@PcodeUserop
+		public void emu_injection_err() {
+			throw new InjectionErrorPcodeExecutionException(null, null);
 		}
 	}
 
@@ -162,16 +176,17 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 				throw new SuspendedPcodeExecutionException(frame, null);
 			}
 			super.stepOp(op, frame, library);
+			thread.stepped();
 		}
 
 		@Override
-		protected void checkLoad(AddressSpace space, T offset) {
-			thread.checkLoad(space, offset);
+		protected void checkLoad(AddressSpace space, T offset, int size) {
+			thread.checkLoad(space, offset, size);
 		}
 
 		@Override
-		protected void checkStore(AddressSpace space, T offset) {
-			thread.checkStore(space, offset);
+		protected void checkStore(AddressSpace space, T offset, int size) {
+			thread.checkStore(space, offset, size);
 		}
 
 		@Override
@@ -623,11 +638,46 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		injects.clear();
 	}
 
-	protected void checkLoad(AddressSpace space, T offset) {
-		machine.checkLoad(space, offset);
+	/**
+	 * Perform checks on a requested LOAD
+	 * 
+	 * <p>
+	 * Throw an exception if the LOAD should cause an interrupt.
+	 * 
+	 * @param space the address space being accessed
+	 * @param offset the offset being accessed
+	 * @param size the size of the variable being accessed
+	 */
+	protected void checkLoad(AddressSpace space, T offset, int size) {
+		machine.checkLoad(space, offset, size);
 	}
 
-	protected void checkStore(AddressSpace space, T offset) {
-		machine.checkStore(space, offset);
+	/**
+	 * Perform checks on a requested STORE
+	 * 
+	 * <p>
+	 * Throw an exception if the STORE should cause an interrupt.
+	 * 
+	 * @param space the address space being accessed
+	 * @param offset the offset being accessed
+	 * @param size the size of the variable being accessed
+	 */
+	protected void checkStore(AddressSpace space, T offset, int size) {
+		machine.checkStore(space, offset, size);
+	}
+
+	/**
+	 * Throw a software interrupt exception if those interrupts are active
+	 */
+	protected void swi() {
+		machine.swi();
+	}
+
+	/**
+	 * Notify the machine a thread has been stepped, so that it may re-enable software interrupts,
+	 * if applicable
+	 */
+	protected void stepped() {
+		machine.stepped();
 	}
 }

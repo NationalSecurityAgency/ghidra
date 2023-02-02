@@ -21,13 +21,20 @@ import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.trace.model.Lifespan.LifeSet;
 import ghidra.trace.model.Trace;
+import ghidra.util.table.column.GColumnRenderer;
 
 public class TraceValueLifeColumn
 		extends AbstractDynamicTableColumn<ValueRow, LifeSet, Trace> {
+	private final TraceValueColumnRenderer<LifeSet> renderer = new TraceValueColumnRenderer<>();
 
 	@Override
 	public String getColumnName() {
 		return "Life";
+	}
+
+	@Override
+	public GColumnRenderer<LifeSet> getColumnRenderer() {
+		return renderer;
 	}
 
 	@Override

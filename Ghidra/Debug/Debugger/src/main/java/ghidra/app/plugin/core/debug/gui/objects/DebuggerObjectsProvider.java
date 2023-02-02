@@ -53,6 +53,7 @@ import ghidra.app.plugin.core.debug.gui.objects.components.*;
 import ghidra.app.plugin.core.debug.mapping.DebuggerMemoryMapper;
 import ghidra.app.script.*;
 import ghidra.app.services.*;
+import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
 import ghidra.async.*;
 import ghidra.dbg.*;
 import ghidra.dbg.error.DebuggerMemoryAccessException;
@@ -149,6 +150,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	protected Map<Long, Trace> traces = new HashMap<>();
 	protected Trace currentTrace;
 	protected DebuggerObjectModel currentModel;
+	private TargetObject targetFocus;
 	// NB: We're getting rid of this because the ObjectsProvider is beating the trace
 	//  to the punch and causing the pattern-matcher to fail
 	// private TraceRecorder recorder;  
@@ -180,6 +182,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	ImportFromXMLAction importFromXMLAction;
 	ImportFromFactsAction importFromFactsAction;
 	OpenWinDbgTraceAction openTraceAction;
+	SetTimeoutAction setTimeoutAction;
 
 	private ToggleDockingAction actionToggleBase;
 	private ToggleDockingAction actionToggleSubscribe;
@@ -202,6 +205,8 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	private boolean updateWhileRunning = true;
 	@AutoConfigStateField
 	private boolean suppressDescent = false;
+	@AutoConfigStateField
+	private int nodeTimeout = 60;
 
 	Set<TargetConfigurable> configurables = new HashSet<>();
 	private String lastMethod = "";
@@ -561,17 +566,14 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			synchronized (targetMap) {
 				targetMap.put(key, container);
 				refSet.add(targetObject);
+				if (targetObject instanceof TargetConfigurable) {
+					configurables.add((TargetConfigurable) targetObject);
+				}
 			}
 			if (targetObject instanceof TargetInterpreter) {
 				TargetInterpreter interpreter = (TargetInterpreter) targetObject;
 				getPlugin().showConsole(interpreter);
-				DebugModelConventions.findSuitable(TargetFocusScope.class, targetObject)
-						.thenAccept(f -> {
-							setFocus(f, targetObject);
-						});
-			}
-			if (targetObject instanceof TargetConfigurable) {
-				configurables.add((TargetConfigurable) targetObject);
+				pane.setSelectedObject(targetObject);
 			}
 		}
 	}
@@ -590,7 +592,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	}
 
 	public ObjectContainer getContainerByPath(List<String> path) {
-		return targetMap.get(PathUtils.toString(path));
+		return targetMap.get(PathUtils.toString(path, PATH_JOIN_CHAR));
 	}
 
 	static List<ObjectContainer> getContainersFromObjects(Map<String, ?> objectMap,
@@ -858,7 +860,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			.buildAndInstallLocal(this);
 		
 		groupTargetIndex++;
-
+		
 		/*
 		actionSuppressDescent = new ToggleActionBuilder("Automatically populate containers", plugin.getName())
 			.menuPath("Maintenance","&Auto-populate")
@@ -1223,6 +1225,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		importFromXMLAction = new ImportFromXMLAction(tool, plugin.getName(), this);
 		importFromFactsAction = new ImportFromFactsAction(tool, plugin.getName(), this);
 		openTraceAction = new OpenWinDbgTraceAction(tool, plugin.getName(), this);
+		setTimeoutAction = new SetTimeoutAction(tool, plugin.getName(), this);
 	}
 
 	//@formatter:on
@@ -1489,7 +1492,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		//this.recorder = rec;
 		Trace trace = rec.getTrace();
 		traceManager.openTrace(trace);
-		traceManager.activateTrace(trace);
+		traceManager.activate(traceManager.resolveTrace(trace), ActivationCause.START_RECORDING);
 	}
 
 	public void stopRecording(TargetObject targetObject) {
@@ -1723,13 +1726,13 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		@AttributeCallback(TargetExecutionStateful.STATE_ATTRIBUTE_NAME)
 		public void executionStateChanged(TargetObject object, TargetExecutionState state) {
 			//this.state = state;
-			plugin.getTool().contextChanged(DebuggerObjectsProvider.this);
+			contextChanged();
 		}
 
 		@AttributeCallback(TargetFocusScope.FOCUS_ATTRIBUTE_NAME)
 		public void focusChanged(TargetObject object, TargetObject focused) {
 			plugin.setFocus(object, focused);
-			plugin.getTool().contextChanged(DebuggerObjectsProvider.this);
+			contextChanged();
 		}
 
 		@Override
@@ -1823,8 +1826,11 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		if (focused.getModel() != currentModel) {
 			return;
 		}
+		this.targetFocus = focused;
 		if (isStopped(focused) || isUpdateWhileRunning()) {
-			pane.setFocus(object, focused);
+			if (pane != null) {
+				pane.setFocus(object, focused);
+			}
 		}
 	}
 
@@ -1854,6 +1860,14 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 
 	public void setAutorecord(boolean autorecord) {
 		this.autoRecord = autorecord;
+	}
+
+	public int getNodeTimeout() {
+		return nodeTimeout;
+	}
+
+	public void setNodeTimeout(int timeout) {
+		this.nodeTimeout = timeout;
 	}
 
 	public void updateActions(ObjectContainer providerContainer) {
@@ -1887,6 +1901,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		actionToggleAutoRecord.setSelected(autoRecord);
 		actionToggleHideIntrinsics.setSelected(hideIntrinsics);
 		actionToggleSelectionOnly.setSelected(selectionOnly);
+		setTimeoutAction.setNodeTimeout(nodeTimeout);
 
 		methodDialog.readConfigState(saveState);
 	}
@@ -1910,9 +1925,9 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		return listener.queue.in;
 	}
 
-	public void navigateToSelectedObject(TargetObject object, Object value) {
-		if (listingService == null || listingService == null) {
-			return;
+	public Address navigateToSelectedObject(TargetObject object, Object value) {
+		if (listingService == null || modelService == null) {
+			return null;
 		}
 		// TODO: Could probably inspect schema for any attribute of type Address[Range], or String
 		if (value == null) {
@@ -1925,7 +1940,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			value = object.getCachedAttribute(TargetObject.VALUE_ATTRIBUTE_NAME);
 		}
 		if (value == null) {
-			return;
+			return null;
 		}
 
 		Address addr = null;
@@ -1946,13 +1961,14 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			if (recorder == null) {
 				recorder = modelService.getRecorder(currentTrace);
 				if (recorder == null) {
-					return;
+					return addr;
 				}
 			}
 			DebuggerMemoryMapper memoryMapper = recorder.getMemoryMapper();
 			Address traceAddr = memoryMapper.targetToTrace(addr);
 			listingService.goTo(traceAddr, true);
 		}
+		return addr;
 	}
 
 	private Address stringToAddress(TargetObject selectedObject, Address addr, String sval) {
@@ -1974,5 +1990,9 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 
 	public boolean isUpdateWhileRunning() {
 		return updateWhileRunning;
+	}
+
+	public TargetObject getFocus() {
+		return targetFocus;
 	}
 }

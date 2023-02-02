@@ -113,7 +113,7 @@ public class DebuggerLegacyRegionsPanel extends JPanel {
 
 		public RegionTableModel(PluginTool tool) {
 			super(tool, "Regions", RegionTableColumns.class, TraceMemoryRegion::getObjectKey,
-				RegionRow::new);
+				RegionRow::new, RegionRow::getRegion);
 		}
 	}
 

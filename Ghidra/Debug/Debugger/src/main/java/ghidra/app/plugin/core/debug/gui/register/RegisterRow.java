@@ -19,7 +19,7 @@ import java.math.BigInteger;
 import java.util.Objects;
 
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
-import ghidra.app.services.DebuggerStateEditingService;
+import ghidra.app.services.DebuggerControlService;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
@@ -105,8 +105,8 @@ public class RegisterRow {
 	 * Attempt to set the register's value
 	 * 
 	 * <p>
-	 * The edit will be directed according to the tool's current edit mode. See
-	 * {@link DebuggerStateEditingService#getCurrentMode(Trace)}
+	 * The edit will be directed according to the tool's current control mode. See
+	 * {@link DebuggerControlService#getCurrentMode(Trace)}
 	 * 
 	 * @param value the value
 	 */

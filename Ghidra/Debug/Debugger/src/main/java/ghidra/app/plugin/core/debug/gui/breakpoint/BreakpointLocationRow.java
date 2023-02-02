@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 
 import ghidra.app.services.LogicalBreakpoint;
 import ghidra.app.services.LogicalBreakpoint.State;
-import ghidra.app.services.TraceRecorder;
+import ghidra.pcode.exec.SleighUtils;
 import ghidra.program.model.address.Address;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.thread.TraceThread;
@@ -40,8 +40,8 @@ public class BreakpointLocationRow {
 	}
 
 	public boolean isEnabled() {
-		TraceRecorder recorder = provider.modelService.getRecorder(loc.getTrace());
-		return recorder != null && loc.isEnabled(recorder.getSnap());
+		long snap = provider.traceManager.getCurrentFor(loc.getTrace()).getSnap();
+		return loc.isEnabled(snap);
 	}
 
 	public State getState() {
@@ -104,6 +104,10 @@ public class BreakpointLocationRow {
 			UndoableTransaction.start(loc.getTrace(), "Set breakpoint comment")) {
 			loc.setComment(comment);
 		}
+	}
+
+	public boolean hasSleigh() {
+		return !SleighUtils.UNCONDITIONAL_BREAK.equals(loc.getEmuSleigh());
 	}
 
 	public TraceBreakpoint getTraceBreakpoint() {

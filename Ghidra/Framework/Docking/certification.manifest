@@ -19,12 +19,14 @@ src/main/help/help/topics/Theming/ThemingUserDocs.html||GHIDRA||||END|
 src/main/help/help/topics/Theming/images/ColorEditor.png||GHIDRA||||END|
 src/main/help/help/topics/Theming/images/FontEditor.png||GHIDRA||||END|
 src/main/help/help/topics/Theming/images/IconEditor.png||GHIDRA||||END|
-src/main/help/help/topics/Theming/images/ThemeDialog.png||GHIDRA||||END|
+src/main/help/help/topics/Theming/images/ThemeChooserDialog.png||GHIDRA||||END|
+src/main/help/help/topics/Theming/images/ThemeEditorDialog.png||GHIDRA||||END|
 src/main/java/docking/dnd/package.html||GHIDRA||reviewed||END|
 src/main/java/docking/options/editor/package.html||GHIDRA||reviewed||END|
 src/main/java/docking/widgets/fieldpanel/package.html||GHIDRA||reviewed||END|
 src/main/java/docking/widgets/filechooser/package.html||GHIDRA||reviewed||END|
 src/main/java/docking/wizard/package.html||GHIDRA||reviewed||END|
+src/main/resources/images/Minus.png||GHIDRA||||END|
 src/main/resources/images/Plus.png||GHIDRA||reviewed||END|
 src/main/resources/images/StackFrameElement.png||GHIDRA||reviewed||END|
 src/main/resources/images/StackFrame_Red.png||GHIDRA||reviewed||END|
@@ -55,6 +57,7 @@ src/main/resources/images/expand.gif||GHIDRA||||END|
 src/main/resources/images/filter_off.png||GHIDRA||||END|
 src/main/resources/images/filter_on.png||GHIDRA||||END|
 src/main/resources/images/folder_add.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
+src/main/resources/images/font.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/hourglass.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/hourglass24_01.png||GHIDRA||reviewed||END|
 src/main/resources/images/hourglass24_02.png||GHIDRA||reviewed||END|

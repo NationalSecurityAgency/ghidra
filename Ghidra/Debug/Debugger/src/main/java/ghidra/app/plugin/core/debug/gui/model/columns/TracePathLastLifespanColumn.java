@@ -15,20 +15,49 @@
  */
 package ghidra.app.plugin.core.debug.gui.model.columns;
 
+import java.awt.Component;
+
 import docking.widgets.table.AbstractDynamicTableColumn;
+import docking.widgets.table.GTableCellRenderingData;
 import ghidra.app.plugin.core.debug.gui.model.PathTableModel.PathRow;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObjectValue;
+import ghidra.util.table.column.AbstractGColumnRenderer;
+import ghidra.util.table.column.GColumnRenderer;
 
 public class TracePathLastLifespanColumn
 		extends AbstractDynamicTableColumn<PathRow, Lifespan, Trace> {
 
+	private final class LastLifespanRenderer extends AbstractGColumnRenderer<Lifespan> {
+		@Override
+		public String getFilterString(Lifespan t, Settings settings) {
+			return t == null ? "<null>" : t.toString();
+		}
+
+		@Override
+		public Component getTableCellRendererComponent(GTableCellRenderingData data) {
+			super.getTableCellRendererComponent(data);
+			PathRow row = (PathRow) data.getRowObject();
+			if (row.isCurrent()) {
+				setBold();
+			}
+			return this;
+		}
+	}
+
+	private final LastLifespanRenderer renderer = new LastLifespanRenderer();
+
 	@Override
 	public String getColumnName() {
 		return "Life";
+	}
+
+	@Override
+	public GColumnRenderer<Lifespan> getColumnRenderer() {
+		return renderer;
 	}
 
 	@Override

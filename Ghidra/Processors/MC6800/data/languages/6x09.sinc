@@ -322,9 +322,9 @@ EA: "["addr",PCR]" is noOffset5=1 & idxMode=0b11101; simm16 [ addr = inst_next +
      export eaddr; 
 }
 
-EA: "["addr"]" is noOffset5=1 & idxReg=0b00 & idxMode=0b11111; simm16 [ addr = inst_next; ] 
+EA: "["imm16"]" is noOffset5=1 & idxReg=0b00 & idxMode=0b11111; imm16
 {
-     local eaddr:2 = inst_next;
+     local eaddr:2 = imm16;
      eaddr = *:2 eaddr;
      export eaddr; 
 }
@@ -366,6 +366,7 @@ OP2: "#"imm16    is (op47=8 | op47=0xC); imm16
 {
     export *[const]:2 imm16;
 }
+
 OP2: "<"imm8    is (op47=0 | op47=9 | op47=0xD); imm8
 {
     local tmp:2 = (zext(DP) << 8) + imm8;
@@ -379,6 +380,21 @@ OP2: EA       is (op47=3 | op47=6 | op47=0xA | op47=0xE); EA
 OP2: imm16      is (op47=7 | op47=0xB | op47=0xF); imm16
 {
     export *:2 imm16;
+}
+
+#JMP and JSR treat the direct/indexed/extended address modes differently
+OP2J: "<"imm8    is (op47=0 | op47=9); imm8
+{
+    local tmp:2 = (zext(DP) << 8) + imm8;
+    export tmp;
+}
+OP2J: EA       is (op47=6 | op47=0xA); EA
+{
+    export EA;
+}
+OP2J: imm16      is (op47=7 | op47=0xB ); imm16
+{
+    export imm16;
 }
 
 ################################################################
@@ -586,8 +602,8 @@ macro storeRegister(reg, op)
 # Push 1 byte operand op1
 macro Push1(reg, op)
 {
-        *:1 reg = op;
         reg = reg - 1;
+        *:1 reg = op;
 }
 
 # Push 2 byte operand op2
@@ -803,9 +819,9 @@ macro PushEntireState()
         test(OP1);
 }
  
-:JMP OP2    is (op=0x0E | op=0x6E | op=0x7E) ... & OP2
+:JMP OP2J    is (op=0x0E | op=0x6E | op=0x7E) ... & OP2J
 {
-        local target = OP2;
+        local target = OP2J;
         goto [target];
 }
 
@@ -1205,11 +1221,11 @@ macro PushEntireState()
         call REL;
 }
 
-:JSR OP2    is (op=0x9D | op=0xAD | op=0xBD) ... & OP2 
+:JSR OP2J    is (op=0x9D | op=0xAD | op=0xBD) ... & OP2J 
 {
         local addr:2 = inst_next;
         Push2(S, addr);
-        local target = OP2;
+        local target = OP2J;
         call [target];
 }
 

@@ -64,6 +64,8 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 
 	protected final PcodeUseropLibrary<T> stubLibrary;
 
+	protected SwiMode swiMode = SwiMode.ACTIVE;
+
 	/* for abstract thread access */ PcodeStateInitializer initializer;
 	private PcodeExecutorState<T> sharedState;
 	protected final Map<String, PcodeThread<T>> threads = new LinkedHashMap<>();
@@ -145,12 +147,12 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 	protected abstract PcodeExecutorState<T> createLocalState(PcodeThread<T> thread);
 
 	/**
-	 * A factory method to create a stub library for compiling thread-local SLEIGH source
+	 * A factory method to create a stub library for compiling thread-local Sleigh source
 	 * 
 	 * <p>
 	 * Because threads may introduce p-code userops using libraries unique to that thread, it
 	 * becomes necessary to at least export stub symbols, so that p-code programs can be compiled
-	 * from SLEIGH source before the thread has necessarily been created. A side effect of this
+	 * from Sleigh source before the thread has necessarily been created. A side effect of this
 	 * strategy is that all threads, though they may have independent libraries, must export
 	 * identically-named symbols.
 	 * 
@@ -158,6 +160,16 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 	 */
 	protected PcodeUseropLibrary<T> createThreadStubLibrary() {
 		return new DefaultPcodeThread.PcodeEmulationLibrary<T>(null);
+	}
+
+	@Override
+	public void setSoftwareInterruptMode(SwiMode mode) {
+		this.swiMode = mode;
+	}
+
+	@Override
+	public SwiMode getSoftwareInterruptMode() {
+		return swiMode;
 	}
 
 	/**
@@ -319,7 +331,17 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 		accessBreakpoints.clear();
 	}
 
-	protected void checkLoad(AddressSpace space, T offset) {
+	/**
+	 * Perform checks on a requested LOAD
+	 * 
+	 * <p>
+	 * Throw an exception if the LOAD should cause an interrupt.
+	 * 
+	 * @param space the address space being accessed
+	 * @param offset the offset being accessed
+	 * @param size the size of the variable being accessed
+	 */
+	protected void checkLoad(AddressSpace space, T offset, int size) {
 		if (accessBreakpoints.isEmpty()) {
 			return;
 		}
@@ -334,7 +356,17 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 		}
 	}
 
-	protected void checkStore(AddressSpace space, T offset) {
+	/**
+	 * Perform checks on a requested STORE
+	 * 
+	 * <p>
+	 * Throw an exception if the STORE should cause an interrupt.
+	 * 
+	 * @param space the address space being accessed
+	 * @param offset the offset being accessed
+	 * @param size the size of the variable being accessed
+	 */
+	protected void checkStore(AddressSpace space, T offset, int size) {
 		if (accessBreakpoints.isEmpty()) {
 			return;
 		}
@@ -346,6 +378,25 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 		}
 		catch (ConcretionError e) {
 			// Consider this not hitting any breakpoint
+		}
+	}
+
+	/**
+	 * Throw a software interrupt exception if those interrupts are active
+	 */
+	protected void swi() {
+		if (swiMode == SwiMode.ACTIVE) {
+			throw new InterruptPcodeExecutionException(null, null);
+		}
+	}
+
+	/**
+	 * Notify the machine a thread has been stepped, so that it may re-enable software interrupts,
+	 * if applicable
+	 */
+	protected void stepped() {
+		if (swiMode == SwiMode.IGNORE_STEP) {
+			swiMode = SwiMode.ACTIVE;
 		}
 	}
 }

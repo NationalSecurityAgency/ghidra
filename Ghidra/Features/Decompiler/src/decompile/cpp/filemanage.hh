@@ -24,7 +24,10 @@
 #include <sstream>
 #include <fstream>
 
-using namespace std;
+using std::vector;
+using std::string;
+using std::ifstream;
+using std::ostringstream;
 
 class FileManage {
   vector<string> pathlist;	// List of paths to search for files

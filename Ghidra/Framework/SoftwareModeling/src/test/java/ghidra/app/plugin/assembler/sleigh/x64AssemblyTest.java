@@ -150,8 +150,8 @@ public class x64AssemblyTest extends AbstractAssemblyTest {
 
 	@Test
 	public void testAssemble_CMP_byte_ptr_m0x006dbeefm_0() {
-		assertOneCompatRestExact("CMP byte ptr [RIP + -0x3f924118],0", "80:3d:e8:be:6d:c0:00",
-			"CMP byte ptr [RIP + -0x3f924118],0x0");
+		assertOneCompatRestExact("CMP byte ptr [0x006dbeef],0", "80:3d:e8:be:6d:c0:00",
+			"CMP byte ptr [0x006dbeef],0x0");
 	}
 
 	@Test

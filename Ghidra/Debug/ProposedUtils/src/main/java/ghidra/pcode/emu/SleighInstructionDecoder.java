@@ -28,7 +28,7 @@ import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * The default instruction decoder, based on SLEIGH
+ * The default instruction decoder, based on Sleigh
  * 
  * <p>
  * This simply uses a {@link Disassembler} on the machine's memory state.
@@ -53,7 +53,7 @@ public class SleighInstructionDecoder implements InstructionDecoder {
 	private PseudoInstruction instruction;
 
 	/**
-	 * Construct a SLEIGH instruction decoder
+	 * Construct a Sleigh instruction decoder
 	 * 
 	 * @see {@link DefaultPcodeThread#createInstructionDecoder(PcodeExecutorState)}
 	 * @param language the language to decoder
