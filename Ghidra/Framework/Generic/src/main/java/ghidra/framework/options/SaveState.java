@@ -75,7 +75,7 @@ public class SaveState {
 	private static final String SAVE_STATE = "SAVE_STATE";
 	public static DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
 	private static final String ARRAY_ELEMENT_NAME = "A";
-	private HashMap<String, Object> map;
+	private TreeMap<String, Object> map; // use ordered map for deterministic serialization
 	private String saveStateName;
 
 	/**
@@ -101,7 +101,7 @@ public class SaveState {
 	 */
 	public SaveState(String name) {
 		this.saveStateName = name;
-		this.map = new HashMap<>();
+		this.map = new TreeMap<>();
 	}
 
 	/**
@@ -127,8 +127,7 @@ public class SaveState {
 	 * @param root XML contents of the save state
 	 */
 	public SaveState(Element root) {
-		map = new HashMap<>();
-		saveStateName = root.getName();
+		this(root.getName());
 		Iterator<?> iter = root.getChildren().iterator();
 		while (iter.hasNext()) {
 			Element elem = (Element) iter.next();
@@ -298,8 +297,7 @@ public class SaveState {
 	}
 
 	protected SaveState(JsonObject root) {
-		map = new HashMap<>();
-		saveStateName = root.get("SAVE_STATE_NAME").getAsString();
+		this(root.get("SAVE_STATE_NAME").getAsString());
 		JsonObject values = root.get("VALUES").getAsJsonObject();
 		JsonObject types = root.get("TYPES").getAsJsonObject();
 		JsonObject enumClasses = root.get("ENUM_CLASSES").getAsJsonObject();
