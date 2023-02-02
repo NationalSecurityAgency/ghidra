@@ -16,7 +16,7 @@
 package ghidra.plugins.fsbrowser;
 
 import java.util.*;
-
+import java.util.stream.Collectors;
 import java.awt.Component;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -35,8 +35,14 @@ import ghidra.app.CorePluginPackage;
 import ghidra.app.events.ProgramActivatedPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.services.*;
+import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.opinion.LoaderService;
 import ghidra.formats.gfilesystem.*;
+import ghidra.formats.gfilesystem.factory.FileSystemFactoryMgr;
+import ghidra.formats.gfilesystem.factory.FileSystemInfoRec;
+import ghidra.formats.gfilesystem.factory.GFileSystemProbeByteProvider;
+import ghidra.formats.gfilesystem.factory.GFileSystemProbeBytesOnly;
+import ghidra.formats.gfilesystem.factory.GFileSystemProbeManual;
 import ghidra.framework.main.FrontEndService;
 import ghidra.framework.main.ApplicationLevelPlugin;
 import ghidra.framework.model.Project;
@@ -244,9 +250,12 @@ public class FileSystemBrowserPlugin extends Plugin implements ApplicationLevelP
 			FileSystemRef ref = fsService().probeFileForFilesystem(containerFSRL, monitor,
 				FileSystemProbeConflictResolver.GUI_PICKER);
 			if (ref == null) {
-				Msg.showWarn(this, parent, "Open Filesystem",
-					"No filesystem provider for " + containerFSRL.getName());
-				return;
+				ref = showFallbackFileSystemChooser(containerFSRL, parent, monitor);
+				if (ref == null) {
+					Msg.showWarn(this, parent, "Open Filesystem",
+							"No filesystem provider for " + containerFSRL.getName());
+					return;
+				}
 			}
 
 			createNewFileSystemBrowser(ref, true);
@@ -255,6 +264,42 @@ public class FileSystemBrowserPlugin extends Plugin implements ApplicationLevelP
 			FSUtilities.displayException(this, parent, "Open Filesystem Error",
 				"Error opening filesystem for " + containerFSRL.getName(), e);
 		}
+	}
+
+	private FileSystemRef showFallbackFileSystemChooser(FSRL containerFSRL, Component parent, TaskMonitor monitor) throws CancelledException, IOException {
+		FileSystemFactoryMgr fsFactoryMgr = FileSystemFactoryMgr.getInstance();
+
+		//@formatter:off
+		List<FileSystemInfoRec> fsList = fsFactoryMgr.getFileSystemInfoRecs().values()
+				.stream()
+				.filter(fs -> fs.getFactory() instanceof GFileSystemProbeManual)
+				.sorted((filesystem1, filesystem2) -> filesystem1.getDescription().compareToIgnoreCase(filesystem2.getDescription()))
+				.collect(Collectors.toList());
+		//@formatter:on
+
+		if (fsList.isEmpty()) {
+			return null;
+		}
+
+		FileSystemInfoRec chosenFilesystem = SelectFromListDialog.selectFromList(fsList, "Select filesystem",
+				"Select a filesystem from list", FileSystemInfoRec::getDescription);
+		if (chosenFilesystem == null) {
+			return null;
+		}
+
+		ByteProvider byteProvider = fsService().getByteProvider(containerFSRL, true, monitor);
+		GFileSystem fs = fsFactoryMgr.mountFileSystem(chosenFilesystem.getType(), byteProvider, fsService, monitor);
+		if (fs != null) {
+			FileSystemRef fsRef = fsService().getMountedFilesystem(containerFSRL.makeNested(chosenFilesystem.getType()));
+			if (fsRef != null) {
+				fs.close();
+				return fsRef;
+			}
+			fsService().addFileSystem(fs);
+			return fs.getRefManager().create();
+		}
+
+		return null;
 	}
 
 	/**

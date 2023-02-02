@@ -347,4 +347,12 @@ public class FileSystemFactoryMgr {
 
 	}
 
+	/**
+	 * Returns the filesystem providers available to this factory.
+	 *
+	 * @return a copy of the available filesystem providers.
+	 */
+	public Map<String, FileSystemInfoRec> getFileSystemInfoRecs() {
+		return new HashMap<>(fsByType);
+	}
 }
