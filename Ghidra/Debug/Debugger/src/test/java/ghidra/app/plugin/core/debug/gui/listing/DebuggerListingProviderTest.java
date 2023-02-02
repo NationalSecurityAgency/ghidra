@@ -34,7 +34,6 @@ import docking.menu.MultiStateDockingAction;
 import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.FieldPanel;
 import generic.test.category.NightlyCategory;
-import generic.test.rule.Repeated;
 import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.plugin.assembler.*;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
