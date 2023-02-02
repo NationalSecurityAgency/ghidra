@@ -66,6 +66,7 @@ public class ExportToCAction extends AbstractDecompilerAction {
 			fileChooser.setSelectedFile(lastUsedFile);
 		}
 		File file = fileChooser.getSelectedFile();
+		fileChooser.dispose();
 		if (file == null) {
 			return null;
 		}

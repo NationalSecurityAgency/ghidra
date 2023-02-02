@@ -192,7 +192,6 @@ src/main/help/help/topics/DataTypeManagerPlugin/data_type_manager_archives.html|
 src/main/help/help/topics/DataTypeManagerPlugin/data_type_manager_description.htm||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/data_type_manager_window.html||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/images/CommitDialog.png||GHIDRA||||END|
-src/main/help/help/topics/DataTypeManagerPlugin/images/DataTypeConflict.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/images/DataTypeManager.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/images/DisassociateDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/images/EditPaths.png||GHIDRA||||END|

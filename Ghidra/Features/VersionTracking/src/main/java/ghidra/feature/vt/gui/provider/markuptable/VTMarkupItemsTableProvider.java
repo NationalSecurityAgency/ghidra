@@ -535,6 +535,8 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 			filter.dispose();
 		}
 
+		ancillaryFilterDialog.dispose();
+
 		tool.removePopupActionProvider(this);
 	}
 

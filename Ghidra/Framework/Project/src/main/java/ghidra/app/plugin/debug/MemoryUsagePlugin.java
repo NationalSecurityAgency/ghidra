@@ -45,6 +45,15 @@ public class MemoryUsagePlugin extends Plugin implements ApplicationLevelOnlyPlu
 		setupActions();
 	}
 
+	@Override
+	protected void dispose() {
+		super.dispose();
+
+		if (dialog != null) {
+			dialog.dispose();
+		}
+	}
+
 	private void setupActions() {
 		DockingAction action;
 

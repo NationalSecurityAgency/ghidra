@@ -47,7 +47,7 @@ import utility.function.Callback;
  *
  * @param <R> the row type of the table being filtered.
  */
-public class ColumnFilterDialog<R> extends DialogComponentProvider
+public class ColumnFilterDialog<R> extends ReusableDialogComponentProvider
 		implements TableFilterDialogModelListener {
 
 	private final ColumnFilterDialogModel<R> filterModel;
@@ -72,7 +72,7 @@ public class ColumnFilterDialog<R> extends DialogComponentProvider
 	 */
 	public ColumnFilterDialog(GTableFilterPanel<R> gTableFilterPanel, JTable table,
 			RowObjectFilterModel<R> tableModel) {
-		super("Table Column Filters", WindowUtilities.areModalDialogsVisible());
+		super("Table Column Filters", WindowUtilities.areModalDialogsVisible(), true, true, false);
 		this.gTableFilterPanel = gTableFilterPanel;
 		this.table = table;
 		this.tableModel = tableModel;

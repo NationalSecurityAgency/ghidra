@@ -29,7 +29,6 @@ class BatchProjectDestinationPanel extends JPanel {
 
 	private JComponent parent;
 	private JTextField folderNameTextField;
-	private DataTreeDialog dataTreeDialog;
 	private DomainFolder selectedDomainFolder;
 
 	public BatchProjectDestinationPanel(JComponent parent, DomainFolder defaultFolder) {
@@ -96,7 +95,7 @@ class BatchProjectDestinationPanel extends JPanel {
 	}
 
 	private void browseFolders() {
-		dataTreeDialog =
+		DataTreeDialog dataTreeDialog =
 			new DataTreeDialog(parent, "Choose a project folder", DataTreeDialog.CHOOSE_FOLDER);
 		dataTreeDialog.addOkActionListener(e -> {
 			dataTreeDialog.close();
@@ -107,9 +106,6 @@ class BatchProjectDestinationPanel extends JPanel {
 	}
 
 	public void setFolder(DomainFolder folder) {
-		if (dataTreeDialog != null) {
-			dataTreeDialog.setSelectedFolder(folder);
-		}
 		folderNameTextField.setText(folder != null ? folder.toString() : "< Choose a folder >");
 		this.selectedDomainFolder = folder;
 		onProjectDestinationChange(selectedDomainFolder);

@@ -24,24 +24,17 @@ import ghidra.app.services.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 
-@PluginInfo(
-	shortDescription = "Debugger regions manager",
-	description = "GUI to manage memory regions",
-	category = PluginCategoryNames.DEBUGGER,
-	packageName = DebuggerPluginPackage.NAME,
-	status = PluginStatus.RELEASED,
-	eventsConsumed = {
-		ProgramActivatedPluginEvent.class,
-		ProgramLocationPluginEvent.class,
-		ProgramClosedPluginEvent.class,
-		TraceActivatedPluginEvent.class,
-	},
-	servicesRequired = {
-		DebuggerModelService.class,
-		DebuggerStaticMappingService.class,
-		DebuggerTraceManagerService.class,
-		ProgramManager.class,
-	})
+@PluginInfo(shortDescription = "Debugger regions manager", description = "GUI to manage memory regions", category = PluginCategoryNames.DEBUGGER, packageName = DebuggerPluginPackage.NAME, status = PluginStatus.RELEASED, eventsConsumed = {
+	ProgramActivatedPluginEvent.class,
+	ProgramLocationPluginEvent.class,
+	ProgramClosedPluginEvent.class,
+	TraceActivatedPluginEvent.class,
+}, servicesRequired = {
+	DebuggerModelService.class,
+	DebuggerStaticMappingService.class,
+	DebuggerTraceManagerService.class,
+	ProgramManager.class,
+})
 public class DebuggerRegionsPlugin extends AbstractDebuggerPlugin {
 	protected DebuggerRegionsProvider provider;
 
@@ -58,6 +51,7 @@ public class DebuggerRegionsPlugin extends AbstractDebuggerPlugin {
 	@Override
 	protected void dispose() {
 		tool.removeComponentProvider(provider);
+		provider.dispose();
 		super.dispose();
 	}
 

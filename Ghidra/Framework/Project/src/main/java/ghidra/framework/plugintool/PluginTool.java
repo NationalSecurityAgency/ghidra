@@ -113,7 +113,6 @@ public abstract class PluginTool extends AbstractDockingTool {
 
 	private OptionsChangeListener optionsListener = new ToolOptionsListener();
 	protected ManagePluginsDialog manageDialog;
-	protected ExtensionTableProvider extensionTableProvider;
 
 	protected ToolIconURL iconURL = new ToolIconURL("view_detailed.png");
 
@@ -335,11 +334,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 * Displays the extensions installation dialog.
 	 */
 	public void showExtensions() {
-		if (extensionTableProvider != null) {
-			extensionTableProvider.close();
-		}
-		extensionTableProvider = new ExtensionTableProvider(this);
-		showDialog(extensionTableProvider);
+		showDialog(new ExtensionTableProvider(this));
 	}
 
 	/**

@@ -26,7 +26,7 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 
 import docking.ActionContext;
-import docking.DialogComponentProvider;
+import docking.ReusableDialogComponentProvider;
 import docking.action.DockingAction;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
@@ -37,7 +37,7 @@ import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
 import ghidra.util.table.GhidraTableFilterPanel;
 
-public class DebuggerAvailableRegistersDialog extends DialogComponentProvider {
+public class DebuggerAvailableRegistersDialog extends ReusableDialogComponentProvider {
 
 	protected enum AvailableRegisterTableColumns
 		implements EnumeratedTableColumn<AvailableRegisterTableColumns, AvailableRegisterRow> {

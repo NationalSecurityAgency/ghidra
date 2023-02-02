@@ -59,7 +59,7 @@ import resources.Icons;
  * 
  *
  */
-class ParseDialog extends DialogComponentProvider {
+class ParseDialog extends ReusableDialogComponentProvider {
 	final static String PROFILE_DIR = "parserprofiles";
 
 	private static String FILE_EXTENSION = ".prf";
@@ -89,11 +89,10 @@ class ParseDialog extends DialogComponentProvider {
 	private ArrayList<ComboBoxItem> itemList;
 	private ComboBoxItemComparator comparator;
 	private ResourceFile parentUserFile;
-	private GhidraFileChooser fileChooser;
 	private boolean saveAsInProgress;
 
 	ParseDialog(CParserPlugin plugin) {
-		super("Parse C Source", false);
+		super("Parse C Source", false, true, true, false);
 
 		this.plugin = plugin;
 		itemList = new ArrayList<>();
@@ -157,7 +156,7 @@ class ParseDialog extends DialogComponentProvider {
 		pathPanel.setBorder(BorderFactory.createTitledBorder("Source files to parse"));
 		String importDir = Preferences.getProperty(LAST_IMPORT_C_DIRECTORY);
 		if (importDir == null) {
-			importDir = Preferences.getProperty(Preferences.LAST_IMPORT_DIRECTORY);
+			importDir = Preferences.getProperty(Preferences.LAST_PATH_DIRECTORY);
 			if (importDir != null) {
 				Preferences.setProperty(LAST_IMPORT_C_DIRECTORY, importDir);
 			}
@@ -625,19 +624,15 @@ class ParseDialog extends DialogComponentProvider {
 	}
 
 	private File getSaveFile() {
-		if (fileChooser == null) {
-			fileChooser = new GhidraFileChooser(rootPanel);
-			String dir = Preferences.getProperty(Preferences.LAST_EXPORT_DIRECTORY);
-			if (dir != null) {
-				File file = new File(dir);
-				fileChooser.setCurrentDirectory(file);
-				fileChooser.setTitle("Choose Save Archive File");
-				fileChooser.setApproveButtonText("Choose Save Archive File");
-				fileChooser.setApproveButtonToolTipText("Choose filename for archive");
-			}
-		}
-		fileChooser.rescanCurrentDirectory();
+
+		GhidraFileChooser fileChooser = new GhidraFileChooser(rootPanel);
+		fileChooser.setTitle("Choose Save Archive File");
+		fileChooser.setApproveButtonText("Choose Save Archive File");
+		fileChooser.setApproveButtonToolTipText("Choose filename for archive");
+		fileChooser.setLastDirectoryPreference(Preferences.LAST_EXPORT_DIRECTORY);
+
 		File file = fileChooser.getSelectedFile();
+		fileChooser.dispose();
 		if (file != null) {
 			File parent = file.getParentFile();
 			if (parent != null) {

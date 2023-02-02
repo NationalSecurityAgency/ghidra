@@ -16,8 +16,6 @@
 package ghidra.program.database.data;
 
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 
@@ -34,11 +32,8 @@ import ghidra.util.task.TaskMonitor;
 
 public class DataTypeArchiveTransformerPanel extends JPanel {
 
-	private final static String DOT_DOT_DOT = ". . .";
 	private final static Cursor WAIT_CURSOR = new Cursor(Cursor.WAIT_CURSOR);
 	private final static Cursor NORM_CURSOR = new Cursor(Cursor.DEFAULT_CURSOR);
-
-	private GhidraFileChooser chooser;
 
 	private JPanel filePanel;
 	private JTextField oldFileTextField;
@@ -87,15 +82,12 @@ public class DataTypeArchiveTransformerPanel extends JPanel {
 		gbc.gridx = 2;
 		gbc.gridwidth = 1;
 		JButton oldBrowseButton = new BrowseButton();
-		oldBrowseButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				setCursor(WAIT_CURSOR);
-				File file = chooseFile("Choose old data type archive");
-				setCursor(NORM_CURSOR);
-				if (file != null) {
-					oldFileTextField.setText(file.getAbsolutePath());
-				}
+		oldBrowseButton.addActionListener(e -> {
+			setCursor(WAIT_CURSOR);
+			File file = chooseFile("Choose old data type archive");
+			setCursor(NORM_CURSOR);
+			if (file != null) {
+				oldFileTextField.setText(file.getAbsolutePath());
 			}
 		});
 		filePanel.add(oldBrowseButton, gbc);
@@ -124,15 +116,12 @@ public class DataTypeArchiveTransformerPanel extends JPanel {
 		gbc.gridx = 2;
 		gbc.gridwidth = 1;
 		JButton newBrowseButton = new BrowseButton();
-		newBrowseButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				setCursor(WAIT_CURSOR);
-				File file = chooseFile("Choose new data type archive");
-				setCursor(NORM_CURSOR);
-				if (file != null) {
-					newFileTextField.setText(file.getAbsolutePath());
-				}
+		newBrowseButton.addActionListener(e -> {
+			setCursor(WAIT_CURSOR);
+			File file = chooseFile("Choose new data type archive");
+			setCursor(NORM_CURSOR);
+			if (file != null) {
+				newFileTextField.setText(file.getAbsolutePath());
 			}
 		});
 		filePanel.add(newBrowseButton, gbc);
@@ -156,31 +145,27 @@ public class DataTypeArchiveTransformerPanel extends JPanel {
 		gbc.gridwidth = 1;
 		JButton destinationBrowseButton = new BrowseButton();
 
-		destinationBrowseButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				setCursor(WAIT_CURSOR);
-				File file = chooseFile("Choose destination file");
-				setCursor(NORM_CURSOR);
-				if (file != null) {
-					destinationFileTextField.setText(file.getAbsolutePath());
-				}
+		destinationBrowseButton.addActionListener(e -> {
+			setCursor(WAIT_CURSOR);
+			File file = chooseFile("Choose destination file");
+			setCursor(NORM_CURSOR);
+			if (file != null) {
+				destinationFileTextField.setText(file.getAbsolutePath());
 			}
 		});
 		filePanel.add(destinationBrowseButton, gbc);
 	}
 
 	File chooseFile(final String buttonText) {
-		if (chooser == null) {
-			chooser = new GhidraFileChooser(this);
-			chooser.setCurrentDirectory(getLastDataTypeArchiveDirectory());
-		}
+
+		GhidraFileChooser chooser = new GhidraFileChooser(this);
+		chooser.setCurrentDirectory(getLastDataTypeArchiveDirectory());
 		chooser.setTitle(buttonText);
 		chooser.setApproveButtonText(buttonText);
 		chooser.setApproveButtonToolTipText(buttonText);
 
 		File file = chooser.getSelectedFile();
-
+		chooser.dispose();
 		if (file != null && file.exists()) {
 			Preferences.setProperty(Preferences.LAST_OPENED_ARCHIVE_DIRECTORY,
 				file.getAbsolutePath());

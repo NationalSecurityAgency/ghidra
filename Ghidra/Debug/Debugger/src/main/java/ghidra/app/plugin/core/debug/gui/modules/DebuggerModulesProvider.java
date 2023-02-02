@@ -418,7 +418,6 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 	private final DebuggerBlockChooserDialog blockChooserDialog;
 	private final DebuggerModuleMapProposalDialog moduleProposalDialog;
 	private final DebuggerSectionMapProposalDialog sectionProposalDialog;
-	private DataTreeDialog programChooserDialog; // Already lazy
 
 	private DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
 	private Program currentProgram;
@@ -470,6 +469,7 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 		GhidraFileChooser chooser = new GhidraFileChooser(getComponent());
 		chooser.setSelectedFile(new File(module.getName()));
 		File file = chooser.getSelectedFile();
+		chooser.dispose();
 		if (file == null) { // Perhaps cancelled
 			return;
 		}
@@ -511,6 +511,10 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 				consoleService.removeResolutionAction(actionMapMissingModule);
 			}
 		}
+
+		blockChooserDialog.dispose();
+		moduleProposalDialog.dispose();
+		sectionProposalDialog.dispose();
 	}
 
 	@Override
@@ -1071,27 +1075,24 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 	}
 
 	private DataTreeDialog getProgramChooserDialog() {
-		if (programChooserDialog != null) {
-			return programChooserDialog;
-		}
+
 		DomainFileFilter filter = df -> Program.class.isAssignableFrom(df.getDomainObjectClass());
 
 		// TODO regarding the hack note below, I believe it's fixed, but not sure how to test
-		return programChooserDialog =
-			new DataTreeDialog(null, "Map Module to Program", DataTreeDialog.OPEN, filter) {
-				{ // TODO/HACK: I get an NPE setting the default selection if I don't fake this.
-					dialogShown();
-				}
-			};
+		return new DataTreeDialog(null, "Map Module to Program", DataTreeDialog.OPEN, filter) {
+			{ // TODO/HACK: I get an NPE setting the default selection if I don't fake this.
+				dialogShown();
+			}
+		};
 	}
 
 	public DomainFile askProgram(Program program) {
-		getProgramChooserDialog();
+		DataTreeDialog dialog = getProgramChooserDialog();
 		if (program != null) {
-			programChooserDialog.selectDomainFile(program.getDomainFile());
+			dialog.selectDomainFile(program.getDomainFile());
 		}
-		tool.showDialog(programChooserDialog);
-		return programChooserDialog.getDomainFile();
+		tool.showDialog(dialog);
+		return dialog.getDomainFile();
 	}
 
 	public Entry<Program, MemoryBlock> askBlock(TraceSection section, Program program,

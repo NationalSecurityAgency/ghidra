@@ -49,9 +49,7 @@ import ghidra.util.Msg;
 //@formatter:on
 public class LabelMgrPlugin extends Plugin {
 
-	private OperandLabelDialog operandDialog;
 	private AddEditDialog addEditDialog;
-	private EditFieldNameDialog editFieldDialog;
 
 	/**
 	 * Constructor
@@ -62,6 +60,8 @@ public class LabelMgrPlugin extends Plugin {
 		super(tool);
 		// Setup list of actions
 		setupActions();
+
+		addEditDialog = new AddEditDialog("", tool);
 	}
 
 	private void setupActions() {
@@ -88,25 +88,21 @@ public class LabelMgrPlugin extends Plugin {
 		tool.addAction(allHistoryAction);
 	}
 
+	@Override
+	protected void dispose() {
+		addEditDialog.dispose();
+	}
+
 	AddEditDialog getAddEditDialog() {
-		if (addEditDialog == null) {
-			addEditDialog = new AddEditDialog("", tool);
-		}
 		return addEditDialog;
 	}
 
 	EditFieldNameDialog getEditFieldDialog() {
-		if (editFieldDialog == null) {
-			editFieldDialog = new EditFieldNameDialog("", tool);
-		}
-		return editFieldDialog;
+		return new EditFieldNameDialog("", tool);
 	}
 
 	OperandLabelDialog getOperandLabelDialog() {
-		if (operandDialog == null) {
-			operandDialog = new OperandLabelDialog(this);
-		}
-		return operandDialog;
+		return new OperandLabelDialog(this);
 	}
 
 	/**

@@ -69,7 +69,6 @@ public class AddressTypeOverviewColorService
 	private Listing listing;
 	private OverviewColorComponent overviewComponent;
 	private PluginTool tool;
-	private DialogComponentProvider legendDialog;
 	private AddressTypeOverviewLegendPanel legendPanel;
 
 	@Override
@@ -336,12 +335,12 @@ public class AddressTypeOverviewColorService
 	}
 
 	private DialogComponentProvider getLegendDialog() {
-		if (legendDialog == null) {
+		if (legendPanel == null) {
 			legendPanel = new AddressTypeOverviewLegendPanel(this);
-
-			legendDialog =
-				new OverviewColorLegendDialog("Overview Legend", legendPanel, getHelpLocation());
 		}
+
+		OverviewColorLegendDialog legendDialog =
+			new OverviewColorLegendDialog("Overview Legend", legendPanel, getHelpLocation());
 		return legendDialog;
 	}
 

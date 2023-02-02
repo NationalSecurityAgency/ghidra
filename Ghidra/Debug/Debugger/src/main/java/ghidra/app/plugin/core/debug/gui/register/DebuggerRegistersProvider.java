@@ -553,6 +553,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 	@Override
 	public void removeFromTool() {
+		availableRegsDialog.dispose();
+
 		plugin.providerRemoved(this);
 		plugin.getTool().removePopupActionProvider(this);
 		super.removeFromTool();
@@ -1296,7 +1298,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			return AsyncUtils.NIL;
 		}
 		toRead.retainAll(regMapper.getRegistersOnTarget());
-		Set<TargetRegisterBank> banks = recorder.getTargetRegisterBanks(traceThread, current.getFrame());
+		Set<TargetRegisterBank> banks =
+			recorder.getTargetRegisterBanks(traceThread, current.getFrame());
 		if (banks == null || banks.isEmpty()) {
 			Msg.error(this, "Current frame's bank does not exist");
 			return AsyncUtils.NIL;

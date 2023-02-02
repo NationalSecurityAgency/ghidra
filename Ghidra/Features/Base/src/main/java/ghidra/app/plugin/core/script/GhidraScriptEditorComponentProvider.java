@@ -628,11 +628,15 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 	}
 
 	private void closeComponentSavingAsNecessary() {
-		provider.removeScriptEditor(scriptSourceFile, true);
+		if (provider.removeScriptEditor(scriptSourceFile, true)) {
+			super.closeComponent();
+		}
 	}
 
 	private void closeComponentWithoutSaving() {
-		provider.removeScriptEditor(scriptSourceFile, false);
+		if (provider.removeScriptEditor(scriptSourceFile, false)) {
+			super.closeComponent();
+		}
 	}
 
 	@Override

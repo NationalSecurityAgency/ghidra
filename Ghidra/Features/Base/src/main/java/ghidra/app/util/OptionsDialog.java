@@ -31,7 +31,7 @@ public class OptionsDialog extends DialogComponentProvider implements OptionList
 	private OptionValidator validator;
 
 	/**
-	 * Contructs a new OptionsDialog for editing the options associated with a specific import format
+	 * Constructs a new OptionsDialog for editing the options associated with a specific import format
 	 * such as PE, ELF, XML, etc.
 	 *
 	 * @param originalOptions the list of options generated from the specific import format selected.

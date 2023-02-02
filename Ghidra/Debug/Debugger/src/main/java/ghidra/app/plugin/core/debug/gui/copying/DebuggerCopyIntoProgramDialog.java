@@ -27,7 +27,7 @@ import javax.swing.*;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 
-import docking.DialogComponentProvider;
+import docking.ReusableDialogComponentProvider;
 import docking.widgets.table.*;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
@@ -52,7 +52,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.table.GhidraTableFilterPanel;
 import ghidra.util.task.*;
 
-public class DebuggerCopyIntoProgramDialog extends DialogComponentProvider {
+public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvider {
 	static final int GAP = 5;
 	static final int BUTTON_SIZE = 32;
 

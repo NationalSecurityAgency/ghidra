@@ -115,7 +115,7 @@ class ToolServicesImpl implements ToolServices {
 				}
 			}
 		}
-
+		fileChooser.dispose();
 		return exportFile;
 	}
 
@@ -449,11 +449,11 @@ class ToolServicesImpl implements ToolServices {
 		@SuppressWarnings("rawtypes")
 		List<ContentHandler> instances = ClassSearcher.getInstances(ContentHandler.class);
 		for (ContentHandler<?> contentHandler : instances) {
-			
+
 			if (contentHandler instanceof FolderLinkContentHandler) {
 				continue; // ignore folder link handler
 			}
-			
+
 			// a bit of validation
 			String contentType = contentHandler.getContentType();
 			if (contentType == null) {
@@ -461,7 +461,7 @@ class ToolServicesImpl implements ToolServices {
 					contentHandler.getClass().getName() + " does not specify a content type");
 				continue;
 			}
-			
+
 			String toolName = contentHandler.getDefaultToolName();
 			if (toolName == null) {
 				Msg.error(DomainObjectAdapter.class, "ContentHandler<?> " +

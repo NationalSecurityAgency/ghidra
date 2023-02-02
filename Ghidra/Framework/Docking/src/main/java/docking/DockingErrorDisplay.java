@@ -173,6 +173,7 @@ public class DockingErrorDisplay implements ErrorDisplay {
 		activeDialog = createErrorDialog(title, throwable, messageString);
 		activeDialog.setClosedCallback(() -> {
 			activeDialog.setClosedCallback(null);
+			activeDialog.dispose();
 			activeDialog = null;
 		});
 		DockingWindowManager.showDialog(parent, activeDialog);

@@ -20,13 +20,13 @@ import java.util.Collection;
 
 import javax.swing.*;
 
-import docking.DialogComponentProvider;
+import docking.ReusableDialogComponentProvider;
 import docking.widgets.table.EnumeratedColumnTableModel;
 import docking.widgets.table.GTable;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.table.GhidraTableFilterPanel;
 
-public abstract class AbstractDebuggerMapProposalDialog<R> extends DialogComponentProvider {
+public abstract class AbstractDebuggerMapProposalDialog<R> extends ReusableDialogComponentProvider {
 
 	protected final EnumeratedColumnTableModel<R> tableModel;
 	protected GTable table;

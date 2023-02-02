@@ -614,8 +614,11 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		else {
 			model = new ExpandBlockDownModel(tool, program);
 		}
-		new ExpandBlockDialog(tool, model, block, program.getAddressFactory(), dialogType);
+
+		ExpandBlockDialog dialog =
+			new ExpandBlockDialog(tool, model, block, program.getAddressFactory(), dialogType);
 		model.initialize(block);
+		dialog.dispose();
 	}
 
 	private void showMoveBlockDialog(MemoryBlock block) {

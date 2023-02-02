@@ -219,7 +219,6 @@ public class DataWindowPlugin extends ProgramPlugin implements DomainObjectListe
 				filterAction.addType(type.getDisplayName());
 			}
 			filterAction.selectTypes(selectedList);
-			filterAction.repaint();
 			provider.reload();
 		}
 	}

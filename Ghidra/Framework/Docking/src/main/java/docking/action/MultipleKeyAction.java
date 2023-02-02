@@ -33,8 +33,6 @@ import ghidra.util.Swing;
 public class MultipleKeyAction extends DockingKeyBindingAction {
 	private List<ActionData> actions = new ArrayList<>();
 
-	private MultiActionDialog dialog;
-
 	/**
 	 * Creates new MultipleKeyAction
 	 *
@@ -124,12 +122,8 @@ public class MultipleKeyAction extends DockingKeyBindingAction {
 		// If more than one action, prompt user for selection
 		if (list.size() > 1) {
 			// popup dialog to show multiple actions
-			if (dialog == null) {
-				dialog = new MultiActionDialog(KeyBindingUtils.parseKeyStroke(keyStroke), list);
-			}
-			else {
-				dialog.setActionList(list);
-			}
+			MultiActionDialog dialog =
+				new MultiActionDialog(KeyBindingUtils.parseKeyStroke(keyStroke), list);
 
 			// doing the show in an invoke later seems to fix a strange swing bug that lock up
 			// the program if you tried to invoke a new action too quickly after invoking

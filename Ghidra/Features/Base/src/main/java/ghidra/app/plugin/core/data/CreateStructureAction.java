@@ -42,14 +42,9 @@ class CreateStructureAction extends ListingContextAction {
 	private DataPlugin plugin;
 	private CreateStructureDialog createStructureDialog;
 
-	/**
-	 * Constructor
-	 * @param name action name
-	 * @param owner owner of this action (the plugin name)
-	 */
 	public CreateStructureAction(DataPlugin plugin) {
 		super("Create Structure", plugin.getName());
-// ACTIONS - auto generated
+
 		setPopupMenuData(new MenuData(CREATE_STRUCTURE_POPUP_MENU, null, "BasicData"));
 		setKeyBindingData(new KeyBindingData(KeyEvent.VK_OPEN_BRACKET, InputEvent.SHIFT_DOWN_MASK));
 

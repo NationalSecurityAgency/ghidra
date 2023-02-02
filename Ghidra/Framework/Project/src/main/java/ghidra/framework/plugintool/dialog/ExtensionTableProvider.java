@@ -55,6 +55,7 @@ public class ExtensionTableProvider extends DialogComponentProvider {
 	public ExtensionTableProvider(PluginTool tool) {
 		super("Install Extensions");
 		addWorkPanel(createMainPanel(tool));
+		setHelpLocation(new HelpLocation(GenericHelpTopics.FRONT_END, "Extensions"));
 	}
 
 	/**
@@ -141,6 +142,7 @@ public class ExtensionTableProvider extends DialogComponentProvider {
 				chooser.addFileFilter(new ExtensionFileFilter());
 
 				List<File> files = chooser.getSelectedFiles();
+				chooser.dispose();
 				for (File file : files) {
 					try {
 						if (!ExtensionUtils.isExtension(new ResourceFile(file))) {

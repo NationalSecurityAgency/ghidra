@@ -131,8 +131,6 @@ public class LoadPdbDialog extends DialogComponentProvider {
 	private JButton configButton;
 	private JToggleButton advancedToggleButton;
 
-	private GhidraFileChooser chooser;
-
 	private JButton choosePdbLocationButton;
 	private JButton loadPdbButton;
 
@@ -681,7 +679,9 @@ public class LoadPdbDialog extends DialogComponentProvider {
 	}
 
 	private void choosePdbFile() {
-		File file = getChooser().getSelectedFile();
+		GhidraFileChooser chooser = getChooser();
+		File file = chooser.getSelectedFile();
+		chooser.dispose();
 		if (file != null && file.isFile()) {
 			Preferences.setProperty(LAST_PDBFILE_PREFERENCE_KEY, file.getPath());
 			executeMonitoredRunnable("Get PDB Info", true, true, 0, monitor -> {
@@ -720,20 +720,17 @@ public class LoadPdbDialog extends DialogComponentProvider {
 
 	private GhidraFileChooser getChooser() {
 
-		if (chooser == null) {
-			chooser = new GhidraFileChooser(getComponent());
-			chooser.addFileFilter(PDB_FILES_FILTER);
-			chooser.setMultiSelectionEnabled(false);
-			chooser.setApproveButtonText("Choose");
-			chooser.setFileSelectionMode(GhidraFileChooserMode.FILES_ONLY);
-			chooser.setTitle("Select PDB");
+		GhidraFileChooser chooser = new GhidraFileChooser(getComponent());
+		chooser.addFileFilter(PDB_FILES_FILTER);
+		chooser.setMultiSelectionEnabled(false);
+		chooser.setApproveButtonText("Choose");
+		chooser.setFileSelectionMode(GhidraFileChooserMode.FILES_ONLY);
+		chooser.setTitle("Select PDB");
 
-			String lastFile = Preferences.getProperty(LAST_PDBFILE_PREFERENCE_KEY);
-			if (lastFile != null) {
-				chooser.setSelectedFile(new File(lastFile));
-			}
+		String lastFile = Preferences.getProperty(LAST_PDBFILE_PREFERENCE_KEY);
+		if (lastFile != null) {
+			chooser.setSelectedFile(new File(lastFile));
 		}
-
 		return chooser;
 	}
 

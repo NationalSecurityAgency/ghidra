@@ -1039,6 +1039,7 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 
 	@Override
 	public void closeComponent() {
+		super.closeComponent();
 		controller.cleanup();
 		plugin.closeProvider(this);
 	}

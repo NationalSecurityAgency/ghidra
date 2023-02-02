@@ -39,7 +39,7 @@ import ghidra.util.task.TaskMonitorComponent;
 /**
  * Dialog for showing options to search text in a Program.
  */
-class SearchTextDialog extends DialogComponentProvider {
+class SearchTextDialog extends ReusableDialogComponentProvider {
 
 	private static final int DEFAULT_MAX_ENTRIES = 10;
 

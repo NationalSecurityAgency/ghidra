@@ -42,14 +42,10 @@ public abstract class DebuggerGoToTrait {
 
 	protected DebuggerCoordinates current = DebuggerCoordinates.NOWHERE;
 
-	protected final DebuggerGoToDialog goToDialog;
-
 	public DebuggerGoToTrait(PluginTool tool, Plugin plugin, ComponentProvider provider) {
 		this.tool = tool;
 		this.plugin = plugin;
 		this.provider = provider;
-
-		goToDialog = new DebuggerGoToDialog(this);
 	}
 
 	protected abstract boolean goToAddress(Address address);
@@ -68,6 +64,7 @@ public abstract class DebuggerGoToTrait {
 	}
 
 	private void activatedGoTo(ActionContext context) {
+		DebuggerGoToDialog goToDialog = new DebuggerGoToDialog(this);
 		TracePlatform platform = current.getPlatform();
 		goToDialog.show((SleighLanguage) platform.getLanguage());
 	}

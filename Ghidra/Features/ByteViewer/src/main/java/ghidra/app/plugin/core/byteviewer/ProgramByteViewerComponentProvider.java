@@ -146,6 +146,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 	@Override
 	public void closeComponent() {
 		// overridden to handle snapshots
+		super.closeComponent();
 		plugin.closeProvider(this);
 	}
 

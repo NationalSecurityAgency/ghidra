@@ -62,15 +62,8 @@ import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.datastruct.CollectionChangeListener;
 import ghidra.util.datastruct.ListenerSet;
 
-@PluginInfo(
-	shortDescription = "Debugger models manager service",
-	description = "Manage debug sessions, connections, and trace recording",
-	category = PluginCategoryNames.DEBUGGER,
-	packageName = DebuggerPluginPackage.NAME,
-	status = PluginStatus.HIDDEN,
-	servicesRequired = {},
-	servicesProvided = {
-		DebuggerModelService.class, })
+@PluginInfo(shortDescription = "Debugger models manager service", description = "Manage debug sessions, connections, and trace recording", category = PluginCategoryNames.DEBUGGER, packageName = DebuggerPluginPackage.NAME, status = PluginStatus.HIDDEN, servicesRequired = {}, servicesProvided = {
+	DebuggerModelService.class, })
 public class DebuggerModelServicePlugin extends Plugin
 		implements DebuggerModelServiceInternal, ApplicationLevelOnlyPlugin {
 
@@ -182,6 +175,14 @@ public class DebuggerModelServicePlugin extends Plugin
 		super.init();
 
 		createActions();
+	}
+
+	@Override
+	protected void dispose() {
+		super.dispose();
+
+		connectDialog.dispose();
+		offerDialog.dispose();
 	}
 
 	protected void createActions() {

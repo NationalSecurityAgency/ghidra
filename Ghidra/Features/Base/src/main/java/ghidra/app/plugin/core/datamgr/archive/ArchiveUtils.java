@@ -119,7 +119,7 @@ public class ArchiveUtils {
 		ArchiveFileChooser fileChooser = new ArchiveFileChooser(component);
 		String archiveName = archive.getName();
 		File file = fileChooser.promptUserForFile(archiveName);
-
+		fileChooser.dispose();
 		if (file == null) {
 			return null;
 		}

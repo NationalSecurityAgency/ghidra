@@ -38,7 +38,7 @@ import ghidra.util.HelpLocation;
 /**
  * Dialog for setting the comments for a CodeUnit.
  */
-public class CommentsDialog extends DialogComponentProvider implements KeyListener {
+public class CommentsDialog extends ReusableDialogComponentProvider implements KeyListener {
 
 	private JTextArea eolField;
 	private JTextArea preField;

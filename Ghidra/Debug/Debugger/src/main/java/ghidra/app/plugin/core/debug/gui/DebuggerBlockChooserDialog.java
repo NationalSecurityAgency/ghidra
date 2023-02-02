@@ -24,7 +24,7 @@ import javax.swing.*;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 
-import docking.DialogComponentProvider;
+import docking.ReusableDialogComponentProvider;
 import docking.widgets.table.*;
 import docking.widgets.table.ColumnSortState.SortDirection;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
@@ -38,7 +38,7 @@ import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.TraceSection;
 import ghidra.util.table.GhidraTableFilterPanel;
 
-public class DebuggerBlockChooserDialog extends DialogComponentProvider {
+public class DebuggerBlockChooserDialog extends ReusableDialogComponentProvider {
 	public static class MemoryBlockRow {
 		private final Program program;
 		private final MemoryBlock block;

@@ -22,7 +22,7 @@ import java.util.*;
 import javax.swing.*;
 
 import docking.ComponentProvider;
-import docking.DialogComponentProvider;
+import docking.ReusableDialogComponentProvider;
 import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.events.ProgramSelectionPluginEvent;
@@ -61,7 +61,7 @@ import ghidra.util.task.TaskMonitor;
  * ------------------------------------
  */
 
-public class InstructionSearchDialog extends DialogComponentProvider implements Observer {
+public class InstructionSearchDialog extends ReusableDialogComponentProvider implements Observer {
 
 	private static final Color BG_COLOR_MARKERS =
 		new GColor("color.bg.plugin.instructionsearch.search.markers");

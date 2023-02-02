@@ -20,8 +20,8 @@ import java.beans.*;
 
 import javax.swing.*;
 
-import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
+import docking.ReusableDialogComponentProvider;
 import generic.theme.ThemeValue;
 
 /**
@@ -106,7 +106,7 @@ public abstract class ThemeValueEditor<T> {
 		clientListener.propertyChange(event);
 	}
 
-	class EditorDialog extends DialogComponentProvider {
+	class EditorDialog extends ReusableDialogComponentProvider {
 		private PropertyChangeListener internalListener = ev -> editorChanged();
 		private ThemeValue<T> originalValue;
 

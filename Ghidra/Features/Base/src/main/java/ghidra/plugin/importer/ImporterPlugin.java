@@ -15,12 +15,11 @@
  */
 package ghidra.plugin.importer;
 
-import java.util.*;
-
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
+import java.util.*;
 
 import docking.ActionContext;
 import docking.action.*;
@@ -139,7 +138,10 @@ public class ImporterPlugin extends Plugin
 			frontEndService.removeProjectListener(this);
 			frontEndService = null;
 		}
-		chooser = null;
+
+		if (chooser != null) {
+			chooser.dispose();
+		}
 	}
 
 	@Override
@@ -327,7 +329,7 @@ public class ImporterPlugin extends Plugin
 		chooser.setTitle(title);
 		chooser.setApproveButtonText(buttonText);
 
-		String lastFile = Preferences.getProperty(ImporterDialog.LAST_IMPORTFILE_PREFERENCE_KEY);
+		String lastFile = Preferences.getProperty(Preferences.LAST_IMPORT_FILE);
 		if (lastFile != null) {
 			chooser.setSelectedFile(new File(lastFile));
 		}

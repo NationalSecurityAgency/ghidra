@@ -16,8 +16,6 @@
 package ghidra.app.plugin.core.string;
 
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 
@@ -231,23 +229,21 @@ public class SearchStringDialog extends DialogComponentProvider {
 
 		// Set up a file chooser that allows the user to select a new *.sng file.
 		JButton browseButton = new BrowseButton();
-		browseButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				GhidraFileChooser chooser = new GhidraFileChooser(panel);
-				chooser.setTitle("Select Word Model File");
-				chooser.setMultiSelectionEnabled(false);
-				chooser.setFileFilter(new ExtensionFileFilter("sng", "Word File"));
+		browseButton.addActionListener(e -> {
+			GhidraFileChooser chooser = new GhidraFileChooser(panel);
+			chooser.setTitle("Select Word Model File");
+			chooser.setMultiSelectionEnabled(false);
+			chooser.setFileFilter(new ExtensionFileFilter("sng", "Word File"));
 
-				File selectedFile = chooser.getSelectedFile();
-				if (selectedFile == null) {
-					return;
-				}
-
-				// Important to only save off the name of the file. The NGramUtils call that
-				// loads the file will search for the file given this name.
-				wordModelField.setText(selectedFile.getName());
+			File selectedFile = chooser.getSelectedFile();
+			chooser.dispose();
+			if (selectedFile == null) {
+				return;
 			}
+
+			// Important to only save off the name of the file. The NGramUtils call that
+			// loads the file will search for the file given this name.
+			wordModelField.setText(selectedFile.getName());
 		});
 
 		modelFieldPanel.add(browseButton);

@@ -20,16 +20,17 @@ import java.util.Map.Entry;
 
 import javax.swing.JComponent;
 
-import docking.DialogComponentProvider;
+import docking.ReusableDialogComponentProvider;
 import ghidra.feature.vt.gui.filters.Filter.FilterShortcutState;
 import ghidra.feature.vt.gui.plugin.VTController;
 
-public abstract class AncillaryFilterDialogComponentProvider<T> extends DialogComponentProvider {
+public abstract class AncillaryFilterDialogComponentProvider<T>
+		extends ReusableDialogComponentProvider {
 
 	private FilterChangedListener filterChangedListener;
-	private Set<AncillaryFilter<T>> ancillaryFilters = new HashSet<AncillaryFilter<T>>();
+	private Set<AncillaryFilter<T>> ancillaryFilters = new HashSet<>();
 	private Map<AncillaryFilter<T>, FilterState> originalState =
-		new HashMap<AncillaryFilter<T>, FilterState>();
+		new HashMap<>();
 
 	protected final VTController controller;
 	private final FilterDialogModel<T> dialogModel;
@@ -38,7 +39,7 @@ public abstract class AncillaryFilterDialogComponentProvider<T> extends DialogCo
 
 	protected AncillaryFilterDialogComponentProvider(VTController controller, String title,
 			FilterDialogModel<T> dialogModel) {
-		super(title, true);
+		super(title);
 		this.controller = controller;
 		this.dialogModel = dialogModel;
 
@@ -141,7 +142,7 @@ public abstract class AncillaryFilterDialogComponentProvider<T> extends DialogCo
 	}
 
 	private Map<AncillaryFilter<T>, FilterState> getCurrentState() {
-		Map<AncillaryFilter<T>, FilterState> state = new HashMap<AncillaryFilter<T>, FilterState>();
+		Map<AncillaryFilter<T>, FilterState> state = new HashMap<>();
 		for (AncillaryFilter<T> filter : ancillaryFilters) {
 			state.put(filter, filter.getFilterState());
 		}
