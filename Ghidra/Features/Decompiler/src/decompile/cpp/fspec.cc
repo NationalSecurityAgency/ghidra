@@ -2871,7 +2871,7 @@ ProtoStoreSymbol::~ProtoStoreSymbol(void)
 
 /// Retrieve the specified ProtoParameter object, making sure it is a ParameterSymbol.
 /// If it doesn't exist, or if the object in the specific slot is not a ParameterSymbol,
-/// allocate an (unitialized) parameter.
+/// allocate an (uninitialized) parameter.
 /// \param i is the specified input slot
 /// \return the corresponding parameter
 ParameterSymbol *ProtoStoreSymbol::getSymbolBacked(int4 i)

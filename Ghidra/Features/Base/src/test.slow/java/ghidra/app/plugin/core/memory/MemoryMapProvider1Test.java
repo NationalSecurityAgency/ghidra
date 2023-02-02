@@ -478,7 +478,7 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 	@Test
 	public void testSortBlockType() throws Exception {
 
-		// add a bit overlay block, live block, and an unitialized block
+		// add a bit overlay block, live block, and an uninitialized block
 		tx(program, () -> {
 			memory.createBitMappedBlock(".Bit", getAddr(0), getAddr(0x01001000), 0x100, false);
 			memory.createUninitializedBlock(".Uninit", getAddr(0x3000), 0x200, false);
@@ -504,7 +504,7 @@ public class MemoryMapProvider1Test extends AbstractGhidraHeadedIntegrationTest 
 
 	@Test
 	public void testSortBlockTypeDescending() throws Exception {
-		// add a bit overlay block, live block, and an unitialized block
+		// add a bit overlay block, live block, and an uninitialized block
 		tx(program, () -> {
 			memory.createBitMappedBlock(".Bit", getAddr(0), getAddr(0x01001000), 0x100, false);
 			memory.createUninitializedBlock(".Uninit", getAddr(0x3000), 0x200, false);

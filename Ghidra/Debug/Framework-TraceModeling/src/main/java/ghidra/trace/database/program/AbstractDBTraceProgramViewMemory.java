@@ -257,7 +257,7 @@ public abstract class AbstractDBTraceProgramViewMemory
 	}
 
 	@Override
-	public MemoryBlock convertToInitialized(MemoryBlock unitializedBlock, byte initialValue)
+	public MemoryBlock convertToInitialized(MemoryBlock uninitializedBlock, byte initialValue)
 			throws LockException, MemoryBlockException, NotFoundException {
 		throw new UnsupportedOperationException();
 	}
