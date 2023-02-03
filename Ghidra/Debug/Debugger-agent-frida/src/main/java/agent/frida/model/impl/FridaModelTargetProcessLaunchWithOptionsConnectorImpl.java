@@ -122,7 +122,7 @@ public class FridaModelTargetProcessLaunchWithOptionsConnectorImpl extends Frida
 		ParameterDescription<Boolean> pF8 =
 			ParameterDescription.create(Boolean.class, "ExitRace", false,
 				false, "Suppress race on exit",
-				"set this flag so frida & the handee don’t race to set its exit status");
+				"set this flag so frida & the handee don't race to set its exit status");
 		map.put("ExitRace", pF8);
 		ParameterDescription<Boolean> pF9 = ParameterDescription.create(Boolean.class, "Detach",
 			false,
