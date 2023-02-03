@@ -24,10 +24,12 @@ import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramBuilder;
+import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.util.ProgramLocation;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 
@@ -146,6 +148,18 @@ public class ProgramStartPluginTest extends AbstractGhidraHeadedIntegrationTest 
 		loadProgram(builder.getProgram());
 
 		assertEquals(addr("0x100"), cb.getCurrentAddress());
+	}
+
+	@Test
+	public void testOptionToStartAtLastLocation() throws Exception {
+		ProgramBuilder builder = getProgramBuilder("0x100");
+		ProgramDB program = builder.getProgram();
+		loadProgram(program);
+		cb.goTo(new ProgramLocation(program, addr("0x107")));
+		env.close(program);
+		env.open(program);
+		waitForSwing();
+		assertEquals(addr("0x107"), cb.getCurrentAddress());
 	}
 
 	private void setUnderscoreOption(boolean b) {

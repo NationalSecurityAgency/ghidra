@@ -36,7 +36,8 @@ public class ProgramStartingLocationOptions implements OptionsChangeListener {
 
 	private static final String START_LOCATION_DESCRIPTION =
 		"Determines the start location for newly opened programs.\n" +
-			"Either lowest address, lowest code address, or symbol name.\nEach higher " +
+			"Either lowest address, lowest code address, preferred starting symbol name, or the" +
+			"location when last closed.\nEach higher " +
 			"option will revert to the next lower option if that option can't be satisfied.";
 	private static final String STARTING_SYSMBOLS_DESCRIPTION =
 		"A comma separated list of symbol names in preference order. " +
@@ -50,7 +51,8 @@ public class ProgramStartingLocationOptions implements OptionsChangeListener {
 	public static enum StartLocationType {
 		LOWEST_ADDRESS("Lowest Address"),
 		LOWEST_CODE_BLOCK("Lowest Code Block Address"),
-		SYMBOL_NAME("Preferred Symbol Name");
+		SYMBOL_NAME("Preferred Symbol Name"),
+		LAST_LOCATION("Location When Last Closed");
 
 		private String label;
 
@@ -78,7 +80,7 @@ public class ProgramStartingLocationOptions implements OptionsChangeListener {
 		Options subOptions = options.getOptions(SUB_OPTION);
 		subOptions.setOptionsHelpLocation(help);
 
-		options.registerOption(START_LOCATION_TYPE_OPTION, StartLocationType.SYMBOL_NAME, help,
+		options.registerOption(START_LOCATION_TYPE_OPTION, StartLocationType.LAST_LOCATION, help,
 			START_LOCATION_DESCRIPTION);
 
 		options.registerOption(START_SYMBOLS_OPTION, DEFAULT_STARTING_SYMBOLS, help,
@@ -109,27 +111,12 @@ public class ProgramStartingLocationOptions implements OptionsChangeListener {
 	}
 
 	/**
-	 * Returns true if the program should start on one of the starting symbols.
-	 * @return true if the program should start on one of the starting symbols
+	 * Returns the StartLocationType (lowest address, lowest code address, staring symbol, or
+	 * last location)
+	 * @return the StartLocationType
 	 */
-	public boolean shouldStartOnSymbol() {
-		return startLocationType == StartLocationType.SYMBOL_NAME;
-	}
-
-	/**
-	 * Returns true if the program should start at the lowest address.
-	 * @return true if the program should start at the lowest address
-	 */
-	public boolean shouldStartAtLowestAddress() {
-		return startLocationType == StartLocationType.LOWEST_ADDRESS;
-	}
-
-	/**
-	 * Returns true if the program should start at the first code block.
-	 * @return true if the program should start at the first code block.
-	 */
-	public boolean shouldStartAtLowestCodeBlock() {
-		return startLocationType == StartLocationType.LOWEST_CODE_BLOCK;
+	public StartLocationType getStartLocationType() {
+		return startLocationType;
 	}
 
 	/**
@@ -171,5 +158,4 @@ public class ProgramStartingLocationOptions implements OptionsChangeListener {
 			useUnderscorePrefixes = (Boolean) newValue;
 		}
 	}
-
 }

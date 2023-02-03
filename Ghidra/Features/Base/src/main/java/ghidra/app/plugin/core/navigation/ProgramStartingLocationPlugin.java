@@ -15,22 +15,29 @@
  */
 package ghidra.app.plugin.core.navigation;
 
-import java.util.Collections;
-import java.util.List;
+import java.io.IOException;
+import java.util.*;
+
+import org.jdom.Element;
+import org.jdom.JDOMException;
 
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
+import ghidra.app.plugin.core.navigation.ProgramStartingLocationOptions.StartLocationType;
 import ghidra.app.services.GoToService;
+import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.PluginInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.ProgramUserData;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolTable;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.Swing;
+import ghidra.util.xml.XmlUtilities;
 
 //@formatter:off
 @PluginInfo(
@@ -44,8 +51,10 @@ import ghidra.util.Swing;
 //@formatter:on
 public class ProgramStartingLocationPlugin extends ProgramPlugin {
 
+	private static final String LAST_LOCATION_PROPERTY = "LAST_PROGRAM_LOCATION";
 	private Program lastOpenedProgram;
 	private ProgramStartingLocationOptions startOptions;
+	private Map<Program, ProgramLocation> lastLocationMap = new HashMap<>();
 
 	public ProgramStartingLocationPlugin(PluginTool tool) {
 		super(tool);
@@ -59,11 +68,25 @@ public class ProgramStartingLocationPlugin extends ProgramPlugin {
 		if (tool.isRestoringDataState()) {
 			return;
 		}
-		if (startOptions.shouldStartAtLowestAddress()) {
+		if (startOptions.getStartLocationType() == StartLocationType.LOWEST_ADDRESS) {
 			// this is what happens by default, so no need to do anything
 			return;
 		}
 		lastOpenedProgram = program;
+	}
+
+	protected void programClosed(Program program) {
+		ProgramLocation lastLocation = lastLocationMap.remove(program);
+		if (lastLocation == null) {
+			return;
+		}
+		// store a program's last location in the associated user program data.
+		ProgramUserData programUserData = program.getProgramUserData();
+		SaveState saveState = new SaveState("Last_Location");
+		lastLocation.saveState(saveState);
+		String xmlString = XmlUtilities.toString(saveState.saveToXml());
+		programUserData.setStringProperty(LAST_LOCATION_PROPERTY, xmlString);
+
 	}
 
 	@Override
@@ -73,6 +96,14 @@ public class ProgramStartingLocationPlugin extends ProgramPlugin {
 			Swing.runLater(this::setStartingLocationForNewProgram);
 		}
 		lastOpenedProgram = null;
+	}
+
+	@Override
+	protected void locationChanged(ProgramLocation loc) {
+		if (loc != null) {
+			Program program = loc.getProgram();
+			lastLocationMap.put(program, loc);
+		}
 	}
 
 	private void setStartingLocationForNewProgram() {
@@ -90,19 +121,53 @@ public class ProgramStartingLocationPlugin extends ProgramPlugin {
 	}
 
 	private ProgramLocation getStartingProgramLocation(Program program) {
-		if (startOptions.shouldStartOnSymbol()) {
-			List<String> symbolNames = startOptions.getStartingSymbolNames();
-			boolean useUnderscores = startOptions.useUnderscorePrefixes();
-			for (String symbolName : symbolNames) {
-				Symbol symbol = findSymbol(program, symbolName, useUnderscores);
+		switch (startOptions.getStartLocationType()) {
+			case LAST_LOCATION:
+				ProgramLocation lastLocation = getLastSavedLocation(program);
+				if (lastLocation != null) {
+					return lastLocation;
+				}
+				// fall through and try symbol name
+			case SYMBOL_NAME:
+				Symbol symbol = fingStartingSymbol(program);
 				if (symbol != null) {
 					return symbol.getProgramLocation();
 				}
+				// fall through and try to find the lowest code block
+			case LOWEST_CODE_BLOCK:
+				return findLowestCodeBlockLocation(program);
+			case LOWEST_ADDRESS:
+			default:
+				return null;	// the program opens to lowest address anyway, so nothing to do
+		}
+	}
+
+	private ProgramLocation getLastSavedLocation(Program program) {
+		ProgramUserData programUserData = program.getProgramUserData();
+		String value = programUserData.getStringProperty(LAST_LOCATION_PROPERTY, null);
+		if (value == null) {
+			return null;
+		}
+		try {
+			Element element = XmlUtilities.fromString(value);
+			SaveState saveState = new SaveState(element);
+			return ProgramLocation.getLocation(program, saveState);
+		}
+		catch (JDOMException | IOException e) {
+			return null;
+		}
+	}
+
+	private Symbol fingStartingSymbol(Program program) {
+		List<String> symbolNames = startOptions.getStartingSymbolNames();
+		boolean useUnderscores = startOptions.useUnderscorePrefixes();
+		for (String symbolName : symbolNames) {
+			Symbol symbol = findSymbol(program, symbolName, useUnderscores);
+			if (symbol != null) {
+				return symbol;
 			}
 		}
-		// if the option is start on first code block, or we couldn't find a symbol, try and
-		// find the first executable code block
-		return findLowestCodeBlockLocation(program);
+		return null;
 	}
 
 	private ProgramLocation findLowestCodeBlockLocation(Program program) {

@@ -794,11 +794,15 @@
  		    <P><B>Start At</B> - Choose a starting program location option:
  		    <UL>
  		    	<LI>Lowest Address - The program will open at the lowest address.</LI>
- 		    	<LI>Lowest Code Block Address - The program will open at the firest executable
+ 		    	<LI>Lowest Code Block Address - The program will open at the first executable
  		    	 memory block. If no executable block found, it will go to lowest address.</LI>
  		    	<LI>Preferred Symbol Name - The program will open at the first symbol name it
  		    	finds that matches a name in the "Start Symbols" option. If no symbol is found,
  		    	it will try the lowest code block, and finally the lowest address.</LI>
+ 		    	<LI>Location When Last Closed - The program will open to the location it was at the 
+ 		    	last time the program was closed. If this is the first time the program 
+ 		    	has been opened, it will try to find a preferred symbol, then it will look for the 
+ 		    	lowest code block, and finally lowest overall address</LI>
  		    </UL>
 
  		    <P><B>Start Symbols</B> - A comma separated list of symbol names to be be used as the
