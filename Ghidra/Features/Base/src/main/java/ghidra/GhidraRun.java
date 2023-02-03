@@ -32,7 +32,6 @@ import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.dialog.ExtensionUtils;
 import ghidra.framework.project.DefaultProjectManager;
-import ghidra.framework.remote.InetNameLookup;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.ProgramDB;
 import ghidra.util.*;
@@ -93,9 +92,6 @@ public class GhidraRun implements GhidraLaunchable {
 				openProject(projectPath);
 			});
 		};
-
-		// Automatically disable reverse name lookup if failure occurs
-		InetNameLookup.setDisableOnFailure(true);
 
 		// Start main thread in GhidraThreadGroup
 		Thread mainThread = new Thread(new GhidraThreadGroup(), mainTask, "Ghidra");
