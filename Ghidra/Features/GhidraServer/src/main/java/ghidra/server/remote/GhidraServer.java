@@ -751,6 +751,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 				// keystore has not been identified - use self-signed certificate
 				ApplicationKeyManagerFactory.setDefaultIdentity(
 					new X500Principal("CN=GhidraServer"));
+				ApplicationKeyManagerFactory.addSubjectAlternativeName(hostname);
 			}
 			if (!ApplicationKeyManagerFactory.initialize()) {
 				log.fatal("Failed to initialize PKI/SSL keystore");

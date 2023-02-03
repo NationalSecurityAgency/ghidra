@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.framework.remote;
+package ghidra.server.remote;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;

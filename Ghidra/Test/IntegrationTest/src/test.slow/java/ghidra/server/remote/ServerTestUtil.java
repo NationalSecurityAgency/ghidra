@@ -943,21 +943,21 @@ public class ServerTestUtil {
 		Msg.info(ServerTestUtil.class, "Generating self-signed CA cert: " + caPath);
 		PrivateKeyEntry caEntry =
 			ApplicationKeyManagerUtils.createKeyEntry("test-CA", TEST_PKI_CA_DN, 2, null, null,
-				"PKCS12", ApplicationKeyManagerFactory.DEFAULT_PASSWORD.toCharArray());
+				"PKCS12", null, ApplicationKeyManagerFactory.DEFAULT_PASSWORD.toCharArray());
 		ApplicationKeyManagerUtils.exportX509Certificates(caEntry.getCertificateChain(), caFile);
 
 		// Generate User/Client certificate and keystore
 		Msg.info(ServerTestUtil.class, "Generating test user key/cert (signed by test-CA, pwd: " +
 			TEST_PKI_USER_PASSPHRASE + "): " + userKeystorePath);
 		ApplicationKeyManagerUtils.createKeyEntry("test-sig", TEST_PKI_USER_DN, 2, caEntry,
-			userKeystoreFile, "PKCS12", TEST_PKI_USER_PASSPHRASE.toCharArray());
+			userKeystoreFile, "PKCS12", null, TEST_PKI_USER_PASSPHRASE.toCharArray());
 
 		// Generate Server certificate and keystore
 		Msg.info(ServerTestUtil.class, "Generating test server key/cert (signed by test-CA, pwd: " +
 			TEST_PKI_SERVER_PASSPHRASE + "): " + serverKeystorePath);
 
 		ApplicationKeyManagerUtils.createKeyEntry("test-sig", TEST_PKI_SERVER_DN, 2, caEntry,
-			serverKeystoreFile, "PKCS12", TEST_PKI_SERVER_PASSPHRASE.toCharArray());
+			serverKeystoreFile, "PKCS12", null, TEST_PKI_SERVER_PASSPHRASE.toCharArray());
 	}
 
 	/**

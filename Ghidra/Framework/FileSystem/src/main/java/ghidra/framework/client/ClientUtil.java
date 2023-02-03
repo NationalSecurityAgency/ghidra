@@ -18,7 +18,6 @@ package ghidra.framework.client;
 import java.awt.Component;
 import java.io.IOException;
 import java.net.Authenticator;
-import java.net.UnknownHostException;
 import java.rmi.*;
 import java.security.GeneralSecurityException;
 import java.util.Arrays;
@@ -50,7 +49,7 @@ public class ClientUtil {
 
 	/**
 	 * Set client authenticator
-	 * @param authenticator
+	 * @param authenticator client authenticator instance
 	 */
 	public static synchronized void setClientAuthenticator(ClientAuthenticator authenticator) {
 		clientAuthenticator = authenticator;
@@ -106,14 +105,6 @@ public class ClientUtil {
 		// ensure that default callback is setup if possible
 		getClientAuthenticator();
 
-		host = host.trim().toLowerCase();
-		try {
-			host = InetNameLookup.getCanonicalHostName(host);
-		}
-		catch (UnknownHostException e) {
-			Msg.warn(ClientUtil.class, "Failed to resolve hostname for " + host);
-		}
-
 		if (port <= 0) {
 			port = GhidraServerHandle.DEFAULT_PORT;
 		}
@@ -145,22 +136,14 @@ public class ClientUtil {
 	 * Eliminate the specified repository server from the connection cache
 	 * @param host host name or IP address
 	 * @param port port (0: use default port)
-	 * @throws IOException
 	 */
-	public static void clearRepositoryAdapter(String host, int port) throws IOException {
-		host = host.trim().toLowerCase();
-		String hostAddr = host;
-		try {
-			hostAddr = InetNameLookup.getCanonicalHostName(host);
-		}
-		catch (UnknownHostException e) {
-			throw new IOException("Repository server lookup failed: " + host);
-		}
+	public static void clearRepositoryAdapter(String host, int port) {
 
 		if (port == 0) {
 			port = GhidraServerHandle.DEFAULT_PORT;
 		}
-		ServerInfo server = new ServerInfo(hostAddr, port);
+
+		ServerInfo server = new ServerInfo(host, port);
 		RepositoryServerAdapter serverAdapter = serverHandles.remove(server);
 		if (serverAdapter != null) {
 			serverAdapter.disconnect();
@@ -170,6 +153,7 @@ public class ClientUtil {
 	/**
 	 * Returns default user login name.  Actual user name used by repository
 	 * should be obtained from RepositoryServerAdapter.getUser
+	 * @return default user name
 	 */
 	public static String getUserName() {
 		String name = SystemUtilities.getUserName();
@@ -372,7 +356,7 @@ public class ClientUtil {
 	 * @param parent dialog parent
 	 * @param handle server handle
 	 * @param serverInfo server information
-	 * @throws IOException
+	 * @throws IOException if error occurs while updating password
 	 */
 	public static void changePassword(Component parent, RepositoryServerHandle handle,
 			String serverInfo) throws IOException {
@@ -451,7 +435,7 @@ public class ClientUtil {
 				sigCb.getRecognizedAuthorities(), sigCb.getToken());
 			sigCb.sign(signedToken.certChain, signedToken.signature);
 			Msg.info(ClientUtil.class, "PKI Authenticating to " + serverName + " as user '" +
-				signedToken.certChain[0].getSubjectDN() + "'");
+				signedToken.certChain[0].getSubjectX500Principal() + "'");
 		}
 		catch (Exception e) {
 			String msg = e.getMessage();

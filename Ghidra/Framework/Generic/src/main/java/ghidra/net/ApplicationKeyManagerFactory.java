@@ -21,7 +21,7 @@ import java.net.Socket;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.Arrays;
+import java.util.*;
 
 import javax.net.ssl.*;
 import javax.security.auth.x500.X500Principal;
@@ -62,6 +62,7 @@ public class ApplicationKeyManagerFactory {
 
 	private static KeyStorePasswordProvider customPasswordProvider;
 	private static X500Principal defaultIdentity;
+	private static List<String> subjectAlternativeNames;
 
 	private static ApplicationKeyManagerFactory instance;
 
@@ -182,14 +183,46 @@ public class ApplicationKeyManagerFactory {
 	/**
 	 * Set the default self-signed principal identity to be used during initialization
 	 * if no keystore defined.  Current application key manager will be invalidated.
-	 * @param identity if not null and a KeyStore path has not be set, this
-	 * identity will be used to generate a self-signed certificate and private key
 	 * (NOTE: this is intended for server use only when client will not be performing
 	 * CA validation).
+	 * @param identity if not null and a KeyStore path has not be set, this
+	 * identity will be used to generate a self-signed certificate and private key
 	 */
 	public synchronized static void setDefaultIdentity(X500Principal identity) {
 		defaultIdentity = identity;
 		getKeyManagerWrapper().invalidateKey();
+	}
+
+	/**
+	 * Add the optional self-signed subject alternative name to be used during initialization
+	 * if no keystore defined.  Current application key manager will be invalidated.
+	 * (NOTE: this is intended for server use only when client will not be performing
+	 * CA validation).
+	 * @param subjectAltName name to be added to the current list of alternative subject names.
+	 * A null value will clear all names currently set.  
+	 * name will be used to generate a self-signed certificate and private key
+	 */
+	public synchronized static void addSubjectAlternativeName(String subjectAltName) {
+		if (subjectAltName == null) {
+			subjectAlternativeNames = null;
+		}
+		else {
+			if (subjectAlternativeNames == null) {
+				subjectAlternativeNames = new ArrayList<>();
+			}
+			subjectAlternativeNames.add(subjectAltName);
+		}
+		getKeyManagerWrapper().invalidateKey();
+	}
+
+	/**
+	 * Get the current list of subject alternative names to be used for a self-signed certificate
+	 * if no keystore defined.
+	 * @return list of subject alternative names to be used for a self-signed certificate
+	 * if no keystore defined.
+	 */
+	public synchronized static List<String> getSubjectAlternativeName() {
+		return Collections.unmodifiableList(subjectAlternativeNames);
 	}
 
 	/**
@@ -548,7 +581,7 @@ public class ApplicationKeyManagerFactory {
 					KeyStore selfSignedKeyStore =
 						ApplicationKeyManagerUtils.createKeyStore("defaultSigKey",
 							defaultIdentity.getName(), SELF_SIGNED_DURATION_DAYS, null, null, "JKS",
-							pwd);
+							subjectAlternativeNames, pwd);
 					keystoreData = new ProtectedKeyStoreData(selfSignedKeyStore, pwd);
 					isSelfSigned = true;
 				}
