@@ -575,6 +575,8 @@ bool Funcdata::earlyJumpTableFail(PcodeOp *op)
 	    return false;	// Don't try to back track through injection
 	  if (dynamic_cast<JumpAssistOp *>(userOp) != (JumpAssistOp *)0)
 	    return false;
+	  if (dynamic_cast<SegmentOp *>(userOp) != (SegmentOp *)0)
+	    return false;
 	  if (outhit)
 	    return true;	// Address formed via uninjected CALLOTHER, analysis will fail
 	  // Assume CALLOTHER will not interfere with address and continue backtracking
