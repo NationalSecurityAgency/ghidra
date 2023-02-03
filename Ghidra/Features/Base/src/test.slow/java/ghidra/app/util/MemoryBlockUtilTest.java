@@ -94,7 +94,7 @@ public class MemoryBlockUtilTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-	public void testGetByteOnUnitializedBlock() {
+	public void testGetByteOnUninitializedBlock() {
 		MemoryBlock block = MemoryBlockUtils.createUninitializedBlock(prog, false, "a",
 			space.getAddress(3000), 1000, "Acomment", "Asource", true, true, true, log);
 		try {

@@ -75,7 +75,7 @@ public class UniqueMemoryBankTest extends AbstractGenericTest {
 	}
 
 	@Test(expected = LowlevelError.class)
-	public void testGetUnitializedByte() {
+	public void testGetUninitializedByte() {
 		WordInfo info = new WordInfo();
 		info.setByte((byte) 0, 0);
 		info.setByte((byte) 1, 1);
@@ -219,13 +219,13 @@ public class UniqueMemoryBankTest extends AbstractGenericTest {
 	}
 
 	@Test(expected = LowlevelError.class)
-	public void testUnitializedReadStop() {
+	public void testUninitializedReadStop() {
 		byte[] dest = new byte[16];
 		uniqueBank.getChunk(0x1000, 0x10, dest, false);
 	}
 
 	@Test
-	public void testUnitializedReadContinue() {
+	public void testUninitializedReadContinue() {
 		byte[] dest = new byte[16];
 		int bytesRead = uniqueBank.getChunk(0x1000, 0x10, dest, true);
 		assertEquals(0, bytesRead);

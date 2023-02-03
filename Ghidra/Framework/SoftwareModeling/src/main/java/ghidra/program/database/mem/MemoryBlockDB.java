@@ -701,7 +701,7 @@ public class MemoryBlockDB implements MemoryBlock {
 		}
 		subBlocks.clear();
 		DBRecord subRecord = adapter.createSubBlockRecord(id, 0, length,
-			MemoryMapDBAdapter.SUB_TYPE_UNITIALIZED, 0, 0);
+			MemoryMapDBAdapter.SUB_TYPE_UNINITIALIZED, 0, 0);
 		subBlocks.add(new UninitializedSubMemoryBlock(adapter, subRecord));
 
 	}

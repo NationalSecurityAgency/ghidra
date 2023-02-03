@@ -123,7 +123,7 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		assertEquals(addr(9), info.getMaxAddress());
 		try {
 			block.getByte(addr(0));
-			fail("expected exception trying to read bytes on unitialized block");
+			fail("expected exception trying to read bytes on uninitialized block");
 		}
 		catch (MemoryAccessException e) {
 			// expected
@@ -131,7 +131,7 @@ public class MemBlockDBTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testCreateUnitializedOverlayBlock() throws Exception {
+	public void testCreateUninitializedOverlayBlock() throws Exception {
 		MemoryBlock block = mem.createUninitializedBlock("test", addr(0), 10, true);
 
 		assertEquals(10, block.getSize());
@@ -148,7 +148,7 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		assertEquals(10, info.getLength());
 		try {
 			block.getByte(block.getStart());
-			fail("expected exception trying to read bytes on unitialized block");
+			fail("expected exception trying to read bytes on uninitialized block");
 		}
 		catch (MemoryAccessException e) {
 			// expected
@@ -206,7 +206,7 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		}
 		try {
 			mem.getByte(block.getStart().add(10));
-			fail("expected exception trying to read bytes on mapped unitialized block");
+			fail("expected exception trying to read bytes on mapped uninitialized block");
 		}
 		catch (MemoryAccessException e) {
 			// expected 
@@ -243,7 +243,7 @@ public class MemBlockDBTest extends AbstractGenericTest {
 		}
 		try {
 			mem.getByte(block.getStart().add(8));
-			fail("expected exception trying to read bytes on mapped unitialized block");
+			fail("expected exception trying to read bytes on mapped uninitialized block");
 		}
 		catch (MemoryAccessException e) {
 			// expected 
@@ -533,7 +533,7 @@ public class MemBlockDBTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testSplitAndJoinUnitializedBlock() throws Exception {
+	public void testSplitAndJoinUninitializedBlock() throws Exception {
 		MemoryBlock block = mem.createUninitializedBlock("test", addr(0), 40, false);
 		mem.split(block, addr(10));
 		MemoryBlock[] blocks = mem.getBlocks();
@@ -977,7 +977,7 @@ public class MemBlockDBTest extends AbstractGenericTest {
 	}
 
 	@Test
-	public void testAddressSourceInfoForUnitialized() throws Exception {
+	public void testAddressSourceInfoForUninitialized() throws Exception {
 		mem.createUninitializedBlock("test", addr(0), 10, false);
 
 		AddressSourceInfo info = mem.getAddressSourceInfo(addr(0));

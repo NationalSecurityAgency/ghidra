@@ -236,7 +236,7 @@ public class AddBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 		model.setStartAddress(getAddr(0x100));
 		model.setLength(100);
 		model.setBlockType(MemoryBlockType.BIT_MAPPED);
-		assertEquals(InitializedType.UNITIALIZED, model.getInitializedType());
+		assertEquals(InitializedType.UNINITIALIZED, model.getInitializedType());
 		model.setBaseAddress(getAddr(0x2000));
 
 		assertTrue(model.execute());
@@ -251,7 +251,7 @@ public class AddBlockModelTest extends AbstractGhidraHeadedIntegrationTest
 		model.setStartAddress(getAddr(0x100));
 		model.setLength(100);
 		model.setBlockType(MemoryBlockType.BYTE_MAPPED);
-		assertEquals(InitializedType.UNITIALIZED, model.getInitializedType());
+		assertEquals(InitializedType.UNINITIALIZED, model.getInitializedType());
 		model.setBaseAddress(getAddr(0x2000));
 
 		assertTrue(model.execute());
