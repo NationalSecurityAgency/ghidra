@@ -204,6 +204,11 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 		createActions();
 	}
 
+	void dispose() {
+		blockChooserDialog.dispose();
+		regionProposalDialog.dispose();
+	}
+
 	protected void buildMainPanel() {
 		panel = new DebuggerRegionsPanel(this);
 		mainPanel.add(panel);

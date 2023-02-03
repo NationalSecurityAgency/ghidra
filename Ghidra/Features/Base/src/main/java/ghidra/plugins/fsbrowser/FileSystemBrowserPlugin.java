@@ -15,13 +15,12 @@
  */
 package ghidra.plugins.fsbrowser;
 
-import java.util.*;
-
 import java.awt.Component;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
+import java.util.*;
 
 import javax.swing.KeyStroke;
 
@@ -37,8 +36,8 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.services.*;
 import ghidra.app.util.opinion.LoaderService;
 import ghidra.formats.gfilesystem.*;
-import ghidra.framework.main.FrontEndService;
 import ghidra.framework.main.ApplicationLevelPlugin;
+import ghidra.framework.main.FrontEndService;
 import ghidra.framework.model.Project;
 import ghidra.framework.model.ProjectListener;
 import ghidra.framework.plugintool.*;
@@ -70,7 +69,8 @@ import utilities.util.FileUtilities;
 	eventsConsumed = { ProgramActivatedPluginEvent.class }
 )
 //@formatter:on
-public class FileSystemBrowserPlugin extends Plugin implements ApplicationLevelPlugin, ProjectListener,
+public class FileSystemBrowserPlugin extends Plugin
+		implements ApplicationLevelPlugin, ProjectListener,
 		FileSystemBrowserService {
 
 	/* package */ DockingAction openFilesystemAction;
@@ -128,7 +128,10 @@ public class FileSystemBrowserPlugin extends Plugin implements ApplicationLevelP
 			frontEndService.removeProjectListener(this);
 			frontEndService = null;
 		}
-		chooserOpen = null;
+
+		if (chooserOpen != null) {
+			chooserOpen.dispose();
+		}
 
 		for (FileSystemBrowserComponentProvider provider : currentBrowsers.values()) {
 			provider.dispose();

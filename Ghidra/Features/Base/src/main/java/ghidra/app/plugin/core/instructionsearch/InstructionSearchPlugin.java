@@ -94,6 +94,16 @@ public class InstructionSearchPlugin extends ProgramPlugin {
 		createActions();
 	}
 
+	@Override
+	protected void dispose() {
+		super.dispose();
+
+		if (searchDialog != null) {
+			searchDialog.dispose();
+		}
+
+	}
+
 	public InstructionSearchDialog getSearchDialog() {
 		return searchDialog;
 	}

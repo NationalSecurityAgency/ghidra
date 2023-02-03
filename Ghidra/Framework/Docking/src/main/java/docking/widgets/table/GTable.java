@@ -1197,6 +1197,7 @@ public class GTable extends JTable {
 	private File chooseExportFile() {
 		GhidraFileChooser chooser = createExportFileChooser();
 		File file = chooser.getSelectedFile();
+		chooser.dispose();
 		if (file == null) {
 			return null;
 		}

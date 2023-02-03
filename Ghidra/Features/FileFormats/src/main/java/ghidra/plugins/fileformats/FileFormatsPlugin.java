@@ -87,6 +87,14 @@ public class FileFormatsPlugin extends Plugin implements ApplicationLevelPlugin 
 	protected void dispose() {
 		super.dispose();
 
+		if (chooserJarFolder != null) {
+			chooserJarFolder.dispose();
+		}
+
+		if (chooserEclipse != null) {
+			chooserEclipse.dispose();
+		}
+
 		actions.forEach(action -> getTool().removeAction(action));
 	}
 

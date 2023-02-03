@@ -269,6 +269,7 @@ public class ExporterDialog extends DialogComponentProvider implements AddressFa
 			setLastExportDirectory(file);
 			filePathTextField.setText(file.getAbsolutePath());
 		}
+		chooser.dispose();
 	}
 
 	private void setLastExportDirectory(File file) {

@@ -820,6 +820,7 @@ public class FrontEndPlugin extends Plugin
 	protected void dispose() {
 		dataTablePanel.dispose();
 		dataTreePanel.dispose();
+		projectActionManager.dispose();
 	}
 
 	private void buildPanels() {

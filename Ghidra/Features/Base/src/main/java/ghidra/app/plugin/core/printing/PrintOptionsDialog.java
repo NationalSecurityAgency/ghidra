@@ -20,13 +20,13 @@ import java.awt.event.*;
 
 import javax.swing.*;
 
-import docking.DialogComponentProvider;
+import docking.ReusableDialogComponentProvider;
 import docking.widgets.button.GRadioButton;
 import docking.widgets.checkbox.GCheckBox;
 import generic.theme.Gui;
 import ghidra.util.HelpLocation;
 
-public class PrintOptionsDialog extends DialogComponentProvider {
+public class PrintOptionsDialog extends ReusableDialogComponentProvider {
 
 	private static final String FONT_ID = "font.print";
 	private boolean selectionEnabled;

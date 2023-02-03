@@ -456,6 +456,8 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 		for (Filter<VTMatch> filter : filters) {
 			filter.dispose();
 		}
+
+		ancillaryFilterDialog.dispose();
 	}
 
 	@Override

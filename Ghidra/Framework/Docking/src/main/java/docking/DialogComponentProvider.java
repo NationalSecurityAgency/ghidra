@@ -32,7 +32,7 @@ import docking.event.mouse.GMouseListenerAdapter;
 import docking.menu.DialogToolbarButton;
 import docking.util.AnimationUtils;
 import docking.widgets.label.GDHtmlLabel;
-import generic.theme.*;
+import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
@@ -85,7 +85,7 @@ public class DialogComponentProvider
 	private CardLayout progressCardLayout;
 	private JButton defaultButton;
 
-	private DockingDialog dialog;
+	DockingDialog dialog;
 	private Component focusComponent;
 	private JPanel toolbar;
 
@@ -103,7 +103,6 @@ public class DialogComponentProvider
 	private boolean isTransient = false;
 
 	private Dimension defaultSize;
-	private ThemeListener themeListener = this::themeChanged;
 
 	/**
 	 * Constructor for a DialogComponentProvider that will be modal and will include a status line and
@@ -178,8 +177,6 @@ public class DialogComponentProvider
 		installEscapeAction();
 
 		doInitialize();
-
-		Gui.addThemeListener(themeListener);
 	}
 
 	private void installEscapeAction() {
@@ -342,20 +339,6 @@ public class DialogComponentProvider
 		if (component.isFocusable()) {
 			component.addMouseListener(popupHandler);
 		}
-	}
-
-	private void themeChanged(ThemeEvent ev) {
-		if (!ev.isLookAndFeelChanged()) {
-			return;  // we only care if the Look and Feel changes
-		}
-
-		// if we are visible, then we don't need to update as the system updates all 
-		// visible components
-		if (isVisible()) {
-			return;
-		}
-		Component component = dialog != null ? dialog : rootPanel;
-		SwingUtilities.updateComponentTreeUI(component);
 	}
 
 	private void uninstallMouseListener(Component comp) {
@@ -898,16 +881,25 @@ public class DialogComponentProvider
 	}
 
 	public void close() {
-		if (isShowing()) {
-			dialog.close();
-		}
-
+		closeDialog();
+		dispose();
 	}
 
+	protected void closeDialog() {
+		if (isShowing()) {
+			cancelCurrentTask();
+			dialog.close();
+		}
+	}
+
+	/**
+	 * Disposes this dialog.  Only call this when the dialog is no longer used.  Calling this method
+	 * will close the dialog if it is open.
+	 */
 	public void dispose() {
-		Gui.removeThemeListener(themeListener);
-		cancelCurrentTask();
-		close();
+
+		closeDialog();
+
 		popupManager.dispose();
 
 		dialogActions.forEach(DockingActionIf::dispose);

@@ -25,7 +25,7 @@ import java.util.List;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
-import docking.DialogComponentProvider;
+import docking.ReusableDialogComponentProvider;
 import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.plugin.core.instructionsearch.model.*;
 import ghidra.app.plugin.core.instructionsearch.ui.SelectionModeWidget.InputMode;
@@ -43,7 +43,7 @@ import ghidra.util.SystemUtilities;
  * will then be disassembled and displayed in the {@link InstructionTable}.
  *
  */
-public class InsertBytesWidget extends DialogComponentProvider implements KeyListener {
+public class InsertBytesWidget extends ReusableDialogComponentProvider implements KeyListener {
 
 	// The input text area.  This is a generic JTextArea but displays a textual 'hint' to inform
 	// the user of what type of input is required.

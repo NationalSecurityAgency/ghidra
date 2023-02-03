@@ -66,8 +66,6 @@ class ToolActionManager implements ToolChestChangeListener {
 	private Map<String, DockingAction> delToolActionMap;
 	private Map<String, DockingAction> exportToolActionMap;
 
-	private GhidraFileChooser fileChooser;
-
 	ToolActionManager(FrontEndPlugin fePlugin) {
 		plugin = fePlugin;
 		tool = (FrontEndTool) plugin.getTool();
@@ -211,8 +209,7 @@ class ToolActionManager implements ToolChestChangeListener {
 		}
 
 		List<String> list = dialog.getSelectedList();
-		for (int i = 0; i < list.size(); i++) {
-			String filename = list.get(i);
+		for (String filename : list) {
 			addDefaultTool(filename);
 		}
 	}
@@ -319,7 +316,7 @@ class ToolActionManager implements ToolChestChangeListener {
 		Workspace ws = plugin.getActiveWorkspace();
 
 		// create the running tool
-		PluginTool runningTool = (PluginTool) ws.createTool();
+		PluginTool runningTool = ws.createTool();
 
 		// whenever we create a new tool, the first thing the
 		// user will want to do is configure it, so automatically
@@ -417,22 +414,22 @@ class ToolActionManager implements ToolChestChangeListener {
 	 * tool.
 	 */
 	private void importTool() {
-		if (fileChooser == null) {
-			fileChooser = new GhidraFileChooser(tool.getToolFrame());
-			fileChooser.setFileFilter(
-				new ExtensionFileFilter(new String[] { "tool", "tcd" }, "Tools"));
-			fileChooser.setTitle("Import Tool");
-			fileChooser.setApproveButtonText("Import");
 
-			String importDir = Preferences.getProperty(Preferences.LAST_TOOL_IMPORT_DIRECTORY);
-			if (importDir != null) {
-				fileChooser.setCurrentDirectory(new File(importDir));
-			}
+		GhidraFileChooser fileChooser = new GhidraFileChooser(tool.getToolFrame());
+		fileChooser.setFileFilter(
+			new ExtensionFileFilter(new String[] { "tool", "tcd" }, "Tools"));
+		fileChooser.setTitle("Import Tool");
+		fileChooser.setApproveButtonText("Import");
+
+		String importDir = Preferences.getProperty(Preferences.LAST_TOOL_IMPORT_DIRECTORY);
+		if (importDir != null) {
+			fileChooser.setCurrentDirectory(new File(importDir));
 		}
 
 		fileChooser.rescanCurrentDirectory();
 
 		File selectedFile = fileChooser.getSelectedFile(true);
+		fileChooser.dispose();
 		if (selectedFile == null) {
 			return;
 		}

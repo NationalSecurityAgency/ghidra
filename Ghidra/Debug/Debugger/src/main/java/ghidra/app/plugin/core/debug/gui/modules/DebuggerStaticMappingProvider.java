@@ -176,6 +176,10 @@ public class DebuggerStaticMappingProvider extends ComponentProviderAdapter
 		createActions();
 	}
 
+	void dispose() {
+		addMappingDialog.dispose();
+	}
+
 	@AutoServiceConsumed
 	private void setMappingService(DebuggerStaticMappingService mappingService) {
 		addMappingDialog.setMappingService(mappingService);

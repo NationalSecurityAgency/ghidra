@@ -150,6 +150,7 @@ public abstract class CompositeEditorProvider extends ComponentProviderAdapter
 			editorModel.endFieldEditing();
 		}
 		if (saveChanges(true) != 0) {
+			super.closeComponent();
 			dispose();
 		}
 	}

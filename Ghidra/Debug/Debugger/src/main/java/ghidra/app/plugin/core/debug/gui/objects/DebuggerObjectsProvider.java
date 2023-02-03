@@ -132,9 +132,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
 
-	@AutoOptionDefined(
-		name = "Default Extended Step",
-		description = "The default string for the extended step command")
+	@AutoOptionDefined(name = "Default Extended Step", description = "The default string for the extended step command")
 	String extendedStep = "";
 
 	@SuppressWarnings("unused")
@@ -246,6 +244,16 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		createActions();
 
 		repeatLastSet.run();
+	}
+
+	void dispose() {
+		// TODO This is not currently called, since the clients of this provider to not hold onto
+		// the provider after creation.  Ideally, these providers should either be tracked and 
+		// disposed, or this provider should perform cleanup on itself when it is no longer used.
+		configDialog.dispose();
+		methodDialog.dispose();
+		attachDialog.dispose();
+		breakpointDialog.dispose();
 	}
 
 	@Override

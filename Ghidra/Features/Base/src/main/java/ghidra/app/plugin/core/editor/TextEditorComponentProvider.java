@@ -44,9 +44,9 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 	private static final String TITLE = "Text Editor";
 	private static final String FONT_ID = "font.plugin.service.text.editor";
 	private static final int MAX_UNDO_REDO_SIZE = 50;
+	private static final String LAST_SAVED_TEXT_FILE_DIR = "LastSavedTextFileDirectory";
 
 	private TextEditorManagerPlugin plugin;
-	private GhidraFileChooser chooser;
 	private File textFile;
 	private String textFileName;
 	private DockingAction saveAction;
@@ -146,17 +146,13 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 	}
 
 	private String loadTextFile(InputStream inputStream) throws IOException {
-		BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-		try {
+		try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
 			return loadTextFile(reader);
-		}
-		finally {
-			reader.close();
 		}
 	}
 
 	private String loadTextFile(BufferedReader reader) throws IOException {
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 		while (true) {
 			String line = reader.readLine();
 			if (line == null) {
@@ -290,21 +286,25 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 			}
 			catch (IOException e) {
 				if (textFile.canWrite()) {
-					Msg.showError(getClass(), getComponent(), "Error saving file", e.getMessage());
+					Msg.showError(getClass(), getComponent(), "Error Saving File",
+						"Unable to save file", e);
 				}
 				else {
 					Msg.showError(getClass(), getComponent(), "Error Saving File",
-						"The file is not writable.");
+						"The file is not writable");
 				}
 			}
 		}
 	}
 
 	private void saveAs() {
-		if (chooser == null) {
-			chooser = new GhidraFileChooser(getComponent());
-		}
+
+		GhidraFileChooser chooser = new GhidraFileChooser(getComponent());
+
+		chooser.setLastDirectoryPreference(LAST_SAVED_TEXT_FILE_DIR);
+
 		File saveAsFile = chooser.getSelectedFile();
+		chooser.dispose();
 		if (saveAsFile == null) {
 			return;
 		}
@@ -344,6 +344,7 @@ public class TextEditorComponentProvider extends ComponentProviderAdapter {
 	public void closeComponent() {
 		if (plugin.removeTextFile(this, textFileName)) {
 			clearUndoRedoStack();
+			super.closeComponent();
 			plugin.getTool().removeComponentProvider(this);
 		}
 	}

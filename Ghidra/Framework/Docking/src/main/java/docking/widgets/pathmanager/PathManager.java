@@ -54,8 +54,7 @@ public class PathManager {
 	private JButton downButton;
 	private JButton addButton;
 	private JButton removeButton;
-	private GhidraFileChooser fileChooser;
-	private String preferenceForLastSelectedDir = Preferences.LAST_IMPORT_DIRECTORY;
+	private String preferenceForLastSelectedDir = Preferences.LAST_PATH_DIRECTORY;
 	private String title = "Select File";
 	private GhidraFileChooserMode fileChooserMode = GhidraFileChooserMode.FILES_ONLY;
 	private boolean allowMultiFileSelection;
@@ -98,7 +97,6 @@ public class PathManager {
 		fileChooserMode = selectionMode;
 		allowMultiFileSelection = allowMultiSelection;
 		this.filter = filter;
-		this.fileChooser = null;
 	}
 
 	/**
@@ -295,32 +293,28 @@ public class PathManager {
 	}
 
 	private void add() {
-		if (fileChooser == null) {
-			fileChooser = new GhidraFileChooser(panel);
-			fileChooser.setMultiSelectionEnabled(allowMultiFileSelection);
-			fileChooser.setFileSelectionMode(fileChooserMode);
-			fileChooser.setTitle(title);
-			fileChooser.setApproveButtonToolTipText(title);
-			if (filter != null) {
-				fileChooser.addFileFilter(new GhidraFileFilter() {
-					@Override
-					public String getDescription() {
-						return filter.getDescription();
-					}
 
-					@Override
-					public boolean accept(File f, GhidraFileChooserModel l_model) {
-						return filter.accept(f, l_model);
-					}
-				});
-			}
-			String dir = Preferences.getProperty(preferenceForLastSelectedDir);
-			if (dir != null) {
-				fileChooser.setCurrentDirectory(new File(dir));
-			}
+		GhidraFileChooser fileChooser = new GhidraFileChooser(panel);
+		fileChooser.setMultiSelectionEnabled(allowMultiFileSelection);
+		fileChooser.setFileSelectionMode(fileChooserMode);
+		fileChooser.setTitle(title);
+		fileChooser.setApproveButtonToolTipText(title);
+		if (filter != null) {
+			fileChooser.addFileFilter(new GhidraFileFilter() {
+				@Override
+				public String getDescription() {
+					return filter.getDescription();
+				}
+
+				@Override
+				public boolean accept(File f, GhidraFileChooserModel l_model) {
+					return filter.accept(f, l_model);
+				}
+			});
 		}
-		else {
-			fileChooser.rescanCurrentDirectory();
+		String dir = Preferences.getProperty(preferenceForLastSelectedDir);
+		if (dir != null) {
+			fileChooser.setCurrentDirectory(new File(dir));
 		}
 
 		List<File> files = fileChooser.getSelectedFiles();
@@ -340,6 +334,8 @@ public class PathManager {
 				Preferences.setProperty(preferenceForLastSelectedDir, path);
 			}
 		}
+
+		fileChooser.dispose();
 	}
 
 	private void up() {

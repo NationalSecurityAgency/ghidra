@@ -136,7 +136,6 @@ public class DefaultGraphDisplay implements GraphDisplay {
 
 	private final SatelliteVisualizationViewer<AttributedVertex, AttributedEdge> satelliteViewer;
 
-	private FilterDialog filterDialog;
 	private AttributeFilters edgeFilters;
 	private AttributeFilters vertexFilters;
 
@@ -555,6 +554,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 			// we have one less level for these transient tool options, so no need to prepend "graph."
 			dialog.displayCategory(relativePath, "");
 			tool.showDialog(dialog, componentProvider);
+			dialog.dispose();
 		}
 	}
 
@@ -772,14 +772,14 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	}
 
 	private void showFilterDialog() {
-		if (filterDialog == null) {
-			if (vertexFilters == null) {
-				Msg.showWarn(this, null, "No Graph", "Can't set filters with no graph present!");
-				return;
-			}
-			filterDialog = new FilterDialog(vertexFilters.getButtons(), edgeFilters.getButtons());
+
+		if (vertexFilters == null) {
+			Msg.showWarn(this, null, "No Graph", "Can't set filters with no graph present!");
+			return;
 		}
-		componentProvider.getTool().showDialog(filterDialog);
+		FilterDialog dialog =
+			new FilterDialog(vertexFilters.getButtons(), edgeFilters.getButtons());
+		componentProvider.getTool().showDialog(dialog);
 	}
 
 	private void toggleSatellite(ActionContext context) {
@@ -1014,11 +1014,6 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	 * configure filters for the graph, based on the vertex and edge attributes
 	 */
 	private void configureFilters() {
-		// close and rebuild filter dialog if exists
-		if (filterDialog != null) {
-			filterDialog.close();
-			filterDialog = null;
-		}
 		Set<AttributedVertex> vertices = graph.vertexSet();
 		Set<AttributedEdge> edges = graph.edgeSet();
 		vertexFilters = AttributeFilters.builder()

@@ -23,12 +23,12 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import docking.DialogComponentProvider;
+import docking.ReusableDialogComponentProvider;
 import docking.widgets.button.GRadioButton;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GLabel;
 
-public class FindDialog extends DialogComponentProvider {
+public class FindDialog extends ReusableDialogComponentProvider {
 
 	private GhidraComboBox<String> comboBox;
 

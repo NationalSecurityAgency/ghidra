@@ -270,12 +270,15 @@ public class PasswordDialog extends DialogComponentProvider {
 	}
 
 	@Override
+	public void close() {
+		// overridden to not call dispose, since this class does special cleanup on close
+		closeDialog();
+	}
+
+	@Override
 	public void dispose() {
-		if (passwordField != null) {
-			passwordField.setText("");
-			rootPanel.remove(passwordField);
-			passwordField = null;
-		}
+		passwordField.setText("");
+		rootPanel.remove(passwordField);
 	}
 
 }

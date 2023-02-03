@@ -80,7 +80,7 @@ class EditPluginPathDialog extends DialogComponentProvider {
 	// gui members needed for dis/enabling and other state-dependent actions
 	private JScrollPane scrollPane; // need for preferred size when resizing
 	private JList<String> pluginPathsList;
-	private GhidraFileChooser fileChooser;
+
 	private JButton upButton;
 	private JButton downButton;
 	private JButton removeButton;
@@ -199,14 +199,14 @@ class EditPluginPathDialog extends DialogComponentProvider {
 
 		setStatusMessage(EditPluginPathDialog.EMPTY_STATUS);
 
-		if (fileChooser == null) {
-			fileChooser = new GhidraFileChooser(getComponent());
-			fileChooser.setCurrentDirectory(new File(System.getProperty("user.home")));
-		}
+		GhidraFileChooser fileChooser = new GhidraFileChooser(getComponent());
+		fileChooser.setCurrentDirectory(new File(System.getProperty("user.home")));
 		fileChooser.setFileSelectionMode(GhidraFileChooserMode.FILES_ONLY);
 		fileChooser.setFileFilter(JAR_FILTER);
 		fileChooser.setApproveButtonToolTipText("Choose Plugin Jar File");
 		fileChooser.setApproveButtonText("Add Jar File");
+
+		fileChooser.setLastDirectoryPreference(Preferences.LAST_PATH_DIRECTORY);
 
 		File dir = fileChooser.getSelectedFile();
 		if (dir != null) {
@@ -225,16 +225,16 @@ class EditPluginPathDialog extends DialogComponentProvider {
 				setStatusMessage(e.getMessage());
 			}
 		}
+
+		fileChooser.dispose();
 	}
 
 	private void addDirCallback() {
 
 		setStatusMessage(EditPluginPathDialog.EMPTY_STATUS);
 
-		if (fileChooser == null) {
-			fileChooser = new GhidraFileChooser(getComponent());
-			fileChooser.setCurrentDirectory(new File(System.getProperty("user.home")));
-		}
+		GhidraFileChooser fileChooser = new GhidraFileChooser(getComponent());
+		fileChooser.setCurrentDirectory(new File(System.getProperty("user.home")));
 		fileChooser.setFileSelectionMode(GhidraFileChooserMode.DIRECTORIES_ONLY);
 		fileChooser.setFileFilter(GhidraFileFilter.ALL);
 		fileChooser.setApproveButtonToolTipText("Choose Directory with Plugin class Files");
@@ -258,6 +258,7 @@ class EditPluginPathDialog extends DialogComponentProvider {
 				Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
 			}
 		}
+		fileChooser.dispose();
 	}
 
 	private String[] getUserPluginPaths() {

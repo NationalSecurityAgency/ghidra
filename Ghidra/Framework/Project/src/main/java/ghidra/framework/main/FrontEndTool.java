@@ -161,6 +161,15 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 		initFrontEndOptions();
 	}
 
+	@Override
+	protected void dispose() {
+		super.dispose();
+
+		if (logProvider != null) {
+			logProvider.dispose();
+		}
+	}
+
 	private void ensureSize() {
 		JFrame frame = getToolFrame();
 		Dimension size = frame.getSize();
@@ -607,8 +616,6 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				showExtensions();
-				extensionTableProvider.setHelpLocation(
-					new HelpLocation(GenericHelpTopics.FRONT_END, "Extensions"));
 			}
 
 			@Override
@@ -834,7 +841,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 // Inner Classes
 //==================================================================================================
 
-	private static class LogComponentProvider extends DialogComponentProvider {
+	private static class LogComponentProvider extends ReusableDialogComponentProvider {
 
 		private final File logFile;
 		private Dimension defaultSize = new Dimension(600, 400);

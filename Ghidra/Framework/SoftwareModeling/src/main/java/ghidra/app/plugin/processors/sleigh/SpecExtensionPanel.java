@@ -434,7 +434,7 @@ public class SpecExtensionPanel extends JPanel {
 		// return them to that spot if they use the dialog again.
 		Preferences.setProperty(LAST_EXPORT_DIRECTORY,
 			fileChooser.getCurrentDirectory().getAbsolutePath());
-
+		fileChooser.dispose();
 		return selectedFile;
 	}
 

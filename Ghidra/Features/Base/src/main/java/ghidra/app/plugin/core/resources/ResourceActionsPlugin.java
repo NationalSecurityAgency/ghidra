@@ -101,6 +101,7 @@ public class ResourceActionsPlugin extends Plugin {
 		chooser.setApproveButtonText("Save Image As");
 		chooser.addFileFilter(GRAPHIC_FORMATS_FILTER);
 		File f = chooser.getSelectedFile();
+		chooser.dispose();
 		if (f != null) {
 			if (f.exists() && OptionDialog.showYesNoDialog(tool.getActiveWindow(),
 				"Overwrite Existing File?",
@@ -146,6 +147,7 @@ public class ResourceActionsPlugin extends Plugin {
 			chooser.setApproveButtonText("Save Image As");
 			chooser.addFileFilter(GRAPHIC_FORMATS_FILTER);
 			File f = chooser.getSelectedFile();
+			chooser.dispose();
 			if (f != null) {
 				if (f.exists() && OptionDialog.showYesNoDialog(tool.getActiveWindow(),
 					"Overwrite Existing File?",

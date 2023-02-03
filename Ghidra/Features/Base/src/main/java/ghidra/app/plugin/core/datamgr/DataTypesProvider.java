@@ -114,6 +114,11 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		createLocalActions();
 	}
 
+	@Override // overridden to open access
+	protected void setTransient() {
+		super.setTransient();
+	}
+
 	/**
 	 * This creates all the actions for opening/creating data type archives.
 	 * It also creates the action for refreshing the built-in data types
@@ -358,7 +363,10 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 
 	@Override // overridden to handle special logic in plugin
 	public void closeComponent() {
-		plugin.closeProvider(this);
+		super.closeComponent();
+		if (isTransient()) {
+			dispose();
+		}
 	}
 
 	private void buildComponent() {

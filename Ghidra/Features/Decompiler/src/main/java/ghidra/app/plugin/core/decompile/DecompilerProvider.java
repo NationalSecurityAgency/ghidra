@@ -160,6 +160,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 	@Override
 	public void closeComponent() {
+		super.closeComponent();
 		controller.clear();
 		plugin.closeProvider(this);
 	}

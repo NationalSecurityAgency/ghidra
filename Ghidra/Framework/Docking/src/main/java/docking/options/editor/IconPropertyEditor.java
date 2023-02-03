@@ -193,6 +193,7 @@ public class IconPropertyEditor extends PropertyEditorSupport {
 				Preferences.setProperty(LAST_ICON_DIR_PREFERENCE_KEY, dir.getAbsolutePath());
 				importIconFile(file);
 			}
+			chooser.dispose();
 		}
 
 		private void importIconFile(File file) {

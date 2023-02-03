@@ -24,7 +24,7 @@ import javax.swing.*;
 
 import org.apache.commons.lang3.StringUtils;
 
-import docking.DialogComponentProvider;
+import docking.ReusableDialogComponentProvider;
 import docking.action.DockingAction;
 import docking.action.builder.ActionBuilder;
 import docking.widgets.combobox.GComboBox;
@@ -50,7 +50,7 @@ import ghidra.util.task.*;
  * for learning function starts, train models, see performance statistics, and
  * apply the models.
  */
-public class FunctionStartRFParamsDialog extends DialogComponentProvider {
+public class FunctionStartRFParamsDialog extends ReusableDialogComponentProvider {
 
 	private static final String INITIAL_BYTES_TEXT = "Number of Initial Bytes (CSV)";
 	private static final String INITIAL_BYTES_TIP =

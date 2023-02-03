@@ -23,8 +23,8 @@ import java.io.IOException;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 
-import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
+import docking.ReusableDialogComponentProvider;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.label.GDLabel;
 import generic.theme.GThemeDefaults.Colors.Messages;
@@ -37,7 +37,7 @@ import resources.Icons;
  * A dialog that controls the panels for going to "Next" and "Previous" in some
  * process that the user is being led through.
  */
-public class WizardManager extends DialogComponentProvider implements WizardPanelListener {
+public class WizardManager extends ReusableDialogComponentProvider implements WizardPanelListener {
 	/**Default text for the 'finish' button*/
 	public static final String FINISH = "Finish";
 	/**Default text for the 'next' button*/
@@ -75,7 +75,7 @@ public class WizardManager extends DialogComponentProvider implements WizardPane
 	 * @param wizardIcon icon to use for this dialog
 	 */
 	public WizardManager(String title, boolean modal, PanelManager pmgr, Icon wizardIcon) {
-		super(title, modal);
+		super(title, modal, true, true, false);
 		init(pmgr, wizardIcon);
 	}
 

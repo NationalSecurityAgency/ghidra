@@ -64,7 +64,7 @@ public class SaveImageAction extends ImagePanelDockingAction {
 		chooser.setMultiSelectionEnabled(false);
 
 		File selected = chooser.getSelectedFile(true);
-
+		chooser.dispose();
 		if (chooser.wasCancelled()) {
 			return null;
 		}

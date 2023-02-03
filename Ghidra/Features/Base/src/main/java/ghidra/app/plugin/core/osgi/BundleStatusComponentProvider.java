@@ -60,7 +60,6 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 	private final BundleStatusTableModel bundleStatusTableModel;
 	private GTableFilterPanel<BundleStatus> filterPanel;
 
-	private GhidraFileChooser fileChooser;
 	private GhidraFileFilter filter;
 	private final BundleHost bundleHost;
 	private transient boolean isDisposed;
@@ -94,7 +93,6 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 				return GhidraBundle.getType(file) != GhidraBundle.Type.INVALID;
 			}
 		};
-		this.fileChooser = null;
 
 		build();
 		addToTool();
@@ -249,38 +247,29 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 	}
 
 	private void showAddBundlesFileChooser() {
-		if (fileChooser == null) {
-			fileChooser = new GhidraFileChooser(getComponent());
-			fileChooser.setMultiSelectionEnabled(true);
-			fileChooser.setFileSelectionMode(GhidraFileChooserMode.FILES_AND_DIRECTORIES);
-			fileChooser.setTitle("Select Bundle(s)");
-			// fileChooser.setApproveButtonToolTipText(title);
-			if (filter != null) {
-				fileChooser.addFileFilter(new GhidraFileFilter() {
-					@Override
-					public String getDescription() {
-						return filter.getDescription();
-					}
 
-					@Override
-					public boolean accept(File f, GhidraFileChooserModel model) {
-						return filter.accept(f, model);
-					}
-				});
-			}
-			String lastSelected = Preferences.getProperty(PREFERENCE_LAST_SELECTED_BUNDLE);
-			if (lastSelected != null) {
-				File lastSelectedFile = new File(lastSelected);
-				fileChooser.setSelectedFile(lastSelectedFile);
-			}
+		GhidraFileChooser fileChooser = new GhidraFileChooser(getComponent());
+		fileChooser.setMultiSelectionEnabled(true);
+		fileChooser.setFileSelectionMode(GhidraFileChooserMode.FILES_AND_DIRECTORIES);
+		fileChooser.setTitle("Select Bundle(s)");
+		// fileChooser.setApproveButtonToolTipText(title);
+		if (filter != null) {
+			fileChooser.addFileFilter(new GhidraFileFilter() {
+				@Override
+				public String getDescription() {
+					return filter.getDescription();
+				}
+
+				@Override
+				public boolean accept(File f, GhidraFileChooserModel model) {
+					return filter.accept(f, model);
+				}
+			});
 		}
-		else {
-			String lastSelected = Preferences.getProperty(PREFERENCE_LAST_SELECTED_BUNDLE);
-			if (lastSelected != null) {
-				File lastSelectedFile = new File(lastSelected);
-				fileChooser.setSelectedFile(lastSelectedFile);
-			}
-			fileChooser.rescanCurrentDirectory();
+		String lastSelected = Preferences.getProperty(PREFERENCE_LAST_SELECTED_BUNDLE);
+		if (lastSelected != null) {
+			File lastSelectedFile = new File(lastSelected);
+			fileChooser.setSelectedFile(lastSelectedFile);
 		}
 
 		List<File> files = fileChooser.getSelectedFiles();
@@ -304,6 +293,8 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 				}
 			});
 		}
+
+		fileChooser.dispose();
 	}
 
 	protected List<BundleStatus> getSelectedStatuses() {

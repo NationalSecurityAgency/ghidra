@@ -57,6 +57,15 @@ public class SelectBlockPlugin extends Plugin {
 		createActions();
 	}
 
+	@Override
+	protected void dispose() {
+		super.dispose();
+
+		if (dialog != null) {
+			dialog.dispose();
+		}
+	}
+
 	private void createActions() {
 
 		toolBarAction = new NavigatableContextAction("SelectBlock", getName()) {

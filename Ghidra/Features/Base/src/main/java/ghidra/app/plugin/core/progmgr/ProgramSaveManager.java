@@ -38,7 +38,6 @@ import ghidra.util.task.*;
 class ProgramSaveManager {
 	private ProgramManager programMgr;
 	private PluginTool tool;
-	private DataTreeDialog dataTreeSaveDialog;
 	private boolean treeDialogCancelled;
 	private DomainFileFilter domainFileFilter;
 
@@ -450,37 +449,35 @@ class ProgramSaveManager {
 	}
 
 	private DataTreeDialog getSaveDialog() {
-		if (dataTreeSaveDialog == null) {
+		DataTreeDialog dialog =
+			new DataTreeDialog(null, "Save As", DataTreeDialog.SAVE, domainFileFilter);
 
-			ActionListener listener = event -> {
-				DomainFolder folder = dataTreeSaveDialog.getDomainFolder();
-				String newName = dataTreeSaveDialog.getNameText();
-				if (newName.length() == 0) {
-					dataTreeSaveDialog.setStatusText("Please enter a name");
-					return;
-				}
-				else if (folder == null) {
-					dataTreeSaveDialog.setStatusText("Please select a folder");
-					return;
-				}
+		ActionListener listener = event -> {
+			DomainFolder folder = dialog.getDomainFolder();
+			String newName = dialog.getNameText();
+			if (newName.length() == 0) {
+				dialog.setStatusText("Please enter a name");
+				return;
+			}
+			else if (folder == null) {
+				dialog.setStatusText("Please select a folder");
+				return;
+			}
 
-				DomainFile file = folder.getFile(newName);
-				if (file != null && file.isReadOnly()) {
-					dataTreeSaveDialog.setStatusText("Read Only.  Choose new name/folder");
-				}
-				else {
-					dataTreeSaveDialog.close();
-					treeDialogCancelled = false;
-				}
-			};
-			dataTreeSaveDialog =
-				new DataTreeDialog(null, "Save As", DataTreeDialog.SAVE, domainFileFilter);
+			DomainFile file = folder.getFile(newName);
+			if (file != null && file.isReadOnly()) {
+				dialog.setStatusText("Read Only.  Choose new name/folder");
+			}
+			else {
+				dialog.close();
+				treeDialogCancelled = false;
+			}
+		};
 
-			dataTreeSaveDialog.addOkActionListener(listener);
-			dataTreeSaveDialog.setHelpLocation(
-				new HelpLocation(HelpTopics.PROGRAM, "Save_As_File"));
-		}
-		return dataTreeSaveDialog;
+		dialog.addOkActionListener(listener);
+		dialog.setHelpLocation(new HelpLocation(HelpTopics.PROGRAM, "Save_As_File"));
+
+		return dialog;
 	}
 
 	class SaveFileTask extends Task {

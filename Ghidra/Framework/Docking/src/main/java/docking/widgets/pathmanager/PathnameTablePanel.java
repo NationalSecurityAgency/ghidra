@@ -53,8 +53,7 @@ public class PathnameTablePanel extends JPanel {
 	private JButton addButton;
 	private JButton removeButton;
 	private JButton resetButton;
-	private GhidraFileChooser fileChooser;
-	private String preferenceForLastSelectedDir = Preferences.LAST_IMPORT_DIRECTORY;
+	private String preferenceForLastSelectedDir = Preferences.LAST_PATH_DIRECTORY;
 	private String title = "Select File";
 	private boolean allowMultiFileSelection;
 	private GhidraFileFilter filter;
@@ -296,32 +295,28 @@ public class PathnameTablePanel extends JPanel {
 	}
 
 	private void add() {
-		if (fileChooser == null) {
-			fileChooser = new GhidraFileChooser(this);
-			fileChooser.setMultiSelectionEnabled(allowMultiFileSelection);
-			fileChooser.setFileSelectionMode(fileChooserMode);
-			fileChooser.setTitle(title);
-			fileChooser.setApproveButtonToolTipText(title);
-			if (filter != null) {
-				fileChooser.addFileFilter(new GhidraFileFilter() {
-					@Override
-					public String getDescription() {
-						return filter.getDescription();
-					}
 
-					@Override
-					public boolean accept(File f, GhidraFileChooserModel model) {
-						return filter.accept(f, model);
-					}
-				});
-			}
-			String dir = Preferences.getProperty(preferenceForLastSelectedDir);
-			if (dir != null) {
-				fileChooser.setCurrentDirectory(new File(dir));
-			}
+		GhidraFileChooser fileChooser = new GhidraFileChooser(this);
+		fileChooser.setMultiSelectionEnabled(allowMultiFileSelection);
+		fileChooser.setFileSelectionMode(fileChooserMode);
+		fileChooser.setTitle(title);
+		fileChooser.setApproveButtonToolTipText(title);
+		if (filter != null) {
+			fileChooser.addFileFilter(new GhidraFileFilter() {
+				@Override
+				public String getDescription() {
+					return filter.getDescription();
+				}
+
+				@Override
+				public boolean accept(File f, GhidraFileChooserModel model) {
+					return filter.accept(f, model);
+				}
+			});
 		}
-		else {
-			fileChooser.rescanCurrentDirectory();
+		String dir = Preferences.getProperty(preferenceForLastSelectedDir);
+		if (dir != null) {
+			fileChooser.setCurrentDirectory(new File(dir));
 		}
 
 		List<File> files = fileChooser.getSelectedFiles();
@@ -341,6 +336,8 @@ public class PathnameTablePanel extends JPanel {
 				Preferences.setProperty(preferenceForLastSelectedDir, paths[0]);
 			}
 		}
+
+		fileChooser.dispose();
 
 		tableModel.addPaths(paths, addToTop);
 	}

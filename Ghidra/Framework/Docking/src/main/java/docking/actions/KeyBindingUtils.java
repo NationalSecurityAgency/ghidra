@@ -952,7 +952,7 @@ public class KeyBindingUtils {
 		// return them to that spot if they user the dialog again.
 		Preferences.setProperty(LAST_KEY_BINDING_EXPORT_DIRECTORY,
 			fileChooser.getCurrentDirectory().getAbsolutePath());
-
+		fileChooser.dispose();
 		return selectedFile;
 	}
 }

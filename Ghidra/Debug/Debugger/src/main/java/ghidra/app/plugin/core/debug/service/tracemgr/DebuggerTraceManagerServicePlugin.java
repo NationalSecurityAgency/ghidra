@@ -66,6 +66,7 @@ import ghidra.util.datastruct.CollectionChangeListener;
 import ghidra.util.exception.*;
 import ghidra.util.task.*;
 
+//@formatter:off
 @PluginInfo(
 	shortDescription = "Debugger Trace Management Plugin",
 	description = "Manages the set of open traces, current views, etc.",
@@ -86,6 +87,7 @@ import ghidra.util.task.*;
 	servicesProvided = {
 		DebuggerTraceManagerService.class,
 	})
+//@formatter:on
 public class DebuggerTraceManagerServicePlugin extends Plugin
 		implements DebuggerTraceManagerService {
 
@@ -282,8 +284,6 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
 
-	private DataTreeDialog traceChooserDialog;
-
 	DockingAction actionCloseTrace;
 	DockingAction actionCloseAllTraces;
 	DockingAction actionCloseOtherTraces;
@@ -393,9 +393,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 	}
 
 	protected DataTreeDialog getTraceChooserDialog() {
-		if (traceChooserDialog != null) {
-			return traceChooserDialog;
-		}
+
 		DomainFileFilter filter = new DomainFileFilter() {
 
 			@Override
@@ -410,21 +408,20 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		};
 
 		// TODO regarding the hack note below, I believe this issue ahs been fixed, but not sure how to test
-		return traceChooserDialog =
-			new DataTreeDialog(null, OpenTraceAction.NAME, DataTreeDialog.OPEN, filter) {
-				{ // TODO/HACK: Why the NPE if I don't do this?
-					dialogShown();
-				}
-			};
+		return new DataTreeDialog(null, OpenTraceAction.NAME, DataTreeDialog.OPEN, filter) {
+			{ // TODO/HACK: Why the NPE if I don't do this?
+				dialogShown();
+			}
+		};
 	}
 
 	public DomainFile askTrace(Trace trace) {
-		getTraceChooserDialog();
+		DataTreeDialog dialog = getTraceChooserDialog();
 		if (trace != null) {
-			traceChooserDialog.selectDomainFile(trace.getDomainFile());
+			dialog.selectDomainFile(trace.getDomainFile());
 		}
-		tool.showDialog(traceChooserDialog);
-		return traceChooserDialog.getDomainFile();
+		tool.showDialog(dialog);
+		return dialog.getDomainFile();
 	}
 
 	@Override

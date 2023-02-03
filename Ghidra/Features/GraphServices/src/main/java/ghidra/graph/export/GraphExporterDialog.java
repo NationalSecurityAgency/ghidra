@@ -167,6 +167,7 @@ public class GraphExporterDialog extends DialogComponentProvider {
 			setLastExportDirectory(file);
 			filePathTextField.setText(file.getAbsolutePath());
 		}
+		chooser.dispose();
 	}
 
 	private void setLastExportDirectory(File file) {

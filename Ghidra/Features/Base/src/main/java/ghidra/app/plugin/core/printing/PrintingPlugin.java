@@ -77,6 +77,15 @@ public class PrintingPlugin extends ProgramPlugin {
 	}
 
 	@Override
+	protected void dispose() {
+		super.dispose();
+
+		if (pod != null) {
+			pod.dispose();
+		}
+	}
+
+	@Override
 	protected void programActivated(Program program) {
 		printAction.setEnabled(true);
 		pageSetupAction.setEnabled(true);
@@ -336,19 +345,19 @@ public class PrintingPlugin extends ProgramPlugin {
 						while (curAddress.compareTo(curRange.getMaxAddress()) <= 0) {
 							//Add the layout for the present address
 							BigInteger curIndex = indexMap.getIndex(curAddress);
-							
+
 							// curIndex may be null when processing resource images; just 
 							// move to the next address and try again.
 							if (curIndex == null) {
 								curAddress = curAddress.next();
-								
+
 								if (curAddress == null) {
 									break;
 								}
-								
+
 								continue;
 							}
-							
+
 							if (!curIndex.equals(lastIndex)) {
 								Layout layout = lm.getLayout(curIndex);
 								if (layout != null) {

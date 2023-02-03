@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.datamgr;
 
 import java.awt.Component;
 import java.awt.datatransfer.Clipboard;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -95,7 +94,6 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 
 	private DataTypeManagerHandler dataTypeManagerHandler;
 	private DataTypesProvider provider;
-	private OpenVersionedFileDialog<DataTypeArchive> openDialog;
 
 	private Map<String, DockingAction> recentlyOpenedArchiveMap;
 	private Map<String, DockingAction> installArchiveMap;
@@ -366,17 +364,8 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 		newProvider.setIncludeDataTypeMembersInFilter(provider.includeDataMembersInSearch());
 		newProvider.setFilteringArrays(provider.isFilteringArrays());
 		newProvider.setFilteringPointers(provider.isFilteringPointers());
+		newProvider.setTransient();
 		return newProvider;
-	}
-
-	public void closeProvider(DataTypesProvider providerToClose) {
-		if (providerToClose != provider) {
-			providerToClose.removeFromTool(); // remove any transient providers when closed
-			providerToClose.dispose();
-		}
-		else {
-			provider.setVisible(false);
-		}
 	}
 
 	public Program getProgram() {
@@ -574,25 +563,24 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 	}
 
 	public void openProjectDataTypeArchive() {
-		if (openDialog == null) {
-			ActionListener listener = ev -> {
-				DomainFile domainFile = openDialog.getDomainFile();
-				int version = openDialog.getVersion();
-				if (domainFile == null) {
-					openDialog.setStatusText("Please choose a Project Data Type Archive");
-				}
-				else {
-					openDialog.close();
-					openArchive(domainFile, version);
-				}
-			};
-			openDialog =
-				new OpenVersionedFileDialog<>(tool, "Open Project Data Type Archive",
-					DataTypeArchive.class);
-			openDialog.setHelpLocation(new HelpLocation(HelpTopics.PROGRAM, "Open_File_Dialog"));
-			openDialog.addOkActionListener(listener);
-		}
-		tool.showDialog(openDialog);
+
+		OpenVersionedFileDialog<DataTypeArchive> dialog =
+			new OpenVersionedFileDialog<>(tool, "Open Project Data Type Archive",
+				DataTypeArchive.class);
+		dialog.setHelpLocation(new HelpLocation(HelpTopics.PROGRAM, "Open_File_Dialog"));
+		dialog.addOkActionListener(ev -> {
+			DomainFile domainFile = dialog.getDomainFile();
+			int version = dialog.getVersion();
+			if (domainFile == null) {
+				dialog.setStatusText("Please choose a Project Data Type Archive");
+			}
+			else {
+				dialog.close();
+				openArchive(domainFile, version);
+			}
+		});
+
+		tool.showDialog(dialog);
 	}
 
 	@Override

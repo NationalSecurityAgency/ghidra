@@ -34,7 +34,6 @@ import ghidra.app.plugin.core.datamgr.*;
 import ghidra.app.plugin.core.datamgr.actions.FindStructuresBySizeAction;
 import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
 import ghidra.app.plugin.core.datamgr.archive.InvalidFileArchive;
-import ghidra.app.plugin.core.datamgr.util.ConflictDialog;
 import ghidra.framework.preferences.Preferences;
 import ghidra.program.model.data.*;
 import ghidra.util.UniversalID;
@@ -72,13 +71,6 @@ public class DataTypeManagerPluginScreenShots extends GhidraScreenShotGenerator 
 		});
 
 		captureDialog(900, 500);
-	}
-
-	@Test
-	public void testDataTypeConflict() {
-		ConflictDialog dialog = new ConflictDialog("SIZE_T", "/baseDTs", "SIZE_T.conflict");
-		showModalDialogInTool(dialog);
-		captureDialog();
 	}
 
 	@Test
