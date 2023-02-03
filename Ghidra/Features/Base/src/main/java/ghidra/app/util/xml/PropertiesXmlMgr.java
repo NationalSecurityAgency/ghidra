@@ -436,7 +436,7 @@ class PropertiesXmlMgr {
 				throw new CancelledException();
 			}
 			String mapName = mapNames.next();
-			PropertyMap map = propMapMgr.getPropertyMap(mapName);
+			PropertyMap<?> map = propMapMgr.getPropertyMap(mapName);
 			if (map instanceof VoidPropertyMap) {
 				writeVoidMap((VoidPropertyMap) map, writer, set, monitor);
 			}
@@ -493,6 +493,7 @@ class PropertiesXmlMgr {
 				writer.endElement("PROPERTY");
 			}
 			catch (NoValueException e) {
+				// skip
 			}
 		}
 	}
@@ -517,6 +518,7 @@ class PropertiesXmlMgr {
 				writer.endElement("PROPERTY");
 			}
 			catch (NoValueException e) {
+				// skip
 			}
 		}
 	}
