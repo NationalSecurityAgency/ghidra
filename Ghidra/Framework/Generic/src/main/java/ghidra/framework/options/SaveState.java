@@ -250,8 +250,7 @@ public class SaveState {
 						boolean[] vals = new boolean[list.size()];
 						while (it.hasNext()) {
 							Element e = (Element) it.next();
-							vals[i++] =
-								Boolean.valueOf(e.getAttributeValue(VALUE)).booleanValue();
+							vals[i++] = Boolean.valueOf(e.getAttributeValue(VALUE)).booleanValue();
 						}
 						map.put(name, vals);
 					}
@@ -566,9 +565,8 @@ public class SaveState {
 			else if (value instanceof KeyStroke) {
 				elem = setAttributes(key, "KeyStroke", value.toString());
 			}
-			else if (value instanceof Font) {
-				elem =
-					setAttributes(key, "Font", OptionType.FONT_TYPE.convertObjectToString(value));
+			else if (value instanceof Font font) {
+				elem = setAttributes(key, "Font", toFontString(font));
 			}
 			else if (value instanceof byte[]) {
 				elem = new Element("BYTES");
@@ -682,9 +680,9 @@ public class SaveState {
 				types.addProperty(key, "KeyStroke");
 				values.addProperty(key, value.toString());
 			}
-			else if (value instanceof Font) {
+			else if (value instanceof Font font) {
 				types.addProperty(key, "Font");
-				values.addProperty(key, OptionType.FONT_TYPE.convertObjectToString(value));
+				values.addProperty(key, toFontString(font));
 			}
 			else if (value instanceof Byte) {
 				types.addProperty(key, "byte");
@@ -1436,4 +1434,22 @@ public class SaveState {
 		return true;
 	}
 
+	private String toFontString(Font font) {
+		return String.format("%s-%s-%s", font.getName(), getStyleString(font), font.getSize());
+	}
+
+	private String getStyleString(Font font) {
+		boolean bold = font.isBold();
+		boolean italic = font.isItalic();
+		if (bold && italic) {
+			return "BOLDITALIC";
+		}
+		if (bold) {
+			return "BOLD";
+		}
+		if (italic) {
+			return "ITALIC";
+		}
+		return "PLAIN";
+	}
 }
