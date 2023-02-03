@@ -801,7 +801,7 @@ public class MIPS_ElfExtension extends ElfExtension {
 		catch (NotFoundException e) {
 			throw new AssertException("unexpected", e);
 		}
-		catch (MemoryAccessException | AddressOverflowException e) {
+		catch (MemoryAccessException e) {
 			elfLoadHelper.log("Failed to adjust GOT: " + e.getMessage());
 		}
 	}
@@ -855,14 +855,14 @@ public class MIPS_ElfExtension extends ElfExtension {
 		catch (NotFoundException e) {
 			throw new AssertException("unexpected", e);
 		}
-		catch (MemoryAccessException | AddressOverflowException e) {
+		catch (MemoryAccessException e) {
 			elfLoadHelper.log("Failed to adjust MIPS GOT: " + e.getMessage());
 		}
 	}
 
 	private Address adjustTableEntryIfNonZero(Address tableBaseAddr, int entryIndex,
 			long adjustment, ElfLoadHelper elfLoadHelper)
-			throws MemoryAccessException, AddressOverflowException {
+			throws MemoryAccessException {
 		boolean is64Bit = elfLoadHelper.getElfHeader().is64Bit();
 		Memory memory = elfLoadHelper.getProgram().getMemory();
 		Address tableEntryAddr;
@@ -871,7 +871,7 @@ public class MIPS_ElfExtension extends ElfExtension {
 			if (adjustment != 0) {
 				long offset = memory.getLong(tableEntryAddr);
 				if (offset != 0) {
-					elfLoadHelper.addFakeRelocTableEntry(tableEntryAddr, 8);
+					elfLoadHelper.addArtificialRelocTableEntry(tableEntryAddr, 8);
 					memory.setLong(tableEntryAddr, offset + adjustment);
 				}
 			}
@@ -881,7 +881,7 @@ public class MIPS_ElfExtension extends ElfExtension {
 			if (adjustment != 0) {
 				int offset = memory.getInt(tableEntryAddr);
 				if (offset != 0) {
-					elfLoadHelper.addFakeRelocTableEntry(tableEntryAddr, 4);
+					elfLoadHelper.addArtificialRelocTableEntry(tableEntryAddr, 4);
 					memory.setInt(tableEntryAddr, (int) (offset + adjustment));
 				}
 			}
@@ -898,7 +898,7 @@ public class MIPS_ElfExtension extends ElfExtension {
 			tableEntryAddr = tableBaseAddr.add(entryIndex * 8);
 			long offset = memory.getLong(tableEntryAddr);
 			if (offset == 0) {
-				elfLoadHelper.addFakeRelocTableEntry(tableEntryAddr, 8);
+				elfLoadHelper.addArtificialRelocTableEntry(tableEntryAddr, 8);
 				memory.setLong(tableEntryAddr, value);
 			}
 		}
@@ -906,7 +906,7 @@ public class MIPS_ElfExtension extends ElfExtension {
 			tableEntryAddr = tableBaseAddr.add(entryIndex * 4);
 			int offset = memory.getInt(tableEntryAddr);
 			if (offset == 0) {
-				elfLoadHelper.addFakeRelocTableEntry(tableEntryAddr, 4);
+				elfLoadHelper.addArtificialRelocTableEntry(tableEntryAddr, 4);
 				memory.setInt(tableEntryAddr, (int) value);
 			}
 		}

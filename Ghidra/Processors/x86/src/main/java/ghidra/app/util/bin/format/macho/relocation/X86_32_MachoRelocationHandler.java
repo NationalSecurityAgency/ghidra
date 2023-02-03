@@ -17,10 +17,12 @@ package ghidra.app.util.bin.format.macho.relocation;
 
 import static ghidra.app.util.bin.format.macho.relocation.X86_32_MachoRelocationConstants.*;
 
+import ghidra.app.util.bin.format.RelocationException;
 import ghidra.app.util.bin.format.macho.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.util.exception.NotFoundException;
+import ghidra.program.model.reloc.Relocation.Status;
+import ghidra.program.model.reloc.RelocationResult;
 
 /** 
  * A {@link MachoRelocationHandler} for x86 32-bit
@@ -41,24 +43,25 @@ public class X86_32_MachoRelocationHandler extends MachoRelocationHandler {
 	}
 	
 	@Override
-	public void relocate(MachoRelocation relocation)
-			throws MemoryAccessException, NotFoundException {
+	public RelocationResult relocate(MachoRelocation relocation)
+			throws MemoryAccessException, RelocationException {
 
 		if (!relocation.requiresRelocation()) {
-			return;
+			return RelocationResult.SKIPPED;
 		}
 		
 		RelocationInfo relocationInfo = relocation.getRelocationInfo();
 		Address relocAddr = relocation.getRelocationAddress();
 		Address targetAddr = relocation.getTargetAddress();
 
+		int byteLength;
 		switch (relocationInfo.getType()) {
 			case GENERIC_RELOC_VANILLA:
 				if (relocationInfo.isPcRelocated()) {
-					write(relocation, targetAddr.subtract(relocAddr) - 4);
+					byteLength = write(relocation, targetAddr.subtract(relocAddr) - 4);
 				}
 				else {
-					write(relocation, targetAddr.getOffset());
+					byteLength = write(relocation, targetAddr.getOffset());
 				}
 				break;
 				
@@ -68,7 +71,8 @@ public class X86_32_MachoRelocationHandler extends MachoRelocationHandler {
 			case GENERIC_RELOC_LOCAL_SECTDIFF: // relocation not required (scattered)
 			case GENERIC_RELOC_TLV:            // not seen yet
 			default:
-				throw new NotFoundException("Unimplemented relocation");
+				return RelocationResult.UNSUPPORTED;
 		}
+		return new RelocationResult(Status.APPLIED, byteLength);
 	}
 }

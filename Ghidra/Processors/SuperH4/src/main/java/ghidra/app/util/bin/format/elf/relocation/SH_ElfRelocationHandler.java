@@ -20,6 +20,8 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.reloc.RelocationResult;
+import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.util.exception.NotFoundException;
 
 public class SH_ElfRelocationHandler extends ElfRelocationHandler {
@@ -30,12 +32,13 @@ public class SH_ElfRelocationHandler extends ElfRelocationHandler {
 	}
 
 	@Override
-	public void relocate(ElfRelocationContext elfRelocationContext, ElfRelocation relocation,
+	public RelocationResult relocate(ElfRelocationContext elfRelocationContext,
+			ElfRelocation relocation,
 			Address relocationAddress) throws MemoryAccessException, NotFoundException {
 
 		ElfHeader elf = elfRelocationContext.getElfHeader();
 		if (elf.e_machine() != ElfConstants.EM_SH || !elf.is32Bit()) {
-			return;
+			return RelocationResult.FAILURE;
 		}
 
 		Program program = elfRelocationContext.getProgram();
@@ -44,7 +47,7 @@ public class SH_ElfRelocationHandler extends ElfRelocationHandler {
 		
 		int type = relocation.getType();
 		if (type == SH_ElfRelocationConstants.R_SH_NONE) {
-			return;
+			return RelocationResult.SKIPPED;
 		}
 		int symbolIndex = relocation.getSymbolIndex();
 
@@ -60,6 +63,8 @@ public class SH_ElfRelocationHandler extends ElfRelocationHandler {
 
 		int newValue = 0;
 		int oldValue;
+
+		int byteLength = 4; // most relocations affect 4-bytes (change if different)
 
 		switch (type) {
 			case SH_ElfRelocationConstants.R_SH_DIR32:
@@ -101,6 +106,7 @@ public class SH_ElfRelocationHandler extends ElfRelocationHandler {
 				newValue = ((symbolValue + addend) - offset) >> 1;
 				newValue = (oldValue & 0xff00) | (newValue & 0xff);
 				memory.setShort(relocationAddress, (short) newValue);
+				byteLength = 2;
 				break;
 
 			case SH_ElfRelocationConstants.R_SH_IND12W:  // 12-bit PC relative branch divided by 2
@@ -114,6 +120,7 @@ public class SH_ElfRelocationHandler extends ElfRelocationHandler {
 				newValue = ((symbolValue + addend) - offset) >> 1;
 				newValue = (oldValue & 0xf000) | (newValue & 0xfff);
 				memory.setShort(relocationAddress, (short) newValue);
+				byteLength = 2;
 				break;
 
 			case SH_ElfRelocationConstants.R_SH_DIR8WPL:  // 8-bit PC unsigned-relative branch divided by 4
@@ -124,12 +131,13 @@ public class SH_ElfRelocationHandler extends ElfRelocationHandler {
 				newValue = ((symbolValue + addend) - offset) >> 2;
 				newValue = (oldValue & 0xff00) | (newValue & 0xff);
 				memory.setShort(relocationAddress, (short) newValue);
+				byteLength = 2;
 				break;
 
 			case SH_ElfRelocationConstants.R_SH_COPY:
 				markAsWarning(program, relocationAddress, "R_SH_COPY", symbolName, symbolIndex,
 					"Runtime copy not supported", elfRelocationContext.getLog());
-				break;
+				return RelocationResult.UNSUPPORTED;
 
 			case SH_ElfRelocationConstants.R_SH_RELATIVE:
 				if (elfRelocationContext.extractAddend()) {
@@ -142,8 +150,9 @@ public class SH_ElfRelocationHandler extends ElfRelocationHandler {
 			default:
 				markAsUnhandled(program, relocationAddress, type, symbolIndex, symbolName,
 					elfRelocationContext.getLog());
-				break;
+				return RelocationResult.UNSUPPORTED;
 		}
+		return new RelocationResult(Status.APPLIED, byteLength);
 	}
 
 }

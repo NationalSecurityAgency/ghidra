@@ -172,8 +172,6 @@ public class DyldCacheSlideInfo3 extends DyldCacheSlideInfoCommon {
 
 		List<Address> unchainedLocList = new ArrayList<>(1024);
 
-		byte origBytes[] = new byte[8];
-
 		long delta = -1;
 		while (delta != 0) {
 			monitor.checkCanceled();
@@ -201,7 +199,7 @@ public class DyldCacheSlideInfo3 extends DyldCacheSlideInfoCommon {
 
 			if (addRelocation) {
 				addRelocationTableEntry(program, chainLoc, 3 * (isAuthenticated ? -1 : 1),
-					chainValue, origBytes, null);
+					chainValue, 8, null);
 			}
 			memory.setLong(chainLoc, chainValue);
 

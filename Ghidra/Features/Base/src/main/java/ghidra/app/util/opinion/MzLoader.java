@@ -32,6 +32,7 @@ import ghidra.program.model.data.DataUtilities;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
+import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.symbol.*;
 import ghidra.util.DataConverter;
 import ghidra.util.LittleEndianDataConverter;
@@ -302,20 +303,20 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 
 		for (RelocationFixup relocationFixup : relocationFixups) {
 			SegmentedAddress relocationAddress = relocationFixup.address();
+			Status status = Status.FAILURE;
 			try {
-				byte[] origBytes = new byte[2];
-				memory.getBytes(relocationAddress, origBytes);
 				memory.setShort(relocationAddress, (short) relocationFixup.segment());
-
-				// Add to relocation table
-				program.getRelocationTable()
-						.add(relocationAddress, 0, new long[] { relocationAddress.getSegment(),
-							relocationAddress.getSegmentOffset() }, origBytes, null);
+				status = Status.APPLIED;
 			}
-			catch (AddressOutOfBoundsException | MemoryAccessException e) {
+			catch (MemoryAccessException e) {
 				log.appendMsg(String.format("Failed to apply relocation: %s (%s)",
 					relocationAddress, e.getMessage()));
 			}
+
+			// Add to relocation table
+			program.getRelocationTable()
+					.add(relocationAddress, status, 0, new long[] { relocationAddress.getSegment(),
+						relocationAddress.getSegmentOffset() }, 2, null);
 		}
 	}
 

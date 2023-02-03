@@ -22,6 +22,7 @@ import ghidra.program.database.map.AddressKeyRecordIterator;
 import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.util.exception.VersionException;
 
 class RelocationDBAdapterV3 extends RelocationDBAdapter {
@@ -32,6 +33,7 @@ class RelocationDBAdapterV3 extends RelocationDBAdapter {
 	private final static int V3_VALUE_COL = 1;
 	private final static int V3_BYTES_COL = 2;
 
+/* Do not remove the following commented out schema! It shows the version 3 relocation table schema. */
 //	final static Schema SCHEMA = new Schema(
 //		RelocationDBAdapterV3.VERSION, "Address", new Field[] { IntField.INSTANCE, 
 //          BinaryField.INSTANCE, BinaryField.INSTANCE },
@@ -47,8 +49,8 @@ class RelocationDBAdapterV3 extends RelocationDBAdapter {
 	 * @throws IOException if database IO error occurs
 	 * @throws VersionException throw if table schema is not V3
 	 */
-	RelocationDBAdapterV3(DBHandle handle, AddressMap addrMap) throws IOException,
-			VersionException {
+	RelocationDBAdapterV3(DBHandle handle, AddressMap addrMap)
+			throws IOException, VersionException {
 		this.addrMap = addrMap;
 		relocTable = handle.getTable(TABLE_NAME);
 		if (relocTable == null || relocTable.getSchema().getVersion() != VERSION) {
@@ -57,7 +59,7 @@ class RelocationDBAdapterV3 extends RelocationDBAdapter {
 	}
 
 	@Override
-	void add(Address addrKey, int type, long[] values, byte[] bytes, String symbolName)
+	void add(Address addrKey, byte flags, int type, long[] values, byte[] bytes, String symbolName)
 			throws IOException {
 		throw new UnsupportedOperationException();
 	}
@@ -93,6 +95,7 @@ class RelocationDBAdapterV3 extends RelocationDBAdapter {
 		}
 		DBRecord newRec = SCHEMA.createRecord(rec.getKey());
 		newRec.setLongValue(ADDR_COL, rec.getKey()); // key was encoded address
+		newRec.setByteValue(FLAGS_COL, getFlags(Status.UNKNOWN, 0));
 		newRec.setIntValue(TYPE_COL, rec.getIntValue(V3_TYPE_COL));
 		newRec.setBinaryData(VALUE_COL, rec.getBinaryData(V3_VALUE_COL));
 		newRec.setBinaryData(BYTES_COL, rec.getBinaryData(V3_BYTES_COL));

@@ -32,6 +32,7 @@ import ghidra.program.model.data.Undefined;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
+import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.DataConverter;
@@ -268,8 +269,9 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 					}
 					long[] values = new long[1];
 					values[0] = finalvalue;
-					program.getRelocationTable().add(state.locAddress, state.locationType, values,
-						origbytes, null);
+					program.getRelocationTable()
+							.add(state.locAddress, Status.APPLIED,
+								state.locationType, values, origbytes, null);
 				}
 			}
 		}

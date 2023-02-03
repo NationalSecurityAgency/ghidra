@@ -22,6 +22,8 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
+import ghidra.program.model.reloc.Relocation.Status;
+import ghidra.program.model.reloc.RelocationResult;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolUtilities;
 import ghidra.util.*;
@@ -35,12 +37,13 @@ public class PowerPC64_ElfRelocationHandler extends ElfRelocationHandler {
 	}
 
 	@Override
-	public void relocate(ElfRelocationContext elfRelocationContext, ElfRelocation relocation,
+	public RelocationResult relocate(ElfRelocationContext elfRelocationContext,
+			ElfRelocation relocation,
 			Address relocationAddress) throws MemoryAccessException, NotFoundException {
 
 		ElfHeader elf = elfRelocationContext.getElfHeader();
 		if (elf.e_machine() != ElfConstants.EM_PPC64 || !elf.is64Bit()) {
-			return;
+			return RelocationResult.FAILURE;
 		}
 
 		Program program = elfRelocationContext.getProgram();
@@ -48,7 +51,7 @@ public class PowerPC64_ElfRelocationHandler extends ElfRelocationHandler {
 
 		int type = relocation.getType();
 		if (type == PowerPC64_ElfRelocationConstants.R_PPC64_NONE) {
-			return;
+			return RelocationResult.SKIPPED;
 		}
 		int symbolIndex = relocation.getSymbolIndex();
 
@@ -72,6 +75,7 @@ public class PowerPC64_ElfRelocationHandler extends ElfRelocationHandler {
 
 		int oldValue = memory.getInt(relocationAddress);
 		int newValue = 0;
+		int byteLength = 4; // most relocations affect 4-bytes (change if different)
 
 		// IMPORTANT NOTE:
 		//   Handling of Object modules (*.o) is currently problematic since relocations
@@ -93,11 +97,11 @@ public class PowerPC64_ElfRelocationHandler extends ElfRelocationHandler {
 
 				MessageLog log = elfRelocationContext.getLog();
 				Symbol tocBaseSym = SymbolUtilities.getLabelOrFunctionSymbol(program,
-					PowerPC64_ElfExtension.TOC_BASE, err -> log.error("PPC_ELF", err));
+					PowerPC64_ElfExtension.TOC_BASE, err -> log.appendMsg(err));
 				if (tocBaseSym == null) {
 					markAsError(program, relocationAddress, type, symbolName,
 						"TOC_BASE unknown", log);
-					return;
+					return RelocationResult.FAILURE;
 				}
 				toc = tocBaseSym.getAddress().getOffset();
 				break;
@@ -108,7 +112,7 @@ public class PowerPC64_ElfRelocationHandler extends ElfRelocationHandler {
 			case PowerPC64_ElfRelocationConstants.R_PPC64_COPY:
 				markAsWarning(program, relocationAddress, "R_PPC64_COPY", symbolName,
 					symbolIndex, "Runtime copy not supported", elfRelocationContext.getLog());
-				break;
+				return RelocationResult.UNSUPPORTED;
 			case PowerPC64_ElfRelocationConstants.R_PPC64_ADDR32:
 				newValue = (int) (symbolValue + addend);
 				memory.setInt(relocationAddress, newValue);
@@ -122,39 +126,47 @@ public class PowerPC64_ElfRelocationHandler extends ElfRelocationHandler {
 			case PowerPC64_ElfRelocationConstants.R_PPC64_ADDR16:
 				newValue = (int) (symbolValue + addend);
 				memory.setShort(relocationAddress, (short) newValue);
+				byteLength = 2;
 				break;
 			case PowerPC64_ElfRelocationConstants.R_PPC64_ADDR16_LO:
 				newValue = (int) (symbolValue + addend);
 				memory.setShort(relocationAddress, (short) newValue);
+				byteLength = 2;
 				break;
 			case PowerPC64_ElfRelocationConstants.R_PPC64_TOC16_LO:
 				newValue = (int) (symbolValue + addend - toc);
 				memory.setShort(relocationAddress, (short) newValue);
+				byteLength = 2;
 				break;
 			case PowerPC64_ElfRelocationConstants.R_PPC64_TOC16_LO_DS:
 				newValue = (int) ((symbolValue + addend - toc) >> 2);
 				newValue = ((oldValue >>> 16) & 0x3) | (newValue << 2);
 				memory.setShort(relocationAddress, (short) newValue);
+				byteLength = 2;
 				break;
 			case PowerPC64_ElfRelocationConstants.R_PPC64_ADDR16_HI:
 				newValue = (int) (symbolValue + addend);
 				newValue = ((newValue >> 16) & 0xFFFF);
 				memory.setShort(relocationAddress, (short) newValue);
+				byteLength = 2;
 				break;
 			case PowerPC64_ElfRelocationConstants.R_PPC64_TOC16_HI:
 				newValue = (int) (symbolValue + addend - toc);
 				newValue = ((newValue >> 16) & 0xFFFF);
 				memory.setShort(relocationAddress, (short) newValue);
+				byteLength = 2;
 				break;
 			case PowerPC64_ElfRelocationConstants.R_PPC64_ADDR16_HA:
 				newValue = (int) (symbolValue + addend);
 				newValue = ((newValue >> 16) + (((newValue & 0x8000) != 0) ? 1 : 0));
 				memory.setShort(relocationAddress, (short) newValue);
+				byteLength = 2;
 				break;
 			case PowerPC64_ElfRelocationConstants.R_PPC64_TOC16_HA:
 				newValue = (int) (symbolValue + addend - toc);
 				newValue = ((newValue >> 16) + (((newValue & 0x8000) != 0) ? 1 : 0));
 				memory.setShort(relocationAddress, (short) newValue);
+				byteLength = 2;
 				break;
 			case PowerPC64_ElfRelocationConstants.R_PPC64_ADDR14:
 			case PowerPC64_ElfRelocationConstants.R_PPC64_ADDR14_BRTAKEN:
@@ -177,6 +189,7 @@ public class PowerPC64_ElfRelocationHandler extends ElfRelocationHandler {
 			case PowerPC64_ElfRelocationConstants.R_PPC64_RELATIVE:
 				long value64 = elfRelocationContext.getImageBaseWordAdjustmentOffset() + addend;
 				memory.setLong(relocationAddress, value64);
+				byteLength = 8;
 				break;
 			case PowerPC64_ElfRelocationConstants.R_PPC64_REL32:
 				newValue = (int) (symbolValue + addend - offset);
@@ -203,12 +216,14 @@ public class PowerPC64_ElfRelocationHandler extends ElfRelocationHandler {
 					// If symbol is in EXTERNAL block, we don't have descriptor entry;
 					// just fill-in first slot with EXTERNAL address
 					memory.setLong(relocationAddress, symbolValue);
+					byteLength = 8;
 				}
 				else {
 					// Copy function descriptor data
 					byte[] bytes = new byte[24]; // TODO: can descriptor size vary ?
 					memory.getBytes(functionDescriptorAddr, bytes);
 					memory.setBytes(relocationAddress, bytes);
+					byteLength = bytes.length;
 				}
 				break;
 			case PowerPC64_ElfRelocationConstants.R_PPC64_UADDR32:
@@ -218,12 +233,14 @@ public class PowerPC64_ElfRelocationHandler extends ElfRelocationHandler {
 			case PowerPC64_ElfRelocationConstants.R_PPC64_UADDR16:
 				newValue = (int) (symbolValue + addend);
 				memory.setShort(relocationAddress, (short) newValue);
+				byteLength = 2;
 				break;
 			case PowerPC64_ElfRelocationConstants.R_PPC64_UADDR64:
 			case PowerPC64_ElfRelocationConstants.R_PPC64_ADDR64:
 			case PowerPC64_ElfRelocationConstants.R_PPC64_GLOB_DAT:
 				value64 = symbolValue + addend;
 				memory.setLong(relocationAddress, value64);
+				byteLength = 8;
 				if (addend != 0) {
 					warnExternalOffsetRelocation(program, relocationAddress,
 						symbolAddr, symbolName, addend, elfRelocationContext.getLog());
@@ -232,13 +249,14 @@ public class PowerPC64_ElfRelocationHandler extends ElfRelocationHandler {
 				break;
 			case PowerPC64_ElfRelocationConstants.R_PPC64_TOC:
 				memory.setLong(relocationAddress, toc);
+				byteLength = 8;
 				break;
 			default:
 				markAsUnhandled(program, relocationAddress, type, symbolIndex, symbolName,
 					elfRelocationContext.getLog());
-				break;
+				return RelocationResult.UNSUPPORTED;
 		}
-
+		return new RelocationResult(Status.APPLIED, byteLength);
 	}
 
 	/**

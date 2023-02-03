@@ -17,10 +17,12 @@ package ghidra.app.util.bin.format.macho.relocation;
 
 import static ghidra.app.util.bin.format.macho.relocation.ARM_MachoRelocationConstants.*;
 
+import ghidra.app.util.bin.format.RelocationException;
 import ghidra.app.util.bin.format.macho.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.util.exception.NotFoundException;
+import ghidra.program.model.reloc.Relocation.Status;
+import ghidra.program.model.reloc.RelocationResult;
 
 /** 
  * A {@link MachoRelocationHandler} for ARM
@@ -43,24 +45,25 @@ public class ARM_MachoRelocationHandler extends MachoRelocationHandler {
 	}
 	
 	@Override
-	public void relocate(MachoRelocation relocation)
-			throws MemoryAccessException, NotFoundException {
+	public RelocationResult relocate(MachoRelocation relocation)
+			throws MemoryAccessException, RelocationException {
 		
 		if (!relocation.requiresRelocation()) {
-			return;
+			return RelocationResult.SKIPPED;
 		}
 		
 		RelocationInfo relocationInfo = relocation.getRelocationInfo();
 		Address targetAddr = relocation.getTargetAddress();
 		long orig = read(relocation);
 
+		int byteLength;
 		switch (relocationInfo.getType()) {
 			case ARM_RELOC_VANILLA:
 				if (!relocationInfo.isPcRelocated()) {
-					write(relocation, targetAddr.getOffset());
+					byteLength = write(relocation, targetAddr.getOffset());
 				}
 				else {
-					throw new NotFoundException("Unimplemented relocation");
+					return RelocationResult.UNSUPPORTED;
 				}
 				break;
 			case ARM_THUMB_RELOC_BR22: {
@@ -86,7 +89,7 @@ public class ARM_MachoRelocationHandler extends MachoRelocationHandler {
 				imm11 = (value >> 1) & 0x7ff;
 				long instr = orig & (blx ? 0xc000f800 : 0xd000f800);
 				instr |= (j1 << 29) | (j2 << 27) | (imm11 << 16) | (s << 10) | imm10;
-				write(relocation, instr);
+				byteLength = write(relocation, instr);
 				break;
 			}
 			
@@ -99,7 +102,8 @@ public class ARM_MachoRelocationHandler extends MachoRelocationHandler {
 			case ARM_RELOC_HALF:           // relocation not required (scattered)
 			case ARM_RELOC_HALF_SECTDIFF:  // relocation not required (scattered)
 			default:
-				throw new NotFoundException("Unimplemented relocation");
+				return RelocationResult.UNSUPPORTED;
 		}
+		return new RelocationResult(Status.APPLIED, byteLength);
 	}
 }

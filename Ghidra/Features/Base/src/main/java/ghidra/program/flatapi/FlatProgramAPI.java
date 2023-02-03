@@ -1704,9 +1704,10 @@ public class FlatProgramAPI {
 	 * @param address the address at which to create a new Data object.
 	 * @param datatype the Data Type that describes the type of Data object to create.
 	 * @return the newly created Data object
-	 * @throws Exception if there is any exception
+	 * @throws CodeUnitInsertionException if a conflicting code unit already exists
 	 */
-	public final Data createData(Address address, DataType datatype) throws Exception {
+	public final Data createData(Address address, DataType datatype)
+			throws CodeUnitInsertionException {
 		Listing listing = currentProgram.getListing();
 		Data d = listing.getDefinedDataAt(address);
 		if (d != null) {

@@ -24,6 +24,8 @@ import ghidra.program.model.listing.Listing;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.reloc.RelocationResult;
+import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.exception.NotFoundException;
 
@@ -35,7 +37,8 @@ public class AVR32_ElfRelocationHandler extends ElfRelocationHandler {
 	}
 
 	@Override
-	public void relocate(ElfRelocationContext elfRelocationContext, ElfRelocation relocation,
+	public RelocationResult relocate(ElfRelocationContext elfRelocationContext,
+			ElfRelocation relocation,
 			Address relocationAddress) throws MemoryAccessException, NotFoundException {
 
 		Program program = elfRelocationContext.getProgram();
@@ -57,11 +60,13 @@ public class AVR32_ElfRelocationHandler extends ElfRelocationHandler {
 
 		int oldValue = memory.getInt(relocationAddress);
 
+		int byteLength = 4; // most relocations affect 4-bytes (change if different)
+
 		if (elf.e_machine() == ElfConstants.EM_AVR32) {
 			int newValueShiftToAligntoUpper = 0;
 			switch (type) {
 				case AVR32_ElfRelocationConstants.R_AVR32_NONE:
-					break;
+					return RelocationResult.SKIPPED;
 				case AVR32_ElfRelocationConstants.R_AVR32_32:
 					int newValue = (((int) symbolValue + (int) addend) & 0xffffffff);
 					memory.setInt(relocationAddress, newValue);
@@ -188,7 +193,7 @@ public class AVR32_ElfRelocationHandler extends ElfRelocationHandler {
 					    System.out.println("  HANDLED AVR relocation: R_AVR32_ALIGN at "+relocationAddress + ", New = " + newValue);
 					}*/
 					//System.out.println("  HANDLED AVR relocation: R_AVR32_ALIGN at "+relocationAddress + ", OldValue = " + Integer.toHexString(oldValue));
-					break;
+					return RelocationResult.SKIPPED;
 
 				//TODO: THE FOLLOWING:
 				/*case AVR32_ElfRelocationConstants.R_AVR32_16_CP:
@@ -316,9 +321,10 @@ public class AVR32_ElfRelocationHandler extends ElfRelocationHandler {
 					markAsUnhandled(program, relocationAddress, type, symbolIndex,
 						elfRelocationContext.getSymbolName(symbolIndex),
 						elfRelocationContext.getLog());
-					break;
+					return RelocationResult.UNSUPPORTED;
 			}
 		}
+		return new RelocationResult(Status.APPLIED, byteLength);
 	}
 
 }
