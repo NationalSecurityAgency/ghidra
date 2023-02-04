@@ -64,7 +64,7 @@ task nodepJar(type: Jar) {
 	inputs.file(file(jar.archivePath))
 	dependsOn(configureNodepJar)
 	dependsOn(jar)
-	
+	duplicatesStrategy = 'exclude'
 	archiveAppendix = 'nodep'
 	manifest {
 		attributes['Main-Class'] = 'agent.lldb.gadp.FridaGadpServer'
@@ -77,6 +77,7 @@ task executableJar {
 	ext.execsh = file("src/main/sh/execjar.sh")
 	ext.jarfile = file(nodepJar.archivePath)
 	ext.outjar = file("${buildDir}/bin/gadp-agent-frida")
+	ext.unsign_jar = file("unsign_jar.sh")
 	dependsOn(nodepJar)
 	inputs.file(execsh)
 	inputs.file(jarfile)
@@ -92,6 +93,7 @@ task executableJar {
 			}
 		}
 		exec {
+			commandLine(ext.unsign_jar, outjar)
 			commandLine("chmod", "+x", outjar)
 		}
 	}
