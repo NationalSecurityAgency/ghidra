@@ -142,6 +142,38 @@ public interface Decoder extends ByteIngest {
 	public long readSignedInteger(AttributeId attribId) throws DecoderException;
 
 	/**
+	 * Parse the current attribute as either a signed integer value or a string.
+	 * If the attribute is an integer, its value is returned.
+	 * If the attribute is a string, it must match an expected string passed to the method,
+	 * and a predetermined integer value associated with the string is returned.
+	 * If the attribute string does not match, or the attribute is encoded as anything other than
+	 * a string or signed integer, an exception is thrown.
+	 * @param expect is the string value to expect if the attribute is encoded as a string
+	 * @param expectval is the integer value to return if the attribute matches the expected string
+	 * @return the encoded integer or the integer value associated with the expected string
+	 * @throws DecoderException is an integer value or expected string cannot be parsed
+	 */
+	public long readSignedIntegerExpectString(String expect, long expectval)
+			throws DecoderException;
+
+	/**
+	 * Find and parse a specific attribute in the current element as either a signed integer
+	 * or a string. If the attribute is an integer, its value is returned.
+	 * If the attribute is encoded as a string, it must match an expected string
+	 * passed to this method. In this case, a predetermined integer value is passed back,
+	 * indicating a matching string was parsed.  If the attribute string does not match, or
+	 * the attribute is encoded as anything other than a string or signed integer, an exception
+	 * is thrown.
+	 * @param attribId is the specific attribute id to match
+	 * @param expect is the string to expect, if the attribute is not encoded as an integer
+	 * @param expectval is the integer value to return if the attribute matches the expected string
+	 * @return the encoded integer or the integer value associated with the expected string
+	 * @throws DecoderException if an integer value or expected string cannot be parsed
+	 */
+	public long readSignedIntegerExpectString(AttributeId attribId, String expect, long expectval)
+			throws DecoderException;
+
+	/**
 	 * Parse the current attribute as an unsigned integer value
 	 * The last attribute, as returned by getNextAttributeId, is treated as an unsigned integer,
 	 * and its value is returned.
