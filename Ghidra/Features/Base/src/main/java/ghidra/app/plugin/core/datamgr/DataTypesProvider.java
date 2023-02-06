@@ -99,8 +99,17 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 	private boolean includeDataMembersInFilter;
 
 	public DataTypesProvider(DataTypeManagerPlugin plugin, String providerName) {
+		this(plugin, providerName, false);
+	}
+
+	public DataTypesProvider(DataTypeManagerPlugin plugin, String providerName,
+			boolean isTransient) {
 		super(plugin.getTool(), providerName, plugin.getName(), DataTypesActionContext.class);
 		this.plugin = plugin;
+
+		if (isTransient) {
+			setTransient();
+		}
 
 		setTitle(TITLE);
 		setIcon(new GIcon("icon.plugin.datatypes.provider"));
@@ -112,11 +121,6 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 		helpLocation = new HelpLocation(plugin.getName(), "Data_Type_Manager");
 		addToTool();
 		createLocalActions();
-	}
-
-	@Override // overridden to open access
-	protected void setTransient() {
-		super.setTransient();
 	}
 
 	/**

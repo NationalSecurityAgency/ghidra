@@ -71,7 +71,7 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 	private AddressInput baseAddrField; // used for Bit and Byte mapped blocks
 	private IntegerTextField schemeDestByteCountField; // used for Byte mapped blocks
 	private IntegerTextField schemeSrcByteCountField; // used for Byte mapped blocks
-	
+
 	private AddBlockModel model;
 	private GhidraComboBox<MemoryBlockType> comboBox;
 	private boolean updatingInitializedRB;
@@ -325,8 +325,9 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 		tool.showDialog(this, tool.getComponentProvider(PluginConstants.MEMORY_MAP));
 	}
 
+	@Override
 	public void dispose() {
-		close();
+		super.dispose();
 		model.dispose();
 	}
 
@@ -427,7 +428,7 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 		}
 		model.setBaseAddress(addr);
 	}
-	
+
 	private void schemeSrcByteCountChanged() {
 		int value = schemeSrcByteCountField.getIntValue();
 		model.setSchemeSrcByteCount(value);
@@ -466,21 +467,21 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 		baseAddrField.setAddressFactory(addrFactory);
 		baseAddrField.setName("Source Addr");
 		baseAddrField.addChangeListener(ev -> baseAddressChanged());
-		
+
 		JPanel schemePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-		
+
 		schemeDestByteCountField = new IntegerTextField(4, 1);
 		schemeDestByteCountField.setAllowNegativeValues(false);
 		schemeDestByteCountField.setAllowsHexPrefix(false);
 		schemeDestByteCountField.setDecimalMode();
 		schemeDestByteCountField.addChangeListener(ev -> schemeDestByteCountChanged());
-		
+
 		schemeSrcByteCountField = new IntegerTextField(4, 1);
 		schemeSrcByteCountField.setAllowNegativeValues(false);
 		schemeSrcByteCountField.setAllowsHexPrefix(false);
 		schemeSrcByteCountField.setDecimalMode();
 		schemeSrcByteCountField.addChangeListener(ev -> schemeSrcByteCountChanged());
-		
+
 		schemePanel.add(schemeDestByteCountField.getComponent());
 		schemePanel.add(new GLabel(" : "));
 		schemePanel.add(schemeSrcByteCountField.getComponent());
@@ -494,10 +495,10 @@ class AddBlockDialog extends DialogComponentProvider implements ChangeListener {
 		model.setBaseAddress(minAddr);
 		panel.add(new GLabel("Source Address:"));
 		panel.add(baseAddrField);
-		
+
 		panel.add(new GLabel("Mapping Ratio:"));
 		panel.add(schemePanel);
-		
+
 		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		return panel;
 	}
