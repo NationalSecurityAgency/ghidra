@@ -2323,14 +2323,7 @@ void ProtoModel::decode(Decoder &decoder)
     if (attribId == ATTRIB_NAME)
       name = decoder.readString();
     else if (attribId == ATTRIB_EXTRAPOP) {
-      string extrapopString = decoder.readString();
-      if (extrapopString == "unknown")
-	extrapop = extrapop_unknown;
-      else {
-	istringstream s(extrapopString);
-	s.unsetf(ios::dec | ios::hex | ios::oct);
-	s >> extrapop;
-      }
+      extrapop = decoder.readSignedIntegerExpectString("unknown", extrapop_unknown);
     }
     else if (attribId == ATTRIB_STACKSHIFT) {
       // Allow this attribute for backward compatibility
@@ -4415,11 +4408,7 @@ void FuncProto::decode(Decoder &decoder,Architecture *glb)
     }
     else if (attribId == ATTRIB_EXTRAPOP) {
       seenextrapop = true;
-      try {
-	readextrapop = decoder.readSignedInteger();
-      } catch(DecoderError &err) {
-	readextrapop = ProtoModel::extrapop_unknown;
-      }
+      readextrapop = decoder.readSignedIntegerExpectString("unknown", ProtoModel::extrapop_unknown);
     }
     else if (attribId == ATTRIB_MODELLOCK) {
       if (decoder.readBool())

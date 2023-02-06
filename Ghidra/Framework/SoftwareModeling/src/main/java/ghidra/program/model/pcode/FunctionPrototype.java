@@ -427,12 +427,8 @@ public class FunctionPrototype {
 		PrototypeModel protoModel =
 			dtmanage.getProgram().getCompilerSpec().getCallingConvention(modelname);
 		hasThis = (protoModel == null) ? false : protoModel.hasThisPointer();
-		try {
-			extrapop = (int) decoder.readSignedInteger(ATTRIB_EXTRAPOP);
-		}
-		catch (DecoderException e) {
-			extrapop = PrototypeModel.UNKNOWN_EXTRAPOP;
-		}
+		extrapop = (int) decoder.readSignedIntegerExpectString(ATTRIB_EXTRAPOP, "unknown",
+			PrototypeModel.UNKNOWN_EXTRAPOP);
 		modellock = false;
 		dotdotdot = false;
 		voidinputlock = false;

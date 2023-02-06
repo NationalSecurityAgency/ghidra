@@ -32,7 +32,6 @@ import ghidra.program.model.symbol.SourceType;
 import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
-import ghidra.util.xml.SpecXmlUtils;
 
 /**
  * 
@@ -155,13 +154,8 @@ public class HighParamID extends PcodeSyntaxTree {
 			else if (subel == ELEM_PROTO.id()) {
 				decoder.openElement();
 				modelname = decoder.readString(ATTRIB_MODEL);
-				String val = decoder.readString(ATTRIB_EXTRAPOP);
-				if (val.equals("unknown")) {
-					protoextrapop = PrototypeModel.UNKNOWN_EXTRAPOP;
-				}
-				else {
-					protoextrapop = SpecXmlUtils.decodeInt(val);
-				}
+				protoextrapop = (int) decoder.readSignedIntegerExpectString(ATTRIB_EXTRAPOP,
+					"unknown", PrototypeModel.UNKNOWN_EXTRAPOP);
 				decoder.closeElement(subel);
 			}
 			else if (subel == ELEM_INPUT.id()) {
