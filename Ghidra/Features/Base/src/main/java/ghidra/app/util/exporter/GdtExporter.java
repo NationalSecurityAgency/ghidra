@@ -16,22 +16,43 @@
 package ghidra.app.util.exporter;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 import ghidra.app.util.DomainObjectService;
 import ghidra.app.util.Option;
+import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainObject;
+import ghidra.program.database.DataTypeArchiveDB;
 import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.data.FileDataTypeManager;
-import ghidra.program.model.listing.DataTypeArchive;
+import ghidra.util.HelpLocation;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-public class ProjectArchiveExporter extends Exporter {
-	public static final String NAME = "Ghidra Data Type File";
+public class GdtExporter extends Exporter {
 
-	public ProjectArchiveExporter() {
-		super(NAME, FileDataTypeManager.EXTENSION, null);
+	public static final String EXTENSION = "gdt";
+	public static final String SUFFIX = "." + EXTENSION;
+
+	public static final String NAME = "Ghidra Data Type Archive File";
+
+	public GdtExporter() {
+		super(NAME, EXTENSION, new HelpLocation("ExporterPlugin", EXTENSION));
+	}
+
+	@Override
+	public boolean canExportDomainObject(Class<? extends DomainObject> domainObjectClass) {
+		return DataTypeArchiveDB.class.isAssignableFrom(domainObjectClass);
+	}
+
+	@Override
+	public boolean canExportDomainFile(DomainFile domainFile) {
+		return canExportDomainObject(domainFile.getDomainObjectClass());
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		return (obj instanceof GdtExporter);
 	}
 
 	@Override
@@ -57,17 +78,39 @@ public class ProjectArchiveExporter extends Exporter {
 	}
 
 	@Override
+	public boolean export(File file, DomainFile domainFile, TaskMonitor monitor)
+			throws ExporterException, IOException {
+		if (!canExportDomainFile(domainFile)) {
+			throw new UnsupportedOperationException("only DataTypeArchiveDB files are supported");
+		}
+		try {
+			domainFile.packFile(file, monitor);
+		}
+		catch (CancelledException e) {
+			return false;
+		}
+		catch (Exception e) {
+			log.appendMsg("Unexpected exception exporting file: " + e.getMessage());
+			return false;
+		}
+		return true;
+	}
+
+	@Override
 	public List<Option> getOptions(DomainObjectService domainObjectService) {
 		return EMPTY_OPTIONS;
 	}
 
 	@Override
 	public void setOptions(List<Option> options) {
-		// this exporter doesn't support any options
+		// no options for this exporter
 	}
 
+	/**
+	 * Returns false.  GDT export only supports entire database.
+	 */
 	@Override
-	public boolean canExportDomainObject(Class<? extends DomainObject> domainObjectClass) {
-		return DataTypeArchive.class.isAssignableFrom(domainObjectClass);
+	public boolean supportsAddressRestrictedExport() {
+		return false;
 	}
 }
