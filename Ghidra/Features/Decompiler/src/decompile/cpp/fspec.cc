@@ -78,28 +78,20 @@ void ParamEntry::resolveJoin(list<ParamEntry> &curList)
     return;
   }
   joinrec = spaceid->getManager()->findJoin(addressbase);
-  int4 mingrp = 1000;
-  int4 maxgrp = -1;
+  groupSet.clear();
   for(int4 i=0;i<joinrec->numPieces();++i) {
     const ParamEntry *entry = findEntryByStorage(curList, joinrec->getPiece(i));
     if (entry != (const ParamEntry *)0) {
-      if (entry->group < mingrp)
-	mingrp = entry->group;
-      int4 max = entry->group + entry->groupsize;
-      if (max > maxgrp)
-	maxgrp = max;
+      groupSet.insert(groupSet.end(),entry->groupSet.begin(),entry->groupSet.end());
       // For output <pentry>, if the most signifigant part overlaps with an earlier <pentry>
       // the least signifigant part is marked for extra checks, and vice versa.
       flags |= (i==0) ? extracheck_low : extracheck_high;
     }
   }
-  if (maxgrp < 0 || mingrp >= 1000)
+  if (groupSet.empty())
     throw LowlevelError("<pentry> join must overlap at least one previous entry");
-  group = mingrp;
-  groupsize = (maxgrp - mingrp);
+  sort(groupSet.begin(),groupSet.end());
   flags |= overlapping;
-  if (groupsize > joinrec->numPieces())
-    throw LowlevelError("<pentry> join must overlap sequential entries");
 }
 
 /// Search for overlaps of \b this with any previous entry.  If an overlap is discovered,
@@ -111,9 +103,7 @@ void ParamEntry::resolveOverlap(list<ParamEntry> &curList)
 {
   if (joinrec != (JoinRecord *)0)
     return;		// Overlaps with join records dealt with in resolveJoin
-  int4 grpsize = 0;
-  int4 mingrp = 1000;
-  int4 maxgrp = -1;
+  vector<int4> overlapSet;
   list<ParamEntry>::const_iterator iter,enditer;
   Address addr(spaceid,addressbase);
   enditer = curList.end();
@@ -123,12 +113,7 @@ void ParamEntry::resolveOverlap(list<ParamEntry> &curList)
     if (!entry.intersects(addr, size)) continue;
     if (contains(entry)) {	// If this contains the intersecting entry
       if (entry.isOverlap()) continue;	// Don't count resources (already counted overlapped entry)
-      if (entry.group < mingrp)
-	mingrp = entry.group;
-      int4 max = entry.group + entry.groupsize;
-      if (max > maxgrp)
-	maxgrp = max;
-      grpsize += entry.groupsize;
+      overlapSet.insert(overlapSet.end(),entry.groupSet.begin(),entry.groupSet.end());
       // For output <pentry>, if the most signifigant part overlaps with an earlier <pentry>
       // the least signifigant part is marked for extra checks, and vice versa.
       if (addressbase == entry.addressbase)
@@ -140,12 +125,34 @@ void ParamEntry::resolveOverlap(list<ParamEntry> &curList)
       throw LowlevelError("Illegal overlap of <pentry> in compiler spec");
   }
 
-  if (grpsize == 0) return;		// No overlaps
-  if (grpsize != (maxgrp - mingrp))
-    throw LowlevelError("<pentry> must overlap sequential entries");
-  group = mingrp;
-  groupsize = grpsize;
+  if (overlapSet.empty()) return;		// No overlaps
+  sort(overlapSet.begin(),overlapSet.end());
+  groupSet = overlapSet;
   flags |= overlapping;
+}
+
+/// \param op2 is the other entry to compare
+/// \return \b true if the group sets associated with each ParamEntry intersect at all
+bool ParamEntry::groupOverlap(const ParamEntry &op2) const
+
+{
+  int4 i = 0;
+  int4 j = 0;
+  int4 valThis = groupSet[i];
+  int4 valOther = op2.groupSet[j];
+  while(valThis != valOther) {
+    if (valThis < valOther) {
+      i += 1;
+      if (i >= groupSet.size()) return false;
+      valThis = groupSet[i];
+    }
+    else {
+      j += 1;
+      if (j >= op2.groupSet.size()) return false;
+      valOther = op2.groupSet[j];
+    }
+  }
+  return true;
 }
 
 /// This entry must properly contain the other memory range, and
@@ -379,7 +386,7 @@ OpCode ParamEntry::assumedExtension(const Address &addr,int4 sz,VarnodeData &res
 int4 ParamEntry::getSlot(const Address &addr,int4 skip) const
 
 {
-  int4 res = group;
+  int4 res = groupSet[0];
   if (alignment != 0) {
     uintb diff = addr.getOffset() + skip - addressbase;
     int4 baseslot = (int4)diff / alignment;
@@ -389,7 +396,7 @@ int4 ParamEntry::getSlot(const Address &addr,int4 skip) const
       res += baseslot;
   }
   else if (skip != 0) {
-    res += (groupsize-1);
+    res = groupSet.back();
   }
   return res;
 }
@@ -456,7 +463,6 @@ void ParamEntry::decode(Decoder &decoder,bool normalstack,bool grouped,list<Para
   size = minsize = -1;		// Must be filled in
   alignment = 0;		// default
   numslots = 1;
-  groupsize = 1;		// default
 
   uint4 elemId = decoder.openElement(ELEM_PENTRY);
   for(;;) {
@@ -646,16 +652,15 @@ Address ParamListStandard::assignAddress(const Datatype *tp,vector<int4> &status
     const ParamEntry &curEntry( *iter );
     int4 grp = curEntry.getGroup();
     if (status[grp]<0) continue;
-    if ((curEntry.getType() != TYPE_UNKNOWN)&&
-	tp->getMetatype() != curEntry.getType())
+    if ((curEntry.getType() != TYPE_UNKNOWN) && tp->getMetatype() != curEntry.getType())
       continue;			// Wrong type
 
     Address res = curEntry.getAddrBySlot(status[grp],tp->getSize());
     if (res.isInvalid()) continue; // If -tp- doesn't fit an invalid address is returned
     if (curEntry.isExclusion()) {
-      int4 maxgrp = grp + curEntry.getGroupSize();
-      for(int4 j=grp;j<maxgrp;++j) // For an exclusion entry
-	status[j] = -1;		// some number of groups are taken up
+      const vector<int4> &groupSet(curEntry.getAllGroups());
+      for(int4 j=0;j<groupSet.size();++j) 	// For an exclusion entry
+	status[groupSet[j]] = -1;		// some number of groups are taken up
     }
     return res;
   }
@@ -852,18 +857,18 @@ void ParamListStandard::separateSections(ParamActive *active,vector<int4> &trial
 ///
 /// Only one trial within an exclusion group can have active use, mark all others as unused.
 /// \param active is the set of trials, which must be sorted on group
-/// \param groupUpper is the biggest group number to be marked
-/// \param groupStart is the index of the first trial in the smallest group to be marked
-/// \param index is the specified trial index that is \e not to be marked
-void ParamListStandard::markGroupNoUse(ParamActive *active,int4 groupUpper,int4 groupStart,int4 index)
+/// \param activeTrial is the index of the trial whose groups are to be considered active
+/// \param trialStart is the index of the first trial to mark
+void ParamListStandard::markGroupNoUse(ParamActive *active,int4 activeTrial,int4 trialStart)
 
 {
   int4 numTrials = active->getNumTrials();
-  for(int4 i=groupStart;i<numTrials;++i) {		// Mark entries in the group range as definitely not used
-    if (i == index) continue;		// The trial NOT to mark
+  const ParamEntry *activeEntry = active->getTrial(activeTrial).getEntry();
+  for(int4 i=trialStart;i<numTrials;++i) {		// Mark entries intersecting the group set as definitely not used
+    if (i == activeTrial) continue;			// The trial NOT to mark
     ParamTrial &othertrial(active->getTrial(i));
     if (othertrial.isDefinitelyNotUsed()) continue;
-    if (othertrial.getEntry()->getGroup() > groupUpper) break;
+    if (!othertrial.getEntry()->groupOverlap(*activeEntry)) break;
     othertrial.markNoUse();
   }
 }
@@ -889,7 +894,7 @@ void ParamListStandard::markBestInactive(ParamActive *active,int4 group,int4 gro
     const ParamEntry *entry = trial.getEntry();
     int4 grp = entry->getGroup();
     if (grp != group) break;
-    if (entry->getGroupSize() > 1) continue;	// Covering multiple slots automatically give low score
+    if (entry->getAllGroups().size() > 1) continue;	// Covering multiple slots automatically give low score
     int4 score = 0;
     if (trial.hasAncestorRealistic()) {
       score += 5;
@@ -904,7 +909,7 @@ void ParamListStandard::markBestInactive(ParamActive *active,int4 group,int4 gro
     }
   }
   if (bestTrial >= 0)
-    markGroupNoUse(active, group, groupStart, bestTrial);
+    markGroupNoUse(active, bestTrial, groupStart);
 }
 
 /// \brief Enforce exclusion rules for the given set of parameter trials
@@ -932,8 +937,7 @@ void ParamListStandard::forceExclusionGroup(ParamActive *active)
       inactiveCount = 0;
     }
     if (curtrial.isActive()) {
-      int4 groupUpper = grp + curtrial.getEntry()->getGroupSize() - 1; // This entry covers some number of groups
-      markGroupNoUse(active, groupUpper, groupStart, i);
+      markGroupNoUse(active, i, groupStart);
     }
     else {
       inactiveCount += 1;
@@ -969,9 +973,9 @@ void ParamListStandard::forceNoUse(ParamActive *active, int4 start, int4 stop)
     }
     else { // First trial in a new group (or next element in same non-exclusion group)
       if (alldefnouse)	   // If all in the last group were defnotused
-	seendefnouse = true;// then force everything afterword to be defnotused
+	seendefnouse = true;// then force everything afterward to be defnotused
       alldefnouse = curtrial.isDefinitelyNotUsed();
-      curgroup = grp + curtrial.getEntry()->getGroupSize() - 1;
+      curgroup = grp;
     }
     if (seendefnouse)
       curtrial.markInactive();
@@ -1131,7 +1135,7 @@ void ParamListStandard::parsePentry(Decoder &decoder,vector<EffectRecord> &effec
   else if (autokill)	// If a register parameter AND we automatically generate killedbycall
     effectlist.push_back(EffectRecord(entry.back(),EffectRecord::killedbycall));
 
-  int4 maxgroup = entry.back().getGroup() + entry.back().getGroupSize();
+  int4 maxgroup = entry.back().getAllGroups().back() + 1;
   if (maxgroup > numgroup)
     numgroup = maxgroup;
 }
@@ -1250,7 +1254,7 @@ bool ParamListStandard::possibleParamWithSlot(const Address &loc,int4 size,int4 
   if (entryNum == (const ParamEntry *)0) return false;
   slot = entryNum->getSlot(loc,0);
   if (entryNum->isExclusion()) {
-    slotsize = entryNum->getGroupSize();
+    slotsize = entryNum->getAllGroups().size();
   }
   else {
     slotsize = ((size-1) / entryNum->getAlign()) + 1;
