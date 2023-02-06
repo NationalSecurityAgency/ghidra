@@ -24,7 +24,9 @@
 
       <LI><A href="#c_cpp">C/C++</A></LI>
       
-      <LI><A href="#gzf">Ghidra Zip File (.gzf)</A></LI>
+      <LI><A href="#gzf">Ghidra Zip File (GZF)</A></LI>
+      
+      <LI><A href="#gdt">Ghidra Data Type Archive File (GDT)</a></LI>
 
       <LI><A href="#html">HTML</A></LI>
 
@@ -58,6 +60,16 @@
 
           <LI>Press the <B>OK</B> button to perform the export.</LI>
         </UL>
+        
+        <P><I><IMG src="help/shared/note.png"> In preparation for a file export, a selected project
+        file may be opened in an attempt to support export formats that require an open
+        file.  If the selected file requires an upgrade a warning dialog
+        will be displayed and the affected export formats will not be available until an upgrade 
+        is perfored, however a direct packed format of the project file may still be chosen
+        without performing the upgrade first (e.g., <A href="#gzf">Ghidra Zip File (GZF)</A>,
+        <A href="#gzf">Ghidra Zip File (GZF)</A>).
+	  	</P>
+	  
       </BLOCKQUOTE>
 
       <H3>To export from the CodeBrowser tool:</H3>
@@ -276,12 +288,28 @@
           </UL>
         </BLOCKQUOTE>
 
-        <H3><A name="gzf"/>Ghidra Zip File (.gzf)</H3>
+        <H3><A name="gzf"/>Ghidra Zip File (GZF)</H3>
 
         <BLOCKQUOTE>
-          <P>Creates a zip file from a program in your project. You may want to create a zip file
+          <P>Creates a GZF file from a Program in your project. You may want to create a GZF file
           so that you can give it to another user who can then <A href=
-          "help/topics/ImporterPlugin/importer.htm">import</A> into their project.</P>
+          "help/topics/ImporterPlugin/importer.htm">import</A> into their project.  A program
+          export of this format from the Project Window will be based on the current saved file
+          content and bypass any potential upgrade that may be required by other formats.
+          </P>
+        </BLOCKQUOTE>
+        
+        <H3><A name="gdt"/>Ghidra Data Type Archive File (GDT)</H3>
+
+        <BLOCKQUOTE>
+          <P>Creates a GDT file from a Data Type Archive in your project. You may want to create a GDT file
+          so that you can give it to another user who can then <A href=
+          "help/topics/ImporterPlugin/importer.htm">import</A> into their project or open directly
+          via the Data Type Manager as a 
+          <A href="help/topics/DataTypeManagerPlugin/data_type_manager_description.htm#Open_File_Data_Type_Archive">File Data Type Archive</A>.
+          A project Data Type Archive export of this format from the Project Window will be based on 
+          the current saved file content and bypass any potential upgrade that may be required by other formats.
+          </P>
         </BLOCKQUOTE>
 
         <H3><A name="html"/><A name="Options_HTML"/>HTML</H3>
