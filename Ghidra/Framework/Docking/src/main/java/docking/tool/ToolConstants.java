@@ -109,6 +109,11 @@ public interface ToolConstants extends DockingToolConstants {
 	public static final String TOOL_OPTIONS = "Tool";
 
 	/**
+	 * File Import options name
+	 */
+	public static final String FILE_IMPORT_OPTIONS = "File Import";
+
+	/**
 	 * Graph options name
 	 */
 	public static final String GRAPH_OPTIONS = "Graph";
