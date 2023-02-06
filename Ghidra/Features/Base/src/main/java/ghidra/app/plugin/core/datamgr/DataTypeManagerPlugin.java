@@ -86,7 +86,7 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 
 	private static final String EXTENSIONS_PATH_PREFIX = Path.GHIDRA_HOME + "/Extensions";
 
-	private static final String SEACH_PROVIDER_NAME = "Search DataTypes Provider";
+	private static final String SEARCH_PROVIDER_NAME = "Search DataTypes Provider";
 	private static final int RECENTLY_USED_CACHE_SIZE = 10;
 
 	private static final String STANDARD_ARCHIVE_MENU = "Standard Archive";
@@ -360,11 +360,10 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 
 	public DataTypesProvider createProvider() {
 
-		DataTypesProvider newProvider = new DataTypesProvider(this, SEACH_PROVIDER_NAME);
+		DataTypesProvider newProvider = new DataTypesProvider(this, SEARCH_PROVIDER_NAME, true);
 		newProvider.setIncludeDataTypeMembersInFilter(provider.includeDataMembersInSearch());
 		newProvider.setFilteringArrays(provider.isFilteringArrays());
 		newProvider.setFilteringPointers(provider.isFilteringPointers());
-		newProvider.setTransient();
 		return newProvider;
 	}
 
