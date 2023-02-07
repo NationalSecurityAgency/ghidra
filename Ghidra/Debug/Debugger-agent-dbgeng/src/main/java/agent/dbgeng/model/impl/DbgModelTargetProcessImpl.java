@@ -183,8 +183,6 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 		switch (kind) {
 			case SKIP:
 				throw new UnsupportedOperationException(kind.name());
-			case ADVANCE: // Why no exec-advance in dbgeng?
-				throw new UnsupportedOperationException(kind.name());
 			default:
 				return model.gateFuture(process.step(convertToDbg(kind)));
 		}

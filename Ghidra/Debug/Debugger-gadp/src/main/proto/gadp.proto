@@ -90,7 +90,6 @@ message BreakKindsSet {
 
 enum StepKind {
 	SK_INTO = 0;
-	SK_ADVANCE = 1;
 	SK_FINISH = 2;
 	SK_LINE = 3;
 	SK_OVER = 4;

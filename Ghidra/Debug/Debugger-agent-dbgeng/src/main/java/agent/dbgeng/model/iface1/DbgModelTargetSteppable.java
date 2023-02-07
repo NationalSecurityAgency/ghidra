@@ -61,8 +61,6 @@ public interface DbgModelTargetSteppable extends DbgModelTargetObject, TargetSte
 		switch (kind) {
 			case SKIP:
 				throw new UnsupportedOperationException(kind.name());
-			case ADVANCE: // Why no exec-advance in dbgeng?
-				return thread.console("advance");
 			default:
 				if (this instanceof DbgModelTargetThread) {
 					DbgModelTargetThread targetThread = (DbgModelTargetThread) this;

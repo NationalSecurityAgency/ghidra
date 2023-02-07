@@ -55,7 +55,6 @@ public class JdiModelTargetThread extends JdiModelTargetObjectReference implemen
 		JdiModelSelectableObject {
 
 	protected static final TargetStepKindSet SUPPORTED_KINDS = TargetStepKindSet.of( //
-		TargetStepKind.ADVANCE, //
 		TargetStepKind.FINISH, //
 		TargetStepKind.LINE, //
 		TargetStepKind.OVER, //
@@ -346,7 +345,6 @@ public class JdiModelTargetThread extends JdiModelTargetObjectReference implemen
 				depth = StepRequest.STEP_LINE;
 				break;
 			case FINISH:
-			case ADVANCE:
 				depth = StepRequest.STEP_OUT;
 				break;
 			case SKIP:

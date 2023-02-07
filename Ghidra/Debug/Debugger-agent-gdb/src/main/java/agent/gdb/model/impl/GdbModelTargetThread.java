@@ -15,6 +15,7 @@
  */
 package agent.gdb.model.impl;
 
+import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -24,14 +25,15 @@ import agent.gdb.manager.GdbManager.StepCmd;
 import agent.gdb.manager.impl.GdbFrameInfo;
 import agent.gdb.manager.impl.GdbThreadInfo;
 import agent.gdb.manager.impl.cmd.GdbStateChangeRecord;
-import agent.gdb.manager.impl.cmd.GdbConsoleExecCommand.CompletesWithRunning;
 import agent.gdb.manager.reason.GdbBreakpointHitReason;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.*;
+import ghidra.dbg.target.TargetMethod.AnnotatedTargetMethod;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.lifecycle.Internal;
+import ghidra.program.model.address.Address;
 import ghidra.util.Msg;
 
 @TargetObjectSchemaInfo(
@@ -44,15 +46,13 @@ public class GdbModelTargetThread
 		extends DefaultTargetObject<TargetObject, GdbModelTargetThreadContainer> implements
 		TargetThread, TargetExecutionStateful, TargetSteppable, TargetAggregate,
 		GdbModelSelectableObject {
-	protected static final TargetStepKindSet SUPPORTED_KINDS = TargetStepKindSet.of( //
-		TargetStepKind.ADVANCE, //
-		TargetStepKind.FINISH, //
-		TargetStepKind.LINE, //
-		TargetStepKind.OVER, //
-		TargetStepKind.OVER_LINE, //
-		TargetStepKind.RETURN, //
-		TargetStepKind.UNTIL, //
-		TargetStepKind.EXTENDED);
+	protected static final TargetStepKindSet SUPPORTED_KINDS = TargetStepKindSet.of(
+		TargetStepKind.FINISH,
+		TargetStepKind.LINE,
+		TargetStepKind.OVER,
+		TargetStepKind.OVER_LINE,
+		TargetStepKind.RETURN,
+		TargetStepKind.UNTIL);
 
 	protected static String indexThread(int threadId) {
 		return PathUtils.makeIndex(threadId);
@@ -87,12 +87,15 @@ public class GdbModelTargetThread
 
 		this.stack = new GdbModelTargetStack(this, inferior);
 
-		changeAttributes(List.of(), List.of(stack), Map.of( //
-			STATE_ATTRIBUTE_NAME, state = convertState(thread.getState()), //
-			SUPPORTED_STEP_KINDS_ATTRIBUTE_NAME, SUPPORTED_KINDS, //
-			SHORT_DISPLAY_ATTRIBUTE_NAME, shortDisplay = computeShortDisplay(), //
-			DISPLAY_ATTRIBUTE_NAME, display = computeDisplay() //
-		), "Initialized");
+		changeAttributes(List.of(), List.of(),
+			AnnotatedTargetMethod.collectExports(MethodHandles.lookup(), impl, this),
+			"Methods");
+		changeAttributes(List.of(), List.of(stack), Map.of(
+			STATE_ATTRIBUTE_NAME, state = convertState(thread.getState()),
+			SUPPORTED_STEP_KINDS_ATTRIBUTE_NAME, SUPPORTED_KINDS,
+			SHORT_DISPLAY_ATTRIBUTE_NAME, shortDisplay = computeShortDisplay(),
+			DISPLAY_ATTRIBUTE_NAME, display = computeDisplay()),
+			"Initialized");
 
 		updateInfo().exceptionally(ex -> {
 			Msg.error(this, "Could not initialize thread info");
@@ -214,12 +217,18 @@ public class GdbModelTargetThread
 			case SKIP:
 			case EXTENDED:
 				throw new UnsupportedOperationException(kind.name());
-			case ADVANCE: // Why no exec-advance in GDB/MI?
-				// TODO: This doesn't work, since advance requires a parameter
-				return model.gateFuture(thread.console("advance", CompletesWithRunning.CANNOT));
 			default:
 				return model.gateFuture(thread.step(convertToGdb(kind)));
 		}
+	}
+
+	@TargetMethod.Export("Advance")
+	public CompletableFuture<Void> advance(
+			@TargetMethod.Param(
+				name = "target",
+				display = "Target",
+				description = "The address to advance to") Address target) {
+		return impl.gateFuture(thread.advance(target.getOffset()));
 	}
 
 	protected void invalidateRegisterCaches() {
@@ -257,5 +266,4 @@ public class GdbModelTargetThread
 		this.base = (Integer) value;
 		updateInfo();
 	}
-
 }

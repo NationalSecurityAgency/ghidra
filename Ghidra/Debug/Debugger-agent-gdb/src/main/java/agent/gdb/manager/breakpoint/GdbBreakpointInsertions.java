@@ -45,6 +45,7 @@ public interface GdbBreakpointInsertions {
 	/**
 	 * Insert a breakpoint (usually a watchpoint) at the given address range
 	 * 
+	 * <p>
 	 * Note, this implements the length by casting the address pointer to a
 	 * fixed-length-char-array-pointer where the array has the given length. Support for specific
 	 * lengths may vary by platform.

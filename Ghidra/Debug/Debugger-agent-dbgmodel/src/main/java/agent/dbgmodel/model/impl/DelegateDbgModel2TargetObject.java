@@ -359,8 +359,6 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 			changeAttributes(List.of(), List.of(), Map.of( //
 				TargetAccessConditioned.ACCESSIBLE_ATTRIBUTE_NAME, accessible //
 			), "Accessibility changed");
-			DbgModelTargetAccessConditioned accessConditioned =
-				(DbgModelTargetAccessConditioned) proxy;
 		}
 	}
 

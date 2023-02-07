@@ -342,6 +342,7 @@
 	</schema>
 	<schema name="Thread" elementResync="NEVER" attributeResync="NEVER">
 		<interface name="Thread" />
+		<interface name="Aggregate" />
 		<interface name="Access" />
 		<interface name="ExecutionStateful" />
 		<interface name="Steppable" />
@@ -364,7 +365,17 @@
 		<attribute name="Id" schema="OBJECT" />
 		<attribute name="Name" schema="OBJECT" />
 		<attribute name="_arch" schema="STRING" />
+		<attribute name="Step to Address (pa)" schema="Method" />
+		<attribute name="Trace to Address (ta)" schema="Method" />
 		<attribute schema="ANY" />
+	</schema>
+	<schema name="Method" elementResync="NEVER" attributeResync="NEVER">
+		<interface name="Method" />
+		<element schema="VOID" />
+		<attribute name="_display" schema="STRING" fixed="yes" hidden="yes" />
+		<attribute name="_return_type" schema="TYPE" fixed="yes" hidden="yes" />
+		<attribute name="_parameters" schema="MAP_PARAMETERS" fixed="yes" hidden="yes" />
+		<attribute schema="VOID" />
 	</schema>
 	<schema name="Module" elementResync="NEVER" attributeResync="NEVER">
 		<interface name="Module" />

@@ -192,9 +192,6 @@ public class GdbModelTargetInferior
 			case SKIP:
 			case EXTENDED:
 				throw new UnsupportedOperationException(kind.name());
-			case ADVANCE: // Why no exec-advance in GDB/MI?
-				// TODO: This doesn't work, since advance requires a parameter
-				return model.gateFuture(inferior.console("advance", CompletesWithRunning.MUST));
 			default:
 				return model.gateFuture(inferior.step(GdbModelTargetThread.convertToGdb(kind)));
 		}

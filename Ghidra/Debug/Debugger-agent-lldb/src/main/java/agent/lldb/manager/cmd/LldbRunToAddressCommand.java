@@ -15,31 +15,23 @@
  */
 package agent.lldb.manager.cmd;
 
-import java.util.Map;
+import java.math.BigInteger;
 
 import SWIG.*;
 import agent.lldb.manager.LldbEvent;
 import agent.lldb.manager.evt.*;
 import agent.lldb.manager.impl.LldbManagerImpl;
-import ghidra.dbg.target.TargetSteppable.TargetStepKind;
 import ghidra.util.Msg;
 
-/**
- * Implementation of {@link LldbThread#stepInstruction()}
- */
-public class LldbStepCommand extends AbstractLldbCommand<Void> {
+public class LldbRunToAddressCommand extends AbstractLldbCommand<Void> {
 
 	private SBThread thread;
-	private TargetStepKind kind;
-	private Map<String, ?> args;
-	private String lastCommand = "";
+	private final BigInteger addr;
 
-	public LldbStepCommand(LldbManagerImpl manager, SBThread thread, TargetStepKind kind,
-			Map<String, ?> args) {
+	public LldbRunToAddressCommand(LldbManagerImpl manager, SBThread thread, BigInteger addr) {
 		super(manager);
 		this.thread = thread;
-		this.kind = kind;
-		this.args = args;
+		this.addr = addr;
 	}
 
 	@Override
@@ -58,53 +50,15 @@ public class LldbStepCommand extends AbstractLldbCommand<Void> {
 
 	@Override
 	public void invoke() {
-		RunMode rm = RunMode.eOnlyThisThread;
 		if (thread == null || !thread.IsValid()) {
 			thread = manager.getCurrentThread();
-			rm = RunMode.eAllThreads;
-		}
-		if (kind == null) {
-			kind = (TargetStepKind) args.get("Kind");
 		}
 		SBError error = new SBError();
-		switch (kind) {
-			case INTO:
-				thread.StepInstruction(false, error);
-				break;
-			case OVER:
-				thread.StepInstruction(true, error);
-				break;
-			case LINE:
-				thread.StepInto();
-				break;
-			case OVER_LINE:
-				thread.StepOver(rm, error);
-				break;
-			case RETURN:
-				thread.StepOut(error);
-				break;
-			case FINISH:
-				thread.StepOutOfFrame(thread.GetSelectedFrame(), error);
-				break;
-			case EXTENDED:
-				manager.execute(new LldbEvaluateCommand(manager, lastCommand));
-				break;
-			case SKIP:
-			default:
-				throw new UnsupportedOperationException("Step " + kind.name() + " not supported");
-		}
+		thread.RunToAddress(addr, error);
 		if (!error.Success()) {
 			SBStream stream = new SBStream();
 			error.GetDescription(stream);
-			Msg.error(this, error.GetType() + " while stepping: " + stream.GetData());
+			Msg.error(this, error.GetType() + " while running to address: " + stream.GetData());
 		}
-	}
-
-	public String getLastCommand() {
-		return lastCommand;
-	}
-
-	public void setLastCommand(String lastCommand) {
-		this.lastCommand = lastCommand;
 	}
 }

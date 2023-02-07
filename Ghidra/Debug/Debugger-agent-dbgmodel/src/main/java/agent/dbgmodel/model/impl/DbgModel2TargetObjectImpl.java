@@ -15,6 +15,7 @@
  */
 package agent.dbgmodel.model.impl;
 
+import java.lang.invoke.MethodHandles;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
@@ -37,6 +38,7 @@ import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.dbg.target.TargetBreakpointSpecContainer.TargetBreakpointKindSet;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
+import ghidra.dbg.target.TargetMethod.AnnotatedTargetMethod;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.util.PathUtils;
 import ghidra.dbg.util.PathUtils.TargetObjectKeyComparator;
@@ -301,6 +303,8 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 				String executionType =
 					targetThread.getThread().getExecutingProcessorType().description;
 				attrs.put(TargetEnvironment.ARCH_ATTRIBUTE_NAME, executionType);
+				attrs.putAll(
+					AnnotatedTargetMethod.collectExports(MethodHandles.lookup(), model, proxy));
 			}
 			if (proxy instanceof TargetRegister) {
 				DbgModelTargetObject bank = (DbgModelTargetObject) getParent();
