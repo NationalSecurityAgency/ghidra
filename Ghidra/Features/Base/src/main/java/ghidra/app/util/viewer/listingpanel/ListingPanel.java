@@ -308,6 +308,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 		if (overviewComponent != null) {
 			scroller.setScrollbarSideKickComponent(buildOverviewComponent());
 		}
+		revalidate();
 		repaint();
 	}
 
