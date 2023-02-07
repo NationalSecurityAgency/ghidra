@@ -18,7 +18,7 @@ package ghidra.app.util.xml;
 import org.xml.sax.*;
 
 /**
- * An implemenation of the basic interface for SAX error handlers.
+ * An implementation of the basic interface for SAX error handlers.
  * Per the documentation, this class is required to prevent the SAX
  * parser from squelching all parse exceptions.
  *
