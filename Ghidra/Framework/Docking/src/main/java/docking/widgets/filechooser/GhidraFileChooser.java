@@ -1514,6 +1514,7 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 		actionManager.dispose();
 		optionsDialog.dispose();
 		close();
+		worker.dispose();
 		fileChooserModel = null;
 	}
 
