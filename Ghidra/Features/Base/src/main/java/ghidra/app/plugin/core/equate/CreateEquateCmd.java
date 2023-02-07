@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.equate;
 
+import java.util.Objects;
+
 import ghidra.app.cmd.equate.SetEquateCmd;
 import ghidra.app.context.ListingActionContext;
 import ghidra.framework.cmd.BackgroundCommand;
@@ -57,7 +59,7 @@ public class CreateEquateCmd extends BackgroundCommand {
 			false /* is modal */);
 		this.targetScalarValue = scalar.getValue();
 		this.iterator = iter;
-		this.equateName = equateName;
+		this.equateName = Objects.requireNonNull(equateName);
 		this.overwriteExisting = overwriteExisting;
 		this.context = context;
 	}
@@ -78,7 +80,7 @@ public class CreateEquateCmd extends BackgroundCommand {
 		this.iterator = iter;
 		this.overwriteExisting = overwriteExisting;
 		this.context = context;
-		this.enoom = enoom;
+		this.enoom = Objects.requireNonNull(enoom);
 	}
 
 	@Override
