@@ -84,8 +84,10 @@ public class HeadlessAnalyzer {
 	 * already been initialized or a headless analyzer has already been retrieved.  In these cases,
 	 * the headless analyzer should be gotten with {@link HeadlessAnalyzer#getInstance()}.
 	 * 
-	 * @param logFile The desired application log file.  If null, no application logging will take place.
-	 * @param scriptLogFile The desired scripting log file.  If null, no script logging will take place.
+	 * @param logFile The desired application log file.  If null, the default application log file 
+	 *   will be used (see {@link Application#initializeLogging}).
+	 * @param scriptLogFile The desired scripting log file.  If null, the default scripting log file
+	 *   will be used (see {@link Application#initializeLogging}).
 	 * @param useLog4j true if log4j is to be used; otherwise, false.  If this class is being used by 
 	 *     another tool as a library, using log4j might interfere with that tool.
 	 * @return An instance of a new headless analyzer.
