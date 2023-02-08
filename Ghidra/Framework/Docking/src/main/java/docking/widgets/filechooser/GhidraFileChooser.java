@@ -1063,11 +1063,15 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 
 	@Override
 	public void close() {
+		closeCleanup();
+		super.close();
+	}
+
+	private void closeCleanup() {
 		clearBackHistory();
 		cancelEdits();
 		clearStatusText();
 		savePreferences();
-		super.close();
 	}
 
 	private void savePreferences() {
@@ -1511,9 +1515,12 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 
 	@Override
 	public void dispose() {
+		super.dispose();
+		closeCleanup();
+		modelUpdater.dispose();
 		actionManager.dispose();
 		optionsDialog.dispose();
-		close();
+
 		worker.dispose();
 		fileChooserModel = null;
 	}
@@ -1956,8 +1963,17 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 
 		@Override
 		public void run(TaskMonitor monitor) {
+			if (monitor.isCancelled()) {
+				return;
+			}
+
 			run();
-			SystemUtilities.runSwingLater(() -> runSwing());
+
+			Swing.runLater(() -> {
+				if (!monitor.isCancelled()) {
+					runSwing();
+				}
+			});
 		}
 
 		public void run() {
@@ -2023,10 +2039,6 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 
 		@Override
 		public void run() {
-			if (fileChooserModel == null) {
-				return;
-			}
-
 			loadedFiles =
 				new ArrayList<>(fileChooserModel.getListing(directory, GhidraFileChooser.this));
 			Collections.sort(loadedFiles, new FileComparator(fileChooserModel));
@@ -2055,9 +2067,6 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 
 		@Override
 		public void run() {
-			if (fileChooserModel == null) {
-				return;
-			}
 			roots = new ArrayList<>(fileChooserModel.getRoots(forceUpdate));
 			Collections.sort(roots);
 		}
