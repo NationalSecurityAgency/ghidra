@@ -21,13 +21,17 @@ import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import javax.swing.Icon;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
+import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.ToggleDockingAction;
+import docking.action.builder.ActionBuilder;
+import docking.action.builder.ToggleActionBuilder;
 import ghidra.app.context.ProgramLocationActionContext;
 import ghidra.app.events.ProgramActivatedPluginEvent;
 import ghidra.app.events.ProgramClosedPluginEvent;
@@ -35,13 +39,14 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.event.TraceClosedPluginEvent;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.services.*;
 import ghidra.async.AsyncLazyMap;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.pcode.emu.PcodeMachine.*;
+import ghidra.pcode.emu.PcodeMachine.AccessKind;
+import ghidra.pcode.emu.PcodeMachine.SwiMode;
 import ghidra.pcode.exec.InjectionErrorPcodeExecutionException;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
@@ -54,6 +59,7 @@ import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.schedule.*;
 import ghidra.trace.model.time.schedule.Scheduler.RunResult;
+import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.database.UndoableTransaction;
@@ -82,6 +88,82 @@ import ghidra.util.task.TaskMonitor;
 	})
 public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEmulationService {
 	protected static final int MAX_CACHE_SIZE = 5;
+
+	interface EmulateProgramAction {
+		String NAME = "Emulate Program in new Trace";
+		String DESCRIPTION = "Emulate the current program in a new trace starting at the cursor";
+		Icon ICON = DebuggerResources.ICON_EMULATE;
+		String GROUP = DebuggerResources.GROUP_GENERAL;
+		String HELP_ANCHOR = "emulate_program";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.toolBarIcon(ICON)
+					.toolBarGroup(GROUP)
+					.menuPath(DebuggerPluginPackage.NAME, NAME)
+					.menuIcon(ICON)
+					.menuGroup(GROUP)
+					.popupMenuPath(NAME)
+					.popupMenuIcon(ICON)
+					.popupMenuGroup(GROUP)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface EmulateAddThreadAction {
+		String NAME = "Add Emulated Thread to Trace";
+		String DESCRIPTION = "Add an emulated thread to the current trace starting here";
+		Icon ICON = DebuggerResources.ICON_THREAD;
+		String GROUP = DebuggerResources.GROUP_GENERAL;
+		String HELP_ANCHOR = "add_emulated_thread";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.menuPath(DebuggerPluginPackage.NAME, NAME)
+					.menuIcon(ICON)
+					.menuGroup(GROUP)
+					.popupMenuPath(NAME)
+					.popupMenuIcon(ICON)
+					.popupMenuGroup(GROUP)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface ConfigureEmulatorAction {
+		String NAME = "Configure Emulator";
+		String DESCRIPTION = "Choose and configure the current emulator";
+		String GROUP = DebuggerResources.GROUP_GENERAL;
+		String HELP_ANCHOR = "configure_emulator";
+
+		static ToggleActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ToggleActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.menuGroup(GROUP)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface InvalidateEmulatorCacheAction {
+		String NAME = "Invalidate Emulator Cache";
+		String DESCRIPTION =
+			"Prevent the emulation service from using cached snapshots from the current trace";
+		String GROUP = DebuggerResources.GROUP_MAINTENANCE;
+		String HELP_ANCHOR = "invalidate_cache";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.menuPath(DebuggerPluginPackage.NAME, ConfigureEmulatorAction.NAME, NAME)
+					.menuGroup(GROUP)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
 
 	protected static class CacheKey implements Comparable<CacheKey> {
 		// TODO: Should key on platform, not trace
@@ -273,6 +355,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 
 	DockingAction actionEmulateProgram;
 	DockingAction actionEmulateAddThread;
+	DockingAction actionInvalidateCache;
 	Map<Class<? extends DebuggerPcodeEmulatorFactory>, ToggleDockingAction> //
 	actionsChooseEmulatorFactory = new HashMap<>();
 
@@ -302,6 +385,10 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 				.popupWhen(this::emulateAddThreadEnabled)
 				.onAction(this::emulateAddThreadActivated)
 				.buildAndInstall(tool);
+		actionInvalidateCache = InvalidateEmulatorCacheAction.builder(this)
+				.enabledWhen(this::invalidateCacheEnabled)
+				.onAction(this::invalidateCacheActivated)
+				.buildAndInstall(tool);
 		ClassSearcher.addChangeListener(classChangeListener);
 		updateConfigureEmulatorStates();
 	}
@@ -312,7 +399,8 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 
 	private ToggleDockingAction createActionChooseEmulator(DebuggerPcodeEmulatorFactory factory) {
 		ToggleDockingAction action = ConfigureEmulatorAction.builder(this)
-				.menuPath(DebuggerPluginPackage.NAME, "Configure Emulator", factory.getTitle())
+				.menuPath(DebuggerPluginPackage.NAME, ConfigureEmulatorAction.NAME,
+					factory.getTitle())
 				.onAction(ctx -> configureEmulatorActivated(factory))
 				.buildAndInstall(tool);
 		String[] path = action.getMenuBarData().getMenuPath();
@@ -460,6 +548,23 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 		}
 	}
 
+	private boolean invalidateCacheEnabled(ActionContext ignored) {
+		return traceManager.getCurrentTrace() != null;
+	}
+
+	private void invalidateCacheActivated(ActionContext ignored) {
+		DebuggerCoordinates current = traceManager.getCurrent();
+		Trace trace = current.getTrace();
+		long version = trace.getEmulatorCacheVersion();
+		try (UndoableTransaction tid =
+			UndoableTransaction.start(trace, "Invalidate Emulator Cache")) {
+			trace.setEmulatorCacheVersion(version + 1);
+		}
+		// NB. Success should already display on screen, since it's current.
+		// Failure should be reported by tool's task manager.
+		traceManager.materialize(current);
+	}
+
 	private void configureEmulatorActivated(DebuggerPcodeEmulatorFactory factory) {
 		// TODO: Pull up config page. Tool Options? Program/Trace Options?
 		setEmulatorFactory(factory);
@@ -493,7 +598,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 	protected Map.Entry<CacheKey, CachedEmulator> findNearestPrefix(CacheKey key) {
 		synchronized (cache) {
 			Map.Entry<CacheKey, CachedEmulator> candidate = cache.floorEntry(key);
-			if (candidate == null) {
+			if (candidate == null || !candidate.getValue().isValid()) {
 				return null;
 			}
 			if (!candidate.getKey().compareKey(key).related) {
@@ -725,7 +830,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 	public DebuggerPcodeMachine<?> getCachedEmulator(Trace trace, TraceSchedule time) {
 		CachedEmulator ce =
 			cache.get(new CacheKey(trace.getPlatformManager().getHostPlatform(), time));
-		return ce == null ? null : ce.emulator();
+		return ce == null || !ce.isValid() ? null : ce.emulator();
 	}
 
 	@Override
