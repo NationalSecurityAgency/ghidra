@@ -166,7 +166,7 @@ public abstract class AbstractDBTraceProgramViewMemory
 
 	@Override
 	public LiveMemoryHandler getLiveMemoryHandler() {
-		return null;
+		return memoryWriteRedirect;
 	}
 
 	@Override
