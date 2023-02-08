@@ -175,7 +175,7 @@ public class SleighLanguage implements Language {
 			volatileAddresses.delete(nonVolatileSymbolAddresses);
 		}
 	}
-	
+
 	private boolean isSLAWrongVersion(ResourceFile slaFile) {
 		XmlPullParser parser = null;
 		try {
@@ -809,8 +809,8 @@ public class SleighLanguage implements Language {
 					boolean isEntry = SpecXmlUtils.decodeBoolean(symbol.getAttribute("entry"));
 					Address startAddress = addressFactory.getAddress(addressString);
 					int rangeSize = SpecXmlUtils.decodeInt(symbol.getAttribute("size"));
-					Boolean isVolatile = SpecXmlUtils.decodeNullableBoolean(
-							symbol.getAttribute("volatile"));
+					Boolean isVolatile =
+						SpecXmlUtils.decodeNullableBoolean(symbol.getAttribute("volatile"));
 					if (startAddress == null) {
 						Msg.error(this, "invalid symbol address \"" + addressString + "\": " +
 							description.getSpecFile());
@@ -819,9 +819,11 @@ public class SleighLanguage implements Language {
 						AddressLabelInfo info;
 						try {
 							info = new AddressLabelInfo(startAddress, rangeSize, labelName, false,
-									isEntry, type, isVolatile);
-						} catch (AddressOverflowException e) {
-							throw new XmlParseException("invalid symbol definition: " + labelName, e);
+								isEntry, type, isVolatile);
+						}
+						catch (AddressOverflowException e) {
+							throw new XmlParseException("invalid symbol definition: " + labelName,
+								e);
 						}
 						defaultSymbols.add(info);
 						if (isVolatile != null) {
@@ -831,7 +833,8 @@ public class SleighLanguage implements Language {
 									volatileSymbolAddresses = new AddressSet();
 								}
 								volatileSymbolAddresses.addRange(startAddress, endAddress);
-							} else {
+							}
+							else {
 								if (nonVolatileSymbolAddresses == null) {
 									nonVolatileSymbolAddresses = new AddressSet();
 								}
@@ -896,7 +899,8 @@ public class SleighLanguage implements Language {
 			read(parser);
 		}
 		catch (XmlParseException e) {
-			Msg.error(this, "Failed to parse Sleigh Specification ("+ specFile.getName() + "): " + e.getMessage());
+			Msg.error(this, "Failed to parse Sleigh Specification (" + specFile.getName() + "): " +
+				e.getMessage());
 		}
 		finally {
 			parser.dispose();
@@ -1454,8 +1458,7 @@ public class SleighLanguage implements Language {
 		encoder.writeBool(ATTRIB_BIGENDIAN, isBigEndian());
 		encoder.writeUnsignedInteger(ATTRIB_UNIQBASE, uniqueOffset);
 		encoder.openElement(ELEM_SPACES);
-		encoder.writeString(ATTRIB_DEFAULTSPACE,
-			factory.getDefaultAddressSpace().getName());
+		encoder.writeString(ATTRIB_DEFAULTSPACE, factory.getDefaultAddressSpace().getName());
 
 		ElementId tag;
 		int delay;
@@ -1511,8 +1514,7 @@ public class SleighLanguage implements Language {
 			encoder.writeSignedInteger(ATTRIB_SIZE, bytesize);
 
 			if (element.getAddressableUnitSize() > 1) {
-				encoder.writeSignedInteger(ATTRIB_WORDSIZE,
-					element.getAddressableUnitSize());
+				encoder.writeUnsignedInteger(ATTRIB_WORDSIZE, element.getAddressableUnitSize());
 			}
 
 			encoder.writeBool(ATTRIB_BIGENDIAN, isBigEndian());

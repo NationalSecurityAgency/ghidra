@@ -16,9 +16,7 @@
 
   <stackpointer register="sp" space="ram"/>
   <funcptr align="2"/>
-  <spacebase name="gp" register="gp" space="ram"/>
   <global>
-    <range space="gp"/>
     <range space="ram"/>
     <range space="register" first="0x2000" last="0x2fff"/>
   </global>
