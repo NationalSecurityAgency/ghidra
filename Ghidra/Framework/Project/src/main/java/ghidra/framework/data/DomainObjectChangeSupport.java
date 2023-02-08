@@ -65,7 +65,7 @@ class DomainObjectChangeSupport {
 		this.timer =
 			GhidraTimerFactory.getGhidraTimer(timeInterval, timeInterval, this::sendEventNow);
 		timer.setInitialDelay(25);
-		timer.setDelay(500);
+		timer.setDelay(timeInterval);
 		timer.setRepeats(true);
 	}
 
