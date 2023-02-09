@@ -612,9 +612,7 @@ public class DebuggerControlPlugin extends AbstractDebuggerPlugin
 
 	public DebuggerControlPlugin(PluginTool tool) {
 		super(tool);
-
 		tool.addContextListener(this);
-
 		createActions();
 	}
 

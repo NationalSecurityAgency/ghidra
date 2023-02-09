@@ -137,8 +137,6 @@ public enum GadpValueUtils {
 
 	public static TargetStepKind getStepKind(Gadp.StepKind kind) {
 		switch (kind) {
-			case SK_ADVANCE:
-				return TargetStepKind.ADVANCE;
 			case SK_FINISH:
 				return TargetStepKind.FINISH;
 			case SK_INTO:
@@ -164,8 +162,6 @@ public enum GadpValueUtils {
 
 	public static Gadp.StepKind makeStepKind(TargetStepKind kind) {
 		switch (kind) {
-			case ADVANCE:
-				return Gadp.StepKind.SK_ADVANCE;
 			case FINISH:
 				return Gadp.StepKind.SK_FINISH;
 			case INTO:

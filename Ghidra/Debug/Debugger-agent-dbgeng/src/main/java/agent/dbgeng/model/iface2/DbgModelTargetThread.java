@@ -23,11 +23,13 @@ import agent.dbgeng.manager.*;
 import agent.dbgeng.manager.impl.*;
 import agent.dbgeng.model.iface1.*;
 import agent.dbgeng.model.impl.DbgModelTargetStackImpl;
-import ghidra.dbg.target.TargetThread;
+import ghidra.dbg.target.*;
 import ghidra.dbg.util.PathUtils;
+import ghidra.program.model.address.Address;
 
 public interface DbgModelTargetThread extends //
 		TargetThread, //
+		TargetAggregate, //
 		DbgModelTargetAccessConditioned, //
 		DbgModelTargetExecutionStateful, //
 		DbgModelTargetSteppable, //
@@ -56,6 +58,24 @@ public interface DbgModelTargetThread extends //
 		catch (IllegalArgumentException e) {
 			return manager.getCurrentThread();
 		}
+	}
+
+	@TargetMethod.Export("Step to Address (pa)")
+	public default CompletableFuture<Void> stepToAddress(
+			@TargetMethod.Param(
+				description = "The target address",
+				display = "StopAddress",
+				name = "address") Address address) {
+		return getModel().gateFuture(getThread().stepToAddress(address.toString(false)));
+	}
+
+	@TargetMethod.Export("Trace to Address (ta)")
+	public default CompletableFuture<Void> traceToAddress(
+			@TargetMethod.Param(
+				description = "The target address",
+				display = "StopAddress",
+				name = "address") Address address) {
+		return getModel().gateFuture(getThread().traceToAddress(address.toString(false)));
 	}
 
 	@Override

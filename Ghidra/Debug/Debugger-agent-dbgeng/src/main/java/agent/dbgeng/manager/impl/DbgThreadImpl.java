@@ -226,6 +226,20 @@ public class DbgThreadImpl implements DbgThread {
 	}
 
 	@Override
+	public CompletableFuture<Void> stepToAddress(String address) {
+		return setActive().thenCompose(__ -> {
+			return manager.execute(new DbgStepToAddressCommand(manager, id, address));
+		});
+	}
+
+	@Override
+	public CompletableFuture<Void> traceToAddress(String address) {
+		return setActive().thenCompose(__ -> {
+			return manager.execute(new DbgTraceToAddressCommand(manager, id, address));
+		});
+	}
+
+	@Override
 	public CompletableFuture<Void> kill() {
 		return setActive().thenCompose(__ -> {
 			return manager.execute(new DbgKillCommand(manager));

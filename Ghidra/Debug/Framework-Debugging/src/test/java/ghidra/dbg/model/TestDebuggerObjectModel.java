@@ -70,7 +70,7 @@ public class TestDebuggerObjectModel extends EmptyDebuggerObjectModel {
 	}
 
 	protected TestTargetSession newTestTargetSession(String rootHint) {
-		return new TestTargetSession(this, rootHint, ROOT_SCHEMA);
+		return new TestTargetSession(this, rootHint, getRootSchema());
 	}
 
 	protected TestTargetEnvironment newTestTargetEnvironment(TestTargetSession session) {

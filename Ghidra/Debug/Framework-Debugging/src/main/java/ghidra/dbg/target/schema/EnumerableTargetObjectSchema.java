@@ -36,7 +36,7 @@ public enum EnumerableTargetObjectSchema implements TargetObjectSchema {
 	 * <p>
 	 * The described value can be any primitive or a {@link TargetObject}.
 	 */
-	ANY("ANY", Object.class) {
+	ANY(Object.class) {
 		@Override
 		public SchemaName getDefaultElementSchema() {
 			return OBJECT.getName();
@@ -53,7 +53,7 @@ public enum EnumerableTargetObjectSchema implements TargetObjectSchema {
 	 * <p>
 	 * This requires nothing more than the described value to be a {@link TargetObject}.
 	 */
-	OBJECT("OBJECT", TargetObject.class) {
+	OBJECT(TargetObject.class) {
 		@Override
 		public SchemaName getDefaultElementSchema() {
 			return OBJECT.getName();
@@ -64,6 +64,7 @@ public enum EnumerableTargetObjectSchema implements TargetObjectSchema {
 			return AttributeSchema.DEFAULT_ANY;
 		}
 	},
+	TYPE(Class.class),
 	/**
 	 * A type so restrictive nothing can satisfy it.
 	 * 
@@ -72,22 +73,23 @@ public enum EnumerableTargetObjectSchema implements TargetObjectSchema {
 	 * the default attribute when only certain enumerated attributes are allowed. It is also used as
 	 * the type for the children of primitives, since primitives cannot have successors.
 	 */
-	VOID("VOID", Void.class, void.class),
-	BOOL("BOOL", Boolean.class, boolean.class),
-	BYTE("BYTE", Byte.class, byte.class),
-	SHORT("SHORT", Short.class, short.class),
-	INT("INT", Integer.class, int.class),
-	LONG("LONG", Long.class, long.class),
-	STRING("STRING", String.class),
-	ADDRESS("ADDRESS", Address.class),
-	RANGE("RANGE", AddressRange.class),
-	DATA_TYPE("DATA_TYPE", TargetDataType.class),
-	LIST_OBJECT("LIST_OBJECT", TargetObjectList.class),
-	MAP_PARAMETERS("MAP_PARAMETERS", TargetParameterMap.class),
-	SET_ATTACH_KIND("SET_ATTACH_KIND", TargetAttachKindSet.class), // TODO: Limited built-in generics
-	SET_BREAKPOINT_KIND("SET_BREAKPOINT_KIND", TargetBreakpointKindSet.class),
-	SET_STEP_KIND("SET_STEP_KIND", TargetStepKindSet.class),
-	EXECUTION_STATE("EXECUTION_STATE", TargetExecutionState.class);
+	VOID(Void.class, void.class),
+	BOOL(Boolean.class, boolean.class),
+	BYTE(Byte.class, byte.class),
+	SHORT(Short.class, short.class),
+	INT(Integer.class, int.class),
+	LONG(Long.class, long.class),
+	STRING(String.class),
+	ADDRESS(Address.class),
+	RANGE(AddressRange.class),
+	DATA_TYPE(TargetDataType.class),
+	// TODO: Limited built-in generics?
+	LIST_OBJECT(TargetObjectList.class),
+	MAP_PARAMETERS(TargetParameterMap.class),
+	SET_ATTACH_KIND(TargetAttachKindSet.class),
+	SET_BREAKPOINT_KIND(TargetBreakpointKindSet.class),
+	SET_STEP_KIND(TargetStepKindSet.class),
+	EXECUTION_STATE(TargetExecutionState.class);
 
 	public static final class MinimalSchemaContext extends DefaultSchemaContext {
 		public static final SchemaContext INSTANCE = new MinimalSchemaContext();
@@ -126,8 +128,8 @@ public enum EnumerableTargetObjectSchema implements TargetObjectSchema {
 	private final SchemaName name;
 	private final List<Class<?>> types;
 
-	private EnumerableTargetObjectSchema(String name, Class<?>... types) {
-		this.name = new SchemaName(name);
+	private EnumerableTargetObjectSchema(Class<?>... types) {
+		this.name = new SchemaName(this.name());
 		this.types = List.of(types);
 	}
 
