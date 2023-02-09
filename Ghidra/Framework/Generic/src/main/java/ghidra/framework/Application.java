@@ -151,6 +151,7 @@ public class Application {
 	/**
 	 * If the Application was previously initialized with logging disabled, this method
 	 * may be used to perform delayed logging initialization.
+	 * 
 	 * @param logFile application log file, if null the default <i>application.log</i> will be stored
 	 * within the user's application settings directory
 	 * @param scriptLogFile scripting log file, if null the default <i>script.log</i> will be stored
@@ -169,10 +170,7 @@ public class Application {
 			logFile = new File(app.layout.getUserSettingsDir(), "application.log");
 		}
 		if (scriptLogFile == null) {
-			// Some clients pass null for the script file, as they do not support scripting.  In
-			// that case, just have the system use the application log as the script log.  This
-			// prevents the logging system from creating an oddly named log file.
-			scriptLogFile = logFile;
+			scriptLogFile = new File(app.layout.getUserSettingsDir(), "script.log");
 		}
 
 		LoggingInitialization.setApplicationLogFile(logFile);
