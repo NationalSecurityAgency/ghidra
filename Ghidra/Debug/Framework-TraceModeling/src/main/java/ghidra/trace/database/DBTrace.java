@@ -26,6 +26,7 @@ import com.google.common.cache.RemovalNotification;
 import db.DBHandle;
 import generic.depends.DependentService;
 import generic.depends.err.ServiceConstructionException;
+import ghidra.framework.model.DomainObjectChangeRecord;
 import ghidra.framework.options.Options;
 import ghidra.lifecycle.Internal;
 import ghidra.program.model.address.*;
@@ -140,6 +141,8 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	protected boolean recordChanges = false;
 
 	protected Set<DBTraceTimeViewport> viewports = new WeakHashCowSet<>();
+	protected ListenerSet<DBTraceDirectChangeListener> directListeners =
+		new ListenerSet<>(DBTraceDirectChangeListener.class);
 	protected DBTraceVariableSnapProgramView programView;
 	protected Set<DBTraceVariableSnapProgramView> programViews = new WeakHashCowSet<>();
 	protected Set<TraceProgramView> programViewsView = Collections.unmodifiableSet(programViews);
@@ -584,6 +587,23 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 		changed = true;
 		DBTraceObjectRegisterSupport.INSTANCE.processEvent(event);
 		fireEvent(event);
+	}
+
+	@Override
+	public void fireEvent(DomainObjectChangeRecord ev) {
+		super.fireEvent(ev);
+		if (directListeners != null) {
+			// Some events fire during construction
+			directListeners.fire.changed(ev);
+		}
+	}
+
+	public void addDirectChangeListener(DBTraceDirectChangeListener listener) {
+		directListeners.add(listener);
+	}
+
+	public void removeDirectChangeListener(DBTraceDirectChangeListener listener) {
+		directListeners.remove(listener);
 	}
 
 	@Override
