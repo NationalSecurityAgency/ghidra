@@ -114,7 +114,7 @@ public class VTSessionContentHandler extends DBContentHandler<VTSessionDB> {
 			if (msg == null) {
 				msg = t.toString();
 			}
-			throw new IOException("Open failed: " + msg);
+			throw new IOException("Open failed: " + msg, t);
 		}
 
 	}
@@ -184,7 +184,7 @@ public class VTSessionContentHandler extends DBContentHandler<VTSessionDB> {
 			if (msg == null) {
 				msg = t.toString();
 			}
-			throw new IOException("Open failed: " + msg);
+			throw new IOException("Open failed: " + msg, t);
 		}
 	}
 

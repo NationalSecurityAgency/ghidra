@@ -86,7 +86,7 @@ public class DBTraceContentHandler extends DBWithUserDataContentHandler<DBTrace>
 			if (msg == null) {
 				msg = t.toString();
 			}
-			throw new IOException("Open failed: " + msg);
+			throw new IOException("Open failed: " + msg, t);
 		}
 		finally {
 			if (!success) {
@@ -136,7 +136,7 @@ public class DBTraceContentHandler extends DBWithUserDataContentHandler<DBTrace>
 			if (msg == null) {
 				msg = t.toString();
 			}
-			throw new IOException("Open failed: " + msg);
+			throw new IOException("Open failed: " + msg, t);
 		}
 		finally {
 			if (!success) {
@@ -191,7 +191,7 @@ public class DBTraceContentHandler extends DBWithUserDataContentHandler<DBTrace>
 			if (msg == null) {
 				msg = t.toString();
 			}
-			throw new IOException("Open failed: " + msg);
+			throw new IOException("Open failed: " + msg, t);
 		}
 		finally {
 			if (!success) {
@@ -288,7 +288,7 @@ public class DBTraceContentHandler extends DBWithUserDataContentHandler<DBTrace>
 			if (msg == null) {
 				msg = t.toString();
 			}
-			throw new IOException("Open failed: " + msg);
+			throw new IOException("Open failed: " + msg, t);
 		}
 		finally {
 			if (trace != null) {
