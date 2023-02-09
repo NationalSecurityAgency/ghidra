@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
+import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils.Extrema;
 import ghidra.app.services.DebuggerEmulationService;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.schema.TargetObjectSchema;
@@ -41,7 +42,8 @@ import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectKeyPath;
 import ghidra.trace.model.thread.*;
 import ghidra.trace.model.time.TraceSnapshot;
-import ghidra.util.*;
+import ghidra.util.DifferenceAddressSetView;
+import ghidra.util.NumericUtilities;
 import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -116,18 +118,6 @@ public enum ProgramEmulationUtils {
 		return result;
 	}
 
-	static class Extrema {
-		Address min = null;
-		Address max = null;
-
-		void consider(AddressRange range) {
-			min = min == null ? range.getMinAddress()
-					: ComparatorMath.cmin(min, range.getMinAddress());
-			max = max == null ? range.getMaxAddress()
-					: ComparatorMath.cmax(max, range.getMaxAddress());
-		}
-	}
-
 	/**
 	 * Create regions for each block in a program, without relocation, and map the program in
 	 * 
@@ -149,10 +139,7 @@ public enum ProgramEmulationUtils {
 		Map<AddressSpace, Extrema> extremaBySpace = new HashMap<>();
 		try {
 			for (MemoryBlock block : program.getMemory().getBlocks()) {
-				if (!block.isLoaded()) {
-					continue;
-				}
-				if (block.isOverlay()) {
+				if (!DebuggerStaticMappingUtils.isReal(block)) {
 					continue;
 				}
 				AddressRange range = new AddressRangeImpl(block.getStart(), block.getEnd());
@@ -170,9 +157,8 @@ public enum ProgramEmulationUtils {
 			for (Extrema extrema : extremaBySpace.values()) {
 				DebuggerStaticMappingUtils.addMapping(
 					new DefaultTraceLocation(trace, null, Lifespan.nowOn(snapshot.getKey()),
-						extrema.min),
-					new ProgramLocation(program, extrema.min),
-					extrema.max.subtract(extrema.min), false);
+						extrema.getMin()),
+					new ProgramLocation(program, extrema.getMin()), extrema.getLength(), false);
 			}
 		}
 		catch (TraceOverlappedRegionException | DuplicateNameException

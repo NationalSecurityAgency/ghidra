@@ -15,15 +15,19 @@
  */
 package ghidra.trace.model.modules;
 
-public class TraceConflictedMappingException extends Exception {
-	private final TraceStaticMapping conflict;
+import java.util.Collection;
+import java.util.Set;
 
-	public TraceConflictedMappingException(String message, TraceStaticMapping conflict) {
-		super(message);
-		this.conflict = conflict;
+public class TraceConflictedMappingException extends RuntimeException {
+	private final Set<TraceStaticMapping> conflicts;
+
+	public TraceConflictedMappingException(String message,
+			Collection<TraceStaticMapping> conflicts) {
+		super(message + ": " + conflicts);
+		this.conflicts = Set.copyOf(conflicts);
 	}
 
-	public TraceStaticMapping getConflict() {
-		return conflict;
+	public Set<TraceStaticMapping> getConflicts() {
+		return conflicts;
 	}
 }
