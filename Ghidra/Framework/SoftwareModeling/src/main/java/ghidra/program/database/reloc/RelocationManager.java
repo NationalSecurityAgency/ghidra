@@ -85,7 +85,8 @@ public class RelocationManager implements RelocationTable, ManagerDB {
 	public void programReady(int openMode, int currentRevision, TaskMonitor monitor)
 			throws IOException, CancelledException {
 
-		if (currentRevision < ProgramDB.RELOCATION_STATUS_ADDED_VERSION) {
+		if (openMode == DBConstants.UPGRADE &&
+			currentRevision < ProgramDB.RELOCATION_STATUS_ADDED_VERSION) {
 			RelocationDBAdapter.preV6DataMigrationUpgrade(adapter, program, monitor);
 		}
 	}

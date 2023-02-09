@@ -96,7 +96,7 @@ public class ProgramContentHandler extends DBWithUserDataContentHandler<ProgramD
 			if (msg == null) {
 				msg = t.toString();
 			}
-			throw new IOException("Open failed: " + msg);
+			throw new IOException("Open failed: " + msg, t);
 		}
 		finally {
 			if (!success) {
