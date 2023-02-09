@@ -750,17 +750,37 @@ public class VariableUtilities {
 	 * Create an empty placeholder class structure whose category is derived from
 	 * the function's class namespace.  NOTE: The structure will not be added to the data
 	 * type manager.
+	 * The structure is created in the program's preferred category, or in the root category
+	 * if a preferred category has not been set.  If a colliding data-type matching the class name
+	 * and category already exists, null is returned.
 	 * @param classNamespace class namespace
 	 * @param dataTypeManager data type manager's whose data organization should be applied.
-	 * @return new class structure
+	 * @return new class structure (or null if there is a collision)
 	 */
 	private static Structure createPlaceholderClassStruct(GhidraClass classNamespace,
 			DataTypeManager dataTypeManager) {
 
 		Namespace classParentNamespace = classNamespace.getParentNamespace();
+		CategoryPath prefRoot = null;
+		if (dataTypeManager instanceof ProgramBasedDataTypeManager) {
+			prefRoot = ((ProgramBasedDataTypeManager) dataTypeManager).getProgram()
+					.getPreferredRootNamespaceCategoryPath();
+		}
+		if (prefRoot == null) {
+			prefRoot = CategoryPath.ROOT;
+		}
 		CategoryPath category =
-			DataTypeUtilities.getDataTypeCategoryPath(CategoryPath.ROOT, classParentNamespace);
+			DataTypeUtilities.getDataTypeCategoryPath(prefRoot, classParentNamespace);
 
+		DataType existingDT = dataTypeManager.getDataType(category, classNamespace.getName());
+		if (existingDT != null) {
+			// If a data-type already exists in the parent, try to create in the child
+			category = DataTypeUtilities.getDataTypeCategoryPath(prefRoot, classNamespace);
+			existingDT = dataTypeManager.getDataType(category, classNamespace.getName());
+			if (existingDT != null) {	// If this also already exists
+				return null;			// Don't create a placeholder
+			}
+		}
 		StructureDataType structDT =
 			new StructureDataType(category, classNamespace.getName(), 0, dataTypeManager);
 		structDT.setDescription("PlaceHolder Class Structure");
@@ -781,6 +801,9 @@ public class VariableUtilities {
 	 * and returned.  A newly instantiated structure will not be added to the data type manager
 	 * and may refer to a non-existing category path which corresponds to the class-parent's 
 	 * namespace.
+	 * 
+	 * If an unrelated data-type already exists matching the class name and category,
+	 * null is returned.
 	 * 
 	 * @param classNamespace class namespace
 	 * @param dataTypeManager data type manager which should be searched and whose
@@ -810,6 +833,9 @@ public class VariableUtilities {
 	 * and returned.  A newly instantiated structure will not be added to the data type manager
 	 * and may refer to a non-existing category path which corresponds to the class-parent's 
 	 * namespace.
+	 * 
+	 * If the function is not part of a class, or if an unrelated data-type already exists with
+	 * the class's name and category, null is returned.
 	 * 
 	 * @param function function's whose class namespace is the basis for the structure
 	 * @return new or existing structure whose name matches the function's class namespace or
