@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.swing.Icon;
 import javax.swing.JEditorPane;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
@@ -35,6 +36,7 @@ import javax.swing.text.html.HTML.Tag;
 
 import generic.jar.ResourceFile;
 import generic.theme.*;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.framework.Application;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.Msg;
@@ -43,11 +45,11 @@ import utilities.util.FileUtilities;
 
 /**
  * A class that allows Ghidra to intercept JavaHelp navigation events in order to resolve them
- * to Ghidra's help system.  Without this class, contribution plugins have no way of 
+ * to Ghidra's help system.  Without this class, contribution plugins have no way of
  * referencing help documents within Ghidra's default help location.
  * <p>
  * This class is currently installed by the {@link GHelpSet}.
- * 
+ *
  * @see GHelpSet
  */
 public class GHelpHTMLEditorKit extends HTMLEditorKit {
@@ -73,8 +75,7 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 		colorsById.put("h3", new GColor("color.fg.help.selector.h3"));
 		colorsById.put("p.providedbyplugin",
 			new GColor("color.fg.help.selector.p.provided.by.plugin"));
-		colorsById.put("p.relatedtopic",
-			new GColor("color.fg.help.selector.p.related.topic"));
+		colorsById.put("p.relatedtopic", new GColor("color.fg.help.selector.p.related.topic"));
 		colorsById.put("th", new GColor("color.fg.help.selector.th"));
 		colorsById.put("code", new GColor("color.fg.help.selector.code"));
 		colorsById.put("code.path", new GColor("color.fg.help.selector.code.path"));
@@ -176,9 +177,9 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 		}
 	}
 
-	/** 
+	/**
 	 * Tests the URL of the given event.  If the URL is invalid, a new event may be created if
-	 *  a new, valid URL can be created. Creates a new event with a patched URL if 
+	 *  a new, valid URL can be created. Creates a new event with a patched URL if
 	 *  the given event's URL is invalid.
 	 */
 	private HyperlinkEvent validateURL(HyperlinkEvent event) {
@@ -235,10 +236,10 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 		}
 
 		//
-		// The item was not found by the ResourceManager (i.e., it is not in a 'resources' 
+		// The item was not found by the ResourceManager (i.e., it is not in a 'resources'
 		// directory).  See if it may be a relative link to a build's installation root (like
 		// a file in <install dir>/docs).
-		// 
+		//
 		newUrl = findApplicationfile(HREF);
 		return newUrl;
 	}
@@ -254,7 +255,7 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 		}
 
 		try {
-			// put the anchor back into the URL                
+			// put the anchor back into the URL
 			return new URL(anchorlessURL, anchor);
 		}
 		catch (MalformedURLException e) {
@@ -438,7 +439,7 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	private class GHelpHTMLFactory extends HTMLFactory {
 		@Override
@@ -465,31 +466,36 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 	}
 
 	/**
-	 * Overridden to allow us to find images that are defined as constants in places like 
+	 * Overridden to allow us to find images that are defined as constants in places like
 	 * {@link Icons}
 	 */
 	private class GHelpImageView extends ImageView {
+
+		private static final String HELP_SHARED_ARROW = "help/shared/arrow.gif";
+		private static final Icon SHARED_ARROW_ICON = new HelpRightArrowIcon(Colors.FOREGROUND);
+		private static final IconProvider SHARED_ARROW_ICON_PROVIDER =
+			new IconProvider(SHARED_ARROW_ICON, null);
 
 		/*
 		 * 						Unusual Code Alert!
 		 * This class exists to enable our help system to find custom icons defined in source
 		 * code.   The default behavior herein is to supply a URL to the base class to load.  This
-		 * works fine.   
-		 * 
+		 * works fine.
+		 *
 		 * There is another use case where we wish to have the base class load an image of our
 		 * choosing.  Why?  Well, we modify, in memory, some icons we use.  We do this for things
 		 * like overlays and rotations.
-		 * 
+		 *
 		 * In order to have our base class use the image that we want (and not the one
 		 * it loads via a URL), we have to play a small game.   We have to allow the base class
 		 * to load the image it wants, which is done asynchronously.  If we install our custom
 		 * image during that process, the loading will throw away the image and not render
-		 * anything.    
-		 * 
-		 * To get the base class to use our image, we override getImage().  However, we should 
+		 * anything.
+		 *
+		 * To get the base class to use our image, we override getImage().  However, we should
 		 * only return our image when the base class is finished loading.  (See the base class'
 		 * paint() method for why we need to do this.)
-		 * 
+		 *
 		 * Note: if we start seeing unusual behavior, like images not rendering, or any size
 		 * issues, then we can revert this code.
 		 */
@@ -541,12 +547,22 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 				return null;
 			}
 
-			String srcString = src.toString();
+			//
+			// This code is looking for the specific referenced image file and then replacing that
+			// image file with something that can update its content at runtime, based on theme.
+			// Alternatively, we could have updated all help files to point to a GIcon, which
+			// handles updating itself when the theme changes.  We chose to replace the icon here
+			// instead of in the source code to prevent changing many files.
+			//
+			String srcString = src.toString().trim();
+			if (srcString.equals(HELP_SHARED_ARROW)) {
+				return installImageFromCustomIcon(SHARED_ARROW_ICON_PROVIDER);
+			}
 
 			// check if the srcString is a defined theme icon id
 			if (Gui.hasIcon(srcString)) {
-				// 
-				// Wrap the GIcon inside of an IconProvider, as that class can handle a null URL 
+				//
+				// Wrap the GIcon inside of an IconProvider, as that class can handle a null URL
 				// returned from GIcon. (This can happen if the GIcon is based on a modified icon.)
 				//
 				GIcon gIcon = new GIcon(srcString);
@@ -559,6 +575,19 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 			}
 
 			URL url = doGetImageURL(srcString);
+			return url;
+		}
+
+		private URL installImageFromCustomIcon(IconProvider iconProvider) {
+
+			if (iconProvider == null || iconProvider.isInvalid()) {
+				return null;
+			}
+
+			this.image = iconProvider.getImage();
+
+			// note: this icon is not used to load the image; the 'image' we set is used instead
+			URL url = iconProvider.getOrCreateUrl();
 			return url;
 		}
 
@@ -590,7 +619,7 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 				// check below
 			}
 
-			// Try the ResourceManager.  This will work for images that start with GHelp 
+			// Try the ResourceManager.  This will work for images that start with GHelp
 			// relative link syntax such as 'help/', 'help/topics/' and 'images/'
 			URL resource = ResourceManager.getResource(srcString);
 			return resource;

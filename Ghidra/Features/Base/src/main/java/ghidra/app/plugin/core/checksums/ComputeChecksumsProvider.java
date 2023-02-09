@@ -25,7 +25,7 @@ import docking.ActionContext;
 import docking.action.*;
 import docking.widgets.label.GDLabel;
 import generic.theme.GIcon;
-import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.context.ProgramContextAction;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.util.HelpLocation;
@@ -96,7 +96,7 @@ public class ComputeChecksumsProvider extends ComponentProviderAdapter {
 		errorStatus = new GDLabel(" ");
 		errorStatus.setName("message");
 		errorStatus.setHorizontalAlignment(SwingConstants.CENTER);
-		errorStatus.setForeground(Colors.ERROR);
+		errorStatus.setForeground(Messages.ERROR);
 		errorStatus.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
 		main.add(errorStatus, BorderLayout.SOUTH);
 
@@ -104,7 +104,7 @@ public class ComputeChecksumsProvider extends ComponentProviderAdapter {
 	}
 
 	/*
-	 * Starts new task every time the generate button is clicked so that the tool would not 
+	 * Starts new task every time the generate button is clicked so that the tool would not
 	 * be hosed up if checksumming takes a long time
 	 */
 	private void generate() {
@@ -122,7 +122,7 @@ public class ComputeChecksumsProvider extends ComponentProviderAdapter {
 	}
 
 	/*
-	 * Once checksumming has completed, method will display results depending on the options 
+	 * Once checksumming has completed, method will display results depending on the options
 	 * that are selected in window
 	 */
 	void generateChecksumCompleted() {
@@ -250,8 +250,8 @@ public class ComputeChecksumsProvider extends ComponentProviderAdapter {
 		};
 		selectionAction.setHelpLocation(new HelpLocation("ComputeChecksumsPlugin", "On_Selection"));
 		selectionAction.setEnabled(plugin.hasSelection());
-		selectionAction.setToolBarData(
-			new ToolBarData(new GIcon("icon.plugin.checksum.select"), null));
+		selectionAction
+				.setToolBarData(new ToolBarData(new GIcon("icon.plugin.checksum.select"), null));
 		selectionAction.setDescription("When toggled, generates checksums on " +
 			"selection. Otherwise checksums are generated over the entire program");
 
@@ -268,8 +268,8 @@ public class ComputeChecksumsProvider extends ComponentProviderAdapter {
 		};
 		showHexAction.setHelpLocation(new HelpLocation("ComputeChecksumsPlugin", "As_Hex"));
 		showHexAction.setEnabled(true);
-		showHexAction.setToolBarData(
-			new ToolBarData(new GIcon("icon.plugin.checksum.show.hex"), null));
+		showHexAction
+				.setToolBarData(new ToolBarData(new GIcon("icon.plugin.checksum.show.hex"), null));
 		showHexAction.setDescription("Toggle to show the hex values instead of decimal values.");
 
 		xorAction = new ToggleDockingAction("XOR Checksum Values", plugin.getName()) {
@@ -288,8 +288,7 @@ public class ComputeChecksumsProvider extends ComponentProviderAdapter {
 		};
 		xorAction.setHelpLocation(new HelpLocation("ComputeChecksumsPlugin", "xor"));
 		xorAction.setEnabled(true);
-		xorAction.setToolBarData(
-			new ToolBarData(new GIcon("icon.plugin.checksum.xor"), null));
+		xorAction.setToolBarData(new ToolBarData(new GIcon("icon.plugin.checksum.xor"), null));
 		xorAction.setDescription("Toggle to recompute values with a xor operation.");
 
 		carryAction = new ToggleDockingAction("Carry Checksum Values", plugin.getName()) {
@@ -309,8 +308,7 @@ public class ComputeChecksumsProvider extends ComponentProviderAdapter {
 		};
 		carryAction.setHelpLocation(new HelpLocation("ComputeChecksumsPlugin", "carry"));
 		carryAction.setEnabled(true);
-		carryAction.setToolBarData(
-			new ToolBarData(new GIcon("icon.plugin.checksum.carry"), null));
+		carryAction.setToolBarData(new ToolBarData(new GIcon("icon.plugin.checksum.carry"), null));
 		carryAction.setDescription("Toggle to recompute values with a carry operation.");
 
 		onesCompAction = new ToggleDockingAction("Ones Complement", plugin.getName()) {

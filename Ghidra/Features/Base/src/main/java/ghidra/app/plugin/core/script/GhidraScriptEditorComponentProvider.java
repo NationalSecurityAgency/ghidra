@@ -33,6 +33,7 @@ import docking.widgets.OptionDialog;
 import generic.jar.ResourceFile;
 import generic.theme.*;
 import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.script.GhidraScriptUtil;
 import ghidra.util.*;
 import ghidra.util.datastruct.FixedSizeStack;
@@ -215,8 +216,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 			}
 		};
 		undoAction.setDescription("Undo");
-		undoAction.setToolBarData(
-			new ToolBarData(new GIcon("icon.undo"), "UndoRedo"));
+		undoAction.setToolBarData(new ToolBarData(new GIcon("icon.undo"), "UndoRedo"));
 		undoAction.setEnabled(false);
 		undoAction.setKeyBindingData(new KeyBindingData(
 			KeyStroke.getKeyStroke(KeyEvent.VK_Z, DockingUtils.CONTROL_KEY_MODIFIER_MASK)));
@@ -236,8 +236,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 			}
 		};
 		redoAction.setDescription("Redo");
-		redoAction.setToolBarData(
-			new ToolBarData(new GIcon("icon.redo"), "UndoRedo"));
+		redoAction.setToolBarData(new ToolBarData(new GIcon("icon.redo"), "UndoRedo"));
 		redoAction.setKeyBindingData(new KeyBindingData(
 			KeyStroke.getKeyStroke(KeyEvent.VK_Y, DockingUtils.CONTROL_KEY_MODIFIER_MASK)));
 		redoAction.setEnabled(false);
@@ -264,8 +263,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 			}
 		};
 		saveAction.setDescription("Save");
-		saveAction.setToolBarData(
-			new ToolBarData(Icons.SAVE_ICON, "Save"));
+		saveAction.setToolBarData(new ToolBarData(Icons.SAVE_ICON, "Save"));
 		saveAction.setKeyBindingData(new KeyBindingData(
 			KeyStroke.getKeyStroke(KeyEvent.VK_S, DockingUtils.CONTROL_KEY_MODIFIER_MASK)));
 
@@ -301,8 +299,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 			}
 		};
 		saveAsAction.setDescription("Save As...");
-		saveAsAction.setToolBarData(
-			new ToolBarData(Icons.SAVE_AS_ICON, "Save"));
+		saveAsAction.setToolBarData(new ToolBarData(Icons.SAVE_AS_ICON, "Save"));
 		saveAsAction.setEnabled(true);
 		plugin.getTool().addLocalAction(this, saveAsAction);
 
@@ -339,8 +336,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 				doSelectFont();
 			}
 		};
-		fontAction.setToolBarData(
-			new ToolBarData(new GIcon("icon.font"), "ZZFont"));
+		fontAction.setToolBarData(new ToolBarData(new GIcon("icon.font"), "ZZFont"));
 		fontAction.setDescription("Select Font");
 		fontAction.setEnabled(true);
 		plugin.getTool().addLocalAction(this, fontAction);
@@ -363,7 +359,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 			return;
 		}
 
-		// if not changed, then do nothing but print a message to let the user know that we 
+		// if not changed, then do nothing but print a message to let the user know that we
 		// tried
 		if (!hasFileOnDiskChanged()) {
 			plugin.getTool().setStatusInfo("Refresh Script - file has not changed");
@@ -403,7 +399,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 		}
 	}
 
-	/** 
+	/**
 	 * Returns false if the user cancels--meaning they did not make a decision regarding the
 	 * file (or 'handle' it).
 	 */
@@ -433,8 +429,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 		int choice = OptionDialog.showOptionDialog(scrollPane, FILE_ON_DISK_CHANGED_TITLE,
 			"<html>The contents of the script file have changed on disk.<br><br>Would " +
 				"you like to <b>keep your changes</b> in the editor or <b><font color=\"" +
-				Colors.ERROR.toHexString() + "\">" +
-				"discard</font></b> your changes?",
+				Colors.ERROR.toHexString() + "\">" + "discard</font></b> your changes?",
 			KEEP_CHANGES_TEXT, DISCARD_CHANGES_TEXT, OptionDialog.QUESTION_MESSAGE);
 
 		if (choice == OptionDialog.CANCEL_OPTION) {
@@ -455,8 +450,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 		//
 		choice = OptionDialog.showOptionDialog(scrollPane, CHANGE_DESTINATION_TITLE,
 			"<html>You can save your current changes to <b>another file</b> or " +
-				"<b><font color=\"" +
-				Colors.ERROR.toHexString() +
+				"<b><font color=\"" + Messages.ERROR.toHexString() +
 				"\">overwrite</font></b> the contents of the file on disk.",
 			SAVE_CHANGES_AS_TEXT, OVERWRITE_CHANGES_TEXT, OptionDialog.QUESTION_MESSAGE);
 
@@ -475,7 +469,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 		if (choice == OptionDialog.OPTION_ONE) {
 			// Save As...
 			if (saveAs()) {
-				// Save As completed successfully; open a new editor 
+				// Save As completed successfully; open a new editor
 				// with the original file
 				provider.editScriptInGhidra(previousFile);
 			}

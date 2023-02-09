@@ -20,8 +20,8 @@ import static generic.theme.SystemThemeIds.*;
 import java.awt.Color;
 
 /** TODO doc how clients should use this in their code, with
- * 
- *  
+ *
+ *
  *  Colors.BACKGROUND
  *  Colors.Java.BORDER
  */
@@ -56,7 +56,7 @@ public class GThemeDefaults {
 		public static final GColor BACKGROUND = new GColor("color.bg");
 		public static final GColor CURSOR = new GColor("color.cursor.focused");
 		public static final GColor DISABLED = new GColor("color.palette.disabled");
-		public static final GColor ERROR = new GColor("color.fg.error"); // TODO replace most uses of this with Messages.ERROR
+		public static final GColor ERROR = new GColor("color.fg.error");
 		public static final GColor FOREGROUND = new GColor("color.fg");
 		public static final GColor FOREGROUND_DISABLED = new GColor("color.fg.disabled");
 		//@formatter:on
@@ -83,9 +83,10 @@ public class GThemeDefaults {
 		public static class Messages {
 			//@formatter:off
 			public static final GColor NORMAL = new GColor("color.fg.messages.normal");
+			@SuppressWarnings("hiding") // we know there is another 'ERROR' field in this file
 			public static final GColor ERROR = new GColor("color.fg.messages.error");
 			public static final GColor HINT = new GColor("color.fg.messages.hint");
-			public static final GColor WARNING = new GColor("color.fg.messages.warning");			
+			public static final GColor WARNING = new GColor("color.fg.messages.warning");
 			//@formatter:on
 
 		}
@@ -127,7 +128,7 @@ public class GThemeDefaults {
 			 * it prevents excess object creation.  This method should be used when the desired
 			 * palette color is not in that list.  Further, this method should only be called once
 			 * per use, such as when initializing a constant value.
-			 * 
+			 *
 			 * @param name the palette entry name
 			 * @return the GColor
 			 */

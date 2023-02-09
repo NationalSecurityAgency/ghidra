@@ -268,9 +268,9 @@ public abstract class AbstractGCellRenderer extends GDHtmlLabel {
 	/**
 	 * Overrides this method to ensure that the new foreground color is not
 	 * a {@link GColorUIResource}. Some Look and Feels will ignore color values that extend
-	 * {@link UIResource}, choosing instead their own custom painting behavior. By not using a 
+	 * {@link UIResource}, choosing instead their own custom painting behavior. By not using a
 	 * UIResource, we prevent the Look and Feel from overriding this renderer's color value.
-	 *  
+	 *
 	 * @param fg the new foreground color
 	 */
 	@Override
@@ -281,9 +281,9 @@ public abstract class AbstractGCellRenderer extends GDHtmlLabel {
 	/**
 	 * Overrides this method to ensure that the new background color is not
 	 * a {@link GColorUIResource}. Some Look and Feels will ignore color values that extend
-	 * {@link UIResource}, choosing instead their own custom painting behavior. By not using a 
+	 * {@link UIResource}, choosing instead their own custom painting behavior. By not using a
 	 * UIResource, we prevent the Look and Feel from overriding this renderer's color value.
-	 * 
+	 *
 	 * @param bg the new background color
 	 */
 	@Override

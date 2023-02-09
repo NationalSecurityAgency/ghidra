@@ -32,7 +32,7 @@ import docking.ComponentProvider;
 import docking.action.*;
 import docking.widgets.OptionDialog;
 import generic.theme.GIcon;
-import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.plugin.core.compositeeditor.EditorListener;
 import ghidra.app.plugin.core.compositeeditor.EditorProvider;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
@@ -399,9 +399,9 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 	}
 
 	private int showOptionDialog(Enum editedEnoom, Set<String> oldNameFields) {
-		StringBuilder msg = new StringBuilder(
-			"<html>If you save this Enum with the <font color=\"" + Colors.ERROR.toHexString() +
-				"\">new value(s)</font> listed below,<br>" +
+		StringBuilder msg =
+			new StringBuilder("<html>If you save this Enum with the <font color=\"" +
+				Messages.ERROR.toHexString() + "\">new value(s)</font> listed below,<br>" +
 				" it will invalidate equates created with the old value(s).<br>");
 		msg.append("<ul>");
 		for (String field : oldNameFields) {
@@ -414,7 +414,7 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 				newVal = "Missing";
 			}
 			msg.append(String.format(
-				"<li>%s: 0x%s \u2192 <font color=\"" + Colors.ERROR.toHexString() +
+				"<li>%s: 0x%s \u2192 <font color=\"" + Messages.ERROR.toHexString() +
 					"\">%s</font></li>",
 				HTMLUtilities.escapeHTML(field), Long.toHexString(originalEnum.getValue(field)),
 				newVal));

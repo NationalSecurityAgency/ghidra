@@ -39,11 +39,11 @@ public interface GComponent {
 	}
 
 	/**
-	 * Returns the current HTML rendering 'enable-ment' of this component.
-	 * 
+	 * Returns the current HTML rendering enablement of this component.
+	 *
 	 * @return boolean, true if HTML rendering is allowed
 	 */
-	public default boolean getHTMLRenderingEnabled() {
+	public default boolean isHTMLRenderingEnabled() {
 		Object prop = ((JComponent) this).getClientProperty(HTML_DISABLE_STRING);
 		return prop == null || prop != Boolean.TRUE;
 	}
@@ -66,7 +66,7 @@ public interface GComponent {
 
 	/**
 	 * Sets the HTML rendering flag for the specified component.
-	 * 
+	 *
 	 * @param comp the thing
 	 * @param enabled boolean, if true html rendering will be allowed
 	 */

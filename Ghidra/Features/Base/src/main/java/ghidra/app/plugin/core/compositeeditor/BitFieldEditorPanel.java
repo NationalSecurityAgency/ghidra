@@ -31,7 +31,7 @@ import docking.widgets.OptionDialog;
 import docking.widgets.button.GButton;
 import docking.widgets.label.GDLabel;
 import generic.theme.GIcon;
-import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.plugin.core.compositeeditor.BitFieldPlacementComponent.BitAttributes;
 import ghidra.app.plugin.core.compositeeditor.BitFieldPlacementComponent.BitFieldAllocation;
 import ghidra.app.services.DataTypeManagerService;
@@ -82,7 +82,6 @@ public class BitFieldEditorPanel extends JPanel {
 
 	BitFieldEditorPanel(Composite composite, DataTypeManagerService dtmService,
 			Predicate<DataType> dataTypeValidator) {
-		super();
 		this.composite = composite;
 
 		if (composite.isPackingEnabled()) {
@@ -167,8 +166,7 @@ public class BitFieldEditorPanel extends JPanel {
 			else {
 				allocOffsetStr = Integer.toString(allocOffset);
 			}
-			String text =
-				"Structure Offset of Allocation Unit: " + allocOffsetStr;
+			String text = "Structure Offset of Allocation Unit: " + allocOffsetStr;
 			allocationOffsetLabel.setText(text);
 
 			int offset = placementComponent.getAllocationOffset();
@@ -183,7 +181,7 @@ public class BitFieldEditorPanel extends JPanel {
 
 		statusTextField = new GDLabel(" ");
 		statusTextField.setHorizontalAlignment(SwingConstants.CENTER);
-		statusTextField.setForeground(Colors.ERROR);
+		statusTextField.setForeground(Messages.ERROR);
 
 		// use a strut panel so the size of the message area does not change if we make
 		// the message label not visible

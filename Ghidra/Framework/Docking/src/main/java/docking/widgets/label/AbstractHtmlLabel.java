@@ -51,13 +51,11 @@ public abstract class AbstractHtmlLabel extends JLabel
 
 	protected AbstractHtmlLabel() {
 		addPropertyChangeListener(this);
-		setHTMLRenderingEnabled(false); // disable parent html rendering so we can do our own
 	}
 
 	protected AbstractHtmlLabel(String text) {
 		super(text);
 		addPropertyChangeListener(this);
-		setHTMLRenderingEnabled(false); // disable parent html rendering so we can do our own
 	}
 
 	@Override
@@ -82,7 +80,7 @@ public abstract class AbstractHtmlLabel extends JLabel
 	private void updateHtmlView() {
 
 		String text = getText();
-		if (text == null) {
+		if (text == null || !isHTMLRenderingEnabled()) {
 			putClientProperty(BasicHTML.propertyKey, null);
 			return;
 		}
