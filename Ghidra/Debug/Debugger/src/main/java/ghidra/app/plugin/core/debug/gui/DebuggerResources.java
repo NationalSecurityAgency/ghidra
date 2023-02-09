@@ -475,65 +475,6 @@ public interface DebuggerResources {
 		}
 	}
 
-	interface EmulateProgramAction {
-		String NAME = "Emulate Program in new Trace";
-		String DESCRIPTION = "Emulate the current program in a new trace starting at the cursor";
-		Icon ICON = ICON_EMULATE;
-		String GROUP = GROUP_GENERAL;
-		String HELP_ANCHOR = "emulate_program";
-
-		static ActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.toolBarIcon(ICON)
-					.toolBarGroup(GROUP)
-					.menuPath(DebuggerPluginPackage.NAME, NAME)
-					.menuIcon(ICON)
-					.menuGroup(GROUP)
-					.popupMenuPath(NAME)
-					.popupMenuIcon(ICON)
-					.popupMenuGroup(GROUP)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface EmulateAddThreadAction {
-		String NAME = "Add Emulated Thread to Trace";
-		String DESCRIPTION = "Add an emulated thread to the current trace starting here";
-		Icon ICON = ICON_THREAD;
-		String GROUP = GROUP_GENERAL;
-		String HELP_ANCHOR = "add_emulated_thread";
-
-		static ActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.menuPath(DebuggerPluginPackage.NAME, NAME)
-					.menuIcon(ICON)
-					.menuGroup(GROUP)
-					.popupMenuPath(NAME)
-					.popupMenuIcon(ICON)
-					.popupMenuGroup(GROUP)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
-	interface ConfigureEmulatorAction {
-		String NAME = "Configure Emulator";
-		String DESCRIPTION = "Choose and configure the current emulator";
-		String GROUP = GROUP_MAINTENANCE;
-		String HELP_ANCHOR = "configure_emulator";
-
-		static ToggleActionBuilder builder(Plugin owner) {
-			String ownerName = owner.getName();
-			return new ToggleActionBuilder(NAME, ownerName)
-					.description(DESCRIPTION)
-					.menuGroup(GROUP)
-					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
-		}
-	}
-
 	abstract class AbstractQuickLaunchAction extends DockingAction {
 		public static final String NAME = "Quick Launch";
 		public static final Icon ICON = ICON_DEBUGGER; // TODO: A different icon?

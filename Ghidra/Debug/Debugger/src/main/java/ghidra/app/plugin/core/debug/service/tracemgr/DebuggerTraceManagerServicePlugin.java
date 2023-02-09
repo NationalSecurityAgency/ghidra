@@ -772,12 +772,13 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		if (coordinates.getTime().isSnapOnly()) {
 			return coordinates.getSnap();
 		}
-		Collection<? extends TraceSnapshot> suitable = coordinates.getTrace()
-				.getTimeManager()
-				.getSnapshotsWithSchedule(coordinates.getTime());
-		if (!suitable.isEmpty()) {
-			TraceSnapshot found = suitable.iterator().next();
-			return found.getKey();
+		Trace trace = coordinates.getTrace();
+		long version = trace.getEmulatorCacheVersion();
+		for (TraceSnapshot snapshot : trace.getTimeManager()
+				.getSnapshotsWithSchedule(coordinates.getTime())) {
+			if (snapshot.getVersion() >= version) {
+				return snapshot.getKey();
+			}
 		}
 		return null;
 	}

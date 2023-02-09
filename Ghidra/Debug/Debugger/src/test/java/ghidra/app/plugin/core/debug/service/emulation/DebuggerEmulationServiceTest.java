@@ -30,11 +30,13 @@ import generic.Unique;
 import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.assembler.*;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
+import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.mapping.DebuggerPlatformMapper;
 import ghidra.app.plugin.core.debug.mapping.DebuggerPlatformOpinion;
 import ghidra.app.plugin.core.debug.service.platform.DebuggerPlatformServicePlugin;
 import ghidra.app.services.DebuggerEmulationService.EmulationResult;
+import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.pcode.exec.InterruptPcodeExecutionException;
 import ghidra.pcode.utils.Utils;
@@ -590,6 +592,86 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerGU
 		mem.getViewBytes(scratch, addr(trace, 0x1234), ByteBuffer.wrap(arr));
 		assertArrayEquals(new byte[] { 0, 0, 0, 0, 0, 0, 0x56, 0x78 }, arr);
 		assertEquals(new BigInteger("0", 16),
+			regs.getViewValue(scratch, regR2).getUnsignedValue());
+	}
+
+	@Test
+	public void testCacheInvalidation() throws Throwable {
+		createProgram();
+		intoProject(program);
+		Assembler asm = Assemblers.getAssembler(program);
+		Memory memory = program.getMemory();
+		Address addrText = addr(program, 0x00400000);
+		Register regR0 = program.getRegister("r0");
+		Register regR2 = program.getRegister("r2");
+		Address addrI2;
+		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize")) {
+			MemoryBlock blockText = memory.createInitializedBlock(".text", addrText, 0x1000,
+				(byte) 0, TaskMonitor.DUMMY, false);
+			blockText.setExecute(true);
+			InstructionIterator ii = asm.assemble(addrText,
+				"mov r1, r0",
+				"mov r2, r1");
+			ii.next();
+			addrI2 = ii.next().getMinAddress();
+			program.getProgramContext()
+					.setValue(regR0, addrText, addrText, new BigInteger("1234", 16));
+		}
+
+		programManager.openProgram(program);
+		waitForSwing();
+		codeBrowser.goTo(new ProgramLocation(program, addrText));
+		waitForSwing();
+
+		performEnabledAction(codeBrowser.getProvider(), emulationPlugin.actionEmulateProgram, true);
+
+		DebuggerCoordinates current = traceManager.getCurrent();
+		Trace trace = current.getTrace();
+		assertNotNull(trace);
+
+		TraceThread thread = Unique.assertOne(trace.getThreadManager().getAllThreads());
+		TraceMemorySpace regs = trace.getMemoryManager().getMemoryRegisterSpace(thread, false);
+
+		// Step as written to fill the cache
+		waitOn(traceManager.activateAndNotify(current.time(TraceSchedule.parse("0:t0-1")),
+			ActivationCause.USER, false));
+		waitForSwing();
+		waitOn(traceManager.activateAndNotify(current.time(TraceSchedule.parse("0:t0-2")),
+			ActivationCause.USER, false));
+		waitForSwing();
+		long scratch = traceManager.getCurrentView().getSnap();
+
+		// Sanity check
+		assertEquals(new BigInteger("1234", 16),
+			regs.getViewValue(scratch, regR2).getUnsignedValue());
+
+		// Inject some logic that would require a cache refresh to materialize
+		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Add breakpoint")) {
+			TraceBreakpoint tb = trace.getBreakpointManager()
+					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), addrI2, Set.of(thread),
+						Set.of(TraceBreakpointKind.SW_EXECUTE), true, "test");
+			tb.setEmuSleigh("""
+					r1 = 0x5678;
+					emu_exec_decoded();
+					""");
+		}
+
+		// Check the cache is still valid
+		waitOn(traceManager.activateAndNotify(current.time(TraceSchedule.parse("0:t0-1")),
+			ActivationCause.USER, false));
+		waitForSwing();
+		waitOn(traceManager.activateAndNotify(current.time(TraceSchedule.parse("0:t0-2")),
+			ActivationCause.USER, false));
+		waitForSwing();
+		assertEquals(scratch, traceManager.getCurrentView().getSnap());
+		assertEquals(new BigInteger("1234", 16),
+			regs.getViewValue(scratch, regR2).getUnsignedValue());
+
+		// Invalidate the cache. View should update immediately
+		performEnabledAction(codeBrowser.getProvider(), emulationPlugin.actionInvalidateCache,
+			true);
+		waitForTasks();
+		assertEquals(new BigInteger("5678", 16),
 			regs.getViewValue(scratch, regR2).getUnsignedValue());
 	}
 }
