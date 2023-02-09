@@ -117,7 +117,7 @@ public class RandomForestTrainingTaskTest extends AbstractProgramBasedTest {
 			RandomForestFunctionFinderPlugin.NON_START, 1, 1, true, TaskMonitor.DUMMY));
 		LabelFactory lf = new LabelFactory();
 		ListDataSource<Label> trainingSource =
-			new ListDataSource<Label>(trainingData, lf, new SimpleDataSourceProvenance("test", lf));
+			new ListDataSource<>(trainingData, lf, new SimpleDataSourceProvenance("test", lf));
 		MutableDataset<Label> trainingSet = new MutableDataset<>(trainingSource);
 
 		//create ensemble with two models which always report FUNC_START  
@@ -199,7 +199,7 @@ public class RandomForestTrainingTaskTest extends AbstractProgramBasedTest {
 			new RandomForestTrainingTask(program, params, x -> rows.add(x), 100);
 		TaskLauncher.launchModal("test", task);
 		assertEquals(1, rows.size());
-		SimilarStartsFinder finder = new SimilarStartsFinder(program, rows.get(0));
+		SimilarStartsFinder finder = new SimilarStartsFinder(program, program, rows.get(0));
 		Address entryAddr = program.getSymbolTable().getSymbols("entry").next().getAddress();
 		List<SimilarStartRowObject> res = finder.getSimilarFunctionStarts(entryAddr, 7);
 		//just verify that the number of elements is correct, each element is a function start,
@@ -356,6 +356,35 @@ public class RandomForestTrainingTaskTest extends AbstractProgramBasedTest {
 
 		assertTrue(data.getTestNegative().contains(interiors.subtract(data.getTrainingNegative())));
 		assertTrue(data.getTestNegative().contains(definedData));
+	}
+
+	@Test
+	public void testExhaustingFunctionInteriors() throws CancelledException {
+		params = new FunctionStartRFParams(program);
+		params.setMaxStarts(5);
+		int tooBig = 10;
+		Address begin = program.getSymbolTable().getSymbols("entry").next().getAddress();
+		AddressSet entries = new AddressSet();
+		for (int i = 0; i < 10; ++i) {
+			entries.add(begin.add(i));
+		}
+		AddressSet interiors = new AddressSet();
+		for (int i = 10; i < 25; ++i) {
+			interiors.add(begin.add(i));
+		}
+		AddressSet definedData = new AddressSet();
+		for (int i = 25; i < 30; ++i) {
+			definedData.add(begin.add(i));
+		}
+		RandomForestTrainingTask task = new RandomForestTrainingTask(program, params, null,
+			RandomForestFunctionFinderPlugin.TEST_SET_MAX_SIZE_DEFAULT);
+		TrainingAndTestData data =
+			task.getTrainingAndTestData(entries, interiors, definedData, tooBig, TaskMonitor.DUMMY);
+		assertTrue(data.getTrainingPositive().getNumAddresses() == 5);
+		assertTrue(data.getTestPositive().getNumAddresses() == 5);
+		assertTrue(data.getTestPositive().union(data.getTrainingPositive()).equals(entries));
+		assertTrue(data.getTrainingNegative().equals(interiors));
+		assertTrue(data.getTestNegative().equals(definedData));
 	}
 
 }

@@ -24,7 +24,6 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.DefaultProgramContext;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemBuffer;
-import ghidra.program.model.util.AddressLabelInfo;
 import ghidra.util.ManualEntry;
 import ghidra.util.task.TaskMonitor;
 

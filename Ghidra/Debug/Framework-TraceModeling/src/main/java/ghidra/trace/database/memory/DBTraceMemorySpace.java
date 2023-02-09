@@ -295,7 +295,9 @@ public class DBTraceMemorySpace
 		if (state == null) {
 			throw new NullPointerException();
 		}
-
+		var l = new Object() {
+			boolean changed;
+		};
 		new AddressRangeMapSetter<Entry<TraceAddressSnapRange, TraceMemoryState>, TraceMemoryState>() {
 			@Override
 			protected AddressRange getRange(Entry<TraceAddressSnapRange, TraceMemoryState> entry) {
@@ -324,6 +326,8 @@ public class DBTraceMemorySpace
 			@Override
 			protected Entry<TraceAddressSnapRange, TraceMemoryState> put(AddressRange range,
 					TraceMemoryState value) {
+				// This should not get called if the range is already the desired state
+				l.changed = true;
 				if (value != TraceMemoryState.UNKNOWN) {
 					stateMapSpace.put(new ImmutableTraceAddressSnapRange(range, snap), value);
 				}
@@ -331,8 +335,10 @@ public class DBTraceMemorySpace
 			}
 		}.set(start, end, state);
 
-		trace.setChanged(new TraceChangeRecord<>(TraceMemoryStateChangeType.CHANGED, this,
-			new ImmutableTraceAddressSnapRange(start, end, snap, snap), state));
+		if (l.changed) {
+			trace.setChanged(new TraceChangeRecord<>(TraceMemoryStateChangeType.CHANGED, this,
+				new ImmutableTraceAddressSnapRange(start, end, snap, snap), state));
+		}
 	}
 
 	protected void checkState(TraceMemoryState state) {

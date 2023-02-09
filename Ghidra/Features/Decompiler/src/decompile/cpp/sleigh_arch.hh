@@ -117,6 +117,12 @@ protected:
   static void collectSpecFiles(ostream &errs);		///< Gather specification files in normal locations
   virtual Translate *buildTranslator(DocumentStorage &store);
   virtual PcodeInjectLibrary *buildPcodeInjectLibrary(void);
+  virtual void buildTypegrp(DocumentStorage &store);
+  virtual void buildCommentDB(DocumentStorage &store);
+  virtual void buildStringManager(DocumentStorage &store);
+  virtual void buildConstantPool(DocumentStorage &store);
+  virtual void buildContext(DocumentStorage &store);
+  virtual void buildSymbols(DocumentStorage &store);
   virtual void buildSpecFile(DocumentStorage &store);
   virtual void modifySpaces(Translate *trans);
   virtual void resolveArchitecture(void);

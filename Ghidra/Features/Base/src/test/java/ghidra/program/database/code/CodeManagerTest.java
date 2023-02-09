@@ -674,7 +674,7 @@ public class CodeManagerTest extends AbstractGenericTest {
 	@Test
 	public void testGetDataContaining() throws Exception {
 		mem.createInitializedBlock("test", addr(0x0), 100, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+			TaskMonitor.DUMMY, false);
 
 		StringDataType s = new StringDataType();
 		listing.createData(addr(0x0), s, 10);
@@ -717,7 +717,7 @@ public class CodeManagerTest extends AbstractGenericTest {
 	@Test
 	public void testGetDataBefore() throws Exception {
 		mem.createInitializedBlock("test", addr(0x0), 200, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+			TaskMonitor.DUMMY, false);
 
 		StringDataType s = new StringDataType();
 		listing.createData(addr(0x0), s, 10);
@@ -739,7 +739,7 @@ public class CodeManagerTest extends AbstractGenericTest {
 	@Test
 	public void testGetDataBefore2() throws Exception {
 		mem.createInitializedBlock("test", addr(0x0), 200, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+			TaskMonitor.DUMMY, false);
 
 		StringDataType s = new StringDataType();
 		listing.createData(addr(0x0), s, 0x10);
@@ -826,31 +826,31 @@ public class CodeManagerTest extends AbstractGenericTest {
 	@Test
 	public void testGetUndefinedDataAfter() throws Exception {
 		mem.createInitializedBlock("bk1", addr(0x0), 0x200, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+			TaskMonitor.DUMMY, false);
 		parseStatic(addr(0x1100), addr(0x1500));
 		Instruction inst = listing.getInstructionContaining(addr(0x1500));
 
-		Data data = listing.getUndefinedDataAfter(addr(0x100), TaskMonitorAdapter.DUMMY_MONITOR);
+		Data data = listing.getUndefinedDataAfter(addr(0x100), TaskMonitor.DUMMY);
 		assertNotNull(data);
 		assertEquals(addr(0x101), data.getMinAddress());
 
-		data = listing.getUndefinedDataAfter(addr(0x1499), TaskMonitorAdapter.DUMMY_MONITOR);
+		data = listing.getUndefinedDataAfter(addr(0x1499), TaskMonitor.DUMMY);
 		assertNotNull(data);
 		Address expectedAddr = inst.getMaxAddress().addNoWrap(1);
 		assertEquals(expectedAddr, data.getMinAddress());
 
-		data = listing.getUndefinedDataAfter(expectedAddr, TaskMonitorAdapter.DUMMY_MONITOR);
+		data = listing.getUndefinedDataAfter(expectedAddr, TaskMonitor.DUMMY);
 		assertNotNull(data);
 		assertEquals(expectedAddr.addNoWrap(1), data.getMinAddress());
 
 		parseStatic(addr(0x1700), addr(0x1705));
 		inst = listing.getInstructionContaining(addr(0x1705));
-		data = listing.getUndefinedDataAfter(addr(0x16ff), TaskMonitorAdapter.DUMMY_MONITOR);
+		data = listing.getUndefinedDataAfter(addr(0x16ff), TaskMonitor.DUMMY);
 		expectedAddr = inst.getMaxAddress().next();
 		assertEquals(expectedAddr, data.getMinAddress());
 
 		listing.clearCodeUnits(addr(0x1390), addr(0x1400), false);
-		data = listing.getUndefinedDataAfter(addr(0x1300), TaskMonitorAdapter.DUMMY_MONITOR);
+		data = listing.getUndefinedDataAfter(addr(0x1300), TaskMonitor.DUMMY);
 		assertNotNull(data);
 		assertEquals(addr(0x1390), data.getMinAddress());
 	}
@@ -858,37 +858,37 @@ public class CodeManagerTest extends AbstractGenericTest {
 	@Test
 	public void testGetFirstUndefinedData() throws Exception {
 		mem.createInitializedBlock("bk1", addr(0x0), 0x200, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+			TaskMonitor.DUMMY, false);
 		parseStatic(addr(0x1100), addr(0x1500));
 		Instruction inst = listing.getInstructionContaining(addr(0x1500));
 
 		Data data = listing.getFirstUndefinedData(new AddressSet(addr(0x101), addr(0x500)),
-			TaskMonitorAdapter.DUMMY_MONITOR);
+			TaskMonitor.DUMMY);
 		assertNotNull(data);
 		assertEquals(addr(0x101), data.getMinAddress());
 
 		data = listing.getFirstUndefinedData(new AddressSet(addr(0x1500), addr(0x2000)),
-			TaskMonitorAdapter.DUMMY_MONITOR);
+			TaskMonitor.DUMMY);
 		assertNotNull(data);
 		Address expectedAddr = inst.getMaxAddress().addNoWrap(1);
 		assertEquals(expectedAddr, data.getMinAddress());
 
 		data = listing.getFirstUndefinedData(
 			new AddressSet(expectedAddr.add(1), expectedAddr.add(500)),
-			TaskMonitorAdapter.DUMMY_MONITOR);
+			TaskMonitor.DUMMY);
 		assertNotNull(data);
 		assertEquals(expectedAddr.addNoWrap(1), data.getMinAddress());
 
 		parseStatic(addr(0x1700), addr(0x1705));
 		inst = listing.getInstructionContaining(addr(0x1705));
 		data = listing.getFirstUndefinedData(new AddressSet(addr(0x1700), addr(0x5000)),
-			TaskMonitorAdapter.DUMMY_MONITOR);
+			TaskMonitor.DUMMY);
 		expectedAddr = inst.getMaxAddress().addNoWrap(1);
 		assertEquals(expectedAddr, data.getMinAddress());
 
 		listing.clearCodeUnits(addr(0x1390), addr(0x1400), false);
 		data = listing.getFirstUndefinedData(new AddressSet(addr(0x1300), addr(0x5000)),
-			TaskMonitorAdapter.DUMMY_MONITOR);
+			TaskMonitor.DUMMY);
 		assertNotNull(data);
 		assertEquals(addr(0x1390), data.getMinAddress());
 	}
@@ -897,12 +897,12 @@ public class CodeManagerTest extends AbstractGenericTest {
 	public void testGetUndefinedDataBefore() throws Exception {
 		parseStatic(addr(0x1100), addr(0x1500));
 
-		Data data = listing.getUndefinedDataBefore(addr(0x1400), TaskMonitorAdapter.DUMMY_MONITOR);
+		Data data = listing.getUndefinedDataBefore(addr(0x1400), TaskMonitor.DUMMY);
 		assertNotNull(data);
 		assertEquals(addr(0x10ff), data.getMinAddress());
 
 		listing.clearCodeUnits(addr(0x1495), addr(0x1500), false);
-		data = listing.getUndefinedDataBefore(addr(0x1600), TaskMonitorAdapter.DUMMY_MONITOR);
+		data = listing.getUndefinedDataBefore(addr(0x1600), TaskMonitor.DUMMY);
 		assertNotNull(data);
 		assertEquals(addr(0x15ff), data.getMinAddress());
 	}
@@ -910,7 +910,7 @@ public class CodeManagerTest extends AbstractGenericTest {
 	@Test
 	public void testClearProperties() throws Exception {
 		mem.createInitializedBlock("bk1", addr(0x0), 0x200, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+			TaskMonitor.DUMMY, false);
 		// addresses 10-19
 		for (int i = 0; i < 20; i++) {
 			CodeUnit cu = listing.getCodeUnitAt(addr(i + 10));
@@ -923,7 +923,7 @@ public class CodeManagerTest extends AbstractGenericTest {
 			cu.setProperty("Name", "codeUnit_" + i);
 			assertNotNull(cu.getStringProperty("Name"));
 		}
-		listing.clearProperties(addr(0x0), addr(0x15), TaskMonitorAdapter.DUMMY_MONITOR);
+		listing.clearProperties(addr(0x0), addr(0x15), TaskMonitor.DUMMY);
 		CodeUnit cu = listing.getCodeUnitAt(addr(0x10));
 		try {
 			cu.getIntProperty("Numbers");
@@ -936,7 +936,7 @@ public class CodeManagerTest extends AbstractGenericTest {
 		cu = listing.getCodeUnitAt(addr(0x18));
 		cu.getIntProperty("Numbers");
 
-		listing.clearProperties(addr(0x16), addr(0x200), TaskMonitorAdapter.DUMMY_MONITOR);
+		listing.clearProperties(addr(0x16), addr(0x200), TaskMonitor.DUMMY);
 		cu = listing.getCodeUnitAt(addr(0x16));
 		try {
 			cu.getIntProperty("Numbers");
@@ -957,7 +957,7 @@ public class CodeManagerTest extends AbstractGenericTest {
 		parseStatic(addr(0x1500), addr(0x1600));
 
 		assertNotNull(listing.getInstructionAt(addr(0x1500)));
-		listing.clearAll(false, TaskMonitorAdapter.DUMMY_MONITOR);
+		listing.clearAll(false, TaskMonitor.DUMMY);
 
 		assertNull(listing.getInstructionAt(addr(0x1500)));
 		assertEquals(0, listing.getNumInstructions());

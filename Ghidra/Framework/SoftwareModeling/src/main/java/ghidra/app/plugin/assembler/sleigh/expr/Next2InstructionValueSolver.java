@@ -19,7 +19,7 @@ import java.util.Map;
 import java.util.Set;
 
 import ghidra.app.plugin.assembler.sleigh.sem.*;
-import ghidra.app.plugin.processors.sleigh.expression.EndInstructionValue;
+import ghidra.app.plugin.processors.sleigh.expression.Next2InstructionValue;
 
 /**
  * "Solves" expressions of {@code inst_next2}
@@ -32,21 +32,22 @@ import ghidra.app.plugin.processors.sleigh.expression.EndInstructionValue;
  * <b>NOTE:</b> This solver requires backfill, since the value of {@code inst_next2} is not known
  * until possible prefixes have been considered.
  */
-public class Next2InstructionValueSolver extends AbstractExpressionSolver<EndInstructionValue> {
+public class Next2InstructionValueSolver extends AbstractExpressionSolver<Next2InstructionValue> {
 
 	public Next2InstructionValueSolver() {
-		super(EndInstructionValue.class);
+		super(Next2InstructionValue.class);
 	}
 
 	@Override
-	public AssemblyResolution solve(EndInstructionValue iv, MaskedLong goal, Map<String, Long> vals,
+	public AssemblyResolution solve(Next2InstructionValue iv, MaskedLong goal,
+			Map<String, Long> vals,
 			AssemblyResolvedPatterns cur, Set<SolverHint> hints, String description) {
 		throw new AssertionError(
 			"INTERNAL: Should never be asked to solve for " + AssemblyTreeResolver.INST_NEXT2);
 	}
 
 	@Override
-	public MaskedLong getValue(EndInstructionValue iv, Map<String, Long> vals,
+	public MaskedLong getValue(Next2InstructionValue iv, Map<String, Long> vals,
 			AssemblyResolvedPatterns cur) throws NeedsBackfillException {
 		Long instNext = vals.get(AssemblyTreeResolver.INST_NEXT2);
 		if (instNext == null) {
@@ -56,12 +57,12 @@ public class Next2InstructionValueSolver extends AbstractExpressionSolver<EndIns
 	}
 
 	@Override
-	public int getInstructionLength(EndInstructionValue iv) {
+	public int getInstructionLength(Next2InstructionValue iv) {
 		return 0;
 	}
 
 	@Override
-	public MaskedLong valueForResolution(EndInstructionValue exp, Map<String, Long> vals,
+	public MaskedLong valueForResolution(Next2InstructionValue exp, Map<String, Long> vals,
 			AssemblyResolvedPatterns rc) {
 		Long instNext = vals.get(AssemblyTreeResolver.INST_NEXT2);
 		if (instNext == null) {

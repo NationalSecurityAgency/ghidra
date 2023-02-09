@@ -17,6 +17,9 @@ package ghidra.feature.vt.api.impl;
 
 import static ghidra.feature.vt.api.main.VTMarkupItemDestinationAddressEditStatus.*;
 import static ghidra.feature.vt.api.main.VTMarkupItemStatus.*;
+
+import java.util.Collection;
+
 import ghidra.feature.vt.api.db.VTAssociationDB;
 import ghidra.feature.vt.api.db.VTSessionDB;
 import ghidra.feature.vt.api.main.*;
@@ -29,9 +32,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.SystemUtilities;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitorAdapter;
-
-import java.util.Collection;
+import ghidra.util.task.TaskMonitor;
 
 public class MarkupItemImpl implements VTMarkupItem {
 	private VTMarkupType markupType;
@@ -128,7 +129,7 @@ public class MarkupItemImpl implements VTMarkupItem {
 					gettingStatus = true;
 					boolean conflictsWithOtherMarkup =
 						getMarkupType().conflictsWithOtherMarkup(this,
-							getAssociation().getMarkupItems(TaskMonitorAdapter.DUMMY_MONITOR));
+							getAssociation().getMarkupItems(TaskMonitor.DUMMY));
 					if (conflictsWithOtherMarkup) {
 						return CONFLICT;
 					}
@@ -309,7 +310,7 @@ public class MarkupItemImpl implements VTMarkupItem {
 		VTAssociationStatus associationStatus = association.getStatus();
 		try {
 			Collection<VTMarkupItem> markupItems =
-				association.getMarkupItems(TaskMonitorAdapter.DUMMY_MONITOR);
+				association.getMarkupItems(TaskMonitor.DUMMY);
 			return associationStatus.canApply() && getStatus().isAppliable() &&
 				!markupType.conflictsWithOtherMarkup(this, markupItems);
 		}
@@ -352,7 +353,7 @@ public class MarkupItemImpl implements VTMarkupItem {
 			VTAssociation association = markupItemStorage.getAssociation();
 			Collection<VTMarkupItem> markupItems;
 			try {
-				markupItems = association.getMarkupItems(TaskMonitorAdapter.DUMMY_MONITOR);
+				markupItems = association.getMarkupItems(TaskMonitor.DUMMY);
 				for (VTMarkupItem currentMarkupItem : markupItems) {
 					if (currentMarkupItem == this) {
 						continue;

@@ -21,9 +21,10 @@ import javax.swing.KeyStroke;
 
 import docking.ActionContext;
 import docking.DockingWindowManager;
+import ghidra.util.Swing;
 
 /**
- * An action to trigger a context menu over the focus owner.  This allows context menus to be 
+ * An action to trigger a context menu over the focus owner.  This allows context menus to be
  * triggered from the keyboard.
  */
 public class ShowContextMenuAction extends DockingAction {
@@ -42,10 +43,12 @@ public class ShowContextMenuAction extends DockingAction {
 			return;
 		}
 
-		// use the focused component to determine what should get the context menu  
+		// use the focused component to determine what should get the context menu
 		Component focusOwner = kfm.getFocusOwner();
 		if (focusOwner != null) {
-			DockingWindowManager.showContextMenu(focusOwner);
+			Swing.runLater(() -> {
+				DockingWindowManager.showContextMenu(focusOwner);
+			});
 		}
 	}
 

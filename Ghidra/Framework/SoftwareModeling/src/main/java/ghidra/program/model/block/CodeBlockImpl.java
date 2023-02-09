@@ -138,13 +138,13 @@ public class CodeBlockImpl implements CodeBlock {
 		List<Address> dList = new ArrayList<Address>();
 
 		try {
-			CodeBlockReferenceIterator ri = getSources(TaskMonitorAdapter.DUMMY_MONITOR);
+			CodeBlockReferenceIterator ri = getSources(TaskMonitor.DUMMY);
 			while (ri.hasNext()) {
 				CodeBlockReference ref = ri.next();
 				Address a = ref.getSourceAddress();
 				sList.add(a);
 			}
-			CodeBlockReferenceIterator di = getDestinations(TaskMonitorAdapter.DUMMY_MONITOR);
+			CodeBlockReferenceIterator di = getDestinations(TaskMonitor.DUMMY);
 			while (di.hasNext()) {
 				CodeBlockReference ref = di.next();
 				Address a = ref.getDestinationAddress();

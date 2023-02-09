@@ -45,8 +45,6 @@ import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.pcode.ElementId;
 import ghidra.program.model.pcode.Encoder;
-import ghidra.program.model.symbol.SourceType;
-import ghidra.program.model.util.AddressLabelInfo;
 import ghidra.program.model.util.ProcessorSymbolType;
 import ghidra.sleigh.grammar.SleighPreprocessor;
 import ghidra.sleigh.grammar.SourceFileIndexer;
@@ -93,9 +91,11 @@ public class SleighLanguage implements Language {
 	/**
 	 * Non-null if a space should yes segmented addressing
 	 */
-	String segmentedspace = "";
-	String segmentType = "";
-	AddressSet volatileAddresses;
+	private String segmentedspace = "";
+	private String segmentType = "";
+	private AddressSet volatileAddresses;
+	private AddressSet volatileSymbolAddresses;
+	private AddressSet nonVolatileSymbolAddresses;
 	private ContextCache contextcache = null;
 	/**
 	 * Cached instruction prototypes
@@ -156,12 +156,24 @@ public class SleighLanguage implements Language {
 		registerBuilder = new RegisterBuilder();
 		loadRegisters(registerBuilder);
 		readRemainingSpecification();
-
+		buildVolatileSymbolAddresses();
 		xrefRegisters();
 
 		instructProtoMap = new LinkedHashMap<>();
 
 		initParallelHelper();
+	}
+
+	private void buildVolatileSymbolAddresses() {
+		if (volatileAddresses == null) {
+			volatileAddresses = new AddressSet();
+		}
+		if (volatileSymbolAddresses != null) {
+			volatileAddresses.add(volatileSymbolAddresses);
+		}
+		if (nonVolatileSymbolAddresses != null) {
+			volatileAddresses.delete(nonVolatileSymbolAddresses);
+		}
 	}
 
 	private boolean isSLAWrongVersion(ResourceFile slaFile) {
@@ -383,10 +395,7 @@ public class SleighLanguage implements Language {
 
 	@Override
 	public boolean isVolatile(Address addr) {
-		if (volatileAddresses != null) {
-			return volatileAddresses.contains(addr);
-		}
-		return false;
+		return volatileAddresses.contains(addr);
 	}
 
 	@Override
@@ -798,15 +807,41 @@ public class SleighLanguage implements Language {
 					String typeString = symbol.getAttribute("type");
 					ProcessorSymbolType type = ProcessorSymbolType.getType(typeString);
 					boolean isEntry = SpecXmlUtils.decodeBoolean(symbol.getAttribute("entry"));
-					Address address = addressFactory.getAddress(addressString);
-					if (address == null) {
+					Address startAddress = addressFactory.getAddress(addressString);
+					int rangeSize = SpecXmlUtils.decodeInt(symbol.getAttribute("size"));
+					Boolean isVolatile =
+						SpecXmlUtils.decodeNullableBoolean(symbol.getAttribute("volatile"));
+					if (startAddress == null) {
 						Msg.error(this, "invalid symbol address \"" + addressString + "\": " +
 							description.getSpecFile());
 					}
 					else {
-						AddressLabelInfo info = new AddressLabelInfo(address, labelName, false,
-							null, SourceType.IMPORTED, isEntry, type);
+						AddressLabelInfo info;
+						try {
+							info = new AddressLabelInfo(startAddress, rangeSize, labelName, false,
+								isEntry, type, isVolatile);
+						}
+						catch (AddressOverflowException e) {
+							throw new XmlParseException("invalid symbol definition: " + labelName,
+								e);
+						}
 						defaultSymbols.add(info);
+						if (isVolatile != null) {
+							Address endAddress = info.getEndAddress();
+							if (isVolatile) {
+								if (volatileSymbolAddresses == null) {
+									volatileSymbolAddresses = new AddressSet();
+								}
+								volatileSymbolAddresses.addRange(startAddress, endAddress);
+							}
+							else {
+								if (nonVolatileSymbolAddresses == null) {
+									nonVolatileSymbolAddresses = new AddressSet();
+								}
+								// punch a hole in the volatile address space.
+								nonVolatileSymbolAddresses.addRange(startAddress, endAddress);
+							}
+						}
 					}
 					// skip the end tag
 					parser.end(symbol);
@@ -864,7 +899,8 @@ public class SleighLanguage implements Language {
 			read(parser);
 		}
 		catch (XmlParseException e) {
-			Msg.error(this, e.getMessage());
+			Msg.error(this, "Failed to parse Sleigh Specification (" + specFile.getName() + "): " +
+				e.getMessage());
 		}
 		finally {
 			parser.dispose();
@@ -1422,8 +1458,7 @@ public class SleighLanguage implements Language {
 		encoder.writeBool(ATTRIB_BIGENDIAN, isBigEndian());
 		encoder.writeUnsignedInteger(ATTRIB_UNIQBASE, uniqueOffset);
 		encoder.openElement(ELEM_SPACES);
-		encoder.writeString(ATTRIB_DEFAULTSPACE,
-			factory.getDefaultAddressSpace().getName());
+		encoder.writeString(ATTRIB_DEFAULTSPACE, factory.getDefaultAddressSpace().getName());
 
 		ElementId tag;
 		int delay;
@@ -1479,8 +1514,7 @@ public class SleighLanguage implements Language {
 			encoder.writeSignedInteger(ATTRIB_SIZE, bytesize);
 
 			if (element.getAddressableUnitSize() > 1) {
-				encoder.writeSignedInteger(ATTRIB_WORDSIZE,
-					element.getAddressableUnitSize());
+				encoder.writeUnsignedInteger(ATTRIB_WORDSIZE, element.getAddressableUnitSize());
 			}
 
 			encoder.writeBool(ATTRIB_BIGENDIAN, isBigEndian());

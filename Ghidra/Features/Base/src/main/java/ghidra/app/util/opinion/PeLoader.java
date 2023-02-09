@@ -16,7 +16,6 @@
 package ghidra.app.util.opinion;
 
 import java.io.IOException;
-import java.math.BigInteger;
 import java.util.*;
 
 import ghidra.app.util.MemoryBlockUtils;
@@ -36,8 +35,6 @@ import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
-import ghidra.program.model.lang.Register;
-import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
@@ -742,7 +739,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 					if (dataSize > 0) {
 						MemoryBlockUtils.createUninitializedBlock(prog, false,
 							sections[i].getReadableName(), address, dataSize, "", "", r, w, x, log);
-						sectionToAddress.put(sections[i], address);
+						sectionToAddress.putIfAbsent(sections[i], address);
 					}
 				}
 

@@ -278,6 +278,9 @@ public:
 
   /// \brief Make sure a possibly offset \e join address has a proper JoinRecord
   void renormalizeJoinAddress(Address &addr,int4 size);
+
+  /// \brief Parse a string with just an \e address \e space name and a hex offset
+  Address parseAddressSimple(const string &val);
 };
 
 /// \brief The interface to a translation engine for a processor.

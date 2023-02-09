@@ -372,6 +372,55 @@ void ArchitectureGhidra::buildContext(DocumentStorage &store)
   context = new ContextGhidra(this);
 }
 
+void ArchitectureGhidra::buildSymbols(DocumentStorage &store)
+
+{
+  const Element *symtag = store.getTag(ELEM_DEFAULT_SYMBOLS.getName());
+  if (symtag == (const Element *)0) return;
+  XmlDecode decoder(this,symtag);
+  uint4 el = decoder.openElement(ELEM_DEFAULT_SYMBOLS);
+  while(decoder.peekElement() != 0) {
+    uint4 subel = decoder.openElement(ELEM_SYMBOL);
+    string addrString;
+    string name;
+    int4 size = 0;
+    int4 volatileState = -1;
+    for(;;) {
+      uint4 attribId = decoder.getNextAttributeId();
+      if (attribId == 0) break;
+      if (attribId == ATTRIB_NAME)
+	name = decoder.readString();
+      else if (attribId == ATTRIB_ADDRESS) {
+	addrString = decoder.readString();
+      }
+      else if (attribId == ATTRIB_VOLATILE) {
+	volatileState = decoder.readBool() ? 1 : 0;
+      }
+      else if (attribId == ATTRIB_SIZE)
+	size = decoder.readSignedInteger();
+    }
+    decoder.closeElement(subel);
+    if (name.size() == 0)
+      throw LowlevelError("Missing name attribute in <symbol> element");
+    if (addrString.size() == 0)
+      throw LowlevelError("Missing address attribute in <symbol> element");
+
+    // Currently we only use the volatile attribute on pspec symbols and let Ghidra
+    // feed the global symbol to the decompiler on a per function basic.
+    if (volatileState < 0)
+      continue;
+    Address addr = parseAddressSimple(addrString);
+    if (size == 0)
+      size = addr.getSpace()->getWordSize();
+    Range range(addr.getSpace(),addr.getOffset(),addr.getOffset() + (size-1));
+    if (volatileState == 0)
+      symboltab->clearPropertyRange(Varnode::volatil, range);
+    else
+      symboltab->setPropertyRange(Varnode::volatil, range);
+  }
+  decoder.closeElement(el);
+}
+
 void ArchitectureGhidra::resolveArchitecture(void)
 
 {

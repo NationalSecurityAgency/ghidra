@@ -7,10 +7,10 @@ define space ram type=ram_space size=4 default;
 define space register type=register_space size=4;
 
 define register offset=0 size=4      [ D0 D1 D2 D3 D4 D5 D6 D7 ];   # Data registers
-define register offset=0 size=2      [ _ D0w _ D1w _ D2w _ D3w _ D4w _ D5w _ D6w _ D7w];
+define register offset=0 size=2      [ D0u D0w D1u D1w D2u D2w D3u D3w D4u D4w D5u D5w D6u D6w D7u D7w];
 define register offset=0 size=1      [ _ _ _ D0b _ _ _ D1b _ _ _ D2b _ _ _ D3b _ _ _ D4b _ _ _ D5b _ _ _ D6b _ _ _ D7b ];
 define register offset=0x20 size=4   [ A0 A1 A2 A3 A4 A5 A6 SP ];   # Address registers
-define register offset=0x20 size=2   [ _ A0w _ A1w _ A2w _ A3w _ A4w _ A5w _ A6w _ A7w];
+define register offset=0x20 size=2   [ A0u A0w A1u A1w A2u A2w A3u A3w A4u A4w A5u A5w A6u A6w A7u A7w];
 define register offset=0x20 size=1   [ _ _ _ A0b _ _ _ A1b _ _ _ A2b _ _ _ A3b _ _ _ A4b _ _ _ A5b _ _ _ A6b _ _ _ A7b ];
 define register offset=0x40 size=1   [ TF SVF IPL XF NF ZF VF CF ];	    # Condition flags
 define register offset=0x50 size=4   PC;			    # Program counter register
@@ -34,7 +34,8 @@ define register offset=0x300 size=4  [ glbdenom movemptr ];
 define register offset=0x400 size=4  [ contextreg ];
 
 @ifdef COLDFIRE
-define register offset=0x500 size=4 [ MACSR ACC MASK ];
+# TODO: add a pure MAC variant, for now, just do EMAC
+define register offset=0x500 size=4 [ MACSR MASK ];
 define register offset=0x600 size=4 [ EMACSR ACC0 ACC1 ACC2 ACC3 ACCext01 ACCext23 EMASK ];
 @endif
 
@@ -75,6 +76,7 @@ define token instr (16)
   copid = (9,11)
   op    = (12,15)
   opbig  = (8,15)
+  op01 = (0,1)
   op02 = (0,2)
   op03 = (0,3)
   op08 = (0,8)
@@ -93,18 +95,26 @@ define token instr (16)
   op5 = (5,5)
   op7 = (7,7)
   op8 = (8,8)
+  op11 = (11,11)
   quick = (9,11)
   op811 = (8,11)
   copcc1 = (0,5)
   d8base = (0,7) signed
 @ifdef COLDFIRE
   reg03y = (0,3)
+  reg03ywu = (0,3)
+  reg03ywl = (0,3)
   op47 = (4,7)
   op611 = (6,11)
   op6  = (6,6)
+  op0910 = (9,10)
   acclsb = (7,7)
   d911 = (9,11)
   reg315 = (3, 15)
+  reg9dnu  = (9,11)
+  reg9dnl  = (9,11)
+  reg9anu = (9,11)
+  reg9anl = (9,11)
 @endif
 ;
 
@@ -147,8 +157,15 @@ define token extword (16)
   fc02   = (0,2)
   ctl    = (0,11)
 @ifdef COLDFIRE
-  sfact = (9,10)
-  accmsb = (4,4)  
+  sfact    = (9,10)
+  accmsb   = (4,4)
+  reg03yu  = (0,3)
+  reg03yl  = (0,3)
+  ereg03y  = (0,3)
+  accw     = (2,3)
+  reg12x   = (12,15)
+  reg12xwu = (12,15)
+  reg12xwl = (12,15)
 @endif  
 ;
 
@@ -294,7 +311,15 @@ attach variables [ reganb regsanb ]                [ A0b A1b A2b A3b A4b A5b A6b
 attach variables [ fsrc fdst fdcos fdsin ]                     [ FP0 FP1 FP2 FP3 FP4 FP5 FP6 FP7 ];
 
 @ifdef COLDFIRE
-attach variables [ reg03y ]    [ D0 D1 D2 D3 D4 D5 D6 D7 A0 A1 A2 A3 A4 A5 A6 SP ];
+attach variables [ reg03y ereg03y reg12x ]      [ D0 D1 D2 D3 D4 D5 D6 D7 A0 A1 A2 A3 A4 A5 A6 SP ];
+attach variables [reg03ywu reg12xwu reg03yu ]    [ D0u D1u D2u D3u D4u D5u D6u D7u A0u A1u A2u A3u A4u A5u A6u A7u ];
+attach variables [reg03ywl reg12xwl reg03yl ]    [ D0w D1w D2w D3w D4w D5w D6w D7w A0w A1w A2w A3w A4w A5w A6w A7w ];
+attach variables [reg9dnu]     [ D0u D1u D2u D3u D4u D5u D6u D7u ];
+attach variables [reg9dnl]     [ D0w D1w D2w D3w D4w D5w D6w D7w ];
+attach variables [reg9anu]     [ A0u A1u A2u A3u A4u A5u A6u A7u ];
+attach variables [reg9anl]     [ A0w A1w A2w A3w A4w A5w A6w A7w ];
+attach variables [accw]        [ACC0 ACC1 ACC2 ACC3];
+
 attach values d911 [ -1 1 2 3 4 5 6 7 ];
 @endif
 
@@ -2511,15 +2536,24 @@ fsubrnd: "d"                   is fopmode=0x6c        {}
 
 
 @ifdef COLDFIRE
-worl: ".w"			is wl=0		{}
-worl: ".l"			is wl=1		{}
 
-uorl7: ".l"			is bs=0		{}
-uorl7: ".u"			is bs=1		{}
-uorl6: ".l"			is IS=0		{}
-uorl6: ".u"			is IS=1		{}
+macregy: reg03ywl	is reg03ywl; IS=0	{ export reg03ywl; }
+macregy: reg03ywu	is reg03ywu; IS=1	{ export reg03ywu; }
+macregx: reg9dnl	is reg9dnl & op6=0; bs=0	{ export reg9dnl; }
+macregx: reg9dnu	is reg9dnu & op6=0; bs=1	{ export reg9dnu; }
+macregx: reg9anl	is reg9anl & op6=1; bs=0	{ export reg9anl; }
+macregx: reg9anu	is reg9anu & op6=1; bs=1	{ export reg9anu; }
+macrw:   reg9dn		is reg9dn & op6=0 { export reg9dn; }
+macrw:   reg9an		is reg9an & op6=1 { export reg9an; }
 
-scalefactor: ""					is sfact=0	{ export 0:1; }
+macregy_e: ereg03y	is ereg03y	{ export ereg03y; }
+macregyl: reg03yl	is reg03yl & IS=0	{ export reg03yl; }
+macregyl: reg03yu	is reg03yu & IS=1	{ export reg03yu; }
+macregxl: reg12xwl	is reg12xwl & bs=0	{ export reg12xwl; }
+macregxl: reg12xwu	is reg12xwu & bs=1	{ export reg12xwu; }
+
+
+scalefactor: ""			is sfact=0	{ export 0:1; }
 scalefactor: "<<1"		is sfact=1	{ export 1:1; }
 scalefactor: ">>1"		is sfact=3	{ export 2:1; }
 
@@ -2537,48 +2571,233 @@ define pcodeop findFirstOne;
 	resflags(regdn);
 }
 
-:mac^worl reg03y^uorl6, reg9dn^uorl7^scalefactor, accreg	is (op=10 & reg9dn & reg03y & op6=0 & op8=0 & op45=0 ; fbit=0 & worl & uorl6 & uorl7 & scalefactor) ... & accreg ...
+# MAC effective address table
+  # size=long
+m_eal: (regan) is mode=2 & regan			{ export *:4 regan; }
+m_eal: (regan)+ is mode=3 & regan			{ local tmp = regan; regan = regan + 4; export *:4 tmp; }
+m_eal: -(regan) is mode=4 & regan			{ regan = regan - 4; export *:4 regan; }
+m_eal: (d16,regan) is mode=5 & regan; d16		{ local tmp  = regan + d16; export *:4 tmp; }
+
+:maaac.l reg03y, reg9dn^scalefactor, accreg, accw	is (op=10 & reg9dn & reg03y & op6=0 & op8=0 & op45=0 ; fbit=0 & wl=1 & scalefactor & accw & odsize=1) ... & accreg ...
 {
   local tmp = reg03y * reg9dn;
-  tmp = tmp << (scalefactor == 1) * 1;
-  tmp = tmp >> (scalefactor == 2) * 1;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
   accreg = accreg + tmp;
+  accw = accw + tmp;
 }
-:mac^worl reg03y^uorl6, reg9an^uorl7^scalefactor, accreg	is (op=10 & reg9an & reg03y & op6=1 & op8=0 & op45=0 ; fbit=0 & worl & uorl6 & uorl7 & scalefactor) ... & accreg ...
+:maaac.l reg03y, reg9an^scalefactor, accreg, accw	is (op=10 & reg9an & reg03y & op6=1 & op8=0 & op45=0 ; fbit=0 & wl=1 & scalefactor & accw & odsize=1) ... & accreg ...
 {
   local tmp = reg03y * reg9an;
-  tmp = tmp << (scalefactor == 1) * 1;
-  tmp = tmp >> (scalefactor == 2) * 1;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
+  accreg = accreg + tmp;
+  accw = accw + tmp;
+}
+
+:maaac.w macregy, macregx^scalefactor, accreg, accw	is (op=10 & op8=0 & op45=0 ; fbit=0 & wl=0 & scalefactor & accw & odsize=1) ... & macregy ... &  macregx ... & accreg ...
+{
+  local tmp = macregy * macregx;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
+  accreg = accreg + sext(tmp);
+  accw = accw + sext(tmp);
+}
+
+:mac.l reg03y, reg9dn^scalefactor, accreg	is (op=10 & reg9dn & reg03y & op6=0 & op8=0 & op45=0 ; fbit=0 & wl=1 & scalefactor) ... & accreg ...
+{
+  local tmp = reg03y * reg9dn;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
+  accreg = accreg + tmp;
+}
+:mac.l reg03y, reg9an^scalefactor, accreg	is (op=10 & reg9an & reg03y & op6=1 & op8=0 & op45=0 ; fbit=0 & wl=1 & scalefactor) ... & accreg ...
+{
+  local tmp = reg03y * reg9an;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
   accreg = accreg + tmp;
 }
 
-:move.l ACC, reg03y			is op=10 & op811=1 & op47=8	& ACC & reg03y		{ reg03y = ACC; }
+:mac.w macregy, macregx^scalefactor, accreg	is (op=10 & op8=0 & op45=0 ; fbit=0 & wl=0 & scalefactor) ... & macregy ... &  macregx ... & accreg ...
+{
+  local tmp = macregy * macregx;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
+  accreg = accreg + sext(tmp);
+}
 
-:move.l MACSR, reg03y		is op=10 & op811=9 & op47=8	& MACSR & reg03y	{ reg03y = MACSR; }
+#mac with load
+:mac.w macregyl, macregxl^scalefactor, m_eal, macrw, accreg	is ((op=10 & macrw & op8=0 ; macregxl & fbit=0 & macregyl & wl=0 & scalefactor) ... & accreg ...) ... & m_eal
+{
+  local tmp = macregyl * macregxl;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
+  accreg = accreg + sext(tmp);
+  macrw = m_eal;
+}
+
+:mac.l macregy_e, reg12x^scalefactor, m_eal, macrw, accreg	is ((op=10 & macrw & op6=0 & op8=0 ; reg12x & fbit=0 & wl=1 & scalefactor & macregy_e) ... & accreg ...) ... & m_eal
+{
+  local tmp = macregy_e * reg12x;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
+  accreg = accreg + tmp;
+  macrw = m_eal;
+}
+
+:masac.l reg03y, reg9dn^scalefactor, accreg, accw	is (op=10 & reg9dn & reg03y & op6=0 & op8=0 & op45=0 ; fbit=0 & wl=1 & scalefactor & accw & odsize=3) ... & accreg ...
+{
+  local tmp = reg03y * reg9dn;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
+  accreg = accreg + tmp;
+  accw = accw - tmp;
+}
+:masac.l reg03y, reg9an^scalefactor, accreg, accw	is (op=10 & reg9an & reg03y & op6=1 & op8=0 & op45=0 ; fbit=0 & wl=1 & scalefactor & accw & odsize=3) ... & accreg ...
+{
+  local tmp = reg03y * reg9an;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
+  accreg = accreg + tmp;
+  accw = accw - tmp;
+}
+
+:masac.w macregy, macregx^scalefactor, accreg, accw	is (op=10 & op8=0 & op45=0 ; fbit=0 & wl=0 & scalefactor & accw & odsize=3) ... & macregy ... &  macregx ... & accreg ...
+{
+  local tmp = macregy * macregx;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
+  accreg = accreg + sext(tmp);
+  accw = accw - sext(tmp);
+}
+
+moveaccreg: ACC0  is ACC0 & op0910=0    { export ACC0; }
+moveaccreg: ACC1  is ACC1 & op0910=1    { export ACC1; }
+moveaccreg: ACC2  is ACC2 & op0910=2    { export ACC2; }
+moveaccreg: ACC3  is ACC3 & op0910=3    { export ACC3; }
+
+moveaccreg2: ACC0  is ACC0 & op01=0    { export ACC0; }
+moveaccreg2: ACC1  is ACC1 & op01=1    { export ACC1; }
+moveaccreg2: ACC2  is ACC2 & op01=2    { export ACC2; }
+moveaccreg2: ACC3  is ACC3 & op01=3    { export ACC3; }
+
+:move.l moveaccreg, reg03y  is op=0b1010 & op11=0 & moveaccreg & op8=1 & op47=0b1000 & reg03y    { reg03y = moveaccreg; }
+
+:move.l ACCext01, eal       is (op=0b1010 & op811=0b1011 & op67=0 & ACCext01 & (mode=0 | mode=1 | mode=7)) ... & eal   { ACCext01 = eal; }
+:move.l ACCext23, eal       is (op=0b1010 & op811=0b1111 & op67=0 & ACCext23 & (mode=0 | mode=1 | mode=7)) ... & eal   { ACCext23 = eal; }
+
+:move.l moveaccreg, eal     is (op=0b1010 & op11=0 & moveaccreg & op8=1 & op67=0 & (mode=0 | mode=1 | mode=7)) ... & eal   { moveaccreg = eal; }
+
+:move.l moveaccreg, moveaccreg2     is op=0b1010 & op11=0 & moveaccreg & op8=1 & op47=1 & moveaccreg2    { moveaccreg2 = moveaccreg; }
+
+:move.l MACSR, reg03y		is op=0b1010 & op811=0b1001 & op47=0b1000 & MACSR & reg03y	{ reg03y = MACSR; }
+:move.l ACCext01, reg03y	is op=0b1010 & op811=0b1011 & op47=0b1000 & ACCext01 & reg03y	{ reg03y = ACCext01; }
+:move.l ACCext23, reg03y	is op=0b1010 & op811=0b1111 & op47=0b1000 & ACCext23 & reg03y	{ reg03y = ACCext23; }
 
 :move.l MASK, reg03y		is op=10 & op811=13 & op47=8 & MASK & reg03y	{ reg03y = MASK; }
 
 :move.l MACSR, "CCR"		is op=10 & op811=9 & op47=12 & MACSR			{ unpackflags(MACSR); }
 
-:move.l eal, ACC			is (op=10 & op611=4 & ACC & (mode=0 | mode=1 | mode=7)) ... & eal			{ ACC = eal; }
-
 :move.l eal, MACSR			is (op=10 & op611=36 & MACSR & (mode=0 | mode=1 | mode=7)) ... & eal		{ MACSR = eal; }
 
 :move.l eal, MASK			is (op=10 & op611=52 & MASK & (mode=0 | mode=1 | mode=7)) ... & eal			{ MASK = eal; }
 
-:msac^worl reg03y^uorl6, reg9dn^uorl7^scalefactor, accreg	is (op=10 & reg9dn & reg03y & op6=0 & op8=0 & op45=0 ; fbit=1 & worl & uorl6 & uorl7 & scalefactor) ... & accreg ...
+
+:msaac.l reg03y, reg9dn^scalefactor, accreg, accw	is (op=10 & reg9dn & reg03y & op6=0 & op8=0 & op45=0 ; fbit=1 & wl=1 & scalefactor & accw & odsize=1) ... & accreg ...
 {
   local tmp = reg03y * reg9dn;
-  tmp = tmp << (scalefactor == 1) * 1;
-  tmp = tmp >> (scalefactor == 2) * 1;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
   accreg = accreg - tmp;
+  accw = accw + tmp;
 }
-:msac^worl reg03y^uorl6, reg9an^uorl7^scalefactor, accreg	is (op=10 & reg9an & reg03y & op6=1 & op8=0 & op45=0 ; fbit=1 & worl & uorl6 & uorl7 & scalefactor) ... & accreg ...
+:msaac.l reg03y, reg9an^scalefactor, accreg, accw	is (op=10 & reg9an & reg03y & op6=1 & op8=0 & op45=0 ; fbit=1 & wl=1 & scalefactor & accw & odsize=1) ... & accreg ...
 {
   local tmp = reg03y * reg9an;
-  tmp = tmp << (scalefactor == 1) * 1;
-  tmp = tmp >> (scalefactor == 2) * 1;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
   accreg = accreg - tmp;
+  accw = accw + tmp;
+}
+
+:msaac.w macregy, macregx^scalefactor, accreg, accw	is (op=10 & op8=0 & op45=0 ; fbit=1 & wl=0 & scalefactor & accw & odsize=1) ... & macregy ... &  macregx ... & accreg ...
+{
+  local tmp = macregy * macregx;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
+  accreg = accreg - sext(tmp);
+  accw = accw + sext(tmp);
+}
+
+:msac.l reg03y, reg9dn^scalefactor, accreg	is (op=10 & reg9dn & reg03y & op6=0 & op8=0 & op45=0 ; fbit=1 & wl=1 & scalefactor) ... & accreg ...
+{
+  local tmp = reg03y * reg9dn;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
+  accreg = accreg - tmp;
+}
+:msac.l reg03y, reg9an^scalefactor, accreg	is (op=10 & reg9an & reg03y & op6=1 & op8=0 & op45=0 ; fbit=1 & wl=1 & scalefactor) ... & accreg ...
+{
+  local tmp = reg03y * reg9an;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
+  accreg = accreg - tmp;
+}
+
+:msac.w macregy, macregx^scalefactor, accreg	is (op=10 & op6=0 & op8=0 & op45=0 ; fbit=1 & wl=0 & scalefactor) ... & macregy ... &  macregx ... & accreg ...
+{
+  local tmp = macregy * macregx;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
+  accreg = accreg - sext(tmp);
+}
+
+
+# MSAC with load
+
+:msac.w macregyl, macregxl^scalefactor, m_eal, macrw, accreg	is ((op=10 & macrw & op8=0 ; macregxl & fbit=1 & macregyl & wl=0 & scalefactor) ... & accreg ...) ... & m_eal
+{
+  local tmp = macregyl * macregxl;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
+  accreg = accreg - sext(tmp);
+  macrw = m_eal;
+}
+
+:msac.l macregy_e, reg12x^scalefactor, m_eal, macrw, accreg	is ((op=10 & macrw & op8=0 ; reg12x & fbit=1 & wl=1 & scalefactor & macregy_e) ... & accreg ...) ... & m_eal
+{
+  local tmp = macregy_e * reg12x;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
+  accreg = accreg - tmp;
+  macrw = m_eal;
+}
+
+:msaac.l reg03y, reg9dn^scalefactor, accreg, accw	is (op=10 & reg9dn & reg03y & op6=0 & op8=0 & op45=0 ; fbit=1 & wl=1 & scalefactor & accw & odsize=3) ... & accreg ...
+{
+  local tmp = reg03y * reg9dn;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
+  accreg = accreg - tmp;
+  accw = accw - tmp;
+}
+:mssac.l reg03y, reg9an^scalefactor, accreg, accw	is (op=10 & reg9an & reg03y & op6=1 & op8=0 & op45=0 ; fbit=1 & wl=1 & scalefactor & accw & odsize=3) ... & accreg ...
+{
+  local tmp = reg03y * reg9an;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
+  accreg = accreg - tmp;
+  accw = accw - tmp;
+}
+
+:mssac.w macregy, macregx^scalefactor, accreg, accw	is (op=10 & op8=0 & op45=0 ; fbit=1 & wl=0 & scalefactor & accw & odsize=3) ... & macregy ... &  macregx ... & accreg ...
+{
+  local tmp = macregy * macregx;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
+  accreg = accreg - sext(tmp);
+  accw = accw - sext(tmp);
 }
 
 @endif

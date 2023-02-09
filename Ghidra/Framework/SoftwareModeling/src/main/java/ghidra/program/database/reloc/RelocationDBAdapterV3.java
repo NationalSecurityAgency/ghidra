@@ -33,9 +33,9 @@ class RelocationDBAdapterV3 extends RelocationDBAdapter {
 	private final static int V3_BYTES_COL = 2;
 
 //	final static Schema SCHEMA = new Schema(
-//		RelocationDBAdapterV4.VERSION, "Address", new Field[] { IntField.INSTANCE,
-//			LongField.INSTANCE, BinaryField.INSTANCE },
-//		new String[] { "Type", "Values", "Bytes" });
+//		RelocationDBAdapterV3.VERSION, "Address", new Field[] { IntField.INSTANCE, 
+//          BinaryField.INSTANCE, BinaryField.INSTANCE },
+//		    new String[] { "Type", "Values", "Bytes" });
 
 	private Table relocTable;
 	private AddressMap addrMap;
@@ -94,8 +94,7 @@ class RelocationDBAdapterV3 extends RelocationDBAdapter {
 		DBRecord newRec = SCHEMA.createRecord(rec.getKey());
 		newRec.setLongValue(ADDR_COL, rec.getKey()); // key was encoded address
 		newRec.setIntValue(TYPE_COL, rec.getIntValue(V3_TYPE_COL));
-		long[] values = new long[] { rec.getLongValue(V3_VALUE_COL) };
-		newRec.setField(VALUE_COL, new BinaryCodedField(values));
+		newRec.setBinaryData(VALUE_COL, rec.getBinaryData(V3_VALUE_COL));
 		newRec.setBinaryData(BYTES_COL, rec.getBinaryData(V3_BYTES_COL));
 		return newRec;
 	}

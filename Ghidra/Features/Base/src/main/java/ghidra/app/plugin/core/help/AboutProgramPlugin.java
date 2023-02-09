@@ -27,8 +27,8 @@ import ghidra.app.context.ProgramContextAction;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.app.util.HelpTopics;
-import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.main.ApplicationLevelPlugin;
+import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.main.datatable.FrontendProjectTreeAction;
 import ghidra.framework.main.datatable.ProjectDataContext;
 import ghidra.framework.model.DomainFile;
@@ -106,8 +106,8 @@ public class AboutProgramPlugin extends Plugin implements ApplicationLevelPlugin
 						ProgramActionContext pac = (ProgramActionContext) context;
 						Program program = pac.getProgram();
 						if (program != null) {
-							String menuName = "About " + program.getDomainFile().getName();
-							getMenuBarData().setMenuItemName(menuName);
+							getMenuBarData().setMenuItemNamePlain(
+								"About " + program.getDomainFile().getName());
 							return true;
 						}
 					}

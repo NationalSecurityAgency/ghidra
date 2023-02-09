@@ -175,15 +175,14 @@ void HighVariable::updateSymbol(void) const
   highflags &= ~((uint4)symboldirty);
   vector<Varnode *>::const_iterator iter;
   symbol = (Symbol *)0;
-  Varnode *vn = (Varnode *)0;
 
   for(iter=inst.begin();iter!=inst.end();++iter) {
-    Varnode *tmpvn = *iter;
-    if (tmpvn->getSymbolEntry() != (SymbolEntry *)0)
-      vn = tmpvn;
+    Varnode *vn = *iter;
+    if (vn->getSymbolEntry() != (SymbolEntry *)0) {
+      setSymbol(vn);
+      return;
+    }
   }
-  if (vn != (Varnode *)0)
-    setSymbol(vn);
 }
 
 /// Compare two Varnode objects based just on their storage address

@@ -26,7 +26,7 @@ import generic.test.AbstractGenericTest;
 import ghidra.framework.store.DatabaseItem;
 import ghidra.framework.store.FolderItem;
 import ghidra.framework.store.local.LocalFileSystem;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 import utilities.util.FileUtilities;
 
 public class RecoveryDBTest extends AbstractGenericTest {
@@ -88,14 +88,14 @@ public class RecoveryDBTest extends AbstractGenericTest {
 		DBHandle dbh = new DBHandle(BUFFER_SIZE);
 		BufferFile bf =
 			fileSystem.createDatabase("/", "testDb", null, "Test", dbh.getBufferSize(), null, null);
-		dbh.saveAs(bf, true, TaskMonitorAdapter.DUMMY_MONITOR);
+		dbh.saveAs(bf, true, TaskMonitor.DUMMY);
 		dbh.close();
 		bf.dispose();
 
 		DatabaseItem dbItem = (DatabaseItem) fileSystem.getItem("/", "testDb");
 		assertTrue(!dbItem.canRecover());
 		bf = dbItem.openForUpdate(FolderItem.DEFAULT_CHECKOUT_ID);
-		dbh = new DBHandle(bf, true, TaskMonitorAdapter.DUMMY_MONITOR);
+		dbh = new DBHandle(bf, true, TaskMonitor.DUMMY);
 
 		long txId = dbh.startTransaction();
 		Table table1 = dbh.createTable("table1", SCHEMA);
@@ -106,7 +106,7 @@ public class RecoveryDBTest extends AbstractGenericTest {
 		tableDelete(table1, initialRecCnt, 0, 2);
 		dbh.endTransaction(txId, true);
 
-		assertTrue(dbh.takeRecoverySnapshot(null, TaskMonitorAdapter.DUMMY_MONITOR));
+		assertTrue(dbh.takeRecoverySnapshot(null, TaskMonitor.DUMMY));
 
 		txId = dbh.startTransaction();
 		Table table2 = dbh.createTable("table2", SCHEMA);
@@ -117,7 +117,7 @@ public class RecoveryDBTest extends AbstractGenericTest {
 		tableDelete(table2, initialRecCnt, 0, 2);
 		dbh.endTransaction(txId, true);
 
-		assertTrue(dbh.takeRecoverySnapshot(null, TaskMonitorAdapter.DUMMY_MONITOR));
+		assertTrue(dbh.takeRecoverySnapshot(null, TaskMonitor.DUMMY));
 
 		return dbh;
 	}
@@ -145,7 +145,7 @@ public class RecoveryDBTest extends AbstractGenericTest {
 			DatabaseItem dbItem = (DatabaseItem) fileSystem.getItem("/", "testDb");
 			assertTrue(dbItem.canRecover());
 			BufferFile bf = dbItem.openForUpdate(FolderItem.DEFAULT_CHECKOUT_ID);
-			dbh2 = new DBHandle(bf, true, TaskMonitorAdapter.DUMMY_MONITOR);
+			dbh2 = new DBHandle(bf, true, TaskMonitor.DUMMY);
 
 			Table table1 = dbh2.getTable("table1");
 			assertNotNull(table1);
@@ -195,12 +195,12 @@ public class RecoveryDBTest extends AbstractGenericTest {
 			assertTrue(dbh.undo());
 			assertTrue(dbh.undo());
 
-			assertTrue(dbh.takeRecoverySnapshot(null, TaskMonitorAdapter.DUMMY_MONITOR));
+			assertTrue(dbh.takeRecoverySnapshot(null, TaskMonitor.DUMMY));
 
 			DatabaseItem dbItem = (DatabaseItem) fileSystem.getItem("/", "testDb");
 			assertTrue(dbItem.canRecover());
 			BufferFile bf = dbItem.openForUpdate(FolderItem.DEFAULT_CHECKOUT_ID);
-			dbh2 = new DBHandle(bf, true, TaskMonitorAdapter.DUMMY_MONITOR);
+			dbh2 = new DBHandle(bf, true, TaskMonitor.DUMMY);
 
 			Table table1 = dbh2.getTable("table1");
 			assertNotNull(table1);
@@ -240,19 +240,19 @@ public class RecoveryDBTest extends AbstractGenericTest {
 			assertTrue(dbh.undo());
 			assertTrue(dbh.undo());
 
-			assertTrue(dbh.takeRecoverySnapshot(null, TaskMonitorAdapter.DUMMY_MONITOR));
+			assertTrue(dbh.takeRecoverySnapshot(null, TaskMonitor.DUMMY));
 
 			assertTrue(dbh.redo());
 			assertTrue(dbh.redo());
 
-			assertTrue(dbh.takeRecoverySnapshot(null, TaskMonitorAdapter.DUMMY_MONITOR));
+			assertTrue(dbh.takeRecoverySnapshot(null, TaskMonitor.DUMMY));
 
 			assertNotNull(dbh.getTable("table2"));
 
 			DatabaseItem dbItem = (DatabaseItem) fileSystem.getItem("/", "testDb");
 			assertTrue(dbItem.canRecover());
 			BufferFile bf = dbItem.openForUpdate(FolderItem.DEFAULT_CHECKOUT_ID);
-			dbh2 = new DBHandle(bf, true, TaskMonitorAdapter.DUMMY_MONITOR);
+			dbh2 = new DBHandle(bf, true, TaskMonitor.DUMMY);
 
 			Table table1 = dbh2.getTable("table1");
 			assertNotNull(table1);
@@ -301,9 +301,9 @@ public class RecoveryDBTest extends AbstractGenericTest {
 			DatabaseItem dbItem = (DatabaseItem) fileSystem.getItem("/", "testDb");
 			assertTrue(dbItem.canRecover());
 			BufferFile bf = dbItem.openForUpdate(FolderItem.DEFAULT_CHECKOUT_ID);
-			dbh2 = new DBHandle(bf, true, TaskMonitorAdapter.DUMMY_MONITOR);
+			dbh2 = new DBHandle(bf, true, TaskMonitor.DUMMY);
 
-			dbh2.save(null, null, TaskMonitorAdapter.DUMMY_MONITOR);
+			dbh2.save(null, null, TaskMonitor.DUMMY);
 			dbh2.close();
 
 			assertTrue(!dbItem.canRecover());

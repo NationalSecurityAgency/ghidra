@@ -371,6 +371,41 @@ public class PackedDecode implements Decoder {
 	}
 
 	@Override
+	public long readSignedIntegerExpectString(String expect, long expectval)
+			throws DecoderException {
+		long res;
+		LinkedByteBuffer.Position tmpPos = new LinkedByteBuffer.Position();
+		tmpPos.copy(curPos);
+		byte header1 = tmpPos.getNextByte();
+		if ((header1 & HEADEREXTEND_MASK) != 0) {
+			tmpPos.getNextByte();
+		}
+		byte typeByte = tmpPos.getNextByte();
+		int typeCode = typeByte >> TYPECODE_SHIFT;
+		if (typeCode == TYPECODE_STRING) {
+			String val = readString();
+			if (!val.equals(expect)) {
+				throw new DecoderException(
+					"Expecting string \"" + expect + "\" but read \"" + val + "\"");
+			}
+			res = expectval;
+		}
+		else {
+			res = readSignedInteger();
+		}
+		return res;
+	}
+
+	@Override
+	public long readSignedIntegerExpectString(AttributeId attribId, String expect, long expectval)
+			throws DecoderException {
+		findMatchingAttribute(attribId);
+		long res = readSignedIntegerExpectString(expect, expectval);
+		curPos.copy(startPos);
+		return res;
+	}
+
+	@Override
 	public long readUnsignedInteger() throws DecoderException {
 		byte header1 = curPos.getNextByte();
 		if ((header1 & HEADEREXTEND_MASK) != 0) {

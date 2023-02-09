@@ -143,7 +143,7 @@ public class GhidraFolder implements DomainFolder {
 	 * @throws IOException
 	 */
 	void refreshFolderData() throws IOException {
-		getFolderData().refresh(false, true, TaskMonitorAdapter.DUMMY_MONITOR);
+		getFolderData().refresh(false, true, TaskMonitor.DUMMY);
 	}
 
 	@Override
@@ -295,14 +295,14 @@ public class GhidraFolder implements DomainFolder {
 	public DomainFile createFile(String fileName, DomainObject obj, TaskMonitor monitor)
 			throws InvalidNameException, IOException, CancelledException {
 		return createFolderData().createFile(fileName, obj,
-			monitor != null ? monitor : TaskMonitorAdapter.DUMMY_MONITOR);
+			monitor != null ? monitor : TaskMonitor.DUMMY);
 	}
 
 	@Override
 	public DomainFile createFile(String fileName, File packFile, TaskMonitor monitor)
 			throws InvalidNameException, IOException, CancelledException {
 		return createFolderData().createFile(fileName, packFile,
-			monitor != null ? monitor : TaskMonitorAdapter.DUMMY_MONITOR);
+			monitor != null ? monitor : TaskMonitor.DUMMY);
 	}
 
 	@Override
@@ -336,7 +336,7 @@ public class GhidraFolder implements DomainFolder {
 		GhidraFolderData folderData = getFolderData();
 		GhidraFolder newGhidraParent = (GhidraFolder) newParent; // assumes single implementation
 		return folderData.copyTo(newGhidraParent.getFolderData(),
-			monitor != null ? monitor : TaskMonitorAdapter.DUMMY_MONITOR);
+			monitor != null ? monitor : TaskMonitor.DUMMY);
 	}
 
 	/**

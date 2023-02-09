@@ -277,15 +277,18 @@ public class RandomForestTrainingTask extends Task {
 		monitor.setMessage(
 			"Selecting " + numEntries * factor + " random addresses within function interiors");
 		start = System.nanoTime();
-		AddressSetView randomFuncInteriors =
-			RandomSubsetUtils.randomSubset(selectableInteriors, numEntries * factor, monitor);
+		long numInteriors = numEntries * factor;
+
+		AddressSetView randomFuncInteriors = numInteriors < selectableInteriors.getNumAddresses()
+				? RandomSubsetUtils.randomSubset(selectableInteriors, numInteriors, monitor)
+				: selectableInteriors;
 		end = System.nanoTime();
 		Msg.info(this, String.format("factor: %d elapsed selecting random interiors: %g seconds",
 			factor, (end - start) / NANOSECONDS_PER_SECOND));
 		trainingNegative = trainingNegative.union(randomFuncInteriors);
 		if (trainingNegative.isEmpty()) {
 			Msg.showError(this, null, "Data Gathering Error",
-				"No function interiors in training set");
+				"No non-starts in training set for sampling factor " + factor);
 			return null;
 		}
 		if (trainingPositive.intersects(trainingNegative)) {

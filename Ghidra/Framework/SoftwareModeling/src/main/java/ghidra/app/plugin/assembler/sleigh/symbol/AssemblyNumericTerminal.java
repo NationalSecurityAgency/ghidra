@@ -183,7 +183,7 @@ public class AssemblyNumericTerminal extends AssemblyTerminal {
 			return Collections.emptySet();
 		}
 		try {
-			long val = Long.parseLong(num, radix);
+			long val = Long.parseUnsignedLong(num, radix);
 			if (neg) {
 				val = -val;
 			}

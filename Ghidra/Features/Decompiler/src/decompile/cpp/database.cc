@@ -3224,6 +3224,32 @@ void Database::setPropertyRange(uint4 flags,const Range &range)
   }
 }
 
+/// The non-zero bits in the \b flags parameter indicate the boolean properties to be cleared.
+/// No other properties are altered.
+/// \param flags is the set of properties to clear
+/// \param range is the memory range to clear
+void Database::clearPropertyRange(uint4 flags,const Range &range)
+
+{
+  Address addr1 = range.getFirstAddr();
+  Address addr2 = range.getLastAddrOpen(glb);
+  flagbase.split(addr1);
+  partmap<Address,uint4>::iterator aiter,biter;
+
+  aiter = flagbase.begin(addr1);
+  if (!addr2.isInvalid()) {
+    flagbase.split(addr2);
+    biter = flagbase.begin(addr2);
+  }
+  else
+    biter = flagbase.end();
+  flags = ~flags;
+  while(aiter != biter) {	// Update bits across whole range
+    (*aiter).second &= flags;
+    ++aiter;
+  }
+}
+
 /// Encode a single \<db> element to the stream, which contains child elements
 /// for each Scope (which contain Symbol children in turn).
 /// \param encoder is the stream encoder

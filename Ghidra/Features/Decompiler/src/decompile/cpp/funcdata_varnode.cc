@@ -1002,18 +1002,6 @@ bool Funcdata::syncVarnodesWithSymbol(VarnodeLocSet::const_iterator &iter,uint4 
   return updateoccurred;
 }
 
-/// For each instance Varnode, remove any SymbolEntry reference and associated properties.
-/// \param high is the given HighVariable to clear
-void Funcdata::clearSymbolLinks(HighVariable *high)
-
-{
-  for(int4 i=0;i<high->numInstances();++i) {
-    Varnode *vn = high->getInstance(i);
-    vn->mapentry = (SymbolEntry *)0;
-    vn->clearFlags(Varnode::namelock | Varnode::typelock | Varnode::mapped);
-  }
-}
-
 /// \brief Remap a Symbol to a given Varnode using a static mapping
 ///
 /// Any previous links between the Symbol, the Varnode, and the associate HighVariable are
@@ -1024,7 +1012,7 @@ void Funcdata::clearSymbolLinks(HighVariable *high)
 void Funcdata::remapVarnode(Varnode *vn,Symbol *sym,const Address &usepoint)
 
 {
-  clearSymbolLinks(vn->getHigh());
+  vn->clearSymbolLinks();
   SymbolEntry *entry = localmap->remapSymbol(sym, vn->getAddr(), usepoint);
   vn->setSymbolEntry(entry);
 }
@@ -1040,7 +1028,7 @@ void Funcdata::remapVarnode(Varnode *vn,Symbol *sym,const Address &usepoint)
 void Funcdata::remapDynamicVarnode(Varnode *vn,Symbol *sym,const Address &usepoint,uint8 hash)
 
 {
-  clearSymbolLinks(vn->getHigh());
+  vn->clearSymbolLinks();
   SymbolEntry *entry = localmap->remapSymbolDynamic(sym, hash, usepoint);
   vn->setSymbolEntry(entry);
 }

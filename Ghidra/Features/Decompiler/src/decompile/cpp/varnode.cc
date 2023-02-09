@@ -352,6 +352,22 @@ void Varnode::clearFlags(uint4 fl) const
   }
 }
 
+/// For \b this Varnode and any others attached to the same HighVariable,
+/// remove any SymbolEntry reference and associated properties.
+void Varnode::clearSymbolLinks(void)
+
+{
+  bool foundEntry = false;
+  for(int4 i=0;i<high->numInstances();++i) {
+    Varnode *vn = high->getInstance(i);
+    foundEntry = foundEntry || (vn->mapentry != (SymbolEntry *)0);
+    vn->mapentry = (SymbolEntry *)0;
+    vn->clearFlags(Varnode::namelock | Varnode::typelock | Varnode::mapped);
+  }
+  if (foundEntry)
+    high->symbolDirty();
+}
+
 /// Directly change the defining PcodeOp and set appropriate dirty bits
 /// \param op is the pointer to the new PcodeOp, which can be \b null
 void Varnode::setDef(PcodeOp *op)

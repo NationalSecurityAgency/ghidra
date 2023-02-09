@@ -125,7 +125,7 @@
 <!ELEMENT PROPERTY EMPTY>
   <!ATTLIST PROPERTY NAME     CDATA                                                #REQUIRED>
   <!ATTLIST PROPERTY ADDRESS  CDATA                                                #IMPLIED>
-  <!ATTLIST PROPERTY TYPE     (string | long | int | double | void | bool | date)  #IMPLIED>
+  <!ATTLIST PROPERTY TYPE     (string | long | int | double | void | bool | date | custom)  #IMPLIED>
   <!ATTLIST PROPERTY VALUE    CDATA                                                #IMPLIED>
 
 <!ELEMENT BOOKMARKS (BOOKMARK*)>

@@ -2114,6 +2114,22 @@ define pcodeop ExclusiveAccess;
   Rt1215 = *tmp;
 }
 
+# overlaps patterns with the other ldr intructions when Rn==1111, therefore it must occur first
+:ldr^ItCond^".w"  Rt1215,PcrelOffset12         is TMode=1 & ItCond & (op4=0xf85 & sop0003=15; Rt1215 & RtGotoCheck) & PcrelOffset12
+{
+  build ItCond;
+  build PcrelOffset12;
+  Rt1215 = PcrelOffset12:4;
+  build RtGotoCheck;
+}
+
+:ldr^ItCond^".w"  Rt1215,PcrelOffset12         is TMode=1 & ItCond & (op4=0xf8d & sop0003=15; Rt1215 & RtGotoCheck) & PcrelOffset12
+{
+  build ItCond;
+  build PcrelOffset12;
+  Rt1215 = PcrelOffset12:4;
+  build RtGotoCheck;
+}
 
 :ldr^ItCond^".w"	Rt1215,RnIndirect12 		is TMode=1 & ItCond & (op4=0xf8d; Rt1215 & RtGotoCheck) & RnIndirect12
 {
@@ -2128,23 +2144,6 @@ define pcodeop ExclusiveAccess;
   build ItCond;
   build RnIndirectPUW;
   Rt1215 = *RnIndirectPUW;
-  build RtGotoCheck;
-}
-
-:ldr^ItCond^".w"  Rt1215,PcrelOffset12         is TMode=1 & ItCond & (op4=0xf8d & sop0003=15; Rt1215 & RtGotoCheck) & PcrelOffset12
-{
-  build ItCond;
-  build PcrelOffset12;
-  Rt1215 = PcrelOffset12:4;
-  build RtGotoCheck;
-}
-
-# overlaps pattern with next ldr intruction, must occur first
-:ldr^ItCond^".w"  Rt1215,PcrelOffset12         is TMode=1 & ItCond & (op4=0xf85 & sop0003=15; Rt1215 & RtGotoCheck) & PcrelOffset12
-{
-  build ItCond;
-  build PcrelOffset12;
-  Rt1215 = PcrelOffset12:4;
   build RtGotoCheck;
 }
 
@@ -2164,6 +2163,23 @@ define pcodeop ExclusiveAccess;
   build RtGotoCheck;
 }
 
+:ldrb^ItCond^".w"  Rt1215,PcrelOffset12         is TMode=1 & ItCond & (op4=0xf81 & sop0003=15; Rt1215) & PcrelOffset12
+{
+   build ItCond;
+   build PcrelOffset12;
+   tmp:1 = PcrelOffset12:1;
+   Rt1215 = zext(tmp);
+}
+
+# overlaps patterns with the other ldrb intructions when Rn==1111, therefore it must occur first
+:ldrb^ItCond^".w"  Rt1215,PcrelOffset12         is TMode=1 & ItCond & (op4=0xf89 & sop0003=15; Rt1215) & PcrelOffset12
+{
+   build ItCond;
+   build PcrelOffset12;
+   tmp:1 = PcrelOffset12:1;
+   Rt1215 = zext(tmp);
+}
+
 :ldrb^ItCond^".w"	Rt1215,RnIndirect12 		is TMode=1 & ItCond & (op4=0xf89; Rt1215) & RnIndirect12
 {
    build ItCond;
@@ -2180,21 +2196,6 @@ define pcodeop ExclusiveAccess;
    Rt1215 = zext(tmp);
 }
 
-:ldrb^ItCond^".w"  Rt1215,PcrelOffset12         is TMode=1 & ItCond & (op4=0xf89 & sop0003=15; Rt1215) & PcrelOffset12
-{
-   build ItCond;
-   build PcrelOffset12;
-   tmp:1 = PcrelOffset12:1;
-   Rt1215 = zext(tmp);
-}
-:ldrb^ItCond^".w"  Rt1215,PcrelOffset12         is TMode=1 & ItCond & (op4=0xf81 & sop0003=15; Rt1215) & PcrelOffset12
-{
-   build ItCond;
-   build PcrelOffset12;
-   tmp:1 = PcrelOffset12:1;
-   Rt1215 = zext(tmp);
-}
-
 :ldrb^ItCond^".w"  Rt1215,[Rn0003,Rm0003,"lsl #"^thc0405]            is TMode=1 & ItCond & op4=0xf81 & Rn0003; Rt1215 & thc1111=0 & sop0610=0 & thc0405 & Rm0003
 {
    build ItCond;
@@ -2203,12 +2204,24 @@ define pcodeop ExclusiveAccess;
   Rt1215 = zext(val);
 }
 
+
 :ldrbt^ItCond^".w"    Rt1215,[Rn0003,"#"^Immed8]   is TMode=1 & ItCond & op4=0xf81 & Rn0003; Rt1215 & thc0811=14 & Immed8
 {
    build ItCond;
   local tmp = Rn0003 + Immed8;
   val:1 = *tmp;
   Rt1215 = zext(val);
+}
+
+
+# overlaps patterns with the other ldrd intructions when Rn==1111, therefore it must occur first
+:ldrd^ItCond  Rt1215,Rt0811,Pcrel8_s8         is TMode=1 & ItCond & op9=0x74 & thc0606=1 & thc0404=1 & sop0003=15; Rt1215 & Rt0811 & Pcrel8_s8
+{
+   build ItCond;
+   build Pcrel8_s8;
+   local val = Pcrel8_s8;
+   Rt1215 = val(4);
+   Rt0811 = val(0);
 }
 
 :ldrd^ItCond    Rt1215,Rt0811,RnIndirectPUW1   is TMode=1 & ItCond & (op9=0x74 & thc0606=1 & thc0404=1 & Rn0003; Rt1215 & Rt0811) & $(RN_INDIRECT_PUW1)
@@ -2219,13 +2232,42 @@ define pcodeop ExclusiveAccess;
   Rt0811 = *(RnIndirectPUW1+4);
 }
 
-:ldrd^ItCond  Rt1215,Rt0811,Pcrel8_s8         is TMode=1 & ItCond & op9=0x74 & thc0606=1 & thc0404=1 & sop0003=15; Rt1215 & Rt0811 & Pcrel8_s8
+
+# pldw must come before ldrh.w because of overlap of Rt != 1111 in ldrh.w
+:pldw^ItCond	Rn0003,"#"^offset12 		is TMode=1 & ItCond & op6=0x3e2 & thwbit=1 & thc0404=1 & Rn0003; op12=0xf & offset12
+{
+  build ItCond;
+  addr:4 = Rn0003 + offset12;
+  HintPreloadDataForWrite(addr);
+}
+
+:pldw^ItCond	Rn0003,"#-"^immed8 		is TMode=1 & ItCond & op6=0x3e0 & thwbit=1 & thc0404=1 & Rn0003; op8=0xfc & immed8
+{
+  build ItCond;
+  addr:4 = Rn0003 - immed8;
+  	HintPreloadDataForWrite(addr);
+}
+
+:pldw^ItCond	Rn0003,Rm0003,"lsl #"^thc0405 		is TMode=1 & ItCond & op6=0x3e0 & thwbit=1 & thc0404=1 & Rn0003; op8=0xf0 & thc0607=0 & thc0405 & Rm0003
+{
+  build ItCond;
+  addr:4 = Rn0003 + (Rm0003 << thc0405);
+  	HintPreloadDataForWrite(addr);
+}
+
+
+# overlaps patterns with the other ldrh intructions when Rn==1111, therefore it must occur first
+:ldrh^ItCond^".w"  Rt1215,PcrelOffset12         is TMode=1 & ItCond & (op4=0xf83 & sop0003=15; Rt1215) & PcrelOffset12
 {
    build ItCond;
-   build Pcrel8_s8;
-   local val = Pcrel8_s8;
-   Rt1215 = val(4);
-   Rt0811 = val(0);
+   local tmp = PcrelOffset12:2;
+   Rt1215 = zext(tmp);
+}
+:ldrh^ItCond^".w"  Rt1215,PcrelOffset12         is TMode=1 & ItCond & (op4=0xf8b & sop0003=15; Rt1215) & PcrelOffset12
+{
+   build ItCond;
+   tmp:2 = PcrelOffset12:2;
+   Rt1215 = zext(tmp);
 }
 
 :ldrh.w^ItCond	Rt1215,RnIndirect12 		is TMode=1 & ItCond & (op4=0xf8B; Rt1215) & RnIndirect12
@@ -2241,19 +2283,6 @@ define pcodeop ExclusiveAccess;
    build ItCond;
    build RnIndirectPUW;
    tmp:2 = *RnIndirectPUW;
-   Rt1215 = zext(tmp);
-}
-
-:ldrh^ItCond^".w"  Rt1215,PcrelOffset12         is TMode=1 & ItCond & (op4=0xf83 & sop0003=15; Rt1215) & PcrelOffset12
-{
-   build ItCond;
-   local tmp = PcrelOffset12:2;
-   Rt1215 = zext(tmp);
-}
-:ldrh^ItCond^".w"  Rt1215,PcrelOffset12         is TMode=1 & ItCond & (op4=0xf8b & sop0003=15; Rt1215) & PcrelOffset12
-{
-   build ItCond;
-   tmp:2 = PcrelOffset12:2;
    Rt1215 = zext(tmp);
 }
 
@@ -2273,6 +2302,44 @@ define pcodeop ExclusiveAccess;
   Rt1215 = zext(val);
 }
 
+
+# pli moevd above ldrsb to avoid conflict for ldrsb when Rt == 1111
+:pli^ItCond	Rn0003,"#"^offset12 		is TMode=1 & ItCond & op4=0xf99 & Rn0003; op12=0xf & offset12
+{
+  build ItCond;
+  addr:4 = Rn0003 + offset12;
+  HintPreloadInstruction(addr);
+}
+
+:pli^ItCond	Rn0003,"#-"^immed8 		is TMode=1 & ItCond & op4=0xf91 & Rn0003; op8=0xfc & immed8
+{
+  build ItCond;
+  addr:4 = Rn0003 - immed8;
+  HintPreloadInstruction(addr);
+}
+
+:pli^ItCond    PcrelOffset12		is TMode=1 & ItCond & (op8=0xf9 & thc0506=0 & thc0004=0x1f; thc1215=0xf) & PcrelOffset12
+{
+   build ItCond;
+   HintPreloadInstruction(PcrelOffset12);
+}
+
+:pli^ItCond	Rn0003,Rm0003"lsl #"^thc0405 		is TMode=1 & ItCond & op4=0xf91 & Rn0003; op6=0x3c0 & thc0405 & Rm0003
+{
+  build ItCond;
+  addr:4 = Rn0003 + (Rm0003 << thc0405);
+  HintPreloadInstruction(addr);
+}
+
+
+# overlaps patterns with the other ldrsb intructions when Rn==1111, therefore it must occur first
+:ldrsb^ItCond^".w"  Rt1215,PcrelOffset12         is TMode=1 & ItCond & (op8=0xf9 & thc0506=0 & thc0404=1 & sop0003=15; Rt1215) & PcrelOffset12
+{
+   build ItCond;
+   tmp:1 = *PcrelOffset12;
+   Rt1215 = sext(tmp);
+}
+
 :ldrsb^ItCond^".w"	Rt1215,RnIndirect12 		is TMode=1 & ItCond & (op4=0xf99; Rt1215) & RnIndirect12
 {
    build ItCond;
@@ -2285,13 +2352,6 @@ define pcodeop ExclusiveAccess;
    build ItCond;
    build RnIndirectPUW;
    tmp:1 = *RnIndirectPUW;
-   Rt1215 = sext(tmp);
-}
-
-:ldrsb^ItCond^".w"  Rt1215,PcrelOffset12         is TMode=1 & ItCond & (op8=0xf9 & thc0506=0 & thc0404=1 & sop0003=15; Rt1215) & PcrelOffset12
-{
-   build ItCond;
-   tmp:1 = *PcrelOffset12;
    Rt1215 = sext(tmp);
 }
 
@@ -2311,6 +2371,16 @@ define pcodeop ExclusiveAccess;
   Rt1215 = sext(val);
 }
 
+
+# overlaps patterns with the other ldr intructions when Rn==1111, therefore it must occur first
+:ldrsh^ItCond^".w"  Rt1215,PcrelOffset12         is TMode=1 & ItCond & (op8=0xf9 & thc0506=1 & thc0404=1 & sop0003=15; Rt1215) & PcrelOffset12
+{
+   build ItCond;
+   build PcrelOffset12;
+   tmp:2 = *PcrelOffset12;
+   Rt1215 = sext(tmp);
+}
+
 :ldrsh^ItCond^".w"	Rt1215,RnIndirect12 		is TMode=1 & ItCond & (op4=0xf9B; Rt1215) & RnIndirect12
 {
    build ItCond;
@@ -2323,14 +2393,6 @@ define pcodeop ExclusiveAccess;
    build ItCond;
    build RnIndirectPUW;
    tmp:2 = *RnIndirectPUW;
-   Rt1215 = sext(tmp);
-}
-
-:ldrsh^ItCond^".w"  Rt1215,PcrelOffset12         is TMode=1 & ItCond & (op8=0xf9 & thc0506=1 & thc0404=1 & sop0003=15; Rt1215) & PcrelOffset12
-{
-   build ItCond;
-   build PcrelOffset12;
-   tmp:2 = *PcrelOffset12;
    Rt1215 = sext(tmp);
 }
 
@@ -3023,25 +3085,12 @@ thspsrmask: spsr^thpsrmask	is thpsrmask & spsr { export thpsrmask; }
   HintPreloadData(addr);
 }
 
-:pldw^ItCond	Rn0003,"#"^offset12 		is TMode=1 & ItCond & op6=0x3e2 & thwbit=1 & thc0404=1 & Rn0003; op12=0xf & offset12
-{
-  build ItCond;
-  addr:4 = Rn0003 + offset12;
-  HintPreloadDataForWrite(addr);
-}
 
 :pld^ItCond	Rn0003,"#-"^immed8 		is TMode=1 & ItCond & op6=0x3e0 & thwbit=0 & thc0404=1 & Rn0003; op8=0xfc & immed8
 {
   build ItCond;
   addr:4 = Rn0003 - immed8;
   HintPreloadData(addr);
-}
-
-:pldw^ItCond	Rn0003,"#-"^immed8 		is TMode=1 & ItCond & op6=0x3e0 & thwbit=1 & thc0404=1 & Rn0003; op8=0xfc & immed8
-{
-  build ItCond;
-  addr:4 = Rn0003 - immed8;
-  	HintPreloadDataForWrite(addr);
 }
 
 :pld^ItCond    PcrelOffset12		is TMode=1 & ItCond & (op8=0xf8 & thc0506=0 & thc0004=0x1f; thc1215=0xf) & PcrelOffset12
@@ -3057,40 +3106,9 @@ thspsrmask: spsr^thpsrmask	is thpsrmask & spsr { export thpsrmask; }
   HintPreloadData(addr);
 }
 
-:pldw^ItCond	Rn0003,Rm0003,"lsl #"^thc0405 		is TMode=1 & ItCond & op6=0x3e0 & thwbit=1 & thc0404=1 & Rn0003; op8=0xf0 & thc0607=0 & thc0405 & Rm0003
-{
-  build ItCond;
-  addr:4 = Rn0003 + (Rm0003 << thc0405);
-  	HintPreloadDataForWrite(addr);
-}
+# pld.w moved above ldrh to avoid conflicts
 
-
-:pli^ItCond	Rn0003,"#"^offset12 		is TMode=1 & ItCond & op4=0xf99 & Rn0003; op12=0xf & offset12
-{
-  build ItCond;
-  addr:4 = Rn0003 + offset12;
-  HintPreloadInstruction(addr);
-}
-
-:pli^ItCond	Rn0003,"#-"^immed8 		is TMode=1 & ItCond & op4=0xf91 & Rn0003; op8=0xfc & immed8
-{
-  build ItCond;
-  addr:4 = Rn0003 - immed8;
-  HintPreloadInstruction(addr);
-}
-
-:pli^ItCond    PcrelOffset12		is TMode=1 & ItCond & (op8=0xf9 & thc0506=0 & thc0004=0x1f; thc1215=0xf) & PcrelOffset12
-{
-   build ItCond;
-   HintPreloadInstruction(PcrelOffset12);
-}
-
-:pli^ItCond	Rn0003,Rm0003"lsl #"^thc0405 		is TMode=1 & ItCond & op4=0xf91 & Rn0003; op6=0x3c0 & thc0405 & Rm0003
-{
-  build ItCond;
-  addr:4 = Rn0003 + (Rm0003 << thc0405);
-  HintPreloadInstruction(addr);
-}
+#pli moved above ldrsb
 
 
 @endif # VERSION_6T2 || VERSION_7
@@ -4764,13 +4782,13 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
    goto [pc];
 }
 
-Pcrel: [cloc,Rm0003]  is Rm0003 & thc0404=0 [ cloc = inst_next; ] 
+Pcrel: [pc,Rm0003]  is Rm0003 & thc0404=0 & pc
 {
-   local tmp = Rm0003; tmp = cloc + tmp; val:1 = *tmp; tmp = zext(val); export tmp;
+   local tmp = Rm0003; tmp = inst_next + tmp; val:1 = *tmp; tmp = zext(val); export tmp;
 }
-Pcrel: [cloc,Rm0003]  is Rm0003 & thc0404=1 [ cloc = inst_next; ] 
+Pcrel: [pc,Rm0003]  is Rm0003 & thc0404=1 & pc
 {
-   local tmp = Rm0003; tmp = cloc + (tmp * 2); val:2 = *tmp; tmp = zext(val); export tmp;
+   local tmp = Rm0003; tmp = inst_next + (tmp * 2); val:2 = *tmp; tmp = zext(val); export tmp;
 }
 
 :tbb^ItCond  Pcrel    is TMode=1 & ItCond & op4=0xe8d & thc0003=15; op8=0xf0 & thc0507=0 & thc0404=0 & Pcrel

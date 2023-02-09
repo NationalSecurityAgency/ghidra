@@ -26,7 +26,7 @@ import ghidra.framework.main.*;
 import ghidra.program.database.OriginalProgramModifierListener;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.data.*;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * More data type merge tests.
@@ -109,7 +109,7 @@ public class DataTypeMerge8Test extends AbstractDataTypeMergeTest {
 				transactionID = program.startTransaction("remove XYZ");
 				try {
 					// Remove the XYZ data type.
-					dtm.remove(xyz, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(xyz, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				finally {

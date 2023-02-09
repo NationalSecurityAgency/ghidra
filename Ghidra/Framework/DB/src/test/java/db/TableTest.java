@@ -25,7 +25,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class TableTest extends AbstractGenericTest {
 
@@ -334,7 +334,7 @@ public class TableTest extends AbstractGenericTest {
 
 		verifyRangeDoesNotExist(startKey, endKey);
 		verifyRecordsBeforeAndAfterExist(startKey, endKey);
-		assertTrue(table.isConsistent(TaskMonitorAdapter.DUMMY_MONITOR));
+		assertTrue(table.isConsistent(TaskMonitor.DUMMY));
 	}
 
 	private void verifyRangeDoesNotExist(int startKey, int endKey) throws IOException {

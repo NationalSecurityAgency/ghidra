@@ -333,7 +333,7 @@ public class PcodeDataTypeManager {
 		}
 		encoder.writeSignedInteger(ATTRIB_SIZE, ptrLen);
 		if (pointerWordSize != 1) {
-			encoder.writeSignedInteger(ATTRIB_WORDSIZE, pointerWordSize);
+			encoder.writeUnsignedInteger(ATTRIB_WORDSIZE, pointerWordSize);
 		}
 		if (spc != null) {
 			encoder.writeSpace(ATTRIB_SPACE, spc);
@@ -398,7 +398,7 @@ public class PcodeDataTypeManager {
 		encodeNameIdAttributes(encoder, type);
 		encoder.writeSignedInteger(ATTRIB_SIZE, pointer.getLength());
 		if (pointerWordSize != 1) {
-			encoder.writeSignedInteger(ATTRIB_WORDSIZE, pointerWordSize);
+			encoder.writeUnsignedInteger(ATTRIB_WORDSIZE, pointerWordSize);
 		}
 		if (space != null) {
 			encoder.writeSpace(ATTRIB_SPACE, space);

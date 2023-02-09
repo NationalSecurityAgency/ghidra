@@ -243,7 +243,7 @@ public class ProjectDataTableDnDHandler implements DragSourceListener, DragGestu
 	}
 
 	private List<DomainFileInfo> createSelectionList(GTable tableToSelect) {
-		ArrayList<DomainFileInfo> list = new ArrayList<DomainFileInfo>();
+		ArrayList<DomainFileInfo> list = new ArrayList<>();
 
 		int[] rows = table.getSelectedRows();
 
@@ -273,7 +273,7 @@ public class ProjectDataTableDnDHandler implements DragSourceListener, DragGestu
 		}
 
 		private Object getDomainFileList() {
-			List<DomainFile> domainFileList = new ArrayList<DomainFile>();
+			List<DomainFile> domainFileList = new ArrayList<>();
 			for (DomainFileInfo domainFileInfo : list) {
 				domainFileList.add(domainFileInfo.getDomainFile());
 			}
@@ -294,10 +294,12 @@ public class ProjectDataTableDnDHandler implements DragSourceListener, DragGestu
 	private class DnDMouseListener extends MouseAdapter {
 
 		private boolean consuming = false;
+		private boolean didDrag = false;
 
 		@Override
 		public void mousePressed(MouseEvent e) {
 			consuming = maybeConsumeEvent(e);
+			didDrag = false;
 		}
 
 		@Override
@@ -309,12 +311,24 @@ public class ProjectDataTableDnDHandler implements DragSourceListener, DragGestu
 			// continue to consume the event that was started during the pressed event, for symmetry
 			maybeConsumeEvent(e);
 			consuming = false;
+
+			if (!didDrag) {
+				//
+				// If we dragged, leave the initial selection, which does not disrupt the user's
+				// workflow; otherwise, select the clicked row.   This allows users to change the
+				// selection by clicking in the table, which is the default table behavior.
+				//
+				table.clearSelection();
+				int row = table.rowAtPoint(e.getPoint());
+				table.selectRow(row);
+			}
 		}
 
 		@Override
 		public void mouseDragged(MouseEvent e) {
 			// always consume the drag so that Java does not change the selection
 			e.consume();
+			didDrag = true;
 		}
 
 		private boolean maybeConsumeEvent(MouseEvent e) {
@@ -323,7 +337,7 @@ public class ProjectDataTableDnDHandler implements DragSourceListener, DragGestu
 				return false;
 			}
 
-			// don't let other listeners process the event if we are 'pressing' the mouse 
+			// don't let other listeners process the event if we are 'pressing' the mouse
 			// button on an already selected row (to prevent de-selecting a multi-selection for
 			// a drag operation)
 			int row = table.rowAtPoint(e.getPoint());

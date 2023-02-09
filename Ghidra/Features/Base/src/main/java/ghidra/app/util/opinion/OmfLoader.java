@@ -85,7 +85,7 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 			reader.setPointerIndex(0);
 			OmfFileHeader scan;
 			try {
-				scan = OmfFileHeader.scan(reader, TaskMonitorAdapter.DUMMY_MONITOR, true);
+				scan = OmfFileHeader.scan(reader, TaskMonitor.DUMMY, true);
 			}
 			catch (OmfException e) {
 				throw new IOException("Bad header format: " + e.getMessage());

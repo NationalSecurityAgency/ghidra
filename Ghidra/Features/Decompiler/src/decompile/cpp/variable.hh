@@ -88,6 +88,7 @@ private:
   void flagsDirty(void) const { highflags |= flagsdirty | namerepdirty; }	///< Mark the boolean properties as \e dirty
   void coverDirty(void) const { highflags |= coverdirty; }	///< Mark the cover as \e dirty
   void typeDirty(void) const { highflags |= typedirty; }	///< Mark the data-type as \e dirty
+  void symbolDirty(void) const { highflags |= symboldirty; }	///< Mark the symbol as \e dirty
   void setUnmerged(void) const { highflags |= unmerged; }	///< Mark \b this as having merge problems
 public:
   HighVariable(Varnode *vn);		///< Construct a HighVariable with a single member Varnode

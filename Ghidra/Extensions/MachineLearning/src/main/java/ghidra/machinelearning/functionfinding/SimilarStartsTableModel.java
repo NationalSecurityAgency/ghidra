@@ -41,7 +41,6 @@ import ghidra.util.task.TaskMonitor;
  */
 public class SimilarStartsTableModel extends AddressBasedTableModel<SimilarStartRowObject> {
 
-	private Address potentialStart;
 	private List<SimilarStartRowObject> rows;
 	private RandomForestRowObject randomForestRow;
 
@@ -50,14 +49,12 @@ public class SimilarStartsTableModel extends AddressBasedTableModel<SimilarStart
 	 * a potential function start
 	 * @param plugin owning program
 	 * @param program program 
-	 * @param potentialStart address of potential start
 	 * @param rows similar function starts
 	 * @param randomForestRow model and params
 	 */
-	public SimilarStartsTableModel(PluginTool plugin, Program program, Address potentialStart,
+	public SimilarStartsTableModel(PluginTool plugin, Program program,
 			List<SimilarStartRowObject> rows, RandomForestRowObject randomForestRow) {
-		super("test", plugin, program, null, false);
-		this.potentialStart = potentialStart;
+		super("Similar Starts", plugin, program, null, false);
 		this.rows = rows;
 		this.randomForestRow = randomForestRow;
 	}
@@ -70,10 +67,6 @@ public class SimilarStartsTableModel extends AddressBasedTableModel<SimilarStart
 	@Override
 	protected void doLoad(Accumulator<SimilarStartRowObject> accumulator, TaskMonitor monitor)
 			throws CancelledException {
-		//add a special row corresponding to the potential function start
-		//want it in the table to facilitate (visual) byte string comparisons
-		accumulator.add(new SimilarStartRowObject(potentialStart,
-			randomForestRow.getRandomForest().getNumModels()));
 		accumulator.addAll(rows);
 
 	}
@@ -99,11 +92,6 @@ public class SimilarStartsTableModel extends AddressBasedTableModel<SimilarStart
 		public String getValue(SimilarStartRowObject rowObject, Settings settings, Object data,
 				ServiceProvider services) throws IllegalArgumentException {
 			String addrString = rowObject.funcStart().toString();
-			//address corresponding to the potential start should stand out in the table
-			//so surround it with asterisks
-			if (rowObject.funcStart().equals(potentialStart)) {
-				addrString = "*" + addrString + "*";
-			}
 			return addrString;
 		}
 	}

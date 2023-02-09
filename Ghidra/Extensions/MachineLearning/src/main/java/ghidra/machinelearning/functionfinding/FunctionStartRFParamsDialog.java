@@ -16,7 +16,6 @@
 package ghidra.machinelearning.functionfinding;
 
 import java.awt.BorderLayout;
-import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
@@ -35,13 +34,12 @@ import docking.widgets.table.threaded.GThreadedTablePanel;
 import docking.widgets.textfield.IntegerTextField;
 import ghidra.app.services.ProgramManager;
 import ghidra.framework.main.DataTreeDialog;
+import ghidra.framework.model.DomainFile;
 import ghidra.framework.preferences.Preferences;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.VersionException;
 import ghidra.util.layout.PairLayout;
 import ghidra.util.table.SelectionNavigationAction;
 import ghidra.util.table.actions.MakeProgramSelectionAction;
@@ -145,7 +143,6 @@ public class FunctionStartRFParamsDialog extends DialogComponentProvider {
 	private RandomForestTableModel tableModel;
 	private Program trainingSource;
 	private FunctionStartRFParams params;
-	private Set<Program> openPrograms;
 	private Vector<Long> moduli = new Vector<>(Arrays.asList(new Long[] { 4l, 8l, 16l, 32l }));
 	private GComboBox<Long> modBox;
 	private JButton trainButton;
@@ -164,7 +161,6 @@ public class FunctionStartRFParamsDialog extends DialogComponentProvider {
 			true, true);
 		this.plugin = plugin;
 		rowObjects = new ArrayList<>();
-		openPrograms = new HashSet<>();
 		trainingSource = plugin.getCurrentProgram();
 		JPanel panel = createPanel();
 		addWorkPanel(panel);
@@ -487,24 +483,37 @@ public class FunctionStartRFParamsDialog extends DialogComponentProvider {
 	}
 
 	private void searchOtherProgram(RandomForestRowObject modelRow) {
-		Program p = selectProgram();
-		if (p == null) {
+		DataTreeDialog dtd = new DataTreeDialog(null, "Select Program", DataTreeDialog.OPEN, f -> {
+			Class<?> c = f.getDomainObjectClass();
+			return Program.class.isAssignableFrom(c);
+		});
+		dtd.show();
+		DomainFile dFile = dtd.getDomainFile();
+		if (dFile == null) {
 			return;
 		}
 		ProgramManager pm = plugin.getTool().getService(ProgramManager.class);
-		pm.openProgram(p, ProgramManager.OPEN_VISIBLE);
+		Program p = pm.openProgram(dFile, DomainFile.DEFAULT_VERSION, ProgramManager.OPEN_VISIBLE);
+		if (p == null) {
+			return;
+		}
+		if (!isProgramCompatible(p)) {
+			Msg.showWarn(this, null, "Incompatible Program", p.getName() +
+				" is not compatible with training source program " + trainingSource.getName());
+			return;
+		}
 		searchProgram(p, modelRow);
 	}
 
 	private void showTestErrors(RandomForestRowObject modelRow) {
 		FunctionStartTableProvider provider = new FunctionStartTableProvider(plugin, trainingSource,
 			modelRow.getTestErrors(), modelRow, true);
-		addGeneralActions(provider);
+		addGeneralActions(provider, trainingSource);
 	}
 
-	private void searchProgram(Program prog, RandomForestRowObject modelRow) {
+	private void searchProgram(Program targetProgram, RandomForestRowObject modelRow) {
 		GetAddressesToClassifyTask getTask =
-			new GetAddressesToClassifyTask(prog, plugin.getMinUndefinedRangeSize());
+			new GetAddressesToClassifyTask(targetProgram, plugin.getMinUndefinedRangeSize());
 		//don't want to use the dialog's progress bar 
 		TaskLauncher.launchModal("Gathering Addresses To Classify", getTask);
 		if (getTask.isCancelled()) {
@@ -518,25 +527,25 @@ public class FunctionStartRFParamsDialog extends DialogComponentProvider {
 			execNonFunc = getTask.getAddressesToClassify();
 		}
 		FunctionStartTableProvider provider =
-			new FunctionStartTableProvider(plugin, prog, execNonFunc, modelRow, false);
-		addGeneralActions(provider);
+			new FunctionStartTableProvider(plugin, targetProgram, execNonFunc, modelRow, false);
+		addGeneralActions(provider, targetProgram);
 		DisassembleFunctionStartsAction disassembleAction = null;
 		if (params.isRestrictedByContext()) {
-			disassembleAction = new DisassembleAndApplyContextAction(plugin, prog,
+			disassembleAction = new DisassembleAndApplyContextAction(plugin, targetProgram,
 				provider.getTable(), provider.getTableModel());
 		}
 		else {
-			disassembleAction = new DisassembleFunctionStartsAction(plugin, prog,
+			disassembleAction = new DisassembleFunctionStartsAction(plugin, targetProgram,
 				provider.getTable(), provider.getTableModel());
 		}
 		plugin.getTool().addLocalAction(provider, disassembleAction);
-		CreateFunctionsAction createActions =
-			new CreateFunctionsAction(plugin, prog, provider.getTable(), provider.getTableModel());
+		CreateFunctionsAction createActions = new CreateFunctionsAction(plugin, targetProgram,
+			provider.getTable(), provider.getTableModel());
 		plugin.getTool().addLocalAction(provider, createActions);
 
 	}
 
-	private void addGeneralActions(FunctionStartTableProvider provider) {
+	private void addGeneralActions(FunctionStartTableProvider provider, Program targetProgram) {
 		plugin.addProvider(provider);
 		DockingAction programSelectAction =
 			new MakeProgramSelectionAction(plugin, provider.getTable());
@@ -545,33 +554,9 @@ public class FunctionStartRFParamsDialog extends DialogComponentProvider {
 		DockingAction selectNavigationAction =
 			new SelectionNavigationAction(plugin, provider.getTable());
 		plugin.getTool().addLocalAction(provider, selectNavigationAction);
-		ShowSimilarStartsAction similarStarts = new ShowSimilarStartsAction(plugin,
-			plugin.getCurrentProgram(), provider.getTable(), provider.getTableModel());
+		ShowSimilarStartsAction similarStarts = new ShowSimilarStartsAction(plugin, trainingSource,
+			targetProgram, provider.getTable(), provider.getTableModel());
 		plugin.getTool().addLocalAction(provider, similarStarts);
-	}
-
-	private Program selectProgram() {
-		DataTreeDialog dtd = new DataTreeDialog(null, "Select Program", DataTreeDialog.OPEN, f -> {
-			Class<?> c = f.getDomainObjectClass();
-			return Program.class.isAssignableFrom(c);
-		});
-		dtd.show();
-		if (dtd.wasCancelled()) {
-			return null;
-		}
-		Program otherProgram = null;
-		try {
-			otherProgram = (Program) dtd.getDomainFile()
-					.getDomainObject(plugin, true, true, getTaskMonitorComponent());
-			openPrograms.add(otherProgram);
-		}
-		catch (VersionException | CancelledException | IOException e) {
-			return null;
-		}
-		if (isProgramCompatible(otherProgram)) {
-			return otherProgram;
-		}
-		return null;
 	}
 
 	//checks whether otherProgram contains any specified context registers

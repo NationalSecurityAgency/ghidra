@@ -188,6 +188,29 @@ public:
   /// \return the signed integer value
   virtual intb readSignedInteger(const AttributeId &attribId)=0;
 
+  /// \brief Parse the current attribute as either a signed integer value or a string.
+  ///
+  /// If the attribute is an integer, its value is returned. If the attribute is a string, it must match an
+  /// expected string passed to the method, and a predetermined integer value associated with the string is returned.
+  /// If the attribute neither matches the expected string nor is an integer, the return value is undefined.
+  /// \param expect is the string value to expect if the attribute is encoded as a string
+  /// \param expectval is the integer value to return if the attribute matches the expected string
+  /// \return the encoded integer or the integer value associated with the expected string
+  virtual intb readSignedIntegerExpectString(const string &expect,intb expectval)=0;
+
+  /// \brief Find and parse a specific attribute in the current element as either a signed integer or a string.
+  ///
+  /// If the attribute is an integer, its value is parsed and returned.
+  /// If the attribute is encoded as a string, it must match an expected string passed to this method.
+  /// In this case, a predetermined integer value is passed back, indicating a matching string was parsed.
+  /// If the attribute neither matches the expected string nor is an integer, the return value is undefined.
+  /// If there is no attribute matching the id, an exception is thrown.
+  /// \param attribId is the specific attribute id to match
+  /// \param expect is the string to expect, if the attribute is not encoded as an integer
+  /// \param expectval is the integer value to return if the attribute matches the expected string
+  /// \return the encoded integer or the integer value associated with the expected string
+  virtual intb readSignedIntegerExpectString(const AttributeId &attribId,const string &expect,intb expectval)=0;
+
   /// \brief Parse the current attribute as an unsigned integer value
   ///
   /// The last attribute, as returned by getNextAttributeId, is treated as an unsigned integer, and its value is returned.
@@ -323,6 +346,7 @@ public:
     document = (Document *)0; rootElement = root; attributeIndex = -1; }	///< Constructor with preparsed root
   XmlDecode(const AddrSpaceManager *spc) : Decoder(spc) {
     document = (Document *)0; rootElement = (const Element *)0; attributeIndex = -1; }	///< Constructor for use with ingestStream
+  const Element *getCurrentXmlElement(void) const { return elStack.back(); }	///< Get pointer to underlying XML element object
   virtual ~XmlDecode(void);
   virtual void ingestStream(istream &s);
   virtual uint4 peekElement(void);
@@ -336,6 +360,8 @@ public:
   virtual bool readBool(const AttributeId &attribId);
   virtual intb readSignedInteger(void);
   virtual intb readSignedInteger(const AttributeId &attribId);
+  virtual intb readSignedIntegerExpectString(const string &expect,intb expectval);
+  virtual intb readSignedIntegerExpectString(const AttributeId &attribId,const string &expect,intb expectval);
   virtual uintb readUnsignedInteger(void);
   virtual uintb readUnsignedInteger(const AttributeId &attribId);
   virtual string readString(void);
@@ -469,6 +495,8 @@ public:
   virtual bool readBool(const AttributeId &attribId);
   virtual intb readSignedInteger(void);
   virtual intb readSignedInteger(const AttributeId &attribId);
+  virtual intb readSignedIntegerExpectString(const string &expect,intb expectval);
+  virtual intb readSignedIntegerExpectString(const AttributeId &attribId,const string &expect,intb expectval);
   virtual uintb readUnsignedInteger(void);
   virtual uintb readUnsignedInteger(const AttributeId &attribId);
   virtual string readString(void);

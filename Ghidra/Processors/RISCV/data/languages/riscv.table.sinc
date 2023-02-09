@@ -203,21 +203,25 @@ cbimm: reloc is scop1212 & cop1011 & cop0506 & cop0304 & cop0202 [ reloc = inst_
 # used for goto
 cjimm: reloc is scop1212 & cop1111 & cop0910 & cop0808 & cop0707 & cop0606 & cop0305 & cop0202 [ reloc = inst_start + ((scop1212 << 11) | (cop1111 << 4) | (cop0910 << 8) | (cop0808 << 10) | (cop0707 << 6) | (cop0606 << 7) | (cop0305 << 1) | (cop0202 << 5)); ] { export *[ram]:$(XLEN) reloc; }
 
+
+nzuimm5: is cop0606=1 | cop0505=1 | cop0404=1 | cop0303 = 1 | cop0202=1 {}
+nzuimm6: is cop1212=1 | cop0606=1 | cop0505=1 | cop0404=1 | cop0303 = 1 | cop0202=1 {}
+
 @if ADDRSIZE == "32"
-#TODO  nonzero, would like to have cop0205>0
-c6imm: uimm is cop1212=0 & cop0206 [ uimm = (cop0206 + 0); ] { local tmp:$(XLEN) = uimm; export tmp; }
+c6imm: uimm is cop1212=0 & cop0206 & nzuimm5 [ uimm = (cop0206 + 0); ] { local tmp:$(XLEN) = uimm; export tmp; }
 @elif ADDRSIZE == "64"
-#TODO  nonzero, would like to have cop0205>0 | cop0206>0
-c6imm: uimm is cop1212 & cop0206 [ uimm = (cop1212 << 5) | (cop0206); ] { local tmp:$(XLEN) = uimm; export tmp; }
+c6imm: uimm is cop1212 & cop0206 & nzuimm6 [ uimm = (cop1212 << 5) | (cop0206); ] { local tmp:$(XLEN) = uimm; export tmp; }
 @elif ADDRSIZE == "128"
 c6imm: uimm is cop1212 & cop0206 [ uimm = (cop1212 << 5) | (cop0206); ] { local tmp:$(XLEN) = uimm + (64 * (uimm == 0)); export tmp; }
 @endif
 
-cbigimm: uimm is cop1212 & scop1212 & cop0206 [ uimm = (cop1212 << 5) | (cop0206); ] { local tmp:$(XLEN) = (scop1212 << 17) | (cop0206 << 12); export tmp; }
+cbigimm: uimm is cop1212 & scop1212 & cop0206 & nzuimm6 [ uimm = (cop1212 << 5) | (cop0206); ] { local tmp:$(XLEN) = (scop1212 << 17) | (cop0206 << 12); export tmp; }
 
-caddi4spnimm: uimm is cop1112 & cop0710 & cop0606 & cop0505 [ uimm = (cop0710 << 6) | (cop1112 << 4) | (cop0505 << 3) | (cop0606 << 2); ] { local tmp:$(XLEN) = uimm; export tmp; }
+nzcaddi4: is cop1212=1 | cop1111=1 | cop1010=1 | cop0909=1 | cop0808=1 | cop0707=1 | cop0606=1 | cop0505=1 {}
 
-caddi16spimm: imm is scop1212 & cop0606 & cop0505 & cop0304 & cop0202 [ imm = (scop1212 << 9) | (cop0304 << 7) | (cop0505 << 6) | (cop0202 << 5) | (cop0606 << 4); ] { local tmp:$(XLEN) = imm; export tmp; }
+caddi4spnimm: uimm is nzcaddi4 & cop1112 & cop0710 & cop0606 & cop0505 [ uimm = (cop0710 << 6) | (cop1112 << 4) | (cop0505 << 3) | (cop0606 << 2); ] { local tmp:$(XLEN) = uimm; export tmp; }
+
+caddi16spimm: imm is scop1212 & cop0606 & cop0505 & cop0304 & cop0202 & nzuimm6 [ imm = (scop1212 << 9) | (cop0304 << 7) | (cop0505 << 6) | (cop0202 << 5) | (cop0606 << 4); ] { local tmp:$(XLEN) = imm; export tmp; }
 
 
 clwimm: uimm is cop1012 & cop0606 & cop0505 [ uimm = (cop1012 << 3) | (cop0606 << 2) | (cop0505 << 6); ] { local tmp:$(XLEN) = uimm; export tmp; }

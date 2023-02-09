@@ -51,7 +51,11 @@ public class ELFExternalSymbolResolver {
 	 */
 	public static void fixUnresolvedExternalSymbols(Program program, boolean saveIfModified,
 			MessageLog messageLog, TaskMonitor monitor) throws CancelledException, IOException {
-		ProjectData projectData = program.getDomainFile().getParent().getProjectData();
+		DomainFolder domainFolder = program.getDomainFile().getParent();
+		if (domainFolder == null) {
+			return; // headless case with nothing pre-saved...currently unsupported
+		}
+		ProjectData projectData = domainFolder.getProjectData();
 
 		Collection<Long> unresolvedExternalFunctionIds = getUnresolvedExternalFunctionIds(program);
 		if (unresolvedExternalFunctionIds.size() == 0) {

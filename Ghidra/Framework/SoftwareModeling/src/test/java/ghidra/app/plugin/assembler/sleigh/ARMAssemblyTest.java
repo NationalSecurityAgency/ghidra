@@ -121,4 +121,19 @@ public class ARMAssemblyTest extends AbstractAssemblyTest {
 		assertOneCompatRestExact("vmov.i64 d0,simdExpand(0x1,0xe,0xb1)", "83:ff:31:0e", THUMB,
 			0x00010100, "vmov.i64 d0,simdExpand(0x1,0xe,0xb1)");
 	}
+
+	@Test
+	public void testAssemble_T_tbb_mr0_r1() {
+		assertOneCompatRestExact("tbb [r0, r1]", "d0:e8:01:f0", THUMB, 0x00400000, "tbb [r0,r1]");
+	}
+
+	@Test
+	public void testAssemble_T_tbb_mpc_r0() {
+		assertOneCompatRestExact("tbb [pc, r1]", "df:e8:01:f0", THUMB, 0x00400000, "tbb [pc,r1]");
+	}
+
+	@Test
+	public void testAssemble_T_tbb_m0_r0() {
+		assertAllSyntaxErrors("tbb [0, r0]");
+	}
 }

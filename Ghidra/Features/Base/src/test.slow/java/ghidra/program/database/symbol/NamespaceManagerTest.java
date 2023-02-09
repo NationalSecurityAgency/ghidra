@@ -28,7 +28,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  */
@@ -259,7 +259,7 @@ public class NamespaceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		MemoryBlock[] blocks = program.getMemory().getBlocks();
 		namespaceManager.moveAddressRange(blocks[0].getStart(), addr(0x1000), blocks[0].getSize(),
-			TaskMonitorAdapter.DUMMY_MONITOR);
+			TaskMonitor.DUMMY);
 
 		set = new AddressSet();
 		set.addRange(addr(0x1000), addr(0x1030));
@@ -292,7 +292,7 @@ public class NamespaceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		f2.setParentNamespace(classNamespace);
 
 		namespaceManager.moveAddressRange(addr(0x300), addr(0x1000), 0x100,
-			TaskMonitorAdapter.DUMMY_MONITOR);
+			TaskMonitor.DUMMY);
 
 		set = new AddressSet();
 		set.addRange(addr(0), addr(0x30));
@@ -485,6 +485,6 @@ public class NamespaceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 	private void addBlock(String name, Address addr, int length) throws Exception {
 		program.getMemory()
 				.createInitializedBlock(name, addr, length, (byte) 0,
-					TaskMonitorAdapter.DUMMY_MONITOR, false);
+					TaskMonitor.DUMMY, false);
 	}
 }

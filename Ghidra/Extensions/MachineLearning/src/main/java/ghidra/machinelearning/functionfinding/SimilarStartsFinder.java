@@ -35,11 +35,13 @@ import ghidra.program.model.listing.Program;
  * function starts, this class is used to find the function starts in the training set
  * most similar to {@code S}.  Here "similar" is defined in terms of proximity in a
  * random forest (i.e., proportion of trees which agree on two feature vectors).
+ * Note that {@code S} may or may not be in the training source program.
  */
 public class SimilarStartsFinder {
 
 	private RandomForestRowObject modelAndParams;
-	private Program program;
+	private Program trainingSource;
+	private Program targetProgram;
 	private int preBytes;
 	private int initialBytes;
 	private boolean includeBitFeatures;
@@ -48,11 +50,14 @@ public class SimilarStartsFinder {
 
 	/**
 	 * Creates a {@link SimilarStartsFinder} for the given program and model
-	 * @param program program
+	 * @param trainingSource source of training data
+	 * @param targetProgram program being searched
 	 * @param modelAndParams model and params
 	 */
-	public SimilarStartsFinder(Program program, RandomForestRowObject modelAndParams) {
-		this.program = program;
+	public SimilarStartsFinder(Program trainingSource, Program targetProgram,
+			RandomForestRowObject modelAndParams) {
+		this.trainingSource = trainingSource;
+		this.targetProgram = targetProgram;
 		this.modelAndParams = modelAndParams;
 		preBytes = modelAndParams.getNumPreBytes();
 		initialBytes = modelAndParams.getNumInitialBytes();
@@ -69,7 +74,7 @@ public class SimilarStartsFinder {
 	 * @return similar starts (in descending order)
 	 */
 	public List<SimilarStartRowObject> getSimilarFunctionStarts(Address potential, int numStarts) {
-		List<Node<Label>> leafNodes = getLeafNodes(potential);
+		List<Node<Label>> leafNodes = getLeafNodes(potential, targetProgram);
 		List<SimilarStartRowObject> neighbors = new ArrayList<>(startsToLeafList.size());
 		for (Entry<Address, List<Node<Label>>> entry : startsToLeafList.entrySet()) {
 			Address start = entry.getKey();
@@ -99,7 +104,7 @@ public class SimilarStartsFinder {
 		AddressIterator addrIter = knownStarts.getAddresses(true);
 		while (addrIter.hasNext()) {
 			Address start = addrIter.next();
-			List<Node<Label>> nodeList = getLeafNodes(start);
+			List<Node<Label>> nodeList = getLeafNodes(start, trainingSource);
 			startsToLeafList.put(start, nodeList);
 		}
 	}
@@ -107,10 +112,11 @@ public class SimilarStartsFinder {
 	/**
 	 * Creates a feature vector for {@code addr}, runs it down each tree in the forest,
 	 * and records the leaf node reached.
-	 * @param addr potential function start
+	 * @param addr (potential) function start
+	 * @param program program containing {@code addr}
 	 * @return list of leaf nodes
 	 */
-	List<Node<Label>> getLeafNodes(Address addr) {
+	List<Node<Label>> getLeafNodes(Address addr, Program program) {
 		List<Node<Label>> leafNodes = new ArrayList<>(randomForest.getNumModels());
 		List<Feature> potentialFeatureVector = ModelTrainingUtils.getFeatureVector(program, addr,
 			preBytes, initialBytes, includeBitFeatures);

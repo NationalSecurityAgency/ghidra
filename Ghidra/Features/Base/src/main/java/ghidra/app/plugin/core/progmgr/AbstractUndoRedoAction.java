@@ -139,7 +139,6 @@ public abstract class AbstractUndoRedoAction extends DockingAction {
 		if (lastProgram != null) {
 			actionName += " " + lastProgram.getDomainFile().getName();
 			description = actionName;
-
 		}
 
 		if (canPerformAction(lastProgram)) {
@@ -147,7 +146,7 @@ public abstract class AbstractUndoRedoAction extends DockingAction {
 				getName() + " " + HTMLUtilities.escapeHTML(getUndoRedoDescription(lastProgram)));
 		}
 
-		getMenuBarData().setMenuItemName(actionName);
+		getMenuBarData().setMenuItemNamePlain(actionName);
 		setDescription(description);
 	}
 

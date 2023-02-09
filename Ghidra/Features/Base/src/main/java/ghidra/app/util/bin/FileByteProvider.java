@@ -28,7 +28,7 @@ import ghidra.util.datastruct.LRUMap;
  * A {@link ByteProvider} that reads its bytes from a file.
  * 
  */
-public class FileByteProvider implements ByteProvider, MutableByteProvider {
+public class FileByteProvider implements MutableByteProvider {
 
 	static final int BUFFER_SIZE = 64 * 1024;
 	private static final int BUFFERS_TO_PIN = 4;

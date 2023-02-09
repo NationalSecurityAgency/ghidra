@@ -27,7 +27,7 @@ import ghidra.program.model.lang.LanguageID;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryConflictException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class AddressMapDB64BitTest extends AbstractAddressMapDBTestClass {
 
@@ -80,7 +80,7 @@ public class AddressMapDB64BitTest extends AbstractAddressMapDBTestClass {
 			// Block3 spans two (2) memory chunks and spans transition between positive and negative offset values
 			// (base #2(end of block) and #3(start of block) allocated
 			mem.createInitializedBlock("Block3", space.getAddress(0x7ffffffffff00000L), 0x200000,
-				(byte) 0, TaskMonitorAdapter.DUMMY_MONITOR, false);
+				(byte) 0, TaskMonitor.DUMMY, false);
 
 			success = true;
 		}

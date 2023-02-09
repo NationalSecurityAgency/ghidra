@@ -22,7 +22,7 @@ import org.junit.Test;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.ProgramModifierListener;
 import ghidra.program.model.data.*;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Tests for merging data types.
@@ -93,7 +93,7 @@ public class DataTypeMergeUseForAllTest extends AbstractDataTypeMergeTest {
 
 				try {
 					intStruct.add(new ByteDataType());// Change data type.
-					dtm.remove(coolUnion, TaskMonitorAdapter.DUMMY_MONITOR);// Remove the data type.
+					dtm.remove(coolUnion, TaskMonitor.DUMMY);// Remove the data type.
 					charStruct.add(new FloatDataType());
 					commit = true;
 				}
@@ -122,7 +122,7 @@ public class DataTypeMergeUseForAllTest extends AbstractDataTypeMergeTest {
 						"CharStruct");
 
 				try {
-					dtm.remove(intStruct, TaskMonitorAdapter.DUMMY_MONITOR);// Remove the data type.
+					dtm.remove(intStruct, TaskMonitor.DUMMY);// Remove the data type.
 					coolUnion.delete(2);
 					charStruct.add(new CharDataType());
 					commit = true;

@@ -159,6 +159,7 @@ private:
   void clearCover(void) const; ///< Turn off any coverage information
   void setFlags(uint4 fl) const; ///< Internal method for setting boolean attributes
   void clearFlags(uint4 fl) const; ///< Internal method for clearing boolean attributes
+  void clearSymbolLinks(void);	///< Clear any Symbol attached to \b this Varnode
   void setUnaffected(void) { setFlags(Varnode::unaffected); } ///< Mark Varnode as \e unaffected
   // These functions should be only private things used by VarnodeBank
   void setInput(void) { setFlags(Varnode::input|Varnode::coverdirty); }	///< Mark Varnode as \e input

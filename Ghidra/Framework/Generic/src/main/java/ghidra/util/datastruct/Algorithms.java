@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +63,7 @@ public class Algorithms {
 
 	public static <T> void bubbleSort(List<T> data, int low, int high, Comparator<T> comparator) {
 		try {
-			doBubbleSort(data, low, high, comparator, TaskMonitorAdapter.DUMMY_MONITOR);
+			doBubbleSort(data, low, high, comparator, TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
 			// do nothing--cancelled

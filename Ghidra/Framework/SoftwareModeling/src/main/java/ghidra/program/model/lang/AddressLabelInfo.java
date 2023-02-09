@@ -13,63 +13,54 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.program.model.util;
+package ghidra.program.model.lang;
 
 import ghidra.program.model.address.Address;
-import ghidra.program.model.symbol.*;
+import ghidra.program.model.address.AddressOverflowException;
+import ghidra.program.model.util.ProcessorSymbolType;
 
 /**
  * <CODE>AddressLabelInfo</CODE> is a utility class for storing
- * an <CODE>Address</CODE> and a corresponding label or alias together.
+ * an <CODE>Address</CODE> together with a corresponding language-defined 
+ * label or alias that is within the global namespace which is
+ * established with a SourceType of IMPORTED within a program.
  */
 public class AddressLabelInfo implements Comparable<AddressLabelInfo> {
 	private Address addr;
+	private Address endAddr;
 	private String label;
 	private boolean isPrimary;
-	private Namespace scope;
-	private SourceType symbolSource;
 	private boolean isEntry;
 	private ProcessorSymbolType processorSymbolType;
-
+	private int sizeInBytes;
+	private Boolean isVolatile;
+	
 	/**
-	 * Constructs a new AddressLabelInfo object
-	 * @param s symbol to initialize info from.
+	 * Constructor for class AddressLabelInfo
+	 * 
+	 * @param	addr			Address object that describes the memory address
+	 * @param	sizeInBytes		Integer describing the Size in bytes that the label applies to.
+	 * @param	label			String label or alias for the Address
+	 * @param 	isPrimary		boolean describes if this object is the primary label for the Address 'addr'
+	 * @param	isEntry			boolean describes if this object is an entry label for the Address 'addr'
+	 * @param	type			ProcessorSymbolType the type of symbol
+	 * @param	isVolatile		Boolean describes if the memory at this address is volatile
 	 */
-	public AddressLabelInfo(Symbol s) {
-		this.addr = s.getAddress();
-		this.label = s.getName();
-		this.isPrimary = s.isPrimary();
-		scope = s.getParentNamespace();
-		symbolSource = s.getSource();
-		isEntry = s.isExternalEntryPoint();
-	}
-
-	public AddressLabelInfo(Address addr, String label, boolean isPrimary, Namespace scope,
-			SourceType symbolSource, boolean isEntry) {
-		this(addr, label, isPrimary, scope, symbolSource, isEntry, null);
-	}
-
-	public AddressLabelInfo(Address addr, String label, boolean isPrimary, Namespace scope,
-			SourceType symbolSource, boolean isEntry, ProcessorSymbolType type) {
+	public AddressLabelInfo(Address addr, Integer sizeInBytes, String label, boolean isPrimary, 
+			boolean isEntry, ProcessorSymbolType type, Boolean isVolatile) throws AddressOverflowException {
 		this.addr = addr;
+		if ( sizeInBytes == null || sizeInBytes <= 0 ) {
+			// Default size in addressable units
+			this.sizeInBytes = addr.getAddressSpace().getAddressableUnitSize();
+		} else {
+			this.sizeInBytes = sizeInBytes;
+		}
+		this.endAddr = this.addr.addNoWrap(this.sizeInBytes-1);
 		this.label = label;
 		this.isPrimary = isPrimary;
-		this.scope = scope;
-		this.symbolSource = symbolSource;
 		this.isEntry = isEntry;
 		this.processorSymbolType = type;
-	}
-
-	public AddressLabelInfo(Address addr, String label, boolean isPrimary, SourceType symbolSource) {
-		this(addr, label, isPrimary, null, symbolSource, false);
-	}
-
-	/**
-	 * Constructs a new AddressLabelInfo object with only address information
-	 * @param addr the address to store in this object
-	 */
-	public AddressLabelInfo(Address addr) {
-		this(addr, null, false, null, SourceType.DEFAULT, false);
+		this.isVolatile = isVolatile;
 	}
 
 	/**
@@ -78,7 +69,14 @@ public class AddressLabelInfo implements Comparable<AddressLabelInfo> {
 	public final Address getAddress() {
 		return addr;
 	}
-
+	
+	/**
+	 * Returns the object's end address.
+	 */
+	public final Address getEndAddress() {
+		return endAddr;
+	}
+	
 	/**
 	 * Returns the object's label or alias.
 	 */
@@ -87,17 +85,28 @@ public class AddressLabelInfo implements Comparable<AddressLabelInfo> {
 	}
 
 	/**
+	 * Returns the object's size in bytes. Always non-zero positive value and defaults to 
+	 * addressable unit size of associated address space.
+	 */
+	public final int getByteSize() {
+		return sizeInBytes;
+	}
+	
+	/**
 	 * Returns whether the object is the primary label at the address.
 	 */
 	public final boolean isPrimary() {
 		return isPrimary;
 	}
-
+	
 	/**
-	 * Returns the scope for the symbol.
+	 * Returns whether the object is volatile.
+	 * Boolean.False when the address is explicitly not volatile.
+	 * Boolean.True when the address is volatile.
+	 * NULL when the volatility is not defined at this address.
 	 */
-	public Namespace getScope() {
-		return scope;
+	public final Boolean isVolatile() {
+		return isVolatile;
 	}
 
 	/**
@@ -138,10 +147,6 @@ public class AddressLabelInfo implements Comparable<AddressLabelInfo> {
 			return -1;
 		}
 		return thisLabel.compareTo(addrLabel);
-	}
-
-	public SourceType getSource() {
-		return symbolSource;
 	}
 
 	public boolean isEntry() {

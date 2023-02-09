@@ -26,12 +26,12 @@ import ghidra.framework.store.LockException;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.*;
+import ghidra.program.model.lang.AddressLabelInfo;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
-import ghidra.program.model.util.AddressLabelInfo;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.exception.NotFoundException;
@@ -106,7 +106,7 @@ public class PinnedSymbolTest extends AbstractGhidraHeadlessIntegrationTest {
 
 		Memory memory = program.getMemory();
 		MemoryBlock block = memory.getBlock(addr(0));
-		memory.moveBlock(block, addr(moveAmount), TaskMonitorAdapter.DUMMY_MONITOR);
+		memory.moveBlock(block, addr(moveAmount), TaskMonitor.DUMMY);
 
 		checkProcessorSymbolsInPlace(EXPECTED_PROCESSOR_SYMBOLS + EXPECTED_USER_SYMBOLS + 1);
 
@@ -136,7 +136,7 @@ public class PinnedSymbolTest extends AbstractGhidraHeadlessIntegrationTest {
 
 		Memory memory = program.getMemory();
 		MemoryBlock block = memory.getBlock(addr(0));
-		memory.removeBlock(block, TaskMonitorAdapter.DUMMY_MONITOR);
+		memory.removeBlock(block, TaskMonitor.DUMMY);
 
 		checkProcessorSymbolsInPlace(EXPECTED_PROCESSOR_SYMBOLS + 1);
 
@@ -308,7 +308,7 @@ public class PinnedSymbolTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	private void createMemBlock() throws Exception {
 		byte[] bytesOne = new byte[100];
-		TaskMonitor m = TaskMonitorAdapter.DUMMY_MONITOR;
+		TaskMonitor m = TaskMonitor.DUMMY;
 		program.getMemory().createInitializedBlock("B1", addr(0),
 			new ByteArrayInputStream(bytesOne), bytesOne.length, m, false);
 

@@ -129,7 +129,7 @@ if "%JAVA_HOME%" == "" (
 set "JAVA_CMD=%JAVA_HOME%\bin\java"
 
 :: Get the configurable VM arguments from the launch properties
-for /f "delims=*" %%i in ('java -cp "%LS_CPATH%" LaunchSupport "%INSTALL_DIR%" -vmargs') do set VMARG_LIST=%VMARG_LIST% %%i
+for /f "delims=*" %%i in ('java -cp "%LS_CPATH%" LaunchSupport "%INSTALL_DIR%" -vmargs') do set VMARG_LIST=!VMARG_LIST! %%i
 
 :: Set Max Heap Size if specified
 if not "%MAXMEM%"=="" (

@@ -483,7 +483,7 @@ public class GhidraProject {
 					throw new DuplicateFileException("File already exists: " + file);
 				}
 			}
-			program.saveToPackedFile(file, TaskMonitorAdapter.DUMMY_MONITOR);
+			program.saveToPackedFile(file, TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e1) {
 			throw new IOException("Cancelled");

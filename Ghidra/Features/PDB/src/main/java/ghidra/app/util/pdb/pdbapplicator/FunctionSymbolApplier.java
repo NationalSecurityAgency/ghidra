@@ -30,8 +30,8 @@ import ghidra.program.model.data.FunctionDefinition;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.SourceType;
-import ghidra.util.exception.AssertException;
-import ghidra.util.exception.CancelledException;
+import ghidra.util.InvalidNameException;
+import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -328,7 +328,17 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 		if (!(dataType instanceof FunctionDefinition)) {
 			return false;
 		}
-		FunctionDefinition def = (FunctionDefinition) dataType;
+		FunctionDefinition def =
+			(FunctionDefinition) dataType.copy(applicator.getDataTypeManager());
+		try {
+			// Must use copy of function definition with preserved function name.
+			// While not ideal, this prevents applying an incorrect function name
+			// with an IMPORTED source type
+			def.setName(function.getName());
+		}
+		catch (InvalidNameException | DuplicateNameException e) {
+			throw new RuntimeException("unexpected exception", e);
+		}
 		ApplyFunctionSignatureCmd sigCmd =
 			new ApplyFunctionSignatureCmd(address, def, SourceType.IMPORTED);
 		if (!sigCmd.applyTo(applicator.getProgram(), monitor)) {

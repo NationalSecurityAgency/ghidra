@@ -15,8 +15,8 @@
  */
 package ghidra.machinelearning.functionfinding;
 
-import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.*;
@@ -33,29 +33,35 @@ import ghidra.util.table.GhidraThreadedTablePanel;
  * set to a potential function start
  */
 public class SimilarStartsTableProvider extends ProgramAssociatedComponentProviderAdapter {
-	private Program program;
+	private Program trainingSource;
+	private Program targetProgram;
 	private Address potentialStart;
 	private List<SimilarStartRowObject> rows;
-	private JComponent component;
+	private JSplitPane component;
 	private RandomForestRowObject randomForestRow;
 
 	/**
 	 * Create a table provider
 	 * @param plugin owning plugin
-	 * @param program program being search
+	 * @param trainingSource source of training data
+	 * @param targetProgram program being searched
 	 * @param potentialStart address of potential start
 	 * @param rows closest potential starts
 	 * @param randomForestRow model and params
 	 */
-	public SimilarStartsTableProvider(RandomForestFunctionFinderPlugin plugin, Program program,
-			Address potentialStart, List<SimilarStartRowObject> rows,
-			RandomForestRowObject randomForestRow) {
-		super(program.getName() + ": Similar Function Starts", plugin.getName(), program, plugin);
-		this.program = program;
+	public SimilarStartsTableProvider(RandomForestFunctionFinderPlugin plugin,
+			Program trainingSource, Program targetProgram, Address potentialStart,
+			List<SimilarStartRowObject> rows, RandomForestRowObject randomForestRow) {
+		super("Potential Start in " + targetProgram.getName(), plugin.getName(), targetProgram,
+			plugin);
+		this.trainingSource = trainingSource;
+		this.targetProgram = targetProgram;
 		this.potentialStart = potentialStart;
 		this.rows = rows;
 		this.randomForestRow = randomForestRow;
-		this.setSubTitle("Function Starts Similar to " + potentialStart.toString());
+		this.setSubTitle(
+			potentialStart.toString() + " compared to closest known starts in training set (from " +
+				trainingSource.getName() + ")");
 		build();
 		setHelpLocation(new HelpLocation(plugin.getName(), "SimilarStartsTable"));
 	}
@@ -65,23 +71,51 @@ public class SimilarStartsTableProvider extends ProgramAssociatedComponentProvid
 		return component;
 	}
 
+	/**
+	 * Builds the main component for this provider.
+	 * <P>
+	 * The component is a {@code JSplitPanel} with two {@link GhidraTable}s.  The upper
+	 * table consists of a single row containing the potential function start.  The rows
+	 * of the lower table contain the function starts in the training source program closest to
+	 * the potential function start.  Both tables are navigable; note that the potential
+	 * function start may or may not be in training source program. 
+	 */
 	private void build() {
-		component = new JPanel(new BorderLayout());
-		SimilarStartsTableModel model =
-			new SimilarStartsTableModel(tool, program, potentialStart, rows, randomForestRow);
+		SimilarStartsTableModel similarStartsModel =
+			new SimilarStartsTableModel(tool, trainingSource, rows, randomForestRow);
 		GhidraThreadedTablePanel<SimilarStartRowObject> similarStartsPanel =
-			new GhidraThreadedTablePanel<>(model, 1000);
+			new GhidraThreadedTablePanel<>(similarStartsModel, 1000);
 		GhidraTable similarStartsTable = similarStartsPanel.getTable();
-		similarStartsTable.setName(
-			program.getName() + ": Known Starts Similar to " + potentialStart.toString());
+		similarStartsPanel.setName(
+			targetProgram.getName() + ": Known Starts Similar to " + potentialStart.toString());
 		GoToService goToService = tool.getService(GoToService.class);
 		if (goToService != null) {
 			similarStartsTable.installNavigation(goToService, goToService.getDefaultNavigatable());
 		}
 		similarStartsTable.setNavigateOnSelectionEnabled(true);
 		similarStartsTable.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
-		similarStartsTable.setPreferredScrollableViewportSize(new Dimension(900, 300));
-		component.add(similarStartsPanel, BorderLayout.CENTER);
+		similarStartsTable.setPreferredScrollableViewportSize(new Dimension(700, 200));
+		similarStartsTable.setToolTipText("Known Starts in " + trainingSource.getName());
+
+		List<SimilarStartRowObject> singleton = new ArrayList<>();
+		singleton.add(new SimilarStartRowObject(potentialStart,
+			randomForestRow.getRandomForest().getNumModels()));
+		SimilarStartsTableModel potentialStartSingletonModel =
+			new SimilarStartsTableModel(tool, targetProgram, singleton, randomForestRow);
+		GhidraThreadedTablePanel<SimilarStartRowObject> potentialStartPanel =
+			new GhidraThreadedTablePanel<>(potentialStartSingletonModel, 1000);
+		GhidraTable potentialStartTable = potentialStartPanel.getTable();
+		potentialStartTable
+				.setToolTipText("Potential Function Start in " + targetProgram.getName());
+		if (goToService != null) {
+			potentialStartTable.installNavigation(goToService, goToService.getDefaultNavigatable());
+		}
+		potentialStartTable.setNavigateOnSelectionEnabled(true);
+		potentialStartTable.setPreferredScrollableViewportSize(new Dimension(700, 30));
+		potentialStartTable.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
+		component =
+			new JSplitPane(JSplitPane.VERTICAL_SPLIT, potentialStartPanel, similarStartsPanel);
+		component.setResizeWeight(.1);
 	}
 
 }

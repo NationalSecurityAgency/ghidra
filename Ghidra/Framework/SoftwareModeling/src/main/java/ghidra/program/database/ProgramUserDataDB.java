@@ -137,7 +137,7 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 			if (createManagers(CREATE, program, TaskMonitor.DUMMY) != null) {
 				throw new AssertException("Unexpected version exception on create");
 			}
-			//initManagers(CREATE, TaskMonitorAdapter.DUMMY_MONITOR);
+			//initManagers(CREATE, TaskMonitor.DUMMY);
 
 			endTransaction(id, true);
 			changed = false;

@@ -74,7 +74,7 @@ public class ClassCategoryNode extends SymbolCategoryNode {
 		Namespace parentNamespace = symbol.getParentNamespace();
 		Symbol namespaceSymbol = parentNamespace.getSymbol();
 		SymbolNode key = SymbolNode.createNode(namespaceSymbol, program);
-		GTreeNode parentNode = findSymbolTreeNode(key, false, TaskMonitorAdapter.DUMMY_MONITOR);
+		GTreeNode parentNode = findSymbolTreeNode(key, false, TaskMonitor.DUMMY);
 		if (parentNode == null) {
 			return null;
 		}
