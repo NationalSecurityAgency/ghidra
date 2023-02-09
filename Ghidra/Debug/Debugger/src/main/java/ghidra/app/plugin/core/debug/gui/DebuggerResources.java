@@ -898,11 +898,13 @@ public interface DebuggerResources {
 
 		String NAME_VIS_RO_ONCE = "Read Visible Memory, RO Once";
 		String NAME_VISIBLE = "Read Visible Memory";
+		String NAME_LOAD_EMU = "Load Emulator from Programs";
 		String NAME_NONE = "Do Not Read Memory";
 
 		// TODO: Separate icon for each
 		Icon ICON_VIS_RO_ONCE = ICON_AUTOREAD;
 		Icon ICON_VISIBLE = ICON_AUTOREAD;
+		Icon ICON_LOAD_EMU = ICON_EMULATE;
 		Icon ICON_NONE = ICON_DELETE;
 
 		static <T> MultiStateActionBuilder<T> builder(Plugin owner) {
