@@ -119,6 +119,7 @@ public interface ToolServices {
 
 	/**
 	 * Launch the default tool and open the specified domainFile.
+	 * NOTE: running tool re-use is implementation dependent
 	 * @param domainFile the file to open
 	 * @return the launched tool.  Null returned if a suitable default tool
 	 * for the file content type was not found.
@@ -136,7 +137,8 @@ public interface ToolServices {
 
 	/**
 	 * Launch the default tool and open the specified Ghidra URL resource.
-	 * The tool choosen well be based upon the content type of the specified resource.
+	 * The tool choosen will be based upon the content type of the specified resource.
+	 * NOTE: running tool re-use is implementation dependent
 	 * @param ghidraUrl resource to be opened (see {@link GhidraURL})
 	 * @return the launched tool.  Null returned if a failure occurs while accessing the specified
 	 * resource or a suitable default tool for the file content type was not found.
@@ -154,18 +156,6 @@ public interface ToolServices {
 	 * the {@code ghidra} protocol is supported.
 	 */
 	public PluginTool launchToolWithURL(String toolName, URL ghidraUrl);
-
-	/**
-	 * Add a listener that will be notified when the default tool specification changes 
-	 * @param listener the listener
-	 */
-	public void addDefaultToolChangeListener(DefaultToolChangeListener listener);
-
-	/**
-	 * Remove the listener
-	 * @param listener the listener
-	 */
-	public void removeDefaultToolChangeListener(DefaultToolChangeListener listener);
 
 	/**
 	 * Return array of running tools

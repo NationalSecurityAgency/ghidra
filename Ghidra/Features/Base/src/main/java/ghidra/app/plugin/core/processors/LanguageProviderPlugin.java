@@ -316,18 +316,7 @@ public final class LanguageProviderPlugin extends Plugin implements ApplicationL
 			try {
 				SwingUtilities.invokeAndWait(() -> {
 					ToolServices toolServices = tool.getToolServices();
-					ToolTemplate defaultToolTemplate = toolServices.getDefaultToolTemplate(file);
-					if (defaultToolTemplate != null) {
-						String defaultToolName = defaultToolTemplate.getName();
-						for (PluginTool t : toolServices.getRunningTools()) {
-							if (t.getName().equals(defaultToolName)) {
-								openTool = t;
-								break;
-							}
-						}
-					}
-					if (openTool == null ||
-						!openTool.acceptDomainFiles(new DomainFile[] { file })) {
+					if (toolServices.launchDefaultTool(domainFile) == null) {
 						Msg.showError(this, tool.getToolFrame(), "Failed to Open Program",
 							"A suitable default tool could not found!");
 					}

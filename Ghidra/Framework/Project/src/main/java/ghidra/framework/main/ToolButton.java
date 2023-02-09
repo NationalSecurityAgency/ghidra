@@ -67,7 +67,6 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 	private ToolTemplate template;
 	private PluginTool associatedRunningTool;
 
-	private DefaultToolChangeListener toolChangeListener;
 	private ToolServices toolServices;
 
 	/**
@@ -132,8 +131,6 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 		}
 
 		if (!isRunningTool()) {
-			toolChangeListener = new ToolChangeListener(template);
-			toolServices.addDefaultToolChangeListener(toolChangeListener);
 			setIcon(generateIcon());
 		}
 	}
@@ -503,8 +500,6 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 	}
 
 	void dispose() {
-		toolServices.removeDefaultToolChangeListener(toolChangeListener);
-
 		plugin = null;
 		template = null;
 		associatedRunningTool = null;
@@ -678,22 +673,6 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
-
-	private class ToolChangeListener implements DefaultToolChangeListener {
-		private final ToolTemplate toolTemplate;
-
-		public ToolChangeListener(ToolTemplate toolTemplate) {
-			this.toolTemplate = toolTemplate;
-		}
-
-		@Override
-		public void defaultToolChanged(String oldName, String newName) {
-			String myName = toolTemplate.getName();
-			if (myName.equals(oldName) || myName.equals(newName)) {
-				setIcon(generateIcon());
-			}
-		}
-	}
 
 	private class ToolButtonDropTgtAdapter extends DropTgtAdapter {
 		private boolean draggingOverValidDropTarget = false;

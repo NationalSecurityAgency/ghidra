@@ -1102,14 +1102,9 @@ public class FrontEndPlugin extends Plugin
 		}
 
 		Project project = tool.getProject();
-		final ToolServices toolServices = project.getToolServices();
-		ToolTemplate defaultToolTemplate = toolServices.getDefaultToolTemplate(domainFile);
-		if (defaultToolTemplate != null) {
-			ToolButton button = toolBar.getToolButtonForToolConfig(defaultToolTemplate);
-			if (button != null) {
-				button.launchTool(domainFile);
-				return;
-			}
+		ToolServices toolServices = project.getToolServices();
+		if (toolServices.launchDefaultTool(domainFile) != null) {
+			return;
 		}
 
 		Msg.showInfo(this, tool.getToolFrame(), "Cannot Find Tool",
