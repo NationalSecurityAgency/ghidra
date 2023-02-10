@@ -17,8 +17,6 @@ package ghidra.app.plugin.core.analysis;
 
 import java.util.*;
 
-import javax.swing.SwingUtilities;
-
 import docking.ActionContext;
 import docking.DockingWindowManager;
 import docking.action.DockingAction;
@@ -59,7 +57,7 @@ import ghidra.util.task.TaskLauncher;
 	category = PluginCategoryNames.ANALYSIS,
 	shortDescription = "Manages auto-analysis",
 	description = "Provides coordination and a service for All Auto Analysis tasks.",
-	eventsConsumed = { ProgramOpenedPluginEvent.class, ProgramClosedPluginEvent.class, ProgramActivatedPluginEvent.class }
+	eventsConsumed = { ProgramOpenedPluginEvent.class, ProgramClosedPluginEvent.class, ProgramActivatedPluginEvent.class, ProgramPostActivatedPluginEvent.class }
 )
 //@formatter:on
 public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerListener {
@@ -180,16 +178,20 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 	private void analyzeCallback(Program program, ProgramSelection selection) {
 		AutoAnalysisManager analysisMgr = AutoAnalysisManager.getAnalysisManager(program);
 
-		analysisMgr.initializeOptions(); // get initial options
+		analysisMgr.initializeOptions(); // this allows analyzers to register options with defaults
 
 		if (!showOptionsDialog(program)) {
 			return;
 		}
 
-		analysisMgr.initializeOptions(); // options may have changed
+		analysisMgr.initializeOptions(); // reloads the options in case the user changed them
 
-		// At this point, any analysis that is done is consider to be true for analyzed.
-		GhidraProgramUtilities.setAnalyzedFlag(program, true);
+		// check if this is the first time this program is being analyzed. If so,
+		// schedule a callback when it is completed to send a FirstTimeAnalyzedPluginEvent
+		boolean isAnalyzed = GhidraProgramUtilities.isAnalyzedFlagSet(program);
+		if (!isAnalyzed) {
+			analysisMgr.addListener(new FirstTimeAnalyzedCallback());
+		}
 
 		// start analysis to set the flag, but it probably won't do more.  A bit goofy but better
 		// than the way it was
@@ -224,16 +226,13 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 
 	@Override
 	public void processEvent(PluginEvent event) {
-		if (event instanceof ProgramClosedPluginEvent) {
-			ProgramClosedPluginEvent ev = (ProgramClosedPluginEvent) event;
+		if (event instanceof ProgramClosedPluginEvent ev) {
 			programClosed(ev.getProgram());
 		}
-		else if (event instanceof ProgramOpenedPluginEvent) {
-			ProgramOpenedPluginEvent ev = (ProgramOpenedPluginEvent) event;
+		else if (event instanceof ProgramOpenedPluginEvent ev) {
 			programOpened(ev.getProgram());
 		}
-		else if (event instanceof ProgramActivatedPluginEvent) {
-			ProgramActivatedPluginEvent ev = (ProgramActivatedPluginEvent) event;
+		else if (event instanceof ProgramActivatedPluginEvent ev) {
 			Program program = ev.getActiveProgram();
 			if (program == null) {
 				removeOneShotActions();
@@ -241,6 +240,12 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 			else {
 				programActivated(program);
 				addOneShotActions(program);
+			}
+		}
+		else if (event instanceof ProgramPostActivatedPluginEvent ev) {
+			Program program = ev.getActiveProgram();
+			if (program != null) {
+				postProgramActivated(program);
 			}
 		}
 	}
@@ -256,30 +261,18 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 			new HelpLocation("AutoAnalysisPlugin", "Auto_Analysis_Option"));
 	}
 
-	private void programActivated(final Program program) {
-
+	private void programActivated(Program program) {
 		program.getOptions(StoredAnalyzerTimes.OPTIONS_LIST)
-				.registerOption(
-					StoredAnalyzerTimes.OPTION_NAME, OptionType.CUSTOM_TYPE, null, null,
-					"Cumulative analysis task times", new StoredAnalyzerTimesPropertyEditor());
+			.registerOption(StoredAnalyzerTimes.OPTION_NAME, OptionType.CUSTOM_TYPE, null, null,
+				"Cumulative analysis task times", new StoredAnalyzerTimesPropertyEditor());
 
-		// invokeLater() to ensure that all other plugins have been notified of the program
-		// activated.  This makes sure plugins like the Listing have opened and painted the 
-		// program.
-		//
-		// If the user decided to instantly close the code browser before we get to run anything,
-		// an exception could be thrown! Therefore, we must check to see if the program is closed
-		// at this point before we run anything.
-		//
-		SwingUtilities.invokeLater(() -> {
-			if (program.isClosed()) {
-				return;
-			}
-			final AutoAnalysisManager analysisMgr = AutoAnalysisManager.getAnalysisManager(program);
-			if (analysisMgr.askToAnalyze(tool)) {
-				analyzeCallback(program, null);
-			}
-		});
+	}
+
+	private void postProgramActivated(Program program) {
+		AutoAnalysisManager analysisMgr = AutoAnalysisManager.getAnalysisManager(program);
+		if (analysisMgr.askToAnalyze(tool)) {
+			analyzeCallback(program, null);
+		}
 	}
 
 	/**
@@ -371,6 +364,15 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 				canAnalyze = analyzer.canAnalyze(p);
 			}
 			return canAnalyze;
+		}
+	}
+
+	private class FirstTimeAnalyzedCallback implements AutoAnalysisManagerListener {
+		@Override
+		public void analysisEnded(AutoAnalysisManager manager) {
+			manager.removeListener(this);
+			tool.firePluginEvent(new FirstTimeAnalyzedPluginEvent(AutoAnalysisPlugin.this.getName(),
+				manager.getProgram()));
 		}
 	}
 }

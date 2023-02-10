@@ -21,28 +21,28 @@ import ghidra.framework.plugintool.PluginEvent;
 import ghidra.program.model.listing.Program;
 
 /**
- * Plugin event class for notification of programs being created, opened, or closed.
+ * Plugin event class for notification of when programs have completed being analyzed for the first 
+ * time.
  */
-public class ProgramClosedPluginEvent extends PluginEvent {
-
-	static final String NAME = "Program Closed";
+public class FirstTimeAnalyzedPluginEvent extends PluginEvent {
+	public static final String EVENT_NAME = "FirstTimeAnalyzed";
 
 	private WeakReference<Program> programRef;
 
 	/**
-	 * Construct a new plugin event.
-	 * @param source name of the plugin that created this event
-	 * @param p the program associated with this event
+	 * Constructor
+	 * @param sourceName source name of the plugin that created this event
+	 * @param program the program that has been analyzed for the first time
 	 */
-	public ProgramClosedPluginEvent(String source, Program p) {
-		super(source, NAME);
-		this.programRef = new WeakReference<Program>(p);
+	public FirstTimeAnalyzedPluginEvent(String sourceName, Program program) {
+		super(sourceName, EVENT_NAME);
+		this.programRef = new WeakReference<Program>(program);
 	}
 
 	/**
-	 * Returns the {@link Program} that has just been opened. This method
-	 * can return null, but only if the method is called some time after the original event
-	 * notification.
+	 * Returns the {@link Program} that has just been analyzed for the first time. This method
+	 * can return null, but only if the program has been closed and is no longer in use which
+	 * can't happen if the method is called during the original event notification.
 	 * @return the {@link Program} that has just been analyzed for the first time.
 	 */
 	public Program getProgram() {

@@ -51,6 +51,7 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 
 	private Runnable programChangedRunnable;
 	private boolean hasUnsavedPrograms;
+	private String pluginName;
 
 	// These data structures are accessed from multiple threads.  Rather than synchronizing all
 	// accesses, we have chosen to be weakly consistent.   We assume that any out-of-date checks
@@ -64,6 +65,7 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 	MultiProgramManager(ProgramManagerPlugin programManagerPlugin) {
 		this.plugin = programManagerPlugin;
 		this.tool = programManagerPlugin.getTool();
+		this.pluginName = plugin.getName();
 
 		txMonitor = new TransactionMonitor();
 		txMonitor.setName("Transaction Open (Program being modified)");
@@ -173,9 +175,9 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 	Program[] getOtherPrograms() {
 		Program currentProgram = getCurrentProgram();
 		List<Program> list = openPrograms.stream()
-				.map(info -> info.program)
-				.filter(program -> program != currentProgram)
-				.collect(Collectors.toList());
+			.map(info -> info.program)
+			.filter(program -> program != currentProgram)
+			.collect(Collectors.toList());
 		return list.toArray(new Program[list.size()]);
 	}
 
@@ -260,25 +262,35 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 		if (toolState != null) {
 			toolState.restoreTool();
 		}
+		// only fire the post activated event when a program is activated (we send activated with
+		// null program to represent a phantom de-activated event)
+		if (newProgram != null) {
+			firePostActivatedEvent(newProgram);
+		}
 	}
 
 	private void fireOpenEvents(Program program) {
-		plugin.firePluginEvent(new ProgramOpenedPluginEvent("", program));
-		plugin.firePluginEvent(new OpenProgramPluginEvent("", program));
+		plugin.firePluginEvent(new ProgramOpenedPluginEvent(pluginName, program));
+		plugin.firePluginEvent(new OpenProgramPluginEvent(pluginName, program));
 	}
 
 	private void fireCloseEvents(Program program) {
-		plugin.firePluginEvent(new ProgramClosedPluginEvent("", program));
-		plugin.firePluginEvent(new CloseProgramPluginEvent("", program, true));
+		plugin.firePluginEvent(new ProgramClosedPluginEvent(pluginName, program));
+		plugin.firePluginEvent(new CloseProgramPluginEvent(pluginName, program, true));
 //		tool.contextChanged();
 	}
 
 	private void fireActivatedEvent(Program newProgram) {
-		plugin.firePluginEvent(new ProgramActivatedPluginEvent("", newProgram));
+		plugin.firePluginEvent(new ProgramActivatedPluginEvent(pluginName, newProgram));
+	}
+
+	private void firePostActivatedEvent(Program newProgram) {
+		plugin.firePluginEvent(new ProgramPostActivatedPluginEvent(pluginName, newProgram));
 	}
 
 	private void fireVisibilityChangeEvent(Program program, boolean isVisible) {
-		plugin.firePluginEvent(new ProgramVisibilityChangePluginEvent("", program, isVisible));
+		plugin.firePluginEvent(
+			new ProgramVisibilityChangePluginEvent(pluginName, program, isVisible));
 	}
 
 	@Override
@@ -503,13 +515,13 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 		private static final AtomicInteger nextAvailableId = new AtomicInteger();
 
 		public final Program program;
-		
+
 		// NOTE: domainFile and ghidraURL use are mutually exclusive and reflect how program was
 		// opened.  Supported cases include:
 		// 1. Opened via Program file
 		// 2. Opened via ProgramLink file
 		// 3. Opened via Program URL
-		
+
 		public final DomainFile domainFile; // may be link file
 		public final URL ghidraURL;
 
@@ -532,7 +544,7 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 			this.visible = visible;
 			instance = nextAvailableId.incrementAndGet();
 		}
-		
+
 		ProgramInfo(Program p, URL ghidraURL, boolean visible) {
 			this.program = p;
 			this.domainFile = null;

@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.analysis;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.Stack;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 
 import javax.swing.JFrame;
@@ -132,7 +133,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 
 	private MessageLog log = new MessageLog();
 
-	private List<AutoAnalysisManagerListener> listeners = new ArrayList<>();
+	private List<AutoAnalysisManagerListener> listeners = new CopyOnWriteArrayList<>();
 
 	private EventQueueID eventQueueID;
 
@@ -850,6 +851,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 		for (AnalysisTaskList list : taskArray) {
 			list.notifyAnalysisEnded(program);
 		}
+
 		for (AutoAnalysisManagerListener listener : listeners) {
 			listener.analysisEnded(this);
 		}
@@ -1268,13 +1270,13 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 			if (testLen > spacer.length()) {
 				testLen = spacer.length() - 5;
 			}
-			taskTimesStringBuf.append(
-				"    " + element + spacer.substring(testLen) + secString + "\n");
+			taskTimesStringBuf
+					.append("    " + element + spacer.substring(testLen) + secString + "\n");
 		}
 
 		taskTimesStringBuf.append("-----------------------------------------------------\n");
-		taskTimesStringBuf.append(
-			"     Total Time   " + (int) (totalTaskTime / 1000.00) + " secs\n");
+		taskTimesStringBuf
+				.append("     Total Time   " + (int) (totalTaskTime / 1000.00) + " secs\n");
 		taskTimesStringBuf.append("-----------------------------------------------------\n");
 
 		return taskTimesStringBuf.toString();
