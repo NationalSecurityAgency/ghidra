@@ -179,14 +179,17 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 
 		navigatable = null;
 
-		if (searchDialog != null && searchDialog.isVisible()) {
-			TaskMonitor taskMonitor = searchDialog.getTaskMonitorComponent();
-			taskMonitor.cancel();
-			searchDialog.dispose();
+		if (searchDialog != null) {
 
-			if (searchAllTaskMonitor != null) {
-				searchAllTaskMonitor.cancel();
+			if (searchDialog.isVisible()) {
+				TaskMonitor taskMonitor = searchDialog.getTaskMonitorComponent();
+				taskMonitor.cancel();
+				if (searchAllTaskMonitor != null) {
+					searchAllTaskMonitor.cancel();
+				}
 			}
+
+			searchDialog.dispose();
 		}
 
 		if (currentTask != null) {

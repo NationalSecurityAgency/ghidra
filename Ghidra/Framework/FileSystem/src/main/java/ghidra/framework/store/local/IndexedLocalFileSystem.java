@@ -81,12 +81,13 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 
 	/**
 	 * Constructor.
-	 * @param rootPath path path for root directory.
+	 * @param rootPath path for root directory.
 	 * @param isVersioned if true item versioning will be enabled.
 	 * @param readOnly if true modifications within this file-system will not be allowed
 	 * and result in an ReadOnlyException
 	 * @param enableAsyncronousDispatching if true a separate dispatch thread will be used
 	 * to notify listeners.  If false, blocking notification will be performed.
+	 * @param create if true a new folder will be created.
 	 * @throws FileNotFoundException if specified rootPath does not exist
 	 * @throws IOException if error occurs while reading/writing index files
 	 */

@@ -133,7 +133,7 @@ configurations {
 	pcodeTestImplementation.extendsFrom implementation
 	testArtifacts.extendsFrom testRuntimeOnly
 	integrationTestArtifacts.extendsFrom integrationTestRuntimeOnly
-	screenShotsImplementation.extendsFrom integrationTestImplemenation
+	screenShotsImplementation.extendsFrom integrationTestImplementation
 }
 
 task testJar(type: Jar) {

@@ -358,7 +358,7 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> {
 						initializeBlock(block);
 					}
 					else {
-						revertBlockToUnitialized(block);
+						revertBlockToUninitialized(block);
 					}
 					return;
 
@@ -392,9 +392,9 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> {
 		}
 	}
 
-	private void revertBlockToUnitialized(MemoryBlock block) {
+	private void revertBlockToUninitialized(MemoryBlock block) {
 		int result = OptionDialog.showYesNoDialog(provider.getComponent(),
-			"Confirm Setting Block To Unitialized",
+			"Confirm Setting Block To Uninitialized",
 			"Are you sure you want to remove the bytes from this block? \n\n" +
 				"This will result in removing all functions, instructions, data,\n" +
 				"and outgoing references from the block!");

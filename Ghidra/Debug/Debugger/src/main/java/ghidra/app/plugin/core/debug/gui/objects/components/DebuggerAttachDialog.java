@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.objects.components;
 
-import static ghidra.app.plugin.core.debug.gui.DebuggerResources.GROUP_GENERAL;
-import static ghidra.app.plugin.core.debug.gui.DebuggerResources.tableRowActivationAction;
+import static ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 
 import java.awt.BorderLayout;
 import java.util.List;
@@ -26,7 +25,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.*;
 
 import docking.ActionContext;
-import docking.DialogComponentProvider;
+import docking.ReusableDialogComponentProvider;
 import docking.action.ToolBarData;
 import docking.widgets.table.*;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractAttachAction;
@@ -40,7 +39,7 @@ import ghidra.util.MessageType;
 import ghidra.util.Msg;
 import ghidra.util.table.GhidraTableFilterPanel;
 
-public class DebuggerAttachDialog extends DialogComponentProvider {
+public class DebuggerAttachDialog extends ReusableDialogComponentProvider {
 
 	protected class RefreshAction extends AbstractRefreshAction {
 		public static final String GROUP = GROUP_GENERAL;

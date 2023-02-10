@@ -50,7 +50,7 @@ import ghidra.util.task.Task;
  * backward searching, proper endianness and whether to find just
  * the next occurrence or all of them in the program.
  */
-class MemSearchDialog extends DialogComponentProvider {
+class MemSearchDialog extends ReusableDialogComponentProvider {
 
 	static final String ADVANCED_BUTTON_NAME = "mem.search.advanced";
 	private static final String CODE_UNIT_SCOPE_NAME = "Code Unit Scope";

@@ -69,6 +69,7 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 		super(title, true, false, true, false);
 		this.settingsDefinitions = settingDefinitions;
 		settings = new SettingsImpl(originalSettings) {
+			@Override
 			public boolean isChangeAllowed(SettingsDefinition settingsDefinition) {
 				return originalSettings == null ||
 					originalSettings.isChangeAllowed(settingsDefinition);
@@ -118,7 +119,7 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 
 	@Override
 	public void dispose() {
-		close();
+		super.dispose();
 		settingsDefinitions = null;
 		defaultSettings = null;
 		settings = null;
@@ -150,23 +151,23 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 
 	private void readHexModePreferences() {
 		intHexModeMap = new HashMap<>();
-		for (int i = 0; i < settingsDefinitions.length; i++) {
-			if (settingsDefinitions[i] instanceof NumberSettingsDefinition) {
-				String propertyName = getHexModePropertyName(settingsDefinitions[i]);
+		for (SettingsDefinition settingsDefinition : settingsDefinitions) {
+			if (settingsDefinition instanceof NumberSettingsDefinition) {
+				String propertyName = getHexModePropertyName(settingsDefinition);
 				boolean hexMode = Boolean
 						.valueOf(
-					Preferences.getProperty(propertyName, Boolean.FALSE.toString()));
-				intHexModeMap.put(settingsDefinitions[i].getName(), hexMode);
+							Preferences.getProperty(propertyName, Boolean.FALSE.toString()));
+				intHexModeMap.put(settingsDefinition.getName(), hexMode);
 			}
 		}
 	}
 
 	private void writeHexModePreferences() {
 		boolean save = false;
-		for (int i = 0; i < settingsDefinitions.length; i++) {
-			if (settingsDefinitions[i] instanceof NumberSettingsDefinition) {
-				boolean hexMode = intHexModeMap.get(settingsDefinitions[i].getName());
-				String propertyName = getHexModePropertyName(settingsDefinitions[i]);
+		for (SettingsDefinition settingsDefinition : settingsDefinitions) {
+			if (settingsDefinition instanceof NumberSettingsDefinition) {
+				boolean hexMode = intHexModeMap.get(settingsDefinition.getName());
+				String propertyName = getHexModePropertyName(settingsDefinition);
 				if (hexMode != Boolean
 						.valueOf(Preferences.getProperty(propertyName, Boolean.FALSE.toString()))) {
 					Preferences.setProperty(propertyName, Boolean.toString(hexMode));
@@ -596,7 +597,6 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 		return sign + "0x" + signedValue.toString(16);
 	}
 
-
 	private class SettingsRenderer extends GTableCellRenderer {
 
 		private Font originalFont;
@@ -634,7 +634,7 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 			return renderer;
 		}
 	}
-	
+
 	private class NumberWrapper {
 
 		final Number value; // may be null
@@ -703,7 +703,7 @@ public abstract class AbstractSettingsDialog extends DialogComponentProvider {
 		GhidraComboBox<String> getComboBox() {
 			return comboBox; // used for testing
 		}
-		
+
 		@Override
 		public Object getCellEditorValue() {
 			switch (mode) {

@@ -28,6 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.button.BrowseButton;
 import docking.widgets.filechooser.GhidraFileChooser;
+import docking.widgets.filechooser.GhidraFileChooserMode;
 
 /**
  * Bean editor to show a text field and a browse button to bring
@@ -160,7 +161,7 @@ public class FileChooserEditor extends PropertyEditorSupport {
 
 			fileChooser.setApproveButtonText("Choose Path");
 			fileChooser.setTitle("Choose Path");
-			fileChooser.setFileSelectionMode(GhidraFileChooser.FILES_AND_DIRECTORIES);
+			fileChooser.setFileSelectionMode(GhidraFileChooserMode.FILES_AND_DIRECTORIES);
 			if (currentFileValue != null) {
 				fileChooser.setSelectedFile(currentFileValue);
 			}

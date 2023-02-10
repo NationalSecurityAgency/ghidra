@@ -113,6 +113,7 @@ public class ThemeUtils {
 			GTheme.FILE_EXTENSION, GTheme.ZIP_FILE_EXTENSION));
 
 		File file = chooser.getSelectedFile();
+		chooser.dispose();
 		if (file == null) {
 			return;
 		}

@@ -974,42 +974,27 @@ public class DexHeaderFormatMarkup {
 			}
 
 			String string = stringDataItem.getString();
+			DataType stringDataType = stringDataItem.toDataType();
+			api.createData(stringDataAddress, stringDataType);
+			api.setPlateComment(stringDataAddress,
+				Integer.toHexString(index) + "\n" + string.trim());
+			fragmentManager.stringDataAddressSet.add(stringDataAddress,
+				stringDataAddress.add(stringDataType.getLength() - 1));
 
-			try {
-				DataType stringDataType = stringDataItem.toDataType();
-				api.createData(stringDataAddress, stringDataType);
-				api.setPlateComment(stringDataAddress,
-					Integer.toHexString(index) + "\n" + string.trim());
-				fragmentManager.stringDataAddressSet.add(stringDataAddress,
-					stringDataAddress.add(stringDataType.getLength() - 1));
-
-				createStringSymbol(stringDataAddress, string, "strings");
-			}
-			catch (DuplicateNameException e) {
-				log.appendException(e); // Report the exception but keep going
-			}
-			catch (InvalidInputException e) {
-				log.appendException(e);
-			}
+			createStringSymbol(stringDataAddress, string, "strings");
 
 			// markup string Id items
 			DataType dataType = item.toDataType();
-			try {
-				Data data = api.createData(address, dataType);
-				fragmentManager.stringsDataSet.add(address, address.add(dataType.getLength() - 1));
 
-				api.setPlateComment(address, "String Index: 0x" + Integer.toHexString(index) +
-					"\nString: " + string.trim() + "\nString Data Address: " + stringDataAddress);
-				createStringSymbol(address, string, "string_data");
+			Data data = api.createData(address, dataType);
+			fragmentManager.stringsDataSet.add(address, address.add(dataType.getLength() - 1));
 
-				api.createMemoryReference(data, stringDataAddress, RefType.DATA);
-			}
-			catch (DuplicateNameException e) {
-				log.appendException(e); // Report the exception but keep going
-			}
-			catch (InvalidInputException e) {
-				log.appendException(e);
-			}
+			api.setPlateComment(address, "String Index: 0x" + Integer.toHexString(index) +
+				"\nString: " + string.trim() + "\nString Data Address: " + stringDataAddress);
+			createStringSymbol(address, string, "string_data");
+
+			api.createMemoryReference(data, stringDataAddress, RefType.DATA);
+
 			++index;
 
 			address = address.add(dataType.getLength());

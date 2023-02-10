@@ -578,6 +578,10 @@ public class GTableFilterPanel<ROW_OBJECT> extends JPanel {
 		columnModel.removeColumnModelListener(columnModelListener);
 		columnModelListener = null;
 
+		if (columnFilterDialog != null) {
+			columnFilterDialog.dispose();
+		}
+
 		table.removePropertyChangeListener(badProgrammingPropertyChangeListener);
 
 		updateManager.dispose();

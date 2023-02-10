@@ -187,9 +187,9 @@ public class PathManagerTest extends AbstractDockingTest {
 
 		File temp = createTempFileForTest();
 
-		Preferences.setProperty(Preferences.LAST_IMPORT_DIRECTORY, temp.getParent());
+		Preferences.setProperty(Preferences.LAST_PATH_DIRECTORY, temp.getParent());
 		pathManager.setFileChooserProperties("Select Source Files",
-			Preferences.LAST_IMPORT_DIRECTORY, GhidraFileChooserMode.FILES_AND_DIRECTORIES, true,
+			Preferences.LAST_PATH_DIRECTORY, GhidraFileChooserMode.FILES_AND_DIRECTORIES, true,
 			new ExtensionFileFilter(new String[] { "h" }, "C Header Files"));
 
 		assertNotNull(addButton);
@@ -223,9 +223,9 @@ public class PathManagerTest extends AbstractDockingTest {
 
 		File temp = createTempFileForTest();
 
-		Preferences.setProperty(Preferences.LAST_IMPORT_DIRECTORY, temp.getParent());
+		Preferences.setProperty(Preferences.LAST_PATH_DIRECTORY, temp.getParent());
 		pathManager.setFileChooserProperties("Select Source Files",
-			Preferences.LAST_IMPORT_DIRECTORY, GhidraFileChooserMode.FILES_AND_DIRECTORIES, true,
+			Preferences.LAST_PATH_DIRECTORY, GhidraFileChooserMode.FILES_AND_DIRECTORIES, true,
 			new ExtensionFileFilter(new String[] { "h" }, "C Header Files"));
 
 		assertNotNull(addButton);

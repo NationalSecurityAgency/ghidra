@@ -43,7 +43,8 @@ class RelocationDBAdapterNoTable extends RelocationDBAdapter {
 	}
 
 	@Override
-	void add(Address addrKey, int type, long[] values, byte[] bytes, String symbolName) {
+	void add(Address addrKey, byte flags, int type, long[] values, byte[] bytes,
+			String symbolName) {
 		throw new UnsupportedOperationException();
 	}
 

@@ -46,8 +46,8 @@ import ghidra.program.model.data.DataUtilities.ClearDataMode;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
-import ghidra.program.model.reloc.Relocation;
-import ghidra.program.model.reloc.RelocationTable;
+import ghidra.program.model.reloc.*;
+import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.AddressSetPropertyMap;
@@ -992,8 +992,11 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				reloc.setType(relrRelocationType);
 			}
 
+			Status status = Status.SKIPPED;
+			int byteLength = 0;
 			try {
 				if (unableToApplyRelocs) {
+					status = Status.FAILURE;
 					ElfRelocationHandler.markAsError(program, relocAddr, type, symbolName,
 						"missing symbol table", log);
 					continue;
@@ -1008,6 +1011,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 						memory.convertToInitialized(relocBlock, (byte) 0);
 					}
 					catch (Exception e) {
+						status = Status.FAILURE;
 						Msg.error(this,
 							"Unexpected exception while converting block to initialized", e);
 						ElfRelocationHandler.markAsUninitializedMemory(program, relocAddr, type,
@@ -1018,15 +1022,19 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 				if (context != null) {
 					if (relrTypeUnknown) {
+						status = Status.UNSUPPORTED;
 						ElfRelocationHandler.markAsUnsupportedRelr(program, relocAddr);
 					}
 					else {
-						context.processRelocation(reloc, relocAddr);
+						RelocationResult result = context.processRelocation(reloc, relocAddr);
+						byteLength = result.byteLength();
+						status = result.status();
 					}
 				}
 			}
 			catch (MemoryAccessException e) {
 				if (type != 0) { // ignore if type 0 which is always NONE (no relocation performed)
+					status = Status.FAILURE;
 					log("Unable to perform relocation: Type = " + type + " (0x" +
 						Long.toHexString(type) + ") at " + relocAddr + " (Symbol = " + symbolName +
 						") - " + getMessage(e));
@@ -1035,7 +1043,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			finally {
 				// Save relocation data - uses original FileBytes
 				program.getRelocationTable()
-						.add(relocAddr, reloc.getType(), values, null, symbolName);
+						.add(relocAddr, status, reloc.getType(), values, byteLength, symbolName);
 			}
 		}
 
@@ -1063,19 +1071,22 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	}
 
 	@Override
-	public boolean addFakeRelocTableEntry(Address address, int length) {
+	public boolean addArtificialRelocTableEntry(Address address, int length) {
 		try {
 			Address maxAddr = address.addNoWrap(length - 1);
 			RelocationTable relocationTable = program.getRelocationTable();
 			List<Relocation> relocations = relocationTable.getRelocations(address);
 			if (!relocations.isEmpty()) {
-				return false;
+				Msg.warn(this, "Artificial relocation at " + address +
+					" conflicts with a previous relocation");
 			}
 			Address nextRelocAddr = relocationTable.getRelocationAddressAfter(address);
-			if (nextRelocAddr == null || nextRelocAddr.compareTo(maxAddr) > 0) {
-				relocationTable.add(address, 0, new long[0], null, null);
-				return true;
+			if (nextRelocAddr != null && nextRelocAddr.compareTo(maxAddr) <= 0) {
+				Msg.warn(this,
+					"Artificial relocation at " + address + " overlaps a previous relocation");
 			}
+			relocationTable.add(address, Status.APPLIED_OTHER, 0, null, length, null);
+			return true;
 		}
 		catch (AddressOverflowException e) {
 			Msg.error(this, "Failed to generate fake relocation data at " + address, e);

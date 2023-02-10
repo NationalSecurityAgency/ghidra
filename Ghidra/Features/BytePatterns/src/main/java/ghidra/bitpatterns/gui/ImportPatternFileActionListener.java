@@ -25,6 +25,7 @@ import java.math.BigInteger;
 import org.xml.sax.SAXException;
 
 import docking.widgets.filechooser.GhidraFileChooser;
+import docking.widgets.filechooser.GhidraFileChooserMode;
 import generic.jar.ResourceFile;
 import ghidra.app.analyzers.FunctionStartAnalyzer.ContextAction;
 import ghidra.bitpatterns.info.ContextRegisterFilter;
@@ -59,7 +60,7 @@ public class ImportPatternFileActionListener implements ActionListener {
 	public void actionPerformed(ActionEvent e) {
 		GhidraFileChooser fileChooser = new GhidraFileChooser(component);
 
-		fileChooser.setFileSelectionMode(GhidraFileChooser.FILES_ONLY);
+		fileChooser.setFileSelectionMode(GhidraFileChooserMode.FILES_ONLY);
 		fileChooser.setTitle("Select Pattern File");
 		String baseDir = Preferences.getProperty(XML_IMPORT_DIR_PROPERTY);
 		if (baseDir != null) {
@@ -68,11 +69,13 @@ public class ImportPatternFileActionListener implements ActionListener {
 		ExtensionFileFilter xmlFilter = new ExtensionFileFilter("xml", "XML Files");
 		fileChooser.setFileFilter(xmlFilter);
 		File patternFile = fileChooser.getSelectedFile();
+		String lastDirPath = fileChooser.getCurrentDirectory().getAbsolutePath();
+		fileChooser.dispose();
 		if (fileChooser.wasCancelled() || patternFile == null) {
 			return;
 		}
-		Preferences.setProperty(XML_IMPORT_DIR_PROPERTY,
-			fileChooser.getCurrentDirectory().getAbsolutePath());
+
+		Preferences.setProperty(XML_IMPORT_DIR_PROPERTY, lastDirPath);
 		Preferences.store();
 		//only clear the patterns if new patterns are loaded from a file
 		ResourceFile resource = new ResourceFile(patternFile);

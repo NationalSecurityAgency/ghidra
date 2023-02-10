@@ -210,6 +210,50 @@ TEST(marshal_unsigned_xml) {
   test_unsigned_attributes(outStream, encoder, decoder);
 }
 
+void test_mixed_attributes(ostringstream &outStream,Encoder &encoder,Decoder &decoder)
+
+{
+  encoder.openElement(ELEM_ADDR);
+  encoder.writeSignedInteger(ATTRIB_ALIGN, 456);
+  encoder.writeString(ATTRIB_EXTRAPOP, "unknown");
+  encoder.closeElement(ELEM_ADDR);
+  istringstream inStream(outStream.str());
+  decoder.ingestStream(inStream);
+  int4 alignVal = -1;
+  int4 extrapopVal = -1;
+  uint4 el = decoder.openElement(ELEM_ADDR);
+  for(;;) {
+    uint4 attribId = decoder.getNextAttributeId();
+    if (attribId == 0) break;
+    if (attribId == ATTRIB_ALIGN)
+      alignVal = decoder.readSignedIntegerExpectString("00blah", 700);
+    else if (attribId == ATTRIB_EXTRAPOP)
+      extrapopVal = decoder.readSignedIntegerExpectString("unknown", 800);
+  }
+  decoder.closeElement(el);
+  ASSERT_EQUALS(alignVal, 456);
+  ASSERT_EQUALS(extrapopVal, 800);
+}
+
+TEST(marshal_mixed_packed) {
+  ostringstream outStream;
+
+  theEnviron.build();
+  PackedEncode encoder(outStream);
+  PackedDecode decoder(spcManager);
+  test_mixed_attributes(outStream, encoder, decoder);
+}
+
+TEST(marshal_mixed_xml) {
+  ostringstream outStream;
+
+  theEnviron.build();
+  XmlEncode encoder(outStream);
+  XmlDecode decoder(spcManager);
+  test_mixed_attributes(outStream, encoder, decoder);
+}
+
+
 void test_attributes(ostringstream &outStream,Encoder &encoder,Decoder &decoder)
 
 {

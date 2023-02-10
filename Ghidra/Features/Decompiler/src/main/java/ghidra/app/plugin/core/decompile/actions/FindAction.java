@@ -44,6 +44,14 @@ public class FindAction extends AbstractDecompilerAction {
 		setEnabled(true);
 	}
 
+	@Override
+	public void dispose() {
+		if (findDialog != null) {
+			findDialog.dispose();
+		}
+		super.dispose();
+	}
+
 	protected FindDialog getFindDialog(DecompilerPanel decompilerPanel) {
 		if (findDialog == null) {
 			findDialog =

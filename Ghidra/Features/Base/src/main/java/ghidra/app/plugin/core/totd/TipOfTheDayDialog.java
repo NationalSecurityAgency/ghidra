@@ -22,8 +22,8 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.border.Border;
 
-import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
+import docking.ReusableDialogComponentProvider;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GLabel;
 import generic.theme.GIcon;
@@ -31,7 +31,7 @@ import generic.theme.GThemeDefaults.Colors;
 import generic.theme.GThemeDefaults.Colors.Java;
 import generic.theme.Gui;
 
-class TipOfTheDayDialog extends DialogComponentProvider {
+class TipOfTheDayDialog extends ReusableDialogComponentProvider {
 	private static final String FONT_ID = "font.plugin.tips";
 	private static final String FONT_LABEL_ID = "font.plugin.tips.label";
 	private static final int _24_HOURS = 86400000;

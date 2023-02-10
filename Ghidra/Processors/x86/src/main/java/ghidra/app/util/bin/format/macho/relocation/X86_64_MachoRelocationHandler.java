@@ -17,10 +17,12 @@ package ghidra.app.util.bin.format.macho.relocation;
 
 import static ghidra.app.util.bin.format.macho.relocation.X86_64_MachoRelocationConstants.*;
 
+import ghidra.app.util.bin.format.RelocationException;
 import ghidra.app.util.bin.format.macho.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.util.exception.NotFoundException;
+import ghidra.program.model.reloc.Relocation.Status;
+import ghidra.program.model.reloc.RelocationResult;
 
 /** 
  * A {@link MachoRelocationHandler} for x86 64-bit
@@ -40,11 +42,11 @@ public class X86_64_MachoRelocationHandler extends MachoRelocationHandler {
 	}
 
 	@Override
-	public void relocate(MachoRelocation relocation)
-			throws MemoryAccessException, NotFoundException {
+	public RelocationResult relocate(MachoRelocation relocation)
+			throws MemoryAccessException, RelocationException {
 
 		if (!relocation.requiresRelocation()) {
-			return;
+			return RelocationResult.SKIPPED;
 		}
 		
 		RelocationInfo relocationInfo = relocation.getRelocationInfo();		
@@ -52,9 +54,10 @@ public class X86_64_MachoRelocationHandler extends MachoRelocationHandler {
 		Address targetAddr = relocation.getTargetAddress();
 		long addend = read(relocation);
 
+		int byteLength;
 		switch (relocationInfo.getType()) {
 			case X86_64_RELOC_UNSIGNED:
-				write(relocation, targetAddr.add(addend).getOffset());
+				byteLength = write(relocation, targetAddr.add(addend).getOffset());
 				break;
 			case X86_64_RELOC_SIGNED:
 			case X86_64_RELOC_BRANCH:
@@ -63,21 +66,24 @@ public class X86_64_MachoRelocationHandler extends MachoRelocationHandler {
 			case X86_64_RELOC_SIGNED_1: // addend should already be -1
 			case X86_64_RELOC_SIGNED_2: // addend should already be -2
 			case X86_64_RELOC_SIGNED_4: // addend should already be -4
-				write(relocation, targetAddr.add(addend).subtract(relocAddr) - 4);
+				byteLength = write(relocation, targetAddr.add(addend).subtract(relocAddr) - 4);
 				break;
 			case X86_64_RELOC_SUBTRACTOR:
 				Address targetAddrExtra = relocation.getTargetAddressExtra();
 				if (addend > 0) {
-					write(relocation, targetAddrExtra.add(addend).subtract(targetAddr));
+					byteLength =
+						write(relocation, targetAddrExtra.add(addend).subtract(targetAddr));
 				}
 				else {
-					write(relocation, targetAddr.add(addend).subtract(targetAddrExtra));
+					byteLength =
+						write(relocation, targetAddr.add(addend).subtract(targetAddrExtra));
 				}
 				break;
 				
 			case X86_64_RELOC_TLV:      // not seen yet
 			default:
-				throw new NotFoundException("Unimplemented relocation");
+				return RelocationResult.UNSUPPORTED;
 		}
+		return new RelocationResult(Status.APPLIED, byteLength);
 	}
 }

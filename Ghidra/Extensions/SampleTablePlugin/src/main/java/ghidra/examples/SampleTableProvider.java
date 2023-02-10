@@ -69,6 +69,7 @@ public class SampleTableProvider extends ComponentProviderAdapter implements Opt
 
 	void dispose() {
 		filterTable.dispose();
+		fileChooserPanel.dispose();
 		removeFromTool();
 	}
 

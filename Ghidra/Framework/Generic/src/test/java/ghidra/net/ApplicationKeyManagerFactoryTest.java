@@ -74,7 +74,7 @@ public class ApplicationKeyManagerFactoryTest extends AbstractGenericTest {
 		keystoreFile.delete();
 
 		ApplicationKeyManagerUtils.createKeyStore(ALIAS, TEST_IDENTITY, 2, null, keystoreFile,
-			"PKCS12", TEST_PWD.toCharArray());
+			"PKCS12", null, TEST_PWD.toCharArray());
 
 		ApplicationKeyManagerFactory.setKeyStorePasswordProvider(passwordProvider);
 	}

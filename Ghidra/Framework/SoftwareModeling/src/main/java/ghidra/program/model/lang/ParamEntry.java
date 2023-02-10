@@ -50,8 +50,7 @@ public class ParamEntry {
 
 	private int flags;
 	private int type;				// Restriction on DataType this entry must match
-	private int group;				// Group of (mutually exclusive) entries that this entry belongs to
-	private int groupsize;			// The number of consecutive groups taken by the entry
+	private int[] groupSet;			// Group(s) this entry belongs to
 	private AddressSpace spaceid;	// Space of this range
 	private long addressbase;		// Start of the range
 	private int size;				// size of the range
@@ -61,15 +60,16 @@ public class ParamEntry {
 	private Varnode[] joinrec;
 
 	public ParamEntry(int grp) {	// For use with restoreXml
-		group = grp;
+		groupSet = new int[1];
+		groupSet[0] = grp;
 	}
 
 	public int getGroup() {
-		return group;
+		return groupSet[0];
 	}
 
-	public int getGroupSize() {
-		return groupsize;
+	public int[] getAllGroups() {
+		return groupSet;
 	}
 
 	public int getSize() {
@@ -265,7 +265,7 @@ public class ParamEntry {
 	 * @return the slot index
 	 */
 	public int getSlot(Address addr, int skip) {
-		int res = group;
+		int res = groupSet[0];
 		if (alignment != 0) {
 			long diff = addr.getOffset() + skip - addressbase;
 			int baseslot = (int) diff / alignment;
@@ -277,7 +277,7 @@ public class ParamEntry {
 			}
 		}
 		else if (skip != 0) {
-			res += (groupsize - 1);
+			res = groupSet[groupSet.length - 1];
 		}
 		return res;
 	}
@@ -366,29 +366,24 @@ public class ParamEntry {
 		if (joinrec == null) {
 			return;
 		}
-		int mingrp = 1000;
-		int maxgrp = -1;
+		ArrayList<Integer> newGroupSet = new ArrayList<>();
 		for (Varnode piece : joinrec) {
 			ParamEntry entry = findEntryByStorage(curList, piece);
 			if (entry != null) {
-				if (entry.group < mingrp) {
-					mingrp = entry.group;
-				}
-				int max = entry.group + entry.groupsize;
-				if (max > maxgrp) {
-					maxgrp = max;
+				for (int group : entry.groupSet) {
+					newGroupSet.add(group);
 				}
 			}
 		}
-		if (maxgrp < 0 || mingrp >= 1000) {
+		if (newGroupSet.isEmpty()) {
 			throw new XmlParseException("<pentry> join must overlap at least one previous entry");
 		}
-		group = mingrp;
-		groupsize = (maxgrp - mingrp);
-		flags |= OVERLAPPING;
-		if (groupsize > joinrec.length) {
-			throw new XmlParseException("<pentry> join must overlap sequential entries");
+		newGroupSet.sort(null);
+		groupSet = new int[newGroupSet.size()];
+		for (int i = 0; i < groupSet.length; ++i) {
+			groupSet[i] = newGroupSet.get(i);
 		}
+		flags |= OVERLAPPING;
 	}
 
 	/**
@@ -401,9 +396,7 @@ public class ParamEntry {
 		if (joinrec != null) {
 			return;
 		}
-		int grpsize = 0;
-		int mingrp = 1000;
-		int maxgrp = -1;
+		ArrayList<Integer> newGroupSet = new ArrayList<>();
 		Address addr = spaceid.getAddress(addressbase);
 		for (ParamEntry entry : curList) {
 			if (entry == this) {
@@ -416,27 +409,22 @@ public class ParamEntry {
 				if (entry.isOverlap()) {
 					continue;		// Don't count resources (already counted overlapped pentry)
 				}
-				if (entry.group < mingrp) {
-					mingrp = entry.group;
+				for (int group : entry.groupSet) {
+					newGroupSet.add(group);
 				}
-				int max = entry.group + entry.groupsize;
-				if (max > maxgrp) {
-					maxgrp = max;
-				}
-				grpsize += entry.groupsize;
 			}
 			else {
 				throw new XmlParseException("Illegal overlap of <pentry> in compiler spec");
 			}
 		}
-		if (grpsize == 0) {
+		if (newGroupSet.isEmpty()) {
 			return;				// No overlaps
 		}
-		if (grpsize != (maxgrp - mingrp)) {
-			throw new XmlParseException("<pentry> must overlap sequential entries");
+		newGroupSet.sort(null);
+		groupSet = new int[newGroupSet.size()];
+		for (int i = 0; i < groupSet.length; ++i) {
+			groupSet[i] = newGroupSet.get(i);
 		}
-		group = mingrp;
-		groupsize = grpsize;
 		flags |= OVERLAPPING;
 	}
 
@@ -486,7 +474,6 @@ public class ParamEntry {
 		size = minsize = -1;		// Must be filled in
 		alignment = 0;				// default
 		numslots = 1;
-		groupsize = 1;				// default
 
 		XmlElement el = parser.start("pentry");
 		Iterator<Entry<String, String>> iter = el.getAttributes().entrySet().iterator();
@@ -606,8 +593,13 @@ public class ParamEntry {
 		if (numslots != obj.numslots) {
 			return false;
 		}
-		if (group != obj.group || groupsize != obj.groupsize) {
+		if (groupSet.length != obj.groupSet.length) {
 			return false;
+		}
+		for (int i = 0; i < groupSet.length; ++i) {
+			if (groupSet[i] != obj.groupSet[i]) {
+				return false;
+			}
 		}
 		if (!SystemUtilities.isArrayEqual(joinrec, obj.joinrec)) {
 			return false;

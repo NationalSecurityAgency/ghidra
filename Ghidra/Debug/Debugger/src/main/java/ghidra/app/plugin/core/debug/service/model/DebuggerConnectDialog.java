@@ -31,7 +31,7 @@ import javax.swing.text.View;
 import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualLinkedHashBidiMap;
 
-import docking.DialogComponentProvider;
+import docking.ReusableDialogComponentProvider;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractConnectAction;
 import ghidra.app.plugin.core.debug.utils.MiscellaneousUtils;
 import ghidra.app.services.DebuggerModelService;
@@ -45,7 +45,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.util.*;
 import ghidra.util.datastruct.CollectionChangeListener;
 
-public class DebuggerConnectDialog extends DialogComponentProvider
+public class DebuggerConnectDialog extends ReusableDialogComponentProvider
 		implements PropertyChangeListener {
 	private static final String KEY_CURRENT_FACTORY_CLASSNAME = "currentFactoryCls";
 	private static final String KEY_SUCCESS_FACTORY_CLASSNAME = "successFactoryCls";

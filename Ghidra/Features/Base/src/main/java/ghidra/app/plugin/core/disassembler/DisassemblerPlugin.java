@@ -263,7 +263,7 @@ public class DisassemblerPlugin extends Plugin {
 				cmd = new DisassembleCommand(addr, restrictedSet, true);
 			}
 			catch (MemoryAccessException e) {
-				tool.setStatusInfo("Can't disassemble unitialized memory!", true);
+				tool.setStatusInfo("Can't disassemble uninitialized memory!", true);
 			}
 		}
 		if (cmd != null) {
@@ -333,7 +333,7 @@ public class DisassemblerPlugin extends Plugin {
 				cmd = new ArmDisassembleCommand(addr, null, thumbMode);
 			}
 			catch (MemoryAccessException e) {
-				tool.setStatusInfo("Can't disassemble unitialized memory!", true);
+				tool.setStatusInfo("Can't disassemble uninitialized memory!", true);
 			}
 		}
 		if (cmd != null) {
@@ -357,7 +357,7 @@ public class DisassemblerPlugin extends Plugin {
 				cmd = new Hcs12DisassembleCommand(addr, null, xgMode);
 			}
 			catch (MemoryAccessException e) {
-				tool.setStatusInfo("Can't disassemble unitialized memory!", true);
+				tool.setStatusInfo("Can't disassemble uninitialized memory!", true);
 			}
 		}
 		if (cmd != null) {
@@ -381,7 +381,7 @@ public class DisassemblerPlugin extends Plugin {
 				cmd = new MipsDisassembleCommand(addr, null, mips16);
 			}
 			catch (MemoryAccessException e) {
-				tool.setStatusInfo("Can't disassemble unitialized memory!", true);
+				tool.setStatusInfo("Can't disassemble uninitialized memory!", true);
 			}
 		}
 		if (cmd != null) {
@@ -405,7 +405,7 @@ public class DisassemblerPlugin extends Plugin {
 				cmd = new PowerPCDisassembleCommand(addr, null, vle);
 			}
 			catch (MemoryAccessException e) {
-				tool.setStatusInfo("Can't disassemble unitialized memory!", true);
+				tool.setStatusInfo("Can't disassemble uninitialized memory!", true);
 			}
 		}
 		if (cmd != null) {

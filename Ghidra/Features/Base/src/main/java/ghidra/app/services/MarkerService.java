@@ -48,7 +48,9 @@ import ghidra.program.model.listing.Program;
  * a program has become deactivated. In this example usage markers are added and removed as the user
  * tabs through open programs.
  */
-@ServiceInfo(defaultProvider = MarkerManagerPlugin.class, description = "Service to manage navigation markers displayed around a scrollable window.")
+@ServiceInfo(
+	defaultProvider = MarkerManagerPlugin.class,
+	description = "Service to manage navigation markers displayed around a scrollable window.")
 public interface MarkerService {
 
 	/**
@@ -241,8 +243,8 @@ public interface MarkerService {
 
 	/**
 	 * Returns the background color associated with the given program and address. Each markerSet
-	 * that supports background coloring is checked in priority order to see if it wants to specify
-	 * a background color for the given address.
+	 * that supports background coloring is blended to determine a background color for the given
+	 * address.
 	 *
 	 * @param program the program to check for a background color.
 	 * @param address the address to check for a background color.

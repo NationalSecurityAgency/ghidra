@@ -20,7 +20,7 @@ import utility.function.Callback;
 /**
  * A dialog that is meant to be extended for showing exceptions
  */
-public abstract class AbstractErrDialog extends DialogComponentProvider {
+public abstract class AbstractErrDialog extends ReusableDialogComponentProvider {
 
 	// at some point, there are too many exceptions to show
 	protected static final int MAX_EXCEPTIONS = 100;

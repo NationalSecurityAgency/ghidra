@@ -287,7 +287,7 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 			navigatable.removeNavigatableListener(this);
 		}
 
-		tool.removeComponentProvider(this);
+		super.closeComponent();
 		tableServicePlugin.remove(this);
 
 		if (markerSet != null) {

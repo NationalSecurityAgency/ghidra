@@ -267,7 +267,9 @@ public class FidPlugin extends ProgramPlugin implements ChangeListener {
 		chooser.setApproveButtonText(approveButtonText);
 		chooser.setTitle(title);
 		chooser.setFileSelectionMode(GhidraFileChooserMode.FILES_ONLY);
-		return chooser.getSelectedFile();
+		File file = chooser.getSelectedFile();
+		chooser.dispose();
+		return file;
 	}
 
 	/**

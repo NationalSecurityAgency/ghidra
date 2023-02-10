@@ -295,6 +295,33 @@ intb XmlDecode::readSignedInteger(const AttributeId &attribId)
   return res;
 }
 
+intb XmlDecode::readSignedIntegerExpectString(const string &expect,intb expectval)
+
+{
+  const Element *el = elStack.back();
+  const string &value( el->getAttributeValue(attributeIndex) );
+  if (value == expect)
+    return expectval;
+  istringstream s2(value);
+  s2.unsetf(ios::dec | ios::hex | ios::oct);
+  intb res = 0;
+  s2 >> res;
+  return res;
+}
+
+intb XmlDecode::readSignedIntegerExpectString(const AttributeId &attribId,const string &expect,intb expectval)
+
+{
+  string value = readString(attribId);
+  if (value == expect)
+    return expectval;
+  istringstream s2(value);
+  s2.unsetf(ios::dec | ios::hex | ios::oct);
+  intb res = 0;
+  s2 >> res;
+  return res;
+}
+
 uintb XmlDecode::readUnsignedInteger(void)
 
 {
@@ -691,9 +718,9 @@ bool PackedDecode::readBool(void)
   if ((header1 & HEADEREXTEND_MASK)!=0)
     getNextByte(curPos);
   uint1 typeByte = getNextByte(curPos);
+  attributeRead = true;
   if ((typeByte >> TYPECODE_SHIFT) != TYPECODE_BOOLEAN)
     throw DecoderError("Expecting boolean attribute");
-  attributeRead = true;
   return ((typeByte & LENGTHCODE_MASK) != 0);
 }
 
@@ -724,6 +751,7 @@ intb PackedDecode::readSignedInteger(void)
   }
   else {
     skipAttributeRemaining(typeByte);
+    attributeRead = true;
     throw DecoderError("Expecting signed integer attribute");
   }
   attributeRead = true;
@@ -735,6 +763,40 @@ intb PackedDecode::readSignedInteger(const AttributeId &attribId)
 {
   findMatchingAttribute(attribId);
   intb res = readSignedInteger();
+  curPos = startPos;
+  return res;
+}
+
+intb PackedDecode::readSignedIntegerExpectString(const string &expect,intb expectval)
+
+{
+  intb res;
+  Position tmpPos = curPos;
+  uint1 header1 = getNextByte(tmpPos);
+  if ((header1 & HEADEREXTEND_MASK)!=0)
+    getNextByte(tmpPos);
+  uint1 typeByte = getNextByte(tmpPos);
+  uint4 typeCode = typeByte >> TYPECODE_SHIFT;
+  if (typeCode == TYPECODE_STRING) {
+    string val = readString();
+    if (val != expect) {
+      ostringstream s;
+      s << "Expecting string \"" << expect << "\" but read \"" << val << "\"";
+      throw DecoderError(s.str());
+    }
+    res = expectval;
+  }
+  else {
+    res = readSignedInteger();
+  }
+  return res;
+}
+
+intb PackedDecode::readSignedIntegerExpectString(const AttributeId &attribId,const string &expect,intb expectval)
+
+{
+  findMatchingAttribute(attribId);
+  intb res = readSignedIntegerExpectString(expect,expectval);
   curPos = startPos;
   return res;
 }
@@ -753,6 +815,7 @@ uintb PackedDecode::readUnsignedInteger(void)
   }
   else {
     skipAttributeRemaining(typeByte);
+    attributeRead = true;
     throw DecoderError("Expecting unsigned integer attribute");
   }
   attributeRead = true;
@@ -778,6 +841,7 @@ string PackedDecode::readString(void)
   uint4 typeCode = typeByte >> TYPECODE_SHIFT;
   if (typeCode != TYPECODE_STRING) {
     skipAttributeRemaining(typeByte);
+    attributeRead = true;
     throw DecoderError("Expecting string attribute");
   }
   int4 length = readLengthCode(typeByte);
@@ -842,6 +906,7 @@ AddrSpace *PackedDecode::readSpace(void)
   }
   else {
     skipAttributeRemaining(typeByte);
+    attributeRead = true;
     throw DecoderError("Expecting space attribute");
   }
   attributeRead = true;

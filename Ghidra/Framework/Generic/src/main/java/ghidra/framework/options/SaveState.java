@@ -75,7 +75,7 @@ public class SaveState {
 	private static final String SAVE_STATE = "SAVE_STATE";
 	public static DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
 	private static final String ARRAY_ELEMENT_NAME = "A";
-	private HashMap<String, Object> map;
+	private TreeMap<String, Object> map; // use ordered map for deterministic serialization
 	private String saveStateName;
 
 	/**
@@ -101,7 +101,7 @@ public class SaveState {
 	 */
 	public SaveState(String name) {
 		this.saveStateName = name;
-		this.map = new HashMap<>();
+		this.map = new TreeMap<>();
 	}
 
 	/**
@@ -127,8 +127,7 @@ public class SaveState {
 	 * @param root XML contents of the save state
 	 */
 	public SaveState(Element root) {
-		map = new HashMap<>();
-		saveStateName = root.getName();
+		this(root.getName());
 		Iterator<?> iter = root.getChildren().iterator();
 		while (iter.hasNext()) {
 			Element elem = (Element) iter.next();
@@ -251,8 +250,7 @@ public class SaveState {
 						boolean[] vals = new boolean[list.size()];
 						while (it.hasNext()) {
 							Element e = (Element) it.next();
-							vals[i++] =
-								Boolean.valueOf(e.getAttributeValue(VALUE)).booleanValue();
+							vals[i++] = Boolean.valueOf(e.getAttributeValue(VALUE)).booleanValue();
 						}
 						map.put(name, vals);
 					}
@@ -298,8 +296,7 @@ public class SaveState {
 	}
 
 	protected SaveState(JsonObject root) {
-		map = new HashMap<>();
-		saveStateName = root.get("SAVE_STATE_NAME").getAsString();
+		this(root.get("SAVE_STATE_NAME").getAsString());
 		JsonObject values = root.get("VALUES").getAsJsonObject();
 		JsonObject types = root.get("TYPES").getAsJsonObject();
 		JsonObject enumClasses = root.get("ENUM_CLASSES").getAsJsonObject();
@@ -568,9 +565,8 @@ public class SaveState {
 			else if (value instanceof KeyStroke) {
 				elem = setAttributes(key, "KeyStroke", value.toString());
 			}
-			else if (value instanceof Font) {
-				elem =
-					setAttributes(key, "Font", OptionType.FONT_TYPE.convertObjectToString(value));
+			else if (value instanceof Font font) {
+				elem = setAttributes(key, "Font", toFontString(font));
 			}
 			else if (value instanceof byte[]) {
 				elem = new Element("BYTES");
@@ -684,9 +680,9 @@ public class SaveState {
 				types.addProperty(key, "KeyStroke");
 				values.addProperty(key, value.toString());
 			}
-			else if (value instanceof Font) {
+			else if (value instanceof Font font) {
 				types.addProperty(key, "Font");
-				values.addProperty(key, OptionType.FONT_TYPE.convertObjectToString(value));
+				values.addProperty(key, toFontString(font));
 			}
 			else if (value instanceof Byte) {
 				types.addProperty(key, "byte");
@@ -1438,4 +1434,22 @@ public class SaveState {
 		return true;
 	}
 
+	private String toFontString(Font font) {
+		return String.format("%s-%s-%s", font.getName(), getStyleString(font), font.getSize());
+	}
+
+	private String getStyleString(Font font) {
+		boolean bold = font.isBold();
+		boolean italic = font.isItalic();
+		if (bold && italic) {
+			return "BOLDITALIC";
+		}
+		if (bold) {
+			return "BOLD";
+		}
+		if (italic) {
+			return "ITALIC";
+		}
+		return "PLAIN";
+	}
 }

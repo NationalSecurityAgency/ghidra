@@ -159,6 +159,7 @@ public class PopulateFidDialog extends DialogComponentProvider {
 			if (selectedFile != null) {
 				symbolsFileTextField.setText(selectedFile.getAbsolutePath());
 			}
+			chooser.dispose();
 		});
 		symbolsFileTextField.getDocument().addUndoableEditListener(e -> updateOkEnablement());
 		panel.add(browseButton, BorderLayout.EAST);

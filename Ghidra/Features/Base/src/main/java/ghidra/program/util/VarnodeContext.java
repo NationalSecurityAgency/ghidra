@@ -38,8 +38,6 @@ import ghidra.util.exception.*;
 
 public class VarnodeContext implements ProcessorContext {
 
-	public Address BAD_ADDRESS = null;
-
 	public static final int BAD_SPACE_ID_VALUE = 0xffff;
 
 	protected DisassemblerContextImpl offsetContext;
@@ -71,6 +69,10 @@ public class VarnodeContext implements ProcessorContext {
 
 	protected static final NotFoundException notFoundExc = new NotFoundException();
 
+	public final Address BAD_ADDRESS;
+	
+	private final int BAD_OFFSET_SPACEID;   // address space for offsets from an unknown value;
+
 	protected boolean hitDest = false;
 
 	protected AddressFactory addrFactory = null;
@@ -90,6 +92,8 @@ public class VarnodeContext implements ProcessorContext {
 		this.addrFactory = new OffsetAddressFactory(program);
 
 		BAD_ADDRESS = addrFactory.getAddress(getAddressSpace("BAD_ADDRESS_SPACE"), 0);
+		
+		BAD_OFFSET_SPACEID  = getAddressSpace("(Bad Address Offset)");
 
 		this.programContext = programContext;
 
@@ -683,7 +687,8 @@ public class VarnodeContext implements ProcessorContext {
 			return;
 		}
 
-		if (out.isAddress() || isSymbolicSpace(out.getSpace())) {
+		boolean isSymbolicAddr = isSymbolicSpace(out.getSpace());
+		if (out.isAddress() || isSymbolicAddr) {
 			if (!isRegister(out)) {
 				if (debug) {
 					Msg.info(this, "      " + print(out) + " <- " + print(result) + " at " +
@@ -1002,11 +1007,28 @@ public class VarnodeContext implements ProcessorContext {
 		return rvnode.toString();
 	}
 
-// TODO: these are vague.  Should they be using context?
+	/**
+	 * Get the current value of the register at the address
+	 * 
+	 * @param reg value of register to get
+	 * @param toAddr value of register at a location
+	 * 
+	 * @return value of register or null
+	 */
 	public RegisterValue getRegisterValue(Register reg, Address toAddr) {
 		return getRegisterValue(reg, Address.NO_ADDRESS, toAddr);
 	}
 
+	/**
+	 * Get the value of a register that was set coming from an address to an
+	 * another address.
+	 * 
+	 * @param reg value of register to get
+	 * @param fromAddr location the value came from
+	 * @param toAddr location to get the value of the register coming from fromAddr
+	 * 
+	 * @return value of register or null
+	 */
 	public RegisterValue getRegisterValue(Register reg, Address fromAddr, Address toAddr) {
 		// only return constants
 		RegisterValue regVal = offsetContext.getRegisterValue(reg, fromAddr, toAddr);
@@ -1105,8 +1127,9 @@ public class VarnodeContext implements ProcessorContext {
 			}
 		}
 		else if (val1.getAddress() == BAD_ADDRESS) {
-// FIXME: Why both a "(bad address)" space and a "BAD_ADDRESS_SPACE" ?
-			spaceID = getAddressSpace("(bad address)");
+			// use bad address offset space, allows offsets to unknown things to continue
+			// TODO: Investigate if the source of the BAD_ADDRESS can be known
+			spaceID = BAD_OFFSET_SPACEID;
 			valbase = 0;
 			// check if evaluator wants to override unknown
 			Instruction instr = getCurrentInstruction(offsetContext.getAddress());
@@ -1163,6 +1186,9 @@ public class VarnodeContext implements ProcessorContext {
 		else {
 			throw notFoundExc;
 		}
+		
+		// create a new varnode with the correct space and offset
+		// note: if spaceID is a bad space, createVarnode will create a new BAD_ADDRESS
 		long result = (valbase + getConstant(val2, null)) &
 			(0xffffffffffffffffL >>> ((8 - val1.getSize()) * 8));
 		return createVarnode(result, spaceID, val1.getSize());
@@ -1224,6 +1250,7 @@ public class VarnodeContext implements ProcessorContext {
 			val2 = swap;
 		}
 		long val2Const = getConstant(val2, null);
+		// got a constant from val2, (value | 0) == value, so just return value
 		if (val2Const == 0) {
 			return val1;
 		}
@@ -1272,7 +1299,10 @@ public class VarnodeContext implements ProcessorContext {
 			throws NotFoundException {
 		// degenerate case, don't need to know the value
 		if (val1.equals(val2)) {
-			return createVarnode(0, addrFactory.getConstantSpace().getSpaceID(), val1.getSize());
+	  	    if (val1.getAddress().equals(BAD_ADDRESS)) {
+	  	    	return val1;
+	  	    }
+		    return createVarnode(0, addrFactory.getConstantSpace().getSpaceID(), val1.getSize());
 		}
 		int spaceID = val1.getSpace();
 		long valbase = 0;

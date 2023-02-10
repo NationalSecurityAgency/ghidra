@@ -17,6 +17,8 @@ package ghidra.program.database.data;
 
 import java.io.IOException;
 
+import org.apache.commons.lang3.StringUtils;
+
 import db.DBRecord;
 import ghidra.docking.settings.*;
 import ghidra.program.model.data.*;
@@ -201,6 +203,9 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 	@Override
 	public void setComment(String comment) {
 		if (record != null) {
+			if (StringUtils.isBlank(comment)) {
+				comment = null;
+			}
 			record.setString(ComponentDBAdapter.COMPONENT_COMMENT_COL, comment);
 			updateRecord(true);
 		}
@@ -398,16 +403,19 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 	 * Perform special-case component update that does not result in size or alignment changes. 
 	 * @param name new component name
 	 * @param dt new resolved datatype
-	 * @param cmt new comment
+	 * @param comment new comment
 	 */
-	void update(String name, DataType dt, String cmt) {
+	void update(String name, DataType dt, String comment) {
 		if (record != null) {
+			if (StringUtils.isBlank(comment)) {
+				comment = null;
+			}
 			// TODO: Need to check field name and throw DuplicateNameException
 			// name = checkFieldName(name);
 			record.setString(ComponentDBAdapter.COMPONENT_FIELD_NAME_COL, name);
 			record.setLongValue(ComponentDBAdapter.COMPONENT_DT_ID_COL,
 				dataMgr.getResolvedID(dt));
-			record.setString(ComponentDBAdapter.COMPONENT_COMMENT_COL, cmt);
+			record.setString(ComponentDBAdapter.COMPONENT_COMMENT_COL, comment);
 			updateRecord(false);
 		}
 	}

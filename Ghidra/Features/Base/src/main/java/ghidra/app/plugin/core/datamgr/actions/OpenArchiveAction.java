@@ -67,6 +67,7 @@ public class OpenArchiveAction extends DockingAction {
 
 		DataTypeManagerHandler manager = plugin.getDataTypeManagerHandler();
 		File file = fileChooser.getSelectedFile();
+		fileChooser.dispose();
 		if (file == null) {
 			return;
 		}

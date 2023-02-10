@@ -2714,7 +2714,11 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	 * @param source symbol source
 	 * @return library symbol
 	 * @throws DuplicateNameException if library name conflicts with another symbol
-	 * @throws InvalidInputException
+	 * @throws InvalidInputException if name contains white space, is zero length, or is null for
+	 *             non-default source. Also thrown if invalid parent namespace is specified.
+	 * @throws IllegalArgumentException if {@link SourceType#DEFAULT} is improperly specified, or 
+	 *             or if the given parent namespace is from a different program than that of this 
+	 *             symbol table.
 	 */
 	public SymbolDB createLibrarySymbol(String name, String pathname, SourceType source)
 			throws DuplicateNameException, InvalidInputException {
@@ -2731,7 +2735,11 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	 * @param checkForDuplicates true if check for duplicate name conflict should be performed
 	 * @return class symbol
 	 * @throws DuplicateNameException if class name conflicts with another symbol
-	 * @throws InvalidInputException
+	 * @throws InvalidInputException if name contains white space, is zero length, or is null for
+	 *             non-default source. Also thrown if invalid parent namespace is specified.
+	 * @throws IllegalArgumentException if {@link SourceType#DEFAULT} is improperly specified, or 
+	 *             or if the given parent namespace is from a different program than that of this 
+	 *             symbol table.
 	 */
 	SymbolDB createClassSymbol(String name, Namespace parent, SourceType source,
 			boolean checkForDuplicates) throws DuplicateNameException, InvalidInputException {
@@ -2748,7 +2756,11 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	 * @param checkForDuplicates true if check for duplicate name conflict should be performed
 	 * @return namespace symbol
 	 * @throws DuplicateNameException if namespace name conflicts with another symbol
-	 * @throws InvalidInputException
+	 * @throws InvalidInputException if name contains white space, is zero length, or is null for
+	 *             non-default source. Also thrown if invalid parent namespace is specified.
+	 * @throws IllegalArgumentException if {@link SourceType#DEFAULT} is improperly specified, or 
+	 *             if the given parent namespace is from a different program than that of this 
+	 *             symbol table.
 	 */
 	SymbolDB createNamespaceSymbol(String name, Namespace parent, SourceType source,
 			boolean checkForDuplicates) throws DuplicateNameException, InvalidInputException {
@@ -2788,6 +2800,9 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	@Override
 	public Symbol createLabel(Address addr, String name, Namespace namespace, SourceType source)
 			throws InvalidInputException {
+		if (!addr.isMemoryAddress()) {
+			throw new IllegalArgumentException("Invalid memory address: " + addr);
+		}
 		return createCodeSymbol(addr, name, namespace, source, null);
 	}
 
@@ -2803,7 +2818,11 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	 * @param source the SourceType of the new symbol
 	 * @param stringData special use depending on the symbol type and whether or not it is external
 	 * @return the new symbol
-	 * @throws InvalidInputException if the name contains illegal characters (i.e. space)
+	 * @throws InvalidInputException if name contains white space, is zero length, or is null for
+	 *             non-default source. Also thrown if invalid parent namespace is specified.
+	 * @throws IllegalArgumentException if {@link SourceType#DEFAULT} is improperly specified, or 
+	 *             an invalid address, or if the given parent namespace is from a different 
+	 *             program than that of this symbol table.
 	 */
 	public Symbol createCodeSymbol(Address addr, String name, Namespace namespace,
 			SourceType source, String stringData) throws InvalidInputException {

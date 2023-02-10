@@ -16,8 +16,6 @@
 package db;
 
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -29,6 +27,7 @@ import db.buffers.LocalBufferFile;
 import docking.framework.DockingApplicationConfiguration;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.filechooser.GhidraFileChooser;
+import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
 import generic.application.GenericApplicationLayout;
@@ -47,7 +46,7 @@ import utility.application.ApplicationLayout;
  * Ghidra database.
  */
 public class DbViewer extends JFrame {
-	private GhidraFileChooser fileChooser;
+	private static final String LAST_BUFFER_FILE_DIRECTORY = "LastBufferFileDirectory";
 	private File dbFile;
 	private DBHandle dbh;
 	private JMenuItem openItem;
@@ -60,7 +59,7 @@ public class DbViewer extends JFrame {
 
 	DbViewer() {
 		super("Database Viewer");
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		buildGui();
 	}
 
@@ -70,29 +69,14 @@ public class DbViewer extends JFrame {
 		menuBar.add(menu);
 		openItem = new JMenuItem("Open Database...");
 		menu.add(openItem);
-		openItem.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				openDb();
-			}
-		});
+		openItem.addActionListener(e -> openDb());
 		closeItem = new JMenuItem("Close Database");
 		menu.add(closeItem);
 		closeItem.setEnabled(false);
-		closeItem.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				closeDb();
-			}
-		});
+		closeItem.addActionListener(e -> closeDb());
 		JMenuItem exitItem = new JMenuItem("Exit");
 		menu.add(exitItem);
-		exitItem.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				System.exit(0);
-			}
-		});
+		exitItem.addActionListener(e -> System.exit(0));
 		setJMenuBar(menuBar);
 	}
 
@@ -106,14 +90,16 @@ public class DbViewer extends JFrame {
 	}
 
 	private void openDb() {
-		if (fileChooser == null) {
-			fileChooser = new GhidraFileChooser(this);
-			fileChooser.setFileSelectionMode(GhidraFileChooser.FILES_ONLY);
-			fileChooser.setFileFilter(new ExtensionFileFilter("gbf", "Ghidra Buffer File"));
-			fileChooser.setCurrentDirectory(new File("C:\\"));
-		}
+
+		GhidraFileChooser fileChooser = new GhidraFileChooser(this);
+		fileChooser.setFileSelectionMode(GhidraFileChooserMode.FILES_ONLY);
+		fileChooser.setFileFilter(new ExtensionFileFilter("gbf", "Ghidra Buffer File"));
+		fileChooser.setCurrentDirectory(new File("C:\\"));
+
+		fileChooser.setLastDirectoryPreference(LAST_BUFFER_FILE_DIRECTORY);
 
 		File selectedFile = fileChooser.getSelectedFile(true);
+		fileChooser.dispose();
 		if (selectedFile == null) {
 			return;
 		}
@@ -169,12 +155,7 @@ public class DbViewer extends JFrame {
 				tables[i].getName() + " (" + Integer.toString(tables[i].getRecordCount()) + ")";
 		}
 		combo = new GComboBox<>(names);
-		combo.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				updateTable();
-			}
-		});
+		combo.addActionListener(e -> updateTable());
 		subNorthPanel.add(combo);
 		northPanel.add(subNorthPanel);
 		mainPanel.add(northPanel, BorderLayout.NORTH);

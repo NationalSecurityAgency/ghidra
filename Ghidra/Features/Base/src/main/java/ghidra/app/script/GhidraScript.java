@@ -2044,7 +2044,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 			chooser.setApproveButtonText(approveButtonText);
 			chooser.setFileSelectionMode(GhidraFileChooserMode.FILES_ONLY);
 			File file = chooser.getSelectedFile();
-
+			chooser.dispose();
 			if (chooser.wasCancelled()) {
 				throw new CancelledException();
 			}
@@ -2121,7 +2121,7 @@ public abstract class GhidraScript extends FlatProgramAPI {
 			chooser.setApproveButtonText(approveButtonText);
 			chooser.setFileSelectionMode(GhidraFileChooserMode.DIRECTORIES_ONLY);
 			File file = chooser.getSelectedFile();
-
+			chooser.dispose();
 			if (chooser.wasCancelled()) {
 				throw new CancelledException();
 			}

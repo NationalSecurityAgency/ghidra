@@ -7,6 +7,51 @@
 
 <BODY>
 
+<H1 align="center">Ghidra 10.2.3 Change History (February 2023)</H1>
+<blockquote><p><u>Improvements</u></p>
+<ul>
+    <li><I>Basic Infrastructure</I>. Addressed CVE-2023-22671 by removing <code>eval</code> usage from <code>launch.sh</code>. (GP-2987, Issue #4869, #4872)</li>
+    <li><I>Build</I>. Ghidra's Windows native binaries can now be built using Microsoft C++ Build Tools. (GP-2786, Issue #1733, #4647)</li>
+    <li><I>Build</I>. Providing better error reporting when a supported version of Visual Studio (2017+) cannot be found. (GP-2928)</li>
+    <li><I>Decompiler</I>. Added fail-fast logic to improve efficiency of switch analysis for software breakpoints. (GP-2866)</li>
+    <li><I>Decompiler</I>. Updated the limit of the <B>Auto Fill in Structure</B> action to take the larger of 0x1000 and the size of the structure. (GP-3020, Issue #4879)</li>
+    <li><I>GUI</I>. Updated the Front End Project Table to allow users to change selected rows by clicking any already-selected row. (GP-3051)</li>
+    <li><I>Processors</I>. Added ColdFire EMAC instruction variants. (GP-2197)</li>
+    <li><I>Processors</I>. Added <code><B>volatile</B></code> and <code><B>size</B></code> attributes to individual default_symbols/symbol elements in pspec files. Symbols with these volatile and size attributes are treated as volatile by the Decompiler. (GP-2606)</li>
+</ul>
+</blockquote>
+<blockquote><p><u>Bugs</u></p>
+<ul>
+    <li><I>Analysis</I>. Corrected RISC-V function start patterns.  The values of <code><B>totalbits</B></code> and <code><B>postbits</B></code> were set such that no patterns would ever match.  Call instructions split into call/jump based on return addressing saving in <code>RA</code>. (GP-2878)</li>
+    <li><I>Analysis</I>. Corrected potentially bad constant propagation where the subtraction two unknown values can result in the placement of an erroneous memory reference. (GP-3066)</li>
+    <li><I>Assembler</I>. Fixed parsing of 64-bit unsigned immediates. (GP-2789, Issue #4688)</li>
+    <li><I>Assembler</I>. Fixed display and assembly of THUMB <code>tbb [pc, rm]</code> instruction. (GP-2946, Issue #4824)</li>
+    <li><I>Debugger:Watches</I>. Fixed endless read loop in Watches pane when read results in error. (GP-2815)</li>
+    <li><I>Decompiler</I>. Fixed Decompiler bug that can cause <code>Symbols... assigned to the same variable</code> exceptions. (GP-2859)</li>
+    <li><I>Decompiler</I>. Fixed regression in handling of spacebase register values that cause a stack trace in the Decompiler for RISC-V.  Removed unnecessary spacebase settings in TriCore, MIPS, RISC-V. (GP-2905)</li>
+    <li><I>Decompiler</I>. Fixed bug preventing some format conversions of negative constants in the Decompiler window. (GP-2927, Issue #3747)</li>
+    <li><I>Decompiler</I>. Fixed error in dynamic hash algorithm which could cause the rename/retype actions in the Decompiler to fail. (GP-3014, Issue #193)</li>
+    <li><I>Decompiler</I>. Fixed Decompiler marshaling parsing error for function prototypes with an <code>unknown</code> stack purge. (GP-3065)</li>
+    <li><I>Decompiler</I>. Fixed bug causing switch analysis on x86 16-bit executables to fail. (GP-3075)</li>
+    <li><I>Decompiler</I>. Fixed bug causing <code>Expecting unsigned integer attribute</code> exceptions when decompiling for architectures with a word size greater than 1 byte. (GP-3088)</li>
+    <li><I>DWARF</I>. Fixed issue with DWARF not marking object-oriented methods as a <code>__thiscall</code>. (GP-2904)</li>
+    <li><I>Exporter:XML</I>. Corrected XML export bug that improperly output custom property values, such as Analysis Times, which was causing failure at time of subsequent import. (GP-1453)</li>
+    <li><I>GUI</I>. Updated the Structure Editor's <B>Create Structure from Selection</B> action to work around a focus issue experienced by some users. (GP-3069, Issue #4066)</li>
+    <li><I>Importer</I>. Improved support for loading old-style DOS MZ binaries. (GP-2210, Issue #1876, #1892, #254, #4318)</li>
+    <li><I>Importer:PE</I>. Fixed an issue that prevented PE ordinal symbols from getting their true names resolved during headless mode import. (GP-2947, Issue #4821)</li>
+    <li><I>Importer:PE</I>. Fixed an issue with label addresses in the PeLoader that occurred when sections had an uninitialized padding block appended to their initialized block. (GP-2948, Issue #4815)</li>
+    <li><I>Multi-User</I>. Fixed svrAdmin to handle projects that contain a space character in the name. (GP-2852, Issue #4750)</li>
+    <li><I>PDB</I>. Corrected a PDB Universal analysis regression error in Ghidra 10.2.2 that caused an internal anonymous function definition name to be set on a function instead of the function symbol name. (GP-2864, Issue #4842)</li>
+    <li><I>Processors</I>. Fixed pcode for the PowerPC <code>mtmsr</code> instruction. (GP-2245)</li>
+    <li><I>Processors</I>. Corrected flag updates for the z80 <code>adc</code> instruction. (GP-2882, Issue #4553)</li>
+    <li><I>Processors</I>. Set 8051 bit-mapped SFR register range to volatile. (GP-2910, Issue #3061)</li>
+    <li><I>Processors</I>. Fixed issue with x86 <code>VEX</code> prefix colliding with the <code>LDS</code> instruction. (GP-2959, Issue #4832)</li>
+    <li><I>Processors</I>. Corrected implementations of x86 <code>SHUFPS</code> and <code>PSHUFD</code> instructions in ia.sinc. (GP-3023, Issue #4868)</li>
+    <li><I>Processors</I>. Fixed ARM Thumb issues with <code>ldr</code> instructions disassembling as incorrect variants. (GP-3083, Issue #4959)</li>
+    <li><I>Version Tracking</I>. Fixed ArrayIndexOutOfBoundsException encountered when using HashedFunctionAddressCorrelation for version tracking. (GP-2758, Issue #4683)</li>
+</ul>
+</blockquote>
+
 <H1 align="center">Ghidra 10.2.2 Change History (November 2022)</H1>
 <blockquote><p><u>Bugs</u></p>
 <ul>

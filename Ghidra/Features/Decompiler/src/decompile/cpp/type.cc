@@ -820,7 +820,7 @@ void TypePointer::encode(Encoder &encoder) const
   encoder.openElement(ELEM_TYPE);
   encodeBasic(metatype,encoder);
   if (wordsize != 1)
-    encoder.writeSignedInteger(ATTRIB_WORDSIZE, wordsize);
+    encoder.writeUnsignedInteger(ATTRIB_WORDSIZE, wordsize);
   if (spaceid != (AddrSpace *)0)
     encoder.writeSpace(ATTRIB_SPACE, spaceid);
   ptrto->encodeRef(encoder);
@@ -2129,7 +2129,7 @@ void TypePointerRel::encode(Encoder &encoder) const
   encoder.openElement(ELEM_TYPE);
   encodeBasic(TYPE_PTRREL,encoder);	// Override the metatype for XML
   if (wordsize != 1)
-    encoder.writeSignedInteger(ATTRIB_WORDSIZE, wordsize);
+    encoder.writeUnsignedInteger(ATTRIB_WORDSIZE, wordsize);
   ptrto->encode(encoder);
   parent->encodeRef(encoder);
   encoder.openElement(ELEM_OFF);

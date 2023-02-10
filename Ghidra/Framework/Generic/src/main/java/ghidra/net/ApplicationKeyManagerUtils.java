@@ -37,6 +37,7 @@ import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.OperatorException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+import org.bouncycastle.util.IPAddress;
 
 import generic.random.SecureRandomFactory;
 import ghidra.util.Msg;
@@ -301,15 +302,19 @@ public class ApplicationKeyManagerUtils {
 	 * @param alias entry alias with keystore
 	 * @param dn distinguished name (e.g., "CN=Ghidra Test, O=Ghidra, OU=Test, C=US" )
 	 * @param durationDays number of days which generated certificate should remain valid
-	 * @param caEntry optional CA private key entry.  If null, a self-signed CA certificate will be generated.
+	 * @param caEntry optional CA private key entry.  If null, a self-signed CA certificate will be 
+	 * 			generated.
 	 * @param keyFile optional file to load/store resulting {@link KeyStore} (may be null)
 	 * @param keystoreType support keystore type (e.g., "JKS", "PKCS12")
+	 * @param subjectAlternativeNames an optional list of subject alternative names to be included 
+	 * 			in certificate (may be null)
 	 * @param protectedPassphrase key and keystore protection password
 	 * @return keystore containing newly generated certification with key pair
 	 * @throws KeyStoreException if error occurs while updating keystore
 	 */
 	public static final KeyStore createKeyStore(String alias, String dn, int durationDays,
-			PrivateKeyEntry caEntry, File keyFile, String keystoreType, char[] protectedPassphrase)
+			PrivateKeyEntry caEntry, File keyFile, String keystoreType,
+			Collection<String> subjectAlternativeNames, char[] protectedPassphrase)
 			throws KeyStoreException {
 
 		PasswordProtection pp = new PasswordProtection(protectedPassphrase);
@@ -352,9 +357,8 @@ public class ApplicationKeyManagerUtils {
 				}
 				X509Certificate caX509Cert = (X509Certificate) caCert;
 				caX500Name =
-					new X500Name(caX509Cert.getSubjectDN().getName());
-				keyUsage = new KeyUsage(
-					KeyUsage.digitalSignature | KeyUsage.keyEncipherment);
+					new X500Name(caX509Cert.getSubjectX500Principal().getName());
+				keyUsage = new KeyUsage(KeyUsage.digitalSignature | KeyUsage.keyEncipherment);
 				issuerKey = caEntry.getPrivateKey();
 			}
 			Date notBefore = new Date();
@@ -362,18 +366,23 @@ public class ApplicationKeyManagerUtils {
 			Date notAfter = new Date(notBefore.getTime() + durationMs);
 			BigInteger serialNumber = new BigInteger(128, random);
 
-//			JcaX509ExtensionUtils x509Utils = new JcaX509ExtensionUtils();
-
 			X509v3CertificateBuilder certificateBuilder = new X509v3CertificateBuilder(caX500Name,
 				serialNumber, notBefore, notAfter, x500Name, bcPk);
-			certificateBuilder
-//					.addExtension(Extension.subjectKeyIdentifier, true, x509Utils.createSubjectKeyIdentifier(bcPk))
-					.addExtension(Extension.keyUsage, true, keyUsage);
-
+			certificateBuilder.addExtension(Extension.keyUsage, true, keyUsage);
+			if (subjectAlternativeNames != null && !subjectAlternativeNames.isEmpty()) {
+				List<GeneralName> nameList = new ArrayList<GeneralName>();
+				for (String altName : subjectAlternativeNames) {
+					int nameType =
+						IPAddress.isValid(altName) ? GeneralName.iPAddress : GeneralName.dNSName;
+					nameList.add(new GeneralName(nameType, altName));
+				}
+				GeneralName[] altNames = nameList.toArray(GeneralName[]::new);
+				certificateBuilder.addExtension(Extension.subjectAlternativeName, false,
+					new GeneralNames(altNames));
+			}
 			if (caEntry == null) {
-				certificateBuilder
-						.addExtension(Extension.basicConstraints, true, new BasicConstraints(1));
-//						.addExtension(Extension.authorityKeyIdentifier, true, x509Utils.createAuthorityKeyIdentifier(bcPk));
+				certificateBuilder.addExtension(Extension.basicConstraints, true,
+					new BasicConstraints(1));
 			}
 
 			ContentSigner contentSigner =
@@ -438,18 +447,21 @@ public class ApplicationKeyManagerUtils {
 	 * @param caEntry optional CA private key entry.  If null, a self-signed CA certificate will be generated.
 	 * @param keyFile optional file to load/store resulting {@link KeyStore} (may be null)
 	 * @param keystoreType support keystore type (e.g., "JKS", "PKCS12")
+	 * @param subjectAlternativeNames an optional list of subject alternative names to be included 
+	 * 			in certificate (may be null)
 	 * @param protectedPassphrase key and keystore protection password
 	 * @return newly generated keystore entry with key pair
 	 * @throws KeyStoreException if error occurs while updating keystore
 	 */
 	public static final PrivateKeyEntry createKeyEntry(String alias, String dn, int durationDays,
-			PrivateKeyEntry caEntry, File keyFile, String keystoreType, char[] protectedPassphrase)
+			PrivateKeyEntry caEntry, File keyFile, String keystoreType,
+			Collection<String> subjectAlternativeNames, char[] protectedPassphrase)
 			throws KeyStoreException {
 
 		PasswordProtection pp = new PasswordProtection(protectedPassphrase);
 		try {
 			KeyStore keyStore = createKeyStore(alias, dn, durationDays, caEntry, keyFile,
-				keystoreType, protectedPassphrase);
+				keystoreType, subjectAlternativeNames, protectedPassphrase);
 			return (PrivateKeyEntry) keyStore.getEntry(alias, pp);
 		}
 		catch (NoSuchAlgorithmException | UnrecoverableEntryException e) {

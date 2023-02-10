@@ -77,7 +77,6 @@ public class BookmarkPlugin extends ProgramPlugin
 	private BookmarkProvider provider;
 	private DockingAction addAction;
 	private DockingAction deleteAction;
-	private CreateBookmarkDialog createDialog;
 	private GoToService goToService;
 	private MarkerService markerService;
 	private BookmarkManager bookmarkMgr;
@@ -205,10 +204,6 @@ public class BookmarkPlugin extends ProgramPlugin
 		if (provider != null) {
 			provider.dispose();
 			provider = null;
-		}
-		if (createDialog != null) {
-			createDialog.dispose();
-			createDialog = null;
 		}
 		goToService = null;
 
@@ -444,7 +439,7 @@ public class BookmarkPlugin extends ProgramPlugin
 			return;
 		}
 		boolean hasSelection = currentSelection != null && !currentSelection.isEmpty();
-		createDialog = new CreateBookmarkDialog(this, currCU, hasSelection);
+		CreateBookmarkDialog createDialog = new CreateBookmarkDialog(this, currCU, hasSelection);
 		tool.showDialog(createDialog);
 	}
 

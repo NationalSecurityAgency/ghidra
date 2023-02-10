@@ -20,14 +20,14 @@ import java.beans.PropertyChangeListener;
 
 import javax.swing.tree.TreePath;
 
-import docking.DialogComponentProvider;
+import docking.ReusableDialogComponentProvider;
 import docking.widgets.OptionDialog;
 import ghidra.framework.options.Options;
 
 /**
  * Dialog for editing options within a tool.
  */
-public class OptionsDialog extends DialogComponentProvider {
+public class OptionsDialog extends ReusableDialogComponentProvider {
 	private OptionsPanel panel;
 	private boolean hasChanges;
 

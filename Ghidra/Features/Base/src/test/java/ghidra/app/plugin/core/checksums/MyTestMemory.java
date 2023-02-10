@@ -179,7 +179,7 @@ public class MyTestMemory extends AddressSet implements Memory {
 	}
 
 	@Override
-	public MemoryBlock convertToInitialized(MemoryBlock unitializedBlock, byte initialValue)
+	public MemoryBlock convertToInitialized(MemoryBlock uninitializedBlock, byte initialValue)
 			throws MemoryBlockException, NotFoundException {
 		throw new UnsupportedOperationException();
 	}

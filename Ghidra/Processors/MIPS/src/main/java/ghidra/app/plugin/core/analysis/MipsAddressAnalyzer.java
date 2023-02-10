@@ -477,6 +477,12 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 								coveredSet.add(func.getBody());
 								amgr.codeDefined(coveredSet);
 							}
+							else {
+								// else T9 was set at the beginning of the function
+								// something within the function must have set it to
+								// an unknown value, so can continue
+								return null;
+							}
 						}
 						catch (ContextChangeException e) {
 							throw new AssertException("Unexpected Exception", e);

@@ -20,7 +20,6 @@
 		<entry size="8" alignment="4" />
 	</size_alignment_map>
   </data_organization>
-  <spacebase name="gp" register="gp" space="ram"/>
   <global>
     <range space="ram"/>
     <register name="gp"/>

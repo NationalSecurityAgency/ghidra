@@ -633,8 +633,11 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 			dialog1.okCallback();
 		});
 
-		waitForPass(
-			() -> assertEquals(tb.addr(0x00401234), memBytesProvider.getLocation().getAddress()));
+		waitForPass(() -> {
+			ProgramLocation loc = memBytesProvider.getLocation();
+			assertNotNull(loc);
+			assertEquals(tb.addr(0x00401234), loc.getAddress());
+		});
 
 		performAction(memBytesProvider.actionGoTo, false);
 		DebuggerGoToDialog dialog2 = waitForDialogComponent(DebuggerGoToDialog.class);

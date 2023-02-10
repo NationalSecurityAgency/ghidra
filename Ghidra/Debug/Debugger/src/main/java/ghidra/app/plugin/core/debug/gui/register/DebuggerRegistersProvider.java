@@ -553,6 +553,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 	@Override
 	public void removeFromTool() {
+		availableRegsDialog.dispose();
+
 		plugin.providerRemoved(this);
 		plugin.getTool().removePopupActionProvider(this);
 		super.removeFromTool();

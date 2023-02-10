@@ -52,8 +52,6 @@ class FilterAction extends ToggleDockingAction {
 	private boolean viewMode = false;
 	private boolean selectionMode = false;
 
-	private FilterDialog dialog;
-
 	private static class SortMapComparatorASC implements Comparator<String> {
 
 		@Override
@@ -82,10 +80,7 @@ class FilterAction extends ToggleDockingAction {
 
 	@Override
 	public void actionPerformed(ActionContext context) {
-		if (dialog == null) {
-			dialog = new FilterDialog();
-		}
-
+		FilterDialog dialog = new FilterDialog();
 		dialog.setSelectionEnabled(plugin.getSelection() != null);
 		dialog.updateButtonEnabledState();
 		plugin.getTool().showDialog(dialog);
@@ -93,19 +88,11 @@ class FilterAction extends ToggleDockingAction {
 
 	synchronized void clearTypes() {
 		typeEnabledMap.clear();
-
-		if (dialog != null) {
-			dialog.clearTypes();
-		}
 	}
 
 	synchronized void addType(String type) {
-		Boolean bool = new Boolean(!filterEnabled);
+		Boolean bool = !filterEnabled;
 		typeEnabledMap.put(type, bool);
-
-		if (dialog != null) {
-			dialog.createCheckBox(type, type, bool.booleanValue());
-		}
 	}
 
 	synchronized boolean typeEnabled(String type) {
@@ -137,16 +124,6 @@ class FilterAction extends ToggleDockingAction {
 		for (String element : list) {
 			typeEnabledMap.put(element, Boolean.TRUE);
 		}
-		if (dialog != null) {
-			dialog.selectTypes(list);
-		}
-	}
-
-	void repaint() {
-		if (dialog == null) {
-			return;
-		}
-		dialog.repaint();
 	}
 
 	boolean getViewMode() {
@@ -170,7 +147,6 @@ class FilterAction extends ToggleDockingAction {
 		filterEnabled = false;
 		viewMode = false;
 		selectionMode = false;
-		dialog = null;
 		setEnabled(false);
 		clearTypes();
 	}

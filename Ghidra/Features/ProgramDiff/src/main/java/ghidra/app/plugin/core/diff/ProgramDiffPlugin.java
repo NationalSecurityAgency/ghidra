@@ -580,6 +580,11 @@ public class ProgramDiffPlugin extends ProgramPlugin
 		if (diffDetailsProvider != null) {
 			diffDetailsProvider.removeActionListener(diffDetailsListener);
 		}
+
+		if (executeDiffDialog != null) {
+			executeDiffDialog.dispose();
+		}
+
 		actionManager.dispose();
 		applySettingsMgr.dispose();
 		markerManager.dispose();

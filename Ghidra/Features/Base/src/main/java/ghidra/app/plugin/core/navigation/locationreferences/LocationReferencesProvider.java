@@ -366,6 +366,7 @@ public class LocationReferencesProvider extends ComponentProviderAdapter
 
 	@Override
 	public void closeComponent() {
+		super.closeComponent();
 		locationReferencesPlugin.providerDismissed(this);
 	}
 

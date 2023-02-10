@@ -23,7 +23,7 @@ import java.util.function.Function;
 
 import javax.swing.*;
 
-import docking.DialogComponentProvider;
+import docking.ReusableDialogComponentProvider;
 import docking.widgets.table.*;
 import docking.widgets.table.ColumnSortState.SortDirection;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
@@ -35,7 +35,7 @@ import ghidra.program.util.DefaultLanguageService;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
 
-public class DebuggerSelectMappingOfferDialog extends DialogComponentProvider {
+public class DebuggerSelectMappingOfferDialog extends ReusableDialogComponentProvider {
 
 	protected enum OfferTableColumns
 		implements EnumeratedTableColumn<OfferTableColumns, DebuggerMappingOffer> {

@@ -42,7 +42,6 @@ public class DataTypeSyncDialog extends DialogComponentProvider implements DataT
 	private DataTypeComparePanel comparePanel;
 	private final String operationName;
 
-	private boolean cancelled;
 	private List<DataTypeSyncInfo> selectedInfos = Collections.emptyList();
 
 	public DataTypeSyncDialog(DataTypeManagerPlugin plugin, String clientName, String sourceName,
@@ -118,7 +117,6 @@ public class DataTypeSyncDialog extends DialogComponentProvider implements DataT
 
 	@Override
 	protected void cancelCallback() {
-		cancelled = true;
 		close();
 	}
 

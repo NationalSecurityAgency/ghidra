@@ -15,18 +15,14 @@
  */
 package agent.frida.model.methods;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 import agent.frida.model.iface1.FridaModelTargetMethod;
 import agent.frida.model.iface2.FridaModelTargetMemoryContainer;
 import agent.frida.model.impl.FridaModelTargetObjectImpl;
 import ghidra.dbg.target.TargetMethod;
-import ghidra.dbg.target.schema.TargetAttributeType;
-import ghidra.dbg.target.schema.TargetElementType;
-import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
+import ghidra.dbg.target.schema.*;
 
 @TargetObjectSchemaInfo(
 	name = "MemoryWatch",
@@ -59,7 +55,7 @@ public class FridaModelTargetMemoryWatchImpl extends FridaModelTargetObjectImpl
 		ParameterDescription<Long> size = ParameterDescription.create(Long.class, "Size", true,
 			1L, "Size", "size to scan");
 		ParameterDescription<String> onAccess = ParameterDescription.create(String.class, "OnAccess",
-			true, "", "onAccess file", "JS file with onAccess implemenation");
+			true, "", "onAccess file", "JS file with onAccess implementation");
 		ParameterDescription<String> name = ParameterDescription.create(String.class, "Name",
 			false, "watch", "name", "name for future unload");
 		ParameterDescription<String> script = ParameterDescription.create(String.class, "Script",

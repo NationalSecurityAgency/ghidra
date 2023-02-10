@@ -53,6 +53,7 @@ public class DebugDecompilerAction extends DockingAction {
 		fileChooser.setTitle("Please Choose Output File");
 		fileChooser.setFileFilter(new ExtensionFileFilter(new String[] { "xml" }, "XML Files"));
 		File file = fileChooser.getSelectedFile();
+		fileChooser.dispose();
 		if (file == null) {
 			return;
 		}

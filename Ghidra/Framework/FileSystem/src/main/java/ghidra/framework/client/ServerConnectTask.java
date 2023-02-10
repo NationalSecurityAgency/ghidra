@@ -18,10 +18,12 @@ package ghidra.framework.client;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.rmi.*;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.security.cert.Certificate;
 import java.util.HashSet;
 
 import javax.net.ssl.SSLHandshakeException;
@@ -45,6 +47,8 @@ import ghidra.util.task.*;
  * Task for connecting to server with Swing thread.
  */
 class ServerConnectTask extends Task {
+
+	private static final int LIVENESS_CHECK_TIMEOUT_MS = 3000;
 
 	private ServerInfo server;
 	//private String defaultUserID;
@@ -98,6 +102,7 @@ class ServerConnectTask extends Task {
 	 * if handle is null after running task.  If both the exception
 	 * and handle are null, it implies the connection attempt was cancelled
 	 * by the user.
+	 * @return exception which occured during a failed connection attempt, or null
 	 */
 	Exception getException() {
 		return exc;
@@ -123,16 +128,6 @@ class ServerConnectTask extends Task {
 		return subj;
 	}
 
-	private static String getPreferredHostname(String name) {
-		try {
-			return InetNameLookup.getCanonicalHostName(name);
-		}
-		catch (UnknownHostException e) {
-			Msg.warn(ServerConnectTask.class, "Failed to resolve hostname for " + name);
-		}
-		return name;
-	}
-
 	private static boolean isSSLHandshakeCancelled(SSLHandshakeException e) throws IOException {
 		if (e.getMessage().indexOf("bad_certificate") > 0) {
 			if (ApplicationKeyManagerFactory.getPreferredKeyStore() == null) {
@@ -154,8 +149,8 @@ class ServerConnectTask extends Task {
 	 * @param server server information
 	 * @param monitor cancellable monitor
 	 * @return Ghidra Server Handle object
-	 * @throws IOException
-	 * @throws CancelledException 
+	 * @throws IOException if a connection error occurs
+	 * @throws CancelledException if connection attempt was cancelled
 	 */
 	public static GhidraServerHandle getGhidraServerHandle(ServerInfo server, TaskMonitor monitor)
 			throws IOException, CancelledException {
@@ -163,6 +158,7 @@ class ServerConnectTask extends Task {
 		GhidraServerHandle gsh = null;
 		boolean canCancel = monitor.isCancelEnabled(); // original state
 		try {
+
 			// Test SSL Handshake to ensure that user is able to decrypt keystore.
 			// This is intended to work around an RMI issue where a continuous
 			// retry condition can occur when a user cancels the password entry
@@ -172,17 +168,10 @@ class ServerConnectTask extends Task {
 			monitor.setCancelEnabled(false);
 			monitor.setMessage("Connecting...");
 
-			Registry reg;
-			try {
-				// attempt to connect with older Ghidra Server registry without using SSL/TLS
-				reg = LocateRegistry.getRegistry(server.getServerName(), server.getPortNumber());
-				checkServerBindNames(reg);
-			}
-			catch (IOException e) {
-				reg = LocateRegistry.getRegistry(server.getServerName(), server.getPortNumber(),
+			Registry reg =
+				LocateRegistry.getRegistry(server.getServerName(), server.getPortNumber(),
 					new SslRMIClientSocketFactory());
-				checkServerBindNames(reg);
-			}
+			checkServerBindNames(reg);
 
 			gsh = (GhidraServerHandle) reg.lookup(GhidraServerHandle.BIND_NAME);
 			gsh.checkCompatibility(GhidraServerHandle.INTERFACE_VERSION);
@@ -241,20 +230,17 @@ class ServerConnectTask extends Task {
 
 	/**
 	 * Attempts server connection and completes any necessary authentication.
-	 * @param defaultUserID
+	 * @param defaultUserID default user ID (actual ID used established during authentication)
 	 * @param monitor task monitor for connection cancellation
 	 * @return server handle or null if authentication or connection attempt was cancelled by user
-	 * @throws IOException 
-	 * @throws LoginException 
+	 * @throws IOException if server connection fails
+	 * @throws LoginException  login failure
 	 */
 	private RemoteRepositoryServerHandle getRepositoryServerHandle(String defaultUserID,
 			TaskMonitor monitor)
 			throws IOException, LoginException, CancelledException {
 
 		GhidraServerHandle gsh = getGhidraServerHandle(server, monitor);
-		if (gsh == null) {
-			return null;
-		}
 
 		Callback[] callbacks = null;
 		try {
@@ -275,7 +261,6 @@ class ServerConnectTask extends Task {
 				}
 			}
 
-			String serverName = getPreferredHostname(server.getServerName());
 			AnonymousCallback onlyAnonymousCb = null;
 			while (true) {
 				try {
@@ -298,8 +283,8 @@ class ServerConnectTask extends Task {
 							// SSH option only available in conjunction with password
 							// based authentication which will be used if SSH attempt fails
 							hasSSHSignatureCallback = false; // only try SSH once
-							ClientUtil.processSSHSignatureCallback(callbacks, serverName,
-								defaultUserID);
+							ClientUtil.processSSHSignatureCallback(callbacks,
+								server.getServerName(), defaultUserID);
 						}
 						else if (pkiSignatureCb != null) {
 							// when using PKI - no other authentication callback will be used
@@ -317,14 +302,15 @@ class ServerConnectTask extends Task {
 							}
 
 							loopOK = false; // only try once
-							ClientUtil.processSignatureCallback(serverName, pkiSignatureCb);
+							ClientUtil.processSignatureCallback(server.getServerName(),
+								pkiSignatureCb);
 						}
 						else {
 							// assume all other callback scenarios are password based
 							// anonymous option must be explicitly chosen over username/password
 							// when processing password callback
-							if (!ClientUtil.processPasswordCallbacks(callbacks, serverName,
-								defaultUserID, loginError)) {
+							if (!ClientUtil.processPasswordCallbacks(callbacks,
+								server.getServerName(), defaultUserID, loginError)) {
 								return null; // Cancelled by user
 							}
 						}
@@ -336,7 +322,7 @@ class ServerConnectTask extends Task {
 						gsh.getRepositoryServer(getLocalUserSubject(), callbacks);
 					if (rsh.isReadOnly()) {
 						Msg.showInfo(this, null, "Anonymous Server Login",
-							"You have been logged-in anonymously to " + serverName +
+							"You have been logged-in anonymously to " + server.getServerName() +
 								"\nRead-only permission is granted to repositories which allow anonymous access");
 					}
 					return rsh;
@@ -374,7 +360,30 @@ class ServerConnectTask extends Task {
 		}
 	}
 
-	private static void testServerSSLConnection(ServerInfo server, TaskMonitor monitor)
+	/**
+	 * Socket implementation with very short connect timeout
+	 */
+	private static class FastConnectionFailSocket extends Socket {
+		FastConnectionFailSocket(String host, int port) throws UnknownHostException, IOException {
+			super(host, port);
+		}
+
+		public void connect(SocketAddress endpoint) throws IOException {
+			connect(endpoint, LIVENESS_CHECK_TIMEOUT_MS);
+		}
+	}
+
+	/**
+	 * Initiate an SSLSocket connection in order to ensure that any neccesary client/server
+	 * certificate validation is performed.
+	 * @param server server to which connection should be verified.  For the Ghidra Server 
+	 * this should correspond to the RMI Registry port {@link GhidraServerHandle#DEFAULT_PORT}.
+	 * @param monitor connection task monitor
+	 * @return certificate chain of server
+	 * @throws IOException if connection failure occurs
+	 * @throws CancelledException if connection attempt is cancelled
+	 */
+	private static Certificate[] testServerSSLConnection(ServerInfo server, TaskMonitor monitor)
 			throws IOException, CancelledException {
 
 		RMIServerPortFactory portFactory = new RMIServerPortFactory(server.getPortNumber());
@@ -384,7 +393,18 @@ class ServerConnectTask extends Task {
 
 		monitor.setCancelEnabled(true);
 		monitor.setMessage("Checking Server Liveness...");
+		
+		// Perform simple socket test connection with short timeout to verify connectivity.
+		try (Socket socket = new FastConnectionFailSocket(serverName, sslRmiPort);
+				ConnectCancelledListener cancelListener =
+					new ConnectCancelledListener(monitor, () -> forceClose(socket))) {
+			// do nothing - connect occurs during instantiation
+		}
+		finally {
+			monitor.checkCanceled(); // circumvent any IOException which may have occured
+		}
 
+		// Perform secure socket test connection to prime keystore use without RMI involvement
 		try (SSLSocket socket = (SSLSocket) factory.createSocket(serverName, sslRmiPort);
 				ConnectCancelledListener cancelListener =
 					new ConnectCancelledListener(monitor, () -> forceClose(socket))) {
@@ -392,6 +412,7 @@ class ServerConnectTask extends Task {
 			// which will give user ability to cancel without involving RMI which 
 			// will avoid RMI reconnect attempts
 			socket.startHandshake();
+			return socket.getSession().getPeerCertificates();
 		}
 		finally {
 			monitor.checkCanceled(); // circumvent any IOException which may have occured

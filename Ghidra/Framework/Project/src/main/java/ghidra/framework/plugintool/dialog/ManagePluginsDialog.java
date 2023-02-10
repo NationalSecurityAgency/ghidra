@@ -20,7 +20,7 @@ import java.awt.Point;
 import javax.swing.*;
 
 import docking.ActionContext;
-import docking.DialogComponentProvider;
+import docking.ReusableDialogComponentProvider;
 import docking.action.*;
 import docking.tool.ToolConstants;
 import docking.widgets.OptionDialog;
@@ -34,7 +34,7 @@ import ghidra.framework.plugintool.util.PluginPackage;
 import ghidra.util.HelpLocation;
 import resources.Icons;
 
-public class ManagePluginsDialog extends DialogComponentProvider {
+public class ManagePluginsDialog extends ReusableDialogComponentProvider {
 
 	private PluginTool tool;
 	private boolean isNewTool;

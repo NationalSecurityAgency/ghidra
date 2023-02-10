@@ -78,6 +78,7 @@ public abstract class ImportExportAsAction extends DockingAction {
 		chooser.setCurrentDirectory(Application.getUserSettingsDirectory());
 
 		File f = chooser.getSelectedFile();
+		chooser.dispose();
 		if (chooser.wasCancelled() || f == null) { // Redundant? Meh, it's cheap.
 			return;
 		}

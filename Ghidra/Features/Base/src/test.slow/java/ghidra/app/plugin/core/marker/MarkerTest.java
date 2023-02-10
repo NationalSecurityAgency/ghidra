@@ -423,7 +423,7 @@ public class MarkerTest extends AbstractGhidraHeadedIntegrationTest {
 			return markerService.getBackgroundColor(p, address);
 		});
 
-		assertEquals("Marker color not correct", c, actual);
+		assertEquals("Marker color not correct", c.getRGB(), actual.getRGB());
 	}
 
 	private void switchToProgram(Program p) {

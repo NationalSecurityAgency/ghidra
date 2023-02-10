@@ -17,7 +17,6 @@ package ghidra.app.plugin.core.datamgr;
 
 import java.awt.Component;
 import java.awt.datatransfer.Clipboard;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -87,7 +86,7 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 
 	private static final String EXTENSIONS_PATH_PREFIX = Path.GHIDRA_HOME + "/Extensions";
 
-	private static final String SEACH_PROVIDER_NAME = "Search DataTypes Provider";
+	private static final String SEARCH_PROVIDER_NAME = "Search DataTypes Provider";
 	private static final int RECENTLY_USED_CACHE_SIZE = 10;
 
 	private static final String STANDARD_ARCHIVE_MENU = "Standard Archive";
@@ -95,7 +94,6 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 
 	private DataTypeManagerHandler dataTypeManagerHandler;
 	private DataTypesProvider provider;
-	private OpenVersionedFileDialog<DataTypeArchive> openDialog;
 
 	private Map<String, DockingAction> recentlyOpenedArchiveMap;
 	private Map<String, DockingAction> installArchiveMap;
@@ -244,7 +242,7 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 		Project project = tool.getProjectManager().getActiveProject();
 		if (project != null && project.getName().equals(projectName)) {
 			DomainFile df = project.getProjectData().getFile(pathname);
-			if (DataTypeArchive.class.isAssignableFrom(df.getDomainObjectClass())) {
+			if (df != null && DataTypeArchive.class.isAssignableFrom(df.getDomainObjectClass())) {
 				return df;
 			}
 		}
@@ -362,21 +360,11 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 
 	public DataTypesProvider createProvider() {
 
-		DataTypesProvider newProvider = new DataTypesProvider(this, SEACH_PROVIDER_NAME);
+		DataTypesProvider newProvider = new DataTypesProvider(this, SEARCH_PROVIDER_NAME, true);
 		newProvider.setIncludeDataTypeMembersInFilter(provider.includeDataMembersInSearch());
 		newProvider.setFilteringArrays(provider.isFilteringArrays());
 		newProvider.setFilteringPointers(provider.isFilteringPointers());
 		return newProvider;
-	}
-
-	public void closeProvider(DataTypesProvider providerToClose) {
-		if (providerToClose != provider) {
-			providerToClose.removeFromTool(); // remove any transient providers when closed
-			providerToClose.dispose();
-		}
-		else {
-			provider.setVisible(false);
-		}
 	}
 
 	public Program getProgram() {
@@ -574,25 +562,24 @@ public class DataTypeManagerPlugin extends ProgramPlugin
 	}
 
 	public void openProjectDataTypeArchive() {
-		if (openDialog == null) {
-			ActionListener listener = ev -> {
-				DomainFile domainFile = openDialog.getDomainFile();
-				int version = openDialog.getVersion();
-				if (domainFile == null) {
-					openDialog.setStatusText("Please choose a Project Data Type Archive");
-				}
-				else {
-					openDialog.close();
-					openArchive(domainFile, version);
-				}
-			};
-			openDialog =
-				new OpenVersionedFileDialog<>(tool, "Open Project Data Type Archive",
-					DataTypeArchive.class);
-			openDialog.setHelpLocation(new HelpLocation(HelpTopics.PROGRAM, "Open_File_Dialog"));
-			openDialog.addOkActionListener(listener);
-		}
-		tool.showDialog(openDialog);
+
+		OpenVersionedFileDialog<DataTypeArchive> dialog =
+			new OpenVersionedFileDialog<>(tool, "Open Project Data Type Archive",
+				DataTypeArchive.class);
+		dialog.setHelpLocation(new HelpLocation(HelpTopics.PROGRAM, "Open_File_Dialog"));
+		dialog.addOkActionListener(ev -> {
+			DomainFile domainFile = dialog.getDomainFile();
+			int version = dialog.getVersion();
+			if (domainFile == null) {
+				dialog.setStatusText("Please choose a Project Data Type Archive");
+			}
+			else {
+				dialog.close();
+				openArchive(domainFile, version);
+			}
+		});
+
+		tool.showDialog(dialog);
 	}
 
 	@Override

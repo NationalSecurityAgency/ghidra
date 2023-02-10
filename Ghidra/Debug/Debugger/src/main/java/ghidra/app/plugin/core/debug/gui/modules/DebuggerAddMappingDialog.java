@@ -23,7 +23,7 @@ import java.math.BigInteger;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
-import docking.DialogComponentProvider;
+import docking.ReusableDialogComponentProvider;
 import docking.widgets.model.GAddressRangeField;
 import docking.widgets.model.GSpanField;
 import ghidra.app.services.DebuggerStaticMappingService;
@@ -36,7 +36,7 @@ import ghidra.trace.model.modules.TraceConflictedMappingException;
 import ghidra.util.MathUtilities;
 import ghidra.util.layout.PairLayout;
 
-public class DebuggerAddMappingDialog extends DialogComponentProvider {
+public class DebuggerAddMappingDialog extends ReusableDialogComponentProvider {
 	private static final String HEX_BIT64 = "0x" + BigInteger.ONE.shiftLeft(64).toString(16);
 
 	private DebuggerStaticMappingService mappingService;

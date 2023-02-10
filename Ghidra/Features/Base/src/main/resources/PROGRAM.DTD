@@ -125,7 +125,7 @@
 <!ELEMENT PROPERTY EMPTY>
   <!ATTLIST PROPERTY NAME     CDATA                                                #REQUIRED>
   <!ATTLIST PROPERTY ADDRESS  CDATA                                                #IMPLIED>
-  <!ATTLIST PROPERTY TYPE     (string | long | int | double | void | bool | date)  #IMPLIED>
+  <!ATTLIST PROPERTY TYPE     (string | long | int | double | void | bool | date | custom)  #IMPLIED>
   <!ATTLIST PROPERTY VALUE    CDATA                                                #IMPLIED>
 
 <!ELEMENT BOOKMARKS (BOOKMARK*)>
@@ -160,8 +160,12 @@
 
 <!ELEMENT RELOCATION EMPTY>
   <!ATTLIST RELOCATION ADDRESS  	CDATA	#REQUIRED>
+  <!ATTLIST RELOCATION STATUS    	( UNKNOWN | SKIPPED | UNSUPPORTED | FAILURE | PARTIAL | APPLIED | APPLIED_OTHER )	#IMPLIED>
+  <!-- STATUS defaults to APPLIED if BYTES specified and TYPE is non-zero  -->
+  <!-- STATUS defaults to APPLIED_OTHER if BYTES specified and TYPE is zero  -->
+  <!-- STATUS defaults to UNKNOWN if BYTES are not specified  -->
   <!ATTLIST RELOCATION TYPE     	CDATA	#REQUIRED>
-  <!ATTLIST RELOCATION VALUE    	CDATA	#REQUIRED>
+  <!ATTLIST RELOCATION VALUE    	CDATA	#IMPLIED>
   <!ATTLIST RELOCATION BYTES    	CDATA	#IMPLIED>
   <!ATTLIST RELOCATION SYMBOL_NAME	CDATA	#IMPLIED>
 

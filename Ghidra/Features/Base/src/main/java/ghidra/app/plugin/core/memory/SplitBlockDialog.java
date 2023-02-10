@@ -16,7 +16,6 @@
 package ghidra.app.plugin.core.memory;
 
 import java.awt.Cursor;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.*;
@@ -54,12 +53,6 @@ class SplitBlockDialog extends DialogComponentProvider {
 	private AddressFactory addrFactory;
 	private MemoryMapPlugin plugin;
 
-	/**
-	 * Constructor
-	 * @param parent
-	 * @param block
-	 * @param af
-	 */
 	SplitBlockDialog(MemoryMapPlugin plugin, MemoryBlock block, AddressFactory af) {
 		super("Split Block");
 		this.plugin = plugin;
@@ -74,9 +67,6 @@ class SplitBlockDialog extends DialogComponentProvider {
 		addListeners();
 	}
 
-	/**
-	 * @see ghidra.util.bean.GhidraDialog#okCallback()
-	 */
 	@Override
 	protected void okCallback() {
 		// call plugin to do the work
@@ -195,12 +185,7 @@ class SplitBlockDialog extends DialogComponentProvider {
 		blockOneEnd.addChangeListener(new AddressChangeListener(blockOneEnd));
 		blockTwoStart.addChangeListener(new AddressChangeListener(blockTwoStart));
 
-		ActionListener al = new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				setStatusText("");
-			}
-		};
+		ActionListener al = e -> setStatusText("");
 		blockOneLengthField.addActionListener(al);
 		blockTwoLengthField.addActionListener(al);
 		blockOneEnd.addActionListener(al);

@@ -15,15 +15,16 @@
  */
 package ghidra.plugin.importer;
 
-import java.util.*;
-
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
+import java.nio.CharBuffer;
+import java.util.*;
 
 import docking.ActionContext;
 import docking.action.*;
+import docking.tool.ToolConstants;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import ghidra.app.CorePluginPackage;
@@ -40,22 +41,25 @@ import ghidra.formats.gfilesystem.FileCache.FileCacheEntry;
 import ghidra.formats.gfilesystem.FileCache.FileCacheEntryBuilder;
 import ghidra.formats.gfilesystem.FileSystemService;
 import ghidra.framework.main.*;
-import ghidra.framework.main.datatree.DomainFileNode;
-import ghidra.framework.main.datatree.DomainFolderNode;
+import ghidra.framework.main.datatree.*;
 import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
+import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.framework.preferences.Preferences;
+import ghidra.framework.store.local.ItemDeserializer;
+import ghidra.framework.store.local.LocalFileSystem;
 import ghidra.plugins.importer.batch.BatchImportDialog;
 import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
 import ghidra.program.util.ProgramSelection;
-import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
+import ghidra.util.*;
+import ghidra.util.exception.AssertException;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.filechooser.GhidraFileFilter;
-import ghidra.util.task.TaskLauncher;
+import ghidra.util.task.*;
 
 /**
  * A {@link Plugin} that supplies menu items and tasks to import files into Ghidra.
@@ -80,8 +84,11 @@ public class ImporterPlugin extends Plugin
 		"This plugin manages importing files, including those contained within " +
 			"firmware/filesystem images.";
 
+	private static final String SIMPLE_UNPACK_OPTION = "Enable simple GZF/GDT unpack";
+	private static final boolean SIMPLE_UNPACK_OPTION_DEFAULT = false;
+
 	private DockingAction importAction;
-	private DockingAction importSelectionAction;// NA in front-end
+	private DockingAction importSelectionAction;
 	private DockingAction addToProgramAction;
 	private GhidraFileChooser chooser;
 	private FrontEndService frontEndService;
@@ -98,6 +105,12 @@ public class ImporterPlugin extends Plugin
 		frontEndService = tool.getService(FrontEndService.class);
 		if (frontEndService != null) {
 			frontEndService.addProjectListener(this);
+
+			ToolOptions options = tool.getOptions(ToolConstants.FILE_IMPORT_OPTIONS);
+			HelpLocation help = new HelpLocation("ImporterPlugin", "Project_Tree");
+
+			options.registerOption(SIMPLE_UNPACK_OPTION, SIMPLE_UNPACK_OPTION_DEFAULT, help,
+				"Perform simple unpack when any packed DB file is imported");
 		}
 
 		setupImportAction();
@@ -139,7 +152,10 @@ public class ImporterPlugin extends Plugin
 			frontEndService.removeProjectListener(this);
 			frontEndService = null;
 		}
-		chooser = null;
+
+		if (chooser != null) {
+			chooser.dispose();
+		}
 	}
 
 	@Override
@@ -156,6 +172,16 @@ public class ImporterPlugin extends Plugin
 
 	@Override
 	public void importFiles(DomainFolder destFolder, List<File> files) {
+
+		if (destFolder == null) {
+			destFolder = tool.getProject().getProjectData().getRootFolder();
+		}
+
+		files = handleSimpleDBUnpack(destFolder, files);
+		if (files.isEmpty()) {
+			return;
+		}
+
 		BatchImportDialog.showAndImport(tool, null, files2FSRLs(files), destFolder,
 			getTool().getService(ProgramManager.class));
 	}
@@ -175,9 +201,113 @@ public class ImporterPlugin extends Plugin
 	@Override
 	public void importFile(DomainFolder folder, File file) {
 
+		if (folder == null) {
+			folder = tool.getProject().getProjectData().getRootFolder();
+		}
+
+		if (handleSimpleDBUnpack(folder, file)) {
+			return;
+		}
+
 		FSRL fsrl = FileSystemService.getInstance().getLocalFSRL(file);
 		ProgramManager manager = tool.getService(ProgramManager.class);
 		ImporterUtilities.showImportDialog(tool, manager, fsrl, folder, null);
+	}
+
+	private static String makeValidUniqueFilename(String name, DomainFolder folder) {
+
+		// Trim-off file extension if ours *.g?? (e.g., gzf, gdt, etc.)
+		int extIndex = name.lastIndexOf(".g");
+		if (extIndex > 1 && (name.length() - extIndex) == 4) {
+			name = name.substring(0, extIndex);
+		}
+
+		CharBuffer buf = CharBuffer.wrap(name.toCharArray());
+		for (int i = 0; i < buf.length(); i++) {
+			if (!LocalFileSystem.isValidNameCharacter(buf.get(i))) {
+				buf.put(i, '_');
+			}
+		}
+
+		String baseName = buf.toString();
+		name = baseName;
+		int count = 0;
+		while (folder.getFile(name) != null) {
+			++count;
+			name = baseName + "." + count;
+		}
+		return name;
+	}
+
+	private List<File> handleSimpleDBUnpack(DomainFolder folder, List<File> files) {
+		if (frontEndService == null || !isSimpleUnpackEnabled()) {
+			return files;
+		}
+
+		ArrayList<File> remainingFiles = new ArrayList<>();
+
+		Task task = new Task("", true, true, true) {
+			@Override
+			public void run(TaskMonitor monitor) throws CancelledException {
+
+				for (File f : files) {
+					monitor.checkCanceled();
+
+					// Test for Packed DB file using ItemDeserializer
+					ItemDeserializer itemDeserializer = null;
+					try {
+						itemDeserializer = new ItemDeserializer(f); // fails for non-packed file
+					}
+					catch (IOException e) {
+						remainingFiles.add(f);
+						continue; // not a Packed DB - skip file
+					}
+					finally {
+						if (itemDeserializer != null) {
+							itemDeserializer.dispose();
+						}
+					}
+
+					monitor.setMessage("Unpacking " + f.getName() + " ...");
+
+					// Perform direct unpack of Packed DB file
+					String filename = makeValidUniqueFilename(f.getName(), folder);
+					try {
+						DomainFile df = folder.createFile(filename, f, monitor);
+						Msg.info(this, "Imported " + f.getName() + " to " + df.getPathname());
+					}
+					catch (InvalidNameException e) {
+						throw new AssertException(e); // unexpected - valid name was used
+					}
+					catch (IOException e) {
+						Msg.showError(JavaFileListHandler.class, tool.getToolFrame(),
+							"Packed DB Import Failed",
+							"Failed to import " + f.getName(), e);
+					}
+				}
+
+			}
+		};
+
+		TaskLauncher.launchModal("Import", task);
+		if (task.isCancelled()) {
+			return List.of(); // return empty list if cancelled
+		}
+
+		return remainingFiles; // return files not yet imported
+	}
+
+	private boolean handleSimpleDBUnpack(DomainFolder folder, File file) {
+		List<File> files = handleSimpleDBUnpack(folder, List.of(file));
+		return files.isEmpty();
+	}
+
+	private boolean isSimpleUnpackEnabled() {
+		if (frontEndService == null) {
+			return false;
+		}
+		ToolOptions options = tool.getOptions(ToolConstants.FILE_IMPORT_OPTIONS);
+		return options.getBoolean(SIMPLE_UNPACK_OPTION, SIMPLE_UNPACK_OPTION_DEFAULT);
 	}
 
 	@Override
@@ -327,7 +457,7 @@ public class ImporterPlugin extends Plugin
 		chooser.setTitle(title);
 		chooser.setApproveButtonText(buttonText);
 
-		String lastFile = Preferences.getProperty(ImporterDialog.LAST_IMPORTFILE_PREFERENCE_KEY);
+		String lastFile = Preferences.getProperty(Preferences.LAST_IMPORT_FILE);
 		if (lastFile != null) {
 			chooser.setSelectedFile(new File(lastFile));
 		}

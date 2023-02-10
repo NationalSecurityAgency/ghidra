@@ -158,6 +158,7 @@ public class ExportThemeDialog extends DialogComponentProvider {
 		if (file != null) {
 			fileTextField.setText(file.getAbsolutePath());
 		}
+		chooser.dispose();
 	}
 
 	// used for testing

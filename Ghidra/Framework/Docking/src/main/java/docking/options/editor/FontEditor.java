@@ -81,7 +81,7 @@ public class FontEditor extends PropertyEditorSupport {
 		setValue(font);
 	}
 
-	class EditorDialogProvider extends DialogComponentProvider {
+	private class EditorDialogProvider extends DialogComponentProvider {
 		private Font originalFont = (Font) getValue();
 
 		EditorDialogProvider() {

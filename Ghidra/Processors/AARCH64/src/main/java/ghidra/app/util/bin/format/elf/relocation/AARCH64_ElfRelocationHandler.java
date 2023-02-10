@@ -22,6 +22,8 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
+import ghidra.program.model.reloc.RelocationResult;
+import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.util.exception.NotFoundException;
 
 public class AARCH64_ElfRelocationHandler extends ElfRelocationHandler {
@@ -37,12 +39,13 @@ public class AARCH64_ElfRelocationHandler extends ElfRelocationHandler {
 	}
 
 	@Override
-	public void relocate(ElfRelocationContext elfRelocationContext, ElfRelocation relocation,
+	public RelocationResult relocate(ElfRelocationContext elfRelocationContext,
+			ElfRelocation relocation,
 			Address relocationAddress) throws MemoryAccessException, NotFoundException {
 
 		ElfHeader elf = elfRelocationContext.getElfHeader();
 		if (elf.e_machine() != ElfConstants.EM_AARCH64) {
-			return;
+			return RelocationResult.FAILURE;
 		}
 
 		Program program = elfRelocationContext.getProgram();
@@ -50,7 +53,7 @@ public class AARCH64_ElfRelocationHandler extends ElfRelocationHandler {
 
 		int type = relocation.getType();
 		if (type == AARCH64_ElfRelocationConstants.R_AARCH64_NONE) {
-			return;
+			return RelocationResult.SKIPPED;
 		}
 		int symbolIndex = relocation.getSymbolIndex();
 
@@ -72,6 +75,8 @@ public class AARCH64_ElfRelocationHandler extends ElfRelocationHandler {
 		long symbolValue = elfRelocationContext.getSymbolValue(sym);
 		long newValue = 0;
 
+		int byteLength = 4; // most relocations affect 4-bytes (change if different)
+
 		switch (type) {
 			// .xword: (S+A)
 			case AARCH64_ElfRelocationConstants.R_AARCH64_ABS64: {
@@ -82,6 +87,7 @@ public class AARCH64_ElfRelocationHandler extends ElfRelocationHandler {
 						symbolAddr, symbolName, addend, elfRelocationContext.getLog());
 					applyComponentOffsetPointer(program, relocationAddress, addend);
 				}
+				byteLength = 8;
 				break;
 			}
 
@@ -99,6 +105,7 @@ public class AARCH64_ElfRelocationHandler extends ElfRelocationHandler {
 			case AARCH64_ElfRelocationConstants.R_AARCH64_P32_ABS16: {
 				newValue = (symbolValue + addend);
 				memory.setShort(relocationAddress, (short) (newValue & 0xffff));
+				byteLength = 2;
 				break;
 			}
 
@@ -107,6 +114,7 @@ public class AARCH64_ElfRelocationHandler extends ElfRelocationHandler {
 				newValue = (symbolValue + addend);
 				newValue -= (offset); // PC relative
 				memory.setLong(relocationAddress, newValue);
+				byteLength = 8;
 				break;
 			}
 
@@ -125,6 +133,7 @@ public class AARCH64_ElfRelocationHandler extends ElfRelocationHandler {
 				newValue = (symbolValue + addend);
 				newValue -= (offset); // PC relative
 				memory.setShort(relocationAddress, (short) (newValue & 0xffff));
+				byteLength = 2;
 				break;
 			}
 
@@ -238,7 +247,7 @@ public class AARCH64_ElfRelocationHandler extends ElfRelocationHandler {
 					addend = getValue(memory, relocationAddress, is64bit);
 				}
 				newValue = symbolValue + addend;
-				setValue(memory, relocationAddress, newValue, is64bit);
+				byteLength = setValue(memory, relocationAddress, newValue, is64bit);
 				break;
 			}
 
@@ -251,11 +260,13 @@ public class AARCH64_ElfRelocationHandler extends ElfRelocationHandler {
 				// GOT entry bytes if it refers to .plt block
 				Address symAddress = elfRelocationContext.getSymbolAddress(sym);
 				MemoryBlock block = memory.getBlock(symAddress);
+				// TODO: jump slots are always in GOT - not sure why PLT check is done
 				boolean isPltSym = block != null && block.getName().startsWith(".plt");
 				boolean isExternalSym =
 					block != null && MemoryBlock.EXTERNAL_BLOCK_NAME.equals(block.getName());
 				if (!isPltSym) {
-					setValue(memory, relocationAddress, symAddress.getOffset(), is64bit);
+					byteLength =
+						setValue(memory, relocationAddress, symAddress.getOffset(), is64bit);
 				}
 				if ((isPltSym || isExternalSym) && !StringUtils.isBlank(symbolName)) {
 					Function extFunction =
@@ -265,7 +276,7 @@ public class AARCH64_ElfRelocationHandler extends ElfRelocationHandler {
 						markAsError(program, relocationAddress, "R_AARCH64_JUMP_SLOT", symbolName,
 							"Failed to create R_AARCH64_JUMP_SLOT external function",
 							elfRelocationContext.getLog());
-						return;
+						// relocation already applied above
 					}
 				}
 				break;
@@ -278,7 +289,7 @@ public class AARCH64_ElfRelocationHandler extends ElfRelocationHandler {
 					addend = getValue(memory, relocationAddress, is64bit);
 				}
 				newValue = elfRelocationContext.getImageBaseWordAdjustmentOffset() + addend;
-				setValue(memory, relocationAddress, newValue, is64bit);
+				byteLength = setValue(memory, relocationAddress, newValue, is64bit);
 				break;
 			}
 
@@ -286,14 +297,16 @@ public class AARCH64_ElfRelocationHandler extends ElfRelocationHandler {
 			case AARCH64_ElfRelocationConstants.R_AARCH64_COPY: {
 				markAsWarning(program, relocationAddress, "R_AARCH64_COPY", symbolName, symbolIndex,
 					"Runtime copy not supported", elfRelocationContext.getLog());
+				return RelocationResult.UNSUPPORTED;
 			}
 
 			default: {
 				markAsUnhandled(program, relocationAddress, type, symbolIndex, symbolName,
 					elfRelocationContext.getLog());
-				break;
+				return RelocationResult.UNSUPPORTED;
 			}
 		}
+		return new RelocationResult(Status.APPLIED, byteLength);
 	}
 
 	/**
@@ -302,15 +315,18 @@ public class AARCH64_ElfRelocationHandler extends ElfRelocationHandler {
 	 * @param addr address to set new value
 	 * @param value value
 	 * @param is64bit true if value is 64, false if 32bit
+	 * return value byte-length
 	 * @throws MemoryAccessException on set of value
 	 */
-	private void setValue(Memory memory, Address addr, long value, boolean is64bit)
+	private int setValue(Memory memory, Address addr, long value, boolean is64bit)
 			throws MemoryAccessException {
 		if (is64bit) {
 			memory.setLong(addr, value);
-		} else {
-			memory.setInt(addr, (int) value);
+			return 8;
 		}
+
+		memory.setInt(addr, (int) value);
+		return 4;
 	}
 
 	/**

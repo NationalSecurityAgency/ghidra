@@ -24,68 +24,27 @@ import java.io.File;
 import java.util.List;
 
 import docking.widgets.tree.GTreeNode;
-import ghidra.app.services.FileImporterService;
-import ghidra.app.util.FileOpenDataFlavorHandler;
-import ghidra.framework.model.DomainFolder;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.util.Msg;
-import ghidra.util.Swing;
 import util.CollectionUtils;
 
 /**
- * {@literal A drag-and-drop handler for trees that is specific to List<File>.} (see
- * {@link DataFlavor#javaFileListFlavor}).
+ * A handler to facilitate drag-n-drop for a list of Java {@link File} objects which is dropped
+ * onto the Project data tree or a running Ghidra Tool (see {@link DataFlavor#javaFileListFlavor}).
  */
-public final class JavaFileListHandler implements DataTreeFlavorHandler, FileOpenDataFlavorHandler {
+public final class JavaFileListHandler extends AbstractFileListFlavorHandler {
 
 	@Override
+	// This is for the FileOpenDataFlavorHandler for handling OS files dropped on a Ghidra Tool
 	public void handle(PluginTool tool, Object transferData, DropTargetDropEvent e, DataFlavor f) {
-
-		FileImporterService importer = tool.getService(FileImporterService.class);
-		if (importer == null) {
-			Msg.showError(this, null, "Could Not Import", "Could not find Importer Service");
-			return;
-		}
-
-		DomainFolder folder = tool.getProject().getProjectData().getRootFolder();
-		doImport(importer, folder, transferData);
+		List<File> fileList = CollectionUtils.asList((List<?>) transferData, File.class);
+		doImport(null, fileList, tool, tool.getToolFrame());
 	}
 
 	@Override
+	// This is for the DataFlavorHandler interface for handling OS files dropped onto a DataTree
 	public void handle(PluginTool tool, DataTree dataTree, GTreeNode destinationNode,
 			Object transferData, int dropAction) {
-
-		FileImporterService importer = tool.getService(FileImporterService.class);
-		if (importer == null) {
-			Msg.showError(this, dataTree, "Could Not Import", "Could not find Importer Service");
-			return;
-		}
-
-		DomainFolder folder = getDomainFolder(destinationNode);
-		doImport(importer, folder, transferData);
-	}
-
-	private void doImport(FileImporterService importer, DomainFolder folder, Object files) {
-
-		List<File> fileList = CollectionUtils.asList((List<?>) files, File.class);
-		Swing.runLater(() -> {
-			if (fileList.size() == 1 && fileList.get(0).isFile()) {
-				importer.importFile(folder, fileList.get(0));
-			}
-			else {
-				importer.importFiles(folder, fileList);
-			}
-		});
-	}
-
-	private DomainFolder getDomainFolder(GTreeNode destinationNode) {
-		if (destinationNode instanceof DomainFolderNode) {
-			return ((DomainFolderNode) destinationNode).getDomainFolder();
-		}
-		else if (destinationNode instanceof DomainFileNode) {
-			DomainFolderNode parent = (DomainFolderNode) destinationNode.getParent();
-			return parent.getDomainFolder();
-		}
-		return null;
+		List<File> fileList = CollectionUtils.asList((List<?>) transferData, File.class);
+		doImport(getDomainFolder(destinationNode), fileList, tool, dataTree);
 	}
 }

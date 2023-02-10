@@ -91,11 +91,11 @@ public class DefaultClientAuthenticator extends PopupKeyStorePasswordProvider
 
 	@Override
 	public char[] getNewPassword(final Component parent, String serverInfo, String username) {
-		final PasswordChangeDialog dlg =
+
+		PasswordChangeDialog dlg =
 			new PasswordChangeDialog("Change Password", "Repository Server", serverInfo, username);
-		Runnable r = () -> DockingWindowManager.showDialog(parent, dlg);
 		try {
-			SystemUtilities.runSwingNow(r);
+			DockingWindowManager.showDialog(parent, dlg);
 			return dlg.getPassword();
 		}
 		finally {
@@ -153,16 +153,17 @@ public class DefaultClientAuthenticator extends PopupKeyStorePasswordProvider
 
 		@Override
 		public void run() {
-			PasswordDialog pwdDialog;
+
 			String choicePrompt = null;
 			String[] choices = null;
 			if (choiceCb != null) {
 				choicePrompt = choiceCb.getPrompt();
 				choices = choiceCb.getChoices();
 			}
-			pwdDialog = new PasswordDialog(title, serverType, serverName, passCb.getPrompt(),
-				nameCb != null ? nameCb.getPrompt() : null, getDefaultUserName(), choicePrompt,
-				choices, getDefaultChoice(), anonymousCb != null);
+			PasswordDialog pwdDialog =
+				new PasswordDialog(title, serverType, serverName, passCb.getPrompt(),
+					nameCb != null ? nameCb.getPrompt() : null, getDefaultUserName(), choicePrompt,
+					choices, getDefaultChoice(), anonymousCb != null);
 			if (errorMsg != null) {
 				pwdDialog.setErrorText(errorMsg);
 			}

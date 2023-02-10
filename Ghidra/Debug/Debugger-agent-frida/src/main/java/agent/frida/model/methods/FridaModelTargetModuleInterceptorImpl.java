@@ -15,18 +15,14 @@
  */
 package agent.frida.model.methods;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 import agent.frida.model.iface1.FridaModelTargetMethod;
 import agent.frida.model.iface2.FridaModelTargetObject;
 import agent.frida.model.impl.FridaModelTargetObjectImpl;
 import ghidra.dbg.target.TargetMethod;
-import ghidra.dbg.target.schema.TargetAttributeType;
-import ghidra.dbg.target.schema.TargetElementType;
-import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
+import ghidra.dbg.target.schema.*;
 
 @TargetObjectSchemaInfo(
 	name = "ModuleIntercept",
@@ -57,9 +53,9 @@ public class FridaModelTargetModuleInterceptorImpl extends FridaModelTargetObjec
 		ParameterDescription<String> address = ParameterDescription.create(String.class, "Address",
 			true, "", "Address", "function address");
 		ParameterDescription<String> onEnter = ParameterDescription.create(String.class, "OnEnter",
-			true, "", "onEnter file", "JS file with onEnter implemenation");
+			true, "", "onEnter file", "JS file with onEnter implementation");
 		ParameterDescription<String> onLeave = ParameterDescription.create(String.class, "OnLeave",
-			true, "", "onLeave file", "JS file with onLeave implemenation");
+			true, "", "onLeave file", "JS file with onLeave implementation");
 		ParameterDescription<String> name = ParameterDescription.create(String.class, "Name",
 			false, "intercept", "name", "name for future unload");
 		ParameterDescription<String> script = ParameterDescription.create(String.class, "Script",

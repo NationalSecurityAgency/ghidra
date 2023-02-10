@@ -768,7 +768,8 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 				if (gotoProgram != getProgram()) {
 					doSetProgram(gotoProgram);
 				}
-				if (!gotoProgram.getMemory().contains(location.getAddress())) {
+				if (gotoProgram == null ||
+					!gotoProgram.getMemory().contains(location.getAddress())) {
 					return false;
 				}
 				if (super.goTo(gotoProgram, location)) {
@@ -1081,6 +1082,7 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 				consoleService.removeResolutionAction(actionOpenProgram);
 			}
 		}
+		removeOldStaticTrackingMarker();
 	}
 
 	protected DebuggerCoordinates adjustCoordinates(DebuggerCoordinates coordinates) {

@@ -22,6 +22,7 @@ import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.util.exception.InvalidInputException;
@@ -213,10 +214,10 @@ public interface ElfLoadHelper {
 			throws MemoryAccessException;
 
 	/**
-	 * Add a fake relocation table entry if none previously existed for the specified address.
+	 * Add an artificial relocation table entry if none previously existed for the specified address.
 	 * This is intended to record original file bytes when forced modifications have been
-	 * performed during the ELF import processing.  A relocation type of 0 will be specified for
-	 * fake entry.  
+	 * performed during the ELF import processing.  A relocation type of 0 and a status of 
+	 * {@link Status#APPLIED_OTHER} will be applied to the relocation entry.  
 	 * NOTE: The number of recorded original FileBytes currently ignores the specified length.
 	 * However, the length is still used to verify that that the intended modification region
 	 * dose not intersect another relocation.
@@ -225,6 +226,6 @@ public interface ElfLoadHelper {
 	 * @return true if recorded successfully, or false if conflict with existing relocation 
 	 * entry and memory addressing error occurs
 	 */
-	public boolean addFakeRelocTableEntry(Address address, int length);
+	public boolean addArtificialRelocTableEntry(Address address, int length);
 
 }

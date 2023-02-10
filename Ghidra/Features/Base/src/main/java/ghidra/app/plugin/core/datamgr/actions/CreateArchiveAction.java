@@ -51,6 +51,7 @@ public class CreateArchiveAction extends DockingAction {
 
 		Msg.trace(this, "Showing filechooser to get new archive name...");
 		File file = fileChooser.promptUserForFile("New_Archive");
+		fileChooser.dispose();
 		if (file == null) {
 			Msg.trace(this, "No new archive filename chosen by user - not performing action");
 			return;

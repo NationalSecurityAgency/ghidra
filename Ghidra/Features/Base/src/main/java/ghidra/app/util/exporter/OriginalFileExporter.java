@@ -58,7 +58,7 @@ public class OriginalFileExporter extends Exporter {
 	}
 
 	@Override
-	public boolean supportsPartialExport() {
+	public boolean supportsAddressRestrictedExport() {
 		return false;
 	}
 

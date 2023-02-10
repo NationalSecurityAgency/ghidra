@@ -28,7 +28,7 @@ import javax.swing.table.*;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 
-import docking.DialogComponentProvider;
+import docking.ReusableDialogComponentProvider;
 import docking.widgets.button.GRadioButton;
 import docking.widgets.table.*;
 import generic.theme.GThemeDefaults.Colors;
@@ -48,7 +48,7 @@ import ghidra.util.table.GhidraTableFilterPanel;
  *
  *
  */
-public class CreateStructureDialog extends DialogComponentProvider {
+public class CreateStructureDialog extends ReusableDialogComponentProvider {
 	private static final String NEW_STRUCTURE_STATUS_PREFIX = "Creating new structure: ";
 	private static final String EXISITING_STRUCTURE_STATUS_PREFIX = "Using existing structure: ";
 

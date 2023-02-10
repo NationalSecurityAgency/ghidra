@@ -27,6 +27,7 @@ import ghidra.program.model.data.DataUtilities.ClearDataMode;
 import ghidra.program.model.data.PointerTypedef;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.reloc.RelocationResult;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ExtensionPoint;
@@ -74,10 +75,11 @@ abstract public class ElfRelocationHandler implements ExtensionPoint {
 	 * @param elfRelocationContext relocation context
 	 * @param relocation ELF relocation
 	 * @param relocationAddress relocation target address (fixup location)
+	 * @return applied relocation result (conveys status and applied byte-length)
 	 * @throws MemoryAccessException memory access failure
 	 * @throws NotFoundException required relocation data not found
 	 */
-	abstract public void relocate(ElfRelocationContext elfRelocationContext,
+	abstract public RelocationResult relocate(ElfRelocationContext elfRelocationContext,
 			ElfRelocation relocation, Address relocationAddress)
 			throws MemoryAccessException, NotFoundException;
 

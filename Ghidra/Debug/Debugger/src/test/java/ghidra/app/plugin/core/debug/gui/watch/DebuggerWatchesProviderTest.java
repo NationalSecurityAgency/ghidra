@@ -803,4 +803,18 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		assertTrue(LongLongDataType.dataType.isEquivalent(rRow0.getDataType()));
 		assertEquals(FormatSettingsDefinition.DECIMAL, format.getChoice(rRow0.getSettings()));
 	}
+
+	@Test
+	public void testTraceClosure() throws Throwable {
+		setRegisterValues(thread);
+		watchesProvider.addWatch("r0");
+		watchesProvider.addWatch("*:8 r0");
+
+		traceManager.openTrace(tb.trace);
+		waitForSwing();
+
+		tb.close();
+		traceManager.activateThread(thread);
+		traceManager.closeTrace(tb.trace);
+	}
 }

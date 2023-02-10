@@ -133,9 +133,7 @@ class SymbolPanel extends JPanel {
 		symTable.dispose();
 		threadedTablePanel.dispose();
 		tableFilterPanel.dispose();
-		symProvider = null;
-		filterDialog.close();
-		filterDialog = null;
+		filterDialog.dispose();
 	}
 
 	void setFilter() {

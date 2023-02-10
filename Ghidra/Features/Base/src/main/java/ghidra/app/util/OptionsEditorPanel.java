@@ -55,7 +55,7 @@ public class OptionsEditorPanel extends JPanel {
 	 * Construct a new OptionsEditorPanel
 	 * @param options the list of options to be edited.
 	 * @param addressFactoryService a service for providing an appropriate AddressFactory if needed
-	 * for editing an options.
+	 * for editing an options.  If null, address based options will not be available.
 	 */
 	public OptionsEditorPanel(List<Option> options, AddressFactoryService addressFactoryService) {
 		super(new VerticalLayout(5));
@@ -76,10 +76,13 @@ public class OptionsEditorPanel extends JPanel {
 
 		panel.setBorder(createBorder(group));
 		for (Option option : optionGroup) {
-			panel.add(new GLabel(option.getName(), SwingConstants.RIGHT));
 			Component editorComponent = getEditorComponent(option);
-			editorComponent.setName(option.getName()); // set the component name to the option name
-			panel.add(editorComponent);
+			if (editorComponent != null) {
+				// Editor not available - omit option from panel
+				panel.add(new GLabel(option.getName(), SwingConstants.RIGHT));
+				editorComponent.setName(option.getName()); // set the component name to the option name
+				panel.add(editorComponent);
+			}
 		}
 
 		if (needsSelectAllDeselectAllButton(optionGroup)) {
@@ -178,7 +181,14 @@ public class OptionsEditorPanel extends JPanel {
 		}
 	}
 
-	public Component getEditorComponent(Option option) {
+	/**
+	 * Get the editor component for the specified option.
+	 * @param option option to be edited
+	 * @return option editor or null if prerequisite state not available to support
+	 * editor (e.g., Address or AddressSpace editor when {@link AddressFactoryService} 
+	 * is not available).
+	 */
+	private Component getEditorComponent(Option option) {
 
 		// Special cases for library link/load options
 		if (option.getName().equals(AbstractLibrarySupportLoader.LINK_SEARCH_FOLDER_OPTION_NAME) ||
@@ -262,6 +272,9 @@ public class OptionsEditorPanel extends JPanel {
 	}
 
 	private Component getAddressSpaceEditorComponent(Option option) {
+		if (addressFactoryService == null) {
+			return null;
+		}
 		JComboBox<AddressSpace> combo = new GComboBox<>();
 		AddressFactory addressFactory = addressFactoryService.getAddressFactory();
 		AddressSpace[] spaces =
@@ -329,6 +342,9 @@ public class OptionsEditorPanel extends JPanel {
 	}
 
 	private Component getAddressEditorComponent(Option option) {
+		if (addressFactoryService == null) {
+			return null;
+		}
 		AddressFactory addressFactory = addressFactoryService.getAddressFactory();
 		AddressInput addressInput = new AddressInput();
 		addressInput.setName(option.getName());

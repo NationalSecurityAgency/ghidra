@@ -66,7 +66,6 @@ class SymbolServerPanel extends JPanel {
 	private GTable table;
 	private JPanel additionalSearchLocationsPanel;
 	private JPanel defaultConfigNotice;
-	private GhidraFileChooser chooser;
 	private Consumer<SymbolServerService> changeCallback;
 
 	private JButton refreshSearchLocationsStatusButton;
@@ -345,8 +344,10 @@ class SymbolServerPanel extends JPanel {
 
 	private void chooseSymbolStorageLocation() {
 		configChanged = true;
-		setSymbolStorageLocation(getChooser().getSelectedFile(), true);
+		GhidraFileChooser chooser = getChooser();
+		setSymbolStorageLocation(chooser.getSelectedFile(), true);
 		updateButtonEnablement();
+		chooser.dispose();
 	}
 
 	private void importLocations() {
@@ -530,13 +531,11 @@ class SymbolServerPanel extends JPanel {
 
 	private GhidraFileChooser getChooser() {
 
-		if (chooser == null) {
-			chooser = new GhidraFileChooser(this);
-			chooser.setMultiSelectionEnabled(false);
-			chooser.setApproveButtonText("Choose");
-			chooser.setFileSelectionMode(GhidraFileChooserMode.DIRECTORIES_ONLY);
-			chooser.setTitle("Select Symbol Storage Dir");
-		}
+		GhidraFileChooser chooser = new GhidraFileChooser(this);
+		chooser.setMultiSelectionEnabled(false);
+		chooser.setApproveButtonText("Choose");
+		chooser.setFileSelectionMode(GhidraFileChooserMode.DIRECTORIES_ONLY);
+		chooser.setTitle("Select Symbol Storage Dir");
 
 		return chooser;
 	}

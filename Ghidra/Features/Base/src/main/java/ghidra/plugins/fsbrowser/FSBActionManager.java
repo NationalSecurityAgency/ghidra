@@ -144,6 +144,15 @@ class FSBActionManager {
 	}
 
 	public void dispose() {
+
+		if (chooserExport != null) {
+			chooserExport.dispose();
+		}
+
+		if (chooserExportAll != null) {
+			chooserExportAll.dispose();
+		}
+
 		removeActions();
 	}
 

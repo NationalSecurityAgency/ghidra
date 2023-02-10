@@ -17,11 +17,13 @@ package ghidra.app.util.bin.format.macho.relocation;
 
 import static ghidra.app.util.bin.format.macho.relocation.AARCH64_MachoRelocationConstants.*;
 
+import ghidra.app.util.bin.format.RelocationException;
 import ghidra.app.util.bin.format.macho.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.reloc.Relocation.Status;
+import ghidra.program.model.reloc.RelocationResult;
 import ghidra.util.Conv;
-import ghidra.util.exception.NotFoundException;
 
 /** 
  * A {@link MachoRelocationHandler} for AARCH64
@@ -42,11 +44,11 @@ public class AARCH64_MachoRelocationHandler extends MachoRelocationHandler {
 	}
 	
 	@Override
-	public void relocate(MachoRelocation relocation)
-			throws MemoryAccessException, NotFoundException {
+	public RelocationResult relocate(MachoRelocation relocation)
+			throws MemoryAccessException, RelocationException {
 		
 		if (!relocation.requiresRelocation()) {
-			return;
+			return RelocationResult.SKIPPED;
 		}
 		
 		RelocationInfo relocationInfo = relocation.getRelocationInfo();
@@ -69,21 +71,22 @@ public class AARCH64_MachoRelocationHandler extends MachoRelocationHandler {
 		}
 		long orig = read(relocation);
 
+		int byteLength;
 		switch (relocationInfo.getType()) {
 			case ARM64_RELOC_UNSIGNED:
 			case ARM64_RELOC_POINTER_TO_GOT: {
 				long addend = orig;
 				long value = targetAddr.getOffset() + addend;
-				write(relocation, value);
+				byteLength = write(relocation, value);
 				break;
 			}
 			case ARM64_RELOC_SUBTRACTOR: {
 				Address targetAddrExtra = relocation.getTargetAddressExtra();
 				if (orig > 0) {
-					write(relocation, targetAddrExtra.add(orig).subtract(targetAddr));
+					byteLength = write(relocation, targetAddrExtra.add(orig).subtract(targetAddr));
 				}
 				else {
-					write(relocation, targetAddr.add(orig).subtract(targetAddrExtra));
+					byteLength = write(relocation, targetAddr.add(orig).subtract(targetAddrExtra));
 				}
 				break;
 			}
@@ -91,7 +94,7 @@ public class AARCH64_MachoRelocationHandler extends MachoRelocationHandler {
 				long addend = orig & 0x3ffffff;
 				long value = (targetAddr.subtract(relocAddr) >> 2) + addend;
 				long instr = orig | (value & 0x3ffffff);
-				write(relocation, instr);
+				byteLength = write(relocation, instr);
 				break;
 			}
 			case ARM64_RELOC_PAGE21:
@@ -106,7 +109,7 @@ public class AARCH64_MachoRelocationHandler extends MachoRelocationHandler {
 				long value = ((pageTarget - pageReloc) >> 12) & 0x1fffff;
 				long instr =
 					(orig & 0x9f00001f) | ((value << 3) & 0x7ffffe0) | ((value & 0x3) << 29);
-				write(relocation, instr);
+				byteLength = write(relocation, instr);
 				break;
 			}
 			case ARM64_RELOC_PAGEOFF12:
@@ -126,13 +129,13 @@ public class AARCH64_MachoRelocationHandler extends MachoRelocationHandler {
 					long value = (targetAddr.getOffset() + addend) & 0xfff;
 					instr = orig | (value << 10);
 				}
-				write(relocation, instr);
+				byteLength = write(relocation, instr);
 				break;
 			}
 			case ARM64_RELOC_AUTHENTICATED_POINTER: {
 				long addend = orig & Conv.INT_MASK;
 				long value = targetAddr.getOffset() + addend;
-				write(relocation, value);
+				byteLength = write(relocation, value);
 				break;
 			}
 			
@@ -140,8 +143,9 @@ public class AARCH64_MachoRelocationHandler extends MachoRelocationHandler {
 			case ARM64_RELOC_TLVP_LOAD_PAGEOFF12: // not seen yet
 			case ARM64_RELOC_ADDEND:              // should never see on its own here
 			default:
-				throw new NotFoundException("Unimplemented relocation");
+				return RelocationResult.UNSUPPORTED;
 		}
+		return new RelocationResult(Status.APPLIED, byteLength);
 	}
 	
 	/**

@@ -53,6 +53,8 @@ import ghidra.util.task.TaskLauncher;
 
 public class BatchImportDialog extends DialogComponentProvider {
 
+	private static final String LAST_IMPORT_DIR = "LastBatchImportDir";
+
 	/**
 	 * Shows the batch import dialog (via runSwingLater) and prompts the user to select
 	 * a file if the supplied {@code batchInfo} is empty.
@@ -96,7 +98,6 @@ public class BatchImportDialog extends DialogComponentProvider {
 	private JButton rescanButton;
 	private JSpinner maxDepthSpinner;
 
-	private GhidraFileChooser fileChooser;
 	private SourcesListModel sourceListModel;
 
 	private BatchImportDialog(BatchInfo batchInfo, DomainFolder defaultFolder) {
@@ -387,26 +388,29 @@ public class BatchImportDialog extends DialogComponentProvider {
 	}
 
 	private boolean addSources() {
-		if (fileChooser == null) {
-			fileChooser = new GhidraFileChooser(getComponent());
-			fileChooser.setMultiSelectionEnabled(true);
-			fileChooser.setTitle("Choose File to Batch Import");
-			fileChooser.setApproveButtonText("Select files");
-			fileChooser.setFileSelectionMode(GhidraFileChooserMode.FILES_AND_DIRECTORIES);
-			fileChooser.addFileFilter(ImporterUtilities.LOADABLE_FILES_FILTER);
-			fileChooser.addFileFilter(ImporterUtilities.CONTAINER_FILES_FILTER);
-			fileChooser.setSelectedFileFilter(GhidraFileFilter.ALL);
-		}
 
-		List<File> selectedFiles = fileChooser.getSelectedFiles();
+		GhidraFileChooser chooser = new GhidraFileChooser(getComponent());
+		chooser.setMultiSelectionEnabled(true);
+		chooser.setTitle("Choose File to Batch Import");
+		chooser.setApproveButtonText("Select files");
+		chooser.setFileSelectionMode(GhidraFileChooserMode.FILES_AND_DIRECTORIES);
+		chooser.addFileFilter(ImporterUtilities.LOADABLE_FILES_FILTER);
+		chooser.addFileFilter(ImporterUtilities.CONTAINER_FILES_FILTER);
+		chooser.setSelectedFileFilter(GhidraFileFilter.ALL);
+
+		chooser.setLastDirectoryPreference(LAST_IMPORT_DIR);
+
+		List<File> selectedFiles = chooser.getSelectedFiles();
 		if (selectedFiles.isEmpty()) {
-			return !fileChooser.wasCancelled();
+			return !chooser.wasCancelled();
 		}
 
 		List<FSRL> filesToAdd = new ArrayList<>();
 		for (File selectedFile : selectedFiles) {
 			filesToAdd.add(FileSystemService.getInstance().getLocalFSRL(selectedFile));
 		}
+
+		chooser.dispose();
 
 		return addSources(filesToAdd);
 	}

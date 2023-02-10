@@ -75,7 +75,9 @@ class FilePromptDialog extends DialogComponentProvider {
 		FilePromptDialog filePromptDialog = new FilePromptDialog(title, prompt, chooseButtonText,
 			directory, initialFileValue, chooserMode, fileFilters);
 		DockingWindowManager.showDialog(filePromptDialog);
-		return filePromptDialog.chosenValue;
+		File file = filePromptDialog.chosenValue;
+		filePromptDialog.dispose();
+		return file;
 	}
 
 	private GhidraFileChooser chooser;
@@ -143,6 +145,15 @@ class FilePromptDialog extends DialogComponentProvider {
 		addWorkPanel(newMain);
 		addOKButton();
 		addCancelButton();
+	}
+
+	@Override
+	public void dispose() {
+		super.dispose();
+
+		if (chooser != null) {
+			chooser.dispose();
+		}
 	}
 
 	private void updateButtonEnablement() {

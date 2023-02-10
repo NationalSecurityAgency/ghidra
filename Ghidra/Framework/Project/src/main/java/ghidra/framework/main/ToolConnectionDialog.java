@@ -20,7 +20,7 @@ import java.beans.PropertyChangeEvent;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 
-import docking.DialogComponentProvider;
+import docking.ReusableDialogComponentProvider;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
@@ -30,7 +30,8 @@ import ghidra.util.HelpLocation;
  * Dialog to show existing connections between tools and
  * to connect tools.
  */
-class ToolConnectionDialog extends DialogComponentProvider implements WorkspaceChangeListener {
+class ToolConnectionDialog extends ReusableDialogComponentProvider
+		implements WorkspaceChangeListener {
 
 	private ToolManager toolManager;
 	private ToolConnectionPanel panel;
@@ -41,7 +42,7 @@ class ToolConnectionDialog extends DialogComponentProvider implements WorkspaceC
 	private JButton disconnectAllButton;
 
 	ToolConnectionDialog(FrontEndTool tool, ToolManager toolManager) {
-		super("Connect Tools", false);
+		super("Connect Tools", false, true, true, false);
 		this.frontEndTool = tool;
 		this.toolManager = toolManager;
 		setHelpLocation(new HelpLocation(GenericHelpTopics.FRONT_END, "Connect_Tools"));

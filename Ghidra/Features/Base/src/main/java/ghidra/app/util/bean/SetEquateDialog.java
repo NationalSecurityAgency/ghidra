@@ -90,6 +90,10 @@ public class SetEquateDialog extends DialogComponentProvider {
 	private EquateFilterListener filterListener = new EquateFilterListener();
 	private EquateEnterListener enterListener = new EquateEnterListener();
 
+	// these will be set in the okCallback()
+	private String equateName;
+	private Enum enumDt;
+
 	/**
 	 * Constructor
 	 *
@@ -148,12 +152,14 @@ public class SetEquateDialog extends DialogComponentProvider {
 				int refCount = eqRowObject.getRefCount();
 				if (refCount > 0) {
 					if (eqRowObject.getEntryName().contains(EquateManager.ERROR_TAG)) {
-						c.setForeground(isSelected ? this.SELECTED_CELL_COLOR : this.BAD_EQUATE_COLOR);
+						c.setForeground(
+							isSelected ? this.SELECTED_CELL_COLOR : this.BAD_EQUATE_COLOR);
 					}
 					else {
 						Equate e = eqRowObject.getEquate();
 						if (e != null && !e.isEnumBased()) {
-							c.setForeground(isSelected ? this.SELECTED_CELL_COLOR : this.EQUATE_COLOR);
+							c.setForeground(
+								isSelected ? this.SELECTED_CELL_COLOR : this.EQUATE_COLOR);
 						}
 					}
 				}
@@ -397,6 +403,10 @@ public class SetEquateDialog extends DialogComponentProvider {
 	 * Get the Equate Name entered or chosen by the user.
 	 */
 	public String getEquateName() {
+		return equateName;
+	}
+
+	private String doGetEquateName() {
 		EquateRowObject equateEntry = getRowObject();
 		if (equateEntry != null) {
 			return equateEntry.getEntryName();
@@ -413,6 +423,10 @@ public class SetEquateDialog extends DialogComponentProvider {
 	 * @return the enum data type for the selected entry, or null if there is no enum.
 	 */
 	public Enum getEnumDataType() {
+		return enumDt;
+	}
+
+	private Enum doGetEnumDataType() {
 		EquateRowObject equateEntry = getRowObject();
 		return (equateEntry != null) ? equateEntry.getEnumDataType() : null;
 	}
@@ -515,8 +529,11 @@ public class SetEquateDialog extends DialogComponentProvider {
 
 	@Override
 	protected void okCallback() {
-		if (isValid(this.getEquateName(), scalar)) {
+		String name = doGetEquateName();
+		if (isValid(name, scalar)) {
 			result = OK;
+			equateName = name;
+			enumDt = doGetEnumDataType();
 			close();
 		}
 		else {
@@ -532,7 +549,7 @@ public class SetEquateDialog extends DialogComponentProvider {
 
 		// look up the new equate string
 		Equate newEquate = equateTable.getEquate(equateStr);
-		if (newEquate != null && getEnumDataType() == null) {
+		if (newEquate != null && doGetEnumDataType() == null) {
 			// make sure any existing equate with that name has the same value.
 			if (newEquate.getValue() != testScalar.getValue()) {
 				setStatus("Equate " + equateStr + " exists with value 0x" +
