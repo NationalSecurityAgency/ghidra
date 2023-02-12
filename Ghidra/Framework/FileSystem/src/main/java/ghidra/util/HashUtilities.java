@@ -45,8 +45,7 @@ public class HashUtilities {
 		if (c > 'Z') {
 			c = 'a' + (val - 36);
 		}
-
-		return c;
+		return (char) c;
 	}
 
 	/**
