@@ -162,6 +162,7 @@ public class FunctionGraphPluginScreenShots extends AbstractFunctionGraphTest {
 		drawRectangleAroundMessageText();
 	}
 
+	@Test
 	public void testFunctionGraph_Vertex_Header() {
 		String address = "406630";
 		go(address);// _strlen function
@@ -784,14 +785,14 @@ public class FunctionGraphPluginScreenShots extends AbstractFunctionGraphTest {
 
 		Object actionManager = getInstanceField("actionManager", graphProvider);
 		@SuppressWarnings("unchecked")
-		final MultiStateDockingAction<Class<? extends FGLayoutProvider>> action =
-			(MultiStateDockingAction<Class<? extends FGLayoutProvider>>) getInstanceField(
+		final MultiStateDockingAction<FGLayoutProvider> action =
+			(MultiStateDockingAction<FGLayoutProvider>) getInstanceField(
 				"layoutAction", actionManager);
 		runSwing(() -> {
-			List<ActionState<Class<? extends FGLayoutProvider>>> states =
+			List<ActionState<FGLayoutProvider>> states =
 				action.getAllActionStates();
-			for (ActionState<Class<? extends FGLayoutProvider>> state : states) {
-				Class<? extends FGLayoutProvider> layoutClass = state.getUserData();
+			for (ActionState<FGLayoutProvider> state : states) {
+				Class<? extends FGLayoutProvider> layoutClass = state.getUserData().getClass();
 				if (layoutClass.getSimpleName().equals("DecompilerNestedLayoutProvider")) {
 					action.setCurrentActionState(state);
 					return;

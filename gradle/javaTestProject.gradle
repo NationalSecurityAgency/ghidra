@@ -75,6 +75,26 @@ task integrationTest (type: Test) { t ->
 	}
 }
 
+tasks.register('screenShots', Test) { t ->
+	group "screenShots"
+	dependsOn { project(":FunctionID").unpackFidDatabases }
+	testClassesDirs = files sourceSets.screenShots.output.classesDirs
+
+	classpath = sourceSets.screenShots.runtimeClasspath
+
+	// Enable if you want to force Gradle to launch a new JVM for each test.
+	forkEvery 1
+
+	initTestJVM(t, rootProject.ext.testRootDirName)
+
+	doFirst {
+		startTestTimer(t)
+	}
+	doLast {
+		endTestTimer(t)
+	}
+}
+
 task pcodeTest (type: Test) { t ->	
     group "pcodeTest"	
     dependsOn { project(":FunctionID").unpackFidDatabases }	

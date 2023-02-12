@@ -564,7 +564,8 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 
 	protected void installTestGraphLayout(FGProvider provider) {
 		FGActionManager actionManager = provider.getActionManager();
-		List<FGLayoutProvider> layouts = List.of(new TestFGLayoutProvider());
+		List<FGLayoutProvider> layouts = new ArrayList<>(List.of(new TestFGLayoutProvider()));
+		layouts.addAll(graphPlugin.getLayoutProviders());
 		runSwing(() -> actionManager.setLayouts(layouts));
 	}
 
