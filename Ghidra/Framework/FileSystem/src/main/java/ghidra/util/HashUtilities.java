@@ -37,10 +37,7 @@ public class HashUtilities {
 	public static final int SHA256_SALTED_HASH_LENGTH = SHA256_UNSALTED_HASH_LENGTH + SALT_LENGTH;
 
 	static char getRandomLetterOrDigit() {
-		int val = (SecureRandomFactory.getSecureRandom().nextInt() % 62); // 0-9,A-Z,a-z (10+26+26=62)
-		if (val < 0) {
-			val = -val;
-		}
+		int val = Math.abs((SecureRandomFactory.getSecureRandom().nextInt() % 62)); // 0-9,A-Z,a-z (10+26+26=62)
 		int c = '0' + val;
 		if (c > '9') {
 			c = 'A' + (val - 10);
@@ -48,7 +45,8 @@ public class HashUtilities {
 		if (c > 'Z') {
 			c = 'a' + (val - 36);
 		}
-		return (char) c;
+
+		return c;
 	}
 
 	/**
