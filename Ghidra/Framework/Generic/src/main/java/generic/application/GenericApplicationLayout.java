@@ -22,11 +22,12 @@ import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
+
 import generic.jar.ResourceFile;
 import ghidra.framework.ApplicationProperties;
 import ghidra.framework.GModule;
 import ghidra.util.SystemUtilities;
-import util.CollectionUtils;
 import utility.application.ApplicationLayout;
 import utility.application.ApplicationUtilities;
 import utility.module.ClasspathFilter;
@@ -38,6 +39,14 @@ import utility.module.ModuleUtilities;
  * runtime.
  */
 public class GenericApplicationLayout extends ApplicationLayout {
+
+	/**
+	 * System property that allows specification of additional application root dirs.  This is used
+	 * for clients that build plugins external to an installation.  The property will be parsed 
+	 * using {@link File#pathSeparator}, allowing for multiple values.
+	 */
+	private static final String ADDITIONAL_APPLICATION_ROOT_DIRS =
+		"ADDITIONAL_APPLICATION_ROOT_DIRS";
 
 	private static final String NO_RELEASE_NAME = "NO_RELEASE";
 
@@ -92,19 +101,10 @@ public class GenericApplicationLayout extends ApplicationLayout {
 		}
 
 		// Modules
-		if (SystemUtilities.isInDevelopmentMode()) {
-
-			// In development mode we rely on the IDE's classpath to determine which modules to
-			// include, as opposed to scanning the filesystem.  This prevents unrelated modules
-			// from being used.
-
-			modules = ModuleUtilities.findModules(applicationRootDirs,
-				ModuleUtilities.findModuleRootDirectories(applicationRootDirs),
-				new ClasspathFilter());
-		}
-		else {
-			modules = ModuleUtilities.findModules(applicationRootDirs, applicationRootDirs);
-		}
+		Collection<ResourceFile> moduleRoots =
+			ModuleUtilities.findModuleRootDirectories(applicationRootDirs);
+		modules =
+			ModuleUtilities.findModules(applicationRootDirs, moduleRoots, new ClasspathFilter());
 
 		// User directories
 		userTempDir = ApplicationUtilities.getDefaultUserTempDir(applicationProperties);
@@ -160,17 +160,33 @@ public class GenericApplicationLayout extends ApplicationLayout {
 	}
 
 	/**
-	 * Get the default list of Application directories.  In repo-based
-	 * development mode this includes the root Ghidra directory within each repo.
-	 * When not in development mode, the requirement is that the current working
-	 * directory correspond to the installation root.  The first entry will be
-	 * the primary root in both cases.
+	 * Get the default list of Application directories.  In repo-based development mode this 
+	 * includes the root Ghidra directory within each repo.  When not in development mode, the 
+	 * requirement is that the current working directory correspond to the installation root.  The 
+	 * first entry will be the primary root in both cases.
 	 * @return root directories
 	 */
 	public static Collection<ResourceFile> getDefaultApplicationRootDirs() {
-		if (SystemUtilities.isInDevelopmentMode()) {
-			return ApplicationUtilities.findDefaultApplicationRootDirs();
+
+		Set<ResourceFile> results = new HashSet<>();
+		String additionalRootsProperty = System.getProperty(ADDITIONAL_APPLICATION_ROOT_DIRS);
+		if (!StringUtils.isBlank(additionalRootsProperty)) {
+			String[] paths = additionalRootsProperty.split(File.pathSeparator);
+			for (String path : paths) {
+				ResourceFile file = new ResourceFile(path);
+				results.add(file);
+			}
 		}
-		return CollectionUtils.asList(new ResourceFile(System.getProperty("user.dir")));
+
+		if (SystemUtilities.isInDevelopmentMode()) {
+			Collection<ResourceFile> defaultRoots =
+				ApplicationUtilities.findDefaultApplicationRootDirs();
+			results.addAll(defaultRoots);
+		}
+		else {
+			results.add(new ResourceFile(System.getProperty("user.dir")));
+		}
+
+		return results;
 	}
 }
