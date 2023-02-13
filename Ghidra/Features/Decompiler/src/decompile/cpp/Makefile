@@ -35,16 +35,15 @@ ifeq ($(OS),Darwin)
   OSDIR=mac_x86_64
 endif
 
-CC=gcc
-CXX=g++
+CXX=g++ -std=c++11
 
 # Debug flags
-DBG_CXXFLAGS=-g -std=c++11 -Wall -Wno-sign-compare
+DBG_CXXFLAGS=-g -Wall -Wno-sign-compare
 #DBG_CXXFLAGS=-g -pg -Wall -Wno-sign-compare
 #DBG_CXXFLAGS=-g -fprofile-arcs -ftest-coverage -Wall -Wno-sign-compare
 
 # Optimization flags
-OPT_CXXFLAGS=-O2 -std=c++11 -Wall -Wno-sign-compare
+OPT_CXXFLAGS=-O2 -Wall -Wno-sign-compare
 
 YACC=bison
 
