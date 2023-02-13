@@ -118,7 +118,7 @@ public class CustomToStringCellRenderer<T> extends AbstractGColumnRenderer<T> {
 	public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 		super.getTableCellRendererComponent(data);
 		setText(toString.apply(cls.cast(data.getValue()), data.getColumnSettings()));
-		if (getHTMLRenderingEnabled()) {
+		if (isHTMLRenderingEnabled()) {
 			setVerticalAlignment(SwingConstants.TOP);
 		}
 		else {

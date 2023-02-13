@@ -57,7 +57,7 @@ public class ThemeManagerPlugin extends Plugin implements ApplicationLevelOnlyPl
 				.onAction(e -> switchTheme())
 				.buildAndInstall(tool);
 
-		new ActionBuilder("Configure", owner).menuPath("Edit", "Theme", "Configure...")
+		new ActionBuilder("Configure", owner).menuPath("Edit", "Theme", "Configure")
 				.menuGroup(group, "2")
 				.helpLocation(new HelpLocation("Theming", "Edit_Theme"))
 				.onAction(e -> configure())

@@ -104,7 +104,7 @@ class InfoPanel extends JPanel {
 		// If the splash.txt file contains non-HTML text, view is null
 		View view = (View) resizer.getClientProperty(javax.swing.plaf.basic.BasicHTML.propertyKey);
 		if (view == null) {
-			// must not be HTML content in the splash screen text (this shouldn't 
+			// must not be HTML content in the splash screen text (this shouldn't
 			// happen, but let's just protect against this anyway).
 			JLabel label = new GDLabel(content) {
 				@Override
@@ -121,9 +121,9 @@ class InfoPanel extends JPanel {
 		float w = view.getPreferredSpan(View.X_AXIS);
 		float h = view.getPreferredSpan(View.Y_AXIS);
 
-		JLabel distribLabel = new GHtmlLabel(content);
-		distribLabel.setPreferredSize(new Dimension((int) Math.ceil(w), (int) Math.ceil(h + 10)));
-		return distribLabel;
+		JLabel distLabel = new GHtmlLabel(content);
+		distLabel.setPreferredSize(new Dimension((int) Math.ceil(w), (int) Math.ceil(h + 10)));
+		return distLabel;
 	}
 
 	private Component buildMarkingLabel() {
@@ -270,18 +270,5 @@ class InfoPanel extends JPanel {
 			Msg.debug(this, "Unable to read splash screen text from: " + SPLASH_FILENAME, e);
 			return SPLASH_FILENAME + " file is unreadable!";
 		}
-	}
-
-	public static void main(String[] args) {
-		JFrame f = new JFrame("Ghidra");
-		InfoPanel p = new InfoPanel();
-		f.getContentPane().add(p);
-		f.pack();
-		f.setVisible(true);
-
-		JDialog d = new JDialog(f, "About Ghidra", true);
-		d.getContentPane().add(new InfoPanel());
-		d.pack();
-		d.setVisible(true);
 	}
 }
