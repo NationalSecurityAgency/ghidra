@@ -17,7 +17,8 @@
 //@category FunctionID
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.function.Predicate;
 
 import ghidra.app.script.GhidraScript;
@@ -26,9 +27,9 @@ import ghidra.app.util.bin.format.coff.*;
 import ghidra.app.util.bin.format.coff.archive.CoffArchiveHeader;
 import ghidra.app.util.bin.format.coff.archive.CoffArchiveMemberHeader;
 import ghidra.app.util.importer.*;
-import ghidra.app.util.opinion.Loader;
-import ghidra.app.util.opinion.MSCoffLoader;
+import ghidra.app.util.opinion.*;
 import ghidra.framework.model.DomainFolder;
+import ghidra.framework.model.DomainObject;
 import ghidra.framework.store.local.LocalFileSystem;
 import ghidra.program.model.lang.LanguageDescription;
 import ghidra.program.model.listing.Program;
@@ -95,40 +96,43 @@ public class ImportMSLibs extends GhidraScript {
 				}
 				offsetsSeen.add(archiveMemberHeader.getPayloadOffset());
 				if (archiveMemberHeader.isCOFF()) {
+					String preferredName = archiveMemberHeader.getName();
 					try (ByteProvider coffProvider = new ByteProviderWrapper(provider,
 						archiveMemberHeader.getPayloadOffset(), archiveMemberHeader.getSize())) {
 						CoffFileHeader header = new CoffFileHeader(coffProvider);
 						if (CoffMachineType.isMachineTypeDefined(header.getMagic())) {
-							String preferredName = archiveMemberHeader.getName();
 							String[] splits = splitPreferredName(preferredName);
 
-							List<Program> programs =
+							LoadResults<? extends DomainObject> loadResults =
 								AutoImporter.importFresh(
 									coffProvider,
-									root,
+									state.getProject(),
+									root.getPathname(),
 									this,
 									log,
 									new CancelOnlyWrappingTaskMonitor(monitor),
 									LOADER_FILTER,
 									LOADSPEC_CHOOSER,
 									mangleNameBecauseDomainFoldersAreSoRetro(splits[splits.length - 1]),
-									OptionChooser.DEFAULT_OPTIONS,
-									MultipleProgramsStrategy.ONE_PROGRAM_OR_EXCEPTION);
+									OptionChooser.DEFAULT_OPTIONS);
 
-							if (programs == null || programs.isEmpty()) {
-								printerr("no programs loaded from " + file + " - " +
-									preferredName);
-							}
-
-							if (programs != null) {
-								for (Program program : programs) {
-									program.release(this);
-									DomainFolder destination =
-										establishFolder(root, file, program, isDebug, splits);
-									program.getDomainFile().moveTo(destination);
+							try {
+								for (Loaded<? extends DomainObject> loaded : loadResults) {
+									if (loaded.getDomainObject() instanceof Program program) {
+										loaded.save(state.getProject(), log, monitor);
+										DomainFolder destination =
+											establishFolder(root, file, program, isDebug, splits);
+										program.getDomainFile().moveTo(destination);
+									}
 								}
 							}
+							finally {
+								loadResults.release(this);
+							}
 						}
+					}
+					catch (LoadException e) {
+						printerr("no programs loaded from " + file + " - " + preferredName);
 					}
 				}
 			}

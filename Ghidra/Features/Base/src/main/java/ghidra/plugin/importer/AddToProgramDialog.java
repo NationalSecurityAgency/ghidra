@@ -53,13 +53,13 @@ public class AddToProgramDialog extends ImporterDialog {
 		super("Add To Program:  " + fsrl.getPath(), tool, loaderMap, byteProvider, null);
 		this.addToProgram = addToProgram;
 		folderNameTextField.setText(getFolderName(addToProgram));
-		filenameTextField.setText(addToProgram.getName());
+		nameTextField.setText(addToProgram.getName());
 		setSelectedLanguage(getLanguageSpec());
 		languageTextField.setEnabled(false);
 		folderNameTextField.setEnabled(false);
 		folderButton.setEnabled(false);
 		languageButton.setEnabled(false);
-		filenameTextField.setEnabled(false);
+		nameTextField.setEnabled(false);
 		validateFormInput();
 	}
 

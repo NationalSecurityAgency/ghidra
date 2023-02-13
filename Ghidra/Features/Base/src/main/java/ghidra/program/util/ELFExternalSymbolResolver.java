@@ -17,10 +17,12 @@ package ghidra.program.util;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.ElfLoader;
-import ghidra.framework.model.*;
+import ghidra.app.util.opinion.Loaded;
+import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.Options;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
@@ -41,90 +43,64 @@ public class ELFExternalSymbolResolver {
 	 * already existing / imported libraries.
 	 * <p>
 	 *
-	 * @param program ELF {@link Program} to fix.
-	 * @param saveIfModified boolean flag, if true the program will be saved if there was a
-	 * modification.
+	 * @param loadedPrograms ELF {@link Loaded} {@link Program}s to fix..
 	 * @param messageLog {@link MessageLog} to write info message to.
 	 * @param monitor {@link TaskMonitor} to watch for cancel and update with progress.
 	 * @throws CancelledException if user cancels
 	 * @throws IOException if error reading
 	 */
-	public static void fixUnresolvedExternalSymbols(Program program, boolean saveIfModified,
+	public static void fixUnresolvedExternalSymbols(List<Loaded<Program>> loadedPrograms,
 			MessageLog messageLog, TaskMonitor monitor) throws CancelledException, IOException {
-		DomainFolder domainFolder = program.getDomainFile().getParent();
-		if (domainFolder == null) {
-			return; // headless case with nothing pre-saved...currently unsupported
-		}
-		ProjectData projectData = domainFolder.getProjectData();
+		Map<String, Loaded<Program>> loadedByName = loadedPrograms.stream()
+				.collect(
+					Collectors.toMap(loaded -> loaded.getName(), loaded -> loaded));
 
-		Collection<Long> unresolvedExternalFunctionIds = getUnresolvedExternalFunctionIds(program);
-		if (unresolvedExternalFunctionIds.size() == 0) {
-			return;
-		}
+		monitor.initialize(loadedByName.size());
+		for (Loaded<Program> loadedProgram : loadedByName.values()) {
+			Program program = loadedProgram.getDomainObject();
 
-		List<Library> libSearchList = getLibrarySearchList(program);
-		if (libSearchList.isEmpty()) {
-			return;
-		}
+			Collection<Long> unresolvedExternalFunctionIds =
+				getUnresolvedExternalFunctionIds(program);
+			if (unresolvedExternalFunctionIds.size() == 0) {
+				return;
+			}
 
-		int transactionID = program.startTransaction("Resolve External Symbols");
-		try {
+			List<Library> libSearchList = getLibrarySearchList(program);
+			if (libSearchList.isEmpty()) {
+				return;
+			}
 
-			messageLog.appendMsg("----- [" + program.getName() + "] Resolve " +
-				unresolvedExternalFunctionIds.size() + " external symbols -----");
+			int transactionID = program.startTransaction("Resolve External Symbols");
+			try {
 
-			for (Library extLibrary : libSearchList) {
-				monitor.checkCanceled();
-				String libName = extLibrary.getName();
-				String libPath = extLibrary.getAssociatedProgramPath();
-				if (libPath == null) {
-					continue;
-				}
+				messageLog.appendMsg("----- [" + program.getName() + "] Resolve " +
+					unresolvedExternalFunctionIds.size() + " external symbols -----");
 
-				DomainFile libDomainFile = projectData.getFile(libPath);
-				if (libDomainFile == null) {
-					messageLog.appendMsg("Referenced external program not found: " + libPath);
-					continue;
-				}
-
-				Object consumer = new Object();
-				DomainObject libDomainObject = null;
-				try {
-					libDomainObject =
-						libDomainFile.getDomainObject(consumer, false, false, monitor);
-					if (!(libDomainObject instanceof Program)) {
-						messageLog.appendMsg(
-							"Referenced external program is not a program: " + libPath);
+				for (Library extLibrary : libSearchList) {
+					monitor.checkCanceled();
+					String libName = extLibrary.getName();
+					String libPath = extLibrary.getAssociatedProgramPath();
+					if (libPath == null) {
 						continue;
 					}
+
+					Loaded<Program> loadedLib = loadedByName.get(libName);
+					if (loadedLib == null) {
+						messageLog.appendMsg("Referenced external program not found: " + libName);
+						continue;
+					}
+
+					DomainObject libDomainObject = loadedLib.getDomainObject();
 					monitor.setMessage("Resolving symbols published by library " + libName);
 					resolveSymbolsToLibrary(program, unresolvedExternalFunctionIds, extLibrary,
 						(Program) libDomainObject, messageLog, monitor);
 				}
-				catch (IOException e) {
-					// failed to open library
-					messageLog.appendMsg("Failed to open library dependency project file: " +
-						libDomainFile.getPathname());
-				}
-				catch (VersionException e) {
-					messageLog.appendMsg(
-						"Referenced external program requires updgrade, unable to consider symbols: " +
-							libPath);
-				}
-				finally {
-					if (libDomainObject != null) {
-						libDomainObject.release(consumer);
-					}
-				}
+				messageLog.appendMsg("Unresolved external symbols which remain: " +
+					unresolvedExternalFunctionIds.size());
 			}
-			messageLog.appendMsg("Unresolved external symbols which remain: " +
-				unresolvedExternalFunctionIds.size());
-		}
-		finally {
-			program.endTransaction(transactionID, true);
-		}
-		if (saveIfModified && program.canSave() && program.isChanged()) {
-			program.save("ExternalSymbolResolver", monitor);
+			finally {
+				program.endTransaction(transactionID, true);
+			}
 		}
 	}
 
@@ -223,7 +199,7 @@ public class ELFExternalSymbolResolver {
 		return orderLibraryMap.values();
 	}
 
-	private static List<Library> getLibrarySearchList(Program program) {
+	public static List<Library> getLibrarySearchList(Program program) {
 		List<Library> result = new ArrayList<>();
 		ExternalManager externalManager = program.getExternalManager();
 		for (String libName : getOrderedLibraryNamesNeeded(program)) {

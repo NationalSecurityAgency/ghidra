@@ -328,7 +328,10 @@ public class DataTreeDialog extends DialogComponentProvider
 	 * @return null if there was no domain folder selected
 	 */
 	public DomainFolder getDomainFolder() {
-		if (domainFolder == null && !cancelled) {
+		if (cancelled) {
+			return null;
+		}
+		if (domainFolder == null) {
 			domainFolder = treePanel.getSelectedDomainFolder();
 		}
 		return domainFolder;

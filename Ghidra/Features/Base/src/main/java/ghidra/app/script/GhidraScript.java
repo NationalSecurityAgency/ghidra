@@ -39,6 +39,7 @@ import ghidra.app.util.demangler.DemanglerUtil;
 import ghidra.app.util.dialog.AskAddrDialog;
 import ghidra.app.util.importer.AutoImporter;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.opinion.*;
 import ghidra.app.util.query.TableService;
 import ghidra.app.util.viewer.field.BrowserCodeUnitFormat;
 import ghidra.app.util.viewer.field.CommentUtils;
@@ -3382,18 +3383,38 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	/**
 	 * Attempts to import the specified file. It attempts to detect the format and
 	 * automatically import the file. If the format is unable to be determined, then
-	 * null is returned.
+	 * null is returned.  For more control over the import process, {@link AutoImporter} may be
+	 * directly called.
+	 * <p>
+	 * NOTE: The returned {@link Program} is not automatically saved into the current project. 
+	 * <p>
+	 * NOTE: It is the responsibility of the script that calls this method to release the returned
+	 * {@link Program} with {@link DomainObject#release(Object consumer)} when it is no longer 
+	 * needed, where <code>consumer</code> is <code>this</code>.
 	 *
 	 * @param file the file to import
 	 * @return the newly imported program, or null
 	 * @throws Exception if any exceptions occur while importing
 	 */
 	public Program importFile(File file) throws Exception {
-		return AutoImporter.importByUsingBestGuess(file, null, this, new MessageLog(), monitor);
+		try {
+			LoadResults<Program> loadResults = AutoImporter.importByUsingBestGuess(file,
+				state.getProject(), null, this, new MessageLog(), monitor);
+			loadResults.releaseNonPrimary(this);
+			return loadResults.getPrimaryDomainObject();
+		}
+		catch (LoadException e) {
+			return null;
+		}
 	}
 
 	/**
-	 * Imports the specified file as raw binary.
+	 * Imports the specified file as raw binary.  For more control over the import process, 
+	 * {@link AutoImporter} may be directly called.
+	 * <p>
+	 * NOTE: It is the responsibility of the script that calls this method to release the returned
+	 * {@link Program} with {@link DomainObject#release(Object consumer)} when it is no longer 
+	 * needed, where <code>consumer</code> is <code>this</code>.
 	 *
 	 * @param file the file to import
 	 * @param language the language of the new program
@@ -3403,8 +3424,14 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 */
 	public Program importFileAsBinary(File file, Language language, CompilerSpec compilerSpec)
 			throws Exception {
-		return AutoImporter.importAsBinary(file, null, language, compilerSpec, this,
-			new MessageLog(), monitor);
+		try {
+			Loaded<Program> loaded = AutoImporter.importAsBinary(file, state.getProject(), null,
+				language, compilerSpec, this, new MessageLog(), monitor);
+			return loaded.getDomainObject();
+		}
+		catch (LoadException e) {
+			return null;
+		}
 	}
 
 	/**
