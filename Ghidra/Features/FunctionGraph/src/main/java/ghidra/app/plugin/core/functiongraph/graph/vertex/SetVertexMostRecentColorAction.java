@@ -49,17 +49,18 @@ public class SetVertexMostRecentColorAction extends MultiActionDockingAction {
 		this.controller = controller;
 		this.vertex = vertex;
 		setDescription("Set this block's background color");
-		colorIcon = new ColorIcon3D(new GColor("color.bg.functiongraph.paint.icon"), 12, 12) {
-			@Override
-			public Color getColor() {
-				return controller.getMostRecentColor();
-			}
-		};
+		colorIcon =
+			new ColorIcon3D(new GColor("color.bg.plugin.functiongraph.paint.icon"), 12, 12) {
+				@Override
+				public Color getColor() {
+					return controller.getMostRecentColor();
+				}
+			};
 
 		Icon blankIcon = new EmptyIcon(16, 16);
 
 		MultiIcon multiIcon = new MultiIcon(blankIcon);
-		Icon paintBrushImage = new GIcon("icon.functiongraph.action.vertex.choose.color");
+		Icon paintBrushImage = new GIcon("icon.plugin.functiongraph.action.vertex.choose.color");
 		Icon scaledBrush = ResourceManager.getScaledIcon(paintBrushImage, 16, 16);
 
 		Point point = getLowerLeftIconOffset(blankIcon, colorIcon);
@@ -100,11 +101,11 @@ public class SetVertexMostRecentColorAction extends MultiActionDockingAction {
 					colorProvider.setVertexColor(vertex, newColor);
 				}
 			};
-		Icon imageIcon = new GIcon("icon.functiongraph.action.vertex.choose.color.palette");
-		chooseColorAction.setMenuBarData(
-			new MenuData(new String[] { "Choose New Color" }, imageIcon));
-		chooseColorAction.setHelpLocation(
-			new HelpLocation("FunctionGraphPlugin", "Vertex_Action_Color"));
+		Icon imageIcon = new GIcon("icon.plugin.functiongraph.action.vertex.choose.color.palette");
+		chooseColorAction
+				.setMenuBarData(new MenuData(new String[] { "Choose New Color" }, imageIcon));
+		chooseColorAction
+				.setHelpLocation(new HelpLocation("FunctionGraphPlugin", "Vertex_Action_Color"));
 
 		clearColorAction =
 			new DockingAction("Clear Vertex Color", FunctionGraphPlugin.class.getName()) {
@@ -115,8 +116,8 @@ public class SetVertexMostRecentColorAction extends MultiActionDockingAction {
 				}
 			};
 		clearColorAction.setMenuBarData(new MenuData(new String[] { "Clear Background Color" }));
-		clearColorAction.setHelpLocation(
-			new HelpLocation("FunctionGraphPlugin", "Vertex_Action_Color"));
+		clearColorAction
+				.setHelpLocation(new HelpLocation("FunctionGraphPlugin", "Vertex_Action_Color"));
 	}
 
 	@Override
@@ -174,7 +175,7 @@ public class SetVertexMostRecentColorAction extends MultiActionDockingAction {
 			@Override
 			/**
 			 * This is used by our button above to show a popup.  We need to override the
-			 * value here, since 
+			 * value here, since
 			 */
 			public Point getLocationOnScreen() {
 				if (vertex.isFullScreenMode()) {
@@ -210,7 +211,7 @@ public class SetVertexMostRecentColorAction extends MultiActionDockingAction {
 				JComponent vertexComponentPanel = vertex.getComponent();
 
 				// Start with our (this button) coordinates and add those to our container's
-				// value recursively until we reach our vertex panel.  We have to stop there, 
+				// value recursively until we reach our vertex panel.  We have to stop there,
 				// since the vertex panel
 				int x = getX();
 				int y = getY();

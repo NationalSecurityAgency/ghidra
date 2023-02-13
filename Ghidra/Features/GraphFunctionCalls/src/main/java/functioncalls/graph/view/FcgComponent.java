@@ -39,14 +39,14 @@ public class FcgComponent extends GraphComponent<FcgVertex, FcgEdge, FunctionCal
 		new FcgVertexPaintTransformer(FcgVertex.DEFAULT_VERTEX_SHAPE_COLOR);
 
 	private FcgEdgePaintTransformer edgePaintTransformer =
-		new FcgEdgePaintTransformer(new GColor("color.bg.fcg.edge.primary.direct"),
-			new GColor("color.bg.fcg.edge.primary.indirect"));
+		new FcgEdgePaintTransformer(new GColor("color.bg.plugin.fcg.edge.primary.direct"),
+			new GColor("color.bg.plugin.fcg.edge.primary.indirect"));
 	private FcgEdgePaintTransformer selectedEdgePaintTransformer =
-		new FcgEdgePaintTransformer(new GColor("color.bg.fcg.edge.primary.direct.selected"),
-			new GColor("color.bg.fcg.edge.primary.indirect.selected"));
+		new FcgEdgePaintTransformer(new GColor("color.bg.plugin.fcg.edge.primary.direct.selected"),
+			new GColor("color.bg.plugin.fcg.edge.primary.indirect.selected"));
 	private FcgEdgePaintTransformer satelliteEdgePaintTransformer =
-		new FcgEdgePaintTransformer(new GColor("color.bg.fcg.edge.satellite.direct"),
-			new GColor("color.bg.fcg.edge.satellite.indirect"));
+		new FcgEdgePaintTransformer(new GColor("color.bg.plugin.fcg.edge.satellite.direct"),
+			new GColor("color.bg.plugin.fcg.edge.satellite.indirect"));
 
 	FcgComponent(FunctionCallGraph g) {
 		setGraph(g);

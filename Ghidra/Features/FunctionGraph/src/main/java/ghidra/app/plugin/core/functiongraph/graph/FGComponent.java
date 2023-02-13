@@ -46,9 +46,9 @@ import ghidra.util.UndefinedFunction;
 public class FGComponent extends GraphComponent<FGVertex, FGEdge, FunctionGraph> {
 
 	//@formatter:off
-	private static final Color PICKED_COLOR = new GColor("color.bg.functiongraph.vertex.picked");
-	private static final Color START_COLOR = new GColor("color.bg.functiongraph.vertex.entry");
-	private static final Color END_COLOR = new GColor("color.bg.functiongraph.vertex.exit");	
+	private static final Color PICKED_COLOR = new GColor("color.bg.plugin.functiongraph.vertex.picked");
+	private static final Color START_COLOR = new GColor("color.bg.plugin.functiongraph.vertex.entry");
+	private static final Color END_COLOR = new GColor("color.bg.plugin.functiongraph.vertex.exit");
 	private static final Color UNDEFINED_FUNCTION_COLOR = new GColor("color.bg.undefined");
 	//@formatter:on
 
@@ -65,7 +65,7 @@ public class FGComponent extends GraphComponent<FGVertex, FGEdge, FunctionGraph>
 	public FGComponent(FGView functionGraphView, FGData data,
 			LayoutProvider<FGVertex, FGEdge, FunctionGraph> layoutProvider) {
 
-		// Note: we cannot call super here, as we need to set our variables below before 
+		// Note: we cannot call super here, as we need to set our variables below before
 		//       the base class builds.
 		// super(data.getFunctionGraph());
 
@@ -84,8 +84,8 @@ public class FGComponent extends GraphComponent<FGVertex, FGEdge, FunctionGraph>
 			setStatusMessage(message);
 		}
 
-		// Note: can't do this here due to timing...restoring the groups may trigger 
-		// callbacks into the view code, which at the point of this constructor has 
+		// Note: can't do this here due to timing...restoring the groups may trigger
+		// callbacks into the view code, which at the point of this constructor has
 		// not yet been initialized
 		//
 		// restoreSettings();
@@ -217,11 +217,12 @@ public class FGComponent extends GraphComponent<FGVertex, FGEdge, FunctionGraph>
 		com.google.common.base.Function<FGEdge, String> edgeLabelTransformer = e -> e.getLabel();
 		renderContext.setEdgeLabelTransformer(edgeLabelTransformer);
 
-		// note: this label renderer is the stamp for the label; we use another edge label 
+		// note: this label renderer is the stamp for the label; we use another edge label
 		//       renderer inside of the VisualGraphRenderer
-		VisualGraphEdgeLabelRenderer edgeLabelRenderer =
-			new VisualGraphEdgeLabelRenderer(new GColor("color.fg.label.picked"));
-		edgeLabelRenderer.setNonPickedForegroundColor(new GColor("color.fg.label.non.picked"));
+		VisualGraphEdgeLabelRenderer edgeLabelRenderer = new VisualGraphEdgeLabelRenderer(
+			new GColor("color.fg.plugin.functiongraph.label.picked"));
+		edgeLabelRenderer.setNonPickedForegroundColor(
+			new GColor("color.fg.plugin.functiongraph.label.non.picked"));
 		edgeLabelRenderer.setRotateEdgeLabels(false);
 		renderContext.setEdgeLabelRenderer(edgeLabelRenderer);
 
@@ -229,16 +230,16 @@ public class FGComponent extends GraphComponent<FGVertex, FGEdge, FunctionGraph>
 		Color bgColor = vgOptions.getGraphBackgroundColor();
 		if (vgOptions.isDefaultBackgroundColor(bgColor)) {
 
-			// Give user notice when seeing the graph for a non-function (such as an undefined 
-			// function), as this is typical for Ghidra UI widgets.   
-			// Don't do this if the user has manually set the background color (this would require 
+			// Give user notice when seeing the graph for a non-function (such as an undefined
+			// function), as this is typical for Ghidra UI widgets.
+			// Don't do this if the user has manually set the background color (this would require
 			// another option).
 			Function function = functionGraphData.getFunction();
 			if (function instanceof UndefinedFunction) {
 				viewer.setBackground(UNDEFINED_FUNCTION_COLOR);
 			}
 			else {
-				viewer.setBackground(new GColor("color.bg.functiongraph"));
+				viewer.setBackground(new GColor("color.bg.plugin.functiongraph"));
 			}
 		}
 
@@ -274,11 +275,11 @@ public class FGComponent extends GraphComponent<FGVertex, FGEdge, FunctionGraph>
 
 //==================================================================================================
 // Accessor Methods
-//==================================================================================================    
+//==================================================================================================
 
 	@Override
 	public void dispose() {
-		// big assumption - the components below will be disposed by the controller, so we don't 
+		// big assumption - the components below will be disposed by the controller, so we don't
 		// dispose them, as they may be cached
 		functionGraph = null;
 		functionGraphData = null;
@@ -314,17 +315,17 @@ public class FGComponent extends GraphComponent<FGVertex, FGEdge, FunctionGraph>
 	public void setVertexFocused(FGVertex v, ProgramLocation location) {
 
 		//
-		// NOTE: we must focus the vertex before we set the program location, as focusing the 
+		// NOTE: we must focus the vertex before we set the program location, as focusing the
 		// vertex will turn on the cursor, which allows the cursor to be properly set when we
-		// set the location.  Reversing these two calls will not allow the cursor to be set 
+		// set the location.  Reversing these two calls will not allow the cursor to be set
 		// properly.
-		// 
+		//
 
 		boolean wasFocused = v.isFocused();
 
 		// As per the note above, the vertex must think it is focused to update its cursor, so
-		// focus it, but DO NOT send out the event.  The 'pick to sync' will not trigger an 
-		// API-wide notification of the focused vertex. 
+		// focus it, but DO NOT send out the event.  The 'pick to sync' will not trigger an
+		// API-wide notification of the focused vertex.
 		gPickedState.pickToSync(v);
 		v.setProgramLocation(location);
 

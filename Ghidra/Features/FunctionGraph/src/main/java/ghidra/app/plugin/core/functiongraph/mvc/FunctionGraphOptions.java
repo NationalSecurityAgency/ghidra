@@ -90,17 +90,17 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 	private boolean updateGroupColorsAutomatically = true;
 
 	//@formatter:off
-	public static final Color DEFAULT_GROUP_BACKGROUND_COLOR = new GColor("color.bg.functiongraph.vertex.group");
-	private GColor defaultVertexBackgroundColor = new GColor("color.bg.functiongraph");
-	private GColor defaultGroupBackgroundColor = new GColor("color.bg.functiongraph.vertex.group");
+	public static final Color DEFAULT_GROUP_BACKGROUND_COLOR = new GColor("color.bg.plugin.functiongraph.vertex.group");
+	private GColor defaultVertexBackgroundColor = new GColor("color.bg.plugin.functiongraph");
+	private GColor defaultGroupBackgroundColor = new GColor("color.bg.plugin.functiongraph.vertex.group");
 
-	private GColor fallthroughEdgeColor = new GColor("color.bg.functiongraph.edge.fall.through");
-	private GColor conditionalJumpEdgeColor = new GColor("color.bg.functiongraph.edge.jump.conditional");
-	private GColor unconditionalJumpEdgeColor = new GColor("color.bg.functiongraph.edge.jump.unconditional");
+	private GColor fallthroughEdgeColor = new GColor("color.bg.plugin.functiongraph.edge.fall.through");
+	private GColor conditionalJumpEdgeColor = new GColor("color.bg.plugin.functiongraph.edge.jump.conditional");
+	private GColor unconditionalJumpEdgeColor = new GColor("color.bg.plugin.functiongraph.edge.jump.unconditional");
 
-	private GColor fallthroughEdgeHighlightColor = new GColor("color.bg.functiongraph.edge.fall.through.highlight");
-	private GColor conditionalJumpEdgeHighlightColor = new GColor("color.bg.functiongraph.edge.jump.conditional.highlight");
-	private GColor unconditionalJumpEdgeHighlightColor = new GColor("color.bg.functiongraph.edge.jump.unconditional.highlight");
+	private GColor fallthroughEdgeHighlightColor = new GColor("color.bg.plugin.functiongraph.edge.fall.through.highlight");
+	private GColor conditionalJumpEdgeHighlightColor = new GColor("color.bg.plugin.functiongraph.edge.jump.conditional.highlight");
+	private GColor unconditionalJumpEdgeHighlightColor = new GColor("color.bg.plugin.functiongraph.edge.jump.unconditional.highlight");
 	//@formatter:on
 
 	private boolean useFullSizeTooltip = false;
@@ -174,12 +174,10 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 			new HelpLocation(OWNER, "Layout_Compressing"), USE_CONDENSED_LAYOUT_DESCRIPTION);
 
 		options.registerThemeColorBinding(DEFAULT_VERTEX_BACKGROUND_COLOR_KEY,
-			defaultVertexBackgroundColor.getId(),
-			help, DEFAULT_VERTEX_BACKGROUND_COLOR_DESCRPTION);
+			defaultVertexBackgroundColor.getId(), help, DEFAULT_VERTEX_BACKGROUND_COLOR_DESCRPTION);
 
 		options.registerThemeColorBinding(DEFAULT_GROUP_BACKGROUND_COLOR_KEY,
-			defaultGroupBackgroundColor.getId(),
-			help, DEFAULT_GROUP_BACKGROUND_COLOR_DESCRPTION);
+			defaultGroupBackgroundColor.getId(), help, DEFAULT_GROUP_BACKGROUND_COLOR_DESCRPTION);
 
 		options.registerOption(UPDATE_GROUP_AND_UNGROUP_COLORS, updateGroupColorsAutomatically,
 			help, UPDATE_GROUP_AND_UNGROUP_COLORS_DESCRIPTION);
@@ -191,12 +189,10 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 			conditionalJumpEdgeColor.getId(), help, "Conditional jump edge color");
 
 		options.registerThemeColorBinding(EDGE_UNCONDITIONAL_JUMP_COLOR_KEY,
-			unconditionalJumpEdgeColor.getId(), help,
-			"Unconditional jump edge color");
+			unconditionalJumpEdgeColor.getId(), help, "Unconditional jump edge color");
 
 		options.registerThemeColorBinding(EDGE_FALLTHROUGH_COLOR_KEY, fallthroughEdgeColor.getId(),
-			help,
-			"Fallthrough edge color");
+			help, "Fallthrough edge color");
 
 		options.registerThemeColorBinding(EDGE_CONDITIONAL_JUMP_HIGHLIGHT_COLOR_KEY,
 			conditionalJumpEdgeHighlightColor.getId(), help,
@@ -207,8 +203,8 @@ public class FunctionGraphOptions extends VisualGraphOptions {
 			"Unconditional jump edge color when highlighting the reachablity of a vertex");
 
 		options.registerThemeColorBinding(EDGE_FALLTHROUGH_HIGHLIGHT_COLOR_KEY,
-			fallthroughEdgeHighlightColor.getId(),
-			help, "Fallthrough edge color when highlighting the reachablity of a vertex");
+			fallthroughEdgeHighlightColor.getId(), help,
+			"Fallthrough edge color when highlighting the reachablity of a vertex");
 
 	}
 
