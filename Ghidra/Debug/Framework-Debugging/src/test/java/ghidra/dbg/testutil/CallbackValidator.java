@@ -73,7 +73,7 @@ public class CallbackValidator implements DebuggerModelListener, AutoCloseable {
 		AddressRange.class, TargetAttachKind.class, TargetAttachKindSet.class,
 		TargetBreakpointKind.class, TargetBreakpointKindSet.class, TargetStepKind.class,
 		TargetStepKindSet.class, TargetExecutionState.class, TargetEventType.class,
-		TargetParameterMap.class, TargetObjectList.class);
+		TargetParameterMap.class, TargetObjectList.class, Class.class);
 
 	public CallbackValidator(DebuggerObjectModel model) {
 		this.model = model;
