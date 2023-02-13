@@ -19,7 +19,9 @@ import static org.junit.Assert.*;
 
 import org.junit.*;
 
+import docking.widgets.OptionDialog;
 import ghidra.GhidraOptions;
+import ghidra.app.events.FirstTimeAnalyzedPluginEvent;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
@@ -57,7 +59,7 @@ public class ProgramStartPluginTest extends AbstractGhidraHeadedIntegrationTest 
 
 	@Test
 	public void testOpensToStartingSymbolByDefault() throws Exception {
-		ProgramBuilder builder = getProgramBuilder("0x100");
+		ProgramBuilder builder = getProgramBuilder("program 1", "0x100");
 		builder.createLabel("0x105", "main");
 		loadProgram(builder.getProgram());
 
@@ -66,7 +68,7 @@ public class ProgramStartPluginTest extends AbstractGhidraHeadedIntegrationTest 
 
 	@Test
 	public void testOpensToLowestCodeBlock() throws Exception {
-		ProgramBuilder builder = getProgramBuilder("0x100");
+		ProgramBuilder builder = getProgramBuilder("program 1", "0x100");
 		MemoryBlock block = builder.createMemory(".text", "0x200", 0x200);
 		builder.setExecute(block, true);
 		builder.createLabel("0x105", "main");
@@ -80,7 +82,7 @@ public class ProgramStartPluginTest extends AbstractGhidraHeadedIntegrationTest 
 
 	@Test
 	public void testOpensToStartingSymbolNotFirstInSymbolList() throws Exception {
-		ProgramBuilder builder = getProgramBuilder("0x100");
+		ProgramBuilder builder = getProgramBuilder("program 1", "0x100");
 		setSymbolListOption("main, foobar, start");
 		builder.createLabel("0x107", "start");
 
@@ -91,7 +93,7 @@ public class ProgramStartPluginTest extends AbstractGhidraHeadedIntegrationTest 
 
 	@Test
 	public void testOpensToFirstSymbolWhenMutlipesAreFoud() throws Exception {
-		ProgramBuilder builder = getProgramBuilder("0x100");
+		ProgramBuilder builder = getProgramBuilder("program 1", "0x100");
 		setSymbolListOption("main, start");
 		builder.createLabel("0x110", "start");
 		builder.createLabel("0x105", "start");
@@ -103,7 +105,7 @@ public class ProgramStartPluginTest extends AbstractGhidraHeadedIntegrationTest 
 
 	@Test
 	public void testOpensToStartingSymbolWithOneUndercore() throws Exception {
-		ProgramBuilder builder = getProgramBuilder("0x100");
+		ProgramBuilder builder = getProgramBuilder("program 1", "0x100");
 		setSymbolListOption("main, start");
 		builder.createLabel("0x105", "_main");
 		builder.createLabel("0x107", "start");
@@ -115,7 +117,7 @@ public class ProgramStartPluginTest extends AbstractGhidraHeadedIntegrationTest 
 
 	@Test
 	public void testOpensToStartingSymbolWithTwoUndercores() throws Exception {
-		ProgramBuilder builder = getProgramBuilder("0x100");
+		ProgramBuilder builder = getProgramBuilder("program 1", "0x100");
 		setSymbolListOption("main, start");
 		builder.createLabel("0x105", "__main");
 		builder.createLabel("0x107", "_start");
@@ -128,7 +130,7 @@ public class ProgramStartPluginTest extends AbstractGhidraHeadedIntegrationTest 
 
 	@Test
 	public void testNoUnderscoresSearching() throws Exception {
-		ProgramBuilder builder = getProgramBuilder("0x100");
+		ProgramBuilder builder = getProgramBuilder("program 1", "0x100");
 		setSymbolListOption("main, start");
 		setUnderscoreOption(false);
 		builder.createLabel("0x105", "__main");
@@ -142,7 +144,7 @@ public class ProgramStartPluginTest extends AbstractGhidraHeadedIntegrationTest 
 
 	@Test
 	public void testOptionToStartAtLowestAddress() throws Exception {
-		ProgramBuilder builder = getProgramBuilder("0x100");
+		ProgramBuilder builder = getProgramBuilder("program 1", "0x100");
 		builder.createLabel("0x105", "main");
 		setOptionToLowestAddress();
 		loadProgram(builder.getProgram());
@@ -152,7 +154,7 @@ public class ProgramStartPluginTest extends AbstractGhidraHeadedIntegrationTest 
 
 	@Test
 	public void testOptionToStartAtLastLocation() throws Exception {
-		ProgramBuilder builder = getProgramBuilder("0x100");
+		ProgramBuilder builder = getProgramBuilder("program 1", "0x100");
 		ProgramDB program = builder.getProgram();
 		loadProgram(program);
 		cb.goTo(new ProgramLocation(program, addr("0x107")));
@@ -162,8 +164,122 @@ public class ProgramStartPluginTest extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals(addr("0x107"), cb.getCurrentAddress());
 	}
 
+	@Test
+	public void testProgramAutoRepostionsAfterAnalysis() throws Exception {
+		ProgramBuilder builder = getProgramBuilder("program 1", "0x100");
+		loadProgram(builder.getProgram());
+
+		assertEquals(addr("0x100"), cb.getCurrentAddress());
+
+		simulateAnaysisCreatingMain(builder, "0x105");
+
+		assertEquals(addr("0x105"), cb.getCurrentAddress());
+
+	}
+
+	@Test
+	public void testProgramAsksToRepostionsAfterAnalysisYes() throws Exception {
+		ProgramBuilder builder = getProgramBuilder("program 1", "0x100");
+		loadProgram(builder.getProgram());
+
+		assertEquals(addr("0x100"), cb.getCurrentAddress());
+		cb.goToField(addr("0x102"), "Address", 0, 0);
+		assertEquals(addr("0x102"), cb.getCurrentAddress());
+
+		simulateAnaysisCreatingMain(builder, "0x105");
+
+		OptionDialog dialog = waitForDialogComponent(OptionDialog.class);
+		pressButtonByText(dialog, "Yes");
+		waitForSwing();
+		assertEquals(addr("0x105"), cb.getCurrentAddress());
+
+	}
+
+	@Test
+	public void testProgramAsksToRepostionsAfterAnalysisNo() throws Exception {
+		ProgramBuilder builder = getProgramBuilder("program 1", "0x100");
+		loadProgram(builder.getProgram());
+
+		assertEquals(addr("0x100"), cb.getCurrentAddress());
+		cb.goToField(addr("0x102"), "Address", 0, 0);
+		assertEquals(addr("0x102"), cb.getCurrentAddress());
+
+		simulateAnaysisCreatingMain(builder, "0x105");
+
+		OptionDialog dialog = waitForDialogComponent(OptionDialog.class);
+		pressButtonByText(dialog, "No");
+		waitForSwing();
+		assertEquals(addr("0x102"), cb.getCurrentAddress());
+
+	}
+
+	@Test
+	public void testAutoMoveOff() throws Exception {
+		ProgramBuilder builder = getProgramBuilder("program 1", "0x100");
+		loadProgram(builder.getProgram());
+		setOptionToNotAutoMove();
+		setOptionToNotAsk();
+
+		assertEquals(addr("0x100"), cb.getCurrentAddress());
+
+		simulateAnaysisCreatingMain(builder, "0x105");
+
+		assertEquals(addr("0x100"), cb.getCurrentAddress());
+	}
+
+	@Test
+	public void testAnalysisHappensWhenProgramIsNotActiveNoUserMove() throws Exception {
+		ProgramBuilder builder1 = getProgramBuilder("program 1", "0x100");
+		loadProgram(builder1.getProgram());
+		ProgramBuilder builder2 = getProgramBuilder("program 2", "0x100");
+		loadProgram(builder2.getProgram());
+
+		simulateAnaysisCreatingMain(builder1, "0x104");
+		assertEquals(addr("0x100"), cb.getCurrentAddress());
+
+		env.close(builder2.getProgram());
+
+		assertEquals(addr("0x104"), cb.getCurrentAddress());
+	}
+
+	@Test
+	public void testAnalysisHappensWhenProgramIsNotActiveWithUserMove() throws Exception {
+		ProgramBuilder builder1 = getProgramBuilder("program 1", "0x100");
+		loadProgram(builder1.getProgram());
+		cb.goToField(addr("0x102"), "Address", 0, 0);
+		assertEquals(addr("0x102"), cb.getCurrentAddress());
+
+		ProgramBuilder builder2 = getProgramBuilder("program 2", "0x100");
+		loadProgram(builder2.getProgram());
+
+		simulateAnaysisCreatingMain(builder1, "0x104");
+		assertEquals(addr("0x100"), cb.getCurrentAddress());
+
+		runSwingLater(() -> env.close(builder2.getProgram()));
+		OptionDialog dialog = waitForDialogComponent(OptionDialog.class);
+		pressButtonByText(dialog, "Yes");
+		waitForSwing();
+
+		assertEquals(addr("0x104"), cb.getCurrentAddress());
+	}
+
+	private void simulateAnaysisCreatingMain(ProgramBuilder builder, String address) {
+		builder.createLabel(address, "main");
+		runSwingLater(() -> tool
+			.firePluginEvent(new FirstTimeAnalyzedPluginEvent("test", builder.getProgram())));
+		waitForSwing();
+	}
+
 	private void setUnderscoreOption(boolean b) {
 		options.setBoolean(ProgramStartingLocationOptions.UNDERSCORE_OPTION, b);
+	}
+
+	private void setOptionToNotAsk() {
+		options.setBoolean(ProgramStartingLocationOptions.ASK_TO_MOVE_OPTION, false);
+	}
+
+	private void setOptionToNotAutoMove() {
+		options.setBoolean(ProgramStartingLocationOptions.AUTO_MOVE_OPTION, false);
 	}
 
 	private void setOptionToLowestAddress() {
@@ -180,8 +296,8 @@ public class ProgramStartPluginTest extends AbstractGhidraHeadedIntegrationTest 
 		options.setString(ProgramStartingLocationOptions.START_SYMBOLS_OPTION, symbolListString);
 	}
 
-	private ProgramBuilder getProgramBuilder(String baseAddress) throws Exception {
-		ProgramBuilder builder = new ProgramBuilder();
+	private ProgramBuilder getProgramBuilder(String name, String baseAddress) throws Exception {
+		ProgramBuilder builder = new ProgramBuilder(name, ProgramBuilder._TOY);
 		builder.createMemory(".data", baseAddress, 0x100);
 		return builder;
 	}

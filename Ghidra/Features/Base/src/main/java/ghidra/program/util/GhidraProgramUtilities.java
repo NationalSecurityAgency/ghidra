@@ -89,4 +89,23 @@ public class GhidraProgramUtilities {
 			program.endTransaction(transactionID, true);
 		}
 	}
+
+	/**
+	 * Returns true if the program has been analyzed at least once.
+	 * @param program the program to test to see if it has been analyzed
+	 * @return true if the program has been analyzed at least once.
+	 */
+	public static boolean isAnalyzedFlagSet(Program program) {
+		Options options = program.getOptions(Program.PROGRAM_INFO);
+
+		// we first have to check if the flag has even been created because checking the flag
+		// directly causes it to be created if it doesn't exist and we unfortunately use the 
+		// existence of the flag to know whether or not to ask the user if they want to start 
+		// analysis
+		if (!options.isRegistered(Program.ANALYZED)) {
+			return false;
+		}
+
+		return options.getBoolean(Program.ANALYZED, false);
+	}
 }

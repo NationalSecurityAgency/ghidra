@@ -21,31 +21,31 @@ import ghidra.framework.plugintool.PluginEvent;
 import ghidra.program.model.listing.Program;
 
 /**
- * Plugin event class for notification of programs being created, opened, or closed.
+ * Plugin event class for notification that plugin first pass processing of a newly activated 
+ * program is complete. More specifically, all plugins have received and had a chance
+ * to react to a {@link ProgramActivatedPluginEvent}.
  */
-public class ProgramClosedPluginEvent extends PluginEvent {
+public class ProgramPostActivatedPluginEvent extends PluginEvent {
 
-	static final String NAME = "Program Closed";
-
-	private WeakReference<Program> programRef;
+	static final String NAME = "Post Program Activated";
+	private WeakReference<Program> newProgramRef;
 
 	/**
-	 * Construct a new plugin event.
+	 * Constructor
 	 * @param source name of the plugin that created this event
-	 * @param p the program associated with this event
+	 * @param activeProgram the program that has been activated
 	 */
-	public ProgramClosedPluginEvent(String source, Program p) {
+	public ProgramPostActivatedPluginEvent(String source, Program activeProgram) {
 		super(source, NAME);
-		this.programRef = new WeakReference<Program>(p);
+		this.newProgramRef = new WeakReference<Program>(activeProgram);
 	}
 
 	/**
-	 * Returns the {@link Program} that has just been opened. This method
-	 * can return null, but only if the method is called some time after the original event
-	 * notification.
-	 * @return the {@link Program} that has just been analyzed for the first time.
+	 * Return the new activated program. May be null.
+	 * @return null if the event if for a program closing.
 	 */
-	public Program getProgram() {
-		return programRef.get();
+	public Program getActiveProgram() {
+		return newProgramRef.get();
 	}
+
 }
