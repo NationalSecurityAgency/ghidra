@@ -659,8 +659,13 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 		if (currentProgram == null || current.getTrace() == null) {
 			return;
 		}
-		staticMappingService.addIdentityMapping(current.getTrace(), currentProgram,
-			Lifespan.nowOn(traceManager.getCurrentSnap()), true);
+		try {
+			staticMappingService.addIdentityMapping(current.getTrace(), currentProgram,
+				Lifespan.nowOn(traceManager.getCurrentSnap()), false);
+		}
+		catch (TraceConflictedMappingException e) {
+			Msg.showError(this, null, "Map Identically", e.getMessage());
+		}
 	}
 
 	private void activatedMapManually(ActionContext ignored) {

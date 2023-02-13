@@ -85,8 +85,9 @@ public class DBTraceStaticMappingManager implements TraceStaticMappingManager, D
 			DBTraceStaticMapping conflict =
 				findAnyConflicting(range, lifespan, toProgramURL, toAddress);
 			if (conflict != null) {
+				// TODO: Find all conflicts?
 				throw new TraceConflictedMappingException("Another mapping would conflict",
-					conflict);
+					Set.of(conflict));
 			}
 			// TODO: A more sophisticated coverage check?
 			// TODO: Better coalescing
@@ -133,8 +134,7 @@ public class DBTraceStaticMappingManager implements TraceStaticMappingManager, D
 
 	@Override
 	public DBTraceStaticMapping findAnyConflicting(AddressRange range, Lifespan lifespan,
-			URL toProgramURL,
-			String toAddress) {
+			URL toProgramURL, String toAddress) {
 		for (DBTraceStaticMapping mapping : mappingsByAddress.head(range.getMaxAddress(),
 			true).descending().values()) {
 			if (!mapping.conflictsWith(range, lifespan, toProgramURL, toAddress)) {

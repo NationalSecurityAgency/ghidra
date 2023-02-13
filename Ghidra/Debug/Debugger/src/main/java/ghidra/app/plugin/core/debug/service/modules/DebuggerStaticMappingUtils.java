@@ -25,11 +25,13 @@ import ghidra.framework.model.ProjectData;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Library;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.ExternalManager;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
 import ghidra.trace.model.modules.*;
 import ghidra.trace.model.program.TraceProgramView;
+import ghidra.util.ComparatorMath;
 import ghidra.util.Msg;
 
 public enum DebuggerStaticMappingUtils {
@@ -153,41 +155,71 @@ public enum DebuggerStaticMappingUtils {
 		addMapping(fromLoc, toLoc, length, truncateExisting);
 	}
 
-	public static void addIdentityMapping(Trace from, Program toProgram, Lifespan lifespan,
-			boolean truncateExisting) {
-		Map<String, Address> mins = new HashMap<>();
-		Map<String, Address> maxs = new HashMap<>();
-		for (AddressRange range : toProgram.getMemory().getAddressRanges()) {
-			mins.compute(range.getAddressSpace().getName(), (n, min) -> {
-				Address can = range.getMinAddress();
-				if (min == null || can.compareTo(min) < 0) {
-					return can;
-				}
-				return min;
-			});
-			maxs.compute(range.getAddressSpace().getName(), (n, max) -> {
-				Address can = range.getMaxAddress();
-				if (max == null || can.compareTo(max) > 0) {
-					return can;
-				}
-				return max;
-			});
+	public static class Extrema {
+		private Address min = null;
+		private Address max = null;
+
+		public void consider(AddressRange range) {
+			min = min == null ? range.getMinAddress()
+					: ComparatorMath.cmin(min, range.getMinAddress());
+			max = max == null ? range.getMaxAddress()
+					: ComparatorMath.cmax(max, range.getMaxAddress());
 		}
-		for (String name : mins.keySet()) {
-			AddressRange range = clippedRange(from, name, mins.get(name).getOffset(),
-				maxs.get(name).getOffset());
-			if (range == null) {
+
+		public Address getMin() {
+			return min;
+		}
+
+		public Address getMax() {
+			return max;
+		}
+
+		public long getLength() {
+			return max.subtract(min) + 1;
+		}
+	}
+
+	public static boolean isReal(MemoryBlock block) {
+		return block.isLoaded() && !block.isOverlay() && !block.isExternalBlock();
+	}
+
+	public static void addIdentityMapping(Trace from, Program toProgram, Lifespan lifespan,
+			boolean truncateExisting) throws TraceConflictedMappingException {
+		AddressSet failures = new AddressSet();
+		Set<TraceStaticMapping> conflicts = new HashSet<>();
+		Map<AddressSpace, Extrema> extremaBySpace = new HashMap<>();
+		for (MemoryBlock block : toProgram.getMemory().getBlocks()) {
+			if (!isReal(block)) {
+				continue;
+			}
+			AddressRange range = new AddressRangeImpl(block.getStart(), block.getEnd());
+			extremaBySpace.computeIfAbsent(range.getAddressSpace(), s -> new Extrema())
+					.consider(range);
+		}
+
+		for (Extrema extrema : extremaBySpace.values()) {
+			AddressRange fromRange =
+				clippedRange(from, extrema.getMin().getAddressSpace().getName(),
+					extrema.getMin().getOffset(), extrema.getMax().getOffset());
+			if (fromRange == null) {
 				continue;
 			}
 			try {
-				addMapping(new DefaultTraceLocation(from, null, lifespan, range.getMinAddress()),
-					new ProgramLocation(toProgram, mins.get(name)), range.getLength(),
+				addMapping(
+					new DefaultTraceLocation(from, null, lifespan, fromRange.getMinAddress()),
+					new ProgramLocation(toProgram, extrema.getMin()), fromRange.getLength(),
 					truncateExisting);
 			}
 			catch (TraceConflictedMappingException e) {
+				failures.add(fromRange);
+				conflicts.addAll(e.getConflicts());
 				Msg.error(DebuggerStaticMappingUtils.class,
-					"Could not add identity mapping " + range + ": " + e.getMessage());
+					"Could not add identity mapping " + fromRange + ": " + e.getMessage());
 			}
+		}
+		if (!failures.isEmpty()) {
+			throw new TraceConflictedMappingException("Conflicting mappings for " + failures,
+				conflicts);
 		}
 	}
 
