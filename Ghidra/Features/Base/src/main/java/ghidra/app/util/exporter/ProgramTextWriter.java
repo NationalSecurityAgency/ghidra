@@ -285,7 +285,7 @@ class ProgramTextWriter {
 			processAddress(currentCodeUnit.getMinAddress(), null);
 			processBytes(currentCodeUnit);
 			processMnemonic(currentCodeUnit);
-			processOperand(currentCodeUnit, cuFormat);
+			processOperands(currentCodeUnit, cuFormat);
 
 			//// End of Line Area //////////////////////////////////////////
 
@@ -583,7 +583,7 @@ class ProgramTextWriter {
 		}
 	}
 
-	private void processOperand(CodeUnit cu, CodeUnitFormat cuFormat) {
+	private void processOperands(CodeUnit cu, CodeUnitFormat cuFormat) {
 
 		int width = options.getOperandWidth();
 		if (width < 1) {
@@ -597,40 +597,49 @@ class ProgramTextWriter {
 			Instruction inst = (Instruction) cu;
 
 			int opCnt = inst.getNumOperands();
-			int opLens = opCnt - 1; // factor-in operand separators
-			if (opCnt > 0) {
+			String firstSeparator = ((Instruction) cu).getSeparator(0);
 
-				String[] opReps = new String[opCnt];
-				for (int i = 0; i < opCnt; ++i) {
-					opReps[i] = cuFormat.getOperandRepresentationString(cu, i);
-					opLens += opReps[i].length();
+			int opLens = 0;
+			int sepLens = firstSeparator != null ? firstSeparator.length() : 0;
+			String[] opSeparators = new String[opCnt];
+			String[] opReps = new String[opCnt];
+			for (int i = 0; i < opCnt; ++i) {
+				opReps[i] = cuFormat.getOperandRepresentationString(cu, i);
+				opLens += opReps[i].length();
+				opSeparators[i] = ((Instruction) cu).getSeparator(i + 1);
+				if (opSeparators[i] == null) {
+					opSeparators[i] = "";
 				}
-				boolean clipRequired = (opLens > width);
-
-				opLens = opCnt - 1; // reset - factor-in operand separators
-				for (int i = 0; i < opCnt; ++i) {
-					if (i > 0) {
-						buffy.append(",");
-					}
-					if (clipRequired) {
-						opReps[i] = clip(opReps[i], (width - opLens) / (opCnt - i), false, true);
-					}
-					opLens += opReps[i].length();
-
-					if (options.isHTML()) {
-						Reference ref =
-							cu.getProgram()
-									.getReferenceManager()
-									.getPrimaryReferenceFrom(cuAddress,
-										i);
-						addReferenceLinkedText(ref, opReps[i], true);
-					}
-					else {
-						buffy.append(opReps[i]);
-					}
-				}
+				sepLens += opSeparators[i].length();
 			}
-			String fill = genFill(width - opLens);
+			boolean clipRequired = (opLens + sepLens) > width;
+
+			// NOTE: Use InstructionDB.toString() as formatting guide
+			int len = sepLens; // reserve space for separator pieces
+			if (firstSeparator != null) {
+				buffy.append(firstSeparator);
+			}
+			for (int i = 0; i < opCnt; ++i) {
+				if (clipRequired) {
+					opReps[i] = clip(opReps[i], (width - len) / (opCnt - i), false, true);
+				}
+				len += opReps[i].length();
+
+				if (options.isHTML()) {
+					Reference ref =
+						cu.getProgram()
+								.getReferenceManager()
+								.getPrimaryReferenceFrom(cuAddress,
+									i);
+					addReferenceLinkedText(ref, opReps[i], true);
+				}
+				else {
+					buffy.append(opReps[i]);
+				}
+				buffy.append(opSeparators[i]);
+			}
+
+			String fill = genFill(width - len);
 			buffy.append(fill);
 		}
 		else if (cu instanceof Data) {
@@ -661,7 +670,7 @@ class ProgramTextWriter {
 			processAddress(component.getMinAddress(), fill + STRUCT_PREFIX);
 			processDataFieldName(component);
 			processMnemonic(component);
-			processOperand(component, cuFormat);
+			processOperands(component, cuFormat);
 			//processEOLComment();
 			//processXREFs();
 			writer.println(buffy.toString());
