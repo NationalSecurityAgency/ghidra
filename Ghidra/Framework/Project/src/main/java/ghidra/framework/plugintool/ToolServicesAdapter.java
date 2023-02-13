@@ -24,10 +24,6 @@ import ghidra.framework.model.*;
 public class ToolServicesAdapter implements ToolServices {
 
 	@Override
-	public void addDefaultToolChangeListener(DefaultToolChangeListener listener) {
-	}
-
-	@Override
 	public boolean canAutoSave(PluginTool tool) {
 		return true;
 	}
@@ -95,11 +91,6 @@ public class ToolServicesAdapter implements ToolServices {
 	@Override
 	public PluginTool launchToolWithURL(String toolName, URL url) {
 		return null;
-	}
-
-	@Override
-	public void removeDefaultToolChangeListener(DefaultToolChangeListener listener) {
-		// override
 	}
 
 	@Override

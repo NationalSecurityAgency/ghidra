@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +15,28 @@
  */
 package ghidra.framework.model;
 
-/**
- * Listener that is notified when the default tool specification changes.
- */
-public interface DefaultToolChangeListener {
+import ghidra.framework.options.Options;
 
-	/**
-	 * Notification that the default tool specification changed
-	 * @param oldName name of the old default tool
-	 * @param newName name of the new default tool
-	 */
-	void defaultToolChanged(String oldName, String newName);
+/**
+ * {@link DefaultLaunchMode} provides an {@link Options} value which indicates how a default tool
+ * launch should be performed.
+ */
+public enum DefaultLaunchMode {
+
+	REUSE_TOOL("Reuse acceptable running tool"),
+	NEW_TOOL("Launch new default tool");
+
+	public static DefaultLaunchMode DEFAULT = NEW_TOOL;
+
+	private String str;
+
+	private DefaultLaunchMode(String str) {
+		this.str = str;
+	}
+
+	@Override
+	public String toString() {
+		return str;
+	}
+
 }

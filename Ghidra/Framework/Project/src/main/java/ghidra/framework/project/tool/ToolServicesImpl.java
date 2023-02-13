@@ -18,6 +18,7 @@ package ghidra.framework.project.tool;
 import java.io.*;
 import java.net.URL;
 import java.util.*;
+import java.util.function.Function;
 
 import org.jdom.Document;
 import org.jdom.output.XMLOutputter;
@@ -26,6 +27,8 @@ import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import ghidra.framework.ToolUtils;
 import ghidra.framework.data.*;
+import ghidra.framework.main.AppInfo;
+import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginEvent;
 import ghidra.framework.plugintool.PluginTool;
@@ -49,7 +52,6 @@ class ToolServicesImpl implements ToolServices {
 
 	private ToolChest toolChest;
 	private ToolManagerImpl toolManager;
-	private List<DefaultToolChangeListener> listeners = new ArrayList<>();
 	private ToolChestChangeListener toolChestChangeListener;
 	private Set<ContentHandler<?>> contentHandlers;
 
@@ -187,20 +189,58 @@ class ToolServicesImpl implements ToolServices {
 		matchingTool.firePluginEvent(event);
 	}
 
-	@Override
-	public PluginTool launchDefaultTool(DomainFile domainFile) {
-		ToolTemplate template = getDefaultToolTemplate(domainFile);
-		if (template == null) {
-			return null;
+	private static DefaultLaunchMode getDefaultLaunchMode() {
+		DefaultLaunchMode defaultLaunchMode = DefaultLaunchMode.DEFAULT;
+		FrontEndTool frontEndTool = AppInfo.getFrontEndTool();
+		if (frontEndTool != null) {
+			defaultLaunchMode = frontEndTool.getDefaultLaunchMode();
 		}
+		return defaultLaunchMode;
+	}
+
+	private PluginTool defaultLaunch(ToolTemplate template,
+			Function<PluginTool, Boolean> openFunction) {
+
+		DefaultLaunchMode defaultLaunchMode = getDefaultLaunchMode();
+		if (defaultLaunchMode == DefaultLaunchMode.REUSE_TOOL) {
+			if (template != null) {
+				// attempt to reuse running tool with default name
+				String defaultToolName = template.getName();
+				for (PluginTool tool : getRunningTools()) {
+					if (tool.getName().equals(defaultToolName) && openFunction.apply(tool)) {
+						return tool;
+					}
+				}
+			}
+
+			// attempt to reuse any running tool
+			for (PluginTool tool : getRunningTools()) {
+				if (openFunction.apply(tool)) {
+					return tool;
+				}
+			}
+		}
+
+		if (template == null) {
+			return null; // unable to launch new tool
+		}
+
 		Workspace workspace = toolManager.getActiveWorkspace();
 		PluginTool tool = workspace.runTool(template);
 		if (tool == null) {
-			return null;
+			return null; // tool launch failed
 		}
 		tool.setVisible(true);
-		tool.acceptDomainFiles(new DomainFile[] { domainFile });
+		openFunction.apply(tool);
 		return tool;
+	}
+
+	@Override
+	public PluginTool launchDefaultTool(DomainFile domainFile) {
+		ToolTemplate template = getDefaultToolTemplate(domainFile);
+		return defaultLaunch(template, t -> {
+			return t.acceptDomainFiles(new DomainFile[] { domainFile });
+		});
 	}
 
 	@Override
@@ -228,17 +268,9 @@ class ToolServicesImpl implements ToolServices {
 			return null;
 		}
 		ToolTemplate template = getDefaultToolTemplate(contentType);
-		if (template == null) {
-			return null;
-		}
-		Workspace workspace = toolManager.getActiveWorkspace();
-		PluginTool tool = workspace.runTool(template);
-		if (tool == null) {
-			return null;
-		}
-		tool.setVisible(true);
-		tool.accept(ghidraUrl);
-		return tool;
+		return defaultLaunch(template, t -> {
+			return t.accept(ghidraUrl);
+		});
 	}
 
 	@Override
@@ -473,16 +505,6 @@ class ToolServicesImpl implements ToolServices {
 		}
 
 		return contentHandlers;
-	}
-
-	@Override
-	public void addDefaultToolChangeListener(DefaultToolChangeListener listener) {
-		listeners.add(listener);
-	}
-
-	@Override
-	public void removeDefaultToolChangeListener(DefaultToolChangeListener listener) {
-		listeners.remove(listener);
 	}
 
 	private GhidraToolTemplate findToolChestToolTemplate(String toolName) {
