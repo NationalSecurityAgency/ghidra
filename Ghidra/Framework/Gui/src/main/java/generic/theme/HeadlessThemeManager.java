@@ -15,6 +15,9 @@
  */
 package generic.theme;
 
+import java.awt.Color;
+import java.awt.Font;
+
 import ghidra.util.Msg;
 
 /**
@@ -41,8 +44,35 @@ public class HeadlessThemeManager extends ThemeManager {
 	}
 
 	private void doInitialize() {
+		initializeSystemValues();
 		buildCurrentValues();
 		GColor.refreshAll(currentValues);
 		GIcon.refreshAll(currentValues);
+	}
+
+	private void initializeSystemValues() {
+
+		//
+		// These values may be referenced by Java clients.   The headless env does not load the
+		// Java LookAndFeel, which is from where the values are usually defined. So, add dummy 
+		// definitions for these values here.
+		//
+
+		Font font = new Font("Arial", Font.PLAIN, 12);
+		javaDefaults.addFont(new FontValue(SystemThemeIds.FONT_CONTROL_ID, font));
+		javaDefaults.addFont(new FontValue(SystemThemeIds.FONT_VIEW_ID, font));
+		javaDefaults.addFont(new FontValue(SystemThemeIds.FONT_MENU_ID, font));
+
+		javaDefaults.addColor(new ColorValue(SystemThemeIds.BG_CONTROL_ID, Color.CYAN));
+		javaDefaults.addColor(new ColorValue(SystemThemeIds.BG_VIEW_ID, Color.CYAN));
+		javaDefaults.addColor(new ColorValue(SystemThemeIds.BG_TOOLTIP_ID, Color.CYAN));
+		javaDefaults.addColor(new ColorValue(SystemThemeIds.BG_VIEW_SELECTED_ID, Color.CYAN));
+		javaDefaults.addColor(new ColorValue(SystemThemeIds.BG_BORDER_ID, Color.CYAN));
+		javaDefaults.addColor(new ColorValue(SystemThemeIds.FG_CONTROL_ID, Color.CYAN));
+		javaDefaults.addColor(new ColorValue(SystemThemeIds.FG_VIEW_ID, Color.CYAN));
+		javaDefaults.addColor(new ColorValue(SystemThemeIds.FG_TOOLTIP_ID, Color.CYAN));
+		javaDefaults.addColor(new ColorValue(SystemThemeIds.FG_VIEW_SELECTED_ID, Color.CYAN));
+		javaDefaults.addColor(new ColorValue(SystemThemeIds.FG_DISABLED_ID, Color.CYAN));
+
 	}
 }

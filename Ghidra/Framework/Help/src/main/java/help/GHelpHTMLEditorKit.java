@@ -26,7 +26,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.swing.Icon;
 import javax.swing.JEditorPane;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
@@ -35,8 +34,8 @@ import javax.swing.text.html.*;
 import javax.swing.text.html.HTML.Tag;
 
 import generic.jar.ResourceFile;
-import generic.theme.*;
-import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GColor;
+import generic.theme.Gui;
 import ghidra.framework.Application;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.Msg;
@@ -471,11 +470,6 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 	 */
 	private class GHelpImageView extends ImageView {
 
-		private static final String HELP_SHARED_ARROW = "help/shared/arrow.gif";
-		private static final Icon SHARED_ARROW_ICON = new HelpRightArrowIcon(Colors.FOREGROUND);
-		private static final IconProvider SHARED_ARROW_ICON_PROVIDER =
-			new IconProvider(SHARED_ARROW_ICON, null);
-
 		/*
 		 * 						Unusual Code Alert!
 		 * This class exists to enable our help system to find custom icons defined in source
@@ -547,61 +541,15 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 				return null;
 			}
 
-			//
-			// This code is looking for the specific referenced image file and then replacing that
-			// image file with something that can update its content at runtime, based on theme.
-			// Alternatively, we could have updated all help files to point to a GIcon, which
-			// handles updating itself when the theme changes.  We chose to replace the icon here
-			// instead of in the source code to prevent changing many files.
-			//
 			String srcString = src.toString().trim();
-			if (srcString.equals(HELP_SHARED_ARROW)) {
-				return installImageFromCustomIcon(SHARED_ARROW_ICON_PROVIDER);
-			}
-
-			// check if the srcString is a defined theme icon id
-			if (Gui.hasIcon(srcString)) {
-				//
-				// Wrap the GIcon inside of an IconProvider, as that class can handle a null URL
-				// returned from GIcon. (This can happen if the GIcon is based on a modified icon.)
-				//
-				GIcon gIcon = new GIcon(srcString);
-				IconProvider iconProvider = new IconProvider(gIcon, gIcon.getUrl());
+			IconProvider iconProvider = HelpBuildUtils.getRuntimeIcon(srcString);
+			if (iconProvider != null && !iconProvider.isInvalid()) {
+				// note: store the image off for later use; the url will not be used by us
+				this.image = iconProvider.getImage();
 				return iconProvider.getOrCreateUrl();
 			}
 
-			if (isJavaCode(srcString)) {
-				return installImageFromJavaCode(srcString);
-			}
-
-			URL url = doGetImageURL(srcString);
-			return url;
-		}
-
-		private URL installImageFromCustomIcon(IconProvider iconProvider) {
-
-			if (iconProvider == null || iconProvider.isInvalid()) {
-				return null;
-			}
-
-			this.image = iconProvider.getImage();
-
-			// note: this icon is not used to load the image; the 'image' we set is used instead
-			URL url = iconProvider.getOrCreateUrl();
-			return url;
-		}
-
-		private URL installImageFromJavaCode(String srcString) {
-
-			IconProvider iconProvider = getIconFromJavaCode(srcString);
-			if (iconProvider == null || iconProvider.isInvalid()) {
-				return null;
-			}
-
-			this.image = iconProvider.getImage();
-
-			URL url = iconProvider.getOrCreateUrl();
-			return url;
+			return doGetImageURL(srcString);
 		}
 
 		private URL doGetImageURL(String srcString) {
@@ -624,16 +572,6 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 			URL resource = ResourceManager.getResource(srcString);
 			return resource;
 		}
-
-		private boolean isJavaCode(String src) {
-			// not sure of the best way to handle this--be exact for now
-			return Icons.isIconsReference(src);
-		}
-
-		private IconProvider getIconFromJavaCode(String src) {
-			return Icons.getIconForIconsReference(src);
-		}
-
 	}
 
 }
