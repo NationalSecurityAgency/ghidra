@@ -292,15 +292,7 @@ public class Varnode {
 	 * @return the lone descendant PcodeOp
 	 */
 	public PcodeOp getLoneDescend() {
-		Iterator<PcodeOp> iter = getDescendants();
-		if (!iter.hasNext()) {
-			return null;		// If there are no descendants return null
-		}
-		PcodeOp op = iter.next();
-		if (iter.hasNext()) {
-			return null;		// If there is more than one descendant return null
-		}
-		return op;
+		return null;
 	}
 
 	/**
