@@ -21,8 +21,13 @@ sourceSets {
 	ghidraClass {
 		java {
 			srcDir 'GhidraClass/AdvancedDevelopment/contrib/gadc/ghidra_scripts'
+			compileClasspath += main.output
 		}
 	}
+}
+
+configurations {
+   ghidraClassImplementation.extendsFrom implementation
 }
 
 dependencies {

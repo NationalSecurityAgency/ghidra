@@ -123,6 +123,7 @@ sourceSets {
 		java {
 			srcDir 'developer_scripts'
 			srcDir 'ghidra_scripts'
+			compileClasspath += main.output
 		}
 	}
 }
@@ -131,6 +132,7 @@ configurations {
 	integrationTestImplementation.extendsFrom testImplementation
 	integrationTestRuntimeOnly.extendsFrom testRuntimeOnly, integrationTestImplementation
 	pcodeTestImplementation.extendsFrom implementation
+	scriptsImplementation.extendsFrom implementation
 	testArtifacts.extendsFrom testRuntimeOnly
 	integrationTestArtifacts.extendsFrom integrationTestRuntimeOnly
 	screenShotsImplementation.extendsFrom integrationTestImplementation
