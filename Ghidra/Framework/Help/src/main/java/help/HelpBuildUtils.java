@@ -488,7 +488,7 @@ public class HelpBuildUtils {
 				debug("Exception loading filesystem for uri: " + uri + "\n\t" + e1.getMessage());
 			}
 		}
-		return Paths.get(uri);
+		return null;
 	}
 
 	/** 
