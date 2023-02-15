@@ -491,6 +491,7 @@ public class HelpBuildUtils {
 		catch (FileSystemNotFoundException e) {
 			try {
 				FileSystems.newFileSystem(uri, Collections.emptyMap());
+				return Paths.get(uri);
 			}
 			catch (IOException e1) {
 				debug("Exception loading filesystem for uri: " + uri + "\n\t" + e1.getMessage());
