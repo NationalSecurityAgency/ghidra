@@ -112,6 +112,13 @@ class PasswordDialog extends DialogComponentProvider {
 	}
 
 	@Override
+	public void close() {
+		// override default close behavior to prevent dispose() from being called before
+		// the password value is retrieved
+		closeDialog();
+	}
+
+	@Override
 	protected void okCallback() {
 		resultState = RESULT_STATE.OK;
 		close();
