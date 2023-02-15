@@ -87,8 +87,6 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 	private RedoAction redoAction;
 	private ProgramLocation currentLocation;
 
-	private OpenVersionedFileDialog<Program> openDialog;
-
 	public ProgramManagerPlugin(PluginTool tool) {
 		super(tool);
 
@@ -297,9 +295,6 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 	public void dispose() {
 		programMgr.dispose();
 		tool.clearLastEvents();
-		if (openDialog != null) {
-			openDialog.dispose();
-		}
 	}
 
 	@Override
@@ -610,22 +605,21 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 
 	private void open() {
 
-		if (openDialog == null) {
-			openDialog = new OpenVersionedFileDialog<>(tool, "Open Program", Program.class);
-			openDialog.setHelpLocation(new HelpLocation(HelpTopics.PROGRAM, "Open_File_Dialog"));
+		OpenVersionedFileDialog<Program> openDialog =
+			new OpenVersionedFileDialog<>(tool, "Open Program", Program.class);
+		openDialog.setHelpLocation(new HelpLocation(HelpTopics.PROGRAM, "Open_File_Dialog"));
 
-			openDialog.addOkActionListener(e -> {
-				DomainFile domainFile = openDialog.getDomainFile();
-				int version = openDialog.getVersion();
-				if (domainFile == null) {
-					openDialog.setStatusText("Please choose a Program");
-				}
-				else {
-					openDialog.close();
-					doOpenProgram(domainFile, version, OPEN_CURRENT);
-				}
-			});
-		}
+		openDialog.addOkActionListener(e -> {
+			DomainFile domainFile = openDialog.getDomainFile();
+			int version = openDialog.getVersion();
+			if (domainFile == null) {
+				openDialog.setStatusText("Please choose a Program");
+			}
+			else {
+				openDialog.close();
+				doOpenProgram(domainFile, version, OPEN_CURRENT);
+			}
+		});
 
 		tool.showDialog(openDialog);
 		contextChanged();
