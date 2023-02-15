@@ -369,11 +369,11 @@ public class ElfDefaultGotPltMarkup {
 			return; // evidence of prior markup - skip GOT processing
 		}
 
-		try {
-			// Fixup first GOT entry which frequently refers to _DYNAMIC but generally lacks relocation (e.g. .got.plt)
-			ElfDynamicTable dynamicTable = elf.getDynamicTable();
-			long imageBaseAdj = elfLoadHelper.getImageBaseWordAdjustmentOffset();
-			if (dynamicTable != null && imageBaseAdj != 0) {
+		// Fixup first GOT entry which frequently refers to _DYNAMIC but generally lacks relocation (e.g. .got.plt)
+		ElfDynamicTable dynamicTable = elf.getDynamicTable();
+		long imageBaseAdj = elfLoadHelper.getImageBaseWordAdjustmentOffset();
+		if (dynamicTable != null && imageBaseAdj != 0) {
+			try {
 				long entry1Value = elfLoadHelper.getOriginalValue(gotStart, false);
 				if (entry1Value == dynamicTable.getAddressOffset()) {
 					// TODO: record artificial relative relocation for reversion/export concerns
@@ -388,9 +388,17 @@ public class ElfDefaultGotPltMarkup {
 					}
 				}
 			}
+			catch (Exception e) {
+				String msg =
+					"Failed to process first GOT entry at " + gotStart + ": " + e.getMessage();
+				log(msg);
+				Msg.error(this, msg, e);
+			}
+		}
 
-			boolean imageBaseAlreadySet = elf.isPreLinked();
+		boolean imageBaseAlreadySet = elf.isPreLinked();
 
+		try {
 			Address newImageBase = null;
 			Address nextGotAddr = gotStart;
 			while (nextGotAddr.compareTo(gotEnd) <= 0) {
