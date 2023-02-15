@@ -21,7 +21,7 @@ import java.util.List;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.framework.model.DomainFolder;
+import ghidra.framework.model.Project;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
@@ -52,9 +52,10 @@ public abstract class AbstractProgramWrapperLoader extends AbstractProgramLoader
 			throws CancelledException, IOException;
 
 	@Override
-	protected List<LoadedProgram> loadProgram(ByteProvider provider, String programName,
-			DomainFolder programFolder, LoadSpec loadSpec, List<Option> options, MessageLog log,
-			Object consumer, TaskMonitor monitor) throws CancelledException, IOException {
+	protected List<Loaded<Program>> loadProgram(ByteProvider provider, String programName,
+			Project project, String programFolderPath, LoadSpec loadSpec, List<Option> options,
+			MessageLog log, Object consumer, TaskMonitor monitor)
+			throws IOException, CancelledException {
 
 		LanguageCompilerSpecPair pair = loadSpec.getLanguageCompilerSpec();
 		Language language = getLanguageService().getLanguage(pair.languageID);
@@ -66,6 +67,8 @@ public abstract class AbstractProgramWrapperLoader extends AbstractProgramLoader
 
 		Program program = createProgram(provider, programName, imageBaseAddr, getName(), language,
 			compilerSpec, consumer);
+		List<Loaded<Program>> loadedList =
+			List.of(new Loaded<Program>(program, programName, programFolderPath));
 
 		int transactionID = program.startTransaction("Loading");
 		boolean success = false;
@@ -73,31 +76,31 @@ public abstract class AbstractProgramWrapperLoader extends AbstractProgramLoader
 			load(provider, loadSpec, options, program, monitor, log);
 			createDefaultMemoryBlocks(program, language, log);
 			success = true;
-			return List.of(new LoadedProgram(program, programFolder));
+			return loadedList;
 		}
 		finally {
-			program.endTransaction(transactionID, success);
+			program.endTransaction(transactionID, true); // More efficient to commit when program will be discarded
 			if (!success) {
-				program.release(consumer);
+				release(loadedList, consumer);
 			}
 		}
 	}
 
 	@Override
-	protected boolean loadProgramInto(ByteProvider provider, LoadSpec loadSpec,
+	protected void loadProgramInto(ByteProvider provider, LoadSpec loadSpec,
 			List<Option> options, MessageLog log, Program program, TaskMonitor monitor)
-			throws CancelledException, IOException {
+			throws CancelledException, LoadException, IOException {
 
 		LanguageCompilerSpecPair pair = loadSpec.getLanguageCompilerSpec();
 		LanguageID languageID = program.getLanguageID();
 		CompilerSpecID compilerSpecID = program.getCompilerSpec().getCompilerSpecID();
 		if (!(pair.languageID.equals(languageID) && pair.compilerSpecID.equals(compilerSpecID))) {
-			log.appendMsg(provider.getAbsolutePath() +
-				" does not have the same language/compiler spec as program " + program.getName());
-			return false;
+			String message = provider.getAbsolutePath() +
+				" does not have the same language/compiler spec as program " + program.getName();
+			log.appendMsg(message);
+			throw new LoadException(message);
 		}
 		load(provider, loadSpec, options, program, monitor, log);
-		return true;
 	}
 
 	@Override

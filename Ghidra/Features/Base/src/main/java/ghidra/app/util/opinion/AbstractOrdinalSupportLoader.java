@@ -21,9 +21,11 @@ import java.util.Iterator;
 import java.util.List;
 
 import ghidra.app.util.Option;
+import ghidra.app.util.OptionUtils;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.model.DomainObject;
+import ghidra.framework.model.Project;
 import ghidra.framework.options.Options;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
@@ -116,33 +118,33 @@ public abstract class AbstractOrdinalSupportLoader extends AbstractLibrarySuppor
 	}
 
 	@Override
-	protected void postLoadProgramFixups(List<LoadedProgram> loadedPrograms, List<Option> options,
-			MessageLog messageLog, TaskMonitor monitor) throws CancelledException, IOException {
+	protected void postLoadProgramFixups(List<Loaded<Program>> loadedPrograms, Project project,
+			List<Option> options, MessageLog messageLog, TaskMonitor monitor)
+			throws CancelledException, IOException {
 		monitor.initialize(loadedPrograms.size());
 
 		if (shouldPerformOrdinalLookup(options)) {
-			for (LoadedProgram loadedProgram : loadedPrograms) {
+			for (Loaded<Program> loadedProgram : loadedPrograms) {
 				monitor.checkCanceled();
-
-				Program p = loadedProgram.program();
-				int id = p.startTransaction("Ordinal fixups");
-				boolean success = false;
+				Program program = loadedProgram.getDomainObject();
+				int id = program.startTransaction("Ordinal fixups");
 				try {
-					applyLibrarySymbols(p, messageLog, monitor);
-					applyImports(p, messageLog, monitor);
-					success = true;
+					applyLibrarySymbols(program, messageLog, monitor);
+					applyImports(program, messageLog, monitor);
 				}
 				finally {
-					p.endTransaction(id, success);
-					if (p.canSave() && p.isChanged()) {
-						p.save("Ordinal fixups", monitor);
-					}
+					program.endTransaction(id, true); // More efficient to commit when program will be discarded
 				}
 			}
 		}
-		LibraryLookupTable.cleanup();
 
-		super.postLoadProgramFixups(loadedPrograms, options, messageLog, monitor);
+		super.postLoadProgramFixups(loadedPrograms, project, options, messageLog, monitor);
+	}
+
+	@Override
+	protected void postLoadCleanup(boolean success) {
+		super.postLoadCleanup(success);
+		LibraryLookupTable.cleanup();
 	}
 
 	/**
@@ -152,16 +154,8 @@ public abstract class AbstractOrdinalSupportLoader extends AbstractLibrarySuppor
 	 * @return True if ordinal lookup should be performed; otherwise, false
 	 */
 	private boolean shouldPerformOrdinalLookup(List<Option> options) {
-		boolean performOrdinalLookup = ORDINAL_LOOKUP_OPTION_DEFAULT;
-		if (options != null) {
-			for (Option option : options) {
-				String optName = option.getName();
-				if (optName.equals(ORDINAL_LOOKUP_OPTION_NAME)) {
-					performOrdinalLookup = (Boolean) option.getValue();
-				}
-			}
-		}
-		return performOrdinalLookup;
+		return OptionUtils.getOption(ORDINAL_LOOKUP_OPTION_NAME, options,
+			ORDINAL_LOOKUP_OPTION_DEFAULT);
 	}
 
 	/**

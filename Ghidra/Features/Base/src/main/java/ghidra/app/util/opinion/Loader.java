@@ -23,13 +23,12 @@ import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.formats.gfilesystem.FSRL;
-import ghidra.framework.model.DomainFolder;
-import ghidra.framework.model.DomainObject;
+import ghidra.framework.model.*;
 import ghidra.program.model.listing.Program;
-import ghidra.util.InvalidNameException;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.classfinder.ExtensionPoint;
-import ghidra.util.exception.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -41,7 +40,16 @@ import ghidra.util.task.TaskMonitor;
  */
 public interface Loader extends ExtensionPoint, Comparable<Loader> {
 
+	/**
+	 * A string prefixed to each loader headless command line argument to avoid naming conflicts 
+	 * with other headless command line argument names
+	 */
 	public static final String COMMAND_LINE_ARG_PREFIX = "-loader";
+
+	/**
+	 * Key used to lookup and store all loader options in the project's saved state
+	 */
+	public static final String OPTIONS_PROJECT_SAVE_STATE_KEY = "LOADER_OPTIONS";
 
 	/**
 	 * If this {@link Loader} supports loading the given {@link ByteProvider}, this methods returns
@@ -59,33 +67,50 @@ public interface Loader extends ExtensionPoint, Comparable<Loader> {
 	public Collection<LoadSpec> findSupportedLoadSpecs(ByteProvider provider) throws IOException;
 
 	/**
-	 * Loads bytes in a particular format as a new {@link DomainObject}. 
-	 * Multiple {@link DomainObject}s may end up getting created, depending on the nature of the
-	 * format.
+	 * Loads bytes in a particular format as a new {@link Loaded} {@link DomainObject}. Multiple
+	 * {@link DomainObject}s may end up getting created, depending on the nature of the format.
+	 * The {@link Loaded} {@link DomainObject}s are bundled together in a {@link LoadResults}
+	 * object which provides convenience methods to operate on the entire group of {@link Loaded}
+	 * {@link DomainObject}s. 
+	 * <p>
+	 * Note that when the load completes, the returned {@link Loaded} {@link DomainObject}s are not 
+	 * saved to a project.  That is the responsibility of the caller (see 
+	 * {@link LoadResults#save(Project, Object, MessageLog, TaskMonitor)}).
+	 * <p>
+	 * It is also the responsibility of the caller to release the returned {@link Loaded} 
+	 * {@link DomainObject}s with {@link LoadResults#release(Object)} when they are no longer
+	 * needed.
 	 *
 	 * @param provider The bytes to load.
-	 * @param name The name of the thing that's being loaded.
-	 * @param folder The {@link DomainFolder} where the loaded thing should be saved.  Could be
-	 *   null if the thing should not be pre-saved.
+	 * @param loadedName A suggested name for the primary {@link Loaded} {@link DomainObject}. 
+	 *   This is just a suggestion, and a {@link Loader} implementation reserves the right to change
+	 *   it. The {@link LoadResults} should be queried for their true names using 
+	 *   {@link Loaded#getName()}.
+	 * @param project The {@link Project}.  Loaders can use this to take advantage of existing
+	 *   {@link DomainFolder}s and {@link DomainFile}s to do custom behaviors such as loading
+	 *   libraries. Could be null if there is no project.
+	 * @param projectFolderPath A suggested project folder path for the {@link Loaded} 
+	 *   {@link DomainObject}s. This is just a suggestion, and a {@link Loader} implementation 
+	 *   reserves the right to change it for each {@link Loaded} result. The {@link LoadResults} 
+	 *   should be queried for their true project folder paths using 
+	 *   {@link Loaded#getProjectFolderPath()}.
 	 * @param loadSpec The {@link LoadSpec} to use during load.
 	 * @param options The load options.
 	 * @param messageLog The message log.
-	 * @param consumer A consumer object for {@link DomainObject} generated.
-	 * @param monitor A cancelable task monitor.
-	 * @return A list of loaded {@link DomainObject}s (element 0 corresponds to primary loaded 
-	 *   object).
+	 * @param consumer A consumer object for generated {@link DomainObject}s.
+	 * @param monitor A task monitor.
+	 * @return The {@link LoadResults} which contains one or more {@link Loaded} 
+	 *   {@link DomainObject}s (created but not saved).
+	 * @throws LoadException if the load failed in an expected way
 	 * @throws IOException if there was an IO-related problem loading.
 	 * @throws CancelledException if the user cancelled the load.
-	 * @throws DuplicateNameException if the load resulted in a naming conflict with the 
-	 *   {@link DomainObject}.
-	 * @throws InvalidNameException if an invalid {@link DomainObject} name was used during load.
-	 * @throws VersionException if there was an issue with database versions, probably due to a
-	 *   failed language upgrade.
+	 * @throws VersionException if the load process tried to open an existing {@link DomainFile} 
+	 *   which was created with a newer or unsupported version of Ghidra
 	 */
-	public List<DomainObject> load(ByteProvider provider, String name, DomainFolder folder,
-			LoadSpec loadSpec, List<Option> options, MessageLog messageLog, Object consumer,
-			TaskMonitor monitor) throws IOException, CancelledException, DuplicateNameException,
-			InvalidNameException, VersionException;
+	public LoadResults<? extends DomainObject> load(ByteProvider provider, String loadedName,
+			Project project, String projectFolderPath, LoadSpec loadSpec, List<Option> options,
+			MessageLog messageLog, Object consumer, TaskMonitor monitor) throws IOException,
+			CancelledException, VersionException, LoadException;
 
 	/**
 	 * Loads bytes into the specified {@link Program}.  This method will not create any new 
@@ -97,13 +122,13 @@ public interface Loader extends ExtensionPoint, Comparable<Loader> {
 	 * @param messageLog The message log.
 	 * @param program The {@link Program} to load into.
 	 * @param monitor A cancelable task monitor.
-	 * @return True if the file was successfully loaded; otherwise, false.
+	 * @throws LoadException if the load failed in an expected way.
 	 * @throws IOException if there was an IO-related problem loading.
 	 * @throws CancelledException if the user cancelled the load.
 	 */
-	public boolean loadInto(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
+	public void loadInto(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
 			MessageLog messageLog, Program program, TaskMonitor monitor)
-			throws IOException, CancelledException;
+			throws IOException, LoadException, CancelledException;
 
 	/**
 	 * Gets the default {@link Loader} options.
@@ -184,6 +209,17 @@ public interface Loader extends ExtensionPoint, Comparable<Loader> {
 	 *   otherwise, false.
 	 */
 	public default boolean supportsLoadIntoProgram() {
+		return false;
+	}
+
+	/**
+	 * Checks to see if this {@link Loader} loads into a new {@link DomainFolder} instead of a new
+	 * {@link DomainFile}
+	 * 
+	 * @return True if this {@link Loader} loads into a new {@link DomainFolder} instead of a new
+	 *   {@link DomainFile}
+	 */
+	public default boolean loadsIntoNewFolder() {
 		return false;
 	}
 

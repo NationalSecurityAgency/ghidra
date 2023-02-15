@@ -20,17 +20,25 @@ import java.util.*;
 
 import org.apache.commons.io.FilenameUtils;
 
+import db.DBConstants;
+import db.DBHandle;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.framework.model.*;
+import ghidra.framework.model.DomainObject;
+import ghidra.framework.model.Project;
+import ghidra.framework.store.db.PackedDatabase;
 import ghidra.framework.store.local.ItemSerializer;
+import ghidra.program.database.DataTypeArchiveContentHandler;
+import ghidra.program.database.DataTypeArchiveDB;
 import ghidra.program.model.data.FileDataTypeManager;
+import ghidra.program.model.lang.LanguageNotFoundException;
 import ghidra.program.model.listing.DataTypeArchive;
 import ghidra.program.model.listing.Program;
-import ghidra.util.InvalidNameException;
-import ghidra.util.exception.*;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
+import utilities.util.FileUtilities;
 
 /**
  * Loads a packed Ghidra data type archive.
@@ -44,48 +52,66 @@ public class GdtLoader implements Loader {
 	}
 
 	@Override
-	public List<DomainObject> load(ByteProvider provider, String filename,
-			DomainFolder programFolder, LoadSpec loadSpec, List<Option> options,
+	public LoadResults<? extends DomainObject> load(ByteProvider provider, String filename,
+			Project project, String projectFolderPath, LoadSpec loadSpec, List<Option> options,
 			MessageLog messageLog, Object consumer, TaskMonitor monitor) throws IOException,
-			CancelledException, DuplicateNameException, InvalidNameException, VersionException {
+			CancelledException, VersionException {
 
-		DomainFile df = doImport(provider, filename, programFolder, monitor);
-
-		monitor.setMessage("Opening " + filename);
-		// Allow upgrade since imported project archives must always be upgraded
-		DomainObject dobj = df.getDomainObject(consumer, true, false, monitor);
-		if (!(dobj instanceof DataTypeArchive)) {
-			if (dobj != null) {
-				dobj.release(consumer);
-				df.delete();
-			}
-			throw new IOException("File imported is not a Data Type Archive: " + filename);
-		}
-
-		List<DomainObject> results = new ArrayList<DomainObject>();
-		results.add(dobj);
-		return results;
+		DataTypeArchive dtArchive =
+			loadPackedProgramDatabase(provider, filename, consumer, monitor);
+		return new LoadResults<>(dtArchive, filename, projectFolderPath);
 	}
 
-	private DomainFile doImport(ByteProvider provider, String filename,
-			DomainFolder programFolder, TaskMonitor monitor)
-			throws InvalidNameException, CancelledException, IOException {
-
+	private DataTypeArchive loadPackedProgramDatabase(ByteProvider provider, String programName,
+			Object consumer, TaskMonitor monitor)
+			throws IOException, CancelledException, VersionException, LanguageNotFoundException {
+		DataTypeArchive dtArchive;
 		File file = provider.getFile();
-		DomainFolder folder = programFolder;
+		File tmpFile = null;
+		if (file == null) {
+			file = tmpFile = createTmpFile(provider, monitor);
+		}
 
-		monitor.setMessage("Restoring " + file.getName());
+		try {
+			PackedDatabase packedDatabase = PackedDatabase.getPackedDatabase(file, true, monitor);
+			boolean success = false;
+			DBHandle dbh = null;
+			try {
+				if (!DataTypeArchiveContentHandler.DATA_TYPE_ARCHIVE_CONTENT_TYPE.equals(
+					packedDatabase.getContentType())) {
+					throw new IOException("File imported is not a Program: " + programName);
+				}
 
-		DomainFile df = folder.createFile(filename, file, monitor);
+				monitor.setMessage("Restoring " + provider.getName());
 
-		return df;
+				dbh = packedDatabase.open(monitor);
+				dtArchive = new DataTypeArchiveDB(dbh, DBConstants.UPGRADE, monitor, consumer);
+				success = true;
+			}
+			finally {
+				if (!success) {
+					if (dbh != null) {
+						dbh.close(); // also disposes packed database object
+					}
+					else {
+						packedDatabase.dispose();
+					}
+				}
+			}
+			return dtArchive;
+		}
+		finally {
+			if (tmpFile != null) {
+				tmpFile.delete();
+			}
+		}
 	}
 
 	@Override
-	public boolean loadInto(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
+	public void loadInto(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
 			MessageLog messageLog, Program program, TaskMonitor monitor)
-			throws IOException, CancelledException {
-		throw new UnsupportedOperationException("cannot add GDT to program");
+			throws IOException, LoadException, CancelledException {
+		throw new LoadException("Cannot add GDT to program");
 	}
 
 	@Override
@@ -108,6 +134,16 @@ public class GdtLoader implements Loader {
 	@Override
 	public String getPreferredFileName(ByteProvider provider) {
 		return FilenameUtils.removeExtension(provider.getName());
+	}
+
+	private static File createTmpFile(ByteProvider provider, TaskMonitor monitor)
+			throws IOException {
+		File tmpFile = File.createTempFile("ghidra_gdt_loader", null);
+		try (InputStream is = provider.getInputStream(0);
+				FileOutputStream fos = new FileOutputStream(tmpFile)) {
+			FileUtilities.copyStreamToStream(is, fos, monitor);
+		}
+		return tmpFile;
 	}
 
 	private static boolean isGDTFile(ByteProvider provider) {

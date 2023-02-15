@@ -15,7 +15,8 @@
  */
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.function.Predicate;
 
 import generic.stl.Pair;
@@ -25,11 +26,10 @@ import ghidra.app.util.bin.format.coff.*;
 import ghidra.app.util.bin.format.coff.archive.CoffArchiveHeader;
 import ghidra.app.util.bin.format.coff.archive.CoffArchiveMemberHeader;
 import ghidra.app.util.importer.*;
-import ghidra.app.util.opinion.Loader;
-import ghidra.app.util.opinion.MSCoffLoader;
+import ghidra.app.util.opinion.*;
 import ghidra.framework.model.DomainFolder;
+import ghidra.framework.model.DomainObject;
 import ghidra.framework.store.local.LocalFileSystem;
-import ghidra.program.model.listing.Program;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -152,16 +152,18 @@ public class RecursiveRecursiveMSLibImport extends GhidraScript {
 							Pair<DomainFolder, String> pair =
 								establishProgramFolder(currentLibrary, preferredName);
 
-							List<Program> programs = AutoImporter.importFresh(coffProvider,
-								pair.first, this, log, monitor, LOADER_FILTER, LOADSPEC_CHOOSER,
-								mangleNameBecauseDomainFoldersAreSoRetro(pair.second),
-								OptionChooser.DEFAULT_OPTIONS,
-								MultipleProgramsStrategy.ONE_PROGRAM_OR_EXCEPTION);
+							LoadResults<? extends DomainObject> loadResults =
+								AutoImporter.importFresh(coffProvider, state.getProject(),
+									pair.first.getPathname(), this, log, monitor, LOADER_FILTER,
+									LOADSPEC_CHOOSER,
+									mangleNameBecauseDomainFoldersAreSoRetro(pair.second),
+									OptionChooser.DEFAULT_OPTIONS);
 
-							if (programs != null) {
-								for (Program program : programs) {
-									program.release(this);
-								}
+							try {
+								loadResults.save(state.getProject(), this, log, monitor);
+							}
+							finally {
+								loadResults.release(this);
 							}
 						}
 					}

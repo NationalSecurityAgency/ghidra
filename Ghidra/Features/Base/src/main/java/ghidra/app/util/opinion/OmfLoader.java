@@ -132,20 +132,14 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 		// the original bytes.
 		MemoryBlockUtils.createFileBytes(program, provider, monitor);
 
-		int id = program.startTransaction("loading program from OMF");
-		boolean success = false;
 		try {
 			processSegmentHeaders(reader, header, program, monitor, log);
 			processExternalSymbols(header, program, monitor, log);
 			processPublicSymbols(header, program, monitor, log);
 			processRelocations(header, program, monitor, log);
-			success = true;
 		}
 		catch (AddressOverflowException e) {
 			throw new IOException(e);
-		}
-		finally {
-			program.endTransaction(id, success);
 		}
 	}
 

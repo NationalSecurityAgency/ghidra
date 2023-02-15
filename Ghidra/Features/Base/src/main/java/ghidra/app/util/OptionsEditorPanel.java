@@ -33,10 +33,12 @@ import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GComboBox;
 import docking.widgets.label.GLabel;
 import docking.widgets.textfield.IntegerTextField;
-import ghidra.app.util.opinion.AbstractLibrarySupportLoader;
-import ghidra.app.util.opinion.LibraryPathsDialog;
+import ghidra.app.util.opinion.*;
+import ghidra.framework.main.AppInfo;
 import ghidra.framework.main.DataTreeDialog;
 import ghidra.framework.model.DomainFolder;
+import ghidra.framework.model.Project;
+import ghidra.framework.options.SaveState;
 import ghidra.program.model.address.*;
 import ghidra.util.exception.AssertException;
 import ghidra.util.layout.*;
@@ -251,21 +253,35 @@ public class OptionsEditorPanel extends JPanel {
 	}
 
 	private Component buildProjectFolderEditor(Option option) {
-		JPanel panel = new JPanel(new BorderLayout());
-		JTextField textField = new JTextField();
+		Project project = AppInfo.getActiveProject();
+		final SaveState state;
+		SaveState existingState = project.getSaveableData(Loader.OPTIONS_PROJECT_SAVE_STATE_KEY);
+		if (existingState != null) {
+			state = existingState;
+		}
+		else {
+			state = new SaveState();
+			project.setSaveableData(Loader.OPTIONS_PROJECT_SAVE_STATE_KEY, state);
+		}
+		String lastFolderPath = state.getString(option.getName(), "");
+		option.setValue(lastFolderPath);
+		JTextField textField = new JTextField(lastFolderPath);
 		textField.setEditable(false);
 		JButton button = new BrowseButton();
 		button.addActionListener(e -> {
 			DataTreeDialog dataTreeDialog =
 				new DataTreeDialog(this, "Choose a project folder", DataTreeDialog.CHOOSE_FOLDER);
-			dataTreeDialog.setSelectedFolder(null);
+			dataTreeDialog.setSelectedFolder(project.getProjectData().getFolder(lastFolderPath));
 			dataTreeDialog.showComponent();
 			DomainFolder folder = dataTreeDialog.getDomainFolder();
 			if (folder != null) {
-				textField.setText(folder.getPathname());
-				option.setValue(folder.getPathname());
+				String newFolderPath = folder.getPathname();
+				textField.setText(newFolderPath);
+				option.setValue(newFolderPath);
+				state.putString(option.getName(), newFolderPath);
 			}
 		});
+		JPanel panel = new JPanel(new BorderLayout());
 		panel.add(textField, BorderLayout.CENTER);
 		panel.add(button, BorderLayout.EAST);
 		return panel;

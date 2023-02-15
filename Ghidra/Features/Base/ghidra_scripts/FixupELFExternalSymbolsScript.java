@@ -22,11 +22,20 @@
 // list.
 //
 //@category Symbol
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.ElfLoader;
+import ghidra.app.util.opinion.Loaded;
+import ghidra.framework.model.*;
+import ghidra.program.model.listing.Library;
+import ghidra.program.model.listing.Program;
 import ghidra.program.util.ELFExternalSymbolResolver;
 import ghidra.util.Msg;
+import ghidra.util.exception.VersionException;
 
 public class FixupELFExternalSymbolsScript extends GhidraScript {
 
@@ -38,10 +47,62 @@ public class FixupELFExternalSymbolsScript extends GhidraScript {
 					")");
 			return;
 		}
-		MessageLog msgLog = new MessageLog();
-		ELFExternalSymbolResolver.fixUnresolvedExternalSymbols(currentProgram, false, msgLog,
-			monitor);
-		Msg.info(this, msgLog.toString());
+		MessageLog messageLog = new MessageLog();
+		Object consumer = new Object();
+		ProjectData projectData = currentProgram.getDomainFile().getParent().getProjectData();
+		List<Loaded<Program>> loadedPrograms = new ArrayList<>();
+
+		// Add current program to list
+		loadedPrograms.add(new Loaded<>(currentProgram, currentProgram.getName(),
+			currentProgram.getDomainFile().getPathname()));
+
+		// Add external libraries to list
+		for (Library extLibrary : ELFExternalSymbolResolver.getLibrarySearchList(currentProgram)) {
+			monitor.checkCanceled();
+			String libName = extLibrary.getName();
+			String libPath = extLibrary.getAssociatedProgramPath();
+			if (libPath == null) {
+				continue;
+			}
+
+			DomainFile libDomainFile = projectData.getFile(libPath);
+			if (libDomainFile == null) {
+				messageLog.appendMsg("Referenced external program not found: " + libPath);
+				continue;
+			}
+
+			DomainObject libDomainObject = null;
+			try {
+				libDomainObject =
+					libDomainFile.getDomainObject(consumer, false, false, monitor);
+				if (libDomainObject instanceof Program program) {
+					loadedPrograms.add(new Loaded<>(program, libName, libPath));
+				}
+				else {
+					messageLog
+							.appendMsg("Referenced external program is not a program: " + libPath);
+				}
+			}
+			catch (IOException e) {
+				// failed to open library
+				messageLog.appendMsg("Failed to open library dependency project file: " +
+					libDomainFile.getPathname());
+			}
+			catch (VersionException e) {
+				messageLog.appendMsg(
+					"Referenced external program requires updgrade, unable to consider symbols: " +
+						libPath);
+			}
+		}
+
+		// Resolve symbols
+		ELFExternalSymbolResolver.fixUnresolvedExternalSymbols(loadedPrograms, messageLog, monitor);
+
+		// Cleanup
+		for (int i = 1; i < loadedPrograms.size(); i++) {
+			loadedPrograms.get(i).release(consumer);
+		}
+		Msg.info(this, messageLog.toString());
 	}
 
 }

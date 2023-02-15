@@ -21,8 +21,7 @@ import java.util.StringTokenizer;
 
 import ghidra.app.util.importer.AutoImporter;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.opinion.Loader;
-import ghidra.app.util.opinion.PeLoader;
+import ghidra.app.util.opinion.*;
 import ghidra.framework.main.AppInfo;
 import ghidra.framework.model.*;
 import ghidra.program.model.address.Address;
@@ -128,21 +127,25 @@ public abstract class ProgramCoordinator {
 				MessageLog messageLog = new MessageLog();
 				DomainFolder folder = getFolder(file.getParent());
 				Class<? extends Loader> loaderClass = PeLoader.class;
+				LoadResults<Program> loadResults = null;
 				try {
 					Language language = languageService.getDefaultLanguage(
 						Processor.findOrPossiblyCreateProcessor("x86"));
 					CompilerSpec compilerSpec =
 						language.getCompilerSpecByID(new CompilerSpecID("windows"));
-					importProgram = AutoImporter.importByUsingSpecificLoaderClassAndLcs(file,
-						folder, loaderClass, null, language, compilerSpec, consumer, messageLog,
-						monitor);
+					loadResults = AutoImporter.importByUsingSpecificLoaderClassAndLcs(file,
+						AppInfo.getActiveProject(), folder.getPathname(), loaderClass, null,
+						language, compilerSpec, consumer, messageLog, monitor);
+					importProgram = loadResults.getPrimaryDomainObject();
 					programManager.openProgram(importProgram);
-					importProgram.release(this);
 				}
 				catch (Exception e) {
 					e.printStackTrace();//TODO
 				}
 				finally {
+					if (loadResults != null) {
+						loadResults.release(this);
+					}
 					importSemaphore.notify();
 				}
 			}

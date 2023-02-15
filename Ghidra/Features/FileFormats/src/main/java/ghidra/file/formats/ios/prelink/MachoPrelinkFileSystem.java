@@ -198,7 +198,7 @@ public class MachoPrelinkFileSystem extends GFileSystemBase implements GFileSyst
 			throw e;
 		}
 		finally {
-			program.endTransaction(id, success);
+			program.endTransaction(id, true); // More efficient to commit when program will be discarded
 			if (!success) {
 				program.release(consumer);
 			}

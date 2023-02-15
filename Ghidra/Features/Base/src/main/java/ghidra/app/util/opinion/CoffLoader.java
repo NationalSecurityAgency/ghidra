@@ -176,21 +176,15 @@ public class CoffLoader extends AbstractLibrarySupportLoader {
 
 		FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider, monitor);
 
-		int id = program.startTransaction("loading program from COFF");
-		boolean success = false;
 		try {
 			processSectionHeaders(provider, header, program, fileBytes, monitor, log, sectionsMap,
 				performFakeLinking);
 			processSymbols(header, program, monitor, log, sectionsMap, symbolsMap);
 			processEntryPoint(header, program, monitor, log);
 			processRelocations(header, program, sectionsMap, symbolsMap, log, monitor);
-			success = true;
 		}
 		catch (AddressOverflowException e) {
 			throw new IOException(e);
-		}
-		finally {
-			program.endTransaction(id, success);
 		}
 	}
 
