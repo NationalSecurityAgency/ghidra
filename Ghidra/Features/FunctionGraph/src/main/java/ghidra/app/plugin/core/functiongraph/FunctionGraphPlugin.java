@@ -61,7 +61,7 @@ public class FunctionGraphPlugin extends ProgramPlugin implements OptionsChangeL
 	static final String OPTIONS_NAME_PATH =
 		ToolConstants.GRAPH_OPTIONS + Options.DELIMITER + FUNCTION_GRAPH_NAME;
 
-	static final Icon ICON = new GIcon("icon.functiongraph.action.provider");
+	static final Icon ICON = new GIcon("icon.plugin.functiongraph.action.provider");
 
 	private static final String USER_DEFINED_FORMAT_CONFIG_NAME = "USER_DEFINED_FORMAT_MANAGER";
 

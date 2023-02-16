@@ -32,7 +32,7 @@ public class BowTieLayoutProvider
 
 	public static final String NAME = "Bow Tie Layout";
 
-	private static final Icon DEFAULT_ICON = new GIcon("icon.fcg.layout.bow.tie");
+	private static final Icon DEFAULT_ICON = new GIcon("icon.plugin.fcg.layout.bow.tie");
 
 	@Override
 	public VisualGraphLayout<FcgVertex, FcgEdge> getLayout(FunctionCallGraph graph,

@@ -30,7 +30,8 @@ import ghidra.util.HelpLocation;
 public class FGSatelliteUndockedProvider extends ComponentProviderAdapter {
 
 	static final String NAME = "Function Graph Satellite";
-	private static final Icon ICON = new GIcon("icon.functiongraph.action.provider.satellite");
+	private static final Icon ICON =
+		new GIcon("icon.plugin.functiongraph.action.provider.satellite");
 
 	private FGController controller;
 	private JComponent satelliteComponent;
