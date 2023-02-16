@@ -314,13 +314,14 @@ class ObjectRecorder {
 	}
 
 	protected <T extends TargetObject> List<T> collectTargetSuccessors(TargetObject targetSeed,
-			Class<T> targetIf) {
+			Class<T> targetIf, boolean requireCanonical) {
 		// TODO: Should this really go through the database?
 		TraceObject seed = toTrace(targetSeed);
 		if (seed == null) {
 			return List.of();
 		}
-		return seed.querySuccessorsTargetInterface(Lifespan.at(recorder.getSnap()), targetIf)
+		return seed.querySuccessorsTargetInterface(Lifespan.at(recorder.getSnap()), targetIf,
+			requireCanonical)
 				.map(p -> toTarget(p.getDestination(seed)).as(targetIf))
 				.collect(Collectors.toList());
 	}
