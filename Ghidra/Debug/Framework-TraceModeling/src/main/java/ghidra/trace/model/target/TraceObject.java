@@ -466,10 +466,11 @@ public interface TraceObject extends TraceUniqueObject {
 	 * 
 	 * @param span the span which the found paths must intersect
 	 * @param targetIf the target interface class
+	 * @param requireCanonical if the objects must be found within their canonical container
 	 * @return the stream of found paths to values
 	 */
 	Stream<? extends TraceObjectValPath> querySuccessorsTargetInterface(Lifespan span,
-			Class<? extends TargetObject> targetIf);
+			Class<? extends TargetObject> targetIf, boolean requireCanonical);
 
 	/**
 	 * Search for successors providing the given interface and retrieve those interfaces
@@ -477,10 +478,11 @@ public interface TraceObject extends TraceUniqueObject {
 	 * @param <I> the interface type
 	 * @param span the span which the found objects must intersect
 	 * @param ifClass the interface class
+	 * @param requireCanonical if the objects must be found within their canonical container
 	 * @return the stream of interfaces
 	 */
 	<I extends TraceObjectInterface> Stream<I> querySuccessorsInterface(Lifespan span,
-			Class<I> ifClass);
+			Class<I> ifClass, boolean requireCanonical);
 
 	/**
 	 * Delete this object along with parent and child value entries referring to it

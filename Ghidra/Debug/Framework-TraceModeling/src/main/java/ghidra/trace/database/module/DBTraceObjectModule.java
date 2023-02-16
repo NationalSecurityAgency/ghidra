@@ -240,7 +240,7 @@ public class DBTraceObjectModule implements TraceObjectModule, DBTraceObjectInte
 	@Override
 	public Collection<? extends TraceObjectSection> getSections() {
 		try (LockHold hold = object.getTrace().lockRead()) {
-			return object.querySuccessorsInterface(getLifespan(), TraceObjectSection.class)
+			return object.querySuccessorsInterface(getLifespan(), TraceObjectSection.class, true)
 					.collect(Collectors.toSet());
 		}
 	}

@@ -186,13 +186,13 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			TraceObject root = om.getRootObject();
 			for (TraceObject module : (Iterable<TraceObject>) () -> root
-					.querySuccessorsTargetInterface(Lifespan.at(0), TargetModule.class)
+					.querySuccessorsTargetInterface(Lifespan.at(0), TargetModule.class, true)
 					.map(p -> p.getDestination(root))
 					.iterator()) {
 				String moduleName = module.getCanonicalPath().index();
 				Lifespan span = module.getLife().bound();
 				for (TraceObject section : (Iterable<TraceObject>) () -> module
-						.querySuccessorsTargetInterface(Lifespan.at(0), TargetSection.class)
+						.querySuccessorsTargetInterface(Lifespan.at(0), TargetSection.class, true)
 						.map(p -> p.getDestination(root))
 						.iterator()) {
 					String sectionName = section.getCanonicalPath().index();

@@ -517,7 +517,7 @@ public class ObjectBasedTraceRecorderTest extends AbstractGhidraHeadedDebuggerGU
 
 		TraceObject traceBank = thread.getObject()
 				.querySuccessorsTargetInterface(Lifespan.at(recorder.getSnap()),
-					TargetRegisterBank.class)
+					TargetRegisterBank.class, false)
 				.map(p -> p.getDestination(thread.getObject()))
 				.findAny()
 				.orElseThrow();

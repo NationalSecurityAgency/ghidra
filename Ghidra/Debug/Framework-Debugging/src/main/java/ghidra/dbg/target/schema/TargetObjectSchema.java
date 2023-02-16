@@ -618,6 +618,7 @@ public interface TargetObjectSchema {
 			}
 			if (sch.getInterfaces().contains(type) && (parentIsCanonical || !requireCanonical)) {
 				result.addPattern(prefix);
+				return;
 			}
 			if (!visited.add(sch)) {
 				return;

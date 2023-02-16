@@ -470,7 +470,7 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 	public Set<TargetThread> getLiveTargetThreads() {
 		return trace.getObjectManager()
 				.getRootObject()
-				.querySuccessorsInterface(Lifespan.at(getSnap()), TraceObjectThread.class)
+				.querySuccessorsInterface(Lifespan.at(getSnap()), TraceObjectThread.class, true)
 				.map(t -> objectRecorder.getTargetInterface(t.getObject(), TargetThread.class))
 				.collect(Collectors.toSet());
 	}
@@ -673,9 +673,10 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 	public List<TargetBreakpointSpecContainer> collectBreakpointContainers(TargetThread thread) {
 		if (thread == null) {
 			return objectRecorder.collectTargetSuccessors(target,
-				TargetBreakpointSpecContainer.class);
+				TargetBreakpointSpecContainer.class, false);
 		}
-		return objectRecorder.collectTargetSuccessors(thread, TargetBreakpointSpecContainer.class);
+		return objectRecorder.collectTargetSuccessors(thread, TargetBreakpointSpecContainer.class,
+			false);
 	}
 
 	private class BreakpointConvention {
@@ -711,7 +712,8 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 	@Override
 	public List<TargetBreakpointLocation> collectBreakpoints(TargetThread thread) {
 		if (thread == null) {
-			return objectRecorder.collectTargetSuccessors(target, TargetBreakpointLocation.class);
+			return objectRecorder.collectTargetSuccessors(target, TargetBreakpointLocation.class,
+				true);
 		}
 		BreakpointConvention convention = new BreakpointConvention(
 			objectRecorder.getTraceInterface(thread, TraceObjectThread.class));
@@ -725,7 +727,8 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 
 	@Override
 	public Set<TraceBreakpointKind> getSupportedBreakpointKinds() {
-		return objectRecorder.collectTargetSuccessors(target, TargetBreakpointSpecContainer.class)
+		return objectRecorder
+				.collectTargetSuccessors(target, TargetBreakpointSpecContainer.class, false)
 				.stream()
 				.flatMap(c -> c.getSupportedBreakpointKinds().stream())
 				.map(k -> TraceRecorder.targetToTraceBreakpointKind(k))
@@ -750,7 +753,7 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 	@Override
 	public CompletableFuture<Boolean> requestFocus(TargetObject focus) {
 		for (TargetFocusScope scope : objectRecorder.collectTargetSuccessors(target,
-			TargetFocusScope.class)) {
+			TargetFocusScope.class, false)) {
 			if (PathUtils.isAncestor(scope.getPath(), focus.getPath())) {
 				return scope.requestFocus(focus).thenApply(__ -> true).exceptionally(ex -> {
 					ex = AsyncUtils.unwrapThrowable(ex);
@@ -772,7 +775,7 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 	@Override
 	public CompletableFuture<Boolean> requestActivation(TargetObject active) {
 		for (TargetActiveScope scope : objectRecorder.collectTargetSuccessors(target,
-			TargetActiveScope.class)) {
+			TargetActiveScope.class, false)) {
 			if (PathUtils.isAncestor(scope.getPath(), active.getPath())) {
 				return scope.requestActivation(active).thenApply(__ -> true).exceptionally(ex -> {
 					ex = AsyncUtils.unwrapThrowable(ex);
