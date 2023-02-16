@@ -4064,10 +4064,10 @@ define pcodeop VectorSetElement;
 @if defined(SIMD)
 
 vmovIndex: val	is TMode=0 &     c2222=1 &     c2121 &     c0506					[ val = (c2121 << 2) + c0506; ]	{ tmp:1 = val; export tmp; }
-vmovIndex: val	is TMode=0 &     c2222=1 &     c2121 &     c0606   &     c0505=1	[ val = (c2121 << 2) + c0606; ]	{ tmp:1 = val; export tmp; }
+vmovIndex: val	is TMode=0 &     c2222=0 &     c2121 &     c0606   &     c0505=1	[ val = (c2121 << 1) + c0606; ]	{ tmp:1 = val; export tmp; }
 
 vmovIndex: val	is TMode=1 & thv_c2222=1 & thv_c2121 & thv_c0506					[ val = (thv_c2121 << 2) + thv_c0506; ]	{ tmp:1 = val; export tmp; }
-vmovIndex: val	is TMode=1 & thv_c2222=1 & thv_c2121 & thv_c0606   & thv_c0505=1	[ val = (thv_c2121 << 2) + thv_c0606; ]	{ tmp:1 = val; export tmp; }
+vmovIndex: val	is TMode=1 & thv_c2222=0 & thv_c2121 & thv_c0606   & thv_c0505=1	[ val = (thv_c2121 << 1) + thv_c0606; ]	{ tmp:1 = val; export tmp; }
 
 @if defined(VFPv2) || defined(VFPv3) || defined(SIMD)
 
