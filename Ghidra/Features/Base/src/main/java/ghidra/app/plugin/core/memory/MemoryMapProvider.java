@@ -131,7 +131,16 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 
 		memTable.setAutoCreateColumnsFromModel(false);
 
-		TableColumn column;
+		GTableCellRenderer monoRenderer = new GTableCellRenderer();
+		monoRenderer.setFont(monoRenderer.getFixedWidthFont());
+
+		TableColumn column = memTable.getColumn(MemoryMapModel.START_COL);
+		column.setCellRenderer(monoRenderer);
+		column = memTable.getColumn(MemoryMapModel.END_COL);
+		column.setCellRenderer(monoRenderer);
+		column = memTable.getColumn(MemoryMapModel.LENGTH_COL);
+		column.setCellRenderer(monoRenderer);
+
 		column = memTable.getColumn(MemoryMapModel.READ_COL);
 		column.setCellRenderer(new GBooleanCellRenderer());
 		column = memTable.getColumn(MemoryMapModel.WRITE_COL);

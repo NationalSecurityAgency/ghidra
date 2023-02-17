@@ -145,11 +145,11 @@ public abstract class AbstractGCellRenderer extends GDHtmlLabel {
 		return defaultFont;
 	}
 
-	protected Font getFixedWidthFont() {
+	public Font getFixedWidthFont() {
 		return fixedWidthFont;
 	}
 
-	protected Font getBoldFont() {
+	public Font getBoldFont() {
 		return boldFont;
 	}
 
