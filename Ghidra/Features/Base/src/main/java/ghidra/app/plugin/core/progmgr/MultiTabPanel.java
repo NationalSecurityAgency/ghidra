@@ -223,6 +223,7 @@ public class MultiTabPanel extends JPanel {
 
 		iconLabel.setToolTipText("Close");
 		iconLabel.setName("Close"); // junit access
+		iconLabel.setOpaque(true);
 
 		MouseListener iconSwitcherMouseListener = new MouseAdapter() {
 			@Override
@@ -925,6 +926,8 @@ public class MultiTabPanel extends JPanel {
 			this.nameLabel = nameLabel;
 			this.labelPanel = labelPanel;
 			this.iconLabel = iconLabel;
+
+			setBackground(backgroundColor);
 		}
 
 		void refresh() {

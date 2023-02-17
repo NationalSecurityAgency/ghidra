@@ -29,7 +29,7 @@ import ghidra.graph.viewer.VisualVertex;
 import ghidra.graph.viewer.vertex.AbstractVisualVertexRenderer;
 
 /**
- * A renderer for vertices for the satellite view.  This is really just a basic renderer 
+ * A renderer for vertices for the satellite view.  This is really just a basic renderer
  * that adds emphasis capability, as seen in the primary function graph renderer.
  * @param <V> the vertex type
  * @param <E> the edge type
@@ -59,9 +59,9 @@ public class VisualVertexSatelliteRenderer<V extends VisualVertex, E extends Vis
 		}
 
 // POSTERITY NOTE: we used to let the satellite paint the emphasis of nodes, as a way to call
-//		           attention to the selected node.  Now that we use caching, this has the odd 
-//		           side-effect of painting a large vertex in the cached image.  Also, we have 
-//		           changed how the satellite paints selected vertices, so the effect being 
+//		           attention to the selected node.  Now that we use caching, this has the odd
+//		           side-effect of painting a large vertex in the cached image.  Also, we have
+//		           changed how the satellite paints selected vertices, so the effect being
 //		           performed below is no longer necessary.
 //		GraphicsDecorator emphasisGraphics = getEmphasisGraphics(defaultGraphics, v, rc, layout);
 //		rc.setGraphicsContext(emphasisGraphics);
@@ -87,8 +87,12 @@ public class VisualVertexSatelliteRenderer<V extends VisualVertex, E extends Vis
 			return;
 		}
 
+		// this makes the plain vertices easier to see
+		paintDropShadow(rc, g, shape);
+
 		g.setPaint(fillPaint);
 		g.fill(shape);
+
 		g.setPaint(oldPaint);
 	}
 
@@ -99,7 +103,7 @@ public class VisualVertexSatelliteRenderer<V extends VisualVertex, E extends Vis
 		// DEBUG original behavior; this can show the true shape of the vertex
 		// return super.prepareFinalVertexShape(rc, v, layout, coords);
 
-		// use the compact shape in the satellite view		
+		// use the compact shape in the satellite view
 		return getCompactShape(rc, layout, v);
 	}
 
@@ -117,7 +121,7 @@ public class VisualVertexSatelliteRenderer<V extends VisualVertex, E extends Vis
 //		int offset = (int) adjustValueForCurrentScale(rc, 10D, .25);
 		int offset = 10;
 
-		// scale the offset with the scale of the view, but not as fast, so that as we scale down, 
+		// scale the offset with the scale of the view, but not as fast, so that as we scale down,
 		// the size of the paint area starts to get larger than the vertex
 		offset = (int) adjustValueForCurrentScale(rc, offset, .9);
 		g.fillOval(bounds.x - offset, bounds.y - offset, bounds.width + (offset * 2),

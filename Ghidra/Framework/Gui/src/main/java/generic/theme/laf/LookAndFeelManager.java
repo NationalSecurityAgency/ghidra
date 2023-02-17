@@ -213,7 +213,8 @@ public abstract class LookAndFeelManager {
 	}
 
 	/**
-	 * Subclass provide this method to install the specific loo
+	 * Subclass provide this method to install the specific look and feel.
+	 *
 	 * @throws ClassNotFoundException if the <code>LookAndFeel</code>
 	 *           class could not be found
 	 * @throws InstantiationException if a new instance of the class
@@ -237,7 +238,7 @@ public abstract class LookAndFeelManager {
 	}
 
 	/**
-	 * Extracts java default colors, fonts, and icons and stores them in the 
+	 * Extracts java default colors, fonts, and icons and stores them in the
 	 * {@link ThemeManager} and updates the {@link UIDefaults} by installing GColors for all
 	 * color values and installing any overridden fonts or icons.
 	 */
