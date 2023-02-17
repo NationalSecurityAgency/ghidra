@@ -168,9 +168,12 @@ define pcodeop __cpu_stop;
 }
 
 # TESTME: JSR \$hhii  => Jump subroutine at special page offset ii
-:JSRSPECIAL   imm8                  is op=0x22; imm8
+
+specOff: "\\"^reloc             is imm8 [ reloc = 0xff00 + imm8; ] { export *:2 reloc; }
+
+:JSR specOff                    is op=0x22; specOff
 {
-    local addr:2 = imm8 + 0xFF00;
+    local addr:2 = specOff;
     *:2 (SP-1) = inst_next;
     SP=SP-2;
     call [addr];
