@@ -47,8 +47,8 @@ public abstract class AbstractHtmlLabel extends JLabel
 		implements GComponent, PropertyChangeListener {
 
 	private static final String HTML_TAG = "<html>";
-	private boolean isUpdating = false;
-	private boolean isHtml = false;
+	private boolean isUpdating;
+	private boolean isHtml;
 
 	protected AbstractHtmlLabel() {
 		addPropertyChangeListener(this);
