@@ -9,7 +9,11 @@ define space register type=register_space size=1;
 define register offset=0x00  size=1 [ A X Y P ];
 define register offset=0x20 size=2  [ PC      SP   ];
 define register offset=0x20 size=1  [ PCL PCH S SH ];
+@ifdef MITSUBISHI_MELPS740
+define register offset=0x30 size=1 [ N V T B D I Z C ];	# status bits
+@else
 define register offset=0x30 size=1 [ N V B D I Z C ];	# status bits
+@endif
 
 #TOKENS
 
@@ -35,6 +39,9 @@ macro popSR() {
 	local ccr = *:1 SP;
 	N = ccr[7,1];
 	V = ccr[6,1];
+@ifdef MITSUBISHI_MELPS740
+	T = ccr[5,1];
+@endif
 	B = ccr[4,1];
 	D = ccr[3,1];
 	I = ccr[2,1];
@@ -46,6 +53,9 @@ macro pushSR() {
 	local ccr:1 = 0xff;
 	ccr[7,1] = N;
 	ccr[6,1] = V;
+@ifdef MITSUBISHI_MELPS740
+	ccr[5,1] = T;
+@endif
 	ccr[4,1] = B;
 	ccr[3,1] = D;
 	ccr[2,1] = I;
