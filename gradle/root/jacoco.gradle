@@ -22,14 +22,6 @@ dependencies {
    jacocoAgent 'org.jacoco:org.jacoco.agent:0.8.8'
 }
 
-def String jacocoRootExecPath = "$buildDir/jacoco/jacocoMerge.exec"
-
-delete new File(jacocoRootExecPath) // If the merged exec file (output from jacocoMerge) exists,
-                				    // jacocoReport & jacocoBranchReport tasks are skipped and 
-				                    // the report is not generated.
-				                    // So always delete the merged file before the determination
-				                    // to skip a task is made.
-
 /*********************************************************************************
   * Generate the Jacoco excludes list from file (this will strip out comments and
   * whitespace).
@@ -72,26 +64,18 @@ def shouldIgnoreLine(line) {
 List excludesList = generateExcludesList()
 
 /*********************************************************************************
- * Task to merge multiple jacoco execution data files into one
- *********************************************************************************/
-task jacocoMerge(type: JacocoMerge) {
-   description = 'Task to merge multiple jacoco execution data files into one.'
-   destinationFile = new File(jacocoRootExecPath)
-   dependsOn { subprojects.findAll { p -> p.plugins.hasPlugin('jacoco') }.test }
-   dependsOn { subprojects.findAll { p -> p.plugins.hasPlugin('jacoco') }.integrationTest }
-   executionData fileTree(rootDir) {
-     include '**/*.exec'
-   }
-}
-
-/*********************************************************************************
  * Task to generate an aggregate jacoco report from subprojects with 
  * Java sourceSets
  *********************************************************************************/
 task jacocoReport(type: JacocoReport, group: 'Coverage reports') {
    description = 'Generates an aggregate Jacoco report from all subprojects'
-   dependsOn 'jacocoMerge'
-   executionData new File(jacocoRootExecPath)
+
+   dependsOn { subprojects.findAll { p -> p.plugins.hasPlugin('jacoco') }.test }
+   dependsOn { subprojects.findAll { p -> p.plugins.hasPlugin('jacoco') }.integrationTest }
+
+   executionData fileTree(rootDir) {
+     include '**/*.exec'
+   }
    
    // Setting these source/class dirs MUST be done in the configuration phase (we used
    // to do it in a doFirst block but that was deprecated in later gradle builds). However,
