@@ -157,10 +157,10 @@ task buildDecompilerHelpHtml(type: Exec) {
 	// Print the output of the commands and check the return value.
 	doLast {
 		println output()
-		if (execResult.exitValue) {
+		if (executionResult.get().getExitValue()) {
 			logger.error("$it.name: An error occurred. Here is the output:\n" + output())
 			throw new TaskExecutionException( it, new Exception("'$it.name': The command: '${commandLine.join(' ')}'" +
-				" task \nfailed with exit code $execResult.exitValue; see task output for details."))
+				" task \nfailed with exit code ${executionResult.get().getExitValue()}; see task output for details."))
 		}
 	}
 }
@@ -214,7 +214,7 @@ task buildDecompilerHelpPdf(type: Exec) {
 	// Print the output of the commands and check the return value.
 	doLast {
 		println output()
-		if (execResult.exitValue) {
+		if (executionResult.get().getExitValue()) {
 			println "$it.name: An error occurred with this task. Here is the output:\n" + output()
 			println "Skipping task $it.name\n"
 		}
@@ -284,7 +284,7 @@ task buildDecompilerDocumentationPdfs(type: Exec) {
 	// Print the output of the commands and check the return value.
 	doLast {
 		println output()
-		if (execResult.exitValue) {
+		if (executionResult.get().getExitValue()) {
 			println "$it.name: An error occurred with this task. Here is the output:\n" + output()
 			println "Skipping task $it.name\n"
 		}
@@ -370,11 +370,11 @@ task buildDecompilerDocumentationHtml(type: Exec) {
 		// Print the output of the commands and check the return value.
 		doLast {
 			println output()
-			if (execResult.exitValue) {
+			if (executionResult.get().getExitValue()) {
 				logger.error("$it.name: An error occurred. Here is the output:\n" + output())
 				throw new TaskExecutionException( it,
 					new Exception( "$it.name: The command: '${commandLine.join(' ')}'" +
-						"\nfailed with exit code $execResult.exitValue; see task output for details." )
+						"\nfailed with exit code ${executionResult.get().getExitValue()}; see task output for details." )
 			)
 		}
 	}
