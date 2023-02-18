@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +15,13 @@
  */
 package db;
 
-import ghidra.util.datastruct.IntIntHashtable;
-import ghidra.util.exception.AssertException;
-import ghidra.util.exception.NoValueException;
-
 import java.io.File;
 import java.io.IOException;
 
 import db.buffers.*;
+import ghidra.util.datastruct.IntIntHashtable;
+import ghidra.util.exception.AssertException;
+import ghidra.util.exception.NoValueException;
 
 /**
  * <code>DBParms</code> manages 4-byte integer parameters associated with a database 
@@ -123,7 +121,7 @@ class DBParms {
 	private static void storeParm(int parm, int value, DataBuffer buffer) {
 		int maxParmCnt = (buffer.length() - PARM_BASE_OFFSET) / 4;
 		if (parm < 0 || parm >= maxParmCnt) {
-			throw new ArrayIndexOutOfBoundsException("Invalid parameter index: " + parm);
+			throw new IndexOutOfBoundsException("Invalid parameter index: " + parm);
 		}
 		int size = (buffer.getInt(DATA_LENGTH_OFFSET) - VERSION_SIZE) / 4;
 		if (parm >= size) {
@@ -164,15 +162,15 @@ class DBParms {
 	 * @param parm parameter number
 	 * @return parameter value
 	 * @throws IOException thrown if an IO error occurs
-	 * @throws ArrayIndexOutOfBoundsException if index outside of allocated
+	 * @throws IndexOutOfBoundsException if index outside of allocated
 	 * parameter space.
 	 */
-	int get(int parm) throws IOException, ArrayIndexOutOfBoundsException {
+	int get(int parm) throws IOException, IndexOutOfBoundsException {
 		try {
 			return cache.get(parm);
 		}
 		catch (NoValueException e) {
-			throw new ArrayIndexOutOfBoundsException();
+			throw new IndexOutOfBoundsException();
 		}
 	}
 	

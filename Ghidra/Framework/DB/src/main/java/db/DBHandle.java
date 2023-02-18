@@ -242,7 +242,7 @@ public class DBHandle {
 			databaseId = ((long) dbParms.get(DBParms.DATABASE_ID_HIGH_PARM) << 32) +
 				(dbParms.get(DBParms.DATABASE_ID_LOW_PARM) & 0x0ffffffffL);
 		}
-		catch (ArrayIndexOutOfBoundsException e) {
+		catch (IndexOutOfBoundsException e) {
 			// DBParams is still at version 1
 		}
 	}
@@ -407,6 +407,16 @@ public class DBHandle {
 	}
 
 	/**
+	 * Check if the database is closed.
+	 * @throws ClosedException if database is closed and further operations are unsupported
+	 */
+	public void checkIsClosed() throws ClosedException {
+		if (isClosed()) {
+			throw new ClosedException();
+		}
+	}
+
+	/**
 	 * @return true if transaction is currently active
 	 */
 	public boolean isTransactionActive() {
@@ -418,6 +428,9 @@ public class DBHandle {
 	 * @return transaction ID
 	 */
 	public synchronized long startTransaction() {
+		if (isClosed()) {
+			throw new IllegalStateException("Database is closed");
+		}
 		if (txStarted) {
 			throw new IllegalStateException("Transaction already started");
 		}
@@ -802,6 +815,8 @@ public class DBHandle {
 	public synchronized void saveAs(File file, boolean associateWithNewFile, TaskMonitor monitor)
 			throws IOException, CancelledException {
 
+		checkIsClosed();
+
 		if (file.exists()) {
 			throw new DuplicateFileException("File already exists: " + file);
 		}
@@ -861,6 +876,7 @@ public class DBHandle {
 	 * @throws IOException if an I/O error occurs while getting the buffer.
 	 */
 	public DBBuffer getBuffer(int id) throws IOException {
+		checkIsClosed();
 		return new DBBuffer(this, new ChainedBuffer(bufferMgr, id));
 	}
 
@@ -876,6 +892,7 @@ public class DBHandle {
 	 * @throws IOException if an I/O error occurs while getting the buffer.
 	 */
 	public DBBuffer getBuffer(int id, DBBuffer shadowBuffer) throws IOException {
+		checkIsClosed();
 		return new DBBuffer(this, new ChainedBuffer(bufferMgr, id, shadowBuffer.buf, 0));
 	}
 
@@ -1071,6 +1088,9 @@ public class DBHandle {
 	 * @return number of buffer cache hits
 	 */
 	public long getCacheHits() {
+		if (bufferMgr == null) {
+			throw new IllegalStateException("Database is closed");
+		}
 		return bufferMgr.getCacheHits();
 	}
 
@@ -1078,6 +1098,9 @@ public class DBHandle {
 	 * @return number of buffer cache misses
 	 */
 	public long getCacheMisses() {
+		if (bufferMgr == null) {
+			throw new IllegalStateException("Database is closed");
+		}
 		return bufferMgr.getCacheMisses();
 	}
 
@@ -1085,6 +1108,9 @@ public class DBHandle {
 	 * @return low water mark (minimum buffer pool size)
 	 */
 	public int getLowBufferCount() {
+		if (bufferMgr == null) {
+			throw new IllegalStateException("Database is closed");
+		}
 		return bufferMgr.getLowBufferCount();
 	}
 
@@ -1102,6 +1128,9 @@ public class DBHandle {
 	 * @return buffer size utilized by this database
 	 */
 	public int getBufferSize() {
+		if (bufferMgr == null) {
+			throw new IllegalStateException("Database is closed");
+		}
 		return bufferMgr.getBufferSize();
 	}
 

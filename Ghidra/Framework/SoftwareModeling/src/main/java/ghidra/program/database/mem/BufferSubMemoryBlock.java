@@ -40,13 +40,14 @@ class BufferSubMemoryBlock extends SubMemoryBlock {
 	}
 
 	@Override
-	public byte getByte(long offsetInMemBlock) throws IOException {
+	public byte getByte(long offsetInMemBlock) throws IndexOutOfBoundsException, IOException {
 		long offsetInSubBlock = offsetInMemBlock - subBlockOffset;
 		return buf.getByte((int) offsetInSubBlock);
 	}
 
 	@Override
-	public int getBytes(long offsetInMemBlock, byte[] b, int off, int len) throws IOException {
+	public int getBytes(long offsetInMemBlock, byte[] b, int off, int len)
+			throws IndexOutOfBoundsException, IOException {
 		long offsetInSubBlock = offsetInMemBlock - subBlockOffset;
 		long available = subBlockLength - offsetInSubBlock;
 		len = (int) Math.min(len, available);
@@ -55,13 +56,15 @@ class BufferSubMemoryBlock extends SubMemoryBlock {
 	}
 
 	@Override
-	public void putByte(long offsetInMemBlock, byte b) throws IOException {
+	public void putByte(long offsetInMemBlock, byte b)
+			throws IndexOutOfBoundsException, IOException {
 		long offsetInSubBlock = offsetInMemBlock - subBlockOffset;
 		buf.putByte((int) offsetInSubBlock, b);
 	}
 
 	@Override
-	public int putBytes(long offsetInMemBlock, byte[] b, int off, int len) throws IOException {
+	public int putBytes(long offsetInMemBlock, byte[] b, int off, int len)
+			throws IndexOutOfBoundsException, IOException {
 		long offsetInSubBlock = offsetInMemBlock - subBlockOffset;
 		long available = subBlockLength - offsetInSubBlock;
 		len = (int) Math.min(len, available);
@@ -95,7 +98,8 @@ class BufferSubMemoryBlock extends SubMemoryBlock {
 	}
 
 	@Override
-	protected SubMemoryBlock split(long memBlockOffset) throws IOException {
+	protected SubMemoryBlock split(long memBlockOffset)
+			throws IndexOutOfBoundsException, IOException {
 		// convert from offset in block to offset in this sub block
 		int offset = (int) (memBlockOffset - subBlockOffset);
 		long newLength = subBlockLength - offset;

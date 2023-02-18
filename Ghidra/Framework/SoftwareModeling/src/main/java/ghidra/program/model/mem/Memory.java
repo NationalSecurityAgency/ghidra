@@ -476,6 +476,7 @@ public interface Memory extends AddressSetView {
 	 * @param size the number of bytes to get.
 	 * @return the number of bytes put into dest.  May be less than
 	 * size if the requested number extends beyond initialized / available memory.
+	 * @throws IndexOutOfBoundsException if an invalid index is specified
 	 * @throws MemoryAccessException if the starting address is
 	 * not contained in any memory block or is an uninitialized location.
 	 */
