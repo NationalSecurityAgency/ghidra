@@ -347,9 +347,10 @@ public abstract class Field implements Comparable<Field> {
 	 * @param buf data buffer
 	 * @param offset data offset
 	 * @return next available Field offset within buffer, or -1 if end of buffer reached.
+	 * @throws IndexOutOfBoundsException if invalid offset is specified
 	 * @throws IOException thrown if IO error occurs
 	 */
-	abstract int write(Buffer buf, int offset) throws IOException;
+	abstract int write(Buffer buf, int offset) throws IndexOutOfBoundsException, IOException;
 
 	/**
 	 * Read the field value from buf at the specified offset. When reading variable length 
@@ -357,9 +358,10 @@ public abstract class Field implements Comparable<Field> {
 	 * @param buf data buffer
 	 * @param offset data offset
 	 * @return next Field offset within buffer, or -1 if end of buffer reached.
+	 * @throws IndexOutOfBoundsException if invalid offset is specified
 	 * @throws IOException thrown if IO error occurs
 	 */
-	abstract int read(Buffer buf, int offset) throws IOException;
+	abstract int read(Buffer buf, int offset) throws IndexOutOfBoundsException, IOException;
 
 	/**
 	 * Get the total number of bytes which will be read from the buffer
@@ -370,9 +372,10 @@ public abstract class Field implements Comparable<Field> {
 	 * @param buf data buffer
 	 * @param offset data offset
 	 * @return total number of bytes for this field stored within buf
+	 * @throws IndexOutOfBoundsException if invalid offset is specified
 	 * @throws IOException thrown if IO error occurs
 	 */
-	abstract int readLength(Buffer buf, int offset) throws IOException;
+	abstract int readLength(Buffer buf, int offset) throws IndexOutOfBoundsException, IOException;
 
 	/**
 	 * Get the number of bytes required to store this field value.
@@ -445,8 +448,9 @@ public abstract class Field implements Comparable<Field> {
 	 * @return comparison value, zero if equal, -1 if this field has a value 
 	 * less than the stored field, or +1 if this field has a value greater than 
 	 * the stored field located at keyIndex.
+	 * @throws IndexOutOfBoundsException if invalid offset is specified
 	 */
-	abstract int compareTo(DataBuffer buffer, int offset);
+	abstract int compareTo(DataBuffer buffer, int offset) throws IndexOutOfBoundsException;
 
 	/**
 	 * Compares this Field with another Field for order.  Returns a
@@ -515,8 +519,9 @@ public abstract class Field implements Comparable<Field> {
 	/**
 	 * Get the type index value of the FixedField type which corresponds
 	 * to the specified fixed-length;
-	 * @param fixedLength fixed length
+	 * @param fixedLength fixed length (currently only 10 is supported)
 	 * @return FixedLength field type index
+	 * @throws IllegalArgumentException if unsupported fixedLength is specified
 	 */
 	static byte getFixedType(int fixedLength) {
 		if (fixedLength == 10) {

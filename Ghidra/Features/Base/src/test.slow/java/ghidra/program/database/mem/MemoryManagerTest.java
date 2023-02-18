@@ -1091,7 +1091,7 @@ public class MemoryManagerTest extends AbstractGhidraHeadedIntegrationTest {
 			mem.getBytes(addr(0), b, 9, 50);
 			fail("Expected exception");
 		}
-		catch (ArrayIndexOutOfBoundsException e) {
+		catch (IndexOutOfBoundsException e) {
 			// expected
 		}
 

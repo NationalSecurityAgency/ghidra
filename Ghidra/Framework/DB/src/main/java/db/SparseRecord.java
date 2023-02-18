@@ -45,7 +45,7 @@ public class SparseRecord extends DBRecord {
 	}
 
 	@Override
-	public void write(Buffer buf, int offset) throws IOException {
+	public void write(Buffer buf, int offset) throws IndexOutOfBoundsException, IOException {
 		ArrayList<Integer> sparseFieldIndexes = new ArrayList<>();
 		Field[] fields = getFields();
 		for (int i = 0; i < fields.length; i++) {
@@ -74,7 +74,7 @@ public class SparseRecord extends DBRecord {
 	}
 
 	@Override
-	public void read(Buffer buf, int offset) throws IOException {
+	public void read(Buffer buf, int offset) throws IndexOutOfBoundsException, IOException {
 		Field[] fields = getFields();
 		for (int i = 0; i < fields.length; i++) {
 			Field f = fields[i];

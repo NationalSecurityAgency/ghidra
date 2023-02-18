@@ -50,7 +50,7 @@ public class DBBufferInputStream extends InputStream {
 	}
 
 	@Override
-	public int read(byte[] b) throws IOException {
+	public int read(byte[] b) throws IndexOutOfBoundsException, IOException {
 		if (offset == buffer.length()) {
 			return -1;
 		}
@@ -61,7 +61,7 @@ public class DBBufferInputStream extends InputStream {
 	}
 
 	@Override
-	public int read(byte[] b, int off, int len) throws IOException {
+	public int read(byte[] b, int off, int len) throws IndexOutOfBoundsException, IOException {
 		if (offset == buffer.length()) {
 			return -1;
 		}

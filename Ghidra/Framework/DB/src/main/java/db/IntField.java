@@ -94,19 +94,19 @@ public final class IntField extends PrimitiveField {
 	}
 
 	@Override
-	int write(Buffer buf, int offset) throws IOException {
+	int write(Buffer buf, int offset) throws IndexOutOfBoundsException, IOException {
 		return buf.putInt(offset, value);
 	}
 
 	@Override
-	int read(Buffer buf, int offset) throws IOException {
+	int read(Buffer buf, int offset) throws IndexOutOfBoundsException, IOException {
 		updatingPrimitiveValue();
 		value = buf.getInt(offset);
 		return offset + 4;
 	}
 
 	@Override
-	int readLength(Buffer buf, int offset) throws IOException {
+	int readLength(Buffer buf, int offset) {
 		return 4;
 	}
 

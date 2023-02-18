@@ -102,7 +102,7 @@ class MemoryBlockInputStream extends InputStream {
 	}
 
 	@Override
-	public int read(byte[] b, int off, int len) throws IOException {
+	public int read(byte[] b, int off, int len) throws IndexOutOfBoundsException, IOException {
 		if (index >= numBytes) {
 			return -1;
 		}

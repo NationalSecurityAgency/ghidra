@@ -188,7 +188,7 @@ public class FixedField10 extends FixedField {
 	}
 
 	@Override
-	int write(Buffer buf, int offset) throws IOException {
+	int write(Buffer buf, int offset) throws IndexOutOfBoundsException, IOException {
 		if (data != null) {
 			return buf.put(offset, data);
 		}
@@ -197,7 +197,7 @@ public class FixedField10 extends FixedField {
 	}
 
 	@Override
-	int read(Buffer buf, int offset) throws IOException {
+	int read(Buffer buf, int offset) throws IndexOutOfBoundsException, IOException {
 		updatingValue();
 		data = null; // be lazy
 		hi8 = buf.getLong(offset);
@@ -206,7 +206,7 @@ public class FixedField10 extends FixedField {
 	}
 
 	@Override
-	int readLength(Buffer buf, int offset) throws IOException {
+	int readLength(Buffer buf, int offset) {
 		return 10;
 	}
 

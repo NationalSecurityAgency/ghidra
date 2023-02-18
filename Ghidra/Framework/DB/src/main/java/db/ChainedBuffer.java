@@ -338,7 +338,6 @@ public class ChainedBuffer implements Buffer {
 	 * @throws UnsupportedOperationException thrown if this ChainedBuffer utilizes an 
 	 * Uninitialized Data Source or is read-only
 	 * @throws IOException thrown if an IO error occurs.
-	 * @throws UnsupportedOperationException if read-only or uninitialized data source is used
 	 */
 	public synchronized void setSize(int size, boolean preserveData) throws IOException {
 		if (readOnly) {
@@ -595,10 +594,10 @@ public class ChainedBuffer implements Buffer {
 	 * byte within the new buffer.
 	 * @return the new DBBuffer object.
 	 * @throws UnsupportedOperationException thrown if this ChainedBuffer is read-only
-	 * @throws ArrayIndexOutOfBoundsException if offset is invalid.
+	 * @throws IndexOutOfBoundsException if offset is invalid.
 	 * @throws IOException thrown if an IO error occurs
 	 */
-	public synchronized ChainedBuffer split(int offset) throws IOException {
+	public synchronized ChainedBuffer split(int offset) throws IndexOutOfBoundsException, IOException {
 		if (readOnly) {
 			throw new UnsupportedOperationException("Read-only buffer");
 		}
@@ -606,7 +605,7 @@ public class ChainedBuffer implements Buffer {
 			throw new AssertException("Invalid Buffer");
 		}
 		if (offset < 0 || offset >= size) {
-			throw new ArrayIndexOutOfBoundsException();
+			throw new IndexOutOfBoundsException();
 		}
 
 		// Create new DBBuffer
@@ -899,10 +898,11 @@ public class ChainedBuffer implements Buffer {
 	 * @return int actual number of byte read.
 	 * This could be smaller than length if the end of buffer is 
 	 * encountered while reading data.
+	 * @throws IndexOutOfBoundsException if an invalid offset, dataOffset, or length is specified.
 	 * @throws IOException thrown if IO error occurs
 	 */
 	private int getBytes(int offset, int index, int bufferDataOffset, byte[] data, int dataOffset,
-			int length) throws IOException {
+			int length) throws IndexOutOfBoundsException, IOException {
 		int availableData = dataSpace - bufferDataOffset;
 		int len = availableData < length ? availableData : length;
 		int id = dataBufferIdTable[index];
@@ -934,15 +934,15 @@ public class ChainedBuffer implements Buffer {
 	 */
 	@Override
 	public synchronized void get(int offset, byte[] data, int dataOffset, int length)
-			throws IOException {
+			throws IndexOutOfBoundsException, IOException {
 		if (dataBufferIdTable == null) {
 			throw new AssertException("Invalid Buffer");
 		}
 		if (offset < 0 || (offset + length - 1) >= size) {
-			throw new ArrayIndexOutOfBoundsException();
+			throw new IndexOutOfBoundsException();
 		}
 		if (data.length < dataOffset + length) {
-			throw new ArrayIndexOutOfBoundsException();
+			throw new IndexOutOfBoundsException();
 		}
 		int index = offset / dataSpace;
 		int bufferDataOffset = offset % dataSpace;
@@ -960,7 +960,7 @@ public class ChainedBuffer implements Buffer {
 	 * @see ghidra.framework.store.Buffer#get(int, byte[])
 	 */
 	@Override
-	public synchronized void get(int offset, byte[] data) throws IOException {
+	public synchronized void get(int offset, byte[] data) throws IndexOutOfBoundsException, IOException {
 		get(offset, data, 0, data.length);
 	}
 
@@ -968,7 +968,7 @@ public class ChainedBuffer implements Buffer {
 	 * @see ghidra.framework.store.Buffer#get(int, int)
 	 */
 	@Override
-	public synchronized byte[] get(int offset, int length) throws IOException {
+	public synchronized byte[] get(int offset, int length) throws IndexOutOfBoundsException, IOException {
 		byte[] data = new byte[length];
 		get(offset, data, 0, length);
 		return data;
@@ -978,12 +978,12 @@ public class ChainedBuffer implements Buffer {
 	 * @see ghidra.framework.store.Buffer#getByte(int)
 	 */
 	@Override
-	public synchronized byte getByte(int offset) throws IOException {
+	public synchronized byte getByte(int offset) throws IndexOutOfBoundsException, IOException {
 		if (dataBufferIdTable == null) {
 			throw new AssertException("Invalid Buffer");
 		}
 		if (offset < 0 || offset >= size) {
-			throw new ArrayIndexOutOfBoundsException();
+			throw new IndexOutOfBoundsException();
 		}
 		int index = offset / dataSpace;
 		int bufferDataOffset = offset % dataSpace;
@@ -1007,14 +1007,14 @@ public class ChainedBuffer implements Buffer {
 	 * @see ghidra.framework.store.Buffer#getInt(int)
 	 */
 	@Override
-	public synchronized int getInt(int offset) throws IOException {
+	public synchronized int getInt(int offset) throws IndexOutOfBoundsException, IOException {
 		int bufferOffset = dataBaseOffset + (offset % dataSpace);
 		if (bufferOffset + 3 <= dataSpace) {
 			if (dataBufferIdTable == null) {
 				throw new AssertException("Invalid Buffer");
 			}
 			if (offset < 0 || (offset + 3) >= size) {
-				throw new ArrayIndexOutOfBoundsException();
+				throw new IndexOutOfBoundsException();
 			}
 			int index = offset / dataSpace;
 			int id = dataBufferIdTable[index];
@@ -1041,14 +1041,14 @@ public class ChainedBuffer implements Buffer {
 	 * @see ghidra.framework.store.Buffer#getLong(int)
 	 */
 	@Override
-	public synchronized long getLong(int offset) throws IOException {
+	public synchronized long getLong(int offset) throws IndexOutOfBoundsException, IOException {
 		int bufferOffset = dataBaseOffset + (offset % dataSpace);
 		if (bufferOffset + 7 <= dataSpace) {
 			if (dataBufferIdTable == null) {
 				throw new AssertException("Invalid Buffer");
 			}
 			if (offset < 0 || (offset + 7) >= size) {
-				throw new ArrayIndexOutOfBoundsException();
+				throw new IndexOutOfBoundsException();
 			}
 			int index = offset / dataSpace;
 			int id = dataBufferIdTable[index];
@@ -1077,14 +1077,14 @@ public class ChainedBuffer implements Buffer {
 	 * @see ghidra.framework.store.Buffer#getShort(int)
 	 */
 	@Override
-	public synchronized short getShort(int offset) throws IOException {
+	public synchronized short getShort(int offset) throws IndexOutOfBoundsException, IOException {
 		int bufferOffset = dataBaseOffset + (offset % dataSpace);
 		if (bufferOffset + 1 <= dataSpace) {
 			if (dataBufferIdTable == null) {
 				throw new AssertException("Invalid Buffer");
 			}
 			if (offset < 0 || (offset + 1) >= size) {
-				throw new ArrayIndexOutOfBoundsException();
+				throw new IndexOutOfBoundsException();
 			}
 			int index = offset / dataSpace;
 			int id = dataBufferIdTable[index];
@@ -1119,10 +1119,12 @@ public class ChainedBuffer implements Buffer {
 	 * @param startOffset starting offset, inclusive
 	 * @param endOffset ending offset, inclusive
 	 * @param fillByte byte value
+	 * @throws IndexOutOfBoundsException if an invalid offsets are provided
+	 * or the end of buffer was encountered while storing the data.
 	 * @throws IOException thrown if an IO error occurs
 	 */
 	public synchronized void fill(int startOffset, int endOffset, byte fillByte)
-			throws IOException {
+			throws IndexOutOfBoundsException, IOException {
 		if (readOnly) {
 			throw new UnsupportedOperationException("Read-only buffer");
 		}
@@ -1130,7 +1132,7 @@ public class ChainedBuffer implements Buffer {
 			throw new IllegalArgumentException();
 		}
 		if (startOffset < 0 || endOffset >= size) {
-			throw new ArrayIndexOutOfBoundsException();
+			throw new IndexOutOfBoundsException();
 		}
 		byte[] fillData = new byte[dataSpace];
 		Arrays.fill(fillData, fillByte);
@@ -1239,7 +1241,7 @@ public class ChainedBuffer implements Buffer {
 	 */
 	@Override
 	public synchronized int put(int offset, byte[] data, int dataOffset, int length)
-			throws IOException {
+			throws IndexOutOfBoundsException, IOException {
 
 		if (readOnly) {
 			throw new UnsupportedOperationException("Read-only buffer");
@@ -1248,7 +1250,7 @@ public class ChainedBuffer implements Buffer {
 			throw new AssertException("Invalid Buffer");
 		}
 		if (offset < 0 || (offset + length - 1) >= size) {
-			throw new ArrayIndexOutOfBoundsException();
+			throw new IndexOutOfBoundsException();
 		}
 		int index = offset / dataSpace;
 		int bufferDataOffset = offset % dataSpace;
@@ -1275,7 +1277,7 @@ public class ChainedBuffer implements Buffer {
 	 * @see ghidra.framework.store.Buffer#put(int, byte[])
 	 */
 	@Override
-	public synchronized int put(int offset, byte[] bytes) throws IOException {
+	public synchronized int put(int offset, byte[] bytes) throws IndexOutOfBoundsException, IOException {
 		return put(offset, bytes, 0, bytes.length);
 	}
 
@@ -1283,7 +1285,7 @@ public class ChainedBuffer implements Buffer {
 	 * @see ghidra.framework.store.Buffer#putByte(int, byte)
 	 */
 	@Override
-	public synchronized int putByte(int offset, byte b) throws IOException {
+	public synchronized int putByte(int offset, byte b) throws IndexOutOfBoundsException, IOException {
 		if (readOnly) {
 			throw new UnsupportedOperationException("Read-only buffer");
 		}
@@ -1291,7 +1293,7 @@ public class ChainedBuffer implements Buffer {
 			throw new AssertException("Invalid Buffer");
 		}
 		if (offset < 0 || offset >= size) {
-			throw new ArrayIndexOutOfBoundsException();
+			throw new IndexOutOfBoundsException();
 		}
 		DataBuffer buffer = getBuffer(offset / dataSpace);
 		int bufferDataOffset = offset % dataSpace;
@@ -1307,7 +1309,7 @@ public class ChainedBuffer implements Buffer {
 	 * @see ghidra.framework.store.Buffer#putInt(int, int)
 	 */
 	@Override
-	public synchronized int putInt(int offset, int v) throws IOException {
+	public synchronized int putInt(int offset, int v) throws IndexOutOfBoundsException, IOException {
 		if (readOnly) {
 			throw new UnsupportedOperationException("Read-only buffer");
 		}
@@ -1317,7 +1319,7 @@ public class ChainedBuffer implements Buffer {
 				throw new AssertException("Invalid Buffer");
 			}
 			if (offset < 0 || (offset + 3) >= size) {
-				throw new ArrayIndexOutOfBoundsException();
+				throw new IndexOutOfBoundsException();
 			}
 			if (useXORMask) {
 				v = v ^ (int) getXorMask(offset % dataSpace, 4);
@@ -1341,7 +1343,7 @@ public class ChainedBuffer implements Buffer {
 	 * @see ghidra.framework.store.Buffer#putLong(int, long)
 	 */
 	@Override
-	public synchronized int putLong(int offset, long v) throws IOException {
+	public synchronized int putLong(int offset, long v) throws IndexOutOfBoundsException, IOException {
 		if (readOnly) {
 			throw new UnsupportedOperationException("Read-only buffer");
 		}
@@ -1351,7 +1353,7 @@ public class ChainedBuffer implements Buffer {
 				throw new AssertException("Invalid Buffer");
 			}
 			if (offset < 0 || (offset + 7) >= size) {
-				throw new ArrayIndexOutOfBoundsException();
+				throw new IndexOutOfBoundsException();
 			}
 			if (useXORMask) {
 				v = v ^ getXorMask(offset % dataSpace, 8);
@@ -1376,7 +1378,7 @@ public class ChainedBuffer implements Buffer {
 	}
 
 	@Override
-	public synchronized int putShort(int offset, short v) throws IOException {
+	public synchronized int putShort(int offset, short v) throws IndexOutOfBoundsException, IOException {
 		if (readOnly) {
 			throw new UnsupportedOperationException("Read-only buffer");
 		}
@@ -1386,7 +1388,7 @@ public class ChainedBuffer implements Buffer {
 				throw new AssertException("Invalid Buffer");
 			}
 			if (offset < 0 || (offset + 1) >= size) {
-				throw new ArrayIndexOutOfBoundsException();
+				throw new IndexOutOfBoundsException();
 			}
 			if (useXORMask) {
 				v = (short) (v ^ (short) getXorMask(offset % dataSpace, 2));
@@ -1430,7 +1432,7 @@ public class ChainedBuffer implements Buffer {
 	 * @throws IOException thrown if an IO error occurs
 	 */
 	private void initializeAllocatedBuffer(int chainBufferIndex, DataBuffer buf)
-			throws IOException {
+			throws IndexOutOfBoundsException, IOException {
 
 		int offset = chainBufferIndex * dataSpace;
 		int len = size - offset;

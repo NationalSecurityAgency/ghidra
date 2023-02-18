@@ -108,19 +108,19 @@ class IndexField extends Field {
 	}
 
 	@Override
-	int write(Buffer buf, int offset) throws IOException {
+	int write(Buffer buf, int offset) throws IndexOutOfBoundsException, IOException {
 		offset = indexedField.write(buf, offset);
 		return primaryKey.write(buf, offset);
 	}
 
 	@Override
-	int read(Buffer buf, int offset) throws IOException {
+	int read(Buffer buf, int offset) throws IndexOutOfBoundsException, IOException {
 		offset = indexedField.read(buf, offset);
 		return primaryKey.read(buf, offset);
 	}
 
 	@Override
-	int readLength(Buffer buf, int offset) throws IOException {
+	int readLength(Buffer buf, int offset) throws IndexOutOfBoundsException, IOException {
 		return indexedField.readLength(buf, offset) + primaryKey.length();
 	}
 
@@ -229,7 +229,7 @@ class IndexField extends Field {
 	}
 
 	@Override
-	int compareTo(DataBuffer buffer, int offset) {
+	int compareTo(DataBuffer buffer, int offset) throws IndexOutOfBoundsException {
 		int result = indexedField.compareTo(buffer, offset);
 		if (result != 0) {
 			return result;
