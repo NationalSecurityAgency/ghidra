@@ -28,6 +28,8 @@ data/languages/mips64_32_o64.cspec||GHIDRA||||END|
 data/languages/mips64be.slaspec||GHIDRA||||END|
 data/languages/mips64le.slaspec||GHIDRA||||END|
 data/languages/mips64micro.pspec||GHIDRA||||END|
+data/languages/mips_dsp.sinc||GHIDRA||||END|
+data/languages/mips_mt.sinc||GHIDRA||||END|
 data/languages/mipsfloat.sinc||GHIDRA||||END|
 data/languages/mipsmicro.sinc||GHIDRA||||END|
 data/manuals/MIPS.idx||GHIDRA||||END|

@@ -1,0 +1,152 @@
+define pcodeop fork;
+define pcodeop move_from_thread_context;
+define pcodeop move_from_thread_cp0;
+define pcodeop move_from_thread_gpr;
+define pcodeop move_from_thread_dsp;
+define pcodeop move_from_thread_fpr;
+define pcodeop move_from_thread_fpcr;
+define pcodeop move_from_thread_cop2_data;
+define pcodeop move_from_thread_cop2_control;
+define pcodeop move_to_thread_context;
+define pcodeop move_to_thread_cp0;
+define pcodeop move_to_thread_gpr;
+define pcodeop move_to_thread_dsp;
+define pcodeop move_to_thread_fpr;
+define pcodeop move_to_thread_fpcr;
+define pcodeop move_to_thread_cop2_data;
+define pcodeop move_to_thread_cop2_control;
+define pcodeop yield;
+
+# Disable multi-threaded execution. Returns VPEControl
+:dmt RT is $(AMODE) & REL6=0 & prime=0x10 & mfmc0=0xB & rd32=0x1 & zero5=0xF & fct=0x1 & RT {
+	# Clear VPEControl IE bit (bit 15)
+	RT = VPEControl; VPEControl = VPEControl & ~0x8000; #VPEControl[15,1] = 0;
+}
+
+# Disable Virtual Processor Execution. Returns VPEControl
+:dvpe RT is $(AMODE) & REL6=0 & prime=0x10 & mfmc0=0xB & rd32=0x0 & zero5=0x0 & fct=0x1 & RT {
+	# Clear MVPControl EVP bit (bit 0)
+	RT = MVPControl; MVPControl = MVPControl & ~0x1;
+}
+
+# Enable multi-threaded execution. Returns VPEControl
+:emt RT is $(AMODE) & REL6=0 & prime=0x10 & mfmc0=0xB & rd32=0x1 & zero5=0xF & fct=0x21 & RT {
+	# Set VPEControl TE bit (bit 15)
+	RT = VPEControl; VPEControl = VPEControl | 0x8000; # VPEControl[15,1] = 1;
+} 
+
+# Enable Virtual Processor Execution. Returns VPEControl
+:evpe RT is $(AMODE) & REL6=0 & prime=0x10 & mfmc0=0xB & rd32=0x0 & zero5=0x0 & fct=0x21 & RT {
+# Set MVPControl EVP bit (bit 0)h
+	RT = MVPControl;
+	MVPControl = MVPControl | 0x1;
+}
+
+:fork "Thread_GPR["^RDsrc^"]", RSsrc, RTsrc is $(AMODE) & REL6=0 & prime=0x1F & zero5=0x0 & fct=0x8 & RDsrc & RSsrc & RTsrc {
+	fork(RDsrc, RSsrc, RTsrc);
+}
+
+# Move From Thread Context
+# MFTR general instruction
+:mftr RD, RTsrc, bit5, sel, h is $(AMODE) & REL6=0 & prime=0x10 & mfmc0=0x8 & bit5 & h & bit3=0 & sel & RD & RTsrc {
+	tmp:$(REGSIZE) = move_from_thread_context(RTsrc, bit5:1, sel:1, h:1);
+	RD = tmp;
+}
+
+# MFTR instructions have many idioms for sub-decodings
+# Move from coprocessor 0 register rt, sel=sel
+:mftc0 RD, "Thread_Co0["^RT0thread^"]", sel is $(AMODE) & REL6=0 & prime=0x10 & mfmc0=0x8 & bit5=0 & bit3=0 & RD & RT0thread & sel {
+	RD = move_from_thread_cp0(RT0thread:1, sel:1);
+}
+
+:mftc0 RD, "Thread_Co0["^RT0thread^"]" is $(AMODE) & REL6=0 & prime=0x10 & mfmc0=0x8 & bit5=0 & bit3=0 & RD & RT0thread & sel=0 {
+	RD = move_from_thread_cp0(RT0thread:1, 0:1);
+}
+
+# Move from GPR[rt]
+:mftgpr RD, "Thread_GPR["^RTthread^"]" is $(AMODE) & REL6=0 & prime=0x10 & mfmc0=0x8 & bit5=1 & bit3=0 & sel=0x0 & RD & RTthread {
+	RD = move_from_thread_gpr(RTthread);
+}
+
+RtDSP: "lo"  is lohiacx=0 { }
+RtDSP: "hi"  is lohiacx=1 { }
+RtDSP: "acx" is lohiacx=2 { }
+RtDSP: "dsp" is rtmtdsp=16 { }
+
+
+:mft^RtDSP RD, rtmtdsp is $(AMODE) & REL6=0 & prime=0x10 & mfmc0=0x8 & bit5=1 & bit3=0 & sel=0x1 & RD & RtDSP & rtmtdsp {
+	RD = move_from_thread_dsp(rtmtdsp);
+}
+
+# Move from FPR[rt]
+:mftc1 RD, "Thread_FPR["^FTthread^"]" is $(AMODE) & REL6=0 & prime=0x10 & mfmc0=0x8 & bit5=1 & h=0 & bit3=0 & sel=0x2 & RD & FTthread {
+	RD = move_from_thread_fpr(FTthread, 0:1);
+}
+
+:mfthc1 RD, "Thread_FPR["^FTthread^"]" is $(AMODE) & REL6=0 & prime=0x10 & mfmc0=0x8 & bit5=1 & h=1 & bit3=0 & sel=0x2 & RD & FTthread {
+	RD = move_from_thread_fpr(FTthread, 1:1);
+}
+
+# Move from FPCR[rt]
+:cftc1 RD, "Thread_FPCR["^FCTthread^"]" is $(AMODE) & REL6=0 & prime=0x10 & mfmc0=0x8 & bit5=1 & bit3=0 & sel=0x3 & RD & FCTthread {
+	RD = move_from_thread_fpcr(FCTthread);
+}
+
+# Skipping for now: MFTR for C0P2 Data and C0P2 Control (bit5=1, sel=4/5)
+
+# Move to Thread Context
+# MTTR general instruction
+:mttr RDsrc, RTsrc, bit5, sel, h is $(AMODE) & REL6=0 & prime=0x10 & mfmc0=0xc & bit5 & h & bit3=0 & sel & RDsrc & RTsrc {
+	move_to_thread_context(RDsrc, RTsrc, bit5:1, sel:1, h:1);
+}
+
+# MTTR instructions have many idioms for sub-decodings
+# Move rt to coprocessor 0 register rd, sel=sel
+:mttc0 RTsrc, "Thread_Co0["^RD0thread^"]", sel is $(AMODE) & REL6=0 & prime=0x10 & mfmc0=0xc & bit5=0 & bit3=0 & RTsrc & RD0thread & sel {
+	move_to_thread_cp0(RD0thread:1, RTsrc, sel:1);
+}
+
+:mttc0 RTsrc, "Thread_Co0["^RD0thread^"]" is $(AMODE) & REL6=0 & prime=0x10 & mfmc0=0xc & bit5=0 & bit3=0 & RTsrc & RD0thread & sel=0 {
+	move_to_thread_cp0(RD0thread:1, RTsrc, 0:1);
+}
+
+# Move to GPR[rd]
+:mttgpr RTsrc, "Thread_GPR["^RDthread^"]" is $(AMODE) & REL6=0 & prime=0x10 & mfmc0=0xc & bit5=1 & bit3=0 & sel=0x0 & RTsrc & RDthread {
+	move_to_thread_gpr(RDthread, RTsrc);
+}
+
+RdDSP: "lo"  is lohiacx2=0 { }
+RdDSP: "hi"  is lohiacx2=1 { }
+RdDSP: "acx" is lohiacx2=2 { }
+RdDSP: "dsp" is rdmtdsp=16 { }
+
+# Move to DSP[rd]
+:mtt^RdDSP RTsrc, rdmtdsp is $(AMODE) & REL6=0 & prime=0x10 & mfmc0=0xc & bit5=1 & bit3=0 & sel=0x1 & RTsrc & RdDSP & rdmtdsp {
+	move_to_thread_dsp(rdmtdsp, RTsrc);
+}
+
+# Move to FPR[rd]
+:mttc1 RTsrc, "Thread_FPR["^FDthread^"]" is $(AMODE) & REL6=0 & prime=0x10 & mfmc0=0xC & bit5=1 & h=0 & bit3=0 & sel=0x2 & RTsrc & FDthread {
+	move_to_thread_fpr(FDthread, RTsrc, 0:1);
+}
+
+:mtthc1 RTsrc, "Thread_FPR["^FDthread^"]" is $(AMODE) & REL6=0 & prime=0x10 & mfmc0=0xC & bit5=1 & h=1 & bit3=0 & sel=0x2 & RTsrc & FDthread {
+	move_to_thread_fpr(FDthread, RTsrc, 1:1);
+}
+
+# Move to FPCR[rd]
+:cttc1 RTsrc, "Thread_FPCR["^FCRthread^"]" is $(AMODE) & REL6=0 & prime=0x10 & mfmc0=0xC & bit5=1 & bit3=0 & sel=0x3 & RTsrc & FCRthread {
+	move_to_thread_fpcr(FCRthread, RTsrc);
+}
+
+# Skipping for now: MTTR for C0P2 Data and C0P2 control (bit5=1, sel=4/5)
+
+# Conditionally Deschedule or Deallocate the Current Thread
+:yield RD, RSsrc is $(AMODE) & REL6=0 & prime=0x1F & op=0 & zero5=0x0 & fct=0x9 & RD & RSsrc {
+	yield(RSsrc);
+	RD = RSsrc & YQMask;
+}
+
+:yield RSsrc is $(AMODE) & REL6=0 & prime=0x1F & op=0 & zero5=0x0 & fct=0x9 & rd=0 & RSsrc {
+	yield(RSsrc);
+}
