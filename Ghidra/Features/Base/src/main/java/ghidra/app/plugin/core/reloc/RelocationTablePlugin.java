@@ -25,9 +25,14 @@ import ghidra.framework.model.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.reloc.Relocation;
 import ghidra.program.util.ChangeManager;
+import ghidra.program.util.ProgramChangeRecord;
 import ghidra.util.table.SelectionNavigationAction;
 import ghidra.util.table.actions.MakeProgramSelectionAction;
+import ghidra.util.task.TaskMonitor;
+import ghidra.util.worker.Job;
+import ghidra.util.worker.Worker;
 
 //@formatter:off
 @PluginInfo(
@@ -46,6 +51,11 @@ public class RelocationTablePlugin extends Plugin implements DomainObjectListene
 
 	private Program currentProgram;
 	private RelocationProvider provider;
+
+	/**
+	 * A worker that will process domain object change event work off of the Swing thread.
+	 */
+	private Worker domainObjectWorker = Worker.createGuiWorker();
 
 	public RelocationTablePlugin(PluginTool tool) {
 		super(tool);
@@ -107,6 +117,76 @@ public class RelocationTablePlugin extends Plugin implements DomainObjectListene
 			provider.setProgram(currentProgram);
 		}
 
+		int eventCnt = ev.numRecords();
+		for (int i = 0; i < eventCnt; ++i) {
+			DomainObjectChangeRecord doRecord = ev.getChangeRecord(i);
+
+			int eventType = doRecord.getEventType();
+			if (!(doRecord instanceof ProgramChangeRecord)) {
+				continue;
+			}
+
+			ProgramChangeRecord rec = (ProgramChangeRecord) doRecord;
+			switch (eventType) {
+				case ChangeManager.DOCR_RELOCATION_ADDED:
+					Relocation relocation = (Relocation) rec.getNewValue();
+					domainObjectWorker.schedule(new RelocationAddedJob(currentProgram, relocation));
+					break;
+
+				case ChangeManager.DOCR_RELOCATION_REMOVED:
+					relocation = (Relocation) rec.getOldValue();
+					domainObjectWorker.schedule(new RelocationRemovedJob(currentProgram, relocation));
+					break;
+			}
+		}
 	}
 
+	private abstract class AbstractRelocationUpdateJob extends Job {
+
+		protected Program program;
+
+		AbstractRelocationUpdateJob(Program program) {
+			this.program = program;
+		}
+
+		@Override
+		public final void run(TaskMonitor taskMonitor) {
+			if (program != currentProgram) {
+				return;
+			}
+			doRun();
+		}
+
+		protected abstract void doRun();
+	}
+
+	private class RelocationAddedJob extends AbstractRelocationUpdateJob {
+
+		private Relocation relocation;
+
+		RelocationAddedJob(Program program, Relocation relocation) {
+			super(program);
+			this.relocation = relocation;
+		}
+
+		@Override
+		protected void doRun() {
+			provider.relocationAdded(relocation);
+		}
+	}
+
+	private class RelocationRemovedJob extends AbstractRelocationUpdateJob {
+
+		private Relocation relocation;
+
+		RelocationRemovedJob(Program program, Relocation relocation) {
+			super(program);
+			this.relocation = relocation;
+		}
+
+		@Override
+		protected void doRun() {
+			provider.relocationRemoved(relocation);
+		}
+	}
 }

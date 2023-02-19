@@ -168,9 +168,10 @@ public class RelocationManager implements RelocationTable, ManagerDB {
 		try {
 			byte flags = RelocationDBAdapter.getFlags(status, byteLength);
 			adapter.add(addr, flags, type, values, null, symbolName);
-			return new Relocation(addr, status, type, values,
+			Relocation relocation = new Relocation(addr, status, type, values,
 				getOriginalBytes(addr, status, null, byteLength),
 				symbolName);
+			relocationAdded(relocation);
 		}
 		catch (IOException e) {
 			program.dbError(e);
@@ -179,6 +180,29 @@ public class RelocationManager implements RelocationTable, ManagerDB {
 			lock.release();
 		}
 		return null;
+	}
+
+	@Override
+	public void remove(Relocation relocation) {
+		lock.acquire();
+		try {
+			RecordIterator it = adapter.iterator(relocation.getAddress());
+			while (it.hasNext()) {
+				DBRecord record = it.next();
+				Relocation candidate = getRelocation(record);
+				if (candidate.equals(relocation)) {
+					adapter.remove(record.getKey());
+					relocationRemoved(candidate);
+					break;
+				}
+			}
+		}
+		catch (IOException e) {
+			program.dbError(e);
+		}
+		finally {
+			lock.release();
+		}
 	}
 
 	@Override
@@ -377,4 +401,13 @@ public class RelocationManager implements RelocationTable, ManagerDB {
 		// do nothing here
 	}
 
+	private void relocationAdded(Relocation relocation) {
+		// fire event
+		program.relocationAdded(relocation);
+	}
+
+	private void relocationRemoved(Relocation relocation) {
+		// fire event
+		program.relocationRemoved(relocation);
+	}
 }

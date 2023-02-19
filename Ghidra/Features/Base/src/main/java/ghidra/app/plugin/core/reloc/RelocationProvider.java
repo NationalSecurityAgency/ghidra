@@ -25,6 +25,7 @@ import ghidra.app.services.GoToService;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.reloc.Relocation;
 import ghidra.util.HelpLocation;
 import ghidra.util.table.*;
 
@@ -112,5 +113,17 @@ class RelocationProvider extends ComponentProviderAdapter {
 		threadedPanel.dispose();
 		tableFilterPanel.dispose();
 
+	}
+
+	void relocationAdded(Relocation relocation) {
+		if (isVisible()) {
+			tableModel.relocationAdded(relocation);
+		}
+	}
+
+	void relocationRemoved(Relocation relocation) {
+		if (isVisible()) {
+			tableModel.relocationRemoved(relocation);
+		}
 	}
 }

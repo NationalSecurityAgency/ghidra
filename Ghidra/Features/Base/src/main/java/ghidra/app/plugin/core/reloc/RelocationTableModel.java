@@ -67,6 +67,8 @@ class RelocationTableModel extends AddressBasedTableModel<RelocationRowObject> {
 	static final String RELOCATION_CURRENT_BYTES = "Current Bytes";
 	static final String RELOCATION_NAME = "Name";
 
+	private int relocationIndex = 0;
+
 	public RelocationTableModel(ServiceProvider serviceProvider, Program program,
 			TaskMonitor monitor) {
 		super("Relocation Table Model", serviceProvider, program, monitor);
@@ -110,7 +112,7 @@ class RelocationTableModel extends AddressBasedTableModel<RelocationRowObject> {
 			return;
 		}
 
-		int relocationIndex = 0;
+		relocationIndex = 0;
 		RelocationTable relocationTable = getProgram().getRelocationTable();
 		Iterator<Relocation> iterator = relocationTable.getRelocations();
 		while (iterator.hasNext()) {
@@ -159,6 +161,20 @@ class RelocationTableModel extends AddressBasedTableModel<RelocationRowObject> {
 		public RelocationRowObject(Relocation r, int relocationIndex) {
 			this.relocationIndex = relocationIndex;
 			this.relocation = r;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (!(obj instanceof RelocationRowObject)) {
+				return false;
+			}
+			RelocationRowObject other = (RelocationRowObject) obj;
+			return relocation.equals(other.relocation);
+		}
+
+		@Override
+		public int hashCode() {
+			return relocation.hashCode();
 		}
 	}
 
@@ -280,5 +296,13 @@ class RelocationTableModel extends AddressBasedTableModel<RelocationRowObject> {
 			return rowObject.relocation.getSymbolName();
 		}
 
+	}
+
+	public void relocationAdded(Relocation relocation) {
+		addObject(new RelocationRowObject(relocation, ++relocationIndex));
+	}
+
+	public void relocationRemoved(Relocation relocation) {
+		removeObject(new RelocationRowObject(relocation, -1));
 	}
 }

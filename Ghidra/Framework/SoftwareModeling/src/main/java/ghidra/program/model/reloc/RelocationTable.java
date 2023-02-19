@@ -69,6 +69,12 @@ public interface RelocationTable {
 			String symbolName);
 
 	/**
+	 * Removes a relocation from the relocation table.
+	 * @param relocation the relocation to remove
+	 */
+	public void remove(Relocation relocation);
+
+	/**
 	 * Returns the ordered list of relocations which have been defined for the specified address.
 	 * In most cases there will be one or none, but in some cases multiple relocations may be
 	 * applied to a single address. 
