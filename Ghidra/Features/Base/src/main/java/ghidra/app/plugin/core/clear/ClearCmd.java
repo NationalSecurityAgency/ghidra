@@ -23,6 +23,7 @@ import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.reloc.*;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
@@ -128,6 +129,9 @@ public class ClearCmd extends BackgroundCommand {
 		if (options.clearSymbols()) {
 			clearSymbols(program, view, monitor);
 		}
+		if (options.clearRelocations()) {
+			clearRelocations(program, view, monitor);
+		}
 		if (options.clearProperties()) {
 			clearProperties(program, view, monitor);
 		}
@@ -180,6 +184,43 @@ public class ClearCmd extends BackgroundCommand {
 
 				if ((numDone % 10000) == 0) {
 					int progress = previousRangeAddrCnt + (int) (s.getAddress().subtract(rangeMin));
+					monitor.setProgress(progress);
+
+					// Allow Swing a chance to paint components that may require a DB lock
+					Swing.allowSwingToProcessEvents();
+				}
+			}
+			previousRangeAddrCnt += range.getLength();
+		}
+	}
+
+	private void clearRelocations(Program program, AddressSetView clearView, TaskMonitor monitor)
+			throws CancelledException {
+
+		if (clearView.isEmpty()) {
+			return;
+		}
+
+		monitor.initialize(clearView.getNumAddresses());
+		monitor.setMessage("Clearing relocations...");
+
+		RelocationTable relocationTable = program.getRelocationTable();
+
+		// Use ranges to keep track of progress
+		int numDone = 0;
+		int previousRangeAddrCnt = 0;
+		for (AddressRange range : clearView.getAddressRanges()) {
+			Address rangeMin = range.getMinAddress();
+			Iterator<Relocation> relocationIter = relocationTable.getRelocations(new AddressSet(range));
+			while (relocationIter.hasNext()) {
+				monitor.checkCanceled();
+				Relocation r = relocationIter.next();
+
+				relocationTable.remove(r);
+				numDone++;
+
+				if ((numDone % 10000) == 0) {
+					int progress = previousRangeAddrCnt + (int) (r.getAddress().subtract(rangeMin));
 					monitor.setProgress(progress);
 
 					// Allow Swing a chance to paint components that may require a DB lock

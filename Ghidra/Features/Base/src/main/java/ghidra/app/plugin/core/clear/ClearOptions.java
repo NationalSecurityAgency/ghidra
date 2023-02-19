@@ -25,6 +25,7 @@ public class ClearOptions {
 
     private boolean code;
     private boolean symbols;
+    private boolean relocations;
     private boolean comments;
     private boolean properties;
     private boolean functions;
@@ -46,11 +47,13 @@ public class ClearOptions {
 	public ClearOptions( boolean defaultClearValue ) {
 	    this(defaultClearValue, defaultClearValue, defaultClearValue, defaultClearValue, 
 	        defaultClearValue, defaultClearValue, defaultClearValue, defaultClearValue, 
-	        defaultClearValue, defaultClearValue, defaultClearValue, defaultClearValue);
+	        defaultClearValue, defaultClearValue, defaultClearValue, defaultClearValue,
+	        defaultClearValue);
 	}
 	
     private ClearOptions(boolean code,
                 		boolean symbols,
+                		boolean relocations,
                 		boolean comments,
                 		boolean properties,
                 		boolean functions,
@@ -63,6 +66,7 @@ public class ClearOptions {
                 		boolean bookmarks) {
         this.code = code;
         this.symbols = symbols;
+        this.relocations = relocations;
         this.comments = comments;
         this.properties = properties;
         this.functions = functions;
@@ -81,6 +85,10 @@ public class ClearOptions {
 
     public void setClearSymbols( boolean symbols ) {
         this.symbols = symbols;
+    }
+
+    public void setClearRelocations( boolean relocations ) {
+        this.relocations = relocations;
     }
 
     public void setClearComments( boolean comments ) {
@@ -135,6 +143,9 @@ public class ClearOptions {
     boolean clearSymbols() {
         return symbols;
     }
+    boolean clearRelocations() {
+        return relocations;
+    }
     boolean clearFunctions() {
         return functions;
     }
@@ -178,7 +189,7 @@ public class ClearOptions {
     }
 
     boolean clearAny() {
-        return code || symbols || comments || properties || functions
+        return code || symbols || relocations || comments || properties || functions
                 || registers || equates || userReferences || analysisReferences
                 || importReferences || defaultReferences || bookmarks;
     }

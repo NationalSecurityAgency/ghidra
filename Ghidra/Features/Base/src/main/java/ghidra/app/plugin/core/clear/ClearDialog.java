@@ -32,13 +32,14 @@ import ghidra.util.HelpLocation;
 
 /**
  * Dialog that shows options for "Clear All." User can choose to clear
- * symbols, comments, properties, code, and functions.
+ * symbols, relocations, comments, properties, code, and functions.
  */
 public class ClearDialog extends DialogComponentProvider {
 
 	private ClearPlugin plugin;
 	private JPanel panel;
 	private JCheckBox symbolsCb;
+	private JCheckBox relocationsCb;
 	private JCheckBox commentsCb;
 	private JCheckBox propertiesCb;
 	private JCheckBox codeCb;
@@ -76,6 +77,7 @@ public class ClearDialog extends DialogComponentProvider {
 
 		opts.setClearCode(codeCb.isSelected());
 		opts.setClearSymbols(symbolsCb.isSelected());
+		opts.setClearRelocations(relocationsCb.isSelected());
 		opts.setClearComments(commentsCb.isSelected());
 		opts.setClearProperties(propertiesCb.isSelected());
 		opts.setClearFunctions(functionsCb.isSelected());
@@ -123,6 +125,7 @@ public class ClearDialog extends DialogComponentProvider {
 		cbPanel.setLayout(bl);
 
 		symbolsCb = new GCheckBox("Symbols");
+		relocationsCb = new GCheckBox("Relocations");
 		commentsCb = new GHtmlCheckBox(
 			"<HTML>Comments <FONT SIZE=\"2\">(does not affect automatic comments)</FONT>");
 		commentsCb.setVerticalTextPosition(SwingConstants.TOP);
@@ -139,6 +142,8 @@ public class ClearDialog extends DialogComponentProvider {
 
 		symbolsCb.setSelected(true);
 		symbolsCb.addKeyListener(listener);
+		relocationsCb.setSelected(true);
+		relocationsCb.addKeyListener(listener);
 		commentsCb.setSelected(true);
 		commentsCb.addKeyListener(listener);
 		propertiesCb.setSelected(true);
@@ -163,6 +168,7 @@ public class ClearDialog extends DialogComponentProvider {
 		bookmarksCb.addKeyListener(listener);
 
 		cbPanel.add(symbolsCb);
+		cbPanel.add(relocationsCb);
 		cbPanel.add(commentsCb);
 		cbPanel.add(propertiesCb);
 		cbPanel.add(codeCb);
@@ -207,6 +213,7 @@ public class ClearDialog extends DialogComponentProvider {
 		// record the checkboxes for later use
 		final List<JCheckBox> checkBoxList = new ArrayList<>(10);
 		checkBoxList.add(symbolsCb);
+		checkBoxList.add(relocationsCb);
 		checkBoxList.add(commentsCb);
 		checkBoxList.add(propertiesCb);
 		checkBoxList.add(codeCb);
