@@ -15,6 +15,9 @@
  */
 package ghidra.program.model.reloc;
 
+import java.util.Arrays;
+import java.util.Objects;
+
 import ghidra.program.model.address.Address;
 
 /**
@@ -191,5 +194,25 @@ public class Relocation {
 	 */
 	public String getSymbolName() {
 		return symbolName;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(addr, status, type, symbolName) ^ Arrays.hashCode(values) ^ Arrays.hashCode(bytes);
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (!(o instanceof Relocation)) {
+			return false;
+		}
+
+		Relocation other = (Relocation) o;
+		return Objects.equals(addr, other.addr) && Objects.equals(status, other.status) &&
+				type == other.type && Arrays.equals(values, other.values) &&
+				Arrays.equals(bytes, other.bytes) && Objects.equals(symbolName, other.symbolName);
 	}
 }
