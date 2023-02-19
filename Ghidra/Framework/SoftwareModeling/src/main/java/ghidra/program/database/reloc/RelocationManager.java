@@ -147,9 +147,10 @@ public class RelocationManager implements RelocationTable, ManagerDB {
 		try {
 			byte flags = RelocationDBAdapter.getFlags(status, 0);
 			adapter.add(addr, flags, type, values, bytes, symbolName);
-			return new Relocation(addr, status, type, values,
+			Relocation relocation = new Relocation(addr, status, type, values,
 				getOriginalBytes(addr, status, bytes, 0),
 				symbolName);
+			relocationAdded(relocation);
 		}
 		catch (IOException e) {
 			program.dbError(e);

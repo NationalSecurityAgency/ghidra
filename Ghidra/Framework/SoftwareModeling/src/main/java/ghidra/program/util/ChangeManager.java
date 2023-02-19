@@ -725,6 +725,22 @@ public interface ChangeManager {
 	public static final int DOCR_USER_DATA_CHANGED = 201;
 
 	////////////////////////////////////////////////////////////////////////////
+	//
+	//                              RELOCATIONS
+	//
+	////////////////////////////////////////////////////////////////////////////
+
+	/**
+	 * A symbol was created.
+	 */
+	public static final int DOCR_RELOCATION_ADDED = 210;
+
+	/**
+	 * A symbol was removed.
+	 */
+	public static final int DOCR_RELOCATION_REMOVED = 211;
+
+	////////////////////////////////////////////////////////////////////////////
 	/**
 	 * Mark the state of a Program as having changed and generate
 	 * the event of the specified type.  Any or all parameters may be null.

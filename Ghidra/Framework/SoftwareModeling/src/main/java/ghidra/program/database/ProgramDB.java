@@ -54,6 +54,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.mem.MemoryConflictException;
 import ghidra.program.model.pcode.Varnode;
+import ghidra.program.model.reloc.Relocation;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.AddressSetPropertyMap;
 import ghidra.program.model.util.PropertyMapManager;
@@ -1013,6 +1014,20 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		}
 		changed = true;
 		fireEvent(new ProgramChangeRecord(type, addr, addr, null, oldValue, newValue));
+	}
+
+	public void relocationAdded(Relocation relocation) {
+		Address addr = relocation.getAddress();
+
+		changed = true;
+		fireEvent(new ProgramChangeRecord(ChangeManager.DOCR_RELOCATION_ADDED, addr, addr, null, null, relocation));
+	}
+
+	public void relocationRemoved(Relocation relocation) {
+		Address addr = relocation.getAddress();
+
+		changed = true;
+		fireEvent(new ProgramChangeRecord(ChangeManager.DOCR_RELOCATION_REMOVED, addr, addr, relocation, relocation, null));
 	}
 
 	@Override
