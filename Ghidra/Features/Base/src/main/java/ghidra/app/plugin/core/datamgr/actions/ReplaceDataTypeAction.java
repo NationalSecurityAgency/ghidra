@@ -112,7 +112,7 @@ public class ReplaceDataTypeAction extends DockingAction {
 				updatedPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 10, 0));
 				updatedPanel.setLayout(new VerticalLayout(5));
 
-				GLabel label = new GLabel("Choose the relacement data type: ");
+				GLabel label = new GLabel("Choose the replacement data type: ");
 				label.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
 				updatedPanel.add(label);
 
@@ -146,7 +146,7 @@ public class ReplaceDataTypeAction extends DockingAction {
 		}
 		catch (DataTypeDependencyException e) {
 			Msg.showError(this, null, "Replace Failed", "Replace failed.  Existing type " + newDt +
-				"; replacment type " + oldDt + ". " + e.getMessage());
+				"; replacement type " + oldDt + ". " + e.getMessage());
 		}
 		finally {
 			dtm.endTransaction(txId, true);
