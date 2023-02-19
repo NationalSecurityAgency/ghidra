@@ -91,6 +91,11 @@ public class RelocationDBAdapterV6 extends RelocationDBAdapter {
 	}
 
 	@Override
+	void remove(long id) throws IOException {
+		relocTable.deleteRecord(id);
+	}
+
+	@Override
 	int getRecordCount() {
 		return relocTable.getRecordCount();
 	}

@@ -219,6 +219,13 @@ abstract class RelocationDBAdapter {
 			String symbolName) throws IOException;
 
 	/**
+	 * Remove a relocation record.
+	 * @param id the relocation id to remove
+	 * @throws IOException if a database error occurs
+	 */
+	abstract void remove(long id) throws IOException;
+
+	/**
 	 * Iterator over all records in address order.
 	 * @return record iterator
 	 * @throws IOException if a database error occurs

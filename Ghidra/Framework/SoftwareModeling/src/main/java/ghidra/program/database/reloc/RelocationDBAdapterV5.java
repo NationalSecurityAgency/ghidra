@@ -66,6 +66,11 @@ public class RelocationDBAdapterV5 extends RelocationDBAdapter {
 	}
 
 	@Override
+	void remove(long id) throws IOException {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	int getRecordCount() {
 		return relocTable.getRecordCount();
 	}
