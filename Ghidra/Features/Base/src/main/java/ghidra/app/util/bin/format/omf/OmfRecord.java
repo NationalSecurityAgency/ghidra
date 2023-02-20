@@ -246,6 +246,6 @@ public abstract class OmfRecord {
 	@Override
 	public String toString() {
 		return String.format("name: %s, type: 0x%x, offset: 0x%x, length: 0x%x",
-			getRecordName(recordType), recordType, recordOffset, recordLength);
+			getRecordName(recordType & 0xfe), recordType, recordOffset, recordLength);
 	}
 }
