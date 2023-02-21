@@ -35,6 +35,7 @@ import ghidra.program.model.pcode.*;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
 import ghidra.util.UndefinedFunction;
+import ghidra.util.exception.NotFoundException;
 import ghidra.util.exception.UsrException;
 import ghidra.util.task.TaskMonitor;
 
@@ -139,6 +140,8 @@ public class DecompileCallback {
 
 	/**
 	 * Get bytes from the program's memory image.
+	 * Any exceptions are caught, resulting in null being returned. The decompiler treats a null
+	 * as a DataUnavailError but will continue to process the function.
 	 * @param addr is the starting address to fetch bytes from
 	 * @param size is the number of bytes to fetch
 	 * @return the bytes matching the query or null if the query can't be met
@@ -199,7 +202,9 @@ public class DecompileCallback {
 	}
 
 	/**
-	 * Generate p-code ops for the instruction at the given address
+	 * Generate p-code ops for the instruction at the given address.
+	 * Any exceptions are caught, resulting in an empty result. The decompiler interprets these
+	 * as a BadDataError, but will continue to process the function.
 	 * @param addr is the given address
 	 * @param resultEncoder will contain the generated p-code ops
 	 */
@@ -234,7 +239,8 @@ public class DecompileCallback {
 			Msg.error(this,
 				"Decompiling " + funcEntry + ", pcode error at " + addr + ": " + e.getMessage(), e);
 		}
-		resultEncoder.clear();
+		// If we reach here, an exception was thrown
+		resultEncoder.clear();	// Make sure the result is empty
 	}
 
 	/**
@@ -275,73 +281,62 @@ public class DecompileCallback {
 	 * @param paramDecoder contains the context
 	 * @param type is the type of payload
 	 * @param resultEncoder will contain the generated p-code ops
+	 * @throws DecoderException for problems decoding the injection context
+	 * @throws UnknownInstructionException if there is no instruction at the injection site
+	 * @throws IOException for errors encoding the injection result
+	 * @throws NotFoundException if an expected aspect of the injection is not present in context
+	 * @throws MemoryAccessException for problems establishing the injection context
 	 */
-	public void getPcodeInject(String nm, Decoder paramDecoder, int type, Encoder resultEncoder) {
+	public void getPcodeInject(String nm, Decoder paramDecoder, int type, Encoder resultEncoder)
+			throws DecoderException, UnknownInstructionException, IOException,
+			MemoryAccessException, NotFoundException {
 		PcodeInjectLibrary snippetLibrary = pcodecompilerspec.getPcodeInjectLibrary();
 
 		InjectPayload payload = snippetLibrary.getPayload(type, nm);
 		if (payload == null) {
-			Msg.warn(this, "Decompiling " + funcEntry + ", no pcode inject with name: " + nm);
-			return;		// No fixup associated with this name
+			throw new NotFoundException("No p-code injection with name: " + nm);
 		}
 		InjectContext con = snippetLibrary.buildInjectContext();
 		PcodeOp[] pcode;
-		try {
-			con.decode(paramDecoder);
+		con.decode(paramDecoder);
+		int fallThruOffset;
+		if (payload.getType() == InjectPayload.EXECUTABLEPCODE_TYPE) {
+			// Executable p-code has no underlying instruction address and
+			// does (should) not use the inst_start, inst_next symbols that need
+			// to know about it.
+			fallThruOffset = 4;		// Provide a dummy length
 		}
-		catch (DecoderException e) {
-			Msg.error(this, "Decompiling " + funcEntry + ": " + e.getMessage());
-			return;
-		}
-		try {
-			int fallThruOffset;
-			if (payload.getType() == InjectPayload.EXECUTABLEPCODE_TYPE) {
-				// Executable p-code has no underlying instruction address and
-				// does (should) not use the inst_start, inst_next symbols that need
-				// to know about it.
-				fallThruOffset = 4;		// Provide a dummy length
+		else {
+			Instruction instr = getInstruction(con.baseAddr);
+			if (instr == null) {
+				Msg.warn(this, "Decompiling " + funcEntry + ", pcode inject error at " +
+					con.baseAddr + ": instruction not found");
+				return;
 			}
-			else {
-				Instruction instr = getInstruction(con.baseAddr);
-				if (instr == null) {
-					Msg.warn(this, "Decompiling " + funcEntry + ", pcode inject error at " +
-						con.baseAddr + ": instruction not found");
-					return;
-				}
 
-				// get next inst addr for inst_next pcode variable
-				fallThruOffset = instr.getDefaultFallThroughOffset();
-				con.nextAddr = con.baseAddr.add(fallThruOffset);
+			// get next inst addr for inst_next pcode variable
+			fallThruOffset = instr.getDefaultFallThroughOffset();
+			con.nextAddr = con.baseAddr.add(fallThruOffset);
 
-				con.refAddr = null;
-				for (Reference ref : program.getReferenceManager()
-						.getReferencesFrom(con.baseAddr)) {
-					if (ref.isPrimary() && ref.getReferenceType().isCall()) {
-						con.refAddr = ref.getToAddress();
-						break;
-					}
+			con.refAddr = null;
+			for (Reference ref : program.getReferenceManager().getReferencesFrom(con.baseAddr)) {
+				if (ref.isPrimary() && ref.getReferenceType().isCall()) {
+					con.refAddr = ref.getToAddress();
+					break;
 				}
 			}
-			pcode = payload.getPcode(program, con);
-			if (pcode == null) {
-				return;		// Return without result, which should let the decompiler exit gracefully
-			}
-			encodeInstruction(resultEncoder, con.baseAddr, pcode, fallThruOffset,
+		}
+		pcode = payload.getPcode(program, con);
+		if (pcode == null) {
+			return;		// Return without result, which should let the decompiler exit gracefully
+		}
+		encodeInstruction(resultEncoder, con.baseAddr, pcode, fallThruOffset,
+			payload.getParamShift(), addrfactory);
+		if (debug != null) {
+			XmlEncode xmlEncode = new XmlEncode();
+			encodeInstruction(xmlEncode, con.baseAddr, pcode, fallThruOffset,
 				payload.getParamShift(), addrfactory);
-			if (debug != null) {
-				XmlEncode xmlEncode = new XmlEncode();
-				encodeInstruction(xmlEncode, con.baseAddr, pcode, fallThruOffset,
-					payload.getParamShift(), addrfactory);
-				debug.addInject(con.baseAddr, nm, type, xmlEncode.toString());
-			}
-		}
-		catch (UnknownInstructionException e) {
-			Msg.warn(this, "Decompiling " + funcEntry + ", pcode inject error at " + con.baseAddr +
-				": " + e.getMessage());
-		}
-		catch (Exception e) {
-			Msg.error(this, "Decompiling " + funcEntry + ", pcode inject error at " + con.baseAddr +
-				": " + e.getMessage(), e);
+			debug.addInject(con.baseAddr, nm, type, xmlEncode.toString());
 		}
 	}
 
@@ -429,26 +424,19 @@ public class DecompileCallback {
 	 * Return the first symbol name at the given address
 	 * @param addr is the given address
 	 * @return the symbol or null if no symbol is found
+	 * @throws IOException for errors trying to encode the symbol
 	 */
-	public String getCodeLabel(Address addr) {
-		try {
-			Symbol sym = program.getSymbolTable().getPrimarySymbol(addr);
-			if (sym == null) {
-				return null;
-			}
-			String res = getSymbolName(sym);
-			if (debug != null) {
-				debug.getCodeSymbol(addr, sym.getID(), res, sym.getParentNamespace());
-			}
+	public String getCodeLabel(Address addr) throws IOException {
+		Symbol sym = program.getSymbolTable().getPrimarySymbol(addr);
+		if (sym == null) {
+			return null;
+		}
+		String res = getSymbolName(sym);
+		if (debug != null) {
+			debug.getCodeSymbol(addr, sym.getID(), res, sym.getParentNamespace());
+		}
 
-			return res;
-		}
-		catch (Exception e) {
-			Msg.error(this,
-				"Decompiling " + funcEntry + ", error while accessing symbol: " + e.getMessage(),
-				e);
-		}
-		return null;
+		return res;
 	}
 
 	private String getSymbolName(Symbol sym) {
@@ -658,100 +646,86 @@ public class DecompileCallback {
 	 * 
 	 * @param addr is the given address
 	 * @param resultEncoder is where to write encoded description
+	 * @throws IOException for errors encoding the result
 	 */
-	public void getMappedSymbols(Address addr, Encoder resultEncoder) {
+	public void getMappedSymbols(Address addr, Encoder resultEncoder) throws IOException {
 		if (addr == Address.NO_ADDRESS) {
 			// Unknown spaces may result from "spacebase" registers defined in cspec
 			return;
 		}
-		try {
-			Object obj = lookupSymbol(addr);
-			if (obj instanceof Function) {
-				boolean includeDefaults = addr.equals(funcEntry);
-				encodeFunction(resultEncoder, (Function) obj, addr, includeDefaults);
-			}
-			else if (obj instanceof Data) {
-				if (!encodeData(resultEncoder, (Data) obj)) {
-					encodeHole(resultEncoder, addr);
-				}
-			}
-			else if (obj instanceof ExternalReference) {
-				encodeExternalRef(resultEncoder, addr, (ExternalReference) obj);
-			}
-			else if (obj instanceof Symbol) {
-				encodeLabel(resultEncoder, (Symbol) obj, addr);
-			}
-			else {
-				encodeHole(resultEncoder, addr);	// There is a hole, describe the extent of the hole
-			}
-
-			return;
+		Object obj = lookupSymbol(addr);
+		if (obj instanceof Function) {
+			boolean includeDefaults = addr.equals(funcEntry);
+			encodeFunction(resultEncoder, (Function) obj, addr, includeDefaults);
 		}
-		catch (Exception e) {
-			Msg.error(this, "Decompiling " + funcEntry + ", mapped symbol error for " + addr +
-				": " + e.getMessage(), e);
+		else if (obj instanceof Data) {
+			if (!encodeData(resultEncoder, (Data) obj)) {
+				encodeHole(resultEncoder, addr);
+			}
 		}
-		return;
+		else if (obj instanceof ExternalReference) {
+			encodeExternalRef(resultEncoder, addr, (ExternalReference) obj);
+		}
+		else if (obj instanceof Symbol) {
+			encodeLabel(resultEncoder, (Symbol) obj, addr);
+		}
+		else {
+			encodeHole(resultEncoder, addr);	// There is a hole, describe the extent of the hole
+		}
 	}
 
 	/**
 	 * Get a description of an external reference at the given address
 	 * @param addr is the given address
 	 * @param resultEncoder will contain the resulting description
+	 * @throws IOException for errors encoding the result
 	 */
-	public void getExternalRef(Address addr, Encoder resultEncoder) {
-		try {
-			Function func = null;
-			if (cachedFunction != null && cachedFunction.getEntryPoint().equals(addr)) {
-				func = cachedFunction;
+	public void getExternalRef(Address addr, Encoder resultEncoder) throws IOException {
+		Function func = null;
+		if (cachedFunction != null && cachedFunction.getEntryPoint().equals(addr)) {
+			func = cachedFunction;
+		}
+		else {
+			ExternalReference extRef = getExternalReference(addr);
+			if (extRef != null) {
+				func = listing.getFunctionAt(extRef.getToAddress());
+				if (func == null) {
+					Symbol symbol = extRef.getExternalLocation().getSymbol();
+					long extId;
+					if (symbol != null) {
+						extId = symbol.getID();
+					}
+					else {
+						extId = program.getSymbolTable().getDynamicSymbolID(addr);
+
+					}
+					HighSymbol shellSymbol =
+						new HighFunctionShellSymbol(extId, extRef.getLabel(), addr, dtmanage);
+					encodeResult(resultEncoder, shellSymbol, null);
+					return;
+				}
 			}
 			else {
-				ExternalReference extRef = getExternalReference(addr);
-				if (extRef != null) {
-					func = listing.getFunctionAt(extRef.getToAddress());
-					if (func == null) {
-						Symbol symbol = extRef.getExternalLocation().getSymbol();
-						long extId;
-						if (symbol != null) {
-							extId = symbol.getID();
-						}
-						else {
-							extId = program.getSymbolTable().getDynamicSymbolID(addr);
-
-						}
-						HighSymbol shellSymbol =
-							new HighFunctionShellSymbol(extId, extRef.getLabel(), addr, dtmanage);
-						encodeResult(resultEncoder, shellSymbol, null);
-						return;
-					}
-				}
-				else {
-					func = listing.getFunctionAt(addr);
-				}
+				func = listing.getFunctionAt(addr);
 			}
-			if (func == null) {
-				// Its conceivable we could have external data, but we aren't currently checking for it
-				return;
-			}
-
-			HighFunction hfunc = new HighFunction(func, pcodelanguage, pcodecompilerspec, dtmanage);
-
-			int extrapop = getExtraPopOverride(func, addr);
-			hfunc.grabFromFunction(extrapop, false, (extrapop != default_extrapop));
-
-			HighSymbol funcSymbol = new HighFunctionSymbol(addr, 2, hfunc);
-			Namespace namespc = funcSymbol.getNamespace();
-			if (debug != null) {
-				debug.getFNTypes(hfunc);
-				debug.addPossiblePrototypeExtension(func);
-			}
-			encodeResult(resultEncoder, funcSymbol, namespc);
+		}
+		if (func == null) {
+			// Its conceivable we could have external data, but we aren't currently checking for it
 			return;
 		}
-		catch (Exception e) {
-			Msg.error(this,
-				"Decompiling " + funcEntry + ", error in getExternalRef: " + e.getMessage(), e);
+
+		HighFunction hfunc = new HighFunction(func, pcodelanguage, pcodecompilerspec, dtmanage);
+
+		int extrapop = getExtraPopOverride(func, addr);
+		hfunc.grabFromFunction(extrapop, false, (extrapop != default_extrapop));
+
+		HighSymbol funcSymbol = new HighFunctionSymbol(addr, 2, hfunc);
+		Namespace namespc = funcSymbol.getNamespace();
+		if (debug != null) {
+			debug.getFNTypes(hfunc);
+			debug.addPossiblePrototypeExtension(func);
 		}
+		encodeResult(resultEncoder, funcSymbol, namespc);
 	}
 
 	/**

@@ -1154,6 +1154,8 @@ void FlowInfo::doInjection(InjectPayload *payload,InjectContext &icontext,PcodeO
 
   bool startbasic = op->isBlockStart();
   ++iter;			// Now points to first op in the injection
+  if (iter == obank.endDead())
+    throw LowlevelError("Empty injection: " + payload->getName());
   PcodeOp *firstop = *iter;
   bool isfallthru = true;
   PcodeOp *lastop = xrefControlFlow(iter,startbasic,isfallthru,fc);

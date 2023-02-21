@@ -51,13 +51,13 @@ void InjectPayloadGhidra::inject(InjectContext &con,PcodeEmit &emit) const
   PackedDecode decoder(ghidra);
   try {
     if (!ghidra->getPcodeInject(name,type,con,decoder))
-      throw LowlevelError("Could not retrieve pcode snippet: "+name);
+      throw LowlevelError("Could not retrieve injection: "+name);
   }
   catch(JavaError &err) {
-    throw LowlevelError("Error getting pcode snippet: " + err.explain);
+    throw LowlevelError("Injection error: " + err.explain);
   }
   catch(DecoderError &err) {
-    throw LowlevelError("Error in pcode snippet xml: "+err.explain);
+    throw LowlevelError("Error decoding injection: "+err.explain);
   }
   uint4 elemId = decoder.openElement();
   Address addr = Address::decode(decoder);
