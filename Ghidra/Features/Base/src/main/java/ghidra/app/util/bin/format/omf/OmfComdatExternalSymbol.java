@@ -15,52 +15,35 @@
  */
 package ghidra.app.util.bin.format.omf;
 
-import ghidra.app.util.bin.BinaryReader;
-
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
+
+import ghidra.app.util.bin.BinaryReader;
 
 public class OmfComdatExternalSymbol extends OmfExternalSymbol {
-	public static class ExternalLookup {
-		public int nameIndex;
-		public int type;
-		
-		public ExternalLookup(int ni, int t) {
-			this.nameIndex = ni;
-			this.type = t;
-		}
-		
-	}
 	
-	protected ArrayList<ExternalLookup> externalLookups;
-	protected OmfSymbol[] symbol;
+	public record ExternalLookup(int nameIndex, int type) {}
+	protected List<ExternalLookup> externalLookups = new ArrayList<>();
 
 	public OmfComdatExternalSymbol(BinaryReader reader) throws IOException {
 		super(false);
 		readRecordHeader(reader);
+
 		long max = reader.getPointerIndex() + getRecordLength() - 1;
-		this.externalLookups = new ArrayList<ExternalLookup>();
-		
-		while(reader.getPointerIndex() < max) {
+		while (reader.getPointerIndex() < max) {
 			int nameIndex = OmfRecord.readIndex(reader);
 			int type = OmfRecord.readIndex(reader);
-			this.externalLookups.add(new ExternalLookup(nameIndex, type));
+			externalLookups.add(new ExternalLookup(nameIndex, type));
 		}
-		
+
 		readCheckSumByte(reader);
 	}
 
-	public void loadNames(ArrayList<String> namelist) {
-		ArrayList<OmfSymbol> symbollist = new ArrayList<OmfSymbol>();
-		for (ExternalLookup ext : this.externalLookups) {
-			String name = namelist.get(ext.nameIndex-1);
-			symbollist.add(new OmfSymbol(name, ext.type, 0, 0, 0));
+	public void loadNames(List<String> nameList) {
+		for (ExternalLookup ext : externalLookups) {
+			String name = nameList.get(ext.nameIndex - 1);
+			symbols.add(new OmfSymbol(name, ext.type, 0, 0, 0));
 		}
-		this.symbol = new OmfSymbol[symbollist.size()];
-		symbollist.toArray(this.symbol);
-	}
-	
-	public OmfSymbol[] getSymbols() {
-		return symbol;
 	}
 }
