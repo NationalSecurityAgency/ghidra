@@ -16,7 +16,6 @@
 package ghidra.app.util.bin.format.omf;
 
 import java.io.IOException;
-import java.util.ArrayList;
 
 import ghidra.app.util.bin.BinaryReader;
 
@@ -25,9 +24,8 @@ public class OmfComdefRecord extends OmfExternalSymbol {
 	public OmfComdefRecord(BinaryReader reader, boolean isStatic) throws IOException, OmfException {
 		super(isStatic);
 		readRecordHeader(reader);
-		long max = reader.getPointerIndex() + getRecordLength() - 1;
 
-		ArrayList<OmfSymbol> symbollist = new ArrayList<OmfSymbol>();
+		long max = reader.getPointerIndex() + getRecordLength() - 1;
 		while (reader.getPointerIndex() < max) {
 			String name = OmfRecord.readString(reader);
 			int typeIndex = OmfRecord.readIndex(reader);
@@ -42,12 +40,9 @@ public class OmfComdefRecord extends OmfExternalSymbol {
 				// Values 1 thru 5f plus 61, read the byte length
 				byteLength = readCommunalLength(reader);
 			}
-			OmfSymbol sym = new OmfSymbol(name, typeIndex, 0, dataType, byteLength);
-			symbollist.add(sym);
+			symbols.add(new OmfSymbol(name, typeIndex, 0, dataType, byteLength));
 		}
 		readCheckSumByte(reader);
-		symbol = new OmfSymbol[symbollist.size()];
-		symbollist.toArray(symbol);
 	}
 
 	private static int readCommunalLength(BinaryReader reader) throws OmfException, IOException {

@@ -21,34 +21,29 @@ import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
 
-public class OmfExternalSymbol extends OmfRecord {
+public class OmfComdatExternalSymbol extends OmfExternalSymbol {
+	
+	public record ExternalLookup(int nameIndex, int type) {}
+	protected List<ExternalLookup> externalLookups = new ArrayList<>();
 
-	private boolean isStatic;
-	protected List<OmfSymbol> symbols = new ArrayList<>();
-
-	protected OmfExternalSymbol(boolean isStatic) {
-		this.isStatic = isStatic;
-	}
-
-	public OmfExternalSymbol(BinaryReader reader, boolean isStatic) throws IOException {
-		this.isStatic = isStatic;
+	public OmfComdatExternalSymbol(BinaryReader reader) throws IOException {
+		super(false);
 		readRecordHeader(reader);
 
 		long max = reader.getPointerIndex() + getRecordLength() - 1;
 		while (reader.getPointerIndex() < max) {
-			String name = OmfRecord.readString(reader);
+			int nameIndex = OmfRecord.readIndex(reader);
 			int type = OmfRecord.readIndex(reader);
-			symbols.add(new OmfSymbol(name, type, 0, 0, 0));
+			externalLookups.add(new ExternalLookup(nameIndex, type));
 		}
 
 		readCheckSumByte(reader);
 	}
 
-	public List<OmfSymbol> getSymbols() {
-		return symbols;
-	}
-
-	public boolean isStatic() {
-		return isStatic;
+	public void loadNames(List<String> nameList) {
+		for (ExternalLookup ext : externalLookups) {
+			String name = nameList.get(ext.nameIndex - 1);
+			symbols.add(new OmfSymbol(name, ext.type, 0, 0, 0));
+		}
 	}
 }

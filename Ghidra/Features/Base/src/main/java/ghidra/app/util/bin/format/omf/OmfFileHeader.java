@@ -235,8 +235,7 @@ public class OmfFileHeader extends OmfRecord {
 	}
 
 	private void evaluateComdef(OmfComdefRecord comdef) {
-		OmfSymbol[] coms = comdef.getSymbols();
-		for (OmfSymbol sym : coms) {
+		for (OmfSymbol sym : comdef.getSymbols()) {
 			int dt = sym.getDataType();
 			if (dt > 0 && dt < 0x60) {		// A special borland segment symbol
 				int count = (extraSeg == null) ? 1 : extraSeg.size() + 1;
@@ -331,6 +330,10 @@ public class OmfFileHeader extends OmfRecord {
 			else if (record instanceof OmfComdefRecord comdef) {
 				header.evaluateComdef(comdef);
 				header.externsymbols.add((OmfExternalSymbol) record);
+			}
+			else if (record instanceof OmfComdatExternalSymbol comdat) {
+				comdat.loadNames(header.nameList);
+				header.externsymbols.add(comdat);
 			}
 			else if (record instanceof OmfExternalSymbol external) {
 				header.externsymbols.add(external);

@@ -147,11 +147,11 @@ public class OmfFixupRecord extends OmfRecord {
 			ThreadSubrecord thread = new ThreadSubrecord();
 			thread.type = reader.readNextByte();
 			int method = thread.getMethod();
-			if (method < 4) {
-				thread.index = OmfRecord.readInt1Or2(reader, hasBigFields);
+			if (method >= 4 && thread.isFrameThread()) {
+				thread.index = -1;
 			}
 			else {
-				thread.index = -1;
+				thread.index = OmfRecord.readInt1Or2(reader, hasBigFields);
 			}
 			return thread;
 		}
