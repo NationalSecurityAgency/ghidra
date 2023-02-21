@@ -565,6 +565,14 @@ public:
 
 /// \brief Propagate conditional constants
 class ActionConditionalConst : public Action {
+  static void clearMarks(const vector<PcodeOp *> &opList);
+  static void collectReachable(Varnode *vn,vector<PcodeOpNode> &phiNodeEdges,vector<PcodeOp *> &reachable);
+  static bool flowToAlternatePath(PcodeOp *op);
+  static bool flowTogether(const vector<PcodeOpNode> &edges,int4 i,vector<int4> &result);
+  static Varnode *placeCopy(PcodeOp *op,BlockBasic *bl,Varnode *constVn,Funcdata &data);
+  static void placeMultipleConstants(vector<PcodeOpNode> &phiNodeEdges,vector<int4> &marks,Varnode *constVn,Funcdata &data);
+  void handlePhiNodes(Varnode *varVn,Varnode *constVn,vector<PcodeOpNode> &phiNodeEdges,Funcdata &data);
+  void propagateConstant(Varnode *varVn,Varnode *constVn,FlowBlock *constBlock,bool useMultiequal,Funcdata &data);
 public:
   ActionConditionalConst(const string &g) : Action(0,"condconst",g) {}	///< Constructor
   virtual Action *clone(const ActionGroupList &grouplist) const {
@@ -572,7 +580,6 @@ public:
     return new ActionConditionalConst(getGroup());
   }
   virtual int4 apply(Funcdata &data);
-  void propagateConstant(Varnode *varVn,Varnode *constVn,FlowBlock *constBlock,Funcdata &data);
 };
 
 /// \brief Normalize jump-table construction.
