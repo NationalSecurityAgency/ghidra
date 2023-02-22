@@ -19,16 +19,10 @@ apply from: "${rootProject.projectDir}/gradle/javaTestProject.gradle"
 apply from: "${rootProject.projectDir}/gradle/distributableGhidraModule.gradle"
 
 apply plugin: 'eclipse'
-eclipse.project.name = 'Debug Framework-TraceModeling'
+eclipse.project.name = 'Framework Emulation'
 
 dependencies {
-	api project(':Generic')
 	api project(':SoftwareModeling')
-	api project(':Emulation')
-	api project(':ProposedUtils')
-	api project(':Framework-Debugging')
-	annotationProcessor project(':AnnotationValidator')
-
-	testImplementation project(':Base')
-	testRuntimeOnly project(':ARM')  // For its emulator state modifier
+	api project(':Generic')
+	api project(':Utility')
 }

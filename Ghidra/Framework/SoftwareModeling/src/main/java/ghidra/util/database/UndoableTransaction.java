@@ -48,7 +48,7 @@ import ghidra.util.Msg;
  * Can be expressed using an undoable transaction instead:
  * 
  * <pre>
- * try (UndoableTransaction txid = UndoableTransaction.start(program, "Do a thing", true)) {
+ * try (UndoableTransaction txid = UndoableTransaction.start(program, "Do a thing")) {
  * 	// ... Do that thing
  * }
  * </pre>
@@ -88,7 +88,6 @@ public interface UndoableTransaction extends AutoCloseable {
 	 * @param domainObject the domain object
 	 * @param description a description of the change
 	 * @param listener a listener for aborted transactions
-	 * @param commitByDefault true to commit at the end of the block
 	 * @return the transaction handle
 	 */
 	public static UndoableTransaction start(UndoableDomainObject domainObject, String description,
@@ -102,7 +101,6 @@ public interface UndoableTransaction extends AutoCloseable {
 	 * 
 	 * @param dataTypeManager the data type manager
 	 * @param description a description of the change
-	 * @param commitByDefault true to commit at the end of the block
 	 * @return the transaction handle
 	 */
 	public static UndoableTransaction start(DataTypeManager dataTypeManager, String description) {

@@ -17,14 +17,19 @@ package ghidra.pcode.exec;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.File;
+
 import org.junit.Before;
 import org.junit.Test;
 
+import generic.test.AbstractGTest;
+import ghidra.GhidraTestApplicationLayout;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
-import ghidra.program.model.lang.LanguageID;
-import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
+import ghidra.app.plugin.processors.sleigh.SleighLanguageHelper;
+import ghidra.framework.Application;
+import ghidra.framework.ApplicationConfiguration;
 
-public class PcodeFrameTest extends AbstractGhidraHeadlessIntegrationTest {
+public class PcodeFrameTest extends AbstractGTest {
 	static final String SAMPLE_ADD = """
 			r0 = r0 + r1;
 			""";
@@ -65,12 +70,16 @@ public class PcodeFrameTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	@Before
 	public void setUp() throws Exception {
-		language =
-			(SleighLanguage) getLanguageService().getLanguage(new LanguageID("Toy:BE:64:default"));
+		if (!Application.isInitialized()) {
+			Application.initializeApplication(
+				new GhidraTestApplicationLayout(new File(getTestDirectoryPath())),
+				new ApplicationConfiguration());
+		}
+		language = SleighLanguageHelper.getMockBE64Language();
 	}
 
 	private PcodeProgram compile(String sample) {
-		return SleighProgramCompiler.compileProgram(language, getName(), sample, library);
+		return SleighProgramCompiler.compileProgram(language, "test", sample, library);
 	}
 
 	private PcodeFrame frame(String sample) {
@@ -93,8 +102,8 @@ public class PcodeFrameTest extends AbstractGhidraHeadlessIntegrationTest {
 		PcodeProgram program = compile(SAMPLE_ADD2);
 		assertEquals("""
 				<PcodeProgram:
-				  $U2000:8 = INT_ADD r0, r1
-				  r0 = INT_ADD $U2000:8, r2
+				  $U200:8 = INT_ADD r0, r1
+				  r0 = INT_ADD $U200:8, r2
 				>""",
 			program.toString());
 	}
@@ -104,8 +113,8 @@ public class PcodeFrameTest extends AbstractGhidraHeadlessIntegrationTest {
 		PcodeProgram program = compile(SAMPLE_IF);
 		assertEquals("""
 				<PcodeProgram:
-				  $U2000:1 = INT_EQUAL r0, r1
-				  CBRANCH <0>, $U2000:1
+				  $U200:1 = INT_EQUAL r0, r1
+				  CBRANCH <0>, $U200:1
 				  r2 = INT_ADD r2, 1:8
 				<0>
 				>""",
@@ -119,8 +128,8 @@ public class PcodeFrameTest extends AbstractGhidraHeadlessIntegrationTest {
 				<PcodeProgram:
 				<0>
 				  r0 = INT_ADD r0, 1:8
-				  $U2080:1 = INT_EQUAL r0, r1
-				  CBRANCH <0>, $U2080:1
+				  $U280:1 = INT_EQUAL r0, r1
+				  CBRANCH <0>, $U280:1
 				>""",
 			program.toString());
 	}
@@ -178,8 +187,8 @@ public class PcodeFrameTest extends AbstractGhidraHeadlessIntegrationTest {
 		PcodeFrame frame = frame(SAMPLE_IF);
 		assertEquals("""
 				<p-code frame: index=0 {
-				 -> $U2000:1 = INT_EQUAL r0, r1
-				    CBRANCH <0>, $U2000:1
+				 -> $U200:1 = INT_EQUAL r0, r1
+				    CBRANCH <0>, $U200:1
 				    r2 = INT_ADD r2, 1:8
 				  <0>
 				}>""",
@@ -190,8 +199,8 @@ public class PcodeFrameTest extends AbstractGhidraHeadlessIntegrationTest {
 		frame.advance();
 		assertEquals("""
 				<p-code frame: index=3 {
-				    $U2000:1 = INT_EQUAL r0, r1
-				    CBRANCH <0>, $U2000:1
+				    $U200:1 = INT_EQUAL r0, r1
+				    CBRANCH <0>, $U200:1
 				    r2 = INT_ADD r2, 1:8
 				  <0>
 				 *> fall-through
@@ -206,8 +215,8 @@ public class PcodeFrameTest extends AbstractGhidraHeadlessIntegrationTest {
 				<p-code frame: index=0 {
 				  <0>
 				 -> r0 = INT_ADD r0, 1:8
-				    $U2080:1 = INT_EQUAL r0, r1
-				    CBRANCH <0>, $U2080:1
+				    $U280:1 = INT_EQUAL r0, r1
+				    CBRANCH <0>, $U280:1
 				}>""",
 			frame.toString());
 	}

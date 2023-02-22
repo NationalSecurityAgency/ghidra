@@ -115,7 +115,8 @@ public class PcodeProgram {
 			throw new IllegalArgumentException("Instruction must be parsed using Sleigh");
 		}
 		PcodeOp[] pcode = instruction.getPcode(includeOverrides);
-		return new PcodeProgram((SleighLanguage) language, List.of(pcode), Map.of());
+		return new PcodeProgram((SleighLanguage) language, List.of(pcode),
+			Map.of());
 	}
 
 	/**
