@@ -47,8 +47,6 @@ public class NimbusUiDefaultsMapper extends UiDefaultsMapper {
 		ignoredLafIds.add("nimbusSelection");
 		ignoredLafIds.add("nimbusSelectionBackground");
 
-		ignoredLafIds.add("defaultFont");
-
 	}
 
 	@Override
