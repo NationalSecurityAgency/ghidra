@@ -139,12 +139,12 @@ configurations {
 }
 
 task testJar(type: Jar) {
-	classifier "test" // value part of file name
+	archiveClassifier.set("test") // value part of file name
 	from sourceSets.test.output
 }
 
 task integrationTestJar(type: Jar) {
-	classifier "integrationTest" // value part of file name
+	archiveClassifier.set("integrationTest") // value part of file name
 	from sourceSets.integrationTest.output
 }
 artifacts {
