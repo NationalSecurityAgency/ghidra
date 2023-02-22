@@ -18,7 +18,6 @@ package ghidra.pcode.emu;
 import java.util.List;
 
 import ghidra.pcode.emu.auxiliary.AuxPcodeEmulator;
-import ghidra.pcode.emu.sys.EmuSyscallLibrary;
 import ghidra.pcode.exec.*;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.Language;
@@ -96,8 +95,8 @@ import ghidra.program.model.lang.Language;
  * The default userop library is empty. For many use cases, it will be necessary to override
  * {@link #createUseropLibrary()} if only to implement the language-defined userops. If needed,
  * simulation of the host operating system is typically achieved by implementing the {@code syscall}
- * userop. The fidelity of that simulation depends on the use case. See {@link EmuSyscallLibrary}
- * and its implementations to see what simulators are available "out of the box."
+ * userop. The fidelity of that simulation depends on the use case. See the SystemEmulation module
+ * to see what simulators are available "out of the box."
  * 
  * <p>
  * Alternatively, if the target program never invokes system calls directly, but rather via

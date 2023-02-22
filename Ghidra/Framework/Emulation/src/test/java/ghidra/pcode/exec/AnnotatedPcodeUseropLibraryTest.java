@@ -18,21 +18,24 @@ package ghidra.pcode.exec;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.io.*;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 
+import org.junit.Before;
 import org.junit.Test;
 
-import ghidra.app.plugin.processors.sleigh.SleighException;
-import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import generic.test.AbstractGTest;
+import ghidra.GhidraTestApplicationLayout;
+import ghidra.app.plugin.processors.sleigh.*;
+import ghidra.framework.Application;
+import ghidra.framework.ApplicationConfiguration;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.utils.Utils;
-import ghidra.program.model.lang.LanguageID;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.pcode.Varnode;
-import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 
-public class AnnotatedPcodeUseropLibraryTest extends AbstractGhidraHeadlessIntegrationTest {
+public class AnnotatedPcodeUseropLibraryTest extends AbstractGTest {
 	private class TestUseropLibrary extends AnnotatedPcodeUseropLibrary<byte[]> {
 		@Override
 		protected Lookup getMethodLookup() {
@@ -40,13 +43,20 @@ public class AnnotatedPcodeUseropLibraryTest extends AbstractGhidraHeadlessInteg
 		}
 	}
 
-	protected PcodeExecutor<byte[]> createBytesExecutor() throws Exception {
-		return createBytesExecutor("Toy:BE:64:default");
+	@Before
+	public void setUp() throws IOException {
+		if (!Application.isInitialized()) {
+			Application.initializeApplication(
+				new GhidraTestApplicationLayout(new File(getTestDirectoryPath())),
+				new ApplicationConfiguration());
+		}
 	}
 
-	protected PcodeExecutor<byte[]> createBytesExecutor(String languageId) throws Exception {
-		SleighLanguage language =
-			(SleighLanguage) getLanguageService().getLanguage(new LanguageID(languageId));
+	protected PcodeExecutor<byte[]> createBytesExecutor() throws Exception {
+		return createBytesExecutor(SleighLanguageHelper.getMockBE64Language());
+	}
+
+	protected PcodeExecutor<byte[]> createBytesExecutor(SleighLanguage language) throws Exception {
 		PcodeExecutorState<byte[]> state = new BytesPcodeExecutorState(language);
 		PcodeArithmetic<byte[]> arithmetic = BytesPcodeArithmetic.forLanguage(language);
 		return new PcodeExecutor<>(language, arithmetic, state, Reason.EXECUTE);
@@ -54,8 +64,9 @@ public class AnnotatedPcodeUseropLibraryTest extends AbstractGhidraHeadlessInteg
 
 	protected <T> void executeSleigh(PcodeExecutor<T> executor, PcodeUseropLibrary<T> library,
 			String source) {
-		PcodeProgram program = SleighProgramCompiler.compileProgram(executor.getLanguage(), "test",
-			source, library);
+		PcodeProgram program =
+			SleighProgramCompiler.compileProgram(executor.getLanguage(), getName(),
+				source, library);
 		executor.execute(program, library);
 	}
 
