@@ -162,6 +162,32 @@ int4 Address::overlap(int4 skip,const Address &op,int4 size) const
   return (int4) dist;
 }
 
+/// This method is equivalent to Address::overlap, but a range in the \e join space can be
+/// considered overlapped with its constituent pieces.
+/// If \e this + \e skip falls in the range, \e op to \e op + \e size, then a non-negative integer is
+/// returned indicating where in the interval it falls. Otherwise -1 is returned.
+/// \param skip is an adjust to \e this address
+/// \param op is the start of the range to check
+/// \param size is the size of the range
+/// \return an integer indicating how overlap occurs
+int4 Address::overlapJoin(int4 skip,const Address &op,int4 size) const
+
+{
+  if (base != op.base) {
+    if (op.base->getType()==IPTR_JOIN) {
+      uintb dist = base->wrapOffset(offset + skip);
+      return ((JoinSpace *)op.base)->pieceOverlap(op.offset,size,base,dist);
+    }
+    return -1;
+  }
+  if (base->getType()==IPTR_CONSTANT) return -1; // Must not be constants
+
+  uintb dist = base->wrapOffset(offset+skip-op.offset);
+
+  if (dist >= size) return -1; // but must fall before op+size
+  return (int4) dist;
+}
+
 /// Does the location \e this, \e sz form a contiguous region to \e loaddr, \e losz,
 /// where \e this forms the most significant piece of the logical whole
 /// \param sz is the size of \e this hi region
@@ -184,7 +210,7 @@ bool Address::isContiguous(int4 sz,const Address &loaddr,int4 losz) const
 }
 
 /// If \b this is (originally) a \e join address, reevaluate it in terms of its new
-/// \e offset and \e siz, changing the space and offset if necessary.
+/// \e offset and \e size, changing the space and offset if necessary.
 /// \param size is the new size in bytes of the underlying object
 void Address::renormalize(int4 size) {
   if (base->getType() == IPTR_JOIN)

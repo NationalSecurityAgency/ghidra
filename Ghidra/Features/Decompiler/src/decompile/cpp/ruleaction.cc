@@ -6965,6 +6965,7 @@ bool RulePieceStructure::separateSymbol(Varnode *root,Varnode *leaf)
   if (!leaf->isWritten()) return true;	// Assume to be different symbols
   if (leaf->isProtoPartial()) return true;	// Already in another tree
   PcodeOp *op = leaf->getDef();
+  if (op->isMarker()) return true;	// Leaf is not defined locally
   if (op->code() != CPUI_PIECE) return false;
   if (leaf->getType()->isPieceStructured()) return true;	// Would be a separate root
 
@@ -7025,6 +7026,7 @@ int4 RulePieceStructure::applyOp(PcodeOp *op,Funcdata &data)
     PieceNode &node(stack[i]);
     Varnode *vn = node.getVarnode();
     Address addr = baseAddr + node.getTypeOffset();
+    addr.renormalize(vn->getSize());		// Allow for possible join address
     if (vn->getAddr() == addr) {
       if (!node.isLeaf() || !separateSymbol(outvn, vn)) {
 	// Varnode already has correct address and will be part of the same symbol as root
