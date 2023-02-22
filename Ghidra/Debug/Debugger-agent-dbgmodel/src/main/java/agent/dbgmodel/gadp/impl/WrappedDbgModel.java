@@ -721,13 +721,41 @@ public class WrappedDbgModel
 	@Override
 	public int getCurrentThreadSystemId() {  // used by impl
 		return client.getSystemObjects().getCurrentThreadSystemId();
-		//return getCurrentThreadId().id;
 	}
 
 	@Override
 	public int getCurrentProcessSystemId() {  // used by impl
 		return client.getSystemObjects().getCurrentProcessSystemId();
-		//return getCurrentProcessId().id;
+	}
+
+	@Override
+	public long getCurrentThreadDataOffset() {  // used by impl
+		return client.getSystemObjects().getCurrentThreadDataOffset();
+	}
+
+	@Override
+	public long getCurrentProcessDataOffset() {  // used by impl
+		return client.getSystemObjects().getCurrentProcessDataOffset();
+	}
+
+	@Override
+	public long getImplicitThreadDataOffset() {  // used by impl
+		return client.getSystemObjects().getImplicitThreadDataOffset();
+	}
+
+	@Override
+	public long getImplicitProcessDataOffset() {  // used by impl
+		return client.getSystemObjects().getImplicitProcessDataOffset();
+	}
+
+	@Override
+	public void setImplicitThreadDataOffset(long offset) {  // used by impl
+		client.getSystemObjects().setImplicitThreadDataOffset(offset);
+	}
+
+	@Override
+	public void setImplicitProcessDataOffset(long offset) {  // used by impl
+		client.getSystemObjects().setImplicitProcessDataOffset(offset);
 	}
 
 	@Override

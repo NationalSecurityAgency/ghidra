@@ -98,4 +98,9 @@ public interface IDebugSystemObjects extends IUnknown {
 	HRESULT GetThreadIdBySystemId(ULONG SystemId, ULONGByReference Id);
 
 	HRESULT GetProcessIdBySystemId(ULONG SystemId, ULONGByReference Id);
+	
+	HRESULT GetCurrentThreadDataOffset(ULONGLONGByReference SysOffset);
+
+	HRESULT GetCurrentProcessDataOffset(ULONGLONGByReference SysOffset);
+
 }

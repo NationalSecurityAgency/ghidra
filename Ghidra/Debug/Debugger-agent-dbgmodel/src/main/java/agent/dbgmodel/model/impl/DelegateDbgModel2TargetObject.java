@@ -18,16 +18,55 @@ package agent.dbgmodel.model.impl;
 import java.lang.invoke.MethodHandles;
 import java.lang.ref.Cleaner;
 import java.lang.ref.Cleaner.Cleanable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
-import agent.dbgeng.manager.*;
+import agent.dbgeng.manager.DbgCause;
+import agent.dbgeng.manager.DbgEventsListener;
+import agent.dbgeng.manager.DbgReason;
+import agent.dbgeng.manager.DbgState;
+import agent.dbgeng.manager.DbgStateListener;
 import agent.dbgeng.manager.breakpoint.DbgBreakpointInfo;
-import agent.dbgeng.model.iface1.*;
-import agent.dbgeng.model.iface2.*;
+import agent.dbgeng.model.iface1.DbgModelTargetAccessConditioned;
+import agent.dbgeng.model.iface1.DbgModelTargetBptHelper;
+import agent.dbgeng.model.iface1.DbgModelTargetExecutionStateful;
+import agent.dbgeng.model.iface1.DbgModelTargetMethod;
+import agent.dbgeng.model.iface2.DbgModelTargetAvailable;
+import agent.dbgeng.model.iface2.DbgModelTargetAvailableContainer;
+import agent.dbgeng.model.iface2.DbgModelTargetBreakpointContainer;
+import agent.dbgeng.model.iface2.DbgModelTargetBreakpointSpec;
+import agent.dbgeng.model.iface2.DbgModelTargetDebugContainer;
+import agent.dbgeng.model.iface2.DbgModelTargetMemoryContainer;
+import agent.dbgeng.model.iface2.DbgModelTargetModule;
+import agent.dbgeng.model.iface2.DbgModelTargetModuleContainer;
+import agent.dbgeng.model.iface2.DbgModelTargetObject;
+import agent.dbgeng.model.iface2.DbgModelTargetProcess;
+import agent.dbgeng.model.iface2.DbgModelTargetProcessContainer;
+import agent.dbgeng.model.iface2.DbgModelTargetRegister;
+import agent.dbgeng.model.iface2.DbgModelTargetRegisterBank;
+import agent.dbgeng.model.iface2.DbgModelTargetRegisterContainer;
+import agent.dbgeng.model.iface2.DbgModelTargetSession;
+import agent.dbgeng.model.iface2.DbgModelTargetSessionAttributes;
+import agent.dbgeng.model.iface2.DbgModelTargetSessionContainer;
+import agent.dbgeng.model.iface2.DbgModelTargetStack;
+import agent.dbgeng.model.iface2.DbgModelTargetStackFrame;
+import agent.dbgeng.model.iface2.DbgModelTargetTTD;
+import agent.dbgeng.model.iface2.DbgModelTargetThread;
+import agent.dbgeng.model.iface2.DbgModelTargetThreadContainer;
 import agent.dbgmodel.dbgmodel.main.ModelObject;
 import agent.dbgmodel.jna.dbgmodel.DbgModelNative.ModelObjectKind;
-import ghidra.dbg.target.*;
+import ghidra.dbg.target.TargetAccessConditioned;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointAction;
+import ghidra.dbg.target.TargetExecutionStateful;
+import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.TargetRegisterBank;
+import ghidra.dbg.target.TargetRegisterContainer;
+import ghidra.dbg.target.TargetStack;
+import ghidra.dbg.target.TargetStackFrame;
+import ghidra.dbg.target.TargetThread;
 import ghidra.dbg.util.PathUtils;
 import ghidra.util.datastruct.ListenerSet;
 
@@ -303,9 +342,18 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 			DbgModelTargetThread targetThread = (DbgModelTargetThread) proxy;
 			targetThread.getThread(false);
 		}
+
+		boolean kernelMode = getModel().getManager().isKernelMode();
+		if (kernelMode) {
+			if (proxy instanceof DbgModelTargetProcess || //
+				proxy instanceof DbgModelTargetThread) {
+				return;
+			}
+		}
 		if (getModel().isSuppressDescent()) {
 			return;
 		}
+		
 		if (proxy instanceof DbgModelTargetSession || //
 			proxy instanceof DbgModelTargetProcess || //
 			proxy instanceof DbgModelTargetThread) {
@@ -416,9 +464,15 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 			}
 			DbgModelTargetRegisterContainer container =
 				(DbgModelTargetRegisterContainer) getCachedAttribute("Registers");
+			if (container == null) {
+				return;
+			}
 			delegates.add((DelegateDbgModel2TargetObject) container.getDelegate());
 			DbgModelTargetRegisterBank bank =
 				(DbgModelTargetRegisterBank) container.getCachedAttribute("User");
+			if (bank == null) {
+				return;
+			}
 			delegates.add((DelegateDbgModel2TargetObject) bank.getDelegate());
 			for (DelegateDbgModel2TargetObject delegate : delegates) {
 				delegate.threadStateChangedSpecific(state, reason);

@@ -176,7 +176,6 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 		getObject(proc).thenAccept(obj -> {
 			DbgModelTargetProcess targetProcess = (DbgModelTargetProcess) obj;
 			if (targetProcess == null) {
-				System.err.println("processAdded - null");
 				return;
 			}
 			DbgModelTargetProcessContainer container =
@@ -196,7 +195,6 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 		getObject(thread).thenAccept(obj -> {
 			DbgModelTargetThread targetThread = (DbgModelTargetThread) obj;
 			if (targetThread == null) {
-				System.err.println("threadCreated - null");
 				return;
 			}
 			DbgModelTargetThreadContainer container =
@@ -270,12 +268,10 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 			getModel().fetchModelObject(objPath).handle(seq::next);
 		}, TypeSpec.cls(TargetObject.class)).then((pobj, seq) -> {
 			DbgModelTargetObject pimpl = (DbgModelTargetObject) pobj;
-			getModel().addModelObject(object, pimpl);
 			seq.exit(pimpl);
 		}).finish();
 	}
 
-	//TODO: fix this
 	private CompletableFuture<DbgModelTargetObject> getObjectRevisited(Object object,
 			List<String> ext, Object info) {
 		List<String> objPath = findObject(object);

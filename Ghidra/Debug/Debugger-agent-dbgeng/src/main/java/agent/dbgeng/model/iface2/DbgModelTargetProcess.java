@@ -58,15 +58,8 @@ public interface DbgModelTargetProcess extends //
 
 	public default DbgProcess getProcess(boolean fire) {
 		DbgManagerImpl manager = getManager();
-		DebugSystemObjects so = manager.getSystemObjects();
 		try {
-			String index = PathUtils.parseIndex(getName());
-			Integer pid = Integer.decode(index);
-			DebugProcessId id = so.getProcessIdBySystemId(pid);
-			if (id == null) {
-				id = so.getCurrentProcessId();
-			}
-			return manager.getProcessComputeIfAbsent(id, pid, fire);
+			return manager.getProcessComputeIfAbsent(getName(), fire);
 		}
 		catch (IllegalArgumentException e) {
 			return manager.getCurrentProcess();
