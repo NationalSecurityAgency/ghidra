@@ -221,6 +221,9 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 							case 2:			// Index is for an external symbol
 							case 6:			// external only, no displacement
 								OmfSymbol symbol = externsyms.get(index - 1);
+								if (symbol.isFloatingPointSpecial()) {
+									continue;
+								}
 								targetAddr = symbol.getAddress().getOffset();
 								break;
 							case 3:			// Not supported by many linkers
