@@ -485,11 +485,11 @@ public class FrontEndPlugin extends Plugin
 	 * general project utility that brings up a file chooser for
 	 * the user to specify a directory and filename that are used
 	 * for the Project location and name
-	 * 
+	 *
 	 * @param fileChooser the chooser used to pick the project
 	 * @param mode read-only or not
 	 * @param preferenceName the preference property name used to save the last opened project
-	 * @return the project locator for the opened project 
+	 * @return the project locator for the opened project
 	 */
 	ProjectLocator chooseProject(GhidraFileChooser fileChooser, String mode,
 			String preferenceName) {
@@ -703,9 +703,9 @@ public class FrontEndPlugin extends Plugin
 
 		connectionButton.setContentAreaFilled(false);
 		connectionButton.setSelected(isConnected);
-		connectionButton.setBorder(
-			isConnected ? BorderFactory.createBevelBorder(BevelBorder.LOWERED)
-					: BorderFactory.createBevelBorder(BevelBorder.RAISED));
+		connectionButton
+				.setBorder(isConnected ? BorderFactory.createBevelBorder(BevelBorder.LOWERED)
+						: BorderFactory.createBevelBorder(BevelBorder.RAISED));
 		connectionIconPanel.add(connectionButton);
 		if (isConnected) {
 
@@ -716,8 +716,8 @@ public class FrontEndPlugin extends Plugin
 				Msg.debug(this, "Unexpected exception retrieving user from repository", e);
 			}
 		}
-		repositoryLabel.setText(
-			"Project Repository:   " + repository.getName() + getAccessString(user));
+		repositoryLabel
+				.setText("Project Repository:   " + repository.getName() + getAccessString(user));
 
 		String serverName = repository.getServerInfo().getServerName();
 		connectionButton.setToolTipText(
@@ -988,8 +988,8 @@ public class FrontEndPlugin extends Plugin
 			}
 		};
 		renameToolAction.setPopupMenuData(new MenuData(new String[] { "Rename..." }, "tool"));
-		renameToolAction.setHelpLocation(
-			new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Rename Tool"));
+		renameToolAction
+				.setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Rename Tool"));
 
 		propertiesAction = new ToolButtonAction(PROPERTIES_ACTION_NAME) {
 			@Override
@@ -1012,8 +1012,8 @@ public class FrontEndPlugin extends Plugin
 		propertiesAction.setPopupMenuData(
 			new MenuData(new String[] { "Configure Plugins..." }, "zproperties"));
 
-		propertiesAction.setHelpLocation(
-			new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Configure_Tool"));
+		propertiesAction
+				.setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Configure_Tool"));
 
 		tool.addLocalAction(frontEndProvider, exportToolAction);
 		tool.addLocalAction(frontEndProvider, renameToolAction);
@@ -1103,6 +1103,15 @@ public class FrontEndPlugin extends Plugin
 
 		Project project = tool.getProject();
 		ToolServices toolServices = project.getToolServices();
+		ToolTemplate defaultToolTemplate = toolServices.getDefaultToolTemplate(domainFile);
+		if (defaultToolTemplate != null) {
+			ToolButton button = toolBar.getToolButtonForToolConfig(defaultToolTemplate);
+			if (button != null) {
+				button.launchTool(domainFile);
+				return;
+			}
+		}
+
 		if (toolServices.launchDefaultTool(domainFile) != null) {
 			return;
 		}
@@ -1132,7 +1141,7 @@ public class FrontEndPlugin extends Plugin
 
 			DomainFolder domainFolder = linkedFolder.getLinkedFolder();
 			if (domainFolder != null) {
-				// delayed to ensure tree is displayd
+				// delayed to ensure tree is displayed
 				Swing.runLater(() -> dtp.selectDomainFolder(domainFolder));
 			}
 		}
