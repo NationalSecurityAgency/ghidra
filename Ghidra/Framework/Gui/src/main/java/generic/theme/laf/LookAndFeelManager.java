@@ -248,7 +248,7 @@ public abstract class LookAndFeelManager {
 
 		GThemeValueMap javaDefaults = uiDefaultsMapper.getJavaDefaults();
 		themeManager.setJavaDefaults(javaDefaults);
-		uiDefaultsMapper.installValuesIntoUIDefaults(themeManager.getApplicationOverrides());
+		uiDefaultsMapper.installValuesIntoUIDefaults(themeManager.getCurrentValues());
 		normalizedIdToLafIdMap = uiDefaultsMapper.getNormalizedIdToLafIdMap();
 	}
 
