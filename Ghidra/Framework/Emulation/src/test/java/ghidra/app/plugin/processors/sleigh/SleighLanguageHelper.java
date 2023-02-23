@@ -15,30 +15,57 @@
  */
 package ghidra.app.plugin.processors.sleigh;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import java.io.IOException;
+import java.net.URL;
 import java.util.*;
 
+import org.antlr.runtime.RecognitionException;
+import org.jdom.JDOMException;
 import org.xml.sax.SAXException;
 
 import generic.jar.ResourceFile;
+import ghidra.pcodeCPort.slgh_compile.SleighCompileLauncher;
 import ghidra.program.model.lang.*;
+import ghidra.util.Msg;
 import resources.ResourceManager;
 
 public class SleighLanguageHelper {
+	private static ResourceFile getResourceFile(String name) {
+		URL url = ResourceManager.getResource(name);
+		if (url == null) {
+			return null;
+		}
+		return new ResourceFile(url.getPath());
+	}
+
 	public static SleighLanguage getMockBE64Language()
 			throws UnknownInstructionException, SAXException, IOException {
 
-		ResourceFile cSpecFile =
-			new ResourceFile(ResourceManager.getResource("mock.cspec").getPath());
+		ResourceFile cSpecFile = getResourceFile("mock.cpsec");
 		CompilerSpecDescription cSpecDesc =
 			new SleighCompilerSpecDescription(new CompilerSpecID("default"), "default", cSpecFile);
+		ResourceFile lDefsFile = getResourceFile("mock.ldefs");
+		ResourceFile pSpecFile = getResourceFile("mock.pspec");
+		ResourceFile slaSpecFile = getResourceFile("mock.slaspec");
+		ResourceFile slaFile = getResourceFile("mock.sla");
+		if (slaFile == null || !slaFile.exists() ||
+			(slaSpecFile.lastModified() > slaFile.lastModified())) {
+			assertNotNull("Cannot find mock.slaspec", slaSpecFile);
+			Msg.debug(SleighLanguageHelper.class, "Compiling mock.slaspec");
+			try {
+				assertEquals("Failed to compile mock.slaspec", 0,
+					SleighCompileLauncher.runMain(new String[] { slaSpecFile.getAbsolutePath() }));
+			}
+			catch (JDOMException | IOException | RecognitionException e) {
+				throw new AssertionError(e);
+			}
+			slaFile = getResourceFile("mock.sla");
+			assertNotNull("Cannot find mock.sla (after compilation)");
+		}
 
-		ResourceFile lDefsFile =
-			new ResourceFile(ResourceManager.getResource("mock.ldefs").getPath());
-		ResourceFile pSpecFile =
-			new ResourceFile(ResourceManager.getResource("mock.pspec").getPath());
-		ResourceFile slaFile =
-			new ResourceFile(ResourceManager.getResource("mock.sla").getPath());
 		SleighLanguageDescription langDesc = new SleighLanguageDescription(
 			new LanguageID("Mock:BE:64:default"),
 			"Mock language (64-bit BE)",
