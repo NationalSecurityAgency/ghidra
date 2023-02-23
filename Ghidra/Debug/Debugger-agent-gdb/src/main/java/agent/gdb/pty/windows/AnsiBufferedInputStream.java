@@ -365,6 +365,9 @@ public class AnsiBufferedInputStream extends InputStream {
 
 	protected int parseNumericBuffer() {
 		String numeric = readAndClearEscBuf();
+		if (numeric.isEmpty()) {
+			return 0;
+		}
 		int result = Integer.parseInt(numeric);
 		return result;
 	}
