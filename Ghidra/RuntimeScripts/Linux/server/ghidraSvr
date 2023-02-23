@@ -56,6 +56,7 @@ APP_LONG_NAME="Ghidra Server"
 MODULE_DIR="Ghidra/Features/GhidraServer"
 WRAPPER_NAME_PREFIX=yajsw
 SERVICE_NAME=org.rzo.yajsw.$APP_NAME
+WRAPPER_TMPDIR="${TMPDIR:-/tmp}"
 
 # Resolve symbolic link if present and get the directory this script lives in.
 # NOTE: "readlink -f" is best but works on Linux only, "readlink" will only work if your PWD
@@ -137,6 +138,10 @@ fi
 
 JAVA_CMD="${JAVA_HOME}/bin/java"
 
+VMARGS=()
+VMARGS+=("-Djna_tmpdir=${WRAPPER_TMPDIR}")
+VMARGS+=("-Djava.io.tmpdir=${WRAPPER_TMPDIR}")
+
 enableForkHack() {
 
 	# use of fork_hack only needed for Mac OS X
@@ -180,7 +185,7 @@ EOF
 
 checkInstall() {
 	# capture status text
-	RESULT=$(java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" "${JAVA_CMD}" -jar "${WRAPPER_HOME}/wrapper.jar" -q "${WRAPPER_CONF}" | grep "Installed   :" | sed -E "s/Installed   : //")
+	RESULT=$(java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" wrapper_tmpdir="${WRAPPER_TMPDIR}" "${JAVA_CMD}" "${VMARGS[@]}" -jar "${WRAPPER_HOME}/wrapper.jar" -q "${WRAPPER_CONF}" | grep "Installed   :" | sed -E "s/Installed   : //")
 	if [ "${RESULT}" = "true" ]; then
 		return 0
 	fi
@@ -190,31 +195,31 @@ checkInstall() {
 
 console() {
     echo "Running ${APP_LONG_NAME}..."
-    java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" "${JAVA_CMD}" -jar "${WRAPPER_HOME}/wrapper.jar" -c "${WRAPPER_CONF}"
+    java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" wrapper_tmpdir="${WRAPPER_TMPDIR}" "${JAVA_CMD}" "${VMARGS[@]}" -jar "${WRAPPER_HOME}/wrapper.jar" -c "${WRAPPER_CONF}"
 }
 
 start() {
     echo "Starting ${APP_LONG_NAME}..."
-    java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" "${JAVA_CMD}" -jar "${WRAPPER_HOME}/wrapper.jar" -t "${WRAPPER_CONF}"
+    java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" wrapper_tmpdir="${WRAPPER_TMPDIR}" "${JAVA_CMD}" "${VMARGS[@]}" -jar "${WRAPPER_HOME}/wrapper.jar" -t "${WRAPPER_CONF}"
 }
  
 stopit() {
     echo "Stopping ${APP_LONG_NAME}..."
-    java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" "${JAVA_CMD}" -jar "${WRAPPER_HOME}/wrapper.jar" -p "${WRAPPER_CONF}"
+    java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" wrapper_tmpdir="${WRAPPER_TMPDIR}" "${JAVA_CMD}" "${VMARGS[@]}" -jar "${WRAPPER_HOME}/wrapper.jar" -p "${WRAPPER_CONF}"
 }
 
 install() {
     echo "Installing ${APP_LONG_NAME}..."
-    java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" "${JAVA_CMD}" -jar "${WRAPPER_HOME}/wrapper.jar" -i "${WRAPPER_CONF}"
+    java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" wrapper_tmpdir="${WRAPPER_TMPDIR}" "${JAVA_CMD}" "${VMARGS[@]}" -jar "${WRAPPER_HOME}/wrapper.jar" -i "${WRAPPER_CONF}"
 }
 
 uninstall() {
     echo "Uninstalling ${APP_LONG_NAME}..."
-    java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" "${JAVA_CMD}" -jar "${WRAPPER_HOME}/wrapper.jar" -r "${WRAPPER_CONF}"
+    java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" wrapper_tmpdir="${WRAPPER_TMPDIR}" "${JAVA_CMD}" "${VMARGS[@]}" -jar "${WRAPPER_HOME}/wrapper.jar" -r "${WRAPPER_CONF}"
 }
 
 status() {
-    java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" "${JAVA_CMD}" -jar "${WRAPPER_HOME}/wrapper.jar" -q "${WRAPPER_CONF}"
+    java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" wrapper_tmpdir="${WRAPPER_TMPDIR}" "${JAVA_CMD}" "${VMARGS[@]}" -jar "${WRAPPER_HOME}/wrapper.jar" -q "${WRAPPER_CONF}"
 }
 
 case "$1" in

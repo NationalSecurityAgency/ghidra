@@ -64,12 +64,11 @@ if "%IS_ADMIN%"=="NO" (
 	if "%OPTION%"=="restart" goto adminFail
 )
 
-set APP_NAME=ghidraSvr
-set APP_LONG_NAME=Ghidra Server
-
-set MODULE_DIR=Ghidra\Features\GhidraServer
-
-set WRAPPER_NAME_PREFIX=yajsw
+set "APP_NAME=ghidraSvr"
+set "APP_LONG_NAME=Ghidra Server"
+set "MODULE_DIR=Ghidra\Features\GhidraServer"
+set "WRAPPER_NAME_PREFIX=yajsw"
+set "wrapper_tmpdir=%TEMP%"
 
 if exist "%SERVER_DIR%\..\Ghidra\" goto normal
 
@@ -137,31 +136,34 @@ if "%JAVA_HOME%" == "" (
 rem reestablish JAVA path based upon final JAVA_HOME
 set "java=%JAVA_HOME%\bin\java.exe"
 
+set VMARGS=-Djava.io.tmpdir="%wrapper_tmpdir%"
+set VMARGS=%VMARGS% -Djna_tmpdir="%wrapper_tmpdir%"
+
 :: set DEBUG=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:18888
 
 if "%OPTION%"=="console" (
-	start "%APP_LONG_NAME%" "%java%" %DEBUG% -jar "%WRAPPER_HOME%/wrapper.jar" -c "%WRAPPER_CONF%"
+	start "%APP_LONG_NAME%" "%java%" %VMARGS% %DEBUG% -jar "%WRAPPER_HOME%/wrapper.jar" -c "%WRAPPER_CONF%"
 	echo Use Ctrl-C in Ghidra Console to terminate...
 	
 ) else if "%OPTION%"=="status" (
-	"%java%" -jar "%WRAPPER_HOME%/wrapper.jar" -q "%WRAPPER_CONF%"
+	"%java%" %VMARGS% -jar "%WRAPPER_HOME%/wrapper.jar" -q "%WRAPPER_CONF%"
 
 ) else if "%OPTION%"=="start" (
-	"%java%" %DEBUG% -jar "%WRAPPER_HOME%/wrapper.jar" -t "%WRAPPER_CONF%"
+	"%java%" %VMARGS% %DEBUG% -jar "%WRAPPER_HOME%/wrapper.jar" -t "%WRAPPER_CONF%"
 
 ) else if "%OPTION%"=="stop" (
-	"%java%" -jar "%WRAPPER_HOME%/wrapper.jar" -p "%WRAPPER_CONF%"
+	"%java%" %VMARGS% -jar "%WRAPPER_HOME%/wrapper.jar" -p "%WRAPPER_CONF%"
 
 ) else if "%OPTION%"=="restart" (
-	"%java%" -jar "%WRAPPER_HOME%/wrapper.jar" -p "%WRAPPER_CONF%"
-	"%java%" -jar "%WRAPPER_HOME%/wrapper.jar" -t "%WRAPPER_CONF%"
+	"%java%" %VMARGS% -jar "%WRAPPER_HOME%/wrapper.jar" -p "%WRAPPER_CONF%"
+	"%java%" %VMARGS% -jar "%WRAPPER_HOME%/wrapper.jar" -t "%WRAPPER_CONF%"
 
 ) else if "%OPTION%"=="install" (
-	"%java%" -jar "%WRAPPER_HOME%/wrapper.jar" -i "%WRAPPER_CONF%"
-	"%java%" -jar "%WRAPPER_HOME%/wrapper.jar" -t "%WRAPPER_CONF%"
+	"%java%" %VMARGS% -jar "%WRAPPER_HOME%/wrapper.jar" -i "%WRAPPER_CONF%"
+	"%java%" %VMARGS% -jar "%WRAPPER_HOME%/wrapper.jar" -t "%WRAPPER_CONF%"
 	
 ) else if "%OPTION%"=="uninstall" (
-	"%java%" -jar "%WRAPPER_HOME%/wrapper.jar" -r "%WRAPPER_CONF%"
+	"%java%" %VMARGS% -jar "%WRAPPER_HOME%/wrapper.jar" -r "%WRAPPER_CONF%"
 
 ) else (
 	goto usage
