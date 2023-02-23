@@ -28,6 +28,7 @@ import agent.dbgmodel.dbgmodel.main.*;
 import agent.dbgmodel.impl.dbgmodel.main.ModelIteratorInternal;
 import agent.dbgmodel.jna.dbgmodel.concept.IIterableConcept;
 import agent.dbgmodel.jna.dbgmodel.main.WrapIModelIterator;
+import ghidra.util.Msg;
 
 public class IterableConceptImpl implements IterableConceptInternal {
 	@SuppressWarnings("unused")
@@ -61,6 +62,10 @@ public class IterableConceptImpl implements IterableConceptInternal {
 		PointerByReference ppIndexers = new PointerByReference();
 		HRESULT hr = jnaData.GetIterator(pContextObject, ppIndexers);
 		if (hr.equals(COMUtilsExtra.E_FAIL)) {
+			return null;
+		}
+		if (hr.equals(COMUtilsExtra.E_BOUNDS)) {
+			Msg.error(this, "iterator out of bounds - check symbol path");
 			return null;
 		}
 		if (hr.equals(COMUtilsExtra.E_COM_EXC)) {

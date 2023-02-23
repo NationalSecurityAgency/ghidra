@@ -57,7 +57,7 @@ public class DbgModelTargetProcessContainerImpl extends DbgModelTargetObjectImpl
 		session.setAccessible(true);
 		DbgModelTargetProcess process = getTargetProcess(proc);
 		changeElements(List.of(), List.of(process), Map.of(), "Added");
-		process.processStarted(proc.getPid());
+		process.processStarted(Long.valueOf(proc.getPid()));
 		broadcast().event(getProxy(), null, TargetEventType.PROCESS_CREATED,
 			"Process " + proc.getId() + " started " + process.getName() + "pid=" + proc.getPid(),
 			List.of(process));
@@ -66,7 +66,7 @@ public class DbgModelTargetProcessContainerImpl extends DbgModelTargetObjectImpl
 	@Override
 	public void processStarted(DbgProcess proc, DbgCause cause) {
 		DbgModelTargetProcess process = getTargetProcess(proc);
-		process.processStarted(proc.getPid());
+		process.processStarted(Long.valueOf(proc.getPid()));
 	}
 
 	@Override
