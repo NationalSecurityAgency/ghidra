@@ -178,14 +178,6 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 		String lkey = key;
 		String pname = parent.getName();
 
-		/*
-		 * if (object.getKind().equals(ModelObjectKind.OBJECT_METHOD) ||
-		 * lkey.contains(")")) { mixins.add(DbgModelTargetMethod.class); // NB: We're
-		 * passing the parent's mixin model to the method on the assumption // the init
-		 * methods will need to know that the method's children have various //
-		 * properties. lkey = pname; pname = ""; }
-		 */
-
 		if (object.getKind().equals(ModelObjectKind.OBJECT_METHOD)) {
 			mixins.add(DbgModelTargetMethod.class);
 		} else {
@@ -306,7 +298,8 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 				if (state != DbgState.EXIT) {
 					setExecutionState(exec, "Refreshed");
 				}
-			} else {
+			} 
+			else {
 				TargetExecutionState previous = this.getExecutionState();
 				if (!previous.equals(TargetExecutionState.INACTIVE)) {
 					setExecutionState(exec, "Refreshed");
