@@ -158,9 +158,12 @@ public interface DbgThread
 
 	/**
 	 * Get the effective architecture for the executing thread
-	 * 
-	 * @return a future that completes when GDB has executed the command
 	 */
 	Machine getExecutingProcessorType();
+
+	/**
+	 * Get the address of the associated thread structure
+	 */
+	Long getOffset();
 
 }

@@ -15,8 +15,14 @@
  */
 package agent.dbgmodel.model.impl;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -24,18 +30,47 @@ import agent.dbgeng.manager.*;
 import agent.dbgeng.manager.breakpoint.DbgBreakpointInfo;
 import agent.dbgeng.model.AbstractDbgModel;
 import agent.dbgeng.model.iface1.DbgModelSelectableObject;
-import agent.dbgeng.model.iface2.*;
-import agent.dbgeng.model.impl.*;
+import agent.dbgeng.model.iface2.DbgModelTargetBreakpointSpec;
+import agent.dbgeng.model.iface2.DbgModelTargetDebugContainer;
+import agent.dbgeng.model.iface2.DbgModelTargetEventContainer;
+import agent.dbgeng.model.iface2.DbgModelTargetExceptionContainer;
+import agent.dbgeng.model.iface2.DbgModelTargetMemoryContainer;
+import agent.dbgeng.model.iface2.DbgModelTargetModule;
+import agent.dbgeng.model.iface2.DbgModelTargetObject;
+import agent.dbgeng.model.iface2.DbgModelTargetProcess;
+import agent.dbgeng.model.iface2.DbgModelTargetSession;
+import agent.dbgeng.model.iface2.DbgModelTargetStackFrame;
+import agent.dbgeng.model.iface2.DbgModelTargetTTD;
+import agent.dbgeng.model.iface2.DbgModelTargetThread;
+import agent.dbgeng.model.impl.DbgModelTargetEventContainerImpl;
+import agent.dbgeng.model.impl.DbgModelTargetExceptionContainerImpl;
+import agent.dbgeng.model.impl.DbgModelTargetMemoryContainerImpl;
+import agent.dbgeng.model.impl.DbgModelTargetProcessImpl;
+import agent.dbgeng.model.impl.DbgModelTargetThreadImpl;
 import agent.dbgmodel.dbgmodel.main.ModelObject;
 import agent.dbgmodel.jna.dbgmodel.DbgModelNative.ModelObjectKind;
 import agent.dbgmodel.jna.dbgmodel.DbgModelNative.TypeKind;
 import agent.dbgmodel.manager.DbgManager2Impl;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.agent.DefaultTargetObject;
-import ghidra.dbg.target.*;
+import ghidra.dbg.target.TargetAccessConditioned;
+import ghidra.dbg.target.TargetAttacher;
+import ghidra.dbg.target.TargetBreakpointSpec;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
+import ghidra.dbg.target.TargetBreakpointSpecContainer;
 import ghidra.dbg.target.TargetBreakpointSpecContainer.TargetBreakpointKindSet;
+import ghidra.dbg.target.TargetEnvironment;
+import ghidra.dbg.target.TargetExecutionStateful;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
+import ghidra.dbg.target.TargetInterpreter;
+import ghidra.dbg.target.TargetModule;
+import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.TargetProcess;
+import ghidra.dbg.target.TargetRegister;
+import ghidra.dbg.target.TargetRegisterBank;
+import ghidra.dbg.target.TargetStackFrame;
+import ghidra.dbg.target.TargetSteppable;
+import ghidra.dbg.target.TargetThread;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.util.PathUtils;
 import ghidra.dbg.util.PathUtils.TargetObjectKeyComparator;
@@ -250,11 +285,6 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 				if (isValid()) {
 					TargetExecutionStateful stateful = (TargetExecutionStateful) proxy;
 					TargetExecutionState state = stateful.getExecutionState();
-					if (getManager().isKernelMode()) {
-						if (state.equals(TargetExecutionState.INACTIVE)) {
-							state = TargetExecutionState.ALIVE;
-						}
-					}
 					attrs.put(TargetExecutionStateful.STATE_ATTRIBUTE_NAME, state);
 				}
 			}

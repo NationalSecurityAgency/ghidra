@@ -18,31 +18,30 @@ package agent.dbgeng.manager.cmd;
 import java.math.BigInteger;
 
 import agent.dbgeng.dbgeng.DebugControl;
-import agent.dbgeng.dbgeng.DebugThreadId;
+import agent.dbgeng.dbgeng.DebugProcessId;
 import agent.dbgeng.manager.DbgEvent;
-import agent.dbgeng.manager.DbgThread;
+import agent.dbgeng.manager.DbgProcess;
 import agent.dbgeng.manager.evt.AbstractDbgCompletedCommandEvent;
 import agent.dbgeng.manager.evt.DbgConsoleOutputEvent;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
-import agent.dbgeng.manager.impl.DbgThreadImpl;
+import agent.dbgeng.manager.impl.DbgProcessImpl;
+import ghidra.util.Msg;
 
-public class DbgSetActiveThreadCommand extends AbstractDbgCommand<Void> {
+public class DbgResolveProcessCommand extends AbstractDbgCommand<DbgProcess> {
 
-	private DbgThreadImpl thread;
-	private Integer frameId;
+	private DbgProcessImpl process;
 	private Long offset;
 
 	/**
-	 * Set the active thread
+	 * Adjust the process contents to include both pid and offset  
+	 * NB: should only be used in kernel-mode against the current process (i.e. id==offset)
 	 * 
 	 * @param manager the manager to execute the command
-	 * @param thread the desired thread
-	 * @param frameId the desired frame level
+	 * @param process the desired process
 	 */
-	public DbgSetActiveThreadCommand(DbgManagerImpl manager, DbgThread thread, Integer frameId) {
+	public DbgResolveProcessCommand(DbgManagerImpl manager, DbgProcess process) {
 		super(manager);
-		this.thread = (DbgThreadImpl) thread;
-		this.frameId = frameId;
+		this.process = (DbgProcessImpl) process;
 	}
 
 	@Override
@@ -57,49 +56,48 @@ public class DbgSetActiveThreadCommand extends AbstractDbgCommand<Void> {
 	}
 
 	@Override
-	public Void complete(DbgPendingCommand<?> pending) {
+	public DbgProcess complete(DbgPendingCommand<?> pending) {
 		StringBuilder builder = new StringBuilder();
 		for (DbgConsoleOutputEvent out : pending.findAllOf(DbgConsoleOutputEvent.class)) {
 			builder.append(out.getOutput());
 		}
 		parse(builder.toString());
-		if (offset != null) {
-			manager.getSystemObjects().setImplicitThreadDataOffset(offset);
-		}
-		return null;
+		return process;
 	}
 
 	private void parse(String result) {
 		String[] lines = result.split("\n");
 		for (int i = 0; i < lines.length; i++) {
 			String line = lines[i];
-			if (line.contains("THREAD")) {
+			if (line.contains("PROCESS")) {
 				String[] fields = line.trim().split("\\s+");
-				if (fields.length > 1 && fields[0].equals("THREAD")) {
+				if (fields.length > 1 && fields[0].equals("PROCESS")) {
 					BigInteger val = new BigInteger(fields[1], 16);
 					offset = val.longValue();
-					thread.setOffset(offset);
+					process.setOffset(offset);
+				}
+			}
+			if (line.contains("Cid:")) {
+				String[] fields = line.trim().split("\\s+");
+				if (fields.length > 3 && fields[2].equals("Cid:")) {
+					Long pid = Long.parseLong(fields[3], 16);
+					process.setPid(pid);
 				}
 				break;
-			}
+			}		
 		}		
+		if (offset == null) {
+			Msg.error(this, result);
+		}
 	}
 
 	@Override
 	public void invoke() {
-		DebugThreadId id = thread.getId();
-		if (id != null) {
-			if (!manager.isKernelMode()) {
-				manager.getSystemObjects().setCurrentThreadId(id);
-			} else {
-				offset = thread.getOffset();
-				if (offset == null || offset == 0L) {
-					DebugControl control = manager.getControl();
-					control.execute("!thread -t "+Long.toHexString(thread.getTid())+" 0");		
-				}
-			}
-			if (frameId != null) {
-				manager.getSymbols().setCurrentScopeFrameIndex(frameId);
+		if (process != null) {
+			DebugProcessId id = process.getId();
+			if (id != null) {
+				DebugControl control = manager.getControl();
+				control.execute("!process "+Long.toHexString(id.id)+" 0");		
 			}
 		}
 	}
