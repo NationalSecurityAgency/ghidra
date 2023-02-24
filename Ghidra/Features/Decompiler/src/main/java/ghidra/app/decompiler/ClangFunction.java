@@ -13,19 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- * Created on Jul 9, 2003
- *
- * To change the template for this generated file go to
- * Window>Preferences>Java>Code Generation>Code and Comments
- */
-
 package ghidra.app.decompiler;
 
 import ghidra.program.model.pcode.HighFunction;
 
 /**
- * All the tokens making up one function in the display
+ * A grouping of source code tokens representing an entire function
  */
 public class ClangFunction extends ClangTokenGroup {
 	private final HighFunction hfunc;
@@ -40,6 +33,9 @@ public class ClangFunction extends ClangTokenGroup {
 		return this;
 	}
 
+	/**
+	 * @return the HighFunction object represented by this source code
+	 */
 	public HighFunction getHighFunction() {
 		return hfunc;
 	}

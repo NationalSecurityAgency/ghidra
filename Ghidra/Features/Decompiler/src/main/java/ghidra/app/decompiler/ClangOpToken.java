@@ -19,11 +19,9 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.pcode.*;
 
 /**
- * 
- *
- * Token representing an operation in C code text. This could be a keyword like
- * "if" or "while" but could also be an operator like '+' or '*'
- * The token may contain an id for the pcode object representing the operation
+ * A token representing a source code "operation". This could be a keyword like
+ * "if" or "while" but could also be an operator like '+' or '*'.
+ * The token may contain an id for the p-code object representing the operation.
  */
 public class ClangOpToken extends ClangToken {
 	private PcodeOp op;

@@ -13,12 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- * Created on Jun 12, 2003
- *
- * To change the template for this generated file go to
- * Window>Preferences>Java>Code Generation>Code and Comments
- */
 package ghidra.app.decompiler;
 
 import static ghidra.program.model.pcode.AttributeId.*;
@@ -32,10 +26,8 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.pcode.*;
 
 /**
- * 
- *
- * Class representing a C code language token
- * May contain links back to pcode object
+ * Class representing a source code language token.
+ * A token has numerous display attributes and may link to the data-flow analysis
  */
 public class ClangToken implements ClangNode {
 	public final static int KEYWORD_COLOR = 0;	// Constants must match Decompiler syntax_highlight
@@ -85,10 +77,18 @@ public class ClangToken implements ClangNode {
 		return parent;
 	}
 
+	/**
+	 * Get the element representing an entire line of text that contains this element
+	 * @return the containing ClangLine
+	 */
 	public ClangLine getLineParent() {
 		return lineparent;
 	}
 
+	/**
+	 * Set (change) the line which this text element part of.  
+	 * @param line is the new ClangLine
+	 */
 	public void setLineParent(ClangLine line) {
 		lineparent = line;
 	}
@@ -126,38 +126,74 @@ public class ClangToken implements ClangNode {
 		highlight = val;
 	}
 
+	/**
+	 * Get the background highlight color used to render this token, or null if not highlighted
+	 * @return the Color or null
+	 */
 	public Color getHighlight() {
 		return highlight;
 	}
 
+	/**
+	 * Set whether or not additional "matching" highlighting is applied to this token.
+	 * Currently this means a bounding box is drawn around the token.
+	 * @param matchingToken is true to enable highlighting, false to disable
+	 */
 	public void setMatchingToken(boolean matchingToken) {
 		this.matchingToken = matchingToken;
 	}
 
+	/**
+	 * @return true if this token should be displayed with "matching" highlighting
+	 */
 	public boolean isMatchingToken() {
 		return matchingToken;
 	}
 
+	/**
+	 * @return true if this token represents a variable (in source code)
+	 */
 	public boolean isVariableRef() {
 		return false;
 	}
 
+	/**
+	 * Get the "syntax" type (color) associated with this token (keyword, type, etc)
+	 * @return the color code
+	 */
 	public int getSyntaxType() {
 		return syntax_type;
 	}
 
+	/**
+	 * Set the "syntax" type (color) associated with this token
+	 * @param syntax_type is the color code to set
+	 */
 	void setSyntaxType(int syntax_type) {
 		this.syntax_type = syntax_type;
 	}
 
+	/**
+	 * @return this token's display text as a string
+	 */
 	public String getText() {
 		return text;
 	}
 
+	/**
+	 * Set this token's display text.
+	 * @param text is the string to set
+	 */
 	void setText(String text) {
 		this.text = text;
 	}
 
+	/**
+	 * Decode this token from the current position in an encoded stream
+	 * @param decoder is the decoder for the stream
+	 * @param pfactory is used to look up p-code objects associated with the token
+	 * @throws DecoderException for problems decoding the stream
+	 */
 	public void decode(Decoder decoder, PcodeFactory pfactory) throws DecoderException {
 		syntax_type = DEFAULT_COLOR;
 		for (;;) {
@@ -181,6 +217,16 @@ public class ClangToken implements ClangNode {
 		list.add(this);
 	}
 
+	/**
+	 * Decode one specialized token from the current position in an encoded stream.  This
+	 * serves as a factory for allocating the various objects derived from ClangToken
+	 * @param node is the particular token type (already) decoded from the stream
+	 * @param par is the text grouping which will contain the token
+	 * @param decoder is the decoder for the stream
+	 * @param pfactory is used to look up p-code objects associated with tokens
+	 * @return the new ClangToken
+	 * @throws DecoderException for problems decoding the stream
+	 */
 	static public ClangToken buildToken(int node, ClangNode par, Decoder decoder,
 			PcodeFactory pfactory) throws DecoderException {
 		ClangToken token = null;
@@ -218,6 +264,13 @@ public class ClangToken implements ClangNode {
 		return token;
 	}
 
+	/**
+	 * Add a spacer token to the given text grouping
+	 * @param par is the text grouping
+	 * @param indent is the number of levels to indent
+	 * @param indentStr is a string representing containg the number of spaces in one indent level
+	 * @return the new spacer token
+	 */
 	static public ClangToken buildSpacer(ClangNode par, int indent, String indentStr) {
 		String spacing = new String();
 		for (int i = 0; i < indent; ++i) {
@@ -237,9 +290,17 @@ public class ClangToken implements ClangNode {
 	 * @return HighVariable
 	 */
 	public HighVariable getHighVariable() {
-		if (Parent() instanceof ClangVariableDecl) {
-			return ((ClangVariableDecl) Parent()).getHighVariable();
-		}
+		return null;
+	}
+
+	/**
+	 * Get the symbol associated with this token or null otherwise.
+	 * This token may be directly associated with the symbol or a reference, in which
+	 * case the symbol is looked up in the containing HighFunction
+	 * @param highFunction is the function
+	 * @return HighSymbol
+	 */
+	public HighSymbol getHighSymbol(HighFunction highFunction) {
 		return null;
 	}
 

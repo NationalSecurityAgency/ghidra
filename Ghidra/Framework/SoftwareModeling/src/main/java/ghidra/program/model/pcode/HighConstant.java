@@ -111,7 +111,8 @@ public class HighConstant extends HighVariable {
 				symbol = globalMap.populateSymbol(symref, null, -1);
 				if (symbol == null) {
 					PcodeOp op = ((VarnodeAST) represent).getLoneDescend();
-					Address addr = HighFunctionDBUtil.getSpacebaseReferenceAddress(program, op);
+					Address addr = HighFunctionDBUtil
+							.getSpacebaseReferenceAddress(program.getAddressFactory(), op);
 					if (addr != null) {
 						Data data = program.getListing().getDataAt(addr);
 						DataType dt = data == null ? DataType.DEFAULT : data.getDataType();
