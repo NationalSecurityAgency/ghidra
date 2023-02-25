@@ -233,7 +233,7 @@ void HighVariable::setSymbol(Varnode *vn) const
     if (rootVn == vn)
       throw LowlevelError("Partial varnode does not match symbol");
 
-    symboloffset = vn->getAddr().overlap(0,rootVn->getAddr(),rootVn->getSize());
+    symboloffset = vn->getAddr().overlapJoin(0,rootVn->getAddr(),rootVn->getSize());
     SymbolEntry *entry = rootVn->getSymbolEntry();
     if (entry != (SymbolEntry *)0)
       symboloffset += entry->getOffset();
@@ -246,7 +246,7 @@ void HighVariable::setSymbol(Varnode *vn) const
       entry->getAddr() == vn->getAddr() && !entry->isPiece())
     symboloffset = -1;			// A matching entry
   else {
-    symboloffset = vn->getAddr().overlap(0,entry->getAddr(),symbol->getType()->getSize()) + entry->getOffset();
+    symboloffset = vn->getAddr().overlapJoin(0,entry->getAddr(),symbol->getType()->getSize()) + entry->getOffset();
   }
 
   highflags &= ~((uint4)symboldirty);		// We are no longer dirty
@@ -426,6 +426,8 @@ bool HighVariable::compareName(Varnode *vn1,Varnode *vn2)
     return vn2->isInput();
   if (vn1->isAddrTied() != vn2->isAddrTied()) // Prefer address tied
     return vn2->isAddrTied();
+  if (vn1->isProtoPartial() != vn2->isProtoPartial())	// Prefer pieces
+    return vn2->isProtoPartial();
 
   // Prefer NOT internal
   if ((vn1->getSpace()->getType() != IPTR_INTERNAL)&&
@@ -469,7 +471,7 @@ Varnode *HighVariable::getNameRepresentative(void) const
 
 /// Find the first member that is either address tied or marked as a proto partial.
 /// \return a member Varnode acting as partial storage or null if none exist
-Varnode *HighVariable::getPartial(void) const
+Varnode *HighVariable::getPartialOrAddrTied(void) const
 
 {
   int4 i;

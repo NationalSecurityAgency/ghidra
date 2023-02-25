@@ -471,6 +471,48 @@ JoinSpace::JoinSpace(AddrSpaceManager *m,const Translate *t,int4 ind)
   clearFlags(heritaged); // This space is never heritaged, but does dead-code analysis
 }
 
+/// \brief Calculate where a given address falls inside a range in the \e join space
+///
+/// The given address, specified as an (AddrSpace, offset) pair is assumed to not be in the \e join space,
+/// but is assumed to be in one of the pieces of the join.  A final non-negative offset is returned if the
+/// address falls in one of the pieces. The offset is in data order, i.e. the offset is 0 if the given Address
+/// matches the address of the first element in an array overlaid on the \e join range.
+/// -1 is returned if the given Address does not lie in any piece.
+/// \param offset is the offset into the \e join space, specifying the range
+/// \param size is the size of the range, which may be smaller than the size of the JoinRecord
+/// \param pieceSpace is the AddrSpace of the given address
+/// \param pieceOffset is the offset of the given address
+/// \return a non-negative offset indicating where in the range the Address lies, or -1
+int4 JoinSpace::pieceOverlap(uintb offset,int4 size,AddrSpace *pieceSpace,uintb pieceOffset) const
+
+{
+  JoinRecord *joinRecord = getManager()->findJoin(offset);
+  // Set up so we traverse pieces in data order
+  int4 startPiece,endPiece,dir;
+  if (isBigEndian()) {
+    startPiece = 0;
+    endPiece = joinRecord->numPieces();
+    dir = 1;
+  }
+  else {
+    startPiece = joinRecord->numPieces() - 1;
+    endPiece = -1;
+    dir = -1;
+  }
+  int4 bytesAccum = 0;
+  for(int4 i=startPiece;i!=endPiece;i += dir) {
+    const VarnodeData &vData(joinRecord->getPiece(i));
+    if (vData.space == pieceSpace && pieceOffset >= vData.offset && pieceOffset <= vData.offset + (vData.size-1)) {
+      int4 res = (int4)(pieceOffset - vData.offset) + bytesAccum;
+      if (res >= size)
+	return -1;
+      return res;
+    }
+    bytesAccum += vData.size;
+  }
+  return -1;
+}
+
 /// Encode a \e join address to the stream.  This method in the interface only
 /// outputs attributes for a single element, so we are forced to encode what should probably
 /// be recursive elements into an attribute.

@@ -223,6 +223,7 @@ public:
   int4 contains(const Varnode &op) const; ///< Return info about the containment of \e op in \b this
   int4 characterizeOverlap(const Varnode &op) const; ///< Return 0, 1, or 2 for "no overlap", "partial overlap", "identical storage"
   int4 overlap(const Varnode &op) const;	///< Return relative point of overlap between two Varnodes
+  int4 overlapJoin(const Varnode &op) const;	///< Return relative point of overlap, where the given Varnode may be in the \e join space
   int4 overlap(const Address &op2loc,int4 op2size) const;	///< Return relative point of overlap with Address range
   uintb getNZMask(void) const { return nzm; } ///< Get the mask of bits within \b this that are known to be zero
   int4 termOrder(const Varnode *op) const; ///< Compare two Varnodes based on their term order

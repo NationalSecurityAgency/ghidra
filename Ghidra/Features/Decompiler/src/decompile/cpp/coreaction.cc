@@ -2850,7 +2850,7 @@ int4 ActionMarkExplicit::baseExplicit(Varnode *vn,int4 maxref)
     if (def->code() == CPUI_SUBPIECE) {
       Varnode *vin = def->getIn(0);
       if (vin->isAddrTied()) {
-        if (vn->overlap(*vin) == def->getIn(1)->getOffset())
+        if (vn->overlapJoin(*vin) == def->getIn(1)->getOffset())
           return -1;		// Should be explicit, will be a copymarker and not printed
       }
     }

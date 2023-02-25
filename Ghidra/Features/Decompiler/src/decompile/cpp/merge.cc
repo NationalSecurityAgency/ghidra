@@ -103,6 +103,18 @@ bool Merge::mergeTestRequired(HighVariable *high_out,HighVariable *high_in)
   else if (high_out->isExtraOut())
     return false;
 
+  if (high_in->isProtoPartial()) {
+    if (high_out->isProtoPartial()) return false;
+    if (high_out->isInput()) return false;
+    if (high_out->isAddrTied()) return false;
+    if (high_out->isPersist()) return false;
+  }
+  if (high_out->isProtoPartial()) {
+    if (high_in->isInput()) return false;
+    if (high_in->isAddrTied()) return false;
+    if (high_in->isPersist()) return false;
+  }
+
   Symbol *symbolIn = high_in->getSymbol();
   Symbol *symbolOut = high_out->getSymbol();
   if (symbolIn != (Symbol *) 0 && symbolOut != (Symbol *) 0) {
@@ -1456,10 +1468,10 @@ void Merge::markInternalCopies(void)
       h1 = op->getOut()->getHigh();
       h2 = op->getIn(0)->getHigh();
       h3 = op->getIn(1)->getHigh();
-      if (!h2->isPartial()) break;
-      if (!h3->isPartial()) break;
-      v2 = h2->getPartial();
-      v3 = h3->getPartial();
+      if (!h2->isPartialOrAddrTied()) break;
+      if (!h3->isPartialOrAddrTied()) break;
+      v2 = h2->getPartialOrAddrTied();
+      v3 = h3->getPartialOrAddrTied();
       if (v2->isAddrTied()) {
 	if (!h1->isAddrTied()) break;
 	v1 = h1->getTiedVarnode();
@@ -1469,15 +1481,15 @@ void Merge::markInternalCopies(void)
 	if (op->getIn(1) != v3) break;
 	v1 = op->getOut();
       }
-      if (v3->overlap(*v1) != 0) break;
-      if (v2->overlap(*v1) != v3->getSize()) break;
+      if (v3->overlapJoin(*v1) != 0) break;
+      if (v2->overlapJoin(*v1) != v3->getSize()) break;
       data.opMarkNonPrinting(op);
       break;
     case CPUI_SUBPIECE:
       h1 = op->getOut()->getHigh();
       h2 = op->getIn(0)->getHigh();
-      if (!h1->isPartial()) break;
-      v1 = h1->getPartial();
+      if (!h1->isPartialOrAddrTied()) break;
+      v1 = h1->getPartialOrAddrTied();
       if (v1->isAddrTied()) {
 	if (!h2->isAddrTied()) break;
 	v2 = h2->getTiedVarnode();
@@ -1487,7 +1499,7 @@ void Merge::markInternalCopies(void)
 	v2 = op->getIn(0);
       }
       val = op->getIn(1)->getOffset();
-      if (v1->overlap(*v2) != val) break;
+      if (v1->overlapJoin(*v2) != val) break;
       data.opMarkNonPrinting(op);
       break;
     default:

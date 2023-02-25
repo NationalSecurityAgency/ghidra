@@ -377,6 +377,9 @@ public class DecompileProcess {
 					currentResponse = null;		// Reset current buffer as a native message may follow
 					break;
 				case 16:			// Beginning of any native message from the decompiler
+					if (currentResponse != null) {	// Beginning of native message before end of main response
+						currentResponse.clear();	// Don't try to parse main response
+					}
 					currentResponse = stringDecoder;
 					currentResponse.open(1 << 20, programSource);
 					break;

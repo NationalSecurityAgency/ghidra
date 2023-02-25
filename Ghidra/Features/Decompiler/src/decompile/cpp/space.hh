@@ -240,6 +240,7 @@ public:
 class JoinSpace : public AddrSpace {
 public:
   JoinSpace(AddrSpaceManager *m,const Translate *t,int4 ind);
+  int4 pieceOverlap(uintb offset,int4 size,AddrSpace *pieceSpace,uintb pieceOffset) const;
   virtual void encodeAttributes(Encoder &encoder,uintb offset) const;
   virtual void encodeAttributes(Encoder &encoder,uintb offset,int4 size) const;
   virtual uintb decodeAttributes(Decoder &decoder,uint4 &size) const;
