@@ -246,7 +246,12 @@ public class AskDialog<T> extends DialogComponentProvider {
 
 	protected Integer getValueAsInt() {
 		String text = getValueAsString();
-		return text != null ? Integer.decode(text) : null;
+
+		if (text == null) {
+			return null;
+		}
+
+		return NumericUtilities.parseInt(text);
 	}
 
 	protected Long getValueAsLong() {

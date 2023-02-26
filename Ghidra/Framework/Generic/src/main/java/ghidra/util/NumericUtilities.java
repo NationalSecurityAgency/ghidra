@@ -98,7 +98,53 @@ public final class NumericUtilities {
 	}
 
 	/**
-	 * Parses the given string as a numeric value, detecting whether or not it begins with a hex
+	 * Parses the given string as a numeric value, detecting whether or not it begins with a Hex
+	 * prefix, and if not, parses as a int value.
+	 */
+	public static int parseInt(String numStr) {
+		String origStr = numStr;
+		int value = 0;
+		int sign = 1;
+
+		numStr = (numStr == null ? "" : numStr.trim());
+		if (numStr.length() == 0) {
+			return value;
+		}
+		if (numStr.startsWith("-")) {
+			sign = -1;
+			numStr = numStr.substring(1);
+		}
+		int radix = 10;
+
+		if (numStr.startsWith(HEX_PREFIX_x) || numStr.startsWith(HEX_PREFIX_X)) {
+			if (numStr.length() > 10) {
+				throw new NumberFormatException(numStr + " has too many digits.");
+			}
+			numStr = numStr.substring(2);
+			radix = 16;
+		}
+		if (numStr.length() == 0) {
+			return 0;
+		}
+		try {
+			BigInteger bi = new BigInteger(numStr, radix);
+			return bi.intValue() * sign;
+		}
+		catch (NumberFormatException e) {
+			// This is a little hacky, but the message should be complete and report about the
+			// original string
+			NumberFormatException e2 =
+				new NumberFormatException("Cannot parse int from " + origStr);
+			e2.setStackTrace(e.getStackTrace());
+			throw e2;
+		}
+		catch (ArithmeticException e) {
+			throw new NumberFormatException(origStr + " is too big.");
+		}
+	}
+	
+	/**
+	 * Parses the given string as a numeric value, detecting whether or not it begins with a Hex
 	 * prefix, and if not, parses as a long int value.
 	 * @param s the string to parse
 	 * @return the long value
