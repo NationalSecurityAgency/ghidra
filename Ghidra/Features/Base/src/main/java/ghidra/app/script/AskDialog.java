@@ -246,13 +246,23 @@ public class AskDialog<T> extends DialogComponentProvider {
 
 	protected Integer getValueAsInt() {
 		String text = getValueAsString();
+		long retValue = 0;
+		
 		if (text == null) {
 			return null;
 		}
-		if (text.startsWith("0x")) {
-			return (int) NumericUtilities.parseHexLong(text);
+		
+		retValue = text.startsWith("0x") ? 
+			NumericUtilities.parseHexLong(text) : 
+			NumericUtilities.parseLong(text);
+		
+		if(retValue > Integer.MAX_VALUE || 
+		   retValue < Integer.MIN_VALUE) {
+			throw new NumberFormatException("The long value " + Long.toString(retValue) + 
+											"from string " + text + "is not within <Integer.MIN_VALUE:Integer.MAX_VALUE> range.");
 		}
-		return (int) NumericUtilities.parseLong(text);
+		
+		return (int) retValue;
 	}
 
 	protected Long getValueAsLong() {
