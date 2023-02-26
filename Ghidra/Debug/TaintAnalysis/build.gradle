@@ -23,6 +23,7 @@ eclipse.project.name = 'Debug TaintAnalysis'
 
 dependencies {
 	api project(':Debugger')
+	api project(':SystemEmulation')
 
 	// Oof. Apparently, this doesn't work transitively....
 	testImplementation project(path: ':ProposedUtils', configuration: 'testArtifacts')
@@ -30,4 +31,5 @@ dependencies {
 	testImplementation project(path: ':Framework-Debugging', configuration: 'testArtifacts')
 	testImplementation project(path: ':Framework-TraceModeling', configuration: 'testArtifacts')
 	testImplementation project(path: ':Debugger', configuration: 'testArtifacts')
+	testImplementation project(path: ':SystemEmulation', configuration: 'testArtifacts')
 }

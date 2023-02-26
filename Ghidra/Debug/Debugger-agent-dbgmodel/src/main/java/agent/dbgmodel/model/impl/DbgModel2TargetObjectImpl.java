@@ -15,14 +15,12 @@
  */
 package agent.dbgmodel.model.impl;
 
-import java.lang.invoke.MethodHandles;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import agent.dbgeng.manager.DbgEventsListener;
-import agent.dbgeng.manager.DbgStateListener;
+import agent.dbgeng.manager.*;
 import agent.dbgeng.manager.breakpoint.DbgBreakpointInfo;
 import agent.dbgeng.model.AbstractDbgModel;
 import agent.dbgeng.model.iface1.DbgModelSelectableObject;
@@ -38,7 +36,6 @@ import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.dbg.target.TargetBreakpointSpecContainer.TargetBreakpointKindSet;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
-import ghidra.dbg.target.TargetMethod.AnnotatedTargetMethod;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.dbg.util.PathUtils;
 import ghidra.dbg.util.PathUtils.TargetObjectKeyComparator;
@@ -253,6 +250,11 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 				if (isValid()) {
 					TargetExecutionStateful stateful = (TargetExecutionStateful) proxy;
 					TargetExecutionState state = stateful.getExecutionState();
+					if (getManager().isKernelMode()) {
+						if (state.equals(TargetExecutionState.INACTIVE)) {
+							state = TargetExecutionState.ALIVE;
+						}
+					}
 					attrs.put(TargetExecutionStateful.STATE_ATTRIBUTE_NAME, state);
 				}
 			}
@@ -300,11 +302,12 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 			}
 			if (proxy instanceof TargetThread) {
 				DbgModelTargetThread targetThread = (DbgModelTargetThread) proxy;
-				String executionType =
-					targetThread.getThread().getExecutingProcessorType().description;
-				attrs.put(TargetEnvironment.ARCH_ATTRIBUTE_NAME, executionType);
-				attrs.putAll(
-					AnnotatedTargetMethod.collectExports(MethodHandles.lookup(), model, proxy));
+				DbgThread thread = targetThread.getThread();
+				if (thread != null) {
+					String executionType =
+						thread.getExecutingProcessorType().description;
+					attrs.put(TargetEnvironment.ARCH_ATTRIBUTE_NAME, executionType);
+				}
 			}
 			if (proxy instanceof TargetRegister) {
 				DbgModelTargetObject bank = (DbgModelTargetObject) getParent();

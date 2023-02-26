@@ -153,18 +153,19 @@ public class UiDefaultsMapper {
 
 	/**
 	 * Updates the UIDefaults file with indirect colors (GColors) and any overridden font or icon
-	 * values as defined in theme.properites files
-	 * @param overrides a Map that contains possible LookAndFeel value overridess
+	 * values as defined in theme.properites files and saved themes.
+	 * @param currentValues a Map that contains all the values including those the may have
+	 * been overridden by the theme.properties files or saved themes
 	 */
-	public void installValuesIntoUIDefaults(GThemeValueMap overrides) {
+	public void installValuesIntoUIDefaults(GThemeValueMap currentValues) {
 		//
 		// In the UI Defaults, colors use indirect values and fonts and icons use direct values.
 		// Here we install our GColors for the indirect colors.  Then we set any font and icon
 		// values that are different than the defaults.
 		//
 		installGColorsIntoUIDefaults();
-		installOverriddenFontsIntoUIDefaults(overrides);
-		installOverriddenIconsIntoUIDefaults(overrides);
+		installOverriddenFontsIntoUIDefaults(currentValues);
+		installOverriddenIconsIntoUIDefaults(currentValues);
 	}
 
 	/**
@@ -550,27 +551,32 @@ public class UiDefaultsMapper {
 	}
 
 	/**
-	 * Replaces any theme overridden icons into the UiDefaults.
-	 * @param overrides the theme values that potentially override a laf icon value
+	 * Replace UiDefault values with theme overridden values.
+	 * @param currentValues the theme values that potentially override a laf icon value
 	 */
-	private void installOverriddenIconsIntoUIDefaults(GThemeValueMap overrides) {
+	private void installOverriddenIconsIntoUIDefaults(GThemeValueMap currentValues) {
 		for (String lafId : extractedValues.getIconIds()) {
+			Icon currentIcon = extractedValues.getResolvedIcon(lafId);
 			String standardId = lafIdToNormalizedIdMap.get(lafId);
-			if (overrides.containsIcon(standardId)) {
-				defaults.put(lafId, overrides.getResolvedIcon(standardId));
+			Icon overriddenIcon = currentValues.getResolvedIcon(standardId);
+			if (overriddenIcon != null && currentIcon != overriddenIcon) {
+				defaults.put(lafId, overriddenIcon);
 			}
 		}
+
 	}
 
 	/**
 	 * Replaces any theme overridden fonts into the UiDefaults.
-	 * @param overrides the theme values that potentially override a laf font value
+	 * @param currentValues the theme values that potentially override a laf font value
 	 */
-	private void installOverriddenFontsIntoUIDefaults(GThemeValueMap overrides) {
+	private void installOverriddenFontsIntoUIDefaults(GThemeValueMap currentValues) {
 		for (String lafId : extractedValues.getFontIds()) {
+			Font currentFont = extractedValues.getResolvedFont(lafId);
 			String standardId = lafIdToNormalizedIdMap.get(lafId);
-			if (overrides.containsFont(standardId)) {
-				defaults.put(lafId, new FontUIResource(overrides.getResolvedFont(standardId)));
+			Font overriddenFont = currentValues.getResolvedFont(standardId);
+			if (overriddenFont != null && overriddenFont != currentFont) {
+				defaults.put(lafId, new FontUIResource(overriddenFont));
 			}
 		}
 	}

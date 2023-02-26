@@ -41,6 +41,7 @@ import ghidra.util.filechooser.GhidraFileChooserModel;
 import ghidra.util.filechooser.GhidraFileFilter;
 import ghidra.util.task.TaskLauncher;
 import ghidra.util.xml.GenericXMLOutputter;
+import util.CollectionUtils;
 
 /**
  * Implementation of service used to manipulate tools.
@@ -240,6 +241,17 @@ class ToolServicesImpl implements ToolServices {
 		ToolTemplate template = getDefaultToolTemplate(domainFile);
 		return defaultLaunch(template, t -> {
 			return t.acceptDomainFiles(new DomainFile[] { domainFile });
+		});
+	}
+
+	@Override
+	public PluginTool launchDefaultTool(Collection<DomainFile> domainFiles) {
+		if (CollectionUtils.isBlank(domainFiles)) {
+			throw new IllegalArgumentException("Domain files cannot be empty");
+		}
+		ToolTemplate template = getDefaultToolTemplate(CollectionUtils.any(domainFiles));
+		return defaultLaunch(template, t -> {
+			return t.acceptDomainFiles(domainFiles.toArray(DomainFile[]::new));
 		});
 	}
 
@@ -530,9 +542,9 @@ class ToolServicesImpl implements ToolServices {
 
 	/**
 	 * Get all running tools that have the same tool chest tool name as this one.
-	 * 
+	 *
 	 * @param tool the tool for comparison.
-	 * 
+	 *
 	 * @return array of tools that are running and named the same as this one.
 	 */
 	private PluginTool[] getSameNamedRunningTools(PluginTool tool) {
@@ -554,10 +566,10 @@ class ToolServicesImpl implements ToolServices {
 
 	/**
 	 * Search the array of tools for one using the given domainFile.
-	 * 
+	 *
 	 * @param tools array of tools to search
 	 * @param domainFile domain file to find user of
-	 * 
+	 *
 	 * @return first tool found to be using the domainFile
 	 */
 	private PluginTool findToolUsingFile(PluginTool[] tools, DomainFile domainFile) {

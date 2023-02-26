@@ -37,7 +37,7 @@ public class ProjectDataOpenDefaultToolAction extends FrontendProjectTreeAction 
 	@Override
 	protected void actionPerformed(ProjectDataContext context) {
 		List<DomainFile> selectedFiles = context.getSelectedFiles();
-		AppInfo.getActiveProject().getToolServices().launchDefaultTool(selectedFiles.get(0));
+		AppInfo.getActiveProject().getToolServices().launchDefaultTool(selectedFiles);
 	}
 
 	@Override

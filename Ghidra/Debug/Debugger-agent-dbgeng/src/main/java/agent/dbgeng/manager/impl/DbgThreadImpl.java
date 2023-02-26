@@ -40,8 +40,9 @@ public class DbgThreadImpl implements DbgThread {
 	DbgManagerImpl manager;
 	private DbgProcessImpl process;
 	private DebugThreadId id;
-	private long tid;
+	private Long tid;
 	private DebugEventInformation info;
+	private Long offset;
 
 	private final AsyncReference<DbgState, CauseReasonPair> state =
 		new AsyncReference<>(DbgState.STOPPED);
@@ -284,4 +285,13 @@ public class DbgThreadImpl implements DbgThread {
 		int executingProcessorType = info.getExecutingProcessorType();
 		return WinNTExtra.Machine.getByNumber(executingProcessorType);
 	}
+	
+	public Long getOffset() {
+		return offset;
+	}
+
+	public void setOffset(long offset) {
+		this.offset = offset;
+	}
+
 }

@@ -39,6 +39,7 @@ configurations {
 
 dependencies {
 	api project(':SoftwareModeling')
+	api project(':Emulation')
 
 	api 'org.apache.felix:org.apache.felix.framework:7.0.3'
 	api 'com.github.rotty3000:phidias:0.3.7'

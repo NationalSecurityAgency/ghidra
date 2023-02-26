@@ -42,17 +42,10 @@ public interface DbgModelTargetThread extends //
 
 	public default DbgThread getThread(boolean fire) {
 		DbgManagerImpl manager = getManager();
-		DebugSystemObjects so = manager.getSystemObjects();
 		try {
-			String index = PathUtils.parseIndex(getName());
-			int tid = Integer.decode(index);
-			DebugThreadId id = so.getThreadIdBySystemId(tid);
-			if (id == null) {
-				id = so.getCurrentThreadId();
-			}
 			DbgModelTargetProcess parentProcess = getParentProcess();
-			DbgProcessImpl process = (DbgProcessImpl) parentProcess.getProcess();
-			DbgThreadImpl thread = manager.getThreadComputeIfAbsent(id, process, tid, fire);
+			DbgProcessImpl process = parentProcess == null ? null : (DbgProcessImpl) parentProcess.getProcess();
+			DbgThreadImpl thread = manager.getThreadComputeIfAbsent(getName(), process, fire);
 			return thread;
 		}
 		catch (IllegalArgumentException e) {

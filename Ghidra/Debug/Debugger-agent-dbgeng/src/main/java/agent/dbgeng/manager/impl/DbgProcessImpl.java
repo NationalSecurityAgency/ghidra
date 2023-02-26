@@ -51,6 +51,7 @@ public class DbgProcessImpl implements DbgProcess {
 	private DebugProcessId id;
 	private Long pid;
 	private Long exitCode;
+	private Long offset;
 
 	/**
 	 * Construct a new inferior
@@ -373,4 +374,13 @@ public class DbgProcessImpl implements DbgProcess {
 	public CompletableFuture<String> evaluate(String expression) {
 		return manager.execute(new DbgEvaluateCommand(manager, expression));
 	}
+
+	public Long getOffset() {
+		return offset;
+	}
+
+	public void setOffset(long offset) {
+		this.offset = offset;
+	}
+
 }

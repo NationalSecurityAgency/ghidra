@@ -444,20 +444,6 @@ public abstract class ThemeManager {
 	}
 
 	/**
-	 * Returns application defaults values (does not include java default values)
-	 * @return application defaults values (does not include java default values)
-	 */
-	public GThemeValueMap getApplicationOverrides() {
-		GThemeValueMap currentDefaults = new GThemeValueMap();
-		currentDefaults.load(applicationDefaults.getLightValues());
-		if (useDarkDefaults) {
-			currentDefaults.load(applicationDefaults.getDarkValues());
-		}
-		currentDefaults.load(applicationDefaults.getLookAndFeelValues(getLookAndFeelType()));
-		return currentDefaults;
-	}
-
-	/**
 	 * Returns a {@link GThemeValueMap} containing all default values for the current theme. It
 	 * is a combination of application defined defaults and java {@link LookAndFeel} defaults.
 	 * @return the current set of defaults.

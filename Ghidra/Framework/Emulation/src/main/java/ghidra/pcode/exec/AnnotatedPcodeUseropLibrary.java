@@ -26,7 +26,6 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.reflect.TypeUtils;
 
-import ghidra.pcode.emu.linux.EmuLinuxAmd64SyscallUseropLibrary;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.program.model.pcode.Varnode;
 import utilities.util.AnnotationUtilities;
@@ -35,8 +34,7 @@ import utilities.util.AnnotationUtilities;
  * A userop library wherein Java methods are exported via a special annotation
  *
  * <p>
- * See {@code StandAloneEmuExampleScript} for an example of implementing a userop library. A more
- * complex example is {@link EmuLinuxAmd64SyscallUseropLibrary}.
+ * See {@code StandAloneEmuExampleScript} for an example of implementing a userop library.
  *
  * @param <T> the type of data processed by the library
  */

@@ -21,9 +21,10 @@ apply from: "gradle/support/loadApplicationProperties.gradle"
 
 
 /***************************************************************************************
- * Make sure the correct version of gradle is being used
- ***************************************************************************************/
+* Print current Gradle version and make sure the correct version of gradle is being used
+***************************************************************************************/
 import org.gradle.util.GradleVersion;
+println "Gradle: " + GradleVersion.current().version
 final GradleVersion minimum_version = GradleVersion.version("${rootProject.GRADLE_MINIMUM_VERSION}")
 if (GradleVersion.current() < minimum_version) {
 	throw new GradleException("Requires at least $minimum_version, but was run with $gradle.gradleVersion")

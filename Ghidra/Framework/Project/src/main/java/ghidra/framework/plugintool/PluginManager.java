@@ -47,6 +47,7 @@ class PluginManager {
 	boolean acceptData(DomainFile[] data) {
 		for (Plugin p : pluginList) {
 			if (p.acceptData(data)) {
+				tool.getWindowManager().getMainWindow().toFront();
 				return true;
 			}
 		}
@@ -64,6 +65,7 @@ class PluginManager {
 	boolean accept(URL url) {
 		for (Plugin p : pluginList) {
 			if (p.accept(url)) {
+				tool.getWindowManager().getMainWindow().toFront();
 				return true;
 			}
 		}
