@@ -15,6 +15,8 @@
  */
 package ghidra.app.util.bin.format.omf;
 
+import java.util.Set;
+
 import ghidra.program.model.address.Address;
 
 public class OmfSymbol {
@@ -25,6 +27,15 @@ public class OmfSymbol {
 	private int segmentRef = 0;	// Symbol is really reference to extra segment
 	private long offset;
 	private Address address;
+
+	/**
+	 * These names were taken from the OpenWatcom source code
+	 * https://github.com/open-watcom/open-watcom-v2/blob/master/bld/watcom/h/fppatche.h
+	 */
+	private static final Set<String> FLOATINGPOINT_SPECIALNAMES = Set.of(
+		"FIWRQQ", "FIDRQQ", "FIERQQ", "FICRQQ", "FJCRQQ", "FISRQQ",
+		"FJSRQQ", "FIARQQ", "FJARQQ", "FIFRQQ", "FJFRQQ", "FIGRQQ",
+		"FJGRQQ");
 
 	public OmfSymbol(String name, int type, long off, int dT, int bL) {
 		symbolName = name;
@@ -64,5 +75,9 @@ public class OmfSymbol {
 
 	public int getFrameDatum() {
 		return 0;					// This is currently unused
+	}
+	
+	public boolean isFloatingPointSpecial() {
+		return FLOATINGPOINT_SPECIALNAMES.contains(symbolName);
 	}
 }

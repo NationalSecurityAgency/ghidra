@@ -47,6 +47,9 @@ public class OmfCommentRecord extends OmfRecord {
 			case COMMENT_CLASS_LIBMOD:
 				value = readString(reader);
 				break;
+			default:
+				reader.setPointerIndex(reader.getPointerIndex() + getRecordLength() - 3);
+				break;
 		}
 		readCheckSumByte(reader);
 	}

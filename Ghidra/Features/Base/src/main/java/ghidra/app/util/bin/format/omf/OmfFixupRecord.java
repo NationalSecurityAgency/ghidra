@@ -19,310 +19,175 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.lang.Language;
 
 public class OmfFixupRecord extends OmfRecord {
+	private final Subrecord[] subrecs;
+	private OmfData lastData = null;
 
-	private Subrecord[] subrecs;
-	private OmfEnumeratedData lastLEData = null;
-	private OmfIteratedData lastLIData = null;
-
+	/**
+	 * Read a Fixup record from the input reader
+	 * @param reader The actual reader
+	 * @throws IOException
+	 */
 	public OmfFixupRecord(BinaryReader reader) throws IOException {
 		ArrayList<Subrecord> subreclist = new ArrayList<Subrecord>();
-		boolean hasBigFields = ((getRecordType() & 1) != 0);
 
 		readRecordHeader(reader);
 		long max = reader.getPointerIndex() + getRecordLength() - 1;
 		while (reader.getPointerIndex() < max) {
-			byte peek = reader.peekNextByte();
-			if ((peek & 0x80) == 0) {
-				ThreadSubrecord subrec = ThreadSubrecord.readThreadSubrecord(reader, hasBigFields);
-				subreclist.add(subrec);
-			}
-			else {
-				FixupSubrecord subrec = FixupSubrecord.readFixupSubrecord(reader, hasBigFields);
-				subreclist.add(subrec);
-			}
+			subreclist.add(Subrecord.readSubrecord(reader, hasBigFields()));
 		}
 		subrecs = new Subrecord[subreclist.size()];
 		subreclist.toArray(subrecs);
 		readCheckSumByte(reader);
 	}
 
-	public void setDataBlock(Object last) {
-		if (last instanceof OmfEnumeratedData) {
-			lastLEData = (OmfEnumeratedData) last;
-			lastLIData = null;
-		}
-		else {
-			lastLIData = (OmfIteratedData) last;
-			lastLEData = null;
-		}
+	/**
+	 * @param last The Datablock this fixup record is meant for
+	 */
+	public void setDataBlock(OmfData last) {
+		lastData = last;
 	}
 
+	/**
+	 * @return The datablock this fixup record is meant for
+	 */
+	public OmfData getDataBlock() {
+		return lastData;
+	}
+
+	/**
+	 * @return The array of subrecords
+	 */
 	public Subrecord[] getSubrecords() {
 		return subrecs;
 	}
 
-	public static class FixupState {
-		public Language language;
-		OmfFileHeader header;
-		public ThreadSubrecord[] frameThreads = new ThreadSubrecord[4];
-		public ThreadSubrecord[] targetThreads = new ThreadSubrecord[4];
-		public OmfFixupRecord currentFixupRecord;
-		public ArrayList<OmfGroupRecord> groups;
-		public ArrayList<OmfSymbol> externals;
-		public int frameState;			// Frame of item being referred to
-		public long targetState;		// Address of item being referred to
-		public Address locAddress;		// Location of data to be patched
-		public boolean M;				// true for segment-relative, false for self-relative
-		public int locationType;
-
-		public FixupState(OmfFileHeader header, ArrayList<OmfSymbol> externsyms, Language lang) {
-			for (int i = 0; i < 4; ++i) {
-				frameThreads[i] = null;
-				targetThreads[i] = null;
-			}
-			this.header = header;
-			groups = header.getGroups();
-			externals = externsyms;
-			language = lang;
-		}
-
-		public void clear() {
-			targetState = -1;
-			locAddress = null;
-			locationType = -1;
-		}
-	}
-
 	public static class Subrecord {
-		private boolean isThread;
-
-		public Subrecord(boolean isthread) {
-			isThread = isthread;
-		}
-
-		public boolean isThread() {
-			return isThread;
-		}
-	}
-
-	public static class ThreadSubrecord extends Subrecord {
-		private byte type;
-		private int index;
-
-		public ThreadSubrecord() {
-			super(true);
-		}
-
-		public int getMethod() {
-			return (type >> 2) & 7;
-		}
-
-		public int getIndex() {
-			return index;
-		}
-
-		public boolean isFrameThread() {
-			return ((type >> 6) & 1) != 0;
-		}
-
-		public int getThreadNum() {
-			return (type & 3);
-		}
-
-		public void updateState(FixupState state) {
-			if (isFrameThread()) {
-				state.frameThreads[getThreadNum()] = this;
-			}
-			else {
-				state.targetThreads[getThreadNum()] = this;
-			}
-		}
-
-		public static ThreadSubrecord readThreadSubrecord(BinaryReader reader, boolean hasBigFields)
-				throws IOException {
-			ThreadSubrecord thread = new ThreadSubrecord();
-			thread.type = reader.readNextByte();
-			int method = thread.getMethod();
-			if (method >= 4 && thread.isFrameThread()) {
-				thread.index = -1;
-			}
-			else {
-				thread.index = OmfRecord.readInt1Or2(reader, hasBigFields);
-			}
-			return thread;
-		}
-	}
-
-	public static class FixupTarget {
+		private byte first;
+		private byte hiFixup;
 		private byte fixData;
+		private int index;
 		private int frameDatum;
 		private int targetDatum;
 		private int targetDisplacement;
 
+		/**
+		 * Read the next subrecord from the input reader
+		 *
+		 * @param reader The input file
+		 * @param hasBigFields Is this 16 or 32 bit values
+		 * @return The read subrecord
+		 * @throws IOException
+		 */
+		public static Subrecord readSubrecord(BinaryReader reader, boolean hasBigFields)
+				throws IOException {
+			int method;
+			final var rec = new Subrecord();
+			rec.first = reader.readNextByte();
+			rec.index = -1;
+			if (rec.isThreadSubrecord()) {
+				method = rec.getThreadMethod();
+				if (method < 4) {
+					rec.index = readIndex(reader);
+				}
+				return rec;
+			}
+			rec.targetDisplacement = 0;
+			rec.targetDatum = 0;
+			rec.hiFixup = reader.readNextByte();
+			rec.fixData = reader.readNextByte();
+			method = rec.getFrameMethod();
+			if (!rec.isFrameThread() && method < 3) { // F=0  (explicit frame method (and datum))
+				rec.frameDatum = readIndex(reader);
+			}
+			if (!rec.isTargetThread()) { // T=0  (explicit target)
+				rec.targetDatum = readIndex(reader);
+			}
+			if ((rec.fixData & 0x04) == 0) { // P=0
+				rec.targetDisplacement = readInt2Or4(reader, hasBigFields);
+			}
+			return rec;
+		}
+
+		/**
+		 * @return True if this is a Thread subrecord type
+		 */
+		public boolean isThreadSubrecord() {
+			return (first & 0x80) == 0;
+		}
+
+		/**
+		 * @return The method value from a Thread subrecord
+		 */
+		public int getThreadMethod() {
+			return first >> 2 & 7;
+		}
+
+		/**
+		 * @return True if this is a frame reference
+		 */
+		public boolean isFrameInSubThread() {
+			return (first & 0x40) != 0;
+		}
+
+		/**
+		 * @return Get the index for explicit thread or frame
+		 */
+		public int getIndex() {
+			return index;
+		}
+
+		/**
+		 * @return Get the thread index from flag
+		 */
+		public int getThreadNum() {
+			return first & 3;
+		}
+
 		public boolean isFrameThread() {
-			return ((fixData >> 7) & 1) != 0;
+			return (fixData & 0x80) != 0;
 		}
 
 		public boolean isTargetThread() {
-			return ((fixData >> 3) & 1) != 0;
+			return (fixData & 0x08) != 0;
 		}
 
 		public int getFrameMethod() {
-			return ((fixData >> 4) & 7);
+			return fixData >> 4 & 7;
 		}
 
-		public int getP() {
-			int res = (fixData >> 2) & 1;
-			return res;
+		public int getFixThreadNum() {
+			return fixData & 3;
 		}
 
-		public void resolveFrame(FixupState state) throws OmfException {
-			int method;
-			int index;
-			if (isFrameThread()) {
-				// Frame datum from a thread
-				int threadnum = ((fixData >> 4) & 3);
-				ThreadSubrecord subrec = state.frameThreads[threadnum];
-				method = subrec.getMethod();
-				index = subrec.getIndex();
-			}
-			else {
-				method = getFrameMethod();
-				index = frameDatum;
-			}
-			switch (method) {
-				case 0:				// Index is for a segment
-					state.frameState = state.header.resolveSegment(index).getFrameDatum();
-					break;
-				case 1:				// Index is for a group
-					state.frameState = state.groups.get(index - 1).getFrameDatum();
-					break;
-				case 2:				// Index is for an external symbol
-					state.frameState = state.externals.get(index - 1).getFrameDatum();
-					break;
-				case 4:				// Segment Index grabbed from datablock
-					if (state.currentFixupRecord.lastLEData != null) {
-						index = state.currentFixupRecord.lastLEData.getSegmentIndex();
-					}
-					else {
-						index = state.currentFixupRecord.lastLIData.getSegmentIndex();
-					}
-					state.frameState = state.header.resolveSegment(index).getFrameDatum();
-					break;
-				case 5:				// Frame determined by target
-					// TODO:  Fill this in properly
-					break;
-				default:
-					state.frameState = -1;			// Indicate an error condition
-			}
+		public int getFixMethodWithSub(Subrecord rec) {
+			return fixData & 0x04 | rec.getThreadMethod() & 0x3;
 		}
 
-		public void resolveTarget(FixupState state) throws OmfException {
-			int method;
-			int index;
-			if (isTargetThread()) {
-				int threadnum = fixData & 3;
-				ThreadSubrecord subrec = state.targetThreads[threadnum];
-				method = getP();		// Most significant bit is frame fixup subrecord
-				method <<= 2;
-				method |= subrec.getMethod();	// Least significant 2 bits are from the thread
-				index = subrec.getIndex();
-			}
-			else {
-				method = fixData & 7;
-				index = targetDatum;
-			}
-
-			switch (method) {
-				case 0:			// Index is for a segment
-					state.targetState = state.header.resolveSegment(index).getStartAddress();
-					state.targetState += targetDisplacement;
-					break;
-				case 1:			// Index is for a group
-					state.targetState = state.groups.get(index - 1).getStartAddress();
-					state.targetState += targetDisplacement;
-					break;
-				case 2:			// Index is for an external symbol
-					state.targetState = state.externals.get(index - 1).getAddress().getOffset();
-					state.targetState += targetDisplacement;
-					break;
-				//	case 3:			// Not supported by many linkers
-				case 4:			// segment only, no displacement
-					state.targetState = state.header.resolveSegment(index).getStartAddress();
-					break;
-				case 5:			// group only, no displacement
-					state.targetState = state.groups.get(index - 1).getStartAddress();
-					break;
-				case 6:			// external only, no displacement
-					state.targetState = state.externals.get(index - 1).getAddress().getOffset();
-					break;
-				default:
-					state.targetState = -1;			// This indicates an unresolved target
-			}
+		public int getFixMethod() {
+			return fixData & 7;
 		}
 
-		public static FixupTarget readFixupTarget(BinaryReader reader, boolean hasBigFields)
-				throws IOException {
-			FixupTarget fixupTarget = new FixupTarget();
-			fixupTarget.fixData = reader.readNextByte();
-			if ((fixupTarget.fixData & 0x80) == 0) {		// F=0  (explicit frame method (and datum))
-				int method = (fixupTarget.fixData >> 4) & 7;
-				if (method < 3) {
-					fixupTarget.frameDatum = OmfRecord.readIndex(reader);
-				}
-			}
-			if ((fixupTarget.fixData & 0x08) == 0) {		// T=0  (explicit target)
-				fixupTarget.targetDatum = OmfRecord.readIndex(reader);
-			}
-			if ((fixupTarget.fixData & 0x04) == 0)		// P=0
-				fixupTarget.targetDisplacement = OmfRecord.readInt2Or4(reader, hasBigFields);
-			return fixupTarget;
+		public int getTargetDatum() {
+			return targetDatum;
+		}
+
+		public int getTargetDisplacement() {
+			return targetDisplacement;
+		}
+
+		public int getLocationType() {
+			return first >> 2 & 0xf;
+		}
+
+		public int getDataRecordOffset() {
+			return (first & 3) << 8 | hiFixup & 0xff;
+		}
+
+		public boolean isSegmentRelative() {
+			return (first & 0x40) != 0;
 		}
 	}
 
-	public static class FixupSubrecord extends Subrecord {
-		private byte lobyte;			// lo-byte of location
-		private byte hibyte;			// hi-byte of location
-		private FixupTarget target;
-
-		public FixupSubrecord() {
-			super(false);
-		}
-
-		public void resolveFixup(FixupState state) throws OmfException {
-
-			target.resolveTarget(state);		// Resolve target first as frame may need to reference results
-			target.resolveFrame(state);
-			state.M = ((lobyte >> 6) & 1) != 0;
-			state.locationType = ((lobyte >> 2) & 0xf);
-			int dataRecordOffset = lobyte & 3;
-			dataRecordOffset <<= 8;
-			dataRecordOffset |= (hibyte) & 0xff;
-			long blockDisplace;
-			int segIndex;
-			if (state.currentFixupRecord.lastLEData != null) {
-				blockDisplace = state.currentFixupRecord.lastLEData.getDataOffset();
-				segIndex = state.currentFixupRecord.lastLEData.getSegmentIndex();
-			}
-			else {
-				blockDisplace = state.currentFixupRecord.lastLIData.getDataOffset();
-				segIndex = state.currentFixupRecord.lastLIData.getSegmentIndex();
-			}
-			OmfSegmentHeader seg = state.header.resolveSegment(segIndex);
-			state.locAddress = seg.getAddress(state.language).add(blockDisplace + dataRecordOffset);
-		}
-
-		public static FixupSubrecord readFixupSubrecord(BinaryReader reader, boolean hasBigFields)
-				throws IOException {
-			FixupSubrecord fixupSubrecord = new FixupSubrecord();
-			fixupSubrecord.lobyte = reader.readNextByte();
-			fixupSubrecord.hibyte = reader.readNextByte();
-			fixupSubrecord.target = FixupTarget.readFixupTarget(reader, hasBigFields);
-			return fixupSubrecord;
-		}
-	}
 }

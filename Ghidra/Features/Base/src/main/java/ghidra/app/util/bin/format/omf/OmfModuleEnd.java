@@ -20,18 +20,24 @@ import java.io.IOException;
 import ghidra.app.util.bin.BinaryReader;
 
 public class OmfModuleEnd extends OmfRecord {
-	private byte moduleType;
-	private OmfFixupRecord.FixupTarget startAddress;
+	//private byte moduleType;
+	//private OmfFixupRecord.FixupTarget startAddress;
 
 	public OmfModuleEnd(BinaryReader reader) throws IOException {
 		readRecordHeader(reader);
+		/* The record type is not handled so simply skip the information 
 		moduleType = reader.readNextByte();
 		if (hasStartAddress()) {
-			startAddress = OmfFixupRecord.FixupTarget.readFixupTarget(reader, hasBigFields());
+			endData = reader.readNextByte();
+			frameDatum = readInt1Or2(reader, hasBigFields());
+			targetDatum = readInt1Or2(reader, hasBigFields());
+			targetDisplacement readInt2Or4(reader, hasBigFields());
 		}
 		readCheckSumByte(reader);
+		*/
+		reader.setPointerIndex(reader.getPointerIndex() + getRecordLength());
 	}
-
+/*
 	public boolean isMainProgramModule() {
 		return ((moduleType & 0x80) != 0);
 	}
@@ -39,4 +45,5 @@ public class OmfModuleEnd extends OmfRecord {
 	public boolean hasStartAddress() {
 		return ((moduleType & 0x40) != 0);
 	}
+*/
 }

@@ -19,9 +19,7 @@ import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
 
-public class OmfEnumeratedData extends OmfRecord implements OmfData {
-	private int segmentIndex;
-	private long dataOffset;
+public class OmfEnumeratedData extends OmfData {
 	private long streamOffset;		// Position in stream where data starts
 	private int streamLength;		// Number of bytes of data
 
@@ -36,27 +34,9 @@ public class OmfEnumeratedData extends OmfRecord implements OmfData {
 		readCheckSumByte(reader);
 	}
 
-	public int getSegmentIndex() {
-		return segmentIndex;
-	}
-
-	@Override
-	public long getDataOffset() {
-		return dataOffset;
-	}
-
 	@Override
 	public int getLength() {
 		return streamLength;
-	}
-
-	@Override
-	public int compareTo(OmfData o) {
-		long otherOffset = o.getDataOffset();
-		if (otherOffset == dataOffset) {
-			return 0;
-		}
-		return (dataOffset < otherOffset) ? -1 : 1;
 	}
 
 	@Override
