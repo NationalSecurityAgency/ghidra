@@ -236,4 +236,9 @@ public interface DbgProcess extends DbgMemoryOperations {
 	 */
 	CompletableFuture<Void> remove();
 
+	/**
+	 * Get the address of the associated process structure
+	 */
+	Long getOffset();
+
 }

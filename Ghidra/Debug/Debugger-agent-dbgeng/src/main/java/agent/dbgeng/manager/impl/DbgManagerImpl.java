@@ -103,10 +103,11 @@ import agent.dbgeng.manager.cmd.DbgRemoveProcessCommand;
 import agent.dbgeng.manager.cmd.DbgRemoveSessionCommand;
 import agent.dbgeng.manager.cmd.DbgRequestActivationCommand;
 import agent.dbgeng.manager.cmd.DbgRequestFocusCommand;
+import agent.dbgeng.manager.cmd.DbgResolveProcessCommand;
+import agent.dbgeng.manager.cmd.DbgResolveThreadCommand;
 import agent.dbgeng.manager.cmd.DbgSetActiveProcessCommand;
 import agent.dbgeng.manager.cmd.DbgSetActiveSessionCommand;
 import agent.dbgeng.manager.cmd.DbgSetActiveThreadCommand;
-import agent.dbgeng.manager.cmd.DbgSetCurrentState;
 import agent.dbgeng.manager.evt.AbstractDbgEvent;
 import agent.dbgeng.manager.evt.DbgBreakpointCreatedEvent;
 import agent.dbgeng.manager.evt.DbgBreakpointDeletedEvent;
@@ -251,9 +252,7 @@ public class DbgManagerImpl implements DbgManager {
 		synchronized (threads) {
 			if (threads.containsKey(id)) {
 				DbgThreadImpl existingThread = threads.get(id);
-				if (existingThread.getTid() == tid) {
-					return existingThread;
-				}
+				return existingThread;
 			}
 			DbgThreadImpl thread = new DbgThreadImpl(this, process, id, tid);
 			thread.add();
@@ -325,24 +324,11 @@ public class DbgManagerImpl implements DbgManager {
 		}
 	}
 
-	public DbgProcessImpl getProcessComputeIfAbsent(String key, boolean fire) {
-		String index = PathUtils.parseIndex(key);
-		Integer pid = Integer.decode(index);
-		DebugProcessId id = getSystemObjects().getProcessIdBySystemId(pid);
-		if (id == null) {
-			id = new DebugProcessId(pid);
-			return getProcessComputeIfAbsent(id, pid, fire);
-		}
-		return getProcessComputeIfAbsent(id, pid, fire);
-	}
-	
 	public DbgProcessImpl getProcessComputeIfAbsent(DebugProcessId id, long pid, boolean fire) {
 		synchronized (processes) {
 			if (processes.containsKey(id)) {
 				DbgProcessImpl existingProc = processes.get(id);
-				if (existingProc.getPid() == pid) {
-					return existingProc;
-				}
+				return existingProc;
 			}
 			DbgProcessImpl process = new DbgProcessImpl(this, id, pid);
 			process.add();
@@ -598,7 +584,7 @@ public class DbgManagerImpl implements DbgManager {
 		}
 		return pcmd;
 	}
-
+	
 	private <T> void addCommand(DbgCommand<? extends T> cmd, DbgPendingCommand<T> pcmd) {
 		synchronized (this) {
 			if (!cmd.validInState(state.get())) {
@@ -609,42 +595,6 @@ public class DbgManagerImpl implements DbgManager {
 		cmd.invoke();
 		processEvent(new DbgCommandDoneEvent(cmd));
 	}
-
-	/*@Override
-	public <T> DbgPendingCommand<T> execute1(DbgCommand<? extends T> cmd) {
-		assert cmd != null;
-		checkStarted();
-		DbgPendingCommand<T> pcmd = new DbgPendingCommand<>(cmd);
-		sequence(TypeSpec.VOID).then((seq) -> {
-			Msg.debug(this, "WAITING cmdLock: " + pcmd);
-			cmdLock.acquire(null).handle(seq::next);
-		}, cmdLockHold).then((seq) -> {
-			Msg.debug(this, "ACQUIRED cmdLock: " + pcmd);
-			synchronized (this) {
-				if (curCmd != null) {
-					throw new AssertionError("Cannot execute more than one command at a time");
-				}
-				if (!cmd.validInState(state.get())) {
-					throw new DbgCommandError(
-						"Command " + cmd + " is not valid while " + state.get());
-				}
-				curCmd = pcmd;
-			}
-			cmd.invoke();
-			processEvent(new DbgCommandDoneEvent(cmd.toString()));
-			seq.exit();
-		}).finish().exceptionally((exc) -> {
-			pcmd.completeExceptionally(exc);
-			Msg.debug(this, "ON_EXCEPTION: CURCMD = " + curCmd);
-			curCmd = null;
-			Msg.debug(this, "SET CURCMD = null");
-			Msg.debug(this, "RELEASING cmdLock");
-			cmdLockHold.getAndSet(null).release();
-			return null;
-		});
-		return pcmd;
-	}
-	*/
 
 	public DebugStatus processEvent(DbgEvent<?> evt) {
 		if (state.get() == DbgState.STARTING) {
@@ -777,7 +727,7 @@ public class DbgManagerImpl implements DbgManager {
 		if (eventThread != null) {
 			((DbgThreadImpl) eventThread).setInfo(lastEventInformation);
 		}
-		return currentThread.getId();
+		return currentThread == null ? new DebugThreadId(-1) : currentThread.getId();
 	}
 
 	/**
@@ -889,6 +839,11 @@ public class DbgManagerImpl implements DbgManager {
 	 * @return retval handling/break status
 	 */
 	protected DebugStatus processThreadSelected(DbgThreadSelectedEvent evt, Void v) {
+		if (evt.getState() == DbgState.RUNNING) {
+			currentThread = evt.getThread();
+			currentThread.setState(evt.getState(), evt.getCause(), evt.getReason());
+			return statusMap.get(evt.getClass());
+		}
 		DebugThreadId eventId = updateState();
 
 		currentThread = evt.getThread();
@@ -1627,6 +1582,10 @@ public class DbgManagerImpl implements DbgManager {
 		return (DbgProcessImpl) (currentProcess != null ? currentProcess : eventProcess);
 	}
 
+	public void setCurrentProcess(DbgProcessImpl process) {
+		currentProcess = process;
+	}
+
 	public DbgSessionImpl getCurrentSession() {
 		return (DbgSessionImpl) (currentSession != null ? currentSession : eventSession);
 	}
@@ -1650,7 +1609,7 @@ public class DbgManagerImpl implements DbgManager {
 	}
 
 	public CompletableFuture<Void> setActiveThread(DbgThread thread) {
-		if (thread == null) {
+		if (thread == null || thread.getTid().equals(currentThread.getTid())) {
 			return CompletableFuture.completedFuture(null);
 		}
 		currentThread = thread;
@@ -1659,7 +1618,7 @@ public class DbgManagerImpl implements DbgManager {
 	}
 
 	public CompletableFuture<Void> setActiveProcess(DbgProcess process) {
-		if (process == null) {
+		if (process == null || process.getPid().equals(currentProcess.getPid())) {
 			return CompletableFuture.completedFuture(null);
 		}
 		currentProcess = process;
@@ -1799,12 +1758,7 @@ public class DbgManagerImpl implements DbgManager {
 		DebugSystemObjects so = getSystemObjects();
 		DebugProcessId id = so.getProcessIdByHandle(info.handle);
 		if (kernelMode) {
-//			try {
-//				return (DbgProcessImpl) execute(new DbgSetCurrentState(this)).get().getProcess();
-//			} catch (Exception e) {
-//				e.printStackTrace();
-//				return null;
-//			}
+			// Unnecessary? Are these events transmitted in kernel-mode?
 			return null;
 		} else {
 			int pid = so.getCurrentProcessSystemId();
@@ -1816,12 +1770,7 @@ public class DbgManagerImpl implements DbgManager {
 		DebugSystemObjects so = getSystemObjects();
 		DebugThreadId id = so.getThreadIdByHandle(info.handle);
 		if (kernelMode) {
-//			try {
-//				return (DbgThreadImpl) execute(new DbgSetCurrentState(this)).get();
-//			} catch (Exception e) {
-//				e.printStackTrace();
-//				return null;
-//			}
+			// Unnecessary? Are these events transmitted in kernel-mode?
 			return null;
 		} else {
 			int pid = so.getCurrentThreadSystemId();
@@ -1833,10 +1782,32 @@ public class DbgManagerImpl implements DbgManager {
 		DebugSystemObjects so = getSystemObjects();
 		currentSession = eventSession = getSessionComputeIfAbsent(esid, true);
 		if (kernelMode) {
-			execute(new DbgSetCurrentState(this)).thenAccept(thread -> {
-				currentThread = eventThread = thread;
-				currentProcess = eventProcess = thread.getProcess();
-			});
+			long poffset = so.getCurrentProcessDataOffset();
+			currentProcess = eventProcess = getProcessComputeIfAbsent(new DebugProcessId(poffset), -1, true);
+			if (currentProcess.getPid() < 0) {
+				execute(new DbgResolveProcessCommand(this, currentProcess)).thenAccept(proc -> {
+					currentProcess = eventProcess = proc;
+					// As you now have both pid & offset, update the id==pid version
+					DbgProcessImpl mirror = getProcessComputeIfAbsent(new DebugProcessId(proc.getPid()), -1, false);
+					if (mirror != null) {
+						mirror.setOffset(currentProcess.getOffset());
+						getEventListeners().fire.processSelected(eventProcess, Causes.UNCLAIMED);
+					}
+				});
+			}
+			long toffset = so.getCurrentThreadDataOffset();
+			currentThread = eventThread = getThreadComputeIfAbsent(new DebugThreadId(toffset), (DbgProcessImpl) eventProcess, -1, false);
+			if (currentThread.getTid() < 0) {
+				execute(new DbgResolveThreadCommand(this, currentThread)).thenAccept(thread -> {
+					currentThread = eventThread = thread;
+					// As you now have both tid & offset, update the id==tid version
+					DbgThreadImpl mirror = getThreadComputeIfAbsent(new DebugThreadId(thread.getTid()), (DbgProcessImpl) eventProcess, -1, false);
+					if (mirror != null) {
+						mirror.setOffset(currentThread.getOffset());
+						getEventListeners().fire.threadSelected(eventThread, null, Causes.UNCLAIMED);
+					}
+				});
+			}
 		} else {
 			currentProcess =
 				eventProcess = getProcessComputeIfAbsent(epid, so.getCurrentProcessSystemId(), true);

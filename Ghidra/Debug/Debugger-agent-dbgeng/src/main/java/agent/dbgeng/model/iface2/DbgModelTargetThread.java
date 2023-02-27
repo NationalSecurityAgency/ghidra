@@ -17,11 +17,18 @@ package agent.dbgeng.model.iface2;
 
 import java.util.concurrent.CompletableFuture;
 
-import agent.dbgeng.dbgeng.DebugSystemObjects;
 import agent.dbgeng.dbgeng.DebugThreadId;
-import agent.dbgeng.manager.*;
-import agent.dbgeng.manager.impl.*;
-import agent.dbgeng.model.iface1.*;
+import agent.dbgeng.manager.DbgEventsListenerAdapter;
+import agent.dbgeng.manager.DbgReason;
+import agent.dbgeng.manager.DbgState;
+import agent.dbgeng.manager.DbgThread;
+import agent.dbgeng.manager.impl.DbgManagerImpl;
+import agent.dbgeng.manager.impl.DbgProcessImpl;
+import agent.dbgeng.manager.impl.DbgThreadImpl;
+import agent.dbgeng.model.iface1.DbgModelSelectableObject;
+import agent.dbgeng.model.iface1.DbgModelTargetAccessConditioned;
+import agent.dbgeng.model.iface1.DbgModelTargetExecutionStateful;
+import agent.dbgeng.model.iface1.DbgModelTargetSteppable;
 import agent.dbgeng.model.impl.DbgModelTargetStackImpl;
 import ghidra.dbg.target.*;
 import ghidra.dbg.util.PathUtils;
@@ -45,7 +52,10 @@ public interface DbgModelTargetThread extends //
 		try {
 			DbgModelTargetProcess parentProcess = getParentProcess();
 			DbgProcessImpl process = parentProcess == null ? null : (DbgProcessImpl) parentProcess.getProcess();
-			DbgThreadImpl thread = manager.getThreadComputeIfAbsent(getName(), process, fire);
+			String index = PathUtils.parseIndex(getName());
+			Long tid = Long.decode(index);
+			DebugThreadId id = new DebugThreadId(tid);
+			DbgThreadImpl thread = manager.getThreadComputeIfAbsent(id, process, tid, fire);
 			return thread;
 		}
 		catch (IllegalArgumentException e) {
