@@ -148,7 +148,7 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 	 * Log a (hopefully) descriptive error, if we can't process a specific relocation
 	 * @param program is the Program
 	 * @param log will receive the error message
-	 * @param state is the relocation record that could not be processed
+	 * @param type the relocation type
 	 */
 	private void relocationError(Program program, MessageLog log, Address addr, int type) {
 		String message;
@@ -174,7 +174,6 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 	private void processRelocations(OmfFileHeader header, Program program, TaskMonitor monitor,
 			MessageLog log) {
 		Language language = program.getLanguage();
-//		OmfFixupRecord.Subrecord[] frameThreads = new Subrecord[4];
 		OmfFixupRecord.Subrecord[] targetThreads = new Subrecord[4];
 		ArrayList<OmfGroupRecord> groups = header.getGroups();
 		long targetAddr;		// Address of item being referred to

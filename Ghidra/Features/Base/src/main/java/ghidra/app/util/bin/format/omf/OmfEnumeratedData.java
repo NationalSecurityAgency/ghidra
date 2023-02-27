@@ -34,18 +34,11 @@ public class OmfEnumeratedData extends OmfData {
 		readCheckSumByte(reader);
 	}
 
-	/**
-	 * @return The length of the block
-	 */
 	@Override
 	public int getLength() {
 		return streamLength;
 	}
 
-	/**
-	 * @param The inputfile to read from
-	 * @return The array of bytes
-	 */
 	@Override
 	public byte[] getByteArray(BinaryReader reader) throws IOException {
 		reader.setPointerIndex(streamOffset);
@@ -53,10 +46,6 @@ public class OmfEnumeratedData extends OmfData {
 		return buffer;
 	}
 
-	/**
-	 * Assume that all zeros are done with OmfIteratedData
-	 * @return True if the block is all zeroes
-	 */
 	@Override
 	public boolean isAllZeroes() {
 		return false;

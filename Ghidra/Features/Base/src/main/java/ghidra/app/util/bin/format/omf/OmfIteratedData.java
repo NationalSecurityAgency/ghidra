@@ -41,9 +41,6 @@ public class OmfIteratedData extends OmfData {
 		blocklist.toArray(datablock);
 	}
 
-	/**
-	 * @return true if the block is all zeros
-	 */
 	@Override
 	public boolean isAllZeroes() {
 		for (int i = 0; i < datablock.length; ++i) {
@@ -54,9 +51,6 @@ public class OmfIteratedData extends OmfData {
 		return true;
 	}
 
-	/**
-	 * @return the length of the block after expansion
-	 */
 	@Override
 	public int getLength() {
 		int length = 0;
@@ -66,10 +60,6 @@ public class OmfIteratedData extends OmfData {
 		return length;
 	}
 
-	/**
-	 * @param reader The file to read from
-	 * @return The block created from the read data
-	 */
 	@Override
 	public byte[] getByteArray(BinaryReader reader) throws IOException {
 		int length = getLength();
@@ -86,7 +76,6 @@ public class OmfIteratedData extends OmfData {
 
 	/**
 	 * Contain the definition of one part of a datablock with possible recursion
-	 * 
 	 */
 	public static class DataBlock {
 		private int repeatCount;

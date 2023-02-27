@@ -42,7 +42,8 @@ public abstract class OmfData extends OmfRecord implements Comparable<OmfData> {
 
 	/**
 	 * Compare datablocks by data offset
-	 * @return -1 for lower address, 0 for same adress, 1 for higher address
+	 * @return a value less than 0 for lower address, 0 for same address, or greater than 0 for
+	 *   higher address
 	 */
 	@Override
 	public int compareTo(OmfData o) {
@@ -52,7 +53,7 @@ public abstract class OmfData extends OmfRecord implements Comparable<OmfData> {
 	/**
 	 * @return the length of this data in bytes
 	 */
-	abstract public int getLength();
+	public abstract int getLength();
 
 	/**
 	 * Create a byte array holding the data represented by this object. The length
@@ -61,10 +62,10 @@ public abstract class OmfData extends OmfRecord implements Comparable<OmfData> {
 	 * @return allocated and filled byte array
 	 * @throws IOException for problems accessing data through the reader
 	 */
-	abstract public byte[] getByteArray(BinaryReader reader) throws IOException;
+	public abstract byte[] getByteArray(BinaryReader reader) throws IOException;
 
 	/**
 	 * @return true if this is a block entirely of zeroes
 	 */
-	abstract public boolean isAllZeroes();
+	public abstract boolean isAllZeroes();
 }
