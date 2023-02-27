@@ -17,7 +17,6 @@ package ghidra.app.script;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.nio.ByteBuffer;
 import java.util.List;
 
 import javax.swing.*;
