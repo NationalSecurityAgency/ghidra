@@ -26,15 +26,15 @@ package agent.dbgeng.dbgeng;
  * TIDs.
  */
 public class DebugThreadId implements Comparable<DebugThreadId> {
-	public final int id;
+	public final long id;
 
-	public DebugThreadId(int id) {
+	public DebugThreadId(long id) {
 		this.id = id;
 	}
 
 	@Override
 	public int hashCode() {
-		return Integer.hashCode(id);
+		return Long.hashCode(id);
 	}
 
 	@Override
@@ -51,7 +51,7 @@ public class DebugThreadId implements Comparable<DebugThreadId> {
 
 	@Override
 	public int compareTo(DebugThreadId that) {
-		return Integer.compare(this.id, that.id);
+		return Long.compare(this.id, that.id);
 	}
 
 	@Override

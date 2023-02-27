@@ -31,7 +31,7 @@ import ghidra.app.script.*;
 import ghidra.app.util.headless.HeadlessScript.HeadlessContinuationOption;
 import ghidra.app.util.importer.AutoImporter;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.opinion.BinaryLoader;
+import ghidra.app.util.opinion.*;
 import ghidra.framework.*;
 import ghidra.framework.client.ClientUtil;
 import ghidra.framework.client.RepositoryAdapter;
@@ -84,8 +84,10 @@ public class HeadlessAnalyzer {
 	 * already been initialized or a headless analyzer has already been retrieved.  In these cases,
 	 * the headless analyzer should be gotten with {@link HeadlessAnalyzer#getInstance()}.
 	 * 
-	 * @param logFile The desired application log file.  If null, no application logging will take place.
-	 * @param scriptLogFile The desired scripting log file.  If null, no script logging will take place.
+	 * @param logFile The desired application log file.  If null, the default application log file 
+	 *   will be used (see {@link Application#initializeLogging}).
+	 * @param scriptLogFile The desired scripting log file.  If null, the default scripting log file
+	 *   will be used (see {@link Application#initializeLogging}).
 	 * @param useLog4j true if log4j is to be used; otherwise, false.  If this class is being used by 
 	 *     another tool as a library, using log4j might interfere with that tool.
 	 * @return An instance of a new headless analyzer.
@@ -1380,7 +1382,15 @@ public class HeadlessAnalyzer {
 		return p;
 	}
 
-	private boolean checkOverwrite(DomainFile df) throws IOException {
+	private boolean checkOverwrite(Loaded<Program> loaded) throws IOException {
+		DomainFolder folder = project.getProjectData().getFolder(loaded.getProjectFolderPath());
+		if (folder == null) {
+			return true;
+		}
+		DomainFile df = folder.getFile(loaded.getName());
+		if (df == null) {
+			return true;
+		}
 		if (options.overwrite) {
 			try {
 				if (df.isHijacked()) {
@@ -1498,192 +1508,148 @@ public class HeadlessAnalyzer {
 
 		Msg.info(this, "IMPORTING: " + file.getAbsolutePath());
 
-		Program program = null;
-
+		LoadResults<Program> loadResults = null;
+		Loaded<Program> primary = null;
 		try {
-			String dfName = null;
-			DomainFile df = null;
-			DomainFolder domainFolder = null;
-			try {
-				// Gets parent folder for import (creates path if doesn't exist)
-				domainFolder = getDomainFolder(folderPath, false);
 
-				dfName = file.getName();
+			// Perform the load.  Note that loading 1 file may result in more than 1 thing getting
+			// loaded. 
+			loadResults = loadPrograms(file, folderPath);
+			Msg.info(this, "IMPORTING: Loaded " + (loadResults.size() - 1) + " additional files");
 
-				if (dfName.toLowerCase().endsWith(".gzf") ||
-					dfName.toLowerCase().endsWith(".xml")) {
-					// Use filename without .gzf
-					int index = dfName.lastIndexOf('.');
-					dfName = dfName.substring(0, index);
-				}
+			primary = loadResults.getPrimary();
+			Program primaryProgram = primary.getDomainObject();
 
-				if (!options.readOnly) {
-					if (domainFolder != null) {
-						df = domainFolder.getFile(dfName);
-					}
-					if (df != null && !checkOverwrite(df)) {
+			// Make sure we are allowed to save ALL programs to the project.  If not, save none and 
+			// fail.
+			if (!options.readOnly) {
+				for (Loaded<Program> loaded : loadResults) {
+					if (!checkOverwrite(loaded)) {
 						return false;
 					}
-					df = null;
-				}
-
-				program = loadProgram(file);
-				if (program == null) {
-					return false;
-				}
-
-				// Check if there are defined memory blocks; abort if not (there is nothing 
-				// to work with!)
-				if (program.getMemory().getAllInitializedAddressSet().isEmpty()) {
-					Msg.error(this, "REPORT: Error: No memory blocks were defined for file '" +
-						file.getAbsolutePath() + "'.");
-					return false;
 				}
 			}
-			catch (Exception exc) {
-				Msg.error(this, "REPORT: " + exc.getMessage(), exc);
-				exc.printStackTrace();
+
+			// Check if there are defined memory blocks in the primary program.
+			// Abort if not (there is nothing to work with!).
+			if (primaryProgram.getMemory().getAllInitializedAddressSet().isEmpty()) {
+				Msg.error(this, "REPORT: Error: No memory blocks were defined for file " +
+					file.getAbsolutePath());
 				return false;
 			}
 
-			Msg.info(this,
-				"REPORT: Import succeeded with language \"" +
-					program.getLanguageID().getIdAsString() + "\" and cspec \"" +
-					program.getCompilerSpec().getCompilerSpecID().getIdAsString() +
-					"\" for file: " + file.getAbsolutePath());
+			// Analyze the primary program, and determine if we should save.
+			// TODO: Analyze non-primary programs (GP-2965).
+			boolean doSave =
+				analyzeProgram(file.getAbsolutePath(), primaryProgram) && !options.readOnly;
 
-			boolean doSave;
-			try {
+			// The act of marking the program as temporary by a script will signal 
+			// us to discard any changes
+			if (!doSave) {
+				loadResults.forEach(e -> e.getDomainObject().setTemporary(true));
+			}
 
-				doSave = analyzeProgram(file.getAbsolutePath(), program) && !options.readOnly;
-
-				if (!doSave) {
-					program.setTemporary(true);
+			// Apply saveDomainFolder to the primary program, if applicable.
+			// We don't support changing the save folder on any non-primary loaded programs.
+			// Note that saveDomainFolder is set by pre/post-scripts, so it can only be used
+			// after analysis happens.
+			if (saveDomainFolder != null) {
+				primary.setProjectFolderPath(saveDomainFolder.getPathname());
+				if (!checkOverwrite(primary)) {
+					return false;
 				}
-
-				// The act of marking the program as temporary by a script will signal 
-				// us to discard any program changes.
-				if (program.isTemporary()) {
+			}
+			
+			// Save
+			for (Loaded<Program> loaded : loadResults) {
+				if (!loaded.getDomainObject().isTemporary()) {
+					try {
+						DomainFile domainFile =
+							loaded.save(project, new MessageLog(), TaskMonitor.DUMMY);
+						Msg.info(this, String.format("REPORT: Save succeeded for: %s (%s)", loaded,
+							domainFile));
+					}
+					catch (IOException e) {
+						Msg.info(this, "REPORT: Save failed for: " + loaded);
+					}
+				}
+				else {
 					if (options.readOnly) {
 						Msg.info(this, "REPORT: Discarded file import due to readOnly option: " +
-							file.getAbsolutePath());
+							loaded);
 					}
 					else {
-						Msg.info(this, "REPORT: Discarded file import as a result of script " +
-							"activity or analysis timeout: " + file.getAbsolutePath());
+						Msg.info(this,
+							"REPORT: Discarded file import as a result of script " +
+								"activity or analysis timeout: " + loaded);
 					}
-					return true;
 				}
+			}
 
-				try {
-					if (saveDomainFolder != null) {
-
-						df = saveDomainFolder.getFile(dfName);
-
-						// Return if file already exists and overwrite == false
-						if (df != null && !checkOverwrite(df)) {
-							return false;
+			// Commit changes
+			if (options.commit) {
+				for (Loaded<Program> loaded : loadResults) {
+					if (!loaded.getDomainObject().isTemporary()) {
+						if (loaded == primary) {
+							AutoAnalysisManager.getAnalysisManager(primaryProgram).dispose();
 						}
-
-						domainFolder = saveDomainFolder;
+						loaded.release(this);
+						commitProgram(loaded.getSavedDomainFile());
 					}
-					else if (domainFolder == null) {
-						domainFolder = getDomainFolder(folderPath, true);
-					}
-					df = domainFolder.createFile(dfName, program, TaskMonitor.DUMMY);
-					Msg.info(this, "REPORT: Save succeeded for file: " + df.getPathname());
-
-					if (options.commit) {
-
-						AutoAnalysisManager.getAnalysisManager(program).dispose();
-						program.release(this);
-						program = null;
-
-						commitProgram(df);
-					}
-				}
-				catch (IOException e) {
-					e.printStackTrace();
-					throw new IOException("Cannot create file: " + domainFolder.getPathname() +
-						DomainFolder.SEPARATOR + dfName, e);
-				}
-			}
-			catch (Exception exc) {
-				String logErrorMsg =
-					file.getAbsolutePath() + " Error during analysis: " + exc.getMessage();
-				Msg.info(this, logErrorMsg);
-				return false;
-			}
-			finally {
-				if (program != null) {
-					AutoAnalysisManager.getAnalysisManager(program).dispose();
 				}
 			}
 
+			Msg.info(this, "REPORT: Import succeeded");
 			return true;
 		}
-		finally {
-			// Program must be released here, since the AutoAnalysisManager uses program to 
-			// call dispose() in the finally() block above.
-			if (program != null) {
-				program.release(this);
-				program = null;
-			}
-		}
-	}
-
-	private Program loadProgram(File file) throws VersionException, InvalidNameException,
-			DuplicateNameException, CancelledException, IOException {
-
-		MessageLog messageLog = new MessageLog();
-		Program program = null;
-
-		// NOTE: we must pass a null DomainFolder to the AutoImporter so as not to
-		// allow the DomainFile to be saved at this point.  DomainFile should be 
-		// saved after all applicable analysis/scripts are run.
-
-		if (options.loaderClass == null) {
-			// User did not specify a loader
-			if (options.language == null) {
-				program = AutoImporter.importByUsingBestGuess(file, null, this, messageLog,
-					TaskMonitor.DUMMY);
-			}
-			else {
-				program = AutoImporter.importByLookingForLcs(file, null, options.language,
-					options.compilerSpec, this, messageLog, TaskMonitor.DUMMY);
-			}
-		}
-		else {
-			// User specified a loader
-			if (options.language == null) {
-				program = AutoImporter.importByUsingSpecificLoaderClass(file, null,
-					options.loaderClass, options.loaderArgs, this, messageLog, TaskMonitor.DUMMY);
-			}
-			else {
-				program = AutoImporter.importByUsingSpecificLoaderClassAndLcs(file, null,
-					options.loaderClass, options.loaderArgs, options.language, options.compilerSpec,
-					this, messageLog, TaskMonitor.DUMMY);
-			}
-		}
-
-		if (program == null) {
+		catch (LoadException e) {
 			Msg.error(this, "The AutoImporter could not successfully load " +
 				file.getAbsolutePath() +
 				" with the provided import parameters. Please ensure that any specified" +
 				" processor/cspec arguments are compatible with the loader that is used during" +
 				" import and try again.");
-
 			if (options.loaderClass != null && options.loaderClass != BinaryLoader.class) {
 				Msg.error(this,
 					"NOTE: Import failure may be due to missing opinion for \"" +
 						options.loaderClass.getSimpleName() +
 						"\". If so, please contact Ghidra team for assistance.");
 			}
+			return false;
+		}
+		catch (Exception e) {
+			Msg.error(this, "REPORT: " + e.getMessage(), e);
+			return false;
+		}
+		finally {
+			if (loadResults != null) {
+				loadResults.release(this);
+			}
+		}
+	}
 
-			return null;
+	private LoadResults<Program> loadPrograms(File file, String folderPath) throws VersionException,
+			InvalidNameException, DuplicateNameException, CancelledException, IOException,
+			LoadException {
+		MessageLog messageLog = new MessageLog();
+
+		if (options.loaderClass == null) {
+			// User did not specify a loader
+			if (options.language == null) {
+				return AutoImporter.importByUsingBestGuess(file, project, folderPath, this,
+					messageLog, TaskMonitor.DUMMY);
+			}
+			return AutoImporter.importByLookingForLcs(file, project, folderPath, options.language,
+				options.compilerSpec, this, messageLog, TaskMonitor.DUMMY);
 		}
 
-		return program;
+		// User specified a loader
+		if (options.language == null) {
+			return AutoImporter.importByUsingSpecificLoaderClass(file, project, folderPath,
+				options.loaderClass, options.loaderArgs, this, messageLog, TaskMonitor.DUMMY);
+		}
+		return AutoImporter.importByUsingSpecificLoaderClassAndLcs(file, project, folderPath,
+			options.loaderClass, options.loaderArgs, options.language, options.compilerSpec, this,
+			messageLog, TaskMonitor.DUMMY);
 	}
 
 	private void processWithImport(File file, String folderPath, boolean isFirstTime)

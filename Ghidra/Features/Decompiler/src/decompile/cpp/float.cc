@@ -22,8 +22,6 @@
 using std::ldexp;
 using std::frexp;
 using std::signbit;
-using std::isnan;
-using std::isinf;
 using std::sqrt;
 using std::floor;
 using std::ceil;
@@ -92,8 +90,8 @@ FloatFormat::floatclass FloatFormat::extractExpSig(double x,bool *sgn,uintb *sig
 
   *sgn = signbit(x);
   if (x == 0.0) return zero;
-  if (isinf(x)) return infinity;
-  if (isnan(x)) return nan;
+  if (std::isinf(x)) return infinity;
+  if (std::isnan(x)) return nan;
   if (*sgn)
     x = -x;
   double norm = frexp(x,&e);  // norm is between 1/2 and 1

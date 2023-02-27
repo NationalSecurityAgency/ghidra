@@ -3228,7 +3228,7 @@ vld3RnAligned: "["^VRn^vld3Align^"]" 	is VRn & vld3Align	{ export VRn; }
 
 buildVld3DdList:							is counter=0			{ }
 buildVld3DdList: Dreg						is counter=1 & Dreg		[ counter=0; regNum=regNum+regInc; ] { }
-buildVld3DdList: Dreg,buildVld3DdList		is buildVld3DdList & Dreg	[ counter=counter-1; regNum=regNum+regInc; ] { }
+buildVld3DdList: Dreg,buildVld3DdList		is Dreg & buildVld3DdList	[ counter=counter-1; regNum=regNum+regInc; ] { }
 
 vld3DdList: "{"^buildVld3DdList^"}"	is TMode=0 & c0811=4 & D22 & c1215 & buildVld3DdList [ regNum=(D22<<4)+c1215-1; regInc=1; counter=3; ] { } # Single
 vld3DdList: "{"^buildVld3DdList^"}"	is TMode=0 & c0811=5 & D22 & c1215 & buildVld3DdList [ regNum=(D22<<4)+c1215-2; regInc=2; counter=3; ] { } # Double
@@ -3385,7 +3385,7 @@ vld4RnAligned: "["^VRn^vld4Align^"]" 	is VRn & vld4Align	{ export VRn; }
 
 buildVld4DdList:							is counter=0			{ }
 buildVld4DdList: Dreg						is counter=1 & Dreg		[ counter=0; regNum=regNum+regInc; ] { }
-buildVld4DdList: Dreg,buildVld4DdList		is buildVld4DdList & Dreg	[ counter=counter-1; regNum=regNum+regInc; ] { }
+buildVld4DdList: Dreg,buildVld4DdList		is Dreg & buildVld4DdList	[ counter=counter-1; regNum=regNum+regInc; ] { }
 
 vld4DdList: "{"^buildVld4DdList^"}"	is TMode=0 & c0808=0 & D22 & c1215 & buildVld4DdList [ regNum=(D22<<4)+c1215-1; regInc=1; counter=4; ] { } # Single
 vld4DdList: "{"^buildVld4DdList^"}"	is TMode=0 & c0808=1 & D22 & c1215 & buildVld4DdList [ regNum=(D22<<4)+c1215-2; regInc=2; counter=4; ] { } # Double
@@ -4064,10 +4064,10 @@ define pcodeop VectorSetElement;
 @if defined(SIMD)
 
 vmovIndex: val	is TMode=0 &     c2222=1 &     c2121 &     c0506					[ val = (c2121 << 2) + c0506; ]	{ tmp:1 = val; export tmp; }
-vmovIndex: val	is TMode=0 &     c2222=1 &     c2121 &     c0606   &     c0505=1	[ val = (c2121 << 2) + c0606; ]	{ tmp:1 = val; export tmp; }
+vmovIndex: val	is TMode=0 &     c2222=0 &     c2121 &     c0606   &     c0505=1	[ val = (c2121 << 1) + c0606; ]	{ tmp:1 = val; export tmp; }
 
 vmovIndex: val	is TMode=1 & thv_c2222=1 & thv_c2121 & thv_c0506					[ val = (thv_c2121 << 2) + thv_c0506; ]	{ tmp:1 = val; export tmp; }
-vmovIndex: val	is TMode=1 & thv_c2222=1 & thv_c2121 & thv_c0606   & thv_c0505=1	[ val = (thv_c2121 << 2) + thv_c0606; ]	{ tmp:1 = val; export tmp; }
+vmovIndex: val	is TMode=1 & thv_c2222=0 & thv_c2121 & thv_c0606   & thv_c0505=1	[ val = (thv_c2121 << 1) + thv_c0606; ]	{ tmp:1 = val; export tmp; }
 
 @if defined(VFPv2) || defined(VFPv3) || defined(SIMD)
 
@@ -5621,7 +5621,7 @@ vst3RnAligned: "["^VRn^vst3Align^"]" 	is VRn & vst3Align	{ export VRn; }
 
 buildvst3DdList:							is counter=0			{ }
 buildvst3DdList: Dreg						is counter=1 & Dreg		[ counter=0; regNum=regNum+regInc; ] { }
-buildvst3DdList: Dreg,buildvst3DdList		is buildvst3DdList & Dreg	[ counter=counter-1; regNum=regNum+regInc; ] { }
+buildvst3DdList: Dreg,buildvst3DdList		is Dreg & buildvst3DdList	[ counter=counter-1; regNum=regNum+regInc; ] { }
 
 vst3DdList: "{"^buildvst3DdList^"}"	is TMode=0 & c0811=4 & D22 & c1215 & buildvst3DdList [ regNum=(D22<<4)+c1215-1; regInc=1; counter=3; ] { } # Single
 vst3DdList: "{"^buildvst3DdList^"}"	is TMode=0 & c0811=5 & D22 & c1215 & buildvst3DdList [ regNum=(D22<<4)+c1215-2; regInc=2; counter=3; ] { } # Double
@@ -5682,7 +5682,7 @@ vst4RnAligned: "["^VRn^vst4Align^"]" 	is VRn & vst4Align	{ export VRn; }
 
 buildVst4DdList:							is counter=0			{ }
 buildVst4DdList: Dreg						is counter=1 & Dreg		[ counter=0; regNum=regNum+regInc; ] { }
-buildVst4DdList: Dreg,buildVst4DdList		is buildVst4DdList & Dreg	[ counter=counter-1; regNum=regNum+regInc; ] { }
+buildVst4DdList: Dreg,buildVst4DdList		is Dreg & buildVst4DdList	[ counter=counter-1; regNum=regNum+regInc; ] { }
 
 vst4DdList: "{"^buildVst4DdList^"}"	is TMode=0 & c0808=0 & D22 & c1215 & buildVst4DdList [ regNum=(D22<<4)+c1215-1; regInc=1; counter=4; ] { } # Single
 vst4DdList: "{"^buildVst4DdList^"}"	is TMode=0 & c0808=1 & D22 & c1215 & buildVst4DdList [ regNum=(D22<<4)+c1215-2; regInc=2; counter=4; ] { } # Double

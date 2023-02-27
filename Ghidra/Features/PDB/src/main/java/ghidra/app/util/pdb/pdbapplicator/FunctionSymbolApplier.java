@@ -258,10 +258,12 @@ public class FunctionSymbolApplier extends MsSymbolApplier {
 		}
 
 		boolean succeededSetFunctionSignature = false;
-		if (!function.isThunk() &&
-			function.getSignatureSource().isLowerPriorityThan(SourceType.IMPORTED)) {
-			succeededSetFunctionSignature = setFunctionDefinition(monitor);
-			function.setNoReturn(isNonReturning);
+		if (thunkSymbol == null) {
+			function.setThunkedFunction(null);
+			if (function.getSignatureSource().isLowerPriorityThan(SourceType.IMPORTED)) {
+				succeededSetFunctionSignature = setFunctionDefinition(monitor);
+				function.setNoReturn(isNonReturning);
+			}
 		}
 		// If signature was set, then override existing primary mangled symbol with
 		// the global symbol that provided this signature so that Demangler does not overwrite

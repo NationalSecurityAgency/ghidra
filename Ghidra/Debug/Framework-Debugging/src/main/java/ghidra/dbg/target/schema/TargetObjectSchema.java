@@ -478,7 +478,8 @@ public interface TargetObjectSchema {
 			throw new IllegalArgumentException("Must provide a specific interface");
 		}
 		PathMatcher result = new PathMatcher();
-		Private.searchFor(this, result, prefix, true, type, requireCanonical, new HashSet<>());
+		Private.searchFor(this, result, prefix, true, type, false, requireCanonical,
+			new HashSet<>());
 		return result;
 	}
 
@@ -610,37 +611,45 @@ public interface TargetObjectSchema {
 
 		private static void searchFor(TargetObjectSchema sch, PathMatcher result,
 				List<String> prefix, boolean parentIsCanonical, Class<? extends TargetObject> type,
-				boolean requireCanonical, Set<TargetObjectSchema> visited) {
+				boolean requireAggregate, boolean requireCanonical,
+				Set<TargetObjectSchema> visited) {
+			if (sch instanceof EnumerableTargetObjectSchema) {
+				return;
+			}
+			if (sch.getInterfaces().contains(type) && (parentIsCanonical || !requireCanonical)) {
+				result.addPattern(prefix);
+				return;
+			}
 			if (!visited.add(sch)) {
 				return;
 			}
-
-			if (sch.getInterfaces().contains(type) && parentIsCanonical) {
-				result.addPattern(prefix);
+			if (requireAggregate && !sch.getInterfaces().contains(TargetAggregate.class)) {
+				return;
 			}
 			SchemaContext ctx = sch.getContext();
 			boolean isCanonical = sch.isCanonicalContainer();
 			for (Entry<String, SchemaName> ent : sch.getElementSchemas().entrySet()) {
 				List<String> extended = PathUtils.index(prefix, ent.getKey());
 				TargetObjectSchema elemSchema = ctx.getSchema(ent.getValue());
-				searchFor(elemSchema, result, extended, isCanonical, type, requireCanonical,
-					visited);
+				searchFor(elemSchema, result, extended, isCanonical, type, requireAggregate,
+					requireCanonical, visited);
 			}
 			List<String> deExtended = PathUtils.extend(prefix, "[]");
 			TargetObjectSchema deSchema = ctx.getSchema(sch.getDefaultElementSchema());
-			searchFor(deSchema, result, deExtended, isCanonical, type, requireCanonical, visited);
+			searchFor(deSchema, result, deExtended, isCanonical, type, requireAggregate,
+				requireCanonical, visited);
 
 			for (Entry<String, AttributeSchema> ent : sch.getAttributeSchemas().entrySet()) {
 				List<String> extended = PathUtils.extend(prefix, ent.getKey());
 				TargetObjectSchema attrSchema = ctx.getSchema(ent.getValue().getSchema());
-				searchFor(attrSchema, result, extended, parentIsCanonical, type, requireCanonical,
-					visited);
+				searchFor(attrSchema, result, extended, isCanonical, type, requireAggregate,
+					requireCanonical, visited);
 			}
 			List<String> daExtended = PathUtils.extend(prefix, "");
 			TargetObjectSchema daSchema =
 				ctx.getSchema(sch.getDefaultAttributeSchema().getSchema());
-			searchFor(daSchema, result, daExtended, parentIsCanonical, type, requireCanonical,
-				visited);
+			searchFor(daSchema, result, daExtended, isCanonical, type, requireAggregate,
+				requireCanonical, visited);
 
 			visited.remove(sch);
 		}
@@ -772,6 +781,34 @@ public interface TargetObjectSchema {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Search for all suitable objects with this schema at the given path
+	 * 
+	 * <p>
+	 * This behaves like {@link #searchForSuitable(Class, List)}, except that it returns a matcher
+	 * for all possibilities. Conventionally, when the client uses the matcher to find suitable
+	 * objects and must choose from among the results, those having the longer paths should be
+	 * preferred. More specifically, it should prefer those sharing the longer path prefixes with
+	 * the given path. The client should <em>not</em> just take the first objects, since these will
+	 * likely have the shortest paths. If exactly one object is required, consider using
+	 * {@link #searchForSuitable(Class, List)} instead.
+	 * 
+	 * @param type
+	 * @param path
+	 * @return
+	 */
+	default PathPredicates matcherForSuitable(Class<? extends TargetObject> type,
+			List<String> path) {
+		PathMatcher result = new PathMatcher();
+		Set<TargetObjectSchema> visited = new HashSet<>();
+		List<TargetObjectSchema> schemas = getSuccessorSchemas(path);
+		for (; path != null; path = PathUtils.parent(path)) {
+			TargetObjectSchema schema = schemas.get(path.size());
+			Private.searchFor(schema, result, path, false, type, true, false, visited);
+		}
+		return result;
 	}
 
 	/**

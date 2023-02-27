@@ -58,7 +58,11 @@ public interface DebuggerEmulationService {
 	/**
 	 * An emulator managed by this service
 	 */
-	record CachedEmulator(Trace trace, DebuggerPcodeMachine<?> emulator) {
+	record CachedEmulator(Trace trace, DebuggerPcodeMachine<?> emulator, long version) {
+		public CachedEmulator(Trace trace, DebuggerPcodeMachine<?> emulator) {
+			this(trace, emulator, trace.getEmulatorCacheVersion());
+		}
+
 		/**
 		 * Get the trace to which the emulator is bound
 		 * 
@@ -82,6 +86,15 @@ public interface DebuggerEmulationService {
 		@Override
 		public DebuggerPcodeMachine<?> emulator() {
 			return emulator;
+		}
+
+		/**
+		 * Check if this cached emulator is still valid
+		 * 
+		 * @return true if valid
+		 */
+		public boolean isValid() {
+			return version >= trace.getEmulatorCacheVersion();
 		}
 	}
 

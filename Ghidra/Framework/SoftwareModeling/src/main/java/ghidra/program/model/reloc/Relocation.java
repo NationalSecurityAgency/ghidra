@@ -175,9 +175,10 @@ public class Relocation {
 	}
 
 	/**
-	 * Returns the original instruction bytes affected by relocation.
+	 * Returns the original instruction bytes affected by applied relocation.
 	 * 
-	 * @return original instruction bytes affected by relocation
+	 * @return original instruction bytes affected by relocation if it was successfully applied
+	 * (i.e., {@link Status#APPLIED}, {@link Status#APPLIED_OTHER}), otherwise null may be returned.
 	 */
 	public byte[] getBytes() {
 		return bytes;

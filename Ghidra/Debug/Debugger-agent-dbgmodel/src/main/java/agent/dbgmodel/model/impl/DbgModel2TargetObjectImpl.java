@@ -20,8 +20,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import agent.dbgeng.manager.DbgEventsListener;
-import agent.dbgeng.manager.DbgStateListener;
+import agent.dbgeng.manager.*;
 import agent.dbgeng.manager.breakpoint.DbgBreakpointInfo;
 import agent.dbgeng.model.AbstractDbgModel;
 import agent.dbgeng.model.iface1.DbgModelSelectableObject;
@@ -251,6 +250,11 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 				if (isValid()) {
 					TargetExecutionStateful stateful = (TargetExecutionStateful) proxy;
 					TargetExecutionState state = stateful.getExecutionState();
+					if (getManager().isKernelMode()) {
+						if (state.equals(TargetExecutionState.INACTIVE)) {
+							state = TargetExecutionState.ALIVE;
+						}
+					}
 					attrs.put(TargetExecutionStateful.STATE_ATTRIBUTE_NAME, state);
 				}
 			}
@@ -298,9 +302,12 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 			}
 			if (proxy instanceof TargetThread) {
 				DbgModelTargetThread targetThread = (DbgModelTargetThread) proxy;
-				String executionType =
-					targetThread.getThread().getExecutingProcessorType().description;
-				attrs.put(TargetEnvironment.ARCH_ATTRIBUTE_NAME, executionType);
+				DbgThread thread = targetThread.getThread();
+				if (thread != null) {
+					String executionType =
+						thread.getExecutingProcessorType().description;
+					attrs.put(TargetEnvironment.ARCH_ATTRIBUTE_NAME, executionType);
+				}
 			}
 			if (proxy instanceof TargetRegister) {
 				DbgModelTargetObject bank = (DbgModelTargetObject) getParent();

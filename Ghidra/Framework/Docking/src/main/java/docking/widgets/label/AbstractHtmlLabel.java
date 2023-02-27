@@ -47,17 +47,16 @@ public abstract class AbstractHtmlLabel extends JLabel
 		implements GComponent, PropertyChangeListener {
 
 	private static final String HTML_TAG = "<html>";
-	private boolean isUpdating = false;
+	private boolean isUpdating;
+	private boolean isHtml;
 
 	protected AbstractHtmlLabel() {
 		addPropertyChangeListener(this);
-		setHTMLRenderingEnabled(false); // disable parent html rendering so we can do our own
 	}
 
 	protected AbstractHtmlLabel(String text) {
 		super(text);
 		addPropertyChangeListener(this);
-		setHTMLRenderingEnabled(false); // disable parent html rendering so we can do our own
 	}
 
 	@Override
@@ -66,6 +65,10 @@ public abstract class AbstractHtmlLabel extends JLabel
 		// do not pass <html> up to the parent so that it does not install its own html rendering
 		if (text != null && text.toLowerCase().startsWith(HTML_TAG)) {
 			text = text.substring(HTML_TAG.length());
+			isHtml = true;
+		}
+		else {
+			isHtml = false;
 		}
 
 		super.setText(text);
@@ -82,7 +85,7 @@ public abstract class AbstractHtmlLabel extends JLabel
 	private void updateHtmlView() {
 
 		String text = getText();
-		if (text == null) {
+		if (text == null || !isHtml || !isHTMLRenderingEnabled()) {
 			putClientProperty(BasicHTML.propertyKey, null);
 			return;
 		}
@@ -213,10 +216,9 @@ public abstract class AbstractHtmlLabel extends JLabel
 			String size = Integer.toString(font.getSize());
 			String weight = font.isBold() ? "700" : "400";
 			String style = font.isItalic() ? "italic" : "normal";
-			String color = WebColors.toString(bg);
+			String color = WebColors.toString(bg, false);
 			String css = String.format(s, family, size, weight, style, color);
-			StyleSheet styleSheet = getStyleSheet();
-			styleSheet.addRule(css);
+			ss.addRule(css);
 		}
 
 		@Override

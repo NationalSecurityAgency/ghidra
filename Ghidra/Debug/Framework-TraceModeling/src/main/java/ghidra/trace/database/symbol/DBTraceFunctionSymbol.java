@@ -253,8 +253,8 @@ public class DBTraceFunctionSymbol extends DBTraceNamespaceSymbol
 		DBTraceBookmarkType errType =
 			manager.trace.getBookmarkManager().getOrDefineBookmarkType(BookmarkType.ERROR);
 		manager.trace.getBookmarkManager()
-				.addBookmark(getLifespan(), entryPoint, errType,
-					"Bad Variables Removed", "Removed " + badns.size() + " bad variables");
+				.addBookmark(getLifespan(), entryPoint, errType, "Bad Variables Removed",
+					"Removed " + badns.size() + " bad variables");
 		for (AbstractDBTraceVariableSymbol s : badns) {
 			s.delete();
 		}
@@ -366,9 +366,9 @@ public class DBTraceFunctionSymbol extends DBTraceNamespaceSymbol
 			}
 			this.callFixup = newCallFixup;
 			update(FIXUP_COLUMN);
-			manager.trace.setChanged(
-				new TraceChangeRecord<>(TraceFunctionChangeType.CHANGED_CALL_FIXUP, getSpace(),
-					this, oldCallFixup, newCallFixup));
+			manager.trace
+					.setChanged(new TraceChangeRecord<>(TraceFunctionChangeType.CHANGED_CALL_FIXUP,
+						getSpace(), this, oldCallFixup, newCallFixup));
 		}
 	}
 
@@ -498,8 +498,8 @@ public class DBTraceFunctionSymbol extends DBTraceNamespaceSymbol
 			}
 			StringBuilder sb = new StringBuilder();
 			DBTraceParameterSymbol retVar = getReturn();
-			sb.append((formalSignature ? retVar.getFormalDataType()
-					: retVar.getDataType()).getDisplayName());
+			sb.append((formalSignature ? retVar.getFormalDataType() : retVar.getDataType())
+					.getDisplayName());
 			sb.append(' ');
 			if (includeCallingConvention && hasExplicitCallingConvention()) {
 				String cc = getCallingConventionName();
@@ -1626,9 +1626,9 @@ public class DBTraceFunctionSymbol extends DBTraceNamespaceSymbol
 			else {
 				andFlags(NO_RETURN_CLEAR);
 			}
-			manager.trace.setChanged(
-				new TraceChangeRecord<>(TraceFunctionChangeType.CHANGED_NORETURN, getSpace(), this,
-					!hasNoReturn, hasNoReturn));
+			manager.trace
+					.setChanged(new TraceChangeRecord<>(TraceFunctionChangeType.CHANGED_NORETURN,
+						getSpace(), this, !hasNoReturn, hasNoReturn));
 		}
 	}
 
@@ -1833,7 +1833,9 @@ public class DBTraceFunctionSymbol extends DBTraceNamespaceSymbol
 			// NOTE: Check for existence first, to avoid resolving unnecessarily.
 			// TODO: If ever struct-class are strongly related, fix that here, too.
 			classStruct = VariableUtilities.findOrCreateClassStruct((GhidraClass) parentNS, dtm);
-			dtm.resolve(classStruct, null);
+			if (classStruct != null) {
+				dtm.resolve(classStruct, null);
+			}
 		}
 	}
 
@@ -1858,8 +1860,7 @@ public class DBTraceFunctionSymbol extends DBTraceNamespaceSymbol
 	}
 
 	private List<Address> getFunctionThunkAddresses(long functionKey, boolean recursive) {
-		Collection<DBTraceFunctionSymbol> thunkSymbols =
-			manager.functionsByThunked.get(getKey());
+		Collection<DBTraceFunctionSymbol> thunkSymbols = manager.functionsByThunked.get(getKey());
 		if (thunkSymbols == null || thunkSymbols.isEmpty()) {
 			return null;
 		}
@@ -1916,8 +1917,7 @@ public class DBTraceFunctionSymbol extends DBTraceNamespaceSymbol
 		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
 			Set<Function> result = new HashSet<>();
 			for (DBTraceReference ref : manager.trace.getReferenceManager()
-					.getReferencesToRange(
-						lifespan, new AddressRangeImpl(entryPoint, entryPoint))) {
+					.getReferencesToRange(lifespan, new AddressRangeImpl(entryPoint, entryPoint))) {
 				if (monitor.isCancelled()) {
 					break;
 				}
@@ -1942,8 +1942,7 @@ public class DBTraceFunctionSymbol extends DBTraceNamespaceSymbol
 			Set<Function> result = new HashSet<>();
 			for (AddressRange rng : getBody()) {
 				for (DBTraceReference ref : manager.trace.getReferenceManager()
-						.getReferencesFromRange(
-							lifespan, rng)) {
+						.getReferencesFromRange(lifespan, rng)) {
 					if (monitor.isCancelled()) {
 						return result;
 					}

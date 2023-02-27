@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.stack;
 
+import java.io.IOException;
 import java.util.*;
 
 import ghidra.app.decompiler.DecompInterface;
@@ -28,8 +29,10 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.pcode.*;
 import ghidra.util.exception.InvalidInputException;
+import ghidra.util.exception.NotFoundException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -68,8 +71,8 @@ class SymPcodeExecutor extends PcodeExecutor<Sym> {
 		CompilerSpec cSpec = program.getCompilerSpec();
 		SleighLanguage language = (SleighLanguage) cSpec.getLanguage();
 		SymPcodeArithmetic arithmetic = new SymPcodeArithmetic(cSpec);
-		return new SymPcodeExecutor(program, cSpec, language, arithmetic, state, reason,
-			warnings, monitor);
+		return new SymPcodeExecutor(program, cSpec, language, arithmetic, state, reason, warnings,
+			monitor);
 	}
 
 	private final Program program;
@@ -93,8 +96,7 @@ class SymPcodeExecutor extends PcodeExecutor<Sym> {
 	}
 
 	@Override
-	public void executeCallother(PcodeOp op, PcodeFrame frame,
-			PcodeUseropLibrary<Sym> library) {
+	public void executeCallother(PcodeOp op, PcodeFrame frame, PcodeUseropLibrary<Sym> library) {
 		// Do nothing
 		// TODO: Is there a way to know if a userop affects the stack?
 	}
@@ -120,8 +122,7 @@ class SymPcodeExecutor extends PcodeExecutor<Sym> {
 		}
 		int extrapop = convention.getExtrapop();
 		if (extrapop == PrototypeModel.UNKNOWN_EXTRAPOP) {
-			throw new PcodeExecutionException(
-				"Cannot get stack change for function " + function);
+			throw new PcodeExecutionException("Cannot get stack change for function " + function);
 		}
 		if (function.isStackPurgeSizeValid()) {
 			return extrapop + function.getStackPurgeSize();
@@ -151,9 +152,15 @@ class SymPcodeExecutor extends PcodeExecutor<Sym> {
 		}
 		String fixupName = callee.getCallFixup();
 		if (fixupName != null && !"".equals(fixupName)) {
-			PcodeProgram snippet =
-				PcodeProgram.fromInject(program, fixupName, InjectPayload.CALLFIXUP_TYPE);
-			execute(snippet, library);
+			PcodeProgram snippet;
+			try {
+				snippet = PcodeProgram.fromInject(program, fixupName, InjectPayload.CALLFIXUP_TYPE);
+				execute(snippet, library);
+			}
+			catch (MemoryAccessException | UnknownInstructionException | NotFoundException
+					| IOException e) {
+				throw new PcodeExecutionException("Issue executing callee fixup: ", e);
+			}
 			return;
 		}
 		int change = computeStackChange(callee);

@@ -226,9 +226,8 @@ public class DBTraceObjectBreakpointSpec
 	@Override
 	public Collection<? extends TraceObjectBreakpointLocation> getLocations() {
 		try (LockHold hold = object.getTrace().lockRead()) {
-			return object
-					.querySuccessorsInterface(getLifespan(), TraceObjectBreakpointLocation.class)
-					.collect(Collectors.toSet());
+			return object.querySuccessorsInterface(getLifespan(),
+				TraceObjectBreakpointLocation.class, true).collect(Collectors.toSet());
 		}
 	}
 

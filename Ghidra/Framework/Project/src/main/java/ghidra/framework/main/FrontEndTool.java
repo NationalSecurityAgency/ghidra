@@ -87,6 +87,7 @@ import help.HelpService;
  * manner.
  */
 public class FrontEndTool extends PluginTool implements OptionsChangeListener {
+	public static final String DEFAULT_TOOL_LAUNCH_MODE = "Default Tool Launch Mode";
 	public static final String AUTOMATICALLY_SAVE_TOOLS = "Automatically Save Tools";
 	private static final String USE_ALERT_ANIMATION_OPTION_NAME = "Use Notification Animation";
 
@@ -121,6 +122,8 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 	private WeakSet<ProjectListener> listeners;
 	private FrontEndPlugin plugin;
+
+	private DefaultLaunchMode defaultLaunchMode = DefaultLaunchMode.DEFAULT;
 
 	private ComponentProvider compProvider;
 	private LogComponentProvider logProvider;
@@ -315,11 +318,21 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 		showComponentHeader(compProvider, false);
 	}
 
+	/**
+	 * Get the preferred default tool launch mode
+	 * @return default tool launch mode
+	 */
+	public DefaultLaunchMode getDefaultLaunchMode() {
+		return defaultLaunchMode;
+	}
+
 	private void initFrontEndOptions() {
 		ToolOptions options = getOptions(ToolConstants.TOOL_OPTIONS);
 		HelpLocation help =
 			new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Front_End_Tool_Options");
 
+		options.registerOption(DEFAULT_TOOL_LAUNCH_MODE, DefaultLaunchMode.DEFAULT, help,
+			"Indicates if a new or already running tool should be used during default launch.");
 		options.registerOption(AUTOMATICALLY_SAVE_TOOLS, true, help,
 			"When enabled tools will be saved when they are closed");
 		options.registerOption(USE_ALERT_ANIMATION_OPTION_NAME, true, help,
@@ -331,6 +344,8 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 		options.registerOption(RESTORE_PREVIOUS_PROJECT_NAME, Boolean.TRUE, help,
 			"Restore the previous project when Ghidra starts.");
+
+		defaultLaunchMode = options.getEnum(DEFAULT_TOOL_LAUNCH_MODE, defaultLaunchMode);
 
 		boolean autoSave = options.getBoolean(AUTOMATICALLY_SAVE_TOOLS, true);
 		GhidraTool.autoSave = autoSave;
@@ -350,6 +365,9 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 	@Override
 	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
 			Object newValue) {
+		if (DEFAULT_TOOL_LAUNCH_MODE.equals(optionName)) {
+			defaultLaunchMode = (DefaultLaunchMode) newValue;
+		}
 		if (AUTOMATICALLY_SAVE_TOOLS.equals(optionName)) {
 			GhidraTool.autoSave = (Boolean) newValue;
 		}

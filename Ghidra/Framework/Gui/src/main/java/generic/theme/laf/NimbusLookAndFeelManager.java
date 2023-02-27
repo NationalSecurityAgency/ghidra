@@ -76,14 +76,6 @@ public class NimbusLookAndFeelManager extends LookAndFeelManager {
 					// as explained above, don't change the java defaults in the theme manager
 					// on a reinstall
 				}
-
-				@Override
-				protected GThemeValueMap getApplicationOverrides() {
-					// on a reinstall, we may also have overrides in the current values and not
-					// just the theme.property files
-					return themeManager.getCurrentValues();
-				}
-
 			});
 		}
 		catch (UnsupportedLookAndFeelException e) {

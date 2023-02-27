@@ -18,7 +18,6 @@ package ghidra.trace.database;
 import java.io.IOException;
 
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 
 import db.DBHandle;
 import db.buffers.BufferFile;
@@ -39,7 +38,7 @@ import ghidra.util.task.TaskMonitor;
 public class DBTraceContentHandler extends DBWithUserDataContentHandler<DBTrace> {
 	public static final String TRACE_CONTENT_TYPE = "Trace";
 
-	public static ImageIcon TRACE_ICON = Trace.TRACE_ICON;
+	public static final Icon TRACE_ICON = Trace.TRACE_ICON;
 
 	static final Class<DBTrace> TRACE_DOMAIN_OBJECT_CLASS = DBTrace.class;
 	static final String TRACE_CONTENT_DEFAULT_TOOL = "Debugger";
@@ -87,7 +86,7 @@ public class DBTraceContentHandler extends DBWithUserDataContentHandler<DBTrace>
 			if (msg == null) {
 				msg = t.toString();
 			}
-			throw new IOException("Open failed: " + msg);
+			throw new IOException("Open failed: " + msg, t);
 		}
 		finally {
 			if (!success) {
@@ -137,7 +136,7 @@ public class DBTraceContentHandler extends DBWithUserDataContentHandler<DBTrace>
 			if (msg == null) {
 				msg = t.toString();
 			}
-			throw new IOException("Open failed: " + msg);
+			throw new IOException("Open failed: " + msg, t);
 		}
 		finally {
 			if (!success) {
@@ -192,7 +191,7 @@ public class DBTraceContentHandler extends DBWithUserDataContentHandler<DBTrace>
 			if (msg == null) {
 				msg = t.toString();
 			}
-			throw new IOException("Open failed: " + msg);
+			throw new IOException("Open failed: " + msg, t);
 		}
 		finally {
 			if (!success) {
@@ -289,7 +288,7 @@ public class DBTraceContentHandler extends DBWithUserDataContentHandler<DBTrace>
 			if (msg == null) {
 				msg = t.toString();
 			}
-			throw new IOException("Open failed: " + msg);
+			throw new IOException("Open failed: " + msg, t);
 		}
 		finally {
 			if (trace != null) {

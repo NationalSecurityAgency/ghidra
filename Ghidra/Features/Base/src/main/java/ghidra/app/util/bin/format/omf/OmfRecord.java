@@ -173,6 +173,8 @@ public abstract class OmfRecord {
 				yield new OmfSymbolRecord(reader, true);
 			case LCOMDEF:
 				yield new OmfComdefRecord(reader, true);
+			case CEXTDEF:
+				yield new OmfComdatExternalSymbol(reader);
 			case RHEADR:
 			case REGINT:
 			case REDATA:
@@ -192,7 +194,6 @@ public abstract class OmfRecord {
 				yield new OmfObsoleteRecord(reader);
 			case LOCSYM:
 			case TYPDEF:
-			case CEXTDEF:
 			case COMDAT:
 			case LINSYM:
 			case ALIAS:
@@ -246,6 +247,6 @@ public abstract class OmfRecord {
 	@Override
 	public String toString() {
 		return String.format("name: %s, type: 0x%x, offset: 0x%x, length: 0x%x",
-			getRecordName(recordType), recordType, recordOffset, recordLength);
+			getRecordName(recordType & 0xfe), recordType, recordOffset, recordLength);
 	}
 }

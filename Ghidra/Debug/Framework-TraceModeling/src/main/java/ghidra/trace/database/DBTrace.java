@@ -26,6 +26,7 @@ import com.google.common.cache.RemovalNotification;
 import db.DBHandle;
 import generic.depends.DependentService;
 import generic.depends.err.ServiceConstructionException;
+import ghidra.framework.model.DomainObjectChangeRecord;
 import ghidra.framework.options.Options;
 import ghidra.lifecycle.Internal;
 import ghidra.program.model.address.*;
@@ -80,6 +81,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	protected static final String BASE_COMPILER = "Base Compiler";
 	protected static final String PLATFORM = "Platform";
 	protected static final String EXECUTABLE_PATH = "Executable Location";
+	protected static final String EMU_CACHE_VERSION = "Emulator Cache Version";
 
 	protected static final int DB_TIME_INTERVAL = 500;
 	protected static final int DB_BUFFER_SIZE = 1000;
@@ -139,6 +141,8 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	protected boolean recordChanges = false;
 
 	protected Set<DBTraceTimeViewport> viewports = new WeakHashCowSet<>();
+	protected ListenerSet<DBTraceDirectChangeListener> directListeners =
+		new ListenerSet<>(DBTraceDirectChangeListener.class);
 	protected DBTraceVariableSnapProgramView programView;
 	protected Set<DBTraceVariableSnapProgramView> programViews = new WeakHashCowSet<>();
 	protected Set<TraceProgramView> programViewsView = Collections.unmodifiableSet(programViews);
@@ -586,6 +590,23 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	}
 
 	@Override
+	public void fireEvent(DomainObjectChangeRecord ev) {
+		super.fireEvent(ev);
+		if (directListeners != null) {
+			// Some events fire during construction
+			directListeners.fire.changed(ev);
+		}
+	}
+
+	public void addDirectChangeListener(DBTraceDirectChangeListener listener) {
+		directListeners.add(listener);
+	}
+
+	public void removeDirectChangeListener(DBTraceDirectChangeListener listener) {
+		directListeners.remove(listener);
+	}
+
+	@Override
 	public DBTraceProgramView getFixedProgramView(long snap) {
 		// NOTE: The new viewport will need to read from the time manager during init
 		DBTraceProgramView view;
@@ -752,6 +773,16 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 
 	public Date getCreationDate() {
 		return getOptions(TRACE_INFO).getDate(DATE_CREATED, new Date(0));
+	}
+
+	@Override
+	public void setEmulatorCacheVersion(long version) {
+		getOptions(TRACE_INFO).setLong(EMU_CACHE_VERSION, version);
+	}
+
+	@Override
+	public long getEmulatorCacheVersion() {
+		return getOptions(TRACE_INFO).getLong(EMU_CACHE_VERSION, 0);
 	}
 
 	@Override

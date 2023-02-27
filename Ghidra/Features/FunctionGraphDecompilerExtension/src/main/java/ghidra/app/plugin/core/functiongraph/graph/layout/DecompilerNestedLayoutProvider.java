@@ -24,7 +24,7 @@ import ghidra.util.task.TaskMonitor;
 
 public class DecompilerNestedLayoutProvider extends FGLayoutProviderExtensionPoint {
 
-	private static final Icon ICON = new GIcon("icon.functiongraph.layout.nested.code");
+	private static final Icon ICON = new GIcon("icon.plugin.functiongraph.layout.nested.code");
 	static final String LAYOUT_NAME = "Nested Code Layout";
 
 	@Override

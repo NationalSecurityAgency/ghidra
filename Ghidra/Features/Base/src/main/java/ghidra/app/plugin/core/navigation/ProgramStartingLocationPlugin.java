@@ -21,14 +21,14 @@ import java.util.*;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 
+import docking.widgets.OptionDialog;
 import ghidra.app.CorePluginPackage;
+import ghidra.app.events.FirstTimeAnalyzedPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
-import ghidra.app.plugin.core.navigation.ProgramStartingLocationOptions.StartLocationType;
 import ghidra.app.services.GoToService;
 import ghidra.framework.options.SaveState;
-import ghidra.framework.plugintool.PluginInfo;
-import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.Program;
@@ -36,7 +36,6 @@ import ghidra.program.model.listing.ProgramUserData;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolTable;
 import ghidra.program.util.ProgramLocation;
-import ghidra.util.Swing;
 import ghidra.util.xml.XmlUtilities;
 
 //@formatter:off
@@ -46,15 +45,23 @@ import ghidra.util.xml.XmlUtilities;
 	category = PluginCategoryNames.COMMON,
 	shortDescription = "Determines the starting location when a program is opened.",
 	description = "This plugin watches for new programs being opened and determines the best starting location for the listing view.",
-	servicesRequired = { GoToService.class }
+	servicesRequired = { GoToService.class },
+	eventsConsumed = { FirstTimeAnalyzedPluginEvent.class }
 )
 //@formatter:on
 public class ProgramStartingLocationPlugin extends ProgramPlugin {
 
+	public static enum NonActiveProgramState {
+		NEWLY_OPENED,
+		RESTORED,
+		FIRST_ANALYSIS_COMPLETED
+	}
+
 	private static final String LAST_LOCATION_PROPERTY = "LAST_PROGRAM_LOCATION";
-	private Program lastOpenedProgram;
 	private ProgramStartingLocationOptions startOptions;
-	private Map<Program, ProgramLocation> lastLocationMap = new HashMap<>();
+	private WeakHashMap<Program, ProgramLocation> currentLocationsMap = new WeakHashMap<>();
+	private WeakHashMap<Program, ProgramLocation> startLocationsMap = new WeakHashMap<>();
+	private WeakHashMap<Program, NonActiveProgramState> programStateMap = new WeakHashMap<>();
 
 	public ProgramStartingLocationPlugin(PluginTool tool) {
 		super(tool);
@@ -62,21 +69,38 @@ public class ProgramStartingLocationPlugin extends ProgramPlugin {
 	}
 
 	@Override
+	public void processEvent(PluginEvent event) {
+		super.processEvent(event);
+
+		if (event instanceof FirstTimeAnalyzedPluginEvent ev) {
+			Program program = ev.getProgram();
+			if (program != null) {
+				firstAnalysisCompleted(program);
+			}
+		}
+	}
+
+	private void firstAnalysisCompleted(Program program) {
+		if (program.equals(currentProgram)) {
+			processFirstAnalysisCompleted();
+		}
+		else {
+			programStateMap.put(program, NonActiveProgramState.FIRST_ANALYSIS_COMPLETED);
+		}
+	}
+
+	@Override
 	protected void programOpened(Program program) {
-		// if the open program event is a result of restoring the tool's data state, don't 
-		// interfere with the tool's restoration of the last location for that program
 		if (tool.isRestoringDataState()) {
-			return;
+			programStateMap.put(program, NonActiveProgramState.RESTORED);
 		}
-		if (startOptions.getStartLocationType() == StartLocationType.LOWEST_ADDRESS) {
-			// this is what happens by default, so no need to do anything
-			return;
+		else {
+			programStateMap.put(program, NonActiveProgramState.NEWLY_OPENED);
 		}
-		lastOpenedProgram = program;
 	}
 
 	protected void programClosed(Program program) {
-		ProgramLocation lastLocation = lastLocationMap.remove(program);
+		ProgramLocation lastLocation = currentLocationsMap.remove(program);
 		if (lastLocation == null) {
 			return;
 		}
@@ -87,22 +111,66 @@ public class ProgramStartingLocationPlugin extends ProgramPlugin {
 		String xmlString = XmlUtilities.toString(saveState.saveToXml());
 		programUserData.setStringProperty(LAST_LOCATION_PROPERTY, xmlString);
 
+		programStateMap.remove(program);
+		currentLocationsMap.remove(program);
+
 	}
 
 	@Override
-	protected void programActivated(Program program) {
-		super.programActivated(program);
-		if (program == lastOpenedProgram) {
-			Swing.runLater(this::setStartingLocationForNewProgram);
+	protected void postProgramActivated(Program program) {
+		NonActiveProgramState state = programStateMap.remove(program);
+		if (state == NonActiveProgramState.NEWLY_OPENED) {
+			setStartingLocationForNewProgram();
 		}
-		lastOpenedProgram = null;
+		else if (state == NonActiveProgramState.FIRST_ANALYSIS_COMPLETED) {
+			processFirstAnalysisCompleted();
+		}
+	}
+
+	private void processFirstAnalysisCompleted() {
+		boolean shouldAskToRepostion = startOptions.shouldAskToRepostionAfterAnalysis();
+		boolean autoRepositionIfNotMoved = startOptions.shouldAutoRepositionIfNotMoved();
+
+		if (!shouldAskToRepostion && !autoRepositionIfNotMoved) {
+			return;
+		}
+
+		// if analysis didn't find any starting symbol, nothing to do
+		Symbol symbol = findStartingSymbol(currentProgram);
+		if (symbol == null) {
+			return;
+		}
+
+		// if already at the symbol's address, don't do anything
+		if (currentLocation != null && currentLocation.getAddress().equals(symbol.getAddress())) {
+			return;
+		}
+
+		if (autoRepositionIfNotMoved && isProgramAtStartingLocation()) {
+			gotoLocation(symbol.getProgramLocation());
+		}
+		else if (shouldAskToRepostion && askToPositionProgram(symbol)) {
+			gotoLocation(symbol.getProgramLocation());
+		}
+	}
+
+	private boolean askToPositionProgram(Symbol symbol) {
+		int result = OptionDialog.showYesNoDialog(null, "Reposition Program?",
+			"Analysis found the symbol \"" + symbol.getName() +
+				"\".  Would you like to go to that symbol?");
+		return result == OptionDialog.YES_OPTION;
 	}
 
 	@Override
 	protected void locationChanged(ProgramLocation loc) {
 		if (loc != null) {
 			Program program = loc.getProgram();
-			lastLocationMap.put(program, loc);
+			currentLocationsMap.put(program, loc);
+
+			// the startLocationsMap only gets updated with the first location
+			if (!startLocationsMap.containsKey(program)) {
+				startLocationsMap.put(program, loc);
+			}
 		}
 	}
 
@@ -111,13 +179,27 @@ public class ProgramStartingLocationPlugin extends ProgramPlugin {
 			return;
 		}
 
-		GoToService gotoService = tool.getService(GoToService.class);
-
 		ProgramLocation location = getStartingProgramLocation(currentProgram);
 		if (location != null) {
-			gotoService.goTo(location);
+			gotoLocation(location);
+			startLocationsMap.put(currentProgram, location);
 		}
 
+	}
+
+	private void gotoLocation(ProgramLocation location) {
+		GoToService gotoService = tool.getService(GoToService.class);
+		gotoService.goTo(location);
+	}
+
+	private boolean isProgramAtStartingLocation() {
+		ProgramLocation startLocation = startLocationsMap.get(currentProgram);
+		if (startLocation == null || currentLocation == null) {
+			return true;
+		}
+		// just compare address, analysis may have tweaked the current location even
+		// the user didn't move
+		return startLocation.getAddress().equals(currentLocation.getAddress());
 	}
 
 	private ProgramLocation getStartingProgramLocation(Program program) {
@@ -129,7 +211,7 @@ public class ProgramStartingLocationPlugin extends ProgramPlugin {
 				}
 				// fall through and try symbol name
 			case SYMBOL_NAME:
-				Symbol symbol = fingStartingSymbol(program);
+				Symbol symbol = findStartingSymbol(program);
 				if (symbol != null) {
 					return symbol.getProgramLocation();
 				}
@@ -158,7 +240,7 @@ public class ProgramStartingLocationPlugin extends ProgramPlugin {
 		}
 	}
 
-	private Symbol fingStartingSymbol(Program program) {
+	private Symbol findStartingSymbol(Program program) {
 		List<String> symbolNames = startOptions.getStartingSymbolNames();
 		boolean useUnderscores = startOptions.useUnderscorePrefixes();
 		for (String symbolName : symbolNames) {

@@ -15,11 +15,10 @@
  */
 package ghidra.app.plugin.core.debug.service.emulation.data;
 
-import java.util.Collection;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
+import ghidra.app.plugin.core.debug.utils.AbstractMappedMemoryBytesVisitor;
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.app.services.DebuggerStaticMappingService.MappedAddressRange;
 import ghidra.app.services.TraceRecorder;
@@ -31,10 +30,8 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceTimeViewport;
 import ghidra.trace.model.guest.TracePlatform;
-import ghidra.util.MathUtilities;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
 
@@ -105,61 +102,46 @@ public class DefaultPcodeDebuggerMemoryAccess extends DefaultPcodeTraceMemoryAcc
 
 	@Override
 	public boolean readFromStaticImages(SemisparseByteArray bytes, AddressSetView guestView) {
-		boolean result = false;
 		// TODO: Expand to block? DON'T OVERWRITE KNOWN!
 		DebuggerStaticMappingService mappingService =
 			tool.getService(DebuggerStaticMappingService.class);
 		if (mappingService == null) {
 			return false;
 		}
-		byte[] data = new byte[4096];
 
-		Trace trace = platform.getTrace();
-		AddressSetView hostView = platform.mapGuestToHost(guestView);
-		for (Entry<Program, Collection<MappedAddressRange>> ent : mappingService
-				.getOpenMappedViews(trace, hostView, snap)
-				.entrySet()) {
-			Program program = ent.getKey();
-			Memory memory = program.getMemory();
-			AddressSetView initialized = memory.getLoadedAndInitializedAddressSet();
+		try {
+			return new AbstractMappedMemoryBytesVisitor(mappingService, new byte[4096]) {
+				@Override
+				protected int read(Memory memory, Address addr, byte[] dest, int size)
+						throws MemoryAccessException {
+					int read = super.read(memory, addr, dest, size);
+					if (read < size) {
+						Msg.warn(this,
+							String.format("  Partial read of %s. Wanted %d bytes. Got %d.",
+								addr, size, read));
+					}
+					return read;
+				}
 
-			Collection<MappedAddressRange> mappedSet = ent.getValue();
-			for (MappedAddressRange mappedRng : mappedSet) {
-				AddressRange progRng = mappedRng.getDestinationAddressRange();
-				AddressSpace progSpace = progRng.getAddressSpace();
-				for (AddressRange subProgRng : initialized.intersectRange(progRng.getMinAddress(),
-					progRng.getMaxAddress())) {
+				@Override
+				protected boolean visitRange(Program program, AddressRange progRng,
+						MappedAddressRange mappedRng) throws MemoryAccessException {
 					Msg.debug(this,
 						"Filling in unknown trace memory in emulator using mapped image: " +
-							program + ": " + subProgRng);
-					long lower = subProgRng.getMinAddress().getOffset();
-					long fullLen = subProgRng.getLength();
-					while (fullLen > 0) {
-						int len = MathUtilities.unsignedMin(data.length, fullLen);
-						try {
-							Address progAddr = progSpace.getAddress(lower);
-							int read = memory.getBytes(progAddr, data, 0, len);
-							if (read < len) {
-								Msg.warn(this,
-									"  Partial read of " + subProgRng + ". Got " + read +
-										" bytes");
-							}
-							Address hostAddr = mappedRng.mapDestinationToSource(progAddr);
-							Address guestAddr = platform.mapHostToGuest(hostAddr);
-							// write(lower - shift, data, 0 ,read);
-							bytes.putData(guestAddr.getOffset(), data, 0, read);
-						}
-						catch (MemoryAccessException | AddressOutOfBoundsException e) {
-							throw new AssertionError(e);
-						}
-						lower += len;
-						fullLen -= len;
-					}
-					result = true;
+							program + ": " + progRng);
+					return super.visitRange(program, progRng, mappedRng);
 				}
-			}
+
+				@Override
+				protected void visitData(Address hostAddr, byte[] data, int size) {
+					Address guestAddr = platform.mapHostToGuest(hostAddr);
+					bytes.putData(guestAddr.getOffset(), data, 0, size);
+				}
+			}.visit(platform.getTrace(), snap, platform.mapGuestToHost(guestView));
 		}
-		return result;
+		catch (MemoryAccessException e) {
+			throw new AssertionError(e);
+		}
 	}
 
 	@Override

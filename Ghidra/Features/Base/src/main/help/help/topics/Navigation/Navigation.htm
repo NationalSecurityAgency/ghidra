@@ -805,7 +805,7 @@
  		    	lowest code block, and finally lowest overall address</LI>
  		    </UL>
 
- 		    <P><B>Start Symbols</B> - A comma separated list of symbol names to be be used as the
+ 		    <P><B><A name="Start_Symbols"></A>Start Symbols</B> - A comma separated list of symbol names to be be used as the
  		    starting location for the program if the "Preferred Symbol Name" option is selected 
  		    above. The first matching symbol found will be used as the starting location for
  		    newly opened programs.</P>
@@ -816,6 +816,24 @@
  		    when trying to find a starting symbol.</P>
 			
  		</BLOCKQUOTE>
+ 		<H3><A name="After_Initial_Analysis"></A>Initial Analysis Navigation Options</H3>
+ 		<P>These options control the behavior of the tool after the initial analysis has
+ 		completed.</P>
+ 		<BLOCKQUOTE>
+  		    <P><B>Ask To Reposition Program</B> - If selected, the user will be prompted if they
+  		    would like the program to be positioned to any newly discovered starting symbols as
+  		    specified in the <A href="#Start_Symbols">Start Symbols</A> option.</P>
+
+ 		    <P><B>Auto Reposition If Not Moved</B> - If selected, the program will automatically
+ 		    be reposition to any newly discovered starting symbols as specified in the 
+ 		     <A href="#Start_Symbols">Start Symbols</A> option, provided the user has
+ 		    not manually moved the cursor off the starting location address. If they have manually
+ 		    moved the cursor, then the behavior will revert to the setting of the "Ask To
+ 		    Reposition Program" option above.</P>
+			
+ 		</BLOCKQUOTE>
+		
+ 		
 		
 	</BLOCKQUOTE>
 	

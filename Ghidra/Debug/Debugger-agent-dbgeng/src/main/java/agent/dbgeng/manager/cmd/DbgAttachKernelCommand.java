@@ -22,6 +22,7 @@ import agent.dbgeng.manager.*;
 import agent.dbgeng.manager.evt.AbstractDbgCompletedCommandEvent;
 import agent.dbgeng.manager.evt.DbgProcessCreatedEvent;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
+import ghidra.util.Msg;
 
 /**
  * Implementation of {@link DbgProcess#fileExecAndSymbols(String)}
@@ -59,6 +60,9 @@ public class DbgAttachKernelCommand extends AbstractDbgCommand<DbgThread> {
 
 	@Override
 	public void invoke() {
+		if (!System.getenv().containsKey("_NT_SYMBOL_PATH")) {
+			Msg.warn(this, "_NT_SYMBOL_PATH is undefined - you may need to define it or run .sympath");
+		}
 		DebugClient dbgeng = manager.getClient();
 		long flags = (Long) args.get("Flags");
 		String options = (String) args.get("Options");

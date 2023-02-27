@@ -18,12 +18,12 @@ package ghidra.base.project;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.nio.channels.OverlappingFileLockException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
 
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.util.importer.*;
-import ghidra.app.util.opinion.Loader;
-import ghidra.app.util.opinion.LoaderService;
+import ghidra.app.util.opinion.*;
 import ghidra.framework.Application;
 import ghidra.framework.client.*;
 import ghidra.framework.cmd.Command;
@@ -599,21 +599,17 @@ public class GhidraProject {
 			AutoAnalysisManager mgr = AutoAnalysisManager.getAnalysisManager(program);
 			mgr.initializeOptions();
 		}
-		openPrograms.put(program, new Integer(id));
+		openPrograms.put(program, id);
 	}
 
-	public Program importProgram(File file, Language language, CompilerSpec compilerSpec)
-			throws CancelledException, DuplicateNameException, InvalidNameException,
-			VersionException, IOException {
-		return importProgram(file, (DomainFolder) null, language, compilerSpec);
-	}
-
-	public Program importProgram(File file, DomainFolder domainFolder, Language language,
+	public Program importProgram(File file, Language language,
 			CompilerSpec compilerSpec) throws CancelledException, DuplicateNameException,
 			InvalidNameException, VersionException, IOException {
 		MessageLog messageLog = new MessageLog();
-		Program program = AutoImporter.importByLookingForLcs(file, domainFolder, language,
-			compilerSpec, this, messageLog, MONITOR);
+		LoadResults<Program> loadResults = AutoImporter.importByLookingForLcs(file, project, null,
+			language, compilerSpec, this, messageLog, MONITOR);
+		Program program = loadResults.getPrimaryDomainObject();
+		loadResults.releaseNonPrimary(this);
 		initializeProgram(program, false);
 		return program;
 	}
@@ -630,8 +626,10 @@ public class GhidraProject {
 			throws CancelledException, DuplicateNameException, InvalidNameException,
 			VersionException, IOException {
 		MessageLog messageLog = new MessageLog();
-		Program program = AutoImporter.importByUsingSpecificLoaderClass(file, null, loaderClass,
-			null, this, messageLog, MONITOR);
+		LoadResults<Program> loadResults = AutoImporter.importByUsingSpecificLoaderClass(file,
+			project, null, loaderClass, null, this, messageLog, MONITOR);
+		Program program = loadResults.getPrimaryDomainObject();
+		loadResults.releaseNonPrimary(this);
 		initializeProgram(program, false);
 		return program;
 	}
@@ -642,25 +640,20 @@ public class GhidraProject {
 		MessageLog messageLog = new MessageLog();
 		SingleLoaderFilter loaderFilter = new SingleLoaderFilter(loaderClass, null);
 		LcsHintLoadSpecChooser opinionChoose = new LcsHintLoadSpecChooser(language, compilerSpec);
-		List<Program> programs = AutoImporter.importFresh(file, null, this, messageLog, MONITOR,
-			loaderFilter, opinionChoose, null, new LoaderArgsOptionChooser(loaderFilter),
-			MultipleProgramsStrategy.ONE_PROGRAM_OR_NULL);
-		if (programs != null && programs.size() == 1) {
-			return programs.get(0);
-		}
-		return null;
+		LoadResults<Program> loadResults =
+			AutoImporter.importFresh(file, project, null, this, messageLog, MONITOR, loaderFilter,
+				opinionChoose, null, new LoaderArgsOptionChooser(loaderFilter));
+		loadResults.releaseNonPrimary(this);
+		return loadResults.getPrimaryDomainObject();
 	}
 
-	public Program importProgram(File file) throws CancelledException, DuplicateNameException,
-			InvalidNameException, VersionException, IOException {
-		return importProgram(file, (DomainFolder) null);
-	}
-
-	public Program importProgram(File file, DomainFolder domainFolder) throws CancelledException,
+	public Program importProgram(File file) throws CancelledException,
 			DuplicateNameException, InvalidNameException, VersionException, IOException {
 		MessageLog messageLog = new MessageLog();
-		Program program =
-			AutoImporter.importByUsingBestGuess(file, domainFolder, this, messageLog, MONITOR);
+		LoadResults<Program> loadResults = AutoImporter.importByUsingBestGuess(file, project,
+			null, this, messageLog, MONITOR);
+		Program program = loadResults.getPrimaryDomainObject();
+		loadResults.releaseNonPrimary(this);
 		initializeProgram(program, false);
 		return program;
 	}
@@ -696,14 +689,12 @@ public class GhidraProject {
 		MessageLog messageLog = new MessageLog();
 
 		String programNameOverride = null;
-		List<Program> programs = AutoImporter.importFresh(file, null, this, messageLog, MONITOR,
-			LoaderService.ACCEPT_ALL, LoadSpecChooser.CHOOSE_THE_FIRST_PREFERRED,
-			programNameOverride, OptionChooser.DEFAULT_OPTIONS,
-			MultipleProgramsStrategy.ONE_PROGRAM_OR_NULL);
-		if (programs != null && programs.size() == 1) {
-			return programs.get(0);
-		}
-		return null;
+		LoadResults<Program> loadResults =
+			AutoImporter.importFresh(file, project, null, this, messageLog, MONITOR,
+				LoaderService.ACCEPT_ALL, LoadSpecChooser.CHOOSE_THE_FIRST_PREFERRED,
+				programNameOverride, OptionChooser.DEFAULT_OPTIONS);
+		loadResults.releaseNonPrimary(this);
+		return loadResults.getPrimaryDomainObject();
 	}
 
 //==================================================================================================

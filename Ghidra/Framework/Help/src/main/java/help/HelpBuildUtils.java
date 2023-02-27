@@ -23,8 +23,11 @@ import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.swing.Icon;
+
 import generic.jar.ResourceFile;
 import generic.theme.GIcon;
+import generic.theme.GThemeDefaults.Colors;
 import generic.theme.Gui;
 import ghidra.framework.Application;
 import ghidra.util.HelpLocation;
@@ -43,6 +46,11 @@ public class HelpBuildUtils {
 		Pattern.compile("class\\s*=\\s*\"(\\w+)\"", Pattern.CASE_INSENSITIVE);
 
 	public static boolean debug = true;
+
+	private static final String HELP_SHARED_ARROW = "help/shared/arrow.gif";
+	private static final Icon SHARED_ARROW_ICON = new HelpRightArrowIcon(Colors.FOREGROUND);
+	private static final IconProvider SHARED_ARROW_ICON_PROVIDER =
+		new IconProvider(SHARED_ARROW_ICON, null);
 
 	private HelpBuildUtils() {
 		// utils class; can't create
@@ -483,12 +491,52 @@ public class HelpBuildUtils {
 		catch (FileSystemNotFoundException e) {
 			try {
 				FileSystems.newFileSystem(uri, Collections.emptyMap());
+				return Paths.get(uri);
 			}
 			catch (IOException e1) {
 				debug("Exception loading filesystem for uri: " + uri + "\n\t" + e1.getMessage());
 			}
 		}
-		return Paths.get(uri);
+		return null;
+	}
+
+	public static IconProvider getRuntimeIcon(String ref) {
+
+		if (Icons.isIconsReference(ref)) {
+			// help system syntax: <img src="Icons.ERROR_ICON" />
+			IconProvider iconProvider = Icons.getIconForIconsReference(ref);
+			if (iconProvider == null) {
+				return new IconProvider(null, null); // return a non-null 'invalid' provider
+			}
+			return iconProvider;
+		}
+		if (Gui.hasIcon(ref)) {
+
+			// 
+			// Wrap the GIcon inside of an IconProvider, as that class can handle a null URL 
+			// returned from GIcon. (This can happen if the GIcon is based on a modified icon.)
+			//
+			GIcon gIcon = new GIcon(ref);
+			return new IconProvider(gIcon, gIcon.getUrl());
+		}
+
+		//
+		// Handle any hard-coded special cases		
+		//
+
+		//
+		// This code is looking for the specific referenced image file and then replacing that
+		// image file with something that can update its content at runtime, based on theme.
+		// Alternatively, we could have updated all help files to point to a GIcon, which
+		// handles updating itself when the theme changes.  We chose to replace the icon here
+		// instead of in the source code to prevent changing many files.
+		//
+		String srcString = ref.toString().trim();
+		if (srcString.equals(HELP_SHARED_ARROW)) {
+			return SHARED_ARROW_ICON_PROVIDER;
+		}
+
+		return null;
 	}
 
 	/** 
@@ -504,35 +552,20 @@ public class HelpBuildUtils {
 	public static ImageLocation locateImageReference(Path sourceFile, String ref)
 			throws URISyntaxException {
 
-		if (Icons.isIconsReference(ref)) {
-
-			// help system syntax: <img src="Icons.ERROR_ICON" />
-			IconProvider iconProvider = Icons.getIconForIconsReference(ref);
-			if (iconProvider == null || iconProvider.isInvalid()) {
+		IconProvider runtimeIconProvider = getRuntimeIcon(ref);
+		if (runtimeIconProvider != null) {
+			if (runtimeIconProvider.isInvalid()) {
 				// bad icon name
 				return ImageLocation.createInvalidRuntimeLocation(sourceFile, ref);
 			}
 
-			URL url = iconProvider.getUrl();
+			URL url = runtimeIconProvider.getUrl();
 			URI resolved = null;
 			Path path = null;
 			if (url != null) { // we may have an icon with an invalid URL (e.g., a MultiIcon)
 				resolved = url.toURI();
 				path = toPath(resolved);
 			}
-			return ImageLocation.createRuntimeLocation(sourceFile, ref, resolved, path);
-		}
-		if (Gui.hasIcon(ref)) {
-
-			// 
-			// Wrap the GIcon inside of an IconProvider, as that class can handle a null URL 
-			// returned from GIcon. (This can happen if the GIcon is based on a modified icon.)
-			//
-			GIcon gIcon = new GIcon(ref);
-			IconProvider iconProvider = new IconProvider(gIcon, gIcon.getUrl());
-			URL url = iconProvider.getOrCreateUrl();
-			URI resolved = url.toURI();
-			Path path = toPath(resolved);
 			return ImageLocation.createRuntimeLocation(sourceFile, ref, resolved, path);
 		}
 

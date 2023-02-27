@@ -287,6 +287,17 @@ public class GdbThreadImpl implements GdbThread {
 	}
 
 	@Override
+	public CompletableFuture<Void> advance(String loc) {
+		// There's no exec-advance or similar in MI2....
+		return console("advance " + loc, CompletesWithRunning.MUST);
+	}
+
+	@Override
+	public CompletableFuture<Void> advance(long addr) {
+		return advance(String.format("*0x%x", addr));
+	}
+
+	@Override
 	public CompletableFuture<Void> kill() {
 		return execute(new GdbKillCommand(manager, id));
 	}

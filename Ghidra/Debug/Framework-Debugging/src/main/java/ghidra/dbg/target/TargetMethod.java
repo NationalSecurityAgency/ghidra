@@ -15,16 +15,30 @@
  */
 package ghidra.dbg.target;
 
+import java.lang.annotation.*;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodType;
+import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.reflect.TypeUtils;
+
 import ghidra.dbg.DebuggerTargetObjectIface;
+import ghidra.dbg.agent.AbstractDebuggerObjectModel;
+import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.error.DebuggerIllegalArgumentException;
+import ghidra.dbg.target.TargetMethod.*;
+import ghidra.dbg.target.TargetMethod.TargetParameterMap.EmptyTargetParameterMap;
+import ghidra.dbg.target.TargetMethod.TargetParameterMap.ImmutableTargetParameterMap;
 import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.util.CollectionUtils.AbstractEmptyMap;
 import ghidra.dbg.util.CollectionUtils.AbstractNMap;
+import utilities.util.reflection.ReflectionUtilities;
 
 /**
  * An object which can be invoked as a method
@@ -38,11 +52,207 @@ public interface TargetMethod extends TargetObject {
 	String RETURN_TYPE_ATTRIBUTE_NAME = PREFIX_INVISIBLE + "return_type";
 	public static String REDIRECT = "<=";
 
+	@Target(ElementType.METHOD)
+	@Retention(RetentionPolicy.RUNTIME)
+	@Inherited
+	@interface Export {
+		String value();
+	}
+
+	interface Value<T> {
+		boolean specified();
+
+		T value();
+	}
+
+	@interface BoolValue {
+		boolean specified() default true;
+
+		boolean value();
+
+		record Val(BoolValue v) implements Value<Boolean> {
+			@Override
+			public boolean specified() {
+				return v.specified();
+			}
+
+			@Override
+			public Boolean value() {
+				return v.value();
+			}
+		}
+	}
+
+	@interface IntValue {
+		boolean specified() default true;
+
+		int value();
+
+		record Val(IntValue v) implements Value<Integer> {
+			@Override
+			public boolean specified() {
+				return v.specified();
+			}
+
+			@Override
+			public Integer value() {
+				return v.value();
+			}
+		}
+	}
+
+	@interface LongValue {
+		boolean specified() default true;
+
+		long value();
+
+		record Val(LongValue v) implements Value<Long> {
+			@Override
+			public boolean specified() {
+				return v.specified();
+			}
+
+			@Override
+			public Long value() {
+				return v.value();
+			}
+		}
+	}
+
+	@interface FloatValue {
+		boolean specified() default true;
+
+		float value();
+
+		record Val(FloatValue v) implements Value<Float> {
+			@Override
+			public boolean specified() {
+				return v.specified();
+			}
+
+			@Override
+			public Float value() {
+				return v.value();
+			}
+		}
+	}
+
+	@interface DoubleValue {
+		boolean specified() default true;
+
+		double value();
+
+		record Val(DoubleValue v) implements Value<Double> {
+			@Override
+			public boolean specified() {
+				return v.specified();
+			}
+
+			@Override
+			public Double value() {
+				return v.value();
+			}
+		}
+	}
+
+	@interface BytesValue {
+		boolean specified() default true;
+
+		byte[] value();
+
+		record Val(BytesValue v) implements Value<byte[]> {
+			@Override
+			public boolean specified() {
+				return v.specified();
+			}
+
+			@Override
+			public byte[] value() {
+				return v.value();
+			}
+		}
+	}
+
+	@interface StringValue {
+		boolean specified() default true;
+
+		String value();
+
+		record Val(StringValue v) implements Value<String> {
+			@Override
+			public boolean specified() {
+				return v.specified();
+			}
+
+			@Override
+			public String value() {
+				return v.value();
+			}
+		}
+	}
+
+	@interface StringsValue {
+		boolean specified() default true;
+
+		String[] value();
+
+		record Val(StringsValue v) implements Value<List<String>> {
+			@Override
+			public boolean specified() {
+				return v.specified();
+			}
+
+			@Override
+			public List<String> value() {
+				return List.of(v.value());
+			}
+		}
+	}
+
+	// TODO: Address, Range, BreakKind[Set], etc?
+
+	@Target(ElementType.PARAMETER)
+	@Retention(RetentionPolicy.RUNTIME)
+	@interface Param {
+		List<Function<Param, Value<?>>> DEFAULTS = List.of(
+			p -> new BoolValue.Val(p.defaultBool()),
+			p -> new IntValue.Val(p.defaultInt()),
+			p -> new LongValue.Val(p.defaultLong()),
+			p -> new FloatValue.Val(p.defaultFloat()),
+			p -> new DoubleValue.Val(p.defaultDouble()),
+			p -> new BytesValue.Val(p.defaultBytes()),
+			p -> new StringValue.Val(p.defaultString()));
+
+		String name();
+
+		String display();
+
+		String description();
+
+		// TODO: Something that hints at changes in activation?
+
+		boolean required() default true;
+
+		BoolValue defaultBool() default @BoolValue(specified = false, value = false);
+
+		IntValue defaultInt() default @IntValue(specified = false, value = 0);
+
+		LongValue defaultLong() default @LongValue(specified = false, value = 0);
+
+		FloatValue defaultFloat() default @FloatValue(specified = false, value = 0);
+
+		DoubleValue defaultDouble() default @DoubleValue(specified = false, value = 0);
+
+		BytesValue defaultBytes() default @BytesValue(specified = false, value = {});
+
+		StringValue defaultString() default @StringValue(specified = false, value = "");
+
+		StringsValue choicesString() default @StringsValue(specified = false, value = {});
+	}
+
 	/**
 	 * A description of a method parameter
 	 * 
-	 * <p>
-	 * TODO: For convenience, these should be programmable via annotations.
 	 * <P>
 	 * TODO: Should this be incorporated into schemas?
 	 * 
@@ -83,6 +293,83 @@ public interface TargetMethod extends TargetObject {
 			T defaultValue = choices.iterator().next();
 			return new ParameterDescription<>(type, name, false, defaultValue, display, description,
 				choices);
+		}
+
+		protected static boolean isRequired(Class<?> type, Param param) {
+			if (!type.isPrimitive()) {
+				return param.required();
+			}
+			if (type == boolean.class) {
+				return !param.defaultBool().specified();
+			}
+			if (type == int.class) {
+				return !param.defaultInt().specified();
+			}
+			if (type == long.class) {
+				return !param.defaultLong().specified();
+			}
+			if (type == float.class) {
+				return !param.defaultFloat().specified();
+			}
+			if (type == double.class) {
+				return !param.defaultDouble().specified();
+			}
+			throw new IllegalArgumentException("Parameter type not allowed: " + type);
+		}
+
+		protected static Object getDefault(Param annot) {
+			List<Object> defaults = new ArrayList<>();
+			for (Function<Param, Value<?>> df : Param.DEFAULTS) {
+				Value<?> value = df.apply(annot);
+				if (value.specified()) {
+					defaults.add(value.value());
+				}
+			}
+			if (defaults.isEmpty()) {
+				return null;
+			}
+			if (defaults.size() > 1) {
+				throw new IllegalArgumentException(
+					"Can only specify one default value. Got " + defaults);
+			}
+			return defaults.get(0);
+		}
+
+		protected static <T> T getDefault(Class<T> type, Param annot) {
+			Object dv = getDefault(annot);
+			if (dv == null) {
+				return null;
+			}
+			if (!type.isInstance(dv)) {
+				throw new IllegalArgumentException(
+					"Type of default does not match that of parameter. Expected type " + type +
+						". Got (" + dv.getClass() + ")" + dv);
+			}
+			return type.cast(dv);
+		}
+
+		protected static <T> ParameterDescription<T> annotated(Class<T> type, Param annot) {
+			boolean required = isRequired(type, annot);
+			T defaultValue = getDefault(type, annot);
+			return ParameterDescription.create(type, annot.name(),
+				required, defaultValue, annot.display(), annot.description());
+		}
+
+		public static ParameterDescription<?> annotated(Parameter parameter) {
+			Param annot = parameter.getAnnotation(Param.class);
+			if (annot == null) {
+				throw new IllegalArgumentException(
+					"Missing @" + Param.class.getSimpleName() + " on " + parameter);
+			}
+			if (annot.choicesString().specified()) {
+				if (parameter.getType() != String.class) {
+					throw new IllegalArgumentException(
+						"Can only specify choices for String parameter");
+				}
+				return ParameterDescription.choices(String.class, annot.name(),
+					List.of(annot.choicesString().value()), annot.display(), annot.description());
+			}
+			return annotated(MethodType.methodType(parameter.getType()).wrap().returnType(), annot);
 		}
 
 		public final Class<T> type;
@@ -199,10 +486,75 @@ public interface TargetMethod extends TargetObject {
 		public static TargetParameterMap ofEntries(
 				Entry<String, ParameterDescription<?>>... entries) {
 			Map<String, ParameterDescription<?>> ordered = new LinkedHashMap<>();
-			for (Entry<String, ParameterDescription<?>> ent: entries) {
+			for (Entry<String, ParameterDescription<?>> ent : entries) {
 				ordered.put(ent.getKey(), ent.getValue());
 			}
 			return new ImmutableTargetParameterMap(ordered);
+		}
+	}
+
+	class AnnotatedTargetMethod extends DefaultTargetObject<TargetObject, TargetObject>
+			implements TargetMethod {
+
+		public static Map<String, AnnotatedTargetMethod> collectExports(Lookup lookup,
+				AbstractDebuggerObjectModel model, TargetObject parent) {
+			Map<String, AnnotatedTargetMethod> result = new HashMap<>();
+			Set<Class<?>> allClasses = new LinkedHashSet<>();
+			allClasses.add(parent.getClass());
+			allClasses.addAll(ReflectionUtilities.getAllParents(parent.getClass()));
+			for (Class<?> declCls : allClasses) {
+				for (Method method : declCls.getDeclaredMethods()) {
+					Export annot = method.getAnnotation(Export.class);
+					if (annot == null || result.containsKey(annot.value())) {
+						continue;
+					}
+					result.put(annot.value(),
+						new AnnotatedTargetMethod(lookup, model, parent, method, annot));
+				}
+			}
+			return result;
+		}
+
+		private final MethodHandle handle;
+		private final TargetParameterMap params;
+
+		public AnnotatedTargetMethod(Lookup lookup, AbstractDebuggerObjectModel model,
+				TargetObject parent, Method method, Export annot) {
+			super(model, parent, annot.value(), "Method");
+			try {
+				this.handle = lookup.unreflect(method).bindTo(parent);
+			}
+			catch (IllegalAccessException e) {
+				throw new IllegalArgumentException("Method " + method + " is not accessible");
+			}
+			this.params = TargetMethod.makeParameters(
+				Stream.of(method.getParameters()).map(ParameterDescription::annotated));
+
+			Map<TypeVariable<?>, Type> argsCf = TypeUtils
+					.getTypeArguments(method.getGenericReturnType(), CompletableFuture.class);
+			Type typeCfT = argsCf.get(CompletableFuture.class.getTypeParameters()[0]);
+			Class<?> returnType = TypeUtils.getRawType(typeCfT, typeCfT);
+
+			changeAttributes(List.of(), Map.ofEntries(
+				Map.entry(RETURN_TYPE_ATTRIBUTE_NAME, returnType),
+				Map.entry(PARAMETERS_ATTRIBUTE_NAME, params)),
+				"Initialize");
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public CompletableFuture<Object> invoke(Map<String, ?> arguments) {
+			Map<String, ?> valid = TargetMethod.validateArguments(params, arguments, false);
+			List<Object> args = new ArrayList<>(params.size());
+			for (ParameterDescription<?> p : params.values()) {
+				args.add(p.get(valid));
+			}
+			try {
+				return (CompletableFuture<Object>) handle.invokeWithArguments(args);
+			}
+			catch (Throwable e) {
+				return CompletableFuture.failedFuture(e);
+			}
 		}
 	}
 

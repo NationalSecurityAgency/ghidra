@@ -113,6 +113,13 @@ public class DBTraceStaticMapping extends DBAnnotatedObject
 	}
 
 	@Override
+	public String toString() {
+		return String.format(
+			"Mapping: dynamic=%s,program=%s,address=%s,length=0x%x,shift=0x%x,lifespan=%s",
+			traceAddress, staticProgramURL, staticAddress, length, shift, lifespan);
+	}
+
+	@Override
 	protected void fresh(boolean created) throws IOException {
 		if (created) {
 			return;

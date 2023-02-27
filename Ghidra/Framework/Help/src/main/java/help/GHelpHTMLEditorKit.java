@@ -34,7 +34,8 @@ import javax.swing.text.html.*;
 import javax.swing.text.html.HTML.Tag;
 
 import generic.jar.ResourceFile;
-import generic.theme.*;
+import generic.theme.GColor;
+import generic.theme.Gui;
 import ghidra.framework.Application;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.Msg;
@@ -43,11 +44,11 @@ import utilities.util.FileUtilities;
 
 /**
  * A class that allows Ghidra to intercept JavaHelp navigation events in order to resolve them
- * to Ghidra's help system.  Without this class, contribution plugins have no way of 
+ * to Ghidra's help system.  Without this class, contribution plugins have no way of
  * referencing help documents within Ghidra's default help location.
  * <p>
  * This class is currently installed by the {@link GHelpSet}.
- * 
+ *
  * @see GHelpSet
  */
 public class GHelpHTMLEditorKit extends HTMLEditorKit {
@@ -73,8 +74,7 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 		colorsById.put("h3", new GColor("color.fg.help.selector.h3"));
 		colorsById.put("p.providedbyplugin",
 			new GColor("color.fg.help.selector.p.provided.by.plugin"));
-		colorsById.put("p.relatedtopic",
-			new GColor("color.fg.help.selector.p.related.topic"));
+		colorsById.put("p.relatedtopic", new GColor("color.fg.help.selector.p.related.topic"));
 		colorsById.put("th", new GColor("color.fg.help.selector.th"));
 		colorsById.put("code", new GColor("color.fg.help.selector.code"));
 		colorsById.put("code.path", new GColor("color.fg.help.selector.code.path"));
@@ -176,9 +176,9 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 		}
 	}
 
-	/** 
+	/**
 	 * Tests the URL of the given event.  If the URL is invalid, a new event may be created if
-	 *  a new, valid URL can be created. Creates a new event with a patched URL if 
+	 *  a new, valid URL can be created. Creates a new event with a patched URL if
 	 *  the given event's URL is invalid.
 	 */
 	private HyperlinkEvent validateURL(HyperlinkEvent event) {
@@ -235,10 +235,10 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 		}
 
 		//
-		// The item was not found by the ResourceManager (i.e., it is not in a 'resources' 
+		// The item was not found by the ResourceManager (i.e., it is not in a 'resources'
 		// directory).  See if it may be a relative link to a build's installation root (like
 		// a file in <install dir>/docs).
-		// 
+		//
 		newUrl = findApplicationfile(HREF);
 		return newUrl;
 	}
@@ -254,7 +254,7 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 		}
 
 		try {
-			// put the anchor back into the URL                
+			// put the anchor back into the URL
 			return new URL(anchorlessURL, anchor);
 		}
 		catch (MalformedURLException e) {
@@ -438,7 +438,7 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	private class GHelpHTMLFactory extends HTMLFactory {
 		@Override
@@ -465,7 +465,7 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 	}
 
 	/**
-	 * Overridden to allow us to find images that are defined as constants in places like 
+	 * Overridden to allow us to find images that are defined as constants in places like
 	 * {@link Icons}
 	 */
 	private class GHelpImageView extends ImageView {
@@ -474,22 +474,22 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 		 * 						Unusual Code Alert!
 		 * This class exists to enable our help system to find custom icons defined in source
 		 * code.   The default behavior herein is to supply a URL to the base class to load.  This
-		 * works fine.   
-		 * 
+		 * works fine.
+		 *
 		 * There is another use case where we wish to have the base class load an image of our
 		 * choosing.  Why?  Well, we modify, in memory, some icons we use.  We do this for things
 		 * like overlays and rotations.
-		 * 
+		 *
 		 * In order to have our base class use the image that we want (and not the one
 		 * it loads via a URL), we have to play a small game.   We have to allow the base class
 		 * to load the image it wants, which is done asynchronously.  If we install our custom
 		 * image during that process, the loading will throw away the image and not render
-		 * anything.    
-		 * 
-		 * To get the base class to use our image, we override getImage().  However, we should 
+		 * anything.
+		 *
+		 * To get the base class to use our image, we override getImage().  However, we should
 		 * only return our image when the base class is finished loading.  (See the base class'
 		 * paint() method for why we need to do this.)
-		 * 
+		 *
 		 * Note: if we start seeing unusual behavior, like images not rendering, or any size
 		 * issues, then we can revert this code.
 		 */
@@ -541,38 +541,15 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 				return null;
 			}
 
-			String srcString = src.toString();
-
-			// check if the srcString is a defined theme icon id
-			if (Gui.hasIcon(srcString)) {
-				// 
-				// Wrap the GIcon inside of an IconProvider, as that class can handle a null URL 
-				// returned from GIcon. (This can happen if the GIcon is based on a modified icon.)
-				//
-				GIcon gIcon = new GIcon(srcString);
-				IconProvider iconProvider = new IconProvider(gIcon, gIcon.getUrl());
+			String srcString = src.toString().trim();
+			IconProvider iconProvider = HelpBuildUtils.getRuntimeIcon(srcString);
+			if (iconProvider != null && !iconProvider.isInvalid()) {
+				// note: store the image off for later use; the url will not be used by us
+				this.image = iconProvider.getImage();
 				return iconProvider.getOrCreateUrl();
 			}
 
-			if (isJavaCode(srcString)) {
-				return installImageFromJavaCode(srcString);
-			}
-
-			URL url = doGetImageURL(srcString);
-			return url;
-		}
-
-		private URL installImageFromJavaCode(String srcString) {
-
-			IconProvider iconProvider = getIconFromJavaCode(srcString);
-			if (iconProvider == null || iconProvider.isInvalid()) {
-				return null;
-			}
-
-			this.image = iconProvider.getImage();
-
-			URL url = iconProvider.getOrCreateUrl();
-			return url;
+			return doGetImageURL(srcString);
 		}
 
 		private URL doGetImageURL(String srcString) {
@@ -590,21 +567,11 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 				// check below
 			}
 
-			// Try the ResourceManager.  This will work for images that start with GHelp 
+			// Try the ResourceManager.  This will work for images that start with GHelp
 			// relative link syntax such as 'help/', 'help/topics/' and 'images/'
 			URL resource = ResourceManager.getResource(srcString);
 			return resource;
 		}
-
-		private boolean isJavaCode(String src) {
-			// not sure of the best way to handle this--be exact for now
-			return Icons.isIconsReference(src);
-		}
-
-		private IconProvider getIconFromJavaCode(String src) {
-			return Icons.getIconForIconsReference(src);
-		}
-
 	}
 
 }

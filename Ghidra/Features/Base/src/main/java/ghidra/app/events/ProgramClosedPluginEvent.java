@@ -40,8 +40,10 @@ public class ProgramClosedPluginEvent extends PluginEvent {
 	}
 
 	/**
-	 * Return the program on this event.
-	 * @return null if the event if for a program closing.
+	 * Returns the {@link Program} that has just been opened. This method
+	 * can return null, but only if the method is called some time after the original event
+	 * notification.
+	 * @return the {@link Program} that has just been analyzed for the first time.
 	 */
 	public Program getProgram() {
 		return programRef.get();

@@ -242,7 +242,8 @@ public enum DBTraceObjectRegisterSupport {
 	protected void onSpaceAddedCheckTransferToPlatformRegisters(TracePlatform platform,
 			TraceObject regContainer, TraceMemorySpace mem) {
 		for (TraceObjectValPath path : it(
-			regContainer.querySuccessorsTargetInterface(Lifespan.ALL, TargetRegister.class))) {
+			regContainer.querySuccessorsTargetInterface(Lifespan.ALL, TargetRegister.class,
+				true))) {
 			TraceObject registerObject =
 				path.getDestination(platform.getTrace().getObjectManager().getRootObject());
 			onSpaceAddedCheckTransferObjectToPlatformRegister(registerObject, platform, mem);
@@ -437,7 +438,7 @@ public enum DBTraceObjectRegisterSupport {
 	public void onMappingAddedCheckTransferMemoryMapped(TraceObject root,
 			TraceGuestPlatformMappedRange mapped) {
 		for (TraceObjectValPath path : it(
-			root.querySuccessorsTargetInterface(Lifespan.ALL, TargetRegister.class))) {
+			root.querySuccessorsTargetInterface(Lifespan.ALL, TargetRegister.class, true))) {
 			TraceObject registerObject = path.getDestination(root);
 			onMappingAddedCheckTransferRegisterObjectMemoryMapped(registerObject, mapped);
 		}

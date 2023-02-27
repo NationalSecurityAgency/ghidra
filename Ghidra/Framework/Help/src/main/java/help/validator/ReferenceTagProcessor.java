@@ -17,11 +17,10 @@ package help.validator;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
-import ghidra.util.exception.AssertException;
 import help.HelpBuildUtils;
 import help.validator.location.HelpModuleLocation;
 import help.validator.model.HREF;
@@ -30,7 +29,8 @@ import help.validator.model.IMG;
 public class ReferenceTagProcessor extends TagProcessor {
 
 	private static final String EOL = System.getProperty("line.separator");
-	private static final String STYLESHEET_FILENAME = "DefaultStyle.css";
+	private static final String SHARED_STYLESHEET_NAME = "help/shared/DefaultStyle.css";
+	private static final Path SHARED_STYLESHEET_PATH = Paths.get(SHARED_STYLESHEET_NAME);
 
 	private Path htmlFile;
 	private Set<Path> styleSheets = new HashSet<>();
@@ -38,7 +38,6 @@ public class ReferenceTagProcessor extends TagProcessor {
 	private boolean readingTitle = false;
 
 	private final StringBuffer errors = new StringBuffer();
-	private final Path defaultStyleSheet;
 	private final AnchorManager anchorManager;
 	private final HelpModuleLocation help;
 	private int errorCount;
@@ -46,13 +45,6 @@ public class ReferenceTagProcessor extends TagProcessor {
 	public ReferenceTagProcessor(HelpModuleLocation help, AnchorManager anchorManager) {
 		this.help = help;
 		this.anchorManager = anchorManager;
-
-		Path sharedHelpDir = HelpBuildUtils.getSharedHelpDirectory();
-		defaultStyleSheet = sharedHelpDir.resolve(Path.of(STYLESHEET_FILENAME));
-
-		if (Files.notExists(defaultStyleSheet)) {
-			throw new AssertException("Cannot find expected stylesheet: " + defaultStyleSheet);
-		}
 	}
 
 	@Override
@@ -122,9 +114,16 @@ public class ReferenceTagProcessor extends TagProcessor {
 
 				String href = tagAttributes.get("href");
 				if (href != null) {
-					Path css = HelpBuildUtils.getFile(htmlFile, href);
-					css = css.normalize();
-					styleSheets.add(css); // validated later
+
+					// The user has linked to the system stylesheet; no need to resolve
+					if (SHARED_STYLESHEET_NAME.equals(href)) {
+						styleSheets.add(SHARED_STYLESHEET_PATH);
+					}
+					else {
+						Path css = HelpBuildUtils.getFile(htmlFile, href);
+						css = css.normalize();
+						styleSheets.add(css); // validated later
+					}
 				}
 //				}
 			}
@@ -175,7 +174,7 @@ public class ReferenceTagProcessor extends TagProcessor {
 
 		boolean hasDefaultStyleSheet = false;
 		for (Path ss : styleSheets) {
-			if (defaultStyleSheet.equals(ss)) {
+			if (SHARED_STYLESHEET_PATH.equals(ss)) {
 				hasDefaultStyleSheet = true;
 				break;
 			}
@@ -183,7 +182,7 @@ public class ReferenceTagProcessor extends TagProcessor {
 
 		if (!hasDefaultStyleSheet) {
 			errorCount++;
-			errors.append("Incorrect stylesheet defined - none match " + defaultStyleSheet +
+			errors.append("Incorrect stylesheet defined - none match " + SHARED_STYLESHEET_NAME +
 				" in file " + htmlFile + EOL + "\tDiscovered stylesheets: " + styleSheets + EOL);
 
 		}

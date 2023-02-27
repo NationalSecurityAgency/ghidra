@@ -28,6 +28,7 @@ import org.apache.commons.collections4.IterableUtils;
 import org.apache.commons.collections4.map.LazyMap;
 
 import docking.widgets.PopupWindow;
+import generic.theme.*;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.listingpanel.*;
@@ -85,6 +86,7 @@ public class MarkerManager implements MarkerService {
 
 	private List<ChangeListener> listeners = new ArrayList<>();
 	private MarkerClickedListener markerClickedListener = null;
+	private ThemeListener themeListener = e -> themeChanged(e);
 
 	public MarkerManager(Plugin plugin) {
 		this(plugin.getName(), plugin.getTool());
@@ -103,6 +105,13 @@ public class MarkerManager implements MarkerService {
 		primaryMarginProvider = createMarginProvider();
 		primaryOverviewProvider = createOverviewProvider();
 
+		Gui.addThemeListener(themeListener);
+	}
+
+	private void themeChanged(ThemeEvent e) {
+		if (e instanceof ColorChangedThemeEvent) {
+			markerSetCache.clearColors();
+		}
 	}
 
 	private void programClosed(Program program) {
@@ -230,6 +239,7 @@ public class MarkerManager implements MarkerService {
 	}
 
 	public void dispose() {
+		Gui.removeThemeListener(themeListener);
 		updater.dispose();
 		markerSetCache.clear();
 		overviewProviders.forEach(provider -> provider.dispose());
@@ -475,6 +485,12 @@ public class MarkerManager implements MarkerService {
 			return entry;
 		}
 
+		void clearColors() {
+			for (MarkerSetCacheEntry entry : map.values()) {
+				entry.clearColors();
+			}
+		}
+
 		public void clear() {
 			map.clear();
 		}
@@ -507,6 +523,10 @@ public class MarkerManager implements MarkerService {
 			 * domain object closing, which works for plain programs, too.
 			 */
 			program.addCloseListener(closeListener);
+		}
+
+		void clearColors() {
+			colorCache.clear();
 		}
 
 		private void programClosed() {

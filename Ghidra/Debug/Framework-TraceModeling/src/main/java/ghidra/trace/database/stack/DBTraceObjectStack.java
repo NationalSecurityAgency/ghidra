@@ -93,8 +93,7 @@ public class DBTraceObjectStack implements TraceObjectStack, DBTraceObjectInterf
 	@Override
 	public int getDepth() {
 		try (LockHold hold = object.getTrace().lockRead()) {
-			return object
-					.querySuccessorsInterface(computeSpan(), TraceObjectStackFrame.class)
+			return object.querySuccessorsInterface(computeSpan(), TraceObjectStackFrame.class, true)
 					.map(f -> f.getLevel())
 					.reduce(Integer::max)
 					.map(m -> m + 1)
@@ -210,8 +209,7 @@ public class DBTraceObjectStack implements TraceObjectStack, DBTraceObjectInterf
 	}
 
 	protected Stream<TraceObjectStackFrame> doGetFrames(long snap) {
-		return object
-				.querySuccessorsInterface(Lifespan.at(snap), TraceObjectStackFrame.class)
+		return object.querySuccessorsInterface(Lifespan.at(snap), TraceObjectStackFrame.class, true)
 				.sorted(Comparator.comparing(f -> f.getLevel()));
 	}
 

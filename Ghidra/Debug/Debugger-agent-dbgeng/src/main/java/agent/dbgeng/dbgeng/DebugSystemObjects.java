@@ -99,4 +99,16 @@ public interface DebugSystemObjects {
 
 	DebugProcessId getProcessIdBySystemId(int systemId);
 
+	long getCurrentThreadDataOffset();
+
+	long getCurrentProcessDataOffset();
+
+	long getImplicitThreadDataOffset();
+
+	long getImplicitProcessDataOffset();
+
+	void setImplicitThreadDataOffset(long systemOffset);
+
+	void setImplicitProcessDataOffset(long systemOffset);
+
 }

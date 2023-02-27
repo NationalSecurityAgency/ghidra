@@ -34,6 +34,7 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.*;
 import ghidra.trace.model.modules.TraceConflictedMappingException;
 import ghidra.util.MathUtilities;
+import ghidra.util.MessageType;
 import ghidra.util.layout.PairLayout;
 
 public class DebuggerAddMappingDialog extends ReusableDialogComponentProvider {
@@ -52,7 +53,7 @@ public class DebuggerAddMappingDialog extends ReusableDialogComponentProvider {
 	private final GSpanField fieldSpan = new GSpanField();
 
 	public DebuggerAddMappingDialog() {
-		super("Add Static Mapping", false, false, true, false);
+		super("Add Static Mapping", false, true, true, false);
 
 		populateComponents();
 	}
@@ -102,6 +103,8 @@ public class DebuggerAddMappingDialog extends ReusableDialogComponentProvider {
 		rigFocusAndEnter(fieldTraceRange, this::traceRangeChanged);
 		rigFocusAndEnter(fieldLength, this::lengthChanged);
 		rigFocusAndEnter(fieldSpan, this::spanChanged);
+
+		fieldSpan.setLifespan(Lifespan.nowOn(0));
 
 		addWorkPanel(panel);
 
@@ -288,6 +291,12 @@ public class DebuggerAddMappingDialog extends ReusableDialogComponentProvider {
 	}
 
 	@Override
+	protected void dialogShown() {
+		super.dialogShown();
+		setStatusText("");
+	}
+
+	@Override
 	protected void applyCallback() {
 		TraceLocation from = new DefaultTraceLocation(trace, null, fieldSpan.getLifespan(),
 			fieldTraceRange.getRange().getMinAddress());
@@ -295,11 +304,18 @@ public class DebuggerAddMappingDialog extends ReusableDialogComponentProvider {
 			fieldProgRange.getRange().getMinAddress());
 
 		try {
-			mappingService.addMapping(from, to, getLength(), true);
+			mappingService.addMapping(from, to, getLength(), false);
+			setStatusText("");
 		}
 		catch (TraceConflictedMappingException e) {
-			throw new AssertionError(e); // I said truncateExisting
+			setStatusText(e.getMessage(), MessageType.ERROR);
 		}
+	}
+
+	@Override
+	protected void dismissCallback() {
+		setStatusText("");
+		super.dismissCallback();
 	}
 
 	/**

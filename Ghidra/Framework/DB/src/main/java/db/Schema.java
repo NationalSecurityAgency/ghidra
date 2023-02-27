@@ -325,7 +325,7 @@ public class Schema {
 			initializeSparseColumnSet(sparseColumns);
 			return consumed;
 		}
-		catch (ArrayIndexOutOfBoundsException e) {
+		catch (IndexOutOfBoundsException e) {
 			throw new UnsupportedFieldException("Incomplete sparse column data");
 		}
 	}

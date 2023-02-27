@@ -24,6 +24,7 @@ eclipse.project.name = 'Debug Framework-TraceModeling'
 dependencies {
 	api project(':Generic')
 	api project(':SoftwareModeling')
+	api project(':Emulation')
 	api project(':ProposedUtils')
 	api project(':Framework-Debugging')
 	annotationProcessor project(':AnnotationValidator')

@@ -254,7 +254,7 @@ public class ClassSearcher {
 
 		long t = (new Date()).getTime();
 
-		log.trace("Searching for classes...");
+		log.info("Searching for classes...");
 		List<String> searchPaths = gatherSearchPaths();
 		searcher = new ClassFinder(searchPaths, monitor);
 

@@ -21,6 +21,12 @@ import java.util.*;
 
 import ghidra.framework.model.DomainObjectChangeRecord;
 
+/**
+ * A trace change type, assigned a number at runtime
+ *
+ * @param <T> the type of object changed
+ * @param <U> the type of the object's attribute that changed
+ */
 public class DefaultTraceChangeType<T, U> implements TraceChangeType<T, U> {
 	private static int nextType = 0x3ACE; // Stay far away from manually-assigned types
 	// But not too far, since it makes the bit set for events gigantic.

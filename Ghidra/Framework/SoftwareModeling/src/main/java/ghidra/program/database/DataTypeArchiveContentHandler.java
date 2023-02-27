@@ -102,7 +102,7 @@ public class DataTypeArchiveContentHandler extends DBContentHandler<DataTypeArch
 			if (msg == null) {
 				msg = t.toString();
 			}
-			throw new IOException("Open failed: " + msg);
+			throw new IOException("Open failed: " + msg, t);
 		}
 		finally {
 			if (!success) {
@@ -157,7 +157,7 @@ public class DataTypeArchiveContentHandler extends DBContentHandler<DataTypeArch
 			if (msg == null) {
 				msg = t.toString();
 			}
-			throw new IOException("Open failed: " + msg);
+			throw new IOException("Open failed: " + msg, t);
 		}
 		finally {
 			if (!success) {
@@ -221,7 +221,7 @@ public class DataTypeArchiveContentHandler extends DBContentHandler<DataTypeArch
 			if (msg == null) {
 				msg = t.toString();
 			}
-			throw new IOException("Open failed: " + msg);
+			throw new IOException("Open failed: " + msg, t);
 		}
 		finally {
 			if (!success) {
@@ -314,7 +314,7 @@ public class DataTypeArchiveContentHandler extends DBContentHandler<DataTypeArch
 			if (msg == null) {
 				msg = t.toString();
 			}
-			throw new IOException("Open failed: " + msg);
+			throw new IOException("Open failed: " + msg, t);
 		}
 		finally {
 			if (dataTypeArchive != null) {

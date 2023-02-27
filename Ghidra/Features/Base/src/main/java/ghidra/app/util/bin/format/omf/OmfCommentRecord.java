@@ -36,12 +36,17 @@ public class OmfCommentRecord extends OmfRecord {
 		readRecordHeader(reader);
 		commentType = reader.readNextByte();
 		commentClass = reader.readNextByte();
-		byte[] bytes = reader.readNextByteArray(
-			getRecordLength() - 3 /* 3 = sizeof(commentType+commentClass+trailing_crcbyte*/);
 
-		if (commentClass == COMMENT_CLASS_TRANSLATOR || commentClass == COMMENT_CLASS_LIBMOD ||
-			commentClass == COMMENT_CLASS_DEFAULT_LIBRARY) {
-			value = new String(bytes, StandardCharsets.US_ASCII); // assuming ASCII
+		switch (commentClass) {
+			case COMMENT_CLASS_TRANSLATOR:
+			case COMMENT_CLASS_DEFAULT_LIBRARY:
+				byte[] bytes = reader.readNextByteArray(getRecordLength() -
+					3 /* 3 = sizeof(commentType+commentClass+trailing_crcbyte*/);
+				value = new String(bytes, StandardCharsets.US_ASCII); // assuming ASCII
+				break;
+			case COMMENT_CLASS_LIBMOD:
+				value = readString(reader);
+				break;
 		}
 		readCheckSumByte(reader);
 	}

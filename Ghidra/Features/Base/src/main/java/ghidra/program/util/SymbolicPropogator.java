@@ -15,9 +15,8 @@
  */
 package ghidra.program.util;
 
-import java.util.*;
-
 import java.math.BigInteger;
+import java.util.*;
 
 import org.apache.commons.collections4.map.LRUMap;
 
@@ -88,7 +87,7 @@ public class SymbolicPropogator {
 
 	// Cache instructions looked up by containing
 	Map<Address, Instruction> instructionContainingCache = new LRUMap<>(LRU_SIZE);
-	
+
 	// cache for pcode callother injection payloads
 	HashMap<Long, InjectPayload> injectPayloadCache = new HashMap<Long, InjectPayload>();
 
@@ -966,7 +965,7 @@ public class SymbolicPropogator {
 					// for callother, could be an interrupt, need to look at it like a call
 					case PcodeOp.CALLOTHER:
 						PcodeOp[] callOtherPcode = doCallOtherPcodeInjection(instruction, in, out);
-						
+
 						if (callOtherPcode != null) {
 							ops = injectPcode(ops, pcodeIndex, callOtherPcode);
 							pcodeIndex = -1;
@@ -1088,7 +1087,8 @@ public class SymbolicPropogator {
 						// if return value is a location, give evaluator a chance to check the value
 						try {
 							val1 = vContext.getValue(in[0], evaluator);
-							if (evaluator != null && evaluator.evaluateReturn(val1, vContext, instruction)) {
+							if (evaluator != null &&
+								evaluator.evaluateReturn(val1, vContext, instruction)) {
 								canceled = true;
 								return null;
 							}
@@ -1446,9 +1446,9 @@ public class SymbolicPropogator {
 		Varnode vt;
 		if (!context.isExternalSpace(val1.getSpace())) {
 			long lval = vContext.getConstant(val1, evaluator);
-			vt = vContext.getVarnode(minInstrAddress.getAddressSpace().getSpaceID(),
-				lval, 0);
-		} else {
+			vt = vContext.getVarnode(minInstrAddress.getAddressSpace().getSpaceID(), lval, 0);
+		}
+		else {
 			vt = val1;
 		}
 		return vt;
@@ -1602,7 +1602,13 @@ public class SymbolicPropogator {
 		con.nextAddr = con.baseAddr.add(instr.getDefaultFallThroughOffset());
 		con.callAddr = func.getEntryPoint();
 		con.refAddr = con.callAddr;
-		return payload.getPcode(prog, con);
+		try {
+			return payload.getPcode(prog, con);
+		}
+		catch (Exception e) {
+			Msg.warn(this, e.getMessage());
+		}
+		return null;
 	}
 
 	private PcodeOp[] checkForUponReturnCallMechanismInjection(Program prog, Function func,
@@ -1629,7 +1635,13 @@ public class SymbolicPropogator {
 		con.nextAddr = con.baseAddr.add(instr.getDefaultFallThroughOffset());
 		con.callAddr = target;
 		con.refAddr = con.callAddr;
-		return payload.getPcode(prog, con);
+		try {
+			return payload.getPcode(prog, con);
+		}
+		catch (Exception e) {
+			Msg.warn(this, e.getMessage());
+		}
+		return null;
 	}
 
 	private PcodeOp[] injectPcode(PcodeOp[] currentPcode, int pcodeIndex, PcodeOp[] replacePcode) {
@@ -1662,7 +1674,8 @@ public class SymbolicPropogator {
 	 * 
 	 * @throws NotFoundException
 	 */
-	private PcodeOp[] doCallOtherPcodeInjection(Instruction instr, Varnode ins[], Varnode out) throws NotFoundException {
+	private PcodeOp[] doCallOtherPcodeInjection(Instruction instr, Varnode ins[], Varnode out)
+			throws NotFoundException {
 		Program prog = instr.getProgram();
 
 		PcodeInjectLibrary snippetLibrary = prog.getCompilerSpec().getPcodeInjectLibrary();
@@ -1689,33 +1702,40 @@ public class SymbolicPropogator {
 		con.inputlist = inputs;
 		con.output = new ArrayList<Varnode>();
 		con.output.add(out);
-		return payload.getPcode(prog, con);
+		try {
+			return payload.getPcode(prog, con);
+		}
+		catch (Exception e) {
+			Msg.warn(this, e.getMessage());
+		}
+		return null;
 	}
-	
-	private InjectPayload findPcodeInjection(Program prog, PcodeInjectLibrary snippetLibrary, long callOtherIndex) {
+
+	private InjectPayload findPcodeInjection(Program prog, PcodeInjectLibrary snippetLibrary,
+			long callOtherIndex) {
 		InjectPayload payload = injectPayloadCache.get(callOtherIndex);
-		
+
 		// has a payload value for the pcode callother index
 		if (payload != null) {
 			return payload;
 		}
-		
+
 		// value null, if contains the key, then already looked up
 		if (injectPayloadCache.containsKey(callOtherIndex)) {
 			return null;
 		}
-		
+
 		String opName = prog.getLanguage().getUserDefinedOpName((int) callOtherIndex);
-		
+
 		// segment is special named injection
-		if ("segment".equals(opName)) {	
+		if ("segment".equals(opName)) {
 			payload =
 				snippetLibrary.getPayload(InjectPayload.EXECUTABLEPCODE_TYPE, "segment_pcode");
 		}
 		else {
 			payload = snippetLibrary.getPayload(InjectPayload.CALLOTHERFIXUP_TYPE, opName);
 		}
-		
+
 		// save payload in cache for next lookup
 		injectPayloadCache.put(callOtherIndex, payload);
 		return payload;
@@ -1739,12 +1759,12 @@ public class SymbolicPropogator {
 		}
 
 		PrototypeModel conv = function.getCallingConvention();
-		
+
 		if (function.isStackPurgeSizeValid()) {
 			int depth = function.getStackPurgeSize();
 			return getDefaultStackDepthChange(prog, conv, depth);
 		}
-		
+
 		return getDefaultStackDepthChange(prog, conv, Function.UNKNOWN_STACK_DEPTH_CHANGE);
 	}
 

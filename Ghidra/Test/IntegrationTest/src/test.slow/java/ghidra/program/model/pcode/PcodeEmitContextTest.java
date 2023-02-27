@@ -1753,7 +1753,7 @@ public class PcodeEmitContextTest extends AbstractGhidraHeadlessIntegrationTest 
 		program.endTransaction(tid, true);
 	}
 
-	private boolean equalPcodeOpArrays(PcodeOp[] array1, PcodeOp[] array2) {
+	public static boolean equalPcodeOpArrays(PcodeOp[] array1, PcodeOp[] array2) {
 		if (array1 == null && array2 == null) {
 			return true;
 		}
@@ -1771,7 +1771,7 @@ public class PcodeEmitContextTest extends AbstractGhidraHeadlessIntegrationTest 
 		return true;
 	}
 
-	private boolean equalPcodeOps(PcodeOp op1, PcodeOp op2) {
+	public static boolean equalPcodeOps(PcodeOp op1, PcodeOp op2) {
 		if (op1.getOpcode() != op2.getOpcode()) {
 			return false;
 		}
@@ -1779,7 +1779,7 @@ public class PcodeEmitContextTest extends AbstractGhidraHeadlessIntegrationTest 
 	}
 
 	//for testing modifications that can the pcode op but nothing else
-	private boolean equalInputsAndOutput(PcodeOp op1, PcodeOp op2) {
+	public static boolean equalInputsAndOutput(PcodeOp op1, PcodeOp op2) {
 		if (!Objects.equals(op1.getOutput(), op2.getOutput())) {
 			return false;
 		}

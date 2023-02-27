@@ -327,28 +327,42 @@ public interface PathPredicates {
 		}
 		if (successorCouldMatch(path, true)) {
 			Set<String> nextNames = getNextNames(path);
-			if (!nextNames.isEmpty()) {
+			if (nextNames.equals(PathMatcher.WILD_SINGLETON)) {
 				for (Map.Entry<String, ?> ent : cur.getCachedAttributes().entrySet()) {
-					Object value = ent.getValue();
-					if (!(value instanceof TargetObject)) {
+					if (!(ent.getValue() instanceof TargetObject obj)) {
 						continue;
 					}
 					String name = ent.getKey();
-					if (!anyMatches(nextNames, name)) {
-						continue;
-					}
-					TargetObject obj = (TargetObject) value;
 					getCachedSuccessors(result, PathUtils.extend(path, name), obj);
 				}
 			}
+			else {
+				for (String name : nextNames) {
+					if (!(cur.getCachedAttribute(name) instanceof TargetObject obj)) {
+						continue;
+					}
+					getCachedSuccessors(result, PathUtils.extend(path, name), obj);
+				}
+			}
+
 			Set<String> nextIndices = getNextIndices(path);
-			if (!nextIndices.isEmpty()) {
+			if (nextIndices.equals(PathMatcher.WILD_SINGLETON)) {
 				for (Map.Entry<String, ? extends TargetObject> ent : cur.getCachedElements()
 						.entrySet()) {
 					TargetObject obj = ent.getValue();
+					if (obj == null) {
+						return;
+					}
 					String index = ent.getKey();
-					if (!anyMatches(nextIndices, index)) {
-						continue;
+					getCachedSuccessors(result, PathUtils.index(path, index), obj);
+				}
+			}
+			else {
+				Map<String, ? extends TargetObject> elements = cur.getCachedElements();
+				for (String index : nextIndices) {
+					TargetObject obj = elements.get(index);
+					if (obj == null) {
+						return;
 					}
 					getCachedSuccessors(result, PathUtils.index(path, index), obj);
 				}

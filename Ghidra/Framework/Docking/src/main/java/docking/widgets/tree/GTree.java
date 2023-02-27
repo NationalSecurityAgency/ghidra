@@ -56,7 +56,7 @@ import ghidra.util.worker.PriorityWorker;
  * Class for creating a JTree that supports filtering, threading, and a progress bar.
  */
 
-public class GTree extends JPanel implements BusyListener, ThemeListener {
+public class GTree extends JPanel implements BusyListener {
 	private static final Color BACKGROUND = new GColor("color.bg.tree");
 	private AutoScrollTree tree;
 	private GTreeModel model;
@@ -93,6 +93,11 @@ public class GTree extends JPanel implements BusyListener, ThemeListener {
 	private JTreeMouseListenerDelegate mouseListenerDelegate;
 	private GTreeDragNDropHandler dragNDropHandler;
 	private boolean isFilteringEnabled = true;
+	private ThemeListener themeListener = e -> {
+		if (e.isLookAndFeelChanged()) {
+			model.fireNodeStructureChanged(getModelRoot());
+		}
+	};
 
 	private ThreadLocal<TaskMonitor> threadLocalMonitor = new ThreadLocal<>();
 	private PriorityWorker worker;
@@ -135,7 +140,7 @@ public class GTree extends JPanel implements BusyListener, ThemeListener {
 				uniquePreferenceKey));
 
 		filterUpdateManager = new SwingUpdateManager(1000, 30000, () -> updateModelFilter());
-		Gui.addThemeListener(this);
+		Gui.addThemeListener(themeListener);
 	}
 
 	/**
@@ -146,13 +151,6 @@ public class GTree extends JPanel implements BusyListener, ThemeListener {
 	 */
 	void setThreadLocalMonitor(TaskMonitor monitor) {
 		threadLocalMonitor.set(monitor);
-	}
-
-	@Override
-	public void themeChanged(ThemeEvent event) {
-		if (event.isLookAndFeelChanged()) {
-			model.fireNodeStructureChanged(getModelRoot());
-		}
 	}
 
 	/**
@@ -272,6 +270,8 @@ public class GTree extends JPanel implements BusyListener, ThemeListener {
 			realViewRootNode.disposeClones();
 		}
 		model.dispose();
+
+		Gui.removeThemeListener(themeListener);
 	}
 
 	public boolean isDisposed() {
@@ -1091,17 +1091,17 @@ public class GTree extends JPanel implements BusyListener, ThemeListener {
 			Consumer<GTreeNode> consumer) {
 
 		/*
-		
+
 			If the GTree were to use Java's CompletableStage API, then the code below
 			could be written thusly:
-		
+
 			tree.getNewNode(modelParent, newName)
 				.thenCompose(newModelChild -> {
 			 		tree.ignoreFilter(newModelChild);
 			 		return tree.getNewNode(viewParent, newName);
 			 	))
 			 	.thenAccept(consumer);
-		
+
 		*/
 
 		// ensure we operate on the model node which will always have the given child not the view

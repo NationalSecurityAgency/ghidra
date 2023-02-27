@@ -47,10 +47,9 @@ import ghidra.framework.plugintool.annotation.AutoConfigStateField;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.lifecycle.Internal;
-import ghidra.trace.model.Trace;
+import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.TraceObjectChangeType;
 import ghidra.trace.model.Trace.TraceThreadChangeType;
-import ghidra.trace.model.TraceDomainObjectListener;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.program.TraceVariableSnapProgramView;
@@ -641,7 +640,13 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 				inactive = curForTrace.snapNoResolve(snap);
 				lastCoordsByTrace.put(trace, inactive);
 			}
-			trace.getProgramView().setSnap(snap);
+			try {
+				trace.getProgramView().setSnap(snap);
+			}
+			catch (TraceClosedException e) {
+				// Whatever. Presumably, a closed event is already queued....
+				Msg.warn(this, "Ignoring snapshot advance for closed trace: " + e);
+			}
 			firePluginEvent(new TraceInactiveCoordinatesPluginEvent(getName(), inactive));
 			return;
 		}
@@ -772,12 +777,13 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		if (coordinates.getTime().isSnapOnly()) {
 			return coordinates.getSnap();
 		}
-		Collection<? extends TraceSnapshot> suitable = coordinates.getTrace()
-				.getTimeManager()
-				.getSnapshotsWithSchedule(coordinates.getTime());
-		if (!suitable.isEmpty()) {
-			TraceSnapshot found = suitable.iterator().next();
-			return found.getKey();
+		Trace trace = coordinates.getTrace();
+		long version = trace.getEmulatorCacheVersion();
+		for (TraceSnapshot snapshot : trace.getTimeManager()
+				.getSnapshotsWithSchedule(coordinates.getTime())) {
+			if (snapshot.getVersion() >= version) {
+				return snapshot.getKey();
+			}
 		}
 		return null;
 	}

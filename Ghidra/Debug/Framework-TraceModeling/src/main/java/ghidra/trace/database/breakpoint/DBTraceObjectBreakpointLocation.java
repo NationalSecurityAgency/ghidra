@@ -283,7 +283,7 @@ public class DBTraceObjectBreakpointLocation
 			return object.getAncestorsRoot(getLifespan(), procMatcher)
 					.flatMap(proc -> proc.getSource(object)
 							.querySuccessorsInterface(getLifespan(),
-								TraceObjectThread.class))
+								TraceObjectThread.class, true))
 					.collect(Collectors.toSet());
 		}
 	}

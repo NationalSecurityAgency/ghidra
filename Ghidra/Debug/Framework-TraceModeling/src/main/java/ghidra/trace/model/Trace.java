@@ -17,8 +17,9 @@ package ghidra.trace.model;
 
 import java.util.*;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
+import generic.theme.GIcon;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.CompilerSpec;
@@ -48,10 +49,20 @@ import ghidra.trace.model.time.TraceTimeManager;
 import ghidra.trace.util.DefaultTraceChangeType;
 import ghidra.util.LockHold;
 import ghidra.util.UniversalID;
-import resources.ResourceManager;
 
+/**
+ * An indexed record of observations over the course of a target's execution
+ * 
+ * <p>
+ * Conceptually, this is the same as a {@link Program}, but multiplied by a concrete dimension of
+ * time and organized into {@link TraceSnapshot snapshots}. This also includes information about
+ * other objects not ordinarily of concern for static analysis, for example, {@link TraceThread
+ * threads}, {@link TraceModule modules}, and {@link TraceBreakpoint breakpoints}. To view a
+ * specific snapshot and/or manipulate the trace as if it were a program, use
+ * {@link #getProgramView()}.
+ */
 public interface Trace extends DataTypeManagerDomainObject {
-	ImageIcon TRACE_ICON = ResourceManager.loadImage("images/video-x-generic16.png");
+	Icon TRACE_ICON = new GIcon("icon.content.handler.trace");
 
 	/**
 	 * TEMPORARY: An a/b switch while both table- (legacy) and object-mode traces are supported
@@ -410,6 +421,10 @@ public interface Trace extends DataTypeManagerDomainObject {
 	Language getBaseLanguage();
 
 	CompilerSpec getBaseCompilerSpec();
+
+	void setEmulatorCacheVersion(long version);
+
+	long getEmulatorCacheVersion();
 
 	AddressFactory getBaseAddressFactory();
 

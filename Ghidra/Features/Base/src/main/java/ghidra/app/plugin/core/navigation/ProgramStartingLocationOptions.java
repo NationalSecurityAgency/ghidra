@@ -29,10 +29,18 @@ import ghidra.util.HelpLocation;
 public class ProgramStartingLocationOptions implements OptionsChangeListener {
 
 	static final String NAVIGATION_TOPIC = "Navigation";
-	public static final String SUB_OPTION = "Starting Program Location";
-	public static final String START_LOCATION_TYPE_OPTION = SUB_OPTION + ".Start At: ";
-	public static final String START_SYMBOLS_OPTION = SUB_OPTION + ".Start Symbols: ";
-	public static final String UNDERSCORE_OPTION = SUB_OPTION + ".Use Underscores:";
+	public static final String START_LOCATION_SUB_OPTION = "Starting Program Location";
+	public static final String START_LOCATION_TYPE_OPTION =
+		START_LOCATION_SUB_OPTION + ".Start At: ";
+	public static final String START_SYMBOLS_OPTION =
+		START_LOCATION_SUB_OPTION + ".Start Symbols: ";
+	public static final String UNDERSCORE_OPTION = START_LOCATION_SUB_OPTION + ".Use Underscores:";
+
+	public static final String AFTER_ANALYSIS_SUB_OPTION = "After Initial Analysis";
+	public static final String ASK_TO_MOVE_OPTION =
+		AFTER_ANALYSIS_SUB_OPTION + ".Ask To Reposition Program";
+	public static final String AUTO_MOVE_OPTION =
+		AFTER_ANALYSIS_SUB_OPTION + ".Auto Reposition If Not Moved";
 
 	private static final String START_LOCATION_DESCRIPTION =
 		"Determines the start location for newly opened programs.\n" +
@@ -44,6 +52,12 @@ public class ProgramStartingLocationOptions implements OptionsChangeListener {
 			"(Used when option above is set to \"Preferred Symbol Name\")";
 	private static final String SYMBOL_PREFIX_DESCRIPTION =
 		"When searching for symbols, also search for the names prepended with \"_\" and \"__\".";
+	public static final String ASK_TO_MOVE_DESCRIPTION =
+		"When initial analysis completed, asks the user if they want to reposition the" +
+			" program to a newly discovered starting symbol.";
+	public static final String AUTO_MOVE_DESCRIPTION =
+		"When initial analysis is completed, automatically repositions the program to " +
+			"a newly discovered starting symbol, provided the user hasn't manually moved.";
 
 	private static final String DEFAULT_STARTING_SYMBOLS =
 		"main, WinMain, libc_start_main, WinMainStartup, start, entry";
@@ -71,13 +85,15 @@ public class ProgramStartingLocationOptions implements OptionsChangeListener {
 	private boolean useUnderscorePrefixes;
 
 	private ToolOptions options;
+	private boolean askToMove;
+	private boolean autoMove;
 
 	public ProgramStartingLocationOptions(PluginTool tool) {
 		options = tool.getOptions(GhidraOptions.NAVIGATION_OPTIONS);
 		HelpLocation help = new HelpLocation(NAVIGATION_TOPIC, "Starting_Program_Location");
 
 		// set a help location on the group
-		Options subOptions = options.getOptions(SUB_OPTION);
+		Options subOptions = options.getOptions(START_LOCATION_SUB_OPTION);
 		subOptions.setOptionsHelpLocation(help);
 
 		options.registerOption(START_LOCATION_TYPE_OPTION, StartLocationType.LAST_LOCATION, help,
@@ -88,6 +104,13 @@ public class ProgramStartingLocationOptions implements OptionsChangeListener {
 
 		options.registerOption(UNDERSCORE_OPTION, true, help, SYMBOL_PREFIX_DESCRIPTION);
 
+		help = new HelpLocation(NAVIGATION_TOPIC, "After_Initial_Analysis");
+		subOptions = options.getOptions(AFTER_ANALYSIS_SUB_OPTION);
+		subOptions.setOptionsHelpLocation(help);
+
+		options.registerOption(ASK_TO_MOVE_OPTION, true, help, ASK_TO_MOVE_DESCRIPTION);
+		options.registerOption(AUTO_MOVE_OPTION, true, help, AUTO_MOVE_DESCRIPTION);
+
 		startLocationType =
 			options.getEnum(START_LOCATION_TYPE_OPTION, StartLocationType.SYMBOL_NAME);
 
@@ -95,6 +118,10 @@ public class ProgramStartingLocationOptions implements OptionsChangeListener {
 		startSymbols = parse(symbolNames);
 
 		useUnderscorePrefixes = options.getBoolean(UNDERSCORE_OPTION, true);
+
+		askToMove = options.getBoolean(ASK_TO_MOVE_OPTION, true);
+		autoMove = options.getBoolean(AUTO_MOVE_OPTION, true);
+
 		options.addOptionsChangeListener(this);
 	}
 
@@ -145,6 +172,32 @@ public class ProgramStartingLocationOptions implements OptionsChangeListener {
 		options.removeOptionsChangeListener(this);
 	}
 
+	/**
+	 * Returns true if the user should be asked after first analysis if they would like the
+	 * program to be repositioned to a newly discovered starting symbol (e.g. "main")
+	 *
+	 * @return true if the user should be asked after first analysis if they would like the
+	 * program to be repositioned to a newly discovered starting symbol (e.g. "main")
+	 */
+	public boolean shouldAskToRepostionAfterAnalysis() {
+		return askToMove;
+	}
+
+	/**
+	 * Returns true if the program should be repositioned to a newly discovered starting symbol 
+	 * (e.g. "main") when the first analysis is completed, provided the user hasn't manually
+	 * changed the program's location. Note that this option has precedence over the 
+	 * {@link #shouldAskToRepostionAfterAnalysis()} option and the user will only be asked 
+	 * if they have manually moved the program.
+	 * 
+	 * @return true if the program should be repositioned to a newly discovered starting symbol 
+	 * (e.g. "main") when the first analysis is completed, provided the user hasn't manually
+	 * changed the program's location.
+	 */
+	public boolean shouldAutoRepositionIfNotMoved() {
+		return autoMove;
+	}
+
 	@Override
 	public void optionsChanged(ToolOptions toolOptions, String optionName, Object oldValue,
 			Object newValue) {
@@ -157,5 +210,12 @@ public class ProgramStartingLocationOptions implements OptionsChangeListener {
 		else if (UNDERSCORE_OPTION.equals(optionName)) {
 			useUnderscorePrefixes = (Boolean) newValue;
 		}
+		else if (ASK_TO_MOVE_OPTION.equals(optionName)) {
+			askToMove = (Boolean) newValue;
+		}
+		else if (AUTO_MOVE_OPTION.equals(optionName)) {
+			autoMove = (Boolean) newValue;
+		}
 	}
+
 }

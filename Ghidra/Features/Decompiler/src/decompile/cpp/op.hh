@@ -252,6 +252,7 @@ struct PcodeOpNode {
   int4 slot;		///< Slot indicating the input Varnode end-point of the edge
   PcodeOpNode(void) { op = (PcodeOp *)0; slot = 0; }	///< Unused constructor
   PcodeOpNode(PcodeOp *o,int4 s) { op = o; slot = s; }	///< Constructor
+  bool operator<(const PcodeOpNode &op2) const;		///< Simple comparator for putting edges in a sorted container
 };
 
 /// \brief A node in a tree structure of CPUI_PIECE operations
@@ -356,5 +357,18 @@ public:
 extern int4 functionalEqualityLevel(Varnode *vn1,Varnode *vn2,Varnode **res1,Varnode **res2);
 extern bool functionalEquality(Varnode *vn1,Varnode *vn2);
 extern bool functionalDifference(Varnode *vn1,Varnode *vn2,int4 depth);
+
+/// Compare PcodeOps (as pointers) first, then slot
+/// \param op2 is the other edge to compare with \b this
+/// \return true if \b this should come before the other PcodeOp
+inline bool PcodeOpNode::operator<(const PcodeOpNode &op2) const
+
+{
+  if (op != op2.op)
+    return (op->getSeqNum().getTime() < op2.op->getSeqNum().getTime());
+  if (slot != op2.slot)
+    return (slot < op2.slot);
+  return false;
+}
 
 #endif

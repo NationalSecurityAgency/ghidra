@@ -19,7 +19,6 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 
 import javax.swing.*;
 
@@ -30,8 +29,10 @@ import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.references.*;
 import ghidra.app.util.importer.*;
+import ghidra.app.util.opinion.LoadResults;
 import ghidra.app.util.opinion.LoaderService;
 import ghidra.framework.main.DataTreeDialog;
+import ghidra.framework.model.Project;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
@@ -290,16 +291,18 @@ public class ReferencesPluginScreenShots extends GhidraScreenShotGenerator {
 	private void importFile(File file) throws CancelledException, DuplicateNameException,
 			InvalidNameException, VersionException, IOException {
 		String programNameOverride = null;
-		List<Program> programs = AutoImporter.importFresh(file, null, this, new MessageLog(),
+		Project project = env.getProject();
+		LoadResults<Program> loadResults = AutoImporter.importFresh(file, project,
+			project.getProjectData().getRootFolder().getPathname(), this, new MessageLog(),
 			TaskMonitor.DUMMY, LoaderService.ACCEPT_ALL, LoadSpecChooser.CHOOSE_THE_FIRST_PREFERRED,
-			programNameOverride, OptionChooser.DEFAULT_OPTIONS,
-			MultipleProgramsStrategy.ALL_PROGRAMS);
-		Program p = programs.get(0);
-		env.getProject()
-				.getProjectData()
-				.getRootFolder()
-				.createFile(p.getName(), p,
-					TaskMonitor.DUMMY);
+			programNameOverride, OptionChooser.DEFAULT_OPTIONS);
+
+		try {
+			loadResults.getPrimary().save(project, new MessageLog(), TaskMonitor.DUMMY);
+		}
+		finally {
+			loadResults.release(this);
+		}
 	}
 
 }

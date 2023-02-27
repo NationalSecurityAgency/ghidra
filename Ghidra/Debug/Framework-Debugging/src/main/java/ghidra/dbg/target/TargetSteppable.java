@@ -67,30 +67,11 @@ public interface TargetSteppable extends TargetObject {
 
 	enum TargetStepKind {
 		/**
-		 * Step strictly forward
-		 * 
-		 * <p>
-		 * To avoid runaway execution, stepping should cease if execution returns from the current
-		 * frame.
-		 * 
-		 * <p>
-		 * In more detail: step until execution reaches the instruction following this one,
-		 * regardless of the current frame. This differs from {@link #UNTIL} in that it doesn't
-		 * regard the current frame.
-		 */
-		ADVANCE,
-		/**
 		 * Step out of the current function.
 		 * 
 		 * <p>
 		 * In more detail: step until the object has executed the return instruction that returns
 		 * from the current frame.
-		 * 
-		 * <p>
-		 * TODO: This step is geared toward GDB's {@code advance}, which actually takes a parameter.
-		 * Perhaps this API should adjust to accommodate stepping parameters. Would probably want a
-		 * strict set of forms, though, and a given kind should have the same form everywhere. If we
-		 * do that, then we could do nifty pop-up actions, like "Step: Advance to here".
 		 */
 		FINISH,
 		/**

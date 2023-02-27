@@ -190,6 +190,14 @@ public class Option {
 				return false;
 			}
 		}
+		else if (Integer.class.isAssignableFrom(getValueClass())) {
+			try {
+				setValue(Integer.decode(str));
+			}
+			catch (NumberFormatException e) {
+				return false;
+			}
+		}
 		else if (Address.class.isAssignableFrom(getValueClass())) {
 			try {
 				Address origAddr = (Address) getValue();

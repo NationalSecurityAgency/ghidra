@@ -86,11 +86,6 @@ public class LldbStepCommand extends AbstractLldbCommand<Void> {
 			case FINISH:
 				thread.StepOutOfFrame(thread.GetSelectedFrame(), error);
 				break;
-			case ADVANCE:
-				SBFileSpec file = (SBFileSpec) args.get("File");
-				long line = (long) args.get("Line");
-				error = thread.StepOverUntil(thread.GetSelectedFrame(), file, line);
-				break;
 			case EXTENDED:
 				manager.execute(new LldbEvaluateCommand(manager, lastCommand));
 				break;

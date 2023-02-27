@@ -1054,17 +1054,26 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 	@Override
 	public long getOriginalValue(Address addr, boolean signExtend) throws MemoryAccessException {
-		byte[] bytes;
+		byte[] bytes = null;
 		int len = elf.is64Bit() ? 8 : 4;
 		List<Relocation> relocations = program.getRelocationTable().getRelocations(addr);
-		if (relocations.isEmpty()) {
+		for (Relocation r : relocations) {
+			bytes = r.getBytes();
+			if (bytes != null) {
+				if (bytes.length != len) {
+					// unsupported relocation length
+					throw new MemoryAccessException(
+						"Failed to identify " + len + " bytes from relocation at " + addr +
+							", was " + bytes.length + " bytes instead");
+				}
+				break;
+			}
+		}
+		if (bytes == null) {
 			bytes = new byte[len];
 			memory.getBytes(addr, bytes);
 		}
-		else {
-			// use bytes from first relocation
-			bytes = relocations.get(0).getBytes();
-		}
+
 		DataConverter dataConverter = DataConverter.getInstance(elf.isBigEndian());
 		return signExtend ? dataConverter.getSignedValue(bytes, len)
 				: dataConverter.getValue(bytes, len);

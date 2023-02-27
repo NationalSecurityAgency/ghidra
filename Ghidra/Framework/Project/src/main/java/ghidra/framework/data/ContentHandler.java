@@ -185,8 +185,8 @@ public interface ContentHandler<T extends DomainObjectAdapter> extends Extension
 	Icon getIcon();
 
 	/**
-	 * Returns the name of the default tool that should be used to open this content type.
-	 * @return associated default tool for this content type
+	 * Returns the name of the default tool/template that should be used to open this content type.
+	 * @return associated default tool name for this content type
 	 */
 	String getDefaultToolName();
 

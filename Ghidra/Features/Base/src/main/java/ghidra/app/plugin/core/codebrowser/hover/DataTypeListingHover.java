@@ -19,7 +19,7 @@ import javax.swing.JComponent;
 
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
-import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.GhidraOptions;
 import ghidra.app.plugin.core.hover.AbstractConfigurableHover;
 import ghidra.app.util.ToolTipUtils;
@@ -111,9 +111,8 @@ public class DataTypeListingHover extends AbstractConfigurableHover implements L
 				warningMsg += "WARNING! Invalid Storage";
 			}
 			if (warningMsg.length() != 0) {
-				String errorText =
-					"<HTML><center><font color=\"" + Colors.ERROR.toHexString() + "\">" +
-						warningMsg + "!</font></center><BR>";
+				String errorText = "<HTML><center><font color=\"" + Messages.ERROR.toHexString() +
+					"\">" + warningMsg + "!</font></center><BR>";
 				toolTipText = toolTipText.replace("<HTML>", errorText);
 			}
 			return createTooltipComponent(toolTipText);
@@ -151,9 +150,8 @@ public class DataTypeListingHover extends AbstractConfigurableHover implements L
 				result += "<br>Missing NULL terminator.";
 			}
 			if (sdi.getStringLength() > dataInstance.getLength()) {
-				result +=
-					"<br><font color=\"" + Colors.ERROR.toHexString() +
-						"\">String exceeds data field.</font>";
+				result += "<br><font color=\"" + Messages.ERROR.toHexString() +
+					"\">String exceeds data field.</font>";
 			}
 		}
 		return result;

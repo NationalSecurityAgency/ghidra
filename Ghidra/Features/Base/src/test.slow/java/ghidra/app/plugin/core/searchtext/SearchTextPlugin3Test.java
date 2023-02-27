@@ -390,8 +390,7 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 
 		Collections.sort(list);
 		Collections.reverse(list);
-		for (int i = 0; i < list.size(); i++) {
-			Address addr = list.get(i);
+		for (Address addr : list) {
 			pressSearchButton(dialog, searchButton);
 			ProgramLocation loc = cbPlugin.getCurrentLocation();
 			assertEquals(addr, loc.getAddress());
@@ -627,7 +626,8 @@ public class SearchTextPlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		setToggleButtonSelected(cb, true);
 
 		// install our own task monitor so we can cancel before the task finishes
-		CancellingStubTaskMonitorComponent testMonitor = new CancellingStubTaskMonitorComponent();
+		CancellingStubTaskMonitorComponent testMonitor =
+			runSwing(() -> new CancellingStubTaskMonitorComponent());
 		setInstanceField("taskMonitorComponent", dialog, testMonitor);
 
 		setText(tf, "hello");

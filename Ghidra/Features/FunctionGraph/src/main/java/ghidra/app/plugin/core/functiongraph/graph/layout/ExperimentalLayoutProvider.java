@@ -21,7 +21,7 @@ import generic.theme.GIcon;
 
 public abstract class ExperimentalLayoutProvider extends FGLayoutProviderExtensionPoint {
 
-	private static final Icon ICON = new GIcon("icon.functiongraph.layout.experimental");
+	private static final Icon ICON = new GIcon("icon.plugin.functiongraph.layout.experimental");
 
 	@Override
 	public Icon getActionIcon() {

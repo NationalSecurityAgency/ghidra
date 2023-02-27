@@ -876,16 +876,16 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 
 	@Override
 	public Stream<? extends TraceObjectValPath> querySuccessorsTargetInterface(Lifespan span,
-			Class<? extends TargetObject> targetIf) {
-		PathMatcher matcher = getTargetSchema().searchFor(targetIf, true);
+			Class<? extends TargetObject> targetIf, boolean requireCanonical) {
+		PathMatcher matcher = getTargetSchema().searchFor(targetIf, requireCanonical);
 		return getSuccessors(span, matcher).filter(p -> isActuallyInterface(p, targetIf));
 	}
 
 	@Override
 	public <I extends TraceObjectInterface> Stream<I> querySuccessorsInterface(Lifespan span,
-			Class<I> ifClass) {
-		return querySuccessorsTargetInterface(span, TraceObjectInterfaceUtils.toTargetIf(ifClass))
-				.map(p -> p.getDestination(this).queryInterface(ifClass));
+			Class<I> ifClass, boolean requireCanonical) {
+		return querySuccessorsTargetInterface(span, TraceObjectInterfaceUtils.toTargetIf(ifClass),
+			requireCanonical).map(p -> p.getDestination(this).queryInterface(ifClass));
 	}
 
 	protected void doDelete() {

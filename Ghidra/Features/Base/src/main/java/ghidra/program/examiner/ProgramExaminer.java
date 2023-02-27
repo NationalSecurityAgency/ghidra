@@ -26,6 +26,8 @@ import ghidra.app.plugin.core.analysis.EmbeddedMediaAnalyzer;
 import ghidra.app.util.bin.*;
 import ghidra.app.util.importer.AutoImporter;
 import ghidra.app.util.importer.MessageLog;
+import ghidra.app.util.opinion.LoadException;
+import ghidra.app.util.opinion.LoadResults;
 import ghidra.framework.Application;
 import ghidra.framework.HeadlessGhidraApplicationConfiguration;
 import ghidra.program.model.data.*;
@@ -79,17 +81,24 @@ public class ProgramExaminer {
 	private ProgramExaminer(ByteProvider provider) throws GhidraException {
 		initializeGhidra();
 		messageLog = new MessageLog();
+		LoadResults<Program> loadResults = null;
 		try {
-			program = AutoImporter.importByUsingBestGuess(provider, null, this, messageLog,
-				TaskMonitor.DUMMY);
-
-			if (program == null) {
-				program = AutoImporter.importAsBinary(provider, null, defaultLanguage, null, this,
+			try {
+				loadResults = AutoImporter.importByUsingBestGuess(provider, null, null, this,
 					messageLog, TaskMonitor.DUMMY);
+				program = loadResults.getPrimaryDomainObject();
 			}
-			if (program == null) {
-				throw new GhidraException(
-					"Can't create program from input: " + messageLog.toString());
+			catch (LoadException e) {
+				try {
+					program = AutoImporter
+							.importAsBinary(provider, null, null, defaultLanguage, null, this,
+								messageLog, TaskMonitor.DUMMY)
+							.getDomainObject();
+				}
+				catch (LoadException e1) {
+					throw new GhidraException(
+						"Can't create program from input: " + messageLog.toString());
+				}
 			}
 		}
 		catch (Exception e) {
@@ -97,6 +106,9 @@ public class ProgramExaminer {
 			throw new GhidraException(e);
 		}
 		finally {
+			if (loadResults != null) {
+				loadResults.releaseNonPrimary(this);
+			}
 			try {
 				provider.close();
 			}
