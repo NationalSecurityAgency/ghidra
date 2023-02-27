@@ -20,8 +20,8 @@ import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
+import org.apache.commons.collections4.BidiMap;
+import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 
 import db.*;
 import ghidra.program.model.address.*;
@@ -413,6 +413,8 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 			}
 		};
 
+		public static final List<MySymbolTypes> VALUES = List.of(values());
+
 		abstract boolean isValidParent(DBTraceNamespaceSymbol parent);
 
 		boolean isNoFunctionAncestor(DBTraceNamespaceSymbol parent) {
@@ -434,7 +436,7 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 	protected final DBTraceAddressSnapRangePropertyMap<Long, DBTraceSymbolIDEntry> idMap;
 
 	protected final DBCachedObjectStore<DBTraceCallingConventionEntry> callingConventionStore;
-	protected final BiMap<String, Byte> callingConventionMap = HashBiMap.create();
+	protected final BidiMap<String, Byte> callingConventionMap = new DualHashBidiMap<>();
 
 	protected final DBCachedObjectStore<DBTraceFunctionTag> tagStore;
 	protected final DBCachedObjectIndex<String, DBTraceFunctionTag> tagsByName;

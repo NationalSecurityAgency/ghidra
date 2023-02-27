@@ -17,9 +17,7 @@ package ghidra.trace.database.listing;
 
 import java.util.Collection;
 import java.util.Iterator;
-
-import com.google.common.collect.Collections2;
-import com.google.common.collect.Iterators;
+import java.util.stream.StreamSupport;
 
 import ghidra.program.model.address.*;
 import ghidra.trace.model.TraceAddressSnapRange;
@@ -83,7 +81,7 @@ public abstract class AbstractComposedDBTraceCodeUnitsView<T extends DBTraceCode
 	@Override
 	public Iterable<? extends T> get(long snap, Address min, Address max, boolean forward) {
 		Collection<? extends Iterator<? extends T>> itCol =
-			Collections2.transform(parts, p -> p.get(snap, min, max, forward).iterator());
+			parts.stream().map(p -> p.get(snap, min, max, forward).iterator()).toList();
 		return () -> new MergeSortingIterator<T>(itCol,
 			forward ? DBTraceDefinedUnitsView::compareForward
 					: DBTraceDefinedUnitsView::compareBackward);
@@ -91,9 +89,10 @@ public abstract class AbstractComposedDBTraceCodeUnitsView<T extends DBTraceCode
 
 	@Override
 	public Iterable<? extends T> getIntersecting(TraceAddressSnapRange tasr) {
-		Collection<? extends Iterator<? extends T>> itCol =
-			Collections2.transform(parts, p -> p.getIntersecting(tasr).iterator());
-		return () -> Iterators.concat(itCol.iterator());
+		return () -> parts.stream()
+				.flatMap(p -> StreamSupport.stream(p.getIntersecting(tasr).spliterator(), false)
+						.map(t -> (T) t))
+				.iterator();
 	}
 
 	@Override
@@ -165,7 +164,7 @@ public abstract class AbstractComposedDBTraceCodeUnitsView<T extends DBTraceCode
 	@Override
 	public AddressSetView getAddressSetView(long snap, AddressRange within) {
 		return new UnionAddressSetView(
-			Collections2.transform(parts, p -> p.getAddressSetView(snap, within)));
+			parts.stream().map(p -> p.getAddressSetView(snap, within)).toList());
 	}
 
 	@Override

@@ -22,10 +22,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
-import com.google.common.collect.Collections2;
-
 import db.DBRecord;
-import generic.CatenatedCollection;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.CircularDependencyException;
 import ghidra.program.model.listing.Program;
@@ -197,11 +194,14 @@ public abstract class AbstractDBTraceSymbol extends DBAnnotatedObject
 		return SpecialAddress.NO_ADDRESS;
 	}
 
-	protected Collection<? extends TraceAddressSnapRange> getRanges() {
-		return new CatenatedCollection<>(Collections2.transform(manager.idMap.getActiveSpaces(),
-			space -> Collections2.transform(
-				space.getUserIndex(long.class, DBTraceSymbolIDEntry.ID_COLUMN).get(getID()),
-				ent -> ent.getShape())));
+	protected Iterable<? extends TraceAddressSnapRange> getRanges() {
+		return () -> manager.idMap.getActiveSpaces()
+				.stream()
+				.flatMap(space -> space.getUserIndex(long.class, DBTraceSymbolIDEntry.ID_COLUMN)
+						.get(getID())
+						.stream())
+				.map(ent -> ent.getShape())
+				.iterator();
 	}
 
 	// Internal
@@ -399,7 +399,7 @@ public abstract class AbstractDBTraceSymbol extends DBAnnotatedObject
 		if (dbns == null) {
 			return false;
 		}
-		return MySymbolTypes.values()[this.getSymbolType().getID()].isValidParent(dbns);
+		return MySymbolTypes.VALUES.get(this.getSymbolType().getID()).isValidParent(dbns);
 	}
 
 	protected DBTraceNamespaceSymbol checkCircular(DBTraceNamespaceSymbol newParent)

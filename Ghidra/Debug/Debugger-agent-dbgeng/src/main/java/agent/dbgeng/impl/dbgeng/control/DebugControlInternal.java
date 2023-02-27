@@ -17,7 +17,6 @@ package agent.dbgeng.impl.dbgeng.control;
 
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Guid.REFIID;
 
@@ -59,18 +58,15 @@ public interface DebugControlInternal extends DebugControl {
 		return DbgEngUtil.lazyWeakCache(CACHE, control, DebugControlImpl7::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIDebugControl>> PREFERRED_CONTROL_IIDS_BUILDER =
-		ImmutableMap.builder();
 	Map<REFIID, Class<? extends WrapIDebugControl>> PREFERRED_CONTROL_IIDS =
-		PREFERRED_CONTROL_IIDS_BUILDER //
-				.put(new REFIID(IDebugControl7.IID_IDEBUG_CONTROL7), WrapIDebugControl7.class) //
-				.put(new REFIID(IDebugControl6.IID_IDEBUG_CONTROL6), WrapIDebugControl6.class) //
-				.put(new REFIID(IDebugControl5.IID_IDEBUG_CONTROL5), WrapIDebugControl5.class) //
-				.put(new REFIID(IDebugControl4.IID_IDEBUG_CONTROL4), WrapIDebugControl4.class) //
-				.put(new REFIID(IDebugControl3.IID_IDEBUG_CONTROL3), WrapIDebugControl3.class) //
-				.put(new REFIID(IDebugControl2.IID_IDEBUG_CONTROL2), WrapIDebugControl2.class) //
-				.put(new REFIID(IDebugControl.IID_IDEBUG_CONTROL), WrapIDebugControl.class) //
-				.build();
+		Map.ofEntries(
+			Map.entry(new REFIID(IDebugControl7.IID_IDEBUG_CONTROL7), WrapIDebugControl7.class),
+			Map.entry(new REFIID(IDebugControl6.IID_IDEBUG_CONTROL6), WrapIDebugControl6.class),
+			Map.entry(new REFIID(IDebugControl5.IID_IDEBUG_CONTROL5), WrapIDebugControl5.class),
+			Map.entry(new REFIID(IDebugControl4.IID_IDEBUG_CONTROL4), WrapIDebugControl4.class),
+			Map.entry(new REFIID(IDebugControl3.IID_IDEBUG_CONTROL3), WrapIDebugControl3.class),
+			Map.entry(new REFIID(IDebugControl2.IID_IDEBUG_CONTROL2), WrapIDebugControl2.class),
+			Map.entry(new REFIID(IDebugControl.IID_IDEBUG_CONTROL), WrapIDebugControl.class));
 
 	static DebugControlInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
 		return DbgEngUtil.tryPreferredInterfaces(DebugControlInternal.class, PREFERRED_CONTROL_IIDS,

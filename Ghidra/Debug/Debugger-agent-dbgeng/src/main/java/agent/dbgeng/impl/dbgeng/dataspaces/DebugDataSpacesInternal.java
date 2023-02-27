@@ -17,7 +17,6 @@ package agent.dbgeng.impl.dbgeng.dataspaces;
 
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Guid.REFIID;
 
@@ -46,19 +45,16 @@ public interface DebugDataSpacesInternal extends DebugDataSpaces {
 		return DbgEngUtil.lazyWeakCache(CACHE, data, DebugDataSpacesImpl4::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIDebugDataSpaces>> PREFERRED_DATA_SPACES_IIDS_BUILDER =
-		ImmutableMap.builder();
 	Map<REFIID, Class<? extends WrapIDebugDataSpaces>> PREFERRED_DATA_SPACES_IIDS =
-		PREFERRED_DATA_SPACES_IIDS_BUILDER //
-				.put(new REFIID(IDebugDataSpaces4.IID_IDEBUG_DATA_SPACES4),
-					WrapIDebugDataSpaces4.class) //
-				.put(new REFIID(IDebugDataSpaces3.IID_IDEBUG_DATA_SPACES3),
-					WrapIDebugDataSpaces3.class) //
-				.put(new REFIID(IDebugDataSpaces2.IID_IDEBUG_DATA_SPACES2),
-					WrapIDebugDataSpaces2.class) //
-				.put(new REFIID(IDebugDataSpaces.IID_IDEBUG_DATA_SPACES),
-					WrapIDebugDataSpaces.class) //
-				.build();
+		Map.ofEntries(
+			Map.entry(new REFIID(IDebugDataSpaces4.IID_IDEBUG_DATA_SPACES4),
+				WrapIDebugDataSpaces4.class),
+			Map.entry(new REFIID(IDebugDataSpaces3.IID_IDEBUG_DATA_SPACES3),
+				WrapIDebugDataSpaces3.class),
+			Map.entry(new REFIID(IDebugDataSpaces2.IID_IDEBUG_DATA_SPACES2),
+				WrapIDebugDataSpaces2.class),
+			Map.entry(new REFIID(IDebugDataSpaces.IID_IDEBUG_DATA_SPACES),
+				WrapIDebugDataSpaces.class));
 
 	static DebugDataSpacesInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
 		return DbgEngUtil.tryPreferredInterfaces(DebugDataSpacesInternal.class,

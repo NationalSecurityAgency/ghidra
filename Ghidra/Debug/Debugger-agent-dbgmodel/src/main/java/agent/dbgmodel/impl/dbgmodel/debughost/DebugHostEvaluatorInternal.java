@@ -17,7 +17,6 @@ package agent.dbgmodel.impl.dbgmodel.debughost;
 
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Guid.REFIID;
 
@@ -38,15 +37,12 @@ public interface DebugHostEvaluatorInternal extends DebugHostEvaluator1 {
 		return DbgModelUtil.lazyWeakCache(CACHE, data, DebugHostEvaluatorImpl2::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIDebugHostEvaluator1>> PREFERRED_DATA_SPACES_IIDS_BUILDER =
-		ImmutableMap.builder();
 	Map<REFIID, Class<? extends WrapIDebugHostEvaluator1>> PREFERRED_DATA_SPACES_IIDS =
-		PREFERRED_DATA_SPACES_IIDS_BUILDER //
-				.put(new REFIID(IDebugHostEvaluator2.IID_IDEBUG_HOST_EVALUATOR2),
-					WrapIDebugHostEvaluator2.class) //
-				.put(new REFIID(IDebugHostEvaluator1.IID_IDEBUG_HOST_EVALUATOR),
-					WrapIDebugHostEvaluator1.class) //
-				.build();
+		Map.ofEntries(
+			Map.entry(new REFIID(IDebugHostEvaluator2.IID_IDEBUG_HOST_EVALUATOR2),
+				WrapIDebugHostEvaluator2.class),
+			Map.entry(new REFIID(IDebugHostEvaluator1.IID_IDEBUG_HOST_EVALUATOR),
+				WrapIDebugHostEvaluator1.class));
 
 	static DebugHostEvaluatorInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
 		return DbgModelUtil.tryPreferredInterfaces(DebugHostEvaluatorInternal.class,

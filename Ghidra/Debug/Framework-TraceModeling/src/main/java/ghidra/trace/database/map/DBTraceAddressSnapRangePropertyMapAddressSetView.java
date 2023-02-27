@@ -21,7 +21,7 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.function.Predicate;
 
-import com.google.common.collect.Iterators;
+import org.apache.commons.collections4.IteratorUtils;
 
 import ghidra.program.model.address.*;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
@@ -171,8 +171,9 @@ public class DBTraceAddressSnapRangePropertyMapAddressSetView<T> extends Abstrac
 				.orderedEntries()
 				.iterator();
 		Iterator<Entry<TraceAddressSnapRange, T>> fltIt =
-			Iterators.filter(mapIt, e -> predicate.test(e.getValue()));
-		Iterator<AddressRange> rawIt = Iterators.transform(fltIt, e -> e.getKey().getRange());
+			IteratorUtils.filteredIterator(mapIt, e -> predicate.test(e.getValue()));
+		Iterator<AddressRange> rawIt =
+			IteratorUtils.transformedIterator(fltIt, e -> e.getKey().getRange());
 		return new UnionAddressRangeIterator(rawIt, forward);
 	}
 

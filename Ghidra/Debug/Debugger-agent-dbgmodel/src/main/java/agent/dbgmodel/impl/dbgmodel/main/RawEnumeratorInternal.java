@@ -17,7 +17,6 @@ package agent.dbgmodel.impl.dbgmodel.main;
 
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Guid.REFIID;
 
@@ -35,12 +34,9 @@ public interface RawEnumeratorInternal extends RawEnumerator {
 		return DbgModelUtil.lazyWeakCache(CACHE, data, RawEnumeratorImpl::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIRawEnumerator>> PREFERRED_DATA_SPACES_IIDS_BUILDER =
-		ImmutableMap.builder();
 	Map<REFIID, Class<? extends WrapIRawEnumerator>> PREFERRED_DATA_SPACES_IIDS =
-		PREFERRED_DATA_SPACES_IIDS_BUILDER //
-				.put(new REFIID(IRawEnumerator.IID_IRAW_ENUMERATOR), WrapIRawEnumerator.class) //
-				.build();
+		Map.ofEntries(
+			Map.entry(new REFIID(IRawEnumerator.IID_IRAW_ENUMERATOR), WrapIRawEnumerator.class));
 
 	static RawEnumeratorInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
 		return DbgModelUtil.tryPreferredInterfaces(RawEnumeratorInternal.class,

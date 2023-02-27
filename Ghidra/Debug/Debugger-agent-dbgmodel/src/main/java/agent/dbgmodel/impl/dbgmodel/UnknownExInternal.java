@@ -17,16 +17,13 @@ package agent.dbgmodel.impl.dbgmodel;
 
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Guid.REFIID;
+import com.sun.jna.platform.win32.COM.IUnknown;
 
 import agent.dbgmodel.dbgmodel.UnknownEx;
 import agent.dbgmodel.impl.dbgmodel.DbgModelUtil.InterfaceSupplier;
 import agent.dbgmodel.jna.dbgmodel.WrapIUnknownEx;
-
-import com.sun.jna.platform.win32.COM.IUnknown;
-
 import ghidra.util.datastruct.WeakValueHashMap;
 
 public interface UnknownExInternal extends UnknownEx {
@@ -36,12 +33,9 @@ public interface UnknownExInternal extends UnknownEx {
 		return DbgModelUtil.lazyWeakCache(CACHE, data, UnknownExImpl::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIUnknownEx>> PREFERRED_DATA_SPACES_IIDS_BUILDER =
-		ImmutableMap.builder();
 	Map<REFIID, Class<? extends WrapIUnknownEx>> PREFERRED_DATA_SPACES_IIDS =
-		PREFERRED_DATA_SPACES_IIDS_BUILDER //
-				.put(new REFIID(IUnknown.IID_IUNKNOWN), WrapIUnknownEx.class) //
-				.build();
+		Map.ofEntries(
+			Map.entry(new REFIID(IUnknown.IID_IUNKNOWN), WrapIUnknownEx.class));
 
 	static UnknownExInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
 		return DbgModelUtil.tryPreferredInterfaces(UnknownExInternal.class,

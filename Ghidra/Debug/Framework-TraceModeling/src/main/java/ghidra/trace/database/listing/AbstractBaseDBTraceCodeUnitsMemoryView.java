@@ -15,11 +15,8 @@
  */
 package ghidra.trace.database.listing;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.locks.Lock;
-
-import com.google.common.collect.Collections2;
 
 import generic.NestedIterator;
 import ghidra.program.model.address.*;
@@ -40,7 +37,6 @@ import ghidra.util.LockHold;
 public abstract class AbstractBaseDBTraceCodeUnitsMemoryView<T extends DBTraceCodeUnitAdapter, M extends AbstractBaseDBTraceCodeUnitsView<T>>
 		implements DBTraceDelegatingManager<M> {
 	protected final DBTraceCodeManager manager;
-	protected final Collection<M> activeSpacesView;
 
 	/**
 	 * Construct a composite view
@@ -49,8 +45,6 @@ public abstract class AbstractBaseDBTraceCodeUnitsMemoryView<T extends DBTraceCo
 	 */
 	public AbstractBaseDBTraceCodeUnitsMemoryView(DBTraceCodeManager manager) {
 		this.manager = manager;
-		this.activeSpacesView =
-			Collections2.transform(manager.getActiveMemorySpaces(), this::getView);
 	}
 
 	public AddressSpace getSpace() {
@@ -242,8 +236,8 @@ public abstract class AbstractBaseDBTraceCodeUnitsMemoryView<T extends DBTraceCo
 	 */
 	public int size() {
 		int sum = 0;
-		for (M m : activeSpacesView) {
-			sum += m.size();
+		for (DBTraceCodeSpace space : manager.getActiveMemorySpaces()) {
+			sum += getView(space).size();
 		}
 		return sum;
 	}

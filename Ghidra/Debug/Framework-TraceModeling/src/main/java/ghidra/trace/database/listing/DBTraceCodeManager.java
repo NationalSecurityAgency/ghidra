@@ -23,9 +23,6 @@ import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.RemovalNotification;
-
 import db.DBHandle;
 import db.DBRecord;
 import ghidra.lifecycle.Internal;
@@ -56,6 +53,7 @@ import ghidra.trace.util.TraceAddressSpace;
 import ghidra.util.*;
 import ghidra.util.database.*;
 import ghidra.util.database.annot.*;
+import ghidra.util.datastruct.WeakValueHashMap;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
@@ -323,11 +321,7 @@ public class DBTraceCodeManager extends AbstractDBTraceSpaceBasedManager<DBTrace
 		new DBTraceDefinedUnitsMemoryView(this);
 
 	protected final Map<AddressSnap, UndefinedDBTraceData> undefinedCache =
-		CacheBuilder.newBuilder()
-				.removalListener(this::undefinedRemovedFromCache)
-				.weakValues()
-				.build()
-				.asMap();
+		new WeakValueHashMap<>();
 
 	public DBTraceCodeManager(DBHandle dbh, DBOpenMode openMode, ReadWriteLock lock,
 			TaskMonitor monitor, Language baseLanguage, DBTrace trace,
@@ -347,11 +341,6 @@ public class DBTraceCodeManager extends AbstractDBTraceSpaceBasedManager<DBTrace
 
 		loadPrototypes();
 		loadSpaces();
-	}
-
-	private void undefinedRemovedFromCache(
-			RemovalNotification<AddressSnap, UndefinedDBTraceData> rn) {
-		// Do nothing
 	}
 
 	// Internal

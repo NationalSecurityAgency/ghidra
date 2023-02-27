@@ -13,26 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package generic;
+package ghidra.util;
 
 import java.util.Collection;
-import java.util.Iterator;
+import java.util.Comparator;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
-public class CatenatedCollection<E> extends AbstractUnionedCollection<E> {
-
-	public CatenatedCollection(Collection<? extends Collection<? extends E>> collections) {
-		super(collections);
-	}
-
-	@SafeVarargs
-	public CatenatedCollection(Collection<? extends E>... collections) {
-		super(collections);
-	}
-
-	@Override
-	public Iterator<E> iterator() {
-		Stream<E> flat = collections.stream().flatMap(Collection::stream);
-		return flat.iterator();
+public enum StreamUtils {
+	;
+	@SuppressWarnings("unchecked")
+	public static <T> Stream<T> merge(Collection<? extends Stream<? extends T>> streams,
+			Comparator<? super T> comparator) {
+		if (streams.size() == 1) {
+			return (Stream<T>) streams.iterator().next();
+		}
+		return StreamSupport.stream(new MergeSortingSpliterator<>(
+			streams.stream().map(s -> s.spliterator()).toList(), comparator), false);
 	}
 }

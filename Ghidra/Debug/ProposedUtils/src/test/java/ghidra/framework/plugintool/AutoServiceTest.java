@@ -17,10 +17,11 @@ package ghidra.framework.plugintool;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.List;
+
 import org.junit.*;
 
 import ghidra.MiscellaneousPluginPackage;
-import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.annotation.AutoServiceConsumed;
 import ghidra.framework.plugintool.annotation.AutoServiceProvided;
 import ghidra.framework.plugintool.util.PluginStatus;
@@ -37,14 +38,13 @@ public class AutoServiceTest extends AbstractGhidraHeadedIntegrationTest {
 		// Nothing to implement
 	}
 
-	@PluginInfo( //
-			category = "Testing", //
-			description = "A class for testing auto services", //
-			packageName = MiscellaneousPluginPackage.NAME, //
-			shortDescription = "Service-annotated plugin", //
-			status = PluginStatus.HIDDEN, //
-			servicesProvided = TestService.class //
-	)
+	@PluginInfo(
+		category = "Testing",
+		description = "A class for testing auto services",
+		packageName = MiscellaneousPluginPackage.NAME,
+		shortDescription = "Service-annotated plugin",
+		status = PluginStatus.HIDDEN,
+		servicesProvided = TestService.class)
 	public static class AnnotatedServicesProvidedPlugin extends Plugin {
 		@AutoServiceProvided(iface = TestService.class)
 		private final TestServiceImpl testService = new TestServiceImpl();
@@ -57,13 +57,12 @@ public class AutoServiceTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 	}
 
-	@PluginInfo( //
-			category = "Testing", //
-			description = "A dummy plugin for order testing", //
-			packageName = MiscellaneousPluginPackage.NAME,  //
-			shortDescription = "Dummy plugin", //
-			status = PluginStatus.HIDDEN //
-	)
+	@PluginInfo(
+		category = "Testing",
+		description = "A dummy plugin for order testing",
+		packageName = MiscellaneousPluginPackage.NAME,
+		shortDescription = "Dummy plugin",
+		status = PluginStatus.HIDDEN)
 	public static class DummyPlugin extends Plugin {
 		public DummyPlugin(PluginTool tool) {
 			super(tool);
@@ -158,7 +157,7 @@ public class AutoServiceTest extends AbstractGhidraHeadedIntegrationTest {
 			new AnnotatedServicesConsumedByFieldComponent(plugin);
 
 		assertEquals(plugin.testService, comp.testService);
-		tool.removePlugins(new Plugin[] { plugin });
+		tool.removePlugins(List.of(plugin));
 		assertEquals(null, comp.testService);
 	}
 }

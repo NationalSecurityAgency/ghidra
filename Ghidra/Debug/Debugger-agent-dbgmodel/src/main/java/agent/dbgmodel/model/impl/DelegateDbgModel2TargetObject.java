@@ -68,6 +68,7 @@ import ghidra.dbg.target.TargetStack;
 import ghidra.dbg.target.TargetStackFrame;
 import ghidra.dbg.target.TargetThread;
 import ghidra.dbg.util.PathUtils;
+import ghidra.util.datastruct.ListenerMap.ListenerEntry;
 import ghidra.util.datastruct.ListenerSet;
 
 public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl implements //
@@ -210,8 +211,8 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 	private final ListenerSet<TargetBreakpointAction> breakpointActions =
 		new ListenerSet<>(TargetBreakpointAction.class) {
 			// Use strong references on actions
-			protected Map<TargetBreakpointAction, TargetBreakpointAction> createMap() {
-				return Collections.synchronizedMap(new LinkedHashMap<>());
+			protected Map<TargetBreakpointAction, ListenerEntry<? extends TargetBreakpointAction>> createMap() {
+				return new LinkedHashMap<>();
 			};
 		};
 

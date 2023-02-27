@@ -334,7 +334,7 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 		synchronized (traceBreaks) {
 			breaks = traceBreaks.get(trace);
 		}
-		return breaks == null ? Set.of() : new HashSet<>(breaks.getBreakpoints());
+		return breaks == null ? Set.of() : breaks.getBreakpoints();
 	}
 
 	@Override

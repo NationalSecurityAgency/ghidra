@@ -17,7 +17,6 @@ package agent.dbgeng.impl.dbgeng.registers;
 
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Guid.REFIID;
 
@@ -38,13 +37,12 @@ public interface DebugRegistersInternal extends DebugRegisters {
 		return DbgEngUtil.lazyWeakCache(CACHE, registers, DebugRegistersImpl2::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIDebugRegisters>> PREFERRED_REGISTERS_IIDS_BUILDER =
-		ImmutableMap.builder();
 	Map<REFIID, Class<? extends WrapIDebugRegisters>> PREFERRED_REGISTERS_IIDS =
-		PREFERRED_REGISTERS_IIDS_BUILDER // 
-				.put(new REFIID(IDebugRegisters2.IID_IDEBUG_REGISTERS2), WrapIDebugRegisters2.class) //
-				.put(new REFIID(IDebugRegisters.IID_IDEBUG_REGISTERS), WrapIDebugRegisters.class) //
-				.build();
+		Map.ofEntries(
+			Map.entry(new REFIID(IDebugRegisters2.IID_IDEBUG_REGISTERS2),
+				WrapIDebugRegisters2.class),
+			Map.entry(new REFIID(IDebugRegisters.IID_IDEBUG_REGISTERS),
+				WrapIDebugRegisters.class));
 
 	static DebugRegistersInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
 		return DbgEngUtil.tryPreferredInterfaces(DebugRegistersInternal.class,

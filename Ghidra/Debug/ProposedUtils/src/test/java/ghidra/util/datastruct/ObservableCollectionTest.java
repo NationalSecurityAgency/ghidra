@@ -24,10 +24,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.After;
 import org.junit.Test;
 
-import com.google.common.collect.ImmutableList;
-
-import ghidra.util.datastruct.CollectionChangeListener;
-import ghidra.util.datastruct.DefaultObservableCollection;
 import ghidra.util.datastruct.ObservableCollection.ChangeAggregator;
 
 public class ObservableCollectionTest {
@@ -91,12 +87,12 @@ public class ObservableCollectionTest {
 		assertTrue(col.remove("Ent1"));
 		assertFalse(col.contains("Ent1"));
 		assertEquals(1, col.size());
-		assertTrue(col.addAll(ImmutableList.of("Ent1", "Ent3")));
-		assertFalse(col.addAll(ImmutableList.of("Ent2", "Ent1")));
-		assertTrue(col.removeAll(ImmutableList.of("Ent1", "Ent2", "Ent3")));
+		assertTrue(col.addAll(List.of("Ent1", "Ent3")));
+		assertFalse(col.addAll(List.of("Ent2", "Ent1")));
+		assertTrue(col.removeAll(List.of("Ent1", "Ent2", "Ent3")));
 		assertTrue(col.isEmpty());
-		assertTrue(col.addAll(ImmutableList.of("Ent2", "Ent3")));
-		assertTrue(col.retainAll(ImmutableList.of("Ent2", "Ent1")));
+		assertTrue(col.addAll(List.of("Ent2", "Ent3")));
+		assertTrue(col.retainAll(List.of("Ent2", "Ent1")));
 		assertTrue(col.contains("Ent2"));
 		assertEquals(1, col.size());
 		col.clear();
@@ -143,7 +139,7 @@ public class ObservableCollectionTest {
 	@Test
 	public void testRemoveViaIteratorCausesEvent() {
 		TestObservableCollection col = new TestObservableCollection();
-		col.addAll(ImmutableList.of("Ent1", "Ent2", "Ent3"));
+		col.addAll(List.of("Ent1", "Ent2", "Ent3"));
 		AtomicReference<Object> lastRemoved = new AtomicReference<>();
 		TestCollectionListener listener = new DefaultTestCollectionListener() {
 			@Override
@@ -171,17 +167,17 @@ public class ObservableCollectionTest {
 			}
 		};
 		col.addChangeListener(listener);
-		assertTrue(col.addAll(ImmutableList.of("Ent1", "Ent2")));
-		assertTrue(col.addAll(ImmutableList.of("Ent3", "Ent2")));
-		assertTrue(col.addAll(ImmutableList.of("Ent3", "Ent4")));
-		assertFalse(col.addAll(ImmutableList.of("Ent1", "Ent2")));
-		assertEquals(ImmutableList.of("Ent1", "Ent2", "Ent3", "Ent4"), added);
+		assertTrue(col.addAll(List.of("Ent1", "Ent2")));
+		assertTrue(col.addAll(List.of("Ent3", "Ent2")));
+		assertTrue(col.addAll(List.of("Ent3", "Ent4")));
+		assertFalse(col.addAll(List.of("Ent1", "Ent2")));
+		assertEquals(List.of("Ent1", "Ent2", "Ent3", "Ent4"), added);
 	}
 
 	@Test
 	public void testRemovalAllCausesEvent() {
 		TestObservableCollection col = new TestObservableCollection();
-		col.addAll(ImmutableList.of("Ent1", "Ent2", "Ent3", "Ent4"));
+		col.addAll(List.of("Ent1", "Ent2", "Ent3", "Ent4"));
 		List<Object> removed = new ArrayList<>();
 		TestCollectionListener listener = new DefaultTestCollectionListener() {
 			@Override
@@ -190,17 +186,17 @@ public class ObservableCollectionTest {
 			}
 		};
 		col.addChangeListener(listener);
-		assertTrue(col.removeAll(ImmutableList.of("Ent1", "Ent2")));
-		assertTrue(col.removeAll(ImmutableList.of("Ent3", "Ent2")));
-		assertTrue(col.removeAll(ImmutableList.of("Ent3", "Ent4")));
-		assertFalse(col.removeAll(ImmutableList.of("Ent1", "Ent2")));
-		assertEquals(ImmutableList.of("Ent1", "Ent2", "Ent3", "Ent4"), removed);
+		assertTrue(col.removeAll(List.of("Ent1", "Ent2")));
+		assertTrue(col.removeAll(List.of("Ent3", "Ent2")));
+		assertTrue(col.removeAll(List.of("Ent3", "Ent4")));
+		assertFalse(col.removeAll(List.of("Ent1", "Ent2")));
+		assertEquals(List.of("Ent1", "Ent2", "Ent3", "Ent4"), removed);
 	}
 
 	@Test
 	public void testRetailAllCausesEvent() {
 		TestObservableCollection col = new TestObservableCollection();
-		col.addAll(ImmutableList.of("Ent1", "Ent2", "Ent3", "Ent4"));
+		col.addAll(List.of("Ent1", "Ent2", "Ent3", "Ent4"));
 		List<Object> removed = new ArrayList<>();
 		TestCollectionListener listener = new DefaultTestCollectionListener() {
 			@Override
@@ -209,17 +205,17 @@ public class ObservableCollectionTest {
 			}
 		};
 		col.addChangeListener(listener);
-		assertTrue(col.retainAll(ImmutableList.of("Ent3", "Ent4")));
-		assertTrue(col.retainAll(ImmutableList.of("Ent4", "Ent1")));
-		assertTrue(col.retainAll(ImmutableList.of("Ent1", "Ent2")));
-		assertFalse(col.retainAll(ImmutableList.of("Ent3", "Ent4")));
-		assertEquals(ImmutableList.of("Ent1", "Ent2", "Ent3", "Ent4"), removed);
+		assertTrue(col.retainAll(List.of("Ent3", "Ent4")));
+		assertTrue(col.retainAll(List.of("Ent4", "Ent1")));
+		assertTrue(col.retainAll(List.of("Ent1", "Ent2")));
+		assertFalse(col.retainAll(List.of("Ent3", "Ent4")));
+		assertEquals(List.of("Ent1", "Ent2", "Ent3", "Ent4"), removed);
 	}
 
 	@Test
 	public void testClearCausesEvent() {
 		TestObservableCollection col = new TestObservableCollection();
-		col.addAll(ImmutableList.of("Ent1", "Ent2", "Ent3", "Ent4"));
+		col.addAll(List.of("Ent1", "Ent2", "Ent3", "Ent4"));
 		List<Object> removed = new ArrayList<>();
 		TestCollectionListener listener = new DefaultTestCollectionListener() {
 			@Override
@@ -229,7 +225,7 @@ public class ObservableCollectionTest {
 		};
 		col.addChangeListener(listener);
 		col.clear();
-		assertEquals(ImmutableList.of("Ent1", "Ent2", "Ent3", "Ent4"), removed);
+		assertEquals(List.of("Ent1", "Ent2", "Ent3", "Ent4"), removed);
 	}
 
 	@Test
@@ -246,7 +242,7 @@ public class ObservableCollectionTest {
 		col.addChangeListener(listener);
 		col.notifyModified("Ent1");
 		col.notifyModified("Ent1");
-		assertEquals(ImmutableList.of("Ent1", "Ent1"), modified);
+		assertEquals(List.of("Ent1", "Ent1"), modified);
 	}
 
 	@Test
@@ -282,9 +278,9 @@ public class ObservableCollectionTest {
 		col.addChangeListener(listener);
 		try (ChangeAggregator changes = col.aggregateChanges()) {
 			assertTrue(col.add("Ent1"));
-			assertEquals(ImmutableList.of(), added);
+			assertEquals(List.of(), added);
 		}
-		assertEquals(ImmutableList.of("Ent1"), added);
+		assertEquals(List.of("Ent1"), added);
 	}
 
 	@Test
@@ -301,9 +297,9 @@ public class ObservableCollectionTest {
 		try (ChangeAggregator changes = col.aggregateChanges()) {
 			assertTrue(col.add("Ent1"));
 			assertTrue(col.add("Ent2"));
-			assertEquals(ImmutableList.of(), added);
+			assertEquals(List.of(), added);
 		}
-		assertEquals(ImmutableList.of("Ent1", "Ent2"), added);
+		assertEquals(List.of("Ent1", "Ent2"), added);
 	}
 
 	@Test
@@ -320,9 +316,9 @@ public class ObservableCollectionTest {
 		try (ChangeAggregator changes = col.aggregateChanges()) {
 			assertTrue(col.add("Ent1"));
 			assertFalse(col.add("Ent1"));
-			assertEquals(ImmutableList.of(), added);
+			assertEquals(List.of(), added);
 		}
-		assertEquals(ImmutableList.of("Ent1"), added);
+		assertEquals(List.of("Ent1"), added);
 	}
 
 	@Test
@@ -339,9 +335,9 @@ public class ObservableCollectionTest {
 		try (ChangeAggregator changes = col.aggregateChanges()) {
 			assertTrue(col.add("Ent1"));
 			col.notifyModified("Ent1");
-			assertEquals(ImmutableList.of(), added);
+			assertEquals(List.of(), added);
 		}
-		assertEquals(ImmutableList.of("Ent1"), added);
+		assertEquals(List.of("Ent1"), added);
 	}
 
 	@Test
@@ -357,11 +353,11 @@ public class ObservableCollectionTest {
 		col.addChangeListener(listener);
 		try (ChangeAggregator changes = col.aggregateChanges()) {
 			assertTrue(col.add("Ent1"));
-			assertEquals(ImmutableList.of(), added);
+			assertEquals(List.of(), added);
 			assertTrue(col.remove("Ent1"));
-			assertEquals(ImmutableList.of(), added);
+			assertEquals(List.of(), added);
 		}
-		assertEquals(ImmutableList.of(), added);
+		assertEquals(List.of(), added);
 	}
 
 	@Test
@@ -378,11 +374,11 @@ public class ObservableCollectionTest {
 		col.addChangeListener(listener);
 		try (ChangeAggregator changes = col.aggregateChanges()) {
 			col.notifyModified("Ent1");
-			assertEquals(ImmutableList.of(), modified);
+			assertEquals(List.of(), modified);
 			assertFalse(col.add("Ent1"));
-			assertEquals(ImmutableList.of(), modified);
+			assertEquals(List.of(), modified);
 		}
-		assertEquals(ImmutableList.of("Ent1"), modified);
+		assertEquals(List.of("Ent1"), modified);
 	}
 
 	@Test
@@ -399,11 +395,11 @@ public class ObservableCollectionTest {
 		col.addChangeListener(listener);
 		try (ChangeAggregator changes = col.aggregateChanges()) {
 			col.notifyModified("Ent1");
-			assertEquals(ImmutableList.of(), modified);
+			assertEquals(List.of(), modified);
 			col.notifyModified("Ent1");
-			assertEquals(ImmutableList.of(), modified);
+			assertEquals(List.of(), modified);
 		}
-		assertEquals(ImmutableList.of("Ent1"), modified);
+		assertEquals(List.of("Ent1"), modified);
 	}
 
 	@Test
@@ -420,11 +416,11 @@ public class ObservableCollectionTest {
 		col.addChangeListener(listener);
 		try (ChangeAggregator changes = col.aggregateChanges()) {
 			col.notifyModified("Ent1");
-			assertEquals(ImmutableList.of(), removed);
+			assertEquals(List.of(), removed);
 			assertTrue(col.remove("Ent1"));
-			assertEquals(ImmutableList.of(), removed);
+			assertEquals(List.of(), removed);
 		}
-		assertEquals(ImmutableList.of("Ent1"), removed);
+		assertEquals(List.of("Ent1"), removed);
 	}
 
 	@Test
@@ -441,11 +437,11 @@ public class ObservableCollectionTest {
 		col.addChangeListener(listener);
 		try (ChangeAggregator changes = col.aggregateChanges()) {
 			assertTrue(col.remove("Ent1"));
-			assertEquals(ImmutableList.of(), modified);
+			assertEquals(List.of(), modified);
 			assertTrue(col.add("Ent1"));
-			assertEquals(ImmutableList.of(), modified);
+			assertEquals(List.of(), modified);
 		}
-		assertEquals(ImmutableList.of("Ent1"), modified);
+		assertEquals(List.of("Ent1"), modified);
 	}
 
 	@Test(expected = AssertionError.class)
@@ -462,7 +458,7 @@ public class ObservableCollectionTest {
 		col.addChangeListener(listener);
 		try (ChangeAggregator changes = col.aggregateChanges()) {
 			assertTrue(col.remove("Ent1"));
-			assertEquals(ImmutableList.of(), removed);
+			assertEquals(List.of(), removed);
 			col.notifyModified("Ent1");
 		}
 	}
@@ -481,11 +477,11 @@ public class ObservableCollectionTest {
 		col.addChangeListener(listener);
 		try (ChangeAggregator changes = col.aggregateChanges()) {
 			assertTrue(col.remove("Ent1"));
-			assertEquals(ImmutableList.of(), removed);
+			assertEquals(List.of(), removed);
 			assertFalse(col.remove("Ent1"));
-			assertEquals(ImmutableList.of(), removed);
+			assertEquals(List.of(), removed);
 		}
-		assertEquals(ImmutableList.of("Ent1"), removed);
+		assertEquals(List.of("Ent1"), removed);
 	}
 
 	@Test
@@ -501,14 +497,14 @@ public class ObservableCollectionTest {
 		col.addChangeListener(listener);
 		try (ChangeAggregator changesOuter = col.aggregateChanges()) {
 			assertTrue(col.add("Ent1"));
-			assertEquals(ImmutableList.of(), added);
+			assertEquals(List.of(), added);
 			try (ChangeAggregator changesInner = col.aggregateChanges()) {
 				assertTrue(col.add("Ent2"));
-				assertEquals(ImmutableList.of(), added);
+				assertEquals(List.of(), added);
 			}
 			assertTrue(col.add("Ent3"));
-			assertEquals(ImmutableList.of(), added);
+			assertEquals(List.of(), added);
 		}
-		assertEquals(ImmutableList.of("Ent1", "Ent2", "Ent3"), added);
+		assertEquals(List.of("Ent1", "Ent2", "Ent3"), added);
 	}
 }

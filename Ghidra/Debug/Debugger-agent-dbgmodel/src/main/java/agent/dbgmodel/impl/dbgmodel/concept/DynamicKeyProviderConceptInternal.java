@@ -17,7 +17,6 @@ package agent.dbgmodel.impl.dbgmodel.concept;
 
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Guid.REFIID;
 
@@ -35,13 +34,10 @@ public interface DynamicKeyProviderConceptInternal extends DynamicKeyProviderCon
 		return DbgModelUtil.lazyWeakCache(CACHE, data, DynamicKeyProviderConceptImpl::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIDynamicKeyProviderConcept>> PREFERRED_DATA_SPACES_IIDS_BUILDER =
-		ImmutableMap.builder();
 	Map<REFIID, Class<? extends WrapIDynamicKeyProviderConcept>> PREFERRED_DATA_SPACES_IIDS =
-		PREFERRED_DATA_SPACES_IIDS_BUILDER //
-				.put(new REFIID(IDynamicKeyProviderConcept.IID_IDYNAMIC_KEY_PROVIDER_CONCEPT),
-					WrapIDynamicKeyProviderConcept.class) //
-				.build();
+		Map.ofEntries(
+			Map.entry(new REFIID(IDynamicKeyProviderConcept.IID_IDYNAMIC_KEY_PROVIDER_CONCEPT),
+				WrapIDynamicKeyProviderConcept.class));
 
 	static DynamicKeyProviderConceptInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
 		return DbgModelUtil.tryPreferredInterfaces(DynamicKeyProviderConceptInternal.class,

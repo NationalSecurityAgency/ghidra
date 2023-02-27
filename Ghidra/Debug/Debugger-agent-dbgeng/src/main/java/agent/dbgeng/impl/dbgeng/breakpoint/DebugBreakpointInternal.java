@@ -17,7 +17,6 @@ package agent.dbgeng.impl.dbgeng.breakpoint;
 
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Guid.REFIID;
 
@@ -43,16 +42,14 @@ public interface DebugBreakpointInternal extends DebugBreakpoint {
 		return DbgEngUtil.lazyWeakCache(CACHE, bp, DebugBreakpointImpl3::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIDebugBreakpoint>> PREFERRED_BREAKPOINT_IIDS_BUILDER =
-		ImmutableMap.builder();
 	Map<REFIID, Class<? extends WrapIDebugBreakpoint>> PREFERRED_BREAKPOINT_IIDS =
-		PREFERRED_BREAKPOINT_IIDS_BUILDER //
-				.put(new REFIID(IDebugBreakpoint3.IID_IDEBUG_BREAKPOINT3),
-					WrapIDebugBreakpoint3.class) //
-				.put(new REFIID(IDebugBreakpoint2.IID_IDEBUG_BREAKPOINT2),
-					WrapIDebugBreakpoint2.class) //
-				.put(new REFIID(IDebugBreakpoint.IID_IDEBUG_BREAKPOINT), WrapIDebugBreakpoint.class) //
-				.build();
+		Map.ofEntries(
+			Map.entry(new REFIID(IDebugBreakpoint3.IID_IDEBUG_BREAKPOINT3),
+				WrapIDebugBreakpoint3.class),
+			Map.entry(new REFIID(IDebugBreakpoint2.IID_IDEBUG_BREAKPOINT2),
+				WrapIDebugBreakpoint2.class),
+			Map.entry(new REFIID(IDebugBreakpoint.IID_IDEBUG_BREAKPOINT),
+				WrapIDebugBreakpoint.class));
 
 	static DebugBreakpointInternal tryPreferredInterfaces(DebugControlInternal control,
 			InterfaceSupplier supplier) {

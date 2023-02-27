@@ -32,11 +32,10 @@ import java.util.function.Consumer;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
+import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.*;
-
-import com.google.common.collect.Iterators;
 
 import db.DBHandle;
 import db.DBRecord;
@@ -725,11 +724,13 @@ public class RStarTreeMapTest {
 	@Test
 	public void testQueryIntersecting() {
 		List<IntRect> expected = new ArrayList<>();
-		Iterators.filter(allRects(range), queryRect::intersects).forEachRemaining(expected::add);
+		IteratorUtils.filteredIterator(allRects(range), queryRect::intersects)
+				.forEachRemaining(expected::add);
 
 		IntRectQuery query = IntRectQuery.intersecting(queryRect);
 		List<IntRect> actual = new ArrayList<>();
-		Iterators.filter(allRects(range), query::testData).forEachRemaining(actual::add);
+		IteratorUtils.filteredIterator(allRects(range), query::testData)
+				.forEachRemaining(actual::add);
 
 		assertEquals(expected, actual);
 	}
@@ -737,11 +738,13 @@ public class RStarTreeMapTest {
 	@Test
 	public void testQueryEnclosing() {
 		List<IntRect> expected = new ArrayList<>();
-		Iterators.filter(allRects(range), queryRect::enclosedBy).forEachRemaining(expected::add);
+		IteratorUtils.filteredIterator(allRects(range), queryRect::enclosedBy)
+				.forEachRemaining(expected::add);
 
 		IntRectQuery query = IntRectQuery.enclosing(queryRect);
 		List<IntRect> actual = new ArrayList<>();
-		Iterators.filter(allRects(range), query::testData).forEachRemaining(actual::add);
+		IteratorUtils.filteredIterator(allRects(range), query::testData)
+				.forEachRemaining(actual::add);
 
 		assertEquals(expected, actual);
 	}
@@ -749,11 +752,13 @@ public class RStarTreeMapTest {
 	@Test
 	public void testQueryEnclosed() {
 		List<IntRect> expected = new ArrayList<>();
-		Iterators.filter(allRects(range), queryRect::encloses).forEachRemaining(expected::add);
+		IteratorUtils.filteredIterator(allRects(range), queryRect::encloses)
+				.forEachRemaining(expected::add);
 
 		IntRectQuery query = IntRectQuery.enclosed(queryRect);
 		List<IntRect> actual = new ArrayList<>();
-		Iterators.filter(allRects(range), query::testData).forEachRemaining(actual::add);
+		IteratorUtils.filteredIterator(allRects(range), query::testData)
+				.forEachRemaining(actual::add);
 
 		assertEquals(expected, actual);
 	}
@@ -763,7 +768,7 @@ public class RStarTreeMapTest {
 		IntRect queryRect1 = rect(1, 1, 12, 13);
 		IntRect queryRect2 = rect(4, 4, 12, 13);
 		List<IntRect> expected = new ArrayList<>();
-		Iterators.filter(allRects(range),
+		IteratorUtils.filteredIterator(allRects(range),
 			r -> queryRect1.intersects(r) && queryRect2.intersects(r))
 				.forEachRemaining(
 					expected::add);
@@ -773,7 +778,8 @@ public class RStarTreeMapTest {
 		IntRectQuery query =
 			IntRectQuery.intersecting(queryRect1).and(IntRectQuery.intersecting(queryRect2));
 		List<IntRect> actual = new ArrayList<>();
-		Iterators.filter(allRects(range), query::testData).forEachRemaining(actual::add);
+		IteratorUtils.filteredIterator(allRects(range), query::testData)
+				.forEachRemaining(actual::add);
 
 		assertEquals(expected, actual);
 	}

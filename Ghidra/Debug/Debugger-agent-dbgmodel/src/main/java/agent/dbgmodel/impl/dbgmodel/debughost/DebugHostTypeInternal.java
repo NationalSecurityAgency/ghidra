@@ -17,7 +17,6 @@ package agent.dbgmodel.impl.dbgmodel.debughost;
 
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Guid.REFIID;
 
@@ -38,13 +37,10 @@ public interface DebugHostTypeInternal extends DebugHostType1 {
 		return DbgModelUtil.lazyWeakCache(CACHE, data, DebugHostTypeImpl2::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIDebugHostType1>> PREFERRED_DATA_SPACES_IIDS_BUILDER =
-		ImmutableMap.builder();
 	Map<REFIID, Class<? extends WrapIDebugHostType1>> PREFERRED_DATA_SPACES_IIDS =
-		PREFERRED_DATA_SPACES_IIDS_BUILDER //
-				.put(new REFIID(IDebugHostType2.IID_IDEBUG_HOST_TYPE2), WrapIDebugHostType2.class) //
-				.put(new REFIID(IDebugHostType1.IID_IDEBUG_HOST_TYPE), WrapIDebugHostType1.class) //
-				.build();
+		Map.ofEntries(
+			Map.entry(new REFIID(IDebugHostType2.IID_IDEBUG_HOST_TYPE2), WrapIDebugHostType2.class),
+			Map.entry(new REFIID(IDebugHostType1.IID_IDEBUG_HOST_TYPE), WrapIDebugHostType1.class));
 
 	static DebugHostTypeInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
 		return DbgModelUtil.tryPreferredInterfaces(DebugHostTypeInternal.class,

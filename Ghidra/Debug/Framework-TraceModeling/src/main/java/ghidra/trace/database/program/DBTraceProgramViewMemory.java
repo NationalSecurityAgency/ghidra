@@ -19,28 +19,19 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import com.google.common.cache.CacheBuilder;
-
 import ghidra.program.model.address.*;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.util.LockHold;
+import ghidra.util.datastruct.WeakValueHashMap;
 
 public class DBTraceProgramViewMemory extends AbstractDBTraceProgramViewMemory {
 
 	// NB. Keep both per-region and force-full (per-space) block sets ready
 	private final Map<TraceMemoryRegion, DBTraceProgramViewMemoryRegionBlock> regionBlocks =
-		CacheBuilder.newBuilder()
-				.removalListener(this::regionBlockRemoved)
-				.weakValues()
-				.build()
-				.asMap();
+		new WeakValueHashMap<>();
 	private final Map<AddressSpace, DBTraceProgramViewMemorySpaceBlock> spaceBlocks =
-		CacheBuilder.newBuilder()
-				.removalListener(this::spaceBlockRemoved)
-				.weakValues()
-				.build()
-				.asMap();
+		new WeakValueHashMap<>();
 
 	public DBTraceProgramViewMemory(DBTraceProgramView program) {
 		super(program);

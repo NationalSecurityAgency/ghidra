@@ -16,11 +16,10 @@
 package generic.theme;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-
-import com.google.common.io.Files;
 
 /**
  * Writes a theme to a file either as a single theme file or as a zip file that contains the theme
@@ -125,7 +124,7 @@ public class ThemeWriter {
 	private void copyToZipFile(String dir, File iconFile, ZipOutputStream zos) throws IOException {
 		ZipEntry entry = new ZipEntry(dir + "images/" + iconFile.getName());
 		zos.putNextEntry(entry);
-		Files.copy(iconFile, zos);
+		Files.copy(iconFile.toPath(), zos);
 	}
 
 	private void saveThemeFileToZip(String dir, ZipOutputStream zos) throws IOException {

@@ -20,12 +20,10 @@ import java.util.Map.Entry;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.RemovalNotification;
-
 import ghidra.program.model.address.*;
 import ghidra.trace.database.DBTraceCacheForContainingQueries.GetKey;
 import ghidra.trace.model.*;
+import ghidra.util.datastruct.FixedSizeHashMap;
 
 public abstract class DBTraceCacheForContainingQueries<K extends GetKey, V, T> {
 	public static class GetKey {
@@ -73,16 +71,7 @@ public abstract class DBTraceCacheForContainingQueries<K extends GetKey, V, T> {
 	public DBTraceCacheForContainingQueries(int snapBreadth, int addressBreadth, int maxPoints) {
 		this.snapBreadth = snapBreadth;
 		this.addressBreadth = addressBreadth;
-		this.pointCache = CacheBuilder.newBuilder()
-				.removalListener(this::getContainingRemoved)
-				.maximumSize(maxPoints)
-				.concurrencyLevel(2)
-				.build()
-				.asMap();
-	}
-
-	private void getContainingRemoved(RemovalNotification<K, V> rn) {
-		// Nothing
+		this.pointCache = new FixedSizeHashMap<>(maxPoints);
 	}
 
 	protected abstract void loadRangeCache(TraceAddressSnapRange range);

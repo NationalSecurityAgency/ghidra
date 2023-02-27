@@ -18,8 +18,6 @@ package agent.gdb.manager.reason;
 import java.util.Map;
 import java.util.function.Function;
 
-import com.google.common.collect.ImmutableMap;
-
 import agent.gdb.manager.GdbState;
 import agent.gdb.manager.parsing.GdbMiParser.GdbMiFieldList;
 import ghidra.util.Msg;
@@ -38,13 +36,12 @@ public interface GdbReason {
 	 * A map of reason strings to reason classes
 	 */
 	static final Map<String, Function<GdbMiFieldList, ? extends GdbReason>> TYPES =
-		new ImmutableMap.Builder<String, Function<GdbMiFieldList, ? extends GdbReason>>()
-				.put("signal-received", GdbSignalReceivedReason::new)
-				.put("breakpoint-hit", GdbBreakpointHitReason::new)
-				.put("end-stepping-range", GdbEndSteppingRangeReason::new)
-				.put("exited", GdbExitedReason::new)
-				.put("exited-normally", GdbExitNormallyReason::new)
-				.build();
+		Map.ofEntries(
+			Map.entry("signal-received", GdbSignalReceivedReason::new),
+			Map.entry("breakpoint-hit", GdbBreakpointHitReason::new),
+			Map.entry("end-stepping-range", GdbEndSteppingRangeReason::new),
+			Map.entry("exited", GdbExitedReason::new),
+			Map.entry("exited-normally", GdbExitNormallyReason::new));
 
 	/**
 	 * Reasons other than those given by GDB

@@ -18,10 +18,8 @@ package ghidra.trace.database.symbol;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.Collections2;
-
-import generic.CatenatedCollection;
 import ghidra.trace.model.symbol.*;
+import ghidra.util.LazyCollection;
 import ghidra.util.MergeSortingIterator;
 
 public class DBTraceSymbolMultipleTypesView<T extends AbstractDBTraceSymbol>
@@ -49,30 +47,30 @@ public class DBTraceSymbolMultipleTypesView<T extends AbstractDBTraceSymbol>
 
 	@Override
 	public Collection<? extends T> getAll(boolean includeDynamicSymbols) {
-		return new CatenatedCollection<>(
-			Collections2.transform(parts, p -> p.getAll(includeDynamicSymbols)));
+		return new LazyCollection<>(
+			() -> parts.stream().flatMap(p -> p.getAll(includeDynamicSymbols).stream()));
 	}
 
 	@Override
 	public Collection<? extends T> getChildrenNamed(String name, TraceNamespaceSymbol parent) {
-		return new CatenatedCollection<>(
-			Collections2.transform(parts, p -> p.getChildrenNamed(name, parent)));
+		return parts.stream().flatMap(p -> p.getChildrenNamed(name, parent).stream()).toList();
 	}
 
 	@Override
 	public Collection<? extends T> getChildren(TraceNamespaceSymbol parent) {
-		return new CatenatedCollection<>(Collections2.transform(parts, p -> p.getChildren(parent)));
+		return new LazyCollection<>(
+			() -> parts.stream().flatMap(p -> p.getChildren(parent).stream()));
 	}
 
 	@Override
 	public Collection<? extends T> getNamed(String name) {
-		return new CatenatedCollection<>(Collections2.transform(parts, p -> p.getNamed(name)));
+		return parts.stream().flatMap(p -> p.getNamed(name).stream()).toList();
 	}
 
 	@Override
 	public Collection<? extends T> getWithMatchingName(String glob, boolean caseSensitive) {
-		return new CatenatedCollection<>(
-			Collections2.transform(parts, p -> p.getWithMatchingName(glob, caseSensitive)));
+		return new LazyCollection<>(() -> parts.stream()
+				.flatMap(p -> p.getWithMatchingName(glob, caseSensitive).stream()));
 	}
 
 	@Override

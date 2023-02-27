@@ -18,9 +18,7 @@ package ghidra.trace.database.program;
 import java.nio.ByteBuffer;
 import java.util.*;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.RemovalNotification;
-import com.google.common.collect.Iterators;
+import org.apache.commons.collections4.IteratorUtils;
 
 import generic.NestedIterator;
 import ghidra.program.database.ProgramDB;
@@ -51,6 +49,7 @@ import ghidra.trace.model.symbol.TraceFunctionSymbol;
 import ghidra.trace.util.*;
 import ghidra.util.*;
 import ghidra.util.AddressIteratorAdapter;
+import ghidra.util.datastruct.WeakValueHashMap;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
@@ -84,12 +83,7 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 		new HashMap<>();
 
 	protected final Map<AddressSnap, UndefinedDBTraceData> undefinedCache =
-		CacheBuilder.newBuilder()
-				.removalListener(
-					this::undefinedRemovedFromCache)
-				.weakValues()
-				.build()
-				.asMap();
+		new WeakValueHashMap<>();
 
 	public AbstractDBTraceProgramViewListing(DBTraceProgramView program,
 			TraceCodeOperations codeOperations) {
@@ -99,11 +93,6 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 		this.platform = program.trace.getPlatformManager().getHostPlatform();
 
 		this.rootModule = new DBTraceProgramViewRootModule(this);
-	}
-
-	private void undefinedRemovedFromCache(
-			RemovalNotification<AddressSnap, UndefinedDBTraceData> rn) {
-		// Do nothing
 	}
 
 	@Override
@@ -165,7 +154,7 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 
 	protected <T extends TraceCodeUnit> Iterator<T> getTopCodeIterator(
 			java.util.function.Function<Long, Iterator<T>> iterFunc, boolean forward) {
-		return Iterators.filter(
+		return IteratorUtils.filteredIterator(
 			program.viewport.mergedIterator(iterFunc, getUnitComparator(forward)),
 			cu -> program.isCodeVisible(cu, cu.getLifespan()));
 	}
@@ -239,16 +228,17 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 				defStart = defUnit.getMinAddress();
 			}
 		}
-		Iterator<AddressRange> defIter = Iterators.transform(
+		Iterator<AddressRange> defIter = IteratorUtils.transformedIterator(
 			getDefinedUnitIterator(defStart, forward), u -> u.getRange());
 		AddressRangeIterator undefIter =
 			AddressRangeIterators.subtract(set.iterator(forward), defIter, start, forward);
 		AddressIteratorAdapter undefAddrIter = new AddressIteratorAdapter(undefIter, forward);
-		return Iterators.transform(undefAddrIter.iterator(), a -> doCreateUndefinedUnit(a));
+		return IteratorUtils.transformedIterator(undefAddrIter.iterator(),
+			a -> doCreateUndefinedUnit(a));
 	}
 
 	protected AddressRangeIterator getUndefinedRangeIterator(AddressSetView set, boolean forward) {
-		Iterator<AddressRange> defIter = Iterators.transform(
+		Iterator<AddressRange> defIter = IteratorUtils.transformedIterator(
 			getDefinedUnitIterator(set, forward), u -> u.getRange());
 		return AddressRangeIterators.subtract(set.iterator(forward), defIter,
 			forward ? set.getMinAddress() : set.getMaxAddress(), forward);
@@ -274,7 +264,8 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 	protected Iterator<TraceData> getUndefinedDataIterator(AddressSetView set, boolean forward) {
 		AddressRangeIterator undefIter = getUndefinedRangeIterator(set, forward);
 		AddressIteratorAdapter undefAddrIter = new AddressIteratorAdapter(undefIter, forward);
-		return Iterators.transform(undefAddrIter.iterator(), a -> doCreateUndefinedUnit(a));
+		return IteratorUtils.transformedIterator(undefAddrIter.iterator(),
+			a -> doCreateUndefinedUnit(a));
 	}
 
 	protected Iterator<TraceCodeUnit> getCodeUnitIterator(AddressSetView set, boolean forward) {

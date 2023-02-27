@@ -22,8 +22,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.Test;
 
-import ghidra.util.datastruct.ListenerSet;
-
 public class ListenerSetTest {
 	public interface DummyListener {
 		void event(String e);

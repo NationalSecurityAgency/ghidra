@@ -17,7 +17,6 @@ package agent.dbgeng.impl.dbgeng.sysobj;
 
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Guid.REFIID;
 
@@ -46,19 +45,16 @@ public interface DebugSystemObjectsInternal extends DebugSystemObjects {
 		return DbgEngUtil.lazyWeakCache(CACHE, sysobj, DebugSystemObjectsImpl4::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIDebugSystemObjects>> PREFERRED_SYSTEM_OBJECTS_IIDS_BUILDER =
-		ImmutableMap.builder();
 	Map<REFIID, Class<? extends WrapIDebugSystemObjects>> PREFERRED_SYSTEM_OBJECTS_IIDS =
-		PREFERRED_SYSTEM_OBJECTS_IIDS_BUILDER //
-				.put(new REFIID(IDebugSystemObjects4.IID_IDEBUG_SYSTEM_OBJECTS4),
-					WrapIDebugSystemObjects4.class) //
-				.put(new REFIID(IDebugSystemObjects3.IID_IDEBUG_SYSTEM_OBJECTS3),
-					WrapIDebugSystemObjects3.class) //
-				.put(new REFIID(IDebugSystemObjects2.IID_IDEBUG_SYSTEM_OBJECTS2),
-					WrapIDebugSystemObjects2.class) //
-				.put(new REFIID(IDebugSystemObjects.IID_IDEBUG_SYSTEM_OBJECTS),
-					WrapIDebugSystemObjects.class) //
-				.build();
+		Map.ofEntries(
+			Map.entry(new REFIID(IDebugSystemObjects4.IID_IDEBUG_SYSTEM_OBJECTS4),
+				WrapIDebugSystemObjects4.class),
+			Map.entry(new REFIID(IDebugSystemObjects3.IID_IDEBUG_SYSTEM_OBJECTS3),
+				WrapIDebugSystemObjects3.class),
+			Map.entry(new REFIID(IDebugSystemObjects2.IID_IDEBUG_SYSTEM_OBJECTS2),
+				WrapIDebugSystemObjects2.class),
+			Map.entry(new REFIID(IDebugSystemObjects.IID_IDEBUG_SYSTEM_OBJECTS),
+				WrapIDebugSystemObjects.class));
 
 	static DebugSystemObjectsInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
 		return DbgEngUtil.tryPreferredInterfaces(DebugSystemObjectsInternal.class,

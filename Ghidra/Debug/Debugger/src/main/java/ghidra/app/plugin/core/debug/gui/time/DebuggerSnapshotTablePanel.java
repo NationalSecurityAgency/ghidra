@@ -25,8 +25,6 @@ import java.util.function.Function;
 import javax.swing.*;
 import javax.swing.table.*;
 
-import com.google.common.collect.Collections2;
-
 import docking.widgets.table.*;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import ghidra.docking.settings.Settings;
@@ -239,8 +237,8 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 		Collection<? extends TraceSnapshot> snapshots = hideScratch
 				? manager.getSnapshots(0, true, Long.MAX_VALUE, true)
 				: manager.getAllSnapshots();
-		snapshotTableModel.addAll(Collections2.transform(snapshots,
-			s -> new SnapshotRow(currentTrace, s)));
+		snapshotTableModel
+				.addAll(snapshots.stream().map(s -> new SnapshotRow(currentTrace, s)).toList());
 	}
 
 	protected void deleteScratchSnapshots() {
@@ -252,9 +250,10 @@ public class DebuggerSnapshotTablePanel extends JPanel {
 			return;
 		}
 		TraceTimeManager manager = currentTrace.getTimeManager();
-		snapshotTableModel.addAll(Collections2.transform(
-			manager.getSnapshots(Long.MIN_VALUE, true, 0, false),
-			s -> new SnapshotRow(currentTrace, s)));
+		snapshotTableModel.addAll(manager.getSnapshots(Long.MIN_VALUE, true, 0, false)
+				.stream()
+				.map(s -> new SnapshotRow(currentTrace, s))
+				.toList());
 	}
 
 	public ListSelectionModel getSelectionModel() {

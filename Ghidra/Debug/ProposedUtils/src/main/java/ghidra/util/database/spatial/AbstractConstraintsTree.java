@@ -20,10 +20,6 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.Consumer;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.RemovalNotification;
-import com.google.common.collect.Collections2;
-
 import db.DBRecord;
 import generic.NestedIterator;
 import generic.util.PeekableIterator;
@@ -31,6 +27,7 @@ import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.database.spatial.DBTreeNodeRecord.NodeType;
 import ghidra.util.database.spatial.Query.QueryInclusion;
+import ghidra.util.datastruct.FixedSizeHashMap;
 import ghidra.util.exception.VersionException;
 
 public abstract class AbstractConstraintsTree< //
@@ -41,21 +38,15 @@ public abstract class AbstractConstraintsTree< //
 		T, //
 		Q extends Query<DS, NS>> {
 
+	static final int MAX_CACHE_ENTRIES = 50;
+
 	protected final DBCachedObjectStore<DR> dataStore;
 	protected final DBCachedObjectStore<NR> nodeStore;
 
-	protected final Map<Long, Collection<DR>> cachedDataChildren = CacheBuilder.newBuilder()
-			.removalListener(this::cachedDataChildrenRemoved)
-			.concurrencyLevel(4)
-			.maximumSize(50)
-			.build()
-			.asMap();
-	protected final Map<Long, Collection<NR>> cachedNodeChildren = CacheBuilder.newBuilder()
-			.removalListener(this::cachedNodeChildrenRemoved)
-			.concurrencyLevel(4)
-			.maximumSize(50)
-			.build()
-			.asMap();
+	protected final Map<Long, Collection<DR>> cachedDataChildren =
+		new FixedSizeHashMap<>(MAX_CACHE_ENTRIES);
+	protected final Map<Long, Collection<NR>> cachedNodeChildren =
+		new FixedSizeHashMap<>(MAX_CACHE_ENTRIES);
 
 	protected NR root;
 	protected int leafLevel;
@@ -67,14 +58,6 @@ public abstract class AbstractConstraintsTree< //
 			this::createDataEntry, upgradable);
 		this.nodeStore = storeFactory.getOrCreateCachedStore(tableName + "_Nodes", nodeType,
 			this::createNodeEntry, upgradable);
-	}
-
-	private void cachedDataChildrenRemoved(RemovalNotification<Long, Collection<DR>> rn) {
-		// Nothing
-	}
-
-	private void cachedNodeChildrenRemoved(RemovalNotification<Long, Collection<NR>> rn) {
-		// Nothing
 	}
 
 	protected abstract DR createDataEntry(DBCachedObjectStore<DR> store, DBRecord record);
@@ -580,9 +563,10 @@ public abstract class AbstractConstraintsTree< //
 		 * edge of the parent. Furthermore, since an implementation may index on those bounds, there
 		 * may be a fast way to discover the "next child in".
 		 */
-		Collection<? extends NS> childBounds =
-			Collections2.transform(getChildrenOf(node), DBTreeRecord::getBounds);
-		NS bounds = BoundingShape.boundsUnion(childBounds);
+		NS bounds = getChildrenOf(node).stream()
+				.map(DBTreeRecord::getBounds)
+				.reduce(BoundingShape::unionBounds)
+				.orElse(null);
 		node.setShape(bounds);
 	}
 
@@ -781,9 +765,10 @@ public abstract class AbstractConstraintsTree< //
 	 */
 	protected void checkNodeIntegrity(NR n) {
 		// Check parent has exactly the minimum bounds of its children
-		Collection<? extends NS> childBounds =
-			Collections2.transform(getChildrenOf(n), DBTreeRecord::getBounds);
-		NS expectedBounds = BoundingShape.boundsUnion(childBounds);
+		NS expectedBounds = getChildrenOf(n).stream()
+				.map(DBTreeRecord::getBounds)
+				.reduce(BoundingShape::unionBounds)
+				.orElse(null);
 		if (expectedBounds == null && n != root) {
 			throw new AssertionError("Non-root node cannot be empty");
 		}

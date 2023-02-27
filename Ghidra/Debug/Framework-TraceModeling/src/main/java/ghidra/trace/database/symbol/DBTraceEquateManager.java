@@ -21,8 +21,6 @@ import java.util.Collections;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import com.google.common.collect.Collections2;
-
 import db.DBHandle;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
@@ -165,7 +163,7 @@ public class DBTraceEquateManager extends AbstractDBTraceSpaceBasedManager<DBTra
 	@Override
 	public AddressSetView getReferringAddresses(Lifespan span) {
 		return new UnionAddressSetView(
-			Collections2.transform(memSpacesView, m -> m.getReferringAddresses(span)));
+			memSpacesView.stream().map(m -> m.getReferringAddresses(span)).toList());
 	}
 
 	@Override

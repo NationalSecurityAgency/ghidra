@@ -17,7 +17,6 @@ package agent.dbgmodel.impl.dbgmodel.concept;
 
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Guid.REFIID;
 
@@ -36,15 +35,12 @@ public interface DynamicConceptProviderConceptInternal extends DynamicConceptPro
 		return DbgModelUtil.lazyWeakCache(CACHE, data, DynamicConceptProviderConceptImpl::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIDynamicConceptProviderConcept>> PREFERRED_DATA_SPACES_IIDS_BUILDER =
-		ImmutableMap.builder();
 	Map<REFIID, Class<? extends WrapIDynamicConceptProviderConcept>> PREFERRED_DATA_SPACES_IIDS =
-		PREFERRED_DATA_SPACES_IIDS_BUILDER //
-				.put(
-					new REFIID(
-						IDynamicConceptProviderConcept.IID_IDYNAMIC_CONCEPT_PROVIDER_CONCEPT),
-					WrapIDynamicConceptProviderConcept.class) //
-				.build();
+		Map.ofEntries(
+			Map.entry(
+				new REFIID(
+					IDynamicConceptProviderConcept.IID_IDYNAMIC_CONCEPT_PROVIDER_CONCEPT),
+				WrapIDynamicConceptProviderConcept.class));
 
 	static DynamicConceptProviderConceptInternal tryPreferredInterfaces(
 			InterfaceSupplier supplier) {
