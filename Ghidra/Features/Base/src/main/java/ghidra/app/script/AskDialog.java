@@ -17,6 +17,7 @@ package ghidra.app.script;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.nio.ByteBuffer;
 import java.util.List;
 
 import javax.swing.*;
@@ -55,8 +56,8 @@ public class AskDialog<T> extends DialogComponentProvider {
 		this(parent, title, message, type, null, null);
 	}
 
-	public AskDialog(final Component parent, String title, String message, int type,
-			List<T> choices, Object defaultValue) {
+	public AskDialog(final Component parent, String title, String message, int type, List<T> choices,
+			Object defaultValue) {
 		super(title, true, true, true, false);
 
 		this.type = type;
@@ -80,13 +81,12 @@ public class AskDialog<T> extends DialogComponentProvider {
 
 		if (choices == null) {
 			textField = new JTextField(20);
-			textField.setName("JTextField");//for JUnits...
+			textField.setName("JTextField");// for JUnits...
 			textField.addKeyListener(keyListener);
 			textField.setText(defaultValue == null ? "" : defaultValue.toString());
 			textField.selectAll();
 			panel.add(textField, BorderLayout.CENTER);
-		}
-		else {
+		} else {
 			comboField = new GComboBox<>(choices.toArray(new Object[choices.size()]));
 			comboField.setEditable(false);
 			comboField.setName("JComboBox");
@@ -123,11 +123,10 @@ public class AskDialog<T> extends DialogComponentProvider {
 		Preferences.setProperty("Ask Dialog Bounds", buffer.toString());
 	}
 
-	@SuppressWarnings("unchecked")  // the type must be correct, as the values were passed in
+	@SuppressWarnings("unchecked") // the type must be correct, as the values were passed in
 	public T getChoiceValue() {
 		if (comboField == null) {
-			throw new IllegalStateException(
-				"Cannot call getChoiceValue() when using a " + "dialog without choices");
+			throw new IllegalStateException("Cannot call getChoiceValue() when using a " + "dialog without choices");
 		}
 
 		return (T) comboField.getSelectedItem();
@@ -136,7 +135,7 @@ public class AskDialog<T> extends DialogComponentProvider {
 	public String getTextFieldValue() {
 		if (textField == null) {
 			throw new IllegalStateException(
-				"Cannot call getTextFieldValue() when using a " + "dialog with multiple choices");
+					"Cannot call getTextFieldValue() when using a " + "dialog with multiple choices");
 		}
 		return textField.getText();
 	}
@@ -149,54 +148,50 @@ public class AskDialog<T> extends DialogComponentProvider {
 				setStatusText("Please make a selection from the pulldown choices.");
 				return;
 			}
-		}
-		else {
+		} else {
 			switch (type) {
-				case STRING: {
-					if (textField.getText().length() == 0) {
-						setStatusText("Please enter a valid STRING.");
-						return;
-					}
-					break;
+			case STRING: {
+				if (textField.getText().length() == 0) {
+					setStatusText("Please enter a valid STRING.");
+					return;
 				}
-				case INT: {
-					try {
-						getValueAsInt();
-					}
-					catch (Exception e) {
-						setStatusText("Please enter a valid INTEGER.");
-						return;
-					}
-					break;
+				break;
+			}
+			case INT: {
+				try {
+					getValueAsInt();
+				} catch (Exception e) {
+					setStatusText("Please enter a valid INTEGER.");
+					return;
 				}
-				case LONG: {
-					try {
-						getValueAsLong();
-					}
-					catch (Exception e) {
-						setStatusText("Please enter a valid LONG.");
-						return;
-					}
-					break;
+				break;
+			}
+			case LONG: {
+				try {
+					getValueAsLong();
+				} catch (Exception e) {
+					setStatusText("Please enter a valid LONG.");
+					return;
 				}
-				case DOUBLE: {
-					try {
-						getValueAsDouble();
-					}
-					catch (Exception e) {
-						setStatusText("Please enter a valid DOUBLE.");
-						return;
-					}
-					break;
+				break;
+			}
+			case DOUBLE: {
+				try {
+					getValueAsDouble();
+				} catch (Exception e) {
+					setStatusText("Please enter a valid DOUBLE.");
+					return;
 				}
-				case BYTES: {
+				break;
+			}
+			case BYTES: {
 
-					if (!isValidBytePattern()) {
-						setStatusText("Please enter a valid BYTE PATTERN separated by spaces.");
-						return;
-					}
-					break;
+				if (!isValidBytePattern()) {
+					setStatusText("Please enter a valid BYTE PATTERN separated by spaces.");
+					return;
 				}
+				break;
+			}
 			}
 		}
 		saveCurrentDimensions();
@@ -212,8 +207,7 @@ public class AskDialog<T> extends DialogComponentProvider {
 		try {
 			NumericUtilities.convertStringToBytes(text);
 			return true;
-		}
-		catch (Exception e) {
+		} catch (Exception e) {
 			return false;
 		}
 	}
@@ -246,23 +240,12 @@ public class AskDialog<T> extends DialogComponentProvider {
 
 	protected Integer getValueAsInt() {
 		String text = getValueAsString();
-		long retValue = 0;
 		
 		if (text == null) {
 			return null;
 		}
 		
-		retValue = text.startsWith("0x") ? 
-			NumericUtilities.parseHexLong(text) : 
-			NumericUtilities.parseLong(text);
-		
-		if(retValue > Integer.MAX_VALUE || 
-		   retValue < Integer.MIN_VALUE) {
-			throw new NumberFormatException("The long value " + Long.toString(retValue) + 
-											"from string " + text + "is not within <Integer.MIN_VALUE:Integer.MAX_VALUE> range.");
-		}
-		
-		return (int) retValue;
+		return NumericUtilities.parseInt(text);
 	}
 
 	protected Long getValueAsLong() {
