@@ -38,7 +38,7 @@ public abstract class AbstractBytesPcodeExecutorStatePiece<S extends BytesPcodeE
 	/**
 	 * A memory buffer bound to a given space in this state
 	 */
-	protected class StateMemBuffer implements MemBufferAdapter {
+	protected class StateMemBuffer implements MemBufferMixin {
 		protected final Address address;
 		protected final BytesPcodeExecutorStateSpace<?> source;
 

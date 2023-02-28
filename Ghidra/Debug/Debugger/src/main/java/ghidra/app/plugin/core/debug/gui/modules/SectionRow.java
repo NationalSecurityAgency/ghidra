@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.modules;
 
+import db.Transaction;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.trace.model.DefaultTraceLocation;
@@ -22,7 +23,6 @@ import ghidra.trace.model.TraceLocation;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.modules.TraceSection;
 import ghidra.util.Msg;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.DuplicateNameException;
 
 public class SectionRow {
@@ -41,8 +41,7 @@ public class SectionRow {
 	}
 
 	public void setName(String name) {
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(section.getTrace(), "Rename section")) {
+		try (Transaction tx = section.getTrace().openTransaction("Rename section")) {
 			section.setName(name);
 		}
 		catch (DuplicateNameException e) {

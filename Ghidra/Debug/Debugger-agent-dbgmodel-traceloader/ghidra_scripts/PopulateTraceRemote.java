@@ -16,6 +16,7 @@
 import java.io.File;
 import java.util.Set;
 
+import db.Transaction;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.services.DebuggerModelService;
 import ghidra.app.services.DebuggerTraceManagerService;
@@ -28,7 +29,6 @@ import ghidra.program.model.lang.*;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.time.TraceTimeManager;
-import ghidra.util.database.UndoableTransaction;
 
 /**
  * This script populates a trace database for demonstrations purposes and opens it in the current
@@ -151,7 +151,7 @@ public class PopulateTraceRemote extends GhidraScript {
 		manager = tool.getService(DebuggerTraceManagerService.class);
 		targets = tool.getService(DebuggerModelService.class);
 
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Populate Events")) {
+		try (Transaction tx = trace.openTransaction("Populate Events")) {
 			timeManager = trace.getTimeManager();
 			timeManager.createSnapshot("init");
 		}

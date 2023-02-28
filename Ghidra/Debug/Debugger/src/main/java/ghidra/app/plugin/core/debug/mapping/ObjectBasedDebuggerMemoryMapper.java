@@ -18,9 +18,9 @@ package ghidra.app.plugin.core.debug.mapping;
 import java.util.HashMap;
 import java.util.Map;
 
+import db.Transaction;
 import ghidra.program.model.address.*;
 import ghidra.trace.model.Trace;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.DuplicateNameException;
 
 public class ObjectBasedDebuggerMemoryMapper implements DebuggerMemoryMapper {
@@ -77,8 +77,7 @@ public class ObjectBasedDebuggerMemoryMapper implements DebuggerMemoryMapper {
 	}
 
 	protected AddressSpace createSpace(String name) {
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(trace, "Create space for mapping")) {
+		try (Transaction tx = trace.openTransaction("Create space for mapping")) {
 			AddressFactory factory = trace.getBaseAddressFactory();
 			AddressSpace space = factory.getAddressSpace(name);
 			if (space == null) {

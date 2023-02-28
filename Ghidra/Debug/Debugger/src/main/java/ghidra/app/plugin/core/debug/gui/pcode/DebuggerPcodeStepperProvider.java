@@ -30,6 +30,7 @@ import javax.swing.table.*;
 
 import org.apache.commons.lang3.StringUtils;
 
+import db.Transaction;
 import docking.action.DockingAction;
 import docking.widgets.table.*;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
@@ -62,7 +63,6 @@ import ghidra.trace.model.Trace;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.ColorUtils;
 import ghidra.util.HTMLUtilities;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
 import ghidra.util.table.column.AbstractGColumnRenderer;
@@ -241,8 +241,8 @@ public class DebuggerPcodeStepperProvider extends ComponentProviderAdapter {
 			if (dataType == null) {
 				return null;
 			}
-			try (UndoableTransaction tid =
-				UndoableTransaction.start(current.getTrace(), "Resolve DataType")) {
+			try (Transaction tid =
+				current.getTrace().openTransaction("Resolve DataType")) {
 				return current.getTrace().getDataTypeManager().resolve(dataType, null);
 			}
 		}

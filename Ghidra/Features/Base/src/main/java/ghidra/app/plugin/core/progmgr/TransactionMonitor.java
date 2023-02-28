@@ -24,7 +24,7 @@ import javax.swing.*;
 
 import generic.theme.GIcon;
 import ghidra.framework.data.DomainObjectAdapterDB;
-import ghidra.framework.model.Transaction;
+import ghidra.framework.model.TransactionInfo;
 import ghidra.framework.model.TransactionListener;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.listing.Program;
@@ -36,7 +36,7 @@ class TransactionMonitor extends JComponent implements TransactionListener {
 	private static Dimension prefSize;
 
 	ProgramDB program;
-	Transaction lastTx;
+	TransactionInfo lastTx;
 
 	TransactionMonitor() {
 		super();
@@ -61,7 +61,7 @@ class TransactionMonitor extends JComponent implements TransactionListener {
 	}
 
 	@Override
-	public void transactionStarted(DomainObjectAdapterDB domainObj, Transaction tx) {
+	public void transactionStarted(DomainObjectAdapterDB domainObj, TransactionInfo tx) {
 		lastTx = tx;
 		repaint();
 	}

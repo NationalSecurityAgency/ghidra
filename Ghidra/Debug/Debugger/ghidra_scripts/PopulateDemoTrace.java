@@ -18,6 +18,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.*;
 
+import db.Transaction;
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.app.script.GhidraScript;
@@ -39,7 +40,6 @@ import ghidra.trace.model.symbol.TraceLabelSymbol;
 import ghidra.trace.model.symbol.TraceNamespaceSymbol;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -289,12 +289,10 @@ public class PopulateDemoTrace extends GhidraScript {
 
 		/**
 		 * For clarity, I will add each tick to the trace in its own transaction. The
-		 * UndoableTransaction class eases the syntax and reduces errors in starting and ending
-		 * transactions. This Utility deprecates ProgramTransaction, as it can be used on any domain
-		 * object.
+		 * Transaction class eases the syntax and reduces errors in starting and ending
+		 * transactions.
 		 */
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(trace, "Populate First Snapshot")) {
+		try (Transaction tx = trace.openTransaction("Populate First Snapshot")) {
 			/**
 			 * While not strictly required, each tick should be explicitly added to the database and
 			 * given a description. Some things may mis-behave if there does not exist at least one
@@ -438,7 +436,7 @@ public class PopulateDemoTrace extends GhidraScript {
 		/**
 		 * Just hand emulate the stepping
 		 */
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Step")) {
+		try (Transaction tx = trace.openTransaction("Step")) {
 			long snap = trace.getTimeManager().createSnapshot("Stepped: PUSH RBP").getKey();
 
 			stack1offset -= 8;
@@ -465,7 +463,7 @@ public class PopulateDemoTrace extends GhidraScript {
 		/**
 		 * More hand emulation
 		 */
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Step")) {
+		try (Transaction tx = trace.openTransaction("Step")) {
 			long snap = trace.getTimeManager().createSnapshot("Stepped: MOV RBP,RSP").getKey();
 
 			putRIP(snap, regs1, mainInstructions.get(++pc1));
@@ -481,7 +479,7 @@ public class PopulateDemoTrace extends GhidraScript {
 		 * While this is a complicated call, there is nothing new to demonstrate in its
 		 * implementation. As an exercise, see if you can follow what is happening within.
 		 */
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Step")) {
+		try (Transaction tx = trace.openTransaction("Step")) {
 			long snap = trace.getTimeManager()
 					.createSnapshot("Stepped Thread 1: CALL clone -> Thread 2")
 					.getKey();
@@ -519,7 +517,7 @@ public class PopulateDemoTrace extends GhidraScript {
 		/**
 		 * Hand emulate thread1 a few steps
 		 */
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Step")) {
+		try (Transaction tx = trace.openTransaction("Step")) {
 			long snap =
 				trace.getTimeManager().createSnapshot("Stepped Thread 1: RET from clone").getKey();
 
@@ -534,7 +532,7 @@ public class PopulateDemoTrace extends GhidraScript {
 		/**
 		 * ...
 		 */
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Step")) {
+		try (Transaction tx = trace.openTransaction("Step")) {
 			long snap =
 				trace.getTimeManager().createSnapshot("Stepped Thread 1: TEST EAX,EAX").getKey();
 
@@ -544,7 +542,7 @@ public class PopulateDemoTrace extends GhidraScript {
 			placeRegUnits(snap, thread1);
 		}
 
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Step")) {
+		try (Transaction tx = trace.openTransaction("Step")) {
 			long snap =
 				trace.getTimeManager().createSnapshot("Stepped Thread 1: JNZ child").getKey();
 
@@ -556,7 +554,7 @@ public class PopulateDemoTrace extends GhidraScript {
 		/**
 		 * Switch to thread2
 		 */
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Step")) {
+		try (Transaction tx = trace.openTransaction("Step")) {
 			long snap =
 				trace.getTimeManager().createSnapshot("Stepped Thread 2: RET from clone").getKey();
 
@@ -568,7 +566,7 @@ public class PopulateDemoTrace extends GhidraScript {
 			placeRegUnits(snap, thread2);
 		}
 
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Step")) {
+		try (Transaction tx = trace.openTransaction("Step")) {
 			long snap =
 				trace.getTimeManager().createSnapshot("Stepped Thread 2: TEST EAX,EAX").getKey();
 
@@ -578,7 +576,7 @@ public class PopulateDemoTrace extends GhidraScript {
 			placeRegUnits(snap, thread2);
 		}
 
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Step")) {
+		try (Transaction tx = trace.openTransaction("Step")) {
 			long snap =
 				trace.getTimeManager().createSnapshot("Stepped Thread 2: JNZ child").getKey();
 
@@ -590,7 +588,7 @@ public class PopulateDemoTrace extends GhidraScript {
 		/**
 		 * Switch to thread1
 		 */
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Step")) {
+		try (Transaction tx = trace.openTransaction("Step")) {
 			long snap =
 				trace.getTimeManager().createSnapshot("Stepped Thread 1: SUB RSP,0x10").getKey();
 
@@ -602,7 +600,7 @@ public class PopulateDemoTrace extends GhidraScript {
 			placeRegUnits(snap, thread1);
 		}
 
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Step")) {
+		try (Transaction tx = trace.openTransaction("Step")) {
 			long snap =
 				trace.getTimeManager().createSnapshot("Stepped Thread 1: MOV...(1)").getKey();
 
@@ -613,7 +611,7 @@ public class PopulateDemoTrace extends GhidraScript {
 			placeRegUnits(snap, thread1);
 		}
 
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Step")) {
+		try (Transaction tx = trace.openTransaction("Step")) {
 			long snap =
 				trace.getTimeManager().createSnapshot("Stepped Thread 1: MOV...(2)").getKey();
 
@@ -624,7 +622,7 @@ public class PopulateDemoTrace extends GhidraScript {
 			placeRegUnits(snap, thread1);
 		}
 
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Step")) {
+		try (Transaction tx = trace.openTransaction("Step")) {
 			long snap =
 				trace.getTimeManager().createSnapshot("Stepped Thread 1: MOV...(3)").getKey();
 
@@ -635,7 +633,7 @@ public class PopulateDemoTrace extends GhidraScript {
 			placeRegUnits(snap, thread1);
 		}
 
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Step")) {
+		try (Transaction tx = trace.openTransaction("Step")) {
 			long snap =
 				trace.getTimeManager().createSnapshot("Stepped Thread 1: MOV...(4)").getKey();
 
@@ -649,7 +647,7 @@ public class PopulateDemoTrace extends GhidraScript {
 		/**
 		 * Switch to thread2
 		 */
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Step")) {
+		try (Transaction tx = trace.openTransaction("Step")) {
 			long snap =
 				trace.getTimeManager().createSnapshot("Stepped Thread 2: SUB RSP,0x10").getKey();
 
@@ -661,7 +659,7 @@ public class PopulateDemoTrace extends GhidraScript {
 			placeRegUnits(snap, thread2);
 		}
 
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Step")) {
+		try (Transaction tx = trace.openTransaction("Step")) {
 			long snap =
 				trace.getTimeManager().createSnapshot("Stepped Thread 2: MOV...(1)").getKey();
 
@@ -672,7 +670,7 @@ public class PopulateDemoTrace extends GhidraScript {
 			placeRegUnits(snap, thread2);
 		}
 
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Step")) {
+		try (Transaction tx = trace.openTransaction("Step")) {
 			long snap =
 				trace.getTimeManager().createSnapshot("Stepped Thread 2: MOV...(2)").getKey();
 
@@ -683,7 +681,7 @@ public class PopulateDemoTrace extends GhidraScript {
 			placeRegUnits(snap, thread2);
 		}
 
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Step")) {
+		try (Transaction tx = trace.openTransaction("Step")) {
 			long snap =
 				trace.getTimeManager().createSnapshot("Stepped Thread 2: MOV...(3)").getKey();
 
@@ -697,7 +695,7 @@ public class PopulateDemoTrace extends GhidraScript {
 		/**
 		 * Let thread2 exit first
 		 */
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Step")) {
+		try (Transaction tx = trace.openTransaction("Step")) {
 			long snap =
 				trace.getTimeManager().createSnapshot("Stepped Thread 2: CALL exit").getKey();
 
@@ -707,7 +705,7 @@ public class PopulateDemoTrace extends GhidraScript {
 		/**
 		 * Terminate
 		 */
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Step")) {
+		try (Transaction tx = trace.openTransaction("Step")) {
 			long snap =
 				trace.getTimeManager().createSnapshot("Stepped Thread 1: CALL exit").getKey();
 

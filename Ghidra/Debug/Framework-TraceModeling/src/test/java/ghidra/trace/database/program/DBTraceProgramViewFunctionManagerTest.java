@@ -15,7 +15,7 @@
  */
 package ghidra.trace.database.program;
 
-import static ghidra.lifecycle.Unfinished.TODO;
+import static ghidra.lifecycle.Unfinished.*;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
@@ -24,6 +24,7 @@ import java.util.List;
 
 import org.junit.*;
 
+import db.Transaction;
 import ghidra.app.cmd.function.AddStackVarCmd;
 import ghidra.app.cmd.refs.AddStackRefCmd;
 import ghidra.program.database.ProgramBuilder;
@@ -35,26 +36,25 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.InvalidInputException;
 
 public class DBTraceProgramViewFunctionManagerTest extends AbstractGhidraHeadlessIntegrationTest {
 	ToyDBTraceBuilder b;
 	FunctionManager functionManager;
 	Program program;
-	UndoableTransaction tid;
+	Transaction tx;
 
 	@Before
 	public void setUpFunctionManagerTest() throws IOException {
 		b = new ToyDBTraceBuilder("Testing", ProgramBuilder._TOY);
 		program = b.trace.getFixedProgramView(0);
 		functionManager = program.getFunctionManager();
-		tid = b.startTransaction();
+		tx = b.startTransaction();
 	}
 
 	@After
 	public void tearDownFunctionManagerTest() {
-		tid.close();
+		tx.close();
 		b.close();
 	}
 

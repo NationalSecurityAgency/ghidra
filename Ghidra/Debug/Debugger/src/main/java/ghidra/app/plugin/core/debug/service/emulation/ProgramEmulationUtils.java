@@ -21,6 +21,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import db.Transaction;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingUtils.Extrema;
 import ghidra.app.services.DebuggerEmulationService;
@@ -44,7 +45,6 @@ import ghidra.trace.model.thread.*;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.DifferenceAddressSetView;
 import ghidra.util.NumericUtilities;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
@@ -339,7 +339,7 @@ public enum ProgramEmulationUtils {
 		boolean success = false;
 		try {
 			trace = new DBTrace(getTraceName(program), program.getCompilerSpec(), consumer);
-			try (UndoableTransaction tid = UndoableTransaction.start(trace, "Emulate")) {
+			try (Transaction tx = trace.openTransaction("Emulate")) {
 				TraceSnapshot initial =
 					trace.getTimeManager().createSnapshot(EMULATION_STARTED_AT + pc);
 				long snap = initial.getKey();
@@ -383,8 +383,7 @@ public enum ProgramEmulationUtils {
 	 */
 	public static TraceThread launchEmulationThread(Trace trace, long snap, Program program,
 			Address tracePc, Address programPc) {
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(trace, "Emulate new Thread")) {
+		try (Transaction tx = trace.openTransaction("Emulate new Thread")) {
 			TraceThread thread = doLaunchEmulationThread(trace, snap, program, tracePc, programPc);
 			return thread;
 		}

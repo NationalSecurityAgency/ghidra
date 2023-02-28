@@ -22,10 +22,10 @@ import java.util.List;
 
 import org.junit.*;
 
+import db.Transaction;
 import generic.test.AbstractGenericTest;
 import ghidra.app.plugin.assembler.*;
 import ghidra.program.database.ProgramDB;
-import ghidra.program.database.util.ProgramTransaction;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.lang.*;
@@ -77,7 +77,7 @@ public class PublicAPITest extends AbstractGenericTest {
 		program = new ProgramDB("test", toy, toy.getDefaultCompilerSpec(), this);
 
 		InstructionIterator it;
-		try (ProgramTransaction tid = ProgramTransaction.open(program, "Test")) {
+		try (Transaction tx = program.openTransaction("Test")) {
 			program.getMemory()
 					.createInitializedBlock(".text", addr(0x00400000), 0x1000, (byte) 0,
 						TaskMonitor.DUMMY, false);
@@ -86,8 +86,6 @@ public class PublicAPITest extends AbstractGenericTest {
 			it = asm.assemble(addr(0x00400000),
 				"brds 0x00400004",
 				"add r0, #6");
-
-			tid.commit();
 		}
 
 		List<Instruction> result = new ArrayList<>();

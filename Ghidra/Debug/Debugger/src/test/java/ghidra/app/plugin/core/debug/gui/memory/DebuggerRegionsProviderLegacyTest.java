@@ -23,6 +23,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import db.Transaction;
 import generic.Unique;
 import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
@@ -40,7 +41,6 @@ import ghidra.program.util.ProgramSelection;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.modules.TraceStaticMapping;
-import ghidra.util.database.UndoableTransaction;
 
 @Category(NightlyCategory.class)
 public class DebuggerRegionsProviderLegacyTest extends AbstractGhidraHeadedDebuggerGUITest {
@@ -63,7 +63,7 @@ public class DebuggerRegionsProviderLegacyTest extends AbstractGhidraHeadedDebug
 
 	protected void addRegions() throws Exception {
 		TraceMemoryManager mm = tb.trace.getMemoryManager();
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			regionExeText = mm.createRegion("Memory[/bin/echo 0x55550000]", 0,
 				tb.range(0x55550000, 0x555500ff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 			regionExeData = mm.createRegion("Memory[/bin/echo 0x55750000]", 0,
@@ -76,7 +76,7 @@ public class DebuggerRegionsProviderLegacyTest extends AbstractGhidraHeadedDebug
 	}
 
 	protected void addBlocks() throws Exception {
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add block")) {
+		try (Transaction tx = program.openTransaction("Add block")) {
 			Memory mem = program.getMemory();
 			blockExeText = mem.createInitializedBlock(".text", tb.addr(0x00400000), 0x100, (byte) 0,
 				monitor, false);
@@ -104,7 +104,7 @@ public class DebuggerRegionsProviderLegacyTest extends AbstractGhidraHeadedDebug
 		createTrace();
 
 		TraceMemoryRegion region;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			TraceMemoryManager mm = tb.trace.getMemoryManager();
 			region = mm.addRegion("Memory[bin:.text]", Lifespan.nowOn(0),
 				tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
@@ -132,7 +132,7 @@ public class DebuggerRegionsProviderLegacyTest extends AbstractGhidraHeadedDebug
 		traceManager.activateTrace(tb.trace);
 
 		TraceMemoryRegion region;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			TraceMemoryManager mm = tb.trace.getMemoryManager();
 			region = mm.addRegion("Memory[bin:.text]", Lifespan.nowOn(0),
 				tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
@@ -149,7 +149,7 @@ public class DebuggerRegionsProviderLegacyTest extends AbstractGhidraHeadedDebug
 		createTrace();
 
 		TraceMemoryRegion region;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			TraceMemoryManager mm = tb.trace.getMemoryManager();
 			region = mm.addRegion("Memory[bin:.text]", Lifespan.nowOn(0),
 				tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
@@ -162,7 +162,7 @@ public class DebuggerRegionsProviderLegacyTest extends AbstractGhidraHeadedDebug
 		RegionRow row = Unique.assertOne(provider.legacyPanel.regionTableModel.getModelData());
 		assertEquals(region, row.getRegion());
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			region.delete();
 		}
 		waitForDomainObject(tb.trace);
@@ -174,7 +174,7 @@ public class DebuggerRegionsProviderLegacyTest extends AbstractGhidraHeadedDebug
 	public void testUndoRedo() throws Exception {
 		createTrace();
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			TraceMemoryManager mm = tb.trace.getMemoryManager();
 			mm.addRegion("Memory[bin:.text]", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
@@ -197,14 +197,14 @@ public class DebuggerRegionsProviderLegacyTest extends AbstractGhidraHeadedDebug
 		createAndOpenTrace();
 		traceManager.activateTrace(tb.trace);
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			TraceMemoryManager mm = tb.trace.getMemoryManager();
 			mm.addRegion("Memory[bin:.text]", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 
 			waitForDomainObject(tb.trace);
 			Unique.assertOne(provider.legacyPanel.regionTableModel.getModelData());
-			tid.abort();
+			tx.abort();
 		}
 		waitForDomainObject(tb.trace);
 		assertEquals(0, provider.legacyPanel.regionTableModel.getModelData().size());
@@ -218,7 +218,7 @@ public class DebuggerRegionsProviderLegacyTest extends AbstractGhidraHeadedDebug
 		createTrace();
 
 		TraceMemoryRegion region;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			TraceMemoryManager mm = tb.trace.getMemoryManager();
 			region = mm.addRegion("Memory[bin:.text]", Lifespan.nowOn(0),
 				tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
@@ -256,7 +256,7 @@ public class DebuggerRegionsProviderLegacyTest extends AbstractGhidraHeadedDebug
 		assertFalse(provider.actionMapRegions.isEnabled());
 
 		addBlocks();
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Change name")) {
+		try (Transaction tx = program.openTransaction("Change name")) {
 			program.setName("echo");
 		}
 		waitForDomainObject(program);
@@ -331,7 +331,7 @@ public class DebuggerRegionsProviderLegacyTest extends AbstractGhidraHeadedDebug
 		createTrace();
 
 		TraceMemoryRegion region;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			TraceMemoryManager mm = tb.trace.getMemoryManager();
 			region = mm.addRegion("Memory[bin:.text]", Lifespan.nowOn(0),
 				tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
@@ -362,7 +362,7 @@ public class DebuggerRegionsProviderLegacyTest extends AbstractGhidraHeadedDebug
 		createTrace();
 
 		TraceMemoryRegion region;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			TraceMemoryManager mm = tb.trace.getMemoryManager();
 			region = mm.addRegion("Memory[bin:.text]", Lifespan.nowOn(0),
 				tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);

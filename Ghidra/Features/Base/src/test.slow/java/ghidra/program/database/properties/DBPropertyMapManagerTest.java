@@ -81,7 +81,7 @@ public class DBPropertyMapManagerTest extends AbstractGhidraHeadedIntegrationTes
 	@After
 	public void tearDown() throws Exception {
 		if (program != null) {
-			if (program.getCurrentTransaction() != null) {
+			if (program.getCurrentTransactionInfo() != null) {
 				program.endTransaction(transactionID, true);
 			}
 			program.release(this);

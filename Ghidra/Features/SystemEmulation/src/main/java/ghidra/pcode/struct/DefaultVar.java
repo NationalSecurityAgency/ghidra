@@ -15,13 +15,13 @@
  */
 package ghidra.pcode.struct;
 
+import db.Transaction;
 import ghidra.app.plugin.processors.sleigh.SleighException;
 import ghidra.pcode.struct.StructuredSleigh.Var;
 import ghidra.pcodeCPort.slghsymbol.SleighSymbol;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeConflictHandler;
 import ghidra.program.model.lang.PcodeParser;
-import ghidra.util.database.UndoableTransaction;
 
 class DefaultVar implements LValInternal, Var {
 	/**
@@ -83,7 +83,7 @@ class DefaultVar implements LValInternal, Var {
 		check.check(ctx.parser, name);
 		this.ctx = ctx;
 		this.name = name;
-		try (UndoableTransaction tid = UndoableTransaction.start(ctx.dtm, "Resolve type")) {
+		try (Transaction tx = ctx.dtm.openTransaction("Resolve type")) {
 			this.type = ctx.dtm.resolve(type, DataTypeConflictHandler.DEFAULT_HANDLER);
 		}
 	}

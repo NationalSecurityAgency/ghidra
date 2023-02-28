@@ -23,6 +23,7 @@ import java.util.*;
 import org.junit.Before;
 import org.junit.Test;
 
+import db.Transaction;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.app.services.DebuggerStaticMappingService.MappedAddressRange;
@@ -37,7 +38,6 @@ import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.*;
 import ghidra.util.Msg;
-import ghidra.util.database.UndoableTransaction;
 
 // Not technically a GUI test, but must be carried out in the context of a plugin tool
 public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebuggerGUITest {
@@ -75,7 +75,7 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 			new DefaultTraceLocation(tb.trace, null, Lifespan.nowOn(0),
 				dynSpace.getAddress(0x00100000));
 		ProgramLocation to = new ProgramLocation(program, stSpace.getAddress(0x00200000));
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			DebuggerStaticMappingUtils.addMapping(from, to, 0x1000, false);
 		}
 		waitForDomainObject(tb.trace);
@@ -85,7 +85,7 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 		TraceLocation from = new DefaultTraceLocation(tb.trace, null, Lifespan.nowOn(10),
 			dynSpace.getAddress(0x00100800));
 		ProgramLocation to = new ProgramLocation(program, stSpace.getAddress(0x00300000));
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			DebuggerStaticMappingUtils.addMapping(from, to, 0x1000, truncateExisting);
 		}
 	}
@@ -104,7 +104,7 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 			new DefaultTraceLocation(tb.trace, null, Lifespan.nowOn(0),
 				dynSpace.getAddress(0x00102000));
 		ProgramLocation to = new ProgramLocation(program, stSpace.getAddress(0x00200000));
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			DebuggerStaticMappingUtils.addMapping(from, to, 0x800, false);
 		}
 		waitForDomainObject(tb.trace);
@@ -550,12 +550,12 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 		TraceLocation goodLoc =
 			new DefaultTraceLocation(tb.trace, null, Lifespan.nowOn(0),
 				dynSpace.getAddress(0x00100c0d));
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			mappingManager.findContaining(dynSpace.getAddress(0x00100000), 0).delete();
 			waitForDomainObject(tb.trace);
 			// pre-check
 			assertNull(mappingService.getOpenMappedLocation(goodLoc));
-			tid.abort();
+			tx.abort();
 		}
 		waitForDomainObject(tb.trace);
 
@@ -573,7 +573,7 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 		// pre-pre-check
 		assertNotNull(mappingService.getOpenMappedLocation(goodLoc));
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			mappingManager.findContaining(dynSpace.getAddress(0x00100000), 0).delete();
 		}
 		waitForDomainObject(tb.trace);
@@ -594,7 +594,7 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 	public void testGroupRegionsByLikelyModule() throws Exception {
 		TraceMemoryRegion echoText, echoData, libText, libData;
 		DBTraceMemoryManager mm = tb.trace.getMemoryManager();
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			echoText = mm.createRegion("Memory.Regions[/bin/echo (0x00400000)]",
 				0, tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 			echoData = mm.createRegion("Memory.Regions[/bin/echo (0x00600000)]",
@@ -620,7 +620,7 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 
 	@Test
 	public void testMapFullSpace() throws Exception {
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			TraceLocation traceLoc =
 				new DefaultTraceLocation(tb.trace, null, Lifespan.nowOn(0), tb.addr(0));
 			ProgramLocation progLoc = new ProgramLocation(program, stSpace.getAddress(0));

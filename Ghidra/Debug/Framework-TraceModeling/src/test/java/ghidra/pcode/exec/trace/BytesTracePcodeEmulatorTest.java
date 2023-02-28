@@ -25,6 +25,7 @@ import java.util.List;
 
 import org.junit.Test;
 
+import db.Transaction;
 import ghidra.app.plugin.assembler.*;
 import ghidra.app.plugin.assembler.sleigh.sem.AssemblyPatternBlock;
 import ghidra.dbg.target.schema.SchemaContext;
@@ -48,7 +49,6 @@ import ghidra.trace.model.target.TraceObject.ConflictResolution;
 import ghidra.trace.model.target.TraceObjectKeyPath;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.NumericUtilities;
-import ghidra.util.database.UndoableTransaction;
 
 public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest {
 
@@ -80,7 +80,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			assertEquals(BigInteger.valueOf(0),
 				TraceSleighUtils.evaluate("*:4 0x0010fffc:8", tb.trace, 0, thread, 0));
 
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				emu.writeDown(tb.host, 1, 1);
 			}
 
@@ -115,7 +115,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			emuThread.stepInstruction();
 			emuThread.stepInstruction();
 
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				emu.writeDown(tb.host, 1, 1);
 			}
 
@@ -160,7 +160,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 
 			emuThread.stepInstruction();
 
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				emu.writeDown(tb.host, 1, 1);
 			}
 
@@ -207,7 +207,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 
 			byte[] mov = asm.assembleLine(tb.addr(0x00401000),
 				"movs r0, #123", thumbPat); // #123 is decimal
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				asm.patchProgram(mov, tb.addr(0x00401000));
 			}
 
@@ -226,7 +226,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 
 			emuThread.stepInstruction();
 
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				emu.writeDown(tb.host, 1, 1);
 			}
 
@@ -258,7 +258,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
 			emuThread.stepInstruction();
 
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				emu.writeDown(tb.host, 1, 1);
 			}
 
@@ -292,7 +292,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			emuThread.stepInstruction(); // brds and 1st imm executed
 			emuThread.stepInstruction(); // 3rd imm executed
 
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				emu.writeDown(tb.host, 1, 1);
 			}
 
@@ -336,7 +336,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			emuThread.stepInstruction();
 			emuThread.stepInstruction();
 
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				emu.writeDown(tb.host, 1, 1);
 			}
 
@@ -389,7 +389,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			emuThread.finishInstruction();
 			assertNull(emuThread.getFrame());
 
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				emu.writeDown(tb.host, 1, 1);
 			}
 
@@ -513,7 +513,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			assertEquals("0c00400000000000", dumped.toString());
 			dumped.delete(0, dumped.length());
 
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				emu.writeDown(tb.host, 1, 1);
 			}
 
@@ -573,7 +573,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
 			emuThread.stepInstruction();
 
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				emu.writeDown(tb.host, 1, 1);
 			}
 
@@ -610,7 +610,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			assertArrayEquals(tb.arr(0x07, 0, 0x40, 0, 0, 0, 0, 0),
 				emuThread.getState().getVar(pc, Reason.INSPECT));
 
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				emu.writeDown(tb.host, 1, 1);
 			}
 
@@ -647,7 +647,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			assertArrayEquals(tb.arr(0x02, 0, 0x40, 0, 0, 0, 0, 0),
 				emuThread.getState().getVar(pc, Reason.INSPECT));
 
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				emu.writeDown(tb.host, 1, 1);
 			}
 
@@ -673,7 +673,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			emuThread.stepInstruction();
 			emuThread.stepInstruction();
 
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				emu.writeDown(tb.host, 1, 1);
 			}
 
@@ -805,7 +805,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			RegisterValue ctxVal = new RegisterValue(ctxReg)
 					.assign(longModeReg, BigInteger.ZERO);
 			DBTraceRegisterContextManager ctxManager = tb.trace.getRegisterContextManager();
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				ctxManager.setValue(lang, ctxVal, Lifespan.nowOn(0),
 					tb.range(0x00400000, 0x00400002));
 			}
@@ -829,7 +829,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			emuThread.stepInstruction();
 			emuThread.stepInstruction();
 
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				emu.writeDown(tb.host, 1, 1);
 			}
 
@@ -863,7 +863,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
 			emuThread.stepInstruction();
 
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				emu.writeDown(tb.host, 1, 1);
 			}
 
@@ -962,7 +962,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
 			emuThread.stepInstruction();
 
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				emu.writeDown(tb.host, 1, 1);
 			}
 
@@ -989,7 +989,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			TraceMemoryManager mm = tb.trace.getMemoryManager();
 			TraceThread thread;
 			TraceGuestPlatform x64;
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				SchemaContext ctx = XmlSchemaContext.deserialize(DBTraceObjectManagerTest.XML_CTX);
 				DBTraceObjectManager objects = tb.trace.getObjectManager();
 				objects.createRootObject(ctx.getSchema(new SchemaName("Session")));
@@ -1033,7 +1033,7 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			assertEquals(BigInteger.valueOf(0),
 				TraceSleighUtils.evaluate(changedExpr, tb.trace, 0, thread, 0));
 
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				emu.writeDown(x64, 1, 1);
 			}
 

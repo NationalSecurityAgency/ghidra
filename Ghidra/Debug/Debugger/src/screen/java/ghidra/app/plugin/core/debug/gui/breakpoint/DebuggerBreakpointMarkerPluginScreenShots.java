@@ -21,6 +21,7 @@ import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
 
+import db.Transaction;
 import generic.Unique;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest.TestDebuggerTargetTraceMapper;
@@ -42,7 +43,6 @@ import ghidra.trace.model.*;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.task.TaskMonitor;
 import help.screenshot.GhidraScreenShotGenerator;
 
@@ -98,7 +98,7 @@ public class DebuggerBreakpointMarkerPluginScreenShots extends GhidraScreenShotG
 				.getRootFolder()
 				.createFile("WinHelloCPP", program, TaskMonitor.DUMMY);
 
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Add Mapping")) {
+		try (Transaction tx = trace.openTransaction("Add Mapping")) {
 			mappingService.addIdentityMapping(trace, program, Lifespan.nowOn(0), true);
 		}
 		waitForValue(() -> mappingService.getOpenMappedLocation(
@@ -148,7 +148,7 @@ public class DebuggerBreakpointMarkerPluginScreenShots extends GhidraScreenShotG
 				.getRootFolder()
 				.createFile("WinHelloCPP", program, TaskMonitor.DUMMY);
 
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Add Mapping")) {
+		try (Transaction tx = trace.openTransaction("Add Mapping")) {
 			mappingService.addIdentityMapping(trace, program, Lifespan.nowOn(0), true);
 		}
 		waitForValue(() -> mappingService.getOpenMappedLocation(

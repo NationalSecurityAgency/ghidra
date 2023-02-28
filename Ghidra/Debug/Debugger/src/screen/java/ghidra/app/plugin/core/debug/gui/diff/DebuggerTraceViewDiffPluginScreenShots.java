@@ -15,13 +15,14 @@
  */
 package ghidra.app.plugin.core.debug.gui.diff;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 import org.junit.*;
 
+import db.Transaction;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
 import ghidra.app.plugin.core.debug.gui.time.DebuggerTimeSelectionDialog;
@@ -36,7 +37,6 @@ import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.Swing;
-import ghidra.util.database.UndoableTransaction;
 import help.screenshot.GhidraScreenShotGenerator;
 
 public class DebuggerTraceViewDiffPluginScreenShots extends GhidraScreenShotGenerator
@@ -66,7 +66,7 @@ public class DebuggerTraceViewDiffPluginScreenShots extends GhidraScreenShotGene
 	@Test
 	public void testCaptureDebuggerTraceViewDiffPlugin() throws Throwable {
 		long snap1, snap2;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			DBTraceTimeManager tm = tb.trace.getTimeManager();
 			snap1 = tm.createSnapshot("Baseline").getKey();
 			snap2 = tm.createSnapshot("X's first move").getKey();
@@ -106,7 +106,7 @@ public class DebuggerTraceViewDiffPluginScreenShots extends GhidraScreenShotGene
 	@Test
 	public void testCaptureDebuggerTimeSelectionDialog() throws Throwable {
 		TraceThread thread;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			DBTraceTimeManager tm = tb.trace.getTimeManager();
 			thread = tb.getOrAddThread("main", 0);
 			tm.createSnapshot("Break on main").setEventThread(thread);

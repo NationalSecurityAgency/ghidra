@@ -27,6 +27,7 @@ import java.util.function.Function;
 
 import org.junit.*;
 
+import db.Transaction;
 import ghidra.lifecycle.Unfinished;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
@@ -46,7 +47,6 @@ import ghidra.trace.model.listing.*;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.IntersectionAddressSetView;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.ConsoleTaskMonitor;
 import ghidra.util.task.TaskMonitor;
@@ -112,14 +112,14 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 
 	@Test
 	public void testAddDefinedData() throws CodeUnitInsertionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			b.addData(0, b.addr(0x4000), IntegerDataType.dataType, b.buf(1, 2, 3, 4));
 		}
 	}
 
 	@Test
 	public void testAddDataPrecedingBytesChanged() throws CodeUnitInsertionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			b.trace.getMemoryManager().putBytes(10, b.addr(0x4001), b.buf(0xaa));
 			TraceData d4000 =
 				b.addData(0, b.addr(0x4000), IntegerDataType.dataType, b.buf(1, 2, 3, 4));
@@ -129,7 +129,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 
 	@Test
 	public void testPutBytesTruncatesDynamicData() throws CodeUnitInsertionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			TraceData d4000 =
 				b.addData(0, b.addr(0x4000), NoMaxStringDataType.dataType, b.buf("Hello"));
 			assertEquals(b.addr(0x4005), d4000.getMaxAddress());
@@ -142,7 +142,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 
 	@Test
 	public void testPutBytesSplitsDynamicDataSameLength() throws CodeUnitInsertionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			TraceData d0at4000 =
 				b.addData(0, b.addr(0x4000), NoMaxStringDataType.dataType, b.buf("Hello"));
 			assertEquals(b.addr(0x4005), d0at4000.getMaxAddress());
@@ -158,7 +158,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 
 	@Test
 	public void testPutBytesSplitsStaticData() throws CodeUnitInsertionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			TraceData d0at4000 =
 				b.addData(0, b.addr(0x4000), IntegerDataType.dataType, b.buf(1, 2, 3, 4));
 			assertEquals(Lifespan.nowOn(0), d0at4000.getLifespan());
@@ -174,7 +174,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 
 	@Test
 	public void testPutBytesInScratchLeavesStaticDataUntouched() throws CodeUnitInsertionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			TraceData d0at4000 =
 				b.addData(0, b.addr(0x4000), IntegerDataType.dataType, b.buf(1, 2, 3, 4));
 			assertEquals(Lifespan.nowOn(0), d0at4000.getLifespan());
@@ -191,7 +191,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 
 	@Test
 	public void testPutBytesDeletesDynamicData() throws CodeUnitInsertionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			TraceData d4000 =
 				b.addData(0, b.addr(0x4000), NoMaxStringDataType.dataType, b.buf("Hello"));
 			assertEquals(b.addr(0x4005), d4000.getMaxAddress());
@@ -203,14 +203,14 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 
 	@Test
 	public void testAddInstruction() throws CodeUnitInsertionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			b.addInstruction(0, b.addr(0x4004), b.host, b.buf(0xf4, 0));
 		}
 	}
 
 	@Test
 	public void testAddInstructionPrecedingBytesChanged() throws CodeUnitInsertionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			b.trace.getMemoryManager().putBytes(10, b.addr(0x4001), b.buf(0xaa));
 			TraceInstruction i4000 =
 				b.addInstruction(0, b.addr(0x4000), b.host, b.buf(0xf4, 0));
@@ -220,7 +220,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 
 	@Test
 	public void testAddInstructionInScratch() throws CodeUnitInsertionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			b.trace.getMemoryManager().putBytes(-5, b.addr(0x4001), b.buf(0xaa));
 			TraceInstruction i4000 =
 				b.addInstruction(-10, b.addr(0x4000), b.host, b.buf(0xf4, 0));
@@ -238,7 +238,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 
 	@Test
 	public void testPutBytesTruncatesInstruction() throws CodeUnitInsertionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			TraceInstruction i4000 =
 				b.addInstruction(0, b.addr(0x4000), b.host, b.buf(0xf4, 0));
 			assertEquals(b.addr(0x4001), i4000.getMaxAddress());
@@ -251,7 +251,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 
 	@Test
 	public void testPutBytesDeletesInstruction() throws CodeUnitInsertionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			TraceInstruction i4000 =
 				b.addInstruction(0, b.addr(0x4000), b.host, b.buf(0xf4, 0));
 			assertEquals(b.addr(0x4001), i4000.getMaxAddress());
@@ -263,7 +263,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 
 	@Test
 	public void testAddUndefinedData() throws CodeUnitInsertionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			b.addData(0, b.addr(0x4000), DefaultDataType.dataType, b.buf(1));
 			DBTraceCodeSpace code = manager.getCodeSpace(b.language.getDefaultSpace(), true);
 			assertTrue(code.definedData().mapSpace.isEmpty());
@@ -272,7 +272,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 
 	@Test
 	public void testOverlapErrors() throws CodeUnitInsertionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			b.addData(0, b.addr(0x4000), IntegerDataType.dataType, b.buf(1, 2, 3, 4));
 
 			try {
@@ -315,7 +315,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 		ArrayList<CompletableFuture<Integer>> creators = new ArrayList<>();
 		for (int i = 0; i < 10; i++) {
 			creators.add(CompletableFuture.supplyAsync(() -> {
-				try (UndoableTransaction tid = b.startTransaction()) {
+				try (Transaction tx = b.startTransaction()) {
 					b.trace.getCodeManager()
 							.definedData()
 							.create(Lifespan.ALL, b.addr(0x4000), IntegerDataType.dataType);
@@ -335,13 +335,13 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 
 	@Test
 	public void testOverlapAllowedAfterAbort() throws Throwable {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			b.trace.getCodeManager()
 					.definedData()
 					.create(Lifespan.ALL, b.addr(0x4000), IntegerDataType.dataType);
-			tid.abort();
+			tx.abort();
 		}
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			b.trace.getCodeManager()
 					.definedData()
 					.create(Lifespan.ALL, b.addr(0x4000), IntegerDataType.dataType);
@@ -349,14 +349,14 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 	}
 
 	public void testOverlapErrAfterInvalidate() throws Throwable {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			b.trace.getCodeManager()
 					.definedData()
 					.create(Lifespan.ALL, b.addr(0x4000), IntegerDataType.dataType);
 		}
 		b.trace.undo();
 		b.trace.redo();
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			b.trace.getCodeManager()
 					.definedData()
 					.create(Lifespan.ALL, b.addr(0x4000), IntegerDataType.dataType);
@@ -377,12 +377,12 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 	public void testOverlapErrWithDataTypeSettings() throws Throwable {
 		AddressSpace space = b.trace.getBaseAddressFactory().getDefaultAddressSpace();
 		PointerTypedef type = new PointerTypedef(null, VoidDataType.dataType, 8, null, space);
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			b.trace.getCodeManager()
 					.definedData()
 					.create(Lifespan.ALL, b.addr(0x4000), type);
 		}
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			b.trace.getCodeManager()
 					.definedData()
 					.create(Lifespan.ALL, b.addr(0x4000), type);
@@ -395,7 +395,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 
 	@Test
 	public void testOverlapErrAfterSetEndSnap() throws Throwable {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			DBTraceDataAdapter data = b.trace.getCodeManager()
 					.definedData()
 					.create(Lifespan.ALL, b.addr(0x4000), IntegerDataType.dataType);
@@ -403,7 +403,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 			data.setEndSnap(-10);
 			assertEquals(Lifespan.before(-9), data.getLifespan());
 		}
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			b.trace.getCodeManager()
 					.definedData()
 					.create(Lifespan.ALL, b.addr(0x4000), IntegerDataType.dataType);
@@ -454,7 +454,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 
 	@Test
 	public void testGetAt() throws CodeUnitInsertionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			assertUndefinedFunc(v -> v.getAt(0, b.addr(0x4000)));
 			TraceData d4000 =
 				b.addData(0, b.addr(0x4000), IntegerDataType.dataType, b.buf(1, 2, 3, 4));
@@ -485,7 +485,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 
 	@Test
 	public void testGetContaining() throws CodeUnitInsertionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			assertUndefinedFunc(v -> v.getContaining(0, b.addr(0x4000)));
 			TraceData d4000 =
 				b.addData(0, b.addr(0x4000), IntegerDataType.dataType, b.buf(1, 2, 3, 4));
@@ -565,7 +565,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 		TraceData d4000;
 		TraceData d4004;
 		TraceInstruction i4008;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			d4000 = b.addData(0, b.addr(0x4000), IntegerDataType.dataType, b.buf(1, 2, 3, 4));
 			d4000.setEndSnap(9);
 			d4004 = b.addData(0, b.addr(0x4004), IntegerDataType.dataType, b.buf(5, 6, 7, 8));
@@ -707,7 +707,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 		TraceData d4000;
 		TraceData d4004;
 		TraceInstruction i4008;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			d4000 = b.addData(0, b.addr(0x4000), IntegerDataType.dataType, b.buf(1, 2, 3, 4));
 			d4000.setEndSnap(9);
 			d4004 = b.addData(0, b.addr(0x4004), IntegerDataType.dataType, b.buf(5, 6, 7, 8));
@@ -846,7 +846,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 		TraceData d4000;
 		TraceData d4004;
 		TraceInstruction i4008;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			d4000 = b.addData(0, b.addr(0x4000), IntegerDataType.dataType, b.buf(1, 2, 3, 4));
 			d4000.setEndSnap(9);
 			d4004 = b.addData(0, b.addr(0x4004), IntegerDataType.dataType, b.buf(5, 6, 7, 8));
@@ -986,7 +986,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 		TraceData d4000;
 		TraceData d4004;
 		TraceInstruction i4008;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			d4000 = b.addData(0, b.addr(0x4000), IntegerDataType.dataType, b.buf(1, 2, 3, 4));
 			d4000.setEndSnap(9);
 			d4004 = b.addData(0, b.addr(0x4004), IntegerDataType.dataType, b.buf(5, 6, 7, 8));
@@ -1200,7 +1200,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 		TraceData d4000;
 		TraceData d4004;
 		TraceInstruction i4008;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			d4000 = b.addData(0, b.addr(0x4000), IntegerDataType.dataType, b.buf(1, 2, 3, 4));
 			d4000.setEndSnap(9);
 			d4004 = b.addData(0, b.addr(0x4004), IntegerDataType.dataType, b.buf(5, 6, 7, 8));
@@ -1257,7 +1257,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 			manager.undefinedData().getAfter(0, b.addr(-0x0001)));
 
 		TraceInstruction iCodeMax;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			iCodeMax = b.addInstruction(0, b.addr(-0x0002), b.host, b.buf(0xf4, 0));
 		}
 
@@ -1275,7 +1275,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 		b.trace.undo();
 
 		TraceData dDataMin;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			dDataMin = b.addData(0, b.data(0x0000), IntegerDataType.dataType, b.buf(1, 2, 3, 4));
 		}
 
@@ -1290,7 +1290,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 		assertUndefinedWithAddr(b.addr(-0x0001),
 			manager.undefinedData().getFloor(0, b.data(0x0003)));
 
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			iCodeMax = b.addInstruction(0, b.addr(-0x0002), b.host, b.buf(0xf4, 0));
 		}
 		TraceData uCodePre = manager.undefinedData().getAt(0, b.addr(-0x0003));
@@ -1327,7 +1327,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 	public void testGetsSingleSpace() throws CodeUnitInsertionException {
 		TraceData d4000;
 		TraceInstruction i4008;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			d4000 = b.addData(0, b.addr(0x4000), IntegerDataType.dataType, b.buf(1, 2, 3, 4));
 			d4000.setEndSnap(9);
 			i4008 = b.addInstruction(0, b.addr(0x4008), b.host, b.buf(0xf4, 0));
@@ -1394,7 +1394,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 		DBTraceCodeSpace regCode;
 		TraceData dR4;
 
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			thread = b.getOrAddThread("Thread 1", 0);
 			regCode = manager.getCodeRegisterSpace(thread, true);
 			dR4 = regCode.definedData()
@@ -1413,7 +1413,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 		DBTraceCodeSpace frameCode;
 		TraceData dR5;
 
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			TraceStack stack = b.trace.getStackManager().getStack(thread, 0, true);
 			stack.setDepth(2, true);
 			assertEquals(regCode, manager.getCodeRegisterSpace(stack.getFrame(0, false), false));
@@ -1460,7 +1460,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 		TraceData d4000;
 		TraceData d4004;
 		TraceInstruction i4008;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			d4000 = b.addData(0, b.addr(0x4000), IntegerDataType.dataType, b.buf(1, 2, 3, 4));
 			d4000.setEndSnap(9);
 			d4004 = b.addData(0, b.addr(0x4004), IntegerDataType.dataType, b.buf(5, 6, 7, 8));
@@ -1530,7 +1530,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 		TraceData d4000;
 		TraceData d4004;
 		TraceInstruction i4008;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			d4000 = b.addData(0, b.addr(0x4000), IntegerDataType.dataType, b.buf(1, 2, 3, 4));
 			d4000.setEndSnap(9);
 			d4004 = b.addData(0, b.addr(0x4004), IntegerDataType.dataType, b.buf(5, 6, 7, 8));
@@ -1605,7 +1605,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 		TraceData d4000;
 		TraceData d4004;
 		TraceInstruction i4008;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			d4000 = b.addData(0, b.addr(0x4000), IntegerDataType.dataType, b.buf(1, 2, 3, 4));
 			d4000.setEndSnap(9);
 			d4004 = b.addData(0, b.addr(0x4004), IntegerDataType.dataType, b.buf(5, 6, 7, 8));
@@ -1690,7 +1690,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 		TraceData d4000;
 		TraceData d4004;
 		TraceInstruction i4008;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			d4000 = b.addData(0, b.addr(0x4000), IntegerDataType.dataType, b.buf(1, 2, 3, 4));
 			d4000.setEndSnap(9);
 			d4004 = b.addData(0, b.addr(0x4004), IntegerDataType.dataType, b.buf(5, 6, 7, 8));
@@ -1700,7 +1700,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 		}
 
 		assertEquals(d4000, manager.definedUnits().getAt(0, b.addr(0x4000)));
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			manager.definedUnits()
 					.clear(Lifespan.ALL, b.range(0x0000, -0x0001), false,
 						TaskMonitor.DUMMY);
@@ -1716,7 +1716,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 		i4008 = manager.instructions().getAt(0, b.addr(0x4008));
 
 		assertEquals(d4000, manager.definedUnits().getAt(7, b.addr(0x4000)));
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			manager.definedUnits()
 					.clear(Lifespan.span(7, 8), b.range(0x0000, -0x0001), false,
 						TaskMonitor.DUMMY);
@@ -1734,7 +1734,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 		i4008 = manager.instructions().getAt(0, b.addr(0x4008));
 
 		assertEquals(d4000, manager.definedUnits().getAt(7, b.addr(0x4000)));
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			manager.definedUnits()
 					.clear(Lifespan.span(7, 8), b.range(0x4000, 0x4000), false,
 						TaskMonitor.DUMMY);
@@ -1752,7 +1752,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 		i4008 = manager.instructions().getAt(0, b.addr(0x4008));
 
 		assertEquals(d4000, manager.definedUnits().getAt(0, b.addr(0x4000)));
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			manager.instructions()
 					.clear(Lifespan.ALL, b.range(0x0000, -0x0001), false,
 						TaskMonitor.DUMMY);
@@ -1767,7 +1767,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 		i4008 = manager.instructions().getAt(0, b.addr(0x4008));
 
 		assertEquals(d4000, manager.definedUnits().getAt(0, b.addr(0x4000)));
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			manager.definedData()
 					.clear(Lifespan.ALL, b.range(0x0000, -0x0001), false,
 						TaskMonitor.DUMMY);
@@ -1789,7 +1789,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 		TraceData d4000;
 		TraceData d4004;
 		TraceInstruction i4008;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			d4000 = b.addData(0, b.addr(0x4000), IntegerDataType.dataType, b.buf(1, 2, 3, 4));
 			d4000.setEndSnap(9);
 			d4004 = b.addData(0, b.addr(0x4004), IntegerDataType.dataType, b.buf(5, 6, 7, 8));
@@ -1807,7 +1807,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 		assertEquals(rvOne, ctxManager.getValue(b.language, r4, 0, b.addr(0x4008)));
 		assertEquals(rvOne, ctxManager.getValue(b.language, r4, 7, b.addr(0x4008)));
 
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			manager.instructions()
 					.clear(Lifespan.ALL, b.range(0x0000, -0x0001), true,
 						TaskMonitor.DUMMY);
@@ -1818,7 +1818,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 		assertEquals(rvOne, ctxManager.getValue(b.language, r4, 0, b.addr(0x4008)));
 		assertEquals(rvOne, ctxManager.getValue(b.language, r4, 7, b.addr(0x4008)));
 
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			manager.instructions()
 					.clear(Lifespan.span(7, 7), b.range(0x0000, -0x0001), true,
 						TaskMonitor.DUMMY);
@@ -1838,7 +1838,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 		TraceInstruction g4000;
 		TraceInstruction i4001;
 		TraceData d4003;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			guest = langMan.addGuestPlatform(x86.getDefaultCompilerSpec());
 			mappedRange = guest.addMappedRange(b.addr(0x0000), b.addr(guest, 0x0000), 1L << 32);
 			g4000 = b.addInstruction(0, b.addr(0x4000), guest, b.buf(0x90));
@@ -1847,7 +1847,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 		}
 
 		assertEquals(g4000, manager.codeUnits().getAt(0, b.addr(0x4000)));
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			mappedRange.delete(new ConsoleTaskMonitor());
 		}
 		assertUndefinedWithAddr(b.addr(0x4000), manager.codeUnits().getAt(0, b.addr(0x4000)));
@@ -1861,7 +1861,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 		g4000 = manager.instructions().getAt(0, b.addr(0x4000));
 		assertNotNull(g4000);
 		assertEquals(guest, g4000.getPlatform());
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			guest.delete(new ConsoleTaskMonitor());
 		}
 		assertUndefinedWithAddr(b.addr(0x4000), manager.codeUnits().getAt(0, b.addr(0x4000)));
@@ -1874,7 +1874,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 
 	@Test
 	public void testSaveAndLoad() throws Exception {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			b.addInstruction(0, b.addr(0x4004), b.host, b.buf(0xf4, 0));
 
 			TraceThread thread = b.getOrAddThread("Thread 1", 0);
@@ -1922,7 +1922,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 
 	@Test
 	public void testUndoThenRedo() throws Exception {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			b.addInstruction(0, b.addr(0x4004), b.host, b.buf(0xf4, 0));
 
 			TraceThread thread = b.getOrAddThread("Thread 1", 0);
@@ -1970,7 +1970,7 @@ public class DBTraceCodeManagerTest extends AbstractGhidraHeadlessIntegrationTes
 
 	@Test
 	public void testOverlaySpaces() throws Exception {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			AddressSpace os = b.trace.getMemoryManager()
 					.createOverlayAddressSpace("test",
 						b.trace.getBaseAddressFactory().getDefaultAddressSpace());

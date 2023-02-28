@@ -31,6 +31,7 @@ import javax.swing.table.TableColumnModel;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
+import db.Transaction;
 import docking.*;
 import docking.action.*;
 import docking.action.builder.ActionBuilder;
@@ -78,7 +79,6 @@ import ghidra.trace.util.TraceRegisterUtils;
 import ghidra.util.*;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.data.DataTypeParser.AllowedDataTypes;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
@@ -450,8 +450,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			if (dataType == null) {
 				return null;
 			}
-			try (UndoableTransaction tid =
-				UndoableTransaction.start(currentTrace, "Resolve DataType")) {
+			try (Transaction tx = currentTrace.openTransaction("Resolve DataType")) {
 				return currentTrace.getDataTypeManager().resolve(dataType, null);
 			}
 		}
@@ -902,8 +901,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	 * register and modify it.... Well, that works until you consider changes in time....
 	 */
 	void writeRegisterDataType(Register register, DataType dataType) {
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(current.getTrace(), "Edit Register Type")) {
+		try (Transaction tx = current.getTrace().openTransaction("Edit Register Type")) {
 			if (dataType instanceof Pointer ptrType && register.getAddress().isRegisterAddress()) {
 				// Because we're about to use the size, resolve it first
 				ptrType = (Pointer) current.getTrace()
@@ -1004,8 +1002,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	void prepareRegisterSpace() {
 		if (current.getThread() != null &&
 			current.getTrace().getObjectManager().getRootSchema() != null) {
-			try (UndoableTransaction tid =
-				UndoableTransaction.start(current.getTrace(), "Create/initialize register space")) {
+			try (Transaction tx =
+				current.getTrace().openTransaction("Create/initialize register space")) {
 				getRegisterMemorySpace(true);
 			}
 		}

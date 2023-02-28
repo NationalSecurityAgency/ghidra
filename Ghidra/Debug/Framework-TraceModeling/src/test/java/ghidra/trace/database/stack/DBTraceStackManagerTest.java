@@ -24,13 +24,13 @@ import java.util.stream.StreamSupport;
 
 import org.junit.*;
 
+import db.Transaction;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.util.database.UndoableTransaction;
 
 public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTest {
 
@@ -50,7 +50,7 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 
 	@Test
 	public void testCreateStack() throws Exception {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			TraceThread thread = b.getOrAddThread("Threads[1]", 0);
 			stackManager.getStack(thread, 0, true);
 		}
@@ -59,7 +59,7 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 	@Test
 	public void testSetDepth() throws Exception {
 		TraceStack stack;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			TraceThread thread = b.getOrAddThread("Threads[1]", 0);
 			stack = stackManager.getStack(thread, 0, true);
 			stack.setDepth(1, true);
@@ -72,7 +72,7 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 		}
 		assertEquals(5, expectedLevel);
 
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			stack.setDepth(3, true);
 		}
 
@@ -82,7 +82,7 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 		}
 		assertEquals(3, expectedLevel);
 
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			stack.setDepth(1, false);
 		}
 
@@ -101,7 +101,7 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 		TraceStack stack1b;
 		TraceStack stack2a;
 		TraceStack stack2b;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			thread1 = b.getOrAddThread("Threads[1]", 0);
 			thread2 = b.getOrAddThread("Threads[2]", 0);
 			stack1a = stackManager.getStack(thread1, 2, true);
@@ -133,7 +133,7 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 		TraceStackFrame frame1b;
 		TraceStackFrame frame2a;
 		TraceStackFrame frame2b;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			TraceThread thread = b.getOrAddThread("Threads[1]", 0);
 
 			TraceStack stack1 = stackManager.getStack(thread, 0, true);
@@ -163,7 +163,7 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 	public void testStackGetThread() throws Exception {
 		TraceThread thread;
 		TraceStack stack;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			thread = b.getOrAddThread("Threads[1]", 0);
 			stack = stackManager.getStack(thread, 0, true);
 		}
@@ -175,7 +175,7 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 	public void testStackGetSnap() throws Exception {
 		TraceThread thread;
 		TraceStack stack;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			thread = b.getOrAddThread("Threads[1]", 0);
 			stack = stackManager.getStack(thread, 2, true);
 		}
@@ -187,7 +187,7 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 	public void testStackGetDepth() throws Exception {
 		TraceThread thread;
 		TraceStack stack;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			thread = b.getOrAddThread("Threads[1]", 0);
 			stack = stackManager.getStack(thread, 0, true);
 			stack.setDepth(2, true);
@@ -200,7 +200,7 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 	public void testStackGetFrames() throws Exception {
 		TraceThread thread;
 		TraceStack stack;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			thread = b.getOrAddThread("Threads[1]", 0);
 			stack = stackManager.getStack(thread, 0, true);
 			stack.setDepth(2, true);
@@ -216,7 +216,7 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 	public void testStackDelete() throws Exception {
 		TraceThread thread;
 		TraceStack stack;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			thread = b.getOrAddThread("Threads[1]", 0);
 			stack = stackManager.getStack(thread, 0, true);
 			stack.setDepth(2, true);
@@ -226,7 +226,7 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 		assertEquals(stack, stackManager.getStack(thread, 0, false));
 		assertEquals(2, stack.getFrames(0).size());
 
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			stack.delete();
 		}
 
@@ -239,7 +239,7 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 		TraceThread thread;
 		TraceStack stack;
 		TraceStackFrame frame;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			thread = b.getOrAddThread("Threads[1]", 0);
 			stack = stackManager.getStack(thread, 0, true);
 			frame = stack.getFrame(0, true);
@@ -254,7 +254,7 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 		TraceStack stack;
 		TraceStackFrame frame0;
 		TraceStackFrame frame1;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			thread = b.getOrAddThread("Threads[1]", 0);
 			stack = stackManager.getStack(thread, 0, true);
 			stack.setDepth(2, true);
@@ -271,7 +271,7 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 		TraceThread thread;
 		TraceStack stack;
 		TraceStackFrame frame;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			thread = b.getOrAddThread("Threads[1]", 0);
 			stack = stackManager.getStack(thread, 0, true);
 			stack.setDepth(1, true);
@@ -289,7 +289,7 @@ public class DBTraceStackManagerTest extends AbstractGhidraHeadlessIntegrationTe
 		TraceThread thread;
 		TraceStack stack;
 		TraceStackFrame frame;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			thread = b.getOrAddThread("Threads[1]", 0);
 			stack = stackManager.getStack(thread, 0, true);
 			stack.setDepth(1, true);

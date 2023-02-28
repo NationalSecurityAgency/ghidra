@@ -21,13 +21,13 @@ import java.awt.event.KeyListener;
 
 import javax.swing.*;
 
+import db.Transaction;
 import docking.action.KeyBindingData;
 import docking.action.MenuData;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import generic.theme.GThemeDefaults.Colors;
 import ghidra.framework.plugintool.Plugin;
-import ghidra.program.database.util.ProgramTransaction;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeEncodeException;
@@ -133,8 +133,8 @@ public class PatchDataAction extends AbstractPatchAction {
 			tool.setStatusInfo(e.getMessage(), true);
 			return;
 		}
-		try (ProgramTransaction trans =
-			ProgramTransaction.open(program, "Patch Data @" + address + ": " + input.getText())) {
+		try (Transaction tx =
+			program.openTransaction("Patch Data @" + address + ": " + input.getText())) {
 			int oldLength = data.getLength();
 			if (encoded.length != oldLength) {
 				program.getListing().clearCodeUnits(address, rng.getMaxAddress(), false);
@@ -143,7 +143,6 @@ public class PatchDataAction extends AbstractPatchAction {
 			if (encoded.length != oldLength) {
 				program.getListing().createData(address, dt, encoded.length);
 			}
-			trans.commit();
 			hide();
 		}
 		catch (MemoryAccessException e) {

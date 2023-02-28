@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.control;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
@@ -26,6 +26,7 @@ import org.jdom.JDOMException;
 import org.junit.Before;
 import org.junit.Test;
 
+import db.Transaction;
 import docking.action.DockingActionIf;
 import generic.Unique;
 import ghidra.app.context.ProgramLocationActionContext;
@@ -45,7 +46,6 @@ import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.program.model.address.Address;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.Lifespan;
-import ghidra.util.database.UndoableTransaction;
 
 public class DebuggerMethodActionsPluginTest extends AbstractGhidraHeadedDebuggerGUITest {
 	public static final XmlSchemaContext SCHEMA_CTX;
@@ -216,13 +216,13 @@ public class DebuggerMethodActionsPluginTest extends AbstractGhidraHeadedDebugge
 		createProgramFromTrace(tb.trace);
 		intoProject(program);
 
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add memory")) {
+		try (Transaction tx = program.openTransaction("Add memory")) {
 			program.getMemory()
 					.createInitializedBlock(".text", addr(program, 0x00400000), 0x1000,
 						(byte) 0, monitor, false);
 		}
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			mappingService.addIdentityMapping(tb.trace, program, Lifespan.ALL, true);
 		}
 		waitForDomainObject(tb.trace);
@@ -252,13 +252,13 @@ public class DebuggerMethodActionsPluginTest extends AbstractGhidraHeadedDebugge
 		createProgramFromTrace(tb.trace);
 		intoProject(program);
 
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add memory")) {
+		try (Transaction tx = program.openTransaction("Add memory")) {
 			program.getMemory()
 					.createInitializedBlock(".text", addr(program, 0x00400000), 0x1000,
 						(byte) 0, monitor, false);
 		}
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			mappingService.addIdentityMapping(tb.trace, program, Lifespan.ALL, true);
 		}
 		waitForDomainObject(tb.trace);

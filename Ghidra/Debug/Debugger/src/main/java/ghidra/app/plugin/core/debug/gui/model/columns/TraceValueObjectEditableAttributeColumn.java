@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.model.columns;
 
+import db.Transaction;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueProperty;
 import ghidra.app.plugin.core.debug.gui.model.ObjectTableModel.ValueRow;
 import ghidra.docking.settings.Settings;
@@ -22,7 +23,6 @@ import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObject;
-import ghidra.util.database.UndoableTransaction;
 
 public class TraceValueObjectEditableAttributeColumn<T> extends TraceValueObjectAttributeColumn<T>
 		implements EditableColumn<ValueRow, ValueProperty<T>, Trace> {
@@ -40,8 +40,8 @@ public class TraceValueObjectEditableAttributeColumn<T> extends TraceValueObject
 	public void setValue(ValueRow row, ValueProperty<T> value, Settings settings, Trace dataSource,
 			ServiceProvider serviceProvider) {
 		TraceObject object = row.getValue().getChild();
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(object.getTrace(), "Edit column " + getColumnName())) {
+		try (Transaction tx =
+			object.getTrace().openTransaction("Edit column " + getColumnName())) {
 			object.setAttribute(Lifespan.nowOn(row.currentSnap()), attributeName, value.getValue());
 		}
 	}

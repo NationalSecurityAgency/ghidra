@@ -17,15 +17,15 @@ package ghidra.app.plugin.core.debug.service.breakpoint;
 
 import java.util.concurrent.CompletableFuture;
 
+import db.Transaction;
 import ghidra.async.AsyncUtils;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
-import ghidra.util.database.UndoableTransaction;
 
 public record EnableEmuBreakpointActionItem(TraceBreakpoint bpt) implements BreakpointActionItem {
 	@Override
 	public CompletableFuture<Void> execute() {
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(bpt.getTrace(), "Enable Emulated Breakpoint")) {
+		try (Transaction tx =
+			bpt.getTrace().openTransaction("Enable Emulated Breakpoint")) {
 			bpt.setEmuEnabled(true);
 		}
 		return AsyncUtils.NIL;

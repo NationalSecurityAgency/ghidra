@@ -22,6 +22,7 @@ import java.nio.ByteBuffer;
 import org.junit.Before;
 import org.junit.Test;
 
+import db.Transaction;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
@@ -32,7 +33,6 @@ import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.Swing;
-import ghidra.util.database.UndoableTransaction;
 
 public class DebuggerTraceViewDiffPluginTest extends AbstractGhidraHeadedDebuggerGUITest {
 
@@ -128,7 +128,7 @@ public class DebuggerTraceViewDiffPluginTest extends AbstractGhidraHeadedDebugge
 	@Test
 	public void testColorsDiffBytes() throws Throwable {
 		createAndOpenTrace();
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			DBTraceMemoryManager mm = tb.trace.getMemoryManager();
 			mm.createRegion(".text", 0, tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
@@ -163,7 +163,7 @@ public class DebuggerTraceViewDiffPluginTest extends AbstractGhidraHeadedDebugge
 	@Test
 	public void testActionPrevDiff() throws Throwable {
 		createAndOpenTrace();
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			DBTraceMemoryManager mm = tb.trace.getMemoryManager();
 			mm.createRegion(".text", 0, tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
@@ -200,7 +200,7 @@ public class DebuggerTraceViewDiffPluginTest extends AbstractGhidraHeadedDebugge
 	@Test
 	public void testActionNextDiff() throws Throwable {
 		createAndOpenTrace();
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			DBTraceMemoryManager mm = tb.trace.getMemoryManager();
 			mm.createRegion(".text", 0, tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);

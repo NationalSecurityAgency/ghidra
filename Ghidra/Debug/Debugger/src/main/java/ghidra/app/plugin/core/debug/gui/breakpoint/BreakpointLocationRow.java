@@ -18,13 +18,13 @@ package ghidra.app.plugin.core.debug.gui.breakpoint;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import db.Transaction;
 import ghidra.app.services.LogicalBreakpoint;
 import ghidra.app.services.LogicalBreakpoint.State;
 import ghidra.pcode.exec.SleighUtils;
 import ghidra.program.model.address.Address;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.util.database.UndoableTransaction;
 
 public class BreakpointLocationRow {
 	private final DebuggerBreakpointsProvider provider;
@@ -73,8 +73,7 @@ public class BreakpointLocationRow {
 	}
 
 	public void setName(String name) {
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(loc.getTrace(), "Set breakpoint name")) {
+		try (Transaction tid = loc.getTrace().openTransaction("Set breakpoint name")) {
 			loc.setName(name);
 		}
 	}
@@ -100,8 +99,7 @@ public class BreakpointLocationRow {
 	}
 
 	public void setComment(String comment) {
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(loc.getTrace(), "Set breakpoint comment")) {
+		try (Transaction tid = loc.getTrace().openTransaction("Set breakpoint comment")) {
 			loc.setComment(comment);
 		}
 	}

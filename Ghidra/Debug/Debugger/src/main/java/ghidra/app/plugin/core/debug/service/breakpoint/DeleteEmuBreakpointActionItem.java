@@ -17,15 +17,15 @@ package ghidra.app.plugin.core.debug.service.breakpoint;
 
 import java.util.concurrent.CompletableFuture;
 
+import db.Transaction;
 import ghidra.async.AsyncUtils;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
-import ghidra.util.database.UndoableTransaction;
 
 public record DeleteEmuBreakpointActionItem(TraceBreakpoint bpt) implements BreakpointActionItem {
 	@Override
 	public CompletableFuture<Void> execute() {
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(bpt.getTrace(), "Delete Emulated Breakpoint")) {
+		try (Transaction tx =
+			bpt.getTrace().openTransaction("Delete Emulated Breakpoint")) {
 			String emuName = PlaceEmuBreakpointActionItem.createName(bpt.getMinAddress());
 			if (bpt.getPath().contains(emuName)) {
 				bpt.delete();

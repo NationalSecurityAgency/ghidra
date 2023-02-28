@@ -19,6 +19,7 @@ import java.util.Set;
 
 import org.junit.*;
 
+import db.Transaction;
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
@@ -33,7 +34,6 @@ import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.symbol.*;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.util.database.UndoableTransaction;
 import help.screenshot.GhidraScreenShotGenerator;
 
 public class DebuggerMemoryBytesPluginScreenShots extends GhidraScreenShotGenerator {
@@ -63,7 +63,7 @@ public class DebuggerMemoryBytesPluginScreenShots extends GhidraScreenShotGenera
 
 	@Test
 	public void testCaptureDebuggerMemoryBytesPlugin() throws Throwable {
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			long snap = tb.trace.getTimeManager().createSnapshot("First").getKey();
 			tb.trace.getMemoryManager()
 					.addRegion(".text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),

@@ -23,6 +23,7 @@ import org.apache.commons.collections4.collection.CompositeCollection;
 
 import com.google.common.cache.RemovalNotification;
 
+import db.Transaction;
 import db.DBHandle;
 import generic.depends.DependentService;
 import generic.depends.err.ServiceConstructionException;
@@ -165,7 +166,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 		this.baseAddressFactory =
 			new TraceAddressFactory(this.baseLanguage, this.baseCompilerSpec);
 
-		try (UndoableTransaction tid = UndoableTransaction.start(this, "Create")) {
+		try (Transaction tx = this.openTransaction("Create")) {
 			initOptions(DBOpenMode.CREATE);
 			init();
 		}

@@ -373,7 +373,7 @@ public class MyProgramChangesDisplayPlugin extends ProgramPlugin implements Doma
 	private class ProgramTransactionListener implements TransactionListener {
 
 		@Override
-		public void transactionStarted(DomainObjectAdapterDB domainObj, Transaction tx) {
+		public void transactionStarted(DomainObjectAdapterDB domainObj, TransactionInfo tx) {
 			// ignore
 		}
 

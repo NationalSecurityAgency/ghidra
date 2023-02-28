@@ -17,10 +17,10 @@ package ghidra.trace.database.module;
 
 import org.junit.Before;
 
+import db.Transaction;
 import ghidra.dbg.target.schema.SchemaContext;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.dbg.target.schema.XmlSchemaContext;
-import ghidra.util.database.UndoableTransaction;
 
 public class DBTraceModuleManagerObjectTest extends DBTraceModuleManagerTest {
 
@@ -50,7 +50,7 @@ public class DBTraceModuleManagerObjectTest extends DBTraceModuleManagerTest {
 			"    </schema>" + //
 			"</context>");
 
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			b.trace.getObjectManager().createRootObject(ctx.getSchema(new SchemaName("Session")));
 		}
 	}

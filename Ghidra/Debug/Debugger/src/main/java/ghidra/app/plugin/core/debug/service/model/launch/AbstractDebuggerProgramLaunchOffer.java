@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.service.model.launch;
 
-import static ghidra.async.AsyncUtils.loop;
+import static ghidra.async.AsyncUtils.*;
 
 import java.io.IOException;
 import java.util.*;
@@ -29,6 +29,7 @@ import javax.swing.JOptionPane;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 
+import db.Transaction;
 import ghidra.app.plugin.core.debug.gui.objects.components.DebuggerMethodInvocationDialog;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
@@ -53,7 +54,6 @@ import ghidra.trace.model.TraceLocation;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.datastruct.CollectionChangeListener;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -243,7 +243,7 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 		}
 		if (program != null) {
 			ProgramUserData userData = program.getProgramUserData();
-			try (UndoableTransaction tid = UndoableTransaction.start(userData)) {
+			try (Transaction tx = userData.openTransaction()) {
 				Element element = state.saveToXml();
 				userData.setStringProperty(TargetCmdLineLauncher.CMDLINE_ARGS_NAME,
 					XmlUtilities.toString(element));

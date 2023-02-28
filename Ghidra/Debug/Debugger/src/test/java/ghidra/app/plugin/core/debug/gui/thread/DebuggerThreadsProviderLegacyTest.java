@@ -25,6 +25,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import db.Transaction;
 import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.thread.DebuggerLegacyThreadsPanel.ThreadTableColumns;
@@ -33,7 +34,6 @@ import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.thread.TraceThreadManager;
 import ghidra.trace.model.time.TraceTimeManager;
-import ghidra.util.database.UndoableTransaction;
 
 @Category(NightlyCategory.class) // this may actually be an @PortSensitive test
 public class DebuggerThreadsProviderLegacyTest extends AbstractGhidraHeadedDebuggerGUITest {
@@ -52,7 +52,7 @@ public class DebuggerThreadsProviderLegacyTest extends AbstractGhidraHeadedDebug
 
 	protected void addThreads() throws Exception {
 		TraceThreadManager manager = tb.trace.getThreadManager();
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			thread1 = manager.addThread("Processes[1].Threads[1]", Lifespan.nowOn(0));
 			thread1.setComment("A comment");
 			thread2 = manager.addThread("Processes[1].Threads[2]", Lifespan.span(5, 10));
@@ -267,7 +267,7 @@ public class DebuggerThreadsProviderLegacyTest extends AbstractGhidraHeadedDebug
 
 		assertEquals(1, threadsProvider.legacyPanel.spanRenderer.getFullRange().max().longValue());
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			manager.getSnapshot(10, true);
 		}
 		waitForSwing();
@@ -284,7 +284,7 @@ public class DebuggerThreadsProviderLegacyTest extends AbstractGhidraHeadedDebug
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			thread1.setDestructionSnap(15);
 		}
 		waitForSwing();
@@ -304,7 +304,7 @@ public class DebuggerThreadsProviderLegacyTest extends AbstractGhidraHeadedDebug
 
 		assertEquals(2, threadsProvider.legacyPanel.threadTableModel.getModelData().size());
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			thread2.delete();
 		}
 		waitForSwing();

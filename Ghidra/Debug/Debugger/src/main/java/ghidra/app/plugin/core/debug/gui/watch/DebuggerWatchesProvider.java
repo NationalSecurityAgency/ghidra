@@ -31,6 +31,7 @@ import javax.swing.table.TableColumnModel;
 
 import org.jdom.Element;
 
+import db.Transaction;
 import docking.ActionContext;
 import docking.WindowPosition;
 import docking.action.DockingAction;
@@ -81,7 +82,6 @@ import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.trace.util.TraceAddressSpace;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
@@ -280,8 +280,7 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 			if (dataType == null) {
 				return null;
 			}
-			try (UndoableTransaction tid =
-				UndoableTransaction.start(currentTrace, "Resolve DataType")) {
+			try (Transaction tx = currentTrace.openTransaction("Resolve DataType")) {
 				return currentTrace.getDataTypeManager().resolve(dataType, null);
 			}
 		}
@@ -605,8 +604,8 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter
 					return;
 				}
 			}
-			try (UndoableTransaction tid =
-				UndoableTransaction.start(current.getTrace(), "Apply Watch Data Type")) {
+			try (Transaction tx =
+				current.getTrace().openTransaction("Apply Watch Data Type")) {
 				try {
 					listing.clearCodeUnits(row.getAddress(), row.getRange().getMaxAddress(), false);
 					Data data = listing.createData(address, dataType, size);

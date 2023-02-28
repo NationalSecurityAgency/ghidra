@@ -24,6 +24,7 @@ import java.util.Map.Entry;
 
 import org.junit.*;
 
+import db.Transaction;
 import ghidra.program.model.lang.LanguageID;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
@@ -31,7 +32,6 @@ import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.util.LanguageTestWatcher;
 import ghidra.util.database.DBCachedObjectStore;
-import ghidra.util.database.UndoableTransaction;
 
 public abstract class AbstractDBTraceMemoryManagerTest
 		extends AbstractGhidraHeadlessIntegrationTest {
@@ -47,7 +47,7 @@ public abstract class AbstractDBTraceMemoryManagerTest
 	@Before
 	public void setUp() throws IOException {
 		b = new ToyDBTraceBuilder("Testing", testLanguage.getLanguage());
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			b.trace.getTimeManager().createSnapshot("Initialize");
 		}
 		memory = b.trace.getMemoryManager();

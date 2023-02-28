@@ -23,8 +23,7 @@ import java.util.function.Predicate;
 
 import org.junit.*;
 
-import db.DBHandle;
-import db.DBRecord;
+import db.*;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.LanguageID;
@@ -145,7 +144,7 @@ public class DBTraceAddressSnapRangePropertyMapAddressSetViewTest
 				.getLanguage(new LanguageID("Toy:BE:64:default"));
 		obj = new MyObject(this);
 		factory = new DBCachedObjectStoreFactory(obj);
-		try (UndoableTransaction tid = UndoableTransaction.start(obj, "CreateTable")) {
+		try (Transaction tx = obj.openTransaction("CreateTable")) {
 			space = new DBTraceAddressSnapRangePropertyMapSpace<>("Entries", factory,
 				obj.getReadWriteLock(), toy.getDefaultSpace(), null, 0, MyEntry.class,
 				MyEntry::new);
@@ -164,7 +163,7 @@ public class DBTraceAddressSnapRangePropertyMapAddressSetViewTest
 		view = makeIntersectingView(tasr(0x0100, 0x2fff, 0, 0), s -> true);
 		assertFalse(view.contains(addr(0x1800)));
 
-		try (UndoableTransaction trans = UndoableTransaction.start(obj, "Create Entries")) {
+		try (Transaction tx = obj.openTransaction("Create Entries")) {
 			space.put(tasr(0x1000, 0x1fff, 0, 9), "A");
 		}
 
@@ -196,7 +195,7 @@ public class DBTraceAddressSnapRangePropertyMapAddressSetViewTest
 		view = makeIntersectingView(tasr(0x0100, 0x2fff, 0, 0), s -> true);
 		assertFalse(view.contains(addr(0x1000), addr(0x1fff)));
 
-		try (UndoableTransaction trans = UndoableTransaction.start(obj, "Create Entries")) {
+		try (Transaction tx = obj.openTransaction("Create Entries")) {
 			space.put(tasr(0x1000, 0x2fff, 0, 0), "A");
 			space.put(tasr(0x2000, 0x3fff, 1, 1), "B");
 		}
@@ -233,7 +232,7 @@ public class DBTraceAddressSnapRangePropertyMapAddressSetViewTest
 		view = makeIntersectingView(tasr(0x0100, 0x2fff, 0, 0), s -> true);
 		assertFalse(view.contains(set(rng(0x1000, 0x1fff))));
 
-		try (UndoableTransaction trans = UndoableTransaction.start(obj, "Create Entries")) {
+		try (Transaction tx = obj.openTransaction("Create Entries")) {
 			space.put(tasr(0x1000, 0x2fff, 0, 0), "A");
 			space.put(tasr(0x2000, 0x3fff, 1, 1), "B");
 		}
@@ -272,7 +271,7 @@ public class DBTraceAddressSnapRangePropertyMapAddressSetViewTest
 		assertEquals(0, view.getNumAddressRanges());
 		assertEquals(0, view.getNumAddresses());
 
-		try (UndoableTransaction trans = UndoableTransaction.start(obj, "Create Entries")) {
+		try (Transaction tx = obj.openTransaction("Create Entries")) {
 			space.put(tasr(0x1000, 0x1fff, 0, 0), "A");
 			space.put(tasr(0x2000, 0x2fff, 0, 0), "A");
 			space.put(tasr(0x2000, 0x2fff, 1, 1), "B");
@@ -308,7 +307,7 @@ public class DBTraceAddressSnapRangePropertyMapAddressSetViewTest
 		assertNull(view.getMinAddress());
 		assertNull(view.getMaxAddress());
 
-		try (UndoableTransaction trans = UndoableTransaction.start(obj, "Create Entries")) {
+		try (Transaction tx = obj.openTransaction("Create Entries")) {
 			space.put(tasr(0x1000, 0x2fff, 0, 0), "A");
 			space.put(tasr(0x2000, 0x3fff, 1, 1), "B");
 		}
@@ -338,7 +337,7 @@ public class DBTraceAddressSnapRangePropertyMapAddressSetViewTest
 		view = makeIntersectingView(tasr(0x0100, 0x2fff, 0, 0), s -> true);
 		assertEquals(List.of(), list(view.iterator()));
 
-		try (UndoableTransaction trans = UndoableTransaction.start(obj, "Create Entries")) {
+		try (Transaction tx = obj.openTransaction("Create Entries")) {
 			space.put(tasr(0x1000, 0x1fff, 0, 0), "A");
 			space.put(tasr(0x2000, 0x2fff, 0, 0), "A");
 			space.put(tasr(0x2000, 0x2fff, 1, 1), "B");
@@ -377,7 +376,7 @@ public class DBTraceAddressSnapRangePropertyMapAddressSetViewTest
 		view = makeIntersectingView(tasr(0x0100, 0x2fff, 0, 0), s -> true);
 		assertEquals(List.of(), list(view.getAddresses(true)));
 
-		try (UndoableTransaction trans = UndoableTransaction.start(obj, "Create Entries")) {
+		try (Transaction tx = obj.openTransaction("Create Entries")) {
 			space.put(tasr(1, 5, 0, 0), "A");
 		}
 
@@ -397,7 +396,7 @@ public class DBTraceAddressSnapRangePropertyMapAddressSetViewTest
 
 	@Test
 	public void testIntersects() {
-		try (UndoableTransaction trans = UndoableTransaction.start(obj, "Create Entries")) {
+		try (Transaction tx = obj.openTransaction("Create Entries")) {
 			space.put(tasr(0x1000, 0x1fff, 0, 0), "A");
 			space.put(tasr(0x2000, 0x2fff, 0, 0), "A");
 			space.put(tasr(0x2000, 0x2fff, 1, 1), "B");
@@ -419,7 +418,7 @@ public class DBTraceAddressSnapRangePropertyMapAddressSetViewTest
 
 	@Test
 	public void testUnion() {
-		try (UndoableTransaction trans = UndoableTransaction.start(obj, "Create Entries")) {
+		try (Transaction tx = obj.openTransaction("Create Entries")) {
 			space.put(tasr(0x1000, 0x1fff, 0, 0), "A");
 			space.put(tasr(0x2000, 0x2fff, 0, 0), "A");
 			space.put(tasr(0x2000, 0x2fff, 1, 1), "B");
@@ -432,7 +431,7 @@ public class DBTraceAddressSnapRangePropertyMapAddressSetViewTest
 
 	@Test
 	public void testSubtract() {
-		try (UndoableTransaction trans = UndoableTransaction.start(obj, "Create Entries")) {
+		try (Transaction tx = obj.openTransaction("Create Entries")) {
 			space.put(tasr(0x1000, 0x1fff, 0, 0), "A");
 			space.put(tasr(0x2000, 0x2fff, 0, 0), "A");
 			space.put(tasr(0x2000, 0x2fff, 1, 1), "B");
@@ -446,7 +445,7 @@ public class DBTraceAddressSnapRangePropertyMapAddressSetViewTest
 
 	@Test
 	public void testXor() {
-		try (UndoableTransaction trans = UndoableTransaction.start(obj, "Create Entries")) {
+		try (Transaction tx = obj.openTransaction("Create Entries")) {
 			space.put(tasr(0x1000, 0x1fff, 0, 0), "A");
 			space.put(tasr(0x2000, 0x2fff, 0, 0), "A");
 			space.put(tasr(0x2000, 0x2fff, 1, 1), "B");
@@ -460,7 +459,7 @@ public class DBTraceAddressSnapRangePropertyMapAddressSetViewTest
 
 	@Test
 	public void testHasSameAddresses() {
-		try (UndoableTransaction trans = UndoableTransaction.start(obj, "Create Entries")) {
+		try (Transaction tx = obj.openTransaction("Create Entries")) {
 			space.put(tasr(0x1000, 0x1fff, 0, 0), "A");
 			space.put(tasr(0x2000, 0x2fff, 0, 0), "A");
 			space.put(tasr(0x2000, 0x2fff, 1, 1), "B");
@@ -476,7 +475,7 @@ public class DBTraceAddressSnapRangePropertyMapAddressSetViewTest
 
 	@Test
 	public void testGetFirstLastRanges() {
-		try (UndoableTransaction trans = UndoableTransaction.start(obj, "Create Entries")) {
+		try (Transaction tx = obj.openTransaction("Create Entries")) {
 			space.put(tasr(0x1000, 0x1fff, 0, 0), "A");
 			space.put(tasr(0x2000, 0x27ff, 0, 0), "A");
 			space.put(tasr(0x2000, 0x2fff, 1, 1), "B");
@@ -490,7 +489,7 @@ public class DBTraceAddressSnapRangePropertyMapAddressSetViewTest
 
 	@Test
 	public void testGetRangeContaining() {
-		try (UndoableTransaction trans = UndoableTransaction.start(obj, "Create Entries")) {
+		try (Transaction tx = obj.openTransaction("Create Entries")) {
 			space.put(tasr(0x1000, 0x1fff, 0, 0), "A");
 			space.put(tasr(0x2000, 0x2fff, 0, 0), "A");
 			space.put(tasr(0x2000, 0x2fff, 1, 1), "B");
@@ -510,7 +509,7 @@ public class DBTraceAddressSnapRangePropertyMapAddressSetViewTest
 
 	@Test
 	public void testFindFirstAddressInCommon() {
-		try (UndoableTransaction trans = UndoableTransaction.start(obj, "Create Entries")) {
+		try (Transaction tx = obj.openTransaction("Create Entries")) {
 			space.put(tasr(0x1000, 0x1fff, 0, 0), "A");
 			space.put(tasr(0x2000, 0x2fff, 0, 0), "A");
 			space.put(tasr(0x2000, 0x2fff, 1, 1), "B");

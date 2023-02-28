@@ -20,8 +20,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.Function;
 
-import db.DBConstants;
-import db.DBHandle;
+import db.*;
 import db.util.ErrorHandler;
 import ghidra.framework.model.*;
 import ghidra.framework.options.Options;
@@ -32,7 +31,6 @@ import ghidra.util.Msg;
 import ghidra.util.ReadOnlyException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * Database version of the DomainObjectAdapter; this version adds the
@@ -273,7 +271,7 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
 
 	@Override
 	public boolean canLock() {
-		return transactionMgr.getCurrentTransaction() == null && !closed;
+		return transactionMgr.getCurrentTransactionInfo() == null && !closed;
 	}
 
 	@Override
@@ -329,18 +327,40 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
 	}
 
 	@Override
-	public int startTransaction(String description) {
+	public Transaction openTransaction(String description)
+			throws TerminatedTransactionException, IllegalStateException {
+		return new Transaction() {
+
+			int txId = startTransaction(description);
+
+			@Override
+			protected boolean endTransaction(boolean commit) {
+				DomainObjectAdapterDB.this.endTransaction(txId, commit);
+				return commit;
+			}
+
+			@Override
+			public boolean isSubTransaction() {
+				return true;
+			}
+		};
+	}
+
+	@Override
+	public int startTransaction(String description) throws TerminatedTransactionException {
 		return startTransaction(description, null);
 	}
 
 	@Override
-	public int startTransaction(String description, AbortedTransactionListener listener) {
+	public int startTransaction(String description, AbortedTransactionListener listener)
+			throws TerminatedTransactionException {
 		return startTransaction(description, listener, tryForeverExceptionHandler);
 	}
 
 	// open for testing
 	int startTransaction(String description, AbortedTransactionListener listener,
-			Function<DomainObjectLockedException, Boolean> exceptionHandler) {
+			Function<DomainObjectLockedException, Boolean> exceptionHandler)
+			throws TerminatedTransactionException {
 
 		while (true) {
 			try {
@@ -355,7 +375,7 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
 	}
 
 	@Override
-	public void endTransaction(int transactionID, boolean commit) {
+	public void endTransaction(int transactionID, boolean commit) throws IllegalStateException {
 		transactionMgr.endTransaction(this, transactionID, commit, true);
 	}
 
@@ -408,8 +428,8 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
 	}
 
 	@Override
-	public Transaction getCurrentTransaction() {
-		return transactionMgr.getCurrentTransaction();
+	public TransactionInfo getCurrentTransactionInfo() {
+		return transactionMgr.getCurrentTransactionInfo();
 	}
 
 	@Override
