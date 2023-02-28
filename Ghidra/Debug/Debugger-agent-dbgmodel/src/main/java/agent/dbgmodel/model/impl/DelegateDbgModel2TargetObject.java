@@ -18,59 +18,19 @@ package agent.dbgmodel.model.impl;
 import java.lang.invoke.MethodHandles;
 import java.lang.ref.Cleaner;
 import java.lang.ref.Cleaner.Cleanable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-import agent.dbgeng.manager.DbgCause;
-import agent.dbgeng.manager.DbgEventsListener;
-import agent.dbgeng.manager.DbgProcess;
-import agent.dbgeng.manager.DbgReason;
-import agent.dbgeng.manager.DbgState;
-import agent.dbgeng.manager.DbgStateListener;
-import agent.dbgeng.manager.DbgThread;
+import agent.dbgeng.manager.*;
 import agent.dbgeng.manager.breakpoint.DbgBreakpointInfo;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
-import agent.dbgeng.model.iface1.DbgModelTargetAccessConditioned;
-import agent.dbgeng.model.iface1.DbgModelTargetBptHelper;
-import agent.dbgeng.model.iface1.DbgModelTargetExecutionStateful;
-import agent.dbgeng.model.iface1.DbgModelTargetMethod;
-import agent.dbgeng.model.iface2.DbgModelTargetAvailable;
-import agent.dbgeng.model.iface2.DbgModelTargetAvailableContainer;
-import agent.dbgeng.model.iface2.DbgModelTargetBreakpointContainer;
-import agent.dbgeng.model.iface2.DbgModelTargetBreakpointSpec;
-import agent.dbgeng.model.iface2.DbgModelTargetDebugContainer;
-import agent.dbgeng.model.iface2.DbgModelTargetMemoryContainer;
-import agent.dbgeng.model.iface2.DbgModelTargetModule;
-import agent.dbgeng.model.iface2.DbgModelTargetModuleContainer;
-import agent.dbgeng.model.iface2.DbgModelTargetObject;
-import agent.dbgeng.model.iface2.DbgModelTargetProcess;
-import agent.dbgeng.model.iface2.DbgModelTargetProcessContainer;
-import agent.dbgeng.model.iface2.DbgModelTargetRegister;
-import agent.dbgeng.model.iface2.DbgModelTargetRegisterBank;
-import agent.dbgeng.model.iface2.DbgModelTargetRegisterContainer;
-import agent.dbgeng.model.iface2.DbgModelTargetSession;
-import agent.dbgeng.model.iface2.DbgModelTargetSessionAttributes;
-import agent.dbgeng.model.iface2.DbgModelTargetSessionContainer;
-import agent.dbgeng.model.iface2.DbgModelTargetStack;
-import agent.dbgeng.model.iface2.DbgModelTargetStackFrame;
-import agent.dbgeng.model.iface2.DbgModelTargetTTD;
-import agent.dbgeng.model.iface2.DbgModelTargetThread;
-import agent.dbgeng.model.iface2.DbgModelTargetThreadContainer;
+import agent.dbgeng.model.iface1.*;
+import agent.dbgeng.model.iface2.*;
 import agent.dbgmodel.dbgmodel.main.ModelObject;
 import agent.dbgmodel.jna.dbgmodel.DbgModelNative.ModelObjectKind;
-import ghidra.dbg.target.TargetAccessConditioned;
+import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointAction;
-import ghidra.dbg.target.TargetExecutionStateful;
-import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.target.TargetRegisterBank;
-import ghidra.dbg.target.TargetRegisterContainer;
-import ghidra.dbg.target.TargetStack;
-import ghidra.dbg.target.TargetStackFrame;
-import ghidra.dbg.target.TargetThread;
 import ghidra.dbg.util.PathUtils;
+import ghidra.util.datastruct.ListenerMap.ListenerEntry;
 import ghidra.util.datastruct.ListenerSet;
 
 public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl implements //
@@ -198,13 +158,14 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 	protected final Cleanable cleanable;
 
 	private boolean breakpointEnabled;
-	private final ListenerSet<TargetBreakpointAction> breakpointActions = new ListenerSet<>(
-			TargetBreakpointAction.class) {
-		// Use strong references on actions
-		protected Map<TargetBreakpointAction, TargetBreakpointAction> createMap() {
-			return Collections.synchronizedMap(new LinkedHashMap<>());
+
+	private final ListenerSet<TargetBreakpointAction> breakpointActions =
+		new ListenerSet<>(TargetBreakpointAction.class) {
+			// Use strong references on actions
+			protected Map<TargetBreakpointAction, ListenerEntry<? extends TargetBreakpointAction>> createMap() {
+				return new LinkedHashMap<>();
+			}
 		};
-	};
 
 	// Extending DefaultTargetObject may spare you from listeners, elements, and
 	// attributes

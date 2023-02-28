@@ -26,13 +26,14 @@ import ghidra.async.AsyncUtils;
 import ghidra.dbg.target.TargetBreakpointSpecContainer.TargetBreakpointKindSet;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
+import ghidra.util.datastruct.ListenerMap.ListenerEntry;
 import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.datastruct.WeakValueHashMap;
 
 @TargetObjectSchemaInfo(
 	name = "BreakpointSpec",
 	elements = { //
-		@TargetElementType(type = LldbModelTargetBreakpointLocationImpl.class) //
+		@TargetElementType(type = LldbModelTargetBreakpointLocationImpl.class)
 	},
 	attributes = {
 		@TargetAttributeType(name = "Type", type = String.class),
@@ -60,8 +61,8 @@ public abstract class LldbModelTargetAbstractXpointSpec extends LldbModelTargetO
 	protected final ListenerSet<TargetBreakpointAction> actions =
 		new ListenerSet<>(TargetBreakpointAction.class) {
 			// Use strong references on actions
-			protected Map<TargetBreakpointAction, TargetBreakpointAction> createMap() {
-				return Collections.synchronizedMap(new LinkedHashMap<>());
+			protected Map<TargetBreakpointAction, ListenerEntry<? extends TargetBreakpointAction>> createMap() {
+				return new LinkedHashMap<>();
 			};
 		};
 

@@ -17,7 +17,6 @@ package agent.dbgmodel.impl.dbgmodel.main;
 
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Guid.REFIID;
 
@@ -35,12 +34,9 @@ public interface KeyStoreInternal extends KeyStore {
 		return DbgModelUtil.lazyWeakCache(CACHE, data, KeyStoreImpl::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIKeyStore>> PREFERRED_DATA_SPACES_IIDS_BUILDER =
-		ImmutableMap.builder();
 	Map<REFIID, Class<? extends WrapIKeyStore>> PREFERRED_DATA_SPACES_IIDS =
-		PREFERRED_DATA_SPACES_IIDS_BUILDER //
-				.put(new REFIID(IKeyStore.IID_IKEY_STORE), WrapIKeyStore.class) //
-				.build();
+		Map.ofEntries(
+			Map.entry(new REFIID(IKeyStore.IID_IKEY_STORE), WrapIKeyStore.class));
 
 	static KeyStoreInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
 		return DbgModelUtil.tryPreferredInterfaces(KeyStoreInternal.class,

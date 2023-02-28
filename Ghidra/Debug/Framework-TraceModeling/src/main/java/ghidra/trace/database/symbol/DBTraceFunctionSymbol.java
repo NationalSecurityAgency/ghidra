@@ -21,8 +21,6 @@ import java.util.*;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
-import com.google.common.collect.Collections2;
-
 import db.DBRecord;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.*;
@@ -244,9 +242,10 @@ public class DBTraceFunctionSymbol extends DBTraceNamespaceSymbol
 		if (!foundBadVariables) {
 			return;
 		}
-		List<AbstractDBTraceVariableSymbol> badns = new ArrayList<>();
-		badns.addAll(Collections2.filter(manager.allLocals.getChildren(this),
-			DBTraceFunctionSymbol::isBadVariable));
+		List<? extends AbstractDBTraceVariableSymbol> badns = manager.allLocals.getChildren(this)
+				.stream()
+				.filter(DBTraceFunctionSymbol::isBadVariable)
+				.toList();
 		if (badns.isEmpty()) {
 			return;
 		}
@@ -1451,7 +1450,7 @@ public class DBTraceFunctionSymbol extends DBTraceNamespaceSymbol
 			into.addAll(from);
 		}
 		else {
-			into.addAll(Collections2.filter(from, filter::matches));
+			from.stream().filter(v -> filter.matches(v)).forEach(into::add);
 		}
 	}
 
@@ -1741,7 +1740,7 @@ public class DBTraceFunctionSymbol extends DBTraceNamespaceSymbol
 			if (DBTraceSymbolManager.DEFAULT_CALLING_CONVENTION_ID == callingConventionID) {
 				return cs.getDefaultCallingConvention();
 			}
-			String ccName = manager.callingConventionMap.inverse().get(callingConventionID);
+			String ccName = manager.callingConventionMap.getKey(callingConventionID);
 			if (ccName == null) {
 				return null;
 			}
@@ -1758,7 +1757,7 @@ public class DBTraceFunctionSymbol extends DBTraceNamespaceSymbol
 			if (DBTraceSymbolManager.DEFAULT_CALLING_CONVENTION_ID == callingConventionID) {
 				return DBTraceSymbolManager.DEFAULT_CALLING_CONVENTION_NAME;
 			}
-			return manager.callingConventionMap.inverse().get(callingConventionID);
+			return manager.callingConventionMap.getKey(callingConventionID);
 		}
 	}
 
@@ -1970,9 +1969,11 @@ public class DBTraceFunctionSymbol extends DBTraceNamespaceSymbol
 	@Override
 	public void promoteLocalUserLabelsToGlobal() {
 		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
-			List<DBTraceLabelSymbol> toPromote =
-				new ArrayList<>(Collections2.filter(manager.labels().getChildren(this),
-					l -> l.getSource() == SourceType.USER_DEFINED));
+			List<? extends DBTraceLabelSymbol> toPromote = manager.labels()
+					.getChildren(this)
+					.stream()
+					.filter(l -> l.getSource() == SourceType.USER_DEFINED)
+					.toList();
 			for (DBTraceLabelSymbol label : toPromote) {
 				try {
 					label.setNamespace(manager.getGlobalNamespace());

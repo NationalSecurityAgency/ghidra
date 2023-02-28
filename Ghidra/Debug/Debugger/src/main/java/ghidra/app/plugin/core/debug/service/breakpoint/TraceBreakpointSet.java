@@ -16,8 +16,7 @@
 package ghidra.app.plugin.core.debug.service.breakpoint;
 
 import java.util.*;
-
-import com.google.common.collect.Collections2;
+import java.util.stream.Collectors;
 
 import ghidra.app.services.*;
 import ghidra.app.services.LogicalBreakpoint.TraceMode;
@@ -239,8 +238,8 @@ class TraceBreakpointSet {
 	 * 
 	 * @return the breakpoints
 	 */
-	public Collection<TraceBreakpoint> getBreakpoints() {
-		return Collections2.transform(breakpoints, e -> e.obj);
+	public Set<TraceBreakpoint> getBreakpoints() {
+		return breakpoints.stream().map(e -> e.obj).collect(Collectors.toUnmodifiableSet());
 	}
 
 	/**

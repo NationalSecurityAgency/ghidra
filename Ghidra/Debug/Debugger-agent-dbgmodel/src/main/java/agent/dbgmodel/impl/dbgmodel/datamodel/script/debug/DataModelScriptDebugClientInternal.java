@@ -17,7 +17,6 @@ package agent.dbgmodel.impl.dbgmodel.datamodel.script.debug;
 
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Guid.REFIID;
 
@@ -36,14 +35,11 @@ public interface DataModelScriptDebugClientInternal extends DataModelScriptDebug
 		return DbgModelUtil.lazyWeakCache(CACHE, data, DataModelScriptDebugClientImpl::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIDataModelScriptDebugClient>> PREFERRED_DATA_SPACES_IIDS_BUILDER =
-		ImmutableMap.builder();
 	Map<REFIID, Class<? extends WrapIDataModelScriptDebugClient>> PREFERRED_DATA_SPACES_IIDS =
-		PREFERRED_DATA_SPACES_IIDS_BUILDER //
-				.put(
-					new REFIID(IDataModelScriptDebugClient.IID_IDATA_MODEL_SCRIPT_DEBUG_CLIENT),
-					WrapIDataModelScriptDebugClient.class) //
-				.build();
+		Map.ofEntries(
+			Map.entry(
+				new REFIID(IDataModelScriptDebugClient.IID_IDATA_MODEL_SCRIPT_DEBUG_CLIENT),
+				WrapIDataModelScriptDebugClient.class));
 
 	static DataModelScriptDebugClientInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
 		return DbgModelUtil.tryPreferredInterfaces(DataModelScriptDebugClientInternal.class,

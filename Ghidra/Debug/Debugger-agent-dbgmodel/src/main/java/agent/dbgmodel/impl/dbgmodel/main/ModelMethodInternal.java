@@ -17,7 +17,6 @@ package agent.dbgmodel.impl.dbgmodel.main;
 
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Guid.REFIID;
 
@@ -35,12 +34,9 @@ public interface ModelMethodInternal extends ModelMethod {
 		return DbgModelUtil.lazyWeakCache(CACHE, data, ModelMethodImpl::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIModelMethod>> PREFERRED_DATA_SPACES_IIDS_BUILDER =
-		ImmutableMap.builder();
 	Map<REFIID, Class<? extends WrapIModelMethod>> PREFERRED_DATA_SPACES_IIDS =
-		PREFERRED_DATA_SPACES_IIDS_BUILDER //
-				.put(new REFIID(IModelMethod.IID_IMODEL_METHOD), WrapIModelMethod.class) //
-				.build();
+		Map.ofEntries(
+			Map.entry(new REFIID(IModelMethod.IID_IMODEL_METHOD), WrapIModelMethod.class));
 
 	static ModelMethodInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
 		return DbgModelUtil.tryPreferredInterfaces(ModelMethodInternal.class,

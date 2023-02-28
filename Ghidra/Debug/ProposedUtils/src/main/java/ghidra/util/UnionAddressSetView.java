@@ -21,8 +21,6 @@ import static ghidra.util.ComparatorMath.cmin;
 import java.util.Arrays;
 import java.util.Collection;
 
-import com.google.common.collect.Collections2;
-
 import ghidra.program.model.address.*;
 
 public class UnionAddressSetView extends AbstractAddressSetView {
@@ -92,12 +90,12 @@ public class UnionAddressSetView extends AbstractAddressSetView {
 
 	@Override
 	public AddressRangeIterator getAddressRanges() {
-		return AddressRangeIterators.union(Collections2.transform(views, v -> v.iterator()), true);
+		return AddressRangeIterators.union(views.stream().map(v -> v.iterator()).toList(), true);
 	}
 
 	@Override
 	public AddressRangeIterator getAddressRanges(boolean forward) {
-		return AddressRangeIterators.union(Collections2.transform(views, v -> v.iterator(forward)),
+		return AddressRangeIterators.union(views.stream().map(v -> v.iterator(forward)).toList(),
 			forward);
 	}
 
@@ -105,9 +103,9 @@ public class UnionAddressSetView extends AbstractAddressSetView {
 	public AddressRangeIterator getAddressRanges(Address start, boolean forward) {
 		// Need to coalesce in reverse to initialize
 		AddressRangeIterator rev = AddressRangeIterators.union(
-			Collections2.transform(views, v -> v.iterator(start, !forward)), !forward);
+			views.stream().map(v -> v.iterator(start, !forward)).toList(), !forward);
 		Address fixedStart = fixStart(rev, start, forward);
-		return AddressRangeIterators.union(
-			Collections2.transform(views, v -> v.iterator(fixedStart, forward)), forward);
+		return AddressRangeIterators
+				.union(views.stream().map(v -> v.iterator(fixedStart, forward)).toList(), forward);
 	}
 }

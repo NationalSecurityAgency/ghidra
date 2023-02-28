@@ -22,10 +22,6 @@ import java.util.function.Consumer;
 
 import org.junit.Test;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-
-import agent.gdb.manager.GdbTable;
 import agent.gdb.manager.parsing.GdbMiParser.GdbMiFieldList;
 
 public class GdbTableTest {
@@ -35,16 +31,16 @@ public class GdbTableTest {
 		return builder.build();
 	}
 
-	protected <K, V> Map<K, V> buildMap(Consumer<ImmutableMap.Builder<K, V>> conf) {
-		ImmutableMap.Builder<K, V> builder = ImmutableMap.builder();
+	protected <K, V> Map<K, V> buildMap(Consumer<Map<K, V>> conf) {
+		Map<K, V> builder = new HashMap<>();
 		conf.accept(builder);
-		return builder.build();
+		return Map.copyOf(builder);
 	}
 
-	protected <E> List<E> buildList(Consumer<ImmutableList.Builder<E>> conf) {
-		ImmutableList.Builder<E> builder = ImmutableList.builder();
+	protected <E> List<E> buildList(Consumer<List<E>> conf) {
+		List<E> builder = new ArrayList<>();
 		conf.accept(builder);
-		return builder.build();
+		return List.copyOf(builder);
 	}
 
 	protected GdbTable buildTestTable() {

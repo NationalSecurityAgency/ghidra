@@ -17,7 +17,6 @@ package agent.dbgmodel.impl.dbgmodel.concept;
 
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Guid.REFIID;
 
@@ -35,13 +34,10 @@ public interface StringDisplayableConceptInternal extends StringDisplayableConce
 		return DbgModelUtil.lazyWeakCache(CACHE, data, StringDisplayableConceptImpl::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIStringDisplayableConcept>> PREFERRED_DATA_SPACES_IIDS_BUILDER =
-		ImmutableMap.builder();
 	Map<REFIID, Class<? extends WrapIStringDisplayableConcept>> PREFERRED_DATA_SPACES_IIDS =
-		PREFERRED_DATA_SPACES_IIDS_BUILDER //
-				.put(new REFIID(IStringDisplayableConcept.IID_ISTRING_DISPLAYABLE_CONCEPT),
-					WrapIStringDisplayableConcept.class) //
-				.build();
+		Map.ofEntries(
+			Map.entry(new REFIID(IStringDisplayableConcept.IID_ISTRING_DISPLAYABLE_CONCEPT),
+				WrapIStringDisplayableConcept.class));
 
 	static StringDisplayableConceptInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
 		return DbgModelUtil.tryPreferredInterfaces(StringDisplayableConceptInternal.class,

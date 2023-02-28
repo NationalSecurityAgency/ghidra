@@ -15,13 +15,13 @@
  */
 package ghidra.util.datastruct;
 
+import java.lang.ref.WeakReference;
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
-
-import com.google.common.cache.*;
 
 import ghidra.util.Msg;
 
@@ -51,6 +51,24 @@ import ghidra.util.Msg;
  * @param <V> the type of listeners
  */
 public class ListenerMap<K, P, V extends P> {
+	private static final boolean DEBUG_INCEPTION = false;
+
+	public static class ListenerEntry<V> extends WeakReference<V> {
+		final String desc;
+		final Throwable inception;
+
+		public ListenerEntry(V referent) {
+			super(referent);
+			this.desc = referent.toString();
+			if (DEBUG_INCEPTION) {
+				this.inception = new Throwable();
+			}
+			else {
+				this.inception = null;
+			}
+		}
+	}
+
 	public static final Executor CALLING_THREAD = new Executor() {
 		@Override
 		public void execute(Runnable command) {
@@ -120,12 +138,13 @@ public class ListenerMap<K, P, V extends P> {
 			//	System.identityHashCode(executor));
 			// Listener adds/removes need to take immediate effect, even with queued events
 			executor.execute(() -> {
-				Collection<V> listenersVolatile;
+				Collection<? extends ListenerEntry<? extends V>> listenersVolatile;
 				synchronized (lock) {
 					listenersVolatile = map.values();
 				}
-				for (V l : listenersVolatile) {
-					if (!ext.isAssignableFrom(l.getClass())) {
+				for (ListenerEntry<? extends V> wl : listenersVolatile) {
+					V l = wl.get();
+					if (l == null || !ext.isAssignableFrom(l.getClass())) {
 						continue;
 					}
 					//Msg.debug(this,
@@ -149,7 +168,7 @@ public class ListenerMap<K, P, V extends P> {
 	private final Object lock = new Object();
 	private final Class<P> iface;
 	private final Executor executor;
-	private Map<K, V> map = createMap();
+	private Map<K, ? extends ListenerEntry<? extends V>> map = createMap();
 
 	/**
 	 * A proxy which passes invocations to each value of this map
@@ -198,22 +217,12 @@ public class ListenerMap<K, P, V extends P> {
 		return map.toString();
 	}
 
-	protected Map<K, V> createMap() {
-		/**
-		 * TODO: This is potentially flawed: The removal modifies the map in place. It does not
-		 * adhere to "copy on write." It does have its own concurrency considerations, though.
-		 */
-		CacheBuilder<K, V> builder = CacheBuilder.newBuilder()
-				.removalListener(this::notifyRemoved)
-				.weakValues()
-				.concurrencyLevel(1);
-		return builder.build().asMap();
+	protected Map<K, ListenerEntry<? extends V>> createMap() {
+		return new HashMap<>();
 	}
 
-	protected void notifyRemoved(RemovalNotification<K, V> rn) {
-		if (rn.getCause() == RemovalCause.COLLECTED) {
-			Msg.warn(this, "Listener garbage collected before removal: " + rn);
-		}
+	protected void notifyRemoved(ListenerEntry<? extends V> entry) {
+		Msg.warn(this, "Listener garbage collected before removal: " + entry.desc);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -233,30 +242,42 @@ public class ListenerMap<K, P, V extends P> {
 		return map.isEmpty();
 	}
 
+	protected void doPutAllInto(Map<? super K, ? super ListenerEntry<? extends V>> newMap) {
+		for (Entry<K, ? extends ListenerEntry<? extends V>> ent : map.entrySet()) {
+			if (ent.getValue().get() == null) {
+				notifyRemoved(ent.getValue());
+			}
+			else {
+				newMap.put(ent.getKey(), ent.getValue());
+			}
+		}
+	}
+
 	public V put(K key, V val) {
 		synchronized (lock) {
 			if (map.get(key) == val) {
 				return val;
 			}
-			Map<K, V> newMap = createMap();
-			newMap.putAll(map);
-			V result = newMap.put(key, val);
+			Map<K, ListenerEntry<? extends V>> newMap = createMap();
+			doPutAllInto(newMap);
+			ListenerEntry<? extends V> result = newMap.put(key, new ListenerEntry<>(val));
 			map = newMap;
-			return result;
+			return result == null ? null : result.get();
 		}
 	}
 
 	public void putAll(ListenerMap<? extends K, P, ? extends V> that) {
 		synchronized (lock) {
-			Map<K, V> newMap = createMap();
-			newMap.putAll(map);
-			newMap.putAll(that.map);
+			Map<K, ListenerEntry<? extends V>> newMap = createMap();
+			doPutAllInto(newMap);
+			that.doPutAllInto(newMap);
 			map = newMap;
 		}
 	}
 
 	public V get(K key) {
-		return map.get(key);
+		ListenerEntry<? extends V> entry = map.get(key);
+		return entry == null ? null : entry.get();
 	}
 
 	public V remove(K key) {
@@ -264,11 +285,11 @@ public class ListenerMap<K, P, V extends P> {
 			if (!map.containsKey(key)) {
 				return null;
 			}
-			Map<K, V> newMap = createMap();
-			newMap.putAll(map);
-			V result = newMap.remove(key);
+			Map<K, ListenerEntry<? extends V>> newMap = createMap();
+			doPutAllInto(newMap);
+			ListenerEntry<? extends V> result = newMap.remove(key);
 			map = newMap;
-			return result;
+			return result == null ? null : result.get();
 		}
 	}
 

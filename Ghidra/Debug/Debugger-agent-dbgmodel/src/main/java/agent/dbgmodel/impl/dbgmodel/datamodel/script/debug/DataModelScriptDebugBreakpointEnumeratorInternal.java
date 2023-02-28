@@ -17,7 +17,6 @@ package agent.dbgmodel.impl.dbgmodel.datamodel.script.debug;
 
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Guid.REFIID;
 
@@ -38,15 +37,12 @@ public interface DataModelScriptDebugBreakpointEnumeratorInternal
 			DataModelScriptDebugBreakpointEnumeratorImpl::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIDataModelScriptDebugBreakpointEnumerator>> PREFERRED_DATA_SPACES_IIDS_BUILDER =
-		ImmutableMap.builder();
 	Map<REFIID, Class<? extends WrapIDataModelScriptDebugBreakpointEnumerator>> PREFERRED_DATA_SPACES_IIDS =
-		PREFERRED_DATA_SPACES_IIDS_BUILDER //
-				.put(
-					new REFIID(
-						IDataModelScriptDebugBreakpointEnumerator.IID_IDATA_MODEL_SCRIPT_DEBUG_BREAKPOINT_ENUMERATOR),
-					WrapIDataModelScriptDebugBreakpointEnumerator.class) //
-				.build();
+		Map.ofEntries(
+			Map.entry(
+				new REFIID(
+					IDataModelScriptDebugBreakpointEnumerator.IID_IDATA_MODEL_SCRIPT_DEBUG_BREAKPOINT_ENUMERATOR),
+				WrapIDataModelScriptDebugBreakpointEnumerator.class));
 
 	static DataModelScriptDebugBreakpointEnumeratorInternal tryPreferredInterfaces(
 			InterfaceSupplier supplier) {

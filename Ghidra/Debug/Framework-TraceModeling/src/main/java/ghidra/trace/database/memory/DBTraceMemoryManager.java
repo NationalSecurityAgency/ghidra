@@ -24,8 +24,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.function.Predicate;
 
-import com.google.common.collect.Collections2;
-
 import db.DBHandle;
 import ghidra.dbg.target.TargetMemoryRegion;
 import ghidra.program.model.address.*;
@@ -226,8 +224,9 @@ public class DBTraceMemoryManager extends AbstractDBTraceSpaceBasedManager<DBTra
 					.getObjectsAddressSet(snap, TargetMemoryRegion.RANGE_ATTRIBUTE_NAME,
 						TraceObjectMemoryRegion.class, r -> true);
 		}
-		return new UnionAddressSetView(Collections2.transform(getActiveMemorySpaces(),
-			m -> m.getRegionsAddressSet(snap)));
+		return new UnionAddressSetView(getActiveMemorySpaces().stream()
+				.map(m -> m.getRegionsAddressSet(snap))
+				.toList());
 	}
 
 	@Override
@@ -238,8 +237,9 @@ public class DBTraceMemoryManager extends AbstractDBTraceSpaceBasedManager<DBTra
 					.getObjectsAddressSet(snap, TargetMemoryRegion.RANGE_ATTRIBUTE_NAME,
 						TraceObjectMemoryRegion.class, predicate);
 		}
-		return new UnionAddressSetView(Collections2.transform(getActiveMemorySpaces(),
-			m -> m.getRegionsAddressSetWith(snap, predicate)));
+		return new UnionAddressSetView(getActiveMemorySpaces().stream()
+				.map(m -> m.getRegionsAddressSetWith(snap, predicate))
+				.toList());
 	}
 
 	@Override
@@ -298,15 +298,17 @@ public class DBTraceMemoryManager extends AbstractDBTraceSpaceBasedManager<DBTra
 
 	@Override
 	public AddressSetView getAddressesWithState(long snap, Predicate<TraceMemoryState> predicate) {
-		return new UnionAddressSetView(Collections2.transform(getActiveMemorySpaces(),
-			m -> m.getAddressesWithState(snap, predicate)));
+		return new UnionAddressSetView(getActiveMemorySpaces().stream()
+				.map(m -> m.getAddressesWithState(snap, predicate))
+				.toList());
 	}
 
 	@Override
 	public AddressSetView getAddressesWithState(Lifespan lifespan,
 			Predicate<TraceMemoryState> predicate) {
-		return new UnionAddressSetView(Collections2.transform(getActiveMemorySpaces(),
-			m -> m.getAddressesWithState(lifespan, predicate)));
+		return new UnionAddressSetView(getActiveMemorySpaces().stream()
+				.map(m -> m.getAddressesWithState(lifespan, predicate))
+				.toList());
 	}
 
 	@Override

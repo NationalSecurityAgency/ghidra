@@ -18,8 +18,6 @@ package agent.lldb.manager.cmd;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 
-import com.google.common.collect.*;
-
 import SWIG.*;
 import agent.lldb.manager.impl.LldbManagerImpl;
 import ghidra.program.model.address.*;

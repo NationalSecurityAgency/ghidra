@@ -21,10 +21,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.*;
 
-import org.apache.commons.collections4.IteratorUtils;
-
-import com.google.common.collect.Iterators;
-
 import db.DBRecord;
 import db.StringField;
 import ghidra.dbg.target.TargetObject;
@@ -60,8 +56,7 @@ import ghidra.trace.model.target.*;
 import ghidra.trace.model.target.annot.TraceObjectInterfaceUtils;
 import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.util.TraceChangeRecord;
-import ghidra.util.LockHold;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.database.*;
 import ghidra.util.database.DBCachedObjectStoreFactory.AbstractDBFieldCodec;
 import ghidra.util.database.annot.*;
@@ -605,23 +600,20 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 		Rectangle2DDirection dir = forward
 				? Rectangle2DDirection.BOTTOMMOST
 				: Rectangle2DDirection.TOPMOST;
-		List<Iterator<DBTraceObjectAddressRangeValue>> iterators = manager.rangeValueMap
+		List<Stream<DBTraceObjectAddressRangeValue>> streams = manager.rangeValueMap
 				.getActiveMemorySpaces()
 				.stream()
-				.map(s -> IteratorUtils.filteredIterator(s
+				.map(s -> StreamSupport.stream(s
 						.reduce(TraceAddressSnapRangeQuery.intersecting(span, s.getAddressSpace())
 								.starting(dir))
 						.orderedValues()
-						.iterator(),
-					v -> key.equals(v.getEntryKey()) && this == v.getParent()))
-				.collect(Collectors.toList());
+						.spliterator(),
+					false).filter(v -> key.equals(v.getEntryKey()) && this == v.getParent()))
+				.toList();
 		Comparator<Long> order = forward ? Comparator.naturalOrder() : Comparator.reverseOrder();
 		Comparator<DBTraceObjectAddressRangeValue> comparator =
 			Comparator.comparing(v -> v.getMinSnap(), order);
-		Iterator<DBTraceObjectAddressRangeValue> merged =
-			Iterators.mergeSorted(iterators, comparator);
-		return StreamSupport
-				.stream(Spliterators.spliteratorUnknownSize(merged, Spliterator.ORDERED), false);
+		return StreamUtils.merge(streams, comparator);
 	}
 
 	@Override
@@ -642,10 +634,7 @@ public class DBTraceObject extends DBAnnotatedObject implements TraceObject {
 		Comparator<Long> order = forward ? Comparator.naturalOrder() : Comparator.reverseOrder();
 		Comparator<InternalTraceObjectValue> comparator =
 			Comparator.comparing(v -> v.getMinSnap(), order);
-		Iterator<InternalTraceObjectValue> merged =
-			Iterators.mergeSorted(Arrays.asList(nrVals.iterator(), rVals.iterator()), comparator);
-		return StreamSupport
-				.stream(Spliterators.spliteratorUnknownSize(merged, Spliterator.ORDERED), false);
+		return StreamUtils.merge(List.of(nrVals, rVals), comparator);
 	}
 
 	@Override

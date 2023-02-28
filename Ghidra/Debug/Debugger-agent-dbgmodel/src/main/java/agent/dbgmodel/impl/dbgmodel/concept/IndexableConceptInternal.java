@@ -17,7 +17,6 @@ package agent.dbgmodel.impl.dbgmodel.concept;
 
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Guid.REFIID;
 
@@ -35,13 +34,10 @@ public interface IndexableConceptInternal extends IndexableConcept {
 		return DbgModelUtil.lazyWeakCache(CACHE, data, IndexableConceptImpl::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIIndexableConcept>> PREFERRED_DATA_SPACES_IIDS_BUILDER =
-		ImmutableMap.builder();
 	Map<REFIID, Class<? extends WrapIIndexableConcept>> PREFERRED_DATA_SPACES_IIDS =
-		PREFERRED_DATA_SPACES_IIDS_BUILDER //
-				.put(new REFIID(IIndexableConcept.IID_IINDEXABLE_CONCEPT),
-					WrapIIndexableConcept.class) //
-				.build();
+		Map.ofEntries(
+			Map.entry(new REFIID(IIndexableConcept.IID_IINDEXABLE_CONCEPT),
+				WrapIIndexableConcept.class));
 
 	static IndexableConceptInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
 		return DbgModelUtil.tryPreferredInterfaces(IndexableConceptInternal.class,

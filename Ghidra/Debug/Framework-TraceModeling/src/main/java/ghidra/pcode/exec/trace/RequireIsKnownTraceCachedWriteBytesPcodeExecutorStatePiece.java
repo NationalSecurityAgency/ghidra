@@ -16,7 +16,6 @@
 package ghidra.pcode.exec.trace;
 
 import ghidra.pcode.exec.AccessPcodeExecutionException;
-import ghidra.pcode.exec.PcodeExecutorStatePiece;
 import ghidra.pcode.exec.trace.data.PcodeTraceDataAccess;
 import ghidra.program.model.address.*;
 import ghidra.trace.model.memory.TraceMemorySpace;

@@ -17,16 +17,16 @@ package ghidra.trace.database.listing;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.stream.StreamSupport;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.RemovalNotification;
-import com.google.common.collect.Iterators;
+import org.apache.commons.collections4.IteratorUtils;
 
 import ghidra.program.model.address.*;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.listing.*;
 import ghidra.util.*;
+import ghidra.util.datastruct.FixedSizeHashMap;
 
 /**
  * The implementation of {@link TraceCodeSpace#undefinedData()}
@@ -39,11 +39,7 @@ public class DBTraceUndefinedDataView extends
 
 	protected final DBTraceCodeManager manager;
 
-	protected final Map<Long, CachedAddressSetView> cache = CacheBuilder.newBuilder()
-			.removalListener(this::cacheEntryRemoved)
-			.maximumSize(CACHE_MAX_SNAPS)
-			.build()
-			.asMap();
+	protected final Map<Long, CachedAddressSetView> cache = new FixedSizeHashMap<>(CACHE_MAX_SNAPS);
 
 	/**
 	 * Construct the view
@@ -53,10 +49,6 @@ public class DBTraceUndefinedDataView extends
 	public DBTraceUndefinedDataView(DBTraceCodeSpace space) {
 		super(space);
 		this.manager = space.manager;
-	}
-
-	private void cacheEntryRemoved(RemovalNotification<Long, CachedAddressSetView> rn) {
-		// Nothing
 	}
 
 	/**
@@ -150,15 +142,16 @@ public class DBTraceUndefinedDataView extends
 			boolean forward) {
 		Iterator<Address> ait =
 			getAddressSetView(snap, new AddressRangeImpl(min, max)).getAddresses(forward);
-		return () -> Iterators.transform(ait, a -> doCreateUnit(snap, a));
+		return () -> IteratorUtils.transformedIterator(ait, a -> doCreateUnit(snap, a));
 	}
 
 	@Override
 	public Iterable<? extends UndefinedDBTraceData> getIntersecting(TraceAddressSnapRange tasr) {
-		Iterator<Iterator<? extends UndefinedDBTraceData>> itIt =
-			Iterators.transform(tasr.getLifespan().iterator(),
-				snap -> get(snap, tasr.getX1(), tasr.getX2(), true).iterator());
-		return () -> Iterators.concat(itIt);
+		return () -> StreamSupport.stream(tasr.getLifespan().spliterator(), false)
+				.flatMap(snap -> StreamSupport
+						.stream(get(snap, tasr.getX1(), tasr.getX2(), true).spliterator(), false)
+						.map(u -> (UndefinedDBTraceData) u))
+				.iterator();
 	}
 
 	@Override

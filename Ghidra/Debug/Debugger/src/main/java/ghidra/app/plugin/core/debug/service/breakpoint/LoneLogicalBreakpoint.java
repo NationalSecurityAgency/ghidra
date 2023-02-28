@@ -112,7 +112,7 @@ public class LoneLogicalBreakpoint implements LogicalBreakpointInternal {
 
 	@Override
 	public Set<TraceBreakpoint> getTraceBreakpoints() {
-		return new HashSet<>(breaks.getBreakpoints());
+		return breaks.getBreakpoints();
 	}
 
 	@Override

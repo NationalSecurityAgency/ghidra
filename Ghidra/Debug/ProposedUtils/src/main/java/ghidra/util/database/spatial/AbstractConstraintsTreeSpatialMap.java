@@ -21,7 +21,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.function.Consumer;
 
-import com.google.common.collect.Iterators;
+import org.apache.commons.collections4.IteratorUtils;
 
 import ghidra.util.LockHold;
 import ghidra.util.database.spatial.DBTreeDataRecord.RecordEntry;
@@ -173,7 +173,7 @@ public abstract class AbstractConstraintsTreeSpatialMap< //
 			public Iterator<Entry<DS, T>> iterator() {
 				try (LockHold hold = LockHold.lock(tree.dataStore.readLock())) {
 					return new SynchronizedIterator<>(
-						Iterators.transform(tree.iterator(query), r -> r.asEntry()),
+						IteratorUtils.transformedIterator(tree.iterator(query), r -> r.asEntry()),
 						tree.dataStore.getLock());
 				}
 			}
@@ -230,7 +230,8 @@ public abstract class AbstractConstraintsTreeSpatialMap< //
 			public Iterator<Entry<DS, T>> iterator() {
 				try (LockHold hold = LockHold.lock(tree.dataStore.readLock())) {
 					return new SynchronizedIterator<>(
-						Iterators.transform(tree.orderedIterator(query), r -> r.asEntry()),
+						IteratorUtils.transformedIterator(tree.orderedIterator(query),
+							r -> r.asEntry()),
 						tree.dataStore.getLock());
 				}
 			}
@@ -254,7 +255,7 @@ public abstract class AbstractConstraintsTreeSpatialMap< //
 			public Iterator<DS> iterator() {
 				try (LockHold hold = LockHold.lock(tree.dataStore.readLock())) {
 					return new SynchronizedIterator<>(
-						Iterators.transform(tree.iterator(query), r -> r.getShape()),
+						IteratorUtils.transformedIterator(tree.iterator(query), r -> r.getShape()),
 						tree.dataStore.getLock());
 				}
 			}
@@ -310,7 +311,8 @@ public abstract class AbstractConstraintsTreeSpatialMap< //
 			public Iterator<DS> iterator() {
 				try (LockHold hold = LockHold.lock(tree.dataStore.readLock())) {
 					return new SynchronizedIterator<>(
-						Iterators.transform(tree.orderedIterator(query), r -> r.getShape()),
+						IteratorUtils.transformedIterator(tree.orderedIterator(query),
+							r -> r.getShape()),
 						tree.dataStore.getLock());
 				}
 			}
@@ -334,7 +336,8 @@ public abstract class AbstractConstraintsTreeSpatialMap< //
 			public Iterator<T> iterator() {
 				try (LockHold hold = LockHold.lock(tree.dataStore.readLock())) {
 					return new SynchronizedIterator<>(
-						Iterators.transform(tree.iterator(query), r -> r.getRecordValue()),
+						IteratorUtils.transformedIterator(tree.iterator(query),
+							r -> r.getRecordValue()),
 						tree.dataStore.getLock());
 				}
 			}
@@ -390,7 +393,7 @@ public abstract class AbstractConstraintsTreeSpatialMap< //
 			public Iterator<T> iterator() {
 				try (LockHold hold = LockHold.lock(tree.dataStore.readLock())) {
 					return new SynchronizedIterator<>(
-						Iterators.transform(tree.orderedIterator(query),
+						IteratorUtils.transformedIterator(tree.orderedIterator(query),
 							r -> r.getRecordValue()),
 						tree.dataStore.getLock());
 				}

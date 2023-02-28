@@ -22,8 +22,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.function.Predicate;
 
-import com.google.common.collect.Collections2;
-
 import db.DBHandle;
 import db.DBRecord;
 import ghidra.program.model.address.AddressSetView;
@@ -235,7 +233,7 @@ public class DBTraceAddressSnapRangePropertyMap<T, DR extends AbstractDBTraceAdd
 	@Override
 	public AddressSetView getAddressSetView(Lifespan span, Predicate<T> predicate) {
 		return new UnionAddressSetView(
-			Collections2.transform(memSpacesView, m -> m.getAddressSetView(span, predicate)));
+			memSpaces.values().stream().map(m -> m.getAddressSetView(span, predicate)).toList());
 	}
 
 	@Override

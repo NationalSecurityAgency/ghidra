@@ -24,8 +24,6 @@ import java.util.function.Function;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.google.common.collect.ImmutableList;
-
 import generic.ComparableTupleRecord;
 import generic.theme.GColor;
 import ghidra.framework.options.annotation.*;
@@ -37,7 +35,7 @@ public interface AutoOptions {
 
 	static class CategoryAndName implements ComparableTupleRecord<CategoryAndName> {
 		public static final List<Function<CategoryAndName, ? extends Comparable<?>>> ACCESSORS =
-			ImmutableList.of(CategoryAndName::getCategory, CategoryAndName::getName);
+			List.of(CategoryAndName::getCategory, CategoryAndName::getName);
 
 		private final String category;
 		private final String name;

@@ -19,7 +19,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
-import com.google.common.collect.Iterators;
+import org.apache.commons.collections4.IteratorUtils;
 
 import ghidra.program.model.address.*;
 import ghidra.util.TwoWayBreakdownAddressRangeIterator.Which;
@@ -72,8 +72,8 @@ public enum AddressRangeIterators {
 
 	public static AddressRangeIterator subtract(Iterator<AddressRange> a, Iterator<AddressRange> b,
 			Address start, boolean forward) {
-		return new WrappingAddressRangeIterator(Iterators.transform(
-			Iterators.filter(new TwoWayBreakdownAddressRangeIterator(a, b, forward),
+		return new WrappingAddressRangeIterator(IteratorUtils.transformedIterator(
+			IteratorUtils.filteredIterator(new TwoWayBreakdownAddressRangeIterator(a, b, forward),
 				e -> doCheckStart(e.getKey(), start, forward) && e.getValue().inSubtract()),
 			e -> e.getKey()));
 	}
@@ -82,19 +82,21 @@ public enum AddressRangeIterators {
 			Address start, boolean forward) {
 		Iterator<Entry<AddressRange, Which>> eit =
 			new TwoWayBreakdownAddressRangeIterator(a, b, forward);
-		Iterator<Entry<AddressRange, Which>> fit = Iterators.filter(eit, e -> e.getValue().inXor());
-		Iterator<AddressRange> rit = Iterators.transform(fit, e -> e.getKey());
+		Iterator<Entry<AddressRange, Which>> fit =
+			IteratorUtils.filteredIterator(eit, e -> e.getValue().inXor());
+		Iterator<AddressRange> rit = IteratorUtils.transformedIterator(fit, e -> e.getKey());
 		// Use union to coalesce just-connected ranges in opposite iterators.
 		Iterator<AddressRange> uit = new UnionAddressRangeIterator(rit, forward);
 		// Have to do this filter after union, otherwise parts of ranges are omitted.
-		Iterator<AddressRange> result = Iterators.filter(uit, r -> doCheckStart(r, start, forward));
+		Iterator<AddressRange> result =
+			IteratorUtils.filteredIterator(uit, r -> doCheckStart(r, start, forward));
 		return new WrappingAddressRangeIterator(result);
 	}
 
 	public static AddressRangeIterator intersect(Iterator<AddressRange> a, Iterator<AddressRange> b,
 			boolean forward) {
-		return new WrappingAddressRangeIterator(Iterators.transform(
-			Iterators.filter(new TwoWayBreakdownAddressRangeIterator(a, b, forward),
+		return new WrappingAddressRangeIterator(IteratorUtils.transformedIterator(
+			IteratorUtils.filteredIterator(new TwoWayBreakdownAddressRangeIterator(a, b, forward),
 				e -> e.getValue().inIntersect()),
 			e -> e.getKey()));
 	}

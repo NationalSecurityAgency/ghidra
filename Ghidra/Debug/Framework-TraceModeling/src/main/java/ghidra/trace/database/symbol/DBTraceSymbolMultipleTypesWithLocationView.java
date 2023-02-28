@@ -18,9 +18,6 @@ package ghidra.trace.database.symbol;
 import java.util.Collection;
 import java.util.Collections;
 
-import com.google.common.collect.Collections2;
-
-import generic.CatenatedCollection;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapSpace;
@@ -31,6 +28,7 @@ import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.symbol.TraceNamespaceSymbol;
 import ghidra.trace.model.symbol.TraceSymbolWithLocationView;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.util.LazyCollection;
 import ghidra.util.LockHold;
 import ghidra.util.database.spatial.rect.Rectangle2DDirection;
 
@@ -70,8 +68,9 @@ public class DBTraceSymbolMultipleTypesWithLocationView<T extends AbstractDBTrac
 	@Override
 	public Collection<? extends T> getAt(long snap, TraceThread thread, Address address,
 			boolean includeDynamicSymbols) {
-		return new CatenatedCollection<>(Collections2.transform(getParts(),
-			p -> p.getAt(snap, thread, address, includeDynamicSymbols)));
+		return getParts().stream()
+				.flatMap(p -> p.getAt(snap, thread, address, includeDynamicSymbols).stream())
+				.toList();
 	}
 
 	@Override
@@ -87,30 +86,31 @@ public class DBTraceSymbolMultipleTypesWithLocationView<T extends AbstractDBTrac
 			if (space == null) {
 				return Collections.emptyList();
 			}
-			Collection<Long> sids =
-				space.reduce(TraceAddressSnapRangeQuery.intersecting(range, span)
-						.starting(
-							forward ? Rectangle2DDirection.LEFTMOST
-									: Rectangle2DDirection.RIGHTMOST))
-						.orderedValues();
-			Collection<Long> matchingTid = Collections2.filter(sids, s -> {
-				byte tid = DBTraceSymbolManager.unpackTypeID(s);
-				for (AbstractDBTraceSymbolSingleTypeView<? extends T> p : parts) {
-					if (p.typeID == tid) {
-						return true;
-					}
-				}
-				return false;
-			});
-			return Collections2.transform(matchingTid, s -> {
-				byte tid = DBTraceSymbolManager.unpackTypeID(s);
-				for (AbstractDBTraceSymbolSingleTypeView<? extends T> p : parts) {
-					if (p.typeID == tid) {
-						return p.store.getObjectAt(DBTraceSymbolManager.unpackKey(s));
-					}
-				}
-				throw new AssertionError(); // Was filtered above
-			});
+			return new LazyCollection<>(() -> space
+					.reduce(TraceAddressSnapRangeQuery.intersecting(range, span)
+							.starting(
+								forward ? Rectangle2DDirection.LEFTMOST
+										: Rectangle2DDirection.RIGHTMOST))
+					.orderedValues()
+					.stream()
+					.filter(s -> {
+						byte tid = DBTraceSymbolManager.unpackTypeID(s);
+						for (AbstractDBTraceSymbolSingleTypeView<? extends T> p : parts) {
+							if (p.typeID == tid) {
+								return true;
+							}
+						}
+						return false;
+					})
+					.map(s -> {
+						byte tid = DBTraceSymbolManager.unpackTypeID(s);
+						for (AbstractDBTraceSymbolSingleTypeView<? extends T> p : parts) {
+							if (p.typeID == tid) {
+								return p.store.getObjectAt(DBTraceSymbolManager.unpackKey(s));
+							}
+						}
+						throw new AssertionError(); // Was filtered above
+					}));
 		}
 	}
 }

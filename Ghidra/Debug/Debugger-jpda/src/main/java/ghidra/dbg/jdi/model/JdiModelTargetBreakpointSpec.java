@@ -20,11 +20,12 @@ import java.util.concurrent.CompletableFuture;
 
 import ghidra.dbg.jdi.manager.breakpoint.JdiBreakpointInfo;
 import ghidra.dbg.jdi.model.iface1.JdiModelTargetDeletable;
-import ghidra.dbg.target.TargetBreakpointSpecContainer.TargetBreakpointKindSet;
 import ghidra.dbg.target.TargetBreakpointLocation;
 import ghidra.dbg.target.TargetBreakpointSpec;
+import ghidra.dbg.target.TargetBreakpointSpecContainer.TargetBreakpointKindSet;
 import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
+import ghidra.util.datastruct.ListenerMap.ListenerEntry;
 import ghidra.util.datastruct.ListenerSet;
 
 @TargetObjectSchemaInfo(
@@ -48,8 +49,8 @@ public class JdiModelTargetBreakpointSpec extends JdiModelTargetObjectImpl
 	protected final ListenerSet<TargetBreakpointAction> actions =
 		new ListenerSet<>(TargetBreakpointAction.class) {
 			// Use strong references on actions
-			protected Map<TargetBreakpointAction, TargetBreakpointAction> createMap() {
-				return Collections.synchronizedMap(new LinkedHashMap<>());
+			protected Map<TargetBreakpointAction, ListenerEntry<? extends TargetBreakpointAction>> createMap() {
+				return new LinkedHashMap<>();
 			}
 		};
 
