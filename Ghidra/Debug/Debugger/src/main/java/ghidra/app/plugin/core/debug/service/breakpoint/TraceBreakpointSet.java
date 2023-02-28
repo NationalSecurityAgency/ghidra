@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.debug.service.breakpoint;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import db.Transaction;
 import ghidra.app.services.*;
 import ghidra.app.services.LogicalBreakpoint.TraceMode;
 import ghidra.dbg.target.*;
@@ -29,7 +30,6 @@ import ghidra.program.model.address.AddressRange;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
-import ghidra.util.database.UndoableTransaction;
 import utilities.util.IDHashed;
 
 /**
@@ -217,7 +217,7 @@ class TraceBreakpointSet {
 	 */
 	public void setEmuSleigh(String emuSleigh) {
 		this.emuSleigh = emuSleigh;
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Set breakpoint Sleigh")) {
+		try (Transaction tx = trace.openTransaction("Set breakpoint Sleigh")) {
 			for (IDHashed<TraceBreakpoint> bpt : breakpoints) {
 				bpt.obj.setEmuSleigh(emuSleigh);
 			}
@@ -254,8 +254,7 @@ class TraceBreakpointSet {
 	 */
 	public boolean add(TraceBreakpoint bpt) {
 		if (SleighUtils.UNCONDITIONAL_BREAK.equals(bpt.getEmuSleigh()) && emuSleigh != null) {
-			try (UndoableTransaction tid =
-				UndoableTransaction.start(trace, "Set breakpoint Sleigh")) {
+			try (Transaction tx = trace.openTransaction("Set breakpoint Sleigh")) {
 				bpt.setEmuSleigh(emuSleigh);
 			}
 		}

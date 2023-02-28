@@ -23,11 +23,11 @@ import java.util.Set;
 
 import org.junit.*;
 
+import db.Transaction;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.util.database.UndoableTransaction;
 
 public class DBTraceBookmarkManagerTest extends AbstractGhidraHeadlessIntegrationTest {
 	protected ToyDBTraceBuilder b;
@@ -58,7 +58,7 @@ public class DBTraceBookmarkManagerTest extends AbstractGhidraHeadlessIntegratio
 		DBTraceBookmark bm = manager.getBookmark(0);
 		assertNull(bm);
 
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			bm = b.addBookmark(0, 0, "Test Type", "Cat1", "Test comment");
 		}
 		long id = bm.getId();
@@ -70,12 +70,12 @@ public class DBTraceBookmarkManagerTest extends AbstractGhidraHeadlessIntegratio
 	@Test
 	public void testDeleteBookmark() {
 		DBTraceBookmark bm;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			bm = b.addBookmark(0, 0, "Test Type", "Cat1", "Test comment");
 		}
 		long id = bm.getId();
 
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			bm.delete();
 		}
 		DBTraceBookmark found = manager.getBookmark(id);
@@ -86,7 +86,7 @@ public class DBTraceBookmarkManagerTest extends AbstractGhidraHeadlessIntegratio
 	public void testGetRegisterBookmarkById() throws Exception {
 		// TODO: Should I check that bookmarks in register spaces are enclosed by the corresponding thread's lifespan?
 		DBTraceBookmark bm;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			bm = b.addRegisterBookmark(0, "Thread1", "r4", "Test Type", "Cat1", "Test comment");
 		}
 		long id = bm.getId();
@@ -97,7 +97,7 @@ public class DBTraceBookmarkManagerTest extends AbstractGhidraHeadlessIntegratio
 
 	@Test
 	public void testGetCategoriesForType() throws Exception {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			TraceThread thread = b.trace.getThreadManager().createThread("Thread1", 0);
 			DBTraceBookmarkSpace rSpace = manager.getBookmarkRegisterSpace(thread, true);
 
@@ -120,7 +120,7 @@ public class DBTraceBookmarkManagerTest extends AbstractGhidraHeadlessIntegratio
 
 	@Test
 	public void testGetBookmarksForType() throws Exception {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			DBTraceBookmarkType type = b.getOrAddBookmarkType("Test Type");
 			assertFalse(type.hasBookmarks());
 			assertEquals(0, type.countBookmarks());
@@ -146,7 +146,7 @@ public class DBTraceBookmarkManagerTest extends AbstractGhidraHeadlessIntegratio
 
 	@Test
 	public void testGetAllBookmarks() {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			DBTraceBookmark bm1 = b.addBookmark(0, 0, "Test Type", "Cat1", "First");
 			DBTraceBookmark bm2 = b.addBookmark(1, 4, "Test Type", "Cat2", "Second");
 
@@ -156,7 +156,7 @@ public class DBTraceBookmarkManagerTest extends AbstractGhidraHeadlessIntegratio
 
 	@Test
 	public void testGetBookmarksAt() {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			DBTraceBookmark bm1 = b.addBookmark(0, 0, "Test Type", "Cat1", "First");
 			DBTraceBookmark bm2 = b.addBookmark(1, 4, "Test Type", "Cat2", "Second");
 
@@ -168,7 +168,7 @@ public class DBTraceBookmarkManagerTest extends AbstractGhidraHeadlessIntegratio
 
 	@Test
 	public void testGetBookmarksEnclosed() {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			DBTraceBookmark bm1 = b.addBookmark(0, 0, "Test Type", "Cat1", "First");
 			DBTraceBookmark bm2 = b.addBookmark(1, 4, "Test Type", "Cat2", "Second");
 
@@ -185,7 +185,7 @@ public class DBTraceBookmarkManagerTest extends AbstractGhidraHeadlessIntegratio
 
 	@Test
 	public void testGetBookmarksIntersecting() {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			DBTraceBookmark bm1 = b.addBookmark(0, 0, "Test Type", "Cat1", "First");
 			DBTraceBookmark bm2 = b.addBookmark(1, 4, "Test Type", "Cat2", "Second");
 

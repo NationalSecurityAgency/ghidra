@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.*;
 import org.junit.experimental.categories.Category;
 
+import db.Transaction;
 import docking.widgets.filechooser.GhidraFileChooser;
 import generic.Unique;
 import generic.test.category.NightlyCategory;
@@ -59,7 +60,6 @@ import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceOverlappedRegionException;
 import ghidra.trace.model.modules.*;
 import ghidra.trace.model.symbol.TraceSymbol;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.DuplicateNameException;
 
 @Category(NightlyCategory.class) // this may actually be an @PortSensitive test
@@ -83,7 +83,7 @@ public class DebuggerModulesProviderLegacyTest extends AbstractGhidraHeadedDebug
 
 	protected void addRegionsFromModules()
 			throws TraceOverlappedRegionException, DuplicateNameException {
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			DBTraceMemoryManager manager = tb.trace.getMemoryManager();
 			for (TraceModule module : tb.trace.getModuleManager().getAllModules()) {
 				for (TraceSection section : module.getSections()) {
@@ -108,7 +108,7 @@ public class DebuggerModulesProviderLegacyTest extends AbstractGhidraHeadedDebug
 
 	protected void addModules() throws Exception {
 		TraceModuleManager manager = tb.trace.getModuleManager();
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			modExe = manager.addLoadedModule("Processes[1].Modules[first_proc]", "first_proc",
 				tb.range(0x55550000, 0x5575007f), 0);
 			secExeText = modExe.addSection("Processes[1].Modules[first_proc].Sections[.text]",
@@ -126,7 +126,7 @@ public class DebuggerModulesProviderLegacyTest extends AbstractGhidraHeadedDebug
 	}
 
 	protected MemoryBlock addBlock() throws Exception {
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add block")) {
+		try (Transaction tx = program.openTransaction("Add block")) {
 			return program.getMemory()
 					.createInitializedBlock(".text", tb.addr(0x00400000), 0x1000, (byte) 0, monitor,
 						false);
@@ -225,7 +225,7 @@ public class DebuggerModulesProviderLegacyTest extends AbstractGhidraHeadedDebug
 		waitForSwing();
 
 		MemoryBlock block = addBlock();
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Change name")) {
+		try (Transaction tx = program.openTransaction("Change name")) {
 			program.setName(modExe.getName());
 		}
 		waitForDomainObject(program);
@@ -261,7 +261,7 @@ public class DebuggerModulesProviderLegacyTest extends AbstractGhidraHeadedDebug
 
 		assertProviderPopulated(); // Cheap sanity check
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			modExe.delete();
 		}
 		waitForDomainObject(tb.trace);
@@ -355,7 +355,7 @@ public class DebuggerModulesProviderLegacyTest extends AbstractGhidraHeadedDebug
 		assertTrue(modulesProvider.actionMapIdentically.isEnabled());
 
 		// Need some substance in the program
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Populate")) {
+		try (Transaction tx = program.openTransaction("Populate")) {
 			addBlock();
 		}
 		waitForDomainObject(program);
@@ -390,7 +390,7 @@ public class DebuggerModulesProviderLegacyTest extends AbstractGhidraHeadedDebug
 		// Still
 		assertFalse(modulesProvider.actionMapModules.isEnabled());
 
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Change name")) {
+		try (Transaction tx = program.openTransaction("Change name")) {
 			program.setImageBase(addr(program, 0x00400000), true);
 			program.setName(modExe.getName());
 
@@ -459,7 +459,7 @@ public class DebuggerModulesProviderLegacyTest extends AbstractGhidraHeadedDebug
 		assertFalse(modulesProvider.actionMapSections.isEnabled());
 
 		MemoryBlock block = addBlock();
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Change name")) {
+		try (Transaction tx = program.openTransaction("Change name")) {
 			program.setName(modExe.getName());
 		}
 		waitForDomainObject(program);
@@ -669,7 +669,7 @@ public class DebuggerModulesProviderLegacyTest extends AbstractGhidraHeadedDebug
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			modExe.setName("/bin/echo"); // File has to exist
 		}
 		waitForPass(

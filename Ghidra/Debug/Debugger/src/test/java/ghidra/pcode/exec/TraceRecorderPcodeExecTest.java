@@ -22,6 +22,7 @@ import java.util.Map;
 
 import org.junit.Test;
 
+import db.Transaction;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.mapping.DebuggerRegisterMapper;
@@ -40,7 +41,6 @@ import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.schedule.TraceSchedule;
-import ghidra.util.database.UndoableTransaction;
 
 /**
  * Test the {@link DirectBytesTracePcodeExecutorState} in combination with
@@ -127,7 +127,7 @@ public class TraceRecorderPcodeExecTest extends AbstractGhidraHeadedDebuggerGUIT
 		});
 
 		TraceSchedule oneTick = TraceSchedule.snap(recorder.getSnap()).steppedForward(thread, 1);
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Scratch")) {
+		try (Transaction tx = trace.openTransaction("Scratch")) {
 			TraceSnapshot scratch = trace.getTimeManager().getSnapshot(Long.MIN_VALUE, true);
 			scratch.setSchedule(oneTick);
 			scratch.setDescription("Faked");

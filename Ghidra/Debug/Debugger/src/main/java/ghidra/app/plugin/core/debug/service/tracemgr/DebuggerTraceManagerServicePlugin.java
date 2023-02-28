@@ -161,13 +161,13 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		public TransactionEndFuture(Trace trace) {
 			this.trace = trace;
 			this.trace.addTransactionListener(this);
-			if (this.trace.getCurrentTransaction() == null) {
+			if (this.trace.getCurrentTransactionInfo() == null) {
 				complete(null);
 			}
 		}
 
 		@Override
-		public void transactionStarted(DomainObjectAdapterDB domainObj, Transaction tx) {
+		public void transactionStarted(DomainObjectAdapterDB domainObj, TransactionInfo tx) {
 		}
 
 		@Override

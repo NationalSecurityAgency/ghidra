@@ -15,10 +15,10 @@
  */
 package ghidra.app.plugin.core.debug.gui.modules;
 
+import db.Transaction;
 import ghidra.program.model.address.Address;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.modules.TraceModule;
-import ghidra.util.database.UndoableTransaction;
 
 public class ModuleRow {
 	private final TraceModule module;
@@ -32,8 +32,7 @@ public class ModuleRow {
 	}
 
 	public void setName(String name) {
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(module.getTrace(), "Renamed module")) {
+		try (Transaction tx = module.getTrace().openTransaction("Renamed module")) {
 			module.setName(name);
 		}
 	}

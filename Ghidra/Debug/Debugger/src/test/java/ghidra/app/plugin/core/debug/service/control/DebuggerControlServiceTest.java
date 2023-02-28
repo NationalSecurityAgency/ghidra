@@ -23,10 +23,10 @@ import java.nio.ByteBuffer;
 import org.junit.Before;
 import org.junit.Test;
 
+import db.Transaction;
 import ghidra.app.plugin.assembler.*;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
-import ghidra.app.plugin.core.debug.service.control.DebuggerControlServicePlugin;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerControlService.StateEditor;
 import ghidra.async.AsyncUtils.TemperamentalRunnable;
@@ -38,7 +38,6 @@ import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.TraceSchedule;
-import ghidra.util.database.UndoableTransaction;
 
 public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerGUITest {
 	protected DebuggerControlService editingService;
@@ -134,7 +133,7 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerGUIT
 		createAndOpenTrace();
 		editingService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			// NB. TraceManager should automatically activate the first thread
 			tb.getOrAddThread("Threads[0]", 0);
 		}
@@ -161,7 +160,7 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerGUIT
 		editingService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
 
 		TraceThread thread;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			// NB. TraceManager should automatically activate the first thread
 			thread = tb.getOrAddThread("Threads[0]", 0);
 		}
@@ -189,7 +188,7 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerGUIT
 		createAndOpenTrace();
 		editingService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			// NB. TraceManager should automatically activate the first thread
 			TraceThread thread = tb.getOrAddThread("Threads[0]", 0);
 			Assembler asm = Assemblers.getAssembler(getPlatform().getLanguage());
@@ -228,7 +227,7 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerGUIT
 		editingService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
 
 		TraceThread thread;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			// NB. TraceManager should automatically activate the first thread
 			thread = tb.getOrAddThread("Threads[0]", 0);
 			Assembler asm = Assemblers.getAssembler(getPlatform().getLanguage());
@@ -267,7 +266,7 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerGUIT
 		createAndOpenTrace();
 		editingService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			// NB. TraceManager should automatically activate the first thread
 			tb.getOrAddThread("Threads[0]", 0);
 		}
@@ -297,7 +296,7 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerGUIT
 		editingService.setCurrentMode(tb.trace, ControlMode.RW_EMULATOR);
 
 		TraceThread thread;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			// NB. TraceManager should automatically activate the first thread
 			thread = tb.getOrAddThread("Threads[0]", 0);
 		}
@@ -367,7 +366,7 @@ public class DebuggerControlServiceTest extends AbstractGhidraHeadedDebuggerGUIT
 		editingService.setCurrentMode(tb.trace, ControlMode.RW_TRACE);
 
 		TraceThread thread;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			// NB. TraceManager should automatically activate the first thread
 			thread = tb.getOrAddThread("Threads[0]", 0);
 		}

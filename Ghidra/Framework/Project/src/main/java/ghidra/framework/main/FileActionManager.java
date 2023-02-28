@@ -370,7 +370,7 @@ class FileActionManager {
 				buf.append("The File " + files.get(lastIndex).getPathname() +
 					" is currently being modified by the\n");
 				buf.append("the following actions:\n \n");
-				Transaction t = udo.getCurrentTransaction();
+				TransactionInfo t = udo.getCurrentTransactionInfo();
 				List<String> list = t.getOpenSubTransactions();
 				Iterator<String> it = list.iterator();
 				while (it.hasNext()) {

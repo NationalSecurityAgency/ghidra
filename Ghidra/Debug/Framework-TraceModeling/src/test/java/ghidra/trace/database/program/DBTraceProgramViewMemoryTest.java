@@ -15,13 +15,13 @@
  */
 package ghidra.trace.database.program;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
+import static org.junit.Assert.*;
 
 import java.io.IOException;
 
 import org.junit.*;
 
+import db.Transaction;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.LanguageNotFoundException;
@@ -32,7 +32,6 @@ import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.database.memory.DBTraceMemoryRegion;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceOverlappedRegionException;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.DuplicateNameException;
 
 public class DBTraceProgramViewMemoryTest extends AbstractGhidraHeadlessIntegrationTest {
@@ -46,7 +45,7 @@ public class DBTraceProgramViewMemoryTest extends AbstractGhidraHeadlessIntegrat
 	@Before
 	public void setUpTraceProgramViewMemoryTest() throws LanguageNotFoundException, IOException {
 		b = new ToyDBTraceBuilder("Testing", ProgramBuilder._TOY64_BE);
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			b.trace.getTimeManager().createSnapshot("Created");
 		}
 		memory = b.trace.getMemoryManager();
@@ -67,7 +66,7 @@ public class DBTraceProgramViewMemoryTest extends AbstractGhidraHeadlessIntegrat
 			AddressOutOfBoundsException {
 		AddressSpace os;
 		DBTraceMemoryRegion io;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			os = memory.createOverlayAddressSpace("test",
 				b.trace.getBaseAddressFactory().getDefaultAddressSpace());
 			io = (DBTraceMemoryRegion) memory.createRegion(".io", 0, b.range(os, 0x1000, 0x1fff),

@@ -15,9 +15,9 @@
  */
 package ghidra.pcode.struct;
 
+import db.Transaction;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeConflictHandler;
-import ghidra.util.database.UndoableTransaction;
 
 public abstract class Expr implements RValInternal {
 	protected final StructuredSleigh ctx;
@@ -26,7 +26,7 @@ public abstract class Expr implements RValInternal {
 	protected Expr(StructuredSleigh ctx, DataType type) {
 		this.ctx = ctx;
 
-		try (UndoableTransaction tid = UndoableTransaction.start(ctx.dtm, "Resolve type")) {
+		try (Transaction tx = ctx.dtm.openTransaction("Resolve type")) {
 			this.type = ctx.dtm.resolve(type, DataTypeConflictHandler.DEFAULT_HANDLER);
 		}
 	}

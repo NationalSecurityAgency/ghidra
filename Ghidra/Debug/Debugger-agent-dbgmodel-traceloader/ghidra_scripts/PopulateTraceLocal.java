@@ -25,6 +25,7 @@ import agent.dbgmodel.dbgmodel.DbgModel;
 import agent.dbgmodel.dbgmodel.bridge.HostDataModelAccess;
 import agent.dbgmodel.dbgmodel.main.ModelObject;
 import agent.dbgmodel.impl.dbgmodel.bridge.HDMAUtil;
+import db.Transaction;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.program.model.address.*;
@@ -39,7 +40,6 @@ import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.thread.TraceThreadManager;
 import ghidra.trace.model.time.TraceTimeManager;
 import ghidra.util.Msg;
-import ghidra.util.database.UndoableTransaction;
 
 /**
  * This script populates a trace database for demonstrations purposes and opens it in the current
@@ -189,8 +189,7 @@ public class PopulateTraceLocal extends GhidraScript {
 		client.openDumpFileWide(f.getAbsolutePath());
 		control.waitForEvent();
 
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(trace, "Populate Events")) {
+		try (Transaction tx = trace.openTransaction("Populate Events")) {
 
 			List<ModelObject> children =
 				util.getElements(List.of("Debugger", "State", "DebuggerVariables", "curprocess",
@@ -282,8 +281,7 @@ public class PopulateTraceLocal extends GhidraScript {
 			}
 		}
 
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(trace, "Populate Registers")) {
+		try (Transaction tx = trace.openTransaction("Populate Registers")) {
 			//for (Long tick : tickManager.getAllTicks()) {
 			for (Long snap : eventSnaps) {
 				control.execute("!tt " + Long.toHexString(snap) + ":0");
@@ -331,7 +329,7 @@ public class PopulateTraceLocal extends GhidraScript {
 		}
 
 		/*
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Populate Heap", true)) {
+		try (Transaction tx = trace.openTransaction("Populate Heap")) {
 			ModelObject currentSession = util.getCurrentSession();
 			ModelObject data = currentSession.getKeyValue("TTD").getKeyValue("Data");
 			ModelMethod heap = data.getMethod("Heap");

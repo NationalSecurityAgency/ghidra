@@ -27,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 
+import db.Transaction;
 import db.DBHandle;
 import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
@@ -54,7 +55,6 @@ import ghidra.trace.model.symbol.TraceReferenceManager;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.Msg;
 import ghidra.util.database.DBOpenMode;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.*;
 import ghidra.util.task.ConsoleTaskMonitor;
 
@@ -432,8 +432,8 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	 * 
 	 * @return the transaction handle
 	 */
-	public UndoableTransaction startTransaction() {
-		return UndoableTransaction.start(trace, "Testing");
+	public Transaction startTransaction() {
+		return trace.openTransaction("Testing");
 	}
 
 	/**

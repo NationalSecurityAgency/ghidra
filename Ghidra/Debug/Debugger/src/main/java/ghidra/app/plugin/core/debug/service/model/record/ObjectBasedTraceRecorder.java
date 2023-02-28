@@ -21,6 +21,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import db.Transaction;
 import ghidra.app.plugin.core.debug.mapping.*;
 import ghidra.app.plugin.core.debug.service.model.DebuggerModelServicePlugin;
 import ghidra.app.plugin.core.debug.service.model.PermanentTransactionExecutor;
@@ -56,7 +57,6 @@ import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.Msg;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.task.TaskMonitor;
 
@@ -193,8 +193,7 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 			long snap = timeRecorder.getSnap();
 			String path = object.getJoinedPath(".");
 			// Don't offload, because we need a consistent map
-			try (UndoableTransaction tid =
-				UndoableTransaction.start(trace, "Object created: " + path)) {
+			try (Transaction trans = trace.openTransaction("Object created: " + path)) {
 				objectRecorder.recordCreated(snap, object);
 			}
 		}

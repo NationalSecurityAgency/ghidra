@@ -22,6 +22,7 @@ import java.util.Set;
 
 import org.junit.*;
 
+import db.Transaction;
 import generic.Unique;
 import ghidra.app.plugin.assembler.*;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
@@ -37,8 +38,8 @@ import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerService
 import ghidra.app.plugin.core.debug.stack.*;
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
 import ghidra.app.services.*;
-import ghidra.app.services.DebuggerEmulationService.EmulationResult;
 import ghidra.app.services.DebuggerControlService.StateEditor;
+import ghidra.app.services.DebuggerEmulationService.EmulationResult;
 import ghidra.async.AsyncTestUtils;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.model.DomainObject;
@@ -63,7 +64,6 @@ import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.Scheduler;
 import ghidra.util.InvalidNameException;
 import ghidra.util.Msg;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.ConsoleTaskMonitor;
 import ghidra.util.task.TaskMonitor;
@@ -113,7 +113,7 @@ public class DebuggerStackPluginScreenShots extends GhidraScreenShotGenerator
 	public void testCaptureDebuggerStackPlugin() throws Throwable {
 		DomainFolder root = tool.getProject().getProjectData().getRootFolder();
 		program = createDefaultProgram("echo", ToyProgramBuilder._X64, this);
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Populate")) {
+		try (Transaction tx = program.openTransaction("Populate")) {
 			program.setImageBase(addr(program, 0x00400000), true);
 			program.getMemory()
 					.createInitializedBlock(".text", addr(program, 0x00400000), 0x10000, (byte) 0,
@@ -128,7 +128,7 @@ public class DebuggerStackPluginScreenShots extends GhidraScreenShotGenerator
 		}
 		long snap;
 		TraceThread thread;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			snap = tb.trace.getTimeManager().createSnapshot("First").getKey();
 			thread = tb.getOrAddThread("[1]", snap);
 			TraceStack stack = tb.trace.getStackManager().getStack(thread, snap, true);
@@ -144,7 +144,7 @@ public class DebuggerStackPluginScreenShots extends GhidraScreenShotGenerator
 		}
 		root.createFile("trace", tb.trace, TaskMonitor.DUMMY);
 		root.createFile("echo", program, TaskMonitor.DUMMY);
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			DebuggerStaticMappingUtils.addMapping(
 				new DefaultTraceLocation(tb.trace, null, Lifespan.nowOn(snap), tb.addr(0x00400000)),
 				new ProgramLocation(program, addr(program, 0x00400000)), 0x10000, false);
@@ -205,7 +205,7 @@ public class DebuggerStackPluginScreenShots extends GhidraScreenShotGenerator
 	protected Function createFibonacciProgramX86_32() throws Throwable {
 		createProgram("x86:LE:32:default", "gcc");
 		intoProject(program);
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Assemble")) {
+		try (Transaction tx = program.openTransaction("Assemble")) {
 			Address entry = addr(program, 0x00400000);
 			program.getMemory()
 					.createInitializedBlock(".text", entry, 0x1000, (byte) 0, monitor, false);
@@ -307,7 +307,7 @@ public class DebuggerStackPluginScreenShots extends GhidraScreenShotGenerator
 		waitOn(frameAtSetup.setReturnAddress(editor, tb.addr(0xdeadbeef)));
 		waitForTasks();
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), retInstr,
 						Set.of(),
@@ -321,7 +321,7 @@ public class DebuggerStackPluginScreenShots extends GhidraScreenShotGenerator
 		traceManager.activateTime(result.schedule());
 		waitForTasks();
 		DebuggerCoordinates tallest = traceManager.getCurrent();
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			new UnwindStackCommand(tool, tallest).applyTo(tb.trace, monitor);
 		}
 		waitForDomainObject(tb.trace);

@@ -22,6 +22,7 @@ import java.util.Map.Entry;
 
 import org.junit.Test;
 
+import db.Transaction;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.mapping.DebuggerRegisterMapper;
 import ghidra.app.services.ActionSource;
@@ -36,7 +37,6 @@ import ghidra.trace.model.*;
 import ghidra.trace.model.listing.TraceCodeSpace;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.util.database.UndoableTransaction;
 
 public class DefaultTraceRecorderTest extends AbstractGhidraHeadedDebuggerGUITest {
 
@@ -73,8 +73,7 @@ public class DefaultTraceRecorderTest extends AbstractGhidraHeadedDebuggerGUITes
 	}
 
 	protected TraceMemorySpace createRegSpace(TraceThread thread) {
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(thread.getTrace(), "Create register space")) {
+		try (Transaction tx = thread.getTrace().openTransaction("Create register space")) {
 			return thread.getTrace().getMemoryManager().getMemoryRegisterSpace(thread, true);
 		}
 	}
@@ -140,7 +139,7 @@ public class DefaultTraceRecorderTest extends AbstractGhidraHeadedDebuggerGUITes
 		mb.testProcess1.regs.addRegistersFromLanguage(getToyBE64Language(),
 			r -> r.isBaseRegister() && r != pc && r != sp);
 		TestTargetRegisterBankInThread regs = mb.testThread1.addRegisterBank();
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Add PC type")) {
+		try (Transaction tx = trace.openTransaction("Add PC type")) {
 			TraceCodeSpace code = trace.getCodeManager().getCodeRegisterSpace(thread, true);
 			code.definedData().create(Lifespan.nowOn(0), pc, PointerDataType.dataType);
 		}
@@ -189,7 +188,7 @@ public class DefaultTraceRecorderTest extends AbstractGhidraHeadedDebuggerGUITes
 		mb.testProcess1.regs.addRegistersFromLanguage(getToyBE64Language(),
 			r -> r.isBaseRegister() && r != pc && r != sp);
 		TestTargetRegisterBankInThread regs = mb.testThread1.addRegisterBank();
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Add SP type")) {
+		try (Transaction tx = trace.openTransaction("Add SP type")) {
 			TraceCodeSpace code = trace.getCodeManager().getCodeRegisterSpace(thread, true);
 			code.definedData().create(Lifespan.nowOn(0), sp, PointerDataType.dataType);
 		}
@@ -238,7 +237,7 @@ public class DefaultTraceRecorderTest extends AbstractGhidraHeadedDebuggerGUITes
 
 		//waitForCondition(() -> registerMapped(recorder, thread, pc));
 		TraceThread thread = waitForValue(() -> recorder.getTraceThread(mb.testThread1));
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Add PC type")) {
+		try (Transaction tx = trace.openTransaction("Add PC type")) {
 			TraceCodeSpace code = trace.getCodeManager().getCodeRegisterSpace(thread, true);
 			code.definedData().create(Lifespan.nowOn(0), pc, PointerDataType.dataType);
 		}

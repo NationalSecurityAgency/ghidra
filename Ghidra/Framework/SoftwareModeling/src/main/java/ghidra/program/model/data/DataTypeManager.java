@@ -17,6 +17,7 @@ package ghidra.program.model.data;
 
 import java.util.*;
 
+import db.Transaction;
 import ghidra.util.InvalidNameException;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.CancelledException;
@@ -318,17 +319,31 @@ public interface DataTypeManager {
 	public void setName(String name) throws InvalidNameException;
 
 	/**
+	 * Returns true if this DataTypeManager can be modified.
+	 * @return true if this DataTypeMangaer can be modified.
+	 */
+	public boolean isUpdatable();
+
+	/**
+	 * Open new transaction.  This should generally be done with a try-with-resources block:
+	 * <pre>
+	 * try (Transaction tx = dtm.openTransaction(description)) {
+	 * 	// ... Do something
+	 * }
+	 * </pre>
+	 * 
+	 * @param description a short description of the changes to be made.
+	 * @return transaction object
+	 * @throws IllegalStateException if this {@link DataTypeManager} has already been closed.
+	 */
+	public Transaction openTransaction(String description) throws IllegalStateException;
+
+	/**
 	 * Starts a transaction for making changes in this data type manager.
 	 * @param description a short description of the changes to be made.
 	 * @return the transaction ID
 	 */
 	public int startTransaction(String description);
-
-	/**
-	 * Returns true if this DataTypeManager can be modified.
-	 * @return true if this DataTypeMangaer can be modified.
-	 */
-	public boolean isUpdatable();
 
 	/**
 	 * Ends the current transaction

@@ -25,6 +25,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
+import db.Transaction;
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.builder.MultiStateActionBuilder;
@@ -58,7 +59,6 @@ import ghidra.program.model.util.StringPropertyMap;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.Msg;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.datastruct.CollectionChangeListener;
 import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.exception.CancelledException;
@@ -305,7 +305,7 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 
 	protected void writeMostRecentLaunches(Program program, List<String> mrl) {
 		ProgramUserData userData = program.getProgramUserData();
-		try (UndoableTransaction tid = UndoableTransaction.start(userData)) {
+		try (Transaction tid = userData.openTransaction()) {
 			StringPropertyMap prop = userData
 					.getStringProperty(getName(), KEY_MOST_RECENT_LAUNCHES, true);
 			Address min = program.getAddressFactory().getDefaultAddressSpace().getMinAddress();

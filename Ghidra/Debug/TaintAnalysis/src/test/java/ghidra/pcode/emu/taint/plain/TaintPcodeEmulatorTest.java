@@ -22,6 +22,7 @@ import java.io.IOException;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.*;
 
+import db.Transaction;
 import ghidra.app.plugin.assembler.*;
 import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.emu.linux.AbstractEmuLinuxSyscallUseropLibrary;
@@ -30,8 +31,8 @@ import ghidra.pcode.emu.linux.EmuLinuxAmd64SyscallUseropLibraryTest.Syscall;
 import ghidra.pcode.emu.sys.EmuProcessExitedException;
 import ghidra.pcode.emu.taint.lib.TaintEmuUnixFileSystem;
 import ghidra.pcode.emu.taint.lib.TaintFileReadsLinuxAmd64SyscallLibrary;
-import ghidra.pcode.exec.PcodeUseropLibrary;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
+import ghidra.pcode.exec.PcodeUseropLibrary;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
@@ -42,7 +43,6 @@ import ghidra.program.model.mem.MemoryBlock;
 import ghidra.taint.model.TaintSet;
 import ghidra.taint.model.TaintVec;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.task.TaskMonitor;
 
 public class TaintPcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTest {
@@ -79,7 +79,7 @@ public class TaintPcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 		start = space.getAddress(0x00400000);
 		size = 0x1000;
 
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize")) {
+		try (Transaction tx = program.openTransaction("Initialize")) {
 			block = program.getMemory()
 					.createInitializedBlock(".text", start, size, (byte) 0, TaskMonitor.DUMMY,
 						false);
@@ -155,7 +155,7 @@ public class TaintPcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 
 	@Test
 	public void testTaintFileReads() throws Exception {
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize")) {
+		try (Transaction tx = program.openTransaction("Initialize")) {
 			asm.assemble(start,
 				"MOV RAX," + Syscall.OPEN.number,
 				"LEA RDI,[0x00400880]",

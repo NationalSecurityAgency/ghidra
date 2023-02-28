@@ -116,7 +116,7 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 			throws CancelledException {
 
 		// Only run once per transaction - avoid message duplication
-		long txId = program.getCurrentTransaction().getID();
+		long txId = program.getCurrentTransactionInfo().getID();
 		if (txId == lastTransactionId) {
 			return false;
 		}

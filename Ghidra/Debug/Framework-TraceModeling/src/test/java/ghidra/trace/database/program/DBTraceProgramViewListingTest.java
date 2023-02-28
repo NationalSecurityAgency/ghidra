@@ -15,7 +15,7 @@
  */
 package ghidra.trace.database.program;
 
-import static ghidra.lifecycle.Unfinished.TODO;
+import static ghidra.lifecycle.Unfinished.*;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
@@ -23,6 +23,7 @@ import java.util.*;
 
 import org.junit.*;
 
+import db.Transaction;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.data.*;
@@ -34,7 +35,6 @@ import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.listing.DBTraceCodeManager;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -64,7 +64,7 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 	@Before
 	public void setUpTraceProgramViewListingTest() throws LanguageNotFoundException, IOException {
 		b = new ToyDBTraceBuilder("Testing", ProgramBuilder._TOY64_BE);
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			b.trace.getTimeManager().createSnapshot("Created");
 		}
 		memory = b.trace.getMemoryManager();
@@ -99,7 +99,7 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 	@Test
 	public void testAddData() throws CodeUnitInsertionException {
 		Data data;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			data = b.addData(0, b.addr(0x4000), Undefined4DataType.dataType, b.buf(1, 2, 3, 4));
 		}
 		assertEquals(b.trace.getDataTypeManager()
@@ -113,7 +113,7 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 	public void testAddInstruction() throws InsufficientBytesException, UnknownInstructionException,
 			CodeUnitInsertionException {
 		Instruction ins;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			ins = b.addInstruction(0, b.addr(0x4005), b.host, b.buf(0xf4, 0));
 		}
 		assertEquals("ret", ins.toString());
@@ -125,7 +125,7 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 		assertUndefined(listing.getCodeUnitAt(b.addr(0x4000)));
 
 		Data d4000;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			d4000 = b.addData(0, b.addr(0x4000), Undefined4DataType.dataType, b.buf(1, 2, 3, 4));
 		}
 		assertEquals(d4000, listing.getCodeUnitAt(b.addr(0x4000)));
@@ -137,7 +137,7 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 		assertUndefined(listing.getCodeUnitAt(b.addr(0x4005)));
 
 		Instruction i4005;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			i4005 = b.addInstruction(0, b.addr(0x4005), b.host, b.buf(0xf4, 0));
 		}
 		assertEquals(i4005, listing.getCodeUnitAt(b.addr(0x4005)));
@@ -151,7 +151,7 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 		assertUndefined(listing.getCodeUnitContaining(b.addr(0x4000)));
 
 		Data d4000;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			d4000 = b.addData(0, b.addr(0x4000), Undefined4DataType.dataType, b.buf(1, 2, 3, 4));
 		}
 		assertEquals(d4000, listing.getCodeUnitContaining(b.addr(0x4000)));
@@ -162,7 +162,7 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 
 		assertUndefined(listing.getCodeUnitContaining(b.addr(0x4005)));
 		Instruction i4005;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			i4005 = b.addInstruction(0, b.addr(0x4005), b.host, b.buf(0xf4, 0));
 		}
 		assertEquals(i4005, listing.getCodeUnitContaining(b.addr(0x4005)));
@@ -178,7 +178,7 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 		assertUndefined(cu = listing.getCodeUnitAfter(b.addr(0x3fff)));
 		assertEquals(b.addr(0x4000), cu.getAddress());
 		Data d4000;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			d4000 = b.addData(0, b.addr(0x4000), Undefined4DataType.dataType, b.buf(1, 2, 3, 4));
 		}
 		assertEquals(d4000, listing.getCodeUnitAfter(b.addr(0x3fff)));
@@ -188,7 +188,7 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 		assertUndefined(cu = listing.getCodeUnitAfter(b.addr(0x4004)));
 		assertEquals(b.addr(0x4005), cu.getAddress());
 		Instruction i4005;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			i4005 = b.addInstruction(0, b.addr(0x4005), b.host, b.buf(0xf4, 0));
 		}
 		assertEquals(i4005, listing.getCodeUnitAfter(b.addr(0x4004)));
@@ -204,7 +204,7 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 		assertUndefined(cu = listing.getCodeUnitBefore(b.addr(0x4001)));
 		assertEquals(b.addr(0x4000), cu.getAddress());
 		Data d4000;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			d4000 = b.addData(0, b.addr(0x4000), Undefined4DataType.dataType, b.buf(1, 2, 3, 4));
 		}
 		assertEquals(d4000, listing.getCodeUnitBefore(b.addr(0x4001)));
@@ -214,7 +214,7 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 		assertUndefined(cu = listing.getCodeUnitBefore(b.addr(0x4006)));
 		assertEquals(b.addr(0x4005), cu.getAddress());
 		Instruction i4005;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			i4005 = b.addInstruction(0, b.addr(0x4005), b.host, b.buf(0xf4, 0));
 		}
 		assertEquals(i4005, listing.getCodeUnitBefore(b.addr(0x4006)));
@@ -289,7 +289,7 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 
 		Data d4000;
 		Instruction i4005;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			d4000 = b.addData(0, b.addr(0x4000), Undefined4DataType.dataType, b.buf(1, 2, 3, 4));
 			i4005 = b.addInstruction(0, b.addr(0x4005), b.host, b.buf(0xf4, 0));
 		}
@@ -354,7 +354,7 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 			UnknownInstructionException, CodeUnitInsertionException {
 		assertNull(listing.getInstructionAt(b.addr(0x4005)));
 		Instruction i4005;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			i4005 = b.addInstruction(0, b.addr(0x4005), b.host, b.buf(0xf4, 0));
 		}
 		assertEquals(i4005, listing.getInstructionAt(b.addr(0x4005)));
@@ -367,7 +367,7 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 			UnknownInstructionException, CodeUnitInsertionException {
 		assertNull(listing.getInstructionContaining(b.addr(0x4005)));
 		Instruction i4005;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			i4005 = b.addInstruction(0, b.addr(0x4005), b.host, b.buf(0xf4, 0));
 		}
 		assertEquals(i4005, listing.getInstructionContaining(b.addr(0x4005)));
@@ -380,7 +380,7 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 			UnknownInstructionException, CodeUnitInsertionException {
 		assertNull(listing.getInstructionAfter(b.addr(0x4004)));
 		Instruction i4005;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			i4005 = b.addInstruction(0, b.addr(0x4005), b.host, b.buf(0xf4, 0));
 		}
 		assertEquals(i4005, listing.getInstructionAfter(b.addr(0x4004)));
@@ -392,7 +392,7 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 			UnknownInstructionException, CodeUnitInsertionException {
 		assertNull(listing.getInstructionBefore(b.addr(0x4006)));
 		Instruction i4005;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			i4005 = b.addInstruction(0, b.addr(0x4005), b.host, b.buf(0xf4, 0));
 		}
 		assertEquals(i4005, listing.getInstructionBefore(b.addr(0x4006)));
@@ -420,7 +420,7 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 		Instruction i4005;
 		Instruction i4007;
 		Instruction i400a;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			i4005 = b.addInstruction(0, b.addr(0x4005), b.host, b.buf(0xf4, 0));
 			i4007 = b.addInstruction(0, b.addr(0x4007), b.host, b.buf(0xf4, 0));
 			i400a = b.addInstruction(0, b.addr(0x400a), b.host, b.buf(0xf4, 0));
@@ -443,7 +443,7 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 			UnknownInstructionException {
 		assertUndefined(listing.getDataAt(b.addr(0x4000)));
 		Data d4000;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			d4000 = b.addData(0, b.addr(0x4000), Undefined4DataType.dataType, b.buf(1, 2, 3, 4));
 		}
 		assertEquals(d4000, listing.getDataAt(b.addr(0x4000)));
@@ -453,7 +453,7 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 		assertUndefined(listing.getDataAt(b.addr(0x4004)));
 
 		assertUndefined(listing.getDataAt(b.addr(0x4005)));
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			b.addInstruction(0, b.addr(0x4005), b.host, b.buf(0xf4, 0));
 		}
 		assertNull(listing.getDataAt(b.addr(0x4005)));
@@ -466,7 +466,7 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 			InsufficientBytesException, UnknownInstructionException {
 		assertUndefined(listing.getDataContaining(b.addr(0x4000)));
 		Data d4000;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			d4000 = b.addData(0, b.addr(0x4000), Undefined4DataType.dataType, b.buf(1, 2, 3, 4));
 		}
 		assertEquals(d4000, listing.getDataContaining(b.addr(0x4000)));
@@ -476,7 +476,7 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 		assertUndefined(listing.getDataContaining(b.addr(0x4004)));
 
 		assertUndefined(listing.getDataContaining(b.addr(0x4005)));
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			b.addInstruction(0, b.addr(0x4005), b.host, b.buf(0xf4, 0));
 		}
 		assertNull(listing.getDataContaining(b.addr(0x4005)));
@@ -492,7 +492,7 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 		assertUndefined(cu = listing.getDataAfter(b.addr(0x3fff)));
 		assertEquals(b.addr(0x4000), cu.getAddress());
 		Data d4000;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			d4000 = b.addData(0, b.addr(0x4000), Undefined4DataType.dataType, b.buf(1, 2, 3, 4));
 		}
 		assertEquals(d4000, listing.getDataAfter(b.addr(0x3fff)));
@@ -501,7 +501,7 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 
 		assertUndefined(cu = listing.getDataAfter(b.addr(0x4004)));
 		assertEquals(b.addr(0x4005), cu.getAddress());
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			b.addInstruction(0, b.addr(0x4005), b.host, b.buf(0xf4, 0));
 		}
 		assertUndefined(cu = listing.getDataAfter(b.addr(0x4004)));
@@ -516,7 +516,7 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 		assertUndefined(cu = listing.getDataBefore(b.addr(0x4001)));
 		assertEquals(b.addr(0x4000), cu.getAddress());
 		Data d4000;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			d4000 = b.addData(0, b.addr(0x4000), Undefined4DataType.dataType, b.buf(1, 2, 3, 4));
 		}
 		assertEquals(d4000, listing.getDataBefore(b.addr(0x4001)));
@@ -525,7 +525,7 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 
 		assertUndefined(cu = listing.getDataBefore(b.addr(0x4006)));
 		assertEquals(b.addr(0x4005), cu.getAddress());
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			b.addInstruction(0, b.addr(0x4005), b.host, b.buf(0xf4, 0));
 		}
 		assertUndefined(cu = listing.getDataBefore(b.addr(0x4007)));
@@ -598,7 +598,7 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 		assertEquals(b.addr(0x3ffe), sample.get(7).getAddress());
 
 		Data d4000;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			d4000 = b.addData(0, b.addr(0x4000), Undefined4DataType.dataType, b.buf(1, 2, 3, 4));
 			b.addInstruction(0, b.addr(0x4005), b.host, b.buf(0xf4, 0));
 		}
@@ -658,7 +658,7 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 	public void testGetDefinedDataAt() throws CodeUnitInsertionException {
 		assertNull(listing.getDefinedDataAt(b.addr(0x4000)));
 		Data d4000;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			d4000 = b.addData(0, b.addr(0x4000), Undefined4DataType.dataType, b.buf(1, 2, 3, 4));
 		}
 		assertEquals(d4000, listing.getDefinedDataAt(b.addr(0x4000)));
@@ -673,7 +673,7 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 	public void testGetDefinedDataContaining() throws CodeUnitInsertionException {
 		assertNull(listing.getDefinedDataContaining(b.addr(0x4005)));
 		Data d4000;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			d4000 = b.addData(0, b.addr(0x4000), Undefined4DataType.dataType, b.buf(1, 2, 3, 4));
 		}
 		assertEquals(d4000, listing.getDefinedDataContaining(b.addr(0x4000)));
@@ -687,7 +687,7 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 	public void testGetDefinedDataAfter() throws CodeUnitInsertionException {
 		assertNull(listing.getDefinedDataAfter(b.addr(0x4000)));
 		Data d4000;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			d4000 = b.addData(0, b.addr(0x4000), Undefined4DataType.dataType, b.buf(1, 2, 3, 4));
 		}
 		assertEquals(d4000, listing.getDefinedDataAfter(b.addr(0x3fff)));
@@ -698,7 +698,7 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 	public void testGetDefinedDataBefore() throws CodeUnitInsertionException {
 		assertNull(listing.getDefinedDataBefore(b.addr(0x4004)));
 		Data d4000;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			d4000 = b.addData(0, b.addr(0x4000), Undefined4DataType.dataType, b.buf(1, 2, 3, 4));
 		}
 		assertEquals(d4000, listing.getDefinedDataBefore(b.addr(0x4001)));
@@ -726,7 +726,7 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 		Data d4000;
 		Data d4004;
 		Data d400a;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			d4000 = b.addData(0, b.addr(0x4000), Undefined4DataType.dataType, b.buf(0, 1, 2, 3));
 			d4004 = b.addData(0, b.addr(0x4004), Undefined4DataType.dataType, b.buf(5, 6, 7, 8));
 			d400a =
@@ -749,7 +749,7 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 	public void testGetUndefinedDataAt() throws CodeUnitInsertionException,
 			InsufficientBytesException, UnknownInstructionException {
 		assertUndefined(listing.getUndefinedDataAt(b.addr(0x4000)));
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			b.addData(0, b.addr(0x4000), Undefined4DataType.dataType, b.buf(1, 2, 3, 4));
 		}
 		assertNull(listing.getUndefinedDataAt(b.addr(0x4000)));
@@ -759,7 +759,7 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 		assertUndefined(listing.getUndefinedDataAt(b.addr(0x4004)));
 
 		assertUndefined(listing.getUndefinedDataAt(b.addr(0x4005)));
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			b.addInstruction(0, b.addr(0x4005), b.host, b.buf(0xf4, 0));
 		}
 		assertNull(listing.getUndefinedDataAt(b.addr(0x4005)));
@@ -774,7 +774,7 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 
 		assertUndefined(cu = listing.getUndefinedDataAfter(b.addr(0x3fff), TaskMonitor.DUMMY));
 		assertEquals(b.addr(0x4000), cu.getAddress());
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			b.addData(0, b.addr(0x4000), Undefined4DataType.dataType, b.buf(1, 2, 3, 4));
 		}
 		assertUndefined(cu = listing.getUndefinedDataAfter(b.addr(0x3fff), TaskMonitor.DUMMY));
@@ -782,7 +782,7 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 
 		assertUndefined(cu = listing.getUndefinedDataAfter(b.addr(0x4004), TaskMonitor.DUMMY));
 		assertEquals(b.addr(0x4005), cu.getAddress());
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			b.addInstruction(0, b.addr(0x4005), b.host, b.buf(0xf4, 0));
 		}
 		assertUndefined(cu = listing.getUndefinedDataAfter(b.addr(0x4004), TaskMonitor.DUMMY));
@@ -796,7 +796,7 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 
 		assertUndefined(cu = listing.getUndefinedDataBefore(b.addr(0x4001), TaskMonitor.DUMMY));
 		assertEquals(b.addr(0x4000), cu.getAddress());
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			b.addData(0, b.addr(0x4000), Undefined4DataType.dataType, b.buf(1, 2, 3, 4));
 		}
 		assertUndefined(cu = listing.getUndefinedDataBefore(b.addr(0x4004), TaskMonitor.DUMMY));
@@ -804,7 +804,7 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 
 		assertUndefined(cu = listing.getUndefinedDataBefore(b.addr(0x4006), TaskMonitor.DUMMY));
 		assertEquals(b.addr(0x4005), cu.getAddress());
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			b.addInstruction(0, b.addr(0x4005), b.host, b.buf(0xf4, 0));
 		}
 		assertUndefined(cu = listing.getUndefinedDataBefore(b.addr(0x4007), TaskMonitor.DUMMY));
@@ -814,7 +814,7 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 	@Test
 	public void testGetFirstUndefinedData() throws InsufficientBytesException,
 			UnknownInstructionException, CodeUnitInsertionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			b.addData(0, b.addr(0x4000), Undefined4DataType.dataType, b.buf(1, 2, 3, 4));
 			b.addInstruction(0, b.addr(0x4005), b.host, b.buf(0xf4, 0));
 		}
@@ -832,7 +832,7 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 	@Ignore("TODO")
 	public void testGetUndefinedRanges() throws InsufficientBytesException,
 			UnknownInstructionException, CodeUnitInsertionException, CancelledException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			b.addData(0, b.addr(0x4000), Undefined4DataType.dataType, b.buf(1, 2, 3, 4));
 			b.addInstruction(0, b.addr(0x4005), b.host, b.buf(0xf4, 0));
 		}
@@ -848,13 +848,13 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 			UnknownInstructionException, CodeUnitInsertionException {
 		assertNull(listing.getDefinedCodeUnitAfter(b.addr(0x3fff)));
 		Instruction i4005;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			i4005 = b.addInstruction(0, b.addr(0x4005), b.host, b.buf(0xf4, 0));
 		}
 		assertEquals(i4005, listing.getDefinedCodeUnitAfter(b.addr(0x3fff)));
 		assertNull(listing.getDefinedCodeUnitAfter(b.addr(0x4005)));
 		Data d4000;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			d4000 = b.addData(0, b.addr(0x4000), Undefined4DataType.dataType, b.buf(1, 2, 3, 4));
 		}
 		assertEquals(d4000, listing.getDefinedCodeUnitAfter(b.addr(0x3fff)));
@@ -866,13 +866,13 @@ public class DBTraceProgramViewListingTest extends AbstractGhidraHeadlessIntegra
 			UnknownInstructionException, CodeUnitInsertionException {
 		assertNull(listing.getDefinedCodeUnitBefore(b.addr(0x4006)));
 		Data d4000;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			d4000 = b.addData(0, b.addr(0x4000), Undefined4DataType.dataType, b.buf(1, 2, 3, 4));
 		}
 		assertEquals(d4000, listing.getDefinedCodeUnitBefore(b.addr(0x4006)));
 		assertNull(listing.getDefinedCodeUnitBefore(b.addr(0x4000)));
 		Instruction i4005;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			i4005 = b.addInstruction(0, b.addr(0x4005), b.host, b.buf(0xf4, 0));
 		}
 		assertEquals(i4005, listing.getDefinedCodeUnitBefore(b.addr(0x4006)));

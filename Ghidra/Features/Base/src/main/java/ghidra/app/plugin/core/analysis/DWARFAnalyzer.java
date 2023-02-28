@@ -168,7 +168,7 @@ public class DWARFAnalyzer extends AbstractAnalyzer {
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws CancelledException {
 
-		long txId = program.getCurrentTransaction().getID();
+		long txId = program.getCurrentTransactionInfo().getID();
 		if (txId == lastTxId) {
 			// Only run once per analysis session - as denoted by being in the same transaction
 			return true;

@@ -22,6 +22,7 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
+import db.Transaction;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.program.model.lang.LanguageID;
 import ghidra.program.model.lang.LanguageNotFoundException;
@@ -29,7 +30,6 @@ import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.task.TaskMonitor;
 
 public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
@@ -269,7 +269,7 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 		TraceSchedule time = TraceSchedule.parse("1:4;t0-3;t1-2.1");
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("test", ToyProgramBuilder._TOY64_BE)) {
 			TraceThread t2;
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				tb.trace.getThreadManager().createThread("Threads[0]", 0);
 				tb.trace.getThreadManager().createThread("Threads[1]", 0);
 				t2 = tb.trace.getThreadManager().createThread("Threads[2]", 0);
@@ -298,7 +298,7 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 		TraceSchedule time = TraceSchedule.parse("1:4;t0-s3;t1-2.s1");
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("test", ToyProgramBuilder._TOY64_BE)) {
 			TraceThread t2;
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				tb.trace.getThreadManager().createThread("Threads[0]", 0);
 				tb.trace.getThreadManager().createThread("Threads[1]", 0);
 				t2 = tb.trace.getThreadManager().createThread("Threads[2]", 0);
@@ -327,7 +327,7 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 		TraceSchedule time = TraceSchedule.parse("1:{r0=0x1234};4");
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("test", "Toy:BE:64:default")) {
 			TraceThread t2;
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				tb.trace.getThreadManager().createThread("Threads[0]", 0);
 				tb.trace.getThreadManager().createThread("Threads[1]", 0);
 				t2 = tb.trace.getThreadManager().createThread("Threads[2]", 0);
@@ -350,7 +350,7 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 		TestMachine machine = new TestMachine();
 		TraceSchedule time = TraceSchedule.parse("1:4;t0-3;t1-2.1");
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("test", "Toy:BE:64:default")) {
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				tb.trace.getThreadManager().createThread("Threads[0]", 0);
 				tb.trace.getThreadManager().createThread("Threads[1]", 0);
 				tb.trace.getThreadManager().createThread("Threads[2]", 0);
@@ -366,7 +366,7 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 		TraceSchedule time = TraceSchedule.parse("1:4;t0-3;t5-2.1");
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("test", "Toy:BE:64:default")) {
 			TraceThread t2;
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				tb.trace.getThreadManager().createThread("Threads[0]", 0);
 				tb.trace.getThreadManager().createThread("Threads[1]", 0);
 				t2 = tb.trace.getThreadManager().createThread("Threads[2]", 0);
@@ -382,7 +382,7 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 		TraceSchedule time = TraceSchedule.parse("1:4;t0-3;t1-2.1");
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("test", "Toy:BE:64:default")) {
 			TraceThread t2;
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				tb.trace.getThreadManager().createThread("Threads[0]", 0);
 				tb.trace.getThreadManager().createThread("Threads[1]", 0);
 				t2 = tb.trace.getThreadManager().createThread("Threads[2]", 0);
@@ -405,7 +405,7 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 		TraceSchedule time = TraceSchedule.parse("1:4;t0-3;t1-2.1");
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("test", "Toy:BE:64:default")) {
 			TraceThread t2;
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				tb.trace.getThreadManager().createThread("Threads[0]", 0);
 				tb.trace.getThreadManager().createThread("Threads[1]", 0);
 				t2 = tb.trace.getThreadManager().createThread("Threads[2]", 0);
@@ -426,7 +426,7 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 		TraceSchedule time = TraceSchedule.parse("1:4;t0-3;t1-2.1");
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("test", "Toy:BE:64:default")) {
 			TraceThread t2;
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				tb.trace.getThreadManager().createThread("Threads[0]", 0);
 				tb.trace.getThreadManager().createThread("Threads[1]", 0);
 				t2 = tb.trace.getThreadManager().createThread("Threads[2]", 0);
@@ -441,7 +441,7 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 		// TODO: Should parse require coalescing? Can't without passing a language...
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("test", "Toy:BE:64:default")) {
 			TraceThread thread;
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				thread = tb.trace.getThreadManager().createThread("Threads[0]", 0);
 			}
 			TraceSchedule time = TraceSchedule.parse("0");

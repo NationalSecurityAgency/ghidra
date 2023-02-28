@@ -15,12 +15,12 @@
  */
 package ghidra.pcode.emu.sys;
 
-import static ghidra.pcode.emu.sys.EmuSyscallLibrary.SYSCALL_SPACE_NAME;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
+import static ghidra.pcode.emu.sys.EmuSyscallLibrary.*;
+import static org.junit.Assert.*;
 
 import org.junit.*;
 
+import db.Transaction;
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
@@ -38,7 +38,6 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.task.TaskMonitor;
 
 public class EmuAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadlessIntegrationTest {
@@ -130,7 +129,7 @@ public class EmuAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadlessInte
 		start = space.getAddress(0x00400000);
 		size = 0x1000;
 
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize")) {
+		try (Transaction tx = program.openTransaction("Initialize")) {
 			block = program.getMemory()
 					.createInitializedBlock(".text", start, size, (byte) 0, TaskMonitor.DUMMY,
 						false);
@@ -179,7 +178,7 @@ public class EmuAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadlessInte
 
 	@Test
 	public void testSyscallWithStdcallConvention() throws Exception {
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize")) {
+		try (Transaction tx = program.openTransaction("Initialize")) {
 			asm.assemble(start,
 				"MOV RAX,0",
 				"MOV RCX,0xbeef",
@@ -198,7 +197,7 @@ public class EmuAmd64SyscallUseropLibraryTest extends AbstractGhidraHeadlessInte
 
 	@Test
 	public void testSyscallWithSyscallConvention() throws Exception {
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize")) {
+		try (Transaction tx = program.openTransaction("Initialize")) {
 			asm.assemble(start,
 				"MOV RAX,1",
 				"MOV RCX,0xdead",

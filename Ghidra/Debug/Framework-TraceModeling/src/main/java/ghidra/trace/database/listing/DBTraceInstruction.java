@@ -110,7 +110,7 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 		}
 	}
 
-	protected class GuestMemBuffer implements MemBufferAdapter {
+	protected class GuestMemBuffer implements MemBufferMixin {
 		@Override
 		public Address getAddress() {
 			return platform.mapHostToGuest(getX1());

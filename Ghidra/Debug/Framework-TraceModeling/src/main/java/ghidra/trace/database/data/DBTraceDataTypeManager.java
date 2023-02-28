@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.concurrent.locks.ReadWriteLock;
 
+import db.Transaction;
 import db.DBHandle;
 import ghidra.framework.model.DomainFile;
 import ghidra.program.database.data.ProgramBasedDataTypeManagerDB;
@@ -174,6 +175,11 @@ public class DBTraceDataTypeManager extends ProgramBasedDataTypeManagerDB
 	@Override
 	public boolean isUpdatable() {
 		return trace.isChangeable();
+	}
+
+	@Override
+	public Transaction openTransaction(String description) throws IllegalStateException {
+		return trace.openTransaction(description);
 	}
 
 	@Override

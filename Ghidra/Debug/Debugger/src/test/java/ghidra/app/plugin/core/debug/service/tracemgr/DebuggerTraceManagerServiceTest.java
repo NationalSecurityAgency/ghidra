@@ -23,6 +23,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import db.Transaction;
 import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
@@ -42,7 +43,6 @@ import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObjectKeyPath;
 import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.util.database.UndoableTransaction;
 
 @Category(NightlyCategory.class) // this may actually be an @PortSensitive test
 public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebuggerGUITest {
@@ -131,7 +131,7 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 		assertNull(traceManager.getCurrentThread());
 
 		TraceThread thread;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			thread = tb.getOrAddThread("Thread 1", 0);
 		}
 		waitForDomainObject(tb.trace);
@@ -231,7 +231,7 @@ public class DebuggerTraceManagerServiceTest extends AbstractGhidraHeadedDebugge
 
 		SchemaContext ctx = XmlSchemaContext.deserialize(DBTraceObjectManagerTest.XML_CTX);
 		TraceObject objThread0;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			DBTraceObjectManager objectManager = tb.trace.getObjectManager();
 			objectManager.createRootObject(ctx.getSchema(new SchemaName("Session"))).getChild();
 			objThread0 =

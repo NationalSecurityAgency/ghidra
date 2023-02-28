@@ -23,6 +23,7 @@
 
 import java.nio.charset.Charset;
 
+import db.Transaction;
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
@@ -43,7 +44,6 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.SourceType;
-import ghidra.util.database.UndoableTransaction;
 
 public class StandAloneSyscallEmuExampleScript extends GhidraScript {
 	private final static Charset UTF8 = Charset.forName("utf8");
@@ -70,7 +70,7 @@ public class StandAloneSyscallEmuExampleScript extends GhidraScript {
 			program =
 				new ProgramDB("syscall_example", language,
 					language.getCompilerSpecByID(new CompilerSpecID("gcc")), this);
-			try (UndoableTransaction tid = UndoableTransaction.start(program, "Init")) {
+			try (Transaction tx = program.openTransaction("Init")) {
 				AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
 				entry = space.getAddress(0x00400000);
 				Address dataEntry = space.getAddress(0x00600000);

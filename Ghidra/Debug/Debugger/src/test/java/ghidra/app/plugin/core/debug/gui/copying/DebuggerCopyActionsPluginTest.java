@@ -24,6 +24,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import db.Transaction;
 import docking.action.DockingActionIf;
 import generic.Unique;
 import generic.test.category.NightlyCategory;
@@ -46,7 +47,6 @@ import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.model.*;
 import ghidra.trace.model.memory.TraceMemoryFlag;
-import ghidra.util.database.UndoableTransaction;
 
 @Category(NightlyCategory.class)
 public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerGUITest {
@@ -92,7 +92,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 		assertDisabled(copyActionsPlugin.actionCopyIntoCurrentProgram);
 
 		createAndOpenTrace();
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getMemoryManager()
 					.createRegion(".text", 0, tb.range(0x00400000, 0x0040ffff),
 						TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
@@ -133,7 +133,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 
 		AddressSpace stSpace = program.getAddressFactory().getDefaultAddressSpace();
 
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add blocks")) {
+		try (Transaction tx = program.openTransaction("Add blocks")) {
 			program.getMemory()
 					.createInitializedBlock(".text", tb.addr(stSpace, 0x00400000), 0x8000, (byte) 0,
 						monitor, false);
@@ -142,7 +142,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 						(byte) 0, monitor, false);
 		}
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			DBTraceMemoryManager mm = tb.trace.getMemoryManager();
 			mm.createRegion(".text", 0, tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ,
 				TraceMemoryFlag.EXECUTE);
@@ -214,7 +214,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 		intoProject(program);
 		intoProject(tb.trace);
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getMemoryManager()
 					.createRegion(".text", 0, tb.range(0x55550000, 0x5555ffff),
 						TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
@@ -227,7 +227,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 
 		AddressSpace stSpace = program.getAddressFactory().getDefaultAddressSpace();
 		MemoryBlock block;
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Create block")) {
+		try (Transaction tx = program.openTransaction("Create block")) {
 			block = program.getMemory()
 					.createUninitializedBlock(".text", tb.addr(stSpace, 0x00400000), 0x10000,
 						false);
@@ -236,7 +236,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 		TraceLocation tloc =
 			new DefaultTraceLocation(tb.trace, null, Lifespan.nowOn(0), tb.addr(0x55550000));
 		ProgramLocation ploc = new ProgramLocation(program, tb.addr(stSpace, 0x00400000));
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			mappingService.addMapping(tloc, ploc, 0x10000, true);
 		}
 
@@ -276,7 +276,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 		intoProject(program);
 		intoProject(tb.trace);
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getMemoryManager()
 					.createRegion(".text", 0, tb.range(0x55550000, 0x5555ffff),
 						TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
@@ -289,7 +289,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 
 		AddressSpace stSpace = program.getAddressFactory().getDefaultAddressSpace();
 		MemoryBlock block;
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Create block")) {
+		try (Transaction tx = program.openTransaction("Create block")) {
 			block = program.getMemory()
 					.createUninitializedBlock(".text", tb.addr(stSpace, 0x00400000), 0x10000,
 						false);
@@ -298,7 +298,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 		TraceLocation tloc =
 			new DefaultTraceLocation(tb.trace, null, Lifespan.nowOn(0), tb.addr(0x55550000));
 		ProgramLocation ploc = new ProgramLocation(program, tb.addr(stSpace, 0x00400000));
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			mappingService.addMapping(tloc, ploc, 0x10000, true);
 		}
 
@@ -338,7 +338,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 
 		createAndOpenTrace();
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getMemoryManager()
 					.createRegion(".text", 0, tb.range(0x55550000, 0x5555ffff),
 						TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
@@ -380,7 +380,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 
 		createAndOpenTrace();
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getMemoryManager()
 					.createRegion(".text", 0, tb.range(0x55550000, 0x5555ffff),
 						TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);

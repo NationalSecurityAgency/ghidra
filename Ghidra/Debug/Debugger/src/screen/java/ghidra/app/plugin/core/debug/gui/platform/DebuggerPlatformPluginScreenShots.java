@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.debug.gui.platform;
 import org.junit.Before;
 import org.junit.Test;
 
+import db.Transaction;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.dbg.target.schema.SchemaContext;
@@ -25,7 +26,6 @@ import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.target.DBTraceObjectManagerTest;
-import ghidra.util.database.UndoableTransaction;
 import help.screenshot.GhidraScreenShotGenerator;
 
 public class DebuggerPlatformPluginScreenShots extends GhidraScreenShotGenerator {
@@ -43,7 +43,7 @@ public class DebuggerPlatformPluginScreenShots extends GhidraScreenShotGenerator
 	public void testCaptureDebuggerSelectPlatformOfferDialog() throws Throwable {
 		SchemaContext ctx = XmlSchemaContext.deserialize(DBTraceObjectManagerTest.XML_CTX);
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("echo", "DATA:BE:64:default")) {
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				tb.trace.getObjectManager()
 						.createRootObject(ctx.getSchema(new SchemaName("Session")));
 			}

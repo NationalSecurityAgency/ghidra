@@ -53,7 +53,7 @@ abstract class AbstractTransactionManager {
 		checkLockingTask();
 
 		synchronized (this) {
-			if (getCurrentTransaction() != null && !transactionTerminated) {
+			if (getCurrentTransactionInfo() != null && !transactionTerminated) {
 				return false;
 			}
 			if (lockCount == 0) {
@@ -85,7 +85,7 @@ abstract class AbstractTransactionManager {
 			return null;
 		}
 		checkDomainObject(domainObj);
-		if (lockCount != 0 || getCurrentTransaction() != null || lockingTaskMonitor != null) {
+		if (lockCount != 0 || getCurrentTransactionInfo() != null || lockingTaskMonitor != null) {
 			return null;
 		}
 		++lockCount; // prevent prepareToSave
@@ -192,14 +192,15 @@ abstract class AbstractTransactionManager {
 	}
 
 	final int startTransaction(DomainObjectAdapterDB object, String description,
-			AbortedTransactionListener listener, boolean notify) {
+			AbortedTransactionListener listener, boolean notify)
+			throws TerminatedTransactionException {
 
 		checkLockingTask();
 
 		synchronized (this) {
 			checkDomainObject(object);
 
-			if (getCurrentTransaction() != null && transactionTerminated) {
+			if (getCurrentTransactionInfo() != null && transactionTerminated) {
 				throw new TerminatedTransactionException();
 			}
 
@@ -210,8 +211,8 @@ abstract class AbstractTransactionManager {
 	abstract int startTransaction(DomainObjectAdapterDB object, String description,
 			AbortedTransactionListener listener, boolean force, boolean notify);
 
-	abstract Transaction endTransaction(DomainObjectAdapterDB object, int transactionID,
-			boolean commit, boolean notify);
+	abstract TransactionInfo endTransaction(DomainObjectAdapterDB object, int transactionID,
+			boolean commit, boolean notify) throws IllegalStateException;
 
 	/**
 	 * Returns the undo stack depth.
@@ -229,14 +230,14 @@ abstract class AbstractTransactionManager {
 
 	abstract String getUndoName();
 
-	abstract Transaction getCurrentTransaction();
+	abstract TransactionInfo getCurrentTransactionInfo();
 
 	final void redo() throws IOException {
 
 		checkLockingTask();
 
 		synchronized (this) {
-			if (getCurrentTransaction() != null) {
+			if (getCurrentTransactionInfo() != null) {
 				throw new IllegalStateException("Can not redo while transaction is open");
 			}
 			verifyNoLock();
@@ -251,9 +252,9 @@ abstract class AbstractTransactionManager {
 		checkLockingTask();
 
 		synchronized (this) {
-			if (getCurrentTransaction() != null) {
+			if (getCurrentTransactionInfo() != null) {
 				throw new IllegalStateException("Can not undo while transaction is open: " +
-					getCurrentTransaction().getDescription());
+					getCurrentTransactionInfo().getDescription());
 			}
 			verifyNoLock();
 			doUndo(true);

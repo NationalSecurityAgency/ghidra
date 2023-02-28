@@ -379,7 +379,7 @@ class ProgramSaveManager {
 			StringBuilder buf = new StringBuilder();
 			buf.append(
 				"The Program is currently being modified by the following actions/tasks:\n ");
-			Transaction t = program.getCurrentTransaction();
+			TransactionInfo t = program.getCurrentTransactionInfo();
 			List<String> list = t.getOpenSubTransactions();
 			Iterator<String> it = list.iterator();
 			while (it.hasNext()) {
@@ -413,7 +413,7 @@ class ProgramSaveManager {
 			StringBuffer buf = new StringBuffer();
 			buf.append(
 				"The Program is currently being modified by the following actions/tasks:\n ");
-			Transaction t = program.getCurrentTransaction();
+			TransactionInfo t = program.getCurrentTransactionInfo();
 			List<String> list = t.getOpenSubTransactions();
 			Iterator<String> it = list.iterator();
 			while (it.hasNext()) {

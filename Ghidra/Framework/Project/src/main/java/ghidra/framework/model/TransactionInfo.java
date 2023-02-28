@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +17,11 @@ package ghidra.framework.model;
 
 import java.util.ArrayList;
 
-public interface Transaction {
+public interface TransactionInfo {
 
-	public static final int NOT_DONE = 0;
-	public static final int COMMITTED = 1;
-	public static final int ABORTED = 2;
-	public static final int NOT_DONE_BUT_ABORTED = 3;
+	public enum Status {
+		NOT_DONE, COMMITTED, ABORTED, NOT_DONE_BUT_ABORTED;
+	}
 
 	public long getID();
 
@@ -40,11 +38,16 @@ public interface Transaction {
 	 */
 	public ArrayList<String> getOpenSubTransactions();
 
-	public int getStatus();
+	/**
+	 * Get the status of the corresponding transaction.
+	 * @return status
+	 */
+	public Status getStatus();
 
 	/**
-	 * Returns true if this fully committed transaction has a corresponding 
-	 * database transaction/checkpoint.
+	 * Determine if the corresponding transaction, and all of its sub-transactions, has been 
+	 * comitted to the underlying database.
+	 * @return true if the corresponding transaction has been comitted, else false.
 	 */
 	public boolean hasCommittedDBTransaction();
 

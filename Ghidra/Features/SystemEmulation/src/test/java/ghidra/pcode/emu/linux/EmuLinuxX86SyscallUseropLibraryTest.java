@@ -25,6 +25,7 @@ import java.util.List;
 
 import org.junit.*;
 
+import db.Transaction;
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
@@ -43,7 +44,6 @@ import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.task.TaskMonitor;
 
 public class EmuLinuxX86SyscallUseropLibraryTest extends AbstractGhidraHeadlessIntegrationTest {
@@ -125,7 +125,7 @@ public class EmuLinuxX86SyscallUseropLibraryTest extends AbstractGhidraHeadlessI
 		start = space.getAddress(0x00400000);
 		size = 0x1000;
 
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize")) {
+		try (Transaction tx = program.openTransaction("Initialize")) {
 			block = program.getMemory()
 					.createInitializedBlock(".text", start, size, (byte) 0, TaskMonitor.DUMMY,
 						false);
@@ -187,7 +187,7 @@ public class EmuLinuxX86SyscallUseropLibraryTest extends AbstractGhidraHeadlessI
 
 	@Test
 	public void testWriteStdout() throws Exception {
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize")) {
+		try (Transaction tx = program.openTransaction("Initialize")) {
 			asm.assemble(start,
 				"MOV EAX," + Syscall.WRITE.number,
 				"MOV EBX," + EmuUnixFileDescriptor.FD_STDOUT,
@@ -219,7 +219,7 @@ public class EmuLinuxX86SyscallUseropLibraryTest extends AbstractGhidraHeadlessI
 
 	@Test
 	public void testReadStdin() throws Exception {
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize")) {
+		try (Transaction tx = program.openTransaction("Initialize")) {
 			asm.assemble(start,
 				"MOV EAX," + Syscall.READ.number,
 				"MOV EBX," + EmuUnixFileDescriptor.FD_STDIN,
@@ -251,7 +251,7 @@ public class EmuLinuxX86SyscallUseropLibraryTest extends AbstractGhidraHeadlessI
 
 	@Test
 	public void testWritevStdout() throws Exception {
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize")) {
+		try (Transaction tx = program.openTransaction("Initialize")) {
 			Address data = space.getAddress(0x00400800);
 			ByteBuffer buf = ByteBuffer.allocate(64).order(ByteOrder.LITTLE_ENDIAN);
 
@@ -306,7 +306,7 @@ public class EmuLinuxX86SyscallUseropLibraryTest extends AbstractGhidraHeadlessI
 	public void testReadvStdin() throws Exception {
 		Address strHello;
 		Address strWorld;
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize")) {
+		try (Transaction tx = program.openTransaction("Initialize")) {
 			Address data = space.getAddress(0x00400800);
 			ByteBuffer buf = ByteBuffer.allocate(64).order(ByteOrder.LITTLE_ENDIAN);
 
@@ -362,7 +362,7 @@ public class EmuLinuxX86SyscallUseropLibraryTest extends AbstractGhidraHeadlessI
 
 	@Test
 	public void testOpenWriteClose() throws Exception {
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize")) {
+		try (Transaction tx = program.openTransaction("Initialize")) {
 			asm.assemble(start,
 				"MOV EAX," + Syscall.OPEN.number,
 				"LEA EBX,[0x00400880]",
@@ -400,7 +400,7 @@ public class EmuLinuxX86SyscallUseropLibraryTest extends AbstractGhidraHeadlessI
 
 	@Test
 	public void testOpenReadClose() throws Exception {
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Initialize")) {
+		try (Transaction tx = program.openTransaction("Initialize")) {
 			asm.assemble(start,
 				"MOV EAX," + Syscall.OPEN.number,
 				"LEA EBX,[0x00400880]",

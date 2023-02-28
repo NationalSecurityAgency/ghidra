@@ -648,6 +648,11 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 	}
 
 	@Override
+	public Transaction openTransaction() {
+		return openTransaction("Property Change");
+	}
+
+	@Override
 	public int startTransaction() {
 		return startTransaction("Property Change");
 	}

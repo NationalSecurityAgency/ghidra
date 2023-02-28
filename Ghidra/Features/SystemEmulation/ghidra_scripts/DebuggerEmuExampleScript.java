@@ -25,6 +25,7 @@
 
 import java.nio.charset.Charset;
 
+import db.Transaction;
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.app.plugin.core.debug.service.emulation.BytesDebuggerPcodeEmulator;
@@ -52,7 +53,6 @@ import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.TraceTimeManager;
-import ghidra.util.database.UndoableTransaction;
 
 public class DebuggerEmuExampleScript extends GhidraScript {
 	private final static Charset UTF8 = Charset.forName("utf8");
@@ -83,7 +83,7 @@ public class DebuggerEmuExampleScript extends GhidraScript {
 					.getProjectData()
 					.getRootFolder()
 					.createFile("emu_example", program, monitor);
-			try (UndoableTransaction tid = UndoableTransaction.start(program, "Init")) {
+			try (Transaction tx = program.openTransaction("Init")) {
 				AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
 				entry = space.getAddress(0x00400000);
 				Address dataEntry = space.getAddress(0x00600000);
@@ -168,7 +168,7 @@ public class DebuggerEmuExampleScript extends GhidraScript {
 		 */
 		TraceTimeManager time = trace.getTimeManager();
 		TraceSnapshot snapshot = time.getSnapshot(0, true);
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Emulate")) {
+		try (Transaction tx = trace.openTransaction("Emulate")) {
 			for (int i = 0; i < 10; i++) {
 				println("Executing: " + thread.getCounter());
 				thread.stepInstruction();

@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.ArrayUtils;
 
+import db.Transaction;
 import ghidra.app.events.ProgramClosedPluginEvent;
 import ghidra.app.events.ProgramOpenedPluginEvent;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -53,7 +54,6 @@ import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.*;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.util.Msg;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -733,8 +733,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	@Override
 	public void addMapping(TraceLocation from, ProgramLocation to, long length,
 			boolean truncateExisting) throws TraceConflictedMappingException {
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(from.getTrace(), "Add mapping")) {
+		try (Transaction tx = from.getTrace().openTransaction("Add mapping")) {
 			DebuggerStaticMappingUtils.addMapping(from, to, length, truncateExisting);
 		}
 	}
@@ -742,8 +741,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	@Override
 	public void addMapping(MapEntry<?, ?> entry, boolean truncateExisting)
 			throws TraceConflictedMappingException {
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(entry.getFromTrace(), "Add mapping")) {
+		try (Transaction tx = entry.getFromTrace().openTransaction("Add mapping")) {
 			DebuggerStaticMappingUtils.addMapping(entry, truncateExisting);
 		}
 	}
@@ -755,7 +753,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 			entries.stream().collect(Collectors.groupingBy(ent -> ent.getFromTrace()));
 		for (Map.Entry<Trace, List<MapEntry<?, ?>>> ent : byTrace.entrySet()) {
 			Trace trace = ent.getKey();
-			try (UndoableTransaction tid = UndoableTransaction.start(trace, description)) {
+			try (Transaction tx = trace.openTransaction(description)) {
 				doAddMappings(trace, ent.getValue(), monitor, truncateExisting);
 			}
 		}
@@ -778,8 +776,7 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 	@Override
 	public void addIdentityMapping(Trace from, Program toProgram, Lifespan lifespan,
 			boolean truncateExisting) {
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(from, "Add identity mappings")) {
+		try (Transaction tx = from.openTransaction("Add identity mappings")) {
 			DebuggerStaticMappingUtils.addIdentityMapping(from, toProgram, lifespan,
 				truncateExisting);
 		}
@@ -798,8 +795,8 @@ public class DebuggerStaticMappingServicePlugin extends Plugin
 			}
 		}
 		for (Map.Entry<Program, List<ModuleMapEntry>> ent : entriesByProgram.entrySet()) {
-			try (UndoableTransaction tid =
-				UndoableTransaction.start(ent.getKey(), "Memorize module mapping")) {
+			try (Transaction tx =
+				ent.getKey().openTransaction("Memorize module mapping")) {
 				for (ModuleMapEntry entry : ent.getValue()) {
 					ProgramModuleIndexer.addModulePaths(entry.getToProgram(),
 						List.of(entry.getModule().getName()));

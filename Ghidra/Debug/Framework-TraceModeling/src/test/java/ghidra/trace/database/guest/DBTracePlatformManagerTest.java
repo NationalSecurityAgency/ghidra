@@ -23,11 +23,11 @@ import java.util.*;
 
 import org.junit.*;
 
+import db.Transaction;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.guest.TraceGuestPlatform;
 import ghidra.trace.model.guest.TracePlatform;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.task.ConsoleTaskMonitor;
 
 public class DBTracePlatformManagerTest extends AbstractGhidraHeadlessIntegrationTest {
@@ -54,7 +54,7 @@ public class DBTracePlatformManagerTest extends AbstractGhidraHeadlessIntegratio
 
 	@Test
 	public void testAddGuestPlatform() throws Throwable {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			assertEquals(0, manager.languageStore.getRecordCount());
 			assertEquals(0, manager.platformStore.getRecordCount());
 			manager.addGuestPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
@@ -65,7 +65,7 @@ public class DBTracePlatformManagerTest extends AbstractGhidraHeadlessIntegratio
 
 	@Test
 	public void testAddGuestPlatformHostCompilerErr() throws Throwable {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			manager.addGuestPlatform(b.getLanguage("Toy:BE:64:default").getDefaultCompilerSpec());
 			fail();
 		}
@@ -80,7 +80,7 @@ public class DBTracePlatformManagerTest extends AbstractGhidraHeadlessIntegratio
 
 	@Test
 	public void testAddGuestPlatformHostLanguage() throws Throwable {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			assertEquals(0, manager.languageStore.getRecordCount());
 			assertEquals(0, manager.platformStore.getRecordCount());
 			manager.addGuestPlatform(b.getCompiler("Toy:BE:64:default", "long8"));
@@ -92,7 +92,7 @@ public class DBTracePlatformManagerTest extends AbstractGhidraHeadlessIntegratio
 	@Test
 	public void testGetGuestPlatforms() throws Throwable {
 		DBTraceGuestPlatform guest;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			assertTrue(manager.getGuestPlatforms().isEmpty());
 			guest = manager.addGuestPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
 		}
@@ -102,7 +102,7 @@ public class DBTracePlatformManagerTest extends AbstractGhidraHeadlessIntegratio
 
 	@Test
 	public void testAddPlatformThenUndo() throws Throwable {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			manager.addGuestPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
 		}
 
@@ -113,7 +113,7 @@ public class DBTracePlatformManagerTest extends AbstractGhidraHeadlessIntegratio
 
 	@Test
 	public void testAddPlatformThenSaveAndLoad() throws Throwable {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			manager.addGuestPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
 		}
 
@@ -133,11 +133,11 @@ public class DBTracePlatformManagerTest extends AbstractGhidraHeadlessIntegratio
 	@Test
 	public void testDeleteGuestPlatform() throws Throwable {
 		DBTraceGuestPlatform guest;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			guest = manager.addGuestPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
 		}
 
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			guest.delete(new ConsoleTaskMonitor());
 		}
 
@@ -147,7 +147,7 @@ public class DBTracePlatformManagerTest extends AbstractGhidraHeadlessIntegratio
 
 	@Test
 	public void testAddMappedRange() throws Throwable {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			DBTraceGuestPlatform guest =
 				manager.addGuestPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
 
@@ -175,7 +175,7 @@ public class DBTracePlatformManagerTest extends AbstractGhidraHeadlessIntegratio
 
 	@Test
 	public void testGetHostAndGuestAddressSet() throws Throwable {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			DBTraceGuestPlatform guest =
 				manager.addGuestPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
 			assertEquals(b.set(), guest.getHostAddressSet());
@@ -188,7 +188,7 @@ public class DBTracePlatformManagerTest extends AbstractGhidraHeadlessIntegratio
 
 	@Test
 	public void testMapHostToGuest() throws Throwable {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			DBTraceGuestPlatform guest =
 				manager.addGuestPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
 			guest.addMappedRange(b.addr(0x01000000), b.addr(guest, 0x02000000), 0x1000);
@@ -204,7 +204,7 @@ public class DBTracePlatformManagerTest extends AbstractGhidraHeadlessIntegratio
 
 	@Test
 	public void testMapGuestToHost() throws Throwable {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			DBTraceGuestPlatform guest =
 				manager.addGuestPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
 			guest.addMappedRange(b.addr(0x01000000), b.addr(guest, 0x02000000), 0x1000);
@@ -220,7 +220,7 @@ public class DBTracePlatformManagerTest extends AbstractGhidraHeadlessIntegratio
 
 	@Test
 	public void testAddMappedRangeThenSaveAndLoad() throws Throwable {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			DBTraceGuestPlatform guest =
 				manager.addGuestPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
 			guest.addMappedRange(b.addr(0x01000000), b.addr(guest, 0x02000000), 0x1000);
@@ -237,7 +237,7 @@ public class DBTracePlatformManagerTest extends AbstractGhidraHeadlessIntegratio
 
 	@Test
 	public void testMappedRangeGetHostLanguage() throws Throwable {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			DBTraceGuestPlatform guest =
 				manager.addGuestPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
 			DBTraceGuestPlatformMappedRange range =
@@ -249,7 +249,7 @@ public class DBTracePlatformManagerTest extends AbstractGhidraHeadlessIntegratio
 
 	@Test
 	public void testMappedRangeGetHostRange() throws Throwable {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			DBTraceGuestPlatform guest =
 				manager.addGuestPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
 			DBTraceGuestPlatformMappedRange range =
@@ -260,7 +260,7 @@ public class DBTracePlatformManagerTest extends AbstractGhidraHeadlessIntegratio
 
 	@Test
 	public void testMappedRangeGetGuestPlatform() throws Throwable {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			DBTraceGuestPlatform guest =
 				manager.addGuestPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
 			DBTraceGuestPlatformMappedRange range =
@@ -271,7 +271,7 @@ public class DBTracePlatformManagerTest extends AbstractGhidraHeadlessIntegratio
 
 	@Test
 	public void testMappedRangeGetGuestRange() throws Throwable {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			DBTraceGuestPlatform guest =
 				manager.addGuestPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
 			DBTraceGuestPlatformMappedRange range =
@@ -282,7 +282,7 @@ public class DBTracePlatformManagerTest extends AbstractGhidraHeadlessIntegratio
 
 	@Test
 	public void testDeleteMappedRange() throws Throwable {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			DBTraceGuestPlatform guest =
 				manager.addGuestPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
 			DBTraceGuestPlatformMappedRange range =
@@ -305,14 +305,14 @@ public class DBTracePlatformManagerTest extends AbstractGhidraHeadlessIntegratio
 	public void testDeleteMappedRangeThenUndo() throws Throwable {
 		DBTraceGuestPlatform guest;
 		DBTraceGuestPlatformMappedRange range;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			guest = manager.addGuestPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
 			range = guest.addMappedRange(b.addr(0x01000000), b.addr(guest, 0x02000000), 0x1000);
 			assertNotNull(guest.mapHostToGuest(b.addr(0x01000800))); // Sanity check
 			assertNotNull(guest.mapGuestToHost(b.addr(guest, 0x02000800))); // Sanity check
 		}
 
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			range.delete(new ConsoleTaskMonitor());
 			assertNull(guest.mapHostToGuest(b.addr(0x01000800))); // Sanity check
 			assertNull(guest.mapGuestToHost(b.addr(guest, 0x02000800))); // Sanity check
@@ -330,12 +330,12 @@ public class DBTracePlatformManagerTest extends AbstractGhidraHeadlessIntegratio
 	public void testDeleteGuestPlatformDeletesMappedRanges() throws Throwable {
 		// TODO: Check that it also deletes code units
 		DBTraceGuestPlatform guest;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			guest = manager.addGuestPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
 			guest.addMappedRange(b.addr(0x01000000), b.addr(guest, 0x02000000), 0x1000);
 		}
 
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			guest.delete(new ConsoleTaskMonitor());
 			assertEquals(0, manager.rangeMappingStore.getRecordCount());
 		}
@@ -345,12 +345,12 @@ public class DBTracePlatformManagerTest extends AbstractGhidraHeadlessIntegratio
 	public void testDeleteGuestPlatformThenUndo() throws Throwable {
 		// TODO: Check that it also deletes code units
 		DBTraceGuestPlatform guest;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			guest = manager.addGuestPlatform(b.getCompiler("x86:LE:32:default", "gcc"));
 			guest.addMappedRange(b.addr(0x01000000), b.addr(guest, 0x02000000), 0x1000);
 		}
 
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			guest.delete(new ConsoleTaskMonitor());
 		}
 

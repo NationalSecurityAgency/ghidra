@@ -25,6 +25,7 @@ import java.util.*;
 
 import org.junit.Test;
 
+import db.Transaction;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import generic.Unique;
@@ -44,8 +45,8 @@ import ghidra.app.plugin.core.debug.stack.StackUnwinderTest.HoverLocation;
 import ghidra.app.plugin.core.decompile.DecompilerProvider;
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
 import ghidra.app.services.*;
-import ghidra.app.services.DebuggerEmulationService.EmulationResult;
 import ghidra.app.services.DebuggerControlService.StateEditor;
+import ghidra.app.services.DebuggerEmulationService.EmulationResult;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
 import ghidra.async.AsyncTestUtils;
 import ghidra.framework.model.DomainFolder;
@@ -70,7 +71,6 @@ import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.Scheduler;
 import ghidra.util.InvalidNameException;
 import ghidra.util.Msg;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.ConsoleTaskMonitor;
 import help.screenshot.GhidraScreenShotGenerator;
@@ -138,7 +138,7 @@ public class VariableValueHoverPluginScreenShots extends GhidraScreenShotGenerat
 	protected Function createFibonacciProgramX86_32() throws Throwable {
 		createProgram("x86:LE:32:default", "gcc");
 		intoProject(program);
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Assemble")) {
+		try (Transaction tx = program.openTransaction("Assemble")) {
 			Address entry = addr(program, 0x00400000);
 			program.getMemory()
 					.createInitializedBlock(".text", entry, 0x1000, (byte) 0, monitor, false);
@@ -244,7 +244,7 @@ public class VariableValueHoverPluginScreenShots extends GhidraScreenShotGenerat
 		traceManager.activateThread(thread);
 		waitForSwing();
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			MemoryBlock block = program.getMemory().getBlock(".text");
 			byte[] text = new byte[(int) block.getSize()];
 			block.getBytes(block.getStart(), text);
@@ -269,7 +269,7 @@ public class VariableValueHoverPluginScreenShots extends GhidraScreenShotGenerat
 		waitOn(frameAtSetup.setReturnAddress(editor, tb.addr(0xdeadbeef)));
 		waitForTasks();
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), retInstr,
 						Set.of(),
@@ -283,7 +283,7 @@ public class VariableValueHoverPluginScreenShots extends GhidraScreenShotGenerat
 		traceManager.activateTime(result.schedule());
 		waitForTasks();
 		DebuggerCoordinates tallest = traceManager.getCurrent();
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			new UnwindStackCommand(tool, tallest).applyTo(tb.trace, monitor);
 		}
 		waitForDomainObject(tb.trace);

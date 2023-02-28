@@ -19,6 +19,7 @@ import java.math.BigInteger;
 
 import org.junit.*;
 
+import db.Transaction;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
 import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.program.model.data.PointerDataType;
@@ -29,7 +30,6 @@ import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.util.database.UndoableTransaction;
 import help.screenshot.GhidraScreenShotGenerator;
 
 public class DebuggerRegistersPluginScreenShots extends GhidraScreenShotGenerator {
@@ -56,7 +56,7 @@ public class DebuggerRegistersPluginScreenShots extends GhidraScreenShotGenerato
 
 	@Test
 	public void testCaptureDebuggerRegistersPlugin() throws Throwable {
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			long snap0 = tb.trace.getTimeManager().createSnapshot("First").getKey();
 			long snap1 = tb.trace.getTimeManager().createSnapshot("Second").getKey();
 
@@ -106,7 +106,7 @@ public class DebuggerRegistersPluginScreenShots extends GhidraScreenShotGenerato
 
 	@Test
 	public void testCaptureDebuggerAvailableRegistersDialog() throws Throwable {
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			long snap0 = tb.trace.getTimeManager().createSnapshot("First").getKey();
 			TraceThread thread = tb.getOrAddThread("[1]", snap0);
 

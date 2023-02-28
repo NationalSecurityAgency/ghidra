@@ -33,6 +33,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import db.Transaction;
 import docking.action.DockingAction;
 import docking.widgets.fieldpanel.FieldPanel;
 import generic.Unique;
@@ -65,7 +66,6 @@ import ghidra.trace.model.*;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.util.SystemUtilities;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
@@ -109,7 +109,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 		programManager.openProgram(program);
 		waitForSwing();
 
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Create function")) {
+		try (Transaction tx = program.openTransaction("Create function")) {
 			entry = addr(program, 0x00400000);
 			program.getMemory()
 					.createInitializedBlock(".text", entry, 0x1000, (byte) 0,
@@ -133,8 +133,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 
 	protected void addStaticMemoryAndBreakpoint() throws LockException, DuplicateNameException,
 			MemoryConflictException, AddressOverflowException, CancelledException {
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(program, "Add bookmark break")) {
+		try (Transaction tx = program.openTransaction("Add bookmark break")) {
 			program.getMemory()
 					.createInitializedBlock(".text", addr(program, 0x00400000), 0x1000, (byte) 0,
 						TaskMonitor.DUMMY, false);
@@ -145,7 +144,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 	}
 
 	protected void addMapping(Trace trace) throws Exception {
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Add mapping")) {
+		try (Transaction tx = trace.openTransaction("Add mapping")) {
 			DebuggerStaticMappingUtils.addMapping(
 				new DefaultTraceLocation(trace, null, Lifespan.nowOn(0), addr(trace, 0x55550123)),
 				new ProgramLocation(program, addr(program, 0x00400123)), 0x1000, false);
@@ -449,7 +448,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 		}
 		waitForPass(() -> assertEquals(0, breakpointService.getAllBreakpoints().size()));
 
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Disassemble")) {
+		try (Transaction tx = program.openTransaction("Disassemble")) {
 			Disassembler.getDisassembler(program, TaskMonitor.DUMMY, msg -> {
 			}).disassemble(addr(program, 0x00400123), set(rng(program, 0x00400123, 0x00400123)));
 		}
@@ -478,7 +477,7 @@ public class DebuggerBreakpointMarkerPluginTest extends AbstractGhidraHeadedDebu
 		}
 		waitForPass(() -> assertEquals(0, breakpointService.getAllBreakpoints().size()));
 
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Disassemble")) {
+		try (Transaction tx = program.openTransaction("Disassemble")) {
 			program.getListing().createData(addr(program, 0x00400123), ByteDataType.dataType);
 		}
 		waitForDomainObject(program);

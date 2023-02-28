@@ -15,14 +15,14 @@
  */
 package ghidra.app.plugin.core.debug.gui.breakpoint;
 
-import static ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest.waitForPass;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest.*;
+import static org.junit.Assert.*;
 
 import java.util.Set;
 
 import org.junit.*;
 
+import db.Transaction;
 import generic.Unique;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest.TestDebuggerTargetTraceMapper;
 import ghidra.app.plugin.core.debug.service.breakpoint.DebuggerLogicalBreakpointServicePlugin;
@@ -44,7 +44,6 @@ import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.model.*;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.util.Msg;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.task.TaskMonitor;
 import help.screenshot.GhidraScreenShotGenerator;
 
@@ -127,19 +126,19 @@ public class DebuggerBreakpointsPluginScreenShots extends GhidraScreenShotGenera
 		mb.testProcess1.addRegion("echo:.data", mb.rng(0x00600000, 0x00600fff), "rw");
 		mb.testProcess3.addRegion("echo:.text", mb.rng(0x7fac0000, 0x7fac0fff), "rx");
 
-		try (UndoableTransaction tid = UndoableTransaction.start(trace1, "Add mapping")) {
+		try (Transaction tx = trace1.openTransaction("Add mapping")) {
 			DebuggerStaticMappingUtils.addMapping(
 				new DefaultTraceLocation(trace1, null, Lifespan.nowOn(0), addr(trace1, 0x00400000)),
 				new ProgramLocation(program, addr(program, 0x00400000)), 0x00210000, false);
 		}
-		try (UndoableTransaction tid = UndoableTransaction.start(trace3, "Add mapping")) {
+		try (Transaction tx = trace3.openTransaction("Add mapping")) {
 			DebuggerStaticMappingUtils.addMapping(
 				new DefaultTraceLocation(trace3, null, Lifespan.nowOn(0), addr(trace3, 0x7fac0000)),
 				new ProgramLocation(program, addr(program, 0x00400000)), 0x00010000, false);
 		}
 		waitForSwing();
 
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add breakpoint")) {
+		try (Transaction tx = program.openTransaction("Add breakpoint")) {
 			program.getBookmarkManager()
 					.setBookmark(addr(program, 0x00401234),
 						LogicalBreakpoint.BREAKPOINT_ENABLED_BOOKMARK_TYPE, "SW_EXECUTE;1",

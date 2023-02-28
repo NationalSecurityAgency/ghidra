@@ -17,11 +17,11 @@ package ghidra.app.plugin.core.debug.gui.time;
 
 import java.util.Date;
 
+import db.Transaction;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.DateUtils;
-import ghidra.util.database.UndoableTransaction;
 
 public class SnapshotRow {
 	//private static final DateFormat FORMAT = DateFormat.getDateTimeInstance();
@@ -60,8 +60,7 @@ public class SnapshotRow {
 	}
 
 	public void setDescription(String description) {
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(trace, "Modify snapshot description")) {
+		try (Transaction tx = trace.openTransaction("Modify snapshot description")) {
 			snapshot.setDescription(description);
 		}
 	}

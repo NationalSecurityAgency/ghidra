@@ -15,7 +15,7 @@
  */
 package ghidra.trace.database.program;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,6 +27,7 @@ import java.util.stream.StreamSupport;
 
 import org.junit.*;
 
+import db.Transaction;
 import ghidra.app.cmd.disassemble.*;
 import ghidra.app.plugin.assembler.*;
 import ghidra.program.database.ProgramBuilder;
@@ -47,7 +48,6 @@ import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceOverlappedRegionException;
 import ghidra.trace.util.LanguageTestWatcher;
 import ghidra.trace.util.LanguageTestWatcher.TestLanguage;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.*;
 import ghidra.util.task.ConsoleTaskMonitor;
 import ghidra.util.task.TaskMonitor;
@@ -62,7 +62,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 	@Before
 	public void setUp() throws IOException {
 		b = new ToyDBTraceBuilder("Testing", testLanguage.getLanguage());
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			b.trace.getTimeManager().createSnapshot("Initialize");
 		}
 		view = b.trace.getProgramView();
@@ -76,7 +76,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 	@Test
 	public void testSingleInstruction() throws IOException, CancelledException, VersionException,
 			DuplicateNameException, TraceOverlappedRegionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			DBTraceMemoryManager memoryManager = b.trace.getMemoryManager();
 			memoryManager.createRegion("Region", 0, b.range(0x4000, 0x4fff),
 				TraceMemoryFlag.EXECUTE, TraceMemoryFlag.READ);
@@ -107,7 +107,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 		Language x86 = getSLEIGH_X86_LANGUAGE();
 		Disassembler dis = Disassembler.getDisassembler(x86, x86.getAddressFactory(),
 			new ConsoleTaskMonitor(), msg -> System.out.println("Listener: " + msg));
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			DBTraceMemorySpace space =
 				b.trace.getMemoryManager().getMemorySpace(b.language.getDefaultSpace(), true);
 			space.putBytes(0, b.addr(0x4000), b.buf(0x90));
@@ -145,8 +145,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 	@Test
 	public void testThumbSampleProgramDB() throws Exception {
 		ProgramBuilder b = new ProgramBuilder(getName(), ProgramBuilder._ARM);
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(b.getProgram(), "Disassemble (THUMB)")) {
+		try (Transaction tx = b.getProgram().openTransaction("Disassemble (THUMB)")) {
 			MemoryBlock text = b.createMemory(".text", "b6fa2cd0", 32, "Sample", (byte) 0);
 			text.putBytes(b.addr(0xb6fa2cdc), new byte[] {
 				// GDB: stmdb sp!,  {r4,r5,r6,r7,r8,lr}
@@ -172,7 +171,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 	@Test
 	@TestLanguage(ProgramBuilder._ARM)
 	public void testThumbSampleDBTrace() throws Exception {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			DBTraceMemoryManager memory = b.trace.getMemoryManager();
 			memory.createRegion(".text", 0, b.range(0xb6fa2cd0, 0xb6fa2cef),
 				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
@@ -198,7 +197,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 	@Test
 	@TestLanguage("MIPS:BE:64:default")
 	public void testDelaySlotSampleDBTrace() throws Exception {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			DBTraceMemoryManager memory = b.trace.getMemoryManager();
 			memory.createRegion(".text", 0, b.range(0x120000000L, 0x120010000L),
 				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
@@ -224,7 +223,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 	@Test
 	@TestLanguage(ProgramBuilder._X64)
 	public void test64BitX86DBTrace() throws Exception {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			DBTraceMemoryManager memory = b.trace.getMemoryManager();
 			memory.createRegion(".text", 0, b.range(0x00400000, 0x00400fff));
 			memory.putBytes(0, b.addr(0x00400000), b.buf(
@@ -254,7 +253,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 	@Test
 	@TestLanguage(ProgramBuilder._X64)
 	public void test32BitX64CompatDBTrace() throws Exception {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			DBTraceMemoryManager memory = b.trace.getMemoryManager();
 			memory.createRegion(".text", 0, b.range(0x00400000, 0x00400fff));
 			memory.putBytes(0, b.addr(0x00400000), b.buf(
@@ -290,7 +289,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 	@Test
 	@TestLanguage(ProgramBuilder._X86)
 	public void test32BitX86DBTrace() throws Exception {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			DBTraceMemoryManager memory = b.trace.getMemoryManager();
 			memory.createRegion(".text", 0, b.range(0x00400000, 0x00400fff));
 			memory.putBytes(0, b.addr(0x00400000), b.buf(
@@ -320,7 +319,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 	}
 
 	protected void runTestCoalesceInstructions(List<Repetition> repetitions) throws Exception {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			DBTraceMemoryManager memory = b.trace.getMemoryManager();
 			DBTraceCodeManager code = b.trace.getCodeManager();
 
@@ -411,7 +410,7 @@ public class DBTraceDisassemblerIntegrationTest extends AbstractGhidraHeadlessIn
 
 	@Test
 	public void testNoCoalesceAcrossByteChanges() throws Exception {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			DBTraceMemoryManager memory = b.trace.getMemoryManager();
 			DBTraceCodeManager code = b.trace.getCodeManager();
 

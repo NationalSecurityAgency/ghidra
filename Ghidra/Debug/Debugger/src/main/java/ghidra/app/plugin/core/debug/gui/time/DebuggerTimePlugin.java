@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.debug.gui.time;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import db.Transaction;
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.widgets.dialogs.InputDialog;
@@ -37,7 +38,6 @@ import ghidra.trace.model.Trace;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.TraceTimeManager;
-import ghidra.util.database.UndoableTransaction;
 
 @PluginInfo(
 	shortDescription = "Lists recorded snapshots in a trace",
@@ -112,7 +112,7 @@ public class DebuggerTimePlugin extends AbstractDebuggerPlugin {
 		if (dialog.isCanceled()) {
 			return;
 		}
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Rename Snapshot")) {
+		try (Transaction tx = trace.openTransaction("Rename Snapshot")) {
 			if (snapshot == null) {
 				snapshot = manager.getSnapshot(snap, true);
 			}

@@ -37,6 +37,7 @@ import org.junit.rules.TestName;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 
+import db.Transaction;
 import docking.ActionContext;
 import docking.action.ActionContextProvider;
 import docking.action.DockingActionIf;
@@ -75,7 +76,6 @@ import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceAddressSpace;
 import ghidra.util.InvalidNameException;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.datastruct.ListenerMap;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.ConsoleTaskMonitor;
@@ -702,7 +702,7 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 	}
 
 	protected void addSnapshot(String desc) throws IOException {
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getTimeManager().createSnapshot(desc);
 		}
 	}
@@ -773,8 +773,7 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 		Language lang = getToyBE64Language();
 		program = new ProgramDB("static-" + name.getMethodName(), lang,
 			lang.getDefaultCompilerSpec(), this);
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(program, "Set Executable Path")) {
+		try (Transaction tx = program.openTransaction("Set Executable Path")) {
 			program.setExecutablePath(path);
 		}
 		programManager.openProgram(program);

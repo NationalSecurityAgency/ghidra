@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 
 import org.junit.*;
 
+import db.Transaction;
 import generic.Unique;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
@@ -53,7 +54,6 @@ import ghidra.trace.model.memory.*;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceRegisterUtils;
 import ghidra.util.Msg;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.task.TaskMonitor;
 
 public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
@@ -96,7 +96,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		createTrace();
 		r0 = tb.language.getRegister("r0");
 		r1 = tb.language.getRegister("r1");
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			thread = tb.getOrAddThread("Thread1", 0);
 		}
 	}
@@ -112,7 +112,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	}
 
 	private void setRegisterValues(TraceThread thread) {
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			TraceMemorySpace regVals =
 				tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, true);
 			regVals.setValue(0, new RegisterValue(r0, BigInteger.valueOf(0x00400000)));
@@ -595,7 +595,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	}
 
 	protected void setupUnmappedDataSection() throws Throwable {
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			TraceMemoryOperations mem = tb.trace.getMemoryManager();
 			mem.createRegion("Memory[bin:.data]", 0, tb.range(0x00600000, 0x0060ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
@@ -612,7 +612,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		intoProject(tb.trace);
 		intoProject(program);
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			TraceMemoryOperations mem = tb.trace.getMemoryManager();
 			mem.createRegion("Memory[bin:.data]", 0, tb.range(0x55750000, 0x5575ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
@@ -624,7 +624,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		programManager.openProgram(program);
 
 		AddressSpace stSpace = program.getAddressFactory().getDefaultAddressSpace();
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add block")) {
+		try (Transaction tx = program.openTransaction("Add block")) {
 			Memory mem = program.getMemory();
 			mem.createInitializedBlock(".data", tb.addr(stSpace, 0x00600000), 0x10000,
 				(byte) 0, TaskMonitor.DUMMY, false);
@@ -633,7 +633,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		DefaultTraceLocation tloc =
 			new DefaultTraceLocation(tb.trace, null, Lifespan.nowOn(0), tb.addr(0x55750000));
 		ProgramLocation ploc = new ProgramLocation(program, tb.addr(stSpace, 0x00600000));
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			mappingService.addMapping(tloc, ploc, 0x10000, false);
 		}
 		waitForValue(() -> mappingService.getOpenMappedLocation(tloc));
@@ -681,7 +681,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		structDt.add(DWordDataType.dataType, "field0", "");
 		structDt.add(DWordDataType.dataType, "field4", "");
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getCodeManager()
 					.definedData()
 					.create(Lifespan.nowOn(0), tb.addr(0x00600000), structDt);
@@ -705,7 +705,7 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		structDt.add(DWordDataType.dataType, "field0", "");
 		structDt.add(DWordDataType.dataType, "field4", "");
 
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add data")) {
+		try (Transaction tx = program.openTransaction("Add data")) {
 			program.getListing().createData(tb.addr(stSpace, 0x00600000), structDt);
 		}
 
@@ -746,11 +746,11 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		setupMappedDataSection();
 
 		Symbol symbol;
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add symbol")) {
+		try (Transaction tx = program.openTransaction("Add symbol")) {
 			symbol = program.getSymbolTable()
 					.createLabel(tb.addr(0x00601234), "my_symbol", SourceType.USER_DEFINED);
 		}
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			TraceMemorySpace regVals =
 				tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, true);
 			regVals.setValue(0, new RegisterValue(r0, BigInteger.valueOf(0x55751234)));

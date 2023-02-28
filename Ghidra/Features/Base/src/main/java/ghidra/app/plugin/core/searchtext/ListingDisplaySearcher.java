@@ -230,7 +230,7 @@ class ListingDisplaySearcher implements Searcher {
 				tool.setStatusInfo("Search failed: try search when tool is not " +
 					"executing commands that may change the program");
 			}
-			else if (!program.isClosed() && program.getCurrentTransaction() != null) {
+			else if (!program.isClosed() && program.getCurrentTransactionInfo() != null) {
 				tool.setStatusInfo("Search failed: try search when program is not being changed");
 			}
 			else if (!program.isClosed() && !(e instanceof DomainObjectException)) {

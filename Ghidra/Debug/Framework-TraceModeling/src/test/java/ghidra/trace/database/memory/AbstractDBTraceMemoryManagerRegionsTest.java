@@ -15,14 +15,14 @@
  */
 package ghidra.trace.database.memory;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.util.Set;
 
 import org.junit.*;
 
+import db.Transaction;
 import ghidra.program.model.lang.LanguageID;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
@@ -30,7 +30,6 @@ import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.util.LanguageTestWatcher;
-import ghidra.util.database.UndoableTransaction;
 
 public abstract class AbstractDBTraceMemoryManagerRegionsTest
 		extends AbstractGhidraHeadlessIntegrationTest {
@@ -46,7 +45,7 @@ public abstract class AbstractDBTraceMemoryManagerRegionsTest
 	@Before
 	public void setUp() throws IOException {
 		b = new ToyDBTraceBuilder("Testing", testLanguage.getLanguage());
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			b.trace.getTimeManager().createSnapshot("Initialize");
 		}
 		memory = b.trace.getMemoryManager();
@@ -59,7 +58,7 @@ public abstract class AbstractDBTraceMemoryManagerRegionsTest
 
 	@Test
 	public void testAddRegion() throws Exception {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			memory.addRegion("Regions[0x1000]", Lifespan.nowOn(0), b.range(0x1000, 0x1fff),
 				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
 		}
@@ -70,7 +69,7 @@ public abstract class AbstractDBTraceMemoryManagerRegionsTest
 		assertEquals(Set.of(), Set.copyOf(memory.getAllRegions()));
 
 		TraceMemoryRegion region;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			region = memory.addRegion("Regions[0x1000]", Lifespan.nowOn(0), b.range(0x1000, 0x1fff),
 				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
 		}
@@ -83,7 +82,7 @@ public abstract class AbstractDBTraceMemoryManagerRegionsTest
 		assertNull(memory.getLiveRegionByPath(0, "Regions[0x1000]"));
 
 		TraceMemoryRegion region;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			region = memory.addRegion("Regions[0x1000]", Lifespan.nowOn(0), b.range(0x1000, 0x1fff),
 				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
 		}
@@ -98,7 +97,7 @@ public abstract class AbstractDBTraceMemoryManagerRegionsTest
 		assertNull(memory.getRegionContaining(0, b.addr(0x1000)));
 
 		TraceMemoryRegion region;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			region = memory.addRegion("Regions[0x1000]", Lifespan.nowOn(0), b.range(0x1000, 0x1fff),
 				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
 		}
@@ -116,7 +115,7 @@ public abstract class AbstractDBTraceMemoryManagerRegionsTest
 			memory.getRegionsIntersecting(Lifespan.span(0, 10), b.range(0x1800, 0x27ff))));
 
 		TraceMemoryRegion region;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			region = memory.addRegion("Regions[0x1000]", Lifespan.nowOn(0), b.range(0x1000, 0x1fff),
 				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
 		}
@@ -134,7 +133,7 @@ public abstract class AbstractDBTraceMemoryManagerRegionsTest
 		assertEquals(Set.of(), Set.copyOf(memory.getRegionsAtSnap(0)));
 
 		TraceMemoryRegion region;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			region = memory.addRegion("Regions[0x1000]", Lifespan.nowOn(0), b.range(0x1000, 0x1fff),
 				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
 		}
@@ -147,7 +146,7 @@ public abstract class AbstractDBTraceMemoryManagerRegionsTest
 	public void testGetRegionsAddressSet() throws Exception {
 		assertEquals(b.set(), memory.getRegionsAddressSet(0));
 
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			memory.addRegion("Regions[0x1000]", Lifespan.nowOn(0), b.range(0x1000, 0x1fff),
 				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
 		}
@@ -160,7 +159,7 @@ public abstract class AbstractDBTraceMemoryManagerRegionsTest
 	public void testGetRegionsAddressSetWith() throws Exception {
 		assertEquals(b.set(), memory.getRegionsAddressSetWith(0, r -> true));
 
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			memory.addRegion("Regions[0x1000]", Lifespan.nowOn(0), b.range(0x1000, 0x1fff),
 				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
 		}

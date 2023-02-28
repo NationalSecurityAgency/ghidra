@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.debug.gui.thread;
 import org.junit.Before;
 import org.junit.Test;
 
+import db.Transaction;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest.TestDebuggerTargetTraceMapper;
 import ghidra.app.plugin.core.debug.service.model.DebuggerModelServiceProxyPlugin;
@@ -26,7 +27,6 @@ import ghidra.app.services.*;
 import ghidra.dbg.model.*;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.util.database.UndoableTransaction;
 import help.screenshot.GhidraScreenShotGenerator;
 
 public class DebuggerThreadsPluginScreenShots extends GhidraScreenShotGenerator {
@@ -72,7 +72,7 @@ public class DebuggerThreadsPluginScreenShots extends GhidraScreenShotGenerator 
 		waitForValue(() -> recorder.getTraceThread(handler2Thread));
 		AbstractGhidraHeadedDebuggerGUITest.waitForDomainObject(trace);
 
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Comments")) {
+		try (Transaction tx = trace.openTransaction("Comments")) {
 			recorder.getTraceThread(mainThread).setComment("GUI main loop");
 			recorder.getTraceThread(serverThread).setComment("Server");
 			recorder.getTraceThread(handler1Thread).setComment("Handler 1");

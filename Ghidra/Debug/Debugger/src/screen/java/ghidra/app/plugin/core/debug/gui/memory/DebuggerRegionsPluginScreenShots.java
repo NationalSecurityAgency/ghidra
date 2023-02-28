@@ -19,6 +19,7 @@ import java.util.Set;
 
 import org.junit.*;
 
+import db.Transaction;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
 import ghidra.app.services.DebuggerTraceManagerService;
@@ -32,7 +33,6 @@ import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.TraceMemoryFlag;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.task.TaskMonitor;
 import help.screenshot.GhidraScreenShotGenerator;
 
@@ -74,7 +74,7 @@ public class DebuggerRegionsPluginScreenShots extends GhidraScreenShotGenerator 
 	}
 
 	private void populateTrace() throws Exception {
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 
 			long snap = tb.trace.getTimeManager().createSnapshot("First").getKey();
 
@@ -102,7 +102,7 @@ public class DebuggerRegionsPluginScreenShots extends GhidraScreenShotGenerator 
 		progBash = createDefaultProgram("bash", ProgramBuilder._X64, this);
 		progLibC = createDefaultProgram("libc.so.6", ProgramBuilder._X64, this);
 
-		try (UndoableTransaction tid = UndoableTransaction.start(progBash, "Add memory")) {
+		try (Transaction tx = progBash.openTransaction("Add memory")) {
 			progBash.setImageBase(addr(progBash, 0x00400000), true);
 			progBash.getMemory()
 					.createInitializedBlock(".text", addr(progBash, 0x00400000), 0x10000, (byte) 0,
@@ -112,7 +112,7 @@ public class DebuggerRegionsPluginScreenShots extends GhidraScreenShotGenerator 
 						TaskMonitor.DUMMY, false);
 		}
 
-		try (UndoableTransaction tid = UndoableTransaction.start(progLibC, "Add memory")) {
+		try (Transaction tx = progLibC.openTransaction("Add memory")) {
 			progLibC.setImageBase(addr(progLibC, 0x00400000), true);
 			progLibC.getMemory()
 					.createInitializedBlock(".text", addr(progLibC, 0x00400000), 0x10000, (byte) 0,
