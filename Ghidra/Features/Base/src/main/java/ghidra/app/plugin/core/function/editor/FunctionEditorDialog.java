@@ -681,6 +681,9 @@ public class FunctionEditorDialog extends DialogComponentProvider implements Mod
 			public void focusLost(FocusEvent e) {
 				Component component = e.getComponent();
 				Component opposite = e.getOppositeComponent();
+				if (opposite == null) {
+					return; // this implies a non-Java app has taken focus
+				}
 				if (!SwingUtilities.isDescendingFrom(opposite, component)) {
 					component.removeFocusListener(this);
 					if (cellEditor != null) {
