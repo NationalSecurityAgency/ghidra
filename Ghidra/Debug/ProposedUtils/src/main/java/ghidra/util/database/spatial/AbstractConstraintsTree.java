@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import db.DBRecord;
 import generic.NestedIterator;
@@ -557,17 +558,17 @@ public abstract class AbstractConstraintsTree< //
 		node.setDataCount(node.getDataCount() - 1);
 	}
 
+	protected NS unionStream(Stream<NS> shapes) {
+		return shapes.reduce(BoundingShape::unionBounds).orElse(null);
+	}
+
 	protected void doRecomputeBounds(NR node) {
 		/*
 		 * TODO: There may be optimizations here, esp. if no bound of the removed node is on the
 		 * edge of the parent. Furthermore, since an implementation may index on those bounds, there
 		 * may be a fast way to discover the "next child in".
 		 */
-		NS bounds = getChildrenOf(node).stream()
-				.map(DBTreeRecord::getBounds)
-				.reduce(BoundingShape::unionBounds)
-				.orElse(null);
-		node.setShape(bounds);
+		node.setShape(unionStream(getChildrenOf(node).stream().map(DBTreeRecord::getBounds)));
 	}
 
 	protected <R> void doRemoveFromCachedChildren(long parentKey, R child,
@@ -765,10 +766,7 @@ public abstract class AbstractConstraintsTree< //
 	 */
 	protected void checkNodeIntegrity(NR n) {
 		// Check parent has exactly the minimum bounds of its children
-		NS expectedBounds = getChildrenOf(n).stream()
-				.map(DBTreeRecord::getBounds)
-				.reduce(BoundingShape::unionBounds)
-				.orElse(null);
+		NS expectedBounds = unionStream(getChildrenOf(n).stream().map(DBTreeRecord::getBounds));
 		if (expectedBounds == null && n != root) {
 			throw new AssertionError("Non-root node cannot be empty");
 		}
