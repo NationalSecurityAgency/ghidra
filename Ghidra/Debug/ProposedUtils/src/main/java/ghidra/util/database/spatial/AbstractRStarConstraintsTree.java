@@ -280,18 +280,12 @@ public abstract class AbstractRStarConstraintsTree< //
 		n2.setType(n.getType());
 
 		// Update existing node's metadata
-		n1.setShape(firstGroup.stream()
-				.map(DBTreeRecord::getBounds)
-				.reduce(BoundingShape::unionBounds)
-				.orElse(null));
+		n1.setShape(unionStream(firstGroup.stream().map(DBTreeRecord::getBounds)));
 		n1.setChildCount(index);
 		n1.setDataCount(firstGroup.stream().mapToInt(DBTreeRecord::getDataCount).sum());
 
 		// Set new node's metadata
-		n2.setShape(secondGroup.stream()
-				.map(DBTreeRecord::getBounds)
-				.reduce(BoundingShape::unionBounds)
-				.orElse(null));
+		n2.setShape(unionStream(secondGroup.stream().map(DBTreeRecord::getBounds)));
 		n2.setChildCount(maxChildren + 1 - index);
 		n2.setDataCount(secondGroup.stream().mapToInt(DBTreeRecord::getDataCount).sum());
 
@@ -329,17 +323,12 @@ public abstract class AbstractRStarConstraintsTree< //
 			// ************X (M = 12)
 			// mmm-------mmm (m = 3)
 			// 8 distributions : 12 - 2*3 + 2
-			NS boundsFirstKChildren = children.subList(0, minChildren)
-					.stream()
-					.map(DBTreeRecord::getBounds)
-					.reduce(BoundingShape::unionBounds)
-					.orElse(null);
+			NS boundsFirstKChildren =
+				unionStream(children.subList(0, minChildren).stream().map(DBTreeRecord::getBounds));
 			NS boundsLastKChildren =
-				children.subList(maxChildren + 1 - minChildren, maxChildren + 1)
+				unionStream(children.subList(maxChildren + 1 - minChildren, maxChildren + 1)
 						.stream()
-						.map(DBTreeRecord::getBounds)
-						.reduce(BoundingShape::unionBounds)
-						.orElse(null);
+						.map(DBTreeRecord::getBounds));
 			int maxK = maxChildren + 1 - minChildren * 2;
 
 			double marginValue = 0;
@@ -376,16 +365,12 @@ public abstract class AbstractRStarConstraintsTree< //
 		// mmm-------mmm (m = 3)
 		// 8 distributions : 12 - 2*3 + 2
 
-		NS boundsFirstKChildren = children.subList(0, minChildren)
-				.stream()
-				.map(DBTreeRecord::getBounds)
-				.reduce(BoundingShape::unionBounds)
-				.orElse(null);
-		NS boundsLastKChildren = children.subList(maxChildren + 1 - minChildren, maxChildren + 1)
-				.stream()
-				.map(DBTreeRecord::getBounds)
-				.reduce(BoundingShape::unionBounds)
-				.orElse(null);
+		NS boundsFirstKChildren =
+			unionStream(children.subList(0, minChildren).stream().map(DBTreeRecord::getBounds));
+		NS boundsLastKChildren =
+			unionStream(children.subList(maxChildren + 1 - minChildren, maxChildren + 1)
+					.stream()
+					.map(DBTreeRecord::getBounds));
 		int maxK = maxChildren + 1 - minChildren * 2;
 
 		Deque<NS> boundsFirsts = new ArrayDeque<>();
@@ -580,10 +565,7 @@ public abstract class AbstractRStarConstraintsTree< //
 			p.setDataCount(newDataCount);
 
 			// I can't think of a better way to re-compute the bounds in the path
-			p.setShape(getChildrenOf(p).stream()
-					.map(DBTreeRecord::getBounds)
-					.reduce(BoundingShape::unionBounds)
-					.orElse(null));
+			p.setShape(unionStream(getChildrenOf(p).stream().map(DBTreeRecord::getBounds)));
 			p = getParentOf(p);
 		}
 
