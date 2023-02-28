@@ -263,6 +263,20 @@ public class FileHeader implements StructConverter {
 	}
 
 	/**
+	 * Get the first section header defined with the specified name
+	 * @param name section name
+	 * @return first section header defined with the specified name or null if not found
+	 */
+	public SectionHeader getSectionHeader(String name) {
+		for (SectionHeader element : sectionHeaders) {
+			if (element.getName().equals(name)) {
+				return element;
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * Returns the time stamp of the image.
 	 * @return the time stamp of the image
 	 */
