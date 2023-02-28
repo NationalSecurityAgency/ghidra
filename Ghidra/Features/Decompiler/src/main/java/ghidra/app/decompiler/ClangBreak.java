@@ -17,6 +17,9 @@ package ghidra.app.decompiler;
 
 import ghidra.program.model.pcode.*;
 
+/**
+ * A line break in source code plus the indenting for the following line.
+ */
 public class ClangBreak extends ClangToken {
 
 	private int indent;		// Number of characters of indent
@@ -31,6 +34,9 @@ public class ClangBreak extends ClangToken {
 		this.indent = indent;
 	}
 
+	/**
+	 * @return the number of indent levels following this line break
+	 */
 	public int getIndent() {
 		return indent;
 	}

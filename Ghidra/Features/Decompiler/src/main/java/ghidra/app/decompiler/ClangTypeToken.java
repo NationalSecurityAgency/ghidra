@@ -13,22 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- * Created on Jun 12, 2003
- *
- * To change the template for this generated file go to
- * Window>Preferences>Java>Code Generation>Code and Comments
- */
 package ghidra.app.decompiler;
 
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.pcode.*;
 
 /**
- * 
- *
- * A C code token representing a data type. This does not include qualifiers on the type
- * like '*' (pointer to) or '[]' (array of). There should be no whitespace in the name
+ * A source code token representing a data-type. This does not include qualifiers on the data-type
+ * like '*' (pointer to) or '[]' (array of). There should be no whitespace in the name.
  */
 public class ClangTypeToken extends ClangToken {
 	private DataType datatype;
@@ -46,6 +38,9 @@ public class ClangTypeToken extends ClangToken {
 		return false;
 	}
 
+	/**
+	 * @return the data-type associated with this token
+	 */
 	public DataType getDataType() {
 		return datatype;
 	}

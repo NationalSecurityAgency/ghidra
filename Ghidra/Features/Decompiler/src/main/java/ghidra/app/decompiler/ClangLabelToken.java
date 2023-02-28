@@ -19,8 +19,11 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.pcode.*;
 
+/**
+ * A source code token representing a control-flow label.
+ */
 public class ClangLabelToken extends ClangToken {
-	private Address blockaddr;	// Address this is labelling
+	private Address blockaddr;	// Address this is labeling
 
 	public ClangLabelToken(ClangNode par) {
 		super(par);

@@ -19,10 +19,8 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.pcode.*;
 
 /**
- * 
- *
- * A C code token representing a function name
- * It contains a link back to the pcode function object represented by the name
+ * A source code token representing a function name.
+ * It contains a link back to the p-code function object represented by the name
  */
 public class ClangFuncNameToken extends ClangToken {
 	private HighFunction hfunc;	// Overall reference to function
@@ -34,6 +32,9 @@ public class ClangFuncNameToken extends ClangToken {
 		op = null;
 	}
 
+	/**
+	 * @return the HighFunction object associated with this name
+	 */
 	public HighFunction getHighFunction() {
 		return hfunc;
 	}

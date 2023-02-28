@@ -13,21 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- * Created on Jun 12, 2003
- *
- * To change the template for this generated file go to
- * Window>Preferences>Java>Code Generation>Code and Comments
- */
 package ghidra.app.decompiler;
 
 import ghidra.program.model.pcode.*;
 
 /**
- * 
- *
- * A C code statement. What typically appears between the ';' '{' and '}' characters.
- * A statement must have a pcode operation associated with it. In the case of conditional
+ * A source code statement (as typically terminated by ';' in C)
+ * A statement must have a p-code operation associated with it. In the case of conditional
  * flow control operations, there are usually two lines associated with the statement one
  * containing the '{' and one containing '}'. The one containing the actual conditional branch
  * is considered a C statement, while the other one is just considered a blank line.
@@ -43,6 +35,9 @@ public class ClangStatement extends ClangTokenGroup {
 		op = null;
 	}
 
+	/**
+	 * @return the (final) p-code operation associated with the statement.
+	 */
 	public PcodeOp getPcodeOp() {
 		return op;
 	}
