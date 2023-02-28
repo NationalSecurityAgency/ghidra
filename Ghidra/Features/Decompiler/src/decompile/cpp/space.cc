@@ -126,6 +126,30 @@ void AddrSpace::truncateSpace(uint4 newsize)
   calcScaleMask();
 }
 
+/// \brief Determine if a given point is contained in an address range in \b this address space
+///
+/// The point is specified as an address space and offset pair plus an additional number of bytes to "skip".
+/// A non-negative value is returned if the point falls in the address range.
+/// If the point falls on the first byte of the range, 0 is returned. For the second byte, 1 is returned, etc.
+/// Otherwise -1 is returned.
+/// \param offset is the starting offset of the address range within \b this space
+/// \param size is the size of the address range in bytes
+/// \param pointSpace is the address space of the given point
+/// \param pointOff is the offset of the given point
+/// \param pointSkip is the additional bytes to skip
+/// \return a non-negative value indicating where the point falls in the range, or -1
+int4 AddrSpace::overlapJoin(uintb offset,int4 size,AddrSpace *pointSpace,uintb pointOff,int4 pointSkip) const
+
+{
+  if (this != pointSpace)
+    return -1;
+
+  uintb dist = wrapOffset(pointOff+pointSkip-offset);
+
+  if (dist >= size) return -1; // but must fall before op+size
+  return (int4) dist;
+}
+
 /// Write the main attributes for an address within \b this space.
 /// The caller provides only the \e offset, and this routine fills
 /// in other details pertaining to this particular space.
@@ -363,6 +387,12 @@ ConstantSpace::ConstantSpace(AddrSpaceManager *m,const Translate *t)
     setFlags(big_endian);
 }
 
+int4 ConstantSpace::overlapJoin(uintb offset,int4 size,AddrSpace *pointSpace,uintb pointOff,int4 pointSkip) const
+
+{
+  return -1;
+}
+
 /// Constants are always printed as hexidecimal values in
 /// the debugger and console dumps
 void ConstantSpace::printRaw(ostream &s,uintb offset) const
@@ -471,21 +501,22 @@ JoinSpace::JoinSpace(AddrSpaceManager *m,const Translate *t,int4 ind)
   clearFlags(heritaged); // This space is never heritaged, but does dead-code analysis
 }
 
-/// \brief Calculate where a given address falls inside a range in the \e join space
-///
-/// The given address, specified as an (AddrSpace, offset) pair is assumed to not be in the \e join space,
-/// but is assumed to be in one of the pieces of the join.  A final non-negative offset is returned if the
-/// address falls in one of the pieces. The offset is in data order, i.e. the offset is 0 if the given Address
-/// matches the address of the first element in an array overlaid on the \e join range.
-/// -1 is returned if the given Address does not lie in any piece.
-/// \param offset is the offset into the \e join space, specifying the range
-/// \param size is the size of the range, which may be smaller than the size of the JoinRecord
-/// \param pieceSpace is the AddrSpace of the given address
-/// \param pieceOffset is the offset of the given address
-/// \return a non-negative offset indicating where in the range the Address lies, or -1
-int4 JoinSpace::pieceOverlap(uintb offset,int4 size,AddrSpace *pieceSpace,uintb pieceOffset) const
+int4 JoinSpace::overlapJoin(uintb offset,int4 size,AddrSpace *pointSpace,uintb pointOffset,int4 pointSkip) const
 
 {
+  if (this == pointSpace) {
+    // If the point is in the join space, translate the point into the piece address space
+    JoinRecord *pieceRecord = getManager()->findJoin(pointOffset);
+    int4 pos;
+    Address addr = pieceRecord->getEquivalentAddress(pointOffset + pointSkip, pos);
+    pointSpace = addr.getSpace();
+    pointOffset = addr.getOffset();
+  }
+  else {
+    if (pointSpace->getType() == IPTR_CONSTANT)
+      return -1;
+    pointOffset = pointSpace->wrapOffset(pointOffset + pointSkip);
+  }
   JoinRecord *joinRecord = getManager()->findJoin(offset);
   // Set up so we traverse pieces in data order
   int4 startPiece,endPiece,dir;
@@ -502,8 +533,8 @@ int4 JoinSpace::pieceOverlap(uintb offset,int4 size,AddrSpace *pieceSpace,uintb 
   int4 bytesAccum = 0;
   for(int4 i=startPiece;i!=endPiece;i += dir) {
     const VarnodeData &vData(joinRecord->getPiece(i));
-    if (vData.space == pieceSpace && pieceOffset >= vData.offset && pieceOffset <= vData.offset + (vData.size-1)) {
-      int4 res = (int4)(pieceOffset - vData.offset) + bytesAccum;
+    if (vData.space == pointSpace && pointOffset >= vData.offset && pointOffset <= vData.offset + (vData.size-1)) {
+      int4 res = (int4)(pointOffset - vData.offset) + bytesAccum;
       if (res >= size)
 	return -1;
       return res;

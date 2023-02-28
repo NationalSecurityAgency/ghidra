@@ -3946,6 +3946,9 @@ int4 ActionDeadCode::apply(Funcdata &data)
   return 0;
 }
 
+/// \brief Clear all marks on the given list of PcodeOps
+///
+/// \param opList is the given list
 void ActionConditionalConst::clearMarks(const vector<PcodeOp *> &opList)
 
 {
