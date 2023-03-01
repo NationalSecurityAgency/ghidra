@@ -89,7 +89,7 @@ public class PairedTransactionTest extends AbstractGuiTest {
 	class MyListener implements TransactionListener {
 
 		private List<String> events = new ArrayList<>();
-		private Transaction lastTransaction;
+		private TransactionInfo lastTransaction;
 		private DomainObjectAdapterDB obj;
 
 		MyListener(DomainObjectAdapterDB obj) {
@@ -105,7 +105,7 @@ public class PairedTransactionTest extends AbstractGuiTest {
 
 		@Override
 		public synchronized void transactionStarted(DomainObjectAdapterDB domainObj,
-				Transaction tx) {
+				TransactionInfo tx) {
 			assertEquals(obj, domainObj);
 			events.add(START);
 			lastTransaction = tx;
@@ -139,7 +139,7 @@ public class PairedTransactionTest extends AbstractGuiTest {
 			}
 		}
 
-		Transaction getLastTransaction() {
+		TransactionInfo getLastTransaction() {
 			waitForPostedSwingRunnables();
 			synchronized (this) {
 				return lastTransaction;
@@ -151,8 +151,8 @@ public class PairedTransactionTest extends AbstractGuiTest {
 	@Test
 	public void testAddSynchronizedDomainObject() throws IOException {
 
-		assertNull(obj1.getCurrentTransaction());
-		assertNull(obj2.getCurrentTransaction());
+		assertNull(obj1.getCurrentTransactionInfo());
+		assertNull(obj2.getCurrentTransactionInfo());
 
 		assertEquals(1, obj1.getUndoStackDepth());
 		assertEquals(1, obj2.getUndoStackDepth());
@@ -162,7 +162,7 @@ public class PairedTransactionTest extends AbstractGuiTest {
 		assertFalse(obj1.canRedo());
 		assertFalse(obj2.canRedo());
 
-		Transaction tx = obj1Listener.getLastTransaction();
+		TransactionInfo tx = obj1Listener.getLastTransaction();
 		obj1Listener.getEvents();
 		assertNotNull(tx);
 
@@ -208,7 +208,7 @@ public class PairedTransactionTest extends AbstractGuiTest {
 		int txId1 = obj1.startTransaction("Test1");
 		try {
 
-			assertNotNull(obj2.getCurrentTransaction());
+			assertNotNull(obj2.getCurrentTransactionInfo());
 
 			propertyList1.setString("A1.B1", "TestB1");
 
@@ -247,7 +247,7 @@ public class PairedTransactionTest extends AbstractGuiTest {
 		assertEquals("NULL", propertyList1.getString("A1.B1", "NULL"));
 		assertEquals("NULL", propertyList2.getString("A2.B2", "NULL"));
 
-		assertNull(obj1.getCurrentTransaction());
+		assertNull(obj1.getCurrentTransactionInfo());
 
 		assertEquals(0, obj1.getUndoStackDepth());
 		assertEquals(0, obj2.getUndoStackDepth());
@@ -267,7 +267,7 @@ public class PairedTransactionTest extends AbstractGuiTest {
 		txId1 = obj1.startTransaction("Test1");
 		try {
 
-			assertNotNull(obj2.getCurrentTransaction());
+			assertNotNull(obj2.getCurrentTransactionInfo());
 
 			propertyList1.setString("A1.B1", "TestB1");
 
@@ -305,7 +305,7 @@ public class PairedTransactionTest extends AbstractGuiTest {
 		assertEquals("TestB1", propertyList1.getString("A1.B1", "NULL"));
 		assertEquals("TestB2", propertyList2.getString("A2.B2", "NULL"));
 
-		assertNull(obj1.getCurrentTransaction());
+		assertNull(obj1.getCurrentTransactionInfo());
 
 		assertEquals(1, obj1.getUndoStackDepth());
 		assertEquals(1, obj2.getUndoStackDepth());
@@ -389,7 +389,7 @@ public class PairedTransactionTest extends AbstractGuiTest {
 		txId1 = obj1.startTransaction("Test1");
 		try {
 
-			assertNull(obj2.getCurrentTransaction());
+			assertNull(obj2.getCurrentTransactionInfo());
 
 			propertyList1.setString("A1.C1", "TestC1");
 
@@ -427,7 +427,7 @@ public class PairedTransactionTest extends AbstractGuiTest {
 		assertEquals("NULL", propertyList1.getString("A1.C1", "NULL"));
 		assertEquals("TestC2", propertyList2.getString("A2.C2", "NULL"));
 
-		assertNull(obj1.getCurrentTransaction());
+		assertNull(obj1.getCurrentTransactionInfo());
 
 		assertEquals(0, obj1.getUndoStackDepth());
 		assertEquals(1, obj2.getUndoStackDepth());

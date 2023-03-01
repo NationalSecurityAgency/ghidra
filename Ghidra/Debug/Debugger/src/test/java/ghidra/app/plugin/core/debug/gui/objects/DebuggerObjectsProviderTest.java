@@ -18,10 +18,10 @@ package ghidra.app.plugin.core.debug.gui.objects;
 import org.junit.Before;
 import org.junit.Test;
 
+import db.Transaction;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.services.CodeViewerService;
 import ghidra.app.services.DebuggerStaticMappingService;
-import ghidra.util.database.UndoableTransaction;
 
 public class DebuggerObjectsProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
 	protected DebuggerObjectsPlugin objectsPlugin;
@@ -43,7 +43,7 @@ public class DebuggerObjectsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	public void testBasic() throws Exception {
 		createAndOpenTrace();
 		traceManager.activateTrace(tb.trace);
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			//objectsProvider.importFromXMLAction.run();
 		}
 		waitForDomainObject(tb.trace);

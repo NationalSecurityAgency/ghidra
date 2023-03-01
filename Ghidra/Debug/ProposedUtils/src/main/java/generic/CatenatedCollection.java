@@ -17,8 +17,7 @@ package generic;
 
 import java.util.Collection;
 import java.util.Iterator;
-
-import com.google.common.collect.Iterators;
+import java.util.stream.Stream;
 
 public class CatenatedCollection<E> extends AbstractUnionedCollection<E> {
 
@@ -33,18 +32,7 @@ public class CatenatedCollection<E> extends AbstractUnionedCollection<E> {
 
 	@Override
 	public Iterator<E> iterator() {
-		return Iterators.concat(new Iterator<Iterator<? extends E>>() {
-			Iterator<? extends Collection<? extends E>> it = collections.iterator();
-
-			@Override
-			public boolean hasNext() {
-				return it.hasNext();
-			}
-
-			@Override
-			public Iterator<? extends E> next() {
-				return it.next().iterator();
-			}
-		});
+		Stream<E> flat = collections.stream().flatMap(Collection::stream);
+		return flat.iterator();
 	}
 }

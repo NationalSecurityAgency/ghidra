@@ -17,9 +17,7 @@ package ghidra.trace.database.program;
 
 import java.util.*;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.RemovalNotification;
-import com.google.common.collect.Iterators;
+import org.apache.commons.collections4.IteratorUtils;
 
 import ghidra.program.model.address.*;
 import ghidra.program.model.symbol.Equate;
@@ -30,6 +28,7 @@ import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.listing.TraceCodeUnit;
 import ghidra.util.IntersectionAddressSetView;
 import ghidra.util.LockHold;
+import ghidra.util.datastruct.WeakValueHashMap;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
@@ -37,16 +36,11 @@ public class DBTraceProgramViewEquateTable implements EquateTable {
 	protected final DBTraceProgramView program;
 	protected final DBTraceEquateManager equateManager;
 
-	protected final Map<DBTraceEquate, DBTraceProgramViewEquate> cache =
-		CacheBuilder.newBuilder().removalListener(this::equateRemoved).weakValues().build().asMap();
+	protected final Map<DBTraceEquate, DBTraceProgramViewEquate> cache = new WeakValueHashMap<>();
 
 	public DBTraceProgramViewEquateTable(DBTraceProgramView program) {
 		this.program = program;
 		this.equateManager = program.trace.getEquateManager();
-	}
-
-	private void equateRemoved(RemovalNotification<DBTraceEquate, DBTraceProgramViewEquate> rn) {
-		// Nothing
 	}
 
 	@Override
@@ -77,7 +71,8 @@ public class DBTraceProgramViewEquateTable implements EquateTable {
 	@Override
 	public void deleteAddressRange(Address start, Address end, TaskMonitor monitor)
 			throws CancelledException {
-		equateManager.clearReferences(Lifespan.nowOn(program.snap), new AddressRangeImpl(start, end),
+		equateManager.clearReferences(Lifespan.nowOn(program.snap),
+			new AddressRangeImpl(start, end),
 			monitor);
 	}
 
@@ -161,7 +156,8 @@ public class DBTraceProgramViewEquateTable implements EquateTable {
 
 	@Override
 	public Iterator<Equate> getEquates() {
-		return Iterators.transform(equateManager.getAll().iterator(), e -> doGetViewEquate(e));
+		return IteratorUtils.transformedIterator(equateManager.getAll().iterator(),
+			e -> doGetViewEquate(e));
 	}
 
 	@Override

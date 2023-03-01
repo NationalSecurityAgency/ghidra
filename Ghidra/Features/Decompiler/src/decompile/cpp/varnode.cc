@@ -171,7 +171,7 @@ int4 Varnode::characterizeOverlap(const Varnode &op) const
 /// I.e. return
 ///     - 0 if it overlaps op's lsb
 ///     - 1 if it overlaps op's second lsb  and so on
-/// \param op is Varnode to test for overlap
+/// \param op is the Varnode to test for overlap
 /// \return the relative overlap point or -1
 int4 Varnode::overlap(const Varnode &op) const
 
@@ -180,6 +180,25 @@ int4 Varnode::overlap(const Varnode &op) const
     return loc.overlap(0,op.loc,op.size);
   else {			// Big endian
     int4 over = loc.overlap(size-1,op.loc,op.size);
+    if (over != -1)
+      return op.size-1-over;
+  }
+  return -1;
+}
+
+/// Return whether \e Least \e Signifigant \e Byte of \b this occurs in \b op.
+/// If \b op is in the \e join space, \b this can be in one of the pieces associated with the \e join range, and
+/// the offset returned will take into account the relative position of the piece within the whole \e join.
+/// Otherwise, this method is equivalent to Varnode::overlap.
+/// \param op is the Varnode to test for overlap
+/// \return the relative overlap point or -1
+int4 Varnode::overlapJoin(const Varnode &op) const
+
+{
+  if (!loc.isBigEndian())	// Little endian
+    return loc.overlapJoin(0,op.loc,op.size);
+  else {			// Big endian
+    int4 over = loc.overlapJoin(size-1,op.loc,op.size);
     if (over != -1)
       return op.size-1-over;
   }

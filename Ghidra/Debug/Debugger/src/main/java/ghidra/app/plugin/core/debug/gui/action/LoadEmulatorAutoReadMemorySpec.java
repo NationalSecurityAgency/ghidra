@@ -20,6 +20,7 @@ import java.util.concurrent.CompletableFuture;
 
 import javax.swing.Icon;
 
+import db.Transaction;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AutoReadMemoryAction;
 import ghidra.app.plugin.core.debug.service.emulation.ProgramEmulationUtils;
@@ -34,7 +35,6 @@ import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.TraceMemoryManager;
 import ghidra.trace.model.memory.TraceMemoryState;
-import ghidra.util.database.UndoableTransaction;
 
 public class LoadEmulatorAutoReadMemorySpec implements AutoReadMemorySpec {
 	public static final String CONFIG_NAME = "LOAD_EMULATOR";
@@ -85,7 +85,7 @@ public class LoadEmulatorAutoReadMemorySpec implements AutoReadMemorySpec {
 
 		long snap = coordinates.getSnap();
 		ByteBuffer buf = ByteBuffer.allocate(4096);
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Load Visible")) {
+		try (Transaction tx = trace.openTransaction("Load Visible")) {
 			new AbstractMappedMemoryBytesVisitor(mappingService, buf.array()) {
 				@Override
 				protected void visitData(Address hostAddr, byte[] data, int size) {

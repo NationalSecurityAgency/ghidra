@@ -15,8 +15,7 @@
  */
 package ghidra.pcode.emu.taint.trace;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -26,6 +25,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Test;
 
+import db.Transaction;
 import ghidra.app.plugin.assembler.*;
 import ghidra.dbg.target.schema.SchemaContext;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
@@ -49,7 +49,6 @@ import ghidra.trace.model.property.TracePropertyMapSpace;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
 import ghidra.trace.model.target.TraceObjectKeyPath;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.util.database.UndoableTransaction;
 
 public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest {
 
@@ -78,7 +77,7 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
 			TraceThread thread = initTrace(tb, "", List.of());
 
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				TracePropertyMap<String> taintMap = tb.trace.getAddressPropertyManager()
 						.getOrCreatePropertyMap("Taint", String.class);
 				taintMap.set(Lifespan.nowOn(0), tb.range(0x00400000, 0x00400003), "test_0");
@@ -106,7 +105,7 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			Register regRAX = tb.language.getRegister("RAX");
 			Register regEBX = tb.language.getRegister("EBX");
 
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				TracePropertyMap<String> taintMap = tb.trace.getAddressPropertyManager()
 						.getOrCreatePropertyMap("Taint", String.class);
 				TracePropertyMapSpace<String> mapSpace =
@@ -144,7 +143,7 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 					.setVar(tb.addr(0x00400000), 8, true,
 						Pair.of(tb.arr(0, 0, 0, 0, 0, 0, 0, 0), taintVal));
 
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				emu.writeDown(tb.host, 1, 0);
 			}
 			TracePropertyMap<String> taintMap =
@@ -170,7 +169,7 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			}
 			emuThread.getState().setVar(tb.reg("EAX"), Pair.of(tb.arr(0, 0, 0, 0), taintVal));
 
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				emu.writeDown(tb.host, 1, 0);
 			}
 			TracePropertyMap<String> taintMap =
@@ -204,11 +203,11 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 						TaintVec.copies(TaintSet.parse("test_0"), 8)));
 
 			emuThread.stepInstruction();
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				emu.writeDown(tb.host, 1, 0);
 			}
 			emuThread.stepInstruction();
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				emu.writeDown(tb.host, 2, 0);
 			}
 
@@ -239,12 +238,12 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 					.setVar(tb.reg("RAX"), Pair.of(
 						tb.arr(1, 2, 3, 4, 5, 6, 7, 8),
 						TaintVec.copies(TaintSet.parse("test_0"), 8)));
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				emu.writeDown(tb.host, 0, 0);
 			}
 
 			emuThread.stepInstruction();
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				emu.writeDown(tb.host, 1, 0);
 			}
 
@@ -273,12 +272,12 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 					.setVar(tb.reg("RAX"), Pair.of(
 						tb.arr(1, 2, 3, 4, 5, 6, 7, 8),
 						TaintVec.copies(TaintSet.parse("test_0"), 8)));
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				emu.writeDown(tb.host, 0, 0);
 			}
 
 			emuThread.stepInstruction();
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				emu.writeDown(tb.host, 1, 0);
 			}
 
@@ -299,7 +298,7 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 			AddressSpace ram = tb.language.getAddressFactory().getDefaultAddressSpace();
 			TraceThread thread;
 			TraceGuestPlatform x64;
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				SchemaContext ctx = XmlSchemaContext.deserialize(DBTraceObjectManagerTest.XML_CTX);
 				DBTraceObjectManager objects = tb.trace.getObjectManager();
 				objects.createRootObject(ctx.getSchema(new SchemaName("Session")));
@@ -332,11 +331,11 @@ public class TaintTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 						TaintVec.copies(TaintSet.parse("test_0"), 8)));
 
 			emuThread.stepInstruction();
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				emu.writeDown(x64, 1, 0);
 			}
 			emuThread.stepInstruction();
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				emu.writeDown(x64, 2, 0);
 			}
 

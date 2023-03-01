@@ -25,6 +25,7 @@ import java.util.Set;
 import org.junit.*;
 import org.junit.experimental.categories.Category;
 
+import db.Transaction;
 import docking.widgets.table.*;
 import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
@@ -52,7 +53,6 @@ import ghidra.trace.model.target.TraceObjectKeyPath;
 import ghidra.trace.model.target.TraceObjectManager;
 import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.time.TraceTimeManager;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.table.GhidraTable;
 
 @Category(NightlyCategory.class)
@@ -133,7 +133,7 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 				    </schema>
 				</context>""");
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getObjectManager().createRootObject(ctx.getSchema(new SchemaName("Session")));
 		}
 	}
@@ -154,7 +154,7 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	}
 
 	protected void addThreads() throws Exception {
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			thread1 = addThread(1, Lifespan.nowOn(0), "A comment");
 			thread2 = addThread(2, Lifespan.span(0, 10), "Another comment");
 		}
@@ -411,7 +411,7 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 			assertEquals(1, renderer.getFullRange().max().longValue());
 		});
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			manager.getSnapshot(10, true);
 		}
 		waitForSwing();
@@ -432,7 +432,7 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		traceManager.activateTrace(tb.trace);
 		waitForTasks();
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			thread1.getObject().removeTree(Lifespan.nowOn(16));
 		}
 		waitForTasks();
@@ -453,7 +453,7 @@ public class DebuggerThreadsProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		waitForPass(() -> assertThreadsTableSize(2));
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			thread2.getObject().removeTree(Lifespan.ALL);
 		}
 		waitForTasks();

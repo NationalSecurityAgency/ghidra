@@ -21,9 +21,8 @@ import java.util.function.Consumer;
 
 import org.apache.commons.collections4.collection.CompositeCollection;
 
-import com.google.common.cache.RemovalNotification;
-
 import db.DBHandle;
+import db.Transaction;
 import generic.depends.DependentService;
 import generic.depends.err.ServiceConstructionException;
 import ghidra.framework.model.DomainObjectChangeRecord;
@@ -165,7 +164,7 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 		this.baseAddressFactory =
 			new TraceAddressFactory(this.baseLanguage, this.baseCompilerSpec);
 
-		try (UndoableTransaction tid = UndoableTransaction.start(this, "Create")) {
+		try (Transaction tx = this.openTransaction("Create")) {
 			initOptions(DBOpenMode.CREATE);
 			init();
 		}
@@ -227,10 +226,6 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 			throw new TraceClosedException(e);
 		}
 		super.dbError(e);
-	}
-
-	protected void fixedProgramViewRemoved(RemovalNotification<Long, DBTraceProgramView> rn) {
-		Msg.debug(this, "Dropped cached fixed view at snap=" + rn.getKey());
 	}
 
 	@Internal

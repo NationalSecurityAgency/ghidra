@@ -32,7 +32,7 @@ import ghidra.util.*;
 import ghidra.util.exception.*;
 
 public class FunctionEditorModel {
-	public static final String PARSING_MODE_STATUS_TEXT =
+	public static final String PARSING_MODE_STATUS_TEXT = HTMLUtilities.HTML +
 		HTMLUtilities.escapeHTML("<TAB> or <RETURN> to commit edits, <ESC> to abort");
 	static final String NONE_CHOICE = "-NONE-";
 

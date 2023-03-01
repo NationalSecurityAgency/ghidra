@@ -15,8 +15,7 @@
  */
 package ghidra.trace.database.data;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,6 +24,7 @@ import java.nio.file.Path;
 
 import org.junit.*;
 
+import db.Transaction;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.LanguageID;
@@ -32,7 +32,6 @@ import ghidra.program.util.DefaultLanguageService;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.DBTrace;
 import ghidra.util.InvalidNameException;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.ConsoleTaskMonitor;
 
@@ -80,7 +79,7 @@ public class DBTraceDataTypeManagerTest extends AbstractGhidraHeadlessIntegratio
 
 	@Test
 	public void testSetName() throws InvalidNameException {
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing")) {
+		try (Transaction tx = trace.openTransaction("Testing")) {
 			dtm.setName("Another name");
 		}
 		assertEquals("Another name", trace.getName());
@@ -93,12 +92,12 @@ public class DBTraceDataTypeManagerTest extends AbstractGhidraHeadlessIntegratio
 		Path tmpDir = Files.createTempDirectory("test");
 		File archiveFile = tmpDir.resolve("test.gdt").toFile();
 		FileDataTypeManager dtm2 = FileDataTypeManager.createFileArchive(archiveFile);
-		try (UndoableTransaction tid = UndoableTransaction.start(dtm2, "Testing")) {
+		try (Transaction tx = dtm2.openTransaction("Testing")) {
 			dtm2.addDataType(mine, DataTypeConflictHandler.DEFAULT_HANDLER);
 		}
 		DataType got = dtm2.getDataType(minePath);
 
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing")) {
+		try (Transaction tx = trace.openTransaction("Testing")) {
 			dtm.addDataType(got, DataTypeConflictHandler.DEFAULT_HANDLER);
 		}
 		dtm2.delete();
@@ -112,7 +111,7 @@ public class DBTraceDataTypeManagerTest extends AbstractGhidraHeadlessIntegratio
 	public void testAddAndGet() {
 		StructureDataType mine = getTestDataType();
 		DataTypePath minePath = mine.getDataTypePath();
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing")) {
+		try (Transaction tx = trace.openTransaction("Testing")) {
 			dtm.addDataType(mine, DataTypeConflictHandler.REPLACE_HANDLER);
 		}
 
@@ -125,14 +124,14 @@ public class DBTraceDataTypeManagerTest extends AbstractGhidraHeadlessIntegratio
 	public void testAddRemoveUndoThenGet() throws IOException {
 		StructureDataType mine = getTestDataType();
 		DataTypePath minePath = mine.getDataTypePath();
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing")) {
+		try (Transaction tx = trace.openTransaction("Testing")) {
 			dtm.addDataType(mine, DataTypeConflictHandler.REPLACE_HANDLER);
 		}
 
 		DataType got = dtm.getDataType(minePath);
 		assertEquals(mine.toString(), got.toString()); // TODO: Eww
 
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "To Undo")) {
+		try (Transaction tx = trace.openTransaction("To Undo")) {
 			dtm.remove(got, new ConsoleTaskMonitor());
 		}
 
@@ -148,7 +147,7 @@ public class DBTraceDataTypeManagerTest extends AbstractGhidraHeadlessIntegratio
 	public void testChangeDataType() {
 		StructureDataType mine = getTestDataType();
 		DataTypePath minePath = mine.getDataTypePath();
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing")) {
+		try (Transaction tx = trace.openTransaction("Testing")) {
 			dtm.addDataType(mine, DataTypeConflictHandler.REPLACE_HANDLER);
 
 			Structure got = (Structure) dtm.getDataType(minePath);
@@ -165,7 +164,7 @@ public class DBTraceDataTypeManagerTest extends AbstractGhidraHeadlessIntegratio
 		DataTypePath mineAPath = mineA.getDataTypePath();
 		StructureDataType mineB = getTestDataTypeB();
 		DataTypePath mineBPath = mineB.getDataTypePath();
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing")) {
+		try (Transaction tx = trace.openTransaction("Testing")) {
 			dtm.addDataType(mineA, DataTypeConflictHandler.REPLACE_HANDLER);
 
 			DataType got = dtm.getDataType(mineAPath);
@@ -181,7 +180,7 @@ public class DBTraceDataTypeManagerTest extends AbstractGhidraHeadlessIntegratio
 		StructureDataType mine = getTestDataType();
 		DataTypePath minePath = mine.getDataTypePath();
 		DataType got;
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing")) {
+		try (Transaction tx = trace.openTransaction("Testing")) {
 			dtm.addDataType(mine, DataTypeConflictHandler.REPLACE_HANDLER);
 
 			got = dtm.getDataType(minePath);
@@ -197,7 +196,7 @@ public class DBTraceDataTypeManagerTest extends AbstractGhidraHeadlessIntegratio
 		StructureDataType mine = getTestDataType();
 		DataTypePath minePath = mine.getDataTypePath();
 		DataType got;
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing")) {
+		try (Transaction tx = trace.openTransaction("Testing")) {
 			dtm.addDataType(mine, DataTypeConflictHandler.REPLACE_HANDLER);
 
 			got = dtm.getDataType(minePath);
@@ -211,7 +210,7 @@ public class DBTraceDataTypeManagerTest extends AbstractGhidraHeadlessIntegratio
 	@Test
 	public void testCreateCategory() {
 		Category category;
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing")) {
+		try (Transaction tx = trace.openTransaction("Testing")) {
 			category = dtm.createCategory(new CategoryPath("/Another/Path"));
 		}
 		assertEquals(category, dtm.getCategory(new CategoryPath("/Another/Path")));
@@ -220,7 +219,7 @@ public class DBTraceDataTypeManagerTest extends AbstractGhidraHeadlessIntegratio
 	@Test
 	public void testMoveCategory() throws DuplicateNameException {
 		Category toMove;
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing")) {
+		try (Transaction tx = trace.openTransaction("Testing")) {
 			Category category = dtm.createCategory(new CategoryPath("/Another/Path"));
 			toMove = dtm.createCategory(new CategoryPath("/MoveMe"));
 			category.moveCategory(toMove, new ConsoleTaskMonitor());
@@ -231,7 +230,7 @@ public class DBTraceDataTypeManagerTest extends AbstractGhidraHeadlessIntegratio
 	@Test
 	public void testRenameCategory() throws DuplicateNameException, InvalidNameException {
 		Category category;
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing")) {
+		try (Transaction tx = trace.openTransaction("Testing")) {
 			category = dtm.createCategory(new CategoryPath("/Another/Path"));
 			category.setName("Renamed");
 		}
@@ -241,12 +240,12 @@ public class DBTraceDataTypeManagerTest extends AbstractGhidraHeadlessIntegratio
 	@Test
 	public void testRemoveCategory() {
 		Category category;
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing")) {
+		try (Transaction tx = trace.openTransaction("Testing")) {
 			category = dtm.createCategory(new CategoryPath("/Another/Path"));
 		}
 		assertEquals(category, dtm.getCategory(new CategoryPath("/Another/Path")));
 
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Testing")) {
+		try (Transaction tx = trace.openTransaction("Testing")) {
 			dtm.getCategory(new CategoryPath("/Another"))
 					.removeEmptyCategory("Path",
 						new ConsoleTaskMonitor());

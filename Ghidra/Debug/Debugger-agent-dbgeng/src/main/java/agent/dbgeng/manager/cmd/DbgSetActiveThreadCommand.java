@@ -91,12 +91,11 @@ public class DbgSetActiveThreadCommand extends AbstractDbgCommand<Void> {
 		if (id != null) {
 			if (!manager.isKernelMode()) {
 				manager.getSystemObjects().setCurrentThreadId(id);
-			} 
-			else {
+			} else {
 				offset = thread.getOffset();
 				if (offset == null || offset == 0L) {
 					DebugControl control = manager.getControl();
-					control.execute("!thread -t "+Long.toHexString(thread.getTid()));		
+					control.execute("!thread -t "+Long.toHexString(thread.getTid())+" 0");		
 				}
 			}
 			if (frameId != null) {

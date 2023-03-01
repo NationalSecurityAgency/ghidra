@@ -18,6 +18,7 @@ import java.nio.ByteOrder;
 
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.model.AbstractDbgModel;
+import db.Transaction;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.services.DebuggerModelService;
 import ghidra.app.services.DebuggerTraceManagerService;
@@ -29,7 +30,6 @@ import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.*;
 import ghidra.util.LockHold;
 import ghidra.util.Msg;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
@@ -119,7 +119,7 @@ public class BangAddressToMemory extends GhidraScript {
 	}
 
 	private void parse(String result) {
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Populate memory");
+		try (Transaction tx = trace.openTransaction("Populate memory");
 				LockHold hold = trace.lockWrite();) {
 			//Pattern pattern = Pattern.compile("\\s+(*)\\s+(*)\\s+");
 			//Matcher matcher = pattern.matcher(fullclassname);

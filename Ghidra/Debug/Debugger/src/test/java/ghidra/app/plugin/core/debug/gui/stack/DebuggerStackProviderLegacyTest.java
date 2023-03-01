@@ -23,6 +23,7 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
+import db.Transaction;
 import generic.Unique;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
@@ -41,7 +42,6 @@ import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
@@ -63,13 +63,13 @@ public class DebuggerStackProviderLegacyTest extends AbstractGhidraHeadedDebugge
 	}
 
 	protected TraceThread addThread(String n) throws DuplicateNameException {
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			return tb.trace.getThreadManager().createThread(n, 0);
 		}
 	}
 
 	protected void addRegVals(TraceThread thread) {
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			TraceMemorySpace regs =
 				tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, true);
 			regs.setValue(0, new RegisterValue(pc, new BigInteger("00400123", 16)));
@@ -77,7 +77,7 @@ public class DebuggerStackProviderLegacyTest extends AbstractGhidraHeadedDebugge
 	}
 
 	protected TraceStack addStack(TraceThread thread, int snap) {
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			return tb.trace.getStackManager().getStack(thread, snap, true);
 		}
 	}
@@ -87,7 +87,7 @@ public class DebuggerStackProviderLegacyTest extends AbstractGhidraHeadedDebugge
 	}
 
 	protected void addStackFrames(TraceStack stack) {
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			stack.setDepth(2, false);
 
 			TraceStackFrame frame = stack.getFrame(0, false);
@@ -234,7 +234,7 @@ public class DebuggerStackProviderLegacyTest extends AbstractGhidraHeadedDebugge
 
 		assertProviderPopulated();
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			stack.setDepth(3, false);
 		}
 		waitForDomainObject(tb.trace);
@@ -259,7 +259,7 @@ public class DebuggerStackProviderLegacyTest extends AbstractGhidraHeadedDebugge
 
 		assertProviderPopulated();
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			stack.setDepth(3, true);
 		}
 		waitForDomainObject(tb.trace);
@@ -284,7 +284,7 @@ public class DebuggerStackProviderLegacyTest extends AbstractGhidraHeadedDebugge
 
 		assertProviderPopulated();
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			stack.setDepth(1, false);
 		}
 		waitForDomainObject(tb.trace);
@@ -307,7 +307,7 @@ public class DebuggerStackProviderLegacyTest extends AbstractGhidraHeadedDebugge
 
 		assertProviderPopulated();
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			stack.setDepth(1, true);
 		}
 		waitForDomainObject(tb.trace);
@@ -330,7 +330,7 @@ public class DebuggerStackProviderLegacyTest extends AbstractGhidraHeadedDebugge
 
 		assertProviderPopulated();
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			stack.delete();
 		}
 		waitForDomainObject(tb.trace);
@@ -472,7 +472,7 @@ public class DebuggerStackProviderLegacyTest extends AbstractGhidraHeadedDebugge
 		assertProviderPopulated();
 
 		Function func;
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add Function")) {
+		try (Transaction tx = program.openTransaction("Add Function")) {
 			program.getMemory()
 					.createInitializedBlock(".text", addr(program, 0x00600000), 0x1000, (byte) 0,
 						TaskMonitor.DUMMY, false);
@@ -483,7 +483,7 @@ public class DebuggerStackProviderLegacyTest extends AbstractGhidraHeadedDebugge
 		}
 		waitForDomainObject(program);
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getMemoryManager()
 					.addRegion("Processes[1].Memory[bin:.text]", Lifespan.nowOn(0),
 						tb.drng(0x00400000, 0x00400fff),

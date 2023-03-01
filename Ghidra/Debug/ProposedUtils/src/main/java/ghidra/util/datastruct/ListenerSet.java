@@ -16,10 +16,10 @@
 package ghidra.util.datastruct;
 
 import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.concurrent.Executor;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.RemovalNotification;
+import ghidra.util.datastruct.ListenerMap.ListenerEntry;
 
 /**
  * A weak set of multiplexed listeners and an invocation proxy
@@ -58,7 +58,7 @@ public class ListenerSet<E> {
 	public ListenerSet(Class<E> iface, Executor executor) {
 		map = new ListenerMap<E, E, E>(iface, executor) {
 			@Override
-			protected Map<E, E> createMap() {
+			protected Map<E, ListenerEntry<? extends E>> createMap() {
 				return ListenerSet.this.createMap();
 			};
 		};
@@ -70,17 +70,9 @@ public class ListenerSet<E> {
 		return map.toString();
 	}
 
-	protected Map<E, E> createMap() {
-		CacheBuilder<E, E> builder = CacheBuilder.newBuilder()
-				.removalListener(this::notifyRemoved)
-				.weakKeys()
-				.weakValues()
-				.concurrencyLevel(1);
-		return builder.build().asMap();
-	}
-
-	protected void notifyRemoved(RemovalNotification<E, E> rn) {
-		map.notifyRemoved(rn);
+	protected Map<E, ListenerEntry<? extends E>> createMap() {
+		// TODO: This doesn't prevent the automatic removal of an entry in the "immutable" map.
+		return new WeakHashMap<>();
 	}
 
 	public <T extends E> T fire(Class<T> ext) {

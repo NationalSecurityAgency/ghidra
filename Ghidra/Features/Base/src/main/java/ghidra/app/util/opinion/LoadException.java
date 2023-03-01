@@ -37,4 +37,23 @@ public class LoadException extends IOException {
 	public LoadException(String message) {
 		super(message);
 	}
+	
+	/**
+	 * Create a new {@link LoadException} with the given message and cause
+	 * 
+	 * @param message The exception message
+	 * @param cause The exception cause
+	 */
+	public LoadException(String message, Throwable cause) {
+		super(message, cause);
+	}
+	
+	/**
+	 * Create a new {@link LoadException} with the given cause
+	 * 
+	 * @param cause The exception cause
+	 */
+	public LoadException(Throwable cause) {
+		super(cause);
+	}
 }

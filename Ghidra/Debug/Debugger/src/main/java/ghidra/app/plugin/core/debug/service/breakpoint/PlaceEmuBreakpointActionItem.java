@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.debug.service.breakpoint;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
+import db.Transaction;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.target.TargetBreakpointSpec;
 import ghidra.dbg.target.TargetBreakpointSpecContainer;
@@ -30,7 +31,6 @@ import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.memory.TraceObjectMemoryRegion;
 import ghidra.trace.model.target.TraceObject;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.DuplicateNameException;
 
 public record PlaceEmuBreakpointActionItem(Trace trace, long snap, Address address, long length,
@@ -97,8 +97,7 @@ public record PlaceEmuBreakpointActionItem(Trace trace, long snap, Address addre
 
 	@Override
 	public CompletableFuture<Void> execute() {
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(trace, "Place Emulated Breakpoint")) {
+		try (Transaction tx = trace.openTransaction("Place Emulated Breakpoint")) {
 			// Defaults with emuEnable=true
 			TraceBreakpoint bpt = trace.getBreakpointManager()
 					.addBreakpoint(computePath(), Lifespan.at(snap), range(address, length),

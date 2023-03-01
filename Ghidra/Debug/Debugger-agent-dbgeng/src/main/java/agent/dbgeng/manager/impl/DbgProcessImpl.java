@@ -383,4 +383,8 @@ public class DbgProcessImpl implements DbgProcess {
 		this.offset = offset;
 	}
 
+	public void setPid(Long pid) {
+		this.pid = pid;
+	}
+
 }

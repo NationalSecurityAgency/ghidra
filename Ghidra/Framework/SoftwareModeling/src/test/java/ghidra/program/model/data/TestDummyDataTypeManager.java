@@ -17,6 +17,7 @@ package ghidra.program.model.data;
 
 import java.util.*;
 
+import db.Transaction;
 import ghidra.util.InvalidNameException;
 import ghidra.util.UniversalID;
 import ghidra.util.exception.CancelledException;
@@ -213,6 +214,11 @@ public class TestDummyDataTypeManager implements DataTypeManager {
 	public void setName(String name) throws InvalidNameException {
 		// stub
 
+	}
+
+	@Override
+	public Transaction openTransaction(String description) throws IllegalStateException {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override

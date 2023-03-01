@@ -22,6 +22,7 @@ import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
 
+import db.Transaction;
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
@@ -41,7 +42,6 @@ import ghidra.trace.model.property.TracePropertyMap;
 import ghidra.trace.model.property.TracePropertyMapSpace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.TraceSchedule;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.task.TaskMonitor;
 
 public class TaintDebuggerPcodeEmulatorTest extends AbstractGhidraHeadedDebuggerGUITest {
@@ -69,7 +69,7 @@ public class TaintDebuggerPcodeEmulatorTest extends AbstractGhidraHeadedDebugger
 
 		createAndOpenTrace();
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			tb.getOrAddThread("Threads[0]", 0);
 		}
 
@@ -97,7 +97,7 @@ public class TaintDebuggerPcodeEmulatorTest extends AbstractGhidraHeadedDebugger
 
 		AddressSpace rs = tb.language.getAddressFactory().getRegisterSpace();
 		TraceThread thread;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			mappingService.addMapping(
 				new DefaultTraceLocation(tb.trace, null, Lifespan.nowOn(0), tb.addr(0x55550000)),
 				new ProgramLocation(program, tb.addr(0x00400000)), 0x1000, false);
@@ -109,7 +109,7 @@ public class TaintDebuggerPcodeEmulatorTest extends AbstractGhidraHeadedDebugger
 			mappingService.getOpenMappedLocation(
 				new DefaultTraceLocation(tb.trace, null, Lifespan.at(0), tb.addr(0x55550000)))));
 
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Assemble")) {
+		try (Transaction tx = program.openTransaction("Assemble")) {
 			program.getMemory()
 					.createInitializedBlock(".text", tb.addr(0x00400000), 0x1000, (byte) 0,
 						TaskMonitor.DUMMY, false);

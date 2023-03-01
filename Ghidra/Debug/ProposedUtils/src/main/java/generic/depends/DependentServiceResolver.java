@@ -19,9 +19,6 @@ import java.lang.reflect.*;
 import java.util.*;
 import java.util.Map.Entry;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-
 import generic.depends.err.*;
 
 public class DependentServiceResolver<T> {
@@ -44,8 +41,8 @@ public class DependentServiceResolver<T> {
 	}
 
 	private final Set<Class<?>> classesIncluded = new HashSet<>();
-	private final Multimap<Class<?>, Field> fieldsByClass = HashMultimap.create();
-	private final Multimap<Class<?>, Class<?>> depsByDependents = HashMultimap.create();
+	private final Map<Class<?>, Set<Field>> fieldsByClass = new HashMap<>();
+	private final Map<Class<?>, Set<Class<?>>> depsByDependents = new HashMap<>();
 	private final Map<Class<?>, Method> constructors = new HashMap<>();
 	private final List<DependentServiceConstructor<?>> ordered = new ArrayList<>();
 
@@ -86,14 +83,14 @@ public class DependentServiceResolver<T> {
 					throw new IllegalArgumentException(
 						"Overridden constructor must return same or subclass of original");
 				}
-				depsByDependents.put(override, rCls);
+				depsByDependents.computeIfAbsent(override, o -> new HashSet<>()).add(rCls);
 				constructors.put(override, m);
 			}
 			constructors.put(rCls, m);
 			m.setAccessible(true);
 
 			for (Class<?> pType : m.getParameterTypes()) {
-				depsByDependents.put(rCls, pType);
+				depsByDependents.computeIfAbsent(rCls, c -> new HashSet<>()).add(pType);
 			}
 		}
 		for (Field f : cls.getDeclaredFields()) {
@@ -102,7 +99,7 @@ public class DependentServiceResolver<T> {
 				continue;
 			}
 			Class<?> fCls = f.getType();
-			fieldsByClass.put(fCls, f);
+			fieldsByClass.computeIfAbsent(fCls, c -> new HashSet<>()).add(f);
 			f.setAccessible(true);
 		}
 	}
@@ -124,7 +121,14 @@ public class DependentServiceResolver<T> {
 				Method m = constructors.get(ready);
 				unordered.remove(ready);
 				ordered.add(new DependentServiceConstructor<>(ready, m));
-				depsByDependents.values().removeAll(Collections.singleton(ready));
+				for (Iterator<Set<Class<?>>> iterator =
+					depsByDependents.values().iterator(); iterator.hasNext();) {
+					Set<Class<?>> deps = iterator.next();
+					deps.remove(ready);
+					if (deps.isEmpty()) {
+						iterator.remove();
+					}
+				}
 			}
 		}
 		assert ordered.size() == constructors.size();
@@ -141,12 +145,14 @@ public class DependentServiceResolver<T> {
 			}
 			instancesByClass.put(cons.cls, service);
 		}
-		for (Entry<Class<?>, Field> entry : fieldsByClass.entries()) {
-			try {
-				entry.getValue().set(obj, instancesByClass.get(entry.getKey()));
-			}
-			catch (IllegalArgumentException | IllegalAccessException e) {
-				throw new AssertionError(e);
+		for (Entry<Class<?>, Set<Field>> entry : fieldsByClass.entrySet()) {
+			for (Field f : entry.getValue()) {
+				try {
+					f.set(obj, instancesByClass.get(entry.getKey()));
+				}
+				catch (IllegalArgumentException | IllegalAccessException e) {
+					throw new AssertionError(e);
+				}
 			}
 		}
 	}

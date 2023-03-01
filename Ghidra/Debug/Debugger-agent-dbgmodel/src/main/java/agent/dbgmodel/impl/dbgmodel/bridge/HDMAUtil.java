@@ -130,11 +130,8 @@ public class HDMAUtil {
 	public ModelObject getTerminalModelObject(List<String> path) {
 		//System.err.println(path);
 		ModelObject target = getRootNamespace();
-		boolean found;
 		for (String str : path) {
-			//System.err.println(":" + str);
 			String indexStr = null;
-			found = false;
 			if (str.endsWith(")")) {
 				target = evaluatePredicate(target, str);
 				if (target.getKind().equals(ModelObjectKind.OBJECT_ERROR)) {
@@ -145,30 +142,28 @@ public class HDMAUtil {
 				indexStr = str.substring(str.indexOf("[") + 1, str.indexOf("]"));
 				str = str.substring(0, str.indexOf("["));
 			}
-			Map<String, ModelObject> keyMap = target.getKeyValueMap();
-			if (keyMap.containsKey(str)) {
-				target = keyMap.get(str);
-				found = true;
-			}
-			else {
-				Map<String, ModelObject> rawMap = target.getRawValueMap();
-				if (rawMap.containsKey(str)) {
-					target = rawMap.get(str);
-					found = true;
+			if (!str.equals("")) {
+				ModelObject keyValue = target.getKeyValueByEnum(str);
+				if (keyValue != null) {
+					target = keyValue;
+					continue;
 				}
-			}
-			if (indexStr != null) {
-				List<ModelObject> children = target.getElements();
-				for (ModelObject child : children) {
-					if (indexStr.equals(child.getSearchKey())) {
-						target = child;
-						found = true;
+				else {
+					ModelObject rawValue = target.getRawValueByEnum(str);
+					if (rawValue != null) {
+						target = rawValue;
+						continue;
 					}
 				}
 			}
-			if (found == false) {
-				return null;
+			if (indexStr != null) {
+				ModelObject element = target.getElement(indexStr);
+				if (element != null) {
+					target = element;
+					continue;
+				}
 			}
+			return null;
 		}
 		return target;
 	}

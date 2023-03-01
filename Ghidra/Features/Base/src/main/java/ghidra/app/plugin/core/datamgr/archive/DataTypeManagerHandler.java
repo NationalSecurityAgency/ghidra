@@ -1335,7 +1335,7 @@ public class DataTypeManagerHandler {
 			StringBuilder buf = new StringBuilder();
 			buf.append("The " + CONTENT_NAME + " is currently being modified by \n");
 			buf.append("the following actions:\n ");
-			Transaction t = undoableDomainObject.getCurrentTransaction();
+			TransactionInfo t = undoableDomainObject.getCurrentTransactionInfo();
 			List<String> list = t.getOpenSubTransactions();
 			Iterator<String> it = list.iterator();
 			while (it.hasNext()) {
@@ -1369,7 +1369,7 @@ public class DataTypeManagerHandler {
 			StringBuffer buf = new StringBuffer();
 			buf.append("The " + CONTENT_NAME +
 				" is currently being modified by the following actions/tasks:\n \n");
-			Transaction t = undoableDomainObject.getCurrentTransaction();
+			TransactionInfo t = undoableDomainObject.getCurrentTransactionInfo();
 			List<String> list = t.getOpenSubTransactions();
 			Iterator<String> it = list.iterator();
 			while (it.hasNext()) {

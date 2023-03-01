@@ -796,6 +796,7 @@ Varnode *PieceNode::findRoot(Varnode *vn)
       Address addr = op->getOut()->getAddr();
       if (addr.getSpace()->isBigEndian() == (slot == 1))
 	addr = addr + op->getIn(1-slot)->getSize();
+      addr.renormalize(vn->getSize());		// Allow for possible join address
       if (addr == vn->getAddr()) {
 	if (pieceOp != (PcodeOp *)0) {		// If there is more than one valid PIECE
 	  if (op->compareOrder(pieceOp))	// Attach this to earliest one

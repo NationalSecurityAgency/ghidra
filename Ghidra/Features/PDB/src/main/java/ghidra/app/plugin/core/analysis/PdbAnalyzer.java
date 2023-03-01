@@ -59,7 +59,7 @@ public class PdbAnalyzer extends AbstractAnalyzer {
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log) {
 
 		// Only run once per transaction - avoid message duplication
-		long txId = program.getCurrentTransaction().getID();
+		long txId = program.getCurrentTransactionInfo().getID();
 		if (txId == lastTransactionId) {
 			return false;
 		}

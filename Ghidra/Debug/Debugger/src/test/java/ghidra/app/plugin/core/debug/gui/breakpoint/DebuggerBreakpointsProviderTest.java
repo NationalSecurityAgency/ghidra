@@ -27,6 +27,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import db.Transaction;
 import docking.widgets.table.RowWrappedEnumeratedColumnTableModel;
 import generic.Unique;
 import generic.test.category.NightlyCategory;
@@ -52,7 +53,6 @@ import ghidra.trace.model.*;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.SystemUtilities;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
@@ -82,7 +82,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 	}
 
 	protected void addMapping(Trace trace, Program prog) throws Exception {
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Add mapping")) {
+		try (Transaction tx = trace.openTransaction("Add mapping")) {
 			DebuggerStaticMappingUtils.addMapping(
 				new DefaultTraceLocation(trace, null, Lifespan.nowOn(0), addr(trace, 0x55550000)),
 				new ProgramLocation(prog, addr(prog, 0x00400000)), 0x1000, false);
@@ -103,8 +103,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 
 	protected void addStaticMemoryAndBreakpoint() throws LockException, DuplicateNameException,
 			MemoryConflictException, AddressOverflowException, CancelledException {
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(program, "Add bookmark break")) {
+		try (Transaction tx = program.openTransaction("Add bookmark break")) {
 			program.getMemory()
 					.createInitializedBlock(".text", addr(program, 0x00400000), 0x1000, (byte) 0,
 						TaskMonitor.DUMMY, false);
@@ -705,7 +704,7 @@ public class DebuggerBreakpointsProviderTest extends AbstractGhidraHeadedDebugge
 
 		// Do our own launch, so that object mode is enabled during load (region creation)
 		createTrace(program.getLanguageID().getIdAsString());
-		try (UndoableTransaction startTransaction = tb.startTransaction()) {
+		try (Transaction startTransaction = tb.startTransaction()) {
 			TraceSnapshot initial = tb.trace.getTimeManager().getSnapshot(0, true);
 			ProgramEmulationUtils.loadExecutable(initial, program);
 			Address pc = program.getMinAddress();

@@ -24,8 +24,7 @@ import java.util.Map.Entry;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.junit.*;
 
-import db.DBHandle;
-import db.DBRecord;
+import db.*;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.LanguageID;
@@ -157,7 +156,7 @@ public class DBTraceAddressSnapRangePropertyMapOcclusionIntoFutureIterableTest
 					new LanguageID("Toy:BE:64:default"));
 		obj = new MyObject(this);
 		factory = new DBCachedObjectStoreFactory(obj);
-		try (UndoableTransaction tid = UndoableTransaction.start(obj, "CreateTable")) {
+		try (Transaction tx = obj.openTransaction("CreateTable")) {
 			space = new DBTraceAddressSnapRangePropertyMapSpace<>("Entries", factory,
 				obj.getReadWriteLock(), toy.getDefaultSpace(), null, 0, MyEntry.class,
 				MyEntry::new);
@@ -189,7 +188,7 @@ public class DBTraceAddressSnapRangePropertyMapOcclusionIntoFutureIterableTest
 	@Test
 	public void testOutOfWindow() {
 		DBTraceAddressSnapRangePropertyMapOcclusionIntoFutureIterable<String> it;
-		try (UndoableTransaction tid = UndoableTransaction.start(obj, "Create Entries")) {
+		try (Transaction tx = obj.openTransaction("Create Entries")) {
 			space.put(tasr(0x1000, 0x1fff, 5, 10), "A");
 		}
 
@@ -209,7 +208,7 @@ public class DBTraceAddressSnapRangePropertyMapOcclusionIntoFutureIterableTest
 	@Test
 	public void testSingleEntry() {
 		DBTraceAddressSnapRangePropertyMapOcclusionIntoFutureIterable<String> it;
-		try (UndoableTransaction tid = UndoableTransaction.start(obj, "Create Entries")) {
+		try (Transaction tx = obj.openTransaction("Create Entries")) {
 			space.put(tasr(0x1000, 0x1fff, 90, 95), "A");
 		}
 
@@ -233,7 +232,7 @@ public class DBTraceAddressSnapRangePropertyMapOcclusionIntoFutureIterableTest
 	@Test
 	public void testEntriesAtExtremes() {
 		DBTraceAddressSnapRangePropertyMapOcclusionIntoFutureIterable<String> it;
-		try (UndoableTransaction tid = UndoableTransaction.start(obj, "Create Entries")) {
+		try (Transaction tx = obj.openTransaction("Create Entries")) {
 			space.put(tasr(0x0000, 0x0fff, 5, 10), "W");
 			space.put(tasr(-0x1000, -0x0001, 5, 10), "E");
 			space.put(tasr(0x1000, 0x1fff, Long.MIN_VALUE, Long.MIN_VALUE + 10), "S");
@@ -252,7 +251,7 @@ public class DBTraceAddressSnapRangePropertyMapOcclusionIntoFutureIterableTest
 	@Test
 	public void testOcclusion() {
 		DBTraceAddressSnapRangePropertyMapOcclusionIntoFutureIterable<String> it;
-		try (UndoableTransaction tid = UndoableTransaction.start(obj, "Create Entries")) {
+		try (Transaction tx = obj.openTransaction("Create Entries")) {
 			space.put(tasr(0x1000, 0x1fff, 90, 95), "A");
 			space.put(tasr(0x1800, 0x27ff, 89, 95), "B");
 

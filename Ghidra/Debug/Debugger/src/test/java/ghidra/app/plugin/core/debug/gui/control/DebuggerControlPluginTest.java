@@ -26,6 +26,7 @@ import java.util.concurrent.CompletableFuture;
 import org.junit.Before;
 import org.junit.Test;
 
+import db.Transaction;
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.DockingActionIf;
@@ -65,7 +66,6 @@ import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.Scheduler;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.Swing;
-import ghidra.util.database.UndoableTransaction;
 
 /**
  * Tests for target control and state editing
@@ -277,7 +277,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITe
 
 		Address start = tb.addr(0x00400000);
 		TraceThread thread;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			Assembler asm = Assemblers.getAssembler(tb.language);
 			AssemblyBuffer buf = new AssemblyBuffer(asm, start);
 			buf.assemble("br 0x" + start);
@@ -376,7 +376,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITe
 	protected void create2SnapTrace() throws Throwable {
 		createAndOpenTrace();
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getTimeManager().getSnapshot(1, true);
 		}
 	}
@@ -421,7 +421,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITe
 
 		createAndOpenTrace();
 		TraceVariableSnapProgramView view = tb.trace.getProgramView();
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			tb.getOrAddThread("Threads[0]", 0);
 			tb.trace.getMemoryManager()
 					.createRegion("Memory[bin:.text]", 0, tb.range(0x00400000, 0x00401000),
@@ -472,7 +472,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITe
 
 		createAndOpenTrace();
 		TraceVariableSnapProgramView view = tb.trace.getProgramView();
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			tb.getOrAddThread("Threads[0]", 0);
 			tb.trace.getMemoryManager()
 					.createRegion("Memory[bin:.text]", 0, tb.range(0x00400000, 0x00401000),
@@ -528,7 +528,7 @@ public class DebuggerControlPluginTest extends AbstractGhidraHeadedDebuggerGUITe
 
 		createAndOpenTrace();
 		TraceVariableSnapProgramView view = tb.trace.getProgramView();
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			tb.getOrAddThread("Threads[0]", 0);
 			tb.trace.getMemoryManager()
 					.createRegion("Memory[bin:.text]", 0, tb.range(0x00400000, 0x00401000),

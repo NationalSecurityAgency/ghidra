@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.mapping;
 
+import db.Transaction;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.CompilerSpec;
@@ -24,7 +25,6 @@ import ghidra.trace.model.guest.*;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.util.MathUtilities;
 import ghidra.util.Msg;
-import ghidra.util.database.UndoableTransaction;
 
 public class DefaultDebuggerPlatformMapper extends AbstractDebuggerPlatformMapper {
 
@@ -57,7 +57,7 @@ public class DefaultDebuggerPlatformMapper extends AbstractDebuggerPlatformMappe
 	public void addToTrace(long snap) {
 		String description = "Add guest " + cSpec.getLanguage().getLanguageDescription() + "/" +
 			cSpec.getCompilerSpecDescription();
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, description)) {
+		try (Transaction tx = trace.openTransaction(description)) {
 			TracePlatformManager platformManager = trace.getPlatformManager();
 			TracePlatform platform = platformManager.getOrAddPlatform(cSpec);
 			if (platform.isHost()) {

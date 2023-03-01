@@ -20,8 +20,6 @@ import java.util.Map.Entry;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
-import com.google.common.collect.Collections2;
-
 import ghidra.program.model.address.*;
 import ghidra.program.model.symbol.Namespace;
 import ghidra.trace.database.DBTraceCacheForContainingQueries;
@@ -35,6 +33,7 @@ import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.symbol.TraceNamespaceSymbol;
 import ghidra.trace.model.symbol.TraceSymbolManager;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.util.LazyCollection;
 import ghidra.util.LockHold;
 import ghidra.util.database.DBCachedObjectStore;
 import ghidra.util.database.spatial.rect.Rectangle2DDirection;
@@ -200,12 +199,13 @@ public abstract class AbstractDBTraceSymbolSingleTypeWithLocationView<T extends 
 			if (space == null) {
 				return Collections.emptyList();
 			}
-			Collection<Long> sids =
-				space.reduce(TraceAddressSnapRangeQuery.intersecting(range, span)).values();
-			Collection<Long> matchingTid =
-				Collections2.filter(sids, s -> DBTraceSymbolManager.unpackTypeID(s) == this.typeID);
-			return Collections2.transform(matchingTid,
-				s -> store.getObjectAt(DBTraceSymbolManager.unpackKey(s)));
+			return new LazyCollection<>(() -> {
+				return space.reduce(TraceAddressSnapRangeQuery.intersecting(range, span))
+						.values()
+						.stream()
+						.filter(s -> DBTraceSymbolManager.unpackTypeID(s) == this.typeID)
+						.map(s -> store.getObjectAt(DBTraceSymbolManager.unpackKey(s)));
+			});
 		}
 	}
 
@@ -220,16 +220,16 @@ public abstract class AbstractDBTraceSymbolSingleTypeWithLocationView<T extends 
 			if (space == null) {
 				return Collections.emptyList();
 			}
-			Collection<Long> sids = space
-					.reduce(TraceAddressSnapRangeQuery.intersecting(range, span)
-							.starting(
-								forward ? Rectangle2DDirection.LEFTMOST
-										: Rectangle2DDirection.RIGHTMOST))
-					.orderedValues();
-			Collection<Long> matchingTid =
-				Collections2.filter(sids, s -> DBTraceSymbolManager.unpackTypeID(s) == this.typeID);
-			return Collections2.transform(matchingTid,
-				s -> store.getObjectAt(DBTraceSymbolManager.unpackKey(s)));
+			return new LazyCollection<T>(() -> {
+				return space.reduce(TraceAddressSnapRangeQuery.intersecting(range, span)
+						.starting(forward
+								? Rectangle2DDirection.LEFTMOST
+								: Rectangle2DDirection.RIGHTMOST))
+						.orderedValues()
+						.stream()
+						.filter(s -> DBTraceSymbolManager.unpackTypeID(s) == this.typeID)
+						.map(s -> store.getObjectAt(DBTraceSymbolManager.unpackKey(s)));
+			});
 		}
 	}
 

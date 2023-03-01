@@ -19,6 +19,7 @@ import java.io.IOException;
 
 import org.junit.*;
 
+import db.Transaction;
 import ghidra.app.plugin.core.bookmark.BookmarkPlugin;
 import ghidra.app.plugin.core.byteviewer.ByteViewerPlugin;
 import ghidra.app.plugin.core.clear.ClearPlugin;
@@ -48,7 +49,6 @@ import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.guest.DBTraceGuestPlatform;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceOverlappedRegionException;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.DuplicateNameException;
 
 public class DebuggerManualTest extends AbstractGhidraHeadedDebuggerGUITest {
@@ -59,7 +59,7 @@ public class DebuggerManualTest extends AbstractGhidraHeadedDebuggerGUITest {
 	public void setUpManualTest() throws IOException {
 		createTrace();
 		ub = new ToyDBTraceBuilder("dynamic2-" + name.getMethodName(), LANGID_TOYBE64);
-		try (UndoableTransaction tid = ub.startTransaction()) {
+		try (Transaction tx = ub.startTransaction()) {
 			ub.trace.getTimeManager().createSnapshot("First snap");
 		}
 	}
@@ -120,7 +120,7 @@ public class DebuggerManualTest extends AbstractGhidraHeadedDebuggerGUITest {
 		//addPlugin(tool, NextPrevSelectedRangePlugin.class);
 		addPlugin(tool, SymbolTablePlugin.class);
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getMemoryManager()
 					.createRegion("Region", 0, tb.range(0x4000, 0x4fff),
 						TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);

@@ -306,7 +306,7 @@ public class OmfFileHeader extends OmfRecord {
 			throw new OmfException("Object file does not start with proper header");
 		}
 		OmfFileHeader header = (OmfFileHeader) record;
-		Object lastDataBlock = null;
+		OmfData lastDataBlock = null;
 
 		while (true) {
 			record = OmfRecord.readRecord(reader);

@@ -17,7 +17,6 @@ package agent.dbgeng.impl.dbgeng.symbols;
 
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Guid.REFIID;
 
@@ -51,16 +50,13 @@ public interface DebugSymbolsInternal extends DebugSymbols {
 		return DbgEngUtil.lazyWeakCache(CACHE, symbols, DebugSymbolsImpl5::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIDebugSymbols>> PREFERRED_SYMBOLS_IIDS_BUILDER =
-		ImmutableMap.builder();
 	Map<REFIID, Class<? extends WrapIDebugSymbols>> PREFFERED_SYMBOLS_IIDS =
-		PREFERRED_SYMBOLS_IIDS_BUILDER //
-				.put(new REFIID(IDebugSymbols5.IID_IDEBUG_SYMBOLS5), WrapIDebugSymbols5.class) //
-				.put(new REFIID(IDebugSymbols4.IID_IDEBUG_SYMBOLS4), WrapIDebugSymbols4.class) //
-				.put(new REFIID(IDebugSymbols3.IID_IDEBUG_SYMBOLS3), WrapIDebugSymbols3.class) //
-				.put(new REFIID(IDebugSymbols2.IID_IDEBUG_SYMBOLS2), WrapIDebugSymbols2.class) //
-				.put(new REFIID(IDebugSymbols.IID_IDEBUG_SYMBOLS), WrapIDebugSymbols.class) //
-				.build();
+		Map.ofEntries(
+			Map.entry(new REFIID(IDebugSymbols5.IID_IDEBUG_SYMBOLS5), WrapIDebugSymbols5.class),
+			Map.entry(new REFIID(IDebugSymbols4.IID_IDEBUG_SYMBOLS4), WrapIDebugSymbols4.class),
+			Map.entry(new REFIID(IDebugSymbols3.IID_IDEBUG_SYMBOLS3), WrapIDebugSymbols3.class),
+			Map.entry(new REFIID(IDebugSymbols2.IID_IDEBUG_SYMBOLS2), WrapIDebugSymbols2.class),
+			Map.entry(new REFIID(IDebugSymbols.IID_IDEBUG_SYMBOLS), WrapIDebugSymbols.class));
 
 	static DebugSymbolsInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
 		return DbgEngUtil.tryPreferredInterfaces(DebugSymbolsInternal.class, PREFFERED_SYMBOLS_IIDS,
@@ -69,6 +65,7 @@ public interface DebugSymbolsInternal extends DebugSymbols {
 
 	String getModuleName(DebugModuleName which, DebugModule module);
 
+	@Override
 	DebugModuleInfo getModuleParameters(int count, int startIndex);
 
 }

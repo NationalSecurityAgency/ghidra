@@ -19,8 +19,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import com.google.common.collect.Collections2;
-
 import db.DBHandle;
 import db.DBRecord;
 import ghidra.program.model.address.*;
@@ -198,25 +196,29 @@ public class DBTraceEquateSpace implements DBTraceSpaceBased, TraceEquateSpace {
 	@Override
 	public Collection<? extends DBTraceEquate> getReferenced(long snap, Address address,
 			int operandIndex) {
-		Collection<DBTraceEquateReference> refs =
-			equateMapSpace.reduce(TraceAddressSnapRangeQuery.at(address, snap)).values();
-		Collection<DBTraceEquateReference> filt = Collections2.filter(refs, r -> {
-			if (r.type != EquateRefType.OP) {
-				return false;
-			}
-			if (r.opOrHash != operandIndex) {
-				return false;
-			}
-			return true;
-		});
-		return Collections2.transform(filt, r -> manager.equateStore.getObjectAt(r.equateKey));
+		return equateMapSpace.reduce(TraceAddressSnapRangeQuery.at(address, snap))
+				.values()
+				.stream()
+				.filter(r -> {
+					if (r.type != EquateRefType.OP) {
+						return false;
+					}
+					if (r.opOrHash != operandIndex) {
+						return false;
+					}
+					return true;
+				})
+				.map(r -> manager.equateStore.getObjectAt(r.equateKey))
+				.toList();
 	}
 
 	@Override
 	public Collection<? extends DBTraceEquate> getReferenced(long snap, Address address) {
-		Collection<DBTraceEquateReference> refs =
-			equateMapSpace.reduce(TraceAddressSnapRangeQuery.at(address, snap)).values();
-		return Collections2.transform(refs, r -> manager.equateStore.getObjectAt(r.equateKey));
+		return equateMapSpace.reduce(TraceAddressSnapRangeQuery.at(address, snap))
+				.values()
+				.stream()
+				.map(r -> manager.equateStore.getObjectAt(r.equateKey))
+				.toList();
 	}
 
 	@Override

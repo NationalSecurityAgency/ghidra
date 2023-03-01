@@ -33,6 +33,7 @@ import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.TargetObjectSchema;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.util.Msg;
+import ghidra.util.datastruct.ListenerMap.ListenerEntry;
 import ghidra.util.datastruct.ListenerSet;
 import utilities.util.ProxyUtilities;
 
@@ -276,8 +277,8 @@ public class DelegateGadpClientTargetObject
 		if (actions == null && createIfAbsent) {
 			actions = new ListenerSet<>(TargetBreakpointAction.class) {
 				// Want strong references on actions
-				protected Map<TargetBreakpointAction, TargetBreakpointAction> createMap() {
-					return Collections.synchronizedMap(new LinkedHashMap<>());
+				protected Map<TargetBreakpointAction, ListenerEntry<? extends TargetBreakpointAction>> createMap() {
+					return new LinkedHashMap<>();
 				};
 			};
 		}

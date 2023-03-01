@@ -19,8 +19,7 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.LinkedList;
 
-import db.DBConstants;
-import db.DBHandle;
+import db.*;
 import db.util.ErrorHandler;
 import ghidra.framework.model.DomainFile;
 import ghidra.program.database.DataTypeArchiveDB;
@@ -185,6 +184,11 @@ public class ProjectDataTypeManager extends DataTypeManagerDB
 		}
 //		dataTypeArchive.getCodeManager().clearData(ids, monitor);
 		// TODO
+	}
+
+	@Override
+	public Transaction openTransaction(String description) throws IllegalStateException {
+		return dataTypeArchive.openTransaction(description);
 	}
 
 	@Override

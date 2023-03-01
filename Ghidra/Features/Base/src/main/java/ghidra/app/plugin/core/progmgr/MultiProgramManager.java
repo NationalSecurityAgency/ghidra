@@ -456,7 +456,7 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 	}
 
 	@Override
-	public void transactionStarted(DomainObjectAdapterDB domainObj, Transaction tx) {
+	public void transactionStarted(DomainObjectAdapterDB domainObj, TransactionInfo tx) {
 		// don't care
 	}
 

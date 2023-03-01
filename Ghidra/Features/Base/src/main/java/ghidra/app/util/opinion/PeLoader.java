@@ -1054,14 +1054,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 //					return compilerType;
 //				}
 
-				// Now look for offset to code (0x1000 for gcc) and PointerToSymbols
-				// (0 for VS, non-zero for gcc)
-				int addrCode = br.readInt(dh.e_lfanew() + 40);
-				if (addrCode != 0x1000) {
-					compilerType = CompilerEnum.VisualStudio;
-					return compilerType;
-				}
-
+				// Now look for PointerToSymbols (0 for VS, non-zero for gcc)
 				int ptrSymTable = br.readInt(dh.e_lfanew() + 12);
 				if (ptrSymTable != 0) {
 					compilerType = CompilerEnum.GCC;

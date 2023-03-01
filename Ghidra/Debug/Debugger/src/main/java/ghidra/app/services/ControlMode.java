@@ -22,6 +22,7 @@ import java.util.concurrent.CompletableFuture;
 
 import javax.swing.Icon;
 
+import db.Transaction;
 import generic.theme.GIcon;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
@@ -41,7 +42,6 @@ import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.PatchStep;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.trace.util.TraceRegisterUtils;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -214,8 +214,7 @@ public enum ControlMode {
 			}
 			TraceMemoryOperations memOrRegs;
 			Address overlayAddress;
-			try (UndoableTransaction txid =
-				UndoableTransaction.start(trace, "Edit Variable")) {
+			try (Transaction tx = trace.openTransaction("Edit Variable")) {
 				if (hostAddress.isRegisterAddress()) {
 					TraceThread thread = coordinates.getThread();
 					if (thread == null) {

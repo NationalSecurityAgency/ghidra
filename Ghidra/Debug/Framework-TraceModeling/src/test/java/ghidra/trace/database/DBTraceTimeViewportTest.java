@@ -15,16 +15,16 @@
  */
 package ghidra.trace.database;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import org.junit.Test;
 
+import db.Transaction;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.time.DBTraceTimeManager;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Lifespan.*;
 import ghidra.trace.model.time.schedule.TraceSchedule;
-import ghidra.util.database.UndoableTransaction;
 
 public class DBTraceTimeViewportTest extends AbstractGhidraHeadlessIntegrationTest {
 	public static <C extends Comparable<C>> LifeSet lifeSetOf(Lifespan... spans) {
@@ -47,7 +47,7 @@ public class DBTraceTimeViewportTest extends AbstractGhidraHeadlessIntegrationTe
 	@Test
 	public void testSelfScheduleSnapshot0RemovesScratch() throws Exception {
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("test", "Toy:BE:64:default")) {
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				tb.trace.getTimeManager().getSnapshot(0, true).setSchedule(TraceSchedule.snap(0));
 			}
 
@@ -60,7 +60,7 @@ public class DBTraceTimeViewportTest extends AbstractGhidraHeadlessIntegrationTe
 	@Test
 	public void testNotationalSchedulesDontFork() throws Exception {
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("test", "Toy:BE:64:default")) {
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				DBTraceTimeManager tm = tb.trace.getTimeManager();
 				tm.getSnapshot(0, true).setSchedule(TraceSchedule.snap(0));
 				tm.getSnapshot(5, true).setSchedule(TraceSchedule.parse("4:1"));
@@ -75,7 +75,7 @@ public class DBTraceTimeViewportTest extends AbstractGhidraHeadlessIntegrationTe
 	@Test
 	public void testForkFromScratch() throws Exception {
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("test", "Toy:BE:64:default")) {
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				DBTraceTimeManager tm = tb.trace.getTimeManager();
 				tm.getSnapshot(0, true).setSchedule(TraceSchedule.snap(0));
 				tm.getSnapshot(Long.MIN_VALUE, true).setSchedule(TraceSchedule.parse("10:4"));
@@ -91,7 +91,7 @@ public class DBTraceTimeViewportTest extends AbstractGhidraHeadlessIntegrationTe
 	@Test
 	public void testCyclesIgnored() throws Exception {
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("test", "Toy:BE:64:default")) {
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				DBTraceTimeManager tm = tb.trace.getTimeManager();
 				tm.getSnapshot(Long.MIN_VALUE, true).setSchedule(TraceSchedule.parse("10:4"));
 			}

@@ -17,7 +17,6 @@ package agent.dbgmodel.impl.dbgmodel.bridge;
 
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Guid.REFIID;
 
@@ -35,13 +34,10 @@ public interface HostDataModelAccessInternal extends HostDataModelAccess {
 		return DbgModelUtil.lazyWeakCache(CACHE, data, HostDataModelAccessImpl::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIHostDataModelAccess>> PREFERRED_DATA_SPACES_IIDS_BUILDER =
-		ImmutableMap.builder();
 	Map<REFIID, Class<? extends WrapIHostDataModelAccess>> PREFERRED_DATA_SPACES_IIDS =
-		PREFERRED_DATA_SPACES_IIDS_BUILDER //
-				.put(new REFIID(IHostDataModelAccess.IID_IHOST_DATA_MODEL_ACCESS),
-					WrapIHostDataModelAccess.class) //
-				.build();
+		Map.ofEntries(
+			Map.entry(new REFIID(IHostDataModelAccess.IID_IHOST_DATA_MODEL_ACCESS),
+				WrapIHostDataModelAccess.class));
 
 	static HostDataModelAccessInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
 		return DbgModelUtil.tryPreferredInterfaces(HostDataModelAccessInternal.class,

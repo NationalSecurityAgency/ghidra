@@ -29,7 +29,7 @@ import org.junit.*;
 
 import docking.DockingWindowManager;
 import generic.util.WindowUtilities;
-import ghidra.framework.model.Transaction;
+import ghidra.framework.model.TransactionInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.MergeTestFacilitator;
 import ghidra.program.model.listing.Program;
@@ -185,7 +185,7 @@ public abstract class AbstractMergeTest extends AbstractGhidraHeadedIntegrationT
 			return;
 		}
 
-		Transaction tx = p.getCurrentTransaction();
+		TransactionInfo tx = p.getCurrentTransactionInfo();
 		if (tx == null) {
 			return;
 		}

@@ -17,6 +17,7 @@ package ghidra.pcode.exec.trace;
 
 import java.util.*;
 
+import db.Transaction;
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
@@ -30,7 +31,6 @@ import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceMemoryManager;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.Msg;
-import ghidra.util.database.UndoableTransaction;
 
 public class AbstractTracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTest {
 
@@ -61,7 +61,7 @@ public class AbstractTracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegr
 			String stateInit, List<String> assembly) throws Throwable {
 		TraceMemoryManager mm = tb.trace.getMemoryManager();
 		TraceThread thread;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			thread = tb.getOrAddThread("Thread1", 0);
 			mm.addRegion("Regions[bin:.text]", Lifespan.nowOn(0), text,
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);

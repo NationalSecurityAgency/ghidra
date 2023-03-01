@@ -25,7 +25,8 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.pcode.*;
 
 /**
- * A node in a tree of C code tokens. 
+ * A sequence of tokens that form a meaningful group in source code.  This group may
+ * break up into subgroups and may be part of a larger group.
  */
 public class ClangTokenGroup implements ClangNode, Iterable<ClangNode> {
 	private ClangNode parent;
@@ -49,6 +50,10 @@ public class ClangTokenGroup implements ClangNode, Iterable<ClangNode> {
 		return maxaddress;
 	}
 
+	/**
+	 * Add additional text to this group
+	 * @param obj is the additional text
+	 */
 	public void AddTokenGroup(ClangNode obj) {
 		Address minaddr = obj.getMinAddress();
 		Address maxaddr = obj.getMaxAddress();
@@ -106,6 +111,12 @@ public class ClangTokenGroup implements ClangNode, Iterable<ClangNode> {
 		}
 	}
 
+	/**
+	 * Decode this text from an encoded stream.
+	 * @param decoder is the decoder for the stream
+	 * @param pfactory is used to look up p-code attributes to associate with tokens
+	 * @throws DecoderException for problems decoding the stream
+	 */
 	public void decode(Decoder decoder, PcodeFactory pfactory) throws DecoderException {
 		for (;;) {
 			int elem = decoder.openElement();
@@ -145,7 +156,11 @@ public class ClangTokenGroup implements ClangNode, Iterable<ClangNode> {
 		}
 	}
 
-	private boolean isLetterDigitOrUnderscore(char c) {
+	/**
+	 * @param c is a character
+	 * @return true if the given character is a letter, digit, or underscore
+	 */
+	private static boolean isLetterDigitOrUnderscore(char c) {
 		return Character.isLetterOrDigit(c) || c == '_';
 	}
 

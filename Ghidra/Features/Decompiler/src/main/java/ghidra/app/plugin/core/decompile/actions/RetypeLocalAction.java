@@ -144,7 +144,7 @@ public class RetypeLocalAction extends AbstractDecompilerAction {
 		if (!tokenAtCursor.isVariableRef()) {
 			return false;
 		}
-		HighSymbol highSymbol = findHighSymbolFromToken(tokenAtCursor, context.getHighFunction());
+		HighSymbol highSymbol = tokenAtCursor.getHighSymbol(context.getHighFunction());
 		if (highSymbol == null) {
 			return false;
 		}
@@ -158,7 +158,7 @@ public class RetypeLocalAction extends AbstractDecompilerAction {
 		ClangToken tokenAtCursor = context.getTokenAtCursor();
 
 		DataType dataType = null;
-		HighSymbol highSymbol = findHighSymbolFromToken(tokenAtCursor, context.getHighFunction());
+		HighSymbol highSymbol = tokenAtCursor.getHighSymbol(context.getHighFunction());
 		if (highSymbol == null) {
 			return;
 		}

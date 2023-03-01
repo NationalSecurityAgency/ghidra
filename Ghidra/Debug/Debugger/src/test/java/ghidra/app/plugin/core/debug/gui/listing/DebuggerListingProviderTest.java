@@ -29,6 +29,7 @@ import java.util.Set;
 import org.junit.*;
 import org.junit.experimental.categories.Category;
 
+import db.Transaction;
 import docking.menu.ActionState;
 import docking.menu.MultiStateDockingAction;
 import docking.widgets.EventTrigger;
@@ -70,7 +71,6 @@ import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
@@ -120,12 +120,12 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		intoProject(program);
 
 		AddressSpace ss = program.getAddressFactory().getDefaultAddressSpace();
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add block")) {
+		try (Transaction tx = program.openTransaction("Add block")) {
 			program.getMemory()
 					.createInitializedBlock(".text", ss.getAddress(0x00600000), 0x10000, (byte) 0,
 						monitor, false);
 		}
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
 			memory.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
@@ -144,7 +144,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	public void testListingViewIsRegionsActivateThenAdd() throws Exception {
 		createAndOpenTrace();
 		traceManager.activateTrace(tb.trace);
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
 			memory.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
@@ -158,7 +158,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	@Test
 	public void testListingViewIsRegionsAddThenActivate() throws Exception {
 		createAndOpenTrace();
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
 			memory.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
@@ -174,7 +174,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	@Test
 	public void testRegisterTrackingOnRegisterChange() throws Exception {
 		createAndOpenTrace();
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
 			memory.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
@@ -200,7 +200,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	@Test
 	public void testRegisterTrackingOnSnapChange() throws Exception {
 		createAndOpenTrace();
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
 			memory.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
@@ -233,7 +233,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		createAndOpenTrace();
 		TraceThread thread1;
 		TraceThread thread2;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
 			memory.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
@@ -279,7 +279,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 				.submit(() -> listingPlugin.createListingIfMissing(PCLocationTrackingSpec.INSTANCE,
 					true))
 				.get();
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
 			memory.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
@@ -315,7 +315,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	@Test
 	public void testRegisterTrackingOnTrackingSpecChange() throws Exception {
 		createAndOpenTrace();
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
 			memory.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
@@ -354,7 +354,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 					new ToyDBTraceBuilder(name.getMethodName() + "_2", LANGID_TOYBE64)) {
 			TraceThread t1, t2;
 
-			try (UndoableTransaction tid = b1.startTransaction()) {
+			try (Transaction tx = b1.startTransaction()) {
 				b1.trace.getTimeManager().createSnapshot("First snap");
 				DBTraceMemoryManager memory = b1.trace.getMemoryManager();
 				memory.addRegion("exe:.text", Lifespan.nowOn(0), b1.range(0x00400000, 0x0040ffff),
@@ -366,7 +366,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 				regs.setValue(0, new RegisterValue(pc, BigInteger.valueOf(0x00401234)));
 			}
 			waitForDomainObject(b1.trace);
-			try (UndoableTransaction tid = b2.startTransaction()) {
+			try (Transaction tx = b2.startTransaction()) {
 				b2.trace.getTimeManager().createSnapshot("First snap");
 				DBTraceMemoryManager memory = b2.trace.getMemoryManager();
 				memory.addRegion("exe:.text", Lifespan.nowOn(0), b2.range(0x00400000, 0x0040ffff),
@@ -410,7 +410,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 					new ToyDBTraceBuilder(name.getMethodName() + "_2", LANGID_TOYBE64)) {
 			TraceThread t1, t2;
 
-			try (UndoableTransaction tid = b1.startTransaction()) {
+			try (Transaction tx = b1.startTransaction()) {
 				b1.trace.getTimeManager().createSnapshot("First snap");
 				DBTraceMemoryManager memory = b1.trace.getMemoryManager();
 				memory.addRegion("exe:.text", Lifespan.nowOn(0), b1.range(0x00400000, 0x0040ffff),
@@ -422,7 +422,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 				regs.setValue(0, new RegisterValue(pc, BigInteger.valueOf(0x00401234)));
 			}
 			waitForDomainObject(b1.trace);
-			try (UndoableTransaction tid = b2.startTransaction()) {
+			try (Transaction tx = b2.startTransaction()) {
 				b2.trace.getTimeManager().createSnapshot("First snap");
 				DBTraceMemoryManager memory = b2.trace.getMemoryManager();
 				memory.addRegion("exe:.text", Lifespan.nowOn(0), b2.range(0x00400000, 0x0040ffff),
@@ -494,13 +494,13 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		intoProject(program);
 
 		AddressSpace ss = program.getAddressFactory().getDefaultAddressSpace();
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add block")) {
+		try (Transaction tx = program.openTransaction("Add block")) {
 			program.getMemory()
 					.createInitializedBlock(".text", ss.getAddress(0x00600000), 0x10000, (byte) 0,
 						monitor, false);
 		}
 		TraceThread thread;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
 			memory.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
@@ -579,7 +579,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		waitForSwing();
 
 		TraceThread thread;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
 			memory.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
@@ -607,13 +607,13 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		intoProject(program);
 
 		AddressSpace ss = program.getAddressFactory().getDefaultAddressSpace();
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add block")) {
+		try (Transaction tx = program.openTransaction("Add block")) {
 			program.getMemory()
 					.createInitializedBlock(".text", ss.getAddress(0x00600000), 0x10000, (byte) 0,
 						monitor, false);
 		}
 		TraceThread thread;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
 			memory.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
@@ -769,7 +769,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		createAndOpenTrace();
 		waitForSwing();
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
 			memory.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
@@ -829,7 +829,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		assertFalse(listingProvider.actionGoTo.isEnabled());
 		createAndOpenTrace();
 		TraceThread thread;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			DBTraceMemoryManager mm = tb.trace.getMemoryManager();
 			mm.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
@@ -870,7 +870,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		assertTrue(listingProvider.actionTrackLocation.isEnabled());
 		createAndOpenTrace();
 		TraceThread thread;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			DBTraceMemoryManager mm = tb.trace.getMemoryManager();
 			mm.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
@@ -1017,7 +1017,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		createAndOpenTrace();
 		TraceThread thread1;
 		TraceThread thread2;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
 			memory.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
@@ -1069,7 +1069,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		// To verify enabled requires live target
 		createAndOpenTrace();
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getMemoryManager()
 					.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x55550000, 0x555500ff),
 						TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
@@ -1185,7 +1185,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		DebuggerConsolePlugin consolePlugin = addPlugin(tool, DebuggerConsolePlugin.class);
 
 		createAndOpenTrace();
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getMemoryManager()
 					.addRegion("bash:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0041ffff),
 						Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
@@ -1216,7 +1216,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		DebuggerConsolePlugin consolePlugin = addPlugin(tool, DebuggerConsolePlugin.class);
 
 		createAndOpenTrace();
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getMemoryManager()
 					.addRegion("bash:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0041ffff),
 						Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
@@ -1247,7 +1247,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		waitForSwing();
 		assertEquals("(nowhere)", listingProvider.locationLabel.getText());
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getMemoryManager()
 					.addRegion("test_region", Lifespan.nowOn(0), tb.range(0x55550000, 0x555502ff),
 						TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
@@ -1256,7 +1256,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		waitForPass(() -> assertEquals("test_region", listingProvider.locationLabel.getText()));
 
 		TraceModule modExe;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			modExe = tb.trace.getModuleManager()
 					.addModule("modExe", "modExe", tb.range(0x55550000, 0x555501ff),
 						Lifespan.nowOn(0));
@@ -1264,7 +1264,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		waitForDomainObject(tb.trace);
 		waitForPass(() -> assertEquals("modExe", listingProvider.locationLabel.getText()));
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			modExe.addSection(".text", tb.range(0x55550000, 0x555500ff));
 		}
 		waitForDomainObject(tb.trace);
@@ -1282,7 +1282,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 			new ToyDBTraceBuilder("dynamic2-" + name.getMethodName(), "dsPIC33F:LE:24:default")) {
 
 			TraceThread thread1;
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				tb.trace.getTimeManager().createSnapshot("First");
 				tb.trace.getMemoryManager()
 						.createRegion(".text", 0, tb.range(0x00400000, 0x0040ffff),
@@ -1292,7 +1292,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 			}
 
 			TraceThread thread2;
-			try (UndoableTransaction tid = tb2.startTransaction()) {
+			try (Transaction tx = tb2.startTransaction()) {
 				tb2.trace.getTimeManager().createSnapshot("First");
 				tb2.trace.getMemoryManager()
 						.createRegion(".text", 0, tb2.range(0x200, 0x3ff), TraceMemoryFlag.READ,
@@ -1323,7 +1323,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		Register pc = tb.language.getProgramCounter();
 		TraceThread thread1;
 		TraceThread thread2;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			DBTraceMemoryManager mm = tb.trace.getMemoryManager();
 			mm.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
@@ -1354,7 +1354,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		createAndOpenTrace();
 		Register pc = tb.language.getProgramCounter();
 		TraceThread thread;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			DBTraceMemoryManager mm = tb.trace.getMemoryManager();
 			mm.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
@@ -1382,7 +1382,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		createAndOpenTrace();
 		TraceThread thread;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			DBTraceMemoryManager mm = tb.trace.getMemoryManager();
 			mm.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
@@ -1413,7 +1413,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		DBTraceMemoryManager mm = tb.trace.getMemoryManager();
 		Register pc = tb.language.getProgramCounter();
 		TraceThread thread;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			mm.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 			thread = tb.getOrAddThread("Thread 1", 0);
@@ -1426,7 +1426,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		assertEquals(tb.addr(0x00401234), listingProvider.getLocation().getAddress());
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			TraceMemorySpace regs = mm.getMemoryRegisterSpace(thread, true);
 			regs.setValue(0, new RegisterValue(pc, new BigInteger("00404321", 16)));
 		}
@@ -1444,7 +1444,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		DBTraceMemoryManager mm = tb.trace.getMemoryManager();
 		Register pc = tb.language.getProgramCounter();
 		TraceThread thread;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			mm.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 			thread = tb.getOrAddThread("Thread 1", 0);
@@ -1461,7 +1461,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		assertEquals(tb.addr(0x00401234), listingProvider.getLocation().getAddress());
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			TraceMemorySpace regs = mm.getMemoryRegisterSpace(thread, true);
 			regs.setValue(0, new RegisterValue(pc, new BigInteger("00404321", 16)));
 		}
@@ -1478,7 +1478,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		createAndOpenTrace();
 		DBTraceStackManager sm = tb.trace.getStackManager();
 		TraceThread thread;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			DBTraceMemoryManager mm = tb.trace.getMemoryManager();
 			mm.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
@@ -1492,7 +1492,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		assertEquals(tb.addr(0x00401234), listingProvider.getLocation().getAddress());
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			TraceStack stack = sm.getStack(thread, 0, true);
 			stack.getFrame(0, true).setProgramCounter(Lifespan.ALL, tb.addr(0x00404321));
 		}
@@ -1511,12 +1511,12 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		intoProject(program);
 
 		AddressSpace ss = program.getAddressFactory().getDefaultAddressSpace();
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add block")) {
+		try (Transaction tx = program.openTransaction("Add block")) {
 			program.getMemory()
 					.createInitializedBlock(".text", ss.getAddress(0x00600000), 0x10000, (byte) 0,
 						monitor, false);
 		}
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
 			memory.addRegion("exe:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
@@ -1625,7 +1625,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	}
 
 	protected Instruction placeGuestInstruction(int guestRangeLength) throws Throwable {
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getMemoryManager()
 					.addRegion("Memory[.text]", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
 						Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));

@@ -29,6 +29,15 @@ import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 public class PrivatelyQueuedListener<P> {
 
 	protected class ListenerHandler implements InvocationHandler {
+		private static final Method OBJECT_HASHCODE;
+		static {
+			try {
+				OBJECT_HASHCODE = Object.class.getMethod("hashCode");
+			}
+			catch (NoSuchMethodException | SecurityException e) {
+				throw new AssertionError(e);
+			}
+		}
 		protected final Class<P> iface;
 
 		public ListenerHandler(Class<P> iface) {
@@ -37,6 +46,9 @@ public class PrivatelyQueuedListener<P> {
 
 		@Override
 		public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+			if (OBJECT_HASHCODE.equals(method)) {
+				return System.identityHashCode(proxy);
+			}
 			executor.execute(() -> {
 				try {
 					method.invoke(out, args);

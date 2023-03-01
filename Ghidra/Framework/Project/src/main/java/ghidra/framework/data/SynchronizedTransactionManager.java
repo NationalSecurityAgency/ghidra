@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.LinkedList;
 
 import ghidra.framework.model.*;
+import ghidra.framework.model.TransactionInfo.Status;
 import ghidra.framework.store.LockException;
 import ghidra.util.Msg;
 
@@ -59,8 +60,8 @@ class SynchronizedTransactionManager extends AbstractTransactionManager {
 			if (!(mgr instanceof DomainObjectTransactionManager)) {
 				throw new IllegalArgumentException("domain object has invalid transaction manager");
 			}
-			if (isLocked() || mgr.isLocked() || getCurrentTransaction() != null ||
-				mgr.getCurrentTransaction() != null) {
+			if (isLocked() || mgr.isLocked() || getCurrentTransactionInfo() != null ||
+				mgr.getCurrentTransactionInfo() != null) {
 				throw new LockException("domain object(s) are busy/locked");
 			}
 			if (!mgr.lock("Transaction manager join")) {
@@ -86,9 +87,9 @@ class SynchronizedTransactionManager extends AbstractTransactionManager {
 	}
 
 	synchronized void removeDomainObject(DomainObjectAdapterDB domainObj) throws LockException {
-		if (getCurrentTransaction() != null) {
+		if (getCurrentTransactionInfo() != null) {
 			throw new LockException(
-				"domain object has open transaction: " + getCurrentTransaction().getDescription());
+				"domain object has open transaction: " + getCurrentTransactionInfo().getDescription());
 		}
 		if (isLocked()) {
 			throw new LockException("domain object is locked!");
@@ -177,15 +178,15 @@ class SynchronizedTransactionManager extends AbstractTransactionManager {
 	}
 
 	@Override
-	synchronized Transaction endTransaction(DomainObjectAdapterDB object, int transactionID,
+	synchronized TransactionInfo endTransaction(DomainObjectAdapterDB object, int transactionID,
 			boolean commit, boolean notify) {
 		if (transaction == null) {
 			throw new IllegalStateException("No transaction is open");
 		}
-		Transaction returnedTransaction = transaction;
+		TransactionInfo returnedTransaction = transaction;
 		transaction.endEntry(object, transactionID, commit && !transactionTerminated);
-		int status = transaction.getStatus();
-		if (status == Transaction.COMMITTED) {
+		Status status = transaction.getStatus();
+		if (status == Status.COMMITTED) {
 			boolean committed = transaction.endAll(true);
 			if (committed) {
 				redoList.clear();
@@ -199,7 +200,7 @@ class SynchronizedTransactionManager extends AbstractTransactionManager {
 				notifyEndTransaction();
 			}
 		}
-		else if (status == Transaction.ABORTED) {
+		else if (status == Status.ABORTED) {
 			if (!transactionTerminated) {
 				transaction.endAll(false);
 			}
@@ -249,7 +250,7 @@ class SynchronizedTransactionManager extends AbstractTransactionManager {
 	@Override
 	synchronized String getRedoName() {
 		if (redoList.size() > 0) {
-			Transaction t = redoList.getLast();
+			TransactionInfo t = redoList.getLast();
 			return t.getDescription();
 		}
 		return "";
@@ -258,14 +259,14 @@ class SynchronizedTransactionManager extends AbstractTransactionManager {
 	@Override
 	synchronized String getUndoName() {
 		if (undoList.size() > 0) {
-			Transaction t = undoList.getLast();
+			TransactionInfo t = undoList.getLast();
 			return t.getDescription();
 		}
 		return "";
 	}
 
 	@Override
-	Transaction getCurrentTransaction() {
+	TransactionInfo getCurrentTransactionInfo() {
 		return transaction;
 	}
 

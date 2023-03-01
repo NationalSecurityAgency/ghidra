@@ -18,6 +18,7 @@ package ghidra.program.model.listing;
 import java.util.List;
 import java.util.Set;
 
+import db.Transaction;
 import ghidra.framework.model.UserData;
 import ghidra.framework.options.Options;
 import ghidra.program.model.util.*;
@@ -25,6 +26,19 @@ import ghidra.util.Saveable;
 import ghidra.util.exception.PropertyTypeMismatchException;
 
 public interface ProgramUserData extends UserData {
+
+	/**
+	 * Open new transaction.  This should generally be done with a try-with-resources block:
+	 * <pre>
+	 * try (Transaction tx = pud.openTransaction(description)) {
+	 * 	// ... Do something
+	 * }
+	 * </pre>
+	 * 
+	 * @return transaction object
+	 * @throws IllegalStateException if this {@link ProgramUserData} has already been closed.
+	 */
+	public Transaction openTransaction();
 
 	/**
 	 * Start a transaction prior to changing any properties

@@ -17,6 +17,7 @@ package ghidra.app.util.bin.format.omf;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
 
@@ -70,4 +71,9 @@ public class OmfSymbolRecord extends OmfRecord {
 	public OmfSymbol getSymbol(int i) {
 		return symbol[i];
 	}
+
+	public List<OmfSymbol> getSymbols() {
+		return List.of(symbol);
+	}
+
 }

@@ -27,6 +27,7 @@ import javax.swing.event.ChangeListener;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
+import db.Transaction;
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.ToggleDockingAction;
@@ -62,7 +63,6 @@ import ghidra.trace.model.time.schedule.Scheduler.RunResult;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ClassSearcher;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.Task;
@@ -556,8 +556,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 		DebuggerCoordinates current = traceManager.getCurrent();
 		Trace trace = current.getTrace();
 		long version = trace.getEmulatorCacheVersion();
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(trace, "Invalidate Emulator Cache")) {
+		try (Transaction tx = trace.openTransaction("Invalidate Emulator Cache")) {
 			trace.setEmulatorCacheVersion(version + 1);
 		}
 		// NB. Success should already display on screen, since it's current.
@@ -750,7 +749,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 	}
 
 	protected TraceSnapshot writeToScratch(CacheKey key, CachedEmulator ce) {
-		try (UndoableTransaction tid = UndoableTransaction.start(key.trace, "Emulate")) {
+		try (Transaction tx = key.trace.openTransaction("Emulate")) {
 			TraceSnapshot destSnap = findScratch(key.trace, key.time);
 			try {
 				ce.emulator().writeDown(key.platform, destSnap.getKey(), key.time.getSnap());
@@ -794,7 +793,7 @@ public class DebuggerEmulationServicePlugin extends Plugin implements DebuggerEm
 		// Cause object-register support to copy values into new register spaces
 		// TODO: I wish this were not necessary
 		monitor.setMessage("Creating register spaces");
-		try (UndoableTransaction tid = UndoableTransaction.start(trace, "Prepare emulation")) {
+		try (Transaction tx = trace.openTransaction("Prepare emulation")) {
 			for (TraceThread thread : time.getThreads(trace)) {
 				trace.getMemoryManager().getMemoryRegisterSpace(thread, 0, true);
 			}

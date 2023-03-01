@@ -294,4 +294,8 @@ public class DbgThreadImpl implements DbgThread {
 		this.offset = offset;
 	}
 
+	public void setTid(Long tid) {
+		this.tid = tid;
+	}
+
 }

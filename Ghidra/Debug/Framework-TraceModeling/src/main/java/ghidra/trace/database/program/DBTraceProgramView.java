@@ -24,6 +24,7 @@ import java.util.function.BiFunction;
 
 import org.apache.commons.lang3.tuple.Pair;
 
+import db.Transaction;
 import ghidra.framework.data.DomainObjectEventQueues;
 import ghidra.framework.model.*;
 import ghidra.framework.options.Options;
@@ -1296,6 +1297,11 @@ public class DBTraceProgramView implements TraceProgramView {
 	}
 
 	@Override
+	public Transaction openTransaction(String description) throws IllegalStateException {
+		return trace.openTransaction(description);
+	}
+
+	@Override
 	public int startTransaction(String description) {
 		return trace.startTransaction(description);
 	}
@@ -1311,8 +1317,8 @@ public class DBTraceProgramView implements TraceProgramView {
 	}
 
 	@Override
-	public Transaction getCurrentTransaction() {
-		return trace.getCurrentTransaction();
+	public TransactionInfo getCurrentTransactionInfo() {
+		return trace.getCurrentTransactionInfo();
 	}
 
 	@Override

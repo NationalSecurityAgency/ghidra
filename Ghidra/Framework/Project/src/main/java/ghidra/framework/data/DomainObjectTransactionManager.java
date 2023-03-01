@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.LinkedList;
 
 import ghidra.framework.model.*;
+import ghidra.framework.model.TransactionInfo.Status;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 import ghidra.util.datastruct.WeakDataStructureFactory;
@@ -138,8 +139,8 @@ class DomainObjectTransactionManager extends AbstractTransactionManager {
 	}
 
 	@Override
-	synchronized Transaction endTransaction(DomainObjectAdapterDB object, int transactionID,
-			boolean commit, boolean notify) {
+	synchronized TransactionInfo endTransaction(DomainObjectAdapterDB object, int transactionID,
+			boolean commit, boolean notify) throws IllegalStateException {
 		if (object != domainObj) {
 			throw new IllegalArgumentException("invalid domain object");
 		}
@@ -149,8 +150,8 @@ class DomainObjectTransactionManager extends AbstractTransactionManager {
 		DomainObjectDBTransaction returnedTransaction = transaction;
 		try {
 			transaction.endEntry(transactionID, commit && !transactionTerminated);
-			int status = transaction.getStatus();
-			if (status == Transaction.COMMITTED) {
+			Status status = transaction.getStatus();
+			if (status == Status.COMMITTED) {
 				object.flushWriteCache();
 				boolean committed = domainObj.dbh.endTransaction(transaction.getID(), true);
 				if (committed) {
@@ -171,7 +172,7 @@ class DomainObjectTransactionManager extends AbstractTransactionManager {
 				}
 				transaction = null;
 			}
-			else if (status == Transaction.ABORTED) {
+			else if (status == Status.ABORTED) {
 				object.invalidateWriteCache();
 				if (!transactionTerminated) {
 					domainObj.dbh.endTransaction(transaction.getID(), false);
@@ -225,7 +226,7 @@ class DomainObjectTransactionManager extends AbstractTransactionManager {
 	@Override
 	synchronized String getRedoName() {
 		if (transaction == null && redoList.size() > 0) {
-			Transaction t = redoList.getLast();
+			TransactionInfo t = redoList.getLast();
 			return t.getDescription();
 		}
 		return "";
@@ -234,14 +235,14 @@ class DomainObjectTransactionManager extends AbstractTransactionManager {
 	@Override
 	synchronized String getUndoName() {
 		if (transaction == null && undoList.size() > 0) {
-			Transaction t = undoList.getLast();
+			TransactionInfo t = undoList.getLast();
 			return t.getDescription();
 		}
 		return "";
 	}
 
 	@Override
-	Transaction getCurrentTransaction() {
+	TransactionInfo getCurrentTransactionInfo() {
 		return transaction;
 	}
 
@@ -318,7 +319,7 @@ class DomainObjectTransactionManager extends AbstractTransactionManager {
 		transactionListeners.remove(listener);
 	}
 
-	void notifyStartTransaction(Transaction tx) {
+	void notifyStartTransaction(TransactionInfo tx) {
 		SystemUtilities.runSwingLater(() -> {
 			for (TransactionListener listener : transactionListeners) {
 				listener.transactionStarted(domainObj, tx);

@@ -25,6 +25,7 @@ import java.util.function.Predicate;
 
 import org.junit.Test;
 
+import db.Transaction;
 import docking.widgets.fieldpanel.Layout;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
@@ -48,8 +49,8 @@ import ghidra.app.plugin.core.decompile.DecompilePlugin;
 import ghidra.app.plugin.core.decompile.DecompilerProvider;
 import ghidra.app.plugin.core.disassembler.DisassemblerPlugin;
 import ghidra.app.services.*;
-import ghidra.app.services.DebuggerEmulationService.EmulationResult;
 import ghidra.app.services.DebuggerControlService.StateEditor;
+import ghidra.app.services.DebuggerEmulationService.EmulationResult;
 import ghidra.app.util.viewer.field.FieldFactory;
 import ghidra.app.util.viewer.field.ListingField;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
@@ -78,7 +79,6 @@ import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.Scheduler;
 import ghidra.util.Msg;
 import ghidra.util.NumericUtilities;
-import ghidra.util.database.UndoableTransaction;
 
 public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 
@@ -135,7 +135,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 	protected Function createSumSquaresProgramX86_32() throws Throwable {
 		createProgram("x86:LE:32:default", "gcc");
 		intoProject(program);
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Assemble")) {
+		try (Transaction tx = program.openTransaction("Assemble")) {
 			Address entry = addr(program, 0x00400000);
 			program.getMemory()
 					.createInitializedBlock(".text", entry, 0x1000, (byte) 0, monitor, false);
@@ -199,7 +199,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 	protected Function createFibonacciProgramX86_32() throws Throwable {
 		createProgram("x86:LE:32:default", "gcc");
 		intoProject(program);
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Assemble")) {
+		try (Transaction tx = program.openTransaction("Assemble")) {
 			Address entry = addr(program, 0x00400000);
 			program.getMemory()
 					.createInitializedBlock(".text", entry, 0x1000, (byte) 0, monitor, false);
@@ -276,7 +276,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 		createProgram("x86:LE:32:default", "gcc");
 		intoProject(program);
 		Address entry;
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Assemble")) {
+		try (Transaction tx = program.openTransaction("Assemble")) {
 			entry = addr(program, 0x00400000);
 			Address externs = addr(program, 0x00700000);
 			program.getMemory()
@@ -338,7 +338,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 		createProgram("x86:LE:32:default", "gcc");
 		intoProject(program);
 		Address entry;
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Assemble")) {
+		try (Transaction tx = program.openTransaction("Assemble")) {
 			entry = addr(program, 0x00400000);
 			program.getMemory()
 					.createInitializedBlock(".text", entry, 0x1000, (byte) 0, monitor, false);
@@ -393,7 +393,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 		createProgram("x86:LE:32:default", "gcc");
 		intoProject(program);
 
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Assemble")) {
+		try (Transaction tx = program.openTransaction("Assemble")) {
 			Address entry = addr(program, 0x00400000);
 			program.getMemory()
 					.createInitializedBlock(".text", entry, 0x1000, (byte) 0, monitor, false);
@@ -430,7 +430,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 		createProgram("x86:LE:32:default", "gcc");
 		intoProject(program);
 
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Assemble")) {
+		try (Transaction tx = program.openTransaction("Assemble")) {
 			ProgramBasedDataTypeManager dtm = program.getDataTypeManager();
 			Structure structure = new StructureDataType("MyStruct", 0, dtm);
 			structure.add(WordDataType.dataType, "y", "");
@@ -515,7 +515,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 		createProgram("x86:LE:32:default", "gcc");
 		intoProject(program);
 
-		try (UndoableTransaction tid = UndoableTransaction.start(program, "Assemble")) {
+		try (Transaction tx = program.openTransaction("Assemble")) {
 			ProgramBasedDataTypeManager dtm = program.getDataTypeManager();
 			Structure structure = new StructureDataType("MyStruct", 0, dtm);
 			structure.add(WordDataType.dataType, "y", "");
@@ -702,7 +702,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 		waitOn(frameAtSetup.setValue(editor, param1, BigInteger.valueOf(4)));
 		waitForTasks();
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), retInstr, Set.of(),
 						Set.of(TraceBreakpointKind.SW_EXECUTE), true, "capture return value");
@@ -764,7 +764,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 		waitForTasks();
 
 		TraceBreakpoint bptUnwind;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			bptUnwind = tb.trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), retInstr,
 						Set.of(),
@@ -802,7 +802,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 			}
 		}
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			bptUnwind.delete();
 		}
 
@@ -845,7 +845,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 		waitForSwing();
 
 		DebuggerCoordinates atSetup = traceManager.getCurrent();
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			new UnwindStackCommand(tool, atSetup).applyTo(tb.trace, monitor);
 		}
 		waitForDomainObject(tb.trace);
@@ -907,7 +907,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 		waitOn(frameAtSetup.setReturnAddress(editor, tb.addr(0xdeadbeef)));
 		waitForTasks();
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), retInstr,
 						Set.of(),
@@ -921,7 +921,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 		traceManager.activateTime(result.schedule());
 		waitForTasks();
 		DebuggerCoordinates tallest = traceManager.getCurrent();
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			new UnwindStackCommand(tool, tallest).applyTo(tb.trace, monitor);
 		}
 		waitForDomainObject(tb.trace);
@@ -950,7 +950,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 		Register sp = program.getCompilerSpec().getStackPointer();
 		waitOn(editor.setRegister(new RegisterValue(sp, BigInteger.valueOf(0x4ff0))));
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), retInstr,
 						Set.of(),
@@ -965,7 +965,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 		traceManager.activateTime(result.schedule());
 		waitForTasks();
 		DebuggerCoordinates atRet = traceManager.getCurrent();
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			new UnwindStackCommand(tool, atRet).applyTo(tb.trace, monitor);
 		}
 		waitForDomainObject(tb.trace);
@@ -994,7 +994,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 		Register sp = program.getCompilerSpec().getStackPointer();
 		waitOn(editor.setRegister(new RegisterValue(sp, BigInteger.valueOf(0x4ff0))));
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), retInstr,
 						Set.of(),
@@ -1009,7 +1009,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 		traceManager.activateTime(result.schedule());
 		waitForTasks();
 		DebuggerCoordinates atRet = traceManager.getCurrent();
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			new UnwindStackCommand(tool, atRet).applyTo(tb.trace, monitor);
 		}
 		waitForDomainObject(tb.trace);
@@ -1038,7 +1038,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 		Register sp = program.getCompilerSpec().getStackPointer();
 		waitOn(editor.setRegister(new RegisterValue(sp, BigInteger.valueOf(0x4ff0))));
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getBreakpointManager()
 					.addBreakpoint("Breakpoints[0]", Lifespan.nowOn(0), retInstr,
 						Set.of(),
@@ -1053,7 +1053,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 		traceManager.activateTime(result.schedule());
 		waitForTasks();
 		DebuggerCoordinates atRet = traceManager.getCurrent();
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			new UnwindStackCommand(tool, atRet).applyTo(tb.trace, monitor);
 		}
 		waitForDomainObject(tb.trace);
@@ -1261,7 +1261,7 @@ public class StackUnwinderTest extends AbstractGhidraHeadedDebuggerGUITest {
 		TraceLocation dynLoc = mappingService.getOpenMappedLocation(tb.trace,
 			new ProgramLocation(program, stIns.getAddress()), current.getSnap());
 		Address dynamicAddress = dynLoc.getAddress();
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			int length = stIns.getLength();
 			assertEquals(length, tb.trace.getMemoryManager()
 					.putBytes(current.getSnap(), dynamicAddress,

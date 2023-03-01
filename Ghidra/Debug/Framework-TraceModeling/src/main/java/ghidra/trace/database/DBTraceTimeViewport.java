@@ -19,8 +19,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.*;
-
 import ghidra.program.model.address.*;
 import ghidra.trace.model.*;
 import ghidra.trace.model.Lifespan.DefaultLifeSet;
@@ -324,10 +322,10 @@ public class DBTraceTimeViewport implements TraceTimeViewport {
 	public List<Long> getReversedSnaps() {
 		try (LockHold hold = trace.lockRead()) {
 			synchronized (ordered) {
-				return Lists.reverse(ordered)
-						.stream()
-						.map(Lifespan::lmax)
-						.collect(Collectors.toList());
+				List<Long> reversed =
+					ordered.stream().map(Lifespan::lmax).collect(Collectors.toList());
+				Collections.reverse(reversed);
+				return reversed;
 			}
 		}
 	}

@@ -21,8 +21,6 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.function.Consumer;
 
-import com.google.common.cache.RemovalNotification;
-
 import ghidra.framework.store.LockException;
 import ghidra.program.database.mem.*;
 import ghidra.program.model.address.*;
@@ -55,16 +53,6 @@ public abstract class AbstractDBTraceProgramViewMemory
 		this.program = program;
 		this.memoryManager = program.trace.getMemoryManager();
 		setSnap(program.snap);
-	}
-
-	protected void regionBlockRemoved(
-			RemovalNotification<TraceMemoryRegion, DBTraceProgramViewMemoryRegionBlock> rn) {
-		// Nothing
-	}
-
-	protected void spaceBlockRemoved(
-			RemovalNotification<AddressSpace, DBTraceProgramViewMemorySpaceBlock> rn) {
-		// Nothing
 	}
 
 	protected abstract void recomputeAddressSet();

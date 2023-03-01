@@ -27,9 +27,7 @@ import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
-import ghidra.program.model.pcode.HighCodeSymbol;
-import ghidra.program.model.pcode.HighFunctionShellSymbol;
-import ghidra.program.model.pcode.HighSymbol;
+import ghidra.program.model.pcode.*;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolTable;
 import ghidra.util.*;
@@ -62,7 +60,7 @@ public class RenameGlobalAction extends AbstractDecompilerAction {
 		if (tokenAtCursor instanceof ClangFieldToken) {
 			return false;
 		}
-		HighSymbol highSymbol = findHighSymbolFromToken(tokenAtCursor, context.getHighFunction());
+		HighSymbol highSymbol = tokenAtCursor.getHighSymbol(context.getHighFunction());
 		if (highSymbol == null || highSymbol instanceof HighFunctionShellSymbol) {
 			return false;
 		}
@@ -73,7 +71,7 @@ public class RenameGlobalAction extends AbstractDecompilerAction {
 	protected void decompilerActionPerformed(DecompilerActionContext context) {
 		PluginTool tool = context.getTool();
 		final ClangToken tokenAtCursor = context.getTokenAtCursor();
-		HighSymbol highSymbol = findHighSymbolFromToken(tokenAtCursor, context.getHighFunction());
+		HighSymbol highSymbol = tokenAtCursor.getHighSymbol(context.getHighFunction());
 		Symbol symbol = null;
 		if (highSymbol instanceof HighCodeSymbol) {
 			symbol = ((HighCodeSymbol) highSymbol).getCodeSymbol();

@@ -20,6 +20,7 @@ import java.util.Set;
 
 import org.junit.*;
 
+import db.Transaction;
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
 import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
 import ghidra.app.services.DebuggerTraceManagerService;
@@ -31,7 +32,6 @@ import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.util.database.UndoableTransaction;
 import help.screenshot.GhidraScreenShotGenerator;
 
 public class DebuggerMemviewPluginScreenShots extends GhidraScreenShotGenerator {
@@ -78,13 +78,13 @@ public class DebuggerMemviewPluginScreenShots extends GhidraScreenShotGenerator 
 	private void populateTraceAndPrograms() throws Exception {
 		tool.getProject().getProjectData().getRootFolder();
 		TraceThread thread1;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			thread1 = tb.trace.getThreadManager().addThread("[0]", Lifespan.span(1, 40));
 			tb.trace.getThreadManager().addThread("[1]", Lifespan.span(4, 50));
 			tb.trace.getThreadManager().addThread("[2]", Lifespan.span(6, 20));
 		}
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getModuleManager()
 					.addLoadedModule("/bin/bash", "/bin/bash", tb.range(0x00400000, 0x0060ffff), 0);
 			tb.trace.getModuleManager()
@@ -92,7 +92,7 @@ public class DebuggerMemviewPluginScreenShots extends GhidraScreenShotGenerator 
 						tb.range(0x7fac0000, 0x7faeffff), 10);
 		}
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getMemoryManager()
 					.addRegion("bash.text", Lifespan.nowOn(5), tb.range(0x00400000, 0x0040ffff),
 						TraceMemoryFlag.EXECUTE);
@@ -108,7 +108,7 @@ public class DebuggerMemviewPluginScreenShots extends GhidraScreenShotGenerator 
 						TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
 		}
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			Set<TraceThread> threads = new HashSet<TraceThread>();
 			Set<TraceBreakpointKind> kinds = new HashSet<TraceBreakpointKind>();
 			threads.add(thread1);

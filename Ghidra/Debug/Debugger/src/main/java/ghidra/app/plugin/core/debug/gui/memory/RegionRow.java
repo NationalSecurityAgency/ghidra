@@ -15,11 +15,11 @@
  */
 package ghidra.app.plugin.core.debug.gui.memory;
 
+import db.Transaction;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.TraceMemoryRegion;
-import ghidra.util.database.UndoableTransaction;
 
 public class RegionRow {
 	private final TraceMemoryRegion region;
@@ -33,8 +33,7 @@ public class RegionRow {
 	}
 
 	public void setName(String name) {
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(region.getTrace(), "Rename region")) {
+		try (Transaction tx = region.getTrace().openTransaction("Rename region")) {
 			region.setName(name);
 		}
 	}
@@ -73,8 +72,8 @@ public class RegionRow {
 	}
 
 	public void setRead(boolean read) {
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(region.getTrace(), "Toggle region read flag")) {
+		try (Transaction tx =
+			region.getTrace().openTransaction("Toggle region read flag")) {
 			region.setRead(read);
 		}
 	}
@@ -84,8 +83,8 @@ public class RegionRow {
 	}
 
 	public void setWrite(boolean write) {
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(region.getTrace(), "Toggle region write flag")) {
+		try (Transaction tx =
+			region.getTrace().openTransaction("Toggle region write flag")) {
 			region.setWrite(write);
 		}
 	}
@@ -95,8 +94,8 @@ public class RegionRow {
 	}
 
 	public void setExecute(boolean execute) {
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(region.getTrace(), "Toggle region execute flag")) {
+		try (Transaction tx =
+			region.getTrace().openTransaction("Toggle region execute flag")) {
 			region.setExecute(execute);
 		}
 	}
@@ -106,8 +105,8 @@ public class RegionRow {
 	}
 
 	public void setVolatile(boolean vol) {
-		try (UndoableTransaction tid =
-			UndoableTransaction.start(region.getTrace(), "Toggle region volatile flag")) {
+		try (Transaction tx =
+			region.getTrace().openTransaction("Toggle region volatile flag")) {
 			region.setVolatile(vol);
 		}
 	}

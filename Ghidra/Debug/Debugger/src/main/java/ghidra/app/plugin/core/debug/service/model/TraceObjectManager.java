@@ -22,6 +22,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.*;
 import java.util.stream.Collectors;
 
+import db.Transaction;
 import ghidra.app.plugin.core.debug.mapping.*;
 import ghidra.app.plugin.core.debug.service.model.interfaces.*;
 import ghidra.app.services.TraceRecorder;
@@ -38,7 +39,6 @@ import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.modules.TraceSection;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.Msg;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -254,8 +254,8 @@ public class TraceObjectManager {
 			ManagedThreadRecorder threadRecorder = recorder.getThreadRecorder((TargetThread) added);
 			TraceThread traceThread = threadRecorder.getTraceThread();
 			recorder.createSnapshot(traceThread + " started", traceThread, null);
-			try (UndoableTransaction tid =
-				UndoableTransaction.start(recorder.getTrace(), "Adjust thread creation")) {
+			try (Transaction tx =
+				recorder.getTrace().openTransaction("Adjust thread creation")) {
 				long existing = traceThread.getCreationSnap();
 				if (existing == Long.MIN_VALUE) {
 					traceThread.setCreationSnap(recorder.getSnap());
@@ -546,8 +546,7 @@ public class TraceObjectManager {
 			ManagedThreadRecorder rec = recorder.getThreadRecorderForSuccessor(thread);
 			if (rec != null) {
 				String name = (String) added.get(TargetObject.DISPLAY_ATTRIBUTE_NAME);
-				try (UndoableTransaction tid =
-					UndoableTransaction.start(rec.getTrace(), "Rename thread")) {
+				try (Transaction tx = rec.getTrace().openTransaction("Rename thread")) {
 					rec.getTraceThread().setName(name);
 				}
 			}

@@ -23,6 +23,7 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
+import db.Transaction;
 import generic.Unique;
 import ghidra.app.plugin.assembler.Assembler;
 import ghidra.app.plugin.assembler.Assemblers;
@@ -45,7 +46,6 @@ import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.schedule.TraceSchedule;
-import ghidra.util.database.UndoableTransaction;
 
 public class DebuggerPcodeStepperProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
 
@@ -75,7 +75,7 @@ public class DebuggerPcodeStepperProviderTest extends AbstractGhidraHeadedDebugg
 	protected void populateTrace() throws Exception {
 		start = tb.addr(0x00400000);
 		InstructionIterator iit;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getMemoryManager()
 					.addRegion("echo:.text", Lifespan.nowOn(0), tb.range(0x00400000, 0x0040ffff),
 						TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);

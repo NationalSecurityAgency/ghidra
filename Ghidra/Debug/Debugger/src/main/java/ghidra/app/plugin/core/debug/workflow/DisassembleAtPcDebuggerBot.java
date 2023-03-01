@@ -20,6 +20,7 @@ import java.util.Map.Entry;
 
 import javax.swing.event.ChangeListener;
 
+import db.Transaction;
 import docking.DockingWindowManager;
 import docking.Tool;
 import ghidra.app.plugin.core.debug.mapping.DebuggerPlatformMapper;
@@ -33,7 +34,8 @@ import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.annotation.HelpInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.PointerTypedef;
+import ghidra.program.model.data.VoidDataType;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.trace.model.*;
@@ -49,7 +51,6 @@ import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.*;
 import ghidra.util.*;
 import ghidra.util.classfinder.ClassSearcher;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.task.TaskMonitor;
 
 @DebuggerBotInfo( //
@@ -222,8 +223,8 @@ public class DisassembleAtPcDebuggerBot implements DebuggerBot {
 				return;
 			}
 			TraceData pcUnit = null;
-			try (UndoableTransaction tid =
-				UndoableTransaction.start(trace, "Disassemble: PC is code pointer")) {
+			try (Transaction tx =
+				trace.openTransaction("Disassemble: PC is code pointer")) {
 				TraceCodeSpace regCode = codeManager.getCodeRegisterSpace(thread, frameLevel, true);
 				// TODO: Should be same platform as pc, not necessarily base
 				AddressSpace space = trace.getBaseAddressFactory().getDefaultAddressSpace();

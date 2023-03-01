@@ -20,11 +20,9 @@ import java.util.ArrayList;
 
 import ghidra.app.util.bin.BinaryReader;
 
-public class OmfIteratedData extends OmfRecord implements OmfData {
+public class OmfIteratedData extends OmfData {
 
 	public static final int MAX_ITERATED_FILL = 0x100000;	// Maximum number of bytes in expanded form
-	private int segmentIndex;
-	private long dataOffset;
 	private DataBlock[] datablock;
 
 	public OmfIteratedData(BinaryReader reader) throws IOException {
@@ -41,15 +39,6 @@ public class OmfIteratedData extends OmfRecord implements OmfData {
 		readCheckSumByte(reader);
 		datablock = new DataBlock[blocklist.size()];
 		blocklist.toArray(datablock);
-	}
-
-	public int getSegmentIndex() {
-		return segmentIndex;
-	}
-
-	@Override
-	public long getDataOffset() {
-		return dataOffset;
 	}
 
 	@Override
@@ -85,15 +74,9 @@ public class OmfIteratedData extends OmfRecord implements OmfData {
 		return buffer;
 	}
 
-	@Override
-	public int compareTo(OmfData o) {
-		long otherOffset = o.getDataOffset();
-		if (dataOffset == otherOffset) {
-			return 0;
-		}
-		return (dataOffset < otherOffset) ? -1 : 1;
-	}
-
+	/**
+	 * Contain the definition of one part of a datablock with possible recursion
+	 */
 	public static class DataBlock {
 		private int repeatCount;
 		private int blockCount;
@@ -120,6 +103,12 @@ public class OmfIteratedData extends OmfRecord implements OmfData {
 			return subblock;
 		}
 
+		/**
+		 * Fill part of the buffer
+		 * @param buffer The buffer to fill
+		 * @param pos The next position to fill
+		 * @return The position after the block
+		 */
 		public int fillBuffer(byte[] buffer, int pos) {
 			for (int i = 0; i < repeatCount; ++i) {
 				if (simpleBlock != null) {
@@ -137,6 +126,9 @@ public class OmfIteratedData extends OmfRecord implements OmfData {
 			return pos;
 		}
 
+		/**
+		 * @return The length of this block
+		 */
 		public int getLength() {
 			int length = 0;
 			if (simpleBlock != null) {

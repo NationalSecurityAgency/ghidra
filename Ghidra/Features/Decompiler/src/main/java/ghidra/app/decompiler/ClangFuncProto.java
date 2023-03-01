@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- * Created on Jun 12, 2003
- *
- * To change the template for this generated file go to
- * Window>Preferences>Java>Code Generation>Code and Comments
- */
 package ghidra.app.decompiler;
 
-
 /**
- * 
- *
- * The C code syntax for a function prototype
+ * A grouping of source code tokens representing a function prototype
  */
 public class ClangFuncProto extends ClangTokenGroup {
-	public ClangFuncProto(ClangNode par) { super(par); }
+	public ClangFuncProto(ClangNode par) {
+		super(par);
+	}
 }

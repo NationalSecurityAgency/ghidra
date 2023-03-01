@@ -21,7 +21,7 @@ import java.nio.ByteOrder;
 
 import org.apache.commons.lang3.ArrayUtils;
 
-public interface MemBufferAdapter extends MemBuffer {
+public interface MemBufferMixin extends MemBuffer {
 	int getBytes(ByteBuffer buffer, int addressOffset);
 
 	@Override

@@ -15,7 +15,7 @@
  */
 package ghidra.trace.database.symbol;
 
-import static ghidra.lifecycle.Unfinished.TODO;
+import static ghidra.lifecycle.Unfinished.*;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
@@ -23,6 +23,7 @@ import java.util.*;
 
 import org.junit.*;
 
+import db.Transaction;
 import ghidra.app.cmd.function.AddRegisterParameterCommand;
 import ghidra.app.cmd.function.AddStackVarCmd;
 import ghidra.app.cmd.refs.AddStackRefCmd;
@@ -42,7 +43,6 @@ import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.TraceOverlappedRegionException;
 import ghidra.trace.model.symbol.*;
 import ghidra.util.IntersectionAddressSetView;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
@@ -56,7 +56,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 	public void setUpFunctionTest()
 			throws IOException, TraceOverlappedRegionException, DuplicateNameException {
 		b = new ToyDBTraceBuilder("Testing", ProgramBuilder._TOY);
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			b.trace.getMemoryManager().createRegion("test", 0, b.range(100, 599));
 		}
 		functions = b.trace.getSymbolManager().functions();
@@ -165,7 +165,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 
 	@Test
 	public void testGetName() throws InvalidInputException, OverlappingFunctionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			TraceFunctionSymbol f = functions.create(0, b.addr(100), b.set(b.range(100, 200)),
 				"foo", null, null, SourceType.USER_DEFINED);
 			assertEquals("foo", f.getName());
@@ -175,7 +175,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 	@Test
 	public void testSetNameUser()
 			throws InvalidInputException, OverlappingFunctionException, DuplicateNameException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			TraceFunctionSymbol f = functions.create(0, b.addr(100), b.set(b.range(100, 200)),
 				"foo", null, null, SourceType.USER_DEFINED);
 			// TODO: Monitor for event
@@ -189,7 +189,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 	@Test
 	public void testSetNameAnalysis()
 			throws InvalidInputException, OverlappingFunctionException, DuplicateNameException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			TraceFunctionSymbol f = functions.create(0, b.addr(100), b.set(b.range(100, 200)),
 				"foo", null, null, SourceType.USER_DEFINED);
 			f.setName("bar", SourceType.ANALYSIS);
@@ -201,7 +201,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 	@Test
 	public void testSetNameImported()
 			throws InvalidInputException, OverlappingFunctionException, DuplicateNameException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			TraceFunctionSymbol f = functions.create(0, b.addr(100), b.set(b.range(100, 200)),
 				"foo", null, null, SourceType.USER_DEFINED);
 			f.setName("bar", SourceType.IMPORTED);
@@ -213,7 +213,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 	@Test
 	public void testSetNameDefault()
 			throws InvalidInputException, OverlappingFunctionException, DuplicateNameException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			String defaultName = SymbolUtilities.getDefaultFunctionName(b.addr(100));
 			TraceFunctionSymbol f = functions.create(0, b.addr(100), b.set(b.range(100, 200)),
 				"foo", null, null, SourceType.USER_DEFINED);
@@ -226,7 +226,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 	@Test
 	public void testSetNameDefaultError()
 			throws InvalidInputException, OverlappingFunctionException, DuplicateNameException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			TraceFunctionSymbol f = functions.create(0, b.addr(100), b.set(b.range(100, 200)),
 				"foo", null, null, SourceType.USER_DEFINED);
 			try {
@@ -242,7 +242,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 
 	@Test
 	public void testSetComment() throws InvalidInputException, OverlappingFunctionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			TraceFunctionSymbol f = functions.create(0, b.addr(100), b.set(b.range(100, 200)),
 				"foo", null, null, SourceType.USER_DEFINED);
 			f.setComment("Test Comment\nLine 2");
@@ -254,7 +254,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 
 	@Test
 	public void testSetRepeatable() throws InvalidInputException, OverlappingFunctionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			TraceFunctionSymbol f = functions.create(0, b.addr(100), b.set(b.range(100, 200)),
 				"foo", null, null, SourceType.USER_DEFINED);
 			f.setRepeatableComment("Test Comment\nLine 2");
@@ -266,7 +266,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 
 	@Test
 	public void testCreateFunction() throws InvalidInputException, OverlappingFunctionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			// TODO: Monitor events
 			AddressSetView body = b.set(b.range(100, 350), b.range(400, 450), b.range(500, 550));
 			TraceFunctionSymbol f =
@@ -285,7 +285,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 
 	@Test
 	public void testSetBody() throws InvalidInputException, OverlappingFunctionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			// TODO: Monitor events
 			AddressSetView body = b.set(b.range(100, 350), b.range(400, 450), b.range(500, 550));
 			TraceFunctionSymbol f =
@@ -301,7 +301,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 	@Test
 	public void testSetBodyClearVarRefs()
 			throws InvalidInputException, OverlappingFunctionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			AddressSetView body = b.set(b.range(100, 350), b.range(400, 450), b.range(500, 550));
 			TraceFunctionSymbol f =
 				functions.create(0, b.addr(100), body, "foo", null, null, SourceType.USER_DEFINED);
@@ -354,7 +354,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 	@Test
 	public void testSetBodyClearVarRefsExceptOneInBoth()
 			throws InvalidInputException, OverlappingFunctionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			AddressSetView body = b.set(b.range(100, 350), b.range(400, 450), b.range(500, 550));
 			TraceFunctionSymbol f =
 				functions.create(0, b.addr(100), body, "foo", null, null, SourceType.USER_DEFINED);
@@ -412,7 +412,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 	@Test
 	public void testSetBodyInvalidEntryPoint()
 			throws InvalidInputException, OverlappingFunctionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			AddressSetView body = b.set(b.range(100, 350), b.range(400, 450), b.range(500, 550));
 			TraceFunctionSymbol f =
 				functions.create(0, b.addr(100), body, "foo", null, null, SourceType.USER_DEFINED);
@@ -431,7 +431,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 	@Test
 	public void testSetBodyOverlapping()
 			throws InvalidInputException, OverlappingFunctionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			AddressSetView body = b.set(b.range(100, 350), b.range(400, 450), b.range(500, 550));
 			TraceFunctionSymbol f =
 				functions.create(0, b.addr(100), body, "foo", null, null, SourceType.USER_DEFINED);
@@ -460,7 +460,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 	@Test
 	public void testSetBodyClearSymbols()
 			throws InvalidInputException, OverlappingFunctionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			AddressSetView body = b.set(b.range(100, 350), b.range(400, 450), b.range(500, 550));
 			TraceFunctionSymbol f =
 				functions.create(0, b.addr(100), body, "foo", null, null, SourceType.USER_DEFINED);
@@ -490,7 +490,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 
 	@Test
 	public void testGetVariables() throws InvalidInputException, OverlappingFunctionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			AddressSetView body = b.set(b.range(100, 350), b.range(400, 450), b.range(500, 550));
 			TraceFunctionSymbol f =
 				functions.create(0, b.addr(100), body, "foo", null, null, SourceType.USER_DEFINED);
@@ -529,7 +529,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 
 	@Test
 	public void testGetReturnType() throws InvalidInputException, OverlappingFunctionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			AddressSetView body = b.set(b.range(100, 350), b.range(400, 450), b.range(500, 550));
 			TraceFunctionSymbol f =
 				functions.create(0, b.addr(100), body, "foo", null, null, SourceType.USER_DEFINED);
@@ -540,7 +540,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 
 	@Test
 	public void testSetReturnType() throws InvalidInputException, OverlappingFunctionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			AddressSetView body = b.set(b.range(100, 350), b.range(400, 450), b.range(500, 550));
 			TraceFunctionSymbol f =
 				functions.create(0, b.addr(100), body, "foo", null, null, SourceType.USER_DEFINED);
@@ -558,7 +558,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 	@Test
 	public void testSetCustomStorage() throws DuplicateNameException, InvalidInputException,
 			IllegalArgumentException, OverlappingFunctionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			TraceFunctionSymbol f = createTestFunction();
 			int initialParamCnt = f.getParameterCount();
 
@@ -622,7 +622,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 	@Test
 	public void testSetCallingConvention() throws DuplicateNameException, InvalidInputException,
 			IllegalArgumentException, OverlappingFunctionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			TraceFunctionSymbol f = createTestFunction();
 
 			int initialParamCnt = f.getParameterCount();
@@ -725,7 +725,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 	@Test
 	public void testUpdateFunctionCustomStorage() throws DuplicateNameException,
 			InvalidInputException, IllegalArgumentException, OverlappingFunctionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			Function f = createTestFunction();
 
 			Structure bigStruct = new StructureDataType("bigStruct", 20);
@@ -762,7 +762,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 	@Test
 	public void testUpdateFunctionDynamicStorage() throws DuplicateNameException,
 			InvalidInputException, IllegalArgumentException, OverlappingFunctionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 
 			Function f = createTestFunction();
 
@@ -813,7 +813,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 	@Test
 	public void testUpdateFunctionDynamicStorage1() throws DuplicateNameException,
 			InvalidInputException, IllegalArgumentException, OverlappingFunctionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 
 			Function f = createTestFunction();
 
@@ -865,7 +865,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 	@Test
 	public void testUpdateFunctionDynamicStorage2() throws DuplicateNameException,
 			InvalidInputException, IllegalArgumentException, OverlappingFunctionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 
 			Function f = createTestFunction();
 
@@ -971,7 +971,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 	@Test
 	public void testAutoAddingRemovingThisParameter() throws DuplicateNameException,
 			InvalidInputException, IllegalArgumentException, OverlappingFunctionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 
 			TraceFunctionSymbol f = createTestFunction();
 			assertEquals(5, f.getParameters().length);
@@ -1069,7 +1069,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 	@Test
 	public void testGetSignatureString()
 			throws InvalidInputException, OverlappingFunctionException, DuplicateNameException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			TraceFunctionSymbol f = functions.create(0, b.addr(100), b.set(b.range(100, 200)),
 				"foo", null, null, SourceType.USER_DEFINED);
 			Structure s = new StructureDataType("bar", 20);
@@ -1152,7 +1152,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 	@Ignore("TODO")
 	public void testDataTypeOnRegisterVariable()
 			throws InvalidInputException, OverlappingFunctionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 
 			Register r7l = b.trace.getBaseLanguage().getRegister("r7l");
 			assertNotNull(r7l);
@@ -1165,7 +1165,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 
 			// TODO: Monitor events
 
-			try (UndoableTransaction localTid = b.startTransaction()) {
+			try (Transaction localTx = b.startTransaction()) {
 				DataType bdt = b.trace.getDataTypeManager()
 						.addDataType(ByteDataType.dataType,
 							DataTypeConflictHandler.DEFAULT_HANDLER);
@@ -1188,7 +1188,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 			assertEquals(r7l, rp.getRegister());
 
 			// delete the typedef data type
-			try (UndoableTransaction localTid = b.startTransaction()) {
+			try (Transaction localTx = b.startTransaction()) {
 				b.trace.getDataTypeManager().remove(dt, TaskMonitor.DUMMY);
 			}
 
@@ -1204,7 +1204,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 	@Test
 	public void testSetStackDepthChange()
 			throws InvalidInputException, OverlappingFunctionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			TraceFunctionSymbol f = functions.create(0, b.addr(100), b.set(b.range(100, 200)),
 				"foo", null, null, SourceType.USER_DEFINED);
 
@@ -1220,7 +1220,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 	@Test
 	public void testSetStackParameter()
 			throws InvalidInputException, OverlappingFunctionException, DuplicateNameException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			TraceFunctionSymbol f = functions.create(0, b.addr(100), b.set(b.range(100, 200)),
 				"foo", null, null, SourceType.USER_DEFINED);
 			f.setCustomVariableStorage(true);
@@ -1287,7 +1287,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 	@Test
 	public void testSetDuplicateStackParameter()
 			throws InvalidInputException, OverlappingFunctionException, DuplicateNameException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			TraceFunctionSymbol f = functions.create(0, b.addr(100), b.set(b.range(100, 200)),
 				"foo", null, null, SourceType.USER_DEFINED);
 			f.setCustomVariableStorage(true);
@@ -1326,7 +1326,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 	@Test
 	public void testSetStackVariable()
 			throws InvalidInputException, OverlappingFunctionException, DuplicateNameException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			TraceFunctionSymbol f = functions.create(0, b.addr(100), b.set(b.range(100, 200)),
 				"foo", null, null, SourceType.USER_DEFINED);
 
@@ -1361,7 +1361,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 	@Test
 	public void testSetStackVariableOverwrite()
 			throws InvalidInputException, OverlappingFunctionException, DuplicateNameException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			TraceFunctionSymbol f = functions.create(0, b.addr(100), b.set(b.range(100, 200)),
 				"foo", null, null, SourceType.USER_DEFINED);
 
@@ -1397,7 +1397,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 	@Test
 	public void testSetDuplicateStackVariable()
 			throws InvalidInputException, OverlappingFunctionException, DuplicateNameException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			TraceFunctionSymbol f = functions.create(0, b.addr(100), b.set(b.range(100, 200)),
 				"foo", null, null, SourceType.USER_DEFINED);
 
@@ -1435,7 +1435,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 	@Test
 	public void testSetRegisterParameter()
 			throws InvalidInputException, OverlappingFunctionException, DuplicateNameException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			TraceFunctionSymbol f = functions.create(0, b.addr(100), b.set(b.range(100, 200)),
 				"foo", null, null, SourceType.USER_DEFINED);
 			f.setCustomVariableStorage(true);
@@ -1471,7 +1471,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 	@Test
 	public void testSetDuplicateRegisterParameter()
 			throws InvalidInputException, OverlappingFunctionException, DuplicateNameException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			TraceFunctionSymbol f = functions.create(0, b.addr(100), b.set(b.range(100, 200)),
 				"foo", null, null, SourceType.USER_DEFINED);
 			f.setCustomVariableStorage(true);
@@ -1507,7 +1507,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 	@Test
 	public void testSetRegisterVariable()
 			throws InvalidInputException, OverlappingFunctionException, DuplicateNameException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			TraceFunctionSymbol f = functions.create(0, b.addr(100), b.set(b.range(100, 200)),
 				"foo", null, null, SourceType.USER_DEFINED);
 
@@ -1543,7 +1543,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 	@Test
 	public void testSetDuplicateRegisterVariable()
 			throws InvalidInputException, OverlappingFunctionException, DuplicateNameException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			TraceFunctionSymbol f = functions.create(0, b.addr(100), b.set(b.range(100, 200)),
 				"foo", null, null, SourceType.USER_DEFINED);
 
@@ -1578,7 +1578,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 	@Test
 	public void testSetMemoryParameter()
 			throws InvalidInputException, OverlappingFunctionException, DuplicateNameException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			TraceFunctionSymbol f = functions.create(0, b.addr(100), b.set(b.range(100, 200)),
 				"foo", null, null, SourceType.USER_DEFINED);
 			f.setCustomVariableStorage(true);
@@ -1613,7 +1613,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 	@Test
 	public void testSetDuplicateMemoryParameter()
 			throws InvalidInputException, OverlappingFunctionException, DuplicateNameException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			TraceFunctionSymbol f = functions.create(0, b.addr(100), b.set(b.range(100, 200)),
 				"foo", null, null, SourceType.USER_DEFINED);
 			f.setCustomVariableStorage(true);
@@ -1649,7 +1649,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 	@Test
 	public void testRemoveRegisterParameter()
 			throws InvalidInputException, OverlappingFunctionException, DuplicateNameException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			TraceFunctionSymbol f = functions.create(0, b.addr(100), b.set(b.range(100, 200)),
 				"foo", null, null, SourceType.USER_DEFINED);
 			f.setCustomVariableStorage(true);
@@ -1686,7 +1686,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 
 	@Test
 	public void testSetInline() throws InvalidInputException, OverlappingFunctionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 
 			TraceFunctionSymbol f = functions.create(0, b.addr(100), b.set(b.range(100, 200)),
 				"foo", null, null, SourceType.USER_DEFINED);
@@ -1710,7 +1710,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 
 	@Test
 	public void testSetNoReturn() throws InvalidInputException, OverlappingFunctionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 
 			TraceFunctionSymbol f = functions.create(0, b.addr(100), b.set(b.range(100, 200)),
 				"foo", null, null, SourceType.USER_DEFINED);
@@ -1734,7 +1734,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 
 	@Test
 	public void testSetCallFixup() throws InvalidInputException, OverlappingFunctionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 
 			TraceFunctionSymbol f = functions.create(0, b.addr(100), b.set(b.range(100, 200)),
 				"foo", null, null, SourceType.USER_DEFINED);
@@ -1759,7 +1759,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 	@Test
 	public void testSetThunkFunction()
 			throws InvalidInputException, OverlappingFunctionException, DuplicateNameException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 
 			Function f1 = functions.create(0, b.addr(0x100), b.set(b.range(0x100, 0x200)), "foo1",
 				null, null, SourceType.USER_DEFINED);
@@ -1856,7 +1856,7 @@ public class DBTraceFunctionSymbolTest extends AbstractGhidraHeadlessIntegration
 	@Test
 	public void testPromoteLocalUserLabelsToGlobal()
 			throws InvalidInputException, OverlappingFunctionException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 
 			TraceFunctionSymbol foo2 = functions.create(0, b.addr(201), b.set(b.range(201, 249)),
 				"foo2", null, null, SourceType.USER_DEFINED);

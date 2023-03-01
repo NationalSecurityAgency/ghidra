@@ -21,7 +21,7 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.Map.Entry;
 
-import com.google.common.collect.Iterators;
+import org.apache.commons.collections4.IteratorUtils;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRangeImpl;
@@ -50,7 +50,7 @@ import ghidra.util.exception.NoValueException;
  * This behaves somewhat like a mixin, allowing it to be used on code units as well as data
  * components, e.g., fields of a struct data unit.
  */
-public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferAdapter {
+public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferMixin {
 
 	@Override
 	DBTrace getTrace();
@@ -196,7 +196,7 @@ public interface DBTraceCodeUnitAdapter extends TraceCodeUnit, MemBufferAdapter 
 	@Override
 	default Iterator<String> propertyNames() {
 		Lifespan span = Lifespan.at(getStartSnap());
-		return Iterators.transform(Iterators.filter(
+		return IteratorUtils.transformedIterator(IteratorUtils.filteredIterator(
 			getTrace().getInternalAddressPropertyManager().getAllProperties().entrySet().iterator(),
 			e -> e.getValue().getAddressSetView(span).contains(getAddress())), Entry::getKey);
 	}

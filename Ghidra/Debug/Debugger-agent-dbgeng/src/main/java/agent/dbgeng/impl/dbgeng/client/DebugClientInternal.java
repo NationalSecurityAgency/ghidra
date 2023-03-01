@@ -17,7 +17,6 @@ package agent.dbgeng.impl.dbgeng.client;
 
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Guid.REFIID;
 
@@ -67,18 +66,15 @@ public interface DebugClientInternal extends DebugClient {
 		return DbgEngUtil.lazyWeakCache(CACHE, client, DebugClientImpl7::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIDebugClient>> PREFERRED_CLIENT_IIDS_BUILDER =
-		ImmutableMap.builder();
 	Map<REFIID, Class<? extends WrapIDebugClient>> PREFERRED_CLIENT_IIDS =
-		PREFERRED_CLIENT_IIDS_BUILDER //
-				.put(new REFIID(IDebugClient7.IID_IDEBUG_CLIENT7), WrapIDebugClient7.class) //
-				.put(new REFIID(IDebugClient6.IID_IDEBUG_CLIENT6), WrapIDebugClient6.class) //
-				.put(new REFIID(IDebugClient5.IID_IDEBUG_CLIENT5), WrapIDebugClient5.class) //
-				.put(new REFIID(IDebugClient4.IID_IDEBUG_CLIENT4), WrapIDebugClient4.class) //
-				.put(new REFIID(IDebugClient3.IID_IDEBUG_CLIENT3), WrapIDebugClient3.class) //
-				.put(new REFIID(IDebugClient2.IID_IDEBUG_CLIENT2), WrapIDebugClient2.class) //
-				.put(new REFIID(IDebugClient.IID_IDEBUG_CLIENT), WrapIDebugClient.class) //
-				.build();
+		Map.ofEntries(
+			Map.entry(new REFIID(IDebugClient7.IID_IDEBUG_CLIENT7), WrapIDebugClient7.class),
+			Map.entry(new REFIID(IDebugClient6.IID_IDEBUG_CLIENT6), WrapIDebugClient6.class),
+			Map.entry(new REFIID(IDebugClient5.IID_IDEBUG_CLIENT5), WrapIDebugClient5.class),
+			Map.entry(new REFIID(IDebugClient4.IID_IDEBUG_CLIENT4), WrapIDebugClient4.class),
+			Map.entry(new REFIID(IDebugClient3.IID_IDEBUG_CLIENT3), WrapIDebugClient3.class),
+			Map.entry(new REFIID(IDebugClient2.IID_IDEBUG_CLIENT2), WrapIDebugClient2.class),
+			Map.entry(new REFIID(IDebugClient.IID_IDEBUG_CLIENT), WrapIDebugClient.class));
 
 	static DebugClientInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
 		return DbgEngUtil.tryPreferredInterfaces(DebugClientInternal.class, PREFERRED_CLIENT_IIDS,

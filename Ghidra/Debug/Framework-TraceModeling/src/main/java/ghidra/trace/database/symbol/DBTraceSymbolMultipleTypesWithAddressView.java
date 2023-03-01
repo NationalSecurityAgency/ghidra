@@ -17,12 +17,10 @@ package ghidra.trace.database.symbol;
 
 import java.util.Collection;
 
-import com.google.common.collect.Collections2;
-
-import generic.CatenatedCollection;
 import ghidra.program.model.address.*;
 import ghidra.trace.model.symbol.TraceNamespaceSymbol;
 import ghidra.trace.model.symbol.TraceSymbolWithAddressView;
+import ghidra.util.LazyCollection;
 import ghidra.util.LockHold;
 
 public class DBTraceSymbolMultipleTypesWithAddressView<T extends AbstractDBTraceSymbol>
@@ -60,8 +58,8 @@ public class DBTraceSymbolMultipleTypesWithAddressView<T extends AbstractDBTrace
 	@Override
 	public Collection<? extends T> getIntersecting(AddressRange range,
 			boolean includeDynamicSymbols) {
-		return new CatenatedCollection<>(Collections2.transform(getParts(),
-			p -> p.getIntersecting(range, includeDynamicSymbols)));
+		return new LazyCollection<>(() -> getParts().stream()
+				.flatMap(p -> p.getIntersecting(range, includeDynamicSymbols).stream()));
 	}
 
 	@Override

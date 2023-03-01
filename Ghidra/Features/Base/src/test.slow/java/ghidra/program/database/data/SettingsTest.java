@@ -81,7 +81,7 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@After
 	public void tearDown() throws Exception {
-		if (program.getCurrentTransaction() != null) {
+		if (program.getCurrentTransactionInfo() != null) {
 			program.endTransaction(transactionID, true);
 		}
 		program.release(this);

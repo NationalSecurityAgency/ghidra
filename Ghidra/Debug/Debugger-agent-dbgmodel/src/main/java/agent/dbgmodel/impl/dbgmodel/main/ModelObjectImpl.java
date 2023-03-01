@@ -724,6 +724,39 @@ public class ModelObjectImpl implements ModelObjectInternal {
 	}
 
 	@Override
+	public ModelObject getElement(String key) {
+		REFIID ref = new REFIID(IIterableConcept.IID_IITERABLE_CONCEPT);
+		IterableConcept concept = (IterableConcept) this.getConcept(ref);
+		if (concept == null) {
+			return null;
+		}
+
+		ModelIterator iterator = concept.getIterator(this);
+		//long dim = concept.getDefaultIndexDimensionality(this);
+		if (iterator != null) {
+			ModelObject next;
+			int i = 0;
+			while ((next = iterator.getNext(1)) != null) {
+				ModelObject index = iterator.getIndexers();
+				if (index != null) {
+					next.setIndexer(index);
+					if (next.getSearchKey().equals(key)) {
+						return next;
+					}
+				}
+				else {
+					next.setSearchKey(Integer.toHexString(i));
+					if (Integer.toHexString(i).equals(key)) {
+						return next;
+					}
+				}
+				i++;
+			}
+		}
+		return null;
+	}
+
+	@Override
 	public ModelObject getChild(DataModelManager1 manager, VARIANT v) {
 		REFIID ref = new REFIID(IIndexableConcept.IID_IINDEXABLE_CONCEPT);
 		IndexableConcept indexable = (IndexableConcept) this.getConcept(ref);
@@ -821,6 +854,22 @@ public class ModelObjectImpl implements ModelObjectInternal {
 	}
 
 	@Override
+	public synchronized ModelObject getKeyValueByEnum(String key) {
+		String kstr;
+		KeyEnumerator enumerator = this.enumerateKeys();
+		while ((kstr = enumerator.getNext()) != null) {
+			if (kstr.equals(key)) {
+				ModelObject value = this.getKeyValue(kstr);
+				if (value != null) {
+					value.setSearchKey(kstr);
+					return value;
+				}
+			}
+		}
+		return null;
+	}
+
+	@Override
 	public synchronized Map<String, ModelObject> getRawValueMap() {
 		TreeMap<String, ModelObject> map = new TreeMap<String, ModelObject>();
 		TypeKind typeKind = getTypeKind();
@@ -861,6 +910,43 @@ public class ModelObjectImpl implements ModelObjectInternal {
 			map.put(kstr, value);
 		}
 		return map;
+	}
+
+	@Override
+	public synchronized ModelObject getRawValueByEnum(String key) {
+		TypeKind typeKind = getTypeKind();
+		if (typeKind == null) {
+			return null;
+		}
+		SymbolKind kind = null;
+		switch (typeKind) {
+			case TYPE_UDT:
+				kind = SymbolKind.SYMBOL_FIELD;
+				break;
+			case TYPE_POINTER:
+				kind = SymbolKind.SYMBOL_BASE_CLASS;
+				try {
+					ModelObject dereference = this.dereference();
+					return dereference.getRawValueByEnum(key);
+				}
+				catch (Exception e) {
+					kind = null;
+					break;
+				}
+			case TYPE_INTRINSIC:
+			case TYPE_ARRAY:
+				break;
+			default:
+				System.err.println(this.getSearchKey() + ":" + typeKind);
+				break;
+		}		String kstr;
+		RawEnumerator enumerator = this.enumerateRawValues(kind.ordinal(), 0);
+		while ((kstr = enumerator.getNext()) != null) {
+			ModelObject value = enumerator.getValue();
+			value.setSearchKey(kstr);
+			return value;
+		}
+		return null;
 	}
 
 	@Override
@@ -909,14 +995,14 @@ public class ModelObjectImpl implements ModelObjectInternal {
 		if (key == null) {
 			throw new RuntimeException("null key for " + this);
 		}
-		Map<String, ModelObject> map = getKeyValueMap();
-		if (map.containsKey("BaseAddress")) {
-			String valueString = map.get("BaseAddress").getValueString();
-			return valueString;
+		ModelObject keyValue = getKeyValueByEnum("BaseAddress");
+		if (keyValue != null) {
+			return keyValue.getValueString();
 		}
-		if (map.containsKey("UniqueID") && map.containsKey("Id")) {
-			String valueString = map.get("Id").getValueString();
-			return valueString;
+		keyValue = getKeyValueByEnum("Id");
+		ModelObject keyValue2 = getKeyValueByEnum("UniqueID");
+		if (keyValue != null && keyValue2 != null) {
+			return keyValue.getValueString();
 		}
 		return key;
 	}

@@ -323,6 +323,11 @@ public:
   virtual void execute(istream &s);
 };
 
+class IfcIsolate : public IfaceDecompCommand {
+public:
+  virtual void execute(istream &s);
+};
+
 class IfcPrintVarnode : public IfaceDecompCommand {
 public:
   virtual void execute(istream &s);

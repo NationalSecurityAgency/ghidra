@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.debug.service.control;
 import java.io.IOException;
 import java.util.Set;
 
+import db.Transaction;
 import ghidra.app.plugin.core.debug.mapping.DebuggerTargetTraceMapper;
 import ghidra.app.plugin.core.debug.mapping.ObjectBasedDebuggerTargetTraceMapper;
 import ghidra.app.plugin.core.debug.service.model.DebuggerModelServicePlugin;
@@ -28,13 +29,12 @@ import ghidra.program.model.lang.LanguageID;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.guest.TraceGuestPlatform;
 import ghidra.trace.model.guest.TracePlatform;
-import ghidra.util.database.UndoableTransaction;
 
 public class DebuggerControlServiceGuestTest extends DebuggerControlServiceTest {
 	protected TraceGuestPlatform platform;
 
 	public void createToyPlatform() {
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			platform = tb.trace.getPlatformManager()
 					.addGuestPlatform(getToyBE64Language().getDefaultCompilerSpec());
 			platform.addMappedRegisterRange();

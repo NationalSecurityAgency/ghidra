@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 
 import org.junit.*;
 
+import db.Transaction;
 import docking.action.DockingActionIf;
 import generic.Unique;
 import ghidra.app.context.ListingActionContext;
@@ -66,7 +67,6 @@ import ghidra.trace.model.target.TraceObject.ConflictResolution;
 import ghidra.trace.model.target.TraceObjectKeyPath;
 import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.task.TaskMonitor;
 
 public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest {
@@ -150,7 +150,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 		createAndOpenTrace("DATA:BE:64:default");
 
 		DBTraceObjectManager objects = tb.trace.getObjectManager();
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			objects.createRootObject(ctx.getSchema(new SchemaName("Session")));
 			DBTraceObject env =
 				objects.createObject(TraceObjectKeyPath.parse("Targets[0].Environment"));
@@ -190,7 +190,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 			Supplier<ByteBuffer> byteSupplier) throws Throwable {
 		createAndOpenTrace(langID);
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
 			memory.createRegion("Memory[bin:.text]", 0, tb.range(offset, offset + 0xffff),
 				Set.of(TraceMemoryFlag.EXECUTE));
@@ -221,7 +221,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 
 		// Fabricate the cpsr so that ARM is used. Otherwise, it will assume Cortex-M, so THUMB
 		TraceThread thread;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			thread = tb.getOrAddThread("Threads[0]", 0);
 			DBTraceMemorySpace regs =
 				tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, true);
@@ -255,7 +255,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 
 		// Fabricate the cpsr so that THUMB is used, even though we could omit as in Cortex-M
 		TraceThread thread;
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			thread = tb.getOrAddThread("Threads[0]", 0);
 			DBTraceMemorySpace regs =
 				tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, true);
@@ -414,7 +414,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 		// Ensure the mapper is added to the trace
 		assertNotNull(platformService.getMapper(tb.trace, null, 0));
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			tb.addInstruction(0, start, tb.host);
 		}
 		waitForDomainObject(tb.trace);
@@ -446,7 +446,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 		// Ensure the mapper is added to the trace
 		assertNotNull(platformService.getMapper(tb.trace, null, 0));
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			TraceDisassembleCommand dis = new TraceDisassembleCommand(tb.host, start,
 				new AddressSet(start, start.addWrap(1)));
 			dis.setInitialContext(DebuggerDisassemblerPlugin.deriveAlternativeDefaultContext(
@@ -484,7 +484,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 
 		TraceGuestPlatform guest =
 			Unique.assertOne(tb.trace.getPlatformManager().getGuestPlatforms());
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			tb.addInstruction(0, start, guest);
 		}
 		waitForDomainObject(tb.trace);
@@ -519,7 +519,7 @@ public class DebuggerDisassemblyTest extends AbstractGhidraHeadedDebuggerGUITest
 		waitForPass(() -> Unique.assertOne(tb.trace.getPlatformManager().getGuestPlatforms()));
 		TraceGuestPlatform guest =
 			Unique.assertOne(tb.trace.getPlatformManager().getGuestPlatforms());
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			TraceDisassembleCommand dis = new TraceDisassembleCommand(guest, start,
 				new AddressSet(start, start.addWrap(1)));
 			dis.setInitialContext(DebuggerDisassemblerPlugin.deriveAlternativeDefaultContext(

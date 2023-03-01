@@ -17,12 +17,12 @@ package ghidra.app.plugin.core.debug.service.breakpoint;
 
 import java.io.IOException;
 
+import db.Transaction;
 import ghidra.dbg.target.schema.SchemaContext;
-import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
+import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObjectKeyPath;
-import ghidra.util.database.UndoableTransaction;
 
 public class DebuggerLogicalBreakpointServiceObjectTest
 		extends DebuggerLogicalBreakpointServiceTest {
@@ -102,7 +102,7 @@ public class DebuggerLogicalBreakpointServiceObjectTest
 				</context>
 				""", index));
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getObjectManager().createRootObject(ctx.getSchema(new SchemaName("Session")));
 			tb.trace.getObjectManager()
 					.createObject(

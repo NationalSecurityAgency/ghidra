@@ -19,13 +19,13 @@ import java.io.IOException;
 
 import org.junit.experimental.categories.Category;
 
+import db.Transaction;
 import generic.test.category.NightlyCategory;
 import ghidra.dbg.target.schema.SchemaContext;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.target.TraceObjectKeyPath;
-import ghidra.util.database.UndoableTransaction;
 
 @Category(NightlyCategory.class)
 public class DebuggerBreakpointsProviderObjectTest extends DebuggerBreakpointsProviderTest {
@@ -105,7 +105,7 @@ public class DebuggerBreakpointsProviderObjectTest extends DebuggerBreakpointsPr
 				</context>
 				""", index));
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getObjectManager().createRootObject(ctx.getSchema(new SchemaName("Session")));
 			tb.trace.getObjectManager()
 					.createObject(

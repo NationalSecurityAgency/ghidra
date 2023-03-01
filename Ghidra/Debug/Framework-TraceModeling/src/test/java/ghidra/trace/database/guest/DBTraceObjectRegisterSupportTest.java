@@ -23,6 +23,7 @@ import java.nio.ByteBuffer;
 import org.junit.Before;
 import org.junit.Test;
 
+import db.Transaction;
 import ghidra.dbg.target.TargetRegister;
 import ghidra.dbg.target.schema.SchemaContext;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
@@ -41,7 +42,6 @@ import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.target.TraceObject.ConflictResolution;
 import ghidra.trace.model.target.TraceObjectKeyPath;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.DuplicateNameException;
 
 public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessIntegrationTest {
@@ -61,7 +61,7 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 
 	@Test
 	public void testRegisterMappingHost() throws DuplicateNameException {
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			root = manager.createRootObject(ctx.getSchema(new SchemaName("Session"))).getChild();
 
 			TraceObject thread =
@@ -89,7 +89,7 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 	@Test
 	public void testRegisterMappingGuest() throws Throwable {
 		TraceGuestPlatform amd64;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			root = manager.createRootObject(ctx.getSchema(new SchemaName("Session"))).getChild();
 
 			TraceObject thread =
@@ -123,7 +123,7 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 	public void testRegisterMappingLabel() throws Throwable {
 		TraceGuestPlatform amd64;
 		Register RAX;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			root = manager.createRootObject(ctx.getSchema(new SchemaName("Session"))).getChild();
 
 			TraceObject thread =
@@ -158,7 +158,7 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 	@Test
 	public void testRegisterMappingGuestMemoryMapped() throws Throwable {
 		TraceGuestPlatform avr8;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			root = manager.createRootObject(ctx.getSchema(new SchemaName("Session"))).getChild();
 
 			TraceObject thread =
@@ -192,7 +192,7 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 	public void testRegisterMappingGuestMemoryMappedHostOverlay() throws Throwable {
 		TraceGuestPlatform avr8;
 		AddressSpace overlay;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			root = manager.createRootObject(ctx.getSchema(new SchemaName("Session"))).getChild();
 
 			TraceObject thread =
@@ -230,7 +230,7 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 	public void testRegisterMappingLabelMemoryMapped() throws Throwable {
 		TraceGuestPlatform avr8;
 		Register R0;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			root = manager.createRootObject(ctx.getSchema(new SchemaName("Session"))).getChild();
 
 			TraceObject thread =
@@ -265,7 +265,7 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 	public void testAddLabelCopiesRegisterValues() throws Throwable {
 		TraceGuestPlatform amd64;
 		Register RAX;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			root = manager.createRootObject(ctx.getSchema(new SchemaName("Session"))).getChild();
 
 			TraceObject thread =
@@ -302,7 +302,7 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 	public void testAddLabelCopiesRegisterValuesMemoryMapped() throws Throwable {
 		TraceGuestPlatform avr8;
 		Register R0;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			root = manager.createRootObject(ctx.getSchema(new SchemaName("Session"))).getChild();
 
 			TraceObject thread =
@@ -337,7 +337,7 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 	@Test
 	public void testAddGuestMappingCopiesRegisterValues() throws Throwable {
 		TraceGuestPlatform amd64;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			root = manager.createRootObject(ctx.getSchema(new SchemaName("Session"))).getChild();
 
 			TraceObject thread =
@@ -370,7 +370,7 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 	@Test
 	public void testAddOverlaySpaceCopiesRegisterValues() throws Throwable {
 		TraceGuestPlatform amd64;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			root = manager.createRootObject(ctx.getSchema(new SchemaName("Session"))).getChild();
 
 			TraceObject thread =
@@ -406,7 +406,7 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 		DBTraceGuestPlatform x86;
 		AddressSpace registers = b.trace.getBaseAddressFactory().getRegisterSpace();
 		AddressSpace overlay;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			root = manager.createRootObject(ctx.getSchema(new SchemaName("Session"))).getChild();
 
 			x86 = b.trace.getPlatformManager()
@@ -437,7 +437,7 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 		AddressSpace overlay;
 		Register EAX;
 		Register EBX;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			root = manager.createRootObject(ctx.getSchema(new SchemaName("Session"))).getChild();
 
 			x86 = b.trace.getPlatformManager()
@@ -465,7 +465,7 @@ public class DBTraceObjectRegisterSupportTest extends AbstractGhidraHeadlessInte
 		AddressSpace registers = b.trace.getBaseAddressFactory().getRegisterSpace();
 		AddressSpace overlay;
 		Register r0;
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			root = manager.createRootObject(ctx.getSchema(new SchemaName("Session"))).getChild();
 			r0 = b.language.getRegister("r0");
 			overlay = b.trace.getMemoryManager()
