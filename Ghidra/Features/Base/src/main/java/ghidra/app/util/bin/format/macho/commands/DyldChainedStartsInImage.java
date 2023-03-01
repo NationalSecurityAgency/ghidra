@@ -46,6 +46,11 @@ public class DyldChainedStartsInImage implements StructConverter {
 		ArrayList<DyldChainedStartsInSegment> starts = new ArrayList<>();
 		for (int off : seg_info_offset) {
 
+			// off == 0 means there is no associated starts_in_segment entry
+			if (off == 0) {
+				continue;
+			}
+
 			reader.setPointerIndex(ptrIndex + off);
 			starts.add(new DyldChainedStartsInSegment(reader));
 		}
