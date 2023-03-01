@@ -15,18 +15,16 @@
  */
 package ghidra.app.util.bin.format.elf;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
-
-import java.io.*;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.bin.format.MemoryLoadable;
-import ghidra.app.util.bin.format.Writeable;
 import ghidra.program.model.data.*;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.util.DataConverter;
 import ghidra.util.StringUtilities;
 
 /**
@@ -70,7 +68,7 @@ import ghidra.util.StringUtilities;
  * </pre>
  */
 
-public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoadable {
+public class ElfSectionHeader implements StructConverter, MemoryLoadable {
 
 	private int sh_name;
 	private int sh_type;
@@ -182,40 +180,6 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 	 */
 	public ElfHeader getElfHeader() {
 		return header;
-	}
-
-	/**
-	 * @see ghidra.app.util.bin.format.Writeable#write(java.io.RandomAccessFile, ghidra.util.DataConverter)
-	 */
-	@Override
-	public void write(RandomAccessFile raf, DataConverter dc) throws IOException {
-		raf.write(dc.getBytes(sh_name));
-		raf.write(dc.getBytes(sh_type));
-
-		if (header.is32Bit()) {
-			raf.write(dc.getBytes((int) sh_flags));
-			raf.write(dc.getBytes((int) sh_addr));
-			raf.write(dc.getBytes((int) sh_offset));
-			raf.write(dc.getBytes((int) sh_size));
-		}
-		else if (header.is64Bit()) {
-			raf.write(dc.getBytes(sh_flags));
-			raf.write(dc.getBytes(sh_addr));
-			raf.write(dc.getBytes(sh_offset));
-			raf.write(dc.getBytes(sh_size));
-		}
-
-		raf.write(dc.getBytes(sh_link));
-		raf.write(dc.getBytes(sh_info));
-
-		if (header.is32Bit()) {
-			raf.write(dc.getBytes((int) sh_addralign));
-			raf.write(dc.getBytes((int) sh_entsize));
-		}
-		else if (header.is64Bit()) {
-			raf.write(dc.getBytes(sh_addralign));
-			raf.write(dc.getBytes(sh_entsize));
-		}
 	}
 
 	/**
@@ -408,15 +372,6 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 	}
 
 	/**
-	 * Sets the section's size.
-	 * @param size the new size of the section
-	 */
-	public void setSize(long size) {
-		this.sh_size = size;
-		checkSize();
-	}
-
-	/**
 	 * This member gives the section's size in bytes. Unless the section type is
 	 * SHT_NOBITS, the section occupies sh_size bytes in the file. A section of type
 	 * SHT_NOBITS may have a non-zero size, but it occupies no space in the file.
@@ -499,28 +454,6 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 	}
 
 	/**
-	 * Sets the actual data bytes for this section.
-	 * If the data is larger than the previous data, then 
-	 * the offset is set to -1 and the section will
-	 * need to be relocated.
-	 * @param data the new data byte for this section
-	 */
-	public void setData(byte[] data) {
-		bytesChanged = true;
-		if (sh_type == ElfSectionHeaderConstants.SHT_NOBITS) {
-			throw new IllegalArgumentException("Cannot set data on section with type: SHT_NOBITS");
-		}
-		this.data = data;
-		//if the data has been increased, then this section
-		//will need to be relocated in the file
-		if (data.length > sh_size) {
-			modified = true;
-			sh_offset = -1;
-		}
-		sh_size = data.length;
-	}
-
-	/**
 	 * Returns true if the data bytes have changed for this section.
 	 * @return true if the data bytes have changed for this section
 	 */
@@ -539,21 +472,6 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 	}
 
 	/**
-	 * Sets the offset of this section. The offset is the actual byte
-	 * offset into the file.
-	 * @param offset the file byte offset
-	 * @throws IOException if an I/O occurs
-	 */
-	public void setOffset(long offset) throws IOException {
-		modified = true;
-		/*if we are overriding the offset, we must cache the section data*/
-		if (data == null) {
-			data = getData();
-		}
-		this.sh_offset = offset;
-	}
-
-	/**
 	 * Sets the start address of this section.
 	 * @param addr the new start address of this section
 	 */
@@ -564,15 +482,7 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 		}
 		this.sh_addr = header.unadjustAddressForPrelink(addr);
 	}
-
-	/**
-	 * Sets the name of this section (may get changed due to conflict)
-	 * @param name section name
-	 */
-	public void setName(String name) {
-		this.name = name;
-	}
-
+	
 	/**
 	 * @see ghidra.app.util.bin.StructConverter#toDataType()
 	 */
@@ -627,13 +537,6 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 			typeEnum.add(type.name, type.value);
 		}
 		return typeEnum;
-	}
-
-	private void checkSize() {
-		if (sh_size > Integer.toUnsignedLong(Integer.MAX_VALUE)) {
-			throw new UnsupportedOperationException(
-				"ELF Section is too large: 0x" + Long.toHexString(sh_size));
-		}
 	}
 
 	@Override
