@@ -936,6 +936,8 @@ moffs32: segWide^[imm64]  is addrsize=2 & highseg=1 & segWide & imm64   { tmp:8 
 @ifdef IA64
 moffs64: segWide^[imm64]  is addrsize=2 & segWide & imm64               { export *:8 imm64; }
 moffs64: segWide^[imm64]  is addrsize=2 & highseg=1 & segWide & imm64   { tmp:8 = segWide + imm64; export *:8 tmp; }
+moffs64: segWide^[imm32]  is addrsize=1 & segWide & imm32               { export *:8 imm32; }
+moffs64: segWide^[imm32]  is addrsize=1 & highseg=1 & segWide & imm32   { tmp:8 = segWide + imm32; export *:8 tmp; }
 @endif
 # TODO: segment register offset in 64bit might not be right
 
