@@ -18,6 +18,8 @@ package ghidra.app.util.opinion;
 import java.io.IOException;
 import java.util.*;
 
+import com.google.common.primitives.Bytes;
+
 import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.BinaryReader;
@@ -77,8 +79,9 @@ public class PeLoader extends AbstractPeDebugLoader {
 		if (ntHeader != null && ntHeader.getOptionalHeader() != null) {
 			long imageBase = ntHeader.getOptionalHeader().getImageBase();
 			String machineName = ntHeader.getFileHeader().getMachineName();
-			String compiler = CompilerOpinion.stripFamily(CompilerOpinion.getOpinion(pe, provider));
-			for (QueryResult result : QueryOpinionService.query(getName(), machineName, compiler)) {
+			String compilerFamily = CompilerOpinion.getOpinion(pe, provider).family;
+			for (QueryResult result : QueryOpinionService.query(getName(), machineName,
+				compilerFamily)) {
 				loadSpecs.add(new LoadSpec(this, imageBase, result));
 			}
 			if (loadSpecs.isEmpty()) {
@@ -858,62 +861,43 @@ public class PeLoader extends AbstractPeDebugLoader {
 			"This program cannot be run in DOS mode.\r\r\n$".toCharArray();
 		static final char[] errString_Clang =
 			"This program cannot be run in DOS mode.$".toCharArray();
-		static final int[] asm16_Borland = { 0xBA, 0x10, 0x00, 0x0E, 0x1F, 0xB4, 0x09, 0xCD, 0x21,
-			0xB8, 0x01, 0x4C, 0xCD, 0x21, 0x90, 0x90 };
-		static final int[] asm16_GCC_VS_Clang =
-			{ 0x0e, 0x1f, 0xba, 0x0e, 0x00, 0xb4, 0x09, 0xcd, 0x21, 0xb8, 0x01, 0x4c, 0xcd, 0x21 };
+		static final byte[] asm16_Borland =
+			{ (byte) 0xBA, 0x10, 0x00, 0x0E, 0x1F, (byte) 0xB4, 0x09, (byte) 0xCD, 0x21,
+				(byte) 0xB8, 0x01, 0x4C, (byte) 0xCD, 0x21, (byte) 0x90, (byte) 0x90 };
+		static final byte[] asm16_GCC_VS_Clang =
+			{ 0x0e, 0x1f, (byte) 0xba, 0x0e, 0x00, (byte) 0xb4, 0x09, (byte) 0xcd, 0x21,
+				(byte) 0xb8, 0x01, 0x4c, (byte) 0xcd, 0x21 };
+		static final byte[] THIS_BYTES = "This".getBytes();
 
 		public enum CompilerEnum {
 
-			VisualStudio("visualstudio:unknown"),
-			GCC("gcc:unknown"),
-			Clang("clang:unknown"),
-			GCC_VS("visualstudiogcc"),
-			GCC_VS_Clang("visualstudiogccclang"),
-			BorlandPascal("borland:pascal"),
-			BorlandCpp("borland:c++"),
-			BorlandUnk("borland:unknown"),
-			CLI("cli"),
-			Unknown("unknown");
+			VisualStudio("visualstudio:unknown", "visualstudio"),
+			GCC("gcc:unknown", "gcc"),
+			Clang("clang:unknown", "clang"),
+			BorlandPascal("borland:pascal", "borlanddelphi"),
+			BorlandCpp("borland:c++", "borlandcpp"),
+			BorlandUnk("borland:unknown", "borlandcpp"),
+			CLI("cli", "cli"),
+			Unknown("unknown", "unknown"),
 
-			private String label;
+			// The following values represent the presence of ambiguous indicators
+			// and should not be returned by the compiler opinion method.
+			GCC_VS(null, null), // GCC | VS
+			GCC_VS_Clang(null, null), // GCC | VS | CLANG
+			;
 
-			private CompilerEnum(String label) {
+			public final String label; // value stored as ProgramInformation.Compiler property
+			public final String family; // used for Opinion secondary query param
+
+			private CompilerEnum(String label, String secondary) {
 				this.label = label;
+				this.family = secondary;
 			}
 
 			@Override
 			public String toString() {
 				return label;
 			}
-		}
-
-		// Treat string as upto 3 colon separated fields describing a compiler  --   <product>:<language>:version
-		public static String stripFamily(CompilerEnum val) {
-			if (val == CompilerEnum.BorlandCpp) {
-				return "borlandcpp";
-			}
-			if (val == CompilerEnum.BorlandPascal) {
-				return "borlanddelphi";
-			}
-			if (val == CompilerEnum.BorlandUnk) {
-				return "borlandcpp";
-			}
-			String compilerid = val.toString();
-			int colon = compilerid.indexOf(':');
-			if (colon > 0) {
-				return compilerid.substring(0, colon);
-			}
-			return compilerid;
-		}
-
-		private static SectionHeader getSectionHeader(String name, SectionHeader[] list) {
-			for (SectionHeader element : list) {
-				if (element.getName().equals(name)) {
-					return element;
-				}
-			}
-			return null;
 		}
 
 		/**
@@ -939,7 +923,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 
 		public static CompilerEnum getOpinion(PortableExecutable pe, ByteProvider provider)
 				throws IOException {
-			CompilerEnum compilerType = CompilerEnum.Unknown;
+
 			CompilerEnum offsetChoice = CompilerEnum.Unknown;
 			CompilerEnum asmChoice = CompilerEnum.Unknown;
 			CompilerEnum errStringChoice = CompilerEnum.Unknown;
@@ -959,77 +943,51 @@ public class PeLoader extends AbstractPeDebugLoader {
 			else if (dh.e_lfanew() == 0x78) {
 				offsetChoice = CompilerEnum.Clang;
 			}
-			else if (dh.e_lfanew() < 0x80) {
-				offsetChoice = CompilerEnum.Unknown;
-			}
-			else {
+			else if (dh.e_lfanew() >= 0x80) {
 
 				// Check for "DanS"
 				int val1 = br.readInt(0x80);
 				int val2 = br.readInt(0x80 + 4);
 
-				if (val1 != 0 && val2 != 0 && (val1 ^ val2) == 0x536e6144) {
-					compilerType = CompilerEnum.VisualStudio;
-					return compilerType;
+				if (val1 != 0 && val2 != 0 && (val1 ^ val2) == 0x536e6144 /* "DanS" */) {
+					// Rich Image Header is present
+					return CompilerEnum.VisualStudio;
 				}
-				else if (dh.e_lfanew() == 0x100) {
-					offsetChoice = CompilerEnum.BorlandPascal;
+
+				if (dh.e_lfanew() == 0x100) {
+					offsetChoice = CompilerEnum.BorlandPascal; // Could also be Borland-C
 				}
 				else if (dh.e_lfanew() == 0x200) {
 					offsetChoice = CompilerEnum.BorlandCpp;
 				}
 				else if (dh.e_lfanew() > 0x300) {
-					compilerType = CompilerEnum.Unknown;
-					return compilerType;
-				}
-				else {
-					offsetChoice = CompilerEnum.Unknown;
+					return CompilerEnum.Unknown;
 				}
 			} // End PE header offset check
 
-			int counter;
 			byte[] asm = provider.readBytes(0x40, 256);
-			for (counter = 0; counter < asm16_Borland.length; counter++) {
-				if ((asm[counter] & 0xff) != (asm16_Borland[counter] & 0xff)) {
-					break;
-				}
-			}
-			if (counter == asm16_Borland.length) {
+			asmChoice = CompilerEnum.Unknown;
+			if (Arrays.compare(asm, 0, asm16_Borland.length, asm16_Borland, 0,
+				asm16_Borland.length) == 0) {
 				asmChoice = CompilerEnum.BorlandUnk;
 			}
-			else {
-				for (counter = 0; counter < asm16_GCC_VS_Clang.length; counter++) {
-					if ((asm[counter] & 0xff) != (asm16_GCC_VS_Clang[counter] & 0xff)) {
-						break;
-					}
-				}
-				if (counter == asm16_GCC_VS_Clang.length) {
-					asmChoice = CompilerEnum.GCC_VS_Clang;
-				}
-				else {
-					asmChoice = CompilerEnum.Unknown;
-				}
-			}
-			// Check for error message
-			int errStringOffset = -1;
-			for (int i = 10; i < asm.length - 3; i++) {
-				if (asm[i] == 'T' && asm[i + 1] == 'h' && asm[i + 2] == 'i' && asm[i + 3] == 's') {
-					errStringOffset = i;
-					break;
-				}
+			else if (Arrays.compare(asm, 0, asm16_GCC_VS_Clang.length, asm16_GCC_VS_Clang, 0,
+				asm16_GCC_VS_Clang.length) == 0) {
+				asmChoice = CompilerEnum.GCC_VS_Clang;
 			}
 
+			// Check for error message
+			int errStringOffset = Bytes.indexOf(asm, THIS_BYTES);
 			if (errStringOffset == -1) {
 				asmChoice = CompilerEnum.Unknown;
 			}
 			else {
 				if (compareBytesToChars(asm, errStringOffset, errString_borland)) {
-					errStringChoice = CompilerEnum.BorlandUnk;
 					if (offsetChoice == CompilerEnum.BorlandCpp ||
 						offsetChoice == CompilerEnum.BorlandPascal) {
-						compilerType = offsetChoice;
-						return compilerType;
+						return offsetChoice;
 					}
+					errStringChoice = CompilerEnum.BorlandUnk;
 				}
 				else if (compareBytesToChars(asm, errStringOffset, errString_GCC_VS)) {
 					errStringChoice = CompilerEnum.GCC_VS;
@@ -1050,77 +1008,59 @@ public class PeLoader extends AbstractPeDebugLoader {
 				// Look for the "Visual Studio" library identifier
 //				if (mem.findBytes(mem.getMinAddress(), "Visual Studio".getBytes(),
 //						null, true, monitor) != null) {
-//					compilerType = COMPIL_VS;
-//					return compilerType;
+//					return CompilerEnum.VisualStudio
 //				}
 
 				// Now look for PointerToSymbols (0 for VS, non-zero for gcc)
 				int ptrSymTable = br.readInt(dh.e_lfanew() + 12);
 				if (ptrSymTable != 0) {
-					compilerType = CompilerEnum.GCC;
-					return compilerType;
+					return CompilerEnum.GCC;
 				}
 			}
 			else if ((offsetChoice == CompilerEnum.Clang ||
 				errStringChoice == CompilerEnum.Clang) && asmChoice == CompilerEnum.GCC_VS_Clang) {
-				compilerType = CompilerEnum.Clang;
-				return compilerType;
+				return CompilerEnum.Clang;
 			}
 			else if (errStringChoice == CompilerEnum.Unknown || asmChoice == CompilerEnum.Unknown) {
-				compilerType = CompilerEnum.Unknown;
-				return compilerType;
+				return CompilerEnum.Unknown;
 			}
 
 			if (errStringChoice == CompilerEnum.BorlandUnk ||
 				asmChoice == CompilerEnum.BorlandUnk) {
 				// Pretty sure it's Borland, but didn't get 0x100 or 0x200
-				compilerType = CompilerEnum.BorlandUnk;
-				return compilerType;
+				return CompilerEnum.BorlandUnk;
 			}
 
-			if ((offsetChoice == CompilerEnum.GCC_VS) || (errStringChoice == CompilerEnum.GCC_VS)) {
-				// Pretty sure it's either gcc or Visual Studio
-				compilerType = CompilerEnum.GCC_VS;
-			}
-			else {
-				// Not sure what it is
-				compilerType = CompilerEnum.Unknown;
-			}
+//			if ((offsetChoice == CompilerEnum.GCC_VS) || (errStringChoice == CompilerEnum.GCC_VS)) {
+//				// Pretty sure it's either gcc or Visual Studio
+//				compilerType = CompilerEnum.GCC_VS;
+//				// TODO: nothing feeds off of this state
+//			}
 
 			// Reaching this point implies that we did not find "DanS and we didn't
 			// see the Borland DOS complaint
-			boolean probablyNotVS = false;
-			// TODO: See if we have an .idata segment and what type it is
-			// Need to make sure that this is the right check to be making
-			SectionHeader[] headers = pe.getNTHeader().getFileHeader().getSectionHeaders();
-			if (getSectionHeader(".idata", headers) != null) {
-				probablyNotVS = true;
+
+			FileHeader fileHeader = pe.getNTHeader().getFileHeader();
+			if (fileHeader.getSectionHeader("CODE") != null) {
+				// NOTE: Could be Borland-C 
+				return CompilerEnum.BorlandPascal;
 			}
 
-			if (getSectionHeader("CODE", headers) != null) {
-				compilerType = CompilerEnum.BorlandPascal;
-				return compilerType;
+			if (fileHeader.getSectionHeader(".bss") != null) {
+				return CompilerEnum.GCC;
 			}
 
-			SectionHeader segment = getSectionHeader(".bss", headers);
-			if ((segment != null)/* && segment.getType() == BSS_TYPE */) {
-				compilerType = CompilerEnum.GCC;
-				return compilerType;
-//			} else if (segment != null) {
-//				compilerType = CompilerEnum.BorlandCpp;
-//				return compilerType;
-			}
-			else if (!probablyNotVS) {
-				compilerType = CompilerEnum.VisualStudio;
-				return compilerType;
+			if (fileHeader.getSectionHeader(".idata") == null) {
+				// assume VS if .idata not found
+				return CompilerEnum.VisualStudio;
 			}
 
-			if (getSectionHeader(".tls", headers) != null) {
-				// expect Borland - prefer cpp since CODE segment didn't occur
-				compilerType = CompilerEnum.BorlandCpp;
+			if (fileHeader.getSectionHeader(".tls") != null) {
+				// assume Borland - prefer cpp since CODE segment didn't occur
+				return CompilerEnum.BorlandCpp;
 			}
 
-			return compilerType;
+			return CompilerEnum.Unknown;
 		}
 	}
 }
