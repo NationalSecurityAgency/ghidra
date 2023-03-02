@@ -46,6 +46,7 @@ public class ThemeEditorDialog extends DialogComponentProvider {
 	private ThemeColorTable colorTable;
 	private ThemeFontTable fontTable;
 	private ThemeIconTable iconTable;
+	private ThemeColorTree colorTree;
 
 	private ThemeManager themeManager;
 
@@ -148,6 +149,7 @@ public class ThemeEditorDialog extends DialogComponentProvider {
 	}
 
 	private void reset() {
+		colorTree.rebuild();
 		colorTable.reloadAll();
 		fontTable.reloadAll();
 		iconTable.reloadAll();
@@ -173,6 +175,7 @@ public class ThemeEditorDialog extends DialogComponentProvider {
 			else {
 				setStatusText("");
 			}
+			colorTree.rebuild();
 			colorTable.reloadAll();
 			fontTable.reloadAll();
 			iconTable.reloadAll();
@@ -229,10 +232,12 @@ public class ThemeEditorDialog extends DialogComponentProvider {
 		colorTable = new ThemeColorTable(themeManager, valuesCache);
 		iconTable = new ThemeIconTable(themeManager, valuesCache);
 		fontTable = new ThemeFontTable(themeManager, valuesCache);
+		colorTree = new ThemeColorTree(themeManager);
 
 		tabbedPane.add("Colors", colorTable);
 		tabbedPane.add("Fonts", fontTable);
 		tabbedPane.add("Icons", iconTable);
+		tabbedPane.add("Color Tree", colorTree);
 
 		return tabbedPane;
 	}
@@ -287,6 +292,7 @@ public class ThemeEditorDialog extends DialogComponentProvider {
 			}
 			if (event.hasAnyColorChanged()) {
 				colorTable.reloadCurrent();
+				colorTree.rebuild();
 			}
 			if (event.hasAnyFontChanged()) {
 				fontTable.reloadCurrent();
@@ -297,4 +303,5 @@ public class ThemeEditorDialog extends DialogComponentProvider {
 			updateButtons();
 		}
 	}
+
 }
