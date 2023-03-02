@@ -20,7 +20,6 @@ import java.util.*;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.program.model.data.*;
-import ghidra.util.DataConverter;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.NotFoundException;
 
@@ -114,32 +113,10 @@ public class ElfDynamicTable implements ElfFileSection {
 	}
 
 	/**
-	 * Sets the dynamic with the specified type to the specified value.
-	 * @param type  the dynamic type
-	 * @param value the new value
-	 */
-	public void setDynamicValue(long type, long value) {
-		for (int i = 0; i < dynamics.size(); i++) {
-			ElfDynamic dyn = dynamics.get(i);
-			if (dyn.getTag() == type) {
-				dyn.setValue(value);
-			}
-		}
-	}
-
-	/**
-	 * Sets the dynamic with the specified (enum) type to the specified value.
-	 * @param type  the dynamic (enum) type
-	 * @param value the new value
-	 */
-	public void setDynamicValue(ElfDynamicType type, long value) {
-		setDynamicValue(type.value, value);
-	}
-
-	/**
 	 * Returns the value of the specified dynamic type.
 	 * @param type the dynamic type
 	 * @return the dynamic value
+	 * @throws NotFoundException if requested value type not found
 	 */
 	public long getDynamicValue(long type) throws NotFoundException {
 		for (int i = 0; i < dynamics.size(); i++) {
@@ -179,6 +156,7 @@ public class ElfDynamicTable implements ElfFileSection {
 	 * Returns the value of the specified dynamic (enum) type.
 	 * @param type the dynamic (enum) type
 	 * @return the dynamic value
+	 * @throws NotFoundException if requested value type not found
 	 */
 	public long getDynamicValue(ElfDynamicType type) throws NotFoundException {
 		return getDynamicValue(type.value);
@@ -247,22 +225,6 @@ public class ElfDynamicTable implements ElfFileSection {
 	@Override
 	public int getEntrySize() {
 		return header.is32Bit() ? 8 : 16;
-	}
-
-	/**
-	 * Get this dynamic table data as a byte array
-	 * @param dc data converter
-	 * @return data array
-	 */
-	public byte[] toBytes(DataConverter dc)
-			throws ArrayIndexOutOfBoundsException {
-		byte[] data = new byte[(int) getLength()];
-		int entrySize = getEntrySize();
-		for (int i = 0; i < dynamics.size(); i++) {
-			ElfDynamic dyn = dynamics.get(i);
-			dyn.write(data, i * entrySize, dc);
-		}
-		return data;
 	}
 
 }

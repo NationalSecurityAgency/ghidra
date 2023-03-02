@@ -15,17 +15,13 @@
  */
 package ghidra.app.util.bin.format.elf;
 
-import java.util.HashMap;
-
 import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.util.HashMap;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.app.util.bin.format.MemoryLoadable;
-import ghidra.app.util.bin.format.Writeable;
 import ghidra.program.model.data.*;
-import ghidra.util.DataConverter;
 import ghidra.util.StringUtilities;
 
 /**
@@ -66,7 +62,7 @@ import ghidra.util.StringUtilities;
  * </pre>
  */
 public class ElfProgramHeader
-		implements StructConverter, Comparable<ElfProgramHeader>, Writeable, MemoryLoadable {
+		implements StructConverter, Comparable<ElfProgramHeader>, MemoryLoadable {
 
 	protected ElfHeader header;
 
@@ -142,33 +138,6 @@ public class ElfProgramHeader
 	}
 
 	/**
-	 * @see ghidra.app.util.bin.format.Writeable#write(java.io.RandomAccessFile, ghidra.util.DataConverter)
-	 */
-	@Override
-	public void write(RandomAccessFile raf, DataConverter dc) throws IOException {
-		if (header.is32Bit()) {
-			raf.write(dc.getBytes(p_type));
-			raf.write(dc.getBytes((int) p_offset));
-			raf.write(dc.getBytes((int) p_vaddr));
-			raf.write(dc.getBytes((int) p_paddr));
-			raf.write(dc.getBytes((int) p_filesz));
-			raf.write(dc.getBytes((int) p_memsz));
-			raf.write(dc.getBytes(p_flags));
-			raf.write(dc.getBytes((int) p_align));
-		}
-		else if (header.is64Bit()) {
-			raf.write(dc.getBytes(p_flags));
-			raf.write(dc.getBytes(p_type));
-			raf.write(dc.getBytes(p_offset));
-			raf.write(dc.getBytes(p_vaddr));
-			raf.write(dc.getBytes(p_paddr));
-			raf.write(dc.getBytes(p_filesz));
-			raf.write(dc.getBytes(p_memsz));
-			raf.write(dc.getBytes(p_align));
-		}
-	}
-
-	/**
 	 * Get header type as string.  ElfProgramHeaderType name will be returned
 	 * if know, otherwise a numeric name of the form "PT_0x12345678" will be returned.
 	 * @return header type as string
@@ -239,10 +208,6 @@ public class ElfProgramHeader
 	 */
 	public int getFlags() {
 		return p_flags;
-	}
-
-	public void setFlags(int flags) {
-		this.p_flags = flags;
 	}
 
 	/**
@@ -352,25 +317,10 @@ public class ElfProgramHeader
 	 * the ELF file.
 	 * @param offset the new offset value
 	 */
-	public void setOffset(long offset) {
+	void setOffset(long offset) {
 		this.p_offset = offset;
 	}
-
-	/**
-	 * Sets the file and memory size.
-	 * Note: the file size can be less than or
-	 * equal to the memory size. It cannot be larger.
-	 * If the file size is less than the memory size,
-	 * then the rest of the space is considered to be
-	 * uninitialized.
-	 * @param fileSize the new file size
-	 * @param memSize  the new memory size
-	 */
-	public void setSize(long fileSize, long memSize) {
-		p_filesz = fileSize;
-		p_memsz = memSize;
-	}
-
+	
 	/**
 	 * On systems for which physical addressing is relevant, this member is reserved for the
 	 * segment's physical address. Because System V ignores physical addressing for application
@@ -449,16 +399,6 @@ public class ElfProgramHeader
 			typeEnum.add(type.name, type.value);
 		}
 		return typeEnum;
-	}
-
-	/**
-	 * Sets the new physical and virtual addresses
-	 * @param paddr the new physical address
-	 * @param vaddr the new virtual address
-	 */
-	public void setAddress(long paddr, long vaddr) {
-		this.p_paddr = header.unadjustAddressForPrelink(paddr);
-		this.p_vaddr = header.unadjustAddressForPrelink(vaddr);
 	}
 
 	/**

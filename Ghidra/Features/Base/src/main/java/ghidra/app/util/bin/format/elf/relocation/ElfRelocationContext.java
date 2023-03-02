@@ -69,7 +69,7 @@ public class ElfRelocationContext {
 		this.relocationTable = relocTable;
 		symbolTable = relocTable.getAssociatedSymbolTable();
 		if (symbolTable == null) {
-			nullSymbol = ElfSymbol.createNullSymbol(loadHelper.getElfHeader());
+			nullSymbol = new ElfSymbol();
 		}
 	}
 
