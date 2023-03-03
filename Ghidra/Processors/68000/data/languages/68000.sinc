@@ -701,97 +701,89 @@ macro extendedResultFlags(result) {
 }
 
 macro arithmeticShiftLeft(count, register, width) {
-	local modcount = count % 64;
-	CF = 0;
-	resflags(register);
-	if (count == 0) goto inst_next;
-	local msbBefore:4 = zext(register) >> (width - 1);
-	getbit(CF, register, width - modcount);
+	local modcount = count & 63;
+	local lbit:1 = ((register >> (width - modcount) & 1) != 0);
+	local msbBefore:4 = zext(register s< 0);
 	register = register << modcount;
 	resflags(register);
-	local msbAfter:4 = zext(register) >> (width - 1);
+	local msbAfter:4 = zext(register s< 0);
 	VF = (msbBefore ^ msbAfter) != 0;
-	XF = CF;
+	CF = (modcount != 0) * lbit;
+	XF = ((modcount == 0) * XF) + ((modcount != 0) * CF);
 }
 
 macro arithmeticShiftRight(count, register, width) {
-	local modcount = count % 64;
-	CF = 0;
-	resflags(register);
-	if (count == 0) goto inst_next;
-	local msbBefore:4 = zext(register) >> (width - 1);
-	getbit(CF, register, modcount - 1);
+	local modcount = count & 63;
+	local lbit:1 = ((register >> (modcount-1) & 1) != 0);
+	local msbBefore:4 = zext(register s< 0);
 	register = register s>> modcount;
 	resflags(register);
-	local msbAfter:4 = zext(register) >> (width - 1);
+	local msbAfter:4 = zext(register s< 0);
 	VF = (msbBefore ^ msbAfter) != 0;
-	XF = CF;
+	CF = (modcount != 0) * lbit;
+	XF = ((modcount == 0) * XF) + ((modcount != 0) * CF);
 }
 
 macro logicalShiftLeft(count, register, width) {
-	local modcount = count % 64;
-	CF = 0;
-	VF = 0;
-	resflags(register);
-	if (modcount == 0) goto inst_next;
-	getbit(CF, register, width - modcount);
+	local modcount = count & 63;
+	local lbit:1 = ((register >> (width - modcount) & 1) != 0);
+	local msbBefore:4 = zext(register s< 0);
 	register = register << modcount;
 	resflags(register);
-	XF = CF;
+	local msbAfter:4 = zext(register s< 0);
+	VF = (msbBefore ^ msbAfter) != 0;
+	CF = (modcount != 0) * lbit;
+	XF = ((modcount == 0) * XF) + ((modcount != 0) * CF);
 }
 
 macro logicalShiftRight(count, register, width) {
-	local modcount = count % 64;
-	CF = 0;
-	VF = 0;
-	resflags(register);
-	if (modcount == 0) goto inst_next;
-	getbit(CF, register, width - modcount);
+	local modcount = count & 63;
+	local lbit:1 = ((register >> (modcount-1) & 1) != 0);
+	local msbBefore:4 = zext(register s< 0);
 	register = register >> modcount;
 	resflags(register);
-	XF = CF;
+	local msbAfter:4 = zext(register s< 0);
+	VF = (msbBefore ^ msbAfter) != 0;
+	CF = (modcount != 0) * lbit;
+	XF = ((modcount == 0) * XF) + ((modcount != 0) * CF);
 }
 
 macro rotateLeft(count, register, width) {
-	local modcount = (count % 64) % width;
-	VF = 0;
+	local modcount = count & 63;
 	register = (register << modcount) | (register >> (width - modcount));
-	getbit(CF, register, width - 1);
 	resflags(register);
+	CF = (register & 1) != 0;
+	VF = 0;
 }
 
 macro rotateRight(count, register, width) {
-	local modcount = (count % 64) % width;
-	VF = 0;
+	local modcount = count & 63;
 	register = (register << (width - modcount)) | (register >> modcount);
-	getbit(CF, register, 0);
 	resflags(register);
+	CF = zext(register s< 0);
+	VF = 0;
 }
 
 macro rotateLeftExtended(count, register, width) {
-	local modcount = (count % 64) % width;
+	local modcount = count & 63;
+	local xflag = (register & (1 << (width - modcount))) != 0;
+	local result = (register << modcount) | (zext(XF) << (modcount - 1)) | (register >> (width - modcount + 1));
+	register = (zext(modcount != 0) * result) + (zext(modcount == 0) * register);
+	resflags(register);
+	XF = (zext(modcount != 0) * xflag) + (zext(modcount == 0) * XF);
 	CF = XF;
 	VF = 0;
-	resflags(register);
-	if (modcount == 0) goto inst_next;
-	local xflag = (register & (1 << (width - modcount))) != 0;
-	register = (register << modcount) | (zext(XF) << (modcount - 1)) | (register >> (width - modcount + 1));
-	XF = xflag;
-	CF = XF;
-	resflags(register);
 }
 
 macro rotateRightExtended(count, register, width) {
-	local modcount = (count % 64) % width;
+	local modcount = count & 63;
+	local xflag = (register & (1 << (modcount - 1))) != 0;
+	local result = (zext(XF) << (width - modcount)) | (register >> modcount) | (register << (width - modcount + 1));
+	register = (zext(modcount != 0) * result) + (zext(modcount == 0) * register);
+	resflags(register);
+	XF = (zext(modcount != 0) * xflag) + (zext(modcount == 0) * XF);
 	CF = XF;
 	VF = 0;
-	resflags(register);
-	if (modcount == 0) goto inst_next;
-	local xflag = (register & (1 << (modcount - 1))) != 0;
-	register = (zext(XF) << (width - modcount)) | (register >> modcount) | (register << (width - modcount + 1));
-	XF = xflag;
-	CF = XF;
-	resflags(register);
 }
 
 :^instruction is  extGUARD=0 & mode2 & reg9an & mode & regan & instruction
