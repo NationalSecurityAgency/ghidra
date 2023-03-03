@@ -15,8 +15,10 @@
  */
 package ghidra.program.model.data;
 
+import ghidra.program.model.data.floats.Float128DataType;
+
 /**
- * Provides a definition of a {@code complex} built-in data type consisting of two 16 byte floating point
+ * Provides a definition of a {@code complex} built-in data type consisting of two 128-bit floating point
  * numbers in the IEEE 754 double precision format.
  */
 public class Complex32DataType extends AbstractComplexDataType {
@@ -28,7 +30,7 @@ public class Complex32DataType extends AbstractComplexDataType {
 	}
 
 	public Complex32DataType(DataTypeManager dtm) {
-		super("complex32", Float16DataType.dataType, dtm);
+		super("complex32", Float128DataType.dataType, dtm);
 	}
 
 	@Override

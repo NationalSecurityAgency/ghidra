@@ -37,7 +37,7 @@ public class OpBehaviorFloatSqrtTest extends AbstractOpBehaviorTest {
 
 		long longbits = ff.getEncoding(2.0);
 		longbits = op.evaluateUnary(8, 8, longbits);
-		double d = ff.getHostFloat(longbits);
+		double d = ff.decodeHostFloat(longbits);
 		Assert.assertEquals("1.414213562373095", Double.toString(d).substring(0, 17));
 
 	}
@@ -52,7 +52,7 @@ public class OpBehaviorFloatSqrtTest extends AbstractOpBehaviorTest {
 		BigFloat big = ff.getBigFloat(2.0);
 		BigInteger encoding = ff.getEncoding(big);
 		encoding = op.evaluateUnary(8, 8, encoding);
-		BigFloat result = ff.getHostFloat(encoding);
+		BigFloat result = ff.decodeBigFloat(encoding);
 		Assert.assertEquals("1.414213562373095", ff.round(result).toString());
 	}
 

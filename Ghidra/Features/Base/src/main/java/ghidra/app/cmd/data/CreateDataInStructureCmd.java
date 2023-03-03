@@ -114,7 +114,8 @@ public class CreateDataInStructureCmd implements Command {
 				else {
 //			        MemBuffer memBuf = new ProgramStructureProviderContext(program,addr, 
 //	    	        					struct, dataComp.getParentOffset());
-					DataTypeInstance dti = DataTypeInstance.getDataTypeInstance(newDataType, -1);
+					DataTypeInstance dti =
+						DataTypeInstance.getDataTypeInstance(newDataType, -1, true);
 					struct.replace(index, dti.getDataType(), dti.getLength());
 				}
 			}

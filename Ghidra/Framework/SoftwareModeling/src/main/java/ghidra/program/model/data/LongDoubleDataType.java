@@ -15,6 +15,7 @@
  */
 package ghidra.program.model.data;
 
+import ghidra.program.model.data.floats.AbstractFloatDataType;
 
 /**
  * Provides a definition of a Long Double within a program.
@@ -31,7 +32,12 @@ public class LongDoubleDataType extends AbstractFloatDataType {
 	}
 
 	public LongDoubleDataType(DataTypeManager dtm) {
-		super("longdouble", dtm);
+		super("longdouble", getDataOrganization(dtm).getLongDoubleSize(), dtm);
+	}
+
+	@Override
+	protected String buildDescription() {
+		return "Compiler-defined 'long double' " + super.buildDescription();
 	}
 
 	public DataType clone(DataTypeManager dtm) {
@@ -49,10 +55,5 @@ public class LongDoubleDataType extends AbstractFloatDataType {
 	@Override
 	public boolean hasLanguageDependantLength() {
 		return true;
-	}
-
-	@Override
-	public int getLength() {
-		return getDataOrganization().getLongDoubleSize();
 	}
 }

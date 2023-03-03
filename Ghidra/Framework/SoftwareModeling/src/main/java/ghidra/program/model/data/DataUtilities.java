@@ -259,10 +259,10 @@ public final class DataUtilities {
 		DataTypeInstance dti;
 		if (length > 0 && (realType instanceof Dynamic) &&
 			((Dynamic) realType).canSpecifyLength()) {
-			dti = DataTypeInstance.getDataTypeInstance(newType, memBuf, length);
+			dti = DataTypeInstance.getDataTypeInstance(newType, memBuf, length, false);
 		}
 		else {
-			dti = DataTypeInstance.getDataTypeInstance(newType, memBuf);
+			dti = DataTypeInstance.getDataTypeInstance(newType, memBuf, false);
 		}
 
 		if (dti == null) {

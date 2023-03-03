@@ -155,6 +155,11 @@ class TypedefDB extends DataTypeDB implements TypeDef {
 	}
 
 	@Override
+	public int getAlignedLength() {
+		return getDataType().getAlignedLength();
+	}
+
+	@Override
 	public String getDescription() {
 		return getDataType().getDescription();
 	}

@@ -129,7 +129,8 @@ class DataDB extends CodeUnitDB implements Data {
 	}
 
 	private void computeLength() {
-		length = dataType.getLength();
+		// NOTE: Data intentionally does not use aligned-length
+		length = dataType.getLength(); 
 
 		// undefined will never change their size
 		if (dataType instanceof Undefined) {

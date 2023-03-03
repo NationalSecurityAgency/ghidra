@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +29,7 @@ public class FloatFormatFactory {
 	 * Get float format
 	 * @param size format storage size in bytes
 	 * @return float format or null if size is not supported
+	 * @throws UnsupportedFloatFormatException if specified size is unsupported
 	 */
 	public static synchronized FloatFormat getFloatFormat(int size)
 			throws UnsupportedFloatFormatException {
@@ -40,7 +40,6 @@ public class FloatFormatFactory {
 			cache.put(size, format);
 		}
 		return format;
-
 	}
 
 }

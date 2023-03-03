@@ -38,23 +38,23 @@ public class OpBehaviorFloatAbsTest extends AbstractOpBehaviorTest {
 
 		long a = ff.getEncoding(2.5);
 		long result = op.evaluateUnary(8, 8, ff.opAbs(a));
-		Assert.assertEquals(2.5, ff.getHostFloat(result), 0);
+		Assert.assertEquals(2.5, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(-2.5);
 		result = op.evaluateUnary(8, 8, a);
-		Assert.assertEquals(2.5, ff.getHostFloat(result), 0);
+		Assert.assertEquals(2.5, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(Double.POSITIVE_INFINITY);
 		result = op.evaluateUnary(8, 8, a);
-		Assert.assertEquals(Double.POSITIVE_INFINITY, ff.getHostFloat(result), 0);
+		Assert.assertEquals(Double.POSITIVE_INFINITY, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(Double.NEGATIVE_INFINITY);
 		result = op.evaluateUnary(8, 8, a);
-		Assert.assertEquals(Double.POSITIVE_INFINITY, ff.getHostFloat(result), 0);
+		Assert.assertEquals(Double.POSITIVE_INFINITY, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(Double.NaN);
 		result = op.evaluateUnary(8, 8, a);
-		Assert.assertEquals(Double.NaN, ff.getHostFloat(result), 0);
+		Assert.assertEquals(Double.NaN, ff.decodeHostFloat(result), 0);
 	}
 
 	@Test
@@ -66,23 +66,23 @@ public class OpBehaviorFloatAbsTest extends AbstractOpBehaviorTest {
 
 		BigInteger a = ff.getEncoding(ff.getBigFloat(2.5d));
 		BigInteger result = op.evaluateUnary(8, 8, a);
-		Assert.assertEquals(ff.getBigFloat(2.5d), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigFloat(2.5d), ff.decodeBigFloat(result));
 
 		a = ff.getEncoding(ff.getBigFloat(-2.5d));
 		result = op.evaluateUnary(8, 8, a);
-		Assert.assertEquals(ff.getBigFloat(2.5d), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigFloat(2.5d), ff.decodeBigFloat(result));
 
 		a = ff.getBigInfinityEncoding(false);
 		result = op.evaluateUnary(8, 8, a);
-		Assert.assertEquals(ff.getBigInfinity(false), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigInfinity(false), ff.decodeBigFloat(result));
 
 		a = ff.getBigInfinityEncoding(true);
 		result = op.evaluateUnary(8, 8, a);
-		Assert.assertEquals(ff.getBigInfinity(false), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigInfinity(false), ff.decodeBigFloat(result));
 
 		a = ff.getBigNaNEncoding(false);
 		result = op.evaluateUnary(8, 8, a);
-		Assert.assertEquals(ff.getBigNaN(false), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigNaN(false), ff.decodeBigFloat(result));
 	}
 
 }

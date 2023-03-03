@@ -22,6 +22,7 @@ import ghidra.app.util.cparser.C.ParseException;
 import ghidra.app.util.parser.FunctionSignatureParser;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.floats.AbstractFloatDataType;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.listing.Function.FunctionUpdateType;
@@ -1206,6 +1207,7 @@ public class FunctionEditorModel {
 		catch (InvalidInputException e) {
 			// ignore
 		}
+
 		setFunctionData(f);
 		isInParsingMode = false;
 	}

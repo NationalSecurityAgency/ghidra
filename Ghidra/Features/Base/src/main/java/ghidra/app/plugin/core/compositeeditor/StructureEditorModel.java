@@ -161,7 +161,8 @@ class StructureEditorModel extends CompEditorModel {
 		else if (columnIndex == getDataTypeColumn()) {
 			DataType dt = dtc.getDataType();
 			int dtLen = dt.getLength();
-			return DataTypeInstance.getDataTypeInstance(dt, (dtLen > 0) ? dtLen : dtc.getLength());
+			return DataTypeInstance.getDataTypeInstance(dt, (dtLen > 0) ? dtLen : dtc.getLength(),
+				true);
 		}
 		else if (columnIndex == getNameColumn()) {
 			value = dtc.getFieldName();

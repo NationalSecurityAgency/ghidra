@@ -137,7 +137,7 @@ public abstract class FactoryStructureDataType extends BuiltIn implements Factor
 
 	protected DataTypeComponent addComponent(Structure es, DataType dt, String componentName) {
 
-		return es.add(dt, dt.getLength(), componentName, null);
+		return es.add(dt, dt.getAlignedLength(), componentName, null);
 	}
 
 	protected abstract void populateDynamicStructure(MemBuffer buf, Structure es);

@@ -41,7 +41,8 @@ class DataTypePreview implements Preview {
 	public String getPreview(Memory memory, Address addr) {
 		try {
 			MemBuffer mb = new DumbMemBufferImpl(memory, addr);
-			DataTypeInstance dti = DataTypeInstance.getDataTypeInstance(dt, mb, MAX_PREVIEW_LENGTH);
+			DataTypeInstance dti =
+				DataTypeInstance.getDataTypeInstance(dt, mb, MAX_PREVIEW_LENGTH, false);
 			if (dti == null) {
 				return "";
 			}

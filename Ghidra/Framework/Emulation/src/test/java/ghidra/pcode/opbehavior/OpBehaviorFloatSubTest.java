@@ -39,32 +39,32 @@ public class OpBehaviorFloatSubTest extends AbstractOpBehaviorTest {
 		long a = ff.getEncoding(1.5);
 		long b = ff.getEncoding(1.25);
 		long result = op.evaluateBinary(8, 8, a, b);// 1.5 - 1.25
-		Assert.assertEquals(0.25, ff.getHostFloat(result), 0);
+		Assert.assertEquals(0.25, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(-1.25);
 		result = op.evaluateBinary(8, 8, a, b);// -1.25 - 1.25
-		Assert.assertEquals(-2.5, ff.getHostFloat(result), 0);
+		Assert.assertEquals(-2.5, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(Double.POSITIVE_INFINITY);
 		result = op.evaluateBinary(8, 8, a, b);// +INFINITY - 1.25
-		Assert.assertEquals(Double.POSITIVE_INFINITY, ff.getHostFloat(result), 0);
+		Assert.assertEquals(Double.POSITIVE_INFINITY, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(Double.NEGATIVE_INFINITY);
 		result = op.evaluateBinary(8, 8, a, b);// -INFINITY - 1.25
-		Assert.assertEquals(Double.NEGATIVE_INFINITY, ff.getHostFloat(result), 0);
+		Assert.assertEquals(Double.NEGATIVE_INFINITY, ff.decodeHostFloat(result), 0);
 
 		b = ff.getEncoding(Double.NEGATIVE_INFINITY);
 		result = op.evaluateBinary(8, 8, a, b);// -INFINITY - -INFINITY
-		Assert.assertEquals(Double.NaN, ff.getHostFloat(result), 0);
+		Assert.assertEquals(Double.NaN, ff.decodeHostFloat(result), 0);
 
 		b = ff.getEncoding(Double.POSITIVE_INFINITY);
 		result = op.evaluateBinary(8, 8, a, b);// -INFINITY - +INFINITY
-		Assert.assertEquals(Double.NEGATIVE_INFINITY, ff.getHostFloat(result), 0);
+		Assert.assertEquals(Double.NEGATIVE_INFINITY, ff.decodeHostFloat(result), 0);
 
 		a = ff.getEncoding(Double.NaN);
 		b = ff.getEncoding(1.25);
 		result = op.evaluateBinary(8, 8, a, b);// NaN - 1.25
-		Assert.assertEquals(Double.NaN, ff.getHostFloat(result), 0);
+		Assert.assertEquals(Double.NaN, ff.decodeHostFloat(result), 0);
 	}
 
 	@Test
@@ -77,32 +77,32 @@ public class OpBehaviorFloatSubTest extends AbstractOpBehaviorTest {
 		BigInteger a = ff.getEncoding(ff.getBigFloat(1.5d));
 		BigInteger b = ff.getEncoding(ff.getBigFloat(1.25d));
 		BigInteger result = op.evaluateBinary(8, 8, a, b);// 1.5 - 1.25
-		Assert.assertEquals(ff.getBigFloat(0.25d), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigFloat(0.25d), ff.decodeBigFloat(result));
 
 		a = ff.getEncoding(ff.getBigFloat(-1.25d));
 		result = op.evaluateBinary(8, 8, a, b);// -1.25 - 1.25
-		Assert.assertEquals(ff.getBigFloat(-2.5d), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigFloat(-2.5d), ff.decodeBigFloat(result));
 
 		a = ff.getBigInfinityEncoding(false);
 		result = op.evaluateBinary(8, 8, a, b);// +INFINITY - 1.25
-		Assert.assertEquals(ff.getBigInfinity(false), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigInfinity(false), ff.decodeBigFloat(result));
 
 		a = ff.getBigInfinityEncoding(true);
 		result = op.evaluateBinary(8, 8, a, b);// -INFINITY - 1.25
-		Assert.assertEquals(ff.getBigInfinity(true), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigInfinity(true), ff.decodeBigFloat(result));
 
 		b = ff.getBigInfinityEncoding(true);
 		result = op.evaluateBinary(8, 8, a, b);// -INFINITY - -INFINITY
-		Assert.assertEquals(ff.getBigNaN(false), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigNaN(false), ff.decodeBigFloat(result));
 
 		b = ff.getBigInfinityEncoding(false);
 		result = op.evaluateBinary(8, 8, a, b);// -INFINITY - +INFINITY
-		Assert.assertEquals(ff.getBigInfinity(true), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigInfinity(true), ff.decodeBigFloat(result));
 
 		a = ff.getBigNaNEncoding(false);
 		b = ff.getEncoding(ff.getBigFloat(1.25d));
 		result = op.evaluateBinary(8, 8, a, b);// NaN - 1.25
-		Assert.assertEquals(ff.getBigNaN(false), ff.getHostFloat(result));
+		Assert.assertEquals(ff.getBigNaN(false), ff.decodeBigFloat(result));
 
 	}
 
