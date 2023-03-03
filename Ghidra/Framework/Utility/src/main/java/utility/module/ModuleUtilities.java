@@ -208,23 +208,27 @@ public class ModuleUtilities {
 	}
 
 	/**
-	 * Gets the "lib" directories from the given modules.
+	 * Gets the library directories from the given modules.
+	 * <p>
+	 * In {@link SystemUtilities#isInReleaseMode() release mode}, we expect these directories to
+	 * be in each module's <code>lib</code> subdirectory.
+	 * <p>
+	 * If not in release mode (i.e., {@link SystemUtilities#isInDevelopmentMode() development mode},
+	 * {@link SystemUtilities#isInTestingMode() testing mode}, etc), we expect these directories to
+	 * be in each module's <code>build/libs</code> subdirectory.
+	 * <p>
+	 * NOTE: If Eclipse is being used this method may still return jars built by Gradle.  It is up
+	 * to the caller of this method to determine if they should be used instead of the classes
+	 * compiled by Eclipse.
 	 *
-	 * @param modules The modules to get the lib directories of.
-	 * @return A collection of lib directories from the given modules.
+	 * @param modules The modules to get the library directories of.
+	 * @return A collection of library directories from the given modules.
 	 */
 	public static Collection<ResourceFile> getModuleLibDirectories(Map<String, GModule> modules) {
 		List<ResourceFile> libraryDirectories = new ArrayList<>();
 		for (GModule module : modules.values()) {
 			module.collectExistingModuleDirs(libraryDirectories, "lib");
-
-			// In testing mode, we run out of an intermediate build state...the module jars
-			// live in a build/libs directory.  We only want to look in here when testing because
-			// other run modes (such as a Ghidra release launched from a user's Eclipse) may contain
-			// build remnants that could cause problems if discovered.
-			if (SystemUtilities.isInTestingMode()) {
-				module.collectExistingModuleDirs(libraryDirectories, "libs");
-			}
+			module.collectExistingModuleDirs(libraryDirectories, "libs");
 		}
 		return libraryDirectories;
 	}

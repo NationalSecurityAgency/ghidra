@@ -76,12 +76,19 @@ rem NOTE: If adjusting JAVA command assignment - do not attempt to add parameter
 
 rem NOTE: Variables that get accessed in server.conf must be lowercase
 
-rem Development Environment
+rem Development Environment (Eclipse classes or "gradle jar")
 set "ghidra_home=%SERVER_DIR%\..\..\..\.."
 set "WRAPPER_CONF=%SERVER_DIR%\..\..\Common\server\server.conf"
 set "DATA_DIR=%ghidra_home%\%MODULE_DIR%\build\data"
 set "classpath_frag=%ghidra_home%\%MODULE_DIR%\build\dev-meta\classpath.frag"
 set "LS_CPATH=%ghidra_home%\GhidraBuild\LaunchSupport\bin\main"
+if not exist "%LS_CPATH%" (
+	set "LS_CPATH=%ghidra_home%\GhidraBuild\LaunchSupport\build\libs\LaunchSupport.jar"
+)
+if not exist "%LS_CPATH%" (
+	set ERROR=ERROR: Cannot launch from repo because Ghidra has not been compiled with Eclipse or Gradle.
+	goto reportError
+)
 
 goto lab1
 
