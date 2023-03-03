@@ -42,7 +42,21 @@ public class OpBehaviorLzcount extends UnaryOpBehavior {
 
 	@Override
 	public BigInteger evaluateUnary(int sizeout, int sizein, BigInteger unsignedIn1) {
-		// TODO Auto-generated method stub
-		return null;
+		int bitcount = 0;
+		sizein = sizein * 8 - 1;
+		while (sizein >= 0) {
+			if (unsignedIn1.testBit(sizein)) {
+				break;
+			}
+			bitcount += 1;
+			sizein -= 1;
+		}
+		if (sizeout == 1) {
+			bitcount &= 0xff;
+		}
+		else if (sizeout == 2) {
+			bitcount &= 0xffff;
+		}
+		return BigInteger.valueOf(bitcount);
 	}
 }

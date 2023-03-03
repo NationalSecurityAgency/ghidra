@@ -231,15 +231,15 @@ sla_opt/%.o:	%.cc
 	$(CXX) $(ARCH_TYPE) -c $(OPT_CXXFLAGS) $(ADDITIONAL_FLAGS) $(SLEIGH_OPT)        $< -o $@
 
 grammar.cc:	grammar.y
-	$(YACC) -p cparse -o $@ $<
+	$(YACC) -l -o $@ $<
 xml.cc:	xml.y
-	$(YACC) -p xml -o $@ $<
+	$(YACC) -l -o $@ $<
 pcodeparse.cc:	pcodeparse.y
-	$(YACC) -p pcode -o $@ $<
+	$(YACC) -l -o $@ $<
 slghparse.cc:	slghparse.y
-	$(YACC) -d -o $@ $<
+	$(YACC) -l -d -o $@ $<
 slghscan.cc:	slghscan.l
-	$(LEX) -o$@ $<
+	$(LEX) -L -o$@ $<
 ruleparse.cc:	ruleparse.y
 	$(YACC) -p ruleparse -d -o $@ $<
 

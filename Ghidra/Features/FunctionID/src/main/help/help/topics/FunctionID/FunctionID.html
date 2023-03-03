@@ -3,24 +3,14 @@
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 <title>Function ID</title>
 <link rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
-<link rel="stylesheet" type="text/css" href="help/shared/languages.css">
-<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<link rel="stylesheet" type="text/css" href="../../shared/languages.css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="index.html" title="Function ID">
+<link rel="up" href="index.html" title="Function ID">
+<link rel="prev" href="index.html" title="Function ID">
 <link rel="next" href="FunctionIDPlugin.html" title="Function ID Plug-in">
 </head>
-<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
-<div class="navheader">
-<table width="100%" summary="Navigation header">
-<tr><th colspan="3" align="center">Function ID</th></tr>
-<tr>
-<td width="20%" align="left"></td>
-<th width="60%" align="center">�</th>
-<td width="20%" align="right">�<a accesskey="n" href="FunctionIDPlugin.html">Next</a>
-</td>
-</tr>
-</table>
-<hr>
-</div>
-<div class="chapter">
+<body><div class="chapter">
 <div class="titlepage"><div><div><h1 class="title">
 <a name="FunctionID"></a>Function ID</h1></div></div></div>
 <div class="mediaobject" align="center"><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="100%"><tr><td align="center"><img src="images/FIDmatch.png" align="middle" width="723" height="267"></td></tr></table></div>
@@ -57,7 +47,7 @@ Within each database, there are a two library variants -- one for debug versions
 </p>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="idm140323472630336"></a>Hashing</h3></div></div></div>
+<a name="hashing"></a>Hashing</h3></div></div></div>
 <p>
 Function ID works by calculating a cumulative hash over all the machine <span class="emphasis"><em>instructions</em></span>
 that make up the body of a function. For each function, two different 64-bit hashes are computed: a
@@ -90,7 +80,7 @@ helps distinguish between closely related variants of a function.
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="idm140323472620992"></a>Parents and Children</h3></div></div></div>
+<a name="parentchild"></a>Parents and Children</h3></div></div></div>
 <p>
 When Function ID examines a function, its parent and child functions are also considered
 as a way of disambiguating multiple matches. For example, suppose two functions have identical
@@ -101,7 +91,7 @@ the two subfunctions, allowing it to distinguish between the two.
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="idm140323472619376"></a>Libraries</h3></div></div></div>
+<a name="libraries"></a>Libraries</h3></div></div></div>
 <p>
 Within a Function ID database, functions are grouped into <span class="emphasis"><em>libraries</em></span>,
 which are intended to be recognizable named software components
@@ -141,7 +131,7 @@ couldn't distinguish.
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="idm140323472607824"></a>Single Matches</h3></div></div></div>
+<a name="singlematches"></a>Single Matches</h3></div></div></div>
 <p>
 A <span class="bold"><strong>Single Match</strong></span> for a function occurs under the following conditions:
   </p>
@@ -268,7 +258,7 @@ used to filter out matches with lower scores.
 </p>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="idm140323472572880"></a>Matching Function Names</h3></div></div></div>
+<a name="matchingfunction"></a>Matching Function Names</h3></div></div></div>
 <p>
 If there are still multiple potential matches once thresholds have been applied to the
 match scores, the remaining matches will be grouped based on function names. If
@@ -284,22 +274,5 @@ parameter information is stripped.
 </p>
 </div>
 </div>
-</div>
-<div class="navfooter">
-<hr>
-<table width="100%" summary="Navigation footer">
-<tr>
-<td width="40%" align="left"></td>
-<td width="20%" align="center">�</td>
-<td width="40%" align="right">�<a accesskey="n" href="FunctionIDPlugin.html">Next</a>
-</td>
-</tr>
-<tr>
-<td width="40%" align="left" valign="top">Function ID�</td>
-<td width="20%" align="center"></td>
-<td width="40%" align="right" valign="top">�Function ID Plug-in</td>
-</tr>
-</table>
-</div>
-</body>
+</div></body>
 </html>

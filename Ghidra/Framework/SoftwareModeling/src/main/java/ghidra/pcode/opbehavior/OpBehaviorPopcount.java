@@ -39,8 +39,26 @@ public class OpBehaviorPopcount extends UnaryOpBehavior {
 
 	@Override
 	public BigInteger evaluateUnary(int sizeout, int sizein, BigInteger unsignedIn1) {
-		// TODO Auto-generated method stub
-		return null;
+		int bitcount = 0;
+		while (sizein >= 8) {
+			bitcount += evaluateUnary(1, 8, unsignedIn1.longValue());
+			sizein -= 8;
+			if (sizein == 0) {
+				break;
+			}
+			unsignedIn1 = unsignedIn1.shiftRight(64);
+		}
+		if (sizein > 0) {
+			long mask = sizein * 8 - 1;
+			bitcount += evaluateUnary(1, 8, unsignedIn1.longValue() & mask);
+		}
+		if (sizeout == 1) {
+			bitcount &= 0xff;
+		}
+		else if (sizeout == 2) {
+			bitcount &= 0xffff;
+		}
+		return BigInteger.valueOf(bitcount);
 	}
 
 }

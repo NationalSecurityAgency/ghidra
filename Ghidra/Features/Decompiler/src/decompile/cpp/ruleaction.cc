@@ -10127,11 +10127,11 @@ int4 RuleXorSwap::applyOp(PcodeOp *op,Funcdata &data)
 }
 
 /// \class RuleLzcountShiftBool
-/// \brief Simplify equality checks that use lzcount.
+/// \brief Simplify equality checks that use lzcount:  `lzcount(X) >> c  =>  X == 0` if X is 2^c bits wide
 ///
 /// Some compilers check if a value is equal to zero by checking the most
 /// significant bit in lzcount; for instance on a 32-bit system,
-/// it being equal to 32 would have the 5th bit set.
+/// the result of lzcount on zero would have the 5th bit set.
 ///  - `lzcount(a ^ 3) >> 5  =>  a ^ 3 == 0  =>  a == 3` (by RuleXorCollapse)
 ///  - `lzcount(a - 3) >> 5  =>  a - 3 == 0  =>  a == 3` (by RuleEqual2Zero)
 void RuleLzcountShiftBool::getOpList(vector<uint4> &oplist) const
@@ -10170,7 +10170,6 @@ int4 RuleLzcountShiftBool::applyOp(PcodeOp *op,Funcdata &data)
 
       // CPUI_INT_EQUAL must produce a 1-byte boolean result
       Varnode* eqResVn = data.newUniqueOut(1, newOp);
-      data.opSetOutput(newOp, eqResVn);
 
       data.opInsertBefore(newOp, baseOp);
 
@@ -10178,7 +10177,10 @@ int4 RuleLzcountShiftBool::applyOp(PcodeOp *op,Funcdata &data)
       // we have to guarantee that a Varnode of this size gets outputted
       // to the descending PcodeOps. This is handled here with CPUI_INT_ZEXT.
       data.opRemoveInput(baseOp, 1);
-      data.opSetOpcode(baseOp, CPUI_INT_ZEXT);
+      if (baseOp->getOut()->getSize() == 1)
+	data.opSetOpcode(baseOp, CPUI_COPY);
+      else
+	data.opSetOpcode(baseOp, CPUI_INT_ZEXT);
       data.opSetInput(baseOp, eqResVn, 0);
       return 1;
     }

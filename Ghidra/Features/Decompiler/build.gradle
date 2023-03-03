@@ -64,8 +64,8 @@ task generateParsers {
  */
 task yaccDecompiler {
 
-	Task t1 = createBisonTask("xml", "decompile", false, true);
-	Task t2 = createBisonTask("grammar", "decompile", false, true);
+	Task t1 = createBisonTask("xml", "decompile", false);
+	Task t2 = createBisonTask("grammar", "decompile", false);
 	
 	if (t1 != null) {
 		dependsOn t1, t2
@@ -79,9 +79,9 @@ task yaccDecompiler {
  */
 task yaccSleigh {
 	
-	Task t1 = createBisonTask("slghparse", "sleigh", true, false); // also produces slghparse.hh header file
-	Task t2 = createBisonTask("pcodeparse", "sleigh", false, true);
-	Task t3 = createBisonTask("xml", "sleigh", false, true);
+	Task t1 = createBisonTask("slghparse", "sleigh", true); // also produces slghparse.hh header file
+	Task t2 = createBisonTask("pcodeparse", "sleigh", false);
+	Task t3 = createBisonTask("xml", "sleigh", false);
 	
 	if (t1 != null) {
 		dependsOn t1,t2,t3
@@ -110,6 +110,8 @@ def installPoint = "$rootDir/GhidraDocs/languages/html"
 
 def installHelpPoint = "../help/help"
 
+def defaultStylePoint = "$rootDir/Ghidra/Framework/Help/src/main/resources/help/shared/DefaultStyle.css"
+
 task buildDecompilerHelpHtml(type: Exec) {
 
 	workingDir 'src/main/doc'
@@ -134,7 +136,7 @@ task buildDecompilerHelpHtml(type: Exec) {
 		xsltproc --output $buildDir/decomp_noscaling.xml --stringparam profile.condition "noscaling" commonprofile.xsl decompileplugin.xml 2>&1
 		xsltproc --stringparam base.dir ${installHelpPoint}/topics/DecompilePlugin/ --stringparam root.filename Decompiler decompileplugin_html.xsl $buildDir/decomp_noscaling.xml 2>&1
 		rm ${installHelpPoint}/topics/DecompilePlugin/Decompiler.html
-		sed -i -e '/Frontpage.css/ { p; s/Frontpage.css/languages.css/; }' ${installHelpPoint}/topics/DecompilePlugin/*.html 2>&1
+		sed -i -e '/DefaultStyle.css/ { p; sQhref=".*"Qhref="../../shared/languages.css"Q; }' ${installHelpPoint}/topics/DecompilePlugin/*.html 2>&1
 
 		echo '** Done. **'
 		"""
@@ -174,6 +176,9 @@ task buildDecompilerHelpPdf(type: Exec) {
 
 	workingDir 'src/main/doc'
 
+	outputs.dir  "$workingDir/$buildDir/pdf"
+	outputs.file "$workingDir/$buildDir/pdf/decompileplugin.pdf"
+
 	// 'which' returns the number of failed arguments
 	// Using 'which' first will allow the entire command to fail if the required 
 	// executables are not installed.
@@ -186,19 +191,25 @@ task buildDecompilerHelpPdf(type: Exec) {
 		echo '** Checking if required executables are installed. **'
 		which fop 2>&1
 		which xsltproc 2>&1
-		rm -f $buildDir/decompileplugin.fo $buildDir/decompileplugin.pdf $buildDir/decompileplugin_withscaling.xml 2>&1
-		rm -rf $buildDir/images 2>&1
-		mkdir -p $buildDir/images 2>&1
-		cp $installHelpPoint/topics/DecompilePlugin/images/*.png $buildDir/images 2>&1
-		cp $installHelpPoint/topics/DecompilePlugin/images/*.gif $buildDir/images 2>&1
-		cp $installHelpPoint/shared/*.png $buildDir/images 2>&1
+		mkdir -p $buildDir/pdf/images 2>&1
+		cp $installHelpPoint/topics/DecompilePlugin/images/*.png $buildDir/pdf/images 2>&1
+		cp ../resources/images/decompileFunction.gif $buildDir/pdf/images 2>&1
+		cp ../../../../../Framework/Help/src/main/resources/help/shared/warning.png $buildDir/pdf/images 2>&1
+		cp ../../../../../Framework/Help/src/main/resources/help/shared/tip.png $buildDir/pdf/images 2>&1
+		cp ../../../../../Framework/Help/src/main/resources/help/shared/note.png $buildDir/pdf/images 2>&1
+		cp ../../../../../Features/Base/src/main/resources/images/camera-photo.png $buildDir/pdf/images 2>&1
+		cp ../../../../../Framework/Gui/src/main/resources/images/openFolder.png $buildDir/pdf/images 2>&1
+		cp ../../../../../Framework/Gui/src/main/resources/images/reload3.png $buildDir/pdf/images 2>&1
+		cp ../../../../../Framework/Gui/src/main/resources/images/page_white_copy.png $buildDir/pdf/images 2>&1
+		cp ../../../../../Framework/Docking/src/main/resources/images/document-properties.png $buildDir/pdf/images 2>&1
+		cp ../../../../../Framework/Project/src/main/resources/images/page_edit.png $buildDir/pdf/images 2>&1
 
 		echo '** Building decompileplugin.fo **'
-		xsltproc --output $buildDir/decompileplugin_withscaling.xml --stringparam profile.condition "withscaling" commonprofile.xsl decompileplugin.xml 2>&1
-		xsltproc --output $buildDir/decompileplugin.fo decompileplugin_pdf.xsl $buildDir/decompileplugin_withscaling.xml 2>&1
+		xsltproc --output $buildDir/pdf/decompileplugin_withscaling.xml --stringparam profile.condition "withscaling" commonprofile.xsl decompileplugin.xml 2>&1
+		xsltproc --output $buildDir/pdf/decompileplugin.fo decompileplugin_pdf.xsl $buildDir/pdf/decompileplugin_withscaling.xml 2>&1
 
 		echo '** Building decompileplugin.pdf **'
-		fop $buildDir/decompileplugin.fo $buildDir/decompileplugin.pdf 2>&1
+		fop $buildDir/pdf/decompileplugin.fo $buildDir/pdf/decompileplugin.pdf 2>&1
 
 		echo '** Done. **'
 		"""
@@ -323,12 +334,11 @@ task buildDecompilerDocumentationHtml(type: Exec) {
 
 		echo -e '** Building index.html **'
 		xsltproc --output $buildDir/index.html main_html.xsl main.xml 2>&1
-		sed -i -e '/Frontpage.css/ { p; s/Frontpage.css/languages.css/; }' $buildDir/index.html
+		sed -i -e '/DefaultStyle.css/ { p; sQhref=".*"Qhref="../../shared/languages.css"Q; }' $buildDir/index.html
 
 		echo '** Building html/sleigh.html **'
 		xsltproc --stringparam base.dir $buildDir/html/ --stringparam root.filename sleigh sleigh_html.xsl sleigh.xml 2>&1
-		sed -i -e '/Frontpage.css/ { p; s/Frontpage.css/languages.css/; }' $buildDir/html/sleigh*.html
-		cp $installPoint/Frontpage.css $buildDir/html 2>&1
+		cp $defaultStylePoint $buildDir/html 2>&1
 		cp $installPoint/languages.css $buildDir/html
 		cp $installPoint/Diagram1.png $buildDir/html
 		cp $installPoint/Diagram2.png $buildDir/html
@@ -336,11 +346,9 @@ task buildDecompilerDocumentationHtml(type: Exec) {
 
 		echo '** Building html/pcoderef.html **'
 		xsltproc --stringparam base.dir $buildDir/html/ --stringparam root.filename pcoderef pcoderef_html.xsl pcoderef.xml  2>&1
-		sed -i -e '/Frontpage.css/ { p; s/Frontpage.css/languages.css/; }' $buildDir/html/pcoderef.html
-		sed -i -e '/Frontpage.css/ { p; s/Frontpage.css/languages.css/; }' $buildDir/html/pcodedescription.html
-		sed -i -e '/Frontpage.css/ { p; s/Frontpage.css/languages.css/; }' $buildDir/html/pseudo-ops.html
-		sed -i -e '/Frontpage.css/ { p; s/Frontpage.css/languages.css/; }' $buildDir/html/reference.html
-		cp $installPoint/Frontpage.css $buildDir/html
+
+		sed -i -e '/DefaultStyle.css/ { p; sQhref=".*"Qhref="languages.css"Q; }' $buildDir/html/*.html
+		cp $defaultStylePoint $buildDir/html
 		cp $installPoint/languages.css $buildDir/html
 
 		echo '** Installing html documentation. **'
@@ -402,40 +410,25 @@ boolean isUpToDate(File srcFile, File resultFile) {
 /**
  * Create a bison task to compile a yacc file (*.y) for the sleigh/decompiler
  */
-Task createBisonTask(String filename, String binaryName, boolean generateHeader,  boolean qualifyVariables) {
+Task createBisonTask(String filename, String binaryName, boolean generateHeader) {
 
-	def outputCppDir = "${cppSourceDir}"
-	def outputHeadersDir = "${cppSourceDir}"
-	
-	def yaccFile = "${cppSourceDir}/${filename}.y"
-	def ccFile = "${outputCppDir}/${filename}.cc"
-	def headerFile = "${outputCppDir}/${filename}.hh"
+	def yaccFile = "${filename}.y"
+	def ccFile = "${filename}.cc"
+	def headerFile = "${filename}.hh"
 
 	return task("bison_${binaryName}_$filename", type: Exec) {
 
-		inputs.file "${yaccFile}"
-		outputs.file "${ccFile}"
+		inputs.file "${cppSourceDir}/${yaccFile}"
+		outputs.file "${cppSourceDir}/${ccFile}"
 		if (generateHeader) {
 			outputs.file "${headerFile}"
 		}
 		
-		// doFirst {
-		//	file(outputCppDir).mkdirs()
-		//	file(outputHeadersDir)mkdirs()
-		// }		
-		
+		workingDir "${cppSourceDir}"
 		executable 'bison'			// use bison program to process yacc files
 		
-		// specify the bison's output file
-		args "-o", "${ccFile}"
-		
-		// most of the yacc files should be compiled with a variable qualifyer to avoid dupes.
-		// Unfortunately there is one (slghparse) that can't use a qualifyer because it 
-		// declares a variable used by other files.
-		
-		if (qualifyVariables) {
-			args "-p", filename
-		}
+		// specify the bison's output file and that no #line directives should be generated
+		args "-l", "-o", "${ccFile}"
 		
 		// tell bison where to put the hh file.
 		if (generateHeader) {
@@ -452,25 +445,20 @@ Task createBisonTask(String filename, String binaryName, boolean generateHeader,
  */
 Task createLexTask(String filename, String binaryName) {
 
-	def outputCppDir = "${cppSourceDir}"
-	
-	def lexFile = "${cppSourceDir}/${filename}.l"
-	def ccFile = "${outputCppDir}/${filename}.cc"
+	def lexFile = "${filename}.l"
+	def ccFile = "${filename}.cc"
 	
 	return task("lex_${binaryName}_$filename", type: Exec) {
 		
 		// set up inputs and outputs so that gradle knows when this needs to be rebuilt
-		inputs.file "${lexFile}"
-		outputs.files "${ccFile}"
+		inputs.file "${cppSourceDir}/${lexFile}"
+		outputs.files "${cppSourceDir}/${ccFile}"
 
-		// doFirst {
-		//	file(outputCppDir).mkdirs();
-		// }
-		
+		workingDir "${cppSourceDir}"
 		executable 'flex'			// the program to execute
 
-		// tell flex where to put the output
-		args "-o", "${ccFile}"
+		// tell flex where to put the output and not to generate #line directives
+		args "-L", "-o", "${ccFile}"
 		
 		// tell flex the input file
 		args "${lexFile}"
