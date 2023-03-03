@@ -42,6 +42,12 @@ rootProject.PLATFORMS.each { platform ->
 			t.from (p.file("Linux/ghidraRun")) 
 		}
 
+		if (isMac(platform.name)) {
+			t.from ("${p.projectDir}/macOS/support") {
+				into "support"
+			}
+		}
+
 		if (isWindows(platform.name)) {
 			t.from ("${p.projectDir}/Windows/support") {
 				into "support"
