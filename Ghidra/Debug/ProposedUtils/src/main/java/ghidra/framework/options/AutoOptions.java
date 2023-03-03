@@ -19,12 +19,9 @@ import java.beans.PropertyEditor;
 import java.lang.annotation.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.util.List;
-import java.util.function.Function;
 
 import org.apache.commons.lang3.StringUtils;
 
-import generic.ComparableTupleRecord;
 import generic.theme.GColor;
 import ghidra.framework.options.annotation.*;
 import ghidra.framework.plugintool.Plugin;
@@ -33,71 +30,43 @@ import ghidra.util.HelpLocation;
 
 public interface AutoOptions {
 
-	static class CategoryAndName implements ComparableTupleRecord<CategoryAndName> {
-		public static final List<Function<CategoryAndName, ? extends Comparable<?>>> ACCESSORS =
-			List.of(CategoryAndName::getCategory, CategoryAndName::getName);
-
-		private final String category;
-		private final String name;
+	record CategoryAndName(String category, String name) implements Comparable<CategoryAndName> {
 
 		protected static String getPluginPackageName(Plugin plugin) {
 			return plugin.getPluginDescription().getPluginPackage().getName();
 		}
 
+		private static String computeCategory(String[] categoryNames, Plugin plugin) {
+			return categoryNames.length == 0
+					? getPluginPackageName(plugin)
+					: computeName(categoryNames);
+		}
+
+		private static String computeName(String[] names) {
+			return String.join(".", names);
+		}
+
 		public CategoryAndName(AutoOptionDefined annotation, Plugin plugin) {
-			String[] categoryNames = annotation.category();
-			if (categoryNames.length == 0) {
-				this.category = getPluginPackageName(plugin);
-			}
-			else {
-				this.category = StringUtils.join(categoryNames, ".");
-			}
-			this.name = StringUtils.join(annotation.name(), ".");
+			this(computeCategory(annotation.category(), plugin), computeName(annotation.name()));
 		}
 
 		public CategoryAndName(AutoOptionConsumed annotation, Plugin plugin) {
 			// Same code because annotations cannot extend one another
-			String[] categoryNames = annotation.category();
-			if (categoryNames.length == 0) {
-				this.category = getPluginPackageName(plugin);
+			this(computeCategory(annotation.category(), plugin), computeName(annotation.name()));
+		}
+
+		@Override
+		public int compareTo(CategoryAndName that) {
+			int cmp;
+			cmp = this.category.compareTo(that.category);
+			if (cmp != 0) {
+				return cmp;
 			}
-			else {
-				this.category = StringUtils.join(categoryNames, ".");
+			cmp = this.name.compareTo(that.name);
+			if (cmp != 0) {
+				return cmp;
 			}
-			this.name = StringUtils.join(annotation.name(), ".");
-		}
-
-		public CategoryAndName(String category, String name) {
-			this.category = category;
-			this.name = name;
-		}
-
-		@Override
-		public List<Function<CategoryAndName, ? extends Comparable<?>>> getComparableFieldAccessors() {
-			return ACCESSORS;
-		}
-
-		public String getCategory() {
-			return category;
-		}
-
-		public String getName() {
-			return name;
-		}
-
-		@Override
-		public int hashCode() {
-			return doHashCode();
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			return doEquals(obj);
-		}
-
-		@Override
-		public String toString() {
-			return category + ":" + name;
+			return 0;
 		}
 	}
 
@@ -151,8 +120,8 @@ public interface AutoOptions {
 				continue;
 			}
 			CategoryAndName key = new CategoryAndName(annotation, plugin);
-			ToolOptions options = plugin.getTool().getOptions(key.getCategory());
-			if (options.isRegistered(key.getName())) {
+			ToolOptions options = plugin.getTool().getOptions(key.category);
+			if (options.isRegistered(key.name)) {
 				continue;
 			}
 			f.setAccessible(true);
@@ -194,7 +163,7 @@ public interface AutoOptions {
 			}
 
 			if (defaultValue instanceof GColor gColor) {
-				options.registerThemeColorBinding(key.getName(), gColor.getId(), help, description);
+				options.registerThemeColorBinding(key.name, gColor.getId(), help, description);
 			}
 			/*
 			else if ( is font option ) {
@@ -208,10 +177,10 @@ public interface AutoOptions {
 			}
 			*/
 			else {
-				options.registerOption(key.getName(), type, defaultValue, help, description,
+				options.registerOption(key.name, type, defaultValue, help, description,
 					editor);
 				// TODO: Wish Ghidra would do this upon any option registration
-				options.putObject(key.getName(), defaultValue, type);
+				options.putObject(key.name, defaultValue, type);
 			}
 
 		}
