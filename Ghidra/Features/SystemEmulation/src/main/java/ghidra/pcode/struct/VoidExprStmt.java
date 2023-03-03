@@ -45,7 +45,7 @@ class VoidExprStmt extends AbstractStmt implements RValInternal, StmtWithVal {
 	@Override
 	protected StringTree generate(Label next, Label fall) {
 		StringTree st = new StringTree();
-		st.append(expr.generate());
+		st.append(expr.generate(this));
 		st.append(";\n");
 		st.append(next.genGoto(fall));
 		return st;
@@ -57,7 +57,7 @@ class VoidExprStmt extends AbstractStmt implements RValInternal, StmtWithVal {
 	}
 
 	@Override
-	public String generate() {
-		return ctx.nil.generate();
+	public StringTree generate(RValInternal parent) {
+		return ctx.nil.generate(this);
 	}
 }

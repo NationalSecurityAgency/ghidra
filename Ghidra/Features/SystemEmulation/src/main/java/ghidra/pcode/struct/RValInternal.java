@@ -26,7 +26,7 @@ interface RValInternal extends RVal {
 	@Override
 	DataType getType();
 
-	String generate();
+	StringTree generate(RValInternal parent);
 
 	@Override
 	default LVal deref() {

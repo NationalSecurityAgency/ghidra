@@ -114,7 +114,7 @@ class DefaultVar implements LValInternal, Var {
 	}
 
 	@Override
-	public String generate() {
-		return name;
+	public StringTree generate(RValInternal parent) {
+		return StringTree.single(name);
 	}
 }

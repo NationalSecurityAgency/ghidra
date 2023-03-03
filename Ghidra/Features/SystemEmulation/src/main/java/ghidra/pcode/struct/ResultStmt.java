@@ -40,7 +40,7 @@ class ResultStmt extends AbstractStmt {
 		StringTree st = new StringTree();
 		st.append(SleighPcodeUseropDefinition.OUT_SYMBOL_NAME);
 		st.append(" = ");
-		st.append(result.generate());
+		st.append(result.generate(null));
 		st.append(";\n");
 		st.append(routine.lReturn.genGoto(fall));
 		return st;

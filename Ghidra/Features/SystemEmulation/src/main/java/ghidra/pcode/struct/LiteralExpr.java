@@ -39,7 +39,7 @@ class LiteralExpr extends Expr {
 	}
 
 	@Override
-	public String generate() {
-		return "0x" + Long.toHexString(val) + ":" + size;
+	public StringTree generate(RValInternal parent) {
+		return StringTree.single(String.format("0x%x:%d", val, size));
 	}
 }

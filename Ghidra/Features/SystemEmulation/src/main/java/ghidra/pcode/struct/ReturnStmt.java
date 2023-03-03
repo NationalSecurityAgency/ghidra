@@ -30,7 +30,7 @@ class ReturnStmt extends AbstractStmt {
 	protected StringTree generate(Label next, Label fall) {
 		StringTree st = new StringTree();
 		st.append("return [");
-		st.append(target.generate());
+		st.append(target.generate(null));
 		st.append("];\n");
 		return st;
 	}

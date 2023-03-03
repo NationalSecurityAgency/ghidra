@@ -355,7 +355,10 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 	@Override
 	public void overrideContextWithDefault() {
 		if (contextreg != Register.NO_CONTEXT) {
-			overrideContext(defaultContext.getDefaultValue(contextreg, counter));
+			RegisterValue defaultValue = defaultContext.getDefaultValue(contextreg, counter);
+			if (defaultValue != null) {
+				overrideContext(defaultValue);
+			}
 		}
 	}
 
