@@ -27,6 +27,7 @@ import agent.dbgeng.model.iface1.*;
 import agent.dbgeng.model.iface2.*;
 import agent.dbgmodel.dbgmodel.main.ModelObject;
 import agent.dbgmodel.jna.dbgmodel.DbgModelNative.ModelObjectKind;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointAction;
 import ghidra.dbg.util.PathUtils;
@@ -320,13 +321,13 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 		if (proxy instanceof DbgModelTargetSession || //
 			proxy instanceof DbgModelTargetProcess || //
 			proxy instanceof DbgModelTargetThread) {
-			requestAttributes(false);
+			requestAttributes(RefreshBehavior.REFRESH_NEVER);
 			return;
 		}
 		if (proxy instanceof DbgModelTargetRegisterContainer || //
 			proxy instanceof DbgModelTargetRegisterBank || //
 			proxy.getName().equals("Stack") || proxy.getName().equals("Debug")) {
-			requestAttributes(false);
+			requestAttributes(RefreshBehavior.REFRESH_NEVER);
 			return;
 		}
 		if (proxy instanceof DbgModelTargetProcessContainer || //
@@ -334,7 +335,7 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 			proxy instanceof DbgModelTargetModuleContainer || //
 			proxy instanceof DbgModelTargetBreakpointContainer || //
 			proxy instanceof DbgModelTargetStack) {
-			requestElements(false);
+			requestElements(RefreshBehavior.REFRESH_NEVER);
 			return;
 		}
 	}
@@ -439,20 +440,20 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 		}
 		if (proxy instanceof TargetRegisterContainer) {
 			if (!getModel().isSuppressDescent()) {
-				requestElements(false);
+				requestElements(RefreshBehavior.REFRESH_NEVER);
 			}
-			requestAttributes(false);
+			requestAttributes(RefreshBehavior.REFRESH_NEVER);
 		}
 		if (proxy instanceof TargetRegisterBank) {
 			TargetRegisterBank bank = (TargetRegisterBank) proxy;
 			// requestElements(false);
-			requestAttributes(false).thenAccept(__ -> {
+			requestAttributes(RefreshBehavior.REFRESH_NEVER).thenAccept(__ -> {
 				bank.readRegistersNamed(getCachedAttributes().keySet());
 			});
 		}
 		if (proxy instanceof TargetStack) {
-			requestAttributes(false);
-			requestElements(false).thenAccept(__ -> {
+			requestAttributes(RefreshBehavior.REFRESH_NEVER);
+			requestElements(RefreshBehavior.REFRESH_NEVER).thenAccept(__ -> {
 				for (TargetObject obj : getCachedElements().values()) {
 					if (obj instanceof TargetStackFrame) {
 						DbgModelTargetObject frame = (DbgModelTargetObject) obj;
@@ -463,7 +464,7 @@ public class DelegateDbgModel2TargetObject extends DbgModel2TargetObjectImpl imp
 			});
 		}
 		if (proxy instanceof TargetStackFrame) {
-			requestAttributes(false);
+			requestAttributes(RefreshBehavior.REFRESH_NEVER);
 		}
 	}
 }

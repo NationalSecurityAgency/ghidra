@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.Pair;
 
 import agent.dbgeng.model.iface2.*;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.TargetObject;
 import ghidra.util.datastruct.WeakValueHashMap;
 
@@ -36,7 +37,7 @@ public class DbgModel2TargetAvailableContainerImpl extends DbgModel2TargetObject
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return getManager().listAvailableProcesses().thenAccept(list -> {
 			List<TargetObject> available;
 			synchronized (this) {
@@ -49,7 +50,7 @@ public class DbgModel2TargetAvailableContainerImpl extends DbgModel2TargetObject
 	}
 
 	@Override
-	public CompletableFuture<Void> requestAttributes(boolean refresh) {
+	public CompletableFuture<Void> requestAttributes(RefreshBehavior refresh) {
 		Map<String, Object> nmap = new HashMap<>();
 		return addModelObjectAttributes(nmap);
 	}

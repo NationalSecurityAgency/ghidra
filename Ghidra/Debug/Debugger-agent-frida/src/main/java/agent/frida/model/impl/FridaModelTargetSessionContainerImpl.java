@@ -25,6 +25,7 @@ import agent.frida.manager.FridaSession;
 import agent.frida.model.iface2.FridaModelTargetRoot;
 import agent.frida.model.iface2.FridaModelTargetSession;
 import agent.frida.model.iface2.FridaModelTargetSessionContainer;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.target.schema.TargetElementType;
@@ -77,7 +78,7 @@ public class FridaModelTargetSessionContainerImpl extends FridaModelTargetObject
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return getManager().listSessions().thenAccept(byIID -> {
 			List<TargetObject> sessions;
 			synchronized (this) {

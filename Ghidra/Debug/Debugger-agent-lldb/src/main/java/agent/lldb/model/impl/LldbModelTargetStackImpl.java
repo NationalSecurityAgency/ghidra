@@ -24,7 +24,7 @@ import SWIG.SBFrame;
 import SWIG.StateType;
 import agent.lldb.manager.LldbReason;
 import agent.lldb.model.iface2.*;
-import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
@@ -53,11 +53,11 @@ public class LldbModelTargetStackImpl extends LldbModelTargetObjectImpl
 	public LldbModelTargetStackImpl(LldbModelTargetThread thread, LldbModelTargetProcess process) {
 		super(thread.getModel(), thread, NAME, "Stack");
 		this.thread = thread;
-		requestElements(false);
+		requestElements(RefreshBehavior.REFRESH_NEVER);
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return getManager().listStackFrames(thread.getThread()).thenAccept(f -> {
 			if (f.isEmpty()) {
 				return;
@@ -84,7 +84,7 @@ public class LldbModelTargetStackImpl extends LldbModelTargetObjectImpl
 
 	public void threadStateChangedSpecific(StateType state, LldbReason reason) {
 		if (state.equals(StateType.eStateStopped)) {
-			requestElements(true).thenAccept(__ -> {
+			requestElements(RefreshBehavior.REFRESH_ALWAYS).thenAccept(__ -> {
 				for (TargetObject element : getCachedElements().values()) {
 					if (element instanceof LldbModelTargetStackFrame) {
 						LldbModelTargetStackFrameImpl frame =

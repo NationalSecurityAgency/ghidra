@@ -21,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 
 import agent.gdb.manager.GdbInferior;
 import agent.gdb.manager.GdbModule;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.TargetModule;
 import ghidra.dbg.target.TargetObject;
@@ -83,7 +84,7 @@ public class GdbModelTargetModule extends
 	}
 
 	public CompletableFuture<Void> init() {
-		return sections.requestElements(true).exceptionally(ex -> {
+		return sections.requestElements(RefreshBehavior.REFRESH_ALWAYS).exceptionally(ex -> {
 			impl.reportError(this, "Could not initialize module sections and base", ex);
 			return null;
 		});

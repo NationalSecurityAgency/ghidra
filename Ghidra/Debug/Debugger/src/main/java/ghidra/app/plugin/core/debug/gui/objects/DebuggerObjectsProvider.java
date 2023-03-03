@@ -56,6 +56,7 @@ import ghidra.app.services.*;
 import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
 import ghidra.async.*;
 import ghidra.dbg.*;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.error.DebuggerMemoryAccessException;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetConsole.Channel;
@@ -546,7 +547,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		for (Object obj : map.values()) {
 			if (obj instanceof TargetObject) {
 				TargetObject ref = (TargetObject) obj;
-				ref.fetchAttributes(true).thenAccept(attrs -> {
+				ref.fetchAttributes(RefreshBehavior.REFRESH_ALWAYS).thenAccept(attrs -> {
 					table.setColumns();
 					// TODO: What with attrs?
 				}).exceptionally(ex -> {

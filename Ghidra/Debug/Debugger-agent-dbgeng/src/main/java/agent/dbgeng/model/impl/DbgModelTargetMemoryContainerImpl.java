@@ -28,6 +28,7 @@ import agent.dbgeng.model.iface2.*;
 import generic.ULongSpan;
 import generic.ULongSpan.ULongSpanSet;
 import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.error.DebuggerMemoryAccessException;
 import ghidra.dbg.error.DebuggerModelAccessException;
 import ghidra.dbg.target.TargetObject;
@@ -54,15 +55,15 @@ public class DbgModelTargetMemoryContainerImpl extends DbgModelTargetObjectImpl
 		super(process.getModel(), process, "Memory", "MemoryContainer");
 		this.process = process;
 		if (!getModel().isSuppressDescent()) {
-			requestElements(true);
+			requestElements(RefreshBehavior.REFRESH_ALWAYS);
 		}
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		DbgModelTargetProcess targetProcess = getParentProcess();
 		DbgProcessImpl currentProcess = getManager().getCurrentProcess();
-		if (!refresh ||
+		if (!refresh.equals(RefreshBehavior.REFRESH_ALWAYS) ||
 			(currentProcess != null && !currentProcess.equals(targetProcess.getProcess()))) {
 			return AsyncUtils.NIL;
 		}

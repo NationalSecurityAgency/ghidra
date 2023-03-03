@@ -21,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.jdom.Element;
 
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.util.PathUtils;
 import ghidra.util.xml.XmlUtilities;
@@ -156,7 +157,7 @@ public class ObjectContainer implements Comparable<ObjectContainer> {
 		if (targetObject == null) {
 			return CompletableFuture.completedFuture(null);
 		}
-		return targetObject.resync(true, true).thenApplyAsync(__ -> {
+		return targetObject.resync(RefreshBehavior.REFRESH_ALWAYS, RefreshBehavior.REFRESH_ALWAYS).thenApplyAsync(__ -> {
 			rebuildContainers(targetObject.getCachedElements(), targetObject.getCachedAttributes());
 			propagateProvider(provider);
 			return this;

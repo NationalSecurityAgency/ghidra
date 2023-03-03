@@ -21,6 +21,7 @@ import java.util.Map;
 import agent.frida.manager.FridaSession;
 import agent.frida.model.iface2.FridaModelTargetSession;
 import agent.frida.model.iface2.FridaModelTargetSessionAttributes;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.schema.*;
 
 @TargetObjectSchemaInfo(
@@ -51,7 +52,7 @@ public class FridaModelTargetSessionAttributesImpl extends FridaModelTargetObjec
 		this.platformAttributes = new FridaModelTargetSessionAttributesPlatformImpl(this);
 		this.environment = new FridaModelTargetSessionAttributesEnvironmentImpl(this);
 
-		requestAttributes(false);
+		requestAttributes(RefreshBehavior.REFRESH_NEVER);
 
 		FridaSession s = (FridaSession) session.getModelObject();
 		changeAttributes(List.of(), List.of( //

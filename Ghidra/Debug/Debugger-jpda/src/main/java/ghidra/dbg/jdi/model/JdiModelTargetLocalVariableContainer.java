@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import com.sun.jdi.LocalVariable;
 
 import ghidra.async.AsyncFence;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
 import ghidra.dbg.target.schema.*;
 
@@ -63,7 +64,7 @@ public class JdiModelTargetLocalVariableContainer extends JdiModelTargetObjectIm
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		Map<String, LocalVariable> map = new HashMap<>();
 		try {
 			for (LocalVariable var : vars) {

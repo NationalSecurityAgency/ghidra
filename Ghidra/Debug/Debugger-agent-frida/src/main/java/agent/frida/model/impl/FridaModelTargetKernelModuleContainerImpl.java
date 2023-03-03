@@ -23,6 +23,7 @@ import agent.frida.frida.FridaModuleInfo;
 import agent.frida.manager.*;
 import agent.frida.model.iface2.FridaModelTargetModule;
 import agent.frida.model.iface2.FridaModelTargetModuleContainer;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
@@ -48,7 +49,7 @@ public class FridaModelTargetKernelModuleContainerImpl extends FridaModelTargetO
 		this.kernel = kernel;
 
 		getManager().addEventsListener(this);
-		requestElements(false);
+		requestElements(RefreshBehavior.REFRESH_NEVER);
 	}
 
 	@Override
@@ -112,8 +113,8 @@ public class FridaModelTargetKernelModuleContainerImpl extends FridaModelTargetO
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
-		if (refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
+		if (refresh.equals(RefreshBehavior.REFRESH_ALWAYS)) {
 			broadcast().invalidateCacheRequested(this);
 		}
 		return getManager().listKernelModules();

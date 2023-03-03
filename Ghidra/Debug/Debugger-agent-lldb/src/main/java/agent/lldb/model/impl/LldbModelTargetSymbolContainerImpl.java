@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 
 import SWIG.SBSymbol;
 import agent.lldb.model.iface2.LldbModelTargetSymbolContainer;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
@@ -45,7 +46,7 @@ public class LldbModelTargetSymbolContainerImpl extends LldbModelTargetObjectImp
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return getManager().listModuleSymbols(module.getModule()).thenAccept(byName -> {
 			List<TargetObject> symbols;
 			synchronized (this) {

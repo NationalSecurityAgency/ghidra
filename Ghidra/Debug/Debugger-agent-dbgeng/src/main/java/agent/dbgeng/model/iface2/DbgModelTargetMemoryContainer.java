@@ -18,6 +18,7 @@ package agent.dbgeng.model.iface2;
 import java.util.concurrent.CompletableFuture;
 
 import agent.dbgeng.manager.DbgModuleMemory;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.TargetMemory;
 import ghidra.program.model.address.Address;
 
@@ -31,6 +32,6 @@ public interface DbgModelTargetMemoryContainer extends DbgModelTargetObject, Tar
 	@Override
 	public CompletableFuture<Void> writeMemory(Address address, byte[] data);
 
-	public CompletableFuture<Void> requestElements(boolean refresh);
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh);
 
 }

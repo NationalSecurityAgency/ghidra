@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import agent.gdb.manager.*;
 import agent.gdb.manager.impl.cmd.GdbStateChangeRecord;
 import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.error.DebuggerIllegalArgumentException;
 import ghidra.dbg.target.TargetConfigurable;
@@ -136,8 +137,8 @@ public class GdbModelTargetInferiorContainer
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
-		if (!refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
+		if (!refresh.equals(RefreshBehavior.REFRESH_ALWAYS)) {
 			updateUsingInferiors(impl.gdb.getKnownInferiors());
 			return AsyncUtils.NIL;
 		}

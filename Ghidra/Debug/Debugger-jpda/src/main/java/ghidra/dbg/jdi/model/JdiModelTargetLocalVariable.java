@@ -21,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 import com.sun.jdi.ClassNotLoadedException;
 import com.sun.jdi.LocalVariable;
 
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.schema.*;
 
 @TargetObjectSchemaInfo(
@@ -63,7 +64,7 @@ public class JdiModelTargetLocalVariable extends JdiModelTargetObjectImpl {
 	}
 
 	@Override
-	public CompletableFuture<Void> requestAttributes(boolean refresh) {
+	public CompletableFuture<Void> requestAttributes(RefreshBehavior refresh) {
 
 		populateAttributes();
 

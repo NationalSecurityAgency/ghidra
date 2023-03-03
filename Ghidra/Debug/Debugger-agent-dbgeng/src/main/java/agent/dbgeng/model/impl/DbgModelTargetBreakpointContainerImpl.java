@@ -25,6 +25,7 @@ import agent.dbgeng.manager.DbgProcess;
 import agent.dbgeng.manager.breakpoint.DbgBreakpointInfo;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.model.iface2.*;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
@@ -109,7 +110,7 @@ public class DbgModelTargetBreakpointContainerImpl extends DbgModelTargetObjectI
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		DbgManagerImpl manager = getManager();
 		return manager.listBreakpoints().thenAccept(byNumber -> {
 			List<TargetObject> specs;

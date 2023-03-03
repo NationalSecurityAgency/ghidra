@@ -18,6 +18,7 @@ package agent.frida.model.impl;
 import java.util.concurrent.CompletableFuture;
 
 import agent.frida.model.iface2.FridaModelTargetProcess;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
 
@@ -38,7 +39,7 @@ public class FridaModelTargetHeapMemoryContainerImpl extends FridaModelTargetMem
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return getManager().listHeapMemory(process.getProcess());
 	}
 

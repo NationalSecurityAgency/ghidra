@@ -22,6 +22,7 @@ import agent.dbgeng.manager.DbgModule;
 import agent.dbgeng.manager.DbgProcess;
 import agent.dbgeng.model.iface2.DbgModelTargetModule;
 import agent.dbgeng.model.iface2.DbgModelTargetModuleContainer;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
@@ -49,7 +50,7 @@ public class DbgModelTargetModuleContainerImpl extends DbgModelTargetObjectImpl
 		this.targetProcess = process;
 		this.process = process.process;
 		if (!getModel().isSuppressDescent()) {
-			requestElements(false);
+			requestElements(RefreshBehavior.REFRESH_NEVER);
 		}
 	}
 
@@ -99,7 +100,7 @@ public class DbgModelTargetModuleContainerImpl extends DbgModelTargetObjectImpl
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		List<TargetObject> result = new ArrayList<>();
 		return process.listModules().thenAccept(byName -> {
 			synchronized (this) {

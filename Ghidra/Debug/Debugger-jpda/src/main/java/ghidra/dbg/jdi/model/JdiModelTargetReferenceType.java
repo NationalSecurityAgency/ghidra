@@ -21,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 import com.sun.jdi.*;
 
 import ghidra.async.AsyncFence;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
 import ghidra.dbg.target.TargetModule;
 import ghidra.dbg.target.schema.*;
@@ -113,7 +114,7 @@ public class JdiModelTargetReferenceType extends JdiModelTargetType implements T
 	}
 
 	@Override
-	public CompletableFuture<Void> requestAttributes(boolean refresh) {
+	public CompletableFuture<Void> requestAttributes(RefreshBehavior refresh) {
 
 		this.allFields = new JdiModelTargetFieldContainer(this, true);
 		this.allMethods = new JdiModelTargetMethodContainer(this, true);

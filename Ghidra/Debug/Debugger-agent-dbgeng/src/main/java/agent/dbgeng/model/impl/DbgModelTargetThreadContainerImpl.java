@@ -26,6 +26,7 @@ import agent.dbgeng.manager.reason.*;
 import agent.dbgeng.model.iface1.DbgModelTargetConfigurable;
 import agent.dbgeng.model.iface2.*;
 import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.error.DebuggerIllegalArgumentException;
 import ghidra.dbg.target.TargetConfigurable;
 import ghidra.dbg.target.TargetObject;
@@ -53,7 +54,7 @@ public class DbgModelTargetThreadContainerImpl extends DbgModelTargetObjectImpl
 
 		getManager().addEventsListener(this);
 		if (!getModel().isSuppressDescent()) {
-			requestElements(false);
+			requestElements(RefreshBehavior.REFRESH_NEVER);
 		}
 	}
 
@@ -119,7 +120,7 @@ public class DbgModelTargetThreadContainerImpl extends DbgModelTargetObjectImpl
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return process.listThreads().thenAccept(byTID -> {
 			List<TargetObject> threads;
 			synchronized (this) {

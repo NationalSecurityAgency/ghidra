@@ -16,28 +16,21 @@
 package agent.lldb.model.impl;
 
 import java.math.BigInteger;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import SWIG.SBStream;
-import SWIG.SBValue;
-import SWIG.StateType;
+import SWIG.*;
 import agent.lldb.manager.LldbReason;
 import agent.lldb.model.iface2.LldbModelTargetRegister;
 import agent.lldb.model.iface2.LldbModelTargetStackFrameRegisterBank;
 import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.error.DebuggerRegisterAccessException;
 import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.target.schema.TargetAttributeType;
-import ghidra.dbg.target.schema.TargetElementType;
+import ghidra.dbg.target.schema.*;
 import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
-import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.dbg.util.PathUtils;
-import ghidra.util.Msg;
 
 @TargetObjectSchemaInfo(
 	name = "RegisterValueBank",
@@ -69,7 +62,7 @@ public class LldbModelTargetStackFrameRegisterBankImpl
 			DISPLAY_ATTRIBUTE_NAME, getName(),
 			DESCRIPTIONS_ATTRIBUTE_NAME, container), "Initialized");
 
-		requestElements(true);
+		requestElements(RefreshBehavior.REFRESH_ALWAYS);
 	}
 
 	@Override
@@ -84,7 +77,7 @@ public class LldbModelTargetStackFrameRegisterBankImpl
 	 * Does both descriptions and then populates values
 	 */
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		SBValue bank = (SBValue) getModelObject();
 		return getManager().listStackFrameRegisters(bank).thenAccept(regs -> {
 			if (regs.isEmpty()) {
@@ -118,7 +111,7 @@ public class LldbModelTargetStackFrameRegisterBankImpl
 	@Override
 	public void threadStateChangedSpecific(StateType state, LldbReason reason) {
 		if (state.equals(StateType.eStateStopped)) {
-			requestElements(false).thenAccept(__ -> {
+			requestElements(RefreshBehavior.REFRESH_NEVER).thenAccept(__ -> {
 				readRegistersNamed(getCachedElements().keySet());
 			});
 		}

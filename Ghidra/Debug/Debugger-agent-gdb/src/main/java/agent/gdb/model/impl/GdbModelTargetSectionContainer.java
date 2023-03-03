@@ -21,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import agent.gdb.manager.GdbModuleSection;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.TargetSectionContainer;
@@ -60,7 +61,7 @@ public class GdbModelTargetSectionContainer
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		// getKnownSections is not guaranteed to be populated
 		// listSections is cached by manager, so just use it always
 		return module.module.listSections().thenAccept(this::updateUsingSections);

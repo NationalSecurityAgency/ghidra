@@ -23,17 +23,14 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.Pair;
 
 import agent.lldb.model.iface1.LldbModelTargetConfigurable;
-import agent.lldb.model.iface2.LldbModelTargetAvailable;
-import agent.lldb.model.iface2.LldbModelTargetAvailableContainer;
-import agent.lldb.model.iface2.LldbModelTargetRoot;
+import agent.lldb.model.iface2.*;
 import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.error.DebuggerIllegalArgumentException;
 import ghidra.dbg.target.TargetConfigurable;
 import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.target.schema.TargetAttributeType;
-import ghidra.dbg.target.schema.TargetElementType;
+import ghidra.dbg.target.schema.*;
 import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
-import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.util.datastruct.WeakValueHashMap;
 
 @TargetObjectSchemaInfo(
@@ -59,7 +56,7 @@ public class LldbModelTargetAvailableContainerImpl extends LldbModelTargetObject
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return getManager().listAvailableProcesses().thenAccept(list -> {
 			List<TargetObject> available;
 			synchronized (this) {

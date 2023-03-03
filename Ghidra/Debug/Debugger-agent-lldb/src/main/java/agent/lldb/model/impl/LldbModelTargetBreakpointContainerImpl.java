@@ -25,6 +25,7 @@ import SWIG.*;
 import agent.lldb.lldb.DebugClient;
 import agent.lldb.manager.LldbCause;
 import agent.lldb.model.iface2.*;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
@@ -137,7 +138,7 @@ public class LldbModelTargetBreakpointContainerImpl extends LldbModelTargetObjec
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return getManager().listBreakpoints(getSession()).thenAccept(byNumber -> {
 			List<TargetObject> specs;
 			synchronized (this) {
