@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import agent.gdb.manager.GdbRegister;
 import agent.gdb.manager.impl.cmd.GdbStateChangeRecord;
 import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.error.DebuggerRegisterAccessException;
 import ghidra.dbg.target.TargetRegisterBank;
@@ -126,7 +127,7 @@ public class GdbModelTargetStackFrameRegisterContainer
 	 * Does both descriptions and then populates values
 	 */
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		// NB. GDB manager caches these per thread
 		return ensureRegisterDescriptions().thenCompose(regs -> {
 			if (!regs.isEmpty()) {
@@ -180,12 +181,12 @@ public class GdbModelTargetStackFrameRegisterContainer
 		}).thenCompose(__ -> {
 			return updateRegisterValues(toWrite.keySet());
 		}).thenCompose(__ -> {
-			return frame.getParent().fetchElements(true);
+			return frame.getParent().fetchElements(RefreshBehavior.REFRESH_ALWAYS);
 		})).thenApply(__ -> null);
 	}
 
 	public CompletableFuture<Void> stateChanged(GdbStateChangeRecord sco) {
-		return requestElements(false).exceptionally(ex -> {
+		return requestElements(RefreshBehavior.REFRESH_NEVER).exceptionally(ex -> {
 			if (!valid) {
 				Msg.info(this,
 					"Ignoring error when refreshing now-invalid thread registers: " + ex);

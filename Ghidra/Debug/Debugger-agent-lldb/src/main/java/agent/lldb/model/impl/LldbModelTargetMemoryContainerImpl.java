@@ -25,6 +25,7 @@ import agent.lldb.manager.cmd.LldbReadMemoryCommand;
 import agent.lldb.manager.cmd.LldbWriteMemoryCommand;
 import agent.lldb.manager.impl.LldbManagerImpl;
 import agent.lldb.model.iface2.*;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.error.DebuggerMemoryAccessException;
 import ghidra.dbg.error.DebuggerModelAccessException;
 import ghidra.dbg.target.TargetObject;
@@ -54,11 +55,11 @@ public class LldbModelTargetMemoryContainerImpl extends LldbModelTargetObjectImp
 	public LldbModelTargetMemoryContainerImpl(LldbModelTargetProcess process) {
 		super(process.getModel(), process, "Memory", "MemoryContainer");
 		this.process = process;
-		requestElements(false);
+		requestElements(RefreshBehavior.REFRESH_NEVER);
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return getManager().listMemory(process.getProcess()).thenAccept(byName -> {
 			List<TargetObject> regions;
 			synchronized (this) {

@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import com.sun.jdi.ModuleReference;
 
 import ghidra.async.AsyncFence;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.error.DebuggerUserException;
 import ghidra.dbg.target.TargetModule;
 import ghidra.dbg.target.TargetModuleContainer;
@@ -100,7 +101,7 @@ public class JdiModelTargetModuleContainer extends JdiModelTargetObjectImpl
 	}
 
 	@Override
-	protected CompletableFuture<Void> requestElements(boolean refresh) {
+	protected CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return doRefresh();
 	}
 

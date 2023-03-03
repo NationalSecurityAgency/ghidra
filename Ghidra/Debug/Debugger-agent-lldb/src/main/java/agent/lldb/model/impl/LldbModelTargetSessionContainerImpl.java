@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import SWIG.SBTarget;
 import agent.lldb.manager.LldbCause;
 import agent.lldb.model.iface2.*;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
 
@@ -73,7 +74,7 @@ public class LldbModelTargetSessionContainerImpl extends LldbModelTargetObjectIm
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return getManager().listSessions().thenAccept(byIID -> {
 			List<TargetObject> sessions;
 			synchronized (this) {

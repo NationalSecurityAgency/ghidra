@@ -27,6 +27,7 @@ import agent.frida.manager.impl.FridaManagerImpl;
 import agent.frida.model.iface2.FridaModelTargetMemoryContainer;
 import agent.frida.model.iface2.FridaModelTargetMemoryRegion;
 import agent.frida.model.methods.*;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.error.DebuggerMemoryAccessException;
 import ghidra.dbg.error.DebuggerModelAccessException;
 import ghidra.dbg.target.TargetObject;
@@ -74,12 +75,12 @@ public class FridaModelTargetKernelMemoryContainerImpl extends FridaModelTargetO
 		), "Initialized");
 
 		getManager().addEventsListener(this);
-		requestElements(false);
+		requestElements(RefreshBehavior.REFRESH_NEVER);
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
-		if (refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
+		if (refresh.equals(RefreshBehavior.REFRESH_ALWAYS)) {
 			broadcast().invalidateCacheRequested(this);
 		}
 		return getManager().listKernelMemory();

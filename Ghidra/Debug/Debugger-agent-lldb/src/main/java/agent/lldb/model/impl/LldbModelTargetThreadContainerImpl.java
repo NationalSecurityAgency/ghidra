@@ -27,6 +27,7 @@ import agent.lldb.manager.LldbReason;
 import agent.lldb.model.iface1.LldbModelTargetConfigurable;
 import agent.lldb.model.iface2.*;
 import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.error.DebuggerIllegalArgumentException;
 import ghidra.dbg.target.TargetConfigurable;
 import ghidra.dbg.target.TargetObject;
@@ -55,7 +56,7 @@ public class LldbModelTargetThreadContainerImpl extends LldbModelTargetObjectImp
 		this.changeAttributes(List.of(), Map.of(BASE_ATTRIBUTE_NAME, 16), "Initialized");
 
 		getManager().addEventsListener(this);
-		requestElements(false);
+		requestElements(RefreshBehavior.REFRESH_NEVER);
 	}
 
 	@Override
@@ -130,7 +131,7 @@ public class LldbModelTargetThreadContainerImpl extends LldbModelTargetObjectImp
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return getManager().listThreads(process).thenAccept(byTID -> {
 			List<TargetObject> threads;
 			synchronized (this) {

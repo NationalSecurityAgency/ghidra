@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 
 import agent.dbgeng.manager.impl.DbgMinimalSymbol;
 import agent.dbgeng.model.iface2.DbgModelTargetSymbolContainer;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
@@ -45,7 +46,7 @@ public class DbgModelTargetSymbolContainerImpl extends DbgModelTargetObjectImpl
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return module.module.listMinimalSymbols().thenAccept(byName -> {
 			List<TargetObject> symbols;
 			synchronized (this) {

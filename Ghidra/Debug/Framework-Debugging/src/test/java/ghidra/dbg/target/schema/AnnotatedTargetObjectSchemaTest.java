@@ -24,6 +24,7 @@ import java.util.concurrent.CompletableFuture;
 import org.junit.Test;
 
 import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.agent.*;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.schema.DefaultTargetObjectSchema.DefaultAttributeSchema;
@@ -105,7 +106,7 @@ public class AnnotatedTargetObjectSchemaTest {
 
 		@Override
 		public CompletableFuture<? extends Map<String, TestAnnotatedTargetProcessStub>> fetchElements(
-				boolean refresh) {
+				RefreshBehavior refresh) {
 			return null; // Doesn't matter
 		}
 	}
@@ -322,7 +323,7 @@ public class AnnotatedTargetObjectSchemaTest {
 
 		@Override
 		public CompletableFuture<? extends Map<String, ? extends T>> fetchElements(
-				boolean refresh) {
+				RefreshBehavior refresh) {
 			return null; // Doesn't matter
 		}
 	}

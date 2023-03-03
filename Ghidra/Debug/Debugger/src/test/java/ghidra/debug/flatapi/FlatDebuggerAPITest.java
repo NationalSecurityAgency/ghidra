@@ -48,6 +48,7 @@ import ghidra.app.services.*;
 import ghidra.app.services.LogicalBreakpoint.State;
 import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.DebuggerObjectModel;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.model.*;
 import ghidra.dbg.target.TargetLauncher.TargetCmdLineLauncher;
 import ghidra.dbg.target.TargetObject;
@@ -1208,8 +1209,8 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 					int pid, AddressSpace space) {
 				return new TestTargetProcess(container, pid, space) {
 					@Override
-					public CompletableFuture<Void> resync(boolean refreshAttributes,
-							boolean refreshElements) {
+					public CompletableFuture<Void> resync(RefreshBehavior refreshAttributes,
+							RefreshBehavior refreshElements) {
 						observed.add(this);
 						return super.resync(refreshAttributes, refreshElements);
 					}
@@ -1234,8 +1235,8 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 					int pid, AddressSpace space) {
 				return new TestTargetProcess(container, pid, space) {
 					@Override
-					public CompletableFuture<Void> resync(boolean refreshAttributes,
-							boolean refreshElements) {
+					public CompletableFuture<Void> resync(RefreshBehavior refreshAttributes,
+							RefreshBehavior refreshElements) {
 						observed.add(this);
 						return super.resync(refreshAttributes, refreshElements);
 					}
@@ -1247,8 +1248,8 @@ public class FlatDebuggerAPITest extends AbstractGhidraHeadedDebuggerGUITest {
 					int tid) {
 				return new TestTargetThread(container, tid) {
 					@Override
-					public CompletableFuture<Void> resync(boolean refreshAttributes,
-							boolean refreshElements) {
+					public CompletableFuture<Void> resync(RefreshBehavior refreshAttributes,
+							RefreshBehavior refreshElements) {
 						observed.add(this);
 						return super.resync(refreshAttributes, refreshElements);
 					}

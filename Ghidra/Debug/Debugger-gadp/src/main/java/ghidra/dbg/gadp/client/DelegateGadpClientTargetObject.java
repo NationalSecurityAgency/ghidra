@@ -22,6 +22,7 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.gadp.GadpRegistry;
 import ghidra.dbg.gadp.client.annot.GadpEventHandler;
@@ -185,22 +186,22 @@ public class DelegateGadpClientTargetObject
 	}
 
 	@Override
-	public CompletableFuture<Void> resync(boolean attributes, boolean elements) {
+	public CompletableFuture<Void> resync(RefreshBehavior attributes, RefreshBehavior elements) {
 		return client.sendChecked(Gadp.ResyncRequest.newBuilder()
 				.setPath(GadpValueUtils.makePath(path))
-				.setAttributes(attributes)
-				.setElements(elements),
+				.setAttributes(attributes.equals(RefreshBehavior.REFRESH_ALWAYS))
+				.setElements(elements.equals(RefreshBehavior.REFRESH_ALWAYS)),
 			Gadp.ResyncReply.getDefaultInstance()).thenApply(rep -> null);
 	}
 
 	@Override
-	protected CompletableFuture<Void> requestAttributes(boolean refresh) {
-		return resync(refresh, false);
+	protected CompletableFuture<Void> requestAttributes(RefreshBehavior refresh) {
+		return resync(refresh, RefreshBehavior.REFRESH_NEVER);
 	}
 
 	@Override
-	protected CompletableFuture<Void> requestElements(boolean refresh) {
-		return resync(false, refresh);
+	protected CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
+		return resync(RefreshBehavior.REFRESH_NEVER, refresh);
 	}
 
 	@Override

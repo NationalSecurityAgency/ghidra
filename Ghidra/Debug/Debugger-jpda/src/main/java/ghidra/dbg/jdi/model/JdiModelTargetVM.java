@@ -27,6 +27,7 @@ import com.sun.jdi.event.*;
 import com.sun.jdi.request.*;
 
 import ghidra.async.AsyncFence;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.jdi.manager.*;
 import ghidra.dbg.jdi.manager.impl.JdiManagerImpl;
 import ghidra.dbg.jdi.model.iface1.*;
@@ -191,7 +192,7 @@ public class JdiModelTargetVM extends JdiModelTargetObjectImpl implements //
 	}
 
 	@Override
-	public CompletableFuture<Void> requestAttributes(boolean refresh) {
+	public CompletableFuture<Void> requestAttributes(RefreshBehavior refresh) {
 
 		this.threadGroups = new JdiModelTargetThreadGroupContainer(this);
 		this.modules = new JdiModelTargetModuleContainer(this);

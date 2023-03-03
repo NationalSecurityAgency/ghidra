@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import com.sun.jdi.ThreadReference;
 
 import ghidra.async.AsyncFence;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.jdi.manager.*;
 import ghidra.dbg.jdi.model.iface1.JdiModelTargetEventScope;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
@@ -118,7 +119,7 @@ public class JdiModelTargetThreadContainer extends JdiModelTargetObjectImpl
 	}
 
 	@Override
-	protected CompletableFuture<Void> requestElements(boolean refresh) {
+	protected CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return updateUsingThreads(threads);
 	}
 

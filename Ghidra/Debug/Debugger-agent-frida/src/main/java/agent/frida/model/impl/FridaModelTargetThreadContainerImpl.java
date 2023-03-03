@@ -25,6 +25,7 @@ import agent.frida.model.iface1.FridaModelTargetConfigurable;
 import agent.frida.model.iface2.*;
 import agent.frida.model.methods.*;
 import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.error.DebuggerIllegalArgumentException;
 import ghidra.dbg.target.TargetConfigurable;
 import ghidra.dbg.target.TargetObject;
@@ -131,8 +132,8 @@ public class FridaModelTargetThreadContainerImpl extends FridaModelTargetObjectI
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
-		if (refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
+		if (refresh.equals(RefreshBehavior.REFRESH_ALWAYS)) {
 			broadcast().invalidateCacheRequested(this);
 		}
 		return getManager().listThreads(process);

@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import agent.frida.manager.*;
 import agent.frida.model.iface2.*;
 import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.error.DebuggerRegisterAccessException;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.TargetRegisterBank;
@@ -58,15 +59,15 @@ public class FridaModelTargetRegisterContainerImpl
 			DISPLAY_ATTRIBUTE_NAME, getName(),
 			DESCRIPTIONS_ATTRIBUTE_NAME, this), "Initialized");
 
-		requestElements(false);
+		requestElements(RefreshBehavior.REFRESH_NEVER);
 	}
 
 	/**
 	 * Does both descriptions and then populates values
 	 */
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
-		if (refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
+		if (refresh.equals(RefreshBehavior.REFRESH_ALWAYS)) {
 			broadcast().invalidateCacheRequested(this);
 		}
 		return getManager().listRegisters(thread.getThread()).thenAccept(registers -> {
@@ -100,7 +101,7 @@ public class FridaModelTargetRegisterContainerImpl
 
 	public void threadStateChangedSpecific(FridaState state, FridaReason reason) {
 		if (state.equals(FridaState.FRIDA_THREAD_STOPPED)) {
-			requestAttributes(false).thenAccept(__ -> {
+			requestAttributes(RefreshBehavior.REFRESH_NEVER).thenAccept(__ -> {
 				for (Object attribute : getCachedAttributes().values()) {
 					if (attribute instanceof FridaModelTargetRegisterBank) {
 						FridaModelTargetRegisterBank bank =

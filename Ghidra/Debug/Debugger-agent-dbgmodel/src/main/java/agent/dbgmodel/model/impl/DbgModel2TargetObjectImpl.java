@@ -52,6 +52,7 @@ import agent.dbgmodel.jna.dbgmodel.DbgModelNative.ModelObjectKind;
 import agent.dbgmodel.jna.dbgmodel.DbgModelNative.TypeKind;
 import agent.dbgmodel.manager.DbgManager2Impl;
 import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.TargetAccessConditioned;
 import ghidra.dbg.target.TargetAttacher;
@@ -142,11 +143,11 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 
 	@Override
 	public CompletableFuture<Void> requestAugmentedAttributes() {
-		return requestAttributes(false);
+		return requestAttributes(RefreshBehavior.REFRESH_NEVER);
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		List<TargetObject> nlist = new ArrayList<>();
 		List<String> rlist = new ArrayList<>();
 		return requestNativeElements().thenCompose(list -> {
@@ -189,7 +190,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 	}
 
 	@Override
-	public CompletableFuture<Void> requestAttributes(boolean refresh) {
+	public CompletableFuture<Void> requestAttributes(RefreshBehavior refresh) {
 		Map<String, Object> nmap = new HashMap<>();
 		List<String> rlist = new ArrayList<>();
 		return requestNativeAttributes().thenCompose(map -> {
@@ -236,7 +237,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 			if (proxy instanceof TargetStackFrame || //
 				proxy instanceof TargetModule || //
 				proxy instanceof TargetBreakpointSpec) {
-				return delegate.requestAttributes(false);
+				return delegate.requestAttributes(RefreshBehavior.REFRESH_NEVER);
 			}
 		}
 		return CompletableFuture.completedFuture(null);
@@ -328,7 +329,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 					memory = new DbgModelTargetMemoryContainerImpl((DbgModelTargetProcess) proxy);
 				}
 				attrs.put(memory.getName(), memory);
-				memory.requestElements(true);
+				memory.requestElements(RefreshBehavior.REFRESH_ALWAYS);
 			}
 			if (proxy instanceof TargetThread) {
 				DbgModelTargetThread targetThread = (DbgModelTargetThread) proxy;
@@ -394,7 +395,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 				if (elements.containsKey(trimKey)) {
 					return CompletableFuture.completedFuture(elements.get(trimKey));
 				}
-				return requestElements(false).thenApply(__ -> getCachedElements().get(trimKey));
+				return requestElements(RefreshBehavior.REFRESH_NEVER).thenApply(__ -> getCachedElements().get(trimKey));
 			}
 		}
 		synchronized (attributes) {
@@ -412,7 +413,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 					return obj;
 				});
 			}
-			return requestAttributes(false).thenApply(__ -> getCachedAttribute(key));
+			return requestAttributes(RefreshBehavior.REFRESH_NEVER).thenApply(__ -> getCachedAttribute(key));
 		}
 	}
 

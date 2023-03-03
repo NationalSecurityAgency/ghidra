@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import ghidra.async.AsyncFence;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.*;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.error.DebuggerModelTypeException;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
@@ -527,17 +528,17 @@ public interface TargetObject extends Comparable<TargetObject> {
 	 * @param refresh true to invalidate all caches involved in handling this request
 	 * @return a future which completes with a name-value map of attributes
 	 */
-	public default CompletableFuture<? extends Map<String, ?>> fetchAttributes(boolean refresh) {
+	public default CompletableFuture<? extends Map<String, ?>> fetchAttributes(RefreshBehavior refresh) {
 		return getModel().fetchObjectAttributes(getPath(), refresh);
 	}
 
 	/**
 	 * Fetch all attributes of this object, without refreshing
 	 * 
-	 * @see #fetchAttributes(boolean)
+	 * @see #fetchAttributes(RefreshBehavior)
 	 */
 	public default CompletableFuture<? extends Map<String, ?>> fetchAttributes() {
-		return fetchAttributes(false);
+		return fetchAttributes(RefreshBehavior.REFRESH_NEVER);
 	}
 
 	/**
@@ -618,17 +619,17 @@ public interface TargetObject extends Comparable<TargetObject> {
 	 * @return a future which completes with a index-value map of elements
 	 */
 	public default CompletableFuture<? extends Map<String, ? extends TargetObject>> fetchElements(
-			boolean refresh) {
+			RefreshBehavior refresh) {
 		return getModel().fetchObjectElements(getPath(), refresh);
 	}
 
 	/**
 	 * Fetch all elements of this object, without refreshing
 	 * 
-	 * @see #fetchElements(boolean)
+	 * @see #fetchElements(RefreshBehavior)
 	 */
 	public default CompletableFuture<? extends Map<String, ? extends TargetObject>> fetchElements() {
-		return fetchElements(false);
+		return fetchElements(RefreshBehavior.REFRESH_NEVER);
 	}
 
 	/**
@@ -653,7 +654,7 @@ public interface TargetObject extends Comparable<TargetObject> {
 	 * @param refresh true to invalidate all caches involved in handling this request
 	 * @return a future which completes with a name-value map of children
 	 */
-	public default CompletableFuture<? extends Map<String, ?>> fetchChildren(boolean refresh) {
+	public default CompletableFuture<? extends Map<String, ?>> fetchChildren(RefreshBehavior refresh) {
 		AsyncFence fence = new AsyncFence();
 		Map<String, Object> children = new TreeMap<>(TargetObjectKeyComparator.CHILD);
 		fence.include(fetchElements(refresh).thenAccept(elements -> {
@@ -671,7 +672,7 @@ public interface TargetObject extends Comparable<TargetObject> {
 	 * @see #fetchChildren(boolean)
 	 */
 	public default CompletableFuture<? extends Map<String, ?>> fetchChildren() {
-		return fetchChildren(false);
+		return fetchChildren(RefreshBehavior.REFRESH_NEVER);
 	}
 
 	/**
@@ -951,7 +952,7 @@ public interface TargetObject extends Comparable<TargetObject> {
 	 * @param refreshElements as the model to refresh elements, querying the debugger if needed
 	 * @return a future which completes when the children are updated.
 	 */
-	CompletableFuture<Void> resync(boolean refreshAttributes, boolean refreshElements);
+	CompletableFuture<Void> resync(RefreshBehavior refreshAttributes, RefreshBehavior refreshElements);
 
 	/**
 	 * Refresh the elements of this object
@@ -959,7 +960,7 @@ public interface TargetObject extends Comparable<TargetObject> {
 	 * @return a future which completes when the children are updated.
 	 */
 	default CompletableFuture<Void> resync() {
-		return resync(false, true);
+		return resync(RefreshBehavior.REFRESH_NEVER, RefreshBehavior.REFRESH_ALWAYS);
 	}
 
 	/**

@@ -55,6 +55,7 @@ import agent.dbgmodel.dbgmodel.main.ModelObject;
 import agent.dbgmodel.manager.DbgManager2Impl;
 import ghidra.async.AsyncUtils;
 import ghidra.async.TypeSpec;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.TargetEventScope;
 import ghidra.dbg.target.TargetExecutionStateful;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
@@ -227,7 +228,7 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 			stateful.changeAttributes(List.of(), Map.of( //
 				TargetExecutionStateful.STATE_ATTRIBUTE_NAME, TargetExecutionState.ALIVE //
 			), "Selected");
-			stateful.fetchAttributes(true);
+			stateful.fetchAttributes(RefreshBehavior.REFRESH_ALWAYS);
 		}
 	}
 	
@@ -263,7 +264,7 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 			stateful.changeAttributes(List.of(), Map.of( //
 				TargetExecutionStateful.STATE_ATTRIBUTE_NAME, TargetExecutionState.ALIVE //
 			), "Selected");
-			stateful.fetchAttributes(true);
+			stateful.fetchAttributes(RefreshBehavior.REFRESH_ALWAYS);
 		}
 	}
 	
@@ -283,7 +284,7 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 				DbgModelTargetProcess eventProcess = (DbgModelTargetProcess) p;
 				DbgModel2TargetObjectImpl memory =
 					(DbgModel2TargetObjectImpl) eventProcess.getCachedAttribute("Memory");
-				memory.requestElements(false);
+				memory.requestElements(RefreshBehavior.REFRESH_NEVER);
 			});
 		});
 	}
@@ -304,7 +305,7 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 				DbgModelTargetProcess eventProcess = (DbgModelTargetProcess) p;
 				DbgModel2TargetObjectImpl memory =
 					(DbgModel2TargetObjectImpl) eventProcess.getCachedAttribute("Memory");
-				memory.requestElements(false);
+				memory.requestElements(RefreshBehavior.REFRESH_NEVER);
 			});
 		});
 	}
@@ -642,7 +643,7 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 	}
 
 	@Override
-	public CompletableFuture<Void> requestAttributes(boolean refresh) {
+	public CompletableFuture<Void> requestAttributes(RefreshBehavior refresh) {
 		DbgManager2Impl manager2 = (DbgManager2Impl) getManager();
 		List<String> pathX = PathUtils.extend(List.of("Debugger"), path);
 		intrinsics.put(available.getName(), available);

@@ -21,6 +21,7 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.function.Predicate;
 
 import ghidra.async.*;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.error.*;
 import ghidra.dbg.target.TargetMemory;
 import ghidra.dbg.target.TargetObject;
@@ -64,6 +65,13 @@ import ghidra.util.Msg;
  * risk deadlocking Ghidra's UI.
  */
 public interface DebuggerObjectModel {
+	
+	public static enum RefreshBehavior {
+		REFRESH_ALWAYS,
+		REFRESH_NEVER,
+		REFRESH_WHEN_ABSENT
+	}
+	
 	public static final TypeSpec<Map<String, ? extends TargetObject>> ELEMENT_MAP_TYPE =
 		TypeSpec.auto();
 	public static final TypeSpec<Map<String, ?>> ATTRIBUTE_MAP_TYPE = TypeSpec.auto();
@@ -247,16 +255,16 @@ public interface DebuggerObjectModel {
 	 * @return a future map of attributes
 	 */
 	public CompletableFuture<? extends Map<String, ?>> fetchObjectAttributes(List<String> path,
-			boolean refresh);
+			RefreshBehavior refresh);
 
 	/**
 	 * Fetch the attributes of the given model path, without refreshing
 	 * 
-	 * @see #fetchObjectAttributes(List, boolean)
+	 * @see #fetchObjectAttributes(List, RefreshBehavior)
 	 */
 	public default CompletableFuture<? extends Map<String, ?>> fetchObjectAttributes(
 			List<String> path) {
-		return fetchObjectAttributes(path, false);
+		return fetchObjectAttributes(path, RefreshBehavior.REFRESH_NEVER);
 	}
 
 	/**
@@ -279,16 +287,16 @@ public interface DebuggerObjectModel {
 	 * @return a future map of elements
 	 */
 	public CompletableFuture<? extends Map<String, ? extends TargetObject>> fetchObjectElements(
-			List<String> path, boolean refresh);
+			List<String> path, RefreshBehavior refresh);
 
 	/**
 	 * Fetch the elements of the given model path, without refreshing
 	 * 
-	 * @see #fetchObjectElements(List, boolean)
+	 * @see #fetchObjectElements(List, RefreshBehavior)
 	 */
 	public default CompletableFuture<? extends Map<String, ? extends TargetObject>> fetchObjectElements(
 			List<String> path) {
-		return fetchObjectElements(path, false);
+		return fetchObjectElements(path, RefreshBehavior.REFRESH_NEVER);
 	}
 
 	/**

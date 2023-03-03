@@ -25,6 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.TypeUtils;
 
 import ghidra.dbg.DebuggerTargetObjectIface;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.TargetMethod;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.DefaultTargetObjectSchema.DefaultAttributeSchema;
@@ -101,7 +102,7 @@ public class AnnotatedSchemaContext extends DefaultSchemaContext {
 	static Set<Class<? extends TargetObject>> getBoundsOfFetchElements(
 			Class<? extends TargetObject> cls) {
 		try {
-			Method method = cls.getMethod("fetchElements", new Class<?>[] { boolean.class });
+			Method method = cls.getMethod("fetchElements", new Class<?>[] { RefreshBehavior.class });
 			Type ret = method.getGenericReturnType();
 			Map<TypeVariable<?>, Type> argsCf =
 				TypeUtils.getTypeArguments(ret, CompletableFuture.class);

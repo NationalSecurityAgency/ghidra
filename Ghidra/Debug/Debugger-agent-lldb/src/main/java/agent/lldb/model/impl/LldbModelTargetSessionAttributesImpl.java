@@ -23,9 +23,8 @@ import SWIG.ByteOrder;
 import SWIG.SBTarget;
 import agent.lldb.model.iface2.LldbModelTargetSession;
 import agent.lldb.model.iface2.LldbModelTargetSessionAttributes;
-import ghidra.dbg.target.schema.TargetAttributeType;
-import ghidra.dbg.target.schema.TargetElementType;
-import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
+import ghidra.dbg.target.schema.*;
 
 @TargetObjectSchemaInfo(
 	name = "SessionAttributes",
@@ -91,7 +90,7 @@ public class LldbModelTargetSessionAttributesImpl extends LldbModelTargetObjectI
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return CompletableFuture.completedFuture(null);
 	}
 
