@@ -140,7 +140,14 @@ public class GhidraLauncher {
 		Map<String, GModule> modules = getOrderedModules(layout);
 
 		if (SystemUtilities.isInDevelopmentMode()) {
+
+			// First add Eclipse's module "bin" paths.  If we didn't find any, assume Ghidra was 
+			// compiled with Gradle, and add the module jars Gradle built.
 			addModuleBinPaths(classpathList, modules);
+			if (classpathList.isEmpty()) {
+				addModuleJarPaths(classpathList, modules);
+			}
+
 			addExternalJarPaths(classpathList, layout.getApplicationRootDirs());
 		}
 		else {

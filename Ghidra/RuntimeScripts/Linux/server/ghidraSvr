@@ -93,13 +93,19 @@ if [ -d "${SCRIPT_DIR}/../Ghidra" ]; then
 	LS_CPATH="${GHIDRA_HOME}/support/LaunchSupport.jar"
 else
 
-	# Development Environment
+	# Development Environment (Eclipse classes or "gradle jar")
 	GHIDRA_HOME="${SCRIPT_DIR}/../../../.."
 	WRAPPER_CONF="${SCRIPT_DIR}/../../Common/server/server.conf"
 	DATA_DIR="${GHIDRA_HOME}/${MODULE_DIR}/build/data"
 	OS_DIR="${GHIDRA_HOME}/${MODULE_DIR}/os/${OS_DIRNAME}"
 	CLASSPATH_FRAG="${GHIDRA_HOME}/${MODULE_DIR}/build/dev-meta/classpath.frag"
 	LS_CPATH="${GHIDRA_HOME}/GhidraBuild/LaunchSupport/bin/main"
+	if ! [ -d "${LS_CPATH}" ]; then
+		LS_CPATH="${GHIDRA_HOME}/GhidraBuild/LaunchSupport/build/libs/LaunchSupport.jar"
+		if ! [ -f "${LS_CPATH}" ]; then
+			reportError "Cannot launch from repo because Ghidra has not been compiled with Eclipse or Gradle."
+		fi
+	fi
 fi
 
 WRAPPER_HOME=$(find "${DATA_DIR}" -maxdepth 1 -name "${WRAPPER_NAME_PREFIX}*" -type d | head -n 1)

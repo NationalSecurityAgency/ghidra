@@ -111,15 +111,19 @@ if [ -f "${SUPPORT_DIR}/launch.properties" ]; then
 	DEBUG_LOG4J="${SUPPORT_DIR}/debug.log4j.xml"
 else
 
-	# Development Environment
+	# Development Environment (Eclipse classes or "gradle jar")
 	INSTALL_DIR="${SUPPORT_DIR}/../../../.."
 	CPATH="${INSTALL_DIR}/Ghidra/Framework/Utility/bin/main"
 	LS_CPATH="${INSTALL_DIR}/GhidraBuild/LaunchSupport/bin/main"
-	DEBUG_LOG4J="${INSTALL_DIR}/Ghidra/RuntimeScripts/Common/support/debug.log4j.xml"
 	if ! [ -d "${LS_CPATH}" ]; then
-		echo "Ghidra cannot launch in development mode because Eclipse has not compiled its class files."
-		exit 1
+		CPATH="${INSTALL_DIR}/Ghidra/Framework/Utility/build/libs/Utility.jar"
+		LS_CPATH="${INSTALL_DIR}/GhidraBuild/LaunchSupport/build/libs/LaunchSupport.jar"
+		if ! [ -f "${LS_CPATH}" ]; then
+			echo "Cannot launch from repo because Ghidra has not been compiled with Eclipse or Gradle."
+			exit 1
+		fi
 	fi
+	DEBUG_LOG4J="${INSTALL_DIR}/Ghidra/RuntimeScripts/Common/support/debug.log4j.xml"
 fi
 
 # Make sure some kind of java is on the path.  It's required to run the LaunchSupport program.
