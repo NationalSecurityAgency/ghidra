@@ -28,6 +28,17 @@ import ghidra.dbg.agent.AgentWindow;
 import ghidra.util.Msg;
 
 public interface LldbGadpServer extends AutoCloseable {
+	public static final String USAGE =
+		"""
+				This is the GADP server for Frida.  Usage:
+
+				    gadp-agent-lldb [-H HOST/ADDR] [-p PORT]
+
+				Options:
+				  --host/-H          The address of the interface on which to listen. Default is
+				                     localhost
+				  --port/-p          The TCP port on which to listen for GADP. Default is 12345
+				""";
 
 	/**
 	 * The entry point for the LLDB server in stand-alone mode
@@ -133,16 +144,7 @@ public interface LldbGadpServer extends AutoCloseable {
 		}
 
 		protected void printUsage() {
-			System.out.println("This is the GADP server for LLVM's lldb.  Usage:");
-			System.out.println();
-			System.out.println("     [-H HOST/ADDR] [-p PORT] [-i ID] [-t TRANSPORT] [-r REMOTE]");
-			System.out.println();
-			System.out.println("Options:");
-			System.out.println(
-				"  --host/-H          The address of the interface on which to listen.");
-			System.out.println("                     Default is localhost");
-			System.out.println(
-				"  --port/-p          The TCP port on which to listen for GADP. Default is 12345");
+			System.out.println(USAGE);
 		}
 	}
 

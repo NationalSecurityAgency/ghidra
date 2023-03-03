@@ -30,6 +30,38 @@ import ghidra.dbg.agent.AgentWindow;
 import ghidra.util.Msg;
 
 public interface GdbGadpServer extends AutoCloseable {
+	public static final String USAGE =
+		"""
+				This is the GADP wrapper for GDB.  Usage:
+
+				    gadp-agent-gdb  [GDB options] [--agent-args [-H HOST/ADDR] [-p PORT]
+				                    [-g CMD] [-x]]
+
+				Options:
+
+				Use gdb -h for suitable [GDB options]
+
+				THE FOLLOWING OPTIONS MUST BE PRECEDED BY --agent-args
+				  --host/-H          The address of the interface on which to listen. Default is
+				                     localhost
+				  --port/-p          The TCP port on which to listen. Default is 12345. 0 for
+				                     automatic.
+				  --gdb-cmd/-g       The command to launch gdb. Default is 'gdb'
+				  --existing/-x      Do not launch gdb. Instead just open a pty
+
+				Starts a GDB-based GADP server "agent". In general, it can be invoked in the
+				same manner as standard gdb. Arguments to control the GADP server and GDB
+				invocation are given after the --gadp-args flag. Once the server has started, it
+				will print the interface IP and port. The -g and -x flags are mutually
+				exclusive. The one appearing last get preference. The -x flags causes the agent
+				to refrain from launching its own gdb process. Instead,	it prints the file name
+				of a pseudo terminal (pty) where it expects a GDB/MI v2 interpreter from an
+				existing gdb process. Use the new-ui command (available since GDB version 7.12)
+				to join the agent to the existing session:
+
+				(gdb) new-ui mi2 /dev/ptyXX
+				""";
+
 	public static void main(String[] args) throws Exception {
 		try {
 			new Runner().run(args);
@@ -73,7 +105,7 @@ public interface GdbGadpServer extends AutoCloseable {
 			Iterator<String> ait = Arrays.asList(args).iterator();
 			while (ait.hasNext()) {
 				String a = ait.next();
-				if ("--gadp-args".equals(a)) {
+				if ("--agent-args".equals(a)) {
 					break;
 				}
 				else if ("-h".equals(a) || "--help".equals(a)) {
@@ -131,45 +163,7 @@ public interface GdbGadpServer extends AutoCloseable {
 		}
 
 		private void printUsage() {
-			System.out.println("This is the GADP wrapper for GDB.  Usage:");
-			System.out.println();
-			System.out.println(
-				"    gadpgdb [GDB options] [--gadp-args [-H HOST/ADDR] [-p PORT] [-g CMD] [-x]]");
-			System.out.println();
-			System.out.println("Options:");
-			System.out.println();
-			System.out.println("Use gdb -h for suitable [GDB options]");
-			System.out.println();
-			System.out.println(
-				"  --host/-H          The address of the interface on which to listen. Default is localhost");
-			System.out.println(
-				"  --port/-p          The TCP port on which to listen. Default is 12345. 0 for automatic.");
-			System.out.println(
-				"  --gdb-cmd/-g       The command to launch gdb. Default is 'gdb'");
-			System.out.println(
-				"  --existing/-x      Do not launch gdb. Instead just open a pty");
-			System.out.println();
-			System.out.println(
-				"Starts a GDB-based GADP server \"agent\". In general, it can be invoked in");
-			System.out.println(
-				"the same manner as standard gdb. Arguments to control the GADP server and");
-			System.out.println(
-				"GDB invocation are given after the --gadp-args flag. Once the server has");
-			System.out.println(
-				"started, it will print the interface IP and port. The -g and -x flags are");
-			System.out.println(
-				"mutually exclusive. The one appearing last get preference. The -x flags");
-			System.out.println(
-				"causes the agent to refrain from launching its own gdb process. Instead,");
-			System.out.println(
-				"it prints the file name of a private terminate (pty) where it expects a");
-			System.out.println(
-				"GDB/MI v2 interpreter from an existing gdb process. Use the new-ui command");
-			System.out.println(
-				"(available since GDB version 7.12) to join the agent to the existing");
-			System.out.println("session:");
-			System.out.println();
-			System.out.println("(gdb) new-ui mi2 /dev/ptyXX");
+			System.out.println(USAGE);
 		}
 	}
 
