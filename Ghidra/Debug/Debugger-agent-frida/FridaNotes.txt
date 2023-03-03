@@ -14,6 +14,7 @@ Ghidra needs a dynamically-loadable version of libfrida-core.a which you can gen
 
 On macOS you will need to also link Objective-C, libresolv and the AppKit and Foundation frameworks:
 	clang++ -lobjc -lresolv -framework Foundation -framework AppKit -shared ghidra_wrapper.c ./libfrida-core.a -o libfrida-core.so
+An example compiler invocation is available in the example from the Frida devkit at the top of the example C file.
 
 Libfrida-core.so should then be added to the jna.library.path or put someplace like /usr/lib/x86_64-linux-gnu, where it will get picked up by Native.load().
 
