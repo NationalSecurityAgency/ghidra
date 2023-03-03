@@ -19,6 +19,7 @@ import javax.swing.JMenuItem;
 
 import docking.ActionContext;
 import docking.DockingCheckBoxMenuItem;
+import docking.action.KeyBindingData;
 import docking.action.ToggleDockingActionIf;
 import docking.menu.DockingCheckboxMenuItemUI;
 
@@ -39,6 +40,7 @@ public class HexNumbersAction extends CompositeEditorTableAction implements Togg
 		setDescription(DESCRIPTION);
 		setEnabled(true);
 		setSelected(model.isShowingNumbersInHex());
+		setKeyBindingData(new KeyBindingData("Shift-H"));
 	}
 
 	@Override
