@@ -99,7 +99,7 @@ public class DemoPcodeUseropLibrary extends AnnotatedPcodeUseropLibrary<byte[]> 
 	 */
 	public class DemoStructuredPart extends StructuredSleigh {
 		final Var RAX = lang("RAX", type("long"));
-		final Var RCX = lang("RAX", type("byte *"));
+		final Var RCX = lang("RCX", type("byte *"));
 		final UseropDecl emu_swi = userop(type("void"), "emu_swi", List.of());
 
 		protected DemoStructuredPart(CompilerSpec cs) {

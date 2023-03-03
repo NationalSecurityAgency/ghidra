@@ -46,7 +46,15 @@ class IndexExpr extends Expr implements LValInternal {
 	}
 
 	@Override
-	public String generate() {
-		return "(" + base.generate() + " + (" + index.generate() + "*" + elemLen + "))";
+	public StringTree generate(RValInternal parent) {
+		StringTree st = new StringTree();
+		st.append("(");
+		st.append(base.generate(this));
+		st.append(" + (");
+		st.append(index.generate(this));
+		st.append("*");
+		st.append(Integer.toString(elemLen));
+		st.append("))");
+		return st;
 	}
 }

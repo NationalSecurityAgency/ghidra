@@ -19,7 +19,6 @@ import ghidra.pcode.struct.StructuredSleigh.Label;
 import ghidra.pcode.struct.StructuredSleigh.RVal;
 
 public class GotoStmt extends AbstractStmt {
-
 	private final RValInternal target;
 
 	protected GotoStmt(StructuredSleigh ctx, RVal target) {
@@ -31,9 +30,8 @@ public class GotoStmt extends AbstractStmt {
 	protected StringTree generate(Label next, Label fall) {
 		StringTree st = new StringTree();
 		st.append("goto [");
-		st.append(target.generate());
+		st.append(target.generate(null));
 		st.append("];\n");
 		return st;
 	}
-
 }

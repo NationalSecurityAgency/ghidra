@@ -37,7 +37,14 @@ public class RawExpr extends Expr {
 	}
 
 	@Override
-	public String generate() {
-		return "(" + expr + ")";
+	public StringTree generate(RValInternal parent) {
+		if (parent instanceof AssignStmt as && as.lhs == this) {
+			return StringTree.single(expr);
+		}
+		StringTree st = new StringTree();
+		st.append("(");
+		st.append(expr);
+		st.append(")");
+		return st;
 	}
 }

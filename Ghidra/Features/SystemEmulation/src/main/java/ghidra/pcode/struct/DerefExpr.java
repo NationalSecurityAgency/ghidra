@@ -45,10 +45,29 @@ class DerefExpr extends Expr implements LValInternal {
 	}
 
 	@Override
-	public String generate() {
-		String spacePiece =
-			ctx.language.getDefaultSpace() == space ? "" : ("[" + space.getName() + "]");
-		String sizePiece = type.getLength() == 0 ? "" : (":" + type.getLength());
-		return "(*" + spacePiece + sizePiece + " " + addr.generate() + ")";
+	public StringTree generate(RValInternal parent) {
+		StringTree st = new StringTree();
+		boolean useParens = !(parent instanceof AssignStmt as && as.lhs == this);
+		if (useParens) {
+			st.append("(*");
+		}
+		else {
+			st.append("*");
+		}
+		if (ctx.language.getDefaultSpace() != space) {
+			st.append("[");
+			st.append(space.getName());
+			st.append("]");
+		}
+		if (type.getLength() != 0) {
+			st.append(":");
+			st.append(Integer.toString(type.getLength()));
+		}
+		st.append(" ");
+		st.append(addr.generate(this));
+		if (useParens) {
+			st.append(")");
+		}
+		return st;
 	}
 }

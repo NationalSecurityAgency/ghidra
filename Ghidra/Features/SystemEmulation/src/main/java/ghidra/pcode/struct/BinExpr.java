@@ -41,7 +41,15 @@ class BinExpr extends Expr {
 	}
 
 	@Override
-	public String generate() {
-		return "(" + lhs.generate() + " " + op + " " + rhs.generate() + ")";
+	public StringTree generate(RValInternal parent) {
+		StringTree st = new StringTree();
+		st.append("(");
+		st.append(lhs.generate(this));
+		st.append(" ");
+		st.append(op);
+		st.append(" ");
+		st.append(rhs.generate(this));
+		st.append(")");
+		return st;
 	}
 }
