@@ -523,8 +523,8 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 							"Library " + libraryName + ": Examining " + candidateLibraryFile);
 						if (processLibrary(library, libraryName, candidateLibraryFile, provider,
 							desiredLoadSpec, options, log, monitor)) {
-							loadedPrograms.add(
-								new Loaded<Program>(library, libraryName, libraryDestFolderPath));
+							loadedPrograms.add(new Loaded<Program>(library, simpleLibraryName,
+								libraryDestFolderPath));
 						}
 						else {
 							library.release(consumer);
