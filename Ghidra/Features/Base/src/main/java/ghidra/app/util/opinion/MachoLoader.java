@@ -165,7 +165,13 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 
 			for (FatArch architecture : architectures) {
 				ByteProvider bp = new ByteProviderWrapper(provider, architecture.getOffset(),
-					architecture.getSize());
+					architecture.getSize()) {
+					
+					@Override // Ensure the parent provider gets closed when the wrapper does
+					public void close() throws IOException {
+						super.provider.close();
+					}
+				};
 				LoadSpec libLoadSpec = matchSupportedLoadSpec(loadSpec, bp);
 				if (libLoadSpec != null) {
 					return bp;
