@@ -67,6 +67,7 @@ public class OptionsDialog extends ReusableDialogComponentProvider {
 
 	@Override
 	public void dispose() {
+		super.dispose();
 		panel.dispose();
 	}
 

@@ -386,6 +386,7 @@ public class TableChooserDialog extends DialogComponentProvider
 	public void dispose() {
 		table.dispose();
 		workers.forEach(w -> w.cancel(true));
+		super.dispose();
 	}
 
 //==================================================================================================

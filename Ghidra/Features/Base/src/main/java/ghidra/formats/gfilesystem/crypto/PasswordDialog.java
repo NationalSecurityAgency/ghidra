@@ -71,13 +71,13 @@ class PasswordDialog extends DialogComponentProvider {
 				updateCapLockWarning();
 			}
 		});
-		
+
 		workPanel = new JPanel(new PairLayout(5, 5));
 		workPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 0, 10));
 
 		workPanel.add(new GLabel(prompt != null ? prompt : "Password:"));
 		workPanel.add(passwordField);
-		
+
 		addWorkPanel(workPanel);
 		addOKButton();
 		addCancelButton();
@@ -132,6 +132,7 @@ class PasswordDialog extends DialogComponentProvider {
 
 	@Override
 	public void dispose() {
+		super.dispose();
 		if (passwordField != null) {
 			passwordField.setText("");
 			workPanel.remove(passwordField);
