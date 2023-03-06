@@ -571,6 +571,7 @@ public class SetEquateDialog extends DialogComponentProvider {
 
 	@Override
 	public void dispose() {
+		super.dispose();
 		suggestedEquatesTable.dispose();
 		filterPanel.dispose();
 	}

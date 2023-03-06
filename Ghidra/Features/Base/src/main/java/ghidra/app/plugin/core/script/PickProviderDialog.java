@@ -101,14 +101,7 @@ public class PickProviderDialog extends DialogComponentProvider {
 		if (wasCancelled) {
 			return null;
 		}
-		return (GhidraScriptProvider) listPanel.getSelectedValue();
-	}
-
-	/**
-	 * close any open dialog
-	 */
-	public void dispose() {
-		close();
+		return listPanel.getSelectedValue();
 	}
 
 	private void selectBestProvider() {
@@ -137,7 +130,7 @@ public class PickProviderDialog extends DialogComponentProvider {
 
 	@Override
 	protected void okCallback() {
-		GhidraScriptProvider provider = (GhidraScriptProvider) listPanel.getSelectedValue();
+		GhidraScriptProvider provider = listPanel.getSelectedValue();
 		if (provider != null) {
 			lastSelectedProviderDescription = provider.getDescription();
 		}
