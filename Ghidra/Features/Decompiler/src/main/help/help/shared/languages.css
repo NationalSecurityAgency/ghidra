@@ -15,13 +15,11 @@
  */
 /*
 	This file contains non-Ghidra style sheet markup.  This file will be loaded in addition to
-	FrontPage.css.
+	DefaultStyle.css.
 */
 
-h5 { margin-left: 10px; margin-top: 20px; font-family:times new roman; font-size:12pt; font-style:italic; }
 div.informalexample { margin-left: 50px; margin-top: 10px; }
 dd { margin-bottom: 20px; }
 dd p { margin-top: 5px; margin-left: 10px; }
 span.term { font-family:times new roman; font-size:14pt; font-weight:bold; }
-span.code { font-weight: bold; font-family: courier new; font-size: 14pt; color:#000000; }
 span.redtext { color:#CC0033; }
