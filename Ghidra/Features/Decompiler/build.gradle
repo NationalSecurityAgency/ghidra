@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,6 +25,8 @@ apply from: "buildNatives.gradle"
 apply plugin: 'eclipse'
 
 eclipse.project.name = 'Features Decompiler'
+
+ext.xsltproc = "xsltproc --nonet"
 
 dependencies {
 	api project(':Base')
@@ -114,6 +116,9 @@ task buildDecompilerHelpHtml(type: Exec) {
 
 	workingDir 'src/main/doc'
 
+	// Rebuild when anything in this directory changes. Crude, but effective.
+	inputs.dir(workingDir)
+
 	// 'which' returns the number of failed arguments
 	// Using the 'which' command first will allow the task to fail if the required
 	// executables are not installed.
@@ -131,8 +136,8 @@ task buildDecompilerHelpHtml(type: Exec) {
 		rm -f $installHelpPoint/topics/DecompilePlugin/*.html
 
 		echo '** Building html files **'
-		xsltproc --output $buildDir/decomp_noscaling.xml --stringparam profile.condition "noscaling" commonprofile.xsl decompileplugin.xml 2>&1
-		xsltproc --stringparam base.dir ${installHelpPoint}/topics/DecompilePlugin/ --stringparam root.filename Decompiler decompileplugin_html.xsl $buildDir/decomp_noscaling.xml 2>&1
+		$xsltproc --output $buildDir/decomp_noscaling.xml --stringparam profile.condition "noscaling" commonprofile.xsl decompileplugin.xml 2>&1
+		$xsltproc --stringparam base.dir ${installHelpPoint}/topics/DecompilePlugin/ --stringparam root.filename Decompiler decompileplugin_html.xsl $buildDir/decomp_noscaling.xml 2>&1
 		rm ${installHelpPoint}/topics/DecompilePlugin/Decompiler.html
 		sed -i -e '/Frontpage.css/ { p; s/Frontpage.css/languages.css/; }' ${installHelpPoint}/topics/DecompilePlugin/*.html 2>&1
 
@@ -174,6 +179,9 @@ task buildDecompilerHelpPdf(type: Exec) {
 
 	workingDir 'src/main/doc'
 
+	// Rebuild when anything in this directory changes. Crude, but effective.
+	inputs.dir(workingDir)
+
 	// 'which' returns the number of failed arguments
 	// Using 'which' first will allow the entire command to fail if the required 
 	// executables are not installed.
@@ -194,8 +202,8 @@ task buildDecompilerHelpPdf(type: Exec) {
 		cp $installHelpPoint/shared/*.png $buildDir/images 2>&1
 
 		echo '** Building decompileplugin.fo **'
-		xsltproc --output $buildDir/decompileplugin_withscaling.xml --stringparam profile.condition "withscaling" commonprofile.xsl decompileplugin.xml 2>&1
-		xsltproc --output $buildDir/decompileplugin.fo decompileplugin_pdf.xsl $buildDir/decompileplugin_withscaling.xml 2>&1
+		$xsltproc --output $buildDir/decompileplugin_withscaling.xml --stringparam profile.condition "withscaling" commonprofile.xsl decompileplugin.xml 2>&1
+		$xsltproc --output $buildDir/decompileplugin.fo decompileplugin_pdf.xsl $buildDir/decompileplugin_withscaling.xml 2>&1
 
 		echo '** Building decompileplugin.pdf **'
 		fop $buildDir/decompileplugin.fo $buildDir/decompileplugin.pdf 2>&1
@@ -236,10 +244,15 @@ task buildDecompilerDocumentationPdfs(type: Exec) {
 
 	workingDir 'src/main/doc'
 
+	// Rebuild when anything in this directory changes. Crude, but effective.
+	inputs.dir(workingDir)
+
 	// Gradle will provide a cleanBuildDecompilerDocumentationPdfs task that will remove these
 	// declared outputs.
 	outputs.file "$workingDir/$buildDir/pcoderef.fo"
 	outputs.file "$workingDir/$buildDir/pcoderef.pdf"
+	outputs.file "$workingDir/$buildDir/cspec.fo"
+	outputs.file "$workingDir/$buildDir/cspec.pdf"
 	outputs.file "$workingDir/$buildDir/sleigh.fo"
 	outputs.file "$workingDir/$buildDir/sleigh.pdf"
 
@@ -259,16 +272,22 @@ task buildDecompilerDocumentationPdfs(type: Exec) {
 		cp $installPoint/Diagram*.png $buildDir 2>&1
 
 		echo '** Building sleigh.fo **'
-		xsltproc --output $buildDir/sleigh.fo sleigh_pdf.xsl sleigh.xml 2>&1
+		$xsltproc --output $buildDir/sleigh.fo sleigh_pdf.xsl sleigh.xml 2>&1
 
 		echo '** Building sleigh.pdf **'
 		fop $buildDir/sleigh.fo $buildDir/sleigh.pdf 2>&1
 
 		echo '** Building pcoderef.fo **'
-		xsltproc --output $buildDir/pcoderef.fo pcoderef_pdf.xsl pcoderef.xml 2>&1
+		$xsltproc --output $buildDir/pcoderef.fo pcoderef_pdf.xsl pcoderef.xml 2>&1
 
 		echo '** Building pcoderef.pdf **'
 		fop $buildDir/pcoderef.fo $buildDir/pcoderef.pdf  2>&1
+
+		echo '** Building cspec.fo **'
+		$xsltproc --output $buildDir/cspec.fo cspec_pdf.xsl cspec.xml 2>&1
+
+		echo '** Building cspec.pdf **'
+		fop $buildDir/cspec.fo $buildDir/cspec.pdf  2>&1
 
 		echo '** Done. **'
 		"""
@@ -302,6 +321,9 @@ task buildDecompilerDocumentationHtml(type: Exec) {
 
 	workingDir 'src/main/doc'
 
+	// Rebuild when anything in this directory changes. Crude, but effective.
+	inputs.dir(workingDir)
+
 	// Gradle will provide a cleanBuildDecompilerDocumentationHtml task that will remove these
 	// declared outputs.
 	outputs.file "$workingDir/$buildDir/index.html"
@@ -322,11 +344,11 @@ task buildDecompilerDocumentationHtml(type: Exec) {
 		which xsltproc 2>&1
 
 		echo -e '** Building index.html **'
-		xsltproc --output $buildDir/index.html main_html.xsl main.xml 2>&1
+		$xsltproc --output $buildDir/index.html main_html.xsl main.xml 2>&1
 		sed -i -e '/Frontpage.css/ { p; s/Frontpage.css/languages.css/; }' $buildDir/index.html
 
 		echo '** Building html/sleigh.html **'
-		xsltproc --stringparam base.dir $buildDir/html/ --stringparam root.filename sleigh sleigh_html.xsl sleigh.xml 2>&1
+		$xsltproc --stringparam base.dir $buildDir/html/ --stringparam root.filename sleigh sleigh_html.xsl sleigh.xml 2>&1
 		sed -i -e '/Frontpage.css/ { p; s/Frontpage.css/languages.css/; }' $buildDir/html/sleigh*.html
 		cp $installPoint/Frontpage.css $buildDir/html 2>&1
 		cp $installPoint/languages.css $buildDir/html
@@ -335,13 +357,17 @@ task buildDecompilerDocumentationHtml(type: Exec) {
 		cp $installPoint/Diagram3.png $buildDir/html
 
 		echo '** Building html/pcoderef.html **'
-		xsltproc --stringparam base.dir $buildDir/html/ --stringparam root.filename pcoderef pcoderef_html.xsl pcoderef.xml  2>&1
+		$xsltproc --stringparam base.dir $buildDir/html/ --stringparam root.filename pcoderef pcoderef_html.xsl pcoderef.xml  2>&1
 		sed -i -e '/Frontpage.css/ { p; s/Frontpage.css/languages.css/; }' $buildDir/html/pcoderef.html
 		sed -i -e '/Frontpage.css/ { p; s/Frontpage.css/languages.css/; }' $buildDir/html/pcodedescription.html
 		sed -i -e '/Frontpage.css/ { p; s/Frontpage.css/languages.css/; }' $buildDir/html/pseudo-ops.html
 		sed -i -e '/Frontpage.css/ { p; s/Frontpage.css/languages.css/; }' $buildDir/html/reference.html
 		cp $installPoint/Frontpage.css $buildDir/html
 		cp $installPoint/languages.css $buildDir/html
+
+		echo '** Building html/cspec.html **'
+		$xsltproc --stringparam base.dir $buildDir/html/ --stringparam root.filename cspec cspec_html.xsl cspec.xml 2>&1
+		sed -i -e '/Frontpage.css/ { p; s/Frontpage.css/languages.css/; }' $buildDir/html/cspec*.html
 
 		echo '** Installing html documentation. **'
 		cp $buildDir/index.html $installPoint/index.html
@@ -479,8 +505,8 @@ Task createLexTask(String filename, String binaryName) {
 
 rootProject.createInstallationZip {
 	dependsOn buildDecompilerDocumentationPdfs
-	
-	
+
+
 	def decompilerPdfZipPath = rootProject.ext.ZIP_DIR_PREFIX + "/docs/languages/"
 
 	// Add decompiler pdf files to zip. If the pdf files do not exist during execution time 
