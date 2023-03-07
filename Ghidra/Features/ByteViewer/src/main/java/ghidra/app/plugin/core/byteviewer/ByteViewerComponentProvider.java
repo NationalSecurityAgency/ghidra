@@ -163,7 +163,6 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 	 * Notification that an option changed.
 	 * 
 	 * @param options options object containing the property that changed
-	 * @param group
 	 * @param optionName name of option that changed
 	 * @param oldValue old value of the option
 	 * @param newValue new value of the option

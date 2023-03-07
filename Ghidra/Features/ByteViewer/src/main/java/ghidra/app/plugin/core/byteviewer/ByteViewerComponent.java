@@ -325,9 +325,6 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 		addFieldMouseListener(this);
 	}
 
-	/**
-	 * Set the FontMetrics; recreate the fields.
-	 */
 	void setFontMetrics(FontMetrics fm) {
 		this.fm = fm;
 		createFields();
@@ -336,6 +333,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 
 	/**
 	 * Set the color used to denote changes in the byte block.
+	 * @param c the color for unsaved changed byte values
 	 */
 	void setEditColor(Color c) {
 		editColor = c;
@@ -386,15 +384,13 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 	}
 
 	/**
-	 * Get the color used to denote changes in the byte block.
+	 * Get the the color of unsaved byte changes
+	 * @return the the color of unsaved byte changes
 	 */
 	Color getEditColor() {
 		return editColor;
 	}
 
-	/**
-	 * Set the byte blocks for displaying data.
-	 */
 	void setIndexMap(IndexMap map) {
 		updatingIndexMap = true;
 		indexMap = map;
@@ -437,9 +433,6 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 		layoutModel.setIndexMap(indexMap);
 	}
 
-	/**
-	 * Set the selection.
-	 */
 	void setViewerSelection(ByteBlockSelection selection) {
 		removeFieldSelectionListener(this);
 		try {
@@ -547,7 +540,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 			return characterOffset;
 		}
 
-		int column = characterOffset;
+		int column = fieldLoc.getCol() + characterOffset;
 		int fieldNum = fieldLoc.getFieldNum();
 		int fieldRow = fieldLoc.getRow();
 		ByteField field = (ByteField) layout.getField(fieldNum);
@@ -604,9 +597,6 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 		return processFieldSelection(hl);
 	}
 
-	/**
-	 * Restore the view.
-	 */
 	void returnToView(ByteBlock block, BigInteger index, ViewerPosition vpos) {
 		FieldLocation fieldLoc = indexMap.getFieldLocation(block, index, fieldFactories);
 		setViewerPosition(vpos.getIndex(), vpos.getXOffset(), vpos.getYOffset());
@@ -651,9 +641,6 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 		return new ByteBlockInfo(block, offset, loc.getCol());
 	}
 
-	/**
-	 * Get the data format model.
-	 */
 	DataFormatModel getDataModel() {
 		return model;
 	}
@@ -683,9 +670,6 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 		}
 	}
 
-	/**
-	 * Return true if this view is in edit mode.
-	 */
 	boolean getEditMode() {
 		return editMode;
 	}
@@ -780,18 +764,52 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 		layoutModel.setFactorys(fieldFactories, model, charWidth);
 	}
 
-	private ByteBlockInfo getBlockInfo(FieldLocation loc, boolean isStart) {
+	private ByteBlockInfo getBlockInfoForSelectionStart(FieldLocation loc) {
 		BigInteger index = loc.getIndex();
-		int offset = indexMap.getFieldOffset(index, loc.getFieldNum(), fieldFactories);
-		if (!isStart && loc.getCol() == 0) {
-			offset--;
-			if (offset < 0) {
-				index = index.subtract(BigInteger.ONE);
-				offset = indexMap.getFieldOffset(index, fieldFactories.length, fieldFactories);
-				offset += model.getUnitByteSize() - 1;
+		int fieldNum = loc.getFieldNum();
+
+		// if the selection starts on a separator line, skip to the next beginning of the next line
+		if (indexMap.isBlockSeparatorIndex(index)) {
+			index = index.add(BigInteger.ONE);
+			fieldNum = 0;
+		}
+
+		int offset = indexMap.getFieldOffset(index, fieldNum, fieldFactories);
+		return indexMap.getBlockInfo(index, offset);
+	}
+
+	private ByteBlockInfo getBlockInfoForSelectionEnd(FieldLocation loc) {
+		BigInteger lineIndex = loc.getIndex();
+		int fieldNum = loc.getFieldNum();
+
+		// if the selection ends on a separator line, go back to the end of the previous line
+		if (indexMap.isBlockSeparatorIndex(lineIndex)) {
+			lineIndex = lineIndex.subtract(BigInteger.ONE);
+			fieldNum = fieldFactories.length - 1; // set to end of line factory
+		}
+
+		// if the selection is before the characters in this field, the selection doesn't include
+		// this field, so move back a field. (Which may require moving back to the end of the
+		// previous line)
+		if (loc.getCol() == 0) {
+			if (--fieldNum < 0) {
+				lineIndex = lineIndex.subtract(BigInteger.ONE);
+				if (indexMap.isBlockSeparatorIndex(lineIndex)) {
+					lineIndex = lineIndex.subtract(BigInteger.ONE);
+				}
+				fieldNum = fieldFactories.length - 1; // set to end of line factory
 			}
 		}
-		return indexMap.getBlockInfo(index, offset);
+
+		// get the byte offset for the first byte in the field
+		int bytesFromLineStart = indexMap.getFieldOffset(lineIndex, fieldNum, fieldFactories);
+
+		// extend the selection to include all bytes in the selected end field since we don't
+		// currently support partial field selections
+		int bytesInField = model.getUnitByteSize();
+		int lastByteInSelectionOnLine = bytesFromLineStart + bytesInField - 1;
+
+		return indexMap.getBlockInfo(lineIndex, lastByteInSelectionOnLine);
 	}
 
 	private void addByteBlockRange(ByteBlockSelection sel, ByteBlockInfo start, ByteBlockInfo end) {
@@ -820,21 +838,23 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 	}
 
 	/**
-	 * Create a byte block selection from the field selection.
+	 * Translates a screen/view selection into a byte block model selection 
+	 * @param fieldSelection a {@link FieldPanel} selection
+	 * @return a {@link ByteBlockSelection}
 	 */
-	protected ByteBlockSelection processFieldSelection(FieldSelection selection) {
+	protected ByteBlockSelection processFieldSelection(FieldSelection fieldSelection) {
 
-		ByteBlockSelection sel = new ByteBlockSelection();
-		int count = selection.getNumRanges();
+		ByteBlockSelection blockSelection = new ByteBlockSelection();
+		int count = fieldSelection.getNumRanges();
 
 		for (int i = 0; i < count; i++) {
-			FieldRange fr = selection.getFieldRange(i);
-			ByteBlockInfo startInfo = getBlockInfo(fr.getStart(), true);
-			ByteBlockInfo endInfo = getBlockInfo(fr.getEnd(), false);
-			addByteBlockRange(sel, startInfo, endInfo);
+			FieldRange range = fieldSelection.getFieldRange(i);
+			ByteBlockInfo start = getBlockInfoForSelectionStart(range.getStart());
+			ByteBlockInfo end = getBlockInfoForSelectionEnd(range.getEnd());
+			addByteBlockRange(blockSelection, start, end);
 		}
 
-		return sel;
+		return blockSelection;
 	}
 
 	String getTextForSelection() {
@@ -846,9 +866,6 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 		return FieldSelectionHelper.getAllSelectedText(selection, this);
 	}
 
-	/**
-	 * Returns a field location for the given block, offset.
-	 */
 	FieldLocation getFieldLocation(ByteBlock block, BigInteger offset) {
 		return indexMap.getFieldLocation(block, offset, fieldFactories);
 	}

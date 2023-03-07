@@ -81,6 +81,22 @@ class FieldFactory {
 	}
 
 	/**
+	 * Returns true if this FieldFactory will return a non-null value at the given line index. 
+	 * If the index is the first index for a block, then there may be non active fields at the 
+	 * beginning of the line. Similarly, the last line of a block may have inactive fields at 
+	 * the end of the line.
+	 *
+	 * @param index the line index
+	 * @return true if this FieldFactory will produce a non-null value at the given line index.
+	 */
+	public boolean isActive(BigInteger index) {
+		if (indexMap == null) {
+			return false;
+		}
+		return indexMap.getBlockInfo(index, fieldOffset) != null;
+	}
+
+	/**
 	 * Gets a Field object for the given index.
 	 * This method is called for the given index and the fieldOffset
 	 * that is defined in the constructor.
@@ -92,7 +108,7 @@ class FieldFactory {
 		// translate index to block and offset into the block
 		ByteBlockInfo info = indexMap.getBlockInfo(index, fieldOffset);
 		if (info == null) {
-			if (indexMap.showSeparator(index)) {
+			if (indexMap.isBlockSeparatorIndex(index)) {
 				ByteField bf = new ByteField(noValueStr, fm, startX, width, false, fieldOffset,
 					index, highlightFactory);
 				bf.setForeground(separatorColor);
