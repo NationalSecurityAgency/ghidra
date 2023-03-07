@@ -23,12 +23,16 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import docking.ActionContext;
+import docking.action.DockingActionIf;
+import docking.action.ToggleDockingActionIf;
 import ghidra.framework.options.Options;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.UsrException;
 
 public class StructureEditorProviderTest extends AbstractStructureEditorTest {
+	private static final String HEX_OPTION_NAME =
+		"Structure Editor" + Options.DELIMITER + "Show Numbers In Hex";
 
 	@Override
 	protected void init(Structure dt, final Category cat, final boolean showInHex) {
@@ -653,98 +657,61 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 	}
 
 	@Test
-	public void testChangeHexNumbersOption() throws Exception {
-		final Options options = tool.getOptions("Editors");
-		final String hexNumbersName =
-			"Structure Editor" + Options.DELIMITER + "Show Numbers In Hex";
-
-		runSwing(() -> {
-			boolean showNumbersInHex = options.getBoolean(hexNumbersName, false);
-			installProvider(
-				new StructureEditorProvider(plugin, complexStructure, showNumbersInHex));
-			model = provider.getModel();
-		});
-
-		DataType oldDt = model.viewComposite.clone(null);
-
-		// Get the hex option values
-		boolean hexNumbers = options.getBoolean(hexNumbersName, false);
-		assertEquals(false, hexNumbers);
-		// Check the values are in decimal
-		assertEquals(false, model.isShowingNumbersInHex());
-		assertEquals("47", model.getValueAt(15, model.getOffsetColumn()));
-		assertEquals("45", model.getValueAt(15, model.getLengthColumn()));
-		assertEquals("325", model.getLengthAsString());
-
-		// Set the hex offset option value to Hex
-		options.setBoolean(hexNumbersName, true);
-
-		// Get the hex option values
-		hexNumbers = options.getBoolean(hexNumbersName, false);
-		assertEquals(true, hexNumbers);
-		// Check the values (offset should still be decimal in editor)
-		assertEquals(false, model.isShowingNumbersInHex());
-		assertEquals("47", model.getValueAt(15, model.getOffsetColumn()));
-		assertEquals("45", model.getValueAt(15, model.getLengthColumn()));
-		assertEquals("325", model.getLengthAsString());
-
-		// Close the editor
-		runSwingLater(() -> provider.closeComponent());
-		waitForSwing();
-		waitForBusyTool(tool);
-		waitForSwing();
-		// Editor should be closed.
-		assertFalse(tool.isVisible(provider));
-		assertTrue(complexStructure.isEquivalent(oldDt));
-
-		// Re-open the editor
-		runSwing(() -> {
-			boolean showNumbersInHex = options.getBoolean(hexNumbersName, false);
-			installProvider(
-				new StructureEditorProvider(plugin, complexStructure, showNumbersInHex));
-			model = provider.getModel();
-		});
-
-		// Get the hex option values (offset should now be hexadecimal in editor)
-		hexNumbers = options.getBoolean(hexNumbersName, false);
-		assertEquals(true, hexNumbers);
-		// Check the values
+	public void testEditorHexModeDefaultsFromOptions() throws Exception {
+		// options default is hex
+		provider = edit(complexStructure);
+		model = provider.getModel();
 		assertEquals(true, model.isShowingNumbersInHex());
 		assertEquals("0x2f", model.getValueAt(15, model.getOffsetColumn()));
 		assertEquals("0x2d", model.getValueAt(15, model.getLengthColumn()));
 		assertEquals("0x145", model.getLengthAsString());
 
-		// Set the hex offset option value to decimal
-		options.setBoolean(hexNumbersName, false);
+		closeProvider(provider);
+		setOptions(HEX_OPTION_NAME, false);
 
-		// Get the hex option values
-		hexNumbers = options.getBoolean(hexNumbersName, false);
-		assertEquals(false, hexNumbers);
-		// Check the values (offset should still be hexadecimal in editor)
+		provider = edit(complexStructure);
+		model = provider.getModel();
+		assertEquals(false, model.isShowingNumbersInHex());
+		assertEquals("47", model.getValueAt(15, model.getOffsetColumn()));
+		assertEquals("45", model.getValueAt(15, model.getLengthColumn()));
+		assertEquals("325", model.getLengthAsString());
+	}
+
+	@Test
+	public void testHexDisplayOptionsChangeDoesntAffectExisting() throws Exception {
+		// options default is hex
+		provider = edit(complexStructure);
+		model = provider.getModel();
 		assertEquals(true, model.isShowingNumbersInHex());
 		assertEquals("0x2f", model.getValueAt(15, model.getOffsetColumn()));
 		assertEquals("0x2d", model.getValueAt(15, model.getLengthColumn()));
 		assertEquals("0x145", model.getLengthAsString());
 
-		// Close the editor
-		runSwingLater(() -> provider.closeComponent());
-		waitForSwing();
-		waitForBusyTool(tool);
-		waitForSwing();
-		// Editor should be closed.
-		assertFalse(tool.isVisible(provider));
-		assertTrue(complexStructure.isEquivalent(oldDt));
-		// Re-open the editor
-		init(complexStructure, pgmTestCat, false);
+		setOptions(HEX_OPTION_NAME, false);
 
-		// Get the hex option values (offset should now be decimal in editor)
-		hexNumbers = options.getBoolean(hexNumbersName, false);
-		assertEquals(false, hexNumbers);
-		// Check the values are in decimal
+		assertEquals(true, model.isShowingNumbersInHex());
+		assertEquals("0x2f", model.getValueAt(15, model.getOffsetColumn()));
+		assertEquals("0x2d", model.getValueAt(15, model.getLengthColumn()));
+		assertEquals("0x145", model.getLengthAsString());
+	}
+
+	@Test
+	public void testToggleHexModeAction() throws Exception {
+		provider = edit(complexStructure);
+		model = provider.getModel();
+		assertEquals(true, model.isShowingNumbersInHex());
+		assertEquals("0x2f", model.getValueAt(15, model.getOffsetColumn()));
+		assertEquals("0x2d", model.getValueAt(15, model.getLengthColumn()));
+		assertEquals("0x145", model.getLengthAsString());
+
+		DockingActionIf action = getAction(plugin, "Editor: Show Numbers In Hex");
+		setToggleActionSelected((ToggleDockingActionIf) action, new ActionContext(), false);
+
 		assertEquals(false, model.isShowingNumbersInHex());
 		assertEquals("47", model.getValueAt(15, model.getOffsetColumn()));
 		assertEquals("45", model.getValueAt(15, model.getLengthColumn()));
 		assertEquals("325", model.getLengthAsString());
+
 	}
 
 	@Test
@@ -794,5 +761,12 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		dialog.dispose();
 
 		assertFalse(tool.isVisible(provider));
+	}
+
+	protected StructureEditorProvider edit(DataType dt) {
+		runSwing(() -> {
+			plugin.edit(dt);
+		});
+		return waitForComponentProvider(StructureEditorProvider.class);
 	}
 }

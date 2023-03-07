@@ -41,6 +41,7 @@ import ghidra.app.plugin.core.stackeditor.StackEditorModel;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.datatype.DataTypeSelectionEditor;
 import ghidra.framework.model.*;
+import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginException;
 import ghidra.program.database.ProgramBuilder;
@@ -819,4 +820,11 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 		assertEquals(value, ((CompEditorModel) model).getLength());
 	}
 
+	protected void setOptions(String optionName, boolean b) {
+		runSwing(() -> {
+			Options options = tool.getOptions("Editors");
+			assertTrue(options.isRegistered(optionName));
+			options.setBoolean(optionName, b);
+		});
+	}
 }
