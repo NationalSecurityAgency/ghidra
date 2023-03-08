@@ -940,9 +940,16 @@ public class GTable extends JTable {
 	public boolean editCellAt(int row, int column, EventObject e) {
 		boolean editAtCell = super.editCellAt(row, column, e);
 		if (editAtCell) {
-			Component editor = getEditorComponent();
-			editor.requestFocusInWindow();
-			if (editor instanceof JTextComponent textComponent) {
+			TableCellEditor currentEditor = getCellEditor();
+			Component editorComponent = getEditorComponent();
+			if (currentEditor instanceof FocusableEditor focusable) {
+				focusable.focusEditor();
+			}
+			else {
+				editorComponent.requestFocusInWindow();
+			}
+
+			if (editorComponent instanceof JTextComponent textComponent) {
 				textComponent.selectAll();
 			}
 		}
