@@ -13,53 +13,46 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.util.bin.format.dwarf4;
+package ghidra.program.model.data;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
-import java.io.IOException;
 import java.util.List;
+
+import java.io.*;
 
 import org.junit.Assert;
 import org.junit.Test;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.ByteArrayProvider;
+import generic.test.AbstractGTest;
+import ghidra.program.model.mem.ByteMemBufferImpl;
+import ghidra.program.model.mem.MemBuffer;
 import ghidra.util.NumericUtilities;
 
-public class LEB128Test {
-
-	private static final boolean BR_IS_LITTLE_ENDIAN = true;
-
-	private BinaryReader br(int... intBytes) {
-		byte[] bytes = new byte[intBytes.length];
-		for (int i = 0; i < intBytes.length; i++) {
-			bytes[i] = (byte) intBytes[i];
-		}
-		return new BinaryReader(new ByteArrayProvider(bytes), BR_IS_LITTLE_ENDIAN);
-	}
-
-	static class TestEntry {
-		long expectedValue;
-		byte[] bytes;
-
-		TestEntry(long expectedValue, byte[] bytes) {
-			this.expectedValue = expectedValue;
-			this.bytes = bytes;
+public class LEB128Test extends AbstractGTest {
+	static record TestEntry(long expectedValue, byte[] bytes) {
+		MemBuffer mb() {
+			return new ByteMemBufferImpl(null, bytes, false /* don't matter */);
 		}
 	}
 
-	private TestEntry te(long expectedValue, int... intBytes) {
-		byte[] bytes = new byte[intBytes.length];
-		for (int i = 0; i < intBytes.length; i++) {
-			bytes[i] = (byte) intBytes[i];
-		}
-		return new TestEntry(expectedValue, bytes);
+	private static InputStream is(int... intBytes) {
+		return is(bytes(intBytes));
 	}
 
-	private List<TestEntry> unsignedTestEntries = List.of(
+	private static InputStream is(byte[] bytes) {
+		ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+		return bais;
+	}
+
+	static TestEntry te(long expectedValue, int... intBytes) {
+		return new TestEntry(expectedValue, bytes(intBytes));
+	}
+
+	/* package */ List<TestEntry> unsignedTestEntries = List.of(
 		// misc
 		te(0L, 0x80, 0x80, 0x80, 0x80, 0x80, 0x0), // Tests reading a zero value that is encoded in non-optimal way.
+		te(1L, 0x81, 0x80, 0x80, 0x80, 0x80, 0x0), // Tests reading a 1 value that is encoded in non-optimal way.
 		te(-1L, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01),  // -1 == MAX unsigned long
 		te(0xf_ffff_ffffL, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01),	// more than 32 bits to test shifting > 32bits
 
@@ -105,7 +98,7 @@ public class LEB128Test {
 	//
 	);
 
-	private List<TestEntry> signedTestEntries = List.of(
+	/* package */ List<TestEntry> signedTestEntries = List.of(
 		// misc
 		te(-2130303778817L, 0xff, 0xff, 0xff, 0xff, 0xff, 0x41),
 
@@ -173,41 +166,41 @@ public class LEB128Test {
 			throws IOException {
 		for (int i = 0; i < testEntries.size(); i++) {
 			TestEntry te = testEntries.get(i);
-			BinaryReader br =
-				new BinaryReader(new ByteArrayProvider(te.bytes), BR_IS_LITTLE_ENDIAN);
-			long actualValue = LEB128.readAsLong(br, signed);
+			InputStream is = is(te.bytes);
+			long actualValue = LEB128.read(is, signed);
+			int remainder = is.available();
 			assertEquals(String.format(
 				"%s[%d] failed: leb128(%s) != %d. Expected=%d / %x, actual=%d / %x",
 				name, i, NumericUtilities.convertBytesToString(te.bytes), te.expectedValue,
 				te.expectedValue, te.expectedValue, actualValue, actualValue), te.expectedValue,
 				actualValue);
-			assertEquals(String.format("%s[%d] failed: left-over bytes: %d", name, i,
-				te.bytes.length - br.getPointerIndex()), te.bytes.length, br.getPointerIndex());
+			assertEquals(String.format("%s[%d] failed: left-over bytes: %d", name, i, remainder),
+				0, is.available());
 		}
 	}
 
 	@Test(expected = IOException.class)
 	public void testToolargeUnsigned() throws IOException {
 		// Test reading a unsigned LEB128 that is just 1 bit too large for a java 64 bit long int.
+		InputStream is = is(0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x02);
 
-		BinaryReader br = br(0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x02);
-
-		long value = LEB128.readAsLong(br, false);
+		long value = LEB128.read(is, false);
 		Assert.fail(
 			"Should not be able to read a LEB128 that is larger than what can fit in java 64bit long int: " +
 				value);
 	}
 
 	@Test
-	public void testTooLargeValueBinaryReaderStreamPosition() {
+	public void testTooLargeValueBinaryReaderStreamPosition() throws IOException {
 		// Test that the BinaryReader stream is 'correctly' positioned after the LEB128 bytes after 
 		// reading a LEB128 that is too large for a java 64 bit long int.
 
-		BinaryReader br =
-			br(0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x02, 0x1, 0x2);
+		byte[] bytes =
+			bytes(0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x02, 0x1, 0x2);
+		InputStream is = is(bytes);
 
 		try {
-			long value = LEB128.readAsLong(br, false);
+			long value = LEB128.read(is, false);
 			Assert.fail(
 				"Should not be able to read a LEB128 that is larger than what can fit in java 64bit long int: " +
 					Long.toUnsignedString(value));
@@ -216,23 +209,7 @@ public class LEB128Test {
 			// good
 		}
 
-		Assert.assertEquals(10, br.getPointerIndex());
+		Assert.assertEquals(bytes.length - 10, is.available());
 	}
 
-	@Test
-	public void testUint32Max() throws IOException {
-		int value = LEB128.readAsUInt32(br(0xff, 0xff, 0xff, 0xff, 0x07));
-		Assert.assertEquals(Integer.MAX_VALUE, value);
-	}
-
-	@Test(expected = IOException.class)
-	public void testUint32Overflow() throws IOException {
-
-		// Test uint32 max overflow with 0xff_ff_ff_ff
-
-		int value = LEB128.readAsUInt32(br(0xff, 0xff, 0xff, 0xff, 0x0f));
-		Assert.fail(
-			"Should not be able to read a LEB128 that is larger than what can fit in java 32 bit int: " +
-				Integer.toUnsignedString(value));
-	}
 }

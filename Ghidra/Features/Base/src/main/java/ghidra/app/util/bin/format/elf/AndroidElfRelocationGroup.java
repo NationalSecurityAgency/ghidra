@@ -15,13 +15,13 @@
  */
 package ghidra.app.util.bin.format.elf;
 
-import java.io.IOException;
 import java.util.ArrayList;
+
+import java.io.IOException;
 
 import javax.help.UnsupportedOperationException;
 
 import ghidra.app.util.bin.*;
-import ghidra.app.util.bin.format.elf.AndroidElfRelocationTableDataType.LEB128Info;
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.data.*;
 import ghidra.program.model.mem.MemBuffer;
@@ -78,13 +78,15 @@ class AndroidElfRelocationGroup extends DynamicDataType {
 
 			ArrayList<DataTypeComponent> list = new ArrayList<>();
 
-			LEB128Info sleb128 = LEB128Info.parse(reader, true);
-			long groupSize = sleb128.value;
-			list.add(sleb128.getComponent(this, list.size(), "group_size", null));
+			LEB128Info sleb128 = reader.readNext(LEB128Info::signed);
+			long groupSize = sleb128.asLong();
+			list.add(AndroidElfRelocationTableDataType.getLEB128Component(sleb128, this,
+				list.size(), "group_size", null));
 
-			sleb128 = LEB128Info.parse(reader, true);
-			long groupFlags = sleb128.value;
-			list.add(sleb128.getComponent(this, list.size(), "group_flags", null));
+			sleb128 = reader.readNext(LEB128Info::signed);
+			long groupFlags = sleb128.asLong();
+			list.add(AndroidElfRelocationTableDataType.getLEB128Component(sleb128, this,
+				list.size(), "group_flags", null));
 
 			boolean groupedByInfo = (groupFlags & RELOCATION_GROUPED_BY_INFO_FLAG) != 0;
 			boolean groupedByDelta = (groupFlags & RELOCATION_GROUPED_BY_OFFSET_DELTA_FLAG) != 0;
@@ -93,23 +95,26 @@ class AndroidElfRelocationGroup extends DynamicDataType {
 
 			long groupOffsetDelta = 0;
 			if (groupedByDelta) {
-				sleb128 = LEB128Info.parse(reader, true);
-				groupOffsetDelta = sleb128.value;
+				sleb128 = reader.readNext(LEB128Info::signed);
+				groupOffsetDelta = sleb128.asLong();
 
 				long minOffset = baseRelocOffset + groupOffsetDelta;
 				String rangeStr = "First relocation offset: 0x" + Long.toHexString(minOffset);
 
-				list.add(sleb128.getComponent(this, list.size(), "group_offsetDelta", rangeStr));
+				list.add(AndroidElfRelocationTableDataType.getLEB128Component(sleb128, this,
+					list.size(), "group_offsetDelta", rangeStr));
 			}
 
 			if (groupedByInfo) {
-				sleb128 = LEB128Info.parse(reader, true);
-				list.add(sleb128.getComponent(this, list.size(), "group_info", null));
+				sleb128 = reader.readNext(LEB128Info::signed);
+				list.add(AndroidElfRelocationTableDataType.getLEB128Component(sleb128, this,
+					list.size(), "group_info", null));
 			}
 
 			if (groupedByAddend && groupHasAddend) {
-				sleb128 = LEB128Info.parse(reader, true);
-				list.add(sleb128.getComponent(this, list.size(), "group_addend", null));
+				sleb128 = reader.readNext(LEB128Info::signed);
+				list.add(AndroidElfRelocationTableDataType.getLEB128Component(sleb128, this,
+					list.size(), "group_addend", null));
 			}
 
 			long relocOffset = baseRelocOffset;
@@ -124,26 +129,26 @@ class AndroidElfRelocationGroup extends DynamicDataType {
 						relocOffset += groupOffsetDelta;
 					}
 					else {
-						sleb128 = LEB128Info.parse(reader, true);
+						sleb128 = reader.readNext(LEB128Info::signed);
 						long baseOffset = relocOffset;
-						relocOffset += sleb128.value;
+						relocOffset += sleb128.asLong();
 						DataTypeComponent dtc = new ReadOnlyDataTypeComponent(
 							new AndroidElfRelocationOffset(dataMgr, baseOffset, relocOffset), this,
-							sleb128.byteLength, list.size(), sleb128.offset, "reloc_offset_" + i,
-							null);
+							sleb128.getLength(), list.size(), (int) sleb128.getOffset(),
+							"reloc_offset_" + i, null);
 						list.add(dtc);
 					}
 
 					if (!groupedByInfo) {
-						sleb128 = LEB128Info.parse(reader, true);
-						list.add(sleb128.getComponent(this, list.size(), "reloc_info_" + i, null,
-							relocOffset));
+						sleb128 = reader.readNext(LEB128Info::signed);
+						list.add(AndroidElfRelocationTableDataType.getLEB128Component(sleb128, this,
+							list.size(), "reloc_info_" + i, null, relocOffset));
 					}
 
 					if (groupHasAddend && !groupedByAddend) {
-						sleb128 = LEB128Info.parse(reader, true);
-						list.add(sleb128.getComponent(this, list.size(), "reloc_addend_" + i, null,
-							relocOffset));
+						sleb128 = reader.readNext(LEB128Info::signed);
+						list.add(AndroidElfRelocationTableDataType.getLEB128Component(sleb128, this,
+							list.size(), "reloc_addend_" + i, null, relocOffset));
 					}
 				}
 			}

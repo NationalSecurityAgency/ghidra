@@ -15,8 +15,9 @@
  */
 package ghidra.program.model.data;
 
-import java.net.URL;
 import java.util.Collection;
+
+import java.net.URL;
 
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
@@ -290,16 +291,18 @@ public interface DataType {
 	public URL getDocs();
 
 	/**
-	 * Get the interpreted data value in the form of the appropriate Object for this DataType.
-	 * This method must return a value consistent with {@link #getValueClass(Settings)}.
+	 * Returns the interpreted data value as an instance of the 
+	 * {@link #getValueClass(Settings) advertised value class}.
 	 * <p>
-	 * For instance, if this datatype is a {@link Pointer} an Address object or null should be returned.
-	 * A Byte, returns a {@link Scalar} object.
+	 * For instance, {@link Pointer} data types should return an Address object (or null), or
+	 * integer data types should return a {@link Scalar} object.
 	 *
-	 * @param buf the data buffer.
+	 * @param buf the data buffer
 	 * @param settings the settings to use.
-	 * @param length the number of bytes to get the value from.
-	 * @return the data Object.
+	 * @param length indicates the maximum number of bytes that may be consumed by a 
+	 * {@link Dynamic} datatype, otherwise this value is ignored.  A value of -1 may be specified
+	 * to allow a Dynamic datatype to determine the length based upon the actual data bytes 
+	 * @return the data object, or null if data is invalid
 	 */
 	public Object getValue(MemBuffer buf, Settings settings, int length);
 

@@ -77,6 +77,16 @@ public interface StructConverter {
 	public final static DataType IBO64 = IBO64DataType.dataType;
 
 	/**
+	 * Reusable Unsigned LEB128 dynamic length data type
+	 */
+	public static final UnsignedLeb128DataType ULEB128 = UnsignedLeb128DataType.dataType;
+
+	/**
+	 * Reusable Signed LEB128 dynamic length data type
+	 */
+	public static final SignedLeb128DataType SLEB128 = SignedLeb128DataType.dataType;
+
+	/**
 	 * Returns a structure datatype representing the
 	 * contents of the implementor of this interface.
 	 * <p> 

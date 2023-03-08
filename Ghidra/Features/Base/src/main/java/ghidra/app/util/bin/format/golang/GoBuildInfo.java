@@ -25,7 +25,6 @@ import java.nio.charset.StandardCharsets;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.MemoryByteProvider;
-import ghidra.app.util.bin.format.dwarf4.LEB128;
 import ghidra.app.util.bin.format.elf.info.ElfInfoItem;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.Address;
@@ -330,7 +329,7 @@ public class GoBuildInfo implements ElfInfoItem {
 	 * @throws IOException if error
 	 */
 	private static byte[] varlenBytes(BinaryReader reader) throws IOException {
-		int strLen = reader.readNextUnsignedVarIntExact(LEB128::readUnsignedAsLong);
+		int strLen = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 		byte[] bytes = reader.readNextByteArray(strLen);
 		return bytes;
 	}

@@ -15,10 +15,10 @@
  */
 package ghidra.app.util.bin.format.dwarf.line;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.dwarf4.LEB128;
-
 import java.io.IOException;
+
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.program.model.data.LEB128;
 
 public final class StatementProgramInstructions {
 
@@ -93,7 +93,7 @@ public final class StatementProgramInstructions {
 	}
 
 	private void executeExtended(int opcode) throws IOException {
-		long length = LEB128.readAsLong(reader, false);
+		long length = reader.readNext(LEB128::unsigned);
 
 		long oldIndex = reader.getPointerIndex();
 		int extendedOpcode = reader.readNextByte();
@@ -123,22 +123,22 @@ public final class StatementProgramInstructions {
 				break;
 			}
 			case DW_LNS_advance_pc: {
-				long value = LEB128.readAsLong(reader, false);
+				long value = reader.readNext(LEB128::unsigned);
 				machine.address += (value * prologue.getMinimumInstructionLength());
 				break;
 			}
 			case DW_LNS_advance_line: {
-				long value = LEB128.readAsLong(reader, false);
+				long value = reader.readNext(LEB128::unsigned);
 				machine.line += value;
 				break;
 			}
 			case DW_LNS_set_file: {
-				long value = LEB128.readAsLong(reader, false);
+				long value = reader.readNext(LEB128::unsigned);
 				machine.file = (int) value;
 				break;
 			}
 			case DW_LNS_set_column: {
-				long value = LEB128.readAsLong(reader, false);
+				long value = reader.readNext(LEB128::unsigned);
 				machine.column = (int) value;
 				break;
 			}

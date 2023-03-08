@@ -28,6 +28,7 @@ public class FormatSettingsDefinition implements EnumSettingsDefinition {
 
 	//NOTE: if these strings change, the XML needs to changed also...
 	private static final String[] choices = { "hex", "decimal", "binary", "octal", "char" };
+	private static final String[] valuePostfix = { "h", "", "b", "o", "" };
 	private static final int[] radix = { 16, 10, 2, 8, 0 };
 
 	protected static final String FORMAT = "format";
@@ -52,7 +53,8 @@ public class FormatSettingsDefinition implements EnumSettingsDefinition {
 	 * Returns the format based on the specified settings
 	 * 
 	 * @param settings the instance settings or null for default value.
-	 * @return the format value (HEX, DECIMAL, BINARY, OCTAL, CHAR)
+	 * @return the format value (HEX, DECIMAL, BINARY, OCTAL, CHAR), or HEX if invalid
+	 * data in the FORMAT settings value
 	 */
 	public int getFormat(Settings settings) {
 		if (settings == null) {
@@ -76,12 +78,18 @@ public class FormatSettingsDefinition implements EnumSettingsDefinition {
 	 * @return the format radix
 	 */
 	public int getRadix(Settings settings) {
-		try {
-			return radix[getFormat(settings)];
-		}
-		catch (ArrayIndexOutOfBoundsException e) {
-			return 16;
-		}
+		return radix[getFormat(settings)];
+	}
+
+	/**
+	 * Returns a descriptive string suffix that should be appended after converting a value
+	 * using the radix returned by {@link #getRadix(Settings)}.
+	 * 
+	 * @param settings the instance settings
+	 * @return string suffix, such as "h" for HEX, "o" for octal
+	 */
+	public String getRepresentationPostfix(Settings settings) {
+		return valuePostfix[getFormat(settings)];
 	}
 
 	@Override

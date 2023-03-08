@@ -27,16 +27,8 @@ import ghidra.program.model.mem.MemBuffer;
 
 public class IntegerDataTypeTest extends AbstractGenericTest {
 
-	private static byte[] arr(int... vals) {
-		byte[] result = new byte[vals.length];
-		for (int i = 0; i < vals.length; i++) {
-			result[i] = (byte) vals[i];
-		}
-		return result;
-	}
-
 	private static MemBuffer buf(boolean bigEndian, int... vals) {
-		return new ByteMemBufferImpl(Address.NO_ADDRESS, arr(vals), bigEndian);
+		return new ByteMemBufferImpl(Address.NO_ADDRESS, bytes(vals), bigEndian);
 	}
 
 	private static Settings format(FormatSettingsDefinition setDef) {
@@ -74,13 +66,13 @@ public class IntegerDataTypeTest extends AbstractGenericTest {
 		DataType type = AbstractIntegerDataType.getUnsignedDataType(1, null);
 
 		// Technically, these two are exactly the same test, just different Java syntax
-		assertArrayEquals(arr(0xff), type.encodeValue((byte) 0xff, BE, HEX, 1));
-		assertArrayEquals(arr(0xff), type.encodeValue((byte) -1, BE, HEX, 1));
+		assertArrayEquals(bytes(0xff), type.encodeValue((byte) 0xff, BE, HEX, 1));
+		assertArrayEquals(bytes(0xff), type.encodeValue((byte) -1, BE, HEX, 1));
 
 		assertFails(() -> type.encodeValue((short) 0x100, BE, HEX, 1));
 		assertFails(() -> type.encodeValue((short) -1, BE, HEX, 1));
 
-		assertArrayEquals(arr(0xff), type.encodeValue(0xff, BE, HEX, 1));
+		assertArrayEquals(bytes(0xff), type.encodeValue(0xff, BE, HEX, 1));
 		// This fails, because (int)-1 is 4294967295 when treated unsigned
 		assertFails(() -> type.encodeValue(-1, BE, HEX, 1));
 	}
@@ -92,10 +84,10 @@ public class IntegerDataTypeTest extends AbstractGenericTest {
 		// Sanity check: Renders unsigned
 		assertEquals("80h", type.getRepresentation(buf(true, 0x80), HEX, 1));
 
-		assertArrayEquals(arr(0x00), type.encodeRepresentation("0h", BE, HEX, 1));
-		assertArrayEquals(arr(0x7f), type.encodeRepresentation("7fh", BE, HEX, 1));
-		assertArrayEquals(arr(0x80), type.encodeRepresentation("80h", BE, HEX, 1));
-		assertArrayEquals(arr(0xff), type.encodeRepresentation("ffh", BE, HEX, 1));
+		assertArrayEquals(bytes(0x00), type.encodeRepresentation("0h", BE, HEX, 1));
+		assertArrayEquals(bytes(0x7f), type.encodeRepresentation("7fh", BE, HEX, 1));
+		assertArrayEquals(bytes(0x80), type.encodeRepresentation("80h", BE, HEX, 1));
+		assertArrayEquals(bytes(0xff), type.encodeRepresentation("ffh", BE, HEX, 1));
 
 		assertFails(() -> type.encodeRepresentation("100h", BE, HEX, 1));
 		assertFails(() -> type.encodeRepresentation("-1h", BE, HEX, 1));
@@ -108,13 +100,13 @@ public class IntegerDataTypeTest extends AbstractGenericTest {
 		// Sanity check: Negative hex values render unsigned
 		assertEquals("8000h", type.getRepresentation(buf(true, 0x80, 0x00), HEX, 2));
 
-		assertArrayEquals(arr(0x00, 0x00), type.encodeRepresentation("0h", BE, HEX, 2));
-		assertArrayEquals(arr(0x7f, 0xff), type.encodeRepresentation("7fffh", BE, HEX, 2));
-		assertArrayEquals(arr(0x80, 0x00), type.encodeRepresentation("8000h", BE, HEX, 2));
-		assertArrayEquals(arr(0xff, 0xff), type.encodeRepresentation("ffffh", BE, HEX, 2));
+		assertArrayEquals(bytes(0x00, 0x00), type.encodeRepresentation("0h", BE, HEX, 2));
+		assertArrayEquals(bytes(0x7f, 0xff), type.encodeRepresentation("7fffh", BE, HEX, 2));
+		assertArrayEquals(bytes(0x80, 0x00), type.encodeRepresentation("8000h", BE, HEX, 2));
+		assertArrayEquals(bytes(0xff, 0xff), type.encodeRepresentation("ffffh", BE, HEX, 2));
 
-		assertArrayEquals(arr(0xff, 0xff), type.encodeRepresentation("-1h", BE, HEX, 2));
-		assertArrayEquals(arr(0x80, 0x00), type.encodeRepresentation("-8000h", BE, HEX, 2));
+		assertArrayEquals(bytes(0xff, 0xff), type.encodeRepresentation("-1h", BE, HEX, 2));
+		assertArrayEquals(bytes(0x80, 0x00), type.encodeRepresentation("-8000h", BE, HEX, 2));
 
 		assertFails(() -> type.encodeRepresentation("10000h", BE, HEX, 2));
 		assertFails(() -> type.encodeRepresentation("-8001h", BE, HEX, 2));
@@ -127,13 +119,13 @@ public class IntegerDataTypeTest extends AbstractGenericTest {
 		// Sanity check: Negative hex values render unsigned
 		assertEquals("8000h", type.getRepresentation(buf(false, 0x00, 0x80), HEX, 2));
 
-		assertArrayEquals(arr(0x00, 0x00), type.encodeRepresentation("0h", LE, HEX, 2));
-		assertArrayEquals(arr(0xff, 0x7f), type.encodeRepresentation("7fffh", LE, HEX, 2));
-		assertArrayEquals(arr(0x00, 0x80), type.encodeRepresentation("8000h", LE, HEX, 2));
-		assertArrayEquals(arr(0xff, 0xff), type.encodeRepresentation("ffffh", LE, HEX, 2));
+		assertArrayEquals(bytes(0x00, 0x00), type.encodeRepresentation("0h", LE, HEX, 2));
+		assertArrayEquals(bytes(0xff, 0x7f), type.encodeRepresentation("7fffh", LE, HEX, 2));
+		assertArrayEquals(bytes(0x00, 0x80), type.encodeRepresentation("8000h", LE, HEX, 2));
+		assertArrayEquals(bytes(0xff, 0xff), type.encodeRepresentation("ffffh", LE, HEX, 2));
 
-		assertArrayEquals(arr(0xff, 0xff), type.encodeRepresentation("-1h", LE, HEX, 2));
-		assertArrayEquals(arr(0x00, 0x80), type.encodeRepresentation("-8000h", LE, HEX, 2));
+		assertArrayEquals(bytes(0xff, 0xff), type.encodeRepresentation("-1h", LE, HEX, 2));
+		assertArrayEquals(bytes(0x00, 0x80), type.encodeRepresentation("-8000h", LE, HEX, 2));
 
 		assertFails(() -> type.encodeRepresentation("10000h", LE, HEX, 2));
 		assertFails(() -> type.encodeRepresentation("-8001h", LE, HEX, 2));
@@ -146,10 +138,10 @@ public class IntegerDataTypeTest extends AbstractGenericTest {
 		// Sanity check: Renders unsigned
 		assertEquals("8000h", type.getRepresentation(buf(true, 0x80, 0x00), HEX, 2));
 
-		assertArrayEquals(arr(0x00, 0x00), type.encodeRepresentation("0h", BE, HEX, 2));
-		assertArrayEquals(arr(0x7f, 0xff), type.encodeRepresentation("7fffh", BE, HEX, 2));
-		assertArrayEquals(arr(0x80, 0x00), type.encodeRepresentation("8000h", BE, HEX, 2));
-		assertArrayEquals(arr(0xff, 0xff), type.encodeRepresentation("ffffh", BE, HEX, 2));
+		assertArrayEquals(bytes(0x00, 0x00), type.encodeRepresentation("0h", BE, HEX, 2));
+		assertArrayEquals(bytes(0x7f, 0xff), type.encodeRepresentation("7fffh", BE, HEX, 2));
+		assertArrayEquals(bytes(0x80, 0x00), type.encodeRepresentation("8000h", BE, HEX, 2));
+		assertArrayEquals(bytes(0xff, 0xff), type.encodeRepresentation("ffffh", BE, HEX, 2));
 
 		assertFails(() -> type.encodeRepresentation("-1h", BE, HEX, 2));
 		assertFails(() -> type.encodeRepresentation("-8000h", BE, HEX, 2));
@@ -164,10 +156,10 @@ public class IntegerDataTypeTest extends AbstractGenericTest {
 		// Sanity check: Negative hex values render signed
 		assertEquals("-32768", type.getRepresentation(buf(true, 0x80, 0x00), DEC, 2));
 
-		assertArrayEquals(arr(0x00, 0x00), type.encodeRepresentation("0", BE, DEC, 2));
-		assertArrayEquals(arr(0x7f, 0xff), type.encodeRepresentation("32767", BE, DEC, 2));
-		assertArrayEquals(arr(0x80, 0x00), type.encodeRepresentation("-32768", BE, DEC, 2));
-		assertArrayEquals(arr(0xff, 0xff), type.encodeRepresentation("-1", BE, DEC, 2));
+		assertArrayEquals(bytes(0x00, 0x00), type.encodeRepresentation("0", BE, DEC, 2));
+		assertArrayEquals(bytes(0x7f, 0xff), type.encodeRepresentation("32767", BE, DEC, 2));
+		assertArrayEquals(bytes(0x80, 0x00), type.encodeRepresentation("-32768", BE, DEC, 2));
+		assertArrayEquals(bytes(0xff, 0xff), type.encodeRepresentation("-1", BE, DEC, 2));
 
 		assertFails(() -> type.encodeRepresentation("32768", BE, DEC, 2));
 		assertFails(() -> type.encodeRepresentation("-32769", BE, DEC, 2));
@@ -180,10 +172,10 @@ public class IntegerDataTypeTest extends AbstractGenericTest {
 		// Sanity check: Renders unsigned
 		assertEquals("32768", type.getRepresentation(buf(true, 0x80, 0x00), DEC, 2));
 
-		assertArrayEquals(arr(0x00, 0x00), type.encodeRepresentation("0", BE, DEC, 2));
-		assertArrayEquals(arr(0x7f, 0xff), type.encodeRepresentation("32767", BE, DEC, 2));
-		assertArrayEquals(arr(0x80, 0x00), type.encodeRepresentation("32768", BE, DEC, 2));
-		assertArrayEquals(arr(0xff, 0xff), type.encodeRepresentation("65535", BE, DEC, 2));
+		assertArrayEquals(bytes(0x00, 0x00), type.encodeRepresentation("0", BE, DEC, 2));
+		assertArrayEquals(bytes(0x7f, 0xff), type.encodeRepresentation("32767", BE, DEC, 2));
+		assertArrayEquals(bytes(0x80, 0x00), type.encodeRepresentation("32768", BE, DEC, 2));
+		assertArrayEquals(bytes(0xff, 0xff), type.encodeRepresentation("65535", BE, DEC, 2));
 
 		assertFails(() -> type.encodeRepresentation("-1", BE, DEC, 2));
 		assertFails(() -> type.encodeRepresentation("65536", BE, DEC, 2));
@@ -196,7 +188,7 @@ public class IntegerDataTypeTest extends AbstractGenericTest {
 		// Sanity check
 		assertEquals("100000011b", type.getRepresentation(buf(true, 0x01, 0x03), BIN, 2));
 
-		assertArrayEquals(arr(0x01, 0x03), type.encodeRepresentation("100000011b", BE, BIN, 2));
+		assertArrayEquals(bytes(0x01, 0x03), type.encodeRepresentation("100000011b", BE, BIN, 2));
 	}
 
 	@Test
@@ -206,7 +198,7 @@ public class IntegerDataTypeTest extends AbstractGenericTest {
 		// Sanity check
 		assertEquals("403o", type.getRepresentation(buf(true, 0x01, 0x03), OCT, 2));
 
-		assertArrayEquals(arr(0x01, 0x03), type.encodeRepresentation("403o", BE, OCT, 2));
+		assertArrayEquals(bytes(0x01, 0x03), type.encodeRepresentation("403o", BE, OCT, 2));
 	}
 
 	@Test
@@ -218,7 +210,7 @@ public class IntegerDataTypeTest extends AbstractGenericTest {
 		assertEquals("'A'", stype.getRepresentation(buf(true, 0x41), CHR, 1));
 		assertEquals("'A'", utype.getRepresentation(buf(true, 0x41), CHR, 1));
 
-		assertArrayEquals(arr(0x41), stype.encodeRepresentation("'A'", BE, CHR, 1));
-		assertArrayEquals(arr(0x41), utype.encodeRepresentation("'A'", BE, CHR, 1));
+		assertArrayEquals(bytes(0x41), stype.encodeRepresentation("'A'", BE, CHR, 1));
+		assertArrayEquals(bytes(0x41), utype.encodeRepresentation("'A'", BE, CHR, 1));
 	}
 }

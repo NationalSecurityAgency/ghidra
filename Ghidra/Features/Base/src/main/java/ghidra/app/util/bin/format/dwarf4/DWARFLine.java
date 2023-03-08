@@ -27,6 +27,7 @@ import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.dwarf4.DWARFUtil.LengthResult;
 import ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute;
 import ghidra.app.util.bin.format.dwarf4.next.DWARFProgram;
+import ghidra.program.model.data.LEB128;
 
 public class DWARFLine {
 	private long unit_length;
@@ -226,9 +227,9 @@ public class DWARFLine {
 
 			// This entry exists only if the length of the string is more than 0
 			if (this.name.length() > 0) {
-				this.directory_index = LEB128.readAsLong(reader, false);
-				this.modification_time = LEB128.readAsLong(reader, false);
-				this.length = LEB128.readAsLong(reader, false);
+				this.directory_index = reader.readNext(LEB128::unsigned);
+				this.modification_time = reader.readNext(LEB128::unsigned);
+				this.length = reader.readNext(LEB128::unsigned);
 			}
 		}
 

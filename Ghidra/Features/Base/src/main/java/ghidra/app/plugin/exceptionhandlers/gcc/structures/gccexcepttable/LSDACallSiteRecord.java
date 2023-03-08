@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +17,13 @@ package ghidra.app.plugin.exceptionhandlers.gcc.structures.gccexcepttable;
 
 import ghidra.app.cmd.comments.SetCommentCmd;
 import ghidra.app.plugin.exceptionhandlers.gcc.*;
-import ghidra.app.plugin.exceptionhandlers.gcc.datatype.UnsignedLeb128DataType;
+import ghidra.app.util.bin.LEB128Info;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.UnsignedLeb128DataType;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Program;
-import ghidra.program.model.mem.*;
-import ghidra.program.model.scalar.Scalar;
+import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.symbol.RefType;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.util.task.TaskMonitor;
@@ -164,25 +163,20 @@ public class LSDACallSiteRecord extends GccAnalysisClass {
 		return addr.add(encodedLen);
 	}
 
-	private Address createAction(Address addr) {
+	private Address createAction(Address addr) throws MemoryAccessException {
 		String comment = "(LSDA Call Site) Action Table Offset";
 
-		UnsignedLeb128DataType uleb = UnsignedLeb128DataType.dataType;
-		MemBuffer buf = new DumbMemBufferImpl(program.getMemory(), addr);
+		LEB128Info uleb128 = GccAnalysisUtils.readULEB128Info(program, addr);
 
-		int encodedLen = uleb.getLength(buf, -1);
-
-		Object actionObj = uleb.getValue(buf, uleb.getDefaultSettings(), encodedLen);
-
-		actionOffset = (int) ((Scalar) actionObj).getUnsignedValue();
-		encodedLen = ((Scalar) actionObj).bitLength() / 8;
+		actionOffset = (int) uleb128.asLong();
 
 		if (actionOffset == 0) {
 			comment += " (No action -- cleanup)";
 		}
 
-		createAndCommentData(program, addr, uleb, comment, CodeUnit.EOL_COMMENT);
-		return addr.add(encodedLen);
+		createAndCommentData(program, addr, UnsignedLeb128DataType.dataType, comment,
+			CodeUnit.EOL_COMMENT);
+		return addr.add(uleb128.getLength());
 	}
 
 	/**

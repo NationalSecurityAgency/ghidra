@@ -17,9 +17,7 @@ package ghidra.file.formats.android.dex.format;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.dwarf4.LEB128;
+import ghidra.app.util.bin.*;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -30,7 +28,7 @@ public class AnnotationElement implements StructConverter {
 	private EncodedValue value;
 
 	public AnnotationElement(BinaryReader reader) throws IOException {
-		LEB128 leb128 = LEB128.readUnsignedValue(reader);
+		LEB128Info leb128 = reader.readNext(LEB128Info::unsigned);
 		nameIndex = leb128.asUInt32();
 		nameIndexLength = leb128.getLength();
 
@@ -50,22 +48,16 @@ public class AnnotationElement implements StructConverter {
 		DataType encodeValueDataType = value.toDataType();
 
 		String name =
-			"annotation_element" + "_" + nameIndexLength + "_" + encodeValueDataType.getName();
+			"annotation_element_%d_%s".formatted(nameIndexLength, encodeValueDataType.getName());
 
 		Structure structure = new StructureDataType(name, 0);
 
-		structure.add(new ArrayDataType(BYTE, nameIndexLength, BYTE.getLength()), "nameIndex",
-			null);
+		structure.add(ULEB128, nameIndexLength, "nameIndex", null);
 
 		structure.add(encodeValueDataType, "value", null);
 
 		structure.setCategoryPath(new CategoryPath("/dex/annotation_element"));
-		// try {
-		// structure.setName( name + "_" + structure.getLength( ) );
-		// }
-		// catch ( Exception e ) {
-		// // ignore
-		// }
+
 		return structure;
 	}
 }
