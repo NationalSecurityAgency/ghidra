@@ -35,6 +35,10 @@ public class PCodeTestGroup implements Comparable<PCodeTestGroup> {
 	 */
 	public static final String FUNCTION_NAME_PREFIX = "main_";
 
+	public static final String IGNORED_TAG = "IGNORED";
+	private static final String IGNORED_FAILED_TAG = "(" + IGNORED_TAG + ")";
+	private static final String IGNORED_PASSED_TAG = "(Passed and " + IGNORED_TAG + ")";
+
 	public final String testGroupName;
 	public final Address functionEntryPtr;
 //	public final int testCount; // TODO: not yet fully implemented - do not use!
@@ -57,31 +61,41 @@ public class PCodeTestGroup implements Comparable<PCodeTestGroup> {
 		return testGroupName + "@" + functionEntryPtr;
 	}
 
+	boolean isIgnoredTest(String testName) {
+		return mainTestControlBlock.getTestResults().isIgnoredTest(testName);
+	}
+
 	void testPassed(String testName, String errFileName, int errLineNum, Program program,
 			TestLogger logger) {
+		if (isIgnoredTest(testName)) {
+			mainTestControlBlock.resultIgnored(testGroupName, testName, true);
+			String testDetail =
+				getTestDetail(testName, errFileName, errLineNum, program, IGNORED_PASSED_TAG);
+			testFailures.add(testDetail);
+			logger.log(this, "WARNING! Ignored Test Passed: " + testDetail);
+			return;
+		}
 		mainTestControlBlock.getTestResults().addPassResult(testGroupName, testName);
 	}
 
 	void testFailed(String testName, String errFileName, int errLineNum, boolean callOtherFailure,
 			Program program, TestLogger logger) {
-		if (callOtherFailure) {
+		String ignoreTag = "";
+		if (isIgnoredTest(testName)) {
+			mainTestControlBlock.resultIgnored(testGroupName, testName, false);
+			ignoreTag = IGNORED_FAILED_TAG;
+		}
+		else if (callOtherFailure) {
 			mainTestControlBlock.getTestResults().addCallOtherResult(testGroupName, testName);
 		}
 		else {
 			mainTestControlBlock.getTestResults().addFailResult(testGroupName, testName);
 		}
-		String failure = testName;
-		if (testName != null) {
-			Symbol symbol = SymbolUtilities.getLabelOrFunctionSymbol(program, testName,
-				err -> Msg.error(this, err));
-			if (symbol != null) {
-				failure += " @ " + symbol.getAddress().toString(true);
-			}
-			failure += " (" + errFileName + ":" + errLineNum + ")";
-		}
-		testFailures.add(failure);
+		String testDetail = getTestDetail(testName, errFileName, errLineNum, program, ignoreTag);
+		testFailures.add(testDetail);
 		logger.log(this,
-			"Test Failed: " + failure + (callOtherFailure ? " (callother error)" : ""));
+			"Test Failed: " + testDetail +
+				(callOtherFailure ? " (callother error)" : ""));
 	}
 
 	void severeTestFailure(String testName, String errFileName, int errLineNum, Program program,
@@ -92,6 +106,20 @@ public class PCodeTestGroup implements Comparable<PCodeTestGroup> {
 
 	void clearFailures() {
 		testFailures.clear();
+	}
+
+	private String getTestDetail(String testName, String errFileName, int errLineNum,
+			Program program, String ignoreTag) {
+		String testDetail = testName;
+		if (testName != null) {
+			Symbol symbol = SymbolUtilities.getLabelOrFunctionSymbol(program, testName,
+				err -> Msg.error(this, err));
+			if (symbol != null) {
+				testDetail += " @ " + symbol.getAddress().toString(true);
+			}
+			testDetail += " (" + errFileName + ":" + errLineNum + ") " + ignoreTag;
+		}
+		return testDetail;
 	}
 
 	/**

@@ -18,6 +18,7 @@ package ghidra.test.processors.support;
 import java.awt.Color;
 import java.io.*;
 import java.util.*;
+import java.util.function.Predicate;
 
 import org.jdom.Document;
 import org.jdom.Element;
@@ -44,6 +45,8 @@ public class PCodeTestCombinedTestResults {
 	private File xmlFile;
 	private File htmlFile;
 
+	private Map<String, Set<String>> ignoredJunitTestNames = new HashMap<>();
+
 	private Map<String, PCodeTestResults> combinedResults = new HashMap<>();
 
 	PCodeTestCombinedTestResults(File reportsDir, boolean readExisting) throws IOException {
@@ -57,10 +60,29 @@ public class PCodeTestCombinedTestResults {
 	public PCodeTestResults getTestResults(String jUnitName, boolean create) {
 		PCodeTestResults testResults = combinedResults.get(jUnitName);
 		if (testResults == null && create) {
-			testResults = new PCodeTestResults(jUnitName);
+			testResults = new PCodeTestResults(jUnitName, new IgnoreTestPredicate(jUnitName));
 			combinedResults.put(jUnitName, testResults);
 		}
 		return testResults;
+	}
+
+	private class IgnoreTestPredicate implements Predicate<String> {
+
+		private String jUnitName;
+
+		IgnoreTestPredicate(String jUnitName) {
+			this.jUnitName = jUnitName;
+		}
+
+		@Override
+		public boolean test(String testName) {
+			Set<String> ignoredTestNames = ignoredJunitTestNames.get(jUnitName);
+			if (ignoredTestNames != null) {
+				return ignoredTestNames.contains(testName);
+			}
+			return false;
+		}
+
 	}
 
 	private void restoreFromXml() throws IOException {
@@ -80,8 +102,10 @@ public class PCodeTestCombinedTestResults {
 			@SuppressWarnings("unchecked")
 			List<Element> elementList = root.getChildren(PCodeTestResults.TAG_NAME);
 			for (Element element : elementList) {
-				PCodeTestResults testResults = new PCodeTestResults(element);
-				combinedResults.put(testResults.getJUnitName(), testResults);
+				String jUnitName = PCodeTestResults.getJunitName(element);
+				PCodeTestResults testResults =
+					new PCodeTestResults(element, new IgnoreTestPredicate(jUnitName));
+				combinedResults.put(jUnitName, testResults);
 			}
 		}
 		catch (org.jdom.JDOMException je) {
@@ -91,6 +115,14 @@ public class PCodeTestCombinedTestResults {
 			istream.close();
 		}
 
+	}
+
+	public void addIgnoredTests(String junitName, String... testNames) {
+		Set<String> ignoredTestSet =
+			ignoredJunitTestNames.computeIfAbsent(junitName, n -> new HashSet<>());
+		for (String testName : testNames) {
+			ignoredTestSet.add(testName);
+		}
 	}
 
 	void saveToXml() throws IOException {
@@ -226,7 +258,9 @@ public class PCodeTestCombinedTestResults {
 				return;
 			}
 			int count =
-				computeCharCount(testResults.passCount) + computeCharCount(testResults.failCount) +
+				computeCharCount(testResults.passCount) +
+					computeCharCount(testResults.ignoredCount) +
+					computeCharCount(testResults.failCount) +
 					computeCharCount(testResults.callOtherCount) + 2;
 			charCount = Math.max(count, charCount);
 		}
@@ -433,6 +467,8 @@ public class PCodeTestCombinedTestResults {
 				getSummaryHighlightColorClass(testResults) + "\">");
 			writeResultCount(w, testResults.summaryPassCount, Palette.GREEN);
 			w.print("/");
+			writeResultCount(w, testResults.summaryIgnoreCount, Palette.GRAY);
+			w.print("/");
 			writeResultCount(w, testResults.summaryFailCount, Palette.RED);
 			w.print("/");
 			writeResultCount(w, testResults.summaryCallOtherCount, Palette.ORANGE);
@@ -485,9 +521,10 @@ public class PCodeTestCombinedTestResults {
 			for (NamedTestColumn namedTestColumn : namedTestColumns) {
 				String testName = namedTestColumn.getTestName();
 				int pass = testResults.getPassResult(groupName, testName);
+				int ignored = testResults.getIgnoredResult(groupName, testName);
 				int fail = testResults.getFailResult(groupName, testName);
 				int callother = testResults.getCallOtherResult(groupName, testName);
-				int total = pass + fail + callother;
+				int total = pass + ignored + fail + callother;
 				int totalAsserts = testResults.getTotalAsserts(groupName, testName);
 
 				boolean severeFailure = testResults.hadSevereFailure(groupName, testName);
@@ -514,6 +551,8 @@ public class PCodeTestCombinedTestResults {
 					}
 					else {
 						writeResultCount(w, pass, Palette.GREEN);
+						w.print("/");
+						writeResultCount(w, ignored, Palette.GRAY);
 						w.print("/");
 						writeResultCount(w, fail, Palette.RED);
 						w.print("/");
