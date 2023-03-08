@@ -18,10 +18,12 @@ package ghidra.app.util.bin.format.dwarf4.attribs;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.dwarf4.*;
+import ghidra.app.util.bin.format.dwarf4.DWARFCompilationUnit;
+import ghidra.app.util.bin.format.dwarf4.DWARFUtil;
 import ghidra.app.util.bin.format.dwarf4.encoding.DWARFForm;
 import ghidra.app.util.bin.format.dwarf4.next.DWARFProgram;
 import ghidra.app.util.bin.format.dwarf4.next.StringTable;
+import ghidra.program.model.data.LEB128;
 import ghidra.util.NumberUtil;
 
 /**
@@ -73,7 +75,7 @@ public class DWARFAttributeFactory {
 				return new DWARFNumericAttribute(uoffset + unit.getStartOffset());
 			}
 			case DW_FORM_ref_udata: {
-				long uoffset = LEB128.readAsLong(reader, false);
+				long uoffset = reader.readNext(LEB128::unsigned);
 				return new DWARFNumericAttribute(uoffset + unit.getStartOffset());
 			}
 
@@ -103,7 +105,7 @@ public class DWARFAttributeFactory {
 				return new DWARFBlobAttribute(reader.readNextByteArray(length));
 			}
 			case DW_FORM_block: {
-				int length = LEB128.readAsUInt32(reader);
+				int length = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 				if (length < 0 || length > MAX_BLOCK4_SIZE) {
 					throw new IOException("Invalid/bad dw_form_block size: " + length);
 				}
@@ -121,12 +123,12 @@ public class DWARFAttributeFactory {
 			case DW_FORM_data8:
 				return new DWARFNumericAttribute(reader.readNextLong());
 			case DW_FORM_sdata:
-				return new DWARFNumericAttribute(LEB128.readAsLong(reader, true));
+				return new DWARFNumericAttribute(reader.readNext(LEB128::signed));
 			case DW_FORM_udata:
-				return new DWARFNumericAttribute(LEB128.readAsLong(reader, false));
+				return new DWARFNumericAttribute(reader.readNext(LEB128::unsigned));
 
 			case DW_FORM_exprloc: {
-				int length = LEB128.readAsUInt32(reader);
+				int length = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 				if (length < 0 || length > MAX_BLOCK4_SIZE) {
 					throw new IOException("Invalid/bad dw_form_exprloc size: " + length);
 				}
@@ -157,7 +159,8 @@ public class DWARFAttributeFactory {
 
 			// Indirect Form
 			case DW_FORM_indirect:
-				DWARFForm formValue = DWARFForm.find(LEB128.readAsUInt32(reader));
+				DWARFForm formValue =
+					DWARFForm.find(reader.readNextUnsignedVarIntExact(LEB128::unsigned));
 				DWARFAttributeValue value = read(reader, unit, formValue);
 
 				return new DWARFIndirectAttribute(value, formValue);

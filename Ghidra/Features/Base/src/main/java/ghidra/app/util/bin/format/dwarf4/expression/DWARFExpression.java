@@ -15,12 +15,14 @@
  */
 package ghidra.app.util.bin.format.dwarf4.expression;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.dwarf4.*;
+import ghidra.program.model.data.LEB128;
 import ghidra.util.NumericUtilities;
 
 /**
@@ -137,9 +139,9 @@ public class DWARFExpression {
 				case U_LONG:
 					return reader.readNextLong(); /* & there is no mask for ulong */
 				case S_LEB128:
-					return LEB128.readAsLong(reader, true);
+					return reader.readNext(LEB128::signed);
 				case U_LEB128:
-					return LEB128.readAsLong(reader, false);
+					return reader.readNext(LEB128::unsigned);
 				case SIZED_BLOB:
 					throw new IOException("Can't read SIZED_BLOB as a Long value");
 				case DWARF_INT:

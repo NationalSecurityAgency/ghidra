@@ -17,17 +17,11 @@ package ghidra.file.formats.android.dex.format;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.dwarf4.LEB128;
+import ghidra.app.util.bin.*;
 import ghidra.file.formats.android.cdex.CDexCodeItem;
 import ghidra.file.formats.android.cdex.CDexHeader;
 import ghidra.file.formats.android.dex.util.DexUtil;
-import ghidra.program.model.data.ArrayDataType;
-import ghidra.program.model.data.CategoryPath;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.Structure;
-import ghidra.program.model.data.StructureDataType;
+import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
@@ -51,16 +45,16 @@ public class EncodedMethod implements StructConverter {
 
 	public EncodedMethod(BinaryReader reader, DexHeader dexHeader) throws IOException {
 
-		LEB128 leb128 = LEB128.readUnsignedValue(reader);
+		LEB128Info leb128 = reader.readNext(LEB128Info::unsigned);
 		_fileOffset = leb128.getOffset();
 		methodIndexDifference = leb128.asUInt32();
 		methodIndexDifferenceLength = leb128.getLength();
 
-		leb128 = LEB128.readUnsignedValue(reader);
+		leb128 = reader.readNext(LEB128Info::unsigned);
 		accessFlags = leb128.asUInt32();
 		accessFlagsLength = leb128.getLength();
 
-		leb128 = LEB128.readUnsignedValue(reader);
+		leb128 = reader.readNext(LEB128Info::unsigned);
 		codeOffset = leb128.asUInt32();
 		codeOffsetLength = leb128.getLength();
 
@@ -115,15 +109,12 @@ public class EncodedMethod implements StructConverter {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		String name = "encoded_method_" + methodIndexDifferenceLength + "_" + accessFlagsLength +
-			"_" + codeOffsetLength;
+		String name = "encoded_method_%d_%d_%d".formatted(methodIndexDifferenceLength,
+			accessFlagsLength, codeOffsetLength);
 		Structure structure = new StructureDataType(name, 0);
-		structure.add(new ArrayDataType(BYTE, methodIndexDifferenceLength, BYTE.getLength()),
-			"method_idx_diff", null);
-		structure.add(new ArrayDataType(BYTE, accessFlagsLength, BYTE.getLength()), "access_flags",
-			null);
-		structure.add(new ArrayDataType(BYTE, codeOffsetLength, BYTE.getLength()), "code_off",
-			null);
+		structure.add(ULEB128, methodIndexDifferenceLength, "method_idx_diff", null);
+		structure.add(ULEB128, accessFlagsLength, "access_flags", null);
+		structure.add(ULEB128, codeOffsetLength, "code_off", null);
 		structure.setCategoryPath(new CategoryPath("/dex/encoded_method"));
 		return structure;
 	}

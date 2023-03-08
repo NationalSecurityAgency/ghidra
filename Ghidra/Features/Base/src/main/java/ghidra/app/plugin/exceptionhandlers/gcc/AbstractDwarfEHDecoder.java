@@ -15,13 +15,10 @@
  */
 package ghidra.app.plugin.exceptionhandlers.gcc;
 
-import ghidra.app.plugin.exceptionhandlers.gcc.datatype.SignedLeb128DataType;
-import ghidra.app.plugin.exceptionhandlers.gcc.datatype.UnsignedLeb128DataType;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
-import ghidra.program.model.scalar.Scalar;
 import ghidra.program.util.AddressTranslationException;
 
 /**
@@ -34,9 +31,6 @@ abstract class AbstractDwarfEHDecoder implements DwarfEHDecoder {
 	protected static WordDataType WORD_DATA_TYPE = WordDataType.dataType;
 	protected static DWordDataType DWORD_DATA_TYPE = DWordDataType.dataType;
 	protected static QWordDataType QWORD_DATA_TYPE = QWordDataType.dataType;
-
-	protected static SignedLeb128DataType SLEB_DATA_TYPE = SignedLeb128DataType.dataType;
-	protected static UnsignedLeb128DataType ULEB_DATA_TYPE = UnsignedLeb128DataType.dataType;
 
 	protected final DwarfEHDataApplicationMode appMode;
 	protected final boolean isIndirect;
@@ -223,70 +217,6 @@ abstract class AbstractDwarfEHDecoder implements DwarfEHDecoder {
 	}
 
 	/**
-	 * Reads an unsigned LEB128-encoded value from <code>program</code> at <code>addr</code>
-	 * @param program Program to read from
-	 * @param addr Address to read from
-	 * @throws MemoryAccessException if the data can't be read
-	 */
-	protected long read_leb128(Program program, Address addr) throws MemoryAccessException {
-		UnsignedLeb128DataType uleb = UnsignedLeb128DataType.dataType;
-
-		MemBuffer buf = new DumbMemBufferImpl(program.getMemory(), addr);
-		Scalar scalar =
-			(Scalar) uleb.getValue(buf, uleb.getDefaultSettings(), uleb.getLength(buf, -1));
-		return scalar.getUnsignedValue();
-
-	}
-
-	/**
-	 * Reads an unsigned LEB128-encoded value from <code>program</code> at the address of <code>buf</code>
-	 * @param buf Buffer to read from
-	 * @param length Unused
-	 * @throws MemoryAccessException if the data can't be read
-	 */
-	protected long read_leb128(MemBuffer buf, int length) throws MemoryAccessException {
-
-		UnsignedLeb128DataType uleb = UnsignedLeb128DataType.dataType;
-
-		Scalar scalar =
-			(Scalar) uleb.getValue(buf, uleb.getDefaultSettings(), uleb.getLength(buf, -1));
-		return scalar.getUnsignedValue();
-
-	}
-
-	/**
-	 * Reads a signed LEB128-encoded value from <code>program</code> at <code>addr</code>
-	 * @param program Program to read from
-	 * @param addr Address to read from
-	 * @throws MemoryAccessException if the data can't be read
-	 */
-	protected long read_sleb128(Program program, Address addr) throws MemoryAccessException {
-
-		SignedLeb128DataType sleb = SignedLeb128DataType.dataType;
-
-		MemBuffer buf = new DumbMemBufferImpl(program.getMemory(), addr);
-		Scalar scalar =
-			(Scalar) sleb.getValue(buf, sleb.getDefaultSettings(), sleb.getLength(buf, -1));
-		return scalar.getSignedValue();
-	}
-
-	/**
-	 * Reads a signed LEB128-encoded value from <code>program</code> at the address of <code>buf</code>
-	 * @param buf Buffer to read from
-	 * @param length Number of bytes to read
-	 * @param buffer Destination buffer to read into
-	 * @throws MemoryAccessException if the data can't be read
-	 */
-	protected long read_sleb128(MemBuffer buf, int length) throws MemoryAccessException {
-
-		SignedLeb128DataType sleb = SignedLeb128DataType.dataType;
-
-		Scalar scalar =
-			(Scalar) sleb.getValue(buf, sleb.getDefaultSettings(), sleb.getLength(buf, -1));
-		return scalar.getSignedValue();
-	}
-
-	/**
 	 * Get the DWARF-encoded address value as stored by the context
 	 * @param context Stores program location and decode parameters
 	 * @return the address
@@ -373,6 +303,11 @@ abstract class AbstractDwarfEHDecoder implements DwarfEHDecoder {
 
 	/**
 	 * Decode an integer value according to parameters stored in the <code>context</code> object.
+	 * <p>
+	 * Implementations should duplicate the result of the call to doDecode in 
+	 * {@link DwarfDecodeContext#setDecodedValue(Object, int)}, as well as the underlying length of
+	 * the data item that was decoded.
+	 *  
 	 * @param context Stores program location and decode parameters
 	 * @return the integer value
 	 * @throws MemoryAccessException if the data can't be read

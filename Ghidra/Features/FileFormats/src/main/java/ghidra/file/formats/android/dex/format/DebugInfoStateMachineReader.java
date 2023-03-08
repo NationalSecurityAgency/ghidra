@@ -18,7 +18,7 @@ package ghidra.file.formats.android.dex.format;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.dwarf4.LEB128;
+import ghidra.program.model.data.LEB128;
 
 class DebugInfoStateMachineReader {
 	private static final int MAX_SIZE = 0x10000; // 64k
@@ -35,44 +35,44 @@ class DebugInfoStateMachineReader {
 					return (int) (reader.getPointerIndex() - start);//done!
 				}
 				case DebugStateMachineOpCodes.DBG_ADVANCE_PC: {
-					LEB128.readAsUInt32(reader);
+					reader.readNext(LEB128::unsigned);
 					break;
 				}
 				case DebugStateMachineOpCodes.DBG_ADVANCE_LINE: {
-					LEB128.readAsUInt32(reader);
+					reader.readNext(LEB128::unsigned);
 					break;
 				}
 				case DebugStateMachineOpCodes.DBG_START_LOCAL: {
-					int register = LEB128.readAsUInt32(reader);
+					int register = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 
 					//TODO uleb128p1
-					int name = LEB128.readAsUInt32(reader);
+					int name = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 
 					//TODO uleb128p1
-					int type = LEB128.readAsUInt32(reader);
+					int type = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 
 					break;
 				}
 				case DebugStateMachineOpCodes.DBG_START_LOCAL_EXTENDED: {
-					int register = LEB128.readAsUInt32(reader);
+					int register = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 
 					//TODO uleb128p1
-					int name = LEB128.readAsUInt32(reader);
+					int name = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 
 					//TODO uleb128p1
-					int type = LEB128.readAsUInt32(reader);
+					int type = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 
 					//TODO uleb128p1
-					int signature = LEB128.readAsUInt32(reader);
+					int signature = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 
 					break;
 				}
 				case DebugStateMachineOpCodes.DBG_END_LOCAL: {
-					int register = LEB128.readAsUInt32(reader);
+					int register = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 					break;
 				}
 				case DebugStateMachineOpCodes.DBG_RESTART_LOCAL: {
-					int register = LEB128.readAsUInt32(reader);
+					int register = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 					break;
 				}
 				case DebugStateMachineOpCodes.DBG_SET_PROLOGUE_END: {
@@ -83,7 +83,7 @@ class DebugInfoStateMachineReader {
 				}
 				case DebugStateMachineOpCodes.DBG_SET_FILE: {
 					//TODO uleb128p1
-					int name = LEB128.readAsUInt32(reader);
+					int name = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 					break;
 				}
 				default: {

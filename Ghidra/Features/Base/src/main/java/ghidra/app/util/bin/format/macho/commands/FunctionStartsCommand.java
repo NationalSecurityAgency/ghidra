@@ -15,14 +15,15 @@
  */
 package ghidra.app.util.bin.format.macho.commands;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.format.dwarf4.LEB128;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.data.LEB128;
 
 /**
  * Represents a LC_FUNCTION_STARTS command.
@@ -80,7 +81,7 @@ public class FunctionStartsCommand extends LinkEditDataCommand {
 
 		List<Long> offsets = new ArrayList<>();
 		while (true) {
-			long offset = LEB128.readAsLong(reader, false);
+			long offset = reader.readNext(LEB128::unsigned);
 			if (offset == 0) {
 				break;
 			}

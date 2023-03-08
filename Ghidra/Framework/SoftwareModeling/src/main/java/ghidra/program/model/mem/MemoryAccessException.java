@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +31,6 @@ public class MemoryAccessException extends UsrException
         super();
     }
     
-    
     /**
      * <p>Constructs an MemoryAccessException with the specified
      * detail message.<p>
@@ -42,4 +40,15 @@ public class MemoryAccessException extends UsrException
     public MemoryAccessException(String message) {
         super(message);
     }
+    
+    /**
+     * Creates a {@link MemoryAccessException} with a message and cause.
+     * @param msg message
+     * @param cause nested cause
+     */
+    public MemoryAccessException(String msg, Throwable cause) {
+    	super(msg, cause);
+    }
+    
+    
 } // MemoryAccessException

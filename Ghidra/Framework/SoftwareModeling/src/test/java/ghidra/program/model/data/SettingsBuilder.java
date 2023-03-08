@@ -73,6 +73,18 @@ public class SettingsBuilder implements Settings {
 		return this;
 	}
 
+	/**
+	 * Sets the {@link FormatSettingsDefinition} value.
+	 * 
+	 * @param formatEnum int such as {@link FormatSettingsDefinition#DECIMAL}
+	 * @param defaultSettings the default settings that apply
+	 * @return chainable SettingsBuilder
+	 */
+	public SettingsBuilder setFormat(int formatEnum, FormatSettingsDefinition defaultSettings) {
+		defaultSettings.setChoice(settings, formatEnum);
+		return this;
+	}
+
 	@Override
 	public Long getLong(String name) {
 		return settings.getLong(name);

@@ -18,6 +18,7 @@ package ghidra.app.plugin.exceptionhandlers.gcc.structures.ehFrame;
 
 import ghidra.app.cmd.comments.SetCommentCmd;
 import ghidra.app.plugin.exceptionhandlers.gcc.GccAnalysisUtils;
+import ghidra.app.util.bin.LEB128Info;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Program;
@@ -99,6 +100,7 @@ public class DwarfCallFrameOpcodeParser {
 		int operand1Len;
 		long operand2;
 		int operand2Len;
+		LEB128Info uleb128;
 
 		while (curr.compareTo(limit) < 0) {
 
@@ -124,8 +126,10 @@ public class DwarfCallFrameOpcodeParser {
 						break;
 					case DW_CFA_offset:
 						primaryOpcode = true;
-						operand1 = GccAnalysisUtils.readULEB128(program, curr);
-						operand1Len = GccAnalysisUtils.getULEB128Length(program, curr);
+
+						uleb128 = GccAnalysisUtils.readULEB128Info(program, curr);
+						operand1 = uleb128.asLong();
+						operand1Len = uleb128.getLength();
 
 						curr = curr.add(operand1Len);
 
@@ -177,12 +181,14 @@ public class DwarfCallFrameOpcodeParser {
 						break;
 
 					case DW_CFA_offset_extended:
-						operand1 = GccAnalysisUtils.readULEB128(program, curr);
-						operand1Len = GccAnalysisUtils.getULEB128Length(program, curr);
+						uleb128 = GccAnalysisUtils.readULEB128Info(program, curr);
+						operand1 = uleb128.asLong();
+						operand1Len = uleb128.getLength();
 						curr = curr.add(operand1Len);
 
-						operand2 = GccAnalysisUtils.readULEB128(program, curr);
-						operand2Len = GccAnalysisUtils.getULEB128Length(program, curr);
+						uleb128 = GccAnalysisUtils.readULEB128Info(program, curr);
+						operand2 = uleb128.asLong();
+						operand2Len = uleb128.getLength();
 						curr = curr.add(operand2Len);
 
 						sb.append(
@@ -190,36 +196,41 @@ public class DwarfCallFrameOpcodeParser {
 						break;
 
 					case DW_CFA_restore_extended:
-						operand1 = GccAnalysisUtils.readULEB128(program, curr);
-						operand1Len = GccAnalysisUtils.getULEB128Length(program, curr);
+						uleb128 = GccAnalysisUtils.readULEB128Info(program, curr);
+						operand1 = uleb128.asLong();
+						operand1Len = uleb128.getLength();
 						curr = curr.add(operand1Len);
 
 						sb.append("DW_CFA_restore_extended reg[" + operand1 + "]");
 						break;
 
 					case DW_CFA_undefined:
-						operand1 = GccAnalysisUtils.readULEB128(program, curr);
-						operand1Len = GccAnalysisUtils.getULEB128Length(program, curr);
+						uleb128 = GccAnalysisUtils.readULEB128Info(program, curr);
+						operand1 = uleb128.asLong();
+						operand1Len = uleb128.getLength();
 						curr = curr.add(operand1Len);
 
 						sb.append("DW_CFA_undefined reg[" + operand1 + "]");
 						break;
 
 					case DW_CFA_same_value:
-						operand1 = GccAnalysisUtils.readULEB128(program, curr);
-						operand1Len = GccAnalysisUtils.getULEB128Length(program, curr);
+						uleb128 = GccAnalysisUtils.readULEB128Info(program, curr);
+						operand1 = uleb128.asLong();
+						operand1Len = uleb128.getLength();
 						curr = curr.add(operand1Len);
 
 						sb.append("DW_CFA_same_value reg[" + operand1 + "]");
 						break;
 
 					case DW_CFA_register:
-						operand1 = GccAnalysisUtils.readULEB128(program, curr);
-						operand1Len = GccAnalysisUtils.getULEB128Length(program, curr);
+						uleb128 = GccAnalysisUtils.readULEB128Info(program, curr);
+						operand1 = uleb128.asLong();
+						operand1Len = uleb128.getLength();
 						curr = curr.add(operand1Len);
 
-						operand2 = GccAnalysisUtils.readULEB128(program, curr);
-						operand2Len = GccAnalysisUtils.getULEB128Length(program, curr);
+						uleb128 = GccAnalysisUtils.readULEB128Info(program, curr);
+						operand2 = uleb128.asLong();
+						operand2Len = uleb128.getLength();
 						curr = curr.add(operand2Len);
 
 						sb.append("DW_CFA_register reg[" + operand1 + "] reg[" + operand2 + "]");
@@ -234,28 +245,32 @@ public class DwarfCallFrameOpcodeParser {
 						break;
 
 					case DW_CFA_def_cfa:
-						operand1 = GccAnalysisUtils.readULEB128(program, curr);
-						operand1Len = GccAnalysisUtils.getULEB128Length(program, curr);
+						uleb128 = GccAnalysisUtils.readULEB128Info(program, curr);
+						operand1 = uleb128.asLong();
+						operand1Len = uleb128.getLength();
 						curr = curr.add(operand1Len);
 
-						operand2 = GccAnalysisUtils.readULEB128(program, curr);
-						operand2Len = GccAnalysisUtils.getULEB128Length(program, curr);
+						uleb128 = GccAnalysisUtils.readULEB128Info(program, curr);
+						operand2 = uleb128.asLong();
+						operand2Len = uleb128.getLength();
 						curr = curr.add(operand2Len);
 
 						sb.append("DW_CFA_def_cfa reg[" + operand1 + "] offs[" + operand2 + "]");
 						break;
 
 					case DW_CFA_def_cfa_register:
-						operand1 = GccAnalysisUtils.readULEB128(program, curr);
-						operand1Len = GccAnalysisUtils.getULEB128Length(program, curr);
+						uleb128 = GccAnalysisUtils.readULEB128Info(program, curr);
+						operand1 = uleb128.asLong();
+						operand1Len = uleb128.getLength();
 						curr = curr.add(operand1Len);
 
 						sb.append("DW_CFA_def_cfa_register reg[" + operand1 + "]");
 						break;
 
 					case DW_CFA_def_cfa_offset:
-						operand1 = GccAnalysisUtils.readULEB128(program, curr);
-						operand1Len = GccAnalysisUtils.getULEB128Length(program, curr);
+						uleb128 = GccAnalysisUtils.readULEB128Info(program, curr);
+						operand1 = uleb128.asLong();
+						operand1Len = uleb128.getLength();
 						curr = curr.add(operand1Len);
 
 						sb.append("DW_CFA_def_cfa_offset offs[" + operand1 + "]");
@@ -266,21 +281,23 @@ public class DwarfCallFrameOpcodeParser {
 						break;
 
 					case DW_CFA_expression:
-
-						operand1 = GccAnalysisUtils.readULEB128(program, curr);
-						operand1Len = GccAnalysisUtils.getULEB128Length(program, curr);
+						uleb128 = GccAnalysisUtils.readULEB128Info(program, curr);
+						operand1 = uleb128.asLong();
+						operand1Len = uleb128.getLength();
 						curr = curr.add(operand1Len);
 
 						sb.append("DW_CFA_expression reg[" + operand1 + "] BLOCK");
 						break;
 
 					case DW_CFA_offset_extended_sf:
-						operand1 = GccAnalysisUtils.readULEB128(program, curr);
-						operand1Len = GccAnalysisUtils.getULEB128Length(program, curr);
+						uleb128 = GccAnalysisUtils.readULEB128Info(program, curr);
+						operand1 = uleb128.asLong();
+						operand1Len = uleb128.getLength();
 						curr = curr.add(operand1Len);
 
-						operand2 = GccAnalysisUtils.readULEB128(program, curr);
-						operand2Len = GccAnalysisUtils.getULEB128Length(program, curr);
+						uleb128 = GccAnalysisUtils.readULEB128Info(program, curr);
+						operand2 = uleb128.asLong();
+						operand2Len = uleb128.getLength();
 						curr = curr.add(operand2Len);
 
 						sb.append("DW_CFA_offset_extended_sf reg[" + operand1 + "] offs[" +
@@ -288,52 +305,60 @@ public class DwarfCallFrameOpcodeParser {
 						break;
 
 					case DW_CFA_def_cfa_sf:
-						operand1 = GccAnalysisUtils.readULEB128(program, curr);
-						operand1Len = GccAnalysisUtils.getULEB128Length(program, curr);
+						uleb128 = GccAnalysisUtils.readULEB128Info(program, curr);
+						operand1 = uleb128.asLong();
+						operand1Len = uleb128.getLength();
 						curr = curr.add(operand1Len);
 
-						operand2 = GccAnalysisUtils.readULEB128(program, curr);
-						operand2Len = GccAnalysisUtils.getULEB128Length(program, curr);
+						uleb128 = GccAnalysisUtils.readULEB128Info(program, curr);
+						operand2 = uleb128.asLong();
+						operand2Len = uleb128.getLength();
 						curr = curr.add(operand2Len);
 
 						sb.append("DW_CFA_def_cfa_sf reg[" + operand1 + "] offs[" + operand2 + "]");
 						break;
 
 					case DW_CFA_def_cfa_offset_sf:
-						operand1 = GccAnalysisUtils.readULEB128(program, curr);
-						operand1Len = GccAnalysisUtils.getULEB128Length(program, curr);
+						uleb128 = GccAnalysisUtils.readULEB128Info(program, curr);
+						operand1 = uleb128.asLong();
+						operand1Len = uleb128.getLength();
 						curr = curr.add(operand1Len);
 
 						sb.append("DW_CFA_def_cfa_offset_sf offs[" + operand1 + "]");
 						break;
 
 					case DW_CFA_val_offset:
-						operand1 = GccAnalysisUtils.readULEB128(program, curr);
-						operand1Len = GccAnalysisUtils.getULEB128Length(program, curr);
+						uleb128 = GccAnalysisUtils.readULEB128Info(program, curr);
+						operand1 = uleb128.asLong();
+						operand1Len = uleb128.getLength();
 						curr = curr.add(operand1Len);
 
-						operand2 = GccAnalysisUtils.readULEB128(program, curr);
-						operand2Len = GccAnalysisUtils.getULEB128Length(program, curr);
+						uleb128 = GccAnalysisUtils.readULEB128Info(program, curr);
+						operand2 = uleb128.asLong();
+						operand2Len = uleb128.getLength();
 						curr = curr.add(operand2Len);
 
 						sb.append("DW_CFA_val_offset [" + operand1 + "] [" + operand2 + "]");
 						break;
 
 					case DW_CFA_val_offset_sf:
-						operand1 = GccAnalysisUtils.readULEB128(program, curr);
-						operand1Len = GccAnalysisUtils.getULEB128Length(program, curr);
+						uleb128 = GccAnalysisUtils.readULEB128Info(program, curr);
+						operand1 = uleb128.asLong();
+						operand1Len = uleb128.getLength();
 						curr = curr.add(operand1Len);
 
-						operand2 = GccAnalysisUtils.readULEB128(program, curr);
-						operand2Len = GccAnalysisUtils.getULEB128Length(program, curr);
+						uleb128 = GccAnalysisUtils.readULEB128Info(program, curr);
+						operand2 = uleb128.asLong();
+						operand2Len = uleb128.getLength();
 						curr = curr.add(operand2Len);
 
 						sb.append("DW_CFA_val_offset_sf [" + operand1 + "] [" + operand2 + "]");
 						break;
 
 					case DW_CFA_val_expression:
-						operand1 = GccAnalysisUtils.readULEB128(program, curr);
-						operand1Len = GccAnalysisUtils.getULEB128Length(program, curr);
+						uleb128 = GccAnalysisUtils.readULEB128Info(program, curr);
+						operand1 = uleb128.asLong();
+						operand1Len = uleb128.getLength();
 						curr = curr.add(operand1Len);
 
 						sb.append("DW_CFA_val_expression [" + operand1 + "] BLOCK");

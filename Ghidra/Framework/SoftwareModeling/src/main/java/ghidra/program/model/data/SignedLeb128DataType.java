@@ -13,16 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.exceptionhandlers.gcc.datatype;
+package ghidra.program.model.data;
 
-import ghidra.docking.settings.Settings;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeManager;
+import ghidra.util.classfinder.ClassTranslator;
 
 /**
  * A Signed Little Endian Base 128 integer data type.
  */
 public class SignedLeb128DataType extends AbstractLeb128DataType {
+	static {
+		ClassTranslator.put("ghidra.app.plugin.exceptionhandlers.gcc.datatype.SignedLeb128DataType",
+			SignedLeb128DataType.class.getName());
+	}
 
 	/** A statically defined SignedLeb128DataType instance.*/
 	public final static SignedLeb128DataType dataType = new SignedLeb128DataType();
@@ -51,17 +53,7 @@ public class SignedLeb128DataType extends AbstractLeb128DataType {
 	}
 
 	@Override
-	public String getMnemonic(Settings settings) {
-		return name;
-	}
-
-	@Override
 	public String getDescription() {
-		return "Signed Dwarf LEB128-Encoded Number";
-	}
-
-	@Override
-	public String getDefaultLabelPrefix() {
-		return "sleb128";
+		return "Signed LEB128-Encoded Number";
 	}
 }
