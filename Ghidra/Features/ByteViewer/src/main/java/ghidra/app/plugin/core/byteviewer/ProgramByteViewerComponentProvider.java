@@ -316,7 +316,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 		if (blocks != null && blockNumber >= 0 && blockNumber < blocks.length) {
 			ByteViewerState view = new ByteViewerState(blockSet,
 				new ByteBlockInfo(blocks[blockNumber], blockOffset, column), vp);
-			panel.returnToView(view);
+			panel.restoreView(view);
 		}
 
 	}
@@ -627,7 +627,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 		if (blocks != null && blockNumber >= 0 && blockNumber < blocks.length) {
 			ByteViewerState view = new ByteViewerState(blockSet,
 				new ByteBlockInfo(blocks[blockNumber], blockOffset, column), vp);
-			panel.returnToView(view);
+			panel.restoreView(view);
 		}
 	}
 

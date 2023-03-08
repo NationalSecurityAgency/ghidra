@@ -85,9 +85,6 @@ public class ByteViewerPanel extends JPanel
 
 	private List<AddressSetDisplayListener> displayListeners = new ArrayList<>();
 
-	/**
-	 * Constructor
-	 */
 	protected ByteViewerPanel(ByteViewerComponentProvider provider) {
 		super();
 		this.provider = provider;
@@ -181,9 +178,6 @@ public class ByteViewerPanel extends JPanel
 	//////////////////////////////////////////////////////////////////////////
 	// ** package-level methods **
 	//////////////////////////////////////////////////////////////////////////
-	/**
-	 * Set the cursor color that indicates the view that has focus.
-	 */
 	void setCurrentCursorColor(Color c) {
 		currentCursorColor = c;
 		for (int i = 0; i < viewList.size(); i++) {
@@ -223,9 +217,6 @@ public class ByteViewerPanel extends JPanel
 		}
 	}
 
-	/**
-	 * Set the color that indicates gaps in memory.
-	 */
 	void setSeparatorColor(Color c) {
 		indexFactory.setMissingValueColor(c);
 		for (int i = 0; i < viewList.size(); i++) {
@@ -234,9 +225,6 @@ public class ByteViewerPanel extends JPanel
 		}
 	}
 
-	/**
-	 * Set the color of the cursor when the byte viewer is not in focus.
-	 */
 	void setNonFocusCursorColor(Color c) {
 		for (int i = 0; i < viewList.size(); i++) {
 			ByteViewerComponent comp = viewList.get(i);
@@ -247,6 +235,7 @@ public class ByteViewerPanel extends JPanel
 	/**
 	 * Set the byte blocks and create an new IndexMap object that will be passed to the index panel
 	 * and to each component that shows a format.
+	 * @param blockSet the set of blocks
 	 */
 	void setByteBlocks(ByteBlockSet blockSet) {
 		this.blockSet = blockSet;
@@ -261,7 +250,7 @@ public class ByteViewerPanel extends JPanel
 				startField.setText(start);
 				ByteBlock lastBlock = blocks[blocks.length - 1];
 				endField.setText(lastBlock
-						.getLocationRepresentation(lastBlock.getLength().subtract(BigInteger.ONE)));
+					.getLocationRepresentation(lastBlock.getLength().subtract(BigInteger.ONE)));
 
 				indexPanelWidth = getIndexPanelWidth(blocks);
 				int center = indexPanelWidth / 2;
@@ -295,9 +284,6 @@ public class ByteViewerPanel extends JPanel
 		indexSetChanged();
 	}
 
-	/**
-	 * Set the selection for all the views.
-	 */
 	void setViewerSelection(ByteBlockSelection selection) {
 		for (int i = 0; i < viewList.size(); i++) {
 			ByteViewerComponent c = viewList.get(i);
@@ -305,11 +291,6 @@ public class ByteViewerPanel extends JPanel
 		}
 	}
 
-	/**
-	 * Get the current selection.
-	 *
-	 * @return ByteBlockSelection selection, or null if there is no selection
-	 */
 	ByteBlockSelection getViewerSelection() {
 		if (currentView == null) {
 			return null;
@@ -317,9 +298,6 @@ public class ByteViewerPanel extends JPanel
 		return currentView.getViewerSelection();
 	}
 
-	/**
-	 * Set the highlight for all the views.
-	 */
 	void setViewerHighlight(ByteBlockSelection highlight) {
 		for (int i = 0; i < viewList.size(); i++) {
 			ByteViewerComponent c = viewList.get(i);
@@ -327,9 +305,6 @@ public class ByteViewerPanel extends JPanel
 		}
 	}
 
-	/**
-	 * Set the background color model for all the views.
-	 */
 	public void setViewerBackgroundColorModel(BackgroundColorModel colorModel) {
 		for (ByteViewerComponent c : viewList) {
 			c.setBackgroundColorModel(colorModel);
@@ -365,6 +340,7 @@ public class ByteViewerPanel extends JPanel
 
 	/**
 	 * Get the cursor location. If there is no current view, then return null.
+	 * @return The ByteBlockInfo which describes the a location in the byte block domain
 	 */
 	ByteBlockInfo getCursorLocation() {
 		if (currentView == null) {
@@ -385,9 +361,6 @@ public class ByteViewerPanel extends JPanel
 		return currentView.getDataModel();
 	}
 
-	/**
-	 * Returns the currently focused view.
-	 */
 	public ByteViewerComponent getCurrentComponent() {
 		return currentView;
 	}
@@ -403,6 +376,7 @@ public class ByteViewerPanel extends JPanel
 	 * @param model model that understands the format
 	 * @param editMode true if edit mode is on
 	 * @param updateViewPosition true if the view position should be set
+	 * @return the new component
 	 */
 	ByteViewerComponent addView(String viewName, DataFormatModel model, boolean editMode,
 			boolean updateViewPosition) {
@@ -464,9 +438,6 @@ public class ByteViewerPanel extends JPanel
 		return c;
 	}
 
-	/**
-	 * Remove the view that currently has focus.
-	 */
 	void removeView(ByteViewerComponent comp) {
 
 		viewList.remove(comp);
@@ -485,10 +456,6 @@ public class ByteViewerPanel extends JPanel
 		repaint();
 	}
 
-	/**
-	 * Set the given component to be the current view; called by the mouse listener in the
-	 * ByteViewerComponent when the user clicks in the panel.
-	 */
 	void setCurrentView(ByteViewerComponent c) {
 		if (currentView != null && currentView != c) {
 			currentView.setFocusedCursorColor(provider.getCursorColor());
@@ -496,9 +463,6 @@ public class ByteViewerPanel extends JPanel
 		currentView = c;
 	}
 
-	/**
-	 * Set the cursor color on the current view to show that it is in edit mode.
-	 */
 	void setEditMode(boolean editMode) {
 		for (int i = 0; i < viewList.size(); i++) {
 			ByteViewerComponent c = viewList.get(i);
@@ -506,10 +470,6 @@ public class ByteViewerPanel extends JPanel
 		}
 	}
 
-	/**
-	 * Return true if the current view is in edit mode.
-	 *
-	 */
 	boolean getEditMode() {
 		if (currentView == null) {
 			return false;
@@ -531,16 +491,10 @@ public class ByteViewerPanel extends JPanel
 //        }
 	}
 
-	/**
-	 * Get the number of views that is currently displayed.
-	 */
 	int getNumberOfViews() {
 		return viewList.size();
 	}
 
-	/**
-	 * Set the block offset.
-	 */
 	void setOffset(int offset) {
 		if (blockOffset != offset) {
 			blockOffset = offset;
@@ -549,9 +503,6 @@ public class ByteViewerPanel extends JPanel
 		}
 	}
 
-	/**
-	 * Set the bytes per line. Bytes per line dictates the number of fields displayed in a row.
-	 */
 	void setBytesPerLine(int bytesPerLine) {
 
 		if (this.bytesPerLine != bytesPerLine) {
@@ -568,6 +519,7 @@ public class ByteViewerPanel extends JPanel
 
 	/**
 	 * Check that each model for the views can support the given bytes per line value.
+	 * @param numBytesPerLine the bytes per line value to see if supported
 	 * 
 	 * @throws InvalidInputException if a model cannot support the bytesPerLine value
 	 */
@@ -662,9 +614,6 @@ public class ByteViewerPanel extends JPanel
 		}
 	}
 
-	/**
-	 * Get the font metrics that all viewer components are using.
-	 */
 	FontMetrics getCurrentFontMetrics() {
 		return fm;
 	}
@@ -672,6 +621,7 @@ public class ByteViewerPanel extends JPanel
 	/**
 	 * Return array of names of views in the order that they appear in the panel. The name array
 	 * includes an entry for the index panel.
+	 * @return a DataModelInfo object that describes the current views
 	 */
 	DataModelInfo getDataModelInfo() {
 
@@ -710,10 +660,7 @@ public class ByteViewerPanel extends JPanel
 		indexPanel.setViewerPosition(pos.getIndex(), pos.getXOffset(), pos.getYOffset());
 	}
 
-	/**
-	 * Restore the view.
-	 */
-	void returnToView(ByteViewerState vp) {
+	void restoreView(ByteViewerState vp) {
 		if (currentView == null) {
 			return;
 		}
@@ -740,9 +687,6 @@ public class ByteViewerPanel extends JPanel
 		setEditColor(newEditColor);
 	}
 
-	/**
-	 * Restore the bytes per line and offset values.
-	 */
 	void restoreConfigState(int newBytesPerLine, int offset) {
 		if (blockOffset != offset) {
 			blockOffset = offset;
@@ -759,9 +703,6 @@ public class ByteViewerPanel extends JPanel
 		refreshView();
 	}
 
-	/**
-	 * Set the font metrics.
-	 */
 	void setFontMetrics(FontMetrics fm) {
 		this.fm = fm;
 		for (int i = 0; i < viewList.size(); i++) {
@@ -781,9 +722,6 @@ public class ByteViewerPanel extends JPanel
 		indexPanel.modelSizeChanged(IndexMapper.IDENTITY_MAPPER);
 	}
 
-	/**
-	 * Set the color used to denote changes in the byte block.
-	 */
 	void setEditColor(Color editColor) {
 		this.editColor = editColor;
 		for (int i = 0; i < viewList.size(); i++) {
@@ -792,9 +730,6 @@ public class ByteViewerPanel extends JPanel
 		}
 	}
 
-	/**
-	 * Get the font metrics that the panel is using.
-	 */
 	protected FontMetrics getFontMetrics() {
 		return fm;
 	}
@@ -1013,9 +948,6 @@ public class ByteViewerPanel extends JPanel
 		return maxWidth;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.LayoutModel#getIndexAfter(int)
-	 */
 	@Override
 	public BigInteger getIndexAfter(BigInteger index) {
 		BigInteger nextIndex = index.add(BigInteger.ONE);
@@ -1025,22 +957,12 @@ public class ByteViewerPanel extends JPanel
 		return nextIndex;
 	}
 
-	/**
-	 * @see docking.widgets.fieldpanel.LayoutModel#getIndexBefore(int)
-	 */
 	@Override
 	public BigInteger getIndexBefore(BigInteger index) {
 		if (index.equals(BigInteger.ZERO)) {
 			return null;
 		}
 		return index.subtract(BigInteger.ONE);
-	}
-
-	/**
-	 * @see docking.widgets.fieldpanel.LayoutModel#changePending()
-	 */
-	public boolean changePending() {
-		return false;
 	}
 
 	/***
