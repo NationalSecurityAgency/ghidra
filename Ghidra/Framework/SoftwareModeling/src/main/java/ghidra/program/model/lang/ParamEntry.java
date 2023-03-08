@@ -124,8 +124,62 @@ public class ParamEntry {
 		return spaceid;
 	}
 
-	public Varnode[] getJoinRecord() {
-		return joinrec;
+	/**
+	 * Collect pieces from the join list, in endian order, until the given size is covered.
+	 * The last piece is trimmed to match the size exactly.  If the size is too big to be
+	 * covered by this ParamEntry, null is returned.
+	 * @param sz is the given size
+	 * @return the collected array of Varnodes or null
+	 */
+	public Varnode[] getJoinPieces(int sz) {
+		int num = 0;
+		int first, replace;
+		Varnode vn = null;
+		Varnode[] res;
+		if (isBigEndian()) {
+			first = 0;
+			while (sz > 0) {
+				if (num >= joinrec.length) {
+					return null;
+				}
+				vn = joinrec[num];
+				if (vn.getSize() > sz) {
+					num += 1;
+					break;
+				}
+				sz -= vn.getSize();
+				num += 1;
+			}
+			replace = num - 1;
+		}
+		else {
+			while (sz > 0) {
+				if (num >= joinrec.length) {
+					return null;
+				}
+				vn = joinrec[joinrec.length - 1 - num];
+				if (vn.getSize() > sz) {
+					num += 1;
+					break;
+				}
+				sz -= vn.getSize();
+				num += 1;
+			}
+			first = joinrec.length - num;
+			replace = first;
+		}
+		if (sz == 0 && num == joinrec.length) {
+			return joinrec;
+		}
+		res = new Varnode[num];
+		for (int i = 0; i < num; ++i) {
+			res[i] = joinrec[first + i];
+		}
+		if (sz > 0) {
+			res[replace] = new Varnode(vn.getAddress(), sz);
+		}
+
+		return res;
 	}
 
 	/**
