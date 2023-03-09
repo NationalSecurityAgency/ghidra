@@ -115,13 +115,17 @@ public class LocalFileSystem implements GFileSystem, GFileHashProvider {
 
 	/**
 	 * Converts a {@link File} into a {@link FSRL}.
+	 * <p>
+	 * NOTE: The given {@link File}'s absolute path will be used.
 	 * 
-	 * @param f {@link File}
-	 * @return {@link FSRL}
+	 * @param f The {@link File} to convert to an {@link FSRL}
+	 * @return The {@link FSRL}
 	 */
 	public FSRL getLocalFSRL(File f) {
-		return fsFSRL
-				.withPath(FSUtilities.appendPath("/", FilenameUtils.separatorsToUnix(f.getPath())));
+		// We prepend a "/" to ensure that Windows-style paths (i.e. C:\) start with a "/".  For
+		// unix-style paths, this redundant "/" will be dropped.
+		return fsFSRL.withPath(
+			FSUtilities.appendPath("/", FilenameUtils.separatorsToUnix(f.getAbsolutePath())));
 	}
 
 	@Override
