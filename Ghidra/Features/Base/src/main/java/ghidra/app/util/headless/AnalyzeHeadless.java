@@ -212,10 +212,10 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 				options.setPropertiesFileDirectories(args[++argi]);
 			}
 			else if (checkArgument("-import", args, argi)) {
-				File inputFile = new File(args[++argi]);
+				File inputFile = new File(args[++argi]).getAbsoluteFile();
 				if (!inputFile.isDirectory() && !inputFile.isFile()) {
 					throw new InvalidInputException(
-						inputFile.getAbsolutePath() + " is not a valid directory or file.");
+						inputFile + " is not a valid directory or file.");
 				}
 
 				HeadlessAnalyzer.checkValidFilename(inputFile);
@@ -234,10 +234,10 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 						break;
 					}
 
-					File otherFile = new File(nextArg);
+					File otherFile = new File(nextArg).getAbsoluteFile();
 					if (!otherFile.isFile() && !otherFile.isDirectory()) {
 						throw new InvalidInputException(
-							otherFile.getAbsolutePath() + " is not a valid directory or file.");
+							otherFile + " is not a valid directory or file.");
 					}
 
 					HeadlessAnalyzer.checkValidFilename(otherFile);

@@ -43,7 +43,6 @@ import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.program.util.AddressEvaluator;
 import ghidra.program.util.string.*;
-import ghidra.util.Conv;
 import ghidra.util.ascii.AsciiCharSetRecognizer;
 import ghidra.util.datastruct.Accumulator;
 import ghidra.util.datastruct.ListAccumulator;
@@ -154,16 +153,14 @@ public class FlatProgramAPI {
 	}
 
 	/**
-	 * Returns the path to the program's executable file.
+	 * Returns the {@link File} that the program was originally imported from.  It does not 
+	 * necessarily still exist on the file system.
+	 * <p>
 	 * For example, <code>c:\temp\test.exe</code>.
-	 * @return path to program's executable file
+	 * @return the {@link File} that the program was originally imported from
 	 */
 	public final File getProgramFile() {
-		File f = new File(currentProgram.getExecutablePath());
-		if (f.exists()) {
-			return f;
-		}
-		return null;
+		return new File(currentProgram.getExecutablePath());
 	}
 
 	/**
@@ -1916,7 +1913,7 @@ public class FlatProgramAPI {
 	 * @return a new address with the specified offset in the default address space
 	 */
 	public final Address toAddr(int offset) {
-		return toAddr(offset & Conv.INT_MASK);
+		return toAddr(Integer.toUnsignedLong(offset));
 	}
 
 	/**
