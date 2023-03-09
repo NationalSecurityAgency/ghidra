@@ -166,6 +166,14 @@ public class PackedEncode implements PatchEncoder {
 	}
 
 	@Override
+	public void writeStringIndexed(AttributeId attribId, int index, String val) throws IOException {
+		byte[] bytes = val.getBytes();
+		writeHeader(ATTRIBUTE, attribId.id() + index);
+		writeInteger((TYPECODE_STRING << TYPECODE_SHIFT), bytes.length);
+		outStream.write(bytes);
+	}
+
+	@Override
 	public void writeSpace(AttributeId attribId, AddressSpace spc) throws IOException {
 		writeHeader(ATTRIBUTE, attribId.id());
 		switch (spc.getType()) {

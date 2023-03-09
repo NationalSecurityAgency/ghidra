@@ -1061,6 +1061,8 @@ SymbolEntry *ActionConstantPtr::isPointer(AddrSpace *spc,Varnode *vn,PcodeOp *op
       if (slot==0)
 	return (SymbolEntry *)0;
       break;
+    case CPUI_PIECE:
+      // Pointers get concatenated in structures
     case CPUI_COPY:
     case CPUI_INT_EQUAL:
     case CPUI_INT_NOTEQUAL:

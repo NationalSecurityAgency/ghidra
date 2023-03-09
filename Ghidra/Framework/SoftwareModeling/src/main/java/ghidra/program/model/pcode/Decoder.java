@@ -93,6 +93,17 @@ public interface Decoder extends ByteIngest {
 	public int getNextAttributeId() throws DecoderException;
 
 	/**
+	 * Get the id for the (current) attribute, assuming it is indexed.
+	 * Assuming the previous call to getNextAttributeId() returned the id of ATTRIB_UNKNOWN,
+	 * reinterpret the attribute as being an indexed form of the given attribute. If the attribute
+	 * matches, return this indexed id, otherwise return ATTRIB_UNKNOWN.
+	 * @param attribId is the attribute being indexed
+	 * @return the indexed id or ATTRIB_UNKNOWN
+	 * @throws DecoderException for unexpected end of stream
+	 */
+	public int getIndexedAttributeId(AttributeId attribId) throws DecoderException;
+
+	/**
 	 * Reset attribute traversal for the current element
 	 * Attributes for a single element can be traversed more than once using the getNextAttributeId
 	 * method.
