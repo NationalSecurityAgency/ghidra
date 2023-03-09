@@ -15,12 +15,11 @@
  */
 package ghidra.app.util.opinion;
 
-import java.util.*;
-
 import java.io.*;
 import java.math.BigInteger;
 import java.nio.file.AccessMode;
 import java.text.NumberFormat;
+import java.util.*;
 
 import org.apache.commons.compress.compressors.xz.XZCompressorInputStream;
 import org.apache.commons.lang3.StringUtils;
@@ -170,11 +169,10 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 			elf.getLoadAdapter().processElf(this, monitor);
 
-			processEntryPoints(monitor);
-
 			monitor.setIndeterminate(false);
 
 			processRelocations(monitor);
+			processEntryPoints(monitor);
 			processImports(monitor);
 
 			monitor.setIndeterminate(true);
@@ -680,18 +678,20 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 		// process dynamic entry points
 		createDynamicEntryPoints(ElfDynamicType.DT_INIT, null, "_INIT_", monitor);
+		createDynamicEntryPoints(ElfDynamicType.DT_FINI, null, "_FINI_", monitor);
+
 		createDynamicEntryPoints(ElfDynamicType.DT_INIT_ARRAY, ElfDynamicType.DT_INIT_ARRAYSZ,
 			"_INIT_", monitor);
 		createDynamicEntryPoints(ElfDynamicType.DT_PREINIT_ARRAY, ElfDynamicType.DT_PREINIT_ARRAYSZ,
 			"_PREINIT_", monitor);
-		createDynamicEntryPoints(ElfDynamicType.DT_FINI, null, "_FINI_", monitor);
 		createDynamicEntryPoints(ElfDynamicType.DT_FINI_ARRAY, ElfDynamicType.DT_FINI_ARRAYSZ,
 			"_FINI_", monitor);
 
 	}
 
 	private void createDynamicEntryPoints(ElfDynamicType dynamicEntryType,
-			ElfDynamicType entryArraySizeType, String baseName, TaskMonitor monitor) {
+			ElfDynamicType entryArraySizeType, String baseName, TaskMonitor monitor)
+			throws CancelledException {
 
 		ElfDynamicTable dynamicTable = elf.getDynamicTable();
 		if (dynamicTable == null) {
@@ -701,7 +701,6 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		try {
 			long entryAddrOffset =
 				elf.adjustAddressForPrelink(dynamicTable.getDynamicValue(dynamicEntryType));
-
 			if (entryArraySizeType == null) {
 				// single entry addr case
 				createEntryFunction("_" + dynamicEntryType.name, entryAddrOffset, monitor);
@@ -709,30 +708,48 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			}
 
 			// entryAddrOffset points to array of entry addresses
-			DataType dt = elf.is32Bit() ? DWordDataType.dataType : QWordDataType.dataType;
 			Address entryArrayAddr = getDefaultAddress(entryAddrOffset);
+
+			DataType dt = elf.is32Bit() ? DWordDataType.dataType : QWordDataType.dataType;
+			if (program.getRelocationTable().hasRelocation(entryArrayAddr) ||
+				(getImageBaseWordAdjustmentOffset() == 0 && elf.adjustAddressForPrelink(0) == 0)) {
+				// apply pointers if relocations applied to array entries or no scalar adjustment
+				dt = new PointerDataType(program.getDataTypeManager());
+			}
+
 			long arraySize = dynamicTable.getDynamicValue(entryArraySizeType);
 			long elementCount = arraySize / dt.getLength();
 
+			monitor.setMessage("Processing " + baseName + " array...");
+			monitor.initialize(elementCount);
 			for (int i = 0; i < elementCount; i++) {
+
+				monitor.checkCanceled();
+				monitor.incrementProgress(1);
+
 				Address addr = entryArrayAddr.add(i * dt.getLength());
 				Data data = createData(addr, dt);
 				if (data == null) {
 					break;
 				}
-				Scalar value = (Scalar) data.getValue();
-				if (value != null) {
-					if (i != 0 && value.getValue() == 0) {
+
+				Object value = data.getValue();
+				Address funcAddr;
+				if (value instanceof Address) {
+					funcAddr = (Address) value;
+				}
+				else {
+					Scalar s = (Scalar) value;
+					long funcAddrOffset = s.getValue();
+					if (funcAddrOffset == 0) {
 						continue;
 					}
-					long funcAddrOffset = elf.adjustAddressForPrelink(value.getValue());
-					Address funcAddr = createEntryFunction(baseName + i, funcAddrOffset, monitor);
-					if (funcAddr != null) {
-						data.addOperandReference(0, funcAddr, RefType.DATA, SourceType.ANALYSIS);
-					}
+					funcAddrOffset = elf.adjustAddressForPrelink(funcAddrOffset);
+					funcAddr = getDefaultAddress(funcAddrOffset);
+					data.addOperandReference(0, funcAddr, RefType.DATA, SourceType.ANALYSIS);
 				}
+				createEntryFunction(baseName + i, funcAddr, monitor);
 			}
-
 		}
 		catch (NotFoundException e) {
 			// ignore
@@ -741,23 +758,35 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	}
 
 	/**
-	 * Create an entry point function.
+	 * Attempt to create an entry point function.
 	 * Note: entries in the dynamic table appear to have any pre-link adjustment already applied.
-	 * @param name
-	 * @param entryAddr function address (adjusted for pre-linking).
-	 * @param monitor
-	 * @return function address
+	 * @param name function name
+	 * @param entryAddr function address offset (must already be adjusted for pre-linking). 
+	 * 			Any required image-base adjustment will be applied before converting to an Address.
+	 * @param monitor task monitor
+	 * @return address which corresponds to entryAddr
 	 */
 	private Address createEntryFunction(String name, long entryAddr, TaskMonitor monitor) {
-
 		entryAddr += getImageBaseWordAdjustmentOffset(); // word offset
-
 		Address entryAddress = getDefaultAddressSpace().getTruncatedAddress(entryAddr, true);
+		createEntryFunction(name, entryAddress, monitor);
+		return entryAddress;
+	}
+	
+	/**
+	 * Attempt to create an entry point function.
+	 * Note: entries in the dynamic table appear to have any pre-link adjustment already applied.
+	 * @param name function name
+	 * @param entryAddress function Address
+	 * @param monitor task monitor
+	 */
+	private void createEntryFunction(String name, Address entryAddress, TaskMonitor monitor) {
 
 		// TODO: Entry may refer to a pointer - make sure we have execute permission
+
 		MemoryBlock block = memory.getBlock(entryAddress);
 		if (block == null || !block.isExecute()) {
-			return entryAddress;
+			return; 
 		}
 
 		entryAddress = elf.getLoadAdapter().creatingFunction(this, entryAddress);
@@ -765,7 +794,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		Function function = program.getFunctionManager().getFunctionAt(entryAddress);
 		if (function != null) {
 			program.getSymbolTable().addExternalEntryPoint(entryAddress);
-			return entryAddress; // symbol-based function already created
+			return; // symbol-based function already created
 		}
 
 		try {
@@ -774,8 +803,6 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		catch (Exception e) {
 			log("Could not create symbol at entry point: " + getMessage(e));
 		}
-
-		return entryAddress;
 	}
 
 	private String getMessage(Exception e) {
