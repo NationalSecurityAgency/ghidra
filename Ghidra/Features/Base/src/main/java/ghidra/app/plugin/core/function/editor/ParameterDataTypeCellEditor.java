@@ -26,13 +26,15 @@ import javax.swing.table.TableCellEditor;
 
 import docking.DialogComponentProvider;
 import docking.widgets.DropDownSelectionTextField;
+import docking.widgets.table.FocusableEditor;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.datatype.DataTypeSelectionEditor;
 import ghidra.program.model.data.DataType;
 import ghidra.util.MessageType;
 import ghidra.util.data.DataTypeParser;
 
-class ParameterDataTypeCellEditor extends AbstractCellEditor implements TableCellEditor {
+class ParameterDataTypeCellEditor extends AbstractCellEditor
+		implements TableCellEditor, FocusableEditor {
 	private DataTypeSelectionEditor editor;
 	private DropDownSelectionTextField<DataType> textField;
 	private JButton dataTypeChooserButton;
@@ -111,6 +113,11 @@ class ParameterDataTypeCellEditor extends AbstractCellEditor implements TableCel
 		editorPanel = new JPanel(new BorderLayout());
 		editorPanel.add(textField, BorderLayout.CENTER);
 		editorPanel.add(dataTypeChooserButton, BorderLayout.EAST);
+	}
+
+	@Override
+	public void focusEditor() {
+		textField.requestFocusInWindow();
 	}
 
 	/**
