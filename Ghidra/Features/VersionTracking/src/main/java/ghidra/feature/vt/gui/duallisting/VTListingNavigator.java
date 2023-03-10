@@ -15,9 +15,6 @@
  */
 package ghidra.feature.vt.gui.duallisting;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import javax.swing.Icon;
 
 import ghidra.app.nav.*;
@@ -33,8 +30,6 @@ public class VTListingNavigator implements Navigatable {
 
 	private final ListingCodeComparisonPanel dualListingPanel;
 	private final ListingPanel listingPanel;
-	private List<NavigatableRemovalListener> listeners =
-		new ArrayList<>();
 	private long id;
 
 	public VTListingNavigator(ListingCodeComparisonPanel dualListingPanel,
@@ -47,7 +42,12 @@ public class VTListingNavigator implements Navigatable {
 
 	@Override
 	public void addNavigatableListener(NavigatableRemovalListener listener) {
-		listeners.add(listener);
+		// not used
+	}
+
+	@Override
+	public void removeNavigatableListener(NavigatableRemovalListener listener) {
+		// not used
 	}
 
 	@Override
@@ -119,11 +119,6 @@ public class VTListingNavigator implements Navigatable {
 	@Override
 	public boolean isVisible() {
 		return true;
-	}
-
-	@Override
-	public void removeNavigatableListener(NavigatableRemovalListener listener) {
-		listeners.remove(listener);
 	}
 
 	@Override
