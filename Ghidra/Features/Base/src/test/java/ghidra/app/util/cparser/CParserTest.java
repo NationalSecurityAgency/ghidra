@@ -51,6 +51,21 @@ public class CParserTest extends AbstractGenericTest {
 		DataType dt = parser.getDataTypeManager().getDataType("/int32_t");
 		assertTrue(dt != null);
 		assertTrue(dt instanceof TypeDef);
+		
+		dt = parser.parse("struct mystruct {" +
+                     "    int field1;" +
+                     "    char field2;" +
+                     " };");
+		
+		assertTrue(dt != null);
+		assertTrue(dt instanceof Structure);
+		Structure sdt = (Structure) dt;
+		DataTypeComponent comp = sdt.getComponent(0);
+		assertEquals("field1", comp.getFieldName());
+		assertEquals(comp.getDataType().getName(),"int");
+		comp = sdt.getComponent(1);
+		assertEquals("field2", comp.getFieldName());
+		assertEquals(comp.getDataType().getName(),"char");
 	}
 
 	/**
