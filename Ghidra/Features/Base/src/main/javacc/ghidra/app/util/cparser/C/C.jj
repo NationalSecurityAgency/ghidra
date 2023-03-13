@@ -307,6 +307,8 @@ public class CParser {
     private DataType addDef(Map<String, DataType> table, String name, DataType dt) {
         // System.out.println("** addDef " + name + " = " + (dt != null ? dt.getName() : " - no type -") );
 
+		lastDataType = dt;
+		
         DataType existingDT = table.get(name);
         if (existingDT != null && dt.isEquivalent(existingDT)) {
             return existingDT;
@@ -426,7 +428,7 @@ public class CParser {
 
                     hasNoComponents = (dtComp.getNumDefinedComponents() == 0 ? true : false);
 
-                    hasSameSourceArchive = dt.getSourceArchive().equals(dtMgr.getLocalSourceArchive());
+                    hasSameSourceArchive = Objects.equals(dt.getSourceArchive(), dtMgr.getLocalSourceArchive());
             }
 
             // make sure comp is a Composite, if existing dt is empty, in same category and archive
