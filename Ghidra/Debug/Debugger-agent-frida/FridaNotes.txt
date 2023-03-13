@@ -9,7 +9,7 @@ Random Notes on the Implementation of Debugger-agent-frida
 	
 Ghidra needs a dynamically-loadable version of libfrida-core.a which you can generate by something like:
 
-	cp ghidra_wrapper.c into the directory with libfrida-core.a and frida-core.h (distro or DEVKIT)
+	cp ghidra_wrapper.c into the directory with libfrida-core.a and frida-core.h (distro or DEVKIT). Do not copy the devkit into the `src/main/cpp/` directory, otherwise you will get build failures due to missing Ghidra IP headers.
 	g++ -shared ghidra_wrapper.c ./libfrida-core.a -o libfrida-core.so
 
 On macOS you will need to also link Objective-C, libresolv and the AppKit and Foundation frameworks:
