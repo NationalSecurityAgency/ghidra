@@ -237,14 +237,6 @@ class ToolServicesImpl implements ToolServices {
 	}
 
 	@Override
-	public PluginTool launchDefaultTool(DomainFile domainFile) {
-		ToolTemplate template = getDefaultToolTemplate(domainFile);
-		return defaultLaunch(template, t -> {
-			return t.acceptDomainFiles(new DomainFile[] { domainFile });
-		});
-	}
-
-	@Override
 	public PluginTool launchDefaultTool(Collection<DomainFile> domainFiles) {
 		if (CollectionUtils.isBlank(domainFiles)) {
 			throw new IllegalArgumentException("Domain files cannot be empty");
@@ -256,21 +248,17 @@ class ToolServicesImpl implements ToolServices {
 	}
 
 	@Override
-	public PluginTool launchTool(String toolName, DomainFile domainFile) {
+	public PluginTool launchTool(String toolName, Collection<DomainFile> domainFiles) {
 		ToolTemplate template = findToolChestToolTemplate(toolName);
 		if (template == null) {
 			return null;
 		}
-		Workspace workspace = toolManager.getActiveWorkspace();
-		PluginTool tool = workspace.runTool(template);
-		if (tool == null) {
-			return null;
-		}
-		tool.setVisible(true);
-		if (domainFile != null) {
-			tool.acceptDomainFiles(new DomainFile[] { domainFile });
-		}
-		return tool;
+		return defaultLaunch(template, t -> {
+			if (CollectionUtils.isBlank(domainFiles)) {
+				return true;
+			}
+			return t.acceptDomainFiles(domainFiles.toArray(DomainFile[]::new));
+		});
 	}
 
 	@Override

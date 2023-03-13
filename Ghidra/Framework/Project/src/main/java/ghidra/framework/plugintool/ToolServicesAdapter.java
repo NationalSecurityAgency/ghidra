@@ -75,17 +75,12 @@ public class ToolServicesAdapter implements ToolServices {
 	}
 
 	@Override
-	public PluginTool launchDefaultTool(DomainFile domainFile) {
-		return null;
-	}
-
-	@Override
 	public PluginTool launchDefaultTool(Collection<DomainFile> domainFile) {
 		return null;
 	}
 
 	@Override
-	public PluginTool launchTool(String toolName, DomainFile domainFile) {
+	public PluginTool launchTool(String toolName, Collection<DomainFile> domainFile) {
 		return null;
 	}
 
