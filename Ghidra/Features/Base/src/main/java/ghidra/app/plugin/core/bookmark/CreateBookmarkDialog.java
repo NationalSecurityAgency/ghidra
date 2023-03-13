@@ -70,7 +70,7 @@ public class CreateBookmarkDialog extends DialogComponentProvider {
 		this.plugin = null;
 		this.program = null;
 		this.address = null;
-
+		super.dispose();
 	}
 
 	@Override
@@ -87,7 +87,7 @@ public class CreateBookmarkDialog extends DialogComponentProvider {
 			plugin.setNote(address, cat, com);
 		}
 
-		cancelCallback();
+		close();
 	}
 
 	private JPanel buildMainPanel() {

@@ -506,8 +506,8 @@ public class ElfDefaultGotPltMarkup {
 
 	/**
 	 * Convert all symbols over a specified range to thunks to external functions. 
-	 * @param minAddress
-	 * @param maxAddress
+	 * @param minAddress range minimum address
+	 * @param maxAddress range maximum address (inclusive)
 	 * @return number of symbols converted
 	 */
 	private int convertSymbolsToExternalFunctions(Address minAddress, Address maxAddress) {

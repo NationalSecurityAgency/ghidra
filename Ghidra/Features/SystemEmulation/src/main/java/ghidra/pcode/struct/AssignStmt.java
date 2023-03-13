@@ -22,7 +22,7 @@ import ghidra.program.model.data.DataType;
  * An assignment statement
  */
 class AssignStmt extends AbstractStmt implements RValInternal, StmtWithVal {
-	private final LValInternal lhs;
+	final LValInternal lhs;
 	private final RValInternal rhs;
 	private final DataType type;
 
@@ -51,9 +51,9 @@ class AssignStmt extends AbstractStmt implements RValInternal, StmtWithVal {
 	@Override
 	protected StringTree generate(Label next, Label fall) {
 		StringTree st = new StringTree();
-		st.append(lhs.generate());
+		st.append(lhs.generate(this));
 		st.append(" = ");
-		st.append(rhs.generate());
+		st.append(rhs.generate(this));
 		st.append(";\n");
 		st.append(next.genGoto(fall));
 		return st;
@@ -65,7 +65,7 @@ class AssignStmt extends AbstractStmt implements RValInternal, StmtWithVal {
 	}
 
 	@Override
-	public String generate() {
-		return lhs.generate();
+	public StringTree generate(RValInternal parent) {
+		return lhs.generate(this);
 	}
 }

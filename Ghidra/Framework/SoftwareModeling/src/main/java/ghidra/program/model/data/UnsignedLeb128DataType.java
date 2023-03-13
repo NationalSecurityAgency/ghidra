@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.exceptionhandlers.gcc.datatype;
+package ghidra.program.model.data;
 
-import ghidra.docking.settings.Settings;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeManager;
+import ghidra.util.classfinder.ClassTranslator;
 
 /**
  * An Unsigned Little Endian Base 128 integer data type.
  */
 public class UnsignedLeb128DataType extends AbstractLeb128DataType {
+	static {
+		ClassTranslator.put(
+			"ghidra.app.plugin.exceptionhandlers.gcc.datatype.UnsignedLeb128DataType",
+			UnsignedLeb128DataType.class.getName());
+	}
 
 	/** A statically defined UnsignedLeb128DataType instance.*/
 	public final static UnsignedLeb128DataType dataType = new UnsignedLeb128DataType();
@@ -51,17 +54,7 @@ public class UnsignedLeb128DataType extends AbstractLeb128DataType {
 	}
 
 	@Override
-	public String getMnemonic(Settings settings) {
-		return name;
-	}
-
-	@Override
 	public String getDescription() {
-		return "Unsigned Dwarf LEB128-Encoded Number";
-	}
-
-	@Override
-	public String getDefaultLabelPrefix() {
-		return "uleb128";
+		return "Unsigned LEB128-Encoded Number";
 	}
 }

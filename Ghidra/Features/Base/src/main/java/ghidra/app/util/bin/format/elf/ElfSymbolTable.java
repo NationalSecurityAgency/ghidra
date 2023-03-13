@@ -21,15 +21,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.ByteArrayConverter;
 import ghidra.program.model.data.*;
-import ghidra.util.DataConverter;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
  * A container class to hold ELF symbols.
  */
-public class ElfSymbolTable implements ElfFileSection, ByteArrayConverter {
+public class ElfSymbolTable implements ElfFileSection {
 
 	private ElfStringTable stringTable;
 	private ElfSectionHeader symbolTableSection; // may be null
@@ -258,39 +256,6 @@ public class ElfSymbolTable implements ElfFileSection, ByteArrayConverter {
 		String[] files = new String[list.size()];
 		list.toArray(files);
 		return files;
-	}
-
-	/**
-	 * Adds the specified symbol into this symbol table.
-	 * @param symbol the new symbol to add
-	 */
-	public void addSymbol(ElfSymbol symbol) {
-		ElfSymbol[] tmp = new ElfSymbol[symbols.length + 1];
-		System.arraycopy(symbols, 0, tmp, 0, symbols.length);
-		tmp[tmp.length - 1] = symbol;
-		symbols = tmp;
-	}
-
-	/**
-	 * @see ghidra.app.util.bin.ByteArrayConverter#toBytes(ghidra.util.DataConverter)
-	 */
-	@Override
-	public byte[] toBytes(DataConverter dc) {
-		byte[] bytes = null;
-		int index = 0;
-		for (int i = 0; i < symbols.length; i++) {
-			byte[] symbytes = symbols[i].toBytes(dc);
-
-			//all symbols are the same size, use the first one to determine the
-			//total number of bytes
-			if (i == 0) {
-				bytes = new byte[symbols.length * symbytes.length];
-			}
-
-			System.arraycopy(symbytes, 0, bytes, index, symbytes.length);
-			index += symbytes.length;
-		}
-		return bytes;
 	}
 
 	@Override

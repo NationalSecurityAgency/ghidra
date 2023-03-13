@@ -21,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.DebuggerObjectModel;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.error.DebuggerModelTypeException;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.util.PathUtils;
@@ -39,11 +40,11 @@ public interface SpiDebuggerObjectModel extends DebuggerObjectModel {
 
 	public static CompletableFuture<Object> fetchFreshChild(TargetObject obj, String key) {
 		if (PathUtils.isIndex(key)) {
-			return obj.fetchElements(true).thenApply(elements -> {
+			return obj.fetchElements(RefreshBehavior.REFRESH_ALWAYS).thenApply(elements -> {
 				return elements.get(PathUtils.parseIndex(key));
 			});
 		}
-		return obj.fetchAttributes(true).thenApply(attributes -> {
+		return obj.fetchAttributes(RefreshBehavior.REFRESH_ALWAYS).thenApply(attributes -> {
 			return attributes.get(key);
 		});
 	}
@@ -103,7 +104,7 @@ public interface SpiDebuggerObjectModel extends DebuggerObjectModel {
 
 	@Override
 	public default CompletableFuture<? extends Map<String, ? extends TargetObject>> fetchObjectElements(
-			List<String> path, boolean refresh) {
+			List<String> path, RefreshBehavior refresh) {
 		return fetchModelObject(path).thenCompose(obj -> {
 			if (obj == null) {
 				return AsyncUtils.nil();
@@ -114,7 +115,7 @@ public interface SpiDebuggerObjectModel extends DebuggerObjectModel {
 
 	@Override
 	default CompletableFuture<? extends Map<String, ?>> fetchObjectAttributes(List<String> path,
-			boolean refresh) {
+			RefreshBehavior refresh) {
 		return fetchModelObject(path).thenCompose(obj -> {
 			if (obj == null) {
 				return AsyncUtils.nil();

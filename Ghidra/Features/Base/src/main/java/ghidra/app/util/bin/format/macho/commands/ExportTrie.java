@@ -15,15 +15,17 @@
  */
 package ghidra.app.util.bin.format.macho.commands;
 
-import static ghidra.app.util.bin.format.macho.commands.DyldInfoCommandConstants.*;
+import static ghidra.app.util.bin.format.macho.commands.DyldInfoCommandConstants.EXPORT_SYMBOL_FLAGS_REEXPORT;
+import static ghidra.app.util.bin.format.macho.commands.DyldInfoCommandConstants.EXPORT_SYMBOL_FLAGS_STUB_AND_RESOLVER;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.dwarf4.LEB128;
+import ghidra.program.model.data.LEB128;
 
 /**
  * Mach-O export trie
@@ -105,31 +107,31 @@ public class ExportTrie {
 	private LinkedList<Node> parseNode(String name, int offset) throws IOException {
 		LinkedList<Node> children = new LinkedList<>();
 		reader.setPointerIndex(base + offset);
-		int terminalSize = LEB128.readAsUInt32(reader);
+		int terminalSize = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 		long childrenIndex = reader.getPointerIndex() + terminalSize;
 		if (terminalSize != 0) {
-			long flags = LEB128.readAsLong(reader, false);
+			long flags = reader.readNext(LEB128::unsigned);
 			long address = 0;
 			long other = 0;
 			String importName = null;
 			if ((flags & EXPORT_SYMBOL_FLAGS_REEXPORT) != 0) {
-				other = LEB128.readAsLong(reader, false); // dylib ordinal
+				other = reader.readNext(LEB128::unsigned); // dylib ordinal
 				importName = reader.readNextAsciiString();
 			}
 			else {
-				address = LEB128.readAsLong(reader, false);
+				address = reader.readNext(LEB128::unsigned);
 				if ((flags & EXPORT_SYMBOL_FLAGS_STUB_AND_RESOLVER) != 0) {
-					other = LEB128.readAsLong(reader, false);
+					other = reader.readNext(LEB128::unsigned);
 				}
 			}
 			ExportEntry export = new ExportEntry(name, address, flags, other, importName);
 			exports.add(export);
 		}
 		reader.setPointerIndex(childrenIndex);
-		int numChildren = LEB128.readAsUInt32(reader);
+		int numChildren = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 		for (int i = 0; i < numChildren; i++) {
 			String childName = reader.readNextAsciiString();
-			int childOffset = LEB128.readAsUInt32(reader);
+			int childOffset = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 			children.add(new Node(childName, childOffset));
 		}
 		return children;

@@ -164,23 +164,15 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 			}
 
 			for (FatArch architecture : architectures) {
-
-				// Note: The creation of the byte provider that we pass to the importer deserves a
-				// bit of explanation:
-				//
-				// At this point in the process we have a FatArch, which provides access to the 
-				// underlying bytes for the Macho in the form of an input stream. From that we could
-				// create a byte provider. That doesn't work however. Here's why:
-				//
-				// The underlying input stream in the FatArch has already been parsed and the first
-				// 4 (magic) bytes read. If we create a provider from that stream and pass it to 
-				// the parent import method, we'll have a problem because that parent method will 
-				// try to read those first 4 magic bytes again, which violates the contract of the 
-				// input stream provider (you can't read the same bytes over again) and will throw 
-				// an exception. To avoid that, just create the provider from the original file 
-				// provider, and not from the FatArch input stream. 
-				ByteProvider bp = new ByteProviderWrapper(provider, architecture.getOffset(), architecture.getSize());
-				LoadSpec libLoadSpec = matchSupportedLoadSpec(loadSpec, provider);
+				ByteProvider bp = new ByteProviderWrapper(provider, architecture.getOffset(),
+					architecture.getSize()) {
+					
+					@Override // Ensure the parent provider gets closed when the wrapper does
+					public void close() throws IOException {
+						super.provider.close();
+					}
+				};
+				LoadSpec libLoadSpec = matchSupportedLoadSpec(loadSpec, bp);
 				if (libLoadSpec != null) {
 					return bp;
 				}

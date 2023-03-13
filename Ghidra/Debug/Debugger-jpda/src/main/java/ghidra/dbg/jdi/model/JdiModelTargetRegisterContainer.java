@@ -20,6 +20,7 @@ import java.util.concurrent.CompletableFuture;
 
 import com.sun.jdi.Location;
 
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.TargetRegisterBank;
 import ghidra.dbg.target.TargetRegisterContainer;
 import ghidra.dbg.target.schema.*;
@@ -136,7 +137,7 @@ public class JdiModelTargetRegisterContainer extends JdiModelTargetObjectImpl
 	}
 
 	protected CompletableFuture<?> update() {
-		return fetchElements(true).exceptionally(e -> {
+		return fetchElements(RefreshBehavior.REFRESH_ALWAYS).exceptionally(e -> {
 			Msg.error(this, "Could not update registers " + this + " on STOPPED");
 			return null;
 		});

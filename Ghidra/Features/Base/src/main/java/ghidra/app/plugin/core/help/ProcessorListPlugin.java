@@ -95,11 +95,11 @@ public class ProcessorListPlugin extends Plugin implements ApplicationLevelPlugi
 		tool.addAction(processorListAction);
 	}
 
-	private synchronized void dialogClosed() {
+	private void dialogClosed() {
 		dialogProvider = null;
 	}
 
-	private synchronized void showProcessorList() {
+	private void showProcessorList() {
 		if (dialogProvider == null) {
 			dialogProvider = new ProcessorListDialogProvider();
 		}
@@ -157,7 +157,7 @@ public class ProcessorListPlugin extends Plugin implements ApplicationLevelPlugi
 		return strBuilder.toString();
 	}
 
-	class ProcessorListDialogProvider extends ReusableDialogComponentProvider {
+	private class ProcessorListDialogProvider extends ReusableDialogComponentProvider {
 
 		ProcessorListDialogProvider() {
 			super("Installed Processor Modules", false, false, true, false);
@@ -165,7 +165,6 @@ public class ProcessorListPlugin extends Plugin implements ApplicationLevelPlugi
 				new ProcessorListTableProvider(tool, getName());
 			setRememberLocation(true);
 			addWorkPanel(tableProvider.getComponent());
-//			addWorkPanel(buildList());
 
 			setHelpLocation(new HelpLocation(HelpTopics.ABOUT, "ProcessorList"));
 

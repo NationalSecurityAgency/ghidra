@@ -15,13 +15,12 @@
  */
 package ghidra.file.formats.android.dex.format;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.dwarf4.LEB128;
+import java.io.IOException;
+
+import ghidra.app.util.bin.*;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -32,7 +31,7 @@ public class EncodedCatchHandlerList implements StructConverter {
 	private List<EncodedCatchHandler> handlers = new ArrayList<>();
 
 	public EncodedCatchHandlerList(BinaryReader reader) throws IOException {
-		LEB128 leb128 = LEB128.readUnsignedValue(reader);
+		LEB128Info leb128 = reader.readNext(LEB128Info::unsigned);
 		size = leb128.asUInt32();
 		sizeLength = leb128.getLength();
 
@@ -57,7 +56,7 @@ public class EncodedCatchHandlerList implements StructConverter {
 //		int unique = 0;
 		String name = "encoded_catch_handler_list" + "_" + sizeLength;
 		Structure structure = new StructureDataType(name, 0);
-		structure.add(new ArrayDataType(BYTE, sizeLength, BYTE.getLength()), "size", null);
+		structure.add(ULEB128, sizeLength, "size", null);
 //		int index = 0;
 //		for ( EncodedCatchHandler handler : handlers ) {
 //			DataType dataType = handler.toDataType( );

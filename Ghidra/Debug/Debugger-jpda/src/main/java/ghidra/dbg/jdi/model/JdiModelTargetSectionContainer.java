@@ -21,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 import com.sun.jdi.Method;
 
 import ghidra.async.AsyncFence;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.TargetMemory;
 import ghidra.dbg.target.schema.*;
 import ghidra.program.model.address.Address;
@@ -56,7 +57,7 @@ public class JdiModelTargetSectionContainer extends JdiModelTargetObjectImpl
 	}
 
 	@Override
-	protected CompletableFuture<Void> requestAttributes(boolean refresh) {
+	protected CompletableFuture<Void> requestAttributes(RefreshBehavior refresh) {
 
 		constantPool = new JdiModelTargetConstantPool(this, reftype.reftype.constantPool(), false);
 		changeAttributes(List.of(), List.of( //
@@ -67,7 +68,7 @@ public class JdiModelTargetSectionContainer extends JdiModelTargetObjectImpl
 	}
 
 	@Override
-	protected CompletableFuture<Void> requestElements(boolean refresh) {
+	protected CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		updateUsingSections(reftype.reftype.methods());
 		return CompletableFuture.completedFuture(null);
 	}

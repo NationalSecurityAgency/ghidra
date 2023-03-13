@@ -67,12 +67,35 @@ public class BinaryReader {
 		 * <p>
 		 * When reading from the BinaryReader, use "readNext" methods to consume the location where
 		 * the object was located.
+		 * <p>
+		 * Implementations of this method should not return {@code null}, instead they should
+		 * throw an IOException.
 		 *  
 		 * @param reader {@link BinaryReader}
 		 * @return new object
 		 * @throws IOException if error reading
 		 */
 		T get(BinaryReader reader) throws IOException;
+	}
+
+	/**
+	 * Reads and returns an object from the current position in the specified input stream.
+	 * <p>
+	 * 
+	 * @param <T> the type of object that will be returned
+	 */
+	public interface InputStreamReaderFunction<T> {
+		/**
+		 * Reads from the specified input stream and returns a new object instance.
+		 * <p>
+		 * Implementations of this method should not return {@code null}, instead they should
+		 * throw an IOException.
+		 *  
+		 * @param is an {@link InputStream} view of the BinaryReader
+		 * @return new object
+		 * @throws IOException if error reading
+		 */
+		T get(InputStream is) throws IOException;
 	}
 
 	private final ByteProvider provider;
@@ -304,6 +327,18 @@ public class BinaryReader {
 	 */
 	public long getPointerIndex() {
 		return currentIndex;
+	}
+
+	/**
+	 * Returns an InputStream that is a live view of the BinaryReader's position.
+	 * <p>
+	 * Any bytes read with the stream will affect the current position of the BinaryReader, and
+	 * any change to the BinaryReader's position will affect the next value the inputstream returns.
+	 *  
+	 * @return {@link InputStream}
+	 */
+	public InputStream getInputStream() {
+		return new BinaryReaderInputStream();
 	}
 
 	/**
@@ -1035,6 +1070,22 @@ public class BinaryReader {
 	}
 
 	/**
+	 * Reads a variable length / unknown format integer from the current position, using the
+	 * supplied reader function, returning it (if it fits) as a 32 bit java integer.
+	 * 
+	 * @param func {@link InputStreamReaderFunction}
+	 * @return signed int32
+	 * @throws IOException if error reading or if the value does not fit into a 32 bit java int
+	 * @throws InvalidDataException if value can not be held in a java integer
+	 */
+	public int readNextVarInt(InputStreamReaderFunction<Long> func)
+			throws IOException, InvalidDataException {
+		long value = func.get(getInputStream());
+		ensureInt32s(value);
+		return (int) value;
+	}
+
+	/**
 	 * Reads a variable length / unknown format unsigned integer from the current position, using
 	 * the supplied reader function, returning it (if it fits) as a 32 bit java integer.
 	 * 
@@ -1046,6 +1097,22 @@ public class BinaryReader {
 	public int readNextUnsignedVarIntExact(ReaderFunction<Long> func)
 			throws IOException, InvalidDataException {
 		long value = func.get(this);
+		ensureInt32u(value);
+		return (int) value;
+	}
+
+	/**
+	 * Reads a variable length / unknown format unsigned integer from the current position, using
+	 * the supplied reader function, returning it (if it fits) as a 32 bit java integer.
+	 * 
+	 * @param func {@link InputStreamReaderFunction}
+	 * @return unsigned int32
+	 * @throws IOException if error reading data
+	 * @throws InvalidDataException if value can not be held in a java integer
+	 */
+	public int readNextUnsignedVarIntExact(InputStreamReaderFunction<Long> func)
+			throws IOException, InvalidDataException {
+		long value = func.get(getInputStream());
 		ensureInt32u(value);
 		return (int) value;
 	}
@@ -1063,12 +1130,25 @@ public class BinaryReader {
 		return obj;
 	}
 
+	/**
+	 * Reads an object from the current position, using the supplied reader function.
+	 * 
+	 * @param <T> type of the object that will be returned
+	 * @param func {@link InputStreamReaderFunction} that will read and return an object
+	 * @return new object of type T
+	 * @throws IOException if error reading
+	 */
+	public <T> T readNext(InputStreamReaderFunction<T> func) throws IOException {
+		T obj = func.get(getInputStream());
+		return obj;
+	}
+
 	//-------------------------------------------------------------------------------------
 	private static void ensureInt32u(long value) throws InvalidDataException {
 		if (value < 0 || value > Integer.MAX_VALUE) {
 			throw new InvalidDataException(
 				"Value out of range for positive java 32 bit unsigned int: %s"
-					.formatted(Long.toUnsignedString(value)));
+						.formatted(Long.toUnsignedString(value)));
 		}
 	}
 
@@ -1076,6 +1156,19 @@ public class BinaryReader {
 		if (value < Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
 			throw new InvalidDataException(
 				"Value out of range for java 32 bit signed int: %d".formatted(value));
+		}
+	}
+
+	/**
+	 * Adapter between this BinaryReader and a InputStream.
+	 */
+	private class BinaryReaderInputStream extends InputStream {
+		@Override
+		public int read() throws IOException {
+			if (!hasNext()) {
+				return -1;
+			}
+			return readNextUnsignedByte();
 		}
 	}
 

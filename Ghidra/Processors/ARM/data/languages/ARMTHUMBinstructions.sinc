@@ -883,7 +883,7 @@ thsdec4: thsdec5					is thc0404=0 & thsdec5				{ }
 thsdec3: r3							is thc0303=1 & r3 & thc0415=0		{ * mult_addr=r3; mult_addr = mult_addr - 4; }
 thsdec3: r3,thsdec4					is thc0303=1 & thsdec4 & r3					{ * mult_addr=r3; mult_addr = mult_addr - 4; }
 thsdec3: thsdec4					is thc0303=0 & thsdec4				{ }
-thsdec2: r2							is thc0202=1 & r2 & thc0415=0		{ * mult_addr=r2; mult_addr = mult_addr - 4; }
+thsdec2: r2							is thc0202=1 & r2 & thc0315=0		{ * mult_addr=r2; mult_addr = mult_addr - 4; }
 thsdec2: r2,thsdec3					is thc0202=1 & thsdec3 & r2					{ * mult_addr=r2; mult_addr = mult_addr - 4; }
 thsdec2: thsdec3					is thc0202=0 & thsdec3				{ }
 thsdec1: r1							is thc0101=1  & r1 & thc0215=0		{ * mult_addr=r1; mult_addr = mult_addr - 4; }

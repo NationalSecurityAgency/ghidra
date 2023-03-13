@@ -25,6 +25,7 @@ import agent.frida.manager.FridaSection;
 import agent.frida.model.iface2.FridaModelTargetModule;
 import agent.frida.model.iface2.FridaModelTargetModuleSection;
 import agent.frida.model.iface2.FridaModelTargetModuleSectionContainer;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.target.schema.TargetElementType;
@@ -47,11 +48,11 @@ public class FridaModelTargetModuleSectionContainerImpl extends FridaModelTarget
 	public FridaModelTargetModuleSectionContainerImpl(FridaModelTargetModule module) {
 		super(module.getModel(), module, "Sections", "ModuleSections");
 		this.module = module;
-		requestElements(false);
+		requestElements(RefreshBehavior.REFRESH_NEVER);
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return getManager().listModuleSections(module.getModule()).thenAccept(byStart -> {
 			List<TargetObject> sections;
 			synchronized (this) {

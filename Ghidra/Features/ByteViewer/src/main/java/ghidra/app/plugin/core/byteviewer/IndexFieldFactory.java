@@ -73,7 +73,7 @@ class IndexFieldFactory {
 				}
 			}
 			if (info == null) {
-				if (indexMap.showSeparator(index)) {
+				if (indexMap.isBlockSeparatorIndex(index)) {
 					SimpleTextField sf =
 						new SimpleTextField(noValueStr, fm, startX, width, false, highlightFactory);
 

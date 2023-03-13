@@ -23,6 +23,7 @@ import agent.frida.frida.FridaModuleInfo;
 import agent.frida.manager.*;
 import agent.frida.model.iface2.*;
 import agent.frida.model.methods.*;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
@@ -66,7 +67,7 @@ public class FridaModelTargetModuleContainerImpl extends FridaModelTargetObjectI
 		), "Initialized");
 
 		getManager().addEventsListener(this);
-		requestElements(true);
+		requestElements(RefreshBehavior.REFRESH_ALWAYS);
 	}
 
 	@Override
@@ -130,8 +131,8 @@ public class FridaModelTargetModuleContainerImpl extends FridaModelTargetObjectI
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
-		if (refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
+		if (refresh.equals(RefreshBehavior.REFRESH_ALWAYS)) {
 			broadcast().invalidateCacheRequested(this);
 		}
 		return getManager().listModules(session.getProcess());

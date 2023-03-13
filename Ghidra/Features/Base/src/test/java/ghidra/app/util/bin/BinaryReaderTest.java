@@ -274,6 +274,23 @@ public class BinaryReaderTest {
 		}
 	}
 
+	@Test
+	public void testUint32Max() throws IOException {
+		BinaryReader br = br(true, 0xff, 0xff, 0xff, 0x7f, 0xff);
+		int value = br.readNextUnsignedIntExact();
+		Assert.assertEquals(Integer.MAX_VALUE, value);
+	}
+
+	@Test(expected = IOException.class)
+	public void testUint32Overflow() throws IOException {
+		// Test uint32 max overflow with 0xff_ff_ff_ff
+		BinaryReader br = br(true, 0xff, 0xff, 0xff, 0xff, 0xff);
+		int value = br.readNextUnsignedIntExact();
+		Assert.fail(
+			"Should not be able to read a value that is larger than what can fit in java 32 bit int: " +
+				Integer.toUnsignedString(value));
+	}
+
 	// ------------------------------------------------------------------------------------
 	// UTF-16 Unicode String
 	// ------------------------------------------------------------------------------------
@@ -546,4 +563,5 @@ public class BinaryReaderTest {
 		BinaryReader br = br(true, -22, -87, 'A', 0);
 		assertEquals("\ufffdA" /* unicode replacement char, 'A'*/, br.readUtf8String(0));
 	}
+
 }

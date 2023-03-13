@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import com.sun.jdi.Field;
 
 import ghidra.async.AsyncFence;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
 
@@ -66,7 +67,7 @@ public class JdiModelTargetFieldContainer extends JdiModelTargetObjectImpl {
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		Map<String, Field> map = new HashMap<>();
 		List<Field> fields = useAll ? reftype.reftype.allFields() : reftype.reftype.fields();
 		for (Field f : fields) {

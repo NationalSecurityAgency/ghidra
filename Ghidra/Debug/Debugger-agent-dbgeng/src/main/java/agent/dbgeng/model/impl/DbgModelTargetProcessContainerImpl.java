@@ -26,6 +26,7 @@ import agent.dbgeng.manager.breakpoint.DbgBreakpointInfo;
 import agent.dbgeng.model.iface1.DbgModelTargetConfigurable;
 import agent.dbgeng.model.iface2.*;
 import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.error.DebuggerIllegalArgumentException;
 import ghidra.dbg.target.TargetConfigurable;
 import ghidra.dbg.target.TargetObject;
@@ -103,7 +104,7 @@ public class DbgModelTargetProcessContainerImpl extends DbgModelTargetObjectImpl
 		DbgModelTargetProcess process = getTargetProcess(proc);
 		DbgModelTargetMemoryContainer memory = process.getMemory();
 		if (memory != null) {
-			memory.requestElements(true);
+			memory.requestElements(RefreshBehavior.REFRESH_ALWAYS);
 		}
 	}
 
@@ -116,7 +117,7 @@ public class DbgModelTargetProcessContainerImpl extends DbgModelTargetObjectImpl
 		}
 		DbgModelTargetMemoryContainer memory = process.getMemory();
 		if (memory != null) {
-			memory.requestElements(true);
+			memory.requestElements(RefreshBehavior.REFRESH_ALWAYS);
 		}
 	}
 
@@ -126,12 +127,12 @@ public class DbgModelTargetProcessContainerImpl extends DbgModelTargetObjectImpl
 		process.getModules().libraryUnloaded(info.toString());
 		DbgModelTargetMemoryContainer memory = process.getMemory();
 		if (memory != null) {
-			memory.requestElements(false);
+			memory.requestElements(RefreshBehavior.REFRESH_NEVER);
 		}
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return getManager().listProcesses().thenAccept(byIID -> {
 			List<TargetObject> processes;
 			synchronized (this) {

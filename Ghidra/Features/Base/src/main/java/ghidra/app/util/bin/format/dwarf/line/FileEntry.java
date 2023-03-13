@@ -18,7 +18,7 @@ package ghidra.app.util.bin.format.dwarf.line;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.dwarf4.LEB128;
+import ghidra.program.model.data.LEB128;
 
 public class FileEntry {
 	private String   fileName;
@@ -31,9 +31,9 @@ public class FileEntry {
 		if (fileName.length() == 0) {
 			return;
 		}
-		directoryIndex = LEB128.readAsLong(reader, false);
-		lastModifiedTime = LEB128.readAsLong(reader, false);
-		fileLengthInBytes = LEB128.readAsLong(reader, false);
+		directoryIndex = reader.readNext(LEB128::unsigned);
+		lastModifiedTime = reader.readNext(LEB128::unsigned);
+		fileLengthInBytes = reader.readNext(LEB128::unsigned);
 	}
 
 	public String getFileName() {

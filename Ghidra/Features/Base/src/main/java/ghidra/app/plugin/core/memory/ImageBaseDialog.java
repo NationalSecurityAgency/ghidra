@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,13 @@
  */
 package ghidra.app.plugin.core.memory;
 
+import java.awt.Dimension;
+
+import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+
+import docking.DialogComponentProvider;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.model.DomainObject;
@@ -24,19 +30,9 @@ import ghidra.framework.store.LockException;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
-import ghidra.util.Msg;
 import ghidra.util.HelpLocation;
+import ghidra.util.Msg;
 import ghidra.util.layout.MiddleLayout;
-
-import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-
-import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-
-import docking.DialogComponentProvider;
 
 class ImageBaseDialog extends DialogComponentProvider {
 	private JTextField textField;
@@ -44,14 +40,14 @@ class ImageBaseDialog extends DialogComponentProvider {
 	private Address currentAddr;
 	private Program program;
 	private PluginTool tool;
-	
+
 	ImageBaseDialog(PluginTool tool, Program program, Address currentAddr) {
 		super("Base Image Address", true, true, true, false);
 		this.program = program;
 		this.currentAddr = currentAddr;
 		this.tool = tool;
 		addr = currentAddr;
-		
+
 		addWorkPanel(createWorkPanel());
 		addOKButton();
 		addCancelButton();
@@ -60,48 +56,54 @@ class ImageBaseDialog extends DialogComponentProvider {
 		setHelpLocation(new HelpLocation(HelpTopics.MEMORY_MAP, "Set Image Base"));
 		setFocusComponent(textField);
 	}
-	
+
+	@Override
 	public void dispose() {
-		super.close();
+		super.dispose();
 		tool = null;
 		program = null;
 	}
-		
+
 	private JComponent createWorkPanel() {
 		JPanel panel = new JPanel(new MiddleLayout());
 		textField = new JTextField(20);
 		textField.setText(currentAddr.toString());
 		textField.selectAll();
-		textField.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				if (addr != null) {
-					okCallback();
-				}
+		textField.addActionListener(e -> {
+			if (addr != null) {
+				okCallback();
 			}
 		});
 		panel.add(textField);
-		
+
 		textField.getDocument().addDocumentListener(new DocumentListener() {
+			@Override
 			public void changedUpdate(DocumentEvent e) {
 				updateAddress();
 			}
+
+			@Override
 			public void insertUpdate(DocumentEvent e) {
 				updateAddress();
 			}
+
+			@Override
 			public void removeUpdate(DocumentEvent e) {
 				updateAddress();
 			}
 		});
 		return panel;
 	}
-	
+
 	private void updateAddress() {
 		clearStatusText();
 		String addrString = textField.getText();
 		addr = null;
 		try {
 			addr = program.getAddressFactory().getDefaultAddressSpace().getAddress(addrString);
-		} catch (AddressFormatException e) {
+		}
+		catch (AddressFormatException e) {
+			// handled below
 		}
 		if (addr == null) {
 			setStatusText("Invalid Address");
@@ -109,36 +111,36 @@ class ImageBaseDialog extends DialogComponentProvider {
 		setOkEnabled(addr != null);
 	}
 
-	/**
-	 * @see ghidra.util.bean.GhidraDialog#okCallback()
-	 */
 	@Override
-    protected void okCallback() {
+	protected void okCallback() {
 		if (addr != null && !addr.equals(currentAddr)) {
-			Msg.info(this, "old base = "+program.getImageBase());
+			Msg.info(this, "old base = " + program.getImageBase());
 			Command cmd = new SetBaseCommand(addr);
 			if (!tool.execute(cmd, program)) {
 				setStatusText(cmd.getStatusMsg());
 				return;
 			}
-			Msg.info(this, "new base = "+((ProgramDB)program).getImageBase());
+			Msg.info(this, "new base = " + ((ProgramDB) program).getImageBase());
 		}
 		close();
 	}
-	
+
 }
+
 class SetBaseCommand implements Command {
 	private Address addr;
 	private String msg;
-	
+
 	SetBaseCommand(Address addr) {
 		this.addr = addr;
 	}
+
 	/**
 	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
 	 */
+	@Override
 	public boolean applyTo(DomainObject obj) {
-		ProgramDB p = (ProgramDB)obj;
+		ProgramDB p = (ProgramDB) obj;
 		try {
 			p.setImageBase(addr, true);
 		}
@@ -146,11 +148,12 @@ class SetBaseCommand implements Command {
 			msg = e.getMessage();
 			return false;
 		}
-		catch(AddressOverflowException e) {
-			msg = "Image base of "+addr.toString()+ " not allowed; change causes " + e.getMessage();
+		catch (AddressOverflowException e) {
+			msg = "Image base of " + addr.toString() + " not allowed; change causes " +
+				e.getMessage();
 			return false;
 		}
-		catch(LockException e) {
+		catch (LockException e) {
 			msg = "Must have exclusive checkout to set the image base";
 			return false;
 		}
@@ -160,6 +163,7 @@ class SetBaseCommand implements Command {
 	/**
 	 * @see ghidra.framework.cmd.Command#getStatusMsg()
 	 */
+	@Override
 	public String getStatusMsg() {
 		return msg;
 	}
@@ -167,6 +171,7 @@ class SetBaseCommand implements Command {
 	/**
 	 * @see ghidra.framework.cmd.Command#getName()
 	 */
+	@Override
 	public String getName() {
 		return "Set Image Base";
 	}

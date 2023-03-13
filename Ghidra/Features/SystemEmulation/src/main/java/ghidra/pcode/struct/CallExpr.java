@@ -64,8 +64,21 @@ public class CallExpr extends Expr {
 	}
 
 	@Override
-	public String generate() {
-		return userop.getName() + "(" +
-			args.stream().map(a -> a.generate()).collect(Collectors.joining(",")) + ")";
+	public StringTree generate(RValInternal parent) {
+		StringTree st = new StringTree();
+		st.append(userop.getName());
+		st.append("(");
+		boolean first = false;
+		for (RValInternal a : args) {
+			if (!first) {
+				first = true;
+			}
+			else {
+				st.append(",");
+			}
+			st.append(a.generate(this));
+		}
+		st.append(")");
+		return st;
 	}
 }

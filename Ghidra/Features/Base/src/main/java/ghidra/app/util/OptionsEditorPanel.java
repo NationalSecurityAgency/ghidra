@@ -271,7 +271,8 @@ public class OptionsEditorPanel extends JPanel {
 		button.addActionListener(e -> {
 			DataTreeDialog dataTreeDialog =
 				new DataTreeDialog(this, "Choose a project folder", DataTreeDialog.CHOOSE_FOLDER);
-			dataTreeDialog.setSelectedFolder(project.getProjectData().getFolder(lastFolderPath));
+			String folderPath = lastFolderPath.isBlank() ? "/" : lastFolderPath;
+			dataTreeDialog.setSelectedFolder(project.getProjectData().getFolder(folderPath));
 			dataTreeDialog.showComponent();
 			DomainFolder folder = dataTreeDialog.getDomainFolder();
 			if (folder != null) {

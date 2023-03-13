@@ -52,7 +52,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 
 	protected DecoratorPanel decorationComponent;
 	private WeakSet<NavigatableRemovalListener> navigationListeners =
-		WeakDataStructureFactory.createSingleThreadAccessWeakSet();
+		WeakDataStructureFactory.createCopyOnWriteWeakSet();
 
 	private CloneByteViewerAction cloneByteViewerAction;
 
@@ -316,7 +316,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 		if (blocks != null && blockNumber >= 0 && blockNumber < blocks.length) {
 			ByteViewerState view = new ByteViewerState(blockSet,
 				new ByteBlockInfo(blocks[blockNumber], blockOffset, column), vp);
-			panel.returnToView(view);
+			panel.restoreView(view);
 		}
 
 	}
@@ -564,9 +564,9 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 		}
 	}
 
-	protected ByteBlockChangeManager newByteBlockChangeManager(ProgramByteBlockSet blockSet,
+	protected ByteBlockChangeManager newByteBlockChangeManager(ProgramByteBlockSet blocks,
 			ByteBlockChangeManager bbcm) {
-		return new ByteBlockChangeManager(blockSet, bbcm);
+		return new ByteBlockChangeManager(blocks, bbcm);
 	}
 
 	protected ProgramByteBlockSet newByteBlockSet(ByteBlockChangeManager changeManager) {
@@ -627,7 +627,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 		if (blocks != null && blockNumber >= 0 && blockNumber < blocks.length) {
 			ByteViewerState view = new ByteViewerState(blockSet,
 				new ByteBlockInfo(blocks[blockNumber], blockOffset, column), vp);
-			panel.returnToView(view);
+			panel.restoreView(view);
 		}
 	}
 

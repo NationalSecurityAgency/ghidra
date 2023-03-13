@@ -245,7 +245,7 @@ public class ElfDynamicType {
 	/**
 	 * Add the specified dynamic entry type to the specified map.
 	 * @param type dynamic entry type
-	 * @param dynamicTypeMap
+	 * @param dynamicTypeMap map of dynamic types
 	 * @throws DuplicateNameException if new type name already defined within
 	 * the specified map
 	 */

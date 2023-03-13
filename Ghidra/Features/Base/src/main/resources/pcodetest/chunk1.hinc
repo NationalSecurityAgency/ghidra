@@ -136,7 +136,8 @@
   <DIV ID="topLeftTable" STYLE="position: absolute; top: 0; left: 0;">
   <TABLE ID="headerTable1" BORDER=1 CELLSPACING=0 CELLPADDING=0 style="height: 100; cursor: pointer;" onclick="toggleHeaderHeight()" onmouseover="mouseOverHeader()" onmouseout="mouseOutHeader()">
   <TR>
-    <TD CLASS="TestNameHead"><DIV STYLE="position:absolute; left: 8px; top: 5px; ">P-Code Test Results</DIV><DIV STYLE="position:absolute; left: 140px; bottom: 5px; "><font color="green" size="2">Pass</font>/<font color="red" size="2">Fail</font>/<font color="orange" size="2">CallOther</font></DIV></TD>
+    <TD CLASS="TestNameHead"><DIV STYLE="position:absolute; left: 8px; top: 5px; ">P-Code Test Results</DIV><DIV STYLE="position:absolute; left: 140px; bottom: 5px; ">
+      <font color="green" size="2">Pass</font>/<font color="gray" size="2">Ignore</font>/<font color="red" size="2">Fail</font>/<font color="orange" size="2">CallOther</font></DIV></TD>
     <TD CLASS="DateTimeHead" ALIGN="center" VALIGN="bottom"><DIV CLASS="r90">DATE/TIME</DIV></TD>
     <TD CLASS="ResultSummaryHead" ALIGN="center" VALIGN="bottom"><DIV CLASS="r90">SUMMARY</DIV></TD>
   </TR>

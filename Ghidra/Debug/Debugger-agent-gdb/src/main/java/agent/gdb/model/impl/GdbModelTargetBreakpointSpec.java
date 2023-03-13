@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 
 import agent.gdb.manager.breakpoint.*;
 import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.TargetBreakpointSpec;
 import ghidra.dbg.target.TargetBreakpointSpecContainer.TargetBreakpointKindSet;
@@ -134,8 +135,8 @@ public class GdbModelTargetBreakpointSpec extends
 		actions.remove(action);
 	}
 
-	protected CompletableFuture<GdbBreakpointInfo> getInfo(boolean refresh) {
-		if (!refresh) {
+	protected CompletableFuture<GdbBreakpointInfo> getInfo(RefreshBehavior refresh) {
+		if (!refresh.equals(RefreshBehavior.REFRESH_ALWAYS)) {
 			return CompletableFuture.completedFuture(impl.gdb.getKnownBreakpoints().get(number));
 		}
 		return impl.gdb.listBreakpoints()
@@ -143,7 +144,7 @@ public class GdbModelTargetBreakpointSpec extends
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return getInfo(refresh).thenCompose(i -> {
 			return updateInfo(info, i, "Refreshed");
 		});

@@ -118,8 +118,13 @@ public class ParamListStandard implements ParamList {
 			VariableStorage store;
 			try {
 				if (res.space.getType() == AddressSpace.TYPE_JOIN) {
-					Varnode[] pieces = element.getJoinRecord();
-					store = new DynamicVariableStorage(program, false, pieces);
+					Varnode[] pieces = element.getJoinPieces(sz);
+					if (pieces != null) {
+						store = new DynamicVariableStorage(program, false, pieces);
+					}
+					else {
+						store = DynamicVariableStorage.getUnassignedDynamicStorage(false);
+					}
 				}
 				else {
 					Address addr = res.space.getAddress(res.offset);

@@ -30,6 +30,7 @@ import agent.gdb.manager.impl.cmd.GdbStateChangeRecord;
 import generic.ULongSpan;
 import ghidra.async.AsyncFence;
 import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.error.DebuggerMemoryAccessException;
 import ghidra.dbg.target.TargetMemory;
@@ -118,7 +119,7 @@ public class GdbModelTargetProcessMemory
 	}
 
 	@Override
-	protected CompletableFuture<Void> requestElements(boolean refresh) {
+	protected CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		// Can't use refresh getKnownMappings is only populated by listMappings
 		return doRefresh();
 	}

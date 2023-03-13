@@ -73,7 +73,7 @@ public class EditReferenceDialog extends ReusableDialogComponentProvider {
 
 	@Override
 	public void dispose() {
-		close();
+		super.dispose();
 		cleanup();
 	}
 

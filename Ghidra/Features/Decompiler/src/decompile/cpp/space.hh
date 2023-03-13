@@ -163,6 +163,7 @@ public:
   virtual const VarnodeData &getSpacebaseFull(int4 i) const;	///< Return original spacebase register before truncation
   virtual bool stackGrowsNegative(void) const;		///< Return \b true if a stack in this space grows negative
   virtual AddrSpace *getContain(void) const;  ///< Return this space's containing space (if any)
+  virtual int4 overlapJoin(uintb offset,int4 size,AddrSpace *pointSpace,uintb pointOff,int4 pointSkip) const;
   virtual void encodeAttributes(Encoder &encoder,uintb offset) const;  ///< Encode address attributes to a stream
   virtual void encodeAttributes(Encoder &encoder,uintb offset,int4 size) const;   ///< Encode an address and size attributes to a stream
   virtual uintb decodeAttributes(Decoder &decoder,uint4 &size) const;   ///< Recover an offset and size
@@ -193,6 +194,7 @@ public:
 class ConstantSpace : public AddrSpace {
 public:
   ConstantSpace(AddrSpaceManager *m,const Translate *t); ///< Only constructor
+  virtual int4 overlapJoin(uintb offset,int4 size,AddrSpace *pointSpace,uintb pointOff,int4 pointSkip) const;
   virtual void printRaw(ostream &s,uintb offset) const;
   virtual void saveXml(ostream &s) const;
   virtual void decode(Decoder &decoder);
@@ -240,7 +242,7 @@ public:
 class JoinSpace : public AddrSpace {
 public:
   JoinSpace(AddrSpaceManager *m,const Translate *t,int4 ind);
-  int4 pieceOverlap(uintb offset,int4 size,AddrSpace *pieceSpace,uintb pieceOffset) const;
+  virtual int4 overlapJoin(uintb offset,int4 size,AddrSpace *pointSpace,uintb pointOff,int4 pointSkip) const;
   virtual void encodeAttributes(Encoder &encoder,uintb offset) const;
   virtual void encodeAttributes(Encoder &encoder,uintb offset,int4 size) const;
   virtual uintb decodeAttributes(Decoder &decoder,uint4 &size) const;

@@ -18,7 +18,8 @@ package ghidra.test.processors.support;
 import java.io.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.math.*;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -1180,6 +1181,7 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 			// Initialize pass/fail counts at runtime to detect severe failure
 			testGroup.mainTestControlBlock.setNumberPassed(testRunner, Integer.MIN_VALUE);
 			testGroup.mainTestControlBlock.setNumberFailed(testRunner, Integer.MIN_VALUE);
+			testGroup.mainTestControlBlock.clearNumberIgnored();
 
 			boolean done;
 			if (traceDisabled) {
@@ -1190,6 +1192,8 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 			}
 
 			int pass = testGroup.mainTestControlBlock.getNumberPassed(testRunner);
+			int ignoredPassed = testGroup.mainTestControlBlock.getNumberPassedIgnored();
+			int ignoredFailed = testGroup.mainTestControlBlock.getNumberFailedIgnored();
 			int callOtherErrors = testRunner.getCallOtherErrors();
 			int fail = testGroup.mainTestControlBlock.getNumberFailed(testRunner);
 
@@ -1199,20 +1203,30 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 						pass + " fail " + fail);
 			}
 
+			pass -= ignoredPassed;
 			pass -= callOtherErrors;
+			fail -= ignoredFailed;
 
-			String passFailText = "Passed: " + pass + " Failed: " + fail;
+			String passFailText = "Passed: " + pass + " Ignored: " +
+				(ignoredFailed + ignoredPassed) + " Failed: " + fail;
 			if (callOtherErrors != 0) {
 				passFailText += " Passed(w/CALLOTHER): " + callOtherErrors;
 			}
 			passFailText += " Expected Assertions: " + totalExpectedAsserts;
 			log(testGroup, passFailText);
 
+			boolean hasFailures = false;
 			List<String> testFailures = testGroup.getTestFailures();
 			if (!testFailures.isEmpty()) {
-				log(testGroup, "TEST FAILURES:");
+				if (!traceDisabled) {
+					log(testGroup, "TEST FAILURE SUMMARY:");
+				}
 				for (String testFailure : testFailures) {
-					log(testGroup, " >>> " + testFailure);
+					if (!traceDisabled) {
+						log(testGroup, " >>> " + testFailure);
+					}
+					// failure is any entry not marked as ignored
+					hasFailures |= (testFailure.indexOf(PCodeTestGroup.IGNORED_TAG) < 0);
 				}
 			}
 
@@ -1235,12 +1249,12 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 				}
 				failTest(testRunner, msg.toString());
 			}
-			int ranCnt = pass + fail + callOtherErrors;
+			int ranCnt = pass + fail + callOtherErrors + ignoredFailed + ignoredPassed;
 			if ((totalExpectedAsserts != 0) && (totalExpectedAsserts != ranCnt)) {
 				failTest(testRunner,
 					"ERROR Unexpected number of assertions ( " + passFailText + " )");
 			}
-			if (fail != 0 || callOtherErrors != 0 || testFailures.size() != 0) {
+			if (fail != 0 || callOtherErrors != 0 || hasFailures) {
 				failTest(testRunner,
 					"ERROR One or more group tests failed ( " + passFailText + " )");
 			}
@@ -1422,6 +1436,17 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 			}
 		}
 		return maxAddr;
+	}
+
+	/**
+	 * Add specified test names to the set of tests which should be ignored due to know issues
+	 * or limitations.  The tests will still be executed, if present, however they will
+	 * not be included in pass/fail counts.  They will appear in log as "(IGNORED)" test
+	 * result.
+	 * @param testNames one or more test names to be ignored
+	 */
+	protected void addIgnoredTests(String... testNames) {
+		combinedResults.addIgnoredTests(getClass().getSimpleName(), testNames);
 	}
 
 	//

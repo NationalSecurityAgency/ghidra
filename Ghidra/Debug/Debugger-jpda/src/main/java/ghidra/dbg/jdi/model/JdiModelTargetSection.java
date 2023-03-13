@@ -21,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 
 import com.sun.jdi.Method;
 
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.TargetMemoryRegion;
 import ghidra.dbg.target.TargetSection;
 import ghidra.dbg.target.schema.*;
@@ -70,7 +71,7 @@ public class JdiModelTargetSection extends JdiModelTargetObjectImpl implements /
 	}
 
 	@Override
-	public CompletableFuture<Void> requestAttributes(boolean refresh) {
+	public CompletableFuture<Void> requestAttributes(RefreshBehavior refresh) {
 
 		this.range = method == null ? impl.defaultRange : impl.getAddressRange(method);
 		if (range != null) {

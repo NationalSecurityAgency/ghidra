@@ -21,4 +21,6 @@ data/languages/AARCH64sve.sinc||GHIDRA||||END|
 data/languages/AppleSilicon.ldefs||GHIDRA||||END|
 data/manuals/AARCH64.idx||GHIDRA||||END|
 data/patterns/AARCH64_LE_patterns.xml||GHIDRA||||END|
+data/patterns/AARCH64_win_patterns.xml||GHIDRA||||END|
 data/patterns/patternconstraints.xml||GHIDRA||||END|
+data/patterns/prepatternconstraints.xml||GHIDRA||||END|

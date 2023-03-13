@@ -606,7 +606,7 @@ static bool matching_constants(Varnode *vn1,Varnode *vn2)
 /// \param path is the specific branch to take from the CBRANCH to reach the switch
 /// \param rng is the range of values causing the switch path to be taken
 /// \param v is the Varnode holding the value controlling the CBRANCH
-/// \param unroll is \b true if the guard is duplicated across multiple blocks
+/// \param unr is \b true if the guard is duplicated across multiple blocks
 GuardRecord::GuardRecord(PcodeOp *bOp,PcodeOp *rOp,int4 path,const CircleRange &rng,Varnode *v,bool unr)
 
 {

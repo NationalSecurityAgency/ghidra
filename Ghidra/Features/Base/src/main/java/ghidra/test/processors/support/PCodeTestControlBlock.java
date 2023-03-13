@@ -48,6 +48,10 @@ public class PCodeTestControlBlock extends PCodeTestAbstractControlBlock {
 
 	private List<PCodeTestGroup> testGroups; // test group data
 
+	// accumulators for tests pass/fail results which have been designated as ignored
+	private int ignoredPassed = 0;
+	private int ignoredFailed = 0;
+
 	// TestInfo data read from program memory
 	private Address onPassFunctionAddress;
 	private Address onErrorFunctionAddress;
@@ -317,6 +321,40 @@ public class PCodeTestControlBlock extends PCodeTestAbstractControlBlock {
 	void setNumberPassed(EmulatorTestRunner emuTestRunner, int value) {
 		Address addr = getMirroredDataAddress(emuTestRunner, infoStructAddr.add(numPassOffset));
 		emuWrite(emuTestRunner.getEmulatorHelper(), addr, SIZEOF_U4, value);
+	}
+
+	void resultIgnored(String testGroupName, String testName, boolean passed) {
+		if (passed) {
+			++ignoredPassed;
+		}
+		else {
+			++ignoredFailed;
+		}
+		testResults.addIgnoredResult(testGroupName, testName);
+	}
+
+	/**
+	 * Get the number of passed tests which should be ignored
+	 * @return number of passed tests which should be ignored
+	 */
+	int getNumberPassedIgnored() {
+		return ignoredPassed;
+	}
+
+	/**
+	 * Get the number of failed tests which should be ignored
+	 * @return number of failed tests which should be ignored
+	 */
+	int getNumberFailedIgnored() {
+		return ignoredFailed;
+	}
+
+	/**
+	 * Clear ignored test result accumulators
+	 */
+	void clearNumberIgnored() {
+		ignoredFailed = 0;
+		ignoredPassed = 0;
 	}
 
 	/**

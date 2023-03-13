@@ -25,6 +25,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import agent.frida.model.iface1.FridaModelTargetConfigurable;
 import agent.frida.model.iface2.*;
 import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.error.DebuggerIllegalArgumentException;
 import ghidra.dbg.target.TargetConfigurable;
 import ghidra.dbg.target.TargetObject;
@@ -55,7 +56,7 @@ public class FridaModelTargetAvailableProcessesContainerImpl extends FridaModelT
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return getManager().listAvailableProcesses().thenAccept(list -> {
 			List<TargetObject> available;
 			synchronized (this) {

@@ -94,7 +94,7 @@ import utilities.util.AnnotationUtilities;
  * 	}
  * };
  * 
- * SleighPcodeUseropDefinition<Object> myUserop = ss.generate().get("my_userop");
+ * SleighPcodeUseropDefinition&lt;Object&gt; myUserop = ss.generate().get("my_userop");
  * // To print source
  * myUserop.getLines().forEach(System.out::print);
  * 
@@ -1081,7 +1081,7 @@ public class StructuredSleigh {
 			}
 			StringTree st = new StringTree();
 			st.append("if ");
-			st.append(((RValInternal) cond).generate());
+			st.append(((RValInternal) cond).generate(null));
 			st.append(" ");
 			st.append(genGoto(fall));
 			return st;

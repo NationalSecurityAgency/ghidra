@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 
 import com.sun.jdi.ThreadGroupReference;
 
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.jdi.manager.JdiEventsListenerAdapter;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
 import ghidra.dbg.target.schema.*;
@@ -61,7 +62,7 @@ public class JdiModelTargetThreadGroupContainer extends JdiModelTargetObjectImpl
 	}
 
 	@Override
-	protected CompletableFuture<Void> requestElements(boolean refresh) {
+	protected CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		List<ThreadGroupReference> groups;
 		if (parent instanceof JdiModelTargetVM) {
 			JdiModelTargetVM vm = (JdiModelTargetVM) parent;

@@ -20,17 +20,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.ByteArrayConverter;
-import ghidra.app.util.bin.format.dwarf4.LEB128;
-import ghidra.program.model.data.ArrayDataType;
-import ghidra.program.model.data.DataType;
-import ghidra.util.DataConverter;
+import ghidra.program.model.data.*;
 import ghidra.util.Msg;
 
 /**
  * A container class to hold ELF relocations.
  */
-public class ElfRelocationTable implements ElfFileSection, ByteArrayConverter {
+public class ElfRelocationTable implements ElfFileSection {
 
 	public enum TableFormat {
 		DEFAULT, ANDROID, RELR;
@@ -199,8 +195,8 @@ public class ElfRelocationTable implements ElfFileSection, ByteArrayConverter {
 
 		try {
 			int relocationIndex = 0;
-			long remainingRelocations = LEB128.readAsLong(reader, true); // reloc_count
-			long offset = LEB128.readAsLong(reader, true); // reloc_baseOffset
+			long remainingRelocations = reader.readNext(LEB128::signed); // reloc_count
+			long offset = reader.readNext(LEB128::signed); // reloc_baseOffset
 
 			while (remainingRelocations > 0) {
 
@@ -208,7 +204,7 @@ public class ElfRelocationTable implements ElfFileSection, ByteArrayConverter {
 				long addend = 0;
 
 				// group_size
-				long groupSize = LEB128.readAsLong(reader, true);
+				long groupSize = reader.readNext(LEB128::signed);
 				if (groupSize > remainingRelocations) {
 					elfHeader.logError("Group relocation count " + groupSize +
 						" exceeded total count " + remainingRelocations);
@@ -216,7 +212,7 @@ public class ElfRelocationTable implements ElfFileSection, ByteArrayConverter {
 				}
 
 				// group_flags
-				long groupFlags = LEB128.readAsLong(reader, true);
+				long groupFlags = reader.readNext(LEB128::signed);
 				boolean groupedByInfo =
 					(groupFlags & AndroidElfRelocationGroup.RELOCATION_GROUPED_BY_INFO_FLAG) != 0;
 				boolean groupedByDelta = (groupFlags &
@@ -227,28 +223,29 @@ public class ElfRelocationTable implements ElfFileSection, ByteArrayConverter {
 					(groupFlags & AndroidElfRelocationGroup.RELOCATION_GROUP_HAS_ADDEND_FLAG) != 0;
 
 				// group_offsetDelta (optional)
-				long groupOffsetDelta = groupedByDelta ? LEB128.readAsLong(reader, true) : 0;
+				long groupOffsetDelta = groupedByDelta ? reader.readNext(LEB128::signed) : 0;
 
 				// group_info (optional)
-				long groupRInfo = groupedByInfo ? LEB128.readAsLong(reader, true) : 0;
+				long groupRInfo = groupedByInfo ? reader.readNext(LEB128::signed) : 0;
 
 				if (groupedByAddend && groupHasAddend) {
 					// group_addend (optional)
-					addend += LEB128.readAsLong(reader, true);
+					addend += reader.readNext(LEB128::signed);
 				}
 
 				for (int i = 0; i < groupSize; i++) {
 					// reloc_offset (optional)
-					offset += groupedByDelta ? groupOffsetDelta : LEB128.readAsLong(reader, true);
+					offset +=
+						groupedByDelta ? groupOffsetDelta : reader.readNext(LEB128::signed);
 
 					// reloc_info (optional)
-					long info = groupedByInfo ? groupRInfo : LEB128.readAsLong(reader, true);
+					long info = groupedByInfo ? groupRInfo : reader.readNext(LEB128::signed);
 
 					long rAddend = 0;
 					if (groupHasAddend) {
 						if (!groupedByAddend) {
 							// reloc_addend (optional)
-							addend += LEB128.readAsLong(reader, true);
+							addend += reader.readNext(LEB128::signed);
 						}
 						rAddend = addend;
 					}
@@ -309,18 +306,6 @@ public class ElfRelocationTable implements ElfFileSection, ByteArrayConverter {
 	 */
 	public ElfSymbolTable getAssociatedSymbolTable() {
 		return symbolTable;
-	}
-
-	@Override
-	public byte[] toBytes(DataConverter dc) {
-		byte[] bytes = new byte[relocs.length * relocs[0].sizeof()];
-		int index = 0;
-		for (ElfRelocation reloc : relocs) {
-			byte[] relocBytes = reloc.toBytes(dc);
-			System.arraycopy(relocBytes, 0, bytes, index, relocBytes.length);
-			index += relocBytes.length;
-		}
-		return bytes;
 	}
 
 	@Override

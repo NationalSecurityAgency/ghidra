@@ -2616,10 +2616,9 @@ bool BlockBasic::noInterveningStatement(PcodeOp *first,int4 path,PcodeOp *last)
   return false;
 }
 
-/// If there exists a CPUI_MULTIEQUAL PcodeOp in the given basic block that takes this exact list of Varnodes
+/// If there exists a CPUI_MULTIEQUAL PcodeOp in \b this basic block that takes the given exact list of Varnodes
 /// as its inputs, return that PcodeOp. Otherwise return null.
 /// \param varArray is the exact list of Varnodes
-/// \param bl is the basic block
 /// \return the MULTIEQUAL or null
 PcodeOp *BlockBasic::findMultiequal(const vector<Varnode *> &varArray)
 
@@ -2646,7 +2645,7 @@ PcodeOp *BlockBasic::findMultiequal(const vector<Varnode *> &varArray)
 /// with the input Varnode in the indicated slot.
 /// \param varArray is the given array of Varnodes
 /// \param slot is the indicated slot
-/// \return \true if all the Varnodes are defined in the same way
+/// \return \b true if all the Varnodes are defined in the same way
 bool BlockBasic::liftVerifyUnroll(vector<Varnode *> &varArray,int4 slot)
 
 {

@@ -23,6 +23,7 @@ import agent.dbgeng.dbgeng.DebugSessionId;
 import agent.dbgeng.manager.DbgCause;
 import agent.dbgeng.manager.DbgSession;
 import agent.dbgeng.model.iface2.*;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
 
@@ -65,7 +66,7 @@ public class DbgModelTargetSessionContainerImpl extends DbgModelTargetObjectImpl
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return CompletableFuture.completedFuture(null);
 		/*
 		DbgManagerImpl manager = getManager();

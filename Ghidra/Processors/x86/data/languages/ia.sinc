@@ -939,6 +939,8 @@ moffs32: segWide^[imm64]  is addrsize=2 & highseg=1 & segWide & imm64   { tmp:8 
 @ifdef IA64
 moffs64: segWide^[imm64]  is addrsize=2 & segWide & imm64               { export *:8 imm64; }
 moffs64: segWide^[imm64]  is addrsize=2 & highseg=1 & segWide & imm64   { tmp:8 = segWide + imm64; export *:8 tmp; }
+moffs64: segWide^[imm32]  is addrsize=1 & segWide & imm32               { export *:8 imm32; }
+moffs64: segWide^[imm32]  is addrsize=1 & highseg=1 & segWide & imm32   { tmp:8 = segWide + imm32; export *:8 tmp; }
 @endif
 # TODO: segment register offset in 64bit might not be right
 
@@ -4079,9 +4081,10 @@ define pcodeop f2xm1;
 :FIADD spec_m32     is vexMode=0 & byte=0xDA; reg_opcode=0 ... & spec_m32            { ST0 = ST0 f+ int2float(spec_m32); }   
 :FIADD spec_m16     is vexMode=0 & byte=0xDE; reg_opcode=0 ... & spec_m16            { ST0 = ST0 f+ int2float(spec_m16); }   
 
-:FBLD  spec_m80     is vexMode=0 & byte=0xDF; reg_opcode=4 ... & spec_m80            { spec_m80 = ST0; fpop(); }
+define pcodeop convert_bcd;
+:FBLD  spec_m80     is vexMode=0 & byte=0xDF; reg_opcode=4 ... & spec_m80            { fdec(); ST0 = convert_bcd(spec_m80); }
 
-:FBSTP spec_m80     is vexMode=0 & byte=0xDF; reg_opcode=6 ... & spec_m80            { spec_m80 = ST0; fpop(); }
+:FBSTP spec_m80     is vexMode=0 & byte=0xDF; reg_opcode=6 ... & spec_m80            { spec_m80 = convert_bcd(ST0); fpop(); }
 
 :FCHS           is vexMode=0 & byte=0xD9; byte=0xE0                 { ST0 = f- ST0; }
 

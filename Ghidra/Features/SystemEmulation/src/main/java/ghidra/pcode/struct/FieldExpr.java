@@ -19,12 +19,12 @@ import ghidra.pcode.struct.StructuredSleigh.LVal;
 import ghidra.program.model.data.*;
 
 class FieldExpr extends Expr implements LValInternal {
-	private final RValInternal parent;
+	private final RValInternal composite;
 	private final int offset;
 
-	private FieldExpr(StructuredSleigh ctx, RValInternal parent, int offset, DataType type) {
+	private FieldExpr(StructuredSleigh ctx, RValInternal composite, int offset, DataType type) {
 		super(ctx, type);
-		this.parent = parent;
+		this.composite = composite;
 		this.offset = offset;
 	}
 
@@ -38,16 +38,22 @@ class FieldExpr extends Expr implements LValInternal {
 
 	@Override
 	public LVal cast(DataType type) {
-		return new FieldExpr(ctx, parent, offset, type);
+		return new FieldExpr(ctx, composite, offset, type);
 	}
 
 	@Override
 	public String toString() {
-		return "<Field " + parent + " + 0x" + Long.toString(offset, 16) + ">";
+		return "<Field " + composite + " + 0x" + Long.toString(offset, 16) + ">";
 	}
 
 	@Override
-	public String generate() {
-		return "(" + parent.generate() + " + " + offset + ")";
+	public StringTree generate(RValInternal parent) {
+		StringTree st = new StringTree();
+		st.append("(");
+		st.append(composite.generate(this));
+		st.append(" + ");
+		st.append(Integer.toString(offset));
+		st.append(")");
+		return st;
 	}
 }

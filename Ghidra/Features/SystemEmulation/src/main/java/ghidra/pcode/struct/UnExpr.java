@@ -39,7 +39,12 @@ class UnExpr extends Expr {
 	}
 
 	@Override
-	public String generate() {
-		return "(" + op + u.generate() + ")";
+	public StringTree generate(RValInternal parent) {
+		StringTree st = new StringTree();
+		st.append("(");
+		st.append(op);
+		st.append(u.generate(this));
+		st.append(")");
+		return st;
 	}
 }
