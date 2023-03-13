@@ -197,11 +197,11 @@ EA: ",--"^W    is idxReg=0b11 & noOffset5=1 & idxMode=0b01111 & W # ,--W
 
 EA: addr,"PCR" is noOffset5=1 & idxMode=0b01100; simm8 [ addr = inst_next + simm8; ] 
 {
-     export addr; 
+     export *[const]:2 addr; 
 }
 EA: addr,"PCR" is noOffset5=1 & idxMode=0b01101; simm16 [ addr = inst_next + simm16; ] 
 {
-     export addr; 
+     export *[const]:2 addr; 
 }
 EA: "[,"idxReg"]"    is idxReg & noOffset5=1 & idxMode=0b10100
 {
@@ -394,7 +394,7 @@ OP2J: EA       is (op47=6 | op47=0xA); EA
 }
 OP2J: imm16      is (op47=7 | op47=0xB ); imm16
 {
-    export imm16;
+    export *[const]:2 imm16;
 }
 
 ################################################################
