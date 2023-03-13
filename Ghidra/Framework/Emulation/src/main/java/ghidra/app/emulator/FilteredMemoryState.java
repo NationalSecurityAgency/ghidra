@@ -15,11 +15,11 @@
  */
 package ghidra.app.emulator;
 
-import ghidra.pcode.memstate.MemoryState;
+import ghidra.pcode.memstate.DefaultMemoryState;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.Language;
 
-class FilteredMemoryState extends MemoryState {
+class FilteredMemoryState extends DefaultMemoryState {
 
 	private MemoryAccessFilter filter;
 	private boolean filterEnabled = true; // used to prevent filtering filter queries

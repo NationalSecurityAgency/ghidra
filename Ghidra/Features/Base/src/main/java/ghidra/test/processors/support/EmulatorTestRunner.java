@@ -63,7 +63,12 @@ public class EmulatorTestRunner {
 		this.program = program;
 		this.testGroup = testGroup;
 		this.executionListener = executionListener;
-		emuHelper = new EmulatorHelper(program);
+		emuHelper = new EmulatorHelper(program) {
+			@Override
+			protected Emulator newEmulator() {
+				return new AdaptedEmulator(this);
+			}
+		};
 		emu = emuHelper.getEmulator();
 		emuHelper.setMemoryFaultHandler(new MyMemoryFaultHandler(executionListener));
 
@@ -71,7 +76,7 @@ public class EmulatorTestRunner {
 			@Override
 			public boolean pcodeCallback(PcodeOpRaw op) throws LowlevelError {
 				int userOp = (int) op.getInput(0).getOffset();
-				String pcodeOpName = emulate.getLanguage().getUserDefinedOpName(userOp);
+				String pcodeOpName = program.getLanguage().getUserDefinedOpName(userOp);
 				unimplementedSet.add(pcodeOpName);
 				String outStr = "";
 				Varnode output = op.getOutput();
@@ -169,8 +174,9 @@ public class EmulatorTestRunner {
 
 	/**
 	 * Add memory dump point
+	 * 
 	 * @param breakAddr instruction address at which execution should pause (before it is executed)
-	 * so that the specified memory may be dumped to the log during trace execution mode.
+	 *            so that the specified memory may be dumped to the log during trace execution mode.
 	 * @param dumpAddr memory address which should be dumped
 	 * @param dumpSize number elements which should be dumped
 	 * @param elementSize size of each element in bytes (be reasonable!)
@@ -190,8 +196,9 @@ public class EmulatorTestRunner {
 
 	/**
 	 * Add memory dump point
+	 * 
 	 * @param breakAddr instruction address at which execution should pause (before it is executed)
-	 * so that the specified memory may be dumped to the log during trace execution mode.
+	 *            so that the specified memory may be dumped to the log during trace execution mode.
 	 * @param dumpAddrReg register containing the memory address offset which should be dumped
 	 * @param relativeOffset dump register relative offset
 	 * @param dumpAddrSpace address space to which memory offset should be applied
@@ -230,11 +237,11 @@ public class EmulatorTestRunner {
 	}
 
 	/**
-	 * Get number of CALLOTHER errors detected when a test pass was registered.
-	 * This number should be subtracted from the pass count and possibly added
-	 * to the failure count.  Number does not reflect total number of CALLOTHER 
-	 * pcodeops encountered but only the number of passed tests affected.
-	 * See log for all CALLOTHER executions detected.
+	 * Get number of CALLOTHER errors detected when a test pass was registered. This number should
+	 * be subtracted from the pass count and possibly added to the failure count. Number does not
+	 * reflect total number of CALLOTHER pcodeops encountered but only the number of passed tests
+	 * affected. See log for all CALLOTHER executions detected.
+	 * 
 	 * @return number of CALLOTHER errors
 	 */
 	public int getCallOtherErrors() {
@@ -243,7 +250,8 @@ public class EmulatorTestRunner {
 
 	/**
 	 * Execute test group without instruction stepping/tracing
-	 * @param timeLimitMS 
+	 * 
+	 * @param timeLimitMS
 	 * @param monitor
 	 * @return
 	 * @throws CancelledException
@@ -695,8 +703,9 @@ public class EmulatorTestRunner {
 		@Override
 		Address getDumpAddress() {
 			RegisterValue regVal = getRegisterValue(dumpAddrReg);
-			return dumpAddrSpace.getAddress(regVal.getUnsignedValue().longValue()).add(
-				relativeOffset);
+			return dumpAddrSpace.getAddress(regVal.getUnsignedValue().longValue())
+					.add(
+						relativeOffset);
 		}
 
 		@Override
