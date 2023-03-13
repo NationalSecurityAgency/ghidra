@@ -42,7 +42,7 @@ public class GenericApplicationLayout extends ApplicationLayout {
 
 	/**
 	 * System property that allows specification of additional application root dirs.  This is used
-	 * for clients that build plugins external to an installation.  The property will be parsed 
+	 * for clients that build plugins external to an installation.  The property will be parsed
 	 * using {@link File#pathSeparator}, allowing for multiple values.
 	 */
 	private static final String ADDITIONAL_APPLICATION_ROOT_DIRS =
@@ -103,8 +103,18 @@ public class GenericApplicationLayout extends ApplicationLayout {
 		// Modules
 		Collection<ResourceFile> moduleRoots =
 			ModuleUtilities.findModuleRootDirectories(applicationRootDirs);
-		modules =
+
+		Map<String, GModule> allModules = new HashMap<>();
+		Map<String, GModule> discoveredModules =
 			ModuleUtilities.findModules(applicationRootDirs, moduleRoots, new ClasspathFilter());
+		allModules.putAll(discoveredModules);
+
+		for (ResourceFile root : applicationRootDirs) {
+			GModule rootModule = new GModule(applicationRootDirs, root);
+			allModules.put(rootModule.getName(), rootModule);
+		}
+
+		modules = Collections.unmodifiableMap(allModules);
 
 		// User directories
 		userTempDir = ApplicationUtilities.getDefaultUserTempDir(applicationProperties);
@@ -160,9 +170,9 @@ public class GenericApplicationLayout extends ApplicationLayout {
 	}
 
 	/**
-	 * Get the default list of Application directories.  In repo-based development mode this 
-	 * includes the root Ghidra directory within each repo.  When not in development mode, the 
-	 * requirement is that the current working directory correspond to the installation root.  The 
+	 * Get the default list of Application directories.  In repo-based development mode this
+	 * includes the root Ghidra directory within each repo.  When not in development mode, the
+	 * requirement is that the current working directory correspond to the installation root.  The
 	 * first entry will be the primary root in both cases.
 	 * @return root directories
 	 */
