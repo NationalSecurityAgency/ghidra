@@ -1914,7 +1914,7 @@ fcc: "un"	is fcode=0x08			{ tmp:1 = $(NAN_FP); clearflags_fp(); export tmp; }
 
 fcc: "f"	is fcode=0x00			{ export 0:1; }
 fcc: "t"	is fcode=0x0f			{ export 1:1; }
-fcc: "sf"	is fcode=0x10			{ export 0:0; }
+fcc: "sf"	is fcode=0x10			{ export 0:1; }
 fcc: "st"	is fcode=0x1f			{ export 1:1; }
 fcc: "seq"	is fcode=0x11			{ tmp:1 = $(Z_FP); clearflags_fp(); export tmp; }
 fcc: "sne"	is fcode=0x1e			{ tmp:1 = $(Z_FP); clearflags_fp(); export tmp; }
