@@ -119,31 +119,25 @@ public interface ToolServices {
 	public void setContentTypeToolAssociations(Set<ToolAssociationInfo> infos);
 
 	/**
-	 * Launch the default tool and open the specified domainFile.
+	 * Launch the default {@link PluginTool tool} and open the specified domainFiles.
 	 * NOTE: running tool reuse is implementation dependent
-	 * @param domainFile the file to open
+	 * @param domainFiles the files to open.  A null or empty list will results in an immediate 
+	 * return of a null {@link PluginTool}.  Null entries are not permitted.
 	 * @return the launched tool.  Null returned if a suitable default tool
-	 * for the file content type was not found.
+	 * for the file content type was not found or failed to launch.
 	 */
-	public PluginTool launchDefaultTool(DomainFile domainFile);
+	public PluginTool launchDefaultTool(Collection<DomainFile> domainFiles);
 
 	/**
-	 * Launch the default tool and open the specified domainFiles.
-	 * NOTE: running tool reuse is implementation dependent
-	 * @param domainFile the file to open
-	 * @return the launched tool.  Null returned if a suitable default tool
-	 * for the file content type was not found.
+	 * Launch the {@link PluginTool tool} with the given name and open the specified domainFiles.
+	 * Only those domainFiles with a content type supported by the specified tool will be opened.
+	 * NOTE: running tool reuse is implementation dependent.  
+	 * @param toolName name of the {@link ToolTemplate tool template} to launch or re-use
+	 * @param domainFiles the files to open; may be null or empty.  Null entries are not permitted.
+	 * @return the resulting {@link PluginTool tool} or null if the specified tool was not found
+	 * or failed to launch
 	 */
-	public PluginTool launchDefaultTool(Collection<DomainFile> domainFile);
-
-	/**
-	 * Launch the tool with the given name.  A domainFile may be specified and will be opened
-	 * if its content type is supported by the tool.
-	 * @param toolName name of the tool to launch
-	 * @param domainFile the file to open; may be null
-	 * @return the requested tool or null if the specified tool not found.
-	 */
-	public PluginTool launchTool(String toolName, DomainFile domainFile);
+	public PluginTool launchTool(String toolName, Collection<DomainFile> domainFiles);
 
 	/**
 	 * Launch the default tool and open the specified Ghidra URL resource.

@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.processors;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 
 import javax.swing.SwingUtilities;
 
@@ -316,7 +317,7 @@ public final class LanguageProviderPlugin extends Plugin implements ApplicationL
 			try {
 				SwingUtilities.invokeAndWait(() -> {
 					ToolServices toolServices = tool.getToolServices();
-					if (toolServices.launchDefaultTool(domainFile) == null) {
+					if (toolServices.launchDefaultTool(List.of(domainFile)) == null) {
 						Msg.showError(this, tool.getToolFrame(), "Failed to Open Program",
 							"A suitable default tool could not found!");
 					}

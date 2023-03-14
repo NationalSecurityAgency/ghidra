@@ -561,7 +561,11 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 			plugin.getActiveWorkspace().runTool(template);
 		}
 		else {
-			toolServices.launchDefaultTool(domainFiles);
+			PluginTool tool = toolServices.launchTool(template.getName(), domainFiles);
+			if (tool == null) {
+				Msg.showError(this, getParent(), "Failed to Launch Tool",
+					"Failed to launch " + template.getName() + " tool.\nSee log for details.");
+			}
 		}
 	}
 
@@ -569,21 +573,7 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 		if (domainFiles == null) {
 			return;
 		}
-		boolean accepted = tool.acceptDomainFiles(domainFiles.toArray(DomainFile[]::new));
-		if (!accepted) {
-			showFilesNotAcceptedMessage(domainFiles);
-		}
-	}
-
-	private void showFilesNotAcceptedMessage(List<DomainFile> domainFiles) {
-		StringBuilder buffy = new StringBuilder("Tool did not accept files: ");
-		for (int i = 0; i < domainFiles.size(); i++) {
-			buffy.append(domainFiles.get(0).getName());
-			if (i != domainFiles.size() - 1) {
-				buffy.append(", ");
-			}
-		}
-		Msg.showError(this, null, "Error", buffy.toString());
+		tool.acceptDomainFiles(domainFiles.toArray(DomainFile[]::new));
 	}
 
 	private void setUpDragDrop() {

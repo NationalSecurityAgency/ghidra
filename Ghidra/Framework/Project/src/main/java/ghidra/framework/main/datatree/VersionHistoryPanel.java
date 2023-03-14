@@ -344,10 +344,11 @@ public class VersionHistoryPanel extends JPanel implements Draggable {
 		if (versionedObj != null) {
 			try {
 				if (toolName != null) {
-					tool.getToolServices().launchTool(toolName, versionedObj.getDomainFile());
+					tool.getToolServices()
+							.launchTool(toolName, List.of(versionedObj.getDomainFile()));
 				}
 				else {
-					tool.getToolServices().launchDefaultTool(versionedObj.getDomainFile());
+					tool.getToolServices().launchDefaultTool(List.of(versionedObj.getDomainFile()));
 				}
 			}
 			finally {
