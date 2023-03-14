@@ -520,29 +520,6 @@ public class DWARFUtil {
 	}
 
 	/**
-	 * Read the value of an address.
-	 * @param reader BinaryReader pointing to the value to read
-	 * @param pointerSize the size of a pointer
-	 * @return the address value
-	 * @throws IOException if an I/O error occurs
-	 * @throws IllegalArgumentException if an unknown pointer size is given
-	 */
-	public static Number readAddress(BinaryReader reader, byte pointerSize) throws IOException {
-		switch (pointerSize) {
-			case 1:
-				return Byte.valueOf(reader.readNextByte());
-			case 2:
-				return Short.valueOf(reader.readNextShort());
-			case 4:
-				return Integer.valueOf(reader.readNextInt());
-			case 8:
-				return Long.valueOf(reader.readNextLong());
-		}
-		throw new IllegalArgumentException(
-			"Unknown pointer size: 0x" + Integer.toHexString(pointerSize));
-	}
-
-	/**
 	 * Reads a variable-sized unsigned 'address' value from a {@link BinaryReader} and
 	 * returns it as a 64 bit java long.
 	 * <p>
@@ -588,8 +565,9 @@ public class DWARFUtil {
 
 		DWARFAttributeValue dwATObjectPointer =
 			paramDIEA.getParent().getAttribute(DWARFAttribute.DW_AT_object_pointer);
-		return dwATObjectPointer != null && dwATObjectPointer instanceof DWARFNumericAttribute &&
-			paramDIEA.hasOffset(((DWARFNumericAttribute) dwATObjectPointer).getUnsignedValue());
+		return dwATObjectPointer != null &&
+			dwATObjectPointer instanceof DWARFNumericAttribute dnum &&
+			paramDIEA.hasOffset(dnum.getUnsignedValue());
 	}
 
 	/**

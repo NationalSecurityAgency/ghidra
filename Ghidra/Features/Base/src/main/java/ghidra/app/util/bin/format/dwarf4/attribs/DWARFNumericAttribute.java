@@ -15,32 +15,35 @@
  */
 package ghidra.app.util.bin.format.dwarf4.attribs;
 
+import ghidra.program.model.scalar.Scalar;
+
 /**
  * DWARF numeric attribute.
- * <p>
- * Use this class instead of {@link DWARFAmbigNumericAttribute} when the signed-ness
- * of the raw value is known when deserializing the attribute from a stream.
- * <p>
- * Use {@link DWARFAmbigNumericAttribute} when the signed-ness of the raw value is only know
- * to the code that is using the attribute value.
  */
-public class DWARFNumericAttribute implements DWARFAttributeValue {
-	protected final long value;
+public class DWARFNumericAttribute extends Scalar implements DWARFAttributeValue {
 
+	/**
+	 * Creates a new numeric value, using 64 bits and marked as signed
+	 * 
+	 * @param value long 64 bit value
+	 */
 	public DWARFNumericAttribute(long value) {
-		this.value = value;
+		this(64, value, true);
 	}
 
-	public long getValue() {
-		return value;
-	}
-
-	public long getUnsignedValue() {
-		return value;
+	/**
+	 * Creates a new numeric value, using the specific bitLength and value.
+	 * 
+	 * @param bitLength number of bits, valid values are 1..64, or 0 if value is also 0
+	 * @param value value of the scalar, any bits that are set above bitLength will be ignored
+	 * @param signed true for a signed value, false for an unsigned value. 
+	 */
+	public DWARFNumericAttribute(int bitLength, long value, boolean signed) {
+		super(bitLength, value, signed);
 	}
 
 	@Override
 	public String toString() {
-		return String.format("DWARFNumericAttribute: %d [%08x]", value, value);
+		return String.format("DWARFNumericAttribute: %d [%08x]", getValue(), getValue());
 	}
 }
