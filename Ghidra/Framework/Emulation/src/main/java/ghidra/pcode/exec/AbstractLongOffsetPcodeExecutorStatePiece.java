@@ -65,7 +65,9 @@ public abstract class AbstractLongOffsetPcodeExecutorStatePiece<A, T, S>
 		 * 
 		 * @return the copy
 		 */
-		public abstract AbstractSpaceMap<S> fork();
+		public AbstractSpaceMap<S> fork() {
+			throw new UnsupportedOperationException();
+		}
 
 		/**
 		 * Deep copy the given space
@@ -73,7 +75,9 @@ public abstract class AbstractLongOffsetPcodeExecutorStatePiece<A, T, S>
 		 * @param s the space
 		 * @return the copy
 		 */
-		public abstract S fork(S s);
+		public S fork(S s) {
+			throw new UnsupportedOperationException();
+		}
 
 		/**
 		 * Produce a deep copy of the given map

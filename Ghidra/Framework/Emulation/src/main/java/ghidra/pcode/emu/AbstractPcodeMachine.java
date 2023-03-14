@@ -266,6 +266,11 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 		this.suspended = suspended;
 	}
 
+	@Override
+	public boolean isSuspended() {
+		return suspended;
+	}
+
 	/**
 	 * Check for a p-code injection (override) at the given address
 	 * 
@@ -391,8 +396,8 @@ public abstract class AbstractPcodeMachine<T> implements PcodeMachine<T> {
 	}
 
 	/**
-	 * Notify the machine a thread has been stepped, so that it may re-enable software interrupts,
-	 * if applicable
+	 * Notify the machine a thread has been stepped a p-code op, so that it may re-enable software
+	 * interrupts, if applicable
 	 */
 	protected void stepped() {
 		if (swiMode == SwiMode.IGNORE_STEP) {

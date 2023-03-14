@@ -16,6 +16,7 @@
 package ghidra.pcode.exec;
 
 import java.util.Map;
+
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
@@ -44,6 +45,8 @@ public interface PcodeExecutorStatePiece<A, T> {
 	 * Reasons for reading state
 	 */
 	enum Reason {
+		/** The value is needed as the default program counter or disassembly context */
+		RE_INIT,
 		/** The value is needed by the emulator in the course of execution */
 		EXECUTE,
 		/** The value is being inspected */
@@ -59,6 +62,9 @@ public interface PcodeExecutorStatePiece<A, T> {
 	 */
 	default void checkRange(AddressSpace space, long offset, int size) {
 		// TODO: Perhaps get/setVar should just take an AddressRange?
+		if (space.isConstantSpace()) {
+			return;
+		}
 		try {
 			new AddressRangeImpl(space.getAddress(offset), size);
 		}
@@ -93,7 +99,9 @@ public interface PcodeExecutorStatePiece<A, T> {
 	 * 
 	 * @return the copy
 	 */
-	PcodeExecutorStatePiece<A, T> fork();
+	default PcodeExecutorStatePiece<A, T> fork() {
+		throw new UnsupportedOperationException();
+	}
 
 	/**
 	 * Set the value of a register variable

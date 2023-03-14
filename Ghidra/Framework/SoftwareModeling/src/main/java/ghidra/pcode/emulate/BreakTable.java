@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +30,7 @@ import ghidra.program.model.address.Address;
 ///
 /// depending on the type of breakpoint they currently want to invoke
 
-public abstract class BreakTable {
+public interface BreakTable {
 
   /// \brief Associate a particular emulator with breakpoints in this table
   ///

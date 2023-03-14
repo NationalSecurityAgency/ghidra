@@ -17,14 +17,15 @@ package ghidra.pcode.emu;
 
 import java.lang.reflect.Constructor;
 
+import ghidra.app.emulator.AdaptedMemoryState;
 import ghidra.app.emulator.Emulator;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.emulate.*;
 import ghidra.pcode.exec.ConcretionError;
-import ghidra.pcode.exec.PcodeArithmetic.Purpose;
+import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
+import ghidra.pcode.memstate.MemoryBank;
 import ghidra.pcode.memstate.MemoryState;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.util.Msg;
@@ -86,34 +87,6 @@ public class ModifiedPcodeThread<T> extends DefaultPcodeThread<T> {
 	}
 
 	/**
-	 * Glue for incorporating state modifiers
-	 * 
-	 * <p>
-	 * This allows the modifiers to access the thread's state (memory and registers).
-	 */
-	protected class GlueMemoryState extends MemoryState {
-		public GlueMemoryState(Language language) {
-			super(language);
-		}
-
-		@Override
-		public int getChunk(byte[] res, AddressSpace spc, long off, int size,
-				boolean stopOnUnintialized) {
-			return getBytesChunk(res, spc, off, size, stopOnUnintialized);
-		}
-
-		@Override
-		public void setChunk(byte[] val, AddressSpace spc, long off, int size) {
-			setBytesChunk(val, spc, off, size);
-		}
-
-		@Override
-		public void setInitialized(boolean initialized, AddressSpace spc, long off, int size) {
-			// Do nothing
-		}
-	}
-
-	/**
 	 * Part of the glue that makes existing state modifiers work in new emulation framework
 	 * 
 	 * <p>
@@ -124,8 +97,6 @@ public class ModifiedPcodeThread<T> extends DefaultPcodeThread<T> {
 	 */
 	protected final EmulateInstructionStateModifier modifier;
 	protected final Emulate emulate;
-
-	protected Address savedCounter;
 
 	/**
 	 * Construct a new thread with the given name belonging to the given machine
@@ -141,8 +112,12 @@ public class ModifiedPcodeThread<T> extends DefaultPcodeThread<T> {
 		 * These two exist as a way to integrate the language-specific injects that are already
 		 * written for {@link Emulator}.
 		 */
-		emulate = new GlueEmulate(language, new GlueMemoryState(language),
-			new BreakTableCallBack(language));
+		emulate = new GlueEmulate(language, new AdaptedMemoryState<>(state, Reason.EXECUTE) {
+			@Override
+			public void setMemoryBank(MemoryBank bank) {
+				// Ignore
+			}
+		}, new BreakTableCallBack(language));
 		modifier = createModifier();
 	}
 
@@ -178,42 +153,19 @@ public class ModifiedPcodeThread<T> extends DefaultPcodeThread<T> {
 		}
 	}
 
-	/**
-	 * Called by a state modifier to read concrete bytes from the thread's state
-	 * 
-	 * @see {@link MemoryState#getChunk(byte[], AddressSpace, long, int, boolean)}
-	 */
-	protected int getBytesChunk(byte[] res, AddressSpace spc, long off, int size,
-			boolean stopOnUnintialized) {
-		T t = state.getVar(spc, off, size, true, executor.getReason());
-		byte[] val = arithmetic.toConcrete(t, Purpose.OTHER);
-		System.arraycopy(val, 0, res, 0, val.length);
-		return val.length;
-	}
-
-	/**
-	 * Called by a state modifier to write concrete bytes to the thread's state
-	 * 
-	 * @see {@link MemoryState#setChunk(byte[], AddressSpace, long, int)}
-	 */
-	protected void setBytesChunk(byte[] val, AddressSpace spc, long off, int size) {
-		T t = arithmetic.fromConst(val);
-		state.setVar(spc, off, size, true, t);
-	}
-
 	@Override
-	public void reInitialize() {
-		super.reInitialize();
+	public void overrideCounter(Address counter) {
+		super.overrideCounter(counter);
 		if (modifier != null) {
-			savedCounter = getCounter();
-			modifier.initialExecuteCallback(emulate, savedCounter, getContext());
+			modifier.initialExecuteCallback(emulate, counter, getContext());
 		}
 	}
 
 	@Override
 	protected void postExecuteInstruction() {
 		if (modifier != null) {
-			modifier.postExecuteCallback(emulate, savedCounter, frame.copyCode(),
+			modifier.postExecuteCallback(emulate,
+				instruction == null ? null : instruction.getAddress(), frame.copyCode(),
 				frame.getBranched(), getCounter());
 		}
 	}

@@ -204,6 +204,13 @@ public interface PcodeMachine<T> {
 	void setSuspended(boolean suspended);
 
 	/**
+	 * Check the suspension state of the machine
+	 * 
+	 * @see PcodeThread#getSuspended()
+	 */
+	boolean isSuspended();
+
+	/**
 	 * Compile the given Sleigh code for execution by a thread of this machine
 	 * 
 	 * <p>
