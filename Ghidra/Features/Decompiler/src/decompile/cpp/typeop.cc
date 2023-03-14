@@ -306,7 +306,7 @@ void TypeOpFunc::printRaw(ostream &s,const PcodeOp *op)
 TypeOpCopy::TypeOpCopy(TypeFactory *t) : TypeOp(t,CPUI_COPY,"copy")
 
 {
-  opflags = PcodeOp::unary;
+  opflags = PcodeOp::unary | PcodeOp::nocollapse;
   behave = new OpBehaviorCopy();
 }
 

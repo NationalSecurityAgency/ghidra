@@ -145,6 +145,16 @@ public class XmlEncode implements Encoder {
 	}
 
 	@Override
+	public void writeStringIndexed(AttributeId attribId, int index, String val) throws IOException {
+		buffer.append(' ');
+		buffer.append(attribId.name());
+		buffer.append(index + 1);
+		buffer.append("=\"");
+		SpecXmlUtils.xmlEscape(buffer, val);
+		buffer.append("\"");
+	}
+
+	@Override
 	public void writeSpace(AttributeId attribId, AddressSpace spc) throws IOException {
 		String spcName;
 		if (spc.getType() == AddressSpace.TYPE_VARIABLE) {

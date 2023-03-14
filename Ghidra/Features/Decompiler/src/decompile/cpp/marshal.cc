@@ -231,6 +231,25 @@ uint4 XmlDecode::getNextAttributeId(void)
   return 0;
 }
 
+uint4 XmlDecode::getIndexedAttributeId(const AttributeId &attribId)
+
+{
+  const Element *el = elStack.back();
+  if (attributeIndex < 0 || attributeIndex >= el->getNumAttributes())
+    return ATTRIB_UNKNOWN.getId();
+  // For XML, the index is encoded directly in the attribute name
+  const string &attribName(el->getAttributeName(attributeIndex));
+  // Does the name start with desired attribute base name?
+  if (0 != attribName.compare(0,attribId.getName().size(),attribId.getName()))
+    return ATTRIB_UNKNOWN.getId();
+  uint4 val = 0;
+  istringstream s(attribName.substr(attribId.getName().size()));	// Strip off the base name
+  s >> dec >> val;		// Decode the remaining decimal integer (starting at 1)
+  if (val == 0)
+    throw LowlevelError("Bad indexed attribute: " + attribId.getName());
+  return attribId.getId() + (val-1);
+}
+
 /// \brief Find the attribute index, within the given element, for the given name
 ///
 /// Run through the attributes of the element until we find the one matching the name,
@@ -479,6 +498,16 @@ void XmlEncode::writeString(const AttributeId &attribId,const string &val)
   a_v(outStream,attribId.getName(),val);
 }
 
+void XmlEncode::writeStringIndexed(const AttributeId &attribId,uint4 index,const string &val)
+
+{
+  outStream << ' ' << attribId.getName() << dec << index + 1;
+  outStream << "=\"";
+  xml_escape(outStream,val.c_str());
+  outStream << "\"";
+
+}
+
 void XmlEncode::writeSpace(const AttributeId &attribId,const AddrSpace *spc)
 
 {
@@ -709,6 +738,12 @@ uint4 PackedDecode::getNextAttributeId(void)
   }
   attributeRead = false;
   return id;
+}
+
+uint4 PackedDecode::getIndexedAttributeId(const AttributeId &attribId)
+
+{
+  return ATTRIB_UNKNOWN.getId();	// PackedDecode never needs to reinterpret an attribute
 }
 
 bool PackedDecode::readBool(void)
@@ -1042,6 +1077,15 @@ void PackedEncode::writeString(const AttributeId &attribId,const string &val)
 {
   uint8 length = val.length();
   writeHeader(ATTRIBUTE, attribId.getId());
+  writeInteger((TYPECODE_STRING << TYPECODE_SHIFT), length);
+  outStream.write(val.c_str(), length);
+}
+
+void PackedEncode::writeStringIndexed(const AttributeId &attribId,uint4 index,const string &val)
+
+{
+  uint8 length = val.length();
+  writeHeader(ATTRIBUTE, attribId.getId() + index);
   writeInteger((TYPECODE_STRING << TYPECODE_SHIFT), length);
   outStream.write(val.c_str(), length);
 }

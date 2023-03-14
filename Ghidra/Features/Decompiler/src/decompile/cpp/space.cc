@@ -21,15 +21,11 @@ AttributeId ATTRIB_DEADCODEDELAY = AttributeId("deadcodedelay",90);
 AttributeId ATTRIB_DELAY = AttributeId("delay", 91);
 AttributeId ATTRIB_LOGICALSIZE = AttributeId("logicalsize",92);
 AttributeId ATTRIB_PHYSICAL = AttributeId("physical",93);
-AttributeId ATTRIB_PIECE1 = AttributeId("piece1",94);	// piece attributes must have sequential ids
-AttributeId ATTRIB_PIECE2 = AttributeId("piece2",95);
-AttributeId ATTRIB_PIECE3 = AttributeId("piece3",96);
-AttributeId ATTRIB_PIECE4 = AttributeId("piece4",97);
-AttributeId ATTRIB_PIECE5 = AttributeId("piece5",98);
-AttributeId ATTRIB_PIECE6 = AttributeId("piece6",99);
-AttributeId ATTRIB_PIECE7 = AttributeId("piece7",100);
-AttributeId ATTRIB_PIECE8 = AttributeId("piece8",101);
-AttributeId ATTRIB_PIECE9 = AttributeId("piece9",102);
+
+// ATTRIB_PIECE is a special attribute for supporting the legacy attributes "piece1", "piece2", ..., "piece9",
+// It is effectively a sequence of indexed attributes for use with Encoder::writeStringIndexed.
+// The index starts at the ids reserved for "piece1" thru "piece9" but can extend farther.
+AttributeId ATTRIB_PIECE = AttributeId("piece",94);	// Open slots 94-102
 
 /// Calculate \e highest based on \e addressSize, and \e wordsize.
 /// This also calculates the default pointerLowerBound
@@ -552,20 +548,17 @@ int4 JoinSpace::overlapJoin(uintb offset,int4 size,AddrSpace *pointSpace,uintb p
 void JoinSpace::encodeAttributes(Encoder &encoder,uintb offset) const
 
 {
-  static AttributeId *pieceArray[] = { &ATTRIB_PIECE1, &ATTRIB_PIECE2, &ATTRIB_PIECE3, &ATTRIB_PIECE4,
-	&ATTRIB_PIECE5, &ATTRIB_PIECE6, &ATTRIB_PIECE7, &ATTRIB_PIECE8, &ATTRIB_PIECE9 };
   JoinRecord *rec = getManager()->findJoin(offset); // Record must already exist
   encoder.writeSpace(ATTRIB_SPACE, this);
   int4 num = rec->numPieces();
-  if (num >= 8)
-    throw LowlevelError("Cannot encode more than 8 pieces");
+  if (num > MAX_PIECES)
+    throw LowlevelError("Exceeded maximum pieces in one join address");
   for(int4 i=0;i<num;++i) {
     const VarnodeData &vdata( rec->getPiece(i) );
     ostringstream t;
-    AttributeId *attribId = pieceArray[i];
     t << vdata.space->getName() << ":0x";
     t << hex << vdata.offset << ':' << dec << vdata.size;
-    encoder.writeString(*attribId, t.str());
+    encoder.writeStringIndexed(ATTRIB_PIECE, i, t.str());
   }
   if (num == 1)
     encoder.writeUnsignedInteger(ATTRIB_LOGICALSIZE, rec->getUnified().size);
@@ -602,9 +595,13 @@ uintb JoinSpace::decodeAttributes(Decoder &decoder,uint4 &size) const
       logicalsize = decoder.readUnsignedInteger();
       continue;
     }
-    if (attribId < ATTRIB_PIECE1.getId() || attribId > ATTRIB_PIECE9.getId())
+    else if (attribId == ATTRIB_UNKNOWN)
+      attribId = decoder.getIndexedAttributeId(ATTRIB_PIECE);
+    if (attribId < ATTRIB_PIECE.getId())
       continue;
-    int4 pos = (int4)(attribId - ATTRIB_PIECE1.getId());
+    int4 pos = (int4)(attribId - ATTRIB_PIECE.getId());
+    if (pos > MAX_PIECES)
+      continue;
     while(pieces.size() <= pos)
       pieces.emplace_back();
     VarnodeData &vdat( pieces[pos] );
