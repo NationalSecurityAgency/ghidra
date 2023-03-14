@@ -1674,20 +1674,22 @@ uint4 VarnodeBank::overlapLoc(VarnodeLocSet::const_iterator iter,vector<VarnodeL
   Varnode *vn = *iter;
   AddrSpace *spc = vn->getSpace();
   uintb off = vn->getOffset();
-  uintb maxoff = off + (vn->getSize() - 1);
+  uintb maxOff = off + (vn->getSize() - 1);
   uint4 flags = vn->getFlags();
   bounds.push_back(iter);
   iter = endLoc(vn->getSize(),vn->getAddr(),Varnode::written);
   bounds.push_back(iter);
   while(iter != loc_tree.end()) {
     vn = *iter;
-    if (vn->getSpace() != spc || vn->getOffset() > maxoff)
+    if (vn->getSpace() != spc || vn->getOffset() > maxOff)
       break;
     if (vn->isFree()) {
       iter = endLoc(vn->getSize(),vn->getAddr(),0);
       continue;
     }
-    maxoff = vn->getOffset() + (vn->getSize() - 1);
+    uintb endOff = vn->getOffset() + (vn->getSize() - 1);
+    if (endOff > maxOff)
+      maxOff = endOff;
     flags |= vn->getFlags();
     bounds.push_back(iter);
     iter = endLoc(vn->getSize(),vn->getAddr(),Varnode::written);

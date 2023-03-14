@@ -1,0 +1,39 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+    Example of logically independent values being concatenated together
+    before being written into a structure, assigning to multiple fields simultaneously
+-->
+<bytechunk space="ram" offset="0x100740" readonly="true">
+554889e54883ec4089c84589c24589c8
+89f966894ddc89f166894dd88855d488
+45d04489d08845cc4489c08845c86448
+8b042528000000488945f831c00fbf45
+d88945ecc165ec100fb745dc0fb7c009
+45ec8b45ec8945f00fbe45c825ff0000
+008945ecc165ec080fbe45cc0fb6c009
+45ecc165ec080fbe45d00fb6c00945ec
+c165ec080fbe45d40fb6c00945ec8b45
+ec8945f4488d45f04889c7e81affffff
+90488b45f86448330425280000007405
+e8bbfdffffc9c3
+</bytechunk>
+<symbol space="ram" offset="0x100740" name="assign"/>
+<symbol space="ram" offset="0x1006fa" name="print"/>
+</binaryimage>
+<script>
+  <com>parse line struct mypiece { int2 a; int2 b; char arr[4]; };</com>
+  <com>parse line extern void assign(int2 a,int2 b,char c,char d,char e,char f);</com>
+  <com>parse line extern void print(mypiece *ptr);</com>
+  <com>lo fu assign</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Piece Structure #1" min="1" max="1">Stack_18\.a = a;</stringmatch>
+<stringmatch name="Piece Structure #2" min="1" max="1">Stack_18\.b = b;</stringmatch>
+<stringmatch name="Piece Structure #3" min="1" max="1">Stack_18\.arr\[0\] = c;</stringmatch>
+<stringmatch name="Piece Structure #4" min="1" max="1">Stack_18\.arr\[1\] = d;</stringmatch>
+<stringmatch name="Piece Structure #5" min="1" max="1">Stack_18\.arr\[2\] = e;</stringmatch>
+<stringmatch name="Piece Structure #6" min="1" max="1">Stack_18\.arr\[3\] = f;</stringmatch>
+</decompilertest>

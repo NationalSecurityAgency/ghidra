@@ -21,21 +21,6 @@
 
 #include "op.hh"
 
-/// \brief A record for caching a Cover intersection test between two HighVariable objects
-///
-/// This is just a pair of HighVariable objects that can be used as a map key. The main
-/// Merge class uses it to cache intersection test results between the two variables in
-/// a map.
-class HighEdge {
-  friend class Merge;
-  HighVariable *a;		///< First HighVariable of the pair
-  HighVariable *b;		///< Second HighVariable of the pair
-public:
-  /// \brief Comparator
-  bool operator<(const HighEdge &op2) const { if (a==op2.a) return (b<op2.b); return (a<op2.a); }
-  HighEdge(HighVariable *c,HighVariable *d) { a=c; b=d; } ///< Constructor
-};
-
 /// \brief Helper class associating a Varnode with the block where it is defined
 ///
 /// This class explicitly stores a Varnode with the index of the BlockBasic that defines it.
@@ -79,14 +64,9 @@ class Funcdata;
 ///   - Merging Varnodes that hold the same data-type
 class Merge {
   Funcdata &data;		///< The function containing the Varnodes to be merged
-  map<HighEdge,bool> highedgemap; ///< A cache of intersection tests, sorted by HighVariable pair
+  HighIntersectTest testCache;	///< Cached intersection tests
   vector<PcodeOp *> copyTrims;	///< COPY ops inserted to facilitate merges
   vector<PcodeOp *> protoPartial;	///< Roots of unmapped CONCAT trees
-  bool updateHigh(HighVariable *a); ///< Make sure given HighVariable's Cover is up-to-date
-  void purgeHigh(HighVariable *high); ///< Remove cached intersection tests for a given HighVariable
-  static void gatherBlockVarnodes(HighVariable *a,int4 blk,const Cover &cover,vector<Varnode *> &res);
-  static bool testBlockIntersection(HighVariable *a,int4 blk,const Cover &cover,int4 relOff,const vector<Varnode *> &blist);
-  bool blockIntersection(HighVariable *a,HighVariable *b,int4 blk);
   static bool mergeTestRequired(HighVariable *high_out,HighVariable *high_in);
   static bool mergeTestAdjacent(HighVariable *high_out,HighVariable *high_in);
   static bool mergeTestSpeculative(HighVariable *high_out,HighVariable *high_in);
@@ -100,7 +80,6 @@ class Merge {
   void collectCovering(vector<Varnode *> &vlist,HighVariable *high,PcodeOp *op);
   bool collectCorrectable(const vector<Varnode *> &vlist,list<PcodeOp *> &oplist,vector<int4> &slotlist,
 			   PcodeOp *op);
-  void moveIntersectTests(HighVariable *high1,HighVariable *high2);
   PcodeOp *allocateCopyTrim(Varnode *inVn,const Address &addr,PcodeOp *trimOp);
   void snipReads(Varnode *vn,list<PcodeOp *> &markedop);
   void snipIndirect(PcodeOp *indop);
@@ -122,7 +101,6 @@ class Merge {
 public:
   Merge(Funcdata &fd) : data(fd) {} ///< Construct given a specific function
   void clear(void);
-  bool intersection(HighVariable *a,HighVariable *b);
   bool inflateTest(Varnode *a,HighVariable *high);
   void inflate(Varnode *a,HighVariable *high);
   bool mergeTest(HighVariable *high,vector<HighVariable *> &tmplist);
