@@ -1142,18 +1142,13 @@ public class FieldPanel extends JPanel
 		Color highlightColor = paintContext.getHighlightColor();
 		Color mixedColor = paintContext.getSelectedHighlightColor();
 		if (!isDefault) {
-			selectionColor = blend(selectionColor, backgroundColor);
-			highlightColor = blend(highlightColor, backgroundColor);
-			mixedColor = blend(mixedColor, backgroundColor);
+			selectionColor = ColorUtils.addColors(selectionColor, backgroundColor);
+			highlightColor = ColorUtils.addColors(highlightColor, backgroundColor);
+			mixedColor = ColorUtils.addColors(mixedColor, backgroundColor);
 		}
 
 		return LayoutColorMapFactory.getLayoutColorMap(layoutIndex, selection, highlight,
 			backgroundColor, selectionColor, highlightColor, mixedColor);
-	}
-
-	private Color blend(Color primary, Color secondary) {
-
-		return ColorUtils.blend(primary, secondary, 0.75);
 	}
 
 	private void paintLayoutBackground(Graphics g, Rectangle rect, AnchoredLayout layout,

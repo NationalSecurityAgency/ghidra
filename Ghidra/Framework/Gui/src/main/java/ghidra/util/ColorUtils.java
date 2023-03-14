@@ -20,6 +20,9 @@ import java.util.Comparator;
 
 public class ColorUtils {
 
+	private static final int MAX_COLOR_VALUE = 255;
+	private static final int MID_COLOR_VALUE = MAX_COLOR_VALUE / 2;
+	private static final int MAX_NUDGE = 32;
 	public static final float HUE_RED = 0.0f / 12;
 	public static final float HUE_ORANGE = 1.0f / 12;
 	public static final float HUE_YELLOW = 2.0f / 12;
@@ -180,6 +183,65 @@ public class ColorUtils {
 		int blue = blend(c1.getBlue(), c2.getBlue(), ratio);
 		int alpha = blend(c1.getAlpha(), c2.getAlpha(), ratio);
 		return new Color(red, green, blue, alpha);
+	}
+
+	/**
+	 * Combines colors in a way the makes them stand out from each other more than just averaging
+	 * them together. Basically if the colors are bright, the result is a darker value than the
+	 * primary, adjusted based on the values in the secondary. If the colors are dark, then the
+	 * result is a brighter version of the primary color adjusted based on values in the secondary
+	 * color.
+	 * @param primary the primary color to be tweaked
+	 * @param secondary the color to used to determine the amount to tweak the red,green,blue values
+	 * @return a new color that is a combination of the two colors
+	 */
+	public static Color addColors(Color primary, Color secondary) {
+		boolean bright1 = isBright(primary);
+		boolean bright2 = isBright(secondary);
+		if (bright1 && bright2) {
+			return combineDarker(primary, secondary);
+		}
+		if (!bright1 && !bright2) {
+			return combineBrighter(primary, secondary);
+		}
+		return average(primary, secondary);
+	}
+
+	private static Color combineDarker(Color primary, Color secondary) {
+		int red = combineDarker(primary.getRed(), secondary.getRed());
+		int green = combineDarker(primary.getGreen(), secondary.getGreen());
+		int blue = combineDarker(primary.getBlue(), secondary.getBlue());
+		return new Color(red, green, blue);
+	}
+
+	private static Color combineBrighter(Color primary, Color secondary) {
+		int red = combineBrighter(primary.getRed(), secondary.getRed());
+		int green = combineBrighter(primary.getGreen(), secondary.getGreen());
+		int blue = combineBrighter(primary.getBlue(), secondary.getBlue());
+		return new Color(red, green, blue);
+	}
+
+	private static int combineDarker(int primary, int secondary) {
+		int nudge = Math.min(MAX_COLOR_VALUE - secondary, MAX_NUDGE);
+		return primary - nudge;
+	}
+
+	private static int combineBrighter(int primary, int secondary) {
+		int nudge = Math.min(secondary, MAX_NUDGE);
+		return primary + nudge;
+	}
+
+	private static boolean isBright(Color color) {
+		if (color.getRed() > MID_COLOR_VALUE) {
+			return true;
+		}
+		if (color.getGreen() > MID_COLOR_VALUE) {
+			return true;
+		}
+		if (color.getBlue() > MID_COLOR_VALUE) {
+			return true;
+		}
+		return false;
 	}
 
 	private static int blend(int colorValue1, int colorValue2, double ratio) {

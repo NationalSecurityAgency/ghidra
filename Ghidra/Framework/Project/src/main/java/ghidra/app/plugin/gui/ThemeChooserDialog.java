@@ -31,29 +31,53 @@ public class ThemeChooserDialog extends DialogComponentProvider {
 
 	private ThemeManager themeManager;
 	private ListPanel<GTheme> listPanel;
-	private GTheme originalTheme;
 
 	public ThemeChooserDialog(ThemeManager themeManager) {
 		super("Change Theme");
 		this.themeManager = themeManager;
-		originalTheme = themeManager.getActiveTheme();
 		addWorkPanel(buildMainPanel());
 		addOKButton();
+		addApplyButton();
 		addCancelButton();
 		setRememberSize(false);
 		setHelpLocation(new HelpLocation("Theming", "Switch_Theme"));
+		updateOkApplyButtons();
+	}
+
+	private void updateOkApplyButtons() {
+
+		GTheme selectedValue = listPanel.getSelectedValue();
+		GTheme currentTheme = themeManager.getActiveTheme();
+		boolean canApplyTheme = selectedValue != null && !currentTheme.equals(selectedValue);
+		setOkEnabled(canApplyTheme);
+		setApplyEnabled(canApplyTheme);
 	}
 
 	@Override
 	protected void okCallback() {
+		applyTheme();
 		close();
 	}
 
-	protected void cancelCallback() {
-		GTheme activeTheme = themeManager.getActiveTheme();
-		if (activeTheme != originalTheme) {
-			themeManager.setTheme(originalTheme);
+	@Override
+	protected void applyCallback() {
+		applyTheme();
+	}
+
+	private void applyTheme() {
+		GTheme selectedValue = listPanel.getSelectedValue();
+		if (selectedValue == null) {
+			return;
 		}
+		GTheme activeTheme = themeManager.getActiveTheme();
+		if (selectedValue != activeTheme) {
+			Swing.runLater(() -> themeManager.setTheme(selectedValue));
+		}
+		setOkEnabled(false);
+		setApplyEnabled(false);
+	}
+
+	protected void cancelCallback() {
 		close();
 	}
 
@@ -74,14 +98,7 @@ public class ThemeChooserDialog extends DialogComponentProvider {
 	}
 
 	private void selectionChanged() {
-		GTheme selectedValue = listPanel.getSelectedValue();
-		if (selectedValue == null) {
-			return;
-		}
-		GTheme activeTheme = themeManager.getActiveTheme();
-		if (selectedValue != activeTheme) {
-			Swing.runLater(() -> themeManager.setTheme(selectedValue));
-		}
+		updateOkApplyButtons();
 	}
 
 	private class ThemeListModel extends AbstractListModel<GTheme> {

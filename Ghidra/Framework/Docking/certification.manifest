@@ -73,7 +73,6 @@ src/main/resources/images/hourglass24_11.png||GHIDRA||reviewed||END|
 src/main/resources/images/info_small.png||GHIDRA||||END|
 src/main/resources/images/info_small_hover.png||GHIDRA||||END|
 src/main/resources/images/inode-directory.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
-src/main/resources/images/list-remove.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/magnifier.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/mail-folder-outbox.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/mail-receive.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
