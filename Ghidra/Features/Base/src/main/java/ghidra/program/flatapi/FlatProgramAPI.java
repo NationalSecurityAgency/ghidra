@@ -1196,7 +1196,7 @@ public class FlatProgramAPI {
 	 * @return the last instruction in the current program
 	 */
 	public final Instruction getLastInstruction() {
-		Address address = currentProgram.getMinAddress();
+		Address address = currentProgram.getMaxAddress();
 		InstructionIterator iterator = currentProgram.getListing().getInstructions(address, false);
 		if (iterator.hasNext()) {
 			return iterator.next();
