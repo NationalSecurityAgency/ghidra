@@ -480,6 +480,8 @@ public class MachoProgramBuilder {
  	}
  	
 	protected boolean processExports(MachHeader header) throws Exception {
+		monitor.setMessage("Processing exports...");
+
 		List<ExportEntry> exports = new ArrayList<>();
 
 		// Old way - export tree in DyldInfoCommand
@@ -1794,7 +1796,9 @@ public class MachoProgramBuilder {
 			}
 			else {
 				newChainValue = DyldChainedPtr.getTarget(pointerFormat, chainValue);
-				newChainValue += imageBaseOffset;
+				if (DyldChainedPtr.isRelative(pointerFormat)) {
+					newChainValue += imageBaseOffset;
+				}
 			}
 
 			if (!start || !program.getRelocationTable().hasRelocation(chainLoc)) {
