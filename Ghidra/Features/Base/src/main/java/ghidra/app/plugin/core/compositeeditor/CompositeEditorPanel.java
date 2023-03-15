@@ -186,6 +186,7 @@ public abstract class CompositeEditorPanel extends JPanel
 					if (editingRow < 0) {
 						return;
 					}
+
 					int modelColumn = table.convertColumnIndexToModel(table.getEditingColumn());
 					if (!launchBitFieldEditor(modelColumn, editingRow)) {
 						model.beginEditingField(editingRow, modelColumn);
@@ -1332,7 +1333,7 @@ public abstract class CompositeEditorPanel extends JPanel
 
 		@Override
 		public void focusEditor() {
-			boolean didFocus = textField.requestFocusInWindow();
+			textField.requestFocusInWindow();
 		}
 
 		@Override
