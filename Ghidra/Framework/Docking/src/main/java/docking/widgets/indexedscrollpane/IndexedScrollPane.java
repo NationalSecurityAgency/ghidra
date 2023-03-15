@@ -212,24 +212,9 @@ public class IndexedScrollPane extends JPanel implements IndexScrollListener {
 
 		@Override
 		public boolean getScrollableTracksViewportWidth() {
-			int prefWidth = comp.getPreferredSize().width;
-			int scrollPaneWidth = getScrollPaneWidth();
-			return scrollPaneWidth > prefWidth;
+			return false;
 		}
 
-		private int getScrollPaneWidth() {
-			Container myParent = getParent();
-			if (myParent == null) {
-				return 0;
-			}
-			Container grandParent = myParent.getParent();
-			if (grandParent == null) {
-				return 0;
-			}
-			return grandParent.getSize().width;
-		}
-
-		@Override
 		public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation,
 				int direction) {
 
