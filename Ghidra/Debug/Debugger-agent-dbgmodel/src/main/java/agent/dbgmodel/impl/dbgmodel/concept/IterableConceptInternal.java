@@ -15,14 +15,15 @@
  */
 package agent.dbgmodel.impl.dbgmodel.concept;
 
+import java.util.List;
 import java.util.Map;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Guid.REFIID;
 
+import agent.dbgeng.impl.dbgeng.DbgEngUtil;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.InterfaceSupplier;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.Preferred;
 import agent.dbgmodel.dbgmodel.concept.IterableConcept;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil.InterfaceSupplier;
 import agent.dbgmodel.jna.dbgmodel.concept.IIterableConcept;
 import agent.dbgmodel.jna.dbgmodel.concept.WrapIIterableConcept;
 import ghidra.util.datastruct.WeakValueHashMap;
@@ -31,16 +32,14 @@ public interface IterableConceptInternal extends IterableConcept {
 	Map<Pointer, IterableConceptInternal> CACHE = new WeakValueHashMap<>();
 
 	static IterableConceptInternal instanceFor(WrapIIterableConcept data) {
-		return DbgModelUtil.lazyWeakCache(CACHE, data, IterableConceptImpl::new);
+		return DbgEngUtil.lazyWeakCache(CACHE, data, IterableConceptImpl::new);
 	}
 
-	Map<REFIID, Class<? extends WrapIIterableConcept>> PREFERRED_DATA_SPACES_IIDS =
-		Map.ofEntries(
-			Map.entry(new REFIID(IIterableConcept.IID_IITERABLE_CONCEPT),
-				WrapIIterableConcept.class));
+	List<Preferred<WrapIIterableConcept>> PREFERRED_DATA_SPACES_IIDS = List.of(
+		new Preferred<>(IIterableConcept.IID_IITERABLE_CONCEPT, WrapIIterableConcept.class));
 
 	static IterableConceptInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
-		return DbgModelUtil.tryPreferredInterfaces(IterableConceptInternal.class,
+		return DbgEngUtil.tryPreferredInterfaces(IterableConceptInternal.class,
 			PREFERRED_DATA_SPACES_IIDS, supplier);
 	}
 }

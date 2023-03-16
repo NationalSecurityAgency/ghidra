@@ -15,14 +15,15 @@
  */
 package agent.dbgeng.impl.dbgeng.breakpoint;
 
+import java.util.List;
 import java.util.Map;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Guid.REFIID;
 
 import agent.dbgeng.dbgeng.DebugBreakpoint;
 import agent.dbgeng.impl.dbgeng.DbgEngUtil;
 import agent.dbgeng.impl.dbgeng.DbgEngUtil.InterfaceSupplier;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.Preferred;
 import agent.dbgeng.impl.dbgeng.control.DebugControlInternal;
 import agent.dbgeng.jna.dbgeng.breakpoint.*;
 import ghidra.util.datastruct.WeakValueHashMap;
@@ -42,14 +43,10 @@ public interface DebugBreakpointInternal extends DebugBreakpoint {
 		return DbgEngUtil.lazyWeakCache(CACHE, bp, DebugBreakpointImpl3::new);
 	}
 
-	Map<REFIID, Class<? extends WrapIDebugBreakpoint>> PREFERRED_BREAKPOINT_IIDS =
-		Map.ofEntries(
-			Map.entry(new REFIID(IDebugBreakpoint3.IID_IDEBUG_BREAKPOINT3),
-				WrapIDebugBreakpoint3.class),
-			Map.entry(new REFIID(IDebugBreakpoint2.IID_IDEBUG_BREAKPOINT2),
-				WrapIDebugBreakpoint2.class),
-			Map.entry(new REFIID(IDebugBreakpoint.IID_IDEBUG_BREAKPOINT),
-				WrapIDebugBreakpoint.class));
+	List<Preferred<WrapIDebugBreakpoint>> PREFERRED_BREAKPOINT_IIDS = List.of(
+		new Preferred<>(IDebugBreakpoint3.IID_IDEBUG_BREAKPOINT3, WrapIDebugBreakpoint3.class),
+		new Preferred<>(IDebugBreakpoint2.IID_IDEBUG_BREAKPOINT2, WrapIDebugBreakpoint2.class),
+		new Preferred<>(IDebugBreakpoint.IID_IDEBUG_BREAKPOINT, WrapIDebugBreakpoint.class));
 
 	static DebugBreakpointInternal tryPreferredInterfaces(DebugControlInternal control,
 			InterfaceSupplier supplier) {

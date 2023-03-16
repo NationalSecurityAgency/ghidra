@@ -15,14 +15,15 @@
  */
 package agent.dbgmodel.impl.dbgmodel.main;
 
+import java.util.List;
 import java.util.Map;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Guid.REFIID;
 
+import agent.dbgeng.impl.dbgeng.DbgEngUtil;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.InterfaceSupplier;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.Preferred;
 import agent.dbgmodel.dbgmodel.main.ModelIterator;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil.InterfaceSupplier;
 import agent.dbgmodel.jna.dbgmodel.main.IModelIterator;
 import agent.dbgmodel.jna.dbgmodel.main.WrapIModelIterator;
 import ghidra.util.datastruct.WeakValueHashMap;
@@ -31,15 +32,14 @@ public interface ModelIteratorInternal extends ModelIterator {
 	Map<Pointer, ModelIteratorInternal> CACHE = new WeakValueHashMap<>();
 
 	static ModelIteratorInternal instanceFor(WrapIModelIterator data) {
-		return DbgModelUtil.lazyWeakCache(CACHE, data, ModelIteratorImpl::new);
+		return DbgEngUtil.lazyWeakCache(CACHE, data, ModelIteratorImpl::new);
 	}
 
-	Map<REFIID, Class<? extends WrapIModelIterator>> PREFERRED_DATA_SPACES_IIDS =
-		Map.ofEntries(
-			Map.entry(new REFIID(IModelIterator.IID_IMODEL_ITERATOR), WrapIModelIterator.class));
+	List<Preferred<WrapIModelIterator>> PREFERRED_DATA_SPACES_IIDS = List.of(
+		new Preferred<>(IModelIterator.IID_IMODEL_ITERATOR, WrapIModelIterator.class));
 
 	static ModelIteratorInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
-		return DbgModelUtil.tryPreferredInterfaces(ModelIteratorInternal.class,
+		return DbgEngUtil.tryPreferredInterfaces(ModelIteratorInternal.class,
 			PREFERRED_DATA_SPACES_IIDS, supplier);
 	}
 }

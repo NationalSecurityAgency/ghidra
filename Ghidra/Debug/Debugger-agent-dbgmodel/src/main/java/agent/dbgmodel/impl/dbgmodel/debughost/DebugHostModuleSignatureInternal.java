@@ -15,14 +15,15 @@
  */
 package agent.dbgmodel.impl.dbgmodel.debughost;
 
+import java.util.List;
 import java.util.Map;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Guid.REFIID;
 
+import agent.dbgeng.impl.dbgeng.DbgEngUtil;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.InterfaceSupplier;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.Preferred;
 import agent.dbgmodel.dbgmodel.debughost.DebugHostModuleSignature;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil.InterfaceSupplier;
 import agent.dbgmodel.jna.dbgmodel.debughost.IDebugHostModuleSignature;
 import agent.dbgmodel.jna.dbgmodel.debughost.WrapIDebugHostModuleSignature;
 import ghidra.util.datastruct.WeakValueHashMap;
@@ -31,16 +32,15 @@ public interface DebugHostModuleSignatureInternal extends DebugHostModuleSignatu
 	Map<Pointer, DebugHostModuleSignatureInternal> CACHE = new WeakValueHashMap<>();
 
 	static DebugHostModuleSignatureInternal instanceFor(WrapIDebugHostModuleSignature data) {
-		return DbgModelUtil.lazyWeakCache(CACHE, data, DebugHostModuleSignatureImpl::new);
+		return DbgEngUtil.lazyWeakCache(CACHE, data, DebugHostModuleSignatureImpl::new);
 	}
 
-	Map<REFIID, Class<? extends WrapIDebugHostModuleSignature>> PREFERRED_DATA_SPACES_IIDS =
-		Map.ofEntries(
-			Map.entry(new REFIID(IDebugHostModuleSignature.IID_IDEBUG_HOST_MODULE_SIGNATURE),
-				WrapIDebugHostModuleSignature.class));
+	List<Preferred<WrapIDebugHostModuleSignature>> PREFERRED_DATA_SPACES_IIDS = List.of(
+		new Preferred<>(IDebugHostModuleSignature.IID_IDEBUG_HOST_MODULE_SIGNATURE,
+			WrapIDebugHostModuleSignature.class));
 
 	static DebugHostModuleSignatureInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
-		return DbgModelUtil.tryPreferredInterfaces(DebugHostModuleSignatureInternal.class,
+		return DbgEngUtil.tryPreferredInterfaces(DebugHostModuleSignatureInternal.class,
 			PREFERRED_DATA_SPACES_IIDS, supplier);
 	}
 }

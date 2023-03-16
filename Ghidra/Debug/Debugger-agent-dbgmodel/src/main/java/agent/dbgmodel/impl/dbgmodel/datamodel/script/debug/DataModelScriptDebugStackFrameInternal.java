@@ -15,14 +15,15 @@
  */
 package agent.dbgmodel.impl.dbgmodel.datamodel.script.debug;
 
+import java.util.List;
 import java.util.Map;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Guid.REFIID;
 
+import agent.dbgeng.impl.dbgeng.DbgEngUtil;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.InterfaceSupplier;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.Preferred;
 import agent.dbgmodel.dbgmodel.datamodel.script.debug.DataModelScriptDebugStackFrame;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil.InterfaceSupplier;
 import agent.dbgmodel.jna.dbgmodel.datamodel.script.debug.IDataModelScriptDebugStackFrame;
 import agent.dbgmodel.jna.dbgmodel.datamodel.script.debug.WrapIDataModelScriptDebugStackFrame;
 import ghidra.util.datastruct.WeakValueHashMap;
@@ -32,19 +33,16 @@ public interface DataModelScriptDebugStackFrameInternal extends DataModelScriptD
 
 	static DataModelScriptDebugStackFrameInternal instanceFor(
 			WrapIDataModelScriptDebugStackFrame data) {
-		return DbgModelUtil.lazyWeakCache(CACHE, data, DataModelScriptDebugStackFrameImpl::new);
+		return DbgEngUtil.lazyWeakCache(CACHE, data, DataModelScriptDebugStackFrameImpl::new);
 	}
 
-	Map<REFIID, Class<? extends WrapIDataModelScriptDebugStackFrame>> PREFERRED_DATA_SPACES_IIDS =
-		Map.ofEntries(
-			Map.entry(
-				new REFIID(
-					IDataModelScriptDebugStackFrame.IID_IDATA_MODEL_SCRIPT_DEBUG_STACK_FRAME),
-				WrapIDataModelScriptDebugStackFrame.class));
+	List<Preferred<WrapIDataModelScriptDebugStackFrame>> PREFERRED_DATA_SPACES_IIDS = List.of(
+		new Preferred<>(IDataModelScriptDebugStackFrame.IID_IDATA_MODEL_SCRIPT_DEBUG_STACK_FRAME,
+			WrapIDataModelScriptDebugStackFrame.class));
 
 	static DataModelScriptDebugStackFrameInternal tryPreferredInterfaces(
 			InterfaceSupplier supplier) {
-		return DbgModelUtil.tryPreferredInterfaces(DataModelScriptDebugStackFrameInternal.class,
+		return DbgEngUtil.tryPreferredInterfaces(DataModelScriptDebugStackFrameInternal.class,
 			PREFERRED_DATA_SPACES_IIDS, supplier);
 	}
 }
