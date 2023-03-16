@@ -64,7 +64,7 @@ public class PcodeExecutor<T> {
 		this.reason = reason;
 
 		this.pc = language.getProgramCounter();
-		this.pcSize = pc.getNumBytes();
+		this.pcSize = pc != null ? pc.getNumBytes() : language.getDefaultSpace().getPointerSize();
 	}
 
 	/**
