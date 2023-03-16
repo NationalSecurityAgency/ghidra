@@ -17,11 +17,12 @@ package ghidra.framework.options;
 
 import static org.junit.Assert.*;
 
+import java.util.Arrays;
+import java.util.Date;
+
 import java.awt.Color;
 import java.awt.Font;
 import java.io.*;
-import java.util.Arrays;
-import java.util.Date;
 
 import javax.swing.KeyStroke;
 
@@ -342,7 +343,7 @@ public class SaveStateTest extends AbstractGenericTest {
 		ss.putString(greaterThanLessThanKey, stringWithGreaterThanAndLessThan);
 
 		String stringWithLargeHexDigit =
-			"The following is a large hex digit: \u0128, \u0132, \307 and \253 " +
+			"The following is a large hex digit: \u0128, \u0132, \307 and \253 \uD835\uDCC8 " +
 				"with some trailing text &#xFF;";
 		String hexDigitKey = "HEX_DIGIT_KEY";
 		ss.putString(hexDigitKey, stringWithLargeHexDigit);
