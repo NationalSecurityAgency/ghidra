@@ -70,7 +70,8 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 	 * @param correlatorName the correlator name
 	 * @param options the tool options
 	 */
-	VTAbstractReferenceProgramCorrelator(ServiceProvider serviceProvider, Program sourceProgram,
+	public VTAbstractReferenceProgramCorrelator(ServiceProvider serviceProvider,
+			Program sourceProgram,
 			AddressSetView sourceAddressSet, Program destinationProgram,
 			AddressSetView destinationAddressSet, String correlatorName, ToolOptions options) {
 		// Call the constructor for the parent class.

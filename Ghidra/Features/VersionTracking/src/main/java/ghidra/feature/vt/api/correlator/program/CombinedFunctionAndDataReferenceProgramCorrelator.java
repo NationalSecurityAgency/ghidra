@@ -39,7 +39,7 @@ public class CombinedFunctionAndDataReferenceProgramCorrelator extends
 	 * @param correlatorName The correlator name string passed from the factory.
 	 * @param options {@code ToolOptions}
 	 */
-	CombinedFunctionAndDataReferenceProgramCorrelator(ServiceProvider serviceProvider,
+	public CombinedFunctionAndDataReferenceProgramCorrelator(ServiceProvider serviceProvider,
 			Program sourceProgram, AddressSetView sourceAddressSet, Program destinationProgram,
 			AddressSetView destinationAddressSet, String correlatorName, ToolOptions options) {
 		super(serviceProvider, sourceProgram, sourceAddressSet, destinationProgram,
