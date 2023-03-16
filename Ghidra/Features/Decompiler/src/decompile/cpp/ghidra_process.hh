@@ -79,7 +79,7 @@ protected:
   virtual void loadParameters(void);	///< Read parameters directing command execution
   virtual void sendResult(void);	///< Send results of the command (if any) back to the Ghidra client
 public:
-  GhidraCommand(void) : sin(cin),sout(cout) {
+  GhidraCommand(void) : sin(std::cin),sout(std::cout) {
     ghidra = (ArchitectureGhidra *)0; 
   }					///< Construct given i/o streams
   virtual ~GhidraCommand(void) {}	///< Destructor
