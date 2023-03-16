@@ -52,7 +52,7 @@ public:
   bool contain(const PcodeOp *point) const;					///< Check containment of given point
   int4 boundary(const PcodeOp *point) const;					///< Characterize given point as boundary
   void merge(const CoverBlock &op2);					///< Merge another CoverBlock into \b this
-  void print(ostream &s) const;						///< Dump a description to stream
+  void print(std::ostream &s) const;						///< Dump a description to stream
 };
 
 /// \brief A description of the topological scope of a single variable object
@@ -66,7 +66,7 @@ public:
 ///
 /// Internally this is implemented as a map from basic block to their non-empty CoverBlock
 class Cover {
-  map<int4,CoverBlock> cover; 			///< block index -> CoverBlock
+  std::map<int4,CoverBlock> cover; 			///< block index -> CoverBlock
   static const CoverBlock emptyBlock;		///< Global empty CoverBlock for blocks not covered by \b this
   void addRefRecurse(const FlowBlock *bl);	///< Fill-in \b this recursively from the given block
 public:
@@ -75,7 +75,7 @@ public:
   const CoverBlock &getCoverBlock(int4 i) const;	///< Get the CoverBlock corresponding to the i-th block
   int4 intersect(const Cover &op2) const;	///< Characterize the intersection between \b this and another Cover.
   int4 intersectByBlock(int4 blk,const Cover &op2) const;	///< Characterize the intersection on a specific block
-  void intersectList(vector<int4> &listout,const Cover &op2,int4 level) const;
+  void intersectList(std::vector<int4> &listout,const Cover &op2,int4 level) const;
   bool contain(const PcodeOp *op,int4 max) const;
   int4 containVarnodeDef(const Varnode *vn) const;
   void merge(const Cover &op2);			///< Merge \b this with another Cover block by block
@@ -84,9 +84,9 @@ public:
   void addRefPoint(const PcodeOp *ref,const Varnode *vn);	///< Add a variable read to \b this Cover
   //  void remove_refpoint(const PcodeOp *ref,const Varnode *vn) {
   //    rebuild(vn); }		// Cheap but inefficient
-  void print(ostream &s) const;			///< Dump a description of \b this cover to stream
-  map<int4,CoverBlock>::const_iterator begin(void) const { return cover.begin(); }	///< Get beginning of CoverBlocks
-  map<int4,CoverBlock>::const_iterator end(void) const { return cover.end(); }		///< Get end of CoverBlocks
+  void print(std::ostream &s) const;			///< Dump a description of \b this cover to stream
+  std::map<int4,CoverBlock>::const_iterator begin(void) const { return cover.begin(); }	///< Get beginning of CoverBlocks
+  std::map<int4,CoverBlock>::const_iterator end(void) const { return cover.end(); }		///< Get end of CoverBlocks
 };
 
 #endif

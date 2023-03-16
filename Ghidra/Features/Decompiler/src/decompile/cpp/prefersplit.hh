@@ -38,8 +38,8 @@ class PreferSplitManager {
     SplitInstance(Varnode *v,int4 off) { vn = v; splitoffset = off; hi = (Varnode *)0; lo = (Varnode *)0; }
   };
   Funcdata *data;
-  const vector<PreferSplitRecord> *records;
-  vector<PcodeOp *> tempsplits; // Copies of temporaries that need additional splitting
+  const std::vector<PreferSplitRecord> *records;
+  std::vector<PcodeOp *> tempsplits; // Copies of temporaries that need additional splitting
   void fillinInstance(SplitInstance *inst,bool bigendian,bool sethi,bool setlo);
   void createCopyOps(SplitInstance *ininst,SplitInstance *outinst,PcodeOp *op,bool istemp);
   bool testDefiningCopy(SplitInstance *inst,PcodeOp *def,bool &istemp);
@@ -61,9 +61,9 @@ class PreferSplitManager {
   bool testTemporary(SplitInstance *inst);
   void splitTemporary(SplitInstance *inst);
 public:
-  void init(Funcdata *fd,const vector<PreferSplitRecord> *rec);
+  void init(Funcdata *fd,const std::vector<PreferSplitRecord> *rec);
   const PreferSplitRecord *findRecord(Varnode *vn) const;
-  static void initialize(vector<PreferSplitRecord> &records);
+  static void initialize(std::vector<PreferSplitRecord> &records);
   void split(void);
   void splitAdditional(void);
 };

@@ -35,7 +35,7 @@ public:
   void close(void);				///< Close any descriptor
   virtual void loadFill(uint1 *ptr,int4 size,const Address &addr);
   // Read only flags are all controlled through the database interface
-  virtual string getArchType(void) const;
+  virtual std::string getArchType(void) const;
   virtual void adjustVma(long adjust);
 };
 

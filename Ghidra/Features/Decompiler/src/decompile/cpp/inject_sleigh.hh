@@ -31,82 +31,82 @@ public:
 class InjectPayloadSleigh : public InjectPayload {
   friend class PcodeInjectLibrarySleigh;
   ConstructTpl *tpl;
-  string parsestring;
-  string source;
+  std::string parsestring;
+  std::string source;
 protected:
   void decodeBody(Decoder &decoder);	///< Parse the <body> tag
 public:
-  InjectPayloadSleigh(const string &src,const string &nm,int4 tp);
+  InjectPayloadSleigh(const std::string &src,const std::string &nm,int4 tp);
   virtual ~InjectPayloadSleigh(void);
   virtual void inject(InjectContext &context,PcodeEmit &emit) const;
   virtual void decode(Decoder &decoder);
-  virtual void printTemplate(ostream &s) const;
-  virtual string getSource(void) const { return source; }
+  virtual void printTemplate(std::ostream &s) const;
+  virtual std::string getSource(void) const { return source; }
 
-  static void checkParameterRestrictions(InjectContextSleigh &con,const vector<InjectParameter> &inputlist,
-					 const vector<InjectParameter> &output,const string &source);
+  static void checkParameterRestrictions(InjectContextSleigh &con,const std::vector<InjectParameter> &inputlist,
+					 const std::vector<InjectParameter> &output,const std::string &source);
   static void setupParameters(InjectContextSleigh &con,ParserWalkerChange &walker,
-			      const vector<InjectParameter> &inputlist,const vector<InjectParameter> &output,
-			      const string &source);
+			      const std::vector<InjectParameter> &inputlist,const std::vector<InjectParameter> &output,
+			      const std::string &source);
 };
 
 class InjectPayloadCallfixup : public InjectPayloadSleigh {
-  vector<string> targetSymbolNames;
+  std::vector<std::string> targetSymbolNames;
 public:
-  InjectPayloadCallfixup(const string &sourceName);
+  InjectPayloadCallfixup(const std::string &sourceName);
   virtual void decode(Decoder &decoder);
 };
 
 class InjectPayloadCallother : public InjectPayloadSleigh {
 public:
-  InjectPayloadCallother(const string &sourceName);
+  InjectPayloadCallother(const std::string &sourceName);
   virtual void decode(Decoder &decoder);
 };
 
 class ExecutablePcodeSleigh : public ExecutablePcode {
   friend class PcodeInjectLibrarySleigh;
 protected:
-  string parsestring;
+  std::string parsestring;
   ConstructTpl *tpl;
  public:
-  ExecutablePcodeSleigh(Architecture *g,const string &src,const string &nm);
+  ExecutablePcodeSleigh(Architecture *g,const std::string &src,const std::string &nm);
   virtual ~ExecutablePcodeSleigh(void);
   virtual void inject(InjectContext &context,PcodeEmit &emit) const;
   virtual void decode(Decoder &decoder);
-  virtual void printTemplate(ostream &s) const;
+  virtual void printTemplate(std::ostream &s) const;
 };
 
 class InjectPayloadDynamic : public InjectPayload {
   Architecture *glb;
-  map<Address,Document *> addrMap;		// Map from address to specific inject
+  std::map<Address,Document *> addrMap;		// Map from address to specific inject
 public:
-  InjectPayloadDynamic(Architecture *g,const string &nm,int4 tp) : InjectPayload(nm,tp) { glb = g; dynamic = true; }
+  InjectPayloadDynamic(Architecture *g,const std::string &nm,int4 tp) : InjectPayload(nm,tp) { glb = g; dynamic = true; }
   virtual ~InjectPayloadDynamic(void);
   void decodeEntry(Decoder &decoder);
   virtual void inject(InjectContext &context,PcodeEmit &emit) const;
   virtual void decode(Decoder &decoder) { throw LowlevelError("decode not supported for InjectPayloadDynamic"); }
-  virtual void printTemplate(ostream &s) const { s << "dynamic"; }
-  virtual string getSource(void) const { return "dynamic"; }
+  virtual void printTemplate(std::ostream &s) const { s << "dynamic"; }
+  virtual std::string getSource(void) const { return "dynamic"; }
 };
 
 class PcodeInjectLibrarySleigh : public PcodeInjectLibrary {
   const SleighBase *slgh;
-  vector<OpBehavior *> inst;
+  std::vector<OpBehavior *> inst;
   InjectContextSleigh contextCache;
   int4 registerDynamicInject(InjectPayload *payload);
   InjectPayloadDynamic *forceDebugDynamic(int4 injectid);
   void parseInject(InjectPayload *payload);
 protected:
-  virtual int4 allocateInject(const string &sourceName,const string &name,int4 type);
+  virtual int4 allocateInject(const std::string &sourceName,const std::string &name,int4 type);
   virtual void registerInject(int4 injectid);
 public:
   PcodeInjectLibrarySleigh(Architecture *g);
   virtual void decodeDebug(Decoder &decoder);
-  virtual int4 manualCallFixup(const string &name,const string &snippetstring);
-  virtual int4 manualCallOtherFixup(const string &name,const string &outname,const vector<string> &inname,
-				    const string &snippet);
+  virtual int4 manualCallFixup(const std::string &name,const std::string &snippetstring);
+  virtual int4 manualCallOtherFixup(const std::string &name,const std::string &outname,const std::vector<std::string> &inname,
+				    const std::string &snippet);
   virtual InjectContext &getCachedContext(void) { return contextCache; }
-  virtual const vector<OpBehavior *> &getBehaviors(void);
+  virtual const std::vector<OpBehavior *> &getBehaviors(void);
 };
 
 #endif

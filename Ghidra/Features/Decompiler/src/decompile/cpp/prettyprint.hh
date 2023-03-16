@@ -92,7 +92,7 @@ extern ElementId ELEM_VARIABLE;		///< Marshaling element \<variable>
 /// For an implementation that actually does pretty printing, see EmitPrettyPrint.
 class Emit {
 public:
-  static const string EMPTY_STRING;	///< An empty string
+  static const std::string EMPTY_STRING;	///< An empty string
 protected:
   int4 indentlevel;			///< Current indent level (in fixed width characters)
   int4 parenlevel;			///< Current depth of parentheses
@@ -228,7 +228,7 @@ public:
   /// \param hl indicates how the identifier should be highlighted
   /// \param vn is the Varnode representing the variable within the syntax tree
   /// \param op is a p-code operation related to the use of the variable (may be null)
-  virtual void tagVariable(const string &name,syntax_highlight hl,const Varnode *vn,const PcodeOp *op)=0;
+  virtual void tagVariable(const std::string &name,syntax_highlight hl,const Varnode *vn,const PcodeOp *op)=0;
 
   /// \brief Emit an operation token
   ///
@@ -237,7 +237,7 @@ public:
   /// \param name is the character data for the emitted representation
   /// \param hl indicates how the token should be highlighted
   /// \param op is the PcodeOp object associated with the operation with the syntax tree
-  virtual void tagOp(const string &name,syntax_highlight hl,const PcodeOp *op)=0;
+  virtual void tagOp(const std::string &name,syntax_highlight hl,const PcodeOp *op)=0;
 
   /// \brief Emit a function identifier
   ///
@@ -247,7 +247,7 @@ public:
   /// \param hl indicates how the identifier should be highlighted
   /// \param fd is the function
   /// \param op is the CALL operation associated within the syntax tree or null for a declaration
-  virtual void tagFuncName(const string &name,syntax_highlight hl,const Funcdata *fd,const PcodeOp *op)=0;
+  virtual void tagFuncName(const std::string &name,syntax_highlight hl,const Funcdata *fd,const PcodeOp *op)=0;
 
   /// \brief Emit a data-type identifier
   ///
@@ -256,7 +256,7 @@ public:
   /// \param name is the character data for the identifier
   /// \param hl indicates how the identifier should be highlighted
   /// \param ct is the data-type description object
-  virtual void tagType(const string &name,syntax_highlight hl,const Datatype *ct)=0;
+  virtual void tagType(const std::string &name,syntax_highlight hl,const Datatype *ct)=0;
 
   /// \brief Emit an identifier for a field within a structured data-type
   ///
@@ -267,7 +267,7 @@ public:
   /// \param ct is the data-type associated with the field
   /// \param off is the (byte) offset of the field within its structured data-type
   /// \param op is the PcodeOp associated with the field (usually PTRSUB or SUBPIECE)
-  virtual void tagField(const string &name,syntax_highlight hl,const Datatype *ct,int4 off,const PcodeOp *op)=0;
+  virtual void tagField(const std::string &name,syntax_highlight hl,const Datatype *ct,int4 off,const PcodeOp *op)=0;
 
   /// \brief Emit a comment string as part of the generated source code
   ///
@@ -278,7 +278,7 @@ public:
   /// \param hl indicates how the comment should be highlighted
   /// \param spc is the address space of the address where the comment is attached
   /// \param off is the offset of the address where the comment is attached
-  virtual void tagComment(const string &name,syntax_highlight hl,const AddrSpace *spc,uintb off)=0;
+  virtual void tagComment(const std::string &name,syntax_highlight hl,const AddrSpace *spc,uintb off)=0;
 
   /// \brief Emit a code label identifier
   ///
@@ -288,7 +288,7 @@ public:
   /// \param hl indicates how the label should be highlighted
   /// \param spc is the address space of the code address being labeled
   /// \param off is the offset of the code address being labeled
-  virtual void tagLabel(const string &name,syntax_highlight hl,const AddrSpace *spc,uintb off)=0;
+  virtual void tagLabel(const std::string &name,syntax_highlight hl,const AddrSpace *spc,uintb off)=0;
 
   /// \brief Emit other (more unusual) syntax as part of source code generation
   ///
@@ -296,7 +296,7 @@ public:
   /// spaces, semi-colons, braces, and other punctuation.
   /// \param data is the character data of the syntax being emitted
   /// \param hl indicates how the syntax should be highlighted
-  virtual void print(const string &data,syntax_highlight hl=no_color)=0;
+  virtual void print(const std::string &data,syntax_highlight hl=no_color)=0;
 
   /// \brief Emit an open parenthesis
   ///
@@ -305,7 +305,7 @@ public:
   /// \param paren is the open parenthesis character to emit
   /// \param id is an id to associate with the parenthesis
   /// \return an id associated with the parenthesis
-  virtual int4 openParen(const string &paren,int4 id=0)=0;
+  virtual int4 openParen(const std::string &paren,int4 id=0)=0;
 
   /// \brief Emit a close parenthesis
   ///
@@ -313,7 +313,7 @@ public:
   /// was started by the matching open parenthesis.
   /// \param paren is the close parenthesis character to emit
   /// \param id is the id associated with the matching open parenthesis (as returned by openParen)
-  virtual void closeParen(const string &paren,int4 id)=0;
+  virtual void closeParen(const std::string &paren,int4 id)=0;
 
   /// \brief Start a group of things that are printed together
   ///
@@ -327,8 +327,8 @@ public:
   /// \param id is the id associated with the group (as returned by openGroup)
   virtual void closeGroup(int4 id) {}
   virtual void clear(void) { parenlevel = 0; indentlevel=0; pendPrint=(PendPrint *)0; }	///< Reset the emitter to its initial state
-  virtual void setOutputStream(ostream *t)=0;			///< Set the output stream for the emitter
-  virtual ostream *getOutputStream(void) const=0;		///< Get the current output stream
+  virtual void setOutputStream(std::ostream *t)=0;			///< Set the output stream for the emitter
+  virtual std::ostream *getOutputStream(void) const=0;		///< Get the current output stream
   virtual void spaces(int4 num,int4 bump=0);
 
   /// \brief Start a new indent level
@@ -380,7 +380,7 @@ public:
   /// If the pretty printer forces a line break in the middle of a comment, this
   /// string is emitted to provide proper syntax and indenting to continue the comment.
   /// \param fill is the set of fill characters
-  virtual void setCommentFill(const string &fill) {}
+  virtual void setCommentFill(const std::string &fill) {}
 
   /// \brief Determine if \b this is an XML markup emitter
   ///
@@ -442,10 +442,10 @@ public:
 /// that does both pretty printing and markup.
 class EmitMarkup : public Emit {
 protected:
-  ostream *s;				///< Stream being emitted to
+  std::ostream *s;				///< Stream being emitted to
   Encoder *encoder;			///< How markup is encoded to the output stream
 public:
-  EmitMarkup(void) : Emit() { s = (ostream *)0; encoder = (Encoder *)0; }		///< Constructor
+  EmitMarkup(void) : Emit() { s = (std::ostream *)0; encoder = (Encoder *)0; }		///< Constructor
 
   virtual ~EmitMarkup(void);
   virtual int4 beginDocument(void);
@@ -464,18 +464,18 @@ public:
   virtual void endStatement(int4 id);
   virtual int4 beginFuncProto(void);
   virtual void endFuncProto(int4 id);
-  virtual void tagVariable(const string &name,syntax_highlight hl,const Varnode *vn,const PcodeOp *op);
-  virtual void tagOp(const string &name,syntax_highlight hl,const PcodeOp *op);
-  virtual void tagFuncName(const string &name,syntax_highlight hl,const Funcdata *fd,const PcodeOp *op);
-  virtual void tagType(const string &name,syntax_highlight hl,const Datatype *ct);
-  virtual void tagField(const string &name,syntax_highlight hl,const Datatype *ct,int4 off,const PcodeOp *op);
-  virtual void tagComment(const string &name,syntax_highlight hl,const AddrSpace *spc,uintb off);
-  virtual void tagLabel(const string &name,syntax_highlight hl,const AddrSpace *spc,uintb off);
-  virtual void print(const string &data,syntax_highlight hl=no_color);
-  virtual int4 openParen(const string &paren,int4 id=0);
-  virtual void closeParen(const string &paren,int4 id);
-  virtual void setOutputStream(ostream *t);
-  virtual ostream *getOutputStream(void) const { return s; }
+  virtual void tagVariable(const std::string &name,syntax_highlight hl,const Varnode *vn,const PcodeOp *op);
+  virtual void tagOp(const std::string &name,syntax_highlight hl,const PcodeOp *op);
+  virtual void tagFuncName(const std::string &name,syntax_highlight hl,const Funcdata *fd,const PcodeOp *op);
+  virtual void tagType(const std::string &name,syntax_highlight hl,const Datatype *ct);
+  virtual void tagField(const std::string &name,syntax_highlight hl,const Datatype *ct,int4 off,const PcodeOp *op);
+  virtual void tagComment(const std::string &name,syntax_highlight hl,const AddrSpace *spc,uintb off);
+  virtual void tagLabel(const std::string &name,syntax_highlight hl,const AddrSpace *spc,uintb off);
+  virtual void print(const std::string &data,syntax_highlight hl=no_color);
+  virtual int4 openParen(const std::string &paren,int4 id=0);
+  virtual void closeParen(const std::string &paren,int4 id);
+  virtual void setOutputStream(std::ostream *t);
+  virtual std::ostream *getOutputStream(void) const { return s; }
   virtual bool emitsMarkup(void) const { return true; }
 };
 
@@ -485,9 +485,9 @@ public:
 /// straight to the final output stream.  It can be used as the low-level back-end
 /// for EmitPrettyPrint.
 class EmitNoMarkup : public Emit {
-  ostream *s;				///< The stream to output tokens to
+  std::ostream *s;				///< The stream to output tokens to
 public:
-  EmitNoMarkup(void) : Emit() { s = (ostream *)0; }		///< Constructor
+  EmitNoMarkup(void) : Emit() { s = (std::ostream *)0; }		///< Constructor
   virtual int4 beginDocument(void) { return 0; }
   virtual void endDocument(int4 id) {}
   virtual int4 beginFunction(const Funcdata *fd) { return 0; }
@@ -495,9 +495,9 @@ public:
   virtual int4 beginBlock(const FlowBlock *bl) { return 0; }
   virtual void endBlock(int4 id) {}
   virtual void tagLine(void) {
-    *s << endl; for(int4 i=indentlevel;i>0;--i) *s << ' '; }
+    *s << std::endl; for(int4 i=indentlevel;i>0;--i) *s << ' '; }
   virtual void tagLine(int4 indent) {
-    *s << endl; for(int4 i=indent;i>0;--i) *s << ' '; }
+    *s << std::endl; for(int4 i=indent;i>0;--i) *s << ' '; }
   virtual int4 beginReturnType(const Varnode *vn) { return 0; }
   virtual void endReturnType(int4 id) {}
   virtual int4 beginVarDecl(const Symbol *sym) { return 0; }
@@ -506,28 +506,28 @@ public:
   virtual void endStatement(int4 id) {}
   virtual int4 beginFuncProto(void) { return 0; }
   virtual void endFuncProto(int4 id) {}
-  virtual void tagVariable(const string &name,syntax_highlight hl,const Varnode *vn,const PcodeOp *op) {
+  virtual void tagVariable(const std::string &name,syntax_highlight hl,const Varnode *vn,const PcodeOp *op) {
     *s << name; }
-  virtual void tagOp(const string &name,syntax_highlight hl,const PcodeOp *op) {
+  virtual void tagOp(const std::string &name,syntax_highlight hl,const PcodeOp *op) {
     *s << name; }
-  virtual void tagFuncName(const string &name,syntax_highlight hl,const Funcdata *fd,const PcodeOp *op) {
+  virtual void tagFuncName(const std::string &name,syntax_highlight hl,const Funcdata *fd,const PcodeOp *op) {
     *s << name; }
-  virtual void tagType(const string &name,syntax_highlight hl,const Datatype *ct) {
+  virtual void tagType(const std::string &name,syntax_highlight hl,const Datatype *ct) {
     *s << name; }
-  virtual void tagField(const string &name,syntax_highlight hl,const Datatype *ct,int4 off,const PcodeOp *op) {
+  virtual void tagField(const std::string &name,syntax_highlight hl,const Datatype *ct,int4 off,const PcodeOp *op) {
     *s << name; }
-  virtual void tagComment(const string &name,syntax_highlight hl,const AddrSpace *spc,uintb off) {
+  virtual void tagComment(const std::string &name,syntax_highlight hl,const AddrSpace *spc,uintb off) {
     *s << name; }
-  virtual void tagLabel(const string &name,syntax_highlight hl,const AddrSpace *spc,uintb off) {
+  virtual void tagLabel(const std::string &name,syntax_highlight hl,const AddrSpace *spc,uintb off) {
     *s << name; }
-  virtual void print(const string &data,syntax_highlight hl=no_color) {
+  virtual void print(const std::string &data,syntax_highlight hl=no_color) {
     *s << data; }
-  virtual int4 openParen(const string &paren,int4 id=0) {
+  virtual int4 openParen(const std::string &paren,int4 id=0) {
     *s << paren; parenlevel += 1; return id; }
-  virtual void closeParen(const string &paren,int4 id) {
+  virtual void closeParen(const std::string &paren,int4 id) {
     *s << paren; parenlevel -= 1; }
-  virtual void setOutputStream(ostream *t) { s = t; }
-  virtual ostream *getOutputStream(void) const { return s; }
+  virtual void setOutputStream(std::ostream *t) { s = t; }
+  virtual std::ostream *getOutputStream(void) const { return s; }
   virtual bool emitsMarkup(void) const { return false; }
 };
 
@@ -594,7 +594,7 @@ public:
 private:
   tag_type tagtype;		///< Type of token
   printclass delimtype;		///< The general class of the token
-  string tok;			///< Characters of token (if any)
+  std::string tok;			///< Characters of token (if any)
   EmitMarkup::syntax_highlight hl;	///< Highlighting for token
   // Additional markup elements for token
   const PcodeOp *op;		///< Pcode-op associated with \b this token
@@ -709,7 +709,7 @@ public:
   /// \param h indicates how the identifier should be highlighted
   /// \param v is the Varnode representing the variable within the syntax tree
   /// \param o is a p-code operation related to the use of the variable (may be null)
-  void tagVariable(const string &name,EmitMarkup::syntax_highlight h,const Varnode *v,const PcodeOp *o) {
+  void tagVariable(const std::string &name,EmitMarkup::syntax_highlight h,const Varnode *v,const PcodeOp *o) {
     tok = name; size = tok.size();
     tagtype=vari_t; delimtype=tokenstring; hl=h; ptr_second.vn=v; op=o; }
 
@@ -718,7 +718,7 @@ public:
   /// \param name is the character data for the emitted representation
   /// \param h indicates how the token should be highlighted
   /// \param o is the PcodeOp object associated with the operation with the syntax tree
-  void tagOp(const string &name,EmitMarkup::syntax_highlight h,const PcodeOp *o) {
+  void tagOp(const std::string &name,EmitMarkup::syntax_highlight h,const PcodeOp *o) {
     tok = name; size = tok.size();
     tagtype=op_t; delimtype=tokenstring; hl=h; op=o; }
 
@@ -728,7 +728,7 @@ public:
   /// \param h indicates how the identifier should be highlighted
   /// \param f is the function
   /// \param o is the CALL operation associated within the syntax tree or null for a declaration
-  void tagFuncName(const string &name,EmitMarkup::syntax_highlight h,const Funcdata *f,const PcodeOp *o) {
+  void tagFuncName(const std::string &name,EmitMarkup::syntax_highlight h,const Funcdata *f,const PcodeOp *o) {
     tok = name; size = tok.size();
     tagtype=fnam_t; delimtype=tokenstring; hl=h; ptr_second.fd=f; op=o; }
 
@@ -737,7 +737,7 @@ public:
   /// \param name is the character data for the identifier
   /// \param h indicates how the identifier should be highlighted
   /// \param ct is the data-type description object
-  void tagType(const string &name,EmitMarkup::syntax_highlight h,const Datatype *ct) {
+  void tagType(const std::string &name,EmitMarkup::syntax_highlight h,const Datatype *ct) {
     tok = name; size = tok.size();
     tagtype=type_t; delimtype=tokenstring; hl=h; ptr_second.ct=ct; }
 
@@ -748,7 +748,7 @@ public:
   /// \param ct is the data-type associated with the field
   /// \param o is the (byte) offset of the field within its structured data-type
   /// \param inOp is the PcodeOp associated with the field (usually PTRSUB or SUBPIECE)
-  void tagField(const string &name,EmitMarkup::syntax_highlight h,const Datatype *ct,int4 o,const PcodeOp *inOp) {
+  void tagField(const std::string &name,EmitMarkup::syntax_highlight h,const Datatype *ct,int4 o,const PcodeOp *inOp) {
     tok = name; size = tok.size();
     tagtype=field_t; delimtype=tokenstring; hl=h; ptr_second.ct=ct; off=(uintb)o; op=inOp; }
 
@@ -758,7 +758,7 @@ public:
   /// \param h indicates how the comment should be highlighted
   /// \param s is the address space of the address where the comment is attached
   /// \param o is the offset of the address where the comment is attached
-  void tagComment(const string &name,EmitMarkup::syntax_highlight h,const AddrSpace *s,uintb o) {
+  void tagComment(const std::string &name,EmitMarkup::syntax_highlight h,const AddrSpace *s,uintb o) {
     tok = name; size = tok.size(); ptr_second.spc=s; off=o;
     tagtype=comm_t; delimtype=tokenstring; hl=h; }
 
@@ -768,7 +768,7 @@ public:
   /// \param h indicates how the label should be highlighted
   /// \param s is the address space of the code address being labeled
   /// \param o is the offset of the code address being labeled
-  void tagLabel(const string &name,EmitMarkup::syntax_highlight h,const AddrSpace *s,uintb o) {
+  void tagLabel(const std::string &name,EmitMarkup::syntax_highlight h,const AddrSpace *s,uintb o) {
     tok = name; size = tok.size(); ptr_second.spc=s; off=o;
     tagtype=label_t; delimtype=tokenstring; hl=h; }
 
@@ -776,7 +776,7 @@ public:
   ///
   /// \param data is the character data of the syntax being emitted
   /// \param h indicates how the syntax should be highlighted
-  void print(const string &data,EmitMarkup::syntax_highlight h) {
+  void print(const std::string &data,EmitMarkup::syntax_highlight h) {
     tok = data; size=tok.size();
     tagtype=synt_t; delimtype=tokenstring; hl=h; }
 
@@ -784,7 +784,7 @@ public:
   ///
   /// \param paren is the open parenthesis character to emit
   /// \param id is an id to associate with the parenthesis
-  void openParen(const string &paren,int4 id) {
+  void openParen(const std::string &paren,int4 id) {
     tok = paren; size = 1;
     tagtype=opar_t; delimtype=tokenstring; count=id; }
 
@@ -792,7 +792,7 @@ public:
   ///
   /// \param paren is the close parenthesis character to emit
   /// \param id is the id associated with the matching open parenthesis (as returned by openParen)
-  void closeParen(const string &paren,int4 id) {
+  void closeParen(const std::string &paren,int4 id) {
     tok = paren; size = 1;
     tagtype=cpar_t; delimtype=tokenstring; count=id; }
 
@@ -858,7 +858,7 @@ public:
   tag_type getTag(void) const { return tagtype; }	///< Get \b this tag type
 #ifdef PRETTY_DEBUG
   int4 getCount(void) const { return count; }		///< Get the delimiter id
-  void printDebug(ostream &s) const;			///< Print \b this token to stream for debugging
+  void printDebug(std::ostream &s) const;			///< Print \b this token to stream for debugging
 #endif
 };
 
@@ -968,17 +968,17 @@ void circularqueue<_type>::expand(int4 amount)
 /// stream and may add markup.
 class EmitPrettyPrint : public Emit {
 #ifdef PRETTY_DEBUG
-  vector<int4> checkid;
+  std::vector<int4> checkid;
 #endif
   Emit *lowlevel;		///< The low-level emitter
-  vector<int4> indentstack;	///< Space available for currently active nesting levels
+  std::vector<int4> indentstack;	///< Space available for currently active nesting levels
   int4 spaceremain;		///< Space remaining in current line
   int4 maxlinesize;		///< Maximum number of characters allowed in a line
   int4 leftotal;		///< # of characters committed from the current line
   int4 rightotal;		///< # of characters yet to be committed from the current line
   bool needbreak;   		///< \b true if break needed before next token
   bool commentmode;		///< \b true if in the middle of a comment
-  string commentfill;		///< Used to fill comments if line breaks are forced
+  std::string commentfill;		///< Used to fill comments if line breaks are forced
   circularqueue<int4> scanqueue; ///< References to current \e open and \e whitespace tokens
   circularqueue<TokenSplit> tokqueue;	///< The full stream of tokens
   void expand(void);		///< Expand the stream buffer
@@ -1010,21 +1010,21 @@ public:
   virtual void endStatement(int4 id);
   virtual int4 beginFuncProto(void);
   virtual void endFuncProto(int4 id);
-  virtual void tagVariable(const string &name,syntax_highlight hl,const Varnode *vn,const PcodeOp *op);
-  virtual void tagOp(const string &name,syntax_highlight hl,const PcodeOp *op);
-  virtual void tagFuncName(const string &name,syntax_highlight hl,const Funcdata *fd,const PcodeOp *op);
-  virtual void tagType(const string &name,syntax_highlight hl,const Datatype *ct);
-  virtual void tagField(const string &name,syntax_highlight hl,const Datatype *ct,int4 off,const PcodeOp *op);
-  virtual void tagComment(const string &name,syntax_highlight hl,const AddrSpace *spc,uintb off);
-  virtual void tagLabel(const string &name,syntax_highlight hl,const AddrSpace *spc,uintb off);
-  virtual void print(const string &data,syntax_highlight hl=no_color);
-  virtual int4 openParen(const string &paren,int4 id=0);
-  virtual void closeParen(const string &paren,int4 id);
+  virtual void tagVariable(const std::string &name,syntax_highlight hl,const Varnode *vn,const PcodeOp *op);
+  virtual void tagOp(const std::string &name,syntax_highlight hl,const PcodeOp *op);
+  virtual void tagFuncName(const std::string &name,syntax_highlight hl,const Funcdata *fd,const PcodeOp *op);
+  virtual void tagType(const std::string &name,syntax_highlight hl,const Datatype *ct);
+  virtual void tagField(const std::string &name,syntax_highlight hl,const Datatype *ct,int4 off,const PcodeOp *op);
+  virtual void tagComment(const std::string &name,syntax_highlight hl,const AddrSpace *spc,uintb off);
+  virtual void tagLabel(const std::string &name,syntax_highlight hl,const AddrSpace *spc,uintb off);
+  virtual void print(const std::string &data,syntax_highlight hl=no_color);
+  virtual int4 openParen(const std::string &paren,int4 id=0);
+  virtual void closeParen(const std::string &paren,int4 id);
   virtual int4 openGroup(void);
   virtual void closeGroup(int4 id);
   virtual void clear(void);
-  virtual void setOutputStream(ostream *t) { lowlevel->setOutputStream(t); }
-  virtual ostream *getOutputStream(void) const { return lowlevel->getOutputStream(); }
+  virtual void setOutputStream(std::ostream *t) { lowlevel->setOutputStream(t); }
+  virtual std::ostream *getOutputStream(void) const { return lowlevel->getOutputStream(); }
   virtual void spaces(int4 num,int4 bump=0);
   virtual int4 startIndent(void);
   virtual void stopIndent(int4 id);
@@ -1033,7 +1033,7 @@ public:
   virtual void flush(void);
   virtual void setMaxLineSize(int4 val);
   virtual int4 getMaxLineSize(void) const { return maxlinesize; }
-  virtual void setCommentFill(const string &fill) { commentfill = fill; }
+  virtual void setCommentFill(const std::string &fill) { commentfill = fill; }
   virtual bool emitsMarkup(void) const { return lowlevel->emitsMarkup(); }
   virtual void resetDefaults(void);
   void setMarkup(bool val);	///< Toggle whether the low-level emitter emits markup or not

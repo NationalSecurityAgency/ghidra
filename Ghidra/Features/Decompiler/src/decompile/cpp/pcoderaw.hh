@@ -106,7 +106,7 @@ class PcodeOpRaw {
   OpBehavior *behave;		///< The opcode for this operation
   SeqNum seq;	                ///< Identifying address and index of this operation
   VarnodeData *out;		///< Output varnode triple
-  vector<VarnodeData *> in;	///< Raw varnode inputs to this op
+  std::vector<VarnodeData *> in;	///< Raw varnode inputs to this op
 public:
   void setBehavior(OpBehavior *be); ///< Set the opcode for this op
   OpBehavior *getBehavior(void) const; ///< Retrieve the behavior for this op

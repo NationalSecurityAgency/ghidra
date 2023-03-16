@@ -26,7 +26,7 @@ class Translate;		// Forward declaration
 /// This exception is thrown when emulation evaluation of an operator fails for some reason.
 /// This can be thrown for either forward or reverse emulation
 struct EvaluationError : public LowlevelError {
-  EvaluationError(const string &s) : LowlevelError(s) {} ///< Initialize the error with an explanatory string
+  EvaluationError(const std::string &s) : LowlevelError(s) {} ///< Initialize the error with an explanatory string
 };
 
 /// \brief Class encapsulating the action/behavior of specific pcode opcodes
@@ -71,7 +71,7 @@ public:
   /// \brief Reverse the unary op-code operation, recovering the input value
   virtual uintb recoverInputUnary(int4 sizeout,uintb out,int4 sizein) const;
 
-  static void registerInstructions(vector<OpBehavior *> &inst,const Translate *trans); ///< Build all pcode behaviors
+  static void registerInstructions(std::vector<OpBehavior *> &inst,const Translate *trans); ///< Build all pcode behaviors
 };
 
 /// This kind of OpBehavior is associated with a particular opcode and is either unary or binary

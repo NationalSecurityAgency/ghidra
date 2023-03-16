@@ -40,9 +40,9 @@ protected:
   class StringData {
   public:
     bool isTruncated;		///< \b true if the the string is truncated
-    vector<uint1> byteData;	///< UTF8 encoded string data
+    std::vector<uint1> byteData;	///< UTF8 encoded string data
   };
-  map<Address,StringData> stringMap;	///< Map from address to string data
+  std::map<Address,StringData> stringMap;	///< Map from address to string data
   int4 maximumChars;			///< Maximum characters in a string before truncating
 public:
   StringManager(int4 max);		///< Constructor
@@ -60,14 +60,14 @@ public:
   /// \param charType is a character data-type indicating the encoding
   /// \param isTrunc passes back whether the string is truncated
   /// \return the byte array of UTF8 data
-  virtual const vector<uint1> &getStringData(const Address &addr,Datatype *charType,bool &isTrunc)=0;
+  virtual const std::vector<uint1> &getStringData(const Address &addr,Datatype *charType,bool &isTrunc)=0;
 
   void encode(Encoder &encoder) const;	///< Encode cached strings to a stream
   void decode(Decoder &decoder);	///< Restore string cache from a stream
 
   static bool hasCharTerminator(const uint1 *buffer,int4 size,int4 charsize);	///< Check for a unicode string terminator
   static int4 readUtf16(const uint1 *buf,bool bigend);	///< Read a UTF16 code point from a byte array
-  static void writeUtf8(ostream &s,int4 codepoint);	///< Write unicode character to stream in UTF8 encoding
+  static void writeUtf8(std::ostream &s,int4 codepoint);	///< Write unicode character to stream in UTF8 encoding
   static int4 getCodepoint(const uint1 *buf,int4 charsize,bool bigend,int4 &skip);	///< Extract next \e unicode \e codepoint
 };
 
@@ -83,8 +83,8 @@ public:
   StringManagerUnicode(Architecture *g,int4 max);	///< Constructor
   virtual ~StringManagerUnicode(void);
 
-  virtual const vector<uint1> &getStringData(const Address &addr,Datatype *charType,bool &isTrunc);
-  bool writeUnicode(ostream &s,uint1 *buffer,int4 size,int4 charsize);	///< Translate/copy unicode to UTF8
+  virtual const std::vector<uint1> &getStringData(const Address &addr,Datatype *charType,bool &isTrunc);
+  bool writeUnicode(std::ostream &s,uint1 *buffer,int4 size,int4 charsize);	///< Translate/copy unicode to UTF8
 };
 
 #endif

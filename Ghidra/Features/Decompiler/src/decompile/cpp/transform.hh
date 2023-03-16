@@ -77,7 +77,7 @@ private:
   OpCode opc;			///< Opcode of the new op
   uint4 special;		///< Special handling code when creating
   TransformVar *output;	///< Varnode output
-  vector<TransformVar *> input; ///< Varnode inputs
+  std::vector<TransformVar *> input; ///< Varnode inputs
   TransformOp *follow;		///< The following op after \b this (if not null)
   void createReplacement(Funcdata *fd);	///< Create the new/modified op this placeholder represents
   bool attemptInsertion(Funcdata *fd);	///< Try to put the new PcodeOp into its basic block
@@ -127,8 +127,8 @@ public:
 /// lanes all of the same size, but the API allows for possibly non-uniform lanes.
 class LaneDescription {
   int4 wholeSize;		///< Size of the region being split in bytes
-  vector<int4> laneSize;	///< Size of lanes in bytes
-  vector<int4> lanePosition;	///< Significance positions of lanes in bytes
+  std::vector<int4> laneSize;	///< Size of lanes in bytes
+  std::vector<int4> lanePosition;	///< Significance positions of lanes in bytes
 public:
   LaneDescription(const LaneDescription &op2);	///< Copy constructor
   LaneDescription(int4 origSize,int4 sz);	///< Construct uniform lanes
@@ -151,15 +151,15 @@ public:
 /// Varnode and data-flow into explicit operations on the lanes.
 class TransformManager {
   Funcdata *fd;					///< Function being operated on
-  map<int4,TransformVar *> pieceMap;		///< Map from large Varnodes to their new pieces
-  list<TransformVar> newVarnodes;		///< Storage for Varnode placeholder nodes
-  list<TransformOp> newOps;			///< Storage for PcodeOp placeholder nodes
+  std::map<int4,TransformVar *> pieceMap;		///< Map from large Varnodes to their new pieces
+  std::list<TransformVar> newVarnodes;		///< Storage for Varnode placeholder nodes
+  std::list<TransformOp> newOps;			///< Storage for PcodeOp placeholder nodes
 
   void specialHandling(TransformOp &rop);
   void createOps(void);		///< Create a new op for each placeholder
-  void createVarnodes(vector<TransformVar *> &inputList);	///< Create a Varnode for each placeholder
+  void createVarnodes(std::vector<TransformVar *> &inputList);	///< Create a Varnode for each placeholder
   void removeOld(void);		///< Remove old preexisting PcodeOps and Varnodes that are now obsolete
-  void transformInputVarnodes(vector<TransformVar *> &inputList);	///< Remove old input Varnodes, mark new input Varnodes
+  void transformInputVarnodes(std::vector<TransformVar *> &inputList);	///< Remove old input Varnodes, mark new input Varnodes
   void placeInputs(void);	///< Set input Varnodes for all new ops
 public:
   TransformManager(Funcdata *f) { fd = f; }	///< Constructor

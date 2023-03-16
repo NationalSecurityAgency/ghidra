@@ -54,7 +54,7 @@ struct UnimplError : public LowlevelError {
   ///
   /// \param s is a more verbose description of the error
   /// \param l is the length (in bytes) of the unimplemented instruction
-  UnimplError(const string &s,int4 l) : LowlevelError(s) { instruction_length = l; }
+  UnimplError(const std::string &s,int4 l) : LowlevelError(s) { instruction_length = l; }
 };
 
 /// \brief Exception for bad instruction data
@@ -67,7 +67,7 @@ struct BadDataError : public LowlevelError {
   /// \brief Constructor
   ///
   /// \param s is a more verbose description of the error
-  BadDataError(const string &s) : LowlevelError(s) {}
+  BadDataError(const std::string &s) : LowlevelError(s) {}
 };
 
 class Translate;
@@ -77,11 +77,11 @@ class Translate;
 /// This can turn up in various XML configuration files and essentially acts
 /// as a command to override the size of an address space as defined by the architecture
 class TruncationTag {
-  string spaceName;	///< Name of space to be truncated
+  std::string spaceName;	///< Name of space to be truncated
   uint4 size;		///< Size truncated addresses into the space
 public:
   void decode(Decoder &decoder);				///< Restore \b this from a stream
-  const string &getName(void) const { return spaceName; }	///< Get name of address space being truncated
+  const std::string &getName(void) const { return spaceName; }	///< Get name of address space being truncated
   uint4 getSize(void) const { return size; }			///< Size (of pointers) for new truncated space
 };
 
@@ -128,7 +128,7 @@ public:
   /// \param addr is the Address of the machine instruction
   /// \param mnem is the decoded instruction mnemonic
   /// \param body is the decode body (or operands) of the instruction
-  virtual void dump(const Address &addr,const string &mnem,const string &body)=0;
+  virtual void dump(const Address &addr,const std::string &mnem,const std::string &body)=0;
 };
 
 /// \brief Abstract class for converting native constants to addresses
@@ -176,14 +176,14 @@ class SpacebaseSpace : public AddrSpace {
   VarnodeData baseOrig;		///< Original base register before any truncation
   void setBaseRegister(const VarnodeData &data,int4 origSize,bool stackGrowth); ///< Set the base register at time space is created
 public:
-  SpacebaseSpace(AddrSpaceManager *m,const Translate *t,const string &nm,int4 ind,int4 sz,AddrSpace *base,int4 dl,bool isFormal);
+  SpacebaseSpace(AddrSpaceManager *m,const Translate *t,const std::string &nm,int4 ind,int4 sz,AddrSpace *base,int4 dl,bool isFormal);
   SpacebaseSpace(AddrSpaceManager *m,const Translate *t); ///< For use with decode
   virtual int4 numSpacebase(void) const;
   virtual const VarnodeData &getSpacebase(int4 i) const;
   virtual const VarnodeData &getSpacebaseFull(int4 i) const;
   virtual bool stackGrowsNegative(void) const { return isNegativeStack; }
   virtual AddrSpace *getContain(void) const { return contain; } ///< Return containing space
-  virtual void saveXml(ostream &s) const;
+  virtual void saveXml(std::ostream &s) const;
   virtual void decode(Decoder &decoder);
 };
 
@@ -194,7 +194,7 @@ public:
 /// from \e most \e significant to \e least \e significant.
 class JoinRecord {
   friend class AddrSpaceManager;
-  vector<VarnodeData> pieces;	///< All the physical pieces of the symbol
+  std::vector<VarnodeData> pieces;	///< All the physical pieces of the symbol
   VarnodeData unified; ///< Special entry representing entire symbol in one chunk
 public:
   int4 numPieces(void) const { return pieces.size(); }	///< Get number of pieces in this record
@@ -216,10 +216,10 @@ struct JoinRecordCompare {
 /// Allow creation, lookup by name, lookup by shortcut, lookup by name, and iteration
 /// over address spaces
 class AddrSpaceManager {
-  vector<AddrSpace *> baselist; ///< Every space we know about for this architecture
-  vector<AddressResolver *> resolvelist; ///< Special constant resolvers
-  map<string,AddrSpace *> name2Space;	///< Map from name -> space
-  map<int4,AddrSpace *> shortcut2Space;	///< Map from shortcut -> space
+  std::vector<AddrSpace *> baselist; ///< Every space we know about for this architecture
+  std::vector<AddressResolver *> resolvelist; ///< Special constant resolvers
+  std::map<std::string,AddrSpace *> name2Space;	///< Map from name -> space
+  std::map<int4,AddrSpace *> shortcut2Space;	///< Map from shortcut -> space
   AddrSpace *constantspace;	///< Quick reference to constant space
   AddrSpace *defaultcodespace;	///< Default space where code lives, generally main RAM
   AddrSpace *defaultdataspace;	///< Default space where data lives
@@ -229,8 +229,8 @@ class AddrSpaceManager {
   AddrSpace *stackspace;	///< Stack space associated with processor
   AddrSpace *uniqspace;		///< Temporary space associated with processor
   uintb joinallocate;		///< Next offset to be allocated in join space
-  set<JoinRecord *,JoinRecordCompare> splitset;	///< Different splits that have been defined in join space
-  vector<JoinRecord *> splitlist; ///< JoinRecords indexed by join address
+  std::set<JoinRecord *,JoinRecordCompare> splitset;	///< Different splits that have been defined in join space
+  std::vector<JoinRecord *> splitlist; ///< JoinRecords indexed by join address
 protected:
   AddrSpace *decodeSpace(Decoder &decoder,const Translate *trans); ///< Add a space to the model based an on XML tag
   void decodeSpaces(Decoder &decoder,const Translate *trans); ///< Restore address spaces in the model from an XML tag
@@ -249,7 +249,7 @@ public:
   AddrSpaceManager(void);	///< Construct an empty address space manager
   virtual ~AddrSpaceManager(void); ///< Destroy the manager
   int4 getDefaultSize(void) const; ///< Get size of addresses for the default space
-  AddrSpace *getSpaceByName(const string &nm) const; ///< Get address space by name
+  AddrSpace *getSpaceByName(const std::string &nm) const; ///< Get address space by name
   AddrSpace *getSpaceByShortcut(char sc) const;	///< Get address space from its shortcut
   AddrSpace *getIopSpace(void) const; ///< Get the internal pcode op space
   AddrSpace *getFspecSpace(void) const; ///< Get the internal callspec space
@@ -265,7 +265,7 @@ public:
   int4 numSpaces(void) const; ///< Get the number of address spaces for this processor
   AddrSpace *getSpace(int4 i) const; ///< Get an address space via its index
   AddrSpace *getNextSpaceInOrder(AddrSpace *spc) const; ///< Get the next \e contiguous address space
-  JoinRecord *findAddJoin(const vector<VarnodeData> &pieces,uint4 logicalsize); ///< Get (or create) JoinRecord for \e pieces
+  JoinRecord *findAddJoin(const std::vector<VarnodeData> &pieces,uint4 logicalsize); ///< Get (or create) JoinRecord for \e pieces
   JoinRecord *findJoin(uintb offset) const; ///< Find JoinRecord for \e offset in the join space
   void setDeadcodeDelay(AddrSpace *spc,int4 delaydelta); ///< Set the deadcodedelay for a specific space
   void truncateSpace(const TruncationTag &tag);	///< Mark a space as truncated from its original size
@@ -280,7 +280,7 @@ public:
   void renormalizeJoinAddress(Address &addr,int4 size);
 
   /// \brief Parse a string with just an \e address \e space name and a hex offset
-  Address parseAddressSimple(const string &val);
+  Address parseAddressSimple(const std::string &val);
 };
 
 /// \brief The interface to a translation engine for a processor.
@@ -309,7 +309,7 @@ private:
   uint4 unique_base;		///< Starting offset into unique space
 protected:
   int4 alignment;      ///< Byte modulo on which instructions are aligned
-  vector<FloatFormat> floatformats; ///< Floating point formats utilized by the processor
+  std::vector<FloatFormat> floatformats; ///< Floating point formats utilized by the processor
 
   void setBigEndian(bool val);	///< Set general endianness to \b big if val is \b true
   void setUniqueBase(uint4 val); ///< Set the base offset for new temporary registers
@@ -339,7 +339,7 @@ public:
   /// \param name is the name of the new context variable
   /// \param sbit is the first bit of the variable in the packed state
   /// \param ebit is the last bit of the variable in the packed state
-  virtual void registerContext(const string &name,int4 sbit,int4 ebit) {}
+  virtual void registerContext(const std::string &name,int4 sbit,int4 ebit) {}
 
   /// \brief Set the default value for a particular context variable
   ///
@@ -348,7 +348,7 @@ public:
   /// for the variable.
   /// \param name is the name of the context variable
   /// \param val is the value to be considered default
-  virtual void setContextDefault(const string &name,uintm val) {}
+  virtual void setContextDefault(const std::string &name,uintm val) {}
 
   /// \brief Toggle whether disassembly is allowed to affect context
   ///
@@ -365,7 +365,7 @@ public:
   /// Retrieve the location and size of a register given its name
   /// \param nm is the name of the register
   /// \return the VarnodeData for the register
-  virtual const VarnodeData &getRegister(const string &nm) const=0;
+  virtual const VarnodeData &getRegister(const std::string &nm) const=0;
 
   /// \brief Get the name of a register given its location
   ///
@@ -377,7 +377,7 @@ public:
   /// \param off is the offset of the location
   /// \param size is the size of the location
   /// \return the name of the register, or an empty string
-  virtual string getRegisterName(AddrSpace *base,uintb off,int4 size) const=0;
+  virtual std::string getRegisterName(AddrSpace *base,uintb off,int4 size) const=0;
 
   /// \brief Get a list of all register names and the corresponding location
   ///
@@ -385,7 +385,7 @@ public:
   /// that are specific to it.  This function populates a map from the location information
   /// to the name, for every named location known by the translator
   /// \param reglist is the map which will be populated by the call
-  virtual void getAllRegisters(map<VarnodeData,string> &reglist) const=0;
+  virtual void getAllRegisters(std::map<VarnodeData,std::string> &reglist) const=0;
 
   /// \brief Get a list of all \e user-defined pcode ops
   ///
@@ -395,7 +395,7 @@ public:
   /// and an index.  This method returns a list of these ops
   /// in index order.
   /// \param res is the resulting vector of user op names
-  virtual void getUserOpNames(vector<string> &res) const=0;
+  virtual void getUserOpNames(std::vector<std::string> &res) const=0;
 
   /// \brief Get the length of a machine instruction
   ///

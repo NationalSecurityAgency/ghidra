@@ -199,8 +199,6 @@ template<typename _linetype,typename _valuetype>
 #if 0
 
 #include <iostream>
-using std::cout;
-
 int main(int argc,char **argv)
 
 {
@@ -212,16 +210,16 @@ int main(int argc,char **argv)
   data.split(3) = 4;
   data.split(3) = 3;
 
-  cout << data.getValue(6) << endl;
-  cout << data.getValue(8) << endl;
-  cout << data.getValue(4) << endl;
-  cout << data.getValue(1) << endl;
+  std::cout << data.getValue(6) << std::endl;
+  std::cout << data.getValue(8) << std::endl;
+  std::cout << data.getValue(4) << std::endl;
+  std::cout << data.getValue(1) << std::endl;
   
   partmap<int,unsigned int>::const_iterator iter;
 
   iter = data.begin(3);
   while(iter!=data.end()) {
-    cout << (*iter).second << endl;
+    std::cout << (*iter).second << std::endl;
     ++iter;
   }
 }

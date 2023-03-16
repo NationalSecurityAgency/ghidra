@@ -25,15 +25,6 @@
 #include <vector>
 #include <map>
 
-using std::string;
-using std::vector;
-using std::map;
-using std::istream;
-using std::ostream;
-using std::ifstream;
-using std::dec;
-using std::hex;
-
 /// \brief The \e attributes for a single XML element
 ///
 /// A container for name/value pairs (of strings) for the formal attributes, as collected during parsing.
@@ -41,34 +32,34 @@ using std::hex;
 /// This also holds other properties of the element that are unused in this implementation,
 /// including the \e namespace URI.
 class Attributes {
-  static string bogus_uri;		///< A placeholder for the namespace URI that should be attached to the element
+  static std::string bogus_uri;		///< A placeholder for the namespace URI that should be attached to the element
 //  static string prefix;
-  string *elementname;			///< The name of the XML element
-  vector<string *> name;		///< List of names for each formal XML attribute
-  vector<string *> value;		///< List of values for each formal XML attribute
+  std::string *elementname;			///< The name of the XML element
+  std::vector<std::string *> name;		///< List of names for each formal XML attribute
+  std::vector<std::string *> value;		///< List of values for each formal XML attribute
 public:
-  Attributes(string *el) { elementname = el; }	///< Construct from element name string
+  Attributes(std::string *el) { elementname = el; }	///< Construct from element name string
   ~Attributes(void) { 
     for(uint4 i=0;i<name.size();++i) { delete name[i]; delete value[i]; }
     delete elementname;
   }	///< Destructor
-  const string &getelemURI(void) const { return bogus_uri; }	///< Get the namespace URI associated with this element
-  const string &getelemName(void) const { return *elementname; }	///< Get the name of this element
-  void add_attribute(string *nm,string *vl) { name.push_back(nm); value.push_back(vl); }	///< Add a formal attribute
+  const std::string &getelemURI(void) const { return bogus_uri; }	///< Get the namespace URI associated with this element
+  const std::string &getelemName(void) const { return *elementname; }	///< Get the name of this element
+  void add_attribute(std::string *nm,std::string *vl) { name.push_back(nm); value.push_back(vl); }	///< Add a formal attribute
 				// The official SAX interface
   int4 getLength(void) const { return name.size(); }		///< Get the number of attributes associated with the element
-  const string &getURI(int4 i) const { return bogus_uri; }	///< Get the namespace URI associated with the i-th attribute
-  const string &getLocalName(int4 i) const { return *name[i]; }	///< Get the local name of the i-th attribute
-  const string &getQName(int4 i) const { return *name[i]; }	///< Get the qualified name of the i-th attribute
+  const std::string &getURI(int4 i) const { return bogus_uri; }	///< Get the namespace URI associated with the i-th attribute
+  const std::string &getLocalName(int4 i) const { return *name[i]; }	///< Get the local name of the i-th attribute
+  const std::string &getQName(int4 i) const { return *name[i]; }	///< Get the qualified name of the i-th attribute
   //  int4 getIndex(const string &uri,const string &localName) const;
   //  int4 getIndex(const string &qualifiedName) const;
   //  const string &getType(int4 index) const;
   //  const string &getType(const string &uri,const string &localName) const;
   //  const string &getType(const string &qualifiedName) const;
-  const string &getValue(int4 i) const { return *value[i]; }	///< Get the value of the i-th attribute
+  const std::string &getValue(int4 i) const { return *value[i]; }	///< Get the value of the i-th attribute
   //const string &getValue(const string &uri,const string &localName) const;
   /// \brief Get the value of the attribute with the given qualified name
-  const string &getValue(const string &qualifiedName) const {
+  const std::string &getValue(const std::string &qualifiedName) const {
     for(uint4 i=0;i<name.size();++i)
       if (*name[i] == qualifiedName) return *value[i];
     return bogus_uri;
@@ -87,8 +78,8 @@ public:
   virtual void setDocumentLocator(Locator locator)=0;	///< Set the Locator object for documents
   virtual void startDocument(void)=0;			///< Start processing a new XML document
   virtual void endDocument(void)=0;			///< End processing for the current XML document
-  virtual void startPrefixMapping(const string &prefix,const string &uri)=0;	///< Start a new prefix to namespace URI mapping
-  virtual void endPrefixMapping(const string &prefix)=0;			///< Finish the current prefix
+  virtual void startPrefixMapping(const std::string &prefix,const std::string &uri)=0;	///< Start a new prefix to namespace URI mapping
+  virtual void endPrefixMapping(const std::string &prefix)=0;			///< Finish the current prefix
 
   /// \brief Callback indicating a new XML element has started.
   ///
@@ -96,16 +87,16 @@ public:
   /// \param localName is the local name of the new element
   /// \param qualifiedName is the fully qualified name of the new element
   /// \param atts is the set of (previously parsed) attributes to attach to the new element
-  virtual void startElement(const string &namespaceURI,const string &localName,
-			    const string &qualifiedName,const Attributes &atts)=0;
+  virtual void startElement(const std::string &namespaceURI,const std::string &localName,
+			    const std::string &qualifiedName,const Attributes &atts)=0;
 
   /// \brief Callback indicating parsing of the current XML element is finished.
   ///
   /// \param namespaceURI is the namespace to which the element belongs
   /// \param localName is the local name of the new element
   /// \param qualifiedName is the fully qualified name of the element.
-  virtual void endElement(const string &namespaceURI,const string &localName,
-			  const string &qualifiedName)=0;
+  virtual void endElement(const std::string &namespaceURI,const std::string &localName,
+			  const std::string &qualifiedName)=0;
 
   /// \brief Callback with raw characters to be inserted in the current XML element
   ///
@@ -124,48 +115,48 @@ public:
   /// \brief Set the XML version as specified by the current document
   ///
   /// \param version is the parsed version string
-  virtual void setVersion(const string &version)=0;
+  virtual void setVersion(const std::string &version)=0;
 
   /// \brief Set the character encoding as specified by the current document
   ///
   /// \param encoding is the parsed encoding string
-  virtual void setEncoding(const string &encoding)=0;
+  virtual void setEncoding(const std::string &encoding)=0;
 
   /// \brief Callback for a formal \e processing \e instruction seen in the current document
   ///
   /// \param target is the target instruction to process
   /// \param data is (optional) character data for the instruction
-  virtual void processingInstruction(const string &target,const string &data)=0;
+  virtual void processingInstruction(const std::string &target,const std::string &data)=0;
 
   /// \brief Callback for an XML entity skipped by the parser
   ///
   /// \param name is the name of the entity being skipped
-  virtual void skippedEntity(const string &name)=0;
+  virtual void skippedEntity(const std::string &name)=0;
 
   /// \brief Callback for handling an error condition during XML parsing
   ///
   /// \param errmsg is a message describing the error condition
-  virtual void setError(const string &errmsg)=0;
+  virtual void setError(const std::string &errmsg)=0;
 };
 
 class Element;
-typedef vector<Element *> List;		///< A list of XML elements
+typedef std::vector<Element *> List;		///< A list of XML elements
 
 /// \brief An XML element.  A node in the DOM tree.
 ///
 /// This is the main node for the in-memory representation of the XML (DOM) tree.
 class Element {
-  string name;			///< The (local) name of the element
-  string content;		///< Character content of the element
-  vector<string> attr;		///< A list of attribute names for \b this element
-  vector<string> value;		///< a (corresponding) list of attribute values for \b this element
+  std::string name;			///< The (local) name of the element
+  std::string content;		///< Character content of the element
+  std::vector<std::string> attr;		///< A list of attribute names for \b this element
+  std::vector<std::string> value;		///< a (corresponding) list of attribute values for \b this element
 protected:
   Element *parent;		///< The parent Element (or null)
   List children;		///< A list of child Element objects
 public:
   Element(Element *par) { parent = par; }	///< Constructor given a parent Element
   ~Element(void);				///< Destructor
-  void setName(const string &nm) { name = nm; }	///< Set the local name of the element
+  void setName(const std::string &nm) { name = nm; }	///< Set the local name of the element
 
   /// \brief Append new character content to \b this element
   ///
@@ -185,13 +176,13 @@ public:
   ///
   /// \param nm is the name of the attribute
   /// \param vl is the value of the attribute
-  void addAttribute(const string &nm,const string &vl) {
+  void addAttribute(const std::string &nm,const std::string &vl) {
     attr.push_back(nm); value.push_back(vl); }
 
   Element *getParent(void) const { return parent; }		///< Get the parent Element
-  const string &getName(void) const { return name; }		///< Get the local name of \b this element
+  const std::string &getName(void) const { return name; }		///< Get the local name of \b this element
   const List &getChildren(void) const { return children; }	///< Get the list of child elements
-  const string &getContent(void) const { return content; }	///< Get the character content of \b this element
+  const std::string &getContent(void) const { return content; }	///< Get the character content of \b this element
 
   /// \brief Get an attribute value by name
   ///
@@ -199,11 +190,11 @@ public:
   /// thrown if the attribute does not exist.
   /// \param nm is the name of the attribute
   /// \return the corresponding attribute value
-  const string &getAttributeValue(const string &nm) const;
+  const std::string &getAttributeValue(const std::string &nm) const;
 
   int4 getNumAttributes(void) const { return attr.size(); }	///< Get the number of attributes for \b this element
-  const string &getAttributeName(int4 i) const { return attr[i]; }	///< Get the name of the i-th attribute
-  const string &getAttributeValue(int4 i) const { return value[i]; }	///< Get the value of the i-th attribute
+  const std::string &getAttributeName(int4 i) const { return attr[i]; }	///< Get the name of the i-th attribute
+  const std::string &getAttributeValue(int4 i) const { return value[i]; }	///< Get the value of the i-th attribute
 };
 
 /// \brief A complete in-memory XML document.
@@ -224,27 +215,27 @@ public:
 class TreeHandler : public ContentHandler {
   Element *root;		///< The root XML element being processed by \b this handler
   Element *cur;			///< The \e current XML element being processed by \b this handler
-  string error;			///< The last error condition returned by the parser (if not empty)
+  std::string error;			///< The last error condition returned by the parser (if not empty)
 public:
   TreeHandler(Element *rt) { root = rt; cur = root; }	///< Constructor given root Element
   virtual ~TreeHandler(void) {}
   virtual void setDocumentLocator(Locator locator) {}
   virtual void startDocument(void) {}
   virtual void endDocument(void) {}
-  virtual void startPrefixMapping(const string &prefix,const string &uri) {}
-  virtual void endPrefixMapping(const string &prefix) {}
-  virtual void startElement(const string &namespaceURI,const string &localName,
-			    const string &qualifiedName,const Attributes &atts);
-  virtual void endElement(const string &namespaceURI,const string &localName,
-			  const string &qualifiedName);
+  virtual void startPrefixMapping(const std::string &prefix,const std::string &uri) {}
+  virtual void endPrefixMapping(const std::string &prefix) {}
+  virtual void startElement(const std::string &namespaceURI,const std::string &localName,
+			    const std::string &qualifiedName,const Attributes &atts);
+  virtual void endElement(const std::string &namespaceURI,const std::string &localName,
+			  const std::string &qualifiedName);
   virtual void characters(const char *text,int4 start,int4 length);
   virtual void ignorableWhitespace(const char *text,int4 start,int4 length) {}
-  virtual void processingInstruction(const string &target,const string &data) {}
-  virtual void setVersion(const string &val) {}
-  virtual void setEncoding(const string &val) {}
-  virtual void skippedEntity(const string &name) {}
-  virtual void setError(const string &errmsg) { error = errmsg; }
-  const string &getError(void) const { return error; }	///< Get the current error message
+  virtual void processingInstruction(const std::string &target,const std::string &data) {}
+  virtual void setVersion(const std::string &val) {}
+  virtual void setEncoding(const std::string &val) {}
+  virtual void skippedEntity(const std::string &name) {}
+  virtual void setError(const std::string &errmsg) { error = errmsg; }
+  const std::string &getError(void) const { return error; }	///< Get the current error message
 };
 
 /// \brief A container for parsed XML documents
@@ -254,8 +245,8 @@ public:
 /// or a filename via openDocument().  If they are explicitly registered, specific
 /// XML Elements can be looked up by name via getTag().
 class DocumentStorage {
-  vector<Document *> doclist;		///< The list of documents held by this container
-  map<string,const Element *> tagmap;	///< The map from name to registered XML elements
+  std::vector<Document *> doclist;		///< The list of documents held by this container
+  std::map<std::string,const Element *> tagmap;	///< The map from name to registered XML elements
 public:
   ~DocumentStorage(void);		///< Destructor
 
@@ -265,7 +256,7 @@ public:
   /// An XmlException is thrown for any parsing error.
   /// \param s is the given stream to parse
   /// \return the in-memory DOM tree
-  Document *parseDocument(istream &s);
+  Document *parseDocument(std::istream &s);
 
   /// \brief Open and parse an XML file
   ///
@@ -273,7 +264,7 @@ public:
   /// its contents into an in-memory DOM tree. An XmlException is thrown for any parsing error.
   /// \param filename is the name of the XML document file
   /// \return the in-memory DOM tree
-  Document *openDocument(const string &filename);
+  Document *openDocument(const std::string &filename);
 
   /// \brief Register the given XML Element object under its tag name
   ///
@@ -285,7 +276,7 @@ public:
   ///
   /// \param nm is the XML tag name
   /// \return the matching registered Element or null
-  const Element *getTag(const string &nm) const;
+  const Element *getTag(const std::string &nm) const;
 };
 
 /// \brief An exception thrown by the XML parser
@@ -293,8 +284,8 @@ public:
 /// This object holds the error message as passed to the SAX interface callback
 /// and is thrown as a formal exception.
 struct DecoderError {
-  string explain;		///< Explanatory string
-  DecoderError(const string &s) { explain = s; }	///< Constructor
+  std::string explain;		///< Explanatory string
+  DecoderError(const std::string &s) { explain = s; }	///< Constructor
 };
 
 /// \brief Start-up the XML parser given a stream and a handler
@@ -304,7 +295,7 @@ struct DecoderError {
 /// \param hand is the ContentHandler that stores or processes the XML content events
 /// \param dbg is non-zero if the parser should output debug information during its parse
 /// \return 0 if there is no error during parsing or a (non-zero) error condition
-extern int4 xml_parse(istream &i,ContentHandler *hand,int4 dbg=0);
+extern int4 xml_parse(std::istream &i,ContentHandler *hand,int4 dbg=0);
 
 /// \brief Parse the given XML stream into an in-memory document
 ///
@@ -312,7 +303,7 @@ extern int4 xml_parse(istream &i,ContentHandler *hand,int4 dbg=0);
 /// DOM representation of the XML document.
 /// \param i is the given stream
 /// \return the in-memory XML document
-extern Document *xml_tree(istream &i);
+extern Document *xml_tree(std::istream &i);
 
 /// \brief Send the given character array to a stream, escaping characters with special XML meaning
 ///
@@ -325,7 +316,7 @@ extern Document *xml_tree(istream &i);
 ///
 /// \param s is the stream to write to
 /// \param str is the given character array to escape
-extern void xml_escape(ostream &s,const char *str);
+extern void xml_escape(std::ostream &s,const char *str);
 
 // Some helper functions for writing XML documents directly to a stream
 
@@ -334,7 +325,7 @@ extern void xml_escape(ostream &s,const char *str);
 /// \param s is the output stream
 /// \param attr is the name of the attribute
 /// \param val is the attribute value
-inline void a_v(ostream &s,const string &attr,const string &val)
+inline void a_v(std::ostream &s,const std::string &attr,const std::string &val)
 
 {
   s << ' ' << attr << "=\"";
@@ -347,10 +338,10 @@ inline void a_v(ostream &s,const string &attr,const string &val)
 /// \param s is the output stream
 /// \param attr is the name of the attribute
 /// \param val is the given integer value
-inline void a_v_i(ostream &s,const string &attr,intb val)
+inline void a_v_i(std::ostream &s,const std::string &attr,intb val)
 
 {
-  s << ' ' << attr << "=\"" << dec << val << "\"";
+  s << ' ' << attr << "=\"" << std::dec << val << "\"";
 }
 
 /// \brief Output the given unsigned integer as an XML attribute value
@@ -358,10 +349,10 @@ inline void a_v_i(ostream &s,const string &attr,intb val)
 /// \param s is the output stream
 /// \param attr is the name of the attribute
 /// \param val is the given unsigned integer value
-inline void a_v_u(ostream &s,const string &attr,uintb val)
+inline void a_v_u(std::ostream &s,const std::string &attr,uintb val)
 
 {
-  s << ' ' << attr << "=\"0x" << hex << val << "\"";
+  s << ' ' << attr << "=\"0x" << std::hex << val << "\"";
 }
 
 /// \brief Output the given boolean value as an XML attribute
@@ -369,7 +360,7 @@ inline void a_v_u(ostream &s,const string &attr,uintb val)
 /// \param s is the output stream
 /// \param attr is the name of the attribute
 /// \param val is the given boolean value
-inline void a_v_b(ostream &s,const string &attr,bool val)
+inline void a_v_b(std::ostream &s,const std::string &attr,bool val)
 
 {
   s << ' ' << attr << "=\"";
@@ -386,7 +377,7 @@ inline void a_v_b(ostream &s,const string &attr,bool val)
 /// as a \b true value.  Anything else is returned as \b false.
 /// \param attr is the given XML attribute value (as a string)
 /// \return either \b true or \b false
-inline bool xml_readbool(const string &attr)
+inline bool xml_readbool(const std::string &attr)
 
 {
   if (attr.size()==0) return false;

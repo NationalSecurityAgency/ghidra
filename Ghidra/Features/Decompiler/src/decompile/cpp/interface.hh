@@ -26,16 +26,6 @@
 #include <sstream>
 #include <cstdio>
 
-using std::map;
-using std::istream;
-using std::ostream;
-using std::ifstream;
-using std::ofstream;
-using std::istringstream;
-using std::endl;
-using std::ws;
-using std::ios_base;
-
 #ifdef __REMOTE_SOCKET__
 
 /// \brief A wrapper around a UNIX domain socket
@@ -47,16 +37,16 @@ class RemoteSocket {
   int fileDescriptor;		///< Descriptor for the socket
   basic_filebuf<char> *inbuf;	///< Input buffer associated with the socket
   basic_filebuf<char> *outbuf;	///< Output buffer for the socket
-  istream *inStream;		///< The C++ input stream
-  ostream *outStream;		///< The C++ output stream
+  std::istream *inStream;		///< The C++ input stream
+  std::ostream *outStream;		///< The C++ output stream
   bool isOpen;			///< Has the socket been opened
 public:
   RemoteSocket(void);				///< Constructor
   ~RemoteSocket(void) { close(); }		///< Destructor
-  bool open(const string &filename);		///< Connect to the given socket
+  bool open(const std::string &filename);		///< Connect to the given socket
   bool isSocketOpen(void);			///< Return \b true if the socket is ready to transfer data
-  istream *getInputStream(void) { return inStream; }	///< Get the input stream
-  ostream *getOutputStream(void) { return outStream; }	///< Get the output stream
+  std::istream *getInputStream(void) { return inStream; }	///< Get the input stream
+  std::ostream *getOutputStream(void) { return outStream; }	///< Get the output stream
   void close(void);				///< Close the streams and socket
 };
 
@@ -64,8 +54,8 @@ public:
 
 /// \brief An exception specific to the command line interface
 struct IfaceError {
-  string explain;		///< Explanatory string
-  IfaceError(const string &s) { explain = s; }	///< Constructor
+  std::string explain;		///< Explanatory string
+  IfaceError(const std::string &s) { explain = s; }	///< Constructor
 };
 
 /// \brief An exception describing a parsing error in a command line
@@ -73,14 +63,14 @@ struct IfaceError {
 /// Thrown when attempting to parse a command line.  Options are missing or are in
 /// the wrong form etc.
 struct IfaceParseError : public IfaceError {
-  IfaceParseError(const string &s) : IfaceError(s) {}	///< Constructor
+  IfaceParseError(const std::string &s) : IfaceError(s) {}	///< Constructor
 };
 
 /// \brief An exception throw during the execution of a command
 ///
 /// Processing of a specific command has started but has reached an error state
 struct IfaceExecutionError : public IfaceError {
-  IfaceExecutionError(const string &s) : IfaceError(s) {}	///< Constructor
+  IfaceExecutionError(const std::string &s) : IfaceError(s) {}	///< Constructor
 };
 
 class IfaceStatus;		// Forward declaration
@@ -102,7 +92,7 @@ public:
 /// The command is associated with a specific sequence of words (tokens)
 /// that should appear at the start of the command line.
 class IfaceCommand {
-  vector<string> com;		///< The token sequence associated with the command
+  std::vector<std::string> com;		///< The token sequence associated with the command
 public:
   virtual ~IfaceCommand(void) {}	///< Destructor
 
@@ -115,13 +105,13 @@ public:
   /// Execute this command. Additional state can be read from the given command line stream.
   /// Otherwise, the command gets its data from its registered IfaceData object
   /// \param s is the input stream from the command line
-  virtual void execute(istream &s)=0;
+  virtual void execute(std::istream &s)=0;
 
   /// \brief Get the formal module name to which this command belongs
   ///
   /// Commands in the same module share data through their registered IfaceData object
   /// \return the formal module name
-  virtual string getModule(void) const=0;
+  virtual std::string getModule(void) const=0;
 
   /// \brief Create a specialized data object for \b this command (and its module)
   ///
@@ -132,13 +122,13 @@ public:
   /// \brief Add a token to the command line string associated with this command
   ///
   /// \param temp is the new token to add
-  void addWord(const string &temp) { com.push_back(temp); }
+  void addWord(const std::string &temp) { com.push_back(temp); }
 
   void removeWord(void) { com.pop_back(); }	///< Remove the last token from the associated command line string
-  const string &getCommandWord(int4 i) const { return com[i]; }	///< Get the i-th command token
-  void addWords(const vector<string> &wordlist);	///< Add words to the associated command line string
+  const std::string &getCommandWord(int4 i) const { return com[i]; }	///< Get the i-th command token
+  void addWords(const std::vector<std::string> &wordlist);	///< Add words to the associated command line string
   int4 numWords(void) const { return com.size(); }	///< Return the number of tokens in the command line string
-  void commandString(string &res) const;	///< Get the complete command line string
+  void commandString(std::string &res) const;	///< Get the complete command line string
   int4 compare(const IfaceCommand &op2) const;	///< Order two commands by their command line strings
 };
 
@@ -146,8 +136,8 @@ public:
 class IfaceCommandDummy : public IfaceCommand {
 public:
   virtual void setData(IfaceStatus *root,IfaceData *data) {}
-  virtual void execute(istream &s) {}
-  virtual string getModule(void) const { return "dummy"; }
+  virtual void execute(std::istream &s) {}
+  virtual std::string getModule(void) const { return "dummy"; }
   virtual IfaceData *createData(void) { return (IfaceData *)0; }
 };
 
@@ -166,11 +156,11 @@ inline bool compare_ifacecommand(const IfaceCommand *a,const IfaceCommand *b) {
 /// is automatically made available to any IfaceStatus object just by calling
 /// the static registerAllCommands()
 class IfaceCapability : public CapabilityPoint {
-  static vector<IfaceCapability *> thelist;	///< The global list of discovered command groupings
+  static std::vector<IfaceCapability *> thelist;	///< The global list of discovered command groupings
 protected:
-  string name;			///< Identifying name for the capability
+  std::string name;			///< Identifying name for the capability
 public:
-  const string &getName(void) const { return name; }	///< Get the name of the capability
+  const std::string &getName(void) const { return name; }	///< Get the name of the capability
   virtual void initialize(void);
   virtual void registerCommands(IfaceStatus *status)=0; ///< Register commands for \b this grouping
 
@@ -200,39 +190,39 @@ public:
 ///   - Override pushScript() and popScript() to allow command scripts
 ///   - Get custom data into IfaceCommand callbacks
 class IfaceStatus {
-  vector<string> promptstack;	///< Stack of command prompts corresponding to script nesting level
-  vector<uint4> flagstack;	///< Stack of flag state corresponding to script nesting level
-  string prompt;		///< The current command prompt
+  std::vector<std::string> promptstack;	///< Stack of command prompts corresponding to script nesting level
+  std::vector<uint4> flagstack;	///< Stack of flag state corresponding to script nesting level
+  std::string prompt;		///< The current command prompt
   int4 maxhistory;		///< Maximum number of command lines to store in history
   int4 curhistory;		///< Most recent history
-  vector<string> history;	///< History of commands executed through this interface
+  std::vector<std::string> history;	///< History of commands executed through this interface
   bool sorted;			///< Set to \b true if commands are sorted
   bool errorisdone;		///< Set to \b true if any error terminates the process
-  void restrictCom(vector<IfaceCommand *>::const_iterator &first,
-		   vector<IfaceCommand *>::const_iterator &last,vector<string> &input);
+  void restrictCom(std::vector<IfaceCommand *>::const_iterator &first,
+		   std::vector<IfaceCommand *>::const_iterator &last,std::vector<std::string> &input);
 
   /// \brief Read the next command line
   ///
   /// \param line is filled in with the next command to execute
-  virtual void readLine(string &line)=0;
-  void saveHistory(const string &line);		///< Store the given command line into \e history
+  virtual void readLine(std::string &line)=0;
+  void saveHistory(const std::string &line);		///< Store the given command line into \e history
 protected:
   bool inerror;			///< Set to \b true if last command did not succeed
-  vector<IfaceCommand *> comlist; ///< List of registered commands
-  map<string,IfaceData *> datamap; ///< Data associated with particular modules
-  int4 expandCom(vector<string> &expand,istream &s,
-		vector<IfaceCommand *>::const_iterator &first,
-		vector<IfaceCommand *>::const_iterator &last);
+  std::vector<IfaceCommand *> comlist; ///< List of registered commands
+  std::map<std::string,IfaceData *> datamap; ///< Data associated with particular modules
+  int4 expandCom(std::vector<std::string> &expand,std::istream &s,
+		std::vector<IfaceCommand *>::const_iterator &first,
+		std::vector<IfaceCommand *>::const_iterator &last);
 public:
   bool done;			///< Set to \b true (by a command) to indicate processing is finished
-  ostream *optr;		///< Where to put command line output
-  ostream *fileoptr;		///< Where to put bulk output
+  std::ostream *optr;		///< Where to put command line output
+  std::ostream *fileoptr;		///< Where to put bulk output
 
-  IfaceStatus(const string &prmpt,ostream &os,int4 mxhist=10);	///< Constructor
+  IfaceStatus(const std::string &prmpt,std::ostream &os,int4 mxhist=10);	///< Constructor
   virtual ~IfaceStatus(void);					///< Destructor
   void setErrorIsDone(bool val) { errorisdone = val; }	///< Set if processing should terminate on an error
-  void pushScript(const string &filename,const string &newprompt);
-  virtual void pushScript(istream *iptr,const string &newprompt);
+  void pushScript(const std::string &filename,const std::string &newprompt);
+  virtual void pushScript(std::istream *iptr,const std::string &newprompt);
   virtual void popScript(void);
   virtual void reset(void);	///< Pop any existing script streams and return to processing from the base stream
   int4 getNumInputStreamSize(void) const { return promptstack.size(); }	///< Get depth of script nesting
@@ -242,14 +232,14 @@ public:
 		   const char *nm3 = (const char *)0,
 		   const char *nm4 = (const char *)0,
 		   const char *nm5 = (const char *)0);
-  IfaceData *getData(const string &nm) const;	///< Get data associated with a IfaceCommand module
+  IfaceData *getData(const std::string &nm) const;	///< Get data associated with a IfaceCommand module
   bool runCommand(void);			///< Run the next command
-  void getHistory(string &line,int4 i) const;	///< Get the i-th command line from history
+  void getHistory(std::string &line,int4 i) const;	///< Get the i-th command line from history
   int4 getHistorySize(void) const { return history.size(); }	///< Get the number of command lines in history
   virtual bool isStreamFinished(void) const=0;		///< Return \b true if the current stream is finished
   bool isInError(void) const { return inerror; }	///< Return \b true if the last command failed
   void evaluateError(void);			///< Adjust which stream to process based on last error
-  static void wordsToString(string &res,const vector<string> &list);	///< Concatenate tokens
+  static void wordsToString(std::string &res,const std::vector<std::string> &list);	///< Concatenate tokens
 };
 
 /// \brief A root class for a basic set of commands
@@ -261,38 +251,38 @@ protected:
   IfaceStatus *status;		///< The interface owning this command instance
 public:
   virtual void setData(IfaceStatus *root,IfaceData *data) { status = root; }
-  virtual string getModule(void) const { return "base"; }
+  virtual std::string getModule(void) const { return "base"; }
   virtual IfaceData *createData(void) { return (IfaceData *)0; }
 };
 
 class IfcQuit : public IfaceBaseCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcHistory : public IfaceBaseCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcOpenfile : public IfaceBaseCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcOpenfileAppend : public IfaceBaseCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcClosefile : public IfaceBaseCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 class IfcEcho : public IfaceBaseCommand {
 public:
-  virtual void execute(istream &s);
+  virtual void execute(std::istream &s);
 };
 
 #endif

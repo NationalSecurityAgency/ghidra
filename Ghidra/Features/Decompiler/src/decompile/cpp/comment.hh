@@ -44,7 +44,7 @@ class Comment {
   int4 uniq;			///< Sub-identifier for uniqueness
   Address funcaddr;		///< Address of the function containing the comment
   Address addr;			///< Address associated with the comment
-  string text;			///< The body of the comment
+  std::string text;			///< The body of the comment
   mutable bool emitted;		///< \b true if this comment has already been emitted
 public:
   /// \brief Possible properties associated with a comment
@@ -56,7 +56,7 @@ public:
     warning = 16,		///< The comment is auto-generated to alert the user
     warningheader = 32		///< The comment is auto-generated and should be in the header
   };
-  Comment(uint4 tp,const Address &fad,const Address &ad,int4 uq,const string &txt);	///< Constructor
+  Comment(uint4 tp,const Address &fad,const Address &ad,int4 uq,const std::string &txt);	///< Constructor
   Comment(void) {} 	///< Constructor for use with decode
   void setEmitted(bool val) const { emitted = val; }		///< Mark that \b this comment has been emitted
   bool isEmitted(void) const { return emitted; }		///< Return \b true if \b this comment is already emitted
@@ -64,11 +64,11 @@ public:
   const Address &getFuncAddr(void) const { return funcaddr; }	///< Get the address of the function containing the comment
   const Address &getAddr(void) const { return addr; }		///< Get the address to which the instruction is attached
   int4 getUniq(void) const { return uniq; }			///< Get the sub-sorting index
-  const string &getText(void) const { return text; }		///< Get the body of the comment
+  const std::string &getText(void) const { return text; }		///< Get the body of the comment
   void encode(Encoder &encoder) const;				///< Encode the comment to a stream
   void decode(Decoder &decoder);				///< Restore the comment from XML
-  static uint4 encodeCommentType(const string &name);		///< Convert name string to comment property
-  static string decodeCommentType(uint4 val);			///< Convert comment property to string
+  static uint4 encodeCommentType(const std::string &name);		///< Convert name string to comment property
+  static std::string decodeCommentType(uint4 val);			///< Convert comment property to string
 };
 
 /// \brief Compare two Comment pointers
@@ -79,7 +79,7 @@ struct CommentOrder {
   bool operator()(const Comment *a,const Comment *b) const;	///< Comparison operator
 };
 
-typedef set<Comment *,CommentOrder> CommentSet;		///< A set of comments sorted by function and address
+typedef std::set<Comment *,CommentOrder> CommentSet;		///< A set of comments sorted by function and address
 
 /// \brief An interface to a container of comments
 ///
@@ -108,7 +108,7 @@ public:
   /// \param ad is the address to which the comment is attached
   /// \param txt is the body of the comment
   virtual void addComment(uint4 tp,const Address &fad,
-			  const Address &ad,const string &txt)=0;
+			  const Address &ad,const std::string &txt)=0;
 
   /// \brief Add a new comment to the container, making sure there is no duplicate
   ///
@@ -119,7 +119,7 @@ public:
   /// \param ad is the address to which the comment is attached
   /// \param txt is the body of the comment
   /// \return \b true if a new Comment was created, \b false if there was a duplicate
-  virtual bool addCommentNoDuplicate(uint4 tp,const Address &fad,const Address &ad,const string &txt)=0;
+  virtual bool addCommentNoDuplicate(uint4 tp,const Address &fad,const Address &ad,const std::string &txt)=0;
 
   /// \brief Remove the given Comment object from the container
   ///
@@ -164,8 +164,8 @@ public:
   virtual void clear(void);
   virtual void clearType(const Address &fad,uint4 tp);
   virtual void addComment(uint4 tp,const Address &fad,
-			  const Address &ad,const string &txt);
-  virtual bool addCommentNoDuplicate(uint4 tp,const Address &fad,const Address &ad,const string &txt);
+			  const Address &ad,const std::string &txt);
+  virtual bool addCommentNoDuplicate(uint4 tp,const Address &fad,const Address &ad,const std::string &txt);
   virtual void deleteComment(Comment *com);
   virtual CommentSet::const_iterator beginComment(const Address &fad) const;
   virtual CommentSet::const_iterator endComment(const Address &fad) const;
@@ -233,10 +233,10 @@ private:
       order = ord;
     }
   };
-  map<Subsort,Comment *> commmap;			///< Comments for the current function, sorted by block
-  mutable map<Subsort,Comment *>::const_iterator start;	///< Iterator to current comment being walked
-  map<Subsort,Comment *>::const_iterator stop;		///< Last comment in current set being walked
-  map<Subsort,Comment *>::const_iterator opstop;	///< Statement landmark within current set of comments
+  std::map<Subsort,Comment *> commmap;			///< Comments for the current function, sorted by block
+  mutable std::map<Subsort,Comment *>::const_iterator start;	///< Iterator to current comment being walked
+  std::map<Subsort,Comment *>::const_iterator stop;		///< Last comment in current set being walked
+  std::map<Subsort,Comment *>::const_iterator opstop;	///< Statement landmark within current set of comments
   bool displayUnplacedComments;				///< True if unplaced comments should be displayed (in the header)
   bool findPosition(Subsort &subsort,Comment *comm,const Funcdata *fd);	///< Establish sorting key for a Comment
 public:

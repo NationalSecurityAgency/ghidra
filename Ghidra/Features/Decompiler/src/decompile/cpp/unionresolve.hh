@@ -132,11 +132,11 @@ class ScoreUnionFields {
     }
   };
   TypeFactory &typegrp;		///< The factory containing data-types
-  vector<int4> scores;		///< Score for each field, indexed by fieldNum + 1 (whole union is index=0)
-  vector<Datatype *> fields;	///< Field corresponding to each score
-  set<VisitMark> visited;	///< Places that have already been visited
-  list<Trial> trialCurrent;	///< Current trials being pushed
-  list<Trial> trialNext;	///< Next set of trials
+  std::vector<int4> scores;		///< Score for each field, indexed by fieldNum + 1 (whole union is index=0)
+  std::vector<Datatype *> fields;	///< Field corresponding to each score
+  std::set<VisitMark> visited;	///< Places that have already been visited
+  std::list<Trial> trialCurrent;	///< Current trials being pushed
+  std::list<Trial> trialNext;	///< Next set of trials
   ResolvedUnion result;		///< The best result
   int4 trialCount;		///< Number of trials evaluated so far
   static const int4 maxPasses;	///< Maximum number of levels to score through

@@ -141,9 +141,9 @@ class ConditionalExecution {
   BlockBasic *posta_block;	///< First block in posta path
   BlockBasic *postb_block;	///< First block in postb path
   bool directsplit;		///< True if this the \e direct \e split variation
-  map<int4,Varnode *> replacement;	///< Map from block to replacement Varnode for (current) Varnode
-  vector<PcodeOp *> returnop;	///< RETURN ops that have flow coming out of the iblock
-  vector<bool> heritageyes;	///< Boolean array indexed by address space indicating whether the space is heritaged
+  std::map<int4,Varnode *> replacement;	///< Map from block to replacement Varnode for (current) Varnode
+  std::vector<PcodeOp *> returnop;	///< RETURN ops that have flow coming out of the iblock
+  std::vector<bool> heritageyes;	///< Boolean array indexed by address space indicating whether the space is heritaged
 
   void buildHeritageArray(void);
   bool testIBlock(void);
@@ -171,7 +171,7 @@ public:
 /// that repeatedly branches on the same (or slightly modified) boolean expression.
 class ActionConditionalExe : public Action {
 public:
-  ActionConditionalExe(const string &g) : Action(0,"conditionalexe",g) {}	///< Constructor
+  ActionConditionalExe(const std::string &g) : Action(0,"conditionalexe",g) {}	///< Constructor
   virtual Action *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Action *)0;
     return new ActionConditionalExe(getGroup());
@@ -225,12 +225,12 @@ class RuleOrPredicate : public Rule {
   };
   int4 checkSingle(Varnode *vn,MultiPredicate &branch,PcodeOp *op,Funcdata &data);
 public:
-  RuleOrPredicate(const string &g) : Rule(g, 0, "orpredicate") {}	///< Constructor
+  RuleOrPredicate(const std::string &g) : Rule(g, 0, "orpredicate") {}	///< Constructor
   virtual Rule *clone(const ActionGroupList &grouplist) const {
     if (!grouplist.contains(getGroup())) return (Rule *)0;
     return new RuleOrPredicate(getGroup());
   }
-  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual void getOpList(std::vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };
 

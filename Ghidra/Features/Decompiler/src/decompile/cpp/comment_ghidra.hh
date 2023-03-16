@@ -39,8 +39,8 @@ public:
     cache.clearType(fad,tp);
   }
   virtual void addComment(uint4 tp,const Address &fad,
-			  const Address &ad,const string &txt);
-  virtual bool addCommentNoDuplicate(uint4 tp,const Address &fad,const Address &ad,const string &txt);
+			  const Address &ad,const std::string &txt);
+  virtual bool addCommentNoDuplicate(uint4 tp,const Address &fad,const Address &ad,const std::string &txt);
   virtual void deleteComment(Comment *com) {
     throw LowlevelError("deleteComment unimplemented"); }
   virtual CommentSet::const_iterator beginComment(const Address &fad) const;

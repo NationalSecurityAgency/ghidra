@@ -72,7 +72,7 @@ private:
   friend class ConstantPool;
   uint4 tag;		///< Descriptor of type of the object
   uint4 flags;		///< Additional boolean properties on the record
-  string token;		///< Name or token associated with the object
+  std::string token;		///< Name or token associated with the object
   uintb value;		///< Constant value of the object (if known)
   Datatype *type;	///< Data-type associated with the object
   uint1 *byteData;	///< For string literals, the raw byte data of the string
@@ -81,7 +81,7 @@ public:
   CPoolRecord(void) { type = (Datatype *)0; byteData = (uint1 *)0; }		///< Construct an empty record
   ~CPoolRecord(void) { if (byteData != (uint1 *)0) delete [] byteData; }	///< Destructor
   uint4 getTag(void) const { return tag; }					///< Get the type of record
-  const string &getToken(void) const { return token; }				///< Get name of method or data-type
+  const std::string &getToken(void) const { return token; }				///< Get name of method or data-type
   const uint1 *getByteData(void) const { return byteData; }			///< Get pointer to string literal data
   int4 getByteDataLength(void) const { return byteDataLen; }			///< Number of bytes of string literal data
   Datatype *getType(void) const { return type; }				///< Get the data-type associated with \b this
@@ -106,7 +106,7 @@ class ConstantPool {
   /// Any issue with allocation (like a dupicate reference) causes an exception.
   /// \param refs is the \e reference of 1 or more identifying integers
   /// \return the new CPoolRecord
-  virtual CPoolRecord *createRecord(const vector<uintb> &refs)=0;
+  virtual CPoolRecord *createRecord(const std::vector<uintb> &refs)=0;
 public:
   virtual ~ConstantPool() {}	///< Destructor
 
@@ -114,7 +114,7 @@ public:
   ///
   /// \param refs is the \e reference (made up of 1 or more identifying integers)
   /// \return the matching CPoolRecord or NULL if none matches the reference
-  virtual const CPoolRecord *getRecord(const vector<uintb> &refs) const=0;
+  virtual const CPoolRecord *getRecord(const std::vector<uintb> &refs) const=0;
 
   /// \brief A a new constant pool record to \b this database
   ///
@@ -124,7 +124,7 @@ public:
   /// \param tag is the type of record to create
   /// \param tok is the name associated with the object
   /// \param ct is the data-type associated with the object
-  void putRecord(const vector<uintb> &refs,uint4 tag,const string &tok,Datatype *ct);
+  void putRecord(const std::vector<uintb> &refs,uint4 tag,const std::string &tok,Datatype *ct);
 
   /// \brief Restore a CPoolRecord given a \e reference and a stream decoder
   ///
@@ -134,7 +134,7 @@ public:
   /// \param decoder is the given stream decoder
   /// \param typegrp is the TypeFactory used to resolve data-type references in XML
   /// \return the newly allocated and initialized CPoolRecord
-  const CPoolRecord *decodeRecord(const vector<uintb> &refs,Decoder &decoder,TypeFactory &typegrp);
+  const CPoolRecord *decodeRecord(const std::vector<uintb> &refs,Decoder &decoder,TypeFactory &typegrp);
 
   virtual bool empty(void) const=0;		///< Is the container empty of records
   virtual void clear(void)=0;			///< Release any (local) resources
@@ -176,7 +176,7 @@ class ConstantPoolInternal : public ConstantPool {
     uintb b;			///< The second integer in a \e reference (or zero)
     CheapSorter(void) { a = 0; b = 0; }	///< Construct a zero reference
     CheapSorter(const CheapSorter &op2) { a = op2.a; b = op2.b; }	///< Copy constructor
-    CheapSorter(const vector<uintb> &refs) { a = refs[0]; b = (refs.size() > 1) ? refs[1] : 0; } ///< Construct from an array of integers
+    CheapSorter(const std::vector<uintb> &refs) { a = refs[0]; b = (refs.size() > 1) ? refs[1] : 0; } ///< Construct from an array of integers
 
     /// \brief Lexicographic comparison
     ///
@@ -190,15 +190,15 @@ class ConstantPoolInternal : public ConstantPool {
     /// \brief Convert the reference back to a formal array of integers
     ///
     /// \param refs is the provided container of integers
-    void apply(vector<uintb> &refs) const { refs.push_back(a); refs.push_back(b); }
+    void apply(std::vector<uintb> &refs) const { refs.push_back(a); refs.push_back(b); }
 
     void encode(Encoder &encoder) const;	///< Encode the \e reference to a stream
     void decode(Decoder &decoder);		///< Decode the \e reference from a stream
   };
-  map<CheapSorter,CPoolRecord> cpoolMap;	///< A map from \e reference to constant pool record
-  virtual CPoolRecord *createRecord(const vector<uintb> &refs);
+  std::map<CheapSorter,CPoolRecord> cpoolMap;	///< A map from \e reference to constant pool record
+  virtual CPoolRecord *createRecord(const std::vector<uintb> &refs);
 public:
-  virtual const CPoolRecord *getRecord(const vector<uintb> &refs) const;
+  virtual const CPoolRecord *getRecord(const std::vector<uintb> &refs) const;
   virtual bool empty(void) const { return cpoolMap.empty(); }
   virtual void clear(void) { cpoolMap.clear(); }
   virtual void encode(Encoder &encoder) const;

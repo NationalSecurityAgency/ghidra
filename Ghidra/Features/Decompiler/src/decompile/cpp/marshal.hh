@@ -20,9 +20,6 @@
 #include <list>
 #include <unordered_map>
 
-using std::list;
-using std::unordered_map;
-
 /// \brief An annotation for a data element to being transferred to/from a stream
 ///
 /// This class parallels the XML concept of an \b attribute on an element. An AttributeId describes
@@ -36,16 +33,16 @@ using std::unordered_map;
 ///
 /// The same AttributeId can be used to label a different type of data when associated with a different ElementId.
 class AttributeId {
-  static unordered_map<string,uint4> lookupAttributeId;		///< A map of AttributeId names to their associated id
-  static vector<AttributeId *> &getList(void);			///< Retrieve the list of static AttributeId
-  string name;			///< The name of the attribute
+  static std::unordered_map<std::string,uint4> lookupAttributeId;		///< A map of AttributeId names to their associated id
+  static std::vector<AttributeId *> &getList(void);			///< Retrieve the list of static AttributeId
+  std::string name;			///< The name of the attribute
   uint4 id;			///< The (internal) id of the attribute
 public:
-  AttributeId(const string &nm,uint4 i);	///< Construct given a name and id
-  const string &getName(void) const { return name; }				///< Get the attribute's name
+  AttributeId(const std::string &nm,uint4 i);	///< Construct given a name and id
+  const std::string &getName(void) const { return name; }				///< Get the attribute's name
   uint4 getId(void) const { return id; }					///< Get the attribute's id
   bool operator==(const AttributeId &op2) const { return (id == op2.id); }	///< Test equality with another AttributeId
-  static uint4 find(const string &nm);			///< Find the id associated with a specific attribute name
+  static uint4 find(const std::string &nm);			///< Find the id associated with a specific attribute name
   static void initialize(void);				///< Populate a hashtable with all AttributeId objects
   friend bool operator==(uint4 id,const AttributeId &op2) { return (id == op2.id); }	///< Test equality of a raw integer id with an AttributeId
   friend bool operator==(const AttributeId &op1,uint4 id) { return (op1.id == id); }	///< Test equality of an AttributeId with a raw integer id
@@ -60,16 +57,16 @@ public:
 /// AttributeId ATTRIB_CONTENT is used to label the XML element's text content, which is traditionally not labeled
 /// as an attribute.
 class ElementId {
-  static unordered_map<string,uint4> lookupElementId;	///< A map of ElementId names to their associated id
-  static vector<ElementId *> &getList(void);		///< Retrieve the list of static ElementId
-  string name;			///< The name of the element
+  static std::unordered_map<std::string,uint4> lookupElementId;	///< A map of ElementId names to their associated id
+  static std::vector<ElementId *> &getList(void);		///< Retrieve the list of static ElementId
+  std::string name;			///< The name of the element
   uint4 id;			///< The (internal) id of the attribute
 public:
-  ElementId(const string &nm,uint4 i);		///< Construct given a name and id
-  const string &getName(void) const { return name; }				///< Get the element's name
+  ElementId(const std::string &nm,uint4 i);		///< Construct given a name and id
+  const std::string &getName(void) const { return name; }				///< Get the element's name
   uint4 getId(void) const { return id; }					///< Get the element's id
   bool operator==(const ElementId &op2) const { return (id == op2.id); }	///< Test equality with another ElementId
-  static uint4 find(const string &nm);			///< Find the id associated with a specific element name
+  static uint4 find(const std::string &nm);			///< Find the id associated with a specific element name
   static void initialize(void);				///< Populate a hashtable with all ElementId objects
   friend bool operator==(uint4 id,const ElementId &op2) { return (id == op2.id); }	///< Test equality of a raw integer id with an ElementId
   friend bool operator==(const ElementId &op1,uint4 id) { return (op1.id == id); }	///< Test equality of an ElementId with a raw integer id
@@ -108,7 +105,7 @@ public:
   /// i.e. the input stream is cleared before any decoding takes place.
   /// \param s is the given input stream to be decode
   /// \return \b true if the stream was fully ingested
-  virtual void ingestStream(istream &s)=0;
+  virtual void ingestStream(std::istream &s)=0;
 
   /// \brief Peek at the next child element of the current parent, without traversing in (opening) it.
   ///
@@ -206,7 +203,7 @@ public:
   /// \param expect is the string value to expect if the attribute is encoded as a string
   /// \param expectval is the integer value to return if the attribute matches the expected string
   /// \return the encoded integer or the integer value associated with the expected string
-  virtual intb readSignedIntegerExpectString(const string &expect,intb expectval)=0;
+  virtual intb readSignedIntegerExpectString(const std::string &expect,intb expectval)=0;
 
   /// \brief Find and parse a specific attribute in the current element as either a signed integer or a string.
   ///
@@ -219,7 +216,7 @@ public:
   /// \param expect is the string to expect, if the attribute is not encoded as an integer
   /// \param expectval is the integer value to return if the attribute matches the expected string
   /// \return the encoded integer or the integer value associated with the expected string
-  virtual intb readSignedIntegerExpectString(const AttributeId &attribId,const string &expect,intb expectval)=0;
+  virtual intb readSignedIntegerExpectString(const AttributeId &attribId,const std::string &expect,intb expectval)=0;
 
   /// \brief Parse the current attribute as an unsigned integer value
   ///
@@ -241,7 +238,7 @@ public:
   ///
   /// The last attribute, as returned by getNextAttributeId, is returned as a string.
   /// \return the string associated with the current attribute.
-  virtual string readString(void)=0;
+  virtual std::string readString(void)=0;
 
   /// \brief Find the specific attribute in the current element and return it as a string
   ///
@@ -250,7 +247,7 @@ public:
   /// Parse via getNextAttributeId is reset.
   /// \param attribId is the specific attribute id to match
   /// \return the string associated with the attribute
-  virtual string readString(const AttributeId &attribId)=0;
+  virtual std::string readString(const AttributeId &attribId)=0;
 
   /// \brief Parse the current attribute as an address space
   ///
@@ -329,7 +326,7 @@ public:
   /// The string is associated with the given AttributeId annotation and the current open element.
   /// \param attribId is the given AttributeId annotation
   /// \param val is the string to encode
-  virtual void writeString(const AttributeId &attribId,const string &val)=0;
+  virtual void writeString(const AttributeId &attribId,const std::string &val)=0;
 
   /// \brief Write an annotated string, using an indexed attribute, into the encoding
   ///
@@ -340,7 +337,7 @@ public:
   /// \param attribId is the shared AttributeId
   /// \param index is the unique index to associated with the string
   /// \param val is the string to encode
-  virtual void writeStringIndexed(const AttributeId &attribId,uint4 index,const string &val)=0;
+  virtual void writeStringIndexed(const AttributeId &attribId,uint4 index,const std::string &val)=0;
 
   /// \brief Write an address space reference into the encoding
   ///
@@ -358,10 +355,10 @@ public:
 class XmlDecode : public Decoder {
   Document *document;				///< An ingested XML document, owned by \b this decoder
   const Element *rootElement;			///< The root XML element to be decoded
-  vector<const Element *> elStack;		///< Stack of currently \e open elements
-  vector<List::const_iterator> iterStack;	///< Index of next child for each \e open element
+  std::vector<const Element *> elStack;		///< Stack of currently \e open elements
+  std::vector<List::const_iterator> iterStack;	///< Index of next child for each \e open element
   int4 attributeIndex;				///< Position of \e current attribute to parse (in \e current element)
-  int4 findMatchingAttribute(const Element *el,const string &attribName);
+  int4 findMatchingAttribute(const Element *el,const std::string &attribName);
 public:
   XmlDecode(const AddrSpaceManager *spc,const Element *root) : Decoder(spc) {
     document = (Document *)0; rootElement = root; attributeIndex = -1; }	///< Constructor with preparsed root
@@ -369,7 +366,7 @@ public:
     document = (Document *)0; rootElement = (const Element *)0; attributeIndex = -1; }	///< Constructor for use with ingestStream
   const Element *getCurrentXmlElement(void) const { return elStack.back(); }	///< Get pointer to underlying XML element object
   virtual ~XmlDecode(void);
-  virtual void ingestStream(istream &s);
+  virtual void ingestStream(std::istream &s);
   virtual uint4 peekElement(void);
   virtual uint4 openElement(void);
   virtual uint4 openElement(const ElementId &elemId);
@@ -382,12 +379,12 @@ public:
   virtual bool readBool(const AttributeId &attribId);
   virtual intb readSignedInteger(void);
   virtual intb readSignedInteger(const AttributeId &attribId);
-  virtual intb readSignedIntegerExpectString(const string &expect,intb expectval);
-  virtual intb readSignedIntegerExpectString(const AttributeId &attribId,const string &expect,intb expectval);
+  virtual intb readSignedIntegerExpectString(const std::string &expect,intb expectval);
+  virtual intb readSignedIntegerExpectString(const AttributeId &attribId,const std::string &expect,intb expectval);
   virtual uintb readUnsignedInteger(void);
   virtual uintb readUnsignedInteger(const AttributeId &attribId);
-  virtual string readString(void);
-  virtual string readString(const AttributeId &attribId);
+  virtual std::string readString(void);
+  virtual std::string readString(const AttributeId &attribId);
   virtual AddrSpace *readSpace(void);
   virtual AddrSpace *readSpace(const AttributeId &attribId);
 };
@@ -398,17 +395,17 @@ public:
 /// receive the XML document as calls are made on the encoder.
 class XmlEncode : public Encoder {
   friend class XmlDecode;
-  ostream &outStream;			///< The stream receiving the encoded data
+  std::ostream &outStream;			///< The stream receiving the encoded data
   bool elementTagIsOpen;		///< If \b true, new attributes can be written to the current element
 public:
-  XmlEncode(ostream &s) : outStream(s) { elementTagIsOpen = false; } ///< Construct from a stream
+  XmlEncode(std::ostream &s) : outStream(s) { elementTagIsOpen = false; } ///< Construct from a stream
   virtual void openElement(const ElementId &elemId);
   virtual void closeElement(const ElementId &elemId);
   virtual void writeBool(const AttributeId &attribId,bool val);
   virtual void writeSignedInteger(const AttributeId &attribId,intb val);
   virtual void writeUnsignedInteger(const AttributeId &attribId,uintb val);
-  virtual void writeString(const AttributeId &attribId,const string &val);
-  virtual void writeStringIndexed(const AttributeId &attribId,uint4 index,const string &val);
+  virtual void writeString(const AttributeId &attribId,const std::string &val);
+  virtual void writeStringIndexed(const AttributeId &attribId,uint4 index,const std::string &val);
   virtual void writeSpace(const AttributeId &attribId,const AddrSpace *spc);
 };
 
@@ -485,11 +482,11 @@ private:
   /// \brief An iterator into input stream
   class Position {
     friend class PackedDecode;
-    list<ByteChunk>::const_iterator seqIter;	///< Current byte sequence
+    std::list<ByteChunk>::const_iterator seqIter;	///< Current byte sequence
     uint1 *current;				///< Current position in sequence
     uint1 *end;					///< End of current sequence
   };
-  list<ByteChunk> inStream;		///< Incoming raw data as a sequence of byte arrays
+  std::list<ByteChunk> inStream;		///< Incoming raw data as a sequence of byte arrays
   Position startPos;			///< Position at the start of the current open element
   Position curPos;			///< Position of the next attribute as returned by getNextAttributeId
   Position endPos;			///< Ending position after all attributes in current open element
@@ -506,7 +503,7 @@ private:
 public:
   PackedDecode(const AddrSpaceManager *spcManager) : Decoder(spcManager) {}	///< Constructor
   virtual ~PackedDecode(void);
-  virtual void ingestStream(istream &s);
+  virtual void ingestStream(std::istream &s);
   virtual uint4 peekElement(void);
   virtual uint4 openElement(void);
   virtual uint4 openElement(const ElementId &elemId);
@@ -519,12 +516,12 @@ public:
   virtual bool readBool(const AttributeId &attribId);
   virtual intb readSignedInteger(void);
   virtual intb readSignedInteger(const AttributeId &attribId);
-  virtual intb readSignedIntegerExpectString(const string &expect,intb expectval);
-  virtual intb readSignedIntegerExpectString(const AttributeId &attribId,const string &expect,intb expectval);
+  virtual intb readSignedIntegerExpectString(const std::string &expect,intb expectval);
+  virtual intb readSignedIntegerExpectString(const AttributeId &attribId,const std::string &expect,intb expectval);
   virtual uintb readUnsignedInteger(void);
   virtual uintb readUnsignedInteger(const AttributeId &attribId);
-  virtual string readString(void);
-  virtual string readString(const AttributeId &attribId);
+  virtual std::string readString(void);
+  virtual std::string readString(const AttributeId &attribId);
   virtual AddrSpace *readSpace(void);
   virtual AddrSpace *readSpace(const AttributeId &attribId);
 };
@@ -533,18 +530,18 @@ public:
 ///
 /// See PackedDecode for details of the encoding format.
 class PackedEncode : public Encoder {
-  ostream &outStream;			///< The stream receiving the encoded data
+  std::ostream &outStream;			///< The stream receiving the encoded data
   void writeHeader(uint1 header,uint4 id);	///< Write a header, element or attribute, to stream
   void writeInteger(uint1 typeByte,uint8 val);	///< Write an integer value to the stream
 public:
-  PackedEncode(ostream &s) : outStream(s) {} ///< Construct from a stream
+  PackedEncode(std::ostream &s) : outStream(s) {} ///< Construct from a stream
   virtual void openElement(const ElementId &elemId);
   virtual void closeElement(const ElementId &elemId);
   virtual void writeBool(const AttributeId &attribId,bool val);
   virtual void writeSignedInteger(const AttributeId &attribId,intb val);
   virtual void writeUnsignedInteger(const AttributeId &attribId,uintb val);
-  virtual void writeString(const AttributeId &attribId,const string &val);
-  virtual void writeStringIndexed(const AttributeId &attribId,uint4 index,const string &val);
+  virtual void writeString(const AttributeId &attribId,const std::string &val);
+  virtual void writeStringIndexed(const AttributeId &attribId,uint4 index,const std::string &val);
   virtual void writeSpace(const AttributeId &attribId,const AddrSpace *spc);
 };
 
@@ -556,7 +553,7 @@ inline uint1 PackedDecode::getBytePlus1(Position &pos)
 {
   uint1 *ptr = pos.current + 1;
   if (ptr == pos.end) {
-    list<ByteChunk>::const_iterator iter = pos.seqIter;
+    std::list<ByteChunk>::const_iterator iter = pos.seqIter;
     ++iter;
     if (iter == inStream.end())
       throw DecoderError("Unexpected end of stream");
@@ -626,10 +623,10 @@ extern AttributeId ATTRIB_CONTENT;	///< Special attribute for XML text content o
 /// placeholder attribute, ATTRIB_UNKNOWN, is returned as a placeholder for attributes with unrecognized names.
 /// \param nm is the name of the attribute
 /// \return the associated id
-inline uint4 AttributeId::find(const string &nm)
+inline uint4 AttributeId::find(const std::string &nm)
 
 {
-  unordered_map<string,uint4>::const_iterator iter = lookupAttributeId.find(nm);
+  std::unordered_map<std::string,uint4>::const_iterator iter = lookupAttributeId.find(nm);
   if (iter != lookupAttributeId.end())
     return (*iter).second;
   return ATTRIB_UNKNOWN.id;
@@ -639,10 +636,10 @@ inline uint4 AttributeId::find(const string &nm)
 /// placeholder element, ELEM_UNKNOWN, is returned as a placeholder for elements with unrecognized names.
 /// \param nm is the name of the element
 /// \return the associated id
-inline uint4 ElementId::find(const string &nm)
+inline uint4 ElementId::find(const std::string &nm)
 
 {
-  unordered_map<string,uint4>::const_iterator iter = lookupElementId.find(nm);
+  std::unordered_map<std::string,uint4>::const_iterator iter = lookupElementId.find(nm);
   if (iter != lookupElementId.end())
     return (*iter).second;
   return ELEM_UNKNOWN.id;

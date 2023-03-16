@@ -54,7 +54,7 @@ public:
   ~Statistics(void);		///< Destructor
   void countCast(void) { castcount += 1; }	///< Count a single cast
   void process(const Funcdata &fd);	///< Accumulate statistics for one function
-  void printResults(ostream &s);	///< Display accumulated statistics
+  void printResults(std::ostream &s);	///< Display accumulated statistics
 };
 
 #endif
@@ -115,11 +115,11 @@ extern ElementId ELEM_VOLATILE;			///< Marshaling element \<volatile>
 class ArchitectureCapability : public CapabilityPoint {
   static const uint4 majorversion;			///< Current major version of decompiler
   static const uint4 minorversion;			///< Current minor version of decompiler
-  static vector<ArchitectureCapability *> thelist;	///< The list of registered extensions
+  static std::vector<ArchitectureCapability *> thelist;	///< The list of registered extensions
 protected:
-  string name;						///< Identifier for this capability
+  std::string name;						///< Identifier for this capability
 public:
-  const string &getName(void) const { return name; }	///< Get the capability identifier
+  const std::string &getName(void) const { return name; }	///< Get the capability identifier
   virtual void initialize(void);			///< Do specialized initialization
 
   /// \brief Build an Architecture given a raw file or data
@@ -130,13 +130,13 @@ public:
   /// \param filename is the path to the executable file to examine
   /// \param target if non-empty is a language id string
   /// \param estream is an output stream for error messages
-  virtual Architecture *buildArchitecture(const string &filename,const string &target,ostream *estream)=0;
+  virtual Architecture *buildArchitecture(const std::string &filename,const std::string &target,std::ostream *estream)=0;
 
   /// \brief Determine if this extension can handle this file
   ///
   /// \param filename is the name of the file to examine
   /// \return \b true is \b this extension is suitable for analyzing the file
-  virtual bool isFileMatch(const string &filename) const=0;
+  virtual bool isFileMatch(const std::string &filename) const=0;
 
   /// \brief Determine is this extension can handle this XML document
   ///
@@ -146,9 +146,9 @@ public:
   /// \return \b true if \b this extension understands the XML
   virtual bool isXmlMatch(Document *doc) const=0;
 
-  static ArchitectureCapability *findCapability(const string &filename);	///< Find an extension to process a file
+  static ArchitectureCapability *findCapability(const std::string &filename);	///< Find an extension to process a file
   static ArchitectureCapability *findCapability(Document *doc);		///< Find an extension to process an XML document
-  static ArchitectureCapability *getCapability(const string &name);	///< Get a capability by name
+  static ArchitectureCapability *getCapability(const std::string &name);	///< Get a capability by name
   static void sortCapabilities(void);					///< Sort extensions
   static uint4 getMajorVersion(void) { return majorversion; }		///< Get \e major decompiler version
   static uint4 getMinorVersion(void) { return minorversion; }		///< Get \e minor decompiler version
@@ -162,7 +162,7 @@ public:
 /// This class also holds numerous configuration parameters for the analysis process
 class Architecture : public AddrSpaceManager {
 public:
-  string archid;		///< ID string uniquely describing this architecture
+  std::string archid;		///< ID string uniquely describing this architecture
 
 				// Configuration data
   int4 trim_recurse_max;	///< How many levels to let parameter trims recurse
@@ -174,16 +174,16 @@ public:
   bool readonlypropagate;	///< true if readonly values should be treated as constants
   bool infer_pointers;		///< True if we should infer pointers from constants that are likely addresses
   bool analyze_for_loops;	///< True if we should attempt conversion of \e whiledo loops to \e for loops
-  vector<AddrSpace *> inferPtrSpaces;	///< Set of address spaces in which a pointer constant is inferable
+  std::vector<AddrSpace *> inferPtrSpaces;	///< Set of address spaces in which a pointer constant is inferable
   int4 funcptr_align;		///< How many bits of alignment a function ptr has
   uint4 flowoptions;            ///< options passed to flow following engine
   uint4 max_instructions;	///< Maximum instructions that can be processed in one function
   int4 alias_block_level;	///< Aliases blocked by 0=none, 1=struct, 2=array, 3=all
-  vector<Rule *> extra_pool_rules; ///< Extra rules that go in the main pool (cpu specific, experimental)
+  std::vector<Rule *> extra_pool_rules; ///< Extra rules that go in the main pool (cpu specific, experimental)
 
   Database *symboltab;		///< Memory map of global variables and functions
   ContextDatabase *context;	///< Map from addresses to context settings
-  map<string,ProtoModel *> protoModels; ///< Parsed forms of possible prototypes
+  std::map<std::string,ProtoModel *> protoModels; ///< Parsed forms of possible prototypes
   ProtoModel *defaultfp;	///< Parsed form of default prototype
   VarnodeData defaultReturnAddr;	///< Default storage location of return address (for current function)
   ProtoModel *evalfp_current;	///< Function proto to use when evaluating current function
@@ -197,58 +197,58 @@ public:
   StringManager *stringManager;	///< Manager of decoded strings
   ConstantPool *cpool;		///< Deferred constant values
   PrintLanguage *print;	        ///< Current high-level language printer
-  vector<PrintLanguage *> printlist;	///< List of high-level language printers supported
+  std::vector<PrintLanguage *> printlist;	///< List of high-level language printers supported
   OptionDatabase *options;	///< Options that can be configured
-  vector<TypeOp *> inst;	///< Registered p-code instructions
+  std::vector<TypeOp *> inst;	///< Registered p-code instructions
   UserOpManage userops;		///< Specifically registered user-defined p-code ops
-  vector<PreferSplitRecord> splitrecords; ///< registers that we would prefer to see split for this processor
-  vector<LanedRegister> lanerecords;	///< Vector registers that have preferred lane sizes
+  std::vector<PreferSplitRecord> splitrecords; ///< registers that we would prefer to see split for this processor
+  std::vector<LanedRegister> lanerecords;	///< Vector registers that have preferred lane sizes
   ActionDatabase allacts;	///< Actions that can be applied in this architecture
   bool loadersymbols_parsed;	///< True if loader symbols have been read
 #ifdef CPUI_STATISTICS
   Statistics *stats;		///< Statistics collector
 #endif
 #ifdef OPACTION_DEBUG
-  ostream *debugstream;		///< The error console
+  std::ostream *debugstream;		///< The error console
 #endif
   Architecture(void);		///< Construct an uninitialized Architecture
   void init(DocumentStorage &store); ///< Load the image and configure architecture
   void resetDefaultsInternal(void);	///< Reset default values for options specific to Architecture
   void resetDefaults(void);		///< Reset defaults values for options owned by \b this
-  ProtoModel *getModel(const string &nm) const;		///< Get a specific PrototypeModel
-  bool hasModel(const string &nm) const;		///< Does this Architecture have a specific PrototypeModel
-  ProtoModel *createUnknownModel(const string &modelName);	///< Create a model for an unrecognized name
+  ProtoModel *getModel(const std::string &nm) const;		///< Get a specific PrototypeModel
+  bool hasModel(const std::string &nm) const;		///< Does this Architecture have a specific PrototypeModel
+  ProtoModel *createUnknownModel(const std::string &modelName);	///< Create a model for an unrecognized name
   bool highPtrPossible(const Address &loc,int4 size) const; ///< Are pointers possible to the given location?
   AddrSpace *getSpaceBySpacebase(const Address &loc,int4 size) const; ///< Get space associated with a \e spacebase register
   const LanedRegister *getLanedRegister(const Address &loc,int4 size) const;	///< Get LanedRegister associated with storage
   int4 getMinimumLanedRegisterSize(void) const;		///< Get the minimum size of a laned register in bytes
   void setDefaultModel(ProtoModel *model);		///< Set the default PrototypeModel
   void clearAnalysis(Funcdata *fd);			///< Clear analysis specific to a function
-  void readLoaderSymbols(const string &delim);		 ///< Read any symbols from loader into database
-  void collectBehaviors(vector<OpBehavior *> &behave) const;	///< Provide a list of OpBehavior objects
+  void readLoaderSymbols(const std::string &delim);		 ///< Read any symbols from loader into database
+  void collectBehaviors(std::vector<OpBehavior *> &behave) const;	///< Provide a list of OpBehavior objects
   SegmentOp *getSegmentOp(AddrSpace *spc) const;	///< Retrieve the \e segment op for the given space if any
   void setPrototype(const PrototypePieces &pieces);	///< Set the prototype for a particular function
-  void setPrintLanguage(const string &nm);		///< Establish a particular output language
+  void setPrintLanguage(const std::string &nm);		///< Establish a particular output language
   void globalify(void);					///< Mark \e all spaces as global
   void decodeFlowOverride(Decoder &decoder);		///< Set flow overrides from XML
   virtual ~Architecture(void);				///< Destructor
 
-  virtual string getDescription(void) const { return archid; }	///< Get a string describing \b this architecture
+  virtual std::string getDescription(void) const { return archid; }	///< Get a string describing \b this architecture
 
   /// \brief Print an error message to console
   ///
   /// Write the given message to whatever the registered error stream is
   /// \param message is the error message
-  virtual void printMessage(const string &message) const=0;
+  virtual void printMessage(const std::string &message) const=0;
   virtual void encode(Encoder &encoder) const;		///< Encode \b this architecture to a stream
   virtual void restoreXml(DocumentStorage &store);	///< Restore the Architecture state from XML documents
-  virtual void nameFunction(const Address &addr,string &name) const;	///< Pick a default name for a function
+  virtual void nameFunction(const Address &addr,std::string &name) const;	///< Pick a default name for a function
 #ifdef OPACTION_DEBUG
-  void setDebugStream(ostream *s) { debugstream = s; }	///< Establish the debug console stream
-  void printDebug(const string &message) const { *debugstream << message << endl; }	///< Print message to the debug stream
+  void setDebugStream(std::ostream *s) { debugstream = s; }	///< Establish the debug console stream
+  void printDebug(const std::string &message) const { *debugstream << message << std::endl; }	///< Print message to the debug stream
 #endif
 protected:
-  void addSpacebase(AddrSpace *basespace,const string &nm,const VarnodeData &ptrdata,
+  void addSpacebase(AddrSpace *basespace,const std::string &nm,const VarnodeData &ptrdata,
 		    int4 truncSize,bool isreversejustified,bool stackGrowth,bool isFormal);
   void addNoHighPtr(const Range &rng); ///< Add a new region where pointers do not exist
 
@@ -338,7 +338,7 @@ protected:
   void fillinReadOnlyFromLoader(void);			///< Load info about read-only sections
   void initializeSegments();				///< Set up segment resolvers
   void cacheAddrSpaceProperties(void);			///< Calculate some frequently used space properties and cache them
-  void createModelAlias(const string &aliasName,const string &parentName);	///< Create name alias for a ProtoModel
+  void createModelAlias(const std::string &aliasName,const std::string &parentName);	///< Create name alias for a ProtoModel
 
   void parseProcessorConfig(DocumentStorage &store);	///< Apply processor specific configuration
   void parseCompilerConfig(DocumentStorage &store);	///< Apply compiler specific configuration
@@ -348,7 +348,7 @@ protected:
   ProtoModel *decodeProto(Decoder &decoder);		///< Parse a proto-type model from a stream
   void decodeProtoEval(Decoder &decoder);		///< Apply prototype evaluation configuration
   void decodeDefaultProto(Decoder &decoder);		///< Apply default prototype model configuration
-  void decodeGlobal(Decoder &decoder,vector<RangeProperties> &rangeProps);	///< Parse information about global ranges
+  void decodeGlobal(Decoder &decoder,std::vector<RangeProperties> &rangeProps);	///< Parse information about global ranges
   void addToGlobalScope(const RangeProperties &props);	///< Add a memory range to the set of addresses considered \e global
   void addOtherSpace(void);                         	///< Add OTHER space and all of its overlays to the symboltab
   void decodeReadOnly(Decoder &decoder);		///< Apply read-only region configuration

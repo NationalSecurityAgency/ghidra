@@ -27,9 +27,6 @@
 #include <iostream>
 #include <csignal>
 
-using std::cin;
-using std::cout;
-
 class GhidraCommand;
 
 extern ElementId ELEM_DOC;		///< Marshaling element \<doc>
@@ -42,11 +39,11 @@ extern ElementId ELEM_DOC;		///< Marshaling element \<doc>
 /// a command from the stream and dispatching to the correct GhidraCommand object.
 class GhidraCapability : public CapabilityPoint {
 protected:
-  static map<string,GhidraCommand *> commandmap;	///< The central map from \e name to Ghidra command
-  string name;						///< Identifier for capability and associated commands
+  static std::map<std::string,GhidraCommand *> commandmap;	///< The central map from \e name to Ghidra command
+  std::string name;						///< Identifier for capability and associated commands
 public:
-  const string &getName(void) const { return name; }	///< Get the capability name
-  static int4 readCommand(istream &sin,ostream &out);	///< Dispatch a Ghidra command
+  const std::string &getName(void) const { return name; }	///< Get the capability name
+  static int4 readCommand(std::istream &sin,std::ostream &out);	///< Dispatch a Ghidra command
   static void shutDown(void);				///< Release all GhidraCommand resources
 };
 
@@ -75,8 +72,8 @@ public:
 /// and sendResult() will send back any accumulated warning/error messages.
 class GhidraCommand {
 protected:
-  istream &sin;				///< The input stream from the Ghidra client
-  ostream &sout;			///< The output stream to the Ghidra client
+  std::istream &sin;				///< The input stream from the Ghidra client
+  std::ostream &sout;			///< The output stream to the Ghidra client
   ArchitectureGhidra *ghidra;		///< The Architecture on which to perform the command
   int4 status;				///< Meta-command to system (0=wait for next command, 1=terminate process)
   virtual void loadParameters(void);	///< Read parameters directing command execution
@@ -105,10 +102,10 @@ public:
 ///   - The stripped down \<sleigh> tag describing address spaces for the program
 ///   - The \<coretypes> tag describing the built-in datatypes for the program
 class RegisterProgram : public GhidraCommand {
-  string pspec;				///< Processor specification to configure with
-  string cspec;				///< Compiler specification to configure with
-  string tspec;				///< Configuration (address-spaces) for the Translate object
-  string corespec;			///< A description of core data-types for the TypeFactory object
+  std::string pspec;				///< Processor specification to configure with
+  std::string cspec;				///< Compiler specification to configure with
+  std::string tspec;				///< Configuration (address-spaces) for the Translate object
+  std::string corespec;			///< A description of core data-types for the TypeFactory object
   virtual void loadParameters(void);
   virtual void sendResult(void);
 public:
@@ -206,8 +203,8 @@ public:
 /// The command returns a single character message, 't' or 'f', indicating whether the
 /// action succeeded.
 class SetAction : public GhidraCommand {
-  string actionstring;			///< The \e root Action to switch to
-  string printstring;			///< The \e printing output configuration to toggle
+  std::string actionstring;			///< The \e root Action to switch to
+  std::string printstring;			///< The \e printing output configuration to toggle
   virtual void loadParameters(void);
   virtual void sendResult(void);
 public:

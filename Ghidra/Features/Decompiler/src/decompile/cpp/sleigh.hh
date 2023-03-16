@@ -57,9 +57,9 @@ class PcodeCacher {
   VarnodeData *poolstart;		///< Start of the pool of VarnodeData objects
   VarnodeData *curpool;			///< First unused VarnodeData
   VarnodeData *endpool;			///< End of the pool of VarnodeData objects
-  vector<PcodeData> issued;		///< P-code ops issued for the current instruction
-  list<RelativeRecord> label_refs;	///< References to labels
-  vector<uintb> labels;			///< Locations of labels
+  std::vector<PcodeData> issued;		///< P-code ops issued for the current instruction
+  std::list<RelativeRecord> label_refs;	///< References to labels
+  std::vector<uintb> labels;			///< Locations of labels
   VarnodeData *expandPool(uint4 size);	///< Expand the memory pool
 public:
   PcodeCacher(void);		///< Constructor
@@ -173,8 +173,8 @@ public:
   virtual ~Sleigh(void);				///< Destructor
   void reset(LoadImage *ld,ContextDatabase *c_db);	///< Reset the engine for a new program
   virtual void initialize(DocumentStorage &store);
-  virtual void registerContext(const string &name,int4 sbit,int4 ebit);
-  virtual void setContextDefault(const string &nm,uintm val);
+  virtual void registerContext(const std::string &name,int4 sbit,int4 ebit);
+  virtual void setContextDefault(const std::string &nm,uintm val);
   virtual void allowContextSet(bool val) const;
   virtual int4 instructionLength(const Address &baseaddr) const;
   virtual int4 oneInstruction(PcodeEmit &emit,const Address &baseaddr) const;

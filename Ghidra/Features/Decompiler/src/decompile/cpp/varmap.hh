@@ -35,15 +35,15 @@ class NameRecommend {
   Address addr;			///< The starting address of the storage location
   Address useaddr;		///< The code address at the point of use
   int4 size;			///< An optional/recommended size for the variable being stored
-  string name;			///< The local symbol name recommendation
+  std::string name;			///< The local symbol name recommendation
   uint8 symbolId;		///< Id associated with the original Symbol
 public:
-  NameRecommend(const Address &ad,const Address &use,int4 sz,const string &nm,uint8 id) :
+  NameRecommend(const Address &ad,const Address &use,int4 sz,const std::string &nm,uint8 id) :
     addr(ad), useaddr(use), size(sz), name(nm), symbolId(id) {} ///< Constructor
   const Address &getAddr(void) const { return addr; }	///< Get the storage address
   const Address &getUseAddr(void) const { return useaddr; }	///< Get the use point address
   int4 getSize(void) const { return size; }			///< Get the optional size
-  string getName(void) const { return name; }			///< Get the recommended name
+  std::string getName(void) const { return name; }			///< Get the recommended name
   uint8 getSymbolId(void) const { return symbolId; }		///< Get the original Symbol id
 };
 
@@ -54,14 +54,14 @@ public:
 class DynamicRecommend {
   Address usePoint;		///< Use point of the Symbol
   uint8 hash;			///< Hash encoding the Symbols environment
-  string name;			///< The local symbol name recommendation
+  std::string name;			///< The local symbol name recommendation
   uint8 symbolId;		///< Id associated with the original Symbol
 public:
-  DynamicRecommend(const Address &addr,uint8 h,const string &nm,uint8 id) :
+  DynamicRecommend(const Address &addr,uint8 h,const std::string &nm,uint8 id) :
     usePoint(addr), hash(h), name(nm), symbolId(id) {}	///< Constructor
   const Address &getAddress(void) const { return usePoint; }	///< Get the use point address
   uint8 getHash(void) const { return hash; }			///< Get the dynamic hash
-  string getName(void) const { return name; }			///< Get the recommended name
+  std::string getName(void) const { return name; }			///< Get the recommended name
   uint8 getSymbolId(void) const { return symbolId; }		///< Get the original Symbol id
 };
 
@@ -135,8 +135,8 @@ public:
 private:
   const Funcdata *fd;		///< Function being searched for aliases
   AddrSpace *space;		///< AddressSpace in which to search
-  mutable vector<AddBase> addBase; ///< Collection of pointers into the AddressSpace
-  mutable vector<uintb> alias;	///< List of aliased addresses (as offsets)
+  mutable std::vector<AddBase> addBase; ///< Collection of pointers into the AddressSpace
+  mutable std::vector<uintb> alias;	///< List of aliased addresses (as offsets)
   mutable bool calculated;	///< Have aliases been calculated
   uintb localExtreme;		///< Largest possible offset for a local variable
   uintb localBoundary;		///< Boundary offset separating locals and parameters
@@ -149,9 +149,9 @@ public:
   void gather(const Funcdata *f,AddrSpace *spc,bool defer);		///< Gather Varnodes that point on the stack
   bool hasLocalAlias(Varnode *vn) const;	///< Return \b true if it looks like the given Varnode is aliased by a pointer
   void sortAlias(void) const;			///< Sort the alias starting offsets
-  const vector<AddBase> &getAddBase(void) const { return addBase; }	///< Get the collection of pointer Varnodes
-  const vector<uintb> &getAlias(void) const { return alias; }		///< Get the list of alias starting offsets
-  static void gatherAdditiveBase(Varnode *startvn,vector<AddBase> &addbase);
+  const std::vector<AddBase> &getAddBase(void) const { return addBase; }	///< Get the collection of pointer Varnodes
+  const std::vector<uintb> &getAlias(void) const { return alias; }		///< Get the list of alias starting offsets
+  static void gatherAdditiveBase(Varnode *startvn,std::vector<AddBase> &addbase);
   static uintb gatherOffset(Varnode *vn);
 };
 
@@ -164,8 +164,8 @@ public:
 class MapState {
   AddrSpace *spaceid;			///< The address space being analyzed
   RangeList range;			///< The subset of ranges, within the whole address space to analyze
-  vector<RangeHint *> maplist;		///< The list of collected RangeHints
-  vector<RangeHint *>::iterator iter;	///< The current iterator into the RangeHints
+  std::vector<RangeHint *> maplist;		///< The list of collected RangeHints
+  std::vector<RangeHint *>::iterator iter;	///< The current iterator into the RangeHints
   Datatype *defaultType;		///< The default data-type to use for RangeHints
   AliasChecker checker;			///< A collection of pointer Varnodes into our address space
   void addGuard(const LoadGuard &guard,OpCode opc,TypeFactory *typeFactory);	///< Add LoadGuard record as a hint to the collection
@@ -182,7 +182,7 @@ public:
   ~MapState(void);		///< Destructor
   bool initialize(void);	///< Initialize the hint collection for iteration
   void sortAlias(void) { checker.sortAlias(); }		///< Sort the alias starting offsets
-  const vector<uintb> &getAlias(void) { return checker.getAlias(); }	///< Get the list of alias starting offsets
+  const std::vector<uintb> &getAlias(void) { return checker.getAlias(); }	///< Get the list of alias starting offsets
   void gatherSymbols(const EntryMap *rangemap);		///< Add Symbol information as hints to the collection
   void gatherVarnodes(const Funcdata &fd);		///< Add stack Varnodes as hints to the collection
   void gatherHighs(const Funcdata &fd);			///< Add HighVariables as hints to the collection
@@ -200,9 +200,9 @@ public:
 /// portions are used for temporary storage (not mapped), and what portion is for parameters.
 class ScopeLocal : public ScopeInternal {
   AddrSpace *space;		///< Address space containing the local stack
-  list<NameRecommend> nameRecommend;	///< Symbol name recommendations for specific addresses
-  list<DynamicRecommend> dynRecommend;		///< Symbol name recommendations for dynamic locations
-  list<TypeRecommend> typeRecommend;	///< Data-types for specific storage locations
+  std::list<NameRecommend> nameRecommend;	///< Symbol name recommendations for specific addresses
+  std::list<DynamicRecommend> dynRecommend;		///< Symbol name recommendations for dynamic locations
+  std::list<TypeRecommend> typeRecommend;	///< Data-types for specific storage locations
   uintb minParamOffset;		///< Minimum offset of parameter passed (to a called function) on the stack
   uintb maxParamOffset;		///< Maximum offset of parameter passed (to a called function) on the stack
   bool stackGrowsNegative;	///< Marked \b true if the stack is considered to \e grow towards smaller offsets
@@ -210,7 +210,7 @@ class ScopeLocal : public ScopeInternal {
   bool adjustFit(RangeHint &a) const;	///< Make the given RangeHint fit in the current Symbol map
   void createEntry(const RangeHint &a);	///< Create a Symbol entry corresponding to the given (fitted) RangeHint
   bool restructure(MapState &state);	///< Merge hints into a formal Symbol layout of the address space
-  void markUnaliased(const vector<uintb> &alias);	///< Mark all local symbols for which there are no aliases
+  void markUnaliased(const std::vector<uintb> &alias);	///< Mark all local symbols for which there are no aliases
   void fakeInputSymbols(void);		///< Make sure all stack inputs have an associated Symbol
   void addRecommendName(Symbol *sym);	///< Convert the given symbol to a name recommendation
   void collectNameRecs(void);		///< Collect names of unlocked Symbols on the stack
@@ -235,7 +235,7 @@ public:
   virtual void encode(Encoder &encoder) const;
   virtual void decode(Decoder &decoder);
   virtual void decodeWrappingAttributes(Decoder &decoder);
-  virtual string buildVariableName(const Address &addr,
+  virtual std::string buildVariableName(const Address &addr,
 				   const Address &pc,
 				   Datatype *ct,
 				   int4 &index,uint4 flags) const;

@@ -60,10 +60,10 @@ public:
 private:
   friend class CallGraph;
   Address entryaddr;		// Starting address of function
-  string name;			// Name of the function if available
+  std::string name;			// Name of the function if available
   Funcdata *fd;			// Pointer to funcdata if we have it
-  vector<CallGraphEdge> inedge;
-  vector<CallGraphEdge> outedge;
+  std::vector<CallGraphEdge> inedge;
+  std::vector<CallGraphEdge> outedge;
   int4 parentedge;		// Incoming edge for spanning tree
   mutable uint4 flags;
 public:
@@ -71,7 +71,7 @@ public:
   void clearMark(void) const { flags &= ~((uint4)mark); }
   bool isMark(void) const { return ((flags&mark)!=0); }
   const Address getAddr(void) const { return entryaddr; }
-  const string &getName(void) const { return name; }
+  const std::string &getName(void) const { return name; }
   Funcdata *getFuncdata(void) const { return fd; }
   int4 numInEdge(void) const { return inedge.size(); }
   const CallGraphEdge &getInEdge(int4 i) const { return inedge[i]; }
@@ -93,9 +93,9 @@ struct LeafIterator {
 class Scope;		// forward declaration
 class CallGraph {
   Architecture *glb;
-  map<Address,CallGraphNode> graph; // Nodes in the graph sorted by address
-  vector<CallGraphNode *> seeds;
-  bool findNoEntry(vector<CallGraphNode *> &seeds);
+  std::map<Address,CallGraphNode> graph; // Nodes in the graph sorted by address
+  std::vector<CallGraphNode *> seeds;
+  bool findNoEntry(std::vector<CallGraphNode *> &seeds);
   void snipCycles(CallGraphNode *node);
   void snipEdge(CallGraphNode *node,int4 i);
   void clearMarks(void);
@@ -108,14 +108,14 @@ class CallGraph {
 public:
   CallGraph(Architecture *g) { glb = g; }
   CallGraphNode *addNode(Funcdata *f);
-  CallGraphNode *addNode(const Address &addr,const string &nm);
+  CallGraphNode *addNode(const Address &addr,const std::string &nm);
   CallGraphNode *findNode(const Address &addr);
   void addEdge(CallGraphNode *from,CallGraphNode *to,const Address &addr);
   void deleteInEdge(CallGraphNode *node,int4 i);
   CallGraphNode * initLeafWalk(void);
   CallGraphNode *nextLeaf(CallGraphNode *node);
-  map<Address,CallGraphNode>::iterator begin(void) { return graph.begin(); }
-  map<Address,CallGraphNode>::iterator end(void) { return graph.end(); }
+  std::map<Address,CallGraphNode>::iterator begin(void) { return graph.begin(); }
+  std::map<Address,CallGraphNode>::iterator end(void) { return graph.end(); }
   void buildAllNodes(void);
   void buildEdges(Funcdata *fd);
   void encode(Encoder &encoder) const;

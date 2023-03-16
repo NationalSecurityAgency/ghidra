@@ -36,7 +36,7 @@ class ScopeGhidra : public Scope {
   ArchitectureGhidra *ghidra;		///< Architecture and connection to the Ghidra client
   mutable ScopeInternal *cache;		///< An internal cache of previously fetched Symbol objects
   mutable RangeList holes;		///< List of (queried) memory ranges with no Symbol in them
-  vector<int4> spacerange;		///< List of address spaces that are in the global range
+  std::vector<int4> spacerange;		///< List of address spaces that are in the global range
   partmap<Address,uint4> flagbaseDefault;	///< Default boolean properties on memory
   mutable bool cacheDirty;		///< Is flagbaseDefault different from cache
   Symbol *dump2Cache(Decoder &decoder) const;			///< Parse a response into the cache
@@ -47,7 +47,7 @@ class ScopeGhidra : public Scope {
   virtual void removeRange(AddrSpace *spc,uintb first,uintb last) {
     throw LowlevelError("remove_range should not be performed on ghidra scope");
   }
-  virtual Scope *buildSubScope(uint8 id,const string &nm);
+  virtual Scope *buildSubScope(uint8 id,const std::string &nm);
   virtual void addSymbolInternal(Symbol *sym) { throw LowlevelError("add_symbol_internal unimplemented"); }
   virtual SymbolEntry *addMapInternal(Symbol *sym,uint4 exfl,const Address &addr,int4 off,int4 sz,
 				      const RangeList &uselim) { throw LowlevelError("addMap unimplemented"); }
@@ -65,13 +65,13 @@ public:
   void lockDefaultProperties(void) { flagbaseDefault = ghidra->symboltab->getProperties(); cacheDirty = false; }
   virtual ~ScopeGhidra(void);
   virtual void clear(void);
-  virtual SymbolEntry *addSymbol(const string &nm,Datatype *ct,
+  virtual SymbolEntry *addSymbol(const std::string &nm,Datatype *ct,
 				 const Address &addr,const Address &usepoint);
-  virtual string buildVariableName(const Address &addr,
+  virtual std::string buildVariableName(const Address &addr,
 				   const Address &pc,
 				   Datatype *ct,int4 &index,uint4 flags) const {
     return cache->buildVariableName(addr,pc,ct,index,flags); }
-  virtual string buildUndefinedName(void) const { return cache->buildUndefinedName(); }
+  virtual std::string buildUndefinedName(void) const { return cache->buildUndefinedName(); }
   virtual void setAttribute(Symbol *sym,uint4 attr) { cache->setAttribute(sym,attr); }
   virtual void clearAttribute(Symbol *sym,uint4 attr) { cache->clearAttribute(sym,attr); }
   virtual void setDisplayFormat(Symbol *sym,uint4 attr) { cache->setDisplayFormat(sym,attr); }
@@ -89,27 +89,27 @@ public:
   virtual Funcdata *resolveExternalRefFunction(ExternRefSymbol *sym) const;
 
   virtual SymbolEntry *findOverlap(const Address &addr,int4 size) const { throw LowlevelError("findOverlap unimplemented"); }
-  virtual void findByName(const string &nm,vector<Symbol *> &res) const { throw LowlevelError("findByName unimplemented"); }
-  virtual bool isNameUsed(const string &nm,const Scope *op2) const { throw LowlevelError("isNameUsed unimplemented"); }
+  virtual void findByName(const std::string &nm,std::vector<Symbol *> &res) const { throw LowlevelError("findByName unimplemented"); }
+  virtual bool isNameUsed(const std::string &nm,const Scope *op2) const { throw LowlevelError("isNameUsed unimplemented"); }
 
   virtual MapIterator begin(void) const { throw LowlevelError("begin unimplemented"); }
   virtual MapIterator end(void) const { throw LowlevelError("end unimplemented"); }
-  virtual list<SymbolEntry>::const_iterator beginDynamic(void) const { throw LowlevelError("beginDynamic unimplemented"); }
-  virtual list<SymbolEntry>::const_iterator endDynamic(void) const { throw LowlevelError("endDynamic unimplemented"); }
-  virtual list<SymbolEntry>::iterator beginDynamic(void) { throw LowlevelError("beginDynamic unimplemented"); }
-  virtual list<SymbolEntry>::iterator endDynamic(void) { throw LowlevelError("endDynamic unimplemented"); }
+  virtual std::list<SymbolEntry>::const_iterator beginDynamic(void) const { throw LowlevelError("beginDynamic unimplemented"); }
+  virtual std::list<SymbolEntry>::const_iterator endDynamic(void) const { throw LowlevelError("endDynamic unimplemented"); }
+  virtual std::list<SymbolEntry>::iterator beginDynamic(void) { throw LowlevelError("beginDynamic unimplemented"); }
+  virtual std::list<SymbolEntry>::iterator endDynamic(void) { throw LowlevelError("endDynamic unimplemented"); }
   virtual void clearCategory(int4 cat) { throw LowlevelError("clearCategory unimplemented"); }
   virtual void clearUnlockedCategory(int4 cat) { throw LowlevelError("clearUnlockedCategory unimplemented"); }
   virtual void clearUnlocked(void) { throw LowlevelError("clearUnlocked unimplemented"); }
   virtual void restrictScope(Funcdata *f) { throw LowlevelError("restrictScope unimplemented"); }
   virtual void removeSymbolMappings(Symbol *symbol) { throw LowlevelError("removeSymbolMappings unimplemented"); }
   virtual void removeSymbol(Symbol *symbol) { throw LowlevelError("removeSymbol unimplemented"); }
-  virtual void renameSymbol(Symbol *sym,const string &newname) { throw LowlevelError("renameSymbol unimplemented"); }
+  virtual void renameSymbol(Symbol *sym,const std::string &newname) { throw LowlevelError("renameSymbol unimplemented"); }
   virtual void retypeSymbol(Symbol *sym,Datatype *ct) { throw LowlevelError("retypeSymbol unimplemented"); }
-  virtual string makeNameUnique(const string &nm) const { throw LowlevelError("makeNameUnique unimplemented"); }
+  virtual std::string makeNameUnique(const std::string &nm) const { throw LowlevelError("makeNameUnique unimplemented"); }
   virtual void encode(Encoder &encoder) const { throw LowlevelError("encode unimplemented"); }
   virtual void decode(Decoder &decoder) { throw LowlevelError("decode unimplemented"); }
-  virtual void printEntries(ostream &s) const { throw LowlevelError("printEntries unimplemented"); }
+  virtual void printEntries(std::ostream &s) const { throw LowlevelError("printEntries unimplemented"); }
   virtual int4 getCategorySize(int4 cat) const { throw LowlevelError("getCategorySize unimplemented"); }
   virtual Symbol *getCategorySymbol(int4 cat,int4 ind) const { throw LowlevelError("getCategorySymbol unimplemented"); }
   virtual void setCategory(Symbol *sym,int4 cat,int4 ind) { throw LowlevelError("setCategory unimplemented"); }
@@ -131,10 +131,10 @@ protected:
   virtual SymbolEntry *addMapInternal(Symbol *sym,uint4 exfl,const Address &addr,int4 off,int4 sz,
 				      const RangeList &uselim);
 public:
-  ScopeGhidraNamespace(uint8 id,const string &nm,ArchitectureGhidra *g)
+  ScopeGhidraNamespace(uint8 id,const std::string &nm,ArchitectureGhidra *g)
     : ScopeInternal(id,nm,g) { ghidra = g; }		///< Constructor
 
-  virtual bool isNameUsed(const string &nm,const Scope *op2) const;
+  virtual bool isNameUsed(const std::string &nm,const Scope *op2) const;
 };
 
 #endif

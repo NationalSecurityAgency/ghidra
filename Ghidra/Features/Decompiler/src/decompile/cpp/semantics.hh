@@ -43,8 +43,8 @@ private:
   } value;
   uintb value_real;
   v_field select;		// Which part of handle to use as constant
-  static void printHandleSelector(ostream &s,v_field val);
-  static v_field readHandleSelector(const string &name);
+  static void printHandleSelector(std::ostream &s,v_field val);
+  static v_field readHandleSelector(const std::string &name);
 public:
   ConstTpl(void) { type = real; value_real = 0; }
   ConstTpl(const ConstTpl &op2) {
@@ -65,12 +65,12 @@ public:
   v_field getSelect(void) const { return select; }
   uintb fix(const ParserWalker &walker) const;
   AddrSpace *fixSpace(const ParserWalker &walker) const;
-  void transfer(const vector<HandleTpl *> &params);
+  void transfer(const std::vector<HandleTpl *> &params);
   bool isZero(void) const { return ((type==real)&&(value_real==0)); }
-  void changeHandleIndex(const vector<int4> &handmap);
+  void changeHandleIndex(const std::vector<int4> &handmap);
   void fillinSpace(FixedHandle &hand,const ParserWalker &walker) const;
   void fillinOffset(FixedHandle &hand,const ParserWalker &walker) const;
-  void saveXml(ostream &s) const;
+  void saveXml(std::ostream &s) const;
   void restoreXml(const Element *el,const AddrSpaceManager *manage);
 };
 
@@ -88,7 +88,7 @@ public:
   const ConstTpl &getOffset(void) const { return offset; }
   const ConstTpl &getSize(void) const { return size; }
   bool isDynamic(const ParserWalker &walker) const;
-  int4 transfer(const vector<HandleTpl *> &params);
+  int4 transfer(const std::vector<HandleTpl *> &params);
   bool isZeroSize(void) const { return size.isZero(); }
   bool operator<(const VarnodeTpl &op2) const;
   void setOffset(uintb constVal) { offset = ConstTpl(ConstTpl::real,constVal); }
@@ -98,9 +98,9 @@ public:
   void setUnnamed(bool val) { unnamed_flag = val; }
   bool isLocalTemp(void) const;
   bool isRelative(void) const { return (offset.getType() == ConstTpl::j_relative); }
-  void changeHandleIndex(const vector<int4> &handmap);
+  void changeHandleIndex(const std::vector<int4> &handmap);
   bool adjustTruncation(int4 sz,bool isbigendian);
-  void saveXml(ostream &s) const;
+  void saveXml(std::ostream &s) const;
   void restoreXml(const Element *el,const AddrSpaceManager *manage);
 };
 
@@ -129,15 +129,15 @@ public:
   void setPtrOffset(uintb val) { ptroffset = ConstTpl(ConstTpl::real,val); }
   void setTempOffset(uintb val) { temp_offset = ConstTpl(ConstTpl::real,val); }
   void fix(FixedHandle &hand,const ParserWalker &walker) const;
-  void changeHandleIndex(const vector<int4> &handmap);
-  void saveXml(ostream &s) const;
+  void changeHandleIndex(const std::vector<int4> &handmap);
+  void saveXml(std::ostream &s) const;
   void restoreXml(const Element *el,const AddrSpaceManager *manage);
 };
 
 class OpTpl {
   VarnodeTpl *output;
   OpCode opc;
-  vector<VarnodeTpl *> input;
+  std::vector<VarnodeTpl *> input;
 public:
   OpTpl(void) {}
   OpTpl(OpCode oc) { opc = oc; output = (VarnodeTpl *)0; }
@@ -153,8 +153,8 @@ public:
   void addInput(VarnodeTpl *vt) { input.push_back(vt); }
   void setInput(VarnodeTpl *vt,int4 slot) { input[slot] = vt; }
   void removeInput(int4 index);
-  void changeHandleIndex(const vector<int4> &handmap);
-  void saveXml(ostream &s) const;
+  void changeHandleIndex(const std::vector<int4> &handmap);
+  void saveXml(std::ostream &s) const;
   void restoreXml(const Element *el,const AddrSpaceManager *manage);
 };
 
@@ -163,27 +163,27 @@ class ConstructTpl {
 protected:
   uint4 delayslot;
   uint4 numlabels;		// Number of label templates
-  vector<OpTpl *> vec;
+  std::vector<OpTpl *> vec;
   HandleTpl *result;
-  void setOpvec(vector<OpTpl *> &opvec) { vec = opvec; }
+  void setOpvec(std::vector<OpTpl *> &opvec) { vec = opvec; }
   void setNumLabels(uint4 val) { numlabels = val; }
 public:
   ConstructTpl(void) { delayslot=0; numlabels=0; result = (HandleTpl *)0; }
   ~ConstructTpl(void);
   uint4 delaySlot(void) const { return delayslot; }
   uint4 numLabels(void) const { return numlabels; }
-  const vector<OpTpl *> &getOpvec(void) const { return vec; }
+  const std::vector<OpTpl *> &getOpvec(void) const { return vec; }
   HandleTpl *getResult(void) const { return result; }
   bool addOp(OpTpl *ot);
-  bool addOpList(const vector<OpTpl *> &oplist);
+  bool addOpList(const std::vector<OpTpl *> &oplist);
   void setResult(HandleTpl *t) { result = t; }
-  int4 fillinBuild(vector<int4> &check,AddrSpace *const_space);
+  int4 fillinBuild(std::vector<int4> &check,AddrSpace *const_space);
   bool buildOnly(void) const;
-  void changeHandleIndex(const vector<int4> &handmap);
+  void changeHandleIndex(const std::vector<int4> &handmap);
   void setInput(VarnodeTpl *vn,int4 index,int4 slot);
   void setOutput(VarnodeTpl *vn,int4 index);
-  void deleteOps(const vector<int4> &indices);
-  void saveXml(ostream &s,int4 sectionid) const;
+  void deleteOps(const std::vector<int4> &indices);
+  void saveXml(std::ostream &s,int4 sectionid) const;
   int4 restoreXml(const Element *el,const AddrSpaceManager *manage);
 };
 

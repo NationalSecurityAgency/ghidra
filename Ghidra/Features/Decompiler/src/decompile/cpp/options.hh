@@ -69,9 +69,9 @@ extern ElementId ELEM_WARNING;			///< Marshaling element \<warning>
 /// are run once during initialization of the Architecture object.
 class ArchOption {
 protected:
-  string name;		///< Name of the option
+  std::string name;		///< Name of the option
 public:
-  string getName(void) const { return name; }	///< Return the name of the option
+  std::string getName(void) const { return name; }	///< Return the name of the option
 
   /// \brief Apply a particular configuration option to the Architecture
   ///
@@ -84,9 +84,9 @@ public:
   /// \param p2 is the second optional configuration string
   /// \param p3 is the third optional configuration string
   /// \return a confirmation/failure message
-  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const=0;
+  virtual std::string apply(Architecture *glb,const std::string &p1,const std::string &p2,const std::string &p3) const=0;
   virtual ~ArchOption(void) {}
-  static bool onOrOff(const string &p);	///< Parse an "on" or "off" string
+  static bool onOrOff(const std::string &p);	///< Parse an "on" or "off" string
 };
 
 /// \brief A Dispatcher for possible ArchOption commands
@@ -100,12 +100,12 @@ public:
 /// whose content is provided as the optional parameters to command.
 class OptionDatabase {
   Architecture *glb;				///< The Architecture affected by the contained ArchOption
-  map<uint4,ArchOption *> optionmap;		///< A map from option id to registered ArchOption instance
+  std::map<uint4,ArchOption *> optionmap;		///< A map from option id to registered ArchOption instance
   void registerOption(ArchOption *option);	///< Map from ArchOption name to its class instance
 public:
   OptionDatabase(Architecture *g);		///< Construct given the owning Architecture
   ~OptionDatabase(void);			///< Destructor
-  string set(uint4 nameId,const string &p1="",const string &p2="",const string &p3="");	///< Issue an option command
+  std::string set(uint4 nameId,const std::string &p1="",const std::string &p2="",const std::string &p3="");	///< Issue an option command
   void decodeOne(Decoder &decoder);		///< Parse and execute a single option element
   void decode(Decoder &decoder);		///< Execute a series of \e option \e commands parsed from a stream
 };  
@@ -113,211 +113,211 @@ public:
 class OptionExtraPop : public ArchOption {
 public:
   OptionExtraPop(void) { name = "extrapop"; }	///< Constructor
-  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+  virtual std::string apply(Architecture *glb,const std::string &p1,const std::string &p2,const std::string &p3) const;
 };
 
 class OptionReadOnly : public ArchOption {
 public:
   OptionReadOnly(void) { name = "readonly"; }	///< Constructor
-  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+  virtual std::string apply(Architecture *glb,const std::string &p1,const std::string &p2,const std::string &p3) const;
 };
 
 class OptionDefaultPrototype : public ArchOption {
 public:
   OptionDefaultPrototype(void) { name = "defaultprototype"; }	///< Constructor
-  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+  virtual std::string apply(Architecture *glb,const std::string &p1,const std::string &p2,const std::string &p3) const;
 };
 
 class OptionInferConstPtr : public ArchOption {
 public:
   OptionInferConstPtr(void) { name = "inferconstptr"; }	///< Constructor
-  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+  virtual std::string apply(Architecture *glb,const std::string &p1,const std::string &p2,const std::string &p3) const;
 };
 
 class OptionForLoops : public ArchOption {
 public:
   OptionForLoops(void) { name = "analyzeforloops"; }	///< Constructor
-  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+  virtual std::string apply(Architecture *glb,const std::string &p1,const std::string &p2,const std::string &p3) const;
 };
 
 class OptionInline : public ArchOption {
 public:
   OptionInline(void) { name = "inline"; }	///< Constructor
-  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+  virtual std::string apply(Architecture *glb,const std::string &p1,const std::string &p2,const std::string &p3) const;
 };
 
 class OptionNoReturn : public ArchOption {
 public:
   OptionNoReturn(void) { name = "noreturn"; }	///< Constructor
-  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+  virtual std::string apply(Architecture *glb,const std::string &p1,const std::string &p2,const std::string &p3) const;
 };
 
 class OptionStructAlign : public ArchOption {
 public:
   OptionStructAlign(void) { name = "structalign"; }	///< Constructor
-  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+  virtual std::string apply(Architecture *glb,const std::string &p1,const std::string &p2,const std::string &p3) const;
 };
 
 class OptionWarning : public ArchOption {
 public:
   OptionWarning(void) { name = "warning"; }	///< Constructor
-  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+  virtual std::string apply(Architecture *glb,const std::string &p1,const std::string &p2,const std::string &p3) const;
 };
 
 class OptionNullPrinting : public ArchOption {
 public:
   OptionNullPrinting(void) { name = "nullprinting"; }	///< Constructor
-  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+  virtual std::string apply(Architecture *glb,const std::string &p1,const std::string &p2,const std::string &p3) const;
 };
 
 class OptionInPlaceOps : public ArchOption {
 public:
   OptionInPlaceOps(void) { name = "inplaceops"; }	///< Constructor
-  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+  virtual std::string apply(Architecture *glb,const std::string &p1,const std::string &p2,const std::string &p3) const;
 };
 
 class OptionConventionPrinting : public ArchOption {
 public:
   OptionConventionPrinting(void) { name = "conventionprinting"; }	///< Constructor
-  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+  virtual std::string apply(Architecture *glb,const std::string &p1,const std::string &p2,const std::string &p3) const;
 };
 
 class OptionNoCastPrinting : public ArchOption {
 public:
   OptionNoCastPrinting(void) { name = "nocastprinting"; }	///< Constructor
-  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+  virtual std::string apply(Architecture *glb,const std::string &p1,const std::string &p2,const std::string &p3) const;
 };
 
 class OptionHideExtensions : public ArchOption {
 public:
   OptionHideExtensions(void) { name="hideextensions"; }		///< Constructor
-  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+  virtual std::string apply(Architecture *glb,const std::string &p1,const std::string &p2,const std::string &p3) const;
 };
 
 class OptionMaxLineWidth : public ArchOption {
 public:
   OptionMaxLineWidth(void) { name = "maxlinewidth"; }	///< Constructor
-  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+  virtual std::string apply(Architecture *glb,const std::string &p1,const std::string &p2,const std::string &p3) const;
 };
 
 class OptionIndentIncrement : public ArchOption {
 public:
   OptionIndentIncrement(void) { name = "indentincrement"; }	///< Constructor
-  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+  virtual std::string apply(Architecture *glb,const std::string &p1,const std::string &p2,const std::string &p3) const;
 };
 
 class OptionCommentIndent : public ArchOption {
 public:
   OptionCommentIndent(void) { name = "commentindent"; }	///< Constructor
-  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+  virtual std::string apply(Architecture *glb,const std::string &p1,const std::string &p2,const std::string &p3) const;
 };
 
 class OptionCommentStyle : public ArchOption {
 public:
   OptionCommentStyle(void) { name = "commentstyle"; }	///< Constructor
-  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+  virtual std::string apply(Architecture *glb,const std::string &p1,const std::string &p2,const std::string &p3) const;
 };
 
 class OptionCommentHeader : public ArchOption {
 public:
   OptionCommentHeader(void) { name = "commentheader"; }	///< Constructor
-  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+  virtual std::string apply(Architecture *glb,const std::string &p1,const std::string &p2,const std::string &p3) const;
 };
 
 class OptionCommentInstruction : public ArchOption {
 public:
  OptionCommentInstruction(void) { name = "commentinstruction"; }	///< Constructor
- virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+ virtual std::string apply(Architecture *glb,const std::string &p1,const std::string &p2,const std::string &p3) const;
 };
 
 class OptionIntegerFormat : public ArchOption {
 public:
   OptionIntegerFormat(void) { name = "integerformat"; }	///< Constructor
-  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+  virtual std::string apply(Architecture *glb,const std::string &p1,const std::string &p2,const std::string &p3) const;
 };
 
 class OptionSetAction : public ArchOption {
 public:
   OptionSetAction(void) { name = "setaction"; }	///< Constructor
-  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+  virtual std::string apply(Architecture *glb,const std::string &p1,const std::string &p2,const std::string &p3) const;
 };
 
 class OptionCurrentAction : public ArchOption {
 public:
   OptionCurrentAction(void) { name = "currentaction"; }	///< Constructor
-  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+  virtual std::string apply(Architecture *glb,const std::string &p1,const std::string &p2,const std::string &p3) const;
 };
 
 class OptionAllowContextSet : public ArchOption {
 public:
   OptionAllowContextSet(void) { name = "allowcontextset"; }	///< Constructor
-  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+  virtual std::string apply(Architecture *glb,const std::string &p1,const std::string &p2,const std::string &p3) const;
 };
 
 class OptionIgnoreUnimplemented : public ArchOption {
 public:
   OptionIgnoreUnimplemented(void) { name = "ignoreunimplemented"; }	///< Constructor
-  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+  virtual std::string apply(Architecture *glb,const std::string &p1,const std::string &p2,const std::string &p3) const;
 };
 
 class OptionErrorUnimplemented : public ArchOption {
 public:
   OptionErrorUnimplemented(void) { name = "errorunimplemented"; }	///< Constructor
-  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+  virtual std::string apply(Architecture *glb,const std::string &p1,const std::string &p2,const std::string &p3) const;
 };
 
 class OptionErrorReinterpreted : public ArchOption {
 public:
   OptionErrorReinterpreted(void) { name = "errorreinterpreted"; }	///< Constructor
-  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+  virtual std::string apply(Architecture *glb,const std::string &p1,const std::string &p2,const std::string &p3) const;
 };
 
 class OptionErrorTooManyInstructions : public ArchOption {
 public:
   OptionErrorTooManyInstructions(void) { name = "errortoomanyinstructions"; }	///< Constructor
-  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+  virtual std::string apply(Architecture *glb,const std::string &p1,const std::string &p2,const std::string &p3) const;
 };
 
 class OptionProtoEval : public ArchOption {
 public:
   OptionProtoEval(void) { name = "protoeval"; }	///< Constructor
-  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+  virtual std::string apply(Architecture *glb,const std::string &p1,const std::string &p2,const std::string &p3) const;
 };
 
 class OptionSetLanguage : public ArchOption {
 public:
   OptionSetLanguage(void) { name = "setlanguage"; }	///< Constructor
-  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+  virtual std::string apply(Architecture *glb,const std::string &p1,const std::string &p2,const std::string &p3) const;
 };
 
 class OptionJumpLoad : public ArchOption {
 public:
   OptionJumpLoad(void) { name = "jumpload"; }	///< Constructor
-  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+  virtual std::string apply(Architecture *glb,const std::string &p1,const std::string &p2,const std::string &p3) const;
 };
 
 class OptionToggleRule : public ArchOption {
 public:
   OptionToggleRule(void) { name = "togglerule"; } ///< Constructor
-  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+  virtual std::string apply(Architecture *glb,const std::string &p1,const std::string &p2,const std::string &p3) const;
 };
 
 class OptionAliasBlock : public ArchOption {
 public:
   OptionAliasBlock(void) { name = "aliasblock"; }	///< Constructor
-  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+  virtual std::string apply(Architecture *glb,const std::string &p1,const std::string &p2,const std::string &p3) const;
 };
 
 class OptionMaxInstruction : public ArchOption {
 public:
   OptionMaxInstruction(void) { name="maxinstruction"; }	///< Constructor
-  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+  virtual std::string apply(Architecture *glb,const std::string &p1,const std::string &p2,const std::string &p3) const;
 };
 
 class OptionNamespaceStrategy : public ArchOption {
 public:
   OptionNamespaceStrategy(void) { name = "namespacestrategy"; }	///< Constructor
-  virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
+  virtual std::string apply(Architecture *glb,const std::string &p1,const std::string &p2,const std::string &p3) const;
 };
 
 #endif

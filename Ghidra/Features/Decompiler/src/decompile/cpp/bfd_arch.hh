@@ -30,8 +30,8 @@ class BfdArchitectureCapability : public ArchitectureCapability {
   BfdArchitectureCapability &operator=(const BfdArchitectureCapability &op2);	///< Not implemented
 public:
   virtual ~BfdArchitectureCapability(void);
-  virtual Architecture *buildArchitecture(const string &filename,const string &target,ostream *estream);
-  virtual bool isFileMatch(const string &filename) const;
+  virtual Architecture *buildArchitecture(const std::string &filename,const std::string &target,std::ostream *estream);
+  virtual bool isFileMatch(const std::string &filename) const;
   virtual bool isXmlMatch(Document *doc) const;
 };
 
@@ -44,6 +44,6 @@ class BfdArchitecture : public SleighArchitecture {
 public:
   virtual void encode(Encoder &encoder) const;
   virtual void restoreXml(DocumentStorage &store);
-  BfdArchitecture(const string &fname,const string &targ,ostream *estream);	///< Constructor
+  BfdArchitecture(const std::string &fname,const std::string &targ,std::ostream *estream);	///< Constructor
   virtual ~BfdArchitecture(void) {}
 };

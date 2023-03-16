@@ -155,7 +155,7 @@ public:
   bool isAddrTied(void) const;						///< Is \b this storage address tied
   bool updateType(Varnode *vn) const;					///< Update a Varnode data-type from \b this
   Datatype *getSizedType(const Address &addr,int4 sz) const;		///< Get the data-type associated with (a piece of) \b this
-  void printEntry(ostream &s) const;					///< Dump a description of \b this to a stream
+  void printEntry(std::ostream &s) const;					///< Dump a description of \b this to a stream
   void encode(Encoder &encoder) const;					///< Encode \b this to a stream
   void decode(Decoder &decoder);					///< Decode \b this from a stream
 };
@@ -173,7 +173,7 @@ class Symbol {
   friend class SymbolCompareName;
 protected:
   Scope *scope;			///< The scope that owns this symbol
-  string name;			///< The local name of the symbol
+  std::string name;			///< The local name of the symbol
   Datatype *type;		///< The symbol's data-type
   uint4 nameDedup;		///< id to distinguish symbols with the same name
   uint4 flags;			///< Varnode-like properties of the symbol
@@ -183,7 +183,7 @@ protected:
   int2 category;		///< Special category (\b function_parameter, \b equate, etc.)
   uint2 catindex;		///< Index within category
   uint8 symbolId;		///< Unique id, 0=unassigned
-  vector<list<SymbolEntry>::iterator> mapentry;	///< List of storage locations labeled with \b this Symbol
+  std::vector<std::list<SymbolEntry>::iterator> mapentry;	///< List of storage locations labeled with \b this Symbol
   mutable const Scope *depthScope;	///< Scope associated with current depth resolution
   mutable int4 depthResolution;	///< Number of namespace elements required to resolve symbol in current scope
   uint4 wholeCount;		///< Number of SymbolEntries that map to the whole Symbol
@@ -213,9 +213,9 @@ public:
     union_facet = 2		///< Symbol holding read or write facing union field information
   };
 
-  Symbol(Scope *sc,const string &nm,Datatype *ct);	///< Construct given a name and data-type
+  Symbol(Scope *sc,const std::string &nm,Datatype *ct);	///< Construct given a name and data-type
   Symbol(Scope *sc);		  			///< Construct for use with decode()
-  const string &getName(void) const { return name; }		///< Get the local name of the symbol
+  const std::string &getName(void) const { return name; }		///< Get the local name of the symbol
   Datatype *getType(void) const { return type; }		///< Get the data-type
   uint8 getId(void) const { return symbolId; }			///< Get a unique id for the symbol
   uint4 getFlags(void) const { return flags; }			///< Get the boolean properties of the Symbol
@@ -281,7 +281,7 @@ class FunctionSymbol : public Symbol {
   virtual ~FunctionSymbol(void);
   void buildType(void);			///< Build the data-type associated with \b this Symbol
 public:
-  FunctionSymbol(Scope *sc,const string &nm,int4 size);	///< Construct given the name
+  FunctionSymbol(Scope *sc,const std::string &nm,int4 size);	///< Construct given the name
   FunctionSymbol(Scope *sc,int4 size);			///< Constructor for use with decode
   Funcdata *getFunction(void);				///< Get the underlying Funcdata object
   virtual void encode(Encoder &encoder) const;
@@ -297,7 +297,7 @@ public:
 class EquateSymbol : public Symbol {
   uintb value;				///< Value of the constant being equated
 public:
-  EquateSymbol(Scope *sc,const string &nm,uint4 format,uintb val);	///< Constructor
+  EquateSymbol(Scope *sc,const std::string &nm,uint4 format,uintb val);	///< Constructor
   EquateSymbol(Scope *sc) : Symbol(sc) { value = 0; category = equate; }	///< Constructor for use with decode
   uintb getValue(void) const { return value; }				///< Get the constant value
   bool isValueClose(uintb op2Value,int4 size) const;			///< Is the given value similar to \b this equate
@@ -314,7 +314,7 @@ public:
 class UnionFacetSymbol : public Symbol {
   int4 fieldNum;			///< Particular field to associate with Symbol access
 public:
-  UnionFacetSymbol(Scope *sc,const string &nm,Datatype *unionDt,int4 fldNum);	///< Constructor from components
+  UnionFacetSymbol(Scope *sc,const std::string &nm,Datatype *unionDt,int4 fldNum);	///< Constructor from components
   UnionFacetSymbol(Scope *sc) : Symbol(sc) { fieldNum = -1; category = union_facet; }	///< Constructor for decode
   int4 getFieldNumber(void) const { return fieldNum; }		///< Get the particular field associate with \b this
   virtual void encode(Encoder &encoder) const;
@@ -325,7 +325,7 @@ public:
 class LabSymbol : public Symbol {
   void buildType(void);		///< Build placeholder data-type
 public:
-  LabSymbol(Scope *sc,const string &nm);	///< Construct given name
+  LabSymbol(Scope *sc,const std::string &nm);	///< Construct given name
   LabSymbol(Scope *sc);				///< Constructor for use with decode
   virtual void encode(Encoder &encoder) const;
   virtual void decode(Decoder &decoder);
@@ -342,7 +342,7 @@ class ExternRefSymbol : public Symbol {
   void buildNameType(void);		///< Create a name and data-type for the Symbol
   virtual ~ExternRefSymbol(void) {}
 public:
-  ExternRefSymbol(Scope *sc,const Address &ref,const string &nm);	///< Construct given a \e placeholder address
+  ExternRefSymbol(Scope *sc,const Address &ref,const std::string &nm);	///< Construct given a \e placeholder address
   ExternRefSymbol(Scope *sc) : Symbol(sc) {} 				///< For use with decode
   const Address &getRefAddr(void) const { return refaddr; }		///< Return the \e placeholder address
   virtual void encode(Encoder &encoder) const;
@@ -365,27 +365,27 @@ public:
     return (sym1->nameDedup < sym2->nameDedup);
   }
 };
-typedef set<Symbol *,SymbolCompareName> SymbolNameTree;		///< A set of Symbol objects sorted by name
+typedef std::set<Symbol *,SymbolCompareName> SymbolNameTree;		///< A set of Symbol objects sorted by name
 
 /// \brief An iterator over SymbolEntry objects in multiple address spaces
 ///
 /// Given an EntryMap (a rangemap of SymbolEntry objects in a single address space)
 /// for each address space, iterator over all the SymbolEntry objects
 class MapIterator {
-  const vector<EntryMap *> *map;		///< The list of EntryMaps, one per address space
-  vector<EntryMap *>::const_iterator curmap;	///< Current EntryMap being iterated
-  list<SymbolEntry>::const_iterator curiter;	///< Current SymbolEntry being iterated
+  const std::vector<EntryMap *> *map;		///< The list of EntryMaps, one per address space
+  std::vector<EntryMap *>::const_iterator curmap;	///< Current EntryMap being iterated
+  std::list<SymbolEntry>::const_iterator curiter;	///< Current SymbolEntry being iterated
 public:
-  MapIterator(void) { map = (const vector<EntryMap *> *)0; }	///< Construct an uninitialized iterator
+  MapIterator(void) { map = (const std::vector<EntryMap *> *)0; }	///< Construct an uninitialized iterator
 
   /// \brief Construct iterator at a specific position
   ///
   /// \param m is the list of EntryMaps
   /// \param cm is the position of the iterator within the EntryMap list
   /// \param ci is the position of the iterator within the specific EntryMap
-  MapIterator(const vector<EntryMap *> *m,
-	       vector<EntryMap *>::const_iterator cm,
-	       list<SymbolEntry>::const_iterator ci) {
+  MapIterator(const std::vector<EntryMap *> *m,
+	       std::vector<EntryMap *>::const_iterator cm,
+	       std::list<SymbolEntry>::const_iterator ci) {
     map = m; curmap = cm; curiter = ci;
   }
 
@@ -426,12 +426,12 @@ public:
 /// and pick up the original symbol.
 struct DuplicateFunctionError : public RecovError {
   Address address;		///< Address of function causing the error
-  string functionName;		///< Name of the function
-  DuplicateFunctionError(const Address &addr,const string &nm) : RecovError("Duplicate Function") {
+  std::string functionName;		///< Name of the function
+  DuplicateFunctionError(const Address &addr,const std::string &nm) : RecovError("Duplicate Function") {
     address = addr; functionName = nm; }	///< Constructor
 };
 
-typedef map<uint8,Scope *> ScopeMap;		///< A map from id to Scope
+typedef std::map<uint8,Scope *> ScopeMap;		///< A map from id to Scope
 
 /// \brief A collection of Symbol objects within a single (namespace or functional) scope
 ///
@@ -463,10 +463,10 @@ class Scope {
   ScopeMap children;				///< Sorted list of child scopes
   void attachScope(Scope *child);		///< Attach a new child Scope to \b this
   void detachScope(ScopeMap::iterator iter);	///< Detach a child Scope from \b this
-  static uint8 hashScopeName(uint8 baseId,const string &nm);
+  static uint8 hashScopeName(uint8 baseId,const std::string &nm);
 protected:
   Architecture *glb;				///< Architecture of \b this scope
-  string name;					///< Name of \b this scope
+  std::string name;					///< Name of \b this scope
   Funcdata *fd;					///< (If non-null) the function which \b this is the local Scope for
   uint8 uniqueId;				///< Unique id for the scope, for deduping scope names, assigning symbol ids
   static const Scope *stackAddr(const Scope *scope1,
@@ -506,7 +506,7 @@ protected:
   /// \param id is the globally unique id associated with the scope
   /// \param nm is the name of the new scope
   /// \return the new Scope object
-  virtual Scope *buildSubScope(uint8 id,const string &nm)=0;
+  virtual Scope *buildSubScope(uint8 id,const std::string &nm)=0;
 
   virtual void restrictScope(Funcdata *f);				///< Convert \b this to a local Scope
 
@@ -556,7 +556,7 @@ public:
   void turnOffDebug(void) const { debugon = false; }
 #endif
   /// \brief Construct an empty scope, given a name and Architecture
-  Scope(uint8 id,const string &nm,Architecture *g,Scope *own) {
+  Scope(uint8 id,const std::string &nm,Architecture *g,Scope *own) {
     uniqueId = id; name = nm; glb = g; parent = (Scope *)0; fd = (Funcdata *)0; owner=own;
 #ifdef OPACTION_DEBUG
     debugon = false;
@@ -565,10 +565,10 @@ public:
   virtual ~Scope(void);						///< Destructor
   virtual MapIterator begin(void) const=0;			///< Beginning iterator to mapped SymbolEntrys
   virtual MapIterator end(void) const=0;			///< Ending iterator to mapped SymbolEntrys
-  virtual list<SymbolEntry>::const_iterator beginDynamic(void) const=0;	///< Beginning iterator to dynamic SymbolEntrys
-  virtual list<SymbolEntry>::const_iterator endDynamic(void) const=0;	///< Ending iterator to dynamic SymbolEntrys
-  virtual list<SymbolEntry>::iterator beginDynamic(void)=0;	///< Beginning iterator to dynamic SymbolEntrys
-  virtual list<SymbolEntry>::iterator endDynamic(void)=0;	///< Ending iterator to dynamic SymbolEntrys
+  virtual std::list<SymbolEntry>::const_iterator beginDynamic(void) const=0;	///< Beginning iterator to dynamic SymbolEntrys
+  virtual std::list<SymbolEntry>::const_iterator endDynamic(void) const=0;	///< Ending iterator to dynamic SymbolEntrys
+  virtual std::list<SymbolEntry>::iterator beginDynamic(void)=0;	///< Beginning iterator to dynamic SymbolEntrys
+  virtual std::list<SymbolEntry>::iterator endDynamic(void)=0;	///< Ending iterator to dynamic SymbolEntrys
   virtual void clear(void)=0;					///< Clear all symbols from \b this scope
   virtual void clearCategory(int4 cat)=0;			///< Clear all symbols of the given category from \b this scope
   virtual void clearUnlocked(void)=0;				///< Clear all unlocked symbols from \b this scope
@@ -592,7 +592,7 @@ public:
 
   virtual void removeSymbolMappings(Symbol *symbol)=0;	///< Remove all SymbolEntrys from the given Symbol
   virtual void removeSymbol(Symbol *symbol)=0;		///< Remove the given Symbol from \b this Scope
-  virtual void renameSymbol(Symbol *sym,const string &newname)=0;	///< Rename a Symbol within \b this Scope
+  virtual void renameSymbol(Symbol *sym,const std::string &newname)=0;	///< Rename a Symbol within \b this Scope
 
   /// \brief Change the data-type of a Symbol within \b this Scope
   ///
@@ -661,7 +661,7 @@ public:
   /// If there are multiple Symbols with the same name, all are passed back.
   /// \param nm is the name to search for
   /// \param res will contain any matching Symbols
-  virtual void findByName(const string &nm,vector<Symbol *> &res) const=0;
+  virtual void findByName(const std::string &nm,std::vector<Symbol *> &res) const=0;
 
   /// \brief Check if the given name is occurs within the given scope path.
   ///
@@ -670,7 +670,7 @@ public:
   /// If the name is used \b true is returned.
   /// \param nm is the given name to test
   /// \param op2 is the terminating ancestor scope (or null)
-  virtual bool isNameUsed(const string &nm,const Scope *op2) const=0;
+  virtual bool isNameUsed(const std::string &nm,const Scope *op2) const=0;
 
   /// \brief Convert an \e external \e reference to the referenced function
   ///
@@ -686,25 +686,25 @@ public:
   /// \param index is a reference to an index used to make the name unique, which will be updated
   /// \param flags are boolean properties of the variable we need the name for
   /// \return the new variable name
-  virtual string buildVariableName(const Address &addr,
+  virtual std::string buildVariableName(const Address &addr,
 				   const Address &pc,
 				   Datatype *ct,int4 &index,uint4 flags) const=0;
 
   /// \brief Build a formal \b undefined name, used internally when a Symbol is not given a name
   ///
   /// \return a special internal name that won't collide with other names in \b this Scope
-  virtual string buildUndefinedName(void) const=0;
+  virtual std::string buildUndefinedName(void) const=0;
 
   /// \brief Produce a version of the given symbol name that won't collide with other names in \b this Scope
   ///
   /// \param nm is the given name
   /// \return return a unique version of the name
-  virtual string makeNameUnique(const string &nm) const=0;
+  virtual std::string makeNameUnique(const std::string &nm) const=0;
 
   virtual void encode(Encoder &encoder) const=0;	///< Encode \b this as a \<scope> element
   virtual void decode(Decoder &decoder)=0;		///< Decode \b this Scope from a \<scope> element
   virtual void decodeWrappingAttributes(Decoder &decoder) {}	///< Restore attributes for \b this Scope from wrapping element
-  virtual void printEntries(ostream &s) const=0;	///< Dump a description of all SymbolEntry objects to a stream
+  virtual void printEntries(std::ostream &s) const=0;	///< Dump a description of all SymbolEntry objects to a stream
 
   /// \brief Get the number of Symbols in the given category
   ///
@@ -726,16 +726,16 @@ public:
   /// \param ind is the index position to set (within the category)
   virtual void setCategory(Symbol *sym,int4 cat,int4 ind)=0;
 
-  virtual SymbolEntry *addSymbol(const string &nm,Datatype *ct,
+  virtual SymbolEntry *addSymbol(const std::string &nm,Datatype *ct,
 				 const Address &addr,const Address &usepoint);
 
-  const string &getName(void) const { return name; }		///< Get the name of the Scope
+  const std::string &getName(void) const { return name; }		///< Get the name of the Scope
   uint8 getId(void) const { return uniqueId; }			///< Get the globally unique id
   bool isGlobal(void) const { return (fd == (Funcdata *)0); }	///< Return \b true if \b this scope is global
 
   // The main global querying routines
-  void queryByName(const string &nm,vector<Symbol *> &res) const;	///< Look-up symbols by name
-  Funcdata *queryFunction(const string &nm) const;			///< Look-up a function by name
+  void queryByName(const std::string &nm,std::vector<Symbol *> &res) const;	///< Look-up symbols by name
+  Funcdata *queryFunction(const std::string &nm) const;			///< Look-up a function by name
   SymbolEntry *queryByAddr(const Address &addr,
 			   const Address &usepoint) const;	  	///< Get Symbol with matching address
   SymbolEntry *queryContainer(const Address &addr,int4 size,
@@ -746,7 +746,7 @@ public:
   Funcdata *queryExternalRefFunction(const Address &addr) const;	///< Look-up a function thru an \e external \e reference
   LabSymbol *queryCodeLabel(const Address &addr) const;			///< Look-up a code label by address
 
-  Scope *resolveScope(const string &nm, bool strategy) const;		///< Find a child Scope of \b this
+  Scope *resolveScope(const std::string &nm, bool strategy) const;		///< Find a child Scope of \b this
   Scope *discoverScope(const Address &addr,int4 sz,const Address &usepoint);	///< Find the owning Scope of a given memory range
   ScopeMap::const_iterator childrenBegin() const { return children.begin(); }	///< Beginning iterator of child scopes
   ScopeMap::const_iterator childrenEnd() const { return children.end(); }	///< Ending iterator of child scopes
@@ -755,24 +755,24 @@ public:
   void resetSizeLockType(Symbol *sym);				///< Clear a Symbol's \e size-locked data-type
   void setThisPointer(Symbol *sym,bool val) { sym->setThisPointer(val); }	///< Toggle the given Symbol as the "this" pointer
   bool isSubScope(const Scope *scp) const;			///< Is this a sub-scope of the given Scope
-  string getFullName(void) const;				///< Get the full name of \b this Scope
-  void getScopePath(vector<const Scope *> &vec) const;		///< Get the ordered list of scopes up to \b this
+  std::string getFullName(void) const;				///< Get the full name of \b this Scope
+  void getScopePath(std::vector<const Scope *> &vec) const;		///< Get the ordered list of scopes up to \b this
   const Scope *findDistinguishingScope(const Scope *op2) const;	///< Find first ancestor of \b this not shared by given scope
   Architecture *getArch(void) const { return glb; }		///< Get the Architecture associated with \b this
   Scope *getParent(void) const { return parent; }		///< Get the parent Scope (or NULL if \b this is the global Scope)
-  Symbol *addSymbol(const string &nm,Datatype *ct);		///< Add a new Symbol \e without mapping it to an address
+  Symbol *addSymbol(const std::string &nm,Datatype *ct);		///< Add a new Symbol \e without mapping it to an address
   SymbolEntry *addMapPoint(Symbol *sym,const Address &addr,
 			   const Address &usepoint);		///< Map a Symbol to a specific address
   Symbol *addMapSym(Decoder &decoder);				///< Parse a mapped Symbol from a \<mapsym> element
-  FunctionSymbol *addFunction(const Address &addr,const string &nm);
-  ExternRefSymbol *addExternalRef(const Address &addr,const Address &refaddr,const string &nm);
-  LabSymbol *addCodeLabel(const Address &addr,const string &nm);
-  Symbol *addDynamicSymbol(const string &nm,Datatype *ct,const Address &caddr,uint8 hash);
-  Symbol *addEquateSymbol(const string &nm,uint4 format,uintb value,const Address &addr,uint8 hash);
-  Symbol *addUnionFacetSymbol(const string &nm,Datatype *dt,int4 fieldNum,const Address &addr,uint8 hash);
-  string buildDefaultName(Symbol *sym,int4 &base,Varnode *vn) const;	///< Create a default name for the given Symbol
+  FunctionSymbol *addFunction(const Address &addr,const std::string &nm);
+  ExternRefSymbol *addExternalRef(const Address &addr,const Address &refaddr,const std::string &nm);
+  LabSymbol *addCodeLabel(const Address &addr,const std::string &nm);
+  Symbol *addDynamicSymbol(const std::string &nm,Datatype *ct,const Address &caddr,uint8 hash);
+  Symbol *addEquateSymbol(const std::string &nm,uint4 format,uintb value,const Address &addr,uint8 hash);
+  Symbol *addUnionFacetSymbol(const std::string &nm,Datatype *dt,int4 fieldNum,const Address &addr,uint8 hash);
+  std::string buildDefaultName(Symbol *sym,int4 &base,Varnode *vn) const;	///< Create a default name for the given Symbol
   bool isReadOnly(const Address &addr,int4 size,const Address &usepoint) const;
-  void printBounds(ostream &s) const { rangetree.printBounds(s); }	///< Print a description of \b this Scope's \e owned memory ranges
+  void printBounds(std::ostream &s) const { rangetree.printBounds(s); }	///< Print a description of \b this Scope's \e owned memory ranges
 };
 
 /// \brief An in-memory implementation of the Scope interface.
@@ -785,22 +785,22 @@ class ScopeInternal : public Scope {
   void decodeHole(Decoder &decoder);
   void decodeCollision(Decoder &decoder);
   void insertNameTree(Symbol *sym);
-  SymbolNameTree::const_iterator findFirstByName(const string &nm) const;
+  SymbolNameTree::const_iterator findFirstByName(const std::string &nm) const;
 protected:
-  virtual Scope *buildSubScope(uint8 id,const string &nm);	///< Build an unattached Scope to be associated as a sub-scope of \b this
+  virtual Scope *buildSubScope(uint8 id,const std::string &nm);	///< Build an unattached Scope to be associated as a sub-scope of \b this
   virtual void addSymbolInternal(Symbol *sym);
   virtual SymbolEntry *addMapInternal(Symbol *sym,uint4 exfl,const Address &addr,int4 off,int4 sz,const RangeList &uselim);
   virtual SymbolEntry *addDynamicMapInternal(Symbol *sym,uint4 exfl,uint8 hash,int4 off,int4 sz,
 					     const RangeList &uselim);
   SymbolNameTree nametree;			///< The set of Symbol objects, sorted by name
-  vector<EntryMap *> maptable;			///< Rangemaps of SymbolEntry, one map for each address space
-  vector<vector<Symbol *> > category;		///< References to Symbol objects organized by category
-  list<SymbolEntry> dynamicentry;		///< Dynamic symbol entries
+  std::vector<EntryMap *> maptable;			///< Rangemaps of SymbolEntry, one map for each address space
+  std::vector<std::vector<Symbol *> > category;		///< References to Symbol objects organized by category
+  std::list<SymbolEntry> dynamicentry;		///< Dynamic symbol entries
   SymbolNameTree multiEntrySet;			///< Set of symbols with multiple entries
   uint8 nextUniqueId;				///< Next available symbol id
 public:
-  ScopeInternal(uint8 id,const string &nm,Architecture *g);	///< Construct the Scope
-  ScopeInternal(uint8 id,const string &nm,Architecture *g, Scope *own);	///< Construct as a cache
+  ScopeInternal(uint8 id,const std::string &nm,Architecture *g);	///< Construct the Scope
+  ScopeInternal(uint8 id,const std::string &nm,Architecture *g, Scope *own);	///< Construct as a cache
   virtual void clear(void);
   virtual void categorySanity(void);			///< Make sure Symbol categories are sane
   virtual void clearCategory(int4 cat);
@@ -810,13 +810,13 @@ public:
   virtual ~ScopeInternal(void);
   virtual MapIterator begin(void) const;
   virtual MapIterator end(void) const;
-  virtual list<SymbolEntry>::const_iterator beginDynamic(void) const;
-  virtual list<SymbolEntry>::const_iterator endDynamic(void) const;
-  virtual list<SymbolEntry>::iterator beginDynamic(void);
-  virtual list<SymbolEntry>::iterator endDynamic(void);
+  virtual std::list<SymbolEntry>::const_iterator beginDynamic(void) const;
+  virtual std::list<SymbolEntry>::const_iterator endDynamic(void) const;
+  virtual std::list<SymbolEntry>::iterator beginDynamic(void);
+  virtual std::list<SymbolEntry>::iterator endDynamic(void);
   virtual void removeSymbolMappings(Symbol *symbol);
   virtual void removeSymbol(Symbol *symbol);
-  virtual void renameSymbol(Symbol *sym,const string &newname);
+  virtual void renameSymbol(Symbol *sym,const std::string &newname);
   virtual void retypeSymbol(Symbol *sym,Datatype *ct);
   virtual void setAttribute(Symbol *sym,uint4 attr);
   virtual void clearAttribute(Symbol *sym,uint4 attr);
@@ -832,24 +832,24 @@ public:
   virtual LabSymbol *findCodeLabel(const Address &addr) const;
   virtual SymbolEntry *findOverlap(const Address &addr,int4 size) const;
 
-  virtual void findByName(const string &nm,vector<Symbol *> &res) const;
-  virtual bool isNameUsed(const string &nm,const Scope *op2) const;
+  virtual void findByName(const std::string &nm,std::vector<Symbol *> &res) const;
+  virtual bool isNameUsed(const std::string &nm,const Scope *op2) const;
   virtual Funcdata *resolveExternalRefFunction(ExternRefSymbol *sym) const;
 
-  virtual string buildVariableName(const Address &addr,
+  virtual std::string buildVariableName(const Address &addr,
 				   const Address &pc,
 				   Datatype *ct,int4 &index,uint4 flags) const;
-  virtual string buildUndefinedName(void) const;
-  virtual string makeNameUnique(const string &nm) const;
+  virtual std::string buildUndefinedName(void) const;
+  virtual std::string makeNameUnique(const std::string &nm) const;
   virtual void encode(Encoder &encoder) const;
   virtual void decode(Decoder &decoder);
-  virtual void printEntries(ostream &s) const;
+  virtual void printEntries(std::ostream &s) const;
   virtual int4 getCategorySize(int4 cat) const;
   virtual Symbol *getCategorySymbol(int4 cat,int4 ind) const;
   virtual void setCategory(Symbol *sym,int4 cat,int4 ind);
   void assignDefaultNames(int4 &base);		///< Assign a default name (via buildVariableName) to any unnamed symbol
-  set<Symbol *>::const_iterator beginMultiEntry(void) const { return multiEntrySet.begin(); }	///< Start of symbols with more than one entry
-  set<Symbol *>::const_iterator endMultiEntry(void) const { return multiEntrySet.end(); }	///< End of symbols with more than one entry
+  std::set<Symbol *>::const_iterator beginMultiEntry(void) const { return multiEntrySet.begin(); }	///< Start of symbols with more than one entry
+  std::set<Symbol *>::const_iterator endMultiEntry(void) const { return multiEntrySet.end(); }	///< End of symbols with more than one entry
 };
 
 /// \brief An Address range associated with the symbol Scope that owns it
@@ -924,9 +924,9 @@ public:
   void removeRange(Scope *scope,AddrSpace *spc,uintb first,uintb last);	///< Remove an address range from \e ownership of a Scope
   Scope *getGlobalScope(void) const { return globalscope; }	///< Get the global Scope
   Scope *resolveScope(uint8 id) const;				///< Look-up a Scope by id
-  Scope *resolveScopeFromSymbolName(const string &fullname,const string &delim,string &basename,Scope *start) const;
-  Scope *findCreateScope(uint8,const string &nm,Scope *parent);	/// Find (and if not found create) a specific subscope
-  Scope *findCreateScopeFromSymbolName(const string &fullname,const string &delim,string &basename,Scope *start);
+  Scope *resolveScopeFromSymbolName(const std::string &fullname,const std::string &delim,std::string &basename,Scope *start) const;
+  Scope *findCreateScope(uint8,const std::string &nm,Scope *parent);	/// Find (and if not found create) a specific subscope
+  Scope *findCreateScopeFromSymbolName(const std::string &fullname,const std::string &delim,std::string &basename,Scope *start);
   const Scope *mapScope(const Scope *qpoint,const Address &addr,const Address &usepoint) const;
   Scope *mapScope(Scope *qpoint,const Address &addr,const Address &usepoint);
   uint4 getProperty(const Address &addr) const { return flagbase.getValue(addr); }	///< Get boolean properties at the given address
@@ -942,7 +942,7 @@ public:
 /// \param sc is the scope containing the new symbol
 /// \param nm is the local name of the symbol
 /// \param ct is the data-type of the symbol
-inline Symbol::Symbol(Scope *sc,const string &nm,Datatype *ct)
+inline Symbol::Symbol(Scope *sc,const std::string &nm,Datatype *ct)
 
 {
   scope=sc;

@@ -56,14 +56,14 @@ public:
     RETURN = 4			///< Replace primary BRANCH or CALL with a suitable RETURN operation
   };
 private:
-  map<Address,Address> forcegoto;	///< Force goto on jump at \b targetpc to \b destpc
-  vector<int4> deadcodedelay;		///< Delay count indexed by address space
-  map<Address,Address> indirectover;	///< Override indirect at \b call-point into direct to \b addr
-  map<Address,FuncProto *> protoover;	///< Override prototype at \b call-point
-  vector<Address> multistagejump;	///< Addresses of indirect jumps that need multistage recovery
-  map<Address,uint4> flowoverride;	///< Override the CALL <-> BRANCH
+  std::map<Address,Address> forcegoto;	///< Force goto on jump at \b targetpc to \b destpc
+  std::vector<int4> deadcodedelay;		///< Delay count indexed by address space
+  std::map<Address,Address> indirectover;	///< Override indirect at \b call-point into direct to \b addr
+  std::map<Address,FuncProto *> protoover;	///< Override prototype at \b call-point
+  std::vector<Address> multistagejump;	///< Addresses of indirect jumps that need multistage recovery
+  std::map<Address,uint4> flowoverride;	///< Override the CALL <-> BRANCH
   void clear(void);			///< Clear the entire set of overrides
-  static string generateDeadcodeDelayMessage(int4 index,Architecture *glb);
+  static std::string generateDeadcodeDelayMessage(int4 index,Architecture *glb);
 public:
   ~Override(void) { clear(); }		///< Destructor
   void insertForceGoto(const Address &targetpc,const Address &destpc);
@@ -81,12 +81,12 @@ public:
   void applyForceGoto(Funcdata &data) const;
   bool hasFlowOverride(void) const { return (!flowoverride.empty()); }	///< Are there any flow overrides
   uint4 getFlowOverride(const Address &addr) const;
-  void printRaw(ostream &s,Architecture *glb) const;
-  void generateOverrideMessages(vector<string> &messagelist,Architecture *glb) const;
+  void printRaw(std::ostream &s,Architecture *glb) const;
+  void generateOverrideMessages(std::vector<std::string> &messagelist,Architecture *glb) const;
   void encode(Encoder &encoder,Architecture *glb) const;
   void decode(Decoder &decoder,Architecture *glb);
-  static string typeToString(uint4 tp);			///< Convert a flow override type to a string
-  static uint4 stringToType(const string &nm);		///< Convert a string to a flow override type
+  static std::string typeToString(uint4 tp);			///< Convert a flow override type to a string
+  static uint4 stringToType(const std::string &nm);		///< Convert a string to a flow override type
 };
 
 #endif

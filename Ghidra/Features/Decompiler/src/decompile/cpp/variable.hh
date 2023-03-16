@@ -47,7 +47,7 @@ class VariableGroup {
     bool operator()(const VariablePiece *a,const VariablePiece *b) const;	///< Comparison operator
   };
 
-  set<VariablePiece *,PieceCompareByOffset> pieceSet;	///< The set of VariablePieces making up \b this group
+  std::set<VariablePiece *,PieceCompareByOffset> pieceSet;	///< The set of VariablePieces making up \b this group
   int4 size;					///< Number of contiguous bytes covered by the whole group
   int4 symbolOffset;				///< Byte offset of \b this group within its containing Symbol
 public:
@@ -71,7 +71,7 @@ class VariablePiece {
   HighVariable *high;			///< HighVariable owning \b this piece
   int4 groupOffset;			///< Byte offset of \b this piece within the group
   int4 size;				///< Number of bytes in \b this piece
-  mutable vector<const VariablePiece *> intersection;	///< List of VariablePieces \b this piece intersects with
+  mutable std::vector<const VariablePiece *> intersection;	///< List of VariablePieces \b this piece intersects with
   mutable Cover cover;			///< Extended cover for the piece, taking into account intersections
 public:
   VariablePiece(HighVariable *h,int4 offset,HighVariable *grp=(HighVariable *)0);
@@ -89,7 +89,7 @@ public:
   void updateCover(void) const;	///< Calculate extended cover based on intersections
   void transferGroup(VariableGroup *newGroup);	///< Transfer \b this piece to another VariableGroup
   void setHigh(HighVariable *newHigh) { high = newHigh; }	///< Move ownership of \b this to another HighVariable
-  void combineOtherGroup(VariablePiece *op2,vector<HighVariable *> &mergePairs);	///< Combine two VariableGroups
+  void combineOtherGroup(VariablePiece *op2,std::vector<HighVariable *> &mergePairs);	///< Combine two VariableGroups
 };
 
 class HighIntersectTest;
@@ -131,7 +131,7 @@ private:
   friend class Merge;
   friend class VariablePiece;
   friend class HighIntersectTest;
-  vector<Varnode *> inst;		///< The member Varnode objects making up \b this HighVariable
+  std::vector<Varnode *> inst;		///< The member Varnode objects making up \b this HighVariable
   int4 numMergeClasses;			///< Number of different speculative merge classes in \b this
   mutable uint4 highflags;		///< Dirtiness flags
   mutable uint4 flags;			///< Boolean properties inherited from Varnode members
@@ -181,9 +181,9 @@ public:
   /// \brief Print details of the cover for \b this (for debug purposes)
   ///
   /// \param s is the output stream
-  void printCover(ostream &s) const { if ((highflags&HighVariable::coverdirty)==0) internalCover.print(s); else s << "Cover dirty"; }
+  void printCover(std::ostream &s) const { if ((highflags&HighVariable::coverdirty)==0) internalCover.print(s); else s << "Cover dirty"; }
 
-  void printInfo(ostream &s) const;		///< Print information about \b this HighVariable to stream
+  void printInfo(std::ostream &s) const;		///< Print information about \b this HighVariable to stream
   bool hasName(void) const;			///< Check if \b this HighVariable can be named
   Varnode *getTiedVarnode(void) const;		///< Find the first address tied member Varnode
   Varnode *getInputVarnode(void) const;		///< Find (the) input member Varnode
@@ -223,7 +223,7 @@ public:
   //  Varnode *findGlobalRep(void) const;
   static bool compareName(Varnode *vn1,Varnode *vn2);	///< Determine which given Varnode is most nameable
   static bool compareJustLoc(const Varnode *a,const Varnode *b);	///< Compare based on storage location
-  static int4 markExpression(Varnode *vn,vector<HighVariable *> &highList);	///< Mark and collect variables in expression
+  static int4 markExpression(Varnode *vn,std::vector<HighVariable *> &highList);	///< Mark and collect variables in expression
 };
 
 /// \brief A record for caching a Cover intersection test between two HighVariable objects
@@ -250,9 +250,9 @@ public:
 /// and still keeping the cached tests accurate, by calling the updateHigh() method.  If two HighVariables
 /// to be merged, the cached tests can be updated by calling moveIntersectTest() before merging.
 class HighIntersectTest {
-  map<HighEdge,bool> highedgemap; ///< A cache of intersection tests, sorted by HighVariable pair
-  static void gatherBlockVarnodes(HighVariable *a,int4 blk,const Cover &cover,vector<Varnode *> &res);
-  static bool testBlockIntersection(HighVariable *a,int4 blk,const Cover &cover,int4 relOff,const vector<Varnode *> &blist);
+  std::map<HighEdge,bool> highedgemap; ///< A cache of intersection tests, sorted by HighVariable pair
+  static void gatherBlockVarnodes(HighVariable *a,int4 blk,const Cover &cover,std::vector<Varnode *> &res);
+  static bool testBlockIntersection(HighVariable *a,int4 blk,const Cover &cover,int4 relOff,const std::vector<Varnode *> &blist);
   bool blockIntersection(HighVariable *a,HighVariable *b,int4 blk);
   void purgeHigh(HighVariable *high); ///< Remove cached intersection tests for a given HighVariable
 public:
