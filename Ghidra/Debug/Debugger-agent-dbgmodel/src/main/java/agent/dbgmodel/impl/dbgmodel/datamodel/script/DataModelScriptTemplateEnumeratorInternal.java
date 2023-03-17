@@ -15,14 +15,15 @@
  */
 package agent.dbgmodel.impl.dbgmodel.datamodel.script;
 
+import java.util.List;
 import java.util.Map;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Guid.REFIID;
 
+import agent.dbgeng.impl.dbgeng.DbgEngUtil;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.InterfaceSupplier;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.Preferred;
 import agent.dbgmodel.dbgmodel.datamodel.script.DataModelScriptTemplateEnumerator;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil.InterfaceSupplier;
 import agent.dbgmodel.jna.dbgmodel.datamodel.script.IDataModelScriptTemplateEnumerator;
 import agent.dbgmodel.jna.dbgmodel.datamodel.script.WrapIDataModelScriptTemplateEnumerator;
 import ghidra.util.datastruct.WeakValueHashMap;
@@ -33,18 +34,17 @@ public interface DataModelScriptTemplateEnumeratorInternal
 
 	static DataModelScriptTemplateEnumeratorInternal instanceFor(
 			WrapIDataModelScriptTemplateEnumerator data) {
-		return DbgModelUtil.lazyWeakCache(CACHE, data, DataModelScriptTemplateEnumeratorImpl::new);
+		return DbgEngUtil.lazyWeakCache(CACHE, data, DataModelScriptTemplateEnumeratorImpl::new);
 	}
 
-	Map<REFIID, Class<? extends WrapIDataModelScriptTemplateEnumerator>> PREFERRED_DATA_SPACES_IIDS =
-		Map.ofEntries(
-			Map.entry(new REFIID(
-				IDataModelScriptTemplateEnumerator.IID_IDATA_MODEL_SCRIPT_TEMPLATE_ENUMERATOR),
-				WrapIDataModelScriptTemplateEnumerator.class));
+	List<Preferred<WrapIDataModelScriptTemplateEnumerator>> PREFERRED_DATA_SPACES_IIDS = List.of(
+		new Preferred<>(
+			IDataModelScriptTemplateEnumerator.IID_IDATA_MODEL_SCRIPT_TEMPLATE_ENUMERATOR,
+			WrapIDataModelScriptTemplateEnumerator.class));
 
 	static DataModelScriptTemplateEnumeratorInternal tryPreferredInterfaces(
 			InterfaceSupplier supplier) {
-		return DbgModelUtil.tryPreferredInterfaces(DataModelScriptTemplateEnumeratorInternal.class,
+		return DbgEngUtil.tryPreferredInterfaces(DataModelScriptTemplateEnumeratorInternal.class,
 			PREFERRED_DATA_SPACES_IIDS, supplier);
 	}
 }

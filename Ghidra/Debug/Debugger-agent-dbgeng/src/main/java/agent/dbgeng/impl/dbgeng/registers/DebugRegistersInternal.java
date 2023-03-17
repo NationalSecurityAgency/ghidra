@@ -15,14 +15,15 @@
  */
 package agent.dbgeng.impl.dbgeng.registers;
 
+import java.util.List;
 import java.util.Map;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Guid.REFIID;
 
 import agent.dbgeng.dbgeng.DebugRegisters;
 import agent.dbgeng.impl.dbgeng.DbgEngUtil;
 import agent.dbgeng.impl.dbgeng.DbgEngUtil.InterfaceSupplier;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.Preferred;
 import agent.dbgeng.jna.dbgeng.registers.*;
 import ghidra.util.datastruct.WeakValueHashMap;
 
@@ -37,12 +38,9 @@ public interface DebugRegistersInternal extends DebugRegisters {
 		return DbgEngUtil.lazyWeakCache(CACHE, registers, DebugRegistersImpl2::new);
 	}
 
-	Map<REFIID, Class<? extends WrapIDebugRegisters>> PREFERRED_REGISTERS_IIDS =
-		Map.ofEntries(
-			Map.entry(new REFIID(IDebugRegisters2.IID_IDEBUG_REGISTERS2),
-				WrapIDebugRegisters2.class),
-			Map.entry(new REFIID(IDebugRegisters.IID_IDEBUG_REGISTERS),
-				WrapIDebugRegisters.class));
+	List<Preferred<WrapIDebugRegisters>> PREFERRED_REGISTERS_IIDS = List.of(
+		new Preferred<>(IDebugRegisters2.IID_IDEBUG_REGISTERS2, WrapIDebugRegisters2.class),
+		new Preferred<>(IDebugRegisters.IID_IDEBUG_REGISTERS, WrapIDebugRegisters.class));
 
 	static DebugRegistersInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
 		return DbgEngUtil.tryPreferredInterfaces(DebugRegistersInternal.class,

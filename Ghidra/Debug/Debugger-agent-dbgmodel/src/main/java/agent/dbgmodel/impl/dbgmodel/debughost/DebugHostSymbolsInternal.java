@@ -15,14 +15,15 @@
  */
 package agent.dbgmodel.impl.dbgmodel.debughost;
 
+import java.util.List;
 import java.util.Map;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Guid.REFIID;
 
+import agent.dbgeng.impl.dbgeng.DbgEngUtil;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.InterfaceSupplier;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.Preferred;
 import agent.dbgmodel.dbgmodel.debughost.DebugHostSymbols;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil.InterfaceSupplier;
 import agent.dbgmodel.jna.dbgmodel.debughost.IDebugHostSymbols;
 import agent.dbgmodel.jna.dbgmodel.debughost.WrapIDebugHostSymbols;
 import ghidra.util.datastruct.WeakValueHashMap;
@@ -31,16 +32,14 @@ public interface DebugHostSymbolsInternal extends DebugHostSymbols {
 	Map<Pointer, DebugHostSymbolsInternal> CACHE = new WeakValueHashMap<>();
 
 	static DebugHostSymbolsInternal instanceFor(WrapIDebugHostSymbols data) {
-		return DbgModelUtil.lazyWeakCache(CACHE, data, DebugHostSymbolsImpl::new);
+		return DbgEngUtil.lazyWeakCache(CACHE, data, DebugHostSymbolsImpl::new);
 	}
 
-	Map<REFIID, Class<? extends WrapIDebugHostSymbols>> PREFERRED_DATA_SPACES_IIDS =
-		Map.ofEntries(
-			Map.entry(new REFIID(IDebugHostSymbols.IID_IDEBUG_HOST_SYMBOLS),
-				WrapIDebugHostSymbols.class));
+	List<Preferred<WrapIDebugHostSymbols>> PREFERRED_DATA_SPACES_IIDS = List.of(
+		new Preferred<>(IDebugHostSymbols.IID_IDEBUG_HOST_SYMBOLS, WrapIDebugHostSymbols.class));
 
 	static DebugHostSymbolsInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
-		return DbgModelUtil.tryPreferredInterfaces(DebugHostSymbolsInternal.class,
+		return DbgEngUtil.tryPreferredInterfaces(DebugHostSymbolsInternal.class,
 			PREFERRED_DATA_SPACES_IIDS, supplier);
 	}
 }

@@ -15,14 +15,15 @@
  */
 package agent.dbgmodel.impl.dbgmodel.datamodel.script;
 
+import java.util.List;
 import java.util.Map;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Guid.REFIID;
 
+import agent.dbgeng.impl.dbgeng.DbgEngUtil;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.InterfaceSupplier;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.Preferred;
 import agent.dbgmodel.dbgmodel.datamodel.script.DataModelScriptProvider;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil.InterfaceSupplier;
 import agent.dbgmodel.jna.dbgmodel.datamodel.script.IDataModelScriptProvider;
 import agent.dbgmodel.jna.dbgmodel.datamodel.script.WrapIDataModelScriptProvider;
 import ghidra.util.datastruct.WeakValueHashMap;
@@ -31,16 +32,15 @@ public interface DataModelScriptProviderInternal extends DataModelScriptProvider
 	Map<Pointer, DataModelScriptProviderInternal> CACHE = new WeakValueHashMap<>();
 
 	static DataModelScriptProviderInternal instanceFor(WrapIDataModelScriptProvider data) {
-		return DbgModelUtil.lazyWeakCache(CACHE, data, DataModelScriptProviderImpl::new);
+		return DbgEngUtil.lazyWeakCache(CACHE, data, DataModelScriptProviderImpl::new);
 	}
 
-	Map<REFIID, Class<? extends WrapIDataModelScriptProvider>> PREFERRED_DATA_SPACES_IIDS =
-		Map.ofEntries(
-			Map.entry(new REFIID(IDataModelScriptProvider.IID_IDATA_MODEL_SCRIPT_PROVIDER),
-				WrapIDataModelScriptProvider.class));
+	List<Preferred<WrapIDataModelScriptProvider>> PREFERRED_DATA_SPACES_IIDS = List.of(
+		new Preferred<>(IDataModelScriptProvider.IID_IDATA_MODEL_SCRIPT_PROVIDER,
+			WrapIDataModelScriptProvider.class));
 
 	static DataModelScriptProviderInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
-		return DbgModelUtil.tryPreferredInterfaces(DataModelScriptProviderInternal.class,
+		return DbgEngUtil.tryPreferredInterfaces(DataModelScriptProviderInternal.class,
 			PREFERRED_DATA_SPACES_IIDS, supplier);
 	}
 }

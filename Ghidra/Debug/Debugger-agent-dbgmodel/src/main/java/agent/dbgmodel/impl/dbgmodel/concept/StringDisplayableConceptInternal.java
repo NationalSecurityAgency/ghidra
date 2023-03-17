@@ -15,14 +15,15 @@
  */
 package agent.dbgmodel.impl.dbgmodel.concept;
 
+import java.util.List;
 import java.util.Map;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Guid.REFIID;
 
+import agent.dbgeng.impl.dbgeng.DbgEngUtil;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.InterfaceSupplier;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.Preferred;
 import agent.dbgmodel.dbgmodel.concept.StringDisplayableConcept;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil.InterfaceSupplier;
 import agent.dbgmodel.jna.dbgmodel.concept.IStringDisplayableConcept;
 import agent.dbgmodel.jna.dbgmodel.concept.WrapIStringDisplayableConcept;
 import ghidra.util.datastruct.WeakValueHashMap;
@@ -31,16 +32,15 @@ public interface StringDisplayableConceptInternal extends StringDisplayableConce
 	Map<Pointer, StringDisplayableConceptInternal> CACHE = new WeakValueHashMap<>();
 
 	static StringDisplayableConceptInternal instanceFor(WrapIStringDisplayableConcept data) {
-		return DbgModelUtil.lazyWeakCache(CACHE, data, StringDisplayableConceptImpl::new);
+		return DbgEngUtil.lazyWeakCache(CACHE, data, StringDisplayableConceptImpl::new);
 	}
 
-	Map<REFIID, Class<? extends WrapIStringDisplayableConcept>> PREFERRED_DATA_SPACES_IIDS =
-		Map.ofEntries(
-			Map.entry(new REFIID(IStringDisplayableConcept.IID_ISTRING_DISPLAYABLE_CONCEPT),
-				WrapIStringDisplayableConcept.class));
+	List<Preferred<WrapIStringDisplayableConcept>> PREFERRED_DATA_SPACES_IIDS = List.of(
+		new Preferred<>(IStringDisplayableConcept.IID_ISTRING_DISPLAYABLE_CONCEPT,
+			WrapIStringDisplayableConcept.class));
 
 	static StringDisplayableConceptInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
-		return DbgModelUtil.tryPreferredInterfaces(StringDisplayableConceptInternal.class,
+		return DbgEngUtil.tryPreferredInterfaces(StringDisplayableConceptInternal.class,
 			PREFERRED_DATA_SPACES_IIDS, supplier);
 	}
 }
