@@ -373,9 +373,7 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 			Address segmentAddr = segment.getAddress(language);
 
 			if (segmentSize == 0) {
-				// don't create a block...just log that we've seen the segment
-				block = program.getMemory().getBlock(segmentAddr);
-				log.appendMsg("Empty Segment: " + segment.getName());
+				// don't create a block
 			}
 			else if (segment.hasNonZeroData()) {
 				block = MemoryBlockUtils.createInitializedBlock(program, false, segment.getName(),
@@ -384,10 +382,7 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 						Long.toHexString(segmentSize),
 					null/*source*/, segment.isReadable(), segment.isWritable(),
 					segment.isExecutable(), log, monitor);
-				if (block != null) {
-					log.appendMsg(
-						"Created Initialized Block: " + segment.getName() + " @ " + segmentAddr);
-				}
+
 			}
 			else {
 				block = MemoryBlockUtils.createUninitializedBlock(program, false, segment.getName(),
@@ -396,10 +391,6 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 						Long.toHexString(segmentSize),
 					null/*source*/, segment.isReadable(), segment.isWritable(),
 					segment.isExecutable(), log);
-				if (block != null) {
-					log.appendMsg(
-						"Created Uninitialized Block: " + segment.getName() + " @ " + segmentAddr);
-				}
 			}
 		}
 	}
