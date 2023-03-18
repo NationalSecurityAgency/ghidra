@@ -75,7 +75,7 @@ public class SetCommentCmd implements Command {
 				"  Is this address valid?";
 			return false;
 		}
-		String updatedComment = CommentUtils.fixupAnnoations(comment, program);
+		String updatedComment = CommentUtils.fixupAnnotations(comment, program);
 		updatedComment = CommentUtils.sanitize(updatedComment);
 		if (commentChanged(cu.getComment(commentType), updatedComment)) {
 			cu.setComment(commentType, updatedComment);

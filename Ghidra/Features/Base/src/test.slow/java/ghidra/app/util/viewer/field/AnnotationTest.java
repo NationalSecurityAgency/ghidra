@@ -89,45 +89,45 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testSymbolAnnotationWithAddress() {
 		String rawComment = "This is a symbol {@sym 01001014} annotation.";
-		String fixed = CommentUtils.fixupAnnoations(rawComment, program);
+		String fixed = CommentUtils.fixupAnnotations(rawComment, program);
 		assertEquals(rawComment, fixed);
 
 		// with display string
 		rawComment = "This is a symbol {@sym 01001014 bob} annotation.";
-		fixed = CommentUtils.fixupAnnoations(rawComment, program);
+		fixed = CommentUtils.fixupAnnotations(rawComment, program);
 		assertEquals(rawComment, fixed);
 	}
 
 	@Test
 	public void testSymbolAnnotationWithInvalidAddress() {
 		String rawComment = "This is a symbol {@sym 999999} annotation.";
-		String fixed = CommentUtils.fixupAnnoations(rawComment, program);
+		String fixed = CommentUtils.fixupAnnotations(rawComment, program);
 		assertEquals(rawComment, fixed);
 	}
 
 	@Test
 	public void testSymbolAnnotationWithSymbol() {
 		String rawComment = "This is a symbol {@sym LAB_01003d2c} annotation.";
-		String fixed = CommentUtils.fixupAnnoations(rawComment, program);
+		String fixed = CommentUtils.fixupAnnotations(rawComment, program);
 		assertEquals("This is a symbol {@sym 01003d2c} annotation.", fixed);
 
 		// with display string
 		rawComment = "This is a symbol {@sym LAB_01003d2c displayText} annotation.";
-		fixed = CommentUtils.fixupAnnoations(rawComment, program);
+		fixed = CommentUtils.fixupAnnotations(rawComment, program);
 		assertEquals("This is a symbol {@sym 01003d2c displayText} annotation.", fixed);
 	}
 
 	@Test
 	public void testSymbolAnnotationWithInvalidSymbol() {
 		String rawComment = "This is a symbol {@sym CocoPebbles} annotation.";
-		String fixed = CommentUtils.fixupAnnoations(rawComment, program);
+		String fixed = CommentUtils.fixupAnnotations(rawComment, program);
 		assertEquals("This is a symbol {@sym CocoPebbles} annotation.", fixed);
 	}
 
 	@Test
 	public void testNoAnnotation() {
 		String rawComment = "This is no symbol annotation.";
-		String fixed = CommentUtils.fixupAnnoations(rawComment, program);
+		String fixed = CommentUtils.fixupAnnotations(rawComment, program);
 		assertEquals(rawComment, fixed);
 	}
 
@@ -135,7 +135,7 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testMixedAnnotationNoSymbolAnnotation() {
 		String rawComment = "This is a symbol {@url www.noplace.com} annotation " +
 			"with a {@program notepad} annotation.";
-		String fixed = CommentUtils.fixupAnnoations(rawComment, program);
+		String fixed = CommentUtils.fixupAnnotations(rawComment, program);
 		assertEquals(rawComment, fixed);
 	}
 
@@ -143,7 +143,7 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testMixedAnnotationWithSymbolAnnotation() {
 		String rawComment = "This is a symbol {@sym LAB_01003d2c} annotation " +
 			"with a {@program notepad} annotation.";
-		String fixed = CommentUtils.fixupAnnoations(rawComment, program);
+		String fixed = CommentUtils.fixupAnnotations(rawComment, program);
 		assertEquals("This is a symbol {@sym 01003d2c} annotation " +
 			"with a {@program notepad} annotation.", fixed);
 	}
@@ -151,21 +151,21 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testSymbolAnnotationAtBeginningOfComment() {
 		String rawComment = "{@sym LAB_01003d2c} annotation at the beginning.";
-		String fixed = CommentUtils.fixupAnnoations(rawComment, program);
+		String fixed = CommentUtils.fixupAnnotations(rawComment, program);
 		assertEquals("{@sym 01003d2c} annotation at the beginning.", fixed);
 	}
 
 	@Test
 	public void testSymbolAnnotation_BackToBack() {
 		String rawComment = "Test {@sym LAB_01003d2c}{@sym LAB_01003d2c} end.";
-		String fixed = CommentUtils.fixupAnnoations(rawComment, program);
+		String fixed = CommentUtils.fixupAnnotations(rawComment, program);
 		assertEquals("Test {@sym 01003d2c}{@sym 01003d2c} end.", fixed);
 	}
 
 	@Test
 	public void testSymbolAnnotationAtEndOfComment() {
 		String rawComment = "Annotation at the end {@sym LAB_01003d2c}";
-		String fixed = CommentUtils.fixupAnnoations(rawComment, program);
+		String fixed = CommentUtils.fixupAnnotations(rawComment, program);
 		assertEquals("Annotation at the end {@sym 01003d2c}", fixed);
 	}
 
@@ -173,7 +173,7 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testSymbolAnnotationAtBeginningAndEndOfComment() {
 		String rawComment =
 			"{@sym LAB_01003d2c} annotation at the beginning and end {@sym LAB_01003d5b}";
-		String fixed = CommentUtils.fixupAnnoations(rawComment, program);
+		String fixed = CommentUtils.fixupAnnotations(rawComment, program);
 		assertEquals("{@sym 01003d2c} annotation at the " + "beginning and end {@sym 01003d5b}",
 			fixed);
 	}
@@ -183,7 +183,7 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 		String rawComment =
 			"{@sym LAB_01003d2c} annotation at the beginning, middle {@sym LAB_01003d28} and " +
 				"end {@sym LAB_01003d5b}";
-		String fixed = CommentUtils.fixupAnnoations(rawComment, program);
+		String fixed = CommentUtils.fixupAnnotations(rawComment, program);
 		assertEquals("{@sym 01003d2c} annotation at the beginning, middle {@sym 01003d28} and " +
 			"end {@sym 01003d5b}", fixed);
 	}
@@ -192,7 +192,7 @@ public class AnnotationTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testSymbolAnnotationWithValidAndInvalidSymbol() {
 		String rawComment = "This is a symbol {@sym LAB_01003d2c} annotation " +
 			"with a {@sym FruityPebbles} annotation.";
-		String fixed = CommentUtils.fixupAnnoations(rawComment, program);
+		String fixed = CommentUtils.fixupAnnotations(rawComment, program);
 		assertEquals("This is a symbol {@sym 01003d2c} annotation " +
 			"with a {@sym FruityPebbles} annotation.", fixed);
 	}
