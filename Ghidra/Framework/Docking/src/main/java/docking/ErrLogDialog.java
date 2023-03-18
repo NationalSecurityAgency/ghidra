@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,8 +24,7 @@ import java.util.List;
 import javax.swing.*;
 
 import docking.widgets.ScrollableTextArea;
-import docking.widgets.label.GHtmlLabel;
-import docking.widgets.label.GIconLabel;
+import docking.widgets.label.*;
 import docking.widgets.table.*;
 import generic.json.Json;
 import generic.util.WindowUtilities;
@@ -157,16 +156,24 @@ public class ErrLogDialog extends AbstractErrDialog {
 		introPanel.add(
 			new GIconLabel(UIManager.getIcon("OptionPane.errorIcon"), SwingConstants.RIGHT),
 			BorderLayout.WEST);
-		String html = HTMLUtilities.toHTML(message);
-		introPanel.add(new GHtmlLabel(html) {
-			@Override
-			public Dimension getPreferredSize() {
-				// rendering HTML the label can expand larger than the screen; keep it reasonable
-				Dimension size = super.getPreferredSize();
-				size.width = 300;
-				return size;
-			}
-		}, BorderLayout.CENTER);
+
+		JLabel messageLabel;
+		if (HTMLUtilities.isHTML(message)) {
+			messageLabel = new GHtmlLabel(message) {
+				@Override
+				public Dimension getPreferredSize() {
+					// rendering HTML the label can expand larger than the screen; keep it reasonable
+					Dimension size = super.getPreferredSize();
+					size.width = 300;
+					return size;
+				}
+			};
+		}
+		else {
+			messageLabel = new GLabel(message);
+		}
+
+		introPanel.add(messageLabel, BorderLayout.CENTER);
 
 		mainPanel = new JPanel(new BorderLayout(10, 20));
 		mainPanel.add(introPanel, BorderLayout.NORTH);
