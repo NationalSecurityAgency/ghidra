@@ -425,7 +425,8 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 		final Function func = program.getFunctionManager().getFunctionContaining(start);
 		if (func != null) {
 			AddressSetView body = func.getBody();
-			if (set != null && body.getNumAddresses() > set.getNumAddresses()) {
+			// don't override flow set if only one address
+			if (body.getNumAddresses() > 1) {
 				flowSet = body;
 			}
 			flowStart = func.getEntryPoint();
