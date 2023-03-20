@@ -34,12 +34,11 @@ public class DWARFSourceInfo {
 	 * @return new {@link DWARFSourceInfo} with filename:linenum info, or null if no info present in DIEA.
 	 */
 	public static DWARFSourceInfo create(DIEAggregate diea) {
-		int fileNum = (int) diea.getUnsignedLong(DWARFAttribute.DW_AT_decl_file, -1);
+		String file = diea.getSourceFile();
 		int lineNum = (int) diea.getUnsignedLong(DWARFAttribute.DW_AT_decl_line, -1);
 
-		return (fileNum != -1 && lineNum != -1)
-				? new DWARFSourceInfo(
-					diea.getCompilationUnit().getCompileUnit().getFileByIndex(fileNum), lineNum)
+		return (file != null && lineNum != -1)
+				? new DWARFSourceInfo(file, lineNum)
 				: null;
 	}
 

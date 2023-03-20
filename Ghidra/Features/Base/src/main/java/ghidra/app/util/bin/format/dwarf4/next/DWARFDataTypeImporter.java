@@ -175,6 +175,7 @@ public class DWARFDataTypeImporter {
 			case DWARFTag.DW_TAG_volatile_type:
 			case DWARFTag.DW_TAG_restrict_type:
 			case DWARFTag.DW_TAG_shared_type:
+			case DWARFTag.DW_TAG_APPLE_ptrauth_type:
 				result = makeDataTypeForConst(diea);
 				break;
 			case DWARFTag.DW_TAG_enumeration_type:
