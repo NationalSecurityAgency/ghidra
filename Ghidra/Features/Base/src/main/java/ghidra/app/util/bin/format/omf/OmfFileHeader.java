@@ -351,7 +351,7 @@ public class OmfFileHeader extends OmfRecord {
 				header.groups.add(group);
 			}
 			else if (record instanceof OmfFixupRecord fixuprec) {
-				if(lastDataBlock != null) {
+				if (lastDataBlock != null) {
 					fixuprec.setDataBlock(lastDataBlock);
 					header.fixup.add(fixuprec);
 				}
@@ -370,6 +370,7 @@ public class OmfFileHeader extends OmfRecord {
 				lastDataBlock = iterheader;
 			}
 			else if (record instanceof OmfUnsupportedRecord) {
+				// TODO: Should we always set lastDataBlock to null?
 				if (record.getRecordType() == COMDAT) {
 					lastDataBlock = null;
 				}
