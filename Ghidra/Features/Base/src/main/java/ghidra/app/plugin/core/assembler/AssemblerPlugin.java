@@ -40,18 +40,13 @@ import ghidra.program.model.mem.MemBuffer;
  * The API for instruction assembly is available from {@link Assemblers}. For data assembly, the API
  * is in {@link DataType#encodeRepresentation(String, MemBuffer, Settings, int)}.
  */
-@PluginInfo(
-	status = PluginStatus.RELEASED,
-	packageName = CorePluginPackage.NAME,
-	category = PluginCategoryNames.PATCHING,
-	shortDescription = "Assembler",
-	description = "This plugin provides functionality for assembly patching. " +
-		"The assembler supports most processor languages also supported by the " +
-		"disassembler. Depending on the particular processor, your mileage may vary. " +
-		"We are in the process of testing and improving support for all our processors. " +
-		"You can access the assembler by pressing Ctrl-Shift-G, and then modifying the " +
-		"instruction in place. As you type, a content assist will guide you and provide " +
-		"assembled bytes when you have a complete instruction.")
+@PluginInfo(status = PluginStatus.RELEASED, packageName = CorePluginPackage.NAME, category = PluginCategoryNames.PATCHING, shortDescription = "Assembler", description = "This plugin provides functionality for assembly patching. " +
+	"The assembler supports most processor languages also supported by the " +
+	"disassembler. Depending on the particular processor, your mileage may vary. " +
+	"We are in the process of testing and improving support for all our processors. " +
+	"You can access the assembler by pressing Ctrl-Shift-G, and then modifying the " +
+	"instruction in place. As you type, a content assist will guide you and provide " +
+	"assembled bytes when you have a complete instruction.")
 public class AssemblerPlugin extends ProgramPlugin {
 	public static final String ASSEMBLER_NAME = "Assembler";
 
@@ -71,6 +66,9 @@ public class AssemblerPlugin extends ProgramPlugin {
 				if (!super.isEnabledForContext(context)) {
 					return false;
 				}
+				if (!(context instanceof ListingActionContext)) {
+					return false;
+				}
 				ListingActionContext lac = (ListingActionContext) context;
 				return !lac.getNavigatable().isDynamic();
 			}
@@ -78,6 +76,9 @@ public class AssemblerPlugin extends ProgramPlugin {
 			@Override
 			public boolean isAddToPopup(ActionContext context) {
 				if (!super.isAddToPopup(context)) {
+					return false;
+				}
+				if (!(context instanceof ListingActionContext)) {
 					return false;
 				}
 				ListingActionContext lac = (ListingActionContext) context;

@@ -17,33 +17,59 @@ package ghidra.app.emulator;
 
 import ghidra.program.model.address.AddressSpace;
 
+/**
+ * A means of intercepting and/or modifying the emulator's memory access.
+ * 
+ * <p>
+ * Several of these filters may be chained together, each being invoked in the reverse of the order
+ * added. In this way, the first added gets the "final say," but it also is farthest from the
+ * original request.
+ */
 public abstract class MemoryAccessFilter {
 
 	private MemoryAccessFilter prevFilter;
 	private MemoryAccessFilter nextFilter;
-	
+
 	protected Emulator emu;
-	
+
 	private boolean filterOnExecutionOnly = true;
-	
-	final void filterRead(AddressSpace spc, long off, int size, byte [] values) {
-		if (filterOnExecutionOnly() && !emu.isExecuting()) return; // do not filter idle queries
+
+	final void filterRead(AddressSpace spc, long off, int size, byte[] values) {
+		if (filterOnExecutionOnly() && !emu.isExecuting())
+			return; // do not filter idle queries
 		processRead(spc, off, size, values);
 		if (nextFilter != null) {
 			nextFilter.filterRead(spc, off, size, values);
 		}
 	}
-	
+
+	/**
+	 * Invoked after a read
+	 * 
+	 * @param spc the space read from
+	 * @param off the offset within the space
+	 * @param size the number of bytes read
+	 * @param values the bytes read
+	 */
 	protected abstract void processRead(AddressSpace spc, long off, int size, byte[] values);
 
-	final void filterWrite(AddressSpace spc, long off, int size, byte [] values) {
-		if (filterOnExecutionOnly() && !emu.isExecuting()) return; // do not filter idle queries
+	final void filterWrite(AddressSpace spc, long off, int size, byte[] values) {
+		if (filterOnExecutionOnly() && !emu.isExecuting())
+			return; // do not filter idle queries
 		processWrite(spc, off, size, values);
 		if (nextFilter != null) {
 			nextFilter.filterWrite(spc, off, size, values);
 		}
 	}
 
+	/**
+	 * Invoked <em>after</em> a write
+	 * 
+	 * @param spc the space written to
+	 * @param off the offset within the space
+	 * @param size the number of bytes written
+	 * @param values the bytes written
+	 */
 	protected abstract void processWrite(AddressSpace spc, long off, int size, byte[] values);
 
 	final void addFilter(Emulator emu) {
@@ -53,10 +79,12 @@ public abstract class MemoryAccessFilter {
 			nextFilter.prevFilter = this;
 		}
 	}
-	
+
 	/**
 	 * Dispose this filter which will cause it to be removed from the memory state.
-	 * If overriden, be sure to invoke super.dispose().
+	 * 
+	 * <p>
+	 * If overriden, be sure to invoke {@code super.dispose()}.
 	 */
 	public void dispose() {
 		if (nextFilter != null) {
@@ -77,7 +105,7 @@ public abstract class MemoryAccessFilter {
 	public void setFilterOnExecutionOnly(boolean filterOnExecutionOnly) {
 		this.filterOnExecutionOnly = filterOnExecutionOnly;
 	}
-	
+
 //	public void compare(String id);
 //	public void clear();
 //	public void updateFlags(String id);

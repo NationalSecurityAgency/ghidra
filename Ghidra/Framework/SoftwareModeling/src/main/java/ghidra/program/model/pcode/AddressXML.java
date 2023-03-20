@@ -45,6 +45,8 @@ import ghidra.xml.XmlParseException;
  * The static restoreXML methods read an \<addr> tag and produce a general AddressXML object.
  */
 public class AddressXML {
+
+	public static int MAX_PIECES = 64;	// Maximum pieces that can be marshaled in one join address
 	private AddressSpace space;		// Address space containing the memory range
 	private long offset;			// Starting offset of the range
 	private long size;				// Number of bytes in the size
@@ -596,32 +598,13 @@ public class AddressXML {
 			AddressXML.encode(encoder, varnodes[0].getAddress(), varnodes[0].getSize());
 			return;
 		}
+		if (varnodes.length > MAX_PIECES) {
+			throw new IOException("Exceeded maximum pieces in one join address");
+		}
 		encoder.openElement(ELEM_ADDR);
 		encoder.writeSpace(ATTRIB_SPACE, AddressSpace.VARIABLE_SPACE);
-		encoder.writeString(ATTRIB_PIECE1, varnodes[0].encodePiece());
-		if (varnodes.length > 1) {
-			encoder.writeString(ATTRIB_PIECE2, varnodes[1].encodePiece());
-		}
-		if (varnodes.length > 2) {
-			encoder.writeString(ATTRIB_PIECE3, varnodes[2].encodePiece());
-		}
-		if (varnodes.length > 3) {
-			encoder.writeString(ATTRIB_PIECE4, varnodes[3].encodePiece());
-		}
-		if (varnodes.length > 4) {
-			encoder.writeString(ATTRIB_PIECE5, varnodes[4].encodePiece());
-		}
-		if (varnodes.length > 5) {
-			encoder.writeString(ATTRIB_PIECE6, varnodes[5].encodePiece());
-		}
-		if (varnodes.length > 6) {
-			encoder.writeString(ATTRIB_PIECE7, varnodes[6].encodePiece());
-		}
-		if (varnodes.length > 7) {
-			encoder.writeString(ATTRIB_PIECE8, varnodes[7].encodePiece());
-		}
-		if (varnodes.length > 8) {
-			encoder.writeString(ATTRIB_PIECE9, varnodes[8].encodePiece());
+		for (int i = 0; i < varnodes.length; ++i) {
+			encoder.writeStringIndexed(ATTRIB_PIECE, i, varnodes[i].encodePiece());
 		}
 		if (logicalsize != 0) {
 			encoder.writeUnsignedInteger(ATTRIB_LOGICALSIZE, logicalsize);

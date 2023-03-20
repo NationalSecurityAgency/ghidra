@@ -18,7 +18,7 @@ rdPlus1: is erd0=0x6 {export R7;}
 rdPlus1: is erd0=0x8 {export R9;}
 rdPlus1: is erd0=0xa {export R11;}
 rdPlus1: is erd0=0xc {export SP;}
-rdPlus1: is erd0=0xe {export inst_start;}#PC register
+rdPlus1: is erd0=0xe {export *[const]:4 inst_start;}#PC register
 
 #---------------------------------------------------------------------
 # ADDHH.W - Add Halfwords into Word

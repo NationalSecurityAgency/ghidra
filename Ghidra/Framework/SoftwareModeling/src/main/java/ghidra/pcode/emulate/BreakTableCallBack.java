@@ -29,7 +29,7 @@ import ghidra.program.model.address.Address;
 ///
 /// Breakpoints are stored in map containers, and the core BreakTable methods
 /// are implemented to search in these containers
-public class BreakTableCallBack extends BreakTable {
+public class BreakTableCallBack implements BreakTable {
 
 	public static final String DEFAULT_NAME = "*";
 

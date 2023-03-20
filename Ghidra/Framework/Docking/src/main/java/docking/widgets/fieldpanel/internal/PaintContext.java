@@ -17,7 +17,7 @@ package docking.widgets.fieldpanel.internal;
 
 import java.awt.Color;
 
-import generic.theme.GColor;
+import generic.theme.*;
 import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.util.ColorUtils;
 
@@ -39,6 +39,7 @@ public class PaintContext {
 
 	private boolean printing = false;
 	private boolean textCopying = false;
+	private ThemeListener themeListener = this::themeChanged;
 
 	/**
 	 * Create a new PaintContext with default color values.
@@ -48,23 +49,16 @@ public class PaintContext {
 		foreground = new GColor("color.fg.fieldpanel");
 		selectionColor = new GColor("color.bg.fieldpanel.selection");
 		highlightColor = new GColor("color.bg.fieldpanel.highlight");
-		selectedHighlightColor = new GColor("color.bg.fieldpanel.selection.and.highlight");
+		updateSelectedHighlightColor();
 		focusedCursorColor = new GColor("color.cursor.focused");
 		notFocusedCursorColor = new GColor("color.cursor.unfocused");
 		cursorColor = focusedCursorColor;
 		invisibleCursorColor = Palette.NO_COLOR;
+		Gui.addThemeListener(themeListener);
 	}
 
-	public PaintContext(PaintContext other) {
-		background = other.background;
-		foreground = other.foreground;
-		selectionColor = other.selectionColor;
-		highlightColor = other.highlightColor;
-		selectedHighlightColor = other.selectedHighlightColor;
-		cursorColor = other.cursorColor;
-		focusedCursorColor = other.focusedCursorColor;
-		notFocusedCursorColor = other.notFocusedCursorColor;
-		invisibleCursorColor = other.invisibleCursorColor;
+	private void themeChanged(ThemeEvent ev) {
+		updateSelectedHighlightColor();
 	}
 
 	/**
@@ -121,16 +115,16 @@ public class PaintContext {
 
 	public void setSelectionColor(Color c) {
 		selectionColor = c;
-		adjustSelectedHighlightColor();
+		updateSelectedHighlightColor();
 	}
 
 	public void setHighlightColor(Color c) {
 		highlightColor = c;
-		adjustSelectedHighlightColor();
+		updateSelectedHighlightColor();
 	}
 
-	private void adjustSelectedHighlightColor() {
-		selectedHighlightColor = ColorUtils.blend(selectionColor, highlightColor, 0.5);
+	private void updateSelectedHighlightColor() {
+		selectedHighlightColor = ColorUtils.addColors(highlightColor, selectionColor);
 	}
 
 	public void setBackgroundColor(Color c) {

@@ -4821,7 +4821,7 @@ define pcodeop SignedSatQ;
 }
 
 :vqdmull.S^esize2021 Qd, Dn, Dm	is ( ( $(AMODE) & ARMcond=0 & cond=15 & c2327=5 & c2021<3 & c0811=0xD & Q6=0 & c0404=0 ) |
-                                      ( $(TMODE_E) & thv_c2327=0x1f & thv_c2324=1 & thv_c2021<3 & thv_c0811=0xD & thv_Q6=0 & thv_c0404=0 ) ) & esize2021 & Dm & Dn & Qd
+                                      ( $(TMODE_E) & thv_c2327=0x1f & thv_c2021<3 & thv_c0811=0xD & thv_Q6=0 & thv_c0404=0 ) ) & esize2021 & Dm & Dn & Qd
 
 {
 	Qd = VectorDoubleMultiplyLong(Dn,Dm,esize2021,0:1);
@@ -4829,7 +4829,7 @@ define pcodeop SignedSatQ;
 }
 
 :vqdmull.S^esize2021 Qd, Dn, vmlDmA	is ( ( $(AMODE) & ARMcond=0 & cond=15 & c2327=5 & c2021<3 & c0811=0xb & Q6=1 & c0404=0 ) |
-                                      ( $(TMODE_E) & thv_c2327=0x1e & thv_c2324=1 & thv_c2021<3 & thv_c0811=0xb & thv_Q6=1 & thv_c0404=0 ) ) & esize2021 & vmlDmA & Dn & Qd
+                                      ( $(TMODE_E) & thv_c2327=0x1f & thv_c2021<3 & thv_c0811=0xb & thv_Q6=1 & thv_c0404=0 ) ) & esize2021 & vmlDmA & Dn & Qd
 
 {
 	Qd = VectorDoubleMultiplyLong(Dn,vmlDmA,esize2021,0:1);

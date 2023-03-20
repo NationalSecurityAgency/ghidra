@@ -89,7 +89,7 @@ public class GdbGadpDebuggerModelFactory extends AbstractGadpLocalDebuggerModelF
 		if (!existing && gdbCmdLine.size() >= 2) {
 			cmd.addAll(gdbCmdLine.subList(1, gdbCmdLine.size()));
 		}
-		cmd.add("--gadp-args");
+		cmd.add("--agent-args");
 		cmd.addAll(List.of("-H", host));
 		cmd.addAll(List.of("-p", Integer.toString(port))); // Available ephemeral port
 		if (!existing && gdbCmdLine.size() >= 1) {

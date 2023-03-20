@@ -132,7 +132,6 @@ public class MachoProgramBuilder {
 		processUnsupportedLoadCommands();
 		boolean exportsFound = processExports(machoHeader);
 		processSymbolTables(machoHeader, !exportsFound);
-		processIndirectSymbols();
 		setRelocatableProperty();
 		processLibraries();
 		processProgramDescription();
@@ -480,6 +479,8 @@ public class MachoProgramBuilder {
  	}
  	
 	protected boolean processExports(MachHeader header) throws Exception {
+		monitor.setMessage("Processing exports...");
+
 		List<ExportEntry> exports = new ArrayList<>();
 
 		// Old way - export tree in DyldInfoCommand
@@ -584,80 +585,6 @@ public class MachoProgramBuilder {
 				catch (Exception e) {
 					log.appendMsg("Unable to create symbol: " + e.getMessage());
 				}
-			}
-		}
-	}
-
-	/**
-	 * The indirect symbols need to be applied across the IMPORT segment. The
-	 * individual section do not really matter except the number of bytes
-	 * between each symbol varies based on section.
-	 * 
-	 * @throws Exception if there is a problem
-	 */
-	protected void processIndirectSymbols() throws Exception {
-
-		monitor.setMessage("Processing indirect symbols...");
-
-		SymbolTableCommand symbolTableCommand =
-			machoHeader.getFirstLoadCommand(SymbolTableCommand.class);
-
-		DynamicSymbolTableCommand dynamicCommand =
-			machoHeader.getFirstLoadCommand(DynamicSymbolTableCommand.class);
-
-		if (dynamicCommand == null) {
-			return;
-		}
-		int[] indirectSymbols = dynamicCommand.getIndirectSymbols();
-		if (indirectSymbols.length == 0) {
-			return;
-		}
-
-		int[] sectionTypes = new int[] { SectionTypes.S_NON_LAZY_SYMBOL_POINTERS,
-			SectionTypes.S_LAZY_SYMBOL_POINTERS, SectionTypes.S_SYMBOL_STUBS };
-
-		List<Section> sections = getSectionsWithTypes(sectionTypes);
-
-		for (Section section : sections) {
-			if (monitor.isCancelled()) {
-				return;
-			}
-			if (section.getSize() == 0) {
-				continue;
-			}
-
-			Namespace namespace = createNamespaceForSection(section);
-
-			int indirectSymbolTableIndex = section.getReserved1();
-
-			int symbolSize = machoHeader.getAddressSize();
-			if (section.getType() == SectionTypes.S_SYMBOL_STUBS) {
-				symbolSize = section.getReserved2();
-			}
-
-			int nSymbols = (int) section.getSize() / symbolSize;
-
-			Address startAddr = space.getAddress(section.getAddress());
-			for (int i = indirectSymbolTableIndex; i < indirectSymbolTableIndex + nSymbols; ++i) {
-				if (monitor.isCancelled()) {
-					break;
-				}
-				int symbolIndex = indirectSymbols[i];
-				NList symbol = symbolTableCommand.getSymbolAt(symbolIndex);
-				if (symbol != null) {
-					String name = generateValidName(symbol.getString());
-					if (name != null && name.length() > 0) {
-						try {
-							program.getSymbolTable()
-									.createLabel(startAddr, name, namespace, SourceType.IMPORTED);
-						}
-						catch (Exception e) {
-							log.appendMsg("Unable to create indirect symbol " + name);
-							log.appendException(e);
-						}
-					}
-				}
-				startAddr = startAddr.add(symbolSize);
 			}
 		}
 	}
@@ -862,15 +789,16 @@ public class MachoProgramBuilder {
 					log.appendMsg(e.getMessage());
 				}
 			}
-			//if (command.getLazyBindSize() > 0) {
-			//    LazyBindProcessor processor = new LazyBindProcessor(program, header, provider, command);
-			//    try {
-			//        processor.process(monitor);
-			//    }
-			//    catch (Exception e) {
-			//        log.appendException(e);
-			//    }
-			//}
+			if (command.getLazyBindSize() > 0) {
+				LazyBindProcessor processor =
+					new LazyBindProcessor(program, machoHeader, provider, command);
+				try {
+					processor.process(monitor);
+				}
+				catch (Exception e) {
+					log.appendException(e);
+				}
+			}
 		}
 
 		if (!doClassic) {
@@ -1504,10 +1432,6 @@ public class MachoProgramBuilder {
 		}
 	}
 
-	private Namespace createNamespaceForSection(Section section) {
-		return createNamespace(section.getSectionName());
-	}
-
 	private Namespace createNamespace(String namespaceName) {
 		try {
 			return program.getSymbolTable()
@@ -1528,25 +1452,6 @@ public class MachoProgramBuilder {
 
 	private String generateValidName(String name) {
 		return SymbolUtilities.replaceInvalidChars(name, true);
-	}
-
-	private List<Section> getSectionsWithTypes(int[] sectionTypes) {
-		List<Section> list = new ArrayList<>();
-		List<Section> sections = machoHeader.getAllSections();
-		for (Section section : sections) {
-			if (monitor.isCancelled()) {
-				break;
-			}
-			for (int sectionType : sectionTypes) {
-				if (monitor.isCancelled()) {
-					break;
-				}
-				if (section.getType() == sectionType) {
-					list.add(section);
-				}
-			}
-		}
-		return list;
 	}
 
 	/**
@@ -1794,7 +1699,9 @@ public class MachoProgramBuilder {
 			}
 			else {
 				newChainValue = DyldChainedPtr.getTarget(pointerFormat, chainValue);
-				newChainValue += imageBaseOffset;
+				if (DyldChainedPtr.isRelative(pointerFormat)) {
+					newChainValue += imageBaseOffset;
+				}
 			}
 
 			if (!start || !program.getRelocationTable().hasRelocation(chainLoc)) {
@@ -1808,10 +1715,13 @@ public class MachoProgramBuilder {
 					byteLength = result.byteLength();
 				}
 				finally {
-					addRelocationTableEntry(chainLoc, status,
-						(start ? 0x8000 : 0x4000) | (isAuthenticated ? 4 : 0) | (isBound ? 2 : 0) |
-							1,
-						newChainValue, byteLength, symName);
+					if (shouldAddChainedFixupsRelocations) {
+						program.getRelocationTable()
+								.add(chainLoc, status,
+									(start ? 0x8000 : 0x4000) | (isAuthenticated ? 4 : 0) |
+										(isBound ? 2 : 0) | 1,
+									new long[] { newChainValue }, byteLength, symName);
+					}
 				}
 			}
 			// delay creating data until after memory has been changed
@@ -1820,15 +1730,6 @@ public class MachoProgramBuilder {
 			start = false;
 			next = DyldChainedPtr.getNext(pointerFormat, chainValue);
 			nextOff += next * DyldChainedPtr.getStride(pointerFormat);
-		}
-	}
-
-	private void addRelocationTableEntry(Address chainLoc, Status status, int type, long chainValue,
-			int byteLength, String name) {
-		if (shouldAddChainedFixupsRelocations) {
-			// Add entry to relocation table for the pointer fixup
-			program.getRelocationTable()
-					.add(chainLoc, status, type, new long[] { chainValue }, byteLength, name);
 		}
 	}
 

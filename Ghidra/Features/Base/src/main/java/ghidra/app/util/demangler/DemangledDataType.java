@@ -64,6 +64,8 @@ public class DemangledDataType extends DemangledType {
 	public final static String BOOL = "bool";
 	public final static String CHAR = "char";
 	public final static String WCHAR_T = "wchar_t";
+	public final static String WCHAR16 = "char16_t";
+	public final static String WCHAR32 = "char32_t";
 	public final static String SHORT = "short";
 	public final static String INT = "int";
 	public final static String INT0_T = "int0_t";
@@ -89,8 +91,9 @@ public class DemangledDataType extends DemangledType {
 	private static final String UNSIGNED_INT = "unsigned int";
 	private static final String UNSIGNED_LONG = "unsigned long";
 
-	public final static String[] PRIMITIVES = { VOID, BOOL, CHAR, WCHAR_T, SHORT, INT, INT0_T, LONG,
-		LONG_LONG, FLOAT, DOUBLE, INT128, FLOAT128, LONG_DOUBLE, };
+	public final static String[] PRIMITIVES =
+		{ VOID, BOOL, CHAR, WCHAR_T, WCHAR16, WCHAR32, SHORT, INT, INT0_T, LONG,
+			LONG_LONG, FLOAT, DOUBLE, INT128, FLOAT128, LONG_DOUBLE, };
 
 	private int arrayDimensions = 0;
 	private boolean isClass;
@@ -231,6 +234,15 @@ public class DemangledDataType extends DemangledType {
 			else {
 				dt = CharDataType.dataType;
 			}
+		}
+		else if (WCHAR_T.equals(name)) {
+			dt = WideCharDataType.dataType;
+		}
+		else if (WCHAR16.equals(name)) {
+			dt = WideChar16DataType.dataType;
+		}
+		else if (WCHAR32.equals(name)) {
+			dt = WideChar32DataType.dataType;
 		}
 		else if (SHORT.equals(name)) {
 			if (isUnsigned()) {

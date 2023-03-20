@@ -119,7 +119,6 @@ int4 PcodeOp::getRepeatSlot(const Varnode *vn,int4 firstSlot,list<PcodeOp *>::co
 bool PcodeOp::isCollapsible(void) const
 
 {
-  if (code() == CPUI_COPY) return false;
   if ((flags & PcodeOp::nocollapse)!=0) return false;
   if (!isAssignment()) return false;
   if (inrefs.size()==0) return false;

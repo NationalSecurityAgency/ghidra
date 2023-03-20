@@ -22,8 +22,22 @@ public interface RegisterState {
 
 	public Set<String> getKeys();
 
+	/**
+	 * Get the byte array value for a register name
+	 * 
+	 * @param key the register name
+	 * @return a list (used as an optional) containing at most the one byte array giving the
+	 *         register's value. If empty, the value if unspecified.
+	 */
 	public List<byte[]> getVals(String key);
 
+	/**
+	 * Check if the register is initialized
+	 * 
+	 * @param key the register name
+	 * @return a list (used an an optional) containing at most the one initialization state. True if
+	 *         initialized, false if not. Empty if unspecified.
+	 */
 	public List<Boolean> isInitialized(String key);
 
 	public void setVals(String key, byte[] vals, boolean setInitiailized);

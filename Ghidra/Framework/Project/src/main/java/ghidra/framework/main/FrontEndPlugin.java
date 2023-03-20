@@ -1112,7 +1112,7 @@ public class FrontEndPlugin extends Plugin
 			}
 		}
 
-		if (toolServices.launchDefaultTool(domainFile) != null) {
+		if (toolServices.launchDefaultTool(List.of(domainFile)) != null) {
 			return;
 		}
 

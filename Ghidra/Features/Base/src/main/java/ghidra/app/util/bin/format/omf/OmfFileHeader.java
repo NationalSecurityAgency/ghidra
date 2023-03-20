@@ -351,8 +351,10 @@ public class OmfFileHeader extends OmfRecord {
 				header.groups.add(group);
 			}
 			else if (record instanceof OmfFixupRecord fixuprec) {
-				fixuprec.setDataBlock(lastDataBlock);
-				header.fixup.add(fixuprec);
+				if (lastDataBlock != null) {
+					fixuprec.setDataBlock(lastDataBlock);
+					header.fixup.add(fixuprec);
+				}
 			}
 			else if (record instanceof OmfEnumeratedData enumheader) {
 				header.addEnumeratedBlock(enumheader);
@@ -368,6 +370,10 @@ public class OmfFileHeader extends OmfRecord {
 				lastDataBlock = iterheader;
 			}
 			else if (record instanceof OmfUnsupportedRecord) {
+				// TODO: Should we always set lastDataBlock to null?
+				if (record.getRecordType() == COMDAT) {
+					lastDataBlock = null;
+				}
 				logRecord("Unsupported OMF record", record, log);
 			}
 			else if (record instanceof OmfObsoleteRecord) {

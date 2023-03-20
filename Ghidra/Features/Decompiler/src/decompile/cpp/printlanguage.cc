@@ -612,6 +612,19 @@ void PrintLanguage::emitLineComment(int4 indent,const Comment *comm)
       emit->tagLine();
     else if (tok=='\r') {
     }
+    else if (tok=='{' && pos < text.size() && text[pos] == '@') {
+      // Comment annotation
+      int4 count = 1;
+      while(pos < text.size()) {
+	tok = text[pos];
+	count += 1;
+	pos += 1;
+	if (tok == '}') break;	// Search for brace ending the annotation
+      }
+      // Treat annotation as one token
+      string annote = text.substr(pos-count,count);
+      emit->tagComment(annote,EmitMarkup::comment_color,spc,off);
+    }
     else {
       int4 count = 1;
       while(pos < text.size()) {

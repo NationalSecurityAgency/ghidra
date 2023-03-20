@@ -22,7 +22,7 @@ import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.reloc.RelocationResult;
 
 /**
- * @see <a href="https://opensource.apple.com/source/dyld/dyld-852.2/include/mach-o/fixup-chains.h.auto.html">mach-o/fixup-chains.h</a> 
+ * @see <a href="https://github.com/apple-oss-distributions/dyld/blob/main/include/mach-o/fixup-chains.h">mach-o/fixup-chains.h</a> 
  */
 public class DyldChainedPtr {
 
@@ -165,6 +165,18 @@ public class DyldChainedPtr {
 				return memory.getInt(chainLoc) & 0xFFFFFFFFL;
 			default:
 				return 0;
+		}
+	}
+
+	public static boolean isRelative(DyldChainType ptrFormat) {
+		switch (ptrFormat) {
+			case DYLD_CHAINED_PTR_64_OFFSET:
+			case DYLD_CHAINED_PTR_ARM64E_KERNEL:
+			case DYLD_CHAINED_PTR_ARM64E_USERLAND:
+			case DYLD_CHAINED_PTR_ARM64E_USERLAND24:
+				return true;
+			default:
+				return false;
 		}
 	}
 

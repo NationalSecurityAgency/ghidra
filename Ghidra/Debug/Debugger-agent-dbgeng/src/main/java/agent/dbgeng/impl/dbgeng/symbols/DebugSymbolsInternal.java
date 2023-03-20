@@ -15,15 +15,16 @@
  */
 package agent.dbgeng.impl.dbgeng.symbols;
 
+import java.util.List;
 import java.util.Map;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Guid.REFIID;
 
 import agent.dbgeng.dbgeng.*;
 import agent.dbgeng.dbgeng.DebugModule.DebugModuleName;
 import agent.dbgeng.impl.dbgeng.DbgEngUtil;
 import agent.dbgeng.impl.dbgeng.DbgEngUtil.InterfaceSupplier;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.Preferred;
 import agent.dbgeng.jna.dbgeng.symbols.*;
 import ghidra.util.datastruct.WeakValueHashMap;
 
@@ -50,13 +51,12 @@ public interface DebugSymbolsInternal extends DebugSymbols {
 		return DbgEngUtil.lazyWeakCache(CACHE, symbols, DebugSymbolsImpl5::new);
 	}
 
-	Map<REFIID, Class<? extends WrapIDebugSymbols>> PREFFERED_SYMBOLS_IIDS =
-		Map.ofEntries(
-			Map.entry(new REFIID(IDebugSymbols5.IID_IDEBUG_SYMBOLS5), WrapIDebugSymbols5.class),
-			Map.entry(new REFIID(IDebugSymbols4.IID_IDEBUG_SYMBOLS4), WrapIDebugSymbols4.class),
-			Map.entry(new REFIID(IDebugSymbols3.IID_IDEBUG_SYMBOLS3), WrapIDebugSymbols3.class),
-			Map.entry(new REFIID(IDebugSymbols2.IID_IDEBUG_SYMBOLS2), WrapIDebugSymbols2.class),
-			Map.entry(new REFIID(IDebugSymbols.IID_IDEBUG_SYMBOLS), WrapIDebugSymbols.class));
+	List<Preferred<WrapIDebugSymbols>> PREFFERED_SYMBOLS_IIDS = List.of(
+		new Preferred<>(IDebugSymbols5.IID_IDEBUG_SYMBOLS5, WrapIDebugSymbols5.class),
+		new Preferred<>(IDebugSymbols4.IID_IDEBUG_SYMBOLS4, WrapIDebugSymbols4.class),
+		new Preferred<>(IDebugSymbols3.IID_IDEBUG_SYMBOLS3, WrapIDebugSymbols3.class),
+		new Preferred<>(IDebugSymbols2.IID_IDEBUG_SYMBOLS2, WrapIDebugSymbols2.class),
+		new Preferred<>(IDebugSymbols.IID_IDEBUG_SYMBOLS, WrapIDebugSymbols.class));
 
 	static DebugSymbolsInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
 		return DbgEngUtil.tryPreferredInterfaces(DebugSymbolsInternal.class, PREFFERED_SYMBOLS_IIDS,

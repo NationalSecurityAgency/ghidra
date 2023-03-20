@@ -1004,7 +1004,7 @@ bool ConsistencyChecker::checkSectionTruncations(Constructor *ct,ConstructTpl *c
 bool ConsistencyChecker::checkSubtable(SubtableSymbol *sym)
 
 {
-  int4 tablesize = 0;
+  int4 tablesize = -1;
   int4 numconstruct = sym->getNumConstructors();
   Constructor *ct;
   bool testresult = true;
@@ -1033,9 +1033,9 @@ bool ConsistencyChecker::checkSubtable(SubtableSymbol *sym)
       }
       seennonemptyexport = true;
       int4 exsize = recoverSize(exportres->getSize(),ct);
-      if (tablesize == 0)
+      if (tablesize == -1)
 	tablesize = exsize;
-      if ((exsize!=0)&&(exsize != tablesize)) {
+      if (exsize != tablesize) {
 	ostringstream msg;
 	msg << "Table '" << sym->getName() << "' has inconsistent export size; ";
 	msg << "Constructor starting at line " << dec << ct->getLineno() << " is first conflict";

@@ -15,11 +15,8 @@
  */
 package ghidra.feature.vt.api.correlator.program;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import generic.DominantPair;
 import generic.hash.FNV1a64MessageDigest;
@@ -28,19 +25,13 @@ import generic.lsh.KandL;
 import generic.lsh.LSHMemoryModel;
 import generic.lsh.vector.LSHCosineVectorAccum;
 import generic.lsh.vector.VectorCompare;
-import ghidra.feature.vt.api.main.VTAssociationType;
-import ghidra.feature.vt.api.main.VTMatchInfo;
-import ghidra.feature.vt.api.main.VTMatchSet;
-import ghidra.feature.vt.api.main.VTScore;
+import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.util.VTAbstractProgramCorrelator;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.listing.Data;
-import ghidra.program.model.listing.DataIterator;
-import ghidra.program.model.listing.Listing;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -49,13 +40,6 @@ public class SimilarDataProgramCorrelator extends VTAbstractProgramCorrelator {
 
 	public static final double SIMILARITY_THRESHOLD = 0.5;
 
-	protected SimilarDataProgramCorrelator(ServiceProvider serviceProvider, Program sourceProgram,
-			AddressSetView sourceAddressSet, Program destinationProgram,
-			AddressSetView destinationAddressSet, ToolOptions options) {
-		super(serviceProvider, sourceProgram, sourceAddressSet, destinationProgram,
-			destinationAddressSet, options);
-	}
-
 	HashMap<Address, LSHCosineVectorAccum> sourceMap;
 	HashMap<Address, LSHCosineVectorAccum> destinationMap;
 
@@ -63,6 +47,13 @@ public class SimilarDataProgramCorrelator extends VTAbstractProgramCorrelator {
 
 	int featureID = 0;
 	int minDataLength;
+
+	public SimilarDataProgramCorrelator(ServiceProvider serviceProvider, Program sourceProgram,
+			AddressSetView sourceAddressSet, Program destinationProgram,
+			AddressSetView destinationAddressSet, ToolOptions options) {
+		super(serviceProvider, sourceProgram, sourceAddressSet, destinationProgram,
+			destinationAddressSet, options);
+	}
 
 	@Override
 	protected void doCorrelate(VTMatchSet matchSet, TaskMonitor monitor) throws CancelledException {
@@ -92,9 +83,9 @@ public class SimilarDataProgramCorrelator extends VTAbstractProgramCorrelator {
 
 	private void extractNGramFeatures(VTMatchSet matchSet, boolean skipHomogenousData,
 			TaskMonitor monitor, int n) throws CancelledException {
-		sourceMap = new HashMap<Address, LSHCosineVectorAccum>();
-		destinationMap = new HashMap<Address, LSHCosineVectorAccum>();
-		idMap = new HashMap<Long, Integer>();
+		sourceMap = new HashMap<>();
+		destinationMap = new HashMap<>();
+		idMap = new HashMap<>();
 
 		final Program sourceProgram = getSourceProgram();
 		final Program destinationProgram = getDestinationProgram();
@@ -233,7 +224,7 @@ public class SimilarDataProgramCorrelator extends VTAbstractProgramCorrelator {
 			LSHCosineVectorAccum destinationVector,
 			Set<DominantPair<Address, LSHCosineVectorAccum>> neighbors, double threshold,
 			TaskMonitor monitor) {
-		List<VTMatchInfo> result = new ArrayList<VTMatchInfo>();
+		List<VTMatchInfo> result = new ArrayList<>();
 
 		Listing sourceListing = getSourceProgram().getListing();
 		Listing destinationListing = getDestinationProgram().getListing();
@@ -289,7 +280,7 @@ public class SimilarDataProgramCorrelator extends VTAbstractProgramCorrelator {
 			getOptions().getEnum(SimilarDataProgramCorrelatorFactory.MEMORY_MODEL,
 				SimilarDataProgramCorrelatorFactory.MEMORY_MODEL_DEFAULT);
 		int L = KandL.memoryModelToL(model);
-		return new LSHMultiHash<Address>(model.getK(), L);
+		return new LSHMultiHash<>(model.getK(), L);
 	}
 
 	@Override

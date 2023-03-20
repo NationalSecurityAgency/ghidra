@@ -311,6 +311,11 @@ public class PackedDecode implements Decoder {
 	}
 
 	@Override
+	public int getIndexedAttributeId(AttributeId attribId) throws DecoderException {
+		return AttributeId.ATTRIB_UNKNOWN.id();
+	}
+
+	@Override
 	public void rewindAttributes() {
 		curPos.copy(startPos);
 		attributeRead = true;

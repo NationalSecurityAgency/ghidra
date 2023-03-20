@@ -156,6 +156,11 @@ class TestThread implements PcodeThread<Void> {
 	}
 
 	@Override
+	public boolean isSuspended() {
+		return false;
+	}
+
+	@Override
 	public PcodeUseropLibrary<Void> getUseropLibrary() {
 		return null;
 	}

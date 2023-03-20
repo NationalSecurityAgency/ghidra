@@ -15,11 +15,12 @@
  */
 package pdb;
 
+import java.util.*;
+import java.util.stream.Collectors;
+
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
-import java.util.stream.Collectors;
 
 import javax.swing.SwingConstants;
 
@@ -202,6 +203,53 @@ public class PdbPlugin extends Plugin {
 
 			SymbolServerInstanceCreatorContext temporarySymbolServerInstanceCreatorContext =
 				SymbolServerInstanceCreatorRegistry.getInstance().getContext(program);
+
+			SymbolServerService temporarySymbolServerService =
+				getSymbolServerService(temporarySymbolServerInstanceCreatorContext);
+
+			List<SymbolFileLocation> results =
+				temporarySymbolServerService.find(symbolFileInfo, findOptions, monitor);
+			if (!results.isEmpty()) {
+				return temporarySymbolServerService.getSymbolFile(results.get(0), monitor);
+			}
+		}
+		catch (CancelledException e) {
+			// ignore
+		}
+		catch (IOException e) {
+			Msg.error(PdbPlugin.class, "Error getting symbol file", e);
+		}
+		return null;
+	}
+
+	/**
+	 * Searches the currently configured symbol server paths for a Pdb symbol file.
+	 * <p>
+	 * Any "SameDir" search location in the configuration will be ignored because there is
+	 * not an associated Program.   
+	 * 
+	 * @param symbolFileInfo info about the pdb that is being searched for.  
+	 * See {@link SymbolFileInfo#fromValues(String, String, int)} 
+	 * @param findOptions options that control how to search for the symbol file
+	 * @param monitor a {@link TaskMonitor} that allows the user to cancel
+	 * @return a File that points to the found Pdb symbol file, or null if no file was found
+	 */
+	public static File findPdb(SymbolFileInfo symbolFileInfo, Set<FindOption> findOptions,
+			TaskMonitor monitor) {
+
+		if (symbolFileInfo == null) {
+			return null;
+		}
+
+		try {
+			// make a copy and add in the ONLY_FIRST_RESULT option
+			findOptions = findOptions.isEmpty()
+					? EnumSet.noneOf(FindOption.class)
+					: EnumSet.copyOf(findOptions);
+			findOptions.add(FindOption.ONLY_FIRST_RESULT);
+
+			SymbolServerInstanceCreatorContext temporarySymbolServerInstanceCreatorContext =
+				SymbolServerInstanceCreatorRegistry.getInstance().getContext();
 
 			SymbolServerService temporarySymbolServerService =
 				getSymbolServerService(temporarySymbolServerInstanceCreatorContext);

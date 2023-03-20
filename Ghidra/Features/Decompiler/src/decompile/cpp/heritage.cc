@@ -1918,6 +1918,12 @@ void Heritage::splitJoinRead(Varnode *vn,JoinRecord *joinrec)
 
 {
   PcodeOp *op = vn->loneDescend(); // vn isFree, so loneDescend must be non-null
+  bool preventConstCollapse = false;
+  if (vn->isTypeLock()) {
+    type_metatype meta = vn->getType()->getMetatype();
+    if (meta == TYPE_STRUCT || meta == TYPE_ARRAY)
+      preventConstCollapse = true;
+  }
   
   vector<Varnode *> lastcombo;
   vector<Varnode *> nextlev;
@@ -1937,6 +1943,8 @@ void Heritage::splitJoinRead(Varnode *vn,JoinRecord *joinrec)
       fd->opSetInput(concat,mosthalf,0);
       fd->opSetInput(concat,leasthalf,1);
       fd->opInsertBefore(concat,op);
+      if (preventConstCollapse)
+	fd->opMarkNoCollapse(concat);
       mosthalf->setPrecisHi();	// Set precision flags to trigger "double precision" rules
       leasthalf->setPrecisLo();
       op = concat;		// Keep -op- as the earliest op in the concatenation construction

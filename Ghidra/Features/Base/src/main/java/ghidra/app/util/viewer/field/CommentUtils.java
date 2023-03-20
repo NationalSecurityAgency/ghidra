@@ -46,7 +46,7 @@ public class CommentUtils {
 	 * @param program the program associated with the comment
 	 * @return the updated string
 	 */
-	public static String fixupAnnoations(String rawCommentText, Program program) {
+	public static String fixupAnnotations(String rawCommentText, Program program) {
 
 		if (rawCommentText == null) {
 			return null;

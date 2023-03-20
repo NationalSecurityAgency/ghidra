@@ -357,49 +357,29 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 		final Language language = program.getLanguage();
 
 		ArrayList<OmfSegmentHeader> segments = header.getSegments();
-//		int sectionNumber = 0;
 		for (OmfSegmentHeader segment : segments) {
-//			++sectionNumber;
 			if (monitor.isCancelled()) {
 				break;
 			}
 
-			//		if (segment.hasIteratedData() && segment.hasEnumeratedData())
-			//			throw new IOException("OMF segment has both iterated and enumerated data blocks");
-			MemoryBlock block = null;
-
+			Address segmentAddr = segment.getAddress(language);
 			final long segmentSize = segment.getSegmentLength();
 
-			Address segmentAddr = segment.getAddress(language);
-
 			if (segmentSize == 0) {
-				// don't create a block...just log that we've seen the segment
-				block = program.getMemory().getBlock(segmentAddr);
-				log.appendMsg("Empty Segment: " + segment.getName());
+				continue;
 			}
-			else if (segment.hasNonZeroData()) {
-				block = MemoryBlockUtils.createInitializedBlock(program, false, segment.getName(),
-					segmentAddr, segment.getRawDataStream(reader, log), segmentSize,
-					"Address:0x" + Long.toHexString(segmentAddr.getOffset()) + " " + "Size:0x" +
-						Long.toHexString(segmentSize),
-					null/*source*/, segment.isReadable(), segment.isWritable(),
-					segment.isExecutable(), log, monitor);
-				if (block != null) {
-					log.appendMsg(
-						"Created Initialized Block: " + segment.getName() + " @ " + segmentAddr);
-				}
+			
+			if (segment.hasNonZeroData()) {
+				MemoryBlockUtils.createInitializedBlock(program, false, segment.getName(),
+					segmentAddr, segment.getRawDataStream(reader, log), segmentSize, "", "",
+					segment.isReadable(), segment.isWritable(), segment.isExecutable(), log,
+					monitor);
+
 			}
 			else {
-				block = MemoryBlockUtils.createUninitializedBlock(program, false, segment.getName(),
-					segmentAddr, segmentSize,
-					"Address:0x" + Long.toHexString(segmentAddr.getOffset()) + " " + "Size:0x" +
-						Long.toHexString(segmentSize),
-					null/*source*/, segment.isReadable(), segment.isWritable(),
+				MemoryBlockUtils.createUninitializedBlock(program, false, segment.getName(),
+					segmentAddr, segmentSize, "", "", segment.isReadable(), segment.isWritable(),
 					segment.isExecutable(), log);
-				if (block != null) {
-					log.appendMsg(
-						"Created Uninitialized Block: " + segment.getName() + " @ " + segmentAddr);
-				}
 			}
 		}
 	}

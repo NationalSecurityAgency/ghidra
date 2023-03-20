@@ -15,6 +15,8 @@
  */
 package ghidra.framework.plugintool;
 
+import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 
 import docking.DockingWindowManager;
@@ -63,11 +65,12 @@ public enum PluginToolUtils {
 	 * that case, it'll pick any compatible tool, no matter how recently it had focus.
 	 * 
 	 * @param tool the front-end tool
-	 * @param domainFile the domain file to open
+	 * @param domainFile the domain file to open (may not be null)
 	 * @return the (possibly new) plugin tool which accepted the domain file
 	 */
 	public static PluginTool openInMostRecentOrLaunchedCompatibleTool(PluginTool tool,
 			DomainFile domainFile) {
+		Objects.requireNonNull(domainFile);
 		DomainFile[] data = new DomainFile[] { domainFile };
 		PluginTool result = inRunningToolsPreferringActive(tool, pt -> {
 			return pt.acceptDomainFiles(data) ? pt : null;
@@ -75,7 +78,7 @@ public enum PluginToolUtils {
 		if (result != null) {
 			return result;
 		}
-		return tool.getToolServices().launchDefaultTool(domainFile);
+		return tool.getToolServices().launchDefaultTool(List.of(domainFile));
 	}
 
 	/**

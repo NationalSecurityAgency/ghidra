@@ -45,15 +45,7 @@ extern AttributeId ATTRIB_DEADCODEDELAY;	///< Marshaling attribute "deadcodedela
 extern AttributeId ATTRIB_DELAY;	///< Marshaling attribute "delay"
 extern AttributeId ATTRIB_LOGICALSIZE;	///< Marshaling attribute "logicalsize"
 extern AttributeId ATTRIB_PHYSICAL;	///< Marshaling attribute "physical"
-extern AttributeId ATTRIB_PIECE1;	///< Marshaling attribute "piece1"
-extern AttributeId ATTRIB_PIECE2;	///< Marshaling attribute "piece2"
-extern AttributeId ATTRIB_PIECE3;	///< Marshaling attribute "piece3"
-extern AttributeId ATTRIB_PIECE4;	///< Marshaling attribute "piece4"
-extern AttributeId ATTRIB_PIECE5;	///< Marshaling attribute "piece5"
-extern AttributeId ATTRIB_PIECE6;	///< Marshaling attribute "piece6"
-extern AttributeId ATTRIB_PIECE7;	///< Marshaling attribute "piece7"
-extern AttributeId ATTRIB_PIECE8;	///< Marshaling attribute "piece8"
-extern AttributeId ATTRIB_PIECE9;	///< Marshaling attribute "piece9"
+extern AttributeId ATTRIB_PIECE;	///< Marshaling attribute "piece"
 
 /// \brief A region where processor data is stored
 ///
@@ -68,8 +60,8 @@ extern AttributeId ATTRIB_PIECE9;	///< Marshaling attribute "piece9"
 /// offsets ranging from 0x00000000 to 0xffffffff within the space
 /// for a total of 2^32 addressable bytes within the space.
 /// There can be multiple address spaces, and it is typical to have spaces
-///     - \b ram        Modelling the main processor address bus
-///     - \b register   Modelling a processors registers
+///     - \b ram        Modeling the main processor address bus
+///     - \b register   Modeling a processors registers
 ///
 /// The processor specification can set up any address spaces it
 /// needs in an arbitrary manner, but \e all data manipulated by
@@ -80,7 +72,7 @@ extern AttributeId ATTRIB_PIECE9;	///< Marshaling attribute "piece9"
 /// The analysis engine also uses additional address spaces to
 /// model special concepts.  These include
 ///     - \b const        There is a \e constant address space for
-///                       modelling constant values in pcode expressions
+///                       modeling constant values in p-code expressions
 ///                       (See ConstantSpace)
 ///     - \b unique       There is always a \e unique address space used
 ///                       as a pool for temporary registers. (See UniqueSpace)
@@ -240,6 +232,7 @@ public:
 /// mapping the logical address in this space to its physical pieces.  Offsets into this space do not
 /// have an absolute meaning, the database may vary what offset is assigned to what set of pieces.
 class JoinSpace : public AddrSpace {
+  static const int4 MAX_PIECES = 64;	///< Maximum number of pieces that can be marshaled in one \e join address
 public:
   JoinSpace(AddrSpaceManager *m,const Translate *t,int4 ind);
   virtual int4 overlapJoin(uintb offset,int4 size,AddrSpace *pointSpace,uintb pointOff,int4 pointSkip) const;

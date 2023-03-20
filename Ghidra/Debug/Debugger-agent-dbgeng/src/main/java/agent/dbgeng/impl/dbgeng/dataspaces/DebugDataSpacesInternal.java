@@ -15,14 +15,15 @@
  */
 package agent.dbgeng.impl.dbgeng.dataspaces;
 
+import java.util.List;
 import java.util.Map;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Guid.REFIID;
 
 import agent.dbgeng.dbgeng.DebugDataSpaces;
 import agent.dbgeng.impl.dbgeng.DbgEngUtil;
 import agent.dbgeng.impl.dbgeng.DbgEngUtil.InterfaceSupplier;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.Preferred;
 import agent.dbgeng.jna.dbgeng.dataspaces.*;
 import ghidra.util.datastruct.WeakValueHashMap;
 
@@ -45,16 +46,11 @@ public interface DebugDataSpacesInternal extends DebugDataSpaces {
 		return DbgEngUtil.lazyWeakCache(CACHE, data, DebugDataSpacesImpl4::new);
 	}
 
-	Map<REFIID, Class<? extends WrapIDebugDataSpaces>> PREFERRED_DATA_SPACES_IIDS =
-		Map.ofEntries(
-			Map.entry(new REFIID(IDebugDataSpaces4.IID_IDEBUG_DATA_SPACES4),
-				WrapIDebugDataSpaces4.class),
-			Map.entry(new REFIID(IDebugDataSpaces3.IID_IDEBUG_DATA_SPACES3),
-				WrapIDebugDataSpaces3.class),
-			Map.entry(new REFIID(IDebugDataSpaces2.IID_IDEBUG_DATA_SPACES2),
-				WrapIDebugDataSpaces2.class),
-			Map.entry(new REFIID(IDebugDataSpaces.IID_IDEBUG_DATA_SPACES),
-				WrapIDebugDataSpaces.class));
+	List<Preferred<WrapIDebugDataSpaces>> PREFERRED_DATA_SPACES_IIDS = List.of(
+		new Preferred<>(IDebugDataSpaces4.IID_IDEBUG_DATA_SPACES4, WrapIDebugDataSpaces4.class),
+		new Preferred<>(IDebugDataSpaces3.IID_IDEBUG_DATA_SPACES3, WrapIDebugDataSpaces3.class),
+		new Preferred<>(IDebugDataSpaces2.IID_IDEBUG_DATA_SPACES2, WrapIDebugDataSpaces2.class),
+		new Preferred<>(IDebugDataSpaces.IID_IDEBUG_DATA_SPACES, WrapIDebugDataSpaces.class));
 
 	static DebugDataSpacesInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
 		return DbgEngUtil.tryPreferredInterfaces(DebugDataSpacesInternal.class,

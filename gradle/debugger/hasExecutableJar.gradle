@@ -13,17 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package agent.dbgmodel.dbgmodel.err;
+apply from: "$rootProject.projectDir/gradle/debugger/hasNodepJar.gradle"
 
-/**
- * The base exception for checked {@code dbgmodel.dll} wrapper-related errors.
- */
-public class DbgModelException extends Exception {
-	public DbgModelException() {
-		super();
-	}
 
-	public DbgModelException(String message) {
-		super(message);
+task executableJar {
+	ext.execsh = file("src/main/sh/execjar.sh")
+	ext.jarfile = file(nodepJar.archivePath)
+	ext.outjar = file("${buildDir}/bin/run")
+	dependsOn(nodepJar)
+	inputs.file { execsh }
+	inputs.file { jarfile }
+	outputs.file { outjar }
+	doLast {
+		outjar.parentFile.mkdirs()
+		outjar.withOutputStream { output ->
+			execsh.withInputStream { input ->
+				output << input
+			}
+			jarfile.withInputStream { input ->
+				output << input
+			}
+		}
+		exec {
+			commandLine("chmod", "+x", outjar)
+		}
 	}
 }
