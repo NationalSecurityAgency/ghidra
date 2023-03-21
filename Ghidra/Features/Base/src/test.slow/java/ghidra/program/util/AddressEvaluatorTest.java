@@ -76,6 +76,15 @@ public class AddressEvaluatorTest extends AbstractGhidraHeadedIntegrationTest {
 
 			assertEquals(addr("0x1"), AddressEvaluator.evaluate(p, "(((0x1 | 0x2) & 0x2) >= 0x1)"));
 			assertEquals(addr("0x0"), AddressEvaluator.evaluate(p, "(((0x1 | 0x2) & 0x2) <= 0x1)"));
+			
+			assertEquals(addr("0x4"), AddressEvaluator.evaluate(p, "(4ul)"));
+			assertEquals(addr("0x4"), AddressEvaluator.evaluate(p, "(4UL)"));
+			assertEquals(addr("0x4"), AddressEvaluator.evaluate(p, "( 4l )"));
+			assertEquals(addr("0x4"), AddressEvaluator.evaluate(p, "(4L)"));
+			assertEquals(addr("0x4"), AddressEvaluator.evaluate(p, "(4u )"));
+			assertEquals(addr("0x4"), AddressEvaluator.evaluate(p, "( 4U)"));
+			
+			assertEquals(null, AddressEvaluator.evaluate(p, "( 4P)"));
 
 			Symbol s = p.getSymbolTable().createLabel(addr("0x100"), "entry", SourceType.IMPORTED);
 			Address a = s.getAddress();

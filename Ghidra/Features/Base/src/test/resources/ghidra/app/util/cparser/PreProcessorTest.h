@@ -19,6 +19,7 @@
  #undef a
  #endif
 
+
  /* definition coming from -D, should evaluate to true */
  #if FROM_ARG_VALUE
  #define DID_ARG_VALUE 1
@@ -217,6 +218,13 @@ int TEST_FAILED;
 #define DefVal9 ((0x7fff & ~(((1 << 4) - 1))))
 
 #define DefVal10 ((0x7fff) * 900L / 1000)
+
+#define DefVal_1L (1L)
+#define DefVal_2l (2l)
+#define DefVal_3U (3U )
+#define DefVal_4u ( 4u)
+#define DefVal_5UL ( 5UL )
+#define DefVal_6ul (6ul)
 
 #define BIGNUM 64 * 16 + 16
 
