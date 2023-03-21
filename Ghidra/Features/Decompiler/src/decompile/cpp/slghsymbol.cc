@@ -287,6 +287,7 @@ void SymbolTable::purge(void)
       case SleighSymbol::token_symbol:
       case SleighSymbol::epsilon_symbol:
       case SleighSymbol::section_symbol:
+      case SleighSymbol::bitrange_symbol:
 	break;
       case SleighSymbol::macro_symbol:
 	{			// Delete macro's local symbols
