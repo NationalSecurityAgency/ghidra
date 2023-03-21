@@ -13,9 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*plugins {
-	id 'com.google.protobuf' version '0.8.10'
-}*/
 
 apply from: "${rootProject.projectDir}/gradle/javaProject.gradle"
 apply from: "${rootProject.projectDir}/gradle/jacocoProject.gradle"
@@ -23,7 +20,7 @@ apply from: "${rootProject.projectDir}/gradle/javaTestProject.gradle"
 apply from: "${rootProject.projectDir}/gradle/distributableGhidraModule.gradle"
 
 apply plugin: 'eclipse'
-eclipse.project.name = 'Debug Debugger-gadp'
+eclipse.project.name = 'Debug Debugger-isf'
 
 configurations {
 	allProtocArtifacts
@@ -67,12 +64,6 @@ dependencies {
 	testImplementation project(path: ':Framework-Debugging', configuration: 'testArtifacts')
 }
 
-/*protobuf {
-	protoc {
-		artifact = 'com.google.protobuf:protoc:3.21.8'
-	}
-}*/
-
 task generateProto {
 	ext.srcdir = file("src/main/proto")
 	ext.src = fileTree(srcdir) {
@@ -106,4 +97,12 @@ sourceSets {
 	}
 }
 zipSourceSubproject.dependsOn generateProto
+
+// Include buildable native source in distribution
+rootProject.assembleDistribution {
+    from (this.project.projectDir.toString()) {
+		include "runISFServer"
+		into  { getZipPath(this.project) }
+    }
+}
 
