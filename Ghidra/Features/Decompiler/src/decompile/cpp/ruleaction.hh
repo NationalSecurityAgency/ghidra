@@ -374,6 +374,16 @@ public:
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
 };  
+class RuleAndZext : public Rule {
+public:
+  RuleAndZext(const string &g) : Rule(g, 0, "andzext") {}	///< Constructor
+  virtual Rule *clone(const ActionGroupList &grouplist) const {
+    if (!grouplist.contains(getGroup())) return (Rule *)0;
+    return new RuleAndZext(getGroup());
+  }
+  virtual void getOpList(vector<uint4> &oplist) const;
+  virtual int4 applyOp(PcodeOp *op,Funcdata &data);
+};
 class RuleAndCompare : public Rule {
 public:
   RuleAndCompare(const string &g) : Rule(g, 0, "andcompare") {}	///< Constructor

@@ -978,6 +978,9 @@ void MapState::gatherVarnodes(const Funcdata &fd)
     if (vn->isFree()) continue;
     uintb start = vn->getOffset();
     Datatype *ct = vn->getType();
+    // Assume parents are present so partials aren't needed
+    if (ct->getMetatype() == TYPE_PARTIALSTRUCT) continue;
+    if (ct->getMetatype() == TYPE_PARTIALUNION) continue;
 				// Do not force Varnode flags on the entry
 				// as the flags were inherited from the previous
 				// (now obsolete) entry
@@ -1008,6 +1011,7 @@ void MapState::gatherHighs(const Funcdata &fd)
     varvec.push_back(high);
     uintb start = vn->getOffset();
     Datatype *ct = high->getType(); // Get type from high
+    if (ct->getMetatype() == TYPE_PARTIALUNION) continue;
     addRange(start,ct,0,RangeHint::fixed,-1);
   }
   for(int4 i=0;i<varvec.size();++i)
