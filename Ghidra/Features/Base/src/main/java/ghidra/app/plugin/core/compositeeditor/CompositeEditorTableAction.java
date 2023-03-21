@@ -82,16 +82,16 @@ abstract public class CompositeEditorTableAction extends DockingAction implement
 		}
 
 		JTable table = ((CompositeEditorPanel) provider.getComponent()).getTable();
-		if (table instanceof GTable gTable) {
-			gTable.requestTableFocus();
+		if (!table.isEditing()) {
+			table.requestFocus();
 			return;
 		}
 
-		if (table.isEditing()) {
-			table.getEditorComponent().requestFocus();
+		if (table instanceof GTable gTable) {
+			gTable.requestTableEditorFocus();
 		}
 		else {
-			table.requestFocus();
+			table.getEditorComponent().requestFocus();
 		}
 	}
 
