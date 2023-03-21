@@ -125,9 +125,18 @@ public class DbgModelTargetObjectImpl extends DefaultTargetObject<TargetObject, 
 				return;
 			}
 		}
-		if (this instanceof DbgModelTargetExecutionStateful) {
-			DbgModelTargetExecutionStateful stateful = (DbgModelTargetExecutionStateful) this;
-			stateful.setExecutionState(exec, "Refreshed");
+		if (proxy instanceof DbgModelTargetExecutionStateful stateful) {
+			if (proxy instanceof DbgModelTargetSession) {
+				if (state != DbgState.EXIT) {
+					stateful.setExecutionState(exec, "Refreshed");
+				}
+			} 
+			else {
+				TargetExecutionState previous = stateful.getExecutionState();
+				if (!previous.equals(TargetExecutionState.INACTIVE)) {
+					stateful.setExecutionState(exec, "Refreshed");
+				}
+			}
 		}
 	}
 

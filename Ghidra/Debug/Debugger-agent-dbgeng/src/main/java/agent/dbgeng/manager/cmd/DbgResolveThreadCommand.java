@@ -93,10 +93,8 @@ public class DbgResolveThreadCommand extends AbstractDbgCommand<DbgThread> {
 
 	@Override
 	public void invoke() {
-		DebugThreadId id = thread.getId();
-		if (id != null) {
-			DebugControl control = manager.getControl();
-			control.execute("!thread "+Long.toHexString(id.id)+" 0");		
-		}
+		DebugControl control = manager.getControl();
+		Long key = thread.getOffset() != null ? thread.getOffset() : thread.getTid();
+		control.execute("!thread "+Long.toHexString(key)+" 0");		
 	}
 }

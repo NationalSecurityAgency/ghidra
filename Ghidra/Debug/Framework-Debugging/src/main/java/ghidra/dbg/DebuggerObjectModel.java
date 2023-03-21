@@ -353,7 +353,7 @@ public interface DebuggerObjectModel {
 	 * @param refresh true to refresh caches
 	 * @return the found value, or {@code null} if it does not exist
 	 */
-	public CompletableFuture<?> fetchModelValue(List<String> path, boolean refresh);
+	public CompletableFuture<?> fetchModelValue(List<String> path, RefreshBehavior refresh);
 
 	/**
 	 * @see #fetchModelValue(List)
@@ -406,7 +406,7 @@ public interface DebuggerObjectModel {
 	 * @throws DebuggerModelTypeException if the value at the path is not a {@link TargetObject}
 	 */
 	public default CompletableFuture<? extends TargetObject> fetchModelObject(List<String> path,
-			boolean refresh) {
+			RefreshBehavior refresh) {
 		return fetchModelValue(path, refresh).thenApply(v -> {
 			if (v == null) {
 				return null;
@@ -431,7 +431,7 @@ public interface DebuggerObjectModel {
 	 */
 	@Deprecated
 	public default CompletableFuture<? extends TargetObject> fetchModelObject(List<String> path) {
-		return fetchModelObject(path, false);
+		return fetchModelObject(path, RefreshBehavior.REFRESH_NEVER);
 	}
 
 	/**

@@ -28,11 +28,11 @@ import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.manager.impl.DbgModuleMemoryImpl;
 import ghidra.util.Msg;
 
-public class DbgListMemoryRegionsCommandAlt extends AbstractDbgCommand<List<DbgModuleMemory>> {
+public class DbgListOSMemoryRegionsCommand extends AbstractDbgCommand<List<DbgModuleMemory>> {
 
 	private List<DbgModuleMemory> memoryRegions = new ArrayList<>();
 
-	public DbgListMemoryRegionsCommandAlt(DbgManagerImpl manager) {
+	public DbgListOSMemoryRegionsCommand(DbgManagerImpl manager) {
 		super(manager);
 	}
 

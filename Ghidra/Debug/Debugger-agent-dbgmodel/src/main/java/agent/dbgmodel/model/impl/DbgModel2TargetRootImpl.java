@@ -164,30 +164,26 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 
 	@Override
 	public void processSelected(DbgProcess process, DbgCause cause) {
-		objectSelected(process);
-		if (getManager().isKernelMode()) {
-			processActivated(process);
+		if (process != null) {
+			objectSelected(process);
 		}
 	}
 
 	@Override
 	public void threadSelected(DbgThread thread, DbgStackFrame frame, DbgCause cause) {
-		objectSelected(thread);
-		if (getManager().isKernelMode() && thread != null) {
-			processActivated(thread.getProcess());
-			threadActivated(thread);
-		}
-		if (frame != null) {
-			objectSelected(frame);
+		if (thread != null) {
+			objectSelected(thread);
+			if (frame != null) {
+				objectSelected(frame);
+			}
 		}
 	}
 
 	public void objectSelected(Object object) {
 		List<String> objPath = findObject(object);
-		TargetObject obj = getModel().getModelObject(objPath);
-		if (obj instanceof DbgModelSelectableObject) {
-			setFocus((DbgModelSelectableObject) obj);
-		}
+		model.fetchModelObject(objPath, RefreshBehavior.REFRESH_WHEN_ABSENT).thenAccept(obj -> 
+			update(obj)
+		);
 	}
 
 	@Override
@@ -217,21 +213,6 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 		});
 	}
 
-	public void processActivated(DbgProcess proc) {
-		List<String> objPath = findObject(proc);
-		DbgModelTargetExecutionStateful stateful = (DbgModelTargetExecutionStateful) getModel().getModelObject(objPath);
-		if (stateful == null) {
-			return;
-		}
-		TargetExecutionState state = stateful.getExecutionState();
-		if (state.equals(TargetExecutionState.INACTIVE)) {
-			stateful.changeAttributes(List.of(), Map.of( //
-				TargetExecutionStateful.STATE_ATTRIBUTE_NAME, TargetExecutionState.ALIVE //
-			), "Selected");
-			stateful.fetchAttributes(RefreshBehavior.REFRESH_ALWAYS);
-		}
-	}
-	
 	@Override
 	public void threadCreated(DbgThread thread, DbgCause cause) {
 		getObject(thread).thenAccept(obj -> {
@@ -253,21 +234,6 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 		});
 	}
 
-	public void threadActivated(DbgThread thread) {
-		List<String> objPath = findObject(thread);
-		DbgModelTargetExecutionStateful stateful = (DbgModelTargetExecutionStateful) getModel().getModelObject(objPath);
-		if (stateful == null) {
-			return;
-		}
-		TargetExecutionState state = stateful.getExecutionState();
-		if (state.equals(TargetExecutionState.INACTIVE)) {
-			stateful.changeAttributes(List.of(), Map.of( //
-				TargetExecutionStateful.STATE_ATTRIBUTE_NAME, TargetExecutionState.ALIVE //
-			), "Selected");
-			stateful.fetchAttributes(RefreshBehavior.REFRESH_ALWAYS);
-		}
-	}
-	
 	@Override
 	public void moduleLoaded(DbgProcess proc, DebugModuleInfo info, DbgCause cause) {
 		getObjectRevisited(proc, List.of("Modules"), info).thenAccept(obj -> {
@@ -340,7 +306,7 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 		xpath.addAll(ext);
 		// NB: fetchModelObject may have to be called with false
 		return AsyncUtils.sequence(TypeSpec.cls(DbgModelTargetObject.class)).then(seq -> {
-			getModel().fetchModelObject(xpath, false).handle(seq::next);
+			getModel().fetchModelObject(xpath, RefreshBehavior.REFRESH_NEVER).handle(seq::next);
 		}, TypeSpec.cls(TargetObject.class)).then((pobj, seq) -> {
 			if (pobj == null) {
 				seq.exit();
@@ -564,11 +530,11 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 		DebugSystemObjects so = getManager().getSystemObjects();
 		List<String> objpath = new ArrayList<>();
 		DebugSessionId sid = so.getCurrentSystemId();
-		String skey = sid.id < 0 ? PathUtils.makeKey("0x0")
-				: PathUtils.makeKey("0x" + Integer.toHexString(sid.id));
+		String skey = sid.value() < 0 ? PathUtils.makeKey("0x0")
+				: PathUtils.makeKey("0x" + sid.id());
 		if (obj instanceof DbgSession) {
 			DbgSession session = (DbgSession) obj;
-			skey = PathUtils.makeKey("0x" + Long.toHexString(session.getId().id));
+			skey = PathUtils.makeKey("0x" + session.getId().id());
 		}
 		if (obj instanceof DbgSession || obj instanceof String) {
 			objpath = List.of("Sessions", skey);
@@ -615,6 +581,30 @@ public class DbgModel2TargetRootImpl extends DbgModel2DefaultTargetModelRoot
 		return objpath;
 	}
 
+	private void update(TargetObject obj) {
+		if (obj instanceof DbgModelSelectableObject) {
+			setFocus((DbgModelSelectableObject) obj);
+		}
+		if (obj instanceof DbgModelTargetExecutionStateful) {
+			activate((DbgModelTargetExecutionStateful) obj);
+			// OK, this sucks, but not all threads are parented to activated objects
+			DbgModelTargetProcess parentProcess = ((DbgModelTargetObject) obj).getParentProcess();
+			if (obj instanceof DbgModelTargetExecutionStateful) {
+				activate(parentProcess);
+			}
+		}
+	}
+
+	private void activate(DbgModelTargetExecutionStateful stateful) {
+		TargetExecutionState state = stateful.getExecutionState();
+		if (state.equals(TargetExecutionState.INACTIVE)) {
+			stateful.changeAttributes(List.of(), Map.of( //
+				TargetExecutionStateful.STATE_ATTRIBUTE_NAME, TargetExecutionState.ALIVE //
+			), "Selected");
+			stateful.fetchAttributes(RefreshBehavior.REFRESH_ALWAYS);
+		}
+	}
+	
 	private TargetEventType getEventType(DbgState state, DbgCause cause, DbgReason reason) {
 		switch (state) {
 			case RUNNING:

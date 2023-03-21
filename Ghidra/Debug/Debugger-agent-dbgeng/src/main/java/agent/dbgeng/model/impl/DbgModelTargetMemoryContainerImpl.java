@@ -15,24 +15,46 @@
  */
 package agent.dbgeng.model.impl;
 
+import java.lang.invoke.MethodHandles;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import agent.dbgeng.manager.DbgModuleMemory;
-import agent.dbgeng.manager.cmd.*;
+import agent.dbgeng.manager.cmd.DbgListKernelMemoryRegionsCommand;
+import agent.dbgeng.manager.cmd.DbgListMemoryRegionsCommand;
+import agent.dbgeng.manager.cmd.DbgListOSMemoryRegionsCommand;
+import agent.dbgeng.manager.cmd.DbgReadBusDataCommand;
+import agent.dbgeng.manager.cmd.DbgReadControlCommand;
+import agent.dbgeng.manager.cmd.DbgReadDebuggerDataCommand;
+import agent.dbgeng.manager.cmd.DbgReadIoCommand;
+import agent.dbgeng.manager.cmd.DbgReadMemoryCommand;
+import agent.dbgeng.manager.cmd.DbgReadPhysicalMemoryCommand;
+import agent.dbgeng.manager.cmd.DbgWriteBusDataCommand;
+import agent.dbgeng.manager.cmd.DbgWriteControlCommand;
+import agent.dbgeng.manager.cmd.DbgWriteIoCommand;
+import agent.dbgeng.manager.cmd.DbgWriteMemoryCommand;
+import agent.dbgeng.manager.cmd.DbgWritePhysicalMemoryCommand;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.manager.impl.DbgProcessImpl;
-import agent.dbgeng.model.iface2.*;
+import agent.dbgeng.model.iface2.DbgModelTargetMemoryContainer;
+import agent.dbgeng.model.iface2.DbgModelTargetMemoryRegion;
+import agent.dbgeng.model.iface2.DbgModelTargetProcess;
 import generic.ULongSpan;
 import generic.ULongSpan.ULongSpanSet;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.error.DebuggerMemoryAccessException;
 import ghidra.dbg.error.DebuggerModelAccessException;
+import ghidra.dbg.target.TargetMethod;
+import ghidra.dbg.target.TargetMethod.AnnotatedTargetMethod;
 import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.target.schema.*;
+import ghidra.dbg.target.schema.TargetAttributeType;
+import ghidra.dbg.target.schema.TargetElementType;
+import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.program.model.address.Address;
 import ghidra.util.datastruct.WeakValueHashMap;
 
@@ -41,6 +63,7 @@ import ghidra.util.datastruct.WeakValueHashMap;
 	elements = {
 		@TargetElementType(type = DbgModelTargetMemoryRegionImpl.class) },
 	attributes = {
+		@TargetAttributeType(name = "Populate", type = TargetMethod.class),
 		@TargetAttributeType(type = Void.class) },
 	canonicalContainer = true)
 public class DbgModelTargetMemoryContainerImpl extends DbgModelTargetObjectImpl
@@ -57,6 +80,12 @@ public class DbgModelTargetMemoryContainerImpl extends DbgModelTargetObjectImpl
 		if (!getModel().isSuppressDescent()) {
 			requestElements(RefreshBehavior.REFRESH_ALWAYS);
 		}
+		DbgManagerImpl manager = getManager();
+		if (manager.isKernelMode()) {
+			changeAttributes(List.of(), List.of(),
+				AnnotatedTargetMethod.collectExports(MethodHandles.lookup(), getModel(), this),
+				"Methods");
+		}	
 	}
 
 	@Override
@@ -96,7 +125,7 @@ public class DbgModelTargetMemoryContainerImpl extends DbgModelTargetObjectImpl
 			return manager.execute(new DbgListKernelMemoryRegionsCommand(manager));
 		}
 		if (manager.useAltMemoryQuery()) {
-			return manager.execute(new DbgListMemoryRegionsCommandAlt(manager));
+			return manager.execute(new DbgListOSMemoryRegionsCommand(manager));
 		}
 		return manager.execute(new DbgListMemoryRegionsCommand(manager));
 	}
@@ -271,4 +300,13 @@ public class DbgModelTargetMemoryContainerImpl extends DbgModelTargetObjectImpl
 		return CompletableFuture.completedFuture(null);
 	}
 
-}
+	@TargetMethod.Export("Populate")
+	public CompletableFuture<Void> populate() {
+		return getManager().listOSMemory().thenAccept(byName -> {
+			List<TargetObject> sections;
+			synchronized (this) {
+				sections = byName.stream().map(this::getTargetMemory).collect(Collectors.toList());
+			}
+			setElements(sections, Map.of(), "Refreshed");
+		});
+	}}

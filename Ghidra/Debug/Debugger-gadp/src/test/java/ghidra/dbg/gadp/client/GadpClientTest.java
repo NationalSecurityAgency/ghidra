@@ -31,6 +31,7 @@ import java.util.concurrent.TimeoutException;
 import org.junit.Test;
 
 import ghidra.async.*;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.gadp.GadpVersion;
 import ghidra.dbg.gadp.protocol.Gadp;
 import ghidra.dbg.gadp.util.AsyncProtobufMessageChannel;
@@ -400,7 +401,7 @@ public class GadpClientTest implements AsyncTestUtils {
 			assertEquals(HELLO_WORLD, waitOn(fetchVal1));
 			assertEquals(HELLO_WORLD, waitOn(fetchVal2));
 
-			CompletableFuture<?> fetchVal3 = client.fetchModelValue(PathUtils.parse("value"), true);
+			CompletableFuture<?> fetchVal3 = client.fetchModelValue(PathUtils.parse("value"), RefreshBehavior.REFRESH_ALWAYS);
 			srv.handleResyncAttributes(List.of(), true, null, Map.of("value", "Hi"));
 			assertEquals("Hi", waitOn(fetchVal3));
 		}

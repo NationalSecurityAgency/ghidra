@@ -41,28 +41,30 @@ public class DbgStackListFramesCommand extends AbstractDbgCommand<List<DbgStackF
 	@Override
 	public void invoke() {
 		result = new ArrayList<>();
-		DebugSystemObjects so = manager.getSystemObjects();
-		DebugThreadId previous = so.getCurrentThreadId();
-		so.setCurrentThreadId(thread.getId());
-		DebugStackInformation stackTrace = manager.getControl().getStackTrace(0L, 0L, 0L);
-		for (int i = 0; i < stackTrace.getNumberOfFrames(); i++) {
-			DEBUG_STACK_FRAME tf = stackTrace.getFrame(i);
-			//DbgStackFrame frame = new DbgStackFrameImpl(thread, tf.FrameNumber.intValue(),
-			//	new BigInteger(Long.toHexString(tf.InstructionOffset.longValue()), 16), null);
-			DbgStackFrame frame = new DbgStackFrameImpl(thread, //
-				tf.FrameNumber.intValue(), //
-				new BigInteger(Long.toHexString(tf.InstructionOffset.longValue()), 16), //
-				tf.FuncTableEntry.longValue(), //
-				tf.FrameOffset.longValue(), //
-				tf.ReturnOffset.longValue(), //
-				tf.StackOffset.longValue(), //
-				tf.Virtual.booleanValue(), //
-				tf.Params[0].longValue(), //
-				tf.Params[1].longValue(), //
-				tf.Params[2].longValue(), //
-				tf.Params[3].longValue());
-			result.add(frame);
+		try {
+			setThread(thread);
+			DebugStackInformation stackTrace = manager.getControl().getStackTrace(0L, 0L, 0L);
+			for (int i = 0; i < stackTrace.getNumberOfFrames(); i++) {
+				DEBUG_STACK_FRAME tf = stackTrace.getFrame(i);
+				//DbgStackFrame frame = new DbgStackFrameImpl(thread, tf.FrameNumber.intValue(),
+				//	new BigInteger(Long.toHexString(tf.InstructionOffset.longValue()), 16), null);
+				DbgStackFrame frame = new DbgStackFrameImpl(thread, //
+					tf.FrameNumber.intValue(), //
+					new BigInteger(Long.toHexString(tf.InstructionOffset.longValue()), 16), //
+					tf.FuncTableEntry.longValue(), //
+					tf.FrameOffset.longValue(), //
+					tf.ReturnOffset.longValue(), //
+					tf.StackOffset.longValue(), //
+					tf.Virtual.booleanValue(), //
+					tf.Params[0].longValue(), //
+					tf.Params[1].longValue(), //
+					tf.Params[2].longValue(), //
+					tf.Params[3].longValue());
+				result.add(frame);
+			}
+		} 
+		finally {
+			resetThread();
 		}
-		so.setCurrentThreadId(previous);
 	}
 }

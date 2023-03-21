@@ -18,6 +18,7 @@ package agent.dbgeng.model.iface2;
 import java.util.concurrent.CompletableFuture;
 
 import agent.dbgeng.dbgeng.DebugProcessId;
+import agent.dbgeng.dbgeng.DebugProcessRecord;
 import agent.dbgeng.manager.DbgEventsListenerAdapter;
 import agent.dbgeng.manager.DbgProcess;
 import agent.dbgeng.manager.DbgState;
@@ -73,7 +74,7 @@ public interface DbgModelTargetProcess extends //
 		try {
 			String index = PathUtils.parseIndex(getName());
 			Long pid = Long.decode(index);
-			DebugProcessId id = new DebugProcessId(pid);
+			DebugProcessId id = new DebugProcessRecord(pid);
 			return manager.getProcessComputeIfAbsent(id, pid, fire);
 		}
 		catch (IllegalArgumentException e) {

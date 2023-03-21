@@ -109,7 +109,7 @@ public class DbgModelTargetStackFrameImpl extends DbgModelTargetObjectImpl
 		if (frame.getFunction() == null) {
 			return String.format("#%d 0x%s", frame.getLevel(), frame.getAddress().toString(16));
 		}
-		return String.format("#%d 0x%s in %s ()", frame.getLevel(), frame.getAddress().toString(16),
+		return String.format("#%d 0x%s in %s", frame.getLevel(), frame.getAddress().toString(16),
 			frame.getFunction());
 	}
 

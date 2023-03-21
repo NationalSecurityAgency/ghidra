@@ -82,11 +82,12 @@ public interface DbgModelTargetRegisterBank extends DbgModelTargetObject, Target
 					VALUE_ATTRIBUTE_NAME, value.toString(16) //
 				), "Refreshed");
 				if (value.longValue() != 0) {
-					String newval = reg.getName() + " : " + value.toString(16);
+					String valstr = Long.toUnsignedString(value.longValue(), 16);  //value.toString(16);
+					String newval = reg.getName() + " : " + valstr;
 					reg.changeAttributes(List.of(), Map.of( //
 						DISPLAY_ATTRIBUTE_NAME, newval //
 					), "Refreshed");
-					reg.setModified(value.toString(16).equals(oldval));
+					reg.setModified(valstr.equals(oldval));
 				}
 			}
 

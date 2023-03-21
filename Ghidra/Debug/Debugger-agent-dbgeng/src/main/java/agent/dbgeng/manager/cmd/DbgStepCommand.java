@@ -73,7 +73,7 @@ public class DbgStepCommand extends AbstractDbgCommand<Void> {
 	@Override
 	public void invoke() {
 		String cmd = "";
-		String prefix = id == null ? "" : "~" + id.id + " ";
+		String prefix = id == null ? "" : "~" + id.id() + " ";
 		DebugControl control = manager.getControl();
 		if (suffix.equals(ExecSuffix.STEP_INSTRUCTION)) {
 			cmd = "t";

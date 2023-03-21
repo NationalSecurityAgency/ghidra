@@ -15,22 +15,38 @@
  */
 package agent.dbgeng.model.impl;
 
+import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import agent.dbgeng.dbgeng.*;
-import agent.dbgeng.manager.*;
+import agent.dbgeng.dbgeng.DebugModuleInfo;
+import agent.dbgeng.dbgeng.DebugProcessId;
+import agent.dbgeng.dbgeng.DebugThreadId;
+import agent.dbgeng.manager.DbgCause;
+import agent.dbgeng.manager.DbgProcess;
+import agent.dbgeng.manager.DbgReason;
+import agent.dbgeng.manager.DbgState;
+import agent.dbgeng.manager.DbgThread;
 import agent.dbgeng.manager.breakpoint.DbgBreakpointInfo;
+import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.model.iface1.DbgModelTargetConfigurable;
-import agent.dbgeng.model.iface2.*;
+import agent.dbgeng.model.iface2.DbgModelTargetMemoryContainer;
+import agent.dbgeng.model.iface2.DbgModelTargetModuleContainer;
+import agent.dbgeng.model.iface2.DbgModelTargetProcess;
+import agent.dbgeng.model.iface2.DbgModelTargetProcessContainer;
+import agent.dbgeng.model.iface2.DbgModelTargetSession;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.error.DebuggerIllegalArgumentException;
 import ghidra.dbg.target.TargetConfigurable;
+import ghidra.dbg.target.TargetMethod;
+import ghidra.dbg.target.TargetMethod.AnnotatedTargetMethod;
 import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.target.schema.*;
+import ghidra.dbg.target.schema.TargetAttributeType;
+import ghidra.dbg.target.schema.TargetElementType;
+import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 
 @TargetObjectSchemaInfo(
 	name = "ProcessContainer",
@@ -39,6 +55,7 @@ import ghidra.dbg.target.schema.*;
 	},
 	attributes = {
 		@TargetAttributeType(name = TargetConfigurable.BASE_ATTRIBUTE_NAME, type = Integer.class),
+		@TargetAttributeType(name = "Populate", type = TargetMethod.class),
 		@TargetAttributeType(type = Void.class)
 	},
 	canonicalContainer = true)
@@ -49,7 +66,8 @@ public class DbgModelTargetProcessContainerImpl extends DbgModelTargetObjectImpl
 		super(session.getModel(), session, "Processes", "ProcessContainer");
 		this.changeAttributes(List.of(), Map.of(BASE_ATTRIBUTE_NAME, 16), "Initialized");
 
-		getManager().addEventsListener(this);
+		DbgManagerImpl manager = getManager();
+		manager.addEventsListener(this);
 	}
 
 	@Override
@@ -62,7 +80,14 @@ public class DbgModelTargetProcessContainerImpl extends DbgModelTargetObjectImpl
 		broadcast().event(getProxy(), null, TargetEventType.PROCESS_CREATED,
 			"Process " + proc.getId() + " started " + process.getName() + "pid=" + proc.getPid(),
 			List.of(process));
-	}
+
+		DbgManagerImpl manager = getManager();
+		if (manager.isKernelMode()) {
+			changeAttributes(List.of(), List.of(),
+					AnnotatedTargetMethod.collectExports(MethodHandles.lookup(), getModel(), this),
+					"Methods");
+		}	
+}
 
 	@Override
 	public void processStarted(DbgProcess proc, DbgCause cause) {
@@ -133,7 +158,8 @@ public class DbgModelTargetProcessContainerImpl extends DbgModelTargetObjectImpl
 
 	@Override
 	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
-		return getManager().listProcesses().thenAccept(byIID -> {
+		DbgManagerImpl manager = getManager();
+		return manager.listProcesses().thenAccept(byIID -> {
 			List<TargetObject> processes;
 			synchronized (this) {
 				processes = byIID.values()
@@ -188,4 +214,15 @@ public class DbgModelTargetProcessContainerImpl extends DbgModelTargetObjectImpl
 		return AsyncUtils.NIL;
 	}
 
+	@TargetMethod.Export("Populate")
+	public CompletableFuture<Void> populate() {
+		return getManager().listOSProcesses().thenAccept(byPID -> {
+			List<TargetObject> processes;
+			synchronized (this) {
+				processes =
+					byPID.values().stream().map(this::getTargetProcess).collect(Collectors.toList());
+			}
+			setElements(processes, Map.of(), "Refreshed");
+		});
+	}
 }

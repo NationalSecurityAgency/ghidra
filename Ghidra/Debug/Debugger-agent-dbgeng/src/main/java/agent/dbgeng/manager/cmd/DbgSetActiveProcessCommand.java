@@ -98,7 +98,7 @@ public class DbgSetActiveProcessCommand extends AbstractDbgCommand<Void> {
 				} else {
 					so.setCurrentProcessId(id);
 					DebugProcessId currentProcessId = so.getCurrentProcessId();
-					if (id.id != currentProcessId.id) {
+					if (!id.id().equals(currentProcessId.id())) {
 						so.setCurrentProcessId(id);
 					}
 				}
