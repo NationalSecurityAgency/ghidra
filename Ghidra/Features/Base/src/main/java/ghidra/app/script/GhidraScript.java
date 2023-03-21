@@ -2505,13 +2505,60 @@ public abstract class GhidraScript extends FlatProgramAPI {
 	 * 			second part of the variable name (in headless mode or when using .properties file)
 	 * @return the user-specified Address value
 	 * @throws CancelledException if the user hit the 'cancel' button in GUI mode
-	 * @throws IllegalArgumentException if in headless mode, there was a missing or	invalid Address
+	 * @throws IllegalArgumentException if in headless mode, there was a missing or invalid Address
 	 * 			specified in the .properties file
 	 */
 	public Address askAddress(String title, String message) throws CancelledException {
+		return askAddress(title, message, null);
+	}
+	
+	/**
+	 * Returns an Address, using the String parameters for guidance.  The actual behavior of the
+	 * method depends on your environment, which can be GUI or headless.
+	 * <p>
+	 * Regardless of environment -- if script arguments have been set, this method will use the
+	 * next argument in the array and advance the array index so the next call to an ask method
+	 * will get the next argument.  If there are no script arguments and a .properties file
+	 * sharing the same base name as the Ghidra Script exists (i.e., Script1.properties for
+	 * Script1.java), then this method will then look there for the String value to return.
+	 * The method will look in the .properties file by searching for a property name that is a
+	 * space-separated concatenation of the input String parameters (title + " " + message).
+	 * If that property name exists and its value represents a valid Address value, then the
+	 * .properties value will be used in the following way:
+	 * <ol>
+	 * 		<li>In the GUI environment, this method displays a popup dialog that prompts the user
+	 * 			for an address value. If the same popup has been run before in the same session,
+	 * 			the address input field will be pre-populated with the last-used address. If not,
+	 * 			the	address input field will be pre-populated with the .properties value (if it
+	 * 			exists).</li>
+	 *		<li>In the headless environment, this method returns an Address representing the
+	 *			.properties value (if it exists), or throws an Exception if there is an invalid or
+	 *			missing .properties value.</li>
+	 * </ol>
+	 *
+	 *
+	 * @param title the title of the dialog (in GUI mode) or the first part of the variable name
+	 * 			(in headless mode or when using .properties file)
+	 * @param message the message to display next to the input field (in GUI mode) or the
+	 * 			second part of the variable name (in headless mode or when using .properties file)
+	 * @param defaultValue the optional default address as a String - if null is passed or an invalid 
+	 * 			address is given no default will be shown in dialog
+	 * @return the user-specified Address value
+	 * @throws CancelledException if the user hit the 'cancel' button in GUI mode
+	 * @throws IllegalArgumentException if in headless mode, there was a missing or invalid Address
+	 * 			specified in the .properties file
+	 */
+	public Address askAddress(String title, String message, String defaultValue) throws CancelledException {
 
 		String key = join(title, message);
-		Address existingValue = loadAskValue(this::parseAddress, key);
+		
+		Address defaultAddr = null;
+		if (defaultValue != null) {
+			defaultAddr = currentProgram.getAddressFactory().getAddress(defaultValue);
+		}
+		
+		// if defaultAddr is null then it assumes no default value
+		Address existingValue = loadAskValue(defaultAddr, this::parseAddress, key);
 		if (isRunningHeadless()) {
 			return existingValue;
 		}
