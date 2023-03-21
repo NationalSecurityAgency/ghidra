@@ -15,27 +15,30 @@
  */
 package agent.dbgeng.manager.cmd;
 
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import agent.dbgeng.dbgeng.DebugControl;
 import agent.dbgeng.dbgeng.DebugProcessId;
-import agent.dbgeng.dbgeng.DebugSystemObjects;
-import agent.dbgeng.dbgeng.DebugThreadId;
+import agent.dbgeng.dbgeng.DebugProcessRecord;
 import agent.dbgeng.manager.DbgEvent;
-import agent.dbgeng.manager.DbgThread;
+import agent.dbgeng.manager.DbgManager;
+import agent.dbgeng.manager.DbgProcess;
 import agent.dbgeng.manager.evt.AbstractDbgCompletedCommandEvent;
 import agent.dbgeng.manager.evt.DbgConsoleOutputEvent;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.manager.impl.DbgProcessImpl;
-import agent.dbgeng.manager.impl.DbgThreadImpl;
 import ghidra.util.Msg;
 
-public class DbgSetCurrentState extends AbstractDbgCommand<DbgThread> {
+/**
+ * Implementation of {@link DbgManager#listProcesses()}
+ */
+public class DbgListOSProcessesCommand extends AbstractDbgCommand<Map<DebugProcessId, DbgProcess>> {
+	private List<DebugProcessId> updatedProcessIds = new ArrayList<>();
 
-	private long pid;
-	private long tid;
-	private DebugProcessId pID;
-	private DebugThreadId tID;
-
-	public DbgSetCurrentState(DbgManagerImpl manager) {
+	public DbgListOSProcessesCommand(DbgManagerImpl manager) {
 		super(manager);
 	}
 
@@ -51,52 +54,47 @@ public class DbgSetCurrentState extends AbstractDbgCommand<DbgThread> {
 	}
 
 	@Override
-	public DbgThread complete(DbgPendingCommand<?> pending) {
+	public Map<DebugProcessId, DbgProcess> complete(DbgPendingCommand<?> pending) {
 		StringBuilder builder = new StringBuilder();
 		for (DbgConsoleOutputEvent out : pending.findAllOf(DbgConsoleOutputEvent.class)) {
 			builder.append(out.getOutput());
 		}
 		parse(builder.toString());
-
-		if (pID == null) {
-			return null;
-		}
-		DbgProcessImpl proc = manager.getProcessComputeIfAbsent(pID, pid, true);
-		DbgThreadImpl thread = manager.getThreadComputeIfAbsent(tID, proc, tid, true);
-		try {
-			DebugSystemObjects so = manager.getSystemObjects();
-			proc.setOffset(so.getCurrentProcessDataOffset());
-			thread.setOffset(so.getCurrentThreadDataOffset());
-		} catch (Exception e) {
-			Msg.error(this, e.getMessage());
-		}
-		return thread;
+		Msg.warn(this, "Completed OS process list");
+		return manager.getKnownProcesses();
 	}
 
 	private void parse(String result) {
 		String[] lines = result.split("\n");
+		Long offset = null;
 		for (int i = 0; i < lines.length; i++) {
 			String line = lines[i];
-			if (line.contains("THREAD")) {
+			if (line.contains("PROCESS")) {
+				offset = null;			
 				String[] fields = line.trim().split("\\s+");
-				if (fields.length > 3 && fields[2].equals("Cid")) {
-					String[] split = fields[3].split("\\.");
-					if (split.length == 2) {
-						pid = Long.parseLong(split[0], 16);
-						tid = Long.parseLong(split[1], 16);
-						pID = new DebugProcessId(pid);
-						tID = new DebugThreadId(tid);
+				if (fields.length > 1 && fields[0].equals("PROCESS")) {
+					BigInteger val = new BigInteger(fields[1], 16);
+					offset = val.longValue();
+				}
+			}
+			if (line.contains("Cid:")) {
+				String[] fields = line.trim().split("\\s+");
+				if (fields.length > 3 && fields[2].equals("Cid:")) {
+					Long pid = Long.parseLong(fields[3], 16);
+					DbgProcessImpl mirror = manager.getProcessComputeIfAbsent(new DebugProcessRecord(pid), pid, false);
+					if (offset != null) {
+						mirror.setOffset(offset);
+						updatedProcessIds.add(mirror.getId());
 					}
 				}
-				break;
-			}
+			}		
 		}		
 	}
 
 	@Override
 	public void invoke() {
+		Msg.warn(this, "Retrieving OS process list");
 		DebugControl control = manager.getControl();
-		control.execute("!thread");
+		control.execute("!process 0 0");		
 	}
-
 }

@@ -15,7 +15,9 @@
  */
 package agent.dbgeng.impl.dbgeng.sysobj;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import com.sun.jna.platform.win32.WinDef.ULONG;
 import com.sun.jna.platform.win32.WinDef.ULONGByReference;
@@ -24,6 +26,7 @@ import com.sun.jna.platform.win32.COM.COMUtils;
 
 import agent.dbgeng.dbgeng.COMUtilsExtra;
 import agent.dbgeng.dbgeng.DebugSessionId;
+import agent.dbgeng.dbgeng.DebugSessionRecord;
 import agent.dbgeng.jna.dbgeng.sysobj.IDebugSystemObjects3;
 
 public class DebugSystemObjectsImpl3 extends DebugSystemObjectsImpl2 {
@@ -40,10 +43,10 @@ public class DebugSystemObjectsImpl3 extends DebugSystemObjectsImpl2 {
 		ULONGByReference pulId = new ULONGByReference();
 		HRESULT hr = jnaSysobj.GetEventSystem(pulId);
 		if (hr.equals(COMUtilsExtra.E_UNEXPECTED)) {
-			return new DebugSessionId(-1);
+			return new DebugSessionRecord(-1);
 		}
 		COMUtils.checkRC(hr);
-		return new DebugSessionId(pulId.getValue().intValue());
+		return new DebugSessionRecord(pulId.getValue().intValue());
 	}
 
 	@Override
@@ -51,15 +54,15 @@ public class DebugSystemObjectsImpl3 extends DebugSystemObjectsImpl2 {
 		ULONGByReference pulId = new ULONGByReference();
 		HRESULT hr = jnaSysobj.GetCurrentSystemId(pulId);
 		if (hr.equals(COMUtilsExtra.E_UNEXPECTED)) {
-			return new DebugSessionId(-1);
+			return new DebugSessionRecord(-1);
 		}
 		COMUtils.checkRC(hr);
-		return new DebugSessionId(pulId.getValue().intValue());
+		return new DebugSessionRecord(pulId.getValue().intValue());
 	}
 
 	@Override
 	public void setCurrentSystemId(DebugSessionId id) {
-		HRESULT hr = jnaSysobj.SetCurrentSystemId(new ULONG(id.id));
+		HRESULT hr = jnaSysobj.SetCurrentSystemId(new ULONG(id.value()));
 		if (!hr.equals(COMUtilsExtra.E_UNEXPECTED)) {
 			COMUtils.checkRC(hr);
 		}
@@ -88,7 +91,7 @@ public class DebugSystemObjectsImpl3 extends DebugSystemObjectsImpl2 {
 		COMUtils.checkRC(jnaSysobj.GetSystemIdsByIndex(ulStart, ulCount, aulIds, null));
 		List<DebugSessionId> result = new ArrayList<>(count);
 		for (int i = 0; i < count; i++) {
-			result.add(new DebugSessionId(aulIds[i].intValue()));
+			result.add(new DebugSessionRecord(aulIds[i].intValue()));
 		}
 		return result;
 	}

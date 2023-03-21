@@ -16,31 +16,29 @@
 package agent.dbgeng.manager.cmd;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import agent.dbgeng.dbgeng.DebugControl;
+import agent.dbgeng.dbgeng.DebugThreadId;
+import agent.dbgeng.dbgeng.DebugThreadRecord;
 import agent.dbgeng.manager.DbgEvent;
-import agent.dbgeng.manager.DbgProcess;
+import agent.dbgeng.manager.DbgThread;
 import agent.dbgeng.manager.evt.AbstractDbgCompletedCommandEvent;
 import agent.dbgeng.manager.evt.DbgConsoleOutputEvent;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.manager.impl.DbgProcessImpl;
+import agent.dbgeng.manager.impl.DbgThreadImpl;
 import ghidra.util.Msg;
 
-public class DbgResolveProcessCommand extends AbstractDbgCommand<DbgProcess> {
+public class DbgListOSThreadsCommand extends AbstractDbgCommand<Map<DebugThreadId, DbgThread>> {
+	protected final DbgProcessImpl process;
+	private List<DebugThreadId> updatedThreadIds = new ArrayList<>();;
 
-	private DbgProcessImpl process;
-	private Long offset;
-
-	/**
-	 * Adjust the process contents to include both pid and offset  
-	 * NB: should only be used in kernel-mode against the current process (i.e. id==offset)
-	 * 
-	 * @param manager the manager to execute the command
-	 * @param process the desired process
-	 */
-	public DbgResolveProcessCommand(DbgManagerImpl manager, DbgProcess process) {
+	public DbgListOSThreadsCommand(DbgManagerImpl manager, DbgProcessImpl process) {
 		super(manager);
-		this.process = (DbgProcessImpl) process;
+		this.process = process;
 	}
 
 	@Override
@@ -55,47 +53,46 @@ public class DbgResolveProcessCommand extends AbstractDbgCommand<DbgProcess> {
 	}
 
 	@Override
-	public DbgProcess complete(DbgPendingCommand<?> pending) {
+	public Map<DebugThreadId, DbgThread> complete(DbgPendingCommand<?> pending) {
 		StringBuilder builder = new StringBuilder();
 		for (DbgConsoleOutputEvent out : pending.findAllOf(DbgConsoleOutputEvent.class)) {
 			builder.append(out.getOutput());
 		}
 		parse(builder.toString());
-		return process;
+		Msg.warn(this, "Completed OS thread list for pid="+Long.toHexString(process.getPid()));
+		Map<DebugThreadId, DbgThread> threads = process.getKnownThreads();
+		return threads;
 	}
 
 	private void parse(String result) {
 		String[] lines = result.split("\n");
+		Long offset = null;
 		for (int i = 0; i < lines.length; i++) {
 			String line = lines[i];
-			if (line.contains("PROCESS")) {
+			if (line.contains("THREAD")) {
 				String[] fields = line.trim().split("\\s+");
-				if (fields.length > 1 && fields[0].equals("PROCESS")) {
+				if (fields.length > 4 && fields[0].equals("THREAD")) {
 					BigInteger val = new BigInteger(fields[1], 16);
 					offset = val.longValue();
-					process.setOffset(offset);
+					String[] split = fields[3].split("\\.");
+					if (split.length == 2) {
+						Long tid = Long.parseLong(split[1], 16);
+						DbgThreadImpl mirror = manager.getThreadComputeIfAbsent(new DebugThreadRecord(tid), process, tid, false);
+						if (offset != null) {
+							mirror.setOffset(offset);
+							updatedThreadIds.add(mirror.getId());
+						}
+					}
 				}
-			}
-			if (line.contains("Cid:")) {
-				String[] fields = line.trim().split("\\s+");
-				if (fields.length > 3 && fields[2].equals("Cid:")) {
-					Long pid = Long.parseLong(fields[3], 16);
-					process.setPid(pid);
-				}
-				break;
 			}		
 		}		
-		if (offset == null) {
-			Msg.error(this, result);
-		}
 	}
 
 	@Override
 	public void invoke() {
-		if (process != null) {
-			DebugControl control = manager.getControl();
-			Long key = process.getOffset() != null ? process.getOffset() : process.getPid();
-			control.execute("!process "+Long.toHexString(key)+" 0");		
-		}
+		Msg.warn(this, "Retrieving OS thread list for pid="+Long.toHexString(process.getPid()));
+		DebugControl control = manager.getControl();
+		control.execute("!process "+Long.toHexString(process.getOffset())+" 2");		
 	}
+
 }

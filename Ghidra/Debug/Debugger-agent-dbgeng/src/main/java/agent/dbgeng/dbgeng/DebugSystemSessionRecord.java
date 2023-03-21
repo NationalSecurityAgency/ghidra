@@ -15,24 +15,20 @@
  */
 package agent.dbgeng.dbgeng;
 
-/**
- * The <em>engine</em> ID assigned to a debugged process.
- * 
- * Note: This is not the same as the "PID." {@code dbgeng.dll} calls that the <em>system</em> ID of
- * the process.
- * 
- * This is essentially just a boxed integer, but having an explicit data type prevents confusion
- * with other integral values. In particular, this prevents confusion of engine PIDs with system
- * PIDs.
- */
-public interface DebugSessionId extends Comparable<DebugSessionId> {
+public record DebugSystemSessionRecord(long value) implements DebugSessionId {
 
-	public String id();
-	public long value();
-	public boolean isSystem();
-	
 	@Override
-	public default int compareTo(DebugSessionId that) {
-		return this.id().compareTo(that.id());
+	public boolean isSystem() {
+		return true;
+	}
+
+	@Override
+	public String id() {
+		return "SYS"+Long.toHexString(value);
+	}
+
+	@Override
+	public String toString() {
+		return "<dbgeng.dll System SYSID " + Long.toHexString(value) + ">";
 	}
 }

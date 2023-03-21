@@ -23,11 +23,13 @@ import java.util.concurrent.RejectedExecutionException;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
-import agent.dbgeng.dbgeng.DebugSessionId;
+import agent.dbgeng.dbgeng.DebugSessionRecord;
 import agent.dbgeng.manager.DbgManager;
 import agent.dbgeng.manager.DbgSession;
 import agent.dbgeng.model.AbstractDbgModel;
-import agent.dbgeng.model.iface2.*;
+import agent.dbgeng.model.iface2.DbgModelTargetProcess;
+import agent.dbgeng.model.iface2.DbgModelTargetSession;
+import agent.dbgeng.model.iface2.DbgModelTargetSessionContainer;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.DebuggerModelClosedReason;
 import ghidra.dbg.DebuggerObjectModelWithMemory;
@@ -36,7 +38,11 @@ import ghidra.dbg.target.TargetMemory;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.AnnotatedSchemaContext;
 import ghidra.dbg.target.schema.TargetObjectSchema;
-import ghidra.program.model.address.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressFactory;
+import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.address.DefaultAddressFactory;
+import ghidra.program.model.address.GenericAddressSpace;
 
 public class DbgModelImpl extends AbstractDbgModel implements DebuggerObjectModelWithMemory {
 	// TODO: Need some minimal memory modeling per architecture on the model/agent side.
@@ -67,7 +73,7 @@ public class DbgModelImpl extends AbstractDbgModel implements DebuggerObjectMode
 		//System.out.println(XmlSchemaContext.serialize(SCHEMA_CTX));
 		this.root = new DbgModelTargetRootImpl(this, ROOT_SCHEMA);
 		this.completedRoot = CompletableFuture.completedFuture(root);
-		DbgSession s = dbg.getSessionComputeIfAbsent(new DebugSessionId(0), true);
+		DbgSession s = dbg.getSessionComputeIfAbsent(new DebugSessionRecord(0), true);
 		DbgModelTargetSessionContainer sessions = root.sessions;
 		this.session = (DbgModelTargetSessionImpl) sessions.getTargetSession(s);
 		addModelRoot(root);

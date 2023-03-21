@@ -25,37 +25,15 @@ package agent.dbgeng.dbgeng;
  * with other integral values. In particular, this prevents confusion of engine TIDs with system
  * TIDs.
  */
-public class DebugThreadId implements Comparable<DebugThreadId> {
-	public final long id;
+public interface DebugThreadId extends Comparable<DebugThreadId> {
 
-	public DebugThreadId(long id) {
-		this.id = id;
-	}
-
+	public String id();
+	public long value();
+	public boolean isSystem();
+	
 	@Override
-	public int hashCode() {
-		return Long.hashCode(id);
+	public default int compareTo(DebugThreadId that) {
+		return this.id().compareTo(that.id());
 	}
 
-	@Override
-	public boolean equals(Object obj) {
-		if (!(obj instanceof DebugThreadId)) {
-			return false;
-		}
-		DebugThreadId that = (DebugThreadId) obj;
-		if (this.id != that.id) {
-			return false;
-		}
-		return true;
-	}
-
-	@Override
-	public int compareTo(DebugThreadId that) {
-		return Long.compare(this.id, that.id);
-	}
-
-	@Override
-	public String toString() {
-		return "<dbgeng.dll Engine TID " + id + ">";
-	}
 }
