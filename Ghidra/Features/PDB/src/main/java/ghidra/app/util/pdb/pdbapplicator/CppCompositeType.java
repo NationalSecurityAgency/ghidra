@@ -1267,7 +1267,7 @@ public class CppCompositeType {
 
 	void addPdbMember(List<ClassPdbMember> pdbMembers, Member member) {
 		ClassPdbMember classPdbMember = new ClassPdbMember(member.getName(), member.getDataType(),
-			member.isFlexibleArray(), member.getOffset(), null);
+			member.isFlexibleArray(), member.getOffset(), member.getComment());
 		pdbMembers.add(classPdbMember);
 	}
 
