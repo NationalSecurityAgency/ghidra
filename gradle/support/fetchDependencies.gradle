@@ -59,12 +59,12 @@ file("${REPO_DIR}/Ghidra/application.properties").withReader { reader ->
 
 ext.deps = [
 	[
-		name: "dex-tools-2.0.zip",
-		url: "https://github.com/pxb1988/dex2jar/releases/download/2.0/dex-tools-2.0.zip",
-		sha256: "7907eb4d6e9280b6e17ddce7ee0507eae2ef161ee29f70a10dbc6944fdca75bc",
+		name: "dex2jar-2.1.zip",
+		url: "https://github.com/pxb1988/dex2jar/releases/download/v2.1/dex2jar-2.1.zip",
+		sha256: "7a9bdf843d43de4d1e94ec2e7b6f55825017b0c4a7ee39ff82660e2493a46f08",
 		destination: {
-			unzip(DOWNLOADS_DIR, DOWNLOADS_DIR, "dex-tools-2.0.zip")
-			FileUtils.copyDirectory(new File(DOWNLOADS_DIR, "dex2jar-2.0/lib/"), FLAT_REPO_DIR, new WildcardFileFilter("dex-*"));
+			unzip(DOWNLOADS_DIR, DOWNLOADS_DIR, "dex2jar-2.1.zip")
+			FileUtils.copyDirectory(new File(DOWNLOADS_DIR, "dex-tools-2.1/lib/"), FLAT_REPO_DIR, new WildcardFileFilter("dex-*"));
 		}
 	],
 	[

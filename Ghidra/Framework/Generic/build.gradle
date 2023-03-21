@@ -26,7 +26,8 @@ eclipse.project.name = 'Framework Generic'
 
 dependencies {
 	api project(':Utility')
-	api "com.google.guava:guava:19.0"
+	api "com.google.guava:guava:31.1-jre"
+	api 'com.google.guava:failureaccess:1.0.1'
 	api "org.jdom:jdom-legacy:1.1.3"
 	api "org.apache.logging.log4j:log4j-api:2.17.1"
 	api "org.apache.logging.log4j:log4j-core:2.17.1"
