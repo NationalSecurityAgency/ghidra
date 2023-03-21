@@ -25,6 +25,20 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.type.AbstractProcedureMsType;
  */
 public class ProcedureFlags extends AbstractParsableItem {
 
+	private static final int HAS_FRAME_POINTER_PRESENT = 0x0001;
+	private static final int HAS_INTERRUPT_RETURN = 0x0002;
+	private static final int HAS_FAR_RETURN = 0x0004;
+	private static final int DOES_NOT_RETURN = 0x0008;
+	private static final int LABEL_NOT_REACHED = 0x0010;
+	private static final int HAS_CUSTOM_CALLING_CONVENTION = 0x0020;
+	private static final int MARKED_AS_NO_INLINE = 0x0040;
+	private static final int HAS_DEBUG_INFORMATION_FOR_OPTIMIZED_CODE = 0x0080;
+
+	private static final int FUNCTION_INDICATION =
+		HAS_FRAME_POINTER_PRESENT | HAS_INTERRUPT_RETURN | HAS_FAR_RETURN | DOES_NOT_RETURN |
+			LABEL_NOT_REACHED | HAS_CUSTOM_CALLING_CONVENTION | MARKED_AS_NO_INLINE |
+			HAS_DEBUG_INFORMATION_FOR_OPTIMIZED_CODE;
+
 	private int flagByte;
 
 	/**
@@ -55,7 +69,7 @@ public class ProcedureFlags extends AbstractParsableItem {
 	 * @return true if frame pointer is present
 	 */
 	public boolean hasFramePointerPresent() {
-		return (flagByte & 0x0001) == 0x0001;
+		return (flagByte & HAS_FRAME_POINTER_PRESENT) != 0;
 	}
 
 	/**
@@ -63,7 +77,7 @@ public class ProcedureFlags extends AbstractParsableItem {
 	 * @return true if has an interrupt return
 	 */
 	public boolean hasInterruptReturn() {
-		return (flagByte & 0x0002) == 0x0002;
+		return (flagByte & HAS_INTERRUPT_RETURN) != 0;
 	}
 
 	/**
@@ -71,7 +85,7 @@ public class ProcedureFlags extends AbstractParsableItem {
 	 * @return true if has a far return
 	 */
 	public boolean hasFarReturn() {
-		return (flagByte & 0x0004) == 0x0004;
+		return (flagByte & HAS_FAR_RETURN) != 0;
 	}
 
 	/**
@@ -79,7 +93,7 @@ public class ProcedureFlags extends AbstractParsableItem {
 	 * @return true if does not return
 	 */
 	public boolean doesNotReturn() {
-		return (flagByte & 0x0008) == 0x0008;
+		return (flagByte & DOES_NOT_RETURN) != 0;
 	}
 
 	/**
@@ -87,7 +101,7 @@ public class ProcedureFlags extends AbstractParsableItem {
 	 * @return true if label is not reached
 	 */
 	public boolean labelNotReached() {
-		return (flagByte & 0x0010) == 0x0010;
+		return (flagByte & LABEL_NOT_REACHED) != 0;
 	}
 
 	/**
@@ -99,7 +113,7 @@ public class ProcedureFlags extends AbstractParsableItem {
 	 * @return true if has custom calling convention
 	 */
 	public boolean hasCustomCallingConvention() {
-		return (flagByte & 0x0020) == 0x0020;
+		return (flagByte & HAS_CUSTOM_CALLING_CONVENTION) != 0;
 	}
 
 	/**
@@ -107,7 +121,7 @@ public class ProcedureFlags extends AbstractParsableItem {
 	 * @return true if marked as {@code noinline}
 	 */
 	public boolean markedAsNoInline() {
-		return (flagByte & 0x0040) == 0x0040;
+		return (flagByte & MARKED_AS_NO_INLINE) != 0;
 	}
 
 	/**
@@ -115,7 +129,15 @@ public class ProcedureFlags extends AbstractParsableItem {
 	 * @return true if has debug information for optimized code
 	 */
 	public boolean hasDebugInformationForOptimizedCode() {
-		return (flagByte & 0x0080) == 0x0080;
+		return (flagByte & HAS_DEBUG_INFORMATION_FOR_OPTIMIZED_CODE) != 0;
 	}
 
+	/**
+	 * Returns true if seems like a function.  Not necessary, but (seems) sufficient, to indicate a
+	 *  function (this is Ghidra functionality not specified in PDB API)
+	 * @return true if function indicated
+	 */
+	public boolean hasFunctionIndication() {
+		return (flagByte & FUNCTION_INDICATION) != 0x0000;
+	}
 }
