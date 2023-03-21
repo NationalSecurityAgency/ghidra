@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Ghidra Debugger</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="style.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="nav"><a
+ class="beginner" href="A1-GettingStarted.html">Getting Started</a><a
+ class="beginner" href="A2-UITour.html">UI Tour</a><a
+ class="beginner" href="A3-Breakpoints.html">Breakpoints</a><a
+ class="beginner" href="A4-MachineState.html">Machine State</a><a
+ class="beginner" href="A5-Navigation.html">Navigation</a><a
+ class="beginner" href="A6-MemoryMap.html">Memory Map</a><a
+ class="advanced" href="B1-RemoteTargets.html">Remote Targets</a><a
+ class="advanced" href="B2-Emulation.html">Emulation</a><a
+ class="advanced" href="B3-Scripting.html">Scripting</a><a
+ class="advanced" href="B4-Modeling.html">Modeling</a>
+</header>
+<header id="title-block-header">
+<h1 class="title">Ghidra Debugger</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#debugger-scripting" id="toc-debugger-scripting">Debugger
+Scripting</a>
+<ul>
+<li><a href="#the-debugger-scripting-api"
+id="toc-the-debugger-scripting-api">The Debugger Scripting API</a></li>
+<li><a href="#dumping-the-game-board"
+id="toc-dumping-the-game-board">Dumping the Game Board</a>
+<ul>
+<li><a href="#checking-the-target" id="toc-checking-the-target">Checking
+the Target</a></li>
+<li><a href="#checking-the-module-map"
+id="toc-checking-the-module-map">Checking the Module Map</a></li>
+<li><a href="#reading-the-data" id="toc-reading-the-data">Reading the
+Data</a></li>
+<li><a href="#dumping-the-board" id="toc-dumping-the-board">Dumping the
+Board</a></li>
+<li><a href="#test-the-script" id="toc-test-the-script">Test the
+Script</a></li>
+<li><a href="#exercise-remove-the-mines"
+id="toc-exercise-remove-the-mines">Exercise: Remove the Mines</a></li>
+</ul></li>
+<li><a href="#waiting-on-reacting-to-events"
+id="toc-waiting-on-reacting-to-events">Waiting on / Reacting to
+Events</a>
+<ul>
+<li><a href="#exercise-always-win-in-0-seconds"
+id="toc-exercise-always-win-in-0-seconds">Exercise: Always Win in 0
+Seconds</a></li>
+<li><a href="#solution-always-win-in-0-seconds"
+id="toc-solution-always-win-in-0-seconds">Solution: Always Win in 0
+Seconds</a></li>
+</ul></li>
+<li><a href="#learning-more" id="toc-learning-more">Learning
+More</a></li>
+</ul></li>
+</ul>
+</nav>
+<section id="debugger-scripting" class="level1">
+<h1>Debugger Scripting</h1>
+<p>This module assumes you have completed the Beginner portion of this
+course, as well as the Scripting module of the Intermediate course.</p>
+<p>As with Ghidra Scripting, the primary use case we consider in this
+module is automation. It also permits some one-off analysis of a live
+target or interacting with the dynamic target. There are also some
+extension points useful for <a href="B4-Modeling.html">Modeling</a> that
+are easily accessed in scripts for prototyping.</p>
+<p>The script development environment is set up exactly the same as it
+is for the rest of Ghidra.</p>
+<section id="the-debugger-scripting-api" class="level2">
+<h2>The Debugger Scripting API</h2>
+<p>To create a Debugger script, do as you normally would then append
+<code>implements FlatDebuggerAPI</code> to the script’s class
+declaration, e.g.:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode numberSource java numberLines"><code class="sourceCode java"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw">import</span> <span class="im">ghidra</span><span class="op">.</span><span class="im">app</span><span class="op">.</span><span class="im">script</span><span class="op">.</span><span class="im">GhidraScript</span><span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2"></a><span class="kw">import</span> <span class="im">ghidra</span><span class="op">.</span><span class="im">debug</span><span class="op">.</span><span class="im">flatapi</span><span class="op">.</span><span class="im">FlatDebuggerAPI</span><span class="op">;</span></span>
+<span id="cb1-3"><a href="#cb1-3"></a></span>
+<span id="cb1-4"><a href="#cb1-4"></a><span class="kw">public</span> <span class="kw">class</span> DemoDebuggerScript <span class="kw">extends</span> GhidraScript <span class="kw">implements</span> FlatDebuggerAPI <span class="op">{</span></span>
+<span id="cb1-5"><a href="#cb1-5"></a>    <span class="at">@Override</span></span>
+<span id="cb1-6"><a href="#cb1-6"></a>    <span class="kw">protected</span> <span class="dt">void</span> <span class="fu">run</span><span class="op">()</span> <span class="kw">throws</span> <span class="bu">Exception</span> <span class="op">{</span></span>
+<span id="cb1-7"><a href="#cb1-7"></a>    <span class="op">}</span></span>
+<span id="cb1-8"><a href="#cb1-8"></a><span class="op">}</span></span></code></pre></div>
+<p>Technically, the Debugger’s “deep” API is accessible to scripts;
+however, the flat API is preferred for scripting. Also, the flat API is
+usually more stable than the deep API. However, because the dynamic
+analysis flat API is newer, it may not be as stable as the static
+analysis flat API. It is also worth noting that the
+<code>FlatDebuggerAPI</code> interface <em>adds</em> the flat API to
+your script. The static analysis flat API is still available, and it
+will manipulate the static portions of the Debugger tool, just as they
+would in the CodeBrowser tool. In this tutorial, we will explore reading
+machine state, setting breakpoints, waiting for conditions, and
+controlling the target.</p>
+</section>
+<section id="dumping-the-game-board" class="level2">
+<h2>Dumping the Game Board</h2>
+<p>We will write a script that assumes the current session is for
+<code>termmines</code> and dumps the game board to the console, allowing
+you to cheat. You can label your variables however you would like but,
+for this tutorial, we will assume you have labeled them
+<code>width</code>, <code>height</code>, and <code>cells</code>. If you
+have not already located and labeled these variables, do so now.</p>
+<section id="checking-the-target" class="level3">
+<h3>Checking the Target</h3>
+<p>First, we will do some validation. Check that we have an active
+session (trace):</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode numberSource java numberLines"><code class="sourceCode java"><span id="cb2-1"><a href="#cb2-1"></a>Trace trace <span class="op">=</span> <span class="fu">getCurrentTrace</span><span class="op">();</span></span>
+<span id="cb2-2"><a href="#cb2-2"></a><span class="cf">if</span> <span class="op">(</span>trace <span class="op">==</span> <span class="kw">null</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-3"><a href="#cb2-3"></a>    <span class="cf">throw</span> <span class="kw">new</span> <span class="bu">AssertionError</span><span class="op">(</span><span class="st">&quot;There is no active session&quot;</span><span class="op">);</span></span>
+<span id="cb2-4"><a href="#cb2-4"></a><span class="op">}</span></span></code></pre></div>
+<p>Now, check that the current program is <code>termmines</code>:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode numberSource java numberLines"><code class="sourceCode java"><span id="cb3-1"><a href="#cb3-1"></a><span class="cf">if</span> <span class="op">(!</span><span class="st">&quot;termmines&quot;</span><span class="op">.</span><span class="fu">equals</span><span class="op">(</span>currentProgram<span class="op">.</span><span class="fu">getName</span><span class="op">()))</span> <span class="op">{</span></span>
+<span id="cb3-2"><a href="#cb3-2"></a>    <span class="cf">throw</span> <span class="kw">new</span> <span class="bu">AssertionError</span><span class="op">(</span><span class="st">&quot;The current program must be termmines&quot;</span><span class="op">);</span></span>
+<span id="cb3-3"><a href="#cb3-3"></a><span class="op">}</span></span></code></pre></div>
+</section>
+<section id="checking-the-module-map" class="level3">
+<h3>Checking the Module Map</h3>
+<p>Now, check that <code>termmines</code> is actually part of the
+current trace. There is not a great way to do this directly in the flat
+API, but we are going to need to map some symbols from the
+<code>termmines</code> module, anyway. In this step, we will both verify
+that the user has placed the required labels, as well as verify that
+those symbols can be mapped to the target:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode numberSource java numberLines"><code class="sourceCode java"><span id="cb4-1"><a href="#cb4-1"></a><span class="bu">List</span><span class="op">&lt;</span>Symbol<span class="op">&gt;</span> widthSyms <span class="op">=</span> <span class="fu">getSymbols</span><span class="op">(</span><span class="st">&quot;width&quot;</span><span class="op">,</span> <span class="kw">null</span><span class="op">);</span></span>
+<span id="cb4-2"><a href="#cb4-2"></a><span class="cf">if</span> <span class="op">(</span>widthSyms<span class="op">.</span><span class="fu">isEmpty</span><span class="op">())</span> <span class="op">{</span></span>
+<span id="cb4-3"><a href="#cb4-3"></a>    <span class="cf">throw</span> <span class="kw">new</span> <span class="bu">AssertionError</span><span class="op">(</span><span class="st">&quot;Symbol &#39;width&#39; is required&quot;</span><span class="op">);</span></span>
+<span id="cb4-4"><a href="#cb4-4"></a><span class="op">}</span></span>
+<span id="cb4-5"><a href="#cb4-5"></a><span class="bu">List</span><span class="op">&lt;</span>Symbol<span class="op">&gt;</span> heightSyms <span class="op">=</span> <span class="fu">getSymbols</span><span class="op">(</span><span class="st">&quot;height&quot;</span><span class="op">,</span> <span class="kw">null</span><span class="op">);</span></span>
+<span id="cb4-6"><a href="#cb4-6"></a><span class="cf">if</span> <span class="op">(</span>heightSyms<span class="op">.</span><span class="fu">isEmpty</span><span class="op">())</span> <span class="op">{</span></span>
+<span id="cb4-7"><a href="#cb4-7"></a>    <span class="cf">throw</span> <span class="kw">new</span> <span class="bu">AssertionError</span><span class="op">(</span><span class="st">&quot;Symbol &#39;height&#39; is required&quot;</span><span class="op">);</span></span>
+<span id="cb4-8"><a href="#cb4-8"></a><span class="op">}</span></span>
+<span id="cb4-9"><a href="#cb4-9"></a><span class="bu">List</span><span class="op">&lt;</span>Symbol<span class="op">&gt;</span> cellsSyms <span class="op">=</span> <span class="fu">getSymbols</span><span class="op">(</span><span class="st">&quot;cells&quot;</span><span class="op">,</span> <span class="kw">null</span><span class="op">);</span></span>
+<span id="cb4-10"><a href="#cb4-10"></a><span class="cf">if</span> <span class="op">(</span>cellsSyms<span class="op">.</span><span class="fu">isEmpty</span><span class="op">())</span> <span class="op">{</span></span>
+<span id="cb4-11"><a href="#cb4-11"></a>    <span class="cf">throw</span> <span class="kw">new</span> <span class="bu">AssertionError</span><span class="op">(</span><span class="st">&quot;Symbol &#39;cells&#39; is required&quot;</span><span class="op">);</span></span>
+<span id="cb4-12"><a href="#cb4-12"></a><span class="op">}</span></span>
+<span id="cb4-13"><a href="#cb4-13"></a></span>
+<span id="cb4-14"><a href="#cb4-14"></a>Address widthDyn <span class="op">=</span> <span class="fu">translateStaticToDynamic</span><span class="op">(</span>widthSyms<span class="op">.</span><span class="fu">get</span><span class="op">(</span><span class="dv">0</span><span class="op">).</span><span class="fu">getAddress</span><span class="op">());</span></span>
+<span id="cb4-15"><a href="#cb4-15"></a><span class="cf">if</span> <span class="op">(</span>widthDyn <span class="op">==</span> <span class="kw">null</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb4-16"><a href="#cb4-16"></a>    <span class="cf">throw</span> <span class="kw">new</span> <span class="bu">AssertionError</span><span class="op">(</span><span class="st">&quot;Symbol &#39;width&#39; is not mapped to target&quot;</span><span class="op">);</span></span>
+<span id="cb4-17"><a href="#cb4-17"></a><span class="op">}</span></span>
+<span id="cb4-18"><a href="#cb4-18"></a>Address heightDyn <span class="op">=</span> <span class="fu">translateStaticToDynamic</span><span class="op">(</span>heightSyms<span class="op">.</span><span class="fu">get</span><span class="op">(</span><span class="dv">0</span><span class="op">).</span><span class="fu">getAddress</span><span class="op">());</span></span>
+<span id="cb4-19"><a href="#cb4-19"></a><span class="cf">if</span> <span class="op">(</span>heightDyn <span class="op">==</span> <span class="kw">null</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb4-20"><a href="#cb4-20"></a>    <span class="cf">throw</span> <span class="kw">new</span> <span class="bu">AssertionError</span><span class="op">(</span><span class="st">&quot;Symbol &#39;height&#39; is not mapped to target&quot;</span><span class="op">);</span></span>
+<span id="cb4-21"><a href="#cb4-21"></a><span class="op">}</span></span>
+<span id="cb4-22"><a href="#cb4-22"></a>Address cellsDyn <span class="op">=</span> <span class="fu">translateStaticToDynamic</span><span class="op">(</span>cellsSyms<span class="op">.</span><span class="fu">get</span><span class="op">(</span><span class="dv">0</span><span class="op">).</span><span class="fu">getAddress</span><span class="op">());</span></span>
+<span id="cb4-23"><a href="#cb4-23"></a><span class="cf">if</span> <span class="op">(</span>cellsDyn <span class="op">==</span> <span class="kw">null</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb4-24"><a href="#cb4-24"></a>    <span class="cf">throw</span> <span class="kw">new</span> <span class="bu">AssertionError</span><span class="op">(</span><span class="st">&quot;Symbol &#39;cells&#39; is not mapped to target&quot;</span><span class="op">);</span></span>
+<span id="cb4-25"><a href="#cb4-25"></a><span class="op">}</span></span></code></pre></div>
+<p>The <code>getSymbols()</code> method is part of the static flat API,
+so it returns symbols from the current static listing. The
+<code>translateStaticToDynamic()</code> is part of the dynamic flat API.
+This allows us to locate that symbol in the dynamic context.</p>
+</section>
+<section id="reading-the-data" class="level3">
+<h3>Reading the Data</h3>
+<p>Now, we want to read the dimensions and the whole board to the trace.
+You should know from earlier exercises that the board is allocated 32
+cells by 32 cells, so we will want to read at least 1024 bytes. Note
+that this will implicitly capture the board to the trace:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode numberSource java numberLines"><code class="sourceCode java"><span id="cb5-1"><a href="#cb5-1"></a><span class="dt">byte</span><span class="op">[]</span> widthDat <span class="op">=</span> <span class="fu">readMemory</span><span class="op">(</span>widthDyn<span class="op">,</span> <span class="dv">4</span><span class="op">,</span> monitor<span class="op">);</span></span>
+<span id="cb5-2"><a href="#cb5-2"></a><span class="dt">byte</span><span class="op">[]</span> heightDat <span class="op">=</span> <span class="fu">readMemory</span><span class="op">(</span>heightDyn<span class="op">,</span> <span class="dv">4</span><span class="op">,</span> monitor<span class="op">);</span></span>
+<span id="cb5-3"><a href="#cb5-3"></a><span class="dt">byte</span><span class="op">[]</span> cellsData <span class="op">=</span> <span class="fu">readMemory</span><span class="op">(</span>cellsDyn<span class="op">,</span> <span class="dv">1024</span><span class="op">,</span> monitor<span class="op">);</span></span></code></pre></div>
+</section>
+<section id="dumping-the-board" class="level3">
+<h3>Dumping the Board</h3>
+<p>Beyond this, everything is pretty standard Java / Ghidra scripting.
+We will need to do some quick conversion of the bytes to integers, and
+then we can iterate over the cells and print the mines’ locations:</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode numberSource java numberLines"><code class="sourceCode java"><span id="cb6-1"><a href="#cb6-1"></a><span class="dt">int</span> width <span class="op">=</span> <span class="bu">ByteBuffer</span><span class="op">.</span><span class="fu">wrap</span><span class="op">(</span>widthDat<span class="op">).</span><span class="fu">order</span><span class="op">(</span><span class="bu">ByteOrder</span><span class="op">.</span><span class="fu">LITTLE_ENDIAN</span><span class="op">).</span><span class="fu">getInt</span><span class="op">();</span></span>
+<span id="cb6-2"><a href="#cb6-2"></a><span class="dt">int</span> height <span class="op">=</span> <span class="bu">ByteBuffer</span><span class="op">.</span><span class="fu">wrap</span><span class="op">(</span>heightDat<span class="op">).</span><span class="fu">order</span><span class="op">(</span><span class="bu">ByteOrder</span><span class="op">.</span><span class="fu">LITTLE_ENDIAN</span><span class="op">).</span><span class="fu">getInt</span><span class="op">();</span></span>
+<span id="cb6-3"><a href="#cb6-3"></a><span class="cf">for</span> <span class="op">(</span><span class="dt">int</span> y <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> y <span class="op">&lt;</span> height<span class="op">;</span> y<span class="op">++)</span> <span class="op">{</span></span>
+<span id="cb6-4"><a href="#cb6-4"></a>    <span class="cf">for</span> <span class="op">(</span><span class="dt">int</span> x <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> x <span class="op">&lt;</span> width<span class="op">;</span> x<span class="op">++)</span> <span class="op">{</span></span>
+<span id="cb6-5"><a href="#cb6-5"></a>        <span class="cf">if</span> <span class="op">((</span>cellsData<span class="op">[(</span>y <span class="op">+</span> <span class="dv">1</span><span class="op">)</span> <span class="op">*</span> <span class="dv">32</span> <span class="op">+</span> x <span class="op">+</span> <span class="dv">1</span><span class="op">]</span> <span class="op">&amp;</span> <span class="bn">0x80</span><span class="op">)</span> <span class="op">==</span> <span class="bn">0x80</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb6-6"><a href="#cb6-6"></a>            <span class="fu">println</span><span class="op">(</span><span class="st">&quot;Mine at (%d,%d)&quot;</span><span class="op">.</span><span class="fu">formatted</span><span class="op">(</span>x<span class="op">,</span> y<span class="op">));</span></span>
+<span id="cb6-7"><a href="#cb6-7"></a>        <span class="op">}</span></span>
+<span id="cb6-8"><a href="#cb6-8"></a>    <span class="op">}</span></span>
+<span id="cb6-9"><a href="#cb6-9"></a><span class="op">}</span></span></code></pre></div>
+</section>
+<section id="test-the-script" class="level3">
+<h3>Test the Script</h3>
+<p>To test, run <code>termmines</code> in a proper terminal and attach
+to it from Ghidra using GDB. Now, run the script. Resume and play the
+game. Once you win, check that the script output describes the actual
+board.</p>
+</section>
+<section id="exercise-remove-the-mines" class="level3">
+<h3>Exercise: Remove the Mines</h3>
+<p>Write a script that will remove the mines from the board.
+<strong>NOTE</strong>: The <code>writeMemory()</code> and related
+methods are all subject to the current control mode. If the mode is
+read-only, the script cannot modify the target’s machine state using
+those methods.</p>
+</section>
+</section>
+<section id="waiting-on-reacting-to-events" class="level2">
+<h2>Waiting on / Reacting to Events</h2>
+<p>Most of the Debugger is implemented using asynchronous event-driven
+programming. This will become apparent if you browse any deeper beyond
+the flat API. Check the return value carefully. A method that might
+intuitively return <code>void</code> may actually return
+<code>CompletableFuture&lt;Void&gt;</code>. Java’s completable futures
+allow you to register callbacks and/or chain additional futures onto
+them.</p>
+<p>However, Ghidra’s scripting system provides a dedicated thread for
+each execution of a script, so it is acceptable to use the
+<code>.get()</code> methods instead, essentially converting to a
+synchronous style. Most of the methods in the flat API will do this for
+you. See also the flat API’s <code>waitOn()</code> method. The most
+common two methods to use when waiting for a condition is
+<code>waitForBreak()</code> and <code>flushAsyncPipelines()</code>. The
+first simply waits for the target to enter the STOPPED state. Once that
+happens, the framework and UI will get to work interrogating the
+back-end debugger to update the various displays. Unfortunately, if a
+script does not wait for this update to complete, it may be subject to
+race conditions. Thus, the second method politely waits for everything
+else to finish. Sadly, it may slow your script down.</p>
+<p>The general template for waiting on a condition is a bit klunky, but
+conceptually straightforward:</p>
+<ol type="1">
+<li>Set up your instrumentation, e.g., breakpoints.</li>
+<li>Get the target running, and then wait for it to break.</li>
+<li>Flush the pipelines.</li>
+<li>Check if the expected conditions are met, esp., that the program
+counter is where you expect.</li>
+<li>If the conditions are not met, then let the target run again and
+repeat.</li>
+<li>Once the conditions are met, perform the desired actions.</li>
+<li>Optionally remove your instrumentation and/or let the target
+run.</li>
+</ol>
+<section id="exercise-always-win-in-0-seconds" class="level3">
+<h3>Exercise: Always Win in 0 Seconds</h3>
+<p><strong>NOTE</strong>: The solution to this exercise is given as a
+tutorial below, but give it an honest try before peeking. If you are not
+already familiar with Eclipse’s searching and discovery features, try
+pressing <strong>Ctrl-O</strong> twice in the editor for your script.
+You should now be able to type patterns, optionally with wildcards, to
+help you find applicable methods.</p>
+<p>Your task is to write a script that will wait for the player to win
+then patch the machine state, so that the game always prints a score of
+0 seconds. Some gotchas to consider up front:</p>
+<ul>
+<li>You may want to verify and/or correct the target’s execution state.
+See <code>getExecutionState()</code> and <code>interrupt()</code>. You
+will not likely be able to place or toggle breakpoints while the target
+is running.</li>
+<li>Methods like <code>writeMemory()</code> are subject to the current
+control mode. You may want to check and/or correct this at the top of
+your script.</li>
+<li>If you require the user to mark code locations with a label, note
+that those labels will likely end up in the containing function’s
+namespace. You will need to provide that namespace to
+<code>getSymbols()</code>.</li>
+<li>If you need to set breakpoints, you should try to toggle an existing
+breakpoint at that location before adding a new one. Otherwise, you may
+generate a pile of breakpoints and/or needlessly increment GDB’s
+breakpoint numbers.</li>
+</ul>
+<p>You are successful when you can attach to a running
+<code>termmines</code> and execute your script. Then, assuming you win
+the game, the game should award you a score of 0 seconds. It is OK if
+you have to re-execute your script after each win.</p>
+</section>
+<section id="solution-always-win-in-0-seconds" class="level3">
+<h3>Solution: Always Win in 0 Seconds</h3>
+<p>As in the previous scripting tutorial, we will do some verifications
+at the top of the script. Your level of pedantry may vary.</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode numberSource java numberLines"><code class="sourceCode java"><span id="cb7-1"><a href="#cb7-1"></a>Trace trace <span class="op">=</span> <span class="fu">getCurrentTrace</span><span class="op">();</span></span>
+<span id="cb7-2"><a href="#cb7-2"></a><span class="cf">if</span> <span class="op">(</span>trace <span class="op">==</span> <span class="kw">null</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb7-3"><a href="#cb7-3"></a>    <span class="cf">throw</span> <span class="kw">new</span> <span class="bu">AssertionError</span><span class="op">(</span><span class="st">&quot;There is no active session&quot;</span><span class="op">);</span></span>
+<span id="cb7-4"><a href="#cb7-4"></a><span class="op">}</span></span>
+<span id="cb7-5"><a href="#cb7-5"></a></span>
+<span id="cb7-6"><a href="#cb7-6"></a><span class="cf">if</span> <span class="op">(!</span><span class="st">&quot;termmines&quot;</span><span class="op">.</span><span class="fu">equals</span><span class="op">(</span>currentProgram<span class="op">.</span><span class="fu">getName</span><span class="op">()))</span> <span class="op">{</span></span>
+<span id="cb7-7"><a href="#cb7-7"></a>    <span class="cf">throw</span> <span class="kw">new</span> <span class="bu">AssertionError</span><span class="op">(</span><span class="st">&quot;The current program must be termmines&quot;</span><span class="op">);</span></span>
+<span id="cb7-8"><a href="#cb7-8"></a><span class="op">}</span></span>
+<span id="cb7-9"><a href="#cb7-9"></a></span>
+<span id="cb7-10"><a href="#cb7-10"></a><span class="cf">if</span> <span class="op">(</span><span class="fu">getExecutionState</span><span class="op">(</span>trace<span class="op">).</span><span class="fu">isRunning</span><span class="op">())</span> <span class="op">{</span></span>
+<span id="cb7-11"><a href="#cb7-11"></a>    monitor<span class="op">.</span><span class="fu">setMessage</span><span class="op">(</span><span class="st">&quot;Interrupting target and waiting for STOPPED&quot;</span><span class="op">);</span></span>
+<span id="cb7-12"><a href="#cb7-12"></a>    <span class="fu">interrupt</span><span class="op">();</span></span>
+<span id="cb7-13"><a href="#cb7-13"></a>    <span class="fu">waitForBreak</span><span class="op">(</span><span class="dv">3</span><span class="op">,</span> <span class="bu">TimeUnit</span><span class="op">.</span><span class="fu">SECONDS</span><span class="op">);</span></span>
+<span id="cb7-14"><a href="#cb7-14"></a><span class="op">}</span></span>
+<span id="cb7-15"><a href="#cb7-15"></a><span class="fu">flushAsyncPipelines</span><span class="op">(</span>trace<span class="op">);</span></span>
+<span id="cb7-16"><a href="#cb7-16"></a></span>
+<span id="cb7-17"><a href="#cb7-17"></a><span class="cf">if</span> <span class="op">(!</span><span class="fu">getControlService</span><span class="op">().</span><span class="fu">getCurrentMode</span><span class="op">(</span>trace<span class="op">).</span><span class="fu">canEdit</span><span class="op">(</span><span class="fu">getCurrentDebuggerCoordinates</span><span class="op">()))</span> <span class="op">{</span></span>
+<span id="cb7-18"><a href="#cb7-18"></a>    <span class="cf">throw</span> <span class="kw">new</span> <span class="bu">AssertionError</span><span class="op">(</span><span class="st">&quot;Current control mode is read-only&quot;</span><span class="op">);</span></span>
+<span id="cb7-19"><a href="#cb7-19"></a><span class="op">}</span></span></code></pre></div>
+<p>The first two blocks check that there is an active target with
+<code>termmines</code> as the current program. As before, the
+association of the current program to the current target will be
+implicitly verified when we map symbols. The second block will interrupt
+the target if it is running. We then allow everything to sync up before
+checking the control mode. We could instead change the control mode to
+<strong>Target w/Edits</strong>, but I prefer to keep the user aware
+that the script needs to modify target machine state.</p>
+<p>Next, we retrieve and map our symbols. This works pretty much the
+same as in the previous scripting tutorial, but with attention to the
+containing function namespace. The way <code>termmines</code> computes
+the score is to record the start time of the game. Then, when the player
+wins, it subtracts the recorded time from the current time. This script
+requires the user to label the start time variable <code>timer</code>,
+and to label the instruction that computes the score
+<code>reset_timer</code>. The function that prints the score must be
+named <code>print_win</code>.</p>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode numberSource java numberLines"><code class="sourceCode java"><span id="cb8-1"><a href="#cb8-1"></a><span class="bu">List</span><span class="op">&lt;</span>Symbol<span class="op">&gt;</span> timerSyms <span class="op">=</span> <span class="fu">getSymbols</span><span class="op">(</span><span class="st">&quot;timer&quot;</span><span class="op">,</span> <span class="kw">null</span><span class="op">);</span></span>
+<span id="cb8-2"><a href="#cb8-2"></a><span class="cf">if</span> <span class="op">(</span>timerSyms<span class="op">.</span><span class="fu">isEmpty</span><span class="op">())</span> <span class="op">{</span></span>
+<span id="cb8-3"><a href="#cb8-3"></a>    <span class="cf">throw</span> <span class="kw">new</span> <span class="bu">AssertionError</span><span class="op">(</span><span class="st">&quot;Symbol &#39;timer&#39; is required&quot;</span><span class="op">);</span></span>
+<span id="cb8-4"><a href="#cb8-4"></a><span class="op">}</span></span>
+<span id="cb8-5"><a href="#cb8-5"></a><span class="bu">List</span><span class="op">&lt;</span>Function<span class="op">&gt;</span> winFuncs <span class="op">=</span> <span class="fu">getGlobalFunctions</span><span class="op">(</span><span class="st">&quot;print_win&quot;</span><span class="op">);</span></span>
+<span id="cb8-6"><a href="#cb8-6"></a><span class="cf">if</span> <span class="op">(</span>winFuncs<span class="op">.</span><span class="fu">isEmpty</span><span class="op">())</span> <span class="op">{</span></span>
+<span id="cb8-7"><a href="#cb8-7"></a>    <span class="cf">throw</span> <span class="kw">new</span> <span class="bu">AssertionError</span><span class="op">(</span><span class="st">&quot;Function &#39;print_win&#39; is required&quot;</span><span class="op">);</span></span>
+<span id="cb8-8"><a href="#cb8-8"></a><span class="op">}</span></span>
+<span id="cb8-9"><a href="#cb8-9"></a><span class="bu">List</span><span class="op">&lt;</span>Symbol<span class="op">&gt;</span> resetSyms <span class="op">=</span> <span class="fu">getSymbols</span><span class="op">(</span><span class="st">&quot;reset_timer&quot;</span><span class="op">,</span> winFuncs<span class="op">.</span><span class="fu">get</span><span class="op">(</span><span class="dv">0</span><span class="op">));</span></span>
+<span id="cb8-10"><a href="#cb8-10"></a><span class="cf">if</span> <span class="op">(</span>resetSyms<span class="op">.</span><span class="fu">isEmpty</span><span class="op">())</span> <span class="op">{</span></span>
+<span id="cb8-11"><a href="#cb8-11"></a>    <span class="cf">throw</span> <span class="kw">new</span> <span class="bu">AssertionError</span><span class="op">(</span><span class="st">&quot;Symbol &#39;reset_timer&#39; is required&quot;</span><span class="op">);</span></span>
+<span id="cb8-12"><a href="#cb8-12"></a><span class="op">}</span></span>
+<span id="cb8-13"><a href="#cb8-13"></a></span>
+<span id="cb8-14"><a href="#cb8-14"></a>Address timerDyn <span class="op">=</span> <span class="fu">translateStaticToDynamic</span><span class="op">(</span>timerSyms<span class="op">.</span><span class="fu">get</span><span class="op">(</span><span class="dv">0</span><span class="op">).</span><span class="fu">getAddress</span><span class="op">());</span></span>
+<span id="cb8-15"><a href="#cb8-15"></a><span class="cf">if</span> <span class="op">(</span>timerDyn <span class="op">==</span> <span class="kw">null</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb8-16"><a href="#cb8-16"></a>    <span class="cf">throw</span> <span class="kw">new</span> <span class="bu">AssertionError</span><span class="op">(</span><span class="st">&quot;Symbol &#39;timer&#39; is not mapped to target&quot;</span><span class="op">);</span></span>
+<span id="cb8-17"><a href="#cb8-17"></a><span class="op">}</span></span>
+<span id="cb8-18"><a href="#cb8-18"></a>Address resetDyn <span class="op">=</span> <span class="fu">translateStaticToDynamic</span><span class="op">(</span>resetSyms<span class="op">.</span><span class="fu">get</span><span class="op">(</span><span class="dv">0</span><span class="op">).</span><span class="fu">getAddress</span><span class="op">());</span></span>
+<span id="cb8-19"><a href="#cb8-19"></a><span class="cf">if</span> <span class="op">(</span>resetDyn <span class="op">==</span> <span class="kw">null</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb8-20"><a href="#cb8-20"></a>    <span class="cf">throw</span> <span class="kw">new</span> <span class="bu">AssertionError</span><span class="op">(</span><span class="st">&quot;Symbol &#39;reset_timer&#39; is not mapped to target&quot;</span><span class="op">);</span></span>
+<span id="cb8-21"><a href="#cb8-21"></a><span class="op">}</span></span></code></pre></div>
+<section id="toggling-and-setting-breakpoints" class="level4">
+<h4>Toggling and Setting Breakpoints</h4>
+<p>The first actual operation we perform on the debug session is to
+toggle or place a breakpoint on the <code>reset_timer</code> label. The
+API prefers to specify breakpoints in the static context, but you can do
+either. To establish that context, you must use a
+<code>ProgramLocation</code>. For static context, use the current
+(static) program as the program. For dynamic context, use the current
+(dynamic) trace view as the program — see
+<code>getCurrentView()</code>.</p>
+<p>To avoid creating a pile of breakpoints, we will first attempt to
+enable an existing breakpoint at the desired location. Technically, the
+existing breakpoints may not be execute breakpoints, but we will blindly
+assume they are. Again, your level of pedantry may vary. The
+<code>breakpointsEnable</code> method will return the existing
+breakpoints, so we can check that and create a new breakpoint, if
+necessary:</p>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode numberSource java numberLines"><code class="sourceCode java"><span id="cb9-1"><a href="#cb9-1"></a>ProgramLocation breakLoc <span class="op">=</span></span>
+<span id="cb9-2"><a href="#cb9-2"></a>    <span class="kw">new</span> <span class="fu">ProgramLocation</span><span class="op">(</span>currentProgram<span class="op">,</span> resetSyms<span class="op">.</span><span class="fu">get</span><span class="op">(</span><span class="dv">0</span><span class="op">).</span><span class="fu">getAddress</span><span class="op">());</span></span>
+<span id="cb9-3"><a href="#cb9-3"></a><span class="bu">Set</span><span class="op">&lt;</span>LogicalBreakpoint<span class="op">&gt;</span> breaks <span class="op">=</span> <span class="fu">breakpointsEnable</span><span class="op">(</span>breakLoc<span class="op">);</span></span>
+<span id="cb9-4"><a href="#cb9-4"></a><span class="cf">if</span> <span class="op">(</span>breaks <span class="op">==</span> <span class="kw">null</span> <span class="op">||</span> breaks<span class="op">.</span><span class="fu">isEmpty</span><span class="op">())</span> <span class="op">{</span></span>
+<span id="cb9-5"><a href="#cb9-5"></a>    <span class="fu">breakpointSetSoftwareExecute</span><span class="op">(</span>breakLoc<span class="op">,</span> <span class="st">&quot;reset timer&quot;</span><span class="op">);</span></span>
+<span id="cb9-6"><a href="#cb9-6"></a><span class="op">}</span></span></code></pre></div>
+</section>
+<section id="waiting-to-hit-the-breakpoint" class="level4">
+<h4>Waiting to Hit the Breakpoint</h4>
+<p>This next loop is quite extensive, but it follows the template given
+earlier for waiting on conditions. It is an indefinite loop, so we
+should check the monitor for cancellation somewhat frequently. This
+implies we should use relatively short timeouts in our API calls. In our
+case, we just want to confirm that the cause of breaking was hitting our
+breakpoint. We do not need to be precise in this check; it suffices to
+check the program counter:</p>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode numberSource java numberLines"><code class="sourceCode java"><span id="cb10-1"><a href="#cb10-1"></a><span class="cf">while</span> <span class="op">(</span><span class="kw">true</span><span class="op">)</span> <span class="op">{</span></span>
+<span id="cb10-2"><a href="#cb10-2"></a>    monitor<span class="op">.</span><span class="fu">checkCanceled</span><span class="op">();</span></span>
+<span id="cb10-3"><a href="#cb10-3"></a></span>
+<span id="cb10-4"><a href="#cb10-4"></a>    TargetExecutionState execState <span class="op">=</span> <span class="fu">getExecutionState</span><span class="op">(</span>trace<span class="op">);</span></span>
+<span id="cb10-5"><a href="#cb10-5"></a>    <span class="cf">switch</span> <span class="op">(</span>execState<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb10-6"><a href="#cb10-6"></a>        <span class="cf">case</span> STOPPED<span class="op">:</span></span>
+<span id="cb10-7"><a href="#cb10-7"></a>            <span class="fu">resume</span><span class="op">();</span></span>
+<span id="cb10-8"><a href="#cb10-8"></a>            <span class="cf">break</span><span class="op">;</span></span>
+<span id="cb10-9"><a href="#cb10-9"></a>        <span class="cf">case</span> TERMINATED<span class="op">:</span></span>
+<span id="cb10-10"><a href="#cb10-10"></a>        <span class="cf">case</span> <span class="bu">INACTIVE</span><span class="op">:</span></span>
+<span id="cb10-11"><a href="#cb10-11"></a>            <span class="cf">throw</span> <span class="kw">new</span> <span class="bu">AssertionError</span><span class="op">(</span><span class="st">&quot;Target terminated&quot;</span><span class="op">);</span></span>
+<span id="cb10-12"><a href="#cb10-12"></a>        <span class="cf">case</span> ALIVE<span class="op">:</span></span>
+<span id="cb10-13"><a href="#cb10-13"></a>            <span class="fu">println</span><span class="op">(</span></span>
+<span id="cb10-14"><a href="#cb10-14"></a>                <span class="st">&quot;I don&#39;t know whether or not the target is running. Please make it RUNNING.&quot;</span><span class="op">);</span></span>
+<span id="cb10-15"><a href="#cb10-15"></a>            <span class="cf">break</span><span class="op">;</span></span>
+<span id="cb10-16"><a href="#cb10-16"></a>        <span class="cf">case</span> RUNNING<span class="op">:</span></span>
+<span id="cb10-17"><a href="#cb10-17"></a>            <span class="co">/**</span></span>
+<span id="cb10-18"><a href="#cb10-18"></a>             <span class="co">*</span> Probably timed out waiting for break<span class="co">. </span>That<span class="co">&#39;</span>s fine<span class="co">.</span> Give the player time to</span>
+<span id="cb10-19"><a href="#cb10-19"></a>             <span class="co">*</span> win<span class="co">.</span></span>
+<span id="cb10-20"><a href="#cb10-20"></a>             <span class="co">*/</span></span>
+<span id="cb10-21"><a href="#cb10-21"></a>            <span class="cf">break</span><span class="op">;</span></span>
+<span id="cb10-22"><a href="#cb10-22"></a>        <span class="kw">default</span><span class="op">:</span></span>
+<span id="cb10-23"><a href="#cb10-23"></a>            <span class="cf">throw</span> <span class="kw">new</span> <span class="bu">AssertionError</span><span class="op">(</span><span class="st">&quot;Unrecognized state: &quot;</span> <span class="op">+</span> execState<span class="op">);</span></span>
+<span id="cb10-24"><a href="#cb10-24"></a>    <span class="op">}</span></span>
+<span id="cb10-25"><a href="#cb10-25"></a>    <span class="cf">try</span> <span class="op">{</span></span>
+<span id="cb10-26"><a href="#cb10-26"></a>        monitor<span class="op">.</span><span class="fu">setMessage</span><span class="op">(</span><span class="st">&quot;Waiting for player to win&quot;</span><span class="op">);</span></span>
+<span id="cb10-27"><a href="#cb10-27"></a>        <span class="fu">waitForBreak</span><span class="op">(</span><span class="dv">1</span><span class="op">,</span> <span class="bu">TimeUnit</span><span class="op">.</span><span class="fu">SECONDS</span><span class="op">);</span></span>
+<span id="cb10-28"><a href="#cb10-28"></a>    <span class="op">}</span></span>
+<span id="cb10-29"><a href="#cb10-29"></a>    <span class="cf">catch</span> <span class="op">(</span><span class="bu">TimeoutException</span> e<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb10-30"><a href="#cb10-30"></a>        <span class="co">// Give the player time to win.</span></span>
+<span id="cb10-31"><a href="#cb10-31"></a>        <span class="cf">continue</span><span class="op">;</span></span>
+<span id="cb10-32"><a href="#cb10-32"></a>    <span class="op">}</span></span>
+<span id="cb10-33"><a href="#cb10-33"></a>    <span class="fu">flushAsyncPipelines</span><span class="op">(</span>trace<span class="op">);</span></span>
+<span id="cb10-34"><a href="#cb10-34"></a>    Address pc <span class="op">=</span> <span class="fu">getProgramCounter</span><span class="op">();</span></span>
+<span id="cb10-35"><a href="#cb10-35"></a>    <span class="fu">println</span><span class="op">(</span><span class="st">&quot;STOPPED at pc = &quot;</span> <span class="op">+</span> pc<span class="op">);</span></span>
+<span id="cb10-36"><a href="#cb10-36"></a>    <span class="cf">if</span> <span class="op">(</span>resetDyn<span class="op">.</span><span class="fu">equals</span><span class="op">(</span>pc<span class="op">))</span> <span class="op">{</span></span>
+<span id="cb10-37"><a href="#cb10-37"></a>        <span class="cf">break</span><span class="op">;</span></span>
+<span id="cb10-38"><a href="#cb10-38"></a>    <span class="op">}</span></span>
+<span id="cb10-39"><a href="#cb10-39"></a><span class="op">}</span></span></code></pre></div>
+<p>The “center” of this loop is a call to <code>waitForBreak()</code>.
+This is the simplest primitive for waiting on the target to meet any
+condition. Because we expect the user to take more than a second to win
+the game, we should expect a timeout exception and just keep waiting.
+Using a timeout of 1 second ensures we can terminate promptly should the
+user cancel the script.</p>
+<p>Before waiting, we need to make sure the target is running. Because
+we could repeat the loop while the target is already running, we should
+only call <code>resume()</code> if the target is stopped. There are
+utility methods on <code>TargetExecutionState</code> like
+<code>isRunning()</code>, which you might prefer to use. Here, we
+exhaustively handle every kind of state using a switch statement, which
+does make the code a bit verbose.</p>
+<p>When the target does break, we first allow the UI to finish
+interrogating the target. We can then reliably retrieve and check the
+program counter. If the PC matches the dynamic location of
+<code>reset_timer</code>, then the player has won, and we need to reset
+the start time.</p>
+</section>
+<section id="patching-the-start-time" class="level4">
+<h4>Patching the Start Time</h4>
+<p>When the player has won, this particular compilation of
+<code>termmines</code> first calls <code>time</code> to get the current
+time and moves it into <code>ECX</code>. It then subtracts, using a
+memory operand, the recorded start time. There are certainly other
+strategies, but this script expects the user to label that
+<code>SUB</code> instruction <code>reset_timer</code>. We would like the
+result of that computation to be 0, so we will simply copy the value of
+<code>ECX</code> over the recorded start time:</p>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode numberSource java numberLines"><code class="sourceCode java"><span id="cb11-1"><a href="#cb11-1"></a><span class="dt">int</span> time <span class="op">=</span> <span class="fu">readRegister</span><span class="op">(</span><span class="st">&quot;ECX&quot;</span><span class="op">).</span><span class="fu">getUnsignedValue</span><span class="op">().</span><span class="fu">intValue</span><span class="op">();</span></span>
+<span id="cb11-2"><a href="#cb11-2"></a><span class="cf">if</span> <span class="op">(!</span><span class="fu">writeMemory</span><span class="op">(</span>timerDyn<span class="op">,</span></span>
+<span id="cb11-3"><a href="#cb11-3"></a>    <span class="bu">ByteBuffer</span><span class="op">.</span><span class="fu">allocate</span><span class="op">(</span><span class="dv">4</span><span class="op">).</span><span class="fu">order</span><span class="op">(</span><span class="bu">ByteOrder</span><span class="op">.</span><span class="fu">LITTLE_ENDIAN</span><span class="op">).</span><span class="fu">putInt</span><span class="op">(</span>time<span class="op">).</span><span class="fu">array</span><span class="op">()))</span> <span class="op">{</span></span>
+<span id="cb11-4"><a href="#cb11-4"></a>    <span class="cf">throw</span> <span class="kw">new</span> <span class="bu">AssertionError</span><span class="op">(</span><span class="st">&quot;Could not write over timer. Does control mode allow edits?&quot;</span><span class="op">);</span></span>
+<span id="cb11-5"><a href="#cb11-5"></a><span class="op">}</span></span>
+<span id="cb11-6"><a href="#cb11-6"></a></span>
+<span id="cb11-7"><a href="#cb11-7"></a><span class="fu">resume</span><span class="op">();</span></span></code></pre></div>
+<p>The final <code>resume()</code> simply allows the target to finish
+printing the score, which ought to be 0 now!</p>
+</section>
+</section>
+</section>
+<section id="learning-more" class="level2">
+<h2>Learning More</h2>
+<p>For another demonstration of the flat API, see <a
+href="../../../Ghidra/Debug/Debugger/ghidra_scripts/DemoDebuggerScript.java">DemoDebuggerScript</a>,
+or just ask Eclipse for all the implementations of
+<code>FlatDebuggerAPI</code>. If you want a list of methods with
+explanations, you should refer to the documentation in the
+<code>FlatDebuggerAPI</code> interface.</p>
+</section>
+</section>
+</body>
+</html>

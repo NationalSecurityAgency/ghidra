@@ -559,7 +559,7 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 			}
 		}
 	};
-	protected ConsoleTaskMonitor monitor = new ConsoleTaskMonitor();
+	protected final ConsoleTaskMonitor monitor = new ConsoleTaskMonitor();
 
 	protected void waitRecorder(TraceRecorder recorder) throws Throwable {
 		if (recorder == null) {

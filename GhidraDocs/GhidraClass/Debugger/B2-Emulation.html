@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Ghidra Debugger</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="style.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="nav"><a
+ class="beginner" href="A1-GettingStarted.html">Getting Started</a><a
+ class="beginner" href="A2-UITour.html">UI Tour</a><a
+ class="beginner" href="A3-Breakpoints.html">Breakpoints</a><a
+ class="beginner" href="A4-MachineState.html">Machine State</a><a
+ class="beginner" href="A5-Navigation.html">Navigation</a><a
+ class="beginner" href="A6-MemoryMap.html">Memory Map</a><a
+ class="advanced" href="B1-RemoteTargets.html">Remote Targets</a><a
+ class="advanced" href="B2-Emulation.html">Emulation</a><a
+ class="advanced" href="B3-Scripting.html">Scripting</a><a
+ class="advanced" href="B4-Modeling.html">Modeling</a>
+</header>
+<header id="title-block-header">
+<h1 class="title">Ghidra Debugger</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#emulation" id="toc-emulation">Emulation</a>
+<ul>
+<li><a href="#p-code-emulation-and-caveats"
+id="toc-p-code-emulation-and-caveats">P-code Emulation and
+Caveats</a></li>
+<li><a href="#use-cases" id="toc-use-cases">Use Cases</a></li>
+<li><a href="#extrapolation-and-interpolation"
+id="toc-extrapolation-and-interpolation">Extrapolation and
+Interpolation</a>
+<ul>
+<li><a href="#stepping-schedules" id="toc-stepping-schedules">Stepping
+Schedules</a></li>
+<li><a href="#exercise-demonstrate-the-cell-numbers"
+id="toc-exercise-demonstrate-the-cell-numbers">Exercise: Demonstrate the
+Cell Numbers</a></li>
+</ul></li>
+<li><a href="#emulating-a-program-image"
+id="toc-emulating-a-program-image">Emulating a Program Image</a>
+<ul>
+<li><a href="#initializing-other-state"
+id="toc-initializing-other-state">Initializing Other State</a></li>
+<li><a href="#stubbing-external-calls"
+id="toc-stubbing-external-calls">Stubbing External Calls</a></li>
+<li><a href="#wrapping-up" id="toc-wrapping-up">Wrapping Up</a></li>
+<li><a href="#optional-exercise-patch-the-placement-algorithm"
+id="toc-optional-exercise-patch-the-placement-algorithm">Optional
+Exercise: Patch the Placement Algorithm</a></li>
+</ul></li>
+<li><a href="#debugging-p-code-semantics"
+id="toc-debugging-p-code-semantics">Debugging P-code Semantics</a></li>
+</ul></li>
+</ul>
+</nav>
+<section id="emulation" class="level1">
+<h1>Emulation</h1>
+<p>Emulation is a bit of a loaded term, unfortunately. Most of the
+confusion deals with the scope of the emulated target. Do you just need
+to step through a few instructions, or a whole function? Do you need to
+include external modules? Do you need to simulate system calls? Do you
+need to simulate connected devices? Most of Ghidra’s GUI-accessible
+emulation features focus on the smaller scope, though it does provide
+programming interfaces for advanced users to extend that scope. Those
+more advanced features are covered in <a
+href="B4-Modeling.html">Modeling</a>.</p>
+<p>This module assumes you have completed the Beginner portion of this
+course.</p>
+<section id="p-code-emulation-and-caveats" class="level2">
+<h2>P-code Emulation and Caveats</h2>
+<p>Ghidra’s emulator uses the same p-code as is used by the decompiler.
+P-code describes the semantics of each instruction by constructing a
+sequence of p-code operations. The p-code specifications for most of
+Ghidra’s languages were designed with decompilation, not necessarily
+emulation, in mind. While in most cases, p-code for decompilation
+suffices for emulation, there are cases where design decisions were
+made, e.g., to keep decompiler output simple, that makes them less
+suitable for emulation. This may manifest, e.g., in an excess of
+user-defined p-code ops, or <em>userops</em>. The <a
+href="B4-Modeling.html">Modeling</a> module discusses ways to implement
+or stub those userops in the emulator. Some processor modules provide
+those stubs “out of the box.” If the emulator ever halts with an
+“unimplemented userop” message, then you have run into this problem.</p>
+</section>
+<section id="use-cases" class="level2">
+<h2>Use Cases</h2>
+<p>As already hinted at the start of this module, there are several use
+cases for emulation, and Ghidra tries to meet these cases by integrating
+emulation into the Debugger UI. Some of the use cases accessible from
+the UI are:</p>
+<ul>
+<li>Extrapolation and interpolation of a live target.</li>
+<li>Emulation of a program image.</li>
+<li>P-code semantics debugging.</li>
+</ul>
+<p>We will explore each case with a tutorial and exercise.</p>
+</section>
+<section id="extrapolation-and-interpolation" class="level2">
+<h2>Extrapolation and Interpolation</h2>
+<p>This is perhaps the easiest use case, assuming you already have
+started a live session. <em>Extrapolation</em> is predicting execution
+of the target into the future, without allowing the actual target to
+execute. Instead, we will allow an emulator to step forward, while
+reading its initial state from the live target. This allows you, e.g.,
+to experiment with various patches, or to force execution down a certain
+path. If you devise a patch, you can then apply it the live target and
+allow it to execute for real. <em>Interpolation</em> is similar, but
+from a snapshot that is in the past. It can help answer the question,
+“How did I get here?” It is more limited, because missing state for
+snapshots in the past cannot be recovered.</p>
+<p>In this tutorial, we will examine the command-line argument parser in
+<code>termmines</code>.</p>
+<ol type="1">
+<li>Launch <code>termmines</code> using GDB in the Ghidra Debugger.</li>
+<li>If you have not already, do a bit of static analysis to identify the
+argument parsing function. It should be the first function called by
+<code>main</code>.</li>
+<li>Use a breakpoint to interrupt the live target when it enters this
+function.</li>
+<li>Change the “Control mode” drop-down to “Control Emulator.”</li>
+<li>Click <img src="images/stepinto.png" alt="step into button" /> Step
+Into to step the emulator forward.</li>
+<li>Click <img src="images/skipover.png" alt="skip over button" /> Skip
+Over and <img src="images/stepback.png" alt="step back button" /> Step
+Back to experiment with different execution paths.</li>
+</ol>
+<p>About those two new actions:</p>
+<ul>
+<li><img src="images/skipover.png" alt="skip over button" />
+<strong>Skip Over</strong>: Step the current thread by skipping one
+instruction.</li>
+<li><img src="images/stepback.png" alt="step back button" />
+<strong>Step Back</strong>: Step the current thread backward one
+instruction, or undo an emulated skip or patch.</li>
+</ul>
+<p>Try to get the program counter onto the call to <code>exit(-1)</code>
+using only those three step buttons.</p>
+<p>You should see things behave more or less the same as they would if
+it were the live target. The main exceptions are the Objects and
+Interpreter windows. Those always display the state of the live target,
+as they are unaware of the emulator, and their sole purpose is to
+interact with the live target. You can make changes to the emulator’s
+machine state, set breakpoints, etc., just as you would in “Control
+Target” mode. <strong>NOTE</strong>: You may see Ghidra interact with
+the target, despite being in “Control Emulator” mode, because Ghidra
+lazily initializes the emulator’s state. If the emulated target reads a
+variable that Ghidra has not yet captured into the current snapshot,
+Ghidra will read that variable from the live target, capture it, and
+provide its value to the emulator.</p>
+<section id="stepping-schedules" class="level3">
+<h3>Stepping Schedules</h3>
+<p>If you had not noticed before, the subtitle of the Threads window
+gives the current snapshot number. If you have stepped in the emulator,
+it will also contain the sequence of steps emulated. Recall the
+<em>time</em> element of the Debugger’s “coordinates.” (See the <a
+href="A5-Navigation.html">Navigation</a> module if you need a
+refresher.) The time element, called the <em>schedule</em>, consists of
+both the current snapshot and the sequence of steps to emulate. The
+subtitle displays that schedule. If you have done any patching of the
+emulator’s state, you may notice some more complicated “steps” in the
+schedule. The syntax is:</p>
+<ul>
+<li><em>Schedule</em> → <em>Snapshot</em> [ <code>:</code> [
+<em>Step</em> ( <code>;</code> <em>Step</em> ) * ] [ <code>.</code>
+<em>Step</em> ( <code>;</code> <em>Step</em> ) * ] ]</li>
+<li><em>Step</em> → [ <code>t</code> <em>Id</em> <code>-</code> ] (
+<em>Tick</em> | <em>Skip</em> | <em>Patch</em> )</li>
+<li><em>Tick</em> → <em>Count</em></li>
+<li><em>Skip</em> → <code>s</code> <em>Count</em></li>
+<li><em>Patch</em> → <code>{</code> <em>SleighStmt</em>
+<code>}</code></li>
+</ul>
+<p>In essence, the schedule is the starting snapshot, followed by zero
+or more machine-instruction steps followed by zero or more
+p-code-operation steps. Each step is optionally preceded by a thread id.
+If omitted, the thread id is the same as the previous step. If the first
+step has no thread id, it applies to the snapshot’s event thread. A
+plain number indicates the number of instructions or operations to
+execute. An <code>s</code> prefix indicates skip instead of execute.
+Curly braces specify a patch using a single Sleigh statement. Here are
+some examples:</p>
+<ul>
+<li><code>0</code> — The first snapshot in the trace.</li>
+<li><code>3</code> — Snapshot number 3.</li>
+<li><code>3:10</code> — Emulate 10 machine instructions on the event
+thread, starting at snapshot 3.</li>
+<li><code>3:t1-10</code> — Same as above, but on the second thread
+rather than the event thread.</li>
+<li><code>3:10;t1-10</code> — Start at snapshot 3. Step the event thread
+10 instructions. Step the second thread 10 instructions.</li>
+<li><code>3:10.4</code> — Start at snapshot 3. Step the event thread 10
+instructions then 4 p-code ops.</li>
+<li><code>3:{RAX=0x1234};10</code> — Start at snapshot 3. Override RAX
+with 0x1234, then step 10 instructions.</li>
+</ul>
+<p>The explication of schedules allows Ghidra to cache emulated machine
+states and manage its emulators internally. You can have Ghidra recall
+or generate the machine state for any schedule by pressing
+<strong>Ctrl-G</strong> or using <strong>Debugger → Go To Time</strong>
+in the menus.</p>
+<p>Assuming you got the program counter onto <code>exit(-1)</code>
+earlier:</p>
+<ol type="1">
+<li>Write down the current schedule.</li>
+<li>Change back to “Control Target” mode. Ghidra will navigate back to
+the current snapshot, so PC will match the live target.</li>
+<li>Press <strong>Ctrl-G</strong> and type or paste the schedule in, and
+click OK. The program counter should be restored to
+<code>exit(-1)</code>.</li>
+</ol>
+<p><strong>NOTE</strong>: The thread IDs used in schedules are internal
+to the current trace database. Most likely, they <em>do not</em>
+correspond to the thread IDs assigned by the back-end debugger.</p>
+</section>
+<section id="exercise-demonstrate-the-cell-numbers" class="level3">
+<h3>Exercise: Demonstrate the Cell Numbers</h3>
+<p>The board setup routine in <code>termmines</code> first places mines
+randomly and then, for each empty cell, counts the number of neighboring
+cells with mines. In this exercise, you will use extrapolation to
+experiment and devise a patch to demonstrate all possible counts of
+neighboring mines:</p>
+<ol type="1">
+<li>Run <code>termmines</code> in a proper terminal and attach to
+it.</li>
+<li>Use a breakpoint to trap it at the point where it has placed mines,
+but before it has counted the neighboring cells with mines. (Use
+<strong>Shift-R</strong> in <code>termmines</code> to reset the
+game.)</li>
+<li>Use the emulator to extrapolate forward and begin understanding how
+the algorithm works.</li>
+<li>Move the mines by patching the board to demonstrate every number of
+neighboring mines. That is, when the board is revealed at the end of the
+game, all the numbers 1 through 8 should appear somewhere.</li>
+<li>Use extrapolation to debug and test your patch.</li>
+<li>Once you have devised your patch, apply it to the live target.
+(Copy-Paste is probably the easiest way to transfer the state from
+emulator to target.)</li>
+</ol>
+</section>
+</section>
+<section id="emulating-a-program-image" class="level2">
+<h2>Emulating a Program Image</h2>
+<p>This use case allows you to load “any” Ghidra program database into
+the emulator, without a back-end debugger, host environment, or other
+dependencies. The result and efficacy of this method depends greatly on
+what is captured in the program database. When Ghidra imports an ELF
+file, it simulates the OS’s loader, but only to a degree: It places each
+section at its load memory address, it applies relocation fixups, etc.
+The resulting program database is suitable for emulating that image, but
+in relative isolation. It is probably not possible to load a library
+module into that same database nor into the same emulator and expect
+proper linkage. Ghidra’s loaders often “fix up” references to external
+symbols by allocating a special <code>EXTERNAL</code> block, and placing
+the external symbols there. There is (currently) no means to re-fix up.
+If, however, you import a firmware image for an embedded device, or a
+memory dump of a process, then the image may already have all the code
+and linkage necessary.</p>
+<p>It is too tedious to categorize every possible situation and failure
+mode here. When you encounter an error, you should diagnose it with
+particular attention to the contents of your program image, and how it
+expects to interact with its environment: the host system, connected
+hardware, etc. The UI has some facilities to stub out dependencies, but
+if you find yourself creating and applying an extensive suite of stubs,
+you may want to consider <a href="B4-Modeling.html">Modeling</a>. This
+allows you to code your stubs into a library, facilitating re-use and
+repeatability.</p>
+<p>Emulation need not start at the image’s designated entry point. In
+this tutorial, we will examine the command-line argument parsing
+routine.</p>
+<ol type="1">
+<li>Ensure you have no active targets in the Debugger, but have
+<code>termmines</code> open in the Static listing.</li>
+<li>Go to the entry of the command-line argument parsing function.</li>
+<li>Right-click its first instruction and select <strong>Emulate Program
+in New Trace</strong>.</li>
+</ol>
+<p>This will map the program into a new trace. Technically, it is not
+actually loaded into an emulator, yet, because Ghidra allocates and
+caches emulators as needed. Instead, what you have is a single-snapshot
+trace without a live target. The initial state is snapshot 0, and
+emulation is started by navigating to a schedule, just like in
+extrapolation. You might be unnerved by the apparently empty and stale
+Dynamic listing:</p>
+<figure>
+<img src="images/Emulation_LazyStaleListing.png"
+alt="Stale listing upon starting pure emulation" />
+<figcaption aria-hidden="true">Stale listing upon starting pure
+emulation</figcaption>
+</figure>
+<p>This is perhaps more a matter of preference, but by default, Ghidra
+will only populate the Dynamic listing with state initialized by the
+emulator itself. When the emulator reads, it will “read through”
+uninitialized state by reading the mapped program image instead. This
+spares the loader from having to copy a potentially large program image
+into the emulator. In general, you should refer to the Static listing
+when following the program counter. If you see contents in the Dynamic
+listing following the program counter, then you are probably dealing
+with self-modifying code.</p>
+<p><strong>NOTE</strong>: If you prefer to see the Dynamic listing
+initialized with the program image, you may select <strong>Load Emulator
+from Program</strong> from the Auto-Read drop-down button in the Dynamic
+Listing. The loading is still done lazily as each page is viewed in the
+listing pane. You will want to change this back when debugging a live
+target!</p>
+<p>Because we can easily step back and forth as well as navigate to
+arbitrary points in time, emulation should feel relatively free of risk;
+however, the point about stubbing dependencies will become apparent. If
+you feel the need to start over, there are two methods: First, you can
+end the emulation session and restart it. To end the session, in the
+Threads panel, right-click the “Emulate termmines” tab and select Close.
+You can then restart by right-clicking the first instruction as before.
+Second, you can use <strong>Ctrl-G</strong> to go to snapshot 0. This
+method is not as clean as the first, because the trace will retain its
+scratch snapshots.</p>
+<p>Press <img src="images/resume.png" alt="resume button" /> Resume to
+let the emulator run until it crashes. It should crash pretty quickly
+and without much ceremony:</p>
+<figure>
+<img src="images/Emulation_ListingAfterResume.png"
+alt="Listing after crashing" />
+<figcaption aria-hidden="true">Listing after crashing</figcaption>
+</figure>
+<p>In this case, the clearest indication that something has gone wrong
+is in the top-right of the Dynamic listing. Recall that the location
+label is displayed in red when the program counter points outside of
+mapped memory. Presumably, the crash was caused by the instruction to be
+executed next. To get details about the error, press <img
+src="images/stepinto.png" alt="step into button" /> Step Into. This
+should display an error dialog with a full trace of the crash. In this
+case, it should be an instruction decode error. When the emulator reads
+uninitialized memory, it will get stale 0s; however, when the emulator
+tries to <em>execute</em> uninitialized memory, it will crash. Most
+likely, the target called an external function, causing the program
+counter to land in the fake <code>EXTERNAL</code> block.</p>
+<p>To diagnose the crash, press <img src="images/stepback.png"
+alt="step back button" /> Step Back. After a couple steps back, you
+should be able to confirm our hypothesis: we got here through a call to
+the external function <code>printf</code>. You can continue stepping
+back until you find the decision point that took us down this path. You
+should notice it was because <code>param_1</code> was 0. The decompiler
+can help you recognize that at a glance, but you will still want to use
+the disassembly to get at precisely the deciding instruction. The
+<code>JZ</code> (or other conditional jump) is too late; you need to
+step back to the <code>TEST EDI,EDI</code> (or similar) instruction.
+(This may, ironically, be the first instruction of the function.) In the
+System V AMD64 ABI (Linux x86-64 calling conventions) <code>RDI</code>
+is used to pass the first parameter. You can hover your mouse over
+<code>param_1</code> in the Decompiler, and it will tell you the
+location is <code>EDI:4</code>, and that its current value is a stale
+0.</p>
+<section id="initializing-other-state" class="level3">
+<h3>Initializing Other State</h3>
+<p>We had just started executing the target function arbitrarily. Ghidra
+takes care of a minimal bit of initialization of the trace to start
+emulation. Namely, it maps the image to its preferred base. It allocates
+space for the main thread’s stack and initializes the stack pointer.
+Finally, it initializes the program counter.</p>
+<p>It is still up to you to initialize any other state, especially the
+function’s parameters. Clearly, we will need to initialize
+<code>param_1</code>. We may need to do a little static analysis around
+the call to this function to understand what those parameters are, but
+you could probably make an educated guess: <code>param_1</code> is
+<code>argc</code> and <code>param_2</code> is <code>argv</code>. We
+might as well initialize both. Luckily, we have plenty of memory, and
+given the small scope of emulation, we can probably place the strings
+for <code>argv</code> wherever we would like.</p>
+<p>You may prefer to apply patches to the trace database or to the
+emulator. The advantage to patching in the emulator is that once you
+have completed your experiments, you can readily see all of the steps
+that got you to the current machine state, including all patches. The
+disadvantage is that if you have extensive patches, they will pollute
+the stepping schedule, and things can get unwieldy.</p>
+<p>Alternatively, you can perform the patches in the trace. When you
+launched the emulated target, all Ghidra really did was initialize a
+trace database. The advantage to patching the trace is that once you
+have completed your experiments, you will have your initial state
+captured in a trace snapshot. The disadvantage is that you will need to
+remember to invalidate the emulator cache any time you change the
+initial state. For this tutorial, we will perform the patches in the
+emulator.</p>
+<p><strong>NOTE</strong>: If you wish to try patching the trace, then
+change to “Control Trace” mode and use the “Navigate backward one
+snapshot” control action that appears, so that you are patching the
+initial state, and not a scratch snapshot. Scratch snapshots are
+ephemeral snapshots in the trace used to display emulated state. Changes
+to these snapshots will affect the display, but will not affect
+subsequent emulation. If your current schedule includes any steps, then
+“Control Trace” is patching a scratch snapshot.</p>
+<p>Now, we will manually “allocate” memory for <code>argv</code>.
+Luckily, Ghidra allocated 16K of stack space for us! The target function
+should not need a full 16K, so we will allocate the lowest addresses of
+the stack region for our command-line arguments. If you prefer, you may
+use the <strong>Add Region</strong> action in the Regions window to
+manually fabricate a heap region, instead. In the Regions window, filter
+for “stack” and take note of the start address, e.g.,
+<code>00001000</code>. We will use the Watches window to perform our
+patching, though we will also use the Dynamic listing to double check.
+Add the following watches:</p>
+<ul>
+<li><code>RSP</code> — to confirm the stack pointer is far from
+<code>argv</code>.</li>
+<li><code>RDI</code> — the location of <code>param_1</code>, i.e.,
+<code>argc</code>.</li>
+<li><code>RSI</code> — the location of <code>param_2</code>, i.e.,
+<code>argv</code>.</li>
+</ul>
+<p>To start, we will just try to return successfully from the parser.
+From the behavior we have observed, it requires at least
+<code>argv[0]</code> to be present. Conventionally, this is the name of
+the binary as it was invoked from the shell, i.e.,
+<code>termmines</code>. There are few reasons a UNIX program might want
+to examine this “argument.” First, if the binary actually implements
+many commands, like <code>busybox</code> does, then that binary needs to
+know the actual command. Second, if the binary needs to print usage
+information, it may like to echo back the actual invocation. It is
+possible we may only need to initialize <code>argc</code>, since the
+parser may not actually <em>use</em> the value of
+<code>argv[0]</code>.</p>
+<p>Use the Watches window to set <code>RDI</code> to 1, then click <img
+src="images/resume.png" alt="resume button" /> Resume. Like before, the
+emulator will crash, but this time you should see “pc = 00000000” in
+red. This probably indicates success. In the Threads window, you should
+see a schedule similar to <code>0:t0-{RDI=0x1);t0-16</code>. This tells
+us we first patched RDI, then emulated 16 machine instructions before
+crashing. When the parser function returned, it probably read a stale 0
+as the return address, so we would expect a decode error at
+<code>00000000</code>. Step backward once to confirm this
+hypothesis.</p>
+</section>
+<section id="stubbing-external-calls" class="level3">
+<h3>Stubbing External Calls</h3>
+<p>For this tutorial, we will set the skill level to Advanced by
+patching in actual command-line arguments. This continues our lesson in
+state initialization, but we may also need to stub some external calls,
+e.g., to <code>strnlen</code> and <code>strcmp</code>. We will need to
+pass in <code>termmines -s Advanced</code>, which is three arguments.
+Use <strong>Ctrl-G</strong> to go back to snapshot 0, and add the
+following watches:</p>
+<ul>
+<li><code>*:8 (RSI + 0)</code> — the address of the first argument,
+i.e., <code>argv[0]</code>.</li>
+<li><code>*:30 (*:8 (RSI + 0))</code> with type
+<code>TerminatedCString</code> — at most 30 characters of the first
+argument.</li>
+<li><code>*:8 (RSI + 8)</code> — <code>argv[1]</code></li>
+<li><code>*:30 (*:8 (RSI + 8))</code> with type
+<code>TerminatedCString</code> — contents of <code>argv[1]</code></li>
+<li><code>*:8 (RSI + 16)</code> — <code>argv[2]</code></li>
+<li><code>*:30 (*:8 (RSI + 16))</code> with type
+<code>TerminatedCString</code> — contents of <code>argv[2]</code></li>
+</ul>
+<figure>
+<img src="images/Emulation_WatchesForCmdline.png"
+alt="Watches for patching command-line arguments" />
+<figcaption aria-hidden="true">Watches for patching command-line
+arguments</figcaption>
+</figure>
+<p>This will generate an extensive list of patch steps, so you may
+prefer to patch the trace in this case. Set <code>RDI</code> to 3.
+Notice that <code>argv[0]</code> is supposedly allocated at
+<code>00000000</code> according to the Address column for the watch on
+<code>*:8 (RSI + 0)</code>. That was determined by the value of
+<code>RSI</code>, which is essentially telling us we need to allocate
+<code>argv</code>, an array of pointers. We can confirm <code>RSP</code>
+is at the upper end of the stack region, so we allocate
+<code>argv</code> at <code>00001000</code>. To do that, set the value of
+<code>RSI</code> to <code>0x1000</code>. You should see the Address
+column update for some other watches. You can double-click any of those
+addresses to go there in the Dynamic listing.</p>
+<p><strong>NOTE</strong>: You <em>do not have</em> to allocate things in
+a listed region, but if you want to see those things in the Dynamic
+listing, it is easiest if you allocate them in a listed region.</p>
+<p>Now, we need to allocate space for each argument’s string. To ensure
+we do not collide with the space we have already allocated for
+<code>argv</code>, we should place a data unit in the Dynamic listing.
+Double-click the Address <code>00001000</code> in the Watches window to
+go to that address in the Dynamic listing. Press <strong>P</strong> then
+<strong>[</strong> (left square bracket) to place a 3-pointer array at
+that address. We can now see the next available byte is at
+<code>00001018</code>. <strong>NOTE</strong>: You might set the Dynamic
+listing to <strong>Do Not Track</strong>, otherwise it may seek back to
+the PC every time you patch.</p>
+<p>Now that we know where to put <code>argv[0]</code>, we need to patch
+it to <code>0x0001018</code>. This should be the watch on
+<code>*:8 (RSI + 0)</code>. When you modify the Value column, you can
+type either bytes (in little-endian order for x86) or the integer value
+<code>0x1018</code>. That should cause the watch on
+<code>*:30 (*:8 (RSI + 0))</code> to get the address
+<code>00001018</code>. Using the Repr column, set that watch’s value to
+<code>"termmines"</code>. (The quotes are required.) Place a string in
+the Dynamic listing using the <strong>’</strong> (apostrophe) key. This
+shows us the next available address is <code>00001022</code>, so repeat
+the process to allocate <code>argv[1]</code> and set it to
+<code>"-s"</code>. Then finally, allocate <code>argv[2]</code> and set
+it to <code>"Advanced"</code>. When you have finished, the Watches pane
+should look something like this:</p>
+<figure>
+<img src="images/Emulation_WatchesForCmdlineSet.png"
+alt="Watches for patching command-line arguments after setting" />
+<figcaption aria-hidden="true">Watches for patching command-line
+arguments after setting</figcaption>
+</figure>
+<p>The Dynamic listing should look something like this:</p>
+<figure>
+<img src="images/Emulation_ListingForCmdlineSet.png"
+alt="Listing after setting command-line arguments" />
+<figcaption aria-hidden="true">Listing after setting command-line
+arguments</figcaption>
+</figure>
+<p><strong>NOTE</strong>: The placement of data units is not necessary
+for the emulator to operate; it only cares about the bytes. However, it
+is a useful aide in devising, understanding, and diagnosing machine
+state.</p>
+<p>Now, click <img src="images/resume.png" alt="resume button" />
+Resume, and see where the emulator crashes next. Depending on your
+compilation of <code>termmines</code>, it may crash after returning, or
+it may crash trying to call <code>strnlen</code> or <code>strcmp</code>.
+If the program counter is <code>00000000</code>, then it returned
+successfully. This is unfortunate, because you no longer have motivation
+to stub external calls.</p>
+<p>If the program counter is not <code>00000000</code>, then step
+backward until you get to the <code>CALL</code>. There are at least
+three techniques for overcoming this.</p>
+<ol type="1">
+<li>You can skip the <code>CALL</code> and patch <code>RAX</code>
+accordingly.</li>
+<li>You can override the <code>CALL</code> instruction using a Sleigh
+breakpoint.</li>
+<li>You can override the call target using a Sleigh breakpoint.</li>
+</ol>
+<section id="skip-technique" class="level4">
+<h4>Skip Technique</h4>
+<p>The skip technique is simplest, but will need to be performed
+<em>every time</em> that call is encountered. Press <img
+src="images/skipover.png" alt="skip over button" /> Skip Over, then use
+the Registers or Watches pane to patch <code>RAX</code>. Then press <img
+src="images/resume.png" alt="resume button" /> Resume.</p>
+</section>
+<section id="call-override-technique" class="level4">
+<h4><code>CALL</code> Override Technique</h4>
+<p>Overriding the <code>CALL</code> is also fairly simple. While this
+will handle every encounter, it will not handle other calls to the same
+external function.</p>
+<ol type="1">
+<li>Press <strong>K</strong> in the listing to place a breakpoint on the
+<code>CALL</code> instruction.</li>
+<li>Now, in the Breakpoints panel, right-click the new breakpoint and
+select <strong>Set Injection (Emulator)</strong>.</li>
+<li>This is the fun part: you must now implement the function in Sleigh,
+or at least stub it well enough for this particular call.</li>
+</ol>
+<p>Supposing this is a call to <code>strnlen</code>, you could implement
+it as:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode numberSource sleigh numberLines"><code class="sourceCode sleighsyntax"><span id="cb1-1"><a href="#cb1-1"></a>RAX = <span class="dv">0</span>;</span>
+<span id="cb1-2"><a href="#cb1-2"></a>&lt;<span class="at">loop</span>&gt;</span>
+<span id="cb1-3"><a href="#cb1-3"></a><span class="cf">if</span> (*:<span class="dv">1</span> (RDI+RAX) == <span class="dv">0</span> || RAX &gt;= RSI) <span class="cf">goto</span> &lt;<span class="at">exit</span>&gt;;</span>
+<span id="cb1-4"><a href="#cb1-4"></a>RAX = RAX + <span class="dv">1</span>;</span>
+<span id="cb1-5"><a href="#cb1-5"></a><span class="cf">goto</span> &lt;<span class="at">loop</span>&gt;;</span>
+<span id="cb1-6"><a href="#cb1-6"></a>&lt;<span class="at">exit</span>&gt;</span>
+<span id="cb1-7"><a href="#cb1-7"></a>emu_skip_decoded();</span></code></pre></div>
+<p>While Sleigh has fairly nice C-like expressions, it unfortunately
+does not have C-like control structures. We are essentially writing a
+for loop. The System V AMD64 ABI specifies RAX is for the return value,
+so we can just use it directly as the counter. RDI points to the string
+to measure, and RSI gives the maximum length. We initialize RAX to 0,
+and then check if the current character is NULL, or the count has
+exceeded the maximum length. If so, we are done; if not, we increment
+RAX and repeat. Finally, because we are <em>replacing</em> the semantics
+of the <code>CALL</code> instruction, we tell the emulator to skip the
+current instruction.</p>
+<p>For the complete specification of Sleigh, see the Semantic Section in
+the <a
+href="../../../Ghidra/Features/Decompiler/src/main/doc/sleigh.xml">Sleigh
+documentation</a>. The emulator adds a few userops:</p>
+<ul>
+<li><code>emu_skip_decoded()</code>: Skip the current instruction.</li>
+<li><code>emu_exec_decoded()</code>: Execute the current
+instruction.</li>
+<li><code>emu_swi()</code>: Interrupt, as in a breakpoint.</li>
+</ul>
+<p>Some control flow is required in the Sleigh injection, otherwise, the
+emulator may never advance past the current instruction. An explicit
+call to <code>emu_exec_decoded()</code> allows you to insert logic
+before and/or after the original instruction; however, if the original
+instruction branches, then the logic you placed <em>after</em> will not
+be reached. An explicit call to <code>emu_skip_decoded()</code> allows
+you to omit the original instruction altogether. It immediately falls
+through to the next instruction. The <code>emu_swi()</code> userop
+allows you to maintain breakpoint behavior, perhaps to debug your
+injection.</p>
+<p>After you have written your Sleigh code:</p>
+<ol type="1">
+<li>Click OK on the Set Injection dialog.</li>
+<li>In the menus, select <strong>Debugger → Configure Emulator →
+Invalidate Emulator Cache</strong>.</li>
+<li>Click <img src="images/resume.png" alt="resume button" />
+Resume.</li>
+</ol>
+<p>Stubbing any remaining external calls is left as an exercise. You are
+successful when the emulator crashes with
+<code>pc = 00000000</code>.</p>
+<p>Clear or disable your breakpoint and invalidate the emulator cache
+again before proceeding to the next technique.</p>
+</section>
+<section id="target-override-technique" class="level4">
+<h4>Target Override Technique</h4>
+<p>The target override technique is most thorough, but also the most
+involved. It will handle all calls to the external function, e.g.,
+<code>strnlen</code>, no matter the call site. If the call goes through
+a program linkage table (PLT), then you are in luck, because the call
+target will be visible in the Dynamic listing. The PLT entry usually
+contains a single <code>JMP</code> instruction to the actual
+<code>strnlen</code>. For real target processes, the <code>JMP</code>
+instruction will transfer control to a lazy linker the first time
+<code>strnlen</code> is called from <code>termmines</code>. The linker
+then finds <code>strnlen</code> and patches the table. In contrast, the
+Ghidra loader immediately patches the table to point to a fake
+<code>&lt;EXTERNAL&gt;::strnlen</code> symbol. The <code>EXTERNAL</code>
+block is not visible in the Dynamic listing, so we will override the
+<code>JMP</code> in the PLT.</p>
+<p>The Sleigh code is nearly identical, but we must code an x86
+<code>RET</code> into it. Because we allow the <code>CALL</code> to
+execute normally, we must restore the stack. Furthermore, we must return
+control back to the caller, just like a real x86 subroutine would. We
+also no longer need <code>emu_skip_decoded()</code>, because the
+<code>RET</code> will provide the necessary control transfer.</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode numberSource sleigh numberLines"><code class="sourceCode sleighsyntax"><span id="cb2-1"><a href="#cb2-1"></a>RAX = <span class="dv">0</span>;</span>
+<span id="cb2-2"><a href="#cb2-2"></a>&lt;<span class="at">loop</span>&gt;</span>
+<span id="cb2-3"><a href="#cb2-3"></a><span class="cf">if</span> (*:<span class="dv">1</span> (RDI+RAX) == <span class="dv">0</span> || RAX &gt;= RSI) <span class="cf">goto</span> &lt;<span class="at">exit</span>&gt;;</span>
+<span id="cb2-4"><a href="#cb2-4"></a>RAX = RAX + <span class="dv">1</span>;</span>
+<span id="cb2-5"><a href="#cb2-5"></a><span class="cf">goto</span> &lt;<span class="at">loop</span>&gt;;</span>
+<span id="cb2-6"><a href="#cb2-6"></a>&lt;<span class="at">exit</span>&gt;</span>
+<span id="cb2-7"><a href="#cb2-7"></a>RIP = *:<span class="dv">8</span> RSP;</span>
+<span id="cb2-8"><a href="#cb2-8"></a>RSP = RSP + <span class="dv">8</span>;</span>
+<span id="cb2-9"><a href="#cb2-9"></a><span class="cf">return</span> [RIP];</span></code></pre></div>
+<p>Notice that we cannot just write <code>RET</code>, but instead must
+write the Sleigh code to mimic a <code>RET</code>. As with the
+<code>CALL</code> override technique, you must now invalidate the
+emulator cache and resume. Stubbing any remaining external functions is
+left as an exercise. You are successful when the emulator crashes with
+<code>pc = 00000000</code>.</p>
+</section>
+</section>
+<section id="wrapping-up" class="level3">
+<h3>Wrapping Up</h3>
+<p>As you can see, depending on the scope of emulation, and the
+particulars of the target function, emulating a program image can be
+quite involved. Whatever technique you choose, once you have
+successfully returned from the command-line argument parser, you should
+check for the expected effects.</p>
+<p>In the Static listing, navigate to the variable that stores the
+board’s dimensions. (Finding that variable is a task in the Beginner
+portion, but it can be found pretty easily with some manual static
+analysis.) In the Dynamic listing, you should notice that the values
+have changed to reflect the Advanced skill level.</p>
+</section>
+<section id="optional-exercise-patch-the-placement-algorithm"
+class="level3">
+<h3>Optional Exercise: Patch the Placement Algorithm</h3>
+<p>In this exercise, you will use emulation to devise an assembly patch
+to <code>termmines</code> to change the mine placement algorithm.
+Instead of random placement, please have them placed left to right, top
+to bottom. We recommend you devise your patch using the Assembler (Patch
+Instruction action) in the Static listing, then test and debug your
+patch using the Emulator. Perhaps patch the Dynamic listing to try quick
+tweaks before committing them to the Static listing. Once you have it,
+export the patched binary and run it in a proper terminal.</p>
+</section>
+</section>
+<section id="debugging-p-code-semantics" class="level2">
+<h2>Debugging P-code Semantics</h2>
+<p>The last use case for emulation we will cover in this course is
+debugging p-code semantics. This use case is a bit niche, so we will not
+cover it too deeply. It is useful for debugging processor modules. It is
+also useful in system modeling, since a lot of that is accomplished
+using Sleigh p-code. Perhaps the most useful case related to this module
+is to debug Sleigh injections.</p>
+<p>Ghidra has a dedicated panel for stepping the emulator one p-code
+operation at a time. This panel is not included in the default Debugger
+tool, so it must be configured:</p>
+<ol type="1">
+<li>If you have not already, open the Debugger tool.</li>
+<li>In the menus, select <strong>File → Configure</strong>.</li>
+<li>Click the “Configure All Plugins” button in the top right of the
+dialog.</li>
+<li>Activate the <code>DebuggerPcodeStepperPlugin</code></li>
+<li>Click OK</li>
+<li>Click Close</li>
+</ol>
+<p>The stepper should appear stacked over the Threads panel in the
+bottom right. Yours will probably still be empty, but here is what it
+looks like populated:</p>
+<figure>
+<img src="images/Emulation_PcodeStepper.png" alt="P-code stepper" />
+<figcaption aria-hidden="true">P-code stepper</figcaption>
+</figure>
+<p>To populate it, you will need a session, either emulated or connected
+to a back-end debugger. Use the buttons in the local toolbar to step
+p-code operations. The first p-code op of any instruction is to decode
+the instruction. Once decoded, the p-code listing (left panel) will
+populate with the ops of the decoded instruction. If the current
+instruction is overridden by a Sleigh breakpoint, the listing will
+populate with the injected ops instead. You can then step forward and
+backward within those. As you step, the other windows that display
+machine state will update.</p>
+<p>In addition to registers and memory, p-code has “unique” variables.
+These are temporary variables used only within an instruction’s
+implementation. They are displayed in the right panel. The table of
+variables works similarly to the Registers pane. The columns are:</p>
+<ul>
+<li>The <strong>Unique</strong> column gives the variable’s name and
+size in bytes.</li>
+<li>The <strong>Bytes</strong> column gives the variable’s value in
+bytes.</li>
+<li>The <strong>Value</strong> column gives the variable’s value as an
+integer, an interpretation of the bytes in the machine’s byte
+order.</li>
+<li>The <strong>Type</strong> column allows you to assign a type. This
+is ephemeral.</li>
+<li>The <strong>Repr</strong> column gives the variable’s value
+according to the assigned type.</li>
+</ul>
+<p>As you step, you may notice the schedule changes. It is displayed in
+the stepper’s subtitle as well as the Threads panel’s subtitle. P-code
+stepping is denoted by the portion of the schedule following the dot.
+<strong>NOTE</strong>: You cannot mix instruction steps with p-code op
+steps. The instruction steps always precede the p-code ops. If you click
+Step Into from the global toolbar in the middle of an instruction, the
+trailing p-code op steps will be removed and replaced with a single
+instruction step. In most cases, this intuitively “finishes” the partial
+instruction.</p>
+</section>
+</section>
+</body>
+</html>

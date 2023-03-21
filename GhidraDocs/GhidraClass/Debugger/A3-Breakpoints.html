@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Ghidra Debugger</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="style.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="nav"><a
+ class="beginner" href="A1-GettingStarted.html">Getting Started</a><a
+ class="beginner" href="A2-UITour.html">UI Tour</a><a
+ class="beginner" href="A3-Breakpoints.html">Breakpoints</a><a
+ class="beginner" href="A4-MachineState.html">Machine State</a><a
+ class="beginner" href="A5-Navigation.html">Navigation</a><a
+ class="beginner" href="A6-MemoryMap.html">Memory Map</a><a
+ class="advanced" href="B1-RemoteTargets.html">Remote Targets</a><a
+ class="advanced" href="B2-Emulation.html">Emulation</a><a
+ class="advanced" href="B3-Scripting.html">Scripting</a><a
+ class="advanced" href="B4-Modeling.html">Modeling</a>
+</header>
+<header id="title-block-header">
+<h1 class="title">Ghidra Debugger</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#using-breakpoints" id="toc-using-breakpoints">Using
+Breakpoints</a>
+<ul>
+<li><a href="#breakpoints" id="toc-breakpoints">Breakpoints</a></li>
+<li><a href="#examining-minesweeper-board-setup"
+id="toc-examining-minesweeper-board-setup">Examining Minesweeper Board
+Setup</a>
+<ul>
+<li><a href="#set-the-breakpoints" id="toc-set-the-breakpoints">Set the
+Breakpoints</a></li>
+<li><a href="#toggling-the-breakpoints"
+id="toc-toggling-the-breakpoints">Toggling the Breakpoints</a></li>
+<li><a href="#importing-libc" id="toc-importing-libc">Importing
+<code>libc</code></a></li>
+<li><a href="#capturing-the-random-seed"
+id="toc-capturing-the-random-seed">Capturing the Random Seed</a></li>
+<li><a href="#locating-the-mine-placement-algorithm"
+id="toc-locating-the-mine-placement-algorithm">Locating the Mine
+Placement Algorithm</a></li>
+<li><a href="#exercise-diagram-the-mines"
+id="toc-exercise-diagram-the-mines">Exercise: Diagram the Mines</a></li>
+<li><a
+href="#optional-exercise-replicate-the-boards-forward-engineering"
+id="toc-optional-exercise-replicate-the-boards-forward-engineering">Optional
+Exercise: Replicate the Boards (Forward Engineering)</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
+<section id="using-breakpoints" class="level1">
+<h1>Using Breakpoints</h1>
+<p>This module assumes you know how to launch <code>termmines</code> in
+Ghidra using GDB and know where to find the basic Debugger GUI
+components. If not, please refer to the previous modules.</p>
+<p>This module will address the Breakpoints window in more depth. While
+the breakpoint manager is able to deal with a system of targets, we will
+only deal with a single target at a time.</p>
+<section id="breakpoints" class="level2">
+<h2>Breakpoints</h2>
+<p>Most likely, this window is empty if you have been following the
+lesson.</p>
+<figure>
+<img src="images/Breakpoints_EmptyAfterLaunch.png"
+alt="The breakpoints window" />
+<figcaption aria-hidden="true">The breakpoints window</figcaption>
+</figure>
+<p>From here, you can toggle and delete existing breakpoints. There are
+several ways to set a new breakpoint:</p>
+<ol type="1">
+<li>From any static or dynamic listing window, including Disassembly,
+Memory/Hex, and the Decompiler, right-click and select <img
+src="images/breakpoint-enable.png" alt="set breakpoint" /> Set
+Breakpoint, press <strong>K</strong> on the keyboard, or double-click
+the margin.</li>
+<li>From the Objects window click the <img
+src="images/breakpoint-enable.png" alt="add breakpoint" /> Add
+Breakpoint button or press <strong>F3</strong> on the keyboard.</li>
+<li>From the Interpreter window, use the GDB command, e.g.,
+<code>break main</code>.</li>
+</ol>
+<p>The advantage of using the listings is that you can quickly set a
+breakpoint at any address. The advantage of using the Objects or
+Interpreter window is that you can specify something other than an
+address. Often, those specifications still resolve to addresses, and
+Ghidra will display them. Ghidra will memorize breakpoints by recording
+them as special bookmarks in the imported program. There is some
+iconography to communicate the various states of a breakpoint. When all
+is well and normal, you should only see enabled <img
+src="images/breakpoint-enable.png" alt="enabled breakpoint" /> and
+disabled <img src="images/breakpoint-disable.png"
+alt="disabled breakpoint" /> breakpoints. If the target is terminated
+(or not launched yet), you may also see ineffective <img
+src="images/breakpoint-enable-ineff.png" alt="ineffective breakpoint" />
+breakpoints.</p>
+</section>
+<section id="examining-minesweeper-board-setup" class="level2">
+<h2>Examining Minesweeper Board Setup</h2>
+<p>Suppose we want to cheat at <code>termmines</code>. We might like to
+understand how the mines are placed. Knowing that the mines are placed
+randomly, we might hypothesize that it is using the <code>srand</code>
+and <code>rand</code> functions from the C standard library. While we
+can test that hypothesis by examining the imports statically, we might
+also like to record some actual values, so we will approach this
+dynamically. (This is the Debugger course, after all.) The breakpoint on
+<code>srand</code> will allow us to capture the random seed. The
+breakpoint on <code>rand</code> will help us find the algorithm that
+places the mines.</p>
+<section id="set-the-breakpoints" class="level3">
+<h3>Set the Breakpoints</h3>
+<p>In the Interpreter, type the GDB commands to set breakpoints on
+<code>srand</code> and <code>rand</code>:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode gdb"><code class="sourceCode gdbsyntax"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">break</span> srand</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">break</span> rand</span></code></pre></div>
+<p>The breakpoint window should now be updated:</p>
+<figure>
+<img src="images/Breakpoints_PopAfterSRandRand.png"
+alt="Populated breakpoints window" />
+<figcaption aria-hidden="true">Populated breakpoints window</figcaption>
+</figure>
+<p>For a single target, the lower panel of the Breakpoints window does
+not add much information, but it does have some. We will start with the
+top panel. This lists the “logical” breakpoints, preferring static
+addresses.</p>
+<ul>
+<li>The left-most column <strong>Enabled</strong> indicates the
+breakpoint’s state. Here, we see the inconsistent <img
+src="images/breakpoint-overlay-inconsistent.png" alt="inconsistent" />
+overlay, because Ghidra cannot save the breakpoint without a module
+image. That is because <code>srand</code> and <code>rand</code> are in a
+different module, and we have not yet imported it into Ghidra.</li>
+<li>The next column <strong>Name</strong> is the name of the breakpoint.
+This is for informational purposes only. You can rename a breakpoint
+however you like, and it will have no effect on the target nor back-end
+debugger.</li>
+<li>The next column <strong>Address</strong> gives the address of the
+breakpoint. Notice that the addresses were resolved, even though the
+breakpoints were specified by symbol. Typically, this is the
+<em>static</em> address of the breakpoint; however, if the module image
+is not imported, yet, this will be the <em>dynamic</em> address, subject
+to relocation or ASLR.</li>
+<li>The next column <strong>Image</strong> gives the name of the
+imported image containing the breakpoint. Again, because the module has
+not been imported yet, this column is blank.</li>
+<li>The next column <strong>Length</strong> gives the length of the
+breakpoint. In GDB, this generally applies to watchpoints only.</li>
+<li>The next column <strong>Kinds</strong> gives the kinds of
+breakpoint. Most breakpoints are software execution breakpoints,
+indicated by “SW_EXECUTE.” That is, they are implemented by patching the
+target’s memory with a special instruction (<code>INT3</code> on x86)
+that traps execution. There are also hardware execution breakpoints
+indicated by “HW_EXECUTE,” and access breakpoints indicated by “HW_READ”
+and/or “HW_WRITE”. <strong>NOTE</strong>: GDB would call these
+“watchpoints.” An advantage to software breakpoints is that you can have
+a practically unlimited number of them. Some disadvantages are they can
+be detected easily, and they are limited to execution breakpoints.</li>
+<li>The next column <strong>Locations</strong> counts the number of
+locations for the breakpoint. For a single-target session, this should
+always be 1.</li>
+<li>The final column <strong>Sleigh</strong> is only applicable to the
+emulator. It indicates that the breakpoint’s behavior has been
+customized with Sleigh code. This is covered in <a
+href="B2-Emulation.html">Emulation</a>.</li>
+</ul>
+<p>Now, we move to the bottom panel. This lists the breakpoint
+locations, as reported by the back-end debugger(s). The Enabled,
+Address, and Sleigh columns are the same as the top, but for the
+individual <em>dynamic</em> addresses.</p>
+<ul>
+<li>The <strong>Name</strong> column is the name as designated by the
+back-end.</li>
+<li>The <strong>Trace</strong> column indicates which target contains
+the location. The text here should match one of the tabs from the
+Threads panel.</li>
+<li>The <strong>Comment</strong> column is a user-defined comment. Its
+default value is the specification that generated it, e.g.,
+<code>srand</code>.</li>
+<li>The <strong>Threads</strong> column indicates if the breakpoint is
+scoped to a limited set of threads. Its use is atypical.</li>
+</ul>
+</section>
+<section id="toggling-the-breakpoints" class="level3">
+<h3>Toggling the Breakpoints</h3>
+<p>While there is no need to toggle the breakpoints right now, it is a
+good time to demonstrate the feature. There are several ways to toggle a
+breakpoint:</p>
+<ol type="1">
+<li>In any listing, as in setting a breakpoint, right-click and select a
+toggle action, press <strong>K</strong> on the keyboard, or double-click
+its icon in the margin.</li>
+<li>From the Objects window, expand the Breakpoints node, right-click a
+breakpoint and select Toggle or press <strong>T</strong> on the
+keyboard.</li>
+<li>From the Breakpoints window, single-click the breakpoint’s status
+icon, right-click an entry and select a toggle action, or create a
+selection and use a toggling action from the local toolbar. Either panel
+works, but the top panel is preferred to keep the breakpoints
+consistent. The local toolbar also has actions for toggling all
+breakpoints in the session.</li>
+<li>From the Interpreter window, use the GDB commands, e.g.,
+<code>disable 2</code>.</li>
+</ol>
+<p>Practice toggling them. Notice that no matter how you toggle the
+breakpoints, the display updates. You might also type
+<code>info break</code> into the Interpreter to confirm the effect of
+toggling breakpoints in the GUI. When you are finished, ensure both
+breakpoints are enabled.</p>
+</section>
+<section id="importing-libc" class="level3">
+<h3>Importing <code>libc</code></h3>
+<p>While the Debugger can operate without importing external modules, it
+generally works better when you have. The symbols <code>srand</code> and
+<code>rand</code> are in <code>libc</code>. If you would like to save
+the breakpoints we placed on them, you must import the module. You could
+do this in the usual manner, but the Debugger offers a convenient way to
+import missing modules.</p>
+<ol type="1">
+<li><p>Navigate to a dynamic address that would be mapped to the missing
+module. For our scenario, the easiest way to do that is to double-click
+an address in the Breakpoints window. Either one points somewhere in
+<code>libc</code>.</p></li>
+<li><p>Check the Debug Console window for a note about the missing
+module:</p>
+<figure>
+<img src="images/Breakpoints_MissingModuleNote.png"
+alt="Missing module note in the debug console" />
+<figcaption aria-hidden="true">Missing module note in the debug
+console</figcaption>
+</figure></li>
+<li><p>Click the import button — leftmost of the remedial actions. It
+will display a file browser pointed at the library file.</p></li>
+<li><p>Proceed with the import and initial analysis as you would in the
+CodeBrowser.</p></li>
+</ol>
+<p>Once imported, the Breakpoints window should update to reflect the
+static addresses, the breakpoints should become consistent, and the
+Static Listing should now be synchronized when navigating within
+<code>libc</code>.</p>
+<figure>
+<img src="images/Breakpoints_SyncedAfterImportLibC.png"
+alt="The debugger tool with breakpoints synchronized after importing libc" />
+<figcaption aria-hidden="true">The debugger tool with breakpoints
+synchronized after importing libc</figcaption>
+</figure>
+</section>
+<section id="capturing-the-random-seed" class="level3">
+<h3>Capturing the Random Seed</h3>
+<p>We can now allow <code>termmines</code> to execute, expecting it to
+hit the <code>srand</code> breakpoint first. Click <img
+src="images/resume.png" alt="resume" /> Resume. If all goes well, the
+target should break at <code>srand</code>. If you have never written
+code that uses <code>srand</code> before, you should briefly read its
+manual page. It takes a single parameter, the desired seed. That
+parameter contains the seed this very moment! We can then examine the
+value of the seed by hovering over <code>param_1</code> in the
+decompiler.</p>
+<figure>
+<img src="images/Breakpoints_SeedValueAfterBreakSRand.png"
+alt="Seed value in decompiler hover" />
+<figcaption aria-hidden="true">Seed value in decompiler
+hover</figcaption>
+</figure>
+<p>We will cover other ways to examine memory and registers in the <a
+href="A4-MachineState.html">Machine State</a> module. We have contrived
+<code>termmines</code> so that its random seed will always start with
+<code>0x5eed____</code>. If you see that in the value displayed, then
+you have successfully recovered the seed. This seed will be used in an
+optional exercise at the end of this module. You might write it down;
+however, if you re-launch <code>termmines</code> between now and then,
+you will have a different seed.</p>
+</section>
+<section id="locating-the-mine-placement-algorithm" class="level3">
+<h3>Locating the Mine Placement Algorithm</h3>
+<p>Press <img src="images/resume.png" alt="resume" /> Resume again. This
+time, the target should break at <code>rand</code>. We are not
+interested in the <code>rand</code> function itself, but rather how the
+placement algorithm is using it. Press <img src="images/stepout.png"
+alt="step out" /> Step Out to allow the target to return from
+<code>rand</code>. If you still have the Decompiler up, you should be in
+a code block resembling:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode numberSource c numberLines"><code class="sourceCode c"><span id="cb2-1"><a href="#cb2-1"></a><span class="cf">while</span> <span class="op">(</span>iVar2 <span class="op">=</span> DAT_00604164<span class="op">,</span> iVar1 <span class="op">=</span> DAT_00604160<span class="op">,</span> iVar10 <span class="op">&lt;</span> _DAT_00604168<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-2"><a href="#cb2-2"></a>  iVar3 <span class="op">=</span> rand<span class="op">();</span></span>
+<span id="cb2-3"><a href="#cb2-3"></a>  iVar2 <span class="op">=</span> DAT_00604164<span class="op">;</span></span>
+<span id="cb2-4"><a href="#cb2-4"></a>  iVar11 <span class="op">=</span> rand<span class="op">();</span></span>
+<span id="cb2-5"><a href="#cb2-5"></a>  lVar7 <span class="op">=</span> <span class="op">(</span><span class="dt">long</span><span class="op">)(</span>iVar11 <span class="op">%</span> iVar2 <span class="op">+</span> <span class="dv">1</span><span class="op">)</span> <span class="op">*</span> <span class="bn">0x20</span> <span class="op">+</span> <span class="op">(</span><span class="dt">long</span><span class="op">)(</span>iVar3 <span class="op">%</span> iVar1 <span class="op">+</span> <span class="dv">1</span><span class="op">);</span></span>
+<span id="cb2-6"><a href="#cb2-6"></a>  bVar14 <span class="op">=</span> <span class="op">*(</span>byte <span class="op">*)((</span><span class="dt">long</span><span class="op">)&amp;</span>DAT_00604160 <span class="op">+</span> lVar7 <span class="op">+</span> <span class="bn">0x1c</span><span class="op">);</span></span>
+<span id="cb2-7"><a href="#cb2-7"></a>  <span class="cf">if</span> <span class="op">(-</span><span class="dv">1</span> <span class="op">&lt;</span> <span class="op">(</span><span class="dt">char</span><span class="op">)</span>bVar14<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-8"><a href="#cb2-8"></a>    iVar10 <span class="op">=</span> iVar10 <span class="op">+</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb2-9"><a href="#cb2-9"></a>    <span class="op">*(</span>byte <span class="op">*)((</span><span class="dt">long</span><span class="op">)&amp;</span>DAT_00604160 <span class="op">+</span> lVar7 <span class="op">+</span> <span class="bn">0x1c</span><span class="op">)</span> <span class="op">=</span> bVar14 <span class="op">|</span> <span class="bn">0x80</span><span class="op">;</span></span>
+<span id="cb2-10"><a href="#cb2-10"></a>  <span class="op">}</span></span>
+<span id="cb2-11"><a href="#cb2-11"></a><span class="op">}</span></span></code></pre></div>
+<p>If you are thinking, “I could have just found <code>rand</code> in
+the symbol table and followed its XRefs,” you are correct. However, it
+is useful to use a dynamic debugging session to drive your analysis
+chronologically through execution of the target, even if much of that
+analysis is still static. The advantages of a dynamic session along side
+static analysis should become more apparent as you progress through this
+course.</p>
+</section>
+<section id="exercise-diagram-the-mines" class="level3">
+<h3>Exercise: Diagram the Mines</h3>
+<p>You goal is to capture the location of all the mines. So that you can
+check your work later, you should run <code>termmines</code> in a
+terminal and attach to it from Ghidra. You will probably want to disable
+the breakpoints on <code>rand</code> and <code>srand</code> for now.
+Devise a strategy using breakpoints and the control buttons (Step,
+Resume, etc.) so that you can observe the location of each mine. Use pen
+and paper to draw a diagram of the board, and mark the location of each
+mine as you observe the algorithm placing it. There should only be 10
+mines in Beginner mode. Once the mines are placed, press <img
+src="images/resume.png" alt="resume" /> Resume. Check you work by
+winning the game. Alternatively, you can intentionally lose to have the
+game reveal the mines.</p>
+</section>
+<section id="optional-exercise-replicate-the-boards-forward-engineering"
+class="level3">
+<h3>Optional Exercise: Replicate the Boards (Forward Engineering)</h3>
+<p>You will need a C development environment for this exercise. Because,
+as we have now confirmed, <code>termmines</code> is importing its random
+number generator from the system, we can write a program that uses that
+same generator. Further, because we can capture the seed, and we know
+the placement algorithm, we can perfectly replicate the sequence of game
+boards for any <code>termmines</code> session.</p>
+<p>Write a program that takes a seed from the user and prints a diagram
+of the first game board with the mines indicated. Optionally, have it
+print each subsequent game board when the user presses ENTER. Check your
+work by re-launching <code>termmines</code> (see note about attaching
+below), capturing its seed, inputting it into your program, and then
+winning the game. Optionally, win 2 more games in the same session.</p>
+<p><strong>NOTE</strong>: We will need a more advanced attaching
+technique to check your work, because you will need both to break on
+<code>srand</code> (which happens early in the process’ execution,
+ruling out our usual attach technique) and to interact with it in the
+terminal (which rules out launching in Ghidra). There are a few ways
+around this, including using <code>gdbserver</code> or using
+<code>set inferior-tty</code>. If you are already familiar with those,
+you can try one. The technique we recommend here is using a stub that
+will suspend itself and then execute <code>termmines</code>. We can then
+run the stub in a terminal outside of Ghidra, attach to that stub, and
+then allow it to proceed into <code>termmines</code>. In this way, we
+can attach to the process in the terminal before it reaches
+<code>srand</code>. The stub is fairly easy to write in Bash and should
+be similar in other shells.</p>
+<ol type="1">
+<li><p>In a terminal running Bash (see note if you’re using
+<code>anyptracer</code>):</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">(</span><span class="bu">echo</span> <span class="va">$BASHPID</span><span class="kw">;</span> <span class="bu">kill</span> <span class="at">-SIGSTOP</span> <span class="va">$BASHPID</span><span class="kw">;</span> <span class="bu">exec</span> ./termmines<span class="kw">)</span></span></code></pre></div>
+<p>The parentheses will start <code>bash</code> in a new subprocess. The
+first two commands cause it to print its own process ID and then suspend
+itself. Your terminal should display the PID and report the stopped
+process.</p>
+<p><strong>NOTE</strong>: If you need to use the <code>anyptracer</code>
+stub, then the invocation is more complicated:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./anyptracer</span> <span class="st">&#39;exec bash -c &quot;echo $BASHPID; kill -SIGSTOP $BASHPID; exec ./termmines&quot;&#39;</span></span></code></pre></div>
+<p>In principle, it works the same except wrapped in the
+<code>anyptracer</code> stub. The parentheses are no longer needed, nor
+allowed, since <code>anyptracer</code> is already a subprocess of your
+shell. If you include parentheses, you will get a second sub-subprocess
+to which you cannot attach.</p></li>
+<li><p>In Ghidra, follow the usual steps to attach, but use the PID
+printed in your terminal. <strong>NOTE</strong>: The process is still
+technically running <code>bash</code> when you attach to it.</p></li>
+<li><p>In the Interpreter panel:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode gdb"><code class="sourceCode gdbsyntax"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">break</span> main</span></code></pre></div>
+<p><strong>NOTE</strong>: At this point <code>main</code> technically
+refers to the symbol in <code>bash</code>, but GDB will adjust its
+location once the target loads <code>termmines</code>.</p></li>
+<li><p>Back in your terminal running Bash:</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="bu">fg</span></span></code></pre></div>
+<p>This will cause Bash to return the stub to the foreground of the
+terminal. Without this step, the system will repeatedly suspend the
+process whenever it attempts any I/O on that terminal.</p></li>
+<li><p>In Ghidra, press Resume (or use <code>continue</code> in the
+Interpreter) until you hit the breakpoint at <code>main</code>. This
+permits the stub to complete its third command
+<code>exec ./termmines</code>. The <code>exec</code> command is
+different than normal command execution. Instead of creating a
+subprocess, it <em>replaces</em> the image of the stub process, so the
+process is now running <code>termmines</code>.</p></li>
+<li><p>Refresh the Modules node in the Objects window. You may need to
+clear your filter text. Expand the Modules node and verify it lists
+<code>termmines</code> instead of <code>bash</code>. Without this step,
+your listings may go out of sync.</p></li>
+</ol>
+<p>At this point, you are attached to your target running in the
+terminal, and you have trapped it at <code>main</code>. Because you were
+attached to it when it was still <code>bash</code>, you will likely see
+a lot of extraneous history. For example, the Modules panel will report
+many of the modules that had been loaded by <code>bash</code>. Please
+note their lifespans, however. They should correctly indicate those
+modules are no longer loaded. In any case, you now have the tools needed
+to check your work for this exercise.</p>
+</section>
+</section>
+</section>
+</body>
+</html>

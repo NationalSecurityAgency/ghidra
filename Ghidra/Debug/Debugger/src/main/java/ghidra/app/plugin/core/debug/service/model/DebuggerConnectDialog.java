@@ -305,6 +305,21 @@ public class DebuggerConnectDialog extends ReusableDialogComponentProvider
 		super.cancelCallback();
 	}
 
+	/**
+	 * For testing and documentation purposes only!
+	 */
+	public synchronized void setFactoryByBrief(String brief) {
+		synchronized (factories) {
+			for (FactoryEntry fe : factories.values()) {
+				if (Objects.equals(brief, fe.factory.getBrief())) {
+					dropdownModel.setSelectedItem(fe);
+					return;
+				}
+			}
+			throw new AssertionError();
+		}
+	}
+
 	protected synchronized CompletableFuture<DebuggerObjectModel> reset(
 			DebuggerModelFactory factory, Program program) {
 		if (factory != null) {

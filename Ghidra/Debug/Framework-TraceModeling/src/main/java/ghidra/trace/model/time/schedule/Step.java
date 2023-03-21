@@ -65,7 +65,7 @@ public interface Step extends Comparable<Step> {
 	 * 
 	 * <p>
 	 * The form of the spec must either be numeric, indicating some number of ticks, or
-	 * brace-enclosed Sleigh code, e.g., {@code "{r0=0x1234;}"}. The latter allows patching machine
+	 * brace-enclosed Sleigh code, e.g., {@code "{r0=0x1234}"}. The latter allows patching machine
 	 * state during execution.
 	 * 
 	 * @param threadKey the thread to step, or -1 for the last thread or event thread
