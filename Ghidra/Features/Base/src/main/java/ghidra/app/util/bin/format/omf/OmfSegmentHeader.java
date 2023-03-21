@@ -207,6 +207,13 @@ public class OmfSegmentHeader extends OmfRecord {
 	}
 
 	/**
+	 * @return if 16 or 32 bit segments are used
+	 */
+	public boolean is16Bit() {
+		return (segAttr & 1) == 0;
+	}
+
+	/**
 	 * @return true if this block uses filler other than zero bytes
 	 */
 	public boolean hasNonZeroData() {

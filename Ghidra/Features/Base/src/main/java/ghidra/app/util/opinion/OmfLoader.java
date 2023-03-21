@@ -70,6 +70,12 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 		if (record.startsWith("CodeGear")) {
 			return "codegearcpp";
 		}
+		if (record.equals("MS C")) {
+			return "windows";
+		}
+		if(record.startsWith("Watcom")) {
+			return "watcom";
+		}
 		return null;
 	}
 
