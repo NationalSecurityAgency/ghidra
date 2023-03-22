@@ -2486,7 +2486,7 @@ public class SymbolicPropogator {
 
 		int numOperands = instruction.getNumOperands();
 
-		for (int i = 0; opIndex == Reference.MNEMONIC && i < numOperands; i++) {
+		for (int i = 0; i < numOperands; i++) {
 			int opType = instruction.getOperandType(i);
 
 			if ((opType & OperandType.ADDRESS) != 0) {
@@ -2496,6 +2496,24 @@ public class SymbolicPropogator {
 					break;
 				}
 			}
+			if ((opType & OperandType.SCALAR) != 0) {
+				Scalar s = instruction.getScalar(i);
+				if (s != null) {
+					long val = s.getUnsignedValue();
+					// sort of a hack, for memory that is not byte addressable
+					if (val == wordOffset || val == (wordOffset >> 1)) {
+						opIndex = i;
+						break;
+					}
+				}
+			}
+			
+			// Don't check more complicated operands if already found an operand that matches
+			// only continue checking for an exact scalar/address operand
+			if (opIndex != Reference.MNEMONIC) {
+				continue;
+			}
+			
 			// markup the program counter for any flow
 			if ((opType & OperandType.REGISTER) != 0) {
 				Register reg = instruction.getRegister(i);
@@ -2519,15 +2537,7 @@ public class SymbolicPropogator {
 					}
 				}
 			}
-			Scalar s = instruction.getScalar(i);
-			if (s != null) {
-				long val = s.getUnsignedValue();
-				// sort of a hack, for memory that is not byte addressable
-				if (val == wordOffset || val == (wordOffset >> 1)) {
-					opIndex = i;
-					break;
-				}
-			}
+
 			if ((opType & OperandType.DYNAMIC) != 0) {
 				List<Object> list = instruction.getDefaultOperandRepresentationList(i);
 				int len = list.size();
