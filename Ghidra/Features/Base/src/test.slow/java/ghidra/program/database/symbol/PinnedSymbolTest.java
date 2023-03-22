@@ -260,12 +260,12 @@ public class PinnedSymbolTest extends AbstractGhidraHeadlessIntegrationTest {
 		program = new ProgramDB("z80", lang, lang.getDefaultCompilerSpec(), this);
 		symbolTable = program.getSymbolTable();
 		space = program.getAddressFactory().getDefaultAddressSpace();
-		program.setImageBase(addr(0xff00), BATCH_MODE);
 
 		originalBobAddress = addr(ORIGINAL_BOB_ADDRESS);
 		originalFunctionAddress = addr(ORIGINAL_FUNCTION_ADDRESS);
 
 		transactionID = program.startTransaction("Test");
+		program.setImageBase(addr(0xff00), false);
 		createMemBlock();
 		createProcessorSymbols(lang);
 		createBobSymbol();
