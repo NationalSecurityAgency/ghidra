@@ -262,6 +262,7 @@ public class DbgProcessImpl implements DbgProcess {
 		return sequence(TypeSpec.cls(DbgThread.class).set()).then((seq) -> {
 			setActive().handle(seq::next);
 		}).then((seq) -> {
+			id = new DebugProcessRecord(toPid);
 			pid = toPid; // TODO: Wait for successful completion?
 			manager.execute(
 				new DbgAttachCommand(manager, this, BitmaskSet.of(DebugAttachFlags.DEFAULT)))
