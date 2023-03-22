@@ -68,7 +68,7 @@ set "APP_NAME=ghidraSvr"
 set "APP_LONG_NAME=Ghidra Server"
 set "MODULE_DIR=Ghidra\Features\GhidraServer"
 set "WRAPPER_NAME_PREFIX=yajsw"
-set "wrapper_tmpdir=%TEMP%"
+set "WRAPPER_TMPDIR=%TEMP%"
 
 if exist "%SERVER_DIR%\..\Ghidra\" goto normal
 
@@ -77,13 +77,13 @@ rem NOTE: If adjusting JAVA command assignment - do not attempt to add parameter
 rem NOTE: Variables that get accessed in server.conf must be lowercase
 
 rem Development Environment (Eclipse classes or "gradle jar")
-set "ghidra_home=%SERVER_DIR%\..\..\..\.."
+set "GHIDRA_HOME=%SERVER_DIR%\..\..\..\.."
 set "WRAPPER_CONF=%SERVER_DIR%\..\..\Common\server\server.conf"
-set "DATA_DIR=%ghidra_home%\%MODULE_DIR%\build\data"
-set "classpath_frag=%ghidra_home%\%MODULE_DIR%\build\dev-meta\classpath.frag"
-set "LS_CPATH=%ghidra_home%\GhidraBuild\LaunchSupport\bin\main"
+set "DATA_DIR=%GHIDRA_HOME%\%MODULE_DIR%\build\data"
+set "CLASSPATH_FRAG=%GHIDRA_HOME%\%MODULE_DIR%\build\dev-meta\classpath.frag"
+set "LS_CPATH=%GHIDRA_HOME%\GhidraBuild\LaunchSupport\bin\main"
 if not exist "%LS_CPATH%" (
-	set "LS_CPATH=%ghidra_home%\GhidraBuild\LaunchSupport\build\libs\LaunchSupport.jar"
+	set "LS_CPATH=%GHIDRA_HOME%\GhidraBuild\LaunchSupport\build\libs\LaunchSupport.jar"
 )
 if not exist "%LS_CPATH%" (
 	set ERROR=ERROR: Cannot launch from repo because Ghidra has not been compiled with Eclipse or Gradle.
@@ -93,11 +93,11 @@ if not exist "%LS_CPATH%" (
 goto lab1
 
 :normal
-set "ghidra_home=%SERVER_DIR%\.."
+set "GHIDRA_HOME=%SERVER_DIR%\.."
 set "WRAPPER_CONF=%SERVER_DIR%\server.conf"
-set "DATA_DIR=%ghidra_home%\%MODULE_DIR%\data"
-set "classpath_frag=%ghidra_home%\%MODULE_DIR%\data\classpath.frag"
-set "LS_CPATH=%ghidra_home%\support\LaunchSupport.jar"
+set "DATA_DIR=%GHIDRA_HOME%\%MODULE_DIR%\data"
+set "CLASSPATH_FRAG=%GHIDRA_HOME%\%MODULE_DIR%\data\classpath.frag"
+set "LS_CPATH=%GHIDRA_HOME%\support\LaunchSupport.jar"
 
 :lab1
 
@@ -134,7 +134,7 @@ goto reportError
 
 :: Get the java that will be used to launch GhidraServer
 set JAVA_HOME=
-for /f "delims=*" %%i in ('call "%java%" -cp "%LS_CPATH%" LaunchSupport "%ghidra_home%" -java_home') do set JAVA_HOME=%%i
+for /f "delims=*" %%i in ('call "%java%" -cp "%LS_CPATH%" LaunchSupport "%GHIDRA_HOME%" -java_home') do set JAVA_HOME=%%i
 if "%JAVA_HOME%" == "" (
 	set ERROR=Failed to find a supported Java runtime.  Please refer to the Ghidra Installation Guide's Troubleshooting section.
 	goto reportError
@@ -143,8 +143,8 @@ if "%JAVA_HOME%" == "" (
 rem reestablish JAVA path based upon final JAVA_HOME
 set "java=%JAVA_HOME%\bin\java.exe"
 
-set VMARGS=-Djava.io.tmpdir="%wrapper_tmpdir%"
-set VMARGS=%VMARGS% -Djna_tmpdir="%wrapper_tmpdir%"
+set VMARGS=-Djava.io.tmpdir="%WRAPPER_TMPDIR%"
+set VMARGS=%VMARGS% -Djna_tmpdir="%WRAPPER_TMPDIR%"
 
 :: set DEBUG=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:18888
 
@@ -188,7 +188,7 @@ goto eof
 	echo.
 	echo %ERROR%
 	echo.
-	echo %ERROR% >> %ghidra_home%\wrapper.log
+	echo %ERROR% >> %GHIDRA_HOME%\wrapper.log
 	exit /B 1
 
 :eof
