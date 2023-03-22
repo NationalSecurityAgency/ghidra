@@ -15,6 +15,7 @@
  */
 package ghidra.app.util.bin.format.elf.extend;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -463,13 +464,19 @@ public class ElfLoadAdapter {
 	}
 
 	/**
-	 * Return the memory section size in bytes for the specified section header.
-	 * The returned value will be consistent with any byte filtering which may be required.
+	 * Returns the memory section size in bytes for the specified section header.
+	 * <p>
+	 * The returned value will be consistent with any byte filtering and decompression which 
+	 * may be required.
+	 * <p>
+	 * The default implementation returns the section's 
+	 * {@link ElfSectionHeader#getLogicalSize() logical size}
+	 * 
 	 * @param section the section header
 	 * @return preferred memory block size in bytes which corresponds to the specified section header
 	 */
 	public long getAdjustedSize(ElfSectionHeader section) {
-		return section.getSize();
+		return section.getLogicalSize();
 	}
 
 	/**
@@ -482,9 +489,11 @@ public class ElfLoadAdapter {
 	 * @param dataLength the in-memory data length in bytes (actual bytes read from dataInput may be more)
 	 * @param dataInput the source input stream
 	 * @return filtered input stream or original input stream
+	 * @throws IOException if error initializing filtered stream
 	 */
 	public InputStream getFilteredLoadInputStream(ElfLoadHelper elfLoadHelper,
-			MemoryLoadable loadable, Address start, long dataLength, InputStream dataInput) {
+			MemoryLoadable loadable, Address start, long dataLength, InputStream dataInput)
+			throws IOException {
 		return dataInput;
 	}
 

@@ -15,9 +15,10 @@
  */
 package ghidra.app.util.bin.format.elf;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
+
+import java.io.IOException;
 
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.elf.ElfRelocationTable.TableFormat;
