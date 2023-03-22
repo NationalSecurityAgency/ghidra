@@ -69,40 +69,41 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 
 		/*
 			 1|
-			 2|	int _main(int argc,char **argv)
+			 2| int _main(int argc,char **argv)
 			 3|
-			 4|	{
-			 5|	  _a.id = 1;
-			 6|	  _a.name = "A";
-			 7|	  _b.id = 2;
-			 8|	  _b.name = "B";
-			 9|	  _c.id = 3;
-			10|	  _c.name = "C";
-			11|	  _d.id = 4;
-			12|	  _d.name = "D";
-			13|	  _e.id = 5;
-			14|	  _e.name = "E";
-			15|	  _c.d.e._0_8_ = CONCAT44(_e._4_4_,5);
-			16|	  _d.e.name = "E";
-			17|	  _c.d._0_8_ = CONCAT44(_d._4_4_,4);
-			18|	  _c.d.name = "D";
-			19|	  _c.d.e.name = "E";
-			20|	  _d.e._0_8_ = _c.d.e._0_8_;
-			21|	  _memcpy(&_b.c,&_c,0x30);
-			22|	  _memcpy(&_a.b,&_b,0x40);
-			23|	  _call_structure_A(&_a);
-			24|	  return 0;
-			25|	}
-			16|
+			 4| {
+			 5|   _a.id = 1;
+			 6|   _a.name = "A";
+			 7|   _b.id = 2;
+			 8|   _b.name = "B";
+			 9|   _c.id = 3;
+			10|   _c.name = "C";
+			11|   _d.id = 4;
+			12|   _d.name = "D";
+			13|   _e.id = 5;
+			14|   _e.name = "E";
+			15|   _c.d.e._4_4_ = _e._4_4_;
+			16|   _c.d.e.id = 5;
+			17|   _d.e.name = "E";
+			18|   _c.d._4_4_ = _d._4_4_;
+			19|   _c.d.id = 4;
+			20|   _c.d.name = "D";
+			21|   _c.d.e.name = "E";
+			22|   _d.e._0_8_ = _c.d.e._0_8_;
+			23|   __stubs::_memcpy(&_b.c,&_c,0x30);
+			24|   __stubs::_memcpy(&_a.b,&_b,0x40);
+			25|   _call_structure_A(&_a);
+			26|   return 0;
+			27| }
 		 	
 		 */
 
 		decompile("100000bf0"); // 'main'
 
 		/*
-		 	24: return 0;
+		 	26: return 0;
 		 */
-		int line = 24;
+		int line = 26;
 		assertToken("return", line, 0, 1, 2, 3, 4, 5);
 		assertTokenIndex(0, line, 0, 1, 2, 3, 4, 5);
 		assertToken(" ", line, 6);
@@ -117,41 +118,41 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 	public void testClangTextField_getNextTokenIndex() {
 
 		/*
-			 1|
-			 2|	int _main(int argc,char **argv)
-			 3|
-			 4|	{
-			 5|	  _a.id = 1;
-			 6|	  _a.name = "A";
-			 7|	  _b.id = 2;
-			 8|	  _b.name = "B";
-			 9|	  _c.id = 3;
-			10|	  _c.name = "C";
-			11|	  _d.id = 4;
-			12|	  _d.name = "D";
-			13|	  _e.id = 5;
-			14|	  _e.name = "E";
-			15|	  _c.d.e._0_8_ = CONCAT44(_e._4_4_,5);
-			16|	  _d.e.name = "E";
-			17|	  _c.d._0_8_ = CONCAT44(_d._4_4_,4);
-			18|	  _c.d.name = "D";
-			19|	  _c.d.e.name = "E";
-			20|	  _d.e._0_8_ = _c.d.e._0_8_;
-			21|	  _memcpy(&_b.c,&_c,0x30);
-			22|	  _memcpy(&_a.b,&_b,0x40);
-			23|	  _call_structure_A(&_a);
-			24|	  return 0;
-			25|	}
-			16|
-		 	
-		 */
-
+		 1|
+		 2| int _main(int argc,char **argv)
+		 3|
+		 4| {
+		 5|   _a.id = 1;
+		 6|   _a.name = "A";
+		 7|   _b.id = 2;
+		 8|   _b.name = "B";
+		 9|   _c.id = 3;
+		10|   _c.name = "C";
+		11|   _d.id = 4;
+		12|   _d.name = "D";
+		13|   _e.id = 5;
+		14|   _e.name = "E";
+		15|   _c.d.e._4_4_ = _e._4_4_;
+		16|   _c.d.e.id = 5;
+		17|   _d.e.name = "E";
+		18|   _c.d._4_4_ = _d._4_4_;
+		19|   _c.d.id = 4;
+		20|   _c.d.name = "D";
+		21|   _c.d.e.name = "E";
+		22|   _d.e._0_8_ = _c.d.e._0_8_;
+		23|   __stubs::_memcpy(&_b.c,&_c,0x30);
+		24|   __stubs::_memcpy(&_a.b,&_b,0x40);
+		25|   _call_structure_A(&_a);
+		26|   return 0;
+		27| }
+		
+		*/
 		decompile("100000bf0"); // 'main'
 
 		/*
-		 	24: return 0;
+		 	26: return 0;
 		 */
-		int line = 24;
+		int line = 26;
 		int nextIndex = 1;
 		assertToken("return", line, 1, 2, 3, 4, 5);
 		assertNextTokenIndex(nextIndex, line, 1, 2, 3, 4, 5);
@@ -2006,8 +2007,8 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		assertAllFieldsHighlighted(name, cm, noIgnores);
 	}
 
-	private void assertAllHighlighterFieldsHighlighted(
-			SpyCTokenHighlightMatcher spyMatcher, String hlText, Color hlColor) {
+	private void assertAllHighlighterFieldsHighlighted(SpyCTokenHighlightMatcher spyMatcher,
+			String hlText, Color hlColor) {
 
 		ClangToken cursorToken = getToken(provider);
 		Predicate<ClangToken> ignores = t -> t == cursorToken;
@@ -2092,8 +2093,8 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 			}
 
 			Color actual = token.getHighlight();
-			assertTrue("Token is not highlighted: '" + token + "'" + "\n\texpected: " +
-				cm + "; found: " + toString(actual), cm.matches(actual));
+			assertTrue("Token is not highlighted: '" + token + "'" + "\n\texpected: " + cm +
+				"; found: " + toString(actual), cm.matches(actual));
 		}
 	}
 
@@ -2119,8 +2120,8 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 			}
 
 			Color actual = token.getHighlight();
-			assertTrue("Token is not highlighted: '" + token + "'" + "\n\texpected: " +
-				cm + "; found: " + toString(actual), cm.matches(actual));
+			assertTrue("Token is not highlighted: '" + token + "'" + "\n\texpected: " + cm +
+				"; found: " + toString(actual), cm.matches(actual));
 		}
 	}
 
@@ -2175,8 +2176,9 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 			Color actual = otherToken.getHighlight();
 			Color combinedColor = getCombinedHighlightColor(otherToken);
 			ColorMatcher combinedColorMatcher = colorMatcher.with(combinedColor);
-			assertTrue("Token is not highlighted: '" + otherToken + "'" + "\n\texpected: " +
-				combinedColorMatcher + "; found: " + toString(actual),
+			assertTrue(
+				"Token is not highlighted: '" + otherToken + "'" + "\n\texpected: " +
+					combinedColorMatcher + "; found: " + toString(actual),
 				combinedColorMatcher.matches(actual));
 		}
 	}
