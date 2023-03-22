@@ -27,8 +27,8 @@ dependencies {
 	api project(":Base")
 
 	// jungrapht - exclude slf4j which produces a conflict with other uses with Ghidra
-	api ("com.github.tomnelson:jungrapht-visualization:1.3") { exclude group: "org.slf4j", module: "slf4j-api" }
-	api ("com.github.tomnelson:jungrapht-layout:1.3") { exclude group: "org.slf4j", module: "slf4j-api" }
+	api ("com.github.tomnelson:jungrapht-visualization:1.4") { exclude group: "org.slf4j", module: "slf4j-api" }
+	api ("com.github.tomnelson:jungrapht-layout:1.4") { exclude group: "org.slf4j", module: "slf4j-api" }
 
 	api "org.jgrapht:jgrapht-core:1.5.1"
 
