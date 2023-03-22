@@ -642,8 +642,8 @@ public class FunctionEditorModel {
 				try {
 					if (autoParamCount < oldAutoCount) {
 						if (oldParams.get(autoParamCount)
-								.getStorage()
-								.getAutoParameterType() != storage.getAutoParameterType()) {
+							.getStorage()
+							.getAutoParameterType() != storage.getAutoParameterType()) {
 							adjustSelectionForRowRemoved(i);
 						}
 					}
@@ -1047,6 +1047,24 @@ public class FunctionEditorModel {
 		return true;
 	}
 
+	private FunctionSignature getFunctionSignature() {
+		FunctionDefinitionDataType funDt = new FunctionDefinitionDataType(name);
+		funDt.setReturnType(returnInfo.getFormalDataType());
+		List<ParameterDefinition> params = new ArrayList<>();
+
+		for (ParamInfo paramInfo : parameters) {
+			if (paramInfo.isAutoParameter()) {
+				continue;
+			}
+			String paramName = paramInfo.getName();
+			DataType paramDt = paramInfo.getFormalDataType();
+			params.add(new ParameterDefinitionImpl(paramName, paramDt, null));
+		}
+		funDt.setArguments(params.toArray(new ParameterDefinition[params.size()]));
+		funDt.setVarArgs(hasVarArgs);
+		return funDt;
+	}
+
 	Program getProgram() {
 		return program;
 	}
@@ -1170,7 +1188,7 @@ public class FunctionEditorModel {
 	public void parseSignatureFieldText() throws ParseException, CancelledException {
 		FunctionSignatureParser parser =
 			new FunctionSignatureParser(program.getDataTypeManager(), dataTypeManagerService);
-		FunctionDefinitionDataType f = parser.parse(function.getSignature(), signatureFieldText);
+		FunctionDefinitionDataType f = parser.parse(getFunctionSignature(), signatureFieldText);
 
 		setFunctionData(f);
 		isInParsingMode = false;
