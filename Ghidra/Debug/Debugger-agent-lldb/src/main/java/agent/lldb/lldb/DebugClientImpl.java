@@ -23,6 +23,7 @@ import SWIG.*;
 import agent.lldb.manager.LldbEvent;
 import agent.lldb.manager.LldbManager;
 import agent.lldb.manager.evt.*;
+import agent.lldb.manager.impl.LldbManagerImpl;
 import ghidra.util.Msg;
 
 public class DebugClientImpl implements DebugClient {
@@ -34,6 +35,7 @@ public class DebugClientImpl implements DebugClient {
 	private DebugOutputCallbacks ocb;
 	//private DebugEventCallbacks ecb;
 	private SBCommandInterpreter cmd;
+	private boolean sessionsAreImmutable;
 
 	public DebugClientImpl() {
 	}
@@ -107,6 +109,35 @@ public class DebugClientImpl implements DebugClient {
 		else {
 			manager.updateState(process);
 		}
+		return process;
+	}
+
+	@Override
+	public SBProcess connectRemote(DebugServerId si, String key, boolean auto, boolean async, boolean kernel) {
+		SBListener listener = new SBListener();
+		SBError error = new SBError();
+		if (!auto) {
+			session = createNullSession();
+			((LldbManagerImpl) manager).addSessionIfAbsent(session);
+			return null;
+		}
+		String plugin = kernel ? "kdb-remote" : "gdb-remote";
+		session = connectSession("");
+		SBProcess process = session.ConnectRemote(listener, key, plugin, error);
+		if (!error.Success()) {
+			Msg.error(this, error.GetType() + " while attaching to " + key);
+			SBStream stream = new SBStream();
+			error.GetDescription(stream);
+			Msg.error(this, stream.GetData());
+			return null;
+		}
+		if (async) {
+			manager.waitForEventEx();
+		}
+		else {
+			manager.updateState(process);
+		}
+		sessionsAreImmutable = true;
 		return process;
 	}
 
@@ -232,6 +263,9 @@ public class DebugClientImpl implements DebugClient {
 
 	@Override
 	public Map<String, SBTarget> listSessions() {
+		if (isSessionImmutable()) {
+			return manager.getKnownSessions();
+		}
 		Map<String, SBTarget> map = new HashMap<>();
 		for (int i = 0; i < sbd.GetNumTargets(); i++) {
 			SBTarget target = sbd.GetTargetAtIndex(i);
@@ -501,6 +535,10 @@ public class DebugClientImpl implements DebugClient {
 		if (res.GetOutputSize() > 0) {
 			ocb.output(DebugOutputFlags.DEBUG_OUTPUT_NORMAL.ordinal(), res.GetOutput());
 		}
+	}
+
+	public boolean isSessionImmutable() {
+		return sessionsAreImmutable;
 	}
 
 }

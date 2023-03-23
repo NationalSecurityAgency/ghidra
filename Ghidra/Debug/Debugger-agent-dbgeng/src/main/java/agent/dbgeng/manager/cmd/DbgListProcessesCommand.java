@@ -48,7 +48,7 @@ public class DbgListProcessesCommand extends AbstractDbgCommand<Map<DebugProcess
 			DebugSystemObjects so = manager.getSystemObjects();
 			so.setCurrentProcessId(id);
 			int pid = so.getCurrentProcessSystemId();
-			manager.getProcessComputeIfAbsent(id, pid);
+			manager.getProcessComputeIfAbsent(id, pid, true);
 		}
 		for (DebugProcessId id : new ArrayList<>(cur)) {
 			if (updatedProcessIds.contains(id)) {

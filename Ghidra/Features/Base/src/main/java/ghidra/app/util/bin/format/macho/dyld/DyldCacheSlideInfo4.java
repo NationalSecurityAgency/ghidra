@@ -34,7 +34,7 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Represents a dyld_cache_slide_info3 structure.
  * 
- * @see <a href="https://opensource.apple.com/source/dyld/dyld-852.2/dyld3/shared-cache/dyld_cache_format.h.auto.html">dyld3/shared-cache/dyld_cache_format.h</a> 
+ * @see <a href="https://github.com/apple-oss-distributions/dyld/blob/main/cache-builder/dyld_cache_format.h">dyld_cache_format.h</a> 
  */
 public class DyldCacheSlideInfo4 extends DyldCacheSlideInfoCommon {
 
@@ -225,8 +225,6 @@ public class DyldCacheSlideInfo4 extends DyldCacheSlideInfoCommon {
 
 		List<Address> unchainedLocList = new ArrayList<Address>(1024);
 
-		byte origBytes[] = new byte[4];
-
 		int valueMask = 0xffffffff >>> (32 - deltaShift);
 
 		long delta = -1;
@@ -250,7 +248,7 @@ public class DyldCacheSlideInfo4 extends DyldCacheSlideInfoCommon {
 			}
 
 			if (addRelocations) {
-				addRelocationTableEntry(program, chainLoc, 4, chainValue, origBytes, null);
+				addRelocationTableEntry(program, chainLoc, 4, chainValue, 4, null);
 			}
 
 			memory.setInt(chainLoc, chainValue);

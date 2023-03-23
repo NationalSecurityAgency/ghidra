@@ -20,16 +20,14 @@ import ghidra.app.cmd.data.CreateArrayCmd;
 import ghidra.app.cmd.data.CreateDataCmd;
 import ghidra.app.cmd.function.CreateFunctionCmd;
 import ghidra.app.plugin.exceptionhandlers.gcc.*;
-import ghidra.app.plugin.exceptionhandlers.gcc.datatype.UnsignedLeb128DataType;
 import ghidra.app.plugin.exceptionhandlers.gcc.sections.CieSource;
 import ghidra.app.plugin.exceptionhandlers.gcc.sections.DebugFrameSection;
 import ghidra.app.plugin.exceptionhandlers.gcc.structures.gccexcepttable.LSDATable;
-import ghidra.app.util.opinion.ElfLoader;
+import ghidra.app.util.bin.LEB128Info;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
-import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.Msg;
@@ -350,18 +348,16 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 		 */
 		String comment = "(FDE) Augmentation Data Length";
 
-		UnsignedLeb128DataType uleb = UnsignedLeb128DataType.dataType;
-		MemBuffer buf = new DumbMemBufferImpl(program.getMemory(), addr);
-		int encodedLen = uleb.getLength(buf, -1);
-		Object augLenObj = uleb.getValue(buf, uleb.getDefaultSettings(), encodedLen);
+		LEB128Info uleb128 = GccAnalysisUtils.readULEB128Info(program, addr);
 
-		intAugmentationDataLength = (int) ((Scalar) augLenObj).getUnsignedValue();
+		intAugmentationDataLength = (int) uleb128.asLong();
 
-		createAndCommentData(program, addr, uleb, comment, CodeUnit.EOL_COMMENT);
+		createAndCommentData(program, addr, UnsignedLeb128DataType.dataType, comment,
+			CodeUnit.EOL_COMMENT);
 
-		curSize += encodedLen;
+		curSize += uleb128.getLength();
 
-		return addr.add(encodedLen);
+		return addr.add(uleb128.getLength());
 	}
 
 	/**

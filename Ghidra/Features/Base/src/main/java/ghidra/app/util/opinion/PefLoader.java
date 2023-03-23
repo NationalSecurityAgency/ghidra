@@ -36,7 +36,7 @@ import ghidra.program.model.symbol.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-public class PefLoader extends AbstractLibrarySupportLoader {
+public class PefLoader extends AbstractProgramWrapperLoader {
 
 	public final static String PEF_NAME = "Preferred Executable Format (PEF)";
 	private static final long MIN_BYTE_LENGTH = 40;

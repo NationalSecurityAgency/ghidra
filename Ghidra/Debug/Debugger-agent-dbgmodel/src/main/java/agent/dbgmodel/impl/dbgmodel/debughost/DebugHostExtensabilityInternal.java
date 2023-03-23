@@ -15,15 +15,15 @@
  */
 package agent.dbgmodel.impl.dbgmodel.debughost;
 
+import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Guid.REFIID;
 
+import agent.dbgeng.impl.dbgeng.DbgEngUtil;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.InterfaceSupplier;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.Preferred;
 import agent.dbgmodel.dbgmodel.debughost.DebugHostExtensability;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil.InterfaceSupplier;
 import agent.dbgmodel.jna.dbgmodel.debughost.IDebugHostExtensability;
 import agent.dbgmodel.jna.dbgmodel.debughost.WrapIDebugHostExtensability;
 import ghidra.util.datastruct.WeakValueHashMap;
@@ -32,19 +32,15 @@ public interface DebugHostExtensabilityInternal extends DebugHostExtensability {
 	Map<Pointer, DebugHostExtensabilityInternal> CACHE = new WeakValueHashMap<>();
 
 	static DebugHostExtensabilityInternal instanceFor(WrapIDebugHostExtensability data) {
-		return DbgModelUtil.lazyWeakCache(CACHE, data, DebugHostExtensabilityImpl::new);
+		return DbgEngUtil.lazyWeakCache(CACHE, data, DebugHostExtensabilityImpl::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIDebugHostExtensability>> PREFERRED_DATA_SPACES_IIDS_BUILDER =
-		ImmutableMap.builder();
-	Map<REFIID, Class<? extends WrapIDebugHostExtensability>> PREFERRED_DATA_SPACES_IIDS =
-		PREFERRED_DATA_SPACES_IIDS_BUILDER //
-				.put(new REFIID(IDebugHostExtensability.IID_IDEBUG_HOST_EXTENSABILITY),
-					WrapIDebugHostExtensability.class) //
-				.build();
+	List<Preferred<WrapIDebugHostExtensability>> PREFERRED_DATA_SPACES_IIDS = List.of(
+		new Preferred<>(IDebugHostExtensability.IID_IDEBUG_HOST_EXTENSABILITY,
+			WrapIDebugHostExtensability.class));
 
 	static DebugHostExtensabilityInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
-		return DbgModelUtil.tryPreferredInterfaces(DebugHostExtensabilityInternal.class,
+		return DbgEngUtil.tryPreferredInterfaces(DebugHostExtensabilityInternal.class,
 			PREFERRED_DATA_SPACES_IIDS, supplier);
 	}
 }

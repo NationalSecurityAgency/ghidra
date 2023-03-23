@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +15,19 @@
  */
 package ghidra.app.plugin.core.byteviewer;
 
-import ghidra.app.util.HighlightProvider;
-import ghidra.app.util.viewer.field.FieldFactory;
-
 import java.awt.Color;
 
 import docking.widgets.fieldpanel.support.Highlight;
+import generic.theme.GColor;
+import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.viewer.field.FieldFactory;
 
 public class ByteViewerHighlightProvider implements HighlightProvider {
 	private static Highlight[] NO_HIGHLIGHTS = new Highlight[0];
 	private String highlightText;
-	private Color highlightColor = Color.YELLOW;
+	private Color highlightColor = new GColor("color.bg.byteviewer.highlight");
 
+	@Override
 	public Highlight[] getHighlights(String text, Object obj,
 			Class<? extends FieldFactory> fieldFactoryClass, int cursorTextOffset) {
 

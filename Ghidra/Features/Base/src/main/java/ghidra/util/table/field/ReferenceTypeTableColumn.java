@@ -22,9 +22,8 @@ import javax.swing.JLabel;
 import docking.widgets.table.GTableCellRenderingData;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
-import ghidra.program.model.listing.Program;
-import ghidra.program.model.symbol.RefType;
-import ghidra.program.model.symbol.Reference;
+import ghidra.program.model.listing.*;
+import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.table.column.AbstractGhidraColumnRenderer;
 import ghidra.util.table.column.GColumnRenderer;
@@ -51,7 +50,16 @@ public class ReferenceTypeTableColumn
 	@Override
 	public RefType getValue(Reference rowObject, Settings settings, Program program,
 			ServiceProvider serviceProvider) throws IllegalArgumentException {
-		return rowObject.getReferenceType();
+		Listing listing = program.getListing();
+		RefType referenceType = rowObject.getReferenceType();
+		if (referenceType == RefType.INDIRECTION) {
+			Instruction instruction = listing.getInstructionAt(rowObject.getFromAddress());
+			if (instruction != null) {
+				FlowType flowType = instruction.getFlowType();
+				return flowType;
+			}
+		}
+		return referenceType;
 	}
 
 	@Override
@@ -73,15 +81,13 @@ public class ReferenceTypeTableColumn
 			JLabel label = (JLabel) super.getTableCellRendererComponent(data);
 
 			RefType value = (RefType) data.getValue();
-
-			label.setText(value.getName());
-
+			label.setText(value.getDisplayString());
 			return label;
 		}
 
 		@Override
 		public String getFilterString(RefType t, Settings settings) {
-			return t.getName();
+			return t.getDisplayString();
 		}
 	}
 }

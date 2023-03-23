@@ -129,11 +129,15 @@ class DexHeaderFragmentManager {
 		if (!isCreateFragments) {
 			return;
 		}
-
 		monitor.setMessage("DEX: creating fragments");
 		if (header.getDataSize() > 0) {
 			Address start = baseAddress.add(header.getDataOffset());
-			api.createFragment("data", start, header.getDataSize());
+			try {
+				api.createFragment("data", start, header.getDataSize());
+			}
+			catch (NotFoundException e) {
+				//ignore, case for incomplete CDEX
+			}
 		}
 	}
 

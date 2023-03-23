@@ -24,8 +24,7 @@ import java.util.NoSuchElementException;
 import ghidra.program.model.address.*;
 import ghidra.util.LongIterator;
 import ghidra.util.datastruct.NoSuchIndexException;
-import ghidra.util.prop.PropertySet;
-import ghidra.util.prop.PropertyVisitor;
+import ghidra.util.map.ValueMap;
 
 /**
  * PropertyMap is used to store values for a fixed property at
@@ -38,11 +37,12 @@ import ghidra.util.prop.PropertyVisitor;
  *   to efficiently search for the next and previous occurrence of the
  *   property relative to a given address.
  *   The subclass provides the createPage() method that dictates
-  *  the type of PropertyPage that will be managed.
+ *  the type of PropertyPage that will be managed.
+ *  @param <T> property value type
  */
-public abstract class DefaultPropertyMap implements PropertyMap {
+public abstract class DefaultPropertyMap<T> implements PropertyMap<T> {
 
-	protected PropertySet propertyMgr;
+	protected ValueMap<T> propertyMgr;
 	protected AddressMapImpl addrMap;
 	protected String description;
 
@@ -51,14 +51,11 @@ public abstract class DefaultPropertyMap implements PropertyMap {
 	 * @param propertyMgr property manager that manages storage of
 	 * properties
 	 */
-	public DefaultPropertyMap(PropertySet propertyMgr) {
+	public DefaultPropertyMap(ValueMap<T> propertyMgr) {
 		this.propertyMgr = propertyMgr;
 		this.addrMap = new AddressMapImpl();
 	}
 
-	/**
-	 * Get the name for this property manager.
-	 */
 	@Override
 	public String getName() {
 		return propertyMgr.getName();
@@ -82,23 +79,11 @@ public abstract class DefaultPropertyMap implements PropertyMap {
 		return description;
 	}
 
-	/**
-	 * Given two addresses, indicate whether there is an address in
-	 * that range (inclusive) having the property.<p>
-	 * @param start the start of the range.
-	 * @param end the end of the range.
-	 *
-	 * @return boolean true if at least one address in the range
-	 * has the property, false otherwise.
-	 */
 	@Override
 	public boolean intersects(Address start, Address end) {
 		return propertyMgr.intersects(addrMap.getKey(start), addrMap.getKey(end));
 	}
 
-	/*
-	 * @see ghidra.program.model.util.PropertyMap#intersects(ghidra.program.model.address.AddressSetView)
-	 */
 	@Override
 	public boolean intersects(AddressSetView set) {
 		AddressRangeIterator ranges = set.getAddressRanges();
@@ -111,43 +96,22 @@ public abstract class DefaultPropertyMap implements PropertyMap {
 		return false;
 	}
 
-	/**
-	 * Removes all property values within a given range.
-	 * @param start begin range
-	 * @param end end range, inclusive
-	 * @return true if any property value was removed; return
-	 * 		false otherwise.
-	 */
 	@Override
 	public boolean removeRange(Address start, Address end) {
 		return propertyMgr.removeRange(addrMap.getKey(start), addrMap.getKey(end));
 	}
 
-	/**
-	 * Remove the property value at the given address.
-	 * @return true if the property value was removed, false
-	 *   otherwise.
-	 * @param addr the address where the property should be removed
-	 */
 	@Override
 	public boolean remove(Address addr) {
 		return propertyMgr.remove(addrMap.getKey(addr));
 	}
 
-	/**
-	 * returns whether there is a property value at addr.
-	 * @param addr the address in question
-	 */
 	@Override
 	public boolean hasProperty(Address addr) {
 		return propertyMgr.hasProperty(addrMap.getKey(addr));
 
 	}
 
-	/**
-	 * Get the next address where the property value exists.
-	 * @param addr the address from which to begin the search (exclusive).
-	 */
 	@Override
 	public Address getNextPropertyAddress(Address addr) {
 
@@ -161,11 +125,6 @@ public abstract class DefaultPropertyMap implements PropertyMap {
 
 	}
 
-	/**
-	 * Get the previous Address where a property value exists.
-	 * @param addr the address from which
-	 * 		to begin the search (exclusive).
-	 */
 	@Override
 	public Address getPreviousPropertyAddress(Address addr) {
 		try {
@@ -177,9 +136,6 @@ public abstract class DefaultPropertyMap implements PropertyMap {
 		return null;
 	}
 
-	/**
-	 * Get the first Address where a property value exists.
-	 */
 	@Override
 	public Address getFirstPropertyAddress() {
 		try {
@@ -192,9 +148,6 @@ public abstract class DefaultPropertyMap implements PropertyMap {
 
 	}
 
-	/**
-	 * Get the last Address where a property value exists.
-	 */
 	@Override
 	public Address getLastPropertyAddress() {
 		try {
@@ -206,82 +159,41 @@ public abstract class DefaultPropertyMap implements PropertyMap {
 		return null;
 	}
 
-	/**
-	 * Get the number of properties in the map.
-	 */
 	@Override
 	public int getSize() {
 		return propertyMgr.getSize();
 	}
 
-	/** Returns an iterator over addresses that have a property value within the
-	 * given address range.
-	 * @param start the first address in the range.
-	 * @param end the last address in the range.
-	 * @exception TypeMismatchException thrown if the property does not
-	 * have values of type <CODE>Object</CODE>.
-	 */
 	@Override
 	public AddressIterator getPropertyIterator(Address start, Address end) {
 		return new AddressPropertyIterator(start, end);
 	}
 
-	/**
-	 * @see ghidra.program.model.util.PropertyMap#getPropertyIterator(ghidra.program.model.address.Address, ghidra.program.model.address.Address, boolean)
-	 */
 	@Override
 	public AddressIterator getPropertyIterator(Address start, Address end, boolean forward) {
 		return new AddressPropertyIterator(start, end, forward);
 	}
 
-	/** Returns an iterator over addresses that have a property value within the
-	 * property map.
-	 * @exception TypeMismatchException thrown if the property does not
-	 * have values of type <CODE>Object</CODE>.
-	 */
 	@Override
 	public AddressIterator getPropertyIterator() {
 		return new AddressPropertyIterator();
 	}
 
-	/**
-	 * Returns an iterator over the addresses that have a property value and
-	 * are in the given address set.
-	 */
 	@Override
 	public AddressIterator getPropertyIterator(AddressSetView asv) {
 		return new AddressSetPropertyIterator(asv, true);
 	}
 
-	/**
-	 * @see ghidra.program.model.util.PropertyMap#getPropertyIterator(ghidra.program.model.address.AddressSetView, boolean)
-	 */
 	@Override
 	public AddressIterator getPropertyIterator(AddressSetView asv, boolean forward) {
 		return new AddressSetPropertyIterator(asv, forward);
 	}
 
-	/**
-	 * @see ghidra.program.model.util.PropertyMap#getPropertyIterator(ghidra.program.model.address.Address, boolean)
-	 */
 	@Override
 	public AddressIterator getPropertyIterator(Address start, boolean forward) {
 		return new AddressPropertyIterator(start, forward);
 	}
 
-	/**
-	 * 
-	 * @see ghidra.program.model.util.PropertyMap#applyValue(ghidra.util.prop.PropertyVisitor, ghidra.program.model.address.Address)
-	 */
-	@Override
-	public void applyValue(PropertyVisitor visitor, Address addr) {
-		propertyMgr.applyValue(visitor, addrMap.getKey(addr));
-	}
-
-	/**
-	 * 
-	 * @see ghidra.program.model.util.PropertyMap#moveRange(ghidra.program.model.address.Address, ghidra.program.model.address.Address, ghidra.program.model.address.Address)
-	 */
 	@Override
 	public void moveRange(Address start, Address end, Address newStart) {
 		propertyMgr.moveRange(addrMap.getKey(start), addrMap.getKey(end), addrMap.getKey(newStart));
@@ -338,17 +250,11 @@ public abstract class DefaultPropertyMap implements PropertyMap {
 
 		}
 
-		/**
-		 * @see java.util.Iterator#remove()
-		 */
 		@Override
 		public void remove() {
 			throw new UnsupportedOperationException();
 		}
 
-		/**
-		 * @see AddressIterator#hasNext()
-		 */
 		@Override
 		public boolean hasNext() {
 			if (forward) {
@@ -357,9 +263,6 @@ public abstract class DefaultPropertyMap implements PropertyMap {
 			return iter.hasPrevious();
 		}
 
-		/**
-		* @see AddressIterator#next()
-		*/
 		@Override
 		public Address next() {
 			try {
@@ -392,17 +295,11 @@ public abstract class DefaultPropertyMap implements PropertyMap {
 			this.atStart = atStart;
 		}
 
-		/**
-		 * @see java.util.Iterator#remove()
-		 */
 		@Override
 		public void remove() {
 			throw new UnsupportedOperationException();
 		}
 
-		/**
-		 * @see AddressIterator#hasNext()
-		 */
 		@Override
 		public boolean hasNext() {
 			if (nextAddr == null) {
@@ -411,21 +308,6 @@ public abstract class DefaultPropertyMap implements PropertyMap {
 			return nextAddr != null;
 		}
 
-		/**
-		 * @see AddressIterator#hasPrevious()
-		 */
-		public boolean hasPrevious() {
-			throw new UnsupportedOperationException();
-//			nextAddr = null;
-//			if (prevAddr == null) {
-//				prevAddr = findPrevious();
-//			}
-//			return prevAddr != null;
-		}
-
-		/**
-		 * @see AddressIterator#next()
-		 */
 		@Override
 		public Address next() {
 			if (hasNext()) {
@@ -434,19 +316,6 @@ public abstract class DefaultPropertyMap implements PropertyMap {
 				return addr;
 			}
 			return null;
-		}
-
-		/**
-		 * @see AddressIterator#previous()
-		 */
-		public Address previous() {
-			throw new UnsupportedOperationException();
-//			if (hasPrevious()) {
-//				Address addr = prevAddr;
-//				prevAddr = null;
-//				return addr;
-//			}
-//			return null;
 		}
 
 		private Address findNext() {
@@ -468,26 +337,6 @@ public abstract class DefaultPropertyMap implements PropertyMap {
 			}
 			return null;
 		}
-
-//		private Address findPrevious() {
-//			if ((iter != null) && iter.hasPrevious()) {
-//				return iter.previous();
-//			}
-//			while(ranges.hasPrevious()) {
-//				AddressRange range = ranges.previous();
-//				if (range == curRange) {
-//					continue;
-//				}
-//				curRange = range;
-//				iter = new AddressPropertyIterator(range.getMinAddress(),
-//												   range.getMaxAddress(), 
-//												   atStart);
-//				if (iter.hasPrevious()) {
-//					return iter.previous();
-//				}
-//			}
-//			return null;
-//		}
 
 		@Override
 		public Iterator<Address> iterator() {

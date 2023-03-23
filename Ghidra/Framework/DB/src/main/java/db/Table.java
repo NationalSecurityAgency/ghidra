@@ -112,14 +112,10 @@ public class Table {
 	 * Subsequent table use may generate an exception.
 	 */
 	void invalidate() {
-		boolean isIndexTable = tableRecord.getIndexedColumn() >= 0;
 		tableRecord = null;
 		rootBufferId = -1;
 		nodeMgr = null;
 		++modCount;
-		if (!isIndexTable) {
-			db.tableDeleted(this);
-		}
 	}
 
 	/**
@@ -419,9 +415,12 @@ public class Table {
 				// Check for bad index tables (missing or invalid entries)
 				for (int indexedColumn : indexedColumns) {
 					IndexTable indexTable = secondaryIndexes.get(indexedColumn);
+					Field f = rec.getField(indexedColumn);
+					if (indexTable.isSparseIndex && f.isNull()) {
+						continue; // skip unindexed field
+					}
 					boolean found = false;
-					Field[] keys =
-						indexTable.findPrimaryKeys(rec.getField(indexTable.getColumnIndex()));
+					Field[] keys = indexTable.findPrimaryKeys(f);
 					for (Field key : keys) {
 						if (key.equals(rec.getKeyField())) {
 							found = true;
@@ -2693,11 +2692,10 @@ public class Table {
 		@Override
 		public boolean hasNext() throws IOException {
 			synchronized (db) {
-				if (iterCnt <= SHORT_ITER_THRESHOLD) {
-					if (++iterCnt > SHORT_ITER_THRESHOLD) {
-						// Switch to long-running iterator
-						keyIter = new LongDurationLongKeyIterator((ShortDurationLongKeyIterator) keyIter);
-					}
+				if (iterCnt <= SHORT_ITER_THRESHOLD && ++iterCnt > SHORT_ITER_THRESHOLD) {
+					// Switch to long-running iterator
+					keyIter =
+						new LongDurationLongKeyIterator((ShortDurationLongKeyIterator) keyIter);
 				}
 				return keyIter.hasNext();
 			}
@@ -2706,11 +2704,10 @@ public class Table {
 		@Override
 		public boolean hasPrevious() throws IOException {
 			synchronized (db) {
-				if (iterCnt <= SHORT_ITER_THRESHOLD) {
-					if (++iterCnt > SHORT_ITER_THRESHOLD) {
-						// Switch to long-running iterator
-						keyIter = new LongDurationLongKeyIterator((ShortDurationLongKeyIterator) keyIter);
-					}
+				if (iterCnt <= SHORT_ITER_THRESHOLD && ++iterCnt > SHORT_ITER_THRESHOLD) {
+					// Switch to long-running iterator
+					keyIter =
+						new LongDurationLongKeyIterator((ShortDurationLongKeyIterator) keyIter);
 				}
 				return keyIter.hasPrevious();
 			}
@@ -2782,7 +2779,6 @@ public class Table {
 			this.maxKey = keyIter.maxKey;
 
 			if (bufferId >= 0) {
-
 				if (modCount != expectedModCount) {
 					reset();
 				}
@@ -2796,9 +2792,10 @@ public class Table {
 						nodeMgr.releaseNodes();
 					}
 				}
-
 			}
-
+			else {
+				keys = new long[0];
+			}
 		}
 
 		/**

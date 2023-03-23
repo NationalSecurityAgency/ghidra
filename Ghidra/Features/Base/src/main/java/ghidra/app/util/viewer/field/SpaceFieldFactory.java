@@ -15,11 +15,11 @@
  */
 package ghidra.app.util.viewer.field;
 
-import java.awt.Color;
 import java.math.BigInteger;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.util.HighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
@@ -47,7 +47,7 @@ public class SpaceFieldFactory extends FieldFactory {
 	/**
 	 * Constructor
 	 * @param model the model that the field belongs to.
-	 * @param hsProvider the HightLightStringProvider.
+	 * @param hlProvider the HightLightStringProvider.
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
@@ -67,38 +67,42 @@ public class SpaceFieldFactory extends FieldFactory {
 		if (!enabled || !(obj instanceof CodeUnit)) {
 			return null;
 		}
+
 		CodeUnit cu = (CodeUnit) obj;
-
-		if (cu.hasProperty(CodeUnit.SPACE_PROPERTY)) {
-
-			try {
-				int n = cu.getIntProperty(CodeUnit.SPACE_PROPERTY);
-				if (n == 0) {
-					cu.removeProperty(CodeUnit.SPACE_PROPERTY);
-					return null;
-				}
-				else if (n < 0) {
-					n = -n;
-				}
-				FieldElement[] fes = new FieldElement[n];
-				AttributedString as = new AttributedString("", Color.BLACK, getMetrics());
-				for (int i = 0; i < n; i++) {
-					fes[i] = new TextFieldElement(as, 0, 0);
-				}
-
-				return ListingTextField.createMultilineTextField(this, proxy, fes,
-					startX + varWidth, width, n + 1, hlProvider);
+		Integer n = getSpaces(cu);
+		if (n != null) {
+			if (n == 0) {
+				cu.removeProperty(CodeUnit.SPACE_PROPERTY);
+				return null;
 			}
-			catch (NoValueException e) {
+			else if (n < 0) {
+				n = -n;
 			}
+			FieldElement[] fes = new FieldElement[n];
+			AttributedString as = new AttributedString("", Colors.FOREGROUND, getMetrics());
+			for (int i = 0; i < n; i++) {
+				fes[i] = new TextFieldElement(as, 0, 0);
+			}
+
+			return ListingTextField.createMultilineTextField(this, proxy, fes, startX + varWidth,
+				width, n + 1, hlProvider);
 
 		}
 		return null;
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#getProgramLocation(int, int, ghidra.app.util.viewer.field.ListingField)
-	 */
+	private Integer getSpaces(CodeUnit cu) {
+		if (cu.hasProperty(CodeUnit.SPACE_PROPERTY)) {
+			try {
+				return cu.getIntProperty(CodeUnit.SPACE_PROPERTY);
+			}
+			catch (NoValueException e) {
+				// can't happen
+			}
+		}
+		return null;
+	}
+
 	@Override
 	public ProgramLocation getProgramLocation(int row, int col, ListingField bf) {
 		Object obj = bf.getProxy().getObject();
@@ -149,5 +153,4 @@ public class SpaceFieldFactory extends FieldFactory {
 			ToolOptions displayOptions, ToolOptions fieldOptions) {
 		return new SpaceFieldFactory(formatModel, provider, displayOptions, fieldOptions);
 	}
-
 }

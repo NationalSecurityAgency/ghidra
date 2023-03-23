@@ -22,8 +22,6 @@ import java.util.Hashtable;
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
 
-import docking.help.Help;
-import docking.help.HelpService;
 import generic.util.WindowUtilities;
 import ghidra.framework.data.DomainObjectMergeManager;
 import ghidra.framework.model.DomainFile;
@@ -35,6 +33,8 @@ import ghidra.program.model.listing.DomainObjectChangeSet;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
+import help.Help;
+import help.HelpService;
 
 /** 
  * Top level object that manages each step of the merge/resolve conflicts
@@ -225,7 +225,7 @@ public abstract class MergeManager implements DomainObjectMergeManager {
 	 * Convenience method for Junit tests.
 	 */
 	public boolean merge() throws CancelledException {
-		return merge(TaskMonitorAdapter.DUMMY_MONITOR);
+		return merge(TaskMonitor.DUMMY);
 	}
 
 	/**

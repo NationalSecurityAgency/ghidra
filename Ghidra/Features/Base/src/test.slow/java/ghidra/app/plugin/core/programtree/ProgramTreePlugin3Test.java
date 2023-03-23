@@ -23,11 +23,11 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.swing.JLabel;
-import javax.swing.tree.TreePath;
 
 import org.junit.*;
 
 import docking.action.DockingActionIf;
+import generic.theme.GIcon;
 import ghidra.app.util.SelectionTransferData;
 import ghidra.app.util.SelectionTransferable;
 import ghidra.program.database.ProgramBuilder;
@@ -36,7 +36,6 @@ import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.*;
 import ghidra.util.exception.NotFoundException;
-import resources.ResourceManager;
 
 /**
  * Tests for drag/drop/reorder for copy and move in the program tree.
@@ -107,7 +106,7 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 
 	@After
 	public void tearDown() throws Exception {
-		waitForPostedSwingRunnables();
+		waitForSwing();
 		env.release(program);
 		env.dispose();
 	}
@@ -123,13 +122,13 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 
 		// put .text in the view
 		ProgramNode textNode = root.getChild(".text");
-		setViewPaths(new TreePath[] { textNode.getTreePath() });
+		setViewPaths(textNode);
 		AddressSet set = plugin.getView();
 
 		ProgramNode subrNode = root.getChild("Subroutines");
 		visitNode(subrNode);
 		ProgramNode node = subrNode.getChild("01004a15");
-		setSelectionPath(node.getTreePath());
+		setSelectionPath(node);
 
 		ProgramNode funcNode = root.getChild("Functions");
 		visitNode(funcNode);
@@ -164,76 +163,6 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 
 	}
 
-	private void dragNodes_Move(ProgramNode node, List<ProgramNode> list) throws Exception {
-		dragNodes(node, list, DnDConstants.ACTION_MOVE);
-	}
-
-	private void dragNodes_Copy(ProgramNode node, List<ProgramNode> list) throws Exception {
-		dragNodes(node, list, DnDConstants.ACTION_COPY);
-	}
-
-	private void dragNodes(ProgramNode node, List<ProgramNode> list, int dropAction)
-			throws Exception {
-		AtomicReference<Exception> ref = new AtomicReference<>();
-		runSwing(() -> {
-			try {
-				tree.processDropRequest(node, list, TreeTransferable.localTreeNodeFlavor,
-					dropAction);
-			}
-			catch (NotFoundException | CircularDependencyException | DuplicateGroupException e) {
-				ref.set(e);
-			}
-		});
-
-		Exception exception = ref.get();
-		if (exception != null) {
-			throw exception;
-		}
-
-		program.flushEvents();
-	}
-
-	private void dropSelectionOnTree(ProgramNode node, SelectionTransferData data)
-			throws Exception {
-		AtomicReference<Exception> ref = new AtomicReference<>();
-		runSwing(() -> {
-			try {
-				tree.processDropRequest(node, data,
-					SelectionTransferable.localProgramSelectionFlavor, DnDConstants.ACTION_MOVE);
-			}
-			catch (NotFoundException | CircularDependencyException | DuplicateGroupException e) {
-				ref.set(e);
-			}
-		});
-
-		Exception exception = ref.get();
-		if (exception != null) {
-			throw exception;
-		}
-
-		program.flushEvents();
-	}
-
-	private void moveNode(ProgramNode to, ProgramNode toMove) throws Exception {
-
-		AtomicReference<Exception> ref = new AtomicReference<>();
-		runSwing(() -> {
-			try {
-				dndManager.add(to, new ProgramNode[] { toMove }, DnDConstants.ACTION_MOVE, 1);
-			}
-			catch (NotFoundException | CircularDependencyException | DuplicateGroupException e) {
-				ref.set(e);
-			}
-		});
-
-		Exception exception = ref.get();
-		if (exception != null) {
-			throw exception;
-		}
-
-		program.flushEvents();
-	}
-
 	@Test
 	public void testDnDFrag2FragInView() throws Exception {
 		// drag a fragment in the view onto another fragment not in the view
@@ -242,7 +171,7 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 
 		ProgramNode dataNode = root.getChild(".data");
 		ProgramNode debugNode = root.getChild(".debug_data");
-		setViewPaths(new TreePath[] { dataNode.getTreePath(), debugNode.getTreePath() });
+		setViewPaths(dataNode, debugNode);
 		AddressSet set = new AddressSet();
 		set.add(dataNode.getFragment());
 		set.add(debugNode.getFragment());
@@ -251,10 +180,10 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		visitNode(subrNode);
 		ProgramNode node = subrNode.getChild("01004a15");
 		// drop target is 01004a15
-		setSelectionPath(node.getTreePath());
+		setSelectionPath(node);
 
 		AddressSet fragSet = new AddressSet(debugNode.getFragment());
-		ArrayList<ProgramNode> list = new ArrayList<ProgramNode>();
+		ArrayList<ProgramNode> list = new ArrayList<>();
 		list.add(debugNode);
 
 		//drag .debug_data to 01004a15
@@ -262,7 +191,7 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 
 		expandNode(root);
 		assertNull(listing.getFragment("Main Tree", ".debug_data"));
-		assertTrue(!plugin.getView().contains(fragSet));
+		assertFalse(plugin.getView().contains(fragSet));
 
 		assertEquals(0, findNodes(".debug_data").length);
 
@@ -274,7 +203,7 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		redo();
 		expandNode(root);
 		assertNull(listing.getFragment("Main Tree", ".debug_data"));
-		assertTrue(!plugin.getView().contains(fragSet));
+		assertFalse(plugin.getView().contains(fragSet));
 
 		assertEquals(0, findNodes(".debug_data").length);
 	}
@@ -290,7 +219,7 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 
 		ProgramNode subrNode = root.getChild("Subroutines");
 		visitNode(subrNode);
-		setSelectionPath(subrNode.getTreePath());
+		setSelectionPath(subrNode);
 
 		dragNodes_Move(subrNode, Arrays.asList(dataNode));
 
@@ -320,7 +249,7 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		ProgramNode extNode = root.getChild("Not Real Blocks");
 
 		// drag functions to external references
-		setSelectionPath(extNode.getTreePath());
+		setSelectionPath(extNode);
 
 		dragNodes_Move(extNode, Arrays.asList(funcNode));
 
@@ -335,9 +264,8 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 				break;
 			}
 		}
-		if (!found) {
-			Assert.fail("Did not find new parent of Functions");
-		}
+
+		assertTrue("Did not find new parent of Functions", found);
 	}
 
 	@Test
@@ -358,13 +286,13 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		m.add(listing.getModule("Main Tree", "Functions"));
 		program.endTransaction(transactionID, true);
 		set.add(m.getAddressSet());
-		program.flushEvents();
+		waitForProgram(program);
 
 		expandNode(root);
 
 		ProgramNode testNode = root.getChild("Test");
 
-		setSelectionPath(testNode.getTreePath());
+		setSelectionPath(testNode);
 		ProgramNode stringsNode = root.getChild("Strings");
 		visitNode(stringsNode);
 		ProgramNode cNode = stringsNode.getChild("L");
@@ -375,8 +303,6 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		ProgramNode n = testNode;
 		ProgramNode tgtNode = fnode;
 		dragNodes_Move(tgtNode, Arrays.asList(n));
-
-		waitForSwing();
 
 		root = (ProgramNode) tree.getModel().getRoot();
 		// reacquire nodes
@@ -406,7 +332,7 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		visitNode(cNode);
 		fnode = cNode.getChild("testl");
 
-		assertTrue(!fnode.getFragment().contains(set));
+		assertFalse(fnode.getFragment().contains(set));
 		expandNode(root);
 		testNode = root.getChild("Test");
 		assertNotNull(testNode);
@@ -445,8 +371,8 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		copyFolderOrFragment("DLLs", "Everything");
 
 		ProgramNode dataNode = root.getChild(".data");
-		setSelectionPath(dataNode.getTreePath());
-		setViewPaths(new TreePath[] { dataNode.getTreePath() });
+		setSelectionPath(dataNode);
+		setViewPaths(dataNode);
 
 		// drag .data to DLLs
 
@@ -455,7 +381,7 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		visitNode(evNode);
 		ProgramNode dllsNode = evNode.getChild("DLLs");
 		visitNode(dllsNode);
-		setSelectionPath(dllsNode.getTreePath());
+		setSelectionPath(dllsNode);
 
 		ProgramNode dragNode = dataNode;
 		dragNodes_Move(dllsNode, Arrays.asList(dragNode));
@@ -465,7 +391,7 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		int row = getRowForPath(nodes[0].getTreePath());
 
 		Component comp = getCellRendererComponentForNonLeaf(nodes[0], row);
-		assertEquals(ResourceManager.loadImage(DnDTreeCellRenderer.VIEWED_CLOSED_FOLDER_WITH_DESC),
+		assertEquals(new GIcon(DnDTreeCellRenderer.VIEWED_CLOSED_FOLDER_WITH_DESC),
 			((JLabel) comp).getIcon());
 
 		visitNode(nodes[0]);
@@ -485,7 +411,7 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		ProgramNode debugNode = root.getChild(".debug_data");
 		AddressSet set = new AddressSet(debugNode.getFragment());
 
-		setViewPaths(new TreePath[] { dataNode.getTreePath(), debugNode.getTreePath() });
+		setViewPaths(dataNode, debugNode);
 
 		ProgramNode subrNode = root.getChild("Subroutines");
 		visitNode(subrNode);
@@ -502,7 +428,7 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		waitForSwing();
 
 		Component comp = getCellRendererComponentForLeaf(n, row);
-		assertEquals(ResourceManager.loadImage(DnDTreeCellRenderer.VIEWED_FRAGMENT),
+		assertEquals(new GIcon(DnDTreeCellRenderer.VIEWED_FRAGMENT),
 			((JLabel) comp).getIcon());
 	}
 
@@ -512,7 +438,7 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		// verify that the destination fragment contains the dragged
 		// code units
 		ProgramNode dataNode = root.getChild(".data");
-		setViewPaths(new TreePath[] { dataNode.getTreePath() });
+		setViewPaths(dataNode);
 
 		AddressSet set = new AddressSet();
 		set.addRange(getAddr(0x01002a9b), getAddr(0x01002aad));
@@ -535,7 +461,7 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		// verify that the source fragment is removed from the program
 
 		ProgramNode dataNode = root.getChild(".data");
-		setViewPaths(new TreePath[] { dataNode.getTreePath() });
+		setViewPaths(dataNode);
 
 		ProgramNode debugNode = root.getChild(".debug_data");
 
@@ -565,7 +491,7 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 
 		ProgramNode dataNode = root.getChild(".data");
 		ProgramNode debugNode = root.getChild(".debug_data");
-		setViewPaths(new TreePath[] { dataNode.getTreePath(), debugNode.getTreePath() });
+		setViewPaths(dataNode, debugNode);
 
 		AddressSet origSet = plugin.getView();
 		AddressSet set = new AddressSet();
@@ -617,24 +543,21 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		ProgramNode textNode = root.getChild(".text");
 		ProgramNode debugNode = root.getChild(".debug_data");
 
-		assertTrue(!dndManager.isDropSiteOk(debugNode, new ProgramNode[] { textNode },
-			DnDConstants.ACTION_COPY, 0));
+		assertDropSiteInvalid(debugNode, textNode);
 	}
 
 	@Test
 	public void testDnDCopyFrag2Folder() throws Exception {
-		// drag/copy a fragment onto a folder that does not contain
-		//this fragment.
-		// Verify that all occurrences of the dest folder are updated with
-		// the new child.
+		// drag/copy a fragment onto a folder that does not contain this fragment.
+		// Verify that all occurrences of the dest folder are updated with the new child.
 		// Verify that the original parent folder remains intact.
 		ProgramNode textNode = root.getChild(".text");
 
-		setSelectionPath(textNode.getTreePath());
+		setSelectionPath(textNode);
 
 		ProgramNode dllsNode = root.getChild("DLLs");
 		int origCount = dllsNode.getChildCount();
-		setSelectionPath(dllsNode.getTreePath());
+		setSelectionPath(dllsNode);
 
 		dragNodes_Copy(dllsNode, Arrays.asList(textNode));
 
@@ -666,8 +589,8 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 
 		ProgramNode debugNode = root.getChild(".debug_data");
 		ProgramNode nrbNode = root.getChild("Not Real Blocks");
-		assertTrue(!dndManager.isDropSiteOk(nrbNode, new ProgramNode[] { debugNode },
-			DnDConstants.ACTION_COPY, 0));
+
+		assertDropSiteInvalid(nrbNode, debugNode);
 	}
 
 	@Test
@@ -682,7 +605,7 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		ProgramNode destNode = root.getChild("DLLs");
 		int childCount = destNode.getChildCount();
 
-		setSelectionPath(dragNode.getTreePath());
+		setSelectionPath(dragNode);
 
 		// drag/copy Functions to DLLs
 		ProgramNode tgtNode = destNode;
@@ -714,8 +637,7 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		// 	Verify that there is no valid drop target.
 		ProgramNode subrNode = root.getChild("Subroutines");
 		ProgramNode evNode = root.getChild("Everything");
-		assertTrue(!dndManager.isDropSiteOk(evNode, new ProgramNode[] { subrNode },
-			DnDConstants.ACTION_COPY, 0));
+		assertDropSiteInvalid(evNode, subrNode);
 	}
 
 	@Test
@@ -731,11 +653,11 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		// Strings, L are expanded
 
 		// select Strings
-		setSelectionPath(stringsNode.getTreePath());
+		setSelectionPath(stringsNode);
 
 		// drag/copy Strings to Functions
 		ProgramNode funcNode = root.getChild("Functions");
-		setSelectionPath(funcNode.getTreePath());
+		setSelectionPath(funcNode);
 
 		dragNodes_Copy(funcNode, Arrays.asList(stringsNode));
 
@@ -759,12 +681,12 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		// Strings, L are expanded
 
 		// select Strings
-		setSelectionPath(stringsNode.getTreePath());
+		setSelectionPath(stringsNode);
 
 		// paste at Functions
 		ProgramNode funcNode = root.getChild("Functions");
 		collapsePath(funcNode.getTreePath());
-		setSelectionPath(funcNode.getTreePath());
+		setSelectionPath(funcNode);
 
 		// drag/copy Strings to Functions
 		dragNodes_Copy(funcNode, Arrays.asList(stringsNode));
@@ -785,12 +707,12 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		collapsePath(stringsNode.getTreePath());
 
 		// select Strings
-		setSelectionPath(stringsNode.getTreePath());
+		setSelectionPath(stringsNode);
 
 		// drag/copy Strings to Functions
 		ProgramNode funcNode = root.getChild("Functions");
 		expandPath(funcNode.getTreePath());
-		setSelectionPath(funcNode.getTreePath());
+		setSelectionPath(funcNode);
 
 		dragNodes_Copy(funcNode, Arrays.asList(stringsNode));
 
@@ -810,13 +732,13 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		collapsePath(stringsNode.getTreePath());
 
 		// select Strings
-		setSelectionPath(stringsNode.getTreePath());
+		setSelectionPath(stringsNode);
 
 		// drag/copy Strings to Functions
 		ProgramNode funcNode = root.getChild("Functions");
 		visitNode(funcNode);
 		collapsePath(funcNode.getTreePath());
-		setSelectionPath(funcNode.getTreePath());
+		setSelectionPath(funcNode);
 
 		dragNodes_Move(funcNode, Arrays.asList(stringsNode));
 
@@ -830,10 +752,10 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		// verify that the view is not affected.
 		ProgramNode funcNode = root.getChild("Functions");
 		// set the view to Functions
-		setViewPaths(new TreePath[] { funcNode.getTreePath() });
+		setViewPaths(funcNode);
 
 		ProgramNode child = funcNode.getChild("doStuff");
-		setSelectionPath(child.getTreePath());
+		setSelectionPath(child);
 
 		ProgramNode subrNode = root.getChild("Subroutines");
 
@@ -858,8 +780,8 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		ProgramNode funcNode = root.getChild("Functions");
 
 		// set the view to Functions
-		setSelectionPath(funcNode.getTreePath());
-		setViewPaths(new TreePath[] { funcNode.getTreePath() });
+		setSelectionPath(funcNode);
+		setViewPaths(funcNode);
 
 		ProgramNode subrNode = root.getChild("Subroutines");
 
@@ -884,13 +806,13 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 
 		ProgramNode funcNode = root.getChild("Functions");
 		// set the view to Functions
-		setViewPaths(new TreePath[] { funcNode.getTreePath() });
+		setViewPaths(funcNode);
 		AddressSetView origSet = funcNode.getModule().getAddressSet();
 
 		// select Subroutines (not in the view)
 		ProgramNode subrNode = root.getChild("Subroutines");
 
-		setSelectionPath(subrNode.getTreePath());
+		setSelectionPath(subrNode);
 
 		dragNodes_Move(funcNode, Arrays.asList(subrNode));
 
@@ -913,7 +835,7 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		// drag "L" and place it after "CC"
 		ProgramNode lnode = stringsNode.getChild("L");
 		ProgramNode cnode = stringsNode.getChild("CC");
-		setSelectionPath(lnode.getTreePath());
+		setSelectionPath(lnode);
 
 		moveNode(cnode, lnode);
 
@@ -949,19 +871,13 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		// drag "S" and place it after "CC"
 		ProgramNode snode = stringsNode.getChild("S");
 		ProgramNode cnode = stringsNode.getChild("CC");
-		setSelectionPath(snode.getTreePath());
+		setSelectionPath(snode);
 
-		runSwing(() -> {
-			try {
-				// place S after CC
-				dndManager.add(cnode, new ProgramNode[] { snode }, DnDConstants.ACTION_MOVE, 1);
-			}
-			catch (Exception e) {
-				Assert.fail(e.getMessage());
-			}
+		runSwingWithException(() -> {
+			dndManager.add(cnode, new ProgramNode[] { snode }, DnDConstants.ACTION_MOVE, 1);
 		});
+		waitForProgram(program);
 
-		program.flushEvents();
 		String[] names = new String[] { "CC", "S", "G", "L" };
 		for (int i = 0; i < names.length; i++) {
 			assertEquals(names[i], stringsNode.getChildAt(i).toString());
@@ -993,19 +909,13 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		// drag "USER32.DLL" and place it above "ADVAPI32.DLL"
 		ProgramNode wnode = dllsNode.getChild("USER32.DLL");
 		ProgramNode anode = dllsNode.getChild("ADVAPI32.DLL");
-		setSelectionPath(wnode.getTreePath());
+		setSelectionPath(wnode);
 
-		runSwing(() -> {
-			try {
-				// place USER32.DLL above ADVAPI32.DLL
-				dndManager.add(anode, new ProgramNode[] { wnode }, DnDConstants.ACTION_MOVE, -1);
-			}
-			catch (Exception e) {
-				Assert.fail(e.getMessage());
-			}
+		runSwingWithException(() -> {
+			dndManager.add(anode, new ProgramNode[] { wnode }, DnDConstants.ACTION_MOVE, -1);
 		});
+		waitForProgram(program);
 
-		program.flushEvents();
 		assertEquals("USER32.DLL", dllsNode.getFirstChild().toString());
 
 		ProgramNode node = dllsNode.getChild("USER32.DLL");
@@ -1032,22 +942,15 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		ProgramNode debugNode = root.getChild(".debug_data");
 		ProgramNode cnode = stringsNode.getChild("CC");
 
-		setSelectionPath(debugNode.getTreePath());
+		setSelectionPath(debugNode);
 
 		// drag .debug_data to Strings and place it above C
 
-		runSwing(() -> {
-			try {
-				// place .debug_data above C
-				dndManager.add(cnode, new ProgramNode[] { debugNode }, DnDConstants.ACTION_MOVE,
-					-1);
-			}
-			catch (Exception e) {
-				Assert.fail(e.getMessage());
-			}
+		runSwingWithException(() -> {
+			dndManager.add(cnode, new ProgramNode[] { debugNode }, DnDConstants.ACTION_MOVE, -1);
 		});
+		waitForProgram(program);
 
-		program.flushEvents();
 		// verify that .debug_data is the first child in Strings
 		// .debug_data should remain selected
 		// .debug_data should be removed from Not Real Blocks
@@ -1076,22 +979,17 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		// expand DLLs
 		ProgramNode dllsNode = root.getChild("DLLs");
 		expandNode(dllsNode);
-		setSelectionPath(dllsNode.getTreePath());
+		setSelectionPath(dllsNode);
 		ProgramNode lnode = stringsNode.getChild("L");
 		collapseNode(lnode);
 
 		// drag DLLs below L in Strings
-		runSwing(() -> {
-			try {
-				// place DLLs below L
-				dndManager.add(lnode, new ProgramNode[] { dllsNode }, DnDConstants.ACTION_MOVE, 1);
-			}
-			catch (Exception e) {
-				Assert.fail(e.getMessage());
-			}
-		});
 
-		program.flushEvents();
+		runSwingWithException(() -> {
+			// place DLLs below L
+			dndManager.add(lnode, new ProgramNode[] { dllsNode }, DnDConstants.ACTION_MOVE, 1);
+		});
+		waitForProgram(program);
 
 		// verify that DLLs is the last child in Strings
 		// verify that DLLs is still expanded
@@ -1128,17 +1026,12 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		// drag Strings between 01004a15 and 010030d8 in Subroutines
 		ProgramNode node = subrNode.getChild("01004a15");
 		ProgramNode strNode = stringsNode;
-		runSwing(() -> {
-			try {
-				// place Strings below 01004a15 in Subroutines
-				dndManager.add(node, new ProgramNode[] { strNode }, DnDConstants.ACTION_MOVE, 1);
-			}
-			catch (Exception e) {
-				Assert.fail(e.getMessage());
-			}
+		// place DLLs below L
+		runSwingWithException(() -> {
+			// place Strings below 01004a15 in Subroutines
+			dndManager.add(node, new ProgramNode[] { strNode }, DnDConstants.ACTION_MOVE, 1);
 		});
-
-		program.flushEvents();
+		waitForProgram(program);
 
 		// verify that Strings is expanded and is the 3rd child in Subroutines
 		// Verify that Strings remains selected
@@ -1173,17 +1066,12 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		// drag Strings between 01004a15 and 010030d8 in Subroutines
 		ProgramNode node = subrNode.getChild("01004a15");
 		ProgramNode strNode = stringsNode;
-		runSwing(() -> {
-			try {
-				// place Strings above 01004a15 in Subroutines
-				dndManager.add(node, new ProgramNode[] { strNode }, DnDConstants.ACTION_MOVE, -1);
-			}
-			catch (Exception e) {
-				Assert.fail(e.getMessage());
-			}
-		});
 
-		program.flushEvents();
+		runSwingWithException(() -> {
+			// place Strings above 01004a15 in Subroutines
+			dndManager.add(node, new ProgramNode[] { strNode }, DnDConstants.ACTION_MOVE, -1);
+		});
+		waitForProgram(program);
 
 		// verify that Strings is expanded and is the 2nd child in Subroutines
 		// Verify that Strings remains selected
@@ -1218,16 +1106,11 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 
 		// drag 010030d8 from Subroutines to Everything and place after
 		// Everything
-		runSwing(() -> {
-			try {
-				dndManager.add(evNode, new ProgramNode[] { node }, DnDConstants.ACTION_MOVE, 1);
-			}
-			catch (Exception e) {
-				Assert.fail(e.getMessage());
-			}
-		});
 
-		program.flushEvents();
+		runSwingWithException(() -> {
+			dndManager.add(evNode, new ProgramNode[] { node }, DnDConstants.ACTION_MOVE, 1);
+		});
+		waitForProgram(program);
 
 		// verify that 010030d8 is the first child in Everything
 		assertEquals("010030d8", evNode.getFirstChild().toString());
@@ -1238,16 +1121,11 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 
 		// from Subroutines drag 01004a15 below Everything
 		ProgramNode node2 = subrNode.getChild("01004a15");
-		runSwing(() -> {
-			try {
-				dndManager.add(evNode, new ProgramNode[] { node2 }, DnDConstants.ACTION_MOVE, 1);
-			}
-			catch (Exception e) {
-				Assert.fail(e.getMessage());
-			}
-		});
 
-		program.flushEvents();
+		runSwingWithException(() -> {
+			dndManager.add(evNode, new ProgramNode[] { node2 }, DnDConstants.ACTION_MOVE, 1);
+		});
+		waitForProgram(program);
 
 		// verify that 01004a15 is moved to the root node and placed
 		// after Everything
@@ -1269,16 +1147,11 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 
 		// drag/copy 010030d8 from Subroutines to Everything and place after
 		// Everything
-		runSwing(() -> {
-			try {
-				dndManager.add(evNode, new ProgramNode[] { node }, DnDConstants.ACTION_COPY, 1);
-			}
-			catch (Exception e) {
-				Assert.fail(e.getMessage());
-			}
-		});
 
-		program.flushEvents();
+		runSwingWithException(() -> {
+			dndManager.add(evNode, new ProgramNode[] { node }, DnDConstants.ACTION_COPY, 1);
+		});
+		waitForProgram(program);
 
 		// verify that 010030d8 is the first child in Everything
 		assertEquals("010030d8", evNode.getFirstChild().toString());
@@ -1289,14 +1162,11 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 
 		// from Subroutines drag 01004a15 below Everything
 		ProgramNode node2 = subrNode.getChild("01004a15");
-		runSwing(() -> {
-			try {
-				dndManager.add(evNode, new ProgramNode[] { node2 }, DnDConstants.ACTION_COPY, 1);
-			}
-			catch (Exception e) {
-				Assert.fail(e.getMessage());
-			}
+
+		runSwingWithException(() -> {
+			dndManager.add(evNode, new ProgramNode[] { node2 }, DnDConstants.ACTION_COPY, 1);
 		});
+		waitForProgram(program);
 
 		// verify that 01004a15 is copied to the root node and placed
 		// after Everything
@@ -1313,22 +1183,16 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		// expand DLLs
 		ProgramNode dllsNode = root.getChild("DLLs");
 		expandNode(dllsNode);
-		setSelectionPath(dllsNode.getTreePath());
+		setSelectionPath(dllsNode);
 		ProgramNode lnode = stringsNode.getChild("L");
 		collapseNode(lnode);
 
 		// drag/copy DLLs below L in Strings
-		runSwing(() -> {
-			try {
-				// place DLLs below L
-				dndManager.add(lnode, new ProgramNode[] { dllsNode }, DnDConstants.ACTION_COPY, 1);
-			}
-			catch (Exception e) {
-				Assert.fail(e.getMessage());
-			}
-		});
 
-		program.flushEvents();
+		runSwingWithException(() -> {
+			dndManager.add(lnode, new ProgramNode[] { dllsNode }, DnDConstants.ACTION_COPY, 1);
+		});
+		waitForProgram(program);
 
 		// verify that DLLs is the last child in Strings
 		// verify that DLLs is still expanded
@@ -1365,17 +1229,11 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		// drag/copy Strings between 01004a15 and 010030d8 in Subroutines
 		ProgramNode node = subrNode.getChild("01004a15");
 		ProgramNode strNode = stringsNode;
-		runSwing(() -> {
-			try {
-				// place Strings above 01004a15 in Subroutines
-				dndManager.add(node, new ProgramNode[] { strNode }, DnDConstants.ACTION_COPY, -1);
-			}
-			catch (Exception e) {
-				Assert.fail(e.getMessage());
-			}
-		});
 
-		program.flushEvents();
+		runSwingWithException(() -> {
+			dndManager.add(node, new ProgramNode[] { strNode }, DnDConstants.ACTION_COPY, -1);
+		});
+		waitForProgram(program);
 
 		// verify that Strings is expanded and is the 2nd child in Subroutines
 		// Verify that Strings remains selected
@@ -1410,17 +1268,11 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		// drag/copy Strings between 01004a15 and 010030d8 in Subroutines
 		ProgramNode node = subrNode.getChild("01004a15");
 		ProgramNode strNode = stringsNode;
-		runSwing(() -> {
-			try {
-				// place Strings below 01004a15 in Subroutines
-				dndManager.add(node, new ProgramNode[] { strNode }, DnDConstants.ACTION_COPY, 1);
-			}
-			catch (Exception e) {
-				Assert.fail(e.getMessage());
-			}
-		});
 
-		program.flushEvents();
+		runSwingWithException(() -> {
+			dndManager.add(node, new ProgramNode[] { strNode }, DnDConstants.ACTION_COPY, 1);
+		});
+		waitForProgram(program);
 
 		// verify that Strings is expanded and is the 3rd child in Subroutines
 		// Verify that Strings remains selected
@@ -1454,22 +1306,16 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		ProgramNode debugNode = root.getChild(".debug_data");
 		ProgramNode cnode = stringsNode.getChild("CC");
 
-		setSelectionPath(debugNode.getTreePath());
+		setSelectionPath(debugNode);
 
 		// drag/copy .debug_data to Strings and place it above CC
 
-		runSwing(() -> {
-			try {
-				// place .debug_data above CC
-				dndManager.add(cnode, new ProgramNode[] { debugNode }, DnDConstants.ACTION_COPY,
-					-1);
-			}
-			catch (Exception e) {
-				Assert.fail(e.getMessage());
-			}
+		runSwingWithException(() -> {
+			// place .debug_data above CC
+			dndManager.add(cnode, new ProgramNode[] { debugNode }, DnDConstants.ACTION_COPY, -1);
 		});
+		waitForProgram(program);
 
-		program.flushEvents();
 		// verify that .debug_data is the first child in Strings
 		// .debug_data should remain selected
 		// .debug_data should not be removed from Not Real Blocks
@@ -1495,8 +1341,7 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		ProgramNode debugNode = root.getChild(".debug_data");
 		ProgramNode nrbNode = root.getChild("Not Real Blocks");
 
-		assertTrue(!dndManager.isDropSiteOk(nrbNode, new ProgramNode[] { debugNode },
-			DnDConstants.ACTION_COPY, 1));
+		assertDropSiteInvalid(nrbNode, debugNode);
 	}
 
 	@Test
@@ -1504,8 +1349,12 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		ProgramNode debugNode = root.getChild(".debug_data");
 		ProgramNode textNode = root.getChild(".text");
 
-		assertTrue(!dndManager.isDropSiteOk(textNode, new ProgramNode[] { debugNode },
-			DnDConstants.ACTION_COPY, 1));
+		assertDropSiteInvalid(textNode, debugNode);
+	}
+
+	private void assertDropSiteInvalid(ProgramNode destinationNode, ProgramNode... dropNodes) {
+		assertFalse(
+			dndManager.isDropSiteOk(destinationNode, dropNodes, DnDConstants.ACTION_COPY, 1));
 	}
 
 	private DockingActionIf getAction(String name) {
@@ -1518,18 +1367,88 @@ public class ProgramTreePlugin3Test extends AbstractProgramTreePluginTest {
 		return null;// cannot get here
 	}
 
+	private void dragNodes_Move(ProgramNode node, List<ProgramNode> list) throws Exception {
+		dragNodes(node, list, DnDConstants.ACTION_MOVE);
+	}
+
+	private void dragNodes_Copy(ProgramNode node, List<ProgramNode> list) throws Exception {
+		dragNodes(node, list, DnDConstants.ACTION_COPY);
+	}
+
+	private void dragNodes(ProgramNode node, List<ProgramNode> list, int dropAction)
+			throws Exception {
+		AtomicReference<Exception> ref = new AtomicReference<>();
+		runSwing(() -> {
+			try {
+				tree.processDropRequest(node, list, TreeTransferable.localTreeNodeFlavor,
+					dropAction);
+			}
+			catch (NotFoundException | CircularDependencyException | DuplicateGroupException e) {
+				ref.set(e);
+			}
+		});
+
+		Exception exception = ref.get();
+		if (exception != null) {
+			throw exception;
+		}
+
+		waitForProgram(program);
+	}
+
+	private void dropSelectionOnTree(ProgramNode node, SelectionTransferData data)
+			throws Exception {
+		AtomicReference<Exception> ref = new AtomicReference<>();
+		runSwing(() -> {
+			try {
+				tree.processDropRequest(node, data,
+					SelectionTransferable.localProgramSelectionFlavor, DnDConstants.ACTION_MOVE);
+			}
+			catch (NotFoundException | CircularDependencyException | DuplicateGroupException e) {
+				ref.set(e);
+			}
+		});
+
+		Exception exception = ref.get();
+		if (exception != null) {
+			throw exception;
+		}
+
+		waitForProgram(program);
+	}
+
+	private void moveNode(ProgramNode to, ProgramNode toMove) throws Exception {
+
+		AtomicReference<Exception> ref = new AtomicReference<>();
+		runSwing(() -> {
+			try {
+				dndManager.add(to, new ProgramNode[] { toMove }, DnDConstants.ACTION_MOVE, 1);
+			}
+			catch (NotFoundException | CircularDependencyException | DuplicateGroupException e) {
+				ref.set(e);
+			}
+		});
+
+		Exception exception = ref.get();
+		if (exception != null) {
+			throw exception;
+		}
+
+		waitForProgram(program);
+	}
+
 	private void copyFolderOrFragment(String src, String dst) {
 		// copy a folder that is in the view to another folder that is not in the view
 		ProgramNode node = root.getChild(src);
 
-		setSelectionPath(node.getTreePath());
-		setViewPaths(new TreePath[] { node.getTreePath() });
-		performAction(copyAction, true);
+		setSelectionPath(node);
+		setViewPaths(node);
+		performAction(copyAction);
 		ProgramNode everythingNode = root.getChild(dst);
 
-		setSelectionPath(everythingNode.getTreePath());
+		setSelectionPath(everythingNode);
 		assertTrue(pasteAction.isEnabled());
-		performAction(pasteAction, true);
+		performAction(pasteAction);
 	}
 
 }

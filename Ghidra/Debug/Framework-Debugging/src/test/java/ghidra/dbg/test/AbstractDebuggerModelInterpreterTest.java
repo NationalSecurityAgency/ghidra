@@ -119,7 +119,10 @@ public abstract class AbstractDebuggerModelInterpreterTest extends AbstractDebug
 		AsyncReference<String, Void> lastOut = new AsyncReference<>();
 		DebuggerModelListener l = new DebuggerModelListener() {
 			@Override
-			public void consoleOutput(TargetObject interpreter, Channel channel, byte[] out) {
+			public void consoleOutput(TargetObject object, Channel channel, byte[] out) {
+				if (object != interpreter) {
+					return;
+				}
 				String str = new String(out);
 				Msg.debug(this, "Got " + channel + " output: " + str);
 				for (String line : str.split("\n")) {
@@ -127,7 +130,7 @@ public abstract class AbstractDebuggerModelInterpreterTest extends AbstractDebug
 				}
 			}
 		};
-		interpreter.addListener(l);
+		interpreter.getModel().addModelListener(l);
 		waitAcc(interpreter);
 		waitOn(interpreter.execute(cmd));
 		waitOn(lastOut.waitValue("test"));
@@ -150,7 +153,10 @@ public abstract class AbstractDebuggerModelInterpreterTest extends AbstractDebug
 		try (CatchOffThread off = new CatchOffThread()) {
 			DebuggerModelListener l = new DebuggerModelListener() {
 				@Override
-				public void consoleOutput(TargetObject interpreter, Channel channel, byte[] out) {
+				public void consoleOutput(TargetObject object, Channel channel, byte[] out) {
+					if (object != interpreter) {
+						return;
+					}
 					String str = new String(out);
 					Msg.debug(this, "Got " + channel + " output: " + str);
 					if (!str.contains("test")) {
@@ -159,7 +165,7 @@ public abstract class AbstractDebuggerModelInterpreterTest extends AbstractDebug
 					off.catching(() -> fail("Unexpected output:" + str));
 				}
 			};
-			interpreter.addListener(l);
+			interpreter.getModel().addModelListener(l);
 			waitAcc(interpreter);
 			String out = waitOn(interpreter.executeCapture(cmd));
 			// Not the greatest, but allow extra lines

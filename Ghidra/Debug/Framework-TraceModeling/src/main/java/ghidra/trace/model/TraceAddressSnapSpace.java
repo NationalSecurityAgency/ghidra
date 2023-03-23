@@ -20,7 +20,7 @@ import java.util.Map;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
-import ghidra.trace.model.map.UnsignedUtils;
+import ghidra.util.NumericUtilities;
 import ghidra.util.database.spatial.rect.EuclideanSpace2D;
 import utilities.util.IDHashed;
 
@@ -65,10 +65,10 @@ public class TraceAddressSnapSpace implements EuclideanSpace2D<Address, Long> {
 	@Override
 	public double distX(Address x1, Address x2) {
 		if (x2.compareTo(x1) > 0) {
-			return UnsignedUtils.unsignedLongToDouble(x2.subtract(x1));
+			return NumericUtilities.unsignedLongToDouble(x2.subtract(x1));
 		}
 		else {
-			return UnsignedUtils.unsignedLongToDouble(x1.subtract(x2));
+			return NumericUtilities.unsignedLongToDouble(x1.subtract(x2));
 		}
 	}
 

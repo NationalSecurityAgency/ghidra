@@ -24,6 +24,7 @@ import agent.dbgeng.manager.*;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 import agent.dbgeng.model.iface1.DbgModelTargetFocusScope;
 import agent.dbgeng.model.iface2.*;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetEventScope.TargetEventType;
 import ghidra.dbg.target.schema.*;
@@ -121,7 +122,11 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 			return "[kernel]";
 		}
 
-		String pidstr = Long.toString(process.getPid(), base);
+		Long pid = process.getPid();
+		if (pid < 0) {
+			return "[" + process.getId().id + "]";
+		}
+		String pidstr = Long.toString(pid, base);
 		if (base == 16) {
 			pidstr = "0x" + pidstr;
 		}
@@ -135,6 +140,7 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 		}
 	}
 
+	@Override
 	public void threadStateChangedSpecific(DbgThread thread, DbgState state) {
 		TargetExecutionState targetState = convertState(state);
 		setExecutionState(targetState, "ThreadStateChanged");
@@ -178,8 +184,6 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 		switch (kind) {
 			case SKIP:
 				throw new UnsupportedOperationException(kind.name());
-			case ADVANCE: // Why no exec-advance in dbgeng?
-				throw new UnsupportedOperationException(kind.name());
 			default:
 				return model.gateFuture(process.step(convertToDbg(kind)));
 		}
@@ -208,7 +212,7 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 				STATE_ATTRIBUTE_NAME, TargetExecutionState.TERMINATED, //
 				EXIT_CODE_ATTRIBUTE_NAME, proc.getExitCode() //
 			), "Exited");
-			getListeners().fire.event(getProxy(), null, TargetEventType.PROCESS_EXITED,
+			broadcast().event(getProxy(), null, TargetEventType.PROCESS_EXITED,
 				"Process " + proc.getId() + " exited code=" + proc.getExitCode(),
 				List.of(getProxy()));
 		}
@@ -217,7 +221,7 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 	@Override
 	public void memoryChanged(DbgProcess proc, long addr, int len, DbgCause cause) {
 		if (proc.equals(this.process)) {
-			listeners.fire.invalidateCacheRequested(memory);
+			broadcast().invalidateCacheRequested(memory);
 		}
 	}
 
@@ -260,9 +264,9 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 	}
 
 	@Override
-	public CompletableFuture<Void> resync(boolean refreshAttributes, boolean refreshElements) {
+	public CompletableFuture<Void> resync(RefreshBehavior refreshAttributes, RefreshBehavior refreshElements) {
 		if (memory != null) {
-			memory.requestElements(true);
+			memory.requestElements(RefreshBehavior.REFRESH_ALWAYS);
 		}
 		return super.resync(refreshAttributes, refreshElements);
 	}

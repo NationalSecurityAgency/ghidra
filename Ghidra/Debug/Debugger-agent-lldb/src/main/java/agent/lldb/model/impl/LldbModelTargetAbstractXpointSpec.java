@@ -23,16 +23,18 @@ import SWIG.SBTarget;
 import agent.lldb.lldb.DebugClient;
 import agent.lldb.model.iface2.*;
 import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.TargetBreakpointSpecContainer.TargetBreakpointKindSet;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
+import ghidra.util.datastruct.ListenerMap.ListenerEntry;
 import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.datastruct.WeakValueHashMap;
 
 @TargetObjectSchemaInfo(
 	name = "BreakpointSpec",
 	elements = { //
-		@TargetElementType(type = LldbModelTargetBreakpointLocationImpl.class) //
+		@TargetElementType(type = LldbModelTargetBreakpointLocationImpl.class)
 	},
 	attributes = {
 		@TargetAttributeType(name = "Type", type = String.class),
@@ -60,8 +62,8 @@ public abstract class LldbModelTargetAbstractXpointSpec extends LldbModelTargetO
 	protected final ListenerSet<TargetBreakpointAction> actions =
 		new ListenerSet<>(TargetBreakpointAction.class) {
 			// Use strong references on actions
-			protected Map<TargetBreakpointAction, TargetBreakpointAction> createMap() {
-				return Collections.synchronizedMap(new LinkedHashMap<>());
+			protected Map<TargetBreakpointAction, ListenerEntry<? extends TargetBreakpointAction>> createMap() {
+				return new LinkedHashMap<>();
 			};
 		};
 
@@ -125,10 +127,10 @@ public abstract class LldbModelTargetAbstractXpointSpec extends LldbModelTargetO
 		actions.remove(action);
 	}
 
-	protected CompletableFuture<Object> getInfo(boolean refresh) {
+	protected CompletableFuture<Object> getInfo(RefreshBehavior refresh) {
 		SBTarget session = getManager().getCurrentSession();
 		String id = DebugClient.getId(getModelObject());
-		if (!refresh) {
+		if (!refresh.equals(RefreshBehavior.REFRESH_ALWAYS)) {
 			return CompletableFuture
 					.completedFuture(getManager().getKnownBreakpoints(session).get(id));
 		}
@@ -137,7 +139,7 @@ public abstract class LldbModelTargetAbstractXpointSpec extends LldbModelTargetO
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return getInfo(refresh).thenAccept(i -> {
 			updateInfo(i, "Refreshed");
 		});

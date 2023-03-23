@@ -18,7 +18,6 @@ package ghidra.app.util.bin.format.elf.relocation;
 import java.util.Map;
 
 import ghidra.app.util.bin.format.elf.ElfLoadHelper;
-import ghidra.app.util.bin.format.elf.ElfRelocationTable;
 import ghidra.app.util.bin.format.elf.ElfSymbol;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
@@ -26,8 +25,8 @@ import ghidra.program.model.address.AddressSpace;
 class PIC30_ElfRelocationContext extends ElfRelocationContext {
 	
 	protected PIC30_ElfRelocationContext(ElfRelocationHandler handler, ElfLoadHelper loadHelper,
-			ElfRelocationTable relocationTable, Map<ElfSymbol, Address> symbolMap) {
-		super(handler, loadHelper, relocationTable, symbolMap);
+			Map<ElfSymbol, Address> symbolMap) {
+		super(handler, loadHelper, symbolMap);
 	}
 	
 	private boolean isDebugSection(AddressSpace overlaySpace) {

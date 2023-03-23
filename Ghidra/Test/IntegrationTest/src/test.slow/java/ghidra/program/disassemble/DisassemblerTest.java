@@ -30,7 +30,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.test.ToyProgramBuilder;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 import util.CollectionUtils;
 
 public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
@@ -71,7 +71,7 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 		programBuilder.createMemory(".text2", "0x3e0", 0x800).setExecute(true);// initialized
 
 		listing = program.getListing();
-		disassembler = new Disassembler(program, TaskMonitorAdapter.DUMMY_MONITOR, null);
+		disassembler = new Disassembler(program, TaskMonitor.DUMMY, null);
 	}
 
 	@After
@@ -1500,6 +1500,35 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 
 		verifyErrorBookmark(addr(12), "conflicting instruction");
 
+	}
+
+	/**
+	 * 	    10: skeq 
+	 *      12: bral 20 --------+
+	 *      14: ret             |
+	 *                          |
+	 *      20: mov  r0, #123 <-+
+	 *      22: ret
+	 *     
+	 * Test skip instruction
+	 * 
+	 */
+	@Test
+	public void testDisassemblerSkip() throws Exception {
+
+		programBuilder.addBytesSkipConditional(10);
+		programBuilder.addBytesBranch(12, 20);
+		programBuilder.addBytesReturn(14);
+
+		programBuilder.addBytesMoveImmediate(20, (short) 123);
+		programBuilder.addBytesReturn(22);
+
+		AddressSetView disAddrs = disassembler.disassemble(addr(10), null);
+		assertEquals(addrset(range(10, 15), range(20, 23)), disAddrs);
+
+		verifyInstructionPresence();
+
+		verifyNoBookmarks();
 	}
 
 	/**

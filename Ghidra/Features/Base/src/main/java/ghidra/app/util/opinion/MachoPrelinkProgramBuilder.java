@@ -292,7 +292,13 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 							section.getSectionName(), name));
 					sectionFragment.move(sectionStart, sectionEnd);
 				}
+
+				// If the sections fully filled the segment, we can remove the now-empty segment
+				if (segmentFragment.isEmpty()) {
+					module.removeChild(segmentFragment.getName());
+				}
 			}
+
 		}
 	}
 }

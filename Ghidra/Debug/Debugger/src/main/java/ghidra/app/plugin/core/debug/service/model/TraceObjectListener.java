@@ -220,6 +220,10 @@ public class TraceObjectListener implements DebuggerModelListener {
 		reorderer.dispose();
 	}
 
+	public CompletableFuture<Void> flushEvents() {
+		return reorderer.flushEvents();
+	}
+
 	/*
 	private CompletableFuture<List<TargetObject>> findDependenciesTop(TargetObject added) {
 		List<TargetObject> result = new ArrayList<>();

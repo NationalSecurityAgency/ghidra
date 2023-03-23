@@ -51,8 +51,8 @@ public class GlobalSymbolMap {
 		program = f.getFunction().getProgram();
 		func = f;
 		symbolTable = program.getSymbolTable();
-		addrMappedSymbols = new HashMap<Address, HighSymbol>();
-		symbolMap = new HashMap<Long, HighSymbol>();
+		addrMappedSymbols = new HashMap<>();
+		symbolMap = new HashMap<>();
 		uniqueSymbolId = 0;
 	}
 
@@ -109,6 +109,42 @@ public class GlobalSymbolMap {
 		}
 		insertSymbol(highSym, symbol.getAddress());
 		return highSym;
+	}
+
+	/**
+	 * Some Varnode annotations refer to global symbols.  Check if there is symbol at the
+	 * Varnode address and, if there is, create a corresponding HighSymbol
+	 * @param vn is the annotation Varnode
+	 */
+	public void populateAnnotation(Varnode vn) {
+		Address addr = vn.getAddress();
+		if (!addr.isLoadedMemoryAddress() || addrMappedSymbols.containsKey(addr)) {
+			return;
+		}
+		Symbol symbol = symbolTable.getPrimarySymbol(addr);
+		if (symbol == null) {
+			return;
+		}
+		HighSymbol highSym;
+		if (symbol instanceof CodeSymbol) {
+			Data dataAt = program.getListing().getDataAt(addr);
+			DataType dataType = DataType.DEFAULT;
+			int sz = 1;
+			if (dataAt != null) {
+				dataType = dataAt.getDataType();
+				sz = dataAt.getLength();
+			}
+
+			highSym = new HighCodeSymbol((CodeSymbol) symbol, dataType, sz, func);
+		}
+		else if (symbol instanceof FunctionSymbol) {
+			highSym = new HighFunctionShellSymbol(symbol.getID(), symbol.getName(),
+				symbol.getAddress(), func.getDataTypeManager());
+		}
+		else {
+			return;
+		}
+		insertSymbol(highSym, symbol.getAddress());
 	}
 
 	/**

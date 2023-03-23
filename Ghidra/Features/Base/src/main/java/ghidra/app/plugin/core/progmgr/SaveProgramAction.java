@@ -15,12 +15,13 @@
  */
 package ghidra.app.plugin.core.progmgr;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import docking.action.*;
 import docking.tool.ToolConstants;
 import ghidra.program.model.listing.Program;
-import resources.ResourceManager;
+import ghidra.util.HTMLUtilities;
+import resources.Icons;
 
 /**
  * Action class for the "Save Program" action
@@ -33,7 +34,7 @@ public class SaveProgramAction extends AbstractProgramNameSwitchingAction {
 		menuData.setMenuGroup(group);
 		menuData.setMenuSubGroup(Integer.toString(subGroup));
 		setMenuBarData(menuData);
-		ImageIcon icon = ResourceManager.loadImage("images/disk.png");
+		Icon icon = Icons.SAVE_ICON;
 		setToolBarData(new ToolBarData(icon, ToolConstants.TOOLBAR_GROUP_ONE));
 		setKeyBindingData(new KeyBindingData("ctrl S"));
 	}
@@ -45,9 +46,10 @@ public class SaveProgramAction extends AbstractProgramNameSwitchingAction {
 			setDescription("Save Program");
 		}
 		else {
-			String programName = "'" + program.getDomainFile().getName() + "'";
-			getMenuBarData().setMenuItemName("&Save " + programName);
-			setDescription("Save " + programName);
+			String progName = program.getDomainFile().getName();
+			getMenuBarData().setMenuItemNamePlain("Save '%s'".formatted(progName));
+			getMenuBarData().setMnemonic('S');
+			setDescription("<html>Save '%s'".formatted(HTMLUtilities.escapeHTML(progName)));
 		}
 	}
 

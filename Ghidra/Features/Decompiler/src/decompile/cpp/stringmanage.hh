@@ -23,6 +23,12 @@
 
 class Architecture;
 
+extern AttributeId ATTRIB_TRUNC;	///< Marshaling attribute "trunc"
+
+extern ElementId ELEM_BYTES;		///< Marshaling element \<bytes>
+extern ElementId ELEM_STRING;		///< Marshaling element \<string>
+extern ElementId ELEM_STRINGMANAGE;	///< Marshaling element \<stringmanage>
+
 /// \brief Storage for decoding and storing strings associated with an address
 ///
 /// Looks at data in the loadimage to determine if it represents a "string".
@@ -56,8 +62,8 @@ public:
   /// \return the byte array of UTF8 data
   virtual const vector<uint1> &getStringData(const Address &addr,Datatype *charType,bool &isTrunc)=0;
 
-  void saveXml(ostream &s) const;	///< Save cached strings to a stream as XML
-  void restoreXml(const Element *el,const AddrSpaceManager *m);	///< Restore string cache from XML
+  void encode(Encoder &encoder) const;	///< Encode cached strings to a stream
+  void decode(Decoder &decoder);	///< Restore string cache from a stream
 
   static bool hasCharTerminator(const uint1 *buffer,int4 size,int4 charsize);	///< Check for a unicode string terminator
   static int4 readUtf16(const uint1 *buf,bool bigend);	///< Read a UTF16 code point from a byte array

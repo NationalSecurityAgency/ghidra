@@ -15,9 +15,9 @@
  */
 package ghidra.program.util;
 
-import java.awt.Color;
 import java.util.*;
 
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.GenericCallingConvention;
@@ -381,7 +381,7 @@ public class FunctionUtility {
 
 			String programStr =
 				HTMLUtilities.friendlyEncodeHTML(program.getDomainFile().getPathname());
-			String specialProgramStr = HTMLUtilities.colorString(Color.DARK_GRAY, programStr);
+			String specialProgramStr = HTMLUtilities.colorString(Palette.DARK_GRAY, programStr);
 			buf.append(specialProgramStr);
 			buf.append(padStr);
 		}

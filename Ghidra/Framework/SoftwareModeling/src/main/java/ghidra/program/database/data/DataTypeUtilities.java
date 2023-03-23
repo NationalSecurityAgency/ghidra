@@ -205,7 +205,7 @@ public class DataTypeUtilities {
 	}
 
 	/**
-	 * Returns true if the two dataTypes have the same sourceArchive and the same UniversalID OR are
+	 * Returns true if two dataTypes have the same sourceArchive and the same UniversalID OR are
 	 * equivalent
 	 * 
 	 * @param dataType1 first data type (if invoked by DB object or manager, this argument must
@@ -221,6 +221,79 @@ public class DataTypeUtilities {
 		}
 		// otherwise, check if they are equivalent
 		return dataType1.isEquivalent(dataType2);
+	}
+
+	/**
+	 * Determine if two dataTypes are the same kind of datatype without considering naming or
+	 * component makeup.  The use of Typedefs is ignored and stripped away for comparison.
+	 * This method also ignores details about most built-in types, pointers and arrays 
+	 * (e.g., number of elements or size).  Implementations of the following abstract classes
+	 * will be treated as the same kind as another datatype which extends the same abstract
+	 * class:
+	 * <ul>
+	 * <li>{@link AbstractIntegerDataType}</li> 
+	 * <li>{@link AbstractFloatDataType}</li>
+	 * <li>{@link AbstractStringDataType}</li>
+	 * </ul>
+	 *  Other uses of {@link BuiltInDataType} must match the specific implementation class. 
+	 * @param dataType1 first data type
+	 * @param dataType2 second data type
+	 * @return true if the two dataTypes are the same basic kind else false
+	 */
+	public static boolean isSameKindDataType(DataType dataType1, DataType dataType2) {
+
+		while (true) {
+			if (dataType1 == dataType2) {
+				return true;
+			}
+
+			// Ignore the use of typedefs - strip away
+			if (dataType1 instanceof TypeDef td1) {
+				dataType1 = td1.getBaseDataType();
+			}
+			if (dataType2 instanceof TypeDef td2) {
+				dataType2 = td2.getBaseDataType();
+			}
+
+			if (dataType1 instanceof Pointer p1 && dataType2 instanceof Pointer p2) {
+				dataType1 = p1.getDataType();
+				dataType2 = p2.getDataType();
+			}
+			else if (dataType2 instanceof Array a1 && dataType2 instanceof Array a2) {
+				dataType1 = a1.getDataType();
+				dataType2 = a2.getDataType();
+			}
+			else if (dataType1 instanceof Enum) {
+				return dataType2 instanceof Enum;
+			}
+			else if (dataType1 instanceof Structure) {
+				return dataType2 instanceof Structure;
+			}
+			else if (dataType1 instanceof Union) {
+				return dataType2 instanceof Union;
+			}
+			else if (dataType1 instanceof BuiltInDataType dt1) {
+				return isSameKindBuiltInDataType(dt1, dataType2);
+			}
+			else {
+				return false;
+			}
+		}
+	}
+
+	private static boolean isSameKindBuiltInDataType(BuiltInDataType dataType1,
+			DataType dataType2) {
+		if (dataType1 instanceof BuiltIn) {
+			// Same kind if both types share a common BuiltIn implementation
+			Class<?> baseClass = dataType1.getClass().getSuperclass();
+			Class<?> superClass;
+			while ((superClass = baseClass.getSuperclass()) != BuiltIn.class) {
+				baseClass = superClass;
+			}
+			return baseClass.isAssignableFrom(dataType2.getClass());
+		}
+		// Ensure built-in implementation class is the same
+		return dataType1.getClass().equals(dataType2.getClass());
 	}
 
 	/**

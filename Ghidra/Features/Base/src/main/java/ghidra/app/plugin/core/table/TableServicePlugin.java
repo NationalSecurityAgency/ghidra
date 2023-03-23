@@ -18,9 +18,8 @@ package ghidra.app.plugin.core.table;
 import java.awt.Color;
 import java.util.*;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
-import docking.ComponentProvider;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.events.ProgramClosedPluginEvent;
 import ghidra.app.nav.Navigatable;
@@ -33,7 +32,8 @@ import ghidra.app.tablechooser.TableChooserExecutor;
 import ghidra.app.util.query.TableService;
 import ghidra.framework.model.DomainObjectChangedEvent;
 import ghidra.framework.model.DomainObjectListener;
-import ghidra.framework.plugintool.*;
+import ghidra.framework.plugintool.PluginInfo;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Swing;
@@ -62,7 +62,7 @@ public class TableServicePlugin extends ProgramPlugin
 	private Map<Program, List<TableChooserDialog>> programToDialogMap = new HashMap<>();
 
 	public TableServicePlugin(PluginTool tool) {
-		super(tool, false, false);
+		super(tool);
 
 		updateMgr = new SwingUpdateManager(1000, () -> updateProviders());
 
@@ -88,14 +88,8 @@ public class TableServicePlugin extends ProgramPlugin
 	}
 
 	@Override
-	public void processEvent(PluginEvent event) {
-		if (event instanceof ProgramClosedPluginEvent) {
-			Program p = ((ProgramClosedPluginEvent) event).getProgram();
-			closeAllQueries(p);
-		}
-		else {
-			super.processEvent(event);
-		}
+	protected void programClosed(Program program) {
+		closeAllQueries(program);
 	}
 
 	@Override
@@ -120,8 +114,7 @@ public class TableServicePlugin extends ProgramPlugin
 		}
 		// make a copy of the list because the provider updates the list
 		List<TableComponentProvider<?>> list = new ArrayList<>(plist);
-		for (int i = 0; i < list.size(); i++) {
-			ComponentProvider provider = list.get(i);
+		for (TableComponentProvider<?> provider : list) {
 			provider.closeComponent();
 		}
 		programMap.remove(program);
@@ -134,8 +127,7 @@ public class TableServicePlugin extends ProgramPlugin
 		}
 		// make a copy of the list because the dialog updates the list
 		List<TableChooserDialog> list = new ArrayList<>(dlist);
-		for (int i = 0; i < list.size(); i++) {
-			TableChooserDialog dialog = list.get(i);
+		for (TableChooserDialog dialog : list) {
 			dialog.close();
 		}
 		programMap.remove(program);
@@ -161,7 +153,7 @@ public class TableServicePlugin extends ProgramPlugin
 
 	@Override
 	public <T> TableComponentProvider<T> showTableWithMarkers(String title, String tableTypeName,
-			GhidraProgramTableModel<T> model, Color markerColor, ImageIcon markerIcon,
+			GhidraProgramTableModel<T> model, Color markerColor, Icon markerIcon,
 			String windowSubMenu, Navigatable navigatable) {
 
 		GoToService gotoService = tool.getService(GoToService.class);
@@ -243,8 +235,7 @@ public class TableServicePlugin extends ProgramPlugin
 
 	private void updateProviders() {
 		List<TableComponentProvider<?>> list = getProviders();
-		for (int i = 0; i < list.size(); i++) {
-			TableComponentProvider<?> provider = list.get(i);
+		for (TableComponentProvider<?> provider : list) {
 			provider.refresh();
 		}
 	}

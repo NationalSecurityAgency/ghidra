@@ -15,13 +15,14 @@
  */
 package ghidra.dbg.attributes;
 
+import com.google.gson.*;
+
 public interface TargetPrimitiveDataType extends TargetDataType {
 	public static final TargetDataType VOID =
 		new DefaultTargetPrimitiveDataType(PrimitiveKind.VOID, 0);
 
 	enum PrimitiveKind {
 		UNDEFINED,
-		@SuppressWarnings("hiding")
 		VOID,
 		UINT,
 		SINT,
@@ -46,6 +47,14 @@ public interface TargetPrimitiveDataType extends TargetDataType {
 		@Override
 		public int getLength() {
 			return length;
+		}
+
+		@Override
+		public JsonObject toJson() {
+			JsonObject object = new JsonObject();
+			object.addProperty("kind", kind.toString());
+			object.addProperty("length", length);
+			return object;
 		}
 	}
 

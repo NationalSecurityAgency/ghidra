@@ -26,15 +26,15 @@ package agent.dbgeng.dbgeng;
  * PIDs.
  */
 public class DebugProcessId implements Comparable<DebugProcessId> {
-	public final int id;
+	public final long id;
 
-	public DebugProcessId(int id) {
+	public DebugProcessId(long id) {
 		this.id = id;
 	}
 
 	@Override
 	public int hashCode() {
-		return Integer.hashCode(id);
+		return Long.hashCode(id);
 	}
 
 	@Override
@@ -51,7 +51,7 @@ public class DebugProcessId implements Comparable<DebugProcessId> {
 
 	@Override
 	public int compareTo(DebugProcessId that) {
-		return Integer.compare(this.id, that.id);
+		return Long.compare(this.id, that.id);
 	}
 
 	@Override

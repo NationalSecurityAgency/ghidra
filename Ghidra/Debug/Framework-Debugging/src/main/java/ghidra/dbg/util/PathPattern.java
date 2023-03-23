@@ -48,13 +48,25 @@ public class PathPattern implements PathPredicates {
 		return String.format("<PathPattern %s>", PathUtils.toString(pattern));
 	}
 
+	/**
+	 * Convert this pattern to a string as in {@link PathPredicates#parse(String)}.
+	 * 
+	 * @return the string
+	 */
+	public String toPatternString() {
+		return PathUtils.toString(pattern);
+	}
+
 	@Override
 	public boolean equals(Object obj) {
 		if (!(obj instanceof PathPattern)) {
 			return false;
 		}
 		PathPattern that = (PathPattern) obj;
-		return Objects.equals(this.pattern, that.pattern);
+		if (!Objects.equals(this.pattern, that.pattern)) {
+			return false;
+		}
+		return true;
 	}
 
 	@Override
@@ -95,6 +107,17 @@ public class PathPattern implements PathPredicates {
 		return true;
 	}
 
+	protected boolean matchesBackTo(List<String> path, int length) {
+		int patternMax = pattern.size() - 1;
+		int pathMax = path.size() - 1;
+		for (int i = 0; i < length; i++) {
+			if (!PathPredicates.keyMatches(pattern.get(patternMax - i), path.get(pathMax - i))) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	@Override
 	public boolean matches(List<String> path) {
 		if (path.size() != pattern.size()) {
@@ -125,6 +148,17 @@ public class PathPattern implements PathPredicates {
 		return matchesUpTo(path, pattern.size());
 	}
 
+	@Override
+	public boolean ancestorCouldMatchRight(List<String> path, boolean strict) {
+		if (path.size() > pattern.size()) {
+			return false;
+		}
+		if (strict && path.size() == pattern.size()) {
+			return false;
+		}
+		return matchesBackTo(path, path.size());
+	}
+
 	protected static boolean containsWildcards(List<String> pattern) {
 		for (String pat : pattern) {
 			if (isWildcard(pat)) {
@@ -142,6 +176,20 @@ public class PathPattern implements PathPredicates {
 		return pattern;
 	}
 
+	/**
+	 * Return the pattern as a list of key patterns
+	 * 
+	 * @return the list of key patterns
+	 */
+	public List<String> asPath() {
+		return pattern;
+	}
+
+	/**
+	 * Count the number of wildcard keys in this pattern
+	 * 
+	 * @return the count
+	 */
 	public int countWildcards() {
 		return (int) pattern.stream().filter(k -> isWildcard(k)).count();
 	}
@@ -149,6 +197,11 @@ public class PathPattern implements PathPredicates {
 	@Override
 	public PathPattern getSingletonPattern() {
 		return this;
+	}
+
+	@Override
+	public Collection<PathPattern> getPatterns() {
+		return List.of(this);
 	}
 
 	@Override
@@ -193,27 +246,42 @@ public class PathPattern implements PathPredicates {
 	}
 
 	@Override
+	public Set<String> getPrevKeys(List<String> path) {
+		if (path.size() >= pattern.size()) {
+			return Set.of();
+		}
+		if (!matchesBackTo(path, path.size())) {
+			return Set.of();
+		}
+		return Set.of(pattern.get(pattern.size() - 1 - path.size()));
+	}
+
+	@Override
 	public boolean isEmpty() {
 		return false;
 	}
 
 	@Override
-	public PathPattern applyKeys(List<String> indices) {
-		List<String> result = new ArrayList<>(pattern.size());
-		Iterator<String> it = indices.iterator();
-		for (String pat : pattern) {
-			if (it.hasNext() && isWildcard(pat)) {
-				String index = it.next();
+	public PathPattern applyKeys(Align align, List<String> indices) {
+		List<String> result = Arrays.asList(new String[pattern.size()]);
+		ListIterator<String> iit = align.iterator(indices);
+		ListIterator<String> pit = align.iterator(pattern);
+
+		while (pit.hasNext()) {
+			int i = pit.nextIndex();
+			String pat = pit.next();
+			if (iit.hasNext() && isWildcard(pat)) {
+				String index = iit.next();
 				if (PathUtils.isIndex(pat)) {
-					result.add(PathUtils.makeKey(index));
+					result.set(i, PathUtils.makeKey(index));
 				}
 				else {
 					// NB. Rare for attribute wildcards, but just in case
-					result.add(index);
+					result.set(i, index);
 				}
 			}
 			else {
-				result.add(pat);
+				result.set(i, pat);
 			}
 		}
 		return new PathPattern(result);
@@ -252,6 +320,20 @@ public class PathPattern implements PathPredicates {
 				}
 			}
 		}
+		return result;
+	}
+
+	public void doRemoveRight(int count, PathMatcher result) {
+		if (count > pattern.size()) {
+			return;
+		}
+		result.addPattern(pattern.subList(0, pattern.size() - count));
+	}
+
+	@Override
+	public PathMatcher removeRight(int count) {
+		PathMatcher result = new PathMatcher();
+		doRemoveRight(count, result);
 		return result;
 	}
 }

@@ -27,31 +27,34 @@ public final class OatDexFileFactory {
 			OatBundle bundle) throws IOException {
 
 		switch (oatVersion) {
-			case OatConstants.VERSION_KITKAT_RELEASE:
+			case OatConstants.OAT_VERSION_007:
 				return new OatDexFile_KitKat(reader);
-			case OatConstants.VERSION_LOLLIPOP_RELEASE:
-			case OatConstants.VERSION_LOLLIPOP_MR1_FI_RELEASE:
-			case OatConstants.VERSION_LOLLIPOP_WEAR_RELEASE:
+			case OatConstants.OAT_VERSION_039:
+			case OatConstants.OAT_VERSION_045:
+			case OatConstants.OAT_VERSION_051:
 				return new OatDexFile_Lollipop(reader);
-			case OatConstants.VERSION_MARSHMALLOW_RELEASE:
+			case OatConstants.OAT_VERSION_064:
 				return new OatDexFile_Marshmallow(reader);
-			case OatConstants.VERSION_NOUGAT_RELEASE:
-			case OatConstants.VERSION_NOUGAT_MR1_RELEASE:
+			case OatConstants.OAT_VERSION_079:
+			case OatConstants.OAT_VERSION_088:
 				return new OatDexFile_Nougat(reader);
-			case OatConstants.VERSION_OREO_RELEASE:
-			case OatConstants.VERSION_OREO_DR3_RELEASE:
+			case OatConstants.OAT_VERSION_124:
+			case OatConstants.OAT_VERSION_126:
 				return new OatDexFile_Oreo(reader, bundle);
-			case OatConstants.VERSION_OREO_M2_RELEASE:
+			case OatConstants.OAT_VERSION_131:
 				return new OatDexFile_OreoM2(reader, bundle);
-			case OatConstants.VERSION_PIE_RELEASE:
+			case OatConstants.OAT_VERSION_138:
 				return new OatDexFile_Pie(reader, bundle);
-			case OatConstants.VERSION_10_RELEASE:
-				return new OatDexFile_Android10(reader, bundle);
-			case OatConstants.VERSION_11_RELEASE:
-				return new OatDexFile_Android11(reader, bundle);
-			case OatConstants.VERSION_12_RELEASE:
-			case OatConstants.VERSION_S_V2_PREVIEW:
-				return new OatDexFile_Android12(reader, bundle);
+			case OatConstants.OAT_VERSION_170:
+				return new OatDexFile_Q(reader, bundle);
+			case OatConstants.OAT_VERSION_183:
+				return new OatDexFile_R(reader, bundle);
+			case OatConstants.OAT_VERSION_195:
+			case OatConstants.OAT_VERSION_199:
+			case OatConstants.OAT_VERSION_220:
+			case OatConstants.OAT_VERSION_223:
+			case OatConstants.OAT_VERSION_225:
+				return new OatDexFile_S_T(reader, bundle);
 		}
 
 		throw new IOException("Unsupported OAT version: " + oatVersion);

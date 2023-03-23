@@ -17,12 +17,12 @@ package ghidra.examples.graph.layout;
 
 import javax.swing.Icon;
 
+import generic.theme.GIcon;
 import ghidra.examples.graph.*;
 import ghidra.graph.viewer.layout.AbstractLayoutProvider;
 import ghidra.graph.viewer.layout.VisualGraphLayout;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import resources.ResourceManager;
 
 /**
  * A layout provider for the {@link SampleGraphPlugin}
@@ -31,7 +31,7 @@ public class SampleGraphPluginDependencyLayoutProvider
 		extends AbstractLayoutProvider<SampleVertex, SampleEdge, SampleGraph> {
 
 	private static final String NAME = "Plugin Dependency Layout";
-	private static final Icon DEFAULT_ICON = ResourceManager.loadImage("images/color_swatch.png");
+	private static final Icon DEFAULT_ICON = new GIcon("icon.sample.graph.dependency.layout");
 
 	@Override
 	public VisualGraphLayout<SampleVertex, SampleEdge> getLayout(SampleGraph g, TaskMonitor monitor)

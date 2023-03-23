@@ -18,6 +18,7 @@ package ghidra.program.model.data;
 import java.io.IOException;
 import java.util.LinkedList;
 
+import db.Transaction;
 import db.DBConstants;
 import generic.jar.ResourceFile;
 import ghidra.program.database.data.DataTypeManagerDB;
@@ -32,6 +33,7 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB {
 	protected String name;
 	private int transactionCount;
 	private Long transaction;
+	private boolean commitTransaction;
 
 	/**
 	 * Constructor for new temporary data-type manager using the default DataOrganization.
@@ -88,13 +90,32 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB {
 	}
 
 	@Override
+	public Transaction openTransaction(String description) throws IllegalStateException {
+		return new Transaction() {
+
+			private int txId = startTransaction(description);
+
+			@Override
+			protected boolean endTransaction(boolean commit) {
+				StandAloneDataTypeManager.this.endTransaction(txId, commit);
+				return commitTransaction;
+			}
+
+			@Override
+			public boolean isSubTransaction() {
+				return true;
+			}
+		};
+	}
+
+	@Override
 	public synchronized int startTransaction(String description) {
 		if (transaction == null) {
 			transaction = dbHandle.startTransaction();
+			commitTransaction = true;
 		}
 		transactionCount++;
 		return transaction.intValue();
-
 	}
 
 	@Override
@@ -110,9 +131,12 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB {
 		if (transaction.intValue() != transactionID) {
 			throw new IllegalArgumentException("Transaction id does not match current transaction");
 		}
+		if (!commit) {
+			commitTransaction = false;
+		}
 		if (--transactionCount == 0) {
 			try {
-				dbHandle.endTransaction(transaction.longValue(), commit);
+				dbHandle.endTransaction(transaction.longValue(), commitTransaction);
 				transaction = null;
 			}
 			catch (IOException e) {

@@ -15,12 +15,16 @@
  */
 package ghidra.program.model.lang;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.plugin.processors.sleigh.template.ConstructTpl;
-import ghidra.util.xml.SpecXmlUtils;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.xml.*;
 
 public class InjectPayloadCallfixup extends InjectPayloadSleigh {
@@ -58,17 +62,16 @@ public class InjectPayloadCallfixup extends InjectPayloadSleigh {
 	}
 
 	@Override
-	public void saveXml(StringBuilder buffer) {
-		buffer.append("<callfixup");
-		SpecXmlUtils.encodeStringAttribute(buffer, "name", name);
-		buffer.append(">\n");
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_CALLFIXUP);
+		encoder.writeString(ATTRIB_NAME, name);
 		for (String nm : targetSymbolNames) {
-			buffer.append("<target");
-			SpecXmlUtils.encodeStringAttribute(buffer, "name", nm);
-			buffer.append("/>\n");
+			encoder.openElement(ELEM_TARGET);
+			encoder.writeString(ATTRIB_NAME, nm);
+			encoder.closeElement(ELEM_TARGET);
 		}
-		super.saveXml(buffer);
-		buffer.append("</callfixup>\n");
+		super.encode(encoder);
+		encoder.closeElement(ELEM_CALLFIXUP);
 	}
 
 	@Override

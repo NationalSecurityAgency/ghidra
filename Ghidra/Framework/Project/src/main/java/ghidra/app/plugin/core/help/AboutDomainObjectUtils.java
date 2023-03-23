@@ -30,6 +30,8 @@ import docking.dnd.GClipboard;
 import docking.dnd.StringTransferable;
 import docking.widgets.OptionDialog;
 import docking.widgets.label.GIconLabel;
+import generic.theme.Gui;
+import generic.theme.GThemeDefaults.Colors.Java;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
@@ -37,6 +39,7 @@ import ghidra.util.Msg;
 import ghidra.util.layout.PairLayout;
 
 public class AboutDomainObjectUtils {
+	private static final String FONT_ID = "font.help.about";
 
 	private static final MouseListener COPY_MOUSE_LISTENER = new PopupMouseListener();
 
@@ -87,7 +90,6 @@ public class AboutDomainObjectUtils {
 
 	private static JComponent getAboutPanel(DomainFile domainFile, Map<String, String> metadata,
 			String additionalInfo) {
-		Font font = new Font("Monospaced", Font.PLAIN, 12);
 
 		JPanel aboutPanel = new JPanel(new PairLayout());
 		JScrollPane propertyScroll = new JScrollPane(aboutPanel);
@@ -110,13 +112,13 @@ public class AboutDomainObjectUtils {
 
 		if (additionalInfo != null && additionalInfo.length() > 0) {
 			JTextArea auxArea = new JTextArea(additionalInfo);
-			auxArea.setFont(font);
+			Gui.registerFont(auxArea, FONT_ID);
 			DockingUtils.setTransparent(auxArea);
 			auxArea.setEditable(false);
 			auxArea.setCaretPosition(0); // move cursor to BOF...
 			JScrollPane sp = new JScrollPane(auxArea);
 			sp.setBorder(BorderFactory.createTitledBorder(
-				BorderFactory.createLineBorder(Color.black), "Additional Information"));
+				BorderFactory.createLineBorder(Java.BORDER), "Additional Information"));
 			sp.setPreferredSize(new Dimension(1, 175)); //width is ignored by border layout...
 
 			JScrollBar sb = sp.getVerticalScrollBar();
@@ -135,7 +137,7 @@ public class AboutDomainObjectUtils {
 
 		Component[] comps = aboutPanel.getComponents();
 		for (Component comp : comps) {
-			comp.setFont(font);
+			Gui.registerFont(comp, FONT_ID);
 		}
 		aboutPanel.invalidate();
 

@@ -29,6 +29,8 @@ import docking.DialogComponentProvider;
 import docking.action.DockingAction;
 import docking.widgets.table.*;
 import docking.widgets.table.threaded.ThreadedTableModel;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.nav.NavigatableRemovalListener;
 import ghidra.app.services.GoToService;
@@ -147,6 +149,16 @@ public class TableChooserDialog extends DialogComponentProvider
 		model.removeObject(rowObject);
 	}
 
+	/**
+	 * Returns true if the given object is still in the dialog.  Clients can use this method to see
+	 * if the user has already processed the given item.
+	 * @param rowObject the row object
+	 * @return true if the object is still in the dialog
+	 */
+	public boolean contains(AddressableRowObject rowObject) {
+		return model.containsObject(rowObject);
+	}
+
 	private void createTableModel() {
 
 		// note: the task monitor is installed later when this model is added to the threaded panel
@@ -227,6 +239,9 @@ public class TableChooserDialog extends DialogComponentProvider
 
 		try {
 			List<AddressableRowObject> deleted = doProcessRowsInTransaction(rowObjects, monitor);
+			if (monitor.isCancelled()) {
+				return;
+			}
 
 			for (AddressableRowObject rowObject : deleted) {
 				model.removeObject(rowObject);
@@ -244,6 +259,10 @@ public class TableChooserDialog extends DialogComponentProvider
 			TaskMonitor monitor) {
 
 		List<AddressableRowObject> deleted = new ArrayList<>();
+		if (executor.executeInBulk(rowObjects, deleted, monitor)) {
+			return deleted;
+		}
+
 		for (AddressableRowObject rowObject : rowObjects) {
 			if (monitor.isCancelled()) {
 				break;
@@ -367,6 +386,7 @@ public class TableChooserDialog extends DialogComponentProvider
 	public void dispose() {
 		table.dispose();
 		workers.forEach(w -> w.cancel(true));
+		super.dispose();
 	}
 
 //==================================================================================================
@@ -401,7 +421,7 @@ public class TableChooserDialog extends DialogComponentProvider
 
 	private class WrappingCellRenderer extends GhidraTableCellRenderer {
 
-		private Color pendingColor = new Color(192, 192, 192, 75);
+		private Color pendingColor = Palette.LIGHT_GRAY;
 		private TableCellRenderer delegate;
 
 		@Override
@@ -413,8 +433,7 @@ public class TableChooserDialog extends DialogComponentProvider
 			}
 			else {
 				if (delegate instanceof GTableCellRenderer) {
-					renderer =
-						((GTableCellRenderer) delegate).getTableCellRendererComponent(data);
+					renderer = ((GTableCellRenderer) delegate).getTableCellRendererComponent(data);
 				}
 				else {
 					renderer = delegate.getTableCellRendererComponent(data.getTable(),
@@ -427,7 +446,7 @@ public class TableChooserDialog extends DialogComponentProvider
 			if (sharedPending.contains(ro)) {
 				renderer.setBackground(pendingColor);
 				renderer.setForeground(data.getTable().getSelectionForeground());
-				renderer.setForeground(Color.BLACK);
+				renderer.setForeground(Colors.FOREGROUND);
 			}
 
 			return renderer;

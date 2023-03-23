@@ -20,7 +20,6 @@ import java.util.stream.Stream;
 
 import ghidra.app.plugin.assembler.sleigh.expr.MaskedLong;
 import ghidra.app.plugin.assembler.sleigh.expr.RecursiveDescentSolver;
-import ghidra.app.plugin.assembler.sleigh.grammars.AssemblyProduction;
 import ghidra.app.plugin.assembler.sleigh.util.DbgTimer;
 import ghidra.app.plugin.languages.sleigh.SleighLanguages;
 import ghidra.app.plugin.languages.sleigh.SubtableEntryVisitor;
@@ -296,10 +295,7 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 	 * 
 	 * @param res the combined resolution requirements derived from the subconstructors
 	 * @param vals any defined symbols (usually {@code inst_start}, and {@code inst_next})
-	 * @param opvals a map from operand index to operand value
-	 * @return the resolution with context changes applied in reverse, or an error
-	 * 
-	 * @see AssemblyTreeResolver#resolveSelectedChildren(AssemblyProduction, List, List, Collection)
+	 * @return the resolution with context changes applied in reverse, or an error 
 	 */
 	public AssemblyResolution solveContextChanges(AssemblyResolvedPatterns res,
 			Map<String, Long> vals) {

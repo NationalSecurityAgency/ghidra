@@ -268,7 +268,8 @@ void SleighBase::restoreXml(const Element *el)
   }
   indexer.restoreXml(*iter);
   iter++;
-  restoreXmlSpaces(*iter,this);
+  XmlDecode decoder(this,*iter);
+  decodeSpaces(decoder,this);
   iter++;
   symtab.restoreXml(*iter,this);
   root = (SubtableSymbol *)symtab.getGlobalScope()->findSymbol("instruction");

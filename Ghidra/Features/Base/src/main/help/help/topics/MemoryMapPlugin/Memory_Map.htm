@@ -9,7 +9,7 @@
     <META name="ProgId" content="FrontPage.Editor.Document">
 
     <TITLE>Memory Map</TITLE>
-    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
   </HEAD>
 
   <BODY>
@@ -21,7 +21,7 @@
     structure of the current program.&nbsp; The component provides actions for adding, renaming,
     moving, splitting, extending, joining, and deleting memory blocks.</P>
     
-    <P><IMG src="../../shared/note.png" border="0">When working with a versioned program within a 
+    <P><IMG src="help/shared/note.png" border="0">When working with a versioned program within a 
     shared project an exclusive checkout of the program project file is required to perform any 
     modifications to the memory map.</P>
 
@@ -56,7 +56,7 @@
       mapping ratio (e.g., 2:4).</LI>
     </OL>
     
-    <P><IMG src="../../shared/note.png" border="0"><I>File Bytes</I> are currently only created
+    <P><IMG src="help/shared/note.png" border="0"><I>File Bytes</I> are currently only created
         by importers.  At this point in time there is no capability provided by the Memory Map provider to create a
         new File Bytes instance.</P>
     
@@ -69,7 +69,7 @@
       do not relocate with image base changes and have significant limitations in conjunction with
       decompilation and analysis.</P>
 
-    <P>To view the <I>Memory Map</I>, select <B>Window<IMG src="../../shared/arrow.gif" border="0">
+    <P>To view the <I>Memory Map</I>, select <B>Window<IMG src="help/shared/arrow.gif" border="0">
     Memory Map</B> from the main tool menu, or click on the&nbsp; <IMG src="images/memory16.gif"
     border="0">&nbsp; icon in the tool bar.&nbsp; Note that the current Image Base Address is
     specified within the title bar.<BR>
@@ -116,7 +116,7 @@
       	block.  If the bytes were originally imported from a file, then this will indicate which file
       	and the offset into that file.  If the bytes are mapped to another region of memory, it will
       	provide the address for the mapping.  Blocks may consist of regions that have different
-      	sources.  In that case, source information about the first several regions will be d
+      	sources.  In that case, source information about the first several regions will be
       	displayed.</P>
 
       <P><I><B>Source -</B></I> Description of block origination.</P>
@@ -247,10 +247,10 @@
             <UL>
 				<LI><B>Initialized</B> - Specify a value and a new block will be created
 					using that value for every byte in the block. </LI>
-				<LI><B>Uninitialized</B> - An unitialized block will be created.</LI>
+				<LI><B>Uninitialized</B> - An uninitialized block will be created.</LI>
 				<LI><B>File Bytes</B> - Select from a list of imported files and enter
 				a starting offset for that file.  Those bytes will be the initial value for the block.</LI>
-				<P><I><IMG src="../../shared/note.png" border="0"> You can use the "Add To Program"
+				<P><I><IMG src="help/shared/note.png" border="0"> You can use the "Add To Program"
 				using "Binary Import" to create new FileBytes that you can use here.</I></P>
 			</UL>
             <LI><B><I>Bit Mapped -</I></B> This is a block that allows bit addressing of a section
@@ -347,7 +347,7 @@
         <P><B><I>New End Address -&nbsp;</I></B> Enter the NEW ending address for the block. The
         NEW starting address will be computed.</P>
 
-        <P><I><IMG src="../../shared/note.png" border="0"> You cannot move a block under the
+        <P><I><IMG src="help/shared/note.png" border="0"> You cannot move a block under the
         following conditions:</I></P>
 
         <UL>
@@ -421,7 +421,7 @@
           <P><B><I>Block Length -</I></B> Length of new split block</P>
         </BLOCKQUOTE>
 
-        <P><I><IMG src="../../shared/note.png" border="0&gt;&lt;a href=">Overlay type blocks cannot
+        <P><I><IMG src="help/shared/note.png" border="0&gt;&lt;a href=">Overlay type blocks cannot
         be split.&nbsp;</I></P>
       </BLOCKQUOTE>
     </BLOCKQUOTE>
@@ -461,7 +461,7 @@
         <P><I><B>Block Length -</B></I> Displays the length of the block.&nbsp; A new value can be
         entered here which will cause a corresponding change in the start address.</P>
 
-        <P><I><IMG src="../../shared/note.png" border="0"><A href="#OverlayType">Overlay</A> type
+        <P><I><IMG src="help/shared/note.png" border="0"><A href="#OverlayType">Overlay</A> type
         blocks cannot be expanded.&nbsp;</I></P>
       </BLOCKQUOTE>
     </BLOCKQUOTE>
@@ -502,7 +502,7 @@
         <P><I><B>Block Length -</B></I> Displays the length of the block.&nbsp; A new value can be
         entered here which will cause a corresponding change in the end address.</P>
 
-        <P><I><IMG src="../../shared/note.png" border="0"><A href="#OverlayType">Overlay</A> type
+        <P><I><IMG src="help/shared/note.png" border="0"><A href="#OverlayType">Overlay</A> type
         blocks cannot be expanded.&nbsp;</I></P>
       </BLOCKQUOTE>
     </BLOCKQUOTE>
@@ -515,15 +515,15 @@
         attempts to merge all selected blocks into one block.&nbsp; Any "gaps" will be "filled in"
         with 0s.&nbsp;</P>
 
-        <P><I><IMG src="../../shared/warning.png" border="0"> Caution should be used because a VERY
+        <P><I><IMG src="help/shared/warning.png" border="0"> Caution should be used because a VERY
         large memory block can be created if the memory blocks being merged are far apart in the
         address space.</I>&nbsp; Ghidra will display a warning if a really large block is about to
         be created.&nbsp; Disregarding the warning may cause Ghidra to fail with an "out of memory"
         error.</P>
 
-        <P><I><IMG src="../../shared/note.png" border="0"></I> Only adjacent <I>Default</I> blocks of the same 
+        <P><I><IMG src="help/shared/note.png" border="0"></I> Only adjacent <I>Default</I> blocks of the same 
         initialization state can be merged.</P>
-        <P><I><IMG src="../../shared/note.png" border="0"></I>Overlay type blocks cannot be merged.</P>
+        <P><I><IMG src="help/shared/note.png" border="0"></I>Overlay type blocks cannot be merged.</P>
       </BLOCKQUOTE>
     </BLOCKQUOTE>
 
@@ -536,7 +536,7 @@
         a confirmation dialog is displayed; select "yes" on the dialog to delete the block. A
         progress dialog is displayed while the block is being deleted.&nbsp;</P>
 
-        <P><IMG src="../../shared/tip.png" border="0">For large blocks that may contain many
+        <P><IMG src="help/shared/tip.png" border="0">For large blocks that may contain many
         symbols, references, instructions, etc., the delete operation may take a while to complete.
         You can cancel the delete operation at any time.</P>
       </BLOCKQUOTE>

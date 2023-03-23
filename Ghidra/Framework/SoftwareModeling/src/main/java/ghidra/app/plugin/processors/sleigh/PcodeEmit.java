@@ -13,12 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- * Created on Feb 4, 2005
- *
- */
 package ghidra.app.plugin.processors.sleigh;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 import ghidra.app.plugin.processors.sleigh.symbol.*;
@@ -62,7 +59,6 @@ public abstract class PcodeEmit {
 	private AddressSpace uniq_space;
 	private long uniquemask;
 	private long uniqueoffset;
-	private AddressSpace overlayspace = null;
 
 	/**
 	 * Pcode emitter constructor for empty or unimiplemented instructions
@@ -84,12 +80,6 @@ public abstract class PcodeEmit {
 		this.instcontext = ictx;
 		this.const_space = walk.getConstSpace();
 		this.startAddress = parsercontext.getAddr();
-		AddressSpace myspace = startAddress.getAddressSpace();
-		if (myspace.isOverlaySpace()) {
-			overlayspace = myspace;
-			startAddress = ((OverlayAddressSpace) myspace).getOverlayedSpace()
-					.getAddress(startAddress.getOffset());
-		}
 		this.fallOffset = fallOffset;
 		this.override = override;
 		SleighInstructionPrototype sleighproto = parsercontext.getPrototype();
@@ -188,8 +178,9 @@ public abstract class PcodeEmit {
 	 * <li>last pcode op has fall-through</li>
 	 * <li>internal label used to branch beyond last pcode op</li>
 	 * </ul>
+	 * @throws IOException for stream errors emitting ops
 	 */
-	void resolveFinalFallthrough() {
+	void resolveFinalFallthrough() throws IOException {
 		try {
 			if (fallOverride == null || fallOverride.equals(getStartAddress().add(fallOffset))) {
 				return;
@@ -200,16 +191,17 @@ public abstract class PcodeEmit {
 		}
 
 		VarnodeData dest = new VarnodeData();
-		dest.space = fallOverride.getAddressSpace().getPhysicalSpace();
+		dest.space = fallOverride.getAddressSpace();
 		dest.offset = fallOverride.getOffset();
 		dest.size = dest.space.getPointerSize();
 
 		dump(startAddress, PcodeOp.BRANCH, new VarnodeData[] { dest }, 1, null);
 	}
 
-	abstract void dump(Address instrAddr, int opcode, VarnodeData[] in, int isize, VarnodeData out);
+	abstract void dump(Address instrAddr, int opcode, VarnodeData[] in, int isize, VarnodeData out)
+			throws IOException;
 
-	private boolean dumpBranchOverride(OpTpl opt) {
+	private boolean dumpBranchOverride(OpTpl opt) throws IOException {
 		int opcode = opt.getOpcode();
 		VarnodeTpl[] inputs = opt.getInput();
 		if (opcode == PcodeOp.CALL) {
@@ -227,7 +219,7 @@ public abstract class PcodeEmit {
 		return false;
 	}
 
-	private void dumpNullReturn() {
+	private void dumpNullReturn() throws IOException {
 
 		VarnodeTpl nullAddr =
 			new VarnodeTpl(new ConstTpl(const_space), new ConstTpl(ConstTpl.REAL, 0),
@@ -237,13 +229,13 @@ public abstract class PcodeEmit {
 		dump(retOpt);
 	}
 
-	private boolean dumpCallOverride(OpTpl opt, boolean returnAfterCall) {
+	private boolean dumpCallOverride(OpTpl opt, boolean returnAfterCall) throws IOException {
 		int opcode = opt.getOpcode();
 		VarnodeTpl[] inputs = opt.getInput();
 		if (opcode == PcodeOp.BRANCH) {
 			int offsetType = inputs[0].getOffset().getType();
 			if (offsetType == ConstTpl.J_RELATIVE || offsetType == ConstTpl.J_START ||
-				offsetType == ConstTpl.J_NEXT) {
+				offsetType == ConstTpl.J_NEXT || offsetType == ConstTpl.J_NEXT2) {
 				return false;
 			}
 			OpTpl callopt = new OpTpl(PcodeOp.CALL, null, inputs);
@@ -266,7 +258,7 @@ public abstract class PcodeEmit {
 		else if (opcode == PcodeOp.CBRANCH) {
 			int offsetType = inputs[0].getOffset().getType();
 			if (offsetType == ConstTpl.J_RELATIVE || offsetType == ConstTpl.J_START ||
-				offsetType == ConstTpl.J_NEXT) {
+				offsetType == ConstTpl.J_NEXT || offsetType == ConstTpl.J_NEXT2) {
 				return false;
 			}
 
@@ -316,14 +308,14 @@ public abstract class PcodeEmit {
 		return false;
 	}
 
-	private boolean dumpReturnOverride(OpTpl opt) {
+	private boolean dumpReturnOverride(OpTpl opt) throws IOException {
 		int opcode = opt.getOpcode();
 		VarnodeTpl[] inputs = opt.getInput();
 
 		if (opcode == PcodeOp.BRANCH || opcode == PcodeOp.CALL) {
 			int offsetType = inputs[0].getOffset().getType();
 			if (offsetType == ConstTpl.J_RELATIVE || offsetType == ConstTpl.J_START ||
-				offsetType == ConstTpl.J_NEXT) {
+				offsetType == ConstTpl.J_NEXT || offsetType == ConstTpl.J_NEXT2) {
 				return false;
 			}
 
@@ -361,7 +353,7 @@ public abstract class PcodeEmit {
 		else if (opcode == PcodeOp.CBRANCH) {
 			int offsetType = inputs[0].getOffset().getType();
 			if (offsetType == ConstTpl.J_RELATIVE || offsetType == ConstTpl.J_START ||
-				offsetType == ConstTpl.J_NEXT) {
+				offsetType == ConstTpl.J_NEXT || offsetType == ConstTpl.J_NEXT2) {
 				return false;
 			}
 
@@ -416,7 +408,7 @@ public abstract class PcodeEmit {
 		return false;
 	}
 
-	private boolean dumpFlowOverride(OpTpl opt) {
+	private boolean dumpFlowOverride(OpTpl opt) throws IOException {
 		if (flowOverride == null || opt.getOutput() != null) {
 			return false; // only call, branch and return instructions can be affected
 		}
@@ -483,8 +475,9 @@ public abstract class PcodeEmit {
 	 * We assume the location of the base pointer is in dyncache[1]
 	 * @param dyncache is the existing array
 	 * @param vn is the V_OFFSET_PLUS VarnodeTpl to adjust for
+	 * @throws IOException for stream errors emitting ops
 	 */
-	private void generatePointerAdd(VarnodeData[] dyncache, VarnodeTpl vn) {
+	private void generatePointerAdd(VarnodeData[] dyncache, VarnodeTpl vn) throws IOException {
 		long offsetPlus = vn.getOffset().getReal() & 0xffff;
 		if (offsetPlus == 0) {
 			return;
@@ -505,7 +498,7 @@ public abstract class PcodeEmit {
 		dyncache[1] = tmpData;
 	}
 
-	private void dump(OpTpl opt) {
+	private void dump(OpTpl opt) throws IOException {
 
 		VarnodeData[] dyncache = null;
 		VarnodeTpl vn, outvn;
@@ -581,7 +574,7 @@ public abstract class PcodeEmit {
 	}
 
 	private void appendBuild(OpTpl bld, int secnum)
-			throws UnknownInstructionException, MemoryAccessException {
+			throws UnknownInstructionException, MemoryAccessException, IOException {
 		// Recover operand index from build statement
 		int index = (int) bld.getInput()[0].getOffset().getReal();
 		Symbol sym = walker.getConstructor().getOperand(index).getDefiningSymbol();
@@ -612,8 +605,10 @@ public abstract class PcodeEmit {
 	 * @param op is the DELAYSLOT directive
 	 * @throws UnknownInstructionException for problems finding the delay slot Instruction
 	 * @throws MemoryAccessException for problems resolving details of the delay slot Instruction
+	 * @throws IOException for stream errors emitting ops
 	 */
-	private void delaySlot(OpTpl op) throws UnknownInstructionException, MemoryAccessException {
+	private void delaySlot(OpTpl op)
+			throws UnknownInstructionException, MemoryAccessException, IOException {
 
 		if (inDelaySlot) {
 			throw new SleighException(
@@ -656,9 +651,10 @@ public abstract class PcodeEmit {
 	 * @param secnum is the section number of the section containing the CROSSBUILD directive
 	 * @throws UnknownInstructionException for problems finding the referenced Instruction
 	 * @throws MemoryAccessException for problems resolving details of the referenced Instruction
+	 * @throws IOException for stream errors emitting ops
 	 */
 	private void appendCrossBuild(OpTpl bld, int secnum)
-			throws UnknownInstructionException, MemoryAccessException {
+			throws UnknownInstructionException, MemoryAccessException, IOException {
 		if (secnum >= 0) {
 			throw new SleighException(
 				"CROSSBUILD recursion problem for instruction at " + walker.getAddr());
@@ -668,8 +664,9 @@ public abstract class PcodeEmit {
 		AddressSpace spc = vn.getSpace().fixSpace(walker);
 		Address addr = spc.getTruncatedAddress(vn.getOffset().fix(walker), false);
 		// translate the address into the overlayspace if we have an overlayspace.
-		if (overlayspace != null) {
-			addr = overlayspace.getOverlayAddress(addr);
+		if (startAddress.getAddressSpace().isOverlaySpace()) {
+			OverlayAddressSpace overSpace = (OverlayAddressSpace) startAddress.getAddressSpace();
+			addr = overSpace.getOverlayAddress(addr);
 		}
 		ParserWalker oldwalker = walker;
 		long olduniqueoffset = uniqueoffset;
@@ -698,7 +695,7 @@ public abstract class PcodeEmit {
 	}
 
 	public void build(ConstructTpl construct, int secnum)
-			throws UnknownInstructionException, MemoryAccessException {
+			throws UnknownInstructionException, MemoryAccessException, IOException {
 		if (construct == null) {
 			throw new NotYetImplementedException(
 				"Semantics for this instruction are not implemented");
@@ -739,9 +736,10 @@ public abstract class PcodeEmit {
 	 * @param secnum index of the section to be built
 	 * @throws MemoryAccessException for problems resolving details of the underlying Instruction
 	 * @throws UnknownInstructionException for problems finding the underlying Instruction
+	 * @throws IOException for stream errors emitting ops
 	 */
 	private void buildEmpty(Constructor ct, int secnum)
-			throws UnknownInstructionException, MemoryAccessException {
+			throws UnknownInstructionException, MemoryAccessException, IOException {
 		int numops = ct.getNumOperands();
 
 		for (int i = 0; i < numops; ++i) {
@@ -759,30 +757,6 @@ public abstract class PcodeEmit {
 				build(construct, secnum);
 			}
 			walker.popOperand();
-		}
-	}
-
-	void checkOverlays(int opcode, VarnodeData[] in, int isize, VarnodeData out) {
-		if (overlayspace != null) {
-			if ((opcode == PcodeOp.LOAD) || (opcode == PcodeOp.STORE)) {
-				int spaceId = (int) in[0].offset;
-				AddressSpace space = addressFactory.getAddressSpace(spaceId);
-				if (space.isOverlaySpace()) {
-					space = ((OverlayAddressSpace) space).getOverlayedSpace();
-					in[0].offset = space.getSpaceID();
-				}
-			}
-			for (int i = 0; i < isize; ++i) {
-				VarnodeData v = in[i];
-				if (v.space.equals(overlayspace)) {
-					v.space = ((OverlayAddressSpace) v.space).getOverlayedSpace();
-				}
-			}
-			if (out != null) {
-				if (out.space.equals(overlayspace)) {
-					out.space = ((OverlayAddressSpace) out.space).getOverlayedSpace();
-				}
-			}
 		}
 	}
 

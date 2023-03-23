@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +24,11 @@ import ghidra.program.util.ProgramSelection;
 /**
  *  Plugin event generated when the highlight in a program changes.
  */
-public final class ProgramHighlightPluginEvent extends PluginEvent { 
-    public static final String NAME = "ProgramHighlight";
+public final class ProgramHighlightPluginEvent extends PluginEvent {
+	public static final String NAME = "ProgramHighlight";
 
-    private ProgramSelection highlight;
-    private WeakReference<Program> programRef;
+	private ProgramSelection highlight;
+	private WeakReference<Program> programRef;
 
 	/**
 	 * Construct a new event.
@@ -37,25 +36,25 @@ public final class ProgramHighlightPluginEvent extends PluginEvent {
 	 * @param hl Program selection containing the selected address set.
 	 * @param program program being highlighted
 	 */
-    public ProgramHighlightPluginEvent(String src,ProgramSelection hl,
-            Program program) {
-        super(src, NAME);
-        this.highlight = hl;
-        this.programRef = new WeakReference<Program>(program);
-    }
+	public ProgramHighlightPluginEvent(String src, ProgramSelection hl, Program program) {
+		super(src, NAME);
+		this.highlight = hl;
+		this.programRef = new WeakReference<Program>(program);
+	}
 
 	/**
 	 * Returns the program selection contained in this event.
 	 * @return ProgramSelection contained in this event.
 	 */
-    public ProgramSelection getHighlight() {
-        return highlight;
-    }
+	public ProgramSelection getHighlight() {
+		return highlight;
+	}
 
-    /**
-     * Returns the Program object that the highlight refers to. 
-     */
-    public Program getProgram() {
-        return programRef.get();
-    }
+	/**
+	 * Returns the Program object that the highlight refers to. 
+	 * @return the Program object that the highlight refers to. 
+	 */
+	public Program getProgram() {
+		return programRef.get();
+	}
 }

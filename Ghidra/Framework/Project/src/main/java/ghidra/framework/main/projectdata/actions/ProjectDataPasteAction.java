@@ -24,19 +24,20 @@ import javax.swing.Icon;
 import docking.action.KeyBindingData;
 import docking.action.MenuData;
 import docking.widgets.tree.GTreeNode;
+import generic.theme.GIcon;
 import ghidra.framework.main.datatree.*;
+import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskLauncher;
-import resources.ResourceManager;
 
 public class ProjectDataPasteAction extends ProjectDataCopyCutBaseAction {
-	private static Icon icon = ResourceManager.loadImage("images/page_paste.png");
+	private static Icon ICON = new GIcon("icon.projectdata.paste");
 
 	public ProjectDataPasteAction(String owner, String group) {
 		super("Paste", owner);
-		setPopupMenuData(new MenuData(new String[] { "Paste" }, icon, group));
+		setPopupMenuData(new MenuData(new String[] { "Paste" }, ICON, group));
 		setKeyBindingData(new KeyBindingData('V', InputEvent.CTRL_DOWN_MASK));
-		markHelpUnnecessary();
+		setHelpLocation(new HelpLocation("FrontEndPlugin", "Paste"));
 	}
 
 	@Override

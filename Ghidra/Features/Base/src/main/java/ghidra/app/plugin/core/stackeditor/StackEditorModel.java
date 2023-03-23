@@ -118,18 +118,15 @@ public class StackEditorModel extends CompositeEditorModel {
 			return false;
 		}
 		StackFrameDataType sfdt = (StackFrameDataType) viewComposite;
-		int editFrameSize = sfdt.getLength();
 		int editReturnAddressOffset = sfdt.getReturnAddressOffset();
 		int editLocalSize = sfdt.getLocalSize();
 		int editParamOffset = sfdt.getParameterOffset();
 		int editParamSize = sfdt.getParameterSize();
-		int stackFrameSize = sfdt.getLength();
-		int stackReturnAddressOffset = sfdt.getReturnAddressOffset();
-		int stackLocalSize = sfdt.getLocalSize();
-		int stackParamOffset = sfdt.getParameterOffset();
-		int stackParamSize = sfdt.getParameterSize();
-		hadChanges = (editFrameSize != stackFrameSize) ||
-			(editReturnAddressOffset != stackReturnAddressOffset) ||
+		int stackReturnAddressOffset = originalStack.getReturnAddressOffset();
+		int stackLocalSize = originalStack.getLocalSize();
+		int stackParamOffset = originalStack.getParameterOffset();
+		int stackParamSize = originalStack.getParameterSize();
+		hadChanges = (editReturnAddressOffset != stackReturnAddressOffset) ||
 			(editLocalSize != stackLocalSize) || (editParamOffset != stackParamOffset) ||
 			(editParamSize != stackParamSize) || super.updateAndCheckChangeState();
 		return hadChanges;
@@ -932,7 +929,7 @@ public class StackEditorModel extends CompositeEditorModel {
 			if (!isValidName() || !hasChanges()) {
 				return false;
 			}
-			StackFrame original = getOriginalStack();
+			StackFrame original = getOriginalStack(); // FIXME: Not Needed - use originalStack
 			Function function = original.getFunction();
 			StackFrameDataType edited = getEditorStack();
 

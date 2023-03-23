@@ -15,11 +15,9 @@
  */
 package ghidra.trace.model.target;
 
-import com.google.common.collect.Range;
-import com.google.common.collect.RangeSet;
-
 import ghidra.lifecycle.Transitional;
-import ghidra.trace.database.DBTraceUtils;
+import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.Lifespan.LifeSet;
 import ghidra.trace.model.thread.TraceObjectThread;
 
 /**
@@ -40,21 +38,21 @@ public interface TraceObjectInterface {
 	 * @return the span of all lifespans
 	 */
 	@Transitional
-	default Range<Long> computeSpan() {
-		RangeSet<Long> life = getObject().getLife();
+	default Lifespan computeSpan() {
+		LifeSet life = getObject().getLife();
 		if (life.isEmpty()) {
 			return null;
 		}
-		return life.span();
+		return life.bound();
 	}
 
 	@Transitional
 	default long computeMinSnap() {
-		return DBTraceUtils.lowerEndpoint(computeSpan());
+		return computeSpan().lmin();
 	}
 
 	@Transitional
 	default long computeMaxSnap() {
-		return DBTraceUtils.upperEndpoint(computeSpan());
+		return computeSpan().lmax();
 	}
 }

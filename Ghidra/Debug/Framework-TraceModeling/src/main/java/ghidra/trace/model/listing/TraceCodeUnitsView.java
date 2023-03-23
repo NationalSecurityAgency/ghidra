@@ -15,6 +15,13 @@
  */
 package ghidra.trace.model.listing;
 
+/**
+ * A view of all code units
+ * 
+ * <p>
+ * In particular, this includes default / undefined units. If an address is valid, this view will
+ * show there is a code unit containing it.
+ */
 public interface TraceCodeUnitsView extends TraceBaseCodeUnitsView<TraceCodeUnit> {
 	// Just finalize the typing
 }

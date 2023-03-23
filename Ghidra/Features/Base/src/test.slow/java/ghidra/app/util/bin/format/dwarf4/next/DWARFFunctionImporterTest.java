@@ -17,8 +17,9 @@ package ghidra.app.util.bin.format.dwarf4.next;
 
 import static org.junit.Assert.*;
 
-import java.io.IOException;
 import java.util.List;
+
+import java.io.IOException;
 
 import org.junit.Test;
 
@@ -27,6 +28,7 @@ import ghidra.app.util.bin.format.dwarf4.*;
 import ghidra.app.util.bin.format.dwarf4.encoding.DWARFSourceLanguage;
 import ghidra.app.util.bin.format.dwarf4.expression.DWARFExpressionOpCodes;
 import ghidra.program.model.data.*;
+import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Namespace;
 import ghidra.util.exception.CancelledException;
@@ -153,8 +155,30 @@ public class DWARFFunctionImporterTest extends DWARFTestBase {
 
 		// Test that VariableUtilities can find the structure for the this* pointer
 		Structure nestedStructDT1 = (Structure) dataMgr
-				.getDataType(new CategoryPath(rootCP, "mystruct::operator/()"), "nested_struct");
+				.getDataType(new CategoryPath(uncatCP, "mystruct::operator/()"), "nested_struct");
 		Structure nestedStructDT2 = VariableUtilities.findExistingClassStruct(fooFunc);
 		assertTrue(nestedStructDT1 == nestedStructDT2);
+	}
+
+	@Test
+	public void testThisParam()
+			throws CancelledException, IOException, DWARFException {
+
+		DebugInfoEntry intDIE = addInt(cu);
+		DebugInfoEntry ptrDIE = addPtr(intDIE, cu);
+		DebugInfoEntry fooDIE = newSubprogram("foo", intDIE, 0x410, 10).create(cu);
+		newFormalParam(fooDIE, "this", ptrDIE,
+			DWARFExpressionOpCodes.DW_OP_implicit_value /* requires this to be non supported location opcode to trigger formal_param_only mode*/,
+			0x6c).create(cu);
+
+		importFunctions();
+
+		Function fooFunc = program.getListing().getFunctionAt(addr(0x410));
+		assertNotNull(fooFunc);
+
+		assertEquals("foo", fooFunc.getName());
+		Parameter[] fooParams = fooFunc.getParameters();
+		assertEquals(fooParams.length, 1);
+		assertEquals(CompilerSpec.CALLING_CONVENTION_thiscall, fooFunc.getCallingConventionName());
 	}
 }

@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- * Created on Jun 12, 2003
- *
- * To change the template for this generated file go to
- * Window>Preferences>Java>Code Generation>Code and Comments
- */
 package ghidra.app.decompiler;
 
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.pcode.*;
-import ghidra.xml.*;
+
 /**
- * 
- *
- * A C code token representing a data type. This does not include qualifiers on the type
- * like '*' (pointer to) or '[]' (array of). There should be no whitespace in the name
+ * A source code token representing a data-type. This does not include qualifiers on the data-type
+ * like '*' (pointer to) or '[]' (array of). There should be no whitespace in the name.
  */
 public class ClangTypeToken extends ClangToken {
 	private DataType datatype;
@@ -38,20 +29,37 @@ public class ClangTypeToken extends ClangToken {
 		super(par);
 		datatype = null;
 	}
-	
+
 	@Override
-    public boolean isVariableRef() {
-		if (Parent() instanceof ClangVariableDecl) return true;
-		return false;	
+	public boolean isVariableRef() {
+		if (Parent() instanceof ClangVariableDecl) {
+			return true;
+		}
+		return false;
 	}
-	
+
+	/**
+	 * @return the data-type associated with this token
+	 */
 	public DataType getDataType() {
 		return datatype;
 	}
-	
+
 	@Override
-    public void restoreFromXML(XmlElement el,XmlElement end,PcodeFactory pfactory) {
-		super.restoreFromXML(el,end,pfactory);
-		datatype = pfactory.getDataTypeManager().findBaseType(getText(),el.getAttribute("id"));
+	public void decode(Decoder decoder, PcodeFactory pfactory) throws DecoderException {
+		long id = 0;
+		for (;;) {
+			int attribId = decoder.getNextAttributeId();
+			if (attribId == 0) {
+				break;
+			}
+			if (attribId == AttributeId.ATTRIB_ID.id()) {
+				id = decoder.readUnsignedInteger();
+				break;
+			}
+		}
+		decoder.rewindAttributes();
+		super.decode(decoder, pfactory);
+		datatype = pfactory.getDataTypeManager().findBaseType(getText(), id);
 	}
 }

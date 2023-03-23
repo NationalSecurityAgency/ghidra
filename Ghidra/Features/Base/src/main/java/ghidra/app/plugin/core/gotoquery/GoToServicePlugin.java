@@ -62,7 +62,7 @@ public final class GoToServicePlugin extends ProgramPlugin {
 	 * @param tool the tool
 	 */
 	public GoToServicePlugin(PluginTool tool) {
-		super(tool, true, true);
+		super(tool);
 
 		Options opt = tool.getOptions(PluginConstants.SEARCH_OPTION_NAME);
 

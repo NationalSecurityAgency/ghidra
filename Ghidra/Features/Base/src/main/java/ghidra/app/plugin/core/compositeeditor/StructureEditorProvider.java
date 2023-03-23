@@ -15,19 +15,19 @@
  */
 package ghidra.app.plugin.core.compositeeditor;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
+import generic.theme.GIcon;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.program.model.data.Structure;
-import resources.ResourceManager;
 
 /**
  * Editor for a Structure Data Type.
  */
 public class StructureEditorProvider extends CompositeEditorProvider {
 
-	protected static final ImageIcon STRUCTURE_EDITOR_ICON =
-		ResourceManager.loadImage("images/cstruct.png");
+	protected static final Icon STRUCTURE_EDITOR_ICON =
+		new GIcon("icon.plugin.composite.editor.provider.structure");
 
 	public StructureEditorProvider(Plugin plugin, Structure structureDataType,
 			boolean showHexNumbers) {

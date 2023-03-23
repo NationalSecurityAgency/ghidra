@@ -36,6 +36,9 @@ import docking.tool.ToolConstants;
 import docking.widgets.OptionDialog;
 import docking.widgets.table.GTable;
 import generic.jar.ResourceFile;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Java;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.framework.Application;
 import ghidra.framework.LoggingInitialization;
 import ghidra.framework.cmd.BackgroundCommand;
@@ -135,11 +138,12 @@ public class ToolScreenShots extends GhidraScreenShotGenerator {
 		tool.executeBackgroundCommand(new DummyBackgroundCommand(), program);
 
 		Border inner = BorderFactory.createRaisedBevelBorder();
-		Border outer = BorderFactory.createLineBorder(Color.BLACK);
+		Border outer = BorderFactory.createLineBorder(Java.BORDER);
 		statusBar.setBorder(BorderFactory.createCompoundBorder(outer, inner));
 		captureComponent(statusBar);
 		program.endTransaction(id, false);
-		padImage(Color.WHITE, topBottomMargin, leftRightMargin, leftRightMargin, topBottomMargin);
+		padImage(Colors.FOREGROUND, topBottomMargin, leftRightMargin, leftRightMargin,
+			topBottomMargin);
 
 		JComponent statusLabel = (JComponent) getInstanceField("statusLabel", statusBar);
 		Font font = new Font("Ariel", Font.PLAIN, 12);
@@ -184,8 +188,9 @@ public class ToolScreenShots extends GhidraScreenShotGenerator {
 		int arrowX = bounds.x + bounds.width / 2 + leftMargin;
 		int arrowStartY = textY - metrics.getHeight() - 5;
 		int arrowEndY = height - topMargin;
-		drawText(label, Color.BLACK, new Point(textX, textY), font);
-		drawArrow(Color.BLACK, 1, new Point(arrowX, arrowStartY), new Point(arrowX, arrowEndY), 9);
+		drawText(label, Colors.FOREGROUND, new Point(textX, textY), font);
+		drawArrow(Palette.BLACK, 1, new Point(arrowX, arrowStartY), new Point(arrowX, arrowEndY),
+			9);
 	}
 
 	private void labelTop(String label, Rectangle bounds, Font font, FontMetrics metrics,
@@ -195,8 +200,9 @@ public class ToolScreenShots extends GhidraScreenShotGenerator {
 		int arrowX = bounds.x + bounds.width / 2 + leftMargin;
 		int arrowStartY = textY + 5;
 		int arrowEndY = topMargin;
-		drawText(label, Color.BLACK, new Point(textX, textY), font);
-		drawArrow(Color.BLACK, 1, new Point(arrowX, arrowStartY), new Point(arrowX, arrowEndY), 9);
+		drawText(label, Colors.FOREGROUND, new Point(textX, textY), font);
+		drawArrow(Palette.BLACK, 1, new Point(arrowX, arrowStartY), new Point(arrowX, arrowEndY),
+			9);
 	}
 
 	private int getTextStart(Rectangle bounds, FontMetrics metrics, String string) {
@@ -261,7 +267,7 @@ public class ToolScreenShots extends GhidraScreenShotGenerator {
 		captureDialog();
 
 		JButton button = findButtonByText(window, "Restore Defaults");
-		drawRectangleWithDropShadowAround(button, Color.GREEN, 2);
+		drawRectangleWithDropShadowAround(button, Palette.GREEN, 2);
 
 		crop(new Rectangle(0, 200, 700, 150));
 	}

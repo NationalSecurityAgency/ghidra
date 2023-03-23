@@ -89,8 +89,8 @@ public class MachoBinaryAnalysisCommand extends FlatProgramAPI
 
 		BookmarkManager bookmarkManager = program.getBookmarkManager();
 
-		ByteProvider provider = new MemoryByteProvider(program.getMemory(),
-			program.getAddressFactory().getDefaultAddressSpace());
+		ByteProvider provider =
+			MemoryByteProvider.createDefaultAddressSpaceByteProvider(program, false);
 
 		try {
 			MachHeader header =

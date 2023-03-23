@@ -122,6 +122,22 @@ public abstract class AbstractProcedureStartMipsMsSymbol extends AbstractProcedu
 	}
 
 	/**
+	 * Returns the register containing the return value
+	 * @return the register.
+	 */
+	public RegisterName getReturnRegister() {
+		return internals.getReturnRegister();
+	}
+
+	/**
+	 * Returns the register containing the frame pointer
+	 * @return the register.
+	 */
+	public RegisterName getFramePointerRegister() {
+		return internals.getFramePointerRegister();
+	}
+
+	/**
 	 * Returns the name.
 	 * @return Name.
 	 */

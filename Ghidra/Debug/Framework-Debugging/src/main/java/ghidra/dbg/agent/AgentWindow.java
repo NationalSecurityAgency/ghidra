@@ -21,6 +21,7 @@ import java.awt.event.WindowListener;
 import java.net.SocketAddress;
 
 import javax.swing.*;
+import javax.swing.text.*;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Appender;
@@ -36,8 +37,8 @@ import log.LogPanelAppender;
 public class AgentWindow extends JFrame implements WindowListener, LogListener {
 	public static final int MAX_LOG_CHARS = 100000;
 
-	protected final JTextArea logArea = new JTextArea();
-	protected final JScrollPane logScroll = new JScrollPane(logArea);
+	protected final JTextPane logPane = new JTextPane();
+	protected final JScrollPane logScroll = new JScrollPane(logPane);
 
 	public AgentWindow(String title, SocketAddress localAddress) {
 		super(title);
@@ -45,10 +46,12 @@ public class AgentWindow extends JFrame implements WindowListener, LogListener {
 		addWindowListener(this);
 		add(new JLabel("<html>This agent is listening at <b>" + localAddress +
 			"</b>. Close this window to terminate it.</html>"), BorderLayout.NORTH);
-		logArea.setEditable(false);
-		logArea.setFont(Font.decode(Font.MONOSPACED));
-		logArea.setAutoscrolls(true);
+		logPane.setEditable(false);
+		logPane.setFont(Font.decode(Font.MONOSPACED));
+		logPane.setAutoscrolls(true);
 		logScroll.setAutoscrolls(true);
+		DefaultCaret caret = (DefaultCaret) logPane.getCaret();
+		caret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
 		add(logScroll);
 		setMinimumSize(new Dimension(400, 300));
 		setVisible(true);
@@ -70,13 +73,22 @@ public class AgentWindow extends JFrame implements WindowListener, LogListener {
 
 	@Override
 	public void messageLogged(String message, boolean isError) {
-		String fMessage = isError ? "<font color=\"red\">" + message + "</font>" : message;
+
 		Swing.runIfSwingOrRunLater(() -> {
-			String allText = logArea.getText() + fMessage + "\n";
-			logArea.setText(
-				allText.substring(Math.max(0, allText.length() - MAX_LOG_CHARS), allText.length()));
-			JScrollBar vScroll = logScroll.getVerticalScrollBar();
-			vScroll.setValue(vScroll.getMaximum());
+			MutableAttributeSet attributes = new SimpleAttributeSet();
+			if (isError) {
+				StyleConstants.setForeground(attributes, Color.RED);
+			}
+			Document document = logPane.getStyledDocument();
+			try {
+				document.insertString(document.getLength(), message + "\n", attributes);
+				if (document.getLength() > MAX_LOG_CHARS) {
+					document.remove(0, document.getLength() - MAX_LOG_CHARS);
+				}
+			}
+			catch (BadLocationException e) {
+				throw new AssertionError(e);
+			}
 		});
 	}
 

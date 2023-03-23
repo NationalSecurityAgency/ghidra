@@ -152,7 +152,7 @@ public class GhidraToolTemplate implements ToolTemplate {
 				dtList.add(Class.forName(className));
 			}
 			catch (ClassNotFoundException e) {
-				Msg.error(this, "Class not found: " + className, e);
+				Msg.warn(this, "Tool supported content class not found: " + className);
 			}
 			catch (Exception exc) {//TODO
 				Msg.error(this, "Unexpected Exception: " + exc.getMessage(), exc);

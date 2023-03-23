@@ -17,13 +17,26 @@ package ghidra.trace.database.listing;
 
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataTypeComponent;
+import ghidra.trace.database.DBTrace;
 import ghidra.trace.model.ImmutableTraceAddressSnapRange;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.util.TraceAddressSpace;
 
+/**
+ * The implementation of a field data component in a {@link DBTrace}
+ */
 public class DBTraceDataCompositeFieldComponent extends AbstractDBTraceDataComponent {
 	protected final DataTypeComponent dtc;
 
+	/**
+	 * Create a field
+	 * 
+	 * @param root the root data unit
+	 * @param parent the parent component, possibly the root
+	 * @param index the index of this component in its parent
+	 * @param address the minimum address of this component
+	 * @param dtc the data type component, giving the index, data type, and length
+	 */
 	public DBTraceDataCompositeFieldComponent(DBTraceData root, DBTraceDefinedDataAdapter parent,
 			Address address, DataTypeComponent dtc) {
 		super(root, parent, dtc.getOrdinal(), address, dtc.getDataType(), dtc.getLength());

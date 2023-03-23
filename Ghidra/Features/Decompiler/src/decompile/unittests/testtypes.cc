@@ -31,7 +31,7 @@ public:
   static void build(void);
 };
 
-TypeTestEnvironment theEnviron;
+static TypeTestEnvironment theEnviron;
 
 TypeTestEnvironment::TypeTestEnvironment(void)
 

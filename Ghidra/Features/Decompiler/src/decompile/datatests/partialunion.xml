@@ -1,0 +1,47 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+   Contrived examples of varnodes labeled as partial unions
+-->
+<bytechunk space="ram" offset="0x10068a" readonly="true">
+                    554889e5f30f
+1145fcf30f1045fcf30f110578092000
+8b05760920005dc3
+</bytechunk>
+<bytechunk space="ram" offset="0x1006a8" readonly="true">
+                554889e5897dfc89
+75f8837dfc01750b8b45f889055b0920
+00eb33837dfc02750e8b45f883c00789
+0543092000eb1f837dfc0475198b45f8
+890536092000f30f100516010000f30f
+110522092000905dc3
+</bytechunk>
+<bytechunk space="ram" offset="0x100804" readonly="true">
+        0000003f
+</bytechunk>
+<symbol space="ram" offset="0x10068a" name="partialunion"/>
+<symbol space="ram" offset="0x1006a8" name="partial1"/>
+</binaryimage>
+<script>
+  <com>option readonly on</com>
+  <com>parse line struct astruct { int4 aval1; int4 aval2; int4 aval3; };</com>
+  <com>parse line struct bstruct { float4 bval1; int4 bval2; float4 bval3; };</com>
+  <com>parse line union structunion { astruct a; bstruct b; };</com>
+  <com>parse line extern int4 partialunion(float4 val);</com>
+  <com>map addr r0x301018 structunion globvar</com>
+  <com>lo fu partialunion</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>lo fu partial1</com>
+  <com>map unionfacet structunion 1 r0x1006ee 20603f6a8a0b89</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Partial union #1" min="1" max="1">globvar\.b\.bval1 = val;</stringmatch>
+<stringmatch name="Partial union #2" min="1" max="1">return globvar\.a\.aval2;</stringmatch>
+<stringmatch name="Partial union #3" min="1" max="1">Var1 = globvar\.a\.aval2;</stringmatch>
+<stringmatch name="Partial union #4" min="1" max="1">globvar\.a\.aval1 = param_2 \+ 7;</stringmatch>
+<stringmatch name="Partial union #5" min="1" max="1">globvar\.b\.bval1 = 0\.5;</stringmatch>
+<stringmatch name="Partial union #6" min="1" max="1">globvar\.a\.aval2 = .Var1;</stringmatch>
+</decompilertest>

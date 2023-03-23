@@ -30,7 +30,6 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.*;
 
 import docking.*;
-import docking.help.HelpService;
 import docking.widgets.table.*;
 import docking.widgets.table.threaded.ThreadedTableModel;
 import ghidra.feature.vt.api.impl.VTChangeManager;
@@ -54,6 +53,7 @@ import ghidra.util.layout.HorizontalLayout;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraThreadedTablePanel;
 import ghidra.util.task.SwingUpdateManager;
+import help.HelpService;
 
 public class VTMatchTableProvider extends ComponentProviderAdapter
 		implements FilterDialogModel<VTMatch>, VTControllerListener {
@@ -456,6 +456,8 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 		for (Filter<VTMatch> filter : filters) {
 			filter.dispose();
 		}
+
+		ancillaryFilterDialog.dispose();
 	}
 
 	@Override

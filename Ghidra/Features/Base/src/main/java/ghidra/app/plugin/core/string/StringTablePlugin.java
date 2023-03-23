@@ -51,7 +51,7 @@ public class StringTablePlugin extends ProgramPlugin {
 	private List<StringTableProvider> transientProviders = new ArrayList<>();
 
 	public StringTablePlugin(PluginTool tool) {
-		super(tool, false, true);
+		super(tool);
 	}
 
 	@Override

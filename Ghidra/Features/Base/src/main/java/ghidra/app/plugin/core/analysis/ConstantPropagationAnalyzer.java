@@ -137,20 +137,22 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws CancelledException {
 
-		set = removeUninitializedBlock(program, set);
+		AddressSet unanalyzedSet = new AddressSet(set);
+		
+		removeUninitializedBlocks(program, unanalyzedSet);
 
 		try {
 			// first split out all the function locations, make those the starts
 			// remove those from the bodies from the given set of addresses
 			Set<Address> locations = new HashSet<Address>();
-			AddressSetView unanalyzedSet = findLocations(program, set, locations, monitor);
+			findLocationsRemoveFunctionBodies(program, unanalyzedSet, locations, monitor);
 
 			int locationCount = locations.size();
 			monitor.initialize(locationCount);
 			if (locationCount != 0) {
 				AddressSetView resultSet = runAddressAnalysis(program, locations, monitor);
 				// get rid of any reached addresses
-				unanalyzedSet = unanalyzedSet.subtract(resultSet);
+				unanalyzedSet.delete(resultSet);
 			}
 
 			// now slog through the rest single threaded
@@ -169,21 +171,42 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 		return true;
 	}
 
-	// Get rid of uninitialized, no use going through those.
-	protected AddressSetView removeUninitializedBlock(Program program, AddressSetView set) {
+	/**
+	 * Get rid of uninitialized memory blocks from set to analyze.
+	 * Uninitialized memory can't have instructions with no bytes.
+	 * 
+	 * @param program program
+	 * @param set remove blocks without bytes
+	 */
+	protected void removeUninitializedBlocks(Program program, AddressSet set) {
 		MemoryBlock[] blocks = program.getMemory().getBlocks();
 		for (MemoryBlock block : blocks) {
 			if (block.isInitialized()) {
 				continue;
 			}
-			AddressSet blocksSet = new AddressSet();
-			blocksSet.addRange(block.getStart(), block.getEnd());
-			set = set.subtract(blocksSet);
+			// ByteMapped blocks currently are uninitialized.
+			// Not optimal, because there might not be initialized
+			// bytes in the whole block, but the savings of checking
+			// would be negligible
+			if (block.isMapped()) {
+				continue;
+			}
+
+			set.deleteRange(block.getStart(), block.getEnd());
 		}
-		return set;
 	}
 
-	protected AddressSetView findLocations(Program program, AddressSetView set,
+	/**
+	 * Find function locations and leave only the function entry point in the address
+	 * set.  Anything not in a function is still in the address set.
+	 * 
+	 * @param program program
+	 * @param set remove known function bodies from the set, leave entry points
+	 * @param locations set of known function start addresses
+	 * @param monitor to cancel
+	 * @throws CancelledException if cancelled
+	 */
+	protected void findLocationsRemoveFunctionBodies(Program program, AddressSet set,
 			Set<Address> locations, TaskMonitor monitor) throws CancelledException {
 
 		monitor.setMessage("Finding function locations...");
@@ -203,7 +226,7 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 		}
 
 		monitor.setProgress(total - inBodySet.getNumAddresses());
-		set = set.subtract(inBodySet);
+		set.delete(inBodySet);
 
 		// set now has Stuff in it that isn't in a recorded function body
 		ReferenceManager referenceManager = program.getReferenceManager();
@@ -228,7 +251,7 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 		}
 
 		monitor.incrementProgress(outOfBodySet.getNumAddresses());
-		set = set.subtract(outOfBodySet);
+		set.delete(outOfBodySet);
 
 		// now iterate over individual address ranges, and use first address as a start
 		outOfBodySet = new AddressSet();
@@ -241,11 +264,21 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 		}
 
 		monitor.incrementProgress(outOfBodySet.getNumAddresses());
-		set = set.subtract(outOfBodySet);
-
-		return set;
+		set.delete(outOfBodySet);
 	}
 
+	/**
+	 * Run constant propagation starting at address in locations
+	 * 
+	 * @param program program
+	 * @param locations function entry points
+	 * @param monitor to cancel
+	 * @return set of addresses covered during constant analysis
+	 * 
+	 * @throws CancelledException
+	 * @throws InterruptedException
+	 * @throws Exception
+	 */
 	protected AddressSetView runAddressAnalysis(final Program program, final Set<Address> locations,
 			final TaskMonitor monitor) throws CancelledException, InterruptedException, Exception {
 
@@ -305,17 +338,25 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 		return analyzedSet;
 	}
 
-	public void analyzeSet(Program program, AddressSetView setToAnalyze, TaskMonitor monitor)
+	/**
+	 * Analyze all addresses in todoSet
+	 * 
+	 * @param program program
+	 * @param todoSet addresses that are not in functions
+	 * @param monitor to cancel
+	 * 
+	 * @throws CancelledException
+	 */
+	public void analyzeSet(Program program, AddressSet todoSet, TaskMonitor monitor)
 			throws CancelledException {
 
-		long totalNumAddresses = setToAnalyze.getNumAddresses();
+		long totalNumAddresses = todoSet.getNumAddresses();
 		monitor.initialize(totalNumAddresses);
 
 		// Iterate over all new instructions
 		// Evaluate each operand
 		Listing listing = program.getListing();
 		int count = 0;
-		AddressSet todoSet = new AddressSet(setToAnalyze);
 		while (!todoSet.isEmpty()) {
 			monitor.checkCanceled();
 

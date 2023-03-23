@@ -18,8 +18,6 @@ package ghidra.util.database.spatial;
 import java.io.IOException;
 import java.util.*;
 
-import com.google.common.collect.Collections2;
-
 import ghidra.util.database.DBCachedObjectStoreFactory;
 import ghidra.util.database.spatial.DBTreeNodeRecord.NodeType;
 import ghidra.util.exception.VersionException;
@@ -251,14 +249,6 @@ public abstract class AbstractRStarConstraintsTree< //
 		return sum;
 	}
 
-	protected static int sum(Iterable<Integer> terms) {
-		int sum = 0;
-		for (long t : terms) {
-			sum += t;
-		}
-		return sum;
-	}
-
 	/**
 	 * The Split algorithm as defined in Section 4.2 of the paper.
 	 * 
@@ -290,18 +280,14 @@ public abstract class AbstractRStarConstraintsTree< //
 		n2.setType(n.getType());
 
 		// Update existing node's metadata
-		Collection<? extends NS> firstBounds =
-			Collections2.transform(firstGroup, DBTreeRecord::getBounds);
-		n1.setShape(BoundingShape.boundsUnion(firstBounds));
+		n1.setShape(unionStream(firstGroup.stream().map(DBTreeRecord::getBounds)));
 		n1.setChildCount(index);
-		n1.setDataCount(sum(Collections2.transform(firstGroup, p -> p.getDataCount())));
+		n1.setDataCount(firstGroup.stream().mapToInt(DBTreeRecord::getDataCount).sum());
 
 		// Set new node's metadata
-		Collection<? extends NS> secondBounds =
-			Collections2.transform(secondGroup, DBTreeRecord::getBounds);
-		n2.setShape(BoundingShape.boundsUnion(secondBounds));
+		n2.setShape(unionStream(secondGroup.stream().map(DBTreeRecord::getBounds)));
 		n2.setChildCount(maxChildren + 1 - index);
-		n2.setDataCount(sum(Collections2.transform(secondGroup, p -> p.getDataCount())));
+		n2.setDataCount(secondGroup.stream().mapToInt(DBTreeRecord::getDataCount).sum());
 
 		// Move split-off children to new node
 		if (n2.getType() == NodeType.LEAF) {
@@ -337,27 +323,26 @@ public abstract class AbstractRStarConstraintsTree< //
 			// ************X (M = 12)
 			// mmm-------mmm (m = 3)
 			// 8 distributions : 12 - 2*3 + 2
-			Collection<? extends NS> firstKBounds =
-				Collections2.transform(children.subList(0, minChildren), DBTreeRecord::getBounds);
-			NS boundsFirstKChildren = BoundingShape.boundsUnion(firstKBounds);
-			Collection<? extends NS> lastKBounds = Collections2.transform(
-				children.subList(maxChildren + 1 - minChildren, maxChildren + 1),
-				DBTreeRecord::getBounds);
-			NS bounsaLastKChildren = BoundingShape.boundsUnion(lastKBounds);
+			NS boundsFirstKChildren =
+				unionStream(children.subList(0, minChildren).stream().map(DBTreeRecord::getBounds));
+			NS boundsLastKChildren =
+				unionStream(children.subList(maxChildren + 1 - minChildren, maxChildren + 1)
+						.stream()
+						.map(DBTreeRecord::getBounds));
 			int maxK = maxChildren + 1 - minChildren * 2;
 
 			double marginValue = 0;
 			marginValue += boundsFirstKChildren.getMargin();
-			marginValue += bounsaLastKChildren.getMargin();
+			marginValue += boundsLastKChildren.getMargin();
 			for (int k = 0; k <= maxK; k++) { // NOTE: Our k is 0-up. Paper defines using 1-up.
 				NS forFirst = children.get(minChildren + k).getBounds();
 				NS forSecond = children.get(maxChildren - minChildren - k).getBounds();
 
 				boundsFirstKChildren = boundsFirstKChildren.unionBounds(forFirst);
-				bounsaLastKChildren = bounsaLastKChildren.unionBounds(forSecond);
+				boundsLastKChildren = boundsLastKChildren.unionBounds(forSecond);
 
 				marginValue += boundsFirstKChildren.getMargin();
-				marginValue += bounsaLastKChildren.getMargin();
+				marginValue += boundsLastKChildren.getMargin();
 			}
 
 			// CSA2
@@ -380,13 +365,12 @@ public abstract class AbstractRStarConstraintsTree< //
 		// mmm-------mmm (m = 3)
 		// 8 distributions : 12 - 2*3 + 2
 
-		Collection<? extends NS> firstBounds =
-			Collections2.transform(children.subList(0, minChildren), DBTreeRecord::getBounds);
-		NS boundsFirstKChildren = BoundingShape.boundsUnion(firstBounds);
-		Collection<? extends NS> secondBounds =
-			Collections2.transform(children.subList(maxChildren + 1 - minChildren, maxChildren + 1),
-				DBTreeRecord::getBounds);
-		NS boundsLastKChildren = BoundingShape.boundsUnion(secondBounds);
+		NS boundsFirstKChildren =
+			unionStream(children.subList(0, minChildren).stream().map(DBTreeRecord::getBounds));
+		NS boundsLastKChildren =
+			unionStream(children.subList(maxChildren + 1 - minChildren, maxChildren + 1)
+					.stream()
+					.map(DBTreeRecord::getBounds));
 		int maxK = maxChildren + 1 - minChildren * 2;
 
 		Deque<NS> boundsFirsts = new ArrayDeque<>();
@@ -581,11 +565,7 @@ public abstract class AbstractRStarConstraintsTree< //
 			p.setDataCount(newDataCount);
 
 			// I can't think of a better way to re-compute the bounds in the path
-			Collection<? extends NS> childBounds =
-				Collections2.transform(getChildrenOf(p), DBTreeRecord::getBounds);
-			NS newBounds = BoundingShape.boundsUnion(childBounds);
-			p.setShape(newBounds);
-
+			p.setShape(unionStream(getChildrenOf(p).stream().map(DBTreeRecord::getBounds)));
 			p = getParentOf(p);
 		}
 

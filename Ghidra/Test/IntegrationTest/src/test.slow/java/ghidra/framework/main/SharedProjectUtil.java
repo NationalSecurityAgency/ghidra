@@ -18,7 +18,7 @@
  */
 package ghidra.framework.main;
 
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,7 +31,7 @@ import docking.action.DockingActionIf;
 import docking.test.AbstractDockingTest;
 import docking.wizard.WizardManager;
 import generic.test.AbstractGTest;
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGuiTest;
 import ghidra.framework.client.*;
 import ghidra.framework.model.*;
 import ghidra.server.remote.ServerTestUtil;
@@ -71,13 +71,13 @@ public class SharedProjectUtil {
 
 		DockingActionIf action = getAction(frontEndTool, "New Project");
 		AbstractDockingTest.performAction(action, false);
-		AbstractGenericTest.waitForSwing();
+		AbstractGuiTest.waitForSwing();
 
 		WizardManager wm = AbstractDockingTest.waitForDialogComponent(WizardManager.class);
 
 		ProjectTypePanel typePanel = AbstractDockingTest.findComponent(wm, ProjectTypePanel.class);
 		final JRadioButton rb =
-			(JRadioButton) AbstractGenericTest.findAbstractButtonByText(typePanel,
+			(JRadioButton) AbstractGuiTest.findAbstractButtonByText(typePanel,
 				"Shared Project");
 
 		SwingUtilities.invokeAndWait(() -> rb.setSelected(true));
@@ -85,41 +85,41 @@ public class SharedProjectUtil {
 		JButton nextButton = AbstractDockingTest.findButtonByText(wm, "Next >>");
 		JButton finishButton = AbstractDockingTest.findButtonByText(wm, "Finish");
 
-		AbstractGenericTest.pressButton(nextButton, true);
+		AbstractGuiTest.pressButton(nextButton, true);
 
 		ServerInfoPanel serverPanel = AbstractDockingTest.findComponent(wm, ServerInfoPanel.class);
 
 		final JTextField serverField =
-			(JTextField) AbstractGenericTest.findComponentByName(serverPanel, "Server Name");
+			(JTextField) AbstractGuiTest.findComponentByName(serverPanel, "Server Name");
 		final JTextField portNumberField =
-			(JTextField) AbstractGenericTest.findComponentByName(serverPanel, "Port Number");
+			(JTextField) AbstractGuiTest.findComponentByName(serverPanel, "Port Number");
 
 		SwingUtilities.invokeAndWait(() -> {
 			serverField.setText(LOCALHOST);
 			portNumberField.setText(Integer.toString(SERVER_PORT));
 		});
 
-		AbstractGenericTest.pressButton(nextButton);
+		AbstractGuiTest.pressButton(nextButton);
 
 		// next panel should be the repository panel
 		RepositoryPanel repPanel = AbstractDockingTest.findComponent(wm, RepositoryPanel.class);
 
-		final JList<?> repList = AbstractGenericTest.findComponent(repPanel, JList.class);
+		final JList<?> repList = AbstractGuiTest.findComponent(repPanel, JList.class);
 
 		// select existing repository
 		SwingUtilities.invokeAndWait(() -> repList.setSelectedIndex(0));
 
 		// next panel is project location panel
-		AbstractGenericTest.pressButton(nextButton, true);
+		AbstractGuiTest.pressButton(nextButton, true);
 
 		final SelectProjectPanel projPanel =
 			AbstractDockingTest.findComponent(wm, SelectProjectPanel.class);
 
 		final String testProjectDirectory = AbstractGTest.getTestDirectoryPath();
 		final JTextField projDirField =
-			(JTextField) AbstractGenericTest.findComponentByName(projPanel, "Project Directory");
+			(JTextField) AbstractGuiTest.findComponentByName(projPanel, "Project Directory");
 		final JTextField projNameField =
-			(JTextField) AbstractGenericTest.findComponentByName(projPanel, "Project Name");
+			(JTextField) AbstractGuiTest.findComponentByName(projPanel, "Project Name");
 
 		SwingUtilities.invokeAndWait(() -> {
 			projDirField.setText(testProjectDirectory);
@@ -133,8 +133,8 @@ public class SharedProjectUtil {
 			return false;
 		}
 
-		AbstractGenericTest.pressButton(finishButton, true);
-		AbstractGenericTest.waitForSwing();
+		AbstractGuiTest.pressButton(finishButton, true);
+		AbstractGuiTest.waitForSwing();
 		boolean didOpen = waitForProjectToOpen(projectName, projectListener);
 		System.err.println("\tdid the project get opened?: " + didOpen);
 		return didOpen;
@@ -151,7 +151,7 @@ public class SharedProjectUtil {
 			AbstractGTest.sleep(waitTime);
 		}
 
-		AbstractGenericTest.waitForSwing();
+		AbstractGuiTest.waitForSwing();
 		boolean success = desiredProjectName.equals(lastOpenedProjectName);
 		if (!success) {
 			System.err.println("\tOpen windows: " + AbstractDockingTest.getOpenWindowsAsString());

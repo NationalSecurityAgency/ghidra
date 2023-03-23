@@ -27,13 +27,14 @@ import docking.widgets.fieldpanel.LayoutModel;
 import docking.widgets.fieldpanel.internal.EmptyLayoutBackgroundColorManager;
 import docking.widgets.fieldpanel.internal.LayoutBackgroundColorManager;
 import docking.widgets.fieldpanel.internal.PaintContext;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.util.DateUtils;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
 
 public class CodeUnitPrintable implements Printable {
 
-	//private FieldPanel panel;
 	private LayoutModel lm;
 	private int startIndex;
 	private int endIndex;
@@ -48,12 +49,11 @@ public class CodeUnitPrintable implements Printable {
 
 	private static final PaintContext PAINT_CONTEXT = new PaintContext();
 	static {
-		PAINT_CONTEXT.setForegroundColor(Color.BLACK);
-		PAINT_CONTEXT.setDefaultBackgroundColor(Color.WHITE);
-		PAINT_CONTEXT.setBackgroundColor(Color.white);
-		PAINT_CONTEXT.setCursorColor(Color.RED);
-		PAINT_CONTEXT.setSelectionColor(new Color(180, 255, 180));
-		PAINT_CONTEXT.setHighlightColor(new Color(255, 255, 150));
+		PAINT_CONTEXT.setForegroundColor(Colors.FOREGROUND);
+		PAINT_CONTEXT.setBackgroundColor(Colors.BACKGROUND);
+		PAINT_CONTEXT.setCursorColor(Colors.CURSOR);
+		PAINT_CONTEXT.setSelectionColor(new GColor("color.bg.selection"));
+		PAINT_CONTEXT.setHighlightColor(new GColor("color.bg.highlight"));
 
 		PAINT_CONTEXT.setPrinting(true);
 	}
@@ -70,13 +70,6 @@ public class CodeUnitPrintable implements Printable {
 		this.book = book;
 		this.job = job;
 		this.startDate = startDate;
-
-		if (pod.getMonochrome()) {
-			PAINT_CONTEXT.setPrintColor(Color.BLACK);
-		}
-		else {
-			PAINT_CONTEXT.setPrintColor(null);
-		}
 	}
 
 	public CodeUnitPrintable(LayoutModel lm, java.util.List<Layout> layouts, double scaleAmount,
@@ -90,20 +83,13 @@ public class CodeUnitPrintable implements Printable {
 		this.book = book;
 		this.job = job;
 		this.startDate = startDate;
-
-		if (pod.getMonochrome()) {
-			PAINT_CONTEXT.setPrintColor(Color.BLACK);
-		}
-		else {
-			PAINT_CONTEXT.setPrintColor(null);
-		}
 	}
 
 	@Override
 	public int print(Graphics graphics, PageFormat pageFormat, int pageIndex)
 			throws PrinterException {
 		Graphics2D g2 = GraphicsUtils.getGraphics2D(graphics);
-		g2.setColor(Color.BLACK);
+		g2.setColor(Colors.FOREGROUND);
 
 		monitor.setMessage("Printing Page " + (pageIndex + 1));
 		monitor.initialize(100);

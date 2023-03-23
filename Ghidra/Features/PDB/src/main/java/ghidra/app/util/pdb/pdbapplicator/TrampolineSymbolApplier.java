@@ -36,10 +36,10 @@ public class TrampolineSymbolApplier extends MsSymbolApplier {
 
 	/**
 	 * Constructor
-	 * @param applicator the {@link PdbApplicator} for which we are working.
+	 * @param applicator the {@link DefaultPdbApplicator} for which we are working.
 	 * @param iter the Iterator containing the symbol sequence being processed
 	 */
-	public TrampolineSymbolApplier(PdbApplicator applicator, AbstractMsSymbolIterator iter) {
+	public TrampolineSymbolApplier(DefaultPdbApplicator applicator, AbstractMsSymbolIterator iter) {
 		super(applicator, iter);
 		AbstractMsSymbol abstractSymbol = iter.next();
 		if (!(abstractSymbol instanceof TrampolineMsSymbol)) {

@@ -42,10 +42,10 @@ public abstract class WeakSet<T> implements Iterable<T> {
 
 	/**
 	 * Looks for situations where clients <b>may</b> lose the values added to this class.  This
-	 * most often happens when a client adds an anonymous, local listener to an object that is 
-	 * using a WeakSet to store its listeners.  Our policy is to implement listeners at the 
-	 * class field level so that they will not be flagged by this method. 
-	 * 
+	 * most often happens when a client adds an anonymous, local listener to an object that is
+	 * using a WeakSet to store its listeners.  Our policy is to implement listeners at the
+	 * class field level so that they will not be flagged by this method.
+	 *
 	 * @param t The object to check
 	 */
 	protected void maybeWarnAboutAnonymousValue(T t) {
@@ -76,7 +76,17 @@ public abstract class WeakSet<T> implements Iterable<T> {
 
 //==================================================================================================
 // Interface Methods
-//==================================================================================================	
+//==================================================================================================
+
+	/**
+	 * Adds all items to this set
+	 * @param it the items
+	 */
+	public void addAll(Iterable<T> it) {
+		for (T t : it) {
+			add(t);
+		}
+	}
 
 	/**
 	 * Add the given object to the set
@@ -87,12 +97,13 @@ public abstract class WeakSet<T> implements Iterable<T> {
 	/**
 	 * Remove the given object from the data structure
 	 * @param t the object to remove
-	 * 
+	 *
 	 */
 	public abstract void remove(T t);
 
 	/**
 	 * Returns true if the given object is in this data structure
+	 * @param t the object
 	 * @return true if the given object is in this data structure
 	 */
 	public abstract boolean contains(T t);
@@ -116,7 +127,7 @@ public abstract class WeakSet<T> implements Iterable<T> {
 
 	/**
 	 * Returns a Collection view of this set.  The returned Collection is backed by this set.
-	 * 
+	 *
 	 * @return a Collection view of this set.  The returned Collection is backed by this set.
 	 */
 	public abstract Collection<T> values();
@@ -125,12 +136,5 @@ public abstract class WeakSet<T> implements Iterable<T> {
 	 * Returns a stream of the values of this collection.
 	 * @return a stream of the values of this collection.
 	 */
-	public Stream<T> stream() {
-		return values().stream();
-	}
-
-	@Override
-	public String toString() {
-		return values().toString();
-	}
+	public abstract Stream<T> stream();
 }

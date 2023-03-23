@@ -49,7 +49,7 @@ import ghidra.util.task.*;
 	description = "The archive plugin provides a menu action from the project window allowing the user to archive a project or restore an archived project. "
 )
 //@formatter:on
-public class ArchivePlugin extends Plugin implements FrontEndOnly, ProjectListener {
+public class ArchivePlugin extends Plugin implements ApplicationLevelOnlyPlugin, ProjectListener {
 
 	private static final String PROJECT_GROUP_C_2 = "CProject2";
 
@@ -96,8 +96,6 @@ public class ArchivePlugin extends Plugin implements FrontEndOnly, ProjectListen
 	private TaskListener archivingListener;
 	private TaskListener restoringListener;
 
-	//////////////////////////////////////////////////////////////////
-
 	/**
 	 * The archive plugin provides menu action from the front end allowing the
 	 * user to archive a project or restore an archived project.
@@ -112,36 +110,34 @@ public class ArchivePlugin extends Plugin implements FrontEndOnly, ProjectListen
 	@Override
 	public void dispose() {
 		super.dispose();
+		if (archiveDialog != null) {
+			archiveDialog.dispose();
+		}
+		if (restoreDialog != null) {
+			restoreDialog.dispose();
+		}
 	}
 
-	/////////////////////////////////////////////////////////////////////
-
-	/**
-	 * @see ghidra.framework.model.ProjectListener#projectClosed(Project)
-	 */
 	@Override
 	public void projectClosed(Project project) {
 		archiveAction.setEnabled(false);
 		restoreAction.setEnabled(true);
 	}
 
-	/**
-	 * @see ghidra.framework.model.ProjectListener#projectOpened(Project)
-	 */
 	@Override
 	public void projectOpened(Project project) {
 		archiveAction.setEnabled(true);
 		restoreAction.setEnabled(false);
 	}
 
-	/**
+	/*
 	 * for JUnits...
 	 */
 	boolean isArchiving() {
 		return isArchiving;
 	}
 
-	/**
+	/*
 	 * for JUnits...
 	 */
 	boolean isRestoring() {
@@ -300,12 +296,6 @@ public class ArchivePlugin extends Plugin implements FrontEndOnly, ProjectListen
 		new TaskLauncher(task, tool.getToolFrame());
 	}
 
-	/**
-	 * Return true if the jar file contains the JAR_FORMAT tag to indicate
-	 * the new jar file format.
-	 * @param jarFile
-	 * @throws IOException
-	 */
 	private boolean isJarFormat(File jarFile) throws IOException {
 		JarInputStream jarIn = new JarInputStream(new FileInputStream(jarFile));
 		JarEntry entry = jarIn.getNextJarEntry();

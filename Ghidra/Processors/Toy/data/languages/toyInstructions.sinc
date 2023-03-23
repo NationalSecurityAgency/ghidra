@@ -1,8 +1,11 @@
-#### immediates
-#  0iii dddd iiii iiii  # imm rd, i          load 11-bit unsigned int into rd
-#  10nn dddd nnnn nnnn  # simm rd, n         load 10-bit signed int into rd
-#  
-#### arithmetic
+#### load immediate 0000 000x xxxx xxxx
+#  00ii dddd iiii iiii  # imm rd, i          load 10-bit unsigned int into rd
+#  01nn dddd nnnn nnnn  # simm rd, n         load 10-bit signed int into rd
+#
+#### misc 100x xxxx xxxx xxxx
+#  1000 0000 0000 0ccc  # skcc				 if ccc goto inst_next2  (conditional skip instruction)
+#
+#### arithmetic 1100 xxxx
 #  1100 0000 ssss tttt  # add rs, rt         rs = rs + rt
 #  1100 0001 ssss tttt  # sub rs, rt         rs = rs - rt
 #  1100 0010 ssss tttt  # rsub rs, rt        rs = rt - rs
@@ -40,7 +43,7 @@
 #  1101 0110 ssss tttt  # load rs, [rt]      rs = [rt]
 #  1101 0111 ssss tttt  # store [rs], rt     [rs] = rt
 #  1101 1111 ssss tttt  # mov rs, rt         rs = rt
-#  
+
 #### flow
 #  1110 nnnn nnnn 0ccc  # brcc n             if ccc goto pc + n
 #  1110 nnnn nnnn 1ccc  # brdscc n           if ccc goto pc + n with delay slot
@@ -54,7 +57,7 @@
 #  1111 0110 ssss 1ccc  # call rs            if ccc call rs
 #  1111 1nnn nnnn nnnn  # call n             call n
 #
-#### user-defined
+#### user-defined 1010 xxxx
 #  1010 0010 ssss 0000  # user_one rs       user_one rs
 #  1010 0010 ssss 0000  # user_two rs       user_two rs
 #  1010 0011 0000 0000  # user_three        user_three 
@@ -63,11 +66,11 @@
 #  1010 0110 ssss 0000  # user_six rs       user_six rs
 #  1010 1000 0000 0000  # unimpl
 #
-#### RESERVED
-#  1101 1001 xxxx xxxx  # RESERVED BANK
-#  1101 1010 xxxx xxxx  # RESERVED BANK
-#  1111 0111 xxxx xxxx  # RESERVED BANK
-
+#### RESERVED / UNUSED
+#  1011 xxxx xxxx xxxx  # UNUSED
+#  1101 1001 xxxx xxxx  # RESERVED BANK (consumed by toy_builder.sinc)
+#  1101 1010 xxxx xxxx  # RESERVED BANK (consumed by toy_builder.sinc)
+#  1111 0111 xxxx xxxx  # RESERVED BANK (consumed by toy_builder.sinc)
 
 define token instr(16)
 	op1515   = (15, 15)
@@ -75,13 +78,14 @@ define token instr(16)
 	op1215   = (12, 15)
 	op1111   = (11, 11)
 	op0811   = (8, 11)
+	op0407   = (4, 7)
 	op0007   = (0, 7)
 	op0003   = (0, 3)
 	op0303   = (3, 3)
 	rd       = (8, 11)
 	rs       = (4, 7)
 	rt       = (0, 3)
-	imm1214  = (12, 14)
+	imm1213  = (12, 13)
 	imm0007  = (0, 7)
 	imm0003  = (0, 3)
 	simm1213 = (12, 13) signed
@@ -104,7 +108,7 @@ Simm4:  "#"^simm0003 is simm0003 { export *[const]:$(SIZE) simm0003; }
 Simm10: "#"^computed is simm1213 & imm0007 [ computed = (simm1213 << 8) | imm0007; ] { export *[const]:$(SIZE) computed; }
 
 Imm4:  "#"^imm0003  is imm0003 { export *[const]:$(SIZE) imm0003; }
-Imm11: "#"^computed is imm1214 & imm0007 [ computed = (imm1214 << 8) | imm0007; ] { export *[const]:$(SIZE) computed; }
+Imm10: "#"^computed is imm1213 & imm0007 [ computed = (imm1213 << 8) | imm0007; ] { export *[const]:$(SIZE) computed; }
 
 Rel8:  addr is simm0007 [ addr = inst_start + simm0007; ] { export *:$(SIZE) addr; }
 Rel82: addr is simm0411 [ addr = inst_start + simm0411; ] { export *:$(SIZE) addr; }
@@ -148,7 +152,7 @@ define pcodeop pcodeop_three;
 
 # operations
 
-:imm  rd, Imm11  is $(INSTR_PHASE) op1515=0x0 & rd & Imm11   { logicflags(); rd = Imm11; resultflags(rd); }
+:imm  rd, Imm10  is $(INSTR_PHASE) op1515=0x0 & rd & Imm10   { logicflags(); rd = Imm10; resultflags(rd); }
 :simm rd, Simm10 is $(INSTR_PHASE) op1415=0x2 & rd & Simm10  { logicflags(); rd = Simm10; resultflags(rd); }
 
 :add  rs, rt is $(INSTR_PHASE) op1215=0xc & op0811=0x0 & rs & rt { addflags(rs, rt); rs = rs + rt; resultflags(rs); }
@@ -196,6 +200,8 @@ define pcodeop pcodeop_three;
 :load  rs, RT is $(INSTR_PHASE) op1215=0xd & op0811=0x6 & rs & RT { rs = RT; logicflags(); resultflags(rs); }
 :store RS, rt is $(INSTR_PHASE) op1215=0xd & op0811=0x7 & RS & rt { RS = rt; logicflags(); resultflags(rt); }
 :mov   rs, rt is $(INSTR_PHASE) op1215=0xd & op0811=0xf & rs & rt { rs = rt; logicflags(); resultflags(rs); }
+
+:sk^CC         is $(INSTR_PHASE) op1215=0x8 & op0811=0x0 & op0407=0x0 & op0303=0x0 & CC & Rel82 { if (CC) goto inst_next2; }
 
 :br^COND Rel82   is $(INSTR_PHASE) op1215=0xe & op0303=0x0 & COND & Rel82           { build COND; goto Rel82; }
 :brds^COND Rel82 is $(INSTR_PHASE) op1215=0xe & op0303=0x1 & COND & Rel82           { build COND; delayslot(1); goto Rel82; }

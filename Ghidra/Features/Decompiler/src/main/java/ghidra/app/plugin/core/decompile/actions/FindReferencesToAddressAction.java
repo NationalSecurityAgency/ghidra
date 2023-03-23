@@ -23,6 +23,7 @@ import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.plugin.core.navigation.locationreferences.LocationReferencesService;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
+import ghidra.program.model.address.Address;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
 
@@ -54,6 +55,7 @@ public class FindReferencesToAddressAction extends AbstractFindReferencesToAddre
 
 		DecompilerActionContext decompilerContext = (DecompilerActionContext) context;
 		return decompilerContext.checkActionEnablement(() -> {
+			updateMenuName(decompilerContext.getAddress());
 			return super.isEnabledForContext(context);
 		});
 	}
@@ -64,5 +66,12 @@ public class FindReferencesToAddressAction extends AbstractFindReferencesToAddre
 		decompilerContext.performAction(() -> {
 			super.actionPerformed(context);
 		});
+	}
+
+	private void updateMenuName(Address addr) {
+		String menuName = "Find References to " + addr.toString();
+		MenuData data = getPopupMenuData().cloneData();
+		data.setMenuPath(new String[] { LocationReferencesService.MENU_GROUP, menuName });
+		setPopupMenuData(data);
 	}
 }

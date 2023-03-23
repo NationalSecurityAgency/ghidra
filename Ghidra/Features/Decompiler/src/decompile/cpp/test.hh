@@ -30,7 +30,16 @@
 #include <vector>
 #include <set>
 #include <string>
+#include <sstream>
 #include <iostream>
+
+using std::vector;
+using std::set;
+using std::string;
+using std::ostringstream;
+using std::cout;
+using std::cerr;
+using std::endl;
 
 typedef void (*testfunc_t)();	///< A unit-test function
 
@@ -40,21 +49,21 @@ typedef void (*testfunc_t)();	///< A unit-test function
 /// The static run() method calls all the function pointers of all instantiated
 /// objects.
 struct UnitTest {
-  static std::vector<UnitTest *> tests;		///< The collection of test objects
-  std::string name;				///< Name of the test
+  static vector<UnitTest *> tests;		///< The collection of test objects
+  string name;					///< Name of the test
   testfunc_t func;				///< Call-back function executing the test
 
   /// \brief Constructor
   ///
   /// \param name is the identifier for the test
   /// \param func is a call-back function that executes the test
-  UnitTest(const std::string &name,testfunc_t func) :
+  UnitTest(const string &name,testfunc_t func) :
       name(name), func(func)
   {
     tests.push_back(this);
   }
 
-  static void run(std::set<std::string> &testNames);	///< Run all the instantiated tests
+  static int run(set<string> &testNames);	///< Run all the instantiated tests
 };
 
 
@@ -67,28 +76,28 @@ struct UnitTest {
 /// \brief Assert that a boolean is \b true for a unit test
 #define ASSERT(test)                                                                                                   \
     if (!(test)) {                                                                                                     \
-        std::cerr << "  failed at " << __FILE__ << ":" << __LINE__ << " asserting \"" << #test << "\"." << std::endl;  \
+        cerr << "  failed at " << __FILE__ << ":" << __LINE__ << " asserting \"" << #test << "\"." << endl;  \
         throw 0;                                                                                                       \
     }
 
 /// \brief Assert that two values are equal for a unit test
 #define ASSERT_EQUALS(a, b)                                                                                            \
     if ((a) != (b)) {                                                                                                  \
-        std::stringstream ssa, ssb;                                                                                    \
+        ostringstream ssa, ssb;                                                                                    \
         ssa << (a);                                                                                                    \
         ssb << (b);                                                                                                    \
-        std::cerr << "  failed at " << __FILE__ << ":" << __LINE__ << " asserting \"" << ssa.str()                     \
-                  << " == " << ssb.str() << "\"." << std::endl;                                                          \
+        cerr << "  failed at " << __FILE__ << ":" << __LINE__ << " asserting \"" << ssa.str()                     \
+                  << " == " << ssb.str() << "\"." << endl;                                                          \
         throw 0;                                                                                                       \
     }
 
 /// \brief Assert that two values are not equal for a unit test
 #define ASSERT_NOT_EQUALS(a, b)                                                                                        \
     if ((a) == (b)) {                                                                                                  \
-        std::stringstream ssa, ssb;                                                                                    \
+        ostringstream ssa, ssb;                                                                                    \
         ssa << (a);                                                                                                    \
         ssb << (b);                                                                                                    \
-        std::cerr << "  failed at " << __FILE__ << ":" << __LINE__ << " asserting \"" << ssa.str()                     \
-                  << " != " << ssb.str() << "\"." << std::endl;                                                          \
+        cerr << "  failed at " << __FILE__ << ":" << __LINE__ << " asserting \"" << ssa.str()                     \
+                  << " != " << ssb.str() << "\"." << endl;                                                          \
         throw 0;                                                                                                       \
     }

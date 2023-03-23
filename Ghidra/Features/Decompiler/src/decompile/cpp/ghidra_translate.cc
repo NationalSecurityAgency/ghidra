@@ -36,7 +36,8 @@ void GhidraTranslate::initialize(DocumentStorage &store)
   const Element *el = store.getTag("sleigh");
   if (el == (const Element *)0)
     throw LowlevelError("Could not find ghidra sleigh tag");
-  restoreXml(el);
+  XmlDecode decoder(this,el);
+  decode(decoder);
 }
 
 const VarnodeData &GhidraTranslate::getRegister(const string &nm) const
@@ -45,26 +46,24 @@ const VarnodeData &GhidraTranslate::getRegister(const string &nm) const
   map<string,VarnodeData>::const_iterator iter = nm2addr.find(nm);
   if (iter != nm2addr.end())
     return (*iter).second;
-  Document *doc;
+  PackedDecode decoder(glb);
   try {
-    doc = glb->getRegister(nm);		// Ask Ghidra client about the register
+    if (!glb->getRegister(nm,decoder))		// Ask Ghidra client about the register
+      throw LowlevelError("No register named "+nm);
   }
-  catch(XmlError &err) {
+  catch(DecoderError &err) {
     ostringstream errmsg;
-    errmsg << "Error parsing XML response for query of register: " << nm;
+    errmsg << "Error decoding response for query of register: " << nm;
     errmsg << " -- " << err.explain;
     throw LowlevelError(errmsg.str());
   }
-  if (doc == (Document *)0)
-    throw LowlevelError("No register named "+nm);
   Address regaddr;
   int4 regsize;
-  regaddr = Address::restoreXml( doc->getRoot(), this, regsize);
+  regaddr = Address::decode( decoder, regsize);
   VarnodeData vndata;
   vndata.space = regaddr.getSpace();
   vndata.offset = regaddr.getOffset();
   vndata.size = regsize;
-  delete doc;
   return cacheRegister(nm,vndata);
 }
 
@@ -101,9 +100,10 @@ int4 GhidraTranslate::oneInstruction(PcodeEmit &emit,const Address &baseaddr) co
 
 {
   int4 offset;
-  uint1 *doc;
+  PackedDecode decoder(glb);
+  bool success;
   try {
-    doc = glb->getPcodePacked(baseaddr);	// Request p-code for one instruction
+    success = glb->getPcode(baseaddr,decoder);	// Request p-code for one instruction
   }
   catch(JavaError &err) {
     ostringstream s;
@@ -111,64 +111,46 @@ int4 GhidraTranslate::oneInstruction(PcodeEmit &emit,const Address &baseaddr) co
     baseaddr.printRaw(s);
     throw LowlevelError(s.str());
   }
-  if (doc == (uint1 *)0) {
+  if (!success) {
     ostringstream s;
     s << "No pcode could be generated at address: " << baseaddr.getShortcut();
     baseaddr.printRaw(s);
     throw BadDataError(s.str());
   }
 
-  uintb val;
-  const uint1 *ptr = PcodeEmit::unpackOffset(doc+1,val);
-  offset = (int4)val;
-
-  if (*doc == PcodeEmit::unimpl_tag) {
+  int4 el = decoder.openElement();
+  offset = decoder.readSignedInteger(ATTRIB_OFFSET);
+  if (el == ELEM_UNIMPL) {
     ostringstream s;
     s << "Instruction not implemented in pcode:\n ";
     baseaddr.printRaw(s);
-    delete [] doc;
     throw UnimplError(s.str(),offset);
   }
 
-  int4 spcindex = (int4)(*ptr++ - 0x20);
-  AddrSpace *spc = getSpace(spcindex);
-  uintb instoffset;
-  ptr = PcodeEmit::unpackOffset(ptr,instoffset);
-  Address pc(spc,instoffset);
+  Address pc = Address::decode(decoder);
   
-  while(*ptr == PcodeEmit::op_tag)
-    ptr = emit.restorePackedOp(pc,ptr,this);
-  delete [] doc;
+  while(decoder.peekElement() != 0)
+    emit.decodeOp(pc,decoder);
   return offset;
 }
 
-/// The Ghidra client passes descriptions of address spaces and other
-/// information that needs to be cached by the decompiler
-/// \param el is the element of the initialization tag
-void GhidraTranslate::restoreXml(const Element *el)
+/// Parse the \<sleigh> element passed back by the Ghidra client, describing address spaces
+/// and other information that needs to be cached by the decompiler.
+/// \param decoder is the stream decoder
+void GhidraTranslate::decode(Decoder &decoder)
 
 {
-  setBigEndian(xml_readbool(el->getAttributeValue("bigendian")));
-  {
-    istringstream s(el->getAttributeValue("uniqbase"));
-    s.unsetf(ios::dec | ios::hex | ios::oct);
-    uintm ubase;
-    s >> ubase;
-    setUniqueBase(ubase);
+  uint4 elemId = decoder.openElement(ELEM_SLEIGH);
+  setBigEndian(decoder.readBool(ATTRIB_BIGENDIAN));
+  setUniqueBase(decoder.readUnsignedInteger(ATTRIB_UNIQBASE));
+  decodeSpaces(decoder,this);
+  for(;;) {
+    uint4 subId = decoder.peekElement();
+    if (subId != ELEM_TRUNCATE_SPACE) break;
+    TruncationTag tag;
+    tag.decode(decoder);
+    truncateSpace(tag);
   }
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-  iter = list.begin();
-  restoreXmlSpaces(*iter,this);
-  ++iter;
-  while(iter != list.end()) {
-    const Element *subel = *iter;
-    if (subel->getName() == "truncate_space") {
-      TruncationTag tag;
-      tag.restoreXml(subel);
-      truncateSpace(tag);
-    }
-    ++iter;
-  }
+  decoder.closeElement(elemId);
 }
 

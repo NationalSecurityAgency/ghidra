@@ -53,7 +53,7 @@ public class ScreenshotPlugin extends ProgramPlugin {
 	private JFileChooser fileChooser;
 
 	public ScreenshotPlugin(PluginTool tool) {
-		super(tool, true, false);
+		super(tool);
 		this.tool = tool;
 
 		setupActions();

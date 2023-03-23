@@ -15,7 +15,9 @@
  */
 package ghidra.app.plugin.core.assembler;
 
+import docking.ActionContext;
 import ghidra.app.CorePluginPackage;
+import ghidra.app.context.ListingActionContext;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.plugin.assembler.Assemblers;
@@ -38,18 +40,13 @@ import ghidra.program.model.mem.MemBuffer;
  * The API for instruction assembly is available from {@link Assemblers}. For data assembly, the API
  * is in {@link DataType#encodeRepresentation(String, MemBuffer, Settings, int)}.
  */
-@PluginInfo(
-	status = PluginStatus.RELEASED,
-	packageName = CorePluginPackage.NAME,
-	category = PluginCategoryNames.PATCHING,
-	shortDescription = "Assembler",
-	description = "This plugin provides functionality for assembly patching. " +
-		"The assembler supports most processor languages also supported by the " +
-		"disassembler. Depending on the particular processor, your mileage may vary. " +
-		"We are in the process of testing and improving support for all our processors. " +
-		"You can access the assembler by pressing Ctrl-Shift-G, and then modifying the " +
-		"instruction in place. As you type, a content assist will guide you and provide " +
-		"assembled bytes when you have a complete instruction.")
+@PluginInfo(status = PluginStatus.RELEASED, packageName = CorePluginPackage.NAME, category = PluginCategoryNames.PATCHING, shortDescription = "Assembler", description = "This plugin provides functionality for assembly patching. " +
+	"The assembler supports most processor languages also supported by the " +
+	"disassembler. Depending on the particular processor, your mileage may vary. " +
+	"We are in the process of testing and improving support for all our processors. " +
+	"You can access the assembler by pressing Ctrl-Shift-G, and then modifying the " +
+	"instruction in place. As you type, a content assist will guide you and provide " +
+	"assembled bytes when you have a complete instruction.")
 public class AssemblerPlugin extends ProgramPlugin {
 	public static final String ASSEMBLER_NAME = "Assembler";
 
@@ -57,15 +54,40 @@ public class AssemblerPlugin extends ProgramPlugin {
 	/*test*/ PatchDataAction patchDataAction;
 
 	public AssemblerPlugin(PluginTool tool) {
-		super(tool, false, false, false);
+		super(tool);
 		createActions();
 	}
 
 	private void createActions() {
-		patchInstructionAction = new PatchInstructionAction(this, "Patch Instruction");
+		// Debugger provides its own "Patch Instruction" action
+		patchInstructionAction = new PatchInstructionAction(this) {
+			@Override
+			public boolean isEnabledForContext(ActionContext context) {
+				if (!super.isEnabledForContext(context)) {
+					return false;
+				}
+				if (!(context instanceof ListingActionContext)) {
+					return false;
+				}
+				ListingActionContext lac = (ListingActionContext) context;
+				return !lac.getNavigatable().isDynamic();
+			}
+
+			@Override
+			public boolean isAddToPopup(ActionContext context) {
+				if (!super.isAddToPopup(context)) {
+					return false;
+				}
+				if (!(context instanceof ListingActionContext)) {
+					return false;
+				}
+				ListingActionContext lac = (ListingActionContext) context;
+				return !lac.getNavigatable().isDynamic();
+			}
+		};
 		tool.addAction(patchInstructionAction);
 
-		patchDataAction = new PatchDataAction(this, "Patch Data");
+		patchDataAction = new PatchDataAction(this);
 		tool.addAction(patchDataAction);
 	}
 

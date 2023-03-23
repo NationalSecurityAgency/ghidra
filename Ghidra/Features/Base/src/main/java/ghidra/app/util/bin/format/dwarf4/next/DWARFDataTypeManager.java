@@ -16,6 +16,8 @@
 package ghidra.app.util.bin.format.dwarf4.next;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import java.io.IOException;
 
@@ -41,6 +43,7 @@ public class DWARFDataTypeManager {
 	private final DataTypeManager builtInDTM;
 	private final DWARFProgram prog;
 	private final DWARFImportSummary importSummary;
+	private final DWARFImportOptions importOptions;
 
 	/**
 	 * Maps DWARF DIE offsets to Ghidra {@link DataType datatypes}, using the
@@ -66,9 +69,6 @@ public class DWARFDataTypeManager {
 	private DataType baseDataTypeBool;
 	private DataType baseDataTypeChar;
 	private DataType baseDataTypeUchar;
-	private DataType baseDataTypeFloats[];
-	private DataType baseDataTypeSignedInts[];
-	private DataType baseDataTypeUnsignedInts[];
 	private DataType baseDataTypeUntyped[];
 	private DataType baseDataTypeChars[];
 	private DataType baseDataTypeUndefined1;
@@ -88,6 +88,7 @@ public class DWARFDataTypeManager {
 		this.dataTypeManager = dataTypeManager;
 		this.builtInDTM = builtInDTM;
 		this.importSummary = importSummary;
+		this.importOptions = prog.getImportOptions();
 		initBaseDataTypes();
 	}
 
@@ -362,7 +363,7 @@ public class DWARFDataTypeManager {
 	 * will be returned.
 	 * <p>
 	 * If the returned data type is not a direct named match, the returned data type
-	 * will be wrapped in a Ghdira typedef using the dwarf type's name.
+	 * will be wrapped in a Ghidra typedef using the dwarf type's name.
 	 * <p>
 	 * Any newly created Ghidra data types will be cached and the same instance will be returned
 	 * if the same DWARF named base type is requested again.
@@ -375,6 +376,7 @@ public class DWARFDataTypeManager {
 	 */
 	public DataType getBaseType(String name, int dwarfSize, int dwarfEncoding,
 			boolean isBigEndian) {
+
 		DataType dt = null;
 		String mangledName = null;
 		if (name != null) {
@@ -389,55 +391,28 @@ public class DWARFDataTypeManager {
 				return dt;
 			}
 		}
-		switch (dwarfEncoding) {
-			case DWARFEncoding.DW_ATE_address:
-				// TODO: Check if bytesize != 0 - may want to make a void pointer
-				dt = baseDataTypeVoid;
-				break;
-			case DWARFEncoding.DW_ATE_boolean:
-				if (dwarfSize == 1) {
-					dt = baseDataTypeBool;
-				}
-				break;
-			case DWARFEncoding.DW_ATE_float:
-				dt = findMatchingDataTypeBySize(baseDataTypeFloats, dwarfSize);
-				break;
-			case DWARFEncoding.DW_ATE_signed:
-				dt = findMatchingDataTypeBySize(baseDataTypeSignedInts, dwarfSize);
-				break;
-			case DWARFEncoding.DW_ATE_unsigned:
-				dt = findMatchingDataTypeBySize(baseDataTypeUnsignedInts, dwarfSize);
-				break;
-			case DWARFEncoding.DW_ATE_signed_char:
-				dt = baseDataTypeChar;
-				break;
-			case DWARFEncoding.DW_ATE_unsigned_char:
-				dt = baseDataTypeUchar;
-				break;
-
-			case DWARFEncoding.DW_ATE_UTF:
-				dt = findMatchingDataTypeBySize(baseDataTypeChars, dwarfSize);
-				break;
-
-			// unsupported DWARF encodings
-			case DWARFEncoding.DW_ATE_packed_decimal:
-			case DWARFEncoding.DW_ATE_numeric_string:
-			case DWARFEncoding.DW_ATE_edited:
-			case DWARFEncoding.DW_ATE_signed_fixed:
-			case DWARFEncoding.DW_ATE_unsigned_fixed:
-			case DWARFEncoding.DW_ATE_decimal_float:
-			case DWARFEncoding.DW_ATE_complex_float:
-			case DWARFEncoding.DW_ATE_imaginary_float:
-				break;
-		}
+		dt = switch (dwarfEncoding) {
+			case DWARFEncoding.DW_ATE_address -> baseDataTypeVoid; // TODO: Check if bytesize != 0 - may want to make a void pointer
+			case DWARFEncoding.DW_ATE_boolean -> dwarfSize == 1 ? baseDataTypeBool : null;
+			case DWARFEncoding.DW_ATE_float -> AbstractFloatDataType.getFloatDataType(dwarfSize,
+				getCorrectDTMForFixedLengthTypes(name, dwarfSize));
+			case DWARFEncoding.DW_ATE_signed -> AbstractIntegerDataType.getSignedDataType(dwarfSize,
+				getCorrectDTMForFixedLengthTypes(name, dwarfSize));
+			case DWARFEncoding.DW_ATE_unsigned -> AbstractIntegerDataType.getUnsignedDataType(
+				dwarfSize, getCorrectDTMForFixedLengthTypes(name, dwarfSize));
+			case DWARFEncoding.DW_ATE_signed_char -> baseDataTypeChar;
+			case DWARFEncoding.DW_ATE_unsigned_char -> baseDataTypeUchar;
+			case DWARFEncoding.DW_ATE_UTF -> findMatchingDataTypeBySize(baseDataTypeChars,
+				dwarfSize);
+			default -> null;
+		};
 
 		if (dt == null) {
 			dt = findMatchingDataTypeBySize(baseDataTypeUntyped, dwarfSize);
 		}
 
 		if (dt == null) {
-			dt = new ArrayDataType(DataType.DEFAULT, dwarfSize, DataType.DEFAULT.getLength(),
-				dataTypeManager);
+			dt = new ArrayDataType(DataType.DEFAULT, dwarfSize, -1, dataTypeManager);
 		}
 
 		if (name != null /* mangledName also will be non-null */) {
@@ -449,6 +424,19 @@ public class DWARFDataTypeManager {
 		}
 
 		return dt;
+	}
+
+	private DataTypeManager getCorrectDTMForFixedLengthTypes(String name, int dwarfSize) {
+		// If the requested name of the base type appears to have a bitsize string
+		// embedded in it, this chunk of code will switch between using the normal DTM
+		// to using a null DTM to force the Abstract(Integer|Float)DataType helper method to
+		// create compiler independent data types that don't change size when the architecture is
+		// changed.
+		int typenameExplicitSize;
+		boolean usedFixedSizeType = importOptions.isSpecialCaseSizedBaseTypes() &&
+			(typenameExplicitSize = getExplicitSizeFromTypeName(name)) != -1 &&
+			typenameExplicitSize / 8 == dwarfSize;
+		return usedFixedSizeType ? null : dataTypeManager;
 	}
 
 	/**
@@ -503,9 +491,6 @@ public class DWARFDataTypeManager {
 		DataType longlongDT = findGhidraType("longlong");
 		DataType ulonglongDT = findGhidraType("ulonglong");
 
-		baseDataTypeSignedInts = new DataType[] { shortDT, intDT, longDT, longlongDT };
-		baseDataTypeUnsignedInts = new DataType[] { ushortDT, uintDT, ulongDT, ulonglongDT };
-
 		baseDataTypes.put("short", shortDT);
 		baseDataTypes.put("short int", shortDT);
 		baseDataTypes.put("signed short int", shortDT);
@@ -531,7 +516,6 @@ public class DWARFDataTypeManager {
 		DataType floatDT = findGhidraType("float");
 		DataType doubleDT = findGhidraType("double");
 		DataType ldoubleDT = findGhidraType("longdouble");
-		baseDataTypeFloats = new DataType[] { floatDT, doubleDT, ldoubleDT };
 		baseDataTypes.put("double", doubleDT);
 		baseDataTypes.put("long double", ldoubleDT);
 		baseDataTypes.put("float", floatDT);
@@ -752,6 +736,35 @@ public class DWARFDataTypeManager {
 		}
 
 		return funcDef;
+	}
+
+	/**
+	 * Regex to match common fixed-size type names like "int64", "int64_t", etc, by triggering
+	 * off some known size designators in the string.
+	 * <p>
+	 * <pre>
+	 * \D+ &larr; one or more non-digits
+	 *    (8|16|32|64|128) &larr; list of common sizes that we are triggering on
+	 *                    \D* &larr; with optional non-digit trailing characters
+	 * </pre>
+	 */
+	private static final Pattern FIXED_SIZED_TYPE_NAME_PATTERN =
+		Pattern.compile("\\D+(8|16|32|64|128)\\D*");
+
+	private int getExplicitSizeFromTypeName(String name) {
+		if (name == null) {
+			return -1;
+		}
+		Matcher m = FIXED_SIZED_TYPE_NAME_PATTERN.matcher(name);
+		if (m.matches()) {
+			try {
+				return Integer.parseInt(m.group(1));
+			}
+			catch (NumberFormatException e) {
+				// shouldn't happen
+			}
+		}
+		return -1;
 	}
 
 }

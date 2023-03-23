@@ -31,10 +31,10 @@ f30f104df0f30f58c1f30f1145f04883
 <com>parse line extern int4 process_array(mystruct *ptr,int4 count);</com>
 <com>lo fu process_array</com>
 <com>dec</com>
-<com>retype piStack16 myptroff ptrrel</com>
-<com>rename iStack20 i</com>
-<com>rename fStack24 fSum</com>
-<com>rename iStack28 iSum</com>
+<com>retype piStack_10 myptroff ptrrel</com>
+<com>rename iStack_14 i</com>
+<com>rename fStack_18 fSum</com>
+<com>rename iStack_1c iSum</com>
 <com>dec</com>
 <com>print C</com>
 <com>quit</com>

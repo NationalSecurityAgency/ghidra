@@ -15,6 +15,7 @@
  */
 package ghidra.framework.plugintool;
 
+import java.net.URL;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -46,6 +47,25 @@ class PluginManager {
 	boolean acceptData(DomainFile[] data) {
 		for (Plugin p : pluginList) {
 			if (p.acceptData(data)) {
+				tool.getWindowManager().getMainWindow().toFront();
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Identify plugin which will accept specified URL.  If no plugin accepts URL it will be 
+	 * rejected and false returned. If a plugin can accept the specified URL it will attempt to 
+	 * process and return true if successful.  
+	 * The user may be prompted if connecting to the URL requires user authentication.
+	 * @param url read-only resource URL
+	 * @return true if URL accepted and processed else false
+	 */
+	boolean accept(URL url) {
+		for (Plugin p : pluginList) {
+			if (p.accept(url)) {
+				tool.getWindowManager().getMainWindow().toFront();
 				return true;
 			}
 		}
@@ -86,7 +106,7 @@ class PluginManager {
 		addPlugins(new Plugin[] { plugin });
 	}
 
-	void addPlugins(List<String> classNames) throws PluginException {
+	void addPlugins(Collection<String> classNames) throws PluginException {
 		PluginException pe = null;
 		List<Plugin> list = new ArrayList<>(classNames.size());
 		List<String> badList = new ArrayList<>();
@@ -189,7 +209,6 @@ class PluginManager {
 		}
 
 		if (badList.size() > 0) {
-			Plugin[] badPlugins = new Plugin[badList.size()];
 			try {
 				removePlugins(badList);
 			}
@@ -260,8 +279,8 @@ class PluginManager {
 
 	void restorePluginsFromXml(Element root) throws PluginException {
 		boolean isOld = isOldToolConfig(root);
-		List<String> classNames =
-			isOld ? getPLuginClassNamesFromOldXml(root) : getPluginClassNamesToLoad(root);
+		Collection<String> classNames =
+			isOld ? getPluginClassNamesFromOldXml(root) : getPluginClassNamesToLoad(root);
 		Map<String, SaveState> map = isOld ? getPluginSavedStates(root, "PLUGIN")
 				: getPluginSavedStates(root, "PLUGIN_STATE");
 
@@ -296,7 +315,7 @@ class PluginManager {
 		return map;
 	}
 
-	private List<String> getPLuginClassNamesFromOldXml(Element root) {
+	private Set<String> getPluginClassNamesFromOldXml(Element root) {
 		List<String> classNames = new ArrayList<>();
 		List<?> pluginElementList = root.getChildren("PLUGIN");
 		Iterator<?> iter = pluginElementList.iterator();
@@ -313,7 +332,7 @@ class PluginManager {
 		return root.getChild("PLUGIN") != null;
 	}
 
-	private List<String> getPluginClassNamesToLoad(Element root) {
+	private Set<String> getPluginClassNamesToLoad(Element root) {
 		PluginClassManager pluginClassManager = tool.getPluginClassManager();
 		return pluginClassManager.getPluginClasses(root);
 	}
@@ -334,8 +353,8 @@ class PluginManager {
 		}
 
 		Map<String, Exception> badMap = new LinkedHashMap<>();
-		List<Plugin> list = getPluginsByServiceOrder(0);
-		for (Plugin p : list) {
+		List<Plugin> plugins = getPluginsByServiceOrder(0);
+		for (Plugin p : plugins) {
 			SaveState saveState = map.get(p.getName());
 			if (saveState != null) {
 				try {
@@ -359,9 +378,7 @@ class PluginManager {
 			Msg.showError(this, null, "Data State Error",
 				"Errors in plugin data states - check console for details");
 		}
-		for (Plugin plugin : list) {
-			plugin.dataStateRestoreCompleted();
-		}
+		plugins.forEach(Plugin::dataStateRestoreCompleted);
 	}
 
 	Element saveDataStateToXml(boolean savingProject) {
@@ -610,11 +627,12 @@ class PluginManager {
 	 * Note: This forces plugins to terminate any tasks they have running for the
 	 * indicated domain object and apply any unsaved data to the domain object. If they can't do
 	 * this or the user cancels then this returns false.
+	 * @param domainObject the domain object
 	 * @return true if all the plugins indicated the domain object can close.
 	 */
-	boolean canCloseDomainObject(DomainObject dObj) {
+	boolean canCloseDomainObject(DomainObject domainObject) {
 		for (Plugin p : pluginList) {
-			if (!p.canCloseDomainObject(dObj)) {
+			if (!p.canCloseDomainObject(domainObject)) {
 				return false;
 			}
 		}
@@ -662,10 +680,11 @@ class PluginManager {
 
 	/**
 	 * Notify plugins that the domain object is about to be saved.
+	 * @param domainObject the domain object
 	 */
-	void prepareToSave(DomainObject dObj) {
+	void prepareToSave(DomainObject domainObject) {
 		for (Plugin p : pluginList) {
-			p.prepareToSave(dObj);
+			p.prepareToSave(domainObject);
 		}
 	}
 

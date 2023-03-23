@@ -50,7 +50,7 @@ public class FunctionTagPlugin extends ProgramPlugin {
 	private FunctionTagProvider provider;
 
 	public FunctionTagPlugin(PluginTool tool) {
-		super(tool, true, false);
+		super(tool);
 		provider = new FunctionTagProvider(this, getCurrentProgram());
 		createActions();
 	}

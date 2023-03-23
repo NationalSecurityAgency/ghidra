@@ -27,11 +27,11 @@ public class NoTypeApplier extends MsTypeApplier {
 
 	/**
 	 * Constructor for nested type applier.
-	 * @param applicator {@link PdbApplicator} for which this class is working.
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
 	 * @param msType {@link AbstractMsType} to process.
 	 * @throws IllegalArgumentException Upon invalid arguments.
 	 */
-	public NoTypeApplier(PdbApplicator applicator, AbstractMsType msType)
+	public NoTypeApplier(DefaultPdbApplicator applicator, AbstractMsType msType)
 			throws IllegalArgumentException {
 		super(applicator, msType);
 	}

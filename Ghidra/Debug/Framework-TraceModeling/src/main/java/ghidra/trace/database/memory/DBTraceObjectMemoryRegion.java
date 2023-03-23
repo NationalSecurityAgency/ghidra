@@ -17,8 +17,6 @@ package ghidra.trace.database.memory;
 
 import java.util.*;
 
-import com.google.common.collect.Range;
-
 import ghidra.dbg.target.TargetMemoryRegion;
 import ghidra.dbg.target.TargetObject;
 import ghidra.program.model.address.*;
@@ -26,6 +24,7 @@ import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.target.DBTraceObject;
 import ghidra.trace.database.target.DBTraceObjectInterface;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.Trace.TraceMemoryRegionChangeType;
 import ghidra.trace.model.memory.*;
@@ -50,7 +49,7 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 		}
 
 		@Override
-		protected TraceChangeType<TraceMemoryRegion, Range<Long>> getLifespanChangedType() {
+		protected TraceChangeType<TraceMemoryRegion, Lifespan> getLifespanChangedType() {
 			return TraceMemoryRegionChangeType.LIFESPAN_CHANGED;
 		}
 
@@ -79,12 +78,12 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 		}
 
 		@Override
-		protected void emitExtraLifespanChanged(Range<Long> oldLifespan, Range<Long> newLifespan) {
+		protected void emitExtraLifespanChanged(Lifespan oldLifespan, Lifespan newLifespan) {
 			updateViewsLifespanChanged(oldLifespan, newLifespan);
 		}
 
 		@Override
-		protected void emitExtraValueChanged(Range<Long> lifespan, String key, Object oldValue,
+		protected void emitExtraValueChanged(Lifespan lifespan, String key, Object oldValue,
 				Object newValue) {
 			updateViewsValueChanged(lifespan, key, oldValue, newValue);
 		}
@@ -100,7 +99,7 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 
 	// Keep copies here for when the object gets invalidated
 	private AddressRange range;
-	private Range<Long> lifespan;
+	private Lifespan lifespan;
 
 	public DBTraceObjectMemoryRegion(DBTraceObject object) {
 		this.object = object;
@@ -119,7 +118,7 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 	}
 
 	@Override
-	public void setName(Range<Long> lifespan, String name) {
+	public void setName(Lifespan lifespan, String name) {
 		object.setValue(lifespan, TargetObject.DISPLAY_ATTRIBUTE_NAME, name);
 	}
 
@@ -138,7 +137,7 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 	}
 
 	@Override
-	public void setLifespan(Range<Long> newLifespan) throws DuplicateNameException {
+	public void setLifespan(Lifespan newLifespan) throws DuplicateNameException {
 		try (LockHold hold = object.getTrace().lockWrite()) {
 			TraceObjectInterfaceUtils.setLifespan(TraceObjectMemoryRegion.class, object,
 				newLifespan);
@@ -147,9 +146,9 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 	}
 
 	@Override
-	public Range<Long> getLifespan() {
+	public Lifespan getLifespan() {
 		try (LockHold hold = object.getTrace().lockRead()) {
-			Range<Long> computed = computeSpan();
+			Lifespan computed = computeSpan();
 			if (computed != null) {
 				lifespan = computed;
 			}
@@ -160,7 +159,7 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 	@Override
 	public void setCreationSnap(long creationSnap) throws DuplicateNameException {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			setLifespan(DBTraceUtils.toRange(creationSnap, getDestructionSnap()));
+			setLifespan(Lifespan.span(creationSnap, getDestructionSnap()));
 		}
 	}
 
@@ -172,7 +171,7 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 	@Override
 	public void setDestructionSnap(long destructionSnap) throws DuplicateNameException {
 		try (LockHold hold = object.getTrace().lockWrite()) {
-			setLifespan(DBTraceUtils.toRange(getCreationSnap(), destructionSnap));
+			setLifespan(Lifespan.span(getCreationSnap(), destructionSnap));
 		}
 	}
 
@@ -182,7 +181,7 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 	}
 
 	@Override
-	public void setRange(Range<Long> lifespan, AddressRange newRange) {
+	public void setRange(Lifespan lifespan, AddressRange newRange) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
 			object.setValue(lifespan, TargetMemoryRegion.RANGE_ATTRIBUTE_NAME, newRange);
 			this.range = newRange;
@@ -261,7 +260,7 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 	}
 
 	@Override
-	public void setFlags(Range<Long> lifespan, Collection<TraceMemoryFlag> flags) {
+	public void setFlags(Lifespan lifespan, Collection<TraceMemoryFlag> flags) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
 			for (TraceMemoryFlag flag : TraceMemoryFlag.values()) {
 				Boolean val = flags.contains(flag) ? true : null;
@@ -271,7 +270,7 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 	}
 
 	@Override
-	public void addFlags(Range<Long> lifespan, Collection<TraceMemoryFlag> flags) {
+	public void addFlags(Lifespan lifespan, Collection<TraceMemoryFlag> flags) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
 			for (TraceMemoryFlag flag : flags) {
 				object.setValue(lifespan, keyForFlag(flag), true);
@@ -280,7 +279,7 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 	}
 
 	@Override
-	public void clearFlags(Range<Long> lifespan, Collection<TraceMemoryFlag> flags) {
+	public void clearFlags(Lifespan lifespan, Collection<TraceMemoryFlag> flags) {
 		try (LockHold hold = object.getTrace().lockWrite()) {
 			for (TraceMemoryFlag flag : flags) {
 				object.setValue(lifespan, keyForFlag(flag), null);
@@ -348,17 +347,17 @@ public class DBTraceObjectMemoryRegion implements TraceObjectMemoryRegion, DBTra
 		object.getTrace().updateViewsAddRegionBlock(this);
 	}
 
-	protected void updateViewsLifespanChanged(Range<Long> oldLifespan, Range<Long> newLifespan) {
+	protected void updateViewsLifespanChanged(Lifespan oldLifespan, Lifespan newLifespan) {
 		object.getTrace().updateViewsChangeRegionBlockLifespan(this, oldLifespan, newLifespan);
 	}
 
-	protected void updateViewsValueChanged(Range<Long> lifespan, String key, Object oldValue,
+	protected void updateViewsValueChanged(Lifespan lifespan, String key, Object oldValue,
 			Object newValue) {
 		DBTrace trace = object.getTrace();
 		switch (key) {
 			case TargetMemoryRegion.RANGE_ATTRIBUTE_NAME:
-				trace.updateViewsChangeRegionBlockRange(this,
-					(AddressRange) oldValue, (AddressRange) newValue);
+				// NB. old/newValue are null here. The CREATED event just has the new entry.
+				trace.updateViewsRefreshBlocks();
 				return;
 			case TargetObject.DISPLAY_ATTRIBUTE_NAME:
 				trace.updateViewsChangeRegionBlockName(this);

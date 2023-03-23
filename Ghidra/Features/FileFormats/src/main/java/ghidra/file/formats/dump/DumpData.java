@@ -15,6 +15,7 @@
  */
 package ghidra.file.formats.dump;
 
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.DataType;
 
 public class DumpData {
@@ -25,6 +26,7 @@ public class DumpData {
 	private boolean generateSymbol;
 	private boolean generateFragment;
 	private long size;
+	private AddressSpace space;
 
 	public DumpData(long offset, DataType dt) {
 		this(offset, dt, dt.getDisplayName(), false, true);
@@ -98,5 +100,13 @@ public class DumpData {
 
 	public long getSize() {
 		return size;
+	}
+
+	public AddressSpace getAddressSpace() {
+		return space;
+	}
+
+	public void setAddressSpace(AddressSpace space) {
+		this.space = space;
 	}
 }

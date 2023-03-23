@@ -32,8 +32,6 @@ import javax.swing.table.TableColumn;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
 
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.options.editor.GenericOptionsComponent;
 import docking.widgets.OptionDialog;
 import docking.widgets.combobox.GhidraComboBox;
@@ -51,6 +49,8 @@ import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import ghidra.util.layout.VerticalLayout;
+import help.Help;
+import help.HelpService;
 import utilities.util.FileUtilities;
 
 class AnalysisPanel extends JPanel implements PropertyChangeListener {

@@ -21,11 +21,13 @@ import java.util.concurrent.CompletableFuture;
 import agent.dbgeng.manager.breakpoint.DbgBreakpointInfo;
 import agent.dbgeng.model.iface2.DbgModelTargetBreakpointContainer;
 import agent.dbgeng.model.iface2.DbgModelTargetBreakpointSpec;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.TargetBreakpointLocation;
 import ghidra.dbg.target.TargetBreakpointSpec;
 import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.dbg.util.PathUtils;
+import ghidra.util.datastruct.ListenerMap.ListenerEntry;
 import ghidra.util.datastruct.ListenerSet;
 
 @TargetObjectSchemaInfo(
@@ -67,27 +69,26 @@ public class DbgModelTargetBreakpointSpecImpl extends DbgModelTargetObjectImpl
 	protected boolean enabled;
 
 	public void changeAttributeSet(String reason) {
-		this.changeAttributes(List.of(), List.of(), Map.of( //
-			DISPLAY_ATTRIBUTE_NAME, "[" + info.getNumber() + "] " + info.getExpression(), //
-			ADDRESS_ATTRIBUTE_NAME, doGetAddress(), //
-			LENGTH_ATTRIBUTE_NAME, info.getSize(), //
-			SPEC_ATTRIBUTE_NAME, this, //
-			EXPRESSION_ATTRIBUTE_NAME, info.getExpression(), //
-			KINDS_ATTRIBUTE_NAME, getKinds() //
-		), reason);
-		this.changeAttributes(List.of(), List.of(), Map.of( //
-			BPT_TYPE_ATTRIBUTE_NAME, info.getType().name(), //
-			BPT_DISP_ATTRIBUTE_NAME, info.getDisp().name(), //
-			BPT_PENDING_ATTRIBUTE_NAME, info.getPending(), //
-			BPT_TIMES_ATTRIBUTE_NAME, info.getTimes() //
-		), reason);
+		this.changeAttributes(List.of(), List.of(), Map.of(
+			DISPLAY_ATTRIBUTE_NAME, "[" + info.getNumber() + "] " + info.getExpression(),
+			RANGE_ATTRIBUTE_NAME, doGetRange(),
+			SPEC_ATTRIBUTE_NAME, this,
+			EXPRESSION_ATTRIBUTE_NAME, info.getExpression(),
+			KINDS_ATTRIBUTE_NAME, getKinds(),
+
+			BPT_TYPE_ATTRIBUTE_NAME, info.getType().name(),
+			BPT_DISP_ATTRIBUTE_NAME, info.getDisp().name(),
+			BPT_PENDING_ATTRIBUTE_NAME, info.getPending(),
+			BPT_TIMES_ATTRIBUTE_NAME, info.getTimes()),
+			reason);
 	}
 
 	private final ListenerSet<TargetBreakpointAction> actions =
 		new ListenerSet<>(TargetBreakpointAction.class) {
 			// Use strong references on actions
-			protected Map<TargetBreakpointAction, TargetBreakpointAction> createMap() {
-				return Collections.synchronizedMap(new LinkedHashMap<>());
+			// The values may be weak, but the keys, which are the same objects, are strong
+			protected Map<TargetBreakpointAction, ListenerEntry<? extends TargetBreakpointAction>> createMap() {
+				return new LinkedHashMap<>();
 			}
 		};
 
@@ -163,7 +164,7 @@ public class DbgModelTargetBreakpointSpecImpl extends DbgModelTargetObjectImpl
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return getInfo().thenAccept(i -> {
 			synchronized (this) {
 				setBreakpointInfo(i);

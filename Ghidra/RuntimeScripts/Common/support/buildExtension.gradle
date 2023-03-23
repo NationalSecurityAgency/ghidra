@@ -253,6 +253,11 @@ task buildHelp(type: JavaExec, dependsOn: indexHelp) {
 	
 	args '-o', "${outputDir.absolutePath}"	// set the output directory arg
 
+	// register the Ghidra installation as an application root so the help system can find modules
+	systemProperties = [
+		"ADDITIONAL_APPLICATION_ROOT_DIRS": "${ghidraInstallDir}/Ghidra"
+	]
+
 	doFirst {		
 		configurations.helpPath.each { 
 			args "-hp"

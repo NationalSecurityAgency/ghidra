@@ -24,7 +24,8 @@ import ghidra.util.StringUtilities;
 
 public class WideCharDataType extends BuiltIn implements ArrayStringable, DataTypeWithCharset {
 	final static SettingsDefinition[] DEFAULT_WIDE_CHAR_SETTINGS = new SettingsDefinition[] {
-		EndianSettingsDefinition.DEF, RenderUnicodeSettingsDefinition.RENDER };
+		EndianSettingsDefinition.DEF, RenderUnicodeSettingsDefinition.RENDER,
+		TranslationSettingsDefinition.TRANSLATION };
 
 	/** A statically defined WideCharDataType instance. */
 	public final static WideCharDataType dataType = new WideCharDataType();

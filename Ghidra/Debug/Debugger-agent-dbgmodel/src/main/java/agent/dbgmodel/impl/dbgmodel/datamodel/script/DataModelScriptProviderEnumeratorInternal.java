@@ -15,15 +15,15 @@
  */
 package agent.dbgmodel.impl.dbgmodel.datamodel.script;
 
+import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Guid.REFIID;
 
+import agent.dbgeng.impl.dbgeng.DbgEngUtil;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.InterfaceSupplier;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.Preferred;
 import agent.dbgmodel.dbgmodel.datamodel.script.DataModelScriptProviderEnumerator;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil.InterfaceSupplier;
 import agent.dbgmodel.jna.dbgmodel.datamodel.script.IDataModelScriptProviderEnumerator;
 import agent.dbgmodel.jna.dbgmodel.datamodel.script.WrapIDataModelScriptProviderEnumerator;
 import ghidra.util.datastruct.WeakValueHashMap;
@@ -34,22 +34,17 @@ public interface DataModelScriptProviderEnumeratorInternal
 
 	static DataModelScriptProviderEnumeratorInternal instanceFor(
 			WrapIDataModelScriptProviderEnumerator data) {
-		return DbgModelUtil.lazyWeakCache(CACHE, data, DataModelScriptProviderEnumeratorImpl::new);
+		return DbgEngUtil.lazyWeakCache(CACHE, data, DataModelScriptProviderEnumeratorImpl::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIDataModelScriptProviderEnumerator>> PREFERRED_DATA_SPACES_IIDS_BUILDER =
-		ImmutableMap.builder();
-	Map<REFIID, Class<? extends WrapIDataModelScriptProviderEnumerator>> PREFERRED_DATA_SPACES_IIDS =
-		PREFERRED_DATA_SPACES_IIDS_BUILDER //
-				.put(
-					new REFIID(
-						IDataModelScriptProviderEnumerator.IID_IDATA_MODEL_SCRIPT_PROVIDER_ENUMERATOR),
-					WrapIDataModelScriptProviderEnumerator.class) //
-				.build();
+	List<Preferred<WrapIDataModelScriptProviderEnumerator>> PREFERRED_DATA_SPACES_IIDS = List.of(
+		new Preferred<>(
+			IDataModelScriptProviderEnumerator.IID_IDATA_MODEL_SCRIPT_PROVIDER_ENUMERATOR,
+			WrapIDataModelScriptProviderEnumerator.class));
 
 	static DataModelScriptProviderEnumeratorInternal tryPreferredInterfaces(
 			InterfaceSupplier supplier) {
-		return DbgModelUtil.tryPreferredInterfaces(DataModelScriptProviderEnumeratorInternal.class,
+		return DbgEngUtil.tryPreferredInterfaces(DataModelScriptProviderEnumeratorInternal.class,
 			PREFERRED_DATA_SPACES_IIDS, supplier);
 	}
 }

@@ -172,7 +172,6 @@ public class YaraGhidraGUIScript extends GhidraScript {
 		yaraString.append("\t\t$STR" + 1 + " = { " + fullStr + " }\n");
 		yaraString.append("\n\tcondition:\n");
 		yaraString.append("\t\t$STR1");
-		yaraString.append(" or $STR" + (1));
 		yaraString.append("\n}\n");
 
 		return yaraString.toString();

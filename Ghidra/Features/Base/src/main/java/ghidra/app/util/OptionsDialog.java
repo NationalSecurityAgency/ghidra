@@ -31,7 +31,7 @@ public class OptionsDialog extends DialogComponentProvider implements OptionList
 	private OptionValidator validator;
 
 	/**
-	 * Contructs a new OptionsDialog for editing the options associated with a specific import format
+	 * Constructs a new OptionsDialog for editing the options associated with a specific import format
 	 * such as PE, ELF, XML, etc.
 	 *
 	 * @param originalOptions the list of options generated from the specific import format selected.
@@ -39,7 +39,7 @@ public class OptionsDialog extends DialogComponentProvider implements OptionList
 	 * @param addressFactoryService a service for retrieving the AddressFactory if needed. This is
 	 * passed instead of an actual AddressFactory, because to get an AddressFactory, it might
 	 * require that a language be loaded or a program be opened and not all options require an
-	 * AddressFactory.
+	 * AddressFactory.  If null, address based options will not be available.
 	 */
 	public OptionsDialog(List<Option> originalOptions,
 			OptionValidator validator, AddressFactoryService addressFactoryService) {

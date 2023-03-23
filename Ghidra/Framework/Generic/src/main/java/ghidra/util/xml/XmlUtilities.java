@@ -569,7 +569,7 @@ public class XmlUtilities {
 	 * @throws XmlAttributeException if the string in not one of y,n,true,false
 	 *             or null.
 	 */
-	public static boolean parseBoolean(String boolStr) {
+	public static boolean parseBoolean(String boolStr) throws XmlAttributeException {
 		if (boolStr == null) {
 			return false;
 		}

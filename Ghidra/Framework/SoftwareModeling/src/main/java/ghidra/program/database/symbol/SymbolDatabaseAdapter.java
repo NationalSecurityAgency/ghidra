@@ -367,6 +367,16 @@ abstract class SymbolDatabaseAdapter {
 	abstract RecordIterator getSymbolsByName(String name) throws IOException;
 
 	/**
+	 * Scan symbols lexicographically by name starting from the given name
+	 * <p>
+	 * This only includes memory-based stored symbols.
+	 * 
+	 * @param startName the starting name to search
+	 * @throws IOException if a database io error occurs
+	 */
+	abstract RecordIterator scanSymbolsByName(String startName) throws IOException;
+
+	/**
 	 * Get all symbols contained in the given {@link Namespace} that have the given name
 	 * @param name the symbol name
 	 * @param id the id of the parent namespace

@@ -33,11 +33,11 @@ public class PointerTypeApplier extends MsTypeApplier {
 	/**
 	 * Constructor for pointer type applier, for transforming a enum into a
 	 * Ghidra DataType.
-	 * @param applicator {@link PdbApplicator} for which this class is working.
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
 	 * @param msType {@link AbstractPointerMsType} to process
 	 * @throws IllegalArgumentException Upon invalid arguments.
 	 */
-	public PointerTypeApplier(PdbApplicator applicator, AbstractPointerMsType msType)
+	public PointerTypeApplier(DefaultPdbApplicator applicator, AbstractPointerMsType msType)
 			throws IllegalArgumentException {
 		super(applicator, msType);
 	}

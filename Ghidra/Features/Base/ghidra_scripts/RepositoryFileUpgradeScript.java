@@ -143,6 +143,8 @@ public class RepositoryFileUpgradeScript extends GhidraScript {
 	}
 
 	private boolean performProgramUpgrade(DomainFile df) throws IOException, CancelledException {
+		// Do not follow folder-links or consider program links.  Using content type
+		// to filter is best way to control this.
 		if (!ProgramContentHandler.PROGRAM_CONTENT_TYPE.equals(df.getContentType())) {
 			return false;
 		}

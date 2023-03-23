@@ -45,8 +45,7 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources.SelectNoneAction;
 import ghidra.app.plugin.core.debug.utils.DebouncedRowWrappedEnumeratedColumnTableModel;
 import ghidra.framework.options.AutoOptions;
 import ghidra.framework.options.annotation.*;
-import ghidra.framework.plugintool.AutoService;
-import ghidra.framework.plugintool.ComponentProviderAdapter;
+import ghidra.framework.plugintool.*;
 import ghidra.util.*;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraTableFilterPanel;
@@ -178,7 +177,7 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 			this.message = message;
 			this.date = date;
 			this.context = context;
-			this.actions = actions;
+			this.actions = Objects.requireNonNull(actions);
 		}
 
 		public Icon getIcon() {
@@ -205,8 +204,8 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 	protected static class LogTableModel extends DebouncedRowWrappedEnumeratedColumnTableModel< //
 			LogTableColumns, ActionContext, LogRow, LogRow> {
 
-		public LogTableModel() {
-			super("Log", LogTableColumns.class, r -> r.getActionContext(), r -> r);
+		public LogTableModel(PluginTool tool) {
+			super(tool, "Log", LogTableColumns.class, r -> r.getActionContext(), r -> r, r -> r);
 		}
 
 		@Override
@@ -286,7 +285,7 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 	protected final Map<String, Map<String, DockingActionIf>> actionsByOwnerThenName =
 		new LinkedHashMap<>();
 
-	protected final LogTableModel logTableModel = new LogTableModel();
+	protected final LogTableModel logTableModel;
 	protected GhidraTable logTable;
 	private GhidraTableFilterPanel<LogRow> logFilterPanel;
 
@@ -300,6 +299,8 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 	public DebuggerConsoleProvider(DebuggerConsolePlugin plugin) {
 		super(plugin.getTool(), DebuggerResources.TITLE_PROVIDER_CONSOLE, plugin.getName());
 		this.plugin = plugin;
+
+		logTableModel = new LogTableModel(tool);
 
 		tool.addPopupActionProvider(this);
 
@@ -452,6 +453,12 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 	protected boolean logContains(ActionContext context) {
 		synchronized (buffer) {
 			return logTableModel.getMap().containsKey(context);
+		}
+	}
+
+	protected List<ActionContext> getActionContexts() {
+		synchronized (buffer) {
+			return List.copyOf(logTableModel.getMap().keySet());
 		}
 	}
 

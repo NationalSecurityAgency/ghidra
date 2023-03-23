@@ -97,8 +97,7 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		assertTrue(action.isEnabled());
 
 		// find the dialog for the add
-		SplitBlockDialog d =
-			waitForDialogComponent(SplitBlockDialog.class);
+		SplitBlockDialog d = waitForDialogComponent(SplitBlockDialog.class);
 		assertNotNull(d);
 		JTextField blockOneName =
 			(JTextField) findComponentByName(d.getComponent(), "BlockOneName");
@@ -152,8 +151,7 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 
 		JButton cancelButton = findButton(d.getComponent(), "Cancel");
 
-		runSwing(
-			() -> cancelButton.getActionListeners()[0].actionPerformed(null));
+		runSwing(() -> cancelButton.getActionListeners()[0].actionPerformed(null));
 	}
 
 	@Test
@@ -165,8 +163,7 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		performAction(action, false);
 
 		// find the dialog for the add
-		SplitBlockDialog d =
-			waitForDialogComponent(SplitBlockDialog.class);
+		SplitBlockDialog d = waitForDialogComponent(SplitBlockDialog.class);
 		JTextField blockOneName =
 			(JTextField) findComponentByName(d.getComponent(), "BlockOneName");
 		assertNotNull(blockOneName);
@@ -183,8 +180,7 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		assertNotNull(blockTwoName);
 		AddressInput blockTwoStart =
 			(AddressInput) findComponentByName(d.getComponent(), "BlockTwoStart");
-		JTextField blockTwoEnd =
-			(JTextField) findComponentByName(d.getComponent(), "BlockTwoEnd");
+		JTextField blockTwoEnd = (JTextField) findComponentByName(d.getComponent(), "BlockTwoEnd");
 		RegisterField blockTwoLength =
 			(RegisterField) findComponentByName(d.getComponent(), "BlockTwoLength");
 		JButton okButton = findButton(d.getComponent(), "OK");
@@ -220,8 +216,7 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		performAction(action, false);
 
 		// find the dialog for the add
-		SplitBlockDialog d =
-			waitForDialogComponent(SplitBlockDialog.class);
+		SplitBlockDialog d = waitForDialogComponent(SplitBlockDialog.class);
 		AddressInput blockOneEnd =
 			(AddressInput) findComponentByName(d.getComponent(), "BlockOneEnd");
 		RegisterField blockOneLength =
@@ -229,8 +224,7 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 
 		AddressInput blockTwoStart =
 			(AddressInput) findComponentByName(d.getComponent(), "BlockTwoStart");
-		JTextField blockTwoEnd =
-			(JTextField) findComponentByName(d.getComponent(), "BlockTwoEnd");
+		JTextField blockTwoEnd = (JTextField) findComponentByName(d.getComponent(), "BlockTwoEnd");
 		RegisterField blockTwoLength =
 			(RegisterField) findComponentByName(d.getComponent(), "BlockTwoLength");
 		JButton okButton = findButton(d.getComponent(), "OK");
@@ -267,8 +261,7 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		performAction(action, false);
 
 		// find the dialog for the add
-		SplitBlockDialog d =
-			waitForDialogComponent(SplitBlockDialog.class);
+		SplitBlockDialog d = waitForDialogComponent(SplitBlockDialog.class);
 
 		AddressInput blockOneEnd =
 			(AddressInput) findComponentByName(d.getComponent(), "BlockOneEnd");
@@ -277,8 +270,7 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 
 		AddressInput blockTwoStart =
 			(AddressInput) findComponentByName(d.getComponent(), "BlockTwoStart");
-		JTextField blockTwoEnd =
-			(JTextField) findComponentByName(d.getComponent(), "BlockTwoEnd");
+		JTextField blockTwoEnd = (JTextField) findComponentByName(d.getComponent(), "BlockTwoEnd");
 		RegisterField blockTwoLength =
 			(RegisterField) findComponentByName(d.getComponent(), "BlockTwoLength");
 		JButton okButton = findButton(d.getComponent(), "OK");
@@ -314,15 +306,13 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		performAction(action, false);
 
 		// find the dialog for the add
-		SplitBlockDialog d =
-			waitForDialogComponent(SplitBlockDialog.class);
+		SplitBlockDialog d = waitForDialogComponent(SplitBlockDialog.class);
 		AddressInput blockOneEnd =
 			(AddressInput) findComponentByName(d.getComponent(), "BlockOneEnd");
 		RegisterField blockOneLength =
 			(RegisterField) findComponentByName(d.getComponent(), "BlockOneLength");
 
-		JTextField blockTwoEnd =
-			(JTextField) findComponentByName(d.getComponent(), "BlockTwoEnd");
+		JTextField blockTwoEnd = (JTextField) findComponentByName(d.getComponent(), "BlockTwoEnd");
 		RegisterField blockTwoLength =
 			(RegisterField) findComponentByName(d.getComponent(), "BlockTwoLength");
 		JButton okButton = findButton(d.getComponent(), "OK");
@@ -360,8 +350,7 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		performAction(action, false);
 
 		// find the dialog for the add
-		SplitBlockDialog d =
-			waitForDialogComponent(SplitBlockDialog.class);
+		SplitBlockDialog d = waitForDialogComponent(SplitBlockDialog.class);
 		AddressInput blockOneEnd =
 			(AddressInput) findComponentByName(d.getComponent(), "BlockOneEnd");
 		JButton okButton = findButton(d.getComponent(), "OK");
@@ -382,8 +371,7 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		performAction(action, false);
 
 		// find the dialog for the add
-		SplitBlockDialog d =
-			waitForDialogComponent(SplitBlockDialog.class);
+		SplitBlockDialog d = waitForDialogComponent(SplitBlockDialog.class);
 		AddressInput blockTwoStart =
 			(AddressInput) findComponentByName(d.getComponent(), "BlockTwoStart");
 		JButton okButton = findButton(d.getComponent(), "OK");
@@ -404,8 +392,7 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		performAction(action, false);
 
 		// find the dialog for the add
-		SplitBlockDialog d =
-			waitForDialogComponent(SplitBlockDialog.class);
+		SplitBlockDialog d = waitForDialogComponent(SplitBlockDialog.class);
 		RegisterField blockOneLength =
 			(RegisterField) findComponentByName(d.getComponent(), "BlockOneLength");
 		JButton okButton = findButton(d.getComponent(), "OK");
@@ -426,8 +413,7 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		performAction(action, false);
 
 		// find the dialog for the add
-		SplitBlockDialog d =
-			waitForDialogComponent(SplitBlockDialog.class);
+		SplitBlockDialog d = waitForDialogComponent(SplitBlockDialog.class);
 
 		JTextField blockTwoName =
 			(JTextField) findComponentByName(d.getComponent(), "BlockTwoName");
@@ -449,18 +435,16 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 	@Test
 	public void testSplitNotAllowed() throws Exception {
 		// create an overlay block
-		int transactionID = program.startTransaction("test");
-		memory.createInitializedBlock(".overlay", getAddr(0), 0x100, (byte) 0xa,
-			TaskMonitor.DUMMY, true);
-		program.endTransaction(transactionID, true);
-		program.flushEvents();
-		waitForSwing();
+		tx(program, () -> {
+			memory.createInitializedBlock(".overlay", getAddr(0), 0x100, (byte) 0xa,
+				TaskMonitor.DUMMY, true);
+		});
+
 		int row = table.getModel().getRowCount() - 1;
 		table.setRowSelectionInterval(row, row);
 		DockingActionIf action = getAction(plugin, "Split Block");
 		performAction(action, false);
-		OptionDialog d =
-			waitForDialogComponent(OptionDialog.class);
+		OptionDialog d = waitForDialogComponent(OptionDialog.class);
 		assertNotNull(d);
 		assertEquals("Split Overlay Block Not Allowed", d.getTitle());
 		close(d);
@@ -469,18 +453,16 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 	@Test
 	public void testExpandBlockNotAllowed() throws Exception {
 		// create an overlay block
-		int transactionID = program.startTransaction("test");
-		memory.createInitializedBlock(".overlay", getAddr(0), 0x100, (byte) 0xa,
-			TaskMonitor.DUMMY, true);
-		program.endTransaction(transactionID, true);
-		program.flushEvents();
-		waitForSwing();
+		tx(program, () -> {
+			memory.createInitializedBlock(".overlay", getAddr(0), 0x100, (byte) 0xa,
+				TaskMonitor.DUMMY, true);
+		});
+
 		int row = table.getModel().getRowCount() - 1;
 		table.setRowSelectionInterval(row, row);
 		DockingActionIf action = getAction(plugin, "Expand Block Up");
 		performAction(action, false);
-		OptionDialog d =
-			waitForDialogComponent(OptionDialog.class);
+		OptionDialog d = waitForDialogComponent(OptionDialog.class);
 		assertNotNull(d);
 		assertEquals("Expand Overlay Block Not Allowed", d.getTitle());
 		close(d);
@@ -488,8 +470,7 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		action = getAction(plugin, "Expand Block Down");
 		performAction(action, false);
 
-		OptionDialog d2 =
-			waitForDialogComponent(OptionDialog.class);
+		OptionDialog d2 = waitForDialogComponent(OptionDialog.class);
 		assertNotNull(d2);
 		assertEquals("Expand Overlay Block Not Allowed", d2.getTitle());
 		runSwing(() -> d2.close());
@@ -505,16 +486,14 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		assertTrue(action.isEnabled());
 
 		// find the dialog for the add
-		ExpandBlockDialog d =
-			waitForDialogComponent(ExpandBlockDialog.class);
+		ExpandBlockDialog d = waitForDialogComponent(ExpandBlockDialog.class);
 		assertNotNull(d);
 		assertEquals("Expand Block Up", d.getTitle());
 
 		AddressInput start =
 			(AddressInput) findComponentByName(d.getComponent(), "NewStartAddress");
 		JTextField end = (JTextField) findComponentByName(d.getComponent(), "EndAddress");
-		RegisterField length =
-			(RegisterField) findComponentByName(d.getComponent(), "BlockLength");
+		RegisterField length = (RegisterField) findComponentByName(d.getComponent(), "BlockLength");
 		JButton okButton = findButton(d.getComponent(), "OK");
 
 		assertNotNull(start);
@@ -541,15 +520,13 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		assertTrue(action.isEnabled());
 
 		// find the dialog for the add
-		ExpandBlockDialog d =
-			waitForDialogComponent(ExpandBlockDialog.class);
+		ExpandBlockDialog d = waitForDialogComponent(ExpandBlockDialog.class);
 
 		AddressInput start =
 			(AddressInput) findComponentByName(d.getComponent(), "NewStartAddress");
 		JTextField end = (JTextField) findComponentByName(d.getComponent(), "EndAddress");
 		assertNotNull(end);
-		RegisterField length =
-			(RegisterField) findComponentByName(d.getComponent(), "BlockLength");
+		RegisterField length = (RegisterField) findComponentByName(d.getComponent(), "BlockLength");
 		JButton okButton = findButton(d.getComponent(), "OK");
 
 		runSwing(() -> start.setValue("00002000"));
@@ -588,13 +565,11 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		assertTrue(action.isEnabled());
 
 		// find the dialog for the add
-		ExpandBlockDialog d =
-			waitForDialogComponent(ExpandBlockDialog.class);
+		ExpandBlockDialog d = waitForDialogComponent(ExpandBlockDialog.class);
 
 		AddressInput start =
 			(AddressInput) findComponentByName(d.getComponent(), "NewStartAddress");
-		RegisterField length =
-			(RegisterField) findComponentByName(d.getComponent(), "BlockLength");
+		RegisterField length = (RegisterField) findComponentByName(d.getComponent(), "BlockLength");
 		assertNotNull(length);
 		JButton okButton = findButton(d.getComponent(), "OK");
 
@@ -616,13 +591,11 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		assertTrue(action.isEnabled());
 
 		// find the dialog for the add
-		ExpandBlockDialog d =
-			waitForDialogComponent(ExpandBlockDialog.class);
+		ExpandBlockDialog d = waitForDialogComponent(ExpandBlockDialog.class);
 		AddressInput start =
 			(AddressInput) findComponentByName(d.getComponent(), "NewStartAddress");
 		JTextField end = (JTextField) findComponentByName(d.getComponent(), "EndAddress");
-		RegisterField length =
-			(RegisterField) findComponentByName(d.getComponent(), "BlockLength");
+		RegisterField length = (RegisterField) findComponentByName(d.getComponent(), "BlockLength");
 		JButton okButton = findButton(d.getComponent(), "OK");
 
 		runSwing(() -> length.setText("0x7600"));
@@ -662,14 +635,12 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		assertTrue(action.isEnabled());
 
 		// find the dialog for the add
-		ExpandBlockDialog d =
-			waitForDialogComponent(ExpandBlockDialog.class);
+		ExpandBlockDialog d = waitForDialogComponent(ExpandBlockDialog.class);
 
 		AddressInput start =
 			(AddressInput) findComponentByName(d.getComponent(), "NewStartAddress");
 		assertNotNull(start);
-		RegisterField length =
-			(RegisterField) findComponentByName(d.getComponent(), "BlockLength");
+		RegisterField length = (RegisterField) findComponentByName(d.getComponent(), "BlockLength");
 		JButton okButton = findButton(d.getComponent(), "OK");
 
 		runSwing(() -> length.setText("0x1000"));
@@ -692,8 +663,7 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		assertTrue(action.isEnabled());
 
 		// find the dialog for the add
-		ExpandBlockDialog d =
-			waitForDialogComponent(ExpandBlockDialog.class);
+		ExpandBlockDialog d = waitForDialogComponent(ExpandBlockDialog.class);
 
 		AddressInput start =
 			(AddressInput) findComponentByName(d.getComponent(), "NewStartAddress");
@@ -721,15 +691,13 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		assertTrue(action.isEnabled());
 
 		// find the dialog for the add
-		ExpandBlockDialog d =
-			waitForDialogComponent(ExpandBlockDialog.class);
+		ExpandBlockDialog d = waitForDialogComponent(ExpandBlockDialog.class);
 		assertNotNull(d);
 		assertEquals("Expand Block Down", d.getTitle());
 
 		JTextField start = (JTextField) findComponentByName(d.getComponent(), "StartAddress");
 		AddressInput end = (AddressInput) findComponentByName(d.getComponent(), "EndAddress");
-		RegisterField length =
-			(RegisterField) findComponentByName(d.getComponent(), "BlockLength");
+		RegisterField length = (RegisterField) findComponentByName(d.getComponent(), "BlockLength");
 		JButton okButton = findButton(d.getComponent(), "OK");
 
 		assertNotNull(start);
@@ -755,12 +723,10 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		performAction(action, false);
 
 		// find the dialog for the add
-		ExpandBlockDialog d =
-			waitForDialogComponent(ExpandBlockDialog.class);
+		ExpandBlockDialog d = waitForDialogComponent(ExpandBlockDialog.class);
 
 		AddressInput end = (AddressInput) findComponentByName(d.getComponent(), "EndAddress");
-		RegisterField length =
-			(RegisterField) findComponentByName(d.getComponent(), "BlockLength");
+		RegisterField length = (RegisterField) findComponentByName(d.getComponent(), "BlockLength");
 		JButton okButton = findButton(d.getComponent(), "OK");
 
 		runSwing(() -> end.setValue("01007700"));
@@ -784,12 +750,10 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		performAction(action, false);
 
 		// find the dialog for the add
-		ExpandBlockDialog d =
-			waitForDialogComponent(ExpandBlockDialog.class);
+		ExpandBlockDialog d = waitForDialogComponent(ExpandBlockDialog.class);
 
 		AddressInput end = (AddressInput) findComponentByName(d.getComponent(), "EndAddress");
-		RegisterField length =
-			(RegisterField) findComponentByName(d.getComponent(), "BlockLength");
+		RegisterField length = (RegisterField) findComponentByName(d.getComponent(), "BlockLength");
 		JButton okButton = findButton(d.getComponent(), "OK");
 
 		runSwing(() -> length.setText("0x6700"));
@@ -815,8 +779,7 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		performAction(action, false);
 
 		// find the dialog for the add
-		ExpandBlockDialog d =
-			waitForDialogComponent(ExpandBlockDialog.class);
+		ExpandBlockDialog d = waitForDialogComponent(ExpandBlockDialog.class);
 
 		AddressInput end = (AddressInput) findComponentByName(d.getComponent(), "EndAddress");
 		JButton okButton = findButton(d.getComponent(), "OK");
@@ -837,11 +800,9 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		performAction(action, false);
 
 		// find the dialog for the add
-		ExpandBlockDialog d =
-			waitForDialogComponent(ExpandBlockDialog.class);
+		ExpandBlockDialog d = waitForDialogComponent(ExpandBlockDialog.class);
 
-		RegisterField length =
-			(RegisterField) findComponentByName(d.getComponent(), "BlockLength");
+		RegisterField length = (RegisterField) findComponentByName(d.getComponent(), "BlockLength");
 		JButton okButton = findButton(d.getComponent(), "OK");
 
 		runSwing(() -> length.setText("0x670"));
@@ -860,11 +821,9 @@ public class MemoryMapProvider3Test extends AbstractGhidraHeadedIntegrationTest 
 		performAction(action, false);
 
 		// find the dialog for the add
-		ExpandBlockDialog d =
-			waitForDialogComponent(ExpandBlockDialog.class);
+		ExpandBlockDialog d = waitForDialogComponent(ExpandBlockDialog.class);
 
-		RegisterField length =
-			(RegisterField) findComponentByName(d.getComponent(), "BlockLength");
+		RegisterField length = (RegisterField) findComponentByName(d.getComponent(), "BlockLength");
 		JButton okButton = findButton(d.getComponent(), "OK");
 
 		runSwing(() -> length.setText("0x7600"));

@@ -26,7 +26,6 @@ import java.util.function.Function;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jdom.JDOMException;
 
-import com.google.common.cache.RemovalNotification;
 import com.google.protobuf.Message;
 import com.google.protobuf.ProtocolStringList;
 
@@ -48,6 +47,7 @@ import ghidra.dbg.target.schema.XmlSchemaContext;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.*;
 import ghidra.util.*;
+import ghidra.util.datastruct.FixedSizeHashMap;
 import ghidra.util.exception.DuplicateNameException;
 import utilities.util.ProxyUtilities;
 
@@ -58,7 +58,6 @@ public class GadpClient extends AbstractDebuggerObjectModel
 	// TODO: More sophisticated cache management
 	// TODO: Perhaps no cache at all, and rely totally on async notifications
 	protected static final int MAX_OUTSTANDING_REQUESTS = Integer.MAX_VALUE;
-	protected static final int REQUEST_TIMEOUT_MILLIS = Integer.MAX_VALUE;
 
 	protected static final ProtobufOneofByTypeHelper<Gadp.RootMessage, Gadp.RootMessage.Builder> MSG_HELPER =
 		ProtobufOneofByTypeHelper.create(Gadp.RootMessage.getDefaultInstance(),
@@ -218,13 +217,22 @@ public class GadpClient extends AbstractDebuggerObjectModel
 			new AsyncDebouncer<>(AsyncTimer.DEFAULT_TIMER, 500);
 
 		public MessagePairingCache() {
-			super(4, REQUEST_TIMEOUT_MILLIS, MAX_OUTSTANDING_REQUESTS);
+			super(MAX_OUTSTANDING_REQUESTS);
 			cacheMonitor.addListener(this::cacheSettled);
 		}
 
 		@Override
-		protected void resultRemoved(RemovalNotification<Integer, Gadp.RootMessage> rn) {
-			Msg.error(this, "Received message with unexpected sequence number: " + rn);
+		protected Map<Integer, RootMessage> createResultCache(int max) {
+			return new FixedSizeHashMap<>(max) {
+				@Override
+				protected boolean removeEldestEntry(Map.Entry<Integer, RootMessage> eldest) {
+					if (!super.removeEldestEntry(eldest)) {
+						return false;
+					}
+					Msg.error(this, "Received message with unexpected sequence number: " + eldest);
+					return true;
+				}
+			};
 		}
 
 		@Override
@@ -235,17 +243,23 @@ public class GadpClient extends AbstractDebuggerObjectModel
 		}
 
 		@Override
-		protected void promiseRemoved(
-				RemovalNotification<Integer, CompletableFuture<Gadp.RootMessage>> rn) {
-			if (rn.wasEvicted()) {
-				String message = "Command with sequence number " + rn.getKey() +
-					" evicted because " + rn.getCause();
-				Msg.error(this, message);
-				AsyncUtils.FRAMEWORK_EXECUTOR.execute(() -> {
-					rn.getValue().completeExceptionally(new TimeoutException(message));
-				});
-			}
-			cacheMonitor.contact(null);
+		protected Map<Integer, CompletableFuture<RootMessage>> createPromiseCache(int max) {
+			return new FixedSizeHashMap<>(max) {
+				@Override
+				protected boolean removeEldestEntry(
+						Map.Entry<Integer, CompletableFuture<RootMessage>> eldest) {
+					if (!super.removeEldestEntry(eldest)) {
+						return false;
+					}
+					String message = "Command with sequence number " + eldest.getKey() +
+						" evicted";
+					Msg.error(this, message);
+					AsyncUtils.FRAMEWORK_EXECUTOR.execute(() -> {
+						eldest.getValue().completeExceptionally(new TimeoutException(message));
+					});
+					return true;
+				}
+			};
 		}
 
 		private void cacheSettled(Void __) {

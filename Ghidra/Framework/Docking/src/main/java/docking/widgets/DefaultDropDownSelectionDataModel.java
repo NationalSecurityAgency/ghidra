@@ -27,7 +27,7 @@ public class DefaultDropDownSelectionDataModel<T> implements DropDownTextFieldDa
 
 	protected List<T> data;
 
-	private Comparator<Object> comparator;
+	protected Comparator<Object> comparator;
 	private DataToStringConverter<T> searchConverter;
 	private DataToStringConverter<T> descriptionConverter;
 	private ListCellRenderer<T> renderer =

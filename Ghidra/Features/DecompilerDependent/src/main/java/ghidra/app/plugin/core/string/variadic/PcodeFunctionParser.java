@@ -17,13 +17,11 @@ package ghidra.app.plugin.core.string.variadic;
 
 import java.util.*;
 
-import ghidra.docking.settings.SettingsImpl;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryBufferImpl;
-import ghidra.program.model.pcode.PcodeOpAST;
-import ghidra.program.model.pcode.Varnode;
+import ghidra.program.model.pcode.*;
 import ghidra.program.model.symbol.SourceType;
 
 /**
@@ -33,14 +31,11 @@ import ghidra.program.model.symbol.SourceType;
  */
 public class PcodeFunctionParser {
 
-	// All values within the range [32, 126] are ascii readable
-	private static final int READABLE_ASCII_LOWER_BOUND = 32;
-	private static final int READABLE_ASCII_UPPER_BOUND = 126;
 	// How many bytes to read from a memory address when initial format
-	// String cannot be found. This normally only happens for short format
-	// Strings with lengths less than 5
-	private static final int BUFFER_LENGTH = 20;
-	private static final String CALL_INSTRUCTION = "CALL";
+	// String cannot be found. This can happen when the format string
+	// is too short or contains escape characters that thwart the
+	// ASCII string analyzer
+	private static final int NULL_TERMINATOR_PROBE = -1;
 
 	private Program program;
 
@@ -65,71 +60,69 @@ public class PcodeFunctionParser {
 			return null;
 		}
 		List<FunctionCallData> functionCallDataList = new ArrayList<>();
-		for (PcodeOpAST ast : pcodeOps) {
-			Varnode firstNode = ast.getInput(0);
-			if (firstNode == null) {
+		for (PcodeOpAST callOp : pcodeOps) {
+			if (callOp.getOpcode() != PcodeOp.CALL) {
 				continue;
 			}
-			if (ast.getMnemonic().contentEquals(CALL_INSTRUCTION)) {
-
-				FunctionManager functionManager = this.program.getFunctionManager();
-				Function function = functionManager.getFunctionAt(firstNode.getAddress());
-				if (function == null) {
-					return null;
-				}
-				String functionName = function.getName();
-				if (variadicFunctionNames.contains(functionName)) {
-					Varnode[] inputs = ast.getInputs();
-					if (inputs.length > 0) {
-						boolean hasDefinedFormatString = searchForVariadicCallData(ast,
-							addressToCandidateData, functionCallDataList, functionName);
-						if (!hasDefinedFormatString) {
-							searchForHiddenFormatStrings(ast, functionCallDataList, function);
-						}
-					}
-				}
+			Varnode callTarget = callOp.getInput(0);
+			if (callTarget == null) {
+				continue;
+			}
+			FunctionManager functionManager = program.getFunctionManager();
+			Function function = functionManager.getFunctionAt(callTarget.getAddress());
+			if (function == null) {
+				continue;
+			}
+			String functionName = function.getName();
+			if (!variadicFunctionNames.contains(functionName)) {
+				continue;
+			}
+			// <= since first input of callOp is call target and 
+			// so not a function argument
+			if (callOp.getNumInputs() <= function.getParameterCount()) {
+				continue;
+			}
+			boolean hasDefinedFormatString = searchForVariadicCallData(callOp,
+				addressToCandidateData, functionCallDataList, function);
+			if (!hasDefinedFormatString) {
+				searchForHiddenFormatStrings(callOp, functionCallDataList, function);
 			}
 		}
 		return functionCallDataList;
 	}
 
-	private boolean searchForVariadicCallData(PcodeOpAST ast,
+	private boolean searchForVariadicCallData(PcodeOpAST callOp,
 			Map<Address, Data> addressToCandidateData, List<FunctionCallData> functionCallDataList,
-			String functionName) {
-
-		boolean hasDefinedFormatString = false;
-		Varnode[] inputs = ast.getInputs();
-		for (int i = 1; i < inputs.length; i++) {
-			Varnode v = inputs[i];
-			Data data = null;
-			Address ramSpaceAddress = convertAddressToRamSpace(v.getAddress());
-			if (addressToCandidateData.containsKey(ramSpaceAddress)) {
-				data = addressToCandidateData.get(ramSpaceAddress);
-				functionCallDataList.add(new FunctionCallData(ast.getSeqnum().getTarget(),
-					functionName, data.getDefaultValueRepresentation()));
-				hasDefinedFormatString = true;
-			}
-			else {
-				//check for offcut references into a larger defined string
-				Data containing = program.getListing().getDataContaining(ramSpaceAddress);
-				if (containing == null) {
-					continue;
-				}
-				if (addressToCandidateData.containsKey(containing.getAddress())) {
-					StringDataInstance entire =
-						StringDataInstance.getStringDataInstance(containing);
-					String subString = entire.getByteOffcut(
+			Function function) {
+		//format string should be last parameter of Function ("..." doesn't count as a parameter)
+		//don't subtract 1 since input 0 is the call target
+		Varnode v = callOp.getInput(function.getParameterCount());
+		Data data = null;
+		Address ramSpaceAddress = convertAddressToRamSpace(v.getAddress());
+		if (addressToCandidateData.containsKey(ramSpaceAddress)) {
+			data = addressToCandidateData.get(ramSpaceAddress);
+			functionCallDataList.add(new FunctionCallData(callOp.getSeqnum().getTarget(),
+				function.getName(), data.getDefaultValueRepresentation()));
+			return true;
+		}
+		//check for offcut references into a larger defined string
+		Data containing = program.getListing().getDataContaining(ramSpaceAddress);
+		if (containing == null) {
+			return false;
+		}
+		if (addressToCandidateData.containsKey(containing.getAddress())) {
+			StringDataInstance entire = StringDataInstance.getStringDataInstance(containing);
+			String subString = entire
+					.getByteOffcut(
 						(int) (ramSpaceAddress.getOffset() - containing.getAddress().getOffset()))
-							.getStringValue();
-					if (subString != null) {
-						functionCallDataList.add(new FunctionCallData(ast.getSeqnum().getTarget(),
-							functionName, subString));
-						hasDefinedFormatString = true;
-					}
-				}
+					.getStringValue();
+			if (subString != null) {
+				functionCallDataList.add(new FunctionCallData(callOp.getSeqnum().getTarget(),
+					function.getName(), subString));
+				return true;
 			}
 		}
-		return hasDefinedFormatString;
+		return false;
 	}
 
 	// If addrToCandidateData doesn't have format String data for this call
@@ -138,27 +131,24 @@ public class PcodeFunctionParser {
 	private void searchForHiddenFormatStrings(PcodeOpAST callOp,
 			List<FunctionCallData> functionCallDataList, Function function) {
 
-		Varnode[] inputs = callOp.getInputs();
-		// Initialize i = 1 to skip first input, which is the call target
-		for (int i = 1; i < inputs.length; ++i) {
-			Varnode v = inputs[i];
-			Parameter param = function.getParameter(i - 1);
-			if (param == null || param.getSource().equals(SourceType.DEFAULT)) {
-				continue;
-			}
-			DataType type = param.getDataType();
-			if ((type == null) || !(type instanceof Pointer)) {
-				continue;
-			}
-			String formatStringCandidate = findFormatString(v.getAddress(), (Pointer) type);
-			if (formatStringCandidate == null) {
-				continue;
-			}
-			if (formatStringCandidate.contains("%")) {
-				functionCallDataList.add(new FunctionCallData(callOp.getSeqnum().getTarget(),
-					function.getName(), formatStringCandidate));
-			}
-			break;
+		int formatStringSlot = function.getParameterCount() - 1;
+		Parameter param = function.getParameter(formatStringSlot);
+		if (param == null || param.getSource().equals(SourceType.DEFAULT)) {
+			return;
+		}
+		DataType type = param.getDataType();
+		if ((type == null) || !(type instanceof Pointer)) {
+			return;
+		}
+		//+1 since first input of callOp is call target address
+		String formatStringCandidate = findNullTerminatedString(
+			callOp.getInput(formatStringSlot + 1).getAddress(), (Pointer) type);
+		if (formatStringCandidate == null) {
+			return;
+		}
+		if (formatStringCandidate.contains("%")) {
+			functionCallDataList.add(new FunctionCallData(callOp.getSeqnum().getTarget(),
+				function.getName(), formatStringCandidate));
 		}
 	}
 
@@ -175,7 +165,7 @@ public class PcodeFunctionParser {
 	 * @param pointer Pointer "type" of string
 	 * @return format String
 	 */
-	private String findFormatString(Address address, Pointer pointer) {
+	String findNullTerminatedString(Address address, Pointer pointer) {
 
 		if (!address.getAddressSpace().isConstantSpace()) {
 			return null;
@@ -191,24 +181,14 @@ public class PcodeFunctionParser {
 		//StringDataInstace.getStringDataInstance checks that charType is appropriate
 		//and returns StringDataInstace.NULL_INSTANCE if not
 		StringDataInstance stringDataInstance = StringDataInstance.getStringDataInstance(charType,
-			memoryBuffer, SettingsImpl.NO_SETTINGS, BUFFER_LENGTH);
-		String stringValue = stringDataInstance.getStringValue();
-		if (stringValue == null) {
+			memoryBuffer, charType.getDefaultSettings(), NULL_TERMINATOR_PROBE);
+		int detectedLength = stringDataInstance.getStringLength();
+		if (detectedLength == -1) {
 			return null;
 		}
-
-		String formatStringCandidate = "";
-		for (int i = 0; i < stringValue.length(); i++) {
-			if (!isAsciiReadable(stringValue.charAt(i))) {
-				break;
-			}
-			formatStringCandidate += stringValue.charAt(i);
-		}
-		return formatStringCandidate;
+		stringDataInstance = new StringDataInstance(charType, charType.getDefaultSettings(),
+			memoryBuffer, detectedLength, true);
+		return stringDataInstance.getStringValue();
 	}
 
-	private boolean isAsciiReadable(char c) {
-
-		return c >= READABLE_ASCII_LOWER_BOUND && c <= READABLE_ASCII_UPPER_BOUND;
-	}
 }

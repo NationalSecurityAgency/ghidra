@@ -21,6 +21,7 @@ import java.awt.event.KeyEvent;
 import javax.swing.Icon;
 import javax.swing.KeyStroke;
 
+import generic.theme.GIcon;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressIterator;
@@ -28,9 +29,10 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import resources.ResourceManager;
 
 public class NextPreviousLabelAction extends AbstractNextPreviousAction {
+
+	private static final Icon ICON = new GIcon("icon.plugin.navigation.label");
 
 	public NextPreviousLabelAction(PluginTool tool, String owner, String subGroup) {
 		super(tool, "Next Label", owner, subGroup);
@@ -38,7 +40,7 @@ public class NextPreviousLabelAction extends AbstractNextPreviousAction {
 
 	@Override
 	protected Icon getIcon() {
-		return ResourceManager.loadImage("images/L.gif");
+		return ICON;
 	}
 
 	@Override

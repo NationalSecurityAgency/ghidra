@@ -38,7 +38,7 @@ import ghidra.test.*;
 
 public class AbstractCodeBrowserNavigationTest extends AbstractGhidraHeadedIntegrationTest {
 	private TestEnv env;
-	private PluginTool tool;
+	protected PluginTool tool;
 	private AddressFactory addrFactory;
 	private DockingActionIf prev;
 	private DockingActionIf clearHistory;
@@ -199,9 +199,8 @@ public class AbstractCodeBrowserNavigationTest extends AbstractGhidraHeadedInteg
 		while (i++ < 50) {
 			TableComponentProvider<?>[] providers = getProviders();
 			if (providers.length > 0) {
-				GThreadedTablePanel<?> panel =
-					(GThreadedTablePanel<?>) TestUtils.getInstanceField("threadedPanel",
-						providers[0]);
+				GThreadedTablePanel<?> panel = (GThreadedTablePanel<?>) TestUtils
+						.getInstanceField("threadedPanel", providers[0]);
 				GTable table = panel.getTable();
 				while (panel.isBusy()) {
 					Thread.sleep(50);

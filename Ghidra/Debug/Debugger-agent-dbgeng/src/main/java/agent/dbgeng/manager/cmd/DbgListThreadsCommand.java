@@ -46,7 +46,7 @@ public class DbgListThreadsCommand extends AbstractDbgCommand<Map<DebugThreadId,
 			DebugSystemObjects so = manager.getSystemObjects();
 			so.setCurrentThreadId(id);
 			int tid = so.getCurrentThreadSystemId();
-			manager.getThreadComputeIfAbsent(id, process, tid);
+			manager.getThreadComputeIfAbsent(id, process, tid, false);
 		}
 		for (DebugThreadId id : new ArrayList<>(cur)) {
 			if (updatedThreadIds.contains(id)) {

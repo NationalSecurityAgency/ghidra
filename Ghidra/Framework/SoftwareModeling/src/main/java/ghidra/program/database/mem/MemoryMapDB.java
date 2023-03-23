@@ -1074,24 +1074,24 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	}
 
 	@Override
-	public MemoryBlock convertToInitialized(MemoryBlock unitializedBlock, byte initialValue)
+	public MemoryBlock convertToInitialized(MemoryBlock uninitializedBlock, byte initialValue)
 			throws MemoryBlockException, NotFoundException, LockException {
 		lock.acquire();
 		try {
-			checkBlock(unitializedBlock);
+			checkBlock(uninitializedBlock);
 			program.checkExclusiveAccess();
-			if (unitializedBlock.isInitialized()) {
+			if (uninitializedBlock.isInitialized()) {
 				throw new IllegalArgumentException(
 					"Only an Uninitialized Block may be converted to an Initialized Block");
 			}
-			if (unitializedBlock.getType() != MemoryBlockType.DEFAULT) {
+			if (uninitializedBlock.getType() != MemoryBlockType.DEFAULT) {
 				throw new IllegalArgumentException("Block is of a type that cannot be initialized");
 			}
-			long size = unitializedBlock.getSize();
+			long size = uninitializedBlock.getSize();
 			if (size > MAX_BLOCK_SIZE) {
 				throw new MemoryBlockException("Block too large to initialize");
 			}
-			MemoryBlockDB memBlock = (MemoryBlockDB) unitializedBlock;
+			MemoryBlockDB memBlock = (MemoryBlockDB) uninitializedBlock;
 			try {
 				memBlock.initializeBlock(initialValue);
 				initializeBlocks();
@@ -2196,11 +2196,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 		}
 		lock.acquire();
 		try {
-			if (monitor != null && is != null) {
-				is = new MonitoredInputStream(is, monitor);
-				monitor.initialize(size);
-			}
-			return fileBytesAdapter.createFileBytes(filename, offset, size, is);
+			return fileBytesAdapter.createFileBytes(filename, offset, size, is, monitor);
 		}
 		catch (IOCancelledException e) {
 			throw new CancelledException();

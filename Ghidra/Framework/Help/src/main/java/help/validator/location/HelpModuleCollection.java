@@ -26,9 +26,9 @@ import javax.help.Map.ID;
 import javax.help.TOCView;
 import javax.swing.tree.DefaultMutableTreeNode;
 
-import docking.help.CustomTOCView.CustomTreeItemDecorator;
 import help.HelpBuildUtils;
 import help.TOCItemProvider;
+import help.CustomTOCView.CustomTreeItemDecorator;
 import help.validator.model.*;
 
 /**

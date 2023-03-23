@@ -20,6 +20,9 @@
 
 #include "typeop.hh"
 
+extern ElementId ELEM_IOP;		///< Marshaling element \<iop>
+extern ElementId ELEM_UNIMPL;		///< Marshaling element \<unimpl>
+
 /// \brief Space for storing internal PcodeOp pointers as addresses
 ///
 /// It is convenient and efficient to replace the formally encoded
@@ -32,11 +35,11 @@
 class IopSpace : public AddrSpace {
 public:
   IopSpace(AddrSpaceManager *m,const Translate *t,int4 ind);
-  virtual void saveXmlAttributes(ostream &s,uintb offset) const { s << " space=\"iop\""; }
-  virtual void saveXmlAttributes(ostream &s,uintb offset,int4 size) const { s << " space=\"iop\""; }
+  virtual void encodeAttributes(Encoder &encoder,uintb offset) const { encoder.writeString(ATTRIB_SPACE, "iop"); }
+  virtual void encodeAttributes(Encoder &encoder,uintb offset,int4 size) const { encoder.writeString(ATTRIB_SPACE, "iop"); }
   virtual void printRaw(ostream &s,uintb offset) const;
   virtual void saveXml(ostream &s) const;
-  virtual void restoreXml(const Element *el);
+  virtual void decode(Decoder &decoder);
   static const string NAME;			///< Reserved name for the iop space
 };
 
@@ -107,7 +110,9 @@ public:
     warning = 8,		///< Warning has been generated for this op
     incidental_copy = 0x10,	///< Treat this as \e incidental for parameter recovery algorithms
     is_cpool_transformed = 0x20, ///< Have we checked for cpool transforms
-    stop_type_propagation = 0x40	///< Stop data-type propagation into output from descendants
+    stop_type_propagation = 0x40,	///< Stop data-type propagation into output from descendants
+    hold_output = 0x80,		///< Output varnode (of call) should not be removed if it is unread
+    concat_root = 0x100		///< Output of \b this is root of a CONCAT tree
   };
 private:
   TypeOp *opcode;		///< Pointer to class providing behavioral details of the operation
@@ -206,6 +211,10 @@ public:
   bool stopsTypePropagation(void) const { return ((addlflags&stop_type_propagation)!=0); }	///< Is data-type propagation from below stopped
   void setStopTypePropagation(void) { addlflags |= stop_type_propagation; }	///< Stop data-type propagation from below
   void clearStopTypePropagation(void) { addlflags &= ~stop_type_propagation; }	///< Allow data-type propagation from below
+  bool holdOutput(void) const { return ((addlflags&hold_output)!=0); }	///< If \b true, do not remove output as dead code
+  void setHoldOutput(void) { addlflags |= hold_output; }	///< Prevent output from being removed as dead code
+  bool isPartialRoot(void) const { return ((addlflags&concat_root)!=0); }	///< Output is root of CONCAT tree
+  void setPartialRoot(void) { addlflags |= concat_root; }	///< Mark \b this as root of CONCAT tree
   bool stopsCopyPropagation(void) const { return ((flags&no_copy_propagation)!=0); }	///< Does \b this allow COPY propagation
   void setStopCopyPropagation(void) { flags |= no_copy_propagation; }	///< Stop COPY propagation through inputs
   /// \brief Return \b true if this LOADs or STOREs from a dynamic \e spacebase pointer
@@ -226,7 +235,8 @@ public:
   void printRaw(ostream &s) const { opcode->printRaw(s,this); }	///< Print raw info about this op to stream
   const string &getOpName(void) const { return opcode->getName(); } ///< Return the name of this op
   void printDebug(ostream &s) const; ///< Print debug description of this op to stream
-  void saveXml(ostream &s) const; ///< Write an XML description of this op to stream
+  void encode(Encoder &encoder) const; ///< Encode a description of \b this op to stream
+
   /// \brief Retrieve the PcodeOp encoded as the address \e addr
   static PcodeOp *getOpFromConst(const Address &addr) { return (PcodeOp *)(uintp)addr.getOffset(); }
 
@@ -242,6 +252,31 @@ struct PcodeOpNode {
   int4 slot;		///< Slot indicating the input Varnode end-point of the edge
   PcodeOpNode(void) { op = (PcodeOp *)0; slot = 0; }	///< Unused constructor
   PcodeOpNode(PcodeOp *o,int4 s) { op = o; slot = s; }	///< Constructor
+  bool operator<(const PcodeOpNode &op2) const;		///< Simple comparator for putting edges in a sorted container
+};
+
+/// \brief A node in a tree structure of CPUI_PIECE operations
+///
+/// If a group of Varnodes are concatenated into a larger structure, this object is used to explicitly gather
+/// the PcodeOps (and Varnodes) in the data-flow and view them as a unit. In a properly formed tree, for each
+/// CPUI_PIECE operation, the addresses of the input Varnodes and the output Varnode align according to the
+/// concatenation. Internal Varnodes can have only one descendant, but the leaf and the root Varnodes
+/// can each have multiple descendants
+class PieceNode {
+  PcodeOp *pieceOp;	///< CPUI_PIECE operation combining this particular Varnode piece
+  int4 slot;		///< The particular slot of this Varnode within CPUI_PIECE
+  int4 typeOffset;	///< Byte offset into structure/array
+  bool leaf;		///< \b true if this is a leaf of the tree structure
+public:
+  PieceNode(PcodeOp *op,int4 sl,int4 off,bool l) { pieceOp=op; slot=sl; typeOffset=off; leaf = l; }	///< Constructor
+  bool isLeaf(void) const { return leaf; }		///< Return \b true if \b this node is a leaf of the tree structure
+  int4 getTypeOffset(void) const { return typeOffset; }	///< Get the byte offset of \b this node into the data-type
+  int4 getSlot(void) const { return slot; }	///< Get the input slot associated with \b this node
+  PcodeOp *getOp(void) const { return pieceOp; }	///< Get the PcodeOp reading \b this piece
+  Varnode *getVarnode(void) const { return pieceOp->getIn(slot); }	///< Get the Varnode representing \b this piece
+  static bool isLeaf(Varnode *rootVn,Varnode *vn,int4 typeOffset);
+  static Varnode *findRoot(Varnode *vn);
+  static void gatherPieces(vector<PieceNode> &stack,Varnode *rootVn,PcodeOp *op,int4 baseOffset);
 };
 
 /// A map from sequence number (SeqNum) to PcodeOp
@@ -322,5 +357,18 @@ public:
 extern int4 functionalEqualityLevel(Varnode *vn1,Varnode *vn2,Varnode **res1,Varnode **res2);
 extern bool functionalEquality(Varnode *vn1,Varnode *vn2);
 extern bool functionalDifference(Varnode *vn1,Varnode *vn2,int4 depth);
+
+/// Compare PcodeOps (as pointers) first, then slot
+/// \param op2 is the other edge to compare with \b this
+/// \return true if \b this should come before the other PcodeOp
+inline bool PcodeOpNode::operator<(const PcodeOpNode &op2) const
+
+{
+  if (op != op2.op)
+    return (op->getSeqNum().getTime() < op2.op->getSeqNum().getTime());
+  if (slot != op2.slot)
+    return (slot < op2.slot);
+  return false;
+}
 
 #endif

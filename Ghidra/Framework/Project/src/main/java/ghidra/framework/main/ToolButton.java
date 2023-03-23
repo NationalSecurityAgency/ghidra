@@ -18,7 +18,8 @@ package ghidra.framework.main;
 import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.dnd.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.List;
 
@@ -29,8 +30,6 @@ import org.jdesktop.animation.timing.TimingTargetAdapter;
 
 import docking.DockingWindowManager;
 import docking.dnd.*;
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.tool.ToolConstants;
 import docking.util.image.ToolIconURL;
 import docking.widgets.EmptyBorderButton;
@@ -40,20 +39,20 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.*;
 import ghidra.util.bean.GGlassPane;
 import ghidra.util.exception.AssertException;
+import help.Help;
+import help.HelpService;
+import util.CollectionUtils;
+import utility.function.Dummy;
 
 /**
  * Component that is a drop target for a DataTreeTransferable object.
  * If the object contains a domain file that is supported by a tool of
  * this tool template, then a tool is launched with the data in it.
  * <p>
- * This button can be used in one of two ways: to launch new instances of an associated tool 
+ * This button can be used in one of two ways: to launch new instances of an associated tool
  * template, or to represent a running tool.
  */
 class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
-
-	private static final Runnable DUMMY_CALLBACK_RUNNABLE = () -> {
-		// dummy
-	};
 
 	private DropTarget dropTarget;
 	private DropTgtAdapter dropTargetAdapter;
@@ -67,12 +66,13 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 	private ToolTemplate template;
 	private PluginTool associatedRunningTool;
 
-	private DefaultToolChangeListener toolChangeListener;
 	private ToolServices toolServices;
 
 	/**
 	 * Construct a tool button that does not represent a running tool, using
 	 * the default tool icon.
+	 * @param plugin the plugin
+	 * @param template the template
 	 */
 	ToolButton(FrontEndPlugin plugin, ToolTemplate template) {
 		this(plugin, null, template, template.getIconURL());
@@ -82,6 +82,9 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 	/**
 	 * Construct a tool label that represents a running tool, using the
 	 * default RUNNING_TOOL icon.
+	 * @param plugin the plugin
+	 * @param tool the running tool
+	 * @param template the template
 	 */
 	ToolButton(FrontEndPlugin plugin, PluginTool tool, ToolTemplate template) {
 		this(plugin, tool, template, tool.getIconURL());
@@ -127,80 +130,38 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 		}
 
 		if (!isRunningTool()) {
-			toolChangeListener = new ToolChangeListener(template);
-			toolServices.addDefaultToolChangeListener(toolChangeListener);
 			setIcon(generateIcon());
 		}
 	}
 
-	/**
-	 * Get the tool tip text.
-	 */
 	@Override
-	public String getToolTipText(MouseEvent event) {
+	public String getToolTipText() {
 		if (associatedRunningTool != null) {
-			if (associatedRunningTool instanceof PluginTool) {
-				return "<html>" + HTMLUtilities.escapeHTML(
-					((PluginTool) associatedRunningTool).getToolFrame().getTitle());
-			}
-
-			return "<html>" + HTMLUtilities.escapeHTML(associatedRunningTool.getName());
+			return "<html>" +
+				HTMLUtilities.escapeHTML(associatedRunningTool.getToolFrame().getTitle());
 		}
 		return "<html>" + HTMLUtilities.escapeHTML(template.getName());
 	}
 
 	public void launchTool(DomainFile domainFile) {
-		doLaunchTool(new DomainFile[] { domainFile });
+		openFilesAndOpenToolAsNecessary(List.of(domainFile), null);
 	}
 
-//==================================================================================================    
+//==================================================================================================
 // Droppable interface
-//==================================================================================================    
+//==================================================================================================
 
-	/**
-	 * Set drag feedback according to the OK parameter.
-	 * @param ok true means the drop action is OK
-	 * @param e event that has current state of drag and drop operation
-	 */
 	@Override
 	public void dragUnderFeedback(boolean ok, DropTargetDragEvent e) {
 		// nothing to do
 	}
 
-	/**
-	 * Return true if is OK to drop the transferable at the location
-	 * specified the event.
-	 * @param e event that has current state of drag and drop operation
-	 */
 	@Override
-	@SuppressWarnings("unchecked")
-	// our data; cast is OK
 	public boolean isDropOk(DropTargetDragEvent e) {
 		DataFlavor[] flavors = e.getCurrentDataFlavors();
+		Transferable transferable = e.getTransferable();
 		try {
-			for (DataFlavor element : flavors) {
-				if (element.equals(DataTreeDragNDropHandler.localDomainFileFlavor)) {
-					Object draggedData = e.getTransferable().getTransferData(
-						DataTreeDragNDropHandler.localDomainFileFlavor);
-					return containsSupportedDataTypes((List<DomainFile>) draggedData);
-				}
-				else if (element.equals(ToolButtonTransferable.localToolButtonFlavor)) {
-					Object draggedData = e.getTransferable().getTransferData(
-						ToolButtonTransferable.localToolButtonFlavor);
-					ToolButton draggedButton = (ToolButton) draggedData;
-					if (draggedButton != null) {
-						if (draggedButton.associatedRunningTool == associatedRunningTool) {
-							// tool chest -> tool chest is not allowed (both runningTools are null).
-							// runningTool -> same runningTool is not allowed.
-							return false;
-						}
-						return true;
-					}
-				}
-				else if (element.equals(VersionInfoTransferable.localVersionInfoFlavor)) {
-					return true;
-				}
-			}
+			return checkForDrop(flavors, transferable);
 		}
 		catch (UnsupportedFlavorException e1) {
 			// don't care; return false
@@ -211,9 +172,39 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 		return false;
 	}
 
+	@SuppressWarnings("unchecked") 	// our data; cast is OK
+	private boolean checkForDrop(DataFlavor[] flavors, Transferable transferable)
+			throws UnsupportedFlavorException, IOException {
+
+		for (DataFlavor flavor : flavors) {
+			if (flavor.equals(DataTreeDragNDropHandler.localDomainFileFlavor)) {
+				Object draggedData =
+					transferable.getTransferData(DataTreeDragNDropHandler.localDomainFileFlavor);
+				return containsSupportedDataTypes((List<DomainFile>) draggedData);
+			}
+			else if (flavor.equals(ToolButtonTransferable.localToolButtonFlavor)) {
+				Object draggedData =
+					transferable.getTransferData(ToolButtonTransferable.localToolButtonFlavor);
+				ToolButton draggedButton = (ToolButton) draggedData;
+				if (draggedButton != null) {
+					if (draggedButton.associatedRunningTool == associatedRunningTool) {
+						// tool chest -> tool chest is not allowed (both runningTools are null).
+						// runningTool -> same runningTool is not allowed.
+						return false;
+					}
+					return true;
+				}
+			}
+			else if (flavor.equals(VersionInfoTransferable.localVersionInfoFlavor)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	/**
 	 * The given list must contain only valid domain files (i.e., no folders or null items)
-	 * @param nodeList The list of DataTreeNode objects to validate
+	 * @param fileList The list of file objects to validate
 	 * @return true if <b>all</b> items in the list are supported
 	 */
 	private boolean containsSupportedDataTypes(List<DomainFile> fileList) {
@@ -228,23 +219,11 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 		return fileList.size() > 0;
 	}
 
-	/**
-	 * Revert back to normal if any drag feedback was set.
-	 */
 	@Override
 	public void undoDragUnderFeedback() {
 		// nothing to do
 	}
 
-	/**
-	 * Add the object to the droppable component. The DropTgtAdapter
-	 * calls this method from its drop() method.
-	 *
-	 * @param obj Transferable object that is to be dropped.
-	 * @param e  has current state of drop operation
-	 * @param f represents the opaque concept of a data format as
-	 * would appear on a clipboard, during drag and drop.
-	 */
 	@Override
 	public void add(Object obj, DropTargetDropEvent event, DataFlavor f) {
 
@@ -254,8 +233,7 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 			@SuppressWarnings("unchecked")
 			// we put the data in
 			List<DomainFile> list = (List<DomainFile>) obj;
-			DomainFile[] domainFiles = list.toArray(new DomainFile[list.size()]);
-			openFilesAndOpenToolAsNecessary(domainFiles);
+			openFilesAndOpenToolAsNecessary(list, null);
 		}
 		else if (f.equals(VersionInfoTransferable.localVersionInfoFlavor)) {
 			VersionInfo info = (VersionInfo) obj;
@@ -269,7 +247,7 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 				DomainFile domainFile = versionedObj.getDomainFile();
 				if (isSupportedDataType(domainFile)) {
 					resetButtonAfterDrag(this);
-					openFilesAndOpenToolAsNecessary(new DomainFile[] { domainFile },
+					openFilesAndOpenToolAsNecessary(List.of(domainFile),
 						() -> versionedObj.release(ToolButton.this));
 				}
 				else {
@@ -285,23 +263,12 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 		}
 	}
 
-	private void showFilesNotAcceptedMessage(DomainFile[] domainFiles) {
-		StringBuffer buffer = new StringBuffer("Tool did not accept files: ");
-		for (int i = 0; i < domainFiles.length; i++) {
-			buffer.append(domainFiles[i].getName());
-			if (i != domainFiles.length - 1) {
-				buffer.append(", ");
-			}
-		}
-		Msg.showError(this, null, "Error", buffer.toString());
-	}
-
 	private void addFromToolButton(ToolButton toolButton) {
 		plugin.setToolButtonTransferable(null);
 		PluginTool tool = null;
 		if (associatedRunningTool != null && toolButton.associatedRunningTool != null) {
 			final PluginTool t2 = toolButton.associatedRunningTool;
-			SwingUtilities.invokeLater(() -> connectTools(associatedRunningTool, t2));
+			Swing.runLater(() -> connectTools(associatedRunningTool, t2));
 			return;
 		}
 
@@ -310,14 +277,14 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 			tool = plugin.getActiveWorkspace().runTool(toolButton.template);
 			accepted = tool.acceptDomainFiles(associatedRunningTool.getDomainFiles());
 			final PluginTool t = tool;
-			SwingUtilities.invokeLater(() -> connectTools(t, associatedRunningTool));
+			Swing.runLater(() -> connectTools(t, associatedRunningTool));
 		}
 		else {
 			tool = plugin.getActiveWorkspace().runTool(template);
 			accepted = tool.acceptDomainFiles(toolButton.associatedRunningTool.getDomainFiles());
 			final PluginTool t = tool;
 			final PluginTool t2 = toolButton.associatedRunningTool;
-			SwingUtilities.invokeLater(() -> connectTools(t, t2));
+			Swing.runLater(() -> connectTools(t, t2));
 		}
 
 		if (!accepted) {
@@ -337,9 +304,6 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 		connectAll(tc);
 	}
 
-	/**
-	 * Connect all events in the connection object.
-	 */
 	private void connectAll(ToolConnection tc) {
 		String[] events = tc.getEvents();
 		for (String element : events) {
@@ -350,10 +314,6 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 			tc.getConsumer().getName());
 	}
 
-	/**
-	 * Return true if the domain file's object class is supported by
-	 * this tool.
-	 */
 	private boolean isSupportedDataType(DomainFile file) {
 		if (file == null) {
 			return false;
@@ -372,13 +332,13 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 	}
 
 	private DomainObject getVersionedObject(DomainFile file, int versionNumber) {
-		GetVersionedObjectTask task = new GetVersionedObjectTask(this, file, versionNumber);
+		GetDomainObjectTask task = new GetDomainObjectTask(this, file, versionNumber);
 		plugin.getTool().execute(task, 250);
-		return task.getVersionedObject();
+		return task.getDomainObject();
 	}
 
-//==================================================================================================    
-// Draggable interface 
+//==================================================================================================
+// Draggable interface
 //==================================================================================================
 
 	/** Fix the button state after dragging/dropping, since this is broken in Java */
@@ -404,7 +364,7 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 
 		// Unusual Code Alert!
 		// When dragging, we do not get mouseReleased() events, which we use to launch tools.
-		// In this case, the drag was cancelled; if we are over ourselves, then simulate 
+		// In this case, the drag was cancelled; if we are over ourselves, then simulate
 		// the Java-eaten mouseReleased() call
 		Container parent = getParent();
 		if (parent == null) {
@@ -441,44 +401,21 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 		return true;
 	}
 
-	/**
-	 * Called by the DragGestureAdapter to start the drag.
-	 */
 	@Override
 	public DragSourceListener getDragSourceListener() {
 		return dragSourceAdapter;
 	}
 
-	/**
-	 * Get the object to transfer.
-	 * @param p location of object to transfer
-	 * @return object to transfer
-	 */
 	@Override
 	public Transferable getTransferable(Point p) {
 		return plugin.getToolButtonTransferable();
 	}
 
-	/**
-	 * Do the move operation; called when the drag and drop operation
-	 * completes.
-	 * @see ghidra.util.bean.dnd.DragSourceAdapter#dragDropEnd
-	 */
 	@Override
 	public void move() {
 		resetButtonAfterDrag(this);
 	}
 
-	/**
-	 * Get the drag actions supported by this drag source:
-	 * <UL>
-	 * <li>DnDConstants.ACTION_MOVE
-	 * <li>DnDConstants.ACTION_COPY
-	 * <li>DnDConstants.ACTION_COPY_OR_MOVE
-	 * </li>
-	 *
-	 * @return the drag actions
-	 */
 	@Override
 	public int getDragAction() {
 		return dragAction;
@@ -486,11 +423,8 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 
 //==================================================================================================
 // Package methods
-//==================================================================================================    
+//==================================================================================================
 
-	/**
-	 * Set the tool template for this button.
-	 */
 	void setToolTemplate(ToolTemplate template, Icon icon) {
 		this.template = template;
 		setIcon(icon);
@@ -500,16 +434,10 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 		return template;
 	}
 
-	/**
-	 * Return whether this tool button represents a running tool.
-	 */
 	boolean isRunningTool() {
 		return associatedRunningTool != null;
 	}
 
-	/**
-	 * Close the running tool.
-	 */
 	void closeTool() {
 		associatedRunningTool.close();
 	}
@@ -519,8 +447,6 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 	}
 
 	void dispose() {
-		toolServices.removeDefaultToolChangeListener(toolChangeListener);
-
 		plugin = null;
 		template = null;
 		associatedRunningTool = null;
@@ -538,23 +464,17 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 	private void activateTool() {
 		if (associatedRunningTool == null) {
 			// this is a button on the tool bar, so launch a new tool
-			doLaunchTool(null);
+			openFilesAndOpenToolAsNecessary(null, null);
 		}
 		else {
 			associatedRunningTool.toFront();
 		}
 	}
 
-	private void doLaunchTool(DomainFile[] domainFiles) {
-		openFilesAndOpenToolAsNecessary(domainFiles);
-	}
-
-	private void openFilesAndOpenToolAsNecessary(final DomainFile[] domainFiles) {
-		openFilesAndOpenToolAsNecessary(domainFiles, DUMMY_CALLBACK_RUNNABLE);
-	}
-
-	private void openFilesAndOpenToolAsNecessary(final DomainFile[] domainFiles,
+	private void openFilesAndOpenToolAsNecessary(List<DomainFile> domainFiles,
 			Runnable finishedCallback) {
+
+		finishedCallback = Dummy.ifNull(finishedCallback);
 
 		if (associatedRunningTool != null) {
 			// this button has a running tool, no need to open one
@@ -567,7 +487,7 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 		Component glassPane = toolFrame.getGlassPane();
 		if (!(glassPane instanceof GGlassPane)) {
 			// We cannot perform the tool launching animation, so just do the old fashion way
-			Msg.debug(this, "Found root frame without a GhidraGlassPane registered!");
+			Msg.debug(this, "Found root frame without a GGlassPane registered!");
 
 			// try to recover without animation
 			PluginTool newTool = plugin.getActiveWorkspace().runTool(template);
@@ -580,9 +500,8 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 			finishedCallback);
 	}
 
-	private void launchToolWithAnimationAndOpenFiles(final DomainFile[] domainFiles,
-			final JFrame toolFrame, final GGlassPane toolGlassPane,
-			final Runnable finishedCallback) {
+	private void launchToolWithAnimationAndOpenFiles(List<DomainFile> domainFiles, JFrame toolFrame,
+			GGlassPane toolGlassPane, Runnable finishedCallback) {
 
 		Icon icon = getIcon();
 		Point buttonLocation = getLocation();
@@ -602,9 +521,9 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 		// the final point over which the image will be painted
 		Rectangle endBounds = new Rectangle(new Point(0, 0), frameSize);
 
-		// Create our animation code: a zooming effect and an effect to move where the image is 
-		// painted.  These effects are independent code-wise, but work together in that the 
-		// mover will set the location and size, and the zoomer will will paint the image with 
+		// Create our animation code: a zooming effect and an effect to move where the image is
+		// painted.  These effects are independent code-wise, but work together in that the
+		// mover will set the location and size, and the zoomer will will paint the image with
 		// a transparency and a zoom level, which is affected by the movers bounds changing.
 		Image image = ZoomedImagePainter.createIconImage(icon);
 		final ZoomedImagePainter painter = new ZoomedImagePainter(startBounds, image);
@@ -612,8 +531,6 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 		MoveImageRunner moveRunner =
 			new MoveImageRunner(toolGlassPane, startBounds, endBounds, painter);
 
-		// a callback that lets us know when to open the given files and restore the state of
-		// the GhidraGlassPane
 		TimingTarget finishedTarget = new TimingTargetAdapter() {
 			@Override
 			public void end() {
@@ -621,8 +538,7 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 				try {
 					// cleanup any residual painting effects
 					toolGlassPane.paintImmediately(toolGlassPane.getBounds());
-					PluginTool newTool = plugin.getActiveWorkspace().runTool(template);
-					openDomainFiles(newTool, domainFiles);
+					openDomainFiles(domainFiles);
 				}
 				finally {
 					// always restore the cursor
@@ -640,19 +556,26 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 		zoomRunner.run();
 	}
 
-	private void openDomainFiles(PluginTool tool, DomainFile[] domainFiles) {
-		if (domainFiles == null) {
-			return;
+	private void openDomainFiles(List<DomainFile> domainFiles) {
+		if (CollectionUtils.isBlank(domainFiles)) {
+			plugin.getActiveWorkspace().runTool(template);
 		}
-		boolean accepted = tool.acceptDomainFiles(domainFiles);
-		if (!accepted) {
-			showFilesNotAcceptedMessage(domainFiles);
+		else {
+			PluginTool tool = toolServices.launchTool(template.getName(), domainFiles);
+			if (tool == null) {
+				Msg.showError(this, getParent(), "Failed to Launch Tool",
+					"Failed to launch " + template.getName() + " tool.\nSee log for details.");
+			}
 		}
 	}
 
-	/**
-	 * Set up the objects so we can be a drag and drop site.
-	 */
+	private void openDomainFiles(PluginTool tool, List<DomainFile> domainFiles) {
+		if (domainFiles == null) {
+			return;
+		}
+		tool.acceptDomainFiles(domainFiles.toArray(DomainFile[]::new));
+	}
+
 	private void setUpDragDrop() {
 
 		acceptableFlavors = new DataFlavor[] { DataTreeDragNDropHandler.localDomainFileFlavor,
@@ -692,24 +615,8 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 	}
 
 //==================================================================================================
-// Inner Classes    
-//==================================================================================================    
-
-	private class ToolChangeListener implements DefaultToolChangeListener {
-		private final ToolTemplate toolTemplate;
-
-		public ToolChangeListener(ToolTemplate toolTemplate) {
-			this.toolTemplate = toolTemplate;
-		}
-
-		@Override
-		public void defaultToolChanged(String oldName, String newName) {
-			String myName = toolTemplate.getName();
-			if (myName.equals(oldName) || myName.equals(newName)) {
-				setIcon(generateIcon());
-			}
-		}
-	}
+// Inner Classes
+//==================================================================================================
 
 	private class ToolButtonDropTgtAdapter extends DropTgtAdapter {
 		private boolean draggingOverValidDropTarget = false;

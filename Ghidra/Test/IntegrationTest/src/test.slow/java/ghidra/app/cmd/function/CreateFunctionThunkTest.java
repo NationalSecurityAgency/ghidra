@@ -25,9 +25,11 @@ import ghidra.framework.cmd.Command;
 import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramBuilder;
+import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.data.DWordDataType;
 import ghidra.program.model.data.DataType;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.Program;
+import ghidra.program.model.listing.*;
+import ghidra.program.model.symbol.SourceType;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 
@@ -70,6 +72,7 @@ public class CreateFunctionThunkTest extends AbstractGhidraHeadedIntegrationTest
 		tool.execute(cmd, program);
 		waitForBusyTool(tool);
 	}
+	
 
 	protected void setAnalysisOptions(String optionName) {
 		int txId = program.startTransaction("Analyze");
@@ -127,5 +130,82 @@ public class CreateFunctionThunkTest extends AbstractGhidraHeadedIntegrationTest
 		Function isThunk = program.getFunctionManager().getFunctionAt(builder.addr(0x466050));
 		assertEquals(true, isThunk.isThunk());
 		assertEquals("chdir", isThunk.getName());
+	}
+	
+	/**
+	 * This tests the forcing of a function to be a thunk with CreateThunkFunctionCmd
+	 * Tests that the Function start analyzer will create a thunk given the thunk tag on a matching function
+	 * That the ARM Thumb language has a thunking pattern.
+	 * 
+	 * That the thunking function can be found with the constant reference analyzer
+	 * 
+	 */
+	@Test
+	public void testArmThumbThunk() throws Exception {
+
+		builder = new ProgramBuilder("thunk", ProgramBuilder._ARM);
+
+		builder.setBytes("0x00015d9c", "00 00 00 00 03 b4 01 48 01 90 01 bd ad 5d 01 00 10 bd");
+		builder.setRegisterValue("TMode", "0x00015da0", "0x00015da0", 1);
+		builder.disassemble("0x00015da0", 27, true);
+
+		
+		builder.createFunction("0x00015da0");
+		builder.createLabel("0x15dac", "chdir");
+		builder.createFunction("0x15dac");
+
+		program = builder.getProgram();
+		
+		builder.applyDataType("0x00015d9c", DWordDataType.dataType);
+
+		analyze();
+		
+		
+		Instruction instruction = program.getListing().getInstructionAt(builder.addr(0x15dac));
+		assertNotNull(instruction);
+		
+
+		Function isThunk = program.getFunctionManager().getFunctionAt(builder.addr(0x00015da0));
+		assertEquals(true, isThunk.isThunk());
+		assertEquals("chdir", isThunk.getName());
+	}
+	
+	/**
+	 * This tests the forcing of a function to be a thunk with CreateThunkFunctionCmd
+	 * Tests that the Function start analyzer will create a thunk given the thunk tag on a matching function
+	 * That the ARM Thumb language has a thunking pattern.
+	 * 
+	 * That the thunking function can be found with the constant reference analyzer
+	 * 
+	 */
+	@Test
+	public void testArmThumbThunk2() throws Exception {
+
+		builder = new ProgramBuilder("thunk", ProgramBuilder._ARM);
+
+		builder.setBytes("0x10000", "10 b5 02 4c 24 68 01 94 10 bd 00 00 14 00 01 00 01 20 70 47 11 00 01 00");
+		builder.setRegisterValue("TMode", "0x10000", "0x10000", 1);
+		builder.disassemble("0x10000", 27, true);
+
+		
+		builder.createLabel("00010000", "thunker");
+		builder.createFunction("0x10000");
+		builder.createLabel("00010010", "thunkee");
+		builder.createFunction("00010010");
+
+		program = builder.getProgram();
+		
+		//builder.applyDataType("0x00015d9c", DWordDataType.dataType);
+
+		analyze();
+		
+		
+		Instruction instruction = program.getListing().getInstructionAt(builder.addr(0x10000));
+		assertNotNull(instruction);
+		
+
+		Function isThunk = program.getFunctionManager().getFunctionAt(builder.addr(0x10000));
+		assertEquals(true, isThunk.isThunk());
+		assertEquals("thunker", isThunk.getName());
 	}
 }

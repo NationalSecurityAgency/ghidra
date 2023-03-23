@@ -750,6 +750,18 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 			!editAction.isEnabledForContext(browser.getProvider().getActionContext(null)));
 	}
 
+	@Test
+	public void testIllegalCharacters() throws Exception {
+		openX86ProgramInTool();
+		Address addr = addr(0x01006420);
+		CodeUnit cu = program.getListing().getCodeUnitAt(addr);
+
+		String illegal = "null\0 comment";
+		String legal = "null comment";
+		setAt(addr, CodeUnit.PRE_COMMENT, illegal, "OK");
+		assertEquals(legal, cu.getComment(CodeUnit.PRE_COMMENT));
+	}
+
 	private void setAt(Address addr, int commentType, String comment, String nameOfButtonToClick)
 			throws Exception {
 

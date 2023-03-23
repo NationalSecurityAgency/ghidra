@@ -1407,7 +1407,8 @@ public class AddressTable {
 	 * relocatable programs. Every address should be in the relocation table.
 	 * 
 	 * @param target location to check
-	 * @return
+	 * @return false if relocations are defined but not at the specified target address, 
+	 * otherwise true.
 	 */
 	private static boolean isValidRelocationAddress(Program program, Address target) {
 		// If the program is relocatable, and this address is not one of the relocations
@@ -1415,7 +1416,7 @@ public class AddressTable {
 		RelocationTable relocationTable = program.getRelocationTable();
 		if (relocationTable.isRelocatable()) {
 			// if it is relocatable, then there should be no pointers in memory, other than relacatable ones
-			if (relocationTable.getSize() > 0 && relocationTable.getRelocation(target) == null) {
+			if (relocationTable.getSize() != 0 && !relocationTable.hasRelocation(target)) {
 				return false;
 			}
 		}

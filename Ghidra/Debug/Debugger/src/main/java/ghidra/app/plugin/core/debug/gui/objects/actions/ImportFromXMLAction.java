@@ -21,7 +21,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 import javax.swing.SwingUtilities;
 
 import org.jdom.Attribute;
@@ -32,6 +32,7 @@ import docking.ActionContext;
 import docking.action.KeyBindingData;
 import docking.action.MenuData;
 import docking.widgets.filechooser.GhidraFileChooserMode;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.debug.gui.objects.DebuggerObjectsProvider;
 import ghidra.app.plugin.core.debug.gui.objects.ObjectContainer;
 import ghidra.app.plugin.core.debug.gui.objects.components.DummyTargetObject;
@@ -40,11 +41,10 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.xml.XmlUtilities;
-import resources.ResourceManager;
 
 public class ImportFromXMLAction extends ImportExportAsAction {
 
-	protected ImageIcon ICON_XML = ResourceManager.loadImage("images/text-xml.png");
+	protected static final Icon ICON_XML = new GIcon("icon.debugger.display.import.xml");
 
 	public ImportFromXMLAction(PluginTool tool, String owner, DebuggerObjectsProvider provider) {
 		super("ImportFromXML", tool, owner, provider);

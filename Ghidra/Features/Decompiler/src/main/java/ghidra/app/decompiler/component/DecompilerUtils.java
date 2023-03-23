@@ -382,8 +382,6 @@ public class DecompilerUtils {
 		Address minAddress = token.getMinAddress();
 		Address maxAddress = token.getMaxAddress();
 		maxAddress = maxAddress == null ? minAddress : maxAddress;
-		minAddress = space.getOverlayAddress(minAddress);
-		maxAddress = space.getOverlayAddress(maxAddress);
 		addrs.addRange(minAddress, maxAddress);
 	}
 
@@ -602,8 +600,8 @@ public class DecompilerUtils {
 		return brace;
 	}
 
-	private static ClangSyntaxToken moveToNextBrace(ClangToken startToken,
-			List<ClangNode> list, String targetBrace, boolean forward) {
+	private static ClangSyntaxToken moveToNextBrace(ClangToken startToken, List<ClangNode> list,
+			String targetBrace, boolean forward) {
 
 		int balance = 0;
 		int index = list.indexOf(startToken);

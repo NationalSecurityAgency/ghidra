@@ -48,7 +48,7 @@ public class SeparatorFieldFactory extends FieldFactory {
 	/**
 	 * Constructor
 	 * @param model the model that the field belongs to.
-	 * @param hsProvider the HightLightStringProvider.
+	 * @param hlProvider the HightLightStringProvider.
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
@@ -71,7 +71,8 @@ public class SeparatorFieldFactory extends FieldFactory {
 			sb.append(sepChar);
 		}
 
-		AttributedString as = new AttributedString(sb.toString(), color, getMetrics());
+		AttributedString as =
+			new AttributedString(sb.toString(), ListingColors.SEPARATOR, getMetrics());
 		FieldElement text = new TextFieldElement(as, 0, 0);
 		return ListingTextField.createSingleLineTextField(this, proxy, text, startX + varWidth,
 			width, hlProvider);
@@ -118,5 +119,4 @@ public class SeparatorFieldFactory extends FieldFactory {
 			ToolOptions displayOptions, ToolOptions fieldOptions) {
 		return new SeparatorFieldFactory(formatModel, provider, displayOptions, fieldOptions);
 	}
-
 }

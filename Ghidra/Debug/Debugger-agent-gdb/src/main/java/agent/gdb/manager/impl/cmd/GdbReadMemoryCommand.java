@@ -18,21 +18,21 @@ package agent.gdb.manager.impl.cmd;
 import java.nio.ByteBuffer;
 import java.util.List;
 
-import com.google.common.collect.*;
-
 import agent.gdb.manager.GdbThread;
 import agent.gdb.manager.evt.GdbCommandDoneEvent;
 import agent.gdb.manager.impl.GdbManagerImpl;
 import agent.gdb.manager.impl.GdbPendingCommand;
 import agent.gdb.manager.parsing.GdbMiParser.GdbMiFieldList;
 import agent.gdb.manager.parsing.GdbParsingUtils;
+import generic.ULongSpan;
+import generic.ULongSpan.*;
 import ghidra.util.Msg;
 import ghidra.util.NumericUtilities;
 
 /**
  * Implementation of {@link GdbThread#readMemory(long, ByteBuffer, int)}
  */
-public class GdbReadMemoryCommand extends AbstractGdbCommandWithThreadId<RangeSet<Long>> {
+public class GdbReadMemoryCommand extends AbstractGdbCommandWithThreadId<ULongSpanSet> {
 
 	private final long addr;
 	private final ByteBuffer buf;
@@ -52,10 +52,10 @@ public class GdbReadMemoryCommand extends AbstractGdbCommandWithThreadId<RangeSe
 	}
 
 	@Override
-	public RangeSet<Long> complete(GdbPendingCommand<?> pending) {
+	public ULongSpanSet complete(GdbPendingCommand<?> pending) {
 		GdbCommandDoneEvent done = pending.checkCompletion(GdbCommandDoneEvent.class);
 		List<GdbMiFieldList> rangeList = done.assumeMemoryContentsList();
-		RangeSet<Long> rangeSet = TreeRangeSet.create();
+		MutableULongSpanSet spanSet = new DefaultULongSpanSet();
 		int pos = buf.position();
 		int max = pos;
 		for (GdbMiFieldList r : rangeList) {
@@ -74,9 +74,9 @@ public class GdbReadMemoryCommand extends AbstractGdbCommandWithThreadId<RangeSe
 			max = Math.max(max, newPos + length);
 			buf.position(newPos);
 			buf.put(contents);
-			rangeSet.add(Range.closedOpen(start, end));
+			spanSet.add(ULongSpan.extent(start, length));
 		}
 		buf.position(max);
-		return rangeSet;
+		return spanSet;
 	}
 }

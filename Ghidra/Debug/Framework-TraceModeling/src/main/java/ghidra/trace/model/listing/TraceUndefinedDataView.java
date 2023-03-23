@@ -15,6 +15,13 @@
  */
 package ghidra.trace.model.listing;
 
+/**
+ * A view of default / undefined data units
+ *
+ * <p>
+ * This excludes all instructions and defined data. Typically, it is used to find ranges of
+ * undefined addresses.
+ */
 public interface TraceUndefinedDataView extends TraceBaseCodeUnitsView<TraceData> {
 	// Just finalize the typing
 }

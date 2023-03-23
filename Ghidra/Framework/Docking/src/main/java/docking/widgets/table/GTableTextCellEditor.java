@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +17,36 @@ package docking.widgets.table;
 
 import javax.swing.*;
 
+import docking.DockingUtils;
+import docking.UndoRedoKeeper;
+
 public class GTableTextCellEditor extends DefaultCellEditor {
 	private static final Object TABLE_FOCUS_CELL_HIGHLIGHT_BORDER =
 		"Table.focusCellHighlightBorder";
+
+	private UndoRedoKeeper undoRedoKeeper;
 
 	public GTableTextCellEditor(JTextField textField) {
 		super(textField);
 		setClickCountToStart(2);
 
 		textField.setBorder(UIManager.getBorder(TABLE_FOCUS_CELL_HIGHLIGHT_BORDER));
+
+		undoRedoKeeper = DockingUtils.installUndoRedo(textField);
+	}
+
+	@Override
+	public boolean stopCellEditing() {
+		if (super.stopCellEditing()) {
+			undoRedoKeeper.clear();
+			return true;
+		}
+		return false;
+	}
+
+	@Override
+	public void cancelCellEditing() {
+		super.cancelCellEditing();
+		undoRedoKeeper.clear();
 	}
 }

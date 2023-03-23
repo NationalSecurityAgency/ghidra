@@ -17,12 +17,11 @@ package ghidra.docking.settings;
 
 import java.io.Serializable;
 import java.util.*;
+import java.util.function.Predicate;
 
 import javax.help.UnsupportedOperationException;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
-import com.google.common.base.Predicate;
 
 import ghidra.util.Msg;
 
@@ -107,7 +106,7 @@ public class SettingsImpl implements Settings, Serializable {
 			return false;
 		}
 		if (allowedSettingPredicate != null &&
-			!allowedSettingPredicate.apply(settingsDefinition.getStorageKey())) {
+			!allowedSettingPredicate.test(settingsDefinition.getStorageKey())) {
 			return false;
 		}
 		return true;
@@ -124,7 +123,7 @@ public class SettingsImpl implements Settings, Serializable {
 			return false;
 		}
 		if (name != null && allowedSettingPredicate != null &&
-			!allowedSettingPredicate.apply(name)) {
+			!allowedSettingPredicate.test(name)) {
 			Msg.warn(this, "Ignored disallowed setting '" + name + "'");
 			return false;
 		}

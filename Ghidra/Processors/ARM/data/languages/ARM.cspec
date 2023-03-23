@@ -120,6 +120,7 @@
   
   <callfixup name="switch8_r3">
     <target name="switch8_r3"/>
+    <target name="__ARM_common_switch8"/>
     <pcode>
       <body><![CDATA[
             tmpptr = lr - 1;

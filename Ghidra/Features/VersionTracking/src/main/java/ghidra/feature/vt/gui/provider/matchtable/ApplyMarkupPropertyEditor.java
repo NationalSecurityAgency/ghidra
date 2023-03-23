@@ -27,7 +27,6 @@ import javax.swing.*;
 import javax.swing.border.TitledBorder;
 
 import docking.DockingWindowManager;
-import docking.help.HelpService;
 import docking.widgets.button.GRadioButton;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.combobox.GComboBox;
@@ -42,6 +41,7 @@ import ghidra.framework.options.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.exception.InvalidInputException;
 import ghidra.util.layout.*;
+import help.HelpService;
 
 /**
  * The ApplyMarkupPropertyEditor provides a custom GUI layout for the options that are used when 

@@ -18,7 +18,7 @@ package ghidra.app;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGuiTest;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
@@ -56,7 +56,7 @@ public class SampleLocationGenerator implements GhidraLocationGenerator {
 	 * @param cb
 	 */
 	public void toggleOpenComposites(final CodeBrowserPlugin cb) {
-		AbstractGenericTest.runSwing(() -> {
+		AbstractGuiTest.runSwing(() -> {
 			Data data = program.getListing().getDataAt(addr(0x100d0f3));
 			if (data.getDataType() instanceof Composite) {
 				cb.toggleOpen(data);

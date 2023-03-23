@@ -24,4 +24,4 @@ SCRIPT_DIR="${SCRIPT_FILE%/*}"
 
 # Launch Ghidra in debug mode
 # DEBUG_ADDRESS set via environment for launch.sh
-DEBUG_ADDRESS=${DEBUG_ADDRESS} "${SCRIPT_DIR}"/launch.sh "${LAUNCH_MODE}" Ghidra "${MAXMEM}" "" ghidra.GhidraRun "$@"
+DEBUG_ADDRESS=${DEBUG_ADDRESS} "${SCRIPT_DIR}"/launch.sh "${LAUNCH_MODE}" jdk Ghidra "${MAXMEM}" "" ghidra.GhidraRun "$@"

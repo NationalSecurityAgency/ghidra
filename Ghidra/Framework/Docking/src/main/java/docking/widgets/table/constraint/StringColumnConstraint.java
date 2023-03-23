@@ -77,7 +77,7 @@ public abstract class StringColumnConstraint implements ColumnConstraint<String>
 	protected Pattern generateFindsPattern() {
 		String regexString = UserSearchUtils.createPatternString(patternString, true);
 		return Pattern.compile("(" + regexString + ")",
-			Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+			Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE | Pattern.DOTALL);
 	}
 
 	@Override
@@ -123,6 +123,11 @@ public abstract class StringColumnConstraint implements ColumnConstraint<String>
 	@Override
 	public ColumnConstraint<String> parseConstraintValue(String newValue, Object dataSource) {
 		return copy(newValue);
+	}
+
+	@Override
+	public String toString() {
+		return getName();
 	}
 
 	@Override

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import os
 import sys
@@ -13,7 +13,7 @@ from pcodetest import *
 # set default properties first, then update values from the command
 # line before they are instantiated.
 
-execfile('defaults.py')
+exec(compile(open('defaults.py', "rb").read(), 'defaults.py', 'exec'))
 
 parser = argparse.ArgumentParser(description='''Build pcodetests.
 One and only one of the following options must be given:
@@ -63,21 +63,24 @@ PCodeTest.defaults.variants = args.variants
 PCodeTest.defaults.verbose = args.verbose
 PCodeTest.defaults.force = args.force
 PCodeTest.defaults.no_publish = args.no_publish
+PCodeTest.defaults.toolchain_root = args.toolchain_root
+PCodeTest.defaults.build_root = args.build_root
+PCodeTest.defaults.gcc_version = args.gcc_version
 
 # load the known pcodetests
 
-execfile('pcode_defs.py')
+exec(compile(open('pcode_defs.py', "rb").read(), 'pcode_defs.py', 'exec'))
 
 cwd = os.getcwd()
 
 if args.pcodetest_list:
     PCodeTest.print_all()
 elif args.pcodetest_all:
-    for n,pct in sorted(PCodeTest.list.iteritems(), key=lambda x: x[0].lower()):
+    for n,pct in sorted(PCodeTest.list.items(), key=lambda x: x[0].lower()):
         if pct.config.build_all:
             try: PCodeTestBuild.factory(pct).main()
             except Exception as e:
-                print 'unhandled exception while building %s' % n
+                print('unhandled exception while building %s' % n)
                 traceback.print_exc(file=sys.stdout)
                 os.chdir(cwd)
 elif args.pcodetest:
@@ -85,7 +88,7 @@ elif args.pcodetest:
         PCodeTest = PCodeTest.list[args.pcodetest]
         PCodeTestBuild.factory(PCodeTest).main()
     else:
-        print 'the pcode test %s is not in the list' % args.pcodetest
+        print('the pcode test %s is not in the list' % args.pcodetest)
 else:
     parser.print_help()
 

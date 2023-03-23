@@ -1,0 +1,227 @@
+<!DOCTYPE doctype>
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Theming Architecture</TITLE>
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+  </HEAD>
+
+  <BODY>
+    <H1>Theming Architecture</H1>
+
+    <P>This document describes the API for initializing and managing themes. A theme (the 
+    <CODE>GTheme</CODE>
+    class) in Ghidra represents a specific Look and Feel as well the set of values for the color,
+    font, and icon resource IDs used in the application. Resource IDs are defined in theme properties
+    files.   Application writers refer to these IDs when using colors, fonts and icons. 
+    The <CODE>Gui</CODE> class provides a set of
+    static methods that serves as the primary interface for managing all aspects of theming.</P>
+
+    <H2>GTheme Class</H2>
+
+    <P>The <CODE>GTheme</CODE> class is the implementation of the theme concept. At any given time, 
+    the application is using resource values as specified by the active theme. The theme specifies
+    the Java Look and Feel, whether or not the overall theme is "dark" (which determines which default
+    values to use) and any resource values which have been overridden specifically by that theme.
+    There are two types of of themes; built-in themes and file-based themes. Built-in
+    themes are implemented directly as sub-classes of <CODE>GTheme</CODE> and simply specify a 
+    Java Look and Feel
+    and whether or not the theme is "dark". There is one "built-in" theme for each supported
+    Look and Feel. File-based themes read their values from a theme file. Theme files are created by
+    editing and saving existing themes.</P>
+
+    <H2>GThemeValueMap / ThemeValue Classes</H2>
+
+    <P>These are the base classes for storing values for resource IDs. A <CODE>GThemeValueMap</CODE>
+    consists of three maps, one each for colors, fonts, and icons. Each map binds an ID to a
+    appropriate subclass of <CODE>ThemeValue</CODE>, which is the base class for 
+    <CODE>ColorValue</CODE>, <CODE>FontValue</CODE>, and
+    <CODE>IconValue</CODE>. Resource values are stored in these <CODE>ThemeValue</CODE> sub-classes 
+    because the value can be
+    either a concrete value or be a reference to some other resource of the same type. So, for
+    example, "color.bg.foo" could map directly to an actual color or its value could be reference
+    to some other indirect color like "color.bg.bar". In any <CODE>ThemeValue</CODE> object, either 
+    the referenced ID or the direct value must be null. To get the ultimate concrete value, there
+    is a convenience method called <CODE>get()</CODE> on <CODE>ThemeValue</CODE>s that takes a 
+    <CODE>GThemeValueMap</CODE> as an argument.
+    This method will recursively resolve reference IDs, which is why it needs a value map as an
+    argument.</P>
+
+    <P><CODE>GThemeValueMap</CODE>s have some convenience methods for performing set operations. 
+    You can load
+    values from other <CODE>GThemeValueMap</CODE>s into this map, which adds to the current map, 
+    replacing values with the same ID with values from the other map. Also, there is a method for 
+    getting the differences from one GThemeValueMap to another.</P>
+
+    <H2>Gui Class</H2>
+
+    <P>The <CODE>Gui</CODE> class is a set of static methods that provides the primary API for 
+    managing themes.
+    It has methods for switching themes, adding themes, deleting themes, saving themes, restoring
+    themes, getting/setting values for resource IDs, adding theme listeners, and others.  This 
+    class is meant to be used by application developers, along with <CODE>GColor</CODE> for colors
+    and <CODE>GIcon</CODE> for icons.   Fonts are handled slightly differently by making calls to
+    <CODE>Gui.registerFont(Component, Id)</CODE> 
+    </P>
+
+    <H2>Application Initialization</H2>
+
+    <P>Applications need to call <CODE>Gui.initialize()</CODE> before any uses of color, fonts, or 
+    icons occur.
+    This will load all resource defaults from all <CODE>*.theme.properties</CODE> files, read the 
+    last used theme from preferences, and load that theme which includes setting the Look and Feel.
+    </P>
+
+    <H2>Loading a Theme</H2>
+
+    <P>Loading a theme consists of two main operations: loading the Look and Feel and building the
+    set of values for all defined resource IDs.</P>
+
+    <H2>Loading the Look and Feel</H2>
+
+    <P>Because each Look and Feel presents different challenges to the theming feature, there is a
+    <CODE>LookandFeelManager</CODE> for each Look and Feel. The <CODE>LookandFeelManager</CODE> is 
+    responsible for installing
+    the Look and Feel (in the case of Nimbus, we had to install a special subclass of the
+    <CODE>NimbusLookandFeel</CODE>), extracting the Java resources mappings (Java Look and Feel 
+    objects also use a resource ID concept), group the Java resources into common groups, possibly 
+    fix up some issues specific to that Look and Feel, possibly install global properties, and have 
+    specific update  techniques to get that Look and Feel to update its component UIs when 
+    values change.</P>
+
+    <H2>Creating the Active Theme Values</H2>
+
+    <P>After the Look and Feel is loaded and the Java values extracted, the final resource mapping is
+    created. This is done by loading various resource values sets (each stored in a GThemeValueMap)
+    in the correct order into a new <CODE>GThemeValueMap</CODE> in <CODE>ThemeManager</CODE> called
+    "currentValues" . When values are loaded into a <CODE>GThemeValueMap</CODE>, they will replace 
+    any existing values with the same ID. The values are loaded in the following order:</P>
+
+    <BLOCKQUOTE>
+      <UL>
+        <LI>Java defaults (values from Look and Feel)</LI>
+
+        <LI>application defaults (from *.theme.properties files)</LI>
+
+        <LI>applications dark defaults (if theme is dark)</LI>
+
+        <LI>theme values (values that were overridden by a specific theme)</LI>
+      </UL>
+    </BLOCKQUOTE>
+
+    <H2>Changing Values Associated With Resource Ids</H2>
+
+    <P>Whenever the value associated with a resource ID changes, the application gets notified in
+    various ways to update the display with the new value. The technique used to notify the
+    application differs depending on the resource type and the Look and Feel (these differences are
+    captured in the <CODE>LookandFeelManager</CODE> sub-classes for each Look and Feel). It can also
+    vary depending on whether the value is an application defined resource or a Java defined
+    resource.</P>
+
+    <H3>Updating Colors</H3>
+
+    <P>Updating Colors is the easiest of all the resource types. First 
+    <CODE>GColor.refreshAll()</CODE> is called,
+    which causes every <CODE>GColor</CODE> to refresh its internal delegate <CODE>Color</CODE>.
+    This is the purpose of using the <CODE>GColor</CODE> class, to introduce a level of indirection 
+    that allows us to change runtime behavior without having to recompile.
+    Next, <CODE>repaint()</CODE> is called on all the top-level Java windows in the application. 
+    Also, since color values in the <CODE>UIDefaults</CODE> are actually
+    replaced with GColor objects, this technique works for both application defined resources and
+    Java defined resources.</P>
+
+    <H3>Updating Icons</H3>
+
+    <P>Updating icons is a mixed bag. If the icon is application defined, 
+    <CODE>GIcon.refreshAll()</CODE> is
+    called which causes every <CODE>GIcon</CODE> to refresh its internal delegate icon and then 
+    call <CODE>repaint()</CODE> on all the
+    windows. If the icon is Java defined, then the <CODE>UIDefaults</CODE> has to be updated and the
+    <CODE>updateComponentTreeUI()</CODE> method on all windows is called.</P>
+
+    <H3>Updating Fonts</H3>
+
+    <P>Updating Fonts is a bit more involved than updating colors and icons, due to the inability
+    to use the indirection model when working with fonts. First, if the changed font is Java 
+    defined, the <CODE>UIDefaults</CODE> for that font ID (and any that derive from it) are updated. 
+    Next, all the components that have called <CODE>Gui.registeredFont()</CODE> are updated. (The
+    registration system for fonts is what allows us to notify components of updates, since fonts
+    cannot use the indirection model.)
+    Finally, the <CODE>updateComponentTreeUI()</CODE> method is
+    called on all windows in the application.</P>
+
+
+
+    <H2>Creating/Editing/Saving Themes</H2>
+
+    <P>New themes can be created and saved to files in the theme directory in the user's
+    application directory (<code>&lt;home&gt;/.ghidra/.ghidra-&lt;version&gt/themes</code>). 
+    When the application is started, this directory is scanned and any
+    <CODE>*.theme</CODE> files are loaded and available to be selected as the active theme. 
+    The <CODE>Gui</CODE> class has
+    methods for setting the value of a color, font, or icon for a given resource ID. If any values
+    are currently different from the active theme, the theme can be saved. If the active theme is a
+    built-in theme, then the only choice is to save using a new theme name. Saving the
+    theme will create a new "xyz.theme" file where "xyz" is the name of the theme. Otherwise, the
+    existing theme file can be overwritten or a new theme name can be supplied to save to a new
+    file.</P>
+
+    <H2>External Icons</H2>
+
+    <P>When setting icons for an icon resource ID, the user has the option of using an icon that
+    exists in the application (on the classpath) or using any supported icon file (.png or .gif) on
+    the filesystem.  If the user
+    chooses to use a non-application icon file, then that icon will be copied into an images 
+    directory in their application directory. These icons are considered external in that if the 
+    theme were given to another user, you would also need to give them these icon files, as they 
+    will not exist in other application installations.</P>
+
+    <H2>Importing/Exporting Themes</H2>
+
+    <P>Themes can be shared with other users by exporting and importing themes. When exporting a
+    theme that doesn't use any external icons (icons not on the classpath), the theme can be
+    exported to a <CODE>.theme</CODE> file of the user's choosing. If the theme does contain 
+    external icons, the
+    user has the option to save the theme as a .zip file, which would contain both the .theme file
+    and all the external icon files.</P>
+
+    <H2>Look and Feel Notes</H2>
+
+    <P>Getting the theming feature to work on all the various Java Look and Feels is a
+    challenge. Java created the concept of <CODE>UIDefaults</CODE>, which is a mapping of property 
+    names
+    to values. The implication is that users can change Look and Feel settings by changing values
+    in the <CODE>UIDefaults</CODE>. Unfortunately, not all Look and Feels support this concept. 
+    Nimbus and GTK+, in particular are problematic. Nimbus somewhat honors values in 
+    <CODE>UIDefaults</CODE>, but only if those values are
+    installed before Nimbus is loaded. So for our theming purposes, we had to extend the Nimbus
+    Look and Feel in order to override the <CODE>getDefaults()</CODE> method (this is the method 
+    where Look and Feels populate the <CODE>UIDefaults</CODE>) so that we can install any overridden 
+    values from the selected theme. Also, since Nimbus does not respect changes to these values after
+    they have been created, every time a Java defined property changes, we have to re-install the
+    Nimbus Look and Feel.  The GTK+ Look and Feel is even more problematic. It gets many of its 
+    properties
+    from native libraries and there doesn't appear to be anyway of changing them. Therefore, themes
+    based on GTK+ doesn't allow for changing Java defined values. To compensate for the
+    differences among Look and Feels, we created a <CODE>LookandFeelManager</CODE> base class with 
+    sub-classes for each Look and Feel.</P>
+
+
+
+
+	<P class="providedbyplugin">Provided by: <I>Theme Manager</I></P>
+
+    <P class="relatedtopic">Related Topics</P>
+
+    <UL>
+      <LI><A href="ThemingOverview.html">Theming Overview</A></LI>
+
+      <LI><A href="ThemingUserDocs.html">Theming User's Guide</A></LI>
+
+      <LI><A href="ThemingDeveloperDocs.html">Theming Developer's Guide</A></LI>
+    </UL><BR>
+  </BODY>
+</HTML>

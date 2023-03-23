@@ -6,6 +6,7 @@
     <property key="addressesDoNotAppearDirectlyInCode" value="true"/>
     <property key="allowOffcutReferencesToFunctionStarts" value="true"/>
     <property key="useNewFunctionStackAnalysis" value="true"/>
+    <property key="enableContiguousFunctionsOnly" value="false"/>
     <property key="emulateInstructionStateModifierClass" value="ghidra.program.emulation.ARMEmulateInstructionStateModifier"/>
     <property key="assemblyRating:ARM:BE:32:v7" value="PLATINUM"/>
     <property key="assemblyRating:ARM:LE:32:v7" value="PLATINUM"/>

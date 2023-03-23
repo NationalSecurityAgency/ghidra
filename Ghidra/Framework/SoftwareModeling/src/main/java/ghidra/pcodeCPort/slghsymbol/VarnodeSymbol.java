@@ -15,14 +15,14 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
-import java.io.PrintStream;
 import java.util.ArrayList;
+
+import java.io.PrintStream;
 
 import org.jdom.Element;
 
-import generic.util.UnsignedDataUtils;
 // A global varnode
-import ghidra.pcodeCPort.context.*;
+import ghidra.pcodeCPort.context.SleighError;
 import ghidra.pcodeCPort.pcoderaw.VarnodeData;
 import ghidra.pcodeCPort.semantics.ConstTpl;
 import ghidra.pcodeCPort.semantics.VarnodeTpl;
@@ -55,11 +55,6 @@ public class VarnodeSymbol extends PatternlessSymbol {
 	}
 
 	@Override
-	public void print(PrintStream s, ParserWalker pos) {
-		s.append(getName());
-	}
-
-	@Override
 	public void collectLocalValues(ArrayList<Long> results) {
 		if (fix.space.getType() == spacetype.IPTR_INTERNAL) {
 			results.add(fix.offset);
@@ -76,9 +71,9 @@ public class VarnodeSymbol extends PatternlessSymbol {
 		int addrSize = base.getAddrSize();
 		long maxByteOffset = ((long) base.getWordSize() << (8 * addrSize)) - 1;
 		long endOffset = offset + size - 1;
-		boolean sizeError = size != 0 && UnsignedDataUtils.unsignedGreaterThan(offset, endOffset);
+		boolean sizeError = size != 0 && Long.compareUnsigned(offset, endOffset) > 0;
 		if (!sizeError && addrSize < 8) {
-			sizeError = UnsignedDataUtils.unsignedGreaterThan(endOffset, maxByteOffset);
+			sizeError = Long.compareUnsigned(endOffset, maxByteOffset) > 0;
 		}
 		if (sizeError) {
 			throw new SleighError(nm + ":" + size + " @ " + base.getName() + ":" +
@@ -96,14 +91,6 @@ public class VarnodeSymbol extends PatternlessSymbol {
 		return new VarnodeTpl(location, new ConstTpl(fix.space),
 			new ConstTpl(ConstTpl.const_type.real, fix.offset),
 			new ConstTpl(ConstTpl.const_type.real, fix.size));
-	}
-
-	@Override
-	public void getFixedHandle(FixedHandle hand, ParserWalker pos) {
-		hand.space = fix.space;
-		hand.offset_space = null; // Not a dynamic symbol
-		hand.offset_offset = fix.offset;
-		hand.size = fix.size;
 	}
 
 	@Override

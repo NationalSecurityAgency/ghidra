@@ -23,7 +23,7 @@ import ghidra.program.model.data.DataType;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * https://android.googlesource.com/platform/art/+/refs/heads/pie-release/runtime/oat_file.h#248
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/pie-release/runtime/oat_file.h#248">pie-release/runtime/oat_file.h</a>
  */
 public class OatClass_Pie extends OatClass_OreoM2 {
 

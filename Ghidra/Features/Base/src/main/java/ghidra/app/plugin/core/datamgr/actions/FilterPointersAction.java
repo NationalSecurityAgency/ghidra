@@ -23,21 +23,23 @@ import javax.swing.tree.TreePath;
 import docking.ActionContext;
 import docking.action.ToggleDockingAction;
 import docking.action.ToolBarData;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeArchiveGTree;
 import ghidra.util.HTMLUtilities;
-import resources.ResourceManager;
 
 public class FilterPointersAction extends ToggleDockingAction {
-	private static final Icon FILTER_POINTERS_ICON =
-		ResourceManager.loadImage("images/FilterPointers.png");
-	private static final Icon POINTER_ICON = ResourceManager.loadImage("images/fingerPointer.png");
+
+	//@formatter:off
+	private static final Icon FILTER_ON_ICON = new GIcon("icon.plugin.datatypes.filter.pointers.on");
+	private static final Icon FILTER_OFF_ICON = new GIcon("icon.plugin.datatypes.filter.pointers.off");
+	//@formatter:on
 
 	public FilterPointersAction(DataTypeManagerPlugin plugin) {
 		super("Filter Pointers", plugin.getName());
 
-		this.setToolBarData(new ToolBarData(FILTER_POINTERS_ICON, "filters"));
+		this.setToolBarData(new ToolBarData(FILTER_ON_ICON, "filters"));
 
 		setDescription(HTMLUtilities.toHTML(
 			"Toggle whether or not Pointers are\n" + "displayed in the Data Type Manager tree."));
@@ -67,7 +69,7 @@ public class FilterPointersAction extends ToggleDockingAction {
 
 	@Override
 	public void setSelected(boolean selected) {
-		getToolBarData().setIcon(selected ? FILTER_POINTERS_ICON : POINTER_ICON);
+		getToolBarData().setIcon(selected ? FILTER_ON_ICON : FILTER_OFF_ICON);
 		super.setSelected(selected);
 	}
 }

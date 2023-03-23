@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +15,18 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
-import generic.stl.VectorSTL;
-import ghidra.pcodeCPort.context.FixedHandle;
-import ghidra.pcodeCPort.context.ParserWalker;
-import ghidra.pcodeCPort.sleighbase.SleighBase;
-import ghidra.pcodeCPort.slghpatexpress.PatternExpression;
-import ghidra.pcodeCPort.slghpatexpress.PatternValue;
-import ghidra.pcodeCPort.translate.BadDataError;
-import ghidra.pcodeCPort.utils.XmlUtils;
-import ghidra.sleigh.grammar.Location;
-
 import java.io.PrintStream;
 import java.util.Iterator;
 import java.util.List;
 
 import org.jdom.Element;
+
+import generic.stl.VectorSTL;
+import ghidra.pcodeCPort.sleighbase.SleighBase;
+import ghidra.pcodeCPort.slghpatexpress.PatternExpression;
+import ghidra.pcodeCPort.slghpatexpress.PatternValue;
+import ghidra.pcodeCPort.utils.XmlUtils;
+import ghidra.sleigh.grammar.Location;
 
 public class ValueMapSymbol extends ValueSymbol {
 	private VectorSTL<Long> valuetable = new VectorSTL<Long>();
@@ -60,41 +56,6 @@ public class ValueMapSymbol extends ValueSymbol {
 			if (valuetable.get(i) == 0xBADBEEF) {
 				tableisfilled = false;
 			}
-		}
-	}
-
-	@Override
-	public Constructor resolve(ParserWalker pos) {
-		if (!tableisfilled) {
-			int ind = (int) patval.getValue(pos);
-			if ((ind >= valuetable.size()) || (ind < 0) || (valuetable.get(ind) == 0xBADBEEF)) {
-				throw new BadDataError("No corresponding entry in nametable <" + getName() +
-					">, index=" + ind);
-			}
-		}
-		return null;
-	}
-
-	@Override
-	public void getFixedHandle(FixedHandle hand, ParserWalker pos) {
-		int ind = (int) patval.getValue(pos);
-		// The resolve routine has checked that -ind- must be a valid index
-		hand.space = pos.getConstSpace();
-		hand.offset_space = null; // Not a dynamic value
-		hand.offset_offset = valuetable.get(ind);
-		hand.size = 0;		// Cannot provide size
-	}
-
-	@Override
-	public void print(PrintStream s, ParserWalker pos) {
-		int ind = (int) patval.getValue(pos);
-		// ind is already checked to be in range by the resolve routine
-		Long val = valuetable.get(ind);
-		if (val >= 0) {
-			s.append("0x").append(Long.toHexString(val));
-		}
-		else {
-			s.append("-0x").append(Long.toHexString(-val));
 		}
 	}
 

@@ -23,8 +23,8 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 
-import docking.DialogComponentProvider;
 import docking.DockingUtils;
+import docking.ReusableDialogComponentProvider;
 import docking.widgets.checkbox.GCheckBox;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
@@ -37,7 +37,7 @@ import ghidra.util.HelpLocation;
  * It allows the user to specify the types of differences to determine 
  * and the address set to diff.
  */
-public class ExecuteDiffDialog extends DialogComponentProvider {
+public class ExecuteDiffDialog extends ReusableDialogComponentProvider {
 
 	public static final String DIFF_ACTION = "Diff";
 	private static final String TITLE = "Determine Program Differences";
@@ -108,9 +108,6 @@ public class ExecuteDiffDialog extends DialogComponentProvider {
 		addCancelButton();
 	}
 
-	/**
-	 * @see ghidra.util.bean.GhidraDialog#okCallback()
-	 */
 	@Override
 	protected void okCallback() {
 		if (!hasDiffSelection()) {
@@ -118,16 +115,14 @@ public class ExecuteDiffDialog extends DialogComponentProvider {
 			Toolkit.getDefaultToolkit().beep();
 			return;
 		}
-		for (int i = 0; i < listenerList.size(); i++) {
-			ActionListener listener = listenerList.get(i);
-			listener.actionPerformed(new ActionEvent(this, 0, DIFF_ACTION));
+
+		ActionEvent event = new ActionEvent(this, 0, DIFF_ACTION);
+		for (ActionListener listener : listenerList) {
+			listener.actionPerformed(event);
 		}
 		close();
 	}
 
-	/**
-	 * @see ghidra.util.bean.GhidraDialog#cancelCallback()
-	 */
 	@Override
 	protected void cancelCallback() {
 		close();
@@ -318,7 +313,7 @@ public class ExecuteDiffDialog extends DialogComponentProvider {
 		diffPropertiesCB = new GCheckBox("Properties", diffProperties);
 		diffPropertiesCB.setName("PropertiesDiffCB");
 		diffPropertiesCB.setToolTipText("Highlight user defined property differences. " +
-				"(for example, Format (space) differences)");
+			"(for example, Format (space) differences)");
 		diffPropertiesCB.addItemListener(event -> {
 			diffProperties = (event.getStateChange() == ItemEvent.SELECTED);
 			diffFilter.setFilter(ProgramDiffFilter.USER_DEFINED_DIFFS, diffProperties);
@@ -340,22 +335,12 @@ public class ExecuteDiffDialog extends DialogComponentProvider {
 	}
 
 	private void createSelectAllButton() {
-		selectAllButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				setSelectAll(true);
-			}
-		});
+		selectAllButton.addActionListener(e -> setSelectAll(true));
 		selectAllButton.setMnemonic('S');
 	}
 
 	private void createDeselectAllButton() {
-		deselectAllButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				setSelectAll(false);
-			}
-		});
+		deselectAllButton.addActionListener(e -> setSelectAll(false));
 		deselectAllButton.setMnemonic('D');
 	}
 

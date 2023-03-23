@@ -671,8 +671,8 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 	}
 
 	/**
-	 * Copy packing and alignment settings from specified composite without
-	 * repacking or notification.
+	 * Set packing and alignment settings.  Record is modified but it is not written to the
+	 * database and no repacking or notification is performed.
 	 * @param composite instance whose packing and alignment are to be copied
 	 * @throws IOException if database IO error occured
 	 */
@@ -681,7 +681,6 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 			composite.getStoredMinimumAlignment());
 		record.setIntValue(CompositeDBAdapter.COMPOSITE_PACKING_COL,
 			composite.getStoredPackingValue());
-		compositeAdapter.updateRecord(record, true);
 	}
 
 	@Override

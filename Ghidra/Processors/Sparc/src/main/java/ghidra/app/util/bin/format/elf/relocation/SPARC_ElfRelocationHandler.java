@@ -20,6 +20,8 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.reloc.RelocationResult;
+import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.util.exception.NotFoundException;
 
 public class SPARC_ElfRelocationHandler extends ElfRelocationHandler {
@@ -32,13 +34,14 @@ public class SPARC_ElfRelocationHandler extends ElfRelocationHandler {
 	}
 
 	@Override
-	public void relocate(ElfRelocationContext elfRelocationContext, ElfRelocation relocation,
+	public RelocationResult relocate(ElfRelocationContext elfRelocationContext,
+			ElfRelocation relocation,
 			Address relocationAddress) throws MemoryAccessException, NotFoundException {
 
 		ElfHeader elf = elfRelocationContext.getElfHeader();
 		if (elf.e_machine() != ElfConstants.EM_SPARC &&
 			elf.e_machine() != ElfConstants.EM_SPARC32PLUS) {
-			return;
+			return RelocationResult.FAILURE;
 		}
 
 		Program program = elfRelocationContext.getProgram();
@@ -46,7 +49,7 @@ public class SPARC_ElfRelocationHandler extends ElfRelocationHandler {
 
 		int type = relocation.getType();
 		if (type == SPARC_ElfRelocationConstants.R_SPARC_NONE) {
-			return;
+			return RelocationResult.SKIPPED;
 		}
 
 		int symbolIndex = relocation.getSymbolIndex();
@@ -55,13 +58,15 @@ public class SPARC_ElfRelocationHandler extends ElfRelocationHandler {
 
 		long offset = (int) relocationAddress.getOffset();
 
-		ElfSymbol sym = elfRelocationContext.getSymbol(symbolIndex);
-		String symbolName = sym != null ? sym.getNameAsString() : null;
+		ElfSymbol sym = elfRelocationContext.getSymbol(symbolIndex); // may be null
+		String symbolName = elfRelocationContext.getSymbolName(symbolIndex);
 
 		long symbolValue = elfRelocationContext.getSymbolValue(sym);
 
 		int oldValue = memory.getInt(relocationAddress);
 		int newValue = 0;
+
+		int byteLength = 4; // most relocations affect 4-bytes (change if different)
 
 		switch (type) {
 			case SPARC_ElfRelocationConstants.R_SPARC_DISP32:
@@ -102,12 +107,13 @@ public class SPARC_ElfRelocationHandler extends ElfRelocationHandler {
 			case SPARC_ElfRelocationConstants.R_SPARC_COPY:
 				markAsWarning(program, relocationAddress, "R_SPARC_COPY", symbolName, symbolIndex,
 					"Runtime copy not supported", elfRelocationContext.getLog());
-				break;
+				return RelocationResult.UNSUPPORTED;
 			default:
 				markAsUnhandled(program, relocationAddress, type, symbolIndex, symbolName,
 					elfRelocationContext.getLog());
-				break;
+				return RelocationResult.UNSUPPORTED;
 		}
+		return new RelocationResult(Status.APPLIED, byteLength);
 	}
 
 }

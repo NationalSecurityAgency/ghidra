@@ -15,6 +15,7 @@
  */
 package ghidra.program.model.mem;
 
+import java.io.InputStream;
 import java.math.BigInteger;
 
 import ghidra.program.model.address.Address;
@@ -86,7 +87,7 @@ public interface MemBuffer {
 	 * @throws MemoryAccessException if memory cannot be read at the specified offset
 	 */
 	default public int getUnsignedByte(int offset) throws MemoryAccessException {
-		return getByte(offset) & 0xff;
+		return Byte.toUnsignedInt(getByte(offset));
 	}
 
 	/**
@@ -139,7 +140,7 @@ public interface MemBuffer {
 	 * @throws MemoryAccessException if a 2-byte short value cannot be read at the specified offset
 	 */
 	default public int getUnsignedShort(int offset) throws MemoryAccessException {
-		return getShort(offset) & 0xffff;
+		return Short.toUnsignedInt(getShort(offset));
 	}
 
 	/**
@@ -157,7 +158,7 @@ public interface MemBuffer {
 	 * @throws MemoryAccessException if a 4-byte integer value cannot be read at the specified offset
 	 */
 	default public long getUnsignedInt(int offset) throws MemoryAccessException {
-		return getInt(offset) & 0xFFFF_FFFFL;
+		return Integer.toUnsignedLong(getInt(offset));
 	}
 
 	/**
@@ -222,4 +223,31 @@ public interface MemBuffer {
 				throw new MemoryAccessException("Invalid length for read: " + len);
 		}
 	}
+
+	/**
+	 * Returns a stream that supplies the bytes of this buffer, starting at offset 0.
+	 * <p>
+	 * Note: the default implementation will produce invalid results if the underlying
+	 * MemBuffer instance is is mutated to point to different memory.
+	 * 
+	 * @return an InputStream that returns the bytes of this mem buffer
+	 */
+	default public InputStream getInputStream() {
+		return new MemBufferInputStream(this);
+	}
+
+	/**
+	 * Returns a stream that supplies the bytes of this buffer, starting at the specified offset.
+	 * <p>
+	 * Note: the default implementation will produce invalid results if the underlying
+	 * MemBuffer instance is is mutated to point to different memory.
+	 * 
+	 * @param initialPosition location in membuffer where the stream should start
+	 * @param length number of bytes to limit the stream to 
+	 * @return an InputSTream that returns the bytes of this mem buffer
+	 */
+	default public InputStream getInputStream(int initialPosition, int length) {
+		return new MemBufferInputStream(this, initialPosition, length);
+	}
+
 }

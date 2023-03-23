@@ -21,16 +21,15 @@ import java.util.Collections;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import com.google.common.collect.Range;
-
 import db.DBHandle;
+import ghidra.dbg.target.TargetBreakpointLocation;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.database.DBTrace;
-import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager;
 import ghidra.trace.database.space.DBTraceDelegatingManager;
 import ghidra.trace.database.thread.DBTraceThreadManager;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.breakpoint.*;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.LockHold;
@@ -40,7 +39,7 @@ import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
 public class DBTraceBreakpointManager
-		extends AbstractDBTraceSpaceBasedManager<DBTraceBreakpointSpace, DBTraceBreakpointSpace>
+		extends AbstractDBTraceSpaceBasedManager<DBTraceBreakpointSpace>
 		implements TraceBreakpointManager, DBTraceDelegatingManager<DBTraceBreakpointSpace> {
 	protected static final String NAME = "Breakpoint";
 
@@ -79,13 +78,13 @@ public class DBTraceBreakpointManager
 		return lock.writeLock();
 	}
 
-	protected void checkDuplicatePath(TraceBreakpoint ignore, String path, Range<Long> lifespan)
+	protected void checkDuplicatePath(TraceBreakpoint ignore, String path, Lifespan lifespan)
 			throws DuplicateNameException {
 		for (TraceBreakpoint pc : getBreakpointsByPath(path)) {
 			if (pc == ignore) {
 				continue;
 			}
-			if (!DBTraceUtils.intersect(lifespan, pc.getLifespan())) {
+			if (!lifespan.intersects(pc.getLifespan())) {
 				continue;
 			}
 			throw new DuplicateNameException("A breakpoint having path '" + path +
@@ -94,7 +93,7 @@ public class DBTraceBreakpointManager
 	}
 
 	@Override
-	public TraceBreakpoint addBreakpoint(String path, Range<Long> lifespan, AddressRange range,
+	public TraceBreakpoint addBreakpoint(String path, Lifespan lifespan, AddressRange range,
 			Collection<TraceThread> threads, Collection<TraceBreakpointKind> kinds, boolean enabled,
 			String comment) throws DuplicateNameException {
 		if (trace.getObjectManager().hasSchema()) {
@@ -142,7 +141,8 @@ public class DBTraceBreakpointManager
 	public Collection<? extends TraceBreakpoint> getBreakpointsAt(long snap, Address address) {
 		if (trace.getObjectManager().hasSchema()) {
 			return trace.getObjectManager()
-					.getObjectsContaining(snap, address, TraceObjectBreakpointLocation.KEY_RANGE,
+					.getObjectsContaining(snap, address,
+						TargetBreakpointLocation.RANGE_ATTRIBUTE_NAME,
 						TraceObjectBreakpointLocation.class);
 		}
 		return delegateRead(address.getAddressSpace(), m -> m.getBreakpointsAt(snap, address),
@@ -150,11 +150,12 @@ public class DBTraceBreakpointManager
 	}
 
 	@Override
-	public Collection<? extends TraceBreakpoint> getBreakpointsIntersecting(Range<Long> span,
+	public Collection<? extends TraceBreakpoint> getBreakpointsIntersecting(Lifespan span,
 			AddressRange range) {
 		if (trace.getObjectManager().hasSchema()) {
 			return trace.getObjectManager()
-					.getObjectsIntersecting(span, range, TraceObjectBreakpointLocation.KEY_RANGE,
+					.getObjectsIntersecting(span, range,
+						TargetBreakpointLocation.RANGE_ATTRIBUTE_NAME,
 						TraceObjectBreakpointLocation.class);
 		}
 		return delegateRead(range.getAddressSpace(), m -> m.getBreakpointsIntersecting(span, range),

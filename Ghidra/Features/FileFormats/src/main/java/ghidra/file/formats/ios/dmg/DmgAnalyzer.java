@@ -15,6 +15,8 @@
  */
 package ghidra.file.formats.ios.dmg;
 
+import java.util.Arrays;
+
 import ghidra.app.plugin.core.analysis.AnalysisWorker;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.util.bin.*;
@@ -27,8 +29,6 @@ import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-
-import java.util.Arrays;
 
 public class DmgAnalyzer extends FileFormatAnalyzer implements AnalysisWorker {
 
@@ -44,7 +44,7 @@ public class DmgAnalyzer extends FileFormatAnalyzer implements AnalysisWorker {
 			throws Exception, CancelledException {
 		Address address = program.getMinAddress();
 
-		ByteProvider provider = new MemoryByteProvider(program.getMemory(), address);
+		ByteProvider provider = MemoryByteProvider.createProgramHeaderByteProvider(program, false);
 		BinaryReader reader = new BinaryReader(provider, false);
 
 		DmgHeader header = new DmgHeaderV2(reader);
@@ -67,22 +67,27 @@ public class DmgAnalyzer extends FileFormatAnalyzer implements AnalysisWorker {
 		return getName();
 	}
 
+	@Override
 	public boolean canAnalyze(Program program) {
 		return DmgUtil.isDMG(program);
 	}
 
+	@Override
 	public boolean getDefaultEnablement(Program program) {
 		return DmgUtil.isDMG(program);
 	}
 
+	@Override
 	public String getDescription() {
 		return "Annotates an DMG file.";
 	}
 
+	@Override
 	public String getName() {
 		return "DMG";
 	}
 
+	@Override
 	public boolean isPrototype() {
 		return true;
 	}

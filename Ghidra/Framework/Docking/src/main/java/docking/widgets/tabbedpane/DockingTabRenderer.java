@@ -20,9 +20,10 @@ import java.awt.event.*;
 
 import javax.swing.*;
 
+import docking.CloseIcon;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.label.GDLabel;
-import resources.ResourceManager;
+import generic.theme.GColor;
 
 /**
  * A widget that can be used to render an icon, title and close button for JTabbedPane.  You would 
@@ -31,10 +32,7 @@ import resources.ResourceManager;
 public class DockingTabRenderer extends JPanel {
 
 	private static final int MAX_TITLE_LENGTH = 25;
-	private Icon EMPTY_ICON =
-		ResourceManager.getScaledIcon(ResourceManager.loadImage("images/close16.gif"), 8, 8);
-	private Icon CLOSE_ICON =
-		ResourceManager.getScaledIcon(ResourceManager.loadImage("images/close16.gif"), 8, 8);
+	private Icon CLOSE_ICON = new CloseIcon(true, new GColor("color.fg.button"));
 
 	private JLabel titleLabel;
 	private JLabel iconLabel;
@@ -56,9 +54,9 @@ public class DockingTabRenderer extends JPanel {
 
 		setTitle(tabTitle, fullTitle);
 		closeButton.setToolTipText("Close " + tabTitle);
-		closeButton.setIcon(EMPTY_ICON); // no icon until we rollover the tab
 		closeButton.setFocusable(false);
 		closeButton.addActionListener(closeListener);
+		closeButton.setIcon(CLOSE_ICON);
 		closeButton.setRolloverIcon(CLOSE_ICON);
 
 		JPanel container = new JPanel();
@@ -84,20 +82,10 @@ public class DockingTabRenderer extends JPanel {
 		titleLabel.addMouseListener(eventForwardingListener);
 		titleLabel.addMouseMotionListener(eventForwardingListener);
 
-		// listeners to know when to hide our close button (from the tabbed pane)
-		final ButtonIconSwapperMouseListener iconListener =
-			new ButtonIconSwapperMouseListener(tabbedPane);
-		installIconListener(container, tabbedPane, iconListener);
-
-		// listeners to know when to hide our close button (from this panel)
-		addMouseListener(iconListener);
-		addMouseMotionListener(iconListener);
-
-		installMouseForwardingListenerWorkaround(tabbedPane, iconListener);
+		installMouseForwardingListenerWorkaround(tabbedPane);
 	}
 
-	private void installMouseForwardingListenerWorkaround(final JTabbedPane tabbedPane,
-			final ButtonIconSwapperMouseListener iconListener) {
+	private void installMouseForwardingListenerWorkaround(final JTabbedPane tabbedPane) {
 
 		forwardingListener = new TabContainerForwardingMouseListener(tabbedPane);
 
@@ -114,20 +102,14 @@ public class DockingTabRenderer extends JPanel {
 					boolean isDisplayable = isDisplayable();
 					if (isDisplayable) {
 						// remove and add in order to prevent duplicate adding
-						myParent.removeMouseListener(iconListener);
-						myParent.removeMouseMotionListener(iconListener);
 						myParent.removeMouseListener(forwardingListener);
 						myParent.removeMouseMotionListener(forwardingListener);
-						myParent.addMouseListener(iconListener);
-						myParent.addMouseMotionListener(iconListener);
 						myParent.addMouseListener(forwardingListener);
 						myParent.addMouseMotionListener(forwardingListener);
 
 						hierarchyListener = this;
 					}
 					else if (hierarchyListener != null) {
-						myParent.removeMouseListener(iconListener);
-						myParent.removeMouseMotionListener(iconListener);
 						myParent.removeMouseListener(forwardingListener);
 						myParent.removeMouseMotionListener(forwardingListener);
 
@@ -143,20 +125,6 @@ public class DockingTabRenderer extends JPanel {
 			title = title.substring(0, MAX_TITLE_LENGTH - 3) + "...";
 		}
 		return title;
-	}
-
-	// add listeners to the tabbed pane so that the icon for closing appears (and disappears) as
-	// needed
-	private void installIconListener(Container container, JTabbedPane tabbedPane,
-			ButtonIconSwapperMouseListener iconListener) {
-		Component[] components = container.getComponents();
-		for (Component component : components) {
-			component.addMouseListener(iconListener);
-		}
-
-		tabbedPane.addMouseListener(iconListener);
-		// we need this due to the gaps between the renderer and the tabbed pane
-		tabbedPane.addMouseMotionListener(iconListener);
 	}
 
 	public void installRenameAction(MouseListener listener) {
@@ -192,57 +160,6 @@ public class DockingTabRenderer extends JPanel {
 //==================================================================================================
 // Inner Classes
 //==================================================================================================
-
-	/**
-	 * A class to hide/show the close button's icon to make it appear that the button is hidden
-	 * and removed.
-	 */
-	private class ButtonIconSwapperMouseListener extends MouseAdapter {
-
-		private final JTabbedPane tabbedPane;
-
-		ButtonIconSwapperMouseListener(JTabbedPane tabbedPane) {
-			this.tabbedPane = tabbedPane;
-		}
-
-		private void updateButton(MouseEvent e) {
-			Point point = e.getPoint();
-			Point tabbedPaneRelativePoint =
-				SwingUtilities.convertPoint(e.getComponent(), point, tabbedPane);
-			int x = tabbedPaneRelativePoint.x;
-			int y = tabbedPaneRelativePoint.y;
-			int tabIndex = tabbedPane.indexAtLocation(x, y);
-			if (tabIndex < 0) {
-				// no tab for the given point (can happen when over the tabbed pane, but not
-				// over any tab)
-				closeButton.setIcon(EMPTY_ICON);
-				return;
-			}
-
-			Component tabComponent = tabbedPane.getTabComponentAt(tabIndex);
-			if (SwingUtilities.isDescendingFrom(closeButton, tabComponent)) {
-				closeButton.setIcon(CLOSE_ICON);
-			}
-			else {
-				closeButton.setIcon(EMPTY_ICON);
-			}
-		}
-
-		@Override
-		public void mouseMoved(MouseEvent e) {
-			updateButton(e);
-		}
-
-		@Override
-		public void mouseEntered(MouseEvent e) {
-			updateButton(e);
-		}
-
-		@Override
-		public void mouseExited(MouseEvent e) {
-			closeButton.setIcon(EMPTY_ICON);
-		}
-	}
 
 	/**
 	 * A class designed to listen for mouse events on this renderer component which it will then

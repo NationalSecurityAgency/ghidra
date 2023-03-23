@@ -32,9 +32,8 @@ public class BTreeAnnotationScript extends GhidraScript {
 
 	@Override
 	public void run() throws Exception {
-		Address address = currentProgram.getMinAddress();
-
-		ByteProvider provider = new MemoryByteProvider(currentProgram.getMemory(), address);
+		ByteProvider provider =
+			MemoryByteProvider.createProgramHeaderByteProvider(currentProgram, false);
 
 		BinaryReader reader = new BinaryReader(provider, false);
 

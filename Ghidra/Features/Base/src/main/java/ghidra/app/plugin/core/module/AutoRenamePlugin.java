@@ -79,7 +79,7 @@ public class AutoRenamePlugin extends ProgramPlugin {
      * Constructor.
      */
     public AutoRenamePlugin(PluginTool tool) {
-        super(tool, true, false);
+        super(tool);
         createActions();
     }
 

@@ -21,8 +21,6 @@ import java.util.List;
 import org.jdom.Element;
 
 import generic.stl.VectorSTL;
-import ghidra.pcodeCPort.context.FixedHandle;
-import ghidra.pcodeCPort.context.ParserWalker;
 import ghidra.pcodeCPort.semantics.ConstTpl.const_type;
 import ghidra.pcodeCPort.semantics.ConstTpl.v_field;
 import ghidra.pcodeCPort.space.spacetype;
@@ -127,17 +125,6 @@ public class VarnodeTpl {
 			return false;
 		}
 		return true;
-	}
-
-	public boolean isDynamic(ParserWalker walker) {
-		if (offset.getType() != ConstTpl.const_type.handle) {
-			return false;
-		}
-		// Technically we should probably check all three
-		// ConstTpls for dynamic handles, but in all cases
-		// if there is any dynamic piece then the offset is
-		FixedHandle hand = walker.getFixedHandle(offset.getHandleIndex());
-		return (hand.offset_space != null);
 	}
 
 	public int transfer(VectorSTL<HandleTpl> params) {

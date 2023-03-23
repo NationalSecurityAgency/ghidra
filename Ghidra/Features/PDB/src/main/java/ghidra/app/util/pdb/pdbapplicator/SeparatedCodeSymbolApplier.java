@@ -28,7 +28,7 @@ import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 
 /**
- * Applier for {@link SeparatedCodeFromCompilerSupportMsSymbol} symbol. 
+ * Applier for {@link SeparatedCodeFromCompilerSupportMsSymbol} symbol.
  */
 // TODO: Need to evaluate relationship to function symbols.
 // TODO: Need to create anonymous name for this as a function?
@@ -55,12 +55,12 @@ public class SeparatedCodeSymbolApplier extends MsSymbolApplier {
 
 	/**
 	 * Constructor
-	 * @param applicator the {@link PdbApplicator} for which we are working.
+	 * @param applicator the {@link DefaultPdbApplicator} for which we are working.
 	 * @param iter the Iterator containing the symbol sequence being processed
 	 * @throws CancelledException upon user cancellation
 	 */
-	public SeparatedCodeSymbolApplier(PdbApplicator applicator, AbstractMsSymbolIterator iter)
-			throws CancelledException {
+	public SeparatedCodeSymbolApplier(DefaultPdbApplicator applicator,
+			AbstractMsSymbolIterator iter) throws CancelledException {
 		super(applicator, validateSymbol(iter));
 
 		symbol = (SeparatedCodeFromCompilerSupportMsSymbol) iter.next();

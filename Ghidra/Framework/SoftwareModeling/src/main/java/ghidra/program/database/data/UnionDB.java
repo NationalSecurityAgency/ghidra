@@ -344,7 +344,7 @@ class UnionDB extends CompositeDB implements UnionInternal {
 			doAdd(resolvedDts[i], dtc.getLength(), dtc.getFieldName(), dtc.getComment(), false);
 		}
 
-		repack(false, false);
+		repack(false, false); // updates timestamp
 
 		if (notify) {
 			notifySizeChanged(false); // assume size and/or alignment changed
@@ -440,6 +440,9 @@ class UnionDB extends CompositeDB implements UnionInternal {
 
 	@Override
 	public Union clone(DataTypeManager dtm) {
+		if (dtm == getDataTypeManager()) {
+			return this;
+		}
 		UnionDataType union = new UnionDataType(getCategoryPath(), getName(), getUniversalID(),
 			getSourceArchive(), getLastChangeTime(), getLastChangeTimeInSourceArchive(), dtm);
 		union.setDescription(getDescription());

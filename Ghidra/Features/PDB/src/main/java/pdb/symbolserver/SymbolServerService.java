@@ -15,10 +15,11 @@
  */
 package pdb.symbolserver;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import java.io.File;
+import java.io.IOException;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -42,6 +43,7 @@ import pdb.PdbUtils;
  */
 public class SymbolServerService {
 
+	private static final int MAX_TRY_COUNT = 3;
 	private SymbolStore symbolStore;	// also the first element of the symbolServers list
 	private List<SymbolServer> symbolServers;
 
@@ -233,20 +235,7 @@ public class SymbolServerService {
 	private SymbolFileLocation ensureLocalUncompressedFile(SymbolFileLocation symbolFileLocation,
 			TaskMonitor monitor) throws IOException, CancelledException {
 		if (!(symbolFileLocation.getSymbolServer() instanceof SymbolStore)) {
-			Msg.debug(this, logPrefix() + ": copying file " + symbolFileLocation.getLocationStr() +
-				" from remote to local " + symbolStore.getName());
-
-			// copy from remote store to our main local symbol store
-			String remoteFilename = FilenameUtils.getName(symbolFileLocation.getPath());
-			try (SymbolServerInputStream symbolServerInputStream =
-				symbolFileLocation.getSymbolServer()
-						.getFileStream(symbolFileLocation.getPath(), monitor)) {
-				String newPath =
-					symbolStore.putStream(symbolFileLocation.getFileInfo(), symbolServerInputStream,
-						remoteFilename, monitor);
-				symbolFileLocation =
-					new SymbolFileLocation(newPath, symbolStore, symbolFileLocation.getFileInfo());
-			}
+			symbolFileLocation = copyRemoteToLocal(symbolFileLocation, monitor);
 		}
 
 		// symbolFileLocation now must be on a SymbolStore, so safe to cast
@@ -254,11 +243,16 @@ public class SymbolServerService {
 
 		if (SymbolStore.isCompressedFilename(symbolFileLocation.getPath())) {
 			File cabFile = localSymbolStore.getFile(symbolFileLocation.getPath());
-			File temporaryExtractFile = new File(symbolStore.getAdminDir(),
-				"ghidra_cab_extract_tmp_" + System.currentTimeMillis());
+			File adminDir = symbolStore.getAdminDir();
+			if (!adminDir.isDirectory()) {
+				// if the admin dir is missing, use the cab file's directory
+				adminDir = cabFile.getParentFile();
+			}
+			File temporaryExtractFile =
+				new File(adminDir, "ghidra_cab_extract_tmp_" + System.currentTimeMillis());
 
-			Msg.debug(this,
-				logPrefix() + ": decompressing file " + symbolFileLocation.getLocationStr());
+			Msg.debug(this, "%s: decompressing file %s".formatted(logPrefix(),
+				symbolFileLocation.getLocationStr()));
 
 			String originalName =
 				PdbUtils.extractSingletonCabToFile(cabFile, temporaryExtractFile, monitor);
@@ -269,11 +263,43 @@ public class SymbolServerService {
 			symbolFileLocation = new SymbolFileLocation(uncompressedPath, symbolStore,
 				symbolFileLocation.getFileInfo());
 
-			Msg.debug(this,
-				logPrefix() + ": new decompressed file " + symbolFileLocation.getLocationStr());
+			Msg.debug(this, "%s: new decompressed file %s".formatted(logPrefix(),
+				symbolFileLocation.getLocationStr()));
 		}
 
 		return symbolFileLocation;
+	}
+
+	private SymbolFileLocation copyRemoteToLocal(SymbolFileLocation symbolFileLocation,
+			TaskMonitor monitor) throws CancelledException, IOException {
+		int tryCount = 0;
+		while (true) {
+			Msg.debug(this,
+				"%s try[%d]: copying file %s from remote to local %s".formatted(logPrefix(),
+					tryCount, symbolFileLocation.getLocationStr(), symbolStore.getName()));
+
+			// copy from remote store to our main local symbol store
+			String remoteFilename = FilenameUtils.getName(symbolFileLocation.getPath());
+			try (SymbolServerInputStream symbolServerInputStream =
+				symbolFileLocation.getSymbolServer()
+						.getFileStream(symbolFileLocation.getPath(), monitor)) {
+				String newPath = symbolStore.putStream(symbolFileLocation.getFileInfo(),
+					symbolServerInputStream, remoteFilename, monitor);
+				return new SymbolFileLocation(newPath, symbolStore,
+					symbolFileLocation.getFileInfo());
+			}
+			catch (IOException e) {
+				String msg = "%s: error copying file %s to %s: %s".formatted(logPrefix(),
+					symbolFileLocation.getLocationStr(), symbolStore.getName(), e.getMessage());
+				if (++tryCount >= MAX_TRY_COUNT) {
+					Msg.error(this, msg);
+					throw e; // failure
+				}
+
+				// allow retry
+				Msg.warn(this, msg);
+			}
+		}
 	}
 
 	private String logPrefix() {

@@ -28,14 +28,14 @@ import ghidra.util.datastruct.WeakSet;
  * <code>DomainObjectDBTransaction</code> represents an atomic undoable operation performed
  * on a single domain object.
  */
-class DomainObjectDBTransaction implements Transaction {
+class DomainObjectDBTransaction implements TransactionInfo {
 
 	private static int nextBaseId = 1234;
 
 	private ArrayList<TransactionEntry> list;
 	private HashMap<PluginTool, ToolState> toolStates;
 	private int activeEntries = 0;
-	private int status = NOT_DONE;
+	private Status status = Status.NOT_DONE;
 	private boolean hasDBTransaction = false;
 	private final long id;
 	private WeakSet<AbortedTransactionListener> abortedTransactionListeners =
@@ -106,7 +106,7 @@ class DomainObjectDBTransaction implements Transaction {
 	 * database transaction/checkpoint.
 	 */
 	void setHasCommittedDBTransaction() {
-		if (getStatus() != COMMITTED) {
+		if (getStatus() != Status.COMMITTED) {
 			throw new IllegalStateException("transaction was not committed");
 		}
 		hasDBTransaction = true;
@@ -147,23 +147,23 @@ class DomainObjectDBTransaction implements Transaction {
 		catch (IndexOutOfBoundsException e) {
 			throw new IllegalStateException("Transaction not found");
 		}
-		if (entry.status != NOT_DONE) {
+		if (entry.status != Status.NOT_DONE) {
 			throw new IllegalStateException("Attempted to end Transaction " + "more that once: " +
 				entry.description);
 		}
-		entry.status = commit ? COMMITTED : ABORTED;
+		entry.status = commit ? Status.COMMITTED : Status.ABORTED;
 		if (!commit) {
-			status = ABORTED;
+			status = Status.ABORTED;
 		}
-		if (--activeEntries == 0 && status == NOT_DONE) {
-			status = COMMITTED;
+		if (--activeEntries == 0 && status == Status.NOT_DONE) {
+			status = Status.COMMITTED;
 		}
 	}
 
 	@Override
-	public int getStatus() {
-		if (status == ABORTED && activeEntries > 0) {
-			return NOT_DONE_BUT_ABORTED;
+	public Status getStatus() {
+		if (status == Status.ABORTED && activeEntries > 0) {
+			return Status.NOT_DONE_BUT_ABORTED;
 		}
 		return status;
 	}
@@ -224,7 +224,7 @@ class DomainObjectDBTransaction implements Transaction {
 		Iterator<TransactionEntry> iter = list.iterator();
 		while (iter.hasNext()) {
 			TransactionEntry entry = iter.next();
-			if (entry.status == NOT_DONE) {
+			if (entry.status == Status.NOT_DONE) {
 				subTxList.add(entry.description);
 			}
 		}
@@ -233,11 +233,11 @@ class DomainObjectDBTransaction implements Transaction {
 
 	private static class TransactionEntry {
 		String description;
-		int status;
+		Status status;
 
 		TransactionEntry(String description) {
 			this.description = description;
-			status = NOT_DONE;
+			status = Status.NOT_DONE;
 		}
 	}
 
@@ -256,7 +256,7 @@ class DomainObjectDBTransaction implements Transaction {
 	}
 
 	void abort() {
-		status = ABORTED;
+		status = Status.ABORTED;
 		for (AbortedTransactionListener listener : abortedTransactionListeners) {
 			listener.transactionAborted(id);
 		}

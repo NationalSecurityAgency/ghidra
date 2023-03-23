@@ -341,6 +341,12 @@ public abstract class AbstractStackEditorTest extends AbstractEditorTest {
 		waitForBusyTool(tool);
 	}
 
+	void deleteFunction(String address) throws Exception {
+		setLocation(address);
+		builder.deleteFunction(address);
+		waitForBusyTool(tool);
+	}
+
 	void analyzeStack(String address) {
 		setLocation(address);
 		DockingActionIf analyzeStack =

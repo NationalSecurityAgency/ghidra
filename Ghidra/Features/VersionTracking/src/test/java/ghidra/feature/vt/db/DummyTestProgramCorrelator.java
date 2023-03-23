@@ -30,7 +30,7 @@ public class DummyTestProgramCorrelator extends VTAbstractProgramCorrelator {
 
 	private int matchCount = 1;
 
-	protected DummyTestProgramCorrelator() {
+	public DummyTestProgramCorrelator() {
 		this(1);
 	}
 
@@ -47,7 +47,7 @@ public class DummyTestProgramCorrelator extends VTAbstractProgramCorrelator {
 			createAddressSet(), createOptions());
 	}
 
-	protected DummyTestProgramCorrelator(int matchCount) {
+	public DummyTestProgramCorrelator(int matchCount) {
 		super(null, null, createAddressSet(), null, createAddressSet(), createOptions());
 		this.matchCount = matchCount;
 	}
@@ -88,6 +88,7 @@ public class DummyTestProgramCorrelator extends VTAbstractProgramCorrelator {
 		}
 	}
 
+	@Override
 	public String getName() {
 		return "DummyTestProgramCorrelator";
 	}

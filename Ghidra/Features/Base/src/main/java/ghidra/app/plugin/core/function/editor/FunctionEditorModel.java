@@ -32,8 +32,8 @@ import ghidra.util.*;
 import ghidra.util.exception.*;
 
 public class FunctionEditorModel {
-	public static final String PARSING_MODE_STATUS_TEXT =
-		"<TAB> or <RETURN> to commit edits, <ESC> to abort";
+	public static final String PARSING_MODE_STATUS_TEXT = HTMLUtilities.HTML +
+		HTMLUtilities.escapeHTML("<TAB> or <RETURN> to commit edits, <ESC> to abort");
 	static final String NONE_CHOICE = "-NONE-";
 
 	private String name;
@@ -641,9 +641,9 @@ public class FunctionEditorModel {
 					returnInfo.getFormalDataType(), storage);
 				try {
 					if (autoParamCount < oldAutoCount) {
-						if (oldParams.get(
-							autoParamCount).getStorage().getAutoParameterType() != storage
-									.getAutoParameterType()) {
+						if (oldParams.get(autoParamCount)
+								.getStorage()
+								.getAutoParameterType() != storage.getAutoParameterType()) {
 							adjustSelectionForRowRemoved(i);
 						}
 					}

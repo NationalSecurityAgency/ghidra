@@ -26,6 +26,7 @@ import agent.dbgeng.manager.breakpoint.DbgBreakpointInfo;
 import agent.dbgeng.model.iface1.DbgModelTargetConfigurable;
 import agent.dbgeng.model.iface2.*;
 import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.error.DebuggerIllegalArgumentException;
 import ghidra.dbg.target.TargetConfigurable;
 import ghidra.dbg.target.TargetObject;
@@ -33,12 +34,12 @@ import ghidra.dbg.target.schema.*;
 
 @TargetObjectSchemaInfo(
 	name = "ProcessContainer",
-	elements = { //
-		@TargetElementType(type = DbgModelTargetProcessImpl.class) //
+	elements = {
+		@TargetElementType(type = DbgModelTargetProcessImpl.class)
 	},
-	attributes = { //
-		@TargetAttributeType(name = TargetConfigurable.BASE_ATTRIBUTE_NAME, type = Integer.class), //
-		@TargetAttributeType(type = Void.class) //
+	attributes = {
+		@TargetAttributeType(name = TargetConfigurable.BASE_ATTRIBUTE_NAME, type = Integer.class),
+		@TargetAttributeType(type = Void.class)
 	},
 	canonicalContainer = true)
 public class DbgModelTargetProcessContainerImpl extends DbgModelTargetObjectImpl
@@ -57,8 +58,8 @@ public class DbgModelTargetProcessContainerImpl extends DbgModelTargetObjectImpl
 		session.setAccessible(true);
 		DbgModelTargetProcess process = getTargetProcess(proc);
 		changeElements(List.of(), List.of(process), Map.of(), "Added");
-		process.processStarted(proc.getPid());
-		getListeners().fire.event(getProxy(), null, TargetEventType.PROCESS_CREATED,
+		process.processStarted(Long.valueOf(proc.getPid()));
+		broadcast().event(getProxy(), null, TargetEventType.PROCESS_CREATED,
 			"Process " + proc.getId() + " started " + process.getName() + "pid=" + proc.getPid(),
 			List.of(process));
 	}
@@ -66,7 +67,7 @@ public class DbgModelTargetProcessContainerImpl extends DbgModelTargetObjectImpl
 	@Override
 	public void processStarted(DbgProcess proc, DbgCause cause) {
 		DbgModelTargetProcess process = getTargetProcess(proc);
-		process.processStarted(proc.getPid());
+		process.processStarted(Long.valueOf(proc.getPid()));
 	}
 
 	@Override
@@ -103,7 +104,7 @@ public class DbgModelTargetProcessContainerImpl extends DbgModelTargetObjectImpl
 		DbgModelTargetProcess process = getTargetProcess(proc);
 		DbgModelTargetMemoryContainer memory = process.getMemory();
 		if (memory != null) {
-			memory.requestElements(true);
+			memory.requestElements(RefreshBehavior.REFRESH_ALWAYS);
 		}
 	}
 
@@ -116,7 +117,7 @@ public class DbgModelTargetProcessContainerImpl extends DbgModelTargetObjectImpl
 		}
 		DbgModelTargetMemoryContainer memory = process.getMemory();
 		if (memory != null) {
-			memory.requestElements(true);
+			memory.requestElements(RefreshBehavior.REFRESH_ALWAYS);
 		}
 	}
 
@@ -126,12 +127,12 @@ public class DbgModelTargetProcessContainerImpl extends DbgModelTargetObjectImpl
 		process.getModules().libraryUnloaded(info.toString());
 		DbgModelTargetMemoryContainer memory = process.getMemory();
 		if (memory != null) {
-			memory.requestElements(false);
+			memory.requestElements(RefreshBehavior.REFRESH_NEVER);
 		}
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return getManager().listProcesses().thenAccept(byIID -> {
 			List<TargetObject> processes;
 			synchronized (this) {

@@ -206,10 +206,10 @@ public class DecompilerClipboardProvider extends ByteCopier
 			endRow = fieldRange.getEnd().getRow();
 		}
 
-		LayoutModel model = provider.getDecompilerPanel().getLayoutModel();
+		LayoutModel model = provider.getDecompilerPanel().getLayoutController();
 		Layout layout = model.getLayout(BigInteger.valueOf(lineNumber));
 		ClangTextField field = (ClangTextField) layout.getField(0);
-		int numSpaces = (field.getStartX() - field.getLineNumberWidth()) / spaceCharWidthInPixels;
+		int numSpaces = field.getStartX() / spaceCharWidthInPixels;
 		for (int i = 0; i < numSpaces; i++) {
 			buffer.append(' ');
 		}
@@ -235,7 +235,7 @@ public class DecompilerClipboardProvider extends ByteCopier
 		int startRow = fieldRange.getStart().getRow();
 		int endRow = fieldRange.getEnd().getRow();
 
-		LayoutModel model = provider.getDecompilerPanel().getLayoutModel();
+		LayoutModel model = provider.getDecompilerPanel().getLayoutController();
 		Layout layout = model.getLayout(BigInteger.valueOf(lineNumber));
 		ClangTextField field = (ClangTextField) layout.getField(0);
 

@@ -15,10 +15,9 @@
  */
 package ghidra.trace.model.stack;
 
-import com.google.common.collect.Range;
-
 import ghidra.lifecycle.Experimental;
 import ghidra.program.model.address.Address;
+import ghidra.trace.model.Lifespan;
 
 /**
  * A frame in a {@link TraceStack}
@@ -57,7 +56,7 @@ public interface TraceStackFrame {
 	 *            fixed over the containing stack's lifetime)
 	 * @param pc the program counter
 	 */
-	void setProgramCounter(@Experimental Range<Long> span, Address pc);
+	void setProgramCounter(@Experimental Lifespan span, Address pc);
 
 	/**
 	 * Get the user comment for the frame

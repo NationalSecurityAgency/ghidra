@@ -25,15 +25,16 @@ import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.util.ConfigurableFactory.FactoryDescription;
 import ghidra.dbg.util.ShellUtils;
+import ghidra.program.model.listing.Program;
 
-/**
- * Note this is in the testing source because it's not meant to be shipped in the release.... That
- * may change if it proves stable, though, no?
- */
-@FactoryDescription( //
-	brief = "IN-VM GNU gdb local debugger", //
-	htmlDetails = "Launch a GDB session in this same JVM" //
-)
+@FactoryDescription(
+	brief = "gdb",
+	htmlDetails = """
+			Connect to gdb.
+			This is best for most Linux and Unix userspace targets, and many embedded targets.
+			It may also be used with gdbserver by connecting to gdb, then using <code>target remote
+			...</code>.
+			This will access the native API, which may put Ghidra's JVM at risk.""")
 public class GdbInJvmDebuggerModelFactory implements DebuggerModelFactory {
 
 	private String gdbCmd = GdbManager.DEFAULT_GDB_CMD;
@@ -59,8 +60,17 @@ public class GdbInJvmDebuggerModelFactory implements DebuggerModelFactory {
 	}
 
 	@Override
-	public boolean isCompatible() {
-		return GdbCompatibility.INSTANCE.isCompatible(gdbCmd);
+	public int getPriority(Program program) {
+		if (!GdbCompatibility.INSTANCE.isCompatible(gdbCmd)) {
+			return -1;
+		}
+		if (program != null) {
+			String exe = program.getExecutablePath();
+			if (exe == null || exe.isBlank()) {
+				return -1;
+			}
+		}
+		return 80;
 	}
 
 	public String getGdbCommand() {

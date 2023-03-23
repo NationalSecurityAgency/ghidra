@@ -55,7 +55,7 @@ public abstract class AssemblyTerminal extends AssemblySymbol {
 	 * Provide a collection of strings that this terminal would have accepted
 	 * 
 	 * @param got the remaining contents of the input buffer
-	 * @param labels the program labels, if applicable
+	 * @param symbols the program symbols, if applicable
 	 * @return a, possibly empty, collection of suggestions
 	 */
 	public abstract Collection<String> getSuggestions(String got, AssemblyNumericSymbols symbols);

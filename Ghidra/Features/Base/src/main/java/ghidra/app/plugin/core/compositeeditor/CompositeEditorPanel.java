@@ -35,8 +35,6 @@ import javax.swing.text.JTextComponent;
 import docking.DockingWindowManager;
 import docking.actions.KeyBindingUtils;
 import docking.dnd.*;
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.widgets.DropDownSelectionTextField;
 import docking.widgets.OptionDialog;
 import docking.widgets.fieldpanel.support.FieldRange;
@@ -45,6 +43,7 @@ import docking.widgets.label.GDLabel;
 import docking.widgets.label.GLabel;
 import docking.widgets.table.*;
 import docking.widgets.textfield.GValidatedTextField;
+import generic.theme.GColor;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.datatype.DataTypeSelectionEditor;
 import ghidra.app.util.datatype.NavigationDirection;
@@ -58,6 +57,8 @@ import ghidra.util.*;
 import ghidra.util.data.DataTypeParser.AllowedDataTypes;
 import ghidra.util.exception.UsrException;
 import ghidra.util.layout.VerticalLayout;
+import help.Help;
+import help.HelpService;
 
 /**
  * Panel for editing a composite data type. Specific composite data type editors
@@ -70,8 +71,6 @@ public abstract class CompositeEditorPanel extends JPanel
 		implements CompositeEditorModelListener, ComponentCellEditorListener, Draggable, Droppable {
 
 	// Normal color for selecting components in the table.
-	// TODO: Why do we choose a different selection color?
-	//private static final Color SELECTION_COLOR = Color.YELLOW.brighter().brighter();
 	//protected static final Insets TEXTFIELD_INSETS = new JTextField().getInsets();
 
 	protected static final Border BEVELED_BORDER = BorderFactory.createLoweredBevelBorder();
@@ -80,7 +79,7 @@ public abstract class CompositeEditorPanel extends JPanel
 
 	protected CompositeEditorProvider provider;
 	protected CompositeEditorModel model;
-	protected CompositeTable table;
+	protected GTable table;
 	private JLabel statusLabel;
 
 	private boolean editorAdjusting = false;
@@ -187,6 +186,7 @@ public abstract class CompositeEditorPanel extends JPanel
 					if (editingRow < 0) {
 						return;
 					}
+
 					int modelColumn = table.convertColumnIndexToModel(table.getEditingColumn());
 					if (!launchBitFieldEditor(modelColumn, editingRow)) {
 						model.beginEditingField(editingRow, modelColumn);
@@ -494,6 +494,11 @@ public abstract class CompositeEditorPanel extends JPanel
 	}
 
 	public void domainObjectRestored(DataTypeManagerDomainObject domainObject) {
+		DataTypeManager originalDTM = model.getOriginalDataTypeManager();
+		if (originalDTM == null) {
+			// editor unloaded
+			return;
+		}
 		boolean reload = true;
 		String objectType = "domain object";
 		if (domainObject instanceof Program) {
@@ -502,7 +507,7 @@ public abstract class CompositeEditorPanel extends JPanel
 		else if (domainObject instanceof DataTypeArchive) {
 			objectType = "data type archive";
 		}
-		DataType dt = model.getOriginalDataTypeManager().getDataType(model.getCompositeID());
+		DataType dt = originalDTM.getDataType(model.getCompositeID());
 		if (dt instanceof Composite) {
 			Composite composite = (Composite) dt;
 			String origDtPath = composite.getPathName();
@@ -554,7 +559,7 @@ public abstract class CompositeEditorPanel extends JPanel
 	}
 
 	private void createTable() {
-		table = new CompositeTable(model);
+		table = new GTable(model);
 
 		TableColumnModel columnModel = table.getColumnModel();
 		if (columnModel instanceof GTableColumnModel) {
@@ -605,8 +610,6 @@ public abstract class CompositeEditorPanel extends JPanel
 		JScrollPane sp = new JScrollPane(table);
 		table.setPreferredScrollableViewportSize(new Dimension(model.getWidth(), 250));
 		table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-		//table.setSelectionBackground(SELECTION_COLOR);
-		//table.setSelectionForeground(Color.black);
 		tablePanel.add(sp, BorderLayout.CENTER);
 		SearchControlPanel searchPanel = new SearchControlPanel(this);
 
@@ -636,7 +639,7 @@ public abstract class CompositeEditorPanel extends JPanel
 			// This can happen on the Mac and is usually white.  This is a simple solution for
 			// that scenario.  If this fails on other platforms, then do something more advanced
 			// at that point.
-			table.setGridColor(Color.GRAY);
+			table.setGridColor(new GColor("color.bg.table.grid"));
 		}
 	}
 
@@ -668,7 +671,7 @@ public abstract class CompositeEditorPanel extends JPanel
 		JPanel panel = new JPanel(new BorderLayout());
 		statusLabel = new GDLabel(" ");
 		statusLabel.setHorizontalAlignment(SwingConstants.CENTER);
-		statusLabel.setForeground(Color.blue);
+		statusLabel.setForeground(new GColor("color.fg.dialog.status.normal"));
 		statusLabel.addComponentListener(new ComponentAdapter() {
 			@Override
 			public void componentResized(ComponentEvent e) {
@@ -1233,9 +1236,10 @@ public abstract class CompositeEditorPanel extends JPanel
 	}
 
 	private class ComponentDataTypeCellEditor extends AbstractCellEditor
-			implements TableCellEditor {
+			implements TableCellEditor, FocusableEditor {
 
 		private DataTypeSelectionEditor editor;
+		private DropDownSelectionTextField<DataType> textField;
 		private DataType dt;
 		private int maxLength;
 		private boolean bitfieldAllowed;
@@ -1275,7 +1279,7 @@ public abstract class CompositeEditorPanel extends JPanel
 			editor.setPreferredDataTypeManager(originalDataTypeManager);
 			editor.setConsumeEnterKeyPress(false); // we want the table to handle Enter key presses
 
-			final DropDownSelectionTextField<DataType> textField = editor.getDropDownTextField();
+			textField = editor.getDropDownTextField();
 			textField.setBorder(UIManager.getBorder("Table.focusCellHighlightBorder"));
 			editor.addCellEditorListener(new CellEditorListener() {
 				@Override
@@ -1309,12 +1313,7 @@ public abstract class CompositeEditorPanel extends JPanel
 				}
 			});
 
-			editorPanel = new JPanel() {
-				@Override
-				public void requestFocus() {
-					textField.requestFocus();
-				}
-			};
+			editorPanel = new JPanel();
 			editorPanel.setLayout(new BorderLayout());
 			editorPanel.add(textField, BorderLayout.CENTER);
 			editorPanel.add(dataTypeChooserButton, BorderLayout.EAST);
@@ -1330,6 +1329,11 @@ public abstract class CompositeEditorPanel extends JPanel
 			else {
 				editor.cancelCellEditing();
 			}
+		}
+
+		@Override
+		public void focusEditor() {
+			textField.requestFocusInWindow();
 		}
 
 		@Override
@@ -1487,20 +1491,4 @@ public abstract class CompositeEditorPanel extends JPanel
 			e.consume();
 		}
 	}
-
-	class CompositeTable extends GTable {
-
-		public CompositeTable(TableModel dm) {
-			super(dm);
-		}
-
-		@Override
-		// overridden because the editor component was not being given focus
-		public Component prepareEditor(TableCellEditor editor, int row, int column) {
-			final Component component = super.prepareEditor(editor, row, column);
-			Swing.runLater(() -> component.requestFocus());
-			return component;
-		}
-	}
-
 }

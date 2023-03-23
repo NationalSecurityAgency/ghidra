@@ -82,6 +82,11 @@ public class EmptyByteProvider implements ByteProvider {
 	}
 
 	@Override
+	public boolean isEmpty() {
+		return true;
+	}
+
+	@Override
 	public boolean isValidIndex(long index) {
 		return false;
 	}

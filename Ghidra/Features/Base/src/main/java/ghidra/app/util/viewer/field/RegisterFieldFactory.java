@@ -15,7 +15,6 @@
  */
 package ghidra.app.util.viewer.field;
 
-import java.awt.Color;
 import java.math.BigInteger;
 import java.util.*;
 
@@ -23,7 +22,6 @@ import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.app.util.HighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
-import ghidra.app.util.viewer.options.OptionsGui;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
@@ -47,7 +45,6 @@ public class RegisterFieldFactory extends FieldFactory {
 		RegisterFieldFactory.REGISTER_GROUP_NAME + Options.DELIMITER +
 			"Display Default Register Values";
 	private RegComparator regComp;
-	private Color regColor;
 	private boolean showHiddenRegisters;
 	private boolean showDefaultValues;
 
@@ -59,15 +56,16 @@ public class RegisterFieldFactory extends FieldFactory {
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, model, highlightProvider, displayOptions, fieldOptions);
 		regComp = new RegComparator();
-		initDisplayOptions();
 
+	}
+
+	@Override
+	protected void initFieldOptions(Options fieldOptions) {
+		super.initFieldOptions(fieldOptions);
 		fieldOptions.registerOption(DISPLAY_HIDDEN_REGISTERS_OPTION_NAME, false, null,
 			"Shows/hides context registers");
 		fieldOptions.registerOption(DISPLAY_DEFAULT_REGISTER_VALUES_OPTION_NAME, false, null,
 			"Shows/hides default register values");
-		regColor =
-			displayOptions.getColor(OptionsGui.REGISTERS.getColorOptionName(), getDefaultColor());
-
 		showHiddenRegisters = fieldOptions.getBoolean(DISPLAY_HIDDEN_REGISTERS_OPTION_NAME, false);
 		showDefaultValues =
 			fieldOptions.getBoolean(DISPLAY_DEFAULT_REGISTER_VALUES_OPTION_NAME, false);
@@ -153,11 +151,6 @@ public class RegisterFieldFactory extends FieldFactory {
 	}
 
 	@Override
-	public Color getDefaultColor() {
-		return OptionsGui.REGISTERS.getDefaultColor();
-	}
-
-	@Override
 	public void fieldOptionsChanged(Options options, String optionName, Object oldValue,
 			Object newValue) {
 		super.fieldOptionsChanged(options, optionName, oldValue, newValue);
@@ -169,16 +162,6 @@ public class RegisterFieldFactory extends FieldFactory {
 
 		if (optionName.equals(DISPLAY_DEFAULT_REGISTER_VALUES_OPTION_NAME)) {
 			showDefaultValues = (Boolean) newValue;
-			model.update();
-		}
-	}
-
-	@Override
-	public void displayOptionsChanged(Options options, String optionName, Object oldValue,
-			Object newValue) {
-		super.displayOptionsChanged(options, optionName, oldValue, newValue);
-		if (optionName.equals(OptionsGui.REGISTERS.getColorOptionName())) {
-			regColor = (Color) newValue;
 			model.update();
 		}
 	}
@@ -219,7 +202,8 @@ public class RegisterFieldFactory extends FieldFactory {
 	private FieldElement[] getFieldElements(String[] registerStrings) {
 		FieldElement[] fieldElements = new FieldElement[registerStrings.length];
 		for (int i = 0; i < registerStrings.length; i++) {
-			AttributedString str = new AttributedString(registerStrings[i], regColor, getMetrics());
+			AttributedString str =
+				new AttributedString(registerStrings[i], ListingColors.REGISTER, getMetrics());
 			fieldElements[i] = new TextFieldElement(str, i, 0);
 		}
 		return fieldElements;

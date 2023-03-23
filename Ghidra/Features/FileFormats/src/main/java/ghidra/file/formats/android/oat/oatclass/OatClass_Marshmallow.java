@@ -23,7 +23,7 @@ import ghidra.program.model.data.DataType;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * https://android.googlesource.com/platform/art/+/refs/heads/marshmallow-release/runtime/oat_file.h#200
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/marshmallow-release/runtime/oat_file.h#200">marshmallow-release/runtime/oat_file.h</a>
  */
 public class OatClass_Marshmallow extends OatClass_Lollipop {
 

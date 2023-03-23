@@ -83,7 +83,7 @@ public class DbgSessionImpl implements DbgSession {
 	 */
 	public void add() {
 		manager.sessions.put(id, this);
-		manager.getEventListeners().fire.sessionAdded(this, DbgCause.Causes.UNCLAIMED);
+		//manager.getEventListeners().fire.sessionAdded(this, DbgCause.Causes.UNCLAIMED);
 		//manager.addSession(this, cause);
 	}
 

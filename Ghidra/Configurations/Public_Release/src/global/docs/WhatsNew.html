@@ -36,146 +36,203 @@
     
     <P>
     In support of NSA's Cybersecurity mission, Ghidra was built to solve scaling and teaming problems
-    on complex SRE efforts, and to provide a customizable and extensible SRE research platform.  NSA
+    on complex SRE efforts and to provide a customizable and extensible SRE research platform.  NSA
     has applied Ghidra SRE capabilities to a variety of problems that involve analyzing malicious
     code and generating deep insights for NSA analysts who seek a better understanding of potential
     vulnerabilities in networks and systems.
     </P>
     <hr>   
-    
-    <H1><span style="color:#FF0000">Log4j Vulnerability Mitigation</span></H1>
-    <p><span style="color:#FF0000">Please read!</span> There have been several
-    published CVE security vulnerabilities noted for log4j which Ghidra uses for logging.  The known issues
-    have been resolved in log4j 2.17.1.  We strongly encourage
-    anyone using previous versions of Ghidra or a build from source, to remediate this issue by either upgrading
-    to the latest Ghidra 10.1.2 version, or patching your current version.</P>
-    
-    <P>
-	To patch your current Ghidra installation:
-	
-	<BLOCKQUOTE>
-	<UL>
-    <li>Delete any log4j jar files in <b>Ghidra/Framework/Generic/lib</b>.</li>
-    <li>Replace those jar files with the newer log4j 2.17.1 version: <b>log4j-api-2.17.1.jar</b> and <b>log4j-core-2.17.1.jar</b>.</li>
-    <li>Update the log4j version to refer to 2.17.1 in <b>&ltinstall_dir&gt/Ghidra/Features/GhidraServer/data/classpath.frag</b>.</li></UL>
-    </BLOCKQUOTE>
-    </p>
-    
-    <P>
-	You can find these in the latest Ghidra 10.1.2 release, or from:
-	<BLOCKQUOTE>
-	<UL>
-    <li>https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-api/2.17.1/log4j-api-2.17.1.jar</li>
-    <li>https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-core/2.17.1/log4j-core-2.17.1.jar</li>
-    </UL></BLOCKQUOTE>
-    </p>
-    
-    <P>
-    The details of the vulnerabilities can be found in the following:
-    CVE-2021-44228, CVE-2021-44832, CVE-2021-45046, CVE-2021-45105.
-    </p>
-    <hr>
         
-    <H1>What's New in Ghidra 10.1</H1>
+    <H1>What's New in Ghidra 10.2</H1>
     
     <H2>The not-so-fine print: Please Read!</H2>
     
-	<P>Ghidra 10.1 is fully backward compatible with project data from previous releases. However, programs and data type archives
-	which are created or modified in 10.1 will not be useable by an earlier Ghidra version.</P>
+	<P>Ghidra 10.2 is fully backward compatible with project data from previous releases. However, programs and data type archives
+	which are created or modified in 10.2 will not be useable by an earlier Ghidra version.</P>
 
 	<P>This release includes many new features and capabilities, performance improvements, quite a few bug fixes, and many pull-request
 	contributions.  Thanks to all those who have contributed their time, thoughts, and code. The Ghidra user community
 	thanks you too!</P>
 	
+	<P>IMPORTANT: Ghidra requires Java 17 JDK to run.  A newer version of Java may be acceptable, but has not been tested.  Please see the
+	<a href="InstallationGuide.html">Ghidra Installation Guide</a> for additional information.</P>
+	
 	<P>NOTE: Please note that any programs imported with a Ghidra beta versions or code built directly from source outside of a release tag may not be compatible
-	and may have flaws that have been corrected.  Any programs analyzed with a beta should be considered experimental and re-imported and analyzed with
-	a release version.  As an example, Ghidra 10.1 beta had an import flaw affecting symbol de-mangling that was not correctable.
+	and may have flaws that have been corrected.  Any programs analyzed from a beta or other local master source build should be considered experimental and
+	re-imported and analyzed with a release version.  As an example, Ghidra 10.1 beta had an import flaw affecting symbol demangling that was not correctable.
 	Programs imported with previous release versions should upgrade correctly through various automatic upgrade mechanisms.  Any program
 	you will continue to reverse engineer should be imported fresh with a release version or a build you trust with the latest code fixes.</P>
 
-	<P>NOTE: Ghidra Server: The Ghidra 10.1 server is compatible with Ghidra 9.2 and later Ghidra clients.  Ghidra 10.1 
-	clients are compatible with all 9.x servers.</P>
+	<P>NOTE: Ghidra Server: The Ghidra 10.2 server is compatible with Ghidra 9.2 and later Ghidra clients.  Ghidra 10.2
+	clients are compatible with all 10.x and 9.x servers.</P>
+	
+	<P>NOTE: Platform-specific native executables can be built directly from a release distribution.
+	The distribution currently provides Linux 64-bit, Windows 64-bit, and MacOS x86 binaries.  If you have another platform,
+	for example a MacOS M1 based system or a Linux variant, the support/buildNatives script can build the Decompiler,
+	demangler, and legacy PDB executables for your plaform.  Please see "Building Ghidra Native Components" section in the
+	the <a href="InstallationGuide.html#Build">Ghidra Installation Guide</a> for additional information.</P>
 	
 	<H2>Distribution</H2>
 	
-	<P> The Ghidra distribution has been enhanced to allow building of native executables directly from a release distribution.
-	The distribution currently provides Linux 64-bit, Windows 64-bit, and MacOS x86 binaries.  If you have another platform,
-	for example a MacOS M1 based system or a Linux variant, the support/buildNatives script can build the decompiler,
-	demangler, and legacy PDB executables for your plaform.  You will need gradle that supports building for your platform
-	and a working compiler for your environment.  Not every platform can be supported, as a pre-requisite is
-	support by gradle.  Ghidra has been tested to build additional native executables for Linux ARM 64-bit,
-	Linux x86 variants, and macOS ARM 64-bit.  </P>
-	
-	<P>Please see the "Building Ghidra Native Components" section of the Installation Guide for additional information.</P>
+	<P> A Software Bill of Materials (SBOM) is now included in the Ghidra release. The SBOM follows the CycloneDX standard,
+	and can be used with tools such as Dependency-Track to help identify risk in the software supply-chain.</P>
 	
 	<H2>Debugger</H2>
 	
-	<H3>Pure Emulation</H3>
-    <P>There's a new action <B>Emulate Program</B> (next to the <B>Debug Program</B> button) to launch the current program in Ghidra's p-code emulator.
-    This is not a new "connector." Rather, it starts a blank trace with the current program mapped in. The user can then step using the usual
-    "Emulate Step" actions in the "Threads" window. In general, this is sufficient to run simple experiments or step through local regions of code.
-    To modify emulated machine state, use the "Watches" window. At the moment, no other provider can modify emulated machine state.</P>
-
-    <P>This is also very useful in combination with the "P-code Stepper" window (this plugin must be added manually via File->Configure).
-    A language developer can, for example, assemble an instruction that needs testing, start emulating with the cursor at that instruction,
-    and then step individual p-code ops in the "P-code Stepper" window.</P>
-
-    <H3>Raw Hex for Live Memory</H3>
-    <P>We've added a variant of the "Bytes" window within dynamic trace, allowing viewing live memory as hex, ascii, etc. The window
-    includes the same background coloring, navigation, and tracking actions as the "Dynamic Listing". To open this window, select Window -> Bytes -> Memory.</P>
-	
-	<H3>LLDB Support</H3>
-	<P>Working toward debugging macOS targets, we've added support for LLDB. Currently, some effort is required on the user's end to clone, patch,
-	and build LLDB with language bindings for Java. Once done, the new connectors for LLDB can be used in the normal fashion. While intended for macOS,
-	these connectors also work on Linux, and may work on Windows, too. This offers an alternative for those who prefer lldb to gdb.</P>
-	
+	<P>The Debugger improvement highlights include:</P>
+	<blockquote>
+	<ul>
+	<li>FlatDebuggerAPI is introduced, providing a scripting API for Java-based GhidraScripts. An example <I>DemoDebuggerScript.java</I>
+	is included to get started.</li>
+	<li>P-code Emulation is improved, including numerous fixes, a new framework for system calls in emulation scripts, and a
+	prototype taint analyzer.</li>
+	<li>Compatibility is improved, including support for GDB versions 8.0.1 through 12.1, and LLDB version 14.0.</li>
+	<li>Support for memory/register editing is improved in Registers, Dynamic Listing, Memory, and Watches panels.</li>
+	<li>A new Frida connector is introduced, including support for debugging using Frida on USB/remote devices.</li>
+	</ul>
+	</blockquote>
+		
 	<H2>Decompiler</H2>
-	<P>Many improvements have been made to the decompiler output to improve readability. These include the production of <i>else-if</i> syntax in control flow,
-	and the reduction of casting when typedefs are involved.  In addition, pointer calculation during sub-expression elimination has been improved, and
-	a new API for iterating and accessing the decompiler output syntax tokens has been added.</P>
+	<P>The Decompiler has a myriad of improvements in the latest-release. Many have been long-requested features or improvements.
+	Highlights of the changes include:</P>
+	<blockquote>
+	<ul>
+	<li>Support for union data-types.  The Decompiler scores and displays the most likely field based on how code accesses the union. Alternately, a field access can be set manually.</li>
+	<li>Support for pointers with an offset relative to the start of a data type, usually a structure.  Examples include windows LIST_ENTRY/CONTAINING_RECORD linked lists,
+	CString allocation data, and memory allocation records.</li>
+	<li>Support for pointers with a specified address space. Useful for targeting a specific address space such as SPI memory or
+	in Harvard architectures with multiple address spaces.</li>
+	<li>Improved reconciliation of overlapping views of data-types; for example, passing of sub members of a structure to a function.</li>
+	<li>Marker Margins, similar to the listing marker margins, have been added to display things like Debugger breakpoints.</li>
+	<li>A colored highlighting service has been added, allowing clients to create highlights in the form of background colors for syntax tokens in
+	 the Decompiler UI through API calls.</li>
+	<li>Read-from and write-to access to a volatile variable now display as simple assignments, with a special token color, instead of as read- or write-volatile function calls.</li>
+	</ul>
+	</blockquote>
 	
 	<H2>Data Types</H2>
 	
-	<P>Support for zero-length data types and components has been improved, although such types will continue to
-	report a non-zero length using the <i>DataType.getLength()</i> method.  For code/features that can support zero-length data types the <i>DataType.isZeroLength()</i> 
-	method must be used to identify this case.  The <i>DataType.isZeroLength()</i> is no longer synonymous with <i>DataType.isNotYetDefined()</i> which is 
-	intended to identify data types (i.e., structures and unions) whose components have not yet be specified.  Along these same lines, Ghidra
-	now allows zero-element arrays to be defined.  The API methods supporting a trailing flex-array on structures have been removed in favor
-	of using zero-element array components.  Existing flex-array instances will be upgraded accordinagly within Programs and Data Type Archives.
-	The static method <i>DataTypeComponent.usesZeroLengthComponent(DataType)</i> may be used to determine if a zero-length component
-	will be used for a specific data type.  Due to the overlapping behavior of zero-length components, a data type which returns <i>true</i>
-	 for <i>isNotYetDefined()</i> will not produce a zero-length component.</P>
-	 
-	 <P>Improved parsing of C header files to correctly extract data type definitions, including corrected sizeof() handling, expression
-	 simplification to a constant for many types such as array size and enumeration value, and handling of type declarations within function
-	 and structure declarations.  We have re-parsed most of the included data type archives to take advantage of the changes, and plan to
-	 update the archives to more recent versions of the header files in the near future.</P>
+	<P>With this release of Ghidra, support for Pointer Typedefs has been expanded to facilitate the use of specialized
+	data type settings.  Improvements have also been made to ensure that such settings are preserved within data type
+	archives and merge situations.  These settings are not supported at the instance-level and are intended to be an
+	attribute of the associated pointer.  The Typedef provides the ability to tailor a pointer for a specific use.  It
+	is highly recommended that all required Pointer Typedef settings be applied prior to using the data type
+	(e.g., for defined data, data type components, and variables) since there is currently no change propagation for such modifications.
+
+   <P>The following Pointer Typedef settings have been introduced with this release:</p>
+<blockquote>
+<ul>     
+     <li> <B>Address Space</B> - allows the destination address space to be specified for a pointer.  While this does not affect pointer dereferencing operations
+     dictated by instruction semantics, it can aid analysis and the generation of associated memory references.</li>
+     <li><B>Component Offset</B> - provides the ability to specify an offset relative to the associated pointer's referenced data type such that:
+         <blockquote>
+         <code>&lt;referenced-data-type-storage-address&gt; = &lt;pointer-offset&gt; - &lt;component-offset-setting&gt;</code>
+         </blockquote>
+     </li>
+     <li><B>Offset Mask</B> - bit-mask to be applied prior to any bit-shift (if specified) during the computation of an actual address offset</li>
+
+     <li><B>Offset Shift</B> - bit-shift to be applied after any bit-mask (if specified) during the computation of an actual address
+     offset (positive: left-shift, negative: right-shift)</li>
+
+     <li><B>Pointer Type</B> - facilitates special interpretation of pointers</li>
+     
+     <blockquote>
+     <ul>
+         <li> <I>default</I> - normal pointer</li>
+         <li> <I>image-base-relative</I>  - pointers whose offset should be treated as relative to the program's image base (e.g., relative virtual address (RVA))</li>
+     
+         <li> <I>relative</I> - pointers whose offset is relative to the pointer's storage address</li>
+     
+         <li> <I>file-offset</I> - pointers whose offset corresponds to an offset within the loaded binary file (limited to single load file)</li>
+     </ul>
+     </blockquote>
+     </UL>
+</blockquote>    
+
+     <P> NOTE: The use and consumption of Pointer Typedef settings is in its early stages and may not be utilized by various analyzers. 
+     In addition, some settings are not relevant to some analyzers where instruction semantics will dictate pointer dereferencing.</P>
+
+     <P> At the API level, the PointerTypedef and PointerTypedefBuilder classes have been added to simplify the creation of a Pointer Typedef.
+     While an explicit Typedef name may be used, Pointer Typedefs also support an auto-naming mechanism (constructed with a null/empty name)
+     which will simply use the pointer name followed by the settings as an attribute list; example:</P> 
+     <blockquote><blockquote>
+     	<code>int * __((space(ram)))</code>
+     </blockquote></blockquote>
+
+    <P> Within the GUI, using the <B>New-&gt;Typedef on <I>&lt;pointer&gt;</I></B> action on a selected pointer within the Data Type Tree is the quickest way to create one.
+    Once this is done, use the <B>Settings...</B> action on the selected Pointer Typedef.  The Settings dialog will be displayed allowing the various settings
+    to be applied to the Typedef.  Settings should be made to Typedef prior to applying it since settings change propogation is very limited.</P>
+	
+	<H3>C Header File Parsing</H3>
+	
+	<P>C-Parser support has been added for missing C specification syntax from C11 and C23, such as tags, macros with varargs, and _NoReturn.
+	Numerous parsing errors have also been fixed, including for arrays of function pointers, array definitions, and placement of compiler directives.
+	In addition, parsing time of extremely large header files has been drastically reduced.</P>
+	<P>Error handling and reporting from the Pre-Processor and C-Parser have been improved.</P>
+	<P>Several scripts to parse header files outside of the GUI have been included, including one that specially parses AVR8 data types and memory-mapped register
+	definitions from header files for each AVR8 processor variant.  The scripts are <I>CreateAVR8GDTArchiveScript.java</I>, <I>CreateExampleGDTArchiveScript.java</I>, <I>CreateJNIArchivesScript.java</I>,
+	and <I>CreateDefaultGDTArchives.java</I>.</P>
+	<P> Finally, data types in open archives can be used during parsing for undefined data types in a header file.  At the start of parsing, use of open
+	archives can be chosen or ignored without closing open archives.  The header files must still parse without error,
+	however a missing data type or unfound header file may not cause the parsing to fail if an open archive contains a missing, but needed data type definition.</P>
+
 	
 	<H2>Mach-O Binary Import</H2>
-	<P>Mach-O binary import has been greatly improved, including handling of relocation pointer chains, support for newer Objective-C
-	class structures with RelativePointers, additional load commands, and support for more recent versions of dyld and kernel caches
-	including split-file dyld_shared_cache variants.</P>
+	<P>Mach-O binary analysis continues to improve. Support has been added for new file formats introduced in iOS 16 and macOS 13.
+	Improvements have also been made to function identification, symbol detection, and Objective-C support.</P>
 	
 	<H2>Android</H2>
-	<P>Import and analysis of the entire existing set (almost) of Android binaries up to version 12.x is now supported.  The type of binaries supported
-	include: Android Run-Time (ART), Ahead-of-Time (OAT)/ELF, Dalvik Executables (DEX), Compact DEX (CDEX), Verified DEX (VEX), Boot Image,
-	and Boot Loader formats.  Also included are Sleigh modules for DEX files covering each major release of Android; the optimized instructions
-	vary across versions.  Now when importing DEX files, you can select the Dalvik language appropriate to the Android release, which will result
-	in better analysis.</P>
 
-	<H2>Performance Improvements</H2>
-	<P>There have been many performance improvements to import, analysis, program data base access, many API calls, and the user interface.</P>
-	<P>Symbol performance in Ghidra was significantly improved. Specifically, new database indexes were created to improve finding primary
-	symbols as well as improving lookups by combinations of name, namespace, and address.</P>
+	<P>Import and analysis of the entire existing set of Android binaries up to version 13.x is now supported, including new support for the Multi-DEX format.
+	The type of binaries supported include: Android Run-Time (ART), Ahead-of-Time (OAT)/ELF, Dalvik Executables (DEX), Multi-DEX, Compact DEX (CDEX),
+	Verified DEX (VEX), Boot Image, and Boot Loader formats.  Also included are Sleigh modules for DEX files covering each major release of Android;
+	the optimized instructions vary across versions.</P>
 	
+	<P>A new Android APK loader will load all DEX files at one time and link the <code><B>method_lookup</B></code>
+	sections using <B>external references</B>. The new APK loader uses the manifest file to determine the Android version.</P>
+	
+	<H2>Analysis</H2>
+
+	<P>The option <B>Assume Contiguous Functions Only</B>, for the <B>Shared Return Analyzer</B>, has been turned on by default.
+	The <B>Shared Return Analyzer</B> turns jump instructions into a call if the jump
+	target is, or should be, considered a function.   When turned on, the option treats a jump
+	over a known function entry point to be a call, even if there is only one jump to that location.  The option improves thunk function
+	recovery as well as decompilation results by using a call to the function instead of including the called functions code within the calling function.</P>
+	
+	<P>The option has been turned on by default for all processor types except ARM.  ARM Thumb binaries can sometimes use <B>BL</B> instructions,
+	normally used as calls, as an internal jump within a large function.  If this option were on by default for such a binary it would cause
+	additional erroneous functions to be created.  The option can be used on ARM binaries, however they should be all ARM code; otherwise any Thumb code
+	using <B>BL</B> for far jumps must be fixed using the Fix_ARM_Call_JumpsScript and Override_ARM_Call_JumpsScript.</P>
+	
+	<H2>Machine Learning</H2>
+	<P>An optional MachineLearning extension has been added containing the <B>Random Forest Function Finder Plugin</B>.
+	The plugin finds undiscovered functions within a binary using classifiers to identify potential function starts.
+	The plugin trains classifiers using data sets created from  known functions within a binary.
+	These classifiers can then be used by the plugin on the original binary or other binaries to find additional functions
+	missed by initial analysis.</P>
+	<P>The extension can be installed from the <B>Ghidra Project Window</B> via <B>File->Install Extensions...</B> </P>
+		
 	<H2>Processors</H2>
-	<P>Improvements and bug fixes to many processors to include: X86, ARM, AARCH64, SPARC, PPC, SH4, RISC-V, and 6502.</P>
+	<P>Updated ARM32 and AARCH64 to version v9.3 to include vfp4 instructions.</P>
+	<P>Improvements and bug fixes have been made to many processors to include: <B>AARCH64, ARM, AVR8, AVR32, Coldfire, JVM, MIPS, MSP430, PA-Risc, PowerPC,
+	RISC-V, SuperH, Tricore, V850, X86, 6502, and 68K</B>.</P>
+	<P> Sleigh now supports <code><B>inst_next2</B></code> as well as <code><B>inst_next</B></code> to support branching around the next instruction when its length is unknown.
+	Many processors have conditional skip instructions which can be used on any instruction, including another skip instruction.
+	Some sleigh processor developers have tried to use the delayslot() directive to accomplish instruction skipping. Unfortunately, the use of the delayslot() directive
+	can cause nested delay slots or the potential for branches into the delay slotted instruction, both of which are not supported.</P>
 	
-	<H2>DWARF</H2>
-	<P>Support for loading DWARF debug information from a separate file during import has been added.  In addition data type information contained in the
-	separate debug file can be loaded without application to a program, enabling the use of debug information from a related version of the binary.</P>
+	<H2>User Interface Improvements</H2>
+	<P>The <B>Go To...</B> dialog now provides navigation to file offsets.  In addition, a new File Offset field is available in the Listing.  The
+	field must be added to the Listing using Edit Listing Fields.
+	These new features can greatly simplify correlating bytes in program memory with their original location within the file from which they were imported.
+	Example: to go to the memory location which corresponds to the first byte in the original file, enter <B><code>file(0)</code></B> in the <B>Go To...</B> dialog.</P>
 	
-    <H2>Bug Fixes and Enhancements</H2>
+	<H2>Import Formats</H2>
+	<P>Support has been added for loading WinDbg and APPORT dump files.</P>
+	<P>Redesigned the Importer's library loading options to provide finer-grained control over where libraries are searched
+	for on disk and in the project, as well as where newly loaded libraries are saved to.</P>
+	
+    <H2>Additional Bug Fixes and Enhancements</H2>
     <P> Numerous other bug fixes and improvements are fully listed in the <a href="ChangeHistory.html">ChangeHistory</a> file.</P>
     		   
     <BR>

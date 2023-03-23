@@ -15,30 +15,16 @@
  */
 package agent.frida.model.impl;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
-import agent.frida.manager.FridaCause;
-import agent.frida.manager.FridaReason;
-import agent.frida.manager.FridaThread;
-import agent.frida.manager.FridaState;
+import agent.frida.manager.*;
 import agent.frida.manager.cmd.FridaAttachCommand;
 import agent.frida.model.iface1.FridaModelSelectableObject;
-import agent.frida.model.iface2.FridaModelTargetConnector;
-import agent.frida.model.iface2.FridaModelTargetRoot;
-import agent.frida.model.iface2.FridaModelTargetThread;
+import agent.frida.model.iface2.*;
 import ghidra.dbg.error.DebuggerUserException;
-import ghidra.dbg.target.TargetAttachable;
-import ghidra.dbg.target.TargetEventScope;
-import ghidra.dbg.target.TargetFocusScope;
-import ghidra.dbg.target.TargetMethod;
-import ghidra.dbg.target.schema.TargetAttributeType;
-import ghidra.dbg.target.schema.TargetElementType;
-import ghidra.dbg.target.schema.TargetObjectSchema;
-import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
+import ghidra.dbg.target.*;
+import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 
 @TargetObjectSchemaInfo(
@@ -47,8 +33,13 @@ import ghidra.dbg.util.PathUtils;
 		@TargetElementType(type = Void.class) },
 	attributes = {
 		@TargetAttributeType(
-			name = "Available",
-			type = FridaModelTargetAvailableContainerImpl.class,
+			name = "AvailableDevices",
+			type = FridaModelTargetAvailableDevicesContainerImpl.class,
+			required = true,
+			fixed = true),
+		@TargetAttributeType(
+			name = "AvailableProcesses",
+			type = FridaModelTargetAvailableProcessesContainerImpl.class,
 			required = true,
 			fixed = true),
 		@TargetAttributeType(
@@ -65,7 +56,8 @@ import ghidra.dbg.util.PathUtils;
 public class FridaModelTargetRootImpl extends FridaModelDefaultTargetModelRoot
 		implements FridaModelTargetRoot {
 
-	protected final FridaModelTargetAvailableContainerImpl available;
+	protected final FridaModelTargetAvailableDevicesContainerImpl availableDevices;
+	protected final FridaModelTargetAvailableProcessesContainerImpl availableProcesses;
 	protected final FridaModelTargetConnectorContainerImpl connectors;
 	protected final FridaModelTargetSessionContainerImpl sessions;
 
@@ -76,13 +68,15 @@ public class FridaModelTargetRootImpl extends FridaModelDefaultTargetModelRoot
 	public FridaModelTargetRootImpl(FridaModelImpl impl, TargetObjectSchema schema) {
 		super(impl, "Debugger", schema);
 
-		this.available = new FridaModelTargetAvailableContainerImpl(this);
+		this.availableDevices = new FridaModelTargetAvailableDevicesContainerImpl(this);
+		this.availableProcesses = new FridaModelTargetAvailableProcessesContainerImpl(this);
 		this.connectors = new FridaModelTargetConnectorContainerImpl(this);
 		this.sessions = new FridaModelTargetSessionContainerImpl(this);
 
 		FridaModelTargetConnector defaultConnector = connectors.getDefaultConnector();
 		changeAttributes(List.of(), List.of( //
-			available, //
+			availableDevices, //
+			availableProcesses, //
 			connectors, //
 			sessions //
 		), Map.of( //
@@ -145,6 +139,16 @@ public class FridaModelTargetRootImpl extends FridaModelDefaultTargetModelRoot
 
 	@Override
 	public CompletableFuture<Void> attach(TargetAttachable attachable) {
+		if (attachable instanceof FridaModelTargetAvailableDevice) {
+			FridaModelTargetDeviceAttachByIdConnectorImpl targetConnector =
+				connectors.targetAttacherById;
+			String key = ((FridaModelTargetAvailableDevice) attachable).getId();
+			Map<String, String> map = new HashMap<>();
+			map.put("Id", key);
+			return model.gateFuture(targetConnector.launch(map)).exceptionally(exc -> {
+				throw new DebuggerUserException("Launch failed for " + key);
+			});
+		}
 		FridaModelTargetProcessAttachByPidConnectorImpl targetConnector =
 			connectors.processAttacherByPid;
 		String key = attachable.getName();

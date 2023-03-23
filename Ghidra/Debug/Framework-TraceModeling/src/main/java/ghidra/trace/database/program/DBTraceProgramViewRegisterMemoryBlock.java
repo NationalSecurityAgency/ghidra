@@ -27,7 +27,7 @@ import ghidra.program.database.mem.ByteMappingScheme;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
 import ghidra.program.model.mem.*;
-import ghidra.trace.database.memory.DBTraceMemoryRegisterSpace;
+import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.model.memory.TraceMemorySpaceInputStream;
 
 public class DBTraceProgramViewRegisterMemoryBlock implements MemoryBlock {
@@ -96,14 +96,14 @@ public class DBTraceProgramViewRegisterMemoryBlock implements MemoryBlock {
 	}
 
 	private final DBTraceProgramView program;
-	private final DBTraceMemoryRegisterSpace space;
+	private final DBTraceMemorySpace space;
 	private final AddressRange range;
 
 	private final List<MemoryBlockSourceInfo> info =
 		Collections.singletonList(new DBTraceProgramViewRegisterMemoryBlockSourceInfo());
 
 	public DBTraceProgramViewRegisterMemoryBlock(DBTraceProgramView program,
-			DBTraceMemoryRegisterSpace space) {
+			DBTraceMemorySpace space) {
 		this.program = program;
 		this.space = space;
 		this.range = new AddressRangeImpl(space.getAddressSpace().getMinAddress(),

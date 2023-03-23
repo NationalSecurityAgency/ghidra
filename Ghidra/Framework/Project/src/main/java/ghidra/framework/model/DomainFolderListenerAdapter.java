@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +15,9 @@
  */
 package ghidra.framework.model;
 
-import ghidra.framework.store.FileSystem;
-
 import java.lang.reflect.Method;
+
+import ghidra.framework.store.FileSystem;
 
 /**
  * Adapter for the domain folder change listener.
@@ -102,13 +101,13 @@ public abstract class DomainFolderListenerAdapter implements DomainFolderChangeL
 	@Override
 	public void domainFolderRenamed(DomainFolder folder, String oldName) {
 		if (enableStateChangeCallback)
-			stateChanged(getPathname(folder.getParent(), oldName), folder.getPathname(), true);
+			stateChanged(folder.getPathname(), getPathname(folder.getParent(), oldName), true);
 	}
 
 	@Override
 	public void domainFileRenamed(DomainFile file, String oldName) {
 		if (enableStateChangeCallback)
-			stateChanged(getPathname(file.getParent(), oldName), file.getPathname(), false);
+			stateChanged(file.getPathname(), getPathname(file.getParent(), oldName), false);
 	}
 
 	@Override

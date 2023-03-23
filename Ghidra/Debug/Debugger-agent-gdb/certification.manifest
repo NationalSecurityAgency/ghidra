@@ -1,4 +1,6 @@
 ##VERSION: 2.0
 ##MODULE IP: JSch License
 Module.manifest||GHIDRA||||END|
-data/scripts/define_info_proc_mappings||GHIDRA||||END|
+data/scripts/fallback_info_proc_mappings.gdb||GHIDRA||||END|
+data/scripts/getpid-linux-i386.gdb||GHIDRA||||END|
+data/scripts/wine32_info_proc_mappings.gdb||GHIDRA||||END|

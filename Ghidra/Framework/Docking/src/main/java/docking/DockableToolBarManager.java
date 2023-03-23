@@ -15,26 +15,25 @@
  */
 package docking;
 
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.util.ArrayList;
+import java.awt.*;
+import java.util.Collections;
 import java.util.Iterator;
 
 import javax.swing.*;
 
 import docking.action.*;
 import docking.menu.*;
+import generic.theme.GColor;
 import ghidra.util.exception.AssertException;
 import ghidra.util.task.SwingUpdateManager;
-import resources.ResourceManager;
 
 /**
  * Manages to toolbar for the dockable components.
  */
 class DockableToolBarManager {
-	private static final ImageIcon CLOSE_ICON = ResourceManager.loadImage("images/close16.gif");
-	private static final ImageIcon MENU_ICON = ResourceManager.loadImage("images/menu16.gif");
-
+	private static final Color BUTTON_COLOR = new GColor("color.fg.button");
+	private static final Icon CLOSE_ICON = new CloseIcon(false, BUTTON_COLOR);
+	private Icon MENU_ICON = new DropDownMenuIcon(BUTTON_COLOR);
 	private GenericHeader dockableHeader;
 	private ToolBarManager toolBarManager;
 
@@ -49,7 +48,8 @@ class DockableToolBarManager {
 
 	DockableToolBarManager(GenericHeader header) {
 		this.dockableHeader = header;
-		initialize(null, null, new ArrayList<DockingActionIf>().iterator());
+		menuButtonManager = new ToolBarItemManager(new ToolBarMenuAction(), null);
+		initialize(null, null, Collections.emptyIterator());
 	}
 
 	/**
@@ -74,17 +74,20 @@ class DockableToolBarManager {
 		String owner = provider.getOwner();
 		ToolBarCloseAction closeAction = new ToolBarCloseAction(owner);
 		closeButtonManager = new ToolBarItemManager(closeAction, winMgr);
-		Tool tool = winMgr.getTool();
+
+		ToolBarMenuAction dropDownAction = new ToolBarMenuAction(owner);
+		menuButtonManager = new ToolBarItemManager(dropDownAction, winMgr);
 
 		// we need to add this action to the tool in order to use key bindings
+		Tool tool = winMgr.getTool();
 		tool.addLocalAction(provider, closeAction);
+		tool.addLocalAction(provider, dropDownAction);
 	}
 
 	private void initialize(DockingWindowManager winMgr, MenuHandler menuHandler,
 			Iterator<DockingActionIf> actions) {
 		toolBarManager = new ToolBarManager(winMgr);
 		menuManager = new MenuManager(null, '\0', null, false, menuHandler, menuGroupMap);
-		menuButtonManager = new ToolBarItemManager(new ToolBarMenuAction(), winMgr);
 
 		while (actions.hasNext()) {
 			DockingActionIf action = actions.next();
@@ -169,6 +172,7 @@ class DockableToolBarManager {
 			Tool tool = dwm.getTool();
 			ComponentProvider provider = dockableComponent.getComponentProvider();
 			tool.removeLocalAction(provider, closeButtonManager.getAction());
+			tool.removeLocalAction(provider, menuButtonManager.getAction());
 		}
 
 		headerUpdater.dispose();
@@ -177,8 +181,8 @@ class DockableToolBarManager {
 	}
 
 //==================================================================================================
-// Inner Classes	
-//==================================================================================================	
+// Inner Classes
+//==================================================================================================
 
 	/**
 	 * Action added to toolbar for "hiding" the component.
@@ -212,19 +216,51 @@ class DockableToolBarManager {
 	 */
 	private class ToolBarMenuAction extends DockingAction {
 
+		private JButton myButton;
+
+		/**
+		 * Constructor for tool bars that are not part of standard component providers, such as
+		 * those used when direct rendering.
+		 */
 		ToolBarMenuAction() {
 			super("Local Menu", DockingWindowManager.DOCKING_WINDOWS_OWNER);
 			setDescription("Menu");
 			setToolBarData(new ToolBarData(MENU_ICON, null));
+			markHelpUnnecessary();
+		}
+
+		/**
+		 * Constructor for component providers
+		 * @param owner the action owner, typically a plugin
+		 */
+		ToolBarMenuAction(String owner) {
+			super("Local Menu", owner, KeyBindingType.SHARED);
+			setDescription("Menu");
+			setToolBarData(new ToolBarData(MENU_ICON, null));
+			markHelpUnnecessary();
+		}
+
+		@Override
+		protected JButton doCreateButton() {
+			myButton = super.doCreateButton();
+			return myButton;
 		}
 
 		@Override
 		public void actionPerformed(ActionContext context) {
-			JComponent src = (JComponent) context.getSourceObject();
-			Dimension d = src.getSize();
+			Dimension d = myButton.getSize();
 			JPopupMenu popupMenu = menuManager.getPopupMenu();
 			popupMenu.addPopupMenuListener(menuManager.getMenuHandler());
-			popupMenu.show(src, 0, d.height);
+			popupMenu.show(myButton, 0, d.height);
+		}
+
+		@Override
+		public boolean isEnabledForContext(ActionContext context) {
+			if (myButton == null) {
+				return false; // no menu items; no drop-down menu
+			}
+			ComponentProvider provider = context.getComponentProvider();
+			return provider == dockableComponent.getComponentProvider();
 		}
 	}
 }

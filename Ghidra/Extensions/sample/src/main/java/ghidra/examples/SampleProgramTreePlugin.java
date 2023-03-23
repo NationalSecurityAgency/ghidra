@@ -60,7 +60,7 @@ public class SampleProgramTreePlugin extends ProgramPlugin {
 	 * @param tool tool that will contain this plugin
 	 */
 	public SampleProgramTreePlugin(PluginTool tool) {
-		super(tool, false, false); // we consume neither location nor selection events
+		super(tool);
 		createActions();
 	}
 

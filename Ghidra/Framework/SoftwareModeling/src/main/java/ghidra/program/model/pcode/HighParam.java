@@ -17,7 +17,6 @@ package ghidra.program.model.pcode;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
-import ghidra.xml.XmlPullParser;
 
 /**
  * 
@@ -55,8 +54,8 @@ public class HighParam extends HighLocal {
 	}
 
 	@Override
-	public void restoreXml(XmlPullParser parser) throws PcodeXMLException {
-		super.restoreXml(parser);
+	public void decode(Decoder decoder) throws DecoderException {
+		super.decode(decoder);
 		HighSymbol sym = getSymbol();
 		slot = sym.getCategoryIndex();
 	}

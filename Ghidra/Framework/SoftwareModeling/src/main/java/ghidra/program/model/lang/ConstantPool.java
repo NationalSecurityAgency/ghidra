@@ -15,11 +15,15 @@
  */
 package ghidra.program.model.lang;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
+import java.io.IOException;
 import java.nio.charset.Charset;
 
 import ghidra.program.model.data.DataType;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.program.model.pcode.PcodeDataTypeManager;
-import ghidra.util.xml.SpecXmlUtils;
 
 /**
  * Class for manipulating "deferred" constant systems like the java virtual machine constant pool
@@ -43,45 +47,46 @@ public abstract class ConstantPool {
 		public DataType type;
 		public boolean isConstructor = false;
 
-		public StringBuilder build(long ref, PcodeDataTypeManager dtmanage) {
-			StringBuilder buf = new StringBuilder();
-			buf.append("<cpoolrec");
-			SpecXmlUtils.encodeUnsignedIntegerAttribute(buf, "ref", ref);
+		public void encode(Encoder encoder, long ref, PcodeDataTypeManager dtmanage)
+				throws IOException {
+			encoder.openElement(ELEM_CPOOLREC);
+			encoder.writeUnsignedInteger(ATTRIB_REF, ref);
 			if (tag == STRING_LITERAL) {
-				SpecXmlUtils.encodeStringAttribute(buf, "tag", "string");
+				encoder.writeString(ATTRIB_TAG, "string");
 			}
 			else if (tag == CLASS_REFERENCE) {
-				SpecXmlUtils.encodeStringAttribute(buf, "tag", "classref");
+				encoder.writeString(ATTRIB_TAG, "classref");
 			}
 			else if (tag == POINTER_METHOD) {
-				SpecXmlUtils.encodeStringAttribute(buf, "tag", "method");
+				encoder.writeString(ATTRIB_TAG, "method");
 			}
 			else if (tag == POINTER_FIELD) {
-				SpecXmlUtils.encodeStringAttribute(buf, "tag", "field");
+				encoder.writeString(ATTRIB_TAG, "field");
 			}
 			else if (tag == ARRAY_LENGTH) {
-				SpecXmlUtils.encodeStringAttribute(buf, "tag", "arraylength");
+				encoder.writeString(ATTRIB_TAG, "arraylength");
 			}
 			else if (tag == INSTANCE_OF) {
-				SpecXmlUtils.encodeStringAttribute(buf, "tag", "instanceof");
+				encoder.writeString(ATTRIB_TAG, "instanceof");
 			}
 			else if (tag == CHECK_CAST) {
-				SpecXmlUtils.encodeStringAttribute(buf, "tag", "checkcast");
+				encoder.writeString(ATTRIB_TAG, "checkcast");
 			}
 			else {
-				SpecXmlUtils.encodeStringAttribute(buf, "tag", "primitive");
+				encoder.writeString(ATTRIB_TAG, "primitive");
 			}
 			if (isConstructor) {
-				SpecXmlUtils.encodeBooleanAttribute(buf, "constructor", true);
+				encoder.writeBool(ATTRIB_CONSTRUCTOR, true);
 			}
-			buf.append(">\n");
 			if (tag == PRIMITIVE) {
-				buf.append("<value>");
-				buf.append(SpecXmlUtils.encodeUnsignedInteger(value));
-				buf.append("</value>\n");
+				encoder.openElement(ELEM_VALUE);
+				encoder.writeUnsignedInteger(ATTRIB_CONTENT, value);
+				encoder.closeElement(ELEM_VALUE);
 			}
 			if (byteData != null) {
-				buf.append("<data length=\"").append(byteData.length).append("\">\n");
+				encoder.openElement(ELEM_DATA);
+				encoder.writeSignedInteger(ATTRIB_LENGTH, byteData.length);
+				StringBuilder buf = new StringBuilder();
 				int wrap = 0;
 				for (byte val : byteData) {
 					int hival = (val >> 4) & 0xf;
@@ -95,16 +100,16 @@ public abstract class ConstantPool {
 						wrap = 0;
 					}
 				}
-				buf.append("</data>\n");
+				encoder.writeString(ATTRIB_CONTENT, buf.toString());
+				encoder.closeElement(ELEM_DATA);
 			}
 			else {
-				buf.append("<token>");
-				SpecXmlUtils.xmlEscape(buf, token);
-				buf.append("</token>\n");
+				encoder.openElement(ELEM_TOKEN);
+				encoder.writeString(ATTRIB_CONTENT, token);
+				encoder.closeElement(ELEM_TOKEN);
 			}
-			dtmanage.buildTypeRef(buf, type, type.getLength());
-			buf.append("</cpoolrec>\n");
-			return buf;
+			dtmanage.encodeTypeRef(encoder, type, type.getLength());
+			encoder.closeElement(ELEM_CPOOLREC);
 		}
 
 		public void setUTF8Data(String val) {

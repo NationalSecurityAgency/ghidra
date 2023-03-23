@@ -358,14 +358,21 @@ public class DataTypeEditorManager
 			DataTypeManager dataTypeManager = editor.getDataTypeManager();
 			DataTypeManager programDataTypeManager = domainObject.getDataTypeManager();
 			if (dataTypeManager == programDataTypeManager) {
-				DataTypePath dtPath = editor.getDtPath();
-				CategoryPath categoryPath = dtPath.getCategoryPath();
-				String name = dtPath.getDataTypeName();
-				DataType dataType = programDataTypeManager.getDataType(categoryPath, name);
-				if (dataType == null || dataType.isDeleted()) {
-					dismissEditor(editor);
-					continue;
-				}
+				/*
+
+				 It is not clear why this check was added.  It seem reasonable to always let the
+				 editor know about the event.  With this code enabled, editors with new, unsaved
+				 types will be closed.
+
+					DataTypePath dtPath = editor.getDtPath();
+					CategoryPath categoryPath = dtPath.getCategoryPath();
+					String name = dtPath.getDataTypeName();
+					DataType dataType = programDataTypeManager.getDataType(categoryPath, name);
+					if (dataType == null || dataType.isDeleted()) {
+						dismissEditor(editor);
+						continue;
+					}
+				*/
 				editor.domainObjectRestored(domainObject);
 			}
 		}
@@ -519,8 +526,8 @@ public class DataTypeEditorManager
 		PluginTool tool = plugin.getTool();
 		DTMEditFunctionSignatureDialog editSigDialog = new DTMEditFunctionSignatureDialog(
 			plugin.getTool(), "Edit Function Signature", category, functionDefinition);
-		editSigDialog.setHelpLocation(
-			new HelpLocation("DataTypeManagerPlugin", "Function_Definition"));
+		editSigDialog
+				.setHelpLocation(new HelpLocation("DataTypeManagerPlugin", "Function_Definition"));
 		tool.showDialog(editSigDialog);
 	}
 
@@ -530,7 +537,7 @@ public class DataTypeEditorManager
 
 	/**
 	 * <code>DTMEditFunctionSignatureDialog</code> provides the ability to edit the
-	 * function signature associated with a specific {@link FunctionDefinition}.  
+	 * function signature associated with a specific {@link FunctionDefinition}.
 	 * Use of this editor requires the presence of the tool-based datatype manager service.
 	 */
 	private class DTMEditFunctionSignatureDialog extends AbstractEditFunctionSignatureDialog {

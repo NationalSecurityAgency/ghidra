@@ -32,6 +32,7 @@ import ghidra.program.util.ProgramSelection;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.program.TraceVariableSnapProgramView;
 
+//@formatter:off
 @PluginInfo(
 	shortDescription = "Copy and export trace data",
 	description = "Provides tool actions for moving data from traces to various destinations.",
@@ -45,6 +46,7 @@ import ghidra.trace.model.program.TraceVariableSnapProgramView;
 		ProgramManager.class,
 	},
 	servicesProvided = {})
+//@formatter:on
 public class DebuggerCopyActionsPlugin extends AbstractDebuggerPlugin {
 
 	protected static ProgramSelection getSelectionFromContext(ActionContext context) {
@@ -55,7 +57,7 @@ public class DebuggerCopyActionsPlugin extends AbstractDebuggerPlugin {
 		return ctx.hasSelection() ? ctx.getSelection() : null;
 	}
 
-	protected DebuggerCopyIntoProgramDialog copyDialog = new DebuggerCopyIntoProgramDialog();
+	protected DebuggerCopyIntoProgramDialog copyDialog;
 
 	protected DockingAction actionExportView;
 	protected DockingAction actionCopyIntoCurrentProgram;
@@ -70,8 +72,16 @@ public class DebuggerCopyActionsPlugin extends AbstractDebuggerPlugin {
 
 	public DebuggerCopyActionsPlugin(PluginTool tool) {
 		super(tool);
+		copyDialog = new DebuggerCopyIntoProgramDialog(tool);
 
 		createActions();
+	}
+
+	@Override
+	protected void dispose() {
+		super.dispose();
+
+		copyDialog.dispose();
 	}
 
 	protected void createActions() {

@@ -15,14 +15,23 @@
  */
 package ghidra.app.util.cparser.C;
 
+import java.io.*;
 import java.util.Arrays;
+import java.util.Iterator;
 
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.services.DataTypeManagerService;
+import ghidra.app.util.cparser.CPP.PreProcessor;
 import ghidra.framework.plugintool.ServiceProvider;
+import ghidra.program.database.ProgramDB;
 import ghidra.program.model.data.*;
+import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
+import ghidra.program.util.DefaultLanguageService;
 import ghidra.util.*;
 import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.task.TaskMonitor;
 
 public class CParserUtils {
 
@@ -171,6 +180,7 @@ public class CParserUtils {
 		DataType dt = null;
 		try {
 			// parse the signature
+			parser.setParseFileName("input line");
 			dt = parser.parse(replacedText + ";");
 
 			if (!(dt instanceof FunctionDefinitionDataType)) {
@@ -205,6 +215,329 @@ public class CParserUtils {
 		}
 
 		return null;
+	}
+
+	/**
+	 * Parse a set of C Header files and associated parsing arguments, returning a new File Data TypeManager
+	 * with in the provided dataFileName.
+	 * 
+	 * Note: Using another open archive while parsing will cause:
+	 * - a dependence on the other archive
+	 * - any missing data types while parsing are supplied if present from an openDTMgr
+	 * - after parsing all data types parsed with an equivalent data type in any openDTMgr
+	 *     replaced by the data type from the openDTMgr
+	 *     
+	 * NOTE: This will only occur if the data type from the openDTMgr's is equivalent.
+	 * 
+	 * @param openDTMgrs array of datatypes managers to use for undefined data types
+	 * 
+	 * @param filenames names of files in order to parse, could include strings with
+	 *        "#" at start, which are ignored as comments
+	 * @param args arguments for parsing, "-D<defn>=", "-I<includepath>"
+	 * 
+	 * @param dataFileName name of data type archive file (include the .gdt extension)
+	 * 
+	 * @param cpp provided PreProcessor, useful if parsed Define's need to be examined after parsing
+	 * 
+	 * @param monitor  used to cancel or provide results
+	 * 
+	 * @return the data types in the ghidra .gdt archive file
+	 * 
+	 * @throws ghidra.app.util.cparser.C.ParseException for catastrophic errors in C parsing
+	 * @throws ghidra.app.util.cparser.CPP.ParseException for catastrophic errors in Preprocessor macro parsing
+	 * @throws IOException    if there io are errors saving the archive
+	 *
+	 */
+	
+	public static FileDataTypeManager parseHeaderFiles(DataTypeManager openDTMgrs[], String[] filenames, String args[], String dataFileName,
+			PreProcessor cpp, TaskMonitor monitor) throws ghidra.app.util.cparser.C.ParseException,
+			ghidra.app.util.cparser.CPP.ParseException, IOException {
+		File file = new File(dataFileName);
+		FileDataTypeManager dtMgr = FileDataTypeManager.createFileArchive(file);
+		
+		parseHeaderFiles(openDTMgrs, filenames, args, dtMgr, cpp, monitor);
+		
+		dtMgr.save();
+		return dtMgr;
+	}
+
+	
+	/**
+	 * Parse a set of C Header files and associated parsing arguments, returning a new File Data TypeManager
+	 * with in the provided dataFileName.
+	 * 
+	 * Note: Using another open archive while parsing will cause:
+	 * - a dependence on the other archive
+	 * - any missing data types while parsing are supplied if present from an openDTMgr
+	 * - after parsing all data types parsed with an equivalent data type in any openDTMgr
+	 *     replaced by the data type from the openDTMgr
+	 *     
+	 * NOTE: This will only occur if the data type from the openDTMgr's is equivalent.
+	 * 
+	 * NOTE: Providing the correct languageID and compilerSpec is very important for header files that might use sizeof()
+	 * 
+	 * @param openDTMgrs array of datatypes managers to use for undefined data types
+	 * 
+	 * @param filenames names of files in order to parse, could include strings with
+	 *        "#" at start, which are ignored as comments
+	 * @param args arguments for parsing, "-D<defn>=", "-I<includepath>"
+	 * 
+	 * @param dataFileName name of data type archive file (include the .gdt extension)
+	 * 
+	 * @param languageId language identication to use for data type organization definitions (int, long, ptr size)
+	 * @param compileSpecId compiler specification to use for parsing
+	 * 
+	 * @param cpp provided PreProcessor, useful if parsed Define's need to be examined after parsing
+	 * 
+	 * @param monitor  used to cancel or provide results
+	 * 
+	 * @return the data types in the ghidra .gdt archive file
+	 * 
+	 * @throws ghidra.app.util.cparser.C.ParseException for catastrophic errors in C parsing
+	 * @throws ghidra.app.util.cparser.CPP.ParseException for catastrophic errors in Preprocessor macro parsing
+	 * @throws IOException    if there io are errors saving the archive
+	 *
+	 */
+	public static DataTypeManager parseHeaderFiles(DataTypeManager openDTMgrs[], String[] filenames, String args[], String dataFileName,
+            String languageId, String compileSpecId, PreProcessor cpp, TaskMonitor monitor) throws ghidra.app.util.cparser.C.ParseException,
+            ghidra.app.util.cparser.CPP.ParseException, IOException {
+
+        File file = new File(dataFileName);
+        FileDataTypeManager dtMgr = FileDataTypeManager.createFileArchive(file);
+        
+        String messages = parseHeaderFiles(openDTMgrs, filenames, args, dtMgr, languageId, compileSpecId, cpp, monitor);
+        Msg.info(CParserUtils.class, messages);
+        
+        dtMgr.save();
+        
+        return dtMgr;
+    }
+
+	
+	/**
+	 * Parse a set of C Header files and associated parsing arguments, data types are added to the provided
+	 * DTMgr.
+	 *
+	 * Note: Using another open archive while parsing will cause:
+	 * - a dependence on the other archive
+	 * - any missing data types while parsing are supplied if present from an openDTMgr
+	 * - after parsing all data types parsed with an equivalent data type in any openDTMgr
+	 *     replaced by the data type from the openDTMgr
+	 *     
+	 * NOTE: This will only occur if the data type from the openDTMgr's is equivalent.
+	 * 
+	 * NOTE: Providing the correct languageID and compilerSpec is very important for header files that might use sizeof()
+	 * @param openDTMgrs array of datatypes managers to use for undefined data types
+	 * 
+	 * @param filenames names of files in order to parse, could include strings with
+	 *        "#" at start, which are ignored as comments
+	 * @param args arguments for parsing, "-D<defn>=", "-I<includepath>"
+	 * 
+	 * @param existingDTMgr datatypes will be populated into this provided DTMgr, can pass Program or File DTMgr
+	 * 
+	 * @param languageId language identication to use for data type organization definitions (int, long, ptr size)
+	 * @param compileSpecId compiler specification to use for parsing
+	 * 
+	 * @param cpp provided PreProcessor, useful if parsed Define's need to be examined after parsing
+	 * 
+	 * @param monitor  used to cancel or provide results
+	 * 
+	 * @return a formatted string of any output from pre processor parsing or C parsing
+	 * 
+	 * @throws ghidra.app.util.cparser.C.ParseException for catastrophic errors in C parsing
+	 * @throws ghidra.app.util.cparser.CPP.ParseException for catastrophic errors in Preprocessor macro parsing
+	 * @throws IOException    if there io are errors saving the archive
+	 *
+	 */
+	public static String parseHeaderFiles(DataTypeManager openDTMgrs[], String[] filenames, String args[], DataTypeManager existingDTMgr,
+            String languageId, String compileSpecId, PreProcessor cpp, TaskMonitor monitor) throws ghidra.app.util.cparser.C.ParseException,
+            ghidra.app.util.cparser.CPP.ParseException, IOException {
+        
+        Language language = DefaultLanguageService.getLanguageService().getLanguage(new LanguageID(languageId));
+        CompilerSpec compilerSpec = language.getCompilerSpecByID(new CompilerSpecID(compileSpecId));
+        
+        String dtmgrName = existingDTMgr.getName();
+        if (existingDTMgr instanceof FileDataTypeManager) {
+        	dtmgrName = ((FileDataTypeManager) existingDTMgr).getPath();
+        }
+        
+        ProgramDB program = new ProgramDB(dtmgrName, language, compilerSpec, CParserUtils.class);
+        try {
+            DataTypeManager programDtm = program.getDataTypeManager();
+            String messages = parseHeaderFiles(openDTMgrs, filenames, args, programDtm, cpp, monitor);
+            
+            int txId = existingDTMgr.startTransaction("Add Types");
+            try {
+                Iterator<DataType> allDataTypes = programDtm.getAllDataTypes();
+                while (allDataTypes.hasNext()) {
+                	existingDTMgr.resolve(allDataTypes.next(), null);
+                }
+            }
+            finally {
+            	existingDTMgr.endTransaction(txId, true);
+            }
+
+            return messages;
+        }
+        finally {
+            program.release(CParserUtils.class);
+        }
+    }
+	
+	/**
+	 * Parse a set of C Header files and associated parsing arguments, data types are added to the provided
+	 * DTMgr.
+	 * 
+	 * Note: Using another open archive while parsing will cause:
+	 * - a dependence on the other archive
+	 * - any missing data types while parsing are supplied if present from an openDTMgr
+	 * - after parsing all data types parsed with an equivalent data type in any openDTMgr
+	 *     replaced by the data type from the openDTMgr
+	 *     
+	 * NOTE: This will only occur if the data type from the openDTMgr's is equivalent.
+	 * 
+	 * NOTE: The DTMgr should have been created with the correct data type organization from a language/compilerspec
+	 *       if there could be variants in datatype defintions when using the generic data type manager data organization
+	 *       for example in a generic FileDataTypeManager int and long are size 4. This will change in the future,
+	 *       but with the current implementation, beware!
+	 * 
+	 * @param openDTmanagers array of datatypes managers to use for undefined data types
+	 * 
+	 * @param filenames names of files in order to parse, could include strings with
+	 *        "#" at start, which are ignored as comments
+	 * @param args arguments for parsing, "-D<defn>=", "-I<includepath>"
+	 * 
+	 * @param dtMgr datatypes will be populated into this provided DTMgr, can pass Program or File DTMgr
+	 * 
+	 * @param cpp provided PreProcessor, useful if parsed Define's need to be examined after parsing
+	 * 
+	 * @param monitor  used to cancel or provide results
+	 * 
+	 * @return a formatted string of any output from pre processor parsing or C parsing
+	 * 
+	 * @throws ghidra.app.util.cparser.C.ParseException for catastrophic errors in C parsing
+	 * @throws ghidra.app.util.cparser.CPP.ParseException for catastrophic errors in Preprocessor macro parsing	
+	 */
+	public static String parseHeaderFiles(DataTypeManager[] openDTmanagers, String[] filenames,
+			String args[], DataTypeManager dtMgr, PreProcessor cpp, TaskMonitor monitor)
+			throws ghidra.app.util.cparser.C.ParseException,
+			ghidra.app.util.cparser.CPP.ParseException {
+
+		String cppMessages = "";
+		if (cpp == null) {
+			cpp = new PreProcessor();
+		}
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		cpp.setArgs(args);
+
+		PrintStream os = System.out;
+		String fName = dtMgr.getName().replace(".gdt","")+"_CParser.out";
+		try {
+			os = new PrintStream(new FileOutputStream(fName));
+		} catch (FileNotFoundException e2) {
+			Msg.error(CParserUtils.class, "Unexpected Exception: " + e2.getMessage(), e2);
+		}
+		// cpp.setOutputStream(os);
+		PrintStream old = System.out;
+		System.setOut(os);
+
+		cpp.setOutputStream(bos);
+
+		try {
+			for (String filename : filenames) {
+				if (monitor.isCancelled()) {
+					break;
+				}
+				if (filename.trim().startsWith("#")) {
+					continue;
+				}
+				File file = new File(filename);
+				// process each header file in the directory
+				if (file.isDirectory()) {
+					String[] children = file.list();
+					if (children == null) {
+						continue;
+					}
+					for (String element : children) {
+						File child = new File(file.getAbsolutePath() + "/" + element);
+						if (child.getName().endsWith(".h")) {
+							parseFile(child.getAbsolutePath(), monitor, cpp);
+						}
+					}
+				} else {
+					parseFile(filename, monitor, cpp);
+				}
+			}
+		} catch (RuntimeException re) {
+			Msg.info(cpp, cpp.getParseMessages());
+			throw new ghidra.app.util.cparser.CPP.ParseException(re.getMessage());
+		} finally {
+			System.out.println(bos);
+			os.flush();
+			os.close();
+			System.setOut(old);
+			
+		}
+		
+		cppMessages = cpp.getParseMessages();
+		
+		// process all the defines and add any that are integer values into
+		// the Equates table
+		cpp.getDefinitions().populateDefineEquates(openDTmanagers, dtMgr);
+
+		String parserMessages = "";
+		if (!monitor.isCancelled()) {
+			monitor.setMessage("Parsing C");
+			
+			CParser cParser = new CParser(dtMgr, true, openDTmanagers);
+			ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
+			try {
+				parserMessages = "";
+				cParser.setParseFileName(fName);
+				cParser.parse(bis);
+			} finally {
+				parserMessages = cParser.getParseMessages();
+			}
+		}
+		
+		return getFormattedParseMessage(parserMessages, cppMessages, null);
+	}
+	
+	private static String parseFile(String filename, TaskMonitor monitor, PreProcessor cpp)
+			throws ghidra.app.util.cparser.CPP.ParseException {
+		monitor.setMessage("PreProcessing " + filename);
+		try {
+			Msg.info(CParserUtils.class, "parse " + filename);
+			cpp.parse(filename);
+		}
+		catch (Throwable e) {
+			Msg.error(CParserUtils.class, "Parsing file :" + filename);
+			Msg.error(CParserUtils.class, "Unexpected Exception: " + e.getMessage(), e);
+
+			throw new ghidra.app.util.cparser.CPP.ParseException(e.getMessage());
+		}
+		
+		return cpp.getParseMessages();
+	}
+	
+	private static String getFormattedParseMessage(String parseMessage, String cppMessage, String errMsg) {
+		String message = "";
+
+		if (errMsg != null) {
+			message += errMsg + "\n\n";
+		}
+
+		String msg = parseMessage;
+		if (msg != null && msg.length() != 0) {
+			message += "CParser Messages:\n" + msg + "\n\n";
+		}
+
+		msg = cppMessage;
+		if (msg != null && msg.length() != 0) {
+			message += "PreProcessor Messages:\n" + msg;
+		}
+
+		return message;
 	}
 
 	private static DataTypeManager[] getDataTypeManagers(DataTypeManagerService service) {
@@ -321,16 +654,16 @@ public class CParserUtils {
 		StringBuffer successFailureBuffer = new StringBuffer();
 		successFailureBuffer.append("<blockquote>");
 		if (errorIndex == 0) {
-			successFailureBuffer.append("<font color=\"red\"><b>");
+			successFailureBuffer.append("<font color=\"" + Messages.ERROR + "\"><b>");
 			successFailureBuffer.append(HTMLUtilities.friendlyEncodeHTML(functionString));
 			successFailureBuffer.append("</b></font>");
 		}
 		else {
-			successFailureBuffer.append("<font color=\"black\">");
+			successFailureBuffer.append("<font color=\"" + Colors.FOREGROUND + "\">");
 			successFailureBuffer.append(
 				HTMLUtilities.friendlyEncodeHTML(functionString.substring(0, errorIndex)));
 			successFailureBuffer.append("</font>");
-			successFailureBuffer.append("<font color=\"red\"><b>");
+			successFailureBuffer.append("<font color=\"" + Messages.ERROR + "\"><b>");
 			successFailureBuffer.append(
 				HTMLUtilities.friendlyEncodeHTML(functionString.substring(errorIndex)));
 			successFailureBuffer.append("</b></font>");

@@ -63,9 +63,9 @@ import ghidra.util.SystemUtilities;
  * specifies a production in both grammars, constraints for selecting the production, as well as the
  * generated run-time semantics. Consider an example:
  * 
- * <pre>
+ * <pre>{@code
  * :ADD regD,imm8 is op=5 & regD & imm8 { regD = regD + imm8; }
- * </pre>
+ * }</pre>
  * 
  * <p>
  * The colon indicates this constructor applies to the root "instruction" table. The mnemonic
@@ -255,9 +255,9 @@ import ghidra.util.SystemUtilities;
  * with the mnemonic production <code>^instruction</code>, though. These "pure recursive"
  * constructors are often (ab)used to handle instruction prefixes, e.g.:
  * 
- * <code>
+ * <pre>{@code
  * :^instruction is prefixed=0 & byte=0xff; instruction [ prefixed=1; ] {}
- * </code>
+ * }</pre>
  * 
  * <p>
  * There are no syntactic elements that would cue the assembly parser to use this constructor.
@@ -572,6 +572,10 @@ public class SleighAssemblerBuilder implements AssemblerBuilder {
 				}
 				else if (sym instanceof EndSymbol) {
 					// Ignore. We handle inst_next in semantic processing
+				}
+
+				else if (sym instanceof Next2Symbol) {
+					// Ignore. We handle inst_next2 in semantic processing
 				}
 				else if (sym instanceof UseropSymbol) {
 					// Ignore. We don't do pcode.

@@ -23,13 +23,13 @@ import java.util.Set;
 
 import javax.swing.*;
 
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
 import ghidra.app.services.FunctionComparisonModel;
 import ghidra.app.util.viewer.util.CodeComparisonPanel;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Function;
+import help.Help;
+import help.HelpService;
 
 /**
  * Extends the basic {@link FunctionComparisonPanel one-to-one comparison panel}

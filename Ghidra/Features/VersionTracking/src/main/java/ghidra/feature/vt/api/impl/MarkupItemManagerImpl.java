@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,7 +90,7 @@ public class MarkupItemManagerImpl {
 			//              will be speedy. If this is found to be false, then we need to take a
 			//              monitor into this method.
 			Collection<MarkupItemStorageDB> databaseMarkupItems =
-				associationDBM.getAppliedMarkupItems(TaskMonitorAdapter.DUMMY_MONITOR, association);
+				associationDBM.getAppliedMarkupItems(TaskMonitor.DUMMY, association);
 			for (MarkupItemStorageDB appliedItem : databaseMarkupItems) {
 				VTMarkupItemStatus status = appliedItem.getStatus();
 				if (status.isUnappliable()) {

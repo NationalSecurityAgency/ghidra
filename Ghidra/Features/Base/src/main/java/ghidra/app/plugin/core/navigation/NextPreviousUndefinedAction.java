@@ -21,14 +21,16 @@ import java.awt.event.KeyEvent;
 import javax.swing.Icon;
 import javax.swing.KeyStroke;
 
+import generic.theme.GIcon;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import resources.ResourceManager;
 
 public class NextPreviousUndefinedAction extends AbstractNextPreviousAction {
+
+	private static final Icon ICON = new GIcon("icon.plugin.navigation.undefined");
 
 	public NextPreviousUndefinedAction(PluginTool tool, String owner, String subGroup) {
 		super(tool, "Next Undefined", owner, subGroup);
@@ -36,7 +38,7 @@ public class NextPreviousUndefinedAction extends AbstractNextPreviousAction {
 
 	@Override
 	protected Icon getIcon() {
-		return ResourceManager.loadImage("images/U.gif");
+		return ICON;
 	}
 
 	@Override

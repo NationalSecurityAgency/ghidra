@@ -30,13 +30,15 @@ import docking.help.*;
 import docking.tool.ToolConstants;
 import ghidra.app.DeveloperPluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
-import ghidra.framework.main.FrontEndable;
+import ghidra.framework.main.ApplicationLevelPlugin;
 import ghidra.framework.model.Project;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.task.*;
+import help.Help;
+import help.HelpService;
 
 /**
  * Generate a file of all components and actions in the 
@@ -52,7 +54,7 @@ import ghidra.util.task.*;
 			JavaHelpPlugin.infoName + ", is written to your home directory."
 )
 //@formatter:on
-public class JavaHelpPlugin extends Plugin implements FrontEndable {
+public class JavaHelpPlugin extends Plugin implements ApplicationLevelPlugin {
 
 	static final String infoName = "GhidraHelpInfo.txt";
 

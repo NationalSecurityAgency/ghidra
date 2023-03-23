@@ -78,7 +78,7 @@ attach variables [ qRegPair4_2 ] [ BC DE HL AF ];
 attach variables [ pRegPair4_2 ] [ BC DE IX SP ];
 attach variables [ rRegPair4_2 ] [ BC DE IY SP ];
 ################################################################
-# Psuedo Instructions
+# Pseudo Instructions
 ################################################################
 define pcodeop segment; # Define special pcodeop that calculates the RAM address
 # given the segment selector and offset as input
@@ -756,6 +756,7 @@ cc2: "C"   is bits3_3=0x7   { c:1 = $(C_flag); export c; }
 :ADC A, ixMem8         is op0_8=0xdd; op0_8=0x8e; ixMem8 & A{
 	val:1 = ixMem8;
 	additionWithCarry(A, val, A);
+	setResultFlags(A);
 }
 
 :ADC A, iyMem8         is op0_8=0xfd; op0_8=0x8e; iyMem8 & A {

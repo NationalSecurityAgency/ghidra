@@ -20,12 +20,12 @@
 		<entry size="8" alignment="4" />
 	</size_alignment_map>
   </data_organization>
-  <spacebase name="a0_" register="a0" space="ram"/>
-  <spacebase name="a1_" register="a1" space="ram"/>
-  <spacebase name="a8_" register="a8" space="ram"/>
-  <spacebase name="a9_" register="a9" space="ram"/>
   <global>
     <range space="ram"/>
+    <register name="a0"/>
+    <register name="a1"/>
+    <register name="a8"/>
+    <register name="a9"/>
   </global>
   
   <returnaddress>

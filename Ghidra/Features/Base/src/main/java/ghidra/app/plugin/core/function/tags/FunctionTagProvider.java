@@ -15,9 +15,9 @@
  */
 package ghidra.app.plugin.core.function.tags;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.util.*;
-import java.util.List;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -27,6 +27,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.label.GLabel;
 import docking.widgets.textfield.HintTextField;
+import generic.theme.GThemeDefaults.Colors.Java;
 import ghidra.app.cmd.function.CreateFunctionTagCmd;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.framework.cmd.Command;
@@ -57,8 +58,6 @@ import resources.ResourceManager;
  */
 public class FunctionTagProvider extends ComponentProviderAdapter
 		implements DomainObjectListener {
-
-	private Color BORDER_COLOR = Color.GRAY;
 
 	private SourceTagsPanel sourcePanel;
 	private TargetTagsPanel targetPanel;
@@ -240,9 +239,9 @@ public class FunctionTagProvider extends ComponentProviderAdapter
 		targetPanel = new TargetTagsPanel(this, tool, "Assigned To Function");
 		allFunctionsPanel = new AllFunctionsPanel(program, this, "Functions with Selected Tag");
 		buttonPanel = new FunctionTagButtonPanel(sourcePanel, targetPanel);
-		sourcePanel.setBorder(BorderFactory.createLineBorder(BORDER_COLOR));
-		targetPanel.setBorder(BorderFactory.createLineBorder(BORDER_COLOR));
-		allFunctionsPanel.setBorder(BorderFactory.createLineBorder(BORDER_COLOR));
+		sourcePanel.setBorder(BorderFactory.createLineBorder(Java.BORDER));
+		targetPanel.setBorder(BorderFactory.createLineBorder(Java.BORDER));
+		allFunctionsPanel.setBorder(BorderFactory.createLineBorder(Java.BORDER));
 
 		// If we don't set this, then the splitter won't be able to shrink the
 		// target panels below the size required by its header, which can be large 

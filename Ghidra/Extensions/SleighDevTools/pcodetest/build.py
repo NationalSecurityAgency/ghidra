@@ -21,7 +21,7 @@ import pwd
 import grp
 import re
 
-class BuildUtil(object):
+class BuildUtil:
 
     def __init__(self):
         self.log = False
@@ -30,7 +30,7 @@ class BuildUtil(object):
         self.num_warnings = 0
 
     def run(self, cmd, stdout=False, stderr=False, verbose=True):
-        if isinstance(cmd, basestring):
+        if isinstance(cmd, str):
             if stdout and stderr:
                 cmd += ' 1>%s 2>%s' % (stdout, stderr)
             elif stdout and not stderr:
@@ -40,19 +40,19 @@ class BuildUtil(object):
             if verbose: self.log_info(cmd)
             os.system(cmd)
         else:
-            str = ' '.join(cmd);
+            string = ' '.join(cmd)
             if stdout:
-                f = file(stdout, 'w+')
-                str += ' 1>%s 2>&1' % (stdout)
+                f = open(stdout, 'w+')
+                string += ' 1>%s 2>&1' % (stdout)
             else:
                 f = subprocess.PIPE
-            if verbose: self.log_info(str)
+            if verbose: self.log_info(string)
             try:
                 sp = subprocess.Popen(cmd, stdout=f, stderr=subprocess.PIPE)
             except OSError as e:
-                self.log_err("Command: " + str)
-                self.log_err(e.message)
-                return 0,e.message#raise
+                self.log_err("Command: " + string)
+                self.log_err(e.strerror)
+                return 0, e.strerror
             if stdout: f.close()
             out, err = sp.communicate()
             # print 'run returned %d bytes stdout and %d bytes stderr' % (len(out) if out else 0, len(err) if err else 0)
@@ -112,19 +112,18 @@ class BuildUtil(object):
         try:
             if not os.path.isdir(dname):
                 self.makedirs(dname)
-            else:
-                self.copy(fname, dname, verbose=True)
+            self.copy(fname, dname, verbose=True)
         except IOError as e:
             self.log_err('Error occurred exporting %s to %s' % (fname, dname))
             self.log_err("Unexpected error: %s" % str(e))
 
-    def rmtree(self, dir, verbose=True):
-        if verbose: self.log_info('rm -r %s' % dir)
-        shutil.rmtree(dir)
+    def rmtree(self, directory, verbose=True):
+        if verbose: self.log_info('rm -r %s' % directory)
+        shutil.rmtree(directory)
 
-    def makedirs(self, dir, verbose=True):
-        if verbose: self.log_info('mkdir -p %s' % dir)
-        try: os.makedirs(dir)
+    def makedirs(self, directory, verbose=True):
+        if verbose: self.log_info('mkdir -p %s' % directory)
+        try: os.makedirs(directory)
         except: pass
 
     # copy a file/directory to a directory
@@ -138,9 +137,9 @@ class BuildUtil(object):
                 shutil.rmtree(dname)
             shutil.copytree(fname, dname)
 
-    def chdir(self, dir, verbose=True):
-        if verbose: self.log_info('cd %s' % dir)
-        os.chdir(dir)
+    def chdir(self, directory, verbose=True):
+        if verbose: self.log_info('cd %s' % directory)
+        os.chdir(directory)
 
     def remove(self, fname, verbose=True):
         if verbose: self.log_info('rm -f %s' % fname)
@@ -189,9 +188,9 @@ class BuildUtil(object):
     def log_close(self):
         if self.log:
             if self.num_errors > 0:
-                print '# ERROR: There were errors, see %s' % self.name
+                print('# ERROR: There were errors, see %s' % self.name)
             elif self.num_warnings > 0:
-                print '# WARNING: There were warnings, see %s' % self.name
+                print('# WARNING: There were warnings, see %s' % self.name)
             self.log.close()
         self.log = False
         self.name = False
@@ -199,7 +198,7 @@ class BuildUtil(object):
         self.num_warnings = 0
 
     def log_pr(self, prefix, what):
-        if isinstance(what, basestring):
+        if isinstance(what, str):
             log_string = prefix + what
         else:
             log_string = prefix + repr(what)
@@ -208,7 +207,7 @@ class BuildUtil(object):
             self.log.write(log_string + '\n')
             self.log.flush()
         else:
-            print log_string
+            print(log_string)
             sys.stdout.flush()
 
     def log_err(self, what):
@@ -278,7 +277,7 @@ class BuildUtil(object):
 
         f.close()
 
-class Config(object):
+class Config:
 
     def __init__(self, *obj):
         for o in obj:
@@ -286,23 +285,23 @@ class Config(object):
             else: self.__dict__.update(o.__dict__)
 
     def format(self, val):
-        if isinstance(val, basestring) and '%' in val:
+        if isinstance(val, str) and '%' in val:
             return val % self.__dict__
         elif isinstance(val, dict):
-            return dict(map(lambda (k,v): (k,self.format(v)), val.iteritems()))
+            return {k: self.format(v) for k, v in val.items()}
         else: return val
 
     def __getattr__(self, attr):
         return ''
 
     def expand(self):
-        for k,v in self.__dict__.iteritems():
+        for k,v in self.__dict__.items():
             self.__dict__[k] = self.format(v)
 
     def dump(self):
         ret = ''
-        for k,v in sorted(self.__dict__.iteritems()):
-            if isinstance(v, basestring): vv = "'" + v + "'"
+        for k,v in sorted(self.__dict__.items()):
+            if isinstance(v, str): vv = "'" + v + "'"
             else: vv = str(v)
             ret += ' '.ljust(10) + k.ljust(20) + vv + '\n'
         return ret

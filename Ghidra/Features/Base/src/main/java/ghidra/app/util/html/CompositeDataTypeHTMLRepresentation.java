@@ -20,6 +20,8 @@ import static ghidra.util.HTMLUtilities.*;
 import java.awt.Color;
 import java.util.*;
 
+import generic.theme.GThemeDefaults.Colors.Messages;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.util.ToolTipUtils;
 import ghidra.app.util.html.diff.*;
 import ghidra.program.model.data.*;
@@ -125,13 +127,11 @@ public class CompositeDataTypeHTMLRepresentation extends HTMLDataTypeRepresentat
 
 			DataType dataType = dataTypeComponent.getDataType();
 			String type = "<unknown type>";
-			DataType locatableType = null;
 			if (dataType != null) {
 				type = dataType.getDisplayName();
-				locatableType = getLocatableDataType(dataType);
 			}
 
-			list.add(new DataTypeLine(fieldName, type, comment, locatableType));
+			list.add(new DataTypeLine(fieldName, type, comment, dataType));
 			if (count++ >= MAX_COMPONENT_COUNT) {
 				// Prevent a ridiculous number of components from consuming all memory.
 				list.add(
@@ -164,7 +164,7 @@ public class CompositeDataTypeHTMLRepresentation extends HTMLDataTypeRepresentat
 		Iterator<String> warnings = warningLines.iterator();
 		for (; warnings.hasNext();) {
 			String warning = warnings.next();
-			String warningLine = wrapStringInColor(warning, Color.RED);
+			String warningLine = wrapStringInColor(warning, Messages.ERROR);
 
 			//@formatter:off
 			append(fullHtml, truncatedHtml, lineCount++, warningLine, BR);
@@ -228,7 +228,7 @@ public class CompositeDataTypeHTMLRepresentation extends HTMLDataTypeRepresentat
 
 			if (!(line instanceof DataTypeLine)) {
 				append(fullHtml, truncatedHtml, lineCount++, TR_OPEN,
-					"<TD COLSPAN=3><FONT COLOR=\"gray\">", TAB, TAB,
+					"<TD COLSPAN=3><FONT COLOR=\"" + Palette.GRAY + "\">", TAB, TAB,
 					line.getText(), "</FONT>", TD_CLOSE, TR_CLOSE);
 				continue;
 			}
@@ -344,7 +344,7 @@ public class CompositeDataTypeHTMLRepresentation extends HTMLDataTypeRepresentat
 
 		String type = truncateAsNecessary(line.getType());
 		type = friendlyEncodeHTML(type);
-		return wrapStringInColor(type, line.getTypeColor());
+		return wrapStringInColor(type, color);
 	}
 
 	// overridden to return truncated text by default

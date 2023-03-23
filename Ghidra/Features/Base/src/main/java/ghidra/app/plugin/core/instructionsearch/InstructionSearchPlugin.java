@@ -15,13 +15,13 @@
  */
 package ghidra.app.plugin.core.instructionsearch;
 
-import java.awt.Color;
 import java.util.HashSet;
 import java.util.Set;
 
 import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.tool.ToolConstants;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.NavigatableActionContext;
 import ghidra.app.context.NavigatableContextAction;
@@ -88,10 +88,20 @@ public class InstructionSearchPlugin extends ProgramPlugin {
 	 * @param tool the plugin tool
 	 */
 	public InstructionSearchPlugin(PluginTool tool) {
-		super(tool, true, true);
+		super(tool);
 
 		// Creates the menu actions used with this plugin.
 		createActions();
+	}
+
+	@Override
+	protected void dispose() {
+		super.dispose();
+
+		if (searchDialog != null) {
+			searchDialog.dispose();
+		}
+
 	}
 
 	public InstructionSearchDialog getSearchDialog() {
@@ -135,12 +145,12 @@ public class InstructionSearchPlugin extends ProgramPlugin {
 		if (selection.getNumAddresses() == 0) {
 			dialog.displayMessage(
 				"Select instructions from the listing (and hit reload) to populate the table.",
-				Color.BLUE);
+				Messages.NORMAL);
 			return false;
 		}
 		if (!isSelectionSizeValid(selection)) {
 			dialog.displayMessage("Invalid selection.  Cannot select more than " +
-				MAX_SELECTION_SIZE + " instructions and/or data items.", Color.RED);
+				MAX_SELECTION_SIZE + " instructions and/or data items.", Messages.ERROR);
 			return false;
 		}
 
@@ -150,7 +160,7 @@ public class InstructionSearchPlugin extends ProgramPlugin {
 			}
 		}
 		catch (InvalidInputException e) {
-			dialog.displayMessage(e.getMessage(), Color.RED);
+			dialog.displayMessage(e.getMessage(), Messages.ERROR);
 			return false;
 		}
 

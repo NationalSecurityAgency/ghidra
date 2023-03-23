@@ -23,6 +23,14 @@
 
 class FuncCallSpecs;		// Forward declaration
 
+extern ElementId ELEM_DEADCODEDELAY;	///< Marshaling element \<deadcodedelay>
+extern ElementId ELEM_FLOW;			///< Marshaling element \<flow>
+extern ElementId ELEM_FORCEGOTO;	///< Marshaling element \<forcegoto>
+extern ElementId ELEM_INDIRECTOVERRIDE;	///< Marshaling element \<indirectoverride>
+extern ElementId ELEM_MULTISTAGEJUMP;	///< Marshaling element \<multistagejump>
+extern ElementId ELEM_OVERRIDE;		///< Marshaling element \<override>
+extern ElementId ELEM_PROTOOVERRIDE;	///< Marshaling element \<protooverride>
+
 /// \brief A container of commands that override the decompiler's default behavior for a single function
 ///
 /// Information about a particular function that can be overridden includes:
@@ -75,8 +83,8 @@ public:
   uint4 getFlowOverride(const Address &addr) const;
   void printRaw(ostream &s,Architecture *glb) const;
   void generateOverrideMessages(vector<string> &messagelist,Architecture *glb) const;
-  void saveXml(ostream &s,Architecture *glb) const;
-  void restoreXml(const Element *el,Architecture *glb);
+  void encode(Encoder &encoder,Architecture *glb) const;
+  void decode(Decoder &decoder,Architecture *glb);
   static string typeToString(uint4 tp);			///< Convert a flow override type to a string
   static uint4 stringToType(const string &nm);		///< Convert a string to a flow override type
 };

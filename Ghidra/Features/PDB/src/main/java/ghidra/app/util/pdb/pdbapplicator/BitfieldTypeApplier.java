@@ -32,10 +32,10 @@ public class BitfieldTypeApplier extends MsTypeApplier {
 
 	/**
 	 * Constructor for bitfield applier.
-	 * @param applicator {@link PdbApplicator} for which this class is working.
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
 	 * @param msType {@link AbstractBitfieldMsType} to processes
 	 */
-	public BitfieldTypeApplier(PdbApplicator applicator, AbstractBitfieldMsType msType) {
+	public BitfieldTypeApplier(DefaultPdbApplicator applicator, AbstractBitfieldMsType msType) {
 		super(applicator, msType);
 	}
 

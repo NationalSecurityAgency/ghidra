@@ -43,7 +43,6 @@ import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.program.util.AddressEvaluator;
 import ghidra.program.util.string.*;
-import ghidra.util.Conv;
 import ghidra.util.ascii.AsciiCharSetRecognizer;
 import ghidra.util.datastruct.Accumulator;
 import ghidra.util.datastruct.ListAccumulator;
@@ -154,16 +153,14 @@ public class FlatProgramAPI {
 	}
 
 	/**
-	 * Returns the path to the program's executable file.
+	 * Returns the {@link File} that the program was originally imported from.  It does not 
+	 * necessarily still exist on the file system.
+	 * <p>
 	 * For example, <code>c:\temp\test.exe</code>.
-	 * @return path to program's executable file
+	 * @return the {@link File} that the program was originally imported from
 	 */
 	public final File getProgramFile() {
-		File f = new File(currentProgram.getExecutablePath());
-		if (f.exists()) {
-			return f;
-		}
-		return null;
+		return new File(currentProgram.getExecutablePath());
 	}
 
 	/**
@@ -246,7 +243,7 @@ public class FlatProgramAPI {
 	/**
 	 * Clears the code units (instructions or data) in the specified range.
 	 * @param start the start address
-	 * @param end   the end address
+	 * @param end   the end address (INCLUSIVE)
 	 * @throws CancelledException if cancelled
 	 */
 	public final void clearListing(Address start, Address end) throws CancelledException {
@@ -1199,7 +1196,7 @@ public class FlatProgramAPI {
 	 * @return the last instruction in the current program
 	 */
 	public final Instruction getLastInstruction() {
-		Address address = currentProgram.getMinAddress();
+		Address address = currentProgram.getMaxAddress();
 		InstructionIterator iterator = currentProgram.getListing().getInstructions(address, false);
 		if (iterator.hasNext()) {
 			return iterator.next();
@@ -1506,13 +1503,73 @@ public class FlatProgramAPI {
 	/**
 	 * Returns the non-function namespace with the given name contained inside the
 	 * specified parent namespace.
-	 * Pass <code>null</code> for namespace to indicate the global namespace.
+	 * Pass <code>null</code> for parent to indicate the global namespace.
 	 * @param parent the parent namespace, or null for global namespace
 	 * @param namespaceName the requested namespace's name
 	 * @return the namespace with the given name or null if not found
 	 */
 	public final Namespace getNamespace(Namespace parent, String namespaceName) {
 		return currentProgram.getSymbolTable().getNamespace(namespaceName, parent);
+	}
+	
+/**
+	 * Creates a new {@link Namespace} with the given name contained inside the
+	 * specified parent namespace.
+	 * Pass <code>null</code> for parent to indicate the global namespace.
+	 * If a {@link Namespace} or {@link GhidraClass} with the given name already exists, the
+	 * existing one will be returned.
+	 * @param parent the parent namespace, or null for global namespace
+	 * @param namespaceName the requested namespace's name
+	 * @return the namespace with the given name
+	 * @throws DuplicateNameException if a {@link Library} symbol exists with the given name
+	 * @throws InvalidInputException if the name is invalid
+	 * @throws IllegalArgumentException if parent Namespace does not correspond to
+	 * <code>currerntProgram</code>
+	 */
+	public final Namespace createNamespace(Namespace parent, String namespaceName)
+			throws DuplicateNameException, InvalidInputException {
+		SymbolTable symbolTable = currentProgram.getSymbolTable();
+		Namespace ns = symbolTable.getNamespace(namespaceName, parent);
+		if (ns != null) {
+			SymbolType type = ns.getSymbol().getSymbolType();
+			if (type == SymbolType.NAMESPACE || type == SymbolType.CLASS) {
+				return ns;
+			}
+		}
+		return symbolTable.createNameSpace(parent, namespaceName, SourceType.USER_DEFINED);
+	}
+	
+	/**
+	 * Creates a new {@link GhidraClass} with the given name contained inside the
+	 * specified parent namespace.
+	 * Pass <code>null</code> for parent to indicate the global namespace.
+	 * If a GhidraClass with the given name already exists, the existing one will be returned.
+	 * @param parent the parent namespace, or null for global namespace
+	 * @param className the requested classes name
+	 * @return the GhidraClass with the given name
+	 * @throws InvalidInputException if the name is invalid
+	 * @throws DuplicateNameException thrown if a {@link Library} or {@link Namespace}
+	 * symbol already exists with the given name.
+	 * Use {@link SymbolTable#convertNamespaceToClass(Namespace)} for converting an
+	 * existing Namespace to a GhidraClass.
+	 * @throws IllegalArgumentException if the given parent namespace is not from
+	 * the {@link #currentProgram}.
+	 * @throws ConcurrentModificationException if the given parent has been deleted
+	 * @throws IllegalArgumentException if parent Namespace does not correspond to
+	 * <code>currerntProgram</code>
+	 * @see SymbolTable#convertNamespaceToClass(Namespace)
+	 */
+	public final GhidraClass createClass(Namespace parent, String className)
+			throws DuplicateNameException, InvalidInputException {
+		SymbolTable symbolTable = currentProgram.getSymbolTable();
+		Namespace ns = symbolTable.getNamespace(className, parent);
+		if (ns != null) {
+			SymbolType type = ns.getSymbol().getSymbolType();
+			if (type == SymbolType.CLASS) {
+				return (GhidraClass) ns;
+			}
+		}
+		return symbolTable.createClass(parent, className, SourceType.USER_DEFINED);
 	}
 
 	/**
@@ -1644,9 +1701,10 @@ public class FlatProgramAPI {
 	 * @param address the address at which to create a new Data object.
 	 * @param datatype the Data Type that describes the type of Data object to create.
 	 * @return the newly created Data object
-	 * @throws Exception if there is any exception
+	 * @throws CodeUnitInsertionException if a conflicting code unit already exists
 	 */
-	public final Data createData(Address address, DataType datatype) throws Exception {
+	public final Data createData(Address address, DataType datatype)
+			throws CodeUnitInsertionException {
 		Listing listing = currentProgram.getListing();
 		Data d = listing.getDefinedDataAt(address);
 		if (d != null) {
@@ -1855,7 +1913,7 @@ public class FlatProgramAPI {
 	 * @return a new address with the specified offset in the default address space
 	 */
 	public final Address toAddr(int offset) {
-		return toAddr(offset & Conv.INT_MASK);
+		return toAddr(Integer.toUnsignedLong(offset));
 	}
 
 	/**
@@ -1878,9 +1936,9 @@ public class FlatProgramAPI {
 	}
 
 	/**
-	 * Returns the 'byte' value at the specified address in memory.
+	 * Returns the signed 'byte' value at the specified address in memory.
 	 * @param address the address
-	 * @return the 'byte' value at the specified address in memory
+	 * @return the signed 'byte' value at the specified address in memory
 	 * @throws MemoryAccessException if the memory is not readable
 	 */
 	public final byte getByte(Address address) throws MemoryAccessException {
@@ -1888,11 +1946,11 @@ public class FlatProgramAPI {
 	}
 
 	/**
-	 * Reads length number of bytes starting at the specified address.
+	 * Reads length number of signed bytes starting at the specified address.
 	 * Note: this could be inefficient if length is large
 	 * @param address the address to start reading
 	 * @param length the number of bytes to read
-	 * @return an array of bytes
+	 * @return an array of signed bytes
 	 * @throws MemoryAccessException if memory does not exist or is uninitialized
 	 * @see ghidra.program.model.mem.Memory
 	 */

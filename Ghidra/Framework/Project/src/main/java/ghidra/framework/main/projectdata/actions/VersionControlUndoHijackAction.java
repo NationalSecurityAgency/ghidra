@@ -19,9 +19,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import docking.action.MenuData;
+import generic.theme.GIcon;
 import ghidra.framework.client.ClientUtil;
 import ghidra.framework.main.datatable.DomainFileContext;
 import ghidra.framework.main.datatree.UndoActionDialog;
@@ -32,12 +33,13 @@ import ghidra.util.InvalidNameException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
-import resources.ResourceManager;
 
 /**
  * Action to undo hijacked domain files in the project.
  */
 public class VersionControlUndoHijackAction extends VersionControlAction {
+
+	private static final Icon ICON = new GIcon("icon.version.control.hijack.undo");
 
 	/**
 	 * Creates an action to undo hijacked domain files in the project.
@@ -45,8 +47,7 @@ public class VersionControlUndoHijackAction extends VersionControlAction {
 	 */
 	public VersionControlUndoHijackAction(Plugin plugin) {
 		super("Undo Hijack", plugin.getName(), plugin.getTool());
-		ImageIcon icon = ResourceManager.loadImage("images/undo_hijack.png");
-		setPopupMenuData(new MenuData(new String[] { "Undo Hijack" }, icon, GROUP));
+		setPopupMenuData(new MenuData(new String[] { "Undo Hijack" }, ICON, GROUP));
 		setEnabled(false);
 	}
 
@@ -98,8 +99,7 @@ public class VersionControlUndoHijackAction extends VersionControlAction {
 		}
 		if (hijackList.size() > 0) {
 			UndoActionDialog dialog = new UndoActionDialog("Confirm Undo Hijack",
-				ResourceManager.loadImage("images/undo_hijack.png"), "Undo_Hijack", "hijack",
-				hijackList);
+				ICON, "Undo_Hijack", "hijack", hijackList);
 			int actionID = dialog.showDialog(tool);
 
 			if (actionID != UndoActionDialog.CANCEL) {

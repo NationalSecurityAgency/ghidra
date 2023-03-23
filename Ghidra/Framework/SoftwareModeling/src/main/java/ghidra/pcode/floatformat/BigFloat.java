@@ -60,8 +60,7 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 	 * @param scale value's scale (signed value with the biased range of expbits)
 	 * @throws IllegalArgumentException if invalid unscaled and scale values are specified based upon the fracbits and expbits values.
 	 */
-	BigFloat(int fracbits, int expbits, FloatKind kind, int sign, BigInteger unscaled,
-			int scale) {
+	BigFloat(int fracbits, int expbits, FloatKind kind, int sign, BigInteger unscaled, int scale) {
 		this.fracbits = fracbits;
 		this.expbits = expbits;
 		this.kind = kind;
@@ -149,21 +148,6 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 				break;
 		}
 		return true;
-	}
-
-	/**
-	 * Return the BigFloat with the given number of bits representing the given BigInteger.
-	 * 
-	 * @param fracbits number of fractional bits
-	 * @param expbits number of bits in the exponent
-	 * @param i an integer
-	 * @return a BigFloat representing i
-	 */
-	public static BigFloat valueOf(int fracbits, int expbits, BigInteger i) {
-		BigFloat f = new BigFloat(fracbits, expbits, FloatKind.FINITE, i.signum() >= 0 ? +1 : -1,
-			i.abs(), fracbits);
-		f.scaleUpTo(fracbits + 1);
-		return f;
 	}
 
 	/**

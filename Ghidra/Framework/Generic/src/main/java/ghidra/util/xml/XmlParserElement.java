@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -153,7 +152,7 @@ public class XmlParserElement {
 	 * @return the boolean value of the specified attribute
 	 * @throws XmlAttributeException if no attribute exists with the specified name
 	 */
-	public boolean getAttrValueAsBool(String attrName) {
+	public boolean getAttrValueAsBool(String attrName) throws XmlAttributeException {
 		String val = getAttrValue(attrName);
 		if (val == null) {
 			throw new XmlAttributeException("Element: "+name+": attribute "+attrName+" does not exist.");
@@ -171,7 +170,7 @@ public class XmlParserElement {
 	 * @return the integer value of the specified attribute
 	 * @throws XmlAttributeException if no attribute exists with the specified name
 	 */
-	public int getAttrValueAsInt(String attrName) {
+	public int getAttrValueAsInt(String attrName) throws XmlAttributeException {
 		try {
 			String intStr = getAttrValue(attrName);
 			return XmlUtilities.parseInt(intStr);
@@ -189,7 +188,7 @@ public class XmlParserElement {
 	 * @return the long value of the specified attribute
 	 * @throws XmlAttributeException if no attribute exists with the specified name
 	 */
-	public long getAttrValueAsLong(String attrName) {
+	public long getAttrValueAsLong(String attrName) throws XmlAttributeException {
 		try {
 			String longStr = getAttrValue(attrName);
 			boolean isNegative = longStr.startsWith("-");
@@ -220,7 +219,7 @@ public class XmlParserElement {
 	 * @return the double value of the specified attribute
 	 * @throws XmlAttributeException if no attribute exists with the specified name
 	 */
-	public double getAttrValueAsDouble(String attrName) {
+	public double getAttrValueAsDouble(String attrName) throws XmlAttributeException {
 		try {
 			return Double.parseDouble(getAttrValue(attrName));
 		}

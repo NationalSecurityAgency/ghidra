@@ -112,8 +112,8 @@ class BookmarkTableModel extends AddressBasedTableModel<BookmarkRowObject> {
 		}
 
 		BookmarkType[] programTypes = bookmarkMgr.getBookmarkTypes();
-		int allKnowTypesSize = programTypes.length;
-		return !types.isEmpty() && types.size() != allKnowTypesSize;
+		int allKnownTypesSize = programTypes.length;
+		return !types.isEmpty() && types.size() != allKnownTypesSize;
 	}
 
 	FilterState getFilterState() {

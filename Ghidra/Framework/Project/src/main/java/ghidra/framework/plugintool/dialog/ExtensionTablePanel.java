@@ -23,12 +23,12 @@ import java.util.Set;
 import javax.swing.*;
 import javax.swing.table.TableColumn;
 
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.widgets.table.*;
 import ghidra.app.util.GenericHelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
+import help.Help;
+import help.HelpService;
 
 /**
  * Container for the {@link GTable} that displays ghidra extensions.

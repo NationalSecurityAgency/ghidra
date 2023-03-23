@@ -19,9 +19,9 @@ import java.awt.datatransfer.DataFlavor;
 import java.util.Comparator;
 
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 
 import docking.widgets.tree.GTreeNode;
+import generic.theme.GIcon;
 import ghidra.app.util.ToolTipUtils;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Symbol;
@@ -30,23 +30,19 @@ import ghidra.util.task.TaskMonitor;
 import resources.ResourceManager;
 
 public class FunctionSymbolNode extends SymbolNode {
-	static final DataFlavor LOCAL_DATA_FLAVOR =
-		new SymbolTreeDataFlavor("Symbol Tree Data Flavor - Local Functions");
-	static final DataFlavor GLOBAL_DATA_FLAVOR =
-		new SymbolTreeDataFlavor("Symbol Tree Data Flavor - Global Functions");
-	static final DataFlavor EXTERNAL_DATA_FLAVOR =
-		new SymbolTreeDataFlavor("Symbol Tree Data Flavor - External Functions");
 
-	public static final Icon FUNCTION_ICON = ResourceManager.loadImage("images/FunctionScope.gif");
-	public static final Icon THUNK_ICON = ResourceManager.loadImage("images/ThunkFunction.gif");
-	public static final Icon EXTERNAL_ICON =
-		ResourceManager.loadImage("images/ExternalFunction.gif");
-	public static final Icon DISABLED_FUNCTION_ICON =
-		ResourceManager.getDisabledIcon((ImageIcon) FUNCTION_ICON);
-	public static final Icon DISABLED_THUNK_ICON =
-		ResourceManager.getDisabledIcon((ImageIcon) THUNK_ICON);
-	public static final Icon DISABLED_EXTERNAL_ICON =
-		ResourceManager.getDisabledIcon((ImageIcon) EXTERNAL_ICON);
+	//@formatter:off
+	static final DataFlavor LOCAL_DATA_FLAVOR = new SymbolTreeDataFlavor("Symbol Tree Data Flavor - Local Functions");
+	static final DataFlavor GLOBAL_DATA_FLAVOR = new SymbolTreeDataFlavor("Symbol Tree Data Flavor - Global Functions");
+	static final DataFlavor EXTERNAL_DATA_FLAVOR = new SymbolTreeDataFlavor("Symbol Tree Data Flavor - External Functions");
+
+	public static final Icon FUNCTION_ICON = new GIcon("icon.plugin.symboltree.node.function");
+	public static final Icon THUNK_ICON = new GIcon("icon.plugin.symboltree.node.function.thunk");
+	public static final Icon EXTERNAL_ICON = new GIcon("icon.plugin.symboltree.node.function.external");
+	public static final Icon DISABLED_FUNCTION_ICON = ResourceManager.getDisabledIcon(FUNCTION_ICON);
+	public static final Icon DISABLED_THUNK_ICON = ResourceManager.getDisabledIcon(THUNK_ICON);
+	public static final Icon DISABLED_EXTERNAL_ICON = ResourceManager.getDisabledIcon(EXTERNAL_ICON);
+	//@formatter:on
 
 	private static Comparator<GTreeNode> CHILD_COMPARATOR = new FunctionVariableComparator();
 

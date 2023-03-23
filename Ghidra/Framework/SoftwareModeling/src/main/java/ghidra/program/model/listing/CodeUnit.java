@@ -18,7 +18,6 @@
 package ghidra.program.model.listing;
 
 import java.util.ConcurrentModificationException;
-import java.util.Iterator;
 
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.Register;
@@ -26,14 +25,12 @@ import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.*;
-import ghidra.util.Saveable;
-import ghidra.util.exception.NoValueException;
-import ghidra.util.prop.PropertyVisitor;
+import ghidra.program.model.util.PropertySet;
 
 /**
  * Interface common to both instructions and data.
  */
-public interface CodeUnit extends MemBuffer {
+public interface CodeUnit extends MemBuffer, PropertySet {
 
 	/**
 	 * Indicator for a mnemonic (versus an operand).
@@ -93,88 +90,6 @@ public interface CodeUnit extends MemBuffer {
 	 * @return string representation of address
 	 */
 	public String getAddressString(boolean showBlockName, boolean pad);
-
-	/**
-	 * Set the named property with the given value at the address of this codeunit.
-	 * @param name the name of the property.
-	 * @param value value to be stored.
-	 */
-	public void setProperty(String name, Saveable value);
-
-	/**
-	 * Set the named property with the given value at the address of this codeunit.
-	 * @param name the name of the property.
-	 * @param value value to be stored.
-	 */
-	public void setProperty(String name, String value);
-
-	/**
-	 * Set the named property with the given value at the address of this codeunit.
-	 * @param name the name of the property.
-	 * @param value value to be stored.
-	 */
-	public void setProperty(String name, int value);
-
-	/**
-	 * Set the named property.  This method is used for "void" properites. The
-	 * property is either set or not set - there is no value
-	 * @param name the name of the property.
-	 */
-	public void setProperty(String name);
-
-	/**
-	 * Get the object property for name; returns null if
-	 * there is no name property for this code unit.
-	 * @param name the name of the property
-	 */
-	public Saveable getObjectProperty(String name);
-
-	/**
-	 * Get the string property for name; returns null if
-	 * there is no name property for this code unit.
-	 * @param name the name of the property
-	 */
-	public String getStringProperty(String name);
-
-	/**
-	 * Get the int property for name.
-	 * @param name the name of the property
-	 * @throws NoValueException if there is not name property
-	 * for this code unit
-	 */
-	public int getIntProperty(String name) throws NoValueException;
-
-	/**
-	 * Returns true if the codeunit has the given property defined.
-	 * @param name the name of the property
-	 */
-	public boolean hasProperty(String name);
-
-	/**
-	 * Returns whether this code unit is marked as having the
-	 * name property.
-	 * @param name the name of the property
-	 */
-	boolean getVoidProperty(String name);
-
-	/**
-	 * Get an iterator over the property names.
-	 */
-	public Iterator<String> propertyNames();
-
-	/**
-	 * Remove the property with the given name from this code unit.
-	 * @param name the name of the property
-	 */
-	public void removeProperty(String name);
-
-	/**
-	 * Invokes the visit() method of the specified PropertyVisitor if the named
-	 * property exists for this code unit.
-	 * @param visitor the class implementing the PropertyVisitor interface.
-	 * @param propertyName the name of the property to be visited.
-	 */
-	public void visitProperty(PropertyVisitor visitor, String propertyName);
 
 	/**
 	 * Get the label for this code unit.

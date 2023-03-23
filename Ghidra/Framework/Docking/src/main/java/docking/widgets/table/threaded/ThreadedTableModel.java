@@ -534,6 +534,17 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 		updateManager.updateNow();
 	}
 
+	/**
+	 * Called when a {@link TableUpdateJob} is cancelled by the user via the Gui. (Disposing of the
+	 * table takes a different path.) This is not called when using an incrementally loading
+	 * table model. 
+	 */
+	protected void backgroundWorkCancelled() {
+		pendingSortContext = null;
+		sortCompleted(null);
+		notifyModelSorted(false);
+	}
+
 	protected void setModelState(TableData<ROW_OBJECT> allData,
 			TableData<ROW_OBJECT> filteredData) {
 
@@ -994,4 +1005,5 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 			delegate.loadingFinished(wasCancelled);
 		}
 	}
+
 }

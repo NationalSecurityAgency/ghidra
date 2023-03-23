@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +17,7 @@ package ghidra.util.datastruct;
 
 import ghidra.util.LongIterator;
 import ghidra.util.exception.NoValueException;
-import ghidra.util.prop.IntPropertySet;
-
-import java.io.Serializable;
+import ghidra.util.map.IntValueMap;
 
 /**
  * Stores ranges of int values throughout "long" space. Every "long" index has
@@ -34,10 +31,9 @@ import java.io.Serializable;
  * value stored there, then the value stored at the nearest previous index
  * that contains a value.
  */
-public class RangeMap implements Serializable {
-    private final static long serialVersionUID = 1;
+public class RangeMap {
 	
-	IntPropertySet map;
+	IntValueMap map;
 	int defaultValue;
 	
 	/**
@@ -52,11 +48,19 @@ public class RangeMap implements Serializable {
 	 * @param defaultValue the default value
 	 */
 	public RangeMap(int defaultValue) {
-		map = new IntPropertySet("RangeMap");
+		map = new IntValueMap("RangeMap");
 		this.defaultValue = defaultValue;
 		map.putInt(0, defaultValue);		
 	}
 	
+	/**
+	 * Get the total number of ranges in map.
+	 * @return number of ranges
+	 */
+	public int getNumRanges() {
+		return map.getSize();
+	}
+
 	/**
 	 * Clears all current values from the range map and resets the default value.
 	 */
@@ -175,6 +179,4 @@ public class RangeMap implements Serializable {
 	public LongIterator getChangePointIterator(long start, long end) {
 		return map.getPropertyIterator(start, end);	
 	}
-
-
 }

@@ -15,7 +15,7 @@
  */
 package ghidra.app.util;
 
-import java.awt.Color;
+import generic.theme.GColor;
 
 /**
  * Miscellaneous defined constants
@@ -76,16 +76,9 @@ public interface PluginConstants {
 	 */
 	public static final String SEARCH_OPTION_NAME = "Search";
 	/**
-	 * Option name for highlight color
-	 */
-	public static final String SEARCH_HIGHLIGHT_COLOR_NAME = " Highlight Color";
-
-	/**
 	 * Option name for highlight color used when something to highlight is at the current
 	 * address. 
 	 */
-	public static final String SEARCH_HIGHLIGHT_CURRENT_COLOR_NAME =
-		"Highlight Color for Current Match";
 	/**
 	 * Option name for whether to highlight search results.
 	 */
@@ -94,11 +87,16 @@ public interface PluginConstants {
 	/**
 	 * Color for highlighting for searches.
 	 */
-	public static final Color SEARCH_HIGHLIGHT_COLOR = new Color(255, 255, 200);
+	public static final String SEARCH_HIGHLIGHT_COLOR_OPTION_NAME = " Highlight Color";
+	public static final GColor SEARCH_HIGHLIGHT_COLOR = new GColor("color.bg.search.highlight");
+
 	/**
 	 * Default highlight color used when something to highlight is at the current
 	 * address. 
 	 */
-	public static final Color SEARCH_HIGHLIGHT_CURRENT_ADDR_COLOR = Color.YELLOW;
+	public static final String SEARCH_HIGHLIGHT_CURRENT_COLOR_OPTION_NAME =
+		"Highlight Color for Current Match";
+	public static final GColor SEARCH_HIGHLIGHT_CURRENT_ADDR_COLOR =
+		new GColor("color.bg.search.current.line.highlight");
 
 }

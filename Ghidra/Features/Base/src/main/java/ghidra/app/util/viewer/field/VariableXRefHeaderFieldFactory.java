@@ -20,6 +20,7 @@ import java.math.BigInteger;
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.viewer.field.ListingColors.XrefColors;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.app.util.viewer.proxy.VariableProxy;
@@ -77,7 +78,7 @@ public class VariableXRefHeaderFieldFactory extends VariableXRefFieldFactory {
 			return null;
 		}
 
-		AttributedString as = new AttributedString(headString, color, getMetrics());
+		AttributedString as = new AttributedString(headString, XrefColors.DEFAULT, getMetrics());
 		FieldElement text = new TextFieldElement(as, 0, 0);
 		return ListingTextField.createSingleLineTextField(this, proxy, text, startX + varWidth,
 			width, hlProvider);

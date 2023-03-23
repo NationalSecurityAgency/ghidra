@@ -19,10 +19,12 @@ import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 
-import ghidra.app.util.*;
+import ghidra.app.util.MemoryBlockUtils;
+import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.*;
+import ghidra.file.formats.dump.apport.Apport;
 import ghidra.file.formats.dump.mdmp.Minidump;
 import ghidra.file.formats.dump.pagedump.Pagedump;
 import ghidra.file.formats.dump.userdump.Userdump;
@@ -30,6 +32,7 @@ import ghidra.framework.model.DomainObject;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.database.mem.MemoryMapDB;
+import ghidra.program.database.register.AddressRangeObjectMap;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataUtilities;
 import ghidra.program.model.data.ProgramBasedDataTypeManager;
@@ -47,27 +50,15 @@ import ghidra.util.task.TaskMonitor;
 /**
  * A {@link Loader} for processing dump files and their embedded objects.
  */
-public class DumpFileLoader extends AbstractLibrarySupportLoader {
+public class DumpFileLoader extends AbstractProgramWrapperLoader {
 
 	/** The name of the dump file loader */
-	public final static String DF_NAME = "Dump File Loader";
-
-	public static final String CREATE_MEMORY_BLOCKS_OPTION_NAME = "Create Memory Blocks";
-	public static final String DEBUG_DATA_PATH_OPTION_NAME =
-		"Debug Data Path (e.g. /path/to/ntoskrnl.pdb)";
-	public static final String JOIN_BLOCKS_OPTION_NAME = "Join Blocks";
-	public static final String ANALYZE_EMBEDDED_OBJECTS_OPTION_NAME =
-		"Analyze Embedded Executables (interactive)";
-	public static final boolean CREATE_MEMORY_BLOCKS_OPTION_DEFAULT = true;
-	public static final String DEBUG_DATA_PATH_OPTION_DEFAULT = "";
-	public static final boolean JOIN_BLOCKS_OPTION_DEFAULT = false;
-	public static final boolean ANALYZE_EMBEDDED_OBJECTS_OPTION_DEFAULT = false;  // must be off by default
+	public static final String DF_NAME = "Dump File Loader";
 	public static final String MEMORY = "Memory";
 
-	private Map<AddressRange, String> ranges = new HashMap<>();
+	private AddressRangeObjectMap<String> rangeMap = new AddressRangeObjectMap<>();
 
 	private MessageLog log;
-	private boolean joinBlocks;
 
 	@Override
 	public String getName() {
@@ -104,6 +95,8 @@ public class DumpFileLoader extends AbstractLibrarySupportLoader {
 					return Userdump.getMachineType(reader);
 				case Minidump.SIGNATURE:
 					return Minidump.getMachineType(reader);
+				case Apport.SIGNATURE:
+					return Apport.getMachineType(reader);
 			}
 		}
 		catch (IOException e) {
@@ -117,19 +110,16 @@ public class DumpFileLoader extends AbstractLibrarySupportLoader {
 	protected void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
 			Program program, TaskMonitor monitor, MessageLog log)
 			throws CancelledException, IOException {
-
 		this.log = log;
-		parseDumpFile(provider, program, options, monitor);
+		parseDumpFile(provider, program, options, loadSpec, monitor);
 	}
 
 	private void parseDumpFile(ByteProvider provider, Program program, List<Option> options,
-			TaskMonitor monitor) throws IOException, CancelledException {
+			LoadSpec loadSpec, TaskMonitor monitor) throws IOException, CancelledException {
 		Language language = program.getLanguage();
 		int size = language.getDefaultSpace().getSize();
 		DumpFileReader reader = new DumpFileReader(provider, true, size);
 
-		joinBlocks = OptionUtils.getBooleanOptionValue(JOIN_BLOCKS_OPTION_NAME, options,
-			DumpFileLoader.JOIN_BLOCKS_OPTION_DEFAULT);
 		ProgramBasedDataTypeManager dtm = program.getDataTypeManager();
 
 		DumpFile df = null;
@@ -144,31 +134,38 @@ public class DumpFileLoader extends AbstractLibrarySupportLoader {
 			case Minidump.SIGNATURE:
 				df = new Minidump(reader, dtm, options, monitor);
 				break;
+			case Apport.SIGNATURE:
+				df = new Apport(reader, dtm, options, monitor, loadSpec, log);
+				break;
 		}
 		if (df != null) {
-			groupRanges(program, provider, df.getExteriorAddressRanges(), monitor);
-			loadRanges(program, provider, df.getInteriorAddressRanges(), monitor);
+			groupRanges(program, df, monitor);
+			loadRanges(program, df, monitor);
 			applyStructures(program, df, monitor);
 			df.analyze(monitor);
 		}
 	}
 
-	public void loadRanges(Program program, ByteProvider provider,
-			Map<Address, DumpAddressObject> daos, TaskMonitor monitor) {
+	public void loadRanges(Program program, DumpFile df, TaskMonitor monitor) {
+		Map<Address, DumpAddressObject> daos = df.getInteriorAddressRanges();
+		if (daos.isEmpty()) {
+			return;
+		}
 		try {
-			monitor.setMessage("Creating file bytes");
-			FileBytes fileBytes = MemoryBlockUtils.createFileBytes(program, provider, monitor);
+			FileBytes fileBytes = df.getFileBytes(monitor);
+			if (fileBytes == null) {
+				Msg.error(this,
+					"File bytes not provided by DumpFile: " + df.getClass().getSimpleName());
+				return;
+			}
 			int count = 0;
 			monitor.setMessage("Tagging blocks");
 			monitor.initialize(daos.size());
 			for (Address address : daos.keySet()) {
 				DumpAddressObject d = daos.get(address);
-				String name = d.getProviderId();
-				for (AddressRange range : ranges.keySet()) {
-					if (range.contains(address)) {
-						name = ranges.get(range);
-						break;
-					}
+				String name = rangeMap.getObject(address);
+				if (name == null) {
+					name = d.getProviderId();
 				}
 				d.setRangeName(name);
 				monitor.setProgress(count++);
@@ -199,7 +196,7 @@ public class DumpFileLoader extends AbstractLibrarySupportLoader {
 				}
 			}
 
-			if (joinBlocks) {
+			if (df.joinBlocksEnabled()) {
 				Set<Address> deleted = new HashSet<>();
 				count = 0;
 				monitor.setMessage("Joining blocks");
@@ -237,27 +234,31 @@ public class DumpFileLoader extends AbstractLibrarySupportLoader {
 		}
 	}
 
-	public void groupRanges(Program program, ByteProvider provider,
-			Map<Address, DumpAddressObject> daos, TaskMonitor monitor) throws CancelledException {
+	public void groupRanges(Program program, DumpFile df, TaskMonitor monitor)
+			throws CancelledException {
+		Map<Address, DumpAddressObject> daos = df.getExteriorAddressRanges();
+		if (daos.isEmpty()) {
+			return;
+		}
 		monitor.setMessage("Assigning ranges");
 		monitor.initialize(daos.size());
 		int count = 0;
 		for (Entry<Address, DumpAddressObject> entry : daos.entrySet()) {
+			monitor.checkCanceled();
+			monitor.setProgress(count++);
 			DumpAddressObject d = entry.getValue();
 			Address address = entry.getKey();
 			if (d.getBase() == 0) {
 				continue;
 			}
 			try {
-				AddressRangeImpl range = new AddressRangeImpl(address, d.getLength());
-				ranges.put(range, d.getProviderId());
+				rangeMap.setObject(address, address.addNoWrap(d.getLength() - 1),
+					d.getProviderId());
 			}
 			catch (AddressOverflowException | AddressOutOfBoundsException
 					| IllegalArgumentException e) {
 				Msg.warn(this, e.getMessage());
 			}
-			monitor.setProgress(count++);
-			monitor.checkCanceled();
 		}
 	}
 
@@ -266,9 +267,14 @@ public class DumpFileLoader extends AbstractLibrarySupportLoader {
 		SymbolTable symbolTable = program.getSymbolTable();
 		monitor.setMessage("Applying data structures");
 		List<DumpData> data = df.getData();
+		if (data.isEmpty()) {
+			return;
+		}
 		monitor.initialize(data.size());
 		int count = 0;
 		for (DumpData dd : data) {
+			monitor.checkCanceled();
+			monitor.setProgress(count++);
 			Address address = program.getImageBase().addWrap(dd.getOffset());
 			try {
 				if (dd.getDataType() == null) {
@@ -286,28 +292,39 @@ public class DumpFileLoader extends AbstractLibrarySupportLoader {
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 			}
 			catch (CodeUnitInsertionException e) {
-				Msg.error(this, "Could not create " + dd.getDataType().getName() + " at " + address);
+				Msg.error(this,
+					"Could not create " + dd.getDataType().getName() + " at " + address);
 			}
-			monitor.setProgress(count++);
-			monitor.checkCanceled();
 		}
 	}
 
 	@Override
 	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
 			DomainObject domainObject, boolean isLoadIntoProgram) {
-		List<Option> list = new ArrayList<>();
-
-		list.add(new Option(CREATE_MEMORY_BLOCKS_OPTION_NAME, CREATE_MEMORY_BLOCKS_OPTION_DEFAULT,
-			Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-createMemoryBlocks"));
-		list.add(new Option(DEBUG_DATA_PATH_OPTION_NAME, DEBUG_DATA_PATH_OPTION_DEFAULT,
-			String.class, Loader.COMMAND_LINE_ARG_PREFIX + "-debugDataFilePath"));
-		list.add(new Option(JOIN_BLOCKS_OPTION_NAME, JOIN_BLOCKS_OPTION_DEFAULT, Boolean.class,
-			Loader.COMMAND_LINE_ARG_PREFIX + "-joinBlocks"));
-		list.add(new Option(ANALYZE_EMBEDDED_OBJECTS_OPTION_NAME,
-			ANALYZE_EMBEDDED_OBJECTS_OPTION_DEFAULT));
-
-		return list;
+		List<Option> options = new ArrayList<>();
+		try {
+			int size = loadSpec.getLanguageCompilerSpec().getLanguage().getDefaultSpace().getSize();
+			DumpFileReader reader = new DumpFileReader(provider, true, size);
+			int signature = reader.readInt(0);
+			switch (signature) {
+				case Pagedump.SIGNATURE:
+					options.addAll(Pagedump.getDefaultOptions(reader));
+					break;
+				case Userdump.SIGNATURE:
+					options.addAll(Userdump.getDefaultOptions(reader));
+					break;
+				case Minidump.SIGNATURE:
+					options.addAll(Minidump.getDefaultOptions(reader));
+					break;
+				case Apport.SIGNATURE:
+					options.addAll(Apport.getDefaultOptions(reader));
+					break;
+			}
+		}
+		catch (IOException e) {
+			Msg.error(this, "Unexpected error", e);
+		}
+		return options;
 	}
 
 	@Override

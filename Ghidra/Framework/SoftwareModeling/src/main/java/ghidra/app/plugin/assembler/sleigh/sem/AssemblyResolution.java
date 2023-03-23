@@ -92,11 +92,10 @@ public abstract class AssemblyResolution implements Comparable<AssemblyResolutio
 	/**
 	 * Build an instruction-only successful resolution result
 	 * 
-	 * @see #resolved(AssemblyPatternBlock, AssemblyPatternBlock, String, List)
 	 * @param ins the instruction pattern block
 	 * @param description a description of the resolution
-	 * @param children the children selected to resolve this constructor, or null
 	 * @return the new resolution
+	 * @see #resolved(AssemblyPatternBlock, AssemblyPatternBlock, String, Constructor, List, AssemblyResolution)
 	 */
 	public static AssemblyResolvedPatterns instrOnly(AssemblyPatternBlock ins,
 			String description) {
@@ -106,11 +105,10 @@ public abstract class AssemblyResolution implements Comparable<AssemblyResolutio
 	/**
 	 * Build a context-only successful resolution result
 	 * 
-	 * @see #resolved(AssemblyPatternBlock, AssemblyPatternBlock, String, List)
 	 * @param ctx the context pattern block
 	 * @param description a description of the resolution
-	 * @param children the children selected to resolve this constructor, or null
 	 * @return the new resolution
+	 * @see #resolved(AssemblyPatternBlock, AssemblyPatternBlock, String, Constructor, List, AssemblyResolution)
 	 */
 	public static AssemblyResolvedPatterns contextOnly(AssemblyPatternBlock ctx,
 			String description) {
@@ -136,7 +134,6 @@ public abstract class AssemblyResolution implements Comparable<AssemblyResolutio
 	 * 
 	 * @param exp the expression depending on a missing symbol
 	 * @param goal the desired value of the expression
-	 * @param res the resolution result for child constructors
 	 * @param inslen the length of instruction portion expected in the future solution
 	 * @param description a description of the backfill record
 	 * @return the new record
@@ -163,7 +160,6 @@ public abstract class AssemblyResolution implements Comparable<AssemblyResolutio
 	 * Obtain a new "blank" resolved SLEIGH constructor record
 	 * 
 	 * @param description a description of the resolution
-	 * @param chilren any children that will be involved in populating this record
 	 * @return the new resolution
 	 */
 	public static AssemblyResolvedPatterns nop(String description) {
@@ -189,7 +185,6 @@ public abstract class AssemblyResolution implements Comparable<AssemblyResolutio
 	 * 
 	 * @param error a description of the error
 	 * @param description a description of what the resolver was doing when the error occurred
-	 * @param children any children involved in generating the error
 	 * @return the new resolution
 	 */
 	public static AssemblyResolvedError error(String error, String description) {

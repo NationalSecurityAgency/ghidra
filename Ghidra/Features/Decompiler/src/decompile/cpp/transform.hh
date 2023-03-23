@@ -22,6 +22,8 @@
 class Funcdata;			// Forward declaration
 class TransformOp;
 
+extern AttributeId ATTRIB_VECTOR_LANE_SIZES;	///< Marshaling attribute "vector_lane_sizes"
+
 /// \brief Placeholder node for Varnode that will exist after a transform is applied to a function
 class TransformVar {
   friend class TransformManager;
@@ -107,9 +109,9 @@ private:
   int4 wholeSize;		///< Size of the whole register
   uint4 sizeBitMask;		///< A 1-bit for every permissible lane size
 public:
-  LanedRegister(void) { wholeSize = 0; sizeBitMask = 0; }	///< Constructor for use with restoreXml
+  LanedRegister(void) { wholeSize = 0; sizeBitMask = 0; }	///< Constructor for use with decode
   LanedRegister(int4 sz,uint4 mask) { wholeSize = sz; sizeBitMask = mask; }	///< Constructor
-  bool restoreXml(const Element *el,const AddrSpaceManager *manage);	///< Restore object from XML stream
+  bool decode(Decoder &decoder);			///< Parse \<register> elements for lane sizes
   int4 getWholeSize(void) const { return wholeSize; }	///< Get the size in bytes of the whole laned register
   uint4 getSizeBitMask(void) const { return sizeBitMask; }	///< Get the bit mask of possible lane sizes
   void addLaneSize(int4 size) { sizeBitMask |= ((uint4)1 << size); }	///< Add a new \e size to the allowed list

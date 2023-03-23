@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.debug;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import docking.ActionContext;
 import docking.action.DockingAction;
@@ -73,7 +73,7 @@ public class DbViewerPlugin extends Plugin {
 		};
 
 		refreshAction.setEnabled(false);
-		ImageIcon icon = Icons.REFRESH_ICON;
+		Icon icon = Icons.REFRESH_ICON;
 		refreshAction.setToolBarData(new ToolBarData(icon));
 	}
 

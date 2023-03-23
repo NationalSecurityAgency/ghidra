@@ -22,6 +22,9 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import docking.DockingUtils;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.util.SystemUtilities;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
@@ -41,11 +44,14 @@ public class FilterTextField extends JPanel {
 	private static final long MINIMUM_TIME_BETWEEN_FLASHES_MS = 5000;
 	private static final int FLASH_FREQUENCY_MS = 250;
 
-	private static Color FLASH_BACKGROUND_COLOR = Color.WHITE;
-	private static Color FILTERED_BACKGROUND_COLOR = Color.YELLOW;
-	/*package*/ static Color UNEDITABLE_BACKGROUND_COLOR = Color.LIGHT_GRAY;
+	private static Color FLASH_FOREGROUND_COLOR = new GColor("color.fg");
+	private static Color FILTERED_BACKGROUND_COLOR = new GColor("color.bg.filterfield");
+	private static Color FILTERED_FOREGROUND_COLOR = new GColor("color.fg.filterfield");
 
-	private Color noFlashColor;
+	/*package*/ static Color UNEDITABLE_BACKGROUND_COLOR = new GColor("color.bg.uneditable");
+
+	private Color noFlashBgColor = Colors.BACKGROUND;
+	private Color noFlashFgColor = Colors.FOREGROUND;
 
 	/** Signals the last flash time (used to prevent excessive flashing) */
 	private long lastFlashTime = 0;
@@ -63,10 +69,10 @@ public class FilterTextField extends JPanel {
 	private WeakSet<Callback> enterListeners = WeakDataStructureFactory.createCopyOnWriteWeakSet();
 
 	/**
-	 * Constructs this text field with the given component.  <code>component</code> may be null, but 
-	 * then this field will be unable to flash in response to focus events (see the header 
+	 * Constructs this text field with the given component.  <code>component</code> may be null, but
+	 * then this field will be unable to flash in response to focus events (see the header
 	 * documentation).
-	 * 
+	 *
 	 * @param component The component needed to listen for focus changes, may be null.
 	 */
 	public FilterTextField(Component component) {
@@ -74,7 +80,7 @@ public class FilterTextField extends JPanel {
 	}
 
 	/**
-	 * Constructs this text field with the given component and the preferred visible column 
+	 * Constructs this text field with the given component and the preferred visible column
 	 * width.  <code>component</code> may be null, but then this field will be able to flash in
 	 * response to focus events (see the header documentation).
 	 * @param component The component needed to listen for focus changes, may be null.
@@ -84,6 +90,8 @@ public class FilterTextField extends JPanel {
 		super(new BorderLayout());
 
 		textField.setColumns(columns);
+		textField.setBackground(noFlashBgColor);
+		textField.setForeground(noFlashFgColor);
 
 		setFocusComponent(component);
 
@@ -120,6 +128,8 @@ public class FilterTextField extends JPanel {
 		});
 
 		add(layeredPane, BorderLayout.NORTH);
+
+		DockingUtils.installUndoRedo(textField);
 	}
 
 	private void notifyEnterPressed() {
@@ -150,19 +160,12 @@ public class FilterTextField extends JPanel {
 		flashTimer.restart();
 	}
 
-	private Color getDefaultBackgroundColor() {
-		if (noFlashColor == null) {
-			noFlashColor = textField.getBackground();  // lazy init to default bg color
-		}
-		return noFlashColor;
-	}
-
 	/**
-	 * This method will signal to the users if a filter is currently applied (has text).  For 
+	 * This method will signal to the users if a filter is currently applied (has text).  For
 	 * example, the default implementation will 'flash' the filter by changing its background
 	 * color multiple times.
 	 * <p>
-	 * Note: this method will not perform the alert if the minimum time between alerts 
+	 * Note: this method will not perform the alert if the minimum time between alerts
 	 * has not passed.  To force the alter to take place, call {@link #alert(boolean)} with a
 	 * value of <code>true</code>.
 	 */
@@ -206,28 +209,31 @@ public class FilterTextField extends JPanel {
 
 	public void setEditable(boolean b) {
 		textField.setEditable(b);
-		updateBackgroundColor();
+		updateColor();
 	}
 
-	private void updateBackgroundColor() {
-		// this is purposely done here (before the isEditable() check below) in order to make
-		// sure that the default color has been properly initialized
-		Color defaultBackgroundColor = getDefaultBackgroundColor();
-
+	private void updateColor() {
 		Color bgColor = UNEDITABLE_BACKGROUND_COLOR;
+		Color fgColor = noFlashFgColor;
 		if (isEditable() && isEnabled()) {
-			bgColor = hasText ? FILTERED_BACKGROUND_COLOR : defaultBackgroundColor;
+			bgColor = hasText ? FILTERED_BACKGROUND_COLOR : noFlashBgColor;
+			fgColor = hasText ? FILTERED_FOREGROUND_COLOR : noFlashFgColor;
 		}
 
 		doSetBackground(bgColor);
+		doSetForeground(fgColor);
 	}
 
-	private void contrastBackground() {
-		Color contrastColor = FLASH_BACKGROUND_COLOR;
-		if (textField.getBackground() == FLASH_BACKGROUND_COLOR) {
-			contrastColor = FILTERED_BACKGROUND_COLOR;
+	private void contrastColors() {
+		Color contrastBg = noFlashBgColor;
+		Color contrastFg = FLASH_FOREGROUND_COLOR;
+		if (textField.getBackground() == noFlashBgColor) {
+			contrastBg = FILTERED_BACKGROUND_COLOR;
+			contrastFg = FILTERED_FOREGROUND_COLOR;
 		}
-		doSetBackground(contrastColor);
+
+		doSetBackground(contrastBg);
+		doSetForeground(contrastFg);
 	}
 
 	public String getText() {
@@ -241,11 +247,11 @@ public class FilterTextField extends JPanel {
 	/**
 	 * Adds the listener to this filter field that will be called when the user presses the
 	 * enter key.
-	 * 
+	 *
 	 * <P>Note: this listener cannot be anonymous, as the underlying storage mechanism may be
 	 * using a weak data structure.  This means that you will need to store the listener in
 	 * a field inside of your class.
-	 * 
+	 *
 	 * @param callback the listener
 	 */
 	public void addEnterListener(Callback callback) {
@@ -257,13 +263,13 @@ public class FilterTextField extends JPanel {
 	}
 
 	/**
-	 * Adds the filter listener to this filter field that will be called when the filter 
+	 * Adds the filter listener to this filter field that will be called when the filter
 	 * contents change.
-	 * 
+	 *
 	 * <P>Note: this listener cannot be anonymous, as the underlying storage mechanism may be
 	 * using a weak data structure.  This means that you will need to store the listener in
 	 * a field inside of your class.
-	 * 
+	 *
 	 * @param l the listener
 	 */
 	public void addFilterListener(FilterListener l) {
@@ -298,10 +304,14 @@ public class FilterTextField extends JPanel {
 
 //==================================================================================================
 // Package Methods (these make testing easier)
-//==================================================================================================	
+//==================================================================================================
 
 	/*package*/ void doSetBackground(Color c) {
 		textField.setBackground(c);
+	}
+
+	/*package*/ void doSetForeground(Color c) {
+		textField.setForeground(c);
 	}
 
 	/*package*/ JLabel getClearLabel() {
@@ -330,7 +340,7 @@ public class FilterTextField extends JPanel {
 
 		updateFocusFlashing();
 
-		updateBackgroundColor();
+		updateColor();
 
 		if (fireEvent) {
 			fireFilterChanged(text);
@@ -352,7 +362,7 @@ public class FilterTextField extends JPanel {
 
 	private void updateFilterButton(boolean showFilter) {
 
-		// Note: this must be run on the Swing thread.  When the filter button shows itself, 
+		// Note: this must be run on the Swing thread.  When the filter button shows itself,
 		//       it requires an AWT lock.  If called from a non-Swing thread, deadlocks!
 		SystemUtilities.runIfSwingOrPostSwingLater(() -> {
 			if (showFilter) {
@@ -431,7 +441,7 @@ public class FilterTextField extends JPanel {
 		@Override
 		public void actionPerformed(ActionEvent event) {
 			if (flashCount < MAX_FLASH_COUNT) {
-				contrastBackground();
+				contrastColors();
 				flashCount++;
 			}
 			else {
@@ -449,7 +459,7 @@ public class FilterTextField extends JPanel {
 		@Override
 		public void stop() {
 			super.stop();
-			updateBackgroundColor(); // set to the proper non-flashing color
+			updateColor(); // set to the proper non-flashing color
 			flashCount = 0;
 		}
 	}

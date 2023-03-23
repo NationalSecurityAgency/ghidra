@@ -16,27 +16,25 @@
 package ghidra.app.plugin.core.datamgr.tree;
 
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.datamgr.archive.DomainFileArchive;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HTMLUtilities;
 import resources.MultiIcon;
-import resources.ResourceManager;
 import resources.icons.TranslateIcon;
 
 public class DomainFileArchiveNode extends ArchiveNode {
 
-	private static ImageIcon CHECKED_OUT_ICON = ResourceManager.loadImage("images/check.png");
-	private static ImageIcon CHECKED_OUT_EXCLUSIVE_ICON =
-		ResourceManager.loadImage("images/checkex.png");
-	private static ImageIcon HIJACKED_ICON = ResourceManager.loadImage("images/small_hijack.gif");
-	private static ImageIcon READ_ONLY_ICON =
-		ResourceManager.loadImage("images/user-busy.png", 10, 10);
-	private static ImageIcon NOT_LATEST_CHECKED_OUT_ICON =
-		ResourceManager.loadImage("images/checkNotLatest.gif");
+	//@formatter:off
+	private static Icon CHECKED_OUT_ICON = new GIcon("icon.plugin.datatypes.tree.node.archive.file.checked.out");
+	private static Icon CHECKED_OUT_EXCLUSIVE_ICON = new GIcon("icon.plugin.datatypes.tree.node.archive.file.checked.out.exclusive");
+	private static Icon HIJACKED_ICON = new GIcon("icon.plugin.datatypes.tree.node.archive.file.hijacked");
+	private static Icon READ_ONLY_ICON = new GIcon("icon.plugin.datatypes.tree.node.archive.file.read.only");
+	private static Icon NOT_LATEST_CHECKED_OUT_ICON = new GIcon("icon.plugin.datatypes.tree.node.archive.file.checked.out.not.latest");
+	//@formatter:on
 
 	private boolean isChanged;
 	private boolean isReadOnly;
@@ -116,7 +114,7 @@ public class DomainFileArchiveNode extends ArchiveNode {
 	@Override
 	public Icon getIcon(boolean expanded) {
 
-		ImageIcon baseIcon = archive.getIcon(expanded);
+		Icon baseIcon = archive.getIcon(expanded);
 		BackgroundIcon bgIcon = new BackgroundIcon(24, 16, isVersioned);
 		MultiIcon multiIcon = new MultiIcon(bgIcon);
 		multiIcon.addIcon(baseIcon);

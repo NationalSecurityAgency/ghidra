@@ -30,16 +30,20 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 
 import docking.widgets.list.GListCellRenderer;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors.Java;
 import ghidra.program.model.listing.Program;
 
 /**
- * Panel that displays the overflow of currently open programs that can be choosen.
+ * Panel that displays the overflow of currently open programs that can be chosen.
  * <p>
  * Programs that don't have a visible tab are displayed in bold. 
  */
 class ProgramListPanel extends JPanel {
 
-	private static final Color BACKGROUND_COLOR = new Color(255, 255, 230);
+	private static final Color BACKGROUND_COLOR = new GColor("color.bg.listing.tabs.list");
+	private static final Color FOREGROUND_COLOR = new GColor("color.fg.listing.tabs.list");
+
 	private List<Program> hiddenList;
 	private List<Program> shownList;
 	private JList<Program> programList;
@@ -74,9 +78,6 @@ class ProgramListPanel extends JPanel {
 		programList.clearSelection();
 	}
 
-	/**
-	 * Return the JList component.
-	 */
 	JList<Program> getList() {
 		return programList;
 	}
@@ -115,6 +116,7 @@ class ProgramListPanel extends JPanel {
 		initListModel();
 		programList = new JList<>(listModel);
 		programList.setBackground(BACKGROUND_COLOR);
+		programList.setForeground(FOREGROUND_COLOR);
 		programList.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
 		programList.addMouseMotionListener(new MouseMotionAdapter() {
 			@Override
@@ -147,7 +149,7 @@ class ProgramListPanel extends JPanel {
 
 		// add some padding around the panel
 		Border innerBorder = BorderFactory.createEmptyBorder(5, 5, 5, 5);
-		Border outerBorder = BorderFactory.createLineBorder(Color.BLACK);
+		Border outerBorder = BorderFactory.createLineBorder(Java.BORDER);
 		Border compoundBorder = BorderFactory.createCompoundBorder(outerBorder, innerBorder);
 		setBorder(compoundBorder);
 
@@ -157,6 +159,7 @@ class ProgramListPanel extends JPanel {
 	private JTextField createFilterField() {
 		JTextField newFilterField = new JTextField(20);
 		newFilterField.setBackground(BACKGROUND_COLOR);
+		newFilterField.setForeground(FOREGROUND_COLOR);
 		newFilterField.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
 
 		newFilterField.getDocument().addDocumentListener(new DocumentListener() {
@@ -222,11 +225,11 @@ class ProgramListPanel extends JPanel {
 
 	private void initListModel() {
 		listModel.clear();
-		for (int i = 0; i < hiddenList.size(); i++) {
-			listModel.addElement(hiddenList.get(i));
+		for (Program element : hiddenList) {
+			listModel.addElement(element);
 		}
-		for (int i = 0; i < shownList.size(); i++) {
-			listModel.addElement(shownList.get(i));
+		for (Program element : shownList) {
+			listModel.addElement(element);
 		}
 	}
 

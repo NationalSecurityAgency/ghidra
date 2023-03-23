@@ -22,6 +22,7 @@ import ghidra.app.services.LogicalBreakpoint.Mode;
 import ghidra.app.services.LogicalBreakpoint.State;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainObject;
+import ghidra.pcode.exec.SleighUtils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind.TraceBreakpointKindSet;
@@ -60,8 +61,14 @@ public class LogicalBreakpointRow {
 	}
 
 	public void setEnabled(boolean enabled) {
+		boolean filter = provider.isFilterByCurrentTrace();
 		if (enabled) {
-			CompletableFuture<Void> future = provider.isFilterByCurrentTrace()
+			String status = lb.generateStatusEnable(filter ? provider.currentTrace : null);
+			if (status != null) {
+				provider.getTool().setStatusInfo(status, true);
+			}
+			lb.enableForProgram();
+			CompletableFuture<Void> future = filter
 					? lb.enableForTrace(provider.currentTrace)
 					: lb.enable();
 			future.exceptionally(ex -> {
@@ -70,7 +77,8 @@ public class LogicalBreakpointRow {
 			});
 		}
 		else {
-			CompletableFuture<Void> future = provider.isFilterByCurrentTrace()
+			lb.disableForProgram();
+			CompletableFuture<Void> future = filter
 					? lb.disableForTrace(provider.currentTrace)
 					: lb.disable();
 			future.exceptionally(ex -> {
@@ -132,6 +140,11 @@ public class LogicalBreakpointRow {
 		return lb.getTraceBreakpoints().size();
 	}
 
+	public boolean hasSleigh() {
+		String sleigh = lb.getEmuSleigh();
+		return sleigh != null && !SleighUtils.UNCONDITIONAL_BREAK.equals(sleigh);
+	}
+
 	/**
 	 * Check if it has mapped locations, regardless of whether those locations are present
 	 * 
@@ -139,6 +152,9 @@ public class LogicalBreakpointRow {
 	 */
 	public boolean isMapped() {
 		if (provider.isFilterByCurrentTrace()) {
+			if (provider.currentTrace == null) {
+				return false;
+			}
 			return lb.getMappedTraces().contains(provider.currentTrace);
 		}
 		return !lb.getMappedTraces().isEmpty();

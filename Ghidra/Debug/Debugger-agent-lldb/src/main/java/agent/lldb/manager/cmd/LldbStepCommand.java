@@ -59,7 +59,7 @@ public class LldbStepCommand extends AbstractLldbCommand<Void> {
 	@Override
 	public void invoke() {
 		RunMode rm = RunMode.eOnlyThisThread;
-		if (thread == null) {
+		if (thread == null || !thread.IsValid()) {
 			thread = manager.getCurrentThread();
 			rm = RunMode.eAllThreads;
 		}
@@ -86,11 +86,6 @@ public class LldbStepCommand extends AbstractLldbCommand<Void> {
 			case FINISH:
 				thread.StepOutOfFrame(thread.GetSelectedFrame(), error);
 				break;
-			case ADVANCE:
-				SBFileSpec file = (SBFileSpec) args.get("File");
-				long line = (long) args.get("Line");
-				error = thread.StepOverUntil(thread.GetSelectedFrame(), file, line);
-				break;
 			case EXTENDED:
 				manager.execute(new LldbEvaluateCommand(manager, lastCommand));
 				break;
@@ -99,7 +94,9 @@ public class LldbStepCommand extends AbstractLldbCommand<Void> {
 				throw new UnsupportedOperationException("Step " + kind.name() + " not supported");
 		}
 		if (!error.Success()) {
-			Msg.error(this, error.GetType() + " while stepping");
+			SBStream stream = new SBStream();
+			error.GetDescription(stream);
+			Msg.error(this, error.GetType() + " while stepping: " + stream.GetData());
 		}
 	}
 

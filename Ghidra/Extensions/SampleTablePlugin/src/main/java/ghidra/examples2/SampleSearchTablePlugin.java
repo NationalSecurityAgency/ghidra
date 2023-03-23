@@ -40,7 +40,7 @@ public class SampleSearchTablePlugin extends ProgramPlugin {
 	private SampleSearchTableProvider provider;
 
 	public SampleSearchTablePlugin(PluginTool tool) {
-		super(tool, false, false);
+		super(tool);
 		createActions();
 	}
 

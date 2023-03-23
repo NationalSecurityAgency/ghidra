@@ -30,7 +30,7 @@ import ghidra.util.task.TaskMonitor;
 /**
  * A {@link Loader} for processing Microsoft DEF files.
  */
-public class DefLoader extends AbstractLibrarySupportLoader {
+public class DefLoader extends AbstractProgramWrapperLoader {
 	public final static String DEF_NAME = "Module Definition (DEF)";
 
 	public static final String NO_MAGIC = "0";

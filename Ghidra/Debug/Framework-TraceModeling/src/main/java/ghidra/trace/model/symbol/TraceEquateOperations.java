@@ -17,19 +17,18 @@ package ghidra.trace.model.symbol;
 
 import java.util.Collection;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.*;
+import ghidra.trace.model.Lifespan;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 public interface TraceEquateOperations {
-	AddressSetView getReferringAddresses(Range<Long> span);
+	AddressSetView getReferringAddresses(Lifespan span);
 
-	void clearReferences(Range<Long> span, AddressSetView asv, TaskMonitor monitor)
+	void clearReferences(Lifespan span, AddressSetView asv, TaskMonitor monitor)
 			throws CancelledException;
 
-	void clearReferences(Range<Long> span, AddressRange range, TaskMonitor monitor)
+	void clearReferences(Lifespan span, AddressRange range, TaskMonitor monitor)
 			throws CancelledException;
 
 	TraceEquate getReferencedByValue(long snap, Address address, int operandIndex, long value);

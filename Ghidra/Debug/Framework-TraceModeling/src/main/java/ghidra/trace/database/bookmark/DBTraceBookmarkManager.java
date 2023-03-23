@@ -21,9 +21,7 @@ import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import javax.swing.ImageIcon;
-
-import com.google.common.collect.Range;
+import javax.swing.Icon;
 
 import db.DBHandle;
 import ghidra.program.model.address.*;
@@ -32,6 +30,7 @@ import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.space.*;
 import ghidra.trace.database.thread.DBTraceThreadManager;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace.TraceBookmarkChangeType;
 import ghidra.trace.model.bookmark.TraceBookmarkManager;
 import ghidra.trace.model.bookmark.TraceBookmarkType;
@@ -44,8 +43,7 @@ import ghidra.util.database.DBOpenMode;
 import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
-public class DBTraceBookmarkManager
-		extends AbstractDBTraceSpaceBasedManager<DBTraceBookmarkSpace, DBTraceBookmarkRegisterSpace>
+public class DBTraceBookmarkManager extends AbstractDBTraceSpaceBasedManager<DBTraceBookmarkSpace>
 		implements TraceBookmarkManager, DBTraceDelegatingManager<DBTraceBookmarkSpace> {
 	public static final String NAME = "Bookmark";
 
@@ -180,13 +178,13 @@ public class DBTraceBookmarkManager
 	@Override
 	protected DBTraceBookmarkSpace createSpace(AddressSpace space, DBTraceSpaceEntry ent)
 			throws VersionException, IOException {
-		return new DBTraceBookmarkSpace(this, space);
+		return new DBTraceBookmarkSpace(this, space, null, 0);
 	}
 
 	@Override
-	protected DBTraceBookmarkRegisterSpace createRegisterSpace(AddressSpace space,
+	protected DBTraceBookmarkSpace createRegisterSpace(AddressSpace space,
 			TraceThread thread, DBTraceSpaceEntry ent) throws VersionException, IOException {
-		return new DBTraceBookmarkRegisterSpace(this, space, thread, ent.getFrameLevel());
+		return new DBTraceBookmarkSpace(this, space, thread, ent.getFrameLevel());
 	}
 
 	@Override
@@ -195,13 +193,13 @@ public class DBTraceBookmarkManager
 	}
 
 	@Override
-	public DBTraceBookmarkRegisterSpace getBookmarkRegisterSpace(TraceThread thread,
+	public DBTraceBookmarkSpace getBookmarkRegisterSpace(TraceThread thread,
 			boolean createIfAbsent) {
 		return getForRegisterSpace(thread, 0, createIfAbsent);
 	}
 
 	@Override
-	public DBTraceBookmarkRegisterSpace getBookmarkRegisterSpace(TraceStackFrame frame,
+	public DBTraceBookmarkSpace getBookmarkRegisterSpace(TraceStackFrame frame,
 			boolean createIfAbsent) {
 		return getForRegisterSpace(frame, createIfAbsent);
 	}
@@ -238,7 +236,7 @@ public class DBTraceBookmarkManager
 	}
 
 	@Override
-	public synchronized DBTraceBookmarkType defineBookmarkType(String typeName, ImageIcon icon,
+	public synchronized DBTraceBookmarkType defineBookmarkType(String typeName, Icon icon,
 			Color color, int priority) {
 		DBTraceBookmarkType type;
 		synchronized (this) {
@@ -294,7 +292,7 @@ public class DBTraceBookmarkManager
 	}
 
 	@Override
-	public DBTraceBookmark addBookmark(Range<Long> lifespan, Address address,
+	public DBTraceBookmark addBookmark(Lifespan lifespan, Address address,
 			TraceBookmarkType type, String category, String comment) {
 		return delegateWrite(address.getAddressSpace(),
 			m -> m.addBookmark(lifespan, address, type, category, comment));
@@ -312,14 +310,14 @@ public class DBTraceBookmarkManager
 	}
 
 	@Override
-	public Iterable<? extends DBTraceBookmark> getBookmarksEnclosed(Range<Long> lifespan,
+	public Iterable<? extends DBTraceBookmark> getBookmarksEnclosed(Lifespan lifespan,
 			AddressRange range) {
 		return delegateRead(range.getAddressSpace(), m -> m.getBookmarksEnclosed(lifespan, range),
 			Set.of());
 	}
 
 	@Override
-	public Iterable<? extends DBTraceBookmark> getBookmarksIntersecting(Range<Long> lifespan,
+	public Iterable<? extends DBTraceBookmark> getBookmarksIntersecting(Lifespan lifespan,
 			AddressRange range) {
 		return delegateRead(range.getAddressSpace(),
 			m -> m.getBookmarksIntersecting(lifespan, range), Set.of());

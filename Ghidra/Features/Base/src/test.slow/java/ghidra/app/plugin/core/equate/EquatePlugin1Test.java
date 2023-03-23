@@ -646,7 +646,7 @@ public class EquatePlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 	/*
 	 * Tests that the user is prompted before attempting to remove an equate within
 	 * a selection.
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test

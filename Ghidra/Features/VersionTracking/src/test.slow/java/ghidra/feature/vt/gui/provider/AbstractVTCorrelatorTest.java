@@ -16,8 +16,7 @@
  */
 package ghidra.feature.vt.gui.provider;
 
-import static ghidra.feature.vt.db.VTTestUtils.createProgramCorrelator;
-import static ghidra.feature.vt.db.VTTestUtils.createRandomMatch;
+import static ghidra.feature.vt.db.VTTestUtils.*;
 import static org.junit.Assert.*;
 
 import java.awt.Component;
@@ -52,11 +51,10 @@ import ghidra.program.model.listing.Library;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
-import ghidra.util.HTMLUtilities;
 import ghidra.util.Msg;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.task.Task;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * An abstract class for Correlator Tests.
@@ -76,7 +74,6 @@ public abstract class AbstractVTCorrelatorTest extends AbstractGhidraHeadedInteg
 	protected WizardManager wizardManager;
 
 	public AbstractVTCorrelatorTest(String sourceProgLoc, String destProgLoc) {
-		super();
 		this.sourceProgLoc = sourceProgLoc;
 		this.destProgLoc = destProgLoc;
 	}
@@ -133,16 +130,14 @@ public abstract class AbstractVTCorrelatorTest extends AbstractGhidraHeadedInteg
 
 		// Check the summary panel.
 		checkWizardButtonEnablement(true, false, true, true);
-		String labelString = "<html>" + "Operation:<br>" + "Session Name:<br>" +
-			"Source Program:<br>" + "Destination Program:<br>" + "Program Correlator:<br>" +
+		String labelString = "Operation:<br>" + "Session Name:<br>" + "Source Program:<br>" +
+			"Destination Program:<br>" + "Program Correlator:<br>" +
 			"Exclude Accepted Matches:<br>" + "Source Address Set:<br>" +
 			"Destination Address Set:<br>" + "</html>";
-		String summaryString = "<html>" + "Add to Version Tracking Session<br>" +
-			session.getName() + "<br>" + srcProg.getName() + "<br>" + destProg.getName() + "<br>" +
-			correlatorName + "<br>" + "No<br>" + "Entire Source Program<br>" +
-			"Entire Destination Program<br>" + "</html>";
-		checkSummaryPanel(HTMLUtilities.toHTML(labelString), HTMLUtilities.toHTML(summaryString),
-			wizardManager::finish);
+		String summaryString = "Add to Version Tracking Session<br>" + session.getName() + "<br>" +
+			srcProg.getName() + "<br>" + destProg.getName() + "<br>" + correlatorName + "<br>" +
+			"No<br>" + "Entire Source Program<br>" + "Entire Destination Program<br>" + "</html>";
+		checkSummaryPanel(labelString, summaryString, wizardManager::finish);
 	}
 
 	public void runTestCorrelator(String correlatorName) {
@@ -378,11 +373,11 @@ public abstract class AbstractVTCorrelatorTest extends AbstractGhidraHeadedInteg
 	/**
 	 * Run Dummy Task Monitor, flush events and wait for Swing.
 	 * @param task
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	protected void runTask(Task task) throws Exception {
 
-		task.run(TaskMonitorAdapter.DUMMY_MONITOR);
+		task.run(TaskMonitor.DUMMY);
 		destProg.flushEvents();
 		waitForSwing();
 		waitForTasks();
@@ -463,33 +458,32 @@ public abstract class AbstractVTCorrelatorTest extends AbstractGhidraHeadedInteg
 			OptionsEditorPanel correlatorOptionsPanel = getCorrelatorOptionsPanel(correlatorName);
 
 			@SuppressWarnings("unchecked")
-			List<EditorState> editorInfoList =
-				(List<EditorState>) TestUtils.getInstanceField("editorInfoList",
-					correlatorOptionsPanel);
+			List<EditorState> editorInfoList = (List<EditorState>) TestUtils
+					.getInstanceField("editorInfoList", correlatorOptionsPanel);
 			for (EditorState editorState : editorInfoList) {
 				String optionName = editorState.getTitle();
 				Component editorComponent = editorState.getEditorComponent();
 
-				if (optionName.equals(
-					VTAbstractReferenceProgramCorrelatorFactory.CONFIDENCE_THRESHOLD)) {
+				if (optionName
+						.equals(VTAbstractReferenceProgramCorrelatorFactory.CONFIDENCE_THRESHOLD)) {
 					PropertyText fieldText = (PropertyText) editorComponent;
 					fieldText.setText(String.format("%f", confidence));
 					fieldText.repaint();
 				}
-				else if (optionName.equals(
-					VTAbstractReferenceProgramCorrelatorFactory.MEMORY_MODEL)) {
+				else if (optionName
+						.equals(VTAbstractReferenceProgramCorrelatorFactory.MEMORY_MODEL)) {
 					PropertySelector selector = (PropertySelector) editorComponent;
 					selector.setSelectedItem(memoryModel);
 					selector.repaint();
 				}
-				else if (optionName.equals(
-					VTAbstractReferenceProgramCorrelatorFactory.SIMILARITY_THRESHOLD)) {
+				else if (optionName
+						.equals(VTAbstractReferenceProgramCorrelatorFactory.SIMILARITY_THRESHOLD)) {
 					PropertyText fieldText = (PropertyText) editorComponent;
 					fieldText.setText(String.format("%f", score));
 					fieldText.repaint();
 				}
-				else if (optionName.equals(
-					VTAbstractReferenceProgramCorrelatorFactory.REFINE_RESULTS)) {
+				else if (optionName
+						.equals(VTAbstractReferenceProgramCorrelatorFactory.REFINE_RESULTS)) {
 					PropertyBoolean checkBox = (PropertyBoolean) editorComponent;
 					checkBox.setSelected(refineResults);
 					checkBox.repaint();
@@ -538,9 +532,8 @@ public abstract class AbstractVTCorrelatorTest extends AbstractGhidraHeadedInteg
 			(JCheckBox) TestUtils.getInstanceField("excludeCheckbox", addressSetOptionsPanel);
 		assertNotNull(excludeCheckbox);
 
-		JCheckBox showAddressSetPanelsCheckbox =
-			(JCheckBox) TestUtils.getInstanceField("showAddressSetPanelsCheckbox",
-				addressSetOptionsPanel);
+		JCheckBox showAddressSetPanelsCheckbox = (JCheckBox) TestUtils
+				.getInstanceField("showAddressSetPanelsCheckbox", addressSetOptionsPanel);
 		assertNotNull(showAddressSetPanelsCheckbox);
 
 		assertEquals("Exclude Accepted Matches checkbox", excludeAccepted,
@@ -562,9 +555,8 @@ public abstract class AbstractVTCorrelatorTest extends AbstractGhidraHeadedInteg
 			(JCheckBox) TestUtils.getInstanceField("excludeCheckbox", addressSetOptionsPanel);
 		assertNotNull(excludeCheckbox);
 
-		JCheckBox showAddressSetPanelsCheckbox =
-			(JCheckBox) TestUtils.getInstanceField("showAddressSetPanelsCheckbox",
-				addressSetOptionsPanel);
+		JCheckBox showAddressSetPanelsCheckbox = (JCheckBox) TestUtils
+				.getInstanceField("showAddressSetPanelsCheckbox", addressSetOptionsPanel);
 		assertNotNull(showAddressSetPanelsCheckbox);
 
 		if (excludeCheckbox.isSelected() != excludeAccepted) {

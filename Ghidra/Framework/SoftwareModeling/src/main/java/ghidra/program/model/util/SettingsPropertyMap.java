@@ -21,7 +21,7 @@ import ghidra.program.model.address.Address;
 /**
  * Property map interface for storing Settings objects.
  */
-public interface SettingsPropertyMap extends PropertyMap {
+public interface SettingsPropertyMap extends PropertyMap<Settings> {
 	/**
 	 * Add an Settings object value at the specified address.
 	 * @param addr address for the property

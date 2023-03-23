@@ -1,0 +1,5 @@
+<patternconstraints>
+  <language id="ARM:*:32:*">
+    <patternfile>ARM_switch_patterns.xml</patternfile>
+  </language>
+</patternconstraints>

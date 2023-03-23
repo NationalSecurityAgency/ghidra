@@ -15,41 +15,39 @@
  */
 package ghidra.app.util.bin.format.omf;
 
-import ghidra.app.util.bin.BinaryReader;
-
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
+
+import ghidra.app.util.bin.BinaryReader;
 
 public class OmfExternalSymbol extends OmfRecord {
+
 	private boolean isStatic;
-	protected OmfSymbol[] symbol;
-	
+	protected List<OmfSymbol> symbols = new ArrayList<>();
+
 	protected OmfExternalSymbol(boolean isStatic) {
 		this.isStatic = isStatic;
 	}
-	
-	public OmfExternalSymbol(BinaryReader reader,boolean isStatic) throws IOException {
+
+	public OmfExternalSymbol(BinaryReader reader, boolean isStatic) throws IOException {
 		this.isStatic = isStatic;
 		readRecordHeader(reader);
+
 		long max = reader.getPointerIndex() + getRecordLength() - 1;
-		ArrayList<OmfSymbol> symbollist = new ArrayList<OmfSymbol>();
-		
-		while(reader.getPointerIndex() < max) {
+		while (reader.getPointerIndex() < max) {
 			String name = OmfRecord.readString(reader);
 			int type = OmfRecord.readIndex(reader);
-			OmfSymbol subrec = new OmfSymbol(name,type,0,0,0);
-			symbollist.add(subrec);
+			symbols.add(new OmfSymbol(name, type, 0, 0, 0));
 		}
-		
+
 		readCheckSumByte(reader);
-		symbol = new OmfSymbol[symbollist.size()];
-		symbollist.toArray(symbol);
 	}
 
-	public OmfSymbol[] getSymbols() {
-		return symbol;
+	public List<OmfSymbol> getSymbols() {
+		return symbols;
 	}
-	
+
 	public boolean isStatic() {
 		return isStatic;
 	}

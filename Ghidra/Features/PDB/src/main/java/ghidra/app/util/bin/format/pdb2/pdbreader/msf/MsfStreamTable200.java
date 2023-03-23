@@ -19,18 +19,18 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.PdbByteReader;
 import ghidra.app.util.bin.format.pdb2.pdbreader.PdbException;
 
 /**
- * This class is the version of {@link AbstractMsfStreamTable} for Microsoft v2.00 MSF.
+ * This class is the version of {@link MsfStreamTable} for Microsoft v2.00 MSF.
  */
-class MsfStreamTable200 extends AbstractMsfStreamTable {
+class MsfStreamTable200 extends MsfStreamTable {
 
 	//==============================================================================================
 	// Package-Protected Internals
 	//==============================================================================================
 	/**
-	 * Constructor.
-	 * @param msf The MSF associated for this class.
+	 * Constructor
+	 * @param msf the MSF associated for this class
 	 */
-	MsfStreamTable200(AbstractMsf msf) {
+	MsfStreamTable200(Msf msf) {
 		super(msf);
 	}
 

@@ -1,52 +1,45 @@
 <patternlist>
-  <patternpairs totalbits="32" postbits="0">
+
+  <patternpairs totalbits="27" postbits="11">
+    <!--  Higher confidence patterns, after a return and more defined bits -->
     <prepatterns>
-      <!--  76543210 54321098 32109876 10987654 -->
-      <data>10000010 10000000</data> <!-- ret -->
-      <data>......01 101.....</data> <!-- c.j imm -->
+      <data>10000010 10000000</data>                    <!-- ret -->
+      <data>10000010 10000000 00000000 00000000 </data> <!-- ret; padding -->
     </prepatterns>
     <postpatterns>
-      <!--  76543210 54321098 32109876 10987654 -->
-      <data>0.....01 01110001</data> <!-- c.addi16sp sp,-imm -->
-      <data>0.....01 00010001</data> <!-- c.addi sp,-imm -->
-      <funcstart/>
-    </postpatterns>
-  </patternpairs>
-    <patternpairs totalbits="48" postbits="0">
-    <prepatterns>
-      <!--  76543210 54321098 32109876 10987654 -->
-      <data>10000010 10000000</data> <!-- ret -->
-      <data>......01 101.....</data> <!-- c.j imm -->
-    </prepatterns>
-    <postpatterns>
-      <!--  76543210 54321098 32109876 10987654 -->
+      <data>0.....01 01110001</data>                   <!-- c.addi16sp sp,-imm -->
+      <data>0.....01 00010001</data>                   <!-- c.addi sp,-imm -->
       <data>00010011 00000001 ....0001 1.......</data> <!--  addi sp,sp,-imm -->
-      <data>.0010111 ........ ........ ........</data> <!--  auipc rd,imm-->
       <funcstart/>
     </postpatterns>
   </patternpairs>
-  <patternpairs totalbits="48" postbits="0">
+  
+  <patternpairs totalbits="16" postbits="11">
+    <!--  Medium confidence, more bits, but prepattern are jumps, not return -->
     <prepatterns>
-      <!--  76543210 54321098 32109876 10987654 -->
-      <data>01101111 ....0000 ........ ........</data> <!-- j imm -->
+      <data>01101111 ....0000 ........ ........</data>  <!-- j imm -->
+      <data>......01 101..... </data>                   <!-- c.j imm -->
+      <data>......01 101..... 00000000 00000000 </data> <!-- c.j imm; padding -->
     </prepatterns>
     <postpatterns>
-      <!--  76543210 54321098 32109876 10987654 -->
-      <data>0.....01 01110001</data> <!-- c.addi16sp sp,-imm -->
-      <data>0.....01 00010001</data> <!-- c.addi sp,-imm -->
-      <funcstart/>
-    </postpatterns>
-  </patternpairs>
-    <patternpairs totalbits="64" postbits="0">
-    <prepatterns>
-      <!--  76543210 54321098 32109876 10987654 -->
-      <data>01101111 ....0000 ........ ........</data> <!-- j imm -->
-    </prepatterns>
-    <postpatterns>
-      <!--  76543210 54321098 32109876 10987654 -->
+      <data>0.....01 01110001</data>                   <!-- c.addi16sp sp,-imm -->
+      <data>0.....01 00010001</data>                   <!-- c.addi sp,-imm -->
       <data>00010011 00000001 ....0001 1.......</data> <!--  addi sp,sp,-imm -->
+      <possiblefuncstart/>
+    </postpatterns>
+  </patternpairs>
+  
+  <patternpairs totalbits="20" postbits="7">
+    <!--  Lower confidence, too few bits on start pattern -->
+    <prepatterns>
+      <data>10000010 10000000</data>                    <!-- ret -->
+      <data>10000010 10000000 00000000 00000000 </data> <!-- ret; padding -->
+      <data>......01 101..... 00000000 00000000 </data> <!-- c.j imm; padding -->
+      <data>01101111 ....0000 ........ ........</data>  <!-- j imm -->
+    </prepatterns>
+    <postpatterns>
       <data>.0010111 ........ ........ ........</data> <!--  auipc rd,imm-->
-      <funcstart/>
+      <possiblefuncstart/>
     </postpatterns>
   </patternpairs>
 </patternlist>

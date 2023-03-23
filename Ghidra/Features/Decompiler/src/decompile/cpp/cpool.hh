@@ -21,6 +21,16 @@
 
 #include "type.hh"
 
+extern AttributeId ATTRIB_A;		///< Marshaling attribute "a"
+extern AttributeId ATTRIB_B;		///< Marshaling attribute "b"
+extern AttributeId ATTRIB_LENGTH;	///< Marshaling attribute "length"
+extern AttributeId ATTRIB_TAG;		///< Marshaling attribute "tag"
+
+extern ElementId ELEM_CONSTANTPOOL;	///< Marshaling element \<constantpool>
+extern ElementId ELEM_CPOOLREC;		///< Marshaling element \<cpoolrec>
+extern ElementId ELEM_REF;		///< Marshaling element \<ref>
+extern ElementId ELEM_TOKEN;		///< Marshaling element \<token>
+
 /// \brief A description of a byte-code object referenced by a constant
 ///
 /// Byte-code languages can make use of objects that the \e system knows about
@@ -78,8 +88,8 @@ public:
   uintb getValue(void) const { return value; }					///< Get the constant value associated with \b this
   bool isConstructor(void) const { return ((flags & is_constructor)!=0); }	///< Is object a constructor method
   bool isDestructor(void) const { return ((flags & is_destructor)!=0); }	///< Is object a destructor method
-  void saveXml(ostream &s) const;						///< Save object to an XML stream
-  void restoreXml(const Element *el,TypeFactory &typegrp);			///< Restore object from XML stream
+  void encode(Encoder &encoder) const;						///< Encode \b this to a stream
+  void decode(Decoder &decoder,TypeFactory &typegrp);				///< Decode \b this from a stream
 };
 
 /// \brief An interface to the pool of \b constant objects for byte-code languages
@@ -116,33 +126,33 @@ public:
   /// \param ct is the data-type associated with the object
   void putRecord(const vector<uintb> &refs,uint4 tag,const string &tok,Datatype *ct);
 
-  /// \brief Restore a CPoolRecord given a \e reference and an XML stream
+  /// \brief Restore a CPoolRecord given a \e reference and a stream decoder
   ///
   /// A \<cpoolrec> element initializes the new record which is immediately associated
   /// with the \e reference.
   /// \param refs is the \e reference (made up of 1 or more identifying integers)
-  /// \param el is the XML element
+  /// \param decoder is the given stream decoder
   /// \param typegrp is the TypeFactory used to resolve data-type references in XML
   /// \return the newly allocated and initialized CPoolRecord
-  const CPoolRecord *restoreXmlRecord(const vector<uintb> &refs,const Element *el,TypeFactory &typegrp);
+  const CPoolRecord *decodeRecord(const vector<uintb> &refs,Decoder &decoder,TypeFactory &typegrp);
 
   virtual bool empty(void) const=0;		///< Is the container empty of records
   virtual void clear(void)=0;			///< Release any (local) resources
 
-  /// \brief Save all records in this container to an XML stream
+  /// \brief Encode all records in this container to a stream
   ///
-  /// (If supported) An \<constantpool> element is written containing \<cpoolrec>
+  /// (If supported) A \<constantpool> element is written containing \<cpoolrec>
   /// child elements for each CPoolRecord in the container.
-  /// \param s is the output stream
-  virtual void saveXml(ostream &s) const=0;
+  /// \param encoder is the stream encoder
+  virtual void encode(Encoder &encoder) const=0;
 
-  /// \brief Restore constant pool records from an XML stream
+  /// \brief Restore constant pool records from the given stream decoder
   ///
-  /// (If supported) The container is populated with CPooLRecords initialized
-  /// from a \<constantpool> XML tag.
-  /// \param el is the XML element
+  /// (If supported) The container is populated with CPoolRecords initialized
+  /// from a \<constantpool> element.
+  /// \param decoder is the given stream decoder
   /// \param typegrp is the TypeFactory used to resolve data-type references in the XML
-  virtual void restoreXml(const Element *el,TypeFactory &typegrp)=0;
+  virtual void decode(Decoder &decoder,TypeFactory &typegrp)=0;
 };
 
 /// \brief An implementation of the ConstantPool interface storing records internally in RAM
@@ -182,8 +192,8 @@ class ConstantPoolInternal : public ConstantPool {
     /// \param refs is the provided container of integers
     void apply(vector<uintb> &refs) const { refs.push_back(a); refs.push_back(b); }
 
-    void saveXml(ostream &s) const;		///< Serialize the \e reference to an XML element
-    void restoreXml(const Element *el);		///< Deserialize the \e reference from an XML element
+    void encode(Encoder &encoder) const;	///< Encode the \e reference to a stream
+    void decode(Decoder &decoder);		///< Decode the \e reference from a stream
   };
   map<CheapSorter,CPoolRecord> cpoolMap;	///< A map from \e reference to constant pool record
   virtual CPoolRecord *createRecord(const vector<uintb> &refs);
@@ -191,8 +201,8 @@ public:
   virtual const CPoolRecord *getRecord(const vector<uintb> &refs) const;
   virtual bool empty(void) const { return cpoolMap.empty(); }
   virtual void clear(void) { cpoolMap.clear(); }
-  virtual void saveXml(ostream &s) const;
-  virtual void restoreXml(const Element *el,TypeFactory &typegrp);
+  virtual void encode(Encoder &encoder) const;
+  virtual void decode(Decoder &decoder,TypeFactory &typegrp);
 };
 
 #endif

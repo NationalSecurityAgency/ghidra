@@ -160,12 +160,30 @@ public class MachHeader implements StructConverter {
 		if (_parsed) {
 			return this;
 		}
+
+		// We must parse segment load commands first, so find and store their indexes separately
 		long currentIndex = _commandIndex;
+		List<Long> segmentIndexes = new ArrayList<>();
+		List<Long> nonSegmentIndexes = new ArrayList<>();
 		for (int i = 0; i < nCmds; ++i) {
 			_reader.setPointerIndex(currentIndex);
+			int type = _reader.readNextInt();
+			int size = _reader.readNextInt();
+			if (type == LoadCommandTypes.LC_SEGMENT || type == LoadCommandTypes.LC_SEGMENT_64) {
+				segmentIndexes.add(currentIndex);
+			}
+			else {
+				nonSegmentIndexes.add(currentIndex);
+			}
+			currentIndex += size;
+		}
+		List<Long> combinedIndexes = new ArrayList<>();
+		combinedIndexes.addAll(segmentIndexes);    // Parse segments first
+		combinedIndexes.addAll(nonSegmentIndexes); // Parse everything else second
+		for (Long index : combinedIndexes) {
+			_reader.setPointerIndex(index);
 			LoadCommand lc = LoadCommandFactory.getLoadCommand(_reader, this, splitDyldCache);
 			_commands.add(lc);
-			currentIndex += lc.getCommandSize();
 		}
 		_parsed = true;
 		return this;

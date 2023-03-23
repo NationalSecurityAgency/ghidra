@@ -36,7 +36,7 @@ class GhidraTranslate : public Translate {
   mutable map<string,VarnodeData> nm2addr;	///< Mapping from register name to Varnode
   mutable map<VarnodeData,string> addr2nm;	///< Mapping rom Varnode to register name
   const VarnodeData &cacheRegister(const string &nm,const VarnodeData &data) const;
-  void restoreXml(const Element *el);		///< Initialize \b this Translate from XML
+  void decode(Decoder &decoder);		///< Initialize \b this Translate from a stream
 public:
   GhidraTranslate(ArchitectureGhidra *g) { glb = g; }	///< Constructor
 

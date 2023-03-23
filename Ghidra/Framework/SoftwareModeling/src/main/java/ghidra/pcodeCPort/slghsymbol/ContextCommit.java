@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +15,12 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
-import ghidra.pcodeCPort.context.ParserWalkerChange;
-import ghidra.pcodeCPort.sleighbase.SleighBase;
-import ghidra.pcodeCPort.utils.*;
-
 import java.io.PrintStream;
 
 import org.jdom.Element;
+
+import ghidra.pcodeCPort.sleighbase.SleighBase;
+import ghidra.pcodeCPort.utils.*;
 
 public class ContextCommit extends ContextChange {
 
@@ -47,12 +45,6 @@ public class ContextCommit extends ContextChange {
 		Utils.calc_maskword(s.getLocation(), sbit, ebit, n, zero, m);
 		num = n.get();
 		mask = m.get();
-	}
-
-	@Override
-	public void apply(ParserWalkerChange pos) {
-		pos.getParserContext().addCommit(sym, num, mask, flow, pos.getPoint());
-
 	}
 
 	@Override

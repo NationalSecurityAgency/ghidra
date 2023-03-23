@@ -28,7 +28,7 @@
 /// that can then be forwarded to the Ghidra client.
 class InjectContextGhidra : public InjectContext {
 public:
-  virtual void saveXml(ostream &s) const;
+  virtual void encode(Encoder &encoder) const;
 };
 
 /// \brief An injection payload that uses a Ghidra client to generate the p-code ops
@@ -41,7 +41,7 @@ class InjectPayloadGhidra : public InjectPayload {
 public:
   InjectPayloadGhidra(const string &src,const string &nm,int4 tp) : InjectPayload(nm,tp) { source = src; }	///< Constructor
   virtual void inject(InjectContext &context,PcodeEmit &emit) const;
-  virtual void restoreXml(const Element *el) {}
+  virtual void decode(Decoder &decoder);
   virtual void printTemplate(ostream &s) const;
   virtual string getSource(void) const { return source; }
 };
@@ -50,14 +50,14 @@ public:
 class InjectCallfixupGhidra : public InjectPayloadGhidra {
 public:
   InjectCallfixupGhidra(const string &src,const string &nm);	///< Constructor
-  virtual void restoreXml(const Element *el);
+  virtual void decode(Decoder &decoder);
 };
 
 /// \brief A callother-fixup injection that uses a Ghidra client to generate the p-code ops
 class InjectCallotherGhidra : public InjectPayloadGhidra {
 public:
   InjectCallotherGhidra(const string &src,const string &nm);	///< Constructor
-  virtual void restoreXml(const Element *el);
+  virtual void decode(Decoder &decoder);
 };
 
 /// \brief A \e p-code \e script that uses a Ghidra client to generate the p-code ops
@@ -69,7 +69,7 @@ class ExecutablePcodeGhidra : public ExecutablePcode {
 public:
   ExecutablePcodeGhidra(Architecture *g,const string &src,const string &nm);	///< Constructor
   virtual void inject(InjectContext &context,PcodeEmit &emit) const;
-  virtual void restoreXml(const Element *el);
+  virtual void decode(Decoder &decoder);
   virtual void printTemplate(ostream &s) const;
 };
 

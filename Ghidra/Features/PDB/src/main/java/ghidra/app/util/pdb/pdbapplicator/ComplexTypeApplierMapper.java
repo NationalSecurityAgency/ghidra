@@ -18,8 +18,8 @@ package ghidra.app.util.pdb.pdbapplicator;
 import java.util.*;
 
 import ghidra.app.util.SymbolPath;
-import ghidra.app.util.bin.format.pdb2.pdbreader.AbstractTypeProgramInterface;
 import ghidra.app.util.bin.format.pdb2.pdbreader.RecordNumber;
+import ghidra.app.util.bin.format.pdb2.pdbreader.TypeProgramInterface;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
@@ -33,14 +33,14 @@ import ghidra.util.task.TaskMonitor;
 //  tried.
 public class ComplexTypeApplierMapper {
 
-	private PdbApplicator applicator;
+	private DefaultPdbApplicator applicator;
 
 //	private Map<SymbolPath, AbstractComplexTypeApplier> complexTypeAppliersBySymbolPath;
 	private Map<SymbolPath, LinkedList<AbstractComplexTypeApplier>> compositeAppliersQueueBySymbolPath;
 	private Map<SymbolPath, LinkedList<AbstractComplexTypeApplier>> enumAppliersQueueBySymbolPath;
 
 	//==============================================================================================
-	public ComplexTypeApplierMapper(PdbApplicator applicator) {
+	public ComplexTypeApplierMapper(DefaultPdbApplicator applicator) {
 		Objects.requireNonNull(applicator, "applicator cannot be null");
 		this.applicator = applicator;
 //		complexTypeAppliersBySymbolPath = new HashMap<>();
@@ -51,15 +51,14 @@ public class ComplexTypeApplierMapper {
 	//==============================================================================================
 	//==============================================================================================
 	void mapAppliers(TaskMonitor monitor) throws CancelledException {
-		AbstractTypeProgramInterface typeProgramInterface =
-			applicator.getPdb().getTypeProgramInterface();
+		TypeProgramInterface typeProgramInterface = applicator.getPdb().getTypeProgramInterface();
 		if (typeProgramInterface == null) {
 			return;
 		}
 		int indexLimit = typeProgramInterface.getTypeIndexMaxExclusive();
 		int indexNumber = typeProgramInterface.getTypeIndexMin();
 		monitor.initialize(indexLimit - indexNumber);
-		applicator.setMonitorMessage("PDB: Mapping Composites...");
+		monitor.setMessage("PDB: Mapping Composites...");
 		while (indexNumber < indexLimit) {
 			monitor.checkCanceled();
 			//PdbResearch.checkBreak(indexNumber);

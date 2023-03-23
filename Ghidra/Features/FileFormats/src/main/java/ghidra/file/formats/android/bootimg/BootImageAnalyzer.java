@@ -19,9 +19,7 @@ import java.io.IOException;
 
 import ghidra.app.plugin.core.analysis.AnalysisWorker;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.bin.MemoryByteProvider;
+import ghidra.app.util.bin.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.file.analyzers.FileFormatAnalyzer;
 import ghidra.program.model.address.Address;
@@ -30,9 +28,7 @@ import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.exception.NotFoundException;
+import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 public class BootImageAnalyzer extends FileFormatAnalyzer implements AnalysisWorker {
@@ -89,9 +85,7 @@ public class BootImageAnalyzer extends FileFormatAnalyzer implements AnalysisWor
 			TaskMonitor monitor)
 			throws Exception, CancelledException {
 
-		Address address = program.getMinAddress();
-
-		ByteProvider provider = new MemoryByteProvider(program.getMemory(), address);
+		ByteProvider provider = MemoryByteProvider.createProgramHeaderByteProvider(program, false);
 		BinaryReader reader = new BinaryReader(provider, true);
 
 		if (BootImageUtil.isBootImage(program)) {

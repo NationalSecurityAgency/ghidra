@@ -54,8 +54,11 @@ public class ClassDefItem implements StructConverter {
 		if (interfacesOffset > 0) {
 			long oldIndex = reader.getPointerIndex();
 			try {
-				reader.setPointerIndex(DexUtil.adjustOffset(interfacesOffset, dexHeader));
-				_interfaces = new TypeList(reader);
+				int adjustOffset = DexUtil.adjustOffset(interfacesOffset, dexHeader);
+				if (reader.isValidIndex(adjustOffset)) {
+					reader.setPointerIndex(adjustOffset);
+					_interfaces = new TypeList(reader);
+				}
 			}
 			finally {
 				reader.setPointerIndex(oldIndex);
@@ -65,8 +68,11 @@ public class ClassDefItem implements StructConverter {
 		if (annotationsOffset > 0) {
 			long oldIndex = reader.getPointerIndex();
 			try {
-				reader.setPointerIndex(DexUtil.adjustOffset(annotationsOffset, dexHeader));
-				_annotationsDirectoryItem = new AnnotationsDirectoryItem(reader, dexHeader);
+				int adjustOffset = DexUtil.adjustOffset(annotationsOffset, dexHeader);
+				if (reader.isValidIndex(adjustOffset)) {
+					reader.setPointerIndex(adjustOffset);
+					_annotationsDirectoryItem = new AnnotationsDirectoryItem(reader, dexHeader);
+				}
 			}
 			finally {
 				reader.setPointerIndex(oldIndex);
@@ -76,8 +82,11 @@ public class ClassDefItem implements StructConverter {
 		if (classDataOffset > 0) {
 			long oldIndex = reader.getPointerIndex();
 			try {
-				reader.setPointerIndex(DexUtil.adjustOffset(classDataOffset, dexHeader));
-				_classDataItem = new ClassDataItem(reader, dexHeader);
+				int adjustOffset = DexUtil.adjustOffset(classDataOffset, dexHeader);
+				if (reader.isValidIndex(adjustOffset)) {
+					reader.setPointerIndex(adjustOffset);
+					_classDataItem = new ClassDataItem(reader, dexHeader);
+				}
 			}
 			finally {
 				reader.setPointerIndex(oldIndex);
@@ -87,8 +96,11 @@ public class ClassDefItem implements StructConverter {
 		if (staticValuesOffset > 0) {
 			long oldIndex = reader.getPointerIndex();
 			try {
-				reader.setPointerIndex(DexUtil.adjustOffset(staticValuesOffset, dexHeader));
-				_staticValues = new EncodedArrayItem(reader);
+				int adjustOffset = DexUtil.adjustOffset(staticValuesOffset, dexHeader);
+				if (reader.isValidIndex(adjustOffset)) {
+					reader.setPointerIndex(adjustOffset);
+					_staticValues = new EncodedArrayItem(reader);
+				}
 			}
 			finally {
 				reader.setPointerIndex(oldIndex);
@@ -170,10 +182,12 @@ public class ClassDefItem implements StructConverter {
 		if (getInterfacesOffset() > 0) {
 			builder.append("Interfaces: " + "\n");
 			TypeList interfaces = getInterfaces();
-			for (TypeItem type : interfaces.getItems()) {
-				monitor.checkCanceled();
-				builder.append(
-					"\t" + DexUtil.convertTypeIndexToString(header, type.getType()) + "\n");
+			if (interfaces != null) {
+				for (TypeItem type : interfaces.getItems()) {
+					monitor.checkCanceled();
+					builder.append(
+						"\t" + DexUtil.convertTypeIndexToString(header, type.getType()) + "\n");
+				}
 			}
 		}
 

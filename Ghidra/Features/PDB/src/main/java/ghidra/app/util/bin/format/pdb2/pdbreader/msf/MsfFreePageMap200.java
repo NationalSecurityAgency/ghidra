@@ -18,21 +18,20 @@ package ghidra.app.util.bin.format.pdb2.pdbreader.msf;
 import java.io.IOException;
 
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
 
 /**
- * This class is the version of {@link AbstractMsfFreePageMap} for Microsoft v2.00 Free Page Map.
+ * This class is the version of {@link MsfFreePageMap} for Microsoft v2.00 Free Page Map.
  */
-class MsfFreePageMap200 extends AbstractMsfFreePageMap {
+class MsfFreePageMap200 extends MsfFreePageMap {
 
 	//==============================================================================================
 	// Package-Protected Internals
 	//==============================================================================================
 	/**
-	 * Constructor.
-	 * @param msf The {@link AbstractMsf} to which this class belongs.
+	 * Constructor
+	 * @param msf the {@link Msf} to which this class belongs
 	 */
-	MsfFreePageMap200(AbstractMsf msf) {
+	MsfFreePageMap200(Msf msf) {
 		super(msf);
 	}
 
@@ -42,12 +41,12 @@ class MsfFreePageMap200 extends AbstractMsfFreePageMap {
 	}
 
 	@Override
-	void deserialize(TaskMonitor monitor) throws IOException, CancelledException {
+	void deserialize() throws IOException, CancelledException {
 		int size = msf.getNumSequentialFreePageMapPages() * msf.getPageSize();
 		byte[] bytes = new byte[size];
-		MsfFileReader fileReader = msf.fileReader;
+		MsfFileReader fileReader = msf.getFileReader();
 		fileReader.read(msf.getCurrentFreePageMapFirstPageNumber(), 0, size, bytes, 0);
-		addMap(bytes, monitor);
+		addMap(bytes);
 	}
 
 }

@@ -95,7 +95,7 @@ public class AssemblyResolvedPatterns extends AssemblyResolution {
 	}
 
 	/**
-	 * @see AssemblyResolution#resolved(AssemblyPatternBlock, AssemblyPatternBlock, String, List)
+	 * @see AssemblyResolution#resolved(AssemblyPatternBlock, AssemblyPatternBlock, String, Constructor, List, AssemblyResolution)
 	 */
 	AssemblyResolvedPatterns(String description, Constructor cons,
 			List<? extends AssemblyResolution> children, AssemblyResolution right,
@@ -481,9 +481,8 @@ public class AssemblyResolvedPatterns extends AssemblyResolution {
 	 * 
 	 * @param sem the constructor whose context changes to solve
 	 * @param vals any defined symbols
-	 * @param opvals the operand values
 	 * @return the result
-	 * @see AssemblyConstructorSemantic#solveContextChanges(AssemblyResolvedPatterns, Map, Map)
+	 * @see AssemblyConstructorSemantic#solveContextChanges(AssemblyResolvedPatterns, Map)
 	 */
 	public AssemblyResolvedPatterns solveContextChangesForForbids(
 			AssemblyConstructorSemantic sem, Map<String, Long> vals) {
@@ -702,6 +701,10 @@ public class AssemblyResolvedPatterns extends AssemblyResolution {
 	 * @return the iterable
 	 */
 	public Iterable<byte[]> possibleInsVals(AssemblyPatternBlock forCtx) {
+		AssemblyPatternBlock ctxCompat = ctx.combine(forCtx);
+		if (ctxCompat == null) {
+			return List.of();
+		}
 		Predicate<byte[]> removeForbidden = (byte[] val) -> {
 			for (AssemblyResolvedPatterns f : forbids) {
 				// If the forbidden length is larger than us, we can ignore it

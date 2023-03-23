@@ -54,6 +54,10 @@ class VarnodeInfo {
 	public void setVarnodeType(VarnodeType type) {
 		this.type = type;
 		address = null;
+		register = null;
+		if (type == VarnodeType.Register) {
+			size = null;
+		}
 	}
 
 	public void setVarnode(Address address, Integer size) {

@@ -75,7 +75,7 @@ public class TestTargetInterpreter
 	}
 
 	public void output(Channel channel, String line) {
-		listeners.fire.consoleOutput(this, channel, line + "\n");
+		broadcast().consoleOutput(this, channel, line + "\n");
 	}
 
 	public void clearCalls() {

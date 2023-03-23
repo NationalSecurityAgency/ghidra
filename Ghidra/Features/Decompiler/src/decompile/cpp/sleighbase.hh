@@ -33,19 +33,19 @@
 /// the source file index.
 class SourceFileIndexer {
 public:
-    SourceFileIndexer() {leastUnusedIndex = 0;}
-    ~SourceFileIndexer(void) { }
-    ///Returns the index of the file.  If the file is not in the index it is added.
-    int4 index(const string filename);
-	int4 getIndex(const string);  ///< get the index of a file.  Error if the file is not in the index.
-	string getFilename(int4);     ///< get the filename corresponding to an index
-    void restoreXml(const Element *el); ///< read a stored index mapping from an XML file
-	void saveXml(ostream&) const;       ///< save the index mapping to an XML file
+  SourceFileIndexer() {leastUnusedIndex = 0;}
+  ~SourceFileIndexer(void) { }
+  ///Returns the index of the file.  If the file is not in the index it is added.
+  int4 index(const string filename);
+  int4 getIndex(const string);	///< get the index of a file.  Error if the file is not in the index.
+  string getFilename(int4);	///< get the filename corresponding to an index
+  void restoreXml(const Element *el);	///< read a stored index mapping from an XML file
+  void saveXml(ostream&) const;		///< save the index mapping to an XML file
 
 private:
-	int4 leastUnusedIndex;  ///< one-up count for assigning indices to files
-	map<int4, string> indexToFile;  ///< map from indices to files
-	map<string, int4> fileToIndex;  ///< map from files to indices
+  int4 leastUnusedIndex;  ///< one-up count for assigning indices to files
+  map<int4, string> indexToFile;  ///< map from indices to files
+  map<string, int4> fileToIndex;  ///< map from files to indices
 };
 
 /// \brief Common core of classes that read or write SLEIGH specification files natively.

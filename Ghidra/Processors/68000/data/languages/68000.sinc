@@ -7,10 +7,10 @@ define space ram type=ram_space size=4 default;
 define space register type=register_space size=4;
 
 define register offset=0 size=4      [ D0 D1 D2 D3 D4 D5 D6 D7 ];   # Data registers
-define register offset=0 size=2      [ _ D0w _ D1w _ D2w _ D3w _ D4w _ D5w _ D6w _ D7w];
+define register offset=0 size=2      [ D0u D0w D1u D1w D2u D2w D3u D3w D4u D4w D5u D5w D6u D6w D7u D7w];
 define register offset=0 size=1      [ _ _ _ D0b _ _ _ D1b _ _ _ D2b _ _ _ D3b _ _ _ D4b _ _ _ D5b _ _ _ D6b _ _ _ D7b ];
 define register offset=0x20 size=4   [ A0 A1 A2 A3 A4 A5 A6 SP ];   # Address registers
-define register offset=0x20 size=2   [ _ A0w _ A1w _ A2w _ A3w _ A4w _ A5w _ A6w _ A7w];
+define register offset=0x20 size=2   [ A0u A0w A1u A1w A2u A2w A3u A3w A4u A4w A5u A5w A6u A6w A7u A7w];
 define register offset=0x20 size=1   [ _ _ _ A0b _ _ _ A1b _ _ _ A2b _ _ _ A3b _ _ _ A4b _ _ _ A5b _ _ _ A6b _ _ _ A7b ];
 define register offset=0x40 size=1   [ TF SVF IPL XF NF ZF VF CF ];	    # Condition flags
 define register offset=0x50 size=4   PC;			    # Program counter register
@@ -34,7 +34,8 @@ define register offset=0x300 size=4  [ glbdenom movemptr ];
 define register offset=0x400 size=4  [ contextreg ];
 
 @ifdef COLDFIRE
-define register offset=0x500 size=4 [ MACSR ACC MASK ];
+# TODO: add a pure MAC variant, for now, just do EMAC
+define register offset=0x500 size=4 [ MACSR MASK ];
 define register offset=0x600 size=4 [ EMACSR ACC0 ACC1 ACC2 ACC3 ACCext01 ACCext23 EMASK ];
 @endif
 
@@ -75,6 +76,7 @@ define token instr (16)
   copid = (9,11)
   op    = (12,15)
   opbig  = (8,15)
+  op01 = (0,1)
   op02 = (0,2)
   op03 = (0,3)
   op08 = (0,8)
@@ -93,17 +95,26 @@ define token instr (16)
   op5 = (5,5)
   op7 = (7,7)
   op8 = (8,8)
+  op11 = (11,11)
   quick = (9,11)
   op811 = (8,11)
   copcc1 = (0,5)
   d8base = (0,7) signed
 @ifdef COLDFIRE
   reg03y = (0,3)
+  reg03ywu = (0,3)
+  reg03ywl = (0,3)
   op47 = (4,7)
   op611 = (6,11)
   op6  = (6,6)
+  op0910 = (9,10)
   acclsb = (7,7)
   d911 = (9,11)
+  reg315 = (3, 15)
+  reg9dnu  = (9,11)
+  reg9dnl  = (9,11)
+  reg9anu = (9,11)
+  reg9anl = (9,11)
 @endif
 ;
 
@@ -146,8 +157,15 @@ define token extword (16)
   fc02   = (0,2)
   ctl    = (0,11)
 @ifdef COLDFIRE
-  sfact = (9,10)
-  accmsb = (4,4)  
+  sfact    = (9,10)
+  accmsb   = (4,4)
+  reg03yu  = (0,3)
+  reg03yl  = (0,3)
+  ereg03y  = (0,3)
+  accw     = (2,3)
+  reg12x   = (12,15)
+  reg12xwu = (12,15)
+  reg12xwl = (12,15)
 @endif  
 ;
 
@@ -293,7 +311,15 @@ attach variables [ reganb regsanb ]                [ A0b A1b A2b A3b A4b A5b A6b
 attach variables [ fsrc fdst fdcos fdsin ]                     [ FP0 FP1 FP2 FP3 FP4 FP5 FP6 FP7 ];
 
 @ifdef COLDFIRE
-attach variables [ reg03y ]    [ D0 D1 D2 D3 D4 D5 D6 D7 A0 A1 A2 A3 A4 A5 A6 SP ];
+attach variables [ reg03y ereg03y reg12x ]      [ D0 D1 D2 D3 D4 D5 D6 D7 A0 A1 A2 A3 A4 A5 A6 SP ];
+attach variables [reg03ywu reg12xwu reg03yu ]    [ D0u D1u D2u D3u D4u D5u D6u D7u A0u A1u A2u A3u A4u A5u A6u A7u ];
+attach variables [reg03ywl reg12xwl reg03yl ]    [ D0w D1w D2w D3w D4w D5w D6w D7w A0w A1w A2w A3w A4w A5w A6w A7w ];
+attach variables [reg9dnu]     [ D0u D1u D2u D3u D4u D5u D6u D7u ];
+attach variables [reg9dnl]     [ D0w D1w D2w D3w D4w D5w D6w D7w ];
+attach variables [reg9anu]     [ A0u A1u A2u A3u A4u A5u A6u A7u ];
+attach variables [reg9anl]     [ A0w A1w A2w A3w A4w A5w A6w A7w ];
+attach variables [accw]        [ACC0 ACC1 ACC2 ACC3];
+
 attach values d911 [ -1 1 2 3 4 5 6 7 ];
 @endif
 
@@ -700,6 +726,92 @@ macro extendedResultFlags(result) {
   ZF = (result == 0) && (ZF == 1);
 }
 
+macro arithmeticShiftLeft(count, register, width) {
+	local modcount = count & 63;
+	local lbit:1 = ((register >> (width - modcount) & 1) != 0);
+	local msbBefore:4 = zext(register s< 0);
+	register = register << modcount;
+	resflags(register);
+	local msbAfter:4 = zext(register s< 0);
+	VF = (msbBefore ^ msbAfter) != 0;
+	CF = (modcount != 0) * lbit;
+	XF = ((modcount == 0) * XF) + ((modcount != 0) * CF);
+}
+
+macro arithmeticShiftRight(count, register, width) {
+	local modcount = count & 63;
+	local lbit:1 = ((register >> (modcount-1) & 1) != 0);
+	local msbBefore:4 = zext(register s< 0);
+	register = register s>> modcount;
+	resflags(register);
+	local msbAfter:4 = zext(register s< 0);
+	VF = (msbBefore ^ msbAfter) != 0;
+	CF = (modcount != 0) * lbit;
+	XF = ((modcount == 0) * XF) + ((modcount != 0) * CF);
+}
+
+macro logicalShiftLeft(count, register, width) {
+	local modcount = count & 63;
+	local lbit:1 = ((register >> (width - modcount) & 1) != 0);
+	local msbBefore:4 = zext(register s< 0);
+	register = register << modcount;
+	resflags(register);
+	local msbAfter:4 = zext(register s< 0);
+	VF = (msbBefore ^ msbAfter) != 0;
+	CF = (modcount != 0) * lbit;
+	XF = ((modcount == 0) * XF) + ((modcount != 0) * CF);
+}
+
+macro logicalShiftRight(count, register, width) {
+	local modcount = count & 63;
+	local lbit:1 = ((register >> (modcount-1) & 1) != 0);
+	local msbBefore:4 = zext(register s< 0);
+	register = register >> modcount;
+	resflags(register);
+	local msbAfter:4 = zext(register s< 0);
+	VF = (msbBefore ^ msbAfter) != 0;
+	CF = (modcount != 0) * lbit;
+	XF = ((modcount == 0) * XF) + ((modcount != 0) * CF);
+}
+
+macro rotateLeft(count, register, width) {
+	local modcount = count & 63;
+	register = (register << modcount) | (register >> (width - modcount));
+	resflags(register);
+	CF = (register & 1) != 0;
+	VF = 0;
+}
+
+macro rotateRight(count, register, width) {
+	local modcount = count & 63;
+	register = (register << (width - modcount)) | (register >> modcount);
+	resflags(register);
+	CF = zext(register s< 0);
+	VF = 0;
+}
+
+macro rotateLeftExtended(count, register, width) {
+	local modcount = count & 63;
+	local xflag = (register & (1 << (width - modcount))) != 0;
+	local result = (register << modcount) | (zext(XF) << (modcount - 1)) | (register >> (width - modcount + 1));
+	register = (zext(modcount != 0) * result) + (zext(modcount == 0) * register);
+	resflags(register);
+	XF = (zext(modcount != 0) * xflag) + (zext(modcount == 0) * XF);
+	CF = XF;
+	VF = 0;
+}
+
+macro rotateRightExtended(count, register, width) {
+	local modcount = count & 63;
+	local xflag = (register & (1 << (modcount - 1))) != 0;
+	local result = (zext(XF) << (width - modcount)) | (register >> modcount) | (register << (width - modcount + 1));
+	register = (zext(modcount != 0) * result) + (zext(modcount == 0) * register);
+	resflags(register);
+	XF = (zext(modcount != 0) * xflag) + (zext(modcount == 0) * XF);
+	CF = XF;
+	VF = 0;
+}
+
 :^instruction is  extGUARD=0 & mode2 & reg9an & mode & regan & instruction
            [ extGUARD=1; regtfan=regan; savmod1=mode; regtsan=reg9an; savmod2=mode2; ]	{}
 
@@ -751,15 +863,35 @@ with : extGUARD=1 {
 :andi const8,"CCR"			is d16=0x23c; const8						{ packflags(SR); SR = SR & zext(const8); unpackflags(SR); }
 :andi const16,SR			is opbig=0x2 & d8base=0x7c; const16 & SR				{ packflags(SR); SR = SR & const16; unpackflags(SR); }
 
-:asl.b cntreg,regdnb		is op=14 & cntreg & op8=1 & op67=0 & op34=0 & regdnb		{ getbit(CF,regdnb,8-cntreg); regdnb=regdnb<<cntreg; resflags(regdnb);}
-:asl.w cntreg,regdnw		is op=14 & cntreg & op8=1 & op67=1 & op34=0 & regdnw		{ getbit(CF,regdnw,16-cntreg); regdnw=regdnw<<cntreg; resflags(regdnw);}
-:asl.l cntreg,regdn		is op=14 & cntreg & op8=1 & op67=2 & op34=0 & regdn		{ getbit(CF,regdn,32-cntreg); regdn=regdn<<cntreg; resflags(regdn); }
-:asl eaw			is (opbig=0xe1 & op67=3 & $(MEM_ALTER_ADDR_MODES))... & eaw				{ getbit(CF,eaw,31); eaw=eaw<<1; resflags(eaw); }
+:asl.b cntreg,regdnb		is op=14 & cntreg & op8=1 & op67=0 & op34=0 & regdnb		{ arithmeticShiftLeft(cntreg, regdnb, 8); }
+:asl.w cntreg,regdnw		is op=14 & cntreg & op8=1 & op67=1 & op34=0 & regdnw		{ arithmeticShiftLeft(cntreg, regdnw, 16); }
+:asl.l cntreg,regdn		is op=14 & cntreg & op8=1 & op67=2 & op34=0 & regdn		{ arithmeticShiftLeft(cntreg, regdn, 32); }
+:asl eaw			is (opbig=0xe1 & op67=3 & $(MEM_ALTER_ADDR_MODES)) ... & eaw	{
+	local value:2 = eaw;
+	local msbBefore = value & 0x8000;
+	getbit(CF, value, 15);
+	value = value << 1;
+	resflags(value);
+	local msbAfter = value & 0x8000;
+	VF = (msbBefore ^ msbAfter) != 0;
+	eaw = value;
+	XF = CF;
+}
 
-:asr.b cntreg,regdnb		is op=14 & cntreg & op8=0 & op67=0 & op34=0 & regdnb		{ getbit(CF,regdnb,cntreg-1);regdnb=regdnb s>>cntreg; resflags(regdnb);}
-:asr.w cntreg,regdnw		is op=14 & cntreg & op8=0 & op67=1 & op34=0 & regdnw		{ getbit(CF,regdnw,cntreg-1);regdnw=regdnw s>>cntreg; resflags(regdnw);}
-:asr.l cntreg,regdn		is op=14 & cntreg & op8=0 & op67=2 & op34=0 & regdn		{ getbit(CF,regdn,cntreg-1); regdn=regdn s>>cntreg; resflags(regdn); }
-:asr eaw			is (opbig=0xe0 & op67=3 & $(MEM_ALTER_ADDR_MODES))... & eaw				{ getbit(CF,eaw,0); eaw=eaw s>>1; resflags(eaw); }
+:asr.b cntreg,regdnb		is op=14 & cntreg & op8=0 & op67=0 & op34=0 & regdnb		{ arithmeticShiftRight(cntreg, regdnb, 8); }
+:asr.w cntreg,regdnw		is op=14 & cntreg & op8=0 & op67=1 & op34=0 & regdnw		{ arithmeticShiftRight(cntreg, regdnw, 16); }
+:asr.l cntreg,regdn		is op=14 & cntreg & op8=0 & op67=2 & op34=0 & regdn		{ arithmeticShiftRight(cntreg, regdn, 32); }
+:asr eaw			is (opbig=0xe0 & op67=3 & $(MEM_ALTER_ADDR_MODES)) ... & eaw	{
+	local value:2 = eaw;
+	local msbBefore = value & 0x8000;
+	getbit(CF, value, 0);
+	value = value s>> 1;
+	resflags(value);
+	local msbAfter = value & 0x8000;
+	VF = (msbBefore ^ msbAfter) != 0;
+	eaw = value;
+	XF = CF;
+}	
 
 :b^cc^".b" addr8		is op=6 & cc & addr8						{ if (cc) goto addr8; }
 :b^cc^".w" addr16		is op=6 & cc & d8base=0; addr16					{ if (cc) goto addr16; }
@@ -856,6 +988,26 @@ define pcodeop countLeadingZeros;
 :btst.b d8,e2b			is opbig=8 & op67=0 & regan & $(MEM_ALTER_ADDR_MODES); d8; e2b	[ savmod2=savmod1; regtsan=regtfan; ] { mask:1 = 1<<d8; ZF=(e2b&mask)==0; }
 :btst.l reg9dn,regdn		is op=0 & reg9dn & op68=4 & mode=0 & regdn			{ mask:4 = 1<<(reg9dn&31); ZF=(regdn&mask)==0; }
 :btst.l d8,regdn		is opbig=8 & op67=0 & mode=0 & regdn; d8			{ mask:4 = 1<<d8; ZF=(regdn&mask)==0; }
+
+@ifdef COLDFIRE
+
+:bitrev regdn is reg315=0x18 & regdn {
+	local dword = regdn;
+	regdn[31,1] = dword[0,1]; regdn[30,1] = dword[1,1]; regdn[29,1] = dword[2,1]; regdn[28,1] = dword[3,1];
+	regdn[27,1] = dword[4,1]; regdn[26,1] = dword[5,1]; regdn[25,1] = dword[6,1]; regdn[24,1] = dword[7,1];
+	regdn[23,1] = dword[8,1]; regdn[22,1] = dword[9,1]; regdn[21,1] = dword[10,1]; regdn[20,1] = dword[11,1];
+	regdn[19,1] = dword[12,1]; regdn[18,1] = dword[13,1]; regdn[17,1] = dword[14,1]; regdn[16,1] = dword[15,1];
+	regdn[15,1] = dword[16,1]; regdn[14,1] = dword[17,1]; regdn[13,1] = dword[18,1]; regdn[12,1] = dword[19,1];
+	regdn[11,1] = dword[20,1]; regdn[10,1] = dword[21,1]; regdn[9,1] = dword[22,1]; regdn[8,1] = dword[23,1];
+	regdn[7,1] = dword[24,1]; regdn[6,1] = dword[25,1]; regdn[5,1] = dword[26,1]; regdn[4,1] = dword[27,1];
+	regdn[3,1] = dword[28,1]; regdn[2,1] = dword[29,1]; regdn[1,1] = dword[30,1]; regdn[0,1] = dword[31,1];
+}
+
+:byterev regdn is reg315=0x58 & regdn {
+	regdn = ((regdn & 0x000000FF) << 24) | ((regdn & 0x0000FF00) << 8) | ((regdn & 0x00FF0000) >> 8) | ((regdn & 0xFF000000) >> 24);
+}
+
+@endif # COLDFIRE
 
 :callm "#"^d8,e2l			is opbig=6 & op67=3 & $(CTL_ADDR_MODES); d8; e2l 			[ savmod2=savmod1; regtsan=regtfan; ] unimpl
 
@@ -1173,15 +1325,31 @@ macro shiftCXFlags(cntreg) {
 		XF = CF * (cntreg != 0) + XF * (cntreg == 0);
 }
 
-:lsl.b cntreg,regdnb               is op=14 & cntreg & op8=1 & op67=0 & op34=1 & regdnb		{ getbit(CF,regdnb,8-cntreg); shiftCXFlags(cntreg); regdnb=regdnb<<cntreg; resflags(regdnb);}
-:lsl.w cntreg,regdnw               is op=14 & cntreg & op8=1 & op67=1 & op34=1 & regdnw		{ getbit(CF,regdnw,16-cntreg); shiftCXFlags(cntreg); regdnw=regdnw<<cntreg; resflags(regdnw);}
-:lsl.l cntreg,regdn                is op=14 & cntreg & op8=1 & op67=2 & op34=1 & regdn		{ getbit(CF,regdn,32-cntreg); shiftCXFlags(cntreg); regdn=regdn<<cntreg; resflags(regdn); }
-:lsl eaw                           is (opbig=0xe3 & op67=3 & $(MEM_ALTER_ADDR_MODES))... & eaw				{ getbit(CF,eaw,31); shiftCXFlags(eaw); eaw=eaw<<1; resflags(eaw); }
+:lsl.b cntreg,regdnb               is op=14 & cntreg & op8=1 & op67=0 & op34=1 & regdnb		{ logicalShiftLeft(cntreg, regdnb, 8); }
+:lsl.w cntreg,regdnw               is op=14 & cntreg & op8=1 & op67=1 & op34=1 & regdnw		{ logicalShiftLeft(cntreg, regdnw, 16); }
+:lsl.l cntreg,regdn                is op=14 & cntreg & op8=1 & op67=2 & op34=1 & regdn		{ logicalShiftLeft(cntreg, regdn, 32); }
+:lsl eaw                           is (opbig=0xe3 & op67=3 & $(MEM_ALTER_ADDR_MODES)) ... & eaw	{
+	local value:2 = eaw;
+	getbit(CF, value, 15);
+	value = value << 1;
+	resflags(value);
+	eaw = value;
+	VF = 0;
+	XF = CF;
+}
 
-:lsr.b cntreg,regdnb               is op=14 & cntreg & op8=0 & op67=0 & op34=1 & regdnb		{ getbit(CF,regdnb,cntreg-1); shiftCXFlags(cntreg); regdnb=regdnb >>cntreg; resflags(regdnb);}
-:lsr.w cntreg,regdnw               is op=14 & cntreg & op8=0 & op67=1 & op34=1 & regdnw		{ getbit(CF,regdnw,cntreg-1); shiftCXFlags(cntreg); regdnw=regdnw >>cntreg; resflags(regdnw);}
-:lsr.l cntreg,regdn                is op=14 & cntreg & op8=0 & op67=2 & op34=1 & regdn		{ getbit(CF,regdn,cntreg-1); shiftCXFlags(cntreg); regdn=regdn >>cntreg; resflags(regdn); }
-:lsr eaw                           is (opbig=0xe2 & op67=3 & $(MEM_ALTER_ADDR_MODES))... & eaw	{ getbit(CF,eaw,0); shiftCXFlags(eaw); eaw=eaw >>1; resflags(eaw); }
+:lsr.b cntreg,regdnb               is op=14 & cntreg & op8=0 & op67=0 & op34=1 & regdnb		{ logicalShiftRight(cntreg, regdnb, 8); }
+:lsr.w cntreg,regdnw               is op=14 & cntreg & op8=0 & op67=1 & op34=1 & regdnw		{ logicalShiftRight(cntreg, regdnw, 16); }
+:lsr.l cntreg,regdn                is op=14 & cntreg & op8=0 & op67=2 & op34=1 & regdn		{ logicalShiftRight(cntreg, regdn, 32); }
+:lsr eaw                           is (opbig=0xe2 & op67=3 & $(MEM_ALTER_ADDR_MODES)) ... & eaw	{
+	local value:2 = eaw;
+	getbit(CF, value, 0);
+	value = value >> 1;
+	resflags(value);
+	eaw = value;
+	VF = 0;
+	XF = CF;
+}
 
 :move.b eab,e2b			is (op=1 & $(DAT_ALTER_ADDR_MODES2))... & eab ; e2b	{ build eab; local tmp = eab; build e2b; e2b = tmp; resflags(tmp); logflags(); }
 :move.w eaw,e2w			is (op=3 & $(DAT_ALTER_ADDR_MODES2))... & eaw ; e2w	{ build eaw; local tmp = eaw; build e2w; e2w = tmp; resflags(tmp); logflags(); }
@@ -1229,9 +1397,13 @@ macro shiftCXFlags(cntreg) {
 
 :sats.l regdn			is opbig=0x4c & op37=0x10 & regdn	{ if (VF == 0) goto inst_next; regdn = (zext(regdn == 0 ) * 0x80000000) + (zext(regdn != 0) * 0x7fffffff); VF=0; CF=0; }
 
-:tpf					is opbig=0x51 & op37=0x1f & op02=4			{ } # nop
-:tpf.w const16			is opbig=0x51 & op37=0x1f & op02=2; const16			{ } # nop + 1 word
-:tpf.l const32			is opbig=0x51 & op37=0x1f & op02=3; const32			{ } # nop + 2 word
+skip_addr: skipAddr is op02=2 [skipAddr = inst_next + 2;] { export *[ram]:4 skipAddr; }
+skip_addr: skipAddr is op02=3 [skipAddr = inst_next + 4;] { export *[ram]:4 skipAddr; }
+
+# TPF.w/l is occassionally used as a branch over a valid instruction.
+:tpf			is opbig=0x51 & op37=0x1f & op02=4	{ } # nop
+:tpf.w			is opbig=0x51 & op37=0x1f & op02=2 & skip_addr	{ goto skip_addr; } # nop + 1 word
+:tpf.l			is opbig=0x51 & op37=0x1f & op02=3 & skip_addr	{ goto skip_addr; } # nop + 2 word
 @endif # COLDFIRE
 
 # Tables for register lists, for the movem instruction
@@ -1574,7 +1746,16 @@ macro negResFlags(result) {
 :ori "#"^d8,"CCR"			is opbig=0 & op37=7 & op02=4; d8			{ packflags(SR); SR=SR|d8; unpackflags(SR); }
 :ori "#"^d16,SR			is SR; opbig=0x00 & d8base=0x7c; d16			{ packflags(SR); SR=SR|d16; unpackflags(SR); }
 
-:pack Tyb,Txb,"#"d16		is op=8 & op48=20 & Txb & Tyb; d16			unimpl
+:pack Tyw,Txw,"#"d16		is op=8 & op48=20 & Txw & Tyw & rmbit=0; d16 {
+	local value = (Tyw & 0x0F0F) + d16;
+	Txw = (Txw & 0xFF00) | ((value & 0x0F00) >> 4) | (value & 0x000F);
+}
+
+:pack Tyw,Txb,"#"d16		is op=8 & op48=20 & Tyw & Txb & rmbit=1; d16 {
+	local value = (Tyw & 0x0F0F) + d16;
+	local result:2 = ((value & 0x0F00) >> 4) | (value & 0x000F);
+	Txb = result:1;
+}
 
 :pea eaptr			is (opbig=0x48 & op67=1 & $(CTL_ADDR_MODES))... & eaptr			{ SP = SP-4; *SP = eaptr; }
 
@@ -1677,37 +1858,57 @@ ptestLevel: "#"^mregn	is mregn  { export *[const]:1 mregn; }
 
 :reset				is d16=0x4e70						{ reset(); }
 
-:rol.b cntreg,regdnb		is op=14 & cntreg & op8=1 & op67=0 & op34=3 & regdnb	{ regdnb=(regdnb<<cntreg)|(regdnb>>(8-cntreg));
-											  getbit(CF,regdnb,0); VF=0; resflags(regdnb); }
-:rol.w cntreg,regdnw		is op=14 & cntreg & op8=1 & op67=1 & op34=3 & regdnw	{ regdnw=(regdnw<<cntreg)|(regdnw>>(16-cntreg));
-											  getbit(CF,regdnw,0); VF=0; resflags(regdnw); }
-:rol.l cntreg,regdn		is op=14 & cntreg & op8=1 & op67=2 & op34=3 & regdn 	{ regdn=(regdn<<cntreg)|(regdn>>(32-cntreg));
-											  getbit(CF,regdn,0); VF=0; resflags(regdn); }
-:rol eaw			is (opbig=0xe7 & op67=3 & $(MEM_ALTER_ADDR_MODES))... & eaw			{ eaw = (eaw<<1)|(eaw>>15); getbit(CF,eaw,0); VF=0; resflags(eaw); }
+:rol.b cntreg,regdnb		is op=14 & cntreg & op8=1 & op67=0 & op34=3 & regdnb		{ rotateLeft(cntreg, regdnb, 8); }
+:rol.w cntreg,regdnw		is op=14 & cntreg & op8=1 & op67=1 & op34=3 & regdnw		{ rotateLeft(cntreg, regdnw, 16); }
+:rol.l cntreg,regdn		is op=14 & cntreg & op8=1 & op67=2 & op34=3 & regdn		{ rotateLeft(cntreg, regdn, 32); }
+:rol eaw			is (opbig=0xe7 & op67=3 & $(MEM_ALTER_ADDR_MODES)) ... & eaw	{
+	local value:2 = eaw;
+	value = (value << 1) | (value >> 15);
+	getbit(CF, value, 0);
+	resflags(value);
+	eaw = value;
+	VF = 0;
+}
 
-:ror.b cntreg,regdnb		is op=14 & cntreg & op8=0 & op67=0 & op34=3 & regdnb	{ regdnb=(regdnb<<(8-cntreg))|(regdnb>>cntreg);
-											  getbit(CF,regdnb,7); VF=0; resflags(regdnb); }
-:ror.w cntreg,regdnw		is op=14 & cntreg & op8=0 & op67=1 & op34=3 & regdnw	{ regdnw=(regdnw<<(16-cntreg))|(regdnw>>cntreg);
-											  getbit(CF,regdnw,15); VF=0; resflags(regdnw); }
-:ror.l cntreg,regdn		is op=14 & cntreg & op8=0 & op67=2 & op34=3 & regdn 	{ regdn=(regdn<<(32-cntreg))|(regdn>>cntreg);
-											  getbit(CF,regdn,31); VF=0; resflags(regdn); }
-:ror eaw			is (opbig=0xe6 & op67=3 & $(MEM_ALTER_ADDR_MODES))... & eaw			{ eaw = (eaw<<15)|(eaw>>1); getbit(CF,eaw,15); VF=0; resflags(eaw); }
+:ror.b cntreg,regdnb		is op=14 & cntreg & op8=0 & op67=0 & op34=3 & regdnb		{ rotateRight(cntreg, regdnb, 8); }
+:ror.w cntreg,regdnw		is op=14 & cntreg & op8=0 & op67=1 & op34=3 & regdnw		{ rotateRight(cntreg, regdnw, 16); }
+:ror.l cntreg,regdn		is op=14 & cntreg & op8=0 & op67=2 & op34=3 & regdn 		{ rotateRight(cntreg, regdn, 32); }
+:ror eaw			is (opbig=0xe6 & op67=3 & $(MEM_ALTER_ADDR_MODES)) ... & eaw	{
+	local value:2 = eaw;
+	value = (value << 15) | (value >> 1);
+	getbit(CF, value, 15);
+	resflags(value);
+	eaw = value;
+	VF = 0;
+}
 
-:roxl.b cntreg,regdnb		is op=14 & cntreg & op8=1 & op67=0 & op34=2 & regdnb	{ CF=(regdnb&(1<<( 8-cntreg)))!=0; regdnb=(zext(XF)<<(cntreg-1))|(regdnb<<cntreg)|(regdnb>>(9-cntreg));
-                                                                                      XF=CF; VF=0; resflags(regdnb); }
-:roxl.w cntreg,regdnw		is op=14 & cntreg & op8=1 & op67=1 & op34=2 & regdnw	{ CF=(regdnw&(1<<(16-cntreg)))!=0; regdnw=(zext(XF)<<(cntreg-1))|(regdnw<<cntreg)|(regdnw>>(17-cntreg));
-                                                                                      XF=CF; VF=0; resflags(regdnw); }
-:roxl.l cntreg,regdn		is op=14 & cntreg & op8=1 & op67=2 & op34=2 & regdn 	{ CF=(regdn &(1<<(32-cntreg)))!=0; regdn =(zext(XF)<<(cntreg-1))|(regdn <<cntreg)|(regdn >>(33-cntreg));
-                                                                                      XF=CF; VF=0; resflags(regdn ); }
-:roxl eaw			is (opbig=0xe5 & op67=3 & $(MEM_ALTER_ADDR_MODES))... & eaw		{ CF=(eaw&0x8000)!=0; eaw=zext(XF)|(eaw<<1)|(eaw>>16); XF=CF; VF=0; resflags(eaw); }
+:roxl.b cntreg,regdnb		is op=14 & cntreg & op8=1 & op67=0 & op34=2 & regdnb		{ rotateLeftExtended(cntreg, regdnb, 8); }
+:roxl.w cntreg,regdnw		is op=14 & cntreg & op8=1 & op67=1 & op34=2 & regdnw		{ rotateLeftExtended(cntreg, regdnw, 16); }
+:roxl.l cntreg,regdn		is op=14 & cntreg & op8=1 & op67=2 & op34=2 & regdn		{ rotateLeftExtended(cntreg, regdn, 32); }
+:roxl eaw			is (opbig=0xe5 & op67=3 & $(MEM_ALTER_ADDR_MODES)) ... & eaw	{
+	local value:2 = eaw;
+	local xflag = (value & 0x8000) != 0;
+	value = (value << 1) | zext(XF);
+	resflags(value);
+	eaw = value;
+	VF = 0;
+	XF = xflag;
+	CF = XF;
+}
 
-:roxr.b cntreg,regdnb		is op=14 & cntreg & op8=0 & op67=0 & op34=2 & regdnb	{ CF=(regdnb&(1<<(cntreg-1)))!=0; regdnb=(zext(XF)<<( 8-cntreg))|(regdnb>>cntreg)|(regdnb<<(9 -cntreg));
-                                                                                      XF=CF; VF=0; resflags(regdnb); }
-:roxr.w cntreg,regdnw		is op=14 & cntreg & op8=0 & op67=1 & op34=2 & regdnw	{ CF=(regdnw&(1<<(cntreg-1)))!=0; regdnw=(zext(XF)<<(16-cntreg))|(regdnw>>cntreg)|(regdnw<<(17-cntreg));
-                                                                                      XF=CF; VF=0; resflags(regdnw); }
-:roxr.l cntreg,regdn		is op=14 & cntreg & op8=0 & op67=2 & op34=2 & regdn 	{ CF=(regdn &(1<<(cntreg-1)))!=0; regdn =(zext(XF)<<(32-cntreg))|(regdn >>cntreg)|(regdn <<(33-cntreg));
-                                                                                      XF=CF; VF=0; resflags(regdn); }
-:roxr eaw			is (opbig=0xe4 & op67=3 & $(MEM_ALTER_ADDR_MODES))... & eaw		{ CF=(eaw&1)!=0; eaw=(zext(XF)<<15)|(eaw>>1); XF=CF; VF=0; resflags(eaw); }
+:roxr.b cntreg,regdnb		is op=14 & cntreg & op8=0 & op67=0 & op34=2 & regdnb		{ rotateRightExtended(cntreg, regdnb, 8); }
+:roxr.w cntreg,regdnw		is op=14 & cntreg & op8=0 & op67=1 & op34=2 & regdnw		{ rotateRightExtended(cntreg, regdnw, 16); }
+:roxr.l cntreg,regdn		is op=14 & cntreg & op8=0 & op67=2 & op34=2 & regdn		{ rotateRightExtended(cntreg, regdn, 32); }
+:roxr eaw			is (opbig=0xe4 & op67=3 & $(MEM_ALTER_ADDR_MODES)) ... & eaw	{
+	local value:2 = eaw;
+	local xflag = (value & 0x0001) != 0;
+	value = (zext(XF) << 15) | (value >> 1);
+	resflags(value);
+	eaw = value;
+	VF = 0;
+	XF = xflag;
+	CF = XF;
+}
 
 :rtd "#"^d16			is opbig=0x4e & op37=14 & op02=4; d16				{ PC = *SP; SP = SP + 4 + d16; return [PC]; }
 :rte				is d16=0x4e73							{ tmp:4 = 0; return [tmp]; }
@@ -1803,7 +2004,15 @@ ptestLevel: "#"^mregn	is mregn  { export *[const]:1 mregn; }
 
 :unlk regan			is opbig=0x4e & op37=11 & regan					{ SP = regan; regan = *SP; SP = SP+4; }
 
-:unpk Tyb,Txb,"#"^d16		is op=8 & Txb & op48=24 & Tyb; d16				unimpl
+:unpk Tyw,Txw,"#"^d16		is op=8 & Txw & op48=24 & Tyw & rmbit=0; d16 {
+	Txw = (Txw & 0xF0F0) | ((((Tyw & 0x00F0) << 4) | (Tyw & 0x000F)) + d16);
+}
+
+:unpk Tyb,Txw,"#"^d16		is op=8 & Tyb & op48=24 & Txw & rmbit=1; d16 {
+	local source:2 = zext(Tyb);
+	source = (((source & 0x00F0) << 4) | (source & 0x000F)) + d16;
+	Txw = (Txw & 0xF0F0) | source;
+}
 
 # Floating Point Instructions
 
@@ -1847,7 +2056,7 @@ fcc: "un"	is fcode=0x08			{ tmp:1 = $(NAN_FP); clearflags_fp(); export tmp; }
 
 fcc: "f"	is fcode=0x00			{ export 0:1; }
 fcc: "t"	is fcode=0x0f			{ export 1:1; }
-fcc: "sf"	is fcode=0x10			{ export 0:0; }
+fcc: "sf"	is fcode=0x10			{ export 0:1; }
 fcc: "st"	is fcode=0x1f			{ export 1:1; }
 fcc: "seq"	is fcode=0x11			{ tmp:1 = $(Z_FP); clearflags_fp(); export tmp; }
 fcc: "sne"	is fcode=0x1e			{ tmp:1 = $(Z_FP); clearflags_fp(); export tmp; }
@@ -2469,15 +2678,24 @@ fsubrnd: "d"                   is fopmode=0x6c        {}
 
 
 @ifdef COLDFIRE
-worl: ".w"			is wl=0		{}
-worl: ".l"			is wl=1		{}
 
-uorl7: ".l"			is bs=0		{}
-uorl7: ".u"			is bs=1		{}
-uorl6: ".l"			is IS=0		{}
-uorl6: ".u"			is IS=1		{}
+macregy: reg03ywl	is reg03ywl; IS=0	{ export reg03ywl; }
+macregy: reg03ywu	is reg03ywu; IS=1	{ export reg03ywu; }
+macregx: reg9dnl	is reg9dnl & op6=0; bs=0	{ export reg9dnl; }
+macregx: reg9dnu	is reg9dnu & op6=0; bs=1	{ export reg9dnu; }
+macregx: reg9anl	is reg9anl & op6=1; bs=0	{ export reg9anl; }
+macregx: reg9anu	is reg9anu & op6=1; bs=1	{ export reg9anu; }
+macrw:   reg9dn		is reg9dn & op6=0 { export reg9dn; }
+macrw:   reg9an		is reg9an & op6=1 { export reg9an; }
 
-scalefactor: ""					is sfact=0	{ export 0:1; }
+macregy_e: ereg03y	is ereg03y	{ export ereg03y; }
+macregyl: reg03yl	is reg03yl & IS=0	{ export reg03yl; }
+macregyl: reg03yu	is reg03yu & IS=1	{ export reg03yu; }
+macregxl: reg12xwl	is reg12xwl & bs=0	{ export reg12xwl; }
+macregxl: reg12xwu	is reg12xwu & bs=1	{ export reg12xwu; }
+
+
+scalefactor: ""			is sfact=0	{ export 0:1; }
 scalefactor: "<<1"		is sfact=1	{ export 1:1; }
 scalefactor: ">>1"		is sfact=3	{ export 2:1; }
 
@@ -2486,48 +2704,242 @@ accreg: ACC1	is ACC1 & acclsb=1 ; accmsb=0 		{ export ACC1; }
 accreg: ACC2	is ACC2 & acclsb=0 ; accmsb=1 		{ export ACC2; }
 accreg: ACC3	is ACC3 & acclsb=1 ; accmsb=1 		{ export ACC3; }
 
-:mac^worl reg03y^uorl6, reg9dn^uorl7^scalefactor, accreg	is (op=10 & reg9dn & reg03y & op6=0 & op8=0 & op45=0 ; fbit=0 & worl & uorl6 & uorl7 & scalefactor) ... & accreg ...
+define pcodeop findFirstOne;
+
+:ff1 regdn							is reg315=0x98 & regdn {
+	regdn = findFirstOne(regdn);
+	VF = 0;
+	CF = 0;
+	resflags(regdn);
+}
+
+# MAC effective address table
+  # size=long
+m_eal: (regan) is mode=2 & regan			{ export *:4 regan; }
+m_eal: (regan)+ is mode=3 & regan			{ local tmp = regan; regan = regan + 4; export *:4 tmp; }
+m_eal: -(regan) is mode=4 & regan			{ regan = regan - 4; export *:4 regan; }
+m_eal: (d16,regan) is mode=5 & regan; d16		{ local tmp  = regan + d16; export *:4 tmp; }
+
+:maaac.l reg03y, reg9dn^scalefactor, accreg, accw	is (op=10 & reg9dn & reg03y & op6=0 & op8=0 & op45=0 ; fbit=0 & wl=1 & scalefactor & accw & odsize=1) ... & accreg ...
 {
   local tmp = reg03y * reg9dn;
-  tmp = tmp << (scalefactor == 1) * 1;
-  tmp = tmp >> (scalefactor == 2) * 1;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
   accreg = accreg + tmp;
+  accw = accw + tmp;
 }
-:mac^worl reg03y^uorl6, reg9an^uorl7^scalefactor, accreg	is (op=10 & reg9an & reg03y & op6=1 & op8=0 & op45=0 ; fbit=0 & worl & uorl6 & uorl7 & scalefactor) ... & accreg ...
+:maaac.l reg03y, reg9an^scalefactor, accreg, accw	is (op=10 & reg9an & reg03y & op6=1 & op8=0 & op45=0 ; fbit=0 & wl=1 & scalefactor & accw & odsize=1) ... & accreg ...
 {
   local tmp = reg03y * reg9an;
-  tmp = tmp << (scalefactor == 1) * 1;
-  tmp = tmp >> (scalefactor == 2) * 1;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
+  accreg = accreg + tmp;
+  accw = accw + tmp;
+}
+
+:maaac.w macregy, macregx^scalefactor, accreg, accw	is (op=10 & op8=0 & op45=0 ; fbit=0 & wl=0 & scalefactor & accw & odsize=1) ... & macregy ... &  macregx ... & accreg ...
+{
+  local tmp = macregy * macregx;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
+  accreg = accreg + sext(tmp);
+  accw = accw + sext(tmp);
+}
+
+:mac.l reg03y, reg9dn^scalefactor, accreg	is (op=10 & reg9dn & reg03y & op6=0 & op8=0 & op45=0 ; fbit=0 & wl=1 & scalefactor) ... & accreg ...
+{
+  local tmp = reg03y * reg9dn;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
+  accreg = accreg + tmp;
+}
+:mac.l reg03y, reg9an^scalefactor, accreg	is (op=10 & reg9an & reg03y & op6=1 & op8=0 & op45=0 ; fbit=0 & wl=1 & scalefactor) ... & accreg ...
+{
+  local tmp = reg03y * reg9an;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
   accreg = accreg + tmp;
 }
 
-:move.l ACC, reg03y			is op=10 & op811=1 & op47=8	& ACC & reg03y		{ reg03y = ACC; }
+:mac.w macregy, macregx^scalefactor, accreg	is (op=10 & op8=0 & op45=0 ; fbit=0 & wl=0 & scalefactor) ... & macregy ... &  macregx ... & accreg ...
+{
+  local tmp = macregy * macregx;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
+  accreg = accreg + sext(tmp);
+}
 
-:move.l MACSR, reg03y		is op=10 & op811=9 & op47=8	& MACSR & reg03y	{ reg03y = MACSR; }
+#mac with load
+:mac.w macregyl, macregxl^scalefactor, m_eal, macrw, accreg	is ((op=10 & macrw & op8=0 ; macregxl & fbit=0 & macregyl & wl=0 & scalefactor) ... & accreg ...) ... & m_eal
+{
+  local tmp = macregyl * macregxl;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
+  accreg = accreg + sext(tmp);
+  macrw = m_eal;
+}
+
+:mac.l macregy_e, reg12x^scalefactor, m_eal, macrw, accreg	is ((op=10 & macrw & op6=0 & op8=0 ; reg12x & fbit=0 & wl=1 & scalefactor & macregy_e) ... & accreg ...) ... & m_eal
+{
+  local tmp = macregy_e * reg12x;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
+  accreg = accreg + tmp;
+  macrw = m_eal;
+}
+
+:masac.l reg03y, reg9dn^scalefactor, accreg, accw	is (op=10 & reg9dn & reg03y & op6=0 & op8=0 & op45=0 ; fbit=0 & wl=1 & scalefactor & accw & odsize=3) ... & accreg ...
+{
+  local tmp = reg03y * reg9dn;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
+  accreg = accreg + tmp;
+  accw = accw - tmp;
+}
+:masac.l reg03y, reg9an^scalefactor, accreg, accw	is (op=10 & reg9an & reg03y & op6=1 & op8=0 & op45=0 ; fbit=0 & wl=1 & scalefactor & accw & odsize=3) ... & accreg ...
+{
+  local tmp = reg03y * reg9an;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
+  accreg = accreg + tmp;
+  accw = accw - tmp;
+}
+
+:masac.w macregy, macregx^scalefactor, accreg, accw	is (op=10 & op8=0 & op45=0 ; fbit=0 & wl=0 & scalefactor & accw & odsize=3) ... & macregy ... &  macregx ... & accreg ...
+{
+  local tmp = macregy * macregx;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
+  accreg = accreg + sext(tmp);
+  accw = accw - sext(tmp);
+}
+
+moveaccreg: ACC0  is ACC0 & op0910=0    { export ACC0; }
+moveaccreg: ACC1  is ACC1 & op0910=1    { export ACC1; }
+moveaccreg: ACC2  is ACC2 & op0910=2    { export ACC2; }
+moveaccreg: ACC3  is ACC3 & op0910=3    { export ACC3; }
+
+moveaccreg2: ACC0  is ACC0 & op01=0    { export ACC0; }
+moveaccreg2: ACC1  is ACC1 & op01=1    { export ACC1; }
+moveaccreg2: ACC2  is ACC2 & op01=2    { export ACC2; }
+moveaccreg2: ACC3  is ACC3 & op01=3    { export ACC3; }
+
+:move.l moveaccreg, reg03y  is op=0b1010 & op11=0 & moveaccreg & op8=1 & op47=0b1000 & reg03y    { reg03y = moveaccreg; }
+
+:move.l ACCext01, eal       is (op=0b1010 & op811=0b1011 & op67=0 & ACCext01 & (mode=0 | mode=1 | mode=7)) ... & eal   { ACCext01 = eal; }
+:move.l ACCext23, eal       is (op=0b1010 & op811=0b1111 & op67=0 & ACCext23 & (mode=0 | mode=1 | mode=7)) ... & eal   { ACCext23 = eal; }
+
+:move.l moveaccreg, eal     is (op=0b1010 & op11=0 & moveaccreg & op8=1 & op67=0 & (mode=0 | mode=1 | mode=7)) ... & eal   { moveaccreg = eal; }
+
+:move.l moveaccreg, moveaccreg2     is op=0b1010 & op11=0 & moveaccreg & op8=1 & op47=1 & moveaccreg2    { moveaccreg2 = moveaccreg; }
+
+:move.l MACSR, reg03y		is op=0b1010 & op811=0b1001 & op47=0b1000 & MACSR & reg03y	{ reg03y = MACSR; }
+:move.l ACCext01, reg03y	is op=0b1010 & op811=0b1011 & op47=0b1000 & ACCext01 & reg03y	{ reg03y = ACCext01; }
+:move.l ACCext23, reg03y	is op=0b1010 & op811=0b1111 & op47=0b1000 & ACCext23 & reg03y	{ reg03y = ACCext23; }
 
 :move.l MASK, reg03y		is op=10 & op811=13 & op47=8 & MASK & reg03y	{ reg03y = MASK; }
 
 :move.l MACSR, "CCR"		is op=10 & op811=9 & op47=12 & MACSR			{ unpackflags(MACSR); }
 
-:move.l eal, ACC			is (op=10 & op611=4 & ACC & (mode=0 | mode=1 | mode=7)) ... & eal			{ ACC = eal; }
-
 :move.l eal, MACSR			is (op=10 & op611=36 & MACSR & (mode=0 | mode=1 | mode=7)) ... & eal		{ MACSR = eal; }
 
 :move.l eal, MASK			is (op=10 & op611=52 & MASK & (mode=0 | mode=1 | mode=7)) ... & eal			{ MASK = eal; }
 
-:msac^worl reg03y^uorl6, reg9dn^uorl7^scalefactor, accreg	is (op=10 & reg9dn & reg03y & op6=0 & op8=0 & op45=0 ; fbit=1 & worl & uorl6 & uorl7 & scalefactor) ... & accreg ...
+
+:msaac.l reg03y, reg9dn^scalefactor, accreg, accw	is (op=10 & reg9dn & reg03y & op6=0 & op8=0 & op45=0 ; fbit=1 & wl=1 & scalefactor & accw & odsize=1) ... & accreg ...
 {
   local tmp = reg03y * reg9dn;
-  tmp = tmp << (scalefactor == 1) * 1;
-  tmp = tmp >> (scalefactor == 2) * 1;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
   accreg = accreg - tmp;
+  accw = accw + tmp;
 }
-:msac^worl reg03y^uorl6, reg9an^uorl7^scalefactor, accreg	is (op=10 & reg9an & reg03y & op6=1 & op8=0 & op45=0 ; fbit=1 & worl & uorl6 & uorl7 & scalefactor) ... & accreg ...
+:msaac.l reg03y, reg9an^scalefactor, accreg, accw	is (op=10 & reg9an & reg03y & op6=1 & op8=0 & op45=0 ; fbit=1 & wl=1 & scalefactor & accw & odsize=1) ... & accreg ...
 {
   local tmp = reg03y * reg9an;
-  tmp = tmp << (scalefactor == 1) * 1;
-  tmp = tmp >> (scalefactor == 2) * 1;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
   accreg = accreg - tmp;
+  accw = accw + tmp;
+}
+
+:msaac.w macregy, macregx^scalefactor, accreg, accw	is (op=10 & op8=0 & op45=0 ; fbit=1 & wl=0 & scalefactor & accw & odsize=1) ... & macregy ... &  macregx ... & accreg ...
+{
+  local tmp = macregy * macregx;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
+  accreg = accreg - sext(tmp);
+  accw = accw + sext(tmp);
+}
+
+:msac.l reg03y, reg9dn^scalefactor, accreg	is (op=10 & reg9dn & reg03y & op6=0 & op8=0 & op45=0 ; fbit=1 & wl=1 & scalefactor) ... & accreg ...
+{
+  local tmp = reg03y * reg9dn;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
+  accreg = accreg - tmp;
+}
+:msac.l reg03y, reg9an^scalefactor, accreg	is (op=10 & reg9an & reg03y & op6=1 & op8=0 & op45=0 ; fbit=1 & wl=1 & scalefactor) ... & accreg ...
+{
+  local tmp = reg03y * reg9an;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
+  accreg = accreg - tmp;
+}
+
+:msac.w macregy, macregx^scalefactor, accreg	is (op=10 & op6=0 & op8=0 & op45=0 ; fbit=1 & wl=0 & scalefactor) ... & macregy ... &  macregx ... & accreg ...
+{
+  local tmp = macregy * macregx;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
+  accreg = accreg - sext(tmp);
+}
+
+
+# MSAC with load
+
+:msac.w macregyl, macregxl^scalefactor, m_eal, macrw, accreg	is ((op=10 & macrw & op8=0 ; macregxl & fbit=1 & macregyl & wl=0 & scalefactor) ... & accreg ...) ... & m_eal
+{
+  local tmp = macregyl * macregxl;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
+  accreg = accreg - sext(tmp);
+  macrw = m_eal;
+}
+
+:msac.l macregy_e, reg12x^scalefactor, m_eal, macrw, accreg	is ((op=10 & macrw & op8=0 ; reg12x & fbit=1 & wl=1 & scalefactor & macregy_e) ... & accreg ...) ... & m_eal
+{
+  local tmp = macregy_e * reg12x;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
+  accreg = accreg - tmp;
+  macrw = m_eal;
+}
+
+:msaac.l reg03y, reg9dn^scalefactor, accreg, accw	is (op=10 & reg9dn & reg03y & op6=0 & op8=0 & op45=0 ; fbit=1 & wl=1 & scalefactor & accw & odsize=3) ... & accreg ...
+{
+  local tmp = reg03y * reg9dn;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
+  accreg = accreg - tmp;
+  accw = accw - tmp;
+}
+:mssac.l reg03y, reg9an^scalefactor, accreg, accw	is (op=10 & reg9an & reg03y & op6=1 & op8=0 & op45=0 ; fbit=1 & wl=1 & scalefactor & accw & odsize=3) ... & accreg ...
+{
+  local tmp = reg03y * reg9an;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
+  accreg = accreg - tmp;
+  accw = accw - tmp;
+}
+
+:mssac.w macregy, macregx^scalefactor, accreg, accw	is (op=10 & op8=0 & op45=0 ; fbit=1 & wl=0 & scalefactor & accw & odsize=3) ... & macregy ... &  macregx ... & accreg ...
+{
+  local tmp = macregy * macregx;
+  tmp = tmp << (scalefactor == 1);
+  tmp = tmp >> (scalefactor == 2);
+  accreg = accreg - sext(tmp);
+  accw = accw - sext(tmp);
 }
 
 @endif

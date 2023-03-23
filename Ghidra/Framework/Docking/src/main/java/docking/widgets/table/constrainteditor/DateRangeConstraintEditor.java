@@ -15,7 +15,8 @@
  */
 package docking.widgets.table.constrainteditor;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.GridLayout;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -28,6 +29,7 @@ import docking.widgets.table.constraint.ColumnConstraint;
 import docking.widgets.table.constraint.RangeColumnConstraint;
 import docking.widgets.table.constraint.provider.DateColumnConstraintProvider;
 import docking.widgets.textfield.LocalDateTextField;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.util.layout.VerticalLayout;
 
 /**
@@ -109,7 +111,7 @@ public class DateRangeConstraintEditor extends AbstractColumnConstraintEditor<Lo
 		panel.add(controlPanel);
 
 		infoLabel = new GDHtmlLabel();
-		infoLabel.setForeground(Color.GRAY);
+		infoLabel.setForeground(Messages.HINT);
 		infoLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		panel.add(infoLabel);
 
@@ -223,8 +225,10 @@ public class DateRangeConstraintEditor extends AbstractColumnConstraintEditor<Lo
 	}
 
 	private static void markSpinnerAsValid(DateSpinner spinner, boolean valid) {
-		spinner.getDateField().getTextField().setBackground(
-			valid ? VALID_INPUT_COLOR : INVALID_INPUT_COLOR);
+		spinner.getDateField()
+				.getTextField()
+				.setBackground(
+					valid ? VALID_INPUT_COLOR : INVALID_INPUT_COLOR);
 	}
 
 	@Override

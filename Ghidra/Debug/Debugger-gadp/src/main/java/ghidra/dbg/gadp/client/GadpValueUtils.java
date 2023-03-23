@@ -137,8 +137,6 @@ public enum GadpValueUtils {
 
 	public static TargetStepKind getStepKind(Gadp.StepKind kind) {
 		switch (kind) {
-			case SK_ADVANCE:
-				return TargetStepKind.ADVANCE;
 			case SK_FINISH:
 				return TargetStepKind.FINISH;
 			case SK_INTO:
@@ -164,8 +162,6 @@ public enum GadpValueUtils {
 
 	public static Gadp.StepKind makeStepKind(TargetStepKind kind) {
 		switch (kind) {
-			case ADVANCE:
-				return Gadp.StepKind.SK_ADVANCE;
 			case FINISH:
 				return Gadp.StepKind.SK_FINISH;
 			case INTO:
@@ -539,7 +535,10 @@ public enum GadpValueUtils {
 
 	public static Gadp.Value makeValue(List<String> path, Object value) {
 		Gadp.Value.Builder b = Gadp.Value.newBuilder();
-		if (value instanceof Boolean) {
+		if (value == null) {
+			b.clearSpec();
+		}
+		else if (value instanceof Boolean) {
 			b.setBoolValue((Boolean) value);
 		}
 		else if (value instanceof Integer) {

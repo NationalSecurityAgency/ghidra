@@ -61,7 +61,7 @@ public class ScalarSearchPlugin extends ProgramPlugin implements DomainObjectLis
 	private Set<ScalarSearchProvider> providers = new HashSet<>();
 
 	public ScalarSearchPlugin(PluginTool tool) {
-		super(tool, true, true);
+		super(tool);
 
 		reloadUpdateMgr =
 			new SwingUpdateManager(1000, 60000, () -> providers.forEach(p -> p.reload()));

@@ -41,12 +41,6 @@ public class InstructionTablePanel extends JPanel {
 
 	private JPanel workPanel;
 
-	/**
-	 * 
-	 * @param numColumns
-	 * @param plugin
-	 * @param dialog
-	 */
 	public InstructionTablePanel(int numColumns, InstructionSearchPlugin plugin,
 			InstructionSearchDialog dialog) {
 
@@ -73,11 +67,6 @@ public class InstructionTablePanel extends JPanel {
 	public JPanel getWorkPanel() {
 		return workPanel;
 	}
-
-	/*********************************************************************************************
-	 * PRIVATE METHODS
-	 * @throws InvalidInputException 
-	 ********************************************************************************************/
 
 	private void setup() throws InvalidInputException {
 

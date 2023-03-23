@@ -38,13 +38,8 @@ configurations {
 }
 
 dependencies {
-	api project(':Utility')
-	api project(':Generic')
-	api project(':Docking')
-	api project(':Graph')
 	api project(':SoftwareModeling')
-	api project(':DB')
-	api project(':Help')
+	api project(':Emulation')
 
 	api 'org.apache.felix:org.apache.felix.framework:7.0.3'
 	api 'com.github.rotty3000:phidias:0.3.7'
@@ -66,6 +61,7 @@ dependencies {
 	testImplementation project(path: ':Project', configuration: 'testArtifacts')
 	testImplementation project(path: ':SoftwareModeling', configuration: 'testArtifacts')
 	testImplementation project(path: ':DB', configuration: 'testArtifacts')
+	helpPath project(path: ':Docking', configuration: 'helpPath')  // this module's help has links to Base help files
 	
 	javacc 'net.java.dev.javacc:javacc:5.0'
 }
@@ -160,7 +156,7 @@ def createTipsHelpFile(input, output) {
 		<html>
 		<head>
 			<title>Ghidra Tips</title>
-			<link rel="stylesheet" type="text/css" href="../../shared/Frontpage.css" />
+			<link rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css" />
 		</head>
 		<body>
 			<h1><a name="Tips"></a>Ghidra Tips of the Day</h1>

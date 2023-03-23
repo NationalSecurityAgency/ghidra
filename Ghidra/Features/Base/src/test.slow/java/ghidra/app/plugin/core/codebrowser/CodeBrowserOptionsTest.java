@@ -23,8 +23,6 @@ import java.util.stream.Collectors;
 
 import org.junit.*;
 
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.widgets.fieldpanel.field.*;
 import generic.test.TestUtils;
 import ghidra.GhidraOptions;
@@ -50,6 +48,8 @@ import ghidra.program.util.BytesFieldLocation;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.HelpLocation;
+import help.Help;
+import help.HelpService;
 import util.CollectionUtils;
 
 public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest {
@@ -351,27 +351,27 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals("01", btf.getText());
 		assertEquals(3, btf.getNumCols(0));
 		FieldElement fe = btf.getFieldElement(0, 1);
-		assertEquals(BytesFieldFactory.DEFAULT_COLOR, fe.getColor(0));
+		assertColorsEqual(ListingColors.BYTES, fe.getColor(0));
 
 		cb.goToField(addr("0x1001104"), "Bytes", 0, 0);
 		btf = (ListingTextField) cb.getCurrentField();
 		assertEquals("05 06 07 08", btf.getText());
 		assertEquals(12, btf.getNumCols(0));
 		fe = btf.getFieldElement(0, 1);
-		assertEquals(BytesFieldFactory.DEFAULT_COLOR, fe.getColor(0));
+		assertColorsEqual(ListingColors.BYTES, fe.getColor(0));
 		fe = btf.getFieldElement(0, 3);
-		assertEquals(BytesFieldFactory.DEFAULT_COLOR, fe.getColor(0));
+		assertColorsEqual(ListingColors.BYTES, fe.getColor(0));
 		fe = btf.getFieldElement(0, 6);
-		assertEquals(BytesFieldFactory.DEFAULT_COLOR, fe.getColor(0));
+		assertColorsEqual(ListingColors.BYTES, fe.getColor(0));
 		fe = btf.getFieldElement(0, 9);
-		assertEquals(BytesFieldFactory.DEFAULT_COLOR, fe.getColor(0));
+		assertColorsEqual(ListingColors.BYTES, fe.getColor(0));
 
 		cb.goToField(addr("0x1001108"), "Bytes", 0, 0);
 		btf = (ListingTextField) cb.getCurrentField();
 		assertEquals("09", btf.getText());
 		assertEquals(3, btf.getNumCols(0));
 		fe = btf.getFieldElement(0, 1);
-		assertEquals(BytesFieldFactory.DEFAULT_COLOR, fe.getColor(0));
+		assertColorsEqual(ListingColors.BYTES, fe.getColor(0));
 	}
 
 	@Test
@@ -393,39 +393,39 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals("0102 0304", btf.getText());
 		assertEquals(10, btf.getNumCols(0));
 		FieldElement fe = btf.getFieldElement(0, 1);
-		assertEquals(BytesFieldFactory.DEFAULT_COLOR, fe.getColor(0));
+		assertColorsEqual(ListingColors.BYTES, fe.getColor(0));
 		fe = btf.getFieldElement(0, 2);
-		assertEquals(BytesFieldFactory.ALIGNMENT_BYTES_COLOR, fe.getColor(0));
+		assertColorsEqual(ListingColors.BYTES_ALIGNMENT, fe.getColor(0));
 		fe = btf.getFieldElement(0, 5);
-		assertEquals(BytesFieldFactory.ALIGNMENT_BYTES_COLOR, fe.getColor(0));
+		assertColorsEqual(ListingColors.BYTES_ALIGNMENT, fe.getColor(0));
 		fe = btf.getFieldElement(0, 7);
-		assertEquals(BytesFieldFactory.ALIGNMENT_BYTES_COLOR, fe.getColor(0));
+		assertColorsEqual(ListingColors.BYTES_ALIGNMENT, fe.getColor(0));
 
 		cb.goToField(addr("0x1001104"), "Bytes", 0, 0);
 		btf = (ListingTextField) cb.getCurrentField();
 		assertEquals("0506 0708", btf.getText());
 		assertEquals(10, btf.getNumCols(0));
 		fe = btf.getFieldElement(0, 1);
-		assertEquals(BytesFieldFactory.DEFAULT_COLOR, fe.getColor(0));
+		assertColorsEqual(ListingColors.BYTES, fe.getColor(0));
 		fe = btf.getFieldElement(0, 2);
-		assertEquals(BytesFieldFactory.DEFAULT_COLOR, fe.getColor(0));
+		assertColorsEqual(ListingColors.BYTES, fe.getColor(0));
 		fe = btf.getFieldElement(0, 5);
-		assertEquals(BytesFieldFactory.DEFAULT_COLOR, fe.getColor(0));
+		assertColorsEqual(ListingColors.BYTES, fe.getColor(0));
 		fe = btf.getFieldElement(0, 7);
-		assertEquals(BytesFieldFactory.DEFAULT_COLOR, fe.getColor(0));
+		assertColorsEqual(ListingColors.BYTES, fe.getColor(0));
 
 		cb.goToField(addr("0x1001108"), "Bytes", 0, 0);
 		btf = (ListingTextField) cb.getCurrentField();
 		assertEquals("090a 0b0c", btf.getText());
 		assertEquals(10, btf.getNumCols(0));
 		fe = btf.getFieldElement(0, 1);
-		assertEquals(BytesFieldFactory.DEFAULT_COLOR, fe.getColor(0));
+		assertColorsEqual(ListingColors.BYTES, fe.getColor(0));
 		fe = btf.getFieldElement(0, 2);
-		assertEquals(BytesFieldFactory.ALIGNMENT_BYTES_COLOR, fe.getColor(0));
+		assertColorsEqual(ListingColors.BYTES_ALIGNMENT, fe.getColor(0));
 		fe = btf.getFieldElement(0, 5);
-		assertEquals(BytesFieldFactory.ALIGNMENT_BYTES_COLOR, fe.getColor(0));
+		assertColorsEqual(ListingColors.BYTES_ALIGNMENT, fe.getColor(0));
 		fe = btf.getFieldElement(0, 7);
-		assertEquals(BytesFieldFactory.ALIGNMENT_BYTES_COLOR, fe.getColor(0));
+		assertColorsEqual(ListingColors.BYTES_ALIGNMENT, fe.getColor(0));
 	}
 
 	@Test
@@ -445,39 +445,39 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals("01 02 03 04", btf.getText());
 		assertEquals(12, btf.getNumCols(0));
 		FieldElement fe = btf.getFieldElement(0, 1);
-		assertEquals(BytesFieldFactory.DEFAULT_COLOR, fe.getColor(0));
+		assertColorsEqual(ListingColors.BYTES, fe.getColor(0));
 		fe = btf.getFieldElement(0, 3);
-		assertEquals(BytesFieldFactory.ALIGNMENT_BYTES_COLOR, fe.getColor(0));
+		assertEquals(ListingColors.BYTES_ALIGNMENT, fe.getColor(0));
 		fe = btf.getFieldElement(0, 6);
-		assertEquals(BytesFieldFactory.ALIGNMENT_BYTES_COLOR, fe.getColor(0));
+		assertEquals(ListingColors.BYTES_ALIGNMENT, fe.getColor(0));
 		fe = btf.getFieldElement(0, 9);
-		assertEquals(BytesFieldFactory.ALIGNMENT_BYTES_COLOR, fe.getColor(0));
+		assertEquals(ListingColors.BYTES_ALIGNMENT, fe.getColor(0));
 
 		cb.goToField(addr("0x1001104"), "Bytes", 0, 0);
 		btf = (ListingTextField) cb.getCurrentField();
 		assertEquals("05 06 07 08", btf.getText());
 		assertEquals(12, btf.getNumCols(0));
 		fe = btf.getFieldElement(0, 1);
-		assertEquals(BytesFieldFactory.DEFAULT_COLOR, fe.getColor(0));
+		assertColorsEqual(ListingColors.BYTES, fe.getColor(0));
 		fe = btf.getFieldElement(0, 3);
-		assertEquals(BytesFieldFactory.DEFAULT_COLOR, fe.getColor(0));
+		assertColorsEqual(ListingColors.BYTES, fe.getColor(0));
 		fe = btf.getFieldElement(0, 6);
-		assertEquals(BytesFieldFactory.DEFAULT_COLOR, fe.getColor(0));
+		assertColorsEqual(ListingColors.BYTES, fe.getColor(0));
 		fe = btf.getFieldElement(0, 9);
-		assertEquals(BytesFieldFactory.DEFAULT_COLOR, fe.getColor(0));
+		assertColorsEqual(ListingColors.BYTES, fe.getColor(0));
 
 		cb.goToField(addr("0x1001108"), "Bytes", 0, 0);
 		btf = (ListingTextField) cb.getCurrentField();
 		assertEquals("09 0a 0b 0c", btf.getText());
 		assertEquals(12, btf.getNumCols(0));
 		fe = btf.getFieldElement(0, 1);
-		assertEquals(BytesFieldFactory.DEFAULT_COLOR, fe.getColor(0));
+		assertColorsEqual(ListingColors.BYTES, fe.getColor(0));
 		fe = btf.getFieldElement(0, 3);
-		assertEquals(BytesFieldFactory.ALIGNMENT_BYTES_COLOR, fe.getColor(0));
+		assertColorsEqual(ListingColors.BYTES_ALIGNMENT, fe.getColor(0));
 		fe = btf.getFieldElement(0, 6);
-		assertEquals(BytesFieldFactory.ALIGNMENT_BYTES_COLOR, fe.getColor(0));
+		assertColorsEqual(ListingColors.BYTES_ALIGNMENT, fe.getColor(0));
 		fe = btf.getFieldElement(0, 9);
-		assertEquals(BytesFieldFactory.ALIGNMENT_BYTES_COLOR, fe.getColor(0));
+		assertColorsEqual(ListingColors.BYTES_ALIGNMENT, fe.getColor(0));
 	}
 
 	@Test
@@ -498,69 +498,69 @@ public class CodeBrowserOptionsTest extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals("01", btf.getText());
 		assertEquals(3, btf.getNumCols(0));
 		FieldElement fe = btf.getFieldElement(0, 1);
-		assertEquals(BytesFieldFactory.DEFAULT_COLOR, fe.getColor(0));
+		assertColorsEqual(ListingColors.BYTES, fe.getColor(0));
 
 		cb.goToField(addr("0x1001201"), "Bytes", 0, 0);
 		btf = (ListingTextField) cb.getCurrentField();
 		assertEquals("02", btf.getText());
 		assertEquals(3, btf.getNumCols(0));
 		fe = btf.getFieldElement(0, 1);
-		assertEquals(BytesFieldFactory.DEFAULT_COLOR, fe.getColor(0));
+		assertColorsEqual(ListingColors.BYTES, fe.getColor(0));
 
 		cb.goToField(addr("0x1001202"), "Bytes", 0, 0);
 		btf = (ListingTextField) cb.getCurrentField();
 		assertEquals("03", btf.getText());
 		assertEquals(3, btf.getNumCols(0));
 		fe = btf.getFieldElement(0, 1);
-		assertEquals(BytesFieldFactory.DEFAULT_COLOR, fe.getColor(0));
+		assertColorsEqual(ListingColors.BYTES, fe.getColor(0));
 
 		cb.goToField(addr("0x1001203"), "Bytes", 0, 0);
 		btf = (ListingTextField) cb.getCurrentField();
 		assertEquals("04", btf.getText());
 		assertEquals(3, btf.getNumCols(0));
 		fe = btf.getFieldElement(0, 1);
-		assertEquals(BytesFieldFactory.DEFAULT_COLOR, fe.getColor(0));
+		assertColorsEqual(ListingColors.BYTES, fe.getColor(0));
 
 		cb.goToField(addr("0x1001204"), "Bytes", 0, 0);
 		btf = (ListingTextField) cb.getCurrentField();
 		assertEquals("05 06 07 08", btf.getText());
 		assertEquals(12, btf.getNumCols(0));
 		fe = btf.getFieldElement(0, 1);
-		assertEquals(BytesFieldFactory.DEFAULT_COLOR, fe.getColor(0));
+		assertColorsEqual(ListingColors.BYTES, fe.getColor(0));
 		fe = btf.getFieldElement(0, 3);
-		assertEquals(BytesFieldFactory.DEFAULT_COLOR, fe.getColor(0));
+		assertColorsEqual(ListingColors.BYTES, fe.getColor(0));
 		fe = btf.getFieldElement(0, 6);
-		assertEquals(BytesFieldFactory.DEFAULT_COLOR, fe.getColor(0));
+		assertColorsEqual(ListingColors.BYTES, fe.getColor(0));
 		fe = btf.getFieldElement(0, 9);
-		assertEquals(BytesFieldFactory.DEFAULT_COLOR, fe.getColor(0));
+		assertColorsEqual(ListingColors.BYTES, fe.getColor(0));
 
 		cb.goToField(addr("0x1001208"), "Bytes", 0, 0);
 		btf = (ListingTextField) cb.getCurrentField();
 		assertEquals("09", btf.getText());
 		assertEquals(3, btf.getNumCols(0));
 		fe = btf.getFieldElement(0, 1);
-		assertEquals(BytesFieldFactory.DEFAULT_COLOR, fe.getColor(0));
+		assertColorsEqual(ListingColors.BYTES, fe.getColor(0));
 
 		cb.goToField(addr("0x1001209"), "Bytes", 0, 0);
 		btf = (ListingTextField) cb.getCurrentField();
 		assertEquals("0a", btf.getText());
 		assertEquals(3, btf.getNumCols(0));
 		fe = btf.getFieldElement(0, 1);
-		assertEquals(BytesFieldFactory.DEFAULT_COLOR, fe.getColor(0));
+		assertColorsEqual(ListingColors.BYTES, fe.getColor(0));
 
 		cb.goToField(addr("0x100120a"), "Bytes", 0, 0);
 		btf = (ListingTextField) cb.getCurrentField();
 		assertEquals("0b", btf.getText());
 		assertEquals(3, btf.getNumCols(0));
 		fe = btf.getFieldElement(0, 1);
-		assertEquals(BytesFieldFactory.DEFAULT_COLOR, fe.getColor(0));
+		assertColorsEqual(ListingColors.BYTES, fe.getColor(0));
 
 		cb.goToField(addr("0x100120b"), "Bytes", 0, 0);
 		btf = (ListingTextField) cb.getCurrentField();
 		assertEquals("0c", btf.getText());
 		assertEquals(3, btf.getNumCols(0));
 		fe = btf.getFieldElement(0, 1);
-		assertEquals(BytesFieldFactory.DEFAULT_COLOR, fe.getColor(0));
+		assertColorsEqual(ListingColors.BYTES, fe.getColor(0));
 	}
 
 	@SuppressWarnings("unchecked")

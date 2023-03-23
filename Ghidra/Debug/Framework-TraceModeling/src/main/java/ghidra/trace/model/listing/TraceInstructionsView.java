@@ -15,27 +15,71 @@
  */
 package ghidra.trace.model.listing;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
+import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.guest.TracePlatform;
 
+/**
+ * A view of instruction units
+ *
+ * <p>
+ * This view excludes all data units, defined or undefined
+ */
 public interface TraceInstructionsView extends TraceBaseDefinedUnitsView<TraceInstruction> {
-	TraceInstruction create(Range<Long> lifespan, Address address, InstructionPrototype prototype,
-			ProcessorContextView context) throws CodeUnitInsertionException;
+	/**
+	 * Create an instruction
+	 * 
+	 * @param lifespan the lifespan for the instruction unit
+	 * @param address the starting address of the instruction
+	 * @param platform the platform
+	 * @param prototype the instruction prototype
+	 * @param context the input disassembly context for the instruction
+	 * @return the new instruction
+	 * @throws CodeUnitInsertionException if the instruction cannot be created
+	 */
+	TraceInstruction create(Lifespan lifespan, Address address, TracePlatform platform,
+			InstructionPrototype prototype, ProcessorContextView context)
+			throws CodeUnitInsertionException;
 
 	/**
-	 * TODO
+	 * Create an instruction for the host platform
 	 * 
-	 * NOTE: Does not throw {@link CodeUnitInsertionException}. Conflicts are instead recorded in
-	 * the {@code instructionSet}
-	 * 
-	 * @param instructionSet the set of instructions to add
-	 * @param overwrite {@code true} to replace conflicting instructions
-	 * @return the address set of instructions actually added
+	 * @see #create(Lifespan, Address, TracePlatform, InstructionPrototype, ProcessorContextView)
 	 */
-	AddressSetView addInstructionSet(Range<Long> lifespan, InstructionSet instructionSet,
-			boolean overwrite);
+	default TraceInstruction create(Lifespan lifespan, Address address,
+			InstructionPrototype prototype, ProcessorContextView context)
+			throws CodeUnitInsertionException {
+		return create(lifespan, address, getTrace().getPlatformManager().getHostPlatform(),
+			prototype, context);
+	}
+
+	/**
+	 * Create several instructions
+	 * 
+	 * <p>
+	 * <b>NOTE:</b> This does not throw {@link CodeUnitInsertionException}. Conflicts are instead
+	 * recorded in the {@code instructionSet}.
+	 * 
+	 * @param lifespan the lifespan for all instruction units
+	 * @param platform the optional guest platform, null for the host
+	 * @param instructionSet the set of instructions to add
+	 * @param overwrite true to replace conflicting instructions
+	 * @return the (host) address set of instructions actually added
+	 */
+	AddressSetView addInstructionSet(Lifespan lifespan, TracePlatform platform,
+			InstructionSet instructionSet, boolean overwrite);
+
+	/**
+	 * Create several instructions for the host platform
+	 * 
+	 * @see #addInstructionSet(Lifespan, TracePlatform, InstructionSet, boolean)
+	 */
+	default AddressSetView addInstructionSet(Lifespan lifespan, InstructionSet instructionSet,
+			boolean overwrite) {
+		return addInstructionSet(lifespan, getTrace().getPlatformManager().getHostPlatform(),
+			instructionSet, overwrite);
+	}
 }

@@ -26,6 +26,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
@@ -36,7 +37,7 @@ import ghidra.util.task.TaskMonitor;
  * The intent is for the the full dyld_cache_slide_info structures to extend this and add their
  * specific parts.
  * 
- * @see <a href="https://opensource.apple.com/source/dyld/dyld-852.2/dyld3/shared-cache/dyld_cache_format.h.auto.html">dyld3/shared-cache/dyld_cache_format.h</a> 
+ * @see <a href="https://github.com/apple-oss-distributions/dyld/blob/main/cache-builder/dyld_cache_format.h">dyld_cache_format.h</a> 
  */
 public abstract class DyldCacheSlideInfoCommon implements StructConverter {
 
@@ -129,11 +130,11 @@ public abstract class DyldCacheSlideInfoCommon implements StructConverter {
 			throws MemoryAccessException, CancelledException;
 
 	protected void addRelocationTableEntry(Program program, Address chainLoc, int type,
-			long chainValue, byte[] origBytes, String name) throws MemoryAccessException {
+			long chainValue, int appliedByteLength, String name) {
 		// Add entry to relocation table for the pointer fixup
-		program.getMemory().getBytes(chainLoc, origBytes);
 		program.getRelocationTable()
-				.add(chainLoc, type, new long[] { chainValue }, origBytes, name);
+				.add(chainLoc, Status.APPLIED, type, new long[] { chainValue }, appliedByteLength,
+					name);
 	}
 
 	/**

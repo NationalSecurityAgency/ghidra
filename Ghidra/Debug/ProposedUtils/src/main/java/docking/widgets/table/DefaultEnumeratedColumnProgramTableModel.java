@@ -16,20 +16,22 @@
 package docking.widgets.table;
 
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 
-public class DefaultEnumeratedColumnProgramTableModel<C extends Enum<C> & EnumeratedTableColumn<C, ? super R>, R>
+public class DefaultEnumeratedColumnProgramTableModel<C extends Enum<C> & EnumeratedTableColumn<C, R>, R>
 		extends DefaultEnumeratedColumnTableModel<C, R>
 		implements EnumeratedColumnProgramTableModel<R> {
 	protected final C selColumn;
 
 	private Program program;
 
-	public DefaultEnumeratedColumnProgramTableModel(String name, Class<C> colType, C selColumn) {
-		super(name, colType);
+	public DefaultEnumeratedColumnProgramTableModel(PluginTool tool, String name, Class<C> colType,
+			C selColumn) {
+		super(tool, name, colType);
 		if (selColumn != null) {
 			Class<?> valueClass = selColumn.getValueClass();
 			if (!Address.class.isAssignableFrom(valueClass) &&

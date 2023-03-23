@@ -85,6 +85,7 @@ public class PcodeParser extends PcodeCompile {
 		Location internalLoc = Location.INTERNALLY_DEFINED;
 		symbolMap.put("inst_start", new StartSymbol(internalLoc, "inst_start", getConstantSpace()));
 		symbolMap.put("inst_next", new EndSymbol(internalLoc, "inst_next", getConstantSpace()));
+		symbolMap.put("inst_next2", new Next2Symbol(internalLoc, "inst_next2", getConstantSpace()));
 		symbolMap.put("inst_ref", new FlowRefSymbol(internalLoc, "inst_ref", getConstantSpace()));
 		symbolMap.put("inst_dest",
 			new FlowDestSymbol(internalLoc, "inst_dest", getConstantSpace()));

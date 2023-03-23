@@ -15,12 +15,28 @@
  */
 package docking.widgets.table;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
 import java.util.function.Predicate;
 
+import javax.help.UnsupportedOperationException;
+
+import ghidra.docking.settings.Settings;
+import ghidra.framework.plugintool.ServiceProvider;
+
 public interface EnumeratedColumnTableModel<R> extends RowObjectTableModel<R> {
-	interface RowIterator<R> extends ListIterator<R> {
-		void notifyUpdated();
+
+	public interface EditableDynamicTableColumn<ROW_TYPE, COLUMN_TYPE, DATA_SOURCE>
+			extends DynamicTableColumn<ROW_TYPE, COLUMN_TYPE, DATA_SOURCE> {
+		default public boolean isEditable(ROW_TYPE row, Settings settings, DATA_SOURCE dataSource,
+				ServiceProvider serviceProvider) {
+			return false;
+		}
+
+		default public void setValueOf(ROW_TYPE row, COLUMN_TYPE value, Settings settings,
+				DATA_SOURCE dataSource, ServiceProvider serviceProvider) {
+			throw new UnsupportedOperationException("Cell is not editable");
+		}
 	}
 
 	void add(R row);

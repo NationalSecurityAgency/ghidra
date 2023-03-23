@@ -27,6 +27,7 @@ import agent.gdb.manager.breakpoint.GdbBreakpointType;
 import agent.gdb.manager.impl.cmd.GdbStateChangeRecord;
 import ghidra.async.AsyncFence;
 import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.target.TargetBreakpointSpec.TargetBreakpointKind;
 import ghidra.dbg.target.TargetBreakpointSpecContainer;
@@ -102,7 +103,7 @@ public class GdbModelTargetBreakpointContainer
 				spec + " (pc=" + frame.getProgramCounter() + ")");
 			//return; // Not ideal, but eb == null should be fine, since the spec holds the actions 
 		}
-		listeners.fire.breakpointHit(this, frame.thread, frame, spec, loc);
+		broadcast().breakpointHit(this, frame.thread, frame, spec, loc);
 		spec.breakpointHit(frame, loc);
 		return loc;
 	}
@@ -179,8 +180,8 @@ public class GdbModelTargetBreakpointContainer
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
-		if (!refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
+		if (!refresh.equals(RefreshBehavior.REFRESH_ALWAYS)) {
 			return updateUsingBreakpoints(impl.gdb.getKnownBreakpoints());
 		}
 		return impl.gdb.listBreakpoints().thenCompose(this::updateUsingBreakpoints);

@@ -132,6 +132,7 @@ class ViewStringsTableModel extends AddressBasedTableModel<ProgramLocation> {
 		ProgramLocation progLoc = rowsIndexedByAddress.get(addr);
 		if (progLoc != null) {
 			removeObject(progLoc);
+			rowsIndexedByAddress.remove(addr);
 		}
 	}
 

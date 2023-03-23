@@ -16,47 +16,13 @@
 package ghidra.pcode.memstate;
 
 import java.math.BigInteger;
-import java.util.HashMap;
-import java.util.Map;
 
-import generic.stl.VectorSTL;
 import ghidra.pcode.error.LowlevelError;
-import ghidra.pcode.utils.Utils;
-import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
-import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.pcode.Varnode;
 
-/**
- * All storage/state for a pcode emulator machine
- *
- * Every piece of information in a pcode emulator machine is representable as a triple
- * (AddressSpace,offset,size).  This class allows getting and setting
- * of all state information of this form.
- */
-public class MemoryState {
-
-	Language language;
-	VectorSTL<MemoryBank> memspace = new VectorSTL<MemoryBank>();
-	Map<Register, Varnode> regVarnodeCache = new HashMap<Register, Varnode>();
-
-	/**
-	 * MemoryState constructor for a specified processor language
-	 * @param language
-	 */
-	public MemoryState(Language language) {
-		this.language = language;
-	}
-
-	private Varnode getVarnode(Register reg) {
-		Varnode varnode = regVarnodeCache.get(reg);
-		if (varnode == null) {
-			varnode = new Varnode(reg.getAddress(), reg.getMinimumByteSize());
-			regVarnodeCache.put(reg, varnode);
-		}
-		return varnode;
-	}
+public interface MemoryState {
 
 	/**
 	 * MemoryBanks associated with specific address spaces must be registers with this MemoryState
@@ -64,15 +30,7 @@ public class MemoryState {
 	 * separately.  The MemoryState object does not assume responsibility for freeing the MemoryBank.
 	 * @param bank is a pointer to the MemoryBank to be registered
 	 */
-	public final void setMemoryBank(MemoryBank bank) {
-		AddressSpace spc = bank.getSpace();
-		int index = spc.getUnique();
-
-		while (index >= memspace.size())
-			memspace.push_back(null);
-
-		memspace.set(index, bank);
-	}
+	void setMemoryBank(MemoryBank bank);
 
 	/**
 	 * Any MemoryBank that has been registered with this MemoryState can be retrieved via this
@@ -80,12 +38,7 @@ public class MemoryState {
 	 * @param spc is the address space of the desired MemoryBank
 	 * @return the MemoryBank or null if no bank is associated with spc.
 	 */
-	public final MemoryBank getMemoryBank(AddressSpace spc) {
-		int index = spc.getUnique();
-		if (index >= memspace.size())
-			return null;
-		return memspace.get(index);
-	}
+	MemoryBank getMemoryBank(AddressSpace spc);
 
 	/**
 	 * A convenience method for setting a value directly on a varnode rather than
@@ -93,10 +46,7 @@ public class MemoryState {
 	 * @param vn the varnode location to be written
 	 * @param cval the value to write into the varnode location
 	 */
-	public final void setValue(Varnode vn, long cval) {
-		Address addr = vn.getAddress();
-		setValue(addr.getAddressSpace(), addr.getOffset(), vn.getSize(), cval);
-	}
+	void setValue(Varnode vn, long cval);
 
 	/**
 	 * A convenience method for setting a value directly on a register rather than
@@ -104,10 +54,7 @@ public class MemoryState {
 	 * @param reg the register location to be written
 	 * @param cval the value to write into the register location
 	 */
-	public final void setValue(Register reg, long cval) {
-		Address addr = reg.getAddress();
-		setValue(addr.getAddressSpace(), addr.getOffset(), reg.getMinimumByteSize(), cval);
-	}
+	void setValue(Register reg, long cval);
 
 	/**
 	 * This is a convenience method for setting registers by name.
@@ -117,12 +64,7 @@ public class MemoryState {
 	 * @param nm is the name of the register
 	 * @param cval is the value to write to the register
 	 */
-	public final void setValue(String nm, long cval) {
-		// Set a "register" value
-		Varnode vdata = getVarnode(language.getRegister(nm));
-		Address addr = vdata.getAddress();
-		setValue(addr.getAddressSpace(), addr.getOffset(), vdata.getSize(), cval);
-	}
+	void setValue(String nm, long cval);
 
 	/**
 	 * This is the main interface for writing values to the MemoryState.
@@ -133,9 +75,7 @@ public class MemoryState {
 	 * @param size is the number of bytes to be written
 	 * @param cval is the value to be written
 	 */
-	public final void setValue(AddressSpace spc, long off, int size, long cval) {
-		setChunk(Utils.longToBytes(cval, size, language.isBigEndian()), spc, off, size);
-	}
+	void setValue(AddressSpace spc, long off, int size, long cval);
 
 	/**
 	 * A convenience method for reading a value directly from a varnode rather
@@ -143,10 +83,7 @@ public class MemoryState {
 	 * @param vn the varnode location to be read
 	 * @return the value read from the varnode location
 	 */
-	public final long getValue(Varnode vn) {
-		Address addr = vn.getAddress();
-		return getValue(addr.getAddressSpace(), addr.getOffset(), vn.getSize());
-	}
+	long getValue(Varnode vn);
 
 	/**
 	 * A convenience method for reading a value directly from a register rather
@@ -154,10 +91,7 @@ public class MemoryState {
 	 * @param reg the register location to be read
 	 * @return the value read from the register location
 	 */
-	public final long getValue(Register reg) {
-		Address addr = reg.getAddress();
-		return getValue(addr.getAddressSpace(), addr.getOffset(), reg.getMinimumByteSize());
-	}
+	long getValue(Register reg);
 
 	/**
 	 * This is a convenience method for reading registers by name.
@@ -167,12 +101,7 @@ public class MemoryState {
 	 * @param nm is the name of the register
 	 * @return the value associated with that register
 	 */
-	public final long getValue(String nm) {
-		// Get a "register" value
-		Varnode vdata = getVarnode(language.getRegister(nm));
-		Address addr = vdata.getAddress();
-		return getValue(addr.getAddressSpace(), addr.getOffset(), vdata.getSize());
-	}
+	long getValue(String nm);
 
 	/**
 	 * This is the main interface for reading values from the MemoryState.
@@ -183,14 +112,7 @@ public class MemoryState {
 	 * @param size is the number of bytes to query
 	 * @return the queried value
 	 */
-	public final long getValue(AddressSpace spc, long off, int size) {
-		if (spc.isConstantSpace()) {
-			return off;
-		}
-		byte[] bytes = new byte[size];
-		getChunk(bytes, spc, off, size, false);
-		return Utils.bytesToLong(bytes, size, language.isBigEndian());
-	}
+	long getValue(AddressSpace spc, long off, int size);
 
 	/**
 	 * A convenience method for setting a value directly on a varnode rather than
@@ -198,10 +120,7 @@ public class MemoryState {
 	 * @param vn the varnode location to be written
 	 * @param cval the value to write into the varnode location
 	 */
-	public final void setValue(Varnode vn, BigInteger cval) {
-		Address addr = vn.getAddress();
-		setValue(addr.getAddressSpace(), addr.getOffset(), vn.getSize(), cval);
-	}
+	void setValue(Varnode vn, BigInteger cval);
 
 	/**
 	 * A convenience method for setting a value directly on a register rather than
@@ -209,10 +128,7 @@ public class MemoryState {
 	 * @param reg the register location to be written
 	 * @param cval the value to write into the register location
 	 */
-	public final void setValue(Register reg, BigInteger cval) {
-		Address addr = reg.getAddress();
-		setValue(addr.getAddressSpace(), addr.getOffset(), reg.getMinimumByteSize(), cval);
-	}
+	void setValue(Register reg, BigInteger cval);
 
 	/**
 	 * This is a convenience method for setting registers by name.
@@ -222,12 +138,7 @@ public class MemoryState {
 	 * @param nm is the name of the register
 	 * @param cval is the value to write to the register
 	 */
-	public final void setValue(String nm, BigInteger cval) {
-		// Set a "register" value
-		Varnode vdata = getVarnode(language.getRegister(nm));
-		Address addr = vdata.getAddress();
-		setValue(addr.getAddressSpace(), addr.getOffset(), vdata.getSize(), cval);
-	}
+	void setValue(String nm, BigInteger cval);
 
 	/**
 	 * This is the main interface for writing values to the MemoryState.
@@ -238,9 +149,7 @@ public class MemoryState {
 	 * @param size is the number of bytes to be written
 	 * @param cval is the value to be written
 	 */
-	public final void setValue(AddressSpace spc, long off, int size, BigInteger cval) {
-		setChunk(Utils.bigIntegerToBytes(cval, size, language.isBigEndian()), spc, off, size);
-	}
+	void setValue(AddressSpace spc, long off, int size, BigInteger cval);
 
 	/**
 	 * A convenience method for reading a value directly from a varnode rather
@@ -249,10 +158,7 @@ public class MemoryState {
 	 * @param signed true if signed value should be returned, false for unsigned value
 	 * @return the unsigned value read from the varnode location
 	 */
-	public final BigInteger getBigInteger(Varnode vn, boolean signed) {
-		Address addr = vn.getAddress();
-		return getBigInteger(addr.getAddressSpace(), addr.getOffset(), vn.getSize(), signed);
-	}
+	BigInteger getBigInteger(Varnode vn, boolean signed);
 
 	/**
 	 * A convenience method for reading a value directly from a register rather
@@ -260,11 +166,7 @@ public class MemoryState {
 	 * @param reg the register location to be read
 	 * @return the unsigned value read from the register location
 	 */
-	public final BigInteger getBigInteger(Register reg) {
-		Address addr = reg.getAddress();
-		return getBigInteger(addr.getAddressSpace(), addr.getOffset(), reg.getMinimumByteSize(),
-			false);
-	}
+	BigInteger getBigInteger(Register reg);
 
 	/**
 	 * This is a convenience method for reading registers by name.
@@ -274,12 +176,7 @@ public class MemoryState {
 	 * @param nm is the name of the register
 	 * @return the unsigned value associated with that register
 	 */
-	public final BigInteger getBigInteger(String nm) {
-		// Get a "register" value
-		Varnode vdata = getVarnode(language.getRegister(nm));
-		Address addr = vdata.getAddress();
-		return getBigInteger(addr.getAddressSpace(), addr.getOffset(), vdata.getSize(), false);
-	}
+	BigInteger getBigInteger(String nm);
 
 	/**
 	 * This is the main interface for reading values from the MemoryState.
@@ -291,17 +188,7 @@ public class MemoryState {
 	 * @param signed true if signed value should be returned, false for unsigned value
 	 * @return the queried unsigned value
 	 */
-	public final BigInteger getBigInteger(AddressSpace spc, long off, int size, boolean signed) {
-		if (spc.isConstantSpace()) {
-			if (!signed && off < 0) {
-				return new BigInteger(1, Utils.longToBytes(off, 8, true));
-			}
-			return BigInteger.valueOf(off);
-		}
-		byte[] bytes = new byte[size];
-		getChunk(bytes, spc, off, size, false);
-		return Utils.bytesToBigInteger(bytes, size, language.isBigEndian(), signed);
-	}
+	BigInteger getBigInteger(AddressSpace spc, long off, int size, boolean signed);
 
 	/**
 	 * This is the main interface for reading a range of bytes from the MemorySate.
@@ -320,17 +207,8 @@ public class MemoryState {
 	 * @throws LowlevelError if spc has not been mapped within this MemoryState or memory fault
 	 * handler generated error
 	 */
-	public int getChunk(byte[] res, AddressSpace spc, long off, int size,
-			boolean stopOnUnintialized) {
-		if (spc.isConstantSpace()) {
-			System.arraycopy(Utils.longToBytes(off, size, language.isBigEndian()), 0, res, 0, size);
-			return size;
-		}
-		MemoryBank mspace = getMemoryBank(spc);
-		if (mspace == null)
-			throw new LowlevelError("Getting chunk from unmapped memory space: " + spc.getName());
-		return mspace.getChunk(off, size, res, stopOnUnintialized);
-	}
+	int getChunk(byte[] res, AddressSpace spc, long off, int size,
+			boolean stopOnUnintialized);
 
 	/**
 	 * This is the main interface for setting values for a range of bytes in the MemoryState.
@@ -345,12 +223,7 @@ public class MemoryState {
 	 * @param size the number of bytes to write
 	 * @throws LowlevelError if spc has not been mapped within this MemoryState
 	 */
-	public void setChunk(byte[] val, AddressSpace spc, long off, int size) {
-		MemoryBank mspace = getMemoryBank(spc);
-		if (mspace == null)
-			throw new LowlevelError("Setting chunk of unmapped memory space: " + spc.getName());
-		mspace.setChunk(off, size, val);
-	}
+	void setChunk(byte[] val, AddressSpace spc, long off, int size);
 
 	/**
 	 * This is the main interface for setting the initialization status for a range of bytes
@@ -365,12 +238,6 @@ public class MemoryState {
 	 * @param off the starting offset of the range being written
 	 * @param size the number of bytes to write
 	 */
-	public void setInitialized(boolean initialized, AddressSpace spc, long off, int size) {
-		MemoryBank mspace = getMemoryBank(spc);
-		if (mspace == null)
-			throw new LowlevelError("Setting intialization status of unmapped memory space: " +
-				spc.getName());
-		mspace.setInitialized(off, size, initialized);
-	}
+	void setInitialized(boolean initialized, AddressSpace spc, long off, int size);
 
 }

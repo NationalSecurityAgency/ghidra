@@ -15,18 +15,18 @@
  */
 package docking.widgets.combobox;
 
-import java.awt.Component;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
 import java.util.*;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.plaf.ComboBoxUI;
-import javax.swing.text.*;
+import javax.swing.text.Document;
 
 import docking.widgets.GComponent;
+import ghidra.util.Swing;
+import ghidra.util.exception.AssertException;
 
 /**
  * GhidraComboBox adds the following features:
@@ -59,12 +59,17 @@ import docking.widgets.GComponent;
  * @param <E> the item type
  */
 public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
-	private List<ActionListener> listeners = new ArrayList<>();
+	private List<ActionListener> actionListeners = new ArrayList<>();
 	private List<DocumentListener> docListeners = new ArrayList<>();
+	private List<KeyListener> keyListeners = new ArrayList<>();
 	private boolean setSelectedFlag = false;
 
 	private boolean forwardEnter;
 	private Action defaultSystemEnterForwardingAction;
+	private Document document;
+	private PassThroughActionListener passThroughActionListener;
+	private PassThroughKeyListener passThroughKeyListener;
+	private PassThroughDocumentListener passThroughDocumentListener;
 
 	/**
 	 * Default constructor.
@@ -100,42 +105,19 @@ public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 		init();
 	}
 
-	private void init() {
-		setHTMLRenderingEnabled(false);
-		if (getRenderer() instanceof JComponent) {
-			GComponent.setHTMLRenderingFlag((JComponent) getRenderer(), false);
-		}
-	}
-
 	@Override
 	public void setUI(ComboBoxUI ui) {
 		super.setUI(ui);
-		Object object = getEditor().getEditorComponent();
-		if (object instanceof JTextField) {
-			JTextField textField = (JTextField) object;
-			textField.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed(ActionEvent e) {
-					notifyActionListeners(e);
-				}
-			});
-			textField.setDocument(new InterceptedInputDocument());
-			textField.getDocument().addDocumentListener(new DocumentListener() {
-				@Override
-				public void removeUpdate(DocumentEvent e) {
-					notifyRemove(e);
-				}
+		// this gets called during construction and during theming changes.  It always
+		// creates a new editor and any listeners or documents set on the current editor are 
+		// lost.  So to combat this, we install the pass through listeners here instead of 
+		// in the init() method. We also reset the document if the client ever called the
+		// setDocument() method
 
-				@Override
-				public void insertUpdate(DocumentEvent e) {
-					notifyInsert(e);
-				}
+		installPassThroughListeners();
 
-				@Override
-				public void changedUpdate(DocumentEvent e) {
-					notifyChanged(e);
-				}
-			});
+		if (document != null) {
+			setDocument(document);
 		}
 
 		// HACK ALERT:  see setEnterKeyForwarding(boolean)
@@ -170,42 +152,210 @@ public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 		this.forwardEnter = forwardEnter;
 	}
 
+	/**
+	 * Returns the text in combobox's editor text component
+	 * @return  the text in combobox's editor text component
+	 */
 	public String getText() {
-		Component comp = getEditor().getEditorComponent();
-		if (comp instanceof JTextField) {
-			JTextField textField = (JTextField) comp;
-			return textField.getText();
+		JTextField textField = getTextField();
+		return textField.getText();
+	}
+
+	/**
+	 * Sets the text on the combobox's editor text component
+	 * @param text the text to set
+	 */
+	public void setText(String text) {
+		if (!isEditable) {
+			return;
 		}
-		return null;
+		JTextField textField = getTextField();
+		textField.setText(text);
 	}
 
 	@Override
 	public void setSelectedItem(Object obj) {
 		setSelectedFlag = true;
 		super.setSelectedItem(obj);
-		Component comp = getEditor().getEditorComponent();
-		if (comp instanceof JTextField) {
-			JTextField textField = (JTextField) comp;
-			updateTextFieldTextForClearedSelection(textField, obj);
-			textField.selectAll();
-		}
+		JTextField textField = getTextField();
+		updateTextFieldTextForClearedSelection(textField, obj);
+		textField.selectAll();
 		setSelectedFlag = false;
 	}
 
 	/**
-	 * Sets the size of the text field editor used by this combo box, <b>if that is the type of
-	 * editor used</b>.  By default the editor for combo boxes is a text field.  This method is
-	 * a convenience for the user to set the number of columns on that text field, which updates
-	 * the preferred size of the combo box.
+	 * Sets the size of the text field editor used by this combo box.
 	 *
 	 * @param columnCount The number of columns for the text field editor
 	 * @see JTextField#setColumns(int)
 	 */
 	public void setColumnCount(int columnCount) {
-		Component comp = getEditor().getEditorComponent();
-		if (comp instanceof JTextField) {
-			((JTextField) comp).setColumns(columnCount);
+		JTextField textField = getTextField();
+		textField.setColumns(columnCount);
+	}
+
+	/**
+	 * Selects the text in the text field editor usd by this combo box.
+	 *
+	 * @see JTextField#selectAll()
+	 */
+	public void selectAll() {
+		JTextField textField = getTextField();
+		textField.selectAll();
+	}
+
+	/**
+	 * Removes all the items from the combobox data model.
+	 */
+	public void clearModel() {
+		DefaultComboBoxModel<E> model = (DefaultComboBoxModel<E>) getModel();
+		model.removeAllElements();
+	}
+
+	/**
+	 * Adds the given item to the combobox's data model.
+	 * @param item the item to add
+	 */
+	public void addToModel(E item) {
+		DefaultComboBoxModel<E> model = (DefaultComboBoxModel<E>) getModel();
+		model.addElement(item);
+	}
+
+	/**
+	 * Adds all the  given item to the combobox's data model.
+	 * @param items the item to add
+	 */
+	public void addToModel(Collection<E> items) {
+		DefaultComboBoxModel<E> model = (DefaultComboBoxModel<E>) getModel();
+		for (E e : items) {
+			model.addElement(e);
 		}
+	}
+
+	/**
+	 * Returns true if the combobox contains the given item.
+	 * @param item the item to check
+	 * @return true if the combobox contains the given item.
+	 */
+	public boolean containsItem(E item) {
+		DefaultComboBoxModel<E> model = (DefaultComboBoxModel<E>) getModel();
+		return model.getIndexOf(item) != -1;
+	}
+
+	@Override
+	public void addActionListener(ActionListener l) {
+		actionListeners.add(l);
+	}
+
+	@Override
+	public void removeActionListener(ActionListener l) {
+		actionListeners.remove(l);
+	}
+
+	/**
+	 * Adds a KeyListener to the combobox's editor component.
+	 * @param l the listener to add
+	 */
+	public void addEditorKeyListener(KeyListener l) {
+		keyListeners.add(l);
+	}
+
+	/**
+	 * Removes a KeyListener from the combobox's editor component.
+	 * @param l the listener to remove
+	 */
+	public void removeEditorKeyListener(KeyListener l) {
+		keyListeners.remove(l);
+	}
+
+	/**
+	 * Sets document to be used by the combobox's editor component.
+	 * @param document the document to be set
+	 */
+	public void setDocument(Document document) {
+		this.document = document;
+		JTextField textField = getTextField();
+		textField.setDocument(document);
+		document.removeDocumentListener(passThroughDocumentListener);
+		document.addDocumentListener(passThroughDocumentListener);
+	}
+
+	/**
+	 * Adds a document listener to the editor component's document.
+	 * @param l the listener to add
+	 */
+	public void addDocumentListener(DocumentListener l) {
+		docListeners.add(l);
+	}
+
+	/**
+	 * Removes a document listener from the editor component's document
+	 * @param l the listener to remove
+	 */
+	public void removeDocumentListener(DocumentListener l) {
+		docListeners.remove(l);
+	}
+
+	/**
+	 * Sets the number of column's in the editor's component (JTextField).
+	 * @param columns the number of columns to show
+	 * @see JTextField#setColumns(int)
+	 */
+	public void setColumns(int columns) {
+		JTextField textField = getTextField();
+		textField.setColumns(columns);
+	}
+
+	/**
+	 * Convenience method for associating a label with the editor component.
+	 * @param label the label to associate
+	 */
+	public void associateLabel(JLabel label) {
+		JTextField textField = getTextField();
+		label.setLabelFor(textField);
+	}
+
+	/**
+	 * Sets the selection start in the editor's text field.
+	 * @param selectionStart the start of the selection
+	 * @see JTextField#setSelectionStart(int)
+	 */
+	public void setSelectionStart(int selectionStart) {
+		JTextField textField = getTextField();
+		textField.setSelectionStart(selectionStart);
+	}
+
+	/**
+	 * Sets the selection end in the editor's text field.
+	 * @param selectionEnd the end of the selection
+	 * @see JTextField#setSelectionEnd(int)
+	 */
+	public void setSelectionEnd(int selectionEnd) {
+		JTextField textField = getTextField();
+		textField.setSelectionEnd(selectionEnd);
+	}
+
+	@Override
+	public void requestFocus() {
+		JTextField textField = getTextField();
+		textField.requestFocus();
+	}
+
+	private String matchHistory(String input) {
+		if (setSelectedFlag) {
+			return null;
+		}
+		if (input == null) {
+			return null;
+		}
+		int count = getItemCount();
+		for (int i = 0; i < count; i++) {
+			String cur = getItemAt(i).toString();
+			if (cur.startsWith(input)) {
+				return cur;
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -237,130 +387,142 @@ public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 		}
 	}
 
-	public void selectAll() {
-		Component comp = getEditor().getEditorComponent();
-		if (comp instanceof JTextField) {
-			JTextField textField = (JTextField) comp;
-			textField.selectAll();
+	private void init() {
+		setHTMLRenderingEnabled(false);
+		if (getRenderer() instanceof JComponent) {
+			GComponent.setHTMLRenderingFlag((JComponent) getRenderer(), false);
 		}
+		// add our internal listener to with all the others that the pass through listener will call
+		addDocumentListener(new MatchingItemsDocumentListener());
+
 	}
 
-	public void clearModel() {
-		DefaultComboBoxModel<E> model = (DefaultComboBoxModel<E>) getModel();
-		model.removeAllElements();
-	}
+	private void installPassThroughListeners() {
+		JTextField textField = getTextField();
 
-	public void addToModel(E obj) {
-		DefaultComboBoxModel<E> model = (DefaultComboBoxModel<E>) getModel();
-		model.addElement(obj);
-	}
-
-	public void addToModel(Collection<E> items) {
-		DefaultComboBoxModel<E> model = (DefaultComboBoxModel<E>) getModel();
-		for (E e : items) {
-			model.addElement(e);
+		// this gets called during construction before our fields are initialized, so need to 
+		// create them here
+		if (passThroughActionListener == null) {
+			passThroughActionListener = new PassThroughActionListener();
+			passThroughKeyListener = new PassThroughKeyListener();
+			passThroughDocumentListener = new PassThroughDocumentListener();
 		}
+		// make sure they are never in there more than once
+		textField.removeActionListener(passThroughActionListener);
+		textField.removeKeyListener(passThroughKeyListener);
+		textField.getDocument().removeDocumentListener(passThroughDocumentListener);
+
+		textField.addActionListener(passThroughActionListener);
+		textField.addKeyListener(passThroughKeyListener);
+		textField.getDocument().addDocumentListener(passThroughDocumentListener);
 	}
 
-	public boolean containsItem(E obj) {
-		DefaultComboBoxModel<E> model = (DefaultComboBoxModel<E>) getModel();
-		return model.getIndexOf(obj) != -1;
-	}
-
-	@Override
-	public void addActionListener(ActionListener l) {
-		listeners.add(l);
-	}
-
-	@Override
-	public void removeActionListener(ActionListener l) {
-		listeners.remove(l);
-	}
-
-	public void addDocumentListener(DocumentListener l) {
-		docListeners.add(l);
-	}
-
-	public void removeDocumentListener(DocumentListener l) {
-		docListeners.remove(l);
-	}
-
-	private void notifyActionListeners(ActionEvent e) {
-		Iterator<ActionListener> iter = listeners.iterator();
-		while (iter.hasNext()) {
-			iter.next().actionPerformed(e);
+	private JTextField getTextField() {
+		Object object = getEditor().getEditorComponent();
+		if (object instanceof JTextField textField) {
+			return textField;
 		}
-	}
-
-	private void notifyInsert(DocumentEvent e) {
-		Iterator<DocumentListener> iter = docListeners.iterator();
-		while (iter.hasNext()) {
-			iter.next().insertUpdate(e);
-		}
-	}
-
-	private void notifyChanged(DocumentEvent e) {
-		Iterator<DocumentListener> iter = docListeners.iterator();
-		while (iter.hasNext()) {
-			iter.next().changedUpdate(e);
-		}
-	}
-
-	private void notifyRemove(DocumentEvent e) {
-		Iterator<DocumentListener> iter = docListeners.iterator();
-		while (iter.hasNext()) {
-			iter.next().removeUpdate(e);
-		}
-	}
-
-	private String matchHistory(String input) {
-		if (setSelectedFlag) {
-			return null;
-		}
-		if (input == null) {
-			return null;
-		}
-		int count = getItemCount();
-		for (int i = 0; i < count; i++) {
-			String cur = getItemAt(i).toString();
-			if (cur.startsWith(input)) {
-				return cur;
-			}
-		}
-		return null;
+		throw new AssertException("Expected GhidraComboBox editor component to be a JTextField!");
 	}
 
 	/**
-	 * Custom Document to perform matching of items as the user types
+	 * Listener on the editor's JTextField that then calls any registered action 
+	 * listener on this combobox
 	 */
-	public class InterceptedInputDocument extends DefaultStyledDocument {
+	private class PassThroughActionListener implements ActionListener {
 
-		private boolean automated = false;
-
-		/**
-		 * Called before new user input is inserted into the entry text field.  The super method is
-		 * called if the input is accepted.
-		 */
 		@Override
-		public void insertString(int offs, String str, AttributeSet a) throws BadLocationException {
-
-			super.insertString(offs, str, a);
-
-			if (automated) {
-				automated = false;
-			}
-			else {
-				JTextField textField = (JTextField) getEditor().getEditorComponent();
-
-				String input = textField.getText();
-				String match = matchHistory(input);
-				if (match != null && match.length() > input.length()) {
-					automated = true;
-					textField.setText(match);
-					textField.setSelectionStart(input.length());
-					textField.setSelectionEnd(match.length());
-				}
+		public void actionPerformed(ActionEvent e) {
+			for (ActionListener listener : actionListeners) {
+				listener.actionPerformed(e);
 			}
 		}
 	}
+
+	/**
+	 * Listener on the editor's JTextField that then calls any registered editor key 
+	 * listener on this combobox
+	 */
+	private class PassThroughKeyListener implements KeyListener {
+
+		@Override
+		public void keyTyped(KeyEvent e) {
+			for (KeyListener listener : keyListeners) {
+				listener.keyTyped(e);
+			}
+		}
+
+		@Override
+		public void keyPressed(KeyEvent e) {
+			for (KeyListener listener : keyListeners) {
+				listener.keyPressed(e);
+			}
+		}
+
+		@Override
+		public void keyReleased(KeyEvent e) {
+			for (KeyListener listener : keyListeners) {
+				listener.keyReleased(e);
+			}
+		}
+	}
+
+	/**
+	 * Listener on the editor's JTextField's document that then calls any registered document 
+	 * listener on this combobox
+	 */
+	private class PassThroughDocumentListener implements DocumentListener {
+		@Override
+		public void insertUpdate(DocumentEvent e) {
+			for (DocumentListener listener : docListeners) {
+				listener.insertUpdate(e);
+			}
+		}
+
+		@Override
+		public void removeUpdate(DocumentEvent e) {
+			for (DocumentListener listener : docListeners) {
+				listener.removeUpdate(e);
+			}
+		}
+
+		@Override
+		public void changedUpdate(DocumentEvent e) {
+			for (DocumentListener listener : docListeners) {
+				listener.changedUpdate(e);
+			}
+		}
+	}
+
+	/**
+	 * Listener to perform matching of items as the user types
+	 */
+	private class MatchingItemsDocumentListener implements DocumentListener {
+
+		@Override
+		public void insertUpdate(DocumentEvent e) {
+			JTextField textField = getTextField();
+			String input = textField.getText();
+			String match = matchHistory(input);
+			if (match != null && match.length() > input.length()) {
+				// Not allowed to modify textField while in the document listener call.
+				Swing.runLater(() -> {
+					textField.setText(match);
+					textField.setSelectionStart(input.length());
+					textField.setSelectionEnd(match.length());
+				});
+			}
+		}
+
+		@Override
+		public void removeUpdate(DocumentEvent e) {
+			// do nothing
+		}
+
+		@Override
+		public void changedUpdate(DocumentEvent e) {
+			// do nothing
+		}
+	}
+
 }

@@ -23,9 +23,13 @@ apply plugin: 'eclipse'
 eclipse.project.name = 'Framework Help'
 
 dependencies {
-	api project(':Utility')
-	api project(':Docking')
+	api project(':Gui')
 	
-//	api name:'jh' - provided by Docking
+	api 'net.java.dev.timingframework:timingframework:1.0'
+	
+	// Only include this debug version of the jh library if necessary.
+	//api name:'jh2.with.debug'
+	api 'javax.help:javahelp:2.0.05'
+	
 
 }

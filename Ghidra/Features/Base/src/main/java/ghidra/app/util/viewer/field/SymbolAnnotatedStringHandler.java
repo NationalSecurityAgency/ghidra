@@ -15,11 +15,12 @@
  */
 package ghidra.app.util.viewer.field;
 
-import java.awt.Color;
 import java.util.*;
 import java.util.regex.Pattern;
 
 import docking.widgets.fieldpanel.field.AttributedString;
+import generic.theme.GThemeDefaults.Colors.Messages;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.services.GoToService;
 import ghidra.app.util.NamespaceUtils;
@@ -90,7 +91,7 @@ public class SymbolAnnotatedStringHandler implements AnnotatedStringHandler {
 				prototypeString.getFontMetrics(0), true, prototypeString.getColor(0));
 		}
 
-		return new AttributedString("No symbol: " + text[1], Color.RED,
+		return new AttributedString("No symbol: " + text[1], Messages.ERROR,
 			prototypeString.getFontMetrics(0), false, null);
 	}
 
@@ -101,7 +102,7 @@ public class SymbolAnnotatedStringHandler implements AnnotatedStringHandler {
 			buffer.append(string).append(" ");
 		}
 
-		return new AttributedString(buffer.toString(), Color.LIGHT_GRAY,
+		return new AttributedString(buffer.toString(), Palette.LIGHT_GRAY,
 			prototypeString.getFontMetrics(0));
 	}
 

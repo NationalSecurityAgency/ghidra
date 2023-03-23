@@ -15,15 +15,15 @@
  */
 package agent.dbgmodel.impl.dbgmodel.debughost;
 
+import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Guid.REFIID;
 
+import agent.dbgeng.impl.dbgeng.DbgEngUtil;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.InterfaceSupplier;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.Preferred;
 import agent.dbgmodel.dbgmodel.debughost.DebugHostEvaluator1;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil.InterfaceSupplier;
 import agent.dbgmodel.jna.dbgmodel.debughost.*;
 import ghidra.util.datastruct.WeakValueHashMap;
 
@@ -31,25 +31,21 @@ public interface DebugHostEvaluatorInternal extends DebugHostEvaluator1 {
 	Map<Pointer, DebugHostEvaluatorInternal> CACHE = new WeakValueHashMap<>();
 
 	static DebugHostEvaluatorInternal instanceFor(WrapIDebugHostEvaluator1 data) {
-		return DbgModelUtil.lazyWeakCache(CACHE, data, DebugHostEvaluatorImpl1::new);
+		return DbgEngUtil.lazyWeakCache(CACHE, data, DebugHostEvaluatorImpl1::new);
 	}
 
 	static DebugHostEvaluatorInternal instanceFor(WrapIDebugHostEvaluator2 data) {
-		return DbgModelUtil.lazyWeakCache(CACHE, data, DebugHostEvaluatorImpl2::new);
+		return DbgEngUtil.lazyWeakCache(CACHE, data, DebugHostEvaluatorImpl2::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIDebugHostEvaluator1>> PREFERRED_DATA_SPACES_IIDS_BUILDER =
-		ImmutableMap.builder();
-	Map<REFIID, Class<? extends WrapIDebugHostEvaluator1>> PREFERRED_DATA_SPACES_IIDS =
-		PREFERRED_DATA_SPACES_IIDS_BUILDER //
-				.put(new REFIID(IDebugHostEvaluator2.IID_IDEBUG_HOST_EVALUATOR2),
-					WrapIDebugHostEvaluator2.class) //
-				.put(new REFIID(IDebugHostEvaluator1.IID_IDEBUG_HOST_EVALUATOR),
-					WrapIDebugHostEvaluator1.class) //
-				.build();
+	List<Preferred<WrapIDebugHostEvaluator1>> PREFERRED_DATA_SPACES_IIDS = List.of(
+		new Preferred<>(IDebugHostEvaluator2.IID_IDEBUG_HOST_EVALUATOR2,
+			WrapIDebugHostEvaluator2.class),
+		new Preferred<>(IDebugHostEvaluator1.IID_IDEBUG_HOST_EVALUATOR,
+			WrapIDebugHostEvaluator1.class));
 
 	static DebugHostEvaluatorInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
-		return DbgModelUtil.tryPreferredInterfaces(DebugHostEvaluatorInternal.class,
+		return DbgEngUtil.tryPreferredInterfaces(DebugHostEvaluatorInternal.class,
 			PREFERRED_DATA_SPACES_IIDS, supplier);
 	}
 }

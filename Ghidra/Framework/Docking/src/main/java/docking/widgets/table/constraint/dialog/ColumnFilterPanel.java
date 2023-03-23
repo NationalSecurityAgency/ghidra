@@ -15,10 +15,9 @@
  */
 package docking.widgets.table.constraint.dialog;
 
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Vector;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.util.*;
 
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
@@ -27,7 +26,9 @@ import docking.widgets.EmptyBorderButton;
 import docking.widgets.combobox.GhidraComboBox;
 import docking.widgets.label.GDLabel;
 import docking.widgets.list.GListCellRenderer;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.util.layout.VerticalLayout;
+import resources.Icons;
 import resources.ResourceManager;
 
 /**
@@ -55,7 +56,7 @@ class ColumnFilterPanel extends JPanel {
 
 	private Component buildButtonPanel() {
 		JPanel panel = new JPanel(new BorderLayout());
-		ImageIcon icon = ResourceManager.loadImage("images/Plus.png");
+		Icon icon = Icons.ADD_ICON;
 		icon = ResourceManager.getScaledIcon(icon, BUTTON_ICON_SIZE, BUTTON_ICON_SIZE);
 
 		JButton button = new EmptyBorderButton(icon);
@@ -116,7 +117,7 @@ class ColumnFilterPanel extends JPanel {
 
 	private Component createOrLabel() {
 		JLabel jLabel = new GDLabel("<OR>", SwingConstants.CENTER);
-		jLabel.setForeground(Color.GRAY);
+		jLabel.setForeground(Messages.HINT);
 		return jLabel;
 	}
 

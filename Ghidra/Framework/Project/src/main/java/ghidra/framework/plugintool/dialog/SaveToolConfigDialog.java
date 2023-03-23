@@ -16,7 +16,8 @@
 package ghidra.framework.plugintool.dialog;
 
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.List;
 
@@ -26,10 +27,11 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.*;
 
 import docking.DialogComponentProvider;
-import docking.options.editor.ButtonPanelFactory;
 import docking.util.image.ToolIconURL;
 import docking.widgets.OptionDialog;
+import docking.widgets.button.BrowseButton;
 import docking.widgets.filechooser.GhidraFileChooser;
+import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.label.GLabel;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
@@ -75,12 +77,7 @@ public class SaveToolConfigDialog extends DialogComponentProvider implements Lis
 		addWorkPanel(buildMainPanel());
 
 		saveButton = new JButton("Save");
-		saveButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent ev) {
-				save();
-			}
-		});
+		saveButton.addActionListener(ev -> save());
 		addButton(saveButton);
 		addCancelButton();
 
@@ -111,7 +108,7 @@ public class SaveToolConfigDialog extends DialogComponentProvider implements Lis
 	/**
 	 * Display the "Save Tool Configuration As..." dialog;
 	 * blocks until user hits the "Cancel" button.
-	 * 
+	 *
 	 * @param name original name for the tool
 	 */
 	public void show(String name, String newDefaultName) {
@@ -186,12 +183,7 @@ public class SaveToolConfigDialog extends DialogComponentProvider implements Lis
 
 	private void addListeners() {
 
-		nameField.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				save();
-			}
-		});
+		nameField.addActionListener(e -> save());
 		nameField.addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyPressed(KeyEvent e) {
@@ -269,7 +261,7 @@ public class SaveToolConfigDialog extends DialogComponentProvider implements Lis
 	}
 
 	/**
-	 * Create a panel that has text fields for entering a 
+	 * Create a panel that has text fields for entering a
 	 * name and tool description
 	 */
 	private JPanel createToolFieldPanel() {
@@ -312,7 +304,7 @@ public class SaveToolConfigDialog extends DialogComponentProvider implements Lis
 		iconField = new JTextField(12);
 		iconField.setName("IconName");
 
-		browseButton = ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
+		browseButton = new BrowseButton();
 
 		JPanel panel = new JPanel(new BorderLayout(5, 0));
 		panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -327,16 +319,13 @@ public class SaveToolConfigDialog extends DialogComponentProvider implements Lis
 	 */
 	private void addIconPanelListeners() {
 
-		iconField.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				String filename = iconField.getText();
-				if (filename.length() == 0) {
-					setStatusText("Please enter a filename for the icon.");
-					return;
-				}
-				setPicture(new ToolIconURL(filename));
+		iconField.addActionListener(e -> {
+			String filename = iconField.getText();
+			if (filename.length() == 0) {
+				setStatusText("Please enter a filename for the icon.");
+				return;
 			}
+			setPicture(new ToolIconURL(filename));
 		});
 
 		iconField.addKeyListener(new KeyAdapter() {
@@ -372,12 +361,7 @@ public class SaveToolConfigDialog extends DialogComponentProvider implements Lis
 		};
 		iconField.getDocument().addDocumentListener(dl);
 
-		browseButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				browseForIcons();
-			}
-		});
+		browseButton.addActionListener(e -> browseForIcons());
 
 	}
 
@@ -402,17 +386,18 @@ public class SaveToolConfigDialog extends DialogComponentProvider implements Lis
 	 * Pop up a file chooser for the user to look for icon images.
 	 */
 	private void browseForIcons() {
-		GhidraFileChooser iconFileChooser = new GhidraFileChooser(getComponent());
-		iconFileChooser.setFileSelectionMode(GhidraFileChooser.FILES_ONLY);
-		iconFileChooser.setTitle("Choose Icon");
-		iconFileChooser.setApproveButtonToolTipText("Choose Icon");
-		iconFileChooser.setFileFilter(
+		GhidraFileChooser chooser = new GhidraFileChooser(getComponent());
+		chooser.setFileSelectionMode(GhidraFileChooserMode.FILES_ONLY);
+		chooser.setTitle("Choose Icon");
+		chooser.setApproveButtonToolTipText("Choose Icon");
+		chooser.setFileFilter(
 			new ExtensionFileFilter(new String[] { "gif", "jpg", "bmp", "png" }, "Image Files"));
 		String iconDir = Preferences.getProperty(LAST_ICON_DIRECTORY);
 		if (iconDir != null) {
-			iconFileChooser.setCurrentDirectory(new File(iconDir));
+			chooser.setCurrentDirectory(new File(iconDir));
 		}
-		File file = iconFileChooser.getSelectedFile();
+		File file = chooser.getSelectedFile();
+		chooser.dispose();
 		if (file == null) {
 			return;
 		}

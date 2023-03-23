@@ -17,10 +17,9 @@ package ghidra.app.util.bin.format.elf;
 
 import java.io.IOException;
 
+import org.apache.commons.lang3.StringUtils;
+
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.ByteArrayConverter;
-import ghidra.util.DataConverter;
-import ghidra.util.exception.NotFoundException;
 
 /**
  * A class to represent the ELF 32bit and 64bit Symbol data structures.
@@ -46,7 +45,10 @@ import ghidra.util.exception.NotFoundException;
  * 
  * </pre>
  */
-public class ElfSymbol implements ByteArrayConverter {
+public class ElfSymbol {
+
+	public static final String FORMATTED_NO_NAME = "<no name>";
+
 	/**Local symbols are not visible outside the object file containing their definition.*/
 	public static final byte STB_LOCAL = 0;
 	/**Global symbols are visible to all object files being combined.*/
@@ -89,7 +91,6 @@ public class ElfSymbol implements ByteArrayConverter {
 	/**Not preemptible, not exported*/
 	public static final byte STV_PROTECTED = 3;
 
-	private ElfHeader header;
 	private ElfSymbolTable symbolTable;
 	private int symbolTableIndex;
 
@@ -103,56 +104,10 @@ public class ElfSymbol implements ByteArrayConverter {
 	private String nameAsString;
 
 	/**
-	 * Creates a new section symbol.
-	 * Warning! the routine initSymbolName() must be called on the symbol later
-	 * to initialize the string name.  This is a performance enhancement.
-	 * @param header the corresponding ELF header
-	 * @param sectionAddress the start address of the section
-	 * @param sectionHeaderIndex the index of the section in the section header table
-	 * @param name the string name of the section
-	 * @param symbolIndex index of symbol within corresponding symbol table
-	 * @param symbolTable symbol table
-	 * @return the new section symbol
+	 * Construct a new special null symbol which corresponds to symbol index 0.
 	 */
-	public static ElfSymbol createSectionSymbol32(ElfHeader header, long sectionAddress,
-			short sectionHeaderIndex, String name, int symbolIndex, ElfSymbolTable symbolTable) {
-		return new ElfSymbol(header, name, 0, sectionAddress, 0, STT_SECTION, (byte) 0,
-			sectionHeaderIndex, symbolIndex, symbolTable);
-	}
-
-	/**
-	 * Creates a new global function symbol.
-	 * Warning! the routine initSymbolName() must be called on the symbol later
-	 * to initialize the string name.  This is a performance enhancement.
-	 * @param header the corresponding ELF header
-	 * @param name the byte index of the name
-	 * @param nameAsString the string name of the section
-	 * @param addr the address of the function
-	 * @param symbolIndex index of symbol within corresponding symbol table
-	 * @param symbolTable symbol table
-	 * @return the new global function symbol
-	 */
-	public static ElfSymbol createGlobalFunctionSymbol(ElfHeader header, int name,
-			String nameAsString, long addr, int symbolIndex, ElfSymbolTable symbolTable) {
-		return new ElfSymbol(header, nameAsString, name, addr, 0,
-			(byte) ((STB_GLOBAL << 4) | STT_FUNC), (byte) 0, (short) 0, symbolIndex, symbolTable);
-	}
-
-	private ElfSymbol(ElfHeader header, String nameAsString, int name, long value, long size,
-			byte info, byte other, short sectionHeaderIndex, int symbolIndex,
-			ElfSymbolTable symbolTable) {
-		this.header = header;
-		this.nameAsString = nameAsString;
-
-		this.st_name = name;
-		this.st_value = value;
-		this.st_size = size;
-		this.st_info = info;
-		this.st_other = other;
-		this.st_shndx = sectionHeaderIndex;
-
-		this.symbolTable = symbolTable;
-		this.symbolTableIndex = symbolIndex;
+	public ElfSymbol() {
+		this.nameAsString = "";
 	}
 
 	/**
@@ -167,7 +122,6 @@ public class ElfSymbol implements ByteArrayConverter {
 	 */
 	public ElfSymbol(BinaryReader reader, int symbolIndex,
 			ElfSymbolTable symbolTable, ElfHeader header) throws IOException {
-		this.header = header;
 		this.symbolTable = symbolTable;
 		this.symbolTableIndex = symbolIndex;
 
@@ -191,13 +145,11 @@ public class ElfSymbol implements ByteArrayConverter {
 		if (st_name == 0) {
 			if (getType() == STT_SECTION) {
 				ElfSectionHeader[] sections = header.getSections();
-				if (st_shndx < 0 || st_shndx >= sections.length) {
-					//invalid section reference...
-					//this is a bug in objcopy, whereby sections are removed
-					//but the corresponding section symbols are left behind.
-				}
-				else {
-					ElfSectionHeader section = sections[st_shndx];
+				// FIXME: handle extended section indexing
+				int uSectionIndex = Short.toUnsignedInt(st_shndx);
+				if (Short.compareUnsigned(st_shndx, ElfSectionHeaderConstants.SHN_LORESERVE) < 0 &&
+					uSectionIndex < sections.length) {
+					ElfSectionHeader section = sections[uSectionIndex];
 					nameAsString = section.getNameAsString();
 				}
 			}
@@ -223,7 +175,7 @@ public class ElfSymbol implements ByteArrayConverter {
 	 * @param stringTable stringTable to initialize symbol name
 	 */
 	public void initSymbolName(BinaryReader reader, ElfStringTable stringTable) {
-		if (nameAsString == null) {
+		if (nameAsString == null && stringTable != null) {
 			nameAsString = stringTable.readString(reader, st_name);
 		}
 	}
@@ -345,7 +297,7 @@ public class ElfSymbol implements ByteArrayConverter {
 	public boolean isExternal() {
 		return (isGlobal() || isWeak()) && getValue() == 0 && getSize() == 0 &&
 			getType() == STT_NOTYPE &&
-			getSectionHeaderIndex() == ElfSectionHeaderConstants.SHT_NULL;
+			getSectionHeaderIndex() == ElfSectionHeaderConstants.SHN_UNDEF;
 	}
 
 	/**
@@ -456,10 +408,21 @@ public class ElfSymbol implements ByteArrayConverter {
 	 * Returns the actual string name for this symbol. The symbol only
 	 * stores an byte index into the string table where
 	 * the name string is located.
-	 * @return the actual string name for this symbol
+	 * @return the actual string name for this symbol (may be null or empty string)
 	 */
 	public String getNameAsString() {
 		return nameAsString;
+	}
+
+	/**
+	 * Returns the formatted string name for this symbol. If the name is blank or
+	 * can not be resolved due to a missing string table the literal string 
+	 * <I>&lt;no name&gt;</I> will be returned.
+	 * the name string is located.
+	 * @return the actual string name for this symbol or the literal string <I>&lt;no name&gt;</I>
+	 */
+	public String getFormattedName() {
+		return StringUtils.isBlank(nameAsString) ? FORMATTED_NO_NAME : nameAsString;
 	}
 
 	/**
@@ -471,12 +434,34 @@ public class ElfSymbol implements ByteArrayConverter {
 	}
 
 	/**
-	 * Every symbol table entry is "defined" in relation to some section;
-	 * this member holds the relevant section header table index.
-	 * @return the relevant section header table index
+	 * Get the raw section index value (<code>st_shndx</code>) for this symbol.
+	 * Special values (SHN_LORESERVE and higher) must be treated properly.  The value SHN_XINDEX 
+	 * indicates that the extended value must be used to obtained the actual section index 
+	 * (see {@link #getExtendedSectionHeaderIndex()}).
+	 * @return the <code>st_shndx</code> section index value
 	 */
 	public short getSectionHeaderIndex() {
 		return st_shndx;
+	}
+
+	/**
+	 * Get the extended symbol section index value when <code>st_shndx</code>
+	 * ({@link #getSectionHeaderIndex()}) has a value of SHN_XINDEX.  This requires a lookup
+	 * into a table defined by an associated SHT_SYMTAB_SHNDX section.
+	 * @return extended symbol section index value
+	 */
+	public int getExtendedSectionHeaderIndex() {
+		return symbolTable != null ? symbolTable.getExtendedSectionIndex(this) : 0;
+	}
+
+	/**
+	 * Determine if st_shndx is within the reserved processor-specific index range 
+	 * @return true if specified symbol section index corresponds to a processor
+	 * specific value in the range SHN_LOPROC..SHN_HIPROC, else false
+	 */
+	public boolean hasProcessorSpecificSymbolSectionIndex() {
+		return (Short.compareUnsigned(st_shndx, ElfSectionHeaderConstants.SHN_LOPROC) >= 0) &&
+			(Short.compareUnsigned(st_shndx, ElfSectionHeaderConstants.SHN_HIPROC) <= 0);
 	}
 
 	/**
@@ -504,56 +489,11 @@ public class ElfSymbol implements ByteArrayConverter {
 	 */
 	@Override
 	public String toString() {
-		return nameAsString + " - " + "st_value:" + Long.toHexString(st_value) + " - " +
-			"st_size: " + Long.toHexString(st_size) + " - " + "st_info: " +
-			Integer.toHexString(st_info) + " - " + "st_other: " + Integer.toHexString(st_other) +
-			" - " + "st_shndx:" + Integer.toHexString(st_shndx);
-	}
-
-	/**
-	 * @see ghidra.app.util.bin.ByteArrayConverter#toBytes(ghidra.util.DataConverter)
-	 */
-	@Override
-	public byte[] toBytes(DataConverter dc) {
-		// FIXME! BUG!! Symbols can exist without a dynamic table !!
-		ElfDynamicTable dynamic = header.getDynamicTable();
-		int syment = 0;
-		try {
-			syment = (int) dynamic.getDynamicValue(ElfDynamicType.DT_SYMENT);
-		}
-		catch (NotFoundException e) {
-			throw new RuntimeException(e);//should never happen!
-		}
-		byte[] bytes = new byte[syment];
-		int index = 0;
-		dc.putInt(bytes, 0, st_name);
-		index += 4;
-		if (header.is32Bit()) {
-			dc.putInt(bytes, index, (int) st_value);
-			index += 4;
-			dc.putInt(bytes, index, (int) st_size);
-			index += 4;
-		}
-		else {
-			dc.putLong(bytes, index, st_value);
-			index += 8;
-			dc.putLong(bytes, index, st_size);
-			index += 8;
-		}
-		bytes[index] = st_info;
-		index += 1;
-		bytes[index] = st_other;
-		index += 1;
-		dc.putShort(bytes, index, st_shndx);
-		return bytes;
-	}
-
-	/**
-	 * Sets the value of this symbol. The value is generally an address.
-	 * @param value the new value of the symbol
-	 */
-	public void setValue(long value) {
-		this.st_value = (int) value;
+		return nameAsString + " - " + "st_value: 0x" + Long.toHexString(st_value) + " - " +
+			"st_size: 0x" + Long.toHexString(st_size) + " - " + "st_info: 0x" +
+			Integer.toHexString(Byte.toUnsignedInt(st_info)) + " - " + "st_other: 0x" +
+			Integer.toHexString(Byte.toUnsignedInt(st_other)) +
+			" - " + "st_shndx: 0x" + Integer.toHexString(Short.toUnsignedInt(st_shndx));
 	}
 
 }

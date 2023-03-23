@@ -15,11 +15,8 @@
  */
 package ghidra.pcodeCPort.slghsymbol;
 
-import java.io.PrintStream;
 import java.util.ArrayList;
 
-import ghidra.pcodeCPort.context.FixedHandle;
-import ghidra.pcodeCPort.context.ParserWalker;
 import ghidra.pcodeCPort.slghpatexpress.PatternExpression;
 import ghidra.sleigh.grammar.Location;
 
@@ -36,20 +33,12 @@ public abstract class TripleSymbol extends SleighSymbol {
 
 	public abstract PatternExpression getPatternExpression();
 
-	public abstract void getFixedHandle(FixedHandle hand, ParserWalker pos);
-
 	public int getSize() {
 		return 0;
 	} // Size out of context
 
-	public abstract void print(PrintStream s, ParserWalker pos);
-
 	public void collectLocalValues(ArrayList<Long> results) {
 		// By default, assume symbol has no local exports
-	}
-
-	public Constructor resolve(ParserWalker pos) {
-		return null;
 	}
 
 }

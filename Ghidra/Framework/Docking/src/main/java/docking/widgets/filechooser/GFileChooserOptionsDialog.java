@@ -17,13 +17,13 @@ package docking.widgets.filechooser;
 
 import javax.swing.*;
 
-import docking.DialogComponentProvider;
+import docking.ReusableDialogComponentProvider;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GLabel;
 import ghidra.framework.preferences.Preferences;
 import ghidra.util.layout.PairLayout;
 
-class GFileChooserOptionsDialog extends DialogComponentProvider {
+class GFileChooserOptionsDialog extends ReusableDialogComponentProvider {
 
 	static final String SHOW_DOT_FILES_PROPERTY_NAME = "G_FILE_CHOOSER.ShowDotFiles";
 	private static final String SHOW_DOT_FILES_DEFAULT = "false";
@@ -31,7 +31,7 @@ class GFileChooserOptionsDialog extends DialogComponentProvider {
 	private JCheckBox showDotFilesCheckBox;
 
 	GFileChooserOptionsDialog() {
-		super("File Chooser Options", true);
+		super("File Chooser Options");
 
 		addWorkPanel(buildComponent());
 

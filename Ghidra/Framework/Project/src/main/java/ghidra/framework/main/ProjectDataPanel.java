@@ -26,21 +26,22 @@ import javax.swing.*;
 
 import docking.ActionContext;
 import docking.ComponentProvider;
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.widgets.tabbedpane.DockingTabRenderer;
+import ghidra.framework.client.NotConnectedException;
 import ghidra.framework.main.datatable.ProjectDataTablePanel;
 import ghidra.framework.main.datatree.ProjectDataTreePanel;
 import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
+import help.Help;
+import help.HelpService;
 
 /**
  * Manages the data tree for the active project, and the trees for the
  * project views.
  */
-class ProjectDataPanel extends JSplitPane {
+class ProjectDataPanel extends JSplitPane implements ProjectViewListener {
 	private final static String BORDER_PREFIX = "Active Project: ";
 	private final static String READ_ONLY_BORDER = "READ-ONLY Project Data";
 	private final static int TYPICAL_NUM_VIEWS = 2;
@@ -76,8 +77,17 @@ class ProjectDataPanel extends JSplitPane {
 
 		projectTab.addTab("Tree View", activePanel);
 		projectTab.addTab("Table View", tablePanel);
-		// setup the active data tree panel
-		this.add(projectTab, JSplitPane.LEFT);
+
+		//
+		// Setup the active data tree panel
+		//
+		// Use a panel for the left side of the split pane so the split pane background does not
+		// shine through.  This allows users to change the split pane background to change the 
+		// divider color without affecting the background of the front end.
+		//
+		JPanel leftPanel = new JPanel(new BorderLayout());
+		leftPanel.add(projectTab);
+		this.add(leftPanel, JSplitPane.LEFT);
 		projectTab.setBorder(BorderFactory.createTitledBorder(BORDER_PREFIX));
 
 		// initialize the read-only project view tabbed pane
@@ -146,6 +156,21 @@ class ProjectDataPanel extends JSplitPane {
 		setViewsVisible(views.length > 0);
 	}
 
+	@Override
+	public void viewedProjectAdded(URL projectView) {
+		SwingUtilities.invokeLater(() -> openView(projectView));
+	}
+
+	@Override
+	public void viewedProjectRemoved(URL projectView) {
+		SwingUtilities.invokeLater(() -> {
+			ProjectDataTreePanel dtp = getViewPanel(projectView);
+			if (dtp != null) {
+				viewRemoved(dtp, projectView, false);
+			}
+		});
+	}
+
 	private void clearReadOnlyViews() {
 		readOnlyTab.removeAll();
 		readOnlyViews.clear();
@@ -158,7 +183,13 @@ class ProjectDataPanel extends JSplitPane {
 		this.setDividerLocation(visible ? DIVIDER_LOCATION : 1.0);
 	}
 
-	void openView(URL projectView) {
+	/**
+	 * Open specified project URL in tabbed READ-Only project views
+	 * @param projectView project URL to be opened/added to view
+	 * @return corresponding tree panel or null on failure
+	 */
+	ProjectDataTreePanel openView(URL projectView) {
+
 		ProjectManager projectManager = tool.getProjectManager();
 		Project activeProject = tool.getProject();
 
@@ -167,19 +198,23 @@ class ProjectDataPanel extends JSplitPane {
 		if (dtp != null) {
 			readOnlyTab.setSelectedComponent(dtp);
 			try {
-				activeProject.addProjectView(projectView);
+				activeProject.addProjectView(projectView, true);
 				projectManager.rememberViewedProject(projectView);
+				return dtp;
 			}
 			catch (Exception e) {
 				projectManager.forgetViewedProject(projectView);
 				Msg.showError(getClass(), tool.getToolFrame(), "Error Adding View", e.toString());
 			}
-			return;
+			return null;
 		}
 
 		try {
 			// TODO: addProjectView should be done in a model task
-			ProjectData projectData = activeProject.addProjectView(projectView);
+			ProjectData projectData = activeProject.addProjectView(projectView, true);
+			if (projectData == null) {
+				return null; // repository connection may have been cancelled
+			}
 			projectManager.rememberViewedProject(projectView);
 			String viewName = projectData.getProjectLocator().getName();
 			final ProjectDataTreePanel newPanel =
@@ -195,13 +230,20 @@ class ProjectDataPanel extends JSplitPane {
 			readOnlyTab.setSelectedIndex(0);
 			readOnlyViews.put(projectData.getProjectLocator(), newPanel);
 			setViewsVisible(true);
+			return newPanel;
+		}
+		catch (NotConnectedException e) {
+			// already handled (e..g, cancelled login) - ignore
 		}
 		catch (Exception e) {
 			projectManager.forgetViewedProject(projectView);
 			Msg.showError(getClass(), tool.getToolFrame(), "Error Adding View",
-				"Failed to view project/repository: " + e.getMessage());
+				"Failed to view project/repository: " + e.getMessage(), e);
 		}
-		validate();
+		finally {
+			validate();
+		}
+		return null;
 	}
 
 	ProjectLocator[] getProjectViews() {
@@ -306,6 +348,7 @@ class ProjectDataPanel extends JSplitPane {
 			treePanel.setProjectData(project.getName(), project.getProjectData());
 			tablePanel.setProjectData(project.getName(), project.getProjectData());
 			populateReadOnlyViews(project);
+			project.addProjectViewListener(this);
 		}
 		else {
 			tablePanel.setProjectData("No Active Project", null);

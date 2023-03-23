@@ -29,8 +29,8 @@ import ghidra.app.util.OptionException;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.xml.*;
-import ghidra.framework.model.DomainFolder;
 import ghidra.framework.model.DomainObject;
+import ghidra.framework.model.Project;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
@@ -177,10 +177,11 @@ public class XmlLoader extends AbstractProgramLoader {
 	}
 
 	@Override
-	protected List<Program> loadProgram(ByteProvider provider, String programName,
-			DomainFolder programFolder, LoadSpec loadSpec, List<Option> options, MessageLog log,
-			Object consumer, TaskMonitor monitor) throws IOException, CancelledException {
-		List<Program> results = new ArrayList<>();
+	protected List<Loaded<Program>> loadProgram(ByteProvider provider, String programName,
+			Project project, String programFolderPath, LoadSpec loadSpec, List<Option> options,
+			MessageLog log, Object consumer, TaskMonitor monitor)
+			throws IOException, LoadException, CancelledException {
+		List<Loaded<Program>> results = new ArrayList<>();
 
 		LanguageCompilerSpecPair pair = loadSpec.getLanguageCompilerSpec();
 		Language importerLanguage = getLanguageService().getLanguage(pair.languageID);
@@ -198,36 +199,35 @@ public class XmlLoader extends AbstractProgramLoader {
 		}
 		Program prog = createProgram(provider, programName, imageBase, getName(), importerLanguage,
 			importerCompilerSpec, consumer);
+		List<Loaded<Program>> loadedList =
+			List.of(new Loaded<>(prog, programName, programFolderPath));
 		boolean success = false;
 		try {
 			success = doImport(result.lastXmlMgr, options, log, prog, monitor, false);
 			if (success) {
 				createDefaultMemoryBlocks(prog, importerLanguage, log);
+				return loadedList;
 			}
+			throw new LoadException("Failed to load");
 		}
 		finally {
 			if (!success) {
-				prog.release(consumer);
-				prog = null;
+				release(loadedList, consumer);
 			}
 		}
-		if (prog != null) {
-			results.add(prog);
-		}
-		return results;
 	}
 
 	@Override
-	protected boolean loadProgramInto(ByteProvider provider, LoadSpec loadSpec,
+	protected void loadProgramInto(ByteProvider provider, LoadSpec loadSpec,
 			List<Option> options, MessageLog log, Program prog, TaskMonitor monitor)
-			throws IOException, CancelledException {
+			throws IOException, LoadException, CancelledException {
 		File file = provider.getFile();
-		return doImport(new ProgramXmlMgr(file), options, log, prog, monitor, true);
+		doImport(new ProgramXmlMgr(file), options, log, prog, monitor, true);
 	}
 
 	private boolean doImportWork(final ProgramXmlMgr mgr, final List<Option> options,
 			final MessageLog log, Program prog, TaskMonitor monitor,
-			final boolean isAddToProgram) throws IOException {
+			final boolean isAddToProgram) throws LoadException {
 		MessageLog mgrLog = null;
 		boolean success = false;
 		try {
@@ -247,7 +247,7 @@ public class XmlLoader extends AbstractProgramLoader {
 				message = log.toString();
 			}
 			Msg.warn(this, "XML import exception, log: " + message, e);
-			throw new IOException(e.getMessage(), e);
+			throw new LoadException(e.getMessage());
 		}
 		return success;
 	}

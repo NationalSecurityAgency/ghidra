@@ -15,46 +15,30 @@
  */
 package ghidra.pcode.exec.trace;
 
-import ghidra.pcode.exec.AccessPcodeExecutionException;
-import ghidra.program.model.address.*;
-import ghidra.trace.model.Trace;
-import ghidra.trace.model.memory.TraceMemorySpace;
-import ghidra.trace.model.memory.TraceMemoryState;
-import ghidra.trace.model.thread.TraceThread;
+import ghidra.pcode.exec.trace.data.PcodeTraceDataAccess;
 
+/**
+ * A state composing a single {@link RequireIsKnownTraceCachedWriteBytesPcodeExecutorState}
+ */
 public class RequireIsKnownTraceCachedWriteBytesPcodeExecutorState
-		extends AbstractCheckedTraceCachedWriteBytesPcodeExecutorState {
+		extends DefaultTracePcodeExecutorState<byte[]> {
 
-	public RequireIsKnownTraceCachedWriteBytesPcodeExecutorState(Trace trace, long snap,
-			TraceThread thread, int frame) {
-		super(trace, snap, thread, frame);
+	/**
+	 * Create the state
+	 * 
+	 * @param data the trace-data access shim
+	 */
+	public RequireIsKnownTraceCachedWriteBytesPcodeExecutorState(PcodeTraceDataAccess data) {
+		super(new RequireIsKnownTraceCachedWriteBytesPcodeExecutorStatePiece(data));
 	}
 
-	protected AddressSetView getKnown(TraceMemorySpace source) {
-		return source.getAddressesWithState(snap, s -> s == TraceMemoryState.KNOWN);
-	}
-
-	protected AccessPcodeExecutionException excFor(AddressSetView unknown) {
-		return new AccessPcodeExecutionException("Memory at " + unknown + " is unknown.");
+	protected RequireIsKnownTraceCachedWriteBytesPcodeExecutorState(
+			TracePcodeExecutorStatePiece<byte[], byte[]> piece) {
+		super(piece);
 	}
 
 	@Override
-	protected int checkUninitialized(TraceMemorySpace backing, Address start, int size,
-			AddressSet uninitialized) {
-		if (backing == null) {
-			if (!uninitialized.contains(start)) {
-				return (int) uninitialized.getMinAddress().subtract(start);
-			}
-			throw excFor(uninitialized);
-		}
-		// TODO: Could find first instead?
-		AddressSetView unknown = uninitialized.subtract(getKnown(backing));
-		if (unknown.isEmpty()) {
-			return size;
-		}
-		if (!unknown.contains(start)) {
-			return (int) unknown.getMinAddress().subtract(start);
-		}
-		throw excFor(unknown);
+	public RequireIsKnownTraceCachedWriteBytesPcodeExecutorState fork() {
+		return new RequireIsKnownTraceCachedWriteBytesPcodeExecutorState(piece.fork());
 	}
 }

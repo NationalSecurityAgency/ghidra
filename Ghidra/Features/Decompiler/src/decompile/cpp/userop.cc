@@ -16,10 +16,25 @@
 #include "userop.hh"
 #include "funcdata.hh"
 
-void InjectedUserOp::restoreXml(const Element *el)
+AttributeId ATTRIB_FARPOINTER = AttributeId("farpointer",85);
+AttributeId ATTRIB_INPUTOP = AttributeId("inputop",86);
+AttributeId ATTRIB_OUTPUTOP = AttributeId("outputop",87);
+AttributeId ATTRIB_USEROP = AttributeId("userop",88);
+
+ElementId ELEM_CONSTRESOLVE = ElementId("constresolve",127);
+ElementId ELEM_JUMPASSIST = ElementId("jumpassist",128);
+ElementId ELEM_SEGMENTOP = ElementId("segmentop",129);
+
+int4 UserPcodeOp::extractAnnotationSize(const Varnode *vn,const PcodeOp *op)
 
 {
-  injectid = glb->pcodeinjectlib->restoreXmlInject("userop", name, InjectPayload::CALLOTHERFIXUP_TYPE,el);
+  throw LowlevelError("Unexpected annotation input for CALLOTHER " + name);
+}
+
+void InjectedUserOp::decode(Decoder &decoder)
+
+{
+  injectid = glb->pcodeinjectlib->decodeInject("userop", "", InjectPayload::CALLOTHERFIXUP_TYPE,decoder);
   name = glb->pcodeinjectlib->getCallOtherTarget(injectid);
   UserPcodeOp *base = glb->userops.getOp(name);
   // This tag overrides the base functionality of a userop
@@ -59,10 +74,13 @@ string VolatileReadOp::getOperatorName(const PcodeOp *op) const
   return appendSize(name,op->getOut()->getSize());
 }
 
-void VolatileReadOp::restoreXml(const Element *el)
+int4 VolatileReadOp::extractAnnotationSize(const Varnode *vn,const PcodeOp *op)
 
 {
-  name = el->getAttributeValue("inputop");
+  const Varnode *outvn = op->getOut();
+  if (outvn != (const Varnode *)0)
+    return op->getOut()->getSize(); // Get size from output of read function
+  return 1;
 }
 
 string VolatileWriteOp::getOperatorName(const PcodeOp *op) const
@@ -72,47 +90,10 @@ string VolatileWriteOp::getOperatorName(const PcodeOp *op) const
   return appendSize(name,op->getIn(2)->getSize());
 }
 
-void VolatileWriteOp::restoreXml(const Element *el)
+int4 VolatileWriteOp::extractAnnotationSize(const Varnode *vn,const PcodeOp *op)
 
 {
-  name = el->getAttributeValue("outputop");
-}
-
-/// Process either a \<baseop> or \<innerop> element.  Currently
-/// this only supports INT_ZEXT, INT_LEFT, and INT_AND operations
-/// \param el is the root XML element
-void OpFollow::restoreXml(const Element *el)
-
-{
-  const string &name(el->getAttributeValue("code"));
-  if (name=="INT_ZEXT")
-    opc = CPUI_INT_ZEXT;
-  else if (name=="INT_LEFT")
-    opc = CPUI_INT_LEFT;
-  else if (name=="INT_AND")
-    opc = CPUI_INT_AND;
-  else
-    throw LowlevelError("Bad segment pattern opcode");
-
-  val = 0;
-  slot=0;
-
-  for(int4 i=0;i<el->getNumAttributes();++i) {
-    if (el->getAttributeName(i) == "code") continue;
-    else if (el->getAttributeName(i) == "value") {
-      istringstream s(el->getAttributeValue(i));
-      s.unsetf(ios::dec | ios::hex | ios::oct);
-      s >> val;
-    }
-    else if (el->getAttributeName(i) == "slot") {
-      istringstream s(el->getAttributeValue(i));
-      s.unsetf(ios::dec | ios::hex | ios::oct);
-      s >> slot;
-    }
-    else
-      throw LowlevelError("Bad XML tag in segment pattern: "+el->getAttributeValue(i));
-  }
-  
+  return op->getIn(2)->getSize(); // Get size from the 3rd parameter of write function
 }
 
 /// \param g is the owning Architecture for this instance of the segment operation
@@ -160,26 +141,29 @@ uintb SegmentOp::execute(const vector<uintb> &input) const
   return pcodeScript->evaluate(input);
 }
 
-void SegmentOp::restoreXml(const Element *el)
+void SegmentOp::decode(Decoder &decoder)
 
 {
-  spc = glb->getSpaceByName(el->getAttributeValue("space"));
+  uint4 elemId = decoder.openElement(ELEM_SEGMENTOP);
+  spc = (AddrSpace *)0;
   injectId = -1;
   baseinsize = 0;
   innerinsize = 0;
   supportsfarpointer = false;
   name = "segment"; 		// Default name, might be overridden by userop attribute
-  for(int4 i=0;i<el->getNumAttributes();++i) {
-    const string &nm(el->getAttributeName(i));
-    if (nm == "space") continue;
-    else if (nm == "farpointer")
+  for(;;) {
+    uint4 attribId = decoder.getNextAttributeId();
+    if (attribId == 0) break;
+    if (attribId == ATTRIB_SPACE)
+      spc = decoder.readSpace();
+    else if (attribId == ATTRIB_FARPOINTER)
       supportsfarpointer = true;
-    else if (nm == "userop") {	// Based on existing sleigh op
-      name = el->getAttributeValue(i);
+    else if (attribId == ATTRIB_USEROP) {	// Based on existing sleigh op
+      name = decoder.readString();
     }
-    else
-      throw LowlevelError("Bad segmentop tag attribute: "+nm);
   }
+  if (spc == (AddrSpace *)0)
+    throw LowlevelError("<segmentop> expecting space attribute");
   UserPcodeOp *otherop = glb->userops.getOp(name);
   if (otherop == (UserPcodeOp *)0)
     throw LowlevelError("<segmentop> unknown userop " + name);
@@ -187,30 +171,27 @@ void SegmentOp::restoreXml(const Element *el)
   if (dynamic_cast<UnspecializedPcodeOp *>(otherop) == (UnspecializedPcodeOp *)0)
     throw LowlevelError("Redefining userop "+name);
 
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-  for(iter=list.begin();iter!=list.end();++iter) {
-    const Element *subel = *iter;
-    if (subel->getName()=="constresolve") {
+  for(;;) {
+    uint4 subId = decoder.peekElement();
+    if (subId == 0) break;
+    if (subId==ELEM_CONSTRESOLVE) {
       int4 sz;
-      const List &sublist(subel->getChildren());
-      if (!sublist.empty()) {
-	List::const_iterator subiter = sublist.begin();
-	const Element *subsubel = *subiter;
-	Address addr = Address::restoreXml(subsubel,glb,sz);
+      decoder.openElement();
+      if (decoder.peekElement() != 0) {
+	Address addr = Address::decode(decoder,sz);
 	constresolve.space = addr.getSpace();
 	constresolve.offset = addr.getOffset();
 	constresolve.size = sz;
       }
+      decoder.closeElement(subId);
     }
-    else if (subel->getName() == "pcode") {
+    else if (subId == ELEM_PCODE) {
       string nm = name + "_pcode";
       string source = "cspec";
-      injectId = glb->pcodeinjectlib->restoreXmlInject(source, nm, InjectPayload::EXECUTABLEPCODE_TYPE, subel);
+      injectId = glb->pcodeinjectlib->decodeInject(source, nm, InjectPayload::EXECUTABLEPCODE_TYPE, decoder);
     }
-    else
-      throw LowlevelError("Bad segment pattern tag: "+subel->getName());
   }
+  decoder.closeElement(elemId);
   if (injectId < 0)
     throw LowlevelError("Missing <pcode> child in <segmentop> tag");
   InjectPayload *payload = glb->pcodeinjectlib->getPayload(injectId);
@@ -237,43 +218,44 @@ JumpAssistOp::JumpAssistOp(Architecture *g)
   calcsize = -1;
 }
 
-void JumpAssistOp::restoreXml(const Element *el)
+void JumpAssistOp::decode(Decoder &decoder)
 
 {
-  name = el->getAttributeValue("name");
+  uint4 elemId = decoder.openElement(ELEM_JUMPASSIST);
+  name = decoder.readString(ATTRIB_NAME);
   index2case = -1;	// Mark as not present until we see a tag
   index2addr = -1;
   defaultaddr = -1;
   calcsize = -1;
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-  for(iter=list.begin();iter!=list.end();++iter) {
-    const Element *subel = *iter;
-    if (subel->getName() == "case_pcode") {
+  for(;;) {
+    uint4 subId = decoder.peekElement();
+    if (subId == 0) break;
+    if (subId == ELEM_CASE_PCODE) {
       if (index2case != -1)
 	throw LowlevelError("Too many <case_pcode> tags");
-      index2case = glb->pcodeinjectlib->restoreXmlInject("jumpassistop", name+"_index2case",
-							 InjectPayload::EXECUTABLEPCODE_TYPE,subel);
+      index2case = glb->pcodeinjectlib->decodeInject("jumpassistop", name+"_index2case",
+						     InjectPayload::EXECUTABLEPCODE_TYPE,decoder);
     }
-    else if (subel->getName() == "addr_pcode") {
+    else if (subId == ELEM_ADDR_PCODE) {
       if (index2addr != -1)
 	throw LowlevelError("Too many <addr_pcode> tags");
-      index2addr = glb->pcodeinjectlib->restoreXmlInject("jumpassistop", name+"_index2addr",
-							 InjectPayload::EXECUTABLEPCODE_TYPE,subel);
+      index2addr = glb->pcodeinjectlib->decodeInject("jumpassistop", name+"_index2addr",
+						     InjectPayload::EXECUTABLEPCODE_TYPE,decoder);
     }
-    else if (subel->getName() == "default_pcode") {
+    else if (subId == ELEM_DEFAULT_PCODE) {
       if (defaultaddr != -1)
 	throw LowlevelError("Too many <default_pcode> tags");
-      defaultaddr = glb->pcodeinjectlib->restoreXmlInject("jumpassistop", name+"_defaultaddr",
-							  InjectPayload::EXECUTABLEPCODE_TYPE,subel);
+      defaultaddr = glb->pcodeinjectlib->decodeInject("jumpassistop", name+"_defaultaddr",
+						      InjectPayload::EXECUTABLEPCODE_TYPE,decoder);
     }
-    else if (subel->getName() == "size_pcode") {
+    else if (subId == ELEM_SIZE_PCODE) {
       if (calcsize != -1)
 	throw LowlevelError("Too many <size_pcode> tags");
-      calcsize = glb->pcodeinjectlib->restoreXmlInject("jumpassistop", name+"_calcsize",
-						       InjectPayload::EXECUTABLEPCODE_TYPE,subel);
+      calcsize = glb->pcodeinjectlib->decodeInject("jumpassistop", name+"_calcsize",
+						   InjectPayload::EXECUTABLEPCODE_TYPE,decoder);
     }
   }
+  decoder.closeElement(elemId);
 
   if (index2addr == -1)
     throw LowlevelError("userop: " + name + " is missing <addr_pcode>");
@@ -330,11 +312,11 @@ void UserOpManage::setDefaults(Architecture *glb)
 
 {
   if (vol_read == (VolatileReadOp *)0) {
-    VolatileReadOp *volread = new VolatileReadOp(glb,"read_volatile",useroplist.size());
+    VolatileReadOp *volread = new VolatileReadOp(glb,"read_volatile",useroplist.size(), false);
     registerOp(volread);
   }
   if (vol_write == (VolatileWriteOp *)0) {
-    VolatileWriteOp *volwrite = new VolatileWriteOp(glb,"write_volatile",useroplist.size());
+    VolatileWriteOp *volwrite = new VolatileWriteOp(glb,"write_volatile",useroplist.size(), false);
     registerOp(volwrite);
   }
 }
@@ -406,17 +388,17 @@ void UserOpManage::registerOp(UserPcodeOp *op)
   }
 }
 
-/// Create a SegmentOp description object based on the tag details and
+/// Create a SegmentOp description object based on the element and
 /// register it with \b this manager.
-/// \param el is the root \<segmentop> element
+/// \param decoder is the stream decoder
 /// \param glb is the owning Architecture
-void UserOpManage::parseSegmentOp(const Element *el,Architecture *glb)
+void UserOpManage::decodeSegmentOp(Decoder &decoder,Architecture *glb)
 
 {
   SegmentOp *s_op;
   s_op = new SegmentOp(glb,"",useroplist.size());
   try {
-    s_op->restoreXml(el);
+    s_op->decode(decoder);
     registerOp(s_op);
   } catch(LowlevelError &err) {
     delete s_op;
@@ -425,47 +407,58 @@ void UserOpManage::parseSegmentOp(const Element *el,Architecture *glb)
 }
 
 /// Create either a VolatileReadOp or VolatileWriteOp description object based on
-/// the XML details and register it with \b this manager.
-/// \param el is the root \<volatile> element
+/// the element and register it with \b this manager.
+/// \param decoder is the stream decoder
 /// \param glb is the owning Architecture
-void UserOpManage::parseVolatile(const Element *el,Architecture *glb)
+void UserOpManage::decodeVolatile(Decoder &decoder,Architecture *glb)
 
 {
-  for(int4 i=0;i<el->getNumAttributes();++i) {
-    if (el->getAttributeName(i)=="inputop") {
-      VolatileReadOp *vr_op = new VolatileReadOp(glb,"",useroplist.size());
-      try {
-	vr_op->restoreXml(el);
-	registerOp(vr_op);
-      } catch(LowlevelError &err) {
-	delete vr_op;
-	throw err;
-      }
+  string readOpName;
+  string writeOpName;
+  bool functionalDisplay = false;
+  for(;;) {
+    uint4 attribId = decoder.getNextAttributeId();
+    if (attribId == 0) break;
+    if (attribId==ATTRIB_INPUTOP) {
+      readOpName = decoder.readString();
     }
-    else if (el->getAttributeName(i)=="outputop") {
-      // Read in the volatile output tag
-      VolatileWriteOp *vw_op = new VolatileWriteOp(glb,"",useroplist.size());
-      try {
-	vw_op->restoreXml(el);
-	registerOp(vw_op);
-      } catch(LowlevelError &err) {
-	delete vw_op;
-	throw err;
-      }
+    else if (attribId==ATTRIB_OUTPUTOP) {
+      writeOpName = decoder.readString();
     }
+    else if (attribId == ATTRIB_FORMAT) {
+      string format = decoder.readString();
+      if (format == "functional")
+	functionalDisplay = true;
+    }
+  }
+  if (readOpName.size() == 0 || writeOpName.size() == 0)
+    throw LowlevelError("Missing inputop/outputop attributes in <volatile> element");
+  VolatileReadOp *vr_op = new VolatileReadOp(glb,readOpName,useroplist.size(),functionalDisplay);
+  try {
+    registerOp(vr_op);
+  } catch(LowlevelError &err) {
+    delete vr_op;
+    throw err;
+  }
+  VolatileWriteOp *vw_op = new VolatileWriteOp(glb,writeOpName,useroplist.size(),functionalDisplay);
+  try {
+    registerOp(vw_op);
+  } catch(LowlevelError &err) {
+    delete vw_op;
+    throw err;
   }
 }
 
-/// Create an InjectedUserOp description object based on the XML description
+/// Create an InjectedUserOp description object based on the element
 /// and register it with \b this manager.
-/// \param el is the root \<callotherfixup> element
+/// \param decoder is the stream decoder
 /// \param glb is the owning Architecture
-void UserOpManage::parseCallOtherFixup(const Element *el,Architecture *glb)
+void UserOpManage::decodeCallOtherFixup(Decoder &decoder,Architecture *glb)
 
 {
   InjectedUserOp *op = new InjectedUserOp(glb,"",0,0);
   try {
-    op->restoreXml(el);
+    op->decode(decoder);
     registerOp(op);
   } catch(LowlevelError &err) {
     delete op;
@@ -473,16 +466,16 @@ void UserOpManage::parseCallOtherFixup(const Element *el,Architecture *glb)
   }
 }
 
-/// Create a JumpAssistOp description object based on the XML description
+/// Create a JumpAssistOp description object based on the element
 /// and register it with \b this manager.
-/// \param el is the root \<jumpassist> element
+/// \param decoder is the stream decoder
 /// \param glb is the owning Architecture
-void UserOpManage::parseJumpAssist(const Element *el,Architecture *glb)
+void UserOpManage::decodeJumpAssist(Decoder &decoder,Architecture *glb)
 
 {
   JumpAssistOp *op = new JumpAssistOp(glb);
   try {
-    op->restoreXml(el);
+    op->decode(decoder);
     registerOp(op);
   } catch(LowlevelError &err) {
     delete op;

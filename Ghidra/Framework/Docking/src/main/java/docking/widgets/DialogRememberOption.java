@@ -46,8 +46,7 @@ public class DialogRememberOption {
 	}
 
 	/**
-	 * Returns the result from a previous call to an OptionDialog that had this SavedDialogChoice
-	 * installed.
+	 * Returns the result from a previous call to an OptionDialog that had this class installed.
 	 * @return  the saved results from a previous call to an OptionDialog.
 	 */
 	public int getRememberedResult() {
@@ -66,10 +65,9 @@ public class DialogRememberOption {
 	/**
 	 * Sets the results from the dialog only if choice is true.
 	 * <P>
-	 * In other words, if the user selects the checkBox, then
-	 * the result will be saved.  The, whenever the dialog is
-	 * "shown", if there is a saved result, it will be returned
-	 * instead of actually showing the dialog.
+	 * In other words, if the user selects the checkBox, then the result will be saved.  Then,
+	 * whenever the dialog is shown, if there is a saved result, it will be returned instead of
+	 * actually showing the dialog.
 	 *
 	 * @param choice the user's choice from the OptionDialog
 	 */

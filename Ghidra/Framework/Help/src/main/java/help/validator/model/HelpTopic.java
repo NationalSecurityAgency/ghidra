@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +15,21 @@
  */
 package help.validator.model;
 
-import help.HelpBuildUtils;
-import help.validator.location.DirectoryHelpModuleLocation;
-import help.validator.location.HelpModuleLocation;
-
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+
+import help.HelpBuildUtils;
+import help.validator.location.DirectoryHelpModuleLocation;
+import help.validator.location.HelpModuleLocation;
 
 public class HelpTopic implements Comparable<HelpTopic> {
 	private final HelpModuleLocation help;
 	private final Path topicFile;
 	private final Path relativePath;
 
-	private Map<Path, HelpFile> helpFiles = new LinkedHashMap<Path, HelpFile>();
+	private Map<Path, HelpFile> helpFiles = new LinkedHashMap<>();
 
 	public static HelpTopic fromHTMLFile(Path topicFile) {
 
@@ -51,8 +50,8 @@ public class HelpTopic implements Comparable<HelpTopic> {
 
 		Path helpDir = help.getHelpLocation();
 
-		Path unknowFSRelativePath = helpDir.relativize(topicFile); // may or may not be jar paths
-		this.relativePath = HelpBuildUtils.toDefaultFS(unknowFSRelativePath);
+		Path unknownFSRelativePath = helpDir.relativize(topicFile); // may or may not be jar paths
+		this.relativePath = HelpBuildUtils.toDefaultFS(unknownFSRelativePath);
 
 		loadHelpFiles(topicFile);
 	}
@@ -104,7 +103,7 @@ public class HelpTopic implements Comparable<HelpTopic> {
 		if (topicFile.getFileSystem() != FileSystems.getDefault()) {
 			return Collections.emptyList();
 		}
-		List<HREF> list = new ArrayList<HREF>();
+		List<HREF> list = new ArrayList<>();
 		for (HelpFile helpFile : helpFiles.values()) {
 			list.addAll(helpFile.getAllHREFs());
 		}
@@ -116,7 +115,7 @@ public class HelpTopic implements Comparable<HelpTopic> {
 		if (topicFile.getFileSystem() != FileSystems.getDefault()) {
 			return Collections.emptyList();
 		}
-		List<IMG> list = new ArrayList<IMG>();
+		List<IMG> list = new ArrayList<>();
 		for (HelpFile helpFile : helpFiles.values()) {
 			list.addAll(helpFile.getAllIMGs());
 		}
@@ -125,7 +124,7 @@ public class HelpTopic implements Comparable<HelpTopic> {
 
 	public Collection<AnchorDefinition> getAllAnchorDefinitions() {
 		// The current module may refer to anchors in pre-built modules.
-		List<AnchorDefinition> list = new ArrayList<AnchorDefinition>();
+		List<AnchorDefinition> list = new ArrayList<>();
 		for (HelpFile helpFile : helpFiles.values()) {
 			list.addAll(helpFile.getAllAnchorDefinitions());
 		}

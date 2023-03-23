@@ -23,8 +23,9 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.AssertException;
 
 /**
- * Takes care of allocating unique instances of primitive data types for the {@link PdbApplicator},
- * and is used principally by the many instances of {@link PrimitiveTypeApplier}.
+ * Takes care of allocating unique instances of primitive data types for the
+ * {@link DefaultPdbApplicator}, and is used principally by the many instances of
+ * {@link PrimitiveTypeApplier}.
  */
 public class PdbPrimitiveTypeApplicator {
 
@@ -59,7 +60,7 @@ public class PdbPrimitiveTypeApplicator {
 	}
 
 	/**
-	 * Returns the {@link DataTypeManager} associated with this analyzer. 
+	 * Returns the {@link DataTypeManager} associated with this analyzer.
 	 * @return DataTypeManager which this analyzer is using.
 	 */
 	private DataTypeManager getDataTypeManager() {
@@ -516,7 +517,7 @@ public class PdbPrimitiveTypeApplicator {
 		return getRealType(16, "float128");
 	}
 
-	/* 
+	/*
 	 * First get type from "other" list, which are typedefs to underlying primitives. If it does
 	 * not exist, then find the proper underlying primitive, create the typedef, and cache this
 	 * newly minted (typedef) unique primitive type.
@@ -629,7 +630,7 @@ public class PdbPrimitiveTypeApplicator {
 		return getBooleanType(16, "T_BOOL128");
 	}
 
-	/* 
+	/*
 	 * First get type from "other" list, which are typedefs to underlying primitives. If it does
 	 * not exist, then find the proper underlying primitive, create the typedef, and cache this
 	 * newly minted (typedef) unique primitive type.

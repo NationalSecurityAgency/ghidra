@@ -45,8 +45,8 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-#ifndef YY_YY_SRC_DECOMPILE_CPP_SLGHPARSE_HH_INCLUDED
-# define YY_YY_SRC_DECOMPILE_CPP_SLGHPARSE_HH_INCLUDED
+#ifndef YY_YY_SLGHPARSE_HH_INCLUDED
+# define YY_YY_SLGHPARSE_HH_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -168,9 +168,10 @@ extern int yydebug;
     OPERANDSYM = 363,
     STARTSYM = 364,
     ENDSYM = 365,
-    MACROSYM = 366,
-    LABELSYM = 367,
-    SUBTABLESYM = 368
+    NEXT2SYM = 366,
+    MACROSYM = 367,
+    LABELSYM = 368,
+    SUBTABLESYM = 369
   };
 #endif
 
@@ -179,7 +180,7 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 29 "src/decompile/cpp/slghparse.y" /* yacc.c:1909  */
+#line 29 "slghparse.y" /* yacc.c:1909  */
 
   char ch;
   uintb *i;
@@ -212,6 +213,7 @@ union YYSTYPE
   SubtableSymbol *subtablesym;
   StartSymbol *startsym;
   EndSymbol *endsym;
+  Next2Symbol *next2sym;
   OperandSymbol *operandsym;
   VarnodeListSymbol *varlistsym;
   VarnodeSymbol *varsym;
@@ -223,7 +225,7 @@ union YYSTYPE
   FamilySymbol *famsym;
   SpecificSymbol *specsym;
 
-#line 212 "src/decompile/cpp/slghparse.hh" /* yacc.c:1909  */
+#line 214 "slghparse.hh" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;
@@ -236,4 +238,4 @@ extern YYSTYPE yylval;
 
 int yyparse (void);
 
-#endif /* !YY_YY_SRC_DECOMPILE_CPP_SLGHPARSE_HH_INCLUDED  */
+#endif /* !YY_YY_SLGHPARSE_HH_INCLUDED  */

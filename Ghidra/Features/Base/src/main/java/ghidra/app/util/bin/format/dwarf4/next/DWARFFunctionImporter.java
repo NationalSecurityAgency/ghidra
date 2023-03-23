@@ -18,9 +18,10 @@ package ghidra.app.util.bin.format.dwarf4.next;
 import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute.*;
 import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag.*;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import java.io.IOException;
 
 import ghidra.app.cmd.comments.AppendCommentCmd;
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
@@ -181,11 +182,12 @@ public class DWARFFunctionImporter {
 			return true;
 		}
 
-		// fetch the low_pc attribute directly instead of calling diea.getLowPc() to avoid
-		// any fixups applied by lower level code
+		long lowPC = diea.getLowPC(0); // adjusted by program base addr fixup
 		DWARFNumericAttribute attr =
 			diea.getAttribute(DWARFAttribute.DW_AT_low_pc, DWARFNumericAttribute.class);
-		if (attr != null && attr.getUnsignedValue() == 0) {
+		if (attr != null && attr.getUnsignedValue() == 0 && lowPC != 0) {
+			// don't process this func if its raw lowpc is 0, with the exception of a binary (a .o) 
+			// that starts at 0 and has a function at 0
 			return true;
 		}
 
@@ -345,16 +347,24 @@ public class DWARFFunctionImporter {
 	private void updateFunctionSignatureWithFormalParams(Function gfunc, List<Parameter> params,
 			DataType returnType, boolean varArgs, DIEAggregate diea) {
 		try {
+			String callingConventionName = null;
 			ReturnParameterImpl returnVar = new ReturnParameterImpl(returnType, currentProgram);
 			try {
+				if (!params.isEmpty() && Function.THIS_PARAM_NAME.equals(params.get(0).getName())) {
+					// this handles the common / simple case.  More nuanced cases where the param
+					// didn't have the correct "this" name, but were marked with DW_AT_object_pointer
+					// or DW_AT_artifical won't be handled by this.
+					callingConventionName = GenericCallingConvention.thiscall.getDeclarationName();
+				}
+
 				gfunc.setVarArgs(varArgs);
-				gfunc.updateFunction(null, returnVar, params,
+				gfunc.updateFunction(callingConventionName, returnVar, params,
 					FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, SourceType.IMPORTED);
 			}
 			catch (DuplicateNameException e) {
 				// try again after adjusting param names
 				setUniqueParameterNames(gfunc, params);
-				gfunc.updateFunction(null, returnVar, params,
+				gfunc.updateFunction(callingConventionName, returnVar, params,
 					FunctionUpdateType.DYNAMIC_STORAGE_ALL_PARAMS, true, SourceType.IMPORTED);
 			}
 		}

@@ -23,7 +23,6 @@ import javax.swing.border.TitledBorder;
 
 import docking.DialogComponentProvider;
 import docking.DockingWindowManager;
-import docking.help.HelpService;
 import docking.widgets.button.GRadioButton;
 import docking.widgets.label.GLabel;
 import docking.widgets.textfield.IntegerTextField;
@@ -31,6 +30,7 @@ import ghidra.app.plugin.core.scalartable.RangeFilterTextField.FilterType;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
+import help.HelpService;
 
 /**
  * Dialog allowing the user to set parameters when initiating a scalar search on a program. 

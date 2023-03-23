@@ -153,7 +153,7 @@ public class TokenPattern {
 			else if (tok2.getRightEllipsis()) {
 				if (tok2.toklist.size() != minsize) {
 					throw new SleighError(String.format("Mismatched pattern sizes -- %d vs %d",
-						tok1.toklist.size(), minsize), location);
+						tok2.toklist.size(), minsize), location);
 				}
 				else if (tok1.toklist.size() == tok2.toklist.size()) {
 					throw new SleighError("Pattern size cannot vary (missing ... ?)", location);

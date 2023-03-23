@@ -307,6 +307,9 @@ class PrototypeManager {
 
 	private void populatePrototypes() {
 		try {
+			// Prior to language upgrade force use of invalid prototypes
+			boolean forceInvalidPrototypes = program.isLanguageUpgradePending();
+
 			RecordIterator iter = protoAdapter.getRecords();
 			while (iter.hasNext()) {
 				DBRecord record = iter.next();
@@ -314,7 +317,9 @@ class PrototypeManager {
 				int protoID = (int) record.getKey();
 
 				if (protoArray.get(protoID) == null) {
-					InstructionPrototype proto = createPrototype(protoID, record);
+					InstructionPrototype proto =
+						forceInvalidPrototypes ? new InvalidPrototype(language)
+								: createPrototype(protoID, record);
 					protoArray.put(protoID, proto);
 					protoHt.put(proto, protoID);
 				}

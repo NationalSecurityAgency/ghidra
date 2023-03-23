@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import javax.swing.JLabel;
 
 import docking.widgets.table.*;
+import generic.theme.GColor;
 import ghidra.app.util.SymbolInspector;
 import ghidra.docking.settings.Settings;
 import ghidra.feature.vt.api.impl.MarkupItemImpl;
@@ -49,6 +50,13 @@ import ghidra.util.task.TaskMonitor;
 public class VTMarkupItemsTableModel extends AddressBasedTableModel<VTMarkupItem> {
 
 	private static final String TITLE = "VTMatchMarkupItem Table Model";
+
+	private static final Color FG_ERROR =
+		new GColor("color.fg.version.tracking.markup.items.table.error");
+	private static final Color FG_USER_DEFINED =
+		new GColor("color.fg.version.tracking.markup.items.table.user.defined.address");
+	private static final Color FG_USER_DEFINED_SELECTED =
+		new GColor("color.fg.version.tracking.markup.items.table.user.defined.address.selected");
 
 	private List<Filter<VTMarkupItem>> allFilters = new ArrayList<>();
 	private final VTController controller;
@@ -336,7 +344,7 @@ public class VTMarkupItemsTableModel extends AddressBasedTableModel<VTMarkupItem
 				if (address != null && address != Address.NO_ADDRESS && symbolInspector != null) {
 					s = program.getSymbolTable().getPrimarySymbol(address);
 				}
-				Color c = Color.RED;
+				Color c = FG_ERROR;
 				if (symbolInspector != null) {
 					symbolInspector.setProgram(program);
 					c = symbolInspector.getColor(s);
@@ -471,7 +479,7 @@ public class VTMarkupItemsTableModel extends AddressBasedTableModel<VTMarkupItem
 				if (address != null && address != Address.NO_ADDRESS && symbolInspector != null) {
 					s = program.getSymbolTable().getPrimarySymbol(address);
 				}
-				Color c = Color.RED;
+				Color c = FG_ERROR;
 				if (symbolInspector != null) {
 					symbolInspector.setProgram(program);
 					c = symbolInspector.getColor(s);
@@ -510,10 +518,10 @@ public class VTMarkupItemsTableModel extends AddressBasedTableModel<VTMarkupItem
 				JLabel renderer = (JLabel) super.getTableCellRendererComponent(renderData);
 
 				if (NO_SOURCE_TEXT.equals(addressSource)) {
-					setForeground(Color.RED);
+					setForeground(FG_ERROR);
 				}
 				else if (VTMarkupItem.USER_DEFINED_ADDRESS_SOURCE.equals(addressSource)) {
-					setForeground(isSelected ? Color.CYAN : Color.CYAN.darker());
+					setForeground(isSelected ? FG_USER_DEFINED : FG_USER_DEFINED_SELECTED);
 				}
 
 				renderer.setOpaque(true);

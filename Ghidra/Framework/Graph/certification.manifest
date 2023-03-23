@@ -3,8 +3,10 @@
 ##MODULE IP: FAMFAMFAM Icons - CC 2.5
 ##MODULE IP: LGPL 2.1
 ##MODULE IP: Oxygen Icons - LGPL 3.0
+##MODULE IP: Tango Icons - Public Domain
 Module.manifest||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
+data/graph.theme.properties||GHIDRA||||END|
 src/main/docs/README.txt||GHIDRA||||END|
 src/main/docs/VerticesAndEdges.png||GHIDRA||||END|
 src/main/docs/VerticesAndEdges.xml||GHIDRA||||END|
@@ -12,6 +14,10 @@ src/main/docs/VisualGraphHierarchy.png||GHIDRA||||END|
 src/main/docs/VisualGraphHierarchy.xml||GHIDRA||||END|
 src/main/docs/VisualGraphViewer.png||GHIDRA||||END|
 src/main/docs/VisualGraphViewer.xml||GHIDRA||||END|
+src/main/resources/images/Lasso.png||GHIDRA||||END|
 src/main/resources/images/color_swatch.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/images/network-wireless-16.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/network-wireless.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
+src/main/resources/images/project-open.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
+src/main/resources/images/redspheregraph.png||GHIDRA||||END|
+src/main/resources/images/view-fullscreen.png||Tango Icons - Public Domain|||tango icon set|END|

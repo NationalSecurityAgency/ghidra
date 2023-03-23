@@ -19,11 +19,14 @@
 package docking.widgets.filechooser;
 
 import static docking.widgets.filechooser.GhidraFileChooserMode.*;
-import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.text.IsEmptyString.isEmptyOrNullString;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
+import java.awt.*;
+import java.awt.event.FocusListener;
+import java.awt.event.MouseEvent;
+import java.io.*;
+import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -31,12 +34,6 @@ import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-
-import java.awt.*;
-import java.awt.event.FocusListener;
-import java.awt.event.MouseEvent;
-import java.io.*;
-import java.nio.file.*;
 
 import javax.swing.*;
 import javax.swing.table.JTableHeader;
@@ -1917,7 +1914,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		waitForChooser();
 		filenameFieldText = getFilenameFieldText();
 		assertThat("Filename text field not cleared upon multi-file selection", filenameFieldText,
-			isEmptyOrNullString());
+			is(emptyOrNullString()));
 
 		//
 		// Clear the multi-selection; a single file selection will set the text field text
@@ -1929,9 +1926,77 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 			filenameFieldText);
 	}
 
+	@Test
+	public void testLastDirectoryPreference() throws Exception {
+
+		// remove the default test chooser
+		close();
+		String key = "SomePreferenceKey";
+		clearPreference(key);
+
+		runSwing(() -> {
+			chooser = new GhidraFileChooser(null);
+			chooser.setLastDirectoryPreference(key);
+			chooser.setMultiSelectionEnabled(true);
+			chooser.setLastDirectoryPreference(key);
+		});
+
+		runSwing(() -> {
+			lastSelectedFile = chooser.getSelectedFile(true);
+		}, false);
+
+		File startDir = createTempDir();
+		setDir(startDir);
+		String nonExistentFilename = getClass().getName() + ".foo.bar.baz.test";
+		setFilenameFieldText(nonExistentFilename);
+		pressOk();
+
+		waitForChooser();
+
+		File selectedFile = getSelectedFile();
+		assertEquals(nonExistentFilename, selectedFile.getName());
+
+		assertChooserPreference(key, selectedFile.getParentFile());
+	}
+
+	@Test
+	public void testLastDirectoryPreference_Cancel() throws Exception {
+
+		// remove the default test chooser
+		close();
+		String key = "SomePreferenceKey";
+		clearPreference(key);
+
+		runSwing(() -> {
+			chooser = new GhidraFileChooser(null);
+			chooser.setLastDirectoryPreference(key);
+			chooser.setMultiSelectionEnabled(true);
+			chooser.setLastDirectoryPreference(key);
+			chooser.show();
+		}, false);
+		waitForChooser();
+
+		pressCancel();
+		assertChooserPreference(key, null);
+	}
+
 //==================================================================================================
 // Private Methods
 //==================================================================================================
+
+	private void clearPreference(String key) {
+		Preferences.setProperty(key, "");
+	}
+
+	private void assertChooserPreference(String key, File dir) {
+		String value = Preferences.getProperty(key);
+		if (dir == null) {
+			assertEquals("", value);
+		}
+		else {
+			assertEquals(dir.getPath(), value);
+		}
+	}
 
 	private List<File> getExistingFiles(File dir, int count) {
 		assertTrue(dir.isDirectory());

@@ -18,13 +18,15 @@ package ghidra.graph.viewer.renderer;
 import java.awt.*;
 import java.util.Objects;
 
+import generic.theme.GThemeDefaults.Colors.Palette;
+
 /**
  * A base class for shapes that can be painted on the graph.  See {@link MouseDebugPaintable}.
  */
 public class PaintableShape {
 
 	protected Shape shape;
-	protected Color color = new Color(255, 200, 0, 127);  // orange with alpha;
+	protected Color color = Palette.ORANGE.withAlpha(127);
 	protected Stroke stroke;
 
 	protected double tx;

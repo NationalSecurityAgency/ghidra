@@ -8,7 +8,7 @@
     <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
 
     <TITLE>Code Browser</TITLE>
-    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
     <META name="generator" content="Microsoft FrontPage 4.0">
   </HEAD>
 
@@ -87,7 +87,7 @@
       to a highlight. Later the highlight can be converted back into a selection using the same
       menu. At that point an action can be applied to the selection.</P>
 
-      <P><IMG border="0" src="../../shared/note.png" alt="">Highlights are not saved across program
+      <P><IMG border="0" src="help/shared/note.png" alt="">Highlights are not saved across program
       sessions. To achieve a lasting color effect, you can <A href=
       "help/topics/CodeBrowserPlugin/ListingBackground.html">color the Listing background</A>.</P>
     </BLOCKQUOTE>
@@ -117,7 +117,7 @@
       display "[more]" to indicate that one or more cross-reference addresses are not shown.</P>
 
       <BLOCKQUOTE>
-        <P><IMG border="0" src="../../shared/tip.png" alt=""> Double-clicking on the "<FONT color=
+        <P><IMG border="0" src="help/shared/tip.png" alt=""> Double-clicking on the "<FONT color=
         "green"><TT>XREF[n]:</TT></FONT> or <FONT><TT>[more]</TT></FONT>" text will cause a 
         dialog containing all the Xrefs to appear.</P>
         <P>
@@ -132,6 +132,22 @@
       <P align="left">This dialog lists all the Xref addresses, any labels that are at that address
       and a preview of the instruction at that address. Clicking on any row in the table will cause
       the browser to navigate to that address</P>
+      
+  	    <H3><A NAME="Show_Thunk_Xrefs"></A>Show Thunk Xrefs 
+  	    	<IMG border="0" src="images/ThunkFunction.gif" alt=""></H3>
+    
+    		<BLOCKQUOTE>
+    			<P>
+    			Available when viewing all Xrefs to a particular function, this toolbar action 
+    			allows you to see not only xrefs directly to the function, but also any xrefs to
+    			functions that thunk that function as well.   With this action toggled on you will
+    			see all Xrefs to the final 'base' thunked function, along with all Xrefs to 
+    			functions that thunk that function, regardless of which function was used to launch
+    			the dialog.  Alternatively, when toggled off, you will only see those Xrefs that
+    			point to the function used to launch the dialog.
+    			</P>
+    		</BLOCKQUOTE>
+      
     </BLOCKQUOTE>
 
     <H2><A NAME="Keyboard_Controls">Keyboard Controls</H2>
@@ -216,18 +232,18 @@
                         	<BLOCKQUOTE>
                         	
             	<P>
-            	<IMG border="0" src="../../shared/note.png" alt="">
+            	<IMG border="0" src="help/shared/note.png" alt="">
             	<SPAN style="font-size: 0.8em;">
             	You can disable horizontal scrolling in the Listing (and all other 
             	Field Panels) via the Tool Options at 
             	<B>Edit
-            	<IMG alt="" border="0" src="../../shared/arrow.gif">
+            	<IMG alt="" border="0" src="help/shared/arrow.gif">
             	Tool Options...
-            	<IMG alt="" border="0" src="../../shared/arrow.gif">
+            	<IMG alt="" border="0" src="help/shared/arrow.gif">
             	Listing Fields
-            	<IMG alt="" border="0" src="../../shared/arrow.gif">
+            	<IMG alt="" border="0" src="help/shared/arrow.gif">
             	Mouse
-            	<IMG alt="" border="0" src="../../shared/arrow.gif">
+            	<IMG alt="" border="0" src="help/shared/arrow.gif">
             	Horizontal Scrolling
             	</B>
             	</SPAN>
@@ -373,7 +389,7 @@
       </TABLE>
 
       <DIV style="margin-left: 2em">
-        <P><IMG border="0" src="../../shared/note.png" alt=""> The marker popup menu is updated
+        <P><IMG border="0" src="help/shared/note.png" alt=""> The marker popup menu is updated
         appropriately when some plugin adds/removes new marker types.</P>
 
         <P><A name="Navigation_Markers"></A>Another way to control the display of Navigation
@@ -408,7 +424,7 @@
         Thus, as you scroll the Listing, you will see flow arrows appear and disappear, as the
         addresses the arrows are based upon appear and disappear in the listing.</P>
 
-        <P><IMG border="0" src="../../shared/tip.png" alt="">You can select an arrow keep it from
+        <P><IMG border="0" src="help/shared/tip.png" alt="">You can select an arrow keep it from
         disappearing as you scroll the Listing. To select an arrow, simply click it with the mouse.
         Selected arrows appear green in color.</P>
       </BLOCKQUOTE>
@@ -465,7 +481,7 @@
     <BLOCKQUOTE>
       <BLOCKQUOTE>
         <P>You can change the size of the popup can be changed by editing options. Choose
-        <B>Edit</B><IMG alt="" border="0" src="../../shared/arrow.gif"> <B>Tool Options...</B>,
+        <B>Edit</B><IMG alt="" border="0" src="help/shared/arrow.gif"> <B>Tool Options...</B>,
         click on the <I>Listing Popups</I> node in the Options tree. Select the <I>Reference Code
         Viewer</I> node to display the height and width values of the popup. Edit the values and
         click on the <B>OK</B> or <B>Apply</B> button.</P>
@@ -538,7 +554,7 @@
         state.</P>
         <!-- Caution about the button and options -->
 
-        <P><IMG border="0" src="../../shared/note.png" alt=""> Clicking the icon has no effect when
+        <P><IMG border="0" src="help/shared/note.png" alt=""> Clicking the icon has no effect when
         all of the hover services are disable in Ghidra's options. A reminder message will be shown
         in the event that you attempt to enable popups from this icon <B>and</B> all hover services
         are disabled.</P>
@@ -607,7 +623,7 @@
           element.</LI>
         </UL>
 
-        <P><IMG border="0" src="../../shared/note.png" alt="">The <B>Expand All Data</B> and
+        <P><IMG border="0" src="help/shared/note.png" alt="">The <B>Expand All Data</B> and
         <B>Collapse All Data</B> actions behave differently. The <B>Expand All Data</B> recursively
         opens the data starting at the location of the popup menu. The <B>Collapse All Data</B>
         action, on the other hand, always works on the <B>outermost</B> data structure, regardless
@@ -718,6 +734,10 @@
       <LI><A href="help/topics/ProgramTreePlugin/program_tree.htm">Program Tree</A></LI>
 
       <LI><A href="help/topics/Selection/Selecting.htm">Selection &amp; Highlighting</A></LI>
-    </UL><BR>
+    </UL>
+        <P>&nbsp;</P>
+    <BR>
+     <BR>
+     <BR>
   </BODY>
 </HTML>

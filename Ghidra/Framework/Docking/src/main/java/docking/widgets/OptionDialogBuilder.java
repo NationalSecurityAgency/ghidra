@@ -60,7 +60,7 @@ import ghidra.util.Swing;
  * The checkBox text will be either "Apply to all", "Remember my decision",
  * or "Don't show again" depending on whether {@link #addApplyToAllOption()},
  * {@link #addDontShowAgainOption()}, or {@link #addRememberMyDecisionOption()} method is
- * called.
+ * called.  Each of these methods called will overwrite the previously called method.
  *
  * <P>If the user selects the checkBox, then the dialog result will be remembered.
  * In future calls to display that dialog (or any dialog sharing

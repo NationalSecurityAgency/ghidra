@@ -22,12 +22,7 @@ import ghidra.framework.model.DomainObject;
 import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.*;
 import ghidra.program.model.block.*;
-import ghidra.program.model.lang.Register;
-import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.MemoryBlock;
-import ghidra.program.model.pcode.PcodeOp;
-import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.symbol.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.*;
@@ -202,7 +197,8 @@ public class CreateFunctionCmd extends BackgroundCommand {
 							tmpSource = oldSym.getSource();
 							Namespace oldParentNamespace = oldSym.getParentNamespace();
 							// A function can't have another function as its parent.
-							if (oldParentNamespace.getSymbol().getSymbolType() != SymbolType.FUNCTION) {
+							if (oldParentNamespace.getSymbol()
+									.getSymbolType() != SymbolType.FUNCTION) {
 								nameSpace = oldParentNamespace;
 							}
 						}
@@ -354,7 +350,7 @@ public class CreateFunctionCmd extends BackgroundCommand {
 	 * @param body - body of function
 	 * @param nameSource - source of the name
 	 * @param bodyChangeMap - change map to restore other affected functions bodies if this fails
-	 * @param monitor
+	 * @param monitor task monitor
 	 * @return
 	 * @throws OverlappingFunctionException
 	 * @throws DuplicateNameException
@@ -403,7 +399,7 @@ public class CreateFunctionCmd extends BackgroundCommand {
 	 * @param entry - entry point of new function
 	 * @param body - new functions body
 	 * @param bodyChangeMap - map of functions that have their bodies changed by creating this function
-	 * @param monitor
+	 * @param monitor task monitor
 	 * @return
 	 * @throws CancelledException
 	 * @throws OverlappingFunctionException
@@ -435,7 +431,7 @@ public class CreateFunctionCmd extends BackgroundCommand {
 	 *
 	 * @param entry
 	 * @param body
-	 * @param monitor
+	 * @param monitor task monitor
 	 * @return the new body, or null if body could not be created and need to abort function creation.
 	 *
 	 * @throws CancelledException
@@ -498,7 +494,7 @@ public class CreateFunctionCmd extends BackgroundCommand {
 	 *
 	 * @param entry function entry point to check for thunk
 	 * @param body new function body
-	 * @param monitor
+	 * @param monitor task monitor
 	 * @return true if the entry resolved to a thunk
 	 *
 	 * @throws OverlappingFunctionException
@@ -506,7 +502,8 @@ public class CreateFunctionCmd extends BackgroundCommand {
 	private boolean resolveThunk(Address entry, AddressSetView body, TaskMonitor monitor)
 			throws OverlappingFunctionException {
 
-		Address thunkedAddr = CreateThunkFunctionCmd.getThunkedExternalFunctionAddress(program, entry);
+		Address thunkedAddr =
+			CreateThunkFunctionCmd.getThunkedExternalFunctionAddress(program, entry);
 		if (thunkedAddr == null) {
 			thunkedAddr = CreateThunkFunctionCmd.getThunkedAddr(program, entry);
 		}
@@ -591,6 +588,7 @@ public class CreateFunctionCmd extends BackgroundCommand {
 	/**
 	 * Find the function body by following all flows other than a call from the
 	 * entry point.
+	 * @param monitor task monitor
 	 * @param program the program where the function is being created.
 	 * @param entry entry point to start tracing flow
 	 *
@@ -650,6 +648,7 @@ public class CreateFunctionCmd extends BackgroundCommand {
 	 * @param monitor task monitor
 	 * @return true if successful, false if cancelled or unable to fixup function or
 	 * no function found containing the start address of the indicated instruction
+	 * @throws CancelledException if the function fixup is cancelled.
 	 */
 	public static boolean fixupFunctionBody(Program program, Instruction start_inst,
 			TaskMonitor monitor) throws CancelledException {
@@ -680,7 +679,8 @@ public class CreateFunctionCmd extends BackgroundCommand {
 		AddressSetView newBody = getFunctionBody(program, entry, false, monitor);
 
 		// function could now be a thunk, since someone is calling this because of a potential body flow change
-		if (!func.isThunk() && resolveThunk(program, entry, newBody, monitor)) {
+		if (func.getSignatureSource() == SourceType.DEFAULT && !func.isThunk() &&
+			resolveThunk(program, entry, newBody, monitor)) {
 			// function flow might have changed, and could now be a thunk, without the body changing.
 			// don't worry about it below, because if there is an overlapping body, something strange
 			// going on, and the function should still be a thunk

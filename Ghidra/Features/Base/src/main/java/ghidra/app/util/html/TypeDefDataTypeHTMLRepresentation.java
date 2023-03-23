@@ -15,11 +15,11 @@
  */
 package ghidra.app.util.html;
 
-import java.awt.Color;
 import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
 
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.util.ToolTipUtils;
 import ghidra.app.util.html.diff.DataTypeDiff;
 import ghidra.app.util.html.diff.DataTypeDiffBuilder;
@@ -144,7 +144,7 @@ public class TypeDefDataTypeHTMLRepresentation extends HTMLDataTypeRepresentatio
 	protected List<ValidatableLine> buildHeaderText(boolean trim) {
 
 		DataType baseDataType = typeDef.getDataType();
-		
+
 		List<ValidatableLine> lines = new ArrayList<>();
 		lines.add(new TextLine(getDataTypeNameHTML(typeDef, trim)));
 
@@ -181,7 +181,7 @@ public class TypeDefDataTypeHTMLRepresentation extends HTMLDataTypeRepresentatio
 				addDataTypeLengthAndAlignment(typeDef, new StringBuilder()).toString();
 			lines.add(new TextLine(INDENT_OPEN + lengthAndAlignmentStr + INDENT_CLOSE));
 		}
-		
+
 		baseDataType = getBasePointerArrayDataType(baseDataType);
 		boolean firstBaseTypedef = true;
 		while (baseDataType instanceof TypeDef) {
@@ -220,7 +220,7 @@ public class TypeDefDataTypeHTMLRepresentation extends HTMLDataTypeRepresentatio
 		Iterator<String> warnings = warningLines.iterator();
 		for (; warnings.hasNext();) {
 			String warning = warnings.next();
-			String warningLine = wrapStringInColor(warning, Color.RED);
+			String warningLine = wrapStringInColor(warning, Messages.ERROR);
 			buffy.append(warningLine).append(BR);
 		}
 

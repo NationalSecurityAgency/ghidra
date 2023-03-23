@@ -20,14 +20,13 @@ import java.util.concurrent.CompletableFuture;
 
 import javax.swing.Icon;
 
-import com.google.common.collect.Range;
-
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AutoReadMemoryAction;
 import ghidra.app.services.TraceRecorder;
 import ghidra.async.AsyncUtils;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.memory.*;
 import ghidra.util.task.TaskMonitor;
@@ -80,7 +79,7 @@ public class VisibleROOnceAutoReadMemorySpec implements AutoReadMemorySpec {
 		AddressSet readOnly = new AddressSet();
 		for (AddressRange range : visible) {
 			for (TraceMemoryRegion region : mm
-					.getRegionsIntersecting(Range.singleton(coordinates.getSnap()), range)) {
+					.getRegionsIntersecting(Lifespan.at(coordinates.getSnap()), range)) {
 				if (region.isWrite()) {
 					continue;
 				}
@@ -93,6 +92,6 @@ public class VisibleROOnceAutoReadMemorySpec implements AutoReadMemorySpec {
 			return AsyncUtils.NIL;
 		}
 
-		return recorder.readMemoryBlocks(toRead, TaskMonitor.DUMMY, false);
+		return recorder.readMemoryBlocks(toRead, TaskMonitor.DUMMY);
 	}
 }

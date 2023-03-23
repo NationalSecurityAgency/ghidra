@@ -26,9 +26,9 @@ import docking.widgets.table.*;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import ghidra.app.plugin.core.debug.gui.AbstractDebuggerMapProposalDialog;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources.MapModulesAction;
 import ghidra.app.services.ModuleMapProposal.ModuleMapEntry;
 import ghidra.framework.model.DomainFile;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Swing;
@@ -48,7 +48,8 @@ public class DebuggerModuleMapProposalDialog
 				? e.getToProgram().getName()
 				: e.getToProgram().getDomainFile().getName())),
 		STATIC_BASE("Static Base", Address.class, e -> e.getToProgram().getImageBase()),
-		SIZE("Size", Long.class, e -> e.getModuleRange().getLength());
+		SIZE("Size", Long.class, e -> e.getModuleRange().getLength()),
+		MEMORIZE("Memorize", Boolean.class, ModuleMapEntry::isMemorize, ModuleMapEntry::setMemorize);
 
 		private final String header;
 		private final Class<?> cls;
@@ -100,8 +101,8 @@ public class DebuggerModuleMapProposalDialog
 	protected static class ModuleMapPropsalTableModel extends
 			DefaultEnumeratedColumnTableModel<ModuleMapTableColumns, ModuleMapEntry> {
 
-		public ModuleMapPropsalTableModel() {
-			super("Module Map", ModuleMapTableColumns.class);
+		public ModuleMapPropsalTableModel(PluginTool tool) {
+			super(tool, "Module Map", ModuleMapTableColumns.class);
 		}
 
 		@Override
@@ -113,13 +114,13 @@ public class DebuggerModuleMapProposalDialog
 	private final DebuggerModulesProvider provider;
 
 	protected DebuggerModuleMapProposalDialog(DebuggerModulesProvider provider) {
-		super(MapModulesAction.NAME);
+		super(provider.getTool(), DebuggerResources.NAME_MAP_MODULES);
 		this.provider = provider;
 	}
 
 	@Override
-	protected ModuleMapPropsalTableModel createTableModel() {
-		return new ModuleMapPropsalTableModel();
+	protected ModuleMapPropsalTableModel createTableModel(PluginTool tool) {
+		return new ModuleMapPropsalTableModel(tool);
 	}
 
 	@Override

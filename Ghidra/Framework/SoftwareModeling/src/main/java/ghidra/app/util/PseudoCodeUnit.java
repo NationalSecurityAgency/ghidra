@@ -24,10 +24,9 @@ import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
-import ghidra.program.model.util.TypeMismatchException;
 import ghidra.util.*;
 import ghidra.util.exception.NoValueException;
-import ghidra.util.prop.PropertyVisitor;
+import ghidra.util.map.TypeMismatchException;
 
 /**
  * 
@@ -408,20 +407,6 @@ abstract class PseudoCodeUnit implements CodeUnit {
 	 */
 	@Override
 	public void removeProperty(String name) {
-		throw new UnsupportedOperationException();
-	}
-
-	/**
-	 * Invokes the visit() method of the specified PropertyVisitor if the named
-	 * property exists for this code unit.
-	 * 
-	 * @param visitor
-	 *            the class implementing the PropertyVisitor interface.
-	 * @param propertyName
-	 *            the name of the property to be visited.
-	 */
-	@Override
-	public void visitProperty(PropertyVisitor visitor, String propertyName) {
 		throw new UnsupportedOperationException();
 	}
 

@@ -37,7 +37,16 @@ public enum TraceBreakpointKind {
 	HW_EXECUTE(1 << 2),
 	SW_EXECUTE(1 << 3);
 
+	public static final int COUNT = values().length;
+
 	public static class TraceBreakpointKindSet extends AbstractSetDecorator<TraceBreakpointKind> {
+		public static final TraceBreakpointKindSet SW_EXECUTE = of(TraceBreakpointKind.SW_EXECUTE);
+		public static final TraceBreakpointKindSet HW_EXECUTE = of(TraceBreakpointKind.HW_EXECUTE);
+		public static final TraceBreakpointKindSet READ = of(TraceBreakpointKind.READ);
+		public static final TraceBreakpointKindSet WRITE = of(TraceBreakpointKind.WRITE);
+		public static final TraceBreakpointKindSet ACCESS =
+			of(TraceBreakpointKind.READ, TraceBreakpointKind.WRITE);
+
 		public static TraceBreakpointKindSet of(TraceBreakpointKind... kinds) {
 			return new TraceBreakpointKindSet(Set.of(kinds));
 		}

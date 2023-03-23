@@ -15,6 +15,11 @@
  */
 package ghidra.feature.vt.gui.duallisting;
 
+import java.awt.Color;
+import java.util.*;
+
+import docking.widgets.fieldpanel.support.Highlight;
+import generic.theme.GColor;
 import ghidra.app.plugin.core.codebrowser.ListingHighlightProvider;
 import ghidra.app.util.HighlightProvider;
 import ghidra.app.util.viewer.field.*;
@@ -32,24 +37,27 @@ import ghidra.program.model.listing.*;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 
-import java.awt.Color;
-import java.util.*;
-
-import docking.widgets.fieldpanel.support.Highlight;
-
 public class VTDualListingHighlightProvider implements HighlightProvider {
 
-	private static Color APPLIED_MARKUP_COLOR = new Color(150, 220, 150); // green
-	private static Color UNAPPLIED_MARKUP_COLOR = new Color(255, 170, 85); // orange
-	private static Color IGNORED_MARKUP_COLOR = new Color(220, 220, 220); // gray
-	private static Color REJECTED_MARKUP_COLOR = new Color(250, 200, 200); // pink
-	private static Color FAILED_MARKUP_COLOR = new Color(255, 80, 80); // red
-	private static Color NO_ADDRESS_MARKUP_COLOR = new Color(205, 185, 220); // purple
-	private static Color SAME_MARKUP_COLOR = new Color(175, 225, 255); // light blue
-	private static Color CONFLICT_MARKUP_COLOR = new Color(255, 225, 105); // gold
+	private static Color APPLIED_MARKUP_COLOR =
+		new GColor("color.bg.version.tracking.dual.listing.highlight.markup.applied");
+	private static Color UNAPPLIED_MARKUP_COLOR =
+		new GColor("color.bg.version.tracking.dual.listing.highlight.markup.unapplied");
+	private static Color IGNORED_MARKUP_COLOR =
+		new GColor("color.bg.version.tracking.dual.listing.highlight.markup.ignored");
+	private static Color REJECTED_MARKUP_COLOR =
+		new GColor("color.bg.version.tracking.dual.listing.highlight.markup.rejected");
+	private static Color FAILED_MARKUP_COLOR =
+		new GColor("color.bg.version.tracking.dual.listing.highlight.markup.failed");
+	private static Color NO_ADDRESS_MARKUP_COLOR =
+		new GColor("color.bg.version.tracking.dual.listing.highlight.markup.no.address");
+	private static Color SAME_MARKUP_COLOR =
+		new GColor("color.bg.version.tracking.dual.listing.highlight.markup.same");
+	private static Color CONFLICT_MARKUP_COLOR =
+		new GColor("color.bg.version.tracking.dual.listing.highlight.markup.conflict");
 
 	private HashMap<Address, HashMap<VTMarkupType, VTMarkupItem>> map =
-		new HashMap<Address, HashMap<VTMarkupType, VTMarkupItem>>();
+		new HashMap<>();
 	private final VTController controller;
 	private ListingPanel listingPanel;
 	private ListingHighlightProvider listingHighlighter;
@@ -112,7 +120,7 @@ public class VTDualListingHighlightProvider implements HighlightProvider {
 
 		HashMap<VTMarkupType, VTMarkupItem> typeMap = map.get(address);
 		if (typeMap == null) {
-			typeMap = new HashMap<VTMarkupType, VTMarkupItem>();
+			typeMap = new HashMap<>();
 			map.put(address, typeMap);
 		}
 
@@ -203,7 +211,7 @@ public class VTDualListingHighlightProvider implements HighlightProvider {
 					cursorTextOffset, highlights);
 		}
 
-		List<Highlight> highlightList = new ArrayList<Highlight>();
+		List<Highlight> highlightList = new ArrayList<>();
 
 		for (Highlight highlight : highlights) {
 			highlightList.add(highlight);
@@ -274,7 +282,7 @@ public class VTDualListingHighlightProvider implements HighlightProvider {
 		}
 		return highlightColor;
 	}
-	
+
 	/**
 	 * Creates a darker shade of the color passed-in, based on the given amount.
 	 * 
@@ -285,22 +293,22 @@ public class VTDualListingHighlightProvider implements HighlightProvider {
 	 * 
 	 * @param color the color to shade
 	 * @param amount number between 0..1 (the smaller the number, the darker the shade)
-	 * @return
+	 * @return the new color
 	 */
 	private static Color shade(Color color, double amount) {
 		if (color != null) {
-		
+
 			int r = color.getRed();
 			int g = color.getGreen();
 			int b = color.getBlue();
-			
+
 			double newR = (r * amount);
 			double newG = (g * amount);
 			double newB = (b * amount);
-			
-			return new Color((int)newR, (int)newG, (int)newB);
+
+			return new Color((int) newR, (int) newG, (int) newB);
 		}
-		
+
 		return null;
 	}
 
@@ -315,7 +323,8 @@ public class VTDualListingHighlightProvider implements HighlightProvider {
 			if (markupItem != null) {
 				VTMarkupItemStatus status = markupItem.getStatus();
 				StringStringable value =
-					(StringStringable) ((isSource || markupItem.canUnapply()) ? markupItem.getSourceValue()
+					(StringStringable) ((isSource || markupItem.canUnapply())
+							? markupItem.getSourceValue()
 							: markupItem.getOriginalDestinationValue());
 				String comment = value.getString();
 				if (comment != null) {
@@ -418,7 +427,7 @@ public class VTDualListingHighlightProvider implements HighlightProvider {
 			CodeUnit codeUnit = (CodeUnit) obj;
 			address = codeUnit.getMinAddress();
 		}
-		ArrayList<Highlight> highlightList = new ArrayList<Highlight>();
+		ArrayList<Highlight> highlightList = new ArrayList<>();
 		HashMap<VTMarkupType, VTMarkupItem> typeMap = map.get(address);
 		if (typeMap != null) {
 			VTMarkupItem markupItem = typeMap.get(RepeatableCommentMarkupType.INSTANCE);
@@ -429,7 +438,8 @@ public class VTDualListingHighlightProvider implements HighlightProvider {
 		return highlightList.toArray(new Highlight[highlightList.size()]);
 	}
 
-	private Highlight[] getFunctionSignatureHighlights(String text, Object obj, int cursorTextOffset) {
+	private Highlight[] getFunctionSignatureHighlights(String text, Object obj,
+			int cursorTextOffset) {
 		Function function = null;
 		if (obj instanceof Function) {
 			function = (Function) obj;
@@ -445,7 +455,7 @@ public class VTDualListingHighlightProvider implements HighlightProvider {
 		Address address = function.getEntryPoint();
 		HashMap<VTMarkupType, VTMarkupItem> typeMap = map.get(address);
 		if (typeMap != null) {
-			ArrayList<Highlight> highlightList = new ArrayList<Highlight>();
+			ArrayList<Highlight> highlightList = new ArrayList<>();
 
 //			// Check if the text is in the Return Type
 //			addFunctionHighlight(FunctionReturnTypeMarkupType.INSTANCE, text, cursorTextOffset,
@@ -485,7 +495,7 @@ public class VTDualListingHighlightProvider implements HighlightProvider {
 		Address address = function.getEntryPoint();
 		HashMap<VTMarkupType, VTMarkupItem> typeMap = map.get(address);
 		if (typeMap != null) {
-			ArrayList<Highlight> highlightList = new ArrayList<Highlight>();
+			ArrayList<Highlight> highlightList = new ArrayList<>();
 
 			VTMarkupItem markupItem = typeMap.get(FunctionSignatureMarkupType.INSTANCE);
 			if (markupItem == null) {
@@ -544,7 +554,8 @@ public class VTDualListingHighlightProvider implements HighlightProvider {
 				if (startIndex >= 0) {
 					int endIndex = startIndex + displayString.length() - 1;
 					Color highlightColor =
-						getMarkupBackgroundColor(cursorTextOffset, markupItem, startIndex, endIndex);
+						getMarkupBackgroundColor(cursorTextOffset, markupItem, startIndex,
+							endIndex);
 					Highlight highlight = new Highlight(startIndex, endIndex, highlightColor);
 					highlightList.add(highlight);
 				}
@@ -557,7 +568,8 @@ public class VTDualListingHighlightProvider implements HighlightProvider {
 		VTMarkupItem markupItem = typeMap.get(FunctionNameMarkupType.INSTANCE);
 		if (markupItem != null) {
 			FunctionNameStringable value =
-				(isSource || markupItem.canUnapply()) ? (FunctionNameStringable) markupItem.getSourceValue()
+				(isSource || markupItem.canUnapply())
+						? (FunctionNameStringable) markupItem.getSourceValue()
 						: (FunctionNameStringable) markupItem.getOriginalDestinationValue();
 			if (value != null) {
 				int parameterStart = text.indexOf("(");
@@ -569,7 +581,8 @@ public class VTDualListingHighlightProvider implements HighlightProvider {
 				if (startIndex >= 0) {
 					int endIndex = startIndex + name.length() - 1;
 					Color highlightColor =
-						getMarkupBackgroundColor(cursorTextOffset, markupItem, startIndex, endIndex);
+						getMarkupBackgroundColor(cursorTextOffset, markupItem, startIndex,
+							endIndex);
 					Highlight highlight = new Highlight(startIndex, endIndex, highlightColor);
 					highlightList.add(highlight);
 				}
@@ -832,7 +845,7 @@ public class VTDualListingHighlightProvider implements HighlightProvider {
 		if (storageAddress == null) {
 			return new Highlight[0];
 		}
-		ArrayList<Highlight> highlightList = new ArrayList<Highlight>();
+		ArrayList<Highlight> highlightList = new ArrayList<>();
 		HashMap<VTMarkupType, VTMarkupItem> typeMap = map.get(storageAddress);
 		if (typeMap != null) {
 			VTMarkupItem markupItem = typeMap.get(markupType);
@@ -914,16 +927,18 @@ public class VTDualListingHighlightProvider implements HighlightProvider {
 		if (typeMap != null) {
 			VTMarkupItem markupItem = typeMap.get(LabelMarkupType.INSTANCE);
 			if (markupItem != null) {
-				ArrayList<Highlight> highlightList = new ArrayList<Highlight>();
+				ArrayList<Highlight> highlightList = new ArrayList<>();
 				MultipleSymbolStringable value =
-					(MultipleSymbolStringable) ((isSource || markupItem.canUnapply()) ? markupItem.getSourceValue()
+					(MultipleSymbolStringable) ((isSource || markupItem.canUnapply())
+							? markupItem.getSourceValue()
 							: markupItem.getOriginalDestinationValue());
 				if (value != null) {
 					// Highlight the entire labels field.
 					int startIndex = 0;
 					int endIndex = text.length() - 1;
 					Color highlightColor =
-						getMarkupBackgroundColor(cursorTextOffset, markupItem, startIndex, endIndex);
+						getMarkupBackgroundColor(cursorTextOffset, markupItem, startIndex,
+							endIndex);
 					Highlight highlight = new Highlight(startIndex, endIndex, highlightColor);
 					highlightList.add(highlight);
 					return highlightList.toArray(new Highlight[highlightList.size()]);
@@ -942,9 +957,10 @@ public class VTDualListingHighlightProvider implements HighlightProvider {
 		if (typeMap != null) {
 			VTMarkupItem markupItem = typeMap.get(DataTypeMarkupType.INSTANCE);
 			if (markupItem != null) {
-				ArrayList<Highlight> highlightList = new ArrayList<Highlight>();
+				ArrayList<Highlight> highlightList = new ArrayList<>();
 				DataTypeStringable value =
-					(DataTypeStringable) ((isSource || markupItem.canUnapply()) ? markupItem.getSourceValue()
+					(DataTypeStringable) ((isSource || markupItem.canUnapply())
+							? markupItem.getSourceValue()
 							: markupItem.getOriginalDestinationValue());
 				if (value != null) {
 					Program sourceProgram =

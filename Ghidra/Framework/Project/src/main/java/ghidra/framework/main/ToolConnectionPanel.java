@@ -27,6 +27,7 @@ import javax.swing.event.ListSelectionListener;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GDLabel;
 import docking.widgets.list.GListCellRenderer;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.framework.model.ToolConnection;
 import ghidra.framework.model.ToolManager;
 import ghidra.framework.plugintool.PluginTool;
@@ -343,7 +344,7 @@ class ToolConnectionPanel extends JPanel implements ListSelectionListener {
 		for (int i = 0; i < checkboxes.length; i++) {
 
 			checkboxes[i] = new GCheckBox(eventNames[i]);
-			checkboxes[i].setBackground(Color.white);
+			checkboxes[i].setBackground(Colors.BACKGROUND);
 
 			boolean isConnected = tc.isConnected(eventNames[i]);
 

@@ -140,8 +140,7 @@ public interface Memory extends AddressSetView {
 	 * @throws LockException if exclusive lock not in place (see haveLock())
 	 * @throws MemoryConflictException if the new block overlaps with a
 	 * previous block
-	 * @throws AddressOverflowException if the start is beyond the
-	 * address space
+	 * @throws AddressOverflowException if block specification exceeds bounds of address space
 	 * @throws CancelledException user cancelled operation
 	 * @throws IllegalArgumentException if invalid block name specified
 	 */
@@ -165,8 +164,7 @@ public interface Memory extends AddressSetView {
 	 * @throws LockException if exclusive lock not in place (see haveLock())
 	 * @throws MemoryConflictException if the new block overlaps with a
 	 * previous block
-	 * @throws AddressOverflowException if the start is beyond the
-	 * address space
+	 * @throws AddressOverflowException if block specification exceeds bounds of address space
 	 * @throws IllegalArgumentException if invalid block name specified
 	 * @throws CancelledException user cancelled operation
 	 */
@@ -191,7 +189,7 @@ public interface Memory extends AddressSetView {
 	 * @throws LockException if exclusive lock not in place (see haveLock())
 	 * @throws MemoryConflictException if the new block overlaps with a
 	 * previous block
-	 * @throws AddressOverflowException if the start is beyond the address space
+	 * @throws AddressOverflowException if block specification exceeds bounds of address space
 	 * @throws IndexOutOfBoundsException if file bytes range specified by offset and size 
 	 * is out of bounds for the specified fileBytes.
 	 * @throws IllegalArgumentException if invalid block name specified
@@ -213,8 +211,7 @@ public interface Memory extends AddressSetView {
 	 * @throws LockException if exclusive lock not in place (see haveLock())
 	 * @throws MemoryConflictException if the new block overlaps with a
 	 * previous block
-	 * @throws AddressOverflowException if the start is beyond the
-	 * address space
+	 * @throws AddressOverflowException if block specification exceeds bounds of address space
 	 * @throws IllegalArgumentException if invalid block name specified
 	 */
 	public MemoryBlock createUninitializedBlock(String name, Address start, long size,
@@ -305,8 +302,7 @@ public interface Memory extends AddressSetView {
 	 * @return new block
 	 * @throws LockException if exclusive lock not in place (see haveLock())
 	 * @throws MemoryConflictException if block specification conflicts with an existing block
-	 * @throws AddressOverflowException if the new memory block would extend
-	 * beyond the end of the address space.
+	 * @throws AddressOverflowException if block specification exceeds bounds of address space
 	 * @throws IllegalArgumentException if invalid block name specifiede
 	 */
 	public MemoryBlock createBlock(MemoryBlock block, String name, Address start, long length)
@@ -357,8 +353,7 @@ public interface Memory extends AddressSetView {
 	 * @throws MemoryConflictException if move would cause
 	 * blocks to overlap.
 	 * @throws MemoryBlockException if block movement is not permitted
-	 * @throws AddressOverflowException if new start address +
-	 * block.getSize() would cause the Address to wrap around.
+	 * @throws AddressOverflowException if block movement would violate bounds of address space
 	 * @throws NotFoundException if memoryBlock does not exist in
 	 *   this memory.
 	 */
@@ -376,8 +371,7 @@ public interface Memory extends AddressSetView {
 	 * @throws NotFoundException thrown if block does not exist
 	 * in memory
 	 * @throws MemoryBlockException memory split not permitted
-	 * @throws AddressOutOfBoundsException thrown if address is
-	 * not in the block
+	 * @throws AddressOutOfBoundsException thrown if address is not in the block
 	 */
 	public void split(MemoryBlock block, Address addr)
 			throws MemoryBlockException, LockException, NotFoundException;
@@ -398,14 +392,14 @@ public interface Memory extends AddressSetView {
 	/**
 	 * Convert an existing uninitialized block with an
 	 * initialized block.
-	 * @param unitializedBlock unitialized block to convert
+	 * @param uninitializedBlock uninitialized block to convert
 	 * @param initialValue initial value for the bytes
 	 * @throws LockException if exclusive lock not in place (see haveLock())
 	 * @throws MemoryBlockException if there is no block in memory
 	 * at the same address as block or if the block lengths are not
 	 * the same.
 	 */
-	public MemoryBlock convertToInitialized(MemoryBlock unitializedBlock, byte initialValue)
+	public MemoryBlock convertToInitialized(MemoryBlock uninitializedBlock, byte initialValue)
 			throws LockException, MemoryBlockException, NotFoundException;
 
 	public MemoryBlock convertToUninitialized(MemoryBlock itializedBlock)
@@ -482,6 +476,7 @@ public interface Memory extends AddressSetView {
 	 * @param size the number of bytes to get.
 	 * @return the number of bytes put into dest.  May be less than
 	 * size if the requested number extends beyond initialized / available memory.
+	 * @throws IndexOutOfBoundsException if an invalid index is specified
 	 * @throws MemoryAccessException if the starting address is
 	 * not contained in any memory block or is an uninitialized location.
 	 */
@@ -790,7 +785,8 @@ public interface Memory extends AddressSetView {
 	 * @param offset the offset into the file for the first byte in the input stream.
 	 * @param size the number of bytes to store from the input stream.
 	 * @param is the input stream that will supply the bytes to store in the program.
-	 * @param monitor 
+	 * Caller is responsible for closing input stream upon return.
+	 * @param monitor task monitor
 	 * @return a FileBytes that was created to access the bytes.
 	 * @throws IOException if there was an IOException saving the bytes to the program database.
 	 * @throws CancelledException if the user cancelled this operation. Note: the database will

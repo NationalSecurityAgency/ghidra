@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +16,7 @@
 package ghidra.program.model.address;
 
 import ghidra.util.datastruct.NoSuchIndexException;
-import ghidra.util.prop.ObjectPropertySet;
+import ghidra.util.map.ObjectValueMap;
 
 import java.io.Serializable;
 
@@ -51,7 +50,7 @@ import java.io.Serializable;
 public class AddressObjectMap {
     
     private AddressMapImpl addrMap = new AddressMapImpl();
-    private ObjectPropertySet objMarkers = new ObjectPropertySet("AddressObjectMap");
+    private ObjectValueMap objMarkers = new ObjectValueMap("AddressObjectMap");
     
     private static final Object [] emptyArray = new Object[0];
 

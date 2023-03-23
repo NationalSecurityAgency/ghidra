@@ -20,10 +20,10 @@ import java.util.List;
 import javax.swing.Icon;
 
 import docking.widgets.tree.GTreeNode;
-import resources.ResourceManager;
+import generic.theme.GIcon;
 
 class RootNode extends GTreeNode {
-	private static Icon icon = ResourceManager.loadImage("images/play.png");
+	private static Icon icon = new GIcon("icon.plugin.scriptmanager.provider");
 
 	@Override
 	public Icon getIcon(boolean expanded) {

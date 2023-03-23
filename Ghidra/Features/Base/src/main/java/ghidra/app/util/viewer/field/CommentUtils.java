@@ -26,6 +26,8 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.fieldpanel.field.*;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.Gui;
 import ghidra.program.model.listing.Program;
 import ghidra.util.StringUtilities;
 import ghidra.util.WordLocation;
@@ -44,7 +46,7 @@ public class CommentUtils {
 	 * @param program the program associated with the comment
 	 * @return the updated string
 	 */
-	public static String fixupAnnoations(String rawCommentText, Program program) {
+	public static String fixupAnnotations(String rawCommentText, Program program) {
 
 		if (rawCommentText == null) {
 			return null;
@@ -93,10 +95,10 @@ public class CommentUtils {
 	}
 
 	private static AttributedString createPrototype() {
-		Font dummyFont = new Font("monospaced", Font.PLAIN, 12);
+		Font dummyFont = Gui.getFont("font.monospaced");
 		@SuppressWarnings("deprecation")
 		FontMetrics fontMetrics = Toolkit.getDefaultToolkit().getFontMetrics(dummyFont);
-		return new AttributedString("", Color.BLACK, fontMetrics);
+		return new AttributedString("", Colors.FOREGROUND, fontMetrics);
 	}
 
 	/**
@@ -133,6 +135,24 @@ public class CommentUtils {
 
 		Function<Annotation, Annotation> noFixing = Function.identity();
 		return doParseTextForAnnotations(text, noFixing, program, prototypeString, row);
+	}
+	
+	/**
+	 * Sanitizes the given text, removing or replacing illegal characters.
+	 * <p>
+	 * Each illegal character is handled as follows:
+	 * <ul>
+	 *   <li>null character (\0) -> remove</li>
+	 * </ul>
+	 * 
+	 * @param text The text to sanitize
+	 * @return The sanitized text, or null if the given text was null
+	 */
+	public static String sanitize(String text) {
+		if (text == null) {
+			return null;
+		}
+		return text.replaceAll("\0", "");
 	}
 
 	/**

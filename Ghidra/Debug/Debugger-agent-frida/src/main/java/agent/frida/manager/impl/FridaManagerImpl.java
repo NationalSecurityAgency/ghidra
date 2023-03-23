@@ -24,7 +24,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import com.google.gson.JsonElement;
 import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
 
@@ -512,7 +511,8 @@ public class FridaManagerImpl implements FridaManager {
 	private <T> void addCommand(FridaCommand<? extends T> cmd, FridaPendingCommand<T> pcmd) {
 		synchronized (this) {
 			if (!cmd.validInState(state.get())) {
-				throw new FridaCommandError("Command " + cmd + " is not valid while " + state.get());
+				throw new FridaCommandError(
+					"Command " + cmd + " is not valid while " + state.get());
 			}
 			activeCmds.add(pcmd);
 		}
@@ -955,7 +955,8 @@ public class FridaManagerImpl implements FridaManager {
 	protected DebugStatus processStateChanged(FridaStateChangedEvent evt, Void v) {
 		status = DebugStatus.fromArgument(evt.newState());
 
-		String id = currentThread == null ? FridaClient.getId(currentProcess) :  FridaClient.getId(currentThread);
+		String id = currentThread == null ? FridaClient.getId(currentProcess)
+				: FridaClient.getId(currentThread);
 		if (status.equals(DebugStatus.NO_DEBUGGEE)) {
 			waiting = false;
 			if (state.get().equals(FridaState.FRIDA_THREAD_HALTED)) {
@@ -1025,6 +1026,11 @@ public class FridaManagerImpl implements FridaManager {
 	}
 
 	@Override
+	public CompletableFuture<List<Pair<String, String>>> listAvailableDevices() {
+		return execute(new FridaListAvailableDevicesCommand(this));
+	}
+
+	@Override
 	public CompletableFuture<Map<String, FridaSession>> listSessions() {
 		return execute(new FridaListSessionsCommand(this));
 	}
@@ -1043,6 +1049,7 @@ public class FridaManagerImpl implements FridaManager {
 	public CompletableFuture<Void> listModules(FridaProcess process) {
 		return execute(new FridaListModulesCommand(this, process));
 	}
+
 	public CompletableFuture<Void> listKernelModules() {
 		return execute(new FridaListKernelModulesCommand(this));
 	}
@@ -1071,6 +1078,7 @@ public class FridaManagerImpl implements FridaManager {
 	public CompletableFuture<Void> listMemory(FridaProcess process) {
 		return execute(new FridaListMemoryRegionsCommand(this, process));
 	}
+
 	public CompletableFuture<Void> listKernelMemory() {
 		return execute(new FridaListKernelMemoryRegionsCommand(this));
 	}
@@ -1079,7 +1087,7 @@ public class FridaManagerImpl implements FridaManager {
 	public CompletableFuture<Void> listHeapMemory(FridaProcess process) {
 		return execute(new FridaListHeapMemoryRegionsCommand(this, process));
 	}
-	
+
 	@Override
 	public CompletableFuture<Void> setExceptionHandler(FridaProcess process) {
 		return execute(new FridaSetExceptionHandlerCommand(this, process));
@@ -1112,6 +1120,16 @@ public class FridaManagerImpl implements FridaManager {
 	}
 
 	@Override
+	public CompletableFuture<?> attachDeviceById(String id) {
+		return execute(new FridaAttachDeviceByIdCommand(this, id));
+	}
+
+	@Override
+	public CompletableFuture<?> attachDeviceByType(String id) {
+		return execute(new FridaAttachDeviceByTypeCommand(this, id));
+	}
+
+	@Override
 	public CompletableFuture<?> launch(String fileName, List<String> args) {
 		return execute(new FridaLaunchProcessCommand(this, fileName, args));
 	}
@@ -1132,7 +1150,7 @@ public class FridaManagerImpl implements FridaManager {
 	public void setCurrentThread(FridaThread thread) {
 		currentThread = thread;
 	}
-	
+
 	public void setCurrentThreadById(String tid) {
 		currentProcess = currentSession.getProcess();
 		if (currentProcess != null) {
@@ -1152,16 +1170,19 @@ public class FridaManagerImpl implements FridaManager {
 	public void setCurrentSession(FridaSession session) {
 		currentSession = session;
 	}
-	
+
+	@Override
 	public FridaTarget getCurrentTarget() {
 		return currentTarget;
 	}
 
+	@Override
 	public void setCurrentTarget(FridaTarget target) {
 		currentTarget = target;
 	}
 
-	public CompletableFuture<Void> requestFocus(FridaModelTargetFocusScope scope, TargetObject obj) {
+	public CompletableFuture<Void> requestFocus(FridaModelTargetFocusScope scope,
+			TargetObject obj) {
 		return execute(new FridaRequestFocusCommand(this, scope, obj));
 	}
 
@@ -1236,13 +1257,15 @@ public class FridaManagerImpl implements FridaManager {
 		return status;
 	}
 
-	public FridaScript loadPermanentScript(AbstractFridaCommand<?> caller, String name, String scriptText) {
+	public FridaScript loadPermanentScript(AbstractFridaCommand<?> caller, String name,
+			String scriptText) {
 		caller.setName(name);
 		Pointer options = FridaEng.createOptions(name);
 		FridaScript script = FridaEng.createScript(currentSession, scriptText, options);
-		NativeLong signal = FridaEng.connectSignal(script, "message", (__s, message, data, userData) -> {
-			caller.parse(message, data);
-		}, null);
+		NativeLong signal =
+			FridaEng.connectSignal(script, "message", (__s, message, data, userData) -> {
+				caller.parse(message, data);
+			}, null);
 		script.setSignal(signal);
 		FridaEng.loadScript(script);
 		scripts.put(name, script);
@@ -1260,16 +1283,15 @@ public class FridaManagerImpl implements FridaManager {
 	public FridaScript loadScript(AbstractFridaCommand<?> caller, String name, String scriptText) {
 		caller.setName(name);
 		Pointer options = FridaEng.createOptions(name);
-		String wrapperText = scriptText.contains("result") ?
-				"var result = '';" + scriptText +
-				"var msg = { key: '" + name + "', value: result};" +
-				"send(JSON.stringify(msg));" :
-				"send(JSON.stringify(" + scriptText + "));";
+		String wrapperText = scriptText.contains("result") ? "var result = '';" + scriptText +
+			"var msg = { key: '" + name + "', value: result};" +
+			"send(JSON.stringify(msg));" : "send(JSON.stringify(" + scriptText + "));";
 		FridaScript script = FridaEng.createScript(currentSession, wrapperText, options);
 		if (script != null) {
-			NativeLong signal = FridaEng.connectSignal(script, "message", (__s, message, data, userData) -> {
-				caller.parse(message, data);
-			}, null);
+			NativeLong signal =
+				FridaEng.connectSignal(script, "message", (__s, message, data, userData) -> {
+					caller.parse(message, data);
+				}, null);
 			script.setSignal(signal);
 			FridaEng.loadScript(script);
 			caller.setScript(script);
@@ -1289,12 +1311,12 @@ public class FridaManagerImpl implements FridaManager {
 		return execute(new FridaStalkThreadCommand(this, tid, arguments));
 	}
 
-	public CompletableFuture<Void>  interceptFunction(String address, Map<String, ?> arguments) {
-		return execute(new FridaInterceptFunctionCommand(this, address, arguments));		
+	public CompletableFuture<Void> interceptFunction(String address, Map<String, ?> arguments) {
+		return execute(new FridaInterceptFunctionCommand(this, address, arguments));
 	}
 
-	public CompletableFuture<Void>  watchMemory(Map<String, ?> arguments) {
-		return execute(new FridaWatchMemoryCommand(this, arguments));		
+	public CompletableFuture<Void> watchMemory(Map<String, ?> arguments) {
+		return execute(new FridaWatchMemoryCommand(this, arguments));
 	}
 
 }

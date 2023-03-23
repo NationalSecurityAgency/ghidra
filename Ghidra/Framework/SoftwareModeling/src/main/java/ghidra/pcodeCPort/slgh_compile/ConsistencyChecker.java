@@ -725,7 +725,7 @@ class ConsistencyChecker {
 	}
 
 	private boolean checkSubtable(SubtableSymbol sym) {
-		int tablesize = 0;
+		int tablesize = -1;
 		int numconstruct = sym.getNumConstructors();
 		Constructor ct;
 		boolean testresult = true;
@@ -757,10 +757,10 @@ class ConsistencyChecker {
 				}
 				seennonemptyexport = true;
 				int exsize = recoverSize(exportres.getSize(), ct);
-				if (tablesize == 0) {
+				if (tablesize == -1) {
 					tablesize = exsize;
 				}
-				if ((exsize != 0) && (exsize != tablesize)) {
+				if (exsize != tablesize) {
 					compiler.reportError(ct.location, String.format(
 						"Table '%s' has inconsistent export size; Constructor at %s is first conflict",
 						sym.getName(), ct.location));

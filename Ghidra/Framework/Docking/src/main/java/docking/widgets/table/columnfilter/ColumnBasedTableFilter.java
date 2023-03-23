@@ -23,6 +23,8 @@ import org.jdom.Element;
 import docking.widgets.table.*;
 import docking.widgets.table.constraint.ColumnConstraint;
 import docking.widgets.table.constraint.TableFilterContext;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.framework.options.SaveState;
 
 /**
@@ -230,16 +232,19 @@ public class ColumnBasedTableFilter<R> implements TableFilter<R> {
 	//
 	private String getHtmlRepresentation(List<ColumnConstraintSet<R, ?>> filters) {
 		StringBuilder buf = new StringBuilder();
-		buf.append("<table valign=top cellspacing=5 cellpadding=0 >");
+		buf.append("<table valign=top cellspacing=5 cellpadding=0>");
 		buf.append("<tr>");
 		// The first row has an empty first column
 		// so that additional rows can display an "AND"
 		buf.append("<td></td><td>");
 		buf.append(filters.get(0).getHtmlRepresentation());
 		buf.append("</td></tr>");
+		GColor gray = Palette.GRAY;
+		String grayHex = gray.toHexString();
 		for (int i = 1; i < filters.size(); i++) {
-			buf.append("<tr><td style=\"color:gray\"> " + filters.get(i).getLogicOperation() +
-				"&nbsp;</td><td>");
+			buf.append("<tr><td style=\"color:").append(grayHex).append("\"> ");
+			buf.append(filters.get(i).getLogicOperation());
+			buf.append("&nbsp;</td><td>");
 			buf.append(filters.get(i).getHtmlRepresentation());
 			buf.append("</td></tr>");
 		}

@@ -15,10 +15,8 @@
  */
 package ghidra.trace.model;
 
-import com.google.common.collect.Range;
-
 public interface TraceSpan extends Comparable<TraceSpan> {
 	Trace getTrace();
 
-	Range<Long> getSpan();
+	Lifespan getSpan();
 }

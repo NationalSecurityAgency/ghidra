@@ -16,8 +16,6 @@
 package ghidra.framework.main;
 
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 
 import javax.swing.*;
@@ -25,7 +23,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.Document;
 
-import docking.options.editor.ButtonPanelFactory;
+import docking.widgets.button.BrowseButton;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.label.GDLabel;
@@ -45,7 +43,7 @@ import ghidra.util.layout.VerticalLayout;
  * Panel that allows the project directory and name to be specified for a
  * new project. A checkbox indicates whether the project should be created
  * as a shared project.
- * 
+ *
  */
 class SelectProjectPanel extends AbstractWizardJPanel {
 
@@ -55,7 +53,6 @@ class SelectProjectPanel extends AbstractWizardJPanel {
 	private JTextField projectNameField;
 	private JTextField directoryField;
 	private JButton browseButton;
-	private GhidraFileChooser fileChooser;
 	private ProjectLocator projectLocator;
 	private NewProjectPanelManager panelManager;
 	private DocumentListener docListener;
@@ -152,12 +149,7 @@ class SelectProjectPanel extends AbstractWizardJPanel {
 		JLabel projectNameLabel = new GDLabel("Project Name:", SwingConstants.RIGHT);
 		projectNameField = new JTextField(25);
 		projectNameField.setName("Project Name");
-		projectNameField.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				setProjectFile();
-			}
-		});
+		projectNameField.addActionListener(e -> setProjectFile());
 
 		docListener = new DocumentListener() {
 			@Override
@@ -178,15 +170,10 @@ class SelectProjectPanel extends AbstractWizardJPanel {
 		projectNameField.getDocument().addDocumentListener(docListener);
 		directoryField.getDocument().addDocumentListener(docListener);
 
-		browseButton = ButtonPanelFactory.createButton(ButtonPanelFactory.BROWSE_TYPE);
-		browseButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				displayFileChooser();
-			}
-		});
+		browseButton = new BrowseButton();
+		browseButton.addActionListener(e -> displayFileChooser());
 
-//		sharedProjectCB = new GCheckBox("Project can be Shared with Others"); 
+//		sharedProjectCB = new GCheckBox("Project can be Shared with Others");
 //		sharedProjectCB.addItemListener(new ItemListener() {
 //			public void itemStateChanged(ItemEvent e) {
 //				panelManager.getWizardManager().validityChanged();
@@ -305,9 +292,7 @@ class SelectProjectPanel extends AbstractWizardJPanel {
 	}
 
 	private void displayFileChooser() {
-		if (fileChooser == null) {
-			createFileChooser();
-		}
+		GhidraFileChooser fileChooser = createFileChooser();
 		fileChooser.setTitle("Select a Ghidra Project Directory");
 		fileChooser.setApproveButtonText("Select Project Directory");
 		fileChooser.setApproveButtonToolTipText("Select a Ghidra Project Directory");
@@ -323,6 +308,8 @@ class SelectProjectPanel extends AbstractWizardJPanel {
 
 			checkProjectFile(true);
 		}
+
+		fileChooser.dispose();
 	}
 
 	private String getProjectName(String name) {
@@ -332,10 +319,10 @@ class SelectProjectPanel extends AbstractWizardJPanel {
 		return name;
 	}
 
-	private void createFileChooser() {
+	private GhidraFileChooser createFileChooser() {
 		WizardManager wm = panelManager.getWizardManager();
 
-		fileChooser = new GhidraFileChooser(wm.getComponent());
+		GhidraFileChooser fileChooser = new GhidraFileChooser(wm.getComponent());
 		File projectDirectory = new File(GenericRunInfo.getProjectsDirPath());
 		String lastDirSelected =
 			Preferences.getProperty(Preferences.LAST_NEW_PROJECT_DIRECTORY, null, true);
@@ -356,5 +343,6 @@ class SelectProjectPanel extends AbstractWizardJPanel {
 			}
 		});
 		fileChooser.setCurrentDirectory(projectDirectory);//start the browsing in the user's preferred project directory
+		return fileChooser;
 	}
 }

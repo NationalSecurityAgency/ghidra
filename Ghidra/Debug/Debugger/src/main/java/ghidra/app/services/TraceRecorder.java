@@ -27,15 +27,18 @@ import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.lang.*;
+import ghidra.program.model.lang.Register;
+import ghidra.program.model.lang.RegisterValue;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemoryRegion;
-import ghidra.trace.model.memory.TraceMemoryRegisterSpace;
+import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.modules.TraceSection;
 import ghidra.trace.model.stack.TraceStackFrame;
+import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.trace.model.time.TraceTimeManager;
@@ -49,7 +52,17 @@ import ghidra.util.task.TaskMonitor;
  * The recorder is the glue from a portion of a debugger's model into a Ghidra trace. As such, this
  * object maintains a mapping between corresponding objects of interest in the model tree to the
  * trace, and that mapping can be queried. In most cases, UI components which deal with tracing need
- * only read the trace in order to populate their display.
+ * only read the trace in order to populate their display. Several methods are provided for
+ * retrieving corresponding objects from the target or trace given that object in the other. These
+ * methods may return null for a variety of reasons:
+ * 
+ * <ol>
+ * <li>The particular type may not be supported or of interest to the recorder.</li>
+ * <li>The recorder may not have actually recorded the object yet, despite receiving notice.
+ * Recording is asynchronous, and it may also be waiting for additional dependencies or attributes
+ * before it can create the corresponding trace object.</li>
+ * <li>The target object may not longer exist for a given trace object.</li>
+ * </ol>
  * 
  * <p>
  * The recorder copies information in one direction; thus, if a trace UI component needs to affect
@@ -204,48 +217,210 @@ public interface TraceRecorder {
 	 */
 	void removeListener(TraceRecorderListener listener);
 
+	/**
+	 * Get the target object corresponding to the given trace object
+	 * 
+	 * @param obj the trace object
+	 * @return the target object, or null
+	 */
+	TargetObject getTargetObject(TraceObject obj);
+
+	/**
+	 * Get the trace object corresponding to the given target object
+	 * 
+	 * @param obj the target object
+	 * @return the trace object, or null
+	 */
+	TraceObject getTraceObject(TargetObject obj);
+
+	/**
+	 * Get the target breakpoint location corresponding to the given trace breakpoint
+	 * 
+	 * @param obj the trace breakpoint
+	 * @return the target breakpoint location, or null
+	 */
 	TargetBreakpointLocation getTargetBreakpoint(TraceBreakpoint bpt);
 
+	/**
+	 * Get the trace breakpoint corresponding to the given target breakpoint location
+	 * 
+	 * @param obj the target breakpoint location
+	 * @return the trace breakpoint, or null
+	 */
 	TraceBreakpoint getTraceBreakpoint(TargetBreakpointLocation bpt);
 
+	/**
+	 * Get the target memory region corresponding to the given trace memory region
+	 * 
+	 * @param obj the trace memory region
+	 * @return the target memory region, or null
+	 */
 	TargetMemoryRegion getTargetMemoryRegion(TraceMemoryRegion region);
 
+	/**
+	 * Get the trace memory region corresponding to the given target memory region
+	 * 
+	 * @param obj the target memory region
+	 * @return the trace memory region, or null
+	 */
 	TraceMemoryRegion getTraceMemoryRegion(TargetMemoryRegion region);
 
+	/**
+	 * Get the target module corresponding to the given trace module
+	 * 
+	 * @param obj the trace module
+	 * @return the target module, or null
+	 */
 	TargetModule getTargetModule(TraceModule module);
 
+	/**
+	 * Get the trace module corresponding to the given target module
+	 * 
+	 * @param obj the target module
+	 * @return the trace module, or null
+	 */
 	TraceModule getTraceModule(TargetModule module);
 
+	/**
+	 * Get the target section corresponding to the given trace section
+	 * 
+	 * @param obj the trace section
+	 * @return the target section, or null
+	 */
 	TargetSection getTargetSection(TraceSection section);
 
+	/**
+	 * Get the trace section corresponding to the given target section
+	 * 
+	 * @param obj the target section
+	 * @return the trace section, or null
+	 */
 	TraceSection getTraceSection(TargetSection section);
 
+	/**
+	 * Get the target thread corresponding to the given trace thread
+	 * 
+	 * @param obj the trace thread
+	 * @return the target thread, or null
+	 */
 	TargetThread getTargetThread(TraceThread thread);
 
+	/**
+	 * Get the execution state of the given target thread
+	 * 
+	 * @param thread the target thread
+	 * @return the execution state, or null
+	 */
 	TargetExecutionState getTargetThreadState(TargetThread thread);
 
+	/**
+	 * Get the execution state of the given trace thread
+	 * 
+	 * @param thread the trace thread
+	 * @return the execution state, or null
+	 */
 	TargetExecutionState getTargetThreadState(TraceThread thread);
 
-	TargetRegisterBank getTargetRegisterBank(TraceThread thread, int frameLevel);
+	/**
+	 * Get the target register bank for the given trace thread and frame level
+	 * 
+	 * <p>
+	 * If the model doesn't provide a bank for every frame, then this should only return non-null
+	 * for frame level 0, in which case it should return the bank for the given thread.
+	 * 
+	 * @param thread the thread
+	 * @param frameLevel the frame level
+	 * @return the bank, or null
+	 */
+	Set<TargetRegisterBank> getTargetRegisterBanks(TraceThread thread, int frameLevel);
 
+	/**
+	 * Get the trace thread corresponding to the given target thread
+	 * 
+	 * @param obj the target thread
+	 * @return the trace thread, or null
+	 */
 	TraceThread getTraceThread(TargetThread thread);
 
+	/**
+	 * Find the trace thread containing the given successor target object
+	 * 
+	 * @param successor the target object
+	 * @return the trace thread containing the object, or null
+	 */
 	TraceThread getTraceThreadForSuccessor(TargetObject successor);
 
+	/**
+	 * Get the trace stack frame for the given target stack frame
+	 * 
+	 * @param frame the target stack frame
+	 * @return the trace stack frame, or null
+	 */
 	TraceStackFrame getTraceStackFrame(TargetStackFrame frame);
 
+	/**
+	 * Get the trace stack frame containing the given successor target object
+	 * 
+	 * @param successor the target object
+	 * @return the trace stack frame containing the object, or null
+	 */
 	TraceStackFrame getTraceStackFrameForSuccessor(TargetObject successor);
 
+	/**
+	 * Get the target stack frame for the given trace thread and frame level
+	 * 
+	 * @param thread the thread
+	 * @param frameLevel the frame level
+	 * @return the stack frame, or null
+	 */
 	TargetStackFrame getTargetStackFrame(TraceThread thread, int frameLevel);
 
+	/**
+	 * Get all the target's threads that are currently alive
+	 * 
+	 * @return the set of live target threads
+	 */
 	Set<TargetThread> getLiveTargetThreads();
 
+	/**
+	 * Get the register mapper for the given trace thread
+	 * 
+	 * @param thread the trace thread
+	 * @return the mapper, or null
+	 */
 	DebuggerRegisterMapper getRegisterMapper(TraceThread thread);
 
+	/**
+	 * Get the memory mapper for the target
+	 * 
+	 * @return the mapper, or null
+	 */
 	DebuggerMemoryMapper getMemoryMapper();
 
+	/**
+	 * Check if the given register bank is accessible
+	 * 
+	 * @param bank the target register bank
+	 * @return true if accessible
+	 * @deprecated the accessibility concept was never really implemented nor offered anything of
+	 *             value. It has no replacement. Instead a model should reject requests its not
+	 *             prepared to handle, or queue them up to be processed when it can. If the latter,
+	 *             then ideally it should only allow one instance of a given request to be queued.
+	 */
+	@Deprecated
 	boolean isRegisterBankAccessible(TargetRegisterBank bank);
 
+	/**
+	 * Check if the register bank for the given trace thread and frame level is accessible
+	 * 
+	 * @param thread the trace thread
+	 * @param frameLevel the frame level
+	 * @see #getTargetStackFrame(TraceThread, int)
+	 * @see #isRegisterBankAccessible(TargetRegisterBank)
+	 * @return true if accessible
+	 * @deprecated for the same reasons as {@link #isRegisterBankAccessible(TargetRegisterBank)}
+	 */
+	@Deprecated
 	boolean isRegisterBankAccessible(TraceThread thread, int frameLevel);
 
 	/**
@@ -263,15 +438,16 @@ public interface TraceRecorder {
 	 * Nevertheless, this method can force the retrieval of a given set of registers from the
 	 * target.
 	 * 
+	 * @param platform the platform whose language defines the registers
 	 * @param thread the trace thread associated with the desired target thread
 	 * @param frameLevel the number of stack frames to "unwind", likely 0
 	 * @param registers the <em>base</em> registers, as viewed by the trace
-	 * @return a future which completes with the captured values
+	 * @return a future which completes when the commands succeed
 	 * @throws IllegalArgumentException if no {@link TargetRegisterBank} is known for the given
 	 *             thread
 	 */
-	CompletableFuture<Map<Register, RegisterValue>> captureThreadRegisters(TraceThread thread,
-			int frameLevel, Set<Register> registers);
+	CompletableFuture<Void> captureThreadRegisters(TracePlatform platform,
+			TraceThread thread, int frameLevel, Set<Register> registers);
 
 	/**
 	 * Write a target thread's registers.
@@ -280,6 +456,7 @@ public interface TraceRecorder {
 	 * Note that the model and recorder should cause values successfully written on the target to be
 	 * updated in the trace. The caller should not update the trace out of band.
 	 * 
+	 * @param platform the platform whose language defines the registers
 	 * @param thread the trace thread associated with the desired target thread
 	 * @param frameLevel the number of stack frames to "unwind", likely 0
 	 * @param values the values to write
@@ -287,8 +464,8 @@ public interface TraceRecorder {
 	 * @throws IllegalArgumentException if no {@link TargetRegisterBank} is known for the given
 	 *             thread
 	 */
-	CompletableFuture<Void> writeThreadRegisters(TraceThread thread, int frameLevel,
-			Map<Register, RegisterValue> values);
+	CompletableFuture<Void> writeThreadRegisters(TracePlatform platform, TraceThread thread,
+			int frameLevel, Map<Register, RegisterValue> values);
 
 	/**
 	 * Read (and capture) a range of target memory
@@ -320,20 +497,14 @@ public interface TraceRecorder {
 	 * 
 	 * <p>
 	 * This task is relatively error tolerant. If a block or region cannot be captured -- a common
-	 * occurrence -- the error is logged, but the task may still complete "successfully." For large
-	 * captures, it is recommended to set {@code returnResult} to false. The recorder will capture
-	 * the bytes into the trace where they can be retrieved later. For small captures, and where
-	 * bypassing the database may offer some advantage, set {@code returnResult} to true, and the
-	 * captured bytes will be returned in an interval map. Connected intervals may or may not be
-	 * joined.
+	 * occurrence -- the error is logged, but the task may still complete "successfully."
 	 * 
 	 * @param set the addresses to capture, as viewed in the trace
 	 * @param monitor a monitor for displaying task steps
 	 * @param returnResult true to complete with results, false to complete with null
 	 * @return a future which completes when the task finishes
 	 */
-	CompletableFuture<NavigableMap<Address, byte[]>> readMemoryBlocks(AddressSetView set,
-			TaskMonitor monitor, boolean returnResult);
+	CompletableFuture<Void> readMemoryBlocks(AddressSetView set, TaskMonitor monitor);
 
 	/**
 	 * Write a variable (memory or register) of the given thread or the process
@@ -350,40 +521,59 @@ public interface TraceRecorder {
 	 * @param data the value to write
 	 * @return a future which completes when the write is complete
 	 */
-	default CompletableFuture<Void> writeVariable(TraceThread thread, int frameLevel,
-			Address address, byte[] data) {
+	default CompletableFuture<Void> writeVariable(TracePlatform platform, TraceThread thread,
+			int frameLevel, Address address, byte[] data) {
 		if (address.isMemoryAddress()) {
 			return writeMemory(address, data);
 		}
 		if (address.isRegisterAddress()) {
-			Language lang = getTrace().getBaseLanguage();
-			Register register = lang.getRegister(address, data.length);
-			if (register == null) {
-				throw new IllegalArgumentException(
-					"Cannot identify the (single) register to write: " + address);
-			}
-
-			RegisterValue rv = new RegisterValue(register,
-				Utils.bytesToBigInteger(data, data.length, lang.isBigEndian(), false));
-			TraceMemoryRegisterSpace regs =
-				getTrace().getMemoryManager().getMemoryRegisterSpace(thread, frameLevel, false);
-			rv = TraceRegisterUtils.combineWithTraceBaseRegisterValue(rv, getSnap(), regs, true);
-			return writeThreadRegisters(thread, frameLevel, Map.of(rv.getRegister(), rv));
+			return writeRegister(platform, Objects.requireNonNull(thread), frameLevel, address,
+				data);
 		}
 		throw new IllegalArgumentException("Address is not in a recognized space: " + address);
 	}
 
 	/**
+	 * Write a register (by address) of the given thread
+	 * 
+	 * @param thread the thread
+	 * @param frameLevel the frame, usually 0.
+	 * @param address the address of the register
+	 * @param data the value to write
+	 * @return a future which completes when the write is complete
+	 */
+	default CompletableFuture<Void> writeRegister(TracePlatform platform, TraceThread thread,
+			int frameLevel, Address address, byte[] data) {
+		Register register = platform.getLanguage().getRegister(address, data.length);
+		if (register == null) {
+			throw new IllegalArgumentException(
+				"Cannot identify the (single) register to write: " + address);
+		}
+
+		RegisterValue rv = new RegisterValue(register,
+			Utils.bytesToBigInteger(data, data.length, register.isBigEndian(), false));
+		TraceMemorySpace regs =
+			getTrace().getMemoryManager().getMemoryRegisterSpace(thread, frameLevel, false);
+		Register parent = isRegisterOnTarget(platform, thread, frameLevel, register);
+		if (parent == null) {
+			throw new IllegalArgumentException("Cannot find register " + register + " on target");
+		}
+		rv = TraceRegisterUtils.combineWithTraceParentRegisterValue(parent, rv, platform, getSnap(),
+			regs, true);
+		return writeThreadRegisters(platform, thread, frameLevel, Map.of(rv.getRegister(), rv));
+	}
+
+	/**
 	 * Check if the given register exists on target (is mappable) for the given thread
 	 * 
+	 * @param platform the platform whose language defines the registers
 	 * @param thread the thread whose registers to examine
+	 * @param frameLevel the frame, usually 0.
 	 * @param register the register to check
-	 * @return true if the given register is known for the given thread on target
+	 * @return the smallest parent register known for the given thread on target, or null
 	 */
-	default boolean isRegisterOnTarget(TraceThread thread, Register register) {
-		Collection<Register> onTarget = getRegisterMapper(thread).getRegistersOnTarget();
-		return onTarget.contains(register) || onTarget.contains(register.getBaseRegister());
-	}
+	Register isRegisterOnTarget(TracePlatform platform, TraceThread thread, int frameLevel,
+			Register register);
 
 	/**
 	 * Check if the given trace address exists in target memory
@@ -398,21 +588,32 @@ public interface TraceRecorder {
 	/**
 	 * Check if a given variable (register or memory) exists on target
 	 * 
+	 * @param platform the platform whose language defines the registers
 	 * @param thread if a register, the thread whose registers to examine
+	 * @param frameLevel the frame, usually 0.
 	 * @param address the address of the variable
 	 * @param size the size of the variable. Ignored for memory
 	 * @return true if the variable can be mapped to the target
 	 */
-	default boolean isVariableOnTarget(TraceThread thread, Address address, int size) {
+	default boolean isVariableOnTarget(TracePlatform platform, TraceThread thread, int frameLevel,
+			Address address, int size) {
 		if (address.isMemoryAddress()) {
 			return isMemoryOnTarget(address);
 		}
-		Register register = getTrace().getBaseLanguage().getRegister(address, size);
+		if (thread == null) { // register-space addresses require a thread
+			return false;
+		}
+		Register register = platform.getLanguage().getRegister(address, size);
 		if (register == null) {
 			throw new IllegalArgumentException("Cannot identify the (single) register: " + address);
 		}
 
-		return isRegisterOnTarget(thread, register);
+		// TODO: Can any debugger modify regs up the stack?
+		if (frameLevel != 0) {
+			return false;
+		}
+
+		return isRegisterOnTarget(platform, thread, frameLevel, register) != null;
 	}
 
 	/**
@@ -522,6 +723,13 @@ public interface TraceRecorder {
 	boolean isSupportsFocus();
 
 	/**
+	 * Check if the target is subject to a {@link TargetActiveScope}.
+	 * 
+	 * @return true if an applicable scope is found, false otherwise.
+	 */
+	boolean isSupportsActivation();
+
+	/**
 	 * Get the last-focused object as observed by this recorder
 	 * 
 	 * @impNote While focus events are not recorded in the trace, it's most fitting to process these
@@ -546,6 +754,14 @@ public interface TraceRecorder {
 	 * @return a future which completes with true if the operation was successful, false otherwise.
 	 */
 	CompletableFuture<Boolean> requestFocus(TargetObject focus);
+
+	/**
+	 * Request activation of a successor of the target
+	 * 
+	 * @param active the object to activate
+	 * @return a future which completes with true if the operation was successful, false otherwise.
+	 */
+	CompletableFuture<Boolean> requestActivation(TargetObject active);
 
 	/**
 	 * Wait for pending transactions finish execution.

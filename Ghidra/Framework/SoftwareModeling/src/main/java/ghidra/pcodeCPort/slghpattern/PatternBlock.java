@@ -23,7 +23,6 @@ import org.jdom.Element;
 
 import generic.stl.IteratorSTL;
 import generic.stl.VectorSTL;
-import ghidra.pcodeCPort.context.ParserWalker;
 import ghidra.pcodeCPort.utils.Utils;
 import ghidra.pcodeCPort.utils.XmlUtils;
 
@@ -362,36 +361,6 @@ public class PatternBlock {
 		res >>>= (8 * 4 - size);
 
 		return res;
-	}
-
-	public boolean isInstructionMatch(ParserWalker pos, int off) {
-		if (nonzerosize <= 0) {
-			return (nonzerosize == 0);
-		}
-		off += offset;
-		for (int i = 0; i < maskvec.size(); ++i) {
-			int data = pos.getInstructionBytes(off, 4);
-			if ((maskvec.get(i) & data) != valvec.get(i)) {
-				return false;
-			}
-			off += 4;
-		}
-		return true;
-	}
-
-	public boolean isContextMatch(ParserWalker pos, int off) {
-		if (nonzerosize <= 0) {
-			return (nonzerosize == 0);
-		}
-		off += offset;
-		for (int i = 0; i < maskvec.size(); ++i) {
-			int data = pos.getContextBytes(off, 4);
-			if ((maskvec.get(i) & data) != valvec.get(i)) {
-				return false;
-			}
-			off += 4;
-		}
-		return true;
 	}
 
 	public void saveXml(PrintStream s) {

@@ -100,7 +100,7 @@ public class MarkupItemStatusRenderer extends AbstractGhidraColumnRenderer<VTMar
 					"This markup item conflicts with another item that is already applied");
 				break;
 			default:
-				renderer.setIcon(ResourceManager.loadImage("images/core.png"));
+				renderer.setIcon(ResourceManager.getDefaultIcon());
 				renderer.setToolTipText("Unexpected match status state!: " + status);
 				break;
 		}

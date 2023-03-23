@@ -43,9 +43,7 @@ public class ReferencedSymbolMsType extends AbstractMsType {
 	public ReferencedSymbolMsType(AbstractPdb pdb, PdbByteReader reader)
 			throws PdbException, CancelledException {
 		super(pdb, reader);
-		int recordLength = reader.parseUnsignedShortVal();
-		PdbByteReader recordReader = reader.getSubPdbByteReader(recordLength);
-		symbolRecord = SymbolParser.parse(pdb, recordReader);
+		symbolRecord = SymbolParser.parseLengthAndSymbol(pdb, reader);
 	}
 
 	@Override

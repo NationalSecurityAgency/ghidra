@@ -29,6 +29,7 @@ import edu.uci.ics.jung.visualization.layout.ObservableCachingLayout;
 import edu.uci.ics.jung.visualization.renderers.Renderer;
 import edu.uci.ics.jung.visualization.transform.shape.GraphicsDecorator;
 import edu.uci.ics.jung.visualization.transform.shape.ShapeTransformer;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.graph.viewer.*;
 import ghidra.graph.viewer.renderer.VisualVertexSatelliteRenderer;
 import ghidra.util.task.SwingUpdateManager;
@@ -38,8 +39,6 @@ public class CachingSatelliteGraphViewer<V extends VisualVertex, E extends Visua
 
 	private BufferedImage bufferedBackgroundImage = null;
 	private BufferedImage bufferedOverlayImage = null;
-
-	private Color backgroundColor;
 
 	private VisualVertexSatelliteRenderer<V, E> highlightRenderer =
 		new VisualVertexSatelliteRenderer<>();
@@ -55,10 +54,6 @@ public class CachingSatelliteGraphViewer<V extends VisualVertex, E extends Visua
 		super(masterViewer, preferredSize);
 
 		preRenderers.clear(); // remove default lens painter
-
-		// same behavior as default ViewLens
-		backgroundColor = masterViewer.getBackground().darker();
-		setBackground(backgroundColor);
 
 		Layout<V, E> layout = masterViewer.getGraphLayout();
 		if (layout instanceof ObservableCachingLayout<?, ?>) {
@@ -76,7 +71,7 @@ public class CachingSatelliteGraphViewer<V extends VisualVertex, E extends Visua
 
 	@Override
 	public Renderer.Vertex<V, E> getPreferredVertexRenderer() {
-		return new VisualVertexSatelliteRenderer<V, E>() {
+		return new VisualVertexSatelliteRenderer<>() {
 			@Override
 			protected void paintHighlight(RenderContext<V, E> rc, V vertex, GraphicsDecorator g,
 					Rectangle bounds) {
@@ -100,16 +95,16 @@ public class CachingSatelliteGraphViewer<V extends VisualVertex, E extends Visua
 		bufferedBackgroundImage =
 			new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
 		Graphics2D graphics = (Graphics2D) bufferedBackgroundImage.getGraphics();
-		setBackground(backgroundColor);
+		setBackground(options.getGraphBackgroundColor());
 		renderGraph(graphics);
 		graphics.dispose();
 
 		bufferedOverlayImage =
 			new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
 		graphics = (Graphics2D) bufferedOverlayImage.getGraphics();
-		setBackground(Color.WHITE);
+		setBackground(Palette.WHITE);
 		renderGraph(graphics);
-		setBackground(backgroundColor);
+		setBackground(options.getGraphBackgroundColor());
 		graphics.dispose();
 	}
 

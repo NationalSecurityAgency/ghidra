@@ -33,8 +33,7 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * 
- * https://android.googlesource.com/platform/art/+/oreo-m2-release/runtime/oat_file.h#467
+ * <a href="https://android.googlesource.com/platform/art/+/oreo-m2-release/runtime/oat_file.h#467">oreo-m2-release/runtime/oat_file.h</a>
  */
 class OatDexFile_OreoM2 extends OatDexFile {
 

@@ -15,21 +15,19 @@
  */
 package ghidra.trace.model.symbol;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.Address;
 import ghidra.program.model.symbol.SourceType;
-import ghidra.trace.database.DBTraceUtils;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.exception.InvalidInputException;
 
 public interface TraceLabelSymbolView extends TraceSymbolWithLocationView<TraceLabelSymbol> {
 
-	TraceLabelSymbol add(Range<Long> lifespan, TraceThread thread, Address address, String name,
+	TraceLabelSymbol add(Lifespan lifespan, TraceThread thread, Address address, String name,
 			TraceNamespaceSymbol parent, SourceType source) throws InvalidInputException;
 
 	default TraceLabelSymbol create(long snap, TraceThread thread, Address address, String name,
 			TraceNamespaceSymbol parent, SourceType source) throws InvalidInputException {
-		return add(DBTraceUtils.toRange(snap), thread, address, name, parent, source);
+		return add(Lifespan.nowOn(snap), thread, address, name, parent, source);
 	}
 }

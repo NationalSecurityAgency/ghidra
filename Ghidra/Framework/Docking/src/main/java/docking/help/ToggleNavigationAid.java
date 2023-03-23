@@ -21,6 +21,7 @@ import java.awt.event.ActionEvent;
 
 import javax.swing.*;
 
+import generic.theme.GIcon;
 import ghidra.framework.preferences.Preferences;
 import resources.MultiIcon;
 import resources.ResourceManager;
@@ -29,9 +30,9 @@ import resources.icons.TranslateIcon;
 
 public class ToggleNavigationAid extends AbstractAction {
 
-	private static final Icon ENABLED_ICON =
-		ResourceManager.loadImage("images/software-update-available.png");
-	private static final Icon CANCEL_ICON = ResourceManager.loadImage("images/dialog-cancel.png");
+	private static final Icon ENABLED_ICON = new GIcon("icon.help.navigation.aid.enabled");
+	private static final Icon DISABLED_OVERLAY_ICON =
+		new GIcon("icon.help.navigation.aid.disabled.overlay");
 	private static Icon DISABLED_ICON;
 
 	private boolean showingNavigationAid = true;
@@ -44,7 +45,7 @@ public class ToggleNavigationAid extends AbstractAction {
 				"when navigating within the help system");
 
 		TranslateIcon translatedIcon =
-			new CenterTranslateIcon(CANCEL_ICON, ENABLED_ICON.getIconWidth());
+			new CenterTranslateIcon(DISABLED_OVERLAY_ICON, ENABLED_ICON.getIconWidth());
 		ImageIcon disabledBaseIcon = ResourceManager.getDisabledIcon(ENABLED_ICON, 50);
 		DISABLED_ICON = new MultiIcon(disabledBaseIcon, translatedIcon);
 
@@ -54,7 +55,7 @@ public class ToggleNavigationAid extends AbstractAction {
 			showingNavigationAid = Boolean.parseBoolean(value);
 		}
 		else {
-			// not yet in the preferences; save the default 
+			// not yet in the preferences; save the default
 			savePreference();
 		}
 	}

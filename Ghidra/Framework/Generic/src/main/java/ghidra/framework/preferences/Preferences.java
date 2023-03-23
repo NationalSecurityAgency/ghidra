@@ -65,10 +65,15 @@ public class Preferences {
 	public final static String LAST_NEW_PROJECT_DIRECTORY = "LastNewProjectDirectory";
 
 	/**
-	 * Preference name for the import directory that was last accessed for
-	 * domain files.
+	 * Preference name for the last chosen directory for path related items.
 	 */
-	public final static String LAST_IMPORT_DIRECTORY = "LastImportDirectory";
+	public final static String LAST_PATH_DIRECTORY = "LastPathDirectory";
+
+	/**
+	 * Preference name for the import directory that was last accessed for domain files.
+	 */
+	public final static String LAST_IMPORT_FILE = "LastImportFile";
+
 	/**
 	 * Preference name for the export directory that was last accessed.
 	 */

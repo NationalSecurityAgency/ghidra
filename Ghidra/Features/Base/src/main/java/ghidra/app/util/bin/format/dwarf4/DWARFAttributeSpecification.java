@@ -15,11 +15,12 @@
  */
 package ghidra.app.util.bin.format.dwarf4;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute;
 import ghidra.app.util.bin.format.dwarf4.encoding.DWARFForm;
-
-import java.io.IOException;
+import ghidra.program.model.data.LEB128;
 
 /**
  * Information about a single DWARF attribute.
@@ -38,8 +39,9 @@ public class DWARFAttributeSpecification {
 	 * @throws IOException
 	 */
 	public static DWARFAttributeSpecification read(BinaryReader reader) throws IOException {
-		int attribute = LEB128.readAsUInt32(reader);
-		DWARFForm attributeForm = DWARFForm.find(LEB128.readAsUInt32(reader));
+		int attribute = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
+		DWARFForm attributeForm =
+			DWARFForm.find(reader.readNextUnsignedVarIntExact(LEB128::unsigned));
 
 		return attribute != 0 && attributeForm != DWARFForm.NULL
 				? new DWARFAttributeSpecification(attribute, attributeForm) : null;

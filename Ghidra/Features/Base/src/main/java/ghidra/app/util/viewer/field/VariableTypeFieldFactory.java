@@ -15,14 +15,12 @@
  */
 package ghidra.app.util.viewer.field;
 
-import java.awt.Color;
 import java.math.BigInteger;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.app.util.HighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
-import ghidra.app.util.viewer.options.OptionsGui;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.app.util.viewer.proxy.VariableProxy;
 import ghidra.framework.options.Options;
@@ -139,13 +137,4 @@ public class VariableTypeFieldFactory extends AbstractVariableFieldFactory {
 			ToolOptions displayOptions, ToolOptions fieldOptions) {
 		return new VariableTypeFieldFactory(formatModel, provider, displayOptions, fieldOptions);
 	}
-
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#getDefaultColor()
-	 */
-	@Override
-	public Color getDefaultColor() {
-		return OptionsGui.VARIABLE.getDefaultColor();
-	}
-
 }

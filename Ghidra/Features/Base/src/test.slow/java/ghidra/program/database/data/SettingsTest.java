@@ -17,10 +17,9 @@ package ghidra.program.database.data;
 
 import static org.junit.Assert.*;
 
-import java.awt.Color;
-
 import org.junit.*;
 
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.docking.settings.*;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
@@ -82,7 +81,7 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@After
 	public void tearDown() throws Exception {
-		if (program.getCurrentTransaction() != null) {
+		if (program.getCurrentTransactionInfo() != null) {
 			program.endTransaction(transactionID, true);
 		}
 		program.release(this);
@@ -154,7 +153,7 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 			defaultSettings.getLong("padded").longValue());
 
 		try {
-			defaultSettings.setValue("format", Color.RED);
+			defaultSettings.setValue("format", Palette.RED);
 			Assert.fail("Should not be able to set arbitrary objects");
 		}
 		catch (IllegalArgumentException e) {

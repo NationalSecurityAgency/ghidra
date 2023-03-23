@@ -60,7 +60,7 @@ public class ModuleAlgorithmPlugin extends ProgramPlugin implements BlockModelSe
 	private BlockModelService blockModelService;
 
 	public ModuleAlgorithmPlugin(PluginTool tool) {
-		super(tool, false, false);
+		super(tool);
 	}
 
 	@Override

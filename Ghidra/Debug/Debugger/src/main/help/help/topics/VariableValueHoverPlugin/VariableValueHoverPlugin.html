@@ -1,0 +1,141 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+
+    <TITLE>Debugger: Variable Hovers</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1><A name="plugin"></A>Debugger: Variable Hovers</H1>
+
+    <P>This service plugin provides hovers to the <A href=
+    "help/topics/CodeBrowserPlugin/CodeBrowser.htm">Static Listing</A>, the <A href=
+    "help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html">Dynamic Listing</A>, and the <A
+    href="help/topics/DecompilePlugin/DecompilerIntro.html">Decompiler</A>. Hovering the mouse over
+    variables or operands in any of those windows will cause the service to display a tip showing
+    the value of that variable, if it can. For stack and register variables, the service will
+    attempt to unwind the stack until it finds a call record for the function using the variable.
+    Thus, it is important to have all the modules imported, analyzed, and open in the Debugger so
+    that the unwinder can access the static analysis of every function it needs to unwind.</P>
+
+    <P>Stack unwinding can be tenuous. It relies heavily on accurate static analysis and expects
+    functions to follow certain conventions. Thus, it's very easy to break and may frequently be
+    incorrect. For hovers that include a <B>Frame</B> row, the displayed value depends on an
+    accurately unwound stack. Take the value with a grain of salt, especially if the hover also
+    includes a <B>Warnings:</B> row. To diagnose the unwound stack, use the <A href=
+    "help/topics/DebuggerStackPlugin/DebuggerStackPlugin.html#unwind_stack">Unwind Stack</A>
+    action.</P>
+
+    <H2>Table Rows</H2>
+
+    <P>A hover may display any of the following rows:</P>
+
+    <UL>
+      <LI><B>Name:</B> The name of the variable or operand.</LI>
+
+      <LI><B>Frame:</B> A description of the frame (call record) unwound to evaluate the variable.
+      This is omitted for global or static variables and for raw register operands.</LI>
+
+      <LI><B>Storage:</B> The statically-defined storage of the variable.</LI>
+
+      <LI><B>Type:</B> The data type of the variable.</LI>
+
+      <LI><B>Instruction:</B> If the operand refers to code, the instruction at the target
+      address.</LI>
+
+      <LI><B>Location:</B> The actual location of the variable on the target.</LI>
+
+      <LI><B>Bytes:</B> The bytes in the variable, subject to the target's endianness. For long
+      buffers, the bytes are split into lines of 16 bytes each for at most 16 lines.</LI>
+
+      <LI><B>Integer:</B> The value displayed as an integer in various formats: decimal,
+      hexadecimal; unsigned, signed. The alternative formats are only included if they differ from
+      the formats already presented.</LI>
+
+      <LI><B>Value:</B> The value as given by its type's default representation. This only applies
+      if the variable has a type and it was able to interpret the variable's bytes.</LI>
+
+      <LI><B>Status:</B> If the evaluation is taking significant time, this provides feedback while
+      evaluation proceeds in the background.</LI>
+
+      <LI><B>Warnings:</B> Displays any warnings encountered while unwinding the stack, if
+      applicable.</LI>
+
+      <LI><B>Error:</B> Displays an exception or error message when there was a problem evaluating
+      the variable. Other rows may be present, but overall the table is incomplete.</LI>
+    </UL>
+
+    <H2>Examples</H2>
+
+    <TABLE width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center" width="100%"><IMG alt="" border="1" src=
+          "images/VariableValueHoverPluginListing.png"></TD>
+        </TR>
+
+        <TR>
+          <TD align="center">A register operand in the Dynamic Listing</TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <P>When hovering over operands in the Dynamic Listing, that operand is most likely a register.
+    The register's value is displayed without regard to the stack frame. It will always use the
+    "innermost frame," meaning it will display the register's current value. In the example, the
+    user has hovered over register EDX; however, the value of EDX was not recorded, so its integer
+    value <CODE>0</CODE> is displayed in gray. Furthermore, the user had not assigned a type to EDX
+    in the <A href="help/topics/DebuggerRegistersPlugin/DebuggerRegistersPlugin.html">Registers</A>
+    window, and so the service cannot interpret the value except as an integer. Register values are
+    never displayed as raw byte arrays.</P>
+
+    <TABLE width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center" width="100%"><IMG alt="" border="1" src=
+          "images/VariableValueHoverPluginBrowser.png"></TD>
+        </TR>
+
+        <TR>
+          <TD align="center">A stack variable in the Static Listing</TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <P>When hovering over operands in the Static Listing, the service will gather context about the
+    operand and find a frame for the relevant function. It will take the first appropriate frame it
+    encounters during unwinding (from innermost out) so long as the frame's level is at least the
+    current frame level. In the example, the user has hovered over the parameter <EM>n</EM>, which
+    is a stack variable of the function <EM>fib</EM>. The curent frame is 0, so the service unwinds
+    the stack, finds that the current frame is a call record for <EM>fib</EM>, and selects it. It
+    displays the variable's static storage <CODE>Stack[0x4]:4</CODE> and type <CODE>uint</CODE>. It
+    then applies this information to determine the actual run-time location and value. Since the
+    frame base is <CODE>00004fa0</CODE>, it adds the stack offset to compute the run-time location
+    <CODE>00004fa4:4</CODE>. It reads the bytes <CODE>01 00 00 00</CODE> from the target and
+    computes the integer value <CODE>1</CODE>. It also interprets the value using the assigned data
+    type, giving <CODE>1h</CODE>.</P>
+
+    <TABLE width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center" width="100%"><IMG alt="" border="1" src=
+          "images/VariableValueHoverPluginDecompiler.png"></TD>
+        </TR>
+
+        <TR>
+          <TD align="center">A stack variable in the Decompiler</TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <P>When hovering over variables in the Decompiler, the service behaves similarly to how it does
+    for operands in the Static Listing. It locates the appropriate frame and attempts to derive the
+    variable's run-time value. Just as in the Static Listing example above, the user has hovered
+    over the variable <EM>n</EM>, so the service has again computed the value <CODE>1h</CODE>.</P>
+  </BODY>
+</HTML>

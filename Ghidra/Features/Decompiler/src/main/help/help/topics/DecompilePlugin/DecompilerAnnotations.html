@@ -2,8 +2,8 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 <title>Program Annotations Affecting the Decompiler</title>
-<link rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
-<link rel="stylesheet" type="text/css" href="../../shared/languages.css">
+<link rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+<link rel="stylesheet" type="text/css" href="help/shared/languages.css">
 <meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
 <link rel="home" href="Decompiler.html" title="Decompiler">
 <link rel="up" href="Decompiler.html" title="Decompiler">
@@ -89,7 +89,7 @@
     </p>
     <div class="warning" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Warning">
 <tr>
-<td rowspan="2" align="center" valign="top" width="25"><img alt="[Warning]" src="../../shared/warning.png"></td>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Warning]" src="help/shared/warning.png"></td>
 <th align="left"></th>
 </tr>
 <tr><td align="left" valign="top">
@@ -260,7 +260,7 @@
   </p>
   <div class="warning" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Warning">
 <tr>
-<td rowspan="2" align="center" valign="top" width="25"><img alt="[Warning]" src="../../shared/warning.png"></td>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Warning]" src="help/shared/warning.png"></td>
 <th align="left"></th>
 </tr>
 <tr><td align="left" valign="top">
@@ -724,8 +724,152 @@
 <p>
 	</p>
       </div>
+      <div class="sect4">
+<div class="titlepage"><div><div><h5 class="title">
+<a name="TypeUnion"></a>Unions</h5></div></div></div>
+	
+	<p>
+	  Unions data-types are fully supported.  The Decompiler does not automatically infer unions
+	  when analyzing a function; it propagates them into the function from explicitly
+	  annotated sources, like input parameters or global variables.
+	</p>
+	<p>
+	  A union data-type, similarly to a structure, is made up of component data-types
+	  called <span class="emphasis"><em>fields</em></span>.  But unlike a structure, a union's fields all share the same underlying
+	  storage.  When the union is applied to a variable, each field potentially describes the whole variable.
+	  At any given point where the variable is read or written, a different field may be in effect, even if the
+	  underlying data hasn't changed.  The decompiler attempts to infer the particular field by following data-flow
+	  to or from the point of use to determine which field best aligns with the specific operations being applied to the
+	  variable.  The name of this recovered field is then printed in Decompiler output using syntax similar to that
+	  used for structure fields.
+	</p>
+	<p>
+	  Depending on the number and variety of fields within the union, it may not be possible
+	  to fully distinguish which field is being used in a specific context. In this situation,
+	  the Decompiler chooses the first field from the list of best matches.  The user has the
+	  option of changing this choice with the <a class="xref" href="DecompilerWindow.html#ActionForceField" title="Force Field">Force Field</a> action.
+	</p>
+      </div>
+      <div class="sect4">
+<div class="titlepage"><div><div><h5 class="title">
+<a name="TypeTypedef"></a>Typedefs</h5></div></div></div>
+	
+	<p>
+	  Typedef data-types are fully supported.  The Decompiler does not automatically infer typedefs
+	  when analyzing a function; it propagates them into the function from explicitly annotated sources.
+	</p>
+	<p>
+	  A <span class="bold"><strong>typedef</strong></span> is copy of another data-type but with an alternate name.
+	  In most cases it can be used interchangeably with the data-type it copies.
+	  In general, the Decompiler treats a typedef as a distinct data-type, and it will maintain its identify
+	  when it is assigned to variables and is propagated through data-flow.
+	</p>
+	<p>
+	  Ghidra supports a specific set of attributes that can be placed directly on a typedef
+	  that then distinguish it from the data-type it copies. This allows Ghidra to support some
+	  non-standard data-types, although the typedef and its copy are no longer interchangeable.
+	  The decompiler supports the following typedef properties:
+	  </p>
+<div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: none; ">
+<li class="listitem" style="list-style-type: none">Component Offset - See <a class="xref" href="DecompilerAnnotations.html#AttributeOffsetPointer" title="Offset Pointers">Offset Pointers</a>
+</li>
+<li class="listitem" style="list-style-type: none">Address Space - See <a class="xref" href="DecompilerAnnotations.html#AttributeAddressPointer" title="Address Space Pointers">Address Space Pointers</a>
+</li>
+</ul></div>
+<p>
+	</p>
+      </div>
     </div>
 
+    <div class="sect3">
+<div class="titlepage"><div><div><h4 class="title">
+<a name="AnnotePointerAttributes"></a>Pointer Attributes</h4></div></div></div>
+      
+      <p>
+	The Decompiler supports some specialized attributes that can be applied to pointer data-types, like offsets
+	and address spaces (See below).  Ghidra implements these attributes on top of <span class="emphasis"><em>typedef</em></span> data-types only. In
+	order to add attributes to pointers, a typedef of the underlying pointer data-type must be created first.
+	Attributes can then be placed directly on the typedef from the Data Type Manager window
+	(See <a class="ulink" href="help/topics/DataTypeManagerPlugin/data_type_manager_description.htm#Pointer_Typedef_Settings" target="_top">Pointer-Typedef Settings</a>).
+      </p>
+      <div class="sect4">
+<div class="titlepage"><div><div><h5 class="title">
+<a name="AttributeOffsetPointer"></a>Offset Pointers</h5></div></div></div>
+	
+	<p>
+	  An <span class="bold"><strong>offset pointer</strong></span> points at a fixed offset relative to the start of its
+	  underlying data-type. Typically the underlying data-type is a structure and the pointer points at a
+	  specific field in the interior of the structure. But in general, the underlying data-type can be anything,
+	  and the offset can point anywhere relative to that data-type, including either before or after.
+	</p>
+	<p>
+	  An offset pointer is defined with all the same properties of a normal pointer.  It has an underlying
+	  data-type and a size. On top of this an <span class="bold"><strong>offset</strong></span> is specified
+	  as an integer attribute on the pointer (typedef). This is the number of bytes that need to be
+	  added to the start of the underlying data-type to obtain the address actually being pointed at.
+	</p>
+	<p>
+	  Because the <span class="emphasis"><em>underlying</em></span> data-type does not start directly at the address
+	  contained in the offset pointer, one can also refer to the offset pointer's
+	  <span class="bold"><strong>direct</strong></span> data-type, i.e. the data-type that <span class="emphasis"><em>is</em></span>
+	  directly at the address contained in the pointer. If the pointer's offset is positive (and small),
+	  the direct data-type will generally be that of a field of the <span class="emphasis"><em>underlying</em></span>
+	  data-type.  If the offset is bigger than the size of the underlying data-type or is negative,
+	  the direct data-type will be <span class="emphasis"><em>undefined</em></span>.
+	</p>
+	<p>
+	  Offset pointers occur in code where the compiler has maintained knowledge of the position of
+	  an underlying data-type relative to a pointer, even if the pointer no longer points directly at the data-type.
+	  Because of this, the code may still access fields of the underlying data-type through the pointer.
+	  Annotating a variable with an offset pointer allows the Decompiler to recover these accesses.
+	</p>
+	<p>
+	  Within the Decompiler's output, the token <code class="code">ADJ</code> is used to indicate that the code is
+	  accessing the underlying data-type through the offset pointer. The token uses functional syntax
+	  to indicate the particular offset pointer. Then, once the <code class="code">ADJ</code> token is
+	  applied, additional pointer syntax is used, i.e. <code class="code">-&gt;</code>, to indicate what part
+	  of the underlying data-type is being accessed.
+	  </p>
+<div class="informalexample">
+            <pre class="programlisting">
+              ADJ(structoffptr)-&gt;field1 = 2;  // Accessing the underlying structure's field
+              iVar1 = *ADJ(intoffptr);        // Accessing the underlying integer data-type
+              ADJ(arrayoffptr)[4] = iVar2;    // Accessing the underlying array
+            </pre>
+	  </div>
+<p>
+	  If the offset pointer appears in Decompiler output without the <code class="code">ADJ</code> token being
+	  applied, it is being treated as if it were a normal pointer to its direct
+	  data-type.  This generally indicates the pointer is being used to access data outside the
+	  underlying data-type. 
+	</p>
+      </div>
+      <div class="sect4">
+<div class="titlepage"><div><div><h5 class="title">
+<a name="AttributeAddressPointer"></a>Address Space Pointers</h5></div></div></div>
+	
+	<p>
+	  An <span class="bold"><strong>address space pointer</strong></span> is a normal pointer data-type with a specific
+	  address space associated to it (See <a class="xref" href="DecompilerConcepts.html#ConceptAddressSpace" title="Address Space">Address Space</a>).  Its created by setting
+	  the Address Space attribute on a typedef of a pointer. The attribute value is the name of the specific
+	  address space.
+	</p>
+	<p>
+	  Address space pointers are useful, when a program architecture supports more than one address space
+	  containing addressable memory, such as separate <code class="code">code</code> and <code class="code">data</code> address spaces.
+	  For a program and a specific section of its code that manipulates a pointer, it may not be easy to determine
+	  which address space is being referred to. Address space pointers provide an additional annotation mechanism
+	  to help the decompiler identify the correct address space for a pointer in context.
+	</p>
+	<p>
+	  The Decompiler will automatically propagate an address space pointer data-type from parameters and
+	  other annotated variables associated with a function. Any constant that the pointer reaches via propagation
+	  is assumed to point into the address space associated with the pointer.  The correct symbol can then
+	  be looked up, further informing the Decompiler output.
+	</p>
+      </div>
+    </div>
+ 
     <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
 <a name="AnnoteForcing"></a>Forcing Data-types</h4></div></div></div>
@@ -745,7 +889,7 @@
       </p>
       <div class="warning" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Warning">
 <tr>
-<td rowspan="2" align="center" valign="top" width="25"><img alt="[Warning]" src="../../shared/warning.png"></td>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Warning]" src="help/shared/warning.png"></td>
 <th align="left"></th>
 </tr>
 <tr><td align="left" valign="top">
@@ -799,7 +943,7 @@
       </p>
       <div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Note">
 <tr>
-<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="../../shared/note.png"></td>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Note]" src="help/shared/note.png"></td>
 <th align="left"></th>
 </tr>
 <tr><td align="left" valign="top">
@@ -1123,7 +1267,7 @@
     </p>
     <div class="warning" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Warning">
 <tr>
-<td rowspan="2" align="center" valign="top" width="25"><img alt="[Warning]" src="../../shared/warning.png"></td>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Warning]" src="help/shared/warning.png"></td>
 <th align="left"></th>
 </tr>
 <tr><td align="left" valign="top">
@@ -1207,18 +1351,20 @@
     <p>
       The <span class="bold"><strong>volatile</strong></span> mutability setting indicates that values within
       the memory region may change unexpectedly, even if the code currently executing does not directly
-      write to it.  If a volatile variable is accessed in a function being analyzed by the Decompiler,
-      each specific access is replaced with a built-in function call, which prevents constant propagation
-      and other transforms across the access. The built-in functions are named based on
-      whether the access is a <span class="emphasis"><em>read</em></span> or <span class="emphasis"><em>write</em></span> and on the <span class="emphasis"><em>size</em></span>
-      of the access.  Within the Decompiler output, the first parameter to a built-in function is a symbol
-      indicating the volatile variable.  The function returns a value in the case of a volatile read or
-      takes a second parameter in the case of a volatile write.
+      write to it.  Accessing a variable within a volatile region, either reading or writing, can have other
+      side-effects on the machine state, and it cannot in general be treated as normal variable.
+      If a volatile variable is accessed in a function being analyzed by the Decompiler,
+      each access is expressed as a copy statement on its own line, separated from other expressions,
+      so that the its position within the code and any sequence of accesses is clearly indicated.
+      Any access, either read or write, will always be displayed, even if the value is not directly
+      used by the function. The token representing the variable will be displayed using the
+      <span class="bold"><strong>Special</strong></span> color, highlighting that the access is volatile
+      (See <a class="xref" href="DecompilerOptions.html#DisplayTokenColor"><span class="bold"><strong>Color for &lt;token&gt;</strong></span></a>).
       </p>
 <div class="informalexample">
 	<pre class="programlisting">
-	  X = read_volatile_2(SREG);
-	  write_volatile_1(DAT_mem_002b,0x20);
+	  X = <span class="redtext">SREG</span>;              // Reading volatile SREG
+	  <span class="redtext">DAT_mem_002b</span> = 0x20;   // Writing volatile DAT
 	</pre>
       </div>
 <p>
@@ -1353,7 +1499,7 @@
     </p>
     <div class="tip" style="margin-left: 0.5in; margin-right: 0.5in;"><table border="0" summary="Tip">
 <tr>
-<td rowspan="2" align="center" valign="top" width="25"><img alt="[Tip]" src="../../shared/tip.png"></td>
+<td rowspan="2" align="center" valign="top" width="25"><img alt="[Tip]" src="help/shared/tip.png"></td>
 <th align="left"></th>
 </tr>
 <tr><td align="left" valign="top">

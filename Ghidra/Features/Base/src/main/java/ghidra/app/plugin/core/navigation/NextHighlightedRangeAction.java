@@ -20,6 +20,7 @@ import java.awt.event.KeyEvent;
 import docking.DockingUtils;
 import docking.action.*;
 import docking.tool.ToolConstants;
+import generic.theme.GIcon;
 import ghidra.app.context.ProgramLocationActionContext;
 import ghidra.app.nav.NextRangeAction;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -27,19 +28,20 @@ import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
-import resources.ResourceManager;
 
 public class NextHighlightedRangeAction extends NextRangeAction {
+
+	private static final GIcon ICON = new GIcon("icon.plugin.navigation.highlight.range.next");
 
 	public NextHighlightedRangeAction(PluginTool tool, String owner, NavigationOptions navOptions) {
 		super(tool, "Next Highlighted Range", owner, navOptions);
 		setMenuBarData(new MenuData(new String[] { ToolConstants.MENU_NAVIGATION,
-			"Next Highlight Range" }, ResourceManager.loadImage("images/NextHighlightBlock16.gif"),
+			"Next Highlight Range" }, ICON,
 			PluginCategoryNames.NAVIGATION, MenuData.NO_MNEMONIC,
 			NextPrevHighlightRangePlugin.ACTION_SUB_GROUP));
 
 		setToolBarData(new ToolBarData(
-			ResourceManager.loadImage("images/NextHighlightBlock16.gif"),
+			ICON,
 			ToolConstants.TOOLBAR_GROUP_THREE, NextPrevHighlightRangePlugin.ACTION_SUB_GROUP));
 		setKeyBindingData(
 			new KeyBindingData(KeyEvent.VK_0, DockingUtils.CONTROL_KEY_MODIFIER_MASK));

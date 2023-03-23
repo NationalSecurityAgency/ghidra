@@ -15,15 +15,14 @@
  */
 package ghidra.app.util.viewer.field;
 
-import java.awt.Color;
 import java.math.BigInteger;
 import java.util.ArrayList;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.viewer.field.ListingColors.FunctionColors;
 import ghidra.app.util.viewer.format.FieldFormatModel;
-import ghidra.app.util.viewer.options.OptionsGui;
 import ghidra.app.util.viewer.proxy.FunctionProxy;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.Options;
@@ -38,8 +37,6 @@ import ghidra.program.util.ProgramLocation;
 public class FunctionCallFixupFieldFactory extends FieldFactory {
 
 	public static final String FIELD_NAME = "Function Call-Fixup";
-	private Color fixupColor;
-	private Color literalColor;
 
 	/**
 	 * Default Constructor
@@ -59,20 +56,6 @@ public class FunctionCallFixupFieldFactory extends FieldFactory {
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
 
-		literalColor = displayOptions.getColor(OptionsGui.SEPARATOR.getColorOptionName(),
-			OptionsGui.SEPARATOR.getDefaultColor());
-		fixupColor = displayOptions.getColor(OptionsGui.FUN_CALL_FIXUP.getColorOptionName(),
-			OptionsGui.FUN_CALL_FIXUP.getDefaultColor());
-	}
-
-	@Override
-	public void displayOptionsChanged(Options options, String optionName, Object oldValue,
-			Object newValue) {
-		super.displayOptionsChanged(options, optionName, oldValue, newValue);
-		literalColor = options.getColor(OptionsGui.FUN_CALL_FIXUP.getColorOptionName(),
-			OptionsGui.FUN_CALL_FIXUP.getDefaultColor());
-		fixupColor = options.getColor(OptionsGui.FUN_CALL_FIXUP.getColorOptionName(),
-			OptionsGui.FUN_CALL_FIXUP.getDefaultColor());
 	}
 
 	@Override
@@ -91,10 +74,10 @@ public class FunctionCallFixupFieldFactory extends FieldFactory {
 		AttributedString as;
 		int elementIndex = 0;
 
-		as = new AttributedString("Call-Fixup: ", literalColor, getMetrics());
+		as = new AttributedString("Call-Fixup: ", ListingColors.SEPARATOR, getMetrics());
 		textElements.add(new TextFieldElement(as, elementIndex++, 0));
 
-		as = new AttributedString(callFixupStr, fixupColor, getMetrics());
+		as = new AttributedString(callFixupStr, FunctionColors.CALL_FIXUP, getMetrics());
 		textElements.add(new TextFieldElement(as, elementIndex++, 0));
 
 		return ListingTextField.createSingleLineTextField(this, proxy,
@@ -141,14 +124,4 @@ public class FunctionCallFixupFieldFactory extends FieldFactory {
 			fieldOptions);
 	}
 
-	@Override
-	public Color getDefaultColor() {
-		return OptionsGui.FUN_CALL_FIXUP.getDefaultColor();
-	}
-
-	@Override
-	public void fieldOptionsChanged(Options options, String optionName, Object oldValue,
-			Object newValue) {
-		// don't care
-	}
 }

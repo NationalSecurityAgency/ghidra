@@ -20,8 +20,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.function.Predicate;
 
-import ghidra.async.AsyncUtils;
-import ghidra.async.TypeSpec;
+import ghidra.async.*;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.error.*;
 import ghidra.dbg.target.TargetMemory;
 import ghidra.dbg.target.TargetObject;
@@ -65,6 +65,13 @@ import ghidra.util.Msg;
  * risk deadlocking Ghidra's UI.
  */
 public interface DebuggerObjectModel {
+	
+	public static enum RefreshBehavior {
+		REFRESH_ALWAYS,
+		REFRESH_NEVER,
+		REFRESH_WHEN_ABSENT
+	}
+	
 	public static final TypeSpec<Map<String, ? extends TargetObject>> ELEMENT_MAP_TYPE =
 		TypeSpec.auto();
 	public static final TypeSpec<Map<String, ?>> ATTRIBUTE_MAP_TYPE = TypeSpec.auto();
@@ -248,16 +255,16 @@ public interface DebuggerObjectModel {
 	 * @return a future map of attributes
 	 */
 	public CompletableFuture<? extends Map<String, ?>> fetchObjectAttributes(List<String> path,
-			boolean refresh);
+			RefreshBehavior refresh);
 
 	/**
 	 * Fetch the attributes of the given model path, without refreshing
 	 * 
-	 * @see #fetchObjectAttributes(List, boolean)
+	 * @see #fetchObjectAttributes(List, RefreshBehavior)
 	 */
 	public default CompletableFuture<? extends Map<String, ?>> fetchObjectAttributes(
 			List<String> path) {
-		return fetchObjectAttributes(path, false);
+		return fetchObjectAttributes(path, RefreshBehavior.REFRESH_NEVER);
 	}
 
 	/**
@@ -280,16 +287,16 @@ public interface DebuggerObjectModel {
 	 * @return a future map of elements
 	 */
 	public CompletableFuture<? extends Map<String, ? extends TargetObject>> fetchObjectElements(
-			List<String> path, boolean refresh);
+			List<String> path, RefreshBehavior refresh);
 
 	/**
 	 * Fetch the elements of the given model path, without refreshing
 	 * 
-	 * @see #fetchObjectElements(List, boolean)
+	 * @see #fetchObjectElements(List, RefreshBehavior)
 	 */
 	public default CompletableFuture<? extends Map<String, ? extends TargetObject>> fetchObjectElements(
 			List<String> path) {
-		return fetchObjectElements(path, false);
+		return fetchObjectElements(path, RefreshBehavior.REFRESH_NEVER);
 	}
 
 	/**
@@ -558,11 +565,15 @@ public interface DebuggerObjectModel {
 	 * @param ex the exception
 	 */
 	default void reportError(Object origin, String message, Throwable ex) {
+		Throwable unwrapped = AsyncUtils.unwrapThrowable(ex);
 		if (ex == null || DebuggerModelTerminatingException.isIgnorable(ex)) {
 			Msg.warn(origin, message + ": " + ex);
 		}
-		else if (AsyncUtils.unwrapThrowable(ex) instanceof RejectedExecutionException) {
+		else if (unwrapped instanceof RejectedExecutionException) {
 			Msg.trace(origin, "Ignoring rejection", ex);
+		}
+		else if (unwrapped instanceof DisposedException) {
+			Msg.trace(origin, "Ignoring disposal", ex);
 		}
 		else {
 			Msg.error(origin, message, ex);
@@ -580,4 +591,5 @@ public interface DebuggerObjectModel {
 	 * @return a future which completes when all queued callbacks have been invoked
 	 */
 	CompletableFuture<Void> flushEvents();
+
 }

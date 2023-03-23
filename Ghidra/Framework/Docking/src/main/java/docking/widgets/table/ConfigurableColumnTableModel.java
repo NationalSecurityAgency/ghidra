@@ -66,4 +66,12 @@ public interface ConfigurableColumnTableModel extends TableModel {
 	 * @return the renderer
 	 */
 	public TableCellRenderer getRenderer(int columnIndex);
+
+	/**
+	 * Returns the header cell renderer for the given column
+	 * @param columnIndex the index of the column
+	 * @return the renderer
+	 * @return
+	 */
+	public TableCellRenderer getHeaderRenderer(int columnIndex);
 }

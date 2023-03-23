@@ -469,6 +469,11 @@ public class FunctionSignatureStringable extends Stringable {
 		if (!returnInfo.isEquivalent(other.returnInfo)) { // storage not checked
 			return false;
 		}
+
+		if (!callingConventionName.equals(other.callingConventionName)) {
+			return false;
+		}
+
 		int paramCnt = parameterInfos.size();
 		if (paramCnt != other.parameterInfos.size()) {
 			return false;

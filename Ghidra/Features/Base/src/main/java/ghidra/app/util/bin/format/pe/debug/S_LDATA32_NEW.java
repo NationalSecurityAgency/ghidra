@@ -35,8 +35,8 @@ class S_LDATA32_NEW extends DebugSymbol{
 
 		byte nameLen = reader.readByte(ptr); ptr += BinaryReader.SIZEOF_BYTE;
 
-		this.name = reader.readAsciiString(ptr, Conv.byteToInt(nameLen));
-		ptr+=nameLen;
+		this.name = reader.readAsciiString(ptr, Byte.toUnsignedInt(nameLen));
+		ptr += Byte.toUnsignedInt(nameLen);
 
 		int sizeOfPadding = Conv.shortToInt(length) - 
 							BinaryReader.SIZEOF_SHORT - 

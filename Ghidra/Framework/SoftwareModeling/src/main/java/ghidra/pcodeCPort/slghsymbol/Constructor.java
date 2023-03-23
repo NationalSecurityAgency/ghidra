@@ -22,7 +22,7 @@ import org.jdom.Element;
 
 import generic.stl.IteratorSTL;
 import generic.stl.VectorSTL;
-import ghidra.pcodeCPort.context.*;
+import ghidra.pcodeCPort.context.SleighError;
 import ghidra.pcodeCPort.semantics.ConstTpl.const_type;
 import ghidra.pcodeCPort.semantics.ConstructTpl;
 import ghidra.pcodeCPort.semantics.HandleTpl;
@@ -127,13 +127,6 @@ public class Constructor {
 
 	public int getNumSections() {
 		return namedtempl.size();
-	}
-
-	public void applyContext(ParserWalkerChange pos) {
-		IteratorSTL<ContextChange> iter = context.begin();
-		for (; !iter.isEnd(); iter.increment()) {
-			iter.get().apply(pos);
-		}
 	}
 
 	public void markSubtableOperands(VectorSTL<Integer> check) {
@@ -294,65 +287,6 @@ public class Constructor {
 			namedtempl.push_back(null);
 		}
 		namedtempl.set(id, tpl);
-	}
-
-	public void print(PrintStream s, ParserWalker pos) {
-		IteratorSTL<String> piter;
-		for (piter = printpiece.begin(); !piter.isEnd(); piter.increment()) {
-			if (piter.get().charAt(0) == '\n') {
-				int index = piter.get().charAt(1) - 'A';
-				operands.get(index).print(s, pos);
-			}
-			else {
-				s.append(piter.get());
-			}
-		}
-	}
-
-	public void printMnemonic(PrintStream s, ParserWalker pos) {
-		if (flowthruindex != -1) {
-			TripleSymbol definingSymbol = operands.get(flowthruindex).getDefiningSymbol();
-			if (definingSymbol instanceof SubtableSymbol) {
-				pos.pushOperand(flowthruindex);
-				pos.getConstructor().printMnemonic(s, pos);
-				pos.popOperand();
-				return;
-			}
-		}
-		int endind = (firstwhitespace == -1) ? printpiece.size() : firstwhitespace;
-		for (int i = 0; i < endind; ++i) {
-			if (printpiece.get(i).charAt(0) == '\n') {
-				int index = printpiece.get(i).charAt(1) - 'A';
-				operands.get(index).print(s, pos);
-			}
-			else {
-				s.append(printpiece.get(i));
-			}
-		}
-	}
-
-	public void printBody(PrintStream s, ParserWalker pos) {
-		if (flowthruindex != -1) {
-			TripleSymbol sym = operands.get(flowthruindex).getDefiningSymbol();
-			if (sym instanceof SubtableSymbol) {
-				pos.pushOperand(flowthruindex);
-				pos.getConstructor().printBody(s, pos);
-				pos.popOperand();
-				return;
-			}
-		}
-		if (firstwhitespace == -1) {
-			return; // Nothing to print after firstwhitespace
-		}
-		for (int i = firstwhitespace + 1; i < printpiece.size(); ++i) {
-			if (printpiece.get(i).charAt(0) == '\n') {
-				int index = printpiece.get(i).charAt(1) - 'A';
-				operands.get(index).print(s, pos);
-			}
-			else {
-				s.append(printpiece.get(i));
-			}
-		}
 	}
 
 	// Allow for user to force extra space at end of printing

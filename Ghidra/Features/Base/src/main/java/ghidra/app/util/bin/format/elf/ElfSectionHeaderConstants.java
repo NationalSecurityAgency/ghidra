@@ -20,56 +20,32 @@ public class ElfSectionHeaderConstants {
 	private ElfSectionHeaderConstants() {
 	}
 
-	/**RESERVED SECTION NAME*/
-	public static final String dot_bss = ".bss";
-	/**RESERVED SECTION NAME*/
-	public static final String dot_comment = ".comment";
-	/**RESERVED SECTION NAME*/
-	public static final String dot_data = ".data";
-	/**RESERVED SECTION NAME*/
-	public static final String dot_data1 = ".data1";
-	/**RESERVED SECTION NAME*/
-	public static final String dot_debug = ".debug";
-	/**RESERVED SECTION NAME*/
-	public static final String dot_dynamic = ".dynamic";
-	/**RESERVED SECTION NAME*/
-	public static final String dot_dynstr = ".dynstr";
-	/**RESERVED SECTION NAME*/
-	public static final String dot_dynsym = ".dynsym";
-	/**RESERVED SECTION NAME*/
-	public static final String dot_fini = ".fini";
-	/**RESERVED SECTION NAME*/
-	public static final String dot_got = ".got";
-	/**RESERVED SECTION NAME*/
-	public static final String dot_hash = ".hash";
-	/**RESERVED SECTION NAME*/
-	public static final String dot_init = ".init";
-	/**RESERVED SECTION NAME*/
-	public static final String dot_interp = ".interp";
-	/**RESERVED SECTION NAME*/
-	public static final String dot_line = ".line";
-	/**RESERVED SECTION NAME*/
-	public static final String dot_note = ".note";
-	/**RESERVED SECTION NAME*/
-	public static final String dot_plt = ".plt";
-	/**RESERVED SECTION NAME*/
-	public static final String dot_rodata = ".rodata";
-	/**RESERVED SECTION NAME*/
-	public static final String dot_rodata1 = ".rodata1";
-	/**RESERVED SECTION NAME*/
-	public static final String dot_shstrtab = ".shstrtab";
-	/**RESERVED SECTION NAME*/
-	public static final String dot_strtab = ".strtab";
-	/**RESERVED SECTION NAME*/
-	public static final String dot_symtab = ".symtab";
-	/**RESERVED SECTION NAME*/
-	public static final String dot_text = ".text";
+	// Frequently used section names
 
-	/**RESERVED SECTION NAME*/
+	public static final String dot_bss = ".bss";
+	public static final String dot_comment = ".comment";
+	public static final String dot_data = ".data";
+	public static final String dot_data1 = ".data1";
+	public static final String dot_debug = ".debug";
+	public static final String dot_dynamic = ".dynamic";
+	public static final String dot_dynstr = ".dynstr";
+	public static final String dot_dynsym = ".dynsym";
+	public static final String dot_fini = ".fini";
+	public static final String dot_got = ".got";
+	public static final String dot_hash = ".hash";
+	public static final String dot_init = ".init";
+	public static final String dot_interp = ".interp";
+	public static final String dot_line = ".line";
+	public static final String dot_note = ".note";
+	public static final String dot_plt = ".plt";
+	public static final String dot_rodata = ".rodata";
+	public static final String dot_rodata1 = ".rodata1";
+	public static final String dot_shstrtab = ".shstrtab";
+	public static final String dot_strtab = ".strtab";
+	public static final String dot_symtab = ".symtab";
+	public static final String dot_text = ".text";
 	public static final String dot_tbss = ".tbss";
-	/**RESERVED SECTION NAME*/
 	public static final String dot_tdata = ".tdata";
-	/**RESERVED SECTION NAME*/
 	public static final String dot_tdata1 = ".tdata1";
 
 	// Section Header Types 
@@ -106,9 +82,12 @@ public class ElfSectionHeaderConstants {
 	public static final int SHT_PREINIT_ARRAY = 16;
 	/**Section group*/
 	public static final int SHT_GROUP = 17;
-	/**Extended section indeces*/
+	/**Extended section index table for linked symbol table */
 	public static final int SHT_SYMTAB_SHNDX = 18;
-	/**Experimental support - see proposal at https://groups.google.com/forum/#!topic/generic-abi/bX460iggiKg */
+	/**
+	 * Relative relocation table section
+	 * (see proposal at https://groups.google.com/forum/#!topic/generic-abi/bX460iggiKg 
+	 */
 	public static final int SHT_RELR = 19;
 
 	// OS Specific Section Types
@@ -169,7 +148,7 @@ public class ElfSectionHeaderConstants {
 	/**Processor-specific*/
 	public static final int SHF_MASKPROC = 0xf0000000;
 
-	//  
+	// Special section index values (stored as 16-bit value)
 
 	/**undefined, missing, irrelevant section*/
 	public static final short SHN_UNDEF = (short) 0x0000;
@@ -192,13 +171,4 @@ public class ElfSectionHeaderConstants {
 	/**upper bound on range of reserved indexes*/
 	public static final short SHN_HIRESERVE = (short) 0xffff;
 	
-	/**
-	 * @param symbolSectionIndex symbol section index (st_shndx)
-	 * @return true if specified symbol section index corresponds to a processor
-	 * specific value in the range SHN_LOPROC..SHN_HIPROC, else false
-	 */
-	public static boolean isProcessorSpecificSymbolSectionIndex(short symbolSectionIndex) {
-		return symbolSectionIndex >= ElfSectionHeaderConstants.SHN_LOPROC &&
-			symbolSectionIndex <= ElfSectionHeaderConstants.SHN_HIPROC;
-	}
 }

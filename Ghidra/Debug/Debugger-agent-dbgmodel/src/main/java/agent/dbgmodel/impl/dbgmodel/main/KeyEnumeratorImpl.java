@@ -28,6 +28,7 @@ import agent.dbgmodel.dbgmodel.DbgModel;
 import agent.dbgmodel.dbgmodel.DbgModel.OpaqueCleanable;
 import agent.dbgmodel.dbgmodel.main.ModelObject;
 import agent.dbgmodel.jna.dbgmodel.main.IKeyEnumerator;
+import ghidra.util.Msg;
 
 public class KeyEnumeratorImpl implements KeyEnumeratorInternal {
 	@SuppressWarnings("unused")
@@ -56,12 +57,17 @@ public class KeyEnumeratorImpl implements KeyEnumeratorInternal {
 		BSTRByReference bref = new BSTRByReference();
 		PointerByReference ppValue = new PointerByReference();
 		PointerByReference ppMetaData = new PointerByReference();
-		HRESULT hr = jnaData.GetNext(bref, ppValue, ppMetaData);
-		if (hr.equals(COMUtilsExtra.E_BOUNDS) || hr.equals(COMUtilsExtra.E_FAIL)) {
-			//System.err.println("ret null");
-			return null;
+		try {
+			HRESULT hr = jnaData.GetNext(bref, ppValue, ppMetaData);
+			if (hr.equals(COMUtilsExtra.E_BOUNDS) || hr.equals(COMUtilsExtra.E_FAIL)) {
+				//System.err.println("ret null");
+				return null;
+			}
+			COMUtils.checkRC(hr);
 		}
-		COMUtils.checkRC(hr);
+		catch (Error e) {
+			Msg.error(this, e.getMessage());
+		}
 
 		Pointer val = ppValue.getValue();
 		if (val != null) {

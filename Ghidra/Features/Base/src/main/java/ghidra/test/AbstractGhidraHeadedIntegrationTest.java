@@ -27,7 +27,7 @@ import docking.DialogComponentProvider;
 import docking.action.DockingActionIf;
 import docking.widgets.fieldpanel.FieldPanel;
 import ghidra.GhidraTestApplicationLayout;
-import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
+import ghidra.app.plugin.core.codebrowser.AbstractCodeBrowserPlugin;
 import ghidra.framework.ApplicationConfiguration;
 import ghidra.framework.GhidraApplicationConfiguration;
 import ghidra.framework.model.*;
@@ -36,7 +36,6 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginException;
 import ghidra.program.model.listing.Program;
 import ghidra.util.TaskUtilities;
-import ghidra.util.exception.AssertException;
 import junit.framework.AssertionFailedError;
 import utility.application.ApplicationLayout;
 
@@ -44,21 +43,14 @@ public abstract class AbstractGhidraHeadedIntegrationTest
 		extends AbstractGhidraHeadlessIntegrationTest {
 
 	public AbstractGhidraHeadedIntegrationTest() {
-		super();
-
 		// Ensure that all headed tests use swing popups when displaying errors.  Setting this
 		// to false would force errors to only be written to the console.
 		setErrorGUIEnabled(true);
 	}
 
 	@Override
-	protected ApplicationLayout createApplicationLayout() {
-		try {
-			return new GhidraTestApplicationLayout(new File(getTestDirectoryPath()));
-		}
-		catch (IOException e) {
-			throw new AssertException(e);
-		}
+	protected ApplicationLayout createApplicationLayout() throws IOException {
+		return new GhidraTestApplicationLayout(new File(getTestDirectoryPath()));
 	}
 
 	@Override
@@ -70,7 +62,7 @@ public abstract class AbstractGhidraHeadedIntegrationTest
 
 	/**
 	 * Flushes the given program's events before waiting for the swing update manager
-	 * 
+	 *
 	 * @param program The program whose events will be flushed; may be null
 	 */
 	public static void waitForProgram(Program program) {
@@ -84,11 +76,11 @@ public abstract class AbstractGhidraHeadedIntegrationTest
 	/**
 	 * Adds the given plugin to the tool and then returns the instance of the plugin that was
 	 * added
-	 * 
+	 *
 	 * @param tool the tool
 	 * @param c the class of the plugin to add
 	 * @return the newly added plugin
-	 * @throws PluginException  if the plugin could not be constructed, or there was problem 
+	 * @throws PluginException  if the plugin could not be constructed, or there was problem
 	 * 		   executing its init() method, or if a plugin of this class already exists in the tool
 	 */
 	public static <T extends Plugin> T addPlugin(PluginTool tool, Class<T> c)
@@ -122,9 +114,9 @@ public abstract class AbstractGhidraHeadedIntegrationTest
 	}
 
 	/**
-	 * Shows the given DialogComponentProvider using the given tool's 
-	 * {@link PluginTool#showDialog(DialogComponentProvider)} method. 
-	 * 
+	 * Shows the given DialogComponentProvider using the given tool's
+	 * {@link PluginTool#showDialog(DialogComponentProvider)} method.
+	 *
 	 * @param tool The tool used to show the given provider.
 	 * @param provider The DialogComponentProvider to show.
 	 * @return The provider once it has been shown, or null if the provider is not shown within
@@ -143,7 +135,7 @@ public abstract class AbstractGhidraHeadedIntegrationTest
 
 	/**
 	 * Waits for the tool to finish executing commands and tasks
-	 * 
+	 *
 	 * @param tool the tool
 	 * @throws AssertionFailedError if the tool does not finish work within a reasonable limit
 	 */
@@ -171,8 +163,8 @@ public abstract class AbstractGhidraHeadedIntegrationTest
 
 	/**
 	 * Save the given tool to the project tool chest.  If the tool already exists, then it will
-	 * be overwritten with the given tool. 
-	 * 
+	 * be overwritten with the given tool.
+	 *
 	 * @param project The project which with the tool is associated.
 	 * @param tool The tool to be saved
 	 * @return the new tool
@@ -194,17 +186,17 @@ public abstract class AbstractGhidraHeadedIntegrationTest
 	}
 
 	/**
-	 * Triggers a browser click at the current cursor location.  Thus, this method should be 
+	 * Triggers a browser click at the current cursor location.  Thus, this method should be
 	 * called only after the browser location is set the the desired field.
-	 * 
+	 *
 	 * @param codeBrowser the CodeBrowserPlugin
 	 * @param clickCount the click count
 	 */
-	public void click(CodeBrowserPlugin codeBrowser, int clickCount) {
+	public void click(AbstractCodeBrowserPlugin<?> codeBrowser, int clickCount) {
 		click(codeBrowser, clickCount, true);
 	}
 
-	public void click(CodeBrowserPlugin codeBrowser, int clickCount, boolean wait) {
+	public void click(AbstractCodeBrowserPlugin<?> codeBrowser, int clickCount, boolean wait) {
 
 		// make sure that the code browser is ready to go--sometimes it is not, due to timing
 		// during the testing process, like when the tool is first loaded.

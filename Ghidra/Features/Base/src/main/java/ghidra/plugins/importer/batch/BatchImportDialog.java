@@ -38,6 +38,7 @@ import docking.widgets.filechooser.GhidraFileChooser;
 import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.label.GDLabel;
 import docking.widgets.table.*;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.services.ProgramManager;
 import ghidra.formats.gfilesystem.FSRL;
 import ghidra.formats.gfilesystem.FileSystemService;
@@ -51,6 +52,8 @@ import ghidra.util.filechooser.GhidraFileFilter;
 import ghidra.util.task.TaskLauncher;
 
 public class BatchImportDialog extends DialogComponentProvider {
+
+	private static final String LAST_IMPORT_DIR = "LastBatchImportDir";
 
 	/**
 	 * Shows the batch import dialog (via runSwingLater) and prompts the user to select
@@ -95,7 +98,6 @@ public class BatchImportDialog extends DialogComponentProvider {
 	private JButton rescanButton;
 	private JSpinner maxDepthSpinner;
 
-	private GhidraFileChooser fileChooser;
 	private SourcesListModel sourceListModel;
 
 	private BatchImportDialog(BatchInfo batchInfo, DomainFolder defaultFolder) {
@@ -386,26 +388,29 @@ public class BatchImportDialog extends DialogComponentProvider {
 	}
 
 	private boolean addSources() {
-		if (fileChooser == null) {
-			fileChooser = new GhidraFileChooser(getComponent());
-			fileChooser.setMultiSelectionEnabled(true);
-			fileChooser.setTitle("Choose File to Batch Import");
-			fileChooser.setApproveButtonText("Select files");
-			fileChooser.setFileSelectionMode(GhidraFileChooserMode.FILES_AND_DIRECTORIES);
-			fileChooser.addFileFilter(ImporterUtilities.LOADABLE_FILES_FILTER);
-			fileChooser.addFileFilter(ImporterUtilities.CONTAINER_FILES_FILTER);
-			fileChooser.setSelectedFileFilter(GhidraFileFilter.ALL);
-		}
 
-		List<File> selectedFiles = fileChooser.getSelectedFiles();
+		GhidraFileChooser chooser = new GhidraFileChooser(getComponent());
+		chooser.setMultiSelectionEnabled(true);
+		chooser.setTitle("Choose File to Batch Import");
+		chooser.setApproveButtonText("Select files");
+		chooser.setFileSelectionMode(GhidraFileChooserMode.FILES_AND_DIRECTORIES);
+		chooser.addFileFilter(ImporterUtilities.LOADABLE_FILES_FILTER);
+		chooser.addFileFilter(ImporterUtilities.CONTAINER_FILES_FILTER);
+		chooser.setSelectedFileFilter(GhidraFileFilter.ALL);
+
+		chooser.setLastDirectoryPreference(LAST_IMPORT_DIR);
+
+		List<File> selectedFiles = chooser.getSelectedFiles();
 		if (selectedFiles.isEmpty()) {
-			return !fileChooser.wasCancelled();
+			return !chooser.wasCancelled();
 		}
 
 		List<FSRL> filesToAdd = new ArrayList<>();
 		for (File selectedFile : selectedFiles) {
 			filesToAdd.add(FileSystemService.getInstance().getLocalFSRL(selectedFile));
 		}
+
+		chooser.dispose();
 
 		return addSources(filesToAdd);
 	}
@@ -537,7 +542,8 @@ public class BatchImportDialog extends DialogComponentProvider {
 			protected String getText(Object value) {
 				BatchGroupLoadSpec bgls = (BatchGroupLoadSpec) value;
 				return (bgls != null) ? bgls.toString()
-						: "<html><font size=\"-2\" color=\"gray\">Click to set language</font>";
+						: "<html><font size=\"-2\" color=\"" + Messages.HINT +
+							"\">Click to set language</font>";
 			}
 		};
 

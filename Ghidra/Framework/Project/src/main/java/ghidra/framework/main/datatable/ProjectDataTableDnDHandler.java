@@ -28,10 +28,10 @@ import javax.swing.CellRendererPane;
 import javax.swing.table.*;
 
 import docking.widgets.table.GTable;
-import ghidra.framework.OperatingSystem;
-import ghidra.framework.Platform;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.framework.main.datatree.DataTreeDragNDropHandler;
 import ghidra.framework.model.DomainFile;
+import ghidra.util.ColorUtils;
 
 public class ProjectDataTableDnDHandler implements DragSourceListener, DragGestureListener {
 
@@ -159,9 +159,6 @@ public class ProjectDataTableDnDHandler implements DragSourceListener, DragGestu
 	}
 
 	private Image getDragImage(List<DomainFileInfo> files) {
-		if (Platform.CURRENT_PLATFORM.getOperatingSystem() != OperatingSystem.MAC_OS_X) {
-			return null;
-		}
 
 		Container parent = table.getParent();
 		Dimension size = parent.getSize(); // assuming this is JViewport
@@ -177,10 +174,9 @@ public class ProjectDataTableDnDHandler implements DragSourceListener, DragGestu
 		Graphics2D g2 = (Graphics2D) graphics;
 		GradientPaint mask;
 		Color treeBackground = table.getBackground();
-		Color transparentTreeBackground = new Color(treeBackground.getRed(),
-			treeBackground.getGreen(), treeBackground.getBlue(), 200);
+		Color transparentTreeBackground = ColorUtils.withAlpha(treeBackground, 200);
 		mask = new GradientPaint(0, 0, transparentTreeBackground, 0, size.height >> 1,
-			new Color(1.0f, 1.0f, 1.0f, 0.0f));
+			Palette.NO_COLOR);
 		g2.setPaint(mask);
 
 		// Sets the alpha composite
@@ -243,7 +239,7 @@ public class ProjectDataTableDnDHandler implements DragSourceListener, DragGestu
 	}
 
 	private List<DomainFileInfo> createSelectionList(GTable tableToSelect) {
-		ArrayList<DomainFileInfo> list = new ArrayList<DomainFileInfo>();
+		ArrayList<DomainFileInfo> list = new ArrayList<>();
 
 		int[] rows = table.getSelectedRows();
 
@@ -273,7 +269,7 @@ public class ProjectDataTableDnDHandler implements DragSourceListener, DragGestu
 		}
 
 		private Object getDomainFileList() {
-			List<DomainFile> domainFileList = new ArrayList<DomainFile>();
+			List<DomainFile> domainFileList = new ArrayList<>();
 			for (DomainFileInfo domainFileInfo : list) {
 				domainFileList.add(domainFileInfo.getDomainFile());
 			}
@@ -294,10 +290,12 @@ public class ProjectDataTableDnDHandler implements DragSourceListener, DragGestu
 	private class DnDMouseListener extends MouseAdapter {
 
 		private boolean consuming = false;
+		private boolean didDrag = false;
 
 		@Override
 		public void mousePressed(MouseEvent e) {
 			consuming = maybeConsumeEvent(e);
+			didDrag = false;
 		}
 
 		@Override
@@ -309,12 +307,24 @@ public class ProjectDataTableDnDHandler implements DragSourceListener, DragGestu
 			// continue to consume the event that was started during the pressed event, for symmetry
 			maybeConsumeEvent(e);
 			consuming = false;
+
+			if (!didDrag) {
+				//
+				// If we dragged, leave the initial selection, which does not disrupt the user's
+				// workflow; otherwise, select the clicked row.   This allows users to change the
+				// selection by clicking in the table, which is the default table behavior.
+				//
+				table.clearSelection();
+				int row = table.rowAtPoint(e.getPoint());
+				table.selectRow(row);
+			}
 		}
 
 		@Override
 		public void mouseDragged(MouseEvent e) {
 			// always consume the drag so that Java does not change the selection
 			e.consume();
+			didDrag = true;
 		}
 
 		private boolean maybeConsumeEvent(MouseEvent e) {
@@ -323,7 +333,7 @@ public class ProjectDataTableDnDHandler implements DragSourceListener, DragGestu
 				return false;
 			}
 
-			// don't let other listeners process the event if we are 'pressing' the mouse 
+			// don't let other listeners process the event if we are 'pressing' the mouse
 			// button on an already selected row (to prevent de-selecting a multi-selection for
 			// a drag operation)
 			int row = table.rowAtPoint(e.getPoint());

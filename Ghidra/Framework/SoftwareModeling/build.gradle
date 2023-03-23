@@ -32,8 +32,6 @@ rootProject.createJsondocs.exclude '**/pcodeCPort/**'
 rootProject.prepDev.dependsOn compileJava
 
 dependencies {
-	api project(':Generic')
-	api project(':FileSystem')
 	api project(':Project')
 	api project(':Graph')
 	
@@ -43,9 +41,7 @@ dependencies {
 	
 	runtimeOnly "msv:relaxngDatatype:20050913"
 	api "msv:isorelax:20050913"	
-	
-	testImplementation "org.jmockit:jmockit:1.44"	
-	
+		
 	// Must specify the specific antlr implementation to use or it will default to trying to find
 	// version 2.7.7 (which we don't have)
 	antlr "org.antlr:antlr:3.5.2"

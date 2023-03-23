@@ -32,11 +32,11 @@ public class ProcedureTypeApplier extends AbstractFunctionTypeApplier {
 	/**
 	 * Constructor for the applicator that applies {@link AbstractProcedureMsType},
 	 * transforming it into a Ghidra {@link DataType}.
-	 * @param applicator {@link PdbApplicator} for which this class is working.
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
 	 * @param msType {@link AbstractProcedureMsType} to processes.
 	 * @throws IllegalArgumentException Upon invalid arguments.
 	 */
-	public ProcedureTypeApplier(PdbApplicator applicator, AbstractProcedureMsType msType)
+	public ProcedureTypeApplier(DefaultPdbApplicator applicator, AbstractProcedureMsType msType)
 			throws IllegalArgumentException {
 		super(applicator, msType);
 	}

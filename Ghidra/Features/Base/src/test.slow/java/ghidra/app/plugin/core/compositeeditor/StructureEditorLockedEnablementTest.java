@@ -20,47 +20,12 @@ import static org.junit.Assert.*;
 import org.junit.Assert;
 import org.junit.Test;
 
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataTypeManager;
+import ghidra.program.model.data.Structure;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 public class StructureEditorLockedEnablementTest extends AbstractStructureEditorTest {
-
-	@Override
-	protected void init(Structure dt, final Category cat, boolean addIfNotThere) {
-		boolean commit = true;
-		startTransaction("Structure Editor Test Initialization");
-		try {
-			DataTypeManager dataTypeManager = cat.getDataTypeManager();
-			if (dt.getDataTypeManager() != dataTypeManager) {
-				dt = dt.clone(dataTypeManager);
-			}
-			CategoryPath categoryPath = cat.getCategoryPath();
-			if (!dt.getCategoryPath().equals(categoryPath)) {
-				try {
-					dt.setCategoryPath(categoryPath);
-				}
-				catch (DuplicateNameException e) {
-					commit = false;
-					Assert.fail(e.getMessage());
-				}
-			}
-			if (addIfNotThere && !dataTypeManager.contains(dt)) {
-				dataTypeManager.addDataType(dt, null);
-			}
-		}
-		finally {
-			endTransaction(commit);
-		}
-		final Structure structDt = dt;
-		runSwing(() -> {
-			installProvider(new StructureEditorProvider(plugin, structDt, false));
-			model = provider.getModel();
-//				model.setLocked(true);
-		});
-//		assertTrue(model.isLocked());
-		getActions();
-	}
 
 	@Test
 	public void testEmptyStructureEditorState() {
@@ -81,7 +46,7 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 			program.endTransaction(txID, true);
 		}
 
-		init(desiredEmptyStructure, pgmTestCat, false);
+		init(desiredEmptyStructure, pgmTestCat);
 
 //		assertTrue(!getModel().isLocked());
 //		assertTrue(getModel().isLockable());
@@ -133,7 +98,7 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 
 	@Test
 	public void testNonEmptyStructureEditorState() {
-		init(simpleStructure, pgmBbCat, false);
+		init(simpleStructure, pgmBbCat);
 
 //		assertTrue(getModel().isLocked());
 //		assertTrue(getModel().isLockable());
@@ -184,7 +149,7 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 
 	@Test
 	public void testUndefinedFirstComponentSelectedEnablement() {
-		init(simpleStructure, pgmBbCat, true);
+		init(simpleStructure, pgmBbCat);
 
 		// Check enablement on first component selected.
 		setSelection(new int[] { 0 });
@@ -215,7 +180,7 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 
 	@Test
 	public void testCentralComponentSelectedEnablement() {
-		init(simpleStructure, pgmBbCat, true);
+		init(simpleStructure, pgmBbCat);
 
 		// Check enablement on central component selected.
 		setSelection(new int[] { 3 });
@@ -245,7 +210,7 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 
 	@Test
 	public void testLastComponentSelectedEnablement() {
-		init(simpleStructure, pgmBbCat, true);
+		init(simpleStructure, pgmBbCat);
 
 		int last = getModel().getNumComponents() - 1;
 
@@ -275,7 +240,7 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 
 	@Test
 	public void testContiguousSelectionEnablement() {
-		init(complexStructure, pgmTestCat, true);
+		init(complexStructure, pgmTestCat);
 
 		// Check enablement on a contiguous multi-component selection.
 		setSelection(new int[] { 2, 3, 4 });
@@ -304,7 +269,7 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 
 	@Test
 	public void testNonContiguousSelectionEnablement() {
-		init(complexStructure, pgmTestCat, true);
+		init(complexStructure, pgmTestCat);
 
 		// Check enablement on a non-contiguous multi-component selection.
 		setSelection(new int[] { 2, 3, 6, 7 });
@@ -329,7 +294,7 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 
 	@Test
 	public void testMultiDupEnablement() throws Exception {
-		init(complexStructure, pgmBbCat, true);
+		init(complexStructure, pgmBbCat);
 		model.clearComponents(new int[] { 3, 10 });
 
 		setSelection(new int[] { 0 });
@@ -376,7 +341,7 @@ public class StructureEditorLockedEnablementTest extends AbstractStructureEditor
 
 	@Test
 	public void testUnpackageEnablement() {
-		init(complexStructure, pgmBbCat, true);
+		init(complexStructure, pgmBbCat);
 
 		setSelection(new int[] { 2 });
 		assertEquals("word", getDataType(2).getDisplayName());

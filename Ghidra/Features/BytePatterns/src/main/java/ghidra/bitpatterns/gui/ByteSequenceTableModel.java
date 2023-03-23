@@ -18,15 +18,13 @@
  */
 package ghidra.bitpatterns.gui;
 
-import java.awt.Font;
+import java.awt.Component;
 import java.util.List;
-
-import javax.swing.JTable;
-import javax.swing.table.TableModel;
 
 import docking.widgets.table.AbstractDynamicTableColumn;
 import docking.widgets.table.TableColumnDescriptor;
 import docking.widgets.table.threaded.ThreadedTableModelStub;
+import generic.theme.Gui;
 import ghidra.bitpatterns.info.ByteSequenceRowObject;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
@@ -38,7 +36,7 @@ import ghidra.util.table.column.GColumnRenderer;
 import ghidra.util.task.TaskMonitor;
 
 public class ByteSequenceTableModel extends ThreadedTableModelStub<ByteSequenceRowObject> {
-	private static final int MONOSPACE_FONT_SIZE = 16;
+	private static final String FONT_ID = "font.bytepatterns.table";
 	List<ByteSequenceRowObject> rowObjects;
 
 	public ByteSequenceTableModel(FunctionBitPatternsExplorerPlugin plugin,
@@ -51,10 +49,13 @@ public class ByteSequenceTableModel extends ThreadedTableModelStub<ByteSequenceR
 	 * Displays the byte sequences in monospace font
 	 */
 	protected GColumnRenderer<String> monospacedRenderer = new AbstractGColumnRenderer<String>() {
+
 		@Override
-		protected void configureFont(JTable table, TableModel model, int column) {
-			Font f = new Font("monospaced", getFixedWidthFont().getStyle(), MONOSPACE_FONT_SIZE);
-			setFont(f);
+		public Component getTableCellRendererComponent(
+				docking.widgets.table.GTableCellRenderingData data) {
+			Component component = super.getTableCellRendererComponent(data);
+			component.setFont(Gui.getFont(FONT_ID));
+			return component;
 		}
 
 		@Override

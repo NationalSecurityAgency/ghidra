@@ -18,11 +18,12 @@ package docking.widgets.table.constrainteditor;
 import java.awt.Color;
 import java.awt.Component;
 
-import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import docking.widgets.table.constraint.ColumnConstraint;
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
@@ -43,9 +44,9 @@ public abstract class AbstractColumnConstraintEditor<T> implements ColumnConstra
 	private boolean validEditorValue = false;
 
 	/** Color indicating a valid value is defined by the editor widget(s) */
-	protected static final Color VALID_INPUT_COLOR = UIManager.getColor("TextField.background");
+	protected static final Color VALID_INPUT_COLOR = Colors.BACKGROUND;
 	/** Color indicating a invalid value is defined by the editor widget(s) */
-	protected static final Color INVALID_INPUT_COLOR = new Color(255, 0, 51, 40);
+	protected static final Color INVALID_INPUT_COLOR = new GColor("color.palette.mistyrose");
 
 	/**
 	 * Constructor.
@@ -62,7 +63,7 @@ public abstract class AbstractColumnConstraintEditor<T> implements ColumnConstra
 	 * This expects the UI to have been constructed.
 	 *
 	 * @see #getValue()
-	 * @return
+	 * @return the value
 	 */
 	protected abstract ColumnConstraint<T> getValueFromComponent();
 
@@ -206,7 +207,7 @@ public abstract class AbstractColumnConstraintEditor<T> implements ColumnConstra
 	 * @return an HTML string suitable for a JLabel.
 	 */
 	protected final static String formatStatus(String message, boolean error) {
-		Color color = error ? Color.RED : Color.BLACK;
+		Color color = error ? Colors.Messages.ERROR : Colors.FOREGROUND;
 		String messageWithFont = HTMLUtilities.setFont(message, color, 12);
 		String html = HTMLUtilities.wrapAsHTML(messageWithFont);
 		return html;

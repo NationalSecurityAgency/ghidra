@@ -17,19 +17,17 @@ package ghidra.trace.model.listing;
 
 import java.nio.ByteBuffer;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.CodeUnit;
-import ghidra.program.model.util.TypeMismatchException;
-import ghidra.trace.model.Trace;
-import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.model.*;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.symbol.TraceReference;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceAddressSpace;
 import ghidra.util.Saveable;
+import ghidra.util.map.TypeMismatchException;
 
 /**
  * A code unit in a {@link Trace}
@@ -42,9 +40,21 @@ public interface TraceCodeUnit extends CodeUnit {
 	 */
 	Trace getTrace();
 
+	/**
+	 * Get the platform for this unit
+	 * 
+	 * @return the platform
+	 */
+	TracePlatform getPlatform();
+
 	@Override
 	TraceProgramView getProgram();
 
+	/**
+	 * Get a key that can be used to obtain the same space in another manager
+	 * 
+	 * @return the space, including thread and frame, if applicable
+	 */
 	TraceAddressSpace getTraceSpace();
 
 	/**
@@ -85,9 +95,9 @@ public interface TraceCodeUnit extends CodeUnit {
 	/**
 	 * Get the lifespan of this code unit
 	 * 
-	 * @return the lifepsna
+	 * @return the lifespan
 	 */
-	Range<Long> getLifespan();
+	Lifespan getLifespan();
 
 	/**
 	 * Get the start snap of this code unit

@@ -181,6 +181,11 @@ public:
   virtual void execute(istream &s);
 };
 
+class IfcMapunionfacet : public IfaceDecompCommand {
+public:
+  virtual void execute(istream &s);
+};
+
 class IfcPrintdisasm : public IfaceDecompCommand {
 public:
   virtual void execute(istream &s);
@@ -314,6 +319,11 @@ public:
 };
 
 class IfcRemove : public IfaceDecompCommand {
+public:
+  virtual void execute(istream &s);
+};
+
+class IfcIsolate : public IfaceDecompCommand {
 public:
   virtual void execute(istream &s);
 };
@@ -522,6 +532,11 @@ public:
 };
 
 class IfcCallOtherFixup : public IfaceDecompCommand {
+public:
+  virtual void execute(istream &s);
+};
+
+class IfcFixupApply : public IfaceDecompCommand {
 public:
   virtual void execute(istream &s);
 };

@@ -15,8 +15,8 @@
  */
 package ghidra.app.util.bin.format.dwarf4.next;
 
-import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute.DW_AT_count;
-import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute.DW_AT_upper_bound;
+import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute.*;
+import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag.DW_TAG_base_type;
 import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag.DW_TAG_subrange_type;
 
 import java.util.*;
@@ -311,7 +311,7 @@ public class DWARFDataTypeImporter {
 
 		if (dni.isAnon() && mangleAnonFuncNames) {
 			String mangledName =
-				DataTypeNamingUtil.setMangledAnonymousFunctionName(funcDef, dni.getName());
+				DataTypeNamingUtil.setMangledAnonymousFunctionName(funcDef);
 			dni = dni.replaceName(mangledName, dni.getOriginalName());
 		}
 
@@ -334,16 +334,20 @@ public class DWARFDataTypeImporter {
 	private DWARFDataType makeDataTypeForBaseType(DIEAggregate diea)
 			throws IOException, DWARFExpressionException {
 
-		DWARFNameInfo dni = prog.getName(diea);
-		int dwarfSize = diea.parseInt(DWARFAttribute.DW_AT_byte_size, 0);
-		int dwarfEncoding = (int) diea.getUnsignedLong(DWARFAttribute.DW_AT_encoding, -1);
+		return makeNamedBaseType(prog.getName(diea), diea);
+	}
+
+	private DWARFDataType makeNamedBaseType(DWARFNameInfo dni, DIEAggregate diea)
+			throws IOException, DWARFExpressionException {
+		int dwarfSize = diea.parseInt(DW_AT_byte_size, 0);
+		int dwarfEncoding = (int) diea.getUnsignedLong(DW_AT_encoding, -1);
 		boolean isBigEndian = DWARFEndianity.getEndianity(
-			diea.getUnsignedLong(DWARFAttribute.DW_AT_endianity, DWARFEndianity.DW_END_default),
+			diea.getUnsignedLong(DW_AT_endianity, DWARFEndianity.DW_END_default),
 			prog.isBigEndian());
-		if (diea.hasAttribute(DWARFAttribute.DW_AT_bit_size)) {
+		if (diea.hasAttribute(DW_AT_bit_size)) {
 			Msg.warn(this,
-				"Warning: Base type bit size and bit offset not currently handled for data type " +
-					dni.toString() + ", DIE " + diea.getHexOffset());
+				"Warning: Base type bit size and bit offset not currently handled for data type %s, DIE %s"
+						.formatted(dni.toString(), diea.getHexOffset()));
 		}
 
 		DataType dt =
@@ -694,7 +698,7 @@ public class DWARFDataTypeImporter {
 		if (union.getLength() < unionSize) {
 			// NOTE: this is likely due incorrect alignment for union or one or more of its components.
 			// Default alignment is 1 for non-packed unions and structures.
-			
+
 			// if the Ghidra union data type is smaller than the DWARF union, pad it out
 			DataType padding = Undefined.getUndefinedDataType((int) unionSize);
 			try {
@@ -709,6 +713,9 @@ public class DWARFDataTypeImporter {
 		if (unionSize > 0 && union.getLength() > unionSize) {
 			DWARFUtil.appendDescription(union, "Imported union size (" + union.getLength() +
 				") is larger than DWARF value (" + unionSize + ")", "\n");
+		}
+		if (importOptions.isTryPackStructs()) {
+			packCompositeIfPossible(ddt);
 		}
 	}
 
@@ -736,6 +743,53 @@ public class DWARFDataTypeImporter {
 		populateStubStruct_worker(ddt, structure, diea, DWARFTag.DW_TAG_member);
 		populateStubStruct_worker(ddt, structure, diea, DWARFTag.DW_TAG_inheritance);
 		removeUneededStructMemberShrinkage(structure);
+		if (importOptions.isTryPackStructs()) {
+			packCompositeIfPossible(ddt);
+		}
+	}
+
+	private void packCompositeIfPossible(DWARFDataType ddt) {
+		Composite original = (Composite) ddt.dataType;
+		if (original.isZeroLength() || original.getNumComponents() == 0) {
+			// don't try to pack empty structs, this would throw off conflicthandler logic.
+			// also don't pack sized structs with no fields because when packed down to 0 bytes they
+			// cause errors when used as a param type
+			return;
+		}
+
+		Composite copy = (Composite) original.copy(dataTypeManager);
+		copy.setToDefaultPacking();
+		if (copy.getLength() != original.getLength()) {
+			// so far, typically because trailing zero-len flex array caused toolchain to
+			// bump struct size to next alignment value in a way that doesn't mesh with ghidra's
+			// logic
+			return;  // fail
+		}
+
+		DataTypeComponent[] preComps = original.getDefinedComponents();
+		DataTypeComponent[] postComps = copy.getDefinedComponents();
+		if (preComps.length != postComps.length) {
+			return; // fail
+		}
+		for (int index = 0; index < preComps.length; index++) {
+			DataTypeComponent preDTC = preComps[index];
+			DataTypeComponent postDTC = postComps[index];
+			if (preDTC.getOffset() != postDTC.getOffset() ||
+				preDTC.getLength() != postDTC.getLength() ||
+				preDTC.isBitFieldComponent() != postDTC.isBitFieldComponent()) {
+				return;  // fail
+			}
+			if (preDTC.isBitFieldComponent()) {
+				BitFieldDataType preBFDT = (BitFieldDataType) preDTC.getDataType();
+				BitFieldDataType postBFDT = (BitFieldDataType) postDTC.getDataType();
+				if (preBFDT.getBitOffset() != postBFDT.getBitOffset() ||
+					preBFDT.getBitSize() != postBFDT.getBitSize()) {
+					return;  // fail
+				}
+			}
+		}
+
+		original.setToDefaultPacking();
 	}
 
 	/**
@@ -776,6 +830,9 @@ public class DWARFDataTypeImporter {
 	 * @return
 	 */
 	private int getUnpaddedDataTypeLength(DataType dt) {
+		if (dt instanceof TypeDef) {
+			dt = ((TypeDef) dt).getBaseDataType();
+		}
 		if (dt instanceof Structure) {
 			Structure structure = (Structure) dt;
 			DataTypeComponent[] definedComponents = structure.getDefinedComponents();
@@ -927,7 +984,6 @@ public class DWARFDataTypeImporter {
 					continue;
 				}
 
-
 				try {
 					DataTypeComponent dtc;
 					if (DataTypeComponent.usesZeroLengthComponent(childDT.dataType)) {
@@ -940,7 +996,7 @@ public class DWARFDataTypeImporter {
 						// use insertAt for zero len members to allow multiple at same offset
 						dtc =
 							structure.insertAtOffset(memberOffset, childDT.dataType, 0, memberName,
-							memberComment);
+								memberComment);
 					}
 					else {
 						int ordinalToReplace = getUndefinedOrdinalAt(structure, memberOffset);
@@ -1176,6 +1232,11 @@ public class DWARFDataTypeImporter {
 	 * If the typedef points (via a pointer) to a function definition type that doesn't
 	 * have a name yet, update the function defintion with the name from this typedef
 	 * and elide this typedef.
+	 * <p>
+	 * If the typedef points to a base type (eg int, float, etc), let the base type factory
+	 * create the typedef as it can do it better if there are size specifiers in the typedef name
+	 * (eg. int64_t).
+	 * 
 	 * @param diea
 	 * @param rec
 	 * @throws IOException
@@ -1186,6 +1247,13 @@ public class DWARFDataTypeImporter {
 
 		DWARFNameInfo typedefDNI = prog.getName(diea);
 		DIEAggregate refdDIEA = diea.getTypeRef();
+
+		if (refdDIEA != null && refdDIEA.getTag() == DW_TAG_base_type) {
+			// if this is a typedef to a base type, skip to the base data type which
+			// can create a better typedef than we can
+			return makeNamedBaseType(typedefDNI, refdDIEA);
+		}
+
 		DWARFDataType refdDT = getDataType(refdDIEA, voidDDT);
 
 		// do a second query to see if there was a recursive loop in the call above back
@@ -1260,8 +1328,11 @@ public class DWARFDataTypeImporter {
 		}
 
 		public String hexOffsets() {
-			return offsets.stream().sorted().map(Long::toHexString).collect(
-				Collectors.joining(","));
+			return offsets.stream()
+					.sorted()
+					.map(Long::toHexString)
+					.collect(
+						Collectors.joining(","));
 		}
 
 	}

@@ -20,16 +20,19 @@ import java.util.ArrayList;
 
 import javax.swing.JPanel;
 
+import generic.theme.GThemeDefaults.Colors.Java;
+import generic.theme.Gui;
+
 public class KnotLabelPanel extends JPanel {
-	private static final Font FONT = new Font("Times New Roman", Font.BOLD, 16);
+	private static final String FONT_ID = "font.plugin.entropy.label.knot";
 	private int topBottomMargin = 10;
-	private Palette palette;
+	private OverviewPalette palette;
 
 	public KnotLabelPanel(int topBottomMargin) {
 		this.topBottomMargin = topBottomMargin;
 	}
 
-	public void setPalette(Palette palette) {
+	public void setPalette(OverviewPalette palette) {
 		this.palette = palette;
 	}
 
@@ -45,14 +48,14 @@ public class KnotLabelPanel extends JPanel {
 		g.setColor(getBackground());
 		g.fillRect(0, 0, width, height);
 		int paletteSize = palette.getSize();
-		g.setFont(FONT);
+		g.setFont(Gui.getFont(FONT_ID));
 		FontMetrics fontMetrics = g.getFontMetrics();
 		int ascent = fontMetrics.getAscent();
 		int descent = fontMetrics.getDescent();
 		int fontOffset = ascent / 3;  // this looks about right
 		ArrayList<KnotRecord> knots = palette.getKnots();
 
-		g.setColor(Color.BLACK);
+		g.setColor(Java.BORDER);
 		g.drawLine(5, topBottomMargin - 6, 10, topBottomMargin - ascent + 2);
 		g.drawString("min entropy (0.0)", 20, topBottomMargin - ascent - descent);
 
@@ -67,7 +70,7 @@ public class KnotLabelPanel extends JPanel {
 			g.drawLine(5, y, 10, y);
 		}
 
-		g.setColor(Color.BLACK);
+		g.setColor(Java.BORDER);
 		g.drawLine(5, height + topBottomMargin + 4, 10, height + topBottomMargin + 8);
 		g.drawString("max entropy (8.0)", 20, topBottomMargin + height + ascent + descent);
 

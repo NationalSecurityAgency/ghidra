@@ -22,6 +22,7 @@ This file must be placed in the IDA loaders directory.
 The file idaxml.py must be placed in the IDA python directory.
 """
 
+from __future__ import print_function
 import ida_idaapi
 import ida_idp
 import ida_kernwin
@@ -30,6 +31,10 @@ import idaxml
 import idc
 import sys
 
+if sys.version_info.major >= 3:
+    from idaxml import _exc_info
+    sys.exc_value = lambda: _exc_info()[1]
+    sys.exc_type = lambda: _exc_info()[0]
 
 """
 Loader functions
@@ -52,13 +57,13 @@ def accept_file(li, filename):
     # read 16K bytes to allow for the DTD
     data = li.read(0x4000)
     # look for start of <PROGRAM> element
-    start = data.find("<PROGRAM")
+    start = data.find(b"<PROGRAM")
     if start >= 0:
-        s = data.find("<PROCESSOR ")
+        s = data.find(b"<PROCESSOR ")
         p = data[s+11:]
-        e = p.find("/>")
+        e = p.find(b"/>")
         proc = p[:e]
-        ida_kernwin.info("Processor specified in the XML file is:\n" + proc +
+        ida_kernwin.info("Processor specified in the XML file is:\n" + proc.decode() +
                          "\n\nYou must select and set the compatible " +
                          "IDA processor type.")
         return { 'format': "XML PROGRAM file", 'options': 0x8001 }
@@ -83,19 +88,19 @@ def load_file(li, neflags, format):
         status = xml.import_xml()
     except idaxml.Cancelled:
         msg = "XML PROGRAM import cancelled!"
-        print "\n" + msg
+        print("\n" + msg)
         idc.warning(msg)
     except idaxml.MultipleAddressSpacesNotSupported:
         msg  = "XML Import cancelled!"
         msg += "\n\nXML Import does not currently support"
         msg += "\nimporting multiple address spaces."
-        print "\n" + msg
+        print("\n" + msg)
         idc.warning(msg)
     except:
-        print "\nHouston, we have a problem!"
+        print("\nHouston, we have a problem!")
         msg = "***** Exception occurred: XML loader failed! *****"
-        print "\n" + msg + "\n", sys.exc_type, sys.exc_value
-        print event, element.tag, element.attrib
+        print("\n" + msg + "\n", sys.exc_type, sys.exc_value)
+        print(event, element.tag, element.attrib)
         idc.warning(msg)
     finally:
         idc.set_ida_state(st)

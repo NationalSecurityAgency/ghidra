@@ -25,8 +25,8 @@ import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.RowColLocation;
 import ghidra.GhidraOptions;
 import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.viewer.field.ListingColors.FunctionColors;
 import ghidra.app.util.viewer.format.FieldFormatModel;
-import ghidra.app.util.viewer.options.OptionsGui;
 import ghidra.app.util.viewer.proxy.FunctionProxy;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.Options;
@@ -46,17 +46,7 @@ public class FunctionSignatureFieldFactory extends FieldFactory {
 		GROUP_TITLE + Options.DELIMITER + GhidraOptions.DISPLAY_NAMESPACE;
 
 	private boolean displayFunctionScope;
-	private Color funNameColor;
-	private Color unresolvedThunkRefColor;
-	private Color resolvedThunkRefColor;
-	private Color funRetColor;
-	private Color literalColor;
-	private Color funParamsColor;
-	private Color autoParamColor;
 
-	/**
-	 * Default Constructor
-	 */
 	public FunctionSignatureFieldFactory() {
 		super(FIELD_NAME);
 	}
@@ -76,41 +66,6 @@ public class FunctionSignatureFieldFactory extends FieldFactory {
 			"Prepends namespaces to labels that are not in the global namespace.");
 
 		displayFunctionScope = fieldOptions.getBoolean(DISPLAY_NAMESPACE, false);
-
-		funRetColor = displayOptions.getColor(OptionsGui.FUN_RET_TYPE.getColorOptionName(),
-			OptionsGui.FUN_RET_TYPE.getDefaultColor());
-		funNameColor = displayOptions.getColor(OptionsGui.FUN_NAME.getColorOptionName(),
-			OptionsGui.FUN_NAME.getDefaultColor());
-		unresolvedThunkRefColor =
-			displayOptions.getColor(OptionsGui.BAD_REF_ADDR.getColorOptionName(),
-				OptionsGui.BAD_REF_ADDR.getDefaultColor());
-		resolvedThunkRefColor =
-			displayOptions.getColor(OptionsGui.EXT_REF_RESOLVED.getColorOptionName(),
-				OptionsGui.EXT_REF_RESOLVED.getDefaultColor());
-		funParamsColor = displayOptions.getColor(OptionsGui.FUN_PARAMS.getColorOptionName(),
-			OptionsGui.FUN_PARAMS.getDefaultColor());
-		autoParamColor = displayOptions.getColor(OptionsGui.FUN_AUTO_PARAMS.getColorOptionName(),
-			OptionsGui.FUN_PARAMS.getDefaultColor());
-		literalColor = displayOptions.getColor(OptionsGui.SEPARATOR.getColorOptionName(),
-			OptionsGui.SEPARATOR.getDefaultColor());
-	}
-
-	@Override
-	public void displayOptionsChanged(Options options, String optionName, Object oldValue,
-			Object newValue) {
-		super.displayOptionsChanged(options, optionName, oldValue, newValue);
-		funRetColor = options.getColor(OptionsGui.FUN_RET_TYPE.getColorOptionName(), Color.BLACK);
-		funNameColor = options.getColor(OptionsGui.FUN_NAME.getColorOptionName(), Color.BLACK);
-		unresolvedThunkRefColor =
-			displayOptions.getColor(OptionsGui.BAD_REF_ADDR.getColorOptionName(),
-				OptionsGui.BAD_REF_ADDR.getDefaultColor());
-		resolvedThunkRefColor =
-			displayOptions.getColor(OptionsGui.EXT_REF_RESOLVED.getColorOptionName(),
-				OptionsGui.EXT_REF_RESOLVED.getDefaultColor());
-		funParamsColor = options.getColor(OptionsGui.FUN_PARAMS.getColorOptionName(), Color.BLACK);
-		autoParamColor =
-			options.getColor(OptionsGui.FUN_AUTO_PARAMS.getColorOptionName(), Color.GRAY);
-		literalColor = options.getColor(OptionsGui.SEPARATOR.getColorOptionName(), Color.BLACK);
 	}
 
 	@Override
@@ -129,7 +84,8 @@ public class FunctionSignatureFieldFactory extends FieldFactory {
 
 		// inline
 		if (function.isInline()) {
-			as = new AttributedString(Function.INLINE + " ", funRetColor, getMetrics());
+			as = new AttributedString(Function.INLINE + " ", FunctionColors.RETURN_TYPE,
+				getMetrics());
 			textElements.add(new FunctionInlineFieldElement(as, elementIndex, 0, startCol));
 			startCol += as.length();
 			elementIndex++;
@@ -137,7 +93,8 @@ public class FunctionSignatureFieldFactory extends FieldFactory {
 
 		// thunk
 		if (function.isThunk()) {
-			as = new AttributedString(Function.THUNK + " ", funRetColor, getMetrics());
+			as = new AttributedString(Function.THUNK + " ", FunctionColors.RETURN_TYPE,
+				getMetrics());
 			textElements.add(new FunctionThunkFieldElement(as, elementIndex, 0, startCol));
 			startCol += as.length();
 			elementIndex++;
@@ -145,7 +102,8 @@ public class FunctionSignatureFieldFactory extends FieldFactory {
 
 		// noreturn
 		if (function.hasNoReturn()) {
-			as = new AttributedString(Function.NORETURN + " ", funRetColor, getMetrics());
+			as = new AttributedString(Function.NORETURN + " ", FunctionColors.RETURN_TYPE,
+				getMetrics());
 			textElements.add(new FunctionNoReturnFieldElement(as, elementIndex, 0, startCol));
 			startCol += as.length();
 			elementIndex++;
@@ -153,7 +111,7 @@ public class FunctionSignatureFieldFactory extends FieldFactory {
 
 		// return type
 		as = new AttributedString(function.getReturn().getFormalDataType().getDisplayName() + " ",
-			funRetColor, getMetrics());
+			FunctionColors.RETURN_TYPE, getMetrics());
 		textElements.add(new FunctionReturnTypeFieldElement(as, elementIndex, 0, startCol));
 		startCol += as.length();
 		elementIndex++;
@@ -165,9 +123,10 @@ public class FunctionSignatureFieldFactory extends FieldFactory {
 		}
 		if (callingConvention != null &&
 			!callingConvention.equals(Function.UNKNOWN_CALLING_CONVENTION_STRING)) {
-			as = new AttributedString(callingConvention + " ", funRetColor, getMetrics());
-			textElements.add(
-				new FunctionCallingConventionFieldElement(as, elementIndex, 0, startCol));
+			as = new AttributedString(callingConvention + " ", FunctionColors.RETURN_TYPE,
+				getMetrics());
+			textElements
+					.add(new FunctionCallingConventionFieldElement(as, elementIndex, 0, startCol));
 			startCol += as.length();
 			elementIndex++;
 		}
@@ -180,14 +139,15 @@ public class FunctionSignatureFieldFactory extends FieldFactory {
 		elementIndex++;
 
 		// opening parenthesis
-		as = new AttributedString("(", literalColor, getMetrics());
+		as = new AttributedString("(", ListingColors.SEPARATOR, getMetrics());
 		textElements.add(new FunctionStartParametersFieldElement(as, elementIndex, 0, startCol));
 		startCol += as.length();
 		elementIndex++;
 
 		// parameters
 		int paramOffset = 0;
-		AttributedString commaSeparator = new AttributedString(", ", literalColor, getMetrics());
+		AttributedString commaSeparator =
+			new AttributedString(", ", ListingColors.SEPARATOR, getMetrics());
 		int lastParam = params.length - 1;
 		for (int i = 0; i < params.length; i++) {
 
@@ -196,7 +156,8 @@ public class FunctionSignatureFieldFactory extends FieldFactory {
 //				continue;
 //			}
 
-			Color pcolor = params[i].isAutoParameter() ? autoParamColor : funParamsColor;
+			Color pcolor =
+				params[i].isAutoParameter() ? FunctionColors.PARAM_AUTO : FunctionColors.PARAM;
 
 			String text = params[i].getFormalDataType().getDisplayName() + " ";
 			as = new AttributedString(text, pcolor, getMetrics());
@@ -232,23 +193,23 @@ public class FunctionSignatureFieldFactory extends FieldFactory {
 				paramOffset += commaSeparator.length();
 				elementIndex++;
 			}
-			as = new AttributedString(FunctionSignature.VAR_ARGS_DISPLAY_STRING, funParamsColor,
-				getMetrics());
+			as = new AttributedString(FunctionSignature.VAR_ARGS_DISPLAY_STRING,
+				FunctionColors.PARAM, getMetrics());
 			textElements.add(new FunctionSignatureFieldElement(as, elementIndex, 0, startCol));
 			startCol += as.length();
 			elementIndex++;
 		}
 		else if (lastParam < 0 && function.getSignatureSource() != SourceType.DEFAULT) {
 			// void parameter list
-			as = new AttributedString(FunctionSignature.VOID_PARAM_DISPLAY_STRING, funParamsColor,
-				getMetrics());
+			as = new AttributedString(FunctionSignature.VOID_PARAM_DISPLAY_STRING,
+				FunctionColors.PARAM, getMetrics());
 			textElements.add(new FunctionSignatureFieldElement(as, elementIndex, 0, startCol));
 			startCol += as.length();
 			elementIndex++;
 		}
 
 		// closing parenthesis
-		as = new AttributedString(")", literalColor, getMetrics());
+		as = new AttributedString(")", ListingColors.SEPARATOR, getMetrics());
 		textElements.add(new FunctionEndParametersFieldElement(as, elementIndex, 0, startCol));
 
 		return ListingTextField.createSingleLineTextField(this, proxy,
@@ -260,23 +221,23 @@ public class FunctionSignatureFieldFactory extends FieldFactory {
 		if (function.isThunk()) {
 			Function thunkedFunction = function.getThunkedFunction(true);
 			if (thunkedFunction == null) {
-				return unresolvedThunkRefColor;
+				return ListingColors.EXT_REF_UNRESOLVED;
 			}
 			else if (thunkedFunction.isExternal()) {
 				ExternalLocation externalLocation = thunkedFunction.getExternalLocation();
 				String libName = externalLocation.getLibraryName();
 				if (Library.UNKNOWN.equals(libName)) {
-					return unresolvedThunkRefColor;
+					return ListingColors.EXT_REF_UNRESOLVED;
 				}
 				ExternalManager externalManager = function.getProgram().getExternalManager();
 				String path = externalManager.getExternalLibraryPath(libName);
 				if (path == null || path.length() == 0) {
-					return unresolvedThunkRefColor;
+					return ListingColors.EXT_REF_UNRESOLVED;
 				}
-				return resolvedThunkRefColor;
+				return ListingColors.EXT_REF_RESOLVED;
 			}
 		}
-		return funNameColor;
+		return FunctionColors.NAME;
 	}
 
 	@Override
@@ -413,14 +374,8 @@ public class FunctionSignatureFieldFactory extends FieldFactory {
 
 	@Override
 	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider provider,
-			ToolOptions displayOptions, ToolOptions fieldOptions) {
-		return new FunctionSignatureFieldFactory(formatModel, provider, displayOptions,
-			fieldOptions);
-	}
-
-	@Override
-	public Color getDefaultColor() {
-		return OptionsGui.FUN_NAME.getDefaultColor();
+			ToolOptions toolOptions, ToolOptions fieldOptions) {
+		return new FunctionSignatureFieldFactory(formatModel, provider, toolOptions, fieldOptions);
 	}
 
 	@Override
@@ -445,6 +400,7 @@ public class FunctionSignatureFieldFactory extends FieldFactory {
 		 * @param as the attributed string used to display this element.
 		 * @param row the row of the function signature where this field element starts.
 		 * @param column the column where this field element starts within the row.
+		 * @param functionSigIndex the function signature index
 		 */
 		FunctionSignatureFieldElement(AttributedString as, int row, int column,
 				int functionSigIndex) {

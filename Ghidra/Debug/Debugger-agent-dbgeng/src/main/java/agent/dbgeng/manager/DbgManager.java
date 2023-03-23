@@ -371,4 +371,6 @@ public interface DbgManager extends AutoCloseable, DbgBreakpointInsertions {
 
 	DebugEventInformation getLastEventInformation();
 
+	DbgSession getSessionComputeIfAbsent(DebugSessionId debugSessionId, boolean b);
+
 }

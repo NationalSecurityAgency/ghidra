@@ -24,7 +24,7 @@ ebce000000000000488d7c2404c64424
   <com>print C</com>
   <com>quit</com>
 </script>
-<stringmatch name="Multi-size return #1" min="1" max="1">Stack20 = CONCAT31.*0x61</stringmatch>
-<stringmatch name="Multi-size return #2" min="1" max="1">Stack20 = CONCAT22.*0x3e9</stringmatch>
-<stringmatch name="Multi-size return #3" min="1" max="1">Stack20 = param_1</stringmatch>
+<stringmatch name="Multi-size return #1" min="1" max="1">Stack_14 = CONCAT31.*0x61</stringmatch>
+<stringmatch name="Multi-size return #2" min="1" max="1">Stack_14 = CONCAT22.*0x3e9</stringmatch>
+<stringmatch name="Multi-size return #3" min="1" max="1">Stack_14 = param_1</stringmatch>
 </decompilertest>

@@ -29,10 +29,10 @@ public class NoSymbolApplier extends MsSymbolApplier {
 
 	/**
 	 * Constructor
-	 * @param applicator the {@link PdbApplicator} for which we are working.
+	 * @param applicator the {@link DefaultPdbApplicator} for which we are working.
 	 * @param iter the Iterator containing the symbol sequence being processed
 	 */
-	public NoSymbolApplier(PdbApplicator applicator, AbstractMsSymbolIterator iter) {
+	public NoSymbolApplier(DefaultPdbApplicator applicator, AbstractMsSymbolIterator iter) {
 		super(applicator, iter);
 		symbol = iter.next();
 	}

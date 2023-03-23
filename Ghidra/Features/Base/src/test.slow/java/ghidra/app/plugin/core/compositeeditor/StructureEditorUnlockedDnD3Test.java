@@ -21,26 +21,15 @@ import org.junit.Before;
 import org.junit.Test;
 
 import docking.widgets.dialogs.NumberInputDialog;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataType;
 
 public class StructureEditorUnlockedDnD3Test extends AbstractStructureEditorTest {
 
-	/* (non-Javadoc)
-	 * @see junit.framework.TestCase#setUp()
-	 */
 	@Override
 	@Before
 	public void setUp() throws Exception {
 		super.setUp();
 		env.showTool();
-	}
-
-	protected void init(Structure dt, Category cat) {
-		super.init(dt, cat, false);
-		runSwing(() -> {
-//				model.setLocked(false);
-		});
-//		assertTrue(!model.isLocked());
 	}
 
 	@Test

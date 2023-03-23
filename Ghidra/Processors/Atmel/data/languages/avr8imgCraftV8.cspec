@@ -7,6 +7,7 @@
 <compiler_spec>
   <global>
     <range space="code"/>
+    <range space="codebyte"/>
     <range space="mem" first="40" last="0xffff"/>
   </global>
  <!-- SP is used for the code stack.  Y is used for the data stack -->

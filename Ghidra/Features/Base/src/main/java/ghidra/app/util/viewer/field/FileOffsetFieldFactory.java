@@ -20,6 +20,7 @@ import java.math.BigInteger;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
+import generic.theme.GColor;
 import ghidra.app.util.HighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
@@ -41,6 +42,7 @@ import ghidra.util.exception.AssertException;
 public class FileOffsetFieldFactory extends FieldFactory {
 
 	public static final String FIELD_NAME = "File Offset";
+	public static final GColor COLOR = new GColor("color.fg.listing.file.offset");
 	public static final String GROUP_TITLE = "File Offset Field";
 	public final static String FILE_OFFSET_DISPLAY_OPTIONS_NAME =
 		GROUP_TITLE + Options.DELIMITER + "File Offset Display Options";
@@ -141,7 +143,7 @@ public class FileOffsetFieldFactory extends FieldFactory {
 			}
 		}
 		FieldElement fieldElement =
-			new TextFieldElement(new AttributedString(text, color, getMetrics()), 0, 0);
+			new TextFieldElement(new AttributedString(text, COLOR, getMetrics()), 0, 0);
 		ListingTextField listingTextField = ListingTextField.createSingleLineTextField(this, proxy,
 			fieldElement, startX + varWidth, width, hlProvider);
 		listingTextField.setPrimary(true);
@@ -191,5 +193,4 @@ public class FileOffsetFieldFactory extends FieldFactory {
 		return (category == FieldFormatModel.INSTRUCTION_OR_DATA ||
 			category == FieldFormatModel.OPEN_DATA || category == FieldFormatModel.ARRAY);
 	}
-
 }

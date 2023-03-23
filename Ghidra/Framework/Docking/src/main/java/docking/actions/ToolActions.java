@@ -20,6 +20,7 @@ import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import javax.swing.Action;
 import javax.swing.KeyStroke;
@@ -28,11 +29,10 @@ import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.collections4.Predicate;
 import org.apache.commons.collections4.map.LazyMap;
 
-import com.google.common.collect.Iterators;
-
 import docking.*;
 import docking.action.*;
 import docking.tool.util.DockingToolConstants;
+import generic.util.action.ReservedKeyBindings;
 import ghidra.framework.options.*;
 import ghidra.util.*;
 import ghidra.util.exception.AssertException;
@@ -100,6 +100,7 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 		if (SystemUtilities.isInDevelopmentMode()) {
 			keyBindingsManager.addReservedAction(new ShowFocusInfoAction());
 			keyBindingsManager.addReservedAction(new ShowFocusCycleAction());
+			keyBindingsManager.addReservedAction(new ComponentThemeInspectorAction());
 		}
 	}
 
@@ -282,21 +283,14 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 	}
 
 	private Iterator<DockingActionIf> getAllActionsIterator() {
-
 		// chain all items together, rather than copy the data
-		Iterator<DockingActionIf> iterator = IteratorUtils.emptyIterator();
-		Collection<Map<String, Set<DockingActionIf>>> maps = actionsByNameByOwner.values();
-		for (Map<String, Set<DockingActionIf>> actionsByName : maps) {
-			for (Set<DockingActionIf> actions : actionsByName.values()) {
-				Iterator<DockingActionIf> next = actions.iterator();
-
-				// Note: do not use apache commons here--the code below degrades exponentially
-				//iterator = IteratorUtils.chainedIterator(iterator, next);
-				iterator = Iterators.concat(iterator, next);
-			}
-		}
-
-		return Iterators.concat(iterator, sharedActionMap.values().iterator());
+		// Note: do not use Apache's IteratorUtils.chainedIterator. It degrades exponentially
+		return Stream.concat(
+			actionsByNameByOwner.values()
+					.stream()
+					.flatMap(actionsByName -> actionsByName.values().stream())
+					.flatMap(actions -> actions.stream()),
+			sharedActionMap.values().stream()).iterator();
 	}
 
 	/**

@@ -16,6 +16,9 @@
 package agent.dbgeng.jna.dbgeng.sysobj;
 
 import com.sun.jna.platform.win32.Guid.IID;
+import com.sun.jna.platform.win32.WinDef.ULONGLONG;
+import com.sun.jna.platform.win32.WinDef.ULONGLONGByReference;
+import com.sun.jna.platform.win32.WinNT.HRESULT;
 
 import agent.dbgeng.jna.dbgeng.UnknownWithUtils.VTableIndex;
 
@@ -37,4 +40,13 @@ public interface IDebugSystemObjects2 extends IDebugSystemObjects {
 			return this.ordinal() + start;
 		}
 	}
+	
+	HRESULT GetImplicitThreadDataOffset(ULONGLONGByReference SysOffset);
+
+	HRESULT GetImplicitProcessDataOffset(ULONGLONGByReference SysOffset);
+
+	HRESULT SetImplicitThreadDataOffset(ULONGLONG SysOffset);
+
+	HRESULT SetImplicitProcessDataOffset(ULONGLONG SysOffset);
+
 }

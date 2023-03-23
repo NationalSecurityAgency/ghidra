@@ -39,14 +39,15 @@ public class ConstTpl {
 	public static final int HANDLE = 1;
 	public static final int J_START = 2;
 	public static final int J_NEXT = 3;
-	public static final int J_CURSPACE = 4;
-	public static final int J_CURSPACE_SIZE = 5;
-	public static final int SPACEID = 6;
-	public static final int J_RELATIVE = 7;
-	public static final int J_FLOWREF = 8;
-	public static final int J_FLOWREF_SIZE = 9;
-	public static final int J_FLOWDEST = 10;
-	public static final int J_FLOWDEST_SIZE = 11;
+	public static final int J_NEXT2 = 4;
+	public static final int J_CURSPACE = 5;
+	public static final int J_CURSPACE_SIZE = 6;
+	public static final int SPACEID = 7;
+	public static final int J_RELATIVE = 8;
+	public static final int J_FLOWREF = 9;
+	public static final int J_FLOWREF_SIZE = 10;
+	public static final int J_FLOWDEST = 11;
+	public static final int J_FLOWDEST_SIZE = 12;
 
 	public static final int V_SPACE = 0;
 	public static final int V_OFFSET = 1;
@@ -143,6 +144,8 @@ public class ConstTpl {
 				return walker.getAddr().getOffset();
 			case J_NEXT:
 				return walker.getNaddr().getOffset();
+			case J_NEXT2:
+				return walker.getN2addr().getOffset();
 			case J_FLOWREF:
 				return walker.getFlowRefAddr().getOffset();
 			case J_FLOWREF_SIZE:
@@ -315,6 +318,9 @@ public class ConstTpl {
 		else if (typestr.equals("next")) {
 			type = J_NEXT;
 		}
+		else if (typestr.equals("next2")) {
+			type = J_NEXT2;
+		}
 		else if (typestr.equals("curspace")) {
 			type = J_CURSPACE;
 		}
@@ -379,6 +385,8 @@ public class ConstTpl {
 				return "[flowref_size]";
 			case J_NEXT:
 				return "[next]";
+			case J_NEXT2:
+				return "[next2]";
 			case J_START:
 				return "[start]";
 			case J_RELATIVE:

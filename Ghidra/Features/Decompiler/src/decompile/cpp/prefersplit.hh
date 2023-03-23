@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +18,8 @@
 
 #include "varnode.hh"
 class Funcdata;			// Forward declaration
+
+extern ElementId ELEM_PREFERSPLIT;	///< Marshaling element \<prefersplit>
 
 struct PreferSplitRecord {
   VarnodeData storage;

@@ -21,6 +21,7 @@ import javax.swing.*;
 import javax.swing.border.TitledBorder;
 
 import docking.widgets.label.GDHtmlLabel;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.merge.util.ConflictUtility;
 
 /**
@@ -103,11 +104,11 @@ public class ExternalConflictInfoPanel extends JPanel {
 	}
 
 	private void addCount(StringBuffer buf, int value) {
-		buf.append("<font color=\"#990000\">" + value + "</font>");
+		buf.append("<font color=\"" + Palette.MAROON + "\">" + value + "</font>");
 	}
 
 	private void addName(StringBuffer buf, String name) {
-		buf.append("<font color=\"#990000\">" + name + "</font>");
+		buf.append("<font color=\"" + Palette.MAROON + "\">" + name + "</font>");
 	}
 
 	private void updateWest() {

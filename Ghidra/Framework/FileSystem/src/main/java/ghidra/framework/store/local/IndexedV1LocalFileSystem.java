@@ -37,16 +37,17 @@ public class IndexedV1LocalFileSystem extends IndexedLocalFileSystem {
 
 	/**
 	 * Constructor.
-	 * @param file path path for root directory.
+	 * @param rootPath path for root directory.
 	 * @param isVersioned if true item versioning will be enabled.
 	 * @param readOnly if true modifications within this file-system will not be allowed
 	 * and result in an ReadOnlyException
 	 * @param enableAsyncronousDispatching if true a separate dispatch thread will be used
 	 * to notify listeners.  If false, blocking notification will be performed.
+	 * @param create if true a new folder will be created.
 	 * @throws FileNotFoundException if specified rootPath does not exist
 	 * @throws IOException if error occurs while reading/writing index files
 	 */
-	IndexedV1LocalFileSystem(String rootPath, boolean isVersioned, boolean readOnly,
+	protected IndexedV1LocalFileSystem(String rootPath, boolean isVersioned, boolean readOnly,
 			boolean enableAsyncronousDispatching, boolean create) throws IOException {
 		super(rootPath, isVersioned, readOnly, enableAsyncronousDispatching, create);
 	}
@@ -134,6 +135,7 @@ public class IndexedV1LocalFileSystem extends IndexedLocalFileSystem {
 
 	@Override
 	public FolderItem getItem(String fileID) throws IOException, UnsupportedOperationException {
+		checkDisposed();
 		if (fileIdMap == null) {
 			return null;
 		}

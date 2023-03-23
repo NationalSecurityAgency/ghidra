@@ -210,7 +210,9 @@ public class DemangledVariable extends DemangledObject {
 			CreateDataCmd cmd = new CreateDataCmd(address, demangledDT, false,
 				ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
 			if (!cmd.applyTo(program)) {
-				Msg.error(this, "Failed to create data at " + address + ": " + cmd.getStatusMsg());
+				String message = cmd.getStatusMsg();
+				setErrorMessage(message);
+				Msg.error(this, message);
 				return false;
 			}
 			return true;
@@ -247,7 +249,9 @@ public class DemangledVariable extends DemangledObject {
 			listing.createData(address, demangledDT);
 		}
 		catch (CodeUnitInsertionException e) {
-			Msg.trace(this, "Unable to create demangled data '" + demangledDT + "' @ " + address);
+			String message = "Unable to create demangled data '" + demangledDT + "' @ " + address;
+			setErrorMessage(message);
+			Msg.trace(this, message);
 		}
 
 		return true; // return true, as we did not fail to demangle
@@ -306,7 +310,9 @@ public class DemangledVariable extends DemangledObject {
 		CreateDataCmd cmd = new CreateDataCmd(address, pointer, false,
 			ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
 		if (!cmd.applyTo(program)) {
-			Msg.error(this, "Failed to create pointer at " + address + ": " + cmd.getStatusMsg());
+			String message = "Failed to create pointer at " + address + ": " + cmd.getStatusMsg();
+			setErrorMessage(message);
+			Msg.error(this, message);
 			return false;
 		}
 		return true;
@@ -314,7 +320,7 @@ public class DemangledVariable extends DemangledObject {
 
 	/**
 	 * get the next symbol defined or auto after address
-	 * 
+	 *
 	 * @param program - program to check
 	 * @param address - address to get symbol after
 	 * @return address of the location of the next symbol or the last address in program

@@ -42,19 +42,32 @@ public class GTreeExpandAllTask extends GTreeTask {
 		monitor.initialize(1000);
 		monitor.setMessage("Expanding nodes...");
 		try {
-			expandNode(node, monitor);
+			expandNode(node, true, monitor);
 		}
 		catch (CancelledException e) {
 			// Not everything expanded which is ok
 		}
 	}
 
-	protected void expandNode(GTreeNode parent, TaskMonitor monitor) throws CancelledException {
+	/**
+	 * Expand the specified parent tree node.
+	 * @param parent the tree node to be expanded
+	 * @param force if parent node has auto-expand disabled 
+	 * (see {@link GTreeNode#isAutoExpandPermitted()}) passing true will force such a node to 
+	 * expand, false will respect this restriction and not expand the parent node.
+	 * @param monitor task monitor
+	 * @throws CancelledException if task cancelled
+	 */
+	protected void expandNode(GTreeNode parent, boolean force, TaskMonitor monitor)
+			throws CancelledException {
 		// only expand MAX number of nodes.
 		if (monitor.getProgress() >= MAX) {
 			return;
 		}
 		if (parent.isLeaf()) {
+			return;
+		}
+		if (!force && !parent.isAutoExpandPermitted()) {
 			return;
 		}
 		monitor.checkCanceled();
@@ -68,9 +81,9 @@ public class GTreeExpandAllTask extends GTreeTask {
 		}
 		for (GTreeNode child : allChildren) {
 			monitor.checkCanceled();
-			expandNode(child, monitor);
+			expandNode(child, false, monitor);
 		}
-		monitor.incrementProgress(1);
+		monitor.incrementProgress(1); // TODO: total node count is unknown
 	}
 
 	private void expandPath(final TreePath treePath, final TaskMonitor monitor) {

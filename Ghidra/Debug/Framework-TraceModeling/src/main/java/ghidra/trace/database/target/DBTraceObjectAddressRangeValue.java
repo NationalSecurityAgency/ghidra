@@ -15,14 +15,13 @@
  */
 package ghidra.trace.database.target;
 
-import com.google.common.collect.Range;
-
 import db.DBRecord;
-import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
 import ghidra.trace.database.target.DBTraceObjectValue.DBTraceObjectDBFieldCodec;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.target.TraceObjectKeyPath;
 import ghidra.trace.model.target.TraceObjectValue;
 import ghidra.trace.util.TraceAddressSpace;
 import ghidra.util.LockHold;
@@ -64,6 +63,12 @@ public class DBTraceObjectAddressRangeValue
 			DBCachedObjectStore<?> store, DBRecord record) {
 		super(tree, store, record);
 		this.manager = manager;
+	}
+
+	@Override
+	public String toString() {
+		return getClass().getSimpleName() + ": parent=" + parent + ", key=" + entryKey +
+			", lifespan=" + getLifespan() + ", value=" + getValue();
 	}
 
 	@Override
@@ -122,8 +127,20 @@ public class DBTraceObjectAddressRangeValue
 	}
 
 	@Override
+	public boolean isObject() {
+		return false;
+	}
+
+	@Override
 	public DBTraceObject getChildOrNull() {
 		return null;
+	}
+
+	@Override
+	public TraceObjectKeyPath getCanonicalPath() {
+		try (LockHold hold = manager.trace.lockRead()) {
+			return parent.getCanonicalPath().extend(entryKey);
+		}
 	}
 
 	@Override
@@ -132,14 +149,14 @@ public class DBTraceObjectAddressRangeValue
 	}
 
 	@Override
-	public void doSetLifespan(Range<Long> lifespan) {
+	public void doSetLifespan(Lifespan lifespan) {
 		super.doSetLifespan(lifespan);
 	}
 
 	@Override
 	public void setMinSnap(long minSnap) {
 		try (LockHold hold = manager.trace.lockWrite()) {
-			setLifespan(DBTraceUtils.toRange(minSnap, getY2()));
+			setLifespan(Lifespan.span(minSnap, getY2()));
 		}
 	}
 
@@ -153,7 +170,7 @@ public class DBTraceObjectAddressRangeValue
 	@Override
 	public void setMaxSnap(long maxSnap) {
 		try (LockHold hold = manager.trace.lockWrite()) {
-			setLifespan(DBTraceUtils.toRange(getY1(), maxSnap));
+			setLifespan(Lifespan.span(getY1(), maxSnap));
 		}
 	}
 
@@ -177,7 +194,7 @@ public class DBTraceObjectAddressRangeValue
 	}
 
 	@Override
-	public TraceObjectValue truncateOrDelete(Range<Long> span) {
+	public TraceObjectValue truncateOrDelete(Lifespan span) {
 		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
 			return doTruncateOrDeleteAndEmitLifeChange(span);
 		}

@@ -15,19 +15,27 @@
  */
 package ghidra.trace.database.listing;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.trace.model.listing.TraceDefinedDataView;
+import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.listing.TraceCodeManager;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
+/**
+ * The implementation of {@link TraceCodeManager#definedData()}
+ */
 public class DBTraceDefinedDataMemoryView
 		extends AbstractBaseDBTraceCodeUnitsMemoryView<DBTraceData, DBTraceDefinedDataView>
-		implements TraceDefinedDataView {
+		implements InternalTraceDefinedDataView {
+
+	/**
+	 * Construct the view
+	 * 
+	 * @param manager the manager
+	 */
 	public DBTraceDefinedDataMemoryView(DBTraceCodeManager manager) {
 		super(manager);
 	}
@@ -38,20 +46,20 @@ public class DBTraceDefinedDataMemoryView
 	}
 
 	@Override
-	public void clear(Range<Long> span, AddressRange range, boolean clearContext,
+	public void clear(Lifespan span, AddressRange range, boolean clearContext,
 			TaskMonitor monitor) throws CancelledException {
 		delegateDeleteV(range.getAddressSpace(), m -> m.clear(span, range, clearContext, monitor));
 	}
 
 	@Override
-	public DBTraceDataAdapter create(Range<Long> lifespan, Address address, DataType dataType,
+	public DBTraceDataAdapter create(Lifespan lifespan, Address address, DataType dataType,
 			int length) throws CodeUnitInsertionException {
 		return delegateWrite(address.getAddressSpace(),
 			m -> m.create(lifespan, address, dataType, length));
 	}
 
 	@Override
-	public DBTraceDataAdapter create(Range<Long> lifespan, Address address, DataType dataType)
+	public DBTraceDataAdapter create(Lifespan lifespan, Address address, DataType dataType)
 			throws CodeUnitInsertionException {
 		return delegateWrite(address.getAddressSpace(), m -> m.create(lifespan, address, dataType));
 	}

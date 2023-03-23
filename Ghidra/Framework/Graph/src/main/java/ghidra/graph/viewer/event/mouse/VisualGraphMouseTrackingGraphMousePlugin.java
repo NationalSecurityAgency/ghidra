@@ -25,6 +25,7 @@ import docking.DockingUtils;
 import edu.uci.ics.jung.visualization.*;
 import edu.uci.ics.jung.visualization.control.AbstractGraphMousePlugin;
 import edu.uci.ics.jung.visualization.transform.MutableTransformer;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.graph.viewer.*;
 import ghidra.graph.viewer.renderer.*;
 
@@ -92,6 +93,7 @@ public class VisualGraphMouseTrackingGraphMousePlugin<V extends VisualVertex,
 		}
 
 		int offset = 20;
+		offset = 0; // not sure why this was using an offset?
 		Point downOver = new Point(down.x + offset, down.y + offset);
 		Point pOver = new Point(p.x + offset, p.y + offset);
 		Point gpOver = GraphViewerUtils.translatePointFromViewSpaceToGraphSpace(pOver, viewer);
@@ -115,7 +117,7 @@ public class VisualGraphMouseTrackingGraphMousePlugin<V extends VisualVertex,
 
 		// we get a lot of these events, so don't record them all
 		if (++mouseMovedCount % 5 == 0) {
-			addPointMousePaintable(e, new Color(0, 255, 0, 127)); // greenish	
+			addPointMousePaintable(e, Palette.GREEN.withAlpha(127));
 		}
 	}
 
@@ -128,7 +130,7 @@ public class VisualGraphMouseTrackingGraphMousePlugin<V extends VisualVertex,
 			return;
 		}
 
-		addPointMousePaintable(e, Color.ORANGE);
+		addPointMousePaintable(e, Palette.ORANGE.withAlpha(127));
 	}
 
 	private void addPointMousePaintable(MouseEvent e, Color color) {

@@ -18,10 +18,9 @@ package ghidra.trace.model.bookmark;
 import java.util.Collection;
 import java.util.Set;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
+import ghidra.trace.model.Lifespan;
 
 public interface TraceBookmarkOperations {
 	/**
@@ -45,16 +44,16 @@ public interface TraceBookmarkOperations {
 	 * @param comment a comment to add to the bookmark
 	 * @return the new bookmark
 	 */
-	TraceBookmark addBookmark(Range<Long> lifespan, Address address, TraceBookmarkType type,
+	TraceBookmark addBookmark(Lifespan lifespan, Address address, TraceBookmarkType type,
 			String category, String comment);
 
 	Collection<? extends TraceBookmark> getAllBookmarks();
 
 	Iterable<? extends TraceBookmark> getBookmarksAt(long snap, Address address);
 
-	Iterable<? extends TraceBookmark> getBookmarksEnclosed(Range<Long> lifespan,
+	Iterable<? extends TraceBookmark> getBookmarksEnclosed(Lifespan lifespan,
 			AddressRange range);
 
-	Iterable<? extends TraceBookmark> getBookmarksIntersecting(Range<Long> lifespan,
+	Iterable<? extends TraceBookmark> getBookmarksIntersecting(Lifespan lifespan,
 			AddressRange range);
 }

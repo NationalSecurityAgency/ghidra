@@ -27,6 +27,8 @@ import javax.swing.text.*;
 
 import docking.DockingUtils;
 import docking.util.GraphicsUtils;
+import generic.theme.GThemeDefaults.Colors.Messages;
+import generic.theme.Gui;
 import ghidra.util.SystemUtilities;
 
 /**
@@ -150,7 +152,7 @@ public class IntegerTextField {
 	 */
 	public BigInteger getValue() {
 		String text = textField.getText();
-		return computeValueFromString(text);
+		return computeValueFromString(text, isHexMode);
 	}
 
 	/**
@@ -209,6 +211,24 @@ public class IntegerTextField {
 	 */
 	public void setValue(int newValue) {
 		setValue(BigInteger.valueOf(newValue));
+	}
+
+	/**
+	 * Sets the field to the given text. The text must be a properly formated string that is 
+	 * a value that is valid for this field. If the field is set to not allow "0x" prefixes, then
+	 * the input string cannot start with 0x and furthermore, if the field is in decimal mode, then
+	 * input string cannot take in hex digits a-f. On the other hand, if "0x" prefixes are allowed,
+	 * then the input string can be either a decimal number or a hex number depending on if the
+	 * input string starts with "0x". In this case, the field's hex mode will be set to match
+	 * the input text. If the text is not valid, the field will not change.
+	 * 
+	 * @param text the value as text to set on this field
+	 * @return true if the set was successful
+	 */
+	public boolean setText(String text) {
+		String oldText = textField.getText();
+		textField.setText(text);
+		return !oldText.equals(textField.getText());
 	}
 
 	/**
@@ -424,12 +444,12 @@ public class IntegerTextField {
 		return value.toString(10);
 	}
 
-	private BigInteger computeValueFromString(String text) {
+	private BigInteger computeValueFromString(String text, boolean parseAsHex) {
 		if (text.isEmpty() || isValidPrefix(text)) {
 			return null;
 		}
 
-		if (!isHexMode) {
+		if (!parseAsHex) {
 			return new BigInteger(text, 10);
 		}
 
@@ -472,14 +492,17 @@ public class IntegerTextField {
 		return value.abs().compareTo(maxValue) <= 0;
 	}
 
-	private void updateNumberMode(String text) {
+	private boolean shouldParseAsHex(String text) {
 		if (allowsHexPrefix) {
-			isHexMode = text.contains("0x");
+			// if allowing "0x" prefix, let the incoming text determine if we should parse as hex
+			return text.startsWith("0x") || text.startsWith("-0x");
 		}
+		// otherwise parse the input string is whatever mode this field has been set to.
+		return isHexMode;
 	}
 
 	/**
-	 * Sets the textField to the given value taking into account the current configuation.
+	 * Sets the textField to the given value taking into account the current configuration.
 	 *
 	 * @param value the value to convert to a string for the textField.
 	 */
@@ -552,27 +575,38 @@ public class IntegerTextField {
 		private boolean isValid(StringBuilder builder) {
 			String valueString = builder.toString();
 
-			// maybe switch radix mode depending on if the string starts with 0x
-			updateNumberMode(valueString);
+			// Depending on configuration and input string, determine if we should parse as hex.
+			// If we don't allow "0x" prefix, then use the current hex/integer mode, Otherwise,
+			// parse as hex depending on whether or not the input string starts with the
+			// "0x" prefix.
+			boolean parseAsHex = shouldParseAsHex(valueString);
 
-			// allow the string if it is the beginning of a valid string, allow it even though
+			// allow the string if it is the beginning of a valid string even though
 			// it doesn't evaluate to a number yet.
 			if (isValidPrefix(valueString)) {
+				// When the input is valid, update the hex mode to match how the text was parsed.
+				// See parseAsHex variable comment above.
+				isHexMode = parseAsHex;
 				return true;
 			}
 
 			// otherwise, it must parse to a number to be valid.
 			try {
-				BigInteger value = computeValueFromString(valueString);
-				if (!allowsNegative && value != null && value.signum() < 0) {
+				BigInteger value = computeValueFromString(valueString, parseAsHex);
+				if (isNonAllowedNegativeNumber(value)) {
 					return false;
 				}
-				return passesMaxCheck(value);
+				if (passesMaxCheck(value)) {
+					// When the input is valid, update the hex mode to match how the text was parsed.
+					// See parseAsHex variable comment above.
+					isHexMode = parseAsHex;
+					return true;
+				}
 			}
 			catch (NumberFormatException e) {
 				return false;
 			}
-
+			return false;
 		}
 
 		// Retrieves the current document text from inside the document filter.
@@ -585,18 +619,30 @@ public class IntegerTextField {
 
 	}
 
+	private boolean isNonAllowedNegativeNumber(BigInteger value) {
+		if (value == null) {
+			return false;
+		}
+		if (allowsNegative) {
+			return false;
+		}
+
+		// so we don't allow negatives
+		return value.signum() < 0;
+	}
+
 	/**
 	 * Overrides the JTextField mainly to allow hint painting for the current radix mode.
 	 */
 	private class MyTextField extends JTextField {
 
-		private Font hintFont = new Font("Monospaced", Font.PLAIN, 10);
+		private static final String FONT_ID = "font.input.hint";
 		private int hintWidth;
 
 		public MyTextField(int columns) {
 			super(columns);
 
-			FontMetrics fontMetrics = getFontMetrics(hintFont);
+			FontMetrics fontMetrics = getFontMetrics(Gui.getFont(FONT_ID));
 			String mode = isHexMode ? "Hex" : "Dec";
 			hintWidth = fontMetrics.stringWidth(mode);
 
@@ -637,8 +683,8 @@ public class IntegerTextField {
 			}
 
 			Font savedFont = g.getFont();
-			g.setFont(hintFont);
-			g.setColor(Color.LIGHT_GRAY);
+			g.setFont(Gui.getFont(FONT_ID));
+			g.setColor(Messages.HINT);
 
 			Dimension size = getSize();
 			Insets insets = getInsets();

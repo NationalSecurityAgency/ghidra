@@ -22,6 +22,8 @@ import java.util.concurrent.CountDownLatch;
 import org.junit.Test;
 
 import docking.DialogComponentProvider;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.model.DomainObject;
 import ghidra.util.task.TaskMonitor;
@@ -37,29 +39,29 @@ public class AutoAnalysisPluginScreenShots extends GhidraScreenShotGenerator {
 		// not tool for this test
 	}
 
-@Test
-    public void testAutoAnalysis() {
-		Color darkGreen = new Color(20, 154, 65);
-		Color darkBlue = new Color(10, 62, 149);
+	@Test
+	public void testAutoAnalysis() {
+		Color darkGreen = Palette.GREEN;
+		Color darkBlue = Palette.getColor("darkblue");
 		image = new BufferedImage(700, 400, BufferedImage.TYPE_INT_ARGB);
 		Graphics g = image.getGraphics();
-		g.setColor(Color.WHITE);
+		g.setColor(Colors.BACKGROUND);
 		g.fillRect(0, 0, 700, 400);
 
-		drawText("(1) User Disassembles Code", Color.BLACK, new Point(160, 30), 24);
+		drawText("(1) User Disassembles Code", Colors.FOREGROUND, new Point(160, 30), 24);
 		drawArrow(darkBlue, new Point(325, 35), new Point(325, 70));
 		drawText("(new code)", darkGreen, new Point(270, 90), 24);
 
-		drawText("(2) Function Analyzer", Color.BLACK, new Point(0, 150), 24);
+		drawText("(2) Function Analyzer", Colors.FOREGROUND, new Point(0, 150), 24);
 		drawArrow(darkBlue, new Point(265, 82), new Point(180, 120));
 		drawText("(new function)", darkGreen, new Point(100, 190), 24);
 
-		drawText("(3) Stack Analyzer", Color.BLACK, new Point(10, 230), 24);
+		drawText("(3) Stack Analyzer", Colors.FOREGROUND, new Point(10, 230), 24);
 		drawArrow(darkBlue, new Point(50, 155), new Point(50, 205));
 
-		drawText("(4) Operand Analyzer", Color.BLACK, new Point(180, 290), 24);
+		drawText("(4) Operand Analyzer", Colors.FOREGROUND, new Point(180, 290), 24);
 		drawArrow(darkBlue, new Point(300, 94), new Point(300, 260));
-		drawText("(5) Data Reference Analyzer", Color.BLACK, new Point(280, 350), 24);
+		drawText("(5) Data Reference Analyzer", Colors.FOREGROUND, new Point(280, 350), 24);
 		drawArrow(darkBlue, new Point(350, 94), new Point(490, 325));
 
 		Point p1 = new Point(447, 355);
@@ -71,14 +73,14 @@ public class AutoAnalysisPluginScreenShots extends GhidraScreenShotGenerator {
 		drawArrow(darkBlue, p3, new Point(404, 88));
 	}
 
-@Test
-    public void testCaptureAutoAnalysisOptions() {
+	@Test
+	public void testCaptureAutoAnalysisOptions() {
 		showAnalysisOptions("Data Reference");
 		captureDialog(800, 400);
 	}
 
-@Test
-    public void testCaptureBackgroundAnalysisTasks() throws InterruptedException {
+	@Test
+	public void testCaptureBackgroundAnalysisTasks() throws InterruptedException {
 		CountDownLatch start = new CountDownLatch(1);
 		CountDownLatch end = new CountDownLatch(1);
 		TestBackgroundCommand cmd = new TestBackgroundCommand(start, end);
@@ -92,8 +94,8 @@ public class AutoAnalysisPluginScreenShots extends GhidraScreenShotGenerator {
 		crop(new Rectangle(width - 400, height - 120, 400, 120));
 	}
 
-@Test
-    public void testCaptureProgramOptions() {
+	@Test
+	public void testCaptureProgramOptions() {
 		showProgramOptions("Analyzers");
 		DialogComponentProvider dialog = getDialog();
 		Component comp = findComponentByName(dialog.getComponent(), "Analysis Panel");
@@ -122,12 +124,7 @@ public class AutoAnalysisPluginScreenShots extends GhidraScreenShotGenerator {
 			monitor.initialize(100);
 			monitor.setProgress(65);
 			monitor.setMessage("Applying Function Signatures");
-			runSwing(new Runnable() {
-				@Override
-				public void run() {
-					invokeInstanceMethod("update", monitor);
-				}
-			});
+			runSwing(() -> invokeInstanceMethod("update", monitor));
 
 			start.countDown();
 			try {

@@ -19,8 +19,7 @@
  */
 package ghidra.app.plugin.processors.sleigh.template;
 
-import ghidra.app.plugin.processors.sleigh.FixedHandle;
-import ghidra.app.plugin.processors.sleigh.ParserWalker;
+import ghidra.app.plugin.processors.sleigh.*;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.InstructionContext;

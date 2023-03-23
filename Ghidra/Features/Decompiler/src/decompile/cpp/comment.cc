@@ -16,6 +16,10 @@
 #include "comment.hh"
 #include "funcdata.hh"
 
+ElementId ELEM_COMMENT = ElementId("comment",86);
+ElementId ELEM_COMMENTDB = ElementId("commentdb",87);
+ElementId ELEM_TEXT = ElementId("text",88);
+
 /// \param tp is the set of properties to associate with the comment (or 0 for no properties)
 /// \param fad is the Address of the function containing the comment
 /// \param ad is the Address of the instruction associated with the comment
@@ -26,46 +30,44 @@ Comment::Comment(uint4 tp,const Address &fad,const Address &ad,int4 uq,const str
 {
 }
 
-/// The single comment is saved as a \<comment> tag.
-/// \param s is the output stream
-void Comment::saveXml(ostream &s) const
+/// The single comment is encoded as a \<comment> element.
+/// \param encoder is the stream encoder
+void Comment::encode(Encoder &encoder) const
 
 {
   string tpname = Comment::decodeCommentType(type);
-  s << "<comment";
-  a_v(s,"type",tpname);
-  s << ">\n";
-  s << "  <addr";
-  funcaddr.getSpace()->saveXmlAttributes(s,funcaddr.getOffset());
-  s << "/>\n";
-  s << "  <addr";
-  addr.getSpace()->saveXmlAttributes(s,addr.getOffset());
-  s << "/>\n";
-  s << "  <text>";
-  xml_escape(s,text.c_str());
-  s << "  </text>\n";
-  s << "</comment>\n";
+  encoder.openElement(ELEM_COMMENT);
+  encoder.writeString(ATTRIB_TYPE, tpname);
+  encoder.openElement(ELEM_ADDR);
+  funcaddr.getSpace()->encodeAttributes(encoder,funcaddr.getOffset());
+  encoder.closeElement(ELEM_ADDR);
+  encoder.openElement(ELEM_ADDR);
+  addr.getSpace()->encodeAttributes(encoder,addr.getOffset());
+  encoder.closeElement(ELEM_ADDR);
+  encoder.openElement(ELEM_TEXT);
+  encoder.writeString(ATTRIB_CONTENT, text);
+  encoder.closeElement(ELEM_TEXT);
+  encoder.closeElement(ELEM_COMMENT);
 }
 
-/// The comment is parsed from a \<comment> tag.
-/// \param el is the \<comment> element
-/// \param manage is a manager for resolving address space references
-void Comment::restoreXml(const Element *el,const AddrSpaceManager *manage)
+/// Parse a \<comment> element from the given stream decoder
+/// \param decoder is the given stream decoder
+void Comment::decode(Decoder &decoder)
 
 {
   emitted = false;
   type = 0;
-  type = Comment::encodeCommentType(el->getAttributeValue("type"));
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-
-  iter = list.begin();
-  funcaddr = Address::restoreXml(*iter,manage);
-  ++iter;
-  addr = Address::restoreXml(*iter,manage);
-  ++iter;
-  if (iter != list.end())
-    text = (*iter)->getContent();
+  uint4 elemId = decoder.openElement(ELEM_COMMENT);
+  type = Comment::encodeCommentType(decoder.readString(ATTRIB_TYPE));
+  funcaddr = Address::decode(decoder);
+  addr = Address::decode(decoder);
+  uint4 subId = decoder.peekElement();
+  if (subId != 0) {
+    decoder.openElement();
+    text = decoder.readString(ATTRIB_CONTENT);
+    decoder.closeElement(subId);
+  }
+  decoder.closeElement(elemId);
 }
 
 /// \param name is a string representation of a single comment property
@@ -235,28 +237,27 @@ CommentSet::const_iterator CommentDatabaseInternal::endComment(const Address &fa
   return commentset.lower_bound(&testcomm);
 }
 
-void CommentDatabaseInternal::saveXml(ostream &s) const
+void CommentDatabaseInternal::encode(Encoder &encoder) const
 
 {
   CommentSet::const_iterator iter;
 
-  s << "<commentdb>\n";
+  encoder.openElement(ELEM_COMMENTDB);
   for(iter=commentset.begin();iter!=commentset.end();++iter)
-    (*iter)->saveXml(s);
-  s << "</commentdb>\n";
+    (*iter)->encode(encoder);
+  encoder.closeElement(ELEM_COMMENTDB);
 }
 
-void CommentDatabaseInternal::restoreXml(const Element *el,const AddrSpaceManager *manage)
+void CommentDatabaseInternal::decode(Decoder &decoder)
 
 {
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-  
-  for(iter=list.begin();iter!=list.end();++iter) {
+  uint4 elemId = decoder.openElement(ELEM_COMMENTDB);
+  while(decoder.peekElement() != 0) {
     Comment com;
-    com.restoreXml(*iter,manage);
+    com.decode(decoder);
     addComment(com.getType(),com.getFuncAddr(),com.getAddr(),com.getText());
   }
+  decoder.closeElement(elemId);
 }
 
 /// Figure out position of given Comment and initialize its key.

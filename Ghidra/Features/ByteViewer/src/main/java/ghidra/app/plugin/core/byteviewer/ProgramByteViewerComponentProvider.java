@@ -25,6 +25,7 @@ import javax.swing.*;
 import docking.ActionContext;
 import docking.action.*;
 import docking.widgets.fieldpanel.support.ViewerPosition;
+import generic.theme.GIcon;
 import ghidra.app.events.*;
 import ghidra.app.nav.*;
 import ghidra.app.plugin.core.format.*;
@@ -43,7 +44,6 @@ import ghidra.util.HelpLocation;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
-import resources.ResourceManager;
 
 public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvider
 		implements DomainObjectListener, Navigatable {
@@ -52,7 +52,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 
 	protected DecoratorPanel decorationComponent;
 	private WeakSet<NavigatableRemovalListener> navigationListeners =
-		WeakDataStructureFactory.createSingleThreadAccessWeakSet();
+		WeakDataStructureFactory.createCopyOnWriteWeakSet();
 
 	private CloneByteViewerAction cloneByteViewerAction;
 
@@ -77,7 +77,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 			AbstractByteViewerPlugin<?> plugin, String name, boolean isConnected) {
 		super(tool, plugin, name, ByteViewerActionContext.class);
 		this.isConnected = isConnected;
-		setIcon(ResourceManager.loadImage("images/binaryData.gif"));
+		setIcon(new GIcon("icon.plugin.byteviewer.provider"));
 		if (!isConnected) {
 			setTransient();
 		}
@@ -146,6 +146,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 	@Override
 	public void closeComponent() {
 		// overridden to handle snapshots
+		super.closeComponent();
 		plugin.closeProvider(this);
 	}
 
@@ -315,7 +316,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 		if (blocks != null && blockNumber >= 0 && blockNumber < blocks.length) {
 			ByteViewerState view = new ByteViewerState(blockSet,
 				new ByteBlockInfo(blocks[blockNumber], blockOffset, column), vp);
-			panel.returnToView(view);
+			panel.restoreView(view);
 		}
 
 	}
@@ -537,7 +538,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 				event.containsEvent(DomainObject.DO_DOMAIN_FILE_CHANGED)) {
 				// drop all changes
 
-				blockSet.setByteBlockChangeManager(new ByteBlockChangeManager(blockSet));
+				blockSet.setByteBlockChangeManager(newByteBlockChangeManager(blockSet, null));
 				updateManager.update();
 			}
 		}
@@ -561,6 +562,11 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 			event.containsEvent(ChangeManager.DOCR_MEM_REFERENCE_ADDED)) {
 			updateManager.update();
 		}
+	}
+
+	protected ByteBlockChangeManager newByteBlockChangeManager(ProgramByteBlockSet blocks,
+			ByteBlockChangeManager bbcm) {
+		return new ByteBlockChangeManager(blocks, bbcm);
 	}
 
 	protected ProgramByteBlockSet newByteBlockSet(ByteBlockChangeManager changeManager) {
@@ -621,7 +627,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 		if (blocks != null && blockNumber >= 0 && blockNumber < blocks.length) {
 			ByteViewerState view = new ByteViewerState(blockSet,
 				new ByteBlockInfo(blocks[blockNumber], blockOffset, column), vp);
-			panel.returnToView(view);
+			panel.restoreView(view);
 		}
 	}
 
@@ -737,7 +743,7 @@ public class ProgramByteViewerComponentProvider extends ByteViewerComponentProvi
 
 		public CloneByteViewerAction() {
 			super("ByteViewer Clone", plugin.getName());
-			ImageIcon image = ResourceManager.loadImage("images/camera-photo.png");
+			Icon image = new GIcon("icon.provider.clone");
 			setToolBarData(new ToolBarData(image, "ZZZ"));
 
 			setDescription("Create a snapshot (disconnected) copy of this Bytes window ");

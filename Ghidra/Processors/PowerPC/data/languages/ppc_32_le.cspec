@@ -87,6 +87,9 @@
         </pentry>
       </output>
       <unaffected>
+        <register name="r1"/>  <!-- stack pointer -->
+        <register name="r2"/>  <!-- _SDA2_BASE_ -->
+      	<register name="r13"/> <!-- _SDA_BASE_  -->
         <register name="r14"/>
         <register name="r15"/>
         <register name="r16"/>
@@ -105,7 +108,9 @@
         <register name="r29"/>
         <register name="r30"/>
         <register name="r31"/>
-        <register name="r1"/>
+        <register name="cr2"/>
+        <register name="cr3"/>
+        <register name="cr4"/>
       </unaffected>
     </prototype>
   </default_proto>

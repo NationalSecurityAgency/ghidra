@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +15,14 @@
  */
 package ghidra.pcodeCPort.slghpatexpress;
 
-import generic.stl.VectorSTL;
-import ghidra.pcodeCPort.context.ParserWalker;
-import ghidra.pcodeCPort.translate.Translate;
-import ghidra.pcodeCPort.utils.MutableInt;
-import ghidra.sleigh.grammar.Location;
-
 import java.io.PrintStream;
 
 import org.jdom.Element;
+
+import generic.stl.VectorSTL;
+import ghidra.pcodeCPort.translate.Translate;
+import ghidra.pcodeCPort.utils.MutableInt;
+import ghidra.sleigh.grammar.Location;
 
 public abstract class PatternExpression {
 	public final Location location;
@@ -38,8 +36,6 @@ public abstract class PatternExpression {
 		this.location = location;
 		refcount = 0;
 	}
-
-	public abstract long getValue(ParserWalker pos);
 
 	public abstract TokenPattern genMinPattern(VectorSTL<TokenPattern> ops);
 
@@ -90,6 +86,9 @@ public abstract class PatternExpression {
 		}
 		else if (nm.equals("end_exp")) {
 			res = new EndInstructionValue(null);
+		}
+		else if (nm.equals("next2_exp")) {
+			res = new Next2InstructionValue(null);
 		}
 		else if (nm.equals("plus_exp")) {
 			res = new PlusExpression(null);

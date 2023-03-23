@@ -2893,6 +2893,10 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	tmp[0,1] = 0;
 	goto [tmp];
 }
+:ji a11 is PCPMode=0 & op0811=11 & op0007=0xdc & op1215=0x0 & a11
+{
+	return [a11];
+}
 @endif
 
 @if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)
@@ -2903,13 +2907,17 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 	tmp[0,1] = 0;
 	goto [tmp];
 }
+:ji a11 is PCPMode=0 & op0811=11 & op0007=0x2d & op1215=0x0 & a11; op1631=0x30
+{
+	return [a11];
+}
 @endif
 
 # JL disp24 (B)
 :jl off24pc is PCPMode=0 & ( op0007=0x5d ) ... & off24pc
 {
 	#TODO  is this just a call w/o context switching?
-	a11 = inst_start + 4;
+	a11 = inst_next;
 	call off24pc;
 }
 
@@ -2917,7 +2925,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 :jla off24abs is PCPMode=0 & ( op0007=0xdd ) ... & off24abs
 {
 	#TODO  is this just a call w/o context switching?
-	a11 = inst_start + 4;
+	a11 = inst_next;
 	call off24abs;
 }
 
@@ -6824,9 +6832,9 @@ macro multiply_u_u(mres0, rega, regb, n) {
 # NOR.T D[c], D[a], pos1, D[b], pos2 (BIT)
 :nor.t Rd2831,Rd0811,const1620Z,Rd1215,const2327Z is PCPMode=0 & Rd0811 & Rd1215 & op0007=0x87 ; Rd2831 & const1620Z & const2327Z & op2122=0x2
 {
-	local tmp = (Rd0811 >> const1620Z) & 1;
-	local tmp2 = (Rd1215 >> const2327Z) & 1;
-	Rd2831 = ~(tmp | tmp2);
+	local tmp = Rd0811 >> const1620Z;
+	local tmp2 = Rd1215 >> const2327Z;
+	Rd2831 = ~(tmp | tmp2) & 1;
 }
 
 @if defined(TRICORE_RIDER_B) || defined(TRICORE_RIDER_D) || defined(TRICORE_V2)

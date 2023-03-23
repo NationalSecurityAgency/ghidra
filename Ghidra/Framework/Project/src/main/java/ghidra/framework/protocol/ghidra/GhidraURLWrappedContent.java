@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +15,13 @@
  */
 package ghidra.framework.protocol.ghidra;
 
-import ghidra.framework.model.*;
-import ghidra.util.InvalidNameException;
-import ghidra.util.exception.NotFoundException;
-
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import ghidra.framework.model.*;
+import ghidra.util.InvalidNameException;
 
 /**
  * <code>GhidraURLWrappedContent</code> provides controlled access to a Ghidra folder/file
@@ -81,9 +80,11 @@ public class GhidraURLWrappedContent {
 		throw new RuntimeException("consumer not found");
 	}
 
+	/**
+	 * Close associated {@link ProjectData} when all consumers have released wrapped object.
+	 */
 	private void closeProjectData() {
-		// Local project data can only be closed once and is not handled here
-		if (projectData instanceof TransientProjectData) {
+		if (projectData != null) {
 			projectData.close();
 		}
 		projectData = null;
@@ -103,7 +104,7 @@ public class GhidraURLWrappedContent {
 		return folder;
 	}
 
-	private void resolve() throws IOException, NotFoundException {
+	private void resolve() throws IOException, FileNotFoundException {
 
 		if (projectData != null) {
 			return;
@@ -125,13 +126,13 @@ public class GhidraURLWrappedContent {
 			catch (InvalidNameException e) {
 				// TODO: URL folder path is invalid
 				closeProjectData();
-				throw new NotFoundException("URL specifies invalid path: " + folderPath);
+				throw new IOException("URL specifies invalid path: " + folderPath);
 			}
 		}
 		if (folder == null) {
 			// TODO: URL location not found
 			closeProjectData();
-			throw new NotFoundException("URL specifies unknown path: " + folderPath);
+			throw new FileNotFoundException("URL specifies unknown path: " + folderPath);
 		}
 
 		if (folderItemName == null) {
@@ -145,22 +146,29 @@ public class GhidraURLWrappedContent {
 			return;
 		}
 
+		DomainFolder subfolder = folder.getFolder(folderItemName);
+		if (subfolder != null) {
+			refObject = subfolder;
+			return;
+		}
+
 		closeProjectData();
-		throw new NotFoundException("URL specifies unknown path: " + folderPath);
+		throw new FileNotFoundException("URL specifies unknown path: " + folderPath);
 	}
 
 	/**
 	 * Get the domain folder or file associated with the Ghidra URL.
 	 * The consumer is responsible for releasing the content object via the release method 
-	 * when it is no longer in use.
+	 * when it is no longer in use (see {@link #release(Object, Object)}}).
 	 * @param consumer object which is responsible for releasing the content
 	 * @return domain file or folder
-	 * @throws IOException
-	 * @throws NotFoundException if the Ghidra URL does no correspond to a folder or file
+	 * @throws IOException if an IO error occurs
+	 * @throws FileNotFoundException if the Ghidra URL does no correspond to a folder or file
 	 * within the Ghidra repository/project.
 	 * @see #release(Object, Object)
 	 */
-	public synchronized Object getContent(Object consumer) throws IOException, NotFoundException {
+	public synchronized Object getContent(Object consumer)
+			throws IOException, FileNotFoundException {
 		addConsumer(consumer);
 		boolean success = false;
 		try {
@@ -180,8 +188,8 @@ public class GhidraURLWrappedContent {
 	 * no longer in-use and the underlying connection may be closed.  A read-only 
 	 * or immutable domain object may remain open and in-use after its associated
 	 * domain folder/file has been released. 
-	 * @param content
-	 * @param consumer
+	 * @param content object obtained via {@link #getContent(Object)}
+	 * @param consumer object consumer which was specified to {@link #getContent(Object)}
 	 */
 	public synchronized void release(Object content, Object consumer) {
 		if (content == null || content != refObject) {

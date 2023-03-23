@@ -7,7 +7,7 @@
 
     <TITLE>Debugger: Registers</TITLE>
     <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
-    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
   </HEAD>
 
   <BODY lang="EN-US">
@@ -46,9 +46,7 @@
       <LI>Value - the value of the register as recorded in the trace. When the value refers to a
       valid memory offset, right-clicking the row allows the user to navigate to that offset in a
       selected memory space. This field is user modifiable when the <B>Enable Edits</B> toggle is
-      on, and the <A href=
-      "help/topics/DebuggerStateEditingPlugin/DebuggerStateEditingPlugin.html">editing service</A>
-      reports the register as modifiable. Edits may be directed toward a live target, the trace, or
+      on, and the register is modifiable. Edits may be directed toward a live target, the trace, or
       the emulator. Values changed by the last event are displayed in <FONT color=
       "red">red</FONT>.</LI>
 
@@ -92,15 +90,21 @@
     recorder, but they can still be populated by the user. Modifying the values of unknown
     registers cannot affect the target. Register sets are memorized per compiler specification.</P>
 
+    <H3><A name="type_settings"></A>Register Type Settings</H3>
+
+    <P>This action is available on the context menu when there is a single register selected with a
+    data type assigned. It permits the adjustment of that data type's settings, e.g., to display
+    decimal vs hexadecimal. The settings are saved to the data unit for the register.</P>
+
     <H3><A name="enable_edits"></A>Enable Edits</H3>
 
     <P>This toggle is a write protector for machine state. To modify register values, this toggle
     must be enabled. Edits are directed according the to <A href=
-    "help/topics/DebuggerStateEditingPlugin/DebuggerStateEditingPlugin.html">State Editing Plugin
-    and Service</A>. <B>Note:</B> Only the raw "Value" column can be edited directly. The "Repr"
-    column cannot be edited, yet.</P>
+    "help/topics/DebuggerControlPlugin/DebuggerControlPlugin.html">Control and Machine State
+    Plugin</A>. <B>Note:</B> Only the raw "Value" column can be edited directly. The "Repr" column
+    cannot be edited, yet.</P>
 
-    <H3><A name="snapshot_window"></A>Snapshot Window</H3>
+    <H3><A name="clone_window"></A>Clone Window</H3>
 
     <P>This button is analogous to the "snapshot" action of other Ghidra windows. It generates a
     clone of this window. The clone will no longer follow the current thread, but it will follow

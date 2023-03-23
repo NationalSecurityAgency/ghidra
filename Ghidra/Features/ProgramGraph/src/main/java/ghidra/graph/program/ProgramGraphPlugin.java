@@ -105,7 +105,7 @@ public class ProgramGraphPlugin extends ProgramPlugin
 	private GraphDisplayProvider defaultGraphService;
 
 	public ProgramGraphPlugin(PluginTool tool) {
-		super(tool, true, true);
+		super(tool);
 		intializeOptions();
 		registerProgramFlowGraphDisplayOptionsWithTool();
 	}

@@ -116,7 +116,7 @@ public class FunctionCallGraphPluginScreenShots extends GhidraScreenShotGenerato
 		area.width += (2 * offset);
 		area.height += (2 * offset);
 
-		// drawRectangle(Color.ORANGE, area, 5);
+		// drawRectangle(Palette.ORANGE, area, 5);
 
 		crop(area);
 	}

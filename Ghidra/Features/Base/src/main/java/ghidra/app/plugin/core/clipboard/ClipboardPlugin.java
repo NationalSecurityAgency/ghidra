@@ -29,6 +29,7 @@ import javax.swing.event.ChangeListener;
 import docking.*;
 import docking.action.*;
 import docking.dnd.GClipboard;
+import generic.theme.GIcon;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -43,7 +44,6 @@ import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.task.*;
-import resources.ResourceManager;
 
 //@formatter:off
 @PluginInfo(
@@ -78,7 +78,7 @@ public class ClipboardPlugin extends ProgramPlugin implements ClipboardOwner, Cl
 	private boolean isClipboardOwner;
 
 	public ClipboardPlugin(PluginTool tool) {
-		super(tool, true, true);
+		super(tool);
 	}
 
 	@Override
@@ -361,7 +361,7 @@ public class ClipboardPlugin extends ProgramPlugin implements ClipboardOwner, Cl
 			this.clipboardService = clipboardService;
 
 			setPopupMenuData(new MenuData(new String[] { "Copy" }, "Clipboard"));
-			setToolBarData(new ToolBarData(ResourceManager.loadImage("images/page_white_copy.png"),
+			setToolBarData(new ToolBarData(new GIcon("icon.plugin.clipboard.copy"),
 				"Clipboard"));
 			setKeyBindingData(new KeyBindingData(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK));
 			setHelpLocation(new HelpLocation("ClipboardPlugin", "Copy"));
@@ -395,7 +395,7 @@ public class ClipboardPlugin extends ProgramPlugin implements ClipboardOwner, Cl
 
 			setPopupMenuData(new MenuData(new String[] { "Paste" }, "Clipboard"));
 			setToolBarData(
-				new ToolBarData(ResourceManager.loadImage("images/page_paste.png"), "Clipboard"));
+				new ToolBarData(new GIcon("icon.plugin.clipboard.paste"), "Clipboard"));
 			setKeyBindingData(new KeyBindingData(KeyEvent.VK_V, InputEvent.CTRL_DOWN_MASK));
 			setHelpLocation(new HelpLocation("ClipboardPlugin", "Paste"));
 		}

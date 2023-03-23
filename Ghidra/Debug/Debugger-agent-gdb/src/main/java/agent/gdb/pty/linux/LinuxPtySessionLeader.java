@@ -16,14 +16,9 @@
 package agent.gdb.pty.linux;
 
 import java.util.List;
-import java.util.concurrent.Callable;
-
-import ghidra.util.Msg;
-import jnr.posix.POSIX;
-import jnr.posix.POSIXFactory;
 
 public class LinuxPtySessionLeader {
-	private static final POSIX LIB_POSIX = POSIXFactory.getNativePOSIX();
+	private static final PosixC LIB_POSIX = PosixC.INSTANCE;
 	private static final int O_RDWR = 2; // TODO: Find this in libs
 
 	public static void main(String[] args) throws Exception {
@@ -40,56 +35,51 @@ public class LinuxPtySessionLeader {
 		subArgs = List.of(args).subList(1, args.length);
 	}
 
-	protected <T> T checkErr(Callable<T> r) throws Exception {
-		LIB_POSIX.errno(0);
-		T result = r.call();
-		int errno = LIB_POSIX.errno();
-		if (errno != 0) {
-			throw new RuntimeException("errno=" + errno + ": " + LIB_POSIX.strerror(errno));
-		}
-		return result;
-	}
-
 	protected void run() throws Exception {
 		/** This tells Linux to make this process the leader of a new session. */
-		checkErr(() -> LIB_POSIX.setsid());
+		LIB_POSIX.setsid();
 
 		/**
 		 * Open the TTY. On Linux, the first TTY opened since becoming a session leader becomes the
 		 * session's controlling TTY. Other platforms, e.g., BSD may require an explicit IOCTL.
 		 */
-		int fd = checkErr(() -> LIB_POSIX.open(ptyPath, O_RDWR, 0));
-
-		/** Copy stderr to a backup descriptor, in case something goes wrong. */
-		int bk = fd + 1;
-		checkErr(() -> LIB_POSIX.dup2(2, bk));
-
-		/**
-		 * Copy the TTY fd over all standard streams. This effectively redirects the leader's
-		 * standard streams to the TTY.
-		 */
-		checkErr(() -> LIB_POSIX.dup2(fd, 0));
-		checkErr(() -> LIB_POSIX.dup2(fd, 1));
-		checkErr(() -> LIB_POSIX.dup2(fd, 2));
-
-		/**
-		 * At this point, we are the session leader and the named TTY is the controlling PTY. Now,
-		 * exec the specified image with arguments as the session leader. Recall, this replaces the
-		 * image of this process.
-		 */
+		int bk = -1;
 		try {
-			checkErr(() -> LIB_POSIX.execv(subArgs.get(0), subArgs.toArray(new String[0])));
+			int fd = LIB_POSIX.open(ptyPath, O_RDWR, 0);
+
+			/** Copy stderr to a backup descriptor, in case something goes wrong. */
+			int bkt = fd + 1;
+			LIB_POSIX.dup2(2, bkt);
+			bk = bkt;
+
+			/**
+			 * Copy the TTY fd over all standard streams. This effectively redirects the leader's
+			 * standard streams to the TTY.
+			 */
+			LIB_POSIX.dup2(fd, 0);
+			LIB_POSIX.dup2(fd, 1);
+			LIB_POSIX.dup2(fd, 2);
+
+			/**
+			 * At this point, we are the session leader and the named TTY is the controlling PTY.
+			 * Now, exec the specified image with arguments as the session leader. Recall, this
+			 * replaces the image of this process.
+			 */
+			LIB_POSIX.execv(subArgs.get(0), subArgs.toArray(new String[0]));
 		}
 		catch (Throwable t) {
-			Msg.error(this, "Could not execv with args " + subArgs, t);
-			try {
-				checkErr(() -> LIB_POSIX.dup2(bk, 2));
+			if (bk != -1) {
+				try {
+					int bkt = bk;
+					LIB_POSIX.dup2(bkt, 2);
+				}
+				catch (Throwable t2) {
+					// Catastrophic
+					System.exit(-1);
+				}
 			}
-			catch (Throwable t2) {
-				// Catastrophic
-				System.exit(-1);
-			}
-			throw t;
+			System.err.println("Could not execute " + subArgs.get(0) + ": " + t.getMessage());
+			System.exit(127);
 		}
 	}
 }

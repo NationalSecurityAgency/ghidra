@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,27 +15,26 @@
  */
 package ghidra.app.merge.listing;
 
-import ghidra.app.merge.tool.ListingMergePanel;
-import ghidra.app.merge.util.ConflictUtility;
-import ghidra.app.merge.util.MergeUtilities;
-import ghidra.program.database.properties.UnsupportedMapDB;
-import ghidra.program.model.address.*;
-import ghidra.program.model.listing.Listing;
-import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.util.*;
-import ghidra.program.util.*;
-import ghidra.util.Msg;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.NoValueException;
-import ghidra.util.task.TaskMonitor;
-
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.*;
 
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+
+import ghidra.app.merge.tool.ListingMergePanel;
+import ghidra.app.merge.util.ConflictUtility;
+import ghidra.app.merge.util.MergeUtilities;
+import ghidra.program.database.properties.GenericSaveable;
+import ghidra.program.model.address.*;
+import ghidra.program.model.listing.Listing;
+import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.util.PropertyMap;
+import ghidra.program.model.util.PropertyMapManager;
+import ghidra.program.util.*;
+import ghidra.util.Msg;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Class for merging user defined property changes. This class can merge non-conflicting
@@ -72,9 +70,6 @@ class UserDefinedPropertyMerger extends AbstractListingMerger {
 		super(listingMergeMgr);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.merge.listing.AbstractListingMerger#init()
-	 */
 	@Override
 	public void init() {
 		super.init();
@@ -84,16 +79,12 @@ class UserDefinedPropertyMerger extends AbstractListingMerger {
 		conflictSet = new AddressSet();
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.merge.listing.ListingMerger#getConflictType()
-	 */
+	@Override
 	public String getConflictType() {
 		return "User Defined Property";
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.merge.listing.ListingMerger#autoMerge(ghidra.util.task.TaskMonitor)
-	 */
+	@Override
 	public void autoMerge(int progressMin, int progressMax, TaskMonitor monitor)
 			throws ProgramConflictException, MemoryAccessException, CancelledException {
 
@@ -111,10 +102,8 @@ class UserDefinedPropertyMerger extends AbstractListingMerger {
 		AddressSet tmpAutoSet = new AddressSet();
 		AddressSet overlapSet = new AddressSet();
 		MergeUtilities.adjustSets(latestDetailSet, myDetailSet, tmpAutoSet, overlapSet);
-		// FUTURE : Change USER_DEFINED_DIFFS to be individual addresses rather than code unit ranges.
-		AddressSet autoAllSet = limitToStartofCodeUnits(resultPgm, tmpAutoSet);
 		// mergeProperties() won't try to merge Unsupported user defined properties.
-		listingMergeMgr.mergeMy.mergeProperties(autoAllSet, monitor);
+		listingMergeMgr.mergeMy.mergeProperties(tmpAutoSet, monitor);
 
 		propNames = getPropertyNames();
 		int numProps = propNames.length;
@@ -129,11 +118,11 @@ class UserDefinedPropertyMerger extends AbstractListingMerger {
 
 		for (int i = 0; i < propNames.length; i++) {
 			propertyIndex = i;
-			PropertyMap latestMap = latestPMM.getPropertyMap(propNames[i]);
-			PropertyMap myMap = myPMM.getPropertyMap(propNames[i]);
-			PropertyMap originalMap = originalPMM.getPropertyMap(propNames[i]);
+			PropertyMap<?> latestMap = latestPMM.getPropertyMap(propNames[i]);
+			PropertyMap<?> myMap = myPMM.getPropertyMap(propNames[i]);
+			PropertyMap<?> originalMap = originalPMM.getPropertyMap(propNames[i]);
 			// Handle case where the class for a Saveable property is missing.
-			if ((latestMap instanceof UnsupportedMapDB) || (myMap instanceof UnsupportedMapDB)) {
+			if (isUnsupportedMap(latestMap) || isUnsupportedMap(myMap)) {
 				String msg =
 					"Encountered unsupported property: " + propNames[i] +
 						"\nYour Ghidra may be missing the java class for this property." +
@@ -144,31 +133,48 @@ class UserDefinedPropertyMerger extends AbstractListingMerger {
 				continue; // ignore property that isn't supported.
 			}
 			if (!samePropertyTypes(latestMap, myMap)) {
+
+				// TODO: improve handling of incompatibl map types - address level conflicts
+				// resolution may be inappropriate since you can't pick-and-choose - only one map
+				// can be retained. (see GP-2585)
+
 				String msg =
-					LATEST_TITLE + " and " + MY_TITLE + " program versions not same type for " +
-						propNames[i] + " property.";
+					LATEST_TITLE + " and " + MY_TITLE +
+						" program versions do not have the same type for '" +
+						propNames[i] + "' property.";
 				Msg.showError(this, this.listingMergePanel, "User Defined Property Merge Error",
 					msg);
 			}
+			else if (isUnsupportedMap(latestMap) || isUnsupportedMap(myMap)) {
+				String msg =
+					LATEST_TITLE + " and/or " + MY_TITLE + " program versions have unsupported " +
+						"property map '" + propNames[i] + "' which will be ignored.";
+				Msg.showError(this, this.listingMergePanel, "User Defined Property Merge Error",
+					msg);
+				continue;
+			}
+
 			AddressIterator latestIter =
 				(latestMap != null) ? latestMap.getPropertyIterator(overlapSet) : null;
 			AddressIterator myIter = (myMap != null) ? myMap.getPropertyIterator(overlapSet) : null;
 			AddressIterator originalIter =
 				(originalMap != null) ? originalMap.getPropertyIterator(overlapSet) : null;
+
 			MultiAddressIterator addrIter =
 				new MultiAddressIterator(new AddressIterator[] { latestIter, myIter, originalIter });
 			while (addrIter.hasNext()) {
 				Address addr = addrIter.next();
-				Object latestObj = getProperty(latestMap, addr);
-				Object myObj = getProperty(myMap, addr);
-				Object originalObj = getProperty(originalMap, addr);
-				boolean sameLatestMy = same(latestObj, myObj);
+				Object latestObj = latestMap != null ? latestMap.get(addr) : null;
+				Object myObj = myMap != null ? myMap.get(addr) : null;
+				Object originalObj = originalMap != null ? originalMap.get(addr) : null;
+
+				boolean sameLatestMy = Objects.equals(latestObj, myObj);
 				if (sameLatestMy) {
 					// My is already like latest, so do nothing.
 					continue;
 				}
-				boolean sameOriginalLatest = same(originalObj, latestObj);
-				boolean sameOriginalMy = same(originalObj, myObj);
+				boolean sameOriginalLatest = Objects.equals(originalObj, latestObj);
+				boolean sameOriginalMy = Objects.equals(originalObj, myObj);
 				if (sameOriginalLatest) {
 					// Only My changed so autoMerge.
 					merge(propNames[i], addr, KEEP_MY);
@@ -186,40 +192,12 @@ class UserDefinedPropertyMerger extends AbstractListingMerger {
 		updateProgress(100, "Done auto-merging User Defined Properties and determining conflicts.");
 	}
 
-	/**
-	 * Gets the property, if there is one, from the specified property map for 
-	 * the indicated address.
-	 * @param map the property map
-	 * @param address the address
-	 * @return the property at the address or null if there isn't one.
-	 */
-	private Object getProperty(PropertyMap map, Address address) {
-		if (map instanceof VoidPropertyMap) {
-			return ((VoidPropertyMap) map).getNextPropertyAddress(address);
+	private boolean isUnsupportedMap(PropertyMap<?> map) {
+		if (map == null) {
+			return false;
 		}
-		else if (map instanceof ObjectPropertyMap) {
-			return ((ObjectPropertyMap) map).getObject(address);
-		}
-		else if (map instanceof LongPropertyMap) {
-			try {
-				return new Long(((LongPropertyMap) map).getLong(address));
-			}
-			catch (NoValueException e) {
-				return null;
-			}
-		}
-		else if (map instanceof IntPropertyMap) {
-			try {
-				return new Integer(((IntPropertyMap) map).getInt(address));
-			}
-			catch (NoValueException e) {
-				return null;
-			}
-		}
-		else if (map instanceof StringPropertyMap) {
-			return ((StringPropertyMap) map).getString(address);
-		}
-		return null;
+		Class<?> valueClass = map.getValueClass();
+		return valueClass == null || GenericSaveable.class.equals(valueClass);
 	}
 
 	/**
@@ -229,11 +207,13 @@ class UserDefinedPropertyMerger extends AbstractListingMerger {
 	 * @return true if the property type held by the two maps is the same.
 	 * Otherwise, return false.
 	 */
-	private boolean samePropertyTypes(PropertyMap latestMap, PropertyMap myMap) {
-		if (latestMap != null && myMap != null) {
-			return latestMap.getClass().equals(myMap.getClass());
+	private boolean samePropertyTypes(PropertyMap<?> latestMap, PropertyMap<?> myMap) {
+		if (latestMap == null || myMap == null) {
+			return true;
 		}
-		return true;
+		Class<?> latestValueClass = latestMap.getValueClass();
+		Class<?> myValueClass = myMap.getValueClass();
+		return Objects.equals(myValueClass, latestValueClass);
 	}
 
 	/**
@@ -260,16 +240,12 @@ class UserDefinedPropertyMerger extends AbstractListingMerger {
 		return list.toArray(new String[list.size()]);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.merge.listing.ListingMerger#hasConflict(ghidra.program.model.address.Address)
-	 */
+	@Override
 	public boolean hasConflict(Address addr) {
 		return conflictSet.contains(addr);
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.merge.listing.ListingMerger#getConflictCount(ghidra.program.model.address.Address)
-	 */
+	@Override
 	public int getConflictCount(Address addr) {
 		int count = 0;
 		for (int i = 0; i < conflictSets.length; i++) {
@@ -292,22 +268,14 @@ class UserDefinedPropertyMerger extends AbstractListingMerger {
 	 */
 	private void setupConflictsPanel(ListingMergePanel listingPanel, String propertyName,
 			Address addr, ChangeListener changeListener) {
+
 		// Initialize the conflict panel.
-		PropertyMap latestPMap = latestPMM.getPropertyMap(propertyName);
-		PropertyMap myPMap = myPMM.getPropertyMap(propertyName);
-		PropertyMap originalPMap = originalPMM.getPropertyMap(propertyName);
-		Object latestObj = null;
-		Object myObj = null;
-		Object originalObj = null;
-		if (latestPMap != null) {
-			latestObj = getProperty(latestPMap, addr);
-		}
-		if (myPMap != null) {
-			myObj = getProperty(myPMap, addr);
-		}
-		if (originalPMap != null) {
-			originalObj = getProperty(originalPMap, addr);
-		}
+		PropertyMap<?> latestMap = latestPMM.getPropertyMap(propertyName);
+		PropertyMap<?> myMap = myPMM.getPropertyMap(propertyName);
+		PropertyMap<?> originalMap = originalPMM.getPropertyMap(propertyName);
+		Object latestObj = latestMap != null ? latestMap.get(addr) : null;
+		Object myObj = myMap != null ? myMap.get(addr) : null;
+		Object originalObj = originalMap != null ? originalMap.get(addr) : null;
 
 		// Get an empty conflict panel.
 		if (conflictPanel != null) {
@@ -380,10 +348,7 @@ class UserDefinedPropertyMerger extends AbstractListingMerger {
 //		}
 //	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.merge.listing.ListingMerger#mergeConflicts(ghidra.app.merge.tool.ListingMergePanel, 
-	 * ghidra.program.model.address.Address, int, ghidra.util.task.TaskMonitor)
-	 */
+	@Override
 	public void mergeConflicts(ListingMergePanel listingPanel, Address addr,
 			int mergeConflictOption, TaskMonitor monitor) throws CancelledException,
 			MemoryAccessException {
@@ -499,16 +464,11 @@ class UserDefinedPropertyMerger extends AbstractListingMerger {
 		return "Delete as in '" + version + "' version";
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.merge.listing.ListingMerger#getConflicts()
-	 */
+	@Override
 	public AddressSetView getConflicts() {
 		return conflictSet;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.app.merge.listing.ListingMerger#apply()
-	 */
 	@Override
 	public boolean apply() {
 		numConflictsResolved = 0;

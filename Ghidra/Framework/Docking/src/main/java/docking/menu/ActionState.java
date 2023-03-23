@@ -15,15 +15,17 @@
  */
 package docking.menu;
 
+import java.util.Objects;
+
 import javax.swing.Icon;
 
 import ghidra.util.HelpLocation;
-import ghidra.util.SystemUtilities;
 
 /**
- * Note: this class overrides the <code>equals(Object)</code> and relies upon the <code>equals</code>
- * method of the <code>userData</code> object.  Thus, if it is important that equals work for you in 
- * the non-standard identity way, then you must override <code>equals</code> in your user data objects.
+ * Note: this class overrides the <code>equals(Object)</code> and relies upon the
+ * <code>equals</code> method of the <code>userData</code> object. Thus, if it is important that
+ * equals work for you in the non-standard identity way, then you must override <code>equals</code>
+ * in your user data objects.
  * 
  * @param <T> the type of the action state
  */
@@ -73,7 +75,7 @@ public class ActionState<T> {
 
 		ActionState<?> otherState = (ActionState<?>) other;
 
-		if (!SystemUtilities.isEqual(userData, otherState.userData)) {
+		if (!Objects.equals(userData, otherState.userData)) {
 			return false;
 		}
 

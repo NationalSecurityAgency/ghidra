@@ -6,9 +6,14 @@ crtExitProcess
 ExitProcess
 ExitThread
 exit
+ExRaiseAccessViolation
+ExRaiseDatatypeMisalignment
+ExRaiseStatus
 FreeLibraryAndExitThread
 invalid_parameter_noinfo_noreturn
 invoke_watson
+KeBugCheck
+KeBugCheckEx
 longjmp
 quick_exit
 RpcRaiseException

@@ -20,6 +20,8 @@ package ghidra.app.util.bin.format.elf;
  */
 public interface ElfConstants {
 
+	public static final String GOT_SYMBOL_NAME = "_GLOBAL_OFFSET_TABLE_";
+
 	// ELF Identification Area Indexes
 
 	/**Length of the File ID*/
@@ -517,5 +519,10 @@ public interface ElfConstants {
 	 * within section[0] sh_info field.
 	 */
 	public static final short PN_XNUM = (short) 0xffff;
+
+	/**
+	 * 32bit "-1", used in 32bit files to signal an invalid offset
+	 */
+	public static final long ELF32_INVALID_OFFSET = 0xFFFFFFFFL;
 
 }

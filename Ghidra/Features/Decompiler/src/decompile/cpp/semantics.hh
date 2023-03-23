@@ -30,9 +30,9 @@ class Translate;		// Forward declaration
 class HandleTpl;		// Forward declaration
 class ConstTpl {
 public:
-  enum const_type { real=0, handle=1, j_start=2, j_next=3, j_curspace=4, 
-		    j_curspace_size=5, spaceid=6, j_relative=7,
-		    j_flowref=8, j_flowref_size=9, j_flowdest=10, j_flowdest_size=11 };
+  enum const_type { real=0, handle=1, j_start=2, j_next=3, j_next2=4, j_curspace=5, 
+		    j_curspace_size=6, spaceid=7, j_relative=8,
+		    j_flowref=9, j_flowref_size=10, j_flowdest=11, j_flowdest_size=12 };
   enum v_field { v_space=0, v_offset=1, v_size=2, v_offset_plus=3 };
 private:
   const_type type;

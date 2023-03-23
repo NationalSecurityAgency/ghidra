@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +15,19 @@
  */
 package ghidra.feature.vt.gui.actions;
 
-import ghidra.feature.vt.api.main.VTMatch;
-import ghidra.feature.vt.gui.plugin.VTController;
-import ghidra.feature.vt.gui.plugin.VTPlugin;
-import ghidra.feature.vt.gui.provider.matchtable.VTMatchContext;
-import ghidra.feature.vt.gui.task.ApplyMatchTask;
-import ghidra.util.HelpLocation;
-
 import java.util.List;
 
 import javax.swing.Icon;
 
-import resources.ResourceManager;
 import docking.ActionContext;
 import docking.action.*;
+import ghidra.feature.vt.api.main.VTMatch;
+import ghidra.feature.vt.gui.plugin.VTController;
+import ghidra.feature.vt.gui.plugin.VTPlugin;
+import ghidra.feature.vt.gui.provider.markuptable.MarkupStatusIcons;
+import ghidra.feature.vt.gui.provider.matchtable.VTMatchContext;
+import ghidra.feature.vt.gui.task.ApplyMatchTask;
+import ghidra.util.HelpLocation;
 
 public class ApplyMatchAction extends DockingAction {
 
@@ -42,7 +40,7 @@ public class ApplyMatchAction extends DockingAction {
 		super(NAME, VTPlugin.OWNER);
 		this.controller = controller;
 
-		Icon icon = ResourceManager.loadImage("images/checkmark_green.gif");
+		Icon icon = MarkupStatusIcons.APPLIED_ICON;
 		setToolBarData(new ToolBarData(icon, MENU_GROUP));
 		setPopupMenuData(new MenuData(new String[] { NAME }, icon, MENU_GROUP));
 		setEnabled(false);

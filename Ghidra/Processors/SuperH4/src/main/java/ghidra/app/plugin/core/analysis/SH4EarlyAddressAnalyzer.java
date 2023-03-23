@@ -54,6 +54,10 @@ public class SH4EarlyAddressAnalyzer extends SH4AddressAnalyzer {
 				// if this is a call, some processors use the register value
 				// used in the call for PIC calculations
 				if (refType.isFlow()) {
+					if (address.isExternalAddress()) {
+						return true;
+					}
+					
 					// set the called function to have a constant value for this register
 					// WARNING: This might not always be the case, if called directly or with a different register
 					//          But then it won't matter, because the function won't depend on the registers value.

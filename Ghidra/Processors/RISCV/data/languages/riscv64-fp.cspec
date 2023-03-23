@@ -9,7 +9,7 @@
 	<pointer_size value="8" />
 	<short_size value="2" />
 	<integer_size value="4" />
-	<long_size value="4" />
+	<long_size value="8" />
 	<long_long_size value="8" />
 	<float_size value="4" />
 	<double_size value="8" />
@@ -17,10 +17,9 @@
 		<entry size="1" alignment="1" />
 		<entry size="2" alignment="2" />
 		<entry size="4" alignment="4" />
-		<entry size="8" alignment="4" />
+		<entry size="8" alignment="8" />
 	</size_alignment_map>
   </data_organization>
-  <spacebase name="gp" register="gp" space="ram"/>
   <global>
     <range space="ram"/>
     <register name="gp"/>

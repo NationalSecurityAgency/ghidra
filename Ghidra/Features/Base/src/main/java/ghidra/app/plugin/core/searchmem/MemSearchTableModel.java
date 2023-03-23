@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.searchmem;
 
+import docking.widgets.table.*;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
@@ -23,6 +24,7 @@ import ghidra.util.datastruct.Accumulator;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.search.memory.*;
 import ghidra.util.table.AddressBasedTableModel;
+import ghidra.util.table.field.AddressTableColumn;
 import ghidra.util.task.TaskMonitor;
 
 public class MemSearchTableModel extends AddressBasedTableModel<MemSearchResult> {
@@ -42,6 +44,22 @@ public class MemSearchTableModel extends AddressBasedTableModel<MemSearchResult>
 		this.selection = programSelection;
 
 		this.selectionSize = selectionSize;
+	}
+
+	public boolean isSortedOnAddress() {
+		TableSortState sortState = getTableSortState();
+		if (sortState.isUnsorted()) {
+			return false;
+		}
+
+		ColumnSortState primaryState = sortState.getAllSortStates().get(0);
+		DynamicTableColumn<MemSearchResult, ?, ?> column =
+			getColumn(primaryState.getColumnModelIndex());
+		String name = column.getColumnName();
+		if (AddressTableColumn.NAME.equals(name)) {
+			return true;
+		}
+		return false;
 	}
 
 	@Override

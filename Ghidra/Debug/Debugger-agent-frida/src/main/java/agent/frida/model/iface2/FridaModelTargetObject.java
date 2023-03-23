@@ -22,11 +22,9 @@ import java.util.concurrent.CompletableFuture;
 import agent.frida.manager.impl.FridaManagerImpl;
 import agent.frida.model.AbstractFridaModel;
 import ghidra.async.AsyncUtils;
-import ghidra.dbg.DebuggerModelListener;
 import ghidra.dbg.agent.SpiTargetObject;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.util.CollectionUtils.Delta;
-import ghidra.util.datastruct.ListenerSet;
 
 public interface FridaModelTargetObject extends SpiTargetObject {
 
@@ -58,8 +56,6 @@ public interface FridaModelTargetObject extends SpiTargetObject {
 	}
 
 	public CompletableFuture<List<TargetObject>> requestNativeElements();
-
-	public ListenerSet<DebuggerModelListener> getListeners();
 
 	public FridaModelTargetSession getParentSession();
 

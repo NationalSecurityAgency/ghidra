@@ -34,10 +34,10 @@ public class VtShapeTypeApplier extends MsTypeApplier {
 
 	/**
 	 * Constructor for vtshape type applier.
-	 * @param applicator {@link PdbApplicator} for which this class is working.
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
 	 * @param msType {@link VtShapeMsType} to process.
 	 */
-	public VtShapeTypeApplier(PdbApplicator applicator, VtShapeMsType msType) {
+	public VtShapeTypeApplier(DefaultPdbApplicator applicator, VtShapeMsType msType) {
 		super(applicator, msType);
 	}
 

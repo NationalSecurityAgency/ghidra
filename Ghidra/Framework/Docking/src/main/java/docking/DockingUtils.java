@@ -37,7 +37,8 @@ import docking.widgets.list.GList;
 import docking.widgets.list.GListCellRenderer;
 import docking.widgets.table.GTableCellRenderer;
 import docking.widgets.tree.support.GTreeRenderer;
-import ghidra.docking.util.DockingWindowsLookAndFeelUtils;
+import generic.theme.GThemeDefaults.Colors.Palette;
+import ghidra.docking.util.LookAndFeelUtils;
 import ghidra.util.HTMLUtilities;
 import resources.ResourceManager;
 
@@ -57,11 +58,11 @@ import resources.ResourceManager;
  * When using a UI component that is HTML enabled, care must be used when constructing the text
  * that is being rendered.
  * <p>
- * During string-building or concatenation, appending a non-literal string value (ie. 
- * {@code "Hello " + getFoo();} ), the non-literal string value should be escaped using 
+ * During string-building or concatenation, appending a non-literal string value (ie.
+ * {@code "Hello " + getFoo();} ), the non-literal string value should be escaped using
  * {@link HTMLUtilities#escapeHTML(String)} (ie. {@code "Hello " + HTMLUtilities.escapeHTML(getFoo());}.
  * <p>
- * Of course, there are exceptions to every rule, and if the string value can be definitely be 
+ * Of course, there are exceptions to every rule, and if the string value can be definitely be
  * traced to its source and there are no user-supplied origins, the HTML escaping can be skipped.
  * <p>
  * Note: just using a UI component that is HTML enabled does not mean that it will treat its
@@ -70,9 +71,9 @@ import resources.ResourceManager;
  * If you fail to do this, the escaped substrings will look wrong because any '&lt;' and '&gt;' chars
  * (and others) in the substring will be mangled when rendered in plain-text mode.
  * <p>
- * When working with plain text, try to avoid allowing a user supplied string being the first 
- * value of text that could be fed to a UI component.  This will prevent the possibly hostile 
- * string from having a leading HTML start tag.  
+ * When working with plain text, try to avoid allowing a user supplied string being the first
+ * value of text that could be fed to a UI component.  This will prevent the possibly hostile
+ * string from having a leading HTML start tag.
  * (ie. when displaying an error to the user about a bad file, don't put the filename
  * value at the start of the string, but instead put a quote or some other delimiter to prevent
  * html mode).
@@ -101,10 +102,10 @@ public class DockingUtils {
 
 	/**
 	 * A version the control key modifiers that is based upon the pre-Java 9 {@link InputEvent}
-	 * usage.  This mask is here for those clients that cannot be upgraded, such as those with 
+	 * usage.  This mask is here for those clients that cannot be upgraded, such as those with
 	 * dependencies on 3rd-party libraries that still use the old mask style.
-	 * 
-	 * @deprecated use instead {@link #CONTROL_KEY_MODIFIER_MASK} 
+	 *
+	 * @deprecated use instead {@link #CONTROL_KEY_MODIFIER_MASK}
 	 */
 	@Deprecated
 	public static final int CONTROL_KEY_MODIFIER_MASK_DEPRECATED =
@@ -125,7 +126,7 @@ public class DockingUtils {
 	public static JSeparator createToolbarSeparator() {
 		Dimension sepDim = new Dimension(2, ICON_SIZE + 2);
 		JSeparator separator = new JSeparator(SwingConstants.VERTICAL);
-		if (DockingWindowsLookAndFeelUtils.isUsingAquaUI(separator.getUI())) {
+		if (LookAndFeelUtils.isUsingAquaUI(separator.getUI())) {
 			separator.setUI(new BasicSeparatorUI());
 		}
 		separator.setPreferredSize(sepDim); // ugly work around to force height of separator
@@ -149,8 +150,8 @@ public class DockingUtils {
 	/**
 	 * Checks if the mouseEvent has the "control" key down.  On windows, this is actually
 	 * the <code>control</code> key.  On Mac, it is the <code>command</code> key.
-	 * 
-	 * @param mouseEvent the event to check 
+	 *
+	 * @param mouseEvent the event to check
 	 * @return true if the control key is pressed
 	 */
 	public static boolean isControlModifier(MouseEvent mouseEvent) {
@@ -162,8 +163,8 @@ public class DockingUtils {
 	/**
 	 * Checks if the mouseEvent has the "control" key down.  On windows, this is actually
 	 * the <code>control</code> key.  On Mac, it is the <code>command</code> key.
-	 * 
-	 * @param keyEvent the event to check 
+	 *
+	 * @param keyEvent the event to check
 	 * @return true if the control key is pressed
 	 */
 	public static boolean isControlModifier(KeyEvent keyEvent) {
@@ -172,10 +173,18 @@ public class DockingUtils {
 		return (modifiers & osSpecificMask) == osSpecificMask;
 	}
 
+	/**
+	 * Installs key binding support for undo/redo operations on the given text component.
+	 *
+	 * <p>Note: the edits are tracked by adding a listener to the document of the given text
+	 * component.  If that document is changed,  then undo/redo will stop working.
+	 *
+	 * @param textComponent the text component
+	 * @return the object that allows the client to track the undo/redo state
+	 */
 	public static UndoRedoKeeper installUndoRedo(JTextComponent textComponent) {
 
 		Document document = textComponent.getDocument();
-
 		final UndoRedoKeeper undoRedoKeeper = new UndoRedoKeeper();
 		document.addUndoableEditListener(e -> {
 			UndoableEdit edit = e.getEdit();
@@ -189,9 +198,11 @@ public class DockingUtils {
 				KeyStroke keyStrokeForEvent = KeyStroke.getKeyStrokeForEvent(e);
 				if (REDO_KEYSTROKE.equals(keyStrokeForEvent)) {
 					undoRedoKeeper.redo();
+					e.consume(); // consume to prevent other listeners from processing a second time
 				}
 				else if (UNDO_KEYSTROKE.equals(keyStrokeForEvent)) {
 					undoRedoKeeper.undo();
+					e.consume(); // consume to prevent other listeners from processing a second time
 				}
 			}
 		});
@@ -226,7 +237,7 @@ public class DockingUtils {
 
 	/**
 	 * Perform some operation on a component and all of its descendants, recursively
-	 * 
+	 *
 	 * This traverses the swing/awt component tree starting at the given container and descends
 	 * recursively through all containers. Any time a component of type (or subclass of type) is
 	 * found, the given callback is executed on it. If order is
@@ -234,7 +245,7 @@ public class DockingUtils {
 	 * the children of a container before executing the callback on the container itself; if
 	 * {@link TreeTraversalOrder#PARENT_FIRST}, then the traversal will execute the callback on the
 	 * container before descending.
-	 * 
+	 *
 	 * The callback must return one of three result values. In normal circumstances, it should
 	 * return {@link TreeTraversalResult#CONTINUE}, allowing traversal to continue to the next
 	 * element. If the callback wishes to terminate traversal "successfully," e.g., because it
@@ -242,14 +253,14 @@ public class DockingUtils {
 	 * {@link TreeTraversalResult#FINISH}. If an error occurs during traversal, then it should
 	 * either return {@link TreeTraversalResult#TERMINATE} or throw an appropriate exception to
 	 * terminate traversal "unsuccessfully."
-	 * 
+	 *
 	 * This method will also return a value of {@link TreeTraversalResult} indicating how traversal
 	 * terminated. If {@link TreeTraversalResult#CONTINUE}, then every element in the subtree was
 	 * visited, and traversal was successful. If {@link TreeTraversalResult#FINISH}, then some
 	 * elements may have been omitted, but traversal was still successful. If
 	 * {@link TreeTraversalResult#TERMINATE}, then some elements may have been omitted, and
 	 * traversal was not successful.
-	 * 
+	 *
 	 * @param start the "root" container of the subtree on which to operate
 	 * @param type the type of components on which to operate
 	 * @param order whether to operation on children or parents first
@@ -288,9 +299,9 @@ public class DockingUtils {
 
 	/**
 	 * Perform some operation on a component and all of its descendents, recursively.
-	 * 
+	 *
 	 * This applies the operation to all components in the tree, children first.
-	 * 
+	 *
 	 * @param start the "root" container of the subtree on which to operate
 	 * @param cb the callback to perform the actual operation
 	 * @return a result indicating whether or not traversal completed successfully
@@ -306,18 +317,18 @@ public class DockingUtils {
 	 * to be painted.
 	 * <p>
 	 * <u>Notes</u>
-	 * Historically, to make a component transparent you would call 
+	 * Historically, to make a component transparent you would call
 	 * {@link JComponent#setOpaque(boolean)} with a <code>false</code> value.  However, it turns out
 	 * that the definition and the implementation of this method are at odds.  <code>setOpaque(false)</code>
 	 * is meant to signal that some part of the component is transparent, so the parent component
 	 * needs to be painted.  Most LaFs implemented this by not painting the background of the
-	 * component, but used the parent's color instead.  The Nimbus LaF actually honors the 
-	 * contract of <code>setOpaque()</code>, which has the effect of painting the components 
+	 * component, but used the parent's color instead.  The Nimbus LaF actually honors the
+	 * contract of <code>setOpaque()</code>, which has the effect of painting the components
 	 * background by default.
 	 * <p>
-	 * This method allows components to achieve transparency when they used to 
+	 * This method allows components to achieve transparency when they used to
 	 * rely on <code>setOpaque(false)</code>.
-	 * 
+	 *
 	 * @param c the component to be made transparent
 	 */
 	public static void setTransparent(JComponent c) {
@@ -339,7 +350,7 @@ public class DockingUtils {
 			c.setBorder(BorderFactory.createEmptyBorder());
 		}
 
-		c.setBackground(new Color(0, 0, 0, 0));
+		c.setBackground(Palette.NO_COLOR);
 	}
 
 	/** Hides any open tooltip window */

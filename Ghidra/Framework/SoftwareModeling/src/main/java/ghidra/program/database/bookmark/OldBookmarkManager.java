@@ -22,6 +22,7 @@ import ghidra.program.model.listing.BookmarkType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.util.*;
 import ghidra.util.exception.DuplicateNameException;
+import ghidra.util.map.TypeMismatchException;
 
 import java.util.*;
 
@@ -164,7 +165,7 @@ class OldBookmarkManager {
 		OldBookmark bookmark = null;
 		ObjectPropertyMap map = getMap(type, false);
 		if (map != null) {
-			bookmark = (OldBookmark) map.getObject(addr);
+			bookmark = (OldBookmark) map.get(addr);
 			if (bookmark != null) {
 				bookmark.setContext(program, type);
 			}

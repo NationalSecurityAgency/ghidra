@@ -22,8 +22,9 @@ import java.io.File;
 
 import javax.swing.*;
 
-import docking.DialogComponentProvider;
+import docking.ReusableDialogComponentProvider;
 import docking.widgets.filechooser.GhidraFileChooser;
+import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.label.GDLabel;
 import ghidra.framework.GenericRunInfo;
 import ghidra.framework.model.ProjectLocator;
@@ -35,7 +36,7 @@ import ghidra.util.filechooser.ExtensionFileFilter;
  * Dialog to prompt the user for the archive file to restore 
  * and where to restore it to.
  */
-public class RestoreDialog extends DialogComponentProvider {
+public class RestoreDialog extends ReusableDialogComponentProvider {
 	/**
 	 * Preference name for directory last selected to choose a jar file
 	 * to restore.
@@ -54,14 +55,12 @@ public class RestoreDialog extends DialogComponentProvider {
 	private JButton restoreBrowse;
 	private JLabel projectNameLabel;
 	private JTextField projectNameField;
-	private GhidraFileChooser jarFileChooser;
-	private GhidraFileChooser dirChooser;
 
 	private String archivePathName;
 	private ProjectLocator restoreURL;
 
 	public RestoreDialog(ArchivePlugin plugin) {
-		super("Restore Project Archive", true);
+		super("Restore Project Archive");
 		this.plugin = plugin;
 		initialize();
 
@@ -114,7 +113,7 @@ public class RestoreDialog extends DialogComponentProvider {
 			}
 		});
 		Font font = archiveBrowse.getFont();
-		archiveBrowse.setFont(new Font(font.getName(), Font.BOLD, font.getSize()));
+		archiveBrowse.setFont(font.deriveFont(Font.BOLD));
 
 		restoreLabel = new GDLabel(" Restore Directory ");
 		restoreField = new JTextField();
@@ -131,7 +130,7 @@ public class RestoreDialog extends DialogComponentProvider {
 			}
 		});
 		font = restoreBrowse.getFont();
-		restoreBrowse.setFont(new Font(font.getName(), Font.BOLD, font.getSize()));
+		restoreBrowse.setFont(font.deriveFont(Font.BOLD));
 
 		projectNameLabel = new GDLabel(" Project Name ");
 		projectNameField = new JTextField();
@@ -374,10 +373,9 @@ public class RestoreDialog extends DialogComponentProvider {
 		GhidraFileChooser fileChooser = new GhidraFileChooser(null);
 		// start the browsing in the user's preferred project directory
 		File projectDirectory = new File(GenericRunInfo.getProjectsDirPath());
-		fileChooser.setFileSelectionMode(GhidraFileChooser.DIRECTORIES_ONLY);
+		fileChooser.setFileSelectionMode(GhidraFileChooserMode.DIRECTORIES_ONLY);
 		fileChooser.setCurrentDirectory(projectDirectory);
 		fileChooser.setSelectedFile(projectDirectory);
-
 		return fileChooser;
 	}
 
@@ -386,19 +384,19 @@ public class RestoreDialog extends DialogComponentProvider {
 	 * filename that are used for the Project location and name
 	 * @param approveButtonText The label for the "Open" button on the file chooser
 	 * @param approveToolTip The tool tip for the "Open" button on the file chooser
-	 * @return the archive filepath.
+	 * @return the archive file path.
 	 */
 	String chooseArchiveFile(String approveButtonText, String approveToolTip) {
-		if (jarFileChooser == null) {
-			jarFileChooser = createFileChooser(ArchivePlugin.ARCHIVE_EXTENSION, "Ghidra Archives",
+
+		GhidraFileChooser jarFileChooser =
+			createFileChooser(ArchivePlugin.ARCHIVE_EXTENSION, "Ghidra Archives",
 				archivePathName);
-			jarFileChooser.setTitle("Restore a Ghidra Project - Archive");
-			String lastDirSelected = Preferences.getProperty(ArchivePlugin.LAST_ARCHIVE_DIR);
-			if (lastDirSelected != null) {
-				File file = new File(lastDirSelected);
-				if (file.exists()) {
-					jarFileChooser.setCurrentDirectory(file);
-				}
+		jarFileChooser.setTitle("Restore a Ghidra Project - Archive");
+		String lastDirSelected = Preferences.getProperty(ArchivePlugin.LAST_ARCHIVE_DIR);
+		if (lastDirSelected != null) {
+			File file = new File(lastDirSelected);
+			if (file.exists()) {
+				jarFileChooser.setCurrentDirectory(file);
 			}
 		}
 		File jarFile = null;
@@ -419,7 +417,7 @@ public class RestoreDialog extends DialogComponentProvider {
 
 			File file = selectedFile;
 			String chosenName = file.getName();
-			if (!NamingUtilities.isValidName(chosenName)) {
+			if (!NamingUtilities.isValidProjectName(chosenName)) {
 				Msg.showError(getClass(), null, "Invalid Archive Name",
 					chosenName + " is not a valid archive name");
 				continue;
@@ -428,6 +426,9 @@ public class RestoreDialog extends DialogComponentProvider {
 			Preferences.setProperty(ArchivePlugin.LAST_ARCHIVE_DIR, file.getParent());
 			pathname = file.getAbsolutePath();
 		}
+
+		jarFileChooser.dispose();
+
 		return pathname;
 	}
 
@@ -436,13 +437,11 @@ public class RestoreDialog extends DialogComponentProvider {
 	 * project archive will be restored.
 	 * @param approveButtonText The label for the "Open" button on the file chooser
 	 * @param approveToolTip The tool tip for the "Open" button on the file chooser
-	 * @return the restore directory filepath.
+	 * @return the restore directory file path.
 	 */
 	String chooseDirectory(String approveButtonText, String approveToolTip) {
-		if (dirChooser == null) {
-			dirChooser = createDirectoryChooser();
-			dirChooser.setTitle("Restore a Ghidra Project - Directory");
-		}
+		GhidraFileChooser dirChooser = createDirectoryChooser();
+		dirChooser.setTitle("Restore a Ghidra Project - Directory");
 		if (restoreURL != null) {
 			dirChooser.setSelectedFile(new File(restoreURL.getLocation()));
 		}
@@ -450,6 +449,7 @@ public class RestoreDialog extends DialogComponentProvider {
 		dirChooser.setApproveButtonToolTipText(approveToolTip);
 
 		File selectedFile = dirChooser.getSelectedFile(true);
+		dirChooser.dispose();
 		if (selectedFile != null) {
 			return selectedFile.getAbsolutePath();
 		}

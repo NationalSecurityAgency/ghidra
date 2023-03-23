@@ -22,10 +22,8 @@ import java.util.List;
 import org.jdom.Element;
 
 import generic.stl.*;
-import ghidra.pcodeCPort.context.ParserWalker;
 import ghidra.pcodeCPort.error.LowlevelError;
 import ghidra.pcodeCPort.slghpattern.DisjointPattern;
-import ghidra.pcodeCPort.translate.BadDataError;
 import ghidra.pcodeCPort.utils.XmlUtils;
 
 public class DecisionNode {
@@ -354,27 +352,6 @@ public class DecisionNode {
 				props.conflictingPattern(pat1, const1, pat2, const2);
 			}
 		}
-	}
-
-	Constructor resolve(ParserWalker pos) {
-		if (bitsize == 0) { // The node is terminal
-			IteratorSTL<Pair<DisjointPattern, Constructor>> iter;
-			for (iter = list.begin(); !iter.isEnd(); iter.increment()) {
-				if (iter.get().first.isMatch(pos)) {
-					return iter.get().second;
-				}
-			}
-			throw new BadDataError(pos.getAddr().getShortcut() + pos.getAddr().toString() +
-				": Unable to resolve constructor");
-		}
-		int val;
-		if (contextdecision) {
-			val = pos.getContextBits(startbit, bitsize);
-		}
-		else {
-			val = pos.getInstructionBits(startbit, bitsize);
-		}
-		return children.get(val).resolve(pos);
 	}
 
 	void saveXml(PrintStream s) {

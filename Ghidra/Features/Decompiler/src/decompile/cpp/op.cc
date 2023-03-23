@@ -16,6 +16,9 @@
 #include "op.hh"
 #include "funcdata.hh"
 
+ElementId ELEM_IOP = ElementId("iop",113);
+ElementId ELEM_UNIMPL = ElementId("unimpl",114);
+
 const string IopSpace::NAME = "iop";
 
 /// Constructor for the \b iop space.
@@ -56,13 +59,13 @@ void IopSpace::printRaw(ostream &s,uintb offset) const
 void IopSpace::saveXml(ostream &s) const
 
 {
-  throw LowlevelError("Should never save iop space to XML");
+  throw LowlevelError("Should never encode iop space to stream");
 }
 
-void IopSpace::restoreXml(const Element *el)
+void IopSpace::decode(Decoder &decoder)
 
 {
-  throw LowlevelError("Should never restore iop space from XML");
+  throw LowlevelError("Should never decode iop space from stream");
 }
 
 /// Construct a completely unattached PcodeOp.  Space is reserved for input and output Varnodes
@@ -116,7 +119,6 @@ int4 PcodeOp::getRepeatSlot(const Varnode *vn,int4 firstSlot,list<PcodeOp *>::co
 bool PcodeOp::isCollapsible(void) const
 
 {
-  if (code() == CPUI_COPY) return false;
   if ((flags & PcodeOp::nocollapse)!=0) return false;
   if (!isAssignment()) return false;
   if (inrefs.size()==0) return false;
@@ -385,50 +387,62 @@ void PcodeOp::printDebug(ostream &s) const
     printRaw(s);
 }
 
-/// Write a description including: the opcode name, the sequence number, and separate xml tags
+/// Encode a description including: the opcode name, the sequence number, and separate elements
 /// providing a reference number for each input and output Varnode
-/// \param s is the stream to write to
-void PcodeOp::saveXml(ostream &s) const
+/// \param encoder is the stream encoder
+void PcodeOp::encode(Encoder &encoder) const
 
 {
-  s << "<op";
-  a_v_i(s,"code",(int4)code());
-  s << ">\n";
-  start.saveXml(s);
-  s << '\n';
-  if (output==(Varnode *)0)
-    s << "<void/>\n";
-  else
-    s << "<addr ref=\"0x" << hex << output->getCreateIndex() << "\"/>\n";
+  encoder.openElement(ELEM_OP);
+  encoder.writeSignedInteger(ATTRIB_CODE, (int4)code());
+  start.encode(encoder);
+  if (output==(Varnode *)0) {
+    encoder.openElement(ELEM_VOID);
+    encoder.closeElement(ELEM_VOID);
+  }
+  else {
+    encoder.openElement(ELEM_ADDR);
+    encoder.writeUnsignedInteger(ATTRIB_REF, output->getCreateIndex());
+    encoder.closeElement(ELEM_ADDR);
+  }
   for(int4 i=0;i<inrefs.size();++i) {
     const Varnode *vn = getIn(i);
-    if (vn == (const Varnode *)0)
-      s << "<void/>\n";
+    if (vn == (const Varnode *)0) {
+      encoder.openElement(ELEM_VOID);
+      encoder.closeElement(ELEM_VOID);
+    }
     else if (vn->getSpace()->getType()==IPTR_IOP) {
       if ((i==1)&&(code()==CPUI_INDIRECT)) {
 	PcodeOp *indop = PcodeOp::getOpFromConst(vn->getAddr());
-	s << "<iop";
-	a_v_u(s,"value",indop->getSeqNum().getTime());
-	s << "/>\n";
+	encoder.openElement(ELEM_IOP);
+	encoder.writeUnsignedInteger(ATTRIB_VALUE, indop->getSeqNum().getTime());
+	encoder.closeElement(ELEM_IOP);
       }
-      else
-	s << "<void/>\n";
+      else {
+	encoder.openElement(ELEM_VOID);
+	encoder.closeElement(ELEM_VOID);
+      }
     }
     else if (vn->getSpace()->getType()==IPTR_CONSTANT) {
       if ((i==0)&&((code()==CPUI_STORE)||(code()==CPUI_LOAD))) {
 	AddrSpace *spc = vn->getSpaceFromConst();
-	s << "<spaceid";
-	a_v(s,"name",spc->getName());
-	s << "/>\n";
+	encoder.openElement(ELEM_SPACEID);
+	encoder.writeSpace(ATTRIB_NAME, spc);
+	encoder.closeElement(ELEM_SPACEID);
       }
-      else
-	s << "<addr ref=\"0x" << hex << vn->getCreateIndex() << "\"/>\n";
+      else {
+	encoder.openElement(ELEM_ADDR);
+	encoder.writeUnsignedInteger(ATTRIB_REF, vn->getCreateIndex());
+	encoder.closeElement(ELEM_ADDR);
+      }
     }
     else {
-      s << "<addr ref=\"0x" << hex << vn->getCreateIndex() << "\"/>\n";
+      encoder.openElement(ELEM_ADDR);
+      encoder.writeUnsignedInteger(ATTRIB_REF, vn->getCreateIndex());
+      encoder.closeElement(ELEM_ADDR);
     }
   }
-  s << "</op>\n";
+  encoder.closeElement(ELEM_OP);
 }
 
 /// Assuming all the inputs to this op are constants, compute the constant result of evaluating
@@ -733,6 +747,91 @@ int4 PcodeOp::compareOrder(const PcodeOp *bop) const
   if (common == bop->parent)
     return 1;
   return 0;
+}
+
+/// \brief Determine if a Varnode is a leaf within the CONCAT tree rooted at the given Varnode
+///
+/// The CONCAT tree is the maximal set of Varnodes that are all inputs to CPUI_PIECE operations,
+/// with no other uses, and that all ultimately flow to the root Varnode.  This method tests
+/// whether a Varnode is a leaf of this tree.
+/// \param rootVn is the given root of the CONCAT tree
+/// \param vn is the Varnode to test as a leaf
+/// \param typeOffset is byte offset of the test Varnode within fully concatenated value
+/// \return \b true is the test Varnode is a leaf of the tree
+bool PieceNode::isLeaf(Varnode *rootVn,Varnode *vn,int4 typeOffset)
+
+{
+  if (vn->isMapped() && rootVn->getSymbolEntry() != vn->getSymbolEntry()) {
+    return true;
+  }
+  if (!vn->isWritten()) return true;
+  PcodeOp *def = vn->getDef();
+  if (def->code() != CPUI_PIECE) return true;
+  PcodeOp *op = vn->loneDescend();
+  if (op == (PcodeOp *)0) return true;
+  if (vn->isAddrTied()) {
+    Address addr = rootVn->getAddr() + typeOffset;
+    if (vn->getAddr() != addr) return true;
+  }
+  return false;
+}
+
+/// Find the root of the CONCAT tree of Varnodes marked either isProtoPartial() or isAddrTied().
+/// This will be the maximal Varnode that containing the given Varnode (as storage), with a
+/// backward path to it through PIECE operations. All Varnodes along the path, except the root, will be
+/// marked as isProtoPartial() or isAddrTied().
+/// \return the root of the CONCAT tree
+Varnode *PieceNode::findRoot(Varnode *vn)
+
+{
+  while(vn->isProtoPartial() || vn->isAddrTied()) {
+    list<PcodeOp *>::const_iterator iter = vn->beginDescend();
+    PcodeOp *pieceOp = (PcodeOp *)0;
+    while(iter != vn->endDescend()) {
+      PcodeOp *op = *iter;
+      ++iter;
+      if (op->code() != CPUI_PIECE) continue;
+      int4 slot = op->getSlot(vn);
+      Address addr = op->getOut()->getAddr();
+      if (addr.getSpace()->isBigEndian() == (slot == 1))
+	addr = addr + op->getIn(1-slot)->getSize();
+      addr.renormalize(vn->getSize());		// Allow for possible join address
+      if (addr == vn->getAddr()) {
+	if (pieceOp != (PcodeOp *)0) {		// If there is more than one valid PIECE
+	  if (op->compareOrder(pieceOp))	// Attach this to earliest one
+	    pieceOp = op;
+	}
+	else
+	  pieceOp = op;
+      }
+    }
+    if (pieceOp == (PcodeOp *)0)
+      break;
+    vn = pieceOp->getOut();
+  }
+  return vn;
+}
+
+/// \brief Build the CONCAT tree rooted at the given Varnode
+///
+/// Recursively walk backwards from the root through CPUI_PIECE operations, stopping if a Varnode
+/// is deemed a leaf.  Collect all Varnodes involved in the tree in a list.  For each Varnode in the tree,
+/// record whether it is leaf and also calculate its offset within the data-type attached to the root.
+/// \param stack holds the markup for each node of the tree
+/// \param rootVn is the given root of the tree
+/// \param op is the current PIECE op to explore as part of the tree
+/// \param baseOffset is the offset associated with the output of the current PIECE op
+void PieceNode::gatherPieces(vector<PieceNode> &stack,Varnode *rootVn,PcodeOp *op,int4 baseOffset)
+
+{
+  for(int4 i=0;i<2;++i) {
+    Varnode *vn = op->getIn(i);
+    int4 offset = (rootVn->getSpace()->isBigEndian() == (i==1)) ? baseOffset + op->getIn(1-i)->getSize() : baseOffset;
+    bool res = isLeaf(rootVn,vn,offset);
+    stack.emplace_back(op,i,offset,res);
+    if (!res)
+      gatherPieces(stack,rootVn,vn->getDef(),offset);
+  }
 }
 
 /// Add the PcodeOp to the list of ops with the same op-code. Currently only certain

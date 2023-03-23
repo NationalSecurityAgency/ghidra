@@ -24,8 +24,8 @@ public abstract class RefType {
 
 	//
 	// NOTE:
-	// When creating a new flow type, be sure
-	// to add code to the RefTypeFactory
+	// - When creating a new flow type, be sure to add code to the RefTypeFactory
+	// - Once a RefType value is defined it must be maintained for upgrade use
 	//
 
 	static final byte __INVALID = -2;
@@ -68,6 +68,12 @@ public abstract class RefType {
 	static final byte __WRITE_IND = 105;
 	static final byte __READ_WRITE_IND = 106;
 	static final byte __UNKNOWNPARAM = 107;
+
+	@Deprecated
+	static final byte __STACK_READ = 110; // Use __READ instead - required for upgrade use
+	@Deprecated
+	static final byte __STACK_WRITE = 111; // Use __WRITE instead - required for upgrade use
+
 	static final byte __EXTERNAL_REF = 113;
 	static final byte __UNKNOWNDATA_IND = 114;
 
@@ -251,6 +257,36 @@ public abstract class RefType {
 
 	private byte type;
 	private String name;
+
+	/**
+	 * Returns an easy to read display string for this ref type.
+	 * @return the string
+	 */
+	public String getDisplayString() {
+		if (this == RefType.THUNK) {
+			return "Thunk";
+		}
+
+		if (isRead() && isWrite()) {
+			return "RW";
+		}
+		if (isRead()) {
+			return "Read";
+		}
+		if (isWrite()) {
+			return "Write";
+		}
+		if (isData()) {
+			return "Data";
+		}
+		if (isCall()) {
+			return "Call";
+		}
+		if (isJump()) {
+			return (isConditional() ? "Branch" : "Jump");
+		}
+		return "Unknown";
+	}
 
 	protected RefType(byte type, String name) {
 		this.type = type;

@@ -15,13 +15,14 @@
  */
 package ghidra.feature.vt.gui.actions;
 
-import static ghidra.feature.vt.gui.plugin.VTPlugin.VT_MAIN_MENU_GROUP;
+import static ghidra.feature.vt.gui.plugin.VTPlugin.*;
 
 import javax.swing.Icon;
 
 import docking.ActionContext;
 import docking.action.*;
 import docking.tool.ToolConstants;
+import generic.theme.GIcon;
 import ghidra.feature.vt.api.db.VTSessionDB;
 import ghidra.feature.vt.api.main.VTSession;
 import ghidra.feature.vt.gui.plugin.VTController;
@@ -31,11 +32,10 @@ import ghidra.framework.model.DomainFile;
 import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
 import ghidra.util.task.TaskLauncher;
-import resources.ResourceManager;
 
 public class SaveVersionTrackingSessionAction extends DockingAction {
 
-	static final Icon ICON = ResourceManager.loadImage("images/disk.png");
+	static final Icon ICON = new GIcon("icon.version.tracking.action.save.session");
 
 	private final VTController controller;
 

@@ -506,8 +506,8 @@ parameters in the actual p-code operation, or an exception will be thrown during
 As with a <code>&lt;callfixup&gt;</code>, the <code>&lt;body&gt;</code> tag is fed straight to the SLEIGH semantic
 parser.  It can refer to registers via their symbolic name defined in SLEIGH, it can refer to the operator parameters
 via their <code>&lt;input&gt;</code> or <code>&lt;output&gt;</code> names, and it can also refer to
-<code>inst_start</code> and <code>inst_next</code> as addresses describing the instruction containing the
-<code>CALLOTHER</code>.
+<code>inst_start</code>, <code>inst_next</code> and <code>inst_next2</code> as addresses describing the instruction 
+containing the <code>CALLOTHER</code>.
 </para>
 <example>
 <programlisting>

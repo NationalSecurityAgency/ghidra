@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +14,6 @@
  * limitations under the License.
  */
 package ghidra.pcodeCPort.slghpattern;
-
-import ghidra.pcodeCPort.context.ParserWalker;
 
 import java.io.PrintStream;
 
@@ -36,8 +33,6 @@ public abstract class Pattern {
 	public abstract Pattern doAnd(Pattern b, int sa);
 
 	public abstract Pattern commonSubPattern(Pattern b, int sa);
-
-	public abstract boolean isMatch(ParserWalker pos); // Does this pattern match context
 
 	public abstract int numDisjoint();
 

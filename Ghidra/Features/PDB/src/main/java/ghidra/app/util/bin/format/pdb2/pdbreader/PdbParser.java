@@ -18,7 +18,7 @@ package ghidra.app.util.bin.format.pdb2.pdbreader;
 import java.io.IOException;
 import java.util.Objects;
 
-import ghidra.app.util.bin.format.pdb2.pdbreader.msf.AbstractMsf;
+import ghidra.app.util.bin.format.pdb2.pdbreader.msf.Msf;
 import ghidra.app.util.bin.format.pdb2.pdbreader.msf.MsfParser;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -43,16 +43,16 @@ public class PdbParser {
 	/**
 	 * Static method to open a PDB file, determine its version, and return an {@link AbstractPdb}
 	 *  appropriate for that version; it will not have been deserialized.  The main method
-	 *  to deserialize it is {@link AbstractPdb#deserialize(TaskMonitor monitor)}; the method
+	 *  to deserialize it is {@link AbstractPdb#deserialize()}; the method
 	 *  used to deserialize its main identifiers (signature, age, guid (if available)) is
-	 *  {@link AbstractPdb#deserializeIdentifiersOnly(TaskMonitor monitor)}.
-	 * @param filename {@link String} pathname of the PDB file to parse.
-	 * @param pdbOptions {@link PdbReaderOptions} used for processing the PDB.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation. 
-	 * @return {@link AbstractPdb} class object for the file.
-	 * @throws IOException on file I/O issues.
-	 * @throws PdbException on parsing issues. 
-	 * @throws CancelledException Upon user cancellation.
+	 *  {@link AbstractPdb#deserializeIdentifiersOnly(TaskMonitor monitor)}
+	 * @param filename {@link String} pathname of the PDB file to parse
+	 * @param pdbOptions {@link PdbReaderOptions} used for processing the PDB
+	 * @param monitor {@link TaskMonitor} used for checking cancellation
+	 * @return {@link AbstractPdb} class object for the file
+	 * @throws IOException on file I/O issues
+	 * @throws PdbException on parsing issues
+	 * @throws CancelledException upon user cancellation
 	 */
 	public static AbstractPdb parse(String filename, PdbReaderOptions pdbOptions,
 			TaskMonitor monitor) throws IOException, PdbException, CancelledException {
@@ -62,7 +62,7 @@ public class PdbParser {
 
 		// Do not do a try with resources here, as the msf must live within the PDB that is
 		//  created below.
-		AbstractMsf msf = MsfParser.parse(filename, pdbOptions, monitor);
+		Msf msf = MsfParser.parse(filename, pdbOptions, monitor);
 
 		int versionNumber = AbstractPdb.deserializeVersionNumber(msf, monitor);
 

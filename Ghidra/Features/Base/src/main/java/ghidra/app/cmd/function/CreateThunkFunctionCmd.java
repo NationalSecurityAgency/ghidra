@@ -16,7 +16,10 @@
 package ghidra.app.cmd.function;
 
 import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import ghidra.app.util.PseudoDisassembler;
@@ -26,6 +29,9 @@ import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.*;
 import ghidra.program.model.block.BasicBlockModel;
 import ghidra.program.model.block.CodeBlock;
+import ghidra.program.model.block.CodeBlockReference;
+import ghidra.program.model.block.CodeBlockReferenceIterator;
+import ghidra.program.model.block.SimpleBlockModel;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.*;
@@ -68,7 +74,9 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 	 * be created (a check will be done to look for an previously defined external location)</li>
 	 * <li>If referencedFunctionAddr corresponds to an instruction, a new function will be<br>
 	 * created at that address.</li>
-	 * </ul>
+	 * </ul> 
+	 * @param referringThunkAddresses provides a list of referring Thunk functions which lead to
+	 * the creation of the function at entry.
 	 */
 	public CreateThunkFunctionCmd(Address entry, AddressSetView body,
 			Address referencedFunctionAddr, List<Address> referringThunkAddresses) {
@@ -253,11 +261,19 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 		return null;
 	}
 
+	/**
+	 * Get the thunkee function the thunking function refers to.
+	 * 
+	 * @param autoThunkOK if true, discover the thunkee function
+	 * @param program program
+	 * @param monitor for canceling
+	 * @return referenced function
+	 */
 	private Function getReferencedFunction(boolean autoThunkOK, Program program,
 			TaskMonitor monitor) {
 
 		Listing listing = program.getListing();
-
+		
 		if (referencedSymbol != null) {
 			Object obj = referencedSymbol.getObject();
 			if (obj instanceof Function) {
@@ -287,6 +303,11 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 					// TODO: Is this the right thing to do on a canceled exception?
 					return null;
 				}
+			}
+			
+			// if still no thunkAddr, grab the first basic block and the call/jump at the end of the block
+			if (referencedFunctionAddr == null || referencedFunctionAddr == Address.NO_ADDRESS) {
+				referencedFunctionAddr = getFirstBlockJumpCall(program, monitor);
 			}
 		}
 		else if (referencedFunctionAddr != null) {
@@ -363,6 +384,36 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 		return null;
 	}
 
+	/**
+	 * Get the first blocks unconditional jump or call destination
+	 * 
+	 * @param program program
+	 * @param monitor monitor for potentially long operation
+	 * @return first blocks unconditional call/jump, null if none in first block
+	 */
+	private Address getFirstBlockJumpCall(Program program, TaskMonitor monitor) {
+		SimpleBlockModel simpleBlockModel = new SimpleBlockModel(program);
+		
+		try {
+			CodeBlock codeBlockAt = simpleBlockModel.getCodeBlockAt(entry, monitor);
+			if (codeBlockAt == null) {
+				return null;
+			}
+			CodeBlockReferenceIterator destinations = codeBlockAt.getDestinations(monitor);
+			while (destinations.hasNext()) {
+				CodeBlockReference destRef = destinations.next();
+				FlowType flowType = destRef.getFlowType();
+				if ((flowType.isCall() || flowType.isJump()) && flowType.isUnConditional()) {
+					return destRef.getDestinationAddress();
+				}
+			}
+		} catch (CancelledException e) {
+			// ignore
+		}
+		
+		return null;
+	}
+
 	private Function getExternalFunction(Program program) {
 
 		ExternalManager externalMgr = program.getExternalManager();
@@ -406,20 +457,19 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 
 		// get the basic block
 		//
-		// NOTE: Assumption, target addres must be computable in single flow, or else isn't a thunk
+		// NOTE: Assumption, target address must be computable in single flow, or else isn't a thunk
 
 		BasicBlockModel basicBlockModel = new BasicBlockModel(program);
-
 		final CodeBlock jumpBlockAt =
 			basicBlockModel.getFirstCodeBlockContaining(location, monitor);
-		// If the jump target can has a computable target with only the instructions in the basic block it is found in
-		//  then it isn't a switch statment
-		//
-		// NOTE: Assumption, we have found all flows leading to the switch that might split the basic block
+		if (jumpBlockAt == null) {
+			return false;
+		}
 
 		final AtomicInteger foundCount = new AtomicInteger(0);
 		SymbolicPropogator prop = new SymbolicPropogator(program);
 
+		// try to compute the thunk by flowing constants from the start of the block
 		prop.flowConstants(jumpBlockAt.getFirstStartAddress(), jumpBlockAt,
 			new ContextEvaluatorAdapter() {
 				@Override
@@ -494,7 +544,7 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 	/**
 	 * Get the address that this function would thunk if it is a valid thunk
 	 *
-	 * @param program
+	 * @param program the program
 	 * @param entry location to check for a thunk
 	 * @param checkForSideEffects true if there should be no extra registers affected
 	 *
@@ -562,7 +612,7 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 
 				// Storing to a location is not allowed for a thunk
 				//   as a side-effect of the thunk.
-				if (pcodeOp.getOpcode() == PcodeOp.STORE) {
+				if (checkForSideEffects && pcodeOp.getOpcode() == PcodeOp.STORE) {
 					return null;
 				}
 
@@ -620,7 +670,7 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 	 * loaded symbol failed to identify itself as a function.  This will 
 	 * only handle single symbols contained within the global namespace.
 	 * 
-	 * @param program 
+	 * @param program the program
 	 * @param entry function being created
 	 * @return newly created external function address or null
 	 */
@@ -652,14 +702,35 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 		return null;
 	}
 
+	// Check for a local branch, which is an unconditional branch that jumps at most
+	// 8 bytes ahead to allow for embedded addresses or mini thunks to another thunk.
+	//
+	// An example of a mini thunk is an Arm Thumb function that converts to ARM code
+	// to for calling another function that is Arm code.
+	//
 	private static boolean isLocalBranch(Listing listing, Instruction instr, FlowType flowType) {
-		if ((flowType.isJump() && !flowType.isConditional())) {
-			Address[] flows = instr.getFlows();
-			// allow a jump of 4 instructions forward.
-			if (flows.length == 1 && Math.abs(flows[0].subtract(instr.getMinAddress())) <= 4) {
-				return true;
-			}
+		// if not a jump instruction, or is a conditional jump, not local branch
+		if (!flowType.isJump() || flowType.isConditional()) {
+			return false;
 		}
+
+		Address[] flows = instr.getFlows();
+		if (flows.length != 1) {
+			// no branch, or more than one branch is not local
+			return false;
+		}
+
+		// if not in same address space, can't be a local branch
+		Address minAddress = instr.getMinAddress();
+		if (!minAddress.hasSameAddressSpace(flows[0])) {
+			return false;
+		}
+
+		// allow a jump of 8 bytes forward to allow for an embedded address
+		if (Math.abs(flows[0].subtract(instr.getMinAddress())) <= 8) {
+			return true;
+		}
+	
 		return false;
 	}
 
@@ -851,6 +922,9 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 
 	/**
 	 * Check if this is a Thunking function.
+	 * 
+	 * @param program the program
+	 * @param func function to check
 	 *
 	 * @return true if this is a function thunking another.
 	 */

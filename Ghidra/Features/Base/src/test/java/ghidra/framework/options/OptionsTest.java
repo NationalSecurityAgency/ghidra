@@ -30,12 +30,13 @@ import javax.swing.KeyStroke;
 import org.jdom.Element;
 import org.junit.*;
 
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGuiTest;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.util.HelpLocation;
 import ghidra.util.bean.opteditor.OptionsVetoException;
 import ghidra.util.exception.InvalidInputException;
 
-public class OptionsTest extends AbstractGenericTest {
+public class OptionsTest extends AbstractGuiTest {
 
 	public enum FRUIT {
 		Apple, Orange, Pear
@@ -137,9 +138,9 @@ public class OptionsTest extends AbstractGenericTest {
 
 	@Test
 	public void testSaveColorOption() {
-		options.setColor("Foo", Color.RED);
+		options.setColor("Foo", Palette.RED);
 		saveAndRestoreOptions();
-		assertEquals(Color.RED, options.getColor("Foo", Color.BLUE));
+		assertColorsEqual(Palette.RED, options.getColor("Foo", Palette.BLUE));
 	}
 
 	@Test
@@ -195,7 +196,7 @@ public class OptionsTest extends AbstractGenericTest {
 	@Test
 	public void testCopy() {
 		options.setInt("Foo", 3);
-		options.setColor("COLOR", Color.RED);
+		options.setColor("COLOR", Palette.RED);
 		options.getLong("LONG", 10);
 		options.registerOption("Bar", true, null, null);
 		Options optionsCopy = options.copy();
@@ -238,39 +239,45 @@ public class OptionsTest extends AbstractGenericTest {
 
 	@Test
 	public void testVeto() {
-		options.setColor("COLOR", Color.RED);
+		options.setColor("COLOR", Palette.RED);
 
 		OptionsChangeListenerForTestVeto listener1 = new OptionsChangeListenerForTestVeto();
 		OptionsChangeListenerForTestVeto listener2 = new OptionsChangeListenerForTestVeto();
 		options.addOptionsChangeListener(listener1);
 		options.addOptionsChangeListener(listener2);
 
-		options.setColor("COLOR", Color.BLUE);
+		try {
+			options.setColor("COLOR", Palette.BLUE);
+			fail("Expected an OptionsVetoExcepton");
+		}
+		catch (OptionsVetoException e) {
+			// expected
+		}
 
-		assertEquals(Color.RED, options.getColor("COLOR", Color.RED));
+		assertEquals(Palette.RED, options.getColor("COLOR", Palette.RED));
 
-		if (listener1.callOrder == 1) {
-			assertEquals(Color.RED, listener1.value);
+		if (listener1.callCount == 1) {
+			assertEquals(Palette.RED, listener1.value);
 			assertEquals(null, listener2.value);
 		}
-		if (listener2.callOrder == 1) {
-			assertEquals(Color.RED, listener2.value);
+		if (listener2.callCount == 1) {
+			assertEquals(Palette.RED, listener2.value);
 			assertEquals(null, listener1.value);
 		}
 	}
 
 	@Test
 	public void testRemove() {
-		options.setColor("COLOR", Color.RED);
+		options.setColor("COLOR", Palette.RED);
 		assertTrue(options.contains("COLOR"));
 		options.removeOption("COLOR");
-		assertTrue(!options.contains("COLOR"));
+		assertFalse(options.contains("COLOR"));
 
 	}
 
 	@Test
 	public void testGetOptionNames() {
-		options.setColor("COLOR", Color.red);
+		options.setColor("COLOR", Palette.RED);
 		options.setInt("INT", 3);
 		List<String> optionNames = options.getOptionNames();
 		assertEquals(2, optionNames.size());
@@ -282,8 +289,8 @@ public class OptionsTest extends AbstractGenericTest {
 	public void testGetDefaultValue() {
 		options.registerOption("Foo", Color.RED, null, null);
 		options.setColor("Foo", Color.BLUE);
-		assertEquals(Color.BLUE, options.getColor("Foo", null));
-		assertEquals(Color.RED, options.getDefaultValue("Foo"));
+		assertColorsEqual(Color.BLUE, options.getColor("Foo", null));
+		assertColorsEqual(Color.RED, (Color) options.getDefaultValue("Foo"));
 	}
 
 	@Test
@@ -305,10 +312,10 @@ public class OptionsTest extends AbstractGenericTest {
 
 		options.registerOption("Foo", Color.RED, null, null);
 		options.setColor("Foo", Color.BLUE);
-		assertEquals(Color.BLUE, options.getColor("Foo", null));
+		assertColorsEqual(Color.BLUE, options.getColor("Foo", null));
 
 		options.restoreDefaultValue("Foo");
-		assertEquals(Color.RED, options.getColor("Foo", null));
+		assertColorsEqual(Color.RED, options.getColor("Foo", null));
 	}
 
 	@Test
@@ -427,11 +434,11 @@ public class OptionsTest extends AbstractGenericTest {
 	@Test
 	public void testCopyOptions() {
 		options.setInt("INT", 3);
-		options.setColor("COLOR", Color.RED);
+		options.setColor("COLOR", Palette.RED);
 		ToolOptions options2 = new ToolOptions("aaa");
 		options2.copyOptions(options);
 		assertEquals(3, options.getInt("INT", 3));
-		assertEquals(Color.RED, options.getColor("COLOR", null));
+		assertColorsEqual(Palette.RED, options.getColor("COLOR", null));
 	}
 
 	@Test
@@ -573,16 +580,16 @@ public class OptionsTest extends AbstractGenericTest {
 
 	@Test
 	public void testSettingValueToNull() {
-		options.setColor("Bar", Color.red);
+		options.setColor("Bar", Palette.RED);
 		options.setColor("Bar", null);
 		assertEquals(null, options.getColor("Bar", null));
 	}
 
 	@Test
-	public void testNullValueWillUsedPassedInDefault() {
-		options.setColor("Bar", Color.red);
+	public void testNullValueWillUsePassedInDefault() {
+		options.setColor("Bar", Palette.RED);
 		options.setColor("Bar", null);
-		assertEquals(Color.BLUE, options.getColor("Bar", Color.BLUE));
+		assertColorsEqual(Palette.BLUE, options.getColor("Bar", Palette.BLUE));
 	}
 
 	@Test
@@ -600,17 +607,17 @@ public class OptionsTest extends AbstractGenericTest {
 	private static class OptionsChangeListenerForTestVeto implements OptionsChangeListener {
 		static int count = 0;
 		private Object value;
-		private int callOrder = -1;
+		private int callCount = -1;
 
 		@Override
 		public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
 				Object newValue) {
 
-			if (callOrder < 0) {
-				callOrder = ++count;
+			if (callCount < 0) {
+				callCount = ++count;
 			}
 
-			if (callOrder > 1) {
+			if (callCount > 1) {
 				throw new OptionsVetoException("Test");
 			}
 

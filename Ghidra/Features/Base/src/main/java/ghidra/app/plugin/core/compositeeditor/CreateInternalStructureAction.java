@@ -17,15 +17,12 @@ package ghidra.app.plugin.core.compositeeditor;
 
 import java.util.Arrays;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import docking.ActionContext;
+import generic.theme.GIcon;
 import ghidra.util.Swing;
-import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.UsrException;
-import ghidra.util.task.TaskLauncher;
-import ghidra.util.task.TaskMonitor;
-import resources.ResourceManager;
 
 /**
  * Action for use in the structure data type editor.
@@ -33,8 +30,7 @@ import resources.ResourceManager;
  */
 public class CreateInternalStructureAction extends CompositeEditorTableAction {
 
-	private final static ImageIcon ICON =
-		ResourceManager.loadImage("images/cstruct.png");
+	private final static Icon ICON = new GIcon("icon.plugin.composite.editor.create");
 	public final static String ACTION_NAME = "Create Structure From Selection";
 	private final static String GROUP_NAME = COMPONENT_ACTION_GROUP;
 	private final static String DESCRIPTION =
@@ -51,16 +47,20 @@ public class CreateInternalStructureAction extends CompositeEditorTableAction {
 	public void actionPerformed(ActionContext context) {
 		int[] selectedComponentRows = model.getSelectedComponentRows();
 		boolean hasComponentSelection = model.hasComponentSelection();
-		boolean contiguousComponentSelection = model.isContiguousComponentSelection();
-		if (hasComponentSelection && contiguousComponentSelection &&
-			(selectedComponentRows.length > 0)) {
+		boolean hasContiguousSelection = model.isContiguousComponentSelection();
+		if (selectedComponentRows.length == 0) {
+			return;
+		}
 
-			Arrays.sort(selectedComponentRows);
-			int numComponents = model.getNumComponents();
-			int maxRow = selectedComponentRows[selectedComponentRows.length - 1];
-			if (maxRow < numComponents) {
-				TaskLauncher.launchModal(getName(), this::doCreate);
-			}
+		if (!hasComponentSelection || !hasContiguousSelection) {
+			return;
+		}
+
+		Arrays.sort(selectedComponentRows);
+		int numComponents = model.getNumComponents();
+		int maxRow = selectedComponentRows[selectedComponentRows.length - 1];
+		if (maxRow < numComponents) {
+			createStructure();
 		}
 
 		requestTableFocus();
@@ -72,12 +72,9 @@ public class CreateInternalStructureAction extends CompositeEditorTableAction {
 		});
 	}
 
-	private void doCreate(TaskMonitor monitor) {
+	private void createStructure() {
 		try {
-			((StructureEditorModel) model).createInternalStructure(monitor);
-		}
-		catch (CancelledException e) {
-			// user cancelled
+			((StructureEditorModel) model).createInternalStructure();
 		}
 		catch (UsrException e) {
 			model.setStatus(e.getMessage(), true);

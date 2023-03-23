@@ -16,26 +16,47 @@
 #include "pcodeinject.hh"
 #include "architecture.hh"
 
-/// \brief Read in an \<input> or \<output> XML tag describing an injection parameter
+AttributeId ATTRIB_DYNAMIC = AttributeId("dynamic",70);
+AttributeId ATTRIB_INCIDENTALCOPY = AttributeId("incidentalcopy",71);
+AttributeId ATTRIB_INJECT = AttributeId("inject",72);
+AttributeId ATTRIB_PARAMSHIFT = AttributeId("paramshift",73);
+AttributeId ATTRIB_TARGETOP = AttributeId("targetop",74);
+
+ElementId ELEM_ADDR_PCODE = ElementId("addr_pcode",89);
+ElementId ELEM_BODY = ElementId("body",90);
+ElementId ELEM_CALLFIXUP = ElementId("callfixup",91);
+ElementId ELEM_CALLOTHERFIXUP = ElementId("callotherfixup",92);
+ElementId ELEM_CASE_PCODE = ElementId("case_pcode",93);
+ElementId ELEM_CONTEXT = ElementId("context",94);
+ElementId ELEM_DEFAULT_PCODE = ElementId("default_pcode",95);
+ElementId ELEM_INJECT = ElementId("inject",96);
+ElementId ELEM_INJECTDEBUG = ElementId("injectdebug",97);
+ElementId ELEM_INST = ElementId("inst",98);
+ElementId ELEM_PAYLOAD = ElementId("payload",99);
+ElementId ELEM_PCODE = ElementId("pcode",100);
+ElementId ELEM_SIZE_PCODE = ElementId("size_pcode",101);
+
+/// \brief Parse an \<input> or \<output> element describing an injection parameter
 ///
-/// \param el is the XML element
+/// \param decoder is the stream decoder
 /// \param name is used to pass back the parameter name
 /// \param size is used to pass back the parameter size
-void InjectPayload::readParameter(const Element *el,string &name,uint4 &size)
+void InjectPayload::decodeParameter(Decoder &decoder,string &name,uint4 &size)
 
 {
   name = "";
   size = 0;
-  int4 num = el->getNumAttributes();
-  for(int4 i=0;i<num;++i) {
-    if (el->getAttributeName(i) == "name")
-      name = el->getAttributeValue(i);
-    else if (el->getAttributeName(i) == "size") {
-      istringstream s(el->getAttributeValue(i));
-      s.unsetf(ios::dec | ios::hex | ios::oct);
-      s >> size;
+  uint4 elemId = decoder.openElement();
+  for(;;) {
+    uint4 attribId = decoder.getNextAttributeId();
+    if (attribId == 0) break;
+    if (attribId == ATTRIB_NAME)
+      name = decoder.readString();
+    else if (attribId == ATTRIB_SIZE) {
+      size = decoder.readUnsignedInteger();
     }
   }
+  decoder.closeElement(elemId);
   if (name.size()==0)
     throw LowlevelError("Missing inject parameter name");
 }
@@ -55,44 +76,55 @@ void InjectPayload::orderParameters(void)
   }
 }
 
-/// The base class version of this method restores from a \<pcode> tag.
-/// Derived classes may restore from a parent tag and then invoke the
-/// base class method.
-/// \param el is the XML element
-void InjectPayload::restoreXml(const Element *el)
+/// The \<pcode> element must be current and already opened.
+/// \param decoder is the stream decoder
+void InjectPayload::decodePayloadAttributes(Decoder &decoder)
 
 {
   paramshift = 0;
   dynamic = false;
-  int4 num = el->getNumAttributes();
-  for(int4 i=0;i<num;++i) {
-    const string &elname(el->getAttributeName(i));
-    if (elname == "paramshift") {
-      istringstream s(el->getAttributeValue(i));
-      s.unsetf(ios::dec | ios::hex | ios::oct);
-      s >> paramshift;
+  for(;;) {
+    uint4 attribId = decoder.getNextAttributeId();
+    if (attribId == 0) break;
+    if (attribId == ATTRIB_PARAMSHIFT) {
+      paramshift = decoder.readSignedInteger();
     }
-    else if (elname == "dynamic")
-      dynamic = xml_readbool(el->getAttributeValue(i));
-    else if (elname == "incidentalcopy")
-      incidentalCopy = xml_readbool(el->getAttributeValue(i));
+    else if (attribId == ATTRIB_DYNAMIC)
+      dynamic = decoder.readBool();
+    else if (attribId == ATTRIB_INCIDENTALCOPY)
+      incidentalCopy = decoder.readBool();
+    else if (attribId == ATTRIB_INJECT) {
+      string uponType = decoder.readString();
+      if (uponType == "uponentry")
+	name = name + "@@inject_uponentry";
+      else
+	name = name + "@@inject_uponreturn";
+    }
   }
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-  for(iter=list.begin();iter!=list.end();++iter) {
-    const Element *subel = *iter;
-    if (subel->getName() == "input") {
+}
+
+/// Elements are processed until the first child that isn't an \<input> or \<output> tag
+/// is encountered. The \<pcode> element must be current and already opened.
+/// \param decoder is the stream decoder
+void InjectPayload::decodePayloadParams(Decoder &decoder)
+
+{
+  for(;;) {
+    uint4 subId = decoder.peekElement();
+    if (subId == ELEM_INPUT) {
       string paramName;
       uint4 size;
-      readParameter(subel,paramName,size);
+      decodeParameter(decoder,paramName,size);
       inputlist.push_back(InjectParameter(paramName,size));
     }
-    else if (subel->getName() == "output") {
+    else if (subId == ELEM_OUTPUT) {
       string paramName;
       uint4 size;
-      readParameter(subel,paramName,size);
+      decodeParameter(decoder,paramName,size);
       output.push_back(InjectParameter(paramName,size));
     }
+    else
+      break;
   }
   orderParameters();
 }
@@ -305,21 +337,21 @@ string PcodeInjectLibrary::getCallMechanismName(int4 injectid) const
   return callMechTarget[injectid];
 }
 
-/// \brief Read in and register an injection payload from an XML stream
+/// \brief Parse and register an injection payload from a stream element
 ///
-/// The root XML element describing the payload is given (\<pcode>, \<callfixup>
-/// \<callotherfixup>, etc.), the InjectPayload is allocated and then
-/// initialized using the element.  Then the InjectPayload is finalized with the library.
-/// \param src is a string describing the source of the payload being restored
+/// The element is one of: \<pcode>, \<callfixup> \<callotherfixup>, etc.
+/// The InjectPayload is allocated and then initialized using the element.
+/// Then the InjectPayload is finalized with the library.
+/// \param src is a string describing the source of the payload being decoded
 /// \param nm is the name of the payload
 /// \param tp is the type of the payload (CALLFIXUP_TYPE, EXECUTABLEPCODE_TYPE, etc.)
-/// \param el is the given XML element
+/// \param decoder is the stream decoder
 /// \return the id of the newly registered payload
-int4 PcodeInjectLibrary::restoreXmlInject(const string &src,const string &nm,int4 tp,const Element *el)
+int4 PcodeInjectLibrary::decodeInject(const string &src,const string &nm,int4 tp,Decoder &decoder)
 
 {
   int4 injectid = allocateInject(src, nm, tp);
-  getPayload(injectid)->restoreXml(el);
+  getPayload(injectid)->decode(decoder);
   registerInject(injectid);
   return injectid;
 }

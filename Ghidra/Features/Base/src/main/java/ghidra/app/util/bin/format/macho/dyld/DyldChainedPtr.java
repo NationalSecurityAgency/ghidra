@@ -18,9 +18,11 @@ package ghidra.app.util.bin.format.macho.dyld;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.reloc.Relocation.Status;
+import ghidra.program.model.reloc.RelocationResult;
 
 /**
- * @see <a href="https://opensource.apple.com/source/dyld/dyld-852.2/include/mach-o/fixup-chains.h.auto.html">mach-o/fixup-chains.h</a> 
+ * @see <a href="https://github.com/apple-oss-distributions/dyld/blob/main/include/mach-o/fixup-chains.h">mach-o/fixup-chains.h</a> 
  */
 public class DyldChainedPtr {
 
@@ -112,8 +114,10 @@ public class DyldChainedPtr {
 		}
 	}
 
-	public static void setChainValue(Memory memory, Address chainLoc, DyldChainType ptrFormat,
+	public static RelocationResult setChainValue(Memory memory, Address chainLoc,
+			DyldChainType ptrFormat,
 			long value) throws MemoryAccessException {
+		int byteLength;
 		switch (ptrFormat) {
 			case DYLD_CHAINED_PTR_ARM64E:
 			case DYLD_CHAINED_PTR_ARM64E_USERLAND:
@@ -125,16 +129,20 @@ public class DyldChainedPtr {
 			case DYLD_CHAINED_PTR_ARM64E_FIRMWARE:
 			case DYLD_CHAINED_PTR_X86_64_KERNEL_CACHE:
 				memory.setLong(chainLoc, value);
+				byteLength = 8;
 				break;
 
 			case DYLD_CHAINED_PTR_32:
 			case DYLD_CHAINED_PTR_32_CACHE:
 			case DYLD_CHAINED_PTR_32_FIRMWARE:
 				memory.setInt(chainLoc, (int) (value & 0xFFFFFFFFL));
+				byteLength = 4;
 				break;
+
 			default:
-				break;
+				return RelocationResult.UNSUPPORTED;
 		}
+		return new RelocationResult(Status.APPLIED_OTHER, byteLength);
 	}
 
 	public static long getChainValue(Memory memory, Address chainLoc, DyldChainType ptrFormat)
@@ -157,6 +165,18 @@ public class DyldChainedPtr {
 				return memory.getInt(chainLoc) & 0xFFFFFFFFL;
 			default:
 				return 0;
+		}
+	}
+
+	public static boolean isRelative(DyldChainType ptrFormat) {
+		switch (ptrFormat) {
+			case DYLD_CHAINED_PTR_64_OFFSET:
+			case DYLD_CHAINED_PTR_ARM64E_KERNEL:
+			case DYLD_CHAINED_PTR_ARM64E_USERLAND:
+			case DYLD_CHAINED_PTR_ARM64E_USERLAND24:
+				return true;
+			default:
+				return false;
 		}
 	}
 

@@ -18,7 +18,6 @@ package ghidra.trace.util;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.function.BiConsumer;
 
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -27,8 +26,9 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.listing.TraceData;
-import ghidra.trace.model.memory.TraceMemoryRegisterSpace;
+import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.memory.TraceMemoryState;
 
 public enum TraceRegisterUtils {
@@ -37,6 +37,27 @@ public enum TraceRegisterUtils {
 	public static AddressRange rangeForRegister(Register register) {
 		Address address = register.getAddress();
 		return new AddressRangeImpl(address, address.add(register.getNumBytes() - 1));
+	}
+
+	public static AddressRange getOverlayRange(AddressSpace space, AddressRange range) {
+		AddressSpace physical = space.getPhysicalSpace();
+		if (physical == space || physical != range.getAddressSpace()) {
+			return range;
+		}
+		return new AddressRangeImpl(
+			space.getAddress(range.getMinAddress().getOffset()),
+			space.getAddress(range.getMaxAddress().getOffset()));
+	}
+
+	public static AddressSetView getOverlaySet(AddressSpace space, AddressSetView set) {
+		if (!space.isOverlaySpace()) {
+			return set;
+		}
+		AddressSet result = new AddressSet();
+		for (AddressRange rng : set) {
+			result.add(getOverlayRange(space, rng));
+		}
+		return result;
 	}
 
 	public static byte[] padOrTruncate(byte[] arr, int length) {
@@ -51,15 +72,15 @@ public enum TraceRegisterUtils {
 		return Arrays.copyOfRange(arr, arr.length - length, arr.length);
 	}
 
-	public static ByteBuffer bufferForValue(Register reg, RegisterValue value) {
+	public static ByteBuffer bufferForValue(Register register, RegisterValue value) {
 		byte[] bytes = value.toBytes().clone();
 		int start = bytes.length / 2;
 		// NB: I guess contextreg is always big?
-		if (!reg.isBigEndian() && !reg.isProcessorContext()) {
+		if (!register.isBigEndian() && !register.isProcessorContext()) {
 			ArrayUtils.reverse(bytes, start, bytes.length);
 		}
-		int offset = TraceRegisterUtils.computeMaskOffset(reg);
-		return ByteBuffer.wrap(bytes, start + offset, reg.getNumBytes());
+		int offset = TraceRegisterUtils.computeMaskOffset(register);
+		return ByteBuffer.wrap(bytes, start + offset, register.getNumBytes());
 	}
 
 	public static int computeMaskOffset(Register reg) {
@@ -102,28 +123,6 @@ public enum TraceRegisterUtils {
 		return seekComponent(data, rangeForRegister(reg));
 	}
 
-	public static Object getValueHackPointer(TraceData data) {
-		if (data.getValueClass() != Address.class) {
-			return data.getValue();
-		}
-		if (!data.getAddress().getAddressSpace().isRegisterSpace()) {
-			return data.getValue();
-		}
-		return PointerDataType.getAddressValue(data, data.getLength(),
-			data.getTrace().getBaseAddressFactory().getDefaultAddressSpace());
-	}
-
-	public static String getValueRepresentationHackPointer(TraceData data) {
-		if (data.getValueClass() != Address.class) {
-			return data.getDefaultValueRepresentation();
-		}
-		Address addr = (Address) getValueHackPointer(data);
-		if (addr == null) {
-			return "NaP";
-		}
-		return addr.toString();
-	}
-
 	public static RegisterValue encodeValueRepresentationHackPointer(Register register,
 			TraceData data, String representation) throws DataTypeEncodeException {
 		DataType dataType = data.getBaseDataType();
@@ -141,48 +140,57 @@ public enum TraceRegisterUtils {
 		return new RegisterValue(register, addr.getOffsetAsBigInteger());
 	}
 
-	public static RegisterValue combineWithTraceBaseRegisterValue(RegisterValue rv, long snap,
-			TraceMemoryRegisterSpace regs, boolean requireKnown) {
+	public static RegisterValue combineWithTraceParentRegisterValue(Register parent,
+			RegisterValue rv, TracePlatform platform, long snap, TraceMemorySpace regs,
+			boolean requireKnown) {
 		Register reg = rv.getRegister();
-		if (reg.isBaseRegister()) {
+		if (reg == parent) {
 			return rv;
 		}
 		if (regs == null) {
 			if (requireKnown) {
-				throw new IllegalStateException("Must fetch base register before setting a child");
+				throw new IllegalStateException("Must fetch " + parent + " before setting " + reg);
 			}
-			return rv.getBaseRegisterValue();
+			return rv.getRegisterValue(parent);
 		}
 		if (requireKnown) {
-			if (TraceMemoryState.KNOWN != regs.getState(snap, reg.getBaseRegister())) {
-				throw new IllegalStateException("Must fetch base register before setting a child");
+			if (TraceMemoryState.KNOWN != regs.getState(platform, snap, parent)) {
+				throw new IllegalStateException("Must fetch " + parent + " before setting " + reg);
 			}
 		}
-		return regs.getValue(snap, reg.getBaseRegister()).combineValues(rv);
+		return regs.getValue(platform, snap, parent).combineValues(rv);
 	}
 
-	public static RegisterValue getRegisterValue(Register reg,
-			BiConsumer<Address, ByteBuffer> readAction) {
+	public static RegisterValue combineWithTraceBaseRegisterValue(RegisterValue rv,
+			TracePlatform platform, long snap, TraceMemorySpace regs, boolean requireKnown) {
+		return combineWithTraceParentRegisterValue(rv.getRegister().getBaseRegister(), rv, platform,
+			snap, regs, requireKnown);
+	}
+
+	public static ByteBuffer prepareBuffer(Register register) {
 		/*
 		 * The byte array for reg values spans the whole base register, but we'd like to avoid
 		 * over-reading, so we'll zero in on the bytes actually included in the mask. We'll then
 		 * have to handle endianness and such. The regval instance should then apply the actual mask
 		 * for the sub-register, if applicable.
 		 */
-		int byteLength = reg.getNumBytes();
-		byte[] mask = reg.getBaseMask();
+		int byteLength = register.getNumBytes();
+		byte[] mask = register.getBaseMask();
 		ByteBuffer buf = ByteBuffer.allocate(mask.length * 2);
 		buf.put(mask);
-		int maskOffset = TraceRegisterUtils.computeMaskOffset(reg);
+		int maskOffset = TraceRegisterUtils.computeMaskOffset(register);
 		int startVal = buf.position() + maskOffset;
 		buf.position(startVal);
 		buf.limit(buf.position() + byteLength);
-		readAction.accept(reg.getAddress(), buf);
+		return buf;
+	}
+
+	public static RegisterValue finishBuffer(ByteBuffer buf, Register register) {
 		byte[] arr = buf.array();
-		if (!reg.isBigEndian() && !reg.isProcessorContext()) {
-			ArrayUtils.reverse(arr, mask.length, buf.capacity());
+		if (!register.isBigEndian() && !register.isProcessorContext()) {
+			ArrayUtils.reverse(arr, register.getBaseMask().length, buf.capacity());
 		}
-		return new RegisterValue(reg, arr);
+		return new RegisterValue(register, arr);
 	}
 
 	public static boolean isByteBound(Register register) {
@@ -192,7 +200,7 @@ public enum TraceRegisterUtils {
 	public static void requireByteBound(Register register) {
 		if (!isByteBound(register)) {
 			throw new IllegalArgumentException(
-				"Cannot work with sub-byte registers. Consider a parent, instead.");
+				"Cannot work with sub-byte registers. Consider a parent instead.");
 		}
 	}
 }

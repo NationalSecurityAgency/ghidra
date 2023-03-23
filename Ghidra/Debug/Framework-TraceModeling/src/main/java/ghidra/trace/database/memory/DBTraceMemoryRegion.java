@@ -18,14 +18,13 @@ package ghidra.trace.database.memory;
 import java.io.IOException;
 import java.util.*;
 
-import com.google.common.collect.Range;
-
 import db.DBRecord;
 import ghidra.program.model.address.*;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.AbstractDBTraceAddressSnapRangePropertyMapData;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace.TraceMemoryRegionChangeType;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.util.TraceChangeRecord;
@@ -107,7 +106,7 @@ public class DBTraceMemoryRegion
 	}
 
 	@SuppressWarnings("hiding")
-	protected void checkOverlapConflicts(Range<Long> lifespan, AddressRange range)
+	protected void checkOverlapConflicts(Lifespan lifespan, AddressRange range)
 			throws TraceOverlappedRegionException {
 		Collection<? extends DBTraceMemoryRegion> overlapConflicts =
 			space.getRegionsIntersecting(lifespan, range);
@@ -120,7 +119,7 @@ public class DBTraceMemoryRegion
 	}
 
 	@SuppressWarnings("hiding")
-	protected void checkPathConflicts(Range<Long> lifespan, String path)
+	protected void checkPathConflicts(Lifespan lifespan, String path)
 			throws DuplicateNameException {
 		Collection<TraceMemoryRegion> pathConflicts =
 			space.manager.getRegionsWithPathInLifespan(lifespan, path);
@@ -164,12 +163,12 @@ public class DBTraceMemoryRegion
 	}
 
 	@Override
-	public void setLifespan(Range<Long> newLifespan)
+	public void setLifespan(Lifespan newLifespan)
 			throws TraceOverlappedRegionException, DuplicateNameException {
 		try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
 			checkOverlapConflicts(newLifespan, range);
 			checkPathConflicts(newLifespan, path);
-			Range<Long> oldLifespan = getLifespan();
+			Lifespan oldLifespan = getLifespan();
 			doSetLifespan(newLifespan);
 			space.trace.updateViewsChangeRegionBlockLifespan(this, oldLifespan, newLifespan);
 			space.trace.setChanged(
@@ -181,26 +180,26 @@ public class DBTraceMemoryRegion
 	@Override
 	public void setCreationSnap(long creationSnap)
 			throws DuplicateNameException, TraceOverlappedRegionException {
-		setLifespan(DBTraceUtils.toRange(creationSnap, getDestructionSnap()));
+		setLifespan(Lifespan.span(creationSnap, getDestructionSnap()));
 	}
 
 	@Override
 	public long getCreationSnap() {
 		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
-			return DBTraceUtils.lowerEndpoint(lifespan);
+			return lifespan.lmin();
 		}
 	}
 
 	@Override
 	public void setDestructionSnap(long destructionSnap)
 			throws DuplicateNameException, TraceOverlappedRegionException {
-		setLifespan(DBTraceUtils.toRange(getCreationSnap(), destructionSnap));
+		setLifespan(Lifespan.span(getCreationSnap(), destructionSnap));
 	}
 
 	@Override
 	public long getDestructionSnap() {
 		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
-			return DBTraceUtils.upperEndpoint(lifespan);
+			return lifespan.lmax();
 		}
 	}
 

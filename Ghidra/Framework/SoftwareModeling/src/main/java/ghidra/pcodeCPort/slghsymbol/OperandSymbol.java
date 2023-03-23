@@ -21,7 +21,7 @@ import java.util.List;
 
 import org.jdom.Element;
 
-import ghidra.pcodeCPort.context.*;
+import ghidra.pcodeCPort.context.SleighError;
 import ghidra.pcodeCPort.semantics.VarnodeTpl;
 import ghidra.pcodeCPort.sleighbase.SleighBase;
 import ghidra.pcodeCPort.slghpatexpress.OperandValue;
@@ -169,41 +169,11 @@ public class OperandSymbol extends SpecificSymbol {
 	}
 
 	@Override
-	public void getFixedHandle(FixedHandle hnd, ParserWalker pos) {
-		hnd = pos.getFixedHandle(hand);
-	}
-
-	@Override
 	public int getSize() {
 		if (triple != null) {
 			return triple.getSize();
 		}
 		return 0;
-	}
-
-	@Override
-	public void print(PrintStream s, ParserWalker pos) {
-		pos.pushOperand(getIndex());
-		if (triple != null) {
-			if (triple.getType() == symbol_type.subtable_symbol) {
-				pos.getConstructor().print(s, pos);
-			}
-			else {
-				triple.print(s, pos);
-			}
-		}
-		else {
-			long val = defexp.getValue(pos);
-			if (val >= 0) {
-				s.append("0x");
-				s.append(Long.toHexString(val));
-			}
-			else {
-				s.append("-0x");
-				s.append(Long.toHexString(-val));
-			}
-		}
-		pos.popOperand();
 	}
 
 	@Override

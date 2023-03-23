@@ -15,11 +15,11 @@
  */
 // Reloads the language specification associated with a program at runtime.
 // @category sleigh
+import java.io.IOException;
+
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.lang.Language;
 import ghidra.util.Msg;
-
-import java.io.IOException;
 
 public class ReloadSleighLanguage extends GhidraScript {
 
@@ -37,7 +37,6 @@ public class ReloadSleighLanguage extends GhidraScript {
 				e.getMessage());
 			return;
 		}
-		currentProgram.setLanguage(language, currentProgram.getCompilerSpec().getCompilerSpecID(),
-			true, monitor);
+		currentProgram.setLanguage(language, null, true, monitor);
 	}
 }

@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGTest;
 import generic.test.TestUtils;
 import ghidra.framework.data.*;
 import ghidra.framework.model.*;
@@ -39,6 +39,7 @@ import ghidra.test.TestProgramManager;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import junit.framework.AssertionFailedError;
+import utilities.util.FileUtilities;
 
 /**
  * This class represents the idea of a shared Ghidra project.  Each project is associated with
@@ -61,21 +62,18 @@ public class FakeSharedProject {
 	public FakeSharedProject(FakeRepository repo, User user) throws IOException {
 
 		this.repo = repo;
-		String projectDirPath = AbstractGenericTest.getTestDirectoryPath();
+		String projectDirPath = AbstractGTest.getTestDirectoryPath();
 		gProject =
 			GhidraProject.createProject(projectDirPath, "TestProject_" + user.getName(), true);
 		gProject.setDeleteOnClose(true);
 
-		LocalFileSystem fs = repo.getSharedFileSystem();
-		if (fs != null) {
-			// first project will keeps its versioned file system
-			setVersionedFileSystem(fs);
-		}
+		// use local shared fake repo versioned file system
+		setVersionedFileSystem(repo.getSharedFileSystem());
 	}
 
 	FakeSharedProject(User user) throws IOException {
 
-		String projectDirPath = AbstractGenericTest.getTestDirectoryPath();
+		String projectDirPath = AbstractGTest.getTestDirectoryPath();
 		gProject =
 			GhidraProject.createProject(projectDirPath, "TestProject_" + user.getName(), true);
 	}
@@ -101,7 +99,7 @@ public class FakeSharedProject {
 	 * @return the project file manager
 	 */
 	public ProjectFileManager getProjectFileManager() {
-		return (ProjectFileManager) gProject.getProject().getProjectData();
+		return (ProjectFileManager) gProject.getProjectData();
 	}
 
 	/**
@@ -369,8 +367,11 @@ public class FakeSharedProject {
 	 * @see FakeRepository#dispose()
 	 */
 	public void dispose() {
+		ProjectLocator projectLocator = getProjectFileManager().getProjectLocator();
 		programManager.disposeOpenPrograms();
 		gProject.close();
+		FileUtilities.deleteDir(projectLocator.getProjectDir());
+		projectLocator.getMarkerFile().delete();
 	}
 
 	@Override
@@ -400,12 +401,7 @@ public class FakeSharedProject {
 			(FileSystemEventManager) TestUtils.getInstanceField("eventManager",
 				versionedFileSystem);
 
-		try {
-			eventManager.flushEvents(DEFAULT_WAIT_TIMEOUT, TimeUnit.MILLISECONDS);
-		}
-		catch (InterruptedException e) {
-			failWithException("Interrupted waiting for filesystem events", e);
-		}
+		eventManager.flushEvents(DEFAULT_WAIT_TIMEOUT, TimeUnit.MILLISECONDS);
 	}
 
 	private DomainFolder getFolder(String path) throws Exception {

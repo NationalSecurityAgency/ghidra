@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 
 import agent.gdb.manager.GdbProcessThreadGroup;
 import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.error.DebuggerIllegalArgumentException;
 import ghidra.dbg.target.TargetConfigurable;
@@ -51,7 +52,7 @@ public class GdbModelTargetAvailableContainer
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return impl.gdb.listAvailableProcesses().thenAccept(list -> {
 			List<GdbModelTargetAttachable> available;
 			synchronized (this) {

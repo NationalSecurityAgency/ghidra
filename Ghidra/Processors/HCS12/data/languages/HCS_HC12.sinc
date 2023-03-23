@@ -3,7 +3,7 @@
 define endian=big;
 define alignment=1;
 
-define space RAM      type=ram_space      size=3  default;
+define space RAM      type=ram_space      size=$(SIZE)  default;
 define space register type=register_space size=2;
 
 @define VECTOR_SWI 	"0xFFF6"
@@ -33,12 +33,16 @@ define register offset=0x31 size=1 [ CCR ];
 
 define register offset = 0x32 size=3 [physPage];
 
-
-define RAM offset=0x10 size=1 [GPAGE];
 define RAM offset=0x11 size=1 [DIRECT];
+
+@ifdef HCS12
+define RAM offset=0x30 size=1 [PPAGE];
+@endif
+@ifdef HCS12X
+define RAM offset=0x10 size=1 [GPAGE];
 define RAM offset=0x16 size=1 [RPAGE];
 define RAM offset=0x17 size=1 [EPAGE];
-define RAM offset=0x30 size=1 [PPAGE];
+@endif
 
 
 # Define context bits
@@ -217,6 +221,7 @@ attach variables [ bytes_T2lDlXlYlSl_2_0 ] [ _ _ _ TMP2L B IXL IYL SPL ];
 # Pseudo Instructions
 ################################################################
 define pcodeop segment; # Define special pcodeop that calculates the RAM address
+
 # given the segment selector and offset as input
 
 define pcodeop readIRQ;
@@ -242,6 +247,7 @@ define pcodeop MinMaxRuleEvaluationWeightedCorrect;
 
 define pcodeop backgroundDebugMode;
 
+@if defined(HCS12X)
 macro setHCSphysPage(addr) {
 	local a3:3 = zext(addr);
 	
@@ -265,31 +271,53 @@ macro setHCSphysPage(addr) {
 	                       (zext(isPpage) *       (0x400000 | ((zext(PPAGE) << 14 ) ^ 0x8000))) +
 	                       (zext(isPpage_FF) * (0x400000 | ((0x3FC000) ^ 0xC000))) ;
 }
+@elif defined(HCS12)  && SIZE=="3"
+macro setHCSphysPage(addr) {
+	local a3:3 = zext(addr);
+
+	local isPpage_3D:1 = (a3 & 0xc000) ==0x0000;
+	local isPpage_3E:1 = (a3 & 0xc000) ==0x4000;
+	local isPpage:1    = (a3 & 0xc000) ==0x8000;
+	local isPpage_3F:1 = (a3 & 0xc000) ==0xC000;
+	
+#	physPage = (zext(isPpage)    * (0x000000 | ((zext(PPAGE) << 14 ) ^ 0x8000)));
+
+	physPage = (zext(isPpage_3D) * (0x000000 | ((0xF4000) ^ 0x0000))) +
+	           (zext(isPpage_3E) * (0x000000 | ((0xF8000) ^ 0x4000))) +
+	           (zext(isPpage)    * (0x000000 | ((zext(PPAGE) << 14 ) ^ 0x8000))) +
+	           (zext(isPpage_3F) * (0x000000 | ((0xFC000) ^ 0xC000))) ;
+}
+@endif
+
+macro GetPagedAddr(addr,paddr) {
+@if SIZE=="3"
+    setHCSphysPage(addr);
+    paddr = segment(physPage, addr);
+@else
+    paddr = addr;
+@endif
+}
 
 macro Load1(value, addr) {
-	setHCSphysPage(addr);
-
-    local paddr:3 = segment(physPage, addr);
+    local paddr:$(SIZE);
+    
+    GetPagedAddr(addr,paddr); 
+ 
 	value = *:1 paddr;
 }
 macro Load2(value, addr) {
-    setHCSphysPage(addr);
+    local paddr:$(SIZE);
     
-    local paddr:3 = segment(physPage, addr);
+    GetPagedAddr(addr,paddr);
+    
 	value = *:2 paddr;
 }
 
-macro GetPagedAddr(addr,paddr) {
-    setHCSphysPage(addr);
-    
-    paddr = segment(physPage, addr);
-}
-
 macro Store(addr, value) {
-    setHCSphysPage(addr);
+    local paddr:$(SIZE);
     
-    local paddr:3 = segment(physPage, addr);
-    
+    GetPagedAddr(addr,paddr);
+  
 	*paddr = value;
 }
 
@@ -304,54 +332,63 @@ macro Store(addr, value) {
 #    since don't know the real address
 #
 
-# known EPAGE offsets
-opr16a:         imm16    is imm16e=0x8 & imm16 & imm16ev { local addr:3 = 0x100000 |  (zext(EPAGE) << 10) | imm16ev; export addr; }
-opr16a:         imm16    is imm16e=0x9 & imm16 & imm16ev { local addr:3 = 0x100000 |  (zext(EPAGE) << 10) | imm16ev; export addr; }
-opr16a:         imm16    is imm16e=0xa & imm16 & imm16ev { local addr:3 = 0x100000 |  (zext(EPAGE) << 10) | imm16ev; export addr; }
-opr16a:         imm16    is imm16e=0xb & imm16 & imm16ev { local addr:3 = 0x100000 |  (zext(EPAGE) << 10) | imm16ev; export addr; }
+macro pageCAddr(addr, shift, page, offset) {
+     addr = (page << shift) | offset;
+}
+macro pagePAddr(addr, shift, page, offset) {
+     addr = (zext(page) << shift) | offset;
+}
 
-opr16a:         imm16    is imm16e=0xc & imm16 & imm16ev { local addr:3 = (0xFF                        << 10) | imm16ev; export addr; }
-opr16a:         imm16    is imm16e=0xd & imm16 & imm16ev { local addr:3 = (0xFF                        << 10) | imm16ev; export addr; }
-opr16a:         imm16    is imm16e=0xe & imm16 & imm16ev { local addr:3 = (0xFF                        << 10) | imm16ev; export addr; }
-opr16a:         imm16    is imm16e=0xf & imm16 & imm16ev { local addr:3 = (0xFF                        << 10) | imm16ev; export addr; }
+@if defined(HCS12X)
+
+# known EPAGE offsets
+opr16a:         imm16    is imm16e=0x8 & imm16 & imm16ev { local addr:3 = 0x100000; pagePAddr(addr,10,EPAGE,imm16ev); export addr; }
+opr16a:         imm16    is imm16e=0x9 & imm16 & imm16ev { local addr:3 = 0x100000; pagePAddr(addr,10,EPAGE,imm16ev); export addr; }
+opr16a:         imm16    is imm16e=0xa & imm16 & imm16ev { local addr:3 = 0x100000; pagePAddr(addr,10,EPAGE,imm16ev); export addr; }
+opr16a:         imm16    is imm16e=0xb & imm16 & imm16ev { local addr:3 = 0x100000; pagePAddr(addr,10,EPAGE,imm16ev); export addr; }
+
+opr16a:         imm16    is imm16e=0xc & imm16 & imm16ev { local addr:3 = 0;        pageCAddr(addr,10,0xFF,imm16ev); export addr; }
+opr16a:         imm16    is imm16e=0xd & imm16 & imm16ev { local addr:3 = 0;        pageCAddr(addr,10,0xFF,imm16ev); export addr; }
+opr16a:         imm16    is imm16e=0xe & imm16 & imm16ev { local addr:3 = 0;        pageCAddr(addr,10,0xFF,imm16ev); export addr; }
+opr16a:         imm16    is imm16e=0xf & imm16 & imm16ev { local addr:3 = 0;        pageCAddr(addr,10,0xFF,imm16ev); export addr; }
 
 # known RPAGE offsets
-opr16a:         imm16    is imm16p=0x1 & imm16 & imm16rv { local addr:3 = (zext(RPAGE) << 12) | imm16rv; export addr; }
-opr16a:         imm16    is imm16p=0x2 & imm16 & imm16rv { local addr:3 = (0xFE                << 12) | imm16rv; export addr; }
-opr16a:         imm16    is imm16p=0x3 & imm16 & imm16rv { local addr:3 = (0xFF                << 12) | imm16rv; export addr; }
+opr16a:         imm16    is imm16p=0x1 & imm16 & imm16rv { local addr:3 = 0;        pagePAddr(addr,12,RPAGE,imm16rv); export addr; }
+opr16a:         imm16    is imm16p=0x2 & imm16 & imm16rv { local addr:3 = 0;        pageCAddr(addr,12,0xFE,imm16rv); export addr; }
+opr16a:         imm16    is imm16p=0x3 & imm16 & imm16rv { local addr:3 = 0;        pageCAddr(addr,12,0xFF,imm16rv); export addr; }
 
 # known PPAGE offsets
-opr16a:         imm16    is imm16p=0x4 & imm16 & imm16pv { local addr:3 = 0x400000 |  (0xFD                << 14) | imm16pv; export addr; }
-opr16a:         imm16    is imm16p=0x5 & imm16 & imm16pv { local addr:3 = 0x400000 |  (0xFD                << 14) | imm16pv; export addr; }
-opr16a:         imm16    is imm16p=0x6 & imm16 & imm16pv { local addr:3 = 0x400000 |  (0xFD                << 14) | imm16pv; export addr; }
-opr16a:         imm16    is imm16p=0x7 & imm16 & imm16pv { local addr:3 = 0x400000 |  (0xFD                << 14) | imm16pv; export addr; }
+opr16a:         imm16    is imm16p=0x4 & imm16 & imm16pv { local addr:3 = 0x400000; pageCAddr(addr,14,0xFD,imm16pv); export addr; }
+opr16a:         imm16    is imm16p=0x5 & imm16 & imm16pv { local addr:3 = 0x400000; pageCAddr(addr,14,0xFD,imm16pv); export addr; }
+opr16a:         imm16    is imm16p=0x6 & imm16 & imm16pv { local addr:3 = 0x400000; pageCAddr(addr,14,0xFD,imm16pv); export addr; }
+opr16a:         imm16    is imm16p=0x7 & imm16 & imm16pv { local addr:3 = 0x400000; pageCAddr(addr,14,0xFD,imm16pv); export addr; }
 
-opr16a:         imm16    is imm16p=0x8 & imm16 & imm16pv { local addr:3 = 0x400000 |  (zext(PPAGE) << 14) | (imm16pv & 0x3fff); export addr; }
-opr16a:         imm16    is imm16p=0x9 & imm16 & imm16pv { local addr:3 = 0x400000 |  (zext(PPAGE) << 14) | (imm16pv & 0x3fff); export addr; }
-opr16a:         imm16    is imm16p=0xa & imm16 & imm16pv { local addr:3 = 0x400000 |  (zext(PPAGE) << 14) | (imm16pv & 0x3fff); export addr; }
-opr16a:         imm16    is imm16p=0xb & imm16 & imm16pv { local addr:3 = 0x400000 |  (zext(PPAGE) << 14) | (imm16pv & 0x3fff); export addr; }
+opr16a:         imm16    is imm16p=0x8 & imm16 & imm16pv { local addr:3 = 0x400000; pagePAddr(addr,14,PPAGE,imm16pv & 0x3fff); export addr; }
+opr16a:         imm16    is imm16p=0x9 & imm16 & imm16pv { local addr:3 = 0x400000; pagePAddr(addr,14,PPAGE,imm16pv & 0x3fff); export addr; }
+opr16a:         imm16    is imm16p=0xa & imm16 & imm16pv { local addr:3 = 0x400000; pagePAddr(addr,14,PPAGE,imm16pv & 0x3fff); export addr; }
+opr16a:         imm16    is imm16p=0xb & imm16 & imm16pv { local addr:3 = 0x400000; pagePAddr(addr,14,PPAGE,imm16pv & 0x3fff); export addr; }
 
-opr16a:         imm16    is imm16p=0xC & imm16 & imm16pv { local addr:3 = 0x400000 |  (0xFF                << 14) | imm16pv; export addr; }
-opr16a:         imm16    is imm16p=0xD & imm16 & imm16pv { local addr:3 = 0x400000 |  (0xFF                << 14) | imm16pv; export addr; }
-opr16a:         imm16    is imm16p=0xE & imm16 & imm16pv { local addr:3 = 0x400000 |  (0xFF                << 14) | imm16pv; export addr; }
-opr16a:         imm16    is imm16p=0xF & imm16 & imm16pv { local addr:3 = 0x400000 |  (0xFF                << 14) | imm16pv; export addr; }
+opr16a:         imm16    is imm16p=0xC & imm16 & imm16pv { local addr:3 = 0x400000; pageCAddr(addr,14,0xFF,imm16pv); export addr; }
+opr16a:         imm16    is imm16p=0xD & imm16 & imm16pv { local addr:3 = 0x400000; pageCAddr(addr,14,0xFF,imm16pv); export addr; }
+opr16a:         imm16    is imm16p=0xE & imm16 & imm16pv { local addr:3 = 0x400000; pageCAddr(addr,14,0xFF,imm16pv); export addr; }
+opr16a:         imm16    is imm16p=0xF & imm16 & imm16pv { local addr:3 = 0x400000; pageCAddr(addr,14,0xFF,imm16pv); export addr; }
 
 opr16a:			imm16    is imm16e & imm16                        { local addr:3 = imm16; export addr; }
 
 opr8a:			imm8    is imm8                        { export *[const]:3 imm8; }
 
-opr8a_8:			imm8     is UseGPAGE=0 & imm8       { export *:1 imm8; }
-opr8a_8:			imm8     is UseGPAGE=1 & imm8       { local addr:3 = (zext(GPAGE) << 16) | imm8; export *:1 addr; }
+opr8a_8:		imm8     is UseGPAGE=0 & imm8       { export *:1 imm8; }
+opr8a_8:		imm8     is UseGPAGE=1 & imm8       { local addr:3 = 0; pagePAddr(addr,16,GPAGE,imm8); export *:1 addr; }
 opr8a_16:		imm8     is UseGPAGE=0 & imm8       { export *:2 imm8; }
-opr8a_16:		imm8     is UseGPAGE=1 & imm8       { local addr:3 = (zext(GPAGE) << 16) | imm8; export *:2 addr; }
+opr8a_16:		imm8     is UseGPAGE=1 & imm8       { local addr:3 = 0; pagePAddr(addr,16,GPAGE,imm8); export *:2 addr; }
 
 opr16a_8:	    opr16a   is UseGPAGE=0 & opr16a     { export *:1 opr16a; }
-opr16a_8:	    imm16   is UseGPAGE=1 & imm16      { local addr:3 = (zext(GPAGE) << 16) | imm16; export *:1 addr; }
+opr16a_8:	    imm16   is UseGPAGE=1 & imm16      { local addr:3 = 0; pagePAddr(addr,16,GPAGE,imm16); export *:1 addr; }
 opr16a_16:	    opr16a   is UseGPAGE=0 & opr16a     { export *:2 opr16a; }
-opr16a_16:	    imm16   is UseGPAGE=1 & imm16      { local addr:3 = (zext(GPAGE) << 16) | imm16; export *:2 addr; }
+opr16a_16:	    imm16   is UseGPAGE=1 & imm16      { local addr:3 = 0; pagePAddr(addr,16,GPAGE,imm16); export *:2 addr; }
 
 iopr8i:			"#"imm8  is imm8       { export *[const]:1 imm8; }
-iopr16i:			"#"imm16 is imm16      { export *[const]:2 imm16; }
+iopr16i:		"#"imm16 is imm16      { export *[const]:2 imm16; }
 msk8:		    imm8     is imm8       { export *[const]:1 imm8; }
 page:		    imm8     is imm8       { export *[const]:1 imm8; }
 
@@ -364,6 +401,53 @@ page:		    imm8     is imm8       { export *[const]:1 imm8; }
 #PageDest: dest    is imm16p=0xe & imm16 & imm16pv ; imm8 [ dest = ($(MAXFLASHPage) << 16) | imm16; ] { 	 export *:1 dest; }
 #PageDest: dest    is imm16p=0xf & imm16 & imm16pv ; imm8 [ dest = ($(MAXFLASHPage) << 16) | imm16; ] { 	 export *:1 dest; }
 PageDest: opr16a   is opr16a; page  { 	 export opr16a; }
+
+@else
+
+
+@if SIZE=="3"
+opr16a:         imm16    is imm16p=0x0 & imm16 & imm16pv { local addr:3 = 0; pageCAddr(addr,14,0x3D,imm16pv); export addr; }
+opr16a:         imm16    is imm16p=0x1 & imm16 & imm16pv { local addr:3 = 0; pageCAddr(addr,14,0x3D,imm16pv); export addr; }
+opr16a:         imm16    is imm16p=0x2 & imm16 & imm16pv { local addr:3 = 0; pageCAddr(addr,14,0x3D,imm16pv); export addr; }
+opr16a:         imm16    is imm16p=0x3 & imm16 & imm16pv { local addr:3 = 0; pageCAddr(addr,14,0x3D,imm16pv); export addr; }
+
+opr16a:         imm16    is imm16p=0x4 & imm16 & imm16pv { local addr:3 = 0; pageCAddr(addr,14,0x3E,imm16pv); export addr; }
+opr16a:         imm16    is imm16p=0x5 & imm16 & imm16pv { local addr:3 = 0; pageCAddr(addr,14,0x3E,imm16pv); export addr; }
+opr16a:         imm16    is imm16p=0x6 & imm16 & imm16pv { local addr:3 = 0; pageCAddr(addr,14,0x3E,imm16pv); export addr; }
+opr16a:         imm16    is imm16p=0x7 & imm16 & imm16pv { local addr:3 = 0; pageCAddr(addr,14,0x3E,imm16pv); export addr; }
+
+opr16a:         imm16    is imm16p=0x8 & imm16 & imm16pv { local addr:3 = 0; pagePAddr(addr,14,PPAGE,imm16pv & 0x3fff); export addr; }
+opr16a:         imm16    is imm16p=0x9 & imm16 & imm16pv { local addr:3 = 0; pagePAddr(addr,14,PPAGE,imm16pv & 0x3fff); export addr; }
+opr16a:         imm16    is imm16p=0xa & imm16 & imm16pv { local addr:3 = 0; pagePAddr(addr,14,PPAGE,imm16pv & 0x3fff); export addr; }
+opr16a:         imm16    is imm16p=0xb & imm16 & imm16pv { local addr:3 = 0; pagePAddr(addr,14,PPAGE,imm16pv & 0x3fff); export addr; }
+
+opr16a:         imm16    is imm16p=0xc & imm16 & imm16pv { local addr:3 = 0; pageCAddr(addr,14,0x3F,imm16pv); export addr; }
+opr16a:         imm16    is imm16p=0xd & imm16 & imm16pv { local addr:3 = 0; pageCAddr(addr,14,0x3F,imm16pv); export addr; }
+opr16a:         imm16    is imm16p=0xe & imm16 & imm16pv { local addr:3 = 0; pageCAddr(addr,14,0x3F,imm16pv); export addr; }
+opr16a:         imm16    is imm16p=0xf & imm16 & imm16pv { local addr:3 = 0; pageCAddr(addr,14,0x3F,imm16pv); export addr; }
+
+page:		    imm8     is imm8       { export *[const]:1 imm8; }
+
+PageDest: opr16a   is opr16a; page  { 	 export opr16a; }
+
+@elif SIZE=="2"
+opr16a:          imm16    is  imm16     {  local addr:$(SIZE) = imm16; export addr; }
+@endif
+
+opr8a:			imm8     is imm8                        { local addr:$(SIZE) = imm8; export addr; }
+
+opr8a_8:		imm8     is UseGPAGE=0 & imm8       { export *:1 imm8; }
+opr8a_16:		imm8     is UseGPAGE=0 & imm8       { export *:2 imm8; }
+
+opr16a_8:	    opr16a   is opr16a     { export *:1 opr16a; }
+opr16a_16:	    opr16a   is opr16a     { export *:2 opr16a; }
+
+iopr8i:			"#"imm8  is imm8       { export *[const]:1 imm8; }
+iopr16i:		"#"imm16 is imm16      { export *[const]:2 imm16; }
+msk8:		    imm8     is imm8       { export *[const]:1 imm8; }
+
+@endif
+
 
 #
 # Postbyte Code (xb) address decoding
@@ -411,12 +495,15 @@ IDX_f: nn3_0, rr7_6a+	is  (xb7_5=0b001 | xb7_5=0b011 | xb7_5=0b101) & rr7_6a & p
 #
 # Accumulator unsigned 8-bit offset indexed
 IDX_g: aa0_0, rr4_3		is  xb7_5=0b111 & rr4_3 & xb2_1=0b10 & aa0_0
-	{ address:2 = rr4_3 + zext(aa0_0); export address; }		
+	{ address:2 = rr4_3 + zext(aa0_0); export address; }
+IDX_g: aa0_0, PC		is  xb7_5=0b111 & rr4_3=3 & xb2_1=0b10 & aa0_0 & PC
+	{ address:2 = inst_next + zext(aa0_0); export address; }	
 
 # Accumulator 16-bit offset indexed
 IDX_h: D, rr4_3			is  xb7_5=0b111 & rr4_3 & xb2_0=0b110 & D
 	{ address:2 = rr4_3 + D; export address; }		
-
+IDX_h: D, PC			is  xb7_5=0b111 & rr4_3=3 & xb2_0=0b110 & D & PC
+	{ address:2 = inst_next + D; export address; }
 
 #**********
 #  IDX1
@@ -426,7 +513,11 @@ IDX_h: D, rr4_3			is  xb7_5=0b111 & rr4_3 & xb2_0=0b110 & D
 #
 # Constant offset (9-bit signed)
 IDX_i: opr9, rr4_3		is  xb7_5=0b111 & rr4_3 & xb2_2=0 & z1_1=0 & ss0_0 ; imm8 [ opr9 = (ss0_0 << 8) | imm8; ]
-	{ address:2 = rr4_3 + opr9; export address; }		
+	{ address:2 = rr4_3 + opr9; export address; }
+
+IDX_i_PCRel: target is ss0_0 ; imm8 [ target = inst_next + (ss0_0 << 8) | imm8; ] { export *[const]:2 target; }
+IDX_i: opr9, PC		is  (xb7_5=0b111 & rr4_3=3 & xb2_2=0 & z1_1=0 & ss0_0 ; imm8) & IDX_i_PCRel & PC [ opr9 = (ss0_0 << 8) | imm8; ]
+	{ export IDX_i_PCRel; }	
 
 #**********
 #  IDX2
@@ -436,7 +527,11 @@ IDX_i: opr9, rr4_3		is  xb7_5=0b111 & rr4_3 & xb2_2=0 & z1_1=0 & ss0_0 ; imm8 [ 
 #
 # Constant offset (16-bit signed)
 IDX_k: simm16, rr4_3	is  xb7_5=0b111 & rr4_3 & xb2_2=0 & z1_1=1 & s0_0=0; simm16
-	{ address:2 = rr4_3 + simm16; export address; }	
+	{ address:2 = rr4_3 + simm16; export address; }
+
+IDX_k_PCRel: target is simm16 [ target = inst_next + simm16; ] { export *[const]:2 target; }
+IDX_k: simm16, PC	is  xb7_5=0b111 & rr4_3=3 & xb2_2=0 & z1_1=1 & s0_0=0; simm16 & PC & IDX_k_PCRel
+	{ export IDX_k_PCRel; }
 
 #**********
 #  [IDX2]
@@ -448,9 +543,10 @@ IDX_k: simm16, rr4_3	is  xb7_5=0b111 & rr4_3 & xb2_2=0 & z1_1=1 & s0_0=0; simm16
 
 IDX_l: [simm16, rr4_3]	is  xb7_5=0b111 & rr4_3 & xb2_2=0 & z1_1=1 & s0_0=1; simm16
 	{ address:2 = rr4_3 + simm16; Load2(address,address); export address; }
-	
-IDX_l: [simm16, PC]	is  xb7_5=0b111 & rr4_3=3 & xb2_2=0 & z1_1=1 & s0_0=1; simm16 & PC
-	{ address:2 = inst_next + simm16; Load2(address,address); export address; }	
+
+IDX_l_PCRel: target is simm16 [ target = inst_next + simm16; ] { export *[const]:2 target; }
+IDX_l: [simm16, PC]	is  xb7_5=0b111 & rr4_3=3 & xb2_2=0 & z1_1=1 & s0_0=1; simm16 & PC & IDX_l_PCRel
+	{ address:2 = IDX_l_PCRel; Load2(address,address); export address; }	
 
 #**********
 #  [D,IDX]
@@ -462,6 +558,8 @@ IDX_l: [simm16, PC]	is  xb7_5=0b111 & rr4_3=3 & xb2_2=0 & z1_1=1 & s0_0=1; simm1
 IDX_m: [D, rr4_3]		is  xb7_5=0b111 & rr4_3 & xb2_0=0b111 & D
 	{ address:2 = rr4_3 + D; Load2(address,address); export address; }	
 
+IDX_m: [D, PC]		is  xb7_5=0b111 & rr4_3=3 & xb2_0=0b111 & D & PC
+	{ address:2 = inst_next + D; Load2(address,address); export address; }	
 
 ######################################################################
 ######################################################################
@@ -493,9 +591,11 @@ indexed3: IDX_k is IDX_k { export IDX_k; }
 # not indexedindexed3: IDX_g is IDX_g { export IDX_g; }		
 # not indexedindexed3: IDX_h is IDX_h { export IDX_h; }		
 # not indexedindexed3: IDX_i is IDX_i { export IDX_i; }			
-# not indexedindexed3: IDX_k is IDX_k { export IDX_k; }		
+# not indexedindexed3: IDX_k is IDX_k { export IDX_k; }
+@ifdef HCS12	
 indexed2: IDX_l is IDX_l { export IDX_l; }		
-indexed2: IDX_m is IDX_m { export IDX_m; }		
+indexed2: IDX_m is IDX_m { export IDX_m; }
+@endif
 
 #
 # effective address of IDX, IDX1, IDX2, [IDX2], [D,IDX]
@@ -536,68 +636,118 @@ indexed1: IDX_h is IDX_h { export IDX_h; }
 # indexed2_x - exports a double byte at the effective address
 #
 
+@ifndef HCS12X
 indexed1_1: indexed1 is indexed1 {
-	local paddr:3 = 0;
+	local paddr:$(SIZE) = 0;
 	GetPagedAddr(indexed1,paddr);
 	export *:1 paddr;
 }
+@endif
+
+@ifdef HCS12
 indexed2_1: indexed1 is indexed1 {
-	local paddr:3 = 0;
+	local paddr:$(SIZE) = 0;
 	GetPagedAddr(indexed1,paddr);
 	export *:2 paddr;
 }
+@else
+indexed2_1: indexed1 is indexed1 {
+	export *:2 indexed1;
+}
+@endif
 
+@ifdef HCS12
 indexed0_2: indexed2 is indexed2 {
 	local val = indexed2; export val;
 }
-					
+@endif
+
+				
 indexed0_3: indexed3 is indexed3 {
 	local val = indexed3; export val;
 }
+@ifdef HCS12
 indexed1_3: indexed3 is indexed3 {
-	local paddr:3 = 0;
+	local paddr:$(SIZE) = 0;
 	GetPagedAddr(indexed3,paddr);
 	export *:1 paddr;
 }
+@else
+indexed1_3: indexed3 is indexed3 {
+	export *:1 indexed3;
+}
+@endif
+
+@ifdef HCS12
 indexed2_3: indexed3 is indexed3 {
-	local paddr:3 = 0;
+	local paddr:$(SIZE) = 0;
 	GetPagedAddr(indexed3,paddr);
 	export *:2 paddr;
 }
+@endif
 
+@ifdef HCS12
 indexedA_5: indexed5 is  UseGPAGE=0 & indexed5 {
-	local paddr:3 = 0;
+	local paddr:$(SIZE) = 0;
 	GetPagedAddr(indexed5,paddr);
     export paddr;
 }
+@else
+indexedA_5: indexed5 is UseGPAGE=0 & indexed5 {
+	export indexed5;
+}
+@endif
+
+@ifdef HCS12X
 indexedA_5: indexed5 is UseGPAGE=1 & indexed5 {
-	local addr:3 = (zext(GPAGE) << 16) | zext(indexed5);
+	local addr:$(SIZE) = (zext(GPAGE) << 16) | zext(indexed5);
 	export addr;
 }
+@endif
+
+@ifdef HCS12
 indexed1_5: indexed5 is  UseGPAGE=0 & indexed5 {
-	local paddr:3 = 0;
+	local paddr:$(SIZE) = 0;
 	GetPagedAddr(indexed5,paddr);
 	export *:1 paddr;
 }
+@else
+indexed1_5: indexed5 is  UseGPAGE=0 & indexed5 {
+	export *:1 indexed5;
+}
+@endif
+
+@ifdef HCS12X
 indexed1_5: indexed5 is UseGPAGE=1 & indexed5 {
-	local addr:3 = (zext(GPAGE) << 16) | zext(indexed5);
+	local addr:$(SIZE) = (zext(GPAGE) << 16) | zext(indexed5);
 	export *:1 addr;
 }
+@endif
+
+@ifdef HCS12
 indexed2_5: indexed5 is UseGPAGE=0 & indexed5 {
-	local paddr:3 = 0;
+	local paddr:$(SIZE) = 0;
 	GetPagedAddr(indexed5,paddr);
 	export *:2 paddr;
 }
+@else
+indexed2_5: indexed5 is UseGPAGE=0 & indexed5 {
+	export indexed5;
+}
+@endif
+
+@ifdef HCS12X
 indexed2_5: indexed5 is UseGPAGE=1 & indexed5 {
-	local addr:3 = (zext(GPAGE) << 16) | zext(indexed5);
+	local addr:$(SIZE) = (zext(GPAGE) << 16) | zext(indexed5);
 	export *:2 addr;
 }
+@endif
 
 # range -128 through +127
 rel8: reloc is rel    [ reloc = inst_next + rel; ]  { export *:1 reloc; }
 
 # range -256 through +255
-rel9: reloc is XGATE=0 & sign12_12 & rr7_0   [ reloc = inst_next + ((sign12_12 << 8) | rr7_0); ]  { export *:1 reloc; }
+rel9: reloc is sign12_12 & rr7_0   [ reloc = inst_next + ((sign12_12 << 8) | rr7_0); ]  { export *:1 reloc; }
 
 # positive range 0 through +65535
 rel16: reloc is simm16   [ reloc = inst_next + simm16; ]  { export *:1 reloc; }
@@ -711,35 +861,51 @@ macro V_NEG_flag2(operand) {
 }
 
 macro Pull1(operand) {
+@if SIZE=="3"
 	setHCSphysPage(SP);
-	
-	paddr:3 = segment(physPage,SP);
+	paddr:$(SIZE) = segment(physPage,SP);
+@else
+    paddr:$(SIZE) = SP;
+@endif
 	operand = *paddr;
 	SP = SP + 1;
 }
 
 macro Pull2(operand) {
+@if SIZE=="3"
 	setHCSphysPage(SP);
-	
-	paddr:3 = segment(physPage,SP);
+	paddr:$(SIZE) = segment(physPage,SP);
+@else
+    paddr:$(SIZE) = SP;
+@endif
+
 	operand = *paddr;
 	SP = SP + 2;
 }
 
 macro Push1(operand) {
 	SP = SP - 1;
-	
+
+@if SIZE=="3"	
 	setHCSphysPage(SP);
-	paddr:3 = segment(physPage,SP);
+	paddr:$(SIZE) = segment(physPage,SP);
+@else
+    paddr:$(SIZE) = SP;
+@endif
+
 	*paddr = operand;
 }
 
 macro Push2(operand) {
 	SP = SP - 2;
 
+@if SIZE=="3"	
 	setHCSphysPage(SP);
-	
-	paddr:3 = segment(physPage,SP);
+	paddr:$(SIZE) = segment(physPage,SP);
+@else
+    paddr:$(SIZE) = SP;
+@endif
+
 	*paddr = operand;
 }
 
@@ -753,30 +919,35 @@ macro setCCRW( operand ) {
 	CCRW = operand & (CCRW | 0b1111111110111111);
 }
 
-:^instruction  is XGATE=0 & op8=0x18; instruction  [ Prefix18=1; ] {}
-
 ################################################################
 # Constructors
 ################################################################
 
-:ABA                     is XGATE=0 & (Prefix18=1 & op8=0x06)
+with : XGATE=0 {
+@ifdef HCS12X
+:^instruction  is op8=0x18; instruction  [ Prefix18=1; ] {}
+@else
+:^instruction  is op8=0x18; instruction  [ Prefix18=1; ] {}
+@endif
+
+:ABA                     is (Prefix18=1 & op8=0x06)
 {
 	result:1 = A + B;
 	addition_flags1(A, B, result);
 	A = result;
 }
 
-:ABX                     is XGATE=0 & Prefix18=0 & (op16=0x1AE5)
+:ABX                     is Prefix18=0 & (op16=0x1AE5)
 {
 	IX = zext(B) + IX;
 }
 
-:ABY                     is XGATE=0 & Prefix18=0 & (op16=0x19ED)
+:ABY                     is Prefix18=0 & (op16=0x19ED)
 {
 	IY = zext(B) + IY;
 }
 
-:ADCA iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0x89); iopr8i
+:ADCA iopr8i                 is Prefix18=0 & (op8=0x89); iopr8i
 {
 	op1:1 = iopr8i;
 
@@ -786,7 +957,7 @@ macro setCCRW( operand ) {
 	A = result;
 }
 
-:ADCA opr8a_8                 is XGATE=0 & Prefix18=0 & (op8=0x99); opr8a_8
+:ADCA opr8a_8                 is Prefix18=0 & (op8=0x99); opr8a_8
 {
 	op1:1 = opr8a_8;
 
@@ -796,7 +967,7 @@ macro setCCRW( operand ) {
 	A = result;
 }
 
-:ADCA opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0xB9); opr16a_8
+:ADCA opr16a_8                 is Prefix18=0 & (op8=0xB9); opr16a_8
 {
 	op1:1 = opr16a_8;
 
@@ -806,7 +977,7 @@ macro setCCRW( operand ) {
 	A = result;
 }
 
-:ADCA indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0xA9); indexed1_5
+:ADCA indexed1_5                 is Prefix18=0 & (op8=0xA9); indexed1_5
 {
 	op1:1 = indexed1_5;
 
@@ -815,7 +986,7 @@ macro setCCRW( operand ) {
 	A = result;
 }
 
-:ADCB iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0xC9); iopr8i
+:ADCB iopr8i                 is Prefix18=0 & (op8=0xC9); iopr8i
 {
 	op1:1 = iopr8i;
 
@@ -825,7 +996,7 @@ macro setCCRW( operand ) {
 	B = result;
 }
 
-:ADCB opr8a_8                 is XGATE=0 & Prefix18=0 & (op8=0xD9); opr8a_8
+:ADCB opr8a_8                 is Prefix18=0 & (op8=0xD9); opr8a_8
 {
 	op1:1 = opr8a_8;
 
@@ -834,7 +1005,7 @@ macro setCCRW( operand ) {
 	B = result;
 }
 
-:ADCB opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0xF9); opr16a_8
+:ADCB opr16a_8                 is Prefix18=0 & (op8=0xF9); opr16a_8
 {
 	op1:1 = opr16a_8;
 
@@ -844,7 +1015,7 @@ macro setCCRW( operand ) {
 	B = result;
 }
 
-:ADCB indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0xE9); indexed1_5
+:ADCB indexed1_5                 is Prefix18=0 & (op8=0xE9); indexed1_5
 {
 	op1:1 = indexed1_5;
 	
@@ -854,7 +1025,7 @@ macro setCCRW( operand ) {
 	B = result;
 }
 
-:ADDA iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0x8B); iopr8i
+:ADDA iopr8i                 is Prefix18=0 & (op8=0x8B); iopr8i
 { 
 	op1:1 = iopr8i;
 
@@ -864,7 +1035,7 @@ macro setCCRW( operand ) {
 	A = result;
 }
 
-:ADDA opr8a_8                 is XGATE=0 & Prefix18=0 & (op8=0x9B); opr8a_8
+:ADDA opr8a_8                 is Prefix18=0 & (op8=0x9B); opr8a_8
 { 
 	op1:1 = opr8a_8;
 
@@ -873,7 +1044,7 @@ macro setCCRW( operand ) {
 	A = result;
 }
 
-:ADDA opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0xBB); opr16a_8
+:ADDA opr16a_8                 is Prefix18=0 & (op8=0xBB); opr16a_8
 { 
 	op1:1 = opr16a_8;
 
@@ -882,7 +1053,7 @@ macro setCCRW( operand ) {
 	A = result;
 }
 
-:ADDA indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0xAB); indexed1_5
+:ADDA indexed1_5                 is Prefix18=0 & (op8=0xAB); indexed1_5
 { 
 	op1:1 = indexed1_5;
 
@@ -891,7 +1062,7 @@ macro setCCRW( operand ) {
 	A = result;
 }
 
-:ADDB iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0xCB); iopr8i
+:ADDB iopr8i                 is Prefix18=0 & (op8=0xCB); iopr8i
 { 
 	op1:1 = iopr8i;
 
@@ -900,7 +1071,7 @@ macro setCCRW( operand ) {
 	B = result;
 }
 
-:ADDB opr8a_8                 is XGATE=0 & Prefix18=0 & (op8=0xDB); opr8a_8
+:ADDB opr8a_8                 is Prefix18=0 & (op8=0xDB); opr8a_8
 { 
 	op1:1 = opr8a_8;
 
@@ -909,7 +1080,7 @@ macro setCCRW( operand ) {
 	B = result;
 }
 
-:ADDB opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0xFB); opr16a_8
+:ADDB opr16a_8                 is Prefix18=0 & (op8=0xFB); opr16a_8
 { 
 	op1:1 = opr16a_8;
 
@@ -918,7 +1089,7 @@ macro setCCRW( operand ) {
 	B = result;
 }
 
-:ADDB indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0xEB); indexed1_5
+:ADDB indexed1_5                 is Prefix18=0 & (op8=0xEB); indexed1_5
 { 
 	op1:1 = indexed1_5;
 
@@ -927,7 +1098,7 @@ macro setCCRW( operand ) {
 	B = result;
 }
 
-:ADDD iopr16i                 is XGATE=0 & Prefix18=0 & (op8=0xC3); iopr16i
+:ADDD iopr16i                 is Prefix18=0 & (op8=0xC3); iopr16i
 { 
 	op1:2 = iopr16i;
 
@@ -936,7 +1107,7 @@ macro setCCRW( operand ) {
 	D = result;
 }
 
-:ADDD opr8a_16                 is XGATE=0 & Prefix18=0 & (op8=0xD3); opr8a_16
+:ADDD opr8a_16                 is Prefix18=0 & (op8=0xD3); opr8a_16
 { 
 	op1:2 = opr8a_16;
 
@@ -945,7 +1116,7 @@ macro setCCRW( operand ) {
 	D = result;
 }
 
-:ADDD opr16a_16                 is XGATE=0 & Prefix18=0 & (op8=0xF3); opr16a_16
+:ADDD opr16a_16                 is Prefix18=0 & (op8=0xF3); opr16a_16
 { 
 	op1:2 = opr16a_16;
 
@@ -954,7 +1125,7 @@ macro setCCRW( operand ) {
 	D = result;
 }
 
-:ADDD indexed2_5                 is XGATE=0 & Prefix18=0 & (op8=0xE3); indexed2_5
+:ADDD indexed2_5                 is Prefix18=0 & (op8=0xE3); indexed2_5
 { 
 	op1:2 = indexed2_5;
 
@@ -964,7 +1135,7 @@ macro setCCRW( operand ) {
 }
 
 @if defined(HCS12X)
-:ADDX iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0x8B); iopr16i
+:ADDX iopr16i                 is Prefix18=1 & (op8=0x8B); iopr16i
 { 
 	op1:2 = iopr16i;
 
@@ -975,7 +1146,7 @@ macro setCCRW( operand ) {
 @endif
 
 @if defined(HCS12X)
-:ADDX opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0x9B); opr8a_16
+:ADDX opr8a_16                 is Prefix18=1 & (op8=0x9B); opr8a_16
 { 
 	op1:2 = opr8a_16;
 
@@ -986,7 +1157,7 @@ macro setCCRW( operand ) {
 @endif
 
 @if defined(HCS12X)
-:ADDX opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xBB); opr16a_16
+:ADDX opr16a_16                 is Prefix18=1 & (op8=0xBB); opr16a_16
 { 
 	op1:2 = opr16a_16;
 
@@ -997,7 +1168,7 @@ macro setCCRW( operand ) {
 @endif
 
 @if defined(HCS12X)
-:ADDX indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xAB); indexed2_5
+:ADDX indexed2_5                 is Prefix18=1 & (op8=0xAB); indexed2_5
 { 
 	op1:2 = indexed2_5;
 
@@ -1008,7 +1179,7 @@ macro setCCRW( operand ) {
 @endif
 
 @if defined(HCS12X)
-:ADDY iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0xCB); iopr16i
+:ADDY iopr16i                 is Prefix18=1 & (op8=0xCB); iopr16i
 { 
 	op1:2 = iopr16i;
 
@@ -1019,7 +1190,7 @@ macro setCCRW( operand ) {
 @endif
 
 @if defined(HCS12X)
-:ADDY opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0xDB); opr8a_16
+:ADDY opr8a_16                 is Prefix18=1 & (op8=0xDB); opr8a_16
 { 
 	op1:2 = opr8a_16;
 
@@ -1030,7 +1201,7 @@ macro setCCRW( operand ) {
 @endif
 
 @if defined(HCS12X)
-:ADDY opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xFB); opr16a_16
+:ADDY opr16a_16                 is Prefix18=1 & (op8=0xFB); opr16a_16
 { 
 	op1:2 = opr16a_16;
 
@@ -1041,7 +1212,7 @@ macro setCCRW( operand ) {
 @endif
 
 @if defined(HCS12X)
-:ADDY indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xEB); indexed2_5
+:ADDY indexed2_5                 is Prefix18=1 & (op8=0xEB); indexed2_5
 { 
 	op1:2 = indexed2_5;
 
@@ -1052,7 +1223,7 @@ macro setCCRW( operand ) {
 @endif
 
 @if defined(HCS12X)
-:ADED iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0xC3); iopr16i
+:ADED iopr16i                 is Prefix18=1 & (op8=0xC3); iopr16i
 { 
 	op1:2 = iopr16i;
 
@@ -1063,7 +1234,7 @@ macro setCCRW( operand ) {
 @endif
 
 @if defined(HCS12X)
-:ADED opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0xD3); opr8a_16
+:ADED opr8a_16                 is Prefix18=1 & (op8=0xD3); opr8a_16
 { 
 	op1:2 = opr8a_16;
 
@@ -1074,7 +1245,7 @@ macro setCCRW( operand ) {
 @endif
 
 @if defined(HCS12X)
-:ADED opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xF3); opr16a_16
+:ADED opr16a_16                 is Prefix18=1 & (op8=0xF3); opr16a_16
 { 
 	op1:2 = opr16a_16;
 
@@ -1085,7 +1256,7 @@ macro setCCRW( operand ) {
 @endif
 
 @if defined(HCS12X)
-:ADED indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xE3); indexed2_5
+:ADED indexed2_5                 is Prefix18=1 & (op8=0xE3); indexed2_5
 { 
 	op1:2 = indexed2_5;
 
@@ -1096,7 +1267,7 @@ macro setCCRW( operand ) {
 @endif
 
 @if defined(HCS12X)
-:ADEX iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0x89); iopr16i
+:ADEX iopr16i                 is Prefix18=1 & (op8=0x89); iopr16i
 { 
 	op1:2 = iopr16i;
 
@@ -1107,7 +1278,7 @@ macro setCCRW( operand ) {
 @endif
 
 @if defined(HCS12X)
-:ADEX opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0x99); opr8a_16
+:ADEX opr8a_16                 is Prefix18=1 & (op8=0x99); opr8a_16
 { 
 	op1:2 = opr8a_16;
 
@@ -1118,7 +1289,7 @@ macro setCCRW( operand ) {
 @endif
 
 @if defined(HCS12X)
-:ADEX opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xb9); opr16a_16
+:ADEX opr16a_16                 is Prefix18=1 & (op8=0xb9); opr16a_16
 { 
 	op1:2 = opr16a_16;
 
@@ -1129,7 +1300,7 @@ macro setCCRW( operand ) {
 @endif
 
 @if defined(HCS12X)
-:ADEX indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xa9); indexed2_5
+:ADEX indexed2_5                 is Prefix18=1 & (op8=0xa9); indexed2_5
 { 
 	op1:2 = indexed2_5;
 
@@ -1140,7 +1311,7 @@ macro setCCRW( operand ) {
 @endif
 
 @if defined(HCS12X)
-:ADEY iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0xC9); iopr16i
+:ADEY iopr16i                 is Prefix18=1 & (op8=0xC9); iopr16i
 { 
 	op1:2 = iopr16i;
 
@@ -1151,7 +1322,7 @@ macro setCCRW( operand ) {
 @endif
 
 @if defined(HCS12X)
-:ADEY opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0xD9); opr8a_16
+:ADEY opr8a_16                 is Prefix18=1 & (op8=0xD9); opr8a_16
 { 
 	op1:2 = opr8a_16;
 
@@ -1162,7 +1333,7 @@ macro setCCRW( operand ) {
 @endif
 
 @if defined(HCS12X)
-:ADEY opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xF9); opr16a_16
+:ADEY opr16a_16                 is Prefix18=1 & (op8=0xF9); opr16a_16
 { 
 	op1:2 = opr16a_16;
 
@@ -1173,7 +1344,7 @@ macro setCCRW( operand ) {
 @endif
 
 @if defined(HCS12X)
-:ADEY indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xE9); indexed2_5
+:ADEY indexed2_5                 is Prefix18=1 & (op8=0xE9); indexed2_5
 { 
 	op1:2 = indexed2_5;
 
@@ -1183,7 +1354,7 @@ macro setCCRW( operand ) {
 }
 @endif
 
-:ANDA iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0x84); iopr8i
+:ANDA iopr8i                 is Prefix18=0 & (op8=0x84); iopr8i
 { 
 	A = A & iopr8i;
 	V_equals_0(); 
@@ -1191,7 +1362,7 @@ macro setCCRW( operand ) {
 	$(N) = (A s< 0);
 }
 
-:ANDA opr8a_8                 is XGATE=0 & Prefix18=0 & (op8=0x94); opr8a_8
+:ANDA opr8a_8                 is Prefix18=0 & (op8=0x94); opr8a_8
 { 
 	A = A & opr8a_8;
 	V_equals_0(); 
@@ -1199,7 +1370,7 @@ macro setCCRW( operand ) {
 	$(N) = (A s< 0);
 }
 
-:ANDA opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0xB4); opr16a_8
+:ANDA opr16a_8                 is Prefix18=0 & (op8=0xB4); opr16a_8
 { 
 	A = A & opr16a_8;
 	V_equals_0(); 
@@ -1207,7 +1378,7 @@ macro setCCRW( operand ) {
 	$(N) = (A s< 0);
 }
 
-:ANDA indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0xA4); indexed1_5
+:ANDA indexed1_5                 is Prefix18=0 & (op8=0xA4); indexed1_5
 { 
 	A = A & indexed1_5;
 	V_equals_0(); 
@@ -1215,7 +1386,7 @@ macro setCCRW( operand ) {
 	$(N) = (A s< 0);
 }
 
-:ANDB iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0xC4); iopr8i
+:ANDB iopr8i                 is Prefix18=0 & (op8=0xC4); iopr8i
 { 
 	B = B & iopr8i;
 	V_equals_0(); 
@@ -1223,7 +1394,7 @@ macro setCCRW( operand ) {
 	$(N) = (B s< 0);
 }
 
-:ANDB opr8a_8                 is XGATE=0 & Prefix18=0 & (op8=0xD4); opr8a_8
+:ANDB opr8a_8                 is Prefix18=0 & (op8=0xD4); opr8a_8
 { 
 	B = B & opr8a_8;
 	V_equals_0(); 
@@ -1231,7 +1402,7 @@ macro setCCRW( operand ) {
 	$(N) = (B s< 0);
 }
 
-:ANDB opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0xF4); opr16a_8
+:ANDB opr16a_8                 is Prefix18=0 & (op8=0xF4); opr16a_8
 { 
 	B = B & opr16a_8;
 	V_equals_0(); 
@@ -1239,7 +1410,7 @@ macro setCCRW( operand ) {
 	$(N) = (B s< 0);
 }
 
-:ANDB indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0xE4); indexed1_5
+:ANDB indexed1_5                 is Prefix18=0 & (op8=0xE4); indexed1_5
 { 
 	B = B & indexed1_5;
 	V_equals_0(); 
@@ -1247,13 +1418,13 @@ macro setCCRW( operand ) {
 	$(N) = (B s< 0);
 }
 
-:ANDCC iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0x10); iopr8i
+:ANDCC iopr8i                 is Prefix18=0 & (op8=0x10); iopr8i
 { 
 	CCR = CCR & iopr8i;
 }
 
 @if defined(HCS12X)
-:ANDX iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0x84); iopr16i
+:ANDX iopr16i                 is Prefix18=1 & (op8=0x84); iopr16i
 { 
 	IX = IX & iopr16i;
 	V_equals_0(); 
@@ -1263,7 +1434,7 @@ macro setCCRW( operand ) {
 @endif
 
 @if defined(HCS12X)
-:ANDX opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0x94); opr8a_16
+:ANDX opr8a_16                 is Prefix18=1 & (op8=0x94); opr8a_16
 { 
 	IX = IX & opr8a_16;
 	V_equals_0(); 
@@ -1273,7 +1444,7 @@ macro setCCRW( operand ) {
 @endif
 
 @if defined(HCS12X)
-:ANDX opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xB4); opr16a_16
+:ANDX opr16a_16                 is Prefix18=1 & (op8=0xB4); opr16a_16
 { 
 	IX = IX & opr16a_16;
 	V_equals_0(); 
@@ -1283,7 +1454,7 @@ macro setCCRW( operand ) {
 @endif
 
 @if defined(HCS12X)
-:ANDX indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xA4); indexed2_5
+:ANDX indexed2_5                 is Prefix18=1 & (op8=0xA4); indexed2_5
 { 
 	IX = IX & indexed2_5;
 	V_equals_0(); 
@@ -1293,7 +1464,7 @@ macro setCCRW( operand ) {
 @endif
 
 @if defined(HCS12X)
-:ANDY iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0xC4); iopr16i
+:ANDY iopr16i                 is Prefix18=1 & (op8=0xC4); iopr16i
 { 
 	IY = IY & iopr16i;
 	V_equals_0(); 
@@ -1303,7 +1474,7 @@ macro setCCRW( operand ) {
 @endif
 
 @if defined(HCS12X)
-:ANDY opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0xD4); opr8a_16
+:ANDY opr8a_16                 is Prefix18=1 & (op8=0xD4); opr8a_16
 { 
 	IY = IY & opr8a_16;
 	V_equals_0(); 
@@ -1313,7 +1484,7 @@ macro setCCRW( operand ) {
 @endif
 
 @if defined(HCS12X)
-:ANDY opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xF4); opr16a_16
+:ANDY opr16a_16                 is Prefix18=1 & (op8=0xF4); opr16a_16
 { 
 	IY = IY & opr16a_16;
 	V_equals_0(); 
@@ -1323,7 +1494,7 @@ macro setCCRW( operand ) {
 @endif
 
 @if defined(HCS12X)
-:ANDY indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xE4); indexed2_5
+:ANDY indexed2_5                 is Prefix18=1 & (op8=0xE4); indexed2_5
 { 
 	IY = IY & indexed2_5;
 	V_equals_0(); 
@@ -1332,7 +1503,7 @@ macro setCCRW( operand ) {
 }
 @endif
 
-:ASL opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0x78); opr16a_8
+:ASL opr16a_8                 is Prefix18=0 & (op8=0x78); opr16a_8
 {
 	tmp:1 = opr16a_8;
 	$(C) = tmp[7,1];
@@ -1343,7 +1514,7 @@ macro setCCRW( operand ) {
 	V_equals_N_xor_C();	
 }
 
-:ASL indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0x68); indexed1_5 
+:ASL indexed1_5                 is Prefix18=0 & (op8=0x68); indexed1_5 
 {
 	tmp:1 = indexed1_5;
 	$(C) = tmp[7,1];
@@ -1354,7 +1525,7 @@ macro setCCRW( operand ) {
 	V_equals_N_xor_C();	
 }
 
-:ASLA                    is XGATE=0 & Prefix18=0 & op8=0x48 
+:ASLA                    is Prefix18=0 & op8=0x48 
 {
 	$(C) = A[7,1];
 	A = A << 1;
@@ -1363,7 +1534,7 @@ macro setCCRW( operand ) {
 	V_equals_N_xor_C();	
 }
 
-:ASLB                    is XGATE=0 & Prefix18=0 & op8=0x58 
+:ASLB                    is Prefix18=0 & op8=0x58 
 {
 	$(C) = B[7,1];
 	B = B << 1;
@@ -1372,7 +1543,7 @@ macro setCCRW( operand ) {
 	V_equals_N_xor_C();	
 }
 
-:ASLD                    is XGATE=0 & Prefix18=0 & op8=0x59 
+:ASLD                    is Prefix18=0 & op8=0x59 
 {
 	$(C) = D[15,1];
 	D = D << 1;
@@ -1382,7 +1553,7 @@ macro setCCRW( operand ) {
 }
 
 @if defined(HCS12X)
-:ASLW opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0x78); opr16a_16
+:ASLW opr16a_16                 is Prefix18=1 & (op8=0x78); opr16a_16
 {
 	local tmp = opr16a_16;
 	$(C) = tmp[15,1];
@@ -1395,7 +1566,7 @@ macro setCCRW( operand ) {
 @endif
 
 @if defined(HCS12X)
-:ASLW indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0x68); indexed2_5 
+:ASLW indexed2_5                 is Prefix18=1 & (op8=0x68); indexed2_5 
 {
 	local tmp = indexed2_5;
 	$(C) = tmp[15,1];
@@ -1408,7 +1579,7 @@ macro setCCRW( operand ) {
 @endif
 
 @if defined(HCS12X)
-:ASLX                    is XGATE=0 & Prefix18=1 & op8=0x48
+:ASLX                    is Prefix18=1 & op8=0x48
 {
 	$(C) = IX[15,1];
 	IX = IX << 1;
@@ -1419,7 +1590,7 @@ macro setCCRW( operand ) {
 @endif
 
 @if defined(HCS12X)
-:ASLY                    is XGATE=0 & Prefix18=1 & op8=0x58
+:ASLY                    is Prefix18=1 & op8=0x58
 {
 	$(C) = IY[15,1];
 	IY = IY << 1;
@@ -1429,7 +1600,7 @@ macro setCCRW( operand ) {
 }
 @endif
 
-:ASR opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0x77); opr16a_8
+:ASR opr16a_8                 is Prefix18=0 & (op8=0x77); opr16a_8
 {
 	tmp:1 = opr16a_8;
 	$(C) = tmp[0,1];
@@ -1440,7 +1611,7 @@ macro setCCRW( operand ) {
 	V_equals_N_xor_C();	
 }
 
-:ASR indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0x67); indexed1_5 
+:ASR indexed1_5                 is Prefix18=0 & (op8=0x67); indexed1_5 
 {
 	tmp:1 = indexed1_5;
 	$(C) = tmp[0,1];
@@ -1451,7 +1622,7 @@ macro setCCRW( operand ) {
 	V_equals_N_xor_C();	
 }
 
-:ASRA                    is XGATE=0 & Prefix18=0 & op8=0x47 
+:ASRA                    is Prefix18=0 & op8=0x47 
 {
 	$(C) = A[0,1];
 	A = A s>> 1;
@@ -1460,7 +1631,7 @@ macro setCCRW( operand ) {
 	V_equals_N_xor_C();	
 }
 
-:ASRB                    is XGATE=0 & Prefix18=0 & op8=0x57 
+:ASRB                    is Prefix18=0 & op8=0x57 
 {
 	$(C) = B[0,1];
 	B = B s>> 1;
@@ -1470,7 +1641,7 @@ macro setCCRW( operand ) {
 }
 
 @if defined(HCS12X)
-:ASRW opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0x77); opr16a_16
+:ASRW opr16a_16                 is Prefix18=1 & (op8=0x77); opr16a_16
 {
 	local tmp = opr16a_16;
 	$(C) = tmp[0,1];
@@ -1483,7 +1654,7 @@ macro setCCRW( operand ) {
 @endif
 
 @if defined(HCS12X)
-:ASRW indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0x67); indexed2_5 
+:ASRW indexed2_5                 is Prefix18=1 & (op8=0x67); indexed2_5 
 {
 	local tmp = indexed2_5;
 	$(C) = tmp[0,1];
@@ -1496,7 +1667,7 @@ macro setCCRW( operand ) {
 @endif
 
 @if defined(HCS12X)
-:ASRX                    is XGATE=0 & Prefix18=1 & op8=0x47 
+:ASRX                    is Prefix18=1 & op8=0x47 
 {
 	$(C) = IX[0,1];
 	IX = IX s>> 1;
@@ -1507,7 +1678,7 @@ macro setCCRW( operand ) {
 @endif
 
 @if defined(HCS12X)
-:ASRY                    is XGATE=0 & Prefix18=1 & op8=0x57 
+:ASRY                    is Prefix18=1 & op8=0x57 
 {
 	$(C) = IY[0,1];
 	IY = IY s>> 1;
@@ -1517,12 +1688,12 @@ macro setCCRW( operand ) {
 }
 @endif
 
-:BCC rel8                 is XGATE=0 & Prefix18=0 & op8=0x24; rel8
+:BCC rel8                 is Prefix18=0 & op8=0x24; rel8
 {
 	if ($(C) == 0) goto rel8;
 }
 
-:BCLR opr8a_8, msk8		is XGATE=0 & Prefix18=0 & (op8=0x4D); opr8a_8; msk8
+:BCLR opr8a_8, msk8		is Prefix18=0 & (op8=0x4D); opr8a_8; msk8
 {
 	op1:1 = opr8a_8;
 	op1 = op1 & ~msk8;
@@ -1532,7 +1703,7 @@ macro setCCRW( operand ) {
 	V_equals_0(); 
 }
 
-:BCLR opr16a_8, msk8	is XGATE=0 & Prefix18=0 & (op8=0x1D); opr16a_8; msk8
+:BCLR opr16a_8, msk8	is Prefix18=0 & (op8=0x1D); opr16a_8; msk8
 {
 	op1:1 = opr16a_8;
 	op1 = op1 & ~msk8;
@@ -1542,7 +1713,7 @@ macro setCCRW( operand ) {
 	V_equals_0(); 
 }
 
-:BCLR indexed1_3, msk8	is XGATE=0 & Prefix18=0 & (op8=0x0D); indexed1_3; msk8
+:BCLR indexed1_3, msk8	is Prefix18=0 & (op8=0x0D); indexed1_3; msk8
 {
 	op1:1 = indexed1_3;
 	op1 = op1 & ~msk8;
@@ -1552,44 +1723,44 @@ macro setCCRW( operand ) {
 	V_equals_0(); 
 }
 
-:BCS rel8                 is XGATE=0 & Prefix18=0 & op8=0x25; rel8
+:BCS rel8                 is Prefix18=0 & op8=0x25; rel8
 {
 	if ($(C) == 1) goto rel8;
 }
 
-:BEQ rel8                 is XGATE=0 & Prefix18=0 & op8=0x27; rel8
+:BEQ rel8                 is Prefix18=0 & op8=0x27; rel8
 {
 	if ($(Z) == 1) goto rel8;
 }
 
-:BGE rel8                 is XGATE=0 & Prefix18=0 & op8=0x2C; rel8
+:BGE rel8                 is Prefix18=0 & op8=0x2C; rel8
 {
 	if (($(N) ^ $(V)) == 1) goto rel8;
 }
 
 @if  defined(HCS12)
-:BGND                    is XGATE=0 & Prefix18=0 & op8=0x00
+:BGND                    is Prefix18=0 & op8=0x00
 {
-	BDM_return:3 = inst_next;
+	BDM_return:$(SIZE) = inst_next;
 	# this could return BDM location, or BDM_return
 	PCE = backgroundDebugMode(BDM_return);
 	goto [PCE];
 }
 @endif
 
-:BGT rel8                 is XGATE=0 & Prefix18=0 & op8=0x2E; rel8
+:BGT rel8                 is Prefix18=0 & op8=0x2E; rel8
 {
 	if (($(Z) | ($(N) ^ $(V))) == 0) goto rel8;
 }
 
-:BHI rel8                 is XGATE=0 & Prefix18=0 & op8=0x22; rel8
+:BHI rel8                 is Prefix18=0 & op8=0x22; rel8
 {
 	if (($(C) | $(Z)) == 0) goto rel8;
 }
 
 #:BHS rel8	is op8=0x24; rel8		See BCC
 
-:BITA iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0x85); iopr8i
+:BITA iopr8i                 is Prefix18=0 & (op8=0x85); iopr8i
 {
 	result:1 = A & iopr8i;
 	$(Z) = (result == 0);
@@ -1597,7 +1768,7 @@ macro setCCRW( operand ) {
 	V_equals_0();
 }
 
-:BITA opr8a_8                 is XGATE=0 & Prefix18=0 & (op8=0x95); opr8a_8
+:BITA opr8a_8                 is Prefix18=0 & (op8=0x95); opr8a_8
 {
 	result:1 = A & opr8a_8;
 	$(Z) = (result == 0);
@@ -1605,7 +1776,7 @@ macro setCCRW( operand ) {
 	V_equals_0();
 }
 
-:BITA opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0xB5); opr16a_8
+:BITA opr16a_8                 is Prefix18=0 & (op8=0xB5); opr16a_8
 {
 	result:1 = A & opr16a_8;
 	$(Z) = (result == 0);
@@ -1613,7 +1784,7 @@ macro setCCRW( operand ) {
 	V_equals_0();
 }
 
-:BITA indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0xA5); indexed1_5
+:BITA indexed1_5                 is Prefix18=0 & (op8=0xA5); indexed1_5
 {
 	result:1 = A & indexed1_5;
 	$(Z) = (result == 0);
@@ -1621,7 +1792,7 @@ macro setCCRW( operand ) {
 	V_equals_0();
 }
 
-:BITB iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0xC5); iopr8i
+:BITB iopr8i                 is Prefix18=0 & (op8=0xC5); iopr8i
 {
 	result:1 = B & iopr8i;
 	$(Z) = (result == 0);
@@ -1629,7 +1800,7 @@ macro setCCRW( operand ) {
 	V_equals_0();
 }
 
-:BITB opr8a_8                 is XGATE=0 & Prefix18=0 & (op8=0xD5); opr8a_8
+:BITB opr8a_8                 is Prefix18=0 & (op8=0xD5); opr8a_8
 {
 	result:1 = B & opr8a_8;
 	$(Z) = (result == 0);
@@ -1637,7 +1808,7 @@ macro setCCRW( operand ) {
 	V_equals_0();
 }
 
-:BITB opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0xF5); opr16a_8
+:BITB opr16a_8                 is Prefix18=0 & (op8=0xF5); opr16a_8
 {
 	result:1 = B & opr16a_8;
 	$(Z) = (result == 0);
@@ -1645,7 +1816,7 @@ macro setCCRW( operand ) {
 	V_equals_0();
 }
 
-:BITB indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0xE5); indexed1_5
+:BITB indexed1_5                 is Prefix18=0 & (op8=0xE5); indexed1_5
 {
 	result:1 = B & indexed1_5;
 	$(Z) = (result == 0);
@@ -1654,7 +1825,7 @@ macro setCCRW( operand ) {
 }
 
 @if defined(HCS12X)
-:BITX iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0x85); iopr16i
+:BITX iopr16i                 is Prefix18=1 & (op8=0x85); iopr16i
 {
 	local result = IX & iopr16i;
 	$(Z) = (result == 0);
@@ -1664,7 +1835,7 @@ macro setCCRW( operand ) {
 @endif
 
 @if defined(HCS12X)
-:BITX opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0x95); opr8a_16
+:BITX opr8a_16                 is Prefix18=1 & (op8=0x95); opr8a_16
 {
 	local result = IX & opr8a_16;
 	$(Z) = (result == 0);
@@ -1674,7 +1845,7 @@ macro setCCRW( operand ) {
 @endif
 
 @if defined(HCS12X)
-:BITX opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xB5); opr16a_16
+:BITX opr16a_16                 is Prefix18=1 & (op8=0xB5); opr16a_16
 {
 	local result = IX & opr16a_16;
 	$(Z) = (result == 0);
@@ -1684,7 +1855,7 @@ macro setCCRW( operand ) {
 @endif
 
 @if defined(HCS12X)
-:BITX indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xA5); indexed2_5
+:BITX indexed2_5                 is Prefix18=1 & (op8=0xA5); indexed2_5
 {
 	local result = IX & indexed2_5;
 	$(Z) = (result == 0);
@@ -1694,7 +1865,7 @@ macro setCCRW( operand ) {
 @endif
 
 @if defined(HCS12X)
-:BITY iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0xC5); iopr16i
+:BITY iopr16i                 is Prefix18=1 & (op8=0xC5); iopr16i
 {
 	local result = IY & iopr16i;
 	$(Z) = (result == 0);
@@ -1704,7 +1875,7 @@ macro setCCRW( operand ) {
 @endif
 
 @if defined(HCS12X)
-:BITY opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0xD5); opr8a_16
+:BITY opr8a_16                 is Prefix18=1 & (op8=0xD5); opr8a_16
 {
 	local result = IY & opr8a_16;
 	$(Z) = (result == 0);
@@ -1714,7 +1885,7 @@ macro setCCRW( operand ) {
 @endif
 
 @if defined(HCS12X)
-:BITY opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xF5); opr16a_16
+:BITY opr16a_16                 is Prefix18=1 & (op8=0xF5); opr16a_16
 {
 	local result = IY & opr16a_16;
 	$(Z) = (result == 0);
@@ -1724,7 +1895,7 @@ macro setCCRW( operand ) {
 @endif
 
 @if defined(HCS12X)
-:BITY indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xE5); indexed2_5
+:BITY indexed2_5                 is Prefix18=1 & (op8=0xE5); indexed2_5
 {
 	local result = IY & indexed2_5;
 	$(Z) = (result == 0);
@@ -1734,56 +1905,56 @@ macro setCCRW( operand ) {
 @endif
 
 
-:BLE rel8                 is XGATE=0 & Prefix18=0 & op8=0x2F; rel8
+:BLE rel8                 is Prefix18=0 & op8=0x2F; rel8
 {
 	if ($(Z) | ($(N) ^ $(V))) goto rel8;
 }
 
 #:BLO rel8	is op8=0x25; rel8		see BCS
 
-:BLS rel8                 is XGATE=0 & Prefix18=0 & op8=0x23; rel8
+:BLS rel8                 is Prefix18=0 & op8=0x23; rel8
 {
 	if (($(C) | $(Z)) == 1) goto rel8;
 }
 
-:BLT rel8                 is XGATE=0 & Prefix18=0 & op8=0x2D; rel8
+:BLT rel8                 is Prefix18=0 & op8=0x2D; rel8
 {
 	if (($(N) ^ $(V)) ==1) goto rel8;
 }
 
-:BMI rel8                 is XGATE=0 & Prefix18=0 & op8=0x2B; rel8
+:BMI rel8                 is Prefix18=0 & op8=0x2B; rel8
 {
 	if ($(N) == 1) goto rel8;
 }
 
-:BNE rel8                 is XGATE=0 & Prefix18=0 & op8=0x26; rel8
+:BNE rel8                 is Prefix18=0 & op8=0x26; rel8
 {
 	if ($(Z) == 0) goto rel8;
 }
 
-:BPL rel8                 is XGATE=0 & Prefix18=0 & op8=0x2A; rel8
+:BPL rel8                 is Prefix18=0 & op8=0x2A; rel8
 {
 	if ($(N) == 0) goto rel8;
 }
 
-:BRA rel8                 is XGATE=0 & Prefix18=0 & op8=0x20; rel8
+:BRA rel8                 is Prefix18=0 & op8=0x20; rel8
 {
 	goto rel8;
 }
 
-:BRCLR opr8a_8, msk8, rel8    is XGATE=0 & Prefix18=0 & op8=0x4F; opr8a_8; msk8; rel8
+:BRCLR opr8a_8, msk8, rel8    is Prefix18=0 & op8=0x4F; opr8a_8; msk8; rel8
 {
 	result:1 = opr8a_8 & msk8;
 	if (result == 0) goto rel8;
 }
 
-:BRCLR opr16a_8, msk8, rel8    is XGATE=0 & Prefix18=0 & op8=0x1F; opr16a_8; msk8; rel8
+:BRCLR opr16a_8, msk8, rel8    is Prefix18=0 & op8=0x1F; opr16a_8; msk8; rel8
 {
 	result:1 = opr16a_8 & msk8;
 	if (result == 0) goto rel8;
 }
 
-:BRCLR indexed1_3, msk8, rel8    is XGATE=0 & Prefix18=0 & op8=0x0F; indexed1_3; msk8; rel8
+:BRCLR indexed1_3, msk8, rel8    is Prefix18=0 & op8=0x0F; indexed1_3; msk8; rel8
 {
 	result:1 = indexed1_3 & msk8;
 	if (result == 0) goto rel8;
@@ -1792,30 +1963,30 @@ macro setCCRW( operand ) {
 # branch never is a two-byte nop
 SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest; }
 
-:BRN SkipNextInstr                 is XGATE=0 & Prefix18=0 & op8=0x21 & SkipNextInstr
+:BRN SkipNextInstr                 is Prefix18=0 & op8=0x21 & SkipNextInstr
 {
 	goto SkipNextInstr;
 }
 
-:BRSET opr8a_8, msk8, rel8    is XGATE=0 & Prefix18=0 & op8=0x4E; opr8a_8; msk8; rel8
+:BRSET opr8a_8, msk8, rel8    is Prefix18=0 & op8=0x4E; opr8a_8; msk8; rel8
 {
 	result:1 = ~opr8a_8 & msk8;
 	if (result != 0) goto rel8;
 }
 
-:BRSET opr16a_8, msk8, rel8    is XGATE=0 & Prefix18=0 & op8=0x1E; opr16a_8; msk8; rel8
+:BRSET opr16a_8, msk8, rel8    is Prefix18=0 & op8=0x1E; opr16a_8; msk8; rel8
 {
 	result:1 = ~opr16a_8 & msk8;
 	if (result != 0) goto rel8;
 }
 
-:BRSET indexed1_3, msk8, rel8    is XGATE=0 & Prefix18=0 & op8=0x0E; indexed1_3; msk8; rel8
+:BRSET indexed1_3, msk8, rel8    is Prefix18=0 & op8=0x0E; indexed1_3; msk8; rel8
 {
 	result:1 = ~indexed1_3 & msk8;
 	if (result != 0) goto rel8;
 }
 
-:BSET opr8a_8, msk8          is XGATE=0 & Prefix18=0 & op8=0x4C; opr8a_8; msk8
+:BSET opr8a_8, msk8          is Prefix18=0 & op8=0x4C; opr8a_8; msk8
 {
 	result:1 = opr8a_8 | msk8;
 	opr8a_8 = result;
@@ -1824,7 +1995,7 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 	V_equals_0();
 }
 
-:BSET opr16a_8, msk8          is XGATE=0 & Prefix18=0 & op8=0x1C; opr16a_8; msk8
+:BSET opr16a_8, msk8          is Prefix18=0 & op8=0x1C; opr16a_8; msk8
 {
 	result:1 = opr16a_8 | msk8;
 	opr16a_8 = result;
@@ -1833,7 +2004,7 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 	V_equals_0();
 }
 
-:BSET indexed1_3, msk8          is XGATE=0 & Prefix18=0 & op8=0x0C; indexed1_3; msk8
+:BSET indexed1_3, msk8          is Prefix18=0 & op8=0x0C; indexed1_3; msk8
 {
 	result:1 = indexed1_3 | msk8;
 	indexed1_3 = result;
@@ -1842,7 +2013,7 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 	V_equals_0();
 }
 
-:BSR rel8                 is XGATE=0 & Prefix18=0 & op8=0x07; rel8 
+:BSR rel8                 is Prefix18=0 & op8=0x07; rel8 
 {
 	tmp:2 = inst_next;
 	Push2( tmp );
@@ -1851,7 +2022,7 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 }
 
 @if defined(HCS12X)
-:BTAS  opr8a_8, msk8                 is XGATE=0 & Prefix18=1 & (op8=0x35); opr8a_8; msk8
+:BTAS  opr8a_8, msk8                 is Prefix18=1 & (op8=0x35); opr8a_8; msk8
 { 
 	op1:1 = opr8a_8;
 	tmp:1 = op1 & msk8;
@@ -1863,7 +2034,7 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 @endif
 
 @if defined(HCS12X)
-:BTAS  opr16a_8, msk8                 is XGATE=0 & Prefix18=1 & (op8=0x36); opr16a_8; msk8
+:BTAS  opr16a_8, msk8                 is Prefix18=1 & (op8=0x36); opr16a_8; msk8
 { 
 	op1:1 = opr16a_8;
 	tmp:1 = op1 & msk8;
@@ -1875,7 +2046,7 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 @endif
 
 @if defined(HCS12X)
-:BTAS  indexed1_3, msk8                 is XGATE=0 & Prefix18=1 & (op8=0x37); indexed1_3; msk8
+:BTAS  indexed1_3, msk8                 is Prefix18=1 & (op8=0x37); indexed1_3; msk8
 { 
 	op1:1 = indexed1_3;
 	tmp:1 = op1 & msk8;
@@ -1887,16 +2058,17 @@ SkipNextInstr: dest is epsilon [ dest = inst_next + 1; ]  { export *[RAM]:1 dest
 @endif
 
 
-:BVC rel8                 is XGATE=0 & Prefix18=0 & op8=0x28; rel8
+:BVC rel8                 is Prefix18=0 & op8=0x28; rel8
 {
 	if ($(V) == 0) goto rel8;
 }
 
-:BVS rel8                 is XGATE=0 & Prefix18=0 & op8=0x29; rel8
+:BVS rel8                 is Prefix18=0 & op8=0x29; rel8
 {
 	if ($(V) == 1) goto rel8;
 }
 
+@ifdef HCS12
 CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	PPAGE = imm8;
 
@@ -1905,7 +2077,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	export PageDest;
 }
 
-:CALL  CallDest   is XGATE=0 & Prefix18=0 & op8=0x4A;   CallDest
+:CALL  CallDest   is Prefix18=0 & op8=0x4A;   CallDest
 {
 	tmp:2 = inst_next;
 	Push2( tmp );
@@ -1915,13 +2087,13 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 
     build CallDest;
     
-    local dest:3 = CallDest;
+    local dest:$(SIZE) = CallDest;
 	call [dest];
 	
 	PPAGE = ppage_tmp;
 }
 
-:CALL indexed2_3, page    is XGATE=0 & Prefix18=0 & (op8=0x4B); indexed2_3; page 
+:CALL indexed2_3, page    is Prefix18=0 & (op8=0x4B); indexed2_3; page 
 {
 	tmp:2 = inst_next;
 	Push2( tmp );
@@ -1932,13 +2104,13 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	
 	build indexed2_3;
 
-	local dest:3;	
+	local dest:$(SIZE);	
 	GetPagedAddr(indexed2_3,dest);
 	call [dest];
 	PPAGE = ppage_tmp;
 }
 
-:CALL indexed0_2    is XGATE=0 & Prefix18=0 & (op8=0x4B); indexed0_2 
+:CALL indexed0_2    is Prefix18=0 & (op8=0x4B); indexed0_2 
 {
 	tmp:2 = inst_next;
 	Push2( tmp );
@@ -1950,14 +2122,15 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	local addr:2;
 	Load2(addr,indexed0_2);
 	
-	local dest:3;	
+	local dest:$(SIZE);	
 	GetPagedAddr(addr,dest);
 	call [dest];
 	
 	PPAGE = ppage_tmp;
 }
+@endif
 
-:CBA                is XGATE=0 & (Prefix18=1 & op8=0x17)
+:CBA                is (Prefix18=1 & op8=0x17)
 { 
 	tmp:1 = A - B;
 	$(N) = (tmp s< 0);
@@ -1966,17 +2139,17 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	$(C) = (B > A);
 }
 
-:CLC                     is XGATE=0 & Prefix18=0 & op16=0x10FE
+:CLC                     is Prefix18=0 & op16=0x10FE
 {
 	$(C) = 0;
 }
 
-:CLI                     is XGATE=0 & Prefix18=0 & op16=0x10EF
+:CLI                     is Prefix18=0 & op16=0x10EF
 {
 	$(I) = 0;
 }
 
-:CLR opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0x79); opr16a_8
+:CLR opr16a_8                 is Prefix18=0 & (op8=0x79); opr16a_8
 {
 	opr16a_8 = 0;
 	$(N) = 0;
@@ -1985,7 +2158,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	$(C) = 0;
 }
 
-:CLR indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0x69); indexed1_5 
+:CLR indexed1_5                 is Prefix18=0 & (op8=0x69); indexed1_5 
 {
 	indexed1_5 = 0;
 	$(N) = 0;
@@ -1994,7 +2167,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	$(C) = 0;
 }
 
-:CLRA                    is XGATE=0 & Prefix18=0 & op8=0x87 
+:CLRA                    is Prefix18=0 & op8=0x87 
 {
 	A = 0;
 	$(N) = 0;
@@ -2003,7 +2176,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	$(C) = 0;
 }
 
-:CLRB                    is XGATE=0 & Prefix18=0 & op8=0xC7 
+:CLRB                    is Prefix18=0 & op8=0xC7 
 {
 	B = 0;
 	$(N) = 0;
@@ -2013,7 +2186,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 }
 
 @if defined(HCS12X)
-:CLRW opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0x79); opr16a_16
+:CLRW opr16a_16                 is Prefix18=1 & (op8=0x79); opr16a_16
 {
 	opr16a_16 = 0;
 	$(N) = 0;
@@ -2024,7 +2197,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 @endif
 
 @if defined(HCS12X)
-:CLRW indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0x69); indexed2_5 
+:CLRW indexed2_5                 is Prefix18=1 & (op8=0x69); indexed2_5 
 {
 	indexed2_5 = 0;
 	$(N) = 0;
@@ -2035,7 +2208,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 @endif
 
 @if defined(HCS12X)
-:CLRX                    is XGATE=0 & Prefix18=1 & op8=0x87 
+:CLRX                    is Prefix18=1 & op8=0x87 
 {
 	IX = 0;
 	$(N) = 0;
@@ -2046,7 +2219,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 @endif
 
 @if defined(HCS12X)
-:CLRY                    is XGATE=0 & Prefix18=1 & op8=0xC7 
+:CLRY                    is Prefix18=1 & op8=0xC7 
 {
 	IY = 0;
 	$(N) = 0;
@@ -2056,12 +2229,12 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 }
 @endif
 
-:CLV                     is XGATE=0 & Prefix18=0 & op16=0x10FD
+:CLV                     is Prefix18=0 & op16=0x10FD
 {
 	$(V) = 0;
 }
 
-:CMPA iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0x81); iopr8i
+:CMPA iopr8i                 is Prefix18=0 & (op8=0x81); iopr8i
 { 
 	op1:1 = iopr8i;
 	tmp:1 = A - op1;
@@ -2071,7 +2244,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	$(C) = (op1 > A);
 }
 
-:CMPA opr8a_8                 is XGATE=0 & Prefix18=0 & (op8=0x91); opr8a_8
+:CMPA opr8a_8                 is Prefix18=0 & (op8=0x91); opr8a_8
 { 
 	op1:1 = opr8a_8;
 	tmp:1 = A - op1;
@@ -2081,7 +2254,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	$(C) = (op1 > A);
 }
 
-:CMPA opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0xB1); opr16a_8
+:CMPA opr16a_8                 is Prefix18=0 & (op8=0xB1); opr16a_8
 { 
 	op1:1 = opr16a_8;
 	tmp:1 = A - op1;
@@ -2091,7 +2264,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	$(C) = (op1 > A);
 }
 
-:CMPA indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0xA1); indexed1_5
+:CMPA indexed1_5                 is Prefix18=0 & (op8=0xA1); indexed1_5
 { 
 	op1:1 = indexed1_5;
 	tmp:1 = A - op1;
@@ -2101,7 +2274,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	$(C) = (op1 > A);
 }
 
-:CMPB iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0xC1); iopr8i
+:CMPB iopr8i                 is Prefix18=0 & (op8=0xC1); iopr8i
 { 
 	op1:1 = iopr8i;
 	tmp:1 = B - op1;
@@ -2111,7 +2284,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	$(C) = (op1 > B);
 }
 
-:CMPB opr8a_8                 is XGATE=0 & Prefix18=0 & (op8=0xD1); opr8a_8
+:CMPB opr8a_8                 is Prefix18=0 & (op8=0xD1); opr8a_8
 { 
 	op1:1 = opr8a_8;
 	tmp:1 = B - op1;
@@ -2121,7 +2294,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	$(C) = (op1 > B);
 }
 
-:CMPB opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0xF1); opr16a_8
+:CMPB opr16a_8                 is Prefix18=0 & (op8=0xF1); opr16a_8
 { 
 	op1:1 = opr16a_8;
 	tmp:1 = B - op1;
@@ -2131,7 +2304,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	$(C) = (op1 > B);
 }
 
-:CMPB indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0xE1); indexed1_5
+:CMPB indexed1_5                 is Prefix18=0 & (op8=0xE1); indexed1_5
 { 
 	op1:1 = indexed1_5;
 	tmp:1 = B - op1;
@@ -2141,7 +2314,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	$(C) = (op1 > B);
 }
 
-:COM opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0x71); opr16a_8
+:COM opr16a_8                 is Prefix18=0 & (op8=0x71); opr16a_8
 {
 	tmp:1 = ~opr16a_8;
 	opr16a_8 = tmp;
@@ -2151,7 +2324,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	V_equals_0();
 }
 
-:COM indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0x61); indexed1_5 
+:COM indexed1_5                 is Prefix18=0 & (op8=0x61); indexed1_5 
 {
 	tmp:1 = ~indexed1_5;
 	indexed1_5 = tmp;
@@ -2161,7 +2334,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	V_equals_0();
 }
 
-:COMA                    is XGATE=0 & Prefix18=0 & op8=0x41 
+:COMA                    is Prefix18=0 & op8=0x41 
 {
 	A = ~A;
 	$(Z) = (A == 0);
@@ -2170,7 +2343,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	V_equals_0();
 }
 
-:COMB                    is XGATE=0 & Prefix18=0 & op8=0x51 
+:COMB                    is Prefix18=0 & op8=0x51 
 {
 	B = ~B;
 	$(Z) = (B == 0);
@@ -2180,7 +2353,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 }
 
 @if defined(HCS12X)
-:COMW opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0x71); opr16a_16
+:COMW opr16a_16                 is Prefix18=1 & (op8=0x71); opr16a_16
 {
 	local tmp = ~opr16a_16;
 	opr16a_16 = tmp;
@@ -2192,7 +2365,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 @endif
 
 @if defined(HCS12X)
-:COMW indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0x61); indexed2_5 
+:COMW indexed2_5                 is Prefix18=1 & (op8=0x61); indexed2_5 
 {
 	local tmp = ~indexed2_5;
 	indexed2_5 = tmp;
@@ -2204,7 +2377,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 @endif
 
 @if defined(HCS12X)
-:COMX                    is XGATE=0 & Prefix18=1 & op8=0x41 
+:COMX                    is Prefix18=1 & op8=0x41 
 {
 	IX = ~IX;
 	$(Z) = (IX == 0);
@@ -2215,7 +2388,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 @endif
 
 @if defined(HCS12X)
-:COMY                    is XGATE=0 & Prefix18=1 & op8=0x51 
+:COMY                    is Prefix18=1 & op8=0x51 
 {
 	IY = ~IY;
 	$(Z) = (IY == 0);
@@ -2225,7 +2398,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 }
 @endif
 
-:CPD iopr16i                 is XGATE=0 & Prefix18=0 & (op8=0x8C); iopr16i
+:CPD iopr16i                 is Prefix18=0 & (op8=0x8C); iopr16i
 { 
 	op1:2 = iopr16i;
 	tmp:2 = D - op1;
@@ -2235,7 +2408,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	V_CMP_flag(D, op1);
 }
 
-:CPD opr8a_16                 is XGATE=0 & Prefix18=0 & (op8=0x9C); opr8a_16
+:CPD opr8a_16                 is Prefix18=0 & (op8=0x9C); opr8a_16
 { 
 	op1:2 = opr8a_16;
 	tmp:2 = D - op1;
@@ -2245,7 +2418,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	V_CMP_flag(D, op1);
 }
 
-:CPD opr16a_16                 is XGATE=0 & Prefix18=0 & (op8=0xBC); opr16a_16
+:CPD opr16a_16                 is Prefix18=0 & (op8=0xBC); opr16a_16
 { 
 	op1:2 = opr16a_16;
 	tmp:2 = D - op1;
@@ -2255,7 +2428,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 	V_CMP_flag(D, op1);
 }
 
-:CPD indexed2_5                 is XGATE=0 & Prefix18=0 & (op8=0xAC); indexed2_5
+:CPD indexed2_5                 is Prefix18=0 & (op8=0xAC); indexed2_5
 { 
 	op1:2 = indexed2_5;
 	tmp:2 = D - op1;
@@ -2266,7 +2439,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 }
 
 @if defined(HCS12X)
-:CPED iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0x8C); iopr16i
+:CPED iopr16i                 is Prefix18=1 & (op8=0x8C); iopr16i
 { 
 	op1:2 = iopr16i;
 	tmp:2 = D - (op1 + zext($(C)));
@@ -2278,7 +2451,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 @endif
 
 @if defined(HCS12X)
-:CPED opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0x9C); opr8a_16
+:CPED opr8a_16                 is Prefix18=1 & (op8=0x9C); opr8a_16
 { 
 	op1:2 = opr8a_16;
 	tmp:2 = D - (op1 + zext($(C)));
@@ -2290,7 +2463,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 @endif
 
 @if defined(HCS12X)
-:CPED opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xBC); opr16a_16
+:CPED opr16a_16                 is Prefix18=1 & (op8=0xBC); opr16a_16
 { 
 	op1:2 = opr16a_16;
 	tmp:2 = D - (op1 + zext($(C)));
@@ -2302,7 +2475,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 @endif
 
 @if defined(HCS12X)
-:CPED indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xAC); indexed2_5
+:CPED indexed2_5                 is Prefix18=1 & (op8=0xAC); indexed2_5
 { 
 	op1:2 = indexed2_5;
 	tmp:2 = D - (op1 + zext($(C)));
@@ -2314,7 +2487,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 @endif
 
 @if defined(HCS12X)
-:CPES iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0x8F); iopr16i
+:CPES iopr16i                 is Prefix18=1 & (op8=0x8F); iopr16i
 { 
 	op1:2 = iopr16i;
 	tmp:2 = SP - (op1 + zext($(C)));
@@ -2326,7 +2499,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 @endif
 
 @if defined(HCS12X)
-:CPES opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0x9F); opr8a_16
+:CPES opr8a_16                 is Prefix18=1 & (op8=0x9F); opr8a_16
 { 
 	op1:2 = opr8a_16;
 	tmp:2 = SP - (op1 + zext($(C)));
@@ -2338,7 +2511,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 @endif
 
 @if defined(HCS12X)
-:CPES opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xBF); opr16a_16
+:CPES opr16a_16                 is Prefix18=1 & (op8=0xBF); opr16a_16
 { 
 	op1:2 = opr16a_16;
 	tmp:2 = SP - (op1 + zext($(C)));
@@ -2350,7 +2523,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 @endif
 
 @if defined(HCS12X)
-:CPES indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xAF); indexed2_5
+:CPES indexed2_5                 is Prefix18=1 & (op8=0xAF); indexed2_5
 { 
 	op1:2 = indexed2_5;
 	tmp:2 = SP - (op1 + zext($(C)));
@@ -2362,7 +2535,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 @endif
 
 @if defined(HCS12X)
-:CPEX iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0x8E); iopr16i
+:CPEX iopr16i                 is Prefix18=1 & (op8=0x8E); iopr16i
 { 
 	op1:2 = iopr16i;
 	tmp:2 = IX - (op1 + zext($(C)));
@@ -2374,7 +2547,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 @endif
 
 @if defined(HCS12X)
-:CPEX opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0x9E); opr8a_16
+:CPEX opr8a_16                 is Prefix18=1 & (op8=0x9E); opr8a_16
 { 
 	op1:2 = opr8a_16;
 	tmp:2 = IX - (op1 + zext($(C)));
@@ -2386,7 +2559,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 @endif
 
 @if defined(HCS12X)
-:CPEX opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xBE); opr16a_16
+:CPEX opr16a_16                 is Prefix18=1 & (op8=0xBE); opr16a_16
 { 
 	op1:2 = opr16a_16;
 	tmp:2 = IX - (op1 + zext($(C)));
@@ -2398,7 +2571,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 @endif
 
 @if defined(HCS12X)
-:CPEX indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xAE); indexed2_5
+:CPEX indexed2_5                 is Prefix18=1 & (op8=0xAE); indexed2_5
 { 
 	op1:2 = indexed2_5;
 	tmp:2 = IX - (op1 + zext($(C)));
@@ -2410,7 +2583,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 @endif
 
 @if defined(HCS12X)
-:CPEY iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0x8D); iopr16i
+:CPEY iopr16i                 is Prefix18=1 & (op8=0x8D); iopr16i
 { 
 	op1:2 = iopr16i;
 	tmp:2 = IY - (op1 + zext($(C)));
@@ -2422,7 +2595,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 @endif
 
 @if defined(HCS12X)
-:CPEY opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0x9D); opr8a_16
+:CPEY opr8a_16                 is Prefix18=1 & (op8=0x9D); opr8a_16
 { 
 	op1:2 = opr8a_16;
 	tmp:2 = IY - (op1 + zext($(C)));
@@ -2434,7 +2607,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 @endif
 
 @if defined(HCS12X)
-:CPEY opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xBD); opr16a_16
+:CPEY opr16a_16                 is Prefix18=1 & (op8=0xBD); opr16a_16
 { 
 	op1:2 = opr16a_16;
 	tmp:2 = IY - (op1 + zext($(C)));
@@ -2446,7 +2619,7 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 @endif
 
 @if defined(HCS12X)
-:CPEY indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xAD); indexed2_5
+:CPEY indexed2_5                 is Prefix18=1 & (op8=0xAD); indexed2_5
 { 
 	op1:2 = indexed2_5;
 	tmp:2 = IY - (op1 + zext($(C)));
@@ -2459,9 +2632,9 @@ CallDest:  PageDest, imm8 is (imm16; imm8) & PageDest {
 
 SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 dest; }
 
-:CPS loc                 is XGATE=0 & Prefix18=0 & (op8=0x8F) & SkipNext2Bytes [ loc = (inst_next & 0xffffff); ]
+:CPS loc                 is Prefix18=0 & (op8=0x8F) & SkipNext2Bytes [ loc = (inst_next & 0xffffff); ]
 { 
-	local addr:3 = inst_next;
+	local addr:$(SIZE) = inst_next;
 	local op1:2 = *[RAM]:2 addr;
 	tmp:2 = SP - op1;
 	$(Z) = (tmp == 0);
@@ -2471,7 +2644,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	goto SkipNext2Bytes;
 }
 
-:CPS opr8a_16                 is XGATE=0 & Prefix18=0 & (op8=0x9F); opr8a_16
+:CPS opr8a_16                 is Prefix18=0 & (op8=0x9F); opr8a_16
 { 
 	op1:2 = opr8a_16;
 	tmp:2 = SP - op1;
@@ -2481,9 +2654,9 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	V_CMP_flag(SP, op1);
 }
 
-:CPS loc                 is XGATE=0 & Prefix18=0 & (op8=0xBF) & SkipNext2Bytes [ loc = (inst_next & 0xffffff); ]
+:CPS loc                 is Prefix18=0 & (op8=0xBF) & SkipNext2Bytes [ loc = (inst_next & 0xffffff); ]
 {
-	local addr:3 = inst_next;
+	local addr:$(SIZE) = inst_next;
 	local op1:2 = *[RAM]:2 addr;
 	Load2(op1, op1);
 	tmp:2 = SP - op1;
@@ -2494,7 +2667,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	goto SkipNext2Bytes;
 }
 
-:CPS indexed2_5                 is XGATE=0 & Prefix18=0 & (op8=0xAF); indexed2_5
+:CPS indexed2_5                 is Prefix18=0 & (op8=0xAF); indexed2_5
 { 
 	op1:2 = indexed2_5;
 	tmp:2 = SP - op1;
@@ -2504,7 +2677,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	V_CMP_flag(SP, op1);
 }
 
-:CPX iopr16i                 is XGATE=0 & Prefix18=0 & (op8=0x8E); iopr16i
+:CPX iopr16i                 is Prefix18=0 & (op8=0x8E); iopr16i
 { 
 	op1:2 = iopr16i;
 	tmp:2 = IX - op1;
@@ -2514,7 +2687,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	V_CMP_flag(IX, op1);
 }
 
-:CPX opr8a_16                 is XGATE=0 & Prefix18=0 & (op8=0x9E); opr8a_16
+:CPX opr8a_16                 is Prefix18=0 & (op8=0x9E); opr8a_16
 { 
 	op1:2 = opr8a_16;
 	tmp:2 = IX - op1;
@@ -2524,7 +2697,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	V_CMP_flag(IX, op1);
 }
 
-:CPX opr16a_16                 is XGATE=0 & Prefix18=0 & (op8=0xBE); opr16a_16
+:CPX opr16a_16                 is Prefix18=0 & (op8=0xBE); opr16a_16
 { 
 	op1:2 = opr16a_16;
 	tmp:2 = IX - op1;
@@ -2534,7 +2707,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	V_CMP_flag(IX, op1);
 }
 
-:CPX indexed2_5                 is XGATE=0 & Prefix18=0 & (op8=0xAE); indexed2_5
+:CPX indexed2_5                 is Prefix18=0 & (op8=0xAE); indexed2_5
 { 
 	op1:2 = indexed2_5;
 	tmp:2 = IX - op1;
@@ -2544,7 +2717,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	V_CMP_flag(IX, op1);
 }
 
-:CPY iopr16i                 is XGATE=0 & Prefix18=0 & (op8=0x8D); iopr16i
+:CPY iopr16i                 is Prefix18=0 & (op8=0x8D); iopr16i
 { 
 	op1:2 = iopr16i;
 	tmp:2 = IY - op1;
@@ -2554,7 +2727,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	V_CMP_flag(IY, op1);
 }
 
-:CPY opr8a_16                 is XGATE=0 & Prefix18=0 & (op8=0x9D); opr8a_16
+:CPY opr8a_16                 is Prefix18=0 & (op8=0x9D); opr8a_16
 { 
 	op1:2 = opr8a_16;
 	tmp:2 = IY - op1;
@@ -2564,7 +2737,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	V_CMP_flag(IY, op1);
 }
 
-:CPY opr16a_16                 is XGATE=0 & Prefix18=0 & (op8=0xBD); opr16a_16
+:CPY opr16a_16                 is Prefix18=0 & (op8=0xBD); opr16a_16
 { 
 	op1:2 = opr16a_16;
 	tmp:2 = IY - op1;
@@ -2574,7 +2747,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	V_CMP_flag(IY, op1);
 }
 
-:CPY indexed2_5                 is XGATE=0 & Prefix18=0 & (op8=0xAD); indexed2_5
+:CPY indexed2_5                 is Prefix18=0 & (op8=0xAD); indexed2_5
 { 
 	op1:2 = indexed2_5;
 	tmp:2 = IY - op1;
@@ -2584,7 +2757,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	V_CMP_flag(IY, op1);
 }
 
-:DAA                     is XGATE=0 & Prefix18=1 & op8=0x07 
+:DAA                     is Prefix18=1 & op8=0x07 
 {
 	A = decimalAdjustAccumulator(A, $(C), $(H));
 	$(C) = decimalAdjustCarry(A, $(C), $(H));
@@ -2593,31 +2766,31 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	#V is undefined
 }
 
-:DBEQ byte9_8, rel9               is XGATE=0 & Prefix18=0 & op8=0x04; op15_13=0x0 & size10_10=0 & byte9_8 & rel9
+:DBEQ byte9_8, rel9               is Prefix18=0 & op8=0x04; op15_13=0x0 & size10_10=0 & byte9_8 & rel9
 {
 	byte9_8 = byte9_8 - 1;
 	if (byte9_8 == 0) goto rel9;
 }
 
-:DBEQ word9_8, rel9               is XGATE=0 & Prefix18=0 & op8=0x04; op15_13=0x0 & size10_10=1 & word9_8 & rel9
+:DBEQ word9_8, rel9               is Prefix18=0 & op8=0x04; op15_13=0x0 & size10_10=1 & word9_8 & rel9
 {
 	word9_8 = word9_8 - 1;
 	if (word9_8 == 0) goto rel9;
 }
 
-:DBNE byte9_8, rel9               is XGATE=0 & Prefix18=0 & op8=0x04; op15_13=0x1 & size10_10=0 & byte9_8 & rel9
+:DBNE byte9_8, rel9               is Prefix18=0 & op8=0x04; op15_13=0x1 & size10_10=0 & byte9_8 & rel9
 {
 	byte9_8 = byte9_8 - 1;
 	if (byte9_8 != 0) goto rel9;
 }
 
-:DBNE word9_8, rel9               is XGATE=0 & Prefix18=0 & op8=0x04; op15_13=0x1 & size10_10=1 & word9_8 & rel9
+:DBNE word9_8, rel9               is Prefix18=0 & op8=0x04; op15_13=0x1 & size10_10=1 & word9_8 & rel9
 {
 	word9_8 = word9_8 - 1;
 	if (word9_8 != 0) goto rel9;
 }
 
-:DEC opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0x73); opr16a_8
+:DEC opr16a_8                 is Prefix18=0 & (op8=0x73); opr16a_8
 {
 	tmp:1 = opr16a_8;
 	result:1 = tmp - 1;
@@ -2627,7 +2800,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	V_DEC_flag(tmp);
 }
 
-:DEC indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0x63); indexed1_5 
+:DEC indexed1_5                 is Prefix18=0 & (op8=0x63); indexed1_5 
 {
 	tmp:1 = indexed1_5;
 	result:1 = tmp - 1;
@@ -2637,7 +2810,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	V_DEC_flag(tmp);
 }
 
-:DECA                    is XGATE=0 & Prefix18=0 & op8=0x43 
+:DECA                    is Prefix18=0 & op8=0x43 
 {
 	tmp:1 = A;
 	A = tmp - 1;
@@ -2646,7 +2819,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	V_DEC_flag(tmp);
 }
 
-:DECB                    is XGATE=0 & Prefix18=0 & op8=0x53 
+:DECB                    is Prefix18=0 & op8=0x53 
 {
 	tmp:1 = B;
 	B = tmp - 1;
@@ -2656,7 +2829,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 }
 
 @if defined(HCS12X)
-:DECW opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0x73); opr16a_16
+:DECW opr16a_16                 is Prefix18=1 & (op8=0x73); opr16a_16
 {
 	local tmp = opr16a_16;
 	local result = tmp - 1;
@@ -2668,7 +2841,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 @endif
 
 @if defined(HCS12X)
-:DECW indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0x63); indexed2_5 
+:DECW indexed2_5                 is Prefix18=1 & (op8=0x63); indexed2_5 
 {
 	local tmp = indexed2_5;
 	local result = tmp - 1;
@@ -2680,7 +2853,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 @endif
 
 @if defined(HCS12X)
-:DECX                    is XGATE=0 & Prefix18=1 & op8=0x43 
+:DECX                    is Prefix18=1 & op8=0x43 
 {
 	local tmp = IX;
 	IX = tmp - 1;
@@ -2691,7 +2864,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 @endif
 
 @if defined(HCS12X)
-:DECY                    is XGATE=0 & Prefix18=1 & op8=0x53 
+:DECY                    is Prefix18=1 & op8=0x53 
 {
 	local tmp = IY;
 	IY = tmp - 1;
@@ -2701,24 +2874,24 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 }
 @endif
 
-:DES                    is XGATE=0 & Prefix18=0 & op16=0x1B9F 
+:DES                    is Prefix18=0 & op16=0x1B9F 
 {
 	SP = SP - 1;
 }
 
-:DEX                    is XGATE=0 & Prefix18=0 & op8=0x09 
+:DEX                    is Prefix18=0 & op8=0x09 
 {
 	IX = IX - 1;
 	$(Z) = (IX == 0);
 }
 
-:DEY                    is XGATE=0 & Prefix18=0 & op8=0x03 
+:DEY                    is Prefix18=0 & op8=0x03 
 {
 	IY = IY - 1;
 	$(Z) = (IY == 0);
 }
 
-:EDIV                     is XGATE=0 & Prefix18=0 & op8=0x11 
+:EDIV                     is Prefix18=0 & op8=0x11 
 {
 	tmp:4 = (zext(IY) << 16) | (zext(D));
 	resultQ:4 = tmp / zext(IX);
@@ -2731,7 +2904,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	$(C) = (IX == 0);
 }
 
-:EDIVS                     is XGATE=0 & Prefix18=1 & op8=0x14 
+:EDIVS                     is Prefix18=1 & op8=0x14 
 {
 	tmp:4 = (zext(IY) << 16) | (zext(D));
 	resultQ:4 = tmp s/ sext(IX);
@@ -2744,7 +2917,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	$(C) = (IX == 0);
 }
 
-:EMACS opr16a                    is XGATE=0 & Prefix18=1 & op8=0x12; opr16a 
+:EMACS opr16a                    is Prefix18=1 & op8=0x12; opr16a 
 {
 	local valx:2 = 0;
 	local valy:2 = 0;
@@ -2758,7 +2931,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	$(C) = (result > 0x00000000FFFFFFFF);
 }
 
-:EMAXD indexed2_5                    is XGATE=0 & Prefix18=1 & op8=0x1A; indexed2_5 
+:EMAXD indexed2_5                    is Prefix18=1 & op8=0x1A; indexed2_5 
 {
 	result:4 = zext(D) - zext(indexed2_5);
 	if (D > indexed2_5) goto <done>;
@@ -2771,7 +2944,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	$(C) = (result > 0x0000FFFF);
 }
 
-:EMAXM indexed2_5                    is XGATE=0 & Prefix18=1 & op8=0x1E; indexed2_5 
+:EMAXM indexed2_5                    is Prefix18=1 & op8=0x1E; indexed2_5 
 {
 	result:4 = zext(D) - zext(indexed2_5);
 	if (D > indexed2_5) goto <done>;
@@ -2784,7 +2957,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	$(C) = (result > 0x0000FFFF);
 }
 
-:EMIND indexed2_5                    is XGATE=0 & Prefix18=1 & op8=0x1B; indexed2_5 
+:EMIND indexed2_5                    is Prefix18=1 & op8=0x1B; indexed2_5 
 {
 	result:4 = zext(D) - zext(indexed2_5);
 	if (D < indexed2_5) goto <done>;
@@ -2797,7 +2970,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	$(C) = (result > 0x0000FFFF);
 }
 
-:EMINM indexed2_5                    is XGATE=0 & Prefix18=1 & op8=0x1F; indexed2_5 
+:EMINM indexed2_5                    is Prefix18=1 & op8=0x1F; indexed2_5 
 {
 	result:4 = zext(D) - zext(indexed2_5);
 	if (D < indexed2_5) goto <done>;
@@ -2810,7 +2983,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	$(C) = (result > 0x0000FFFF);
 }
 
-:EMUL                     is XGATE=0 & Prefix18=0 & op8=0x13
+:EMUL                     is Prefix18=0 & op8=0x13
 {
 	result:4 = zext(D) * zext(IY);
 	IY = result(2);
@@ -2820,7 +2993,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	$(C) = result[15,1];
 }
 
-:EMULS                     is XGATE=0 & Prefix18=1 & op8=0x13
+:EMULS                     is Prefix18=1 & op8=0x13
 {
 	result:4 = sext(D) * sext(IY);
 	IY = result(2);
@@ -2830,7 +3003,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	$(C) = result[15,1];
 }
 
-:EORA iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0x88); iopr8i
+:EORA iopr8i                 is Prefix18=0 & (op8=0x88); iopr8i
 { 
 	op1:1 = iopr8i;
 	A = A ^ op1;
@@ -2839,7 +3012,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	V_equals_0();
 }
 
-:EORA opr8a_8                 is XGATE=0 & Prefix18=0 & (op8=0x98); opr8a_8
+:EORA opr8a_8                 is Prefix18=0 & (op8=0x98); opr8a_8
 { 
 	op1:1 = opr8a_8;
 	A = A ^ op1;
@@ -2848,7 +3021,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	V_equals_0();
 }
 
-:EORA opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0xB8); opr16a_8
+:EORA opr16a_8                 is Prefix18=0 & (op8=0xB8); opr16a_8
 { 
 	op1:1 = opr16a_8;
 	A = A ^ op1;
@@ -2857,7 +3030,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	V_equals_0();
 }
 
-:EORA indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0xA8); indexed1_5
+:EORA indexed1_5                 is Prefix18=0 & (op8=0xA8); indexed1_5
 { 
 	op1:1 = indexed1_5;
 	A = A ^ op1;
@@ -2866,7 +3039,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	V_equals_0();
 }
 
-:EORB iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0xC8); iopr8i
+:EORB iopr8i                 is Prefix18=0 & (op8=0xC8); iopr8i
 { 
 	op1:1 = iopr8i;
 	B = B ^ op1;
@@ -2875,7 +3048,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	V_equals_0();
 }
 
-:EORB opr8a_8                 is XGATE=0 & Prefix18=0 & (op8=0xD8); opr8a_8
+:EORB opr8a_8                 is Prefix18=0 & (op8=0xD8); opr8a_8
 { 
 	op1:1 = opr8a_8;
 	B = B ^ op1;
@@ -2884,7 +3057,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	V_equals_0();
 }
 
-:EORB opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0xF8); opr16a_8
+:EORB opr16a_8                 is Prefix18=0 & (op8=0xF8); opr16a_8
 { 
 	op1:1 = opr16a_8;
 	B = B ^ op1;
@@ -2893,7 +3066,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	V_equals_0();
 }
 
-:EORB indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0xE8); indexed1_5
+:EORB indexed1_5                 is Prefix18=0 & (op8=0xE8); indexed1_5
 { 
 	op1:1 = indexed1_5;
 	B = B ^ op1;
@@ -2903,7 +3076,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 }
 
 @if defined(HCS12X)
-:EORX iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0x88); iopr16i
+:EORX iopr16i                 is Prefix18=1 & (op8=0x88); iopr16i
 { 
 	local op1 = iopr16i;
 	IX = IX ^ op1;
@@ -2914,7 +3087,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 @endif
 
 @if defined(HCS12X)
-:EORX opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0x98); opr8a_16
+:EORX opr8a_16                 is Prefix18=1 & (op8=0x98); opr8a_16
 { 
 	local op1 = opr8a_16;
 	IX = IX ^ op1;
@@ -2925,7 +3098,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 @endif
 
 @if defined(HCS12X)
-:EORX opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xB8); opr16a_16
+:EORX opr16a_16                 is Prefix18=1 & (op8=0xB8); opr16a_16
 { 
 	local op1 = opr16a_16;
 	IX = IX ^ op1;
@@ -2936,7 +3109,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 @endif
 
 @if defined(HCS12X)
-:EORX indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xA8); indexed2_5
+:EORX indexed2_5                 is Prefix18=1 & (op8=0xA8); indexed2_5
 { 
 	local op1 = indexed2_5;
 	IX = IX ^ op1;
@@ -2947,7 +3120,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 @endif
 
 @if defined(HCS12X)
-:EORY iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0xC8); iopr16i
+:EORY iopr16i                 is Prefix18=1 & (op8=0xC8); iopr16i
 { 
 	local op1 = iopr16i;
 	IY = IY ^ op1;
@@ -2958,7 +3131,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 @endif
 
 @if defined(HCS12X)
-:EORY opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0xD8); opr8a_16
+:EORY opr8a_16                 is Prefix18=1 & (op8=0xD8); opr8a_16
 { 
 	local op1 = opr8a_16;
 	IY = IY ^ op1;
@@ -2966,9 +3139,10 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	$(N) = (IY s< 0);
 	V_equals_0();
 }
+@endif
 
 @if defined(HCS12X)
-:EORY opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xF8); opr16a_16
+:EORY opr16a_16                 is Prefix18=1 & (op8=0xF8); opr16a_16
 { 
 	local op1 = opr16a_16;
 	IY = IY ^ op1;
@@ -2979,7 +3153,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 @endif
 
 @if defined(HCS12X)
-:EORY indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xE8); indexed2_5
+:EORY indexed2_5                 is Prefix18=1 & (op8=0xE8); indexed2_5
 { 
 	local op1 = indexed2_5;
 	IY = IY ^ op1;
@@ -2989,7 +3163,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 }
 @endif
 
-:ETBL indexed2_1                    is XGATE=0 & Prefix18=1 & op8=0x3F; indexed2_1 
+:ETBL indexed2_1                    is Prefix18=1 & op8=0x3F; indexed2_1 
 {
 	D = ETBL( indexed2_1, B );
 	$(N) = (D s< 0);
@@ -2998,7 +3172,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 }
 
 # this case 'C0' or 'C8', does not display similarly to other members of either its row or column
-:EXG D, A	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+:EXG D, A	is Prefix18=0 & ( op8=0xB7 );
 	(
 		( rows3_0=0x0 & (                                                                     columns7_4=0xC                                                    ) ) |
 
@@ -3012,7 +3186,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 } 
 
 # this case 'C1' or 'C9', does not work similarly to other members of either its row or column
-:EXG D, B	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+:EXG D, B	is Prefix18=0 & ( op8=0xB7 );
 	(
 		( rows3_0=0x1 & (                                                                     columns7_4=0xC                                                    ) ) |
 
@@ -3025,7 +3199,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 } 
 
 # this case '84' or '8C', does not work similarly to other members of either its row or column
-:EXG A, D	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+:EXG A, D	is Prefix18=0 & ( op8=0xB7 );
 	(
 		( rows3_0=0x4 & ( columns7_4=0x8                                                                                                                        ) ) |
 
@@ -3037,7 +3211,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 } 
 
 # this case '94' or '9C', does not work similarly to other members of either its row or column
-:EXG B, D	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+:EXG B, D	is Prefix18=0 & ( op8=0xB7 );
 	(
 		( rows3_0=0x4 & (                  columns7_4=0x9                                                                                                       ) ) |
 
@@ -3049,7 +3223,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 } 
 
 # this case 'A8', does not work the same as 'A0'
-:EXG CCRH, A	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+:EXG CCRH, A	is Prefix18=0 & ( op8=0xB7 );
 	(
 		( rows3_0=0x8 & (                                   columns7_4=0xA                                                                                      ) ) 
 	) &
@@ -3061,7 +3235,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 } 
 
 # this case '8A', does not work the same as '82'
-:EXG A, CCRH	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+:EXG A, CCRH	is Prefix18=0 & ( op8=0xB7 );
 	(
 		( rows3_0=0xA & ( columns7_4=0x8                                                                                                                        ) ) 
 	) &
@@ -3073,7 +3247,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 } 
 
 # this case 'AA', does not display the same as 'A2'
-:EXG CCRW, "CCRW"	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+:EXG CCRW, "CCRW"	is Prefix18=0 & ( op8=0xB7 );
 	(
 		( rows3_0=0xA & (                                   columns7_4=0xA                                                                                      ) ) 
 	) &
@@ -3082,7 +3256,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	CCRW = CCRW;
 } 
 
-:EXG bytes_ABCl_6_4, bytes_ABCl_2_0	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+:EXG bytes_ABCl_6_4, bytes_ABCl_2_0	is Prefix18=0 & ( op8=0xB7 );
 	(
 		( rows3_0=0x0 & ( columns7_4=0x8 | columns7_4=0x9                                                                                                       ) ) |
 		( rows3_0=0x1 & ( columns7_4=0x8 | columns7_4=0x9                                                                                                       ) ) |
@@ -3097,7 +3271,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	bytes_ABCl_6_4 = tmp;
 }
 
-:EXG bytes_ABCl_6_4, CCR	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+:EXG bytes_ABCl_6_4, CCR	is Prefix18=0 & ( op8=0xB7 );
 	(
 		( rows3_0=0x2 & ( columns7_4=0x8 | columns7_4=0x9                                                                                                       ) ) |
 
@@ -3110,7 +3284,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	setCCR( tmp );
 }
 
-:EXG CCR, bytes_ABCl_2_0	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+:EXG CCR, bytes_ABCl_2_0	is Prefix18=0 & ( op8=0xB7 );
 	(
 		( rows3_0=0x0 & (                                   columns7_4=0xA                                                                                      ) ) |
 		( rows3_0=0x1 & (                                   columns7_4=0xA                                                                                      ) ) |
@@ -3125,7 +3299,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	setCCR( tmp );
 }
 
-:EXG bytes_T3l_XlYlSl_6_4, A	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+:EXG bytes_T3l_XlYlSl_6_4, A	is Prefix18=0 & ( op8=0xB7 );
 	(
 		( rows3_0=0x0 & (                                                    columns7_4=0xB |                  columns7_4=0xD | columns7_4=0xE | columns7_4=0xF ) ) 
 	) &
@@ -3136,7 +3310,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	words_T3_XYS_6_4 = tmp;
 }
 
-:EXG bytes_T3h_XhYhSh_6_4, A	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+:EXG bytes_T3h_XhYhSh_6_4, A	is Prefix18=0 & ( op8=0xB7 );
 	(
 		( rows3_0=0x8 & (                                                    columns7_4=0xB |                  columns7_4=0xD | columns7_4=0xE | columns7_4=0xF ) ) 
 	) &
@@ -3147,7 +3321,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	words_T3_XYS_6_4 = tmp;
 }
 
-:EXG bytes_T3l_XlYlSl_6_4, B	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+:EXG bytes_T3l_XlYlSl_6_4, B	is Prefix18=0 & ( op8=0xB7 );
 	(
 		( rows3_0=0x1 & (                                                    columns7_4=0xB |                  columns7_4=0xD | columns7_4=0xE | columns7_4=0xF ) ) 
 	) &
@@ -3158,7 +3332,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	words_T3_XYS_6_4 = tmp;
 }
 
-:EXG bytes_T3l_XlYlSl_6_4, B	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+:EXG bytes_T3l_XlYlSl_6_4, B	is Prefix18=0 & ( op8=0xB7 );
 	(
 		( rows3_0=0x9 & (                                                    columns7_4=0xB |                  columns7_4=0xD | columns7_4=0xE | columns7_4=0xF ) ) 
 	) &
@@ -3169,7 +3343,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	bytes_T3l_XlYlSl_6_4 = tmp;
 }
 
-:EXG bytes_T3lDlXlYlSl_6_4, CCR	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+:EXG bytes_T3lDlXlYlSl_6_4, CCR	is Prefix18=0 & ( op8=0xB7 );
 	(
 		( rows3_0=0x2 & (                                                    columns7_4=0xB | columns7_4=0xC | columns7_4=0xD | columns7_4=0xE | columns7_4=0xF ) ) 
 	) &
@@ -3181,7 +3355,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	words_T3DXYS_6_4 = tmp;
 }
 
-:EXG words_T3DXYS_6_4, CCRW	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+:EXG words_T3DXYS_6_4, CCRW	is Prefix18=0 & ( op8=0xB7 );
 	(
 		( rows3_0=0xA & (                                                    columns7_4=0xB | columns7_4=0xC | columns7_4=0xD | columns7_4=0xE | columns7_4=0xF ) ) 
 	) &
@@ -3193,7 +3367,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 }
 
 # this case 'CB', does not work similarly to other members of either its row or column
-:EXG D, TMP1	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+:EXG D, TMP1	is Prefix18=0 & ( op8=0xB7 );
 	(
 		( rows3_0=0xB & (                                                                     columns7_4=0xC                                                    ) ) 
 	) &
@@ -3205,7 +3379,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 } 
 
 # this case 'BC', does not work similarly to other members of either its row or column
-:EXG TMP1, D	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+:EXG TMP1, D	is Prefix18=0 & ( op8=0xB7 );
 	(
 		( rows3_0=0xC & (                                                    columns7_4=0xB                                                                     ) ) 
 	) &
@@ -3216,7 +3390,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	D = tmp;
 } 
 
-:EXG words_T3DXYS_6_4, words_T2DXYS_2_0	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+:EXG words_T3DXYS_6_4, words_T2DXYS_2_0	is Prefix18=0 & ( op8=0xB7 );
 	(
 # Case "C5" is handled by XGDX
 # Case "C6" is handled by XGDY
@@ -3239,7 +3413,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	words_T2DXYS_2_0 = tmp;
 }
 
-:EXG bytes_ABCl_6_4, words_T2DXYS_2_0	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+:EXG bytes_ABCl_6_4, words_T2DXYS_2_0	is Prefix18=0 & ( op8=0xB7 );
 	(
 		( rows3_0=0x3 & ( columns7_4=0x8 | columns7_4=0x9                                                                                                       ) ) |
 
@@ -3254,7 +3428,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	words_T2DXYS_2_0 = tmp;
 }
 
-:EXG bytes_ABCl_6_4, bytes_T2hDhXhYhSh_2_0	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+:EXG bytes_ABCl_6_4, bytes_T2hDhXhYhSh_2_0	is Prefix18=0 & ( op8=0xB7 );
 	(
 		( rows3_0=0xB & ( columns7_4=0x8                                                                                                                        ) ) |
 
@@ -3270,7 +3444,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 }
 
 # only column 9 with rows B, (skip C), D, E, and F
-:EXG bytes_ABCl_6_4, bytes_T2lDlXlYlSl_2_0	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+:EXG bytes_ABCl_6_4, bytes_T2lDlXlYlSl_2_0	is Prefix18=0 & ( op8=0xB7 );
 	(
 		( rows3_0=0xB & (                  columns7_4=0x9                                                                                                       ) ) |
 
@@ -3285,7 +3459,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	bytes_T2lDlXlYlSl_2_0 = tmp;
 }
 
-:EXG CCR, words_T2DXYS_2_0	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+:EXG CCR, words_T2DXYS_2_0	is Prefix18=0 & ( op8=0xB7 );
 	(
 		( rows3_0=0x3 & (                                   columns7_4=0xA                                                                                      ) ) |
 		( rows3_0=0x4 & (                                   columns7_4=0xA                                                                                      ) ) |
@@ -3300,7 +3474,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	words_T2DXYS_2_0 = tmp;
 }
 
-:EXG CCRW, words_T2DXYS_2_0	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+:EXG CCRW, words_T2DXYS_2_0	is Prefix18=0 & ( op8=0xB7 );
 	(
 		( rows3_0=0xB & (                                   columns7_4=0xA                                                                                      ) ) |
 		( rows3_0=0xC & (                                   columns7_4=0xA                                                                                      ) ) |
@@ -3315,7 +3489,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	words_T2DXYS_2_0 = tmp;
 }
 
-:FDIV                     is XGATE=0 & Prefix18=1 & op8=0x11 
+:FDIV                     is Prefix18=1 & op8=0x11 
 {
 	$(V) = (IX <= D);
 	$(C) = (IX == 0);
@@ -3376,31 +3550,31 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 #:GSTY 	is op16=0x186D		See GPAGE extended STY
 
 
-:IBEQ byte9_8, rel9               is XGATE=0 & Prefix18=0 & op8=0x04; op15_13=0x4 & size10_10=0 & byte9_8 & rel9
+:IBEQ byte9_8, rel9               is Prefix18=0 & op8=0x04; op15_13=0x4 & size10_10=0 & byte9_8 & rel9
 {
 	byte9_8 = byte9_8 + 1;
 	if (byte9_8 == 0) goto rel9;
 }
 
-:IBEQ word9_8, rel9               is XGATE=0 & Prefix18=0 & op8=0x04; op15_13=0x4 & size10_10=1 & word9_8 & rel9
+:IBEQ word9_8, rel9               is Prefix18=0 & op8=0x04; op15_13=0x4 & size10_10=1 & word9_8 & rel9
 {
 	word9_8 = word9_8 + 1;
 	if (word9_8 == 0) goto rel9;
 }
 
-:IBNE byte9_8, rel9               is XGATE=0 & Prefix18=0 & op8=0x04; op15_13=0x5 & size10_10=0 & byte9_8 & rel9
+:IBNE byte9_8, rel9               is Prefix18=0 & op8=0x04; op15_13=0x5 & size10_10=0 & byte9_8 & rel9
 {
 	byte9_8 = byte9_8 + 1;
 	if (byte9_8 != 0) goto rel9;
 }
 
-:IBNE word9_8, rel9               is XGATE=0 & Prefix18=0 & op8=0x04; op15_13=0x5 & size10_10=1 & word9_8 & rel9
+:IBNE word9_8, rel9               is Prefix18=0 & op8=0x04; op15_13=0x5 & size10_10=1 & word9_8 & rel9
 {
 	word9_8 = word9_8 + 1;
 	if (word9_8 != 0) goto rel9;
 }
 
-:IDIV                     is XGATE=0 & Prefix18=1 & op8=0x10 
+:IDIV                     is Prefix18=1 & op8=0x10 
 {
 	$(C) = (IX == 0);
 	resultQ:2 = D / IX;
@@ -3411,7 +3585,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	$(V) = 0;
 }
 
-:IDIVS                    is XGATE=0 & Prefix18=1 & op8=0x15 
+:IDIVS                    is Prefix18=1 & op8=0x15 
 {
 	$(C) = (IX == 0);
 	resultQ:4 = sext(D) s/ sext(IX);
@@ -3423,7 +3597,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	$(V) = (resultQ s> 0x00007FFF) | (resultQ s< 0x00008000);
 }
 
-:INC opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0x72); opr16a_8
+:INC opr16a_8                 is Prefix18=0 & (op8=0x72); opr16a_8
 {
 	tmp:1 = opr16a_8;
 	result:1 = tmp + 1;
@@ -3433,7 +3607,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	V_INC_flag(tmp);
 }
 
-:INC indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0x62); indexed1_5 
+:INC indexed1_5                 is Prefix18=0 & (op8=0x62); indexed1_5 
 {
 	tmp:1 = indexed1_5;
 	result:1 = tmp + 1;
@@ -3443,7 +3617,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	V_INC_flag(tmp);
 }
 
-:INCA                    is XGATE=0 & Prefix18=0 & op8=0x42 
+:INCA                    is Prefix18=0 & op8=0x42 
 {
 	tmp:1 = A;
 	A = tmp + 1;
@@ -3452,7 +3626,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	V_INC_flag(tmp);
 }
 
-:INCB                    is XGATE=0 & Prefix18=0 & op8=0x52 
+:INCB                    is Prefix18=0 & op8=0x52 
 {
 	tmp:1 = B;
 	B = tmp + 1;
@@ -3462,7 +3636,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 }
 
 @if defined(HCS12X)
-:INCW opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0x72); opr16a_16
+:INCW opr16a_16                 is Prefix18=1 & (op8=0x72); opr16a_16
 {
 	tmp:2 = opr16a_16;
 	result:2 = tmp + 1;
@@ -3474,7 +3648,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 @endif
 
 @if defined(HCS12X)
-:INCW indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0x62); indexed2_5 
+:INCW indexed2_5                 is Prefix18=1 & (op8=0x62); indexed2_5 
 {
 	tmp:2 = indexed2_5;
 	result:2 = tmp + 1;
@@ -3486,7 +3660,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 @endif
 
 @if defined(HCS12X)
-:INCX                    is XGATE=0 & Prefix18=1 & op8=0x42 
+:INCX                    is Prefix18=1 & op8=0x42 
 {
 	local tmp = IX;
 	IX = tmp + 1;
@@ -3497,7 +3671,7 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 @endif
 
 @if defined(HCS12X)
-:INCY                    is XGATE=0 & Prefix18=1 & op8=0x52 
+:INCY                    is Prefix18=1 & op8=0x52 
 {
 	local tmp = IY;
 	IY = tmp + 1;
@@ -3507,145 +3681,142 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 }
 @endif
 
-:INS                    is XGATE=0 & Prefix18=0 & op16=0x1B81 
+:INS                    is Prefix18=0 & op16=0x1B81 
 {
 	SP = SP + 1;
 }
 
-:INX                    is XGATE=0 & Prefix18=0 & op8=0x08 
+:INX                    is Prefix18=0 & op8=0x08 
 {
 	IX = IX + 1;
 	$(Z) = (IX == 0);
 }
 
-:INY                    is XGATE=0 & Prefix18=0 & op8=0x02 
+:INY                    is Prefix18=0 & op8=0x02 
 {
 	IY = IY + 1;
 	$(Z) = (IY == 0);
 }
 
-:JMP opr16a                is XGATE=0 & Prefix18=0 & (op8=0x06); opr16a
-{
-	local target = opr16a;
-	goto [target];
+:JMP opr16a                is Prefix18=0 & (op8=0x06); opr16a
+{	
+	goto [opr16a];
 }
 
-:JMP indexed2_5               is XGATE=0 & Prefix18=0 & (op8=0x05); indexed2_5
+:JMP indexedA_5               is Prefix18=0 & (op8=0x05); indexedA_5
 {
-	goto [indexed2_5];
+	goto [indexedA_5];
 }
 
-:JSR opr8a                is XGATE=0 & Prefix18=0 & (op8=0x17); opr8a
+:JSR opr8a                is Prefix18=0 & (op8=0x17); opr8a
 {
 	tmp:2 = inst_next;
 	Push2( tmp );
 	
-	local target = opr8a;
-	call [target];
+	call [opr8a];
 }
 
-:JSR opr16a              is XGATE=0 & Prefix18=0 & (op8=0x16); opr16a
+:JSR opr16a              is Prefix18=0 & (op8=0x16); opr16a
+{
+	tmp:2 = inst_next;
+	Push2( tmp );
+
+	call [opr16a];
+}
+
+:JSR indexedA_5               is Prefix18=0 & (op8=0x15); indexedA_5
 {
 	tmp:2 = inst_next;
 	Push2( tmp );
 	 
-	local target = opr16a;
-	call [target];
+	call [indexedA_5];
 }
 
-:JSR indexed2_5               is XGATE=0 & Prefix18=0 & (op8=0x15); indexed2_5
-{
-	tmp:2 = inst_next;
-	Push2( tmp );
-	 
-	call [indexed2_5];
-}
-
-:LBCC rel16                 is XGATE=0 & Prefix18=1 & op8=0x24; rel16
+:LBCC rel16                 is Prefix18=1 & op8=0x24; rel16
 {
 	if ($(C) == 0) goto rel16;
 }
 
-:LBCS rel16                 is XGATE=0 & Prefix18=1 & op8=0x25; rel16
+:LBCS rel16                 is Prefix18=1 & op8=0x25; rel16
 {
 	if ($(C) == 1) goto rel16;
 }
 
-:LBEQ rel16                 is XGATE=0 & Prefix18=1 & op8=0x27; rel16
+:LBEQ rel16                 is Prefix18=1 & op8=0x27; rel16
 {
 	if ($(Z) == 1) goto rel16;
 }
 
-:LBGE rel16                 is XGATE=0 & Prefix18=1 & op8=0x2C; rel16
+:LBGE rel16                 is Prefix18=1 & op8=0x2C; rel16
 {
 	if (($(N) ^ $(V)) == 1) goto rel16;
 }
 
-:LBGT rel16                 is XGATE=0 & Prefix18=1 & op8=0x2E; rel16
+:LBGT rel16                 is Prefix18=1 & op8=0x2E; rel16
 {
 	if (($(Z) | ($(N) ^ $(V))) == 0) goto rel16;
 }
 
-:LBHI rel16                 is XGATE=0 & Prefix18=1 & op8=0x22; rel16
+:LBHI rel16                 is Prefix18=1 & op8=0x22; rel16
 {
 	if (($(C) | $(Z)) == 0) goto rel16;
 }
 
-#:LBHS rel16	is XGATE=0 & Prefix18=1 & op8=0x24; rel16		See LBCC
+#:LBHS rel16	is Prefix18=1 & op8=0x24; rel16		See LBCC
 
-:LBLE rel16                 is XGATE=0 & Prefix18=1 & op8=0x2F; rel16
+:LBLE rel16                 is Prefix18=1 & op8=0x2F; rel16
 {
 	if ($(Z) | ($(N) ^ $(V))) goto rel16;
 }
 
-#:LBLO rel16	is XGATE=0 & Prefix18=1 & op8=0x25; rel16		see LBCS
+#:LBLO rel16	is Prefix18=1 & op8=0x25; rel16		see LBCS
 
-:LBLS rel16                 is XGATE=0 & Prefix18=1 & op8=0x23; rel16
+:LBLS rel16                 is Prefix18=1 & op8=0x23; rel16
 {
 	if (($(C) | $(Z)) == 1) goto rel16;
 }
 
-:LBLT rel16                 is XGATE=0 & Prefix18=1 & op8=0x2D; rel16
+:LBLT rel16                 is Prefix18=1 & op8=0x2D; rel16
 {
 	if (($(N) ^ $(V)) == 1) goto rel16;
 }
 
-:LBMI rel16                 is XGATE=0 & Prefix18=1 & op8=0x2B; rel16
+:LBMI rel16                 is Prefix18=1 & op8=0x2B; rel16
 {
 	if ($(N) == 1) goto rel16;
 }
 
-:LBNE rel16                 is XGATE=0 & Prefix18=1 & op8=0x26; rel16
+:LBNE rel16                 is Prefix18=1 & op8=0x26; rel16
 {
 	if ($(Z) == 0) goto rel16;
 }
 
-:LBPL rel16                 is XGATE=0 & Prefix18=1 & op8=0x2A; rel16
+:LBPL rel16                 is Prefix18=1 & op8=0x2A; rel16
 {
 	if ($(N) == 0) goto rel16;
 }
 
-:LBRA rel16                 is XGATE=0 & Prefix18=1 & op8=0x20; rel16
+:LBRA rel16                 is Prefix18=1 & op8=0x20; rel16
 {
 	goto rel16;
 }
 
 # branch never is a four-byte nop
-:LBRN rel16                 is XGATE=0 & Prefix18=1 & op8=0x21; rel16
+:LBRN rel16                 is Prefix18=1 & op8=0x21; rel16
 {
 }
 
-:LBVC rel16                 is XGATE=0 & Prefix18=1 & op8=0x28; rel16
+:LBVC rel16                 is Prefix18=1 & op8=0x28; rel16
 {
 	if ($(V) == 0) goto rel16;
 }
 
-:LBVS rel16                 is XGATE=0 & Prefix18=1 & op8=0x29; rel16
+:LBVS rel16                 is Prefix18=1 & op8=0x29; rel16
 {
 	if ($(V) == 1) goto rel16;
 }
 
-:LDAA iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0x86); iopr8i
+:LDAA iopr8i                 is Prefix18=0 & (op8=0x86); iopr8i
 { 
 	A = iopr8i;
 	$(Z) = (A == 0);
@@ -3653,10 +3824,10 @@ SkipNext2Bytes: dest is epsilon [ dest = inst_next + 2; ]  { export *[RAM]:1 des
 	V_equals_0();
 }
 
-GPaged: "G" is XGATE=0 & Prefix18=1 [ UseGPAGE=1; ] {}
-GPaged:     is XGATE=0 & Prefix18=0 [ UseGPAGE=0; ] {}
+GPaged: "G" is Prefix18=1 [ UseGPAGE=1; ] {}
+GPaged:     is Prefix18=0 [ UseGPAGE=0; ] {}
 
-:^GPaged^"LDAA" opr8a_8                 is XGATE=0 & GPaged & (op8=0x96); opr8a_8 [ UseGPAGE=Prefix18; ]
+:^GPaged^"LDAA" opr8a_8                 is GPaged & (op8=0x96); opr8a_8 [ UseGPAGE=Prefix18; ]
 {
 	build GPaged;
 	A = opr8a_8;
@@ -3665,7 +3836,7 @@ GPaged:     is XGATE=0 & Prefix18=0 [ UseGPAGE=0; ] {}
 	V_equals_0();
 }
 
-:^GPaged^"LDAA" opr16a_8                 is XGATE=0 & GPaged & (op8=0xB6); opr16a_8 [ UseGPAGE=Prefix18; ]
+:^GPaged^"LDAA" opr16a_8                 is GPaged & (op8=0xB6); opr16a_8 [ UseGPAGE=Prefix18; ]
 {
     build GPaged;
 	A = opr16a_8;
@@ -3674,7 +3845,7 @@ GPaged:     is XGATE=0 & Prefix18=0 [ UseGPAGE=0; ] {}
 	V_equals_0();
 }
 
-:^GPaged^"LDAA" indexed1_5                 is XGATE=0 & GPaged & (op8=0xA6); indexed1_5 [ UseGPAGE=Prefix18; ]
+:^GPaged^"LDAA" indexed1_5                 is GPaged & (op8=0xA6); indexed1_5 [ UseGPAGE=Prefix18; ]
 {
 	build GPaged;
 	A = indexed1_5;
@@ -3683,7 +3854,7 @@ GPaged:     is XGATE=0 & Prefix18=0 [ UseGPAGE=0; ] {}
 	V_equals_0();
 }
 
-:LDAB iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0xC6); iopr8i
+:LDAB iopr8i                 is Prefix18=0 & (op8=0xC6); iopr8i
 { 
 	B = iopr8i;
 	$(Z) = (B == 0);
@@ -3691,7 +3862,7 @@ GPaged:     is XGATE=0 & Prefix18=0 [ UseGPAGE=0; ] {}
 	V_equals_0();
 }
 
-:^GPaged^"LDAB" opr8a_8                 is XGATE=0 & GPaged & (op8=0xD6); opr8a_8 [ UseGPAGE=Prefix18; ]
+:^GPaged^"LDAB" opr8a_8                 is GPaged & (op8=0xD6); opr8a_8 [ UseGPAGE=Prefix18; ]
 { 
     build GPaged;
 	B = opr8a_8;
@@ -3700,7 +3871,7 @@ GPaged:     is XGATE=0 & Prefix18=0 [ UseGPAGE=0; ] {}
 	V_equals_0();
 }
 
-:^GPaged^"LDAB" opr16a_8                 is XGATE=0 & GPaged & (op8=0xF6); opr16a_8 [ UseGPAGE=Prefix18; ]
+:^GPaged^"LDAB" opr16a_8                 is GPaged & (op8=0xF6); opr16a_8 [ UseGPAGE=Prefix18; ]
 {
 	build GPaged;
 	B = opr16a_8;
@@ -3709,7 +3880,7 @@ GPaged:     is XGATE=0 & Prefix18=0 [ UseGPAGE=0; ] {}
 	V_equals_0();
 }
 
-:^GPaged^"LDAB" indexed1_5                 is XGATE=0 & GPaged & (op8=0xE6); indexed1_5 [ UseGPAGE=Prefix18; ]
+:^GPaged^"LDAB" indexed1_5                 is GPaged & (op8=0xE6); indexed1_5 [ UseGPAGE=Prefix18; ]
 {
 	build GPaged;
 	B = indexed1_5;
@@ -3718,7 +3889,7 @@ GPaged:     is XGATE=0 & Prefix18=0 [ UseGPAGE=0; ] {}
 	V_equals_0();
 }
 
-:LDD iopr16i                 is XGATE=0 & Prefix18=0 & (op8=0xCC); iopr16i
+:LDD iopr16i                 is Prefix18=0 & (op8=0xCC); iopr16i
 { 
 	D = iopr16i;
 	$(Z) = (D == 0);
@@ -3726,7 +3897,7 @@ GPaged:     is XGATE=0 & Prefix18=0 [ UseGPAGE=0; ] {}
 	V_equals_0();
 }
 
-:^GPaged^"LDD" opr8a_16                 is XGATE=0 & GPaged & (op8=0xDC); opr8a_16 [ UseGPAGE=Prefix18; ]
+:^GPaged^"LDD" opr8a_16                 is GPaged & (op8=0xDC); opr8a_16 [ UseGPAGE=Prefix18; ]
 {
 	build GPaged;
 	D = opr8a_16;
@@ -3735,7 +3906,7 @@ GPaged:     is XGATE=0 & Prefix18=0 [ UseGPAGE=0; ] {}
 	V_equals_0();
 }
 
-:^GPaged^"LDD" opr16a_16                 is XGATE=0 & GPaged & (op8=0xFC); opr16a_16 [ UseGPAGE=Prefix18; ]
+:^GPaged^"LDD" opr16a_16                 is GPaged & (op8=0xFC); opr16a_16 [ UseGPAGE=Prefix18; ]
 {
 	build GPaged;
 	D = opr16a_16;
@@ -3744,7 +3915,7 @@ GPaged:     is XGATE=0 & Prefix18=0 [ UseGPAGE=0; ] {}
 	V_equals_0();
 }
 
-:^GPaged^"LDD" indexed2_5                 is XGATE=0 & GPaged & (op8=0xEC); indexed2_5 [ UseGPAGE=Prefix18; ]
+:^GPaged^"LDD" indexed2_5                 is GPaged & (op8=0xEC); indexed2_5 [ UseGPAGE=Prefix18; ]
 {
 	build GPaged;
 	D = indexed2_5;
@@ -3756,7 +3927,7 @@ GPaged:     is XGATE=0 & Prefix18=0 [ UseGPAGE=0; ] {}
 
 define pcodeop LoadStack;
 
-:LDS iopr16i                 is XGATE=0 & Prefix18=0 & (op8=0xCF); iopr16i
+:LDS iopr16i                 is Prefix18=0 & (op8=0xCF); iopr16i
 {
 	SP = LoadStack(iopr16i);
 	$(Z) = (SP == 0);
@@ -3764,7 +3935,7 @@ define pcodeop LoadStack;
 	V_equals_0();
 }
 
-:^GPaged^"LDS" opr8a_16                 is XGATE=0 & GPaged & (op8=0xDF); opr8a_16 [ UseGPAGE=Prefix18; ]
+:^GPaged^"LDS" opr8a_16                 is GPaged & (op8=0xDF); opr8a_16 [ UseGPAGE=Prefix18; ]
 {
 	build GPaged;
 	SP = LoadStack(opr8a_16);
@@ -3773,7 +3944,7 @@ define pcodeop LoadStack;
 	V_equals_0();
 }
 
-:^GPaged^"LDS" opr16a_16                 is XGATE=0 & GPaged & (op8=0xFF); opr16a_16 [ UseGPAGE=Prefix18; ]
+:^GPaged^"LDS" opr16a_16                 is GPaged & (op8=0xFF); opr16a_16 [ UseGPAGE=Prefix18; ]
 {
 	build GPaged;
 	SP = LoadStack(opr16a_16);
@@ -3782,7 +3953,7 @@ define pcodeop LoadStack;
 	V_equals_0();
 }
 
-:^GPaged^"LDS" indexed2_5                 is XGATE=0 & GPaged & (op8=0xEF); indexed2_5 [ UseGPAGE=Prefix18; ]
+:^GPaged^"LDS" indexed2_5                 is GPaged & (op8=0xEF); indexed2_5 [ UseGPAGE=Prefix18; ]
 {
 	build GPaged;
 	SP = LoadStack(indexed2_5);
@@ -3791,7 +3962,7 @@ define pcodeop LoadStack;
 	V_equals_0();
 }
 
-:LDX iopr16i                 is XGATE=0 & Prefix18=0 & (op8=0xCE); iopr16i
+:LDX iopr16i                 is Prefix18=0 & (op8=0xCE); iopr16i
 { 
 	IX = iopr16i;
 	$(Z) = (IX == 0);
@@ -3799,7 +3970,7 @@ define pcodeop LoadStack;
 	V_equals_0();
 }
 
-:^GPaged^"LDX" opr8a_16                 is XGATE=0 & GPaged & (op8=0xDE); opr8a_16 [ UseGPAGE=Prefix18; ]
+:^GPaged^"LDX" opr8a_16                 is GPaged & (op8=0xDE); opr8a_16 [ UseGPAGE=Prefix18; ]
 {
 	build GPaged;
 	IX = opr8a_16;
@@ -3808,7 +3979,7 @@ define pcodeop LoadStack;
 	V_equals_0();
 }
 
-:^GPaged^"LDX" opr16a_16                 is XGATE=0 & GPaged & (op8=0xFE); opr16a_16 [ UseGPAGE=Prefix18; ]
+:^GPaged^"LDX" opr16a_16                 is GPaged & (op8=0xFE); opr16a_16 [ UseGPAGE=Prefix18; ]
 {
 	build GPaged;
 	IX = opr16a_16;
@@ -3817,7 +3988,7 @@ define pcodeop LoadStack;
 	V_equals_0();
 }
 
-:^GPaged^"LDX" indexed2_5                 is XGATE=0 & GPaged & (op8=0xEE); indexed2_5 [ UseGPAGE=Prefix18; ]
+:^GPaged^"LDX" indexed2_5                 is GPaged & (op8=0xEE); indexed2_5 [ UseGPAGE=Prefix18; ]
 {
 	build GPaged;
 	IX = indexed2_5;
@@ -3826,7 +3997,7 @@ define pcodeop LoadStack;
 	V_equals_0();
 }
 
-:LDY iopr16i                 is XGATE=0 & Prefix18=0 & (op8=0xCD); iopr16i
+:LDY iopr16i                 is Prefix18=0 & (op8=0xCD); iopr16i
 { 
 	IY = iopr16i;
 	$(Z) = (IY == 0);
@@ -3834,7 +4005,7 @@ define pcodeop LoadStack;
 	V_equals_0();
 }
 
-:^GPaged^"LDY" opr8a_16                 is XGATE=0 & GPaged & (op8=0xDD); opr8a_16 [ UseGPAGE=Prefix18; ]
+:^GPaged^"LDY" opr8a_16                 is GPaged & (op8=0xDD); opr8a_16 [ UseGPAGE=Prefix18; ]
 {
 	build GPaged;
 	IY = opr8a_16;
@@ -3843,7 +4014,7 @@ define pcodeop LoadStack;
 	V_equals_0();
 }
 
-:^GPaged^"LDY" opr16a_16                 is XGATE=0 & GPaged & (op8=0xFD); opr16a_16 [ UseGPAGE=Prefix18; ]
+:^GPaged^"LDY" opr16a_16                 is GPaged & (op8=0xFD); opr16a_16 [ UseGPAGE=Prefix18; ]
 {
 	build GPaged;
 	IY = opr16a_16;
@@ -3852,7 +4023,7 @@ define pcodeop LoadStack;
 	V_equals_0();
 }
 
-:^GPaged^"LDY" indexed2_5                 is XGATE=0 & GPaged & (op8=0xED); indexed2_5 [ UseGPAGE=Prefix18; ]
+:^GPaged^"LDY" indexed2_5                 is GPaged & (op8=0xED); indexed2_5 [ UseGPAGE=Prefix18; ]
 {
 	build GPaged;
 	IY = indexed2_5;
@@ -3861,17 +4032,17 @@ define pcodeop LoadStack;
 	V_equals_0();
 }
 
-:LEAS indexed0_3                 is XGATE=0 & Prefix18=0 & (op8=0x1B); indexed0_3
+:LEAS indexed0_3                 is Prefix18=0 & (op8=0x1B); indexed0_3
 { 
 	SP = indexed0_3;
 }
 
-:LEAX indexed0_3                 is XGATE=0 & Prefix18=0 & (op8=0x1A); indexed0_3
+:LEAX indexed0_3                 is Prefix18=0 & (op8=0x1A); indexed0_3
 { 
 	IX = indexed0_3;
 }
 
-:LEAY indexed0_3                 is XGATE=0 & Prefix18=0 & (op8=0x19); indexed0_3
+:LEAY indexed0_3                 is Prefix18=0 & (op8=0x19); indexed0_3
 { 
 	IY = indexed0_3;
 }
@@ -3886,7 +4057,7 @@ define pcodeop LoadStack;
 #:LSLX		is op16=0x1848					see ASLX
 #:LSLY		is op16=0x1858					see ASLY
 
-:LSR opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0x74); opr16a_8
+:LSR opr16a_8                 is Prefix18=0 & (op8=0x74); opr16a_8
 {
 	tmp:1 = opr16a_8;
 	$(C) = tmp & 1;
@@ -3897,7 +4068,7 @@ define pcodeop LoadStack;
 	V_equals_C();	
 }
 
-:LSR indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0x64); indexed1_5 
+:LSR indexed1_5                 is Prefix18=0 & (op8=0x64); indexed1_5 
 {
 	tmp:1 = indexed1_5;
 	$(C) = tmp & 1;
@@ -3908,7 +4079,7 @@ define pcodeop LoadStack;
 	V_equals_C();	
 }
 
-:LSRA                    is XGATE=0 & Prefix18=0 & op8=0x44 
+:LSRA                    is Prefix18=0 & op8=0x44 
 {
 	$(C) = A[0,1];
 	A = (A >> 1);
@@ -3917,7 +4088,7 @@ define pcodeop LoadStack;
 	V_equals_C();	
 }
 
-:LSRB                    is XGATE=0 & Prefix18=0 & op8=0x54 
+:LSRB                    is Prefix18=0 & op8=0x54 
 {
 	$(C) = B[0,1];
 	B = (B >> 1);
@@ -3926,7 +4097,7 @@ define pcodeop LoadStack;
 	V_equals_C();	
 }
 
-:LSRD                    is XGATE=0 & Prefix18=0 & op8=0x49 
+:LSRD                    is Prefix18=0 & op8=0x49 
 {
 	$(C) = D[0,1];
 	D = (D >> 1);
@@ -3936,7 +4107,7 @@ define pcodeop LoadStack;
 }
 
 @if defined(HCS12X)
-:LSRW opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0x74); opr16a_16
+:LSRW opr16a_16                 is Prefix18=1 & (op8=0x74); opr16a_16
 {
 	local tmp = opr16a_16;
 	$(C) = tmp[0,1];
@@ -3949,7 +4120,7 @@ define pcodeop LoadStack;
 @endif
 
 @if defined(HCS12X)
-:LSRW indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0x64); indexed2_5 
+:LSRW indexed2_5                 is Prefix18=1 & (op8=0x64); indexed2_5 
 {
 	local tmp = indexed2_5;
 	$(C) = tmp[0,1];
@@ -3962,7 +4133,7 @@ define pcodeop LoadStack;
 @endif
 
 @if defined(HCS12X)
-:LSRX                    is XGATE=0 & Prefix18=1 & op8=0x44 
+:LSRX                    is Prefix18=1 & op8=0x44 
 {
 	$(C) = IX[0,1];
 	IX = IX >> 1;
@@ -3973,7 +4144,7 @@ define pcodeop LoadStack;
 @endif
 
 @if defined(HCS12X)
-:LSRY                    is XGATE=0 & Prefix18=1 & op8=0x54 
+:LSRY                    is Prefix18=1 & op8=0x54 
 {
 	$(C) = IY[0,1];
 	IY = IY >> 1;
@@ -3983,7 +4154,7 @@ define pcodeop LoadStack;
 }
 @endif
 
-:MAXA indexed1_5                    is XGATE=0 & Prefix18=1 & op8=0x18; indexed1_5 
+:MAXA indexed1_5                    is Prefix18=1 & op8=0x18; indexed1_5 
 {
 	tmp:1 = indexed1_5;
 	result:2 = zext(A) - zext(tmp);
@@ -3997,7 +4168,7 @@ define pcodeop LoadStack;
 	$(C) = (result > 0x00FF);
 }
 
-:MAXM indexed1_5                    is XGATE=0 & Prefix18=1 & op8=0x1C; indexed1_5 
+:MAXM indexed1_5                    is Prefix18=1 & op8=0x1C; indexed1_5 
 {
 	tmp:1 = indexed1_5;
 	result:4 = zext(A) - zext(tmp);
@@ -4011,7 +4182,7 @@ define pcodeop LoadStack;
 	$(C) = (result > 0x00FF);
 }
 
-:MEM                     is XGATE=0 & Prefix18=0 & op8=0x01
+:MEM                     is Prefix18=0 & op8=0x01
 {
 	local val:1 = GradeOfMembership(A, IX, IY);
 	Store(IY, val);
@@ -4019,7 +4190,7 @@ define pcodeop LoadStack;
 	IX = IX + 4;
 }
 
-:MINA indexed1_5                    is XGATE=0 & Prefix18=1 & op8=0x19; indexed1_5 
+:MINA indexed1_5                    is Prefix18=1 & op8=0x19; indexed1_5 
 {
 	tmp:1 = indexed1_5;
 	result:2 = zext(A) - zext(tmp);
@@ -4033,7 +4204,7 @@ define pcodeop LoadStack;
 	$(C) = (result > 0x00FF);
 }
 
-:MINM indexed1_5                    is XGATE=0 & Prefix18=1 & op8=0x1D; indexed1_5 
+:MINM indexed1_5                    is Prefix18=1 & op8=0x1D; indexed1_5 
 {
 	tmp:1 = indexed1_5;
 	result:4 = zext(A) - zext(tmp);
@@ -4047,24 +4218,24 @@ define pcodeop LoadStack;
 	$(C) = (result > 0x00FF);
 }
 
-:MOVB iopr8i, opr16a_8				is XGATE=0 & Prefix18=1 & op8=0x0B; iopr8i; opr16a_8 
+:MOVB iopr8i, opr16a_8				is Prefix18=1 & op8=0x0B; iopr8i; opr16a_8 
 {
 	opr16a_8 = iopr8i;
 }
 
 @if defined(HCS12X)
-:MOVB iopr8i, indexed1_5			is XGATE=0 & Prefix18=1 & op8=0x08; indexed1_5; iopr8i
+:MOVB iopr8i, indexed1_5			is Prefix18=1 & op8=0x08; indexed1_5; iopr8i
 {
 	indexed1_5 = iopr8i;
 }
 @else
-:MOVB iopr8i, indexed1_1			is XGATE=0 & Prefix18=1 & op8=0x08; indexed1_1; iopr8i
+:MOVB iopr8i, indexed1_1			is Prefix18=1 & op8=0x08; indexed1_1; iopr8i
 {
 	indexed1_1 = iopr8i;
 }
 @endif
 
-:MOVB opr16a_8, op2_opr16a_8		is XGATE=0 & Prefix18=1 & op8=0x0C; opr16a_8; op2_opr16a_8 
+:MOVB opr16a_8, op2_opr16a_8		is Prefix18=1 & op8=0x0C; opr16a_8; op2_opr16a_8 
 {
 	build opr16a_8;
 	local tmp = opr16a_8;
@@ -4073,31 +4244,31 @@ define pcodeop LoadStack;
 }
 
 @if defined(HCS12X)
-:MOVB opr16a_8, indexed1_5			is XGATE=0 & Prefix18=1 & op8=0x09; indexed1_5; opr16a_8 
+:MOVB opr16a_8, indexed1_5			is Prefix18=1 & op8=0x09; indexed1_5; opr16a_8 
 {
 	indexed1_5 = opr16a_8;
 }
 @else
-:MOVB opr16a_8, indexed1_1			is XGATE=0 & Prefix18=1 & op8=0x09; indexed1_1; opr16a_8 
+:MOVB opr16a_8, indexed1_1			is Prefix18=1 & op8=0x09; indexed1_1; opr16a_8 
 {
 	indexed1_1 = opr16a_8;
 }
 @endif
 
 @if defined(HCS12X)
-:MOVB indexed1_5, opr16a_8			is XGATE=0 & Prefix18=1 & op8=0x0D; indexed1_5; opr16a_8 
+:MOVB indexed1_5, opr16a_8			is Prefix18=1 & op8=0x0D; indexed1_5; opr16a_8 
 {
 	opr16a_8 = indexed1_5;
 }
 @else
-:MOVB indexed1_1, opr16a_8			is XGATE=0 & Prefix18=1 & op8=0x0D; indexed1_1; opr16a_8 
+:MOVB indexed1_1, opr16a_8			is Prefix18=1 & op8=0x0D; indexed1_1; opr16a_8 
 {
 	opr16a_8 = indexed1_1;
 }
 @endif
 
 @if defined(HCS12X)
-:MOVB indexed1_5, op2_indexed1_5	is XGATE=0 & Prefix18=1 & op8=0x0A; indexed1_5; op2_indexed1_5 
+:MOVB indexed1_5, op2_indexed1_5	is Prefix18=1 & op8=0x0A; indexed1_5; op2_indexed1_5 
 {
 	# two operands share a lower level subconstructor
 	#  MUST do the builds and store the value, or the first operands results will be overwritten
@@ -4107,7 +4278,7 @@ define pcodeop LoadStack;
 	op2_indexed1_5 = tmp;
 }
 @else
-:MOVB indexed1_1, op2_indexed1_1	is XGATE=0 & Prefix18=1 & op8=0x0A; indexed1_1; op2_indexed1_1 
+:MOVB indexed1_1, op2_indexed1_1	is Prefix18=1 & op8=0x0A; indexed1_1; op2_indexed1_1 
 {
 	# two operands share a lower level subconstructor
 	#  MUST do the builds and store the value, or the first operands results will be overwritten
@@ -4118,24 +4289,24 @@ define pcodeop LoadStack;
 }
 @endif
 
-:MOVW iopr16i, opr16a_16				is XGATE=0 & Prefix18=1 & op8=0x03; iopr16i; opr16a_16 
+:MOVW iopr16i, opr16a_16				is Prefix18=1 & op8=0x03; iopr16i; opr16a_16 
 {
 	opr16a_16 = iopr16i;
 }
 
 @if defined(HCS12X)
-:MOVW iopr16i, indexed2_5			is XGATE=0 & Prefix18=1 & op8=0x00; indexed2_5; iopr16i
+:MOVW iopr16i, indexed2_5			is Prefix18=1 & op8=0x00; indexed2_5; iopr16i
 {
 	indexed2_5 = iopr16i;
 }
 @else
-:MOVW iopr16i, indexed2_1			is XGATE=0 & Prefix18=1 & op8=0x00; indexed2_1; iopr16i
+:MOVW iopr16i, indexed2_1			is Prefix18=1 & op8=0x00; indexed2_1; iopr16i
 {
 	indexed2_1 = iopr16i;
 }
 @endif
 
-:MOVW opr16a_16, op2_opr16a_16		is XGATE=0 & Prefix18=1 & op8=0x04; opr16a_16; op2_opr16a_16 
+:MOVW opr16a_16, op2_opr16a_16		is Prefix18=1 & op8=0x04; opr16a_16; op2_opr16a_16 
 {
 	# two operands share a lower level subconstructor
 	#  MUST do the builds and store the value, or the first operands results will be overwritten
@@ -4146,31 +4317,31 @@ define pcodeop LoadStack;
 }
 
 @if defined(HCS12X)
-:MOVW opr16a_16, indexed2_5			is XGATE=0 & Prefix18=1 & op8=0x01; indexed2_5; opr16a_16 
+:MOVW opr16a_16, indexed2_5			is Prefix18=1 & op8=0x01; indexed2_5; opr16a_16 
 {
 	indexed2_5 = opr16a_16;
 }
 @else
-:MOVW opr16a_16, indexed2_1			is XGATE=0 & Prefix18=1 & op8=0x01; indexed2_1; opr16a_16 
+:MOVW opr16a_16, indexed2_1			is Prefix18=1 & op8=0x01; indexed2_1; opr16a_16 
 {
 	indexed2_1 = opr16a_16;
 }
 @endif
 
 @if defined(HCS12X)
-:MOVW indexed2_5, opr16a_16			is XGATE=0 & Prefix18=1 & op8=0x05; indexed2_5; opr16a_16 
+:MOVW indexed2_5, opr16a_16			is Prefix18=1 & op8=0x05; indexed2_5; opr16a_16 
 {
 	opr16a_16 = indexed2_5;
 }
 @else
-:MOVW indexed2_1, opr16a_16			is XGATE=0 & Prefix18=1 & op8=0x05; indexed2_1; opr16a_16 
+:MOVW indexed2_1, opr16a_16			is Prefix18=1 & op8=0x05; indexed2_1; opr16a_16 
 {
 	opr16a_16 = indexed2_1;
 }
 @endif
 
 @if defined(HCS12X)
-:MOVW indexed2_5, op2_indexed2_5	is XGATE=0 & Prefix18=1 & op8=0x02; indexed2_5; op2_indexed2_5 
+:MOVW indexed2_5, op2_indexed2_5	is Prefix18=1 & op8=0x02; indexed2_5; op2_indexed2_5 
 {
 	# two operands share a lower level subconstructor
 	#  MUST do the builds and store the value, or the first operands results will be overwritten
@@ -4180,7 +4351,7 @@ define pcodeop LoadStack;
 	op2_indexed2_5 = tmp;
 }
 @else
-:MOVW indexed2_1, op2_indexed2_1	is XGATE=0 & Prefix18=1 & op8=0x02; indexed2_1; op2_indexed2_1 
+:MOVW indexed2_1, op2_indexed2_1	is Prefix18=1 & op8=0x02; indexed2_1; op2_indexed2_1 
 {
 	# two operands share a lower level subconstructor
 	#  MUST do the builds and store the value, or the first operands results will be overwritten
@@ -4192,13 +4363,13 @@ define pcodeop LoadStack;
 @endif
 
 
-:MUL                     is XGATE=0 & Prefix18=0 & op8=0x12
+:MUL                     is Prefix18=0 & op8=0x12
 {
 	D = zext(A) * zext(B);
 	$(C) = B[7,1];
 }
 
-:NEG opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0x70); opr16a_8
+:NEG opr16a_8                 is Prefix18=0 & (op8=0x70); opr16a_8
 {
 	tmp:1 = opr16a_8;
 	result:1 = -tmp;
@@ -4209,7 +4380,7 @@ define pcodeop LoadStack;
 	V_NEG_flag(tmp); 
 }
 
-:NEG indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0x60); indexed1_5 
+:NEG indexed1_5                 is Prefix18=0 & (op8=0x60); indexed1_5 
 {
 	tmp:1 = indexed1_5;
 	result:1 = -tmp;
@@ -4220,7 +4391,7 @@ define pcodeop LoadStack;
 	V_NEG_flag(tmp); 
 }
 
-:NEGA                    is XGATE=0 & Prefix18=0 & op8=0x40 
+:NEGA                    is Prefix18=0 & op8=0x40 
 {
 	tmp:1 = A;
 	A = -tmp;
@@ -4230,7 +4401,7 @@ define pcodeop LoadStack;
 	V_NEG_flag(tmp); 
 }
 
-:NEGB                    is XGATE=0 & Prefix18=0 & op8=0x50 
+:NEGB                    is Prefix18=0 & op8=0x50 
 {
 	tmp:1 = B;
 	B = -tmp;
@@ -4241,7 +4412,7 @@ define pcodeop LoadStack;
 }
 
 @if defined(HCS12X)
-:NEGW opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0x70); opr16a_16
+:NEGW opr16a_16                 is Prefix18=1 & (op8=0x70); opr16a_16
 {
 	tmp:2 = opr16a_16;
 	result:2 = -tmp;
@@ -4251,9 +4422,10 @@ define pcodeop LoadStack;
 	$(N) = (result s< 0);
 	V_NEG_flag2(tmp); 
 }
+@endif
 
 @if defined(HCS12X)
-:NEGW indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0x60); indexed2_5 
+:NEGW indexed2_5                 is Prefix18=1 & (op8=0x60); indexed2_5 
 {
 	tmp:2 = indexed2_5;
 	result:2 = -tmp;
@@ -4266,7 +4438,7 @@ define pcodeop LoadStack;
 @endif
 
 @if defined(HCS12X)
-:NEGX                    is XGATE=0 & Prefix18=1 & op8=0x40 
+:NEGX                    is Prefix18=1 & op8=0x40 
 {
 	tmp:2 = IX;
 	IX = -tmp;
@@ -4277,7 +4449,8 @@ define pcodeop LoadStack;
 }
 @endif
 
-:NEGY                    is XGATE=0 & Prefix18=1 & op8=0x50 
+@if defined(HCS12X)
+:NEGY                    is Prefix18=1 & op8=0x50 
 {
 	tmp:2 = IY;
 	IY = -tmp;
@@ -4288,11 +4461,11 @@ define pcodeop LoadStack;
 }
 @endif
 
-:NOP                     is XGATE=0 & Prefix18=0 & op8=0xA7
+:NOP                     is Prefix18=0 & op8=0xA7
 {
 }
 
-:ORAA iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0x8A); iopr8i
+:ORAA iopr8i                 is Prefix18=0 & (op8=0x8A); iopr8i
 { 
 	A = A | iopr8i; 
 	$(Z) = (A == 0);
@@ -4300,7 +4473,7 @@ define pcodeop LoadStack;
 	V_equals_0();
 }
 
-:ORAA opr8a_8                 is XGATE=0 & Prefix18=0 & (op8=0x9A); opr8a_8
+:ORAA opr8a_8                 is Prefix18=0 & (op8=0x9A); opr8a_8
 { 
 	A = A | opr8a_8; 
 	$(Z) = (A == 0);
@@ -4308,7 +4481,7 @@ define pcodeop LoadStack;
 	V_equals_0();
 }
 
-:ORAA opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0xBA); opr16a_8
+:ORAA opr16a_8                 is Prefix18=0 & (op8=0xBA); opr16a_8
 { 
 	A = A | opr16a_8; 
 	$(Z) = (A == 0);
@@ -4316,7 +4489,7 @@ define pcodeop LoadStack;
 	V_equals_0();
 }
 
-:ORAA indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0xAA); indexed1_5
+:ORAA indexed1_5                 is Prefix18=0 & (op8=0xAA); indexed1_5
 { 
 	A = A | indexed1_5; 
 	$(Z) = (A == 0);
@@ -4324,7 +4497,7 @@ define pcodeop LoadStack;
 	V_equals_0();
 }
 
-:ORAB iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0xCA); iopr8i
+:ORAB iopr8i                 is Prefix18=0 & (op8=0xCA); iopr8i
 { 
 	B = B | iopr8i; 
 	$(Z) = (B == 0);
@@ -4332,7 +4505,7 @@ define pcodeop LoadStack;
 	V_equals_0();
 }
 
-:ORAB opr8a_8                 is XGATE=0 & Prefix18=0 & (op8=0xDA); opr8a_8
+:ORAB opr8a_8                 is Prefix18=0 & (op8=0xDA); opr8a_8
 { 
 	B = B | opr8a_8; 
 	$(Z) = (B == 0);
@@ -4340,7 +4513,7 @@ define pcodeop LoadStack;
 	V_equals_0();
 }
 
-:ORAB opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0xFA); opr16a_8
+:ORAB opr16a_8                 is Prefix18=0 & (op8=0xFA); opr16a_8
 { 
 	B = B | opr16a_8; 
 	$(Z) = (B == 0);
@@ -4348,7 +4521,7 @@ define pcodeop LoadStack;
 	V_equals_0();
 }
 
-:ORAB indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0xEA); indexed1_5
+:ORAB indexed1_5                 is Prefix18=0 & (op8=0xEA); indexed1_5
 { 
 	B = B | indexed1_5; 
 	$(Z) = (B == 0);
@@ -4356,13 +4529,13 @@ define pcodeop LoadStack;
 	V_equals_0();
 }
 
-:ORCC iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0x14); iopr8i
+:ORCC iopr8i                 is Prefix18=0 & (op8=0x14); iopr8i
 { 
 	CCR = CCR | (iopr8i & 0b10111111); 
 }
 
 @if defined(HCS12X)
-:ORX iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0x8A); iopr16i
+:ORX iopr16i                 is Prefix18=1 & (op8=0x8A); iopr16i
 { 
 	IX = IX | iopr16i;
 	V_equals_0(); 
@@ -4372,7 +4545,7 @@ define pcodeop LoadStack;
 @endif
 
 @if defined(HCS12X)
-:ORX opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0x9A); opr8a_16
+:ORX opr8a_16                 is Prefix18=1 & (op8=0x9A); opr8a_16
 { 
 	IX = IX | opr8a_16;
 	V_equals_0(); 
@@ -4382,7 +4555,7 @@ define pcodeop LoadStack;
 @endif
 
 @if defined(HCS12X)
-:ORX opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xBA); opr16a_16
+:ORX opr16a_16                 is Prefix18=1 & (op8=0xBA); opr16a_16
 { 
 	IX = IX | opr16a_16;
 	V_equals_0(); 
@@ -4392,7 +4565,7 @@ define pcodeop LoadStack;
 @endif
 
 @if defined(HCS12X)
-:ORX indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xAA); indexed2_5
+:ORX indexed2_5                 is Prefix18=1 & (op8=0xAA); indexed2_5
 { 
 	IX = IX | indexed2_5;
 	V_equals_0(); 
@@ -4402,7 +4575,7 @@ define pcodeop LoadStack;
 @endif
 
 @if defined(HCS12X)
-:ORY iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0xCA); iopr16i
+:ORY iopr16i                 is Prefix18=1 & (op8=0xCA); iopr16i
 { 
 	IY = IY | iopr16i;
 	V_equals_0(); 
@@ -4412,7 +4585,7 @@ define pcodeop LoadStack;
 @endif
 
 @if defined(HCS12X)
-:ORY opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0xDA); opr8a_16
+:ORY opr8a_16                 is Prefix18=1 & (op8=0xDA); opr8a_16
 { 
 	IY = IY | opr8a_16;
 	V_equals_0(); 
@@ -4422,7 +4595,7 @@ define pcodeop LoadStack;
 @endif
 
 @if defined(HCS12X)
-:ORY opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xFA); opr16a_16
+:ORY opr16a_16                 is Prefix18=1 & (op8=0xFA); opr16a_16
 { 
 	IY = IY | opr16a_16;
 	V_equals_0(); 
@@ -4432,7 +4605,7 @@ define pcodeop LoadStack;
 @endif
 
 @if defined(HCS12X)
-:ORY indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xEA); indexed2_5
+:ORY indexed2_5                 is Prefix18=1 & (op8=0xEA); indexed2_5
 { 
 	IY = IY | indexed2_5;
 	V_equals_0(); 
@@ -4441,81 +4614,81 @@ define pcodeop LoadStack;
 }
 @endif
 
-:PSHA                    is XGATE=0 & Prefix18=0 & op8=0x36
+:PSHA                    is Prefix18=0 & op8=0x36
 {
 	Push1( A );
 }
 
-:PSHB                    is XGATE=0 & Prefix18=0 & op8=0x37
+:PSHB                    is Prefix18=0 & op8=0x37
 {
 	Push1( B );
 }
 
-:PSHC                    is XGATE=0 & Prefix18=0 & op8=0x39
+:PSHC                    is Prefix18=0 & op8=0x39
 {
 	Push1( CCR );
 }
 
 @if defined(HCS12X)
-:PSHCW                    is XGATE=0 & Prefix18=1 & op8=0x39
+:PSHCW                    is Prefix18=1 & op8=0x39
 {
 	Push2( CCRW );
 }
 @endif
 
-:PSHD                    is XGATE=0 & Prefix18=0 & op8=0x3B
+:PSHD                    is Prefix18=0 & op8=0x3B
 {
 	Push2( D );
 }
 
-:PSHX                    is XGATE=0 & Prefix18=0 & op8=0x34
+:PSHX                    is Prefix18=0 & op8=0x34
 {
 	Push2( IX );
 }
 
-:PSHY                    is XGATE=0 & Prefix18=0 & op8=0x35
+:PSHY                    is Prefix18=0 & op8=0x35
 {
 	Push2( IY );
 }
 
-:PULA                    is XGATE=0 & Prefix18=0 & op8=0x32
+:PULA                    is Prefix18=0 & op8=0x32
 {
 	Pull1( A );
 }
 
-:PULB                    is XGATE=0 & Prefix18=0 & op8=0x33
+:PULB                    is Prefix18=0 & op8=0x33
 {
 	Pull1( B );
 }
 
-:PULC                    is XGATE=0 & Prefix18=0 & op8=0x38
+:PULC                    is Prefix18=0 & op8=0x38
 {
 	Pull1( CCR );
 }
 
 @if defined(HCS12X)
-:PULCW                    is XGATE=0 & Prefix18=1 & op8=0x38
+:PULCW                    is Prefix18=1 & op8=0x38
 {
 	Pull2( CCRW );
 }
 @endif
 
-:PULD                    is XGATE=0 & Prefix18=0 & op8=0x3A
+:PULD                    is Prefix18=0 & op8=0x3A
 {
 	Pull2( D );
 }
 
-:PULX                    is XGATE=0 & Prefix18=0 & op8=0x30
+:PULX                    is Prefix18=0 & op8=0x30
 {
 	Pull2( IX );
 }
 
-:PULY                    is XGATE=0 & Prefix18=0 & op8=0x31
+:PULY                    is Prefix18=0 & op8=0x31
 {
 	Pull2( IY );
 }
 
-:REV                    is XGATE=0 & Prefix18=1 & op8=0x3A
+:REV                    is Prefix18=1 & op8=0x3A
 {
 	tempIX:2 = MinMaxRuleEvaluation(IX, IY, A, $(V));
 	$(V) = MinMaxRuleEvaluationCorrect(IX, IY, A, $(V));
@@ -4523,7 +4696,7 @@ define pcodeop LoadStack;
 	IX = tempIX;
 }
 
-:REVW                   is XGATE=0 & Prefix18=1 & op8=0x3B
+:REVW                   is Prefix18=1 & op8=0x3B
 {
 	tempIX:2 = MinMaxRuleEvaluationWeighted(IX, IY, A, $(V), $(C));
 	tempIY:2 = MinMaxRuleEvaluationWeighted(IX, IY, A, $(V), $(C));
@@ -4533,7 +4706,7 @@ define pcodeop LoadStack;
 	IY = tempIY;
 }
 
-:ROL opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0x75); opr16a_8
+:ROL opr16a_8                 is Prefix18=0 & (op8=0x75); opr16a_8
 {
 	tmpC:1 = $(C);
 	op1:1 = opr16a_8;
@@ -4546,7 +4719,7 @@ define pcodeop LoadStack;
 	V_equals_N_xor_C();	
 }
 
-:ROL indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0x65); indexed1_5 
+:ROL indexed1_5                 is Prefix18=0 & (op8=0x65); indexed1_5 
 {
 	tmpC:1 = $(C);
 	op1:1 = indexed1_5;
@@ -4559,7 +4732,7 @@ define pcodeop LoadStack;
 	V_equals_N_xor_C();	
 }
 
-:ROLA                    is XGATE=0 & Prefix18=0 & op8=0x45 
+:ROLA                    is Prefix18=0 & op8=0x45 
 {
 	tmpC:1 = $(C) ;
 	$(C) = A >> 7;
@@ -4570,7 +4743,7 @@ define pcodeop LoadStack;
 	V_equals_N_xor_C();	
 }
 
-:ROLB                    is XGATE=0 & Prefix18=0 & op8=0x55 
+:ROLB                    is Prefix18=0 & op8=0x55 
 {
 	tmpC:1 = $(C) ;
 	$(C) = B >> 7;
@@ -4582,7 +4755,7 @@ define pcodeop LoadStack;
 }
 
 @if defined(HCS12X)
-:ROLW opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0x75); opr16a_16
+:ROLW opr16a_16                 is Prefix18=1 & (op8=0x75); opr16a_16
 {
 	local tmp = opr16a_16;
 	local tmpC = $(C);
@@ -4597,7 +4770,7 @@ define pcodeop LoadStack;
 @endif
 
 @if defined(HCS12X)
-:ROLW indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0x65); indexed2_5 
+:ROLW indexed2_5                 is Prefix18=1 & (op8=0x65); indexed2_5 
 {
 	local tmp = indexed2_5;
 	local tmpC = $(C);
@@ -4612,7 +4785,7 @@ define pcodeop LoadStack;
 @endif
 
 @if defined(HCS12X)
-:ROLX                    is XGATE=0 & Prefix18=1 & op8=0x45
+:ROLX                    is Prefix18=1 & op8=0x45
 {
 	local tmpC = $(C);
 	$(C) = IX[15,1];
@@ -4625,7 +4798,7 @@ define pcodeop LoadStack;
 @endif
 
 @if defined(HCS12X)
-:ROLY                    is XGATE=0 & Prefix18=1 & op8=0x55
+:ROLY                    is Prefix18=1 & op8=0x55
 {
 	local tmpC = $(C);
 	$(C) = IY[15,1];
@@ -4637,7 +4810,7 @@ define pcodeop LoadStack;
 }
 @endif
 
-:ROR opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0x76); opr16a_8
+:ROR opr16a_8                 is Prefix18=0 & (op8=0x76); opr16a_8
 {
 	tmpC:1 = $(C) << 7;
 	tmp:1 = opr16a_8;
@@ -4650,7 +4823,7 @@ define pcodeop LoadStack;
 	V_equals_N_xor_C();	
 }
 
-:ROR indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0x66); indexed1_5 
+:ROR indexed1_5                 is Prefix18=0 & (op8=0x66); indexed1_5 
 {
 	tmpC:1 = $(C) << 7;
 	tmp:1 = indexed1_5;
@@ -4663,7 +4836,7 @@ define pcodeop LoadStack;
 	V_equals_N_xor_C();	
 }
 
-:RORA                    is XGATE=0 & Prefix18=0 & op8=0x46 
+:RORA                    is Prefix18=0 & op8=0x46 
 {
 	tmpC:1 = $(C) << 7;
 	$(C) = A & 1;
@@ -4674,7 +4847,7 @@ define pcodeop LoadStack;
 	V_equals_N_xor_C();	
 }
 
-:RORB                    is XGATE=0 & Prefix18=0 & op8=0x56 
+:RORB                    is Prefix18=0 & op8=0x56 
 {
 	tmpC:1 = $(C) << 7;
 	$(C) = B & 1;
@@ -4686,7 +4859,7 @@ define pcodeop LoadStack;
 }
 
 @if defined(HCS12X)
-:RORW opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0x76); opr16a_16
+:RORW opr16a_16                 is Prefix18=1 & (op8=0x76); opr16a_16
 {
 	local tmp = opr16a_16;
 	local tmpC = $(C);
@@ -4701,7 +4874,7 @@ define pcodeop LoadStack;
 @endif
 
 @if defined(HCS12X)
-:RORW indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0x66); indexed2_5 
+:RORW indexed2_5                 is Prefix18=1 & (op8=0x66); indexed2_5 
 {
 	local tmp = indexed2_5;
 	local tmpC = $(C);
@@ -4716,7 +4889,7 @@ define pcodeop LoadStack;
 @endif
 
 @if defined(HCS12X)
-:RORX                    is XGATE=0 & Prefix18=1 & op8=0x46
+:RORX                    is Prefix18=1 & op8=0x46
 {
 	local tmpC = $(C);
 	$(C) = IX[0,1];
@@ -4729,7 +4902,7 @@ define pcodeop LoadStack;
 @endif
 
 @if defined(HCS12X)
-:RORY                    is XGATE=0 & Prefix18=1 & op8=0x56
+:RORY                    is Prefix18=1 & op8=0x56
 {
 	local tmpC = $(C);
 	$(C) = IY[0,1];
@@ -4741,7 +4914,8 @@ define pcodeop LoadStack;
 }
 @endif
 
-:RTC                     is XGATE=0 & Prefix18=0 & op8=0x0A
+@ifdef HCS12
+:RTC                     is Prefix18=0 & op8=0x0A
 {
 	Pull1( PPAGE );
 
@@ -4750,8 +4924,9 @@ define pcodeop LoadStack;
 	
 	return [tmp];
 }
+@endif
 
-:RTI                     is XGATE=0 & Prefix18=0 & op8=0x0B
+:RTI                     is Prefix18=0 & op8=0x0B
 {
 	tmp:2 = 0;
 	Pull1( CCR );
@@ -4764,7 +4939,7 @@ define pcodeop LoadStack;
 	return [tmp];
 }
 
-:RTS                     is XGATE=0 & Prefix18=0 & op8=0x3D
+:RTS                     is Prefix18=0 & op8=0x3D
 {
 	tmp:2 = 0;
 	Pull2( tmp );
@@ -4772,14 +4947,14 @@ define pcodeop LoadStack;
 	return [tmp];
 }
 
-:SBA	                 is XGATE=0 & Prefix18=1 & (op8=0x16)
+:SBA	                 is Prefix18=1 & (op8=0x16)
 { 
 	result:1 = A - B;
 	subtraction_flags1(A, B, result);
 	A = result;
 }
 
-:SBCA iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0x82); iopr8i
+:SBCA iopr8i                 is Prefix18=0 & (op8=0x82); iopr8i
 { 
 	op1:1 = iopr8i;
 	
@@ -4788,7 +4963,7 @@ define pcodeop LoadStack;
 	A = result;
 }
 
-:SBCA opr8a_8                 is XGATE=0 & Prefix18=0 & (op8=0x92); opr8a_8
+:SBCA opr8a_8                 is Prefix18=0 & (op8=0x92); opr8a_8
 { 
 	op1:1 = opr8a_8;
 	
@@ -4797,7 +4972,7 @@ define pcodeop LoadStack;
 	A = result;
 }
 
-:SBCA opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0xB2); opr16a_8
+:SBCA opr16a_8                 is Prefix18=0 & (op8=0xB2); opr16a_8
 { 
 	op1:1 = opr16a_8;
 	
@@ -4806,7 +4981,7 @@ define pcodeop LoadStack;
 	A = result;
 }
 
-:SBCA indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0xA2); indexed1_5
+:SBCA indexed1_5                 is Prefix18=0 & (op8=0xA2); indexed1_5
 { 
 	op1:1 = indexed1_5;
 	
@@ -4815,7 +4990,7 @@ define pcodeop LoadStack;
 	A = result;
 }
 
-:SBCB iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0xC2); iopr8i
+:SBCB iopr8i                 is Prefix18=0 & (op8=0xC2); iopr8i
 { 
 	op1:1 = iopr8i;
 	
@@ -4824,7 +4999,7 @@ define pcodeop LoadStack;
 	B = result;
 }
 
-:SBCB opr8a_8                 is XGATE=0 & Prefix18=0 & (op8=0xD2); opr8a_8
+:SBCB opr8a_8                 is Prefix18=0 & (op8=0xD2); opr8a_8
 { 
 	op1:1 = opr8a_8;
 	
@@ -4833,7 +5008,7 @@ define pcodeop LoadStack;
 	B = result;
 }
 
-:SBCB opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0xF2); opr16a_8
+:SBCB opr16a_8                 is Prefix18=0 & (op8=0xF2); opr16a_8
 { 
 	op1:1 = opr16a_8;
 	
@@ -4842,7 +5017,7 @@ define pcodeop LoadStack;
 	B = result;
 }
 
-:SBCB indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0xE2); indexed1_5
+:SBCB indexed1_5                 is Prefix18=0 & (op8=0xE2); indexed1_5
 { 
 	op1:1 = indexed1_5;
 	
@@ -4852,7 +5027,7 @@ define pcodeop LoadStack;
 }
 
 @if defined(HCS12X)
-:SBED iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0x83); iopr16i
+:SBED iopr16i                 is Prefix18=1 & (op8=0x83); iopr16i
 {
 	op1:2 = iopr16i;
 	
@@ -4863,7 +5038,7 @@ define pcodeop LoadStack;
 @endif
 
 @if defined(HCS12X)
-:SBED opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0x93); opr8a_16
+:SBED opr8a_16                 is Prefix18=1 & (op8=0x93); opr8a_16
 { 
 	op1:2 = opr8a_16;
 	
@@ -4874,7 +5049,7 @@ define pcodeop LoadStack;
 @endif
 
 @if defined(HCS12X)
-:SBED opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xB3); opr16a_16
+:SBED opr16a_16                 is Prefix18=1 & (op8=0xB3); opr16a_16
 { 
 	op1:2 = opr16a_16;
 	
@@ -4885,7 +5060,7 @@ define pcodeop LoadStack;
 @endif
 
 @if defined(HCS12X)
-:SBED indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xA3); indexed2_5
+:SBED indexed2_5                 is Prefix18=1 & (op8=0xA3); indexed2_5
 { 
 	op1:2 = indexed2_5;
 	
@@ -4896,7 +5071,7 @@ define pcodeop LoadStack;
 @endif
 
 @if defined(HCS12X)
-:SBEX iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0x82); iopr16i
+:SBEX iopr16i                 is Prefix18=1 & (op8=0x82); iopr16i
 { 
 	op1:2 = iopr16i;
 	
@@ -4907,7 +5082,7 @@ define pcodeop LoadStack;
 @endif
 
 @if defined(HCS12X)
-:SBEX opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0x92); opr8a_16
+:SBEX opr8a_16                 is Prefix18=1 & (op8=0x92); opr8a_16
 { 
 	op1:2 = opr8a_16;
 	
@@ -4918,7 +5093,7 @@ define pcodeop LoadStack;
 @endif
 
 @if defined(HCS12X)
-:SBEX opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xB2); opr16a_16
+:SBEX opr16a_16                 is Prefix18=1 & (op8=0xB2); opr16a_16
 { 
 	op1:2 = opr16a_16;
 	
@@ -4929,7 +5104,7 @@ define pcodeop LoadStack;
 @endif
 
 @if defined(HCS12X)
-:SBEX indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xA2); indexed2_5
+:SBEX indexed2_5                 is Prefix18=1 & (op8=0xA2); indexed2_5
 { 
 	op1:2 = indexed2_5;
 	
@@ -4940,7 +5115,7 @@ define pcodeop LoadStack;
 @endif
 
 @if defined(HCS12X)
-:SBEY iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0xC2); iopr16i
+:SBEY iopr16i                 is Prefix18=1 & (op8=0xC2); iopr16i
 { 
 	op1:2 = iopr16i;
 	
@@ -4951,7 +5126,7 @@ define pcodeop LoadStack;
 @endif
 
 @if defined(HCS12X)
-:SBEY opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0xD2); opr8a_16
+:SBEY opr8a_16                 is Prefix18=1 & (op8=0xD2); opr8a_16
 { 
 	op1:2 = opr8a_16;
 	
@@ -4962,7 +5137,7 @@ define pcodeop LoadStack;
 @endif
 
 @if defined(HCS12X)
-:SBEY opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xF2); opr16a_16
+:SBEY opr16a_16                 is Prefix18=1 & (op8=0xF2); opr16a_16
 { 
 	op1:2 = opr16a_16;
 	
@@ -4973,7 +5148,7 @@ define pcodeop LoadStack;
 @endif
 
 @if defined(HCS12X)
-:SBEY indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xE2); indexed2_5
+:SBEY indexed2_5                 is Prefix18=1 & (op8=0xE2); indexed2_5
 { 
 	op1:2 = indexed2_5;
 	
@@ -4983,17 +5158,17 @@ define pcodeop LoadStack;
 }
 @endif
 
-:SEC                     is XGATE=0 & Prefix18=0 & op16=0x1401 
+:SEC                     is Prefix18=0 & op16=0x1401 
 {
 	$(C) = 1;
 }
 
-:SEI                     is XGATE=0 & Prefix18=0 & op16=0x1410 
+:SEI                     is Prefix18=0 & op16=0x1410 
 {
 	$(I) = 1;
 }
 
-:SEV                     is XGATE=0 & Prefix18=0 & op16=0x1402 
+:SEV                     is Prefix18=0 & op16=0x1402 
 {
 	$(V) = 1;
 }
@@ -5001,7 +5176,7 @@ define pcodeop LoadStack;
 
 
 @if defined(HCS12X)
-:SEX  A, D          is XGATE=0 & Prefix18=0 & op8=0xB7;
+:SEX  A, D          is Prefix18=0 & op8=0xB7;
 	(
 		( rows3_0=0xC & ( columns7_4=0x0                                                                                                                        ) ) 
 	) &
@@ -5012,7 +5187,7 @@ define pcodeop LoadStack;
 @endif
 
 @if defined(HCS12X)
-:SEX  B, D          is XGATE=0 & Prefix18=0 & op8=0xB7;
+:SEX  B, D          is Prefix18=0 & op8=0xB7;
 	(
 		( rows3_0=0xC & (                  columns7_4=0x1                                                                                                       ) ) 
 	) &
@@ -5023,7 +5198,7 @@ define pcodeop LoadStack;
 @endif
 
 @if defined(HCS12X)
-:SEX  D, IX          is XGATE=0 & Prefix18=0 & op8=0xB7;
+:SEX  D, IX          is Prefix18=0 & op8=0xB7;
 	(
 		( rows3_0=0xD & (                                                                     columns7_4=0x4                                                    ) )  
 	) &
@@ -5036,7 +5211,7 @@ define pcodeop LoadStack;
 @endif
 
 @if defined(HCS12X)
-:SEX  D, IY          is XGATE=0 & Prefix18=0 & op8=0xB7;
+:SEX  D, IY          is Prefix18=0 & op8=0xB7;
 	(
 		( rows3_0=0xE & (                                                                     columns7_4=0x4                                                    ) )  
 	) &
@@ -5048,7 +5223,7 @@ define pcodeop LoadStack;
 }
 @endif
 
-:SEX  abc5_4, dxys2_0          is XGATE=0 & Prefix18=0 & op8=0xB7;
+:SEX  abc5_4, dxys2_0          is Prefix18=0 & op8=0xB7;
 	(
 		( rows3_0=0x3 & ( columns7_4=0x0 | columns7_4=0x1 | columns7_4=0x2                                                                                      ) ) | 
 		( rows3_0=0x4 & ( columns7_4=0x0 | columns7_4=0x1 | columns7_4=0x2                                                                                      ) ) | 
@@ -5061,7 +5236,7 @@ define pcodeop LoadStack;
 	dxys2_0 = sext(abc5_4);
 }
 
-:^GPaged^"STAA" opr8a_8                 is XGATE=0 & GPaged & (op8=0x5A); opr8a_8 [ UseGPAGE=Prefix18; ]
+:^GPaged^"STAA" opr8a_8                 is GPaged & (op8=0x5A); opr8a_8 [ UseGPAGE=Prefix18; ]
 {
 	build GPaged;
 	opr8a_8 = A;
@@ -5070,7 +5245,7 @@ define pcodeop LoadStack;
 	V_equals_0();
 }
 
-:^GPaged^"STAA" opr16a_8                 is XGATE=0 & GPaged & (op8=0x7A); opr16a_8 [ UseGPAGE=Prefix18; ]
+:^GPaged^"STAA" opr16a_8                 is GPaged & (op8=0x7A); opr16a_8 [ UseGPAGE=Prefix18; ]
 {
 	build GPaged;
 	opr16a_8 = A;
@@ -5079,7 +5254,7 @@ define pcodeop LoadStack;
 	V_equals_0();
 }
 
-:^GPaged^"STAA" indexed1_5                 is XGATE=0 & GPaged & (op8=0x6A); indexed1_5 [ UseGPAGE=Prefix18; ]
+:^GPaged^"STAA" indexed1_5                 is GPaged & (op8=0x6A); indexed1_5 [ UseGPAGE=Prefix18; ]
 {
 	build GPaged;
 	indexed1_5 = A;
@@ -5088,7 +5263,7 @@ define pcodeop LoadStack;
 	V_equals_0();
 }
 
-:^GPaged^"STAB" opr8a_8                 is XGATE=0 & GPaged & (op8=0x5B); opr8a_8 [ UseGPAGE=Prefix18; ]
+:^GPaged^"STAB" opr8a_8                 is GPaged & (op8=0x5B); opr8a_8 [ UseGPAGE=Prefix18; ]
 {
 	build GPaged;
 	opr8a_8 = B;
@@ -5097,7 +5272,7 @@ define pcodeop LoadStack;
 	V_equals_0();
 }
 
-:^GPaged^"STAB" opr16a_8                 is XGATE=0 & GPaged & (op8=0x7B); opr16a_8 [ UseGPAGE=Prefix18; ]
+:^GPaged^"STAB" opr16a_8                 is GPaged & (op8=0x7B); opr16a_8 [ UseGPAGE=Prefix18; ]
 {
 	build GPaged;
 	opr16a_8 = B;
@@ -5106,7 +5281,7 @@ define pcodeop LoadStack;
 	V_equals_0();
 }
 
-:^GPaged^"STAB" indexed1_5                 is XGATE=0 & GPaged & (op8=0x6B); indexed1_5 [ UseGPAGE=Prefix18; ]
+:^GPaged^"STAB" indexed1_5                 is GPaged & (op8=0x6B); indexed1_5 [ UseGPAGE=Prefix18; ]
 {
 	build GPaged;
 	indexed1_5 = B;
@@ -5115,7 +5290,7 @@ define pcodeop LoadStack;
 	V_equals_0();
 }
 
-:^GPaged^"STD" opr8a_16                 is XGATE=0 & GPaged & (op8=0x5C); opr8a_16 [ UseGPAGE=Prefix18; ]
+:^GPaged^"STD" opr8a_16                 is GPaged & (op8=0x5C); opr8a_16 [ UseGPAGE=Prefix18; ]
 {
 	build GPaged;
 	opr8a_16 = D;
@@ -5124,7 +5299,7 @@ define pcodeop LoadStack;
 	V_equals_0();
 }
 
-:^GPaged^"STD" opr16a_16                 is XGATE=0 & GPaged & (op8=0x7C); opr16a_16 [ UseGPAGE=Prefix18; ]
+:^GPaged^"STD" opr16a_16                 is GPaged & (op8=0x7C); opr16a_16 [ UseGPAGE=Prefix18; ]
 {
 	build GPaged;
 	opr16a_16 = D;
@@ -5133,7 +5308,7 @@ define pcodeop LoadStack;
 	V_equals_0();
 }
 
-:^GPaged^"STD" indexed2_5                 is XGATE=0 & GPaged & (op8=0x6C); indexed2_5 [ UseGPAGE=Prefix18; ]
+:^GPaged^"STD" indexed2_5                 is GPaged & (op8=0x6C); indexed2_5 [ UseGPAGE=Prefix18; ]
 {
 	build GPaged;
 	indexed2_5 = D;
@@ -5142,7 +5317,7 @@ define pcodeop LoadStack;
 	V_equals_0();
 }
 
-:STOP                    is XGATE=0 & Prefix18=1 & op8=0x3E
+:STOP                    is Prefix18=1 & op8=0x3E
 {
 	if ($(S) == 0) goto <continue>;
 		tmp:2 = inst_next;
@@ -5156,7 +5331,7 @@ define pcodeop LoadStack;
 	<continue>
 }
 
-:^GPaged^"STS" opr8a_16                 is XGATE=0 & GPaged & (op8=0x5F); opr8a_16 [ UseGPAGE=Prefix18; ]
+:^GPaged^"STS" opr8a_16                 is GPaged & (op8=0x5F); opr8a_16 [ UseGPAGE=Prefix18; ]
 {
 	build GPaged;
 	opr8a_16 = SP;
@@ -5165,7 +5340,7 @@ define pcodeop LoadStack;
 	V_equals_0();
 }
 
-:^GPaged^"STS" opr16a_16                 is XGATE=0 & GPaged & (op8=0x7F); opr16a_16 [ UseGPAGE=Prefix18; ]
+:^GPaged^"STS" opr16a_16                 is GPaged & (op8=0x7F); opr16a_16 [ UseGPAGE=Prefix18; ]
 {
 	build GPaged;
 	opr16a_16 = SP;
@@ -5174,7 +5349,7 @@ define pcodeop LoadStack;
 	V_equals_0();
 }
 
-:^GPaged^"STS" indexed2_5                 is XGATE=0 & GPaged & (op8=0x6F); indexed2_5 [ UseGPAGE=Prefix18; ]
+:^GPaged^"STS" indexed2_5                 is GPaged & (op8=0x6F); indexed2_5 [ UseGPAGE=Prefix18; ]
 {
 	build GPaged;
 	indexed2_5 = SP;
@@ -5183,7 +5358,7 @@ define pcodeop LoadStack;
 	V_equals_0();
 }
 
-:^GPaged^"STX" opr8a_16                 is XGATE=0 & GPaged & (op8=0x5E); opr8a_16 [ UseGPAGE=Prefix18; ]
+:^GPaged^"STX" opr8a_16                 is GPaged & (op8=0x5E); opr8a_16 [ UseGPAGE=Prefix18; ]
 {
 	build GPaged;
 	opr8a_16 = IX;
@@ -5192,7 +5367,7 @@ define pcodeop LoadStack;
 	V_equals_0();
 }
 
-:^GPaged^"STX" opr16a_16                 is XGATE=0 & GPaged & (op8=0x7E); opr16a_16 [ UseGPAGE=Prefix18; ]
+:^GPaged^"STX" opr16a_16                 is GPaged & (op8=0x7E); opr16a_16 [ UseGPAGE=Prefix18; ]
 {
 	build GPaged;
 	opr16a_16 = IX;
@@ -5201,7 +5376,7 @@ define pcodeop LoadStack;
 	V_equals_0();
 }
 
-:^GPaged^"STX" indexed2_5                 is XGATE=0 & GPaged & (op8=0x6E); indexed2_5 [ UseGPAGE=Prefix18; ]
+:^GPaged^"STX" indexed2_5                 is GPaged & (op8=0x6E); indexed2_5 [ UseGPAGE=Prefix18; ]
 {
 	build GPaged;
 	indexed2_5 = IX;
@@ -5210,7 +5385,7 @@ define pcodeop LoadStack;
 	V_equals_0();
 }
 
-:^GPaged^"STY" opr8a_16                 is XGATE=0 & GPaged & (op8=0x5D); opr8a_16 [ UseGPAGE=Prefix18; ]
+:^GPaged^"STY" opr8a_16                 is GPaged & (op8=0x5D); opr8a_16 [ UseGPAGE=Prefix18; ]
 {
 	build GPaged;
 	opr8a_16 = IY;
@@ -5219,7 +5394,7 @@ define pcodeop LoadStack;
 	V_equals_0();
 }
 
-:^GPaged^"STY" opr16a_16                 is XGATE=0 & GPaged & (op8=0x7D); opr16a_16 [ UseGPAGE=Prefix18; ]
+:^GPaged^"STY" opr16a_16                 is GPaged & (op8=0x7D); opr16a_16 [ UseGPAGE=Prefix18; ]
 {
 	build GPaged;
 	opr16a_16 = IY;
@@ -5228,7 +5403,7 @@ define pcodeop LoadStack;
 	V_equals_0();
 }
 
-:^GPaged^"STY" indexed2_5                 is XGATE=0 & GPaged & (op8=0x6D); indexed2_5 [ UseGPAGE=Prefix18; ]
+:^GPaged^"STY" indexed2_5                 is GPaged & (op8=0x6D); indexed2_5 [ UseGPAGE=Prefix18; ]
 {
 	build GPaged;
 	indexed2_5 = IY;
@@ -5237,7 +5412,7 @@ define pcodeop LoadStack;
 	V_equals_0();
 }
 
-:SUBA iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0x80); iopr8i
+:SUBA iopr8i                 is Prefix18=0 & (op8=0x80); iopr8i
 { 
 	op1:1 = iopr8i;
 	
@@ -5246,7 +5421,7 @@ define pcodeop LoadStack;
 	A = result;
 }
 
-:SUBA opr8a_8                 is XGATE=0 & Prefix18=0 & (op8=0x90); opr8a_8
+:SUBA opr8a_8                 is Prefix18=0 & (op8=0x90); opr8a_8
 { 
 	op1:1 = opr8a_8;
 	
@@ -5255,7 +5430,7 @@ define pcodeop LoadStack;
 	A = result;
 }
 
-:SUBA opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0xB0); opr16a_8
+:SUBA opr16a_8                 is Prefix18=0 & (op8=0xB0); opr16a_8
 { 
 	op1:1 = opr16a_8;
 	
@@ -5264,7 +5439,7 @@ define pcodeop LoadStack;
 	A = result;
 }
 
-:SUBA indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0xA0); indexed1_5
+:SUBA indexed1_5                 is Prefix18=0 & (op8=0xA0); indexed1_5
 { 
 	op1:1 = indexed1_5;
 	
@@ -5273,7 +5448,7 @@ define pcodeop LoadStack;
 	A = result;
 }
 
-:SUBB iopr8i                 is XGATE=0 & Prefix18=0 & (op8=0xC0); iopr8i
+:SUBB iopr8i                 is Prefix18=0 & (op8=0xC0); iopr8i
 { 
 	op1:1 = iopr8i;
 	
@@ -5282,7 +5457,7 @@ define pcodeop LoadStack;
 	B = result;
 }
 
-:SUBB opr8a_8                 is XGATE=0 & Prefix18=0 & (op8=0xD0); opr8a_8
+:SUBB opr8a_8                 is Prefix18=0 & (op8=0xD0); opr8a_8
 { 
 	op1:1 = opr8a_8;
 	
@@ -5291,7 +5466,7 @@ define pcodeop LoadStack;
 	B = result;
 }
 
-:SUBB opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0xF0); opr16a_8
+:SUBB opr16a_8                 is Prefix18=0 & (op8=0xF0); opr16a_8
 { 
 	op1:1 = opr16a_8;
 	
@@ -5300,7 +5475,7 @@ define pcodeop LoadStack;
 	B = result;
 }
 
-:SUBB indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0xE0); indexed1_5
+:SUBB indexed1_5                 is Prefix18=0 & (op8=0xE0); indexed1_5
 { 
 	op1:1 = indexed1_5;
 	
@@ -5309,7 +5484,7 @@ define pcodeop LoadStack;
 	B = result;
 }
 
-:SUBD iopr16i                 is XGATE=0 & Prefix18=0 & (op8=0x83); iopr16i
+:SUBD iopr16i                 is Prefix18=0 & (op8=0x83); iopr16i
 { 
 	op1:2 = iopr16i;
 	
@@ -5318,7 +5493,7 @@ define pcodeop LoadStack;
 	D = result;
 }
 
-:SUBD opr8a_16                 is XGATE=0 & Prefix18=0 & (op8=0x93); opr8a_16
+:SUBD opr8a_16                 is Prefix18=0 & (op8=0x93); opr8a_16
 { 
 	op1:2 = opr8a_16;
 	
@@ -5327,7 +5502,7 @@ define pcodeop LoadStack;
 	D = result;
 }
 
-:SUBD opr16a_16                 is XGATE=0 & Prefix18=0 & (op8=0xB3); opr16a_16
+:SUBD opr16a_16                 is Prefix18=0 & (op8=0xB3); opr16a_16
 { 
 	op1:2 = opr16a_16;
 	
@@ -5336,7 +5511,7 @@ define pcodeop LoadStack;
 	D = result;
 }
 
-:SUBD indexed2_5                 is XGATE=0 & Prefix18=0 & (op8=0xA3); indexed2_5
+:SUBD indexed2_5                 is Prefix18=0 & (op8=0xA3); indexed2_5
 { 
 	op1:2 = indexed2_5;
 	
@@ -5346,7 +5521,7 @@ define pcodeop LoadStack;
 }
 
 @if defined(HCS12X)
-:SUBX iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0x80); iopr16i
+:SUBX iopr16i                 is Prefix18=1 & (op8=0x80); iopr16i
 { 
 	op1:2 = iopr16i;
 	
@@ -5357,7 +5532,7 @@ define pcodeop LoadStack;
 @endif
 
 @if defined(HCS12X)
-:SUBX opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0x90); opr8a_16
+:SUBX opr8a_16                 is Prefix18=1 & (op8=0x90); opr8a_16
 { 
 	op1:2 = opr8a_16;
 	
@@ -5368,7 +5543,7 @@ define pcodeop LoadStack;
 @endif
 
 @if defined(HCS12X)
-:SUBX opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xB0); opr16a_16
+:SUBX opr16a_16                 is Prefix18=1 & (op8=0xB0); opr16a_16
 { 
 	op1:2 = opr16a_16;
 	
@@ -5379,7 +5554,7 @@ define pcodeop LoadStack;
 @endif
 
 @if defined(HCS12X)
-:SUBX indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xA0); indexed2_5
+:SUBX indexed2_5                 is Prefix18=1 & (op8=0xA0); indexed2_5
 { 
 	op1:2 = indexed2_5;
 	
@@ -5387,9 +5562,10 @@ define pcodeop LoadStack;
 	subtraction_flags2(IX, op1, result);
 	IX = result;
 }
+@endif
 
 @if defined(HCS12X)
-:SUBY iopr16i                 is XGATE=0 & Prefix18=1 & (op8=0xC0); iopr16i
+:SUBY iopr16i                 is Prefix18=1 & (op8=0xC0); iopr16i
 { 
 	op1:2 = iopr16i;
 	
@@ -5400,7 +5576,7 @@ define pcodeop LoadStack;
 @endif
 
 @if defined(HCS12X)
-:SUBY opr8a_16                 is XGATE=0 & Prefix18=1 & (op8=0xD0); opr8a_16
+:SUBY opr8a_16                 is Prefix18=1 & (op8=0xD0); opr8a_16
 { 
 	op1:2 = opr8a_16;
 	
@@ -5411,7 +5587,7 @@ define pcodeop LoadStack;
 @endif
 
 @if defined(HCS12X)
-:SUBY opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xF0); opr16a_16
+:SUBY opr16a_16                 is Prefix18=1 & (op8=0xF0); opr16a_16
 { 
 	op1:2 = opr16a_16;
 	
@@ -5422,7 +5598,7 @@ define pcodeop LoadStack;
 @endif
 
 @if defined(HCS12X)
-:SUBY indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xE0); indexed2_5
+:SUBY indexed2_5                 is Prefix18=1 & (op8=0xE0); indexed2_5
 { 
 	op1:2 = indexed2_5;
 	
@@ -5432,7 +5608,7 @@ define pcodeop LoadStack;
 }
 @endif
 
-:SWI                     is XGATE=0 & Prefix18=0 & op8=0x3F
+:SWI                     is Prefix18=0 & op8=0x3F
 {
 	tmp:2 = inst_next;
 	Push2( tmp );
@@ -5448,7 +5624,7 @@ define pcodeop LoadStack;
 	call [addr];
 }
 
-:TAB                     is XGATE=0 & Prefix18=1 & op8=0x0E 
+:TAB                     is Prefix18=1 & op8=0x0E 
 {
 	B = A;
 	$(Z) = (B == 0);
@@ -5456,12 +5632,12 @@ define pcodeop LoadStack;
 	V_equals_0();	
 }
 
-:TAP                     is XGATE=0 & Prefix18=0 & op16=0xB702 
+:TAP                     is Prefix18=0 & op16=0xB702 
 {
 	setCCR( A );
 }
 
-:TBA                     is XGATE=0 & Prefix18=1 & op8=0x0F 
+:TBA                     is Prefix18=1 & op8=0x0F 
 {
 	A = B;
 	$(Z) = (A == 0);
@@ -5469,17 +5645,17 @@ define pcodeop LoadStack;
 	V_equals_0();	
 }
 
-:TBEQ byte9_8, rel9               is XGATE=0 & Prefix18=0 & op8=0x04; op15_13=0x2 & size10_10=0 & byte9_8 & rel9
+:TBEQ byte9_8, rel9               is Prefix18=0 & op8=0x04; op15_13=0x2 & size10_10=0 & byte9_8 & rel9
 {
 	if (byte9_8 == 0) goto rel9;
 }
 
-:TBEQ word9_8, rel9               is XGATE=0 & Prefix18=0 & op8=0x04; op15_13=0x2 & size10_10=1 & word9_8 & rel9
+:TBEQ word9_8, rel9               is Prefix18=0 & op8=0x04; op15_13=0x2 & size10_10=1 & word9_8 & rel9
 {
 	if (word9_8 == 0) goto rel9;
 }
 
-:TBL indexed1_3                    is XGATE=0 & Prefix18=1 & op8=0x3D; indexed1_3
+:TBL indexed1_3                    is Prefix18=1 & op8=0x3D; indexed1_3
 {
 	A = TableLookupAndInterpolate(indexed1_3, B);
 	$(Z) = (A == 0);
@@ -5489,17 +5665,17 @@ define pcodeop LoadStack;
 @endif
 }
 
-:TBNE byte9_8, rel9               is XGATE=0 & Prefix18=0 & op8=0x04; op15_13=0x3 & size10_10=0 & byte9_8 & rel9
+:TBNE byte9_8, rel9               is Prefix18=0 & op8=0x04; op15_13=0x3 & size10_10=0 & byte9_8 & rel9
 {
 	if (byte9_8 != 0) goto rel9;
 }
 
-:TBNE word9_8, rel9               is XGATE=0 & Prefix18=0 & op8=0x04; op15_13=0x3 & size10_10=1 & word9_8 & rel9
+:TBNE word9_8, rel9               is Prefix18=0 & op8=0x04; op15_13=0x3 & size10_10=1 & word9_8 & rel9
 {
 	if (word9_8 != 0) goto rel9;
 }
 
-:TFR bytes_ABClT3lBXlYlSl_6_4, bytes_ABCl_2_0	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+:TFR bytes_ABClT3lBXlYlSl_6_4, bytes_ABCl_2_0	is Prefix18=0 & ( op8=0xB7 );
 	(
 # The case "20" is covered by TPA
 		( rows3_0=0x0 & ( columns7_4=0x0 | columns7_4=0x1 |                  columns7_4=0x3 | columns7_4=0x4 | columns7_4=0x5 | columns7_4=0x6 | columns7_4=0x7 ) ) | 
@@ -5513,7 +5689,7 @@ define pcodeop LoadStack;
 	bytes_ABCl_2_0 = bytes_ABClT3lBXlYlSl_6_4;
 }
 
-:TFR bytes_ABClT3lBXlYlSl_6_4, CCR	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+:TFR bytes_ABClT3lBXlYlSl_6_4, CCR	is Prefix18=0 & ( op8=0xB7 );
 	(
 # The case "02" is covered by TAP
 		( rows3_0=0x2 & (                  columns7_4=0x1 | columns7_4=0x2 | columns7_4=0x3 | columns7_4=0x4 | columns7_4=0x5 | columns7_4=0x6 | columns7_4=0x7 ) ) | 
@@ -5525,7 +5701,7 @@ define pcodeop LoadStack;
 	setCCR( bytes_ABClT3lBXlYlSl_6_4 );
 }
 
-:TFR bytes_ABChT3hBXhYhSh_6_4, A	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+:TFR bytes_ABChT3hBXhYhSh_6_4, A	is Prefix18=0 & ( op8=0xB7 );
 	(
 		( rows3_0=0x8 & (                                   columns7_4=0x2 | columns7_4=0x3 |                  columns7_4=0x5 | columns7_4=0x6 | columns7_4=0x7 ) ) 
 	) &
@@ -5534,7 +5710,7 @@ define pcodeop LoadStack;
 	A = bytes_ABChT3hBXhYhSh_6_4;
 }
 
-:TFR A, CCRH	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+:TFR A, CCRH	is Prefix18=0 & ( op8=0xB7 );
 	(
 		( rows3_0=0xA & ( columns7_4=0x0                                                                                                                        ) )  
 	) &
@@ -5543,7 +5719,7 @@ define pcodeop LoadStack;
 	CCRH = A;
 }
 
-:TFR words_CT3DXYS_6_4, CCRW	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+:TFR words_CT3DXYS_6_4, CCRW	is Prefix18=0 & ( op8=0xB7 );
 	(
 		( rows3_0=0xA & (                                   columns7_4=0x2 | columns7_4=0x3 | columns7_4=0x4 | columns7_4=0x5 | columns7_4=0x6 | columns7_4=0x7 ) )  
 	) &
@@ -5552,7 +5728,7 @@ define pcodeop LoadStack;
 	setCCRW( words_CT3DXYS_6_4 );
 }
 
-:TFR words_T3DXYS_6_4, words_T2DXYS_2_0	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+:TFR words_T3DXYS_6_4, words_T2DXYS_2_0	is Prefix18=0 & ( op8=0xB7 );
 	(
 # The case "57" is covered by TXS
 # The case "67" is covered by TYS
@@ -5575,7 +5751,7 @@ define pcodeop LoadStack;
 	words_T2DXYS_2_0 = words_T3DXYS_6_4;
 }
 
-:TFR D, TMP1	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+:TFR D, TMP1	is Prefix18=0 & ( op8=0xB7 );
 	(
 		( rows3_0=0xB & (                                                                     columns7_4=0x4                                                    ) )  
 	) &
@@ -5584,7 +5760,7 @@ define pcodeop LoadStack;
 	TMP1 = D;
 }
 
-:TFR TMP1, D	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+:TFR TMP1, D	is Prefix18=0 & ( op8=0xB7 );
 	(
 		( rows3_0=0xC & (                                                    columns7_4=0x3                                                                     ) ) 
 	) &
@@ -5593,7 +5769,7 @@ define pcodeop LoadStack;
 	D = TMP1;
 }
 
-:TFR CCRW, words_T2DXYS_2_0	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+:TFR CCRW, words_T2DXYS_2_0	is Prefix18=0 & ( op8=0xB7 );
 	(
 		( rows3_0=0xB & (                                   columns7_4=0x2                                                                                      ) ) |
 		( rows3_0=0xC & (                                   columns7_4=0x2                                                                                      ) ) |
@@ -5606,7 +5782,7 @@ define pcodeop LoadStack;
 	words_T2DXYS_2_0 = CCRW;
 }
 
-:TFR A, bytes_T2h_XhYhSh_2_0	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+:TFR A, bytes_T2h_XhYhSh_2_0	is Prefix18=0 & ( op8=0xB7 );
 	(
 		( rows3_0=0xB & ( columns7_4=0x0                                                                                                                        ) ) |
 
@@ -5619,7 +5795,7 @@ define pcodeop LoadStack;
 	bytes_T2h_XhYhSh_2_0 = A;
 }
 
-:TFR A, bytes_T2l_XlYlSl_2_0	is XGATE=0 & Prefix18=0 & ( op8=0xB7 );
+:TFR A, bytes_T2l_XlYlSl_2_0	is Prefix18=0 & ( op8=0xB7 );
 	(
 		( rows3_0=0xB & (                  columns7_4=0x1                                                                                                       ) ) |
 
@@ -5632,13 +5808,13 @@ define pcodeop LoadStack;
 	bytes_T2l_XlYlSl_2_0 = A;
 }
 
-:TPA                     is XGATE=0 & Prefix18=0 & op16=0xB720 
+:TPA                     is Prefix18=0 & op16=0xB720 
 {
 	A = CCR;
 }
 
-# TODO Not working properly with context regis XGATE=0 & ter for Prefix18
-:TRAP trapnum	is XGATE=0 & Prefix18=1 & op8=0x30 & trapnum
+# TODO Not working properly with context regis ter for Prefix18
+:TRAP trapnum	is Prefix18=1 & op8=0x30 & trapnum
 {
 	tmp:2 = inst_next;
 	Push2( tmp );
@@ -5654,7 +5830,7 @@ define pcodeop LoadStack;
 	call [addr];
 }
 
-:TST opr16a_8                 is XGATE=0 & Prefix18=0 & (op8=0xF7); opr16a_8
+:TST opr16a_8                 is Prefix18=0 & (op8=0xF7); opr16a_8
 {
 	op1:1 = opr16a_8;
 	$(Z) = (op1 == 0);
@@ -5663,7 +5839,7 @@ define pcodeop LoadStack;
 	$(C) = 0;	
 }
 
-:TST indexed1_5                 is XGATE=0 & Prefix18=0 & (op8=0xE7); indexed1_5 
+:TST indexed1_5                 is Prefix18=0 & (op8=0xE7); indexed1_5 
 {
 	op1:1 = indexed1_5;
 	$(Z) = (op1 == 0);
@@ -5672,14 +5848,14 @@ define pcodeop LoadStack;
 	$(C) = 0;	
 }
 
-:TSTA                    is XGATE=0 & Prefix18=0 & op8=0x97 
+:TSTA                    is Prefix18=0 & op8=0x97 
 {
 	$(Z) = (A == 0);
 	$(N) = (A s< 0);
 	V_equals_0();	
 }
 
-:TSTB                    is XGATE=0 & Prefix18=0 & op8=0xD7 
+:TSTB                    is Prefix18=0 & op8=0xD7 
 {
 	$(Z) = (B == 0);
 	$(N) = (B s< 0);
@@ -5688,7 +5864,7 @@ define pcodeop LoadStack;
 }
 
 @if defined(HCS12X)
-:TSTW opr16a_16                 is XGATE=0 & Prefix18=1 & (op8=0xF7); opr16a_16
+:TSTW opr16a_16                 is Prefix18=1 & (op8=0xF7); opr16a_16
 {
 	op1:2 = opr16a_16;
 	$(Z) = (op1 == 0);
@@ -5699,7 +5875,7 @@ define pcodeop LoadStack;
 @endif
 
 @if defined(HCS12X)
-:TSTW indexed2_5                 is XGATE=0 & Prefix18=1 & (op8=0xE7); indexed2_5 
+:TSTW indexed2_5                 is Prefix18=1 & (op8=0xE7); indexed2_5 
 {
 	op1:2 = indexed2_5;
 	$(Z) = (op1 == 0);
@@ -5709,7 +5885,7 @@ define pcodeop LoadStack;
 }
 @endif
 
-:TSTX                    is XGATE=0 & Prefix18=1 & op8=0x97
+:TSTX                    is Prefix18=1 & op8=0x97
 {
 	$(Z) = (IX == 0);
 	$(N) = (IX s< 0);
@@ -5717,34 +5893,34 @@ define pcodeop LoadStack;
 }
 
 
-:TSTY                    is XGATE=0 & Prefix18=1 & op8=0xD7 
+:TSTY                    is Prefix18=1 & op8=0xD7 
 {
 	$(Z) = (IY == 0);
 	$(N) = (IY s< 0);
 	V_equals_0();	
 }
 
-:TSX                     is XGATE=0 & Prefix18=0 & op16=0xB775 
+:TSX                     is Prefix18=0 & op16=0xB775 
 {
 	IX = SP;
 }
 
-:TSY                     is XGATE=0 & Prefix18=0 & op16=0xB776 
+:TSY                     is Prefix18=0 & op16=0xB776 
 {
 	IY = SP;
 }
 
-:TXS                     is XGATE=0 & Prefix18=0 & op16=0xB757 
+:TXS                     is Prefix18=0 & op16=0xB757 
 {
 	SP = IX;
 }
 
-:TYS                     is XGATE=0 & Prefix18=0 & op16=0xB767 
+:TYS                     is Prefix18=0 & op16=0xB767 
 {
 	SP = IY;
 }
 
-:WAI                    is XGATE=0 & Prefix18=0 & op8=0x3E 
+:WAI                    is Prefix18=0 & op8=0x3E 
 {
 	tmp:2 = inst_next;
 	Push2( tmp );
@@ -5757,7 +5933,7 @@ define pcodeop LoadStack;
 	WaitForInterrupt();
 }
  
-:WAV                    is XGATE=0 & Prefix18=1 & op8=0x3C 
+:WAV                    is Prefix18=1 & op8=0x3C 
 {
 	tempIY:2 = WeightedAverageSOPHigh(B, IY, IX);
 	tempD:2  = WeightedAverageSOPLow (B, IY, IX);
@@ -5770,21 +5946,23 @@ define pcodeop LoadStack;
 	IX = tempIX;
 }
  
-:WAVR                    is XGATE=0 & Prefix18=0 & op8=0x3C 
+:WAVR                    is Prefix18=0 & op8=0x3C 
 {
 	WeightedAverageResume();
 }
 
-:XGDX                     is XGATE=0 & Prefix18=0 & op16=0xB7C5 
+:XGDX                     is Prefix18=0 & op16=0xB7C5 
 {
 	tmp:2 = IX;
 	IX = D;
 	D = tmp;
 }
 
-:XGDY                     is XGATE=0 & Prefix18=0 & op16=0xB7C6 
+:XGDY                     is Prefix18=0 & op16=0xB7C6 
 {
 	tmp:2 = IY;
 	IY = D;
 	D = tmp;
 }
+
+} # End with : XGATE=0

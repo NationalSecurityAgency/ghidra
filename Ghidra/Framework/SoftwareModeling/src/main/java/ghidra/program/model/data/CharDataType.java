@@ -33,13 +33,13 @@ public class CharDataType extends AbstractIntegerDataType implements DataTypeWit
 			CharDataType.class.getName());
 	}
 
-	private static SettingsDefinition[] CHAR_SETTINGS_DEFS =
-		{ FormatSettingsDefinition.DEF_CHAR, PADDING, ENDIAN, MNEMONIC,
-			CharsetSettingsDefinition.CHARSET, RenderUnicodeSettingsDefinition.RENDER };
+	private static SettingsDefinition[] CHAR_SETTINGS_DEFS = { FormatSettingsDefinition.DEF_CHAR,
+		PADDING, ENDIAN, MNEMONIC, CharsetSettingsDefinition.CHARSET,
+		RenderUnicodeSettingsDefinition.RENDER, TranslationSettingsDefinition.TRANSLATION };
 
 	private static SettingsDefinition[] WIDE_UTF_CHAR_SETTINGS_DEFS =
 		{ FormatSettingsDefinition.DEF_CHAR, PADDING, ENDIAN, MNEMONIC,
-			RenderUnicodeSettingsDefinition.RENDER };
+			RenderUnicodeSettingsDefinition.RENDER, TranslationSettingsDefinition.TRANSLATION };
 
 	public static final CharDataType dataType = new CharDataType();
 

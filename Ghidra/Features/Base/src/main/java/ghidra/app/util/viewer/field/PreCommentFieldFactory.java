@@ -15,7 +15,6 @@
  */
 package ghidra.app.util.viewer.field;
 
-import java.awt.Color;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +25,7 @@ import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.FieldUtils;
 import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.viewer.field.ListingColors.CommentColors;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.options.OptionsGui;
 import ghidra.app.util.viewer.proxy.ProxyObj;
@@ -66,7 +66,6 @@ public class PreCommentFieldFactory extends FieldFactory {
 	private boolean flagSubroutineEntry;
 	private boolean isWordWrap;
 	private boolean alwaysShowAutomatic;
-	private Color automaticCommentColor;
 	private int automaticCommentStyle;
 
 	/**
@@ -95,9 +94,6 @@ public class PreCommentFieldFactory extends FieldFactory {
 		flagFunctionEntry = fieldOptions.getBoolean(FLAG_FUNCTION_ENTRY_OPTION, false);
 		flagSubroutineEntry = fieldOptions.getBoolean(FLAG_SUBROUTINE_ENTRY_OPTION, false);
 
-		automaticCommentColor =
-			displayOptions.getColor(OptionsGui.COMMENT_AUTO.getColorOptionName(),
-				OptionsGui.COMMENT_AUTO.getDefaultColor());
 		automaticCommentStyle =
 			displayOptions.getInt(OptionsGui.COMMENT_AUTO.getStyleOptionName(), -1);
 
@@ -189,11 +185,6 @@ public class PreCommentFieldFactory extends FieldFactory {
 	}
 
 	@Override
-	public Color getDefaultColor() {
-		return OptionsGui.COMMENT_PRE.getDefaultColor();
-	}
-
-	@Override
 	public void fieldOptionsChanged(Options options, String optionName, Object oldValue,
 			Object newValue) {
 
@@ -266,7 +257,7 @@ public class PreCommentFieldFactory extends FieldFactory {
 		// NOTE: A zero-length composite has a length of 1 which may cause it to improperly consume
 		// the address location which actually corresponds to a trailing zero-length 
 		// component.
-		
+
 		int levelsToIgnore = 0;
 		String label = null;
 		Address prevDataAddr = data.getMinAddress().previous();
@@ -314,11 +305,11 @@ public class PreCommentFieldFactory extends FieldFactory {
 					lastDtc = ddt.getComponent(lastDtcOrdinal, data);
 				}
 			}
-			
+
 			if (lastDtc == null || lastDtc.getLength() == 0) {
 				break;
 			}
-			
+
 			Data component = data.getComponent(lastDtc.getOrdinal());
 			if (component == null) {
 				return null;
@@ -329,11 +320,12 @@ public class PreCommentFieldFactory extends FieldFactory {
 		if (lastDtc == null || lastDtc.isBitFieldComponent()) {
 			return null;
 		}
-		
+
 		return buildZeroLengthComponentAutoComment(lastDtc, data, levelsToIgnore, label);
 	}
 
-	private String[] buildZeroLengthComponentAutoComment(DataTypeComponent lastZeroLengthComponent, Data data, int levelsToIgnore, String label) {
+	private String[] buildZeroLengthComponentAutoComment(DataTypeComponent lastZeroLengthComponent,
+			Data data, int levelsToIgnore, String label) {
 
 		String fieldName = lastZeroLengthComponent.getFieldName();
 		if (StringUtils.isEmpty(fieldName)) {
@@ -356,8 +348,8 @@ public class PreCommentFieldFactory extends FieldFactory {
 			flexName.insert(0, label + ".");
 		}
 
-		return new String[] { "Zero-length Component: " + lastZeroLengthComponent.getDataType().getName() + " " +
-				flexName.toString() };
+		return new String[] { "Zero-length Component: " +
+			lastZeroLengthComponent.getDataType().getName() + " " + flexName.toString() };
 	}
 
 	private ListingTextField getTextField(String[] comments, String[] autoComment,
@@ -378,10 +370,11 @@ public class PreCommentFieldFactory extends FieldFactory {
 
 		CodeUnit cu = (CodeUnit) proxy.getObject();
 		Program program = cu.getProgram();
-		AttributedString prototypeString = new AttributedString("prototype", color, getMetrics());
+		AttributedString prototypeString =
+			new AttributedString("prototype", CommentColors.PRE, getMetrics());
 		List<FieldElement> fields = new ArrayList<>();
 		for (int i = 0; i < nLinesAutoComment; i++) {
-			AttributedString as = new AttributedString(autoComment[i], automaticCommentColor,
+			AttributedString as = new AttributedString(autoComment[i], CommentColors.AUTO,
 				getMetrics(automaticCommentStyle), false, null);
 			fields.add(new TextFieldElement(as, i, 0));
 		}

@@ -33,8 +33,8 @@ import ghidra.program.model.util.*;
 import ghidra.program.util.ChangeManager;
 import ghidra.util.*;
 import ghidra.util.exception.*;
+import ghidra.util.map.TypeMismatchException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * Manages generic address keyed properties.
@@ -46,7 +46,7 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 	private AddressMap addrMap;
 	private ChangeManager changeMgr;
 	private PropertiesDBAdapter propertiesDBAdapter;
-	private TreeMap<String, PropertyMap> propertyMapCache;
+	private TreeMap<String, PropertyMapDB<?>> propertyMapCache;
 	private Lock lock;
 
 	static final int CURRENT_PROPERTIES_TABLE_VERSION = 0;
@@ -82,9 +82,9 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 	 * @param openMode the program open mode.
 	 * @param lock the program synchronization lock
 	 * @param monitor the task monitor
-	 * @throws IOException
-	 * @throws VersionException
-	 * @throws CancelledException
+	 * @throws IOException if an IO error occurs
+	 * @throws VersionException if a version error occurs
+	 * @throws CancelledException if task is cancelled
 	 */
 	public DBPropertyMapManager(DBHandle handle, ChangeManager changeMgr, AddressMap addrMap,
 			int openMode, Lock lock, TaskMonitor monitor)
@@ -97,7 +97,7 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 			dbHandle.createTable(PROPERTIES_TABLE_NAME, PROPERTIES_SCHEMA);
 		}
 		findAdapters(handle);
-		propertyMapCache = new TreeMap<String, PropertyMap>();
+		propertyMapCache = new TreeMap<String, PropertyMapDB<?>>();
 		loadPropertyMaps(openMode, monitor);
 	}
 
@@ -126,9 +126,10 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 		lock.acquire();
 		try {
 			propertyMapCache.clear();
-			loadPropertyMaps(-1, TaskMonitorAdapter.DUMMY_MONITOR);
+			loadPropertyMaps(-1, TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
+			// will not happen
 		}
 		catch (VersionException e) {
 			throw new AssertException();
@@ -147,7 +148,7 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 				DBRecord rec = iter.next();
 				String name = rec.getKeyField().getString();
 				byte propertyType = rec.getByteValue(PROPERTY_TYPE_COL);
-				PropertyMap pm = null;
+				PropertyMapDB<?> pm = null;
 				try {
 					switch (propertyType) {
 						case INT_PROPERTY_TYPE:
@@ -178,12 +179,12 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 									throw new VersionException(VersionException.OLDER_VERSION,
 										true);
 								}
-								pm = new ObjectPropertyMapDB(dbHandle, openMode, program, changeMgr,
-									addrMap, name, OldBookmark.class, monitor, false);
+								pm = new ObjectPropertyMapDB<>(dbHandle, openMode, program,
+									changeMgr, addrMap, name, OldBookmark.class, monitor, false);
 							}
 							else {
-								pm = new ObjectPropertyMapDB(dbHandle, openMode, program, changeMgr,
-									addrMap, name,
+								pm = new ObjectPropertyMapDB<>(dbHandle, openMode, program,
+									changeMgr, addrMap, name,
 									ObjectPropertyMapDB.getSaveableClassForName(className), monitor,
 									false);
 							}
@@ -233,10 +234,10 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 			if (propertyMapCache.containsKey(propertyName)) {
 				throw new DuplicateNameException();
 			}
-			IntPropertyMap pm = null;
+			IntPropertyMapDB pm = null;
 			try {
 				pm = new IntPropertyMapDB(dbHandle, DBConstants.CREATE, program, changeMgr, addrMap,
-					propertyName, TaskMonitorAdapter.DUMMY_MONITOR);
+					propertyName, TaskMonitor.DUMMY);
 				propertiesDBAdapter.putRecord(propertyName, INT_PROPERTY_TYPE, null);
 				propertyMapCache.put(propertyName, pm);
 			}
@@ -244,6 +245,7 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 				throw new AssertException();
 			}
 			catch (CancelledException e) {
+				// will not happen
 			}
 			catch (IOException e) {
 				program.dbError(e);
@@ -270,10 +272,10 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 			if (propertyMapCache.containsKey(propertyName)) {
 				throw new DuplicateNameException();
 			}
-			LongPropertyMap pm = null;
+			LongPropertyMapDB pm = null;
 			try {
 				pm = new LongPropertyMapDB(dbHandle, DBConstants.CREATE, program, changeMgr,
-					addrMap, propertyName, TaskMonitorAdapter.DUMMY_MONITOR);
+					addrMap, propertyName, TaskMonitor.DUMMY);
 				propertiesDBAdapter.putRecord(propertyName, LONG_PROPERTY_TYPE, null);
 				propertyMapCache.put(propertyName, pm);
 			}
@@ -281,6 +283,7 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 				throw new AssertException();
 			}
 			catch (CancelledException e) {
+				// will not happen
 			}
 			catch (IOException e) {
 				program.dbError(e);
@@ -308,10 +311,10 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 			if (propertyMapCache.containsKey(propertyName)) {
 				throw new DuplicateNameException();
 			}
-			StringPropertyMap pm = null;
+			StringPropertyMapDB pm = null;
 			try {
 				pm = new StringPropertyMapDB(dbHandle, DBConstants.CREATE, program, changeMgr,
-					addrMap, propertyName, TaskMonitorAdapter.DUMMY_MONITOR);
+					addrMap, propertyName, TaskMonitor.DUMMY);
 				propertiesDBAdapter.putRecord(propertyName, STRING_PROPERTY_TYPE, null);
 				propertyMapCache.put(propertyName, pm);
 			}
@@ -319,6 +322,7 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 				throw new AssertException();
 			}
 			catch (CancelledException e) {
+				// will not happen
 			}
 			catch (IOException e) {
 				program.dbError(e);
@@ -331,26 +335,19 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 
 	}
 
-	/**
-	 * Creates a new ObjectPropertyMap with the given name.
-	 * @param propertyName the name of the property to create.
-	 * @param objectClass the class of the objects that will be stored in the property.
-	 * @exception DuplicateNameException thrown if a PropertyMap already
-	 * exists with that name.
-	 */
 	@Override
-	public ObjectPropertyMap createObjectPropertyMap(String propertyName,
-			Class<? extends Saveable> objectClass) throws DuplicateNameException {
+	public <T extends Saveable> ObjectPropertyMap<T> createObjectPropertyMap(String propertyName,
+			Class<T> objectClass) throws DuplicateNameException {
 
 		lock.acquire();
 		try {
 			if (propertyMapCache.containsKey(propertyName)) {
 				throw new DuplicateNameException();
 			}
-			ObjectPropertyMap pm = null;
+			ObjectPropertyMapDB<T> pm = null;
 			try {
-				pm = new ObjectPropertyMapDB(dbHandle, DBConstants.CREATE, program, changeMgr,
-					addrMap, propertyName, objectClass, TaskMonitorAdapter.DUMMY_MONITOR, false);
+				pm = new ObjectPropertyMapDB<>(dbHandle, DBConstants.CREATE, program, changeMgr,
+					addrMap, propertyName, objectClass, TaskMonitor.DUMMY, false);
 				propertiesDBAdapter.putRecord(propertyName, OBJECT_PROPERTY_TYPE,
 					objectClass.getName());
 				propertyMapCache.put(propertyName, pm);
@@ -359,6 +356,7 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 				throw new AssertException();
 			}
 			catch (CancelledException e) {
+				// will not happen
 			}
 			catch (IOException e) {
 				program.dbError(e);
@@ -386,10 +384,10 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 			if (propertyMapCache.containsKey(propertyName)) {
 				throw new DuplicateNameException();
 			}
-			VoidPropertyMap pm = null;
+			VoidPropertyMapDB pm = null;
 			try {
 				pm = new VoidPropertyMapDB(dbHandle, DBConstants.CREATE, program, changeMgr,
-					addrMap, propertyName, TaskMonitorAdapter.DUMMY_MONITOR);
+					addrMap, propertyName, TaskMonitor.DUMMY);
 				propertiesDBAdapter.putRecord(propertyName, VOID_PROPERTY_TYPE, null);
 				propertyMapCache.put(propertyName, pm);
 			}
@@ -397,6 +395,7 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 				throw new AssertException();
 			}
 			catch (CancelledException e) {
+				// will not happen
 			}
 			catch (IOException e) {
 				program.dbError(e);
@@ -415,7 +414,7 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 	 * @param propertyName the name of the property to retrieve.
 	 */
 	@Override
-	public PropertyMap getPropertyMap(String propertyName) {
+	public PropertyMap<?> getPropertyMap(String propertyName) {
 		lock.acquire();
 		try {
 			return propertyMapCache.get(propertyName);
@@ -437,7 +436,7 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 
 		lock.acquire();
 		try {
-			PropertyMap pm = propertyMapCache.get(propertyName);
+			PropertyMapDB<?> pm = propertyMapCache.get(propertyName);
 			if (pm == null || pm instanceof IntPropertyMap) {
 				return (IntPropertyMap) pm;
 			}
@@ -459,7 +458,7 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 	public LongPropertyMap getLongPropertyMap(String propertyName) {
 		lock.acquire();
 		try {
-			PropertyMap pm = propertyMapCache.get(propertyName);
+			PropertyMapDB<?> pm = propertyMapCache.get(propertyName);
 			if (pm == null || pm instanceof LongPropertyMap) {
 				return (LongPropertyMap) pm;
 			}
@@ -481,7 +480,7 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 	public StringPropertyMap getStringPropertyMap(String propertyName) {
 		lock.acquire();
 		try {
-			PropertyMap pm = propertyMapCache.get(propertyName);
+			PropertyMapDB<?> pm = propertyMapCache.get(propertyName);
 			if (pm == null || pm instanceof StringPropertyMap) {
 				return (StringPropertyMap) pm;
 			}
@@ -500,12 +499,12 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 	 * exists but is not an ObjectPropertyMap.
 	 */
 	@Override
-	public ObjectPropertyMap getObjectPropertyMap(String propertyName) {
+	public ObjectPropertyMap<?> getObjectPropertyMap(String propertyName) {
 		lock.acquire();
 		try {
-			PropertyMap pm = propertyMapCache.get(propertyName);
+			PropertyMapDB<?> pm = propertyMapCache.get(propertyName);
 			if (pm == null || pm instanceof ObjectPropertyMap) {
-				return (ObjectPropertyMap) pm;
+				return (ObjectPropertyMap<?>) pm;
 			}
 			throw new TypeMismatchException("Property " + propertyName + " is not object type");
 
@@ -525,7 +524,7 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 	public VoidPropertyMap getVoidPropertyMap(String propertyName) {
 		lock.acquire();
 		try {
-			PropertyMap pm = propertyMapCache.get(propertyName);
+			PropertyMapDB<?> pm = propertyMapCache.get(propertyName);
 			if (pm == null || pm instanceof VoidPropertyMap) {
 				return (VoidPropertyMap) pm;
 			}
@@ -536,17 +535,12 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 		}
 	}
 
-	/**
-	 * Removes the PropertyMap with the given name.
-	 * @param propertyName the name of the property to remove.
-	 * @return true if a PropertyMap with that name was found (and removed)
-	 */
 	@Override
 	public boolean removePropertyMap(String propertyName) {
 		lock.acquire();
 		try {
-			if (propertyMapCache.containsKey(propertyName)) {
-				PropertyMapDB pm = (PropertyMapDB) propertyMapCache.get(propertyName);
+			PropertyMapDB<?> pm = propertyMapCache.remove(propertyName);
+			if (pm != null) {
 				pm.delete();
 				propertiesDBAdapter.removeRecord(propertyName);
 				propertyMapCache.remove(propertyName);
@@ -565,9 +559,6 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 		return false;
 	}
 
-	/**
-	 * Returns an iterator over the names of all existing PropertyMangers.
-	 */
 	@Override
 	public Iterator<String> propertyManagers() {
 		lock.acquire();
@@ -580,18 +571,13 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 
 	}
 
-	/**
-	 * Removes any property at the given address from all defined
-	 * PropertyManagers.
-	 * @param addr the address at which to remove all properties.
-	 */
 	@Override
 	public void removeAll(Address addr) {
 		lock.acquire();
 		try {
-			Iterator<PropertyMap> iter = propertyMapCache.values().iterator();
+			Iterator<PropertyMapDB<?>> iter = propertyMapCache.values().iterator();
 			while (iter.hasNext()) {
-				PropertyMapDB pm = (PropertyMapDB) iter.next();
+				PropertyMapDB<?> pm = iter.next();
 				pm.remove(addr);
 			}
 
@@ -601,18 +587,15 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.util.PropertyMapManager#removeAll(ghidra.program.model.address.Address, ghidra.program.model.address.Address, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
 	public void removeAll(Address startAddr, Address endAddr, TaskMonitor monitor)
 			throws CancelledException {
 		lock.acquire();
 		try {
-			Iterator<PropertyMap> iter = propertyMapCache.values().iterator();
+			Iterator<PropertyMapDB<?>> iter = propertyMapCache.values().iterator();
 			while (iter.hasNext()) {
 				monitor.checkCanceled();
-				PropertyMapDB pm = (PropertyMapDB) iter.next();
+				PropertyMapDB<?> pm = iter.next();
 				pm.removeRange(startAddr, endAddr);
 			}
 
@@ -622,18 +605,15 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.database.ManagerDB#moveAddressRange(ghidra.program.model.address.Address, ghidra.program.model.address.Address, long, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
 	public void moveAddressRange(Address fromAddr, Address toAddr, long length, TaskMonitor monitor)
 			throws CancelledException {
 		lock.acquire();
 		try {
-			Iterator<PropertyMap> iter = propertyMapCache.values().iterator();
+			Iterator<PropertyMapDB<?>> iter = propertyMapCache.values().iterator();
 			while (iter.hasNext()) {
 				monitor.checkCanceled();
-				PropertyMapDB pm = (PropertyMapDB) iter.next();
+				PropertyMapDB<?> pm = iter.next();
 				pm.moveRange(fromAddr, fromAddr.add(length - 1), toAddr);
 			}
 
@@ -643,9 +623,6 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 		}
 	}
 
-	/**
-	 * @see ghidra.program.database.ManagerDB#deleteAddressRange(ghidra.program.model.address.Address, ghidra.program.model.address.Address, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
 	public void deleteAddressRange(Address startAddr, Address endAddr, TaskMonitor monitor)
 			throws CancelledException {

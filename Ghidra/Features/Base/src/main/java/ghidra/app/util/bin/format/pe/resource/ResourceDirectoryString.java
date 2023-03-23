@@ -15,12 +15,12 @@
  */
 package ghidra.app.util.bin.format.pe.resource;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
-
-import java.io.IOException;
 
 /**
  * <pre>
@@ -42,12 +42,9 @@ public class ResourceDirectoryString implements StructConverter {
      * @param index the index where this resource string begins
      */
     public ResourceDirectoryString(BinaryReader reader, int index) throws IOException {
-        length = reader.readShort(index);
-        nameString = reader.readAsciiString(index+BinaryReader.SIZEOF_SHORT);
-        if (nameString.length() != length) {
-            //todo:
-            throw new IllegalArgumentException("name string length != length");
-        }
+		BinaryReader stringReader = reader.clone(index);
+		length = stringReader.readNextShort();
+		nameString = stringReader.readNextAsciiString(Short.toUnsignedInt(length));
     }
 
     /**
@@ -66,6 +63,7 @@ public class ResourceDirectoryString implements StructConverter {
         return nameString;
     }
 
+	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		StructureDataType struct = new StructureDataType(NAME+"_"+length, 0);
 		struct.add(WORD, "Length", null);

@@ -101,6 +101,6 @@ public class FGData {
 
 	@Override
 	public String toString() {
-		return "FunctionGraphData[" + function.getName() + "]";
+		return "FunctionGraphData[" + function.getName() + "@" + function.getEntryPoint() + "]";
 	}
 }

@@ -48,7 +48,7 @@ import ghidra.util.data.DataTypeParser.AllowedDataTypes;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.task.SwingUpdateManager;
 import ghidra.util.task.TaskMonitor;
-import resources.ResourceManager;
+import resources.Icons;
 import util.CollectionUtils;
 
 //@formatter:off
@@ -79,7 +79,7 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 	private SwingUpdateManager updateManager = new SwingUpdateManager(650, () -> updatePreview());
 
 	public DataTypePreviewPlugin(PluginTool tool) {
-		super(tool, true, true);
+		super(tool);
 	}
 
 	DTPPTableModel getTableModel() {
@@ -301,7 +301,7 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 			}
 		};
 		addAction.setPopupMenuData(new MenuData(new String[] { "Add" }));
-		addAction.setToolBarData(new ToolBarData(ResourceManager.loadImage("images/Plus.png")));
+		addAction.setToolBarData(new ToolBarData(Icons.ADD_ICON));
 		addAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_PLUS, 0));
 
 		addAction.setDescription("Add Datatypes");
@@ -316,8 +316,7 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 			}
 		};
 		deleteAction.setPopupMenuData(new MenuData(new String[] { "Delete" }));
-		deleteAction.setToolBarData(
-			new ToolBarData(ResourceManager.loadImage("images/edit-delete.png")));
+		deleteAction.setToolBarData(new ToolBarData(Icons.DELETE_ICON));
 		deleteAction.setKeyBindingData(new KeyBindingData(KeyEvent.VK_DELETE, 0));
 
 		deleteAction.setDescription("Delete Selected Datatypes");

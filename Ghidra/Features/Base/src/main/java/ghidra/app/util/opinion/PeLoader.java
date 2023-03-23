@@ -16,8 +16,9 @@
 package ghidra.app.util.opinion;
 
 import java.io.IOException;
-import java.math.BigInteger;
 import java.util.*;
+
+import com.google.common.primitives.Bytes;
 
 import ghidra.app.util.MemoryBlockUtils;
 import ghidra.app.util.Option;
@@ -26,7 +27,6 @@ import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.mz.DOSHeader;
 import ghidra.app.util.bin.format.pe.*;
 import ghidra.app.util.bin.format.pe.ImageCor20Header.ImageCor20Flags;
-import ghidra.app.util.bin.format.pe.ImageRuntimeFunctionEntries._IMAGE_RUNTIME_FUNCTION_ENTRY;
 import ghidra.app.util.bin.format.pe.PortableExecutable.SectionLayout;
 import ghidra.app.util.bin.format.pe.debug.DebugCOFFSymbol;
 import ghidra.app.util.bin.format.pe.debug.DebugDirectoryParser;
@@ -37,16 +37,14 @@ import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
-import ghidra.program.model.lang.Register;
-import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.reloc.RelocationTable;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.AddressSetPropertyMap;
 import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.util.*;
+import ghidra.util.Msg;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
@@ -81,8 +79,9 @@ public class PeLoader extends AbstractPeDebugLoader {
 		if (ntHeader != null && ntHeader.getOptionalHeader() != null) {
 			long imageBase = ntHeader.getOptionalHeader().getImageBase();
 			String machineName = ntHeader.getFileHeader().getMachineName();
-			String compiler = CompilerOpinion.stripFamily(CompilerOpinion.getOpinion(pe, provider));
-			for (QueryResult result : QueryOpinionService.query(getName(), machineName, compiler)) {
+			String compilerFamily = CompilerOpinion.getOpinion(pe, provider).family;
+			for (QueryResult result : QueryOpinionService.query(getName(), machineName,
+				compilerFamily)) {
 				loadSpecs.add(new LoadSpec(this, imageBase, result));
 			}
 			if (loadSpecs.isEmpty()) {
@@ -110,7 +109,6 @@ public class PeLoader extends AbstractPeDebugLoader {
 			return;
 		}
 		OptionalHeader optionalHeader = ntHeader.getOptionalHeader();
-		FileHeader fileHeader = ntHeader.getFileHeader();
 
 		monitor.setMessage("Completing PE header parsing...");
 		FileBytes fileBytes = createFileBytes(provider, program, monitor);
@@ -134,17 +132,14 @@ public class PeLoader extends AbstractPeDebugLoader {
 				}
 			}
 
-			setProcessorContext(fileHeader, program, monitor, log);
-
 			processExports(optionalHeader, program, monitor, log);
 			processImports(optionalHeader, program, monitor, log);
 			processDelayImports(optionalHeader, program, monitor, log);
 			processRelocations(optionalHeader, program, monitor, log);
-			processDebug(optionalHeader, ntHeader, sectionToAddress, program, monitor);
+			processDebug(optionalHeader, ntHeader, sectionToAddress, program, options, monitor);
 			processProperties(optionalHeader, program, monitor);
 			processComments(program.getListing(), monitor);
 			processSymbols(ntHeader, sectionToAddress, program, monitor, log);
-			processImageRuntimeFunctionEntries(fileHeader, program, monitor, log);
 
 			processEntryPoints(ntHeader, program, monitor);
 			String compiler = CompilerOpinion.getOpinion(pe, provider).toString();
@@ -259,41 +254,6 @@ public class PeLoader extends AbstractPeDebugLoader {
 		}
 	}
 
-	private void processImageRuntimeFunctionEntries(FileHeader fileHeader, Program program,
-			TaskMonitor monitor, MessageLog log) {
-
-		// Check to see that we have exception data to process
-		SectionHeader irfeHeader = null;
-		for (SectionHeader header : fileHeader.getSectionHeaders()) {
-			if (header.getName().contains(".pdata")) {
-				irfeHeader = header;
-				break;
-			}
-		}
-
-		if (irfeHeader == null) {
-			return;
-		}
-
-		Address start = program.getImageBase().add(irfeHeader.getVirtualAddress());
-
-		List<_IMAGE_RUNTIME_FUNCTION_ENTRY> irfes = fileHeader.getImageRuntimeFunctionEntries();
-
-		if (irfes.isEmpty()) {
-			return;
-		}
-
-		// TODO: This is x86-64 architecture-specific and needs to be generalized.
-		ImageRuntimeFunctionEntries.createData(program, start, irfes);
-
-		// Each RUNTIME_INFO contains an address to an UNWIND_INFO structure
-		// which also needs to be laid out. When they contain chaining data
-		// they're recursive but the toDataType() function handles that.
-		for (_IMAGE_RUNTIME_FUNCTION_ENTRY entry : irfes) {
-			entry.createData(program);
-		}
-	}
-
 	private void processSymbols(NTHeader ntHeader, Map<SectionHeader, Address> sectionToAddress,
 			Program program, TaskMonitor monitor, MessageLog log) {
 		FileHeader fileHeader = ntHeader.getFileHeader();
@@ -324,10 +284,9 @@ public class PeLoader extends AbstractPeDebugLoader {
 
 	private void processRelocations(OptionalHeader optionalHeader, Program prog,
 			TaskMonitor monitor, MessageLog log) {
+		// We don't currently support relocations in PE's because we always load at the preferred
+		// image base, but we'll go though them anyway and add them to the relocation table
 
-		if (monitor.isCancelled()) {
-			return;
-		}
 		monitor.setMessage("[" + prog.getName() + "]: processing relocation tables...");
 
 		DataDirectory[] dataDirectories = optionalHeader.getDataDirectories();
@@ -343,67 +302,15 @@ public class PeLoader extends AbstractPeDebugLoader {
 		AddressSpace space = prog.getAddressFactory().getDefaultAddressSpace();
 		RelocationTable relocTable = prog.getRelocationTable();
 
-		Memory memory = prog.getMemory();
-
-		BaseRelocation[] relocs = brdd.getBaseRelocations();
-		long originalImageBase = optionalHeader.getOriginalImageBase();
-		AddressRange brddRange =
-			new AddressRangeImpl(space.getAddress(originalImageBase + brdd.getVirtualAddress()),
-				space.getAddress(originalImageBase + brdd.getVirtualAddress() + brdd.getSize()));
-		AddressRange headerRange = new AddressRangeImpl(space.getAddress(originalImageBase),
-			space.getAddress(originalImageBase + optionalHeader.getSizeOfHeaders()));
-		DataConverter conv = LittleEndianDataConverter.INSTANCE;
-
-		for (BaseRelocation reloc : relocs) {
+		for (BaseRelocation reloc : brdd.getBaseRelocations()) {
 			if (monitor.isCancelled()) {
 				return;
 			}
 			int baseAddr = reloc.getVirtualAddress();
-			int count = reloc.getCount();
-			for (int j = 0; j < count; ++j) {
-				int type = reloc.getType(j);
-				if (type == BaseRelocation.IMAGE_REL_BASED_ABSOLUTE) {
-					continue;
-				}
-				int offset = reloc.getOffset(j);
-				long addr = Conv.intToLong(baseAddr + offset) + optionalHeader.getImageBase();
-				Address relocAddr = space.getAddress(addr);
-
-				try {
-					byte[] bytes = optionalHeader.is64bit() ? new byte[8] : new byte[4];
-					memory.getBytes(relocAddr, bytes);
-					if (optionalHeader.wasRebased()) {
-						long val = optionalHeader.is64bit() ? conv.getLong(bytes)
-								: conv.getInt(bytes) & 0xFFFFFFFFL;
-						val =
-							val - (originalImageBase & 0xFFFFFFFFL) + optionalHeader.getImageBase();
-						byte[] newbytes = optionalHeader.is64bit() ? conv.getBytes(val)
-								: conv.getBytes((int) val);
-						if (type == BaseRelocation.IMAGE_REL_BASED_HIGHLOW) {
-							memory.setBytes(relocAddr, newbytes);
-						}
-						else if (type == BaseRelocation.IMAGE_REL_BASED_DIR64) {
-							memory.setBytes(relocAddr, newbytes);
-						}
-						else {
-							Msg.error(this, "Non-standard relocation type " + type);
-						}
-					}
-
-					relocTable.add(relocAddr, type, null, bytes, null);
-
-				}
-				catch (MemoryAccessException e) {
-					log.appendMsg("Relocation does not exist in memory: " + relocAddr);
-				}
-				if (brddRange.contains(relocAddr)) {
-					Msg.error(this, "Self-modifying relocation table at " + relocAddr);
-					return;
-				}
-				if (headerRange.contains(relocAddr)) {
-					Msg.error(this, "Header modified at " + relocAddr);
-					return;
-				}
+			for (int i = 0; i < reloc.getCount(); ++i) {
+				long addr = optionalHeader.getImageBase() + baseAddr + reloc.getOffset(i);
+				relocTable.add(space.getAddress(addr), Status.SKIPPED, reloc.getType(i), null, null,
+					null);
 			}
 		}
 	}
@@ -437,13 +344,14 @@ public class PeLoader extends AbstractPeDebugLoader {
 				return;
 			}
 
-			long addr = Conv.intToLong(importInfo.getAddress()) + optionalHeader.getImageBase();
+			long addr =
+				Integer.toUnsignedLong(importInfo.getAddress()) + optionalHeader.getImageBase();
 
 			//If not 64bit make sure address is not larger
 			//than 32bit. On WindowsCE some sections are
 			//declared to roll over.
 			if (!optionalHeader.is64bit()) {
-				addr &= Conv.INT_MASK;
+				addr &= 0x00000000ffffffffL;
 			}
 
 			Address address = space.getAddress(addr);
@@ -579,27 +487,6 @@ public class PeLoader extends AbstractPeDebugLoader {
 
 		if (codeProp != null) {
 			codeProp.add(address, address);
-		}
-	}
-
-	private void setProcessorContext(FileHeader fileHeader, Program program, TaskMonitor monitor,
-			MessageLog log) {
-
-		try {
-			String machineName = fileHeader.getMachineName();
-			if ("450".equals(machineName) || "452".equals(machineName)) {
-				Register tmodeReg = program.getProgramContext().getRegister("TMode");
-				if (tmodeReg == null) {
-					return;
-				}
-				RegisterValue thumbMode = new RegisterValue(tmodeReg, BigInteger.ONE);
-				AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
-				program.getProgramContext()
-						.setRegisterValue(space.getMinAddress(), space.getMaxAddress(), thumbMode);
-			}
-		}
-		catch (ContextChangeException e) {
-			throw new AssertException("instructions should not exist");
 		}
 	}
 
@@ -744,6 +631,11 @@ public class PeLoader extends AbstractPeDebugLoader {
 
 				address = space.getAddress(addr);
 
+				String sectionName = sections[i].getReadableName();
+				if (sectionName.isBlank()) {
+					sectionName = "SECTION." + i;
+				}
+
 				r = ((sections[i].getCharacteristics() &
 					SectionFlags.IMAGE_SCN_MEM_READ.getMask()) != 0x0);
 				w = ((sections[i].getCharacteristics() &
@@ -764,10 +656,6 @@ public class PeLoader extends AbstractPeDebugLoader {
 						if (!ntHeader.checkRVA(dataSize)) {
 							Msg.warn(this, "OptionalHeader.SizeOfImage < size of " +
 								sections[i].getName() + " section");
-						}
-						String sectionName = sections[i].getReadableName();
-						if (sectionName.isBlank()) {
-							sectionName = "SECTION." + i;
 						}
 						MemoryBlockUtils.createInitializedBlock(prog, false, sectionName, address,
 							fileBytes, rawDataPtr, dataSize, "", "", r, w, x, log);
@@ -798,9 +686,9 @@ public class PeLoader extends AbstractPeDebugLoader {
 				else {
 					int dataSize = (virtualSize > 0 || rawDataSize < 0) ? virtualSize : 0;
 					if (dataSize > 0) {
-						MemoryBlockUtils.createUninitializedBlock(prog, false,
-							sections[i].getReadableName(), address, dataSize, "", "", r, w, x, log);
-						sectionToAddress.put(sections[i], address);
+						MemoryBlockUtils.createUninitializedBlock(prog, false, sectionName, address,
+							dataSize, "", "", r, w, x, log);
+						sectionToAddress.putIfAbsent(sections[i], address);
 					}
 				}
 
@@ -935,7 +823,8 @@ public class PeLoader extends AbstractPeDebugLoader {
 	}
 
 	private void processDebug(OptionalHeader optionalHeader, NTHeader ntHeader,
-			Map<SectionHeader, Address> sectionToAddress, Program program, TaskMonitor monitor) {
+			Map<SectionHeader, Address> sectionToAddress, Program program, List<Option> options,
+			TaskMonitor monitor) {
 		if (monitor.isCancelled()) {
 			return;
 		}
@@ -957,7 +846,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 			return;
 		}
 
-		processDebug(parser, ntHeader, sectionToAddress, program, monitor);
+		processDebug(parser, ntHeader, sectionToAddress, program, options, monitor);
 	}
 
 	@Override
@@ -972,62 +861,43 @@ public class PeLoader extends AbstractPeDebugLoader {
 			"This program cannot be run in DOS mode.\r\r\n$".toCharArray();
 		static final char[] errString_Clang =
 			"This program cannot be run in DOS mode.$".toCharArray();
-		static final int[] asm16_Borland = { 0xBA, 0x10, 0x00, 0x0E, 0x1F, 0xB4, 0x09, 0xCD, 0x21,
-			0xB8, 0x01, 0x4C, 0xCD, 0x21, 0x90, 0x90 };
-		static final int[] asm16_GCC_VS_Clang =
-			{ 0x0e, 0x1f, 0xba, 0x0e, 0x00, 0xb4, 0x09, 0xcd, 0x21, 0xb8, 0x01, 0x4c, 0xcd, 0x21 };
+		static final byte[] asm16_Borland =
+			{ (byte) 0xBA, 0x10, 0x00, 0x0E, 0x1F, (byte) 0xB4, 0x09, (byte) 0xCD, 0x21,
+				(byte) 0xB8, 0x01, 0x4C, (byte) 0xCD, 0x21, (byte) 0x90, (byte) 0x90 };
+		static final byte[] asm16_GCC_VS_Clang =
+			{ 0x0e, 0x1f, (byte) 0xba, 0x0e, 0x00, (byte) 0xb4, 0x09, (byte) 0xcd, 0x21,
+				(byte) 0xb8, 0x01, 0x4c, (byte) 0xcd, 0x21 };
+		static final byte[] THIS_BYTES = "This".getBytes();
 
 		public enum CompilerEnum {
 
-			VisualStudio("visualstudio:unknown"),
-			GCC("gcc:unknown"),
-			Clang("clang:unknown"),
-			GCC_VS("visualstudiogcc"),
-			GCC_VS_Clang("visualstudiogccclang"),
-			BorlandPascal("borland:pascal"),
-			BorlandCpp("borland:c++"),
-			BorlandUnk("borland:unknown"),
-			CLI("cli"),
-			Unknown("unknown");
+			VisualStudio("visualstudio:unknown", "visualstudio"),
+			GCC("gcc:unknown", "gcc"),
+			Clang("clang:unknown", "clang"),
+			BorlandPascal("borland:pascal", "borlanddelphi"),
+			BorlandCpp("borland:c++", "borlandcpp"),
+			BorlandUnk("borland:unknown", "borlandcpp"),
+			CLI("cli", "cli"),
+			Unknown("unknown", "unknown"),
 
-			private String label;
+			// The following values represent the presence of ambiguous indicators
+			// and should not be returned by the compiler opinion method.
+			GCC_VS(null, null), // GCC | VS
+			GCC_VS_Clang(null, null), // GCC | VS | CLANG
+			;
 
-			private CompilerEnum(String label) {
+			public final String label; // value stored as ProgramInformation.Compiler property
+			public final String family; // used for Opinion secondary query param
+
+			private CompilerEnum(String label, String secondary) {
 				this.label = label;
+				this.family = secondary;
 			}
 
 			@Override
 			public String toString() {
 				return label;
 			}
-		}
-
-		// Treat string as upto 3 colon separated fields describing a compiler  --   <product>:<language>:version
-		public static String stripFamily(CompilerEnum val) {
-			if (val == CompilerEnum.BorlandCpp) {
-				return "borlandcpp";
-			}
-			if (val == CompilerEnum.BorlandPascal) {
-				return "borlanddelphi";
-			}
-			if (val == CompilerEnum.BorlandUnk) {
-				return "borlandcpp";
-			}
-			String compilerid = val.toString();
-			int colon = compilerid.indexOf(':');
-			if (colon > 0) {
-				return compilerid.substring(0, colon);
-			}
-			return compilerid;
-		}
-
-		private static SectionHeader getSectionHeader(String name, SectionHeader[] list) {
-			for (SectionHeader element : list) {
-				if (element.getName().equals(name)) {
-					return element;
-				}
-			}
-			return null;
 		}
 
 		/**
@@ -1053,7 +923,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 
 		public static CompilerEnum getOpinion(PortableExecutable pe, ByteProvider provider)
 				throws IOException {
-			CompilerEnum compilerType = CompilerEnum.Unknown;
+
 			CompilerEnum offsetChoice = CompilerEnum.Unknown;
 			CompilerEnum asmChoice = CompilerEnum.Unknown;
 			CompilerEnum errStringChoice = CompilerEnum.Unknown;
@@ -1073,77 +943,51 @@ public class PeLoader extends AbstractPeDebugLoader {
 			else if (dh.e_lfanew() == 0x78) {
 				offsetChoice = CompilerEnum.Clang;
 			}
-			else if (dh.e_lfanew() < 0x80) {
-				offsetChoice = CompilerEnum.Unknown;
-			}
-			else {
+			else if (dh.e_lfanew() >= 0x80) {
 
 				// Check for "DanS"
 				int val1 = br.readInt(0x80);
 				int val2 = br.readInt(0x80 + 4);
 
-				if (val1 != 0 && val2 != 0 && (val1 ^ val2) == 0x536e6144) {
-					compilerType = CompilerEnum.VisualStudio;
-					return compilerType;
+				if (val1 != 0 && val2 != 0 && (val1 ^ val2) == 0x536e6144 /* "DanS" */) {
+					// Rich Image Header is present
+					return CompilerEnum.VisualStudio;
 				}
-				else if (dh.e_lfanew() == 0x100) {
-					offsetChoice = CompilerEnum.BorlandPascal;
+
+				if (dh.e_lfanew() == 0x100) {
+					offsetChoice = CompilerEnum.BorlandPascal; // Could also be Borland-C
 				}
 				else if (dh.e_lfanew() == 0x200) {
 					offsetChoice = CompilerEnum.BorlandCpp;
 				}
 				else if (dh.e_lfanew() > 0x300) {
-					compilerType = CompilerEnum.Unknown;
-					return compilerType;
-				}
-				else {
-					offsetChoice = CompilerEnum.Unknown;
+					return CompilerEnum.Unknown;
 				}
 			} // End PE header offset check
 
-			int counter;
 			byte[] asm = provider.readBytes(0x40, 256);
-			for (counter = 0; counter < asm16_Borland.length; counter++) {
-				if ((asm[counter] & 0xff) != (asm16_Borland[counter] & 0xff)) {
-					break;
-				}
-			}
-			if (counter == asm16_Borland.length) {
+			asmChoice = CompilerEnum.Unknown;
+			if (Arrays.compare(asm, 0, asm16_Borland.length, asm16_Borland, 0,
+				asm16_Borland.length) == 0) {
 				asmChoice = CompilerEnum.BorlandUnk;
 			}
-			else {
-				for (counter = 0; counter < asm16_GCC_VS_Clang.length; counter++) {
-					if ((asm[counter] & 0xff) != (asm16_GCC_VS_Clang[counter] & 0xff)) {
-						break;
-					}
-				}
-				if (counter == asm16_GCC_VS_Clang.length) {
-					asmChoice = CompilerEnum.GCC_VS_Clang;
-				}
-				else {
-					asmChoice = CompilerEnum.Unknown;
-				}
-			}
-			// Check for error message
-			int errStringOffset = -1;
-			for (int i = 10; i < asm.length - 3; i++) {
-				if (asm[i] == 'T' && asm[i + 1] == 'h' && asm[i + 2] == 'i' && asm[i + 3] == 's') {
-					errStringOffset = i;
-					break;
-				}
+			else if (Arrays.compare(asm, 0, asm16_GCC_VS_Clang.length, asm16_GCC_VS_Clang, 0,
+				asm16_GCC_VS_Clang.length) == 0) {
+				asmChoice = CompilerEnum.GCC_VS_Clang;
 			}
 
+			// Check for error message
+			int errStringOffset = Bytes.indexOf(asm, THIS_BYTES);
 			if (errStringOffset == -1) {
 				asmChoice = CompilerEnum.Unknown;
 			}
 			else {
 				if (compareBytesToChars(asm, errStringOffset, errString_borland)) {
-					errStringChoice = CompilerEnum.BorlandUnk;
 					if (offsetChoice == CompilerEnum.BorlandCpp ||
 						offsetChoice == CompilerEnum.BorlandPascal) {
-						compilerType = offsetChoice;
-						return compilerType;
+						return offsetChoice;
 					}
+					errStringChoice = CompilerEnum.BorlandUnk;
 				}
 				else if (compareBytesToChars(asm, errStringOffset, errString_GCC_VS)) {
 					errStringChoice = CompilerEnum.GCC_VS;
@@ -1164,84 +1008,59 @@ public class PeLoader extends AbstractPeDebugLoader {
 				// Look for the "Visual Studio" library identifier
 //				if (mem.findBytes(mem.getMinAddress(), "Visual Studio".getBytes(),
 //						null, true, monitor) != null) {
-//					compilerType = COMPIL_VS;
-//					return compilerType;
+//					return CompilerEnum.VisualStudio
 //				}
 
-				// Now look for offset to code (0x1000 for gcc) and PointerToSymbols
-				// (0 for VS, non-zero for gcc)
-				int addrCode = br.readInt(dh.e_lfanew() + 40);
-				if (addrCode != 0x1000) {
-					compilerType = CompilerEnum.VisualStudio;
-					return compilerType;
-				}
-
+				// Now look for PointerToSymbols (0 for VS, non-zero for gcc)
 				int ptrSymTable = br.readInt(dh.e_lfanew() + 12);
 				if (ptrSymTable != 0) {
-					compilerType = CompilerEnum.GCC;
-					return compilerType;
+					return CompilerEnum.GCC;
 				}
 			}
 			else if ((offsetChoice == CompilerEnum.Clang ||
 				errStringChoice == CompilerEnum.Clang) && asmChoice == CompilerEnum.GCC_VS_Clang) {
-				compilerType = CompilerEnum.Clang;
-				return compilerType;
+				return CompilerEnum.Clang;
 			}
 			else if (errStringChoice == CompilerEnum.Unknown || asmChoice == CompilerEnum.Unknown) {
-				compilerType = CompilerEnum.Unknown;
-				return compilerType;
+				return CompilerEnum.Unknown;
 			}
 
 			if (errStringChoice == CompilerEnum.BorlandUnk ||
 				asmChoice == CompilerEnum.BorlandUnk) {
 				// Pretty sure it's Borland, but didn't get 0x100 or 0x200
-				compilerType = CompilerEnum.BorlandUnk;
-				return compilerType;
+				return CompilerEnum.BorlandUnk;
 			}
 
-			if ((offsetChoice == CompilerEnum.GCC_VS) || (errStringChoice == CompilerEnum.GCC_VS)) {
-				// Pretty sure it's either gcc or Visual Studio
-				compilerType = CompilerEnum.GCC_VS;
-			}
-			else {
-				// Not sure what it is
-				compilerType = CompilerEnum.Unknown;
-			}
+//			if ((offsetChoice == CompilerEnum.GCC_VS) || (errStringChoice == CompilerEnum.GCC_VS)) {
+//				// Pretty sure it's either gcc or Visual Studio
+//				compilerType = CompilerEnum.GCC_VS;
+//				// TODO: nothing feeds off of this state
+//			}
 
 			// Reaching this point implies that we did not find "DanS and we didn't
 			// see the Borland DOS complaint
-			boolean probablyNotVS = false;
-			// TODO: See if we have an .idata segment and what type it is
-			// Need to make sure that this is the right check to be making
-			SectionHeader[] headers = pe.getNTHeader().getFileHeader().getSectionHeaders();
-			if (getSectionHeader(".idata", headers) != null) {
-				probablyNotVS = true;
+
+			FileHeader fileHeader = pe.getNTHeader().getFileHeader();
+			if (fileHeader.getSectionHeader("CODE") != null) {
+				// NOTE: Could be Borland-C 
+				return CompilerEnum.BorlandPascal;
 			}
 
-			if (getSectionHeader("CODE", headers) != null) {
-				compilerType = CompilerEnum.BorlandPascal;
-				return compilerType;
+			if (fileHeader.getSectionHeader(".bss") != null) {
+				return CompilerEnum.GCC;
 			}
 
-			SectionHeader segment = getSectionHeader(".bss", headers);
-			if ((segment != null)/* && segment.getType() == BSS_TYPE */) {
-				compilerType = CompilerEnum.GCC;
-				return compilerType;
-//			} else if (segment != null) {
-//				compilerType = CompilerEnum.BorlandCpp;
-//				return compilerType;
-			}
-			else if (!probablyNotVS) {
-				compilerType = CompilerEnum.VisualStudio;
-				return compilerType;
+			if (fileHeader.getSectionHeader(".idata") == null) {
+				// assume VS if .idata not found
+				return CompilerEnum.VisualStudio;
 			}
 
-			if (getSectionHeader(".tls", headers) != null) {
-				// expect Borland - prefer cpp since CODE segment didn't occur
-				compilerType = CompilerEnum.BorlandCpp;
+			if (fileHeader.getSectionHeader(".tls") != null) {
+				// assume Borland - prefer cpp since CODE segment didn't occur
+				return CompilerEnum.BorlandCpp;
 			}
 
-			return compilerType;
+			return CompilerEnum.Unknown;
 		}
 	}
 }

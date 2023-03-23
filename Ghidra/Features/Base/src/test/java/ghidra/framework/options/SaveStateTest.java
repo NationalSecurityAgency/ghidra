@@ -35,6 +35,7 @@ import org.junit.Test;
 import com.google.gson.JsonObject;
 
 import generic.test.AbstractGenericTest;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.plugin.core.overview.addresstype.AddressType;
 import ghidra.program.model.lang.Endian;
 import ghidra.util.xml.GenericXMLOutputter;
@@ -68,15 +69,15 @@ public class SaveStateTest extends AbstractGenericTest {
 
 	@Test
 	public void testColor() throws Exception {
-		ss.putColor("TEST", Color.RED);
+		ss.putColor("TEST", Palette.RED);
 		Color c = ss.getColor("TEST", null);
-		assertEquals(Color.RED, c);
+		assertEquals(Palette.RED.getRGB(), c.getRGB());
 
 		SaveState restoredState = saveAndRestoreToXml();
 
 		// make sure our value is inside
 		c = restoredState.getColor("TEST", null);
-		assertEquals(Color.RED, c);
+		assertEquals(Palette.RED.getRGB(), c.getRGB());
 	}
 
 	@Test
@@ -421,9 +422,9 @@ public class SaveStateTest extends AbstractGenericTest {
 
 	@Test
 	public void testJsonColorRoundTrip() {
-		ss.putColor("foo", Color.BLUE);
+		ss.putColor("foo", Palette.BLUE);
 		SaveState restored = jsonRoundTrip(ss);
-		assertEquals(Color.BLUE, restored.getColor("foo", null));
+		assertEquals(Palette.BLUE.getRGB(), restored.getColor("foo", null).getRGB());
 	}
 
 	@Test

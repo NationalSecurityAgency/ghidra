@@ -16,11 +16,17 @@
 package ghidra.app.decompiler;
 
 import static ghidra.GhidraOptions.*;
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
 
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.MouseEvent;
+import java.io.IOException;
 
+import generic.theme.GColor;
+import generic.theme.Gui;
+import ghidra.GhidraOptions;
 import ghidra.GhidraOptions.CURSOR_MOUSE_BUTTON_NAMES;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.options.Options;
@@ -31,8 +37,9 @@ import ghidra.program.database.ProgramCompilerSpec;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.lang.CompilerSpec.EvaluationModelType;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.pcode.ElementId;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.util.HelpLocation;
-import ghidra.util.SystemUtilities;
 
 /**
  * Configuration options for the decompiler
@@ -293,58 +300,60 @@ public class DecompileOptions {
 		}
 	}
 
+	//@formatter:off
 	private final static IntegerFormatEnum INTEGERFORMAT_OPTIONDEFAULT = IntegerFormatEnum.BestFit;		// Must match PrintLanguage::resetDefaultsInternal
 	private IntegerFormatEnum integerFormat;
 
-	private final static Color HIGHLIGHT_MIDDLE_MOUSE_DEF = new Color(255, 255, 0, 128);
-	private Color middleMouseHighlightColor;
 	private int middleMouseHighlightButton = MouseEvent.BUTTON2;
 
-	private final static String HIGHLIGHT_CURRENT_VARIABLE_MSG =
-		"Display.Color for Current Variable Highlight";
-	private final static Color HIGHLIGHT_CURRENT_VARIABLE_DEF = new Color(255, 255, 0, 128);
-	private Color currentVariableHighlightColor;
+	private final static String HIGHLIGHT_CURRENT_VARIABLE_MSG ="Display.Color for Current Variable Highlight";
+	private final static GColor HIGHLIGHT_CURRENT_VARIABLE_COLOR = new GColor("color.bg.decompiler.current.variable");
 
 	private final static String HIGHLIGHT_KEYWORD_MSG = "Display.Color for Keywords";
-	private final static Color HIGHLIGHT_KEYWORD_DEF = Color.decode("0x0001E6");
-	private Color keywordColor;
+	private final static GColor HIGHLIGHT_KEYWORD_COLOR = new GColor("color.fg.decompiler.keyword");
+
 	private final static String HIGHLIGHT_FUNCTION_MSG = "Display.Color for Function names";
-	private final static Color HIGHLIGHT_FUNCTION_DEF = Color.decode("0x0000FF");
-	private Color functionColor;
+	private final static GColor HIGHLIGHT_FUNCTION_COLOR = new GColor("color.fg.decompiler.function.name");
+
 	private final static String HIGHLIGHT_COMMENT_MSG = "Display.Color for Comments";
-	private final static Color HIGHLIGHT_COMMENT_DEF = Color.decode("0x9600FF");
-	private Color commentColor;
+	private final static GColor HIGHLIGHT_COMMENT_COLOR = new GColor( "color.fg.decompiler.comment");
+
 	private final static String HIGHLIGHT_VARIABLE_MSG = "Display.Color for Variables";
-	private final static Color HIGHLIGHT_VARIABLE_DEF = Color.decode("0x999900");
-	private Color variableColor;
+	private final static GColor HIGHLIGHT_VARIABLE_COLOR = new GColor("color.fg.decompiler.variable");
+
 	private final static String HIGHLIGHT_CONST_MSG = "Display.Color for Constants";
-	private final static Color HIGHLIGHT_CONST_DEF = Color.decode("0x008E00");
-	private Color constantColor;
+	private final static GColor HIGHLIGHT_CONST_COLOR = new GColor("color.fg.decompiler.constant");
+
 	private final static String HIGHLIGHT_TYPE_MSG = "Display.Color for Types";
-	private final static Color HIGHLIGHT_TYPE_DEF = Color.decode("0x0033CC");
-	private Color typeColor;
+	private final static GColor HIGHLIGHT_TYPE_COLOR = new GColor("color.fg.decompiler.type");
+
 	private final static String HIGHLIGHT_PARAMETER_MSG = "Display.Color for Parameters";
-	private final static Color HIGHLIGHT_PARAMETER_DEF = Color.decode("0x9B009B");
-	private Color parameterColor;
+	private final static GColor HIGHLIGHT_PARAMETER_COLOR = new GColor("color.fg.decompiler.parameter");
+
 	private final static String HIGHLIGHT_GLOBAL_MSG = "Display.Color for Globals";
-	private final static Color HIGHLIGHT_GLOBAL_DEF = Color.decode("0x009999");
-	private Color globalColor;
+	private final static GColor HIGHLIGHT_GLOBAL_COLOR = new GColor("color.fg.decompiler.global");
+	
+	private final static String HIGHLIGHT_SPECIAL_MSG = "Display.Color for Special";
+	private final static GColor HIGHLIGHT_SPECIAL_COLOR = new GColor("color.fg.decompiler.special");
+
 	private final static String HIGHLIGHT_DEFAULT_MSG = "Display.Color Default";
-	private final static Color HIGHLIGHT_DEFAULT_DEF = Color.BLACK;
-	private Color defaultColor;
+	private final static GColor HIGHLIGHT_DEFAULT_COLOR =  new GColor("color.fg.decompiler");
 
-	private static final String CODE_VIEWER_BACKGROUND_COLOR_MSG = "Display.Background Color";
-	private static final Color CODE_VIEWER_BACKGROUND_COLOR = Color.WHITE;
-	private Color codeViewerBackgroundColor;
+	private static final String SEARCH_HIGHLIGHT_MSG = "Display.Color for Highlighting Find Matches";
+	private static final GColor SEARCH_HIGHLIGHT_COLOR = new GColor("color.bg.decompiler.highlights.search");
 
-	private static final String SEARCH_HIGHLIGHT_MSG =
-		"Display.Color for Highlighting Find Matches";
-	private static final Color SEARCH_HIGHLIGHT_DEF = new Color(100, 100, 255);
-	private Color defaultSearchHighlightColor = SEARCH_HIGHLIGHT_DEF;
+
+	//@formatter:on
+
+	private static final String BACKGROUND_COLOR_MSG = "Display.Background Color";
+	private static final String BACKGROUND_COLOR_ID = "color.bg.decompiler";
+	private static final GColor BACKGROUND_COLOR = new GColor(BACKGROUND_COLOR_ID);
+
+	// Color applied to a token to indicate warning/error
+	private final static Color ERROR_COLOR = new GColor("color.fg.decompiler.error");
 
 	final static String FONT_MSG = "Display.Font";
-	final static Font DEFAULT_FONT = new Font(Font.MONOSPACED, Font.PLAIN, 12);
-	private Font defaultFont;
+	public final static String DEFAULT_FONT_ID = "font.decompiler";
 
 	private final static String CACHED_RESULTS_SIZE_MSG = "Cache Size (Functions)";
 	private final static int SUGGESTED_CACHED_RESULTS_SIZE = 10;
@@ -391,17 +400,6 @@ public class DecompileOptions {
 		commentHeadInclude = COMMENTHEAD_OPTIONDEFAULT;
 		namespaceStrategy = NAMESPACE_OPTIONDEFAULT;
 		integerFormat = INTEGERFORMAT_OPTIONDEFAULT;
-		keywordColor = HIGHLIGHT_KEYWORD_DEF;
-		functionColor = HIGHLIGHT_FUNCTION_DEF;
-		commentColor = HIGHLIGHT_COMMENT_DEF;
-		variableColor = HIGHLIGHT_VARIABLE_DEF;
-		constantColor = HIGHLIGHT_CONST_DEF;
-		typeColor = HIGHLIGHT_TYPE_DEF;
-		parameterColor = HIGHLIGHT_PARAMETER_DEF;
-		globalColor = HIGHLIGHT_GLOBAL_DEF;
-		defaultColor = HIGHLIGHT_DEFAULT_DEF;
-		codeViewerBackgroundColor = CODE_VIEWER_BACKGROUND_COLOR;
-		defaultFont = DEFAULT_FONT;
 		displayLineNumbers = LINE_NUMBER_DEF;
 		displayLanguage = ProgramCompilerSpec.DECOMPILER_OUTPUT_DEF;
 		protoEvalModel = "default";
@@ -454,22 +452,7 @@ public class DecompileOptions {
 		commentHeadInclude = opt.getBoolean(COMMENTHEAD_OPTIONSTRING, COMMENTHEAD_OPTIONDEFAULT);
 		namespaceStrategy = opt.getEnum(NAMESPACE_OPTIONSTRING, NAMESPACE_OPTIONDEFAULT);
 		integerFormat = opt.getEnum(INTEGERFORMAT_OPTIONSTRING, INTEGERFORMAT_OPTIONDEFAULT);
-		keywordColor = opt.getColor(HIGHLIGHT_KEYWORD_MSG, HIGHLIGHT_KEYWORD_DEF);
-		typeColor = opt.getColor(HIGHLIGHT_TYPE_MSG, HIGHLIGHT_TYPE_DEF);
-		functionColor = opt.getColor(HIGHLIGHT_FUNCTION_MSG, HIGHLIGHT_FUNCTION_DEF);
-		commentColor = opt.getColor(HIGHLIGHT_COMMENT_MSG, HIGHLIGHT_COMMENT_DEF);
-		variableColor = opt.getColor(HIGHLIGHT_VARIABLE_MSG, HIGHLIGHT_VARIABLE_DEF);
-		constantColor = opt.getColor(HIGHLIGHT_CONST_MSG, HIGHLIGHT_CONST_DEF);
-		parameterColor = opt.getColor(HIGHLIGHT_PARAMETER_MSG, HIGHLIGHT_PARAMETER_DEF);
-		globalColor = opt.getColor(HIGHLIGHT_GLOBAL_MSG, HIGHLIGHT_GLOBAL_DEF);
-		defaultColor = opt.getColor(HIGHLIGHT_DEFAULT_MSG, HIGHLIGHT_DEFAULT_DEF);
-		codeViewerBackgroundColor =
-			opt.getColor(CODE_VIEWER_BACKGROUND_COLOR_MSG, CODE_VIEWER_BACKGROUND_COLOR);
-		currentVariableHighlightColor =
-			opt.getColor(HIGHLIGHT_CURRENT_VARIABLE_MSG, HIGHLIGHT_CURRENT_VARIABLE_DEF);
-		defaultFont = opt.getFont(FONT_MSG, DEFAULT_FONT);
-		defaultFont = SystemUtilities.adjustForFontSizeOverride(defaultFont);
-		defaultSearchHighlightColor = opt.getColor(SEARCH_HIGHLIGHT_MSG, SEARCH_HIGHLIGHT_DEF);
+
 		displayLineNumbers = opt.getBoolean(LINE_NUMBER_MSG, LINE_NUMBER_DEF);
 		decompileTimeoutSeconds = opt.getInt(DECOMPILE_TIMEOUT, SUGGESTED_DECOMPILE_TIMEOUT_SECS);
 		payloadLimitMBytes = opt.getInt(PAYLOAD_LIMIT, SUGGESTED_MAX_PAYLOAD_BYTES);
@@ -486,9 +469,6 @@ public class DecompileOptions {
 
 		PluginTool tool = ownerPlugin.getTool();
 		Options toolOptions = tool.getOptions(CATEGORY_BROWSER_FIELDS);
-
-		middleMouseHighlightColor =
-			toolOptions.getColor(HIGHLIGHT_COLOR_NAME, HIGHLIGHT_MIDDLE_MOUSE_DEF);
 
 		CURSOR_MOUSE_BUTTON_NAMES mouseEvent =
 			toolOptions.getEnum(CURSOR_HIGHLIGHT_BUTTON_NAME, CURSOR_MOUSE_BUTTON_NAMES.MIDDLE);
@@ -606,40 +586,43 @@ public class DecompileOptions {
 		opt.registerOption(INTEGERFORMAT_OPTIONSTRING, INTEGERFORMAT_OPTIONDEFAULT,
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayIntegerFormat"),
 			INTEGERFORMAT_OPTIONDESCRIPTION);
-		opt.registerOption(HIGHLIGHT_KEYWORD_MSG, HIGHLIGHT_KEYWORD_DEF,
+		opt.registerThemeColorBinding(HIGHLIGHT_KEYWORD_MSG, HIGHLIGHT_KEYWORD_COLOR.getId(),
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for highlighting keywords.");
-		opt.registerOption(HIGHLIGHT_TYPE_MSG, HIGHLIGHT_TYPE_DEF,
+		opt.registerThemeColorBinding(HIGHLIGHT_TYPE_MSG, HIGHLIGHT_TYPE_COLOR.getId(),
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for highlighting types.");
-		opt.registerOption(HIGHLIGHT_FUNCTION_MSG, HIGHLIGHT_FUNCTION_DEF,
+		opt.registerThemeColorBinding(HIGHLIGHT_FUNCTION_MSG, HIGHLIGHT_FUNCTION_COLOR.getId(),
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for highlighting function names.");
-		opt.registerOption(HIGHLIGHT_COMMENT_MSG, HIGHLIGHT_COMMENT_DEF,
+		opt.registerThemeColorBinding(HIGHLIGHT_COMMENT_MSG, HIGHLIGHT_COMMENT_COLOR.getId(),
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for highlighting comments.");
-		opt.registerOption(HIGHLIGHT_VARIABLE_MSG, HIGHLIGHT_VARIABLE_DEF,
+		opt.registerThemeColorBinding(HIGHLIGHT_VARIABLE_MSG, HIGHLIGHT_VARIABLE_COLOR.getId(),
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for highlighting variables.");
-		opt.registerOption(HIGHLIGHT_CONST_MSG, HIGHLIGHT_CONST_DEF,
+		opt.registerThemeColorBinding(HIGHLIGHT_CONST_MSG, HIGHLIGHT_CONST_COLOR.getId(),
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for highlighting constants.");
-		opt.registerOption(HIGHLIGHT_PARAMETER_MSG, HIGHLIGHT_PARAMETER_DEF,
+		opt.registerThemeColorBinding(HIGHLIGHT_PARAMETER_MSG, HIGHLIGHT_PARAMETER_COLOR.getId(),
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for highlighting parameters.");
-		opt.registerOption(HIGHLIGHT_GLOBAL_MSG, HIGHLIGHT_GLOBAL_DEF,
+		opt.registerThemeColorBinding(HIGHLIGHT_GLOBAL_MSG, HIGHLIGHT_GLOBAL_COLOR.getId(),
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
 			"Color used for highlighting global variables.");
-		opt.registerOption(HIGHLIGHT_DEFAULT_MSG, HIGHLIGHT_DEFAULT_DEF,
+		opt.registerThemeColorBinding(HIGHLIGHT_SPECIAL_MSG, HIGHLIGHT_SPECIAL_COLOR.getId(),
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayTokenColor"),
+			"Color used for volatile or other exceptional variables.");
+		opt.registerThemeColorBinding(HIGHLIGHT_DEFAULT_MSG, HIGHLIGHT_DEFAULT_COLOR.getId(),
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayColorDefault"),
 			"The color used when a specific color is not specified.");
-		opt.registerOption(CODE_VIEWER_BACKGROUND_COLOR_MSG, CODE_VIEWER_BACKGROUND_COLOR,
+		opt.registerThemeColorBinding(BACKGROUND_COLOR_MSG, BACKGROUND_COLOR.getId(),
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayBackgroundColor"),
 			"The background color of the decompiler window.");
-		opt.registerOption(FONT_MSG, DEFAULT_FONT,
+		opt.registerThemeFontBinding(FONT_MSG, DEFAULT_FONT_ID,
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayFont"),
 			"The font used to render text in the decompiler.");
-		opt.registerOption(SEARCH_HIGHLIGHT_MSG, SEARCH_HIGHLIGHT_DEF,
+		opt.registerThemeColorBinding(SEARCH_HIGHLIGHT_MSG, SEARCH_HIGHLIGHT_COLOR.getId(),
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayFindHighlight"),
 			"The color used to highlight matches using the Find Dialog.");
 		opt.registerOption(LINE_NUMBER_MSG, LINE_NUMBER_DEF,
@@ -656,7 +639,8 @@ public class DecompileOptions {
 		opt.registerOption(MAX_INSTRUCTIONS, SUGGESTED_MAX_INSTRUCTIONS,
 			new HelpLocation(HelpTopics.DECOMPILER, "GeneralMaxInstruction"),
 			"The maximum number of instructions decompiled in a single function");
-		opt.registerOption(HIGHLIGHT_CURRENT_VARIABLE_MSG, HIGHLIGHT_CURRENT_VARIABLE_DEF,
+		opt.registerThemeColorBinding(HIGHLIGHT_CURRENT_VARIABLE_MSG,
+			HIGHLIGHT_CURRENT_VARIABLE_COLOR.getId(),
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayCurrentHighlight"),
 			"Current variable highlight");
 		opt.registerOption(CACHED_RESULTS_SIZE_MSG, SUGGESTED_CACHED_RESULTS_SIZE,
@@ -664,128 +648,125 @@ public class DecompileOptions {
 		grabFromToolAndProgram(ownerPlugin, opt, program);
 	}
 
-	private static void appendOption(StringBuffer buf, String name, String p1, String p2,
-			String p3) {
-		buf.append(" <");
-		buf.append(name);
-		buf.append('>');
+	private static void appendOption(Encoder encoder, ElementId option, String p1, String p2,
+			String p3) throws IOException {
+		encoder.openElement(option);
 		if ((p2.length() == 0) && (p3.length() == 0)) {
-			buf.append(p1);
+			encoder.writeString(ATTRIB_CONTENT, p1);
 		}
 		else {
-			buf.append('\n');
-			buf.append("  <param1>");
-			buf.append(p1);
-			buf.append("</param1>\n");
-			buf.append("  <param2>");
-			buf.append(p2); // Print even if empty, as p3 isn't
-			buf.append("</param2>\n");
+			encoder.openElement(ELEM_PARAM1);
+			encoder.writeString(ATTRIB_CONTENT, p1);
+			encoder.closeElement(ELEM_PARAM1);
+			encoder.openElement(ELEM_PARAM2);
+			encoder.writeString(ATTRIB_CONTENT, p2);	// Print even if empty, as p3 isn't
+			encoder.closeElement(ELEM_PARAM2);
 			if (p3.length() != 0) {
-				buf.append("  <param3>");
-				buf.append(p3);
-				buf.append("</param3>\n");
+				encoder.openElement(ELEM_PARAM3);
+				encoder.writeString(ATTRIB_CONTENT, p3);
+				encoder.closeElement(ELEM_PARAM3);
 			}
 		}
-		buf.append("</");
-		buf.append(name);
-		buf.append(">\n");
+		encoder.closeElement(option);
 	}
 
 	/**
-	 * Produce XML document of configuration options
-	 * to be sent to decompiler process. This object
-	 * is global to all decompile processes so we can
-	 * tailor to the specific process by passing in the
-	 * interface
+	 * Encode all the configuration options to a stream for the decompiler process.
+	 * This object is global to all decompile processes so we can tailor to the specific process
+	 * by passing in the interface.
+	 * @param encoder is the stream encoder
 	 * @param iface  specific DecompInterface being sent options
-	 * @return XML document as a string
+	 * @throws IOException for errors writing to the underlying stream
 	 */
-	public String getXML(DecompInterface iface) {
-		StringBuffer buf = new StringBuffer();
-		buf.append("<optionslist>\n");
-		appendOption(buf, "currentaction", "conditionalexe", predicate ? "on" : "off", "");
-		appendOption(buf, "readonly", readOnly ? "on" : "off", "", "");
-		appendOption(buf, "currentaction", iface.getSimplificationStyle(), "unreachable",
+	public void encode(Encoder encoder, DecompInterface iface) throws IOException {
+		encoder.openElement(ELEM_OPTIONSLIST);
+		appendOption(encoder, ELEM_CURRENTACTION, "conditionalexe", predicate ? "on" : "off", "");
+		appendOption(encoder, ELEM_READONLY, readOnly ? "on" : "off", "", "");
+		appendOption(encoder, ELEM_CURRENTACTION, iface.getSimplificationStyle(), "unreachable",
 			eliminateUnreachable ? "on" : "off");
-		appendOption(buf, "currentaction", iface.getSimplificationStyle(), "doubleprecis",
+		appendOption(encoder, ELEM_CURRENTACTION, iface.getSimplificationStyle(), "doubleprecis",
 			simplifyDoublePrecision ? "on" : "off");
 
 		// Must set language early so that the object is in place before other option changes
-		appendOption(buf, "setlanguage", displayLanguage.toString(), "", "");
+		appendOption(encoder, ELEM_SETLANGUAGE, displayLanguage.toString(), "", "");
 
 		if (ignoreunimpl != IGNOREUNIMPL_OPTIONDEFAULT) {
-			appendOption(buf, "ignoreunimplemented", ignoreunimpl ? "on" : "off", "", "");
+			appendOption(encoder, ELEM_IGNOREUNIMPLEMENTED, ignoreunimpl ? "on" : "off", "", "");
 		}
 		if (inferconstptr != INFERCONSTPTR_OPTIONDEFAULT) {
-			appendOption(buf, "inferconstptr", inferconstptr ? "on" : "off", "", "");
+			appendOption(encoder, ELEM_INFERCONSTPTR, inferconstptr ? "on" : "off", "", "");
 		}
 		if (analyzeForLoops != ANALYZEFORLOOPS_OPTIONDEFAULT) {
-			appendOption(buf, "analyzeforloops", analyzeForLoops ? "on" : "off", "", "");
+			appendOption(encoder, ELEM_ANALYZEFORLOOPS, analyzeForLoops ? "on" : "off", "", "");
 		}
 		if (nullToken != NULLTOKEN_OPTIONDEFAULT) {
-			appendOption(buf, "nullprinting", nullToken ? "on" : "off", "", "");
+			appendOption(encoder, ELEM_NULLPRINTING, nullToken ? "on" : "off", "", "");
 		}
 		if (inplaceTokens != INPLACEOP_OPTIONDEFAULT) {
-			appendOption(buf, "inplaceops", inplaceTokens ? "on" : "off", "", "");
+			appendOption(encoder, ELEM_INPLACEOPS, inplaceTokens ? "on" : "off", "", "");
 		}
 		if (aliasBlock != ALIASBLOCK_OPTIONDEFAULT) {
-			appendOption(buf, "aliasblock", aliasBlock.getOptionString(), "", "");
+			appendOption(encoder, ELEM_ALIASBLOCK, aliasBlock.getOptionString(), "", "");
 		}
 		if (conventionPrint != CONVENTION_OPTIONDEFAULT) {
-			appendOption(buf, "conventionprinting", conventionPrint ? "on" : "off", "", "");
+			appendOption(encoder, ELEM_CONVENTIONPRINTING, conventionPrint ? "on" : "off", "", "");
 		}
 		if (noCastPrint != NOCAST_OPTIONDEFAULT) {
-			appendOption(buf, "nocastprinting", noCastPrint ? "on" : "off", "", "");
+			appendOption(encoder, ELEM_NOCASTPRINTING, noCastPrint ? "on" : "off", "", "");
 		}
 		if (maxwidth != MAXWIDTH_OPTIONDEFAULT) {
-			appendOption(buf, "maxlinewidth", Integer.toString(maxwidth), "", "");
+			appendOption(encoder, ELEM_MAXLINEWIDTH, Integer.toString(maxwidth), "", "");
 		}
 		if (indentwidth != INDENTWIDTH_OPTIONDEFAULT) {
-			appendOption(buf, "indentincrement", Integer.toString(indentwidth), "", "");
+			appendOption(encoder, ELEM_INDENTINCREMENT, Integer.toString(indentwidth), "", "");
 		}
 		if (commentindent != COMMENTINDENT_OPTIONDEFAULT) {
-			appendOption(buf, "commentindent", Integer.toString(commentindent), "", "");
+			appendOption(encoder, ELEM_COMMENTINDENT, Integer.toString(commentindent), "", "");
 		}
 		if (commentStyle != COMMENTSTYLE_OPTIONDEFAULT) {
 			String curstyle = CommentStyleEnum.CPPStyle.equals(commentStyle) ? "cplusplus" : "c";
-			appendOption(buf, "commentstyle", curstyle, "", "");
+			appendOption(encoder, ELEM_COMMENTSTYLE, curstyle, "", "");
 		}
 		if (commentPLATEInclude != COMMENTPLATE_OPTIONDEFAULT) {
-			appendOption(buf, "commentinstruction", "header", commentPLATEInclude ? "on" : "off",
-				"");
+			appendOption(encoder, ELEM_COMMENTINSTRUCTION, "header",
+				commentPLATEInclude ? "on" : "off", "");
 		}
 		if (commentPREInclude != COMMENTPRE_OPTIONDEFAULT) {
-			appendOption(buf, "commentinstruction", "user2", commentPREInclude ? "on" : "off", "");
+			appendOption(encoder, ELEM_COMMENTINSTRUCTION, "user2",
+				commentPREInclude ? "on" : "off", "");
 		}
 		if (commentEOLInclude != COMMENTEOL_OPTIONDEFAULT) {
-			appendOption(buf, "commentinstruction", "user1", commentEOLInclude ? "on" : "off", "");
+			appendOption(encoder, ELEM_COMMENTINSTRUCTION, "user1",
+				commentEOLInclude ? "on" : "off", "");
 		}
 		if (commentPOSTInclude != COMMENTPOST_OPTIONDEFAULT) {
-			appendOption(buf, "commentinstruction", "user3", commentPOSTInclude ? "on" : "off", "");
+			appendOption(encoder, ELEM_COMMENTINSTRUCTION, "user3",
+				commentPOSTInclude ? "on" : "off", "");
 		}
 		if (commentWARNInclude != COMMENTWARN_OPTIONDEFAULT) {
-			appendOption(buf, "commentinstruction", "warning", commentWARNInclude ? "on" : "off",
-				"");
+			appendOption(encoder, ELEM_COMMENTINSTRUCTION, "warning",
+				commentWARNInclude ? "on" : "off", "");
 		}
 		if (commentHeadInclude != COMMENTHEAD_OPTIONDEFAULT) {
-			appendOption(buf, "commentheader", "header", commentHeadInclude ? "on" : "off", "");
-		}
-		if (commentWARNInclude != COMMENTWARN_OPTIONDEFAULT) {
-			appendOption(buf, "commentheader", "warningheader", commentWARNInclude ? "on" : "off",
+			appendOption(encoder, ELEM_COMMENTHEADER, "header", commentHeadInclude ? "on" : "off",
 				"");
 		}
+		if (commentWARNInclude != COMMENTWARN_OPTIONDEFAULT) {
+			appendOption(encoder, ELEM_COMMENTHEADER, "warningheader",
+				commentWARNInclude ? "on" : "off", "");
+		}
 		if (namespaceStrategy != NAMESPACE_OPTIONDEFAULT) {
-			appendOption(buf, "namespacestrategy", namespaceStrategy.getOptionString(), "", "");
+			appendOption(encoder, ELEM_NAMESPACESTRATEGY, namespaceStrategy.getOptionString(), "",
+				"");
 		}
 		if (integerFormat != INTEGERFORMAT_OPTIONDEFAULT) {
-			appendOption(buf, "integerformat", integerFormat.getOptionString(), "", "");
+			appendOption(encoder, ELEM_INTEGERFORMAT, integerFormat.getOptionString(), "", "");
 		}
 		if (maxIntructionsPer != SUGGESTED_MAX_INSTRUCTIONS) {
-			appendOption(buf, "maxinstruction", Integer.toString(maxIntructionsPer), "", "");
+			appendOption(encoder, ELEM_MAXINSTRUCTION, Integer.toString(maxIntructionsPer), "", "");
 		}
-		appendOption(buf, "protoeval", protoEvalModel, "", "");
-		buf.append("</optionslist>\n");
-		return buf.toString();
+		appendOption(encoder, ELEM_PROTOEVAL, protoEvalModel, "", "");
+		encoder.closeElement(ELEM_OPTIONSLIST);
 	}
 
 	public int getMaxWidth() {
@@ -796,56 +777,109 @@ public class DecompileOptions {
 		this.maxwidth = maxwidth;
 	}
 
+	/**
+	 * @return color associated with keyword tokens
+	 */
 	public Color getKeywordColor() {
-		return keywordColor;
+		return HIGHLIGHT_KEYWORD_COLOR;
 	}
 
+	/**
+	 * @return color associated with data-type tokens
+	 */
 	public Color getTypeColor() {
-		return typeColor;
+		return HIGHLIGHT_TYPE_COLOR;
 	}
 
+	/**
+	 * @return color associated with a function name token
+	 */
 	public Color getFunctionColor() {
-		return functionColor;
+		return HIGHLIGHT_FUNCTION_COLOR;
 	}
 
+	/**
+	 * @return color used to display comments
+	 */
 	public Color getCommentColor() {
-		return commentColor;
+		return HIGHLIGHT_COMMENT_COLOR;
 	}
 
+	/**
+	 * @return color associated with constant tokens
+	 */
 	public Color getConstantColor() {
-		return constantColor;
+		return HIGHLIGHT_CONST_COLOR;
 	}
 
+	/**
+	 * @return color associated with (local) variable tokens
+	 */
 	public Color getVariableColor() {
-		return variableColor;
+		return HIGHLIGHT_VARIABLE_COLOR;
 	}
 
+	/**
+	 * @return color associated with parameter tokens
+	 */
 	public Color getParameterColor() {
-		return parameterColor;
+		return HIGHLIGHT_PARAMETER_COLOR;
 	}
 
+	/**
+	 * @return color associated with global variable tokens
+	 */
 	public Color getGlobalColor() {
-		return globalColor;
+		return HIGHLIGHT_GLOBAL_COLOR;
 	}
 
+	/**
+	 * @return color associated with volatile variables or other special tokens
+	 */
+	public Color getSpecialColor() {
+		return HIGHLIGHT_SPECIAL_COLOR;
+	}
+
+	/**
+	 * @return color for generic syntax or other unspecified tokens
+	 */
 	public Color getDefaultColor() {
-		return defaultColor;
+		return HIGHLIGHT_DEFAULT_COLOR;
 	}
 
-	public Color getCodeViewerBackgroundColor() {
-		return codeViewerBackgroundColor;
+	/**
+	 * @return color used on tokens that need to warn of an error or other unusual conditions 
+	 */
+	public Color getErrorColor() {
+		return ERROR_COLOR;
 	}
 
+	/**
+	 * @return the background color for the decompiler window
+	 */
+	public Color getBackgroundColor() {
+		return BACKGROUND_COLOR;
+	}
+
+	/**
+	 * @return the color used display the current highlighted variable
+	 */
 	public Color getCurrentVariableHighlightColor() {
-		return currentVariableHighlightColor;
+		return HIGHLIGHT_CURRENT_VARIABLE_COLOR;
 	}
 
+	/**
+	 * @return color used to highlight token(s) selected with a middle button clock
+	 */
 	public Color getMiddleMouseHighlightColor() {
-		return middleMouseHighlightColor;
+		return GhidraOptions.DEFAULT_HIGHLIGHT_COLOR;
 	}
 
+	/**
+	 * @return color used to highlight search results
+	 */
 	public Color getSearchHighlightColor() {
-		return defaultSearchHighlightColor;
+		return SEARCH_HIGHLIGHT_COLOR;
 	}
 
 	public int getMiddleMouseHighlightButton() {
@@ -945,7 +979,7 @@ public class DecompileOptions {
 	}
 
 	public Font getDefaultFont() {
-		return defaultFont;
+		return Gui.getFont(DEFAULT_FONT_ID);
 	}
 
 	public int getDefaultTimeout() {

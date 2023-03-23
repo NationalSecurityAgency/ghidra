@@ -28,30 +28,33 @@ public class OatClassFactory {
 			String oatVersion) throws IOException, UnsupportedOatVersionException {
 
 		switch (oatVersion) {
-			case OatConstants.VERSION_KITKAT_RELEASE:
+			case OatConstants.OAT_VERSION_007:
 				return new OatClass_KitKat(reader, classDataItem, oatVersion);
-			case OatConstants.VERSION_LOLLIPOP_RELEASE:
-			case OatConstants.VERSION_LOLLIPOP_MR1_FI_RELEASE:
-			case OatConstants.VERSION_LOLLIPOP_WEAR_RELEASE:
+			case OatConstants.OAT_VERSION_039:
+			case OatConstants.OAT_VERSION_045:
+			case OatConstants.OAT_VERSION_051:
 				return new OatClass_Lollipop(reader, classDataItem, oatVersion);
-			case OatConstants.VERSION_MARSHMALLOW_RELEASE:
+			case OatConstants.OAT_VERSION_064:
 				return new OatClass_Marshmallow(reader, classDataItem, oatVersion);
-			case OatConstants.VERSION_NOUGAT_RELEASE:
-			case OatConstants.VERSION_NOUGAT_MR1_RELEASE:
+			case OatConstants.OAT_VERSION_079:
+			case OatConstants.OAT_VERSION_088:
 				return new OatClass_Nougat(reader, classDataItem, oatVersion);
-			case OatConstants.VERSION_OREO_RELEASE:
+			case OatConstants.OAT_VERSION_124:
 				return new OatClass_Oreo(reader, classDataItem, oatVersion);
-			case OatConstants.VERSION_OREO_M2_RELEASE:
+			case OatConstants.OAT_VERSION_131:
 				return new OatClass_OreoM2(reader, classDataItem, oatVersion);
-			case OatConstants.VERSION_PIE_RELEASE:
+			case OatConstants.OAT_VERSION_138:
 				return new OatClass_Pie(reader, classDataItem, oatVersion);
-			case OatConstants.VERSION_10_RELEASE:
-				return new OatClass_Android10(reader, classDataItem, oatVersion);
-			case OatConstants.VERSION_11_RELEASE:
-				return new OatClass_Android11(reader, classDataItem, oatVersion);
-			case OatConstants.VERSION_12_RELEASE:
-			case OatConstants.VERSION_S_V2_PREVIEW:
-				return new OatClass_Android12(reader, classDataItem, oatVersion);
+			case OatConstants.OAT_VERSION_170:
+				return new OatClass_Q(reader, classDataItem, oatVersion);
+			case OatConstants.OAT_VERSION_183:
+				return new OatClass_R(reader, classDataItem, oatVersion);
+			case OatConstants.OAT_VERSION_195:
+			case OatConstants.OAT_VERSION_199:
+			case OatConstants.OAT_VERSION_220:
+			case OatConstants.OAT_VERSION_223:
+			case OatConstants.OAT_VERSION_225:
+				return new OatClass_S_T(reader, classDataItem, oatVersion);
 			default:
 				throw new UnsupportedOatVersionException(
 					"OatClass not supported for OAT Version: " + oatVersion);

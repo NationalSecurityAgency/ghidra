@@ -19,10 +19,11 @@ import java.awt.Color;
 import java.awt.Component;
 import java.util.Comparator;
 
-import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 
 import docking.widgets.table.GTableCellRenderingData;
+import generic.theme.GIcon;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.listing.Program;
@@ -32,7 +33,7 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.table.column.AbstractGhidraColumnRenderer;
 import ghidra.util.table.column.GColumnRenderer;
-import resources.ResourceManager;
+import resources.Icons;
 
 public class MemoryTypeProgramLocationBasedTableColumn
 		extends ProgramLocationTableColumnExtensionPoint<ProgramLocation, MemoryBlock> {
@@ -75,9 +76,9 @@ public class MemoryTypeProgramLocationBasedTableColumn
 
 	private class MemoryTypeRenderer extends AbstractGhidraColumnRenderer<MemoryBlock> {
 
-		private Color disabledColor = Color.LIGHT_GRAY;
-		private ImageIcon offIcon = ResourceManager.loadImage("images/EmptyIcon16.gif");
-		private ImageIcon onIcon = ResourceManager.loadImage("images/check.png");
+		private Color disabledColor = Colors.DISABLED;
+		private GIcon offIcon = (GIcon) Icons.EMPTY_ICON;
+		private GIcon onIcon = new GIcon("icon.check");
 
 		MemoryTypeRenderer() {
 			setHTMLRenderingEnabled(true);
@@ -96,8 +97,8 @@ public class MemoryTypeProgramLocationBasedTableColumn
 
 			MemoryBlock block = (MemoryBlock) value;
 
-			StringBuffer buffy = new StringBuffer("<html>");
-			StringBuffer tooltipBuffy = new StringBuffer("<html>");
+			StringBuilder buffy = new StringBuilder("<html>");
+			StringBuilder tooltipBuffy = new StringBuilder("<html>");
 			asString(block, buffy, tooltipBuffy);
 
 			setText(buffy.toString());
@@ -105,66 +106,66 @@ public class MemoryTypeProgramLocationBasedTableColumn
 			return theRenderer;
 		}
 
-		private void asString(MemoryBlock block, StringBuffer buffy, StringBuffer tooltipBuffy) {
+		private void asString(MemoryBlock block, StringBuilder buffy, StringBuilder tooltipBuffy) {
 			updateForRead(block, buffy, tooltipBuffy);
 			updateForWrite(block, buffy, tooltipBuffy);
 			updateForExecute(block, buffy, tooltipBuffy);
 			updateForVolatile(block, buffy, tooltipBuffy);
 		}
 
-		private void updateForVolatile(MemoryBlock block, StringBuffer buffy,
-				StringBuffer tooltipBuffy) {
+		private void updateForVolatile(MemoryBlock block, StringBuilder buffy,
+				StringBuilder tooltipBuffy) {
 
 			if (block.isVolatile()) {
 				buffy.append("<b>V</b>");
-				tooltipBuffy.append("<image src=\"" + onIcon.getDescription() + "\">");
+				tooltipBuffy.append("<image src=\"" + onIcon.getUrl() + "\">");
 			}
 			else {
 				buffy.append(HTMLUtilities.colorString(disabledColor, "V"));
-				tooltipBuffy.append("<image src=\"" + offIcon.getDescription() + "\">");
+				tooltipBuffy.append("<image src=\"" + offIcon.getUrl() + "\">");
 			}
 
 			tooltipBuffy.append(HTMLUtilities.spaces(2)).append("Volatile<br>");
 		}
 
-		private void updateForExecute(MemoryBlock block, StringBuffer buffy,
-				StringBuffer tooltipBuffy) {
+		private void updateForExecute(MemoryBlock block, StringBuilder buffy,
+				StringBuilder tooltipBuffy) {
 
 			if (block.isExecute()) {
 				buffy.append("<b>E</b>");
-				tooltipBuffy.append("<image src=\"" + onIcon.getDescription() + "\">");
+				tooltipBuffy.append("<image src=\"" + onIcon.getUrl() + "\">");
 			}
 			else {
 				buffy.append(HTMLUtilities.colorString(disabledColor, "E"));
-				tooltipBuffy.append("<image src=\"" + offIcon.getDescription() + "\">");
+				tooltipBuffy.append("<image src=\"" + offIcon.getUrl() + "\">");
 			}
 			tooltipBuffy.append(HTMLUtilities.spaces(2)).append("Execute<br>");
 		}
 
-		private void updateForWrite(MemoryBlock block, StringBuffer buffy,
-				StringBuffer tooltipBuffy) {
+		private void updateForWrite(MemoryBlock block, StringBuilder buffy,
+				StringBuilder tooltipBuffy) {
 
 			if (block.isWrite()) {
 				buffy.append("<b>W</b>");
-				tooltipBuffy.append("<image src=\"" + onIcon.getDescription() + "\">");
+				tooltipBuffy.append("<image src=\"" + onIcon.getUrl() + "\">");
 			}
 			else {
 				buffy.append(HTMLUtilities.colorString(disabledColor, "W"));
-				tooltipBuffy.append("<image src=\"" + offIcon.getDescription() + "\">");
+				tooltipBuffy.append("<image src=\"" + offIcon.getUrl() + "\">");
 			}
 			tooltipBuffy.append(HTMLUtilities.spaces(2)).append("Write<br>");
 		}
 
-		private void updateForRead(MemoryBlock block, StringBuffer buffy,
-				StringBuffer tooltipBuffy) {
+		private void updateForRead(MemoryBlock block, StringBuilder buffy,
+				StringBuilder tooltipBuffy) {
 
 			if (block.isRead()) {
 				buffy.append("<b>R</b>");
-				tooltipBuffy.append("<image src=\"" + onIcon.getDescription() + "\">");
+				tooltipBuffy.append("<image src=\"" + onIcon.getUrl() + "\">");
 			}
 			else {
 				buffy.append(HTMLUtilities.colorString(disabledColor, "R"));
-				tooltipBuffy.append("<image src=\"" + offIcon.getDescription() + "\">");
+				tooltipBuffy.append("<image src=\"" + offIcon.getUrl() + "\">");
 			}
 			tooltipBuffy.append(HTMLUtilities.spaces(2)).append("Read<br>");
 		}
@@ -175,8 +176,8 @@ public class MemoryTypeProgramLocationBasedTableColumn
 				return "";
 			}
 
-			StringBuffer buffy = new StringBuffer("<html>");
-			StringBuffer tooltipBuffy = new StringBuffer("<html>");
+			StringBuilder buffy = new StringBuilder("<html>");
+			StringBuilder tooltipBuffy = new StringBuilder("<html>");
 			asString(t, buffy, tooltipBuffy);
 			return buffy.toString();
 		}

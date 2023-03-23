@@ -28,6 +28,12 @@ public class TraceAddressFactory extends ProgramAddressFactory {
 		super(language, compilerSpec);
 	}
 
+	@Override
+	protected boolean validateOriginalSpace(AddressSpace originalSpace) {
+		return (originalSpace.isMemorySpace() || originalSpace.isRegisterSpace()) &&
+			!originalSpace.isOverlaySpace();
+	}
+
 	@Override // for peer access
 	protected OverlayAddressSpace addOverlayAddressSpace(String name, boolean preserveName,
 			AddressSpace originalSpace, long minOffset, long maxOffset) {

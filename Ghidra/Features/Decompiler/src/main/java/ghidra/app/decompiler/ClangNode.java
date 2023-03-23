@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,32 +13,67 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- * Created on Jul 7, 2003
- *
- * To change the template for this generated file go to
- * Window>Preferences>Java>Code Generation>Code and Comments
- */
 package ghidra.app.decompiler;
-
-import ghidra.program.model.address.Address;
 
 import java.awt.Color;
 import java.util.List;
+
+import ghidra.program.model.address.Address;
+
 /**
- * 
- *
- * Generic tree interface
+ * A collection of source code text elements, with associated attributes, grouped in
+ * a tree structure.
  */
 public interface ClangNode {
 
+	/**
+	 * Get the immediate grouping (parent) containing this text element. If this is a
+	 * complete document, null is returned.
+	 * @return the parent grouping or null
+	 */
 	public ClangNode Parent();
+
+	/**
+	 * Get the smallest Program address associated with the code that this text represents 
+	 * @return the smallest Address
+	 */
 	public Address getMinAddress();
+
+	/**
+	 * Get the biggest Program address associated with the code that this text represents
+	 * @return the biggest Address
+	 */
 	public Address getMaxAddress();
+
+	/**
+	 * Set a highlighting background color for all text elements
+	 * @param c is the color to set
+	 */
 	public void setHighlight(Color c);
-	public int numChildren(); 
+
+	/**
+	 * Return the number of immediate groupings this text breaks up into
+	 * @return the number of child groupings
+	 */
+	public int numChildren();
+
+	/**
+	 * Get the i-th child grouping
+	 * @param i is the index selecting the grouping
+	 * @return the selected grouping
+	 */
 	public ClangNode Child(int i);
+
+	/**
+	 * Get the text representing an entire function of which this is part.
+	 * @return text for the whole function
+	 */
 	public ClangFunction getClangFunction();
+
+	/**
+	 * Flatten this text into a list of tokens (see ClangToken)
+	 * @param list is the container that will contain the tokens
+	 */
 	public void flatten(List<ClangNode> list);
 
 }

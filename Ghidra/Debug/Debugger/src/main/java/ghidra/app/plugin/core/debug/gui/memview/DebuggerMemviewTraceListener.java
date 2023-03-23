@@ -17,8 +17,6 @@ package ghidra.app.plugin.core.debug.gui.memview;
 
 import java.util.*;
 
-import com.google.common.collect.Range;
-
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.services.TraceRecorder;
 import ghidra.async.AsyncDebouncer;
@@ -156,10 +154,9 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 		if (!trackBytes || !trackTrace) {
 			return;
 		}
-		Range<Long> lifespan = range.getLifespan();
-		Range<Long> newspan = Range.closedOpen(lifespan.lowerEndpoint(), lifespan.lowerEndpoint());
+		Lifespan lifespan = range.getLifespan();
 		MemoryBox box = new MemoryBox("BytesChanged " + range.description(),
-			MemviewBoxType.WRITE_MEMORY, range.getRange(), newspan);
+			MemviewBoxType.WRITE_MEMORY, range.getRange(), lifespan);
 		updateList.add(box);
 		updateLabelDebouncer.contact(null);
 	}
@@ -199,7 +196,8 @@ public class DebuggerMemviewTraceListener extends TraceDomainObjectListener {
 
 	protected DebuggerCoordinates adjustCoordinates(DebuggerCoordinates coordinates) {
 		// Because the view's snap is changing with or without us.... So go with.
-		return current.withSnap(coordinates.getSnap());
+		// i.e., take the time, but not the thread
+		return current.time(coordinates.getTime());
 	}
 
 	public void coordinatesActivated(DebuggerCoordinates coordinates) {

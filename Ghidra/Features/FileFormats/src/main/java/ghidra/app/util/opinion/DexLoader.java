@@ -26,12 +26,17 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.file.formats.android.dex.DexHeaderFactory;
 import ghidra.file.formats.android.dex.format.*;
 import ghidra.file.formats.android.dex.util.DexUtil;
+import ghidra.framework.model.DomainObject;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.data.PointerDataType;
+import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.symbol.*;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
-public class DexLoader extends AbstractLibrarySupportLoader {
+public class DexLoader extends AbstractProgramWrapperLoader {
 
 	public DexLoader() {
 	}
@@ -102,6 +107,8 @@ public class DexLoader extends AbstractLibrarySupportLoader {
 				createMethods(program, header, item, classDataItem.getVirtualMethods(), monitor,
 					log);
 			}
+
+			markupMethodLookup(program, header, monitor, log);
 		}
 		catch (Exception e) {
 			log.appendException(e);
@@ -157,6 +164,72 @@ public class DexLoader extends AbstractLibrarySupportLoader {
 		}
 	}
 
+	protected void markupMethodLookup(Program program, DexHeader header, TaskMonitor monitor,
+			MessageLog log)
+			throws Exception {
+
+		monitor.setMessage("DEX: processing methods");
+		monitor.setMaximum(header.getMethodIdsSize());
+		monitor.setProgress(0);
+
+		int methodIndex = 0;
+		for (MethodIDItem item : header.getMethods()) {
+			monitor.checkCanceled();
+			monitor.incrementProgress(1);
+
+			StringBuilder builder = new StringBuilder();
+			builder.append("Method Index: 0x" + Integer.toHexString(methodIndex) + "\n");
+			builder.append(
+				"Class: " + DexUtil.convertTypeIndexToString(header, item.getClassIndex()) + "\n");
+			builder.append("Prototype: " +
+				DexUtil.convertPrototypeIndexToString(header, item.getProtoIndex()) + "\n");
+			builder.append("Name: " + DexUtil.convertToString(header, item.getNameIndex()) + "\n");
+
+			Address methodIndexAddress = DexUtil.toLookupAddress(program, methodIndex);
+
+			if (program.getMemory().getInt(methodIndexAddress) == -1) {
+				program.getListing()
+						.setComment(methodIndexAddress, CodeUnit.PLATE_COMMENT, builder.toString());
+
+				// Add placeholder symbol for external functions
+				String methodName = DexUtil.convertToString(header, item.getNameIndex());
+				String className = DexUtil.convertTypeIndexToString(header, item.getClassIndex());
+				Namespace classNameSpace =
+					DexUtil.createNameSpaceFromMangledClassName(program, className);
+				if (classNameSpace != null) {
+					Address externalAddress = DexUtil.toLookupAddress(program, methodIndex);
+					Symbol methodSymbol =
+						createMethodSymbol(program, externalAddress, methodName, classNameSpace,
+							log);
+					if (methodSymbol != null) {
+						String externalName = methodSymbol.getName(true);
+						program.getReferenceManager()
+								.addExternalReference(methodIndexAddress,
+									"EXTERNAL.dex-" + methodIndex, externalName, null,
+									SourceType.ANALYSIS, 0, RefType.DATA);
+					}
+				}
+			}
+			program.getListing().createData(methodIndexAddress, new PointerDataType());
+
+			++methodIndex;
+		}
+	}
+
+	private Symbol createMethodSymbol(Program program, Address methodAddress, String methodName,
+			Namespace classNameSpace, MessageLog log) {
+
+		program.getSymbolTable().addExternalEntryPoint(methodAddress);
+		try {
+			return program.getSymbolTable()
+					.createLabel(methodAddress, methodName, classNameSpace, SourceType.ANALYSIS);
+		}
+		catch (InvalidInputException e) {
+			log.appendException(e);
+			return null;
+		}
+	}
+
 	protected Address toAddr(Program program, long offset) {
 		return program.getAddressFactory().getDefaultAddressSpace().getAddress(offset);
 	}
@@ -171,5 +244,18 @@ public class DexLoader extends AbstractLibrarySupportLoader {
 
 	protected String getMonitorMessageSecondary() {
 		return "DEX Loader: creating method byte code";
+	}
+
+	@Override
+	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
+			DomainObject domainObject, boolean loadIntoProgram) {
+
+		return Collections.emptyList();
+	}
+
+	@Override
+	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
+			Program program) {
+		return null;
 	}
 }

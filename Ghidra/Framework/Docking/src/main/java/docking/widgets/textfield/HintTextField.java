@@ -22,6 +22,9 @@ import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors.Messages;
+
 /**
  * Simple text field that shows a text hint when the field is empty.
  *
@@ -39,8 +42,8 @@ public class HintTextField extends JTextField {
 	// some indication of what the field should contain.
 	private String hint;
 
-	private Color INVALID_COLOR = new Color(255, 225, 225);
-	private Color VALID_COLOR = Color.WHITE;
+	private Color VALID_COLOR = new GColor("color.bg.textfield.hint.valid");
+	private Color INVALID_COLOR = new GColor("color.bg.textfield.hint.invalid");
 	private Color defaultBackgroundColor;
 
 	/**
@@ -125,9 +128,8 @@ public class HintTextField extends JTextField {
 		}
 
 		Graphics2D g2 = (Graphics2D) g;
-		g2.setColor(Color.LIGHT_GRAY);
-		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-			RenderingHints.VALUE_ANTIALIAS_ON);
+		g2.setColor(Messages.HINT);
+		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
 		Dimension size = getSize();
 		Insets insets = getInsets();
@@ -179,7 +181,7 @@ public class HintTextField extends JTextField {
 	 */
 	private void setAttributes() {
 		setFont(getFont().deriveFont(Font.PLAIN));
-		setForeground(Color.BLACK);
+		setForeground(new GColor("color.fg.textfield.hint"));
 	}
 
 	/**

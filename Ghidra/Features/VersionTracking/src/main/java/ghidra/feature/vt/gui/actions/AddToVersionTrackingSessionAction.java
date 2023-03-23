@@ -15,18 +15,17 @@
  */
 package ghidra.feature.vt.gui.actions;
 
-import ghidra.feature.vt.gui.plugin.VTController;
-import ghidra.feature.vt.gui.plugin.VTPlugin;
-import ghidra.feature.vt.gui.wizard.VTAddToSessionWizardManager;
-import ghidra.util.HelpLocation;
-
 import javax.swing.Icon;
 
-import resources.ResourceManager;
 import docking.ActionContext;
 import docking.action.*;
 import docking.tool.ToolConstants;
 import docking.wizard.WizardManager;
+import generic.theme.GIcon;
+import ghidra.feature.vt.gui.plugin.VTController;
+import ghidra.feature.vt.gui.plugin.VTPlugin;
+import ghidra.feature.vt.gui.wizard.VTAddToSessionWizardManager;
+import ghidra.util.HelpLocation;
 
 public class AddToVersionTrackingSessionAction extends DockingAction {
 
@@ -37,13 +36,8 @@ public class AddToVersionTrackingSessionAction extends DockingAction {
 		super("Add To Session", VTPlugin.OWNER);
 		this.controller = controller;
 		String[] menuPath = { ToolConstants.MENU_FILE, "Add to Session..." };
-		Icon plusIcon = ResourceManager.loadImage("images/Plus.png");
-
+		Icon plusIcon = new GIcon("icon.version.tracking.action.add.to.session");
 		setMenuBarData(new MenuData(menuPath, plusIcon, "AAA"));
-
-//		Icon baseNewIcon = ResourceManager.loadImage("images/start-here_16.png");		
-//		MultiIcon addToIcon = new MultiIcon(baseNewIcon, false);
-//		addToIcon.addIcon(plusIcon);
 		setToolBarData(new ToolBarData(plusIcon, "View"));
 		setDescription("Add additional correlations to the current version tracking session");
 		setHelpLocation(new HelpLocation("VersionTrackingPlugin", "Add_To_Session"));

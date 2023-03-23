@@ -18,13 +18,14 @@ package ghidra.app.services;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
+import java.util.function.Supplier;
 
 import ghidra.app.plugin.core.debug.service.breakpoint.DebuggerLogicalBreakpointServicePlugin;
 import ghidra.app.services.LogicalBreakpoint.State;
 import ghidra.framework.plugintool.ServiceInfo;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
-import ghidra.program.util.ProgramLocation;
+import ghidra.program.util.*;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
@@ -32,7 +33,7 @@ import ghidra.trace.model.program.TraceProgramView;
 
 @ServiceInfo( //
 	defaultProvider = DebuggerLogicalBreakpointServicePlugin.class,
-	description = "Aggregate breakpoints for programs and live traces")
+	description = "Aggregate breakpoints for programs and traces")
 public interface DebuggerLogicalBreakpointService {
 	/**
 	 * Get all logical breakpoints known to the tool.
@@ -53,11 +54,11 @@ public interface DebuggerLogicalBreakpointService {
 	NavigableMap<Address, Set<LogicalBreakpoint>> getBreakpoints(Program program);
 
 	/**
-	 * Get a map of addresses to collected logical breakpoints (at present) for a given trace.
+	 * Get a map of addresses to collected logical breakpoints for a given trace.
 	 * 
 	 * <p>
-	 * The trace must be associated with a live target. The returned map collects live breakpoints
-	 * in the recorded target, using trace breakpoints from the recorder's current snapshot.
+	 * The map only includes breakpoints visible in the trace's primary view. Visibility depends on
+	 * the view's snapshot.
 	 * 
 	 * @param trace the trace database
 	 * @return the map of logical breakpoints
@@ -77,12 +78,11 @@ public interface DebuggerLogicalBreakpointService {
 	Set<LogicalBreakpoint> getBreakpointsAt(Program program, Address address);
 
 	/**
-	 * Get the collected logical breakpoints (at present) at the given trace location.
+	 * Get the collected logical breakpoints at the given trace location.
 	 * 
 	 * <p>
-	 * The trace must be associated with a live target. The returned collection includes live
-	 * breakpoints in the recorded target, using trace breakpoints from the recorders' current
-	 * snapshot.
+	 * The set only includes breakpoints visible in the trace's primary view. Visibility depends on
+	 * the view's snapshot.
 	 * 
 	 * @param trace the trace database
 	 * @param address the address
@@ -94,8 +94,8 @@ public interface DebuggerLogicalBreakpointService {
 	 * Get the logical breakpoint of which the given trace breakpoint is a part
 	 * 
 	 * <p>
-	 * If the given trace breakpoint is not part of any logical breakpoint, e.g., because it is not
-	 * on a live target, then null is returned.
+	 * If the given trace breakpoint is not part of any logical breakpoint, e.g., because the trace
+	 * is not opened in the tool or events are still being processed, then null is returned.
 	 * 
 	 * @param bpt the trace breakpoint
 	 * @return the logical breakpoint, or null
@@ -107,8 +107,8 @@ public interface DebuggerLogicalBreakpointService {
 	 * 
 	 * <p>
 	 * The {@code program} field for the location may be either a program database (static image) or
-	 * a view for a trace associated with a live target. If it is the latter, the view's current
-	 * snapshot is ignored, in favor of the associated recorder's current snapshot.
+	 * a view for a trace. If it is the latter, the view's snapshot is ignored in favor of the
+	 * trace's primary view's snapshot.
 	 * 
 	 * <p>
 	 * If {@code program} is a static image, this is equivalent to using
@@ -147,15 +147,45 @@ public interface DebuggerLogicalBreakpointService {
 	 */
 	void removeChangeListener(LogicalBreakpointsChangeListener l);
 
+	/**
+	 * Get a future which completes after pending changes have been processed
+	 * 
+	 * <p>
+	 * The returned future completes after all change listeners have been invoked
+	 * 
+	 * @return the future
+	 */
+	CompletableFuture<Void> changesSettled();
+
+	/**
+	 * Get the address most likely intended by the user for a given location
+	 * 
+	 * <p>
+	 * Program locations always have addresses at the start of a code unit, no matter how the
+	 * location was produced. This attempts to interpret the context a bit deeper to discern the
+	 * user's intent. At the moment, it seems reasonable to check if the location includes a code
+	 * unit. If so, take its min address, i.e., the location's address. If not, take the location's
+	 * byte address.
+	 * 
+	 * @param loc the location
+	 * @return the address
+	 */
+	static Address addressFromLocation(ProgramLocation loc) {
+		if (loc instanceof CodeUnitLocation) {
+			return loc.getAddress();
+		}
+		return loc.getByteAddress();
+	}
+
 	static <T> T programOrTrace(ProgramLocation loc,
 			BiFunction<? super Program, ? super Address, ? extends T> progFunc,
 			BiFunction<? super Trace, ? super Address, ? extends T> traceFunc) {
 		Program progOrView = loc.getProgram();
 		if (progOrView instanceof TraceProgramView) {
 			TraceProgramView view = (TraceProgramView) progOrView;
-			return traceFunc.apply(view.getTrace(), loc.getByteAddress());
+			return traceFunc.apply(view.getTrace(), addressFromLocation(loc));
 		}
-		return progFunc.apply(progOrView, loc.getByteAddress());
+		return progFunc.apply(progOrView, addressFromLocation(loc));
 	}
 
 	default State computeState(Collection<LogicalBreakpoint> col) {
@@ -221,8 +251,7 @@ public interface DebuggerLogicalBreakpointService {
 	}
 
 	/**
-	 * Create an enabled breakpoint at the given program location and each mapped live trace
-	 * location.
+	 * Create an enabled breakpoint at the given program location and each mapped trace location.
 	 * 
 	 * <p>
 	 * The implementation should take care not to create the same breakpoint multiple times. The
@@ -247,12 +276,12 @@ public interface DebuggerLogicalBreakpointService {
 	 * this is the case, the breakpoint will have no name.
 	 * 
 	 * <p>
-	 * Note, the debugger ultimately determines the placement behavior. If it is managing multiple
-	 * targets, it is possible the breakpoint will be effective in another trace. This fact should
-	 * be reflected correctly in the resulting logical markings once all resulting events have been
-	 * processed.
+	 * Note for live targets, the debugger ultimately determines the placement behavior. If it is
+	 * managing multiple targets, it is possible the breakpoint will be effective in another trace.
+	 * This fact should be reflected correctly in the resulting logical markings once all resulting
+	 * events have been processed.
 	 * 
-	 * @param trace the given trace, which must be live
+	 * @param trace the given trace
 	 * @param address the address in the trace (as viewed in the present)
 	 * @param length size of the breakpoint, may be ignored by debugger
 	 * @param kinds the kinds of breakpoint
@@ -280,6 +309,23 @@ public interface DebuggerLogicalBreakpointService {
 	 */
 	CompletableFuture<Void> placeBreakpointAt(ProgramLocation loc, long length,
 			Collection<TraceBreakpointKind> kinds, String name);
+
+	/**
+	 * Generate an informational status message when enabling the selected breakpoints
+	 * 
+	 * <p>
+	 * Breakpoint enabling may fail for a variety of reasons. Some of those reasons deal with the
+	 * trace database and GUI rather than with the target. When enabling will not likely behave in
+	 * the manner expected by the user, this should provide a message explaining why. For example,
+	 * if a breakpoint has no locations on a target, then we already know "enable" will not work.
+	 * This should explain the situation to the user. If enabling is expected to work, then this
+	 * should return null.
+	 * 
+	 * @param col the collection we're about to enable
+	 * @param trace a trace, if the command will be limited to the given trace
+	 * @return the status message, or null
+	 */
+	String generateStatusEnable(Collection<LogicalBreakpoint> col, Trace trace);
 
 	/**
 	 * Enable a collection of logical breakpoints on target, if applicable
@@ -319,7 +365,7 @@ public interface DebuggerLogicalBreakpointService {
 	CompletableFuture<Void> deleteAll(Collection<LogicalBreakpoint> col, Trace trace);
 
 	/**
-	 * Presuming the given locations are live, enable them
+	 * Enable the given locations
 	 * 
 	 * @param col the trace breakpoints
 	 * @return a future which completes when the command has been processed
@@ -327,7 +373,7 @@ public interface DebuggerLogicalBreakpointService {
 	CompletableFuture<Void> enableLocs(Collection<TraceBreakpoint> col);
 
 	/**
-	 * Presuming the given locations are live, disable them
+	 * Disable the given locations
 	 * 
 	 * @param col the trace breakpoints
 	 * @return a future which completes when the command has been processed
@@ -335,10 +381,64 @@ public interface DebuggerLogicalBreakpointService {
 	CompletableFuture<Void> disableLocs(Collection<TraceBreakpoint> col);
 
 	/**
-	 * Presuming the given locations are live, delete them
+	 * Delete the given locations
 	 * 
 	 * @param col the trace breakpoints
 	 * @return a future which completes when the command has been processed
 	 */
 	CompletableFuture<Void> deleteLocs(Collection<TraceBreakpoint> col);
+
+	/**
+	 * Generate an informational message when toggling the breakpoints
+	 * 
+	 * <p>
+	 * This works in the same manner as {@link #generateStatusEnable(Collection, Trace)}, except it
+	 * is for toggling breakpoints. If the breakpoint set is empty, this should return null, since
+	 * the usual behavior in that case is to prompt to place a new breakpoint.
+	 * 
+	 * @see #generateStatusEnable(Collection, Trace))
+	 * @param loc a representative location
+	 * @return the status message, or null
+	 */
+	String generateStatusToggleAt(Set<LogicalBreakpoint> bs, ProgramLocation loc);
+
+	/**
+	 * Generate an informational message when toggling the breakpoints at the given location
+	 * 
+	 * <p>
+	 * This works in the same manner as {@link #generateStatusEnable(Collection, Trace))}, except it
+	 * is for toggling breakpoints at a given location. If there are no breakpoints at the location,
+	 * this should return null, since the usual behavior in that case is to prompt to place a new
+	 * breakpoint.
+	 * 
+	 * @see #generateStatusEnable(Collection)
+	 * @param loc the location
+	 * @return the status message, or null
+	 */
+	default String generateStatusToggleAt(ProgramLocation loc) {
+		return generateStatusToggleAt(getBreakpointsAt(loc), loc);
+	}
+
+	/**
+	 * Toggle the breakpoints at the given location
+	 * 
+	 * @param bs the set of breakpoints to toggle
+	 * @param location the location
+	 * @param placer if the breakpoint set is empty, a routine for placing a breakpoint
+	 * @return a future which completes when the command has been processed
+	 */
+	CompletableFuture<Set<LogicalBreakpoint>> toggleBreakpointsAt(Set<LogicalBreakpoint> bs,
+			ProgramLocation location, Supplier<CompletableFuture<Set<LogicalBreakpoint>>> placer);
+
+	/**
+	 * Toggle the breakpoints at the given location
+	 * 
+	 * @param location the location
+	 * @param placer if there are no breakpoints, a routine for placing a breakpoint
+	 * @return a future which completes when the command has been processed
+	 */
+	default CompletableFuture<Set<LogicalBreakpoint>> toggleBreakpointsAt(ProgramLocation location,
+			Supplier<CompletableFuture<Set<LogicalBreakpoint>>> placer) {
+		return toggleBreakpointsAt(getBreakpointsAt(location), location, placer);
+	}
 }

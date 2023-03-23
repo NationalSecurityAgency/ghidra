@@ -20,7 +20,7 @@ import java.io.PrintStream;
 import org.jdom.Element;
 
 import generic.stl.VectorSTL;
-import ghidra.pcodeCPort.context.*;
+import ghidra.pcodeCPort.context.SleighError;
 import ghidra.pcodeCPort.sleighbase.SleighBase;
 import ghidra.pcodeCPort.slghsymbol.*;
 import ghidra.pcodeCPort.translate.Translate;
@@ -77,28 +77,6 @@ public class OperandValue extends PatternValue {
 	@Override
 	public long maxValue() {
 		throw new SleighError("Operand used in pattern expression", ct.location);
-	}
-
-	// Get the value of an operand when it is used in
-	// an expression.
-	@Override
-	public long getValue(ParserWalker pos) {
-		OperandSymbol sym = ct.getOperand(index);
-		PatternExpression patexp = sym.getDefiningExpression();
-		if (patexp == null) {
-			TripleSymbol defsym = sym.getDefiningSymbol();
-			if (defsym != null) {
-				patexp = defsym.getPatternExpression();
-			}
-			if (patexp == null) {
-				return 0;
-			}
-		}
-		ConstructState tempstate = new ConstructState();
-		ParserWalker newwalker = new ParserWalker(pos.getParserContext());
-		newwalker.setOutOfBandState(ct, index, tempstate, pos);
-		long res = patexp.getValue(newwalker);
-		return res;
 	}
 
 	@Override

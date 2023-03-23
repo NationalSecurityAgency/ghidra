@@ -25,7 +25,7 @@ import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.macho.*;
 import ghidra.app.util.bin.format.ubi.*;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.framework.model.DomainFolder;
+import ghidra.formats.gfilesystem.FileSystemService;
 import ghidra.framework.model.DomainObject;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.listing.Program;
@@ -144,47 +144,37 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 	 * import method will be invoked. 
 	 */
 	@Override
-	protected boolean importLibrary(String libName, DomainFolder libFolder, File libFile,
-			LoadSpec loadSpec, List<Option> options, MessageLog log, Object consumer,
-			Set<String> unprocessedLibs, List<Program> programList, TaskMonitor monitor)
-			throws CancelledException, IOException {
+	protected ByteProvider createLibraryByteProvider(File libFile, LoadSpec loadSpec, MessageLog log)
+			throws IOException {
 
 		if (!libFile.isFile()) {
-			return false;
+			return null;
 		}
 
-		try (ByteProvider provider = new FileByteProvider(libFile, null, AccessMode.READ)) {
+		ByteProvider provider = new FileByteProvider(libFile,
+			FileSystemService.getInstance().getLocalFSRL(libFile), AccessMode.READ);
 
+		try {
 			FatHeader header = new FatHeader(provider);
 			List<FatArch> architectures = header.getArchitectures();
 
 			if (architectures.isEmpty()) {
 				log.appendMsg("WARNING! No archives found in the UBI: " + libFile);
-				return false;
+				return null;
 			}
 
 			for (FatArch architecture : architectures) {
-
-				// Note: The creation of the byte provider that we pass to the importer deserves a
-				// bit of explanation:
-				//
-				// At this point in the process we have a FatArch, which provides access to the 
-				// underlying bytes for the Macho in the form of an input stream. From that we could
-				// create a byte provider. That doesn't work however. Here's why:
-				//
-				// The underlying input stream in the FatArch has already been parsed and the first
-				// 4 (magic) bytes read. If we create a provider from that stream and pass it to 
-				// the parent import method, we'll have a problem because that parent method will 
-				// try to read those first 4 magic bytes again, which violates the contract of the 
-				// input stream provider (you can't read the same bytes over again) and will throw 
-				// an exception. To avoid that, just create the provider from the original file 
-				// provider, and not from the FatArch input stream. 
-				try (ByteProvider bp = new ByteProviderWrapper(provider, architecture.getOffset(),
-					architecture.getSize())) {
-					if (super.importLibrary(libName, libFolder, libFile, bp, loadSpec, options, log,
-						consumer, unprocessedLibs, programList, monitor)) {
-						return true;
+				ByteProvider bp = new ByteProviderWrapper(provider, architecture.getOffset(),
+					architecture.getSize()) {
+					
+					@Override // Ensure the parent provider gets closed when the wrapper does
+					public void close() throws IOException {
+						super.provider.close();
 					}
+				};
+				LoadSpec libLoadSpec = matchSupportedLoadSpec(loadSpec, bp);
+				if (libLoadSpec != null) {
+					return bp;
 				}
 			}
 		}
@@ -193,7 +183,6 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 			// not an error condition so no need to log.
 		}
 
-		return super.importLibrary(libName, libFolder, libFile, loadSpec, options, log, consumer,
-			unprocessedLibs, programList, monitor);
+		return provider;
 	}
 }

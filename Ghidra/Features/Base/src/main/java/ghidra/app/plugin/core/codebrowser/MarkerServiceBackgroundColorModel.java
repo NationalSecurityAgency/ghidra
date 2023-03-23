@@ -19,6 +19,7 @@ import java.awt.Color;
 import java.math.BigInteger;
 
 import docking.widgets.fieldpanel.support.BackgroundColorModel;
+import generic.theme.GColor;
 import ghidra.app.services.MarkerService;
 import ghidra.app.util.viewer.listingpanel.ListingBackgroundColorModel;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
@@ -33,7 +34,7 @@ public class MarkerServiceBackgroundColorModel implements ListingBackgroundColor
 	private MarkerService markerService;
 	private Program program;
 	private AddressIndexMap indexMap;
-	private Color defaultBackgroundColor = Color.WHITE;
+	private Color defaultBackgroundColor = new GColor("color.bg.markerservice");
 
 	public MarkerServiceBackgroundColorModel(MarkerService markerService, Program program,
 			AddressIndexMap indexMap) {

@@ -21,30 +21,85 @@ import java.net.*;
 import ghidra.framework.client.*;
 import ghidra.framework.data.ProjectFileManager;
 import ghidra.framework.model.ProjectData;
-import ghidra.framework.model.ProjectLocator;
-import ghidra.util.NotOwnerException;
 import ghidra.util.exception.AssertException;
 
 public class GhidraURLConnection extends URLConnection {
 
+	/**
+	 * Connection status codes
+	 */
+	public enum StatusCode {
+		OK(20, "OK"),
+		/**
+		 * Ghidra Status-Code 401: Unauthorized.
+		 * This status code occurs when repository access is denied.
+		 */
+		UNAUTHORIZED(401, "Unauthorized"),
+		/**
+		 * Ghidra Status-Code 404: Not Found.
+		 * This status code occurs when repository or project does not exist.
+		 */
+		NOT_FOUND(404, "Not Found"),
+		/**
+		 * Ghidra Status-Code 423: Locked.
+		 * This status code occurs when project is locked (i.e., in use).
+		 */
+		LOCKED(423, "Locked Project"),
+		/**
+		 * Ghidra Status-Code 503: Unavailable.
+		 * This status code includes a variety of connection errors
+		 * which are reported/logged by the Ghidra Server support code.
+		 */
+		UNAVAILABLE(503, "Unavailable");
+
+		private int code;
+		private String description;
+
+		private StatusCode(int code, String description) {
+			this.code = code;
+			this.description = description;
+		}
+
+		public int getCode() {
+			return code;
+		}
+
+		public String getDescription() {
+			return description;
+		}
+	}
+
 	// TODO: consider implementing request and response headers
 
-	/**
-	 * Ghidra Status-Code 200: OK.
-	 */
-	public static final int GHIDRA_OK = 200;
-
-	/**
-	 * Ghidra Status-Code 401: Unauthorized.
-	 * This response code includes a variety of connection errors
-	 * which are reported/logged by the Ghidra Server support code.
-	 */
-	public static final int GHIDRA_UNAUTHORIZED = 401;
-
-	/**
-	 * Ghidra Status-Code 404: Not Found.
-	 */
-	public static final int GHIDRA_NOT_FOUND = 404;
+//	/**
+//	 * Ghidra Status-Code 200: OK.
+//	 */
+//	public static final int GHIDRA_OK = 200;
+//
+//	/**
+//	 * Ghidra Status-Code 401: Unauthorized.
+//	 * This response code includes a variety of connection errors
+//	 * which are reported/logged by the Ghidra Server support code.
+//	 */
+//	public static final int GHIDRA_UNAUTHORIZED = 401;
+//
+//	/**
+//	 * Ghidra Status-Code 404: Not Found.
+//	 */
+//	public static final int GHIDRA_NOT_FOUND = 404;
+//
+//	/**
+//	 * Ghidra Status-Code 423: Locked
+//	 * Caused by attempt to open local project data with write-access when project is
+//	 * already opened and locked.
+//	 */
+//	public static final int GHIDRA_LOCKED = 423;
+//
+//	/**
+//	 * Ghidra Status-Code 503: Unavailable
+//	 * Caused by other connection failure
+//	 */
+//	public static final int GHIDRA_UNAVAILABLE = 503;
 
 	/**
 	 * Ghidra content type - domain folder/file wrapped within GhidraURLWrappedContent object.
@@ -58,7 +113,7 @@ public class GhidraURLConnection extends URLConnection {
 	 */
 	public static final String REPOSITORY_SERVER_CONTENT = "RepositoryServer";
 
-	private int responseCode = -1;
+	private StatusCode statusCode = null;
 
 	private GhidraProtocolConnector protocolConnector;
 
@@ -110,16 +165,23 @@ public class GhidraURLConnection extends URLConnection {
 	}
 
 	/**
-	 * Set the read-only state of the content.
-	 * Extreme care must be taken when setting the state to false for local projects
-	 * without the use of a ProjectLock.  This setting is currently ignored
-	 * for server repositories which are always read-only in Headed mode and 
-	 * read-write in Headless mode.
+	 * Set the read-only state for this connection prior to connecting or getting content.  
+	 * The default access is read-only.  Extreme care must be taken when setting the state to false 
+	 * for local projects without the use of a ProjectLock.
+	 * <P>
+	 * <B>NOTE:</B> Local project URL connections only support read-only access.
 	 * @param state read-only if true, otherwise read-write
+	 * @throws UnsupportedOperationException if an attempt is made to enable write access for
+	 * a local project URL.
+	 * @throws IllegalStateException if already connected
 	 */
 	public void setReadOnly(boolean state) {
 		if (connected)
 			throw new IllegalStateException("Already connected");
+		if (GhidraURL.isLocalProjectURL(url) && !state) {
+			// local project write-access not supported due to inadequate cleanup/disposal strategy
+			throw new UnsupportedOperationException("write access to local projects not supported");
+		}
 		readOnly = state;
 	}
 
@@ -159,19 +221,19 @@ public class GhidraURLConnection extends URLConnection {
 	}
 
 	/**
-	 * Gets the status code from a Ghidra URL response.
+	 * Gets the status code from a Ghidra URL connect attempt.
 	 * @throws IOException if an error occurred connecting to the server.
-	 * @return the Ghidra Status-Code, or -1
+	 * @return the Ghidra connection status code or null
 	 */
-	public int getResponseCode() throws IOException {
+	public StatusCode getStatusCode() throws IOException {
 
-		if (responseCode != -1) {
-			return responseCode;
+		if (statusCode != null) {
+			return statusCode;
 		}
 
 		getContent(); // Ensure that we have connected to the server.
 
-		return responseCode;
+		return statusCode;
 	}
 
 	@Override
@@ -195,7 +257,7 @@ public class GhidraURLConnection extends URLConnection {
 	 * @return URL content generally in the form of GhidraURLWrappedContent, although other
 	 * special cases may result in different content (Example: a server-only URL could result in
 	 * content class of RepositoryServerAdapter).
-	 * @throws IOException
+	 * @throws IOException if an IO error occurs
 	 */
 	@Override
 	public Object getContent() throws IOException {
@@ -214,7 +276,7 @@ public class GhidraURLConnection extends URLConnection {
 	 * failure to do so may prevent release of repository handle to server.
 	 * Only a single call to this method is permitted.
 	 * @return transient project data or null if unavailable
-	 * @throws IOException
+	 * @throws IOException if an IO error occurs
 	 */
 	public ProjectData getProjectData() throws IOException {
 
@@ -226,24 +288,6 @@ public class GhidraURLConnection extends URLConnection {
 			((TransientProjectData) projectData).incrementInstanceUseCount();
 		}
 		return projectData;
-	}
-
-	private void localConnect(ProjectLocator localProjectLocator) throws IOException {
-
-		responseCode = protocolConnector.connect(readOnly);
-		if (responseCode != GHIDRA_OK) {
-			return;
-		}
-
-		try {
-			projectData = new ProjectFileManager(localProjectLocator, !readOnly, false);
-
-			refObject = new GhidraURLWrappedContent(this);
-			responseCode = GHIDRA_OK;
-		}
-		catch (NotOwnerException e) {
-			responseCode = GHIDRA_UNAUTHORIZED;
-		}
 	}
 
 	@Override
@@ -258,9 +302,13 @@ public class GhidraURLConnection extends URLConnection {
 		if (protocolConnector instanceof DefaultLocalGhidraProtocolConnector) {
 			// local project connection
 			DefaultLocalGhidraProtocolConnector localConnector =
-				((DefaultLocalGhidraProtocolConnector) protocolConnector);
-			localConnect(localConnector.getLocalProjectLocator());
+				(DefaultLocalGhidraProtocolConnector) protocolConnector;
+			projectData = localConnector.getLocalProjectData(readOnly);
+			statusCode = localConnector.getStatusCode();
 			connected = true;
+			if (statusCode == StatusCode.OK) {
+				refObject = new GhidraURLWrappedContent(this);
+			}
 			return;
 		}
 
@@ -268,9 +316,9 @@ public class GhidraURLConnection extends URLConnection {
 		if (repoName == null) {
 			// assume only server adapter connection without repository name specified
 			// any RepositoryServerAdapter caching is responsibility of connector
-			responseCode = protocolConnector.connect(readOnly);
+			statusCode = protocolConnector.connect(readOnly);
 			connected = true;
-			if (responseCode == GHIDRA_OK) {
+			if (statusCode == StatusCode.OK) {
 				refObject = protocolConnector.getRepositoryServerAdapter();
 				if (refObject == null) {
 					throw new AssertException("expected RepositoryServerAdapter content");
@@ -292,9 +340,9 @@ public class GhidraURLConnection extends URLConnection {
 			transientProjectManager.getTransientProject(protocolConnector, readOnly);
 
 		connected = true;
-		responseCode = protocolConnector.getResponseCode();
+		statusCode = protocolConnector.getStatusCode();
 
-		if (responseCode != GHIDRA_OK) {
+		if (statusCode != StatusCode.OK) {
 			return;
 		}
 

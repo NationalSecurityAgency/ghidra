@@ -33,8 +33,9 @@ import generic.util.Path;
 import ghidra.app.plugin.core.console.ConsoleComponentProvider;
 import ghidra.app.plugin.core.osgi.BundleStatusComponentProvider;
 import ghidra.app.plugin.core.script.*;
-import ghidra.app.script.GhidraScriptUtil;
+import ghidra.app.script.*;
 import ghidra.app.services.ConsoleService;
+import ghidra.python.PythonScriptProvider;
 import ghidra.util.HelpLocation;
 
 public class GhidraScriptMgrPluginScreenShots extends GhidraScreenShotGenerator {
@@ -230,10 +231,11 @@ public class GhidraScriptMgrPluginScreenShots extends GhidraScreenShotGenerator 
 	@Test
 	public void testPick() {
 
-		List<String> items = new ArrayList<>();
-		items.add("Java");
-		items.add("Python");
-		final PickProviderDialog pickDialog = new PickProviderDialog(items, "Java");
+		List<GhidraScriptProvider> items = new ArrayList<>();
+		JavaScriptProvider javaScriptProvider = new JavaScriptProvider();
+		items.add(javaScriptProvider);
+		items.add(new PythonScriptProvider());
+		final PickProviderDialog pickDialog = new PickProviderDialog(items, javaScriptProvider);
 		runSwing(() -> tool.showDialog(pickDialog), false);
 
 		PickProviderDialog dialog = waitForDialogComponent(PickProviderDialog.class);

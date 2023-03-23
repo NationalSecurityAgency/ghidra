@@ -15,7 +15,8 @@
  */
 package ghidra.app.plugin.core.disassembler;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Component;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,14 +25,14 @@ import javax.swing.event.ChangeListener;
 
 import docking.WindowPosition;
 import docking.widgets.list.GListCellRenderer;
+import generic.theme.GColor;
+import generic.theme.Gui;
 import ghidra.GhidraOptions;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.util.PseudoDisassembler;
-import ghidra.app.util.viewer.field.BrowserCodeUnitFormat;
-import ghidra.app.util.viewer.field.FieldFactory;
-import ghidra.app.util.viewer.options.OptionsGui;
+import ghidra.app.util.viewer.field.*;
 import ghidra.framework.model.DomainObjectChangedEvent;
 import ghidra.framework.model.DomainObjectListener;
 import ghidra.framework.options.OptionsChangeListener;
@@ -77,6 +78,9 @@ import ghidra.util.exception.UsrException;
 )
 //@formatter:on
 public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjectListener {
+	private static final Color ADDRESS_COLOR =
+		new GColor("color.fg.plugin.disassembledview.address");
+
 	/**
 	 * The number of addresses that should be disassembled, including the 
 	 * address of the current {@link ProgramLocation}.
@@ -111,7 +115,7 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 		// events and selection changed events.  The first type we get from
 		// our parent, the other two we get by passing true to our parent's 
 		// constructor
-		super(plugintool, true, true);
+		super(plugintool);
 	}
 
 	/**
@@ -324,24 +328,6 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 	 */
 	private class DisassembledViewComponentProvider extends ComponentProviderAdapter {
 		/**
-		 * Constant for the selection color setting.
-		 */
-
-		/**
-		 * Constant for the address foreground color setting.
-		 */
-		private static final String ADDRESS_COLOR_OPTION = "Address Color";
-
-		/**
-		 * Constant for the browser font setting.
-		 */
-		private static final String ADDRESS_FONT_OPTION = "BASE FONT";
-		/**
-		 * Constant for the browser's background setting.
-		 */
-		private static final String BACKGROUND_COLOR_OPTION = "Background Color";
-
-		/**
 		 * The constant part of the tooltip text for the list cells.  This
 		 * string is prepended to the currently selected address in the 
 		 * program.
@@ -361,27 +347,6 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 		 * The list that will render the disassembled addresses.
 		 */
 		private JList<DisassembledAddressInfo> contentList;
-
-		/**
-		 * The color of the address in the list that represents the current
-		 * selection in the code browser.
-		 */
-		private Color selectedAddressColor;
-
-		/**
-		 * The color of the preview text.
-		 */
-		private Color addressForegroundColor;
-
-		/**
-		 * The color for the list background.
-		 */
-		private Color backgroundColor;
-
-		/**
-		 * The font for the list items.
-		 */
-		private Font font;
 
 		/**
 		 * The preview style of the addresses being displayed.
@@ -437,7 +402,7 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 					super.getListCellRendererComponent(list, value, index, isSelected,
 						cellHasFocus);
 
-					setFont(font);
+					setFont(Gui.getFont(FieldFactory.BASE_LISTING_FONT_ID));
 
 					setToolTipText(TOOLTIP_TEXT_PREPEND +
 						HTMLUtilities.escapeHTML(currentLocation.getAddress().toString()));
@@ -445,12 +410,12 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 					// make sure the first value is highlighted to indicate
 					// that it is the selected program location
 					if (index == 0) {
-						Color foreground = addressForegroundColor;
-						Color background = selectedAddressColor;
+						Color foreground = ADDRESS_COLOR;
+						Color background = GhidraOptions.DEFAULT_SELECTION_COLOR;
 
 						if (isSelected) {
-							foreground = foreground.brighter();
-							background = background.darker();
+							foreground = Gui.brighter(foreground);
+							background = Gui.darker(background);
 						}
 
 						setForeground(foreground);
@@ -470,10 +435,6 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 			ToolOptions opt = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS);
 			opt.addOptionsChangeListener(optionsChangeListener);
 
-			// current address background color
-			selectedAddressColor = opt.getColor(GhidraOptions.OPTION_SELECTION_COLOR,
-				GhidraOptions.DEFAULT_SELECTION_COLOR);
-
 			// the address preview style
 			addressPreviewFormat = new BrowserCodeUnitFormat(tool);
 			addressPreviewFormat.addChangeListener(addressFormatChangeListener);
@@ -481,20 +442,9 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 			opt = tool.getOptions(GhidraOptions.CATEGORY_BROWSER_DISPLAY);
 			opt.addOptionsChangeListener(optionsChangeListener);
 
-			// the preview text color
-			addressForegroundColor = opt.getColor(OptionsGui.SEPARATOR.getColorOptionName(),
-				OptionsGui.SEPARATOR.getDefaultColor());
-
-			// background color
-			backgroundColor = opt.getColor(OptionsGui.BACKGROUND.getColorOptionName(),
-				OptionsGui.BACKGROUND.getDefaultColor());
-
-			// font
-			font = opt.getFont(ADDRESS_FONT_OPTION, FieldFactory.DEFAULT_FIELD_FONT);
-
-			contentList.setForeground(addressForegroundColor);
-			contentList.setBackground(backgroundColor);
-			contentList.setFont(font);
+			contentList.setForeground(ADDRESS_COLOR);
+			contentList.setBackground(ListingColors.BACKGROUND);
+			Gui.registerFont(contentList, "font.listing.base");
 		}
 
 		/**
@@ -509,22 +459,6 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 			opt.removeOptionsChangeListener(optionsChangeListener);
 		}
 
-		/**
-		 * Adds the given listener to be notified when the user selects list
-		 * items in the view.
-		 * 
-		 * @param listener The listener to add.
-		 */
-//        void addListSelectionListener( ListSelectionListener listener )
-//        {
-//            contentList.addListSelectionListener( listener );
-//        }
-
-		/**
-		 * Sets the contents to the provided value.
-		 * 
-		 * @param displayContents The value that the view should display.
-		 */
 		void setContents(DisassembledAddressInfo[] addressInfos) {
 			contentList.setListData(addressInfos);
 		}
@@ -580,25 +514,6 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 			@Override
 			public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
 					Object newValue) {
-				if (options.getName().equals(GhidraOptions.CATEGORY_BROWSER_FIELDS)) {
-					if (optionName.equals(GhidraOptions.OPTION_SELECTION_COLOR)) {
-						selectedAddressColor = (Color) newValue;
-					}
-				}
-				else if (options.getName().equals(GhidraOptions.CATEGORY_BROWSER_DISPLAY)) {
-					if (optionName.equals(ADDRESS_COLOR_OPTION)) {
-						addressForegroundColor = (Color) newValue;
-						contentList.setForeground(addressForegroundColor);
-					}
-					else if (optionName.equals(BACKGROUND_COLOR_OPTION)) {
-						backgroundColor = (Color) newValue;
-						contentList.setBackground(backgroundColor);
-					}
-					else if (optionName.equals(ADDRESS_FONT_OPTION)) {
-						font = (Font) newValue;
-					}
-				}
-
 				// update the display
 				contentList.repaint();
 			}
@@ -606,9 +521,8 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 	}
 
 	/**
-	 * An object that provides information about the address that it wraps.
-	 * The info knows how to locate a {@link CodeInfo} object for the address
-	 * and can generate a string preview of the address.
+	 * An object that provides information about the address that it wraps.  The info knows how to 
+	 * locate an info object for the address and can generate a string preview of the address.
 	 */
 	private class DisassembledAddressInfo {
 		/**
@@ -683,8 +597,8 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 		/**
 		 * Get the code unit from the program location.
 		 *
-		 * @param  The address from which we want the CodeUnit.
-		 * @return CodeUnit null if there is no location.
+		 * @param address the address from which we want the CodeUnit.
+		 * @return null if there is no location.
 		 */
 		private CodeUnit getCodeUnitForAddress(Address address) {
 			CodeUnit codeUnit = null;
@@ -693,8 +607,8 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 				Listing listing = currentProgram.getListing();
 				codeUnit = listing.getCodeUnitAt(address);
 
-				// if the CodeUnit is Data and is not defined, then we 
-				// need to try to virutally disassemble it
+				// if the CodeUnit is Data and is not defined, then we need to try to virtually 
+				// disassemble it
 				if (codeUnit instanceof Data) {
 					if (!((Data) codeUnit).isDefined()) {
 						CodeUnit virtualCodeUnit = virtuallyDisassembleAddress(address);
@@ -727,18 +641,15 @@ public class DisassembledViewPlugin extends ProgramPlugin implements DomainObjec
 					codeUnit = disassembler.disassemble(address);
 				}
 				catch (UsrException ue) {
-					// these exceptions happen if there is insufficient data
-					// from the program: InsufficientBytesException, 
-					// UnknownInstructionException, UnknownContextException
+					// these exceptions happen if there is insufficient data from the program: 
+					// InsufficientBytesException, UnknownInstructionException, 
+					// UnknownContextException
 				}
 			}
 
 			return codeUnit;
 		}
 
-		/**
-		 * Gets the preview String for the provided code unit.
-		 */
 		public String getAddressPreview(CodeUnitFormat format) {
 			return getAddress().toString() + " " + format.getRepresentationString(addressCodeUnit);
 		}

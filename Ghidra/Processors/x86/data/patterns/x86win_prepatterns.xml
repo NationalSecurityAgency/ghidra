@@ -1,0 +1,38 @@
+<patternlist>
+  
+  <pattern>
+     <data> 
+            0x8bff
+            0x55
+            0x8bec
+            0x83ec20
+            0x8b4508
+            0x56
+            0x57
+            0x6a08
+            0x59
+            0xbe........
+            0x8d7de0
+            0xf3a5
+            0x8945f8
+            0x8b450c
+            0x5f
+            0x8945fc
+            0x5e
+            0x85c0
+            0x740c
+            0xf60008
+            0x7407
+            0xc745f4........
+            0x8d45f4
+            0x50
+            0xff75f0
+            0xff75e4
+            0xff75e0
+            0xff15........
+            0xc9
+            0xc20800  </data> <!-- __CxxThrowException@8 -->
+     <funcstart label="__CxxThrowException@8" noreturn="true"/>
+  </pattern>
+
+</patternlist>

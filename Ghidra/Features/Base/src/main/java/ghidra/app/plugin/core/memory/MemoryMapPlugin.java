@@ -59,7 +59,7 @@ public class MemoryMapPlugin extends ProgramPlugin implements DomainObjectListen
 	private MemoryMapManager memManager;
 
 	public MemoryMapPlugin(PluginTool tool) {
-		super(tool, true, false);
+		super(tool);
 
 		memManager = new MemoryMapManager(this);
 		provider = new MemoryMapProvider(this);

@@ -21,8 +21,8 @@ import java.util.*;
 import ghidra.app.util.*;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.framework.model.DomainFolder;
 import ghidra.framework.model.DomainObject;
+import ghidra.framework.model.Project;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
@@ -269,9 +269,10 @@ public class BinaryLoader extends AbstractProgramLoader {
 	}
 
 	@Override
-	protected List<Program> loadProgram(ByteProvider provider, String programName,
-			DomainFolder programFolder, LoadSpec loadSpec, List<Option> options, MessageLog log,
-			Object consumer, TaskMonitor monitor) throws IOException, CancelledException {
+	protected List<Loaded<Program>> loadProgram(ByteProvider provider, String programName,
+			Project project, String programFolderPath, LoadSpec loadSpec, List<Option> options,
+			MessageLog log, Object consumer, TaskMonitor monitor)
+			throws IOException, CancelledException {
 		LanguageCompilerSpecPair pair = loadSpec.getLanguageCompilerSpec();
 		Language importerLanguage = getLanguageService().getLanguage(pair.languageID);
 		CompilerSpec importerCompilerSpec =
@@ -281,30 +282,27 @@ public class BinaryLoader extends AbstractProgramLoader {
 			importerLanguage.getAddressFactory().getDefaultAddressSpace().getAddress(0);
 		Program prog = createProgram(provider, programName, baseAddr, getName(), importerLanguage,
 			importerCompilerSpec, consumer);
+		List<Loaded<Program>> loadedList =
+			List.of(new Loaded<>(prog, programName, programFolderPath));
+
 		boolean success = false;
 		try {
-			success = loadInto(provider, loadSpec, options, log, prog, monitor);
-			if (success) {
-				createDefaultMemoryBlocks(prog, importerLanguage, log);
-			}
+			loadInto(provider, loadSpec, options, log, prog, monitor);
+			createDefaultMemoryBlocks(prog, importerLanguage, log);
+			success = true;
+			return loadedList;
 		}
 		finally {
 			if (!success) {
-				prog.release(consumer);
-				prog = null;
+				release(loadedList, consumer);
 			}
 		}
-		List<Program> results = new ArrayList<Program>();
-		if (prog != null) {
-			results.add(prog);
-		}
-		return results;
 	}
 
 	@Override
-	protected boolean loadProgramInto(ByteProvider provider, LoadSpec loadSpec,
+	protected void loadProgramInto(ByteProvider provider, LoadSpec loadSpec,
 			List<Option> options, MessageLog log, Program prog, TaskMonitor monitor)
-			throws IOException, CancelledException {
+			throws IOException, LoadException, CancelledException {
 		long length = getLength(options);
 		//File file = provider.getFile();
 		long fileOffset = getFileOffset(options);
@@ -329,12 +327,10 @@ public class BinaryLoader extends AbstractProgramLoader {
 				blockName = generateBlockName(prog, isOverlay, baseAddr.getAddressSpace());
 			}
 			createBlock(prog, isOverlay, blockName, baseAddr, fileBytes, length, log);
-
-			return true;
 		}
 		catch (AddressOverflowException e) {
-			throw new IllegalArgumentException("Invalid address range specified: start:" +
-				baseAddr + ", length:" + length + " - end address exceeds address space boundary!");
+			throw new LoadException("Invalid address range specified: start:" + baseAddr +
+				", length:" + length + " - end address exceeds address space boundary!");
 		}
 	}
 

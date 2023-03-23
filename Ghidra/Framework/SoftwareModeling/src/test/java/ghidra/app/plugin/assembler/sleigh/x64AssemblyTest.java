@@ -15,8 +15,7 @@
  */
 package ghidra.app.plugin.assembler.sleigh;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import org.junit.Test;
 
@@ -184,6 +183,17 @@ public class x64AssemblyTest extends AbstractAssemblyTest {
 	@Test
 	public void testAssemble_MOV_RCX_mR12m() {
 		assertOneCompatRestExact("MOV RCX,qword ptr [R12]", "49:8b:0c:24");
+	}
+
+	@Test
+	public void testAssemble_MOV_RDX_0xffffffffffffffff() {
+		assertOneCompatRestExact("MOV RDX,0xffffffffffffffff", "48:ba:ff:ff:ff:ff:ff:ff:ff:ff",
+			"MOV RDX,-0x1");
+	}
+
+	@Test
+	public void testAssemble_MOV_RDX_n1() {
+		assertOneCompatRestExact("MOV RDX,-0x1", "48:ba:ff:ff:ff:ff:ff:ff:ff:ff");
 	}
 
 	@Test

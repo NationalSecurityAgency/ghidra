@@ -68,6 +68,6 @@ public class VisibleAutoReadMemorySpec implements AutoReadMemorySpec {
 			return AsyncUtils.NIL;
 		}
 
-		return recorder.readMemoryBlocks(toRead, TaskMonitor.DUMMY, false);
+		return recorder.readMemoryBlocks(toRead, TaskMonitor.DUMMY);
 	}
 }

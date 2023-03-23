@@ -15,8 +15,9 @@
  */
 package ghidra.app.util.bin.format.pe.debug;
 
-import java.io.IOException;
 import java.util.ArrayList;
+
+import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.util.Conv;
@@ -80,8 +81,8 @@ public class OMFSrcModuleFile {
 		cbName = reader.readByte(index);
 		index += BinaryReader.SIZEOF_BYTE;
 
-		name = reader.readAsciiString(index, cbName);
-		index += cbName;
+		name = reader.readAsciiString(index, Byte.toUnsignedInt(cbName));
+		index += Byte.toUnsignedInt(cbName);
 
 		for (int i = 0; i < Conv.shortToInt(cSeg); ++i) {
 			//OMFSrcModuleLine line = new OMFSrcModuleLine(reader, index);

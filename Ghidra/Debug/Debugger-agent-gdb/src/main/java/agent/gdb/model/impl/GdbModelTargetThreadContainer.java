@@ -25,6 +25,7 @@ import agent.gdb.manager.impl.cmd.GdbStateChangeRecord;
 import agent.gdb.manager.reason.GdbBreakpointHitReason;
 import ghidra.async.AsyncFence;
 import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.agent.DefaultTargetObject;
 import ghidra.dbg.error.DebuggerIllegalArgumentException;
 import ghidra.dbg.target.TargetConfigurable;
@@ -90,8 +91,8 @@ public class GdbModelTargetThreadContainer
 	}
 
 	@Override
-	protected CompletableFuture<Void> requestElements(boolean refresh) {
-		if (!refresh) {
+	protected CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
+		if (!refresh.equals(RefreshBehavior.REFRESH_ALWAYS)) {
 			updateUsingThreads(inferior.getKnownThreads());
 			return AsyncUtils.NIL;
 		}
@@ -136,7 +137,7 @@ public class GdbModelTargetThreadContainer
 		if (sco.getState() != GdbState.STOPPED) {
 			return updateThreadStates(sco);
 		}
-		return requestElements(false).thenCompose(__ -> {
+		return requestElements(RefreshBehavior.REFRESH_NEVER).thenCompose(__ -> {
 			return updateThreadStates(sco);
 		}).exceptionally(__ -> {
 			Msg.error(this, "Could not update threads " + this + " on STOPPED");

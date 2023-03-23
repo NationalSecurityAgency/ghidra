@@ -33,4 +33,4 @@ SCRIPT_DIR="${SCRIPT_FILE%/*}"
 
 # Launch Ghidra Python
 # DEBUG_ADDRESS set via environment for launch.sh
-DEBUG_ADDRESS=${DEBUG_ADDRESS} "${SCRIPT_DIR}"/launch.sh "${LAUNCH_MODE}" "Ghidra-Python" "${MAXMEM}" "${VMARG_LIST}" ghidra.python.PythonRun "$@"
+DEBUG_ADDRESS=${DEBUG_ADDRESS} "${SCRIPT_DIR}"/launch.sh "${LAUNCH_MODE}" jdk "Ghidra-Python" "${MAXMEM}" "${VMARG_LIST}" ghidra.python.PythonRun "$@"

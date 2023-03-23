@@ -15,6 +15,8 @@
  */
 package ghidra.app.services;
 
+import java.util.List;
+
 import javax.swing.Icon;
 
 import docking.ActionContext;
@@ -71,6 +73,13 @@ public interface DebuggerConsoleService extends DebuggerConsoleLogger {
 	 * @return true if present, false if absent
 	 */
 	boolean logContains(ActionContext context);
+
+	/**
+	 * Get the action context for all actionable messages
+	 * 
+	 * @return a copy of the collection of contexts, in no particular order
+	 */
+	List<ActionContext> getActionContexts();
 
 	/**
 	 * Add an action which might be applied to an actionable log message

@@ -122,6 +122,44 @@ public class PowerPC64_ElfRelocationConstants {
 	public static final int R_PPC64_DTPREL16_HIGHEST = 105; // half16    #highest(@dtprel)
 	public static final int R_PPC64_DTPREL16_HIGHESTA = 106; // half16   #highesta(@dtprel)
 
+	public static final int R_PPC64_PLTSEQ_NOTOC = 121;
+	public static final int R_PPC64_PLTCALL_NOTOC = 122;
+	public static final int R_PPC64_PCREL_OPT = 123;
+
+	public static final int R_PPC64_D34 = 128;
+	public static final int R_PPC64_D34_LO = 129;
+	public static final int R_PPC64_D34_HI30 = 130;
+	public static final int R_PPC64_D34_HA30 = 131;
+	public static final int R_PPC64_PCREL34 = 132;
+	public static final int R_PPC64_GOT_PCREL34 = 133;
+	public static final int R_PPC64_PLT_PCREL34 = 134;
+	public static final int R_PPC64_PLT_PCREL34_NOTOC = 135;
+	public static final int R_PPC64_ADDR16_HIGHER34 = 136;
+	public static final int R_PPC64_ADDR16_HIGHERA34 = 137;
+	public static final int R_PPC64_ADDR16_HIGHEST34 = 138;
+	public static final int R_PPC64_ADDR16_HIGHESTA34 = 139;
+	public static final int R_PPC64_REL16_HIGHER34 = 140;
+	public static final int R_PPC64_REL16_HIGHERA34 = 141;
+	public static final int R_PPC64_REL16_HIGHEST34 = 142;
+	public static final int R_PPC64_REL16_HIGHESTA34 = 143;
+	public static final int R_PPC64_D28 = 144;
+	public static final int R_PPC64_PCREL28 = 145;
+	public static final int R_PPC64_TPREL34 = 146;
+	public static final int R_PPC64_DTPREL34 = 147;
+	public static final int R_PPC64_GOT_TLSGD_PCREL34 = 148;
+	public static final int R_PPC64_GOT_TLSLD_PCREL34 = 149;
+	public static final int R_PPC64_GOT_TPREL_PCREL34 = 150;
+	public static final int R_PPC64_GOT_DTPREL_PCREL34 = 151;
+
+	public static final int R_PPC64_REL16_HIGH = 240;
+	public static final int R_PPC64_REL16_HIGHA = 241;
+	public static final int R_PPC64_REL16_HIGHER = 242;
+	public static final int R_PPC64_REL16_HIGHERA = 243;
+	public static final int R_PPC64_REL16_HIGHEST = 244;
+	public static final int R_PPC64_REL16_HIGHESTA = 245;
+
+	public static final int R_PPC64_JMP_IREL = 247;
+
 	// Masks for manipulating Power PC relocation targets
 	public static final int PPC64_WORD32 = 0xFFFFFFFF;
 	public static final int PPC64_WORD30 = 0xFFFFFFFC;

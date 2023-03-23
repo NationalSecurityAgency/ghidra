@@ -30,12 +30,12 @@ public class UdtSourceLineTypeApplier extends MsTypeApplier {
 
 	/**
 	 * Constructor for base class applier.
-	 * @param applicator {@link PdbApplicator} for which this class is working.
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
 	 * @param msType {@link AbstractBaseClassMsType}, {@link AbstractVirtualBaseClassMsType}, or
 	 * {@link AbstractIndirectVirtualBaseClassMsType} to processes.
 	 * @throws IllegalArgumentException Upon invalid arguments.
 	 */
-	public UdtSourceLineTypeApplier(PdbApplicator applicator, AbstractMsType msType)
+	public UdtSourceLineTypeApplier(DefaultPdbApplicator applicator, AbstractMsType msType)
 			throws IllegalArgumentException {
 		super(applicator, validateType(msType));
 	}

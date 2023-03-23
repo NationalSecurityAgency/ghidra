@@ -19,9 +19,21 @@ import java.io.IOException;
 
 import db.RecordIterator;
 
+/**
+ * An abstract implementation of {@link DirectedRecordIterator}
+ * 
+ * <p>
+ * Essentially, this just wraps a {@link RecordIterator}, but imposes and encapsulates its
+ * direction.
+ */
 public abstract class AbstractDirectedRecordIterator implements DirectedRecordIterator {
 	protected final RecordIterator it;
 
+	/**
+	 * Wrap the given iterator
+	 * 
+	 * @param it the iterator
+	 */
 	public AbstractDirectedRecordIterator(RecordIterator it) {
 		this.it = it;
 	}

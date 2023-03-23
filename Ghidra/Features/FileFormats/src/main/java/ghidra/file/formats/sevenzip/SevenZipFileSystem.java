@@ -73,9 +73,11 @@ public class SevenZipFileSystem implements GFileSystem {
 	 */
 	public void mount(ByteProvider byteProvider, TaskMonitor monitor)
 			throws CancelledException, IOException {
+		if (!SevenZipFileSystemFactory.initNativeLibraries()) {
+			throw new IOException("Could not initialize 7zip native libraries");
+		}
 		try {
 			szBPStream = new SZByteProviderStream(byteProvider);
-			SevenZip.initSevenZipFromPlatformJAR(); // calling this multiple times is ok
 			archive = SevenZip.openInArchive(null, szBPStream);
 			archiveFormat = archive.getArchiveFormat();
 			archiveInterface = archive.getSimpleInterface();
@@ -84,7 +86,7 @@ public class SevenZipFileSystem implements GFileSystem {
 			indexFiles(monitor);
 			ensurePasswords(monitor);
 		}
-		catch (SevenZipException | SevenZipNativeInitializationException e) {
+		catch (SevenZipException e) {
 			throw new IOException("Failed to open archive: " + fsrl, e);
 		}
 	}

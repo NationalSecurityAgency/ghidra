@@ -17,10 +17,10 @@ package ghidra.trace.database.memory;
 
 import org.junit.Before;
 
+import db.Transaction;
 import ghidra.dbg.target.schema.SchemaContext;
 import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 import ghidra.dbg.target.schema.XmlSchemaContext;
-import ghidra.util.database.UndoableTransaction;
 
 public class DBTraceMemoryManagerObjectRegionsTest extends DBTraceMemoryManagerRegionsTest {
 
@@ -28,21 +28,22 @@ public class DBTraceMemoryManagerObjectRegionsTest extends DBTraceMemoryManagerR
 
 	@Before
 	public void setUpObjectsMode() throws Exception {
-		ctx = XmlSchemaContext.deserialize("" + //
-			"<context>" + //
-			"    <schema name='Session' elementResync='NEVER' attributeResync='ONCE'>" + //
-			"        <attribute name='Regions' schema='RegionContainer' />" + //
-			"    </schema>" + //
-			"    <schema name='RegionContainer' canonical='yes' elementResync='NEVER' " + //
-			"            attributeResync='ONCE'>" + //
-			"        <element schema='Region' />" + //
-			"    </schema>" + //
-			"    <schema name='Region' elementResync='NEVER' attributeResync='NEVER'>" + //
-			"        <interface name='MemoryRegion' />" + //
-			"    </schema>" + //
-			"</context>");
+		ctx = XmlSchemaContext.deserialize("""
+				<context>
+				    <schema name='Session' elementResync='NEVER' attributeResync='ONCE'>
+				        <attribute name='Regions' schema='RegionContainer' />
+				    </schema>
+				    <schema name='RegionContainer' canonical='yes' elementResync='NEVER'
+				            attributeResync='ONCE'>
+				        <element schema='Region' />
+				    </schema>
+				    <schema name='Region' elementResync='NEVER' attributeResync='NEVER'>
+				        <interface name='MemoryRegion' />
+				    </schema>
+				</context>
+				""");
 
-		try (UndoableTransaction tid = b.startTransaction()) {
+		try (Transaction tx = b.startTransaction()) {
 			b.trace.getObjectManager().createRootObject(ctx.getSchema(new SchemaName("Session")));
 		}
 	}

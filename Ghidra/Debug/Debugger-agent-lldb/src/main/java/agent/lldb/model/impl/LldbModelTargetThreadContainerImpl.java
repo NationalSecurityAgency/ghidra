@@ -27,6 +27,7 @@ import agent.lldb.manager.LldbReason;
 import agent.lldb.model.iface1.LldbModelTargetConfigurable;
 import agent.lldb.model.iface2.*;
 import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.error.DebuggerIllegalArgumentException;
 import ghidra.dbg.target.TargetConfigurable;
 import ghidra.dbg.target.TargetObject;
@@ -55,7 +56,7 @@ public class LldbModelTargetThreadContainerImpl extends LldbModelTargetObjectImp
 		this.changeAttributes(List.of(), Map.of(BASE_ATTRIBUTE_NAME, 16), "Initialized");
 
 		getManager().addEventsListener(this);
-		requestElements(false);
+		requestElements(RefreshBehavior.REFRESH_NEVER);
 	}
 
 	@Override
@@ -65,7 +66,7 @@ public class LldbModelTargetThreadContainerImpl extends LldbModelTargetObjectImp
 		changeElements(List.of(), List.of(targetThread), Map.of(), "Created");
 		targetThread.threadStateChangedSpecific(StateType.eStateConnected,
 			LldbReason.getReason(null));
-		getListeners().fire.event(getProxy(), targetThread, TargetEventType.THREAD_CREATED,
+		broadcast().event(getProxy(), targetThread, TargetEventType.THREAD_CREATED,
 			"Thread " + DebugClient.getId(thread) + " started", List.of(targetThread));
 	}
 
@@ -81,7 +82,7 @@ public class LldbModelTargetThreadContainerImpl extends LldbModelTargetObjectImp
 			LldbReason reason) {
 		LldbModelTargetThread targetThread = getTargetThread(thread);
 		TargetEventType eventType = getEventType(state, cause, reason);
-		getListeners().fire.event(getProxy(), targetThread, eventType,
+		broadcast().event(getProxy(), targetThread, eventType,
 			"Thread " + DebugClient.getId(thread) + " state changed", List.of(targetThread));
 		targetThread.threadStateChangedSpecific(state, reason);
 	}
@@ -94,7 +95,7 @@ public class LldbModelTargetThreadContainerImpl extends LldbModelTargetObjectImp
 		String threadId = LldbModelTargetThreadImpl.indexThread(thread);
 		LldbModelTargetThread targetThread = (LldbModelTargetThread) getMapObject(thread);
 		if (targetThread != null) {
-			getListeners().fire.event(getProxy(), targetThread, TargetEventType.THREAD_EXITED,
+			broadcast().event(getProxy(), targetThread, TargetEventType.THREAD_EXITED,
 				"Thread " + threadId + " exited", List.of(targetThread));
 		}
 		changeElements(List.of( //
@@ -130,7 +131,7 @@ public class LldbModelTargetThreadContainerImpl extends LldbModelTargetObjectImp
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return getManager().listThreads(process).thenAccept(byTID -> {
 			List<TargetObject> threads;
 			synchronized (this) {

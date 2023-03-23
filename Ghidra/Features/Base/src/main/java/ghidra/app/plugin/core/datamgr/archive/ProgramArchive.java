@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +15,22 @@
  */
 package ghidra.app.plugin.core.datamgr.archive;
 
+import java.awt.Component;
+import java.io.IOException;
+
+import javax.swing.Icon;
+
+import generic.theme.GIcon;
 import ghidra.framework.model.DomainFile;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.data.DataTypeManagerChangeListener;
 import ghidra.program.model.listing.Program;
 import ghidra.util.exception.DuplicateFileException;
 
-import java.awt.Component;
-import java.io.IOException;
-
-import javax.swing.ImageIcon;
-
-import resources.ResourceManager;
-
 public class ProgramArchive implements DomainFileArchive {
 
-	private static ImageIcon CLOSED_ICON = ResourceManager.loadImage("images/closedBookRed.png");
-	private static ImageIcon OPEN_ICON = ResourceManager.loadImage("images/openBookRed.png");
+	private static Icon CLOSED_ICON = new GIcon("icon.plugin.datatypes.archive.program.closed");
+	private static Icon OPEN_ICON = new GIcon("icon.plugin.datatypes.archive.program.open");
 	private final Program program;
 	DataTypeManagerChangeListener categoryListener; // hold on to since it is stored in a weak set
 	private DataTypeManager dataTypeManager;
@@ -105,7 +103,7 @@ public class ProgramArchive implements DomainFileArchive {
 	}
 
 	@Override
-	public ImageIcon getIcon(boolean expanded) {
+	public Icon getIcon(boolean expanded) {
 		return expanded ? OPEN_ICON : CLOSED_ICON;
 	}
 }

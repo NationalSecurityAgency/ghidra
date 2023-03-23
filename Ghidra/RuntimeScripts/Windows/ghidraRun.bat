@@ -7,5 +7,5 @@ setlocal
 :: the physical memory available to the OS. Uncomment MAXMEM setting if non-default value is needed.
 ::set MAXMEM=2G
 
-call "%~dp0support\launch.bat" bg Ghidra "%MAXMEM%" "" ghidra.GhidraRun %*
+call "%~dp0support\launch.bat" bg jdk Ghidra "%MAXMEM%" "" ghidra.GhidraRun %*
 

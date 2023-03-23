@@ -25,17 +25,18 @@ import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
 
 import docking.StatusBarSpacer;
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.label.GDLabel;
+import generic.theme.GIcon;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.layout.HorizontalLayout;
 import ghidra.util.task.BufferedSwingRunner;
+import help.Help;
+import help.HelpService;
 import log.LogListener;
 import log.LogPanelAppender;
-import resources.ResourceManager;
 
 /**
  * A JPanel that contains a label to show the last message displayed. It also has a button to 
@@ -53,7 +54,7 @@ public class LogPanel extends JPanel implements LogListener {
 		super(new BorderLayout());
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setBorder(BorderFactory.createEmptyBorder(8, 4, 4, 2));
-		button = new EmptyBorderButton(ResourceManager.loadImage("images/monitor.png"));
+		button = new EmptyBorderButton(new GIcon("icon.console"));
 		label = new GDLabel();
 		label.setName("Details");
 		defaultColor = label.getForeground();
@@ -95,7 +96,7 @@ public class LogPanel extends JPanel implements LogListener {
 	public void messageLogged(String message, boolean isError) {
 
 		messageUpdater.run(() -> {
-			label.setForeground(isError ? Color.RED : defaultColor);
+			label.setForeground(isError ? Messages.ERROR : defaultColor);
 			String text = message.replace("\n", " ");
 			label.setText(text);
 			label.setToolTipText(text);

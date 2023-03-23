@@ -41,6 +41,7 @@ import ghidra.app.plugin.core.stackeditor.StackEditorModel;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.util.datatype.DataTypeSelectionEditor;
 import ghidra.framework.model.*;
+import ghidra.framework.options.Options;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginException;
 import ghidra.program.database.ProgramBuilder;
@@ -244,6 +245,10 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 					range.getEnd().getIndex().intValue() - 1);
 			}
 		});
+	}
+
+	protected int[] getSelection() {
+		return runSwing(() -> getTable().getSelectedRows());
 	}
 
 	private String arrayToString(int[] values) {
@@ -471,25 +476,11 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 	}
 
 	protected void startTransaction(final String txDescription) {
-		runSwing(() -> {
-			try {
-				txId = program.startTransaction(txDescription);
-			}
-			catch (Exception e) {
-				Assert.fail(e.getMessage());
-			}
-		});
+		txId = program.startTransaction(txDescription);
 	}
 
 	protected void endTransaction(final boolean saveChanges) {
-		runSwing(() -> {
-			try {
-				program.endTransaction(txId, saveChanges);
-			}
-			catch (Exception e) {
-				Assert.fail(e.getMessage());
-			}
-		});
+		program.endTransaction(txId, saveChanges);
 	}
 
 	protected class RestoreListener implements DomainObjectListener {
@@ -829,4 +820,11 @@ public abstract class AbstractEditorTest extends AbstractGhidraHeadedIntegration
 		assertEquals(value, ((CompEditorModel) model).getLength());
 	}
 
+	protected void setOptions(String optionName, boolean b) {
+		runSwing(() -> {
+			Options options = tool.getOptions("Editors");
+			assertTrue(options.isRegistered(optionName));
+			options.setBoolean(optionName, b);
+		});
+	}
 }

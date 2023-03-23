@@ -27,9 +27,8 @@ import javax.swing.*;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 
-import com.google.common.collect.Range;
-
-import docking.DialogComponentProvider;
+import db.Transaction;
+import docking.ReusableDialogComponentProvider;
 import docking.widgets.table.*;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
@@ -37,22 +36,23 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.copying.DebuggerCopyPlan.Copier;
 import ghidra.app.services.*;
 import ghidra.app.services.DebuggerStaticMappingService.MappedAddressRange;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.TraceMemoryManager;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.*;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.util.*;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.table.GhidraTableFilterPanel;
 import ghidra.util.task.*;
 
-public class DebuggerCopyIntoProgramDialog extends DialogComponentProvider {
+public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvider {
 	static final int GAP = 5;
 	static final int BUTTON_SIZE = 32;
 
@@ -200,8 +200,8 @@ public class DebuggerCopyIntoProgramDialog extends DialogComponentProvider {
 
 	protected static class RangeTableModel
 			extends DefaultEnumeratedColumnTableModel<RangeTableColumns, RangeEntry> {
-		public RangeTableModel() {
-			super("Ranges", RangeTableColumns.class);
+		public RangeTableModel(PluginTool tool) {
+			super(tool, "Ranges", RangeTableColumns.class);
 		}
 
 		@Override
@@ -302,15 +302,16 @@ public class DebuggerCopyIntoProgramDialog extends DialogComponentProvider {
 	protected JCheckBox cbUseOverlays;
 	protected DebuggerCopyPlan plan = new DebuggerCopyPlan();
 
-	protected final RangeTableModel tableModel = new RangeTableModel();
+	protected final RangeTableModel tableModel;
 	protected GTable table;
 	protected GhidraTableFilterPanel<RangeEntry> filterPanel;
 
 	protected JButton resetButton;
 
-	public DebuggerCopyIntoProgramDialog() {
+	public DebuggerCopyIntoProgramDialog(PluginTool tool) {
 		super("Copy Into Program", true, true, true, true);
 
+		tableModel = new RangeTableModel(tool);
 		populateComponents();
 	}
 
@@ -497,7 +498,7 @@ public class DebuggerCopyIntoProgramDialog extends DialogComponentProvider {
 		if (recorder == null) {
 			return null;
 		}
-		if (!DebuggerCoordinates.view(source).withRecorder(recorder).isAliveAndReadsPresent()) {
+		if (!DebuggerCoordinates.NOWHERE.view(source).recorder(recorder).isAliveAndReadsPresent()) {
 			return null;
 		}
 		return recorder;
@@ -630,21 +631,21 @@ public class DebuggerCopyIntoProgramDialog extends DialogComponentProvider {
 	protected String computeRegionString(AddressRange rng) {
 		TraceMemoryManager mm = source.getTrace().getMemoryManager();
 		Collection<? extends TraceMemoryRegion> regions =
-			mm.getRegionsIntersecting(Range.singleton(source.getSnap()), rng);
+			mm.getRegionsIntersecting(Lifespan.at(source.getSnap()), rng);
 		return regions.isEmpty() ? "UNKNOWN" : regions.iterator().next().getName();
 	}
 
 	protected String computeModulesString(AddressRange rng) {
 		TraceModuleManager mm = source.getTrace().getModuleManager();
 		Collection<? extends TraceModule> modules =
-			mm.getModulesIntersecting(Range.singleton(source.getSnap()), rng);
+			mm.getModulesIntersecting(Lifespan.at(source.getSnap()), rng);
 		return modules.stream().map(m -> m.getName()).collect(Collectors.joining(","));
 	}
 
 	protected String computeSectionsString(AddressRange rng) {
 		TraceModuleManager mm = source.getTrace().getModuleManager();
 		Collection<? extends TraceSection> sections =
-			mm.getSectionsIntersecting(Range.singleton(source.getSnap()), rng);
+			mm.getSectionsIntersecting(Lifespan.at(source.getSnap()), rng);
 		return sections.stream().map(s -> s.getName()).collect(Collectors.joining(","));
 	}
 
@@ -703,7 +704,7 @@ public class DebuggerCopyIntoProgramDialog extends DialogComponentProvider {
 		List<AddressRange> result = new ArrayList<>();
 		for (TraceMemoryRegion region : source.getTrace()
 				.getMemoryManager()
-				.getRegionsIntersecting(Range.singleton(source.getSnap()), srcRange)) {
+				.getRegionsIntersecting(Lifespan.at(source.getSnap()), srcRange)) {
 			AddressRange range = region.getRange().intersect(srcRange);
 			result.add(range);
 			remains.delete(range);
@@ -810,8 +811,8 @@ public class DebuggerCopyIntoProgramDialog extends DialogComponentProvider {
 			throws Exception {
 		synchronized (this) {
 			monitor.checkCanceled();
-			CompletableFuture<NavigableMap<Address, byte[]>> recCapture =
-				recorder.readMemoryBlocks(new AddressSet(range), monitor, false);
+			CompletableFuture<Void> recCapture =
+				recorder.readMemoryBlocks(new AddressSet(range), monitor);
 			this.captureTask = recCapture.thenCompose(__ -> {
 				return recorder.getTarget().getModel().flushEvents();
 			}).thenCompose(__ -> {
@@ -830,7 +831,7 @@ public class DebuggerCopyIntoProgramDialog extends DialogComponentProvider {
 		Program dest = getDestination().getOrCreateProgram(source, this);
 		boolean doRelease = !Arrays.asList(programManager.getAllOpenPrograms()).contains(dest);
 		TraceRecorder recorder = getRecorderIfEnabledAndReadsPresent();
-		try (UndoableTransaction tid = UndoableTransaction.start(dest, "Copy From Trace", true)) {
+		try (Transaction tx = dest.openTransaction("Copy From Trace")) {
 			monitor.initialize(tableModel.getRowCount());
 			for (RangeEntry entry : tableModel.getModelData()) {
 				monitor.setMessage("Copying into " + entry.getDstRange());

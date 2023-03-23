@@ -19,7 +19,7 @@ import java.awt.Color;
 import java.io.IOException;
 import java.util.*;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -235,7 +235,7 @@ public class BookmarkDBManager implements BookmarkManager, ErrorHandler, Manager
 	}
 
 	@Override
-	public BookmarkType defineType(String type, ImageIcon icon, Color color, int priority) {
+	public BookmarkType defineType(String type, Icon icon, Color color, int priority) {
 		lock.acquire();
 		try {
 			String validatedType = StringUtils.trim(type);

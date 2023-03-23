@@ -32,12 +32,12 @@ public class ArgumentsListTypeApplier extends MsTypeApplier {
 
 	/**
 	 * Constructor for the applicator that applies a arguments list.
-	 * @param applicator {@link PdbApplicator} for which this class is working.
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
 	 * @param msType {@link AbstractArgumentsListMsType} to processes.
 	 * @throws IllegalArgumentException Upon invalid arguments.
 	 */
-	public ArgumentsListTypeApplier(PdbApplicator applicator, AbstractArgumentsListMsType msType)
-			throws IllegalArgumentException {
+	public ArgumentsListTypeApplier(DefaultPdbApplicator applicator,
+			AbstractArgumentsListMsType msType) throws IllegalArgumentException {
 		super(applicator, msType);
 	}
 
@@ -110,7 +110,7 @@ public class ArgumentsListTypeApplier extends MsTypeApplier {
 	}
 
 	/**
-	 * Apply this to function ({@link AbstractFunctionTypeApplier}). 
+	 * Apply this to function ({@link AbstractFunctionTypeApplier}).
 	 * @param functionApplier the {@link AbstractFunctionTypeApplier} to which to apply the
 	 * arguments.
 	 * @throws CancelledException Upon user cancellation
@@ -172,7 +172,7 @@ public class ArgumentsListTypeApplier extends MsTypeApplier {
 	}
 
 //	/**
-//	 * Apply this to function ({@link AbstractFunctionTypeApplier}). 
+//	 * Apply this to function ({@link AbstractFunctionTypeApplier}).
 //	 * @param functionApplier the {@link AbstractFunctionTypeApplier} to which to apply the
 //	 * arguments.
 //	 * @throws PdbException when unexpected function internals are found.
@@ -221,5 +221,5 @@ public class ArgumentsListTypeApplier extends MsTypeApplier {
 //		functionDefinition.setArguments(parameterDefinitionList.toArray(
 //			new ParameterDefinition[parameterDefinitionList.size()]));
 //	}
-//	
+//
 }

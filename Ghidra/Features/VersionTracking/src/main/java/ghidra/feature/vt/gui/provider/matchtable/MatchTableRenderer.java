@@ -21,11 +21,13 @@ import java.awt.Component;
 import javax.swing.JTable;
 
 import docking.widgets.table.GTableCellRenderingData;
+import generic.theme.GColor;
 import ghidra.feature.vt.api.main.*;
 import ghidra.util.table.CompositeGhidraTableCellRenderer;
 
 public class MatchTableRenderer extends CompositeGhidraTableCellRenderer {
-	private static final Color LOCKED_OUT_BACKGROUND_COLOR = new Color(239, 239, 239);
+	private static final Color LOCKED_OUT_BACKGROUND_COLOR =
+		new GColor("color.bg.version.tracking.match.table.locked.out");
 
 	@Override
 	public Component getTableCellRendererComponent(GTableCellRenderingData data) {

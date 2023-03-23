@@ -18,6 +18,7 @@ package ghidra.program.model.data;
 import java.util.*;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.ArrayUtils;
 
 /**
  * A category path is the full path to a particular data type
@@ -52,7 +53,7 @@ public class CategoryPath implements Comparable<CategoryPath> {
 
 	/**
 	 * Converts an escaped String suitable for being passed in as a component of a single category
-	 * path string into an non-escaped string.  
+	 * path string into an non-escaped string.
 	 * @param escapedString String that might need unescaping for characters used for delimiting
 	 * @return non-escaped String
 	 * @see #escapeString(String)
@@ -76,7 +77,8 @@ public class CategoryPath implements Comparable<CategoryPath> {
 	 *
 	 * @param parent the parent CategoryPath.  Choose {@code ROOT} if needed.
 	 * @param subPathElements the array of names of sub-categories of the parent.
-	 * @throws IllegalArgumentException if the given array is null or empty.
+	 * @throws IllegalArgumentException if the parent is null, the elements list is null or empty,
+	 * or an individual element is null
 	 */
 	public CategoryPath(CategoryPath parent, String... subPathElements) {
 		this(parent, Arrays.asList(subPathElements));
@@ -88,15 +90,21 @@ public class CategoryPath implements Comparable<CategoryPath> {
 	 *
 	 * @param parent the parent CategoryPath.  Choose {@code ROOT} if needed.
 	 * @param subPathElements the hierarchical array of sub-categories of the parent.
-	 * @throws IllegalArgumentException if the given list is null or empty.
+	 * @throws IllegalArgumentException if the parent is null, the elements list is null or empty,
+	 * or an individual element is null
 	 */
 	public CategoryPath(CategoryPath parent, List<String> subPathElements) {
-		Objects.requireNonNull(parent);
+		if (parent == null) {
+			throw new IllegalArgumentException("Parent category must not be null!");
+		}
 		if (CollectionUtils.isEmpty(subPathElements)) {
 			throw new IllegalArgumentException(
 				"Category list must contain at least one string name!");
 		}
 		name = subPathElements.get(subPathElements.size() - 1);
+		if (name == null) {
+			throw new IllegalArgumentException("A category element must not be null!");
+		}
 		if (subPathElements.size() == 1) {
 			this.parent = parent;
 		}
@@ -104,6 +112,36 @@ public class CategoryPath implements Comparable<CategoryPath> {
 			this.parent =
 				new CategoryPath(parent, subPathElements.subList(0, subPathElements.size() - 1));
 		}
+	}
+
+	/**
+	 * Returns a CategoryPath that extends the current path using a hierarchical array of strings
+	 * where each string is the name of a category in the category path extension.
+	 *
+	 * @param subPathElements the array of names of sub-categories of the parent.
+	 * @return the extended CategoryPath
+	 * @throws IllegalArgumentException if an element is null
+	 */
+	public CategoryPath extend(String... subPathElements) {
+		if (ArrayUtils.isEmpty(subPathElements)) {
+			return this;
+		}
+		return new CategoryPath(this, subPathElements);
+	}
+
+	/**
+	 * Returns a CategoryPath that extends the current path using a hierarchical list of strings
+	 * where each  string is the name of a category in the category path extension.
+	 *
+	 * @param subPathElements the hierarchical array of sub-categories of the parent.
+	 * @return the extended CategoryPath
+	 * @throws IllegalArgumentException if an element is null
+	 */
+	public CategoryPath extend(List<String> subPathElements) {
+		if (CollectionUtils.isEmpty(subPathElements)) {
+			return this;
+		}
+		return new CategoryPath(this, subPathElements);
 	}
 
 	/**
@@ -121,7 +159,7 @@ public class CategoryPath implements Comparable<CategoryPath> {
 	 */
 	// NOTE: We purposefully did not create a constructor that takes varags only, as that
 	// constructor, called with a single argument that would not be escaped, would conflict with
-	// this constructor, which requires an escaped argument. 
+	// this constructor, which requires an escaped argument.
 	public CategoryPath(String path) {
 		if (path == null || path.length() == 0 || path.equals(DELIMITER_STRING)) {
 			// parent can only be null for ROOT

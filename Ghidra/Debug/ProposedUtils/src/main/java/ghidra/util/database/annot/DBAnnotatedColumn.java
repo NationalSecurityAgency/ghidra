@@ -17,8 +17,22 @@ package ghidra.util.database.annot;
 
 import java.lang.annotation.*;
 
+import ghidra.util.database.DBAnnotatedObject;
+import ghidra.util.database.DBObjectColumn;
+
+/**
+ * Mark a {@link DBObjectColumn} to receive a column handle
+ *
+ * @see DBAnnotatedObject
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface DBAnnotatedColumn {
+	/**
+	 * The name of the column
+	 * 
+	 * <p>
+	 * There should be a {@link DBAnnotatedField} annotation with the same column name
+	 */
 	String value();
 }

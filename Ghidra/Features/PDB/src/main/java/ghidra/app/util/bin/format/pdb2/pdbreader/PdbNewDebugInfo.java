@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * This class is the version of {@link PdbDebugInfo} for newer PDB files.
@@ -63,9 +62,9 @@ public class PdbNewDebugInfo extends PdbDebugInfo {
 	// API
 	//==============================================================================================
 	/**
-	 * Constructor.
-	 * @param pdb {@link AbstractPdb} that owns this {@link PdbNewDebugInfo}.
-	 * @param streamNumber The stream number that contains the {@link PdbNewDebugInfo} data.
+	 * Constructor
+	 * @param pdb {@link AbstractPdb} that owns this {@link PdbNewDebugInfo}
+	 * @param streamNumber the stream number that contains the {@link PdbNewDebugInfo} data
 	 */
 	public PdbNewDebugInfo(AbstractPdb pdb, int streamNumber) {
 		super(pdb, streamNumber);
@@ -73,16 +72,16 @@ public class PdbNewDebugInfo extends PdbDebugInfo {
 	}
 
 	/**
-	 * Returns the {@link ImageFileMachine} machine type.
-	 * @return the machine type.
+	 * Returns the {@link ImageFileMachine} machine type
+	 * @return the machine type
 	 */
 	public ImageFileMachine getMachineType() {
 		return machineType;
 	}
 
 	/**
-	 * Returns the {@link DebugData} for this {@link PdbNewDebugInfo}.
-	 * @return the {@link DebugData}.
+	 * Returns the {@link DebugData} for this {@link PdbNewDebugInfo}
+	 * @return the {@link DebugData}
 	 */
 	public DebugData getDebugData() {
 		return debugData;
@@ -133,34 +132,34 @@ public class PdbNewDebugInfo extends PdbDebugInfo {
 	}
 
 	@Override
-	protected void deserializeInternalSubstreams(PdbByteReader reader, TaskMonitor monitor)
+	protected void deserializeInternalSubstreams(PdbByteReader reader)
 			throws PdbException, CancelledException {
-		processModuleInformation(reader, monitor, false);
-		processSectionContributions(reader, monitor, false);
-		processSegmentMap(reader, monitor, false);
-		processFileInformation(reader, monitor, false);
+		processModuleInformation(reader, false);
+		processSectionContributions(reader, false);
+		processSegmentMap(reader, false);
+		processFileInformation(reader, false);
 		processTypeServerMap(reader, false);
 		//Note that the next two are in reverse order from their length fields in the header.
-		processEditAndContinueInformation(reader, monitor, false);
+		processEditAndContinueInformation(reader, false);
 		//processDebugHeader(reader, false);
-		debugData.deserializeHeader(reader, monitor);
+		debugData.deserializeHeader(reader);
 	}
 
 	@Override
-	protected void deserializeAdditionalSubstreams(TaskMonitor monitor)
+	protected void deserializeAdditionalSubstreams()
 			throws IOException, PdbException, CancelledException {
 		// TODO: evaluate.  I don't think we need GlobalSymbolInformation (hash) or the
-		//  PublicSymbolInformation (hash), as they are both are search mechanisms. 
-		symbolRecords.deserialize(monitor);
-		globalSymbolInformation.deserialize(getGlobalSymbolsHashMaybeStreamNumber(), monitor);
-		publicSymbolInformation.deserialize(getPublicStaticSymbolsHashMaybeStreamNumber(), monitor);
+		//  PublicSymbolInformation (hash), as they are both are search mechanisms.
+		symbolRecords.deserialize();
+		globalSymbolInformation.deserialize(getGlobalSymbolsHashMaybeStreamNumber());
+		publicSymbolInformation.deserialize(getPublicStaticSymbolsHashMaybeStreamNumber());
 		//TODO: Process further information that might be found from ProcessTypeServerMap,
 		// and processEditAndContinueInformation.
-		debugData.deserialize(monitor);
+		debugData.deserialize();
 	}
 
 	@Override
-	protected void processModuleInformation(PdbByteReader reader, TaskMonitor monitor, boolean skip)
+	protected void processModuleInformation(PdbByteReader reader, boolean skip)
 			throws PdbException, CancelledException {
 		if (lengthModuleInformationSubstream == 0) {
 			return;
@@ -172,8 +171,8 @@ public class PdbNewDebugInfo extends PdbDebugInfo {
 		PdbByteReader substreamReader =
 			reader.getSubPdbByteReader(lengthModuleInformationSubstream);
 		while (substreamReader.hasMore()) {
-			monitor.checkCanceled();
-			AbstractModuleInformation moduleInformation = new ModuleInformation600(pdb);
+			pdb.checkCanceled();
+			ModuleInformation moduleInformation = new ModuleInformation600(pdb);
 			moduleInformation.deserialize(substreamReader);
 			moduleInformationList.add(moduleInformation);
 		}
@@ -230,7 +229,7 @@ public class PdbNewDebugInfo extends PdbDebugInfo {
 	}
 
 	@Override
-	protected void dumpInternalSubstreams(Writer writer) throws IOException {
+	protected void dumpInternalSubstreams(Writer writer) throws IOException, CancelledException {
 		writer.write("ModuleInformationList---------------------------------------\n");
 		dumpModuleInformation(writer);
 		writer.write("\nEnd ModuleInformationList-----------------------------------\n");
@@ -251,10 +250,10 @@ public class PdbNewDebugInfo extends PdbDebugInfo {
 	//==============================================================================================
 	//TODO: Find examples that exercise this.
 	/**
-	 * Deserializes/Processes the TypeServerMap.
-	 * @param reader {@link PdbByteReader} from which to deserialize the data.
-	 * @param skip Skip over the data in the {@link PdbByteReader}.
-	 * @throws PdbException Upon not enough data left to parse.
+	 * Deserializes/processes the TypeServerMap
+	 * @param reader {@link PdbByteReader} from which to deserialize the data
+	 * @param skip skip over the data in the {@link PdbByteReader}
+	 * @throws PdbException upon not enough data left to parse
 	 */
 	@SuppressWarnings("unused") // substreamReader
 	protected void processTypeServerMap(PdbByteReader reader, boolean skip) throws PdbException {
@@ -270,16 +269,15 @@ public class PdbNewDebugInfo extends PdbDebugInfo {
 	}
 
 	/**
-	 * Deserializes/Processes the EditAndContinueInformation.
-	 * @param reader {@link PdbByteReader} from which to deserialize the data.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @param skip Skip over the data in the {@link PdbByteReader}.
-	 * @throws PdbException upon error parsing a name or unexpected data.
-	 * @throws CancelledException Upon user cancellation.
+	 * Deserializes/processes the EditAndContinueInformation
+	 * @param reader {@link PdbByteReader} from which to deserialize the data
+	 * @param skip skip over the data in the {@link PdbByteReader}
+	 * @throws PdbException upon error parsing a name or unexpected data
+	 * @throws CancelledException upon user cancellation
 	 */
 	@SuppressWarnings("unused") // hashVal
-	protected void processEditAndContinueInformation(PdbByteReader reader, TaskMonitor monitor,
-			boolean skip) throws PdbException, CancelledException {
+	protected void processEditAndContinueInformation(PdbByteReader reader, boolean skip)
+			throws PdbException, CancelledException {
 		if (lengthEditAndContinueSubstream == 0) {
 			return;
 		}
@@ -312,7 +310,7 @@ public class PdbNewDebugInfo extends PdbDebugInfo {
 		int count = tableSize;
 		int realEntryCount = 0;
 		while (--count >= 0) {
-			monitor.checkCanceled();
+			pdb.checkCanceled();
 			int offset = substreamReader.parseInt();
 			bufferReader.setIndex(offset);
 			String name = bufferReader.parseNullTerminatedString(
@@ -336,8 +334,8 @@ public class PdbNewDebugInfo extends PdbDebugInfo {
 
 	/**
 	 * Dumps the EditAndContinueNameList.  This package-protected method is for debugging only.
-	 * @param writer {@link Writer} to which to write the debug dump.
-	 * @throws IOException On issue writing to the {@link Writer}.
+	 * @param writer {@link Writer} to which to write the debug dump
+	 * @throws IOException on issue writing to the {@link Writer}
 	 */
 	protected void dumpEditAndContinueNameList(Writer writer) throws IOException {
 		for (String name : editAndContinueNameList) {

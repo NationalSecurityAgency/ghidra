@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +15,15 @@
  */
 package ghidra.app.util.viewer.field;
 
-import ghidra.app.util.viewer.format.FieldFormatModel;
-import ghidra.app.util.viewer.proxy.EmptyProxy;
-import ghidra.app.util.viewer.proxy.ProxyObj;
-
 import java.awt.FontMetrics;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import docking.widgets.fieldpanel.field.SimpleImageField;
 import docking.widgets.fieldpanel.support.FieldLocation;
+import ghidra.app.util.viewer.format.FieldFormatModel;
+import ghidra.app.util.viewer.proxy.EmptyProxy;
+import ghidra.app.util.viewer.proxy.ProxyObj;
 
 /**
  * Class for displaying images in fields.
@@ -33,77 +31,69 @@ import docking.widgets.fieldpanel.support.FieldLocation;
 public class ImageFactoryField extends SimpleImageField implements ListingField {
 
 	private FieldFactory factory;
-	private ProxyObj proxy;
+	private ProxyObj<?> proxy;
 
-    /**
-     * Constructor
-     * @param factory the FieldFactory that generated this field.
-     * @param icon the ImageIcon to display.
-     * @param proxy the object that this field represents.
-     * @param metrics the FontMetrics used to render.
-     * @param x the starting x position for this field.
-     * @param width the width of this field.
-     */
-    public ImageFactoryField(FieldFactory factory,
-                                ImageIcon icon,
-                                ProxyObj proxy,
-                                FontMetrics metrics,
-                                int x,
-                                int width) {
-        this(factory, icon, proxy, metrics, x, width, false);
-    }
+	/**
+	 * Constructor
+	 * @param factory the FieldFactory that generated this field.
+	 * @param icon the ImageIcon to display.
+	 * @param proxy the object that this field represents.
+	 * @param metrics the FontMetrics used to render.
+	 * @param x the starting x position for this field.
+	 * @param width the width of this field.
+	 */
+	public ImageFactoryField(FieldFactory factory,
+			Icon icon,
+			ProxyObj<?> proxy,
+			FontMetrics metrics,
+			int x,
+			int width) {
+		this(factory, icon, proxy, metrics, x, width, false);
+	}
 
-    /**
-     * Constructor
-     * @param factory the FieldFactory that generated this field.
-     * @param icon the ImageIcon to display.
-     * @param proxy the object that this field represents.
-     * @param metrics the FontMetrics used to render.
-     * @param x the starting x position for this field.
-     * @param width the width of this field.
-     * @param center centers the image if true.
-     */
-    public ImageFactoryField(FieldFactory factory,
-                                ImageIcon icon,
-                                ProxyObj proxy,
-                                FontMetrics metrics,
-                                int x,
-                                int width,
-                                boolean center) {
+	/**
+	 * Constructor
+	 * @param factory the FieldFactory that generated this field.
+	 * @param icon the ImageIcon to display.
+	 * @param proxy the object that this field represents.
+	 * @param metrics the FontMetrics used to render.
+	 * @param x the starting x position for this field.
+	 * @param width the width of this field.
+	 * @param center centers the image if true.
+	 */
+	public ImageFactoryField(FieldFactory factory,
+			Icon icon,
+			ProxyObj<?> proxy,
+			FontMetrics metrics,
+			int x,
+			int width,
+			boolean center) {
 
 		super(icon, metrics, x, 0, width, center);
 		this.factory = factory;
 		this.proxy = proxy;
-    }
+	}
 
-    /**
-     * Returns the FieldFactory that generated this Field.
-     */
+	@Override
 	public FieldFactory getFieldFactory() {
-        return factory;
-    }
+		return factory;
+	}
 
-    /**
-     * Returns the model that contains the FieldFactory that generated this Field.
-     */
+	@Override
 	public FieldFormatModel getFieldModel() {
-        return factory.getFieldModel();
-    }
+		return factory.getFieldModel();
+	}
 
-    /**
-     * Returns the object that this field is associated with.
-     */
-	public ProxyObj getProxy() {
+	@Override
+	public ProxyObj<?> getProxy() {
 		if (proxy == null) {
 			return EmptyProxy.EMPTY_PROXY;
 		}
-        return proxy;
-    }
+		return proxy;
+	}
 
-    /**
-     * @see ListingField#getClickedObject(FieldLocation)
-     */
-    public Object getClickedObject( FieldLocation fieldLocation ) {
-        return this;
-    }
+	@Override
+	public Object getClickedObject(FieldLocation fieldLocation) {
+		return this;
+	}
 }

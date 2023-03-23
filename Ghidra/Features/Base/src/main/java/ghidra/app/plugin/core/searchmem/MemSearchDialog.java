@@ -50,7 +50,7 @@ import ghidra.util.task.Task;
  * backward searching, proper endianness and whether to find just
  * the next occurrence or all of them in the program.
  */
-class MemSearchDialog extends DialogComponentProvider {
+class MemSearchDialog extends ReusableDialogComponentProvider {
 
 	static final String ADVANCED_BUTTON_NAME = "mem.search.advanced";
 	private static final String CODE_UNIT_SCOPE_NAME = "Code Unit Scope";
@@ -72,7 +72,6 @@ class MemSearchDialog extends DialogComponentProvider {
 	private JButton nextButton;
 	private JButton previousButton;
 	private JButton allButton;
-	private JTextField valueField;
 	private GhidraComboBox<String> valueComboBox;
 	private List<String> history = new LinkedList<>();
 	private JLabel hexSeqField;
@@ -120,11 +119,11 @@ class MemSearchDialog extends DialogComponentProvider {
 	}
 
 	void setBytes(byte[] bytes) {
-		if (valueField != null) {
-			valueField.setText(null);
+		if (valueComboBox != null) {
+			valueComboBox.setText(null);
 		}
 		String convertBytesToString = NumericUtilities.convertBytesToString(bytes, " ");
-		valueField.setText(convertBytesToString);
+		valueComboBox.setText(convertBytesToString);
 	}
 
 	void setAlignment(int alignment) {
@@ -132,7 +131,7 @@ class MemSearchDialog extends DialogComponentProvider {
 	}
 
 	public void setSearchText(String maskedString) {
-		valueField.setText(maskedString);
+		valueComboBox.setText(maskedString);
 		updateDisplay();
 	}
 
@@ -196,7 +195,7 @@ class MemSearchDialog extends DialogComponentProvider {
 
 	@Override
 	protected void dismissCallback() {
-		valueField.setText(null);
+		valueComboBox.setText(null);
 		hexSeqField.setText(null);
 		cancelCurrentTask();
 		close();
@@ -204,8 +203,8 @@ class MemSearchDialog extends DialogComponentProvider {
 
 	void show(ComponentProvider provider) {
 		clearStatusText();
-		valueField.requestFocus();
-		valueField.selectAll();
+		valueComboBox.requestFocus();
+		valueComboBox.selectAll();
 		PluginTool tool = plugin.getTool();
 		tool.showDialog(MemSearchDialog.this, provider);
 	}
@@ -256,7 +255,7 @@ class MemSearchDialog extends DialogComponentProvider {
 			if (plugin.searchOnce(new SearchInfo(searchData, 1,
 				searchSelectionRadioButton.isSelected(), forward, alignment, allBlocks.isSelected(),
 				createCodeUnitSearchInfo(), plugin.createTaskListener()))) {
-				addToHistory(valueField.getText());
+				addToHistory(valueComboBox.getText());
 				setStatusText("Searching...");
 				isSearching = true;
 				updateSearchButtonEnablement();
@@ -284,7 +283,7 @@ class MemSearchDialog extends DialogComponentProvider {
 			if (plugin.searchAll(new SearchAllSearchInfo(searchData, plugin.getSearchLimit(),
 				searchSelectionRadioButton.isSelected(), true, alignment, allBlocks.isSelected(),
 				createCodeUnitSearchInfo()))) {
-				addToHistory(valueField.getText());
+				addToHistory(valueComboBox.getText());
 				setStatusText("Searching...");
 				isSearching = true;
 				updateSearchButtonEnablement();
@@ -307,11 +306,9 @@ class MemSearchDialog extends DialogComponentProvider {
 		inputPanel.setLayout(new GridLayout(0, 1));
 		valueComboBox = new GhidraComboBox<>();
 		valueComboBox.setEditable(true);
-
-		valueField = (JTextField) valueComboBox.getEditor().getEditorComponent();
-		valueField.setToolTipText(currentFormat.getToolTip());
-		valueField.setDocument(new RestrictedInputDocument());
-		valueField.addActionListener(ev -> {
+		valueComboBox.setToolTipText(currentFormat.getToolTip());
+		valueComboBox.setDocument(new RestrictedInputDocument());
+		valueComboBox.addActionListener(ev -> {
 			if (nextButton.isEnabled()) {
 				nextPreviousCallback(true);
 			}
@@ -580,10 +577,10 @@ class MemSearchDialog extends DialogComponentProvider {
 		memoryBlockGroup.add(loadedBlocks);
 		memoryBlockGroup.add(allBlocks);
 
-		loadedBlocks.setToolTipText(HTMLUtilities.toHTML(
-			"Only searches memory blocks that are loaded in a running executable.\n  " +
-				"Ghidra now includes memory blocks for other data such as section headers.\n" +
-				"This option exludes these OTHER (non loaded) blocks."));
+		loadedBlocks.setToolTipText(HTMLUtilities
+				.toHTML("Only searches memory blocks that are loaded in a running executable.\n  " +
+					"Ghidra now includes memory blocks for other data such as section headers.\n" +
+					"This option exludes these OTHER (non loaded) blocks."));
 		allBlocks.setToolTipText(
 			"Searches all memory blocks including blocks that are not actually loaded in a running executable");
 
@@ -666,17 +663,17 @@ class MemSearchDialog extends DialogComponentProvider {
 
 		setEndianEnabled(currentFormat.usesEndieness());
 		updateSearchButtonEnablement();
-		valueField.setToolTipText(currentFormat.getToolTip());
+		valueComboBox.setToolTipText(currentFormat.getToolTip());
 	}
 
 	private void updateSearchData() {
 		currentFormat.setEndieness(bigEndian.isSelected());
-		SearchData inputData = currentFormat.getSearchData(valueField.getText());
-		if (valueField.getText().trim().length() != 0 && inputData.isValidInputData()) {
+		SearchData inputData = currentFormat.getSearchData(valueComboBox.getText());
+		if (valueComboBox.getText().trim().length() != 0 && inputData.isValidInputData()) {
 			updateSearchData(inputData);
 		}
 		else {
-			valueField.setText("");
+			valueComboBox.setText("");
 			updateSearchData(DEFAULT_SEARCH_DATA);
 		}
 	}
@@ -710,6 +707,9 @@ class MemSearchDialog extends DialogComponentProvider {
 		public void insertString(int offs, String str, AttributeSet a) throws BadLocationException {
 			clearStatusText();
 
+			// allow pasting numbers in the forms like 0xABC or ABCh
+			str = removeNumberBasePrefixAndSuffix(str);
+
 			String currentText = getText(0, getLength());
 			String beforeOffset = currentText.substring(0, offs);
 			String afterOffset = currentText.substring(offs, currentText.length());
@@ -719,8 +719,8 @@ class MemSearchDialog extends DialogComponentProvider {
 			String match = handleHistoryMatch(currentText, proposedText);
 			if (match != null) {
 				super.insertString(offs, match.substring(beforeOffset.length()), a);
-				valueField.setSelectionStart(proposedText.length());
-				valueField.setSelectionEnd(match.length());
+				valueComboBox.setSelectionStart(proposedText.length());
+				valueComboBox.setSelectionEnd(match.length());
 				return;
 			}
 
@@ -787,6 +787,38 @@ class MemSearchDialog extends DialogComponentProvider {
 				}
 			}
 			return null;
+		}
+
+		private String removeNumberBasePrefixAndSuffix(String str) {
+			if (!(currentFormat instanceof HexSearchFormat ||
+				currentFormat instanceof BinarySearchFormat)) {
+				return str;
+			}
+
+			String numMaybe = str.strip();
+			String lowercase = numMaybe.toLowerCase();
+			if (currentFormat instanceof HexSearchFormat) {
+				if (lowercase.startsWith("0x")) {
+					numMaybe = numMaybe.substring(2);
+				}
+				else if (lowercase.startsWith("$")) {
+					numMaybe = numMaybe.substring(1);
+				}
+				else if (lowercase.endsWith("h")) {
+					numMaybe = numMaybe.substring(0, numMaybe.length() - 1);
+				}
+			}
+			else {
+				if (lowercase.startsWith("0b")) {
+					numMaybe = numMaybe.substring(2);
+				}
+			}
+
+			// check if the resultant number looks valid for insertion (i.e. not empty)
+			if (!numMaybe.isEmpty()) {
+				return numMaybe;
+			}
+			return str;
 		}
 	}
 

@@ -15,6 +15,12 @@
  */
 package ghidra.program.model.data;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
+import java.io.IOException;
+
+import ghidra.program.model.pcode.Encoder;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
@@ -70,26 +76,31 @@ public class BitFieldPackingImpl implements BitFieldPacking {
 	}
 
 	/**
-	 * Write configuration to a stream as an XML \<bitfield_packing> tag
-	 * @param buffer is the stream to write to
+	 * Write configuration to a stream as a \<bitfield_packing> element
+	 * @param encoder is the stream encoder
+	 * @throws IOException for errors writing to the underlying stream
 	 */
-	public void saveXml(StringBuilder buffer) {
+	public void encode(Encoder encoder) throws IOException {
 		if (!useMSConvention && typeAlignmentEnabled && zeroLengthBoundary == 0) {
 			return;		// All defaults
 		}
-		buffer.append("<bitfield_packing>\n");
+		encoder.openElement(ELEM_BITFIELD_PACKING);
 		if (useMSConvention) {
-			buffer.append("<use_MS_convention value=\"yes\"/>\n");
+			encoder.openElement(ELEM_USE_MS_CONVENTION);
+			encoder.writeBool(ATTRIB_VALUE, true);
+			encoder.closeElement(ELEM_USE_MS_CONVENTION);
 		}
 		if (!typeAlignmentEnabled) {
-			buffer.append("<type_alignment_enabled value=\"no\"/>\n");
+			encoder.openElement(ELEM_TYPE_ALIGNMENT_ENABLED);
+			encoder.writeBool(ATTRIB_VALUE, false);
+			encoder.closeElement(ELEM_TYPE_ALIGNMENT_ENABLED);
 		}
 		if (zeroLengthBoundary != 0) {
-			buffer.append("<zero_length_boundary");
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "value", zeroLengthBoundary);
-			buffer.append("/>\n");
+			encoder.openElement(ELEM_ZERO_LENGTH_BOUNDARY);
+			encoder.writeSignedInteger(ATTRIB_VALUE, zeroLengthBoundary);
+			encoder.closeElement(ELEM_ZERO_LENGTH_BOUNDARY);
 		}
-		buffer.append("</bitfield_packing>\n");
+		encoder.closeElement(ELEM_BITFIELD_PACKING);
 	}
 
 	/**

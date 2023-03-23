@@ -106,9 +106,33 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 				CodeUnit cu = cuIter.next();
 				if (cu instanceof Instruction) {
 					Instruction instr = (Instruction) cu;
+
+					// check for function on delay slot
+					if (listing.getFunctionAt(instr.getMinAddress()) != null) {
+						continue; // skip since it will be picked-up by flow if appropriate
+					}
+
+					// check for fallthrough to instruction
 					Address ffAddr = instr.getFallFrom();
 					if (ffAddr != null && startAddrs.contains(ffAddr)) {
-						continue; // skip since it will be picked-up by flow
+						continue; // skip since it will be picked-up by flow if appropriate
+					}
+
+					// check for flow into delay slot
+					if (instr.isInDelaySlot()) {
+						boolean skip = false;
+						ReferenceIterator refToIter = instr.getReferenceIteratorTo();
+						while (refToIter.hasNext()) {
+							Reference ref = refToIter.next();
+							RefType refType = ref.getReferenceType();
+							if (refType.isJump() || refType.isCall()) {
+								skip = true;
+								break;
+							}
+						}
+						if (skip) {
+							continue; // skip since it will be picked-up by flow if appropriate
+						}
 					}
 				}
 				else {

@@ -59,9 +59,9 @@ public interface DataTypeComponent {
 
 	/**
 	 * Get the byte offset of where this component begins relative to the start of the parent
-	 * data type.  
+	 * data type.
 	 * @return offset of start of component relative to the start of the parent
-	 * data type. 
+	 * data type.
 	 */
 	public int getOffset();
 
@@ -75,8 +75,8 @@ public interface DataTypeComponent {
 
 	/**
 	 * Get the length of this component.  Zero-length components will report a length of 0
-	 * and may overlap other components at the same offset.  Similarly, multiple adjacent 
-	 * bit-field components may appear to overlap at the byte-level. 
+	 * and may overlap other components at the same offset.  Similarly, multiple adjacent
+	 * bit-field components may appear to overlap at the byte-level.
 	 * @return the length of this component
 	 */
 	public int getLength();
@@ -100,8 +100,10 @@ public interface DataTypeComponent {
 	public void setComment(String comment);
 
 	/**
-	 * Get the name of the field name as a component of a Data Type.
-	 * @return the name as a component of another Data Type.
+	 * Get this component's field name within its parent.
+	 * If this method returns null {@link #getDefaultFieldName()} can be used to obtain a default
+	 * generated field name.
+	 * @return this component's field name within its parent or null if one has not been set.
 	 */
 	public String getFieldName();
 
@@ -118,12 +120,12 @@ public interface DataTypeComponent {
 	public void setFieldName(String fieldName) throws DuplicateNameException;
 
 	/**
-	 * Returns a default Field name.  Used only if a field name is not set.
-	 * @return default field name
+	 * Returns a default field name for this component.  Used only if a field name is not set.
+	 * @return default field name (may be null for nameless fields such as a zero-length bitfield).
 	 */
 	public default String getDefaultFieldName() {
 		if (isZeroBitFieldComponent()) {
-			return "";
+			return null;
 		}
 		String name = DEFAULT_FIELD_NAME_PREFIX + getOrdinal();
 		if (getParent() instanceof Structure) {
@@ -137,7 +139,7 @@ public interface DataTypeComponent {
 	 * A dataTypeComponent is "equivalent" if the other component has a data type
 	 * that is equivalent to this component's data type. The dataTypeComponents must
 	 * also have the same offset, field name, and comment.  The length is only checked
-	 * for components which are dyanmic and whose size must be specified when creating
+	 * for components which are dynamic and whose size must be specified when creating
 	 * a component.
 	 * @param dtc the dataTypeComponent being tested for equivalence.
 	 * @return true if the given dataTypeComponent is equivalent to this dataTypeComponent.
@@ -148,10 +150,10 @@ public interface DataTypeComponent {
 	 * Determine if the specified dataType will be treated as a zero-length component
 	 * allowing it to possibly overlap the next component.  If the specified dataType
 	 * returns true for {@link DataType#isZeroLength()} and true for {@link DataType#isNotYetDefined()}
-	 * this method will return false causing the associated component to use the reported dataType length 
+	 * this method will return false causing the associated component to use the reported dataType length
 	 * of 1.
 	 * @param dataType datatype to be evaluated
-	 * @return true if zero-length component 
+	 * @return true if zero-length component
 	 */
 	public static boolean usesZeroLengthComponent(DataType dataType) {
 		if (dataType.isZeroLength()) {

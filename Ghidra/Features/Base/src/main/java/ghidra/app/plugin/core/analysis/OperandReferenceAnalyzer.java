@@ -1032,7 +1032,7 @@ public class OperandReferenceAnalyzer extends AbstractAnalyzer {
 		RelocationTable relocationTable = program.getRelocationTable();
 		if (relocationTable.isRelocatable()) {
 			// if it is relocatable, then there should be no pointers in memory, other than relacatable ones
-			if (relocationTable.getSize() > 0 && relocationTable.getRelocation(target) == null) {
+			if (relocationTable.getSize() != 0 && !relocationTable.hasRelocation(target)) {
 				return false;
 			}
 		}

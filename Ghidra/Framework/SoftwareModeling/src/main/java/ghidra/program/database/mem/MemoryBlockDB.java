@@ -344,7 +344,8 @@ public class MemoryBlockDB implements MemoryBlock {
 	}
 
 	@Override
-	public int getBytes(Address addr, byte[] b, int off, int len) throws MemoryAccessException {
+	public int getBytes(Address addr, byte[] b, int off, int len)
+			throws IndexOutOfBoundsException, MemoryAccessException {
 		if (memMap.getLiveMemoryHandler() != null) {
 			return memMap.getBytes(addr, b, off, len);
 		}
@@ -379,7 +380,8 @@ public class MemoryBlockDB implements MemoryBlock {
 	}
 
 	@Override
-	public int putBytes(Address addr, byte[] b, int off, int len) throws MemoryAccessException {
+	public int putBytes(Address addr, byte[] b, int off, int len)
+			throws IndexOutOfBoundsException, MemoryAccessException {
 		if (memMap.getLiveMemoryHandler() != null) {
 			memMap.setBytes(addr, b, off, len);
 			return len;
@@ -460,12 +462,13 @@ public class MemoryBlockDB implements MemoryBlock {
 		return 0;
 	}
 
-	public int getBytes(long offset, byte[] b, int off, int len) throws MemoryAccessException {
+	public int getBytes(long offset, byte[] b, int off, int len)
+			throws IndexOutOfBoundsException, MemoryAccessException {
 		if (off < 0 || off + len > b.length) {
-			throw new ArrayIndexOutOfBoundsException();
+			throw new IndexOutOfBoundsException();
 		}
 		if (offset < 0 || offset >= length) {
-			throw new ArrayIndexOutOfBoundsException();
+			throw new IndexOutOfBoundsException();
 		}
 
 		len = (int) Math.min(len, length - offset);
@@ -512,12 +515,13 @@ public class MemoryBlockDB implements MemoryBlock {
 		}
 	}
 
-	private int putBytes(long offset, byte[] b, int off, int len) throws MemoryAccessException {
+	private int putBytes(long offset, byte[] b, int off, int len)
+			throws IndexOutOfBoundsException, MemoryAccessException {
 		if (off < 0 || off + len > b.length) {
-			throw new ArrayIndexOutOfBoundsException();
+			throw new IndexOutOfBoundsException();
 		}
 		if (offset < 0 || offset >= length) {
-			throw new ArrayIndexOutOfBoundsException();
+			throw new IndexOutOfBoundsException();
 		}
 
 		len = (int) Math.min(len, length - offset);
@@ -539,11 +543,14 @@ public class MemoryBlockDB implements MemoryBlock {
 	}
 
 	private SubMemoryBlock getSubBlock(long offset) {
-		if (lastSubBlock != null && lastSubBlock.contains(offset)) {
-			return lastSubBlock;
+		// avoid potential thread race condition
+		SubMemoryBlock last = lastSubBlock;
+		if (last != null && last.contains(offset)) {
+			return last;
 		}
-		lastSubBlock = findBlock(0, subBlocks.size() - 1, offset);
-		return lastSubBlock;
+		last = findBlock(0, subBlocks.size() - 1, offset);
+		lastSubBlock = last;
+		return last;
 	}
 
 	private SubMemoryBlock findBlock(int minIndex, int maxIndex, long offset) {
@@ -698,7 +705,7 @@ public class MemoryBlockDB implements MemoryBlock {
 		}
 		subBlocks.clear();
 		DBRecord subRecord = adapter.createSubBlockRecord(id, 0, length,
-			MemoryMapDBAdapter.SUB_TYPE_UNITIALIZED, 0, 0);
+			MemoryMapDBAdapter.SUB_TYPE_UNINITIALIZED, 0, 0);
 		subBlocks.add(new UninitializedSubMemoryBlock(adapter, subRecord));
 
 	}

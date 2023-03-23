@@ -428,7 +428,7 @@ public class ProgramMergeManager {
 		AddressSet p1CodeUnitSet = DiffUtility.getCodeUnitSet(p1MergeSet, this.program1);
 		if (monitor == null) {
 			// Create a "do nothing" task monitor that we can pass along.
-			monitor = TaskMonitorAdapter.DUMMY_MONITOR;
+			monitor = TaskMonitor.DUMMY;
 		}
 
 		// Check that the needed memory addresses are available in the merge program.

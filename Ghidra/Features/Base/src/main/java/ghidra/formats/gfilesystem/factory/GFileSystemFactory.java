@@ -20,9 +20,6 @@ import ghidra.formats.gfilesystem.GFileSystem;
 /**
  * An empty interface that is a common type for the real factory interfaces to derive from.
  * <p> 
- * See {@link GFileSystemFactoryFull}, {@link GFileSystemFactoryWithFile}, or
- * {@link GFileSystemFactoryIgnore}.
- * <p> 
  * @param <FSTYPE> {@link GFileSystem} derived type
  */
 public interface GFileSystemFactory<FSTYPE extends GFileSystem> {

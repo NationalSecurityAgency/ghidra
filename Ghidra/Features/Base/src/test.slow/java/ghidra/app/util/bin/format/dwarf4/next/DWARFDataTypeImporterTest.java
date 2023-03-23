@@ -92,6 +92,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		DataType baseTypeDT = dt.getBaseDataType();
 		assertTrue(baseTypeDT instanceof AbstractIntegerDataType);
 		assertTrue(((AbstractIntegerDataType) baseTypeDT).isSigned() == true);
+		assertTrue(baseTypeDT.hasLanguageDependantLength());
 	}
 
 	@Test
@@ -100,9 +101,10 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 		importAllDataTypes();
 
-		DataType tddt = dataMgr.getDataType(rootCP, "mytypedef");
+		DataType tddt = dataMgr.getDataType(dwarfRootCP, "mytypedef");
 		DataType baseTypeDT = ((TypeDef) tddt).getDataType();
 
+		assertTrue(baseTypeDT.hasLanguageDependantLength());
 		assertEquals(4, baseTypeDT.getLength());
 		assertTrue(baseTypeDT instanceof AbstractIntegerDataType);
 		assertTrue(((AbstractIntegerDataType) baseTypeDT).isSigned() == true);
@@ -116,12 +118,51 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 		importAllDataTypes();
 
-		DataType tddt = dataMgr.getDataType(rootCP, "mytypedef");
+		DataType tddt = dataMgr.getDataType(dwarfRootCP, "mytypedef");
 		DataType baseTypeDT = ((TypeDef) tddt).getDataType();
 
+		assertTrue(baseTypeDT.hasLanguageDependantLength());
 		assertEquals(4, baseTypeDT.getLength());
 		assertTrue(baseTypeDT instanceof AbstractIntegerDataType);
 		assertTrue(((AbstractIntegerDataType) baseTypeDT).isSigned() == false);
+	}
+
+	@Test
+	public void testBaseTypeExplictBitSize()
+			throws CancelledException, IOException, DWARFException {
+		// test when int data type name has a bitsize string (8|16|32|64,etc)
+
+		addBaseType("uint32_t", 4, DWARFEncoding.DW_ATE_unsigned, cu);
+		addBaseType("blah32blah", 4, DWARFEncoding.DW_ATE_signed, cu);
+
+		importAllDataTypes();
+
+		DataType tddt = dataMgr.getDataType(dwarfRootCP, "uint32_t");
+		DataType baseTypeDT = ((TypeDef) tddt).getDataType();
+
+		assertFalse(baseTypeDT.hasLanguageDependantLength());
+		assertEquals(4, baseTypeDT.getLength());
+		assertTrue(baseTypeDT instanceof AbstractIntegerDataType);
+		assertTrue(((AbstractIntegerDataType) baseTypeDT).isSigned() == false);
+
+		DataType blahDT = dataMgr.getDataType(dwarfRootCP, "blah32blah");
+		assertFalse(blahDT.hasLanguageDependantLength());
+		assertEquals(4, blahDT.getLength());
+	}
+
+	@Test
+	public void testBaseTypeBadExplictBitSize()
+			throws CancelledException, IOException, DWARFException {
+		// test when int data type name has a bitsize string that doesn't make sense
+
+		addBaseType("uint32_t", 2 /* not 4 */, DWARFEncoding.DW_ATE_unsigned, cu);
+
+		importAllDataTypes();
+
+		DataType dt = dataMgr.getDataType(dwarfRootCP, "uint32_t");
+
+		assertTrue(dt.hasLanguageDependantLength());
+		assertEquals(2, dt.getLength());
 	}
 
 	@Test
@@ -137,7 +178,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 		importAllDataTypes();
 
-		DataType structdt = dataMgr.getDataType(rootCP, "mystruct");
+		DataType structdt = dataMgr.getDataType(uncatCP, "mystruct");
 	}
 
 	@Test
@@ -153,7 +194,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 		importAllDataTypes();
 
-		DataType structdt = dataMgr.getDataType(rootCP, "mystruct");
+		DataType structdt = dataMgr.getDataType(uncatCP, "mystruct");
 		assertEquals(100, structdt.getLength());
 	}
 
@@ -181,8 +222,8 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 		importAllDataTypes();
 
-		DataType structdt = dataMgr.getDataType(rootCP, "mystruct");
-		DataType structdt2 = dataMgr.getDataType(rootCP, "mystruct.conflict");
+		DataType structdt = dataMgr.getDataType(uncatCP, "mystruct");
+		DataType structdt2 = dataMgr.getDataType(uncatCP, "mystruct.conflict");
 
 		assertEquals(100, structdt.getLength());
 		assertNull(structdt2);
@@ -219,7 +260,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 		importAllDataTypes();
 
-		Structure struct2dt = (Structure)dataMgr.getDataType(rootCP, "struct2");
+		Structure struct2dt = (Structure)dataMgr.getDataType(uncatCP, "struct2");
 
 		assertEquals(2, struct2dt.getNumComponents());
 		assertEquals(2, struct2dt.getNumDefinedComponents());
@@ -259,8 +300,8 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 		importAllDataTypes();
 
-		Structure structAdt = (Structure) dataMgr.getDataType(rootCP, "structA");
-		Structure structBdt = (Structure) dataMgr.getDataType(rootCP, "structB");
+		Structure structAdt = (Structure) dataMgr.getDataType(uncatCP, "structA");
+		Structure structBdt = (Structure) dataMgr.getDataType(uncatCP, "structB");
 		assertEquals(2, structBdt.getNumComponents());
 		assertEquals(4, structAdt.getNumComponents());
 	}
@@ -289,8 +330,8 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 		importAllDataTypes();
 
-		DataType structdt = dataMgr.getDataType(rootCP, "mystruct");
-		DataType structdt2 = dataMgr.getDataType(rootCP, "mystruct.conflict");
+		DataType structdt = dataMgr.getDataType(uncatCP, "mystruct");
+		DataType structdt2 = dataMgr.getDataType(uncatCP, "mystruct.conflict");
 
 		assertEquals(100, structdt.getLength());
 		assertNull(structdt2);
@@ -324,8 +365,8 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 		importAllDataTypes();
 
-		DataType structdt = dataMgr.getDataType(rootCP, "mystruct");
-		DataType structdt2 = dataMgr.getDataType(rootCP, "mystruct.conflict");
+		DataType structdt = dataMgr.getDataType(uncatCP, "mystruct");
+		DataType structdt2 = dataMgr.getDataType(uncatCP, "mystruct.conflict");
 
 		assertEquals(100, structdt.getLength());
 		assertEquals(50, structdt2.getLength());
@@ -351,8 +392,8 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 		importAllDataTypes();
 
-		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct");
-		DataType structdt2 = dataMgr.getDataType(rootCP, "mystruct.conflict");
+		Structure structdt = (Structure) dataMgr.getDataType(uncatCP, "mystruct");
+		DataType structdt2 = dataMgr.getDataType(uncatCP, "mystruct.conflict");
 
 		assertEquals(100, structdt.getLength());
 		assertEquals("f1", structdt.getComponentContaining(0).getFieldName());
@@ -375,8 +416,8 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 		importAllDataTypes();
 
-		DataType structdt = dataMgr.getDataType(rootCP, "mystruct");
-		Structure struct2dt = (Structure) dataMgr.getDataType(rootCP, "mystruct2");
+		DataType structdt = dataMgr.getDataType(uncatCP, "mystruct");
+		Structure struct2dt = (Structure) dataMgr.getDataType(uncatCP, "mystruct2");
 
 		assertEquals(100, structdt.getLength());
 		assertEquals("ptr_to_struct1", struct2dt.getComponentContaining(0).getFieldName());
@@ -410,8 +451,8 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 		importAllDataTypes();
 
-		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct");
-		Structure struct2dt = (Structure) dataMgr.getDataType(rootCP, "mystruct2");
+		Structure structdt = (Structure) dataMgr.getDataType(uncatCP, "mystruct");
+		Structure struct2dt = (Structure) dataMgr.getDataType(uncatCP, "mystruct2");
 
 		assertEquals(100, structdt.getLength());
 		assertEquals(10, struct2dt.getLength());
@@ -437,7 +478,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 		importAllDataTypes();
 
-		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct");
+		Structure structdt = (Structure) dataMgr.getDataType(uncatCP, "mystruct");
 		assertEquals(100, structdt.getLength());
 	}
 
@@ -466,7 +507,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 		importAllDataTypes();
 
-		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct");
+		Structure structdt = (Structure) dataMgr.getDataType(uncatCP, "mystruct");
 		assertEquals(1, structdt.getDefinedComponents().length);
 		assertEquals("f1", structdt.getDefinedComponents()[0].getFieldName());
 	}
@@ -496,7 +537,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 		importAllDataTypes();
 
-		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct");
+		Structure structdt = (Structure) dataMgr.getDataType(uncatCP, "mystruct");
 		assertEquals(2, structdt.getDefinedComponents().length);
 		assertEquals("f1", structdt.getDefinedComponents()[0].getFieldName());
 		assertEquals("f1", structdt.getDefinedComponents()[1].getFieldName());
@@ -561,7 +602,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 		importAllDataTypes();
 
-		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct");
+		Structure structdt = (Structure) dataMgr.getDataType(uncatCP, "mystruct");
 		assertEquals(0, structdt.getNumDefinedComponents());
 	}
 
@@ -586,8 +627,8 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	@Test
 	public void testDTMIncorrectOverwrite() {
 
-		DataType x = dataMgr.addDataType(new StructureDataType(rootCP, "X", 1), null);
-		StructureDataType x2 = new StructureDataType(rootCP, "X", 4);
+		DataType x = dataMgr.addDataType(new StructureDataType(uncatCP, "X", 1), null);
+		StructureDataType x2 = new StructureDataType(uncatCP, "X", 4);
 		x2.replaceAtOffset(0, x, 1, "f1", null);
 		Structure x3 = (Structure) dataMgr.resolve(x2, DataTypeConflictHandler.REPLACE_HANDLER);
 		assertEquals("X.conflict", x3.getName());
@@ -611,7 +652,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 		importAllDataTypes();
 
-		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct");
+		Structure structdt = (Structure) dataMgr.getDataType(uncatCP, "mystruct");
 		DataTypeComponent dtc = structdt.getDefinedComponents()[0];
 		DataType baseDT = dtc.getDataType();
 		assertEquals("base", baseDT.getName());
@@ -637,7 +678,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 		importAllDataTypes();
 
-		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct");
+		Structure structdt = (Structure) dataMgr.getDataType(uncatCP, "mystruct");
 		DataTypeComponent dtc = structdt.getDefinedComponents()[0];
 		DataType baseDT = dtc.getDataType();
 		assertEquals("base", baseDT.getName());
@@ -653,7 +694,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		dataMgr.getAllDataTypes(dataTypes);
 
 		for (DataType dt : dataTypes) {
-			System.out.println("Data type: " + dt);
+			System.out.println("Data type: " + dt.getDataTypePath());
 		}
 	}
 
@@ -673,9 +714,9 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 		importAllDataTypes();
 
-		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct");
+		Structure structdt = (Structure) dataMgr.getDataType(uncatCP, "mystruct");
 		Structure struct2dt =
-			(Structure) dataMgr.getDataType(new CategoryPath(rootCP, "mystruct"), "mystruct2");
+			(Structure) dataMgr.getDataType(new CategoryPath(uncatCP, "mystruct"), "mystruct2");
 
 		assertNotNull(structdt);
 		assertNotNull(struct2dt);
@@ -699,7 +740,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 		importAllDataTypes();
 
-		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct");
+		Structure structdt = (Structure) dataMgr.getDataType(uncatCP, "mystruct");
 		DataTypeComponent dtc = structdt.getComponentContaining(14);
 		DataType anonDT = dtc.getDataType();
 		assertEquals("anon_struct_10_1_a7b17f80_for_f3_f4", anonDT.getName());
@@ -728,7 +769,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 		importAllDataTypes();
 
-		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct");
+		Structure structdt = (Structure) dataMgr.getDataType(uncatCP, "mystruct");
 		DataTypeComponent dtc = structdt.getComponentContaining(14);
 		DataType anonDT = dtc.getDataType();
 
@@ -752,9 +793,9 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 		importAllDataTypes();
 
-		Structure mystruct = (Structure) dataMgr.getDataType(rootCP, "mystruct");
+		Structure mystruct = (Structure) dataMgr.getDataType(uncatCP, "mystruct");
 		assertNotNull(mystruct);
-		assertEquals(1, dataMgr.getDataTypes(rootCP).length); // should not have an anon_struct_xyz either
+		assertEquals(1, dataMgr.getDataTypes(uncatCP).length); // should not have an anon_struct_xyz either
 	}
 
 	@Test
@@ -769,7 +810,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 		importAllDataTypes();
 
-		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct");
+		Structure structdt = (Structure) dataMgr.getDataType(uncatCP, "mystruct");
 		DataTypeComponent component = structdt.getComponent(structdt.getNumComponents() - 1);
 		assertNotNull(component);
 		assertEquals(0, component.getLength());
@@ -796,7 +837,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 		importAllDataTypes();
 
-		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct");
+		Structure structdt = (Structure) dataMgr.getDataType(uncatCP, "mystruct");
 		assertHasFlexArray(structdt);
 
 	}
@@ -818,7 +859,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 		importAllDataTypes();
 
-		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct");
+		Structure structdt = (Structure) dataMgr.getDataType(uncatCP, "mystruct");
 		assertHasFlexArray(structdt);
 	}
 
@@ -835,7 +876,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 		importAllDataTypes();
 
-		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct");
+		Structure structdt = (Structure) dataMgr.getDataType(uncatCP, "mystruct");
 
 		List<DataTypeComponent> components = structdt.getComponentsContaining(100);
 		assertEquals(1, components.size());
@@ -860,7 +901,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 		importAllDataTypes();
 
-		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct");
+		Structure structdt = (Structure) dataMgr.getDataType(uncatCP, "mystruct");
 
 		assertEquals(2, structdt.getNumDefinedComponents());
 		DataTypeComponent f1 = structdt.getDefinedComponents()[0];
@@ -887,7 +928,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 		importAllDataTypes();
 
-		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct");
+		Structure structdt = (Structure) dataMgr.getDataType(uncatCP, "mystruct");
 		assertEquals(4, structdt.getNumDefinedComponents());
 		DataTypeComponent f1 = structdt.getDefinedComponents()[0];
 		assertEquals(0, f1.getOffset());
@@ -927,7 +968,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 		importAllDataTypes();
 
-		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct");
+		Structure structdt = (Structure) dataMgr.getDataType(uncatCP, "mystruct");
 		List<DataTypeComponent> bitfields = getBitFieldComponents(structdt);
 		Set<Integer> expectedBitfieldSizes = new HashSet<>(Set.of(2, 3, 9));
 		for (DataTypeComponent dtc : bitfields) {
@@ -965,7 +1006,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 		importAllDataTypes();
 
-		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct::with::colons");
+		Structure structdt = (Structure) dataMgr.getDataType(uncatCP, "mystruct::with::colons");
 		assertEquals(3, structdt.getNumDefinedComponents());
 		Structure nestedStructDt = (Structure) structdt.getDefinedComponents()[2].getDataType();
 		assertEquals("mystruct::with::colons", nestedStructDt.getCategoryPath().getName());
@@ -989,7 +1030,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 		importAllDataTypes();
 
-		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct::operator/()");
+		Structure structdt = (Structure) dataMgr.getDataType(uncatCP, "mystruct::operator/()");
 		assertEquals(3, structdt.getNumDefinedComponents());
 		Structure nestedStructDt = (Structure) structdt.getDefinedComponents()[2].getDataType();
 		assertEquals("mystruct::operator/()", nestedStructDt.getCategoryPath().getName());
@@ -1009,7 +1050,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 		importAllDataTypes();
 
-		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct<int,_float>");
+		Structure structdt = (Structure) dataMgr.getDataType(uncatCP, "mystruct<int,_float>");
 		assertEquals(2, structdt.getNumDefinedComponents());
 	}
 	//----------------------------------------------------------------------------------------------------
@@ -1039,7 +1080,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 		importAllDataTypes();
 
-		Union uniondt = (Union) dataMgr.getDataType(rootCP, "myunion");
+		Union uniondt = (Union) dataMgr.getDataType(uncatCP, "myunion");
 
 		assertEquals("f1", uniondt.getComponent(0).getFieldName());
 		// "f2_self" field should not have been added as it was a recursive reference back to ourself
@@ -1065,7 +1106,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 		importAllDataTypes();
 
-		Union uniondt = (Union) dataMgr.getDataType(rootCP, "myunion");
+		Union uniondt = (Union) dataMgr.getDataType(uncatCP, "myunion");
 
 		assertEquals("f1", uniondt.getComponent(0).getFieldName());
 		DataTypeComponent flexDTC = uniondt.getComponent(1);
@@ -1104,7 +1145,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 		importAllDataTypes();
 
-		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct");
+		Structure structdt = (Structure) dataMgr.getDataType(uncatCP, "mystruct");
 		DataTypeComponent f1dtc = structdt.getComponentContaining(0);
 		DataTypeComponent f2dtc = structdt.getComponentContaining(10);
 		DataTypeComponent f3dtc = structdt.getComponentContaining(20);
@@ -1310,7 +1351,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 
 		importAllDataTypes();
 
-		DataType structdt = dataMgr.getDataType(rootCP, "mystruct");
+		DataType structdt = dataMgr.getDataType(uncatCP, "mystruct");
 		assertEquals(100, structdt.getLength());
 
 	}

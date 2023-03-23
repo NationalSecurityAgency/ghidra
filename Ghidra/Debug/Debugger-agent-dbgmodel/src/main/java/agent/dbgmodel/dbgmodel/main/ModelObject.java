@@ -113,12 +113,18 @@ public interface ModelObject extends UnknownEx {
 	void setIndexer(ModelObject indexer);
 
 	List<ModelObject> getElements();
+	
+	ModelObject getElement(String key);
 
 	ModelObject getChild(DataModelManager1 manager, VARIANT v);
 
 	Map<String, ModelObject> getKeyValueMap();
+	
+	ModelObject getKeyValueByEnum(String key);
 
 	Map<String, ModelObject> getRawValueMap();
+	
+	ModelObject getRawValueByEnum(String key);
 
 	Object getValue();
 

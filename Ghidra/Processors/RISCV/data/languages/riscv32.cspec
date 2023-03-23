@@ -18,7 +18,6 @@
 		<entry size="8" alignment="4" />
 	</size_alignment_map>
   </data_organization>
-  <spacebase name="gp" register="gp" space="ram"/>
   <global>
     <range space="ram"/>
     <register name="gp"/>
@@ -69,20 +68,20 @@
       </output>
       <unaffected>
         <register name="sp"/>
-	<register name="gp"/>
-	<register name="tp"/>
+        <register name="gp"/>
+        <register name="tp"/>
         <register name="s0"/>
-      	<register name="s1"/>
-	<register name="s2"/>
-	<register name="s3"/>
-	<register name="s4"/>
-	<register name="s5"/>
-	<register name="s6"/>
-	<register name="s7"/>
-	<register name="s8"/>
-	<register name="s9"/>
-	<register name="s10"/>
-	<register name="s11"/>
+        <register name="s1"/>
+        <register name="s2"/>
+        <register name="s3"/>
+        <register name="s4"/>
+        <register name="s5"/>
+        <register name="s6"/>
+        <register name="s7"/>
+        <register name="s8"/>
+        <register name="s9"/>
+        <register name="s10"/>
+        <register name="s11"/>
       </unaffected>
     </prototype>
   </default_proto>

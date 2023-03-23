@@ -15,12 +15,12 @@
  */
 package ghidra.app.plugin.debug;
 
-import docking.help.Help;
-import docking.help.HelpService;
 import ghidra.app.DeveloperPluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
+import help.Help;
+import help.HelpService;
 
 /**
   * Plugin to demonstrate handling of Program within a plugin and how to

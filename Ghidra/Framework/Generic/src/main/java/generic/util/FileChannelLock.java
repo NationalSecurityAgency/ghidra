@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +16,7 @@
 package generic.util;
 
 import java.io.*;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
+import java.nio.channels.*;
 
 public class FileChannelLock {
 
@@ -51,7 +49,7 @@ public class FileChannelLock {
 
 			return isLocked;
 		}
-		catch (IOException e) {
+		catch (IOException | OverlappingFileLockException e) {
 			release();
 		}
 		return false;

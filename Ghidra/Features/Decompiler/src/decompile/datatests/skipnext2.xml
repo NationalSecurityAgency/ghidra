@@ -1,0 +1,19 @@
+<decompilertest>
+<binaryimage arch="Toy:BE:32:builder.align2:default">
+<!--
+  Test SLEIGH inst_next2 functionality via the Toy "skeq", (skip if equal) instruction     
+-->
+<bytechunk space="ram" offset="0x10">
+0a0acec58000c0abdfcaf400
+</bytechunk>
+<symbol name="skipinst" space="ram" offset="0x10"/>
+</binaryimage>
+<script>
+  <com>lo fu skipinst</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Skip Instruction #1" min="1" max="1">if \(param_1 != 5\)</stringmatch>
+<stringmatch name="Skip Instruction #2" min="1" max="1">iVar1 = param_2 \+ 10;</stringmatch>
+</decompilertest>

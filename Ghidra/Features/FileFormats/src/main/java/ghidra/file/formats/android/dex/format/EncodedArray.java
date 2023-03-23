@@ -15,13 +15,12 @@
  */
 package ghidra.file.formats.android.dex.format;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.dwarf4.LEB128;
+import java.io.IOException;
+
+import ghidra.app.util.bin.*;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -33,7 +32,7 @@ public class EncodedArray implements StructConverter {
 	private byte[] values;
 
 	public EncodedArray(BinaryReader reader) throws IOException {
-		LEB128 leb128 = LEB128.readUnsignedValue(reader);
+		LEB128Info leb128 = reader.readNext(LEB128Info::unsigned);
 		size = leb128.asUInt32();
 		sizeLength = leb128.getLength();
 
@@ -57,7 +56,7 @@ public class EncodedArray implements StructConverter {
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		Structure structure = new StructureDataType("encoded_array_" + values.length, 0);
-		structure.add(new ArrayDataType(BYTE, sizeLength, BYTE.getLength()), "size", null);
+		structure.add(ULEB128, sizeLength, "size", null);
 		if (values.length > 0) {
 			structure.add(new ArrayDataType(BYTE, values.length, BYTE.getLength()), "values", null);
 		}

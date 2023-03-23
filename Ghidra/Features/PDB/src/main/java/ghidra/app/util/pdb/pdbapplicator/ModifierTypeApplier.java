@@ -31,10 +31,10 @@ public class ModifierTypeApplier extends MsTypeApplier {
 
 	/**
 	 * Constructor for modifier type applier.
-	 * @param applicator {@link PdbApplicator} for which this class is working.
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
 	 * @param msType {@link AbstractModifierMsType} to processes.
 	 */
-	public ModifierTypeApplier(PdbApplicator applicator, AbstractModifierMsType msType) {
+	public ModifierTypeApplier(DefaultPdbApplicator applicator, AbstractModifierMsType msType) {
 		super(applicator, msType);
 	}
 

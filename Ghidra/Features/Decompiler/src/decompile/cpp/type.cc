@@ -18,10 +18,56 @@
 
 /// The base propagation ordering associated with each meta-type.
 /// The array elements correspond to the ordering of #type_metatype.
-sub_metatype Datatype::base2sub[14] = {
-    SUB_UNION, SUB_STRUCT, SUB_PARTIALSTRUCT, SUB_ARRAY, SUB_PTRREL, SUB_PTR, SUB_FLOAT, SUB_CODE, SUB_BOOL,
-    SUB_UINT_PLAIN, SUB_INT_PLAIN, SUB_UNKNOWN, SUB_SPACEBASE, SUB_VOID
+sub_metatype Datatype::base2sub[15] = {
+    SUB_PARTIALUNION, SUB_PARTIALSTRUCT, SUB_UNION, SUB_STRUCT, SUB_ARRAY, SUB_PTRREL, SUB_PTR, SUB_FLOAT, SUB_CODE,
+    SUB_BOOL, SUB_UINT_PLAIN, SUB_INT_PLAIN, SUB_UNKNOWN, SUB_SPACEBASE, SUB_VOID
 };
+
+AttributeId ATTRIB_ALIGNMENT = AttributeId("alignment",47);
+AttributeId ATTRIB_ARRAYSIZE = AttributeId("arraysize",48);
+AttributeId ATTRIB_CHAR = AttributeId("char",49);
+AttributeId ATTRIB_CORE = AttributeId("core",50);
+AttributeId ATTRIB_ENUM = AttributeId("enum",51);
+AttributeId ATTRIB_ENUMSIGNED = AttributeId("enumsigned",52);
+AttributeId ATTRIB_ENUMSIZE = AttributeId("enumsize",53);
+AttributeId ATTRIB_INTSIZE = AttributeId("intsize",54);
+AttributeId ATTRIB_LONGSIZE = AttributeId("longsize",55);
+AttributeId ATTRIB_OPAQUESTRING = AttributeId("opaquestring",56);
+AttributeId ATTRIB_SIGNED = AttributeId("signed",57);
+AttributeId ATTRIB_STRUCTALIGN = AttributeId("structalign",58);
+AttributeId ATTRIB_UTF = AttributeId("utf",59);
+AttributeId ATTRIB_VARLENGTH = AttributeId("varlength",60);
+
+//ElementId ELEM_ABSOLUTE_MAX_ALIGNMENT = ElementId("absolute_max_alignment", 37);
+//ElementId ELEM_BITFIELD_PACKING = ElementId("bitfield_packing", 38);
+//ElementId ELEM_CHAR_SIZE = ElementId("char_size", 39);
+//ElementId ELEM_CHAR_TYPE = ElementId("char_type", 40);
+ElementId ELEM_CORETYPES = ElementId("coretypes",41);
+ElementId ELEM_DATA_ORGANIZATION = ElementId("data_organization", 42);
+ElementId ELEM_DEF = ElementId("def",43);
+//ElementId ELEM_DEFAULT_ALIGNMENT = ElementId("default_alignment", 44);
+//ElementId ELEM_DEFAULT_POINTER_ALIGNMENT = ElementId("default_pointer_alignment", 45);
+//ElementId ELEM_DOUBLE_SIZE = ElementId("double_size", 46);
+ElementId ELEM_ENTRY = ElementId("entry",47);
+ElementId ELEM_ENUM = ElementId("enum",48);
+ElementId ELEM_FIELD = ElementId("field",49);
+//ElementId ELEM_FLOAT_SIZE = ElementId("float_size", 50);
+ElementId ELEM_INTEGER_SIZE = ElementId("integer_size",51);
+//ElementId ELEM_LONG_DOUBLE_SIZE = ElementId("long_double_size", 52);
+//ElementId ELEM_LONG_LONG_SIZE = ElementId("long_long_size", 53);
+ElementId ELEM_LONG_SIZE = ElementId("long_size", 54);
+//ElementId ELEM_MACHINE_ALIGNMENT = ElementId("machine_alignment", 55);
+//ElementId ELEM_POINTER_SHIFT = ElementId("pointer_shift", 56);
+//ElementId ELEM_POINTER_SIZE = ElementId("pointer_size", 57);
+//ElementId ELEM_SHORT_SIZE = ElementId("short_size", 58);
+ElementId ELEM_SIZE_ALIGNMENT_MAP = ElementId("size_alignment_map", 59);
+ElementId ELEM_TYPE = ElementId("type",60);
+//ElementId ELEM_TYPE_ALIGNMENT_ENABLED = ElementId("type_alignment_enabled", 61);
+ElementId ELEM_TYPEGRP = ElementId("typegrp",62);
+ElementId ELEM_TYPEREF = ElementId("typeref",63);
+//ElementId ELEM_USE_MS_CONVENTION = ElementId("use_MS_convention", 64);
+//ElementId ELEM_WCHAR_SIZE = ElementId("wchar_size", 65);
+//ElementId ELEM_ZERO_LENGTH_BOUNDARY = ElementId("zero_length_boundary", 66);
 
 // Some default routines for displaying data
 
@@ -94,6 +140,24 @@ void Datatype::printRaw(ostream &s) const
     s << name;
   else
     s << "unkbyte" << dec << size;
+}
+
+/// \brief Find an immediate subfield of \b this data-type
+///
+/// Given a byte range within \b this data-type, determine the field it is contained in
+/// and pass back the renormalized offset. This method applies to TYPE_STRUCT, TYPE_UNION, and
+/// TYPE_PARTIALUNION, data-types that have field components. For TYPE_UNION and TYPE_PARTIALUNION, the
+/// field may depend on the p-code op extracting or writing the value.
+/// \param off is the byte offset into \b this
+/// \param sz is the size of the byte range
+/// \param op is the PcodeOp reading/writing the data-type
+/// \param slot is the index of the Varnode being accessed, -1 for the output, >=0 for an input
+/// \param newoff points to the renormalized offset to pass back
+/// \return the containing field or NULL if the range is not contained
+const TypeField *Datatype::findTruncation(int4 off,int4 sz,const PcodeOp *op,int4 slot,int4 &newoff) const
+
+{
+  return (const TypeField *)0;
 }
 
 /// Given an offset into \b this data-type, return the component data-type at that offset.
@@ -185,7 +249,10 @@ void metatype2string(type_metatype metatype,string &res)
     res = "array";
     break;
   case TYPE_PARTIALSTRUCT:
-    res = "part";
+    res = "partstruct";
+    break;
+  case TYPE_PARTIALUNION:
+    res = "partunion";
     break;
   case TYPE_STRUCT:
     res = "struct";
@@ -229,10 +296,12 @@ type_metatype string2metatype(const string &metastring)
   case 'p':
     if (metastring=="ptr")
       return TYPE_PTR;
-    else if (metastring=="part")
-      return TYPE_PARTIALSTRUCT;
     else if (metastring=="ptrrel")
       return TYPE_PTRREL;
+    else if (metastring=="partunion")
+      return TYPE_PARTIALUNION;
+    else if (metastring=="partstruct")
+      return TYPE_PARTIALSTRUCT;
     break;
   case 'a':
     if (metastring=="array")
@@ -278,87 +347,86 @@ type_metatype string2metatype(const string &metastring)
   throw LowlevelError("Unknown metatype: "+metastring);
 }
 
-/// Write out a formal description of the data-type as an XML \<type> tag.
+/// Encode a formal description of the data-type as a \<type> element.
 /// For composite data-types, the description goes down one level, describing
 /// the component types only by reference.
-/// \param s is the stream to write to
-void Datatype::saveXml(ostream &s) const
+/// \param encoder is the stream encoder
+void Datatype::encode(Encoder &encoder) const
 
 {
-  s << "<type";
-  saveXmlBasic(metatype,s);
-  s << "/>";
+  encoder.openElement(ELEM_TYPE);
+  encodeBasic(metatype,encoder);
+  encoder.closeElement(ELEM_TYPE);
 }
 
-/// Write out basic data-type properties (name,size,id) as XML attributes.
-/// This routine presumes the initial tag is already written to the stream.
-/// \param meta is the metatype to put in the XML
-/// \param s is the stream to write to
-void Datatype::saveXmlBasic(type_metatype meta,ostream &s) const
+/// Encode basic data-type properties (name,size,id) as attributes.
+/// This routine presumes the initial element is already written to the stream.
+/// \param meta is the metatype attribute
+/// \param encoder is the stream encoder
+void Datatype::encodeBasic(type_metatype meta,Encoder &encoder) const
 
 {
-  a_v(s,"name",name);
+  encoder.writeString(ATTRIB_NAME, name);
   uint8 saveId;
   if (isVariableLength())
     saveId = hashSize(id, size);
   else
     saveId = id;
   if (saveId != 0) {
-    s << " id=\"0x" << hex << saveId << '\"';
+    encoder.writeUnsignedInteger(ATTRIB_ID, saveId);
   }
-  a_v_i(s,"size",size);
+  encoder.writeSignedInteger(ATTRIB_SIZE, size);
   string metastring;
   metatype2string(meta,metastring);
-  a_v(s,"metatype",metastring);
+  encoder.writeString(ATTRIB_METATYPE,metastring);
   if ((flags & coretype)!=0)
-    a_v_b(s,"core",true);
+    encoder.writeBool(ATTRIB_CORE,true);
   if (isVariableLength())
-    a_v_b(s,"varlength",true);
+    encoder.writeBool(ATTRIB_VARLENGTH,true);
   if ((flags & opaque_string)!=0)
-    a_v_b(s,"opaquestring",true);
+    encoder.writeBool(ATTRIB_OPAQUESTRING,true);
   uint4 format = getDisplayFormat();
   if (format != 0)
-    a_v(s,"format",decodeIntegerFormat(format));
+    encoder.writeString(ATTRIB_FORMAT,decodeIntegerFormat(format));
 }
 
-/// Write a simple reference to \b this data-type as an XML \<typeref> tag,
-/// which only encodes the name and id.
-/// \param s is the stream to write to
-void Datatype::saveXmlRef(ostream &s) const
+/// Encode a simple reference to \b this data-type as a \<typeref> element,
+/// including only the name and id.
+/// \param encoder is the stream encoder
+void Datatype::encodeRef(Encoder &encoder) const
 
 {				// Save just a name reference if possible
   if ((id!=0)&&(metatype != TYPE_VOID)) {
-    s << "<typeref";
-    a_v(s,"name",name);
+    encoder.openElement(ELEM_TYPEREF);
+    encoder.writeString(ATTRIB_NAME,name);
     if (isVariableLength()) {			// For a type with a "variable length" base
-      a_v_u(s,"id",hashSize(id,size));		// Emit the size independent version of the id
-      a_v_i(s,"size",size);			// but also emit size of this instance
+      encoder.writeUnsignedInteger(ATTRIB_ID, hashSize(id,size));	// Emit the size independent version of the id
+      encoder.writeSignedInteger(ATTRIB_SIZE, size);			// but also emit size of this instance
     }
     else {
-      a_v_u(s,"id",id);
+      encoder.writeUnsignedInteger(ATTRIB_ID, id);
     }
-    s << "/>";
+    encoder.closeElement(ELEM_TYPEREF);
   }
   else
-    saveXml(s);
+    encode(encoder);
 }
 
-/// Called only if the \b typedefImm field is non-null.  Write the data-type to the
-/// stream as a simple \<typedef> tag including only the names and ids of \b this and
+/// Called only if the \b typedefImm field is non-null.  Encode the data-type to the
+/// stream as a simple \<typedef> element including only the names and ids of \b this and
 /// the data-type it typedefs.
-/// \param s is the output stream
-void Datatype::saveXmlTypedef(ostream &s) const
+/// \param encoder is the stream encoder
+void Datatype::encodeTypedef(Encoder &encoder) const
 
 {
-  s << "<def";
-  a_v(s,"name",name);
-  a_v_u(s,"id",id);
+  encoder.openElement(ELEM_DEF);
+  encoder.writeString(ATTRIB_NAME, name);
+  encoder.writeUnsignedInteger(ATTRIB_ID, id);
   uint4 format = getDisplayFormat();
   if (format != 0)
-    a_v(s,"format",Datatype::decodeIntegerFormat(format));
-  s << ">";
-  typedefImm->saveXmlRef(s);
-  s << "</def>";
+    encoder.writeString(ATTRIB_FORMAT,Datatype::decodeIntegerFormat(format));
+  typedefImm->encodeRef(encoder);
+  encoder.closeElement(ELEM_DEF);
 }
 
 /// A CPUI_PTRSUB must act on a pointer data-type where the given offset addresses a component.
@@ -416,46 +484,68 @@ int4 Datatype::findCompatibleResolve(Datatype *ct) const
   return -1;
 }
 
-/// Restore the basic properties (name,size,id) of a data-type from an XML element
-/// Properties are read from the attributes of the element
-/// \param el is the XML element
-void Datatype::restoreXmlBasic(const Element *el)
+/// \brief Resolve which union field is being used for a given PcodeOp when a truncation is involved
+///
+/// This method applies to the TYPE_UNION and TYPE_PARTIALUNION data-types, when a Varnode is backed
+/// by a larger Symbol with a union data-type, or if the Varnode is produced by a CPUI_SUBPIECE where
+/// the input Varnode has a union data-type.
+/// Scoring is done to compute the best field and the result is cached with the function.
+/// The record of the best field is returned or null if there is no appropriate field
+/// \param offset is the byte offset into the union we are truncating to
+/// \param op is either the PcodeOp reading the truncated Varnode or the CPUI_SUBPIECE doing the truncation
+/// \param slot is either the input slot of the reading PcodeOp or the artificial SUBPIECE slot: 1
+/// \param newoff is used to pass back how much offset is left to resolve
+/// \return the field of the union best associated with the truncation or null
+const TypeField *Datatype::resolveTruncation(int4 offset,PcodeOp *op,int4 slot,int4 &newoff)
 
 {
-  name = el->getAttributeValue("name");
-  istringstream s(el->getAttributeValue("size"));
-  s.unsetf(ios::dec | ios::hex | ios::oct);
+  return (const TypeField *)0;
+}
+
+/// Restore the basic properties (name,size,id) of a data-type from an XML element
+/// Properties are read from the attributes of the element
+/// \param decoder is the stream decoder
+void Datatype::decodeBasic(Decoder &decoder)
+
+{
   size = -1;
-  s >> size;
-  if (size < 0)
-    throw LowlevelError("Bad size for type "+name);
-  metatype = string2metatype( el->getAttributeValue("metatype") );
-  submeta = base2sub[metatype];
+  metatype = TYPE_VOID;
   id = 0;
-  for(int4 i=0;i<el->getNumAttributes();++i) {
-    const string &attribName( el->getAttributeName(i) );
-    if (attribName == "core") {
-      if (xml_readbool(el->getAttributeValue(i)))
+  for(;;) {
+    uint4 attrib = decoder.getNextAttributeId();
+    if (attrib == 0) break;
+    if (attrib == ATTRIB_NAME) {
+      name = decoder.readString();
+    }
+    else if (attrib == ATTRIB_SIZE) {
+      size = decoder.readSignedInteger();
+    }
+    else if (attrib == ATTRIB_METATYPE) {
+      metatype = string2metatype(decoder.readString());
+    }
+    else if (attrib == ATTRIB_CORE) {
+      if (decoder.readBool())
 	flags |= coretype;
     }
-    else if (attribName == "id") {
-      istringstream s1(el->getAttributeValue(i));
-      s1.unsetf(ios::dec | ios::hex | ios::oct);
-      s1 >> id;
+    else if (attrib == ATTRIB_ID) {
+      id = decoder.readUnsignedInteger();
     }
-    else if (attribName == "varlength") {
-      if (xml_readbool(el->getAttributeValue(i)))
+    else if (attrib == ATTRIB_VARLENGTH) {
+      if (decoder.readBool())
 	flags |= variable_length;
     }
-    else if (attribName == "opaquestring") {
-      if (xml_readbool(el->getAttributeValue(i)))
+    else if (attrib == ATTRIB_OPAQUESTRING) {
+      if (decoder.readBool())
 	flags |= opaque_string;
     }
-    else if (attribName == "format") {
-      uint4 val = encodeIntegerFormat(el->getAttributeValue(i));
+    else if (attrib == ATTRIB_FORMAT) {
+      uint4 val = encodeIntegerFormat(decoder.readString());
       setDisplayFormat(val);
     }
   }
+  if (size < 0)
+    throw LowlevelError("Bad size for type "+name);
+  submeta = base2sub[metatype];
   if ((id==0)&&(name.size()>0))	// If there is a type name
     id = hashName(name);	// There must be some kind of id
   if (isVariableLength()) {
@@ -546,74 +636,74 @@ string Datatype::decodeIntegerFormat(uint4 val)
   throw LowlevelError("Unrecognized integer format encoding");
 }
 
-/// Contruct from the given \<field> element.
-/// \param el is the element
+/// Construct from a \<field> element.
+/// \param decoder is the stream decoder
 /// \param typegrp is the TypeFactory for parsing data-type info
-TypeField::TypeField(const Element *el,TypeFactory &typegrp)
+TypeField::TypeField(Decoder &decoder,TypeFactory &typegrp)
 
 {
+  uint4 elemId = decoder.openElement(ELEM_FIELD);
   ident = -1;
   offset = -1;
-  for(int4 i=0;i<el->getNumAttributes();++i) {
-    const string &attribName(el->getAttributeName(i));
-    if (attribName == "name")
-      name = el->getAttributeValue(i);
-    else if (attribName == "offset") {
-      istringstream j(el->getAttributeValue(i));
-      j.unsetf(ios::dec | ios::hex | ios::oct);
-      j >> offset;
+  for(;;) {
+    uint4 attrib = decoder.getNextAttributeId();
+    if (attrib == 0) break;
+    if (attrib == ATTRIB_NAME)
+      name = decoder.readString();
+    else if (attrib == ATTRIB_OFFSET) {
+      offset = decoder.readSignedInteger();
     }
-    else if (attribName == "id") {
-      istringstream j(el->getAttributeValue(i));
-      j.unsetf(ios::dec | ios::hex | ios::oct);
-      j >> ident;
+    else if (attrib == ATTRIB_ID) {
+      ident = decoder.readSignedInteger();
     }
   }
-  type = typegrp.restoreXmlType( *el->getChildren().begin() );
+  type = typegrp.decodeType( decoder );
   if (name.size()==0)
     throw LowlevelError("name attribute must not be empty in <field> tag");
   if (offset < 0)
     throw LowlevelError("offset attribute invalid for <field> tag");
   if (ident < 0)
     ident = offset;	// By default the id is the offset
+  decoder.closeElement(elemId);
 }
 
-/// Write out a formal description of \b this as an XML \<field> tag.
-/// \param s is the stream to write to
-void TypeField::saveXml(ostream &s) const
+/// Encode a formal description of \b this as a \<field> element.
+/// \param encoder is the stream encoder
+void TypeField::encode(Encoder &encoder) const
 
 {
-  s << "<field";
-  a_v(s,"name",name);
-  a_v_i(s,"offset",offset);
+  encoder.openElement(ELEM_FIELD);
+  encoder.writeString(ATTRIB_NAME,name);
+  encoder.writeSignedInteger(ATTRIB_OFFSET, offset);
   if (ident != offset)
-    a_v_i(s,"id",ident);
-  s << '>';
-  type->saveXmlRef(s);
-  s << "</field>\n";
+    encoder.writeSignedInteger(ATTRIB_ID, ident);
+  type->encodeRef(encoder);
+  encoder.closeElement(ELEM_FIELD);
 }
 
-/// Parse a \<type> tag for attributes of the character data-type
-/// \param el is the root XML element
+/// Parse a \<type> element for attributes of the character data-type
+/// \param decoder is the stream decoder
 /// \param typegrp is the factory owning \b this data-type
-void TypeChar::restoreXml(const Element *el,TypeFactory &typegrp)
+void TypeChar::decode(Decoder &decoder,TypeFactory &typegrp)
 
 {
-  restoreXmlBasic(el);
+//  uint4 elemId = decoder.openElement();
+  decodeBasic(decoder);
   submeta = (metatype == TYPE_INT) ? SUB_INT_CHAR : SUB_UINT_CHAR;
+//  decoder.closeElement(elemId);
 }
 
-void TypeChar::saveXml(ostream &s) const
+void TypeChar::encode(Encoder &encoder) const
 
 {
   if (typedefImm != (Datatype *)0) {
-    saveXmlTypedef(s);
+    encodeTypedef(encoder);
     return;
   }
-  s << "<type";
-  saveXmlBasic(metatype,s);
-  a_v_b(s,"char",true);
-  s << "/>";
+  encoder.openElement(ELEM_TYPE);
+  encodeBasic(metatype,encoder);
+  encoder.writeBool(ATTRIB_CHAR, true);
+  encoder.closeElement(ELEM_TYPE);
 }
 
 /// Properties that specify which encoding this type uses are set based
@@ -629,16 +719,18 @@ void TypeUnicode::setflags(void)
     flags |= Datatype::chartype; // This ultimately should be UTF8 but we default to basic char
 }
 
-/// Parse a \<type> tag for properties of the data-type
-/// \param el is the root XML element
+/// Parse a \<type> tag for properties of the data-type.
+/// \param decoder is the stream decoder
 /// \param typegrp is the factory owning \b this data-type
-void TypeUnicode::restoreXml(const Element *el,TypeFactory &typegrp)
+void TypeUnicode::decode(Decoder &decoder,TypeFactory &typegrp)
 
 {
-  restoreXmlBasic(el);
+//  uint4 elemId = decoder.openElement();
+  decodeBasic(decoder);
   // Get endianness flag from architecture, rather than specific type encoding
   setflags();
   submeta = (metatype == TYPE_INT) ? SUB_INT_UNICODE : SUB_UINT_UNICODE;
+//  decoder.closeElement(elemId);
 }
 
 TypeUnicode::TypeUnicode(const string &nm,int4 sz,type_metatype m)
@@ -648,27 +740,28 @@ TypeUnicode::TypeUnicode(const string &nm,int4 sz,type_metatype m)
   submeta = (m == TYPE_INT) ? SUB_INT_UNICODE : SUB_UINT_UNICODE;
 }
 
-void TypeUnicode::saveXml(ostream &s) const
+void TypeUnicode::encode(Encoder &encoder) const
 
 {
   if (typedefImm != (Datatype *)0) {
-    saveXmlTypedef(s);
+    encodeTypedef(encoder);
     return;
   }
-  s << "<type";
-  saveXmlBasic(metatype,s);
-  a_v_b(s,"utf",true);
-  s << "/>";
+  encoder.openElement(ELEM_TYPE);
+  encodeBasic(metatype,encoder);
+  encoder.writeBool(ATTRIB_UTF, true);
+  encoder.closeElement(ELEM_TYPE);
 }
 
-void TypeVoid::saveXml(ostream &s) const
+void TypeVoid::encode(Encoder &encoder) const
 
 {
   if (typedefImm != (Datatype *)0) {
-    saveXmlTypedef(s);
+    encodeTypedef(encoder);
     return;
   }
-  s << "<void/>";
+  encoder.openElement(ELEM_VOID);
+  encoder.closeElement(ELEM_VOID);
 }
 
 void TypePointer::printRaw(ostream &s) const
@@ -717,46 +810,47 @@ int4 TypePointer::compareDependency(const Datatype &op) const
   return (op.getSize()-size);
 }
 
-void TypePointer::saveXml(ostream &s) const
+void TypePointer::encode(Encoder &encoder) const
 
 {
   if (typedefImm != (Datatype *)0) {
-    saveXmlTypedef(s);
+    encodeTypedef(encoder);
     return;
   }
-  s << "<type";
-  saveXmlBasic(metatype,s);
+  encoder.openElement(ELEM_TYPE);
+  encodeBasic(metatype,encoder);
   if (wordsize != 1)
-    a_v_i(s,"wordsize",wordsize);
+    encoder.writeUnsignedInteger(ATTRIB_WORDSIZE, wordsize);
   if (spaceid != (AddrSpace *)0)
-    a_v(s,"space",spaceid->getName());
-  s << '>';
-  ptrto->saveXmlRef(s);
-  s << "</type>";
+    encoder.writeSpace(ATTRIB_SPACE, spaceid);
+  ptrto->encodeRef(encoder);
+  encoder.closeElement(ELEM_TYPE);
 }
 
-/// Parse a \<type> tag with a child describing the data-type being pointed to
-/// \param el is the root XML element
+/// Parse a \<type> element with a child describing the data-type being pointed to
+/// \param decoder is the stream decoder
 /// \param typegrp is the factory owning \b this data-type
-void TypePointer::restoreXml(const Element *el,TypeFactory &typegrp)
+void TypePointer::decode(Decoder &decoder,TypeFactory &typegrp)
 
 {
-  restoreXmlBasic(el);
-  for(int4 i=0;i<el->getNumAttributes();++i) {
-    const string &attrName(el->getAttributeName(i));
-    if (attrName == "wordsize") {
-      istringstream s(el->getAttributeValue(i));
-      s.unsetf(ios::dec | ios::hex | ios::oct);
-      s >> wordsize;
+//  uint4 elemId = decoder.openElement();
+  decodeBasic(decoder);;
+  decoder.rewindAttributes();
+  for(;;) {
+    uint4 attrib = decoder.getNextAttributeId();
+    if (attrib == 0) break;
+    if (attrib == ATTRIB_WORDSIZE) {
+      wordsize = decoder.readUnsignedInteger();
     }
-    else if (attrName == "space") {
-      spaceid = typegrp.getArch()->getSpaceByName(el->getAttributeValue(i));
+    else if (attrib == ATTRIB_SPACE) {
+      spaceid = decoder.readSpace();
     }
   }
-  ptrto = typegrp.restoreXmlType( *el->getChildren().begin() );
+  ptrto = typegrp.decodeType( decoder );
   calcSubmeta();
   if (name.size() == 0)		// Inherit only if no name
     flags |= ptrto->getInheritable();
+//  decoder.closeElement(elemId);
 }
 
 /// Pointers to structures may require a specific \b submeta
@@ -934,19 +1028,18 @@ Datatype *TypeArray::getSubEntry(int4 off,int4 sz,int4 *newoff,int4 *el) const
   return arrayof;
 }
 
-void TypeArray::saveXml(ostream &s) const
+void TypeArray::encode(Encoder &encoder) const
 
 {
   if (typedefImm != (Datatype *)0) {
-    saveXmlTypedef(s);
+    encodeTypedef(encoder);
     return;
   }
-  s << "<type";
-  saveXmlBasic(metatype,s);
-  a_v_i(s,"arraysize",arraysize);
-  s << '>';
-  arrayof->saveXmlRef(s);
-  s << "</type>";
+  encoder.openElement(ELEM_TYPE);
+  encodeBasic(metatype,encoder);
+  encoder.writeSignedInteger(ATTRIB_ARRAYSIZE, arraysize);
+  arrayof->encodeRef(encoder);
+  encoder.closeElement(ELEM_TYPE);
 }
 
 Datatype *TypeArray::resolveInFlow(PcodeOp *op,int4 slot)
@@ -977,22 +1070,29 @@ int4 TypeArray::findCompatibleResolve(Datatype *ct) const
   return -1;
 }
 
-/// Parse a \<type> tag with a child describing the array element data-type.
-/// \param el is the root XML element
+/// Parse a \<type> element with a child describing the array element data-type.
+/// \param decoder is the stream decoder
 /// \param typegrp is the factory owning \b this data-type
-void TypeArray::restoreXml(const Element *el,TypeFactory &typegrp)
+void TypeArray::decode(Decoder &decoder,TypeFactory &typegrp)
 
 {
-  restoreXmlBasic(el);
+//  uint4 elemId = decoder.openElement();
+  decodeBasic(decoder);
   arraysize = -1;
-  istringstream j(el->getAttributeValue("arraysize"));
-  j.unsetf(ios::dec | ios::hex | ios::oct);
-  j >> arraysize;
-  arrayof  = typegrp.restoreXmlType(*el->getChildren().begin());
+  decoder.rewindAttributes();
+  for(;;) {
+    uint4 attrib = decoder.getNextAttributeId();
+    if (attrib == 0) break;
+    if (attrib == ATTRIB_ARRAYSIZE) {
+      arraysize = decoder.readSignedInteger();
+    }
+  }
+  arrayof = typegrp.decodeType(decoder);
   if ((arraysize<=0)||(arraysize*arrayof->getSize()!=size))
     throw LowlevelError("Bad size for array of type "+arrayof->getName());
   if (arraysize == 1)
     flags |= needs_resolution;		// Array of size 1 needs special treatment
+//  decoder.closeElement(elemId);
 }
 
 TypeEnum::TypeEnum(const TypeEnum &op) : TypeBase(op)
@@ -1141,50 +1241,59 @@ int4 TypeEnum::compareDependency(const Datatype &op) const
   return 0;
 }
 
-void TypeEnum::saveXml(ostream &s) const
+void TypeEnum::encode(Encoder &encoder) const
 
 {
   if (typedefImm != (Datatype *)0) {
-    saveXmlTypedef(s);
+    encodeTypedef(encoder);
     return;
   }
-  s << "<type";
-  saveXmlBasic(metatype,s);
-  a_v(s,"enum","true");
-  s << ">\n";
+  encoder.openElement(ELEM_TYPE);
+  encodeBasic(metatype,encoder);
+  encoder.writeString(ATTRIB_ENUM, "true");
   map<uintb,string>::const_iterator iter;
   for(iter=namemap.begin();iter!=namemap.end();++iter) {
-    s << "<val";
-    a_v(s,"name",(*iter).second);
-    a_v_u(s,"value",(*iter).first);
-    s << "/>\n";
+    encoder.openElement(ELEM_VAL);
+    encoder.writeString(ATTRIB_NAME,(*iter).second);
+    encoder.writeUnsignedInteger(ATTRIB_VALUE, (*iter).first);
+    encoder.closeElement(ELEM_VAL);
   }
-  s << "</type>";
+  encoder.closeElement(ELEM_TYPE);
 }
 
-/// Parse a \<type> tag with children describing each specific enumeration value.
-/// \param el is the root XML element
+/// Parse a \<type> element with children describing each specific enumeration value.
+/// \param decoder is the stream decoder
 /// \param typegrp is the factory owning \b this data-type
-void TypeEnum::restoreXml(const Element *el,TypeFactory &typegrp)
+void TypeEnum::decode(Decoder &decoder,TypeFactory &typegrp)
 
 {
-  restoreXmlBasic(el);
+//  uint4 elemId = decoder.openElement();
+  decodeBasic(decoder);
   submeta = (metatype == TYPE_INT) ? SUB_INT_ENUM : SUB_UINT_ENUM;
-  const List &list(el->getChildren());
-  List::const_iterator iter;
   map<uintb,string> nmap;
 
-  for(iter=list.begin();iter!=list.end();++iter) {
-    uintb val;
-    Element *subel = *iter;
-    istringstream is(subel->getAttributeValue("value"));
-    is.unsetf(ios::dec|ios::hex|ios::oct);
-    intb valsign;		// Value might be negative
-    is >> valsign;
-    val = (uintb)valsign & calc_mask(size);
-    nmap[val] = subel->getAttributeValue("name");
+  for(;;) {
+    uint4 childId = decoder.openElement();
+    if (childId == 0) break;
+    uintb val = 0;
+    string nm;
+    for(;;) {
+      uint4 attrib = decoder.getNextAttributeId();
+      if (attrib == 0) break;
+      if (attrib == ATTRIB_VALUE) {
+	intb valsign = decoder.readSignedInteger();	// Value might be negative
+	val = (uintb)valsign & calc_mask(size);
+      }
+      else if (attrib == ATTRIB_NAME)
+	nm = decoder.readString();
+    }
+    if (nm.size() == 0)
+      throw LowlevelError(name + ": TypeEnum field missing name attribute");
+    nmap[val] = nm;
+    decoder.closeElement(childId);
   }
   setNameMap(nmap);
+//  decoder.closeElement(elemId);
 }
 
 TypeStruct::TypeStruct(const TypeStruct &op)
@@ -1264,13 +1373,7 @@ int4 TypeStruct::getLowerBoundField(int4 off) const
   return -1;
 }
 
-/// Given a byte range within \b this data-type, determine the field it is contained in
-/// and pass back the renormalized offset.
-/// \param off is the byte offset into \b this
-/// \param sz is the size of the byte range
-/// \param newoff points to the renormalized offset to pass back
-/// \return the containing field or NULL if the range is not contained
-const TypeField *TypeStruct::resolveTruncation(int4 off,int4 sz,int4 *newoff) const
+const TypeField *TypeStruct::findTruncation(int4 off,int4 sz,const PcodeOp *op,int4 slot,int4 &newoff) const
 
 {
   int4 i;
@@ -1282,7 +1385,7 @@ const TypeField *TypeStruct::resolveTruncation(int4 off,int4 sz,int4 *newoff) co
   noff = off - curfield.offset;
   if (noff+sz > curfield.type->getSize()) // Requested piece spans more than one field
     return (const TypeField *)0;
-  *newoff = noff;
+  newoff = noff;
   return &curfield;
 }
 
@@ -1420,34 +1523,31 @@ int4 TypeStruct::compareDependency(const Datatype &op) const
   return 0;
 }
 
-void TypeStruct::saveXml(ostream &s) const
+void TypeStruct::encode(Encoder &encoder) const
 
 {
   if (typedefImm != (Datatype *)0) {
-    saveXmlTypedef(s);
+    encodeTypedef(encoder);
     return;
   }
-  s << "<type";
-  saveXmlBasic(metatype,s);
-  s << ">\n";
+  encoder.openElement(ELEM_TYPE);
+  encodeBasic(metatype,encoder);
   vector<TypeField>::const_iterator iter;
   for(iter=field.begin();iter!=field.end();++iter) {
-    (*iter).saveXml(s);
+    (*iter).encode(encoder);
   }
-  s << "</type>";
+  encoder.closeElement(ELEM_TYPE);
 }
 
 /// Children of the structure element describe each field.
-/// \param el is the root structure element
+/// \param decoder is the stream decoder
 /// \param typegrp is the factory owning the new structure
-void TypeStruct::restoreFields(const Element *el,TypeFactory &typegrp)
+void TypeStruct::decodeFields(Decoder &decoder,TypeFactory &typegrp)
 
 {
-  const List &list(el->getChildren());
-  List::const_iterator iter;
   int4 maxoffset = 0;
-  for(iter=list.begin();iter!=list.end();++iter) {
-    field.emplace_back(*iter,typegrp);
+  while(decoder.peekElement() != 0) {
+    field.emplace_back(decoder,typegrp);
     int4 trialmax = field.back().offset + field.back().type->getSize();
     if (trialmax > maxoffset)
       maxoffset = trialmax;
@@ -1457,7 +1557,7 @@ void TypeStruct::restoreFields(const Element *el,TypeFactory &typegrp)
       throw LowlevelError(s.str());
     }
   }
-  if (size == 0)		// We can restore an incomplete structure, indicated by 0 size
+  if (size == 0)		// We can decode an incomplete structure, indicated by 0 size
     flags |=  type_incomplete;
   else
     markComplete();		// Otherwise the structure is complete
@@ -1591,23 +1691,21 @@ void TypeUnion::setFields(const vector<TypeField> &fd)
   }
 }
 
-/// Children of the XML element describe each field.
-/// \param el is the root union element
+/// Parse children of the \<type> element describing each field.
+/// \param decoder is the stream decoder
 /// \param typegrp is the factory owning the new union
-void TypeUnion::restoreFields(const Element *el,TypeFactory &typegrp)
+void TypeUnion::decodeFields(Decoder &decoder,TypeFactory &typegrp)
 
 {
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-  for(iter=list.begin();iter!=list.end();++iter) {
-    field.emplace_back(*iter,typegrp);
+  while(decoder.peekElement() != 0) {
+    field.emplace_back(decoder,typegrp);
     if (field.back().offset + field.back().type->getSize() > size) {
       ostringstream s;
       s << "Field " << field.back().name << " does not fit in union " << name;
       throw LowlevelError(s.str());
     }
   }
-  if (size == 0)		// We can restore an incomplete structure, indicated by 0 size
+  if (size == 0)		// We can decode an incomplete structure, indicated by 0 size
     flags |=  type_incomplete;
   else
     markComplete();		// Otherwise the union is complete
@@ -1684,21 +1782,20 @@ int4 TypeUnion::compareDependency(const Datatype &op) const
   return 0;
 }
 
-void TypeUnion::saveXml(ostream &s) const
+void TypeUnion::encode(Encoder &encoder) const
 
 {
   if (typedefImm != (Datatype *)0) {
-    saveXmlTypedef(s);
+    encodeTypedef(encoder);
     return;
   }
-  s << "<type";
-  saveXmlBasic(metatype,s);
-  s << ">\n";
+  encoder.openElement(ELEM_TYPE);
+  encodeBasic(metatype,encoder);
   vector<TypeField>::const_iterator iter;
   for(iter=field.begin();iter!=field.end();++iter) {
-    (*iter).saveXml(s);
+    (*iter).encode(encoder);
   }
-  s << "</type>";
+  encoder.closeElement(ELEM_TYPE);
 }
 
 Datatype *TypeUnion::resolveInFlow(PcodeOp *op,int4 slot)
@@ -1723,17 +1820,6 @@ Datatype* TypeUnion::findResolve(const PcodeOp *op,int4 slot)
   return this;
 }
 
-/// \brief Resolve which union field is being used for a given PcodeOp when a truncation is involved
-///
-/// This is used either when a Varnode is backed by a larger Symbol with a union data-type,
-/// or if the Varnode is produced by a CPUI_SUBPIECE where the input Varnode has a union data-type.
-/// Scoring is done to compute the best field and the result is cached with the function.
-/// The record of the best field is returned or null if there is no appropriate field
-/// \param offset is the byte offset into the union we are truncating to
-/// \param op is either the PcodeOp reading the truncated Varnode or the CPUI_SUBPIECE doing the truncation
-/// \param slot is either the input slot of the reading PcodeOp or the artificial SUBPIECE slot: 1
-/// \param newoff is used to pass back how much offset is left to resolve
-/// \return the field of the union best associated with the truncation or null
 const TypeField *TypeUnion::resolveTruncation(int4 offset,PcodeOp *op,int4 slot,int4 &newoff)
 
 {
@@ -1764,23 +1850,23 @@ const TypeField *TypeUnion::resolveTruncation(int4 offset,PcodeOp *op,int4 slot,
   return (const TypeField *)0;
 }
 
-/// \brief Return a precalculated field associated with a truncation
-///
-/// This is the \e const version of resolveTruncation().  No new scoring is done, but if a cached result
-/// is available, return it.
 /// \param offset is the byte offset of the truncation
+/// \param sz is the number of bytes in the resulting truncation
 /// \param op is the PcodeOp reading the truncated value
 /// \param slot is the input slot being read
 /// \param newoff is used to pass back any remaining offset into the field which still must be resolved
 /// \return the field to use with truncation or null if there is no appropriate field
-const TypeField *TypeUnion::findTruncation(int4 offset,const PcodeOp *op,int4 slot,int4 &newoff) const
+const TypeField *TypeUnion::findTruncation(int4 offset,int4 sz,const PcodeOp *op,int4 slot,int4 &newoff) const
 
 {
+  // No new scoring is done, but if a cached result is available, return it.
   const Funcdata *fd = op->getParent()->getFuncdata();
   const ResolvedUnion *res = fd->getUnionField(this, op, slot);
   if (res != (ResolvedUnion *)0 && res->getFieldNum() >= 0) {
     const TypeField *field = getField(res->getFieldNum());
     newoff = offset - field->offset;
+    if (newoff + sz > field->type->getSize())
+      return (const TypeField *)0;	// Truncation spans more than one field
     return field;
   }
   return (const TypeField *)0;
@@ -1808,41 +1894,175 @@ int4 TypeUnion::findCompatibleResolve(Datatype *ct) const
   return -1;
 }
 
-/// Parse a \<type> tag with children describing the data-type being pointed to and the parent data-type.
-/// \param el is the root XML element
-/// \param typegrp is the factory owning \b this data-type
-void TypePointerRel::restoreXml(const Element *el,TypeFactory &typegrp)
+TypePartialUnion::TypePartialUnion(const TypePartialUnion &op)
+  : Datatype(op)
+{
+  stripped = op.stripped;
+  container = op.container;
+  offset = op.offset;
+}
+
+TypePartialUnion::TypePartialUnion(TypeUnion *contain,int4 off,int4 sz,Datatype *strip)
+  : Datatype(sz,TYPE_PARTIALUNION)
+{
+  flags |= (needs_resolution | has_stripped);
+  stripped = strip;
+  container = contain;
+  offset = off;
+}
+
+void TypePartialUnion::printRaw(ostream &s) const
 
 {
-  flags |= is_ptrrel;
-  restoreXmlBasic(el);
-  metatype = TYPE_PTR;		// Don't use TYPE_PTRREL internally
-  for(int4 i=0;i<el->getNumAttributes();++i) {
-    const string &attribName(el->getAttributeName(i));
-    if (attribName == "wordsize") {
-      istringstream s(el->getAttributeValue(i));
-      s.unsetf(ios::dec | ios::hex | ios::oct);
-      s >> wordsize;
+  container->printRaw(s);
+  s << "[off=" << dec << offset << ",sz=" << size << ']';
+}
+
+const TypeField *TypePartialUnion::findTruncation(int4 off,int4 sz,const PcodeOp *op,int4 slot,int4 &newoff) const
+
+{
+  return container->findTruncation(off + offset, sz, op, slot, newoff);
+}
+
+int4 TypePartialUnion::numDepend(void) const
+
+{
+  return container->numDepend();
+}
+
+Datatype *TypePartialUnion::getDepend(int4 index) const
+
+{
+  // Treat dependents as coming from the underlying union
+  Datatype *res = container->getDepend(index);
+  if (res->getSize() != size)	// But if the size doesn't match
+    return stripped;		// Return the stripped data-type
+  return res;
+}
+
+int4 TypePartialUnion::compare(const Datatype &op,int4 level) const
+
+{
+  int4 res = Datatype::compare(op,level);
+  if (res != 0) return res;
+  // Both must be partial unions
+  TypePartialUnion *tp = (TypePartialUnion *) &op;
+  if (offset != tp->offset) return (offset < tp->offset) ? -1 : 1;
+  level -= 1;
+  if (level < 0) {
+    if (id == op.getId()) return 0;
+    return (id < op.getId()) ? -1 : 1;
+  }
+  return container->compare(*tp->container,level); // Compare the underlying union
+}
+
+int4 TypePartialUnion::compareDependency(const Datatype &op) const
+
+{
+  if (submeta != op.getSubMeta()) return (submeta < op.getSubMeta()) ? -1 : 1;
+  TypePartialUnion *tp = (TypePartialUnion *) &op;	// Both must be partial unions
+  if (container != tp->container) return (container < tp->container) ? -1 : 1;	// Compare absolute pointers
+  if (offset != tp->offset) return (offset < tp->offset) ? -1 : 1;
+  return (op.getSize()-size);
+}
+
+void TypePartialUnion::encode(Encoder &encoder) const
+
+{
+  encoder.openElement(ELEM_TYPE);
+  encodeBasic(metatype,encoder);
+  encoder.writeSignedInteger(ATTRIB_OFFSET, offset);
+  container->encodeRef(encoder);
+  encoder.closeElement(ELEM_TYPE);
+}
+
+Datatype *TypePartialUnion::resolveInFlow(PcodeOp *op,int4 slot)
+
+{
+  Datatype *curType = container;
+  int4 curOff = offset;
+  while(curType != (Datatype *)0 && curType->getSize() > size) {
+    if (curType->getMetatype() == TYPE_UNION) {
+      const TypeField *field = curType->resolveTruncation(curOff, op, slot, curOff);
+      curType = (field == (const TypeField *)0) ? (Datatype *)0 : field->type;
     }
-    else if (attribName == "space") {
-      spaceid = typegrp.getArch()->getSpaceByName(el->getAttributeValue("space"));
+    else {
+      uintb newOff;
+      curType = curType->getSubType(curOff, &newOff);
+      curOff = newOff;
     }
   }
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-  iter = list.begin();
-  ptrto = typegrp.restoreXmlType( *iter );
-  ++iter;
-  parent = typegrp.restoreXmlType( *iter );
-  ++iter;
-  istringstream s1((*iter)->getContent());
-  s1.unsetf(ios::dec | ios::hex | ios::oct);
-  s1 >> offset;
+  if (curType != (Datatype *)0 && curType->getSize() == size)
+    return curType;
+  return stripped;
+}
+
+Datatype* TypePartialUnion::findResolve(const PcodeOp *op,int4 slot)
+
+{
+  Datatype *curType = container;
+  int4 curOff = offset;
+  while(curType != (Datatype *)0 && curType->getSize() > size) {
+    if (curType->getMetatype() == TYPE_UNION) {
+      Datatype *newType = curType->findResolve(op, slot);
+      curType = (newType == curType) ? (Datatype *)0 : newType;
+    }
+    else {
+      uintb newOff;
+      curType = curType->getSubType(curOff, &newOff);
+      curOff = newOff;
+    }
+  }
+  if (curType != (Datatype *)0 && curType->getSize() == size)
+    return curType;
+  return stripped;
+}
+
+int4 TypePartialUnion::findCompatibleResolve(Datatype *ct) const
+
+{
+  return container->findCompatibleResolve(ct);
+}
+
+const TypeField *TypePartialUnion::resolveTruncation(int4 off,PcodeOp *op,int4 slot,int4 &newoff)
+
+{
+  return container->resolveTruncation(off + offset, op, slot, newoff);
+}
+
+/// Parse a \<type> element with children describing the data-type being pointed to
+/// and the parent data-type.
+/// \param decoder is the stream decoder
+/// \param typegrp is the factory owning \b this data-type
+void TypePointerRel::decode(Decoder &decoder,TypeFactory &typegrp)
+
+{
+//  uint4 elemId = decoder.openElement();
+  flags |= is_ptrrel;
+  decodeBasic(decoder);
+  metatype = TYPE_PTR;		// Don't use TYPE_PTRREL internally
+  decoder.rewindAttributes();
+  for(;;) {
+    uint4 attrib = decoder.getNextAttributeId();
+    if (attrib == 0) break;
+    if (attrib == ATTRIB_WORDSIZE) {
+      wordsize = decoder.readUnsignedInteger();
+    }
+    else if (attrib == ATTRIB_SPACE) {
+      spaceid = decoder.readSpace();
+    }
+  }
+  ptrto = typegrp.decodeType( decoder );
+  parent = typegrp.decodeType( decoder );
+  uint4 subId = decoder.openElement(ELEM_OFF);
+  offset = decoder.readSignedInteger(ATTRIB_CONTENT);
+  decoder.closeElement(subId);
   if (offset == 0)
     throw new LowlevelError("For metatype=\"ptrstruct\", <off> tag must not be zero");
-  submeta = (ptrto->getMetatype()==TYPE_UNKNOWN) ? SUB_PTRREL_UNK: SUB_PTRREL;
+  submeta = SUB_PTRREL;
   if (name.size() == 0)		// If the data-type is not named
-    cacheStrippedType(typegrp);	// it is considered ephemeral
+    markEphemeral(typegrp);	// it is considered ephemeral
+//  decoder.closeElement(elemId);
 }
 
 /// For a variable that is a relative pointer, constant offsets relative to the variable can be
@@ -1903,19 +2123,19 @@ int4 TypePointerRel::compareDependency(const Datatype &op) const
   return (op.getSize()-size);
 }
 
-void TypePointerRel::saveXml(ostream &s) const
+void TypePointerRel::encode(Encoder &encoder) const
 
 {
-  s << "<type";
-  saveXmlBasic(TYPE_PTRREL,s);	// Override the metatype for XML
+  encoder.openElement(ELEM_TYPE);
+  encodeBasic(TYPE_PTRREL,encoder);	// Override the metatype for XML
   if (wordsize != 1)
-    a_v_i(s,"wordsize",wordsize);
-  s << ">\n";
-  ptrto->saveXml(s);
-  s << '\n';
-  parent->saveXmlRef(s);
-  s << "\n<off>" << dec << offset << "</off>\n";
-  s << "</type>";
+    encoder.writeUnsignedInteger(ATTRIB_WORDSIZE, wordsize);
+  ptrto->encode(encoder);
+  parent->encodeRef(encoder);
+  encoder.openElement(ELEM_OFF);
+  encoder.writeSignedInteger(ATTRIB_CONTENT, offset);
+  encoder.closeElement(ELEM_OFF);
+  encoder.closeElement(ELEM_TYPE);
 }
 
 TypePointer *TypePointerRel::downChain(uintb &off,TypePointer *&par,uintb &parOff,bool allowArrayWrap,
@@ -2161,49 +2381,45 @@ int4 TypeCode::compareDependency(const Datatype &op) const
   return 0;
 }
 
-void TypeCode::saveXml(ostream &s) const
+void TypeCode::encode(Encoder &encoder) const
 
 {
   if (typedefImm != (Datatype *)0) {
-    saveXmlTypedef(s);
+    encodeTypedef(encoder);
     return;
   }
-  s << "<type";
-  saveXmlBasic(metatype,s);
-  s << ">\n";
+  encoder.openElement(ELEM_TYPE);
+  encodeBasic(metatype,encoder);
   if (proto != (FuncProto *)0)
-    proto->saveXml(s);
-  s << "</type>";
+    proto->encode(encoder);
+  encoder.closeElement(ELEM_TYPE);
 }
 
-/// \param el is the root XML element describing the code object
-void TypeCode::restoreStub(const Element *el)
+/// \param decoder is the stream decoder
+void TypeCode::decodeStub(Decoder &decoder)
 
 {
-  if (!el->getChildren().empty()) {
+  if (decoder.peekElement() != 0) {
     // Traditionally a <prototype> tag implies variable length, without a "varlength" attribute
     flags |= variable_length;
   }
-  restoreXmlBasic(el);
+  decodeBasic(decoder);
 }
 
 /// A single child element indicates a full function prototype.
-/// \param el is the root XML tag describing the code object
+/// \param decoder is the stream decoder
 /// \param isConstructor is \b true if the prototype is a constructor
 /// \param isDestructor is \b true if the prototype is a destructor
 /// \param typegrp is the factory owning the code object
-void TypeCode::restorePrototype(const Element *el,bool isConstructor,bool isDestructor,TypeFactory &typegrp)
+void TypeCode::decodePrototype(Decoder &decoder,bool isConstructor,bool isDestructor,TypeFactory &typegrp)
 
 {
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-  iter = list.begin();
-  if (iter != list.end()) {
+  if (decoder.peekElement() != 0) {
     Architecture *glb = typegrp.getArch();
     factory = &typegrp;
     proto = new FuncProto();
     proto->setInternal( glb->defaultfp, typegrp.getTypeVoid() );
-    proto->restoreXml(*iter,glb);
+    proto->decode(decoder,glb);
     proto->setConstructor(isConstructor);
     proto->setDestructor(isDestructor);
   }
@@ -2350,33 +2566,32 @@ Address TypeSpacebase::getAddress(uintb off,int4 sz,const Address &point) const
   return glb->resolveConstant(spaceid,off,sz,point,fullEncoding);
 }
 
-void TypeSpacebase::saveXml(ostream &s) const
+void TypeSpacebase::encode(Encoder &encoder) const
 
 {
   if (typedefImm != (Datatype *)0) {
-    saveXmlTypedef(s);
+    encodeTypedef(encoder);
     return;
   }
-  s << "<type";
-  saveXmlBasic(metatype,s);
-  a_v(s,"space",spaceid->getName());
-  s << '>';
-  localframe.saveXml(s);
-  s << "</type>";
+  encoder.openElement(ELEM_TYPE);
+  encodeBasic(metatype,encoder);
+  encoder.writeSpace(ATTRIB_SPACE, spaceid);
+  localframe.encode(encoder);
+  encoder.closeElement(ELEM_TYPE);
 }
 
 /// Parse the \<type> tag.
-/// \param el is the root XML element
+/// \param decoder is the stream decoder
 /// \param typegrp is the factory owning \b this data-type
-void TypeSpacebase::restoreXml(const Element *el,TypeFactory &typegrp)
+void TypeSpacebase::decode(Decoder &decoder,TypeFactory &typegrp)
 
 {
-  restoreXmlBasic(el);
-  spaceid = glb->getSpaceByName(el->getAttributeValue("space"));
-  const List &list(el->getChildren());
-  localframe = Address::restoreXml(list.front(),typegrp.getArch());
+//  uint4 elemId = decoder.openElement();
+  decodeBasic(decoder);
+  spaceid = decoder.readSpace(ATTRIB_SPACE);
+  localframe = Address::decode(decoder);
+//  decoder.closeElement(elemId);
 }
-
 
 /// Initialize an empty container
 /// \param g is the owning Architecture
@@ -3137,6 +3352,8 @@ TypePointer *TypeFactory::getTypePointerNoDepth(int4 s,Datatype *pt,uint4 ws)
 TypeArray *TypeFactory::getTypeArray(int4 as,Datatype *ao)
 
 {
+  if (ao->hasStripped())
+    ao = ao->getStripped();
   TypeArray tmp(as,ao);
   return (TypeArray *) findAdd(tmp);
 }
@@ -3163,6 +3380,14 @@ TypeUnion *TypeFactory::getTypeUnion(const string &n)
   tmp.name = n;
   tmp.id = Datatype::hashName(n);
   return (TypeUnion *) findAdd(tmp);
+}
+
+TypePartialUnion *TypeFactory::getTypePartialUnion(TypeUnion *contain,int4 off,int4 sz)
+
+{
+  Datatype *strip = getBase(sz, TYPE_UNKNOWN);
+  TypePartialUnion tpu(contain,off,sz,strip);
+  return (TypePartialUnion *) findAdd(tpu);
 }
 
 /// The created enumeration will have no named values and a default configuration
@@ -3214,7 +3439,7 @@ TypePointerRel *TypeFactory::getTypePointerRel(TypePointer *parentPtr,Datatype *
 
 {
   TypePointerRel tp(parentPtr->size,ptrTo,parentPtr->wordsize,parentPtr->ptrto,off);
-  tp.cacheStrippedType(*this);		// Mark as ephemeral
+  tp.markEphemeral(*this);		// Mark as ephemeral
   TypePointerRel *res = (TypePointerRel *) findAdd(tp);
   return res;
 }
@@ -3258,6 +3483,31 @@ TypePointer *TypeFactory::getTypePointerWithSpace(Datatype *ptrTo,AddrSpace *spc
   return res;
 }
 
+/// Drill down into nested data-types until we get to a data-type that exactly matches the
+/// given offset and size, and return this data-type.  Any \e union data-type encountered
+/// terminates the process and a partial union data-type is constructed and returned.
+/// If the range indicated by the offset and size contains only a partial field or crosses
+/// field boundaries, null is returned.
+/// \param ct is the structured data-type
+/// \param offset is the starting byte offset for the piece
+/// \param size is the number of bytes in the piece
+/// \return the data-type of the piece or null
+Datatype *TypeFactory::getExactPiece(Datatype *ct,int4 offset,int4 size)
+
+{
+  uintb newOff = offset;
+  while(ct != (Datatype *)0 && ct->getSize() > size && ct->getMetatype() != TYPE_UNION) {
+    ct = ct->getSubType(newOff, &newOff);
+  }
+  if (ct == (Datatype *)0 || ct->getSize() < size)
+    return (Datatype *)0;
+  if (ct->getSize() == size)
+    return ct;
+  if (ct->getMetatype() == TYPE_UNION)	// If we hit a containing union
+    return getTypePartialUnion((TypeUnion *)ct, newOff, size);
+  return (Datatype *)0;
+}
+
 /// The indicated Datatype object is removed from this container.
 /// Indirect references (via TypeArray TypeStruct etc.) are not affected
 /// \param ct is the data-type to destroy
@@ -3289,87 +3539,82 @@ Datatype *TypeFactory::concretize(Datatype *ct)
   return ct;
 }
 
-/// Restore a Datatype object from an XML tag description: either \<type>, \<typeref>, or \<void>
-/// \param el is the XML element describing the data-type
-/// \return the restored Datatype object
-Datatype *TypeFactory::restoreXmlType(const Element *el)
+/// Restore a Datatype object from an element: either \<type>, \<typeref>, or \<void>
+/// \param decoder is the stream decoder
+/// \return the decoded Datatype object
+Datatype *TypeFactory::decodeType(Decoder &decoder)
 
 {
   Datatype *ct;
-  if (el->getName() == "typeref") {
+  uint4 elemId = decoder.peekElement();
+  if (ELEM_TYPEREF == elemId) {
+    elemId = decoder.openElement();
     uint8 newid = 0;
     int4 size = -1;
-    int4 num = el->getNumAttributes();
-    for(int4 i=0;i<num;++i) {
-      const string &nm(el->getAttributeName(i));
-      if (nm == "id") {
-	istringstream s(el->getAttributeValue(i));
-	s.unsetf(ios::dec | ios::hex | ios::oct);
-	s >> newid;
+    for(;;) {
+      uint4 attribId = decoder.getNextAttributeId();
+      if (attribId == 0) break;
+      if (attribId == ATTRIB_ID) {
+	newid = decoder.readUnsignedInteger();
       }
-      else if (nm == "size") {		// A "size" attribute indicates a "variable length" base
-	istringstream s(el->getAttributeValue(i));
-	s.unsetf(ios::dec | ios::hex | ios::oct);
-	s >> size;
+      else if (attribId == ATTRIB_SIZE) {		// A "size" attribute indicates a "variable length" base
+	size = decoder.readSignedInteger();
       }
     }
-    const string &newname( el->getAttributeValue("name"));
+    string newname = decoder.readString(ATTRIB_NAME);
     if (newid == 0)		// If there was no id, use the name hash
       newid = Datatype::hashName(newname);
     ct = findById(newname,newid,size);
     if (ct == (Datatype *)0)
       throw LowlevelError("Unable to resolve type: "+newname);
+    decoder.closeElement(elemId);
     return ct;
   }
-  return restoreXmlTypeNoRef(el,false);
+  return decodeTypeNoRef(decoder,false);
 }
 
-/// \brief Restore data-type from XML with extra "code" flags
+/// \brief Restore data-type from an element and extra "code" flags
 ///
-/// Kludge to get flags into code pointer types, when they can't come through XML
-/// \param el is the XML element describing the Datatype
+/// Kludge to get flags into code pointer types, when they can't come through the stream
+/// \param decoder is the stream decoder
 /// \param isConstructor toggles "constructor" property on "function" datatypes
 /// \param isDestructor toggles "destructor" property on "function" datatypes
-/// \return the restored Datatype object
-Datatype *TypeFactory::restoreXmlTypeWithCodeFlags(const Element *el,bool isConstructor,bool isDestructor)
+/// \return the decoded Datatype object
+Datatype *TypeFactory::decodeTypeWithCodeFlags(Decoder &decoder,bool isConstructor,bool isDestructor)
 
 {
   TypePointer tp;
-  tp.restoreXmlBasic(el);
+  uint4 elemId = decoder.openElement();
+  tp.decodeBasic(decoder);
   if (tp.getMetatype() != TYPE_PTR)
-    throw LowlevelError("Special type restoreXml does not see pointer");
-  for(int4 i=0;i<el->getNumAttributes();++i)
-    if (el->getAttributeName(i) == "wordsize") {
-      istringstream s(el->getAttributeValue(i));
-      s.unsetf(ios::dec | ios::hex | ios::oct);
-      s >> tp.wordsize;
+    throw LowlevelError("Special type decode does not see pointer");
+  for(;;) {
+    uint4 attribId = decoder.getNextAttributeId();
+    if (attribId == 0) break;
+    if (attribId == ATTRIB_WORDSIZE) {
+      tp.wordsize = decoder.readUnsignedInteger();
     }
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-  iter = list.begin();
-  const Element *subel = *iter;
-  if (subel->getAttributeValue("metatype") != "code")
-    throw LowlevelError("Special type restoreXml does not see code");
-  tp.ptrto = restoreCode(subel, isConstructor, isDestructor, false);
+  }
+  tp.ptrto = decodeCode(decoder, isConstructor, isDestructor, false);
+  decoder.closeElement(elemId);
   return findAdd(tp);
 }
 
-/// All data-types, in dependency order, are written out to an XML stream
-/// \param s is the output stream
-void TypeFactory::saveXml(ostream &s) const
+/// All data-types, in dependency order, are encoded to a stream
+/// \param encoder is the stream encoder
+void TypeFactory::encode(Encoder &encoder) const
 
 {
   vector<Datatype *> deporder;
   vector<Datatype *>::iterator iter;
 
   dependentOrder(deporder);	// Put types in correct order
-  s << "<typegrp";
-  a_v_i(s,"intsize",sizeOfInt);
-  a_v_i(s,"longsize",sizeOfLong);
-  a_v_i(s,"structalign",align);
-  a_v_i(s,"enumsize",enumsize);
-  a_v_b(s,"enumsigned",(enumtype==TYPE_INT));
-  s << ">\n";
+  encoder.openElement(ELEM_TYPEGRP);
+  encoder.writeSignedInteger(ATTRIB_INTSIZE, sizeOfInt);
+  encoder.writeSignedInteger(ATTRIB_LONGSIZE, sizeOfLong);
+  encoder.writeSignedInteger(ATTRIB_STRUCTALIGN, align);
+  encoder.writeSignedInteger(ATTRIB_ENUMSIZE, enumsize);
+  encoder.writeBool(ATTRIB_ENUMSIGNED, (enumtype==TYPE_INT));
   for(iter=deporder.begin();iter!=deporder.end();++iter) {
     if ((*iter)->getName().size()==0) continue;	// Don't save anonymous types
     if ((*iter)->isCoreType()) { // If this would be saved as a coretype
@@ -3378,23 +3623,21 @@ void TypeFactory::saveXml(ostream &s) const
 	  (meta != TYPE_STRUCT)&&(meta != TYPE_UNION))
 	continue;		// Don't save it here
     }
-    s << ' ';
-    (*iter)->saveXml(s);
-    s << '\n';
+    (*iter)->encode(encoder);
   }
-  s << "</typegrp>\n";
+  encoder.closeElement(ELEM_TYPEGRP);
 }
 
-/// Any data-type within this container marked as "core" will
-/// be written to an XML \<coretypes> stream.
-/// \param s is the output stream
-void TypeFactory::saveXmlCoreTypes(ostream &s) const
+/// Any data-type within this container marked as \e core will
+/// be encodeded as a \<coretypes> element.
+/// \param encoder is the stream encoder
+void TypeFactory::encodeCoreTypes(Encoder &encoder) const
 
 {
   DatatypeSet::const_iterator iter;
   Datatype *ct;
 
-  s << "<coretypes>\n";
+  encoder.openElement(ELEM_CORETYPES);
   for(iter=tree.begin();iter!=tree.end();++iter) {
     ct = *iter;
     if (!ct->isCoreType()) continue;
@@ -3402,41 +3645,40 @@ void TypeFactory::saveXmlCoreTypes(ostream &s) const
     if ((meta==TYPE_PTR)||(meta==TYPE_ARRAY)||
 	(meta==TYPE_STRUCT)||(meta==TYPE_UNION))
       continue;
-    s << ' ';
-    ct->saveXml(s);
-    s << '\n';
+    ct->encode(encoder);
   }
-  s << "</coretypes>\n";
+  encoder.closeElement(ELEM_CORETYPES);
 }
 
 /// Scan the new id and name.  A subtag references the data-type being typedefed.
 /// Construct the new data-type based on the referenced data-type but with new name and id.
-/// \param el is the \<def> element
+/// \param decoder is the stream decoder
 /// \return the constructed typedef data-type
-Datatype *TypeFactory::restoreTypedef(const Element *el)
+Datatype *TypeFactory::decodeTypedef(Decoder &decoder)
 
 {
   uint8 id = 0;
   string nm;
   uint4 format = 0;		// No forced display format by default
-  for(int4 i=0;i<el->getNumAttributes();++i) {
-    const string &attribName(el->getAttributeName(i));
-    if (attribName == "id") {
-      istringstream s1(el->getAttributeValue(i));
-      s1.unsetf(ios::dec | ios::hex | ios::oct);
-      s1 >> id;
+//  uint4 elemId = decoder.openElement();
+  for(;;) {
+    uint4 attribId = decoder.getNextAttributeId();
+    if (attribId == 0) break;
+    if (attribId == ATTRIB_ID) {
+      id = decoder.readUnsignedInteger();
     }
-    else if (attribName == "name") {
-      nm = el->getAttributeValue(i);
+    else if (attribId == ATTRIB_NAME) {
+      nm = decoder.readString();
     }
-    else if (attribName == "format") {
-      format = Datatype::encodeIntegerFormat(el->getAttributeValue(i));
+    else if (attribId == ATTRIB_FORMAT) {
+      format = Datatype::encodeIntegerFormat(decoder.readString());
     }
   }
   if (id == 0) {			// Its possible the typedef is a builtin
     id = Datatype::hashName(nm);	// There must be some kind of id
   }
-  Datatype *defedType = restoreXmlType( *el->getChildren().begin() );
+  Datatype *defedType = decodeType( decoder );
+//  decoder.closeElement(elemId);
   if (defedType->isVariableLength())
     id = Datatype::hashSize(id, defedType->size);
   if (defedType->getMetatype() == TYPE_STRUCT || defedType->getMetatype() == TYPE_UNION) {
@@ -3465,14 +3707,15 @@ Datatype *TypeFactory::restoreTypedef(const Element *el)
 }
 
 /// If necessary create a stub object before parsing the field descriptions, to deal with recursive definitions
-/// \param el is the XML element describing the structure
+/// \param decoder is the stream decoder
 /// \param forcecore is \b true if the data-type is considered core
 /// \return the newly minted structure data-type
-Datatype* TypeFactory::restoreStruct(const Element *el,bool forcecore)
+Datatype* TypeFactory::decodeStruct(Decoder &decoder,bool forcecore)
 
 {
   TypeStruct ts;
-  ts.restoreXmlBasic(el);
+//  uint4 elemId = decoder.openElement();
+  ts.decodeBasic(decoder);
   if (forcecore)
     ts.flags |= Datatype::coretype;
   Datatype *ct = findByIdLocal(ts.name,ts.id);
@@ -3481,7 +3724,7 @@ Datatype* TypeFactory::restoreStruct(const Element *el,bool forcecore)
   }
   else if (ct->getMetatype() != TYPE_STRUCT)
     throw LowlevelError("Trying to redefine type: " + ts.name);
-  ts.restoreFields(el,*this);
+  ts.decodeFields(decoder,*this);
   if (!ct->isIncomplete()) {	// Structure of this name was already present
     if (0 != ct->compareDependency(ts))
       throw LowlevelError("Redefinition of structure: " + ts.name);
@@ -3490,18 +3733,20 @@ Datatype* TypeFactory::restoreStruct(const Element *el,bool forcecore)
     if (!setFields(ts.field,(TypeStruct*)ct,ts.size,ts.flags)) // Define structure now by copying fields
       throw LowlevelError("Bad structure definition");
   }
+//  decoder.closeElement(elemId);
   return ct;
 }
 
 /// If necessary create a stub object before parsing the field descriptions, to deal with recursive definitions
-/// \param el is the XML element describing the union
+/// \param decoder is the stream decoder
 /// \param forcecore is \b true if the data-type is considered core
 /// \return the newly minted union data-type
-Datatype* TypeFactory::restoreUnion(const Element *el,bool forcecore)
+Datatype* TypeFactory::decodeUnion(Decoder &decoder,bool forcecore)
 
 {
   TypeUnion tu;
-  tu.restoreXmlBasic(el);
+//  uint4 elemId = decoder.openElement();
+  tu.decodeBasic(decoder);
   if (forcecore)
     tu.flags |= Datatype::coretype;
   Datatype *ct = findByIdLocal(tu.name,tu.id);
@@ -3510,7 +3755,7 @@ Datatype* TypeFactory::restoreUnion(const Element *el,bool forcecore)
   }
   else if (ct->getMetatype() != TYPE_UNION)
     throw LowlevelError("Trying to redefine type: " + tu.name);
-  tu.restoreFields(el,*this);
+  tu.decodeFields(decoder,*this);
   if (!ct->isIncomplete()) {	// Structure of this name was already present
     if (0 != ct->compareDependency(tu))
       throw LowlevelError("Redefinition of union: " + tu.name);
@@ -3519,20 +3764,25 @@ Datatype* TypeFactory::restoreUnion(const Element *el,bool forcecore)
     if (!setFields(tu.field,(TypeUnion*)ct,tu.size,tu.flags)) // Define structure now by copying fields
       throw LowlevelError("Bad union definition");
   }
+//  decoder.closeElement(elemId);
   return ct;
 }
 
 /// If necessary create a stub object before parsing the prototype description, to deal with recursive definitions
-/// \param el is the XML element describing the code object
+/// \param decoder is the stream decoder
 /// \param isConstructor is \b true if any prototype should be treated as a constructor
 /// \param isDestructor is \b true if any prototype should be treated as a destructor
 /// \param forcecore is \b true if the data-type is considered core
 /// \return the newly minted code data-type
-Datatype *TypeFactory::restoreCode(const Element *el,bool isConstructor,bool isDestructor,bool forcecore)
+Datatype *TypeFactory::decodeCode(Decoder &decoder,bool isConstructor,bool isDestructor,bool forcecore)
 
 {
   TypeCode tc;
-  tc.restoreStub(el);
+//  uint4 elemId = decoder.openElement();
+  tc.decodeStub(decoder);
+  if (tc.getMetatype() != TYPE_CODE) {
+    throw LowlevelError("Expecting metatype=\"code\"");
+  }
   if (forcecore)
     tc.flags |= Datatype::coretype;
   Datatype *ct = findByIdLocal(tc.name,tc.id);
@@ -3541,7 +3791,7 @@ Datatype *TypeFactory::restoreCode(const Element *el,bool isConstructor,bool isD
   }
   else if (ct->getMetatype() != TYPE_CODE)
     throw LowlevelError("Trying to redefine type: " + tc.name);
-  tc.restorePrototype(el, isConstructor, isDestructor, *this);
+  tc.decodePrototype(decoder, isConstructor, isDestructor, *this);
   if (!ct->isIncomplete()) {	// Code data-type of this name was already present
     if (0 != ct->compareDependency(tc))
       throw LowlevelError("Redefinition of code data-type: " + tc.name);
@@ -3549,34 +3799,38 @@ Datatype *TypeFactory::restoreCode(const Element *el,bool isConstructor,bool isD
   else {	// If there was a placeholder stub
     setPrototype(tc.proto, (TypeCode *)ct, tc.flags);
   }
+//  decoder.closeElement(elemId);
   return ct;
 }
 
-/// Restore a Datatype object from an XML \<type> tag. (Don't use for \<typeref> tags)
-/// The new Datatype is added to \b this container
-/// \param el is the XML element
+/// Restore a Datatype object from a \<type> element. (Don't use for \<typeref> elements)
+/// The new Datatype is added to \b this container.
+/// \param decoder is the stream decoder
 /// \param forcecore is true if the new type should be labeled as a core type
 /// \return the new Datatype object
-Datatype *TypeFactory::restoreXmlTypeNoRef(const Element *el,bool forcecore)
+Datatype *TypeFactory::decodeTypeNoRef(Decoder &decoder,bool forcecore)
 
 {
   string metastring;
   Datatype *ct;
 
-  char c = el->getName()[0];
-  if (c != 't') {
-    if (el->getName() == "void")
-      return getTypeVoid();	// Automatically a coretype
-    if (el->getName() == "def")
-      return restoreTypedef(el);
+  uint4 elemId = decoder.openElement();
+  if (elemId == ELEM_VOID) {
+    ct = getTypeVoid();	// Automatically a coretype
+    decoder.closeElement(elemId);
+    return ct;
   }
-  metastring = el->getAttributeValue("metatype");
-  type_metatype meta = string2metatype(metastring);
+  if (elemId == ELEM_DEF) {
+    ct = decodeTypedef(decoder);
+    decoder.closeElement(elemId);
+    return ct;
+  }
+  type_metatype meta = string2metatype(decoder.readString(ATTRIB_METATYPE));
   switch(meta) {
   case TYPE_PTR:
     {
       TypePointer tp;
-      tp.restoreXml(el,*this);
+      tp.decode(decoder,*this);
       if (forcecore)
 	tp.flags |= Datatype::coretype;
       ct = findAdd(tp);
@@ -3585,7 +3839,7 @@ Datatype *TypeFactory::restoreXmlTypeNoRef(const Element *el,bool forcecore)
   case TYPE_PTRREL:
     {
       TypePointerRel tp;
-      tp.restoreXml(el, *this);
+      tp.decode(decoder, *this);
       if (forcecore)
 	tp.flags |= Datatype::coretype;
       ct = findAdd(tp);
@@ -3594,169 +3848,166 @@ Datatype *TypeFactory::restoreXmlTypeNoRef(const Element *el,bool forcecore)
   case TYPE_ARRAY:
     {
       TypeArray ta;
-      ta.restoreXml(el,*this);
+      ta.decode(decoder,*this);
       if (forcecore)
 	ta.flags |= Datatype::coretype;
       ct = findAdd(ta);
     }
     break;
   case TYPE_STRUCT:
-    ct = restoreStruct(el,forcecore);
+    ct = decodeStruct(decoder,forcecore);
     break;
   case TYPE_UNION:
-    ct = restoreUnion(el,forcecore);
+    ct = decodeUnion(decoder,forcecore);
     break;
   case TYPE_SPACEBASE:
     {
       TypeSpacebase tsb((AddrSpace *)0,Address(),glb);
-      tsb.restoreXml(el,*this);
+      tsb.decode(decoder,*this);
       if (forcecore)
 	tsb.flags |= Datatype::coretype;
       ct = findAdd(tsb);
     }
     break;
   case TYPE_CODE:
-    ct = restoreCode(el,false, false, forcecore);
+    ct = decodeCode(decoder,false, false, forcecore);
     break;
   default:
-    for(int4 i=0;i<el->getNumAttributes();++i) {
-      if ((el->getAttributeName(i) == "char") &&
-	  xml_readbool(el->getAttributeValue(i))) {
-	TypeChar tc(el->getAttributeValue("name"));
-	tc.restoreXml(el,*this);
+    for(;;) {
+      uint4 attribId = decoder.getNextAttributeId();
+      if (attribId == 0) break;
+      if (attribId == ATTRIB_CHAR && decoder.readBool()) {
+	TypeChar tc(decoder.readString(ATTRIB_NAME));
+	decoder.rewindAttributes();
+	tc.decode(decoder,*this);
 	if (forcecore)
 	  tc.flags |= Datatype::coretype;
 	ct = findAdd(tc);
+	decoder.closeElement(elemId);
 	return ct;
       }
-      else if ((el->getAttributeName(i) == "enum") &&
-	       xml_readbool(el->getAttributeValue(i))) {
+      else if (attribId == ATTRIB_ENUM && decoder.readBool()) {
 	TypeEnum te(1,TYPE_INT); // size and metatype are replaced
-	te.restoreXml(el,*this);
+	decoder.rewindAttributes();
+	te.decode(decoder,*this);
 	if (forcecore)
 	  te.flags |= Datatype::coretype;
 	ct = findAdd(te);
+	decoder.closeElement(elemId);
 	return ct;
       }
-      else if ((el->getAttributeName(i) == "utf") &&
-	       xml_readbool(el->getAttributeValue(i))) {
+      else if (attribId == ATTRIB_UTF && decoder.readBool()) {
 	TypeUnicode tu;
-	tu.restoreXml(el,*this);
+	decoder.rewindAttributes();
+	tu.decode(decoder,*this);
 	if (forcecore)
 	  tu.flags |= Datatype::coretype;
 	ct = findAdd(tu);
+	decoder.closeElement(elemId);
 	return ct;
       }
     }
     {
+      decoder.rewindAttributes();
       TypeBase tb(0,TYPE_UNKNOWN);
-      tb.restoreXmlBasic(el);
+      tb.decodeBasic(decoder);
       if (forcecore)
 	tb.flags |= Datatype::coretype;
       ct = findAdd(tb);
     }
     break;
   }
+  decoder.closeElement(elemId);
   return ct;
 }
 
-/// Read data-types into this container from an XML stream
-/// \param el is the root XML element
-void TypeFactory::restoreXml(const Element *el)
+/// Scan configuration parameters of the factory and parse elements describing data-types
+/// into this container.
+/// \param decoder is the stream decoder
+void TypeFactory::decode(Decoder &decoder)
 
 {
-  const List &list(el->getChildren());
-  List::const_iterator iter;
+  uint4 elemId = decoder.openElement(ELEM_TYPEGRP);
   string metastring;
 
-  istringstream i3(el->getAttributeValue("intsize"));
-  i3.unsetf(ios::dec | ios::hex | ios::oct);
-  i3 >> sizeOfInt;
-  istringstream i4(el->getAttributeValue("longsize"));
-  i4.unsetf(ios::dec | ios::hex | ios::oct);
-  i4 >> sizeOfLong;
-  istringstream i(el->getAttributeValue("structalign"));
-  i.unsetf(ios::dec | ios::hex | ios::oct);
-  i >> align;
-  istringstream i2(el->getAttributeValue("enumsize"));
-  i2.unsetf(ios::dec | ios::hex | ios::oct);
-  i2 >> enumsize;
-  if (xml_readbool(el->getAttributeValue("enumsigned")))
+  sizeOfInt = decoder.readSignedInteger(ATTRIB_INTSIZE);
+  sizeOfLong = decoder.readSignedInteger(ATTRIB_LONGSIZE);
+  align = decoder.readSignedInteger(ATTRIB_STRUCTALIGN);
+  enumsize = decoder.readSignedInteger(ATTRIB_ENUMSIZE);
+  if (decoder.readBool(ATTRIB_ENUMSIGNED))
     enumtype = TYPE_INT;
   else
     enumtype = TYPE_UINT;
-  for(iter=list.begin();iter!=list.end();++iter)
-    restoreXmlTypeNoRef(*iter,false);
+  while(decoder.peekElement() != 0)
+    decodeTypeNoRef(decoder,false);
+  decoder.closeElement(elemId);
 }
 
-/// Restore data-types from an XML stream into this container
+/// Parse data-type elements into this container.
 /// This stream is presumed to contain "core" datatypes and the
 /// cached matrix will be populated from this set.
-/// \param el is the root XML element
-void TypeFactory::restoreXmlCoreTypes(const Element *el)
+/// \param decoder is the stream decoder
+void TypeFactory::decodeCoreTypes(Decoder &decoder)
 
 {
   clear();			// Make sure this routine flushes
 
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-
-  for(iter=list.begin();iter!=list.end();++iter)
-    restoreXmlTypeNoRef(*iter,true);
+  uint4 elemId = decoder.openElement(ELEM_CORETYPES);
+  while(decoder.peekElement() != 0)
+    decodeTypeNoRef(decoder,true);
+  decoder.closeElement(elemId);
   cacheCoreTypes();
 }
 
 /// Recover various sizes relevant to \b this container, such as
 /// the default size of "int" and structure alignment, by parsing
-/// the \<data_organization> tag.
-/// \param el is the XML element
-void TypeFactory::parseDataOrganization(const Element *el)
+/// a \<data_organization> element.
+/// \param decoder is the stream decoder
+void TypeFactory::decodeDataOrganization(Decoder &decoder)
 
 {
-  const List &list(el->getChildren());
-  List::const_iterator iter;
-
-  for(iter=list.begin();iter!=list.end();++iter) {
-    const Element *subel = *iter;
-    if (subel->getName() == "integer_size") {
-      istringstream i(subel->getAttributeValue("value"));
-      i.unsetf(ios::dec | ios::hex | ios::oct);
-      i >> sizeOfInt;
+  uint4 elemId = decoder.openElement(ELEM_DATA_ORGANIZATION);
+  for(;;) {
+    uint4 subId = decoder.openElement();
+    if (subId == 0) break;
+    if (subId == ELEM_INTEGER_SIZE) {
+      sizeOfInt = decoder.readSignedInteger(ATTRIB_VALUE);
     }
-    else if (subel->getName() == "long_size") {
-      istringstream i(subel->getAttributeValue("value"));
-      i.unsetf(ios::dec | ios::hex | ios::oct);
-      i >> sizeOfLong;
+    else if (subId == ELEM_LONG_SIZE) {
+      sizeOfLong = decoder.readSignedInteger(ATTRIB_VALUE);
     }
-    else if (subel->getName() == "size_alignment_map") {
-      const List &childlist(subel->getChildren());
-      List::const_iterator iter2;
+    else if (subId == ELEM_SIZE_ALIGNMENT_MAP) {
       align = 0;
-      for(iter2=childlist.begin();iter2!=childlist.end();++iter2) {
-	const Element *childel = *iter2;
-	int4 val;
-	istringstream i2(childel->getAttributeValue("alignment"));
-	i2.unsetf(ios::dec | ios::hex | ios::oct);
-	i2 >> val;
+      for(;;) {
+	uint4 mapId = decoder.openElement();
+	if (mapId != ELEM_ENTRY) break;
+	int4 val = decoder.readSignedInteger(ATTRIB_ALIGNMENT);
+	decoder.closeElement(mapId);
 	if (val > align)		// Take maximum size alignment
 	  align = val;
       }
     }
+    else {
+      decoder.closeElementSkipping(subId);
+      continue;
+    }
+    decoder.closeElement(subId);
   }
+  decoder.closeElement(elemId);
 }
 
 /// Recover default enumeration properties (size and meta-type) from
 /// an \<enum> XML tag.  Should probably consider this deprecated. These
 /// values are only used by the internal C parser.
 /// param el is the XML element
-void TypeFactory::parseEnumConfig(const Element *el)
+void TypeFactory::parseEnumConfig(Decoder &decoder)
 
 {
-  istringstream s(el->getAttributeValue("size"));
-  s.unsetf(ios::dec | ios::hex | ios::oct);
-  s >> enumsize;
-  if (xml_readbool(el->getAttributeValue("signed")))
+  uint4 elemId = decoder.openElement(ELEM_ENUM);
+  enumsize = decoder.readSignedInteger(ATTRIB_SIZE);
+  if (decoder.readBool(ATTRIB_SIGNED))
     enumtype = TYPE_INT;
   else
     enumtype = TYPE_UINT;
+  decoder.closeElement(elemId);
 }

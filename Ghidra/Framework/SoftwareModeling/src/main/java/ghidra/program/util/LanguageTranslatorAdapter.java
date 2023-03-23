@@ -15,6 +15,7 @@
  */
 package ghidra.program.util;
 
+import java.io.IOException;
 import java.util.*;
 
 import ghidra.program.model.address.*;
@@ -22,6 +23,7 @@ import ghidra.program.model.data.DataOrganization;
 import ghidra.program.model.data.GenericCallingConvention;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.util.Msg;
 import ghidra.util.datastruct.RangeMap;
 import ghidra.util.exception.CancelledException;
@@ -681,7 +683,7 @@ class TemporaryCompilerSpec implements CompilerSpec {
 	}
 
 	@Override
-	public void saveXml(StringBuilder buffer) {
+	public void encode(Encoder encoder) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 

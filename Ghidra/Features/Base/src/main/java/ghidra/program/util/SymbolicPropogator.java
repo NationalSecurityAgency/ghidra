@@ -20,7 +20,6 @@ import java.util.*;
 
 import org.apache.commons.collections4.map.LRUMap;
 
-import generic.util.UnsignedDataUtils;
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.cmd.function.CallDepthChangeInfo;
 import ghidra.pcode.opbehavior.*;
@@ -88,7 +87,7 @@ public class SymbolicPropogator {
 
 	// Cache instructions looked up by containing
 	Map<Address, Instruction> instructionContainingCache = new LRUMap<>(LRU_SIZE);
-	
+
 	// cache for pcode callother injection payloads
 	HashMap<Long, InjectPayload> injectPayloadCache = new HashMap<Long, InjectPayload>();
 
@@ -838,9 +837,7 @@ public class SymbolicPropogator {
 					case PcodeOp.BRANCHIND:
 						try {
 							val1 = vContext.getValue(in[0], evaluator);
-							lval1 = vContext.getConstant(val1, evaluator);
-							vt = vContext.getVarnode(minInstrAddress.getAddressSpace().getSpaceID(),
-								lval1, 0);
+							vt = getConstantOrExternal(vContext, minInstrAddress, val1);
 							makeReference(vContext, instruction, ptype, -1, vt,
 								instruction.getFlowType(), monitor);
 						}
@@ -887,8 +884,11 @@ public class SymbolicPropogator {
 									// if not, we must rely on reference to function.
 									target = resolveFunctionReference(val1.getAddress());
 								}
+								else if (vContext.isExternalSpace(val1.getSpace())) {
+									target = val1.getAddress();
+								}
 								// if the value didn't get changed, then the real value isn't in here, don't make a reference
-								if (target != null && (val1.isAddress() || val1.isConstant())) {
+								if (target != null) {
 									Reference[] refs = instruction.getReferencesFrom();
 									// make sure we aren't replacing a read ref with a call to the same place
 									if (refs.length <= 0 ||
@@ -965,7 +965,7 @@ public class SymbolicPropogator {
 					// for callother, could be an interrupt, need to look at it like a call
 					case PcodeOp.CALLOTHER:
 						PcodeOp[] callOtherPcode = doCallOtherPcodeInjection(instruction, in, out);
-						
+
 						if (callOtherPcode != null) {
 							ops = injectPcode(ops, pcodeIndex, callOtherPcode);
 							pcodeIndex = -1;
@@ -1083,6 +1083,19 @@ public class SymbolicPropogator {
 						break;
 
 					case PcodeOp.RETURN:
+
+						// if return value is a location, give evaluator a chance to check the value
+						try {
+							val1 = vContext.getValue(in[0], evaluator);
+							if (evaluator != null &&
+								evaluator.evaluateReturn(val1, vContext, instruction)) {
+								canceled = true;
+								return null;
+							}
+						}
+						catch (NotFoundException e) {
+							// constant not found, ignore
+						}
 						// put references on any return value that is a pointer and could be returned
 
 						addReturnReferences(instruction, vContext, monitor);
@@ -1306,7 +1319,7 @@ public class SymbolicPropogator {
 						val2 = vContext.getValue(in[1], false, evaluator);
 						lval1 = vContext.getConstant(val1, evaluator);
 						lval2 = vContext.getConstant(val2, evaluator);
-						lresult = UnsignedDataUtils.unsignedLessThan(lval1, lval2) ? 1 : 0;
+						lresult = Long.compareUnsigned(lval1, lval2) < 0 ? 1 : 0;
 						result = vContext.createConstantVarnode(lresult, val1.getSize());
 						vContext.putValue(out, result, mustClearAll);
 						break;
@@ -1327,7 +1340,7 @@ public class SymbolicPropogator {
 						val2 = vContext.getValue(in[1], false, evaluator);
 						lval1 = vContext.getConstant(val1, evaluator);
 						lval2 = vContext.getConstant(val2, evaluator);
-						lresult = UnsignedDataUtils.unsignedLessThanOrEqual(lval1, lval2) ? 1 : 0;
+						lresult = Long.compareUnsigned(lval1, lval2) <= 0 ? 1 : 0;
 						result = vContext.createConstantVarnode(lresult, val1.getSize());
 						vContext.putValue(out, result, mustClearAll);
 						break;
@@ -1426,6 +1439,19 @@ public class SymbolicPropogator {
 		}
 
 		return nextAddr;
+	}
+
+	private Varnode getConstantOrExternal(VarnodeContext vContext, Address minInstrAddress,
+			Varnode val1) throws NotFoundException {
+		Varnode vt;
+		if (!context.isExternalSpace(val1.getSpace())) {
+			long lval = vContext.getConstant(val1, evaluator);
+			vt = vContext.getVarnode(minInstrAddress.getAddressSpace().getSpaceID(), lval, 0);
+		}
+		else {
+			vt = val1;
+		}
+		return vt;
 	}
 
 	private Varnode getStoredLocation(VarnodeContext vContext, Varnode[] in) {
@@ -1576,7 +1602,13 @@ public class SymbolicPropogator {
 		con.nextAddr = con.baseAddr.add(instr.getDefaultFallThroughOffset());
 		con.callAddr = func.getEntryPoint();
 		con.refAddr = con.callAddr;
-		return payload.getPcode(prog, con);
+		try {
+			return payload.getPcode(prog, con);
+		}
+		catch (Exception e) {
+			Msg.warn(this, e.getMessage());
+		}
+		return null;
 	}
 
 	private PcodeOp[] checkForUponReturnCallMechanismInjection(Program prog, Function func,
@@ -1603,7 +1635,13 @@ public class SymbolicPropogator {
 		con.nextAddr = con.baseAddr.add(instr.getDefaultFallThroughOffset());
 		con.callAddr = target;
 		con.refAddr = con.callAddr;
-		return payload.getPcode(prog, con);
+		try {
+			return payload.getPcode(prog, con);
+		}
+		catch (Exception e) {
+			Msg.warn(this, e.getMessage());
+		}
+		return null;
 	}
 
 	private PcodeOp[] injectPcode(PcodeOp[] currentPcode, int pcodeIndex, PcodeOp[] replacePcode) {
@@ -1636,7 +1674,8 @@ public class SymbolicPropogator {
 	 * 
 	 * @throws NotFoundException
 	 */
-	private PcodeOp[] doCallOtherPcodeInjection(Instruction instr, Varnode ins[], Varnode out) throws NotFoundException {
+	private PcodeOp[] doCallOtherPcodeInjection(Instruction instr, Varnode ins[], Varnode out)
+			throws NotFoundException {
 		Program prog = instr.getProgram();
 
 		PcodeInjectLibrary snippetLibrary = prog.getCompilerSpec().getPcodeInjectLibrary();
@@ -1663,33 +1702,40 @@ public class SymbolicPropogator {
 		con.inputlist = inputs;
 		con.output = new ArrayList<Varnode>();
 		con.output.add(out);
-		return payload.getPcode(prog, con);
+		try {
+			return payload.getPcode(prog, con);
+		}
+		catch (Exception e) {
+			Msg.warn(this, e.getMessage());
+		}
+		return null;
 	}
-	
-	private InjectPayload findPcodeInjection(Program prog, PcodeInjectLibrary snippetLibrary, long callOtherIndex) {
-		InjectPayload payload = (InjectPayload) injectPayloadCache.get(callOtherIndex);
-		
+
+	private InjectPayload findPcodeInjection(Program prog, PcodeInjectLibrary snippetLibrary,
+			long callOtherIndex) {
+		InjectPayload payload = injectPayloadCache.get(callOtherIndex);
+
 		// has a payload value for the pcode callother index
 		if (payload != null) {
 			return payload;
 		}
-		
+
 		// value null, if contains the key, then already looked up
 		if (injectPayloadCache.containsKey(callOtherIndex)) {
 			return null;
 		}
-		
+
 		String opName = prog.getLanguage().getUserDefinedOpName((int) callOtherIndex);
-		
+
 		// segment is special named injection
-		if ("segment".equals(opName)) {	
+		if ("segment".equals(opName)) {
 			payload =
 				snippetLibrary.getPayload(InjectPayload.EXECUTABLEPCODE_TYPE, "segment_pcode");
 		}
 		else {
 			payload = snippetLibrary.getPayload(InjectPayload.CALLOTHERFIXUP_TYPE, opName);
 		}
-		
+
 		// save payload in cache for next lookup
 		injectPayloadCache.put(callOtherIndex, payload);
 		return payload;
@@ -1709,38 +1755,36 @@ public class SymbolicPropogator {
 	private int getFunctionPurge(Program prog, Function function) {
 
 		if (function == null) {
-			return getDefaultStackDepthChange(prog, Function.UNKNOWN_STACK_DEPTH_CHANGE);
-		}
-
-		int depth = function.getStackPurgeSize();
-		if (function.isStackPurgeSizeValid()) {
-			return getDefaultStackDepthChange(prog, depth);
+			return getDefaultStackDepthChange(prog, null, Function.UNKNOWN_STACK_DEPTH_CHANGE);
 		}
 
 		PrototypeModel conv = function.getCallingConvention();
-		if (conv == null) {
-			conv = prog.getCompilerSpec().getDefaultCallingConvention();
+
+		if (function.isStackPurgeSizeValid()) {
+			int depth = function.getStackPurgeSize();
+			return getDefaultStackDepthChange(prog, conv, depth);
 		}
-		if (conv != null) {
-			int callStackMod = conv.getExtrapop();
-			int callStackShift = conv.getStackshift();
-			if (callStackMod != PrototypeModel.UNKNOWN_EXTRAPOP) {
-				return callStackShift;
-			}
-		}
-		return Function.UNKNOWN_STACK_DEPTH_CHANGE;
+
+		return getDefaultStackDepthChange(prog, conv, Function.UNKNOWN_STACK_DEPTH_CHANGE);
 	}
 
 	/**
 	 * Get the default/assumed stack depth change for this language
 	 * 
+	 * @param model calling convention to use
 	 * @param depth stack depth to return if the default is unknown for the language
-	 * @return
+	 * @return default assumed stack depth
 	 */
-	private int getDefaultStackDepthChange(Program prog, int depth) {
-		PrototypeModel defaultModel = prog.getCompilerSpec().getDefaultCallingConvention();
-		int callStackMod = defaultModel.getExtrapop();
-		int callStackShift = defaultModel.getStackshift();
+	private int getDefaultStackDepthChange(Program prog, PrototypeModel model, int depth) {
+		if (model == null) {
+			model = prog.getCompilerSpec().getDefaultCallingConvention();
+		}
+		if (model == null) {
+			return Function.UNKNOWN_STACK_DEPTH_CHANGE;
+		}
+
+		int callStackMod = model.getExtrapop();
+		int callStackShift = model.getStackshift();
 		if (callStackMod != PrototypeModel.UNKNOWN_EXTRAPOP) {
 			return callStackShift;
 		}
@@ -1757,7 +1801,7 @@ public class SymbolicPropogator {
 	 * @param prog program
 	 * @param addr addr of instruction that could have an override of the stack depth
 	 * @param purge current purge depth.
-	 * @return
+	 * @return new purge, which includes the extrapop value
 	 */
 	private int addStackOverride(Program prog, Address addr, int purge) {
 		Integer stackDepthChange = CallDepthChangeInfo.getStackDepthChange(prog, addr);
@@ -1906,8 +1950,8 @@ public class SymbolicPropogator {
 	/**
 	 * Find the operand that is assigning to the varnode with contains the load or store reference offset
 	 * 
-	 * @param instruction
-	 * @param assigningVarnode
+	 * @param instruction the instruction with operands
+	 * @param assigningVarnode varnode representing the load/store assignment
 	 * @return operand index if found or -1 if not
 	 */
 	private int findOperandWithVarnodeAssignment(Instruction instruction,
@@ -2081,7 +2125,8 @@ public class SymbolicPropogator {
 	 * 
 	 * @param instruction - reference is to be placed on (used for address)
 	 * @param offset - offset into the address space. (word addressing based)
-	 * @return
+	 * 
+	 * @return spaceID of address to use for the reference
 	 */
 	private int getReferenceSpaceID(Instruction instruction, long offset) {
 		// TODO: this should be passed to the client callback to make the decision
@@ -2174,11 +2219,11 @@ public class SymbolicPropogator {
 	 * @param opIndex - operand it should be placed on, or -1 if unknown
 	 * @param vt - place to reference, could be a full address, or just a constant
 	 * @param refType - type of reference
-	 * @param monitor
+	 * @param monitor to cancel
 	 */
 	public void makeReference(VarnodeContext varnodeContext, Instruction instruction, int pcodeop,
 			int opIndex, Varnode vt, RefType refType, TaskMonitor monitor) {
-		if (!vt.isAddress()) {
+		if (!vt.isAddress() && !varnodeContext.isExternalSpace(vt.getSpace())) {
 			if (evaluator != null) {
 				evaluator.evaluateSymbolicReference(varnodeContext, instruction, vt.getAddress());
 			}
@@ -2198,13 +2243,15 @@ public class SymbolicPropogator {
 	 *  The target could be an external Address carried along and then finally used.
 	 *  External addresses are OK as long as nothing is done to the offset.
 	 *  
-	 * @param vContext - context to use for any other infomation needed
+	 * @param vContext - context to use for any other information needed
 	 * @param instruction - instruction to place the reference on.
 	 * @param opIndex - operand it should be placed on, or -1 if unknown
 	 * @param knownSpaceID target space ID or -1 if only offset is known
 	 * @param wordOffset - target offset that is word addressing based
+	 * @param size - size of the access to the location
 	 * @param refType - type of reference
-	 * @param pcodeop - pcode op that caused the reference
+	 * @param pcodeop - op that caused the reference
+	 * @param knownReference - true if reference is known to be a real reference, not speculative
 	 * @param monitor - the task monitor
 	 */
 	public void makeReference(VarnodeContext vContext, Instruction instruction, int opIndex,
@@ -2439,25 +2486,23 @@ public class SymbolicPropogator {
 		}
 		DataType dt = Undefined.getUndefinedDataType(size);
 
-		Data data = null;
 		try {
 			// create data at the location so that we record the access size
 			//   the data is undefined, and SHOULD be overwritten if something
 			//   else knows better about the location.
 			// This should only be done on references that are know good read/write, not data
-			data = program.getListing().createData(address, dt);
+			program.getListing().createData(address, dt);
 		}
 		catch (CodeUnitInsertionException e) {
-			data = program.getListing().getDefinedDataAt(address);
+			program.getListing().getDefinedDataAt(address);
 		}
 		int addrByteSize = dt.getLength();
 
 		return addrByteSize;
 	}
 
-	private int findOpIndexForRef(VarnodeContext context, Instruction instruction, int opIndex,
+	private int findOpIndexForRef(VarnodeContext vcontext, Instruction instruction, int opIndex,
 			long wordOffset, RefType refType) {
-		boolean foundExactValue = false;
 
 		int numOperands = instruction.getNumOperands();
 
@@ -2468,7 +2513,6 @@ public class SymbolicPropogator {
 				Address opAddr = instruction.getAddress(i);
 				if (opAddr != null && opAddr.getAddressableWordOffset() == wordOffset) {
 					opIndex = i;
-					foundExactValue = true;
 					break;
 				}
 			}
@@ -2483,14 +2527,12 @@ public class SymbolicPropogator {
 					// value for pointer can differ by 1 bit, which is sometimes ignored for flow
 					if (checkOffByOne(reg, wordOffset)) {
 						opIndex = i;
-						foundExactValue = true;
 						if (refType.isFlow()) {
 							break;
 						}
 					}
 					if (checkOffByOne(reg.getParentRegister(), wordOffset)) {
 						opIndex = i;
-						foundExactValue = true;
 						if (refType.isFlow()) {
 							break;
 						}
@@ -2503,7 +2545,6 @@ public class SymbolicPropogator {
 				// sort of a hack, for memory that is not byte addressable
 				if (val == wordOffset || val == (wordOffset >> 1)) {
 					opIndex = i;
-					foundExactValue = true;
 					break;
 				}
 			}
@@ -2522,7 +2563,6 @@ public class SymbolicPropogator {
 							if (val == wordOffset || val == (wordOffset >> 1) ||
 								(val + baseRegVal) == wordOffset) {
 								opIndex = i;
-								foundExactValue = true;
 								break;
 							}
 							val = ((Scalar) obj).getSignedValue();
@@ -2531,7 +2571,7 @@ public class SymbolicPropogator {
 						}
 						if (obj instanceof Register) {
 							Register reg = (Register) obj;
-							BigInteger val = context.getValue(reg, false);
+							BigInteger val = vcontext.getValue(reg, false);
 							if (val != null) {
 								baseRegVal = val.longValue();
 								if ((baseRegVal & pointerMask) == wordOffset) {
@@ -2544,7 +2584,6 @@ public class SymbolicPropogator {
 					}
 					if (offset_residue_neg == 0 || offset_residue_pos == 0) {
 						opIndex = i;
-						foundExactValue = true;
 						break;
 					}
 					if (opIndex == Reference.MNEMONIC && i == (numOperands - 1)) {
@@ -2601,7 +2640,7 @@ public class SymbolicPropogator {
 	/**
 	 * enable/disable checking return for constant references
 	 * 
-	 * @param checkReturnRefsOption
+	 * @param checkReturnRefsOption true if enable check return for constant references
 	 */
 	public void setReturnRefCheck(boolean checkReturnRefsOption) {
 		checkForReturnRefs = checkReturnRefsOption;
@@ -2610,7 +2649,7 @@ public class SymbolicPropogator {
 	/**
 	 * enable/disable checking stored values for constant references
 	 * 
-	 * @param checkStoredRefsOption
+	 * @param checkStoredRefsOption true if enable check for stored values for constant references
 	 */
 	public void setStoredRefCheck(boolean checkStoredRefsOption) {
 		checkForStoredRefs = checkStoredRefsOption;

@@ -255,6 +255,13 @@ class SymbolDatabaseAdapterV0 extends SymbolDatabaseAdapter {
 			symbolTable.indexIterator(V0_SYMBOL_NAME_COL, val, val, true));
 	}
 
+	@Override
+	RecordIterator scanSymbolsByName(String startName) throws IOException {
+		StringField val = new StringField(startName);
+		return new V0ConvertedRecordIterator(
+			symbolTable.indexIterator(V0_SYMBOL_NAME_COL, val, null, true));
+	}
+
 	private class V0ConvertedRecordIterator implements RecordIterator {
 
 		private RecordIterator symIter;

@@ -339,9 +339,10 @@ public class ScalarSearchModel extends AddressBasedTableModel<ScalarRowObject> {
 				return (o1.isSigned() ? 1 : -1);
 			}
 
-			return o1.compareTo(o2);
+			return o1.isSigned()
+					? Long.compare(o1.getSignedValue(), o2.getSignedValue())
+					: Long.compareUnsigned(o1.getUnsignedValue(), o2.getUnsignedValue());
 		}
-
 	}
 
 	private abstract class AbstractScalarValueRenderer extends AbstractGColumnRenderer<Scalar> {

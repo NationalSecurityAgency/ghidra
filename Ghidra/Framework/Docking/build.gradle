@@ -15,6 +15,7 @@
  */
 apply from: "$rootProject.projectDir/gradle/distributableGhidraModule.gradle"
 apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
+apply from: "$rootProject.projectDir/gradle/helpProject.gradle"
 apply from: "$rootProject.projectDir/gradle/jacocoProject.gradle"
 apply from: "$rootProject.projectDir/gradle/javaTestProject.gradle"
 apply from: "$rootProject.projectDir/gradle/javadoc.gradle"
@@ -23,23 +24,13 @@ apply plugin: 'eclipse'
 eclipse.project.name = 'Framework Docking'
 
 dependencies {
-	api project(':Generic')
-	api 'net.java.dev.timingframework:timingframework:1.0'
-	
-	// Only include this debug version of the jh library if necessary.
-	//api name:'jh2.with.debug'
-	api 'javax.help:javahelp:2.0.05'
-	
+	api project(':Help')
 	
 	// include code from src/test in Generic
 	testImplementation project(path: ':Generic', configuration: 'testArtifacts')
 	compileOnly "junit:junit:4.12"
 }
 
-// For Java 9, we must explicitly export references to the internal classes we are using.
-// We export them to all "unnamed" modules, which are modules that don't define themselves
-// as a new Java 9 style module.  Ghidra is currently using unnamed modules everywhere.
 ext.addExports([
-	'java.desktop/sun.awt=ALL-UNNAMED',
-	'java.desktop/sun.awt.image=ALL-UNNAMED'
+	'java.desktop/sun.awt=ALL-UNNAMED'
 ])

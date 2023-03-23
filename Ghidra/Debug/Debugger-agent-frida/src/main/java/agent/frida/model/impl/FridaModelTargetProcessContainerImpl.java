@@ -25,6 +25,7 @@ import agent.frida.manager.*;
 import agent.frida.model.iface1.FridaModelTargetConfigurable;
 import agent.frida.model.iface2.*;
 import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.error.DebuggerIllegalArgumentException;
 import ghidra.dbg.target.TargetConfigurable;
 import ghidra.dbg.target.TargetObject;
@@ -64,7 +65,7 @@ public class FridaModelTargetProcessContainerImpl extends FridaModelTargetObject
 		FridaModelTargetProcess process = getTargetProcess(proc);
 		changeElements(List.of(), List.of(process), Map.of(), "Added");
 		process.processStarted(proc);
-		getListeners().fire.event(getProxy(), null, TargetEventType.PROCESS_CREATED,
+		broadcast().event(getProxy(), null, TargetEventType.PROCESS_CREATED,
 			"Process " + FridaClient.getId(proc) + " started " + process.getName(),
 			List.of(process));
 	}
@@ -99,7 +100,7 @@ public class FridaModelTargetProcessContainerImpl extends FridaModelTargetObject
 	*/
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return getManager().listProcesses(session.getSession()).thenAccept(byIID -> {
 			List<TargetObject> processes;
 			synchronized (this) {

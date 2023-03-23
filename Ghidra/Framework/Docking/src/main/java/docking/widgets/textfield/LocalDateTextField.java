@@ -31,6 +31,8 @@ import javax.swing.JTextField;
 import javax.swing.event.*;
 
 import docking.util.GraphicsUtils;
+import generic.theme.GThemeDefaults.Colors.Messages;
+import generic.theme.Gui;
 import ghidra.util.SystemUtilities;
 
 /**
@@ -226,15 +228,17 @@ public class LocalDateTextField {
 
 	private class MyTextField extends JTextField {
 
+		private static final String FONT_ID = "font.input.hint";
+
 		@Override
 		protected void paintComponent(Graphics g) {
 			super.paintComponent(g);
 
 			if (showFieldDecoration) {
-				Font font = new Font("Monospaced", Font.PLAIN, 10);
+				Font font = Gui.getFont(FONT_ID);
 				Font savedFont = g.getFont();
 				g.setFont(font);
-				g.setColor(Color.LIGHT_GRAY);
+				g.setColor(Messages.HINT);
 				FontMetrics fontMetrics = getFontMetrics(font);
 				String label = isMonthMode ? MONTH_LABEL : DAY_LABEL;
 				int stringWidth = fontMetrics.stringWidth(label);

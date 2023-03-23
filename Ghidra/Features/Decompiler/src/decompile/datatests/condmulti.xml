@@ -1,0 +1,29 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<!--
+      An example of a conditional constant propagated along multiple paths that flow together
+-->
+<bytechunk space="ram" offset="0x100825" readonly="true">
+          554889e5897dfc8975f883
+7dfc0075098b45fc8905d60720008b45
+fc8905d9072000837dfc0a75188b45fc
+8905c2072000837df8067f098b45fc89
+05b7072000905dc3
+</bytechunk>
+<symbol space="ram" offset="0x100825" name="condconst_multi"/>
+</binaryimage>
+<script>
+  <com>parse line extern int4 condconst_multi(int4 a,int4 b);</com>
+  <com>map addr r0x301014 int4 glob1</com>
+  <com>map addr r0x301020 int4 glob2</com>
+  <com>map addr r0x301018 int4 glob3</com>
+  <com>map addr r0x30101c int4 glob4</com>
+  <com>lo fu condconst_multi</com>
+  <com>decompile</com>
+  <com>print C</com>
+</script>
+<stringmatch name="Conditional Multi #1" min="1" max="1">glob1 = 0;</stringmatch>
+<stringmatch name="Conditional Multi #2" min="1" max="1">glob2 = a;</stringmatch>
+<stringmatch name="Conditional Multi #3" min="1" max="1">glob3 = 10[,;]</stringmatch>
+<stringmatch name="Conditional Multi #4" min="1" max="1">glob4 = 10;</stringmatch>
+</decompilertest>

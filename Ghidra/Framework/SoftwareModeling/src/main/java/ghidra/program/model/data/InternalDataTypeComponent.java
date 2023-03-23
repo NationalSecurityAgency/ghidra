@@ -41,9 +41,13 @@ public interface InternalDataTypeComponent extends DataTypeComponent {
 			buffer.append("(" + ((BitFieldDataType) c.getDataType()).getBitOffset() + ")");
 		}
 		buffer.append("  " + c.getLength());
-		buffer.append("  " + c.getFieldName());
+		String name = c.getFieldName();
+		if (name == null) {
+			name = "";
+		}
+		buffer.append("  " + name);
 		String cmt = c.getComment();
-		buffer.append("  " + ((cmt != null) ? ("\"" + cmt + "\"") : cmt));
+		buffer.append("  " + ((cmt != null) ? ("\"" + cmt + "\"") : ""));
 		return buffer.toString();
 	}
 

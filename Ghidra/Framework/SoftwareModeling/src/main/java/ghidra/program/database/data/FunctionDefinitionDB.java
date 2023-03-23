@@ -223,6 +223,9 @@ class FunctionDefinitionDB extends DataTypeDB implements FunctionDefinition {
 
 	@Override
 	public DataType clone(DataTypeManager dtm) {
+		if (dtm == getDataTypeManager()) {
+			return this;
+		}
 		return new FunctionDefinitionDataType(getCategoryPath(), getName(), this, getUniversalID(),
 			getSourceArchive(), getLastChangeTime(), getLastChangeTimeInSourceArchive(), dtm);
 	}

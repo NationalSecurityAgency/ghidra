@@ -64,6 +64,52 @@ public class DataTypeUtilitiesTest extends AbstractGenericTest {
 	}
 
 	@Test
+	public void testIsSameKindDataType() {
+
+		assertTrue(
+			DataTypeUtilities.isSameKindDataType(IntegerDataType.dataType, ShortDataType.dataType));
+		assertFalse(
+			DataTypeUtilities.isSameKindDataType(FloatDataType.dataType, ShortDataType.dataType));
+
+		assertTrue(
+			DataTypeUtilities.isSameKindDataType(new PointerDataType(IntegerDataType.dataType),
+				new PointerDataType(ShortDataType.dataType)));
+		assertFalse(
+			DataTypeUtilities.isSameKindDataType(new PointerDataType(FloatDataType.dataType),
+				new PointerDataType(ShortDataType.dataType)));
+
+		assertTrue(
+			DataTypeUtilities.isSameKindDataType(new StructureDataType("X", 10),
+				new StructureDataType("Y", 5)));
+		assertTrue(
+			DataTypeUtilities.isSameKindDataType(new UnionDataType("X"), new UnionDataType("Y")));
+		assertFalse(
+			DataTypeUtilities.isSameKindDataType(new StructureDataType("X", 10),
+				new UnionDataType("Y")));
+
+		assertTrue(
+			DataTypeUtilities.isSameKindDataType(
+				new PointerDataType(new StructureDataType("X", 10)),
+				new PointerDataType(new StructureDataType("Y", 5))));
+		assertTrue(
+			DataTypeUtilities.isSameKindDataType(new PointerDataType(new UnionDataType("X")),
+				new PointerDataType(new UnionDataType("Y"))));
+		assertFalse(
+			DataTypeUtilities.isSameKindDataType(
+				new PointerDataType(new StructureDataType("X", 10)),
+				new PointerDataType(new UnionDataType("Y"))));
+
+		assertTrue(
+			DataTypeUtilities.isSameKindDataType(
+				new TypedefDataType("Foo", new PointerDataType(new StructureDataType("X", 10))),
+				new PointerDataType(new StructureDataType("Y", 5))));
+		assertFalse(
+			DataTypeUtilities.isSameKindDataType(
+				new TypedefDataType("Foo", new PointerDataType(new StructureDataType("X", 10))),
+				new PointerDataType(new UnionDataType("Y"))));
+	}
+
+	@Test
 	public void testEqualsIgnoreConflictviaManagedDataTypes() throws Exception {
 
 		DataType byteDt = new ByteDataType();

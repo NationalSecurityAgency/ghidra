@@ -21,6 +21,7 @@ import com.sun.jna.platform.win32.Guid.IID;
 import com.sun.jna.platform.win32.WinDef.*;
 import com.sun.jna.platform.win32.WinNT.HRESULT;
 
+import agent.dbgeng.jna.dbgeng.DbgEngNative.DEBUG_CREATE_PROCESS_OPTIONS;
 import agent.dbgeng.jna.dbgeng.UnknownWithUtils.VTableIndex;
 import agent.dbgeng.jna.dbgeng.event.IDebugEventCallbacksWide;
 import agent.dbgeng.jna.dbgeng.io.IDebugOutputCallbacksWide;
@@ -89,7 +90,7 @@ public interface IDebugClient5 extends IDebugClient4 {
 
 	HRESULT GetOutputLinePrefixWide(char[] Buffer, ULONG BufferSize, ULONGByReference PrefixSize);
 
-	HRESULT SetOuutputLinePrefixWide(WString Prefix);
+	HRESULT SetOutputLinePrefixWide(WString Prefix);
 
 	HRESULT GetIdentityWide(char[] Buffer, ULONG BufferSize, ULONGByReference IdentitySize);
 
@@ -102,7 +103,8 @@ public interface IDebugClient5 extends IDebugClient4 {
 	HRESULT CreateProcess2(ULONGLONG Server, String CommandLine, Pointer OptionsBuffer,
 			ULONG OptionsBufferSize, String InitialDirectory, String Environment);
 
-	HRESULT CreateProcess2Wide(ULONGLONG Server, WString CommandLine, Pointer OptionsBuffer,
+	HRESULT CreateProcess2Wide(ULONGLONG Server, WString CommandLine,
+			DEBUG_CREATE_PROCESS_OPTIONS OptionsBuffer,
 			ULONG OptionsBufferSize, WString InitialDirectory, WString Environment);
 
 	HRESULT CreateProcessAndAttach2(ULONGLONG Server, String CommandLine, Pointer OptionsBuffer,

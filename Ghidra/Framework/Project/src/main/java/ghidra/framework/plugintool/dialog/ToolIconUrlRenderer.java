@@ -15,7 +15,6 @@
  */
 package ghidra.framework.plugintool.dialog;
 
-import java.awt.Color;
 import java.awt.Component;
 
 import javax.swing.BorderFactory;
@@ -24,13 +23,14 @@ import javax.swing.border.Border;
 
 import docking.util.image.ToolIconURL;
 import docking.widgets.list.GListCellRenderer;
+import generic.theme.GThemeDefaults.Colors.Palette;
 
 class ToolIconUrlRenderer extends GListCellRenderer<ToolIconURL> {
 	private Border emptyBorder = BorderFactory.createEmptyBorder(5, 5, 5, 5);
-	private Border blueLineBorder = BorderFactory.createLineBorder(Color.BLUE, 2);
-	private Border emptyBlueBorder = BorderFactory.createEmptyBorder(3, 3, 3, 3);
-	private Border blueCompoundBorder =
-		BorderFactory.createCompoundBorder(emptyBlueBorder, blueLineBorder);
+	private Border selectedBorder = BorderFactory.createLineBorder(Palette.BLUE, 2);
+	private Border emptySelectedBorder = BorderFactory.createEmptyBorder(3, 3, 3, 3);
+	private Border selectedCompoundBorder =
+		BorderFactory.createCompoundBorder(emptySelectedBorder, selectedBorder);
 
 	ToolIconUrlRenderer() {
 		setBorder(emptyBorder);
@@ -49,7 +49,7 @@ class ToolIconUrlRenderer extends GListCellRenderer<ToolIconURL> {
 		// lie to our parent about the selected status to disable the background selection color
 		super.getListCellRendererComponent(list, toolIconUrl, index, false, cellHasFocus);
 		setIcon(toolIconUrl.getIcon());
-		setBorder(isSelected ? blueCompoundBorder : emptyBorder);
+		setBorder(isSelected ? selectedCompoundBorder : emptyBorder);
 		return this;
 	}
 

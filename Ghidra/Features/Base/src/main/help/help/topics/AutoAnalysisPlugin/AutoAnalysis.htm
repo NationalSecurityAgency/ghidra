@@ -7,7 +7,7 @@
 
     <TITLE>Auto Analysis</TITLE>
     <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
-    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
   </HEAD>
 
   <BODY lang="EN-US">
@@ -53,7 +53,7 @@
 
     <BLOCKQUOTE>
       <P>A program imported through Front End will have no initial analysis applied to it. To force
-      analysis, use the <B>Analysis<IMG alt="" src="images/arrow.gif"> Auto Analysis</B> menu
+      analysis, use the <B>Analysis<IMG alt="" src="help/shared/arrow.gif"> Auto Analysis</B> menu
       item. The Auto Analysis Options dialog is displayed to allow changes to the analysis options
       before beginning analysis.</P>
     </BLOCKQUOTE>
@@ -63,15 +63,15 @@
     <BLOCKQUOTE>
       <BLOCKQUOTE>
         <BLOCKQUOTE>
-          <P><IMG alt="" src="images/note.png">The display of this dialog may be controlled
+          <P><IMG alt="" src="help/shared/note.png">The display of this dialog may be controlled
           from the Auto Analysis Tool Options. Select the <I>Auto Analysis</I> node in the
-          <B>Edit</B><IMG alt="" src="images/arrow.gif"> <B>Tool Options</B> menu and check
+          <B>Edit</B><IMG alt="" src="help/shared/arrow.gif"> <B>Tool Options</B> menu and check
           or uncheck <I>Show Analysis Options</I>. When unchecked, the next time Auto Analysis is
           chosen, the options dialog is skipped, and analysis begins immediately.</P>
           
           
           
-		<P><IMG alt="" src="images/tip.png"> Any analyzer that is not in its default enablement
+		<P><IMG alt="" src="help/shared/tip.png"> Any analyzer that is not in its default enablement
 		state will show a yellowish color in the table of analyzer names.</P>
           
           
@@ -112,10 +112,10 @@
         architecture differing from the current program will <B>not</B> be analyzed using this
         action.</FONT></P>
 
-        <P><IMG alt="" src="images/note.png">
+        <P><IMG alt="" src="help/shared/note.png">
          If the option to show the analysis dialog is disabled, then using this action <B>will</B>
         analyze all open programs <B>using their current analysis settings</B>. To disable the
-        analysis dialog go to <B>Edit <IMG alt="" src="images/arrow.gif"> Tool Options...</B>
+        analysis dialog go to <B>Edit <IMG alt="" src="help/shared/arrow.gif"> Tool Options...</B>
         to show the options dialog upon which, select the <B>Auto Analysis</B> options and
         de-select <B>Show Analysis Options</B>.</P>
       </BLOCKQUOTE>
@@ -135,17 +135,17 @@
 
     <BLOCKQUOTE>
       <P>Each Analyzer can be turned off using the <I>Analysis</I> panel in the <B>Edit<IMG alt=""
-      src="images/arrow.gif"> ProgramOptions</B> dialog.</P>
+      src="help/shared/arrow.gif"> ProgramOptions</B> dialog.</P>
     </BLOCKQUOTE>
 
     <BLOCKQUOTE>
       <P>The <I>Analysis</I> panel configures Analyzer specific options and which Analyzers are
       enabled to run. To view these options, choose <B>Edit<IMG alt="" src=
-      "images/arrow.gif"> Program Options...</B>; then open the Analysis node in the Options
+      "help/shared/arrow.gif"> Program Options...</B>; then open the Analysis node in the Options
       tree. Each analyzer is represented as a leaf under the Analysis folder node.</P>
 
       <BLOCKQUOTE>
-        <P><IMG alt="" src="images/note.png"> An analyzer may be marked as (Prototype). These
+        <P><IMG alt="" src="help/shared/note.png"> An analyzer may be marked as (Prototype). These
         analyzers can be very useful on certain programs, but have not been exercised on a large
         number of programs. Use them with caution.</P>
       </BLOCKQUOTE>
@@ -155,9 +155,9 @@
 
     <BLOCKQUOTE>
       <BLOCKQUOTE>
-        <P><IMG alt="" src="images/note.png"> A separate dialog showing the <I>Analysis</I>
+        <P><IMG alt="" src="help/shared/note.png"> A separate dialog showing the <I>Analysis</I>
         options is also displayed after a new program has been imported, or the <B>Analysis<IMG
-        alt="" src="images/arrow.gif"> Auto Analysis</B> menu item is chosen.</P>
+        alt="" src="help/shared/arrow.gif"> Auto Analysis</B> menu item is chosen.</P>
         
         <P><IMG alt="" src="images/warning.help.png"> <FONT color="red">Some analyzers only work
         on certain processors. For example, the MIPS Instruction Analyzer only works on MIPS
@@ -165,8 +165,8 @@
         with the analyzer.</FONT></P>
       </BLOCKQUOTE>
       
-      <P style="background-color: #FFF0E0;">
-		<IMG SRC="../../shared/warning.png" />Note that multi-user merge does not currently support
+      <P style="background-color: #FFF0E0; color: black;">
+		<IMG SRC="help/shared/warning.png" />Note that multi-user merge does not currently support
 		merging of Program Options (including Analysis Options).  Options stored in shared Program database
 		following a conflicting checkin may not reflect option settings specified prior to checkin.
 	</P>
@@ -182,9 +182,9 @@
 			the current program.</LI>
 		</UL>
 		
-		<P style="background-color: #FFF0E0;">
-		<IMG SRC="../../shared/warning.png" />Access to stored configurations is not currently
-		aupported across different versions of Ghidra.
+		<P style="background-color: #FFF0E0; color: black;">
+		<IMG SRC="help/shared/warning.png" />Access to stored configurations is not currently
+		supported across different versions of Ghidra.
 		</P>
 		
     </BLOCKQUOTE>
@@ -452,8 +452,8 @@
 					</UL>	
 				</P>
 
-				<P style="background-color: #FFF0E0;">
-					<IMG SRC="../../shared/warning.png" />When using an external GNU demangler, 
+				<P style="background-color: #FFF0E0; color: black;">
+					<IMG SRC="help/shared/warning.png" />When using an external GNU demangler, 
 					please understand the risks associated with using that version of the 
 					software.   The <CODE>demangler_gnu_v2_24</CODE> version of the
 					demangler is a modified version of GNU's <CODE>c++filt (v2.24)</CODE>.  The
@@ -464,7 +464,7 @@
 			</BLOCKQUOTE>
 		
 		<P>
-		<IMG SRC="../../shared/tip.png" />The Demangler Analyzer is designed to be extensible.
+		<IMG SRC="help/shared/tip.png" />The Demangler Analyzer is designed to be extensible.
 		You can extend <CODE>ghidra.app.plugin.core.analysis.AbstractDemanglerAnalyzer</CODE> 
 		to add your demangler analyzer callback.  This allows you to precisely control
 		which demanglers get called, as well as which options are used.
@@ -661,4 +661,4 @@
      <BR>
   </BODY>
 </HTML>
-
+

@@ -38,7 +38,7 @@ public class DataReferenceProgramCorrelator extends VTAbstractReferenceProgramCo
 	 * @param correlatorName The correlator name string passed from the factory.
 	 * @param options {@code ToolOptions}
 	 */
-	DataReferenceProgramCorrelator(ServiceProvider serviceProvider, Program sourceProgram,
+	public DataReferenceProgramCorrelator(ServiceProvider serviceProvider, Program sourceProgram,
 			AddressSetView sourceAddressSet, Program destinationProgram,
 			AddressSetView destinationAddressSet, String correlatorName, ToolOptions options) {
 		super(serviceProvider, sourceProgram, sourceAddressSet, destinationProgram,

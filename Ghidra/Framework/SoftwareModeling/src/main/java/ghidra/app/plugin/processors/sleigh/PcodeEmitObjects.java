@@ -107,7 +107,7 @@ public class PcodeEmitObjects extends PcodeEmit {
 	 */
 	@Override
 	void dump(Address instrAddr, int opcode, VarnodeData[] in, int isize, VarnodeData out) {
-		opcode = checkOverrides(opcode, in);
+		int updatedOpcode = checkOverrides(opcode, in);
 		Varnode outvn;
 		if (out != null) {
 			outvn = new Varnode(out.space.getAddress(out.offset), out.size);
@@ -115,11 +115,14 @@ public class PcodeEmitObjects extends PcodeEmit {
 		else {
 			outvn = null;
 		}
+		if (opcode == PcodeOp.CALLOTHER && updatedOpcode == PcodeOp.CALL) {
+			isize = 1;  //CALLOTHER_CALL_OVERRIDE, ignore inputs other than call dest
+		}
 		Varnode[] invn = new Varnode[isize];
 		for (int i = 0; i < isize; ++i) {
 			invn[i] = new Varnode(in[i].space.getAddress(in[i].offset), in[i].size);
 		}
-		PcodeOp op = new PcodeOp(instrAddr, oplist.size(), opcode, invn, outvn);
+		PcodeOp op = new PcodeOp(instrAddr, oplist.size(), updatedOpcode, invn, outvn);
 		oplist.add(op);
 	}
 

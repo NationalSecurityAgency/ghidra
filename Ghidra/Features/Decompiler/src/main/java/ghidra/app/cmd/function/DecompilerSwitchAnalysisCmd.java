@@ -103,11 +103,21 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand {
 		JumpTable[] tables = hfunction.getJumpTables();
 		for (JumpTable table : tables) {
 			Address switchAddr = table.getSwitchAddress();
-			Instruction instr = program.getListing().getInstructionAt(switchAddr);
 
+			Instruction instr = program.getListing().getInstructionAt(switchAddr);
 			if (instr == null) {
 				continue;
 			}
+
+			Function containingFunction =
+				program.getFunctionManager().getFunctionContaining(switchAddr);
+			if (containingFunction != null && !containingFunction.equals(f)) {
+				continue; // skip switch owned by a different defined function
+			}
+
+			AddressSetView containingBody =
+				containingFunction != null ? containingFunction.getBody() : null;
+
 			Reference[] referencesFrom = instr.getReferencesFrom();
 			Address[] tableDest = table.getCases();
 
@@ -116,6 +126,11 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand {
 			for (tableIndx = 0; tableIndx < tableDest.length; tableIndx++) {
 				monitor.checkCanceled();
 				boolean foundit = false;
+				if (containingBody != null && !containingBody.contains(tableDest[tableIndx])) {
+					// switch case missing from owner function's body
+					foundNotThere = true;
+					break;
+				}
 				for (Reference element : referencesFrom) {
 					if (element.getToAddress().equals(tableDest[tableIndx])) {
 						foundit = true;

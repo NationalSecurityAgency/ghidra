@@ -27,6 +27,7 @@ import docking.action.*;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.filechooser.GhidraFileChooserPanel;
 import docking.widgets.table.GFilterTable;
+import generic.theme.GIcon;
 import ghidra.framework.options.OptionsChangeListener;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
@@ -34,7 +35,6 @@ import ghidra.framework.plugintool.util.OptionsService;
 import ghidra.util.*;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.layout.MiddleLayout;
-import resources.ResourceManager;
 
 public class SampleTableProvider extends ComponentProviderAdapter implements OptionsChangeListener {
 
@@ -69,6 +69,7 @@ public class SampleTableProvider extends ComponentProviderAdapter implements Opt
 
 	void dispose() {
 		filterTable.dispose();
+		fileChooserPanel.dispose();
 		removeFromTool();
 	}
 
@@ -154,7 +155,7 @@ public class SampleTableProvider extends ComponentProviderAdapter implements Opt
 			}
 
 		};
-		ImageIcon icon = ResourceManager.loadImage("images/table.png");
+		Icon icon = new GIcon("icon.sample.plugin.action.show.options");
 		optionsAction.setToolBarData(new ToolBarData(icon));
 
 		DockingAction saveTableDataAction = new DockingAction("Save Table Data", plugin.getName()) {
@@ -189,7 +190,7 @@ public class SampleTableProvider extends ComponentProviderAdapter implements Opt
 				return SwingUtilities.isDescendingFrom((Component) sourceObject, filterTable);
 			}
 		};
-		icon = ResourceManager.loadImage("images/disk.png");
+		icon = new GIcon("icon.sample.plugin.action.save");
 		saveTableDataAction.setToolBarData(new ToolBarData(icon));
 		saveTableDataAction.setPopupMenuData(new MenuData(new String[] { "Save Data" }));
 

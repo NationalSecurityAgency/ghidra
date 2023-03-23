@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.label;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import org.junit.*;
 
@@ -37,8 +37,6 @@ public class OperandLabelDialogTest extends AbstractGhidraHeadedIntegrationTest 
 	private LabelMgrPlugin plugin;
 	private CodeBrowserPlugin cb;
 	private Program program;
-	private OperandLabelDialog dialog;
-	private GhidraComboBox<?> combo;
 	private SetOperandLabelAction setLabelAction;
 
 	@Before
@@ -50,10 +48,6 @@ public class OperandLabelDialogTest extends AbstractGhidraHeadedIntegrationTest 
 		tool = env.launchDefaultTool(program);
 		plugin = getPlugin(tool, LabelMgrPlugin.class);
 		cb = getPlugin(tool, CodeBrowserPlugin.class);
-
-		dialog = runSwing(() -> plugin.getOperandLabelDialog());
-
-		combo = (GhidraComboBox<?>) findComponentByName(dialog, "MYCHOICE");
 
 		setLabelAction = (SetOperandLabelAction) getAction(plugin, "Set Operand Label");
 	}
@@ -80,7 +74,10 @@ public class OperandLabelDialogTest extends AbstractGhidraHeadedIntegrationTest 
 		performAction(setLabelAction, context, false);
 		waitForSwing();
 
-		runSwing(() -> combo.setSelectedItem("bob"));
+		OperandLabelDialog dialog = waitForDialogComponent(OperandLabelDialog.class);
+		GhidraComboBox<?> combo = (GhidraComboBox<?>) findComponentByName(dialog, "MYCHOICE");
+
+		setSelectedItem(combo, "bob");
 
 		pressButtonByText(dialog, "OK");
 		waitForSwing();
@@ -94,7 +91,10 @@ public class OperandLabelDialogTest extends AbstractGhidraHeadedIntegrationTest 
 		performAction(setLabelAction, context, false);
 		waitForSwing();
 
-		runSwing(() -> combo.setSelectedItem("b"));
+		dialog = waitForDialogComponent(OperandLabelDialog.class);
+		combo = (GhidraComboBox<?>) findComponentByName(dialog, "MYCHOICE");
+
+		setSelectedItem(combo, "b");
 		pressButtonByText(dialog, "OK");
 
 		program.flushEvents();
@@ -108,4 +108,7 @@ public class OperandLabelDialogTest extends AbstractGhidraHeadedIntegrationTest 
 		assertEquals("dword ptr [b]", cb.getCurrentFieldText());
 	}
 
+	private void setSelectedItem(GhidraComboBox<?> combo, String s) {
+		runSwing(() -> combo.setSelectedItem(s));
+	}
 }

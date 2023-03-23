@@ -285,4 +285,8 @@ public class TraceEventListener extends AnnotatedDebuggerAttributeListener {
 		reorderer.dispose();
 	}
 
+	public CompletableFuture<Void> flushEvents() {
+		return reorderer.flushEvents();
+	}
+
 }

@@ -15,9 +15,8 @@
  */
 package ghidra.trace.model.memory;
 
-import com.google.common.collect.Range;
-
 import ghidra.dbg.target.TargetRegister;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.target.TraceObjectInterface;
 import ghidra.trace.model.target.annot.TraceObjectInfo;
 import ghidra.trace.model.thread.TraceObjectThread;
@@ -27,7 +26,7 @@ import ghidra.trace.model.thread.TraceObjectThread;
 	targetIf = TargetRegister.class,
 	shortName = "register",
 	fixedKeys = {
-		TargetRegister.LENGTH_ATTRIBUTE_NAME
+		TargetRegister.BIT_LENGTH_ATTRIBUTE_NAME
 	})
 public interface TraceObjectRegister extends TraceObjectInterface {
 	String KEY_STATE = "_state";
@@ -36,13 +35,17 @@ public interface TraceObjectRegister extends TraceObjectInterface {
 
 	String getName();
 
-	int getLength();
+	int getBitLength();
 
-	void setValue(Range<Long> lifespan, byte[] value);
+	default int getByteLength() {
+		return (getBitLength() + 7) / 8;
+	}
+
+	void setValue(Lifespan lifespan, byte[] value);
 
 	byte[] getValue(long snap);
 
-	void setState(Range<Long> lifespan, TraceMemoryState state);
+	void setState(Lifespan lifespan, TraceMemoryState state);
 
 	TraceMemoryState getState(long snap);
 

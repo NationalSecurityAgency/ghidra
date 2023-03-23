@@ -1985,7 +1985,8 @@ define pcodeop Sleep_Standby;
     r15 = r15 - 4;
     *r15 = pc + 2;
 
-    call [vbr + (imm_00_07 * 4)];
+    pc = *(vbr + (imm_00_07 * 4));
+    call [pc];
 }
 
 @if defined(FPU)

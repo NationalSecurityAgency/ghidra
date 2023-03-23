@@ -24,7 +24,7 @@ import javax.swing.Timer;
 
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
-import ghidra.framework.main.FrontEndOnly;
+import ghidra.framework.main.ApplicationLevelOnlyPlugin;
 import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.model.*;
 import ghidra.framework.options.OptionsChangeListener;
@@ -49,7 +49,7 @@ import ghidra.util.exception.AssertException;
 )
 //@formatter:on
 public class RecoverySnapshotMgrPlugin extends Plugin
-		implements FrontEndOnly, OptionsChangeListener, ProjectListener {
+		implements ApplicationLevelOnlyPlugin, OptionsChangeListener, ProjectListener {
 
 	private final static String OPTIONS_TITLE = "Recovery";
 	private final static String SNAPSHOT_PERIOD_OPTION = "Snapshot period (minutes, 0=disabled)";

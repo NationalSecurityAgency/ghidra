@@ -45,7 +45,7 @@ import ghidra.util.task.TaskMonitor;
 public class ExternalDebugFileSectionProvider extends BaseSectionProvider {
 	public static final String PROGRAM_INFO_DWARF_EXTERNAL_DEBUG_FILE = "DWARF External Debug File";
 
-	public static DWARFSectionProvider createSectionProviderFor(Program program,
+	public static DWARFSectionProvider createExternalSectionProviderFor(Program program,
 			TaskMonitor monitor) {
 		try {
 			ExternalDebugInfo extDebugInfo = ExternalDebugInfo.fromProgram(program);
@@ -123,7 +123,7 @@ public class ExternalDebugFileSectionProvider extends BaseSectionProvider {
 	}
 
 	/**
-	 * Returns the previouly saved value of the external debug file location from the program's
+	 * Returns the previously saved value of the external debug file location from the program's
 	 * metadata.
 	 *  
 	 * @param program DWARF that previously was analyzed 

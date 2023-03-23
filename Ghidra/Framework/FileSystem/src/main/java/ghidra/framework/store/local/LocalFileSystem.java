@@ -71,15 +71,14 @@ public abstract class LocalFileSystem implements FileSystem {
 
 	private static boolean refreshRequired = false;
 
+	private boolean disposed = false;
+
 	protected final File root;
 	protected final boolean isVersioned;
 	protected final boolean readOnly;
 	protected final FileSystemEventManager eventManager;
 
 	private RepositoryLogger repositoryLogger;
-
-	// Always false in production; can be manipulated by tests
-	private boolean isShared;
 
 	/**
 	 * Construct a local filesystem for existing data
@@ -218,10 +217,9 @@ public abstract class LocalFileSystem implements FileSystem {
 				if (item != null) {
 					item.deleteContent(null);
 				}
-				else {
-					// make sure we get item out of index
-					deallocateItemStorage(folderPath, itemName);
-				}
+
+				// make sure we get item out of index
+				deallocateItemStorage(folderPath, itemName);
 			}
 			String parentPath = folderPath + (folderPath.endsWith(SEPARATOR) ? "" : SEPARATOR);
 			for (String subfolder : getFolderNames(folderPath)) {
@@ -286,25 +284,16 @@ public abstract class LocalFileSystem implements FileSystem {
 		return refreshRequired;
 	}
 
-	/*
-	 * @see ghidra.framework.store.FileSystem#isVersioned()
-	 */
 	@Override
 	public boolean isVersioned() {
 		return isVersioned;
 	}
 
-	/*
-	 * @see ghidra.framework.store.FileSystem#isOnline()
-	 */
 	@Override
 	public boolean isOnline() {
-		return true;
+		return !disposed;
 	}
 
-	/*
-	 * @see ghidra.framework.store.FileSystem#isReadOnly()
-	 */
 	@Override
 	public boolean isReadOnly() {
 		return readOnly;
@@ -389,9 +378,6 @@ public abstract class LocalFileSystem implements FileSystem {
 		return getItemNames(folderPath, false);
 	}
 
-	/*
-	 * @see ghidra.framework.store.FileSystem#getItem(java.lang.String, java.lang.String)
-	 */
 	@Override
 	public synchronized LocalFolderItem getItem(String folderPath, String name) throws IOException {
 		try {
@@ -425,9 +411,6 @@ public abstract class LocalFileSystem implements FileSystem {
 		throw new UnsupportedOperationException("getItem by File-ID");
 	}
 
-	/*
-	 * @see ghidra.framework.store.FileSystem#createDatabase(java.lang.String, java.lang.String, java.lang.String, db.buffers.BufferFile, java.lang.String, java.lang.String, boolean, ghidra.util.task.TaskMonitor, java.lang.String)
-	 */
 	@Override
 	public synchronized LocalDatabaseItem createDatabase(String parentPath, String name,
 			String fileID, BufferFile bufferFile, String comment, String contentType,
@@ -484,9 +467,6 @@ public abstract class LocalFileSystem implements FileSystem {
 		return item;
 	}
 
-	/*
-	 * @see ghidra.framework.store.FileSystem#createDatabase(java.lang.String, java.lang.String, java.lang.String, int, java.lang.String)
-	 */
 	@Override
 	public LocalManagedBufferFile createDatabase(String parentPath, String name, String fileID,
 			String contentType, int bufferSize, String user, String projectPath)
@@ -514,9 +494,6 @@ public abstract class LocalFileSystem implements FileSystem {
 		return bufferFile;
 	}
 
-	/*
-	 * @see ghidra.framework.store.FileSystem#createDataFile(java.lang.String, java.lang.String, java.io.InputStream, java.lang.String, java.lang.String, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
 	public synchronized LocalDataFile createDataFile(String parentPath, String name,
 			InputStream istream, String comment, String contentType, TaskMonitor monitor)
@@ -547,9 +524,6 @@ public abstract class LocalFileSystem implements FileSystem {
 		return dataFile;
 	}
 
-	/*
-	 * @see ghidra.framework.store.FileSystem#createFile(java.lang.String, java.lang.String, java.io.File, ghidra.util.task.TaskMonitor, java.lang.String)
-	 */
 	@Override
 	public LocalDatabaseItem createFile(String parentPath, String name, File packedFile,
 			TaskMonitor monitor, String user)
@@ -592,9 +566,6 @@ public abstract class LocalFileSystem implements FileSystem {
 		return item;
 	}
 
-	/*
-	 * @see ghidra.framework.store.FileSystem#moveItem(java.lang.String, java.lang.String, java.lang.String)
-	 */
 	@Override
 	public synchronized void moveItem(String folderPath, String name, String newFolderPath,
 			String newName) throws IOException, InvalidNameException {
@@ -653,9 +624,6 @@ public abstract class LocalFileSystem implements FileSystem {
 	@Override
 	public abstract boolean folderExists(String folderPath);
 
-	/*
-	 * @see ghidra.framework.store.FileSystem#fileExists(java.lang.String, java.lang.String)
-	 */
 	@Override
 	public boolean fileExists(String folderPath, String name) {
 		try {
@@ -670,9 +638,6 @@ public abstract class LocalFileSystem implements FileSystem {
 		}
 	}
 
-	/*
-	 * @see ghidra.framework.store.FileSystem#addFileSystemListener(ghidra.framework.store.FileSystemListener)
-	 */
 	@Override
 	public void addFileSystemListener(FileSystemListener listener) {
 		if (eventManager != null) {
@@ -680,9 +645,6 @@ public abstract class LocalFileSystem implements FileSystem {
 		}
 	}
 
-	/*
-	 * @see ghidra.framework.store.FileSystem#removeFileSystemListener(ghidra.framework.store.FileSystemListener)
-	 */
 	@Override
 	public void removeFileSystemListener(FileSystemListener listener) {
 		if (eventManager != null) {
@@ -830,8 +792,7 @@ public abstract class LocalFileSystem implements FileSystem {
 
 	@Override
 	public boolean isShared() {
-		// Does not support direct sharing in production
-		return isShared;
+		return false;
 	}
 
 //	static void testValidPathLength(File file) throws IOException {
@@ -846,6 +807,17 @@ public abstract class LocalFileSystem implements FileSystem {
 	public void dispose() {
 		if (eventManager != null) {
 			eventManager.dispose();
+		}
+		disposed = true;
+	}
+
+	/**
+	 * Check to see if file-system has been disposed.
+	 * @throws IOException if file-system has been disposed
+	 */
+	protected void checkDisposed() throws IOException {
+		if (disposed) {
+			throw new IOException("File-system has been disposed");
 		}
 	}
 

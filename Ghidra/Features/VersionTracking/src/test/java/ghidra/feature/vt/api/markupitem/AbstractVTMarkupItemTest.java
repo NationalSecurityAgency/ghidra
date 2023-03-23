@@ -367,7 +367,7 @@ public abstract class AbstractVTMarkupItemTest extends AbstractGhidraHeadedInteg
 			// Association markupItemManger expects all markups to be generated though it.
 			// Call it to put it in a good state.
 			VTAssociation association = addedMatch.getAssociation();
-			association.getMarkupItems(TaskMonitorAdapter.DUMMY_MONITOR);
+			association.getMarkupItems(TaskMonitor.DUMMY);
 
 			return addedMatch;
 		}

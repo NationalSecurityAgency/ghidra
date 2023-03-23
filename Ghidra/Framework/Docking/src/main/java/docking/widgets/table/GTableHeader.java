@@ -22,10 +22,11 @@ import javax.swing.*;
 import javax.swing.table.*;
 
 import docking.DockingWindowManager;
-import docking.help.HelpService;
 import docking.widgets.table.columnfilter.ColumnBasedTableFilter;
+import generic.theme.GIcon;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.HelpLocation;
+import help.HelpService;
 import resources.ResourceManager;
 
 /**
@@ -38,11 +39,11 @@ public class GTableHeader extends JTableHeader {
 	/** This is the cursor used by BasicTableHeaderUI to tell the user they can resize a column  */
 	private static final Cursor RESIZE_CURSOR = Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR);
 
-	private static final int HELP_ICON_HEIGHT = 8;
+	public static final int HELP_ICON_HEIGHT = 8;
 	private static final Icon HELP_ICON = ResourceManager.getScaledIcon(
-		ResourceManager.loadImage("images/info_small.png"), HELP_ICON_HEIGHT, HELP_ICON_HEIGHT);
+		new GIcon("icon.widget.table.header.help"), HELP_ICON_HEIGHT, HELP_ICON_HEIGHT);
 	private static final Icon HELP_HOVERED_ICON =
-		ResourceManager.getScaledIcon(ResourceManager.loadImage("images/info_small_hover.png"),
+		ResourceManager.getScaledIcon(new GIcon("icon.widget.table.header.help.hovered"),
 			HELP_ICON_HEIGHT, HELP_ICON_HEIGHT);
 
 	private final GTable gTable;
@@ -206,7 +207,7 @@ public class GTableHeader extends JTableHeader {
 		}
 
 		if (columnFilterToolTip != null) {
-			ttBuilder.append("<br><b>Filters: </b");
+			ttBuilder.append("<br><hr width=80%><b>Filters: </b");
 			ttBuilder.append(columnFilterToolTip);
 
 		}
@@ -222,12 +223,6 @@ public class GTableHeader extends JTableHeader {
 		int cellWidth = getHeaderRect(columnIndex).width;
 		if (prefWidth > cellWidth) {
 			return column.getHeaderValue().toString();
-		}
-		if (component instanceof GTableHeaderRenderer) {
-			GTableHeaderRenderer gthr = (GTableHeaderRenderer) component;
-			if (gthr.isTextOccluded()) {
-				return column.getHeaderValue().toString();
-			}
 		}
 
 		// handle the case where the user has specifically added a tooltip string

@@ -21,7 +21,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 import generic.test.AbstractGTest;
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGuiTest;
 
 /**
  * This class mainly serves as a conduit through which testing code can access some of the 
@@ -44,7 +44,7 @@ public class DockingWindowManagerTestUtils {
 	public static Window moveProviderToWindow(final DockingWindowManager dwm,
 			final ComponentProvider provider) {
 
-		AbstractGenericTest.runSwing(() -> {
+		AbstractGuiTest.runSwing(() -> {
 			if (!dwm.containsProvider(provider)) {
 				return;
 			}
@@ -65,7 +65,7 @@ public class DockingWindowManagerTestUtils {
 	public static void moveProvider(final DockingWindowManager dwm, final ComponentProvider movee,
 			final ComponentProvider relativeTo, final WindowPosition position) {
 
-		AbstractGenericTest.runSwing(() -> {
+		AbstractGuiTest.runSwing(() -> {
 			ComponentPlaceholder moveePlaceholder = dwm.getPlaceholder(movee);
 			ComponentPlaceholder relativeToPlaceholder = dwm.getPlaceholder(relativeTo);
 			dwm.movePlaceholder(moveePlaceholder, relativeToPlaceholder, position);
@@ -76,7 +76,7 @@ public class DockingWindowManagerTestUtils {
 			final ComponentProvider provider) {
 
 		final AtomicReference<DockableComponent> ref = new AtomicReference<>();
-		AbstractGenericTest.runSwing(() -> ref.set(dwm.getDockableComponent(provider)));
+		AbstractGuiTest.runSwing(() -> ref.set(dwm.getDockableComponent(provider)));
 
 		return ref.get();
 	}

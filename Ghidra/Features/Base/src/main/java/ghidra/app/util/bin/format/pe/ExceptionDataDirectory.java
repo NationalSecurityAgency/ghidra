@@ -15,6 +15,8 @@
  */
 package ghidra.app.util.bin.format.pe;
 
+import static ghidra.app.util.bin.format.pe.FileHeader.*;
+
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
@@ -23,15 +25,18 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.util.CodeUnitInsertionException;
+import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 public class ExceptionDataDirectory extends DataDirectory {
     private final static String NAME = "IMAGE_DIRECTORY_ENTRY_EXCEPTION";
 
+	private ImageRuntimeFunctionEntries functionEntries;
+
 	ExceptionDataDirectory(NTHeader ntHeader, BinaryReader reader) throws IOException {
 		processDataDirectory(ntHeader, reader);
-    }
+	}
 
 	@Override
 	public String getDirectoryName() {
@@ -39,11 +44,31 @@ public class ExceptionDataDirectory extends DataDirectory {
 	}
 
 	@Override
-	public boolean parse() {
+	public boolean parse() throws IOException {
 		int ptr = getPointer();
 		if (ptr < 0) {
 			return false;
 		}
+
+		long oldIndex = reader.getPointerIndex();
+		reader.setPointerIndex(ptr);
+
+		functionEntries = switch (ntHeader.getFileHeader().getMachine() & IMAGE_FILE_MACHINE_MASK) {
+			case IMAGE_FILE_MACHINE_I386:
+			case IMAGE_FILE_MACHINE_IA64:
+			case IMAGE_FILE_MACHINE_AMD64:
+				yield new ImageRuntimeFunctionEntries_X86(reader, size, ntHeader);
+			case IMAGE_FILE_MACHINE_ARM:
+			case IMAGE_FILE_MACHINE_ARM64:
+			case IMAGE_FILE_MACHINE_ARMNT:
+				yield new ImageRuntimeFunctionEntries_ARM(reader, size, ntHeader);
+			default:
+				Msg.error(this, String.format("Exception Data unsupported architecture: 0x%02x",
+					ntHeader.getFileHeader().getMachine()));
+				yield null;
+		};
+
+		reader.setPointerIndex(oldIndex);
 		return true;
     }
 
@@ -52,17 +77,16 @@ public class ExceptionDataDirectory extends DataDirectory {
 			NTHeader ntHeader)
 			throws DuplicateNameException, CodeUnitInsertionException, IOException {
 
-		monitor.setMessage(program.getName()+": exceptions...");
 		Address addr = PeUtils.getMarkupAddress(program, isBinary, ntHeader, virtualAddress);
 		if (!program.getMemory().contains(addr)) {
 			return;
 		}
 		createDirectoryBookmark(program, addr);
+		if (functionEntries != null) {
+			functionEntries.markup(program, addr);
+		}
 	}
 
-    /**
-     * @see ghidra.app.util.bin.StructConverter#toDataType()
-     */
     @Override
     public DataType toDataType() throws DuplicateNameException {
         StructureDataType struct = new StructureDataType(NAME, size);

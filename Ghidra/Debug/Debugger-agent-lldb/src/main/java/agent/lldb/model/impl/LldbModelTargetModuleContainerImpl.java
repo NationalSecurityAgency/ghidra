@@ -22,6 +22,7 @@ import SWIG.*;
 import agent.lldb.lldb.DebugModuleInfo;
 import agent.lldb.model.iface2.LldbModelTargetModule;
 import agent.lldb.model.iface2.LldbModelTargetModuleContainer;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
@@ -47,7 +48,7 @@ public class LldbModelTargetModuleContainerImpl extends LldbModelTargetObjectImp
 		super(session.getModel(), session, "Modules", "ModuleContainer");
 		this.targetSession = session;
 		this.session = session.getSession();
-		requestElements(false);
+		requestElements(RefreshBehavior.REFRESH_NEVER);
 	}
 
 	@Override
@@ -72,8 +73,8 @@ public class LldbModelTargetModuleContainerImpl extends LldbModelTargetObjectImp
 		TargetThread eventThread =
 			(TargetThread) getModel().getModelObject(thread);
 		changeElements(List.of(), List.of(targetModule), Map.of(), "Loaded");
-		getListeners().fire.event(getProxy(), eventThread, TargetEventType.MODULE_LOADED,
-				"Library " + info.getModuleName(index) + " loaded", List.of(targetModule));
+		broadcast().event(getProxy(), eventThread, TargetEventType.MODULE_LOADED,
+			"Library " + info.getModuleName(index) + " loaded", List.of(targetModule));
 	}
 
 	@Override
@@ -84,8 +85,8 @@ public class LldbModelTargetModuleContainerImpl extends LldbModelTargetObjectImp
 			SBThread thread = getManager().getEventThread();
 			TargetThread eventThread =
 				(TargetThread) getModel().getModelObject(thread);
-			getListeners().fire.event(getProxy(), eventThread, TargetEventType.MODULE_UNLOADED,
-					"Library " + info.getModuleName(index) + " unloaded", List.of(targetModule));
+			broadcast().event(getProxy(), eventThread, TargetEventType.MODULE_UNLOADED,
+				"Library " + info.getModuleName(index) + " unloaded", List.of(targetModule));
 			LldbModelImpl impl = (LldbModelImpl) model;
 			impl.deleteModelObject(targetModule.getModule());
 		}
@@ -103,7 +104,7 @@ public class LldbModelTargetModuleContainerImpl extends LldbModelTargetObjectImp
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return getManager().listModules(session).thenAccept(byName -> {
 			List<LldbModelTargetModule> result = new ArrayList<>();
 			synchronized (this) {

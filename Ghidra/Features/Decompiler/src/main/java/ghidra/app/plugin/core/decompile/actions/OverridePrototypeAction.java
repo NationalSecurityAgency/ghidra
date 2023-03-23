@@ -47,7 +47,7 @@ public class OverridePrototypeAction extends AbstractDecompilerAction {
 	 * @param tokenAtCursor is the point in the window the user has selected
 	 * @return the PcodeOp or null
 	 */
-	private static PcodeOp getCallOp(Program program, ClangToken tokenAtCursor) {
+	public static PcodeOp getCallOp(Program program, ClangToken tokenAtCursor) {
 		if (tokenAtCursor == null) {
 			return null;
 		}

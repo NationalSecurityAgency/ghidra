@@ -41,27 +41,24 @@ import ghidra.program.util.ProgramLocation;
 public class MemoryBlockStartFieldFactory extends FieldFactory {
 
 	private static final String FIELD_NAME = "Memory Block Start";
-	private static final Color BLOCK_COLOR = new Color(75, 0, 130);
 
 	/**
 	 * Constructor
 	 */
 	public MemoryBlockStartFieldFactory() {
 		super(FIELD_NAME);
-		color = BLOCK_COLOR;
 	}
 
 	/**
 	 * Constructor
 	 * @param model the model that the field belongs to.
-	 * @param hsProvider the HightLightStringProvider.
+	 * @param hlProvider the HightLightStringProvider.
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
 	private MemoryBlockStartFieldFactory(FieldFormatModel model, HighlightProvider hlProvider,
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
-		color = BLOCK_COLOR;
 	}
 
 	/**
@@ -186,15 +183,6 @@ public class MemoryBlockStartFieldFactory extends FieldFactory {
 			fieldOptions);
 	}
 
-	/**
-	 * Creates a comment to be show at the beginning of each block that shows the following:
-	 *   - block name
-	 *   - block type
-	 *   - block start/end address (size)
-	 *   - block comment
-	 * 
-	 * @param cu
-	 */
 	protected List<AttributedString> createBlockStartText(CodeUnit cu) {
 
 		List<AttributedString> lines = new ArrayList<>();
@@ -226,7 +214,7 @@ public class MemoryBlockStartFieldFactory extends FieldFactory {
 		String line1 = block.getName() + " " + type;
 		String line2 = block.getComment();
 		String line3 = block.getStart().toString(true) + "-" + block.getEnd().toString(true);
-
+		Color color = ListingColors.BLOCK_START;
 		AttributedString borderAS = new AttributedString("//", color, getMetrics());
 		lines.add(borderAS);
 		lines.add(new AttributedString("// " + line1, color, getMetrics()));
@@ -239,12 +227,6 @@ public class MemoryBlockStartFieldFactory extends FieldFactory {
 		return lines;
 	}
 
-	/**
-	 * Creates {@link FieldElement} instances for each given {@link AttributedString}.
-	 * 
-	 * @param attributedStrings
-	 * @return
-	 */
 	private FieldElement[] createFieldElements(List<AttributedString> attributedStrings) {
 		List<FieldElement> elements = new ArrayList<>();
 		int lineNum = 0;
@@ -260,23 +242,4 @@ public class MemoryBlockStartFieldFactory extends FieldFactory {
 
 		return elementsArray;
 	}
-
-	/**
-	 * Returns the length of the longest string in the given list.
-	 * 
-	 * @param lines
-	 * @return
-	 */
-	private int getLongestLineSize(String... lines) {
-
-		int longest = 0;
-		for (String line : lines) {
-			if (line.length() > longest) {
-				longest = line.length();
-			}
-		}
-		return longest;
-
-	}
-
 }

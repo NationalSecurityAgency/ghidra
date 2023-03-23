@@ -19,6 +19,7 @@ import java.io.IOException;
 
 import org.junit.*;
 
+import db.Transaction;
 import ghidra.app.plugin.core.bookmark.BookmarkPlugin;
 import ghidra.app.plugin.core.byteviewer.ByteViewerPlugin;
 import ghidra.app.plugin.core.clear.ClearPlugin;
@@ -45,10 +46,9 @@ import ghidra.program.model.data.Undefined4DataType;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.trace.database.ToyDBTraceBuilder;
-import ghidra.trace.database.language.DBTraceGuestLanguage;
+import ghidra.trace.database.guest.DBTraceGuestPlatform;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceOverlappedRegionException;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.exception.DuplicateNameException;
 
 public class DebuggerManualTest extends AbstractGhidraHeadedDebuggerGUITest {
@@ -59,7 +59,7 @@ public class DebuggerManualTest extends AbstractGhidraHeadedDebuggerGUITest {
 	public void setUpManualTest() throws IOException {
 		createTrace();
 		ub = new ToyDBTraceBuilder("dynamic2-" + name.getMethodName(), LANGID_TOYBE64);
-		try (UndoableTransaction tid = ub.startTransaction()) {
+		try (Transaction tx = ub.startTransaction()) {
 			ub.trace.getTimeManager().createSnapshot("First snap");
 		}
 	}
@@ -120,7 +120,7 @@ public class DebuggerManualTest extends AbstractGhidraHeadedDebuggerGUITest {
 		//addPlugin(tool, NextPrevSelectedRangePlugin.class);
 		addPlugin(tool, SymbolTablePlugin.class);
 
-		try (UndoableTransaction tid = tb.startTransaction()) {
+		try (Transaction tx = tb.startTransaction()) {
 			tb.trace.getMemoryManager()
 					.createRegion("Region", 0, tb.range(0x4000, 0x4fff),
 						TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
@@ -129,12 +129,13 @@ public class DebuggerManualTest extends AbstractGhidraHeadedDebuggerGUITest {
 			tb.trace.getThreadManager().createThread("Thread 2", 4);
 
 			tb.addData(0, tb.addr(0x4004), Undefined4DataType.dataType, tb.buf(6, 7, 8, 9));
-			tb.addInstruction(0, tb.addr(0x4008), tb.language, tb.buf(0xf4, 0));
+			tb.addInstruction(0, tb.addr(0x4008), tb.host, tb.buf(0xf4, 0));
 
 			Language x86 = getSLEIGH_X86_LANGUAGE();
-			DBTraceGuestLanguage guest = tb.trace.getLanguageManager().addGuestLanguage(x86);
+			DBTraceGuestPlatform guest =
+				tb.trace.getPlatformManager().addGuestPlatform(x86.getDefaultCompilerSpec());
 			guest.addMappedRange(tb.addr(0x4000), tb.addr(guest, 0x00400000), 0x1000);
-			tb.addInstruction(0, tb.addr(0x400a), x86, tb.buf(0x90));
+			tb.addInstruction(0, tb.addr(0x400a), guest, tb.buf(0x90));
 		}
 		waitForSwing();
 

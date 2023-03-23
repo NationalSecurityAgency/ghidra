@@ -15,10 +15,14 @@
  */
 package ghidra.dbg.attributes;
 
+import com.google.gson.JsonElement;
+
 import ghidra.dbg.attributes.TargetPrimitiveDataType.DefaultTargetPrimitiveDataType;
 import ghidra.dbg.attributes.TargetPrimitiveDataType.PrimitiveKind;
 
 public interface TargetDataType {
 	TargetDataType UNDEFINED1 =
 		new DefaultTargetPrimitiveDataType(PrimitiveKind.UNDEFINED, 1);
+
+	JsonElement toJson();
 }

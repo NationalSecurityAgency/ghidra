@@ -21,9 +21,10 @@ import java.util.Set;
 /**
  * Class used to organize long values into sets of values with overlapping bits.
  * For example, if you had values 1,2,3, 8, 12, you could partition them into two bit groups.
- * The values 1,2,3, would be in one bit group because they all either use the "1" or "2" bit
- * (If there was on "3", then 1 and 2 could be in separate groups). Also the values "8" and "12"
- * are in the same group since they share the "8" bit.
+ * The values 1,2,3, would be in one bit group because they all use the "1" or "2" bit.
+ * (If there was no "3" enum value, then the "1" bit and the "2" bit would be in separate groups
+ * since there are no enum values that share any bits.) Also, the values "8" and "12" are in the same
+ * group since they share the "8" bit.
  */
 public class BitGroup {
 	private Set<Long> values = new HashSet<>();

@@ -32,16 +32,16 @@ import ghidra.util.exception.CancelledException;
  * make fields available to the user from the {@link AbstractMsSymbol}.
  */
 public abstract class MsSymbolApplier {
-	protected PdbApplicator applicator;
+	protected DefaultPdbApplicator applicator;
 	protected AbstractMsSymbolIterator iter;
 	protected long currentOffset;
 
 	/**
 	 * Constructor
-	 * @param applicator the {@link PdbApplicator} for which we are working.
+	 * @param applicator the {@link DefaultPdbApplicator} for which we are working.
 	 * @param iter the Iterator containing the symbol sequence being processed
 	 */
-	public MsSymbolApplier(PdbApplicator applicator, AbstractMsSymbolIterator iter) {
+	public MsSymbolApplier(DefaultPdbApplicator applicator, AbstractMsSymbolIterator iter) {
 		Objects.requireNonNull(applicator, "applicator cannot be null");
 		Objects.requireNonNull(iter, "iter cannot be null");
 		this.applicator = applicator;

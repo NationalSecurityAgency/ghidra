@@ -30,10 +30,9 @@ import docking.widgets.OptionDialog;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import generic.test.AbstractGTest;
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGuiTest;
 import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.main.SharedProjectUtil;
-import ghidra.framework.main.datatable.ProjectDataContext;
 import ghidra.framework.main.datatree.*;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
@@ -61,9 +60,8 @@ public class FrontEndTestEnv {
 	// TODO make private
 	protected TestEnv env;
 	protected FrontEndTool frontEndTool;
-	protected DataTree tree;
-	protected DomainFolder rootFolder;
-	protected GTreeNode rootNode;
+	protected DomainFolder rootFolder; // active project root
+	protected DataTreeHelper projectTreeHelper;
 
 	public FrontEndTestEnv() throws Exception {
 		this(false);
@@ -79,7 +77,12 @@ public class FrontEndTestEnv {
 			startServer();
 		}
 
-		tree = AbstractGenericTest.findComponent(frontEndTool.getToolFrame(), DataTree.class);
+		// assume read-only project views are not active and only active 
+		// project tree is present
+		DataTree tree =
+			AbstractGuiTest.findComponent(frontEndTool.getToolFrame(), DataTree.class);
+		projectTreeHelper = new DataTreeHelper(tree, true);
+
 		Project project = frontEndTool.getProject();
 		rootFolder = project.getProjectData().getRootFolder();
 
@@ -87,7 +90,6 @@ public class FrontEndTestEnv {
 		rootFolder.createFile(PROGRAM_A, p, TaskMonitor.DUMMY);
 		p.release(this);
 
-		rootNode = tree.getViewRoot();
 		waitForTree();
 	}
 
@@ -122,7 +124,7 @@ public class FrontEndTestEnv {
 	}
 
 	public void waitForTree() {
-		AbstractDockingTest.waitForTree(tree);
+		projectTreeHelper.waitForTree();
 	}
 
 	public DomainFolder getRootFolder() {
@@ -130,11 +132,11 @@ public class FrontEndTestEnv {
 	}
 
 	public GTree getTree() {
-		return tree;
+		return projectTreeHelper.getTree();
 	}
 
 	public GTreeNode getRootNode() {
-		return tree.getModelRoot();
+		return projectTreeHelper.getRootNode();
 	}
 
 	/** 
@@ -142,58 +144,55 @@ public class FrontEndTestEnv {
 	 * @return the default program node named {@link #PROGRAM_A}
 	 */
 	public DomainFileNode getProgramNode() {
-		return getTreeNode(PROGRAM_A);
+		return waitForFileNode(PROGRAM_A);
 	}
 
 	public DomainFileNode getTreeNode(String name) {
-		return waitForTreeNode(name);
+		return projectTreeHelper.waitForFileNode(name);
 	}
 
-	public DomainFileNode waitForTreeNode(String name) {
-		return (DomainFileNode) AbstractGTest.waitForValue(() -> rootNode.getChild(name));
+	public GTreeNode waitForTreeNode(String name) {
+		return projectTreeHelper.waitForTreeNode(name);
 	}
 
 	public DomainFileNode waitForFileNode(String name) {
-		return (DomainFileNode) AbstractGTest.waitForValue(() -> rootNode.getChild(name));
+		return projectTreeHelper.waitForFileNode(name);
 	}
 
 	public DomainFolderNode waitForFolderNode(String name) {
-		return (DomainFolderNode) AbstractGTest.waitForValue(() -> rootNode.getChild(name));
+		return projectTreeHelper.waitForFolderNode(name);
 	}
 
 	public void clearTreeSelection() {
-		runSwing(() -> tree.clearSelection());
+		projectTreeHelper.clearTreeSelection();
 	}
 
 	public void waitForSwing() {
-		AbstractGenericTest.waitForSwing();
+		AbstractGuiTest.waitForSwing();
 	}
 
 	private void runSwing(Runnable r) {
-		AbstractGenericTest.runSwing(r);
+		AbstractGuiTest.runSwing(r);
 	}
 
 	private void runSwing(Runnable r, boolean wait) {
-		AbstractGenericTest.runSwing(r, wait);
+		AbstractGuiTest.runSwing(r, wait);
 	}
 
 	private void waitForTasks() {
-		AbstractGenericTest.waitForTasks();
+		AbstractGuiTest.waitForTasks();
 	}
 
 	public void setTreeSelection(final TreePath[] paths) throws Exception {
-		tree.setSelectionPaths(paths);
-		waitForTree();
+		projectTreeHelper.setTreeSelection(paths);
 	}
 
 	public void selectNodes(GTreeNode... nodes) {
-		tree.setSelectedNodes(nodes);
-		waitForTree();
+		projectTreeHelper.selectNodes(nodes);
 	}
 
 	public void expandNode(GTreeNode node) {
-		tree.expandPath(node);
-		waitForTree();
+		projectTreeHelper.expandNode(node);
 	}
 
 	public void dispose() {
@@ -238,8 +237,8 @@ public class FrontEndTestEnv {
 
 		assertTrue(node.getDomainFile().isCheckedOut());
 
-		AbstractGenericTest.waitForSwing();
-		AbstractGenericTest.waitForTasks();
+		AbstractGuiTest.waitForSwing();
+		AbstractGuiTest.waitForTasks();
 
 		Program program =
 			(Program) node.getDomainFile().getDomainObject(this, true, false, TaskMonitor.DUMMY);
@@ -306,26 +305,13 @@ public class FrontEndTestEnv {
 		ActionContext context = provider.getActionContext(null);
 		AbstractDockingTest.performAction(terminateCheckoutAction, context, false);
 		OptionDialog optDialog = AbstractDockingTest.waitForDialogComponent(OptionDialog.class);
-		AbstractGenericTest.pressButtonByText(optDialog.getComponent(), "Yes", true);
+		AbstractGuiTest.pressButtonByText(optDialog.getComponent(), "Yes", true);
 		waitForTasks();
 		waitForSwing();
 	}
 
 	public ActionContext getDomainFileActionContext(GTreeNode... nodes) {
-		List<DomainFile> fileList = new ArrayList<>();
-		List<DomainFolder> folderList = new ArrayList<>();
-		for (GTreeNode node : nodes) {
-			if (node instanceof DomainFileNode) {
-				fileList.add(((DomainFileNode) node).getDomainFile());
-			}
-			else if (node instanceof DomainFolderNode) {
-				folderList.add(((DomainFolderNode) node).getDomainFolder());
-			}
-		}
-
-		return new ProjectDataContext(null, rootFolder.getProjectData(), nodes[0], folderList,
-			fileList, tree, true);
-
+		return projectTreeHelper.getDomainFileActionContext(nodes);
 	}
 
 	public FrontEndTool getFrontEndTool() {
@@ -337,7 +323,8 @@ public class FrontEndTestEnv {
 	}
 
 	public List<PluginTool> getTools() {
-		PluginTool[] tools = frontEndTool.getProject().getToolManager().getActiveWorkspace().getTools();
+		PluginTool[] tools =
+			frontEndTool.getProject().getToolManager().getActiveWorkspace().getTools();
 		return new ArrayList<>(Arrays.asList(tools));
 	}
 
@@ -385,9 +372,9 @@ public class FrontEndTestEnv {
 		}
 
 		JButton okButton =
-			(JButton) AbstractGenericTest.findAbstractButtonByText(dialog.getComponent(), "OK");
+			(JButton) AbstractGuiTest.findAbstractButtonByText(dialog.getComponent(), "OK");
 		assertNotNull(okButton);
-		AbstractGenericTest.pressButton(okButton);
+		AbstractGuiTest.pressButton(okButton);
 		waitForTasks();
 		DomainFile df = node.getDomainFile();
 
@@ -446,5 +433,31 @@ public class FrontEndTestEnv {
 
 	public interface ModifyProgramCallback {
 		public void call(Program p) throws Exception;
+	}
+
+	/**
+	 * Get the named READ-ONLY project view tree helper
+	 * @param tabName project view name (should match tab name)
+	 * @return named READ-ONLY project view tree helper or null if view tree not found
+	 */
+	public DataTreeHelper getReadOnlyProjectTreeHelper(String tabName) {
+		String dataTreeName = "Data Tree: " + tabName;
+		DataTree tree = (DataTree) AbstractGuiTest
+				.findComponentByName(frontEndTool.getToolFrame(), dataTreeName);
+		return tree != null ? new DataTreeHelper(tree, true) : null;
+	}
+
+	/**
+	 * Get the READ-ONLY project view tree helper for first view found
+	 * @return READ-ONLY project view tree helper for first view found or null if none displayed
+	 */
+	public DataTreeHelper getFirstReadOnlyProjectTreeHelper() {
+		for (DataTree tree : AbstractGuiTest.findComponents(frontEndTool.getToolFrame(),
+			DataTree.class)) {
+			if (tree.getName().startsWith("Data Tree:")) {
+				return new DataTreeHelper(tree, true);
+			}
+		}
+		return null;
 	}
 }

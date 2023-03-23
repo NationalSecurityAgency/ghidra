@@ -46,22 +46,11 @@ public class ClearPlugin extends Plugin {
 	private static final String CLEAR_CODE_BYTES_NAME = "Clear Code Bytes";
 	private static final String CLEAR_FLOW_AND_REPAIR = "Clear Flow and Repair";
 
-	private ClearDialog clearDialog;
-	private ClearFlowDialog clearFlowDialog;
-
-	/**
-	 * Constructor
-	 */
 	public ClearPlugin(PluginTool tool) {
 		super(tool);
 		createActions();
 	}
 
-	// /////////////////////////////////////////////////////////////////////
-
-	/**
-	 * Clear the flow and repair disassembly at the current location
-	 */
 	void clearFlowAndRepair(ListingActionContext context, boolean clearSymbols, boolean clearData,
 			boolean repair) {
 		ClearFlowAndRepairCmd cmd;
@@ -76,10 +65,6 @@ public class ClearPlugin extends Plugin {
 		tool.executeBackgroundCommand(cmd, context.getProgram());
 	}
 
-	/**
-	 * Use the options to determine what must be cleared. Starts a new thread if
-	 * necessary to do the work. Called by the actions and by the dialog.
-	 */
 	void clear(ClearOptions options, ListingActionContext context) {
 		if (!options.clearAny()) {
 			return;
@@ -208,7 +193,7 @@ public class ClearPlugin extends Plugin {
 		new ActionBuilder(CLEAR_WITH_OPTIONS_NAME, getName())
 				.menuPath(ToolConstants.MENU_EDIT, CLEAR_WITH_OPTIONS_NAME + "...")
 				.menuGroup(CLEAR_CODE_BYTES_NAME, "2")
-				.popupMenuPath(CLEAR_WITH_OPTIONS_NAME)
+				.popupMenuPath(CLEAR_WITH_OPTIONS_NAME + "...")
 				.popupMenuGroup(CLEAR_CODE_BYTES_NAME, "2")
 				.withContext(ListingActionContext.class)
 				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
@@ -218,7 +203,7 @@ public class ClearPlugin extends Plugin {
 		new ActionBuilder(CLEAR_FLOW_AND_REPAIR, getName())
 				.menuPath(ToolConstants.MENU_EDIT, CLEAR_FLOW_AND_REPAIR + "...")
 				.menuGroup(CLEAR_CODE_BYTES_NAME, "3")
-				.popupMenuPath(CLEAR_FLOW_AND_REPAIR)
+				.popupMenuPath(CLEAR_FLOW_AND_REPAIR + "...")
 				.popupMenuGroup(CLEAR_CODE_BYTES_NAME, "3")
 				.withContext(ListingActionContext.class)
 				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
@@ -258,13 +243,12 @@ public class ClearPlugin extends Plugin {
 		clear(opts, context);
 
 	}
+
 	/**
 	 * Pop up the clear with options dialog.
 	 */
 	private void showClearAllDialog(ListingActionContext programActionContext) {
-		if (clearDialog == null) {
-			clearDialog = new ClearDialog(this);
-		}
+		ClearDialog clearDialog = new ClearDialog(this);
 		clearDialog.setProgramActionContext(programActionContext);
 		tool.showDialog(clearDialog);
 	}
@@ -273,9 +257,7 @@ public class ClearPlugin extends Plugin {
 	 * Pop up the clear flows dialog
 	 */
 	private void showClearFlowDialog(ListingActionContext context) {
-		if (clearFlowDialog == null) {
-			clearFlowDialog = new ClearFlowDialog(this);
-		}
+		ClearFlowDialog clearFlowDialog = new ClearFlowDialog(this);
 		clearFlowDialog.setProgramActionContext(context);
 		tool.showDialog(clearFlowDialog);
 	}

@@ -24,6 +24,7 @@ import org.junit.Test;
 
 import docking.DialogComponentProvider;
 import docking.action.DockingActionIf;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.searchmem.mask.MnemonicSearchPlugin;
@@ -168,9 +169,9 @@ public class MemorySearchScreenShots extends AbstractSearchScreenShots {
 	@Test
 	public void testSearchInstructions() {
 		Font font = new Font("Monospaced", Font.PLAIN, 14);
-		Color selectionColor = new Color(180, 255, 180);
+		Color selectionColor = Palette.getColor("palegreen");
 		TextFormatter tf = new TextFormatter(font, 8, 500, 4, 5, 2);
-		TextFormatterContext blue = new TextFormatterContext(Color.BLUE);
+		TextFormatterContext blue = new TextFormatterContext(Palette.BLUE);
 		TextFormatterContext darkBlue = new TextFormatterContext(DARK_BLUE);
 		TextFormatterContext darkGreen = new TextFormatterContext(DARK_GREEN);
 		TextFormatterContext orange = new TextFormatterContext(YELLOW_ORANGE);
@@ -194,7 +195,7 @@ public class MemorySearchScreenShots extends AbstractSearchScreenShots {
 	public void testSearchInstructionsIncludeOperands() {
 		Font font = new Font("Monospaced", Font.PLAIN, 14);
 		TextFormatter tf = new TextFormatter(font, 4, 300, 4, 5, 2);
-		TextFormatterContext blue = new TextFormatterContext(Color.BLUE);
+		TextFormatterContext blue = new TextFormatterContext(Palette.BLUE);
 		TextFormatterContext darkBlue = new TextFormatterContext(DARK_BLUE);
 		TextFormatterContext darkGreen = new TextFormatterContext(DARK_GREEN);
 		TextFormatterContext orange = new TextFormatterContext(YELLOW_ORANGE);
@@ -258,7 +259,7 @@ public class MemorySearchScreenShots extends AbstractSearchScreenShots {
 		performAction(action, provider, false);
 
 		// And capture the error dialog.
-		Window errorDialog = waitForWindow("Mnemonic Search Error", 2000);
+		Window errorDialog = waitForWindow("Mnemonic Search Error");
 		captureWindow(errorDialog);
 	}
 }

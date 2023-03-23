@@ -53,9 +53,9 @@ public class StorageEditorModelBETest extends StorageEditorModelTest {
 		createStorageModel(4, 4, false);
 		VarnodeInfo varnode = model.getVarnodes().get(0);
 		model.setVarnodeType(varnode, VarnodeType.Register);
+		model.setVarnode(varnode, register);
 		assertEquals(4, varnode.getSize().intValue());
 		assertEquals(64, register.getBitLength());
-		model.setVarnode(varnode, register);
 		assertEquals(register.getAddress().getOffset() + 4,
 			model.getVarnodes().get(0).getAddress().getOffset());
 		assertEquals(4, varnode.getSize().intValue());
@@ -64,11 +64,10 @@ public class StorageEditorModelBETest extends StorageEditorModelTest {
 		createStorageModel(4, 4, true);
 		varnode = model.getVarnodes().get(0);
 		model.setVarnodeType(varnode, VarnodeType.Register);
-		assertEquals(4, varnode.getSize().intValue());
-		assertEquals(64, register.getBitLength());
 		model.setVarnode(varnode, register);
+		assertEquals(8, varnode.getSize().intValue());
+		assertEquals(64, register.getBitLength());
 		assertEquals(register.getAddress().getOffset(),
 			model.getVarnodes().get(0).getAddress().getOffset());
-		assertEquals(8, varnode.getSize().intValue());
 	}
 }

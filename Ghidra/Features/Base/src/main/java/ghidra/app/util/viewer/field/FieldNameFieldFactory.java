@@ -15,7 +15,6 @@
  */
 package ghidra.app.util.viewer.field;
 
-import java.awt.Color;
 import java.math.BigInteger;
 
 import docking.widgets.fieldpanel.field.*;
@@ -24,7 +23,6 @@ import ghidra.GhidraOptions;
 import ghidra.app.util.HighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.format.FormatManager;
-import ghidra.app.util.viewer.options.OptionsGui;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.Options;
 import ghidra.framework.options.ToolOptions;
@@ -115,7 +113,8 @@ public class FieldNameFieldFactory extends FieldFactory {
 		if ((fieldName == null) || (fieldName.length() == 0)) {
 			return null;
 		}
-		AttributedString as = new AttributedString(fieldName, color, getMetrics());
+		AttributedString as =
+			new AttributedString(fieldName, ListingColors.FIELD_NAME, getMetrics());
 		FieldElement text = new TextFieldElement(as, 0, 0);
 
 		return ListingTextField.createSingleLineTextField(this, proxy, text, startX + varWidth,
@@ -159,10 +158,5 @@ public class FieldNameFieldFactory extends FieldFactory {
 	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider provider,
 			ToolOptions toolOptions, ToolOptions fieldOptions) {
 		return new FieldNameFieldFactory(formatModel, provider, toolOptions, fieldOptions);
-	}
-
-	@Override
-	public Color getDefaultColor() {
-		return OptionsGui.FIELD_NAME.getDefaultColor();
 	}
 }

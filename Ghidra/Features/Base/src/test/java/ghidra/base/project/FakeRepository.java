@@ -15,15 +15,18 @@
  */
 package ghidra.base.project;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import generic.test.TestUtils;
+import generic.test.AbstractGTest;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.remote.User;
+import ghidra.framework.store.local.IndexedV1LocalFileSystem;
 import ghidra.framework.store.local.LocalFileSystem;
 import ghidra.test.TestEnv;
+import utilities.util.FileUtilities;
 
 /**
  * This class represents the idea of a shared Ghidra repository.  This class is meant to be
@@ -54,11 +57,34 @@ public class FakeRepository {
 	private Map<String, User> usersByName = new HashMap<>();
 	private Map<User, FakeSharedProject> projectsByUser = new HashMap<>();
 
+	private File versionedFSDir;
 	private LocalFileSystem versionedFileSystem;
 
-	public FakeRepository() {
+	public FakeRepository() throws IOException {
 		// validation must be enabled if both environments are utilized by a test
 		LocalFileSystem.setValidationRequired();
+
+		versionedFSDir =
+			new File(AbstractGTest.getTestDirectoryPath() + File.separator + "TestRepo.rep");
+		if (versionedFSDir.exists()) {
+			FileUtilities.deleteDir(versionedFSDir);
+		}
+		if (versionedFSDir.exists() || !FileUtilities.createDir(versionedFSDir)) {
+			throw new IOException("Failed to create clean repo dir: " + versionedFSDir);
+		}
+		versionedFileSystem = new MyVersionedFileSystem(versionedFSDir.getPath());
+	}
+
+	private static class MyVersionedFileSystem extends IndexedV1LocalFileSystem {
+		MyVersionedFileSystem(String rootPath) throws IOException {
+			super(rootPath, true, false, true, true);
+		}
+
+		@Override
+		public boolean isShared() {
+			// Enables use of asyncronous event dispatching thread
+			return true;
+		}
 	}
 
 	/**
@@ -109,11 +135,6 @@ public class FakeRepository {
 
 		FakeSharedProject project = new FakeSharedProject(this, user);
 		projectsByUser.put(user, project);
-
-		if (versionedFileSystem == null) {
-			versionedFileSystem = project.getVersionedFileSystem();
-			TestUtils.setInstanceField("isShared", versionedFileSystem, Boolean.TRUE);
-		}
 		return project;
 	}
 
@@ -139,6 +160,8 @@ public class FakeRepository {
 	 */
 	public void dispose() {
 		projectsByUser.values().forEach(p -> disposeProject(p));
+		versionedFileSystem.dispose();
+		FileUtilities.deleteDir(versionedFSDir);
 	}
 
 	private void disposeProject(FakeSharedProject p) {

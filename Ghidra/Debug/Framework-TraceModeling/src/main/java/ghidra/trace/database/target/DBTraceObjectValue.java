@@ -24,13 +24,12 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.ArrayUtils;
 
-import com.google.common.collect.Range;
-
 import db.*;
-import ghidra.trace.database.DBTraceUtils;
-import ghidra.trace.database.target.InternalTreeTraversal.Visitor;
+import ghidra.trace.database.target.visitors.TreeTraversal;
+import ghidra.trace.database.target.visitors.TreeTraversal.Visitor;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.target.*;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;
 import ghidra.util.database.DBCachedObjectStoreFactory.AbstractDBFieldCodec;
@@ -193,7 +192,7 @@ public class DBTraceObjectValue extends DBAnnotatedObject implements InternalTra
 
 	protected final DBTraceObjectManager manager;
 
-	private Range<Long> lifespan;
+	private Lifespan lifespan;
 
 	public DBTraceObjectValue(DBTraceObjectManager manager, DBCachedObjectStore<?> store,
 			DBRecord record) {
@@ -206,13 +205,13 @@ public class DBTraceObjectValue extends DBAnnotatedObject implements InternalTra
 		if (created) {
 			return;
 		}
-		lifespan = DBTraceUtils.toRange(triple.minSnap, maxSnap);
+		lifespan = Lifespan.span(triple.minSnap, maxSnap);
 	}
 
-	protected void set(Range<Long> lifespan, DBTraceObject parent, String key, Object value) {
-		this.triple = new PrimaryTriple(parent, key, DBTraceUtils.lowerEndpoint(lifespan));
-		this.maxSnap = DBTraceUtils.upperEndpoint(lifespan);
-		this.lifespan = DBTraceUtils.toRange(triple.minSnap, maxSnap);
+	protected void set(Lifespan lifespan, DBTraceObject parent, String key, Object value) {
+		this.triple = new PrimaryTriple(parent, key, lifespan.lmin());
+		this.maxSnap = lifespan.lmax();
+		this.lifespan = Lifespan.span(triple.minSnap, maxSnap);
 		if (value instanceof TraceObject) {
 			DBTraceObject child = manager.assertIsMine((TraceObject) value);
 			this.child = child;
@@ -232,15 +231,15 @@ public class DBTraceObjectValue extends DBAnnotatedObject implements InternalTra
 	}
 
 	@Override
-	public void doSetLifespan(Range<Long> lifespan) {
-		long minSnap = DBTraceUtils.lowerEndpoint(lifespan);
+	public void doSetLifespan(Lifespan lifespan) {
+		long minSnap = lifespan.lmin();
 		if (this.triple.minSnap != minSnap) {
 			this.triple = triple.withMinSnap(minSnap);
 			update(TRIPLE_COLUMN);
 		}
-		this.maxSnap = DBTraceUtils.upperEndpoint(lifespan);
+		this.maxSnap = lifespan.lmax();
 		update(MAX_SNAP_COLUMN);
-		this.lifespan = DBTraceUtils.toRange(minSnap, maxSnap);
+		this.lifespan = Lifespan.span(minSnap, maxSnap);
 	}
 
 	@Override
@@ -276,12 +275,17 @@ public class DBTraceObjectValue extends DBAnnotatedObject implements InternalTra
 	}
 
 	@Override
+	public boolean isObject() {
+		return child != null;
+	}
+
+	@Override
 	public DBTraceObject getChildOrNull() {
 		return child;
 	}
 
 	@Override
-	public Range<Long> getLifespan() {
+	public Lifespan getLifespan() {
 		try (LockHold hold = manager.trace.lockRead()) {
 			return lifespan;
 		}
@@ -290,7 +294,7 @@ public class DBTraceObjectValue extends DBAnnotatedObject implements InternalTra
 	@Override
 	public void setMinSnap(long minSnap) {
 		try (LockHold hold = manager.trace.lockWrite()) {
-			setLifespan(DBTraceUtils.toRange(minSnap, maxSnap));
+			setLifespan(Lifespan.span(minSnap, maxSnap));
 		}
 	}
 
@@ -304,7 +308,7 @@ public class DBTraceObjectValue extends DBAnnotatedObject implements InternalTra
 	@Override
 	public void setMaxSnap(long maxSnap) {
 		try (LockHold hold = manager.trace.lockWrite()) {
-			setLifespan(DBTraceUtils.toRange(triple.minSnap, maxSnap));
+			setLifespan(Lifespan.span(triple.minSnap, maxSnap));
 		}
 	}
 
@@ -315,9 +319,16 @@ public class DBTraceObjectValue extends DBAnnotatedObject implements InternalTra
 		}
 	}
 
-	protected Stream<? extends DBTraceObjectValPath> doStreamVisitor(Range<Long> span,
+	protected Stream<? extends TraceObjectValPath> doStreamVisitor(Lifespan span,
 			Visitor visitor) {
-		return InternalTreeTraversal.INSTANCE.walkValue(visitor, this, span, null);
+		return TreeTraversal.INSTANCE.walkValue(visitor, this, span, null);
+	}
+
+	protected TraceObjectKeyPath doGetCanonicalPath() {
+		if (triple == null || triple.parent == null) {
+			return TraceObjectKeyPath.of();
+		}
+		return triple.parent.getCanonicalPath().extend(triple.key);
 	}
 
 	protected boolean doIsCanonical() {
@@ -327,7 +338,14 @@ public class DBTraceObjectValue extends DBAnnotatedObject implements InternalTra
 		if (triple.parent == null) {
 			return true;
 		}
-		return triple.parent.getCanonicalPath().extend(triple.key).equals(child.getCanonicalPath());
+		return doGetCanonicalPath().equals(child.getCanonicalPath());
+	}
+
+	@Override
+	public TraceObjectKeyPath getCanonicalPath() {
+		try (LockHold hold = LockHold.lock(manager.lock.readLock())) {
+			return doGetCanonicalPath();
+		}
 	}
 
 	@Override
@@ -353,7 +371,7 @@ public class DBTraceObjectValue extends DBAnnotatedObject implements InternalTra
 	}
 
 	@Override
-	public InternalTraceObjectValue truncateOrDelete(Range<Long> span) {
+	public InternalTraceObjectValue truncateOrDelete(Lifespan span) {
 		try (LockHold hold = LockHold.lock(manager.lock.writeLock())) {
 			if (triple.parent == null) {
 				throw new IllegalArgumentException("Cannot truncate or delete root value");

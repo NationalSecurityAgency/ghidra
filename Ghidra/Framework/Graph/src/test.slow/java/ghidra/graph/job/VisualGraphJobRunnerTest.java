@@ -27,7 +27,7 @@ import org.apache.logging.log4j.Logger;
 import org.junit.*;
 
 import generic.test.AbstractGTest;
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGuiTest;
 import ghidra.framework.LoggingInitialization;
 import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
@@ -35,7 +35,7 @@ import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.AssertException;
 
-public class VisualGraphJobRunnerTest extends AbstractGenericTest {
+public class VisualGraphJobRunnerTest extends AbstractGuiTest {
 
 	// something reasonable: too large makes the test slower; too small, then the test can timeout
 	private static final int RUN_TIME_MILLIS_JOB_THREAD_MAX = 1000;

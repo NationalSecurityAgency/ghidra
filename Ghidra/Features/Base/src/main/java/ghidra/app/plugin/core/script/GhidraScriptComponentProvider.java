@@ -15,15 +15,16 @@
  */
 package ghidra.app.plugin.core.script;
 
-import java.awt.BorderLayout;
-import java.awt.Rectangle;
-import java.awt.event.*;
-import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+
+import java.awt.BorderLayout;
+import java.awt.Rectangle;
+import java.awt.event.*;
+import java.io.*;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -45,6 +46,7 @@ import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 import docking.widgets.tree.support.BreadthFirstIterator;
 import generic.jar.ResourceFile;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.osgi.*;
 import ghidra.app.script.*;
 import ghidra.app.services.ConsoleService;
@@ -56,7 +58,6 @@ import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.table.GhidraTableFilterPanel;
 import ghidra.util.task.*;
-import resources.ResourceManager;
 import util.CollectionUtils;
 import utilities.util.FileUtilities;
 
@@ -125,7 +126,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		scriptList.addListener(scriptListListener);
 
 		setHelpLocation(new HelpLocation(plugin.getName(), plugin.getName()));
-		setIcon(ResourceManager.loadImage("images/play.png"));
+		setIcon(new GIcon("icon.plugin.scriptmanager.provider"));
 		addToToolbar();
 		setWindowGroup(WINDOW_GROUP);
 
@@ -134,6 +135,13 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		plugin.getTool().addComponentProvider(this, false);
 		actionManager = new GhidraScriptActionManager(this, plugin, infoManager);
 		updateTitle();
+	}
+
+	@Override
+	public boolean canBeParent() {
+		// the script window may be open and closed often as users run scripts and thus is not a
+		// suitable parent when in a window by itself
+		return false;
 	}
 
 	private void buildCategoryTree() {
@@ -664,14 +672,9 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 		try {
 			return provider.getScriptInstance(scriptFile, console.getStdErr());
 		}
-		catch (IllegalAccessException e) {
-			console.addErrorMessage("", "Unable to access script: " + scriptName);
-		}
-		catch (InstantiationException e) {
-			console.addErrorMessage("", "Unable to instantiate script: " + scriptName);
-		}
-		catch (ClassNotFoundException e) {
-			console.addErrorMessage("", "Unable to locate script class: " + scriptName);
+		catch (GhidraScriptLoadException e) {
+			console.addErrorMessage("", "Unable to load script: " + scriptName);
+			console.addErrorMessage("", "  detail: " + e.getMessage());
 		}
 
 		// show the error icon
@@ -1033,20 +1036,16 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 	}
 
 	private void updateDescriptionPanel() {
-		String text = "Error! no script info!";
 		ResourceFile script = getSelectedScript();
-		if (script != null) {
-			ScriptInfo info = infoManager.getExistingScriptInfo(script);
-			if (info != null) {
-				text = info.getToolTipText();
-			}
-		}
-		final String ftext = text;
+		ScriptInfo info = infoManager.getExistingScriptInfo(script); // null script is ok
+		String text = script != null
+				? (info != null ? info.getToolTipText() : "Error! no script info!")
+				: null; // no selected script
 
 		// have to do an invokeLater here, since the DefaultCaret class runs in an invokeLater,
 		// which will overwrite our location setting
 		SwingUtilities.invokeLater(() -> {
-			descriptionTextPane.setText(ftext);
+			descriptionTextPane.setText(text);
 			descriptionTextPane.setCaretPosition(0);
 		});
 	}
@@ -1171,7 +1170,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 
 		@Override
 		public void bundleBuilt(GhidraBundle bundle, String summary) {
-			// on enable, build can happen before the refresh populates the info manager with this 
+			// on enable, build can happen before the refresh populates the info manager with this
 			// bundle's scripts, so allow for the possibility and create the info here.
 			if (!(bundle instanceof GhidraSourceBundle)) {
 				return;
@@ -1180,7 +1179,7 @@ public class GhidraScriptComponentProvider extends ComponentProviderAdapter {
 			GhidraSourceBundle sourceBundle = (GhidraSourceBundle) bundle;
 			ResourceFile sourceDirectory = sourceBundle.getFile();
 			if (summary == null) {
-				// a null summary means the build didn't change anything, so use any errors from 
+				// a null summary means the build didn't change anything, so use any errors from
 				// the last build
 				for (ResourceFile sourceFile : sourceBundle.getAllErrors().keySet()) {
 					if (sourceFile.getParentFile().equals(sourceDirectory)) {

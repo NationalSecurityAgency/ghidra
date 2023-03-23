@@ -15,6 +15,7 @@
  */
 package ghidra.framework;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -22,6 +23,12 @@ import generic.jar.ResourceFile;
 import ghidra.util.Msg;
 import utility.module.ModuleManifestFile;
 
+/**
+ * Represents a module in universe of repos.   This class has the notion of 'shadow' modules, which
+ * are those modules that live under a repo other than the module root directory, but in the same
+ * path structure.  This allows for optional repos to be used, adding content to the module when 
+ * that repo is present.
+ */
 public class GModule {
 	private final String BUILD_OUTPUT_DIR = "build";
 	private static final HashSet<String> EXCLUDED_DIRECTORY_NAMES = new HashSet<>();
@@ -99,7 +106,7 @@ public class GModule {
 		String moduleRootPath = moduleRoot.getAbsolutePath();
 
 		for (ResourceFile appRoot : appRoots) {
-			String appRootPath = appRoot.getAbsolutePath();
+			String appRootPath = appRoot.getAbsolutePath() + File.separator;
 
 			if (moduleRootPath.equals(appRootPath)) {
 				// The module root is an appRoot; it doesn't support nested modules
@@ -107,7 +114,7 @@ public class GModule {
 			}
 
 			if (moduleRootPath.startsWith(appRootPath)) {
-				return moduleRootPath.substring(appRootPath.length() + 1);
+				return moduleRootPath.substring(appRootPath.length());
 			}
 		}
 		return null;
@@ -193,4 +200,36 @@ public class GModule {
 	public String toString() {
 		return getName();
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((moduleRoot == null) ? 0 : moduleRoot.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		GModule other = (GModule) obj;
+		if (moduleRoot == null) {
+			if (other.moduleRoot != null) {
+				return false;
+			}
+		}
+		else if (!moduleRoot.equals(other.moduleRoot)) {
+			return false;
+		}
+		return true;
+	}
+
 }

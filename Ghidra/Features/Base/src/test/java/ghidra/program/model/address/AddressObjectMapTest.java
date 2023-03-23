@@ -27,7 +27,7 @@ import org.junit.*;
 
 import generic.test.AbstractGenericTest;
 import ghidra.util.datastruct.NoSuchIndexException;
-import ghidra.util.prop.ObjectPropertySet;
+import ghidra.util.map.ObjectValueMap;
 
 /**
  *
@@ -290,7 +290,7 @@ public class AddressObjectMapTest extends AbstractGenericTest {
 		testMap.addObject("one", setB);
 
 		AddressMapImpl addrMap = (AddressMapImpl) getInstanceField("addrMap", testMap);
-		ObjectPropertySet objMarkers = (ObjectPropertySet) getInstanceField("objMarkers", testMap);
+		ObjectValueMap objMarkers = (ObjectValueMap) getInstanceField("objMarkers", testMap);
 
 		long start = Math.min(addrMap.getKey(startA), addrMap.getKey(startB));
 		long end = Math.max(addrMap.getKey(endA), addrMap.getKey(endB));
@@ -319,7 +319,7 @@ public class AddressObjectMapTest extends AbstractGenericTest {
 		testMap.removeObject("two", setB);
 
 		AddressMapImpl addrMap = (AddressMapImpl) getInstanceField("addrMap", testMap);
-		ObjectPropertySet objMarkers = (ObjectPropertySet) getInstanceField("objMarkers", testMap);
+		ObjectValueMap objMarkers = (ObjectValueMap) getInstanceField("objMarkers", testMap);
 
 		try {
 			long firstMark = objMarkers.getFirstPropertyIndex();

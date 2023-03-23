@@ -20,6 +20,7 @@ import java.util.concurrent.CompletableFuture;
 
 import com.sun.jdi.*;
 
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.jdi.model.iface2.JdiModelTargetObject;
 import ghidra.dbg.target.schema.*;
 
@@ -84,7 +85,7 @@ public class JdiModelTargetMethod extends JdiModelTargetObjectImpl {
 	}
 
 	@Override
-	public CompletableFuture<Void> requestAttributes(boolean refresh) {
+	public CompletableFuture<Void> requestAttributes(RefreshBehavior refresh) {
 
 		populateAttributes();
 

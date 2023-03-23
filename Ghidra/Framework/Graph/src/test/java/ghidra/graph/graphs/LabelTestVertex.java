@@ -15,12 +15,12 @@
  */
 package ghidra.graph.graphs;
 
-import java.awt.Color;
 import java.awt.Dimension;
 
 import javax.swing.*;
 
 import docking.widgets.label.GDLabel;
+import generic.theme.GThemeDefaults.Colors.Palette;
 
 /**
  * A test vertex that renders using a {@link JLabel}.
@@ -33,7 +33,7 @@ public class LabelTestVertex extends AbstractTestVertex {
 		super(name);
 		label.setText(name);
 		label.setPreferredSize(new Dimension(50, 50));
-		label.setBackground(Color.YELLOW.darker());
+		label.setBackground(Palette.GOLD);
 		label.setOpaque(true);
 		label.setBorder(BorderFactory.createRaisedBevelBorder());
 		label.setHorizontalAlignment(SwingConstants.CENTER);

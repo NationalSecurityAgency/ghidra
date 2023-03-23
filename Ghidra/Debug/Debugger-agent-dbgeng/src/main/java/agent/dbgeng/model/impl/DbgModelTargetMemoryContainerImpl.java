@@ -20,14 +20,15 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.Range;
-import com.google.common.collect.RangeSet;
-
 import agent.dbgeng.manager.DbgModuleMemory;
 import agent.dbgeng.manager.cmd.*;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
+import agent.dbgeng.manager.impl.DbgProcessImpl;
 import agent.dbgeng.model.iface2.*;
+import generic.ULongSpan;
+import generic.ULongSpan.ULongSpanSet;
 import ghidra.async.AsyncUtils;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.error.DebuggerMemoryAccessException;
 import ghidra.dbg.error.DebuggerModelAccessException;
 import ghidra.dbg.target.TargetObject;
@@ -53,13 +54,17 @@ public class DbgModelTargetMemoryContainerImpl extends DbgModelTargetObjectImpl
 	public DbgModelTargetMemoryContainerImpl(DbgModelTargetProcess process) {
 		super(process.getModel(), process, "Memory", "MemoryContainer");
 		this.process = process;
-		requestElements(true);
+		if (!getModel().isSuppressDescent()) {
+			requestElements(RefreshBehavior.REFRESH_ALWAYS);
+		}
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		DbgModelTargetProcess targetProcess = getParentProcess();
-		if (!refresh || !targetProcess.getProcess().equals(getManager().getCurrentProcess())) {
+		DbgProcessImpl currentProcess = getManager().getCurrentProcess();
+		if (!refresh.equals(RefreshBehavior.REFRESH_ALWAYS) ||
+			(currentProcess != null && !currentProcess.equals(targetProcess.getProcess()))) {
 			return AsyncUtils.NIL;
 		}
 		return listMemory().thenAccept(byName -> {
@@ -90,6 +95,9 @@ public class DbgModelTargetMemoryContainerImpl extends DbgModelTargetObjectImpl
 		if (manager.isKernelMode()) {
 			return manager.execute(new DbgListKernelMemoryRegionsCommand(manager));
 		}
+		if (manager.useAltMemoryQuery()) {
+			return manager.execute(new DbgListMemoryRegionsCommandAlt(manager));
+		}
 		return manager.execute(new DbgListMemoryRegionsCommand(manager));
 	}
 
@@ -106,16 +114,16 @@ public class DbgModelTargetMemoryContainerImpl extends DbgModelTargetObjectImpl
 		});
 	}
 
-	private byte[] readAssist(Address address, ByteBuffer buf, long offset, RangeSet<Long> set) {
+	private byte[] readAssist(Address address, ByteBuffer buf, long offset, ULongSpanSet set) {
 		if (set == null) {
 			return new byte[0];
 		}
-		Range<Long> range = set.rangeContaining(offset);
-		if (range == null) {
+		ULongSpan span = set.spanContaining(offset);
+		if (span == null) {
 			throw new DebuggerMemoryAccessException("Cannot read at " + address);
 		}
-		listeners.fire.memoryUpdated(getProxy(), address, buf.array());
-		return Arrays.copyOf(buf.array(), (int) (range.upperEndpoint() - range.lowerEndpoint()));
+		broadcast().memoryUpdated(getProxy(), address, buf.array());
+		return Arrays.copyOf(buf.array(), (int) span.length());
 	}
 
 	public CompletableFuture<Void> writeVirtualMemory(Address address, byte[] data) {
@@ -131,7 +139,7 @@ public class DbgModelTargetMemoryContainerImpl extends DbgModelTargetObjectImpl
 	}
 
 	private void writeAssist(Address address, byte[] data) {
-		listeners.fire.memoryUpdated(getProxy(), address, data);
+		broadcast().memoryUpdated(getProxy(), address, data);
 	}
 
 	@Override

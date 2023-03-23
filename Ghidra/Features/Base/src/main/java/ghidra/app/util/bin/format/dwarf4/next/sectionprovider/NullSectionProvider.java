@@ -18,6 +18,7 @@ package ghidra.app.util.bin.format.dwarf4.next.sectionprovider;
 import java.io.IOException;
 
 import ghidra.app.util.bin.ByteProvider;
+import ghidra.util.task.TaskMonitor;
 
 public class NullSectionProvider implements DWARFSectionProvider {
 
@@ -26,7 +27,8 @@ public class NullSectionProvider implements DWARFSectionProvider {
 	}
 
 	@Override
-	public ByteProvider getSectionAsByteProvider(String sectionName) throws IOException {
+	public ByteProvider getSectionAsByteProvider(String sectionName, TaskMonitor monitor)
+			throws IOException {
 		return ByteProvider.EMPTY_BYTEPROVIDER;
 	}
 

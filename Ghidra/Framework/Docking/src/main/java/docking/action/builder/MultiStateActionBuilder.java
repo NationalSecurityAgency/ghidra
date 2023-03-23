@@ -18,6 +18,7 @@ package docking.action.builder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
 import javax.swing.Icon;
 
@@ -26,7 +27,7 @@ import docking.menu.ActionState;
 import docking.menu.MultiStateDockingAction;
 import docking.widgets.EventTrigger;
 
-/** 
+/**
  * Builder for {@link MultiStateDockingAction}
  * 
  * @param <T> The action state type
@@ -38,9 +39,11 @@ public class MultiStateActionBuilder<T> extends
 	private boolean useCheckboxForIcons;
 
 	private List<ActionState<T>> states = new ArrayList<>();
+	private Supplier<List<ActionState<T>>> generator = null;
 
 	/**
 	 * Builder constructor
+	 * 
 	 * @param name the name of the action to be built
 	 * @param owner the owner of the action to be build
 	 */
@@ -55,8 +58,10 @@ public class MultiStateActionBuilder<T> extends
 
 	/**
 	 * Sets the primary callback to be executed when this action changes its action state.
-	 * This builder will throw an {@link IllegalStateException} if one of the build methods is 
-	 * called without providing this callback
+	 * 
+	 * <p>
+	 * This builder will throw an {@link IllegalStateException} if one of the build methods is
+	 * called without providing this callback.
 	 * 
 	 * @param biConsumer the callback to execute when the selected action state is changed.
 	 * @return this builder (for chaining)
@@ -69,10 +74,12 @@ public class MultiStateActionBuilder<T> extends
 	}
 
 	/**
-	 * Overrides the default icons for actions shown in popup menu of the multi-state action.  By
-	 * default, the popup menu items will use the icons as provided by the {@link ActionState}.
-	 * By passing true to this method, icons will not be used in the popup menu.  Instead, a 
-	 * checkbox icon will be used to show the active action state.
+	 * Overrides the default icons for actions shown in popup menu of the multi-state action.
+	 * 
+	 * <p>
+	 * By default, the popup menu items will use the icons as provided by the {@link ActionState}.
+	 * By passing true to this method, icons will not be used in the popup menu. Instead, a checkbox
+	 * icon will be used to show the active action state.
 	 * 
 	 * @param b true to use a checkbox
 	 * @return this MultiActionDockingActionBuilder (for chaining)
@@ -83,7 +90,7 @@ public class MultiStateActionBuilder<T> extends
 	}
 
 	/**
-	 * Add an action state 
+	 * Add an action state
 	 * 
 	 * @param displayName the name to appear in the action menu
 	 * @param icon the icon to appear in the action menu
@@ -96,7 +103,7 @@ public class MultiStateActionBuilder<T> extends
 	}
 
 	/**
-	 * Add an action state 
+	 * Add an action state
 	 * 
 	 * @param actionState the action state to add
 	 * @return this MultiActionDockingActionBuilder (for chaining)
@@ -107,13 +114,28 @@ public class MultiStateActionBuilder<T> extends
 	}
 
 	/**
-	 * Add a list of action states 
+	 * Add a list of action states
 	 * 
 	 * @param list a list of ActionStates;
 	 * @return this MultiActionDockingActionBuilder (for chaining)
 	 */
 	public MultiStateActionBuilder<T> addStates(List<ActionState<T>> list) {
 		states.addAll(list);
+		return self();
+	}
+
+	/**
+	 * Generate the states dynamically upon the user clicking the button
+	 * 
+	 * <p>
+	 * It is highly recommended that the current state is included in the list of available states.
+	 * Otherwise, the user could become confused or frustrated.
+	 * 
+	 * @param generator a function from action context to available states
+	 * @return this MultiActionDockingActionBuilder (for chaining)
+	 */
+	public MultiStateActionBuilder<T> stateGenerator(Supplier<List<ActionState<T>>> generator) {
+		this.generator = generator;
 		return self();
 	}
 
@@ -136,6 +158,16 @@ public class MultiStateActionBuilder<T> extends
 					}
 					else {
 						super.actionPerformed(context);
+					}
+				}
+
+				@Override
+				protected List<ActionState<T>> getStates() {
+					if (generator == null) {
+						return super.getStates();
+					}
+					else {
+						return generator.get();
 					}
 				}
 			};

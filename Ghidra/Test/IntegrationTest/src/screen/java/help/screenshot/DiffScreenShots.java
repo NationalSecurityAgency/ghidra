@@ -15,7 +15,6 @@
  */
 package help.screenshot;
 
-import java.awt.Color;
 import java.awt.Font;
 
 import javax.swing.*;
@@ -24,6 +23,8 @@ import org.junit.Test;
 
 import docking.ComponentProvider;
 import docking.DialogComponentProvider;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.nav.ListingPanelContainer;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.services.ProgramManager;
@@ -44,8 +45,7 @@ public class DiffScreenShots extends GhidraScreenShotGenerator {
 	public void testSelectOtherProgram() throws Exception {
 		addProgramsToProject();
 		program = env.getProgram("WinHelloCPP.exe");
-		performAction("Open/Close Program View", "ProgramDiffPlugin", false);
-		performAction("Open/Close Program View", "ProgramDiffPlugin", false);
+		performAction("Open/Close Diff View", "ProgramDiffPlugin", false);
 		waitForSwing();
 		DialogComponentProvider dialog = getDialog();
 		captureDialog(dialog.getPreferredSize().width, 500);
@@ -58,10 +58,10 @@ public class DiffScreenShots extends GhidraScreenShotGenerator {
 		addProgramsToProject();
 		createProgramVersions();
 		waitForSwing();
-		performAction("Open/Close Program View", "ProgramDiffPlugin", false);
-		performAction("Open/Close Program View", "ProgramDiffPlugin", false);
+		performAction("Open/Close Diff View", "ProgramDiffPlugin", false);
 		waitForSwing();
-		OpenVersionedFileDialog dialog = (OpenVersionedFileDialog) getDialog();
+		@SuppressWarnings("unchecked")
+		OpenVersionedFileDialog<Program> dialog = (OpenVersionedFileDialog<Program>) getDialog();
 		DataTree dataTree = (DataTree) findComponentByName(dialog.getComponent(), "Data Tree");
 		selectPath(dataTree, env.getProject().getName(), "WinHelloCpp.exe");
 		JButton historyButton = findButtonByText(dialog.getComponent(), "History>>");
@@ -70,12 +70,33 @@ public class DiffScreenShots extends GhidraScreenShotGenerator {
 	}
 
 	@Test
+	public void testSelectOpenProgram() throws Exception {
+		addProgramsToProject();
+		createProgramVersions();
+		runSwing(() -> {
+			Project project = env.getProject();
+			ProjectData projectData = project.getProjectData();
+			DomainFile file = projectData.getRootFolder().getFile("OldWinHelloCpp.exe");
+			ProgramManager pm = tool.getService(ProgramManager.class);
+			pm.openProgram(file);
+		});
+		waitForSwing();
+		performAction("Open/Close Diff View", "ProgramDiffPlugin", false);
+		waitForSwing();
+		@SuppressWarnings("unchecked")
+		OpenVersionedFileDialog<Program> dialog = (OpenVersionedFileDialog<Program>) getDialog();
+		JTabbedPane tabPane = (JTabbedPane) findComponentByName(dialog.getComponent(), "Tabs");
+		runSwing(() -> tabPane.setSelectedIndex(1)); // select Open Programs tab
+		captureDialog(dialog.getPreferredSize().width, 500);
+	}
+
+	@Test
 	public void testDetermineDiffs() throws Exception {
 		addProgramsToProject();
-		performAction("Open/Close Program View", "ProgramDiffPlugin", false);
-		performAction("Open/Close Program View", "ProgramDiffPlugin", false);
+		performAction("Open/Close Diff View", "ProgramDiffPlugin", false);
 		waitForSwing();
-		OpenVersionedFileDialog dialog = (OpenVersionedFileDialog) getDialog();
+		@SuppressWarnings("unchecked")
+		OpenVersionedFileDialog<Program> dialog = (OpenVersionedFileDialog<Program>) getDialog();
 		DataTree dataTree = (DataTree) findComponentByName(dialog.getComponent(), "Data Tree");
 		selectPath(dataTree, env.getProject().getName(), "WinHelloCpp.exe");
 		waitForSwing();
@@ -88,10 +109,10 @@ public class DiffScreenShots extends GhidraScreenShotGenerator {
 	public void testDiff() throws Exception {
 		addProgramsToProject();
 		createDifferences();
-		performAction("Open/Close Program View", "ProgramDiffPlugin", false);
-		performAction("Open/Close Program View", "ProgramDiffPlugin", false);
+		performAction("Open/Close Diff View", "ProgramDiffPlugin", false);
 		waitForSwing();
-		OpenVersionedFileDialog dialog = (OpenVersionedFileDialog) getDialog();
+		@SuppressWarnings("unchecked")
+		OpenVersionedFileDialog<Program> dialog = (OpenVersionedFileDialog<Program>) getDialog();
 		DataTree dataTree = (DataTree) findComponentByName(dialog.getComponent(), "Data Tree");
 		selectPath(dataTree, env.getProject().getName(), "WinHelloCpp.exe");
 		waitForSwing();
@@ -110,10 +131,10 @@ public class DiffScreenShots extends GhidraScreenShotGenerator {
 	public void testDiffApplySettings() throws Exception {
 		addProgramsToProject();
 		createDifferences();
-		performAction("Open/Close Program View", "ProgramDiffPlugin", false);
-		performAction("Open/Close Program View", "ProgramDiffPlugin", false);
+		performAction("Open/Close Diff View", "ProgramDiffPlugin", false);
 		waitForSwing();
-		OpenVersionedFileDialog dialog = (OpenVersionedFileDialog) getDialog();
+		@SuppressWarnings("unchecked")
+		OpenVersionedFileDialog<Program> dialog = (OpenVersionedFileDialog<Program>) getDialog();
 		DataTree dataTree = (DataTree) findComponentByName(dialog.getComponent(), "Data Tree");
 		selectPath(dataTree, env.getProject().getName(), "WinHelloCpp.exe");
 		waitForSwing();
@@ -135,8 +156,8 @@ public class DiffScreenShots extends GhidraScreenShotGenerator {
 		JMenu jMenu = new JMenu();
 		Font font = jMenu.getFont().deriveFont(11f);
 		TextFormatter tf = new TextFormatter(font, 3, 220, 0, 20, 3);
-		TextFormatterContext white = new TextFormatterContext(Color.WHITE);
-		tf.colorLines(new Color(60, 115, 200), 2, 1);
+		TextFormatterContext white = new TextFormatterContext(Colors.BACKGROUND);
+		tf.colorLines(Palette.getColor("cornflowerblue"), 2, 1);
 
 		tf.writeln("Set Ignore for All Apply Settings");
 		tf.writeln("Set Replace for All Apply Settings");
@@ -148,10 +169,10 @@ public class DiffScreenShots extends GhidraScreenShotGenerator {
 	public void testDiffDetails() throws Exception {
 		addProgramsToProject();
 		createDifferencesAt401417();
-		performAction("Open/Close Program View", "ProgramDiffPlugin", false);
-		performAction("Open/Close Program View", "ProgramDiffPlugin", false);
+		performAction("Open/Close Diff View", "ProgramDiffPlugin", false);
 		waitForSwing();
-		OpenVersionedFileDialog dialog = (OpenVersionedFileDialog) getDialog();
+		@SuppressWarnings("unchecked")
+		OpenVersionedFileDialog<Program> dialog = (OpenVersionedFileDialog<Program>) getDialog();
 		DataTree dataTree = (DataTree) findComponentByName(dialog.getComponent(), "Data Tree");
 		selectPath(dataTree, env.getProject().getName(), "WinHelloCpp.exe");
 		waitForSwing();

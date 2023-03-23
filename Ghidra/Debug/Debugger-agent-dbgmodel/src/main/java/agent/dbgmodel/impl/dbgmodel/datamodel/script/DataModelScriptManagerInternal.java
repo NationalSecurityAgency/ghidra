@@ -15,15 +15,15 @@
  */
 package agent.dbgmodel.impl.dbgmodel.datamodel.script;
 
+import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Guid.REFIID;
 
+import agent.dbgeng.impl.dbgeng.DbgEngUtil;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.InterfaceSupplier;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.Preferred;
 import agent.dbgmodel.dbgmodel.datamodel.script.DataModelScriptManager;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil.InterfaceSupplier;
 import agent.dbgmodel.jna.dbgmodel.datamodel.script.IDataModelScriptManager;
 import agent.dbgmodel.jna.dbgmodel.datamodel.script.WrapIDataModelScriptManager;
 import ghidra.util.datastruct.WeakValueHashMap;
@@ -32,19 +32,15 @@ public interface DataModelScriptManagerInternal extends DataModelScriptManager {
 	Map<Pointer, DataModelScriptManagerInternal> CACHE = new WeakValueHashMap<>();
 
 	static DataModelScriptManagerInternal instanceFor(WrapIDataModelScriptManager data) {
-		return DbgModelUtil.lazyWeakCache(CACHE, data, DataModelScriptManagerImpl::new);
+		return DbgEngUtil.lazyWeakCache(CACHE, data, DataModelScriptManagerImpl::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIDataModelScriptManager>> PREFERRED_DATA_SPACES_IIDS_BUILDER =
-		ImmutableMap.builder();
-	Map<REFIID, Class<? extends WrapIDataModelScriptManager>> PREFERRED_DATA_SPACES_IIDS =
-		PREFERRED_DATA_SPACES_IIDS_BUILDER //
-				.put(new REFIID(IDataModelScriptManager.IID_IDATA_MODEL_SCRIPT_MANAGER),
-					WrapIDataModelScriptManager.class) //
-				.build();
+	List<Preferred<WrapIDataModelScriptManager>> PREFERRED_DATA_SPACES_IIDS = List.of(
+		new Preferred<>(IDataModelScriptManager.IID_IDATA_MODEL_SCRIPT_MANAGER,
+			WrapIDataModelScriptManager.class));
 
 	static DataModelScriptManagerInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
-		return DbgModelUtil.tryPreferredInterfaces(DataModelScriptManagerInternal.class,
+		return DbgEngUtil.tryPreferredInterfaces(DataModelScriptManagerInternal.class,
 			PREFERRED_DATA_SPACES_IIDS, supplier);
 	}
 }

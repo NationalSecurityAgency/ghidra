@@ -35,16 +35,15 @@ ifeq ($(OS),Darwin)
   OSDIR=mac_x86_64
 endif
 
-CC=gcc
-CXX=g++
+CXX=g++ -std=c++11
 
 # Debug flags
-DBG_CXXFLAGS=-g -std=c++11 -Wall -Wno-sign-compare
+DBG_CXXFLAGS=-g -Wall -Wno-sign-compare
 #DBG_CXXFLAGS=-g -pg -Wall -Wno-sign-compare
 #DBG_CXXFLAGS=-g -fprofile-arcs -ftest-coverage -Wall -Wno-sign-compare
 
 # Optimization flags
-OPT_CXXFLAGS=-O2 -std=c++11 -Wall -Wno-sign-compare
+OPT_CXXFLAGS=-O2 -Wall -Wno-sign-compare
 
 YACC=bison
 
@@ -77,7 +76,7 @@ EXTERNAL_CONSOLEEXT_NAMES=$(subst .cc,,$(notdir $(EXTERNAL_CONSOLEEXT_SOURCE)))
 
 # The following macros partition all the source files, there should be no overlaps
 # Some core source files used in all projects
-CORE=	xml space float address pcoderaw translate opcodes globalcontext
+CORE=	xml marshal space float address pcoderaw translate opcodes globalcontext
 # Additional core files for any projects that decompile
 DECCORE=capability architecture options graph cover block cast typeop database cpool \
 	comment stringmanage fspec action loadimage grammar varnode op \

@@ -19,9 +19,11 @@ import java.awt.*;
 
 import javax.swing.JPanel;
 
+import generic.theme.GThemeDefaults.Colors.Java;
+
 public class PalettePanel extends JPanel {
 
-	private Palette palette;
+	private OverviewPalette palette;
 	private final int topBottomMargin;
 
 	PalettePanel(int topBottomMargin) {
@@ -33,7 +35,7 @@ public class PalettePanel extends JPanel {
 		return new Dimension(20, 10);
 	}
 
-	public void setPalette(Palette palette) {
+	public void setPalette(OverviewPalette palette) {
 		this.palette = palette;
 	}
 
@@ -45,12 +47,12 @@ public class PalettePanel extends JPanel {
 
 		g.setColor(getBackground());
 		g.fillRect(0, 0, getWidth(), getHeight());
-		g.setColor(Color.BLACK);
+		g.setColor(Java.BORDER);
 		if (palette == null) {
-			g.setColor(Color.BLACK);
 			g.drawRect(0, 0, width - 1, height - 1);
 			return;
 		}
+
 		int palsize = palette.getSize();
 		//Draw the rectangles for each pixel
 		for (int i = 0; i < height; i++) {
@@ -62,7 +64,7 @@ public class PalettePanel extends JPanel {
 			g.setColor(c);
 			g.fillRect(0, topBottomMargin + i, width, 1);
 		}
-		g.setColor(Color.BLACK);
+		g.setColor(Java.BORDER);
 		g.drawRect(0, topBottomMargin, width - 1, height);
 	}
 

@@ -29,7 +29,7 @@ public class TestTargetModuleContainer
 	}
 
 	public TestTargetModule addModule(String name, AddressRange range) {
-		TestTargetModule module = new TestTargetModule(this, name, range);
+		TestTargetModule module = getModel().newTestTargetModule(this, name, range);
 		changeElements(List.of(), List.of(module), "Add test module: " + name);
 		return module;
 	}

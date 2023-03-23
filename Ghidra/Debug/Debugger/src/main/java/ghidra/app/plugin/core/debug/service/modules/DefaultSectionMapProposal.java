@@ -17,8 +17,6 @@ package ghidra.app.plugin.core.debug.service.modules;
 
 import java.util.Map;
 
-import com.google.common.collect.Range;
-
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.app.services.SectionMapProposal;
 import ghidra.app.services.SectionMapProposal.SectionMapEntry;
@@ -26,6 +24,7 @@ import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.address.AddressRangeImpl;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.modules.TraceSection;
 
@@ -66,7 +65,7 @@ public class DefaultSectionMapProposal
 		}
 
 		@Override
-		public Range<Long> getFromLifespan() {
+		public Lifespan getFromLifespan() {
 			return getModule().getLifespan();
 		}
 

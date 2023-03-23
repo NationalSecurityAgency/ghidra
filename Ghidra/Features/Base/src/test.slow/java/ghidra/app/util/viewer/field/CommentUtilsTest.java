@@ -15,8 +15,7 @@
  */
 package ghidra.app.util.viewer.field;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.util.List;
 
@@ -107,5 +106,17 @@ public class CommentUtilsTest extends AbstractGhidraHeadlessIntegrationTest {
 		assertEquals(1, annotations.size());
 		WordLocation word = annotations.get(0);
 		assertEquals("{@symbol symbol\\{Name\\}}", word.getWord());
+	}
+	
+	@Test
+	public void testSanitize() {
+		
+		String comment = null;
+		String sanitized = CommentUtils.sanitize(comment);
+		assertNull(sanitized);
+
+		comment = "Null\0 character test";
+		sanitized = CommentUtils.sanitize(comment);
+		assertEquals(sanitized, "Null character test");
 	}
 }

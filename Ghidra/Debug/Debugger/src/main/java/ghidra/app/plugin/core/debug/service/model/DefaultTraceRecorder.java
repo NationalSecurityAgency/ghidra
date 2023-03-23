@@ -42,10 +42,12 @@ import ghidra.program.model.lang.RegisterValue;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.breakpoint.TraceBreakpoint;
 import ghidra.trace.model.breakpoint.TraceBreakpointKind;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.TraceModule;
 import ghidra.trace.model.modules.TraceSection;
 import ghidra.trace.model.stack.TraceStackFrame;
+import ghidra.trace.model.target.TraceObject;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.Msg;
@@ -105,6 +107,16 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	}
 
 	/*---------------- OBJECT MANAGER METHODS -------------------*/
+
+	@Override
+	public TargetObject getTargetObject(TraceObject obj) {
+		return null;
+	}
+
+	@Override
+	public TraceObject getTraceObject(TargetObject obj) {
+		return null;
+	}
 
 	@Override
 	public TargetBreakpointLocation getTargetBreakpoint(TraceBreakpoint bpt) {
@@ -220,7 +232,7 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	}
 
 	@Override
-	public TargetRegisterBank getTargetRegisterBank(TraceThread thread, int frameLevel) {
+	public Set<TargetRegisterBank> getTargetRegisterBanks(TraceThread thread, int frameLevel) {
 		DefaultThreadRecorder rec = getThreadRecorder(thread);
 		return rec.getTargetRegisterBank(thread, frameLevel);
 	}
@@ -268,12 +280,11 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	/*---------------- CAPTURE METHODS -------------------*/
 
 	@Override
-	public CompletableFuture<NavigableMap<Address, byte[]>> readMemoryBlocks(AddressSetView set,
-			TaskMonitor monitor, boolean toMap) {
+	public CompletableFuture<Void> readMemoryBlocks(AddressSetView set, TaskMonitor monitor) {
 		if (set.isEmpty()) {
-			return CompletableFuture.completedFuture(new TreeMap<>());
+			return AsyncUtils.NIL;
 		}
-		return memoryRecorder.captureProcessMemory(set, monitor, toMap);
+		return memoryRecorder.captureProcessMemory(set, monitor);
 	}
 
 	@Override
@@ -315,11 +326,10 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	}
 
 	@Override
-	public CompletableFuture<Map<Register, RegisterValue>> captureThreadRegisters(
-			TraceThread thread, int frameLevel,
-			Set<Register> registers) {
+	public CompletableFuture<Void> captureThreadRegisters(
+			TracePlatform platform, TraceThread thread, int frameLevel, Set<Register> registers) {
 		DefaultThreadRecorder rec = getThreadRecorder(thread);
-		return rec.captureThreadRegisters(thread, frameLevel, registers);
+		return rec.captureThreadRegisters(thread, frameLevel, registers).thenApply(__ -> null);
 	}
 
 	/*---------------- SNAPSHOT METHODS -------------------*/
@@ -377,13 +387,31 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		return findFocusScope() != null;
 	}
 
+	@Override
+	public boolean isSupportsActivation() {
+		return findActiveScope() != null;
+	}
+
 	// NOTE: This may require the scope to be an ancestor of the target
 	// That should be fine
 	protected TargetFocusScope findFocusScope() {
 		List<String> path = target.getModel()
 				.getRootSchema()
 				.searchForSuitable(TargetFocusScope.class, target.getPath());
+		if (path == null) {
+			return null;
+		}
 		return (TargetFocusScope) target.getModel().getModelObject(path);
+	}
+
+	protected TargetActiveScope findActiveScope() {
+		List<String> path = target.getModel()
+				.getRootSchema()
+				.searchForSuitable(TargetActiveScope.class, target.getPath());
+		if (path == null) {
+			return null;
+		}
+		return (TargetActiveScope) target.getModel().getModelObject(path);
 	}
 
 	@Override
@@ -409,8 +437,8 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	@Override
 	public CompletableFuture<Boolean> requestFocus(TargetObject focus) {
 		if (!isSupportsFocus()) {
-			return CompletableFuture
-					.failedFuture(new IllegalArgumentException("Target does not support focus"));
+			return CompletableFuture.failedFuture(
+				new IllegalArgumentException("Target does not support focus"));
 		}
 		if (!PathUtils.isAncestor(getTarget().getPath(), focus.getPath())) {
 			return CompletableFuture.failedFuture(new IllegalArgumentException(
@@ -431,6 +459,36 @@ public class DefaultTraceRecorder implements TraceRecorder {
 			}
 			else {
 				Msg.error(this, "Could not focus " + focus, ex);
+			}
+			return false;
+		});
+	}
+
+	@Override
+	public CompletableFuture<Boolean> requestActivation(TargetObject active) {
+		if (!isSupportsActivation()) {
+			return CompletableFuture.failedFuture(
+				new IllegalArgumentException("Target does not support activation"));
+		}
+		if (!PathUtils.isAncestor(getTarget().getPath(), active.getPath())) {
+			return CompletableFuture.failedFuture(new IllegalArgumentException(
+				"Requested activation path is not a successor of the target"));
+		}
+		TargetActiveScope activeScope = findActiveScope();
+		if (!PathUtils.isAncestor(activeScope.getPath(), active.getPath())) {
+			// This should be rare, if not forbidden
+			return CompletableFuture.failedFuture(new IllegalArgumentException(
+				"Requested activation path is not a successor of the focus scope"));
+		}
+		return activeScope.requestActivation(active).thenApply(__ -> true).exceptionally(ex -> {
+			ex = AsyncUtils.unwrapThrowable(ex);
+			String msg = "Could not activate " + active + ": " + ex.getMessage();
+			plugin.getTool().setStatusInfo(msg);
+			if (ex instanceof DebuggerModelAccessException) {
+				Msg.info(this, msg);
+			}
+			else {
+				Msg.error(this, "Could not activate " + active, ex);
 			}
 			return false;
 		});
@@ -537,8 +595,21 @@ public class DefaultTraceRecorder implements TraceRecorder {
 	}
 
 	@Override
-	public CompletableFuture<Void> writeThreadRegisters(TraceThread thread, int frameLevel,
-			Map<Register, RegisterValue> values) {
+	public Register isRegisterOnTarget(TracePlatform platform, TraceThread thread, int frameLevel,
+			Register register) {
+		// NOTE: This pays no heed to frameLevel, but caller does require level==0 for now.
+		Collection<Register> onTarget = getRegisterMapper(thread).getRegistersOnTarget();
+		for (; register != null; register = register.getParentRegister()) {
+			if (onTarget.contains(register)) {
+				return register;
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public CompletableFuture<Void> writeThreadRegisters(TracePlatform platform, TraceThread thread,
+			int frameLevel, Map<Register, RegisterValue> values) {
 		DefaultThreadRecorder rec = getThreadRecorder(thread);
 		return (rec == null) ? null : rec.writeThreadRegisters(frameLevel, values);
 	}
@@ -562,9 +633,13 @@ public class DefaultTraceRecorder implements TraceRecorder {
 		return true;
 	}
 
-	// UNUSED?
 	@Override
 	public CompletableFuture<Void> flushTransactions() {
-		return parTx.flush();
+		return CompletableFuture.runAsync(() -> {
+		}, privateQueue).thenCompose(__ -> {
+			return objectManager.flushEvents();
+		}).thenCompose(__ -> {
+			return parTx.flush();
+		});
 	}
 }

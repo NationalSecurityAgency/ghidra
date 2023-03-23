@@ -71,7 +71,7 @@ public class DebugSystemObjectsImpl1 implements DebugSystemObjectsInternal {
 	@Override
 	public void setCurrentThreadId(DebugThreadId id) {
 		HRESULT hr = jnaSysobj.SetCurrentThreadId(new ULONG(id.id));
-		if (!hr.equals(COMUtilsExtra.E_UNEXPECTED)) {
+		if (!hr.equals(COMUtilsExtra.E_UNEXPECTED) && !hr.equals(COMUtilsExtra.E_NOINTERFACE)) {
 			COMUtils.checkRC(hr);
 		}
 	}
@@ -229,6 +229,28 @@ public class DebugSystemObjectsImpl1 implements DebugSystemObjectsInternal {
 	}
 
 	@Override
+	public long getCurrentThreadDataOffset() {
+		ULONGLONGByReference pulSysOffset = new ULONGLONGByReference();
+		HRESULT hr = jnaSysobj.GetCurrentThreadDataOffset(pulSysOffset);
+		if (hr.equals(COMUtilsExtra.E_UNEXPECTED) || hr.equals(COMUtilsExtra.E_NOTIMPLEMENTED)) {
+			return -1;
+		}
+		COMUtils.checkRC(hr);
+		return pulSysOffset.getValue().longValue();
+	}
+
+	@Override
+	public long getCurrentProcessDataOffset() {
+		ULONGLONGByReference pulSysOffset = new ULONGLONGByReference();
+		HRESULT hr = jnaSysobj.GetCurrentProcessDataOffset(pulSysOffset);
+		if (hr.equals(COMUtilsExtra.E_UNEXPECTED) || hr.equals(COMUtilsExtra.E_NOTIMPLEMENTED)) {
+			return -1;
+		}
+		COMUtils.checkRC(hr);
+		return pulSysOffset.getValue().longValue();
+	}
+
+	@Override
 	public DebugSessionId getEventSystem() {
 		throw new UnsupportedOperationException("Not supported by this interface");
 	}
@@ -252,4 +274,26 @@ public class DebugSystemObjectsImpl1 implements DebugSystemObjectsInternal {
 	public List<DebugSessionId> getSystems(int start, int count) {
 		throw new UnsupportedOperationException("Not supported by this interface");
 	}
+	
+	@Override
+	public long getImplicitThreadDataOffset() {
+		throw new UnsupportedOperationException("Not supported by this interface");
+	}
+
+	@Override
+	public long getImplicitProcessDataOffset() {
+		throw new UnsupportedOperationException("Not supported by this interface");
+	}
+
+	@Override
+	public void setImplicitThreadDataOffset(long offset) {
+		throw new UnsupportedOperationException("Not supported by this interface");
+	}
+
+	@Override
+	public void setImplicitProcessDataOffset(long offset) {
+		throw new UnsupportedOperationException("Not supported by this interface");
+	}
+
+
 }

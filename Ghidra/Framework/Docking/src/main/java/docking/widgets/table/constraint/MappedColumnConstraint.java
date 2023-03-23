@@ -17,12 +17,13 @@ package docking.widgets.table.constraint;
 
 import docking.widgets.table.constrainteditor.ColumnConstraintEditor;
 import docking.widgets.table.constrainteditor.MappedColumnConstraintEditor;
+import generic.json.Json;
 import ghidra.util.SystemUtilities;
 
 /**
  * Class that maps one type of column constraint into another.  Typically, these are created
  * automatically based on {@link ColumnTypeMapper} that are discovered by the system.  For example,
- * {@literal if you have a column type of "Foo", and you create a ColumnTypeMapper<Foo, String>, 
+ * {@literal if you have a column type of "Foo", and you create a ColumnTypeMapper<Foo, String>,
  * then all the} string constraints would now be available that column.
  *
  * @param <T> The column type
@@ -98,6 +99,11 @@ public class MappedColumnConstraint<T, M> implements ColumnConstraint<T> {
 	 */
 	public ColumnConstraint<M> getDelegate() {
 		return delegate;
+	}
+
+	@Override
+	public String toString() {
+		return Json.toString(this);
 	}
 
 	@Override

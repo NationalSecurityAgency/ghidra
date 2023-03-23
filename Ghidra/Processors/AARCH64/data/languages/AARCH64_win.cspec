@@ -193,4 +193,22 @@
     </prototype>
   </default_proto>
 
+  <callfixup name="security_push_cookie">
+  <target name="__security_push_cookie"/>
+  <pcode>
+    <body><![CDATA[
+     sp = sp - 16;
+    ]]></body>
+  </pcode>
+  </callfixup>
+  
+  <callfixup name="security_pop_cookie">
+  <target name="__security_pop_cookie"/>
+  <pcode>
+    <body><![CDATA[
+     sp = sp + 16;
+    ]]></body>
+  </pcode>
+  </callfixup>
+  
 </compiler_spec>

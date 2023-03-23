@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +15,22 @@
  */
 package ghidra.feature.vt.gui.provider.matchtable;
 
+import javax.swing.Icon;
+
+import docking.ActionContext;
+import docking.action.*;
+import generic.theme.GIcon;
 import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.feature.vt.gui.plugin.VTPlugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.OptionsService;
 import ghidra.util.HelpLocation;
 
-import javax.swing.Icon;
-
-import resources.ResourceManager;
-import docking.ActionContext;
-import docking.action.*;
-
 public class VTMatchApplySettingsAction extends DockingAction {
 	public static final String VERSION_TRACKING_OPTIONS_NAME = "Version Tracking";
 	public static final String VERSION_TRACKING_APPLY_MARKUP_OPTIONS = "Apply Markup Options";
 
-	static final Icon ICON = ResourceManager.loadImage("images/settings16.gif");
+	static final Icon ICON = new GIcon("icon.version.tracking.action.show.settings");
 	private static final String MENU_GROUP = VTPlugin.VT_SETTINGS_MENU_GROUP;
 	private static final String TITLE = "Version Tracking Options";
 

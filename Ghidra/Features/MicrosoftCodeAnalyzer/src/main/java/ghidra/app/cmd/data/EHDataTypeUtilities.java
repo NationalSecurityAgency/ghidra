@@ -324,10 +324,11 @@ public class EHDataTypeUtilities {
 	public static boolean createFunctionIfNeeded(Program program, Address functionAddress) {
 		// If there isn't an instruction at the function address yet, then disassemble there.
 		Listing listing = program.getListing();
-		functionAddress =
+		Address normalizedFunctionAddress =
 			PseudoDisassembler.getNormalizedDisassemblyAddress(program, functionAddress);
-		Instruction inst = listing.getInstructionAt(functionAddress);
+		Instruction inst = listing.getInstructionAt(normalizedFunctionAddress);
 		if (inst == null) {
+			functionAddress = PseudoDisassembler.setTargeContextForDisassembly(program, functionAddress);
 			DisassembleCommand cmd = new DisassembleCommand(functionAddress, null, true);
 			if (!cmd.applyTo(program) || cmd.getDisassembledAddressSet().isEmpty()) {
 				Msg.error(EHDataTypeUtilities.class, "Failed to disassemble at " + functionAddress);
@@ -337,12 +338,12 @@ public class EHDataTypeUtilities {
 
 		// If there isn't a function at the function address yet, then try to create one there.
 		FunctionManager functionManager = program.getFunctionManager();
-		Function function = functionManager.getFunctionAt(functionAddress);
+		Function function = functionManager.getFunctionAt(normalizedFunctionAddress);
 		if (function == null) {
-			CreateFunctionCmd cmd = new CreateFunctionCmd(functionAddress);
+			CreateFunctionCmd cmd = new CreateFunctionCmd(normalizedFunctionAddress);
 			if (!cmd.applyTo(program)) {
 				Msg.error(EHDataTypeUtilities.class,
-					"Failed to create function at " + functionAddress);
+					"Failed to create function at " + normalizedFunctionAddress);
 				return false;
 			}
 		}

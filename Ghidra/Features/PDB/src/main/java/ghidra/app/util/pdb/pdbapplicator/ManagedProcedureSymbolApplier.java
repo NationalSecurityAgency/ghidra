@@ -58,6 +58,7 @@ public class ManagedProcedureSymbolApplier extends MsSymbolApplier {
 
 	private Address specifiedAddress;
 	private Address address;
+	private boolean isNonReturning;
 	private Function function = null;
 	private long specifiedFrameSize = 0;
 	private long currentFrameSize = 0;
@@ -76,12 +77,12 @@ public class ManagedProcedureSymbolApplier extends MsSymbolApplier {
 
 	/**
 	 * Constructor
-	 * @param applicator the {@link PdbApplicator} for which we are working.
+	 * @param applicator the {@link DefaultPdbApplicator} for which we are working.
 	 * @param iter the Iterator containing the symbol sequence being processed
 	 * @throws CancelledException upon user cancellation
 	 */
-	public ManagedProcedureSymbolApplier(PdbApplicator applicator, AbstractMsSymbolIterator iter)
-			throws CancelledException {
+	public ManagedProcedureSymbolApplier(DefaultPdbApplicator applicator,
+			AbstractMsSymbolIterator iter) throws CancelledException {
 		super(applicator, iter);
 		AbstractMsSymbol abstractSymbol = iter.next();
 		symbolBlockNestingLevel = 0;
@@ -98,6 +99,7 @@ public class ManagedProcedureSymbolApplier extends MsSymbolApplier {
 		procedureSymbol = (AbstractManagedProcedureMsSymbol) abstractSymbol;
 		specifiedAddress = applicator.getRawAddress(procedureSymbol);
 		address = applicator.getAddress(procedureSymbol);
+		isNonReturning = procedureSymbol.getFlags().doesNotReturn();
 
 		manageBlockNesting(this);
 
@@ -248,17 +250,15 @@ public class ManagedProcedureSymbolApplier extends MsSymbolApplier {
 		if (function == null) {
 			function = createFunction(monitor);
 		}
-		if (function != null && !function.isThunk() &&
-			(function.getSignatureSource() == SourceType.DEFAULT ||
-				function.getSignatureSource() == SourceType.ANALYSIS)) {
-			// Set the function definition
-			setFunctionDefinition(monitor);
-
-		}
 		if (function == null) {
 			return false;
 		}
 
+		if (!function.isThunk() &&
+			function.getSignatureSource().isLowerPriorityThan(SourceType.IMPORTED)) {
+			setFunctionDefinition(monitor);
+			function.setNoReturn(isNonReturning);
+		}
 		currentFrameSize = 0;
 		return true;
 	}
@@ -493,7 +493,7 @@ public class ManagedProcedureSymbolApplier extends MsSymbolApplier {
 			return new CallDepthChangeInfo(function, scopeSet, frameReg, monitor);
 		}
 
-		Integer getRegChange(PdbApplicator applicator, Register register) {
+		Integer getRegChange(DefaultPdbApplicator applicator, Register register) {
 			if (callDepthChangeInfo == null || register == null) {
 				return null;
 			}

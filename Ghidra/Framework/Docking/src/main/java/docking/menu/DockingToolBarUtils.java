@@ -24,7 +24,7 @@ import javax.swing.KeyStroke;
 import org.apache.commons.lang3.StringUtils;
 
 import docking.action.DockingActionIf;
-import ghidra.docking.util.DockingWindowsLookAndFeelUtils;
+import ghidra.docking.util.LookAndFeelUtils;
 import ghidra.util.StringUtilities;
 
 class DockingToolBarUtils {
@@ -96,7 +96,7 @@ class DockingToolBarUtils {
 			builder.append(InputEvent.getModifiersExText(modifiers));
 
 			// The Aqua LaF does not use the '+' symbol between modifiers
-			if (!DockingWindowsLookAndFeelUtils.isUsingAquaUI(button.getUI())) {
+			if (!LookAndFeelUtils.isUsingAquaUI(button.getUI())) {
 				builder.append('+');
 			}
 		}

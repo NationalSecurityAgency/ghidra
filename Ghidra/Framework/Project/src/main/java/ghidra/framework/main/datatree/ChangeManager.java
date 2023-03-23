@@ -176,39 +176,14 @@ class ChangeManager implements DomainFolderChangeListener {
 			if (lazy && !folderNode.isLoaded()) {
 				return null; // not visited 
 			}
-			// must look at all children since a folder and file may have the same name
-			boolean found = false;
-			for (GTreeNode node : folderNode.getChildren()) {
-				if (!(node instanceof DomainFolderNode)) {
-					continue;
-				}
-				if (name.equals(node.getName())) {
-					folderNode = (DomainFolderNode) node;
-					found = true;
-					break;
-				}
-			}
-			if (!found) {
+			folderNode =
+				(DomainFolderNode) folderNode.getChild(name, n -> (n instanceof DomainFolderNode));
+			if (folderNode == null) {
 				return null;
 			}
 		}
 		return folderNode;
 	}
-
-//	private DomainFileNode findDomainFileNode(DomainFolder parent, String name, boolean lazy) {
-//		DomainFolderNode folderNode = findDomainFolderNode(parent, lazy);
-//		if (folderNode == null) {
-//			return null;
-//		}
-//		if (lazy && !folderNode.isChildrenLoadedOrInProgress()) {
-//			return null; // not visited 
-//		}
-//		GTreeNode child = folderNode.getChild(name);
-//		if (child instanceof DomainFileNode) {
-//			return (DomainFileNode) child;
-//		}
-//		return null;
-//	}
 
 	private DomainFileNode findDomainFileNode(DomainFile domainFile, boolean lazy) {
 		DomainFolderNode folderNode = findDomainFolderNode(domainFile.getParent(), lazy);
@@ -219,11 +194,8 @@ class ChangeManager implements DomainFolderChangeListener {
 			return null; // not visited 
 		}
 
-		GTreeNode child = folderNode.getChild(domainFile.getName());
-		if (child instanceof DomainFileNode) {
-			return (DomainFileNode) child;
-		}
-		return null;
+		return (DomainFileNode) folderNode.getChild(domainFile.getName(),
+			n -> (n instanceof DomainFileNode));
 	}
 
 	private void updateFolderNode(DomainFolder parent) {

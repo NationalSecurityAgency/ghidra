@@ -29,7 +29,7 @@ of how you might be impacted.
 
 ## Install
 To install an official pre-built multi-platform Ghidra release:  
-* Install [JDK 11 64-bit][jdk11]
+* Install [JDK 17 64-bit][jdk17]
 * Download a Ghidra [release file][releases]
 * Extract the Ghidra release file
 * Launch Ghidra: `./ghidraRun` (or `ghidraRun.bat` for Windows)
@@ -43,10 +43,14 @@ directory.
 To create the latest development build for your platform from this source repository:
 
 ##### Install build tools:
-* [JDK 11 64-bit][jdk11]
-* [Gradle 6.8+ or 7.x][gradle]
+* [JDK 17 64-bit][jdk17]
+* [Gradle 7.3+][gradle]
 * make, gcc, and g++ (Linux/macOS-only)
-* [Microsoft Visual Studio][vs] (Windows-only)
+* [Microsoft Visual Studio][vs] 2017+ or [Microsoft C++ Build Tools][vcbuildtools] with the
+  following components installed (Windows-only):
+  - MSVC
+  - Windows SDK
+  - C++ ATL
 
 ##### Download and extract the source:
 [Download from GitHub][master]
@@ -68,7 +72,9 @@ $ gradle buildGhidra
 ```
 The compressed development build will be located at `build/dist/`.
 
-For more detailed information on building Ghidra, please read the [Developer Guide][devguide].  
+For more detailed information on building Ghidra, please read the [Developer Guide][devguide].
+
+For issues building, please check the [Known Issues][known-issues] section for possible solutions.
 
 ## Develop
 
@@ -82,7 +88,7 @@ To develop the Ghidra tool itself, it is highly recommended to use Eclipse, whic
 development process has been highly customized for.
 
 ##### Install build and development tools:
-* Follow the above build instructions so the build completes without errors
+* Follow the above [build instructions](#build) so the build completes without errors
 * Install [Eclipse IDE for Java Developers][eclipse]
 
 ##### Prepare the development environment:
@@ -111,11 +117,13 @@ source project.
 [nsa]: https://www.nsa.gov
 [contrib]: CONTRIBUTING.md
 [devguide]: DevGuide.md
+[known-issues]: DevGuide.md#known-issues
 [career]: https://www.intelligencecareers.gov/nsa
 [releases]: https://github.com/NationalSecurityAgency/ghidra/releases
-[jdk11]: https://adoptium.net/releases.html?variant=openjdk11&jvmVariant=hotspot
+[jdk17]: https://adoptium.net/temurin/releases
 [gradle]: https://gradle.org/releases/
 [vs]: https://visualstudio.microsoft.com/vs/community/
+[vcbuildtools]: https://visualstudio.microsoft.com/visual-cpp-build-tools/
 [eclipse]: https://www.eclipse.org/downloads/packages/
 [master]: https://github.com/NationalSecurityAgency/ghidra/archive/refs/heads/master.zip
 [security]: https://github.com/NationalSecurityAgency/ghidra/security/advisories

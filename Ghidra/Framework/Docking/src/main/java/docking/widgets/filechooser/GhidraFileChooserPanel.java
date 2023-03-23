@@ -73,6 +73,7 @@ public class GhidraFileChooserPanel extends JPanel implements Droppable {
 	 * @param propertyName the property name to save state
 	 * @param defaultFileName the default file name.
 	 * @param createBorder flag to create the border or not.
+	 * @param mode whether {@link #INPUT_MODE} or {@link #OUTPUT_MODE}
 	 */
 	public GhidraFileChooserPanel(String title, String propertyName, String defaultFileName,
 			boolean createBorder, int mode) {
@@ -84,6 +85,12 @@ public class GhidraFileChooserPanel extends JPanel implements Droppable {
 		this.mode = mode;
 		build();
 		setupDragAndDrop();
+	}
+
+	public void dispose() {
+		if (fileChooser != null) {
+			fileChooser.dispose();
+		}
 	}
 
 	/**

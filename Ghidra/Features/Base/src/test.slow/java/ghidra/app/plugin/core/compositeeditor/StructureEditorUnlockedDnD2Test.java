@@ -25,22 +25,11 @@ import ghidra.program.model.data.*;
 
 public class StructureEditorUnlockedDnD2Test extends AbstractStructureEditorTest {
 
-	/* (non-Javadoc)
-	 * @see junit.framework.TestCase#setUp()
-	 */
 	@Override
 	@Before
 	public void setUp() throws Exception {
 		super.setUp();
 		env.showTool();
-	}
-
-	protected void init(Structure dt, Category cat) {
-		super.init(dt, cat, false);
-		runSwing(() -> {
-//				model.setLocked(false);
-		});
-//		assertTrue(!model.isLocked());
 	}
 
 	@Test

@@ -52,6 +52,13 @@ model {
 				}
 			}
 		}
+		if (isCurrentWindows() && VISUAL_STUDIO_INSTALL_DIR) {
+			// specify installDir because Gradle doesn't find VS Build Tools.
+			// See https://github.com/gradle/gradle-native/issues/617#issuecomment-575735288
+			visualCpp(VisualCpp) {
+				installDir VISUAL_STUDIO_INSTALL_DIR
+			}
+		}
 	}
 }
 
@@ -64,7 +71,7 @@ task CheckToolChain {
 		if (isCurrentWindows()) {
 			// ensure that required MS Visual Studio is installed
 			if (!VISUAL_STUDIO_INSTALL_DIR) {
-				throw new GradleException("Visual Studio not found!");
+				throw new GradleException("Supported Windows native toolchain not found!");
 			}	
 		}
 	}

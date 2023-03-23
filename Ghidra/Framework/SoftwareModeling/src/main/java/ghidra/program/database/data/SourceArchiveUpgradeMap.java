@@ -90,54 +90,54 @@ public class SourceArchiveUpgradeMap {
 		return new String[] { "short", "int", "long", "longlong", "wchar_t", "bool" };
 	}
 
-}
+	private static class SourceArchiveImpl implements SourceArchive {
 
-class SourceArchiveImpl implements SourceArchive {
+		private final UniversalID id;
+		private final String archiveName;
 
-	private final UniversalID id;
-	private final String archiveName;
+		public SourceArchiveImpl(UniversalID id, String archiveName) {
+			this.id = id;
+			this.archiveName = archiveName;
+		}
 
-	public SourceArchiveImpl(UniversalID id, String archiveName) {
-		this.id = id;
-		this.archiveName = archiveName;
-	}
+		public SourceArchiveImpl() {
+			id = DataTypeManager.LOCAL_ARCHIVE_UNIVERSAL_ID;
+			archiveName = "";
+		}
 
-	public SourceArchiveImpl() {
-		id = DataTypeManager.LOCAL_ARCHIVE_UNIVERSAL_ID;
-		archiveName = "";
-	}
+		public ArchiveType getArchiveType() {
+			return ArchiveType.FILE;
+		}
 
-	public ArchiveType getArchiveType() {
-		return ArchiveType.FILE;
-	}
+		public String getDomainFileID() {
+			return null;
+		}
 
-	public String getDomainFileID() {
-		return null;
-	}
+		public long getLastSyncTime() {
+			return 0;
+		}
 
-	public long getLastSyncTime() {
-		return 0;
-	}
+		public String getName() {
+			return archiveName;
+		}
 
-	public String getName() {
-		return archiveName;
-	}
+		public UniversalID getSourceArchiveID() {
+			return id;
+		}
 
-	public UniversalID getSourceArchiveID() {
-		return id;
-	}
+		public boolean isDirty() {
+			return false;
+		}
 
-	public boolean isDirty() {
-		return false;
-	}
+		public void setDirtyFlag(boolean dirty) {
+		}
 
-	public void setDirtyFlag(boolean dirty) {
-	}
+		public void setLastSyncTime(long time) {
+		}
 
-	public void setLastSyncTime(long time) {
-	}
+		public void setName(String name) {
+		}
 
-	public void setName(String name) {
 	}
 
 }

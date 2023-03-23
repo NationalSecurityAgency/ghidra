@@ -15,14 +15,12 @@
  */
 package ghidra.bitpatterns.gui;
 
-import java.awt.Font;
-
-import javax.swing.JTable;
-import javax.swing.table.TableModel;
+import java.awt.Component;
 
 import docking.widgets.table.AbstractDynamicTableColumn;
 import docking.widgets.table.TableColumnDescriptor;
 import docking.widgets.table.threaded.ThreadedTableModelStub;
+import generic.theme.Gui;
 import ghidra.bitpatterns.info.PatternType;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
@@ -42,7 +40,7 @@ public class PatternInfoTableModel extends ThreadedTableModelStub<PatternInfoRow
 	private FunctionBitPatternsExplorerPlugin plugin;
 	private static final int NOTE_COLUMN = 2;
 	private static final int ALIGNMENT_COLUMN = 5;
-	private static final int MONOSPACE_FONT_SIZE = 14;
+	protected static final String FONT_ID = "font.bytepatterns.table";
 
 	public PatternInfoTableModel(FunctionBitPatternsExplorerPlugin plugin) {
 		super(MODEL_NAME, plugin.getTool());
@@ -56,10 +54,11 @@ public class PatternInfoTableModel extends ThreadedTableModelStub<PatternInfoRow
 	}
 
 	protected GColumnRenderer<String> monospacedRenderer = new AbstractGColumnRenderer<String>() {
-		@Override
-		protected void configureFont(JTable table, TableModel model, int column) {
-			Font f = new Font("monospaced", getFixedWidthFont().getStyle(), MONOSPACE_FONT_SIZE);
-			setFont(f);
+		public Component getTableCellRendererComponent(
+				docking.widgets.table.GTableCellRenderingData data) {
+			Component component = super.getTableCellRendererComponent(data);
+			component.setFont(Gui.getFont(FONT_ID));
+			return component;
 		}
 
 		@Override

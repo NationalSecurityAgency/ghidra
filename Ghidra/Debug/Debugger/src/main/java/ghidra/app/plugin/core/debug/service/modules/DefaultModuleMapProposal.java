@@ -17,14 +17,13 @@ package ghidra.app.plugin.core.debug.service.modules;
 
 import java.util.*;
 
-import com.google.common.collect.Range;
-
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.app.services.ModuleMapProposal;
 import ghidra.app.services.ModuleMapProposal.ModuleMapEntry;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.TraceModule;
 
@@ -85,6 +84,7 @@ public class DefaultModuleMapProposal
 		}
 
 		protected AddressRange moduleRange;
+		protected boolean memorize = false;
 
 		/**
 		 * Construct a module map entry
@@ -110,7 +110,7 @@ public class DefaultModuleMapProposal
 		}
 
 		@Override
-		public Range<Long> getFromLifespan() {
+		public Lifespan getFromLifespan() {
 			return getModule().getLifespan();
 		}
 
@@ -146,6 +146,16 @@ public class DefaultModuleMapProposal
 			catch (AddressOverflowException e) {
 				throw new AssertionError(e);
 			}
+		}
+
+		@Override
+		public boolean isMemorize() {
+			return memorize;
+		}
+
+		@Override
+		public void setMemorize(boolean memorize) {
+			this.memorize = memorize;
 		}
 	}
 

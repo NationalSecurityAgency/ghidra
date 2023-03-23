@@ -30,6 +30,7 @@ import docking.action.*;
 import docking.widgets.table.GTable;
 import docking.widgets.table.RowObjectTableModel;
 import docking.widgets.table.threaded.GThreadedTablePanel;
+import generic.theme.GIcon;
 import ghidra.feature.vt.api.db.DeletedMatch;
 import ghidra.feature.vt.api.impl.VTChangeManager;
 import ghidra.feature.vt.api.impl.VersionTrackingChangeRecord;
@@ -47,7 +48,6 @@ import ghidra.util.HelpLocation;
 import ghidra.util.table.GhidraTableFilterPanel;
 import ghidra.util.table.GhidraThreadedTablePanel;
 import resources.Icons;
-import resources.ResourceManager;
 
 public class VTImpliedMatchesTableProvider extends ComponentProviderAdapter
 		implements VTControllerListener {
@@ -70,7 +70,7 @@ public class VTImpliedMatchesTableProvider extends ComponentProviderAdapter
 		this.controller = controller;
 		controller.addListener(this);
 		setWindowGroup(VTPlugin.WINDOW_GROUP);
-		setIcon(ResourceManager.loadImage("images/application_view_detail.png"));
+		setIcon(new GIcon("icon.version.tracking.provider.implied.match"));
 		setDefaultWindowPosition(WindowPosition.BOTTOM);
 		setIntraGroupPosition(WindowPosition.STACK);
 

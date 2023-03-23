@@ -31,7 +31,7 @@ import ghidra.app.plugin.core.debug.event.TraceOpenedPluginEvent;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.services.*;
 import ghidra.dbg.DebuggerObjectModel;
-import ghidra.framework.main.FrontEndOnly;
+import ghidra.framework.main.ApplicationLevelOnlyPlugin;
 import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.*;
@@ -55,7 +55,7 @@ import ghidra.util.datastruct.CollectionChangeListener;
 		} //
 )
 public class DebuggerWorkflowServicePlugin extends Plugin
-		implements DebuggerWorkflowService, FrontEndOnly, OptionsChangeListener {
+		implements DebuggerWorkflowService, ApplicationLevelOnlyPlugin, OptionsChangeListener {
 
 	protected class ForBotsModelsChangeListener
 			implements CollectionChangeListener<DebuggerObjectModel> {
@@ -128,7 +128,7 @@ public class DebuggerWorkflowServicePlugin extends Plugin
 	/* testing */ final List<DebuggerBot> allBots = new ArrayList<>();
 
 	// Cannot auto-wire, since they're dynamically populated
-	private final ToolOptions options;
+	private final Options options;
 
 	@SuppressWarnings("hiding") // I'm FrontEndOnly
 	protected final FrontEndTool tool;
@@ -140,8 +140,9 @@ public class DebuggerWorkflowServicePlugin extends Plugin
 		this.tool = (FrontEndTool) tool; // I'm FrontEndOnly
 
 		this.autoServiceWiring = AutoService.wireServicesProvidedAndConsumed(this);
-		this.options = tool.getOptions(DebuggerResources.OPTIONS_CATEGORY_WORKFLOW);
-		this.options.addOptionsChangeListener(this);
+		ToolOptions rootOptions = tool.getOptions(DebuggerResources.OPTIONS_CATEGORY_DEBUGGER);
+		rootOptions.addOptionsChangeListener(this);
+		this.options = rootOptions.getOptions(DebuggerResources.OPTIONS_CATEGORY_WORKFLOW);
 
 	}
 

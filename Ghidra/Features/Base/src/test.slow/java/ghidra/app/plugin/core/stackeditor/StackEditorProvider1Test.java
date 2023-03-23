@@ -25,6 +25,7 @@ import javax.swing.SwingUtilities;
 import org.junit.Test;
 
 import docking.action.DockingActionIf;
+import ghidra.app.util.datatype.EmptyCompositeException;
 import ghidra.framework.options.Options;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
@@ -139,10 +140,12 @@ public class StackEditorProvider1Test extends AbstractStackEditorProviderTest {
 	}
 
 	@Test
-	public void testUndoAssociatedFunctionCreate() throws Exception {
+	public void testDeleteAssociatedFunction() throws Exception {
 		Window dialog;
 		// Create the stack frame @ 00000200.
 		createFunction("0x200");
+		waitForBusyTool(tool); // wait for analysis to complete
+
 		editStack("0x200");
 
 		Function f = program.getFunctionManager().getFunctionAt(addr("0x200"));
@@ -159,16 +162,23 @@ public class StackEditorProvider1Test extends AbstractStackEditorProviderTest {
 		// Put byte at -0x18
 		setType(new ByteDataType(), 0);
 
-		// Undo the apply of a new data type to an editor component.
-		undo(program, false); // don't wait, in case there is a modal dialog
-		waitForSwing();
+		runSwing(() -> {
+			try {
+				model.apply();
+			}
+			catch (EmptyCompositeException | InvalidDataTypeException e) {
+				failWithException("Editor apply failure", e);
+			}
+		});
+		
+		deleteFunction("0x200");
 
 		// Verify the Reload Stack Editor? dialog is not displayed.
 		dialog = getWindow("Reload Stack Editor?");
 		assertNull(dialog);
 
 		// Verify the stack editor is not displayed.
-		assertStackEditorHidden(f);
+		assertStackEditorHidden(f); // This occurs if function is removed
 	}
 
 	@Test

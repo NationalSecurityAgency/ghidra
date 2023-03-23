@@ -415,7 +415,7 @@ public abstract class ByteCopier {
 					return false;
 				}
 
-				// Ask the user before pasting a string into the program.  Since having a string in 
+				// Ask the user before pasting a string into the program.  Since having a string in
 				// the clipboard is so common, this is to prevent an accidental paste.
 				if (!confirmPaste(validString)) {
 					return true; // the user cancelled; the command is successful
@@ -447,7 +447,7 @@ public abstract class ByteCopier {
 					}
 					address = address.next();
 				}
-				return foundError;
+				return !foundError;
 			}
 
 			private boolean confirmPaste(String validString) {

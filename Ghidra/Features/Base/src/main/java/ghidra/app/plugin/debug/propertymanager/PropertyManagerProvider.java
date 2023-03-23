@@ -25,6 +25,7 @@ import javax.swing.event.TableModelListener;
 import docking.ActionContext;
 import docking.action.DockingAction;
 import docking.action.MenuData;
+import generic.theme.GIcon;
 import ghidra.app.services.MarkerSet;
 import ghidra.framework.cmd.Command;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
@@ -32,15 +33,13 @@ import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.*;
 import ghidra.util.HelpLocation;
 import ghidra.util.table.GhidraTable;
-import resources.ResourceManager;
 
 /**
  * PropertyManagerDialog
  */
 public class PropertyManagerProvider extends ComponentProviderAdapter {
 
-	protected static final ImageIcon ICON =
-		ResourceManager.loadImage("images/document-properties.png");
+	protected static final Icon ICON = new GIcon("icon.plugin.debug.propertymanager.provider");
 
 	protected static final String DELETE_PROPERTIES_ACTION_NAME = "Delete Properties";
 
@@ -140,7 +139,6 @@ public class PropertyManagerProvider extends ComponentProviderAdapter {
 
 		ListSelectionModel tlsm = table.getSelectionModel();
 		selectionListener = e -> {
-			ListSelectionModel lsm = (ListSelectionModel) e.getSource();
 			refreshMarkers(table.getSelectedRow());
 		};
 		tlsm.addListSelectionListener(selectionListener);

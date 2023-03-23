@@ -897,7 +897,7 @@ public strictfp class FloatFormat {
 		else {
 			a = Utils.convertToUnsignedValue(a, sizein);
 		}
-		return getEncoding(BigFloat.valueOf(frac_size, exp_size, a));
+		return getEncoding(valueOf(a));
 	}
 
 	public long opFloat2Float(long a, FloatFormat outformat) { // convert between floating
@@ -966,6 +966,29 @@ public strictfp class FloatFormat {
 		BigFloat fa = getHostFloat(a);
 		fa.round();
 		return getEncoding(fa);
+	}
+	
+	public BigFloat valueOf(BigInteger value) {
+
+		BigInteger unscaled = value;
+		int sign = 1;
+		if (unscaled.signum() < 0) {
+			sign = -1;
+			unscaled = unscaled.negate();
+		}
+
+		int ulen = unscaled.bitLength();
+		int shift = frac_size + 1 - ulen;
+
+		unscaled = unscaled.shiftLeft(shift);
+
+		int scale = frac_size - shift;
+
+		if (scale > bias) {
+			return BigFloat.infinity(frac_size, exp_size, sign);
+		}
+
+		return new BigFloat(frac_size, exp_size, FloatKind.FINITE, sign, unscaled, scale);
 	}
 
 }

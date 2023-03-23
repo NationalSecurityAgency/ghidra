@@ -37,6 +37,8 @@ import ghidra.util.Msg;
  */
 public abstract class AbstractDebuggerModelScenarioMemoryTest extends AbstractDebuggerModelTest {
 
+	// TODO: Something for expected flags, permissions?
+
 	/**
 	 * This specimen must perform some observable action, which can be affected by a memory write
 	 * 

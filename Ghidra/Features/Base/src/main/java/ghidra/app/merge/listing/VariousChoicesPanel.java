@@ -15,22 +15,12 @@
  */
 package ghidra.app.merge.listing;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+import java.awt.*;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import javax.swing.BorderFactory;
-import javax.swing.ButtonGroup;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import javax.swing.SwingConstants;
+import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeListener;
@@ -39,6 +29,7 @@ import docking.widgets.button.GRadioButton;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GDHtmlLabel;
 import docking.widgets.label.GLabel;
+import generic.theme.GThemeDefaults.Colors.Java;
 import ghidra.app.merge.util.ConflictUtility;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.layout.MaximizeSpecificColumnGridLayout;
@@ -55,7 +46,7 @@ public class VariousChoicesPanel extends ConflictPanel {
 
 	private final static long serialVersionUID = 1;
 	private static final Border UNDERLINE_BORDER =
-		BorderFactory.createMatteBorder(0, 0, 1, 0, Color.BLACK);
+		BorderFactory.createMatteBorder(0, 0, 1, 0, Java.BORDER);
 
 	private JPanel rowPanel;
 	private GDHtmlLabel headerLabel;
@@ -76,7 +67,7 @@ public class VariousChoicesPanel extends ConflictPanel {
 
 	/**
 	 * Constructor for a various choices panel.
-	 * @param isDoubleBuffered
+	 * @param isDoubleBuffered true if double buffered
 	 */
 	public VariousChoicesPanel(boolean isDoubleBuffered) {
 		super(isDoubleBuffered);
@@ -199,17 +190,14 @@ public class VariousChoicesPanel extends ConflictPanel {
 		MyRadioButton[] rb = new MyRadioButton[choices.length];
 		final int row = rows.size();
 		final ChoiceRow choiceRow = new ChoiceRow(titleComp, rb);
-		ItemListener itemListener = new ItemListener() {
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				adjustUseForAllEnablement();
-				if (listener != null) {
-					Object source = e.getSource();
-					if (((MyRadioButton) source).isSelected()) {
-						ResolveConflictChangeEvent re =
-							new ResolveConflictChangeEvent(source, row, choiceRow.getChoice());
-						listener.stateChanged(re);
-					}
+		ItemListener itemListener = e -> {
+			adjustUseForAllEnablement();
+			if (listener != null) {
+				Object source = e.getSource();
+				if (((MyRadioButton) source).isSelected()) {
+					ResolveConflictChangeEvent re =
+						new ResolveConflictChangeEvent(source, row, choiceRow.getChoice());
+					listener.stateChanged(re);
 				}
 			}
 		};
@@ -246,15 +234,12 @@ public class VariousChoicesPanel extends ConflictPanel {
 		MyCheckBox[] cb = new MyCheckBox[choices.length];
 		final int row = rows.size();
 		final ChoiceRow choiceRow = new ChoiceRow(titleComp, cb);
-		ItemListener itemListener = new ItemListener() {
-			@Override
-			public void itemStateChanged(ItemEvent e) {
-				adjustUseForAllEnablement();
-				if (listener != null) {
-					ResolveConflictChangeEvent re =
-						new ResolveConflictChangeEvent(e.getSource(), row, choiceRow.getChoice());
-					listener.stateChanged(re);
-				}
+		ItemListener itemListener = e -> {
+			adjustUseForAllEnablement();
+			if (listener != null) {
+				ResolveConflictChangeEvent re =
+					new ResolveConflictChangeEvent(e.getSource(), row, choiceRow.getChoice());
+				listener.stateChanged(re);
 			}
 		};
 		for (int i = 0; i < choices.length; i++) {
@@ -291,8 +276,8 @@ public class VariousChoicesPanel extends ConflictPanel {
 
 		rowPanel.add(choiceRow.titleLabel);
 
-		for (int i = 0; i < choiceRow.rb.length; i++) {
-			rowPanel.add(choiceRow.rb[i]);
+		for (JComponent element : choiceRow.rb) {
+			rowPanel.add(element);
 		}
 		if (row == 0) {
 			add(rowPanel, BorderLayout.CENTER);
@@ -303,8 +288,8 @@ public class VariousChoicesPanel extends ConflictPanel {
 		ChoiceRow cr = rows.get(rowNum);
 		rowPanel.remove(cr.titleLabel);
 		JComponent[] comps = cr.rb;
-		for (int i = 0; i < comps.length; i++) {
-			rowPanel.remove(comps[i]);
+		for (JComponent comp : comps) {
+			rowPanel.remove(comp);
 		}
 		rows.remove(rowNum);
 	}
@@ -404,8 +389,7 @@ public class VariousChoicesPanel extends ConflictPanel {
 	}
 
 	private void removeListeners(ChoiceRow cr) {
-		for (int i = 0; i < cr.rb.length; i++) {
-			JComponent comp = cr.rb[i];
+		for (JComponent comp : cr.rb) {
 			if (comp instanceof MyRadioButton) {
 				MyRadioButton rb = (MyRadioButton) comp;
 				ItemListener[] listeners = rb.getItemListeners();
@@ -496,8 +480,8 @@ public class VariousChoicesPanel extends ConflictPanel {
 		}
 
 		boolean hasChoices() {
-			for (int i = 0; i < rb.length; i++) {
-				if ((rb[i] instanceof MyRadioButton) || (rb[i] instanceof MyCheckBox)) {
+			for (JComponent element : rb) {
+				if ((element instanceof MyRadioButton) || (element instanceof MyCheckBox)) {
 					return true;
 				}
 			}

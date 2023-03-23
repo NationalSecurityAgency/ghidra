@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import db.Transaction;
 import ghidra.framework.data.DomainObjectEventQueues;
 import ghidra.framework.model.*;
 import ghidra.framework.options.Options;
@@ -34,14 +35,14 @@ import ghidra.program.model.reloc.RelocationTable;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.AddressSetPropertyMap;
 import ghidra.program.model.util.PropertyMapManager;
-import ghidra.trace.database.listing.DBTraceCodeRegisterSpace;
-import ghidra.trace.database.memory.DBTraceMemoryRegisterSpace;
+import ghidra.trace.database.listing.DBTraceCodeSpace;
+import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.TraceTimeViewport;
 import ghidra.trace.model.data.TraceBasedDataTypeManager;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.program.TraceProgramViewMemory;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.util.TraceTimeViewport;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
@@ -56,8 +57,8 @@ public class DBTraceProgramViewRegisters implements TraceProgramView {
 	private final DBTraceProgramViewRegisterMemory memory;
 	private final DBTraceProgramViewRegistersReferenceManager referenceManager;
 
-	public DBTraceProgramViewRegisters(DBTraceProgramView view, DBTraceCodeRegisterSpace codeSpace,
-			DBTraceMemoryRegisterSpace memorySpace) {
+	public DBTraceProgramViewRegisters(DBTraceProgramView view, DBTraceCodeSpace codeSpace,
+			DBTraceMemorySpace memorySpace) {
 		this.view = view;
 		this.thread = codeSpace.getThread(); // TODO: Bleh, should be parameter
 
@@ -352,6 +353,11 @@ public class DBTraceProgramViewRegisters implements TraceProgramView {
 	}
 
 	@Override
+	public Transaction openTransaction(String description) throws IllegalStateException {
+		return view.openTransaction(description);
+	}
+
+	@Override
 	public int startTransaction(String description) {
 		return view.startTransaction(description);
 	}
@@ -367,8 +373,8 @@ public class DBTraceProgramViewRegisters implements TraceProgramView {
 	}
 
 	@Override
-	public Transaction getCurrentTransaction() {
-		return view.getCurrentTransaction();
+	public TransactionInfo getCurrentTransactionInfo() {
+		return view.getCurrentTransactionInfo();
 	}
 
 	@Override

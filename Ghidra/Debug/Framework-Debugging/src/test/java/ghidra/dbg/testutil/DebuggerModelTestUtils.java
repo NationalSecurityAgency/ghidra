@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 import ghidra.async.*;
 import ghidra.dbg.*;
 import ghidra.dbg.DebugModelConventions.AsyncAccess;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.error.DebuggerMemoryAccessException;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetConsole.Channel;
@@ -177,7 +178,7 @@ public interface DebuggerModelTestUtils extends AsyncTestUtils {
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	default Collection<TargetAttachable> fetchAttachables(TargetObject container)
 			throws Throwable {
-		return (Collection) waitOn(container.fetchElements(true)).values();
+		return (Collection) waitOn(container.fetchElements(RefreshBehavior.REFRESH_ALWAYS)).values();
 	}
 
 	default TargetProcess getProcessRunning(DebuggerTestSpecimen specimen,

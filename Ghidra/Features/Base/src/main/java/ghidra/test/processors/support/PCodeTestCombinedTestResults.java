@@ -15,14 +15,17 @@
  */
 package ghidra.test.processors.support;
 
+import java.awt.Color;
 import java.io.*;
 import java.util.*;
+import java.util.function.Predicate;
 
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
 import org.jdom.output.XMLOutputter;
 
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.test.processors.support.PCodeTestResults.TestResults;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.Msg;
@@ -42,6 +45,8 @@ public class PCodeTestCombinedTestResults {
 	private File xmlFile;
 	private File htmlFile;
 
+	private Map<String, Set<String>> ignoredJunitTestNames = new HashMap<>();
+
 	private Map<String, PCodeTestResults> combinedResults = new HashMap<>();
 
 	PCodeTestCombinedTestResults(File reportsDir, boolean readExisting) throws IOException {
@@ -55,10 +60,29 @@ public class PCodeTestCombinedTestResults {
 	public PCodeTestResults getTestResults(String jUnitName, boolean create) {
 		PCodeTestResults testResults = combinedResults.get(jUnitName);
 		if (testResults == null && create) {
-			testResults = new PCodeTestResults(jUnitName);
+			testResults = new PCodeTestResults(jUnitName, new IgnoreTestPredicate(jUnitName));
 			combinedResults.put(jUnitName, testResults);
 		}
 		return testResults;
+	}
+
+	private class IgnoreTestPredicate implements Predicate<String> {
+
+		private String jUnitName;
+
+		IgnoreTestPredicate(String jUnitName) {
+			this.jUnitName = jUnitName;
+		}
+
+		@Override
+		public boolean test(String testName) {
+			Set<String> ignoredTestNames = ignoredJunitTestNames.get(jUnitName);
+			if (ignoredTestNames != null) {
+				return ignoredTestNames.contains(testName);
+			}
+			return false;
+		}
+
 	}
 
 	private void restoreFromXml() throws IOException {
@@ -78,8 +102,10 @@ public class PCodeTestCombinedTestResults {
 			@SuppressWarnings("unchecked")
 			List<Element> elementList = root.getChildren(PCodeTestResults.TAG_NAME);
 			for (Element element : elementList) {
-				PCodeTestResults testResults = new PCodeTestResults(element);
-				combinedResults.put(testResults.getJUnitName(), testResults);
+				String jUnitName = PCodeTestResults.getJunitName(element);
+				PCodeTestResults testResults =
+					new PCodeTestResults(element, new IgnoreTestPredicate(jUnitName));
+				combinedResults.put(jUnitName, testResults);
 			}
 		}
 		catch (org.jdom.JDOMException je) {
@@ -89,6 +115,14 @@ public class PCodeTestCombinedTestResults {
 			istream.close();
 		}
 
+	}
+
+	public void addIgnoredTests(String junitName, String... testNames) {
+		Set<String> ignoredTestSet =
+			ignoredJunitTestNames.computeIfAbsent(junitName, n -> new HashSet<>());
+		for (String testName : testNames) {
+			ignoredTestSet.add(testName);
+		}
 	}
 
 	void saveToXml() throws IOException {
@@ -224,7 +258,9 @@ public class PCodeTestCombinedTestResults {
 				return;
 			}
 			int count =
-				computeCharCount(testResults.passCount) + computeCharCount(testResults.failCount) +
+				computeCharCount(testResults.passCount) +
+					computeCharCount(testResults.ignoredCount) +
+					computeCharCount(testResults.failCount) +
 					computeCharCount(testResults.callOtherCount) + 2;
 			charCount = Math.max(count, charCount);
 		}
@@ -383,9 +419,9 @@ public class PCodeTestCombinedTestResults {
 		w.println("</tr>");
 	}
 
-	private void writeResultCount(PrintWriter w, int count, String color) {
+	private void writeResultCount(PrintWriter w, int count, Color color) {
 		if (count == 0) {
-			w.print("<font color=\"gray\">-</font>");
+			w.print("<font color=\"" + Palette.GRAY + "\">-</font>");
 		}
 		else {
 			w.print("<font color=\"" + color + "\">" + Integer.toString(count) + "</font>");
@@ -417,25 +453,28 @@ public class PCodeTestCombinedTestResults {
 			// analyzed program has relocation or disassembly errors
 			w.print("<td align=\"center\" class=\"ResultSummary bad\">");
 			if (testResults.summaryHasIngestErrors) {
-				w.print("<font color=\"red\">Ingest-Err</font><br>");
+				w.print("<font color=\"" + Palette.RED + "\">Ingest-Err</font><br>");
 			}
 			if (testResults.summaryHasRelocationErrors) {
-				w.print("<font color=\"red\">Reloc-Err</font><br>");
+				w.print("<font color=\"" + Palette.RED + "\">Reloc-Err</font><br>");
 			}
 			if (testResults.summaryHasDisassemblyErrors) {
-				w.print("<font color=\"red\">Dis-Err</font>");
+				w.print("<font color=\"" + Palette.RED + "\">Dis-Err</font>");
 			}
 		}
 		else {
 			w.print("<td align=\"center\" class=\"ResultSummary " +
 				getSummaryHighlightColorClass(testResults) + "\">");
-			writeResultCount(w, testResults.summaryPassCount, "green");
+			writeResultCount(w, testResults.summaryPassCount, Palette.GREEN);
 			w.print("/");
-			writeResultCount(w, testResults.summaryFailCount, "red");
+			writeResultCount(w, testResults.summaryIgnoreCount, Palette.GRAY);
 			w.print("/");
-			writeResultCount(w, testResults.summaryCallOtherCount, "orange");
+			writeResultCount(w, testResults.summaryFailCount, Palette.RED);
+			w.print("/");
+			writeResultCount(w, testResults.summaryCallOtherCount, Palette.ORANGE);
 			if (testResults.summarySevereFailures != 0) {
-				w.print("<br><font color=\"red\">ERR:&nbsp;" + testResults.summarySevereFailures +
+				w.print("<br><font color=\"" + Palette.RED + "\">ERR:&nbsp;" +
+					testResults.summarySevereFailures +
 					"</font>");
 			}
 		}
@@ -482,9 +521,10 @@ public class PCodeTestCombinedTestResults {
 			for (NamedTestColumn namedTestColumn : namedTestColumns) {
 				String testName = namedTestColumn.getTestName();
 				int pass = testResults.getPassResult(groupName, testName);
+				int ignored = testResults.getIgnoredResult(groupName, testName);
 				int fail = testResults.getFailResult(groupName, testName);
 				int callother = testResults.getCallOtherResult(groupName, testName);
-				int total = pass + fail + callother;
+				int total = pass + ignored + fail + callother;
 				int totalAsserts = testResults.getTotalAsserts(groupName, testName);
 
 				boolean severeFailure = testResults.hadSevereFailure(groupName, testName);
@@ -498,25 +538,28 @@ public class PCodeTestCombinedTestResults {
 						namedTestColumn.getColumnWidth() + "><br>");
 				}
 				if (severeFailure) {
-					w.print("<font color=\"red\">ERR</font>");
+					w.print("<font color=\"" + Palette.RED + "\">ERR</font>");
 				}
 				else {
 					if (total == 0) {
 						if (totalAsserts == 0) {
-							w.print("<font color=\"gray\">-</font>");
+							w.print("<font color=\"" + Palette.GRAY + "\">-</font>");
 						}
 						else {
-							w.print("<font color=\"red\">x</font>");
+							w.print("<font color=\"" + Palette.RED + "\">x</font>");
 						}
 					}
 					else {
-						writeResultCount(w, pass, "green");
+						writeResultCount(w, pass, Palette.GREEN);
 						w.print("/");
-						writeResultCount(w, fail, "red");
+						writeResultCount(w, ignored, Palette.GRAY);
 						w.print("/");
-						writeResultCount(w, callother, "orange");
+						writeResultCount(w, fail, Palette.RED);
+						w.print("/");
+						writeResultCount(w, callother, Palette.ORANGE);
 						if (total != totalAsserts) {
-							w.print("<br><font color=\"red\">(!=" + totalAsserts + ")</font>");
+							w.print("<br><font color=\"" + Palette.RED + "\">(!=" + totalAsserts +
+								")</font>");
 						}
 					}
 				}

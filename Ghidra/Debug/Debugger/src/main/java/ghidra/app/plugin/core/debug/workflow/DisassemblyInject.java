@@ -17,11 +17,11 @@ package ghidra.app.plugin.core.debug.workflow;
 
 import java.util.Arrays;
 
-import ghidra.app.cmd.disassemble.DisassembleCommand;
+import ghidra.app.plugin.core.debug.disassemble.TraceDisassembleCommand;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.lang.Language;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.Msg;
 import ghidra.util.classfinder.ExtensionPoint;
@@ -87,13 +87,16 @@ public interface DisassemblyInject extends ExtensionPoint {
 	 * 
 	 * @param tool the tool that will execute the command
 	 * @param command the command to be configured, which is about to execute
-	 * @param view the view (trace, snap) which is about to be disassembled
+	 * @param trace the trace whose bytes to disassemble
+	 * @param language the language for the disassembler
+	 * @param snap the snap the snap at which to disassemble
 	 * @param thread the thread whose PC is being disassembled
 	 * @param startSet the starting address set, usually just the PC
 	 * @param restricted the set of disassemblable addresses
 	 */
-	default void pre(PluginTool tool, DisassembleCommand command, TraceProgramView view,
-			TraceThread thread, AddressSetView startSet, AddressSetView restricted) {
+	default void pre(PluginTool tool, TraceDisassembleCommand command, Trace trace,
+			Language language, long snap, TraceThread thread, AddressSetView startSet,
+			AddressSetView restricted) {
 	}
 
 	/**
@@ -104,9 +107,10 @@ public interface DisassemblyInject extends ExtensionPoint {
 	 * The callback occurs within the command's background thread.
 	 * 
 	 * @param tool the tool that just executed the disassembly command
-	 * @param view the view (trace, snap) which was just disassembled
+	 * @param trace the trace whose bytes were disassembled
+	 * @param snap the snap the snap at which disassembly was performed
 	 * @param disassembled the addresses that were actually disassembled
 	 */
-	default void post(PluginTool tool, TraceProgramView view, AddressSetView disassembled) {
+	default void post(PluginTool tool, Trace trace, long snap, AddressSetView disassembled) {
 	}
 }

@@ -31,7 +31,7 @@ import ghidra.program.database.mem.MemoryMapDB;
 import ghidra.program.model.address.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.exception.NoValueException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  *
@@ -49,22 +49,18 @@ public class LongPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest i
 
 	/**
 	 * Constructor for LongPropertyMapDBTest.
-	 * @param arg0
 	 */
 	public LongPropertyMapDBTest() {
 		super();
 	}
 
-	/*
-	 * @see TestCase#setUp()
-	 */
 	@Before
 	public void setUp() throws Exception {
 
 		program = createDefaultProgram("Test", ProgramBuilder._TOY, this);
 		db = program.getDBHandle();
 		addrSpace = program.getAddressFactory().getDefaultAddressSpace();
-		memMap = (MemoryMapDB) program.getMemory();
+		memMap = program.getMemory();
 		addrMap = (AddressMap) getInstanceField("addrMap", memMap);
 		transactionID = program.startTransaction("Test");
 
@@ -73,9 +69,6 @@ public class LongPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest i
 		random = new Random(1);
 	}
 
-	/*
-	 * @see TestCase#tearDown()
-	 */
 	@After
 	public void tearDown() throws Exception {
 		program.endTransaction(transactionID, true);
@@ -89,7 +82,7 @@ public class LongPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest i
 
 	private void createPropertyMap(String name) throws Exception {
 		propertyMap = new LongPropertyMapDB(db, DBConstants.CREATE, this, null, addrMap, name,
-			TaskMonitorAdapter.DUMMY_MONITOR);
+			TaskMonitor.DUMMY);
 		propertyMap.setCacheSize(2);
 	}
 
@@ -137,6 +130,7 @@ public class LongPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest i
 			Assert.fail();
 		}
 		catch (NoValueException e) {
+			// expected
 		}
 	}
 
@@ -152,21 +146,19 @@ public class LongPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest i
 		assertEquals(propertyMap.getSize(), 20);
 	}
 
-//	public void testApplyValue() throws Exception {
-//		MyLongVisitor visitor = new MyLongVisitor();
-//		createPropertyMap("TEST");
-//
-//		long[] values = new long[20];
-//		for (int i = 0; i < 20; i++) {
-//			values[i] = random.nextInt();
-//			propertyMap.add(addr(i * 100), values[i]);
-//		}
-//		for (int i = 0; i < 20; i++) {
-//			propertyMap.applyValue(visitor, addr(i * 100));
-//			assertEquals(visitor.value, values[i]);
-//		}
-//
-//	}
+	@Test
+	public void testApplyValue() throws Exception {
+		createPropertyMap("TEST");
+
+		long[] values = new long[20];
+		for (int i = 0; i < 20; i++) {
+			values[i] = random.nextInt();
+			propertyMap.add(addr(i * 100), values[i]);
+		}
+		for (int i = 0; i < 20; i++) {
+			assertEquals(values[i], propertyMap.getLong(addr(i * 100)));
+		}
+	}
 
 	@Test
 	public void testDelete() throws Exception {
@@ -223,6 +215,7 @@ public class LongPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest i
 			Assert.fail();
 		}
 		catch (NoValueException e) {
+			// expected
 		}
 		propertyMap.removeRange(addr(1900), addr(2050));
 		assertEquals(propertyMap.getSize(), 17);
@@ -231,6 +224,7 @@ public class LongPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest i
 			Assert.fail();
 		}
 		catch (NoValueException e) {
+			// expected
 		}
 	}
 
@@ -253,6 +247,7 @@ public class LongPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest i
 			Assert.fail();
 		}
 		catch (NoValueException e) {
+			// expected
 		}
 		propertyMap.remove(addr(1900));
 		assertEquals(propertyMap.getSize(), 18);
@@ -261,6 +256,7 @@ public class LongPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest i
 			Assert.fail();
 		}
 		catch (NoValueException e) {
+			// expected
 		}
 	}
 
@@ -459,9 +455,6 @@ public class LongPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest i
 		assertNull(iter.next());
 	}
 
-	/**
-	 * @see ghidra.program.db.util.ErrorHandler#dbError(java.io.IOException)
-	 */
 	@Override
 	public void dbError(IOException e) {
 		throw new RuntimeException(e.getMessage());

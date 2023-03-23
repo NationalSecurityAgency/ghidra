@@ -19,13 +19,12 @@ import java.io.IOException;
 import java.util.*;
 
 import ghidra.app.util.Option;
-import ghidra.app.util.OptionUtils;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.elf.ElfException;
 import ghidra.app.util.bin.format.elf.ElfHeader;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.framework.model.DomainFolder;
 import ghidra.framework.model.DomainObject;
+import ghidra.framework.model.Project;
 import ghidra.framework.options.Options;
 import ghidra.program.model.lang.Endian;
 import ghidra.program.model.listing.Program;
@@ -154,19 +153,12 @@ public class ElfLoader extends AbstractLibrarySupportLoader {
 	}
 
 	@Override
-	protected void postLoadProgramFixups(List<Program> importedPrograms, DomainFolder importFolder,
+	protected void postLoadProgramFixups(List<Loaded<Program>> loadedPrograms, Project project,
 			List<Option> options, MessageLog messageLog, TaskMonitor monitor)
 			throws CancelledException, IOException {
-		super.postLoadProgramFixups(importedPrograms, importFolder, options, messageLog, monitor);
+		super.postLoadProgramFixups(loadedPrograms, project, options, messageLog, monitor);
 
-		if (OptionUtils.getBooleanOptionValue(
-			ElfLoaderOptionsFactory.RESOLVE_EXTERNAL_SYMBOLS_OPTION_NAME, options,
-			ElfLoaderOptionsFactory.RESOLVE_EXTERNAL_SYMBOLS_DEFAULT)) {
-			for (Program importedProgram : importedPrograms) {
-				ELFExternalSymbolResolver.fixUnresolvedExternalSymbols(importedProgram, true,
-					messageLog, monitor);
-			}
-		}
+		ELFExternalSymbolResolver.fixUnresolvedExternalSymbols(loadedPrograms, messageLog, monitor);
 	}
 
 	@Override

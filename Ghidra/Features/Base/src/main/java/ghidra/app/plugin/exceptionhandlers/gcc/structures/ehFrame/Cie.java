@@ -21,13 +21,13 @@ import java.nio.ByteOrder;
 import ghidra.app.cmd.comments.SetCommentCmd;
 import ghidra.app.cmd.data.CreateArrayCmd;
 import ghidra.app.plugin.exceptionhandlers.gcc.*;
-import ghidra.app.plugin.exceptionhandlers.gcc.datatype.*;
+import ghidra.app.plugin.exceptionhandlers.gcc.datatype.DwarfEncodingModeDataType;
+import ghidra.app.util.bin.LEB128Info;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOutOfBoundsException;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.*;
-import ghidra.program.model.scalar.Scalar;
+import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.symbol.RefType;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.util.Msg;
@@ -280,18 +280,16 @@ public class Cie extends GccAnalysisClass {
 		 */
 		String comment = "(CIE) Code Alignment";
 
-		UnsignedLeb128DataType uleb = UnsignedLeb128DataType.dataType;
-		MemBuffer buf = new DumbMemBufferImpl(program.getMemory(), addr);
-		int encodedLen = uleb.getLength(buf, AbstractLeb128DataType.MAX_LEB128_ENCODED_VALUE_LEN);
-		Object augLenObj = uleb.getValue(buf, uleb.getDefaultSettings(), encodedLen);
+		LEB128Info uleb128 = GccAnalysisUtils.readULEB128Info(program, addr);
 
-		codeAlignFactor = (int) ((Scalar) augLenObj).getUnsignedValue();
+		codeAlignFactor = (int) uleb128.asLong();
 
-		createAndCommentData(program, addr, uleb, comment, CodeUnit.EOL_COMMENT);
+		createAndCommentData(program, addr, UnsignedLeb128DataType.dataType, comment,
+			CodeUnit.EOL_COMMENT);
 
-		curSize += encodedLen;
+		curSize += uleb128.getLength();
 
-		return addr.add(encodedLen);
+		return addr.add(uleb128.getLength());
 	}
 
 	/**
@@ -309,18 +307,16 @@ public class Cie extends GccAnalysisClass {
 		 */
 		String comment = "(CIE) Data Alignment";
 
-		SignedLeb128DataType sleb = SignedLeb128DataType.dataType;
-		MemBuffer buf = new DumbMemBufferImpl(program.getMemory(), addr);
-		int encodedLen = sleb.getLength(buf, -1);
-		Object alignObj = sleb.getValue(buf, sleb.getDefaultSettings(), encodedLen);
+		LEB128Info sleb128 = GccAnalysisUtils.readSLEB128Info(program, addr);
 
-		dataAlignFactor = (int) ((Scalar) alignObj).getSignedValue();
+		dataAlignFactor = (int) sleb128.asLong();
 
-		createAndCommentData(program, addr, sleb, comment, CodeUnit.EOL_COMMENT);
+		createAndCommentData(program, addr, SignedLeb128DataType.dataType, comment,
+			CodeUnit.EOL_COMMENT);
 
-		curSize += encodedLen;
+		curSize += sleb128.getLength();
 
-		return addr.add(encodedLen);
+		return addr.add(sleb128.getLength());
 	}
 
 	/**
@@ -349,16 +345,14 @@ public class Cie extends GccAnalysisClass {
 		}
 		else {
 
-			UnsignedLeb128DataType uleb = UnsignedLeb128DataType.dataType;
-			encodedDt = uleb;
+			LEB128Info uleb128 = GccAnalysisUtils.readULEB128Info(program, addr);
+
+			encodedDt = UnsignedLeb128DataType.dataType;
 			// TODO Instead use the following data type once it can correctly determine the register.
 			// encodedDt = new DwarfRegisterLeb128DataType();
 
-			MemBuffer buf = new DumbMemBufferImpl(program.getMemory(), addr);
-			encodedLen = uleb.getLength(buf, AbstractLeb128DataType.MAX_LEB128_ENCODED_VALUE_LEN);
-			Object augLenObj = uleb.getValue(buf, uleb.getDefaultSettings(), encodedLen);
-
-			returnAddrRegister = (int) ((Scalar) augLenObj).getUnsignedValue();
+			encodedLen = uleb128.getLength();
+			returnAddrRegister = (int) uleb128.asLong();
 
 		}
 
@@ -383,18 +377,16 @@ public class Cie extends GccAnalysisClass {
 		 */
 		String comment = "(CIE) Augmentation Data Length";
 
-		UnsignedLeb128DataType uleb = UnsignedLeb128DataType.dataType;
-		MemBuffer buf = new DumbMemBufferImpl(program.getMemory(), addr);
-		int encodedLen = uleb.getLength(buf, AbstractLeb128DataType.MAX_LEB128_ENCODED_VALUE_LEN);
-		Object augLenObj = uleb.getValue(buf, uleb.getDefaultSettings(), encodedLen);
+		LEB128Info uleb128 = GccAnalysisUtils.readULEB128Info(program, addr);
 
-		augmentationDataLength = (int) ((Scalar) augLenObj).getUnsignedValue();
+		augmentationDataLength = (int) uleb128.asLong();
 
-		createAndCommentData(program, addr, uleb, comment, CodeUnit.EOL_COMMENT);
+		createAndCommentData(program, addr, UnsignedLeb128DataType.dataType, comment,
+			CodeUnit.EOL_COMMENT);
 
-		curSize += encodedLen;
+		curSize += uleb128.getLength();
 
-		return addr.add(encodedLen);
+		return addr.add(uleb128.getLength());
 
 	}
 

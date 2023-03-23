@@ -15,11 +15,14 @@
  */
 package help.screenshot;
 
-import java.awt.*;
+import java.awt.Point;
+import java.awt.Rectangle;
 
 import org.junit.Test;
 
 import docking.action.DockingActionIf;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.util.viewer.field.*;
 import ghidra.graph.visualization.DefaultGraphDisplayComponentProvider;
 
@@ -110,9 +113,10 @@ public class ProgramGraphPluginScreenShots extends GhidraScreenShotGenerator {
 		Point p2 = new Point(STARTX + WIDTH, startY);
 		Point p3 = new Point(STARTX, endY);
 		Point p4 = new Point(STARTX + WIDTH, endY);
-		drawLine(Color.BLACK, 3, p1, p2);
-		drawLine(Color.BLACK, 3, p2, p4);
-		drawLine(Color.BLACK, 3, p3, p4);
-		drawText(string, Color.BLACK, new Point(STARTX + WIDTH + 10, (startY + endY) / 2), 12);
+		drawLine(Palette.BLACK, 3, p1, p2);
+		drawLine(Palette.BLACK, 3, p2, p4);
+		drawLine(Palette.BLACK, 3, p3, p4);
+		drawText(string, Colors.FOREGROUND, new Point(STARTX + WIDTH + 10, (startY + endY) / 2),
+			12);
 	}
 }

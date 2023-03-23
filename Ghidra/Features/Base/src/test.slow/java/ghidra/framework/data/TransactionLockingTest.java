@@ -15,27 +15,25 @@
  */
 package ghidra.framework.data;
 
-import static org.junit.Assert.assertFalse;
-
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 
-import org.junit.*;
+import org.junit.Before;
+import org.junit.Test;
 
 import generic.test.AbstractGenericTest;
 import ghidra.framework.model.DomainObjectLockedException;
 import ghidra.program.database.ProgramBuilder;
 import ghidra.program.model.listing.Program;
 import ghidra.util.exception.AssertException;
-import mockit.*;
 
 public class TransactionLockingTest extends AbstractGenericTest {
 
 	private Program program;
 
-	private CountDownLatch programLockedLatch = new CountDownLatch(1);
-	private CountDownLatch lockExceptionLatch = new CountDownLatch(1);
+	// placeholder for exceptions encountered while testing; this will be checked at the end
+	private Exception unexpectedException = null;
 
 	@Before
 	public void setUp() throws Exception {
@@ -43,80 +41,89 @@ public class TransactionLockingTest extends AbstractGenericTest {
 		program = builder.getProgram();
 	}
 
-	@After
-	public void tearDown() {
-		program.release(this);
-	}
-
+	/**
+	 * This test attempts to verify 2 things: 1) that a client attempting to start a transaction
+	 * on a locked domain object will get an exception, and 2) the client will keep waiting after
+	 * getting the exception, due to the use of a while(true) loop in the system under test.
+	 */
 	@Test
-	public void testTransactionWaitForLock() throws Exception {
+	public void testTransactionWaitForLock() {
 
-		// Inject DomainObjectLockedException mock to trigger lockExceptionLatch
-		new SpyDomainObjectLockedException();
+		//
+		// The latch uses a count of 3, which is an arbitrary number greater than 1.  This allows
+		// us to know that the system performed the expected spin/wait loop more than once.
+		//
+		CountDownLatch clientWaitLatch = new CountDownLatch(3);
+		Function<DomainObjectLockedException, Boolean> exceptionHandler = e -> {
+			clientWaitLatch.countDown();
+			return true; // keep waiting; the client will get released by the lock thread
+		};
 
-		AtomicReference<Exception> exceptionRef = new AtomicReference<>();
-
-		// setup transaction thread
+		//
+		// Thread that will block while waiting to start the transaction
+		//
+		CountDownLatch lockThreadLatch = new CountDownLatch(1);
 		Thread txThread = new Thread(() -> {
 			try {
-				programLockedLatch.await(2, TimeUnit.SECONDS);
-				int txId = program.startTransaction("Test"); // Block until lock released
+				lockThreadLatch.await(2, TimeUnit.SECONDS);
+
+				//
+				// Cast to db to use package-level method for testing.
+				//
+				// The call to startTransaction() will block until our exception handler signals
+				// to continue.
+				//
+				DomainObjectAdapterDB programDb = (DomainObjectAdapterDB) program;
+				int txId = programDb.startTransaction("Test", null, exceptionHandler);
 				program.endTransaction(txId, true);
 			}
 			catch (Exception e) {
-				exceptionRef.set(e);
+				unexpectedException = e;
 			}
 
-		}, "Tx-Thread");
+		}, "Tx-Client-Thread");
 		txThread.start();
 
-		//setup lock thread
+		//
+		// Thread that will acquire the program lock, which will block the other thread
+		//
 		Thread lockThread = new Thread(() -> {
-			boolean gotLock = program.lock("TestLock");
-			if (!gotLock) {
-				exceptionRef.set(new AssertException("Failed to obtain lock"));
+			if (!program.lock("TestLock")) {
+				unexpectedException = new AssertException("Failed to obtain program lock");
+				lockThreadLatch.countDown(); // signal for the Transaction Thread to proceed
+				return;
 			}
 
-			programLockedLatch.countDown(); // signal for startTransaction
-
-			if (gotLock) {
-				try {
-					lockExceptionLatch.await(2, TimeUnit.SECONDS);
-				}
-				catch (InterruptedException e) {
-					// unexpected
-					exceptionRef.set(e);
-				}
-				finally {
-					program.unlock();
-				}
+			lockThreadLatch.countDown(); // signal for the Transaction Thread to proceed
+			try {
+				// keep blocking until we know the client has waited for our test exception handler
+				// to signal to continue
+				clientWaitLatch.await(2, TimeUnit.SECONDS);
+			}
+			catch (InterruptedException e) {
+				unexpectedException = new AssertException(
+					"Test thread interrupted waiting for client transaction thread", e);
+			}
+			finally {
+				program.unlock();
 			}
 
-		}, "Lock-Thread");
+		}, "Program-Lock-Thread");
 		lockThread.start();
 
 		// wait for transaction test thread to complete
-		txThread.join(2000);
-		assertFalse("Tx-Thread may be hung", txThread.isAlive());
+		try {
+			txThread.join(2000);
+		}
+		catch (InterruptedException e) {
+			unexpectedException = new AssertException(
+				"Test thread interrupted waiting for client transaction thread", e);
+		}
 
-		Exception exc = exceptionRef.get();
-		if (exc != null) {
-			failWithException("Transaction Failure", exc);
+		if (unexpectedException != null) {
+			failWithException("Unexpected test failure", unexpectedException);
 		}
 
 	}
 
-	private class SpyDomainObjectLockedException extends MockUp<DomainObjectLockedException> {
-
-		/**
-		 * Mock/Inject constructor for DomainObjectLockedException to provide detection
-		 * of its construction via lockExceptionLatch
-		 * @param invocation
-		 * @param reason
-		 */
-		@Mock
-		public void $init(Invocation invocation, String reason) {
-			lockExceptionLatch.countDown();
-		}
-	}
 }

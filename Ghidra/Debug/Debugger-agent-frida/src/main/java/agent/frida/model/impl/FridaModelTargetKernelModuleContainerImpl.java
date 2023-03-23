@@ -23,6 +23,7 @@ import agent.frida.frida.FridaModuleInfo;
 import agent.frida.manager.*;
 import agent.frida.model.iface2.FridaModelTargetModule;
 import agent.frida.model.iface2.FridaModelTargetModuleContainer;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
@@ -48,7 +49,7 @@ public class FridaModelTargetKernelModuleContainerImpl extends FridaModelTargetO
 		this.kernel = kernel;
 
 		getManager().addEventsListener(this);
-		requestElements(false);
+		requestElements(RefreshBehavior.REFRESH_NEVER);
 	}
 
 	@Override
@@ -72,12 +73,13 @@ public class FridaModelTargetKernelModuleContainerImpl extends FridaModelTargetO
 		TargetThread eventThread =
 			(TargetThread) getModel().getModelObject(thread);
 		changeElements(List.of(), List.of(targetModule), Map.of(), "Loaded");
-		getListeners().fire.event(getProxy(), eventThread, TargetEventType.MODULE_LOADED,
-				"Library " + info.getModuleName(index) + " loaded", List.of(targetModule));
+		broadcast().event(getProxy(), eventThread, TargetEventType.MODULE_LOADED,
+			"Library " + info.getModuleName(index) + " loaded", List.of(targetModule));
 	}
 
 	@Override
-	public void moduleReplaced(FridaProcess proc, FridaModuleInfo info, int index, FridaCause cause) {
+	public void moduleReplaced(FridaProcess proc, FridaModuleInfo info, int index,
+			FridaCause cause) {
 		FridaModule module = info.getModule(index);
 		changeElements(List.of(), List.of(getTargetModule(module)), Map.of(), "Replaced");
 		FridaModelTargetModule targetModule = getTargetModule(module);
@@ -85,14 +87,15 @@ public class FridaModelTargetKernelModuleContainerImpl extends FridaModelTargetO
 	}
 
 	@Override
-	public void moduleUnloaded(FridaProcess proc, FridaModuleInfo info, int index, FridaCause cause) {
+	public void moduleUnloaded(FridaProcess proc, FridaModuleInfo info, int index,
+			FridaCause cause) {
 		FridaModelTargetModule targetModule = getTargetModule(info.getModule(index));
 		if (targetModule != null) {
 			FridaThread thread = getManager().getCurrentThread();
 			TargetThread eventThread =
 				(TargetThread) getModel().getModelObject(thread);
-			getListeners().fire.event(getProxy(), eventThread, TargetEventType.MODULE_UNLOADED,
-					"Library " + info.getModuleName(index) + " unloaded", List.of(targetModule));
+			broadcast().event(getProxy(), eventThread, TargetEventType.MODULE_UNLOADED,
+				"Library " + info.getModuleName(index) + " unloaded", List.of(targetModule));
 			FridaModelImpl impl = (FridaModelImpl) model;
 			impl.deleteModelObject(targetModule.getModule());
 		}
@@ -110,9 +113,9 @@ public class FridaModelTargetKernelModuleContainerImpl extends FridaModelTargetO
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
-		if (refresh) {
-			listeners.fire.invalidateCacheRequested(this);
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
+		if (refresh.equals(RefreshBehavior.REFRESH_ALWAYS)) {
+			broadcast().invalidateCacheRequested(this);
 		}
 		return getManager().listKernelModules();
 	}
@@ -121,7 +124,8 @@ public class FridaModelTargetKernelModuleContainerImpl extends FridaModelTargetO
 	public FridaModelTargetKernelModuleImpl getTargetModule(FridaModule module) {
 		TargetObject targetObject = getMapObject(module);
 		if (targetObject != null) {
-			FridaModelTargetKernelModuleImpl targetModule = (FridaModelTargetKernelModuleImpl) targetObject;
+			FridaModelTargetKernelModuleImpl targetModule =
+				(FridaModelTargetKernelModuleImpl) targetObject;
 			targetModule.setModelObject(module);
 			return targetModule;
 		}

@@ -48,9 +48,7 @@ public interface GdbManager extends AutoCloseable, GdbConsoleOperations, GdbBrea
 		RETURN("return"),
 		STEP("step"),
 		STEPI("stepi", "step-instruction"),
-		UNTIL("until"),
-		/** User-defined */
-		EXTENDED("echo extended-step?", "???"),;
+		UNTIL("until");
 
 		public final String mi2;
 		public final String cli;

@@ -7,7 +7,7 @@
 
     <TITLE>Ghidra Tree Filters</TITLE>
     <META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
   </HEAD>
 
   <BODY>
@@ -35,7 +35,7 @@
       exited Ghidra.</P>
 
       <BLOCKQUOTE>
-        <P><IMG alt="" src="../../shared/note.png"> Some trees use more than the node's name for
+        <P><IMG alt="" src="help/shared/note.png"> Some trees use more than the node's name for
         filter purposes. So, it may appear that the filter is matching more than it should, when
         actually it is also using some other related text for the match, such as a node
         description.</P>
@@ -100,7 +100,7 @@
 
               <BLOCKQUOTE>
                 <BR>
-                 <IMG alt="" src="../../shared/note.yellow.png"> Multiple words in the text field
+                 <IMG alt="" src="help/shared/note.yellow.png"> Multiple words in the text field
                 are treated as separate patterns and <B>ALL</B> patterns must match for the node or
                 row to be accepted. For example, if the text field contained "foo bar", then the
                 table will match if at least one column contains a "foo" and at least one column
@@ -181,7 +181,7 @@
         evaluated. If the text is split, the Filter Strategy and associated options -- case
         sensitivity, globbing, and inversion -- are applied to each term.</P>
 
-        <P><IMG alt="" src="../../shared/note.png"> When 'Regular Expression' is selected as the
+        <P><IMG alt="" src="help/shared/note.png"> When 'Regular Expression' is selected as the
         filter strategy, these options are disabled. Regular expressions are flexible enough to
         match multiple terms and may contain many of the characters otherwise used for convenient
         text splitting.</P>
@@ -229,7 +229,7 @@
         overall acceptance by the filter.</P>
 
         <BLOCKQUOTE>
-          <P><IMG alt="" src="../../shared/note.yellow.png"> Using delimiters that otherwise have a
+          <P><IMG alt="" src="help/shared/note.yellow.png"> Using delimiters that otherwise have a
           logical definition -- '<CODE>+</CODE>', or '<CODE>|</CODE>', for example -- have
           <I>no</I> semantic value in this application; they are simply tokens for input string
           processing.</P>
@@ -277,7 +277,7 @@
       
       
       <BLOCKQUOTE>
-	      <P><IMG src="../../shared/warning.png">
+	      <P><IMG src="help/shared/warning.png">
 	      Some columns in tables are not filterable via the filter text field below the table.
 	      For example, many numeric columns are ignored by the text filter because they can be 
 	      slow to calculate and they are better filtered by using a range filter, as is available
@@ -293,7 +293,7 @@
       </CENTER><BR>
        
 
-      <P>The <IMG alt="" src="images/view-filter.png"> button in lower right corner will bring up
+      <P>The <IMG alt="" src="images/filter_off.png"> button in lower right corner will bring up
       the Column Filter Dialog.</P>
       <BR>
       <BR>

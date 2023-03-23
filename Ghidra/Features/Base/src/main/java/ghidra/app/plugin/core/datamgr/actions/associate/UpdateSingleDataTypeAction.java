@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.datamgr.actions.associate;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 import javax.swing.tree.TreePath;
 
 import docking.ActionContext;
@@ -24,19 +24,19 @@ import docking.action.MenuData;
 import docking.widgets.OptionDialog;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.datamgr.*;
 import ghidra.app.plugin.core.datamgr.archive.DataTypeManagerHandler;
 import ghidra.app.plugin.core.datamgr.tree.DataTypeNode;
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.program.model.data.*;
 import resources.MultiIcon;
-import resources.ResourceManager;
 import resources.icons.EmptyIcon;
 import resources.icons.TranslateIcon;
 
 public class UpdateSingleDataTypeAction extends DockingAction {
 
-	private static ImageIcon UPDATE_ICON = ResourceManager.loadImage("images/smallLeftArrow.png");
+	private static Icon UPDATE_ICON = new GIcon("icon.plugin.datatypes.associate.single.type");
 
 	private final DataTypeManagerPlugin plugin;
 

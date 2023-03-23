@@ -132,11 +132,11 @@ public class FidDB implements Closeable {
 	private DBHandle openPackedDatabase() throws IOException {
 		try {
 			PackedDatabase pdb = PackedDatabase.getPackedDatabase(fidFile.getFile(), false,
-				TaskMonitorAdapter.DUMMY_MONITOR);
+				TaskMonitor.DUMMY);
 			if (openForUpdate) {
-				return pdb.openForUpdate(TaskMonitorAdapter.DUMMY_MONITOR);
+				return pdb.openForUpdate(TaskMonitor.DUMMY);
 			}
-			return pdb.open(TaskMonitorAdapter.DUMMY_MONITOR);
+			return pdb.open(TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
 			// using dummy monitor - can't happen

@@ -21,6 +21,8 @@ import javax.swing.*;
 
 import docking.DialogComponentProvider;
 import docking.widgets.label.GDLabel;
+import generic.theme.GThemeDefaults.Ids.Fonts;
+import generic.theme.Gui;
 import ghidra.feature.fid.db.FidFileManager;
 import ghidra.feature.fid.db.FidQueryService;
 import ghidra.feature.fid.plugin.FidPlugin;
@@ -75,13 +77,13 @@ public class FidSearchDebugDialog extends DialogComponentProvider {
 
 	private JLabel getPreparedLabel(String text) {
 		JLabel label = new GDLabel(text, SwingConstants.RIGHT);
-		label.setFont(FidDebugUtils.MONOSPACED_FONT);
+		label.setFont(Gui.getFont(Fonts.MONOSPACED));
 		return label;
 	}
 
 	private JTextField getPreparedTextField() {
 		JTextField textField = new JTextField(25);
-		textField.setFont(FidDebugUtils.MONOSPACED_FONT);
+		textField.setFont(Gui.getFont(Fonts.MONOSPACED));
 		return textField;
 	}
 

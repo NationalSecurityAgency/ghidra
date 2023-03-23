@@ -46,7 +46,6 @@ public class StringContainsColumnConstraint extends StringColumnConstraint {
 	@Override
 	protected Pattern generateMatchesPattern(String patternString) {
 		return UserSearchUtils.createContainsPattern(patternString.trim(), true,
-			Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+			Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE | Pattern.DOTALL);
 	}
-
 }

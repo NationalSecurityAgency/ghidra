@@ -84,7 +84,7 @@ class LoadPdbTask extends Task {
 					else if (!parseWithNewParser(log, wrappedMonitor)) {
 						return false;
 					}
-					analyzeSymbols(currentMonitor, log);
+					scheduleAdditionalAnalysis();
 				}
 				catch (IOException e) {
 					log.appendMsg("PDB IO Error: " + e.getMessage());
@@ -94,8 +94,8 @@ class LoadPdbTask extends Task {
 		};
 
 		try {
-			AutoAnalysisManager.getAnalysisManager(program).scheduleWorker(worker, null, true,
-				wrappedMonitor);
+			AutoAnalysisManager.getAnalysisManager(program)
+					.scheduleWorker(worker, null, true, wrappedMonitor);
 		}
 		catch (InterruptedException | CancelledException e) {
 			// ignore
@@ -144,10 +144,11 @@ class LoadPdbTask extends Task {
 		try (AbstractPdb pdb = ghidra.app.util.bin.format.pdb2.pdbreader.PdbParser.parse(
 			pdbFile.getAbsolutePath(), pdbReaderOptions, monitor)) {
 			monitor.setMessage("PDB: Parsing " + pdbFile + "...");
-			pdb.deserialize(monitor);
-			PdbApplicator applicator = new PdbApplicator(pdbFile.getAbsolutePath(), pdb);
+			pdb.deserialize();
+			DefaultPdbApplicator applicator =
+				new DefaultPdbApplicator(pdb);
 			applicator.applyTo(program, program.getDataTypeManager(), program.getImageBase(),
-				pdbApplicatorOptions, monitor, log);
+				pdbApplicatorOptions, log);
 
 			return true;
 		}
@@ -157,27 +158,30 @@ class LoadPdbTask extends Task {
 		return false;
 	}
 
-	private void analyzeSymbols(TaskMonitor monitor, MessageLog log) {
+	// We need to kick off any byte analyzers (like getting import symbols), as they typically
+	// won't get kicked off by our loading of the PDB.
+	private void scheduleAdditionalAnalysis() {
 
+		AddressSetView addrs = program.getMemory();
+		AutoAnalysisManager manager = AutoAnalysisManager.getAnalysisManager(program);
+		Options analysisProperties = program.getOptions(Program.ANALYSIS_PROPERTIES);
+
+		//other planned analysis here.
+
+		scheduleDemangler(manager, analysisProperties, addrs);
+	}
+
+	private void scheduleDemangler(AutoAnalysisManager manager, Options analysisProperties,
+			AddressSetView addrs) {
 		MicrosoftDemanglerAnalyzer demanglerAnalyzer = new MicrosoftDemanglerAnalyzer();
 		String analyzerName = demanglerAnalyzer.getName();
+		String valueAsString = analysisProperties.getValueAsString(analyzerName);
 
-		Options analysisProperties = program.getOptions(Program.ANALYSIS_PROPERTIES);
-		String defaultValueAsString = analysisProperties.getValueAsString(analyzerName);
-		boolean doDemangle = true;
-		if (defaultValueAsString != null) {
-			doDemangle = Boolean.parseBoolean(defaultValueAsString);
+		// Only schedule analyzer if enabled
+		if (!Boolean.parseBoolean(valueAsString)) {
+			return;
 		}
-
-		if (doDemangle) {
-			AddressSetView addrs = program.getMemory();
-			monitor.initialize(addrs.getNumAddresses());
-			try {
-				demanglerAnalyzer.added(program, addrs, monitor, log);
-			}
-			catch (CancelledException e) {
-				// ignore cancel
-			}
-		}
+		manager.scheduleOneTimeAnalysis(demanglerAnalyzer, addrs);
 	}
+
 }

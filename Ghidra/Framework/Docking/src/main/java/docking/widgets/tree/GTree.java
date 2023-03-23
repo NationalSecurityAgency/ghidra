@@ -15,8 +15,8 @@
  */
 package docking.widgets.tree;
 
-import static docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin.USER_GENERATED;
-import static ghidra.util.SystemUtilities.runSwingNow;
+import static docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin.*;
+import static ghidra.util.SystemUtilities.*;
 
 import java.awt.*;
 import java.awt.dnd.Autoscroll;
@@ -45,6 +45,7 @@ import docking.widgets.tree.internal.*;
 import docking.widgets.tree.support.*;
 import docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin;
 import docking.widgets.tree.tasks.*;
+import generic.theme.*;
 import generic.timer.ExpiringSwingTimer;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
@@ -56,7 +57,7 @@ import ghidra.util.worker.PriorityWorker;
  */
 
 public class GTree extends JPanel implements BusyListener {
-
+	private static final Color BACKGROUND = new GColor("color.bg.tree");
 	private AutoScrollTree tree;
 	private GTreeModel model;
 
@@ -92,6 +93,11 @@ public class GTree extends JPanel implements BusyListener {
 	private JTreeMouseListenerDelegate mouseListenerDelegate;
 	private GTreeDragNDropHandler dragNDropHandler;
 	private boolean isFilteringEnabled = true;
+	private ThemeListener themeListener = e -> {
+		if (e.isLookAndFeelChanged()) {
+			model.fireNodeStructureChanged(getModelRoot());
+		}
+	};
 
 	private ThreadLocal<TaskMonitor> threadLocalMonitor = new ThreadLocal<>();
 	private PriorityWorker worker;
@@ -134,6 +140,7 @@ public class GTree extends JPanel implements BusyListener {
 				uniquePreferenceKey));
 
 		filterUpdateManager = new SwingUpdateManager(1000, 30000, () -> updateModelFilter());
+		Gui.addThemeListener(themeListener);
 	}
 
 	/**
@@ -186,7 +193,7 @@ public class GTree extends JPanel implements BusyListener {
 
 	/**
 	 * Turns tree event notifications on/off
-	 * 
+	 *
 	 * @param b true to enable events, false to disable events
 	 */
 	public void setEventsEnabled(boolean b) {
@@ -208,6 +215,9 @@ public class GTree extends JPanel implements BusyListener {
 	}
 
 	private void init() {
+
+		setBackground(BACKGROUND);
+
 		tree = new AutoScrollTree(model);
 
 		setLayout(new BorderLayout());
@@ -260,6 +270,8 @@ public class GTree extends JPanel implements BusyListener {
 			realViewRootNode.disposeClones();
 		}
 		model.dispose();
+
+		Gui.removeThemeListener(themeListener);
 	}
 
 	public boolean isDisposed() {
@@ -320,10 +332,14 @@ public class GTree extends JPanel implements BusyListener {
 	 * <p>
 	 * <b>Note: </b>See the usage note at the header of this class concerning how tree state is used
 	 * relative to the <code>equals()</code> method.
-	 * 
+	 *
 	 * @return the saved state
 	 */
 	public GTreeState getTreeState() {
+		GTreeNode root = getViewRoot();
+		if (root == null) {
+			return null; // this can happen during initialization
+		}
 		return new GTreeState(this);
 	}
 
@@ -538,7 +554,7 @@ public class GTree extends JPanel implements BusyListener {
 
 	/**
 	 * Returns the model for this tree
-	 * 
+	 *
 	 * @return the model for this tree
 	 */
 	public GTreeModel getModel() {
@@ -554,7 +570,7 @@ public class GTree extends JPanel implements BusyListener {
 
 	/**
 	 * Returns the current viewport position of the scrollable tree.
-	 * 
+	 *
 	 * @return the current viewport position of the scrollable tree.
 	 */
 	public Point getViewPosition() {
@@ -825,7 +841,7 @@ public class GTree extends JPanel implements BusyListener {
 	 * and always contains all the nodes regardless of any filter being applied. If a filter is
 	 * applied to the tree, then this is not the actual root node being displayed by the
 	 * {@link JTree}.
-	 * 
+	 *
 	 * @return the root node as provided by the client.
 	 */
 	public GTreeNode getModelRoot() {
@@ -837,7 +853,7 @@ public class GTree extends JPanel implements BusyListener {
 	 * are no filters applied, then this will be the same as the model root (See
 	 * {@link #getModelRoot()}). If a filter is applied, then this will be a clone of the model root
 	 * that contains clones of all nodes matching the filter.
-	 * 
+	 *
 	 * @return the root node currently being display by the {@link JTree}
 	 */
 	public GTreeNode getViewRoot() {
@@ -846,7 +862,7 @@ public class GTree extends JPanel implements BusyListener {
 
 	/**
 	 * This method is useful for debugging tree problems. Don't know where else to put it.
-	 * 
+	 *
 	 * @param out the output writer
 	 * @param name use this to indicate what tree event occurred ("node inserted" "node removed",
 	 *            etc.)
@@ -1009,6 +1025,11 @@ public class GTree extends JPanel implements BusyListener {
 	// Waits for the given model node, passing it to the consumer when available
 	private void getModelNode(GTreeNode parent, String childName, Consumer<GTreeNode> consumer) {
 
+		// check for null here to preserve the stack, as the code below is asynchronous
+		Objects.requireNonNull(parent);
+		Objects.requireNonNull(childName);
+		Objects.requireNonNull(consumer);
+
 		int expireMs = 3000;
 		Supplier<GTreeNode> supplier = () -> {
 			GTreeNode modelParent = getModelNode(parent);
@@ -1022,6 +1043,11 @@ public class GTree extends JPanel implements BusyListener {
 
 	// Waits for the given view node, passing it to the consumer when available
 	private void getViewNode(GTreeNode parent, String childName, Consumer<GTreeNode> consumer) {
+
+		// check for null here to preserve the stack, as the code below is asynchronous
+		Objects.requireNonNull(parent);
+		Objects.requireNonNull(childName);
+		Objects.requireNonNull(consumer);
 
 		int expireMs = 3000;
 		Supplier<GTreeNode> supplier = () -> {
@@ -1065,22 +1091,27 @@ public class GTree extends JPanel implements BusyListener {
 			Consumer<GTreeNode> consumer) {
 
 		/*
-		
+
 			If the GTree were to use Java's CompletableStage API, then the code below
 			could be written thusly:
-		
+
 			tree.getNewNode(modelParent, newName)
 				.thenCompose(newModelChild -> {
 			 		tree.ignoreFilter(newModelChild);
 			 		return tree.getNewNode(viewParent, newName);
 			 	))
 			 	.thenAccept(consumer);
-		
+
 		*/
 
 		// ensure we operate on the model node which will always have the given child not the view
 		// node, which may have its child filtered
 		GTreeNode modelParent = getModelNode(parent);
+		if (modelParent == null) {
+			Msg.error(this, "Attempted to show a node with an invalid parent.\n\tParent: " +
+				parent + "\n\tchild: " + childName);
+			return;
+		}
 		getModelNode(modelParent, childName, newModelChild -> {
 			// force the filter to accept the new node
 			ignoreFilter(newModelChild);
@@ -1252,7 +1283,7 @@ public class GTree extends JPanel implements BusyListener {
 	/**
 	 * Re-filters the tree if the newNode should be included in the current filter results. If the
 	 * new node doesn't match the filter, there is no need to refilter the tree.
-	 * 
+	 *
 	 * @param newNode the node that may cause the tree to refilter.
 	 */
 	public void refilterLater(GTreeNode newNode) {
@@ -1300,7 +1331,7 @@ public class GTree extends JPanel implements BusyListener {
 	 * Used to run simple GTree tasks that can be expressed as a {@link MonitoredRunnable} (or a
 	 * lambda taking a {@link TaskMonitor}).
 	 * <p>
-	 * 
+	 *
 	 * @param runnableTask {@link TaskMonitor} to watch and update with progress.
 	 */
 	public void runTask(MonitoredRunnable runnableTask) {
@@ -1322,6 +1353,10 @@ public class GTree extends JPanel implements BusyListener {
 
 	public void stopEditing() {
 		tree.stopEditing();
+	}
+
+	public void cancelEditing() {
+		tree.cancelEditing();
 	}
 
 	public void setNodeEditable(GTreeNode child) {
@@ -1372,6 +1407,7 @@ public class GTree extends JPanel implements BusyListener {
 
 		public AutoScrollTree(TreeModel model) {
 			super(model);
+			setBackground(BACKGROUND);
 			scroller = new AutoscrollAdapter(this, 5);
 
 			setRowHeight(-1);// variable size rows
@@ -1522,7 +1558,7 @@ public class GTree extends JPanel implements BusyListener {
 		 * Calling setSelectedPaths on GTree queues the selection for after any currently scheduled
 		 * tasks. This method sets the selected path immediately and does not wait for for scheduled
 		 * tasks.
-		 * 
+		 *
 		 * @param path the path to select.
 		 */
 		@Override

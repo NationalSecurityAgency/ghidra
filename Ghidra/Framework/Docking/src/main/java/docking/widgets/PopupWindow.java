@@ -26,6 +26,7 @@ import javax.swing.*;
 import javax.swing.Timer;
 
 import docking.widgets.shapes.*;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import generic.util.WindowUtilities;
 import ghidra.util.bean.GGlassPane;
 import ghidra.util.bean.GGlassPanePainter;
@@ -337,7 +338,7 @@ public class PopupWindow {
 				Point p = new Point(r.getLocation());
 				SwingUtilities.convertPointFromScreen(p, glassPane);
 
-				Color c = new Color(50, 50, 200, 125);
+				Color c = Palette.LAVENDER;
 				g.setColor(c);
 				g.fillRect(p.x, p.y, r.width, r.height);
 			}
@@ -346,7 +347,7 @@ public class PopupWindow {
 			if (sourceEvent != null) {
 				Point p = sourceEvent.getPoint();
 				p = SwingUtilities.convertPoint(sourceEvent.getComponent(), p.x, p.y, glassPane);
-				g.setColor(Color.RED);
+				g.setColor(Palette.RED);
 				int offset = 10;
 				g.fillRect(p.x - offset, p.y - offset, (offset * 2), (offset * 2));
 			}

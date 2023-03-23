@@ -15,13 +15,15 @@
  */
 package ghidra.app.util.bin.format.macho.relocation;
 
+import ghidra.app.util.bin.format.RelocationException;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.bin.format.macho.RelocationInfo;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.reloc.Relocation.Status;
+import ghidra.program.model.reloc.RelocationResult;
 import ghidra.util.classfinder.ExtensionPoint;
-import ghidra.util.exception.NotFoundException;
 
 /**
  * An abstract class used to perform Mach-O relocations.  Classes should extend this class to
@@ -51,13 +53,17 @@ abstract public class MachoRelocationHandler implements ExtensionPoint {
 
 	/**
 	 * Performs a relocation
-
+	
 	 * @param relocation The relocation to perform
+	 * @return applied relocation result
 	 * @throws MemoryAccessException If there is a problem accessing memory during the relocation
-	 * @throws NotFoundException If this handler didn't find a way to perform the relocation
+	 * @throws RelocationException if supported relocation encountered an error during processing.
+	 * This exception should be thrown in place of returning {@link RelocationResult#FAILURE} or
+	 * a status of {@link Status#FAILURE} which will facilitate a failure reason via 
+	 * {@link RelocationException#getMessage()}.
 	 */
-	abstract public void relocate(MachoRelocation relocation)
-			throws MemoryAccessException, NotFoundException;
+	abstract public RelocationResult relocate(MachoRelocation relocation)
+			throws MemoryAccessException, RelocationException;
 
 	/**
 	 * Reads bytes at the given address.  The size of the read is determined by the length of the 
@@ -90,23 +96,25 @@ abstract public class MachoRelocationHandler implements ExtensionPoint {
 	 * 
 	 * @param relocation The relocation to write
 	 * @param value The value to write
+	 * @return number of bytes written
 	 * @throws MemoryAccessException If there is a problem accessing memory during the write
 	 */
-	public static void write(MachoRelocation relocation, long value) throws MemoryAccessException {
+	public static int write(MachoRelocation relocation, long value) throws MemoryAccessException {
 		Memory mem = relocation.getProgram().getMemory();
-		int len = relocation.getRelocationInfo().getLength();
 		Address addr = relocation.getRelocationAddress();
-		if (len == 3) {
-			mem.setLong(addr, value);
-		}
-		else if (len == 2) {
-			mem.setInt(addr, (int) value);
-		}
-		else if (len == 1) {
-			mem.setShort(addr, (short) value);
-		}
-		else {
-			mem.setByte(addr, (byte) value);
+		switch (relocation.getRelocationInfo().getLength()) {
+			case 3:
+				mem.setLong(addr, value);
+				return 8;
+			case 2:
+				mem.setInt(addr, (int) value);
+				return 4;
+			case 1:
+				mem.setShort(addr, (short) value);
+				return 2;
+			default:
+				mem.setByte(addr, (byte) value);
+				return 1;
 		}
 	}
 }

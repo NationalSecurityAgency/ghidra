@@ -16,8 +16,7 @@
 package ghidra.app.services;
 
 import java.util.*;
-
-import com.google.common.collect.Range;
+import java.util.concurrent.CompletableFuture;
 
 import ghidra.app.services.ModuleMapProposal.ModuleMapEntry;
 import ghidra.app.services.RegionMapProposal.RegionMapEntry;
@@ -217,7 +216,7 @@ public interface DebuggerStaticMappingService {
 	 * @param truncateExisting true to delete or truncate the lifespan of overlapping entries. If
 	 *            false, overlapping entries are omitted.
 	 */
-	void addIdentityMapping(Trace from, Program toProgram, Range<Long> lifespan,
+	void addIdentityMapping(Trace from, Program toProgram, Lifespan lifespan,
 			boolean truncateExisting);
 
 	void addMapping(MapEntry<?, ?> entry, boolean truncateExisting)
@@ -233,6 +232,10 @@ public interface DebuggerStaticMappingService {
 	 * This will group the entries by trace and add each's entries in a single transaction. If any
 	 * entry fails, including due to conflicts, that failure is logged but ignored, and the
 	 * remaining entries are processed.
+	 * 
+	 * <p>
+	 * Any entries indicated for memorization will have their module paths added to the destination
+	 * program's metadata.
 	 * 
 	 * @param entries the entries to add
 	 * @param monitor a monitor to cancel the operation
@@ -401,19 +404,33 @@ public interface DebuggerStaticMappingService {
 	void removeChangeListener(DebuggerStaticMappingChangeListener l);
 
 	/**
-	 * Collect likely matches for destination programs for the given trace module
+	 * Get a future which completes when pending changes have all settled
 	 * 
 	 * <p>
-	 * If the trace is saved in a project, this will search that project preferring its siblings; if
-	 * no sibling are probable, it will try the rest of the project. Otherwise, it will search the
-	 * current project. "Probable" leaves room for implementations to use any number of heuristics
-	 * available, e.g., name, path, type; however, they should refrain from opening or checking out
-	 * domain files.
+	 * The returned future completes after all change listeners have been invoked.
+	 * 
+	 * @return the future
+	 */
+	CompletableFuture<Void> changesSettled();
+
+	/**
+	 * Find the best match among programs in the project for the given trace module
+	 * 
+	 * <p>
+	 * The service maintains an index of likely module names to domain files in the active project.
+	 * This will search that index for the module's full file path. Failing that, it will search
+	 * just for the module's file name. Among the programs found, it first prefers those whose
+	 * module name list (see {@link ProgramModuleIndexer#setModulePaths(Program, List)}) include the
+	 * sought module. Then, it prefers those whose executable path (see
+	 * {@link Program#setExecutablePath(String)}) matches the sought module. Finally, it prefers
+	 * matches on the program name and the domain file name. Ties in name matching are broken by
+	 * looking for domain files in the same folders as those programs already mapped into the trace
+	 * in the given address space.
 	 * 
 	 * @param module the trace module
 	 * @return the, possibly empty, set of probable matches
 	 */
-	Set<DomainFile> findProbableModulePrograms(TraceModule module);
+	DomainFile findBestModuleProgram(AddressSpace space, TraceModule module);
 
 	/**
 	 * Propose a module map for the given module to the given program

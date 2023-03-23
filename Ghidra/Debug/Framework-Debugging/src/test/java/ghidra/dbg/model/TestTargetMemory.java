@@ -52,7 +52,7 @@ public class TestTargetMemory
 		getMemory(address, data);
 		CompletableFuture<byte[]> future = getModel().future(data);
 		future.thenAccept(__ -> {
-			listeners.fire.memoryUpdated(this, address, data);
+			broadcast().memoryUpdated(this, address, data);
 		});
 		return future;
 	}
@@ -67,13 +67,14 @@ public class TestTargetMemory
 		setMemory(address, data);
 		CompletableFuture<Void> future = getModel().future(null);
 		future.thenAccept(__ -> {
-			listeners.fire.memoryUpdated(this, address, data);
+			broadcast().memoryUpdated(this, address, data);
 		});
 		return future;
 	}
 
 	public TestTargetMemoryRegion addRegion(String name, AddressRange range, String flags) {
-		TestTargetMemoryRegion region = new TestTargetMemoryRegion(this, name, range, flags);
+		TestTargetMemoryRegion region =
+			getModel().newTestTargetMemoryRegion(this, name, range, flags);
 		changeElements(List.of(), List.of(region), "Add test region: " + range);
 		return region;
 	}

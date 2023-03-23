@@ -109,10 +109,9 @@ class MemviewMapModel extends AbstractSortedTableModel<MemoryBox> {
 	}
 
 	/**
-	 * Convenience method for locating columns by name.
-	 * Implementation is naive so this should be overridden if
-	 * this method is to be called often. This method is not
-	 * in the TableModel interface and is not used by the JTable.
+	 * Convenience method for locating columns by name. Implementation is naive so this should be
+	 * overridden if this method is to be called often. This method is not in the TableModel
+	 * interface and is not used by the JTable.
 	 */
 	@Override
 	public int findColumn(String columnName) {
@@ -125,7 +124,7 @@ class MemviewMapModel extends AbstractSortedTableModel<MemoryBox> {
 	}
 
 	/**
-	 *  Returns Object.class by default
+	 * Returns Object.class by default
 	 */
 	@Override
 	public Class<?> getColumnClass(int columnIndex) {
@@ -136,7 +135,7 @@ class MemviewMapModel extends AbstractSortedTableModel<MemoryBox> {
 	}
 
 	/**
-	 *  Return whether this column is editable.
+	 * Return whether this column is editable.
 	 */
 	@Override
 	public boolean isCellEditable(int rowIndex, int columnIndex) {
@@ -144,10 +143,9 @@ class MemviewMapModel extends AbstractSortedTableModel<MemoryBox> {
 	}
 
 	/**
-	 * Returns the number of records managed by the data source object. A
-	 * <B>JTable</B> uses this method to determine how many rows it
-	 * should create and display.  This method should be quick, as it
-	 * is call by <B>JTable</B> quite frequently.
+	 * Returns the number of records managed by the data source object. A <B>JTable</B> uses this
+	 * method to determine how many rows it should create and display. This method should be quick,
+	 * as it is call by <B>JTable</B> quite frequently.
 	 *
 	 * @return the number or rows in the model
 	 * @see #getColumnCount

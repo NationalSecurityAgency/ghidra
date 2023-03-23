@@ -15,8 +15,7 @@
  */
 package ghidra.pcodeCPort.slgh_compile;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -171,10 +170,9 @@ public abstract class PcodeCompile {
 	// Build temporary variable (with zerosize)
 	public VarnodeTpl buildTemporary(Location location) {
 		entry("buildTemporary", location);
-		VarnodeTpl res =
-			new VarnodeTpl(location, new ConstTpl(getUniqueSpace()), new ConstTpl(
-				ConstTpl.const_type.real, allocateTemp()),
-				new ConstTpl(ConstTpl.const_type.real, 0));
+		VarnodeTpl res = new VarnodeTpl(location, new ConstTpl(getUniqueSpace()),
+			new ConstTpl(ConstTpl.const_type.real, allocateTemp()),
+			new ConstTpl(ConstTpl.const_type.real, 0));
 		res.setUnnamed(true);
 		return res;
 	}
@@ -197,8 +195,7 @@ public abstract class PcodeCompile {
 		labsym.setPlaced();
 		VectorSTL<OpTpl> res = new VectorSTL<OpTpl>();
 		OpTpl op = new OpTpl(location, OpCode.CPUI_PTRADD);
-		VarnodeTpl idvn = new VarnodeTpl(location,
-			new ConstTpl(getConstantSpace()),
+		VarnodeTpl idvn = new VarnodeTpl(location, new ConstTpl(getConstantSpace()),
 			new ConstTpl(ConstTpl.const_type.real, labsym.getIndex()),
 			new ConstTpl(ConstTpl.const_type.real, 4));
 		op.addInput(idvn);
@@ -239,9 +236,8 @@ public abstract class PcodeCompile {
 		if (size != 0) {
 			tmpvn.setSize(new ConstTpl(ConstTpl.const_type.real, size)); // Size was explicitly specified
 		}
-		sym =
-			new VarnodeSymbol(location, varname, tmpvn.getSpace().getSpace(),
-				tmpvn.getOffset().getReal(), (int) tmpvn.getSize().getReal());
+		sym = new VarnodeSymbol(location, varname, tmpvn.getSpace().getSpace(),
+			tmpvn.getOffset().getReal(), (int) tmpvn.getSize().getReal());
 		addSymbol(sym);
 	}
 
@@ -268,9 +264,8 @@ public abstract class PcodeCompile {
 		// cannot build the VarnodeSymbol with a placeholder constant
 		rhs.setOutput(location, tmpvn);
 		// Create new symbol regardless
-		sym =
-			new VarnodeSymbol(location, varname, tmpvn.getSpace().getSpace(),
-				tmpvn.getOffset().getReal(), (int) tmpvn.getSize().getReal());
+		sym = new VarnodeSymbol(location, varname, tmpvn.getSpace().getSpace(),
+			tmpvn.getOffset().getReal(), (int) tmpvn.getSize().getReal());
 		addSymbol(sym);
 		if ((!usesLocalKey) && enforceLocalKey) {
 			reportError(location, "Must use 'local' keyword to define symbol '" + varname + "'");
@@ -369,9 +364,8 @@ public abstract class PcodeCompile {
 
 	public VectorSTL<OpTpl> createOpConst(Location location, OpCode opc, long val) {
 		entry("createOpConst", location, opc, val);
-		VarnodeTpl vn =
-			new VarnodeTpl(location, new ConstTpl(getConstantSpace()), new ConstTpl(
-				ConstTpl.const_type.real, val), new ConstTpl(ConstTpl.const_type.real, 4));
+		VarnodeTpl vn = new VarnodeTpl(location, new ConstTpl(getConstantSpace()),
+			new ConstTpl(ConstTpl.const_type.real, val), new ConstTpl(ConstTpl.const_type.real, 4));
 		VectorSTL<OpTpl> res = new VectorSTL<OpTpl>();
 		OpTpl op = new OpTpl(location, opc);
 		op.addInput(vn);
@@ -384,9 +378,8 @@ public abstract class PcodeCompile {
 		entry("createLoad", location, qual, ptr);
 		VarnodeTpl outvn = buildTemporary(location);
 		OpTpl op = new OpTpl(location, OpCode.CPUI_LOAD);
-		VarnodeTpl spcvn =
-			new VarnodeTpl(location, new ConstTpl(getConstantSpace()), qual.getId(), new ConstTpl(
-				ConstTpl.const_type.real, 8));
+		VarnodeTpl spcvn = new VarnodeTpl(location, new ConstTpl(getConstantSpace()), qual.getId(),
+			new ConstTpl(ConstTpl.const_type.real, 8));
 		op.addInput(spcvn);
 		op.addInput(ptr.outvn);
 		op.setOutput(outvn);
@@ -406,9 +399,8 @@ public abstract class PcodeCompile {
 		res.appendAll(val.ops);
 		val.ops.clear();
 		OpTpl op = new OpTpl(location, OpCode.CPUI_STORE);
-		VarnodeTpl spcvn =
-			new VarnodeTpl(location, new ConstTpl(getConstantSpace()), qual.getId(), new ConstTpl(
-				ConstTpl.const_type.real, 8));
+		VarnodeTpl spcvn = new VarnodeTpl(location, new ConstTpl(getConstantSpace()), qual.getId(),
+			new ConstTpl(ConstTpl.const_type.real, 8));
 		op.addInput(spcvn);
 		op.addInput(ptr.outvn);
 		op.addInput(val.outvn);
@@ -434,10 +426,9 @@ public abstract class PcodeCompile {
 			VectorSTL<ExprTree> param) {
 		entry("createUserOpNoOut", sym, param);
 		OpTpl op = new OpTpl(location, OpCode.CPUI_CALLOTHER);
-		VarnodeTpl vn =
-			new VarnodeTpl(sym.location, new ConstTpl(getConstantSpace()), new ConstTpl(
-				ConstTpl.const_type.real, sym.getIndex()),
-				new ConstTpl(ConstTpl.const_type.real, 4));
+		VarnodeTpl vn = new VarnodeTpl(sym.location, new ConstTpl(getConstantSpace()),
+			new ConstTpl(ConstTpl.const_type.real, sym.getIndex()),
+			new ConstTpl(ConstTpl.const_type.real, 4));
 		op.addInput(vn);
 		return ExprTree.appendParams(op, param);
 	}
@@ -493,9 +484,8 @@ public abstract class PcodeCompile {
 			// We put in the correct adjustment to offset assuming things are little endian
 			// We defer the correct big endian calculation until after the consistency check
 			// because we need to know the subtable export sizes
-			specialoff =
-				new ConstTpl(const_type.handle, basevn.getOffset().getHandleIndex(),
-					v_field.v_offset_plus, byteoffset);
+			specialoff = new ConstTpl(const_type.handle, basevn.getOffset().getHandleIndex(),
+				v_field.v_offset_plus, byteoffset);
 		}
 		else {
 			if (basevn.getSize().getType() != const_type.real) {
@@ -510,9 +500,8 @@ public abstract class PcodeCompile {
 			}
 			specialoff = new ConstTpl(const_type.real, basevn.getOffset().getReal() + plus);
 		}
-		VarnodeTpl res =
-			new VarnodeTpl(loc, basevn.getSpace(), specialoff, new ConstTpl(const_type.real,
-				numbytes));
+		VarnodeTpl res = new VarnodeTpl(loc, basevn.getSpace(), specialoff,
+			new ConstTpl(const_type.real, numbytes));
 		return res;
 	}
 
@@ -521,10 +510,9 @@ public abstract class PcodeCompile {
 	public void appendOp(Location location, OpCode opc, ExprTree res, long constval, int constsz) {
 		entry("appendOp", location, opc, res, constval, constsz);
 		OpTpl op = new OpTpl(location, opc);
-		VarnodeTpl constvn =
-			new VarnodeTpl(location, new ConstTpl(getConstantSpace()), new ConstTpl(
-				ConstTpl.const_type.real, constval),
-				new ConstTpl(ConstTpl.const_type.real, constsz));
+		VarnodeTpl constvn = new VarnodeTpl(location, new ConstTpl(getConstantSpace()),
+			new ConstTpl(ConstTpl.const_type.real, constval),
+			new ConstTpl(ConstTpl.const_type.real, constsz));
 		VarnodeTpl outvn = buildTemporary(location);
 		op.addInput(res.outvn);
 		op.addInput(constvn);
@@ -708,15 +696,13 @@ public abstract class PcodeCompile {
 		if ((var.getOffset().getType() == ConstTpl.const_type.real) &&
 			(var.getSpace().getType() == ConstTpl.const_type.spaceid)) {
 			AddrSpace spc = var.getSpace().getSpace();
-			res =
-				new VarnodeTpl(var.location, new ConstTpl(getConstantSpace()), new ConstTpl(
-					ConstTpl.const_type.real, var.getOffset().getReal() >> spc.getScale()),
-					new ConstTpl(ConstTpl.const_type.real, size));
+			res = new VarnodeTpl(var.location, new ConstTpl(getConstantSpace()),
+				new ConstTpl(ConstTpl.const_type.real, var.getOffset().getReal() >> spc.getScale()),
+				new ConstTpl(ConstTpl.const_type.real, size));
 		}
 		else {
-			res =
-				new VarnodeTpl(var.location, new ConstTpl(getConstantSpace()), var.getOffset(),
-					new ConstTpl(ConstTpl.const_type.real, size));
+			res = new VarnodeTpl(var.location, new ConstTpl(getConstantSpace()), var.getOffset(),
+				new ConstTpl(ConstTpl.const_type.real, size));
 		}
 		return res;
 	}
@@ -898,7 +884,9 @@ public abstract class PcodeCompile {
 	public static void entry(String name, Object... args) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(name).append("(");
-		sb.append(Arrays.stream(args).map(Object::toString).collect(Collectors.joining(", ")));
+		sb.append(Arrays.stream(args)
+				.map(x -> Objects.toString(x, "null"))
+				.collect(Collectors.joining(", ")));
 		sb.append(")");
 
 		log.trace(sb.toString());

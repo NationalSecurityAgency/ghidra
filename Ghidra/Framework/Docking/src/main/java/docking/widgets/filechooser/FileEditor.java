@@ -24,6 +24,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.table.TableCellEditor;
 
 import docking.widgets.label.GDLabel;
+import generic.theme.GThemeDefaults.Colors.Java;
 import ghidra.util.Msg;
 import ghidra.util.filechooser.GhidraFileChooserModel;
 
@@ -100,12 +101,7 @@ class FileEditor extends AbstractCellEditor implements TableCellEditor {
 			// make sure the name field gets the focus, not the container
 			@Override
 			public void requestFocus() {
-				SwingUtilities.invokeLater(new Runnable() {
-					@Override
-					public void run() {
-						nameField.requestFocus();
-					}
-				});
+				SwingUtilities.invokeLater(() -> nameField.requestFocus());
 			}
 		};
 
@@ -115,7 +111,7 @@ class FileEditor extends AbstractCellEditor implements TableCellEditor {
 		// match the spacing of non-editing cells
 		editor.setBorder(
 			BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0),
-				BorderFactory.createLineBorder(Color.GRAY)));
+				BorderFactory.createLineBorder(Java.BORDER)));
 	}
 
 	private void handleDoubleClick(Point p) {

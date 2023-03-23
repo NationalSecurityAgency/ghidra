@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +15,14 @@
  */
 package ghidra.pcodeCPort.slghpattern;
 
-import generic.stl.IteratorSTL;
-import generic.stl.VectorSTL;
-import ghidra.pcodeCPort.context.ParserWalker;
-
 import java.io.PrintStream;
 import java.util.Iterator;
 import java.util.List;
 
 import org.jdom.Element;
+
+import generic.stl.IteratorSTL;
+import generic.stl.VectorSTL;
 
 public class OrPattern extends Pattern {
 
@@ -69,16 +67,6 @@ public class OrPattern extends Pattern {
 		for (iter = orlist.begin(); !iter.isEnd(); iter.increment()) {
 			iter.get().shiftInstruction(sa);
 		}
-	}
-
-	@Override
-	public boolean isMatch(ParserWalker pos) {
-		for (int i = 0; i < orlist.size(); ++i) {
-			if (orlist.get(i).isMatch(pos)) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	// This isn't quite right because different branches

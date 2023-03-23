@@ -58,6 +58,7 @@
   SubtableSymbol *subtablesym;
   StartSymbol *startsym;
   EndSymbol *endsym;
+  Next2Symbol *next2sym;
   OperandSymbol *operandsym;
   VarnodeListSymbol *varlistsym;
   VarnodeSymbol *varsym;
@@ -121,6 +122,7 @@
 %token <operandsym> OPERANDSYM
 %token <startsym> STARTSYM
 %token <endsym> ENDSYM
+%token <next2sym> NEXT2SYM
 %token <macrosym> MACROSYM
 %token <labelsym> LABELSYM
 %token <subtablesym> SUBTABLESYM
@@ -331,7 +333,7 @@ contextblock:				{ $$ = (vector<ContextChange *> *)0; }
   | '[' contextlist ']'			{ $$ = $2; }
   ;
 contextlist: 				{ $$ = new vector<ContextChange *>; }
-  | contextlist CONTEXTSYM '=' pexpression ';'  { $$ = $1; if (!slgh->contextMod($1,$2,$4)) { string errmsg="Cannot use 'inst_next' to set context variable: "+$2->getName(); yyerror(errmsg.c_str()); YYERROR; } }
+  | contextlist CONTEXTSYM '=' pexpression ';'  { $$ = $1; if (!slgh->contextMod($1,$2,$4)) { string errmsg="Cannot use 'inst_next' or 'inst_next2' to set context variable: "+$2->getName(); yyerror(errmsg.c_str()); YYERROR; } }
   | contextlist GLOBALSET_KEY '(' familysymbol ',' CONTEXTSYM ')' ';' { $$ = $1; slgh->contextSet($1,$4,$6); }
   | contextlist GLOBALSET_KEY '(' specificsymbol ',' CONTEXTSYM ')' ';' { $$ = $1; slgh->contextSet($1,$4,$6); }
   | contextlist OPERANDSYM '=' pexpression ';' { $$ = $1; slgh->defineOperand($2,$4); }
@@ -456,6 +458,7 @@ sizedstar: '*' '[' SPACESYM ']' ':' INTEGER { $$ = new StarQuality; $$->size = *
   ;
 jumpdest: STARTSYM		{ VarnodeTpl *sym = $1->getVarnode(); $$ = new VarnodeTpl(ConstTpl(ConstTpl::j_curspace),sym->getOffset(),ConstTpl(ConstTpl::j_curspace_size)); delete sym; }
   | ENDSYM			{ VarnodeTpl *sym = $1->getVarnode(); $$ = new VarnodeTpl(ConstTpl(ConstTpl::j_curspace),sym->getOffset(),ConstTpl(ConstTpl::j_curspace_size)); delete sym; }
+  | NEXT2SYM			{ VarnodeTpl *sym = $1->getVarnode(); $$ = new VarnodeTpl(ConstTpl(ConstTpl::j_curspace),sym->getOffset(),ConstTpl(ConstTpl::j_curspace_size)); delete sym; }
   | INTEGER			{ $$ = new VarnodeTpl(ConstTpl(ConstTpl::j_curspace),ConstTpl(ConstTpl::real,*$1),ConstTpl(ConstTpl::j_curspace_size)); delete $1; }
   | BADINTEGER                  { $$ = new VarnodeTpl(ConstTpl(ConstTpl::j_curspace),ConstTpl(ConstTpl::real,0),ConstTpl(ConstTpl::j_curspace_size)); yyerror("Parsed integer is too big (overflow)"); }
   | OPERANDSYM			{ $$ = $1->getVarnode(); $1->setCodeAddress(); }
@@ -499,6 +502,7 @@ specificsymbol: VARSYM		{ $$ = $1; }
   | OPERANDSYM			{ $$ = $1; }
   | STARTSYM			{ $$ = $1; }
   | ENDSYM			{ $$ = $1; }
+  | NEXT2SYM			{ $$ = $1; }
   ;
 charstring: CHAR		{ $$ = new string; (*$$) += $1; }
   | charstring CHAR		{ $$ = $1; (*$$) += $2; }
@@ -573,6 +577,7 @@ anysymbol: SPACESYM		{ $$ = $1; }
   | OPERANDSYM			{ $$ = $1; }
   | STARTSYM			{ $$ = $1; }
   | ENDSYM			{ $$ = $1; }
+  | NEXT2SYM			{ $$ = $1; }
   | BITSYM                      { $$ = $1; }
   ;
 %%

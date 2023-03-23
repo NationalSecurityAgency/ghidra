@@ -84,10 +84,9 @@ public class LinuxPtyTest extends AbstractPtyTest {
 			PtySession dies =
 				pty.getChild().session(new String[] { "thisHadBetterNotExist" }, null);
 			/**
-			 * NOTE: Java subprocess dies with code 1 on unhandled exception. TODO: Is there a nice
-			 * way to distinguish whether the code is from java or the execed image?
+			 * Choice of 127 is based on bash setting "exit code" to 127 for "command not found"
 			 */
-			assertEquals(1, dies.waitExited());
+			assertEquals(127, dies.waitExited());
 		}
 	}
 

@@ -29,13 +29,26 @@ def configureVisualStudio() {
 		println "Searching for latest Visual Studio and required components..."
 		def vswherePath = "C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\\vswhere.exe"
 		if (!file(vswherePath).exists()) {
-			println "Visual Studio not found!"
+			println "  -> Visual Studio vswhere.exe not found!"
 			return
 		}
-		def vswhereOutput = "${vswherePath} -latest -format json".execute().text.trim()
+		def vswhereProcess = "${vswherePath} -products * -latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -format json -utf8".execute()
+		def vswhereOutput = vswhereProcess.text.trim()
+		def vswhereExit = vswhereProcess.exitValue()
+		if (vswhereExit != 0) {
+			if (vswhereExit == 87) { // ERROR_INVALID_PARAMATER
+				println "  -> Visual Studio vswhere.exe was passed an unsupported argument!"
+			}
+			else {
+				println "  -> Visual Studio vswhere.exe returned an error code (${vswhereExit})!"
+			}
+			println "  -> Please confirm ${vswherePath} is version 2.5 or later."
+			println "  -> Please check README.md or InstallationGuide.html to verify you are using a supported version of Visual Studio." 
+			return
+		}
 		def vswhereJson = new groovy.json.JsonSlurper().parseText(vswhereOutput);
 		if (vswhereJson.isEmpty()) {
-			println "Visual Studio not found!"
+			println "  -> Visual Studio not found!"
 			return
 		}
 		def vsInstallDir = vswhereJson[0].installationPath

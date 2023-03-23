@@ -44,7 +44,9 @@ public class LldbListAvailableProcessesCommand
 		for (int i = 3; i < lines.length; i++) {
 			String[] fields = lines[i].split("\\s+");
 			try {
-				result.add(new ImmutablePair<String,String>(fields[0], fields[fields.length-1]));
+				if (fields[0].matches("[0-9]+") && fields[1].matches("[0-9]+")) {
+					result.add(new ImmutablePair<String,String>(fields[0], fields[fields.length-1]));
+				}
 			} catch (Exception e) {
 				Msg.error(this, e.getMessage());
 			}

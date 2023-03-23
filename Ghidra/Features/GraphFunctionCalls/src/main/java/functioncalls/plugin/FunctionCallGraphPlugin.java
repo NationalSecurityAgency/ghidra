@@ -64,7 +64,7 @@ public class FunctionCallGraphPlugin extends ProgramPlugin implements OptionsCha
 	});
 
 	public FunctionCallGraphPlugin(PluginTool tool) {
-		super(tool, true, false);
+		super(tool);
 	}
 
 	@Override
@@ -146,9 +146,6 @@ public class FunctionCallGraphPlugin extends ProgramPlugin implements OptionsCha
 			}
 		};
 
-// TODO create icon from scratch: bow-tie
-//		ImageIcon icon = ResourceManager.loadImage("images/applications-development.png");
-//		showProviderAction.setToolBarData(new ToolBarData(icon, "View"));
 		tool.addAction(showProviderAction);
 	}
 

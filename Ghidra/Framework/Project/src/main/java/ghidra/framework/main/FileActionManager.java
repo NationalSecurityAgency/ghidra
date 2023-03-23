@@ -29,6 +29,7 @@ import docking.tool.ToolConstants;
 import docking.widgets.OptionDialog;
 import docking.widgets.filechooser.GhidraFileChooser;
 import docking.wizard.WizardManager;
+import generic.theme.GIcon;
 import ghidra.framework.client.ClientUtil;
 import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.model.*;
@@ -38,7 +39,6 @@ import ghidra.framework.store.LockException;
 import ghidra.util.*;
 import ghidra.util.exception.NotFoundException;
 import ghidra.util.task.TaskLauncher;
-import resources.ResourceManager;
 
 /**
  * Helper class to manage actions on the File menu.
@@ -49,9 +49,10 @@ class FileActionManager {
 	private final static int OPEN_ACCELERATOR = KeyEvent.VK_O;
 	private final static int CLOSE_ACCELERATOR = KeyEvent.VK_W;
 	private final static int SAVE_ACCELERATOR = KeyEvent.VK_S;
-	private final static Icon NEW_PROJECT_ICON = ResourceManager.loadImage("images/folder_add.png");
-	private final static String LAST_SELECTED_PROJECT_DIRECTORY = "LastSelectedProjectDirectory";
 
+	private final static Icon NEW_PROJECT_ICON = new GIcon("icon.menu.file.new.project");
+
+	private final static String LAST_SELECTED_PROJECT_DIRECTORY = "LastSelectedProjectDirectory";
 	private static final String DISPLAY_DATA = "DISPLAY_DATA";
 
 	private FrontEndTool tool;
@@ -64,7 +65,6 @@ class FileActionManager {
 	private DockingAction saveAction;
 
 	private List<ViewInfo> reopenList;
-	private GhidraFileChooser fileChooser;
 
 	private boolean firingProjectOpened;
 
@@ -237,19 +237,16 @@ class FileActionManager {
 		if (activeProject != null) {
 			currentProjectLocator = activeProject.getProjectLocator();
 		}
-		if (fileChooser == null) {
-			fileChooser = plugin.createFileChooser(LAST_SELECTED_PROJECT_DIRECTORY);
-		}
 
+		GhidraFileChooser fileChooser = plugin.createFileChooser(LAST_SELECTED_PROJECT_DIRECTORY);
 		ProjectLocator projectLocator =
 			plugin.chooseProject(fileChooser, "Open", LAST_SELECTED_PROJECT_DIRECTORY);
 		if (projectLocator != null) {
-
 			if (!doOpenProject(projectLocator) && currentProjectLocator != null) {
 				doOpenProject(currentProjectLocator);
 			}
-
 		}
+		fileChooser.dispose();
 	}
 
 	private class OpenTaskRunnable implements Runnable {
@@ -373,7 +370,7 @@ class FileActionManager {
 				buf.append("The File " + files.get(lastIndex).getPathname() +
 					" is currently being modified by the\n");
 				buf.append("the following actions:\n \n");
-				Transaction t = udo.getCurrentTransaction();
+				TransactionInfo t = udo.getCurrentTransactionInfo();
 				List<String> list = t.getOpenSubTransactions();
 				Iterator<String> it = list.iterator();
 				while (it.hasNext()) {
@@ -578,11 +575,11 @@ class FileActionManager {
 	 * menu listener for File | Delete Project...
 	 */
 	private void deleteProject() {
-		if (fileChooser == null) {
-			fileChooser = plugin.createFileChooser(LAST_SELECTED_PROJECT_DIRECTORY);
-		}
+
+		GhidraFileChooser fileChooser = plugin.createFileChooser(LAST_SELECTED_PROJECT_DIRECTORY);
 		ProjectLocator projectLocator =
 			plugin.chooseProject(fileChooser, "Delete", LAST_SELECTED_PROJECT_DIRECTORY);
+		fileChooser.dispose();
 		if (projectLocator == null) {
 			return; // user canceled
 		}
@@ -602,7 +599,7 @@ class FileActionManager {
 		confirmMsg.append(" ?\n");
 		boolean isActiveProject =
 			(activeProject != null && activeProject.getProjectLocator().equals(projectLocator));
-		// also give special warning if we open this project as read-only voew
+		// also give special warning if we open this project as read-only view
 		boolean isOpenProjectView = isOpenProjectView(projectLocator);
 
 		if (!allowDelete(isActiveProject ? activeProject : null)) {

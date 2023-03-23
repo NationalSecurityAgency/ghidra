@@ -15,13 +15,13 @@
  */
 package ghidra.app.util.viewer.field;
 
-import java.awt.Color;
 import java.math.BigInteger;
 import java.util.ArrayList;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.viewer.field.ListingColors.FunctionColors;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.Options;
@@ -35,7 +35,6 @@ import ghidra.program.util.ProgramLocation;
   */
 public class AssignedVariableFieldFactory extends FieldFactory {
 	public static final String FIELD_NAME = "Var Assign";
-	public static final Color DEFAULT_COLOR = new Color(128, 0, 128);
 
 	/**
 	 * Default constructor.
@@ -55,18 +54,6 @@ public class AssignedVariableFieldFactory extends FieldFactory {
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, model, hsProvider, displayOptions, fieldOptions);
 	}
-
-	@Override
-	public void fieldOptionsChanged(Options options, String optionName, Object oldValue,
-			Object newValue) {
-
-	}
-
-//	private static String getOffsetString(int offset) {
-//		String offString =
-//			(offset >= 0 ? Integer.toHexString(offset) : "-" + Integer.toHexString(-offset));
-//		return offString;
-//	}
 
 	/**
 	 * Returns the FactoryField for the given object at index index.
@@ -100,7 +87,8 @@ public class AssignedVariableFieldFactory extends FieldFactory {
 					buf.append(var.getVariableStorage().toString());
 					buf.append(" = ");
 					buf.append(var.getName());
-					AttributedString as = new AttributedString(buf.toString(), color, getMetrics());
+					AttributedString as = new AttributedString(buf.toString(),
+						FunctionColors.VARIABLE_ASSIGNED, getMetrics());
 					elemenetList.add(new TextFieldElement(as, 0, 0));
 				}
 			}
@@ -150,10 +138,5 @@ public class AssignedVariableFieldFactory extends FieldFactory {
 			ToolOptions displayOptions, ToolOptions fieldOptions) {
 		return new AssignedVariableFieldFactory(formatModel, hsProvider, displayOptions,
 			fieldOptions);
-	}
-
-	@Override
-	public Color getDefaultColor() {
-		return DEFAULT_COLOR;
 	}
 }

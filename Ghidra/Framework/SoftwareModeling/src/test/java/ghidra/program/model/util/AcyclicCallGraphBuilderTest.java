@@ -15,7 +15,7 @@
  */
 package ghidra.program.model.util;
 
-import static ghidra.util.task.TaskMonitorAdapter.DUMMY_MONITOR;
+import static ghidra.util.task.TaskMonitor.*;
 
 import java.util.*;
 
@@ -102,7 +102,7 @@ public class AcyclicCallGraphBuilderTest extends AbstractGenericTest {
 		node(3, 4);
 
 		AcyclicCallGraphBuilder builder = new AcyclicCallGraphBuilder(program, functions, false);
-		AbstractDependencyGraph<Address> graph = builder.getDependencyGraph(DUMMY_MONITOR);
+		AbstractDependencyGraph<Address> graph = builder.getDependencyGraph(DUMMY);
 
 		Assert.assertEquals(4, graph.size());
 
@@ -119,7 +119,7 @@ public class AcyclicCallGraphBuilderTest extends AbstractGenericTest {
 		node(2,3);
 		
 		AcyclicCallGraphBuilder builder = new AcyclicCallGraphBuilder(program,functions,false);
-		AbstractDependencyGraph<Address> graph = builder.getDependencyGraph(DUMMY_MONITOR);
+		AbstractDependencyGraph<Address> graph = builder.getDependencyGraph(DUMMY);
 		
 		Assert.assertEquals(3, graph.size());
 		
@@ -135,7 +135,7 @@ public class AcyclicCallGraphBuilderTest extends AbstractGenericTest {
 		node(3, 1);
 
 		AcyclicCallGraphBuilder builder = new AcyclicCallGraphBuilder(program, functions, false);
-		AbstractDependencyGraph<Address> graph = builder.getDependencyGraph(DUMMY_MONITOR);
+		AbstractDependencyGraph<Address> graph = builder.getDependencyGraph(DUMMY);
 
 		Assert.assertEquals(3, graph.size());
 
@@ -152,7 +152,7 @@ public class AcyclicCallGraphBuilderTest extends AbstractGenericTest {
 		node(2, 2);
 
 		AcyclicCallGraphBuilder builder = new AcyclicCallGraphBuilder(program, functions, false);
-		AbstractDependencyGraph<Address> graph = builder.getDependencyGraph(DUMMY_MONITOR);
+		AbstractDependencyGraph<Address> graph = builder.getDependencyGraph(DUMMY);
 
 		Assert.assertEquals(3, graph.size());
 
@@ -168,7 +168,7 @@ public class AcyclicCallGraphBuilderTest extends AbstractGenericTest {
 		node(3, 1);
 
 		AcyclicCallGraphBuilder builder = new AcyclicCallGraphBuilder(program, functions, false);
-		AbstractDependencyGraph<Address> graph = builder.getDependencyGraph(DUMMY_MONITOR);
+		AbstractDependencyGraph<Address> graph = builder.getDependencyGraph(DUMMY);
 
 		Assert.assertEquals(3, graph.size());
 
@@ -197,7 +197,7 @@ public class AcyclicCallGraphBuilderTest extends AbstractGenericTest {
 		thunkNode(17, 18, false);
 
 		AcyclicCallGraphBuilder builder = new AcyclicCallGraphBuilder(program, functions, false);
-		AbstractDependencyGraph<Address> graph = builder.getDependencyGraph(DUMMY_MONITOR);
+		AbstractDependencyGraph<Address> graph = builder.getDependencyGraph(DUMMY);
 
 		Assert.assertEquals(18, graph.size());
 
@@ -241,7 +241,7 @@ public class AcyclicCallGraphBuilderTest extends AbstractGenericTest {
 		thunkNode(17, 18, false);
 
 		AcyclicCallGraphBuilder builder = new AcyclicCallGraphBuilder(program, functions, true);
-		AbstractDependencyGraph<Address> graph = builder.getDependencyGraph(DUMMY_MONITOR);
+		AbstractDependencyGraph<Address> graph = builder.getDependencyGraph(DUMMY);
 
 		Assert.assertEquals(8, graph.size());
 
@@ -265,7 +265,7 @@ public class AcyclicCallGraphBuilderTest extends AbstractGenericTest {
 
 		thunkNode(5, 3, true);	// Thunk node hits recursion from different point
 		AcyclicCallGraphBuilder builder = new AcyclicCallGraphBuilder(program, functions, true);
-		AbstractDependencyGraph<Address> graph = builder.getDependencyGraph(DUMMY_MONITOR);
+		AbstractDependencyGraph<Address> graph = builder.getDependencyGraph(DUMMY);
 
 		Assert.assertEquals(4, graph.size());
 		assertDependents(graph, 2, 1);
@@ -284,7 +284,7 @@ public class AcyclicCallGraphBuilderTest extends AbstractGenericTest {
 	}
 
 	private FunctionManager createFunctionManager() {
-		return new FunctionManagerTestDouble() {
+		return new StubFunctionManager() {
 			@Override
 			public Function getFunctionAt(Address addr) {
 				return functionMap.get(addr);
@@ -294,7 +294,7 @@ public class AcyclicCallGraphBuilderTest extends AbstractGenericTest {
 
 	private Program createProgram() {
 		final FunctionManager funMgr = createFunctionManager();
-		return new ProgramTestDouble() {
+		return new StubProgram() {
 			@Override
 			public ReferenceManager getReferenceManager() {
 				return refState;

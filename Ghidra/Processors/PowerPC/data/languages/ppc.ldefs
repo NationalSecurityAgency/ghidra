@@ -158,7 +158,7 @@
 	<external_name tool="IDA-PRO" name="ppc"/>
     <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
   </language>
-   <language processor="PowerPC"
+  <language processor="PowerPC"
             endian="little"
             size="32"
             variant="PowerQUICC-III"
@@ -173,7 +173,39 @@
 	<external_name tool="gnu" name="powerpc:MPC8XX"/>
 	<external_name tool="IDA-PRO" name="ppcl"/>
     <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
-  </language>  
+  </language>
+  <language processor="PowerPC"
+            endian="big"
+            size="32"
+            variant="PowerQUICC-III-e500"
+            version="1.5"
+            slafile="ppc_32_e500_be.sla"
+            processorspec="ppc_32.pspec"
+            manualindexfile="../manuals/PowerPC.idx"
+            id="PowerPC:BE:32:e500">
+    <description>PowerQUICC-III e500 32-bit big-endian family</description>
+    <truncate_space space="ram" size="4"/>
+    <compiler name="default" spec="ppc_32_e500_be.cspec" id="default"/>
+    <external_name tool="gnu" name="powerpc:e500"/>
+    <external_name tool="IDA-PRO" name="ppc"/>
+    <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
+  </language>
+  <language processor="PowerPC"
+            endian="little"
+            size="32"
+            variant="PowerQUICC-III-e500"
+            version="1.5"
+            slafile="ppc_32_e500_le.sla"
+            processorspec="ppc_32.pspec"
+            manualindexfile="../manuals/PowerPC.idx"
+            id="PowerPC:LE:32:e500">
+    <description>PowerQUICC-III e500 32-bit little-endian family</description>
+    <truncate_space space="ram" size="4"/>
+    <compiler name="default" spec="ppc_32_e500_le.cspec" id="default"/>
+    <external_name tool="gnu" name="powerpc:e500"/>
+    <external_name tool="IDA-PRO" name="ppc"/>
+    <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
+  </language>
   <language processor="PowerPC"
             endian="big"
             size="32"

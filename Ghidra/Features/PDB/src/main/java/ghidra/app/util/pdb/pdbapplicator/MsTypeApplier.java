@@ -32,7 +32,7 @@ import ghidra.util.exception.CancelledException;
  */
 public abstract class MsTypeApplier {
 
-	protected PdbApplicator applicator;
+	protected DefaultPdbApplicator applicator;
 	protected AbstractMsType msType;
 	protected int index;
 	protected DataType dataType;
@@ -48,10 +48,10 @@ public abstract class MsTypeApplier {
 
 	/**
 	 * Constructor.
-	 * @param applicator {@link PdbApplicator} for which this class is working.
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
 	 * @param msType {@link AbstractMsType} to apply.
 	 */
-	public MsTypeApplier(PdbApplicator applicator, AbstractMsType msType) {
+	public MsTypeApplier(DefaultPdbApplicator applicator, AbstractMsType msType) {
 		this.applicator = applicator;
 		this.msType = msType;
 		RecordNumber recordNumber = msType.getRecordNumber();
@@ -100,7 +100,7 @@ public abstract class MsTypeApplier {
 	 * Returns {@code true} if the application as been deferred (during the {@link #apply()}
 	 * method.  The {@link #deferredApply()} method will need to be applied at the appropriate
 	 * place in the processing sequence (depending on data dependency ordering) as determined
-	 * and driven by the {@link PdbApplicator}.
+	 * and driven by the {@link DefaultPdbApplicator}.
 	 * @return {@code true} if application was deferred
 	 */
 	boolean isDeferred() {
@@ -109,7 +109,7 @@ public abstract class MsTypeApplier {
 
 	/**
 	 * Performs the work required in a deferred application of the data type.  This method
-	 * is used by the {@link PdbApplicator} in the correct data dependency sequence.
+	 * is used by the {@link DefaultPdbApplicator} in the correct data dependency sequence.
 	 * @throws PdbException on error applying the data type
 	 * @throws CancelledException on user cancellation
 	 */
@@ -187,7 +187,7 @@ public abstract class MsTypeApplier {
 	 * @return the size; zero if unknown.
 	 */
 	long getSizeLong() {
-		return PdbApplicator.bigIntegerToLong(applicator, getSize());
+		return DefaultPdbApplicator.bigIntegerToLong(applicator, getSize());
 	}
 
 	/**
@@ -195,7 +195,7 @@ public abstract class MsTypeApplier {
 	 * @return the size; zero if unknown.
 	 */
 	int getSizeInt() {
-		return PdbApplicator.bigIntegerToInt(applicator, getSize());
+		return DefaultPdbApplicator.bigIntegerToInt(applicator, getSize());
 	}
 
 	@Override

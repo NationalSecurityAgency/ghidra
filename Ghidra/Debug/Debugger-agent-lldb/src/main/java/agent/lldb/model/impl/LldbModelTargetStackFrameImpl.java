@@ -152,7 +152,7 @@ public class LldbModelTargetStackFrameImpl extends LldbModelTargetObjectImpl
 	@Override
 	public void setFrame(SBFrame frame) {
 		if (!frame.IsValid()) {
-			System.err.println("Error in frame");
+			System.err.println("Frame is not valid");
 		}
 		setModelObject(frame);
 		BigInteger address = frame.GetPC();

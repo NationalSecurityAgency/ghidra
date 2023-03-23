@@ -86,6 +86,16 @@ public class CachedAddressSetView implements AddressSetView {
 		maxAddress = delegate.getMaxAddress();
 	}
 
+	protected static void addMixed(AddressSet set, Address min, Address max) {
+		if (min.getAddressSpace() == max.getAddressSpace()) {
+			set.add(min, max);
+		}
+		else {
+			set.add(min, min.getAddressSpace().getMaxAddress());
+			set.add(max.getAddressSpace().getMinAddress(), max);
+		}
+	}
+
 	protected void ensureKnown(Address min, Address max) {
 		if (minAddress == null) {
 			return;
@@ -101,21 +111,21 @@ public class CachedAddressSetView implements AddressSetView {
 		if (rangesBackward.hasNext()) {
 			AddressRange prev = rangesBackward.next();
 			cache.add(prev);
-			known.add(prev.getMinAddress(), min);
+			addMixed(known, prev.getMinAddress(), min);
 		}
 		else {
-			known.add(minAddress, min);
+			addMixed(known, minAddress, min);
 		}
 		AddressRangeIterator rangesForward = delegate.getAddressRanges(min, true);
 		while (true) {
 			if (!rangesForward.hasNext()) {
-				known.add(min, maxAddress);
+				addMixed(known, min, maxAddress);
 				break;
 			}
 			AddressRange next = rangesForward.next();
 			cache.add(next);
 			if (next.getMaxAddress().compareTo(max) >= 0) {
-				known.add(min, next.getMaxAddress());
+				addMixed(known, min, next.getMaxAddress());
 				break;
 			}
 		}

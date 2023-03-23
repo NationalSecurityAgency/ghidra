@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +15,27 @@
  */
 package ghidra.feature.vt.gui.provider.matchtable;
 
-import ghidra.feature.vt.api.main.VTAssociationMarkupStatus;
-
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.Icon;
 
+import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors.Java;
+import ghidra.feature.vt.api.main.VTAssociationMarkupStatus;
+
 public class VTMarkupStatusIcon implements Icon {
+
+	private static final Color BG_APPLIED =
+		new GColor("color.bg.version.tracking.match.table.markup.status.applied");
+	private static final Color BG_REJECTED =
+		new GColor("color.bg.version.tracking.match.table.markup.status.rejected");
+	private static final Color BG_DONT_CARE =
+		new GColor("color.bg.version.tracking.match.table.markup.status.dont.care");
+	private static final Color BG_DONT_KNOW =
+		new GColor("color.bg.version.tracking.match.table.markup.status.dont.know");
+
 	private int BORDER = 2;
 	private int WIDTH = 44;
 	private int KNOB_WIDTH = 4;
@@ -63,7 +74,7 @@ public class VTMarkupStatusIcon implements Icon {
 			drawBar(g, x + startX + BORDER + 1, y + BORDER + 1, width, colors.get(i));
 		}
 
-		g.setColor(Color.BLACK);
+		g.setColor(Java.BORDER);
 		g.drawRect(x, y, WIDTH, HEIGHT);
 //		g.drawRect(x, y, WIDTH / 2, HEIGHT);
 		g.drawRect(x + WIDTH, y + HEIGHT / 2 - 3, KNOB_WIDTH, 6);
@@ -75,22 +86,20 @@ public class VTMarkupStatusIcon implements Icon {
 		g.fillRect(x, y, width, HEIGHT - 2 * BORDER - 1);
 	}
 
-	private List<Color> getColors(VTAssociationMarkupStatus status) {
-		Color ORANGE = new Color(255, 150, 0);
-		Color GREEN = new Color(0, 180, 0);
-		Color BLUE = new Color(80, 80, 240);
-		List<Color> list = new ArrayList<Color>(4);
-		if (status.hasRejectedMarkup()) {
-			list.add(Color.RED);
+	private List<Color> getColors(VTAssociationMarkupStatus markupStatus) {
+
+		List<Color> list = new ArrayList<>(4);
+		if (markupStatus.hasRejectedMarkup()) {
+			list.add(BG_REJECTED);
 		}
-		if (status.hasAppliedMarkup() || status.isFullyApplied()) {
-			list.add(GREEN);
+		if (markupStatus.hasAppliedMarkup() || markupStatus.isFullyApplied()) {
+			list.add(BG_APPLIED);
 		}
-		if (status.hasDontCareMarkup()) {
-			list.add(BLUE);
+		if (markupStatus.hasDontCareMarkup()) {
+			list.add(BG_DONT_CARE);
 		}
-		if (status.hasDontKnowMarkup()) {
-			list.add(ORANGE);
+		if (markupStatus.hasDontKnowMarkup()) {
+			list.add(BG_DONT_KNOW);
 		}
 		return list;
 	}

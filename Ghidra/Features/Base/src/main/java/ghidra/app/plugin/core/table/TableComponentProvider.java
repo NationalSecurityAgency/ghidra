@@ -32,6 +32,7 @@ import docking.action.MenuData;
 import docking.widgets.table.AbstractSortedTableModel;
 import docking.widgets.table.GTable;
 import docking.widgets.table.threaded.GThreadedTablePanel;
+import generic.theme.GIcon;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.nav.NavigatableRemovalListener;
 import ghidra.app.services.*;
@@ -45,7 +46,6 @@ import ghidra.util.HelpLocation;
 import ghidra.util.table.*;
 import ghidra.util.table.actions.DeleteTableRowAction;
 import ghidra.util.table.actions.MakeProgramSelectionAction;
-import resources.ResourceManager;
 
 public class TableComponentProvider<T> extends ComponentProviderAdapter
 		implements TableModelListener, NavigatableRemovalListener {
@@ -78,8 +78,8 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 
 	TableComponentProvider(TableServicePlugin plugin, String title, String name,
 			GhidraProgramTableModel<T> model, String programName, GoToService gotoService,
-			MarkerService markerService, Color markerColor, ImageIcon markerIcon,
-			String windowSubMenu, Navigatable navigatable) {
+			MarkerService markerService, Color markerColor, Icon markerIcon, String windowSubMenu,
+			Navigatable navigatable) {
 		super(plugin.getTool(), name, plugin.getName());
 
 		this.tableServicePlugin = plugin;
@@ -89,7 +89,7 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		this.programName = programName;
 		this.markerService = markerService;
 		this.windowSubMenu = windowSubMenu;
-		setIcon(ResourceManager.loadImage("images/magnifier.png"));
+		setIcon(new GIcon("icon.plugin.table.service"));
 		setTransient();
 		setTitle(title);
 		setHelpLocation(helpLoc);
@@ -114,8 +114,9 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 			// remove it; we will add it later to a group
 			markerService.removeMarker(markerSet, program);
 			loadMarkers();
-			model.addTableModelListener(this);
 		}
+
+		model.addTableModelListener(this);
 	}
 
 	private JPanel buildMainPanel(GhidraProgramTableModel<T> tableModel, GoToService gotoService) {
@@ -154,8 +155,8 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		selectAction.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, "Make_Selection"));
 
 		selectionNavigationAction = new SelectionNavigationAction(plugin, table);
-		selectionNavigationAction.setHelpLocation(
-			new HelpLocation(HelpTopics.SEARCH, "Selection_Navigation"));
+		selectionNavigationAction
+				.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, "Selection_Navigation"));
 
 		DockingAction externalGotoAction = new DockingAction("Go to External Location", getName()) {
 			@Override
@@ -185,7 +186,7 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		externalGotoAction.setDescription("Go to an external location");
 		externalGotoAction.setEnabled(false);
 
-		Icon icon = ResourceManager.loadImage("images/searchm_obj.gif");
+		Icon icon = new GIcon("icon.plugin.table.service.marker");
 		externalGotoAction.setPopupMenuData(
 			new MenuData(new String[] { "GoTo External Location" }, icon, null));
 		externalGotoAction.setHelpLocation(new HelpLocation(HelpTopics.SEARCH, "Navigation"));
@@ -206,6 +207,10 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		tool.addLocalAction(this, removeItemsAction);
 	}
 
+	public String getActionOwner() {
+		return tableServicePlugin.getName();
+	}
+
 	private JPanel createFilterFieldPanel(JTable table, AbstractSortedTableModel<T> sortedModel) {
 		tableFilterPanel = new GhidraTableFilterPanel<>(table, sortedModel);
 		tableFilterPanel.setToolTipText("Filter search results");
@@ -217,14 +222,34 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		buffer.append("(");
 		buffer.append(programName);
 		buffer.append(") ");
+
+		String filteredText = "";
+		if (tableFilterPanel.isFiltered()) {
+			filteredText = " of " + tableFilterPanel.getUnfilteredRowCount();
+		}
+
 		int n = model.getRowCount();
 		if (n == 1) {
-			buffer.append("    (1 entry)");
+			buffer.append("    (1 entry").append(filteredText).append(")");
 		}
 		else if (n > 1) {
-			buffer.append("    (" + n + " entries)");
+			buffer.append("    (").append(n).append(" entries").append(filteredText).append(")");
 		}
 		return buffer.toString();
+	}
+
+	private void reloadMarkers() {
+		if (markerSet == null) {
+			return;
+		}
+
+		if (!markerService.isActiveMarkerForGroup(MarkerService.HIGHLIGHT_GROUP, markerSet,
+			program)) {
+			return; // we are not the active marker service; do not replace the active group
+		}
+
+		markerService.removeMarkerForGroup(MarkerService.HIGHLIGHT_GROUP, markerSet, program);
+		loadMarkers();
 	}
 
 	private void loadMarkers() {
@@ -232,12 +257,17 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 			return;
 		}
 
+		if (markerService.isActiveMarkerForGroup(MarkerService.HIGHLIGHT_GROUP, markerSet,
+			program)) {
+			return; // already active; no need to load
+		}
+
 		markerSet.clearAll();
 		int n = model.getRowCount();
 		for (int i = 0; i < n; i++) {
-			ProgramLocation loc = model.getProgramLocation(i, 0);
-			if (loc != null) {
-				markerSet.add(loc.getByteAddress());
+			Address a = model.getAddress(i);
+			if (a != null) {
+				markerSet.add(a);
 			}
 		}
 
@@ -257,7 +287,7 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 			navigatable.removeNavigatableListener(this);
 		}
 
-		tool.removeComponentProvider(this);
+		super.closeComponent();
 		tableServicePlugin.remove(this);
 
 		if (markerSet != null) {
@@ -317,7 +347,7 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 	@Override
 	public void tableChanged(TableModelEvent ev) {
 		updateTitle();
-		loadMarkers();
+		reloadMarkers();
 	}
 
 	public GhidraProgramTableModel<T> getModel() {
@@ -336,9 +366,6 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		activationListenerList.remove(listener);
 	}
 
-	/**
-	 * @see docking.ComponentProvider#componentActivated()
-	 */
 	@Override
 	public void componentActivated() {
 		loadMarkers();
@@ -347,9 +374,6 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		}
 	}
 
-	/**
-	 * @see docking.ComponentProvider#componentDeactived()
-	 */
 	@Override
 	public void componentDeactived() {
 		for (ComponentProviderActivationListener listener : activationListenerList) {
@@ -357,9 +381,6 @@ public class TableComponentProvider<T> extends ComponentProviderAdapter
 		}
 	}
 
-	/**
-	 * @see docking.ComponentProvider#getWindowSubMenuName()
-	 */
 	@Override
 	public String getWindowSubMenuName() {
 		return windowSubMenu;

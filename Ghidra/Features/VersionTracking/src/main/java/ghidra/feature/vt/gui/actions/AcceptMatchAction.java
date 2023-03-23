@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +15,14 @@
  */
 package ghidra.feature.vt.gui.actions;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.Icon;
+
+import docking.ActionContext;
+import docking.action.*;
+import generic.theme.GIcon;
 import ghidra.feature.vt.api.main.VTMatch;
 import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.feature.vt.gui.plugin.VTPlugin;
@@ -23,15 +30,6 @@ import ghidra.feature.vt.gui.provider.matchtable.VTMatchContext;
 import ghidra.feature.vt.gui.provider.onetomany.VTMatchOneToManyContext;
 import ghidra.feature.vt.gui.task.AcceptMatchTask;
 import ghidra.util.HelpLocation;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.swing.Icon;
-
-import resources.ResourceManager;
-import docking.ActionContext;
-import docking.action.*;
 
 public class AcceptMatchAction extends DockingAction {
 
@@ -43,7 +41,7 @@ public class AcceptMatchAction extends DockingAction {
 		super("Accept", VTPlugin.OWNER);
 		this.controller = controller;
 
-		Icon icon = ResourceManager.loadImage("images/flag.png");
+		Icon icon = new GIcon("icon.version.tracking.action.accept.match");
 		setToolBarData(new ToolBarData(icon, MENU_GROUP));
 		setPopupMenuData(new MenuData(new String[] { "Accept" }, icon, MENU_GROUP));
 		setEnabled(false);

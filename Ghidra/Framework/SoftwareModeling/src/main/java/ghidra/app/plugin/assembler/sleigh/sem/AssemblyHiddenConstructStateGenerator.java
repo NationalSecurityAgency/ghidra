@@ -39,7 +39,7 @@ public class AssemblyHiddenConstructStateGenerator extends AssemblyConstructStat
 	 * Construct the hidden sub-table operand state generator
 	 * 
 	 * @param resolver the resolver
-	 * @param node the node from which to generate states
+	 * @param subtableSym
 	 * @param fromLeft the accumulated patterns from the left sibling or the parent
 	 */
 	public AssemblyHiddenConstructStateGenerator(AssemblyTreeResolver resolver,

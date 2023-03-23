@@ -16,7 +16,8 @@
 package ghidra.file.formats.ios.dyldcache;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.macho.*;
@@ -84,7 +85,7 @@ public class DyldCacheDylibExtractor {
 				TaskMonitor monitor) throws MachException, IOException {
 			ByteProvider provider = splitDyldCache.getProvider(index);
 			this.reader = new BinaryReader(provider, true);
-			this.header = new MachHeader(provider, dylibOffset, false).parse();
+			this.header = new MachHeader(provider, dylibOffset, false).parse(splitDyldCache);
 			this.monitor = monitor;
 
 			// Keep track of each segment's file offset in the DYLD cache.

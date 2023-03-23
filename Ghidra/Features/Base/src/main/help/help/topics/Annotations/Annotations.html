@@ -8,7 +8,7 @@
     <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
 
     <TITLE>Annotations</TITLE>
-    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
     <META name="generator" content="Microsoft FrontPage 4.0">
   </HEAD>
 
@@ -22,13 +22,15 @@
     hyperlink.</P>
     <!-- Annotation Example -->
 
-    <P>The following text shows the syntax of the URL annotation:</P>
+    <P>The following text shows the syntax of a sample URL annotation:</P>
 	<pre><font size="4"><br>
-	<b>{@<i>url</i></b> "http://www.google.com"<b>}</b><br>
+	<b>{@<i>url</i></b> "<i>http://www.google.com</i>"</b> "Search Web"<b>}</b><br>
 	</font><br></pre>
 
     <P>The bold text is required for all annotations. The italicized text is required but is
-    specific to the annotation being used (see the table below).</P>
+    specific to the annotation being used (see the table below).  The optional rendered display text
+    "Search Web" will be displayed in listing.  If the optional display test is omitted, the URL 
+    will be displayed.  Quotes around display text are optional.</P>
 
     <H2>Examples</H2>
 
@@ -47,10 +49,21 @@
        <I>Rendered URL Annotation Example</I></P>
 
       <P>When the URL text (e.g., "http://www.google.com") in the above image is clicked from within
-      Ghidra, a web browser is launched and attempts to load the corresponding web page.  If the URL text
-      is of the form <i>ghidra://&lt;host&gt;[:&lt;port&gt;]/&lt;repository-name&gt;/&lt;program-path&gt;[#&lt;address-or-symbol-ref&gt;]</i>
-      an attempt will be made to open the corresponding program from the referenced Ghidra Server (e.g., 
-      <i>ghidra://myserver/Repo/notepad.exe#entry</i>).</P>
+      Ghidra, a web browser is launched and attempts to load the corresponding web page.  </P>
+      
+      <P>If the URL text corresponds to a Ghidra URL and attempt will be made to open the referenced
+      Program file within the Code Browser.  Such a URL may refer to a Program file from a 
+      local project or Ghidra Server.  The Ghidra URL forms supported include:</P>
+      
+      <P><U>Remote Ghidra Server file</U><BR>
+      <i>ghidra://&lt;host&gt;[:&lt;port&gt;]/&lt;repository-name&gt;/&lt;program-path&gt;[#&lt;address-or-symbol-ref&gt;]</i><BR>
+      Example: <i>ghidra://hostname/Repo/notepad.exe#entry</i>
+      </P>
+      
+      <P><U>Local Ghidra project file</U><BR>
+      <i>ghidra:/[&lt;project-path&gt/]&lt;project-name&gt;?/&lt;program-path&gt;[#&lt;address-or-symbol-ref&gt;]</i><BR>
+      Example: <i>ghidra:/share/MyProject?/notepad.exe#entry</i>
+      </P>
     </BLOCKQUOTE>
 
     <H2>Valid Annotations</H2>
@@ -174,9 +187,10 @@
             <TD valign="top" width="15%">Displays the given URL has a hyperlink. This annotation
             optionally takes display text so that the hyperlink may be displayed with text other
             than that of the URL.<BR><BR>
-            References to <i>ghidra://</i>, which refer to a program within a Ghidra Server repository,
-            will be opened within the Listing display, while all other URL protocols (e.g., <i>http://, https://,
-            file://,</i> etc.) will be launched via an external web browser (see 
+            References to a program file on a Ghidra Server (<i>ghidra://&lt;host...</i>) or 
+            local project (<i>ghidra:/&lt;project-...</i>) will be opened within the Listing display, 
+            while all other URL forms (e.g., <i>http://, https://, file://,</i> etc.) will be 
+            launched via an external web browser (see 
             <a href="help/topics/ShowInstructionInfoPlugin/ShowInstructionInfo.htm#Show_Processor_Manual">command configuration 
             for Processor Manuals</a>). 
             </TD>
@@ -216,6 +230,12 @@
                 <LI>{@url "ghidra://myserver/Repo/notepad.exe#entry"}</LI>
                 
                 <LI>{@url "ghidra://myserver/Repo/notepad.exe" "see notepad.exe"}</LI>
+                
+                <LI>{@url "ghidra:/share/MyProject?/notepad.exe#entry"}</LI>
+                
+                <LI>{@url "ghidra:/share/MyProject?/notepad.exe" "see notepad.exe"}</LI>
+                
+                
               </UL>
             </TD>
           </TR>
@@ -224,8 +244,9 @@
             <TD valign="top" width="5%">Program<BR>
             </TD>
 
-            <TD valign="top" width="15%">Displays a hyperlink to the given Ghidra program name that
-            will open that program in a new Listing tab when clicked.<BR>
+            <TD valign="top" width="15%">Displays a hyperlink to the given Ghidra program pathname 
+            with the current project.  Referenced program 
+            will open in a new Listing tab when clicked.<BR>
              You may optionally provide an address or symbol to be displayed when the program is
             opened by appending to the program name an '@' character, followed by an address or
             symbol name.</TD>

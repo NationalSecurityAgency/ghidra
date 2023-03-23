@@ -58,6 +58,7 @@ public class DefaultTableCellRendererWrapper extends GTableCellRenderer {
 
 		JComponent thisRenderer = (JComponent) super.getTableCellRendererComponent(data);
 
+		rendererComponent.setForeground(thisRenderer.getForeground());
 		rendererComponent.setBackground(thisRenderer.getBackground());
 
 		if (rendererComponent instanceof JComponent) {

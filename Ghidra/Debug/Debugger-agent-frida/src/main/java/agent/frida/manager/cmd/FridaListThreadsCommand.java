@@ -21,10 +21,7 @@ import java.util.List;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-import agent.frida.manager.FridaContext;
-import agent.frida.manager.FridaProcess;
-import agent.frida.manager.FridaState;
-import agent.frida.manager.FridaThread;
+import agent.frida.manager.*;
 import agent.frida.manager.impl.FridaManagerImpl;
 import ghidra.util.Msg;
 
@@ -45,7 +42,7 @@ public class FridaListThreadsCommand extends AbstractFridaCommand<Void> {
 			manager.addThreadIfAbsent(process, thread);
 		}
 	}
-	
+
 	@Override
 	public void parseSpecifics(JsonElement element) {
 		FridaThread thread = new FridaThread(process);
@@ -61,5 +58,5 @@ public class FridaListThreadsCommand extends AbstractFridaCommand<Void> {
 		thread.setContext(new FridaContext(cpuContext));
 		threads.add(thread);
 	}
-	
+
 }

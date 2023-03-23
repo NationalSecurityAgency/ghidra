@@ -18,8 +18,6 @@ package ghidra.app.util.bin.format.elf;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.ByteArrayConverter;
-import ghidra.util.DataConverter;
 import ghidra.util.StringUtilities;
 
 /**
@@ -52,7 +50,7 @@ import ghidra.util.StringUtilities;
  * 
  * </code></pre>
  */
-public class ElfDynamic implements ByteArrayConverter {
+public class ElfDynamic {
 
 	private ElfHeader elf;
 
@@ -123,22 +121,6 @@ public class ElfDynamic implements ByteArrayConverter {
     }
 
     /**
-     * Sets the value of this dynamic. The value could be an address or a number.
-     * @param value the new value dynamic
-     */
-    public void setValue(long value) {
-        this.d_val = value;
-    }
-
-    /**
-     * Sets the value of this dynamic. The value could be an address or a number.
-     * @param value the new value dynamic
-     */
-    public void setValue(int value) {
-		this.d_val = Integer.toUnsignedLong(value);
-    }
-
-    /**
      * A convenience method for getting a string representing the d_tag value.
      * For example, if d_tag == DT_SYMTAB, then this method returns "DT_SYMTAB".
      * @return a string representing the d_tag value
@@ -154,27 +136,6 @@ public class ElfDynamic implements ByteArrayConverter {
 	@Override
 	public String toString() {
 		return getTagAsString();
-	}
-
-    /**
-     * @see ghidra.app.util.bin.ByteArrayConverter#toBytes(ghidra.util.DataConverter)
-     */
-    public byte [] toBytes(DataConverter dc) {
-        byte [] bytes = new byte[sizeof()];
-		write(bytes, 0, dc);
-        return bytes;
-    }
-
-	public void write(byte[] data, int offset, DataConverter dc)
-			throws ArrayIndexOutOfBoundsException {
-		if (elf.is32Bit()) {
-			dc.putInt(data, offset, d_tag);
-			dc.putInt(data, offset + 4, (int) d_val);
-		}
-		else {
-			dc.putLong(data, offset, d_tag);
-			dc.putLong(data, offset + 8, d_val);
-		}
 	}
 
     /**

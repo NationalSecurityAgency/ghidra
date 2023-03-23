@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +14,6 @@
  * limitations under the License.
  */
 package ghidra.pcodeCPort.slghpattern;
-
-import ghidra.pcodeCPort.context.ParserWalker;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -68,11 +65,6 @@ public class InstructionPattern extends DisjointPattern {
 	@Override
 	public void shiftInstruction(int sa) {
 		maskvalue.shift(sa);
-	}
-
-	@Override
-	public boolean isMatch(ParserWalker pos) {
-		return maskvalue.isInstructionMatch(pos, 0);
 	}
 
 	@Override

@@ -115,7 +115,7 @@ public abstract class ArtImageSections {
 				reader.setPointerIndex(kSectionArtFields.getOffset());
 				while (reader.getPointerIndex() < Integer
 						.toUnsignedLong(kSectionArtFields.getEnd())) {
-					if (ArtConstants.VERSION_MARSHMALLOW_RELEASE.equals(header.getVersion())) {
+					if (ArtConstants.ART_VERSION_017.equals(header.getVersion())) {
 						ArtField field = new ArtField(reader);
 						fieldList.add(field);
 					}
@@ -135,7 +135,7 @@ public abstract class ArtImageSections {
 				reader.setPointerIndex(kSectionArtMethods.getOffset());
 				while (reader.getPointerIndex() < Integer
 						.toUnsignedLong(kSectionArtMethods.getEnd())) {
-					if (ArtConstants.VERSION_MARSHMALLOW_RELEASE.equals(header.getVersion())) {
+					if (ArtConstants.ART_VERSION_017.equals(header.getVersion())) {
 						ArtMethod method =
 							new ArtMethod(reader, header.getPointerSize(), header.getVersion());
 						methodList.add(method);

@@ -23,10 +23,10 @@ import javax.swing.*;
 import javax.swing.border.Border;
 
 import docking.*;
-import docking.help.HelpService;
 import docking.widgets.label.GLabel;
 import docking.widgets.table.GTableFilterPanel;
 import docking.widgets.table.TableFilter;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.scalartable.RangeFilterTextField.FilterType;
 import ghidra.app.services.GoToService;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
@@ -38,7 +38,7 @@ import ghidra.util.HelpLocation;
 import ghidra.util.table.*;
 import ghidra.util.table.actions.DeleteTableRowAction;
 import ghidra.util.table.actions.MakeProgramSelectionAction;
-import resources.ResourceManager;
+import help.HelpService;
 
 /**
  * Displays the results of a query from the {@link ScalarSearchPlugin}. Consists of 2 components:
@@ -49,7 +49,7 @@ import resources.ResourceManager;
  */
 public class ScalarSearchProvider extends ComponentProviderAdapter {
 
-	public static final ImageIcon ICON = ResourceManager.loadImage("images/dataW.gif");
+	public static final Icon ICON = new GIcon("icon.plugin.scalartable.provider");
 
 	private ScalarSearchPlugin plugin;
 

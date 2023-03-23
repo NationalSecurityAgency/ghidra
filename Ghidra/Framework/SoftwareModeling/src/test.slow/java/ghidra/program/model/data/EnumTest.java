@@ -239,4 +239,33 @@ public class EnumTest extends AbstractGTest {
 		}
 	}
 
+	@Test
+	public void testSetLength() {
+		EnumDataType enumm = new EnumDataType("Color", 1);
+		enumm.setLength(2);
+		assertEquals(2, enumm.getLength());
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testSetLength_TooBig() {
+		EnumDataType enumm = new EnumDataType("Color", 1);
+		enumm.setLength(10);
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testSetLength_TooSmall() {
+		EnumDataType enumm = new EnumDataType("Color", 1);
+		enumm.setLength(0);
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testSetLength_TooSmallForCurrentValues() {
+		int bytes = 8;
+		EnumDataType enumm = new EnumDataType("Color", bytes);
+		int currentBits = 8 * 8 - 1;
+		long maxValue = (1L << currentBits) - 1;
+		enumm.add("My Name", maxValue);
+
+		enumm.setLength(7);
+	}
 }

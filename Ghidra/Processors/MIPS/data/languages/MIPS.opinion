@@ -1,4 +1,13 @@
 <opinions>
+    <!--
+      NOTE: secondary key constraints can be matched at the bit level or as a hex value (if the
+      key is an integer value).
+      When matching at the bit level, prefix the secondary key constraint value with "0b", followed
+      by a sequence of 0's and 1's to specify the key value.  Dots (".") can be used as a wild card
+      for individual bits.  Space and underscores ("_") are ignored and can be used for formatting.
+      When matching a hex value, prefix the secondary key constraint value with "0x", followed
+      by the hex value.  No wildcarding is supported. 
+    -->
     <constraint loader="Portable Executable (PE)" compilerSpecID="windows">
         <constraint primary="352"   processor="MIPS"    endian="big"    size="32" variant="default" /> <!-- R3000 -->
         <constraint primary="354"   processor="MIPS"    endian="little" size="32" variant="default" /> <!-- R3000 -->
@@ -89,9 +98,18 @@ Elf e_flags are used for the secondary attribute, the following are pulled from 
 	<constraint primary="8,10" processor="MIPS" size="32" variant="default"
                 secondary= "0b 01.1 ..00 .... .... 00.1 0.0. 0000 ...."/>
 
-        <!-- MIPS32-R1 and -R2, with microMIPS, don't cares: MDMX, EABI, FPU -->
+    <!-- MIPS32-R1 and -R2, don't cares: MDMX, MIPS16e, FPU -->                
+	<constraint primary="8,10" processor="MIPS" size="32" variant="default" compilerSpecID="eabi"
+                secondary= "0b 01.1 ..00 .... .... 0011 0.0. 0000 ...."/>
+
+
+    <!-- MIPS32-R1 and -R2, with microMIPS, don't cares: MDMX, EABI, FPU -->
         <constraint primary="8,10" processor="MIPS" size="32" variant="micro"
                 secondary= "0b 0111 .010 .... .... 00.1 0.0. 0000 ...."/>
+
+    <!-- MIPS32-R1 and -R2, with microMIPS, don't cares: MDMX, FPU -->
+        <constraint primary="8,10" processor="MIPS" size="32" variant="micro" compilerSpecID="eabi"
+                secondary= "0b 0111 .010 .... .... 0011 0.0. 0000 ...."/>
 
   <!-- MIPS64 Pre-Release 6 -->
         <!-- MIPS64-R1 with 32-bit addresses, don't cares: MDMX, MIPS16e, EABI, FPU -->
@@ -104,7 +122,23 @@ Elf e_flags are used for the secondary attribute, the following are pulled from 
 
         <!-- MIPS64-R2 with 32-bit addresses, don't cares: MDMX, MIPS16e, EABI, FPU -->
         <constraint primary="8,10" processor="MIPS" size="32" variant="64-32addr"
-                secondary= "0b 1000 ..00 .... .... 0... 0.0. 00.0 ...."/>
+                secondary= "0b 1000 ..00 .... .... 0... 0.0. 0000 ...."/>
+
+        <!-- MIPS64-R2 with 32-bit addresses, n32 don't cares: MDMX, MIPS16e, FPU -->
+        <constraint primary="8,10" processor="MIPS" size="32" variant="64-32addr" compilerSpecID="n32"
+                secondary= "0b 1000 ..00 .... .... 0... 0.0. 0010 ...."/>
+
+        <!-- MIPS64-R2 with 32-bit addresses, o32 don't cares: MDMX, MIPS16e, FPU -->
+        <constraint primary="8,10" processor="MIPS" size="32" variant="64-32addr" compilerSpecID="o32"
+                secondary= "0b 1000 ..00 .... .... 0.01 0.0. 0000 ...."/>
+
+        <!-- MIPS64-R2 with 32-bit addresses, o64 don't cares: MDMX, MIPS16e, FPU -->
+        <constraint primary="8,10" processor="MIPS" size="32" variant="64-32addr" compilerSpecID="o64"
+                secondary= "0b 1000 ..00 .... .... 0.10 0.0. 0000 ...."/>
+
+        <!-- MIPS64-R2 with 32-bit addresses, eabi don't cares: MDMX, MIPS16e, FPU -->
+        <constraint primary="8,10" processor="MIPS" size="32" variant="64-32addr" compilerSpecID="eabi"
+                secondary= "0b 1000 ..00 .... .... 0.11 0.0. 0000 ...."/>
 
         <!-- MIPS64-R2 with 32-bit addresses and with micromips -->
         <constraint primary="8,10" processor="MIPS" size="32" variant="64-32addr-micro"

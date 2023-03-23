@@ -20,92 +20,91 @@ import java.util.function.Predicate;
 
 import docking.widgets.table.ColumnSortState.SortDirection;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
+import ghidra.docking.settings.Settings;
+import ghidra.framework.plugintool.PluginTool;
+import ghidra.framework.plugintool.ServiceProvider;
 
-public class DefaultEnumeratedColumnTableModel<C extends Enum<C> & EnumeratedTableColumn<C, ? super R>, R>
-		extends AbstractSortedTableModel<R> implements EnumeratedColumnTableModel<R> {
+/**
+ * A table model whose columns are described using an {@link Enum}.
+ *
+ * <p>
+ * See the callers to this class' constructor to find example uses.
+ *
+ * @param <C> the type of the enum
+ * @param <R> the type of rows
+ */
+public class DefaultEnumeratedColumnTableModel<C extends Enum<C> & EnumeratedTableColumn<C, R>, R>
+		extends GDynamicColumnTableModel<R, Void> implements EnumeratedColumnTableModel<R> {
 	// NOTE: If I need to track indices, addSortListener
+	/**
+	 * An interface on enums used to describe table columns
+	 *
+	 * @param <C> the type of the enum
+	 * @param <R> the type of rows
+	 */
 	public static interface EnumeratedTableColumn<C extends Enum<C>, R> {
+		/**
+		 * Get the value class of cells in this column
+		 * 
+		 * @return the class
+		 */
 		public Class<?> getValueClass();
 
+		/**
+		 * Get the value of this column for the given row
+		 * 
+		 * @param row the row
+		 * @return the value
+		 */
 		public Object getValueOf(R row);
 
+		/**
+		 * Get the name of this column
+		 * 
+		 * @return the name
+		 */
 		public String getHeader();
 
+		/**
+		 * Get the value of this column for the given row
+		 * 
+		 * @param row the row
+		 * @param value the new value
+		 */
 		default public void setValueOf(R row, Object value) {
 			throw new UnsupportedOperationException("Cell is not editable");
 		}
 
+		/**
+		 * Check if this column can be modified for the given row
+		 * 
+		 * @param row the row
+		 * @return true if editable
+		 */
 		default public boolean isEditable(R row) {
 			return false;
 		}
 
+		/**
+		 * Check if this column can be sorted
+		 * 
+		 * <p>
+		 * TODO: Either this should be implemented as ported to {@link GDynamicColumnTableModel}, or
+		 * removed.
+		 * 
+		 * @return true if sortable
+		 */
 		default public boolean isSortable() {
 			return true;
 		}
 
+		/**
+		 * Get the default sort direction for this column
+		 * 
+		 * @return the sort direction
+		 */
 		default public SortDirection defaultSortDirection() {
 			return SortDirection.ASCENDING;
-		}
-	}
-
-	public class TableRowIterator implements RowIterator<R> {
-		protected final ListIterator<R> it = modelData.listIterator();
-		protected int index;
-
-		@Override
-		public boolean hasNext() {
-			return it.hasNext();
-		}
-
-		@Override
-		public R next() {
-			index = it.nextIndex();
-			return it.next();
-		}
-
-		@Override
-		public boolean hasPrevious() {
-			return it.hasPrevious();
-		}
-
-		@Override
-		public R previous() {
-			index = it.previousIndex();
-			return it.previous();
-		}
-
-		@Override
-		public int nextIndex() {
-			return it.nextIndex();
-		}
-
-		@Override
-		public int previousIndex() {
-			return it.previousIndex();
-		}
-
-		@Override
-		public void remove() {
-			it.remove();
-			fireTableRowsDeleted(index, index);
-		}
-
-		@Override
-		public void set(R e) {
-			it.set(e);
-			fireTableRowsUpdated(index, index);
-		}
-
-		@Override
-		public void notifyUpdated() {
-			fireTableRowsUpdated(index, index);
-		}
-
-		@Override
-		public void add(R e) {
-			it.add(e);
-			int nextIndex = it.nextIndex();
-			fireTableRowsInserted(nextIndex, nextIndex);
 		}
 	}
 
@@ -113,11 +112,12 @@ public class DefaultEnumeratedColumnTableModel<C extends Enum<C> & EnumeratedTab
 	private final String name;
 	private final C[] cols;
 
-	public DefaultEnumeratedColumnTableModel(String name, Class<C> colType) {
+	public DefaultEnumeratedColumnTableModel(PluginTool tool, String name, Class<C> colType) {
+		super(tool);
 		this.name = name;
 		this.cols = colType.getEnumConstants();
 
-		setupDefaultSortOrder();
+		reloadColumns(); // Smell
 	}
 
 	@Override
@@ -130,76 +130,112 @@ public class DefaultEnumeratedColumnTableModel<C extends Enum<C> & EnumeratedTab
 		return modelData;
 	}
 
-	protected void setupDefaultSortOrder() {
-		List<C> defaultOrder = defaultSortOrder();
-		if (defaultOrder.isEmpty()) {
-			return;
+	static class EnumeratedDynamicTableColumn<R>
+			extends AbstractDynamicTableColumn<R, Object, Void>
+			implements EditableDynamicTableColumn<R, Object, Void> {
+		private final EnumeratedTableColumn<?, R> col;
+
+		public EnumeratedDynamicTableColumn(EnumeratedTableColumn<?, R> col) {
+			this.col = col;
 		}
-		TableSortStateEditor editor = new TableSortStateEditor();
-		for (C col : defaultOrder) {
-			editor.addSortedColumn(col.ordinal(), col.defaultSortDirection());
+
+		@Override
+		public String getColumnName() {
+			return col.getHeader();
 		}
-		setDefaultTableSortState(editor.createTableSortState());
+
+		@Override
+		public Object getValue(R rowObject, Settings settings, Void data,
+				ServiceProvider serviceProvider) throws IllegalArgumentException {
+			return col.getValueOf(rowObject);
+		}
+
+		@Override
+		@SuppressWarnings("unchecked")
+		public Class<Object> getColumnClass() {
+			return (Class<Object>) col.getValueClass();
+		}
+
+		@Override
+		public boolean isEditable(R row, Settings settings, Void dataSource,
+				ServiceProvider serviceProvider) {
+			return col.isEditable(row);
+		}
+
+		@Override
+		public void setValueOf(R row, Object value, Settings settings, Void dataSource,
+				ServiceProvider serviceProvider) {
+			col.setValueOf(row, value);
+		}
 	}
 
+	@Override
+	protected TableColumnDescriptor<R> createTableColumnDescriptor() {
+		TableColumnDescriptor<R> descriptor = new TableColumnDescriptor<>();
+		if (cols != null) { // Smells
+			List<C> defaultOrder = defaultSortOrder();
+			for (C col : cols) {
+				descriptor.addVisibleColumn(
+					new EnumeratedDynamicTableColumn<R>(col),
+					defaultOrder.indexOf(col), // -1 means not found, not sorted
+					col.defaultSortDirection().isAscending());
+			}
+		}
+		return descriptor;
+	}
+
+	@Override
+	public Void getDataSource() {
+		return null;
+	}
+
+	/**
+	 * Get the default sort order of the table
+	 * 
+	 * @return the list of columns in order of descending priority
+	 */
 	public List<C> defaultSortOrder() {
 		return Collections.emptyList();
 	}
 
-	/*@Override
-	public int getRowCount() {
-		return modelData.size();
-	}*/
-
-	@Override
-	public int getColumnCount() {
-		return cols.length;
-	}
-
-	/*@Override
-	public Object getValueAt(int rowIndex, int columnIndex) {
-		return getColumnValueForRow(modelData.get(rowIndex), columnIndex);
-	}*/
-
 	@Override
 	public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+		DynamicTableColumn<R, ?, ?> column = tableColumns.get(columnIndex);
+		if (!(column instanceof EditableDynamicTableColumn)) {
+			return; // TODO: throw?
+		}
+		@SuppressWarnings("unchecked") // tableColumns doesn't include DATA_SOURCE
+		// May cause ClassCastException if given value can't be cast. Good.
+		EditableDynamicTableColumn<R, Object, Void> editable =
+			(EditableDynamicTableColumn<R, Object, Void>) column;
 		synchronized (modelData) {
+			if (rowIndex < 0 || rowIndex >= modelData.size()) {
+				return; // TODO: throw?
+			}
 			R row = modelData.get(rowIndex);
-			C col = cols[columnIndex];
-			Class<?> cls = col.getValueClass();
-			col.setValueOf(row, cls.cast(aValue));
+			editable.setValueOf(row, aValue, columnSettings.get(column), getDataSource(),
+				serviceProvider);
 		}
 		fireTableCellUpdated(rowIndex, columnIndex);
 	}
 
 	@Override
 	public boolean isCellEditable(int rowIndex, int columnIndex) {
-		synchronized (modelData) {
-			R row = modelData.get(rowIndex);
-			C col = cols[columnIndex];
-			return col.isEditable(row);
+		DynamicTableColumn<R, ?, ?> column = tableColumns.get(columnIndex);
+		if (!(column instanceof EditableDynamicTableColumn)) {
+			return false;
 		}
-	}
-
-	@Override
-	public boolean isSortable(int columnIndex) {
-		C col = cols[columnIndex];
-		return col.isSortable();
-	}
-
-	@Override
-	public Class<?> getColumnClass(int columnIndex) {
-		return cols[columnIndex].getValueClass();
-	}
-
-	@Override
-	public String getColumnName(int column) {
-		return cols[column].getHeader();
-	}
-
-	@Override
-	public Object getColumnValueForRow(R t, int columnIndex) {
-		return cols[columnIndex].getValueOf(t);
+		@SuppressWarnings("unchecked") // tableColumns doesn't include DATA_SOURCE
+		EditableDynamicTableColumn<R, ?, Void> editable =
+			(EditableDynamicTableColumn<R, ?, Void>) column;
+		synchronized (modelData) {
+			if (rowIndex < 0 || rowIndex >= modelData.size()) {
+				return false;
+			}
+			R row = modelData.get(rowIndex);
+			return editable.isEditable(row, columnSettings.get(column), getDataSource(),
+				serviceProvider);
+		}
 	}
 
 	@Override

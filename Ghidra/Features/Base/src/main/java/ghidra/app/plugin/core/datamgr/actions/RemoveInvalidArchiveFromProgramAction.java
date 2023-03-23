@@ -23,6 +23,7 @@ import docking.action.MenuData;
 import docking.widgets.OptionDialog;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
 import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
 import ghidra.app.plugin.core.datamgr.archive.*;
@@ -78,8 +79,8 @@ public class RemoveInvalidArchiveFromProgramAction extends DockingAction {
 		if (OptionDialog.showOptionDialog(gtree, "Confirm Remove Invalid Archive(s)",
 			"<html><b>Are you sure you want to delete archive: " +
 				HTMLUtilities.escapeHTML(invalidArchiveNode.getName()) +
-				" from the program?<br><br>" +
-				"<font color=\"red\">(WARNING: This action will disassociate " +
+				" from the program?<br><br>" + "<font color=\"" + Messages.ERROR.toHexString() +
+				"\">(WARNING: This action will disassociate " +
 				"all datatypes in the program from this archive.)</font></b>",
 			"Yes", OptionDialog.QUESTION_MESSAGE) != OptionDialog.OPTION_ONE) {
 			return;

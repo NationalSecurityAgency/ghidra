@@ -21,8 +21,6 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.function.Consumer;
 
-import com.google.common.cache.RemovalNotification;
-
 import ghidra.framework.store.LockException;
 import ghidra.program.database.mem.*;
 import ghidra.program.model.address.*;
@@ -34,6 +32,7 @@ import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.program.TraceProgramViewMemory;
 import ghidra.trace.util.MemoryAdapter;
+import ghidra.util.LockHold;
 import ghidra.util.MathUtilities;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.NotFoundException;
@@ -44,7 +43,7 @@ public abstract class AbstractDBTraceProgramViewMemory
 	protected final DBTraceProgramView program;
 	protected final DBTraceMemoryManager memoryManager;
 
-	protected AddressSetView addressSet;
+	protected volatile AddressSetView addressSet;
 	protected boolean forceFullView = false;
 	protected long snap;
 
@@ -54,16 +53,6 @@ public abstract class AbstractDBTraceProgramViewMemory
 		this.program = program;
 		this.memoryManager = program.trace.getMemoryManager();
 		setSnap(program.snap);
-	}
-
-	protected void regionBlockRemoved(
-			RemovalNotification<TraceMemoryRegion, DBTraceProgramViewMemoryRegionBlock> rn) {
-		// Nothing
-	}
-
-	protected void spaceBlockRemoved(
-			RemovalNotification<AddressSpace, DBTraceProgramViewMemorySpaceBlock> rn) {
-		// Nothing
 	}
 
 	protected abstract void recomputeAddressSet();
@@ -81,7 +70,9 @@ public abstract class AbstractDBTraceProgramViewMemory
 
 	protected void computeFullAdddressSet() {
 		AddressSet temp = new AddressSet();
-		forPhysicalSpaces(space -> temp.add(space.getMinAddress(), space.getMaxAddress()));
+		try (LockHold hold = program.trace.lockRead()) {
+			forPhysicalSpaces(space -> temp.add(space.getMinAddress(), space.getMaxAddress()));
+		}
 		addressSet = temp;
 	}
 
@@ -125,17 +116,17 @@ public abstract class AbstractDBTraceProgramViewMemory
 	}
 
 	@Override
-	public synchronized AddressSetView getLoadedAndInitializedAddressSet() {
+	public AddressSetView getLoadedAndInitializedAddressSet() {
 		return addressSet;
 	}
 
 	@Override
-	public synchronized AddressSetView getAllInitializedAddressSet() {
+	public AddressSetView getAllInitializedAddressSet() {
 		return addressSet;
 	}
 
 	@Override
-	public synchronized AddressSetView getInitializedAddressSet() {
+	public AddressSetView getInitializedAddressSet() {
 		return addressSet;
 	}
 
@@ -163,7 +154,7 @@ public abstract class AbstractDBTraceProgramViewMemory
 
 	@Override
 	public LiveMemoryHandler getLiveMemoryHandler() {
-		return null;
+		return memoryWriteRedirect;
 	}
 
 	@Override
@@ -230,7 +221,7 @@ public abstract class AbstractDBTraceProgramViewMemory
 	}
 
 	@Override
-	public synchronized long getSize() {
+	public long getSize() {
 		return addressSet.getNumAddresses();
 	}
 
@@ -254,7 +245,7 @@ public abstract class AbstractDBTraceProgramViewMemory
 	}
 
 	@Override
-	public MemoryBlock convertToInitialized(MemoryBlock unitializedBlock, byte initialValue)
+	public MemoryBlock convertToInitialized(MemoryBlock uninitializedBlock, byte initialValue)
 			throws LockException, MemoryBlockException, NotFoundException {
 		throw new UnsupportedOperationException();
 	}

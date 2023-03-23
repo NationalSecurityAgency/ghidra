@@ -44,7 +44,6 @@ import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.filechooser.ExtensionFileFilter;
 import resources.Icons;
-import resources.ResourceManager;
 
 /**
  * Dialog that shows files used for parsing C header files. The profile has a list of 
@@ -60,7 +59,7 @@ import resources.ResourceManager;
  * 
  *
  */
-class ParseDialog extends DialogComponentProvider {
+class ParseDialog extends ReusableDialogComponentProvider {
 	final static String PROFILE_DIR = "parserprofiles";
 
 	private static String FILE_EXTENSION = ".prf";
@@ -90,11 +89,10 @@ class ParseDialog extends DialogComponentProvider {
 	private ArrayList<ComboBoxItem> itemList;
 	private ComboBoxItemComparator comparator;
 	private ResourceFile parentUserFile;
-	private GhidraFileChooser fileChooser;
 	private boolean saveAsInProgress;
 
 	ParseDialog(CParserPlugin plugin) {
-		super("Parse C Source", false);
+		super("Parse C Source", false, true, true, false);
 
 		this.plugin = plugin;
 		itemList = new ArrayList<>();
@@ -158,7 +156,7 @@ class ParseDialog extends DialogComponentProvider {
 		pathPanel.setBorder(BorderFactory.createTitledBorder("Source files to parse"));
 		String importDir = Preferences.getProperty(LAST_IMPORT_C_DIRECTORY);
 		if (importDir == null) {
-			importDir = Preferences.getProperty(Preferences.LAST_IMPORT_DIRECTORY);
+			importDir = Preferences.getProperty(Preferences.LAST_PATH_DIRECTORY);
 			if (importDir != null) {
 				Preferences.setProperty(LAST_IMPORT_C_DIRECTORY, importDir);
 			}
@@ -341,7 +339,7 @@ class ParseDialog extends DialogComponentProvider {
 			}
 		};
 		saveAction.setEnabled(false);
-		ImageIcon icon = ResourceManager.loadImage("images/disk.png");
+		Icon icon = Icons.SAVE_ICON;
 		String saveGroup = "save";
 		saveAction.setMenuBarData(new MenuData(new String[] { "Save" }, icon, saveGroup));
 		saveAction.setToolBarData(new ToolBarData(icon, saveGroup));
@@ -355,7 +353,7 @@ class ParseDialog extends DialogComponentProvider {
 			}
 		};
 		saveAsAction.setEnabled(true);
-		icon = ResourceManager.loadImage("images/disk_save_as.png");
+		icon = Icons.SAVE_AS_ICON;
 		saveAsAction.setMenuBarData(new MenuData(new String[] { "Save As..." }, icon, saveGroup));
 		saveAsAction.setToolBarData(new ToolBarData(icon, saveGroup));
 		saveAsAction.setDescription("Save profile to new name");
@@ -369,10 +367,10 @@ class ParseDialog extends DialogComponentProvider {
 		};
 
 		clearAction.setEnabled(true);
-		icon = ResourceManager.loadImage("images/erase16.png");
+		icon = Icons.CLEAR_ICON;
 		String clearGroup = "clear";
-		clearAction.setMenuBarData(
-			new MenuData(new String[] { "Clear Profile" }, icon, clearGroup));
+		clearAction
+				.setMenuBarData(new MenuData(new String[] { "Clear Profile" }, icon, clearGroup));
 		clearAction.setToolBarData(new ToolBarData(icon, clearGroup));
 		clearAction.setDescription("Clear profile");
 		addAction(clearAction);
@@ -399,7 +397,7 @@ class ParseDialog extends DialogComponentProvider {
 			}
 		};
 		deleteAction.setEnabled(false);
-		icon = ResourceManager.loadImage("images/edit-delete.png");
+		icon = Icons.DELETE_ICON;
 		String deleteGroup = "Xdelete";
 		deleteAction.setMenuBarData(new MenuData(new String[] { "Delete" }, icon, deleteGroup));
 		deleteAction.setToolBarData(new ToolBarData(icon, deleteGroup));
@@ -626,19 +624,15 @@ class ParseDialog extends DialogComponentProvider {
 	}
 
 	private File getSaveFile() {
-		if (fileChooser == null) {
-			fileChooser = new GhidraFileChooser(rootPanel);
-			String dir = Preferences.getProperty(Preferences.LAST_EXPORT_DIRECTORY);
-			if (dir != null) {
-				File file = new File(dir);
-				fileChooser.setCurrentDirectory(file);
-				fileChooser.setTitle("Choose Save Archive File");
-				fileChooser.setApproveButtonText("Choose Save Archive File");
-				fileChooser.setApproveButtonToolTipText("Choose filename for archive");
-			}
-		}
-		fileChooser.rescanCurrentDirectory();
+
+		GhidraFileChooser fileChooser = new GhidraFileChooser(rootPanel);
+		fileChooser.setTitle("Choose Save Archive File");
+		fileChooser.setApproveButtonText("Choose Save Archive File");
+		fileChooser.setApproveButtonToolTipText("Choose filename for archive");
+		fileChooser.setLastDirectoryPreference(Preferences.LAST_EXPORT_DIRECTORY);
+
 		File file = fileChooser.getSelectedFile();
+		fileChooser.dispose();
 		if (file != null) {
 			File parent = file.getParentFile();
 			if (parent != null) {

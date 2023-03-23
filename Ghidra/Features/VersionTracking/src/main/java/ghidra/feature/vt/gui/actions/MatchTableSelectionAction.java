@@ -23,10 +23,10 @@ import docking.action.ToolBarData;
 import docking.menu.ActionState;
 import docking.menu.MultiStateDockingAction;
 import docking.widgets.EventTrigger;
+import generic.theme.GIcon;
 import ghidra.feature.vt.gui.plugin.VTPlugin;
 import ghidra.feature.vt.gui.provider.matchtable.VTMatchTableProvider;
 import ghidra.util.HelpLocation;
-import resources.ResourceManager;
 
 public class MatchTableSelectionAction
 		extends MultiStateDockingAction<TableSelectionTrackingState> {
@@ -49,9 +49,12 @@ public class MatchTableSelectionAction
 			new HelpLocation("VersionTrackingPlugin", "Match_Table_Selection");
 		setHelpLocation(helpLocation);
 
-		Icon noSelectionTrackingIcon = ResourceManager.loadImage("images/table_delete.png");
-		Icon trackMatchSelectionIcon = ResourceManager.loadImage("images/table_go.png");
-		Icon trackRowIndexSelectionIcon = ResourceManager.loadImage("images/table_gear.png");
+		Icon noSelectionTrackingIcon =
+			new GIcon("icon.version.tracking.match.table.selection.track.none");
+		Icon trackMatchSelectionIcon =
+			new GIcon("icon.version.tracking.match.table.selection.track.match");
+		Icon trackRowIndexSelectionIcon =
+			new GIcon("icon.version.tracking.match.table.selection.track.row");
 
 		ActionState<TableSelectionTrackingState> trackSelectedIndexActionState =
 			new ActionState<>("Track Selected Index",

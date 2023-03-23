@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import com.sun.jdi.Method;
 
 import ghidra.async.AsyncFence;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
 
@@ -64,7 +65,7 @@ public class JdiModelTargetMethodContainer extends JdiModelTargetObjectImpl {
 	}
 
 	@Override
-	protected CompletableFuture<Void> requestElements(boolean refresh) {
+	protected CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		Map<String, Method> map = new HashMap<>();
 		List<Method> methods = useAll ? reftype.reftype.allMethods() : reftype.reftype.methods();
 		for (Method var : methods) {

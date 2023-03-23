@@ -103,6 +103,22 @@ define token instrArm (32)
 	Qm1=(0,3)
 	Dn0=(16,19)
 	Dd0=(12,15)
+	Dd_1=(12,15)
+	Dd_2=(12,15)
+	Dd_3=(12,15)
+	Dd_4=(12,15)
+	Dd_5=(12,15)
+	Dd_6=(12,15)
+	Dd_7=(12,15)
+	Dd_8=(12,15)
+	Dd_9=(12,15)
+	Dd_10=(12,15)
+	Dd_11=(12,15)
+	Dd_12=(12,15)
+	Dd_13=(12,15)
+	Dd_14=(12,15)
+	Dd_15=(12,15)
+	Dd_16=(12,15)
 	Dm0=(0,3)
 	Dn1=(16,19)
 	Dd1=(12,15)
@@ -117,6 +133,8 @@ define token instrArm (32)
 	Sd1=(12,15)
 	Sm1=(0,3)
 	Sm1next=(0,3)
+	Sm0_3=(0,2)
+	Sm1_3=(0,2)
 	cmode=(8,11)
 	
 	
@@ -286,12 +304,14 @@ define token instrArm (32)
 	thv_Sm1=(16,19)
 	thv_Sm1next=(16,19)
 	thv_cmode=(24,27)
+	thv_Sm0_3=(16,18)
+	thv_Sm1_3=(16,18)
 	
 	thv_Rd=(28,31)
 	thv_Rt=(28,31)
 	thv_Rn=(0,3)
 	thv_Rm=(16,19)
-        thv_Rt2=(24,27)
+    thv_Rt2=(24,27)
 	thv_immed=(16,23)
 	    
     # Arbitrary bit fields for 32-bit Little Endian Thumb
@@ -447,6 +467,8 @@ define token instrArm (32)
 	thv_Sd1=(12,15)
 	thv_Sm1=(0,3)
 	thv_Sm1next=(0,3)
+	thv_Sm0_3=(0,2)
+	thv_Sm1_3=(0,2)
 	thv_cmode=(8,11)
 	
 	thv_Rd=(12,15)
@@ -965,80 +987,80 @@ addrmode2: [rn],-addr2shift is I25=1 & P24=0 & U23=0 & W21=1 & rn & addr2shift	{
 #   it returns a varnode containing the address
 ###########################
 
-addrmode3: [reloff]		is P24=1 & U23=1 & c2122=2 & c1619=15 & immedH & c0707=1 & c0404=1 & immedL
+addrmode3: [reloff]		is P24=1 & U23=1 & c2122=2 & c1619=15 & immedH & immedL
   [ reloff=inst_start+8+((immedH<<4) | immedL);]
 {
   export *:4 reloff;
 }
 
-addrmode3: [reloff]		is P24=1 & U23=0 & c2122=2 & c1619=15 & immedH & c0707=1 & c0404=1 & immedL
+addrmode3: [reloff]		is P24=1 & U23=0 & c2122=2 & c1619=15 & immedH & immedL
   [ reloff=inst_start+8-((immedH<<4) | immedL);]
 {
   export *:4 reloff;
 }
 
-addrmode3: [rn,"#"^off8]		is P24=1 & U23=1 & c2122=2 & rn & immedH & c0707=1 & c0404=1 & immedL
+addrmode3: [rn,"#"^off8]		is P24=1 & U23=1 & c2122=2 & rn & immedH & immedL
   [ off8=(immedH<<4)|immedL;]
 {
   local tmp = rn + off8; export tmp;
 }
 
-addrmode3: [rn,"#"^noff8]		is P24=1 & U23=0 & c2122=2 & rn & immedH & c0707=1 & c0404=1 & immedL
+addrmode3: [rn,"#"^noff8]		is P24=1 & U23=0 & c2122=2 & rn & immedH & immedL
   [ noff8=-((immedH<<4)|immedL);]
 {
   local tmp = rn + noff8; export tmp;
 }
 
-addrmode3: [rn,rm]		is P24=1 & U23=1 & c2122=0 & rn & c0811=0 & c0707=1 & c0404=1 & rm
+addrmode3: [rn,rm]		is P24=1 & U23=1 & c2122=0 & rn & c0811=0 & rm
 {
   local tmp = rn + rm; export tmp;
 }
 
-addrmode3: [rn,-rm]		is P24=1 & U23=0 & c2122=0 & rn & c0811=0 & c0707=1 & c0404=1 & rm
+addrmode3: [rn,-rm]		is P24=1 & U23=0 & c2122=0 & rn & c0811=0 & rm
 {
   local tmp = rn - rm; export tmp;
 }
 
-addrmode3: [rn,"#"^off8]!		is P24=1 & U23=1 & c2122=3 & rn & immedH & c0707=1 & c0404=1 & immedL
+addrmode3: [rn,"#"^off8]!		is P24=1 & U23=1 & c2122=3 & rn & immedH & immedL
   [ off8=(immedH<<4)|immedL;]
 {
   rn=rn + off8; export rn;
 }
 
-addrmode3: [rn,"#"^noff8]!		is P24=1 & U23=0 & c2122=3 & rn & immedH & c0707=1 & c0404=1 & immedL
+addrmode3: [rn,"#"^noff8]!		is P24=1 & U23=0 & c2122=3 & rn & immedH & immedL
   [ noff8=-((immedH<<4)|immedL);]
 {
   rn=rn + noff8; export rn;
 }
 
-addrmode3: [rn,rm]!		is P24=1 & U23=1 & c2122=1 & rn & c0811=0 & c0707=1 & c0404=1 & rm
+addrmode3: [rn,rm]!		is P24=1 & U23=1 & c2122=1 & rn & c0811=0 & rm
 {
   rn = rn+rm; export rn;
 }
 
-addrmode3: [rn,-rm]!		is P24=1 & U23=0 & c2122=1 & rn & c0811=0 & c0707=1 & c0404=1 & rm
+addrmode3: [rn,-rm]!		is P24=1 & U23=0 & c2122=1 & rn & c0811=0 & rm
 {
   rn = rn - rm; export rn;
 }
 
-addrmode3: [rn],"#"^off8		is P24=0 & U23=1 & c2122=2 & rn & immedH & c0707=1 & c0404=1 & immedL
+addrmode3: [rn],"#"^off8		is P24=0 & U23=1 & c2222=1 & rn & immedH & immedL
   [ off8=(immedH<<4)|immedL;]
 {
   local tmp=rn; rn=rn + off8; export tmp;
 }
 
-addrmode3: [rn],"#"^noff8		is P24=0 & U23=0 & c2122=2 & rn & immedH & c0707=1 & c0404=1 & immedL
+addrmode3: [rn],"#"^noff8		is P24=0 & U23=0 & c2222=1 & rn & immedH & immedL
   [ noff8=-((immedH<<4)|immedL);]
 {
   local tmp=rn; rn=rn + noff8; export tmp;
 }
 
-addrmode3: [rn],rm		is P24=0 & U23=1 & c2122=0 & rn & c0811=0 & c0707=1 & c0404=1 & rm
+addrmode3: [rn],rm		is P24=0 & U23=1 & c2222=0 & rn & c0811=0 & rm
 {
   local tmp=rn; rn=rn+rm; export tmp;
 }
 
-addrmode3: [rn],-rm		is P24=0 & U23=0 & c2122=0 & rn & c0811=0 & c0707=1 & c0404=1 & rm
+addrmode3: [rn],-rm		is P24=0 & U23=0 & c2222=0 & rn & c0811=0 & rm
 {
   local tmp=rn; rn=rn-rm; export tmp;
 }
@@ -1500,18 +1522,12 @@ SRSMode: "sys" is srsMode=23 & c0004 { export *[const]:1 c0004; }
 SRSMode: "#"^srsMode is srsMode      { export *[const]:1 srsMode; }
 @endif # VERSION_6
 
-# Add a hat instruction to set the ARMcond context variable which
-# tells whether this is a legal conditional instruction (for v7 and
-# later).
-
-@if defined(VERSION_6T2) || defined(VERSION_7)
-:^instruction is ARMcondCk=0 & itmode=0 & TMode=0 & (bit31=0|bit30=0|bit29=0|bit28=0) & instruction [ ARMcondCk=1; ARMcond=1; ] {}
+# Perform ARMcond check phase and set ARMcond context variable
+:^instruction is $(AMODE) & ARMcondCk=0 & (bit31=0|bit30=0|bit29=0|bit28=0) & instruction [ ARMcondCk=1; ARMcond=1; ] {}
 :^instruction is ARMcondCk=0 & instruction [ ARMcondCk=1; ARMcond=0; ] {}
 
-# Ensure one of the recursive rules above is applied for assembly
+# Ensure that the condition check phase has been completed
 with : ARMcondCk=1 {
-
-@endif
 
 #################################################
 #
@@ -1647,11 +1663,11 @@ SetMode: "#"^23  is c0004=0x17  { setAbortMode(); }
 SetMode: "#"^27  is c0004=0x1b  { setUndefinedMode(); } 
 SetMode: "#"^31  is c0004=0x1f  { setSystemMode(); } 
 
-:cps SetMode    		is $(AMODE) &  cond=15 & c2027=16 & c1819=0 & c1717=1 & c0916=0 & c0508=0 & SetMode { }
-:cpsie IFLAGS    	is $(AMODE) &  cond=15 & c2027=16 & c1819=2 & c1717=0 & c0916=0 & c0505=0 & c0004=0 & IFLAGS { }
-:cpsid IFLAGS    	is $(AMODE) &  cond=15 & c2027=16 & c1819=3 & c1717=0 & c0916=0 & c0505=0 & c0004=0 & IFLAGS { }
-:cpsie IFLAGS, SetMode  is $(AMODE) &  cond=15 & c2027=16 & c1819=2 & c1717=1 & c0916=0 & c0505=0 & IFLAGS & SetMode { }
-:cpsid IFLAGS, SetMode  is $(AMODE) &  cond=15 & c2027=16 & c1819=3 & c1717=1 & c0916=0 & c0505=0 & IFLAGS & SetMode { }
+:cps SetMode    		is $(AMODE) & ARMcond=0 & cond=15 & c2027=16 & c1819=0 & c1717=1 & c0916=0 & c0508=0 & SetMode { }
+:cpsie IFLAGS    	is $(AMODE) & ARMcond=0 & cond=15 & c2027=16 & c1819=2 & c1717=0 & c0916=0 & c0505=0 & c0004=0 & IFLAGS { }
+:cpsid IFLAGS    	is $(AMODE) & ARMcond=0 & cond=15 & c2027=16 & c1819=3 & c1717=0 & c0916=0 & c0505=0 & c0004=0 & IFLAGS { }
+:cpsie IFLAGS, SetMode  is $(AMODE) & ARMcond=0 & cond=15 & c2027=16 & c1819=2 & c1717=1 & c0916=0 & c0505=0 & IFLAGS & SetMode { }
+:cpsid IFLAGS, SetMode  is $(AMODE) & ARMcond=0 & cond=15 & c2027=16 & c1819=3 & c1717=1 & c0916=0 & c0505=0 & IFLAGS & SetMode { }
 
 @endif  # VERSION_6
 
@@ -1687,7 +1703,7 @@ SetMode: "#"^31  is c0004=0x1f  { setSystemMode(); }
 
 @if defined(VERSION_6)
 
-:rfeia rn 		is $(AMODE) &  cond=15 & c2527=4 & P24=0 & U23=1 & S22=0 & W21=0 & L20=1 & rn & c1215=0 & c0811=10 & c0007=0
+:rfeia rn 		is $(AMODE) & ARMcond=0 & cond=15 & c2527=4 & P24=0 & U23=1 & S22=0 & W21=0 & L20=1 & rn & c1215=0 & c0811=10 & c0007=0
 {
   # register list is always: pc, cpsr
   ptr:4 = rn;
@@ -1697,7 +1713,7 @@ SetMode: "#"^31  is c0004=0x1f  { setSystemMode(); }
   return [pc];
 }
 
-:rfeib rn 		is $(AMODE) &  cond=15 & c2527=4 & P24=1 & U23=1 & S22=0 & W21=0 & L20=1 & rn & c1215=0 & c0811=10 & c0007=0
+:rfeib rn 		is $(AMODE) & ARMcond=0 & cond=15 & c2527=4 & P24=1 & U23=1 & S22=0 & W21=0 & L20=1 & rn & c1215=0 & c0811=10 & c0007=0
 {
   # register list is always: pc, cpsr
   ptr:4 = rn + 4;
@@ -1707,7 +1723,7 @@ SetMode: "#"^31  is c0004=0x1f  { setSystemMode(); }
   return [pc];
 }
 
-:rfeda rn 		is $(AMODE) &  cond=15 & c2527=4 & P24=0 & U23=0 & S22=0 & W21=0 & L20=1 & rn & c1215=0 & c0811=10 & c0007=0
+:rfeda rn 		is $(AMODE) & ARMcond=0 & cond=15 & c2527=4 & P24=0 & U23=0 & S22=0 & W21=0 & L20=1 & rn & c1215=0 & c0811=10 & c0007=0
 {
   # register list is always: pc, cpsr
   ptr:4 = rn;
@@ -1717,7 +1733,7 @@ SetMode: "#"^31  is c0004=0x1f  { setSystemMode(); }
   return [pc];
 }
 
-:rfedb rn 		is $(AMODE) &  cond=15 & c2527=4 & P24=1 & U23=0 & S22=0 & W21=0 & L20=1 & rn & c1215=0 & c0811=10 & c0007=0
+:rfedb rn 		is $(AMODE) & ARMcond=0 & cond=15 & c2527=4 & P24=1 & U23=0 & S22=0 & W21=0 & L20=1 & rn & c1215=0 & c0811=10 & c0007=0
 {
   # register list is always: pc, cpsr
   ptr:4 = rn - 4;
@@ -1727,7 +1743,7 @@ SetMode: "#"^31  is c0004=0x1f  { setSystemMode(); }
   return [pc];
 }
 
-:rfeia Rn! 		is $(AMODE) &  cond=15 & c2527=4 & P24=0 & U23=1 & S22=0 & W21=1 & L20=1 & Rn & c1215=0 & c0811=10 & c0007=0
+:rfeia Rn! 		is $(AMODE) & ARMcond=0 & cond=15 & c2527=4 & P24=0 & U23=1 & S22=0 & W21=1 & L20=1 & Rn & c1215=0 & c0811=10 & c0007=0
 {
   # register list is always: pc, cpsr
   ptr:4 = Rn;
@@ -1738,7 +1754,7 @@ SetMode: "#"^31  is c0004=0x1f  { setSystemMode(); }
   return [pc];
 }
 
-:rfeib Rn! 		is $(AMODE) &  cond=15 & c2527=4 & P24=1 & U23=1 & S22=0 & W21=1 & L20=1 & Rn & c1215=0 & c0811=10 & c0007=0
+:rfeib Rn! 		is $(AMODE) & ARMcond=0 & cond=15 & c2527=4 & P24=1 & U23=1 & S22=0 & W21=1 & L20=1 & Rn & c1215=0 & c0811=10 & c0007=0
 {
   # register list is always: pc, cpsr
   ptr:4 = Rn + 4;
@@ -1749,7 +1765,7 @@ SetMode: "#"^31  is c0004=0x1f  { setSystemMode(); }
   return [pc];
 }
 
-:rfeda Rn! 		is $(AMODE) &  cond=15 & c2527=4 & P24=0 & U23=0 & S22=0 & W21=1 & L20=1 & Rn & c1215=0 & c0811=10 & c0007=0
+:rfeda Rn! 		is $(AMODE) & ARMcond=0 & cond=15 & c2527=4 & P24=0 & U23=0 & S22=0 & W21=1 & L20=1 & Rn & c1215=0 & c0811=10 & c0007=0
 {
   # register list is always: pc, cpsr
   ptr:4 = Rn;
@@ -1760,7 +1776,7 @@ SetMode: "#"^31  is c0004=0x1f  { setSystemMode(); }
   return [pc];
 }
 
-:rfedb Rn! 		is $(AMODE) &  cond=15 & c2527=4 & P24=1 & U23=0 & S22=0 & W21=1 & L20=1 & Rn & c1215=0 & c0811=10 & c0007=0
+:rfedb Rn! 		is $(AMODE) & ARMcond=0 & cond=15 & c2527=4 & P24=1 & U23=0 & S22=0 & W21=1 & L20=1 & Rn & c1215=0 & c0811=10 & c0007=0
 {
   # register list is always: pc, cpsr
   ptr:4 = Rn - 4;
@@ -1771,7 +1787,7 @@ SetMode: "#"^31  is c0004=0x1f  { setSystemMode(); }
   return [pc];
 }
 
-:srsia SRSMode 		is $(AMODE) &  cond=15 & c2527=4 & P24=0 & U23=1 & S22=1 & W21=0 & L20=0 & c1215=0 & c0811=5 & c0507=0 & SRSMode
+:srsia SRSMode 		is $(AMODE) & ARMcond=0 & cond=15 & c2527=4 & P24=0 & U23=1 & S22=1 & W21=0 & L20=0 & c1215=0 & c0811=5 & c0507=0 & SRSMode
 {
   # register list is always: r14, spsr
   ptr:4 = sp;
@@ -1781,7 +1797,7 @@ SetMode: "#"^31  is c0004=0x1f  { setSystemMode(); }
   ptr = ptr + 4;
 }
 
-:srsib SRSMode 		is $(AMODE) &  cond=15 & c2527=4 & P24=1 & U23=1 & W21=0 & S22=1 & L20=0 & c1215=0 & c0811=5 & c0507=0 & SRSMode
+:srsib SRSMode 		is $(AMODE) & ARMcond=0 & cond=15 & c2527=4 & P24=1 & U23=1 & W21=0 & S22=1 & L20=0 & c1215=0 & c0811=5 & c0507=0 & SRSMode
 {
   # register list is always: r14, spsr
   ptr:4 = sp + 4;
@@ -1790,7 +1806,7 @@ SetMode: "#"^31  is c0004=0x1f  { setSystemMode(); }
   *ptr = spsr;
 }
 
-:srsda SRSMode 		is $(AMODE) &  cond=15 & c2527=4 & P24=0 & U23=0 & W21=0 & S22=1 & L20=0 & c1215=0 & c0811=5 & c0507=0 & SRSMode
+:srsda SRSMode 		is $(AMODE) & ARMcond=0 & cond=15 & c2527=4 & P24=0 & U23=0 & W21=0 & S22=1 & L20=0 & c1215=0 & c0811=5 & c0507=0 & SRSMode
 {
   # register list is always: r14, spsr
   ptr:4 = sp;
@@ -1800,7 +1816,7 @@ SetMode: "#"^31  is c0004=0x1f  { setSystemMode(); }
   ptr = ptr - 4;
 }
 
-:srsdb SRSMode 		is $(AMODE) &  cond=15 & c2527=4 & P24=1 & U23=0 & W21=0 & S22=1 & L20=0 & c1215=0 & c0811=5 & c0507=0 & SRSMode
+:srsdb SRSMode 		is $(AMODE) & ARMcond=0 & cond=15 & c2527=4 & P24=1 & U23=0 & W21=0 & S22=1 & L20=0 & c1215=0 & c0811=5 & c0507=0 & SRSMode
 {
   # register list is always: r14, spsr
   ptr:4 = sp - 4;
@@ -1809,7 +1825,7 @@ SetMode: "#"^31  is c0004=0x1f  { setSystemMode(); }
   *ptr = spsr;
 }
 
-:srsia SRSMode! 		is $(AMODE) &  cond=15 & c2527=4 & P24=0 & U23=1 & S22=1 & W21=1 & L20=0 & c1215=0 & c0811=5 & c0507=0 & SRSMode
+:srsia SRSMode! 		is $(AMODE) & ARMcond=0 & cond=15 & c2527=4 & P24=0 & U23=1 & S22=1 & W21=1 & L20=0 & c1215=0 & c0811=5 & c0507=0 & SRSMode
 {
   # register list is always: r14, spsr
   ptr:4 = sp;
@@ -1820,7 +1836,7 @@ SetMode: "#"^31  is c0004=0x1f  { setSystemMode(); }
   sp = ptr;
 }
 
-:srsib SRSMode! 		is $(AMODE) &  cond=15 & c2527=4 & P24=1 & U23=1 & W21=1 & S22=1 & L20=0 & c1215=0 & c0811=5 & c0507=0 & SRSMode
+:srsib SRSMode! 		is $(AMODE) & ARMcond=0 & cond=15 & c2527=4 & P24=1 & U23=1 & W21=1 & S22=1 & L20=0 & c1215=0 & c0811=5 & c0507=0 & SRSMode
 {
   # register list is always: r14, spsr
   ptr:4 = sp + 4;
@@ -1830,7 +1846,7 @@ SetMode: "#"^31  is c0004=0x1f  { setSystemMode(); }
   sp = ptr;
 }
 
-:srsda SRSMode! 		is $(AMODE) &  cond=15 & c2527=4 & P24=0 & U23=0 & W21=1 & S22=1 & L20=0 & c1215=0 & c0811=5 & c0507=0 & SRSMode
+:srsda SRSMode! 		is $(AMODE) & ARMcond=0 & cond=15 & c2527=4 & P24=0 & U23=0 & W21=1 & S22=1 & L20=0 & c1215=0 & c0811=5 & c0507=0 & SRSMode
 {
   # register list is always: r14, spsr
   ptr:4 = sp;
@@ -1841,7 +1857,7 @@ SetMode: "#"^31  is c0004=0x1f  { setSystemMode(); }
   sp = ptr;
 }
 
-:srsdb SRSMode! 		is $(AMODE) &  cond=15 & c2527=4 & P24=1 & U23=0 & W21=1 & S22=1 & L20=0 & c1215=0 & c0811=5 & c0507=0 & SRSMode
+:srsdb SRSMode! 		is $(AMODE) & ARMcond=0 & cond=15 & c2527=4 & P24=1 & U23=0 & W21=1 & S22=1 & L20=0 & c1215=0 & c0811=5 & c0507=0 & SRSMode
 {
   # register list is always: r14, spsr
   ptr:4 = sp;
@@ -1856,13 +1872,13 @@ SetMode: "#"^31  is c0004=0x1f  { setSystemMode(); }
 
 @if defined(VERSION_5)
 
-:stc2 cpn,CRd,addrmode5 	is $(AMODE) &  cond=15 & c2527=6 & addrmode5 & cpn & CRd & N22=0 & L20=0
+:stc2 cpn,CRd,addrmode5 	is $(AMODE) & ARMcond=0 & cond=15 & c2527=6 & addrmode5 & cpn & CRd & N22=0 & L20=0
 {
   t_cpn:4 = cpn;
   coprocessor_store2(t_cpn,CRd,addrmode5);
 }
 
-:stc2l cpn,CRd,addrmode5 	is $(AMODE) &  cond=15 & c2527=6 & addrmode5 & cpn & CRd & N22=1 & L20=0
+:stc2l cpn,CRd,addrmode5 	is $(AMODE) & ARMcond=0 & cond=15 & c2527=6 & addrmode5 & cpn & CRd & N22=1 & L20=0
 {
   t_cpn:4 = cpn;
   coprocessor_storelong2(t_cpn,CRd,addrmode5);
@@ -1893,7 +1909,7 @@ macro sub_with_carry_flags(op1, op2){
 }
 
 
-:adc^COND^SBIT_CZNO Rd,rn,shift1	is $(AMODE) &  COND & c2124=5 & SBIT_CZNO & rn & Rd & c2627=0 & shift1
+:adc^COND^SBIT_CZNO Rd,rn,shift1	is $(AMODE) & ARMcond=1 & COND & c2124=5 & SBIT_CZNO & rn & Rd & c2627=0 & shift1
 {
   build COND;
   build rn;
@@ -1904,7 +1920,7 @@ macro sub_with_carry_flags(op1, op2){
   build SBIT_CZNO;
 }
 
-:adc^COND^SBIT_CZNO Rd,rn,shift2	is $(AMODE) &  COND & c2124=5 & SBIT_CZNO & rn & Rd & c2627=0 & shift2
+:adc^COND^SBIT_CZNO Rd,rn,shift2	is $(AMODE) & ARMcond=1 & COND & c2124=5 & SBIT_CZNO & rn & Rd & c2627=0 & shift2
 {
   build COND;
   build rn;
@@ -1915,7 +1931,7 @@ macro sub_with_carry_flags(op1, op2){
   build SBIT_CZNO;
 }
 
-:adc^COND^SBIT_CZNO Rd,rn,shift3	is $(AMODE) &  COND & c2124=5 & SBIT_CZNO & rn & Rd & c2627=0 & shift3
+:adc^COND^SBIT_CZNO Rd,rn,shift3	is $(AMODE) & ARMcond=1 & COND & c2124=5 & SBIT_CZNO & rn & Rd & c2627=0 & shift3
 {
   build COND;
   build rn;
@@ -1926,7 +1942,7 @@ macro sub_with_carry_flags(op1, op2){
   build SBIT_CZNO;
 }
 
-:adc^COND^SBIT_CZNO pc,rn,shift1 	is $(AMODE) &  pc & COND & c2124=5 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift1
+:adc^COND^SBIT_CZNO pc,rn,shift1 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=5 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift1
 {
   build COND;
   build rn;
@@ -1939,7 +1955,7 @@ macro sub_with_carry_flags(op1, op2){
   goto [pc];
 }
 
-:adc^COND^SBIT_CZNO pc,rn,shift2 	is $(AMODE) &  pc & COND & c2124=5 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift2
+:adc^COND^SBIT_CZNO pc,rn,shift2 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=5 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift2
 {
   build COND;
   build rn;
@@ -1952,7 +1968,7 @@ macro sub_with_carry_flags(op1, op2){
   goto [pc];
 }
 
-:adc^COND^SBIT_CZNO pc,rn,shift3 	is $(AMODE) &  pc & COND & c2124=5 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift3
+:adc^COND^SBIT_CZNO pc,rn,shift3 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=5 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift3
 {
   build COND;
   build rn;
@@ -1981,13 +1997,13 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 # ADR constructors must appear before ADD constructors to give ADR parsing precedence
 #
 
-:adr^COND Rd,ArmPCRelImmed12	is $(AMODE) &  COND & c2527=1 & (c2024=8 | c2024=4) & Rn=15 & Rd & ArmPCRelImmed12
+:adr^COND Rd,ArmPCRelImmed12	is $(AMODE) & ARMcond=1 & COND & c2527=1 & (c2024=8 | c2024=4) & Rn=15 & Rd & ArmPCRelImmed12
 {
   build COND;
   Rd = ArmPCRelImmed12;
 }
 
-:adr^COND pc,ArmPCRelImmed12 	is $(AMODE) &  COND & c2527=1 & (c2024=8 | c2024=4) & Rn=15 & Rd=15 & pc & ArmPCRelImmed12
+:adr^COND pc,ArmPCRelImmed12 	is $(AMODE) & ARMcond=1 & COND & c2527=1 & (c2024=8 | c2024=4) & Rn=15 & Rd=15 & pc & ArmPCRelImmed12
 {
   build COND;
   dest:4 = ArmPCRelImmed12;
@@ -1996,7 +2012,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 }
 
 
-:add^COND^SBIT_CZNO Rd,rn,shift1	is $(AMODE) &  COND & c2124=4 & SBIT_CZNO & rn & Rd & c2627=0 & shift1
+:add^COND^SBIT_CZNO Rd,rn,shift1	is $(AMODE) & ARMcond=1 & COND & c2124=4 & SBIT_CZNO & rn & Rd & c2627=0 & shift1
 {
   build COND;
   build rn;
@@ -2007,7 +2023,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build SBIT_CZNO;
 }
 
-:add^COND^SBIT_CZNO Rd,rn,shift2	is $(AMODE) &  COND & c2124=4 & SBIT_CZNO & rn & Rd & c2627=0 & shift2
+:add^COND^SBIT_CZNO Rd,rn,shift2	is $(AMODE) & ARMcond=1 & COND & c2124=4 & SBIT_CZNO & rn & Rd & c2627=0 & shift2
 {
   build COND;
   build rn;
@@ -2018,7 +2034,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build SBIT_CZNO;
 }
 
-:add^COND^SBIT_CZNO Rd,rn,shift3	is $(AMODE) &  COND & c2124=4 & SBIT_CZNO & rn & Rd & c2627=0 & shift3
+:add^COND^SBIT_CZNO Rd,rn,shift3	is $(AMODE) & ARMcond=1 & COND & c2124=4 & SBIT_CZNO & rn & Rd & c2627=0 & shift3
 {
   build COND;
   build rn;
@@ -2029,7 +2045,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build SBIT_CZNO;
 }
 
-:add^COND^SBIT_CZNO pc,rn,shift1 	is $(AMODE) &  pc & COND & c2124=4 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift1
+:add^COND^SBIT_CZNO pc,rn,shift1 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=4 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift1
 {
   build COND;
   build rn;
@@ -2042,7 +2058,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   goto [pc];
 }
 
-:add^COND^SBIT_CZNO pc,rn,shift2 	is $(AMODE) &  pc & COND & c2124=4 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift2
+:add^COND^SBIT_CZNO pc,rn,shift2 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=4 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift2
 {
   build COND;
   build rn;
@@ -2055,7 +2071,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   goto [pc];
 }
 
-:add^COND^SBIT_CZNO pc,rn,shift3 	is $(AMODE) &  pc & COND & c2124=4 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift3
+:add^COND^SBIT_CZNO pc,rn,shift3 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=4 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift3
 {
   build COND;
   build rn;
@@ -2068,7 +2084,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   goto [pc];
 }
 
-:and^COND^SBIT_CZNO Rd,rn,shift1	is $(AMODE) &  COND & c2124=0 & SBIT_CZNO & rn & Rd & c2627=0 & shift1
+:and^COND^SBIT_CZNO Rd,rn,shift1	is $(AMODE) & ARMcond=1 & COND & c2124=0 & SBIT_CZNO & rn & Rd & c2627=0 & shift1
 {
   build COND;
   build rn;
@@ -2079,7 +2095,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build SBIT_CZNO;
 }
 
-:and^COND^SBIT_CZNO Rd,rn,shift2	is $(AMODE) &  COND & c2124=0 & SBIT_CZNO & rn & Rd & c2627=0 & shift2
+:and^COND^SBIT_CZNO Rd,rn,shift2	is $(AMODE) & ARMcond=1 & COND & c2124=0 & SBIT_CZNO & rn & Rd & c2627=0 & shift2
 {
   build COND;
   build rn;
@@ -2090,7 +2106,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build SBIT_CZNO;
 }
 
-:and^COND^SBIT_CZNO Rd,rn,shift3	is $(AMODE) &  COND & c2124=0 & SBIT_CZNO & rn & Rd & c2627=0 & shift3
+:and^COND^SBIT_CZNO Rd,rn,shift3	is $(AMODE) & ARMcond=1 & COND & c2124=0 & SBIT_CZNO & rn & Rd & c2627=0 & shift3
 {
   build COND;
   build rn;
@@ -2101,7 +2117,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build SBIT_CZNO;
 }
 
-:and^COND^SBIT_CZNO pc,rn,shift1 	is $(AMODE) &  pc & COND & c2124=0 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift1
+:and^COND^SBIT_CZNO pc,rn,shift1 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=0 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift1
 {
   build COND;
   build rn;
@@ -2114,7 +2130,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   goto [pc];
 }
 
-:and^COND^SBIT_CZNO pc,rn,shift2 	is $(AMODE) &  pc & COND & c2124=0 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift2
+:and^COND^SBIT_CZNO pc,rn,shift2 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=0 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift2
 {
   build COND;
   build rn;
@@ -2127,7 +2143,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   goto [pc];
 }
 
-:and^COND^SBIT_CZNO pc,rn,shift3 	is $(AMODE) &  pc & COND & c2124=0 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift3
+:and^COND^SBIT_CZNO pc,rn,shift3 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=0 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift3
 {
   build COND;
   build rn;
@@ -2156,7 +2172,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 @if defined(VERSION_6T2)
 
-:bfc^COND Rd,lsbImm,bitWidth	is $(AMODE) &  COND & c2127=0x3e & msbImm & Rd & lsbImm & bitWidth & c0006=0x1f 	{
+:bfc^COND Rd,lsbImm,bitWidth	is $(AMODE) & ARMcond=1 & COND & c2127=0x3e & msbImm & Rd & lsbImm & bitWidth & c0006=0x1f 	{
 	build COND;
 	build lsbImm;
 	build msbImm;
@@ -2165,7 +2181,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 	Rd = Rd & clearMask;
 }
 
-:bfi^COND Rd,Rm,lsbImm,bitWidth	is $(AMODE) &  COND & c2127=0x3e & Rd & Rm & lsbImm & bitWidth & c0406=1	{
+:bfi^COND Rd,Rm,lsbImm,bitWidth	is $(AMODE) & ARMcond=1 & COND & c2127=0x3e & Rd & Rm & lsbImm & bitWidth & c0406=1	{
 	build COND;
 	build lsbImm;
 	build bitWidth;
@@ -2177,7 +2193,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 @endif # VERSION_6T2
 
-:bic^COND^SBIT_CZNO Rd,rn,shift1	is $(AMODE) &  COND & c2124=14 & SBIT_CZNO & rn & Rd & c2627=0 & shift1
+:bic^COND^SBIT_CZNO Rd,rn,shift1	is $(AMODE) & ARMcond=1 & COND & c2124=14 & SBIT_CZNO & rn & Rd & c2627=0 & shift1
 {
   build COND;
   build rn;
@@ -2188,7 +2204,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build SBIT_CZNO;
 }
 
-:bic^COND^SBIT_CZNO Rd,rn,shift2	is $(AMODE) &  COND & c2124=14 & SBIT_CZNO & rn & Rd & c2627=0 & shift2
+:bic^COND^SBIT_CZNO Rd,rn,shift2	is $(AMODE) & ARMcond=1 & COND & c2124=14 & SBIT_CZNO & rn & Rd & c2627=0 & shift2
 {
   build COND;
   build rn;
@@ -2199,7 +2215,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build SBIT_CZNO;
 }
 
-:bic^COND^SBIT_CZNO Rd,rn,shift3	is $(AMODE) &  COND & c2124=14 & SBIT_CZNO & rn & Rd & c2627=0 & shift3
+:bic^COND^SBIT_CZNO Rd,rn,shift3	is $(AMODE) & ARMcond=1 & COND & c2124=14 & SBIT_CZNO & rn & Rd & c2627=0 & shift3
 {
   build COND;
   build rn;
@@ -2210,7 +2226,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build SBIT_CZNO;
 }
 
-:bic^COND^SBIT_CZNO pc,rn,shift1 	is $(AMODE) &  pc & COND & c2124=14 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift1
+:bic^COND^SBIT_CZNO pc,rn,shift1 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=14 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift1
 {
   build COND;
   build rn;
@@ -2223,7 +2239,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   goto [pc];
 }
 
-:bic^COND^SBIT_CZNO pc,rn,shift2 	is $(AMODE) &  pc & COND & c2124=14 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift2
+:bic^COND^SBIT_CZNO pc,rn,shift2 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=14 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift2
 {
   build COND;
   build rn;
@@ -2236,7 +2252,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   goto [pc];
 }
 
-:bic^COND^SBIT_CZNO pc,rn,shift3 	is $(AMODE) &  pc & COND & c2124=14 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift3
+:bic^COND^SBIT_CZNO pc,rn,shift3 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=14 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift3
 {
   build COND;
   build rn;
@@ -2257,7 +2273,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 }
 
 # bl<COND> used as a PIC instruction to get at current PC in lr
-:bl^COND Addr24 		is $(AMODE) & COND & c2527=5 & L24=1 & immed24=0xffffff & Addr24
+:bl^COND Addr24 		is $(AMODE) & ARMcond=1 & COND & c2527=5 & L24=1 & immed24=0xffffff & Addr24
 {
   build COND;
   build Addr24;
@@ -2291,7 +2307,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 @if defined(T_VARIANT) && defined(VERSION_5)
 
 # Two forms of blx needed to distinguish from b
-:blx HAddr24			is $(AMODE) &  CALLoverride=0 & cond=15 & c2527=5 & H24=0 & HAddr24
+:blx HAddr24			is $(AMODE) &  CALLoverride=0 & ARMcond=0 & cond=15 & c2527=5 & H24=0 & HAddr24
 {
   lr = inst_next;
   SetThumbMode(1);
@@ -2299,7 +2315,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   # don't do causes decompiler trouble  TB = 0;
 } # Always changes to THUMB mode
 
-:blx HAddr24			is $(AMODE) &  CALLoverride=1 & cond=15 & c2527=5 & H24=0 & HAddr24
+:blx HAddr24			is $(AMODE) &  CALLoverride=1 & ARMcond=0 & cond=15 & c2527=5 & H24=0 & HAddr24
 {
   lr = inst_next;
   SetThumbMode(1);
@@ -2307,7 +2323,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 } # Always changes to THUMB mode
 
 
-:blx HAddr24 			is $(AMODE) &  CALLoverride=0 & cond=15 & c2527=5 & H24=1 & HAddr24
+:blx HAddr24 			is $(AMODE) & ARMcond=0 & CALLoverride=0 & cond=15 & c2527=5 & H24=1 & HAddr24
 {
   lr = inst_next;
   SetThumbMode(1);
@@ -2315,7 +2331,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   # don't do causes decompiler trouble  TB = 0;
 }   # Always changes to THUMB mode
 
-:blx HAddr24 			is $(AMODE) &  CALLoverride=1 & cond=15 & c2527=5 & H24=1 & HAddr24
+:blx HAddr24 			is $(AMODE) & ARMcond=0 & CALLoverride=1 & cond=15 & c2527=5 & H24=1 & HAddr24
 {
   lr = inst_next;
   SetThumbMode(1);
@@ -2326,7 +2342,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 @if defined(VERSION_5)
 
-:blx^COND rm 			is $(AMODE) &  COND & c2027=18 & c1619=15 & c1215=15 & c0811=15 & c0407=3 & rm
+:blx^COND rm 			is $(AMODE) & ARMcond=1 & COND & c2027=18 & c1619=15 & c1215=15 & c0811=15 & c0407=3 & rm
 {
   build COND;
   build rm;
@@ -2336,7 +2352,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 # don't do causes decompiler trouble  TB = 0;
 } # Optional THUMB
 
-:blx^COND rm 			is $(AMODE) &  CALLoverride=1 & COND & c2027=18 & c1619=15 & c1215=15 & c0811=15 & c0407=3 & rm
+:blx^COND rm 			is $(AMODE) &  CALLoverride=1 & ARMcond=1 & COND & c2027=18 & c1619=15 & c1215=15 & c0811=15 & c0407=3 & rm
 {
   build COND;
   build rm;
@@ -2350,7 +2366,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 @if defined(VERSION_5_or_T)
 
 # if branching using lr, assume return
-:bx^COND rm 			is $(AMODE) &  REToverride=0 & LRset=0 & COND & c2027=18 & c1619=15 & c1215=15 & c0811=15 & c0407=1 & rm & Rm=14
+:bx^COND rm 			is $(AMODE) &  REToverride=0 & LRset=0 & ARMcond=1 & COND & c2027=18 & c1619=15 & c1215=15 & c0811=15 & c0407=1 & rm & Rm=14
 {
   build COND;
   build rm;
@@ -2358,7 +2374,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   return [pc];
 } # Optional change to THUMB
 
-:bx^COND rm 			is $(AMODE) &  REToverride=0 & LRset=0 & COND & c2027=18 & c1619=15 & c1215=15 & c0811=15 & c0407=1 & rm & Rm
+:bx^COND rm 			is $(AMODE) &  REToverride=0 & LRset=0 & ARMcond=1 & COND & c2027=18 & c1619=15 & c1215=15 & c0811=15 & c0407=1 & rm & Rm
 {
   build COND;
   build rm;
@@ -2367,7 +2383,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 } # Optional change to THUMB
 
 # if lr has just been set, assume call
-:bx^COND rm 			is $(AMODE) &  REToverride=0 & LRset=1 & COND & c2027=18 & c1619=15 & c1215=15 & c0811=15 & c0407=1 & rm & Rm
+:bx^COND rm 			is $(AMODE) &  REToverride=0 & LRset=1 & ARMcond=1 & COND & c2027=18 & c1619=15 & c1215=15 & c0811=15 & c0407=1 & rm & Rm
 {
   build COND;
   build rm;
@@ -2375,7 +2391,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   call [pc];
 } # Optional change to THUMB
 
-:bx^COND rm 			is $(AMODE) &  REToverride=1 & COND & c2027=18 & c1619=15 & c1215=15 & c0811=15 & c0407=1 & rm
+:bx^COND rm 			is $(AMODE) &  REToverride=1 & ARMcond=1 & COND & c2027=18 & c1619=15 & c1215=15 & c0811=15 & c0407=1 & rm
 {
   build COND;
   build rm;
@@ -2383,7 +2399,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   goto [pc];
 } # Optional change to THUMB
 
-#:bx^COND lr 			is $(AMODE) &  COND & c2027=18 & c1619=15 & c1215=15 & c0811=15 & c0407=1 & Rm=14 & lr
+#:bx^COND lr 			is $(AMODE) & ARMcond=1 & COND & c2027=18 & c1619=15 & c1215=15 & c0811=15 & c0407=1 & Rm=14 & lr
 #{
 #  build COND;
 #  TB=(lr&0x00000001)!=0;
@@ -2397,7 +2413,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 # bxj behaves like bx except that Jazelle state is enabled if available (added with Version-5 J-variant)
 
-:bxj^COND rm 			is $(AMODE) &  REToverride=0 & COND & c2027=18 & c1619=15 & c1215=15 & c0811=15 & c0407=2 & rm
+:bxj^COND rm 			is $(AMODE) &  REToverride=0 & ARMcond=1 & COND & c2027=18 & c1619=15 & c1215=15 & c0811=15 & c0407=2 & rm
 {
   build COND;
   build rm;
@@ -2409,7 +2425,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 } # Optional change to THUMB
 
 # if branching using "ip" then is a goto
-:bxj^COND rm 			is $(AMODE) &  REToverride=0 & COND & c2027=18 & c1619=15 & c1215=15 & c0811=15 & c0407=2 & rm & Rm=12
+:bxj^COND rm 			is $(AMODE) &  REToverride=0 & ARMcond=1 & COND & c2027=18 & c1619=15 & c1215=15 & c0811=15 & c0407=2 & rm & Rm=12
 {
   build COND;
   build rm;
@@ -2420,7 +2436,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   <skipBx>
 } # Optional change to THUMB
 
-:bxj^COND rm 			is $(AMODE) &  REToverride=1 & COND & c2027=18 & c1619=15 & c1215=15 & c0811=15 & c0407=2 & rm
+:bxj^COND rm 			is $(AMODE) &  REToverride=1 & ARMcond=1 & COND & c2027=18 & c1619=15 & c1215=15 & c0811=15 & c0407=2 & rm
 {
   build COND;
   build rm;
@@ -2435,7 +2451,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 @if defined(VERSION_5)
 
-:cdp2 cpn,opcode1,CRd,CRn,CRm,opcode2 is $(AMODE) &  cond=15 & c2427=14 & opcode1 & CRn & CRd & cpn & opcode2 & c0404=0 & CRm
+:cdp2 cpn,opcode1,CRd,CRn,CRm,opcode2 is $(AMODE) & ARMcond=0 & cond=15 & c2427=14 & opcode1 & CRn & CRd & cpn & opcode2 & c0404=0 & CRm
 {
   t_cpn:4 = cpn;
   t_op1:4 = opcode1;
@@ -2445,7 +2461,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 @endif # VERSION_5
 
-:cdp^COND cpn,opcode1,CRd,CRn,CRm,opcode2 is $(AMODE) &  COND & c2427=14 & opcode1 & CRn & CRd & cpn & opcode2 & c0404=0 & CRm
+:cdp^COND cpn,opcode1,CRd,CRn,CRm,opcode2 is $(AMODE) & ARMcond=1 & COND & c2427=14 & opcode1 & CRn & CRd & cpn & opcode2 & c0404=0 & CRm
 {
   build COND;
   t_cpn:4 = cpn;
@@ -2464,7 +2480,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 @if defined(VERSION_5)
 
-:clz^COND Rd,rm 		is $(AMODE) &  COND & c2027=22 & c1619=15 & Rd & c0811=15 & c0407=1 & rm
+:clz^COND Rd,rm 		is $(AMODE) & ARMcond=1 & COND & c2027=22 & c1619=15 & Rd & c0811=15 & c0407=1 & rm
 {
   build COND;
   build rm;
@@ -2473,7 +2489,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 @endif # VERSION_5
 
-:cmn^COND rn,shift1 		is $(AMODE) &  COND & c2024=23 & rn & c1215=0 & c2627=0 & shift1
+:cmn^COND rn,shift1 		is $(AMODE) & ARMcond=1 & COND & c2024=23 & rn & c1215=0 & c2627=0 & shift1
 {
   build COND;
   build rn;
@@ -2484,7 +2500,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   affectflags();
 }
 
-:cmn^COND rn,shift2 		is $(AMODE) &  COND & c2024=23 & rn & c1215=0 & c2627=0 & shift2
+:cmn^COND rn,shift2 		is $(AMODE) & ARMcond=1 & COND & c2024=23 & rn & c1215=0 & c2627=0 & shift2
 {
   build COND;
   build rn;
@@ -2495,7 +2511,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   affectflags();
 }
 
-:cmn^COND rn,shift3 		is $(AMODE) &  COND & c2024=23 & rn & c1215=0 & c2627=0 & shift3
+:cmn^COND rn,shift3 		is $(AMODE) & ARMcond=1 & COND & c2024=23 & rn & c1215=0 & c2627=0 & shift3
 {
   build COND;
   build rn;
@@ -2506,7 +2522,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   affectflags();
 }
 
-:cmp^COND rn,shift1 		is $(AMODE) &  COND & c2024=21 & rn & c1215=0 & c2627=0 & shift1
+:cmp^COND rn,shift1 		is $(AMODE) & ARMcond=1 & COND & c2024=21 & rn & c1215=0 & c2627=0 & shift1
 {
   build COND;
   build rn;
@@ -2517,7 +2533,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   affectflags();
 }
 
-:cmp^COND rn,shift2 		is $(AMODE) &  COND & c2024=21 & rn & c1215=0 & c2627=0 & shift2
+:cmp^COND rn,shift2 		is $(AMODE) & ARMcond=1 & COND & c2024=21 & rn & c1215=0 & c2627=0 & shift2
 {
   build COND;
   build rn;
@@ -2528,7 +2544,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   affectflags();
 }
 
-:cmp^COND rn,shift3 		is $(AMODE) &  COND & c2024=21 & rn & c1215=0 & c2627=0 & shift3
+:cmp^COND rn,shift3 		is $(AMODE) & ARMcond=1 & COND & c2024=21 & rn & c1215=0 & c2627=0 & shift3
 {
   build COND;
   build rn;
@@ -2542,7 +2558,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 @if defined(VERSION_6)
 
 # cpy is a pre-UAL synonym for mov
-:cpy^COND pc,rm 	is $(AMODE) &  COND & pc & c2027=0x1a & c1619=0 & c0411=0 & Rd=15 & rm
+:cpy^COND pc,rm 	is $(AMODE) & ARMcond=1 & COND & pc & c2027=0x1a & c1619=0 & c0411=0 & Rd=15 & rm
 {
   build COND;
   build rm;
@@ -2550,14 +2566,14 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   goto [pc];
 }
 
-:cpy^COND lr,rm 	is $(AMODE) &  COND & c2027=0x1a & c1619=0 & c0411=0 & Rd=14 & lr & rm & Rm2=15
+:cpy^COND lr,rm 	is $(AMODE) & ARMcond=1 & COND & c2027=0x1a & c1619=0 & c0411=0 & Rd=14 & lr & rm & Rm2=15
                     [ LRset=1; globalset(inst_next,LRset); ]
 {
   build COND;
   lr = rm;
 }
 
-:cpy^COND Rd,rm 	is $(AMODE) &  COND & c2027=0x1a & c1619=0 & c0411=0 & Rd & rm
+:cpy^COND Rd,rm 	is $(AMODE) & ARMcond=1 & COND & c2027=0x1a & c1619=0 & c0411=0 & Rd & rm
 {
   build COND;
   build rm;
@@ -2568,7 +2584,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 @if defined(VERSION_6K) || defined(VERSION_6T2)
 
-:dbg^COND optionImm	is $(AMODE) &  COND & c0427=0x320f0f & optionImm	{
+:dbg^COND optionImm	is $(AMODE) & ARMcond=1 & COND & c0427=0x320f0f & optionImm	{
 @if defined(VERSION_7)
 	build COND;
 	build optionImm;
@@ -2592,7 +2608,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 @endif # VERSION_7
 
-:eor^COND^SBIT_CZNO Rd,rn,shift1	is $(AMODE) &  COND & c2124=1 & SBIT_CZNO & rn & Rd & c2627=0 & shift1
+:eor^COND^SBIT_CZNO Rd,rn,shift1	is $(AMODE) & ARMcond=1 & COND & c2124=1 & SBIT_CZNO & rn & Rd & c2627=0 & shift1
 {
   build COND;
   build rn;
@@ -2603,7 +2619,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build SBIT_CZNO;
 }
 
-:eor^COND^SBIT_CZNO Rd,rn,shift2	is $(AMODE) &  COND & c2124=1 & SBIT_CZNO & rn & Rd & c2627=0 & shift2
+:eor^COND^SBIT_CZNO Rd,rn,shift2	is $(AMODE) & ARMcond=1 & COND & c2124=1 & SBIT_CZNO & rn & Rd & c2627=0 & shift2
 {
   build COND;
   build rn;
@@ -2614,7 +2630,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build SBIT_CZNO;
 }
 
-:eor^COND^SBIT_CZNO Rd,rn,shift3	is $(AMODE) &  COND & c2124=1 & SBIT_CZNO & rn & Rd & c2627=0 & shift3
+:eor^COND^SBIT_CZNO Rd,rn,shift3	is $(AMODE) & ARMcond=1 & COND & c2124=1 & SBIT_CZNO & rn & Rd & c2627=0 & shift3
 {
   build COND;
   build rn;
@@ -2625,7 +2641,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build SBIT_CZNO;
 }
 
-:eor^COND^SBIT_CZNO pc,rn,shift1 	is $(AMODE) &  pc & COND & c2124=1 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift1
+:eor^COND^SBIT_CZNO pc,rn,shift1 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=1 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift1
 {
   build COND;
   build rn;
@@ -2638,7 +2654,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   goto [pc];
 }
 
-:eor^COND^SBIT_CZNO pc,rn,shift2 	is $(AMODE) &  pc & COND & c2124=1 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift2
+:eor^COND^SBIT_CZNO pc,rn,shift2 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=1 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift2
 {
   build COND;
   build rn;
@@ -2651,7 +2667,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   goto [pc];
 }
 
-:eor^COND^SBIT_CZNO pc,rn,shift3 	is $(AMODE) &  pc & COND & c2124=1 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift3
+:eor^COND^SBIT_CZNO pc,rn,shift3 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=1 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift3
 {
   build COND;
   build rn;
@@ -2676,13 +2692,13 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 ### These must come first, because of cond=15 match
 @if defined(VERSION_5)
 
-:ldc2 cpn,CRd,addrmode5 	is $(AMODE) &  cond=15 & c2527=6 & addrmode5 & cpn & CRd & N22=0 & L20=1
+:ldc2 cpn,CRd,addrmode5 	is $(AMODE) & ARMcond=0 & cond=15 & c2527=6 & addrmode5 & cpn & CRd & N22=0 & L20=1
 {
   t_cpn:4 = cpn;
   coprocessor_load2(t_cpn,CRd,addrmode5);
 }
 
-:ldc2l cpn,CRd,addrmode5 	is $(AMODE) &  cond=15 & c2527=6 & addrmode5 & cpn & CRd & N22=1 & L20=1
+:ldc2l cpn,CRd,addrmode5 	is $(AMODE) & ARMcond=0 & cond=15 & c2527=6 & addrmode5 & cpn & CRd & N22=1 & L20=1
 {
   t_cpn:4 = cpn;
   coprocessor_loadlong2(t_cpn,CRd,addrmode5);
@@ -2691,7 +2707,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 @endif # VERSION_5
 ########  cond=15 match
 
-:ldc^COND cpn,CRd,addrmode5 	is $(AMODE) &  COND & c2527=6 & addrmode5 & cpn & CRd & N22=0 & L20=1
+:ldc^COND cpn,CRd,addrmode5 	is $(AMODE) & ARMcond=1 & COND & c2527=6 & addrmode5 & cpn & CRd & N22=0 & L20=1
 {
   build COND;
   build addrmode5;
@@ -2699,7 +2715,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   coprocessor_load(t_cpn,CRd,addrmode5);
 }
 
-:ldcl^COND cpn,CRd,addrmode5 is $(AMODE) &  COND & c2527=6 & addrmode5 & cpn & CRd & N22=1 & L20=1
+:ldcl^COND cpn,CRd,addrmode5 is $(AMODE) & ARMcond=1 & COND & c2527=6 & addrmode5 & cpn & CRd & N22=1 & L20=1
 {
   build COND;
   build addrmode5;
@@ -2707,13 +2723,13 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   coprocessor_loadlong(t_cpn,CRd,addrmode5);
 }
 
-:ldm^mdir^COND reglist 		is $(AMODE) &  COND & c2527=4 & mdir & L20=1 & c1515=0 & reglist
+:ldm^mdir^COND reglist 		is $(AMODE) & ARMcond=1 & COND & c2527=4 & mdir & L20=1 & c1515=0 & reglist
 {
   build COND;
   build reglist;
 }
 
-:ldm^mdir^COND reglist 		is $(AMODE) &  COND & c2527=4 & mdir & L20=1 & c1515=1 & reglist
+:ldm^mdir^COND reglist 		is $(AMODE) & ARMcond=1 & COND & c2527=4 & mdir & L20=1 & c1515=1 & reglist
 {
   build COND;
   build reglist;
@@ -2721,7 +2737,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   return [pc];
 }
 
-#:ldr^COND Rd,addrmode2 	is $(AMODE) &  COND & B22=0 & L20=1 & Rd & (I25=0 | (I25=1 & c0404=0)) & addrmode2
+#:ldr^COND Rd,addrmode2 	is $(AMODE) & ARMcond=1 & COND & B22=0 & L20=1 & Rd & (I25=0 | (I25=1 & c0404=0)) & addrmode2
 #{
 #  build COND;
 #  build addrmode2;
@@ -2732,7 +2748,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 #}
 
 # The following form of ldr assumes alignment checking is on
-:ldr^COND Rd,addrmode2 		is $(AMODE) &  COND & c2627=1 & B22=0 & L20=1 & Rd & (I25=0 | (I25=1 & c0404=0)) & addrmode2
+:ldr^COND Rd,addrmode2 		is $(AMODE) & ARMcond=1 & COND & c2627=1 & B22=0 & L20=1 & Rd & (I25=0 | (I25=1 & c0404=0)) & addrmode2
 {
   build COND;
   build addrmode2;
@@ -2740,7 +2756,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 }
 
 # Two forms of ldr with destination=pc needed to distinguish from ldrt
-:ldr^COND pc,addrmode2 		is $(AMODE) &  pc & COND & LRset=1 & c2627=1 & B22=0 & L20=1 & Rd=15 & P24=1 & (I25=0 | (I25=1 & c0404=0)) & addrmode2
+:ldr^COND pc,addrmode2 		is $(AMODE) & pc & ARMcond=1 & COND & LRset=1 & c2627=1 & B22=0 & L20=1 & Rd=15 & P24=1 & (I25=0 | (I25=1 & c0404=0)) & addrmode2
            [ LRset=0; globalset(inst_next,LRset); ]
 {
   build COND;
@@ -2752,7 +2768,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   SetThumbMode(0);
 } # No unaligned address
 
-:ldr^COND pc,addrmode2 		is $(AMODE) &  pc & COND & LRset=1 & c2627=1 & B22=0 & L20=1 & Rd=15 & P24=0 & W21=0 & (I25=0 | (I25=1 & c0404=0)) & addrmode2
+:ldr^COND pc,addrmode2 		is $(AMODE) & pc & ARMcond=1 & COND & LRset=1 & c2627=1 & B22=0 & L20=1 & Rd=15 & P24=0 & W21=0 & (I25=0 | (I25=1 & c0404=0)) & addrmode2
            [ LRset=0; globalset(inst_next,LRset); ]
 {
   build COND;
@@ -2765,7 +2781,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 } # No unaligned address
 
 # Two forms of ldr with destination=pc needed to distinguish from ldrt
-:ldr^COND pc,addrmode2 		is $(AMODE) &  pc & COND & c2627=1 & B22=0 & L20=1 & Rd=15 & P24=1 & (I25=0 | (I25=1 & c0404=0)) & addrmode2
+:ldr^COND pc,addrmode2 		is $(AMODE) & pc & ARMcond=1 & COND & c2627=1 & B22=0 & L20=1 & Rd=15 & P24=1 & (I25=0 | (I25=1 & c0404=0)) & addrmode2
 {
   build COND;
   build addrmode2;
@@ -2774,7 +2790,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   goto [pc];
 } # No unaligned address
 
-:ldr^COND pc,addrmode2 		is $(AMODE) &  pc & COND & c2627=1 & B22=0 & L20=1 & Rd=15 & P24=0 & W21=0 & (I25=0 | (I25=1 & c0404=0)) & addrmode2
+:ldr^COND pc,addrmode2 		is $(AMODE) & pc & ARMcond=1 & COND & c2627=1 & B22=0 & L20=1 & Rd=15 & P24=0 & W21=0 & (I25=0 | (I25=1 & c0404=0)) & addrmode2
 {
   build COND;
   build addrmode2;
@@ -2783,14 +2799,14 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   goto [pc];
 } # No unaligned address
 
-:ldrb^COND Rd,addrmode2 	is $(AMODE) &  COND & c2627=1 & B22=1 & L20=1 & Rd & (I25=0 | (I25=1 & c0404=0)) & addrmode2
+:ldrb^COND Rd,addrmode2 	is $(AMODE) & ARMcond=1 & COND & c2627=1 & B22=1 & L20=1 & Rd & (I25=0 | (I25=1 & c0404=0)) & addrmode2
 {
   build COND;
   build addrmode2;
   Rd = zext( *:1 addrmode2);
 }
 
-:ldrbt^COND Rd,addrmode2 	is $(AMODE) &  COND & c2627=1 & B22=1 & L20=1 & P24=0 & W21=1 & Rd & (I25=0 | (I25=1 & c0404=0)) & addrmode2
+:ldrbt^COND Rd,addrmode2 	is $(AMODE) & ARMcond=1 & COND & c2627=1 & B22=1 & L20=1 & P24=0 & W21=1 & Rd & (I25=0 | (I25=1 & c0404=0)) & addrmode2
 {
   build COND;
   build addrmode2;
@@ -2799,7 +2815,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 @if defined(VERSION_5E)
 
-:ldrd^COND Rd,Rd2,addrmode3   is $(AMODE) &  COND & c2527=0 & c0407=13 & c1212=0 & L20=0 & Rd & Rd2 & addrmode3
+:ldrd^COND Rd,Rd2,addrmode3   is $(AMODE) & ARMcond=1 & COND & c2527=0 & c0407=13 & c1212=0 & L20=0 & Rd & Rd2 & addrmode3
 {
   build COND;
   build addrmode3;
@@ -2811,7 +2827,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 @if defined(VERSION_6)
 
-:ldrex^COND Rd,[Rn]  is $(AMODE) &  COND & c2027=0x19 & Rn & Rd & c0011=0xf9f
+:ldrex^COND Rd,[Rn]  is $(AMODE) & ARMcond=1 & COND & c2027=0x19 & Rn & Rd & c0011=0xf9f
 {
 	build COND;
 	Rd = *Rn;
@@ -2821,20 +2837,20 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 @if defined(VERSION_6K)
 
-:ldrexb^COND Rd,[Rn]  is $(AMODE) &  COND & c2027=0x1d & Rn & Rd & c0011=0xf9f
+:ldrexb^COND Rd,[Rn]  is $(AMODE) & ARMcond=1 & COND & c2027=0x1d & Rn & Rd & c0011=0xf9f
 {
 	build COND;
 	Rd = zext(*:1 Rn);
 }
 
-:ldrexd^COND Rd,Rd2,[Rn]  is $(AMODE) &  COND & c2027=0x1b & Rn & Rd & Rd2 & c0011=0xf9f
+:ldrexd^COND Rd,Rd2,[Rn]  is $(AMODE) & ARMcond=1 & COND & c2027=0x1b & Rn & Rd & Rd2 & c0011=0xf9f
 {
 	build COND;
   	Rd = *(Rn);
   	Rd2 = *(Rn + 4);
 }
 
-:ldrexh^COND Rd,[Rn]  is $(AMODE) &  COND & c2027=0x1f & Rn & Rd & c0011=0xf9f
+:ldrexh^COND Rd,[Rn]  is $(AMODE) & ARMcond=1 & COND & c2027=0x1f & Rn & Rd & c0011=0xf9f
 {
 	build COND;
 	Rd = zext(*:2 Rn);
@@ -2842,7 +2858,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 @endif # VERSION_6K
 
-:ldrh^COND Rd,addrmode3 	is $(AMODE) &  COND & c2527=0 & L20=1 & c0407=11 & Rd & addrmode3
+:ldrh^COND Rd,addrmode3 	is $(AMODE) & ARMcond=1 & COND & c2527=0 & L20=1 & c0407=11 & Rd & addrmode3
 {
   build COND;
   build addrmode3;
@@ -2851,7 +2867,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 @if defined(VERSION_6T2)
 
-:ldrht^COND Rd,addrmode3		is $(AMODE) &  COND & c2527=0 & P24=0 & W21=1 & L20=1 & c0407=11 & Rd & addrmode3	{
+:ldrht^COND Rd,addrmode3		is $(AMODE) & ARMcond=1 & COND & c2527=0 & P24=0 & W21=1 & L20=1 & c0407=11 & Rd & addrmode3	{
   build COND;
   build addrmode3;
   Rd = zext( *:2 addrmode3);
@@ -2859,7 +2875,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 @endif # VERSION_6T2
 
-:ldrsb^COND Rd,addrmode3 	is $(AMODE) &  COND & c2527=0 & L20=1 & c0407=13 & Rd & addrmode3
+:ldrsb^COND Rd,addrmode3 	is $(AMODE) & ARMcond=1 & COND & c2527=0 & L20=1 & c0407=13 & Rd & addrmode3
 {
   build COND;
   build addrmode3;
@@ -2868,7 +2884,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 @if defined(VERSION_6T2)
 
-:ldrsbt^COND Rd,addrmode3		is $(AMODE) &  COND & c2527=0 & P24=0 & W21=1 & L20=1 & c0407=13 & Rd & addrmode3	{
+:ldrsbt^COND Rd,addrmode3		is $(AMODE) & ARMcond=1 & COND & c2527=0 & P24=0 & W21=1 & L20=1 & c0407=13 & Rd & addrmode3	{
   build COND;
   build addrmode3;
   Rd = sext( *:1 addrmode3);
@@ -2876,7 +2892,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 @endif # VERSION_6T2
 
-:ldrsh^COND Rd,addrmode3 	is $(AMODE) &  COND & c2527=0 & L20=1 & c0407=15 & Rd & addrmode3
+:ldrsh^COND Rd,addrmode3 	is $(AMODE) & ARMcond=1 & COND & c2527=0 & L20=1 & c0407=15 & Rd & addrmode3
 {
   build COND;
   build addrmode3;
@@ -2885,7 +2901,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 @if defined(VERSION_6T2)
 
-:ldrsht^COND Rd,addrmode3		is $(AMODE) &  COND & c2527=0 & P24=0 & W21=1 & L20=1 & c0407=15 & Rd & addrmode3	{
+:ldrsht^COND Rd,addrmode3		is $(AMODE) & ARMcond=1 & COND & c2527=0 & P24=0 & W21=1 & L20=1 & c0407=15 & Rd & addrmode3	{
   build COND;
   build addrmode3;
   Rd = sext( *:2 addrmode3);
@@ -2894,7 +2910,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 @endif # VERSION_6T2
 
 # The following form of ldr assumes alignment checking is on
-:ldrt^COND Rd,addrmode2 	is $(AMODE) & COND & c2627=1 & B22=0 & L20=1 & P24=0 & W21=1 & Rd & (I25=0 | (I25=1 & c0404=0)) & addrmode2
+:ldrt^COND Rd,addrmode2 	is $(AMODE) & ARMcond=1 & COND & c2627=1 & B22=0 & L20=1 & P24=0 & W21=1 & Rd & (I25=0 | (I25=1 & c0404=0)) & addrmode2
 {
   build COND;
   build addrmode2;
@@ -2904,7 +2920,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 ###### must come first cond=15
 @if defined(VERSION_5)
-:mcr2 cpn,opc1,Rd,CRn,CRm,opc2 is $(AMODE) &  cond=15 & c2427=14 & opc1 & c2020=0 & CRn & Rd & cpn & opc2 & c0404=1 & CRm
+:mcr2 cpn,opc1,Rd,CRn,CRm,opc2 is $(AMODE) & ARMcond=0 & cond=15 & c2427=14 & opc1 & c2020=0 & CRn & Rd & cpn & opc2 & c0404=1 & CRm
 {
   t_cpn:4 = cpn;
   t_op1:4 = opc1;
@@ -2918,7 +2934,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 # ===== START mcr
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=0 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=0 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -2927,7 +2943,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=0 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=0 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -2936,7 +2952,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=2 & cpn=15 & Rd & CRn=0 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=2 & cpn=15 & Rd & CRn=0 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -2945,7 +2961,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=3 & cpn=15 & Rd & CRn=0 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=3 & cpn=15 & Rd & CRn=0 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -2954,7 +2970,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=1 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=1 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -2963,7 +2979,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=1 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=1 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -2972,7 +2988,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=2 & cpn=15 & Rd & CRn=1 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=2 & cpn=15 & Rd & CRn=1 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -2981,7 +2997,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=1 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=1 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=1 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=1 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -2990,7 +3006,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=1 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=1 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=1 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=1 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -2999,7 +3015,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=1 & c0404=1 & opc2=2 & cpn=15 & Rd & CRn=1 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=1 & c0404=1 & opc2=2 & cpn=15 & Rd & CRn=1 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3008,7 +3024,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=2 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=2 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3017,7 +3033,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=2 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=2 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3026,7 +3042,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=2 & cpn=15 & Rd & CRn=2 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=2 & cpn=15 & Rd & CRn=2 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3035,7 +3051,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=3 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=3 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3044,7 +3060,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=5 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=5 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3053,7 +3069,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=5 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=5 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3062,7 +3078,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=6 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=6 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3071,7 +3087,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=2 & cpn=15 & Rd & CRn=6 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=2 & cpn=15 & Rd & CRn=6 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3080,7 +3096,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=4 & cpn=15 & Rd & CRn=7 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=4 & cpn=15 & Rd & CRn=7 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3089,7 +3105,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=5 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=7 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=5 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=7 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3098,7 +3114,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=5 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=7 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=5 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=7 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3107,7 +3123,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=5 & c0404=1 & opc2=4 & cpn=15 & Rd & CRn=7 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=5 & c0404=1 & opc2=4 & cpn=15 & Rd & CRn=7 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3116,7 +3132,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=6 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=7 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=6 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=7 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3125,7 +3141,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=6 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=7 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=6 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=7 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3134,7 +3150,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=6 & c0404=1 & opc2=2 & cpn=15 & Rd & CRn=7 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=6 & c0404=1 & opc2=2 & cpn=15 & Rd & CRn=7 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3143,7 +3159,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=10 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=7 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=10 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=7 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3152,7 +3168,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=10 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=7 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=10 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=7 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3161,7 +3177,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=10 & c0404=1 & opc2=2 & cpn=15 & Rd & CRn=7 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=10 & c0404=1 & opc2=2 & cpn=15 & Rd & CRn=7 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3170,7 +3186,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=10 & c0404=1 & opc2=4 & cpn=15 & Rd & CRn=7 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=10 & c0404=1 & opc2=4 & cpn=15 & Rd & CRn=7 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3179,7 +3195,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=10 & c0404=1 & opc2=5 & cpn=15 & Rd & CRn=7 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=10 & c0404=1 & opc2=5 & cpn=15 & Rd & CRn=7 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3188,7 +3204,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=14 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=7 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=14 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=7 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3197,7 +3213,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=14 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=7 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=14 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=7 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3206,7 +3222,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=7 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=8 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=7 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=8 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3215,7 +3231,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=7 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=8 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=7 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=8 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3224,7 +3240,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=7 & c0404=1 & opc2=2 & cpn=15 & Rd & CRn=8 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=7 & c0404=1 & opc2=2 & cpn=15 & Rd & CRn=8 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3233,7 +3249,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=13 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=13 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3242,7 +3258,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=13 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=13 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3251,7 +3267,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=2 & cpn=15 & Rd & CRn=13 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=2 & cpn=15 & Rd & CRn=13 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3260,7 +3276,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=3 & cpn=15 & Rd & CRn=13 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=3 & cpn=15 & Rd & CRn=13 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3269,7 +3285,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=4 & cpn=15 & Rd & CRn=13 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=4 & cpn=15 & Rd & CRn=13 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3278,7 +3294,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=2 & c0404=1 & opc2=4 & cpn=15 & Rd & CRn=15 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=2 & c0404=1 & opc2=4 & cpn=15 & Rd & CRn=15 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3287,7 +3303,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=1 & c0404=1 & opc2 & cpn=15 & Rd & CRn=0 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=1 & c0404=1 & opc2 & cpn=15 & Rd & CRn=0 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3297,7 +3313,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=2 & c0404=1 & opc2 & cpn=15 & Rd & CRn=0 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=2 & c0404=1 & opc2 & cpn=15 & Rd & CRn=0 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3307,7 +3323,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=4 & c0404=1 & opc2 & cpn=15 & Rd & CRn=0 & c2020=0 & opc1=2 & c2427=14 & COND &
+    $(AMODE) &  CRm=4 & c0404=1 & opc2 & cpn=15 & Rd & CRn=0 & c2020=0 & opc1=2 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3317,7 +3333,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2 & cpn=15 & Rd & CRn=1 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2 & cpn=15 & Rd & CRn=1 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3327,7 +3343,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=1 & c0404=1 & opc2 & cpn=15 & Rd & CRn=1 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=1 & c0404=1 & opc2 & cpn=15 & Rd & CRn=1 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3337,7 +3353,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2 & cpn=15 & Rd & CRn=2 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2 & cpn=15 & Rd & CRn=2 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3347,7 +3363,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=5 & c0404=1 & opc2 & cpn=15 & Rd & CRn=7 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=5 & c0404=1 & opc2 & cpn=15 & Rd & CRn=7 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3357,7 +3373,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm=10 & c0404=1 & opc2 & cpn=15 & Rd & CRn=7 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=10 & c0404=1 & opc2 & cpn=15 & Rd & CRn=7 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3367,7 +3383,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm & c0404=1 & opc2 & cpn=15 & Rd & CRn=0 & c2020=0 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm & c0404=1 & opc2 & cpn=15 & Rd & CRn=0 & c2020=0 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3377,7 +3393,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mcr^COND mcrOperands  is 
-    $(AMODE) &  CRm & c0404=1 & opc2 & cpn=15 & Rd & CRn=15 & c2020=0 & opc1 & c2427=14 & COND &
+    $(AMODE) &  CRm & c0404=1 & opc2 & cpn=15 & Rd & CRn=15 & c2020=0 & opc1 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3388,7 +3404,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 # ===== END mcr 
 
-:mcr^COND cpn,opc1,Rd,CRn,CRm,opc2 is $(AMODE) &  COND & c2427=14 & opc1 & c2020=0 & CRn & Rd & cpn & opc2 & c0404=1 & CRm
+:mcr^COND cpn,opc1,Rd,CRn,CRm,opc2 is $(AMODE) & ARMcond=1 & COND & c2427=14 & opc1 & c2020=0 & CRn & Rd & cpn & opc2 & c0404=1 & CRm
 {
   build COND;
   t_cpn:4 = cpn;
@@ -3399,14 +3415,14 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 ##### must come first cond=15
 @if defined(VERSION_6)
-:mcrr2 cpn,opcode3,Rd,Rn,CRm        is $(AMODE) &  cond=15 & c2027=0xc4 & cpn & opcode3 & Rd & Rn & CRm
+:mcrr2 cpn,opcode3,Rd,Rn,CRm        is $(AMODE) & ARMcond=0 & cond=15 & c2027=0xc4 & cpn & opcode3 & Rd & Rn & CRm
 {
   t_cpn:4 = cpn;
   t_op:4 = opcode3;
   coprocessor_moveto2(t_cpn,t_op,Rd,Rn,CRm);
 }
 
-:mrrc2  cpn,opcode3,Rd,Rn,CRm    is $(AMODE) &  cond=15 & c2027=0xc5 & cpn & opcode3 & Rd & Rn & CRm
+:mrrc2  cpn,opcode3,Rd,Rn,CRm    is $(AMODE) & ARMcond=0 & cond=15 & c2027=0xc5 & cpn & opcode3 & Rd & Rn & CRm
 {
   t_cpn:4 = cpn;
   t_op:4 = opcode3;
@@ -3419,7 +3435,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 @if defined(VERSION_5E)
 
-:mcrr^COND  cpn,opcode3,Rd,Rn,CRm    is $(AMODE) &  c2027=0xc4 & COND & cpn & opcode3 & Rd & Rn & CRm
+:mcrr^COND  cpn,opcode3,Rd,Rn,CRm    is $(AMODE) &  c2027=0xc4 & COND & ARMcond=1 & cpn & opcode3 & Rd & Rn & CRm
 {
   build COND;
   t_cpn:4 = cpn;
@@ -3427,7 +3443,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   coprocessor_moveto2(t_cpn,t_op,Rd,Rn,CRm);
 }
 
-:mrrc^COND  cpn,opcode3,Rd,Rn,CRm    is $(AMODE) &  c2027=0xc5 & COND & cpn & opcode3 & Rd & Rn & CRm
+:mrrc^COND  cpn,opcode3,Rd,Rn,CRm    is $(AMODE) &  c2027=0xc5 & COND & ARMcond=1 & cpn & opcode3 & Rd & Rn & CRm
 {
   build COND;
   t_cpn:4 = cpn;
@@ -3438,7 +3454,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 @endif # VERSION_5E
 
-:mla^COND^SBIT_ZN Rn,Rm,Rs,Rd 	is $(AMODE) &  COND & c2527=0 & c2124=1 & SBIT_ZN & Rn & Rd & Rs & c0407=9 & Rm
+:mla^COND^SBIT_ZN Rn,Rm,Rs,Rd 	is $(AMODE) & ARMcond=1 & COND & c2527=0 & c2124=1 & SBIT_ZN & Rn & Rd & Rs & c0407=9 & Rm
 {
   build COND;
   Rn = Rm*Rs + Rd;
@@ -3448,14 +3464,14 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 @if defined(VERSION_6T2)
 
-:mls^COND Rn,Rm,Rs,Rd 	is $(AMODE) &  COND & c2027=0x06 & Rn & Rd & Rs & c0407=9 & Rm {
+:mls^COND Rn,Rm,Rs,Rd 	is $(AMODE) & ARMcond=1 & COND & c2027=0x06 & Rn & Rd & Rs & c0407=9 & Rm {
   build COND;
   Rn = Rd - Rm*Rs;
 }
 
 @endif # VERSION_6T2
 
-:mov^COND^SBIT_CZNO Rd,shift1 	is $(AMODE) &  COND & c2124=13 & SBIT_CZNO & c1619=0 & Rd & c2627=0 & shift1
+:mov^COND^SBIT_CZNO Rd,shift1 	is $(AMODE) & ARMcond=1 & COND & c2124=13 & SBIT_CZNO & c1619=0 & Rd & c2627=0 & shift1
 {
   build COND;
   build shift1;
@@ -3465,7 +3481,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build SBIT_CZNO;
 }
 
-:mov^COND^SBIT_CZNO Rd,shift2 	is $(AMODE) &  COND & c2124=13 & SBIT_CZNO & c1619=0 & Rd & c2627=0 & shift2
+:mov^COND^SBIT_CZNO Rd,shift2 	is $(AMODE) & ARMcond=1 & COND & c2124=13 & SBIT_CZNO & c1619=0 & Rd & c2627=0 & shift2
 {
   build COND;
   build shift2;
@@ -3475,7 +3491,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build SBIT_CZNO;
 }
 
-:mov lr,pc						is $(AMODE) &  c0031=0xe1a0e00f & lr & pc
+:mov lr,pc						is $(AMODE) & ARMcond=1 & c0031=0xe1a0e00f & lr & pc
 									[ LRset=1; globalset(inst_next,LRset); ]
 {
 	lr = inst_next + 4;
@@ -3483,7 +3499,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 	logicflags();
 }
 
-:mov^COND^SBIT_CZNO Rd,shift3 	is $(AMODE) &  COND & c2124=13 & SBIT_CZNO & c1619=0 & Rd & c2627=0 & shift3
+:mov^COND^SBIT_CZNO Rd,shift3 	is $(AMODE) & ARMcond=1 & COND & c2124=13 & SBIT_CZNO & c1619=0 & Rd & c2627=0 & shift3
 {
   build COND;
   build shift3;
@@ -3493,7 +3509,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build SBIT_CZNO;
 }
 
-:mov^COND^SBIT_CZNO pc,shift1 	is $(AMODE) &  pc & COND & c2124=13 & SBIT_CZNO & c1619=0 & Rd=15 & c2627=0 & shift1
+:mov^COND^SBIT_CZNO pc,shift1 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=13 & SBIT_CZNO & c1619=0 & Rd=15 & c2627=0 & shift1
 {
   build COND;
   build shift1;
@@ -3506,7 +3522,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   goto [pc];
 }
 
-:mov^COND^SBIT_CZNO pc,shift2 	is $(AMODE) &  pc & COND & c2124=13 & SBIT_CZNO & c1619=0 & Rd=15 & c2627=0 & shift2
+:mov^COND^SBIT_CZNO pc,shift2 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=13 & SBIT_CZNO & c1619=0 & Rd=15 & c2627=0 & shift2
 {
   build COND;
   build shift2;
@@ -3518,7 +3534,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   ALUWritePC(tmp);
   goto [pc];
 }
-:mov^COND^SBIT_CZNO pc,shift2 	is $(AMODE) &  LRset=1 & pc & COND & c2124=13 & SBIT_CZNO & c1619=0 & Rd=15 & c2627=0 & shift2
+:mov^COND^SBIT_CZNO pc,shift2 	is $(AMODE) &  LRset=1 & pc & COND & ARMcond=1 & c2124=13 & SBIT_CZNO & c1619=0 & Rd=15 & c2627=0 & shift2
 {
   build COND;
   build shift2;
@@ -3531,7 +3547,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   call [pc];
 }
 
-:mov^COND^SBIT_CZNO pc,shift3 	is $(AMODE) &  pc & COND & c2124=13 & SBIT_CZNO & c1619=0 & Rd=15 & c2627=0 & shift3
+:mov^COND^SBIT_CZNO pc,shift3 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=13 & SBIT_CZNO & c1619=0 & Rd=15 & c2627=0 & shift3
 {
   build COND;
   build shift3;
@@ -3544,13 +3560,13 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   goto [pc];
 }
 
-:mov lr,rm 		is $(AMODE) &  cond=15 & c2527=0 & S20=0 & c2124=13 & c1619=0 & rm & Rm2=15 & sftimm=0 & c0406=0 & Rd=14 & lr
+:mov lr,rm 		is $(AMODE) & ARMcond=0 & cond=15 & c2527=0 & S20=0 & c2124=13 & c1619=0 & rm & Rm2=15 & sftimm=0 & c0406=0 & Rd=14 & lr
                     [ LRset=1; globalset(inst_next,LRset); ]
 {
   lr = rm;
 }
 
-:mov^COND pc,lr 		is $(AMODE) &  pc & COND & c2527=0 & S20=0 & c2124=13 & c1619=0 & Rd=15 & sftimm=0 & c0406=0 & Rm=14 & lr
+:mov^COND pc,lr 		is $(AMODE) & pc & ARMcond=1 & COND & c2527=0 & S20=0 & c2124=13 & c1619=0 & Rd=15 & sftimm=0 & c0406=0 & Rm=14 & lr
 {
   build COND;
   dest:4 = lr;
@@ -3560,12 +3576,12 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 @if defined(VERSION_6T2)
 
-:movw^COND Rd,"#"^val		is $(AMODE) &  COND & c2027=0x30 & c1619 & Rd & c0011 [ val = (c1619 << 12) | c0011; ]		{
+:movw^COND Rd,"#"^val		is $(AMODE) & ARMcond=1 & COND & c2027=0x30 & c1619 & Rd & c0011 [ val = (c1619 << 12) | c0011; ]		{
 	build COND;
 	Rd = val;
 }
 
-:movt^COND Rd,"#"^val		is $(AMODE) &  COND & c2027=0x34 & c1619 & Rd & c0011 [ val = (c1619 << 12) | c0011; ]		{
+:movt^COND Rd,"#"^val		is $(AMODE) & ARMcond=1 & COND & c2027=0x34 & c1619 & Rd & c0011 [ val = (c1619 << 12) | c0011; ]		{
 	build COND;
 	Rd = (val << 16) | (Rd & 0xffff);
 }
@@ -3576,7 +3592,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 @if defined(VERSION_5)
 
 
-:mrc2 cpn,opc1,Rd,CRn,CRm,opc2 is $(AMODE) &  cond=15 & c2427=14 & opc1 & c2020=1 & CRn & Rd & cpn & opc2 & c0404=1 & CRm
+:mrc2 cpn,opc1,Rd,CRn,CRm,opc2 is $(AMODE) & ARMcond=0 & cond=15 & c2427=14 & opc1 & c2020=1 & CRn & Rd & cpn & opc2 & c0404=1 & CRm
 {
   t_cpn:4 = cpn;
   t_op1:4 = opc1;
@@ -3589,7 +3605,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=0 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=0 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3599,7 +3615,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=0 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=0 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3609,7 +3625,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=2 & cpn=15 & Rd & CRn=0 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=2 & cpn=15 & Rd & CRn=0 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3619,7 +3635,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=3 & cpn=15 & Rd & CRn=0 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=3 & cpn=15 & Rd & CRn=0 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3629,7 +3645,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=1 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=1 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3639,7 +3655,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=1 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=1 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3649,7 +3665,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=2 & cpn=15 & Rd & CRn=1 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=2 & cpn=15 & Rd & CRn=1 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3659,7 +3675,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=1 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=1 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=1 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=1 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3669,7 +3685,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=1 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=1 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=1 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=1 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3679,7 +3695,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=1 & c0404=1 & opc2=2 & cpn=15 & Rd & CRn=1 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=1 & c0404=1 & opc2=2 & cpn=15 & Rd & CRn=1 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3689,7 +3705,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=2 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=2 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3699,7 +3715,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=2 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=2 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3709,7 +3725,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=2 & cpn=15 & Rd & CRn=2 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=2 & cpn=15 & Rd & CRn=2 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3719,7 +3735,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=3 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=3 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3729,7 +3745,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=5 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=5 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3739,7 +3755,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=5 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=5 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3749,7 +3765,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=6 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=6 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3759,7 +3775,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=2 & cpn=15 & Rd & CRn=6 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=2 & cpn=15 & Rd & CRn=6 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3769,7 +3785,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=4 & cpn=15 & Rd & CRn=7 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=4 & cpn=15 & Rd & CRn=7 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3779,7 +3795,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=5 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=7 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=5 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=7 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3789,7 +3805,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=5 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=7 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=5 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=7 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3799,7 +3815,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=5 & c0404=1 & opc2=4 & cpn=15 & Rd & CRn=7 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=5 & c0404=1 & opc2=4 & cpn=15 & Rd & CRn=7 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3809,7 +3825,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=6 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=7 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=6 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=7 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3819,7 +3835,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=6 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=7 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=6 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=7 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3829,7 +3845,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=6 & c0404=1 & opc2=2 & cpn=15 & Rd & CRn=7 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=6 & c0404=1 & opc2=2 & cpn=15 & Rd & CRn=7 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3839,7 +3855,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=10 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=7 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=10 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=7 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3849,7 +3865,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=10 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=7 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=10 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=7 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3859,7 +3875,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=10 & c0404=1 & opc2=2 & cpn=15 & Rd & CRn=7 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=10 & c0404=1 & opc2=2 & cpn=15 & Rd & CRn=7 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3869,7 +3885,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=10 & c0404=1 & opc2=4 & cpn=15 & Rd & CRn=7 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=10 & c0404=1 & opc2=4 & cpn=15 & Rd & CRn=7 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3879,7 +3895,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=10 & c0404=1 & opc2=5 & cpn=15 & Rd & CRn=7 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=10 & c0404=1 & opc2=5 & cpn=15 & Rd & CRn=7 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3889,7 +3905,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=14 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=7 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=14 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=7 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3899,7 +3915,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=14 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=7 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=14 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=7 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3909,7 +3925,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=7 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=8 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=7 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=8 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3919,7 +3935,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=7 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=8 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=7 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=8 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3929,7 +3945,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=7 & c0404=1 & opc2=2 & cpn=15 & Rd & CRn=8 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=7 & c0404=1 & opc2=2 & cpn=15 & Rd & CRn=8 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3939,7 +3955,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=13 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=0 & cpn=15 & Rd & CRn=13 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3949,7 +3965,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=13 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=1 & cpn=15 & Rd & CRn=13 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3959,7 +3975,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=2 & cpn=15 & Rd & CRn=13 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=2 & cpn=15 & Rd & CRn=13 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3969,7 +3985,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=3 & cpn=15 & Rd & CRn=13 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=3 & cpn=15 & Rd & CRn=13 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3979,7 +3995,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2=4 & cpn=15 & Rd & CRn=13 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2=4 & cpn=15 & Rd & CRn=13 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3989,7 +4005,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=2 & c0404=1 & opc2=4 & cpn=15 & Rd & CRn=15 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=2 & c0404=1 & opc2=4 & cpn=15 & Rd & CRn=15 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -3999,7 +4015,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=1 & c0404=1 & opc2 & cpn=15 & Rd & CRn=0 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=1 & c0404=1 & opc2 & cpn=15 & Rd & CRn=0 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -4010,7 +4026,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=2 & c0404=1 & opc2 & cpn=15 & Rd & CRn=0 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=2 & c0404=1 & opc2 & cpn=15 & Rd & CRn=0 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -4021,7 +4037,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=4 & c0404=1 & opc2 & cpn=15 & Rd & CRn=0 & c2020=1 & opc1=2 & c2427=14 & COND &
+    $(AMODE) &  CRm=4 & c0404=1 & opc2 & cpn=15 & Rd & CRn=0 & c2020=1 & opc1=2 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -4032,7 +4048,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2 & cpn=15 & Rd & CRn=1 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2 & cpn=15 & Rd & CRn=1 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -4043,7 +4059,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=1 & c0404=1 & opc2 & cpn=15 & Rd & CRn=1 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=1 & c0404=1 & opc2 & cpn=15 & Rd & CRn=1 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -4054,7 +4070,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=0 & c0404=1 & opc2 & cpn=15 & Rd & CRn=2 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=0 & c0404=1 & opc2 & cpn=15 & Rd & CRn=2 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -4065,7 +4081,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=5 & c0404=1 & opc2 & cpn=15 & Rd & CRn=7 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=5 & c0404=1 & opc2 & cpn=15 & Rd & CRn=7 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -4076,7 +4092,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm=10 & c0404=1 & opc2 & cpn=15 & Rd & CRn=7 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm=10 & c0404=1 & opc2 & cpn=15 & Rd & CRn=7 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -4087,7 +4103,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm & c0404=1 & opc2 & cpn=15 & Rd & CRn=0 & c2020=1 & opc1=0 & c2427=14 & COND &
+    $(AMODE) &  CRm & c0404=1 & opc2 & cpn=15 & Rd & CRn=0 & c2020=1 & opc1=0 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -4098,7 +4114,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 
 :mrc^COND mcrOperands  is 
-    $(AMODE) &  CRm & c0404=1 & opc2 & cpn=15 & Rd & CRn=15 & c2020=1 & opc1 & c2427=14 & COND &
+    $(AMODE) &  CRm & c0404=1 & opc2 & cpn=15 & Rd & CRn=15 & c2020=1 & opc1 & c2427=14 & COND & ARMcond=1 &
         mcrOperands
 {
   build COND;
@@ -4110,7 +4126,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 # ===== End mrc
 
-:mrc^COND cpn,opc1,Rd,CRn,CRm,opc2 is $(AMODE) &  COND & c2427=14 & opc1 & c2020=1 & CRn & Rd & cpn & opc2 & c0404=1 & CRm
+:mrc^COND cpn,opc1,Rd,CRn,CRm,opc2 is $(AMODE) & ARMcond=1 & COND & c2427=14 & opc1 & c2020=1 & CRn & Rd & cpn & opc2 & c0404=1 & CRm
 {
   build COND;
   t_cpn:4 = cpn;
@@ -4120,20 +4136,20 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 }
 
 
-:mrs^COND Rd,cpsr 		is $(AMODE) &  COND & c2027=16 & c1619=15 & Rd & offset_12=0 & cpsr
+:mrs^COND Rd,cpsr 		is $(AMODE) & ARMcond=1 & COND & c2027=16 & c1619=15 & Rd & offset_12=0 & cpsr
 {
 # TODO: GE bits have not been included
   build COND;
   Rd = zext( (NG<<4) | (ZR<<3) | (CY<<2) | (OV<<1) | (Q) ) << 27;
 }
 
-:mrs^COND Rd,spsr 		is $(AMODE) &  COND & c2027=20 & c1619=15 & Rd & offset_12=0 & spsr
+:mrs^COND Rd,spsr 		is $(AMODE) & ARMcond=1 & COND & c2027=20 & c1619=15 & Rd & offset_12=0 & spsr
 {
   build COND;
   Rd = spsr;
 }
 
-:msr^COND cpsrmask,shift1 	is $(AMODE) &  COND & c2027=50 & cpsrmask & c1215=15 & c2627=0 & shift1
+:msr^COND cpsrmask,shift1 	is $(AMODE) & ARMcond=1 & COND & c2027=50 & cpsrmask & c1215=15 & c2627=0 & shift1
 {
   build COND;
   build cpsrmask;
@@ -4141,7 +4157,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   cpsr = (cpsr& ~cpsrmask) | (shift1 & cpsrmask);
 }
 
-:msr^COND cpsrmask,rm 		is $(AMODE) &  COND & c2027=18 & cpsrmask & c1215=15 & c0811=0 & c0407=0 & rm
+:msr^COND cpsrmask,rm 		is $(AMODE) & ARMcond=1 & COND & c2027=18 & cpsrmask & c1215=15 & c0811=0 & c0407=0 & rm
 {
 # TODO: GE bits have not been included
   build COND;
@@ -4155,7 +4171,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   NG = ((tmp >> 4) & 0x1) != 0;
 }
 
-:msr^COND spsrmask,shift1 	is $(AMODE) &  COND & c2027=54 & spsrmask & c1215=15 & c2627=0 & shift1
+:msr^COND spsrmask,shift1 	is $(AMODE) & ARMcond=1 & COND & c2027=54 & spsrmask & c1215=15 & c2627=0 & shift1
 {
   build COND;
   build spsrmask;
@@ -4163,14 +4179,14 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   spsr = (spsr& ~spsrmask) | (shift1 & spsrmask);
 }
 
-:msr^COND spsrmask,rm 		is $(AMODE) &  COND & c2027=22 & spsrmask & c1215=15 & c0811=0 & c0407=0 & rm
+:msr^COND spsrmask,rm 		is $(AMODE) & ARMcond=1 & COND & c2027=22 & spsrmask & c1215=15 & c0811=0 & c0407=0 & rm
 {
   build COND;
   build spsrmask;
   spsr = (spsr& ~spsrmask) | (rm & spsrmask);
 }
 
-:mul^COND^SBIT_ZN rn,rm,rs 	is $(AMODE) &  COND & c2527=0 & c2124=0 & SBIT_ZN & rn & c1215=0 & rs & c0407=9 & rm
+:mul^COND^SBIT_ZN rn,rm,rs 	is $(AMODE) & ARMcond=1 & COND & c2527=0 & c2124=0 & SBIT_ZN & rn & c1215=0 & rs & c0407=9 & rm
 {
   build COND;
   build rm;
@@ -4180,7 +4196,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build SBIT_ZN;
 }
 
-:mvn^COND^SBIT_CZNO Rd,shift1 	is $(AMODE) &  COND & c2124=15 & SBIT_CZNO & c1619=0 & Rd & c2627=0 & shift1
+:mvn^COND^SBIT_CZNO Rd,shift1 	is $(AMODE) & ARMcond=1 & COND & c2124=15 & SBIT_CZNO & c1619=0 & Rd & c2627=0 & shift1
 {
   build COND;
   build shift1;
@@ -4190,7 +4206,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build SBIT_CZNO;
 }
 
-:mvn^COND^SBIT_CZNO Rd,shift2 	is $(AMODE) &  COND & c2124=15 & SBIT_CZNO & c1619=0 & Rd & c2627=0 & shift2
+:mvn^COND^SBIT_CZNO Rd,shift2 	is $(AMODE) & ARMcond=1 & COND & c2124=15 & SBIT_CZNO & c1619=0 & Rd & c2627=0 & shift2
 {
   build COND;
   build shift2;
@@ -4200,7 +4216,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build SBIT_CZNO;
 }
 
-:mvn^COND^SBIT_CZNO Rd,shift3 	is $(AMODE) &  COND & c2124=15 & SBIT_CZNO & c1619=0 & Rd & c2627=0 & shift3
+:mvn^COND^SBIT_CZNO Rd,shift3 	is $(AMODE) & ARMcond=1 & COND & c2124=15 & SBIT_CZNO & c1619=0 & Rd & c2627=0 & shift3
 {
   build COND;
   build shift3;
@@ -4210,7 +4226,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build SBIT_CZNO;
 }
 
-:mvn^COND^SBIT_ZN pc,shift1 	is $(AMODE) &  pc & COND & c2124=15 & SBIT_ZN & c1619=0 & Rd=15 & c2627=0 & shift1
+:mvn^COND^SBIT_ZN pc,shift1 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=15 & SBIT_ZN & c1619=0 & Rd=15 & c2627=0 & shift1
 {
   build COND;
   build shift1;
@@ -4221,7 +4237,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   goto [pc];
 }
 
-:mvn^COND^SBIT_ZN pc,shift2 	is $(AMODE) &  pc & COND & c2124=15 & SBIT_ZN & c1619=0 & Rd=15 & c2627=0 & shift2
+:mvn^COND^SBIT_ZN pc,shift2 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=15 & SBIT_ZN & c1619=0 & Rd=15 & c2627=0 & shift2
 {
   build COND;
   build shift2;
@@ -4232,7 +4248,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   goto [pc];
 }
 
-:mvn^COND^SBIT_ZN pc,shift3 	is $(AMODE) &  pc & COND & c2124=15 & SBIT_ZN & c1619=0 & Rd=15 & c2627=0 & shift3
+:mvn^COND^SBIT_ZN pc,shift3 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=15 & SBIT_ZN & c1619=0 & Rd=15 & c2627=0 & shift3
 {
   build COND;
   build shift3;
@@ -4245,12 +4261,12 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 @if defined(VERSION_6K) || defined(VERSION_6T2) || defined(VERSION_7)
 
-:nop^COND		is $(AMODE) &  COND & c0027=0x320f000		{
+:nop^COND		is $(AMODE) & ARMcond=1 & COND & c0027=0x320f000		{
 }
 
 @endif # VERSION_6K
 
-:orr^COND^SBIT_CZNO Rd,rn,shift1	is $(AMODE) &  COND & c2124=12 & SBIT_CZNO & rn & Rd & c2627=0 & shift1
+:orr^COND^SBIT_CZNO Rd,rn,shift1	is $(AMODE) & ARMcond=1 & COND & c2124=12 & SBIT_CZNO & rn & Rd & c2627=0 & shift1
 {
   build COND;
   build rn;
@@ -4261,7 +4277,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build SBIT_CZNO;
 }
 
-:orr^COND^SBIT_CZNO Rd,rn,shift2	is $(AMODE) &  COND & c2124=12 & SBIT_CZNO & rn & Rd & c2627=0 & shift2
+:orr^COND^SBIT_CZNO Rd,rn,shift2	is $(AMODE) & ARMcond=1 & COND & c2124=12 & SBIT_CZNO & rn & Rd & c2627=0 & shift2
 {
   build COND;
   build rn;
@@ -4272,7 +4288,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build SBIT_CZNO;
 }
 
-:orr^COND^SBIT_CZNO Rd,rn,shift3	is $(AMODE) &  COND & c2124=12 & SBIT_CZNO & rn & Rd & c2627=0 & shift3
+:orr^COND^SBIT_CZNO Rd,rn,shift3	is $(AMODE) & ARMcond=1 & COND & c2124=12 & SBIT_CZNO & rn & Rd & c2627=0 & shift3
 {
   build COND;
   build rn;
@@ -4283,7 +4299,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   build SBIT_CZNO;
 }
 
-:orr^COND^SBIT_CZNO pc,rn,shift1 	is $(AMODE) &  pc & COND & c2124=12 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift1
+:orr^COND^SBIT_CZNO pc,rn,shift1 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=12 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift1
 {
   build COND;
   build rn;
@@ -4296,7 +4312,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   goto [pc];
 }
 
-:orr^COND^SBIT_CZNO pc,rn,shift2 	is $(AMODE) &  pc & COND & c2124=12 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift2
+:orr^COND^SBIT_CZNO pc,rn,shift2 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=12 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift2
 {
   build COND;
   build rn;
@@ -4309,7 +4325,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   goto [pc];
 }
 
-:orr^COND^SBIT_CZNO pc,rn,shift3 	is $(AMODE) &  pc & COND & c2124=12 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift3
+:orr^COND^SBIT_CZNO pc,rn,shift3 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=12 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift3
 {
   build COND;
   build rn;
@@ -4324,7 +4340,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 @if defined(VERSION_6)
 
-:pkhbt^COND Rd,rn,shift4    is $(AMODE) &  COND & c2027=0x68 & c0406=1 & Rd & rn & shift4
+:pkhbt^COND Rd,rn,shift4    is $(AMODE) & ARMcond=1 & COND & c2027=0x68 & c0406=1 & Rd & rn & shift4
 {
   build COND;
   build rn;
@@ -4332,7 +4348,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   Rd = (rn & 0xffff) + (shift4 & 0xffff0000);
 }
 
-:pkhtb^COND Rd,rn,shift4    is $(AMODE) &  COND & c2027=0x68 & c0406=5 & Rd & rn & shift4
+:pkhtb^COND Rd,rn,shift4    is $(AMODE) & ARMcond=1 & COND & c2027=0x68 & c0406=5 & Rd & rn & shift4
 {
   build COND;
   build rn;
@@ -4344,7 +4360,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 @if defined(VERSION_5E)
 
-:qadd^COND   Rd,Rm,Rn    is  $(AMODE) &  COND & c2027=0x10 & Rn & Rd & c0811=0 & c0407=5 & Rm
+:qadd^COND   Rd,Rm,Rn    is  $(AMODE) & ARMcond=1 & COND & c2027=0x10 & Rn & Rd & c0811=0 & c0407=5 & Rm
 {
   build COND;
   local sum1 = Rm + Rn;
@@ -4357,7 +4373,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 @if defined(VERSION_6)
 
-:qadd16^COND  Rd, Rn, Rm    is $(AMODE) &  COND & c2027=0x62 & c0811=15 & c0407=1 & Rn & Rd & Rm
+:qadd16^COND  Rd, Rn, Rm    is $(AMODE) & ARMcond=1 & COND & c2027=0x62 & c0811=15 & c0407=1 & Rn & Rd & Rm
 {
   build COND;
   local lRn = Rn & 0xffff;
@@ -4371,7 +4387,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   Rd = (zext(sum2) << 16) | zext(sum1);
 }
 
-:qadd8^COND  Rd, Rn, Rm    is $(AMODE) &  COND & c2027=0x62 & c0811=15 & c0407=9 & Rn & Rd & Rm
+:qadd8^COND  Rd, Rn, Rm    is $(AMODE) & ARMcond=1 & COND & c2027=0x62 & c0811=15 & c0407=9 & Rn & Rd & Rm
 {
   build COND;
   local rn1 = Rn & 0xff;
@@ -4394,7 +4410,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 }
 
 # qaddsubx
-:qasx^COND  Rd, Rn, Rm    is $(AMODE) &  COND & c2027=0x62 & c0811=15 & c0407=3 & Rn & Rd & Rm
+:qasx^COND  Rd, Rn, Rm    is $(AMODE) & ARMcond=1 & COND & c2027=0x62 & c0811=15 & c0407=3 & Rn & Rd & Rm
 {
   build COND;
   local lRn = Rn & 0xffff;
@@ -4412,7 +4428,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 @if defined(VERSION_5E)
 
-:qdadd^COND  Rd,Rm,Rn    is $(AMODE) &  COND & c2027=0x14 & Rn & Rd & c0811=0 & c0407=5 & Rm
+:qdadd^COND  Rd,Rm,Rn    is $(AMODE) & ARMcond=1 & COND & c2027=0x14 & Rn & Rd & c0811=0 & c0407=5 & Rm
 {
   build COND;
   tmp:4 = Rn * 2;
@@ -4424,7 +4440,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   Rd = tmp;
 }
 
-:qdsub^COND Rd,Rm,Rn    is $(AMODE) &  COND & c2027=0x16 & Rn & Rd & c0811=0 & c0407=5 & Rm
+:qdsub^COND Rd,Rm,Rn    is $(AMODE) & ARMcond=1 & COND & c2027=0x16 & Rn & Rd & c0811=0 & c0407=5 & Rm
 {
   build COND;
   tmp:4 = Rn * 2;
@@ -4441,7 +4457,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 @if defined(VERSION_6)
 
 # qsubaddx
-:qsax^COND  Rd, Rn, Rm    is $(AMODE) &  COND & c2027=0x62 & c0811=15 & c0407=5 & Rn & Rd & Rm
+:qsax^COND  Rd, Rn, Rm    is $(AMODE) & ARMcond=1 & COND & c2027=0x62 & c0811=15 & c0407=5 & Rn & Rd & Rm
 {
   build COND;
   local lRn = Rn & 0xffff;
@@ -4459,7 +4475,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 @if defined(VERSION_5E)
 
-:qsub^COND   Rd,Rm,Rn    is  $(AMODE) &  COND & c2027=0x12 & Rn & Rd & c0811=0 & c0407=5 & Rm
+:qsub^COND   Rd,Rm,Rn    is  $(AMODE) & ARMcond=1 & COND & c2027=0x12 & Rn & Rd & c0811=0 & c0407=5 & Rm
 {
   build COND;
   tmp:4 = Rm - Rn;
@@ -4472,7 +4488,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 
 @if defined(VERSION_6)
 
-:qsub16^COND  Rd, Rn, Rm    is $(AMODE) &  COND & c2027=0x62 & c0811=15 & c0407=7 & Rn & Rd & Rm
+:qsub16^COND  Rd, Rn, Rm    is $(AMODE) & ARMcond=1 & COND & c2027=0x62 & c0811=15 & c0407=7 & Rn & Rd & Rm
 {
   build COND;
   local lRn = Rn & 0xffff;
@@ -4486,7 +4502,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
   Rd = (zext(sum2) << 16) | zext(sum1);
 }
 
-:qsub8^COND  Rd, Rn, Rm    is $(AMODE) &  COND & c2027=0x62 & c0811=15 & c0407=15 & Rn & Rd & Rm
+:qsub8^COND  Rd, Rn, Rm    is $(AMODE) & ARMcond=1 & COND & c2027=0x62 & c0811=15 & c0407=15 & Rn & Rd & Rm
 {
   build COND;
   local rn1 = Rn & 0xff;
@@ -4535,7 +4551,7 @@ macro BitReverse_arm(val) {
 }
 
 
-:rbit^COND Rd, rm	is $(AMODE) &  COND & c2327=13 & c2022=7 & c0407=3 & c1619=15 & c0811=15 & Rd & rm
+:rbit^COND Rd, rm	is $(AMODE) & ARMcond=1 & COND & c2327=13 & c2022=7 & c0407=3 & c1619=15 & c0811=15 & Rd & rm
 {
 	build COND;
   	build rm;
@@ -4558,7 +4574,7 @@ macro BitReverse_arm(val) {
 
 @if defined(VERSION_6)
 
-:rev^COND   Rd, rm      is $(AMODE) &  COND & c2327=13 & c2022=3 & c0407=3 & c1619=15 & c0811=15 & Rd & rm
+:rev^COND   Rd, rm      is $(AMODE) & ARMcond=1 & COND & c2327=13 & c2022=3 & c0407=3 & c1619=15 & c0811=15 & Rd & rm
 {
   build COND;
   build rm;
@@ -4569,7 +4585,7 @@ macro BitReverse_arm(val) {
   Rd = (tmp1 << 24) | (tmp2 << 16) | (tmp3 << 8) | tmp4;
 }
 
-:rev16^COND   Rd, rm      is $(AMODE) &  COND & c2327=13 & c2022=3 & c0407=11 & Rd & rm
+:rev16^COND   Rd, rm      is $(AMODE) & ARMcond=1 & COND & c2327=13 & c2022=3 & c0407=11 & Rd & rm
 {
   build COND;
   build rm;
@@ -4580,7 +4596,7 @@ macro BitReverse_arm(val) {
   Rd = (tmp3 << 24) | (tmp4 << 16) | (tmp1 << 8) | tmp2;
 }
 
-:revsh^COND   Rd, rm      is $(AMODE) &  COND & c2327=13 & c2022=7 & c0407=11 & Rd & rm
+:revsh^COND   Rd, rm      is $(AMODE) & ARMcond=1 & COND & c2327=13 & c2022=7 & c0407=11 & Rd & rm
 {
   build COND;
   build rm;
@@ -4592,7 +4608,7 @@ macro BitReverse_arm(val) {
 
 @endif # VERSION_6
 
-:rsb^COND^SBIT_CZNO Rd,rn,shift1	is $(AMODE) &  COND & c2124=3 & SBIT_CZNO & rn & Rd & c2627=0 & shift1
+:rsb^COND^SBIT_CZNO Rd,rn,shift1	is $(AMODE) & ARMcond=1 & COND & c2124=3 & SBIT_CZNO & rn & Rd & c2627=0 & shift1
 {
   build COND;
   build rn;
@@ -4603,7 +4619,7 @@ macro BitReverse_arm(val) {
   build SBIT_CZNO;
 }
 
-:rsb^COND^SBIT_CZNO Rd,rn,shift2	is $(AMODE) &  COND & c2124=3 & SBIT_CZNO & rn & Rd & c2627=0 & shift2
+:rsb^COND^SBIT_CZNO Rd,rn,shift2	is $(AMODE) & ARMcond=1 & COND & c2124=3 & SBIT_CZNO & rn & Rd & c2627=0 & shift2
 {
   build COND;
   build rn;
@@ -4614,7 +4630,7 @@ macro BitReverse_arm(val) {
   build SBIT_CZNO;
 }
 
-:rsb^COND^SBIT_CZNO Rd,rn,shift3	is $(AMODE) &  COND & c2124=3 & SBIT_CZNO & rn & Rd & c2627=0 & shift3
+:rsb^COND^SBIT_CZNO Rd,rn,shift3	is $(AMODE) & ARMcond=1 & COND & c2124=3 & SBIT_CZNO & rn & Rd & c2627=0 & shift3
 {
   build COND;
   build rn;
@@ -4625,7 +4641,7 @@ macro BitReverse_arm(val) {
   build SBIT_CZNO;
 }
 
-:rsb^COND^SBIT_CZNO pc,rn,shift1 	is $(AMODE) &  pc & COND & c2124=3 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift1
+:rsb^COND^SBIT_CZNO pc,rn,shift1 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=3 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift1
 {
   build COND;
   build rn;
@@ -4638,7 +4654,7 @@ macro BitReverse_arm(val) {
   goto [pc];
 }
 
-:rsb^COND^SBIT_CZNO pc,rn,shift2 	is $(AMODE) &  pc & COND & c2124=3 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift2
+:rsb^COND^SBIT_CZNO pc,rn,shift2 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=3 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift2
 {
   build COND;
   build rn;
@@ -4651,7 +4667,7 @@ macro BitReverse_arm(val) {
   goto [pc];
 }
 
-:rsb^COND^SBIT_CZNO pc,rn,shift3 	is $(AMODE) &  pc & COND & c2124=3 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift3
+:rsb^COND^SBIT_CZNO pc,rn,shift3 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=3 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift3
 {
   build COND;
   build rn;
@@ -4664,7 +4680,7 @@ macro BitReverse_arm(val) {
   goto [pc];
 }
 
-:rsc^COND^SBIT_CZNO Rd,rn,shift1	is $(AMODE) &  COND & c2124=7 & SBIT_CZNO & rn & Rd & c2627=0 & shift1
+:rsc^COND^SBIT_CZNO Rd,rn,shift1	is $(AMODE) & ARMcond=1 & COND & c2124=7 & SBIT_CZNO & rn & Rd & c2627=0 & shift1
 {
   build COND;
   build rn;
@@ -4675,7 +4691,7 @@ macro BitReverse_arm(val) {
   build SBIT_CZNO;
 }
 
-:rsc^COND^SBIT_CZNO Rd,rn,shift2	is $(AMODE) &  COND & c2124=7 & SBIT_CZNO & rn & Rd & c2627=0 & shift2
+:rsc^COND^SBIT_CZNO Rd,rn,shift2	is $(AMODE) & ARMcond=1 & COND & c2124=7 & SBIT_CZNO & rn & Rd & c2627=0 & shift2
 {
   build COND;
   build rn;
@@ -4686,7 +4702,7 @@ macro BitReverse_arm(val) {
   build SBIT_CZNO;
 }
 
-:rsc^COND^SBIT_CZNO Rd,rn,shift3	is $(AMODE) &  COND & c2124=7 & SBIT_CZNO & rn & Rd & c2627=0 & shift3
+:rsc^COND^SBIT_CZNO Rd,rn,shift3	is $(AMODE) & ARMcond=1 & COND & c2124=7 & SBIT_CZNO & rn & Rd & c2627=0 & shift3
 {
   build COND;
   build rn;
@@ -4697,7 +4713,7 @@ macro BitReverse_arm(val) {
   build SBIT_CZNO;
 }
 
-:rsc^COND^SBIT_CZNO pc,rn,shift1 	is $(AMODE) &  pc & COND & c2124=7 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift1
+:rsc^COND^SBIT_CZNO pc,rn,shift1 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=7 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift1
 {
   build COND;
   build rn;
@@ -4710,7 +4726,7 @@ macro BitReverse_arm(val) {
   goto [pc];
 }
 
-:rsc^COND^SBIT_CZNO pc,rn,shift2 	is $(AMODE) &  pc & COND & c2124=7 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift2
+:rsc^COND^SBIT_CZNO pc,rn,shift2 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=7 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift2
 {
   build COND;
   build rn;
@@ -4723,7 +4739,7 @@ macro BitReverse_arm(val) {
   goto [pc];
 }
 
-:rsc^COND^SBIT_CZNO pc,rn,shift3 	is $(AMODE) &  pc & COND & c2124=7 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift3
+:rsc^COND^SBIT_CZNO pc,rn,shift3 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=7 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift3
 {
   build COND;
   build rn;
@@ -4738,7 +4754,7 @@ macro BitReverse_arm(val) {
 
 @if defined(VERSION_6)
 
-:sadd16^COND  Rd, Rn, Rm    is $(AMODE) &  COND & c2027=0x61 & c0811=15 & c0407=1 & Rn & Rd & Rm
+:sadd16^COND  Rd, Rn, Rm    is $(AMODE) & ARMcond=1 & COND & c2027=0x61 & c0811=15 & c0407=1 & Rn & Rd & Rm
 {
   build COND;
   local tmpRn = Rn & 0xffff;
@@ -4754,7 +4770,7 @@ macro BitReverse_arm(val) {
   Rd = ((sum2 & 0xffff) << 16) | (sum1 & 0xffff);
 }
 
-:sadd8^COND  Rd, Rn, Rm    is $(AMODE) &  COND & c2027=0x61 & c0811=15 & c0407=9 & Rn & Rd & Rm
+:sadd8^COND  Rd, Rn, Rm    is $(AMODE) & ARMcond=1 & COND & c2027=0x61 & c0811=15 & c0407=9 & Rn & Rd & Rm
 {
   build COND;
   local tmpRn = Rn & 0xff;
@@ -4777,7 +4793,7 @@ macro BitReverse_arm(val) {
 }
 
 # saddsubx
-:sasx^COND  Rd, Rn, Rm    is $(AMODE) &  COND & c2027=0x61 & c0811=15 & c0407=3 & Rn & Rd & Rm
+:sasx^COND  Rd, Rn, Rm    is $(AMODE) & ARMcond=1 & COND & c2027=0x61 & c0811=15 & c0407=3 & Rn & Rd & Rm
 {
   build COND;
   local lRn = Rn & 0xffff;
@@ -4796,7 +4812,7 @@ macro BitReverse_arm(val) {
 
 @endif # VERSION_6
 
-:sbc^SBIT_CZNO^COND Rd,rn,shift1	is $(AMODE) &  COND & c2124=6 & SBIT_CZNO & rn & Rd & c2627=0 & shift1
+:sbc^SBIT_CZNO^COND Rd,rn,shift1	is $(AMODE) & ARMcond=1 & COND & c2124=6 & SBIT_CZNO & rn & Rd & c2627=0 & shift1
 {
   build COND;
   build rn;
@@ -4807,7 +4823,7 @@ macro BitReverse_arm(val) {
   build SBIT_CZNO;
 }
 
-:sbc^SBIT_CZNO^COND Rd,rn,shift2	is $(AMODE) &  COND & c2124=6 & SBIT_CZNO & rn & Rd & c2627=0 & shift2
+:sbc^SBIT_CZNO^COND Rd,rn,shift2	is $(AMODE) & ARMcond=1 & COND & c2124=6 & SBIT_CZNO & rn & Rd & c2627=0 & shift2
 {
   build COND;
   build rn;
@@ -4818,7 +4834,7 @@ macro BitReverse_arm(val) {
   build SBIT_CZNO;
 }
 
-:sbc^SBIT_CZNO^COND Rd,rn,shift3	is $(AMODE) &  COND & c2124=6 & SBIT_CZNO & rn & Rd & c2627=0 & shift3
+:sbc^SBIT_CZNO^COND Rd,rn,shift3	is $(AMODE) & ARMcond=1 & COND & c2124=6 & SBIT_CZNO & rn & Rd & c2627=0 & shift3
 {
   build COND;
   build rn;
@@ -4829,7 +4845,7 @@ macro BitReverse_arm(val) {
   build SBIT_CZNO;
 }
 
-:sbc^SBIT_CZNO^COND pc,rn,shift1 	is $(AMODE) &  pc & COND & c2124=6 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift1
+:sbc^SBIT_CZNO^COND pc,rn,shift1 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=6 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift1
 {
   build COND;
   build rn;
@@ -4842,7 +4858,7 @@ macro BitReverse_arm(val) {
   goto [pc];
 }
 
-:sbc^SBIT_CZNO^COND pc,rn,shift2 	is $(AMODE) &  pc & COND & c2124=6 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift2
+:sbc^SBIT_CZNO^COND pc,rn,shift2 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=6 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift2
 {
   build COND;
   build rn;
@@ -4855,7 +4871,7 @@ macro BitReverse_arm(val) {
   goto [pc];
 }
 
-:sbc^SBIT_CZNO^COND pc,rn,shift3 	is $(AMODE) &  pc & COND & c2124=6 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift3
+:sbc^SBIT_CZNO^COND pc,rn,shift3 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=6 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift3
 {
   build COND;
   build rn;
@@ -4872,7 +4888,7 @@ macro BitReverse_arm(val) {
 
 @if defined(VERSION_6T2)
 
-:sbfx^COND Rd,Rm,lsbImm,widthMinus1	is $(AMODE) &  COND & c2127=0x3d & widthMinus1 & Rd & lsbImm & c0406=5 & Rm
+:sbfx^COND Rd,Rm,lsbImm,widthMinus1	is $(AMODE) & COND & ARMcond=1 & c2127=0x3d & widthMinus1 & Rd & lsbImm & c0406=5 & Rm
 {
 	build COND;
 	build lsbImm;
@@ -4888,7 +4904,7 @@ macro BitReverse_arm(val) {
 @if defined(VERSION_7)
 
 # Warning: note the non-standard use of Rd, Rm, Rn
-:sdiv^COND   RdHi,RnLo,RmHi    is $(AMODE) &  COND & c2027=0x71 & RdHi & c1215=0xf & RmHi & c0407=0x1 & RnLo
+:sdiv^COND   RdHi,RnLo,RmHi    is $(AMODE) & ARMcond=1 & COND & c2027=0x71 & RdHi & c1215=0xf & RmHi & c0407=0x1 & RnLo
 {
     build COND;
     local result = RnLo / RmHi;
@@ -4897,7 +4913,7 @@ macro BitReverse_arm(val) {
 
 @endif # VERSION_7
 
-:sel^COND Rd, Rn, Rm    is $(AMODE) &  COND & c2027=0x68 & Rn & Rd & c0811=15 & c0407=11 & Rm
+:sel^COND Rd, Rn, Rm    is $(AMODE) & ARMcond=1 & COND & c2027=0x68 & Rn & Rd & c0811=15 & c0407=11 & Rm
 {
 	build COND;
 	local rD1 = ((zext(GE1) * Rn) + (zext(!GE1) * Rm)) & 0x0ff;
@@ -4909,7 +4925,7 @@ macro BitReverse_arm(val) {
 
 @if defined(VERSION_6K)
 
-:sev^COND	is $(AMODE) &  COND & c0027=0x320f004
+:sev^COND	is $(AMODE) & ARMcond=1 & COND & c0027=0x320f004
 {
 	build COND;
 	SendEvent();
@@ -4924,7 +4940,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 :setend armEndianNess  is $(AMODE) &  (c0031=0xf1010000 | c0031=0xf1010200) & armEndianNess { setEndianState(armEndianNess); }
 
 
-:shadd16^COND Rd, Rn, Rm  is $(AMODE) &  COND & c2027=0x63 & Rn & Rd & c0811=15 & c0407=1 & Rm 
+:shadd16^COND Rd, Rn, Rm  is $(AMODE) & ARMcond=1 & COND & c2027=0x63 & Rn & Rd & c0811=15 & c0407=1 & Rm 
 {
   build COND;
   local tmpRn = Rn;
@@ -4934,7 +4950,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   Rd = (sum2 << 16) + (sum1 & 0xffff);
 }
 
-:shadd8^COND Rd, Rn, Rm  is $(AMODE) &  COND & c2027=0x63 & Rn & Rd & c0811=15 & c0407=9 & Rm 
+:shadd8^COND Rd, Rn, Rm  is $(AMODE) & ARMcond=1 & COND & c2027=0x63 & Rn & Rd & c0811=15 & c0407=9 & Rm 
 {
   build COND;
   local tmpRn = Rn;
@@ -4953,7 +4969,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 }
 
 # shaddsubx
-:shasx^COND Rd, Rn, Rm  is $(AMODE) &  COND & c2027=0x63 & Rn & Rd & c0811=15 & c0407=3 & Rm 
+:shasx^COND Rd, Rn, Rm  is $(AMODE) & ARMcond=1 & COND & c2027=0x63 & Rn & Rd & c0811=15 & c0407=3 & Rm 
 {
   build COND;
   local tmpRn = Rn;
@@ -4965,7 +4981,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 }
 
 # shsubbaddx
-:shsax^COND Rd, Rn, Rm  is $(AMODE) &  COND & c2027=0x63 & Rn & Rd & c0811=15 & c0407=5 & Rm 
+:shsax^COND Rd, Rn, Rm  is $(AMODE) & ARMcond=1 & COND & c2027=0x63 & Rn & Rd & c0811=15 & c0407=5 & Rm 
 {
   build COND;
   local tmpRn = Rn;
@@ -4976,7 +4992,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   Rd[16,16] = diff[1,16];
 }
 
-:shsub16^COND Rd, Rn, Rm  is $(AMODE) &  COND & c2027=0x63 & Rn & Rd & c0811=15 & c0407=7 & Rm 
+:shsub16^COND Rd, Rn, Rm  is $(AMODE) & ARMcond=1 & COND & c2027=0x63 & Rn & Rd & c0811=15 & c0407=7 & Rm 
 {
   build COND;
   local tmpRn = Rn;
@@ -4986,7 +5002,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   Rd = (sum2 << 16) + (sum1 & 0xffff);
 }
 
-:shsub8^COND Rd, Rn, Rm  is $(AMODE) &  COND & c2027=0x63 & Rn & Rd & c0811=15 & c0407=15 & Rm 
+:shsub8^COND Rd, Rn, Rm  is $(AMODE) & ARMcond=1 & COND & c2027=0x63 & Rn & Rd & c0811=15 & c0407=15 & Rm 
 {
   build COND;
   local tmpRn = Rn;
@@ -5008,7 +5024,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 
 @if defined(VERSION_5E)
 
-:smla^XBIT^YBIT^COND   smRd,smRn,smRm,smRa  is $(AMODE) &  COND & c2027=0x10 & smRd & smRn & smRm & c0707=1 & XBIT & YBIT & c0404=0 & smRa
+:smla^XBIT^YBIT^COND   smRd,smRn,smRm,smRa  is $(AMODE) & ARMcond=1 & COND & c2027=0x10 & smRd & smRn & smRm & c0707=1 & XBIT & YBIT & c0404=0 & smRa
 {
 	build COND;
 	local tmp:4 = sext(XBIT) * sext(YBIT);
@@ -5020,7 +5036,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 
 @if defined(VERSION_6)
 
-:smlad^COND smRd,smRn,smRm,smRa   is $(AMODE) &  COND & c2027=0x70 & c0407=1 & smRd & smRa & smRm & smRn
+:smlad^COND smRd,smRn,smRm,smRa   is $(AMODE) & ARMcond=1 & COND & c2027=0x70 & c0407=1 & smRd & smRa & smRm & smRn
 {
   build COND;
   local tmpRn = smRn;
@@ -5036,7 +5052,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   smRd = smRa + tmpprod;
 }
 
-:smladx^COND smRd, smRn, smRm, smRa  is $(AMODE) &  COND & c2027=0x70 & c0407=3 & smRd & smRn & smRm & smRa  
+:smladx^COND smRd, smRn, smRm, smRa  is $(AMODE) & ARMcond=1 & COND & c2027=0x70 & c0407=3 & smRd & smRn & smRm & smRa  
 {
   build COND;
   local tmpRn = smRn;
@@ -5054,7 +5070,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 
 @endif # VERSION_6
 
-:smlal^COND^SBIT_ZN  RdLo,RdHi,smRn,smRm 	is $(AMODE) &  COND & c2527=0 & c2124=7 & SBIT_ZN & RdLo & RdHi & smRn & c0407=9 & smRm
+:smlal^COND^SBIT_ZN  RdLo,RdHi,smRn,smRm 	is $(AMODE) & ARMcond=1 & COND & c2527=0 & c2124=7 & SBIT_ZN & RdLo & RdHi & smRn & c0407=9 & smRm
 {
   build COND;
   tmp:8 = (zext(RdHi) << 32) | zext(RdLo);
@@ -5069,7 +5085,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 
 @if defined(VERSION_5E)
 
-:smlal^XBIT^YBIT^COND   RdLo,RdHi,smRn,smRm  is $(AMODE) &  COND & c2027=0x14 & RdLo & RdHi & smRm & c0707=1 & XBIT & YBIT & c0404=0 & smRn
+:smlal^XBIT^YBIT^COND   RdLo,RdHi,smRn,smRm  is $(AMODE) & ARMcond=1 & COND & c2027=0x14 & RdLo & RdHi & smRm & c0707=1 & XBIT & YBIT & c0404=0 & smRn
 {
 	build COND;
 	local prod:8 = sext(XBIT) * sext(YBIT);
@@ -5083,7 +5099,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 
 @if defined(VERSION_6)
 
-:smlald^COND   RdLo,RdHi,smRn,smRm  is $(AMODE) &  COND & c2027=0x74 & RdLo & RdHi & c0607=0 & c0405=1 & smRn & smRm
+:smlald^COND   RdLo,RdHi,smRn,smRm  is $(AMODE) & ARMcond=1 & COND & c2027=0x74 & RdLo & RdHi & c0607=0 & c0405=1 & smRn & smRm
 {
 	build COND;
 	local tmpRn = smRn;
@@ -5097,7 +5113,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 	RdHi = result(4);
 }
 
-:smlaldx^COND   RdLo,RdHi,smRn,smRm  is $(AMODE) &  COND & c2027=0x74 & RdLo & RdHi & c0607=0 & c0405=3 & smRn & smRm
+:smlaldx^COND   RdLo,RdHi,smRn,smRm  is $(AMODE) & ARMcond=1 & COND & c2027=0x74 & RdLo & RdHi & c0607=0 & c0405=3 & smRn & smRm
 {
 	build COND;
 	local tmpRn = smRn;
@@ -5115,7 +5131,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 
 @if defined(VERSION_5E)
 
-:smlaw^YBIT^COND   smRd,smRn,smRm,smRa  is $(AMODE) &  COND & c2027=0x12 & smRd & smRn & smRm & c0707=1 & YBIT & x=0 & c0404=0 & smRa
+:smlaw^YBIT^COND   smRd,smRn,smRm,smRa  is $(AMODE) & ARMcond=1 & COND & c2027=0x12 & smRd & smRn & smRm & c0707=1 & YBIT & x=0 & c0404=0 & smRa
 {
 	build COND;
 	local tmp64:6 = sext(smRn) * sext(YBIT);
@@ -5128,7 +5144,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 
 @if defined(VERSION_6)
 
-:smlsd^COND smRd,smRn,smRm,smRa  is $(AMODE) &  COND & c2027=0x70 & smRd & smRn & c0607=1 & x=0 & c0404=1 & smRm & smRa
+:smlsd^COND smRd,smRn,smRm,smRa  is $(AMODE) & ARMcond=1 & COND & c2027=0x70 & smRd & smRn & c0607=1 & x=0 & c0404=1 & smRm & smRa
 {
 	build COND;
 	local tmpRn = smRn;
@@ -5142,7 +5158,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 	smRd = smRa + diff;	
 }
 
-:smlsdx^COND smRd,smRn,smRm,smRa  is $(AMODE) &  COND & c2027=0x70 & smRd & smRn & c0607=1 & x=1 & c0404=1 & smRm & smRa
+:smlsdx^COND smRd,smRn,smRm,smRa  is $(AMODE) & ARMcond=1 & COND & c2027=0x70 & smRd & smRn & c0607=1 & x=1 & c0404=1 & smRm & smRa
 {
 	build COND;
 	local tmpRn = smRn;
@@ -5156,7 +5172,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 	smRd = smRa + diff;	
 }
 
-:smlsld^COND RdLo,RdHi,smRn,smRm  is $(AMODE) &  COND & c2027=0x74 & RdHi & RdLo & smRm & c0607=1 & x=0 & c0404=1 & smRn
+:smlsld^COND RdLo,RdHi,smRn,smRm  is $(AMODE) & ARMcond=1 & COND & c2027=0x74 & RdHi & RdLo & smRm & c0607=1 & x=0 & c0404=1 & smRn
 {
 	build COND;
 	local tmpRn = smRn;
@@ -5170,7 +5186,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 	RdHi = result(4);
 }
 
-:smlsldx^COND RdLo,RdHi,smRn,smRm  is $(AMODE) &  COND & c2027=0x74 & RdHi & RdLo & smRm & c0607=1 & x=1 & c0404=1 & smRn
+:smlsldx^COND RdLo,RdHi,smRn,smRm  is $(AMODE) & ARMcond=1 & COND & c2027=0x74 & RdHi & RdLo & smRm & c0607=1 & x=1 & c0404=1 & smRn
 {
 	build COND;
 	local tmpRn = smRn;
@@ -5184,7 +5200,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 	RdHi = result(4);
 }
 
-:smmla^COND smRd,smRn,smRm,smRa  is $(AMODE) &  COND & c2027=0x75 & smRd & smRn & smRm & c0607=0 & r=0 & c0404=1 & smRa
+:smmla^COND smRd,smRn,smRm,smRa  is $(AMODE) & ARMcond=1 & COND & c2027=0x75 & smRd & smRn & smRm & c0607=0 & r=0 & c0404=1 & smRa
 {
 	build COND;
 	val:8 = sext(smRn) * sext(smRm);
@@ -5192,7 +5208,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 	smRd = val(4);
 }
 
-:smmlar^COND smRd,smRn,smRm,smRa  is $(AMODE) &  COND & c2027=0x75 & smRd & smRn & smRm & c0607=0 & r=1 & c0404=1 & smRa
+:smmlar^COND smRd,smRn,smRm,smRa  is $(AMODE) & ARMcond=1 & COND & c2027=0x75 & smRd & smRn & smRm & c0607=0 & r=1 & c0404=1 & smRa
 {
 	build COND;
 	val:8 = sext(smRn) * sext(smRm);
@@ -5200,7 +5216,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 	smRd = val(4);
 }
 
-:smmls^COND smRd,smRn,smRm,smRa  is $(AMODE) &  COND & c2027=0x75 & smRd & smRn & smRm & c0607=3 & r=0 & c0404=1 & smRa
+:smmls^COND smRd,smRn,smRm,smRa  is $(AMODE) & ARMcond=1 & COND & c2027=0x75 & smRd & smRn & smRm & c0607=3 & r=0 & c0404=1 & smRa
 {
 	build COND;
 	val:8 = sext(smRn) * sext(smRm);
@@ -5208,7 +5224,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 	smRd = val(4);
 }
 
-:smmlsr^COND smRd,smRn,smRm,smRa  is $(AMODE) &  COND & c2027=0x75 & smRd & smRn & smRm & c0607=3 & r=1 & c0404=1 & smRa
+:smmlsr^COND smRd,smRn,smRm,smRa  is $(AMODE) & ARMcond=1 & COND & c2027=0x75 & smRd & smRn & smRm & c0607=3 & r=1 & c0404=1 & smRa
 {
 	build COND;
 	val:8 = sext(smRn) * sext(smRm);
@@ -5216,21 +5232,21 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 	smRd = val(4);
 }
 
-:smmul^COND smRd,smRn,smRm  is $(AMODE) &  COND & c2027=0x75 & smRd & c1215=15 & smRn & c0607=0 & r=0 & c0404=1 & smRm
+:smmul^COND smRd,smRn,smRm  is $(AMODE) & ARMcond=1 & COND & c2027=0x75 & smRd & c1215=15 & smRn & c0607=0 & r=0 & c0404=1 & smRm
 {
 	build COND;
 	val:8 = sext(smRn) * sext(smRm);
 	smRd = val(4);
 }
 
-:smmulr^COND smRd,smRn,smRm  is $(AMODE) &  COND & c2027=0x75 & smRd & c1215=15 & smRn & c0607=0 & r=1 & c0404=1 & smRm
+:smmulr^COND smRd,smRn,smRm  is $(AMODE) & ARMcond=1 & COND & c2027=0x75 & smRd & c1215=15 & smRn & c0607=0 & r=1 & c0404=1 & smRm
 {
 	build COND;
 	val:8 = (sext(smRn) * sext(smRm)) + 0x080000000;
 	smRd = val(4);
 }
 
-:smuad^COND smRd, smRn, smRm  is $(AMODE) &  COND & c2027=0x70 & c0407=1 & smRd & c1619=15 & smRn & smRm
+:smuad^COND smRd, smRn, smRm  is $(AMODE) & ARMcond=1 & COND & c2027=0x70 & c0407=1 & smRd & c1619=15 & smRn & smRm
 {
   build COND;
   local tmpRm = smRm;
@@ -5246,7 +5262,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   smRd = tmpprod;
 }
 
-:smuadx^COND smRd, smRn, smRm  is $(AMODE) &  COND & c2027=0x70 & c0407=3 & smRd & c1619=15 & smRn & smRm
+:smuadx^COND smRd, smRn, smRm  is $(AMODE) & ARMcond=1 & COND & c2027=0x70 & c0407=3 & smRd & c1619=15 & smRn & smRm
 {
   build COND;
   local tmpRm = smRm;
@@ -5266,7 +5282,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 
 @if defined(VERSION_5E)
 
-:smul^XBIT^YBIT^COND   smRd,smRn,smRm  is $(AMODE) &  COND & c2027=0x16 & smRd & c1215=0 & smRm & c0707=1 & XBIT & YBIT & c0404=0 & smRn
+:smul^XBIT^YBIT^COND   smRd,smRn,smRm  is $(AMODE) & ARMcond=1 & COND & c2027=0x16 & smRd & c1215=0 & smRm & c0707=1 & XBIT & YBIT & c0404=0 & smRn
 {
 	build COND;
 	tmp:8 = sext(XBIT) * sext(YBIT);
@@ -5275,7 +5291,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 
 @endif # VERSION_5E
 
-:smull^COND^SBIT_ZN RdLo,RdHi,smRn,smRm 	is $(AMODE) &  COND & c2527=0 & c2124=6 & SBIT_ZN & RdHi & RdLo & smRn & c0407=9 & smRm
+:smull^COND^SBIT_ZN RdLo,RdHi,smRn,smRm 	is $(AMODE) & ARMcond=1 & COND & c2527=0 & c2124=6 & SBIT_ZN & RdHi & RdLo & smRn & c0407=9 & smRm
 {
   build COND;
   rn64:8 = sext(smRn);
@@ -5289,7 +5305,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 
 @if defined(VERSION_5E)
 
-:smulw^YBIT^COND   smRd,smRn,smRm  is $(AMODE) &  COND & c2027=0x12 & smRd & c1215=0 & smRn & c0707=1 & YBIT & x=1 & c0404=0 & smRm
+:smulw^YBIT^COND   smRd,smRn,smRm  is $(AMODE) & ARMcond=1 & COND & c2027=0x12 & smRd & c1215=0 & smRn & c0707=1 & YBIT & x=1 & c0404=0 & smRm
 {
 	build COND;
 	tmp:6 = sext(smRn) * sext(YBIT);
@@ -5301,7 +5317,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 
 @if defined(VERSION_6)
 
-:smusd^COND smRd,smRn,smRm  is $(AMODE) &  COND & c2027=0x70 & smRd & c1215=15 & smRm & c0607=1 & x=0 & c0404=1 & smRn
+:smusd^COND smRd,smRn,smRm  is $(AMODE) & ARMcond=1 & COND & c2027=0x70 & smRd & c1215=15 & smRm & c0607=1 & x=0 & c0404=1 & smRn
 {
 	build COND;
 	local tmpRn = smRn;
@@ -5313,7 +5329,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 	smRd = prod1 - prod2;
 }
 
-:smusdx^COND smRd,smRn,smRm  is $(AMODE) &  COND & c2027=0x70 & smRd & c1215=15 & smRm & c0607=1 & x=1 & c0404=1 & smRn
+:smusdx^COND smRd,smRn,smRm  is $(AMODE) & ARMcond=1 & COND & c2027=0x70 & smRd & c1215=15 & smRm & c0607=1 & x=1 & c0404=1 & smRn
 {
 	build COND;
 	local tmpRn = smRn;
@@ -5326,7 +5342,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 }
 
 
-:ssat^COND Rd, sSatImm5, shift4  is $(AMODE) &  COND & c2127=0x35 & c0405=1 & sSatImm5 & Rd & shift4 
+:ssat^COND Rd, sSatImm5, shift4  is $(AMODE) & ARMcond=1 & COND & c2127=0x35 & c0405=1 & sSatImm5 & Rd & shift4 
 {
   build COND;  
   build shift4;
@@ -5335,7 +5351,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   Rd = tmp;
 }
 
-:ssat16^COND   Rd, sSatImm4, Rm    is $(AMODE) &  COND & c2027=0x6a & c0811=15 & c0407=0x3 & sSatImm4 & Rd & Rm
+:ssat16^COND   Rd, sSatImm4, Rm    is $(AMODE) & ARMcond=1 & COND & c2027=0x6a & c0811=15 & c0407=0x3 & sSatImm4 & Rd & Rm
 {
   build COND;
   build sSatImm4;
@@ -5348,7 +5364,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 }
 
 # ssubaddx
-:ssax^COND  Rd, Rn, Rm    is $(AMODE) &  COND & c2027=0x61 & c0811=15 & c0407=5 & Rn & Rd & Rm
+:ssax^COND  Rd, Rn, Rm    is $(AMODE) & ARMcond=1 & COND & c2027=0x61 & c0811=15 & c0407=5 & Rn & Rd & Rm
 {
   build COND;
   local lRn = Rn & 0xffff;
@@ -5364,7 +5380,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   Rd = ((diff & 0xffff) << 16) | (sum & 0xffff);
 }
 
-:ssub16^COND  Rd, Rn, Rm    is $(AMODE) &  COND & c2027=0x61 & c0811=15 & c0407=7 & Rn & Rd & Rm
+:ssub16^COND  Rd, Rn, Rm    is $(AMODE) & ARMcond=1 & COND & c2027=0x61 & c0811=15 & c0407=7 & Rn & Rd & Rm
 {
   build COND;
   local lRn = Rn & 0xffff;
@@ -5380,7 +5396,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   Rd = ((diffu & 0xffff) << 16) | (diffl & 0xffff);
 }
 
-:ssub8^COND  Rd, Rn, Rm    is $(AMODE) &  COND & c2027=0x61 & c0811=15 & c0407=15 & Rn & Rd & Rm
+:ssub8^COND  Rd, Rn, Rm    is $(AMODE) & ARMcond=1 & COND & c2027=0x61 & c0811=15 & c0407=15 & Rn & Rd & Rm
 {
   build COND;
   local tmpRn = Rn & 0xff;
@@ -5404,7 +5420,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 
 @endif # VERSION_6
 
-:stc^COND cpn,CRd,addrmode5 	is $(AMODE) &  COND & c2527=6 & addrmode5 & cpn & CRd & N22=0 & L20=0
+:stc^COND cpn,CRd,addrmode5 	is $(AMODE) & ARMcond=1 & COND & c2527=6 & addrmode5 & cpn & CRd & N22=0 & L20=0
 {
   build COND;
   build addrmode5;
@@ -5412,7 +5428,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   coprocessor_store(t_cpn,CRd,addrmode5);
 }
 
-:stcl^COND cpn,CRd,addrmode5 is $(AMODE) &  COND & c2527=6 & addrmode5 & cpn & CRd & N22=1 & L20=0
+:stcl^COND cpn,CRd,addrmode5 is $(AMODE) & ARMcond=1 & COND & c2527=6 & addrmode5 & cpn & CRd & N22=1 & L20=0
 {
   build COND;
   build addrmode5;
@@ -5420,13 +5436,13 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   coprocessor_storelong(t_cpn,CRd,addrmode5);
 }
 
-:stm^mdir^COND reglist 		is $(AMODE) &  COND & c2527=4 & mdir & L20=0 & reglist
+:stm^mdir^COND reglist 		is $(AMODE) & ARMcond=1 & COND & c2527=4 & mdir & L20=0 & reglist
 {
   build COND;
   build reglist;
 }
 
-#:str^COND Rd,addrmode2 	is $(AMODE) &  COND & c2627=1 & B22=0 & L20=0 & Rd & (I25=0 | (I25=1 & c0404=0)) & addrmode2
+#:str^COND Rd,addrmode2 	is $(AMODE) & ARMcond=1 & COND & c2627=1 & B22=0 & L20=0 & Rd & (I25=0 | (I25=1 & c0404=0)) & addrmode2
 #{
 #  build COND;
 #  build addrmode2;
@@ -5435,14 +5451,14 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 #}
 
 # The following form of str assumes alignment checking is on
-:str^COND Rd,addrmode2 		is $(AMODE) &  COND & c2627=1 & B22=0 & L20=0 & Rd & (I25=0 | (I25=1 & c0404=0)) & addrmode2
+:str^COND Rd,addrmode2 		is $(AMODE) & ARMcond=1 & COND & c2627=1 & B22=0 & L20=0 & Rd & (I25=0 | (I25=1 & c0404=0)) & addrmode2
 {
   build COND;
   build addrmode2;
   *addrmode2 = Rd;
 }
 
-:strb^COND Rd,addrmode2 	is $(AMODE) &  COND & c2627=1 & B22=1 & L20=0 & Rd & (I25=0 | (I25=1 & c0404=0)) & addrmode2
+:strb^COND Rd,addrmode2 	is $(AMODE) & ARMcond=1 & COND & c2627=1 & B22=1 & L20=0 & Rd & (I25=0 | (I25=1 & c0404=0)) & addrmode2
 {
   build COND;
   build addrmode2;
@@ -5450,7 +5466,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   *addrmode2 = tmpRd:1;
 }
 
-:strbt^COND Rd,addrmode2 	is $(AMODE) &  COND & c2627=1 &P24=0 & B22=1 & W21=1 & L20=0 & Rd & (I25=0 | (I25=1 & c0404=0)) & addrmode2
+:strbt^COND Rd,addrmode2 	is $(AMODE) & ARMcond=1 & COND & c2627=1 & P24=0 & B22=1 & W21=1 & L20=0 & Rd & (I25=0 | (I25=1 & c0404=0)) & addrmode2
 {
   build COND;
   build addrmode2;
@@ -5458,7 +5474,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   *addrmode2 = tmpRd:1;
 }
 
-:strh^COND Rd,addrmode3 	is $(AMODE) &  COND & c2527=0 & L20=0 & c0407=11 & Rd & addrmode3
+:strh^COND Rd,addrmode3 	is $(AMODE) & ARMcond=1 & COND & c2527=0 & L20=0 & c0407=11 & Rd & addrmode3
 {
   build COND;
   build addrmode3;
@@ -5468,7 +5484,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 
 @if defined(VERSION_5E)
 
-:strd^COND Rd,Rd2,addrmode3   is $(AMODE) &  COND & c2527=0 & c0407=0xf & L20=0 & Rd & Rd2 & addrmode3
+:strd^COND Rd,Rd2,addrmode3   is $(AMODE) & ARMcond=1 & COND & c2527=0 & c0407=0xf & L20=0 & Rd & Rd2 & addrmode3
 {
   build COND;
   build addrmode3;
@@ -5482,7 +5498,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 
 @if defined(VERSION_6)
 
-:strex^COND  Rd,Rm,[Rn]    is $(AMODE) &  COND & c2027=0x18 & c0411=0xf9 & Rn & Rd & Rm
+:strex^COND  Rd,Rm,[Rn]    is $(AMODE) & ARMcond=1 & COND & c2027=0x18 & c0411=0xf9 & Rn & Rd & Rm
 {
 	build COND;
 	local tmp = Rn;
@@ -5497,7 +5513,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 
 @if defined(VERSION_6K)
 
-:strexb^COND  Rd,Rm,[Rn]    is $(AMODE) &  COND & c2027=0x1c & c0411=0xf9 & Rn & Rd & Rm
+:strexb^COND  Rd,Rm,[Rn]    is $(AMODE) & ARMcond=1 & COND & c2027=0x1c & c0411=0xf9 & Rn & Rd & Rm
 {
 	build COND;
 	local tmp = Rn;
@@ -5509,7 +5525,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   	*tmp = tmpRm:1;
 }
 
-:strexd^COND Rd,Rm,Rm2,[Rn]  is $(AMODE) &  COND & c2027=0x1a & Rn & Rd & c0411=0xf9 & c0003 & Rm & Rm2
+:strexd^COND Rd,Rm,Rm2,[Rn]  is $(AMODE) & ARMcond=1 & COND & c2027=0x1a & Rn & Rd & c0411=0xf9 & c0003 & Rm & Rm2
 {
 	build COND;
 	local addr = Rn;
@@ -5522,7 +5538,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 	*(addr) = Rm2;
 }
 
-:strexh^COND  Rd,Rm,[Rn]    is $(AMODE) &  COND & c2027=0x1e & c0411=0xf9 & Rn & Rd & Rm
+:strexh^COND  Rd,Rm,[Rn]    is $(AMODE) & ARMcond=1 & COND & c2027=0x1e & c0411=0xf9 & Rn & Rd & Rm
 {
 	build COND;
 	local tmp = Rn;
@@ -5534,14 +5550,14 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 	*tmp = tmpRm:2;
 }
 
-:strht^COND Rd,addrmode3		is $(AMODE) &  COND & c2527=0 & P24=0 & W21=1 & L20=0 & c0407=11 & Rd & addrmode3	{
+:strht^COND Rd,addrmode3		is $(AMODE) & ARMcond=1 & COND & c2527=0 & P24=0 & W21=1 & L20=0 & c0407=11 & Rd & addrmode3	{
   build COND;
   *:2 addrmode3 = Rd;
 }
 
 @endif # VERSION_6K
 
-#:strt^COND Rd,addrmode2 	is $(AMODE) &  COND & c2627=1 & B22=0 & L20=0 & P24=0 & W21=1 & Rd & addrmode2
+#:strt^COND Rd,addrmode2 	is $(AMODE) & ARMcond=1 & COND & c2627=1 & B22=0 & L20=0 & P24=0 & W21=1 & Rd & addrmode2
 #{
 #  build COND;
 #  build addrmode2;
@@ -5550,14 +5566,14 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 #}
 
 # The following form of str assumes alignment checking is on
-:strt^COND Rd,addrmode2 	is $(AMODE) &  COND & c2627=1 & B22=0 & L20=0 & P24=0 & W21=1 & Rd & (I25=0 | (I25=1 & c0404=0)) & addrmode2
+:strt^COND Rd,addrmode2 	is $(AMODE) & ARMcond=1 & COND & c2627=1 & B22=0 & L20=0 & P24=0 & W21=1 & Rd & (I25=0 | (I25=1 & c0404=0)) & addrmode2
 {
   build COND;
   build addrmode2;
   *addrmode2 = Rd;
 }
 
-:sub^COND^SBIT_CZNO Rd,rn,shift1	is $(AMODE) &  COND & c2124=2 & SBIT_CZNO & rn & Rd & c2627=0 & shift1
+:sub^COND^SBIT_CZNO Rd,rn,shift1	is $(AMODE) & ARMcond=1 & COND & c2124=2 & SBIT_CZNO & rn & Rd & c2627=0 & shift1
 {
   build COND;
   build rn;
@@ -5568,7 +5584,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   build SBIT_CZNO;
 }
 
-:sub^COND^SBIT_CZNO Rd,rn,shift2	is $(AMODE) &  COND & c2124=2 & SBIT_CZNO & rn & Rd & c2627=0 & shift2
+:sub^COND^SBIT_CZNO Rd,rn,shift2	is $(AMODE) & ARMcond=1 & COND & c2124=2 & SBIT_CZNO & rn & Rd & c2627=0 & shift2
 {
   build COND;
   build rn;
@@ -5579,7 +5595,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   build SBIT_CZNO;
 }
 
-:sub^COND^SBIT_CZNO Rd,rn,shift3	is $(AMODE) &  COND & c2124=2 & SBIT_CZNO & rn & Rd & c2627=0 & shift3
+:sub^COND^SBIT_CZNO Rd,rn,shift3	is $(AMODE) & ARMcond=1 & COND & c2124=2 & SBIT_CZNO & rn & Rd & c2627=0 & shift3
 {
   build COND;
   build rn;
@@ -5590,7 +5606,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   build SBIT_CZNO;
 }
 
-:sub^COND^SBIT_CZNO pc,rn,shift1 	is $(AMODE) &  pc & COND & c2124=2 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift1
+:sub^COND^SBIT_CZNO pc,rn,shift1 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=2 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift1
 {
   build COND;
   build rn;
@@ -5605,7 +5621,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   goto [pc];
 }
 
-:sub^COND^SBIT_CZNO pc,rn,shift1 	is $(AMODE) &  pc & COND & c2124=2 & SBIT_CZNO & rn & Rd=15 & Rn=14 & I25=1 & immed=0 & rotate=0 & c2627=0 & shift1
+:sub^COND^SBIT_CZNO pc,rn,shift1 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=2 & SBIT_CZNO & rn & Rd=15 & Rn=14 & I25=1 & immed=0 & rotate=0 & c2627=0 & shift1
 {
   build COND;
   build rn;
@@ -5619,7 +5635,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   return [pc];
 }
 
-:sub^COND^SBIT_CZNO pc,rn,shift2 	is $(AMODE) &  pc & COND & c2124=2 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift2
+:sub^COND^SBIT_CZNO pc,rn,shift2 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=2 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift2
 {
   build COND;
   build rn;
@@ -5634,7 +5650,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   goto [pc];
 }
 
-:sub^COND^SBIT_CZNO pc,rn,shift3 	is $(AMODE) &  pc & COND & c2124=2 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift3
+:sub^COND^SBIT_CZNO pc,rn,shift3 	is $(AMODE) & pc & ARMcond=1 & COND & c2124=2 & SBIT_CZNO & rn & Rd=15 & c2627=0 & shift3
 {
   build COND;
   build rn;
@@ -5649,14 +5665,14 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   goto [pc];
 }
 
-:swi^COND immed24 		is $(AMODE) &  COND & c2427=15 & immed24
+:swi^COND immed24 		is $(AMODE) & ARMcond=1 & COND & c2427=15 & immed24
 {
   build COND;
   tmp:4 = immed24;
   software_interrupt(tmp);
 }
 
-#:swp^COND Rd,Rm,Rn 		is $(AMODE) &  COND & c2027=16 & Rn & Rd & c0811=0 & c0407=9 & Rm
+#:swp^COND Rd,Rm,Rn 		is $(AMODE) & ARMcond=1 & COND & c2027=16 & Rn & Rd & c0811=0 & c0407=9 & Rm
 #{
 #  build COND;
 #  tmp = Rn & 0xfffffffc;
@@ -5668,7 +5684,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 #}
 
 # Assuming alignment checking is enabled
-:swp^COND Rd,Rm,Rn 		is $(AMODE) &  COND & c2027=16 & Rn & Rd & c0811=0 & c0407=9 & Rm
+:swp^COND Rd,Rm,Rn 		is $(AMODE) & ARMcond=1 & COND & c2027=16 & Rn & Rd & c0811=0 & c0407=9 & Rm
 {
   build COND;
   val:4 = *Rn;
@@ -5676,7 +5692,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   Rd = val;
 }
 
-:swpb^COND Rd,Rm,Rn 		is $(AMODE) &  COND & c2027=20 & Rn & Rd & c0811=0 & c0407=9 & Rm
+:swpb^COND Rd,Rm,Rn 		is $(AMODE) & ARMcond=1 & COND & c2027=20 & Rn & Rd & c0811=0 & c0407=9 & Rm
 {
   build COND;
   local tmp = *:1 Rn;
@@ -5687,14 +5703,14 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 
 @if defined(VERSION_6)
 
-:sxtab^COND   Rd,Rn,ror1  is $(AMODE) &  COND & c2327=13 & c2022=2 & c0407=7 & Rd & Rn & ror1
+:sxtab^COND   Rd,Rn,ror1  is $(AMODE) & ARMcond=1 & COND & c2327=13 & c2022=2 & c0407=7 & Rd & Rn & ror1
 {
   build COND;
   build ror1;
   Rd = Rn + sext(ror1:1);
 }
 
-:sxtab16^COND Rd,Rn,ror1  is $(AMODE) &  COND & c2027=0x68 & c0407=7 & Rn & Rd & ror1
+:sxtab16^COND Rd,Rn,ror1  is $(AMODE) & ARMcond=1 & COND & c2027=0x68 & c0407=7 & Rn & Rd & ror1
 {
   build COND;
   build ror1;
@@ -5705,21 +5721,21 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   Rd = (zext(hi) << 16) + zext(lo);
 }
 
-:sxtah^COND   Rd,Rn,ror1  is $(AMODE) &  COND & c2327=13 & c2022=3 & c0407=7 & Rd & Rn & ror1
+:sxtah^COND   Rd,Rn,ror1  is $(AMODE) & ARMcond=1 & COND & c2327=13 & c2022=3 & c0407=7 & Rd & Rn & ror1
 {
   build COND;
   build ror1;
   Rd = Rn + sext(ror1:2);
 }
 
-:sxtb^COND    Rd,ror1     is $(AMODE) &  COND & c2327=13 & c2022=2 & c0407=7 & Rd & c1619=15 & ror1
+:sxtb^COND    Rd,ror1     is $(AMODE) & ARMcond=1 & COND & c2327=13 & c2022=2 & c0407=7 & Rd & c1619=15 & ror1
 {
   build COND;
   build ror1;
   Rd = sext(ror1:1);
 }
 
-:sxtb16^COND   Rd,ror1  is $(AMODE) &  COND & c2327=13 & c2022=0 & c0407=7 & Rd & c1619=15 & ror1
+:sxtb16^COND   Rd,ror1  is $(AMODE) & ARMcond=1 & COND & c2327=13 & c2022=0 & c0407=7 & Rd & c1619=15 & ror1
 {
   build COND;
   build ror1;
@@ -5730,7 +5746,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   Rd = (zext(high) << 16) | zext(low);
 }
 
-:sxth^COND   Rd,ror1  is $(AMODE) &  COND & c2327=13 & c2022=3 & c0407=7 & Rd & c1619=15 & ror1
+:sxth^COND   Rd,ror1  is $(AMODE) & ARMcond=1 & COND & c2327=13 & c2022=3 & c0407=7 & Rd & c1619=15 & ror1
 {
   build COND;
   build ror1;
@@ -5739,7 +5755,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 
 @endif # VERSION_6
 
-:teq^COND rn,shift1 		is $(AMODE) &  COND & c2024=19 & rn & c1215=0 & c2627=0 & shift1
+:teq^COND rn,shift1 		is $(AMODE) & ARMcond=1 & COND & c2024=19 & rn & c1215=0 & c2627=0 & shift1
 {
   build COND;
   build rn;
@@ -5750,7 +5766,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   affectflags();
 }
 
-:teq^COND rn,shift2 		is $(AMODE) &  COND & c2024=19 & rn & c1215=0 & c2627=0 & shift2
+:teq^COND rn,shift2 		is $(AMODE) & ARMcond=1 & COND & c2024=19 & rn & c1215=0 & c2627=0 & shift2
 {
   build COND;
   build rn;
@@ -5761,7 +5777,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   affectflags();
 }
 
-:teq^COND rn,shift3 		is $(AMODE) &  COND & c2024=19 & rn & c1215=0 & c2627=0 & shift3
+:teq^COND rn,shift3 		is $(AMODE) & ARMcond=1 & COND & c2024=19 & rn & c1215=0 & c2627=0 & shift3
 {
   build COND;
   build rn;
@@ -5772,7 +5788,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   affectflags();
 }
 
-:teq^COND^"p" rn,shift1 		is $(AMODE) &  COND & c2024=19 & rn & c1215=15 & c2627=0 & shift1
+:teq^COND^"p" rn,shift1 		is $(AMODE) & ARMcond=1 & COND & c2024=19 & rn & c1215=15 & c2627=0 & shift1
 {
   build COND;
   build rn;
@@ -5783,7 +5799,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   affectflags();
 }
 
-:teq^COND^"p" rn,shift2 		is $(AMODE) &  COND & c2024=19 & rn & c1215=15 & c2627=0 & shift2
+:teq^COND^"p" rn,shift2 		is $(AMODE) & ARMcond=1 & COND & c2024=19 & rn & c1215=15 & c2627=0 & shift2
 {
   build COND;
   build rn;
@@ -5794,7 +5810,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   affectflags();
 }
 
-:teq^COND^"p" rn,shift3 		is $(AMODE) &  COND & c2024=19 & rn & c1215=15 & c2627=0 & shift3
+:teq^COND^"p" rn,shift3 		is $(AMODE) & ARMcond=1 & COND & c2024=19 & rn & c1215=15 & c2627=0 & shift3
 {
   build COND;
   build rn;
@@ -5806,7 +5822,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 }
 
 
-:tst^COND rn,shift1 		is $(AMODE) &  COND & c2024=17 & rn & c1215=0 & c2627=0 & shift1
+:tst^COND rn,shift1 		is $(AMODE) & ARMcond=1 & COND & c2024=17 & rn & c1215=0 & c2627=0 & shift1
 {
   build COND;
   build rn;
@@ -5817,7 +5833,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   affectflags();
 }
 
-:tst^COND rn,shift2 		is $(AMODE) &  COND & c2024=17 & rn & c1215=0 & c2627=0 & shift2
+:tst^COND rn,shift2 		is $(AMODE) & ARMcond=1 & COND & c2024=17 & rn & c1215=0 & c2627=0 & shift2
 {
   build COND;
   build rn;
@@ -5828,7 +5844,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   affectflags();
 }
 
-:tst^COND rn,shift3 		is $(AMODE) &  COND & c2024=17 & rn & c1215=0 & c2627=0 & shift3
+:tst^COND rn,shift3 		is $(AMODE) & ARMcond=1 & COND & c2024=17 & rn & c1215=0 & c2627=0 & shift3
 {
   build COND;
   build rn;
@@ -5841,7 +5857,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 
 @if defined(VERSION_6)
 
-:uadd16^COND   Rd,rn,rm   is   $(AMODE) &  COND & c2327=12 & c2022=5 & c0811=15 & c0407=1 & Rd & rn & rm
+:uadd16^COND   Rd,rn,rm   is   $(AMODE) & ARMcond=1 & COND & c2327=12 & c2022=5 & c0811=15 & c0407=1 & Rd & rn & rm
 {
   build COND;
   build rn;
@@ -5863,7 +5879,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   Rd = zext(tmpHigh) << 16 | zext(tmpLow);
 }
 
-:uadd8^COND   Rd,rn,rm   is   $(AMODE) &  COND & c2327=12 & c2022=5 & c0811=15 & c0407=9 & Rd & rn & rm
+:uadd8^COND   Rd,rn,rm   is   $(AMODE) & ARMcond=1 & COND & c2327=12 & c2022=5 & c0811=15 & c0407=9 & Rd & rn & rm
 {
   build COND;
   build rn;
@@ -5890,7 +5906,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 }
 
 # uaddsubx
-:uasx^COND Rd,rn,rm   is   $(AMODE) &  COND & c2327=12 & c2022=5 & c0811=15 & c0407=3 & Rd & rn & rm
+:uasx^COND Rd,rn,rm   is   $(AMODE) & ARMcond=1 & COND & c2327=12 & c2022=5 & c0811=15 & c0407=3 & Rd & rn & rm
 {
   build COND;
   build rn;
@@ -5916,7 +5932,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 
 @if defined(VERSION_6T2)
 
-:ubfx^COND Rd,Rm,lsbImm,widthMinus1	is $(AMODE) &  COND & c2127=0x3f & widthMinus1 & Rd & lsbImm & c0406=5 & Rm
+:ubfx^COND Rd,Rm,lsbImm,widthMinus1	is $(AMODE) & ARMcond=1 & COND & c2127=0x3f & widthMinus1 & Rd & lsbImm & c0406=5 & Rm
 {
 	build COND;
 	build lsbImm;
@@ -5931,7 +5947,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 
 @if defined(VERSION_7)
 
-:udiv^COND   RdHi,RnLo,RmHi    is $(AMODE) &  COND & c2027=0x73 & RdHi & c1215=0xf & RmHi & c0407=0x1 & RnLo
+:udiv^COND   RdHi,RnLo,RmHi    is $(AMODE) & ARMcond=1 & COND & c2027=0x73 & RdHi & c1215=0xf & RmHi & c0407=0x1 & RnLo
 {
     build COND;
     result:8 = zext(RnLo) / zext(RmHi);
@@ -5942,7 +5958,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 
 @if defined(VERSION_6)
 
-:uhadd16^COND   Rd,rn,rm   is   $(AMODE) &  COND & c2327=12 & c2022=7 & c0811=15 & c0407=1 & Rd & rn & rm
+:uhadd16^COND   Rd,rn,rm   is   $(AMODE) & ARMcond=1 & COND & c2327=12 & c2022=7 & c0811=15 & c0407=1 & Rd & rn & rm
 {
   build COND;
   build rn;
@@ -5957,7 +5973,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   Rd[16,16] = tmpHigh[1,16];
 }
 
-:uhadd8^COND   Rd,rn,rm   is   $(AMODE) &  COND & c2327=12 & c2022=7 & c0811=15 & c0407=9 & Rd & rn & rm
+:uhadd8^COND   Rd,rn,rm   is   $(AMODE) & ARMcond=1 & COND & c2327=12 & c2022=7 & c0811=15 & c0407=9 & Rd & rn & rm
 {
   build COND;
   build rn;
@@ -5980,7 +5996,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 }
 
 # uhaddsubx
-:uhasx^COND   Rd,rn,rm   is   $(AMODE) &  COND & c2327=12 & c2022=7 & c0811=15 & c0407=3 & Rd & rn & rm
+:uhasx^COND   Rd,rn,rm   is   $(AMODE) & ARMcond=1 & COND & c2327=12 & c2022=7 & c0811=15 & c0407=3 & Rd & rn & rm
 {
   build COND;
   build rn;
@@ -5997,7 +6013,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 }
 
 # uhsubaddx
-:uhsax^COND   Rd,rn,rm   is   $(AMODE) &  COND & c2327=12 & c2022=7 & c0811=15 & c0407=5 & Rd & rn & rm
+:uhsax^COND   Rd,rn,rm   is   $(AMODE) & ARMcond=1 & COND & c2327=12 & c2022=7 & c0811=15 & c0407=5 & Rd & rn & rm
 {
   build COND;
   build rn;
@@ -6013,7 +6029,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   Rd = (tmpHigh << 16) | tmpLow;
 }
 
-:uhsub16^COND   Rd,rn,rm   is   $(AMODE) &  COND & c2327=12 & c2022=7 & c0811=15 & c0407=7 & Rd & rn & rm
+:uhsub16^COND   Rd,rn,rm   is   $(AMODE) & ARMcond=1 & COND & c2327=12 & c2022=7 & c0811=15 & c0407=7 & Rd & rn & rm
 {
   build COND;
   build rn;
@@ -6029,7 +6045,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   Rd = (tmpHigh << 16) | tmpLow;
 }
 
-:uhsub8^COND   Rd,rn,rm   is   $(AMODE) &  COND & c2327=12 & c2022=7 & c0811=15 & c0407=15 & Rd & rn & rm
+:uhsub8^COND   Rd,rn,rm   is   $(AMODE) & ARMcond=1 & COND & c2327=12 & c2022=7 & c0811=15 & c0407=15 & Rd & rn & rm
 {
   build COND;
   build rn;
@@ -6051,7 +6067,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   Rd = (b4 << 24) | (b3 << 16) | (b2 << 8) | b1;
 }
 
-:umaal^COND  RdLo,RdHi,Rm,Rs  is $(AMODE) &  COND & c2027=0x04 & RdHi & RdLo & Rs & c0407=9 & Rm
+:umaal^COND  RdLo,RdHi,Rm,Rs  is $(AMODE) & ARMcond=1 & COND & c2027=0x04 & RdHi & RdLo & Rs & c0407=9 & Rm
 {
   build COND;
   result:8 = (zext(Rm) * zext(Rs)) + zext(RdLo) + zext(RdHi);
@@ -6061,7 +6077,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 
 @endif # VERSION_6
 
-:umlal^COND^SBIT_ZN  Rd,Rn,rm,rs 	is $(AMODE) &  COND & c2527=0 & c2124=5 & SBIT_ZN & Rn & Rd & rs & c0407=9 & rm
+:umlal^COND^SBIT_ZN  Rd,Rn,rm,rs 	is $(AMODE) & ARMcond=1 & COND & c2527=0 & c2124=5 & SBIT_ZN & Rn & Rd & rs & c0407=9 & rm
 {
   build COND;
   build rm;
@@ -6076,7 +6092,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   build SBIT_ZN;
 }
 
-:umull^COND^SBIT_ZN Rd,Rn,rm,rs 	is $(AMODE) &  COND & c2527=0 & c2124=4 & SBIT_ZN & Rn & Rd & rs & c0407=9 & rm
+:umull^COND^SBIT_ZN Rd,Rn,rm,rs 	is $(AMODE) & ARMcond=1 & COND & c2527=0 & c2124=4 & SBIT_ZN & Rn & Rd & rs & c0407=9 & rm
 {
   build COND;
   build rm;
@@ -6092,7 +6108,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 
 @if defined(VERSION_6)
 
-:uqadd16^COND  Rd, Rn, Rm    is $(AMODE) &  COND & c2027=0x66 & c0811=15 & c0407=1 & Rn & Rd & Rm
+:uqadd16^COND  Rd, Rn, Rm    is $(AMODE) & ARMcond=1 & COND & c2027=0x66 & c0811=15 & c0407=1 & Rn & Rd & Rm
 {
   build COND;
   local tmpRn = Rn;
@@ -6106,7 +6122,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   Rd = (zext(sum2) << 16) | zext(sum1);
 }
 
-:uqadd8^COND  Rd, Rn, Rm    is $(AMODE) &  COND & c2027=0x66 & c0811=15 & c0407=9 & Rn & Rd & Rm
+:uqadd8^COND  Rd, Rn, Rm    is $(AMODE) & ARMcond=1 & COND & c2027=0x66 & c0811=15 & c0407=9 & Rn & Rd & Rm
 {
   build COND;
   local tmpRn = Rn;
@@ -6127,7 +6143,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 }
 
 # uqaddsubx
-:uqasx^COND  Rd, Rn, Rm    is $(AMODE) &  COND & c2027=0x66 & c0811=15 & c0407=3 & Rn & Rd & Rm
+:uqasx^COND  Rd, Rn, Rm    is $(AMODE) & ARMcond=1 & COND & c2027=0x66 & c0811=15 & c0407=3 & Rn & Rd & Rm
 {
   build COND;
   local tmpRn = Rn;
@@ -6142,7 +6158,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 }
 
 # uqsubaddx
-:uqsax^COND  Rd, Rn, Rm    is $(AMODE) &  COND & c2027=0x66 & c0811=15 & c0407=5 & Rn & Rd & Rm
+:uqsax^COND  Rd, Rn, Rm    is $(AMODE) & ARMcond=1 & COND & c2027=0x66 & c0811=15 & c0407=5 & Rn & Rd & Rm
 {
   build COND;
   local tmpRn = Rn;
@@ -6156,7 +6172,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   Rd = (zext(sum2) << 16) | zext(sum1);
 }
 
-:uqsub16^COND  Rd, Rn, Rm    is $(AMODE) &  COND & c2027=0x66 & c0811=15 & c0407=7 & Rn & Rd & Rm
+:uqsub16^COND  Rd, Rn, Rm    is $(AMODE) & ARMcond=1 & COND & c2027=0x66 & c0811=15 & c0407=7 & Rn & Rd & Rm
 {
   build COND;
   local tmpRn = Rn;
@@ -6170,7 +6186,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   Rd = (zext(sum2) << 16) | zext(sum1);
 }
 
-:uqsub8^COND  Rd, Rn, Rm    is $(AMODE) &  COND & c2027=0x66 & c0811=15 & c0407=15 & Rn & Rd & Rm
+:uqsub8^COND  Rd, Rn, Rm    is $(AMODE) & ARMcond=1 & COND & c2027=0x66 & c0811=15 & c0407=15 & Rn & Rd & Rm
 {
   build COND;
   local tmpRn = Rn;
@@ -6190,7 +6206,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   Rd = (zext(sum4) << 24) | (zext(sum3) << 16) | (zext(sum2) << 8) | zext(sum1);
 }
 
-:usad8^COND Rd, Rm, Rs  is $(AMODE) &  COND & c2027=0x78 & c1215=15 & c0407=1 & Rd & Rm & Rs
+:usad8^COND Rd, Rm, Rs  is $(AMODE) & ARMcond=1 & COND & c2027=0x78 & c1215=15 & c0407=1 & Rd & Rm & Rs
 {
   build COND;
   local tmpRs = Rs;
@@ -6210,7 +6226,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   Rd = (zext(sum4) << 24) | (zext(sum3) << 16) | (zext(sum2) << 8) | zext(sum1);
 }
 
-:usada8^COND Rd, Rm, Rs, Rn  is $(AMODE) &  COND & c2027=0x78 & c0407=1 & Rd & Rn& Rm & Rs
+:usada8^COND Rd, Rm, Rs, Rn  is $(AMODE) & ARMcond=1 & COND & c2027=0x78 & c0407=1 & Rd & Rn& Rm & Rs
 {
   build COND;
   local tmpRs = Rs;
@@ -6230,7 +6246,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   Rd = Rn + ((zext(sum4) << 24) | (zext(sum3) << 16) | (zext(sum2) << 8) | zext(sum1));
 }
 
-:usat^COND   Rd, uSatImm5, shift4    is $(AMODE) &  COND & c2127=0x37 & c0405=0x1 & uSatImm5 & Rd & shift4
+:usat^COND   Rd, uSatImm5, shift4    is $(AMODE) & ARMcond=1 & COND & c2127=0x37 & c0405=0x1 & uSatImm5 & Rd & shift4
 {
   build COND;
   build uSatImm5;
@@ -6240,7 +6256,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   Rd = tmp;
 }
 
-:usat16^COND   Rd, uSatImm4, Rm    is $(AMODE) &  COND & c2027=0x6e & c0811=15 & c0407=0x3 & uSatImm4 & Rd & Rm
+:usat16^COND   Rd, uSatImm4, Rm    is $(AMODE) & ARMcond=1 & COND & c2027=0x6e & c0811=15 & c0407=0x3 & uSatImm4 & Rd & Rm
 {
   build COND;
   build uSatImm4;
@@ -6253,7 +6269,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 }
 
 # usubaddx
-:usax^COND   Rd,rn,rm   is   $(AMODE) &  COND & c2327=12 & c2022=5 & c0811=15 & c0407=5 & Rd & rn & rm
+:usax^COND   Rd,rn,rm   is   $(AMODE) & ARMcond=1 & COND & c2327=12 & c2022=5 & c0811=15 & c0407=5 & Rd & rn & rm
 {
   build COND;
   build rn;
@@ -6275,7 +6291,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   Rd = zext(tmpHigh) << 16 | zext(tmpLow);
 }
 
-:usub16^COND   Rd,rn,rm   is   $(AMODE) &  COND & c2327=12 & c2022=5 & c0811=15 & c0407=7 & Rd & rn & rm
+:usub16^COND   Rd,rn,rm   is   $(AMODE) & ARMcond=1 & COND & c2327=12 & c2022=5 & c0811=15 & c0407=7 & Rd & rn & rm
 {
   build COND;
   build rn;
@@ -6297,7 +6313,7 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   Rd = zext(tmpHigh) << 16 | zext(tmpLow);
 }
 
-:usub8^COND   Rd,rn,rm   is   $(AMODE) &  COND & c2327=12 & c2022=5 & c0811=15 & c0407=15 & Rd & rn & rm
+:usub8^COND   Rd,rn,rm   is   $(AMODE) & ARMcond=1 & COND & c2327=12 & c2022=5 & c0811=15 & c0407=15 & Rd & rn & rm
 {
   build COND;
   build rn;
@@ -6323,14 +6339,14 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   Rd = (zext(b4) << 24) | (zext(b3) << 16) | (zext(b2) << 8) | zext(b1);
 }
 
-:uxtab^COND   Rd,Rn,ror1  is $(AMODE) &  COND & c2327=13 & c2022=6 & c0407=7 & Rd & Rn & ror1
+:uxtab^COND   Rd,Rn,ror1  is $(AMODE) & ARMcond=1 & COND & c2327=13 & c2022=6 & c0407=7 & Rd & Rn & ror1
 {
   build COND;
   build ror1;
   Rd = Rn + zext(ror1:1);
 }
 
-:uxtab16^COND   Rd,Rn,ror1  is $(AMODE) &  COND & c2327=13 & c2022=4 & c0407=7 & Rd & Rn & ror1
+:uxtab16^COND   Rd,Rn,ror1  is $(AMODE) & ARMcond=1 & COND & c2327=13 & c2022=4 & c0407=7 & Rd & Rn & ror1
 {
   build COND;
   build ror1;
@@ -6341,28 +6357,28 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
   Rd = (tmp2n << 16) | tmp1n;
 }
 
-:uxtah^COND   Rd,Rn,ror1  is $(AMODE) &  COND & c2327=13 & c2022=7 & c0407=7 & Rd & Rn & ror1
+:uxtah^COND   Rd,Rn,ror1  is $(AMODE) & ARMcond=1 & COND & c2327=13 & c2022=7 & c0407=7 & Rd & Rn & ror1
 {
   build COND;
   build ror1;
   Rd = Rn + zext(ror1:2);
 }
 
-:uxtb^COND    Rd,ror1     is $(AMODE) &  COND & c2327=13 & c2022=6 & c0407=7 & Rd & c1619=15 & ror1
+:uxtb^COND    Rd,ror1     is $(AMODE) & ARMcond=1 & COND & c2327=13 & c2022=6 & c0407=7 & Rd & c1619=15 & ror1
 {
   build COND;
   build ror1;
   Rd = ror1 & 0x0ff;
 }
 
-:uxtb16^COND    Rd,ror1     is $(AMODE) &  COND & c2327=13 & c2022=4 & c0407=7 & Rd & c1619=15 & ror1
+:uxtb16^COND    Rd,ror1     is $(AMODE) & ARMcond=1 & COND & c2327=13 & c2022=4 & c0407=7 & Rd & c1619=15 & ror1
 {
   build COND;
   build ror1;
   Rd = ror1 & 0x0ff00ff;
 }
 
-:uxth^COND   Rd,ror1  is $(AMODE) &  COND & c2327=13 & c2022=7 & c0407=7 & Rd & c1619=15 & ror1
+:uxth^COND   Rd,ror1  is $(AMODE) & ARMcond=1 & COND & c2327=13 & c2022=7 & c0407=7 & Rd & c1619=15 & ror1
 {
   build COND;
   build ror1;
@@ -6375,19 +6391,19 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 
 @if defined(VERSION_6K)
 
-:wfe^COND	is $(AMODE) &  COND & c0027=0x320f002
+:wfe^COND	is $(AMODE) & ARMcond=1 & COND & c0027=0x320f002
 {
 	build COND;
 	WaitForEvent();
 }
 
-:wfi^COND	is $(AMODE) &  COND & c0027=0x320f003
+:wfi^COND	is $(AMODE) & ARMcond=1 & COND & c0027=0x320f003
 {
 	build COND;
 	WaitForInterrupt();
 }
 
-:yield^COND	is $(AMODE) &  COND & c0027=0x320f001
+:yield^COND	is $(AMODE) & ARMcond=1 & COND & c0027=0x320f001
 {
 	build COND;
 	HintYield();
@@ -6444,6 +6460,5 @@ armEndianNess: "BE" is c0031=0xf1010200 { export 1:1; }
 #}
 
 
-@if defined(VERSION_6T2) || defined(VERSION_7)
 } # End with : ARMcondCk=1
-@endif
+

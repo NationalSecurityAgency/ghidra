@@ -211,9 +211,9 @@ public class CodeItem implements StructConverter {
 		structure.add(DWORD, "debug_info_off", null);
 		structure.add(DWORD, "insns_size", null);
 		structure.add(new ArrayDataType(WORD, instructionSize, WORD.getLength()), "insns", null);
-		if (hasPadding()) {
-			structure.add(WORD, "padding", null);
-		}
+//		if (hasPadding()) {
+//			structure.add(WORD, "padding", null);
+//		}
 		structure.setCategoryPath(new CategoryPath("/dex/code_item"));
 		return structure;
 	}

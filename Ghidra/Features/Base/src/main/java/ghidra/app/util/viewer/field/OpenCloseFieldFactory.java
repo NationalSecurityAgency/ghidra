@@ -42,7 +42,7 @@ public class OpenCloseFieldFactory extends FieldFactory {
 	/**
 	 * Constructor
 	 * @param model the model that the field belongs to.
-	 * @param hsProvider the HightLightStringProvider.
+	 * @param hlProvider the HightLightStringProvider.
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
@@ -84,13 +84,6 @@ public class OpenCloseFieldFactory extends FieldFactory {
 				isLast);
 		}
 		return null;
-	}
-
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#servicesChanged()
-	 */
-	@Override
-	public void servicesChanged() {
 	}
 
 	/**
@@ -165,5 +158,4 @@ public class OpenCloseFieldFactory extends FieldFactory {
 			ToolOptions displayOptions, ToolOptions fieldOptions) {
 		return new OpenCloseFieldFactory(fieldModel, provider, displayOptions, fieldOptions);
 	}
-
 }

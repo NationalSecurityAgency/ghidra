@@ -15,9 +15,14 @@
  */
 package ghidra.program.model.data;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
+import java.io.IOException;
 import java.util.*;
 
 import ghidra.program.model.lang.Language;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.util.exception.NoValueException;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.XmlElement;
@@ -551,99 +556,101 @@ public class DataOrganizationImpl implements DataOrganization {
 		return (value2 != 0) ? getGreatestCommonDenominator(value2, value1 % value2) : value1;
 	}
 
-	public void saveXml(StringBuilder buffer) {
-		buffer.append("<data_organization>\n");
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_DATA_ORGANIZATION);
 		if (absoluteMaxAlignment != NO_MAXIMUM_ALIGNMENT) {
-			buffer.append("<absolute_max_alignment");
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "value", absoluteMaxAlignment);
-			buffer.append("/>\n");
+			encoder.openElement(ELEM_ABSOLUTE_MAX_ALIGNMENT);
+			encoder.writeSignedInteger(ATTRIB_VALUE, absoluteMaxAlignment);
+			encoder.closeElement(ELEM_ABSOLUTE_MAX_ALIGNMENT);
 		}
 		if (machineAlignment != 8) {
-			buffer.append("<machine_alignment");
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "value", machineAlignment);
-			buffer.append("/>\n");
+			encoder.openElement(ELEM_MACHINE_ALIGNMENT);
+			encoder.writeSignedInteger(ATTRIB_VALUE, machineAlignment);
+			encoder.closeElement(ELEM_MACHINE_ALIGNMENT);
 		}
 		if (defaultAlignment != 1) {
-			buffer.append("<default_alignment");
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "value", defaultAlignment);
-			buffer.append("/>\n");
+			encoder.openElement(ELEM_DEFAULT_ALIGNMENT);
+			encoder.writeSignedInteger(ATTRIB_VALUE, defaultAlignment);
+			encoder.closeElement(ELEM_DEFAULT_ALIGNMENT);
 		}
 		if (defaultPointerAlignment != 4) {
-			buffer.append("<default_pointer_alignment");
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "value", defaultPointerAlignment);
-			buffer.append("/>\n");
+			encoder.openElement(ELEM_DEFAULT_POINTER_ALIGNMENT);
+			encoder.writeSignedInteger(ATTRIB_VALUE, defaultPointerAlignment);
+			encoder.closeElement(ELEM_DEFAULT_POINTER_ALIGNMENT);
 		}
 		if (pointerSize != 0) {
-			buffer.append("<pointer_size");
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "value", pointerSize);
-			buffer.append("/>\n");
+			encoder.openElement(ELEM_POINTER_SIZE);
+			encoder.writeSignedInteger(ATTRIB_VALUE, pointerSize);
+			encoder.closeElement(ELEM_POINTER_SIZE);
 		}
 		if (pointerShift != 0) {
-			buffer.append("<pointer_shift");
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "value", pointerShift);
-			buffer.append("/>\n");
+			encoder.openElement(ELEM_POINTER_SHIFT);
+			encoder.writeSignedInteger(ATTRIB_VALUE, pointerShift);
+			encoder.closeElement(ELEM_POINTER_SHIFT);
 		}
 		if (!isSignedChar) {
-			buffer.append("<char_type signed=\"no\"/>\n");
+			encoder.openElement(ELEM_CHAR_TYPE);
+			encoder.writeBool(ATTRIB_SIGNED, false);
+			encoder.closeElement(ELEM_CHAR_TYPE);
 		}
 		if (charSize != 1) {
-			buffer.append("<char_size");
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "value", charSize);
-			buffer.append("/>\n");
+			encoder.openElement(ELEM_CHAR_SIZE);
+			encoder.writeSignedInteger(ATTRIB_VALUE, charSize);
+			encoder.closeElement(ELEM_CHAR_SIZE);
 		}
 		if (wideCharSize != 2) {
-			buffer.append("<wchar_size");
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "value", wideCharSize);
-			buffer.append("/>\n");
+			encoder.openElement(ELEM_WCHAR_SIZE);
+			encoder.writeSignedInteger(ATTRIB_VALUE, wideCharSize);
+			encoder.closeElement(ELEM_WCHAR_SIZE);
 		}
 		if (shortSize != 2) {
-			buffer.append("<short_size");
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "value", shortSize);
-			buffer.append("/>\n");
+			encoder.openElement(ELEM_SHORT_SIZE);
+			encoder.writeSignedInteger(ATTRIB_VALUE, shortSize);
+			encoder.closeElement(ELEM_SHORT_SIZE);
 		}
 		if (integerSize != 4) {
-			buffer.append("<integer_size");
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "value", integerSize);
-			buffer.append("/>\n");
+			encoder.openElement(ELEM_INTEGER_SIZE);
+			encoder.writeSignedInteger(ATTRIB_VALUE, integerSize);
+			encoder.closeElement(ELEM_INTEGER_SIZE);
 		}
 		if (longSize != 4) {
-			buffer.append("<long_size");
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "value", longSize);
-			buffer.append("/>\n");
+			encoder.openElement(ELEM_LONG_SIZE);
+			encoder.writeSignedInteger(ATTRIB_VALUE, longSize);
+			encoder.closeElement(ELEM_LONG_SIZE);
 		}
 		if (longLongSize != 8) {
-			buffer.append("<long_long_size");
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "value", longLongSize);
-			buffer.append("/>\n");
+			encoder.openElement(ELEM_LONG_LONG_SIZE);
+			encoder.writeSignedInteger(ATTRIB_VALUE, longLongSize);
+			encoder.closeElement(ELEM_LONG_LONG_SIZE);
 		}
 		if (floatSize != 4) {
-			buffer.append("<float_size");
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "value", floatSize);
-			buffer.append("/>\n");
+			encoder.openElement(ELEM_FLOAT_SIZE);
+			encoder.writeSignedInteger(ATTRIB_VALUE, floatSize);
+			encoder.closeElement(ELEM_FLOAT_SIZE);
 		}
 		if (doubleSize != 8) {
-			buffer.append("<double_size");
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "value", doubleSize);
-			buffer.append("/>\n");
+			encoder.openElement(ELEM_DOUBLE_SIZE);
+			encoder.writeSignedInteger(ATTRIB_VALUE, doubleSize);
+			encoder.closeElement(ELEM_DOUBLE_SIZE);
 		}
 		if (longDoubleSize != 8) {
-			buffer.append("<long_double_size");
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "value", longDoubleSize);
-			buffer.append("/>\n");
+			encoder.openElement(ELEM_LONG_DOUBLE_SIZE);
+			encoder.writeSignedInteger(ATTRIB_VALUE, longDoubleSize);
+			encoder.closeElement(ELEM_LONG_DOUBLE_SIZE);
 		}
 		if (sizeAlignmentMap.size() != 0) {
-			buffer.append("<size_alignment_map>\n");
+			encoder.openElement(ELEM_SIZE_ALIGNMENT_MAP);
 			for (int key : sizeAlignmentMap.keySet()) {
-				buffer.append("<entry");
+				encoder.openElement(ELEM_ENTRY);
 				int value = sizeAlignmentMap.get(key);
-				SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "size", key);
-				SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "alignment", value);
-				buffer.append("/>\n");
+				encoder.writeSignedInteger(ATTRIB_SIZE, key);
+				encoder.writeSignedInteger(ATTRIB_ALIGNMENT, value);
+				encoder.closeElement(ELEM_ENTRY);
 			}
-			buffer.append("</size_alignment_map>\n");
+			encoder.closeElement(ELEM_SIZE_ALIGNMENT_MAP);
 		}
-		bitFieldPacking.saveXml(buffer);
-		buffer.append("</data_organization>\n");
+		bitFieldPacking.encode(encoder);
+		encoder.closeElement(ELEM_DATA_ORGANIZATION);
 	}
 
 	/**

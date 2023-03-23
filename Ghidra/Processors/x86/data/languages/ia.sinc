@@ -666,6 +666,9 @@ usimm8_64: val is imm8 & imm8_7=1 [ val = 0xffffffffffffff00 | imm8; ] { export 
 #usimm16_32: imm16 is imm16 & imm16_15=0 { export *[const]:4 imm16; }
 #usimm16_32: val is imm16 & imm16_15=1 [ val = 0xffff0000 | imm16; ] { export *[const]:4 val; }
 
+# RIP/EIP relative address - NOTE: export of size 0 is intentional so it may be adjusted
+pcRelSimm32: addr	is simm32 [ addr=inst_next+simm32; ] { export addr; }
+
 # 16-bit addressing modes   (the offset portion)
 addr16: [BX + SI]		is mod=0 & r_m=0 & BX & SI		{ local tmp=BX+SI; export tmp; }
 addr16: [BX + DI]		is mod=0 & r_m=1 & BX & DI		{ local tmp=BX+DI; export tmp; }
@@ -693,16 +696,16 @@ addr16: [BP + imm16]  is mod=2 & r_m=6 & BP; imm16        { local tmp=BP+imm16; 
 addr16: [BX + imm16]  is mod=2 & r_m=7 & BX; imm16        { local tmp=BX+imm16; export tmp; }
 
 # 32-bit addressing modes   (the offset portion)
-addr32: [Rmr32]							is mod=0 & Rmr32  							{ export Rmr32; }
-addr32: [Rmr32 + simm8_32]				is mod=1 & Rmr32; simm8_32       			{ local tmp=Rmr32+simm8_32; export tmp; }
-addr32: [Rmr32]							is mod=1 & r_m!=4 & Rmr32; simm8=0			{ export Rmr32; }
-addr32: [Rmr32 + imm32]					        is mod=2 & Rmr32; imm32                      { local tmp=Rmr32+imm32; export tmp; }
+addr32: [Rmr32]							is mod=0 & Rmr32  							 { export Rmr32; }
+addr32: [Rmr32 + simm8_32]				is mod=1 & Rmr32; simm8_32       			 { local tmp=Rmr32+simm8_32; export tmp; }
+addr32: [Rmr32]							is mod=1 & r_m!=4 & Rmr32; simm8=0			 { export Rmr32; }
+addr32: [Rmr32 + imm32]					is mod=2 & Rmr32; imm32                      { local tmp=Rmr32+imm32; export tmp; }
 addr32: [Rmr32]							is mod=2 & r_m!=4 & Rmr32; imm32=0           { export Rmr32; }
 addr32: [imm32]							is mod=0 & r_m=5; imm32                      { export *[const]:4 imm32; }
 addr32: [Base + Index*ss]				is mod=0 & r_m=4; Index & Base & ss          { local tmp=Base+Index*ss; export tmp; }
 addr32: [Base]							is mod=0 & r_m=4; index=4 & Base             { export Base; }
-addr32: [Index*ss + imm32]				        is mod=0 & r_m=4; Index & base=5 & ss; imm32 { local tmp=imm32+Index*ss; export tmp; }
-addr32: [imm32]							is mod=0 & r_m=4; index=4 & base=5; imm32     { export *[const]:4 imm32; }
+addr32: [Index*ss + imm32]				is mod=0 & r_m=4; Index & base=5 & ss; imm32 { local tmp=imm32+Index*ss; export tmp; }
+addr32: [imm32]							is mod=0 & r_m=4; index=4 & base=5; imm32    { export *[const]:4 imm32; }
 addr32: [Base + Index*ss + simm8_32]	is mod=1 & r_m=4; Index & Base & ss; simm8_32    { local tmp=simm8_32+Base+Index*ss; export tmp; }
 addr32: [Base + simm8_32]				is mod=1 & r_m=4; index=4 & Base; simm8_32   { local tmp=simm8_32+Base; export tmp; }
 addr32: [Base + Index*ss]				is mod=1 & r_m=4; Index & Base & ss; simm8=0 { local tmp=Base+Index*ss; export tmp; }
@@ -712,11 +715,11 @@ addr32: [Base + imm32]					is mod=2 & r_m=4; index=4 & Base; imm32      { local 
 addr32: [Base + Index*ss]				is mod=2 & r_m=4; Index & Base & ss; imm32=0 { local tmp=Base+Index*ss; export tmp; }
 addr32: [Base]							is mod=2 & r_m=4; index=4 & Base; imm32=0    { export Base; }
 @ifdef IA64
-addr32: [riprel]						is bit64=1 & mod=0 & r_m=4; index=4 & base=5; simm32 [ riprel=inst_next+simm32; ] { export *[const]:4 riprel; }
+addr32: [pcRelSimm32]					is bit64=1 & mod=0 & r_m=4; index=4 & base=5; pcRelSimm32 { export *[const]:4 pcRelSimm32; }
 
-Addr32_64: [eiprel]						is mod=0 & r_m=5; simm32	[ eiprel=inst_next+simm32; ] { export *[const]:8 eiprel; }
-Addr32_64: [imm32]		is mod=0 & r_m=4; index=4 & base=5; imm32    { export *[const]:8 imm32; }
-Addr32_64: addr32		is addr32									 { tmp:8 = sext(addr32); export tmp; }
+Addr32_64: [pcRelSimm32]				is mod=0 & r_m=5; pcRelSimm32                { export *[const]:8 pcRelSimm32; }
+Addr32_64: [imm32]						is mod=0 & r_m=4; index=4 & base=5; imm32    { export *[const]:8 imm32; }
+Addr32_64: addr32						is addr32									 { tmp:8 = sext(addr32); export tmp; }
 	
 @endif
 
@@ -728,12 +731,12 @@ addr64: [Rmr64 + simm8_64]				is mod=1 & Rmr64; simm8_64                        
 addr64: [Rmr64 + simm32_64]				is mod=2 & Rmr64; simm32_64                        { local tmp=Rmr64+simm32_64; export tmp; }
 addr64: [Rmr64]							is mod=1 & r_m!=4 & Rmr64; simm8=0                 { export Rmr64; }
 addr64: [Rmr64]							is mod=2 & r_m!=4 & Rmr64; simm32=0                { export Rmr64; }
-addr64: [riprel]						is mod=0 & r_m=5; simm32 [ riprel=inst_next+simm32; ] { export *[const]:8 riprel; }
+addr64: [pcRelSimm32]					is mod=0 & r_m=5; pcRelSimm32                      { export *[const]:8 pcRelSimm32; }
 addr64: [Base64 + Index64*ss]			is mod=0 & r_m=4; Index64 & Base64 & ss            { local tmp=Base64+Index64*ss; export tmp; }
 addr64: [Base64]						is mod=0 & r_m=4; rexXprefix=0 & index64=4 & Base64    { export Base64; }
 addr64: [simm32_64 + Index64*ss]		is mod=0 & r_m=4; Index64 & base64=5 & ss; simm32_64   { local tmp=simm32_64+Index64*ss; export tmp; }
 addr64: [Index64*ss]					is mod=0 & r_m=4; Index64 & base64=5 & ss; imm32=0 { local tmp=Index64*ss; export tmp; }
-addr64: [imm32_64]						is mod=0 & r_m=4; rexXprefix=0 & index64=4 & base64=5; imm32_64      { export *[const]:8 imm32_64; }
+addr64: [simm32_64]						is mod=0 & r_m=4; rexXprefix=0 & index64=4 & base64=5; simm32_64      { export *[const]:8 simm32_64; }
 addr64: [Base64 + simm8_64]				is mod=1 & r_m=4; rexXprefix=0 & index64=4 & Base64; simm8_64     { local tmp=simm8_64+Base64; export tmp; }
 addr64: [Base64 + Index64*ss + simm8_64] is mod=1 & r_m=4; Index64 & Base64 & ss; simm8_64 { local tmp=simm8_64+Base64+Index64*ss; export tmp; }
 addr64: [Base64 + Index64*ss]			is mod=1 & r_m=4; Index64 & Base64 & ss; simm8=0   { local tmp=Base64+Index64*ss; export tmp; }
@@ -936,6 +939,8 @@ moffs32: segWide^[imm64]  is addrsize=2 & highseg=1 & segWide & imm64   { tmp:8 
 @ifdef IA64
 moffs64: segWide^[imm64]  is addrsize=2 & segWide & imm64               { export *:8 imm64; }
 moffs64: segWide^[imm64]  is addrsize=2 & highseg=1 & segWide & imm64   { tmp:8 = segWide + imm64; export *:8 tmp; }
+moffs64: segWide^[imm32]  is addrsize=1 & segWide & imm32               { export *:8 imm32; }
+moffs64: segWide^[imm32]  is addrsize=1 & highseg=1 & segWide & imm32   { tmp:8 = segWide + imm32; export *:8 tmp; }
 @endif
 # TODO: segment register offset in 64bit might not be right
 
@@ -1606,13 +1611,13 @@ macro fucompe(val1, val2) {
                        [ instrPhase=1; vexMode=1; rexBprefix=~vex_b; vexMMMMM=vex_mmmmm; rexWprefix=vex_w;  vexVVVV=~vex_vvvv; vexL=vex_l; prefix_f2=1; ] {}
 
 # 32-bit 2-byte VEX
-:^instruction is $(LONGMODE_OFF) & instrPhase=0 & vexMode=0 & rexprefix=0 & mandover=0 & byte=0xC5; vex_r=1 & vex_vvvv & vex_l & vex_pp=0; instruction
+:^instruction is $(LONGMODE_OFF) & instrPhase=0 & vexMode=0 & rexprefix=0 & mandover=0 & byte=0xC5; vex_r=1 & vex_x=1 & vex_vvvv & vex_l & vex_pp=0; instruction
                        [ instrPhase=1; vexMode=1; vexVVVV=~vex_vvvv; vexL=vex_l; vexMMMMM=0x1; ] {}
-:^instruction is $(LONGMODE_OFF) & instrPhase=0 & vexMode=0 & rexprefix=0 & mandover=0 & byte=0xC5; vex_r=1 & vex_vvvv & vex_l & vex_pp=1; instruction
+:^instruction is $(LONGMODE_OFF) & instrPhase=0 & vexMode=0 & rexprefix=0 & mandover=0 & byte=0xC5; vex_r=1 & vex_x=1 & vex_vvvv & vex_l & vex_pp=1; instruction
                        [ instrPhase=1; vexMode=1; vexVVVV=~vex_vvvv; vexL=vex_l; vexMMMMM=0x1; prefix_66=1; ] {}
-:^instruction is $(LONGMODE_OFF) & instrPhase=0 & vexMode=0 & rexprefix=0 & mandover=0 & byte=0xC5; vex_r=1 & vex_vvvv & vex_l & vex_pp=2; instruction
+:^instruction is $(LONGMODE_OFF) & instrPhase=0 & vexMode=0 & rexprefix=0 & mandover=0 & byte=0xC5; vex_r=1 & vex_x=1 & vex_vvvv & vex_l & vex_pp=2; instruction
                        [ instrPhase=1; vexMode=1; vexVVVV=~vex_vvvv; vexL=vex_l; vexMMMMM=0x1; prefix_f3=1; ] {}
-:^instruction is $(LONGMODE_OFF) & instrPhase=0 & vexMode=0 & rexprefix=0 & mandover=0 & byte=0xC5; vex_r=1 & vex_vvvv & vex_l & vex_pp=3; instruction
+:^instruction is $(LONGMODE_OFF) & instrPhase=0 & vexMode=0 & rexprefix=0 & mandover=0 & byte=0xC5; vex_r=1 & vex_x=1 & vex_vvvv & vex_l & vex_pp=3; instruction
                        [ instrPhase=1; vexMode=1; vexVVVV=~vex_vvvv; vexL=vex_l; vexMMMMM=0x1; prefix_f2=1; ] {}
 
 
@@ -2171,7 +2176,8 @@ define pcodeop clflush;
 # CLGI:  clear global interrupt flag (GIF); while GIF is zero, all external interrupts are disabled.
 :CLGI                   is vexMode=0 & byte=0x0f; byte=0x01; byte=0xDD                      { clgi(); }
 :CLI			is vexMode=0 & byte=0xfa						{ IF = 0; }
-:CLTS			is vexMode=0 & byte=0x0f; byte=0x06					{ }
+define pcodeop clts;
+:CLTS			is vexMode=0 & byte=0x0f; byte=0x06				{ CR0 = CR0 & ~(0x8); }
 
 define pcodeop clzero;
 
@@ -2228,7 +2234,9 @@ define pcodeop clzero;
 :CMPSD^repe^repetail eseDI8,dseSI8  is $(LONGMODE_ON) & vexMode=0 & repe & repetail & opsize=2 & byte=0xa7 & dseSI8 & eseDI8 { build repe; build eseDI8; build dseSI8; subflags(dseSI8,eseDI8); local diff=dseSI8-eseDI8; resultflags(diff); build repetail; }
 @endif
 
-:CMPXCHG rm8,Reg8  is vexMode=0 & byte=0xf; byte=0xa6; rm8 & Reg8 ...           { }
+define pcodeop _cmpxchg;
+:CMPXCHG rm8,Reg8  is vexMode=0 & byte=0xf; byte=0xa6; rm8 & Reg8 ...           { _cmpxchg(rm8, Reg8); } #deprecated after 486
+:CMPXCHG rm16,Reg16  is vexMode=0 & byte=0xf; byte=0xa7; rm16 & Reg16 ...       { _cmpxchg(rm16, Reg16); } #deprecated after 486
 :CMPXCHG rm8,Reg8  is vexMode=0 & byte=0xf; byte=0xb0; rm8 & Reg8 ...           { subflags(AL,rm8); local tmp=AL-rm8; resultflags(tmp);
                                           local diff = rm8^Reg8; rm8 = rm8 ^ (ZF*diff);
                                           diff = AL ^ rm8; AL = AL ^ ((ZF==0)*diff); }
@@ -3201,8 +3209,8 @@ define pcodeop swap_bytes;
 :NEG rm64      is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf7; rm64 & reg_opcode=3 ... { negflags(rm64); rm64 = -rm64; resultflags(rm64); }
 @endif
 
-:NOP            is vexMode=0 & opsize=0 & byte=0x90                        { }
-:NOP            is vexMode=0 & opsize=1 & byte=0x90                        { }
+:NOP            is vexMode=0 & opsize=0 & byte=0x90 & rexprefix=0   { }
+:NOP            is vexMode=0 & opsize=1 & byte=0x90 & rexprefix=0   { }
 :NOP rm16       is vexMode=0 & mandover & opsize=0 & byte=0x0f; high5=3; rm16  ...    { }
 :NOP rm32       is vexMode=0 & mandover & opsize=1 & byte=0x0f; high5=3; rm32  ...    { }
 :NOP^"/reserved" rm16 is vexMode=0 & mandover & opsize=0 & byte=0x0f; byte=0x18; rm16 & reg_opcode_hb=1 ...    { }
@@ -3849,8 +3857,10 @@ define pcodeop invalidInstructionException;
 :UD1  Reg32, rm32 is vexMode=0 & byte=0x0f; byte=0xb9; rm32 & Reg32 ...           { invalidInstructionException(); goto inst_start; }
 :UD2              is vexMode=0 & byte=0xf; byte=0xb                               { invalidInstructionException(); goto inst_start; }
 
-:VERR rm16      is vexMode=0 & byte=0xf; byte=0x0; rm16 & reg_opcode=4 ...      { }
-:VERW rm16      is vexMode=0 & byte=0xf; byte=0x0; rm16 & reg_opcode=5 ...      { }
+define pcodeop verr;
+define pcodeop verw;
+:VERR rm16      is vexMode=0 & byte=0xf; byte=0x0; rm16 & reg_opcode=4 ...      { ZF = verr(); }
+:VERW rm16      is vexMode=0 & byte=0xf; byte=0x0; rm16 & reg_opcode=5 ...      { ZF = verw(); }
 
 # MFL added VMX opcodes
 #
@@ -4071,9 +4081,10 @@ define pcodeop f2xm1;
 :FIADD spec_m32     is vexMode=0 & byte=0xDA; reg_opcode=0 ... & spec_m32            { ST0 = ST0 f+ int2float(spec_m32); }   
 :FIADD spec_m16     is vexMode=0 & byte=0xDE; reg_opcode=0 ... & spec_m16            { ST0 = ST0 f+ int2float(spec_m16); }   
 
-:FBLD  spec_m80     is vexMode=0 & byte=0xDF; reg_opcode=4 ... & spec_m80            { spec_m80 = ST0; fpop(); }
+define pcodeop convert_bcd;
+:FBLD  spec_m80     is vexMode=0 & byte=0xDF; reg_opcode=4 ... & spec_m80            { fdec(); ST0 = convert_bcd(spec_m80); }
 
-:FBSTP spec_m80     is vexMode=0 & byte=0xDF; reg_opcode=6 ... & spec_m80            { spec_m80 = ST0; fpop(); }
+:FBSTP spec_m80     is vexMode=0 & byte=0xDF; reg_opcode=6 ... & spec_m80            { spec_m80 = convert_bcd(ST0); fpop(); }
 
 :FCHS           is vexMode=0 & byte=0xD9; byte=0xE0                 { ST0 = f- ST0; }
 
@@ -4109,6 +4120,12 @@ define pcodeop fcos;
                                                                  
 :FDECSTP		    is vexMode=0 & byte=0xD9; byte=0xF6					{ fdec(); FPUStatusWord = FPUStatusWord & 0xfeff; C0 = 0; }  #Clear C0
 
+# Legacy 8087 instructions. Still valid but treated as NOP instructions.
+:FDISI              is vexMode=0 & byte=0x9B; byte=0xDB; byte=0xE1 {}
+:FNDISI             is vexMode=0 & byte=0xDB; byte=0xE1            {}
+:FENI               is vexMode=0 & byte=0x9B; byte=0xDB; byte=0xE0 {}
+:FNENI              is vexMode=0 & byte=0xDB; byte=0xE0            {}
+
 :FDIV spec_m32      is vexMode=0 & byte=0xD8; reg_opcode=6 ... & spec_m32            { ST0 = ST0 f/ float2float(spec_m32); }    
 :FDIV spec_m64      is vexMode=0 & byte=0xDC; reg_opcode=6 ... & spec_m64            { ST0 = ST0 f/ float2float(spec_m64); }    
 :FDIV ST0,freg      is vexMode=0 & byte=0xD8; frow=15 & fpage=0 & freg & ST0        { ST0 = ST0 f/ freg; }            
@@ -4127,8 +4144,9 @@ define pcodeop fcos;
 :FIDIVR spec_m32    is vexMode=0 & byte=0xDA; reg_opcode=7 ... & spec_m32            { ST0 = int2float(spec_m32) f/ ST0; }      
 :FIDIVR spec_m16    is vexMode=0 & byte=0xDE; reg_opcode=7 ... & spec_m16            { ST0 = int2float(spec_m16) f/ ST0; }      
 
-:FFREE freg         is vexMode=0 & byte=0xDD; frow=12 & fpage=0 & freg          { }  # Set freg to invalid value
-:FFREEP freg        is vexMode=0 & byte=0xDF; frow=12 & fpage=0 & freg          { fpop(); }  # FFREE and pop
+define pcodeop ffree;
+:FFREE freg         is vexMode=0 & byte=0xDD; frow=12 & fpage=0 & freg          { FPUTagWord = ffree(freg); }  # Set freg to invalid value
+:FFREEP freg        is vexMode=0 & byte=0xDF; frow=12 & fpage=0 & freg          { FPUTagWord = ffree(freg); fpop(); }  # FFREE and pop
                                                                   
 :FICOM spec_m16     is vexMode=0 & byte=0xDE; reg_opcode=2 ... & spec_m16            { local tmp = int2float(spec_m16); fcom(tmp); }          
 :FICOM spec_m32     is vexMode=0 & byte=0xDA; reg_opcode=2 ... & spec_m32            { local tmp = int2float(spec_m32); fcom(tmp); }          
@@ -4153,7 +4171,17 @@ define pcodeop fcos;
                                           C2 = 0;                 
                                           C3 = 0; }                           
 
-:FNINIT         is vexMode=0 & byte=0xDB; byte=0xE3                 { }
+:FNINIT         is vexMode=0 & byte=0xDB; byte=0xE3                 {
+										  FPUControlWord = 0x037f;        
+                                          FPUStatusWord = 0x0000;         
+                                          FPUTagWord = 0xffff;            
+                                          FPUDataPointer = 0x00000000;        
+                                          FPUInstructionPointer = 0x00000000;     
+                                          FPULastInstructionOpcode = 0x0000;  
+                                          C0 = 0;                 
+                                          C1 = 0;                 
+                                          C2 = 0;                 
+                                          C3 = 0; }          
 
 :FIST spec_m16       is vexMode=0 & byte=0xDF; (mod != 0b11 & reg_opcode=2) ... & spec_m16            { tmp:10 = round(ST0); spec_m16 = trunc(tmp); }                    
 :FIST spec_m32       is vexMode=0 & byte=0xDB; (mod != 0b11 & reg_opcode=2) ... & spec_m32            { tmp:10 = round(ST0); spec_m32 = trunc(tmp); }            
@@ -7155,42 +7183,39 @@ define pcodeop pshufb;
 :PSHUFB         XmmReg1, XmmReg2 is vexMode=0 &  $(PRE_66) & byte=0x0F; byte=0x38; byte=0x00; xmmmod = 3 & XmmReg1 & XmmReg2 { XmmReg1=pshufb(XmmReg1,XmmReg2); }
 
 # determine the total shift required by the bit fields in a shuffle opcode
-Order0: order0	is imm8 [ order0 = (( imm8       & 0x3) << 5); ] { export *[const]:1 order0; } 
-Order1: order1	is imm8 [ order1 = (((imm8 >> 2) & 0x3) << 5); ] { export *[const]:1 order1; } 
-Order2: order2	is imm8 [ order2 = (((imm8 >> 4) & 0x3) << 5); ] { export *[const]:1 order2; } 
-Order3: order3	is imm8 [ order3 = (((imm8 >> 6) & 0x3) << 5); ] { export *[const]:1 order3; } 
+Order0: order0  is imm8 [ order0 = ( imm8       & 0x3); ] { export *[const]:1 order0; }
+Order1: order1  is imm8 [ order1 = ((imm8 >> 2) & 0x3); ] { export *[const]:1 order1; }
+Order2: order2  is imm8 [ order2 = ((imm8 >> 4) & 0x3); ] { export *[const]:1 order2; }
+Order3: order3  is imm8 [ order3 = ((imm8 >> 6) & 0x3); ] { export *[const]:1 order3; }
+
+macro shuffle_4(dest,ord,c0,c1,c2,c3){
+    dest = zext(ord == 0) * c0 + zext(ord == 1) * c1 + zext(ord == 2) * c2 + zext(ord == 3) * c3;
+}
 
 :PSHUFD         XmmReg1, m128, imm8     is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x70; (m128 & XmmReg1 ...); imm8 & Order0 & Order1 & Order2 & Order3
 {
-    shifted:16 = m128 >> Order0;   
-    XmmReg1[0,32] = shifted:4;
-    
-    shifted = m128 >> Order1;   
-    XmmReg1[32,32] = shifted:4;
+    local c0 = m128[0,32];
+    local c1 = m128[32,32];
+    local c2 = m128[64,32];
+    local c3 = m128[96,32];
 
-    shifted = m128 >> Order2;   
-    XmmReg1[64,32] = shifted:4;
-
-    shifted = m128 >> Order3;   
-    XmmReg1[96,32] = shifted:4;
+    shuffle_4(XmmReg1[0,32],Order0,c0,c1,c2,c3);
+    shuffle_4(XmmReg1[32,32],Order1,c0,c1,c2,c3);
+    shuffle_4(XmmReg1[64,32],Order2,c0,c1,c2,c3);
+    shuffle_4(XmmReg1[96,32],Order3,c0,c1,c2,c3);
 }
 
 :PSHUFD         XmmReg1, XmmReg2, imm8  is vexMode=0 & $(PRE_66) & byte=0x0F; byte=0x70; xmmmod=3 & XmmReg1 & XmmReg2 ; imm8 & Order0 & Order1 & Order2 & Order3
 {
-    #in case XmmReg1 and XmmReg2 are the same register
-    local original_XmmReg2:16 = XmmReg2;
-    
-    shifted:16 = original_XmmReg2 >> Order0;   
-    XmmReg1[0,32] = shifted:4;
-    
-    shifted = original_XmmReg2 >> Order1;   
-    XmmReg1[32,32] = shifted:4;
+    local c0 = XmmReg2[0,32];
+    local c1 = XmmReg2[32,32];
+    local c2 = XmmReg2[64,32];
+    local c3 = XmmReg2[96,32];
 
-    shifted = original_XmmReg2 >> Order2;   
-    XmmReg1[64,32] = shifted:4;
-
-    shifted = original_XmmReg2 >> Order3;   
-    XmmReg1[96,32] = shifted:4;
+    shuffle_4(XmmReg1[0,32],Order0,c0,c1,c2,c3);
+    shuffle_4(XmmReg1[32,32],Order1,c0,c1,c2,c3);
+    shuffle_4(XmmReg1[64,32],Order2,c0,c1,c2,c3);
+    shuffle_4(XmmReg1[96,32],Order3,c0,c1,c2,c3);
 }
 
 define pcodeop pshufhw;
@@ -8023,42 +8048,38 @@ define pcodeop shufpd;
 
 :SHUFPS  XmmReg, m128, imm8  is vexMode=0 & mandover=0 & byte=0x0F; byte=0xC6; (m128 & XmmReg ...); imm8 & Order0 & Order1 & Order2 & Order3
 {
-    shifted:16 = XmmReg >> Order0;   
-    tempA:4 = shifted:4;
-    
-    shifted = XmmReg >> Order1;   
-    tempB:4 = shifted:4;
+    local m128_c0 = m128[0,32];
+    local m128_c1 = m128[32,32];
+    local m128_c2 = m128[64,32];
+    local m128_c3 = m128[96,32];
 
-    shifted = m128 >> Order2;   
-    tempC:4 = shifted:4;
+    local xmm_c0 = XmmReg[0,32];
+    local xmm_c1 = XmmReg[32,32];
+    local xmm_c2 = XmmReg[64,32];
+    local xmm_c3 = XmmReg[96,32];
 
-    shifted = m128 >> Order3;   
-    tempD:4 = shifted:4;
-
-    XmmReg[0,32] = tempA;
-    XmmReg[32,32] = tempB;
-    XmmReg[64,32] = tempC;
-    XmmReg[96,32] = tempD;
+    shuffle_4(XmmReg[0,32],Order0,xmm_c0,xmm_c1,xmm_c2,xmm_c3);
+    shuffle_4(XmmReg[32,32],Order1,xmm_c0,xmm_c1,xmm_c2,xmm_c3);
+    shuffle_4(XmmReg[64,32],Order2,m128_c0,m128_c1,m128_c2,m128_c3);
+    shuffle_4(XmmReg[96,32],Order3,m128_c0,m128_c1,m128_c2,m128_c3);
 }
 
 :SHUFPS  XmmReg1, XmmReg2, imm8  is vexMode=0 & mandover=0 & byte=0x0F; byte=0xC6; xmmmod=3 & XmmReg1 & XmmReg2; imm8 & Order0 & Order1 & Order2 & Order3
 {
-    shifted:16 = XmmReg1 >> Order0;   
-    tempA:4 = shifted:4;
-    
-    shifted = XmmReg1 >> Order1;   
-    tempB:4 = shifted:4;
+    local xmm1_c0 = XmmReg1[0,32];
+    local xmm1_c1 = XmmReg1[32,32];
+    local xmm1_c2 = XmmReg1[64,32];
+    local xmm1_c3 = XmmReg1[96,32];
 
-    shifted = XmmReg2 >> Order2;   
-    tempC:4 = shifted:4;
+    local xmm2_c0 = XmmReg2[0,32];
+    local xmm2_c1 = XmmReg2[32,32];
+    local xmm2_c2 = XmmReg2[64,32];
+    local xmm2_c3 = XmmReg2[96,32];
 
-    shifted = XmmReg2 >> Order3;   
-    tempD:4 = shifted:4;
-    
-    XmmReg1[0,32] = tempA;
-    XmmReg1[32,32] = tempB;
-    XmmReg1[64,32] = tempC;
-    XmmReg1[96,32] = tempD;
+    shuffle_4(XmmReg1[0,32],Order0,xmm1_c0,xmm1_c1,xmm1_c2,xmm1_c3);
+    shuffle_4(XmmReg1[32,32],Order1,xmm1_c0,xmm1_c1,xmm1_c2,xmm1_c3);
+    shuffle_4(XmmReg1[64,32],Order2,xmm2_c0,xmm2_c1,xmm2_c2,xmm2_c3);
+    shuffle_4(XmmReg1[96,32],Order3,xmm2_c0,xmm2_c1,xmm2_c2,xmm2_c3);
 }
 
 define pcodeop sqrtpd;

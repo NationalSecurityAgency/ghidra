@@ -139,9 +139,6 @@ public interface DebuggerModelService {
 	 * as much. If the user cancels, the returned future completes with {@code null}. The invocation
 	 * is assumed to come from a {@link ActionSource#MANUAL} source.
 	 * 
-	 * <p>
-	 * TODO: Should the prompt allow the user to force an opinion which gave no offers?
-	 * 
 	 * @see DebuggerMappingOpinion#queryOpinions(TargetObject)
 	 * @param target the target to record.
 	 * @return a future which completes with the recorder, or completes exceptionally
@@ -356,14 +353,20 @@ public interface DebuggerModelService {
 	 * 
 	 * @return a future which completes with the new connection, possibly cancelled
 	 */
-	default CompletableFuture<DebuggerObjectModel> showConnectDialog() {
-		return showConnectDialog(null);
-	}
+	CompletableFuture<DebuggerObjectModel> showConnectDialog();
+
+	/**
+	 * Prompt the user to create a new connection, hinting at the program to launch
+	 * 
+	 * @param program the current program used to help select a default
+	 * @return a future which completes with the new connection, possibly cancelled
+	 */
+	CompletableFuture<DebuggerObjectModel> showConnectDialog(Program program);
 
 	/**
 	 * Prompt the user to create a new connection, optionally fixing the factory
 	 * 
-	 * @param factory the required factory, or null for user selection
+	 * @param factory the required factory
 	 * @return a future which completes with the new connection, possible cancelled
 	 */
 	CompletableFuture<DebuggerObjectModel> showConnectDialog(DebuggerModelFactory factory);

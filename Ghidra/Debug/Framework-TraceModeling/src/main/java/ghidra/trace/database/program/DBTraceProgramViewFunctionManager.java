@@ -21,8 +21,6 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 
-import com.google.common.collect.Range;
-
 import generic.NestedIterator;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.function.OverlappingFunctionException;
@@ -33,6 +31,7 @@ import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.trace.database.DBTraceUtils;
 import ghidra.trace.database.symbol.*;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.listing.TraceData;
 import ghidra.trace.model.symbol.TraceFunctionSymbol;
 import ghidra.trace.util.EmptyFunctionIterator;
@@ -193,7 +192,7 @@ public class DBTraceProgramViewFunctionManager implements FunctionManager {
 
 	protected Iterator<? extends DBTraceFunctionSymbol> getFunctionsInRange(AddressRange range,
 			boolean forward) {
-		return functions.getIntersecting(Range.singleton(program.snap), null, range, false,
+		return functions.getIntersecting(Lifespan.at(program.snap), null, range, false,
 			forward).iterator();
 	}
 

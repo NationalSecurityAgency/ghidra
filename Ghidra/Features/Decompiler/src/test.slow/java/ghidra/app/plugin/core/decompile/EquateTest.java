@@ -62,6 +62,7 @@ public class EquateTest extends AbstractDecompilerTest {
 
 	/**
 	 * Simulate the action of "converting" the current token to the given format
+	 *
 	 * @param convertType is the given format
 	 */
 	private void convertToken(int convertType) {
@@ -83,6 +84,12 @@ public class EquateTest extends AbstractDecompilerTest {
 			case EquateSymbol.FORMAT_HEX:
 				action = new ConvertHexAction(decompiler);
 				break;
+			case EquateSymbol.FORMAT_FLOAT:
+				action = new ConvertFloatAction(decompiler);
+				break;
+			case EquateSymbol.FORMAT_DOUBLE:
+				action = new ConvertDoubleAction(decompiler);
+				break;
 			default:
 				action = null;
 		}
@@ -94,6 +101,7 @@ public class EquateTest extends AbstractDecompilerTest {
 
 	/**
 	 * Simulate setting an equate on the current token with the given name
+	 *
 	 * @param nm is the given name
 	 */
 	private void convertToken(String nm) {
@@ -216,6 +224,9 @@ public class EquateTest extends AbstractDecompilerTest {
 		// Make sure the named equate applies to the negative number in the decompiler window
 		// NOT the positive variant in the listing
 		verifyMatch("MYMINUS", "MYMINUS", 0x1002862, false);
+		Equate equate = program.getEquateTable().getEquate("MYMINUS");
+		// Table value should be sign-extended version of original scalar
+		assertEquals(equate.getValue(), 0xffffffffffffffc8L);
 	}
 
 	@Test

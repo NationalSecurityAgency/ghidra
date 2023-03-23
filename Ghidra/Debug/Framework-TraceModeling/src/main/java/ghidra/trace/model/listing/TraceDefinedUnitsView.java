@@ -15,6 +15,12 @@
  */
 package ghidra.trace.model.listing;
 
+/**
+ * A view of defined units
+ *
+ * <p>
+ * This view excludes default / undefined data units.
+ */
 public interface TraceDefinedUnitsView
 		extends TraceBaseDefinedUnitsView<TraceCodeUnit> {
 	// Just finalize the typing

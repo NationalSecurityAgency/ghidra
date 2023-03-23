@@ -16,31 +16,37 @@
 package ghidra.app.plugin.core.debug.service.model.record;
 
 import java.lang.invoke.MethodHandles;
+import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import com.google.common.collect.Range;
-
+import db.Transaction;
 import ghidra.app.plugin.core.debug.mapping.*;
 import ghidra.app.plugin.core.debug.service.model.DebuggerModelServicePlugin;
 import ghidra.app.plugin.core.debug.service.model.PermanentTransactionExecutor;
 import ghidra.app.services.TraceRecorder;
 import ghidra.app.services.TraceRecorderListener;
+import ghidra.async.AsyncFence;
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.AnnotatedDebuggerAttributeListener;
+import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.error.DebuggerMemoryAccessException;
 import ghidra.dbg.error.DebuggerModelAccessException;
 import ghidra.dbg.target.*;
 import ghidra.dbg.target.TargetEventScope.TargetEventType;
 import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
+import ghidra.dbg.util.PathMatcher;
 import ghidra.dbg.util.PathUtils;
+import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.trace.database.module.TraceObjectSection;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.breakpoint.*;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.memory.TraceObjectMemoryRegion;
 import ghidra.trace.model.modules.*;
@@ -51,7 +57,6 @@ import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.Msg;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.task.TaskMonitor;
 
@@ -188,8 +193,7 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 			long snap = timeRecorder.getSnap();
 			String path = object.getJoinedPath(".");
 			// Don't offload, because we need a consistent map
-			try (UndoableTransaction tid =
-				UndoableTransaction.start(trace, "Object created: " + path, true)) {
+			try (Transaction trans = trace.openTransaction("Object created: " + path)) {
 				objectRecorder.recordCreated(snap, object);
 			}
 		}
@@ -347,6 +351,16 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 	}
 
 	@Override
+	public TargetObject getTargetObject(TraceObject obj) {
+		return objectRecorder.toTarget(obj);
+	}
+
+	@Override
+	public TraceObject getTraceObject(TargetObject obj) {
+		return objectRecorder.toTrace(obj);
+	}
+
+	@Override
 	public TargetBreakpointLocation getTargetBreakpoint(TraceBreakpoint bpt) {
 		return objectRecorder.getTargetInterface(bpt, TraceObjectBreakpointLocation.class,
 			TargetBreakpointLocation.class);
@@ -392,6 +406,9 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 
 	@Override
 	public TargetThread getTargetThread(TraceThread thread) {
+		if (thread == null) {
+			return null;
+		}
 		return objectRecorder.getTargetInterface(thread, TraceObjectThread.class,
 			TargetThread.class);
 	}
@@ -408,8 +425,9 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 	}
 
 	@Override
-	public TargetRegisterBank getTargetRegisterBank(TraceThread thread, int frameLevel) {
-		return objectRecorder.getTargetFrameInterface(thread, frameLevel, TargetRegisterBank.class);
+	public Set<TargetRegisterBank> getTargetRegisterBanks(TraceThread thread, int frameLevel) {
+		return Set.of(
+			objectRecorder.getTargetFrameInterface(thread, frameLevel, TargetRegisterBank.class));
 	}
 
 	@Override
@@ -451,7 +469,7 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 	public Set<TargetThread> getLiveTargetThreads() {
 		return trace.getObjectManager()
 				.getRootObject()
-				.querySuccessorsInterface(Range.singleton(getSnap()), TraceObjectThread.class)
+				.querySuccessorsInterface(Lifespan.at(getSnap()), TraceObjectThread.class, true)
 				.map(t -> objectRecorder.getTargetInterface(t.getObject(), TargetThread.class))
 				.collect(Collectors.toSet());
 	}
@@ -468,13 +486,13 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 
 	@Override
 	public boolean isRegisterBankAccessible(TargetRegisterBank bank) {
-		// TODO: This seems a little aggressive, but the accessbility thing is already out of hand
+		// TODO: This seems a little aggressive, but the accessibility thing is already out of hand
 		return true;
 	}
 
 	@Override
 	public boolean isRegisterBankAccessible(TraceThread thread, int frameLevel) {
-		// TODO: This seems a little aggressive, but the accessbility thing is already out of hand
+		// TODO: This seems a little aggressive, but the accessibility thing is already out of hand
 		return true;
 	}
 
@@ -483,16 +501,134 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 		return memoryRecorder.getAccessible();
 	}
 
-	@Override
-	public CompletableFuture<Map<Register, RegisterValue>> captureThreadRegisters(
-			TraceThread thread, int frameLevel, Set<Register> registers) {
-		return CompletableFuture.completedFuture(Map.of());
+	protected TargetRegisterContainer getTargetRegisterContainer(TraceThread thread,
+			int frameLevel) {
+		if (!(thread instanceof TraceObjectThread tot)) {
+			throw new AssertionError("thread = " + thread);
+		}
+		TraceObject objThread = tot.getObject();
+		TraceObject regContainer = objThread.queryRegisterContainer(frameLevel);
+		if (regContainer == null) {
+			Msg.error(this,
+				"No register container for " + thread + " and frame " + frameLevel + " in trace");
+			return null;
+		}
+		TargetObject result =
+			target.getModel().getModelObject(regContainer.getCanonicalPath().getKeyList());
+		if (result == null) {
+			Msg.error(this,
+				"No register container for " + thread + " and frame " + frameLevel + " on target");
+			return null;
+		}
+		return (TargetRegisterContainer) result;
 	}
 
 	@Override
-	public CompletableFuture<Void> writeThreadRegisters(TraceThread thread, int frameLevel,
-			Map<Register, RegisterValue> values) {
-		throw new UnsupportedOperationException();
+	public CompletableFuture<Void> captureThreadRegisters(
+			TracePlatform platform, TraceThread thread, int frameLevel, Set<Register> registers) {
+		TargetRegisterContainer regContainer = getTargetRegisterContainer(thread, frameLevel);
+		/**
+		 * TODO: Seems I should be able to single out specific registers.... Is this convention
+		 * universal, or do some models allow refreshing on a register-by-register basis? If so,
+		 * what communicates that convention?
+		 */
+		if (regContainer == null) {
+			return AsyncUtils.NIL;
+		}
+		return regContainer.resync();
+	}
+
+	protected static byte[] encodeValue(int byteLength, BigInteger value) {
+		return Utils.bigIntegerToBytes(value, byteLength, true);
+	}
+
+	protected TargetRegisterBank isExactRegisterOnTarget(TracePlatform platform,
+			TargetRegisterContainer regContainer, Register register) {
+		PathMatcher matcher =
+			platform.getConventionalRegisterPath(regContainer.getSchema(), List.of(), register);
+		for (TargetObject targetObject : matcher.getCachedSuccessors(regContainer).values()) {
+			if (!(targetObject instanceof TargetRegister targetRegister)) {
+				continue;
+			}
+			DebuggerObjectModel model = targetRegister.getModel();
+			List<String> pathBank = model.getRootSchema()
+					.searchForAncestor(TargetRegisterBank.class, targetRegister.getPath());
+			if (pathBank == null ||
+				!(model.getModelObject(pathBank) instanceof TargetRegisterBank targetBank)) {
+				continue;
+			}
+			return targetBank;
+		}
+		return null;
+	}
+
+	protected TargetRegisterBank isExactRegisterOnTarget(TracePlatform platform, TraceThread thread,
+			int frameLevel, Register register) {
+		TargetRegisterContainer regContainer = getTargetRegisterContainer(thread, frameLevel);
+		if (regContainer == null) {
+			return null;
+		}
+		return isExactRegisterOnTarget(platform, regContainer, register);
+	}
+
+	@Override
+	public Register isRegisterOnTarget(TracePlatform platform, TraceThread thread, int frameLevel,
+			Register register) {
+		for (; register != null; register = register.getParentRegister()) {
+			TargetRegisterBank targetBank =
+				isExactRegisterOnTarget(platform, thread, frameLevel, register);
+			if (targetBank != null) {
+				/**
+				 * TODO: A way to ask the target which registers are modifiable, but
+				 * "isRegisterOnTarget" does not necessarily imply for writing
+				 */
+				return register;
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public CompletableFuture<Void> writeThreadRegisters(TracePlatform platform, TraceThread thread,
+			int frameLevel, Map<Register, RegisterValue> values) {
+		TargetRegisterContainer regContainer = getTargetRegisterContainer(thread, frameLevel);
+		if (regContainer == null) {
+			return AsyncUtils.NIL;
+		}
+		Map<TargetRegisterBank, Map<TargetRegister, byte[]>> writesByBank = new HashMap<>();
+		for (RegisterValue rv : values.values()) {
+			Register register = rv.getRegister();
+			PathMatcher matcher =
+				platform.getConventionalRegisterPath(regContainer.getSchema(), List.of(), register);
+			Collection<TargetObject> regs = matcher.getCachedSuccessors(regContainer).values();
+			if (regs.isEmpty()) {
+				Msg.warn(this, "No register object for " + register);
+			}
+			for (TargetObject objRegUntyped : regs) {
+				TargetRegister objReg = (TargetRegister) objRegUntyped;
+				List<String> pathBank = objReg.getModel()
+						.getRootSchema()
+						.searchForAncestor(TargetRegisterBank.class, objReg.getPath());
+				if (pathBank == null) {
+					Msg.warn(this, "No register bank for " + register);
+					continue;
+				}
+				TargetRegisterBank objBank =
+					(TargetRegisterBank) objReg.getModel().getModelObject(pathBank);
+				if (objBank == null) {
+					Msg.warn(this, "No register bank for " + register);
+					continue;
+				}
+				writesByBank.computeIfAbsent(objBank, __ -> new HashMap<>())
+						.put(objReg, encodeValue(objReg.getByteLength(), rv.getUnsignedValue()));
+			}
+		}
+		AsyncFence fence = new AsyncFence();
+		for (Map.Entry<TargetRegisterBank, Map<TargetRegister, byte[]>> ent : writesByBank
+				.entrySet()) {
+			fence.include(ent.getKey().writeRegisters(ent.getValue()));
+		}
+		return fence.ready();
 	}
 
 	@Override
@@ -506,10 +642,8 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 	}
 
 	@Override
-	public CompletableFuture<NavigableMap<Address, byte[]>> readMemoryBlocks(
-			AddressSetView set, TaskMonitor monitor, boolean returnResult) {
-		return RecorderUtils.INSTANCE.readMemoryBlocks(this, BLOCK_BITS, set, monitor,
-			returnResult);
+	public CompletableFuture<Void> readMemoryBlocks(AddressSetView set, TaskMonitor monitor) {
+		return RecorderUtils.INSTANCE.readMemoryBlocks(this, BLOCK_BITS, set, monitor);
 	}
 
 	@Override
@@ -538,9 +672,10 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 	public List<TargetBreakpointSpecContainer> collectBreakpointContainers(TargetThread thread) {
 		if (thread == null) {
 			return objectRecorder.collectTargetSuccessors(target,
-				TargetBreakpointSpecContainer.class);
+				TargetBreakpointSpecContainer.class, false);
 		}
-		return objectRecorder.collectTargetSuccessors(thread, TargetBreakpointSpecContainer.class);
+		return objectRecorder.collectTargetSuccessors(thread, TargetBreakpointSpecContainer.class,
+			false);
 	}
 
 	private class BreakpointConvention {
@@ -551,7 +686,7 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 			this.thread = thread;
 			TraceObject object = thread.getObject();
 			this.process = object
-					.queryAncestorsTargetInterface(Range.singleton(getSnap()), TargetProcess.class)
+					.queryAncestorsTargetInterface(Lifespan.at(getSnap()), TargetProcess.class)
 					.map(p -> p.getSource(object))
 					.findFirst()
 					.orElse(null);
@@ -559,7 +694,7 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 
 		private boolean appliesTo(TraceObjectBreakpointLocation loc) {
 			TraceObject object = loc.getObject();
-			if (object.queryAncestorsInterface(Range.singleton(getSnap()), TraceObjectThread.class)
+			if (object.queryAncestorsInterface(Lifespan.at(getSnap()), TraceObjectThread.class)
 					.anyMatch(t -> t == thread)) {
 				return true;
 			}
@@ -567,7 +702,7 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 				return false;
 			}
 			return object
-					.queryAncestorsTargetInterface(Range.singleton(getSnap()), TargetProcess.class)
+					.queryAncestorsTargetInterface(Lifespan.at(getSnap()), TargetProcess.class)
 					.map(p -> p.getSource(object))
 					.anyMatch(p -> p == process);
 		}
@@ -576,12 +711,13 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 	@Override
 	public List<TargetBreakpointLocation> collectBreakpoints(TargetThread thread) {
 		if (thread == null) {
-			return objectRecorder.collectTargetSuccessors(target, TargetBreakpointLocation.class);
+			return objectRecorder.collectTargetSuccessors(target, TargetBreakpointLocation.class,
+				true);
 		}
 		BreakpointConvention convention = new BreakpointConvention(
 			objectRecorder.getTraceInterface(thread, TraceObjectThread.class));
 		return trace.getObjectManager()
-				.queryAllInterface(Range.singleton(getSnap()), TraceObjectBreakpointLocation.class)
+				.queryAllInterface(Lifespan.at(getSnap()), TraceObjectBreakpointLocation.class)
 				.filter(convention::appliesTo)
 				.map(tl -> objectRecorder.getTargetInterface(tl.getObject(),
 					TargetBreakpointLocation.class))
@@ -590,7 +726,8 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 
 	@Override
 	public Set<TraceBreakpointKind> getSupportedBreakpointKinds() {
-		return objectRecorder.collectTargetSuccessors(target, TargetBreakpointSpecContainer.class)
+		return objectRecorder
+				.collectTargetSuccessors(target, TargetBreakpointSpecContainer.class, false)
 				.stream()
 				.flatMap(c -> c.getSupportedBreakpointKinds().stream())
 				.map(k -> TraceRecorder.targetToTraceBreakpointKind(k))
@@ -603,6 +740,11 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 	}
 
 	@Override
+	public boolean isSupportsActivation() {
+		return objectRecorder.isSupportsActivation;
+	}
+
+	@Override
 	public TargetObject getFocus() {
 		return curFocus;
 	}
@@ -610,7 +752,7 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 	@Override
 	public CompletableFuture<Boolean> requestFocus(TargetObject focus) {
 		for (TargetFocusScope scope : objectRecorder.collectTargetSuccessors(target,
-			TargetFocusScope.class)) {
+			TargetFocusScope.class, false)) {
 			if (PathUtils.isAncestor(scope.getPath(), focus.getPath())) {
 				return scope.requestFocus(focus).thenApply(__ -> true).exceptionally(ex -> {
 					ex = AsyncUtils.unwrapThrowable(ex);
@@ -626,6 +768,28 @@ public class ObjectBasedTraceRecorder implements TraceRecorder {
 			}
 		}
 		Msg.info(this, "Could not find suitable focus scope for " + focus);
+		return CompletableFuture.completedFuture(false);
+	}
+
+	@Override
+	public CompletableFuture<Boolean> requestActivation(TargetObject active) {
+		for (TargetActiveScope scope : objectRecorder.collectTargetSuccessors(target,
+			TargetActiveScope.class, false)) {
+			if (PathUtils.isAncestor(scope.getPath(), active.getPath())) {
+				return scope.requestActivation(active).thenApply(__ -> true).exceptionally(ex -> {
+					ex = AsyncUtils.unwrapThrowable(ex);
+					String msg = "Could not activate " + active + ": " + ex.getMessage();
+					if (ex instanceof DebuggerModelAccessException) {
+						Msg.info(this, msg);
+					}
+					else {
+						Msg.error(this, msg, ex);
+					}
+					return false;
+				});
+			}
+		}
+		Msg.info(this, "Could not find suitable active scope for " + active);
 		return CompletableFuture.completedFuture(false);
 	}
 

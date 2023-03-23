@@ -21,17 +21,17 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import docking.action.KeyBindingData;
 import docking.action.MenuData;
 import docking.widgets.filechooser.GhidraFileChooserMode;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.debug.gui.objects.DebuggerObjectsProvider;
 import ghidra.app.plugin.core.debug.gui.objects.ObjectContainer;
 import ghidra.dbg.target.TargetObject;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
-import resources.ResourceManager;
 
 public class ExportAsFactsAction extends ImportExportAsAction {
 
@@ -39,8 +39,8 @@ public class ExportAsFactsAction extends ImportExportAsAction {
 	public static String JOIN = ".";
 	public static String SPLIT = "\\.";
 	public static String fileExt2 = ".facts";
-	protected ImageIcon ICON_FACTS = ResourceManager.loadImage("images/closedFolder.png");
-	private Map<String, PrintWriter> files = new HashMap<String, PrintWriter>();
+	protected static final Icon ICON_FACTS = new GIcon("icon.debugger.display.export.facts");
+	private Map<String, PrintWriter> files = new HashMap<>();
 
 	public ExportAsFactsAction(PluginTool tool, String owner, DebuggerObjectsProvider provider) {
 		super("ExportAsFacts", tool, owner, provider);

@@ -73,8 +73,7 @@ public class AssemblyNumericTerminal extends AssemblyTerminal {
 	 * This is only a convenience for testing
 	 * 
 	 * <p>
-	 * Please use {@link #match(String, int, AssemblyGrammar, Map) match(String, int,
-	 * AssemblyGrammar, Map&lt;String, Long&gt;)}.
+	 * Please use {@link #match(String, int, AssemblyGrammar, AssemblyNumericSymbols)}
 	 * 
 	 * @param buffer the input buffer
 	 * @return the parsed token
@@ -184,7 +183,7 @@ public class AssemblyNumericTerminal extends AssemblyTerminal {
 			return Collections.emptySet();
 		}
 		try {
-			long val = Long.parseLong(num, radix);
+			long val = Long.parseUnsignedLong(num, radix);
 			if (neg) {
 				val = -val;
 			}

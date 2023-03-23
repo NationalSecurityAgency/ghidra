@@ -15,7 +15,6 @@
  */
 #include "typeop.hh"
 #include "funcdata.hh"
-#include <cmath>
 
 /// \param inst will hold the array of TypeOp objects, indexed on op-code
 /// \param tlst is the corresponding TypeFactory for the Architecture
@@ -307,7 +306,7 @@ void TypeOpFunc::printRaw(ostream &s,const PcodeOp *op)
 TypeOpCopy::TypeOpCopy(TypeFactory *t) : TypeOp(t,CPUI_COPY,"copy")
 
 {
-  opflags = PcodeOp::unary;
+  opflags = PcodeOp::unary | PcodeOp::nocollapse;
   behave = new OpBehaviorCopy();
 }
 
@@ -1791,7 +1790,18 @@ TypeOpMulti::TypeOpMulti(TypeFactory *t) : TypeOp(t,CPUI_MULTIEQUAL,"?")
 Datatype *TypeOpMulti::propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn,Varnode *outvn,
 				     int4 inslot,int4 outslot)
 {
-  if ((inslot!=-1)&&(outslot!=-1)) return (Datatype *)0; // Must propagate input <-> output
+  if ((inslot!=-1)&&(outslot!=-1)) {
+    if (invn == outvn && outvn->getTempType()->needsResolution()) {
+      // If same Varnode occupies two input slots of the MULTIEQUAL
+      // the second input slot should inherit the resolution of the first
+      Funcdata *fd = op->getParent()->getFuncdata();
+      Datatype *unionType = outvn->getTempType();
+      const ResolvedUnion *res = fd->getUnionField(unionType, op, inslot);
+      if (res != (const ResolvedUnion *)0)
+	fd->setUnionField(unionType, op, outslot, *res);
+    }
+    return (Datatype *)0; // Must propagate input <-> output
+  }
   Datatype *newtype;
   if (invn->isSpacebase()) {
     AddrSpace *spc = tlst->getArch()->getDefaultDataSpace();
@@ -1918,18 +1928,20 @@ string TypeOpSubpiece::getOperatorName(const PcodeOp *op) const
 Datatype *TypeOpSubpiece::getOutputToken(const PcodeOp *op,CastStrategy *castStrategy) const
 
 {
+  const Varnode *outvn = op->getOut();
+  const TypeField *field;
+  Datatype *ct = op->getIn(0)->getHighTypeReadFacing(op);
   int4 offset;
-  Datatype *parent;
-  const Varnode *vn = op->getOut();
-  const TypeField *field = testExtraction(true, op, parent, offset);
+  int4 byteOff = computeByteOffsetForComposite(op);
+ field = ct->findTruncation(byteOff,outvn->getSize(),op,1,offset);	// Use artificial slot
   if (field != (const TypeField *)0) {
-    if (vn->getSize() == field->type->getSize())
+    if (outvn->getSize() == field->type->getSize())
       return field->type;
   }
-  Datatype *dt = vn->getHighTypeDefFacing();	// SUBPIECE prints as cast to whatever its output is
+  Datatype *dt = outvn->getHighTypeDefFacing();	// SUBPIECE prints as cast to whatever its output is
   if (dt->getMetatype() != TYPE_UNKNOWN)
     return dt;
-  return tlst->getBase(vn->getSize(),TYPE_INT);	// If output is unknown, treat as cast to int
+  return tlst->getBase(outvn->getSize(),TYPE_INT);	// If output is unknown, treat as cast to int
 }
 
 Datatype *TypeOpSubpiece::propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn,Varnode *outvn,
@@ -1939,15 +1951,16 @@ Datatype *TypeOpSubpiece::propagateType(Datatype *alttype,PcodeOp *op,Varnode *i
   int4 byteOff;
   int4 newoff;
   const TypeField *field;
-  if (alttype->getMetatype() == TYPE_UNION) {
+  type_metatype meta = alttype->getMetatype();
+  if (meta == TYPE_UNION || meta == TYPE_PARTIALUNION) {
     // NOTE: We use an artificial slot here to store the field being truncated to
     // as the facing data-type for slot 0 is already to the parent (this TYPE_UNION)
     byteOff = computeByteOffsetForComposite(op);
-    field = ((TypeUnion *)alttype)->resolveTruncation(byteOff,op,1,newoff);
+    field = alttype->resolveTruncation(byteOff,op,1,newoff);
   }
   else if (alttype->getMetatype() == TYPE_STRUCT) {
     int4 byteOff = computeByteOffsetForComposite(op);
-    field = ((TypeStruct *)alttype)->resolveTruncation(byteOff, outvn->getSize(), &newoff);
+    field = alttype->findTruncation(byteOff, outvn->getSize(), op, 1, newoff);
   }
   else
     return (Datatype *)0;
@@ -1955,39 +1968,6 @@ Datatype *TypeOpSubpiece::propagateType(Datatype *alttype,PcodeOp *op,Varnode *i
     return field->type;
   }
   return (Datatype *)0;
-}
-
-/// \brief Test if the given SUBPIECE PcodeOp is acting as a field extraction operator
-///
-/// For packed structures with small fields,  SUBPIECE may be used to extract the field.
-/// Test if the HighVariable being truncated is a structure and if the truncation produces
-/// part of a \e single field.  If so return the TypeField descriptor, and pass back the parent
-/// structure and the number of least significant bytes that have been truncated from the field.
-/// \param useHigh is \b true if the HighVariable data-type is checked, otherwise the Varnode data-type is used
-/// \param op is the given SUBPIECE PcodeOp
-/// \param parent holds the parent Datatype being passed back
-/// \param offset holds the LSB offset being passed back
-/// \return the TypeField if a field is being extracted or null otherwise
-const TypeField *TypeOpSubpiece::testExtraction(bool useHigh,const PcodeOp *op,Datatype *&parent,int4 &offset)
-
-{
-  const Varnode *vn = op->getIn(0);
-  Datatype *ct = useHigh ? vn->getHigh()->getType() : vn->getType();
-  if (ct->getMetatype() == TYPE_STRUCT) {
-    parent = ct;
-    int4 byteOff = computeByteOffsetForComposite(op);
-    return ((TypeStruct *)ct)->resolveTruncation(byteOff,op->getOut()->getSize(),&offset);
-  }
-  else if (ct->getMetatype() == TYPE_UNION) {
-    const Funcdata *fd = op->getParent()->getFuncdata();
-    const ResolvedUnion *res = fd->getUnionField(ct, op, 1);		// Use artificial slot
-    if (res != (const ResolvedUnion *)0 && res->getFieldNum() >= 0) {
-      parent = ct;
-      offset = 0;
-      return ((TypeUnion *)ct)->getField(res->getFieldNum());
-    }
-  }
-  return (const TypeField *)0;
 }
 
 /// \brief Compute the byte offset into an assumed composite data-type produced by the given CPUI_SUBPIECE

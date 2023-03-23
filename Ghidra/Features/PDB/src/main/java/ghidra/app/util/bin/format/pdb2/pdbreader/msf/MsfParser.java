@@ -25,35 +25,35 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Parser for detecting the appropriate {@link AbstractMsf} format for the filename given.
- *  It then creates and returns the appropriate {@link AbstractMsf} object.
+ * Parser for detecting the appropriate {@link Msf} format for the filename given.
+ *  It then creates and returns the appropriate {@link Msf} object.
  */
 public class MsfParser {
 
 	/**
-	 * Detects, creates, and returns the appropriate {@link AbstractMsf} object found for
-	 * the filename given. 
-	 * @param filename Filename of the file to process.
-	 * @param pdbOptions {@link PdbReaderOptions} used for processing the PDB.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation. 
-	 * @return Derived {@link AbstractMsf} object.
-	 * @throws IOException For file I/O reasons
-	 * @throws PdbException If an appropriate object cannot be created.
-	 * @throws CancelledException Upon user cancellation.
+	 * Detects, creates, and returns the appropriate {@link Msf} object found for
+	 * the filename given
+	 * @param filename name of the file to process
+	 * @param pdbOptions {@link PdbReaderOptions} used for processing the PDB
+	 * @param monitor {@link TaskMonitor} used for checking cancellation
+	 * @return derived {@link Msf} object
+	 * @throws IOException for file I/O reasons
+	 * @throws PdbException if an appropriate object cannot be created
+	 * @throws CancelledException upon user cancellation
 	 */
-	public static AbstractMsf parse(String filename, PdbReaderOptions pdbOptions,
+	public static Msf parse(String filename, PdbReaderOptions pdbOptions,
 			TaskMonitor monitor) throws IOException, PdbException, CancelledException {
 		Objects.requireNonNull(filename, "filename cannot be null");
 		Objects.requireNonNull(pdbOptions, "pdbOptions cannot be null");
 		Objects.requireNonNull(monitor, "monitor cannot be null");
 
-		AbstractMsf msf;
+		Msf msf;
 		RandomAccessFile file = new RandomAccessFile(filename, "r");
 		if (Msf200.detected(file)) {
-			msf = new Msf200(file, pdbOptions);
+			msf = new Msf200(file, filename, monitor, pdbOptions);
 		}
 		else if (Msf700.detected(file)) {
-			msf = new Msf700(file, pdbOptions);
+			msf = new Msf700(file, filename, monitor, pdbOptions);
 		}
 		else {
 			// Must close the file here.  In cases where MSF is created, the MSF takes
@@ -61,7 +61,7 @@ public class MsfParser {
 			file.close();
 			throw new PdbException("MSF format not detected");
 		}
-		msf.deserialize(monitor);
+		msf.deserialize();
 		return msf;
 	}
 

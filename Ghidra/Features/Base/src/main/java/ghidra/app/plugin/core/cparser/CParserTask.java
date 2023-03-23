@@ -19,6 +19,7 @@ import java.io.File;
 
 import javax.swing.SwingUtilities;
 
+import docking.widgets.dialogs.MultiLineMessageDialog;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.data.FileDataTypeManager;
 import ghidra.util.Msg;
@@ -57,6 +58,15 @@ class CParserTask extends Task {
 		this.dtMgr = dataTypeManager;
 	}
 
+	private String getFirstMessageLine(final String errMsg) {
+		int indexOf = errMsg.indexOf('\n');
+		String msg = errMsg;
+		if (indexOf > 0) {
+			msg = msg.substring(0, indexOf);
+		}
+		return msg;
+	}
+
 	@Override
 	public void run(TaskMonitor monitor) {
 		DataTypeManager fileDtMgr = null;
@@ -73,16 +83,6 @@ class CParserTask extends Task {
 					try {
 						((FileDataTypeManager) dtMgr).save();
 						dtMgr.close();
-						SwingUtilities.invokeLater(new Runnable() {
-							@Override
-							public void run() {
-								Msg.showInfo(
-									getClass(), plugin.getDialog().getComponent(),
-									"Created Archive File", "Successfully created archive file\n" +
-										((FileDataTypeManager) dtMgr).getFilename());
-							}
-
-						});
 					}
 					catch (DuplicateFileException e) {
 						Msg.showError(this, plugin.getDialog().getComponent(), "Error During Save",
@@ -102,8 +102,12 @@ class CParserTask extends Task {
 					SwingUtilities.invokeLater(new Runnable() {
 						@Override
 						public void run() {
-							Msg.showInfo(getClass(),
-								plugin.getDialog().getComponent(), "Parse Errors", "File was not created due to parse errors.");
+							MultiLineMessageDialog.showModalMessageDialog(
+								plugin.getDialog().getComponent(), "Parse Errors",
+								"File was not created due to parse errors: " +
+									((FileDataTypeManager) dtMgr).getFilename(),
+								plugin.getFormattedParseMessage(null),
+								MultiLineMessageDialog.INFORMATION_MESSAGE);
 						}
 					});
 				}
@@ -115,8 +119,10 @@ class CParserTask extends Task {
 			SwingUtilities.invokeLater(new Runnable() {
 				@Override
 				public void run() {
-					Msg.showInfo(getClass(),
-						plugin.getDialog().getComponent(), "Parse Errors", errMsg);
+					String msg = getFirstMessageLine(errMsg);
+					MultiLineMessageDialog.showModalMessageDialog(plugin.getDialog().getComponent(),
+						"Parse Errors", msg, plugin.getFormattedParseMessage(errMsg),
+						MultiLineMessageDialog.ERROR_MESSAGE);
 				}
 			});
 		}
@@ -126,14 +132,22 @@ class CParserTask extends Task {
 			SwingUtilities.invokeLater(new Runnable() {
 				@Override
 				public void run() {
-					Msg.showInfo(getClass(),
-						plugin.getDialog().getComponent(), "Parse Errors", errMsg);
+					String msg = getFirstMessageLine(errMsg);
+					MultiLineMessageDialog.showModalMessageDialog(plugin.getDialog().getComponent(),
+						"PreProcessor Parse Errors", msg, plugin.getFormattedParseMessage(errMsg),
+						MultiLineMessageDialog.ERROR_MESSAGE);
 				}
 			});
 		}
 		catch (Exception e) {
+			final String errMsg = e.getMessage();
+			String msg = getFirstMessageLine(errMsg);
 			Msg.showError(this, plugin.getDialog().getComponent(), "Error During Parse",
-				"Parse header files failed", e);
+				"Parse header files failed" + "\n\nParser Messages:\n" + plugin.getParseMessage(),
+				e);
+			MultiLineMessageDialog.showModalMessageDialog(plugin.getDialog().getComponent(),
+				"Error During Parse", msg, plugin.getFormattedParseMessage(errMsg),
+				MultiLineMessageDialog.ERROR_MESSAGE);
 		}
 		finally {
 			if (fileDtMgr != null) {

@@ -15,7 +15,6 @@
  */
 package ghidra.app.util.viewer.field;
 
-import java.awt.Color;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -25,8 +24,8 @@ import org.apache.commons.lang3.StringUtils;
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.viewer.field.ListingColors.FunctionColors;
 import ghidra.app.util.viewer.format.FieldFormatModel;
-import ghidra.app.util.viewer.options.OptionsGui;
 import ghidra.app.util.viewer.proxy.FunctionProxy;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.Options;
@@ -44,9 +43,6 @@ import ghidra.program.util.ProgramLocation;
 public class FunctionTagFieldFactory extends FieldFactory {
 
 	public static final String FIELD_NAME = "Function Tags";
-	public static final Color DEFAULT_COLOR = new Color(130, 0, 75);
-
-	private Color literalColor;
 
 	/**
 	 * Default Constructor
@@ -59,23 +55,14 @@ public class FunctionTagFieldFactory extends FieldFactory {
 	 * Constructor
 	 * 
 	 * @param model the model that the field belongs to.
-	 * @param hsProvider the HightLightStringProvider.
+	 * @param hlProvider the HightLightStringProvider.
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
-	 * @param serviceProvider the provider for services.
 	 */
 	private FunctionTagFieldFactory(FieldFormatModel model, HighlightProvider hlProvider,
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
-		color = displayOptions.getColor(OptionsGui.FUN_TAG.getColorOptionName(),
-			OptionsGui.FUN_TAG.getDefaultColor());
-		literalColor = displayOptions.getColor(OptionsGui.SEPARATOR.getColorOptionName(),
-			OptionsGui.SEPARATOR.getDefaultColor());
 	}
-
-	/******************************************************************************
-	 * PUBLIC METHODS
-	 ******************************************************************************/
 
 	@Override
 	public ListingField getField(ProxyObj<?> proxy, int varWidth) {
@@ -139,31 +126,16 @@ public class FunctionTagFieldFactory extends FieldFactory {
 
 	@Override
 	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider provider,
-			ToolOptions displayOptions, ToolOptions fieldOptions) {
-		return new FunctionTagFieldFactory(formatModel, provider, displayOptions, fieldOptions);
+			ToolOptions toolOptions, ToolOptions fieldOptions) {
+		return new FunctionTagFieldFactory(formatModel, provider, toolOptions, fieldOptions);
 	}
-
-	@Override
-	public void displayOptionsChanged(Options options, String optionName, Object oldValue,
-			Object newValue) {
-		if (optionName.equals(OptionsGui.FUN_TAG.getColorOptionName())) {
-			color = (Color) newValue;
-		}
-		else if (optionName.equals(OptionsGui.SEPARATOR.getColorOptionName())) {
-			literalColor = (Color) newValue;
-		}
-		super.displayOptionsChanged(options, optionName, oldValue, newValue);
-	}
-
-	/******************************************************************************
-	 * PROTECTED METHODS
-	 ******************************************************************************/
 
 	/**
 	 * Creates a tags list field to be show at the beginning of each function that shows the tags
 	 * assigned to that function. 
 	 * 
 	 * @param function the function to retrieve the tags from
+	 * @return the elements
 	 */
 	protected List<FieldElement> createFunctionTagElements(FunctionDB function) {
 
@@ -176,19 +148,15 @@ public class FunctionTagFieldFactory extends FieldFactory {
 		AttributedString as;
 		int elementIndex = 0;
 
-		as = new AttributedString("Tags: ", literalColor, getMetrics());
+		as = new AttributedString("Tags: ", ListingColors.SEPARATOR, getMetrics());
 		textElements.add(new TextFieldElement(as, elementIndex++, 0));
 
 		String tagNamesStr = StringUtils.join(tagNames, ", ");
-		as = new AttributedString(tagNamesStr, color, getMetrics());
+		as = new AttributedString(tagNamesStr, FunctionColors.TAG, getMetrics());
 		textElements.add(new TextFieldElement(as, elementIndex++, 0));
 
 		return textElements;
 	}
-
-	/******************************************************************************
-	 * PRIVATE METHODS
-	 ******************************************************************************/
 
 	/**
 	 * Returns all function tags associated with the given function.

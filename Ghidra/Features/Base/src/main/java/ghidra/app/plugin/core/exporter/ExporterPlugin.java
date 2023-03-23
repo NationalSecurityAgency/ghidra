@@ -24,9 +24,10 @@ import ghidra.app.context.NavigatableActionContext;
 import ghidra.app.context.NavigatableContextAction;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.services.CodeViewerService;
-import ghidra.framework.main.FrontEndable;
-import ghidra.framework.main.datatable.ProjectDataContext;
+import ghidra.framework.main.ApplicationLevelPlugin;
+import ghidra.framework.main.FrontEndService;
 import ghidra.framework.main.datatable.FrontendProjectTreeAction;
+import ghidra.framework.main.datatable.ProjectDataContext;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.plugintool.*;
@@ -44,15 +45,25 @@ import ghidra.util.HelpLocation;
 	description = "This plugin exports a program or datatype archive to an external file."
 )
 //@formatter:on
-public class ExporterPlugin extends Plugin implements FrontEndable {
+public class ExporterPlugin extends Plugin implements ApplicationLevelPlugin {
+
+	private FrontEndService frontEndService;
 
 	public ExporterPlugin(PluginTool tool) {
 		super(tool);
+
+		frontEndService = tool.getService(FrontEndService.class);
+
 		createFrontEndAction();
 		createToolAction();
 	}
 
 	private void createToolAction() {
+
+		if (frontEndService != null) {
+			return; // do not add File menu Export Program action to front-end
+		}
+
 		DockingAction action = new NavigatableContextAction("Export Program", getName()) {
 
 			@Override
@@ -83,6 +94,11 @@ public class ExporterPlugin extends Plugin implements FrontEndable {
 	}
 
 	private void createFrontEndAction() {
+
+		if (frontEndService == null) {
+			return; // only add project tree actions to front-end
+		}
+
 		DockingAction action = new FrontendProjectTreeAction("Export", getName()) {
 
 			@Override

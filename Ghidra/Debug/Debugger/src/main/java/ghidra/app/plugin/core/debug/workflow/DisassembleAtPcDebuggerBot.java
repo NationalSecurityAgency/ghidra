@@ -20,34 +20,37 @@ import java.util.Map.Entry;
 
 import javax.swing.event.ChangeListener;
 
-import com.google.common.collect.Range;
-
-import ghidra.app.cmd.disassemble.DisassembleCommand;
+import db.Transaction;
+import docking.DockingWindowManager;
+import docking.Tool;
+import ghidra.app.plugin.core.debug.mapping.DebuggerPlatformMapper;
+import ghidra.app.plugin.core.debug.mapping.DisassemblyResult;
 import ghidra.app.plugin.core.debug.service.workflow.*;
-import ghidra.app.services.DebuggerBot;
-import ghidra.app.services.DebuggerBotInfo;
+import ghidra.app.services.*;
 import ghidra.async.AsyncDebouncer;
 import ghidra.async.AsyncTimer;
+import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.annotation.HelpInfo;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
-import ghidra.program.model.data.PointerDataType;
+import ghidra.program.model.data.PointerTypedef;
+import ghidra.program.model.data.VoidDataType;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.util.CodeUnitInsertionException;
-import ghidra.trace.model.Trace;
+import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.TraceMemoryBytesChangeType;
 import ghidra.trace.model.Trace.TraceStackChangeType;
-import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.listing.*;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.stack.*;
+import ghidra.trace.model.target.TraceObject;
+import ghidra.trace.model.thread.TraceObjectThread;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.*;
 import ghidra.util.*;
 import ghidra.util.classfinder.ClassSearcher;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.task.TaskMonitor;
 
 @DebuggerBotInfo( //
@@ -152,9 +155,9 @@ public class DisassembleAtPcDebuggerBot implements DebuggerBot {
 			}
 			TraceViewportSpanIterator spit = new TraceViewportSpanIterator(trace, snap);
 			while (spit.hasNext()) {
-				Range<Long> span = spit.next();
-				if (span.upperEndpoint() >= 0) {
-					return span.upperEndpoint();
+				Lifespan span = spit.next();
+				if (span.lmax() >= 0) {
+					return span.lmax();
 				}
 			}
 			return snap;
@@ -207,22 +210,28 @@ public class DisassembleAtPcDebuggerBot implements DebuggerBot {
 			if (pcVal == null) {
 				return;
 			}
-			if (range == null || range.contains(pcVal)) {
-				// NOTE: If non-0 frames are ever used, level should be passed in for injects
-				disassemble(pcVal, stack.getThread(), snap);
+			if (range != null && !range.contains(pcVal)) {
+				return;
 			}
+			// NOTE: If non-0 frames are ever used, level should be passed in for injects
+			disassemble(pcVal, stack.getThread(), snap);
 		}
 
 		protected void disassembleRegPcVal(TraceThread thread, int frameLevel, long pcSnap,
 				long memSnap) {
+			if (pc == null) {
+				return;
+			}
 			TraceData pcUnit = null;
-			try (UndoableTransaction tid =
-				UndoableTransaction.start(trace, "Disassemble: PC is code pointer", true)) {
-				TraceCodeRegisterSpace regCode =
-					codeManager.getCodeRegisterSpace(thread, frameLevel, true);
+			try (Transaction tx =
+				trace.openTransaction("Disassemble: PC is code pointer")) {
+				TraceCodeSpace regCode = codeManager.getCodeRegisterSpace(thread, frameLevel, true);
+				// TODO: Should be same platform as pc, not necessarily base
+				AddressSpace space = trace.getBaseAddressFactory().getDefaultAddressSpace();
+				PointerTypedef type = new PointerTypedef(null, VoidDataType.dataType,
+					pc.getMinimumByteSize(), null, space);
 				try {
-					pcUnit = regCode.definedData()
-							.create(Range.atLeast(pcSnap), pc, PointerDataType.dataType);
+					pcUnit = regCode.definedData().create(Lifespan.nowOn(pcSnap), pc, type);
 				}
 				catch (CodeUnitInsertionException e) {
 					// I guess something's already there. Leave it, then!
@@ -230,11 +239,8 @@ public class DisassembleAtPcDebuggerBot implements DebuggerBot {
 					pcUnit = regCode.definedData().getForRegister(pcSnap, pc);
 				}
 			}
-			if (pcUnit != null) {
-				Address pcVal = (Address) TraceRegisterUtils.getValueHackPointer(pcUnit);
-				if (pcVal != null) {
-					disassemble(pcVal, thread, memSnap);
-				}
+			if (pcUnit != null && pcUnit.getValue() instanceof Address pcVal) {
+				disassemble(pcVal, thread, memSnap);
 			}
 		}
 
@@ -256,6 +262,14 @@ public class DisassembleAtPcDebuggerBot implements DebuggerBot {
 				return null;
 			}
 			return mrent.getKey().getY1();
+		}
+
+		// TODO: TraceManager should instead track focus object, not thread
+		protected TraceObject getObject(TraceThread thread) {
+			if (!(thread instanceof TraceObjectThread)) {
+				return null;
+			}
+			return ((TraceObjectThread) thread).getObject();
 		}
 
 		protected void disassemble(Address start, TraceThread thread, long snap) {
@@ -280,7 +294,7 @@ public class DisassembleAtPcDebuggerBot implements DebuggerBot {
 			 */
 			AddressSetView readOnly =
 				memoryManager.getRegionsAddressSetWith(ks, r -> !r.isWrite());
-			AddressSetView everKnown = memoryManager.getAddressesWithState(Range.atMost(ks),
+			AddressSetView everKnown = memoryManager.getAddressesWithState(Lifespan.since(ks),
 				s -> s == TraceMemoryState.KNOWN);
 			AddressSetView roEverKnown = new IntersectionAddressSetView(readOnly, everKnown);
 			AddressSetView known =
@@ -290,45 +304,86 @@ public class DisassembleAtPcDebuggerBot implements DebuggerBot {
 
 			// TODO: Should I just keep a variable-snap view around?
 			TraceProgramView view = trace.getFixedProgramView(ks);
-			DisassembleCommand dis =
-				new DisassembleCommand(start, disassemblable, true) {
-					@Override
-					public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
-						synchronized (injects) {
-							try {
-								if (codeManager.definedUnits().containsAddress(ks, start)) {
-									return true;
-								}
-								for (DisassemblyInject i : injects) {
-									i.pre(plugin.getTool(), this, view, thread,
-										new AddressSet(start, start),
-										disassemblable);
-								}
-								boolean result = super.applyTo(obj, monitor);
-								if (!result) {
-									Msg.error(this, "Auto-disassembly error: " + getStatusMsg());
-									return true; // No pop-up errors
-								}
-								for (DisassemblyInject i : injects) {
-									i.post(plugin.getTool(), view, getDisassembledAddressSet());
-								}
-								return true;
-							}
-							catch (Throwable e) {
-								Msg.error(this, "Auto-disassembly error: " + e);
-								return true; // No pop-up errors
-							}
+
+			BackgroundCommand cmd = new BackgroundCommand("Auto-disassemble", true, true, false) {
+				@Override
+				public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
+					try {
+						DebuggerPlatformService platformService =
+							findService(DebuggerPlatformService.class);
+						if (platformService == null) {
+							reportError("Cannot disassemble without the platform service");
+							return true;
 						}
+						TraceObject object = getObject(thread);
+						DebuggerPlatformMapper mapper =
+							platformService.getMapper(trace, object, snap);
+						if (mapper == null) {
+							reportError("Cannot disassemble without a platform mapper");
+							return true;
+						}
+						DisassemblyResult result = mapper.disassemble(thread, object, start,
+							disassemblable, snap, monitor);
+						if (result.isAtLeastOne() || result.isSuccess()) {
+							return true;
+						}
+						reportError("Auto-disassembly error: " + result.getErrorMessage());
 					}
-				};
+					catch (Exception e) {
+						reportError("Auto-disassembly error: " + e, e);
+					}
+					return true; // No pop-up errors
+				}
+			};
 			// TODO: Queue commands so no two for the same trace run concurrently
-			plugin.getTool().executeBackgroundCommand(dis, view);
+			plugin.getTool().executeBackgroundCommand(cmd, view);
 		}
 	}
 
 	private DebuggerWorkflowServicePlugin plugin;
 	private final MultiToolTraceListenerManager<ForDisassemblyTraceListener> listeners =
 		new MultiToolTraceListenerManager<>(ForDisassemblyTraceListener::new);
+
+	protected void reportError(String error) {
+		reportError(error, null);
+	}
+
+	protected void reportError(String error, Throwable t) {
+		for (PluginTool tool : plugin.getProxyingPluginTools()) {
+			Msg.error(this, error, t);
+			tool.setStatusInfo(error, true);
+		}
+	}
+
+	/**
+	 * Find the given service among the open tools
+	 * 
+	 * <p>
+	 * NOTE: This will prefer the service from the most-recently active tool first, only considering
+	 * those with the workflow service proxy enabled. This is important when considering the state
+	 * of said service.
+	 * 
+	 * @param <T> the type of the service
+	 * @param cls the class of the service
+	 * @return the service, or null
+	 */
+	protected <T> T findService(Class<T> cls) {
+		Collection<PluginTool> proxied = plugin.getProxyingPluginTools();
+		List<DockingWindowManager> all = DockingWindowManager.getAllDockingWindowManagers();
+		Collections.reverse(all);
+		for (DockingWindowManager dwm : all) {
+			Tool tool = dwm.getTool();
+			if (!proxied.contains(tool)) {
+				continue;
+			}
+			T t = tool.getService(cls);
+			if (t == null) {
+				continue;
+			}
+			return t;
+		}
+		return null;
+	}
 
 	@Override
 	public boolean isEnabled() {

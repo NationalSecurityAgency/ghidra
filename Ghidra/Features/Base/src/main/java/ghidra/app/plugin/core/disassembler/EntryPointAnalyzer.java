@@ -31,6 +31,7 @@ import ghidra.framework.options.Options;
 import ghidra.program.disassemble.Disassembler;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.PointerDataType;
+import ghidra.program.model.lang.AddressLabelInfo;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.*;
@@ -274,7 +275,7 @@ public class EntryPointAnalyzer extends AbstractAnalyzer {
 			}
 
 			// relocation at this place, don't trust it
-			if (program.getRelocationTable().getRelocation(entry) != null) {
+			if (program.getRelocationTable().hasRelocation(entry)) {
 				laterIter.remove();
 				continue;
 			}

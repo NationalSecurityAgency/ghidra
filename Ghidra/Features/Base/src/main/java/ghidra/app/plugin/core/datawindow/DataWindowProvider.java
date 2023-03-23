@@ -23,6 +23,7 @@ import javax.swing.*;
 import javax.swing.table.JTableHeader;
 
 import docking.ActionContext;
+import generic.theme.GIcon;
 import ghidra.app.services.GoToService;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.program.model.address.Address;
@@ -30,14 +31,13 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
 import ghidra.util.table.*;
-import resources.ResourceManager;
 
 /**
  * Provider for the equates table.
  */
 class DataWindowProvider extends ComponentProviderAdapter {
 
-	public static final ImageIcon ICON = ResourceManager.loadImage("images/dataW.gif");
+	public static final Icon ICON = new GIcon("icon.plugin.datawindow.provider");
 
 	private DataWindowPlugin plugin;
 
@@ -93,7 +93,9 @@ class DataWindowProvider extends ComponentProviderAdapter {
 	}
 
 	void programClosed() {
-		dataModel.reload(null);
+		if (isVisible()) {
+			dataModel.reload(null);
+		}
 	}
 
 	void dispose() {
@@ -156,10 +158,14 @@ class DataWindowProvider extends ComponentProviderAdapter {
 	}
 
 	private void setDataTableRenderer() {
-		dataTable.getColumnModel().getColumn(DataTableModel.LOCATION_COL).setPreferredWidth(
-			DataTableModel.ADDRESS_COL_WIDTH);
-		dataTable.getColumnModel().getColumn(DataTableModel.SIZE_COL).setPreferredWidth(
-			DataTableModel.SIZE_COL_WIDTH);
+		dataTable.getColumnModel()
+				.getColumn(DataTableModel.LOCATION_COL)
+				.setPreferredWidth(
+					DataTableModel.ADDRESS_COL_WIDTH);
+		dataTable.getColumnModel()
+				.getColumn(DataTableModel.SIZE_COL)
+				.setPreferredWidth(
+					DataTableModel.SIZE_COL_WIDTH);
 	}
 
 	void reload() {

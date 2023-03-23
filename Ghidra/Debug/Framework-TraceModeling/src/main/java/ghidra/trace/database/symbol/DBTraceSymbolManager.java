@@ -20,7 +20,8 @@ import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import com.google.common.collect.*;
+import org.apache.commons.collections4.BidiMap;
+import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 
 import db.*;
 import ghidra.program.model.address.*;
@@ -37,6 +38,7 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.Abstract
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAddressSnapRangeQuery;
 import ghidra.trace.database.space.DBTraceSpaceKey;
 import ghidra.trace.database.thread.DBTraceThreadManager;
+import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.Trace.TraceFunctionTagChangeType;
 import ghidra.trace.model.Trace.TraceSymbolChangeType;
@@ -411,6 +413,8 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 			}
 		};
 
+		public static final List<MySymbolTypes> VALUES = List.of(values());
+
 		abstract boolean isValidParent(DBTraceNamespaceSymbol parent);
 
 		boolean isNoFunctionAncestor(DBTraceNamespaceSymbol parent) {
@@ -432,7 +436,7 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 	protected final DBTraceAddressSnapRangePropertyMap<Long, DBTraceSymbolIDEntry> idMap;
 
 	protected final DBCachedObjectStore<DBTraceCallingConventionEntry> callingConventionStore;
-	protected final BiMap<String, Byte> callingConventionMap = HashBiMap.create();
+	protected final BidiMap<String, Byte> callingConventionMap = new DualHashBidiMap<>();
 
 	protected final DBCachedObjectStore<DBTraceFunctionTag> tagStore;
 	protected final DBCachedObjectIndex<String, DBTraceFunctionTag> tagsByName;
@@ -666,10 +670,6 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 			throw new IllegalArgumentException(
 				"Memory addresses cannot be associated with a thread");
 		}
-		if (thread == null && address.getAddressSpace().isRegisterSpace()) {
-			throw new IllegalArgumentException(
-				"Register addresses must be associated with a thread");
-		}
 	}
 
 	@Override
@@ -901,14 +901,14 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 		return true;
 	}
 
-	protected void putID(Range<Long> lifespan, TraceThread thread, Address address, long id) {
+	protected void putID(Lifespan lifespan, TraceThread thread, Address address, long id) {
 		idMap.get(DBTraceSpaceKey.create(address.getAddressSpace(), thread, 0), true)
 				.put(address, lifespan, id);
 		// TODO: Add to ancestors' too?
 		// NOTE: Might be hard to remove because of overlaps
 	}
 
-	protected void putID(Range<Long> lifespan, TraceThread thread, AddressRange rng, long id) {
+	protected void putID(Lifespan lifespan, TraceThread thread, AddressRange rng, long id) {
 		idMap.get(DBTraceSpaceKey.create(rng.getAddressSpace(), thread, 0), true)
 				.put(rng, lifespan, id);
 		// TODO: Add to ancestors' too?
@@ -928,7 +928,7 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 		}
 	}
 
-	protected void assertNotDuplicate(AbstractDBTraceSymbol exclude, Range<Long> lifespan,
+	protected void assertNotDuplicate(AbstractDBTraceSymbol exclude, Lifespan lifespan,
 			TraceThread thread, Address address, String name, DBTraceNamespaceSymbol parent)
 			throws DuplicateNameException {
 		if (address.isMemoryAddress()) {

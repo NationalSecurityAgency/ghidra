@@ -17,31 +17,30 @@ package ghidra.trace.model.symbol;
 
 import java.util.Collection;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.symbol.*;
+import ghidra.trace.model.Lifespan;
 
 public interface TraceReferenceOperations {
 	TraceReference addReference(TraceReference reference);
 
-	TraceReference addReference(Range<Long> lifespan, Reference reference);
+	TraceReference addReference(Lifespan lifespan, Reference reference);
 
-	TraceReference addMemoryReference(Range<Long> lifespan, Address fromAddress, Address toAddress,
+	TraceReference addMemoryReference(Lifespan lifespan, Address fromAddress, Address toAddress,
 			RefType refType, SourceType source, int operandIndex);
 
-	TraceOffsetReference addOffsetReference(Range<Long> lifespan, Address fromAddress,
+	TraceOffsetReference addOffsetReference(Lifespan lifespan, Address fromAddress,
 			Address toAddress, boolean toAddrIsBase, long offset, RefType refType,
 			SourceType source, int operandIndex);
 
-	TraceShiftedReference addShiftedReference(Range<Long> lifespan, Address fromAddress,
+	TraceShiftedReference addShiftedReference(Lifespan lifespan, Address fromAddress,
 			Address toAddress, int shift, RefType refType, SourceType source, int operandIndex);
 
-	TraceReference addRegisterReference(Range<Long> lifespan, Address fromAddress,
+	TraceReference addRegisterReference(Lifespan lifespan, Address fromAddress,
 			Register toRegister, RefType refType, SourceType source, int operandIndex);
 
-	TraceReference addStackReference(Range<Long> lifespan, Address fromAddress, int toStackOffset,
+	TraceReference addStackReference(Lifespan lifespan, Address fromAddress, int toStackOffset,
 			RefType refType, SourceType source, int operandIndex);
 
 	TraceReference getReference(long snap, Address fromAddress, Address toAddress,
@@ -62,18 +61,18 @@ public interface TraceReferenceOperations {
 	 * @param range
 	 * @return
 	 */
-	Collection<? extends TraceReference> getReferencesFromRange(Range<Long> span,
+	Collection<? extends TraceReference> getReferencesFromRange(Lifespan span,
 			AddressRange range);
 
 	TraceReference getPrimaryReferenceFrom(long snap, Address fromAddress, int operandIndex);
 
 	Collection<? extends TraceReference> getFlowReferencesFrom(long snap, Address fromAddress);
 
-	void clearReferencesFrom(Range<Long> span, AddressRange range);
+	void clearReferencesFrom(Lifespan span, AddressRange range);
 
 	Collection<? extends TraceReference> getReferencesTo(long snap, Address toAddress);
 
-	void clearReferencesTo(Range<Long> span, AddressRange range);
+	void clearReferencesTo(Lifespan span, AddressRange range);
 
 	/**
 	 * TODO: Document me
@@ -84,7 +83,7 @@ public interface TraceReferenceOperations {
 	 * @param range
 	 * @return
 	 */
-	Collection<? extends TraceReference> getReferencesToRange(Range<Long> span, AddressRange range);
+	Collection<? extends TraceReference> getReferencesToRange(Lifespan span, AddressRange range);
 
 	// TODO: Support Variable references
 
@@ -104,9 +103,9 @@ public interface TraceReferenceOperations {
 		return !getReferencesTo(snap, toAddress).isEmpty();
 	}
 
-	AddressSetView getReferenceSources(Range<Long> span);
+	AddressSetView getReferenceSources(Lifespan span);
 
-	AddressSetView getReferenceDestinations(Range<Long> span);
+	AddressSetView getReferenceDestinations(Lifespan span);
 
 	int getReferenceCountFrom(long snap, Address fromAddress);
 

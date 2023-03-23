@@ -27,6 +27,8 @@ import docking.EmptyBorderToggleButton;
 import docking.widgets.autocomplete.*;
 import docking.widgets.label.GDLabel;
 import docking.widgets.textfield.TextFieldLinker;
+import generic.theme.*;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.GhidraApplicationLayout;
 import ghidra.GhidraLaunchable;
 import ghidra.app.plugin.assembler.Assembler;
@@ -38,13 +40,9 @@ import ghidra.app.plugin.processors.sleigh.*;
 import ghidra.framework.Application;
 import ghidra.framework.ApplicationConfiguration;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.LanguageID;
 import ghidra.program.model.listing.Instruction;
-import ghidra.program.model.listing.Program;
-import ghidra.program.util.ProgramLocation;
 import ghidra.util.NumericUtilities;
-import resources.ResourceManager;
 
 /**
  * A pair of text fields suitable for guided assembly
@@ -63,6 +61,14 @@ import resources.ResourceManager;
  * Otherwise, the usual autocompletion behavior is applied automatically.
  */
 public class AssemblyDualTextField {
+	private static final String FONT_ID = "font.plugin.assembly.dual.text.field";
+	private static Color FG_PREFERENCE_MOST =
+		new GColor("color.fg.plugin.assembler.completion.most");
+	private static Color FG_PREFERENCE_MIDDLE =
+		new GColor("color.fg.plugin.assembler.completion.middle");
+	private static Color FG_PREFERENCE_LEAST =
+		new GColor("color.fg.plugin.assembler.completion.least");
+
 	protected final TextFieldLinker linker = new TextFieldLinker();
 	protected final JTextField mnemonic = new JTextField();
 	protected final JTextField operands = new JTextField();
@@ -71,7 +77,6 @@ public class AssemblyDualTextField {
 	protected final AssemblyAutocompletionModel model = new AssemblyAutocompletionModel();
 	protected final AssemblyAutocompleter auto = new AssemblyAutocompleter(model);
 
-	protected Program program;
 	protected Assembler assembler;
 	protected Address address;
 	protected Instruction existing;
@@ -183,8 +188,8 @@ public class AssemblyDualTextField {
 		public AssemblyInstruction(String text, byte[] data, int preference) {
 			// TODO?: Description to display constructor tree information
 			super("", NumericUtilities.convertBytesToString(data, " "),
-				preference == 10000 ? Color.BLUE
-						: preference == 5000 ? new Color(0, 0, 128) : new Color(0, 128, 0),
+				preference == 10000 ? FG_PREFERENCE_MOST
+						: preference == 5000 ? FG_PREFERENCE_MIDDLE : FG_PREFERENCE_LEAST,
 				-preference);
 			this.data = data;
 		}
@@ -224,7 +229,7 @@ public class AssemblyDualTextField {
 		private String text;
 
 		public AssemblyError(String text, String desc) {
-			super(text, desc, Color.RED, 1);
+			super(text, desc, Colors.ERROR, 1);
 			this.text = text;
 		}
 
@@ -255,6 +260,10 @@ public class AssemblyDualTextField {
 	class AssemblyAutocompleter extends TextFieldAutocompleter<AssemblyCompletion> {
 		public AssemblyAutocompleter(AutocompletionModel<AssemblyCompletion> model) {
 			super(model);
+		}
+
+		void fakeFocusGained(JTextField field) {
+			listener.fakeFocusGained(field);
 		}
 
 		@Override
@@ -326,7 +335,7 @@ public class AssemblyDualTextField {
 		@Override
 		protected void addContent(JPanel content) {
 			Box controls = Box.createHorizontalBox();
-			Icon icon = ResourceManager.loadImage("images/question_zero.png");
+			Icon icon = new GIcon("icon.plugin.assembler.question");
 			EmptyBorderToggleButton button = new EmptyBorderToggleButton(icon);
 			button.setToolTipText("Exhaust unspecified bits, otherwise zero them");
 			button.addActionListener((e) -> {
@@ -416,42 +425,36 @@ public class AssemblyDualTextField {
 	}
 
 	/**
-	 * @see #setProgramLocation(Program, Address)
+	 * Set the assembler to use
+	 * 
+	 * @param assembler the assembler
 	 */
-	public void setProgramLocation(ProgramLocation loc) {
-		setProgramLocation(loc.getProgram(), loc.getAddress());
+	public void setAssembler(Assembler assembler) {
+		this.assembler = Objects.requireNonNull(assembler);
 	}
 
 	/**
-	 * Set the current program location
+	 * Set the address of the assembly instruction
 	 * 
 	 * <p>
-	 * This may cause the construction of a new assembler, if one suitable for the given program's
-	 * language has not yet been built.
+	 * Note this will reset the existing instruction to null to prevent its accidental re-use. See
+	 * {@link #setExisting(Instruction)}.
 	 * 
-	 * @param program the program
-	 * @param address the non-null address
+	 * @param address the address
 	 */
-	public void setProgramLocation(Program program, Address address) {
-		this.program = program;
+	public void setAddress(Address address) {
 		this.address = Objects.requireNonNull(address);
-		this.existing = program.getListing().getInstructionAt(address);
-
-		this.assembler = Assemblers.getAssembler(program);
+		this.existing = null;
 	}
 
 	/**
-	 * Specify the language and address without binding to a program
+	 * Set the "existing" instruction used for ordering proposed instructions by "most similar"
 	 * 
-	 * @param lang the language
-	 * @param addr the address
+	 * @see #computePreference(AssemblyResolvedPatterns)
+	 * @param existing the existing instruction
 	 */
-	public void setLanguageLocation(Language lang, Address addr) {
-		this.program = null;
-		this.address = addr;
-		this.existing = null;
-
-		this.assembler = Assemblers.getAssembler(lang);
+	public void setExisting(Instruction existing) {
+		this.existing = existing;
 	}
 
 	/**
@@ -474,6 +477,7 @@ public class AssemblyDualTextField {
 
 	/**
 	 * For single mode: Get the text field containing the full assembly text
+	 * @return the text field
 	 */
 	public JTextField getAssemblyField() {
 		return assembly;
@@ -556,18 +560,13 @@ public class AssemblyDualTextField {
 			if (assembly.isVisible()) {
 				throw new AssertionError();
 			}
-			else {
-				return VisibilityMode.DUAL_VISIBLE;
-			}
+			return VisibilityMode.DUAL_VISIBLE;
 		}
-		else {
-			if (assembly.isVisible()) {
-				return VisibilityMode.SINGLE_VISIBLE;
-			}
-			else {
-				return VisibilityMode.INVISIBLE;
-			}
+
+		if (assembly.isVisible()) {
+			return VisibilityMode.SINGLE_VISIBLE;
 		}
+		return VisibilityMode.INVISIBLE;
 	}
 
 	/**
@@ -659,8 +658,7 @@ public class AssemblyDualTextField {
 	 * @param field the field to configure
 	 */
 	protected void configureField(JTextField field) {
-		Font mono = new Font(Font.MONOSPACED, Font.PLAIN, 12); // TODO: Font size from options
-		field.setFont(mono);
+		Gui.registerFont(field, FONT_ID);
 	}
 
 	/**
@@ -701,10 +699,9 @@ public class AssemblyDualTextField {
 	 * one are preferred. Last, the shortest instructions are preferred.
 	 * 
 	 * @param rc a resolved instruction
-	 * @param existing the instruction, if any, currently under the user's cursor
 	 * @return a preference
 	 */
-	protected int computePreference(AssemblyResolvedPatterns rc, Instruction existing) {
+	protected int computePreference(AssemblyResolvedPatterns rc) {
 		if (existing == null) {
 			return 0;
 		}
@@ -729,14 +726,14 @@ public class AssemblyDualTextField {
 	 * If text parses and assembles, then the completion set will include assembled instruction-byte
 	 * entries. Note that there may still be valid textual completions to continue the instruction.
 	 * The suggestions yielded by all syntax errors are used to create textual completions. If the
-	 * suggestion is prefixed by the buffer where the syntax error ocurred, then, the tail of that
+	 * suggestion is prefixed by the buffer where the syntax error occurred, then, the tail of that
 	 * suggestion is made into a completion entry.
 	 * 
 	 * @param text the prefix
 	 * @return the collection of completion items
 	 */
 	protected Collection<AssemblyCompletion> computeCompletions(String text) {
-		final AssemblyPatternBlock ctx = assembler.getContextAt(address);
+		final AssemblyPatternBlock ctx = Objects.requireNonNull(getContext());
 
 		Set<AssemblyCompletion> result = new TreeSet<>();
 		Collection<AssemblyParseResult> parses = assembler.parseLine(text);
@@ -757,7 +754,8 @@ public class AssemblyDualTextField {
 		parses = assembler.parseLine(fullText);
 		for (AssemblyParseResult parse : parses) {
 			if (!parse.isError()) {
-				AssemblyResolutionResults sems = assembler.resolveTree(parse, address);
+				AssemblyResolutionResults sems =
+					assembler.resolveTree(parse, address, ctx);
 				for (AssemblyResolution ar : sems) {
 					if (ar.isError()) {
 						//result.add(new AssemblyError("", ar.toString()));
@@ -766,7 +764,7 @@ public class AssemblyDualTextField {
 					AssemblyResolvedPatterns rc = (AssemblyResolvedPatterns) ar;
 					for (byte[] ins : rc.possibleInsVals(ctx)) {
 						result.add(new AssemblyInstruction(text, Arrays.copyOf(ins, ins.length),
-							computePreference(rc, existing)));
+							computePreference(rc)));
 						if (!exhaustUndefined) {
 							break;
 						}
@@ -778,6 +776,15 @@ public class AssemblyDualTextField {
 			result.add(new AssemblyError("", "Invalid instruction and/or prefix"));
 		}
 		return result;
+	}
+
+	/**
+	 * Get the context for filtering completed instructions in the auto-completer
+	 * 
+	 * @return the context
+	 */
+	protected AssemblyPatternBlock getContext() {
+		return assembler.getContextAt(address).fillMask();
 	}
 
 	/**
@@ -803,11 +810,12 @@ public class AssemblyDualTextField {
 
 			AssemblyDualTextField input = new AssemblyDualTextField();
 
-			SleighLanguageProvider provider = new SleighLanguageProvider();
+			SleighLanguageProvider provider = SleighLanguageProvider.getSleighLanguageProvider();
 			SleighLanguage lang = (SleighLanguage) provider.getLanguage(DEMO_LANG_ID);
 			curAddr = lang.getDefaultSpace().getAddress(0);
 
-			input.setLanguageLocation(lang, curAddr);
+			input.setAssembler(Assemblers.getAssembler(lang));
+			input.setAddress(curAddr);
 
 			hbox.add(input.getAssemblyField());
 			hbox.add(input.getMnemonicField());
@@ -827,7 +835,7 @@ public class AssemblyDualTextField {
 					asm.setText(asm.getText() + data);
 					input.clear();
 					curAddr = curAddr.addWrap(ins.getData().length);
-					input.setLanguageLocation(lang, curAddr);
+					input.setAddress(curAddr);
 					addrlabel.setText(String.format(ADDR_FORMAT, curAddr));
 				}
 			});

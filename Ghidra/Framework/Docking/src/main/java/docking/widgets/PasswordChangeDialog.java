@@ -16,7 +16,8 @@
 package docking.widgets;
 
 import java.awt.Toolkit;
-import java.awt.event.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.util.Arrays;
 
 import javax.swing.*;
@@ -63,12 +64,7 @@ public class PasswordChangeDialog extends DialogComponentProvider {
 		wp.add(new GLabel("Repeat Password:"));
 		passwordField2 = new JPasswordField(16);
 		passwordField2.setName("PASSWORD-ENTRY2-COMPONENT");
-		passwordField2.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				okCallback();
-			}
-		});
+		passwordField2.addActionListener(e -> okCallback());
 		wp.add(passwordField2);
 
 		wp.add(new GLabel());
@@ -146,8 +142,15 @@ public class PasswordChangeDialog extends DialogComponentProvider {
 		close();
 	}
 
+	@Override
+	public void close() {
+		// overridden to not call dispose, since this class does special cleanup on close
+		closeDialog();
+	}
+
+	@Override
 	public void dispose() {
-		close();
+		super.dispose();
 		if (newPassword != null) {
 			Arrays.fill(newPassword, ' ');
 			newPassword = null;

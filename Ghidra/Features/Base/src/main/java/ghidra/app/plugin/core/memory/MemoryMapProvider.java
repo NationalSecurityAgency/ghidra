@@ -29,6 +29,7 @@ import docking.action.ToolBarData;
 import docking.widgets.label.GLabel;
 import docking.widgets.table.*;
 import docking.widgets.textfield.GValidatedTextField.MaxLengthField;
+import generic.theme.GIcon;
 import ghidra.app.context.ProgramActionContext;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
@@ -40,7 +41,6 @@ import ghidra.program.model.mem.MemoryBlockType;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.table.GhidraTable;
-import resources.ResourceManager;
 
 /**
  * Provider for the memory map Component.
@@ -65,16 +65,6 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 
 	private MemoryMapPlugin plugin = null;
 
-	private final static String ADD_IMAGE = "images/Plus.png";
-	private final static String MOVE_IMAGE = "images/move.png";
-	private final static String SPLIT_IMAGE = "images/verticalSplit.png";
-	private final static String EXPAND_UP_IMAGE = "images/collapse.gif";
-	private final static String EXPAND_DOWN_IMAGE = "images/expand.gif";
-	private final static String MERGE_IMAGE = "images/Merge.png";
-	private final static String DELETE_IMAGE = "images/edit-delete.png";
-	private final static String IMAGE_BASE = "images/house.png";
-	final static String MEMORY_IMAGE = "images/memory16.gif";
-
 	private Program program;
 	private MemoryMapManager memManager;
 
@@ -84,7 +74,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 
 		setHelpLocation(new HelpLocation(plugin.getName(), getName()));
 		memManager = plugin.getMemoryMapManager();
-		setIcon(ResourceManager.loadImage(MEMORY_IMAGE));
+		setIcon(new GIcon("icon.plugin.memorymap.provider"));
 		addToToolbar();
 		mainPanel = buildMainPanel();
 		addToTool();
@@ -141,7 +131,16 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 
 		memTable.setAutoCreateColumnsFromModel(false);
 
-		TableColumn column;
+		GTableCellRenderer monoRenderer = new GTableCellRenderer();
+		monoRenderer.setFont(monoRenderer.getFixedWidthFont());
+
+		TableColumn column = memTable.getColumn(MemoryMapModel.START_COL);
+		column.setCellRenderer(monoRenderer);
+		column = memTable.getColumn(MemoryMapModel.END_COL);
+		column.setCellRenderer(monoRenderer);
+		column = memTable.getColumn(MemoryMapModel.LENGTH_COL);
+		column.setCellRenderer(monoRenderer);
+
 		column = memTable.getColumn(MemoryMapModel.READ_COL);
 		column.setCellRenderer(new GBooleanCellRenderer());
 		column = memTable.getColumn(MemoryMapModel.WRITE_COL);
@@ -159,7 +158,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 			new GTableTextCellEditor(new MaxLengthField(MAX_SIZE)));
 
 		memPane = new JScrollPane(memTable);
-		memTable.setPreferredScrollableViewportSize(new Dimension(570, 105));
+		memTable.setPreferredScrollableViewportSize(new Dimension(700, 105));
 
 		memTable.addMouseListener(new MouseHandler());
 
@@ -185,7 +184,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 	}
 
 	private void addLocalActions() {
-		ImageIcon addImage = ResourceManager.loadImage(ADD_IMAGE);
+		Icon addImage = new GIcon("icon.plugin.memorymap.add");
 
 		addAction = new MemoryMapAction("Add Block", addImage) {
 			@Override
@@ -200,7 +199,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		addAction.setDescription("Add a new block to memory");
 		tool.addLocalAction(this, addAction);
 
-		ImageIcon moveImage = ResourceManager.loadImage(MOVE_IMAGE);
+		Icon moveImage = new GIcon("icon.plugin.memorymap.move");
 		moveAction = new MemoryMapAction("Move Block", moveImage) {
 			@Override
 			public void actionPerformed(ActionContext context) {
@@ -213,7 +212,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		moveAction.setDescription("Move a block to another address");
 		tool.addLocalAction(this, moveAction);
 
-		ImageIcon splitImage = ResourceManager.loadImage(SPLIT_IMAGE);
+		Icon splitImage = new GIcon("icon.plugin.memorymap.split");
 
 		splitAction = new MemoryMapAction("Split Block", splitImage) {
 			@Override
@@ -228,7 +227,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		splitAction.setDescription("Split a block");
 		tool.addLocalAction(this, splitAction);
 
-		ImageIcon expandUpImage = ResourceManager.loadImage(EXPAND_UP_IMAGE);
+		Icon expandUpImage = new GIcon("icon.plugin.memorymap.expand.up");
 
 		expandUpAction = new MemoryMapAction("Expand Block Up", expandUpImage) {
 			@Override
@@ -242,7 +241,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		expandUpAction.setDescription("Expand block by setting new start address");
 		tool.addLocalAction(this, expandUpAction);
 
-		ImageIcon expandDownImage = ResourceManager.loadImage(EXPAND_DOWN_IMAGE);
+		Icon expandDownImage = new GIcon("icon.plugin.memorymap.expand.down");
 
 		expandDownAction = new MemoryMapAction("Expand Block Down", expandDownImage) {
 			@Override
@@ -256,7 +255,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		expandDownAction.setDescription("Expand block by setting new end address");
 		tool.addLocalAction(this, expandDownAction);
 
-		ImageIcon mergeImage = ResourceManager.loadImage(MERGE_IMAGE);
+		Icon mergeImage = new GIcon("icon.plugin.memorymap.merge");
 		mergeAction = new MemoryMapAction("Merge Blocks", mergeImage) {
 			@Override
 			public void actionPerformed(ActionContext context) {
@@ -269,7 +268,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		mergeAction.setDescription("Merge blocks into a single block");
 		tool.addLocalAction(this, mergeAction);
 
-		ImageIcon deleteImage = ResourceManager.loadImage(DELETE_IMAGE);
+		Icon deleteImage = new GIcon("icon.plugin.memorymap.delete");
 		deleteAction = new MemoryMapAction("Delete Block", deleteImage) {
 			@Override
 			public void actionPerformed(ActionContext context) {
@@ -282,7 +281,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		deleteAction.setDescription("Delete a block");
 		tool.addLocalAction(this, deleteAction);
 
-		ImageIcon setBaseIcon = ResourceManager.loadImage(IMAGE_BASE);
+		Icon setBaseIcon = new GIcon("icon.plugin.memorymap.image.base");
 		setBaseAction = new MemoryMapAction("Set Image Base", setBaseIcon) {
 			@Override
 			public void actionPerformed(ActionContext context) {
@@ -336,7 +335,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 	/**
 	 * Enable/disable the expand up/down actions according to the selected
 	 * block.
-	 * 
+	 *
 	 * @param numSelected number of blocks selected
 	 */
 	private void enableExpandActions(int numSelected) {
@@ -444,15 +443,15 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 
 		column = memTable.getColumn(MemoryMapModel.VOLATILE_COL);
 		if (column != null) {
-			column.setMaxWidth(57);
-			column.setMinWidth(57);
+			column.setMaxWidth(65);
+			column.setMinWidth(65);
 			column.setResizable(false);
 		}
 
 		column = memTable.getColumn(MemoryMapModel.OVERLAY_COL);
 		if (column != null) {
-			column.setMaxWidth(55);
-			column.setMinWidth(55);
+			column.setMaxWidth(65);
+			column.setMinWidth(65);
 			column.setResizable(false);
 		}
 
@@ -464,8 +463,8 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 
 		column = memTable.getColumn(MemoryMapModel.INIT_COL);
 		if (column != null) {
-			column.setMaxWidth(68);
-			column.setMinWidth(68);
+			column.setMaxWidth(80);
+			column.setMinWidth(80);
 			column.setResizable(false);
 		}
 	}
@@ -555,7 +554,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 	 * Pop up a dialog to expand the block either up or down; "up" means make a
 	 * block have a lesser starting address; "down" means to make the block have
 	 * a greater ending address.
-	 * 
+	 *
 	 * @param dialogType either ExpandBlockDialog.EXPAND_UP or
 	 *            ExpandBlockDialog.EXPAND_DOWN.
 	 */
@@ -612,7 +611,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 
 	/**
 	 * Show the dialog to expand a memory block.
-	 * 
+	 *
 	 * @param dialogType expand up or down
 	 * @param block block to expand
 	 */
@@ -624,8 +623,11 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 		else {
 			model = new ExpandBlockDownModel(tool, program);
 		}
-		new ExpandBlockDialog(tool, model, block, program.getAddressFactory(), dialogType);
+
+		ExpandBlockDialog dialog =
+			new ExpandBlockDialog(tool, model, block, program.getAddressFactory(), dialogType);
 		model.initialize(block);
+		dialog.dispose();
 	}
 
 	private void showMoveBlockDialog(MemoryBlock block) {
@@ -687,7 +689,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 	}
 
 	private abstract class MemoryMapAction extends DockingAction {
-		MemoryMapAction(String name, ImageIcon icon) {
+		MemoryMapAction(String name, Icon icon) {
 			super(name, plugin.getName());
 			this.setToolBarData(new ToolBarData(icon, null));
 		}

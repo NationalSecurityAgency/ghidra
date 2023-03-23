@@ -25,8 +25,6 @@ import javax.swing.*;
 
 import docking.ActionContext;
 import docking.ComponentProvider;
-import docking.help.Help;
-import docking.help.HelpService;
 import docking.widgets.label.GHtmlLabel;
 import docking.widgets.table.*;
 import docking.widgets.table.threaded.*;
@@ -36,6 +34,8 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.*;
 import ghidra.util.bean.GGlassPane;
 import ghidra.util.bean.GGlassPanePainter;
+import help.Help;
+import help.HelpService;
 
 public class ProjectDataTablePanel extends JPanel {
 
@@ -182,9 +182,12 @@ public class ProjectDataTablePanel extends JPanel {
 			this.projectData.removeDomainFolderChangeListener(changeListener);
 			model.setProjectData(null);
 			SystemUtilities.runSwingLater(() -> {
-				GGlassPane glassPane = (GGlassPane) gTable.getRootPane().getGlassPane();
-				glassPane.removePainter(painter);
-				glassPane.addPainter(painter);
+				JRootPane rootPane = gTable.getRootPane();
+				if (rootPane != null) {
+					GGlassPane glassPane = (GGlassPane) rootPane.getGlassPane();
+					glassPane.removePainter(painter);
+					glassPane.addPainter(painter);
+				}
 			});
 		}
 	}

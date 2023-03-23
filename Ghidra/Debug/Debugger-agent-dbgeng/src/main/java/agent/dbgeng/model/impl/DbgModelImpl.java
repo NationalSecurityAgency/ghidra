@@ -25,8 +25,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import agent.dbgeng.dbgeng.DebugSessionId;
 import agent.dbgeng.manager.DbgManager;
-import agent.dbgeng.manager.impl.DbgManagerImpl;
-import agent.dbgeng.manager.impl.DbgSessionImpl;
+import agent.dbgeng.manager.DbgSession;
 import agent.dbgeng.model.AbstractDbgModel;
 import agent.dbgeng.model.iface2.*;
 import ghidra.async.AsyncUtils;
@@ -61,14 +60,14 @@ public class DbgModelImpl extends AbstractDbgModel implements DebuggerObjectMode
 	protected final CompletableFuture<DbgModelTargetRootImpl> completedRoot;
 
 	protected Map<Object, TargetObject> objectMap = new HashMap<>();
+	private boolean suppressDescent = false;
 
 	public DbgModelImpl() {
 		this.dbg = DbgManager.newInstance();
 		//System.out.println(XmlSchemaContext.serialize(SCHEMA_CTX));
 		this.root = new DbgModelTargetRootImpl(this, ROOT_SCHEMA);
 		this.completedRoot = CompletableFuture.completedFuture(root);
-		DbgSessionImpl s = new DbgSessionImpl((DbgManagerImpl) dbg, new DebugSessionId(0));
-		s.add();
+		DbgSession s = dbg.getSessionComputeIfAbsent(new DebugSessionId(0), true);
 		DbgModelTargetSessionContainer sessions = root.sessions;
 		this.session = (DbgModelTargetSessionImpl) sessions.getTargetSession(s);
 		addModelRoot(root);
@@ -121,8 +120,8 @@ public class DbgModelImpl extends AbstractDbgModel implements DebuggerObjectMode
 	}
 
 	@Override
-	public DbgManagerImpl getManager() {
-		return (DbgManagerImpl) dbg;
+	public DbgManager getManager() {
+		return dbg;
 	}
 
 	@Override
@@ -179,5 +178,14 @@ public class DbgModelImpl extends AbstractDbgModel implements DebuggerObjectMode
 			}
 			return ExceptionUtils.rethrow(ex);
 		});
+	}
+
+	@Override
+	public boolean isSuppressDescent() {
+		return suppressDescent;
+	}
+
+	public void setSuppressDescent(boolean suppressDescent) {
+		this.suppressDescent = suppressDescent;
 	}
 }

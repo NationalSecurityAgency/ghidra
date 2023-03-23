@@ -20,6 +20,10 @@ import java.io.IOException;
 import db.DBRecord;
 import db.RecordIterator;
 
+/**
+ * A wrapper of {@link RecordIterator} that runs it backward and implements
+ * {@link DirectedRecordIterator}
+ */
 public class BackwardRecordIterator extends AbstractDirectedRecordIterator {
 	public BackwardRecordIterator(RecordIterator it) {
 		super(it);

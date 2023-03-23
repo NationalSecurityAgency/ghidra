@@ -18,13 +18,15 @@ package ghidra.dbg.jdi.model;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.jdi.manager.breakpoint.JdiBreakpointInfo;
 import ghidra.dbg.jdi.model.iface1.JdiModelTargetDeletable;
-import ghidra.dbg.target.TargetBreakpointSpecContainer.TargetBreakpointKindSet;
 import ghidra.dbg.target.TargetBreakpointLocation;
 import ghidra.dbg.target.TargetBreakpointSpec;
+import ghidra.dbg.target.TargetBreakpointSpecContainer.TargetBreakpointKindSet;
 import ghidra.dbg.target.schema.TargetAttributeType;
 import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
+import ghidra.util.datastruct.ListenerMap.ListenerEntry;
 import ghidra.util.datastruct.ListenerSet;
 
 @TargetObjectSchemaInfo(
@@ -48,8 +50,8 @@ public class JdiModelTargetBreakpointSpec extends JdiModelTargetObjectImpl
 	protected final ListenerSet<TargetBreakpointAction> actions =
 		new ListenerSet<>(TargetBreakpointAction.class) {
 			// Use strong references on actions
-			protected Map<TargetBreakpointAction, TargetBreakpointAction> createMap() {
-				return Collections.synchronizedMap(new LinkedHashMap<>());
+			protected Map<TargetBreakpointAction, ListenerEntry<? extends TargetBreakpointAction>> createMap() {
+				return new LinkedHashMap<>();
 			}
 		};
 
@@ -103,7 +105,7 @@ public class JdiModelTargetBreakpointSpec extends JdiModelTargetObjectImpl
 		actions.remove(action);
 	}
 
-	protected CompletableFuture<JdiBreakpointInfo> getInfo(boolean refresh) {
+	protected CompletableFuture<JdiBreakpointInfo> getInfo(RefreshBehavior refresh) {
 		return CompletableFuture.completedFuture(info);
 	}
 
@@ -125,7 +127,7 @@ public class JdiModelTargetBreakpointSpec extends JdiModelTargetObjectImpl
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
 		return getInfo(refresh).thenCompose(i -> {
 			return updateInfo(info, i, "Refreshed");
 		});

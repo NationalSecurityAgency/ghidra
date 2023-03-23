@@ -24,11 +24,13 @@ import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.symbol.*;
-import ghidra.program.model.util.TypeMismatchException;
-import ghidra.util.*;
-import ghidra.util.exception.*;
+import ghidra.program.model.util.PropertyMap;
+import ghidra.program.model.util.PropertyMapManager;
+import ghidra.util.Msg;
+import ghidra.util.SystemUtilities;
+import ghidra.util.exception.AssertException;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * <CODE>ProgramDiff</CODE> is a class for comparing two programs and
@@ -290,6 +292,7 @@ public class ProgramDiff {
 
 	/**
 	 * Return true if the programs to compare have matching memory maps.
+	 * @return true if program1 and program2 memory address set matches
 	 */
 	public boolean memoryMatches() {
 		if (pgmMemComp.hasMemoryDifferences()) {
@@ -298,9 +301,10 @@ public class ProgramDiff {
 		return true;
 	}
 
-	/** Returns a copy of this ProgramDiff.
-	 *  @return the copy of this ProgramDiff or null if a
-	 *  MemoryConflictException occurs.
+	/** 
+	 * Returns a copy of this ProgramDiff.
+	 * @return the copy of this ProgramDiff or null if a
+	 * MemoryConflictException occurs.
 	 */
 	@Override
 	protected Object clone() {
@@ -331,7 +335,8 @@ public class ProgramDiff {
 		return diff;
 	}
 
-	/** Get a message indicating any warnings about this PRogramDiff. For example,
+	/** 
+	 * Get a message indicating any warnings about this PRogramDiff. For example,
 	 * if the program context registers don't match between the programs, the
 	 * string is a message indicating this.
 	 * @return the warning message string. null if no warnings.
@@ -340,7 +345,8 @@ public class ProgramDiff {
 		return warnings;
 	}
 
-	/** Returns a new ProgramDiffFilter equal to the one in this program diff.
+	/** 
+	 * Returns a new ProgramDiffFilter equal to the one in this program diff.
 	 * The filter indicates which types of differences are to be determined.
 	 * @return a copy of the program diff filter currently in use.
 	 */
@@ -348,7 +354,8 @@ public class ProgramDiff {
 		return new ProgramDiffFilter(pdf);
 	}
 
-	/** Sets the ProgramDiffFilter for this program diff. The filter indicates
+	/** 
+	 * Sets the ProgramDiffFilter for this program diff. The filter indicates
 	 * which types of differences are to be determined.
 	 * @param filter the program diff filter
 	 */
@@ -366,21 +373,24 @@ public class ProgramDiff {
 		}
 	}
 
-	/** Gets the first program being compared by the ProgramDiff.
+	/** 
+	 * Gets the first program being compared by the ProgramDiff.
 	 * @return program1.
 	 */
 	public Program getProgramOne() {
 		return program1;
 	}
 
-	/** Gets the second program being compared by the ProgramDiff.
+	/** 
+	 * Gets the second program being compared by the ProgramDiff.
 	 * @return program2.
 	 */
 	public Program getProgramTwo() {
 		return program2;
 	}
 
-	/** Returns the addresses from combining the address sets in program1 and program2.
+	/** 
+	 * Returns the addresses from combining the address sets in program1 and program2.
 	 * @return the addresses for both program1 and program2.
 	 * The addresses in this address set are derived from program1.
 	 */
@@ -388,7 +398,8 @@ public class ProgramDiff {
 		return ProgramMemoryComparator.getCombinedAddresses(program1, program2);
 	}
 
-	/** Returns the initialized memory addresses in common between
+	/** 
+	 * Returns the initialized memory addresses in common between
 	 * program1 and program2.
 	 * @return the initialized memory addresses in common between
 	 * program1 and program2.
@@ -398,7 +409,8 @@ public class ProgramDiff {
 		return pgmMemComp.getInitializedAddressesInCommon();
 	}
 
-	/** Returns the addresses in common between program1 and program2.
+	/** 
+	 * Returns the addresses in common between program1 and program2.
 	 * @return the addresses in common between program1 and program2.
 	 * The addresses in this address set are derived from program1.
 	 */
@@ -406,7 +418,8 @@ public class ProgramDiff {
 		return pgmMemComp.getAddressesInCommon();
 	}
 
-	/** Returns the addresses that are in program1, but not in program2.
+	/** 
+	 * Returns the addresses that are in program1, but not in program2.
 	 * @return the addresses that are in program1, but not in program2.
 	 * The addresses in this address set are derived from program1.
 	 */
@@ -414,7 +427,8 @@ public class ProgramDiff {
 		return pgmMemComp.getAddressesOnlyInOne();
 	}
 
-	/** Returns the addresses that are in program2, but not in program1.
+	/** 
+	 * Returns the addresses that are in program2, but not in program1.
 	 * @return the addresses that are in program2, but not in program1.
 	 * The addresses in this address set are derived from program2.
 	 */
@@ -468,7 +482,7 @@ public class ProgramDiff {
 		cancelled = false;
 		if (monitor == null) {
 			// Create a do nothing task monitor that we can pass along.
-			monitor = TaskMonitorAdapter.DUMMY_MONITOR;
+			monitor = TaskMonitor.DUMMY;
 		}
 
 		if (!filterChanged && ((filter != null) && (filter.equals(this.pdf)))) {
@@ -484,7 +498,7 @@ public class ProgramDiff {
 		for (int element : pt) {
 			// Are we interested in this difference type?
 			if (pdf.getFilter(element)) {
-				Integer key = new Integer(element);
+				Integer key = element;
 				// Do we still need to determine differences of this type?
 				if (!diffAddrSets.containsKey(key)) {
 					if (!cancelled) {
@@ -526,12 +540,13 @@ public class ProgramDiff {
 	 * @param monitor the task monitor for indicating the progress of
 	 * determining differences. This monitor also allows the user to cancel if
 	 * the diff takes too long. If no monitor is desired, use null.
+	 * @throws CancelledException if Diff cancelled by user
 	 */
 	synchronized void reDiffSubSet(AddressSetView subSet, TaskMonitor monitor)
 			throws CancelledException {
 		if (monitor == null) {
 			// Create a do nothing task monitor that we can pass along.
-			monitor = TaskMonitorAdapter.DUMMY_MONITOR;
+			monitor = TaskMonitor.DUMMY;
 		}
 		monitor.checkCanceled();
 
@@ -543,7 +558,7 @@ public class ProgramDiff {
 			// Adjust any required address sets.
 			int[] pt = ProgramDiffFilter.getPrimaryTypes();
 			for (int element : pt) {
-				Integer key = new Integer(element);
+				Integer key = element;
 				AddressSet thisSet = diffAddrSets.get(key);
 				if (thisSet == null) {
 					continue; // This is not part of current address sets.
@@ -581,8 +596,7 @@ public class ProgramDiff {
 			(listing2.getPropertyMap(property) instanceof UnsupportedMapDB)) {
 			return new AddressSet(); // ignore property that isn't supported.
 		}
-		return getCuiDiffs(property, addrs, new UserDefinedComparator(program1, program2, property),
-			monitor);
+		return getCuiDiffs(property, addrs, new UserDefinedComparator(property), monitor);
 	}
 
 	/** Creates an address set indicating the differences between program1 and
@@ -594,6 +608,7 @@ public class ProgramDiff {
 	 * determining differences. This monitor reports the progress to the user.
 	 * @return the address set indicating the differences.
 	 * The addresses in this address set are derived from program1.
+	 * @throws ProgramConflictException context register definition differs between programs
 	 * @throws CancelledException if the user cancelled the Diff.
 	 */
 	synchronized public AddressSetView getTypeDiffs(int diffType, AddressSetView addrs,
@@ -623,32 +638,32 @@ public class ProgramDiff {
 				monitorMsg = "Checking End of Line Comment Differences";
 				monitor.setMessage(monitorMsg);
 				as = getCommentDiffs(CodeUnit.EOL_COMMENT, addrs,
-					new CommentTypeComparator(program1, program2, CodeUnit.EOL_COMMENT), monitor);
+					new CommentTypeComparator(CodeUnit.EOL_COMMENT), monitor);
 				break;
 			case ProgramDiffFilter.REPEATABLE_COMMENT_DIFFS:
 				monitorMsg = "Checking Repeatable Comment Differences";
 				monitor.setMessage(monitorMsg);
 				as = getCommentDiffs(CodeUnit.REPEATABLE_COMMENT, addrs,
-					new CommentTypeComparator(program1, program2, CodeUnit.REPEATABLE_COMMENT),
+					new CommentTypeComparator(CodeUnit.REPEATABLE_COMMENT),
 					monitor);
 				break;
 			case ProgramDiffFilter.PRE_COMMENT_DIFFS:
 				monitorMsg = "Checking Pre-Comment Differences";
 				monitor.setMessage(monitorMsg);
 				as = getCommentDiffs(CodeUnit.PRE_COMMENT, addrs,
-					new CommentTypeComparator(program1, program2, CodeUnit.PRE_COMMENT), monitor);
+					new CommentTypeComparator(CodeUnit.PRE_COMMENT), monitor);
 				break;
 			case ProgramDiffFilter.POST_COMMENT_DIFFS:
 				monitorMsg = "Checking Post-Comment Differences";
 				monitor.setMessage(monitorMsg);
 				as = getCommentDiffs(CodeUnit.POST_COMMENT, addrs,
-					new CommentTypeComparator(program1, program2, CodeUnit.POST_COMMENT), monitor);
+					new CommentTypeComparator(CodeUnit.POST_COMMENT), monitor);
 				break;
 			case ProgramDiffFilter.PLATE_COMMENT_DIFFS:
 				monitorMsg = "Checking Plate Comment Differences";
 				monitor.setMessage(monitorMsg);
 				as = getCommentDiffs(CodeUnit.PLATE_COMMENT, addrs,
-					new CommentTypeComparator(program1, program2, CodeUnit.PLATE_COMMENT), monitor);
+					new CommentTypeComparator(CodeUnit.PLATE_COMMENT), monitor);
 				break;
 			case ProgramDiffFilter.REFERENCE_DIFFS:
 				monitorMsg = "Checking Reference Differences";
@@ -693,6 +708,7 @@ public class ProgramDiff {
 	 * Get the address set that the diff process is limited to when checking for differences.
 	 * Returns null if the diff is not limited (i.e. the entire program is being diffed).
 	 * The addresses in the returned address set are derived from program1.
+	 * @return limited address set
 	 */
 	synchronized public AddressSetView getLimitedAddressSet() {
 		return checkAddressSet;
@@ -714,6 +730,7 @@ public class ProgramDiff {
 	 * Get the address set that the getDifferences method results are restricted to.
 	 * null indicates no current restrictions.
 	 * The addresses in the returned address set are derived from program1.
+	 * @return restricted address set
 	 */
 	synchronized public AddressSetView getRestrictedAddressSet() {
 		return restrictAddressSet;
@@ -741,6 +758,7 @@ public class ProgramDiff {
 	 * Get the address set that contains addresses that should not be indicated as
 	 * having any differences.
 	 * The addresses in this address set are derived from program1.
+	 * @return ignored addresses
 	 */
 	synchronized public AddressSetView getIgnoreAddressSet() {
 		return ignoreAddressSet;
@@ -832,7 +850,7 @@ public class ProgramDiff {
 		AddressSet diffs = new AddressSet();
 		int[] pt = ProgramDiffFilter.getPrimaryTypes();
 		for (int element : pt) {
-			AddressSet as = diffAddrSets.get(new Integer(element));
+			AddressSet as = diffAddrSets.get(element);
 			diffs.add(as);
 		}
 		AddressRangeIterator iter = diffs.getAddressRanges();
@@ -854,7 +872,7 @@ public class ProgramDiff {
 		int[] pt = ProgramDiffFilter.getPrimaryTypes();
 		for (int element : pt) {
 			Msg.info(this, "\n" + ProgramDiffFilter.typeToName(element) + " differences:");
-			AddressSet as = diffAddrSets.get(new Integer(element));
+			AddressSet as = diffAddrSets.get(element);
 			if (as != null) {
 				AddressRangeIterator iter = as.getAddressRanges();
 				while (iter.hasNext()) {
@@ -864,7 +882,8 @@ public class ProgramDiff {
 		}
 	}
 
-	/** Creates an address set indicating the differences between program1 and
+	/** 
+	 * Creates an address set indicating the differences between program1 and
 	 * program2 of the specified type.
 	 * The addresses in this address set are derived from program1
 	 * and put into diffAddrSets using the diffType number as an index.
@@ -903,32 +922,32 @@ public class ProgramDiff {
 				monitorMsg = "Checking End of Line Comment Differences";
 				monitor.setMessage(monitorMsg);
 				as = getCommentDiffs(CodeUnit.EOL_COMMENT, checkAddressSet,
-					new CommentTypeComparator(program1, program2, CodeUnit.EOL_COMMENT), monitor);
+					new CommentTypeComparator(CodeUnit.EOL_COMMENT), monitor);
 				break;
 			case ProgramDiffFilter.REPEATABLE_COMMENT_DIFFS:
 				monitorMsg = "Checking Repeatable Comment Differences";
 				monitor.setMessage(monitorMsg);
 				as = getCommentDiffs(CodeUnit.REPEATABLE_COMMENT, checkAddressSet,
-					new CommentTypeComparator(program1, program2, CodeUnit.REPEATABLE_COMMENT),
+					new CommentTypeComparator(CodeUnit.REPEATABLE_COMMENT),
 					monitor);
 				break;
 			case ProgramDiffFilter.PRE_COMMENT_DIFFS:
 				monitorMsg = "Checking Pre-Comment Differences";
 				monitor.setMessage(monitorMsg);
 				as = getCommentDiffs(CodeUnit.PRE_COMMENT, checkAddressSet,
-					new CommentTypeComparator(program1, program2, CodeUnit.PRE_COMMENT), monitor);
+					new CommentTypeComparator(CodeUnit.PRE_COMMENT), monitor);
 				break;
 			case ProgramDiffFilter.POST_COMMENT_DIFFS:
 				monitorMsg = "Checking Post-Comment Differences";
 				monitor.setMessage(monitorMsg);
 				as = getCommentDiffs(CodeUnit.POST_COMMENT, checkAddressSet,
-					new CommentTypeComparator(program1, program2, CodeUnit.POST_COMMENT), monitor);
+					new CommentTypeComparator(CodeUnit.POST_COMMENT), monitor);
 				break;
 			case ProgramDiffFilter.PLATE_COMMENT_DIFFS:
 				monitorMsg = "Checking Plate Comment Differences";
 				monitor.setMessage(monitorMsg);
 				as = getCommentDiffs(CodeUnit.PLATE_COMMENT, checkAddressSet,
-					new CommentTypeComparator(program1, program2, CodeUnit.PLATE_COMMENT), monitor);
+					new CommentTypeComparator(CodeUnit.PLATE_COMMENT), monitor);
 				break;
 			case ProgramDiffFilter.REFERENCE_DIFFS:
 				monitorMsg = "Checking Reference Differences";
@@ -967,7 +986,7 @@ public class ProgramDiff {
 				break;
 		}
 		if (as != null) {
-			diffAddrSets.put(new Integer(diffType), as);
+			diffAddrSets.put(diffType, as);
 		}
 	}
 
@@ -1064,7 +1083,8 @@ public class ProgramDiff {
 		while (endAddr.compareTo(max) < 0);
 	}
 
-	/** Determines the addresses within the two programs where bytes differ.
+	/** 
+	 * Determines the addresses within the two programs where bytes differ.
 	 * If a byte difference is found, the entire code unit is added to the address set.
 	 * This also indicates addresses in program1 that are not in program2 as well as
 	 * program2 addresses that are compatible with program1 but not in program1 memory.
@@ -1106,7 +1126,8 @@ public class ProgramDiff {
 		return differences;
 	}
 
-	/** Determines the addresses for the code units that differ between program1
+	/** 
+	 * Determines the addresses for the code units that differ between program1
 	 * and program2.
 	 *
 	 * @param addrs the addresses to check for differences.
@@ -1124,21 +1145,22 @@ public class ProgramDiff {
 		AddressSet differences = new AddressSet();
 		// Get the instruction differences.
 		monitorMsg = "Checking Instruction Differences";
-		AddressSet instrDiffs = getAdjustedCuiDiffs(CodeUnit.INSTRUCTION_PROPERTY, addrs,
-			new InstructionComparator(program1, program2), monitor);
+		InstructionComparator instComp = new InstructionComparator();
+		AddressSet instrDiffs = instComp.getAdjustedCuiDiffs(addrs, monitor);
 		instrDiffs = instrDiffs.intersect(pgmMemComp.getAddressesInCommon());
 		differences.add(instrDiffs);
 		// Get the defined data differences.
 		monitorMsg = "Checking Defined Data Differences";
-		AddressSet dataDiffs = getAdjustedCuiDiffs(CodeUnit.DEFINED_DATA_PROPERTY, addrs,
-			new DefinedDataComparator(program1, program2), monitor);
+		DefinedDataComparator dataComp = new DefinedDataComparator();
+		AddressSet dataDiffs = dataComp.getAdjustedCuiDiffs(addrs, monitor);
 		differences.add(dataDiffs);
 		AddressSet contextRegDifferences = getContextRegisterDifferences(addrs, monitor);
 		differences.add(contextRegDifferences);
 		return differences;
 	}
 
-	/** Gets the addresses where the Program Context (register bits) differ
+	/** 
+	 * Gets the addresses where the Program Context (register bits) differ
 	 * between two programs.
 	 *
 	 * @param addressSet the addresses to check for differences.
@@ -1187,7 +1209,8 @@ public class ProgramDiff {
 		return differences;
 	}
 
-	/** Gets the addresses where the Program Context (register bits) differ
+	/** 
+	 * Gets the addresses where the Program Context (register bits) differ
 	 * between two programs for the specified registers (which should generally match).
 	 *
 	 * @param pc1 program context for 1st program
@@ -1200,8 +1223,6 @@ public class ProgramDiff {
 	 * added to this set. The addresses in this address set are derived from the 1st program.
 	 * @param monitor the task monitor for indicating the progress of
 	 * determining differences. This monitor reports the progress to the user.
-	 *
-	 * @throws ProgramConflictException if the two programs can't are not comparable.
 	 * @throws CancelledException if the user cancelled the Diff.
 	 */
 	private void getProgramContextDifferences(ProgramContext pc1, Register reg1, ProgramContext pc2,
@@ -1247,7 +1268,8 @@ public class ProgramDiff {
 		}
 	}
 
-	/** Gets the addresses where the context-register value differs
+	/** 
+	 * Gets the addresses where the context-register value differs
 	 * between two programs.
 	 *
 	 * @param addressSet the addresses to check for differences.
@@ -1258,8 +1280,6 @@ public class ProgramDiff {
 	 * @return the addresses of code units where the program context (register
 	 * bits values) differs.
 	 * The addresses in this address set are derived from program1.
-	 *
-	 * @throws ProgramConflictException if the two programs can't are not comparable.
 	 * @throws CancelledException if the user cancelled the Diff.
 	 */
 	private AddressSet getContextRegisterDifferences(AddressSetView addressSet, TaskMonitor monitor)
@@ -1278,7 +1298,8 @@ public class ProgramDiff {
 		return differences;
 	}
 
-	/** Gets the addresses where the user defined properties differ between
+	/** 
+	 * Gets the addresses where the user defined properties differ between
 	 * two programs.
 	 *
 	 * @param addressSet the addresses to check for differences.
@@ -1319,13 +1340,14 @@ public class ProgramDiff {
 				continue; // ignore property that isn't supported.
 			}
 			// Get the differences for each user defined property type.
-			differences.add(getCuiDiffs(property, addressSet,
-				new UserDefinedComparator(program1, program2, property), monitor));
+			differences.add(
+				getCuiDiffs(property, addressSet, new UserDefinedComparator(property), monitor));
 		}
 		return differences;
 	}
 
-	/** Gets the addresses where bookmarks differ between two programs.
+	/** 
+	 * Gets the addresses where bookmarks differ between two programs.
 	 *
 	 * @param addressSet the addresses to check for differences.
 	 * The addresses in this address set should be derived from program1.
@@ -1373,15 +1395,16 @@ public class ProgramDiff {
 			addrs1 = addrs1.intersect(addressSet);
 			addrs2 = addrs2.intersect(addressSet2);
 			// Get the differences for each bookmark type.
-			sets[i] = getObjectDiffs(new BookmarksComparator(type, program1, program2),
-				new IteratorWrapper(addrs1.getAddresses(true)),
-				new IteratorWrapper(addrs2.getAddresses(true)), monitor);
+			BookmarksComparator c = new BookmarksComparator(type);
+			sets[i] =
+				c.getObjectDiffs(addrs1.getAddresses(true), addrs2.getAddresses(true), monitor);
 			differences.add(sets[i]);
 		}
 		return differences;
 	}
 
-	/** Determines the addresses where program1 and program2 have different
+	/** 
+	 * Determines the addresses where program1 and program2 have different
 	 *  labels (symbols or aliases) specified.
 	 * @param addressSet the addresses to check for differences.
 	 * The addresses in this address set should be derived from program1.
@@ -1405,12 +1428,12 @@ public class ProgramDiff {
 			AddressSet addressSet2 = DiffUtility.getCompatibleAddressSet(addressSet, program2);
 			iter2 = program2.getSymbolTable().getPrimarySymbolIterator(addressSet2, true);
 		}
-		// Symbols
-		return getObjectDiffs(new SymbolComparator(program1, program2), new IteratorWrapper(iter1),
-			new IteratorWrapper(iter2), monitor);
+		SymbolComparator c = new SymbolComparator();
+		return c.getObjectDiffs(iter1, iter2, monitor);
 	}
 
-	/** Determines the addresses where program1 and program2 have different equates
+	/** 
+	 * Determines the addresses where program1 and program2 have different equates
 	 * specified.
 	 * @param addressSet the addresses to check for differences.
 	 * The addresses in this address set should be derived from program1.
@@ -1433,8 +1456,8 @@ public class ProgramDiff {
 			AddressSet addressSet2 = DiffUtility.getCompatibleAddressSet(addressSet, program2);
 			iter2 = program2.getEquateTable().getEquateAddresses(addressSet2);
 		}
-		return getObjectDiffs(new EquateComparator(program1, program2), new IteratorWrapper(iter1),
-			new IteratorWrapper(iter2), monitor);
+		EquateComparator c = new EquateComparator();
+		return c.getObjectDiffs(iter1, iter2, monitor);
 	}
 
 	/**
@@ -1465,7 +1488,8 @@ public class ProgramDiff {
 		return true;
 	}
 
-	/** Determines the addresses where program1 and program2 have different
+	/** 
+	 * Determines the addresses where program1 and program2 have different
 	 * references specified.
 	 * @param addressSet the addresses to check for differences.
 	 * The addresses in this address set should be derived from program1.
@@ -1491,19 +1515,20 @@ public class ProgramDiff {
 			AddressSet addressSet2 = DiffUtility.getCompatibleAddressSet(addressSet, program2);
 			iter2 = rm2.getReferenceSourceIterator(addressSet2, true);
 		}
-		AddressSet addrs = getObjectDiffs(new ReferenceComparator(program1, program2),
-			new IteratorWrapper(iter1), new IteratorWrapper(iter2), monitor);
+		ReferenceComparator c = new ReferenceComparator();
+		AddressSet addrs = c.getObjectDiffs(iter1, iter2, monitor);
 		return addrs.intersect(pgmMemComp.getSameMemTypeAddressesInCommon());
 	}
 
-	/** Determines the addresses where program1 and program2 have different
+	/** 
+	 * Determines the addresses where program1 and program2 have different
 	 * function information specified. This may be the signature, comment,
 	 * stack variables, or register variables.
 	 * @param addressSet the addresses to check for differences.
 	 * The addresses in this address set should be derived from program1.
 	 * @param monitor the task monitor for indicating the progress of
 	 * determining differences. This monitor reports the progress to the user.
-	 * @return the addresses where the equates differed between program1 and program2.
+	 * @return the addresses where the functions differed between program1 and program2.
 	 * The addresses in this address set are derived from program1.
 	 * @throws CancelledException if the user cancelled the Diff.
 	 */
@@ -1520,18 +1545,20 @@ public class ProgramDiff {
 			AddressSet addressSet2 = DiffUtility.getCompatibleAddressSet(addressSet, program2);
 			iter2 = program2.getListing().getFunctions(addressSet2, true);
 		}
-		return getObjectDiffs(new FunctionComparator(program1, program2),
-			new IteratorWrapper(iter1), new IteratorWrapper(iter2), monitor);
+		FunctionComparator c = new FunctionComparator();
+		return c.getObjectDiffs(iter1, iter2, monitor);
 	}
 
-	/**
-	 * Returns the function start addresses of all functions where there is a difference
-	 * in tags between program 1 and program 2.
-	 *
-	 * @param addressSet
-	 * @param monitor
-	 * @return
-	 * @throws CancelledException
+	/** 
+	 * Determines the addresses where program1 and program2 have different
+	 * function tags.
+	 * @param addressSet the addresses to check for differences.
+	 * The addresses in this address set should be derived from program1.
+	 * @param monitor the task monitor for indicating the progress of
+	 * determining differences. This monitor reports the progress to the user.
+	 * @return the addresses where the function tags differed between program1 and program2.
+	 * The addresses in this address set are derived from program1.
+	 * @throws CancelledException if the user cancelled the Diff.
 	 */
 	private AddressSet getFunctionTagDifferences(AddressSetView addressSet, TaskMonitor monitor)
 			throws CancelledException {
@@ -1539,14 +1566,12 @@ public class ProgramDiff {
 		FunctionIterator iter1 = program1.getListing().getFunctions(addressSet, true);
 		AddressSet addressSet2 = DiffUtility.getCompatibleAddressSet(addressSet, program2);
 		FunctionIterator iter2 = program2.getListing().getFunctions(addressSet2, true);
-		return getObjectDiffs(new FunctionTagComparator(program1, program2),
-			new IteratorWrapper(iter1), new IteratorWrapper(iter2), monitor);
+		FunctionTagComparator c = new FunctionTagComparator();
+		return c.getObjectDiffs(iter1, iter2, monitor);
 	}
 
-	/////////////////////////////////////////
-	// Generic methods.
-	/////////////////////////////////////////
-	/** Determines the code unit addresses where there are differences of the
+	/** 
+	 * Determines the code unit addresses where there are differences of the
 	 * indicated type between program1 and program2.
 	 * @param cuiType the type of difference on the code unit. These are defined
 	 * in <CODE>CodeUnit</CODE>. (i.e. CodeUnit.EOL_COMMENT_PROPERTY).
@@ -1562,15 +1587,17 @@ public class ProgramDiff {
 	 * @throws CancelledException if the user cancelled the Diff.
 	 * @see ghidra.program.model.listing.CodeUnit
 	 */
-	private AddressSet getCuiDiffs(String cuiType, AddressSetView addressSet, CodeUnitComparator c,
+	private AddressSet getCuiDiffs(String cuiType, AddressSetView addressSet,
+			CodeUnitComparator<CodeUnit> c,
 			TaskMonitor monitor) throws CancelledException {
 		CodeUnitIterator iter1 = listing1.getCodeUnitIterator(cuiType, addressSet, true);
 		AddressSet addressSet2 = DiffUtility.getCompatibleAddressSet(addressSet, program2);
 		CodeUnitIterator iter2 = listing2.getCodeUnitIterator(cuiType, addressSet2, true);
-		return getObjectDiffs(c, new IteratorWrapper(iter1), new IteratorWrapper(iter2), monitor);
+		return c.getObjectDiffs(iter1, iter2, monitor);
 	}
 
-	/** Determines the code unit addresses where there are comment differences of the
+	/** 
+	 * Determines the code unit addresses where there are comment differences of the
 	 * indicated type between program1 and program2.
 	 * @param commentType the type of comment. These are defined
 	 * in <CODE>CodeUnit</CODE>. (i.e. CodeUnit.EOL_COMMENT).
@@ -1584,48 +1611,13 @@ public class ProgramDiff {
 	 * specified type.
 	 * The addresses in this address set are derived from program1.
 	 * @throws CancelledException if the user cancelled the Diff.
-	 * @see ghidra.program.model.listing.CodeUnit
 	 */
 	private AddressSet getCommentDiffs(int commentType, AddressSetView addressSet,
 			CommentTypeComparator c, TaskMonitor monitor) throws CancelledException {
 		AddressIterator iter1 = listing1.getCommentAddressIterator(commentType, addressSet, true);
 		AddressSet addressSet2 = DiffUtility.getCompatibleAddressSet(addressSet, program2);
 		AddressIterator iter2 = listing2.getCommentAddressIterator(commentType, addressSet2, true);
-		return getObjectDiffs(c, new IteratorWrapper(iter1), new IteratorWrapper(iter2), monitor);
-	}
-
-	/** Determines the code unit addresses where there are differences of the
-	 * indicated type between program1 and program2. If address ranges in the
-	 * address set begin inside a code unit instead of at the beginning, the
-	 * entire code unit will be added to the address set.
-	 * @param cuiType the type of difference on the code unit. These are defined
-	 * in <CODE>CodeUnit</CODE>. (i.e. CodeUnit.EOL_COMMENT_PROPERTY).
-	 * @param addressSet the addresses to check for differences.
-	 * The addresses in this address set should be derived from program1.
-	 * @param c the comparator to use for determining where the differences are.
-	 * @param monitor the task monitor for indicating the progress of
-	 * determining differences. This monitor reports the progress to the user.
-	 *
-	 * @return the addresses where there were code unit differences of the
-	 * specified type.
-	 * The addresses in this address set are derived from program1.
-	 * @throws CancelledException if the user cancelled the Diff.
-	 * @see ghidra.program.model.listing.CodeUnit
-	 */
-	private AddressSet getAdjustedCuiDiffs(String cuiType, AddressSetView addressSet,
-			CodeUnitComparator c, TaskMonitor monitor) throws CancelledException {
-		// Check each address range from the address set for differences.
-		AddressSet inCommon;
-		inCommon = pgmMemComp.getAddressesInCommon();
-		if (addressSet != null) {
-			inCommon = inCommon.intersect(addressSet);
-		}
-		AddressSet as1 = adjustCodeUnitAddressSet(inCommon, listing1, monitor);
-		CodeUnitIterator iter1 = listing1.getCodeUnitIterator(cuiType, as1, true);
-		AddressSet inCommonFrom2 = DiffUtility.getCompatibleAddressSet(inCommon, program2);
-		AddressSet as2 = adjustCodeUnitAddressSet(inCommonFrom2, listing2, monitor);
-		CodeUnitIterator iter2 = listing2.getCodeUnitIterator(cuiType, as2, true);
-		return getObjectDiffs(c, new IteratorWrapper(iter1), new IteratorWrapper(iter2), monitor);
+		return c.getObjectDiffs(iter1, iter2, monitor);
 	}
 
 	/**
@@ -1635,11 +1627,13 @@ public class ProgramDiff {
 	 * @param initialAddressSet the initial address set
 	 * The addresses in this address set should be derived from the program
 	 * passed as a parameter.
-	 * @param program the program to get the code units from.
+	 * @param listing the program listing to get the code units from.
+	 * @param monitor the task monitor for indicating the progress of
+	 * determining differences. This monitor reports the progress to the user.
 	 * @return the new address set
 	 * The addresses in this address set are derived from the program
 	 * that was passed as a parameter.
-	 * @throws CancelledException
+	 * @throws CancelledException if the user cancelled the Diff.
 	 */
 	private AddressSet adjustCodeUnitAddressSet(AddressSetView initialAddressSet, Listing listing,
 			TaskMonitor monitor) throws CancelledException {
@@ -1673,146 +1667,15 @@ public class ProgramDiff {
 		return tmpAddrSet;
 	}
 
-	/** Determines where the property of interest to the comparator is different
-	 * between program1 and program2. This is for use with object iterators as
-	 * opposed to determining differences using a code unit iterator.
-	 * (For example, object iterators are used for equates and functions.)
-	 * @param c the comparator to use for determining where the differences are.
-	 * @param iter1 the program1 object iterator for where the property type
-	 * to be compared exists.
-	 * @param iter2 the program2 object iterator for where the property type
-	 * to be compared exists.
-	 * @param monitor the task monitor for indicating the progress of
-	 * determining differences. This monitor reports the progress to the user.
-	 * @return the addresses where the comparator determined the property type
-	 * of interest was different. null if canceled.
-	 * The addresses in this address set are derived from program1.
-	 * @throws CancelledException if the user canceled the Diff.
-	 */
-	private AddressSet getObjectDiffs(ProgramDiffComparator c, IteratorWrapper iter1,
-			IteratorWrapper iter2, TaskMonitor monitor) throws CancelledException {
-		AddressSet addrs = new AddressSet();
-		Object o1 = null;
-		Object o2 = null;
-		AddressSet a1 = new AddressSet();
-		AddressSet a2 = new AddressSet();
-		AddressSet a2CompatibleWith1 = DiffUtility.getCompatibleAddressSet(a2, program1);
-		if (iter1.hasNext()) {
-			o1 = iter1.next(); // Get first object in iterator1
-			a1 = c.getAddressSet(o1, c.getProgramOne());
-		}
-		if (iter2.hasNext()) {
-			o2 = iter2.next(); // Get first object in iterator2
-			a2 = c.getAddressSet(o2, c.getProgramTwo());
-			a2CompatibleWith1 = DiffUtility.getCompatibleAddressSet(a2, program1);
-		}
-//		int i=0;
-		while ((o1 != null) && (o2 != null)) {
-			boolean move1 = false;
-			boolean move2 = false;
-			int result = c.compare(o1, o2);
-			if (result < 0) {
-				// o1 < o2
-				addrs.add(a1);
-				move1 = true;
-			}
-			else if (result > 0) {
-				// o1 > o2
-				addrs.add(a2CompatibleWith1);
-				move2 = true;
-			}
-			else {
-				// o1 == o2
-				// Now see if what we're interested about in each program's
-				// object is different.
-				if (!c.isSame(o1, o2)) {
-					addrs.add(a1);
-					addrs.add(a2CompatibleWith1);
-				}
-				move1 = true;
-				move2 = true;
-			}
-//			if (++i == DISPLAY_GRANULARITY) {
-			monitor.setMessage(
-				monitorMsg + ": " + (move1 ? a1.getMinAddress().toString(showAddressSpace)
-						: a2.getMinAddress().toString(showAddressSpace)));
-//				i = 0;
-//			}
-			if (move1) {
-				if (iter1.hasNext()) {
-					o1 = iter1.next();
-					a1 = c.getAddressSet(o1, c.getProgramOne());
-				}
-				else {
-					o1 = null;
-				}
-			}
-			if (move2) {
-				if (iter2.hasNext()) {
-					o2 = iter2.next();
-					a2 = c.getAddressSet(o2, c.getProgramTwo());
-					a2CompatibleWith1 = DiffUtility.getCompatibleAddressSet(a2, program1);
-				}
-				else {
-					o2 = null;
-				}
-			}
-			checkCancelled(monitor);
-		}
-		// Put remaining iterator1 addresses in the address set.
-		if (o1 != null) {
-			addrs.add(a1);
-		}
-		while (iter1.hasNext()) {
-			o1 = iter1.next();
-			a1 = c.getAddressSet(o1, c.getProgramOne());
-			addrs.add(a1);
-			checkCancelled(monitor);
-//			if (++i == DISPLAY_GRANULARITY) {
-			monitor.setMessage(monitorMsg + ": " + (a1.getMinAddress().toString(showAddressSpace)));
-//				i = 0;
-//			}
-		}
-		// Put remaining iterator2 addresses in the address set.
-		if (o2 != null) {
-			addrs.add(a2CompatibleWith1);
-		}
-		while (iter2.hasNext()) {
-			checkCancelled(monitor);
-			o2 = iter2.next();
-			a2 = c.getAddressSet(o2, c.getProgramTwo());
-			Address min = a2.getMinAddress();
-			if (min != null) {
-				a2CompatibleWith1 = DiffUtility.getCompatibleAddressSet(a2, program1);
-				addrs.add(a2CompatibleWith1);
-//				if (++i == DISPLAY_GRANULARITY) {
-				monitor.setMessage(monitorMsg + ": " + (min.toString(showAddressSpace)));
-//					i = 0;
-//				}
-			}
-		}
-
-		return addrs;
-	}
-
-//	/** Compares the minimum addresses for each of the code units.
-//	 * @param cu1 the first code unit.
-//	 * @param cu2 the second code unit.
-//	 * @return 0 if the code units have the same minimum address. -1 if first
-//	 * code unit's min address is less than the second's. 1 if first code unit's
-//	 * address is greater than the second's.
-//	 */
-//    private int compareAddress(CodeUnit cu1, CodeUnit cu2) {
-//		return cu1.getMinAddress().compareTo(cu2.getMinAddress());
-//	}
-
 	///////////////////////////////////////////////////////////////////////
 	// COMPARATORS
 	///////////////////////////////////////////////////////////////////////
-	/** Interface providing a means for comparing programs to determine their differences.
+	/** 
+	 * Interface providing a means for comparing programs to determine their differences.
 	 */
-	private interface ProgramDiffComparator {
-		/** Returns the first program for this diff.
+	private interface ProgramDiffComparator<T> {
+		/** 
+		 * Returns the first program for this diff.
 		 * @return the first program.
 		 */
 		public Program getProgramOne();
@@ -1822,7 +1685,8 @@ public class ProgramDiff {
 		 */
 		public Program getProgramTwo();
 
-		/** Compares two like objects to determine whether the first is effectively
+		/** 
+		 * Compares two like objects to determine whether the first is effectively
 		 *  less than (comes before it in memory), equal to (at the same spot
 		 *  in memory), or greater than (comes after it in memory) the second.
 		 * @param obj1 the first object
@@ -1831,114 +1695,210 @@ public class ProgramDiff {
 		 *          0 if the objects are at the same spot in memory.
 		 *          1 if the first comes after the second in memory.
 		 */
-		public int compare(Object obj1, Object obj2);
+		public int compare(T obj1, T obj2);
 
-		/** Returns whether the objects are the same with respect to the
-		 *  program difference type this comparator is interested in.
+		/** 
+		 * Returns whether the objects are the same with respect to the
+		 * program difference type this comparator is interested in.
 		 * @param obj1 the first object
 		 * @param obj2 the second object
 		 * @return true if the objects are the same with respect to the type
 		 * this comparator is interested in.
 		 */
-		public boolean isSame(Object obj1, Object obj2);
+		public boolean isSame(T obj1, T obj2);
 
-		/** Returns the addresses that are to indicate the difference of this
-		 *  comparison type for this object.
+		/**
+		 * Returns the addresses that are to indicate the difference of this
+		 * comparison type for this object.
 		 * @param obj the object being examined by this comparator.
 		 * @param program the program the object is associated with.
 		 * @return the addresses that we want to indicate for a difference
 		 * of this comparison type.
 		 * The addresses in this address set are derived from the specified program.
 		 */
-		public AddressSet getAddressSet(Object obj, Program program);
+		public AddressSet getAddressSet(T obj, Program program);
 	}
 
-	/** Provides a means for comparing programs to determine their differences.
+	/** 
+	 * Provides a means for comparing programs to determine their differences.
+	 * @param <T> diff comparable object types
 	 */
-	static abstract class ProgramDiffComparatorImpl implements ProgramDiffComparator {
-		/** The first program for the diff. */
-		protected Program program1;
-		/** The second program for the diff. */
-		protected Program program2;
+	private abstract class ProgramDiffComparatorImpl<T> implements ProgramDiffComparator<T> {
 
-		/** Generic constructor for comparing program differences.
-		 * @param program1 the first program
-		 * @param program2 the second program
-		 */
-		public ProgramDiffComparatorImpl(Program program1, Program program2) {
-			this.program1 = program1;
-			this.program2 = program2;
-		}
-
-		/** Returns the first program being compared by this <CODE>ProgramDiff</CODE>.
-		 * @return the first program for the diff.
-		 */
 		@Override
 		public Program getProgramOne() {
 			return program1;
 		}
 
-		/** Returns the second program being compared by this <CODE>ProgramDiff</CODE>.
-		 * @return the second program for the diff.
-		 */
 		@Override
 		public Program getProgramTwo() {
 			return program2;
 		}
+
+		/** 
+		 * Determines where the property of interest to the comparator is different
+		 * between program1 and program2. This is for use with object iterators as
+		 * opposed to determining differences using a code unit iterator.
+		 * (For example, object iterators are used for equates and functions.)
+		 * @param iter1 the program1 object iterator
+		 * @param iter2 the program2 object iterator
+		 * @param monitor the task monitor for indicating the progress of
+		 * determining differences. This monitor reports the progress to the user.
+		 * @return the addresses where the comparator determined the objects
+		 * of interest was different. null if canceled.
+		 * The addresses in this address set are derived from program1.
+		 * @throws CancelledException if the user canceled the Diff.
+		 */
+		AddressSet getObjectDiffs(Iterator<T> iter1, Iterator<T> iter2, TaskMonitor monitor)
+				throws CancelledException {
+			AddressSet addrs = new AddressSet();
+			T o1 = null;
+			T o2 = null;
+			AddressSet a1 = new AddressSet();
+			AddressSet a2 = new AddressSet();
+			AddressSet a2CompatibleWith1 = DiffUtility.getCompatibleAddressSet(a2, program1);
+			if (iter1.hasNext()) {
+				o1 = iter1.next(); // Get first object in iterator1
+				a1 = getAddressSet(o1, getProgramOne());
+			}
+			if (iter2.hasNext()) {
+				o2 = iter2.next(); // Get first object in iterator2
+				a2 = getAddressSet(o2, getProgramTwo());
+				a2CompatibleWith1 = DiffUtility.getCompatibleAddressSet(a2, program1);
+			}
+//			int i=0;
+			while ((o1 != null) && (o2 != null)) {
+				boolean move1 = false;
+				boolean move2 = false;
+				int result = compare(o1, o2);
+				if (result < 0) {
+					// o1 < o2
+					addrs.add(a1);
+					move1 = true;
+				}
+				else if (result > 0) {
+					// o1 > o2
+					addrs.add(a2CompatibleWith1);
+					move2 = true;
+				}
+				else {
+					// o1 == o2
+					// Now see if what we're interested about in each program's
+					// object is different.
+					if (!isSame(o1, o2)) {
+						addrs.add(a1);
+						addrs.add(a2CompatibleWith1);
+					}
+					move1 = true;
+					move2 = true;
+				}
+//				if (++i == DISPLAY_GRANULARITY) {
+				monitor.setMessage(
+					monitorMsg + ": " + (move1 ? a1.getMinAddress().toString(showAddressSpace)
+							: a2.getMinAddress().toString(showAddressSpace)));
+//					i = 0;
+//				}
+				if (move1) {
+					if (iter1.hasNext()) {
+						o1 = iter1.next();
+						a1 = getAddressSet(o1, getProgramOne());
+					}
+					else {
+						o1 = null;
+					}
+				}
+				if (move2) {
+					if (iter2.hasNext()) {
+						o2 = iter2.next();
+						a2 = getAddressSet(o2, getProgramTwo());
+						a2CompatibleWith1 = DiffUtility.getCompatibleAddressSet(a2, program1);
+					}
+					else {
+						o2 = null;
+					}
+				}
+				checkCancelled(monitor);
+			}
+			// Put remaining iterator1 addresses in the address set.
+			if (o1 != null) {
+				addrs.add(a1);
+			}
+			while (iter1.hasNext()) {
+				o1 = iter1.next();
+				a1 = getAddressSet(o1, getProgramOne());
+				addrs.add(a1);
+				checkCancelled(monitor);
+//				if (++i == DISPLAY_GRANULARITY) {
+				monitor.setMessage(
+					monitorMsg + ": " + (a1.getMinAddress().toString(showAddressSpace)));
+//					i = 0;
+//				}
+			}
+			// Put remaining iterator2 addresses in the address set.
+			if (o2 != null) {
+				addrs.add(a2CompatibleWith1);
+			}
+			while (iter2.hasNext()) {
+				checkCancelled(monitor);
+				o2 = iter2.next();
+				a2 = getAddressSet(o2, getProgramTwo());
+				Address min = a2.getMinAddress();
+				if (min != null) {
+					a2CompatibleWith1 = DiffUtility.getCompatibleAddressSet(a2, program1);
+					addrs.add(a2CompatibleWith1);
+//					if (++i == DISPLAY_GRANULARITY) {
+					monitor.setMessage(monitorMsg + ": " + (min.toString(showAddressSpace)));
+//						i = 0;
+//					}
+				}
+			}
+
+			return addrs;
+		}
 	}
 
-	/** Used to compare the symbols in two programs.
+	/**
+	 * Symbol sort comparator for use on a group of symbols at a single address.
 	 */
-	private class SymbolComparator extends ProgramDiffComparatorImpl {
-		/** Constructor
-		 * @param program1 the first program
-		 * @param program2 the second program
-		 */
-		private SymbolComparator(Program program1, Program program2) {
-			super(program1, program2);
-		}
-
-		/** Compares two symbols to determine whether the first is effectively
-		 *  less than (comes before it in the symbol table),
-		 *  equal to (at the same spot in the symbol table),
-		 *  or greater than (comes after it in the symbol table) the second.
-		 * @param obj1 the address for the first program's symbol.
-		 * @param obj2 the address for the second program's symbol.
-		 * @return -1 if the first comes before the second in the symbol table.
-		 *          0 if the objects are at the same spot in the symbol table.
-		 *          1 if the first comes after the second in the symbol table.
-		 */
+	private static Comparator<Symbol> SYMBOL_COMPARATOR = new Comparator<Symbol>() {
 		@Override
-		public int compare(Object obj1, Object obj2) {
-			Symbol s1 = (Symbol) obj1;
-			Symbol s2 = (Symbol) obj2;
+		public int compare(Symbol s1, Symbol s2) {
+			if (s1.isPrimary()) {
+				return s2.isPrimary() ? 0 : -1;
+			}
+			else if (s2.isPrimary()) {
+				return 1;
+			}
+			return s1.getName(true).compareTo(s2.getName(true));
+		}
+	};
+
+	/** 
+	 * Used to compare the symbols in two programs.
+	 * Comparator is intended to be invoked with primary symbols only and will compare together with 
+	 * all non-primary symbols. 
+	 */
+	private class SymbolComparator extends ProgramDiffComparatorImpl<Symbol> {
+
+		@Override
+		public int compare(Symbol s1, Symbol s2) {
 			Address address2CompatibleWith1 =
 				SimpleDiffUtility.getCompatibleAddress(program2, s2.getAddress(), program1);
 			return s1.getAddress().compareTo(address2CompatibleWith1);
 		}
 
-		/** Returns whether or not all the symbol objects are the same at the
-		 *  same address as the indicated symbol objects (obj1 and obj2).
-		 * @param obj1 the first object
-		 * @param obj2 the second object
-		 * @return true if the objects are the same symbol and have the same
-		 * associated symbols (other symbols at the same address).
-		 */
 		@Override
-		public boolean isSame(Object obj1, Object obj2) {
-			Symbol s1 = (Symbol) obj1;
-			Symbol s2 = (Symbol) obj2;
+		public boolean isSame(Symbol s1, Symbol s2) {
 			if (s1.isExternalEntryPoint() != s2.isExternalEntryPoint()) {
 				return false;
 			}
-			Symbol[] sym1 = this.program1.getSymbolTable().getSymbols(s1.getAddress());
-			Symbol[] sym2 = this.program2.getSymbolTable().getSymbols(s2.getAddress());
+			Symbol[] sym1 = program1.getSymbolTable().getSymbols(s1.getAddress());
+			Symbol[] sym2 = program2.getSymbolTable().getSymbols(s2.getAddress());
 			if (sym1.length != sym2.length) {
 				return false;
 			}
-			SymbolNameComparator snc = new SymbolNameComparator();
-			Arrays.sort(sym1, snc);
-			Arrays.sort(sym2, snc);
+			Arrays.sort(sym1, SYMBOL_COMPARATOR);
+			Arrays.sort(sym2, SYMBOL_COMPARATOR);
 			for (int i = 0; i < sym1.length; i++) {
 				if (!equivalentSymbols(program1, program2, sym1[i], sym2[i])) {
 					return false;
@@ -1947,21 +1907,12 @@ public class ProgramDiff {
 			return true;
 		}
 
-		/** Returns the address range for the code unit associated with this
-		 *  symbol object.
-		 * @param obj the object being examined by this comparator.
-		 * @param program the program the object is associated with.
-		 * @return the addresses that we want to indicate for a difference
-		 * of this comparison type.
-		 * The addresses in this address set are derived from the specified program.
-		 */
 		@Override
-		public AddressSet getAddressSet(Object obj, Program program) {
+		public AddressSet getAddressSet(Symbol s, Program program) {
 			AddressSet addrs = new AddressSet();
-			if (obj == null) {
+			if (s == null) {
 				return addrs;
 			}
-			Symbol s = (Symbol) obj;
 			Address addr = s.getAddress();
 			addrs.addRange(addr, addr);
 			return addrs;
@@ -1969,47 +1920,65 @@ public class ProgramDiff {
 
 	}
 
-	/** Used to compare the equates in two programs.
+	/** 
+	 * Compares the function tags in two programs. 
+	 * 
+	 * Two sets of tags are considered equal if they contain the name and comment
+	 * attributes.
 	 */
-	private class EquateComparator extends ProgramDiffComparatorImpl {
+	private class FunctionTagComparator extends ProgramDiffComparatorImpl<Function> {
 
-		/** Constructor
-		 * @param program1 the first program
-		 * @param program2 the second program
-		 */
-		private EquateComparator(Program program1, Program program2) {
-			super(program1, program2);
-		}
-
-		/** Compares two equate's addresses to determine whether the first is
-		 *  effectively less than (comes before it in memory),
-		 *  equal to (at the same spot in memory),
-		 *  or greater than (comes after it in memory) the second.
-		 * @param obj1 the address for the first program's equate code unit.
-		 * @param obj2 the address for the second program's equate code unit.
-		 * @return -1 if the first comes before the second in memory.
-		 *          0 if the objects are at the same spot in memory.
-		 *          1 if the first comes after the second in memory.
-		 */
 		@Override
-		public int compare(Object obj1, Object obj2) {
-			Address a1 = (Address) obj1;
-			Address a2 = (Address) obj2;
+		public int compare(Function f1, Function f2) {
+			Address a1 = f1.getEntryPoint();
+			Address a2 = f2.getEntryPoint();
 			Address address2CompatibleWith1 =
 				SimpleDiffUtility.getCompatibleAddress(program2, a2, program1);
 			return a1.compareTo(address2CompatibleWith1);
 		}
 
-		/** Returns whether the objects are the same with respect to the
-		 *  program difference type this comparator is interested in.
-		 * @param obj1 the first object
-		 * @param obj2 the second object
-		 * @return true if the objects are the same with respect to the type
-		 * this comparator is interested in.
-		 */
 		@Override
-		public boolean isSame(Object obj1, Object obj2) {
-			Address a1 = (Address) obj1;
+		public boolean isSame(Function f1, Function f2) {
+			if (f1 == null && f2 == null) {
+				// Both null - neither is a function so just return true
+				return true;
+			}
+			if (f1 == null || f2 == null) {
+				// Someone is not a function, return false
+				return false;
+			}
+
+			// Get the tag lists and check if they're the same.
+			Collection<FunctionTag> f1Tags = f1.getTags();
+			Collection<FunctionTag> f2Tags = f2.getTags();
+			return f1Tags.equals(f2Tags);
+		}
+
+		@Override
+		public AddressSet getAddressSet(Function f, Program program) {
+			AddressSet addrs = new AddressSet();
+			if (f == null) {
+				return addrs;
+			}
+			addrs.add(f.getEntryPoint());
+			return addrs;
+		}
+	}
+
+	/** 
+	 * Used to compare the equates in two programs.
+	 */
+	private class EquateComparator extends ProgramDiffComparatorImpl<Address> {
+
+		@Override
+		public int compare(Address a1, Address a2) {
+			Address address2CompatibleWith1 =
+				SimpleDiffUtility.getCompatibleAddress(program2, a2, program1);
+			return a1.compareTo(address2CompatibleWith1);
+		}
+
+		@Override
+		public boolean isSame(Address a1, Address a2) {
 			for (int opIndex = 0; opIndex < Program.MAX_OPERANDS; opIndex++) {
 				if (!isSameOperandEquates(a1, opIndex)) {
 					return false;
@@ -2018,79 +1987,46 @@ public class ProgramDiff {
 			return true;
 		}
 
-		/** Returns the addresses that are to indicate the difference of this
-		 *  comparison type for this object.
-		 * @param obj the object being examined by this comparator.
-		 * @param program the program the object is associated with.
-		 * @return the addresses that we want to indicate for a difference
-		 * of this comparison type.
-		 * The addresses in this address set are derived from the specified program.
-		 */
 		@Override
-		public AddressSet getAddressSet(Object obj, Program program) {
+		public AddressSet getAddressSet(Address addr, Program program) {
 			AddressSet addrs = new AddressSet();
-			if (obj == null) {
+			if (addr == null) {
 				return addrs;
 			}
-			Address addr = (Address) obj;
 			addrs.addRange(addr, addr);
 			return addrs;
 		}
 	}
 
-	/** Used to compare the bookmarks in two programs.
+	/** 
+	 * Used to compare the bookmarks in two programs.
 	 */
-	private class BookmarksComparator extends ProgramDiffComparatorImpl {
+	private class BookmarksComparator extends ProgramDiffComparatorImpl<Address> {
 		/** The first program's bookmark manager. */
 		BookmarkManager bm1;
 		/** The second program's bookmark manager. */
 		BookmarkManager bm2;
 		BookmarkType type;
 
-		/** Constructor
+		/** 
+		 * Constructor
 		 * @param type the bookmark type to be compared.
-		 * @param program1 the first program
-		 * @param program2 the second program
 		 */
-		private BookmarksComparator(BookmarkType type, Program program1, Program program2) {
-			super(program1, program2);
+		private BookmarksComparator(BookmarkType type) {
 			this.type = type;
 			bm1 = program1.getBookmarkManager();
 			bm2 = program2.getBookmarkManager();
 		}
 
-		/** Compares two bookmark's addresses to determine whether the first is
-		 *  effectively less than (comes before it in memory),
-		 *  equal to (at the same spot in memory),
-		 *  or greater than (comes after it in memory) the second.
-		 * @param obj1 the address where there are bookmarks of the current
-		 * bookmark type in the first program.
-		 * @param obj2 the address where there are bookmarks of the current
-		 * bookmark type in the second program.
-		 * @return -1 if the first comes before the second in memory.
-		 *          0 if the objects are at the same spot in memory.
-		 *          1 if the first comes after the second in memory.
-		 */
 		@Override
-		public int compare(Object obj1, Object obj2) {
-			Address a1 = (Address) obj1;
-			Address a2 = (Address) obj2;
+		public int compare(Address a1, Address a2) {
 			Address address2CompatibleWith1 =
 				SimpleDiffUtility.getCompatibleAddress(program2, a2, program1);
 			return a1.compareTo(address2CompatibleWith1);
 		}
 
-		/** Returns whether the objects have the same bookmarks of the current
-		 * bookmark type at the indicated address.
-		 * @param obj1 the first object
-		 * @param obj2 the second object
-		 * @return true if the objects are the same with respect to the type
-		 * this comparator is interested in.
-		 */
 		@Override
-		public boolean isSame(Object obj1, Object obj2) {
-			Address a1 = (Address) obj1;
-			Address a2 = (Address) obj2;
+		public boolean isSame(Address a1, Address a2) {
 			Address address2CompatibleWith1 =
 				SimpleDiffUtility.getCompatibleAddress(program2, a2, program1);
 			if (!a1.equals(address2CompatibleWith1)) {
@@ -2112,21 +2048,12 @@ public class ProgramDiff {
 			return true;
 		}
 
-		/** Returns the addresses that are to indicate the difference of this
-		 *  comparison type for this object.
-		 * @param obj the object being examined by this comparator.
-		 * @param program the program the object is associated with.
-		 * @return the addresses that we want to indicate for a difference
-		 * of this comparison type.
-		 * The addresses in this address set are derived from the specified program.
-		 */
 		@Override
-		public AddressSet getAddressSet(Object obj, Program program) {
+		public AddressSet getAddressSet(Address addr, Program program) {
 			AddressSet addrs = new AddressSet();
-			if (obj == null) {
+			if (addr == null) {
 				return addrs;
 			}
-			Address addr = (Address) obj;
 			CodeUnit cu = program.getListing().getCodeUnitContaining(addr);
 			if (cu != null) {
 				addrs.addRange(cu.getMinAddress(), cu.getMaxAddress());
@@ -2406,36 +2333,13 @@ public class ProgramDiff {
 		return listA.equals(listB);
 	}
 
-	/** Used to compare the functions in two programs.
+	/** 
+	 * Used to compare the functions in two programs.
 	 */
-	private class FunctionComparator extends ProgramDiffComparatorImpl {
-		/** Constructor
-		 * @param program1 the first program
-		 * @param program2 the second program
-		 */
-		private FunctionComparator(Program program1, Program program2) {
-			super(program1, program2);
-		}
+	private class FunctionComparator extends ProgramDiffComparatorImpl<Function> {
 
-		/**
-		 * @param obj1 the address for the first program's function.
-		 * @param obj2 the address for the second program's function.
-		 * @return  */
-		/** Compares two function objects to determine whether the first
-		 *  function's entry point is effectively
-		 *  less than (comes before it in memory), equal to (at the same spot
-		 *  in memory), or greater than (comes after it in memory) the second
-		 *  function's entry point.
-		 * @param obj1 the first object
-		 * @param obj2 the second object
-		 * @return -1 if the first comes before the second in memory.
-		 *          0 if the objects are at the same spot in memory.
-		 *          1 if the first comes after the second in memory.
-		 */
 		@Override
-		public int compare(Object obj1, Object obj2) {
-			Function f1 = (Function) obj1;
-			Function f2 = (Function) obj2;
+		public int compare(Function f1, Function f2) {
 			// FunctionIterator is ordered by address.
 			// Check the function entry point address.
 			Address entryPt2CompatibleWith1 =
@@ -2443,33 +2347,17 @@ public class ProgramDiff {
 			return f1.getEntryPoint().compareTo(entryPt2CompatibleWith1);
 		}
 
-		/** Returns whether the functions are the same.
-		 * @param obj1 the first object
-		 * @param obj2 the second object
-		 * @return true if the functions have the same signature, comment,
-		 * body, and stack.
-		 */
 		@Override
-		public boolean isSame(Object obj1, Object obj2) {
-			Function f1 = (Function) obj1;
-			Function f2 = (Function) obj2;
+		public boolean isSame(Function f1, Function f2) {
 			return equivalentFunctions(f1, f2);
 		}
 
-		/** Returns the address set, which contains the address for the
-		 *  function object's entry point.
-		 * @param obj the object being examined by this comparator.
-		 * @param program the program the object is associated with.
-		 * @return the function entry point address.
-		 * The addresses in this address set are derived from the specified program.
-		 */
 		@Override
-		public AddressSet getAddressSet(Object obj, Program program) {
+		public AddressSet getAddressSet(Function f, Program program) {
 			AddressSet addrs = new AddressSet();
-			if (obj == null) {
+			if (f == null) {
 				return addrs;
 			}
-			Function f = (Function) obj;
 			Address addr = f.getEntryPoint();
 			if (addr != null) {
 				addrs.addRange(addr, addr);
@@ -2478,7 +2366,8 @@ public class ProgramDiff {
 		}
 	}
 
-	/** Abstract class for comparing two code units to determine if a particular program property
+	/** 
+	 * Abstract class for comparing two code units to determine if a particular program property
 	 * differs. It provides a default implementation of the <CODE>compare</CODE> method
 	 * which compares the code unit minimum addresses. It also implements the
 	 * <CODE>getAddressSet</CODE> method, which gets the addresses for the specified
@@ -2487,66 +2376,68 @@ public class ProgramDiff {
 	 * isSame should compare the desired property of the two code units to determine
 	 * if it is equal in each.
 	 */
-	private abstract class CodeUnitComparator extends ProgramDiffComparatorImpl {
-		/** Generic constructor for comparing program differences.
-		 * @param program1 the first program
-		 * @param program2 the second program
-		 */
-		private CodeUnitComparator(Program program1, Program program2) {
-			super(program1, program2);
-		}
+	private abstract class CodeUnitComparator<T extends CodeUnit>
+			extends ProgramDiffComparatorImpl<T> {
 
-		/** Compares two like objects to determine whether the first is effectively
-		 *  less than (comes before it in memory), equal to (at the same spot
-		 *  in memory), or greater than (comes after it in memory) the second.
-		 * @param obj1 the first object
-		 * @param obj2 the second object
-		 * @return -1 if the first comes before the second in memory.
-		 *          0 if the objects are at the same spot in memory.
-		 *          1 if the first comes after the second in memory.
-		 */
 		@Override
-		public int compare(Object obj1, Object obj2) {
-			CodeUnit cu1 = (CodeUnit) obj1;
-			CodeUnit cu2 = (CodeUnit) obj2;
+		public final int compare(T cu1, T cu2) {
 			Address min2CompatibleWith1 =
 				SimpleDiffUtility.getCompatibleAddress(program2, cu2.getMinAddress(), program1);
 			return cu1.getMinAddress().compareTo(min2CompatibleWith1);
 		}
 
-		/** Returns whether the objects are the same with respect to the
-		 *  program difference type this comparator is interested in.
-		 * @param obj1 the first object
-		 * @param obj2 the second object
-		 * @return true if the objects are the same with respect to the type
-		 * this comparator is interested in.
-		 */
 		@Override
-		public abstract boolean isSame(Object obj1, Object obj2);
-
-		/** Returns the addresses that are to indicate the difference of this
-		 *  comparison type for this object.
-		 * @param obj the object being examined by this comparator.
-		 * @param program the program associated with the object.
-		 * @return the addresses that we want to indicate for a difference
-		 * of this comparison type.
-		 * The addresses in this address set are derived from the specified program.
-		 */
-		@Override
-		public AddressSet getAddressSet(Object obj, Program program) {
+		public final AddressSet getAddressSet(T cu, Program program) {
 			AddressSet addrSet = new AddressSet();
-			if (obj == null) {
+			if (cu == null) {
 				return addrSet;
 			}
-			CodeUnit cu = (CodeUnit) obj;
 			addrSet.addRange(cu.getMinAddress(), cu.getMaxAddress());
 			return addrSet;
 		}
+
+		/**
+		 * Get an appropriate code unit iterator over the specified address set.
+		 * @param p program
+		 * @param set address set
+		 * @return code unit iterator
+		 */
+		abstract Iterator<T> iterator(Program p, AddressSetView set);
+
+		/** 
+		 * Determines the code unit addresses where there are differences of the
+		 * indicated type between program1 and program2. If address ranges in the
+		 * address set begin inside a code unit instead of at the beginning, the
+		 * entire code unit will be added to the address set.
+		 * @param addressSet the addresses to check for differences.
+		 * The addresses in this address set should be derived from program1.
+		 * @param monitor the task monitor for indicating the progress of
+		 * determining differences. This monitor reports the progress to the user.
+		 * @return the addresses where there were code unit differences of the
+		 * specified type.  The addresses in this address set are derived from program1.
+		 * @throws CancelledException if the user cancelled the Diff.
+		 */
+		final AddressSet getAdjustedCuiDiffs(AddressSetView addressSet, TaskMonitor monitor)
+				throws CancelledException {
+			// Check each address range from the address set for differences.
+			AddressSet inCommon;
+			inCommon = pgmMemComp.getAddressesInCommon();
+			if (addressSet != null) {
+				inCommon = inCommon.intersect(addressSet);
+			}
+			AddressSet as1 = adjustCodeUnitAddressSet(inCommon, listing1, monitor);
+			Iterator<T> iter1 = iterator(program1, as1);
+			AddressSet inCommonFrom2 = DiffUtility.getCompatibleAddressSet(inCommon, program2);
+			AddressSet as2 = adjustCodeUnitAddressSet(inCommonFrom2, listing2, monitor);
+			Iterator<T> iter2 = iterator(program2, as2);
+			return getObjectDiffs(iter1, iter2, monitor);
+		}
 	}
 
-	/** Used to compare the comments of a particular type in two programs.
+	/** 
+	 * Used to compare the comments of a particular type in two programs.
 	 */
-	private class CommentTypeComparator extends ProgramDiffComparatorImpl {
+	private class CommentTypeComparator extends ProgramDiffComparatorImpl<Address> {
 		/**
 		 * the type of comment to compare
 		 * <br>CodeUnit.PLATE_COMMENT
@@ -2559,65 +2450,36 @@ public class ProgramDiff {
 		private Listing comparatorListing1;
 		private Listing comparatorListing2;
 
-		/** Generic constructor for comparing program differences.
-		 * @param program1 the first program
-		 * @param program2 the second program
+		/** 
+		 * Generic constructor for comparing program differences.
 		 * @param type the comment type
 		 */
-		private CommentTypeComparator(Program program1, Program program2, int type) {
-			super(program1, program2);
+		private CommentTypeComparator(int type) {
 			this.type = type;
 			comparatorListing1 = program1.getListing();
 			comparatorListing2 = program2.getListing();
 		}
 
-		/** Compares two comment address objects to determine whether the first
-		 *  comment's address is effectively
-		 *  less than (comes before it in memory), equal to (at the same spot
-		 *  in memory), or greater than (comes after it in memory) the second
-		 *  comment's address.
-		 * @param obj1 the address for the first program's comment.
-		 * @param obj2 the address for the second program's comment.
-		 * @return -1 if the first comes before the second in memory.
-		 *          0 if the objects are at the same spot in memory.
-		 *          1 if the first comes after the second in memory.
-		 */
 		@Override
-		public int compare(Object obj1, Object obj2) {
-			Address a1 = (Address) obj1;
-			Address a2 = (Address) obj2;
+		public int compare(Address a1, Address a2) {
 			Address address2CompatibleWith1 =
 				SimpleDiffUtility.getCompatibleAddress(program2, a2, program1);
 			return a1.compareTo(address2CompatibleWith1);
 		}
 
-		/** Returns whether the comments are the same.
-		 * @param obj1 the first object
-		 * @param obj2 the second object
-		 * @return true if the comments are the same.
-		 */
 		@Override
-		public boolean isSame(Object obj1, Object obj2) {
-			Address a1 = (Address) obj1;
-			Address a2 = (Address) obj2;
+		public boolean isSame(Address a1, Address a2) {
 			String c1 = comparatorListing1.getComment(type, a1);
 			String c2 = comparatorListing2.getComment(type, a2);
 			return SystemUtilities.isEqual(c1, c2);
 		}
 
-		/** Returns the address set, which contains the address for the comment.
-		 * @param obj the object being examined by this comparator.
-		 * @param program the program the object is associated with.
-		 * @return the comment address.
-		 * The addresses in this address set are derived from the specified program.
-		 */
 		@Override
-		public AddressSet getAddressSet(Object obj, Program program) {
+		public AddressSet getAddressSet(Address addr, Program program) {
 			AddressSet addrs = new AddressSet();
-			if (obj == null) {
+			if (addr == null) {
 				return addrs;
 			}
-			Address addr = (Address) obj;
 			addrs.addRange(addr, addr);
 			return addrs;
 		}
@@ -2786,11 +2648,11 @@ public class ProgramDiff {
 	}
 
 	/**
-	 *
-	 * @param addressTranslator
-	 * @param p1Ref
-	 * @param p2Ref
-	 * @return
+	 * Determine if two references from the two programs are equivalent.
+	 * @param p2ToP1Translator program2-to-program1 address translator
+	 * @param p1Ref reference from program1
+	 * @param p2Ref reference from program2
+	 * @return true if references are equivalent
 	 */
 	static boolean equivalentReferences(AddressTranslator p2ToP1Translator, Reference p1Ref,
 			final Reference p2Ref) {
@@ -2888,56 +2750,29 @@ public class ProgramDiff {
 	 * References include mnemonic, operand, and value references.
 	 * These can be memory references or external references.
 	 */
-	private class ReferenceComparator extends ProgramDiffComparatorImpl {
+	private class ReferenceComparator extends ProgramDiffComparatorImpl<Address> {
 		/** The first program's reference manager. */
 		ReferenceManager rm1;
 		/** THe second program's reference manager. */
 		ReferenceManager rm2;
 
-		/** Constructor for comparing program memory reference differences.
-		 * @param program1 the first program
-		 * @param program2 the second program
-		 */
-		private ReferenceComparator(Program program1, Program program2) {
-			super(program1, program2);
+		private ReferenceComparator() {
 			rm1 = program1.getReferenceManager();
 			rm2 = program2.getReferenceManager();
 		}
 
-		/** Compares two reference addresses to determine whether the first is
-		 *  effectively less than (comes before it in memory),
-		 *  equal to (at the same spot in memory),
-		 *  or greater than (comes after it in memory) the second.
-		 * @param obj1 the address for the first program's reference.
-		 * @param obj2 the address for the second program's reference.
-		 * @return -1 if the first comes before the second in memory.
-		 *          0 if the objects are at the same spot in memory.
-		 *          1 if the first comes after the second in memory.
-		 */
 		@Override
-		public int compare(Object obj1, Object obj2) {
-			Address a1 = (Address) obj1;
-			Address a2 = (Address) obj2;
+		public int compare(Address a1, Address a2) {
 			Address address2CompatibleWith1 =
 				SimpleDiffUtility.getCompatibleAddress(program2, a2, program1);
 			return a1.compareTo(address2CompatibleWith1);
 		}
 
-		/** Returns whether the objects are the same with respect to the
-		 *  program difference type this comparator is interested in.
-		 *  Returns whether the memory, stack and external references are
-		 *  the same for the mnemonic, operand, and value at the indicated address.
-		 * @param obj1 the first address object
-		 * @param obj2 the second address object
-		 * @return true if the references are the same at the indicated address.
-		 */
 		@Override
-		public boolean isSame(Object obj1, Object obj2) {
-			Address addr1 = (Address) obj1;
-			Address addr2 = (Address) obj2;
+		public boolean isSame(Address a1, Address a2) {
 			// Check the references.
-			Reference[] refs1 = rm1.getReferencesFrom(addr1);
-			Reference[] refs2 = rm2.getReferencesFrom(addr2);
+			Reference[] refs1 = rm1.getReferencesFrom(a1);
+			Reference[] refs2 = rm2.getReferencesFrom(a2);
 			// Want to compare refs other than fallthrough refs.
 			Reference[] diffRefs1 = getDiffRefs(refs1);
 			Reference[] diffRefs2 = getDiffRefs(refs2);
@@ -2946,21 +2781,12 @@ public class ProgramDiff {
 			return equalRefArrays(diffRefs1, diffRefs2);
 		}
 
-		/** Returns the addresses that are to indicate the difference of this
-		 *  comparison type for this object.
-		 * @param obj the object being examined by this comparator.
-		 * @param program the program the object is associated with.
-		 * @return the addresses that we want to indicate for a difference
-		 * of this comparison type.
-		 * The addresses in this address set are derived from the specified program.
-		 */
 		@Override
-		public AddressSet getAddressSet(Object obj, Program program) {
+		public AddressSet getAddressSet(Address addr, Program program) {
 			AddressSet addrs = new AddressSet();
-			if (obj == null) {
+			if (addr == null) {
 				return addrs;
 			}
-			Address addr = (Address) obj;
 			CodeUnit cu = program.getListing().getCodeUnitContaining(addr);
 			if (cu != null) {
 				addrs.addRange(cu.getMinAddress(), cu.getMaxAddress());
@@ -2986,33 +2812,25 @@ public class ProgramDiff {
 		return refList.toArray(new Reference[refList.size()]);
 	}
 
-	/** Compares two code units to determine if their user defined properties differ.
+	/** 
+	 * Compares two code units to determine if their user defined properties differ.
 	 */
-	private class UserDefinedComparator extends CodeUnitComparator {
+	private class UserDefinedComparator extends CodeUnitComparator<CodeUnit> {
+
 		/** The name of the user defined property to be compared. */
 		String propertyName;
 
-		/** Constructor for comparing program differences.
-		 * @param program1 the first program
-		 * @param program2 the second program
+		/** 
+		 * Constructor for comparing program differences.
 		 * @param property the name of the user defined property to be
 		 * compared in program1 and program2.
 		 */
-		private UserDefinedComparator(Program program1, Program program2, String property) {
-			super(program1, program2);
+		private UserDefinedComparator(String property) {
 			this.propertyName = property;
 		}
 
-		/** Returns whether the code units have the same user defined properties.
-		 * @param obj1 the first code unit object
-		 * @param obj2 the second code unit object
-		 * @return true if the code unit objects have the same user defined
-		 * properties.
-		 */
 		@Override
-		public boolean isSame(Object obj1, Object obj2) {
-			CodeUnit cu1 = (CodeUnit) obj1;
-			CodeUnit cu2 = (CodeUnit) obj2;
+		public boolean isSame(CodeUnit cu1, CodeUnit cu2) {
 			Object p1 = null;
 			Object p2 = null;
 			p1 = getProperty(cu1, propertyName);
@@ -3021,71 +2839,35 @@ public class ProgramDiff {
 		}
 
 		private Object getProperty(CodeUnit cu, String localPropertyName) {
-			Object obj = null;
-			if (cu.hasProperty(localPropertyName)) {
-				// int property.
-				try {
-					int intProp = cu.getIntProperty(localPropertyName);
-					return new Integer(intProp);
-				}
-				catch (NoValueException e) {
-					// Do nothing. Instead fall-through to next property type.
-				}
-				catch (TypeMismatchException e) {
-					// Do nothing. Instead fall-through to next property type.
-				}
 
-				// String property.
-				try {
-					String stringProp = cu.getStringProperty(localPropertyName);
-					return stringProp;
-				}
-				catch (TypeMismatchException e) {
-					// Do nothing. Instead fall-through to next property type.
-				}
-
-				// Object (Saveable) property.
-				try {
-					Saveable objProp = cu.getObjectProperty(localPropertyName);
-					return objProp;
-				}
-				catch (TypeMismatchException e) {
-					// Do nothing. Instead fall-through to next property type.
-				}
-
-				// void property.
-				try {
-					boolean voidProp = cu.getVoidProperty(localPropertyName);
-					return new Boolean(voidProp);
-				}
-				catch (TypeMismatchException e) {
-					// Do nothing. Instead fall-through to next property type.
-				}
+			PropertyMapManager usrPropertyManager = cu.getProgram().getUsrPropertyManager();
+			PropertyMap<?> propertyMap = usrPropertyManager.getPropertyMap(localPropertyName);
+			if (propertyMap == null) {
+				return null;
 			}
-			return obj;
+
+			try {
+				Address addr = cu.getAddress();
+				return propertyMap.get(addr);
+			}
+			catch (Exception e1) {
+				return null;
+			}
+		}
+
+		@Override
+		Iterator<CodeUnit> iterator(Program p, AddressSetView set) {
+			return p.getListing().getCodeUnitIterator(propertyName, set, true);
 		}
 	}
 
-	/** Provides comparisons between two instruction code units.
+	/** 
+	 * Provides comparisons between two instruction code units.
 	 */
-	private class InstructionComparator extends CodeUnitComparator {
-		/** Constructor for comparing program differences.
-		 * @param program1 the first program
-		 * @param program2 the second program
-		 */
-		private InstructionComparator(Program program1, Program program2) {
-			super(program1, program2);
-		}
+	private class InstructionComparator extends CodeUnitComparator<Instruction> {
 
-		/** Returns whether the two instructions are the same.
-		 * @param obj1 the first instruction object
-		 * @param obj2 the second instruction object
-		 * @return true if the instruction objects are the same.
-		 */
 		@Override
-		public boolean isSame(Object obj1, Object obj2) {
-			Instruction i1 = (Instruction) obj1;
-			Instruction i2 = (Instruction) obj2;
+		public boolean isSame(Instruction i1, Instruction i2) {
 			if (i1 == i2) {
 				return true;
 			}
@@ -3121,6 +2903,11 @@ public class ProgramDiff {
 			}
 
 			return true;
+		}
+
+		@Override
+		Iterator<Instruction> iterator(Program p, AddressSetView set) {
+			return p.getListing().getInstructions(set, true);
 		}
 	}
 
@@ -3161,26 +2948,13 @@ public class ProgramDiff {
 		return true;
 	}
 
-	/** Provides comparisons between two defined data code units.
+	/** 
+	 * Provides comparisons between two defined data code units.
 	 */
-	private class DefinedDataComparator extends CodeUnitComparator {
-		/** Constructor for comparing program differences.
-		 * @param program1 the first program
-		 * @param program2 the second program
-		 */
-		private DefinedDataComparator(Program program1, Program program2) {
-			super(program1, program2);
-		}
+	private class DefinedDataComparator extends CodeUnitComparator<Data> {
 
-		/** Returns whether the two defined data objects are the same.
-		 * @param obj1 the first defined data object
-		 * @param obj2 the second defined data object
-		 * @return true if the defined data objects are the same.
-		 */
 		@Override
-		public boolean isSame(Object obj1, Object obj2) {
-			Data d1 = (Data) obj1;
-			Data d2 = (Data) obj2;
+		public boolean isSame(Data d1, Data d2) {
 			if (d1.getLength() != d2.getLength()) {
 				return false;
 			}
@@ -3196,78 +2970,10 @@ public class ProgramDiff {
 
 			return true;
 		}
-	}
-
-	/** An IteratorWrapper provides a common class for accessing the methods
-	 * for several different iterator types (Iterator, CodeUnitIterator, and
-	 * AddressIterator).
-	 */
-	private static class IteratorWrapper {
-
-		/** The iterator that this object wraps. */
-		Object iterator;
-
-		/** Creates a wrapper for the specified iterator.
-		 * @param iterator the iterator object.
-		 * Must be Iterator, AddressIterator, or CodeUnitIterator. */
-		public IteratorWrapper(Object iterator) {
-			this.iterator = iterator;
-		}
-
-		/**
-		 * Returns <tt>true</tt> if the iteration has more elements. (In other
-		 * words, returns <tt>true</tt> if <tt>next</tt> would return an element
-		 * rather than throwing an exception.)
-		 *
-		 * @return <tt>true</tt> if the iterator has more elements.
-		 */
-		public boolean hasNext() {
-			if (iterator instanceof AddressIterator) {
-				return ((AddressIterator) iterator).hasNext();
-			}
-			else if (iterator instanceof CodeUnitIterator) {
-				return ((CodeUnitIterator) iterator).hasNext();
-			}
-			else if (iterator instanceof SymbolIterator) {
-				return ((SymbolIterator) iterator).hasNext();
-			}
-			else if (iterator instanceof FunctionIterator) {
-				return ((FunctionIterator) iterator).hasNext();
-			}
-			return false;
-		}
-
-		/** Returns the next element in the iteration.
-		 *
-		 * @return the next element in the iteration.
-		 * @exception NoSuchElementException iteration has no more elements.
-		 */
-		public Object next() throws java.util.NoSuchElementException {
-			if (iterator instanceof AddressIterator) {
-				return ((AddressIterator) iterator).next();
-			}
-			else if (iterator instanceof CodeUnitIterator) {
-				return ((CodeUnitIterator) iterator).next();
-			}
-			else if (iterator instanceof SymbolIterator) {
-				return ((SymbolIterator) iterator).next();
-			}
-			else if (iterator instanceof FunctionIterator) {
-				return ((FunctionIterator) iterator).next();
-			}
-			return null;
-		}
-
-	}
-
-	private class SymbolNameComparator implements Comparator<Symbol> {
-		SymbolNameComparator() {
-		}
 
 		@Override
-		public int compare(Symbol s1, Symbol s2) {
-			int comparison = s1.getName().compareTo(s2.getName());
-			return comparison;
+		Iterator<Data> iterator(Program p, AddressSetView set) {
+			return p.getListing().getDefinedData(set, true);
 		}
 	}
 

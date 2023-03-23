@@ -21,7 +21,6 @@ import java.util.*;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
 
 /**
  * This class represents Global Symbol Information or Public Symbol Information component of a
@@ -62,16 +61,16 @@ public abstract class AbstractSymbolInformation {
 	// API
 	//==============================================================================================
 	/**
-	 * Constructor.
-	 * @param pdbIn {@link AbstractPdb} that owns the Abstract Symbol Information to process.
+	 * Constructor
+	 * @param pdbIn {@link AbstractPdb} that owns the Abstract Symbol Information to process
 	 */
 	public AbstractSymbolInformation(AbstractPdb pdbIn) {
 		pdb = pdbIn;
 	}
 
 	/**
-	 * Returns the list of symbols for this {@link AbstractSymbolInformation}.
-	 * @return the symbols.
+	 * Returns the list of symbols for this {@link AbstractSymbolInformation}
+	 * @return the symbols
 	 */
 	public List<AbstractMsSymbol> getSymbols() {
 		return symbols;
@@ -79,7 +78,7 @@ public abstract class AbstractSymbolInformation {
 
 	/**
 	 * Returns the Offsets of symbols within the symbol table; these are gotten from the
-	 *  HashRecords and modified to point to the size field of the symbols in the symbol table.
+	 *  HashRecords and modified to point to the size field of the symbols in the symbol table
 	 * @return offsets
 	 */
 	public List<Long> getModifiedHashRecordSymbolOffsets() {
@@ -90,15 +89,14 @@ public abstract class AbstractSymbolInformation {
 	// Package-Protected Internals
 	//==============================================================================================
 	/**
-	 * Deserialize the {@link AbstractSymbolInformation} from the appropriate stream in the Pdb.
-	 * @param streamNumber the stream number containing the information to deserialize.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
-	 *  inability to read required bytes.
-	 * @throws PdbException Upon not enough data left to parse.
-	 * @throws CancelledException Upon user cancellation.
+	 * Deserialize the {@link AbstractSymbolInformation} from the appropriate stream in the Pdb
+	 * @param streamNumber the stream number containing the information to deserialize
+	 * @throws IOException on file seek or read, invalid parameters, bad file configuration, or
+	 *  inability to read required bytes
+	 * @throws PdbException upon not enough data left to parse
+	 * @throws CancelledException upon user cancellation
 	 */
-	void deserialize(int streamNumber, TaskMonitor monitor)
+	void deserialize(int streamNumber)
 			throws IOException, PdbException, CancelledException {
 		if (pdb.hasMinimalDebugInfo()) {
 			hashRecordsBitMapLength = 0x8000;
@@ -113,11 +111,12 @@ public abstract class AbstractSymbolInformation {
 	}
 
 	/**
-	 * Debug method for dumping information from this {@link AbstractSymbolInformation}.
-	 * @param writer {@link Writer} to which to dump the information.
-	 * @throws IOException Upon IOException writing to the {@link Writer}.
+	 * Debug method for dumping information from this {@link AbstractSymbolInformation}
+	 * @param writer {@link Writer} to which to dump the information
+	 * @throws IOException upon IOException writing to the {@link Writer}
+	 * @throws CancelledException upon user cancellation
 	 */
-	void dump(Writer writer) throws IOException {
+	void dump(Writer writer) throws IOException, CancelledException {
 		StringBuilder builder = new StringBuilder();
 		builder.append("AbstractSymbolInformation-----------------------------------\n");
 		dumpHashHeader(builder);
@@ -128,8 +127,8 @@ public abstract class AbstractSymbolInformation {
 	}
 
 	/**
-	 * Debug method for dumping basic information from this {@link AbstractSymbolInformation}.
-	 * @param builder {@link StringBuilder} to which to dump the information.
+	 * Debug method for dumping basic information from this {@link AbstractSymbolInformation}
+	 * @param builder {@link StringBuilder} to which to dump the information
 	 */
 	protected void dumpHashBasics(StringBuilder builder) {
 		builder.append("HashBasics--------------------------------------------------\n");
@@ -143,8 +142,8 @@ public abstract class AbstractSymbolInformation {
 	}
 
 	/**
-	 * Debug method for dumping information from this {@link AbstractSymbolInformation} header.
-	 * @param builder {@link StringBuilder} to which to dump the information.
+	 * Debug method for dumping information from this {@link AbstractSymbolInformation} header
+	 * @param builder {@link StringBuilder} to which to dump the information
 	 */
 	protected void dumpHashHeader(StringBuilder builder) {
 		builder.append("HashHeader--------------------------------------------------\n");
@@ -160,12 +159,11 @@ public abstract class AbstractSymbolInformation {
 	}
 
 	/**
-	 * Generates a list of symbols from the information that we have.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @throws PdbException Upon PDB corruption.
-	 * @throws CancelledException Upon user cancellation.
+	 * Generates a list of symbols from the information that we have
+	 * @throws PdbException upon PDB corruption
+	 * @throws CancelledException upon user cancellation
 	 */
-	protected void generateSymbolsList(TaskMonitor monitor)
+	protected void generateSymbolsList()
 			throws PdbException, CancelledException {
 		symbols = new ArrayList<>();
 		PdbDebugInfo debugInfo = pdb.getDebugInfo();
@@ -174,7 +172,7 @@ public abstract class AbstractSymbolInformation {
 		}
 		Map<Long, AbstractMsSymbol> symbolsByOffset = debugInfo.getSymbolsByOffset();
 		for (SymbolHashRecord record : hashRecords) {
-			monitor.checkCanceled();
+			pdb.checkCanceled();
 			long offset = record.getOffset() - 2; // Modified offset
 			AbstractMsSymbol symbol = symbolsByOffset.get(offset);
 			modifiedHashRecordSymbolOffsets.add(offset);
@@ -186,13 +184,15 @@ public abstract class AbstractSymbolInformation {
 	}
 
 	/**
-	 * Debug method for dumping hash records from this {@link AbstractSymbolInformation}.
-	 * @param builder {@link StringBuilder} to which to dump the information.
+	 * Debug method for dumping hash records from this {@link AbstractSymbolInformation}
+	 * @param builder {@link StringBuilder} to which to dump the information
+	 * @throws CancelledException upon user cancellation
 	 */
-	protected void dumpHashRecords(StringBuilder builder) {
+	protected void dumpHashRecords(StringBuilder builder) throws CancelledException {
 		builder.append("HashRecords-------------------------------------------------\n");
 		builder.append("numHashRecords: " + hashRecords.size() + "\n");
 		for (SymbolHashRecord record : hashRecords) {
+			pdb.checkCanceled();
 			builder.append(
 				String.format("0X%08X  0X%04X\n", record.getOffset(), record.getReferenceCount()));
 		}
@@ -200,13 +200,12 @@ public abstract class AbstractSymbolInformation {
 	}
 
 	/**
-	 * Deserializes the hash table for the symbols.
-	 * @param reader {@link PdbByteReader} containing the data buffer to process.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @throws PdbException Upon not enough data left to parse.
-	 * @throws CancelledException Upon user cancellation.
+	 * Deserializes the hash table for the symbols
+	 * @param reader {@link PdbByteReader} containing the data buffer to process
+	 * @throws PdbException upon not enough data left to parse
+	 * @throws CancelledException upon user cancellation
 	 */
-	protected void deserializeHashTable(PdbByteReader reader, TaskMonitor monitor)
+	protected void deserializeHashTable(PdbByteReader reader)
 			throws PdbException, CancelledException {
 
 		deserializeHashHeader(reader);
@@ -214,7 +213,7 @@ public abstract class AbstractSymbolInformation {
 		if (headerSignature == HEADER_SIGNATURE) {
 			switch (versionNumber) {
 				case GSI70:
-					deserializeGsi70HashTable(reader, monitor);
+					deserializeGsi70HashTable(reader);
 					break;
 				default:
 					throw new PdbException("Unknown GSI Version Number");
@@ -222,15 +221,15 @@ public abstract class AbstractSymbolInformation {
 		}
 		else {
 			reader.reset(); // There was no header
-			deserializeGsiPre70HashTable(reader, monitor);
+			deserializeGsiPre70HashTable(reader);
 		}
 
 	}
 
 	/**
-	 * Deserialize the header of the Hash from the {@link PdbByteReader} provided.
-	 * @param reader {@link PdbByteReader} containing the data buffer to process.
-	 * @throws PdbException Upon not enough data left to parse.
+	 * Deserialize the header of the Hash from the {@link PdbByteReader} provided
+	 * @param reader {@link PdbByteReader} containing the data buffer to process
+	 * @throws PdbException upon not enough data left to parse
 	 */
 	private void deserializeHashHeader(PdbByteReader reader) throws PdbException {
 		headerSignature = reader.parseInt();
@@ -241,13 +240,12 @@ public abstract class AbstractSymbolInformation {
 
 	/**
 	 * Deserialize the body of the {@link AbstractSymbolInformation} according to the GSI versions
-	 * prior to 7.00 specification.
-	 * @param reader {@link PdbByteReader} containing the data buffer to process.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @throws PdbException Upon unexpected fields.
-	 * @throws CancelledException Upon user cancellation.
+	 * prior to 7.00 specification
+	 * @param reader {@link PdbByteReader} containing the data buffer to process
+	 * @throws PdbException upon unexpected fields
+	 * @throws CancelledException upon user cancellation
 	 */
-	private void deserializeGsiPre70HashTable(PdbByteReader reader, TaskMonitor monitor)
+	private void deserializeGsiPre70HashTable(PdbByteReader reader)
 			throws PdbException, CancelledException {
 
 		int numBucketsBytes = 4 * (numHashRecords + 1);
@@ -264,7 +262,7 @@ public abstract class AbstractSymbolInformation {
 
 		hashBucketOffsets = new ArrayList<>();
 		while (bucketsReader.hasMore()) {
-			monitor.checkCanceled();
+			pdb.checkCanceled();
 			hashBucketOffsets.add(bucketsReader.parseInt());
 		}
 
@@ -273,18 +271,17 @@ public abstract class AbstractSymbolInformation {
 		// take the offset and multiple by 2/3 to get the byte offset into the reader for the
 		// actual record.  Still need to deal with the collision logic after that.
 
-		deserializeHashRecords(hashRecordsReader, monitor);
+		deserializeHashRecords(hashRecordsReader);
 	}
 
 	/**
 	 * Deserialize the body of the {@link AbstractSymbolInformation} according to the GSI 7.00
-	 * specification.
-	 * @param reader {@link PdbByteReader} containing the data buffer to process.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @throws PdbException Upon unexpected fields.
-	 * @throws CancelledException Upon user cancellation.
+	 * specification
+	 * @param reader {@link PdbByteReader} containing the data buffer to process
+	 * @throws PdbException upon unexpected fields
+	 * @throws CancelledException upon user cancellation
 	 */
-	private void deserializeGsi70HashTable(PdbByteReader reader, TaskMonitor monitor)
+	private void deserializeGsi70HashTable(PdbByteReader reader)
 			throws PdbException, CancelledException {
 
 		if (reader.numRemaining() != hashRecordsLength + bucketsLength) {
@@ -297,7 +294,7 @@ public abstract class AbstractSymbolInformation {
 		PdbByteReader hashRecordsReader = reader.getSubPdbByteReader(hashRecordsLength);
 		PdbByteReader bucketsReader = reader.getSubPdbByteReader(bucketsLength);
 
-		deserializedCompressedHashBuckets(bucketsReader, monitor);
+		deserializedCompressedHashBuckets(bucketsReader);
 
 //		int i = 0;
 //		for (int x : hashBucketOffsets) {
@@ -308,30 +305,29 @@ public abstract class AbstractSymbolInformation {
 		// take the offset and multiple by 2/3 to get the byte offset into the reader for the
 		// actual record.  Still need to deal with the collision logic after that.
 
-		deserializeHashRecords(hashRecordsReader, monitor);
+		deserializeHashRecords(hashRecordsReader);
 	}
 
 	/**
 	 * Deserializes a compressed set of hash buckets from the {@link PdbByteReader} provided.  The
 	 * data comes as a bit-mapped representation of which indices should contain the data followed
-	 * by a flat set of hash buckets that will be set at those indices in the order provided.
-	 * @param reader {@link PdbByteReader} containing the data buffer to process.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @throws PdbException Upon not enough data left to parse.
-	 * @throws CancelledException Upon user cancellation.
+	 * by a flat set of hash buckets that will be set at those indices in the order provided
+	 * @param reader {@link PdbByteReader} containing the data buffer to process
+	 * @throws PdbException upon not enough data left to parse
+	 * @throws CancelledException upon user cancellation
 	 */
-	private void deserializedCompressedHashBuckets(PdbByteReader reader, TaskMonitor monitor)
+	private void deserializedCompressedHashBuckets(PdbByteReader reader)
 			throws PdbException, CancelledException {
 
 		PdbByteReader bitEncoderReader = reader.getSubPdbByteReader(hashRecordsBitMapLength);
 		// Throw away extra bytes between bit map and buckets.
 		reader.getSubPdbByteReader(numExtraBytes);
 		while (bitEncoderReader.hasMore() && reader.hasMore()) {
-			monitor.checkCanceled();
+			pdb.checkCanceled();
 			long val = bitEncoderReader.parseUnsignedIntVal();
 			//bitEncoded[index++] = val;
 			for (int bit = 0; bit < 32 && reader.hasMore(); bit++) {
-				monitor.checkCanceled();
+				pdb.checkCanceled();
 				if ((val & 0x01L) == 0x01L) {
 					hashBucketOffsets.add(reader.parseInt());
 				}
@@ -348,7 +344,7 @@ public abstract class AbstractSymbolInformation {
 			throw new PdbException("Compressed GSI Hash Buckets corrupt");
 		}
 		while (bitEncoderReader.hasMore()) {
-			monitor.checkCanceled();
+			pdb.checkCanceled();
 			if (bitEncoderReader.parseUnsignedIntVal() != 0) {
 				throw new PdbException("Compressed GSI Hash Buckets corrupt");
 			}
@@ -357,17 +353,16 @@ public abstract class AbstractSymbolInformation {
 	}
 
 	/**
-	 *
-	 * @param reader {@link PdbByteReader} containing the data buffer to process.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation.
-	 * @throws PdbException Upon not enough data left to parse.
-	 * @throws CancelledException Upon user cancellation.
+	 * Deserializes the hash records
+	 * @param reader {@link PdbByteReader} containing the data buffer to process
+	 * @throws PdbException upon not enough data left to parse
+	 * @throws CancelledException upon user cancellation
 	 */
-	private void deserializeHashRecords(PdbByteReader reader, TaskMonitor monitor)
+	private void deserializeHashRecords(PdbByteReader reader)
 			throws PdbException, CancelledException {
 		hashRecords = new TreeSet<>();
 		while (reader.hasMore()) {
-			monitor.checkCanceled();
+			pdb.checkCanceled();
 			SymbolHashRecord record = new SymbolHashRecord();
 			record.parse(reader);
 			hashRecords.add(record);

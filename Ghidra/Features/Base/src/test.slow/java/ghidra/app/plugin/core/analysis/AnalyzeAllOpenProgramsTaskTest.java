@@ -237,12 +237,12 @@ public class AnalyzeAllOpenProgramsTaskTest extends AbstractGhidraHeadedIntegrat
 	}
 
 	/**
-	 * Verifies that changing the analyzers to be run affects the task list for 
+	 * Verifies that changing the analyzers to be run affects the task list for
 	 * all open programs.
 	 * <p>
 	 * For this test we'll verify that a specific analyzer is enabled, then turn off all
 	 * analyzers and check again to verify that the analyzer is no longer enabled.
-	 * 
+	 *
 	 * @throws Exception if there is a problem building the test programs
 	 */
 	@Test
@@ -277,7 +277,7 @@ public class AnalyzeAllOpenProgramsTaskTest extends AbstractGhidraHeadedIntegrat
 
 	/**
 	 * Returns true if the given analyzer is enabled.
-	 * 
+	 *
 	 * @param name the name of the analyzer
 	 * @param program the program to check
 	 * @return true if the analyzer is enabled; false otherwise
@@ -310,8 +310,7 @@ public class AnalyzeAllOpenProgramsTaskTest extends AbstractGhidraHeadedIntegrat
 			pressButtonByText(warningDialog, "Continue");
 		}
 
-		AnalysisOptionsDialog optionsDialog =
-			waitForDialogComponent(AnalysisOptionsDialog.class);
+		AnalysisOptionsDialog optionsDialog = waitForDialogComponent(AnalysisOptionsDialog.class);
 
 		// select some options
 		JComponent root = optionsDialog.getComponent();
@@ -325,8 +324,7 @@ public class AnalyzeAllOpenProgramsTaskTest extends AbstractGhidraHeadedIntegrat
 	}
 
 	private void cancelAnalysisDialog() {
-		AnalysisOptionsDialog optionsDialog =
-			waitForDialogComponent(AnalysisOptionsDialog.class);
+		AnalysisOptionsDialog optionsDialog = waitForDialogComponent(AnalysisOptionsDialog.class);
 
 		// press Apply
 		pressButtonByText(optionsDialog, "Cancel");
@@ -429,7 +427,12 @@ public class AnalyzeAllOpenProgramsTaskTest extends AbstractGhidraHeadedIntegrat
 
 		@Override
 		public void close() {
-			runSwing(super::close);
+			runSwing(() -> super.close());
+		}
+
+		@Override
+		public void saveTool() {
+			// do not save our stub tool
 		}
 	}
 

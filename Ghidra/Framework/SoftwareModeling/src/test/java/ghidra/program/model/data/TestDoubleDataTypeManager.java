@@ -17,6 +17,7 @@ package ghidra.program.model.data;
 
 import java.util.*;
 
+import db.Transaction;
 import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
@@ -188,6 +189,11 @@ public class TestDoubleDataTypeManager implements DataTypeManager {
 
 	@Override
 	public void setName(String name) throws InvalidNameException {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Transaction openTransaction(String description) throws IllegalStateException {
 		throw new UnsupportedOperationException();
 	}
 

@@ -289,6 +289,8 @@ public class SleighCompile extends SleighBase {
 		symtab.addSymbol(startsym);
 		EndSymbol endsym = new EndSymbol(location, "inst_next", getConstantSpace());
 		symtab.addSymbol(endsym);
+		Next2Symbol next2sym = new Next2Symbol(location, "inst_next2", getConstantSpace());
+		symtab.addSymbol(next2sym);
 		EpsilonSymbol epsilon = new EpsilonSymbol(location, "epsilon", getConstantSpace());
 		symtab.addSymbol(epsilon);
 	}
@@ -486,6 +488,8 @@ public class SleighCompile extends SleighBase {
 		}
 		for (int i = 0; i < tables.size(); ++i) {
 			if (tables.get(i).isError()) {
+				reportError(tables.get(i).getLocation(),
+					"Problem in table: '" + tables.get(i).getName());
 				errors += 1;
 			}
 			if (tables.get(i).getPattern() == null) {
@@ -921,13 +925,28 @@ public class SleighCompile extends SleighBase {
 
 	public void addTokenField(Location location, TokenSymbol sym, FieldQuality qual) {
 		entry("addTokenField", location, sym, qual);
+		if (qual.high < qual.low) {
+			reportError(location, "Field '" + qual.name + "' starts at " +
+				Integer.toString(qual.low) + " and ends at " + Integer.toString(qual.high));
+		}
+		if (sym.getToken().getSize() * 8 <= qual.high) {
+			reportError(location, "Field '" + qual.name + "' high must be less than token size");
+		}
 		TokenField field =
 			new TokenField(location, sym.getToken(), qual.signext, qual.low, qual.high);
 		addSymbol(new ValueSymbol(location, qual.name, field));
 	}
 
-	public boolean addContextField(VarnodeSymbol sym, FieldQuality qual) {
+	public boolean addContextField(Location location, VarnodeSymbol sym, FieldQuality qual) {
 		entry("addContextField", sym, qual);
+		if (qual.high < qual.low) {
+			reportError(location, "Context field '" + qual.name + "' starts at " +
+				Integer.toString(qual.low) + " and ends at " + Integer.toString(qual.high));
+		}
+		if (sym.getSize() * 8 <= qual.high) {
+			reportError(location,
+				"Context field '" + qual.name + "' high must be less than context size");
+		}
 		if (contextlock) {
 			return false; // Context layout has already been satisfied
 		}
@@ -1280,7 +1299,8 @@ public class SleighCompile extends SleighBase {
 		VectorSTL<PatternValue> vallist = new VectorSTL<>();
 		pe.listValues(vallist);
 		for (int i = 0; i < vallist.size(); ++i) {
-			if (vallist.get(i) instanceof EndInstructionValue) {
+			PatternValue v = vallist.get(i);
+			if (v instanceof EndInstructionValue || v instanceof Next2InstructionValue) {
 				return false;
 			}
 		}

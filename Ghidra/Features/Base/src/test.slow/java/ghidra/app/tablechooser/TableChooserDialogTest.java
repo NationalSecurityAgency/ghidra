@@ -45,6 +45,7 @@ import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.ToyProgramBuilder;
+import ghidra.util.task.TaskMonitor;
 import resources.Icons;
 import util.CollectionUtils;
 
@@ -54,7 +55,7 @@ public class TableChooserDialogTest extends AbstractGhidraHeadedIntegrationTest 
 	private static final TestExecutorDecision DEFAULT_DECISION = r -> true;
 
 	private DummyPluginTool tool;
-	private SpyTableChooserExecutor executor;
+	private SpyExecutor executor;
 	private TableChooserDialog dialog;
 	private TestAction testAction;
 
@@ -63,7 +64,14 @@ public class TableChooserDialogTest extends AbstractGhidraHeadedIntegrationTest 
 
 	@Before
 	public void setUp() throws Exception {
-		executor = new SpyTableChooserExecutor();
+
+		if (testName.getMethodName().contains("InBulk")) {
+			executor = new SpyBulkTableChooserExecutor();
+		}
+		else {
+			executor = new SpyTableChooserExecutor();
+		}
+
 		createDialog(executor);
 	}
 
@@ -74,7 +82,7 @@ public class TableChooserDialogTest extends AbstractGhidraHeadedIntegrationTest 
 		});
 	}
 
-	private void createDialog(SpyTableChooserExecutor dialogExecutor) throws Exception {
+	private void createDialog(SpyExecutor dialogExecutor) throws Exception {
 		executor = dialogExecutor;
 
 		tool = new DummyPluginTool();
@@ -237,8 +245,9 @@ public class TableChooserDialogTest extends AbstractGhidraHeadedIntegrationTest 
 		testDecision = r -> {
 			toProcess.remove(r);
 
+			// Simulate the client removing items from the table while processing items
 			// if not empty, remove one of the remaining items
-			if (!toProcess.isEmpty()) {
+			if (!removedButNotExecuted.isEmpty()) {
 				TestStubRowObject other = toProcess.remove(0);
 				removedButNotExecuted.add(other);
 				dialog.remove(other);
@@ -363,6 +372,56 @@ public class TableChooserDialogTest extends AbstractGhidraHeadedIntegrationTest 
 	public void testSetSortState_Invalid() throws Exception {
 		assertSortedColumn(0);
 		dialog.setSortState(TableSortState.createDefaultSortState(100));
+	}
+
+	@Test
+	public void testCallback_ExecuteInBulk() throws Exception {
+
+		int rowCount = getRowCount();
+		List<TestStubRowObject> selected = selectRows(0, 1, 3);
+
+		testDecision = r -> true;
+
+		pressExecuteButton();
+		waitForDialog();
+		assertNotInDialog(selected);
+		assertRowCount(rowCount - selected.size());
+	}
+
+	@Test
+	public void testCalllbackRemovesItems_OtherItemNotSelected_ExecuteInBulk() {
+
+		/*
+		 	Select multiple items.
+		 	Have the first callback remove one of the remaining *selected* items.
+		 	The removed item should not itself get a callback.
+		 */
+
+		int rowCount = getRowCount();
+		List<TestStubRowObject> selected = selectRows(0, 1, 3);
+		List<TestStubRowObject> toProcess = new ArrayList<>(selected);
+
+		List<TestStubRowObject> removedButNotExecuted = new ArrayList<>();
+		testDecision = r -> {
+			toProcess.remove(r);
+
+			// Simulate the client removing items from the table while processing items
+			// if not empty, remove one of the remaining items
+			if (removedButNotExecuted.isEmpty()) {
+				TestStubRowObject other = toProcess.remove(0);
+				removedButNotExecuted.add(other);
+				dialog.remove(other);
+			}
+			return true; // remove 'r'
+		};
+
+		pressExecuteButton();
+		waitForDialog();
+		assertTrue(toProcess.isEmpty());
+
+		assertNotInDialog(selected);
+		assertRowCount(rowCount - selected.size());
+		assertNotExecuted(removedButNotExecuted);
 	}
 
 //==================================================================================================
@@ -517,9 +576,8 @@ public class TableChooserDialogTest extends AbstractGhidraHeadedIntegrationTest 
 		public boolean decide(AddressableRowObject rowObject);
 	}
 
-	private class SpyTableChooserExecutor implements TableChooserExecutor {
-
-		private Map<AddressableRowObject, AtomicInteger> callbacks = new HashMap<>();
+	private abstract class SpyExecutor implements TableChooserExecutor {
+		protected Map<AddressableRowObject, AtomicInteger> callbacks = new HashMap<>();
 
 		@Override
 		public String getButtonName() {
@@ -534,6 +592,13 @@ public class TableChooserDialogTest extends AbstractGhidraHeadedIntegrationTest 
 			return counter.get();
 		}
 
+		boolean wasExecuted(AddressableRowObject rowObject) {
+			return callbacks.containsKey(rowObject);
+		}
+	}
+
+	private class SpyTableChooserExecutor extends SpyExecutor {
+
 		@Override
 		public boolean execute(AddressableRowObject rowObject) {
 
@@ -545,9 +610,42 @@ public class TableChooserDialogTest extends AbstractGhidraHeadedIntegrationTest 
 			boolean result = testDecision.decide(rowObject);
 			return result;
 		}
+	}
 
-		boolean wasExecuted(AddressableRowObject rowObject) {
-			return callbacks.containsKey(rowObject);
+	private class SpyBulkTableChooserExecutor extends SpyExecutor {
+
+		@Override
+		public boolean executeInBulk(List<AddressableRowObject> rowObjects,
+				List<AddressableRowObject> deleted, TaskMonitor monitor) {
+
+			for (AddressableRowObject rowObject : rowObjects) {
+				if (monitor.isCancelled()) {
+					break;
+				}
+
+				if (testDecision.decide(rowObject)) {
+					deleted.add(rowObject);
+				}
+
+				if (!dialog.contains(rowObject)) {
+					// this simulates the handling of the case where we remove items arbitrarily
+					// while processing items in this list
+					continue;
+				}
+
+				callbacks.merge(rowObject, new AtomicInteger(1), (k, v) -> {
+					v.incrementAndGet();
+					return v;
+				});
+			}
+
+			return true;
+		}
+
+		@Override
+		public boolean execute(AddressableRowObject rowObject) {
+			fail("execute() called unexpectedly");
+			return false;
 		}
 	}
 

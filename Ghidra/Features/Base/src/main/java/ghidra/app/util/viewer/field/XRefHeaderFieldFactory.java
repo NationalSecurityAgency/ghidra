@@ -22,6 +22,7 @@ import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.app.util.HighlightProvider;
 import ghidra.app.util.XReferenceUtils;
+import ghidra.app.util.viewer.field.ListingColors.XrefColors;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.Options;
@@ -52,9 +53,13 @@ public class XRefHeaderFieldFactory extends XRefFieldFactory {
 	public XRefHeaderFieldFactory(FieldFormatModel model, HighlightProvider hlProvider,
 			Options displayOptions, ToolOptions fieldOptions) {
 		super(XREF_FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
+	}
+
+	@Override
+	protected void initDisplayOptions(Options displayOptions) {
 		colorOptionName = "XRef Color";
 		styleOptionName = "XRef Style";
-		initDisplayOptions();
+		super.initDisplayOptions(displayOptions);
 	}
 
 	@Override
@@ -68,7 +73,7 @@ public class XRefHeaderFieldFactory extends XRefFieldFactory {
 		if (headString == null || headString.length() == 0) {
 			return null;
 		}
-		AttributedString as = new AttributedString(headString, color, getMetrics());
+		AttributedString as = new AttributedString(headString, XrefColors.DEFAULT, getMetrics());
 		FieldElement field = new TextFieldElement(as, 0, 0);
 		return ListingTextField.createSingleLineTextField(this, proxy, field, startX + varWidth,
 			width, hlProvider);

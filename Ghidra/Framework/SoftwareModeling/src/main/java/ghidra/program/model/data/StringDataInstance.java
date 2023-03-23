@@ -15,14 +15,15 @@
  */
 package ghidra.program.model.data;
 
-import static ghidra.program.model.data.EndianSettingsDefinition.*;
-import static ghidra.program.model.data.RenderUnicodeSettingsDefinition.*;
+import static ghidra.program.model.data.EndianSettingsDefinition.ENDIAN;
+import static ghidra.program.model.data.RenderUnicodeSettingsDefinition.RENDER;
 import static ghidra.program.model.data.StringLayoutEnum.*;
-import static ghidra.program.model.data.TranslationSettingsDefinition.*;
+import static ghidra.program.model.data.TranslationSettingsDefinition.TRANSLATION;
+
+import java.util.*;
 
 import java.nio.*;
 import java.nio.charset.*;
-import java.util.*;
 
 import generic.stl.Pair;
 import ghidra.docking.settings.*;
@@ -426,7 +427,7 @@ public class StringDataInstance {
 	 * contains our n-bit character which will be tested for null-ness. (not the endian'ness of the
 	 * character set name - ie. "UTF-16BE")
 	 *
-	 * @return length of the string (NOT including null term if null term probe), in bytes, or -1 if
+	 * @return length of the string (INCLUDING null term if null term probe), in bytes, or -1 if
 	 *         no terminator found.
 	 */
 	public int getStringLength() {
@@ -912,7 +913,7 @@ public class StringDataInstance {
 
 	/**
 	 * Returns the value of the stored
-	 * {@link TranslationSettingsDefinition#getTranslatedValue(Settings) translated settings}
+	 * {@link TranslationSettingsDefinition#getTranslatedValue(Data) translated settings}
 	 * string.
 	 * <p>
 	 * 
@@ -1031,6 +1032,9 @@ public class StringDataInstance {
 	public StringDataInstance getByteOffcut(int byteOffset) {
 		if (isBadCharSize() || isProbe() || !isValidOffcutOffset(byteOffset)) {
 			return NULL_INSTANCE;
+		}
+		if (byteOffset == 0) {
+			return this;
 		}
 		int newLength = Math.max(0, length - byteOffset);
 		StringDataInstance sub = new StringDataInstance(this, getOffcutLayout(),

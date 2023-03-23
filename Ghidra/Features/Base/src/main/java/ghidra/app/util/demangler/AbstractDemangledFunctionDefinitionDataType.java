@@ -20,6 +20,7 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 
+import ghidra.app.util.DataTypeNamingUtil;
 import ghidra.program.model.data.*;
 import ghidra.program.model.symbol.Namespace;
 
@@ -314,13 +315,16 @@ public abstract class AbstractDemangledFunctionDefinitionDataType extends Demang
 	@Override
 	public DataType getDataType(DataTypeManager dataTypeManager) {
 
-		FunctionDefinitionDataType fddt = new FunctionDefinitionDataType(getName());
+		FunctionDefinitionDataType fddt =
+			new FunctionDefinitionDataType(DEMANGLER_ANONYMOUS_FUNCTION_CATEGORY_PATH, getName());
 
 		if (returnType != null) {
 			fddt.setReturnType(returnType.getDataType(dataTypeManager));
 		}
 
 		setParameters(fddt, dataTypeManager);
+
+		DataTypeNamingUtil.setMangledAnonymousFunctionName(fddt);
 
 		DataType dt = DemangledDataType.findDataType(dataTypeManager, namespace, getName());
 		if (dt == null || !(dt instanceof FunctionDefinitionDataType)) {

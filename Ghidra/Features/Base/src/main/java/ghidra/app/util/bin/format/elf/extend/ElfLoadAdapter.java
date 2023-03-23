@@ -18,9 +18,9 @@ package ghidra.app.util.bin.format.elf.extend;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
+import ghidra.app.util.Option;
 import ghidra.app.util.bin.format.MemoryLoadable;
 import ghidra.app.util.bin.format.elf.*;
 import ghidra.program.model.address.Address;
@@ -341,7 +341,7 @@ public class ElfLoadAdapter {
 	 * adjust the address and/or apply context to the intended symbol location.
 	 * @param elfLoadHelper load helper object
 	 * @param elfSymbol elf symbol
-	 * @param address program memory address where symbol will be created
+	 * @param address program memory address where symbol will be created.
 	 * @param isExternal true if symbol treated as external to the program and has been
 	 * assigned a fake memory address in the EXTERNAL memory block.
 	 * @return adjusted symbol address or null if extension will handle applying the elfSymbol
@@ -510,6 +510,15 @@ public class ElfLoadAdapter {
 	 */
 	public Class<? extends ElfRelocation> getRelocationClass(ElfHeader elfHeader) {
 		return null;
+	}
+
+	/**
+	 * Add extension-specific load options
+	 * @param elf ELF header
+	 * @param options list to which load options may be added 
+	 */
+	public void addLoadOptions(ElfHeader elf, List<Option> options) {
+		// no additional options
 	}
 
 }

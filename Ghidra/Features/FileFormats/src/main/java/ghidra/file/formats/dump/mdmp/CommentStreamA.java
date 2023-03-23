@@ -43,8 +43,8 @@ public class CommentStreamA implements StructConverter {
 	private void parse() throws IOException {
 		reader.setPointerIndex(index);
 
-		commentLength = reader.readNextInt();
 		comment = reader.readNextAsciiString();
+		commentLength = (int) (reader.getPointerIndex() - index);
 
 	}
 
@@ -54,7 +54,6 @@ public class CommentStreamA implements StructConverter {
 	public DataType toDataType() throws DuplicateNameException {
 		StructureDataType struct = new StructureDataType(NAME, 0);
 
-		struct.add(DWORD, 4, "CommentLength", null);
 		struct.add(ASCII, commentLength, "Comment", null);
 
 		return struct;

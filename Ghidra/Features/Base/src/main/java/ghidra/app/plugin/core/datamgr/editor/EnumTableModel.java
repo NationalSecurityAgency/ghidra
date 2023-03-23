@@ -17,6 +17,8 @@ package ghidra.app.plugin.core.datamgr.editor;
 
 import java.util.*;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.widgets.table.AbstractSortedTableModel;
 import docking.widgets.table.TableSortState;
 import ghidra.program.model.data.EnumDataType;
@@ -200,7 +202,13 @@ class EnumTableModel extends AbstractSortedTableModel<EnumEntry> {
 		if (columnIndex == NAME_COL) {
 			return new EnumNameComparator();
 		}
-		return new EnumValueComparator();
+		else if (columnIndex == VALUE_COL) {
+			return new EnumValueComparator();
+		}
+		else if (columnIndex == COMMENT_COL) {
+			return new EnumCommentComparator();
+		}
+		return null;
 	}
 
 	EnumDataType getEnum() {
@@ -367,4 +375,10 @@ class EnumTableModel extends AbstractSortedTableModel<EnumEntry> {
 		}
 	}
 
+	private class EnumCommentComparator implements Comparator<EnumEntry> {
+		@Override
+		public int compare(EnumEntry entry1, EnumEntry entry2) {
+			return StringUtils.compare(entry1.getComment(), entry2.getComment());
+		}
+	}
 }

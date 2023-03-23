@@ -44,10 +44,16 @@ public class GhidraColorChooser extends JColorChooser {
 		this.title = title;
 	}
 
+	public void addColorToHistory(Color c) {
+		recentColorCache.addColor(c);
+		maybeInstallSettableColorSwatchChooserPanel();
+	}
+
 	public void setColorHistory(List<Color> colors) {
 		for (Color color : colors) {
 			recentColorCache.addColor(color);
 		}
+		maybeInstallSettableColorSwatchChooserPanel();
 	}
 
 	public List<Color> getColorHistory() {
@@ -66,8 +72,6 @@ public class GhidraColorChooser extends JColorChooser {
 
 	@SuppressWarnings("deprecation")
 	public Color showDialog(Component centerOverComponent) {
-		maybeInstallSettableColorSwatchChooserPanel();
-
 		OKListener okListener = new OKListener();
 		JDialog dialog = createDialog(centerOverComponent, title, true, this, okListener, null);
 		doSetActiveTab(dialog);
@@ -123,7 +127,7 @@ public class GhidraColorChooser extends JColorChooser {
 	}
 
 	private void maybeInstallSettableColorSwatchChooserPanel() {
-		if (recentColorCache.size() == 0) {
+		if (recentColorCache.isEmpty()) {
 			return;
 		}
 

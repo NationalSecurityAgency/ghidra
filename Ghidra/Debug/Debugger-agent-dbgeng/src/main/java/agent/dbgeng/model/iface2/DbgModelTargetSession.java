@@ -44,12 +44,16 @@ public interface DbgModelTargetSession extends //
 	DbgModelTargetProcessContainer getProcesses();
 
 	public default DbgSession getSession() {
+		return getSession(true);
+	}
+
+	public default DbgSession getSession(boolean fire) {
 		DbgManagerImpl manager = getManager();
 		try {
 			String index = PathUtils.parseIndex(getName());
 			Integer sid = Integer.decode(index);
 			DebugSessionId id = new DebugSessionId(sid);
-			return manager.getSessionComputeIfAbsent(id);
+			return manager.getSessionComputeIfAbsent(id, fire);
 		}
 		catch (IllegalArgumentException e) {
 			return manager.getCurrentSession();
@@ -75,7 +79,7 @@ public interface DbgModelTargetSession extends //
 		if (!isValid()) {
 			return;
 		}
-		getListeners().fire.consoleOutput(getProxy(), chan, output);
+		broadcast().consoleOutput(getProxy(), chan, output);
 	}
 
 	@Override

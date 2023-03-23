@@ -209,7 +209,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 	@Override
 	public ExternalLocation getExternalLocation() {
 		if (isExternal()) {
-			ExternalManagerDB extMgr = (ExternalManagerDB) program.getExternalManager();
+			ExternalManagerDB extMgr = program.getExternalManager();
 			return extMgr.getExternalLocation(getSymbol());
 		}
 		return null;
@@ -993,7 +993,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 					v.setStorageAndDataType(storage, var.getDataType());
 				}
 				else {
-					SymbolManager symbolMgr = (SymbolManager) program.getSymbolTable();
+					SymbolManager symbolMgr = program.getSymbolTable();
 					VariableSymbolDB s = symbolMgr.createVariableSymbol(name, this,
 						SymbolType.LOCAL_VAR, firstUseOffset, storage, source);
 					s.setStorageAndDataType(storage, var.getDataType());
@@ -1460,7 +1460,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 			}
 
 			// Append new parameters if needed
-			SymbolManager symbolMgr = (SymbolManager) program.getSymbolTable();
+			SymbolManager symbolMgr = program.getSymbolTable();
 			for (int i = newParamIndex; i < newParams.size(); i++) {
 				Variable newParam = newParams.get(i);
 				DataType dt = (newParam instanceof Parameter && !useCustomStorage)
@@ -1683,7 +1683,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 							}
 						}
 					}
-					SymbolManager symbolMgr = (SymbolManager) program.getSymbolTable();
+					SymbolManager symbolMgr = program.getSymbolTable();
 					VariableSymbolDB s = symbolMgr.createVariableSymbol(name, this,
 						SymbolType.PARAMETER, ordinal, storage, paramSource);
 					s.setStorageAndDataType(storage, var.getDataType());
@@ -2671,7 +2671,9 @@ public class FunctionDB extends DatabaseObject implements Function {
 			// relationship between a class namespace and its structure is needed
 			// so its name and category can track properly.
 			classStruct = VariableUtilities.findOrCreateClassStruct(this);
-			dataTypeManager.resolve(classStruct, null);
+			if (classStruct != null) {
+				dataTypeManager.resolve(classStruct, null);
+			}
 		}
 	}
 

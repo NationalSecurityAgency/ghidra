@@ -15,8 +15,9 @@
  */
 package ghidra.app.util.opinion;
 
-import java.io.IOException;
 import java.util.*;
+
+import java.io.IOException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.xml.sax.*;
@@ -206,53 +207,60 @@ public class QueryOpinionService {
 		return queryResult;
 	}
 
-	static boolean secondaryAttributeMatches(String eFlagsDecimalString, String attribute) {
-
-		// eFlagDecimalString is the elf e_flags value, as a decimal string
-		// sa is the secondary attribute string from the opinion file,
-		// and it must start with "0x" or "0b"
-		if (attribute == null) {
+	/**
+	 * Match a secondaryKey value string against a binary or hex formatted constraint.
+	 * <p>
+	 * The constraint value needs to be patterned as:
+	 * <li>Binary: "0b1110_0001 111..." (spaces and "_" ignored, dots are wildcards)
+	 * <li>Hex: "0xaabb_ccdd" (hex digits, spaces and "_" ignored)
+	 * 
+	 * @param secondaryKey decimal integer string that is being searched for
+	 * @param constraint value or pattern that the secondaryKey is being compared against
+	 * @return boolean true if the secondaryKey matches the constraint; false if it doesn't match
+	 * or if the constraint isn't a binary or hex constraint, or if the secondaryKey value isn't
+	 * an integer
+	 */
+	static boolean secondaryAttributeMatches(String secondaryKey, String constraint) {
+		if (constraint == null) {
 			return false;
 		}
 
-		if (!StringUtils.startsWithAny(attribute.toLowerCase(), "0x", "0b")) {
+		int secondaryKeyInt;
+		try {
+			secondaryKeyInt = Integer.parseInt(secondaryKey);
+		}
+		catch (NumberFormatException e) {
 			return false;
 		}
 
-		int eFlagsInt = Integer.parseInt(eFlagsDecimalString);
-		String eFlagsBinaryString = Integer.toBinaryString(eFlagsInt);
-		if (eFlagsBinaryString == null) {
-			return false;
-		}
-
-		eFlagsBinaryString = StringUtils.leftPad(eFlagsBinaryString, 32, "0");
-		String eFlagsHexString = Integer.toHexString(eFlagsInt);
-		eFlagsHexString = StringUtils.leftPad(eFlagsHexString, 8, "0");
-
-		// Remove '_' and whitespace from the attribute string
-		String cleaned = attribute.replace("_", "").replaceAll("\\s+", "").trim();
-		String prefix = cleaned.substring(0, 2);
-		String value = cleaned.substring(2);
-		if (prefix.toLowerCase().startsWith("0x")) {
-
-			// It's a hex string
-			value = StringUtils.leftPad(value, 8, "0");
-			return value.equals(eFlagsHexString);
-		}
-
-		// It's a binary string
-		value = StringUtils.leftPad(value, 32, "0");
-		for (int i = 0; i < 32; i++) {
-			char c = value.charAt(i);
-			if (c == '.') { // wildcard
-				continue;
+		constraint = constraint.replaceAll("[_\\s]+", "").trim().toLowerCase();
+		if (constraint.startsWith("0x")) { // Hex constraint string
+			try {
+				int hexConstraint = Integer.parseUnsignedInt(constraint.substring(2), 16);
+				return secondaryKeyInt == hexConstraint;
 			}
-
-			if (eFlagsBinaryString.charAt(i) != c) {
-				return false;
+			catch (NumberFormatException e) {
+				// fall thru, return false
 			}
+			return false;
 		}
+		else if (constraint.startsWith("0b")) { // Binary constraint string
+			String secondaryKeyBinaryString = Integer.toBinaryString(secondaryKeyInt);
+			secondaryKeyBinaryString = StringUtils.leftPad(secondaryKeyBinaryString, 32, "0");
 
-		return true;
+			String constraintBinaryString = StringUtils.leftPad(constraint.substring(2), 32, "0");
+			for (int i = 0; i < 32; i++) {
+				char c = constraintBinaryString.charAt(i);
+				if (c == '.') { // wildcard
+					continue;
+				}
+
+				if (secondaryKeyBinaryString.charAt(i) != c) {
+					return false;
+				}
+			}
+			return true;
+		}
+		return false;
 	}
 }

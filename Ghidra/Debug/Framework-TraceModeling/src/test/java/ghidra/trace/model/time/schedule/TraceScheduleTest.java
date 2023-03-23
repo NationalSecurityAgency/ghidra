@@ -17,23 +17,19 @@ package ghidra.trace.model.time.schedule;
 
 import static org.junit.Assert.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
 
+import db.Transaction;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
-import ghidra.pcode.emu.*;
-import ghidra.pcode.exec.*;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.lang.*;
-import ghidra.program.model.listing.Instruction;
+import ghidra.program.model.lang.LanguageID;
+import ghidra.program.model.lang.LanguageNotFoundException;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.util.database.UndoableTransaction;
 import ghidra.util.task.TaskMonitor;
 
 public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
@@ -267,172 +263,13 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 		assertEquals(15, TraceSchedule.parse("0:4;t1-5.6").totalTickCount());
 	}
 
-	protected static class TestThread implements PcodeThread<Void> {
-		protected final String name;
-		protected final TestMachine machine;
-
-		public TestThread(String name, TestMachine machine) {
-			this.name = name;
-			this.machine = machine;
-		}
-
-		@Override
-		public String getName() {
-			return name;
-		}
-
-		@Override
-		public TestMachine getMachine() {
-			return machine;
-		}
-
-		@Override
-		public void setCounter(Address counter) {
-		}
-
-		@Override
-		public Address getCounter() {
-			return null;
-		}
-
-		@Override
-		public void overrideCounter(Address counter) {
-		}
-
-		@Override
-		public void assignContext(RegisterValue context) {
-		}
-
-		@Override
-		public RegisterValue getContext() {
-			return null;
-		}
-
-		@Override
-		public void overrideContext(RegisterValue context) {
-		}
-
-		@Override
-		public void overrideContextWithDefault() {
-		}
-
-		@Override
-		public void reInitialize() {
-		}
-
-		@Override
-		public void stepInstruction() {
-			machine.record.add("s:" + name);
-		}
-
-		@Override
-		public void stepPcodeOp() {
-			machine.record.add("p:" + name);
-		}
-
-		@Override
-		public PcodeFrame getFrame() {
-			return null;
-		}
-
-		@Override
-		public Instruction getInstruction() {
-			return null;
-		}
-
-		@Override
-		public void executeInstruction() {
-		}
-
-		@Override
-		public void finishInstruction() {
-		}
-
-		@Override
-		public void skipInstruction() {
-		}
-
-		@Override
-		public void dropInstruction() {
-		}
-
-		@Override
-		public void run() {
-		}
-
-		@Override
-		public void setSuspended(boolean suspended) {
-		}
-
-		@Override
-		public PcodeExecutor<Void> getExecutor() {
-			return new PcodeExecutor<>(TOY_BE_64_LANG, machine.getArithmetic(), getState()) {
-				public PcodeFrame execute(PcodeProgram program, PcodeUseropLibrary<Void> library) {
-					machine.record.add("x:" + name);
-					// TODO: Verify the actual effect
-					return null; //super.execute(program, library);
-				}
-			};
-		}
-
-		@Override
-		public PcodeUseropLibrary<Void> getUseropLibrary() {
-			return null;
-		}
-
-		@Override
-		public ThreadPcodeExecutorState<Void> getState() {
-			return null;
-		}
-
-		@Override
-		public void inject(Address address, List<String> sleigh) {
-		}
-
-		@Override
-		public void clearInject(Address address) {
-		}
-
-		@Override
-		public void clearAllInjects() {
-		}
-	}
-
-	protected static class TestMachine extends AbstractPcodeMachine<Void> {
-		protected final List<String> record = new ArrayList<>();
-
-		public TestMachine() {
-			super(TOY_BE_64_LANG, null);
-		}
-
-		@Override
-		protected PcodeThread<Void> createThread(String name) {
-			return new TestThread(name, this);
-		}
-
-		@Override
-		protected PcodeExecutorState<Void> createSharedState() {
-			return null;
-		}
-
-		@Override
-		protected PcodeExecutorState<Void> createLocalState(PcodeThread<Void> thread) {
-			return null;
-		}
-
-		@Override
-		protected PcodeUseropLibrary<Void> createUseropLibrary() {
-			return PcodeUseropLibrary.nil();
-		}
-	}
-
 	@Test
 	public void testExecute() throws Exception {
 		TestMachine machine = new TestMachine();
 		TraceSchedule time = TraceSchedule.parse("1:4;t0-3;t1-2.1");
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("test", ToyProgramBuilder._TOY64_BE)) {
 			TraceThread t2;
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				tb.trace.getThreadManager().createThread("Threads[0]", 0);
 				tb.trace.getThreadManager().createThread("Threads[1]", 0);
 				t2 = tb.trace.getThreadManager().createThread("Threads[2]", 0);
@@ -442,16 +279,45 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 		}
 
 		assertEquals(List.of(
-			"s:Threads[2]",
-			"s:Threads[2]",
-			"s:Threads[2]",
-			"s:Threads[2]",
-			"s:Threads[0]",
-			"s:Threads[0]",
-			"s:Threads[0]",
-			"s:Threads[1]",
-			"s:Threads[1]",
-			"p:Threads[1]"),
+			"ti:Threads[2]",
+			"ti:Threads[2]",
+			"ti:Threads[2]",
+			"ti:Threads[2]",
+			"ti:Threads[0]",
+			"ti:Threads[0]",
+			"ti:Threads[0]",
+			"ti:Threads[1]",
+			"ti:Threads[1]",
+			"tp:Threads[1]"),
+			machine.record);
+	}
+
+	@Test
+	public void testExecuteWithSkips() throws Exception {
+		TestMachine machine = new TestMachine();
+		TraceSchedule time = TraceSchedule.parse("1:4;t0-s3;t1-2.s1");
+		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("test", ToyProgramBuilder._TOY64_BE)) {
+			TraceThread t2;
+			try (Transaction tx = tb.startTransaction()) {
+				tb.trace.getThreadManager().createThread("Threads[0]", 0);
+				tb.trace.getThreadManager().createThread("Threads[1]", 0);
+				t2 = tb.trace.getThreadManager().createThread("Threads[2]", 0);
+				tb.trace.getTimeManager().getSnapshot(1, true).setEventThread(t2);
+			}
+			time.execute(tb.trace, machine, TaskMonitor.DUMMY);
+		}
+
+		assertEquals(List.of(
+			"ti:Threads[2]",
+			"ti:Threads[2]",
+			"ti:Threads[2]",
+			"ti:Threads[2]",
+			"si:Threads[0]",
+			"si:Threads[0]",
+			"si:Threads[0]",
+			"ti:Threads[1]",
+			"ti:Threads[1]",
+			"sp:Threads[1]"),
 			machine.record);
 	}
 
@@ -461,7 +327,7 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 		TraceSchedule time = TraceSchedule.parse("1:{r0=0x1234};4");
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("test", "Toy:BE:64:default")) {
 			TraceThread t2;
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				tb.trace.getThreadManager().createThread("Threads[0]", 0);
 				tb.trace.getThreadManager().createThread("Threads[1]", 0);
 				t2 = tb.trace.getThreadManager().createThread("Threads[2]", 0);
@@ -472,10 +338,10 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 
 		assertEquals(List.of(
 			"x:Threads[2]",
-			"s:Threads[2]",
-			"s:Threads[2]",
-			"s:Threads[2]",
-			"s:Threads[2]"),
+			"ti:Threads[2]",
+			"ti:Threads[2]",
+			"ti:Threads[2]",
+			"ti:Threads[2]"),
 			machine.record);
 	}
 
@@ -484,7 +350,7 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 		TestMachine machine = new TestMachine();
 		TraceSchedule time = TraceSchedule.parse("1:4;t0-3;t1-2.1");
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("test", "Toy:BE:64:default")) {
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				tb.trace.getThreadManager().createThread("Threads[0]", 0);
 				tb.trace.getThreadManager().createThread("Threads[1]", 0);
 				tb.trace.getThreadManager().createThread("Threads[2]", 0);
@@ -500,7 +366,7 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 		TraceSchedule time = TraceSchedule.parse("1:4;t0-3;t5-2.1");
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("test", "Toy:BE:64:default")) {
 			TraceThread t2;
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				tb.trace.getThreadManager().createThread("Threads[0]", 0);
 				tb.trace.getThreadManager().createThread("Threads[1]", 0);
 				t2 = tb.trace.getThreadManager().createThread("Threads[2]", 0);
@@ -516,7 +382,7 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 		TraceSchedule time = TraceSchedule.parse("1:4;t0-3;t1-2.1");
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("test", "Toy:BE:64:default")) {
 			TraceThread t2;
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				tb.trace.getThreadManager().createThread("Threads[0]", 0);
 				tb.trace.getThreadManager().createThread("Threads[1]", 0);
 				t2 = tb.trace.getThreadManager().createThread("Threads[2]", 0);
@@ -526,10 +392,10 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 		}
 
 		assertEquals(List.of(
-			"s:Threads[0]",
-			"s:Threads[1]",
-			"s:Threads[1]",
-			"p:Threads[1]"),
+			"ti:Threads[0]",
+			"ti:Threads[1]",
+			"ti:Threads[1]",
+			"tp:Threads[1]"),
 			machine.record);
 	}
 
@@ -539,7 +405,7 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 		TraceSchedule time = TraceSchedule.parse("1:4;t0-3;t1-2.1");
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("test", "Toy:BE:64:default")) {
 			TraceThread t2;
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				tb.trace.getThreadManager().createThread("Threads[0]", 0);
 				tb.trace.getThreadManager().createThread("Threads[1]", 0);
 				t2 = tb.trace.getThreadManager().createThread("Threads[2]", 0);
@@ -550,7 +416,7 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 		}
 
 		assertEquals(List.of(
-			"p:Threads[1]"),
+			"tp:Threads[1]"),
 			machine.record);
 	}
 
@@ -560,7 +426,7 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 		TraceSchedule time = TraceSchedule.parse("1:4;t0-3;t1-2.1");
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("test", "Toy:BE:64:default")) {
 			TraceThread t2;
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				tb.trace.getThreadManager().createThread("Threads[0]", 0);
 				tb.trace.getThreadManager().createThread("Threads[1]", 0);
 				t2 = tb.trace.getThreadManager().createThread("Threads[2]", 0);
@@ -575,19 +441,20 @@ public class TraceScheduleTest extends AbstractGhidraHeadlessIntegrationTest {
 		// TODO: Should parse require coalescing? Can't without passing a language...
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("test", "Toy:BE:64:default")) {
 			TraceThread thread;
-			try (UndoableTransaction tid = tb.startTransaction()) {
+			try (Transaction tx = tb.startTransaction()) {
 				thread = tb.trace.getThreadManager().createThread("Threads[0]", 0);
 			}
 			TraceSchedule time = TraceSchedule.parse("0");
-			time = time.patched(thread, "r0l=1");
+			time = time.patched(thread, tb.language, "r0l=1");
 			assertEquals("0:t0-{r0l=0x1}", time.toString());
-			time = time.patched(thread, "r0h=2");
+			time = time.patched(thread, tb.language, "r0h=2");
 			assertEquals("0:t0-{r0=0x200000001}", time.toString());
-			time = time.patched(thread, "r1l=3").patched(thread, "*[ram]:4 0xcafe:8=0xdeadbeef");
+			time = time.patched(thread, tb.language, "r1l=3")
+					.patched(thread, tb.language, "*[ram]:4 0xcafe:8=0xdeadbeef");
 			assertEquals("0:t0-{*:4 0xcafe:8=0xdeadbeef};t0-{r0=0x200000001};t0-{r1l=0x3}",
 				time.toString());
 
-			time = time.patched(thread, "*:8 0xcb00:8 = 0x1122334455667788");
+			time = time.patched(thread, tb.language, "*:8 0xcb00:8 = 0x1122334455667788");
 			assertEquals("0:t0-{*:8 0xcafe:8=0xdead112233445566};t0-{*:2 0xcb06:8=0x7788};" +
 				"t0-{r0=0x200000001};t0-{r1l=0x3}", time.toString());
 		}

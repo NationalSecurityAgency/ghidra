@@ -19,13 +19,14 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.List;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jdom.Element;
 
 import docking.action.KeyBindingData;
 import docking.action.MenuData;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.debug.gui.objects.DebuggerObjectsProvider;
 import ghidra.app.plugin.core.debug.gui.objects.ObjectContainer;
 import ghidra.app.services.ConsoleService;
@@ -33,12 +34,11 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.xml.XmlUtilities;
-import resources.ResourceManager;
 
 public class DisplayFilteredXMLAction extends DisplayFilteredAction {
 
 	protected ConsoleService consoleService;
-	protected ImageIcon ICON_XML = ResourceManager.loadImage("images/text-xml.png");;
+	protected static final Icon ICON_XML = new GIcon("icon.debugger.display.xml.filtered");
 
 	public DisplayFilteredXMLAction(PluginTool tool, String owner,
 			DebuggerObjectsProvider provider) {

@@ -25,6 +25,7 @@ import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.FieldUtils;
 import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.viewer.field.ListingColors.CommentColors;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.options.OptionsGui;
 import ghidra.app.util.viewer.proxy.ProxyObj;
@@ -72,7 +73,6 @@ public class PostCommentFieldFactory extends FieldFactory {
 	private int nLinesAfterBlocks;
 	private boolean isWordWrap;
 	private boolean alwaysShowAutomatic;
-	private Color automaticCommentColor;
 	private int automaticCommentStyle;
 
 	/**
@@ -104,9 +104,6 @@ public class PostCommentFieldFactory extends FieldFactory {
 		flagJMPsRETs = fieldOptions.getBoolean(FLAG_TERMINATOR_OPTION, false);
 		nLinesAfterBlocks = fieldOptions.getInt(LINES_AFTER_BLOCKS_OPTION, 0);
 
-		automaticCommentColor =
-			displayOptions.getColor(OptionsGui.COMMENT_AUTO.getColorOptionName(),
-				OptionsGui.COMMENT_AUTO.getDefaultColor());
 		automaticCommentStyle =
 			displayOptions.getInt(OptionsGui.COMMENT_AUTO.getStyleOptionName(), -1);
 
@@ -332,11 +329,6 @@ public class PostCommentFieldFactory extends FieldFactory {
 	}
 
 	@Override
-	public Color getDefaultColor() {
-		return OptionsGui.COMMENT_POST.getDefaultColor();
-	}
-
-	@Override
 	public void fieldOptionsChanged(Options options, String optionName, Object oldValue,
 			Object newValue) {
 
@@ -379,9 +371,6 @@ public class PostCommentFieldFactory extends FieldFactory {
 	 */
 	private void adjustAutomaticCommentDisplayOptions(Options options, String optionName,
 			Object oldValue, Object newValue) {
-		if (optionName.equals(OptionsGui.COMMENT_AUTO.getColorOptionName())) {
-			automaticCommentColor = (Color) newValue;
-		}
 		String automaticCommentStyleName = OptionsGui.COMMENT_AUTO.getStyleOptionName();
 		if (optionName.equals(automaticCommentStyleName)) {
 			automaticCommentStyle = options.getInt(automaticCommentStyleName, -1);
@@ -393,6 +382,7 @@ public class PostCommentFieldFactory extends FieldFactory {
 		Listing listing = instr.getProgram().getListing();
 		Address addr = instr.getMinAddress();
 		FlowType flowType = instr.getFlowType();
+		Color color = CommentColors.POST;
 
 		// Options that affect Post Comments:
 		//   Flag Function Exits (only if post comment does not exist)
@@ -456,7 +446,7 @@ public class PostCommentFieldFactory extends FieldFactory {
 				if (fields.length > 0) {
 					for (int i = 0; i < nLinesAutoComment; i++) {
 						AttributedString as = new AttributedString(autoComment[i],
-							automaticCommentColor, getMetrics(automaticCommentStyle), false, null);
+							CommentColors.AUTO, getMetrics(automaticCommentStyle), false, null);
 						fields[i] = new TextFieldElement(as, i, 0);
 					}
 					for (int i = 0; i < comments.length; i++) {
@@ -497,10 +487,11 @@ public class PostCommentFieldFactory extends FieldFactory {
 
 		CodeUnit cu = (CodeUnit) proxy.getObject();
 		Program program = cu.getProgram();
-		AttributedString prototypeString = new AttributedString("prototype", color, getMetrics());
+		AttributedString prototypeString =
+			new AttributedString("prototype", CommentColors.POST, getMetrics());
 		List<FieldElement> fields = new ArrayList<>();
 		for (int i = 0; i < nLinesAutoComment; i++) {
-			AttributedString as = new AttributedString(autoComment[i], automaticCommentColor,
+			AttributedString as = new AttributedString(autoComment[i], CommentColors.AUTO,
 				getMetrics(automaticCommentStyle), false, null);
 			fields.add(new TextFieldElement(as, i, 0));
 		}
@@ -513,7 +504,7 @@ public class PostCommentFieldFactory extends FieldFactory {
 		}
 		if (useLinesAfterBlock) {
 			for (int i = 0; i < nLinesAfterBlocks; i++) {
-				AttributedString as = new AttributedString("", color, getMetrics());
+				AttributedString as = new AttributedString("", CommentColors.POST, getMetrics());
 				fields.add(new TextFieldElement(as, fields.size(), 0));
 			}
 		}
@@ -618,12 +609,12 @@ public class PostCommentFieldFactory extends FieldFactory {
 				hasAppropriatePcodeOp = true;
 				if (op.getOpcode() == PcodeOp.CALLOTHER) {
 					if (callOtherName == null) {
-						callOtherName = inst.getProgram().getLanguage().getUserDefinedOpName(
-							(int) op.getInput(0).getOffset());
+						callOtherName = inst.getProgram()
+								.getLanguage()
+								.getUserDefinedOpName((int) op.getInput(0).getOffset());
 						if (op.getOutput() != null) {
 							outputWarningString =
-								"WARNING: Output of " + callOtherName +
-									" destroyed by override!";
+								"WARNING: Output of " + callOtherName + " destroyed by override!";
 						}
 					}
 					else {

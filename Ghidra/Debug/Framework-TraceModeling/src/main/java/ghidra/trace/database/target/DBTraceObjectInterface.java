@@ -15,9 +15,8 @@
  */
 package ghidra.trace.database.target;
 
-import com.google.common.collect.*;
-
-import ghidra.trace.database.DBTraceUtils;
+import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.Lifespan.*;
 import ghidra.trace.model.Trace.TraceObjectChangeType;
 import ghidra.trace.model.TraceUniqueObject;
 import ghidra.trace.model.target.*;
@@ -32,7 +31,7 @@ public interface DBTraceObjectInterface extends TraceObjectInterface, TraceUniqu
 		private final T iface;
 		// TODO: Memorizing life is not optimal.
 		// GP-1887 means to expose multiple lifespans in, e.g., TraceThread
-		private RangeSet<Long> life = TreeRangeSet.create();
+		private LifeSet life = new DefaultLifeSet();
 
 		public Translator(String spaceValueKey, DBTraceObject object, T iface) {
 			this.spaceValueKey = spaceValueKey;
@@ -42,7 +41,7 @@ public interface DBTraceObjectInterface extends TraceObjectInterface, TraceUniqu
 
 		protected abstract TraceChangeType<T, Void> getAddedType();
 
-		protected abstract TraceChangeType<T, Range<Long>> getLifespanChangedType();
+		protected abstract TraceChangeType<T, Lifespan> getLifespanChangedType();
 
 		protected abstract TraceChangeType<T, ?> getChangedType();
 
@@ -54,11 +53,11 @@ public interface DBTraceObjectInterface extends TraceObjectInterface, TraceUniqu
 			// Extension point
 		}
 
-		protected void emitExtraLifespanChanged(Range<Long> oldLifespan, Range<Long> newLifespan) {
+		protected void emitExtraLifespanChanged(Lifespan oldLifespan, Lifespan newLifespan) {
 			// Extension point
 		}
 
-		protected void emitExtraValueChanged(Range<Long> lifespan, String key, Object oldValue,
+		protected void emitExtraValueChanged(Lifespan lifespan, String key, Object oldValue,
 				Object newValue) {
 			// Extension point
 		}
@@ -67,12 +66,12 @@ public interface DBTraceObjectInterface extends TraceObjectInterface, TraceUniqu
 			// Extension point
 		}
 
-		protected TraceAddressSpace getSpace(RangeSet<Long> life) {
+		protected TraceAddressSpace getSpace(LifeSet life) {
 			if (life.isEmpty()) {
 				return null;
 			}
 			return spaceValueKey == null ? null
-					: spaceForValue(object, DBTraceUtils.lowerEndpoint(life.span()), spaceValueKey);
+					: spaceForValue(object, life.bound().lmin(), spaceValueKey);
 		}
 
 		protected TraceChangeRecord<?, ?> translateAdded() {
@@ -84,18 +83,18 @@ public interface DBTraceObjectInterface extends TraceObjectInterface, TraceUniqu
 			return new TraceChangeRecord<>(type, getSpace(life), iface, null, null);
 		}
 
-		protected TraceChangeRecord<?, ?> translateLifespanChanged(RangeSet<Long> oldLife) {
-			TraceChangeType<T, Range<Long>> type = getLifespanChangedType();
+		protected TraceChangeRecord<?, ?> translateLifespanChanged(LifeSet oldLife) {
+			TraceChangeType<T, Lifespan> type = getLifespanChangedType();
 			if (type == null) {
 				return null;
 			}
-			Range<Long> oldLifespan = oldLife.span();
-			Range<Long> newLifespan = life.span();
+			Lifespan oldLifespan = oldLife.bound();
+			Lifespan newLifespan = life.bound();
 			emitExtraLifespanChanged(oldLifespan, newLifespan);
 			return new TraceChangeRecord<>(type, getSpace(life), iface, oldLifespan, newLifespan);
 		}
 
-		protected TraceChangeRecord<?, ?> translateDeleted(RangeSet<Long> life) {
+		protected TraceChangeRecord<?, ?> translateDeleted(LifeSet life) {
 			TraceChangeType<T, Void> type = getDeletedType();
 			if (type == null) {
 				return null;
@@ -110,7 +109,7 @@ public interface DBTraceObjectInterface extends TraceObjectInterface, TraceUniqu
 					return null;
 				}
 				assert rec.getAffectedObject() == object;
-				RangeSet<Long> oldLife = life;
+				LifeSet oldLife = life;
 				life = object.getLife();
 				boolean oldHasLife = !oldLife.isEmpty();
 				boolean newHasLife = !life.isEmpty();

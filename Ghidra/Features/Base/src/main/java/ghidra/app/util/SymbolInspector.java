@@ -20,6 +20,7 @@ import java.awt.Component;
 import java.util.HashMap;
 import java.util.Map;
 
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.GhidraOptions;
 import ghidra.app.util.viewer.options.OptionsGui;
 import ghidra.app.util.viewer.options.ScreenElement;
@@ -431,15 +432,9 @@ public class SymbolInspector implements OptionsChangeListener {
 
 	private Color getColor(ScreenElement se) {
 		if (se == null) {
-			return Color.BLACK;
+			return Colors.BACKGROUND;
 		}
-		String optionName = se.getColorOptionName();
-		Color color = (Color) cache.get(optionName);
-		if (color == null) {
-			color = optionsObject.getColor(se.getColorOptionName(), se.getDefaultColor());
-			cache.put(optionName, color);
-		}
-		return color;
+		return se.getDefaultColor();
 	}
 
 	private int getStyle(ScreenElement se) {
@@ -449,7 +444,7 @@ public class SymbolInspector implements OptionsChangeListener {
 		String optionName = se.getStyleOptionName();
 		Integer style = (Integer) cache.get(optionName);
 		if (style == null) {
-			style = Integer.valueOf(optionsObject.getInt(se.getStyleOptionName(), -1));
+			style = optionsObject.getInt(optionName, -1);
 			cache.put(optionName, style);
 		}
 		return style.intValue();

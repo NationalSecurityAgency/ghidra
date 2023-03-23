@@ -15,15 +15,15 @@
  */
 package agent.dbgmodel.impl.dbgmodel.datamodel.script;
 
+import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Guid.REFIID;
 
+import agent.dbgeng.impl.dbgeng.DbgEngUtil;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.InterfaceSupplier;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.Preferred;
 import agent.dbgmodel.dbgmodel.datamodel.script.DataModelNameBinder;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil.InterfaceSupplier;
 import agent.dbgmodel.jna.dbgmodel.datamodel.script.IDataModelNameBinder;
 import agent.dbgmodel.jna.dbgmodel.datamodel.script.WrapIDataModelNameBinder;
 import ghidra.util.datastruct.WeakValueHashMap;
@@ -32,19 +32,15 @@ public interface DataModelNameBinderInternal extends DataModelNameBinder {
 	Map<Pointer, DataModelNameBinderInternal> CACHE = new WeakValueHashMap<>();
 
 	static DataModelNameBinderInternal instanceFor(WrapIDataModelNameBinder data) {
-		return DbgModelUtil.lazyWeakCache(CACHE, data, DataModelNameBinderImpl::new);
+		return DbgEngUtil.lazyWeakCache(CACHE, data, DataModelNameBinderImpl::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIDataModelNameBinder>> PREFERRED_DATA_SPACES_IIDS_BUILDER =
-		ImmutableMap.builder();
-	Map<REFIID, Class<? extends WrapIDataModelNameBinder>> PREFERRED_DATA_SPACES_IIDS =
-		PREFERRED_DATA_SPACES_IIDS_BUILDER //
-				.put(new REFIID(IDataModelNameBinder.IID_IDATA_MODEL_NAME_BINDER),
-					WrapIDataModelNameBinder.class) //
-				.build();
+	List<Preferred<WrapIDataModelNameBinder>> PREFERRED_DATA_SPACES_IIDS = List.of(
+		new Preferred<>(IDataModelNameBinder.IID_IDATA_MODEL_NAME_BINDER,
+			WrapIDataModelNameBinder.class));
 
 	static DataModelNameBinderInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
-		return DbgModelUtil.tryPreferredInterfaces(DataModelNameBinderInternal.class,
+		return DbgEngUtil.tryPreferredInterfaces(DataModelNameBinderInternal.class,
 			PREFERRED_DATA_SPACES_IIDS, supplier);
 	}
 }

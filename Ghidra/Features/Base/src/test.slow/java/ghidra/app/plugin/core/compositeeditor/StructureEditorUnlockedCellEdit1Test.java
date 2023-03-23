@@ -23,7 +23,7 @@ import docking.widgets.dialogs.NumberInputDialog;
 import ghidra.program.model.data.DataType;
 
 public class StructureEditorUnlockedCellEdit1Test
-		extends AbstractStructureEditorUnlockedCellEditTest {
+		extends AbstractStructureEditorTest {
 
 	@Test
 	public void testEditDynamicDataTypeAtLastComponent() throws Exception {

@@ -23,7 +23,9 @@ import java.util.Map.Entry;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.plugin.core.datamgr.util.DataTypeArchiveUtility;
 import ghidra.app.services.DataTypeManagerService;
-import ghidra.app.util.Option;
+import ghidra.app.util.*;
+import ghidra.app.util.opinion.Loader;
+import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.data.*;
@@ -31,10 +33,23 @@ import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.*;
 import ghidra.util.Msg;
+import ghidra.util.SystemUtilities;
+import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 public class DumpFile {
 
+	public static final String CREATE_MEMORY_BLOCKS_OPTION_NAME = "Create Memory Blocks";
+	public static final String JOIN_BLOCKS_OPTION_NAME = "Join Blocks";
+	public static final String ANALYZE_EMBEDDED_OBJECTS_OPTION_NAME =
+		"Analyze Embedded Executables (interactive)";
+
+	public static final boolean CREATE_MEMORY_BLOCKS_OPTION_DEFAULT = true;
+	public static final boolean JOIN_BLOCKS_OPTION_DEFAULT = false;
+	public static final boolean ANALYZE_EMBEDDED_OBJECTS_OPTION_DEFAULT =
+		!SystemUtilities.isInHeadlessMode();
+
+	// If data defined so must intAddressRanges which are used to create memory blocks
 	protected List<DumpData> data = new ArrayList<DumpData>();
 	// Interior ranges are actual defined memory ranges.
 	// Exterior ranges are aggregates of interior ranges, typically corresponding to a module
@@ -62,6 +77,8 @@ public class DumpFile {
 
 	protected Map<String, DataTypeManager> managerList = new HashMap<>();
 
+	private FileBytes fileBytes;
+
 	public DumpFile(DumpFileReader reader, ProgramBasedDataTypeManager dtm, List<Option> options,
 			TaskMonitor monitor) {
 
@@ -72,6 +89,16 @@ public class DumpFile {
 		AddressFactory factory = lang.getAddressFactory();
 		this.minAddr = factory.getAddressSet().getMinAddress();
 		this.options = options;
+	}
+
+	/**
+	 * Determine if {@link DumpFileLoader} should join memory blocks associated with interior
+	 * address ranges.
+	 * @return true if loaded memory blocks should be joined
+	 */
+	public boolean joinBlocksEnabled() {
+		return OptionUtils.getBooleanOptionValue(DumpFile.JOIN_BLOCKS_OPTION_NAME, options,
+			JOIN_BLOCKS_OPTION_DEFAULT);
 	}
 
 	protected DataType getTypeFromArchive(String name) {
@@ -257,8 +284,47 @@ public class DumpFile {
 
 	}
 
+	/**
+	 * Get or create FileBytes within program
+	 * @param monitor task monitor
+	 * @return file bytes object to be used for block creation or null
+	 * @throws IOException if error occurs reading source file or writing to program database
+	 * @throws CancelledException if operation cancelled by user
+	 */
+	public FileBytes getFileBytes(TaskMonitor monitor) throws IOException, CancelledException {
+		if (fileBytes == null) {
+			monitor.setMessage("Creating file bytes");
+			fileBytes =
+				MemoryBlockUtils.createFileBytes(program, reader.getByteProvider(), monitor);
+		}
+		return fileBytes;
+	}
+
 	public void analyze(TaskMonitor monitor) {
 		// Override if needed
+	}
+
+	/**
+	 * Get default <code>DumpFile</code> loader options common to most formats.  These include:
+	 * <ul>
+	 * <li>{@link DumpFile#CREATE_MEMORY_BLOCKS_OPTION_NAME}</li>
+	 * <li>{@link DumpFile#JOIN_BLOCKS_OPTION_NAME}</li>
+	 * <li>{@link DumpFile#ANALYZE_EMBEDDED_OBJECTS_OPTION_NAME}</li>
+	 * </ul>
+	 * @param reader dump file reader
+	 * @return default collection of DumpFile loader options
+	 */
+	protected static Collection<? extends Option> getDefaultOptions(DumpFileReader reader) {
+		List<Option> list = new ArrayList<>();
+
+		list.add(new Option(CREATE_MEMORY_BLOCKS_OPTION_NAME, CREATE_MEMORY_BLOCKS_OPTION_DEFAULT,
+			Boolean.class, Loader.COMMAND_LINE_ARG_PREFIX + "-createMemoryBlocks"));
+		list.add(new Option(JOIN_BLOCKS_OPTION_NAME, JOIN_BLOCKS_OPTION_DEFAULT, Boolean.class,
+			Loader.COMMAND_LINE_ARG_PREFIX + "-joinBlocks"));
+		list.add(new Option(ANALYZE_EMBEDDED_OBJECTS_OPTION_NAME,
+			ANALYZE_EMBEDDED_OBJECTS_OPTION_DEFAULT));
+
+		return list;
 	}
 
 }

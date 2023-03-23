@@ -24,7 +24,9 @@ import org.apache.commons.lang3.StringUtils;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.*;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.util.*;
+import ghidra.app.util.viewer.field.ListingColors.CommentColors;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.options.OptionsGui;
 import ghidra.app.util.viewer.proxy.ProxyObj;
@@ -42,27 +44,27 @@ import ghidra.util.bean.field.AnnotatedTextFieldElement;
   */
 public class EolCommentFieldFactory extends FieldFactory {
 	public static final String FIELD_NAME = "EOL Comment";
-	private final static String GROUP_TITLE = "EOL Comments Field";
+	private static final String GROUP_TITLE = "EOL Comments Field";
 	private static final String SEMICOLON_PREFIX = "; ";
-	public final static String ENABLE_WORD_WRAP_MSG =
+	public static final String ENABLE_WORD_WRAP_MSG =
 		GROUP_TITLE + Options.DELIMITER + "Enable Word Wrapping";
-	public final static String MAX_DISPLAY_LINES_MSG =
+	public static final String MAX_DISPLAY_LINES_MSG =
 		GROUP_TITLE + Options.DELIMITER + "Maximum Lines To Display";
-	public final static String ENABLE_SHOW_SEMICOLON_MSG =
+	public static final String ENABLE_SHOW_SEMICOLON_MSG =
 		GROUP_TITLE + Options.DELIMITER + "Show Semicolon at Start of Each Line";
-	public final static String ENABLE_ALWAYS_SHOW_REPEATABLE_MSG =
+	public static final String ENABLE_ALWAYS_SHOW_REPEATABLE_MSG =
 		GROUP_TITLE + Options.DELIMITER + "Always Show the Repeatable Comment";
-	public final static String ENABLE_ALWAYS_SHOW_REF_REPEATABLE_MSG =
+	public static final String ENABLE_ALWAYS_SHOW_REF_REPEATABLE_MSG =
 		GROUP_TITLE + Options.DELIMITER + "Always Show the Referenced Repeatable Comments";
-	public final static String ENABLE_ALWAYS_SHOW_AUTOMATIC_MSG =
+	public static final String ENABLE_ALWAYS_SHOW_AUTOMATIC_MSG =
 		GROUP_TITLE + Options.DELIMITER + "Always Show the Automatic Comment";
 	public static final String USE_ABBREVIATED_AUTOMITIC_COMMENT_MSG =
 		GROUP_TITLE + Options.DELIMITER + "Use Abbreviated Automatic Comments";
 	public static final String SHOW_FUNCTION_AUTOMITIC_COMMENT_MSG =
 		GROUP_TITLE + Options.DELIMITER + "Show Function Reference Automatic Comments";
-	public final static String ENABLE_PREPEND_REF_ADDRESS_MSG =
+	public static final String ENABLE_PREPEND_REF_ADDRESS_MSG =
 		GROUP_TITLE + Options.DELIMITER + "Prepend the Address to Each Referenced Comment";
-	public static final Color DEFAULT_COLOR = Color.BLUE;
+	public static final Color DEFAULT_COLOR = Palette.BLUE;
 
 	private boolean isWordWrap;
 	private int maxDisplayLines;
@@ -73,9 +75,6 @@ public class EolCommentFieldFactory extends FieldFactory {
 	private boolean useAbbreviatedAutomatic;
 	private boolean showAutomaticFunctions;
 	private boolean prependRefAddress;
-	private Color repeatableCommentColor;
-	private Color automaticCommentColor;
-	private Color refRepeatableCommentColor;
 	private int repeatableCommentStyle;
 	private int automaticCommentStyle;
 	private int refRepeatableCommentStyle;
@@ -137,19 +136,10 @@ public class EolCommentFieldFactory extends FieldFactory {
 
 		maxDisplayLines = fieldOptions.getInt(MAX_DISPLAY_LINES_MSG, 6);
 		isWordWrap = fieldOptions.getBoolean(ENABLE_WORD_WRAP_MSG, false);
-		repeatableCommentColor =
-			displayOptions.getColor(OptionsGui.COMMENT_REPEATABLE.getColorOptionName(),
-				OptionsGui.COMMENT_REPEATABLE.getDefaultColor());
 		repeatableCommentStyle =
 			displayOptions.getInt(OptionsGui.COMMENT_REPEATABLE.getStyleOptionName(), -1);
-		automaticCommentColor =
-			displayOptions.getColor(OptionsGui.COMMENT_AUTO.getColorOptionName(),
-				OptionsGui.COMMENT_AUTO.getDefaultColor());
 		automaticCommentStyle =
 			displayOptions.getInt(OptionsGui.COMMENT_AUTO.getStyleOptionName(), -1);
-		refRepeatableCommentColor =
-			displayOptions.getColor(OptionsGui.COMMENT_REF_REPEAT.getColorOptionName(),
-				OptionsGui.COMMENT_REF_REPEAT.getDefaultColor());
 		refRepeatableCommentStyle =
 			displayOptions.getInt(OptionsGui.COMMENT_REF_REPEAT.getStyleOptionName(), -1);
 		showSemicolon = fieldOptions.getBoolean(ENABLE_SHOW_SEMICOLON_MSG, false);
@@ -159,8 +149,7 @@ public class EolCommentFieldFactory extends FieldFactory {
 		alwaysShowAutomatic = fieldOptions.getBoolean(ENABLE_ALWAYS_SHOW_AUTOMATIC_MSG, false);
 		useAbbreviatedAutomatic =
 			fieldOptions.getBoolean(USE_ABBREVIATED_AUTOMITIC_COMMENT_MSG, true);
-		showAutomaticFunctions =
-			fieldOptions.getBoolean(SHOW_FUNCTION_AUTOMITIC_COMMENT_MSG, true);
+		showAutomaticFunctions = fieldOptions.getBoolean(SHOW_FUNCTION_AUTOMITIC_COMMENT_MSG, true);
 
 		prependRefAddress = fieldOptions.getBoolean(ENABLE_PREPEND_REF_ADDRESS_MSG, false);
 
@@ -224,9 +213,6 @@ public class EolCommentFieldFactory extends FieldFactory {
 	 */
 	private void adjustRepeatableDisplayOptions(Options options, String optionName, Object oldValue,
 			Object newValue) {
-		if (optionName.equals(OptionsGui.COMMENT_REPEATABLE.getColorOptionName())) {
-			repeatableCommentColor = (Color) newValue;
-		}
 		String repeatableStyleName = OptionsGui.COMMENT_REPEATABLE.getStyleOptionName();
 		if (optionName.equals(repeatableStyleName)) {
 			repeatableCommentStyle = options.getInt(repeatableStyleName, -1);
@@ -243,9 +229,6 @@ public class EolCommentFieldFactory extends FieldFactory {
 	 */
 	private void adjustRefRepeatDisplayOptions(Options options, String optionName, Object oldValue,
 			Object newValue) {
-		if (optionName.equals(OptionsGui.COMMENT_REF_REPEAT.getColorOptionName())) {
-			refRepeatableCommentColor = (Color) newValue;
-		}
 		String refRepeatStyleName = OptionsGui.COMMENT_REF_REPEAT.getStyleOptionName();
 		if (optionName.equals(refRepeatStyleName)) {
 			refRepeatableCommentStyle = options.getInt(refRepeatStyleName, -1);
@@ -261,9 +244,6 @@ public class EolCommentFieldFactory extends FieldFactory {
 	 */
 	private void adjustAutomaticCommentDisplayOptions(Options options, String optionName,
 			Object oldValue, Object newValue) {
-		if (optionName.equals(OptionsGui.COMMENT_AUTO.getColorOptionName())) {
-			automaticCommentColor = (Color) newValue;
-		}
 		String automaticCommentStyleName = OptionsGui.COMMENT_AUTO.getStyleOptionName();
 		if (optionName.equals(automaticCommentStyleName)) {
 			automaticCommentStyle = options.getInt(automaticCommentStyleName, -1);
@@ -314,8 +294,8 @@ public class EolCommentFieldFactory extends FieldFactory {
 		List<FieldElement> elementList = new ArrayList<>();
 
 		// This Code Unit's End of Line Comment
-		AttributedString myEolPrefixString =
-			new AttributedString(SEMICOLON_PREFIX, color, getMetrics(style), false, null);
+		AttributedString myEolPrefixString = new AttributedString(SEMICOLON_PREFIX,
+			CommentColors.EOL, getMetrics(style), false, null);
 		String[] eolComments = displayableEol.getEOLComments();
 		List<FieldElement> eolFieldElements = convertToFieldElements(program, eolComments,
 			myEolPrefixString, showSemicolon, isWordWrap, getNextRow(elementList));
@@ -324,7 +304,7 @@ public class EolCommentFieldFactory extends FieldFactory {
 		// This Code Unit's Repeatable Comment
 		if (alwaysShowRepeatable || elementList.isEmpty()) {
 			AttributedString myRepeatablePrefixString = new AttributedString(SEMICOLON_PREFIX,
-				repeatableCommentColor, getMetrics(repeatableCommentStyle), false, null);
+				CommentColors.REPEATABLE, getMetrics(repeatableCommentStyle), false, null);
 			String[] repeatableComments = displayableEol.getRepeatableComments();
 			List<FieldElement> repeatableFieldElements =
 				convertToFieldElements(program, repeatableComments, myRepeatablePrefixString,
@@ -335,7 +315,7 @@ public class EolCommentFieldFactory extends FieldFactory {
 		// Referenced Repeatable Comments
 		if (alwaysShowRefRepeatables || elementList.isEmpty()) {
 			AttributedString refRepeatPrefixString = new AttributedString(SEMICOLON_PREFIX,
-				refRepeatableCommentColor, getMetrics(refRepeatableCommentStyle), false, null);
+				CommentColors.REF_REPEATABLE, getMetrics(refRepeatableCommentStyle), false, null);
 			int refRepeatCount = displayableEol.getReferencedRepeatableCommentsCount();
 			for (int subTypeIndex = 0; subTypeIndex < refRepeatCount; subTypeIndex++) {
 				RefRepeatComment refRepeatComment =
@@ -351,7 +331,7 @@ public class EolCommentFieldFactory extends FieldFactory {
 		// Automatic Comment
 		if (alwaysShowAutomatic || elementList.isEmpty()) {
 			AttributedString autoCommentPrefixString = new AttributedString(SEMICOLON_PREFIX,
-				automaticCommentColor, getMetrics(automaticCommentStyle), false, null);
+				CommentColors.AUTO, getMetrics(automaticCommentStyle), false, null);
 			String[] autoComment = displayableEol.getAutomaticComment();
 			List<FieldElement> autoCommentFieldElements =
 				convertToFieldElements(program, autoComment, autoCommentPrefixString, showSemicolon,
@@ -572,11 +552,6 @@ public class EolCommentFieldFactory extends FieldFactory {
 			ToolOptions newFieldOptions) {
 		return new EolCommentFieldFactory(fieldFormatModel, highlightProvider, newDisplayOptions,
 			newFieldOptions);
-	}
-
-	@Override
-	public Color getDefaultColor() {
-		return OptionsGui.COMMENT_EOL.getDefaultColor();
 	}
 
 	/**

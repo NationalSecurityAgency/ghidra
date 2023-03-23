@@ -1049,16 +1049,15 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			else if (sourceArchive == null || dataType.getUniversalID() == null) {
 				// if the dataType has no source or it has no ID (datatypes with no ID are
 				// always local i.e. pointers)
-				resolvedDataType = resolveNoSourceDataType(dataType, currentHandler);
+				resolvedDataType = resolveDataTypeNoSource(dataType, currentHandler);
 			}
 			else if (!sourceArchive.getSourceArchiveID().equals(getUniversalID()) &&
 				sourceArchive.getArchiveType() == ArchiveType.PROGRAM) {
 				// dataTypes from a different program don't carry over their identity.
-				resolvedDataType = resolveNoSourceDataType(dataType, currentHandler);
+				resolvedDataType = resolveDataTypeNoSource(dataType, currentHandler);
 			}
 			else {
-				resolvedDataType =
-					resolveDataTypeWithSource(dataType, sourceArchive, currentHandler);
+				resolvedDataType = resolveDataTypeWithSource(dataType, currentHandler);
 			}
 			cacheResolvedDataType(dataType, resolvedDataType);
 			if (resolvedDataType instanceof DataTypeDB) {
@@ -1083,6 +1082,12 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	}
 
 	private DataType resolveBuiltIn(DataType dataType, DataTypeConflictHandler handler) {
+
+		if (dataType instanceof Pointer) {
+			// treat built-in pointers like other datatypes without a source
+			return resolveDataTypeNoSource(dataType, currentHandler);
+		}
+
 		// can't do this check now because Pointers from the BuiltinDataTypeManager are
 		// not instances of BuiltInDataType because the BuiltInDataTypeManger converts
 		// pointers from BuiltIns to PointerDBs (Probably shouldn't, but the 
@@ -1094,7 +1099,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				return existingDataType;
 			}
 			// oops a non-builtin dataType exists with the same name. Only option is to rename existing
-			String dtName = getUnusedConflictName(dataType.getCategoryPath(), dataType.getName());
+			String dtName = getUnusedConflictName(dataType);
 			try {
 				existingDataType.setName(dtName);
 			}
@@ -1135,84 +1140,8 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 	}
 
-	/**
-	 * Either finds an equivalent dataType with the same categoryPath and name (or
-	 * conflict name) to the given dataType. Otherwise, it creates a new dataType in
-	 * this archive equivalent to the given dataType. If a dataType exists with same
-	 * path and name but is not equivalent, the handler will resolve the problem in
-	 * one of 3 ways. 1) A new dataType will be created, but with a .conflict name
-	 * 2) The existing dataType will be replaced by a resolved copy of the given
-	 * dataType. 3) The existing dataType will be returned instead of a resolved
-	 * version of the given dataType.
-	 * 
-	 * @param dataType the dataType for which to return an equivalent dataType in
-	 *                 this manager
-	 * @param handler  Used to handle collisions with dataTypes with same path and
-	 *                 name that is
-	 * @return resolved datatype
-	 */
-	private DataType resolveNoSourceDataType(DataType dataType, DataTypeConflictHandler handler) {
-
-		DataType existingDataType = findEquivalentDataTypeSameLocation(dataType, handler);
-		if (existingDataType != null) {
-			return existingDataType;
-		}
-		existingDataType = getDataType(dataType.getCategoryPath(), dataType.getName());
-		if (existingDataType == null) {
-			return createDataType(dataType, dataType.getName(), null, handler);
-		}
-
-		// So we have a dataType with the same path and name, but not equivalent, so use
-		// the conflictHandler to decide what to do.
-		ConflictResult result = resolveConflict(handler, dataType, existingDataType);
-		switch (result) {
-
-			case REPLACE_EXISTING: // new type replaces old conflicted type
-				try {
-					if (updateExistingDataType(existingDataType, dataType)) {
-						return existingDataType;
-					}
-					renameToUnusedConflictName(existingDataType);
-					DataType newDataType =
-						createDataType(dataType, dataType.getName(), null, handler);
-					try {
-						replace(existingDataType, newDataType);
-					}
-					catch (DataTypeDependencyException e) {
-						throw new IllegalArgumentException(
-							"Invalid datatype replacement: " + newDataType.getName(), e);
-					}
-					return newDataType;
-				}
-				catch (DataTypeDependencyException e) {
-					// new type refers to old type - fallthrough to RENAME_AND_ADD
-					// TODO: alternatively we could throw an exception
-				}
-
-			case RENAME_AND_ADD: // default handler behavior
-				String dtName =
-					getUnusedConflictName(dataType.getCategoryPath(), dataType.getName());
-				DataType newDataType = createDataType(dataType, dtName, null, handler);
-
-				// resolving child data types could result in another copy of dataType in the
-				// manager depending upon the conflict handler - check again
-				existingDataType = findEquivalentDataTypeSameLocation(dataType, handler);
-				// If there is an equivalent datatype, remove the added type and return the existing
-				if (existingDataType != null && existingDataType != newDataType) {
-					removeInternal(newDataType, TaskMonitor.DUMMY);
-					return existingDataType;
-				}
-				return newDataType;
-
-			case USE_EXISTING: // new type is discarded and old conflicted type is returned
-				return existingDataType;
-		}
-		return null;
-	}
-
 	private void renameToUnusedConflictName(DataType dataType) {
-		String dtName = dataType.getName();
-		String name = getUnusedConflictName(dataType.getCategoryPath(), dtName);
+		String name = getUnusedConflictName(dataType);
 		try {
 			dataType.setName(name);
 		}
@@ -1232,15 +1161,14 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 * 
 	 * @param existingDataType existing datatype
 	 * @param dataType         new datatype
+	 * @param sourceArchive source archive associated with new type (may be null).
+	 * If not null the existingDataType will be updated with source info.
 	 * @return true if replacement approach was successful, else false
 	 * @throws DataTypeDependencyException if datatype contains dependency issues
 	 *                                     during resolve process
 	 */
-	private boolean updateExistingDataType(DataType existingDataType, DataType dataType)
-			throws DataTypeDependencyException {
-
-		// TODO: this approach could be added to other DB datatypes to avoid
-		// unnecessary creation and removal.
+	private boolean updateExistingDataType(DataType existingDataType, DataType dataType,
+			SourceArchive sourceArchive) throws DataTypeDependencyException {
 
 		try {
 			if (existingDataType instanceof StructureDB) {
@@ -1249,7 +1177,6 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				}
 				StructureDB existingStruct = (StructureDB) existingDataType;
 				existingStruct.doReplaceWith((StructureInternal) dataType, true);
-				return true;
 			}
 			else if (existingDataType instanceof UnionDB) {
 				if (!(dataType instanceof UnionInternal)) {
@@ -1257,13 +1184,57 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				}
 				UnionDB existingUnion = (UnionDB) existingDataType;
 				existingUnion.doReplaceWith((UnionInternal) dataType, true);
-				return true;
 			}
+			else if (existingDataType instanceof FunctionDefinitionDB) {
+				if (!(dataType instanceof FunctionDefinition)) {
+					return false;
+				}
+				existingDataType.replaceWith(dataType);
+			}
+			else if (existingDataType instanceof EnumDB) {
+				if (!(dataType instanceof Enum)) {
+					return false;
+				}
+				existingDataType.replaceWith(dataType);
+			}
+			else if (existingDataType instanceof TypedefDB) {
+				if (!(dataType instanceof TypeDef)) {
+					return false;
+				}
+				existingDataType.replaceWith(dataType);
+			}
+			else {
+				return false;
+			}
+
+			if (sourceArchive != null) {
+				existingDataType.setSourceArchive(sourceArchive);
+				((DataTypeDB) existingDataType).setUniversalID(dataType.getUniversalID());
+				long lastChangeTime = dataType.getLastChangeTime();
+				existingDataType.setLastChangeTime(lastChangeTime);
+				existingDataType.setLastChangeTimeInSourceArchive(lastChangeTime);
+			}
+			return true;
 		}
 		catch (IOException e) {
 			dbError(e);
 		}
 		return false;
+	}
+
+	/**
+	 * This method gets a ".conflict" name that is not currently used by any data
+	 * types in the indicated category of the data type manager.
+	 * @param dt datatype who name is used to establish non-conflict base name
+	 * @return the unused conflict name or original name for datatypes whose name is automatic
+	 */
+	public String getUnusedConflictName(DataType dt) {
+		String name = dt.getName();
+		if ((dt instanceof Array) || (dt instanceof Pointer) || (dt instanceof BuiltInDataType)) {
+			// name not used - anything will do
+			return name;
+		}
+		return getUnusedConflictName(dt.getCategoryPath(), name);
 	}
 
 	/**
@@ -1283,20 +1254,59 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		if (index > 0) {
 			name = name.substring(0, index);
 		}
+		// Name sequence: <baseName>, <baseName>.conflict, <basename>.conflict1, ...
+
 		String baseName = name + DataType.CONFLICT_SUFFIX;
-		String testName = baseName;
+		String testName = name;
 		int count = 0;
 		while (getDataType(path, testName) != null) {
-			count++;
-			testName = baseName + count;
+			String countSuffix = "";
+			if (count != 0) {
+				countSuffix = Integer.toString(count);
+			}
+			testName = baseName + countSuffix;
+			++count;
 		}
 		return testName;
 	}
 
-	private boolean isEquivalentDataType(DataType addedDataType, DataType existingDataType,
-			DataTypeConflictHandler handler) {
-		return existingDataType.isEquivalent(addedDataType) ||
-			handler.resolveConflict(addedDataType, existingDataType) == ConflictResult.USE_EXISTING;
+	private List<DataType> findDataTypesSameLocation(DataType dataType) {
+
+		Category category = getCategory(dataType.getCategoryPath());
+		if (category == null) {
+			return List.of();
+		}
+
+		if (!(dataType instanceof Pointer) && !(dataType instanceof Array)) {
+			return category.getDataTypesByBaseName(dataType.getName());
+		}
+
+		// Handle pointers and arrays
+
+		DataType existingDataType = category.getDataType(dataType.getName());
+
+		DataType baseDataType = DataTypeUtilities.getBaseDataType(dataType);
+		if (baseDataType == null) {
+			return existingDataType != null ? List.of(existingDataType) : List.of();
+		}
+
+		SourceArchive sourceArchive = baseDataType.getSourceArchive();
+		if (sourceArchive != null && sourceArchive.getArchiveType() == ArchiveType.BUILT_IN) {
+			return existingDataType != null ? List.of(existingDataType) : List.of();
+		}
+
+		String baseTypeName = baseDataType.getName();
+		String decorations = dataType.getName().substring(baseTypeName.length());
+
+		List<DataType> list = new ArrayList<>();
+		for (DataType existingBaseDt : category.getDataTypesByBaseName(baseTypeName)) {
+			String name = existingBaseDt.getName() + decorations;
+			DataType dt = category.getDataType(name);
+			if (dt != null) {
+				list.add(dt);
+			}
+		}
+		return list;
 	}
 
 	/**
@@ -1304,75 +1314,188 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	 * categoryPath and has either the same name or a conflict variation of that
 	 * name.
 	 * 
-	 * @param dataType the dataType for which to find an equivalent existing
-	 *                 dataType
+	 * @param dataType the dataType for which to find an equivalent existing dataType
 	 */
-	private DataType findEquivalentDataTypeSameLocation(DataType dataType,
-			DataTypeConflictHandler handler) {
+	private DataType findEquivalentDataTypeSameLocation(DataType dataType) {
 
-		// first see if an exact match exists
-		String dtName = dataType.getName();
-
-		DataType existingDataType = getDataType(dataType.getCategoryPath(), dtName);
+		// Check exact name match
+		DataType existingDataType = getDataType(dataType.getCategoryPath(), dataType.getName());
 
 		// If the existing Data type is currently being resolved, its isEquivalent
 		// method is short circuited such that it will return true. So it is important 
 		// to call the isEquivalent on the existing datatype and not the dataType.
-		if (existingDataType != null && isEquivalentDataType(dataType, existingDataType, handler)) {
+		if (existingDataType != null && existingDataType.isEquivalent(dataType)) {
 			return existingDataType;
 		}
 
-		Category category = getCategory(dataType.getCategoryPath());
-		if (category == null) {
-			return null;
-		}
-		List<DataType> relatedByName = category.getDataTypesByBaseName(dtName);
-
+		List<DataType> relatedByName = findDataTypesSameLocation(dataType);
 		for (DataType candidate : relatedByName) {
-			if (candidate != existingDataType &&
-				isEquivalentDataType(dataType, candidate, handler)) {
+			if (candidate != existingDataType && candidate.isEquivalent(dataType)) {
 				return candidate;
 			}
 		}
 		return null;
 	}
 
-	private DataType resolveDataTypeWithSource(DataType dataType, SourceArchive sourceArchive,
-			DataTypeConflictHandler handler) {
+	private DataType findDataTypeSameLocation(DataType dataType) {
+
+		// Check exact name match which is similar
+		DataType existingDataType = getDataType(dataType.getCategoryPath(), dataType.getName());
+		if (existingDataType != null &&
+			DataTypeUtilities.isSameKindDataType(dataType, existingDataType)) {
+			return existingDataType;
+		}
+
+		// check all conflict types
+		List<DataType> relatedByName = findDataTypesSameLocation(dataType);
+		for (DataType candidate : relatedByName) {
+			if (existingDataType == null) {
+				existingDataType = candidate;
+			}
+			if (DataTypeUtilities.isSameKindDataType(dataType, candidate)) {
+				return candidate;
+			}
+		}
+
+		return existingDataType;
+	}
+
+	/**
+	 * Either finds an equivalent dataType with the same categoryPath and name (or
+	 * conflict name) to the given dataType. Otherwise, it creates a new dataType in
+	 * this archive equivalent to the given dataType. If a dataType exists with same
+	 * path and name but is not equivalent, the handler will resolve the problem in
+	 * one of 3 ways. 1) A new dataType will be created, but with a .conflict name
+	 * 2) The existing dataType will be replaced by a resolved copy of the given
+	 * dataType. 3) The existing dataType will be returned instead of a resolved
+	 * version of the given dataType.
+	 * 
+	 * @param dataType the dataType for which to return an equivalent dataType in
+	 *                 this manager
+	 * @param handler  Used to handle collisions with dataTypes with same path and
+	 *                 name that is
+	 * @return resolved datatype
+	 */
+	private DataType resolveDataTypeNoSource(DataType dataType, DataTypeConflictHandler handler) {
+
+		DataType existingDataType = findEquivalentDataTypeSameLocation(dataType);
+		if (existingDataType != null) {
+			return existingDataType;
+		}
+
+		return resolveNoEquivalentFound(dataType, null, handler);
+	}
+
+	/**
+	 * Perform datatype resolution for types originating from a source archive (excludes
+	 * programs and built-in datatypes).
+	 * 
+	 * @param dataType the dataType for which to return an equivalent dataType in
+	 *                 this manager
+	 * @param handler  Used to handle collisions with dataTypes with same path and
+	 *                 name that is
+	 * @return resolved datatype
+	 */
+	private DataType resolveDataTypeWithSource(DataType dataType, DataTypeConflictHandler handler) {
+
+		SourceArchive sourceArchive = dataType.getSourceArchive();
+
 		// Do we have that dataType already resolved and associated with the source archive?
 		DataType existingDataType = getDataType(sourceArchive, dataType.getUniversalID());
 		if (existingDataType != null) {
-			if (!existingDataType.isEquivalent(dataType)) {
-				if (handler.shouldUpdate(dataType, existingDataType)) {
-					existingDataType.replaceWith(dataType);
-					existingDataType.setLastChangeTime(dataType.getLastChangeTime());
-				}
+			if (!existingDataType.isEquivalent(dataType) &&
+				handler.shouldUpdate(dataType, existingDataType)) {
+				existingDataType.replaceWith(dataType);
+				existingDataType.setLastChangeTime(dataType.getLastChangeTime());
 			}
 			return existingDataType;
 		}
 
-		// Do we have the same named data type in the same category already?
-		existingDataType = getDataType(dataType.getCategoryPath(), dataType.getName());
-		if (existingDataType == null) {
-			// Don't have a data type with this path name, so can create it.
-			return createDataType(dataType, dataType.getName(), sourceArchive, handler);
-		}
-
 		// If we have the same path name and the existing data type is a local data type
 		// and is equivalent to this one, then associate it with the source archive
-		if (isLocalSource(existingDataType) &&
-			isEquivalentDataType(dataType, existingDataType, handler)) {
-			return replaceEquivalentLocalWithSourceDataType(dataType, sourceArchive,
-				existingDataType);
+		existingDataType = findEquivalentDataTypeSameLocation(dataType);
+		if (existingDataType != null) {
+			if (isLocalSource(existingDataType)) {
+				// If we have an equivalent local data type associate it with the source archive
+				replaceEquivalentLocalWithSourceDataType(dataType, sourceArchive, existingDataType);
+			}
+			return existingDataType;
 		}
-
-		// Otherwise, we need to create a new Data type associated with the archive
-		// and it will possibly have a conflict name.
-		String dtName = getUnusedConflictName(dataType.getCategoryPath(), dataType.getName());
-		return createDataType(dataType, dtName, sourceArchive, handler);
+			
+		return resolveNoEquivalentFound(dataType, sourceArchive, handler);
 	}
 
-	private DataType replaceEquivalentLocalWithSourceDataType(DataType dataType,
+	/**
+	 * Complete datatype resolution after having attempted to find an existing equivalent type. 
+	 * An attempt is made to identify a conflicting datatype and determine a conflict resolution
+	 * using the specified conflict handler.
+	 * @param dataType datatype being resolved
+	 * @param sourceArchive source archive associated with new type (may be null)
+	 * @param handler datatype conflict handler
+	 * @return resolved datatype (may be existing or newly added datatype)
+	 */
+	private DataType resolveNoEquivalentFound(DataType dataType, SourceArchive sourceArchive,
+			DataTypeConflictHandler handler) {
+
+		// If not found, do we have the same named data type in the same category already?
+		// (preference is given to similar kind of datatype when checking existing conflict types)
+		DataType existingDataType = findDataTypeSameLocation(dataType);
+		if (existingDataType == null) {
+			return createDataType(dataType, handler);
+		}
+
+		// So we have a dataType with the same path and name, but not equivalent, so use
+		// the conflictHandler to decide what to do.
+		ConflictResult result = handler.resolveConflict(dataType, existingDataType);
+		switch (result) {
+
+			case REPLACE_EXISTING: // new type replaces old conflicted type
+				try {
+					if (updateExistingDataType(existingDataType, dataType, sourceArchive)) {
+						return existingDataType;
+					}
+					renameToUnusedConflictName(existingDataType);
+					DataType newDataType =
+						createDataType(dataType, dataType.getName(), sourceArchive, handler);
+					try {
+						replace(existingDataType, newDataType);
+					}
+					catch (DataTypeDependencyException e) {
+						throw new IllegalArgumentException(
+							"Invalid datatype replacement: " + newDataType.getName(), e);
+					}
+					return newDataType;
+				}
+				catch (DataTypeDependencyException e) {
+					// new type refers to old type - fallthrough to RENAME_AND_ADD
+					// TODO: alternatively we could throw an exception
+				}
+
+			case RENAME_AND_ADD: // default handler behavior
+				return createDataType(dataType, handler);
+
+			default:  // USE_EXISTING - new type is discarded and old conflicted type is returned
+				return existingDataType;
+		}
+	}
+
+	private DataType createDataType(DataType dataType, DataTypeConflictHandler handler) {
+		SourceArchive sourceArchive = dataType.getSourceArchive();
+		String dtName = getUnusedConflictName(dataType);
+		DataType newDataType = createDataType(dataType, dtName, sourceArchive, handler);
+
+		// resolving child data types could result in another copy of dataType in the
+		// manager depending upon the conflict handler - check again
+		DataType existingDataType = findEquivalentDataTypeSameLocation(dataType);
+		// If there is an equivalent datatype, remove the added type and return the existing
+		if (existingDataType != null && existingDataType != newDataType) {
+			removeInternal(newDataType, TaskMonitor.DUMMY);
+			return existingDataType;
+		}
+		return newDataType;
+	}
+
+	private void replaceEquivalentLocalWithSourceDataType(DataType dataType,
 			SourceArchive sourceArchive, DataType existingDataType) {
 		// Since it's equivalent, set its source, ID, and replace its components.
 		// TODO: Need a better way to do this.
@@ -1383,7 +1506,6 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		existingDataType.setLastChangeTime(lastChangeTime);
 		existingDataType.setLastChangeTimeInSourceArchive(lastChangeTime);
 		dataTypeChanged(existingDataType, false);
-		return existingDataType;
 	}
 
 	private boolean isLocalSource(DataType dataType) {
@@ -1986,8 +2108,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 			// Set the datatype's universal ID to a newly generated universal ID,
 			// since we no longer want the source archive data type's universal ID.
-			if (dataType instanceof DataTypeDB) {
-				DataTypeDB dt = (DataTypeDB) dataType;
+			if (dataType instanceof DataTypeDB dt) {
 				dt.setUniversalID(UniversalIdGenerator.nextID());
 			}
 
@@ -2038,8 +2159,8 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		if (dataType == null) {
 			return;
 		}
-		if (dataType instanceof DataTypeDB) {
-			((DataTypeDB) dataType).notifyDeleted();
+		if (dataType instanceof DataTypeDB dt) {
+			dt.notifyDeleted();
 		}
 		else {
 			buildSortedDataTypeList();
@@ -2159,8 +2280,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 		}
 		// otherwise, it probably belongs to this dataTypeManager, but it could a
 		// leftover after an undo. So make sure it really is there.
-		if (dataType instanceof DataTypeDB) {
-			DataTypeDB dtDb = (DataTypeDB) dataType;
+		if (dataType instanceof DataTypeDB dtDb) {
 			return dtCache.get(dtDb.getKey()) == dataType && !dtDb.isDeleted();
 		}
 		return builtIn2IdMap.containsKey(dataType);
@@ -2599,46 +2719,37 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			}
 
 			DataType newDataType = null;
-			if (dt instanceof Array) {
-				Array array = (Array) dt;
+			if (dt instanceof Array array) {
 				newDataType = createArray(array.getDataType(), array.getNumElements(),
 					array.getElementLength(), cat, handler);
 			}
-			else if (dt instanceof Pointer) {
-				Pointer ptr = (Pointer) dt;
+			else if (dt instanceof Pointer ptr) {
 				int len = ptr.hasLanguageDependantLength() ? -1 : ptr.getLength();
 				newDataType = createPointer(ptr.getDataType(), cat, (byte) len, handler);
 			}
-			else if (dt instanceof BuiltInDataType) {
-				BuiltInDataType builtInDataType = (BuiltInDataType) dt;
+			else if (dt instanceof BuiltInDataType builtInDataType) {
 				newDataType = createBuiltIn(builtInDataType, cat);
 			}
-			else if (dt instanceof StructureInternal) {
-				StructureInternal structure = (StructureInternal) dt;
+			else if (dt instanceof StructureInternal structure) {
 				newDataType = createStructure(structure, name, cat, sourceArchiveIdValue,
 					id.getValue());
 			}
-			else if (dt instanceof TypeDef) {
-				TypeDef typedef = (TypeDef) dt;
+			else if (dt instanceof TypeDef typedef) {
 				newDataType =
 					createTypeDef(typedef, name, cat, sourceArchiveIdValue, id.getValue());
 			}
-			else if (dt instanceof UnionInternal) {
-				UnionInternal union = (UnionInternal) dt;
+			else if (dt instanceof UnionInternal union) {
 				newDataType =
 					createUnion(union, name, cat, sourceArchiveIdValue, id.getValue());
 			}
-			else if (dt instanceof Enum) {
-				Enum enumm = (Enum) dt;
+			else if (dt instanceof Enum enumm) {
 				newDataType = createEnum(enumm, name, cat, sourceArchiveIdValue, id.getValue());
 			}
-			else if (dt instanceof FunctionDefinition) {
-				FunctionDefinition funDef = (FunctionDefinition) dt;
+			else if (dt instanceof FunctionDefinition funDef) {
 				newDataType = createFunctionDefinition(funDef, name, cat, sourceArchiveIdValue,
 					id.getValue());
 			}
-			else if (dt instanceof MissingBuiltInDataType) {
-				MissingBuiltInDataType missingBuiltInDataType = (MissingBuiltInDataType) dt;
+			else if (dt instanceof MissingBuiltInDataType missingBuiltInDataType) {
 				newDataType = createMissingBuiltIn(missingBuiltInDataType, cat);
 			}
 			else {
@@ -3391,8 +3502,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 
 	@Override
 	public Set<DataType> getDataTypesContaining(DataType dataType) {
-		if (dataType instanceof DataTypeDB) {
-			DataTypeDB dataTypeDb = (DataTypeDB) dataType;
+		if (dataType instanceof DataTypeDB dataTypeDb) {
 			if (dataTypeDb.getDataTypeManager() != this) {
 				return Set.of();
 			}

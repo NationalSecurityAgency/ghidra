@@ -32,9 +32,9 @@ public class TestTargetModule
 
 	public TestTargetModule(TestTargetModuleContainer parent, String name, AddressRange range) {
 		super(parent, PathUtils.makeKey(name), "Module");
-		sections = new TestTargetSectionContainer(this);
-		symbols = new TestTargetSymbolNamespace(this);
-		types = new TestTargetDataTypeNamespace(this);
+		sections = getModel().newTestTargetSectionContainer(this);
+		symbols = getModel().newTestTargetSymbolNamespace(this);
+		types = getModel().newTestTargetDataTypeNamespace(this);
 
 		changeAttributes(List.of(), Map.of(
 			RANGE_ATTRIBUTE_NAME, range,

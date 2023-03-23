@@ -15,6 +15,8 @@
  */
 package ghidra.program.database.properties;
 
+import javax.help.UnsupportedOperationException;
+
 import db.*;
 import ghidra.util.ObjectStorage;
 import ghidra.util.Saveable;
@@ -49,39 +51,26 @@ public class GenericSaveable implements Saveable {
 		return fieldClasses;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.util.Saveable#save(ghidra.util.ObjectStorage)
-	 */
 	@Override
 	public void save(ObjectStorage objStorage) {
+		throw new UnsupportedOperationException("not supported by GenericSaveable");
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.util.Saveable#restore(ghidra.util.ObjectStorage)
-	 */
 	@Override
 	public void restore(ObjectStorage objStorage) {
+		throw new UnsupportedOperationException("not supported by GenericSaveable");
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.util.Saveable#getSchemaVersion()
-	 */
 	@Override
 	public int getSchemaVersion() {
 		return 0;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.util.Saveable#isUpgradeable(int)
-	 */
 	@Override
 	public boolean isUpgradeable(int oldSchemaVersion) {
 		return false;
 	}
 
-	/* (non-Javadoc)
-	 * @see ghidra.util.Saveable#upgrade(ghidra.util.ObjectStorage, int, ghidra.util.ObjectStorage)
-	 */
 	@Override
 	public boolean upgrade(ObjectStorage oldObjStorage, int oldSchemaVersion,
 			ObjectStorage currentObjStorage) {
@@ -124,9 +113,6 @@ public class GenericSaveable implements Saveable {
 		return true;
 	}
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		if (record == null || schema == null) {

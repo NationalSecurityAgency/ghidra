@@ -16,12 +16,16 @@
 package ghidra.app.util.bin.format.elf.extend;
 
 import java.math.BigInteger;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
 
 import ghidra.app.util.bin.format.elf.*;
 import ghidra.app.util.bin.format.elf.ElfDynamicType.ElfDynamicValueType;
 import ghidra.app.util.bin.format.elf.relocation.PowerPC64_ElfRelocationConstants;
 import ghidra.app.util.opinion.ElfLoader;
-import ghidra.program.model.address.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.data.PointerDataType;
 import ghidra.program.model.data.QWordDataType;
 import ghidra.program.model.lang.*;
@@ -46,10 +50,21 @@ public class PowerPC64_ElfExtension extends ElfExtension {
 	public static final ElfDynamicType DT_PPC64_OPDSZ = new ElfDynamicType(0x70000002,
 		"DT_PPC64_OPDSZ", "Specify the size of the .opd section", ElfDynamicValueType.ADDRESS);
 	public static final ElfDynamicType DT_PPC64_OPT = new ElfDynamicType(0x70000003, "DT_PPC64_OPT",
-		"Specify whether various optimisations are possible", ElfDynamicValueType.VALUE);
+		"Specify whether various optimizations are possible", ElfDynamicValueType.VALUE);
 
 	// PPC64 ABI Version Flag Bits contained within ElfHeader e_flags
 	private static final int EF_PPC64_ABI = 3;
+
+	// DT_PPC64_OPT bits
+	private static final int PPC64_OPT_TLS = 1;
+	private static final int PPC64_OPT_MULTI_TOC = 2;
+	private static final int PPC64_OPT_LOCALENTRY = 4;
+
+	// ELFv2 ABI symbol st_other bits
+	//   STO_PPC64_LOCAL specifies the number of instructions between a
+	//   function's global entry point and local entry point
+	private static final int STO_PPC64_LOCAL_BIT = 5;
+	private static final int STO_PPC64_LOCAL_MASK = 0xE0;
 
 	public static final String TOC_BASE = "TOC_BASE"; // injected symbol to mark global TOC_BASE
 
@@ -376,9 +391,9 @@ public class PowerPC64_ElfExtension extends ElfExtension {
 		Function function = program.getListing().getFunctionAt(refAddr);
 		if (function == null) {
 			// Check for potential pointer table (unsure a non-function would be referenced by OPD section)
-			Relocation reloc = program.getRelocationTable().getRelocation(refAddr);
-			if (reloc != null &&
-				reloc.getType() == PowerPC64_ElfRelocationConstants.R_PPC64_RELATIVE) {
+			List<Relocation> relocations = program.getRelocationTable().getRelocations(refAddr);
+			if (!relocations.isEmpty() &&
+				relocations.get(0).getType() == PowerPC64_ElfRelocationConstants.R_PPC64_RELATIVE) {
 				return program.getSymbolTable().getPrimarySymbol(refAddr);
 			}
 
@@ -474,34 +489,35 @@ public class PowerPC64_ElfExtension extends ElfExtension {
 		// Handle V2 ABI - st_other signals local entry vs. global entry behavior and offset.
 		// 4-byte instructions are assumed.l
 
+		String name = elfSymbol.getNameAsString();
 		Function localFunction = null;
+
 		int localOffset = PPC64_ABIV2_GLOBAL_ENTRY_OFFSET[(elfSymbol.getOther() & 0xe0) >>> 5] * 4;
 		if (localOffset != 0) {
-
-			// generate local symbol TODO: this should really be done after demangling
-			String name = elfSymbol.getNameAsString();
-			String localName = "." + name;
+			// generate local function 			
+			String localName = "";
+			if (!StringUtils.isBlank(name)) {
+				// NOTE: this naming could cause issues with mangled name use
+				localName = "." + name;
+			}
 			try {
 				Address localFunctionAddr = address.add(localOffset);
-				localFunction = elfLoadHelper.createOneByteFunction(null, localFunctionAddr, false);
-				if (localFunction != null &&
-					localFunction.getSymbol().getSource() == SourceType.DEFAULT) {
-					elfLoadHelper.createSymbol(localFunctionAddr, localName, true, false, null);
-				}
+				localFunction =
+					elfLoadHelper.createOneByteFunction(localName, localFunctionAddr, false);
+
 				// TODO: global function should be a thunk to the local function - need analyzer to do this
 				String cmt = "local function entry for global function " + name + " at {@address " +
 					address + "}";
 				elfLoadHelper.getProgram().getListing().setComment(localFunctionAddr,
 					CodeUnit.PRE_COMMENT, cmt);
 			}
-			catch (AddressOutOfBoundsException | InvalidInputException e) {
+			catch (Exception e) {
 				elfLoadHelper.log("Failed to generate local function symbol " + localName + " at " +
 					address + "+" + localOffset);
 			}
 		}
 
-		Function f =
-			elfLoadHelper.createOneByteFunction(elfSymbol.getNameAsString(), address, false);
+		Function f = elfLoadHelper.createOneByteFunction(name, address, false);
 		if (f != null && localFunction != null) {
 			f.setThunkedFunction(localFunction);
 			return null; // symbol creation handled

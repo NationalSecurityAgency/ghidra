@@ -21,6 +21,7 @@ import java.awt.Component;
 import javax.swing.JComponent;
 
 import docking.widgets.table.GTableCellRenderingData;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.util.SymbolInspector;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.symbol.Symbol;
@@ -49,7 +50,7 @@ public class VTSymbolRenderer extends GhidraTableCellRenderer {
 	private void handleSymbol(Object value, boolean isSelected) {
 		setBold();
 		if (!isSelected) {
-			Color color = Color.BLACK;
+			Color color = Colors.FOREGROUND;
 			if (value instanceof Symbol) {
 				Symbol s = (Symbol) value;
 				inspector.setProgram(s.getProgram());

@@ -29,17 +29,17 @@ import docking.ActionContext;
 import docking.widgets.table.GTable;
 import docking.widgets.table.RowObjectTableModel;
 import docking.widgets.table.threaded.ThreadedTableModel;
+import generic.theme.GIcon;
 import ghidra.feature.vt.api.util.VTRelatedMatch;
 import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.feature.vt.gui.plugin.VTPlugin;
 import ghidra.framework.plugintool.ComponentProviderAdapter;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.table.*;
-import resources.ResourceManager;
 
 public class VTRelatedMatchesTableProvider extends ComponentProviderAdapter {
 
-	private static final Icon ICON = ResourceManager.loadImage("images/user-online.png");
+	private static final Icon ICON = new GIcon("icon.version.tracking.provider.related.matches");
 
 	private JComponent component;
 

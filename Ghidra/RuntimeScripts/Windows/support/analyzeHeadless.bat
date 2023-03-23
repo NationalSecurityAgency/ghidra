@@ -16,14 +16,10 @@ set LAUNCH_MODE=fg
 :: NOTE: This variable is ignored if not launching in a debugging mode.
 set DEBUG_ADDRESS=127.0.0.1:13002
 
-:: Run Java in headless mode
-set VMARG_LIST=-Djava.awt.headless=true
-
 :: Limit the # of garbage collection and JIT compiler threads in case many headless
 :: instances are run in parallel.  By default, Java will assign one thread per core
 :: which does not scale well on servers with many cores.
-set VMARG_LIST=%VMARG_LIST% -XX:ParallelGCThreads=2
-set VMARG_LIST=%VMARG_LIST% -XX:CICompilerCount=2
+set VMARG_LIST=-XX:ParallelGCThreads=2 -XX:CICompilerCount=2
 
 :: Store current path (%0 gets modified below by SHIFT)
 set "SCRIPT_DIR=%~dp0"
@@ -56,4 +52,4 @@ goto Loop
 
 setlocal DisableDelayedExpansion
 
-call "%SCRIPT_DIR%launch.bat" %LAUNCH_MODE% Ghidra-Headless "%MAXMEM%" "%VMARG_LIST%" ghidra.app.util.headless.AnalyzeHeadless %params%
+call "%SCRIPT_DIR%launch.bat" %LAUNCH_MODE% jdk Ghidra-Headless "%MAXMEM%" "%VMARG_LIST%" ghidra.app.util.headless.AnalyzeHeadless %params%

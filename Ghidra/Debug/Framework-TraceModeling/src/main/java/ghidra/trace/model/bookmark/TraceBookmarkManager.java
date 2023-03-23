@@ -18,7 +18,7 @@ package ghidra.trace.model.bookmark;
 import java.awt.Color;
 import java.util.Collection;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import ghidra.program.model.address.AddressSpace;
 import ghidra.trace.model.stack.TraceStackFrame;
@@ -27,9 +27,9 @@ import ghidra.trace.model.thread.TraceThread;
 public interface TraceBookmarkManager extends TraceBookmarkOperations {
 	TraceBookmarkSpace getBookmarkSpace(AddressSpace space, boolean createIfAbsent);
 
-	TraceBookmarkRegisterSpace getBookmarkRegisterSpace(TraceThread thread, boolean createIfAbsent);
+	TraceBookmarkSpace getBookmarkRegisterSpace(TraceThread thread, boolean createIfAbsent);
 
-	TraceBookmarkRegisterSpace getBookmarkRegisterSpace(TraceStackFrame frame,
+	TraceBookmarkSpace getBookmarkRegisterSpace(TraceStackFrame frame,
 			boolean createIfAbsent);
 
 	/**
@@ -45,7 +45,7 @@ public interface TraceBookmarkManager extends TraceBookmarkOperations {
 	 *            the same location
 	 * @return the newly-defined type
 	 */
-	TraceBookmarkType defineBookmarkType(String name, ImageIcon icon, Color color, int priority);
+	TraceBookmarkType defineBookmarkType(String name, Icon icon, Color color, int priority);
 
 	/**
 	 * Get the defined bookmark types.

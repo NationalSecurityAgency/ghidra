@@ -40,8 +40,7 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * 
- * https://android.googlesource.com/platform/art/+/refs/heads/kitkat-release/runtime/oat_file.h#191
+ * <a href="https://android.googlesource.com/platform/art/+/refs/heads/kitkat-release/runtime/oat_file.h#191">kitkat-release/runtime/oat_file.h</a>
  */
 class OatDexFile_KitKat extends OatDexFile {
 

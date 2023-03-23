@@ -15,15 +15,15 @@
  */
 package agent.dbgmodel.impl.dbgmodel.concept;
 
+import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Guid.REFIID;
 
+import agent.dbgeng.impl.dbgeng.DbgEngUtil;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.InterfaceSupplier;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.Preferred;
 import agent.dbgmodel.dbgmodel.concept.PreferredRuntimeTypeConcept;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil.InterfaceSupplier;
 import agent.dbgmodel.jna.dbgmodel.concept.IPreferredRuntimeTypeConcept;
 import agent.dbgmodel.jna.dbgmodel.concept.WrapIPreferredRuntimeTypeConcept;
 import ghidra.util.datastruct.WeakValueHashMap;
@@ -32,19 +32,15 @@ public interface PreferredRuntimeTypeConceptInternal extends PreferredRuntimeTyp
 	Map<Pointer, PreferredRuntimeTypeConceptInternal> CACHE = new WeakValueHashMap<>();
 
 	static PreferredRuntimeTypeConceptInternal instanceFor(WrapIPreferredRuntimeTypeConcept data) {
-		return DbgModelUtil.lazyWeakCache(CACHE, data, PreferredRuntimeTypeConceptImpl::new);
+		return DbgEngUtil.lazyWeakCache(CACHE, data, PreferredRuntimeTypeConceptImpl::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIPreferredRuntimeTypeConcept>> PREFERRED_DATA_SPACES_IIDS_BUILDER =
-		ImmutableMap.builder();
-	Map<REFIID, Class<? extends WrapIPreferredRuntimeTypeConcept>> PREFERRED_DATA_SPACES_IIDS =
-		PREFERRED_DATA_SPACES_IIDS_BUILDER //
-				.put(new REFIID(IPreferredRuntimeTypeConcept.IID_IPREFERRED_RUNTIME_TYPE_CONCEPT),
-					WrapIPreferredRuntimeTypeConcept.class) //
-				.build();
+	List<Preferred<WrapIPreferredRuntimeTypeConcept>> PREFERRED_DATA_SPACES_IIDS = List.of(
+		new Preferred<>(IPreferredRuntimeTypeConcept.IID_IPREFERRED_RUNTIME_TYPE_CONCEPT,
+			WrapIPreferredRuntimeTypeConcept.class));
 
 	static PreferredRuntimeTypeConceptInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
-		return DbgModelUtil.tryPreferredInterfaces(PreferredRuntimeTypeConceptInternal.class,
+		return DbgEngUtil.tryPreferredInterfaces(PreferredRuntimeTypeConceptInternal.class,
 			PREFERRED_DATA_SPACES_IIDS, supplier);
 	}
 }

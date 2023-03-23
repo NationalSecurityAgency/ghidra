@@ -27,7 +27,7 @@ import docking.widgets.dialogs.InputDialog;
 import docking.widgets.dialogs.NumberInputDialog;
 import ghidra.program.model.data.*;
 
-public class StructureEditorLockedActions3Test extends AbstractStructureEditorLockedActionsTest {
+public class StructureEditorLockedActions3Test extends AbstractStructureEditorTest {
 
 	/**
 	 * Edit an existing structure and create a structure from a selection. Use the conflicting 

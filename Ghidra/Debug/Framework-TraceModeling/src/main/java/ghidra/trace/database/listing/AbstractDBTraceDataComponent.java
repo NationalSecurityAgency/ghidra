@@ -17,17 +17,27 @@ package ghidra.trace.database.listing;
 
 import java.nio.ByteBuffer;
 
-import com.google.common.collect.Range;
-
 import ghidra.docking.settings.Settings;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.database.DBTrace;
 import ghidra.trace.database.data.DBTraceDataSettingsAdapter.DBTraceDataSettingsSpace;
+import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.guest.TracePlatform;
+import ghidra.trace.model.listing.TraceData;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.LockHold;
 
+/**
+ * An abstract implementation of a {@link TraceData} for a data component, i.e., field of a struct
+ * or element of an array
+ *
+ * <p>
+ * These are not backed directly by a table. The root data unit, along with its type, is stored in
+ * the table. If the type is composite, then these are generated, possibly recursively, for the
+ * components therein.
+ */
 public abstract class AbstractDBTraceDataComponent implements DBTraceDefinedDataAdapter {
 
 	protected final DBTraceData root;
@@ -46,6 +56,16 @@ public abstract class AbstractDBTraceDataComponent implements DBTraceDefinedData
 
 	protected AbstractDBTraceDataComponent[] componentCache = null;
 
+	/**
+	 * Create a data component
+	 * 
+	 * @param root the root data unit
+	 * @param parent the parent component, possibly the root
+	 * @param index the index of this component in its parent
+	 * @param address the minimum address of this component
+	 * @param dataType the data type of this component
+	 * @param length the length of this component
+	 */
 	public AbstractDBTraceDataComponent(DBTraceData root, DBTraceDefinedDataAdapter parent,
 			int index, Address address, DataType dataType, int length) {
 		this.root = root;
@@ -83,12 +103,17 @@ public abstract class AbstractDBTraceDataComponent implements DBTraceDefinedData
 	}
 
 	@Override
+	public TracePlatform getPlatform() {
+		return root.getPlatform();
+	}
+
+	@Override
 	public Language getLanguage() {
 		return root.getLanguage();
 	}
 
 	@Override
-	public Range<Long> getLifespan() {
+	public Lifespan getLifespan() {
 		return root.getLifespan();
 	}
 
@@ -167,6 +192,7 @@ public abstract class AbstractDBTraceDataComponent implements DBTraceDefinedData
 	/**
 	 * {@inheritDoc}
 	 * 
+	 * <p>
 	 * In other words, this includes the symbol name of the root unit; whereas,
 	 * {@link #getComponentPathName()} omits it.
 	 */
@@ -178,6 +204,7 @@ public abstract class AbstractDBTraceDataComponent implements DBTraceDefinedData
 	/**
 	 * {@inheritDoc}
 	 * 
+	 * <p>
 	 * In other words, this omits the symbol name of the root unit; whereas, {@link #getPathName()}
 	 * includes it.
 	 */
@@ -225,7 +252,7 @@ public abstract class AbstractDBTraceDataComponent implements DBTraceDefinedData
 
 	@Override
 	public DBTraceDataSettingsSpace getSettingsSpace(boolean createIfAbsent) {
-		return root.getSettingsSpace(createIfAbsent);
+		return (DBTraceDataSettingsSpace) root.getSettingsSpace(createIfAbsent);
 	}
 
 	@Override

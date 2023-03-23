@@ -18,11 +18,10 @@ package ghidra.trace.model.modules;
 import java.net.URL;
 import java.util.Collection;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.listing.Program;
+import ghidra.trace.model.Lifespan;
 
 /**
  * Manages mappings from this trace into static images (Ghida {@link Program}s)
@@ -51,10 +50,10 @@ public interface TraceStaticMappingManager {
 	 * @param toProgramURL the (Ghidra) URL of the static image ("to")
 	 * @param toAddress the starting address (in string form) in the static image ("to")
 	 * @throws TraceConflictedMappingException if an existing mapping conflicts. See
-	 *             {@link #isAnyConflicting(AddressRange, Range, URL, String)}
+	 *             {@link #isAnyConflicting(AddressRange, Lifespan, URL, String)}
 	 * @return the new entry, or any entry which subsumes the specified mapping
 	 */
-	TraceStaticMapping add(AddressRange range, Range<Long> lifespan, URL toProgramURL,
+	TraceStaticMapping add(AddressRange range, Lifespan lifespan, URL toProgramURL,
 			String toAddress) throws TraceConflictedMappingException;
 
 	/**
@@ -91,7 +90,7 @@ public interface TraceStaticMappingManager {
 	 * @param toAddress the starting address (in string form) in the static image ("to")
 	 * @return a conflicting mapping, or {@code null} if none exist
 	 */
-	TraceStaticMapping findAnyConflicting(AddressRange range, Range<Long> lifespan,
+	TraceStaticMapping findAnyConflicting(AddressRange range, Lifespan lifespan,
 			URL toProgramURL, String toAddress);
 
 	/**
@@ -104,5 +103,5 @@ public interface TraceStaticMappingManager {
 	 * @return an unmodifiable collection of overlapped entries
 	 */
 	Collection<? extends TraceStaticMapping> findAllOverlapping(AddressRange range,
-			Range<Long> lifespan);
+			Lifespan lifespan);
 }

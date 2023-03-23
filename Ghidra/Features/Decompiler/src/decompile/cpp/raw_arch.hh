@@ -18,6 +18,8 @@
 #include "sleigh_arch.hh"
 #include "loadimage.hh"
 
+extern ElementId ELEM_RAW_SAVEFILE;	///< Marshaling element \<raw_savefile>
+
 /// \brief Extension point for building an Architecture that reads in raw images
 class RawBinaryArchitectureCapability : public ArchitectureCapability {
   static RawBinaryArchitectureCapability rawBinaryArchitectureCapability;	///< The singleton instance
@@ -38,7 +40,7 @@ class RawBinaryArchitecture : public SleighArchitecture {
   virtual void resolveArchitecture(void);
   virtual void postSpecFile(void);
 public:
-  virtual void saveXml(ostream &s) const;
+  virtual void encode(Encoder &encoder) const;
   virtual void restoreXml(DocumentStorage &store);
   RawBinaryArchitecture(const string &fname,const string &targ,ostream *estream);	///< Constructor
   virtual ~RawBinaryArchitecture(void) {}

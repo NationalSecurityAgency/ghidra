@@ -39,6 +39,8 @@ ResolvedUnion::ResolvedUnion(Datatype *parent)
 ResolvedUnion::ResolvedUnion(Datatype *parent,int4 fldNum,TypeFactory &typegrp)
 
 {
+  if (parent->getMetatype() == TYPE_PARTIALUNION)
+    parent = ((TypePartialUnion *)parent)->getParentUnion();
   baseType = parent;
   fieldNum = fldNum;
   lock = false;
@@ -67,6 +69,8 @@ ResolveEdge::ResolveEdge(const Datatype *parent,const PcodeOp *op,int4 slot)
     typeId = ((TypePointer *)parent)->getPtrTo()->getId();	// Strip pointer
     encoding += 0x1000;		// Encode the fact that a pointer is getting accessed
   }
+  else if (parent->getMetatype() == TYPE_PARTIALUNION)
+    typeId = ((TypePartialUnion *)parent)->getParentUnion()->getId();
   else
     typeId = parent->getId();
 }

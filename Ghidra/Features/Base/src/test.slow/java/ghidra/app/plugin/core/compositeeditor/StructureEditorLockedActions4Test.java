@@ -22,7 +22,7 @@ import org.junit.Test;
 import docking.widgets.dialogs.NumberInputDialog;
 import ghidra.program.model.data.*;
 
-public class StructureEditorLockedActions4Test extends AbstractStructureEditorLockedActionsTest {
+public class StructureEditorLockedActions4Test extends AbstractStructureEditorTest {
 
 	@Test
 	public void testArrayBeforeUndefineds() throws Exception {

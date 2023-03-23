@@ -231,10 +231,12 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 	 * @param off the offset into the byte array.
 	 * @param len the number of bytes to get.
 	 * @return the number of bytes actually populated.
+	 * @throws IndexOutOfBoundsException if invalid offset is specified
 	 * @throws MemoryAccessException if any of the requested bytes are uninitialized.
 	 * @throws IllegalArgumentException if the Address is not in this block.
 	 */
-	public int getBytes(Address addr, byte[] b, int off, int len) throws MemoryAccessException;
+	public int getBytes(Address addr, byte[] b, int off, int len)
+			throws IndexOutOfBoundsException, MemoryAccessException;
 
 	/**
 	 * Puts the given byte at the given address in this block.
@@ -266,18 +268,24 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 	 * @param off the offset into the byte array.
 	 * @param len the number of bytes to write.
 	 * @return the number of bytes actually written.
+	 * @throws IndexOutOfBoundsException if invalid offset is specified
 	 * @throws MemoryAccessException if the block is uninitialized
 	 * @throws IllegalArgumentException if the Address is not in this block.
 	 */
-	public int putBytes(Address addr, byte[] b, int off, int len) throws MemoryAccessException;
+	public int putBytes(Address addr, byte[] b, int off, int len)
+			throws IndexOutOfBoundsException, MemoryAccessException;
 
 	/**
 	 * Get the type for this block: DEFAULT, BIT_MAPPED, or BYTE_MAPPED
+	 * (see {@link MemoryBlockType}).
+	 * @return memory block type
 	 */
 	public MemoryBlockType getType();
 
 	/**
 	 * Return whether this block has been initialized.
+	 * 
+	 * @return true if block is fully initialized else false
 	 */
 	public boolean isInitialized();
 

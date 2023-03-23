@@ -429,6 +429,9 @@ int4 find_symbol(void) {
   case SleighSymbol::end_symbol:
     yylval.endsym = (EndSymbol *)sym;
     return ENDSYM;
+  case SleighSymbol::next2_symbol:
+    yylval.next2sym = (Next2Symbol *)sym;
+    return NEXT2SYM;
   case SleighSymbol::subtable_symbol:
     yylval.subtablesym = (SubtableSymbol *)sym;
     return SUBTABLESYM;

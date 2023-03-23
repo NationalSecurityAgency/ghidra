@@ -24,18 +24,18 @@ import javax.swing.*;
 import docking.ActionContext;
 import docking.DialogComponentProvider;
 import docking.action.*;
+import generic.theme.GIcon;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.gui.editors.MatchTagComboBox;
 import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.feature.vt.gui.plugin.VTPlugin;
 import ghidra.feature.vt.gui.provider.matchtable.VTMatchContext;
 import ghidra.util.HelpLocation;
-import resources.ResourceManager;
 
 public class ChooseMatchTagAction extends DockingAction {
 
 	private static final String MENU_GROUP = VTPlugin.TAG_MENU_GROUP;
-	private static final Icon EDIT_TAG_ICON = ResourceManager.loadImage("images/tag_blue.png");
+	private static final Icon EDIT_TAG_ICON = new GIcon("icon.version.tracking.action.choose.tag");
 	private static final String ACTION_NAME = "Choose Match Tag";
 
 	private final VTController controller;

@@ -15,34 +15,81 @@
  */
 package agent.dbgeng;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import agent.dbgeng.model.impl.DbgModelImpl;
 import ghidra.dbg.DebuggerModelFactory;
 import ghidra.dbg.DebuggerObjectModel;
 import ghidra.dbg.util.ConfigurableFactory.FactoryDescription;
+import ghidra.program.model.listing.Program;
 
-/**
- * Note this is in the testing source because it's not meant to be shipped in the release.... That
- * may change if it proves stable, though, no?
- */
-@FactoryDescription( //
-	brief = "IN-VM MS dbgeng local debugger", //
-	htmlDetails = "Launch a dbgeng session in this same JVM" //
-)
+@FactoryDescription(
+	brief = "MS dbgeng.dll (WinDbg)",
+	htmlDetails = """
+			Connect to the Microsoft Debug Engine.
+			This is the same engine that powers WinDbg.
+			This is best for most Windows userspace and kernel targets.
+			Kernel debugging is still experimental.
+			This will access the native API, which may put Ghidra's JVM at risk.""")
 public class DbgEngInJvmDebuggerModelFactory implements DebuggerModelFactory {
 
-	// TODO remoteTransport option?
+	protected String remote = "none"; // Require user to start server
+	@FactoryOption("DebugConnect options (.server)")
+	public final Property<String> agentRemoteOption =
+		Property.fromAccessors(String.class, this::getAgentRemote, this::setAgentRemote);
+
+	protected String transport = "none"; // Require user to start server
+	@FactoryOption("Remote process server options (untested)")
+	public final Property<String> agentTransportOption =
+		Property.fromAccessors(String.class, this::getAgentTransport, this::setAgentTransport);
 
 	@Override
 	public CompletableFuture<? extends DebuggerObjectModel> build() {
 		DbgModelImpl model = new DbgModelImpl();
-		return model.startDbgEng(new String[] {}).thenApply(__ -> model);
+		List<String> cmds = new ArrayList<>();
+		completeCommandLine(cmds);
+		return model.startDbgEng(cmds.toArray(new String[cmds.size()])).thenApply(__ -> model);
 	}
 
 	@Override
-	public boolean isCompatible() {
-		return System.getProperty("os.name").toLowerCase().contains("windows");
+	public int getPriority(Program program) {
+		// TODO: Might instead look for the DLL
+		if (!System.getProperty("os.name").toLowerCase().contains("windows")) {
+			return -1;
+		}
+		if (program != null) {
+			String exe = program.getExecutablePath();
+			if (exe == null || exe.isBlank()) {
+				return -1;
+			}
+		}
+		return 80;
 	}
 
+	public String getAgentTransport() {
+		return transport;
+	}
+
+	public void setAgentTransport(String transport) {
+		this.transport = transport;
+	}
+
+	public String getAgentRemote() {
+		return remote;
+	}
+
+	public void setAgentRemote(String remote) {
+		this.remote = remote;
+	}
+
+	protected void completeCommandLine(List<String> cmd) {
+		if (!remote.equals("none")) {
+			cmd.addAll(List.of(remote));
+		}
+		if (!transport.equals("none")) {
+			cmd.addAll(List.of(transport));
+		}
+	}
 }

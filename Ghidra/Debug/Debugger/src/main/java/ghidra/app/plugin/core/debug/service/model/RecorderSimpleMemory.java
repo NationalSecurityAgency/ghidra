@@ -105,7 +105,11 @@ public class RecorderSimpleMemory implements AbstractRecorderMemory {
 			AddressSet accessible = new AddressSet();
 			if (memMapper != null) {
 				for (Entry<Address, TargetMemoryRegion> ent : byMin.entrySet()) {
-					accessible.add(memMapper.targetToTrace(ent.getValue().getRange()));
+					AddressRange traceRange =
+						memMapper.targetToTraceTruncated(ent.getValue().getRange());
+					if (traceRange != null) {
+						accessible.add(traceRange);
+					}
 				}
 			}
 			return accessible;

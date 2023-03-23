@@ -446,7 +446,7 @@ public class VerticalLayoutTextField implements TextField {
 			if (tooManyLines && (i == maxLines - 1)) {
 				FieldElement[] elements = new FieldElement[2];
 				elements[0] = element;
-				elements[1] = new StrutFieldElement(500);
+				elements[1] = new StrutFieldElement(element, 500);
 				element = new CompositeFieldElement(elements);
 			}
 			TextField field = createFieldForLine(element);
@@ -459,7 +459,6 @@ public class VerticalLayoutTextField implements TextField {
 		}
 
 		isClipped |= tooManyLines;
-
 		return newSubFields;
 	}
 

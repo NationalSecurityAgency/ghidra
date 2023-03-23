@@ -51,8 +51,8 @@ public:
   virtual const TrackedSet &getTrackedSet(const Address &addr) const;
 
   // Ignored routines (taken care of by GHIDRA)
-  virtual void restoreXml(const Element *el,const AddrSpaceManager *manage) {}
-  virtual void restoreFromSpec(const Element *el,const AddrSpaceManager *manage) {}
+  virtual void decode(Decoder &decoder);
+  virtual void decodeFromSpec(Decoder &decoder);
 
   // Unimplemented routines (should never be called)
   virtual int getContextSize(void) const {
@@ -63,8 +63,8 @@ public:
     throw LowlevelError("getContext should not be called for GHIDRA"); }
   virtual void registerVariable(const string &nm,int4 sbit,int4 ebit) {
     throw LowlevelError("registerVariable should not be called for GHIDRA"); }
-  virtual void saveXml(ostream &s) const {
-    throw LowlevelError("context::saveXml should not be called for GHIDRA"); }
+  virtual void encode(Encoder &encoder) const {
+    throw LowlevelError("context::encode should not be called for GHIDRA"); }
 
   virtual TrackedSet &createSet(const Address &addr1,const Address &addr2) {
     throw LowlevelError("createSet should not be called for GHIDRA"); }

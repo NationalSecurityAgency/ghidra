@@ -33,6 +33,6 @@ public interface GadpClientTargetEventScope extends GadpClientTargetObject, Targ
 		String description = evt.getDescription();
 		List<Object> parameters =
 			GadpValueUtils.getValues(getModel(), evt.getParametersList());
-		getDelegate().getListeners().fire.event(this, thread, type, description, parameters);
+		broadcast().event(this, thread, type, description, parameters);
 	}
 }

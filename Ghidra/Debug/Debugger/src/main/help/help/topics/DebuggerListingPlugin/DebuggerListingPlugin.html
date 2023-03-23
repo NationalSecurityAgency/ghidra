@@ -7,7 +7,7 @@
 
     <TITLE>Debugger: Dynamic Listing</TITLE>
     <META http-equiv="Content-Type" content="text/html; charset=windows-1252">
-    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
   </HEAD>
 
   <BODY lang="EN-US">
@@ -58,9 +58,9 @@
     failed, the first address in the failed range is displayed with a pink background. Otherwise,
     up-to-date contents are displayed with the default background color.</P>
 
-    <P>The dynamic listing supports editing memory via the <A href=
-    "help/topics/DebuggerStateEditingPlugin/DebuggerStateEditingPlugin.html">Machine State Editing
-    Plugin and Service</A>. Such edits are performed as usual: Via the <A href=
+    <P>The dynamic listing supports editing memory. See <A href=
+    "help/topics/DebuggerControlPlugin/DebuggerControlPlugin.html">Control and Machine State</A>.
+    Such edits are performed as usual: Via the <A href=
     "help/topics/AssemblerPlugin/Assembler.htm">Patch</A> actions, or by pasting byte strings.
     These edits may be directed toward a live target, the trace, or the emulator.</P>
 
@@ -94,10 +94,12 @@
 
     <P>This action is always available on all dynamic listings. It configures automatic navigation
     for the dynamic listing. When location tracking is enabled, the listing is automatically
-    navigated to an address computed from the trace's or target's machine state. The address (and
-    its corresponding static address) are also highlighted in green. The computed address is
-    affected by the tool's current "coordinates," that is the selected thread, frame, and point in
-    time. The options are pluggable, but currently consist of:</P>
+    navigated to an address computed from the trace's or target's machine state. The address is
+    displayed in the top right of the viewer. That address and its corresponding static address are
+    also highlighted in green in the listing. If the address cannot be located in the listing, the
+    address is displayed in red. The computed address is affected by the tool's current
+    "coordinates," that is the selected thread, frame, and point in time. The options are
+    pluggable, but currently consist of:</P>
 
     <UL>
       <LI>Do Not Track - disables automatic navigation.</LI>
@@ -108,8 +110,25 @@
       meaning may vary among platforms. While there may be some nuances to the register value, the
       value recorded in the stack should indicate the next instruction to be executed.</LI>
 
-      <LI>Track Stack Pointer - navigates this listing to the current stack pointer. Again,
+      <LI>Track Program Counter (by stack) - navigates this listing to the current program counter
+      as recorded from the debugger's stack trace. This option is not recommended for regular use,
+      especially for emulation, since the emulator does not provide stack trace records. Its use is
+      recommended for debugger connection developers to verify the stack records are being properly
+      interpreted by the GUI.</LI>
+
+      <LI>Track Program Counter (by register) - navigates this listing to the current program
+      counter as recorded from the registers. While suitable for regular use, the default "Track
+      Program Counter" option is recommended, since the stack may record the program counter in
+      some cases where the registers do not. For example, when unwinding a stack frame, the
+      debugger may report the frame's program counter without reporting the frame's registers. This
+      option may be desired if stack frames are recorded incorrectly.</LI>
+
+      <LI>Track Stack Pointer - navigates this listing to the current stack pointer. Note that
       platforms may vary in how they define the stack pointer.</LI>
+
+      <LI>Track address of watch - navigates this listing to the address of the expression's value.
+      This option is replicated for each watch in the <A href=
+      "help/topics/DebuggerWatchesPlugin/DebuggerWatchesPlugin.html">Watches</A> window.</LI>
     </UL>
 
     <H3><A name="go_to"></A>Go To (G)</H3>

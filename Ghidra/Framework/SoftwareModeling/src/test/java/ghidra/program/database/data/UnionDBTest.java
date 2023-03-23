@@ -52,7 +52,7 @@ public class UnionDBTest extends AbstractGTest {
 
 	private void transitionToBigEndian() {
 
-		Union unionClone = (Union) union.clone(null);
+		Union unionClone = union.clone(null);
 		dataMgr.remove(union, TaskMonitor.DUMMY);
 
 		DataOrganizationImpl dataOrg = (DataOrganizationImpl) dataMgr.getDataOrganization();
@@ -170,7 +170,7 @@ public class UnionDBTest extends AbstractGTest {
 		CompositeTestUtils.assertExpectedComposite(this, "/TestUnion\n" + 
 			"pack(disabled)\n" + 
 			"Union TestUnion {\n" + 
-			"   0   short   2   null   \"\"\n" + 
+			"   0   short   2      \"\"\n" + 
 			"   0   int:2(0)   1   bf1   \"bf1Comment\"\n" + 
 			"}\n" + 
 			"Size = 2   Actual Alignment = 1", union);
@@ -192,7 +192,7 @@ public class UnionDBTest extends AbstractGTest {
 		CompositeTestUtils.assertExpectedComposite(this, "/TestUnion\n" + 
 			"pack()\n" + 
 			"Union TestUnion {\n" + 
-			"   0   short   2   null   \"\"\n" + 
+			"   0   short   2      \"\"\n" + 
 			"   0   int:2(0)   1   bf1   \"bf1Comment\"\n" + 
 			"}\n" + 
 			"Size = 4   Actual Alignment = 4", union);
@@ -210,7 +210,7 @@ public class UnionDBTest extends AbstractGTest {
 			"pack(disabled)\n" + 
 			"Union TestUnion {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-			"   0   word   2   null   \"Comment2\"\n" + 
+			"   0   word   2      \"Comment2\"\n" + 
 			"   0   int:4(0)   1   bf1   \"bf1Comment\"\n" + 
 			"   0   byte:4(0)   1   bf2   \"bf2Comment\"\n" + 
 			"   0   dword   4   field3   \"\"\n" + 
@@ -233,7 +233,7 @@ public class UnionDBTest extends AbstractGTest {
 			"pack(disabled)\n" + 
 			"Union TestUnion {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-			"   0   word   2   null   \"Comment2\"\n" + 
+			"   0   word   2      \"Comment2\"\n" + 
 			"   0   int:4(4)   1   bf1   \"bf1Comment\"\n" + 
 			"   0   byte:4(4)   1   bf2   \"bf2Comment\"\n" + 
 			"   0   dword   4   field3   \"\"\n" + 
@@ -257,7 +257,7 @@ public class UnionDBTest extends AbstractGTest {
 			"pack(disabled)\n" + 
 			"Union TestUnion {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-			"   0   word   2   null   \"Comment2\"\n" + 
+			"   0   word   2      \"Comment2\"\n" + 
 			"   0   Foo:4(0)   1   bf1   \"bf1Comment\"\n" + 
 			"   0   Foo:4(0)   1   bf2   \"bf2Comment\"\n" + 
 			"   0   dword   4   field3   \"\"\n" + 
@@ -273,7 +273,7 @@ public class UnionDBTest extends AbstractGTest {
 			"pack(disabled)\n" + 
 			"Union TestUnion {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-			"   0   word   2   null   \"Comment2\"\n" + 
+			"   0   word   2      \"Comment2\"\n" + 
 			"   0   dword   4   field3   \"\"\n" + 
 			"   0   byte   1   field4   \"Comment4\"\n" + 
 			"}\n" + 
@@ -296,7 +296,7 @@ public class UnionDBTest extends AbstractGTest {
 			"pack(disabled)\n" + 
 			"Union TestUnion {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-			"   0   word   2   null   \"Comment2\"\n" + 
+			"   0   word   2      \"Comment2\"\n" + 
 			"   0   Foo:4(0)   1   bf1   \"bf1Comment\"\n" + 
 			"   0   Foo:4(0)   1   bf2   \"bf2Comment\"\n" + 
 			"   0   dword   4   field3   \"\"\n" + 
@@ -312,7 +312,7 @@ public class UnionDBTest extends AbstractGTest {
 			"pack(disabled)\n" + 
 			"Union TestUnion {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-			"   0   word   2   null   \"Comment2\"\n" + 
+			"   0   word   2      \"Comment2\"\n" + 
 			"   0   char:4(0)   1   bf1   \"bf1Comment\"\n" + 
 			"   0   char:4(0)   1   bf2   \"bf2Comment\"\n" + 
 			"   0   dword   4   field3   \"\"\n" + 
@@ -329,7 +329,7 @@ public class UnionDBTest extends AbstractGTest {
 
 	@Test
 	public void testCloneRetainIdentity() throws Exception {
-		Union unionCopy = (Union) union.clone(null);
+		Union unionCopy = union.clone(null);
 		assertNull(unionCopy.getDataTypeManager());
 		assertEquals(4, union.getLength());
 	}
@@ -369,10 +369,10 @@ public class UnionDBTest extends AbstractGTest {
 			"pack(disabled)\n" + 
 			"Union TestUnion {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-			"   0   word   2   null   \"Comment2\"\n" + 
+			"   0   word   2      \"Comment2\"\n" + 
 			"   0   dword   4   field3   \"\"\n" + 
 			"   0   byte   1   field4   \"Comment4\"\n" + 
-			"   0   struct_1   11   null   \"\"\n" + 
+			"   0   struct_1   11      \"\"\n" + 
 			"}\n" + 
 			"Size = 11   Actual Alignment = 1", union);
 		//@formatter:on
@@ -385,7 +385,7 @@ public class UnionDBTest extends AbstractGTest {
 			"pack(disabled)\n" + 
 			"Union TestUnion {\n" + 
 			"   0   byte   1   field1   \"Comment1\"\n" + 
-			"   0   word   2   null   \"Comment2\"\n" + 
+			"   0   word   2      \"Comment2\"\n" + 
 			"   0   byte   1   field4   \"Comment4\"\n" + 
 			"}\n" + 
 			"Size = 2   Actual Alignment = 1", union);
@@ -426,7 +426,7 @@ public class UnionDBTest extends AbstractGTest {
 			"pack(disabled)\n" + 
 			"Union Replaced {\n" + 
 			"   0   byte   1   field0   \"Comment1\"\n" + 
-			"   0   word   2   null   \"Comment2\"\n" + 
+			"   0   word   2      \"Comment2\"\n" + 
 			"   0   dword   4   field2   \"\"\n" + 
 			"   0   int:4(0)   1   MyBit1   \"bitComment1\"\n" + 
 			"   0   int:3(0)   1   MyBit2   \"bitComment2\"\n" + 
@@ -441,7 +441,7 @@ public class UnionDBTest extends AbstractGTest {
 			"pack(disabled)\n" + 
 			"Union TestUnion {\n" + 
 			"   0   byte   1   field0   \"Comment1\"\n" + 
-			"   0   word   2   null   \"Comment2\"\n" + 
+			"   0   word   2      \"Comment2\"\n" + 
 			"   0   dword   4   field2   \"\"\n" + 
 			"   0   int:4(0)   1   MyBit1   \"bitComment1\"\n" + 
 			"   0   int:3(0)   1   MyBit2   \"bitComment2\"\n" + 

@@ -20,13 +20,13 @@ import java.util.Objects;
 import javax.swing.Icon;
 
 import edu.uci.ics.jung.algorithms.layout.Layout;
+import generic.theme.GIcon;
 import ghidra.graph.VisualGraph;
 import ghidra.graph.graphs.JungDirectedVisualGraph;
 import ghidra.graph.viewer.VisualEdge;
 import ghidra.graph.viewer.VisualVertex;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import resources.ResourceManager;
 
 /**
  * A layout provider that works on {@link JungDirectedVisualGraph}s.  This class allows the 
@@ -43,7 +43,7 @@ public abstract class JungLayoutProvider<V extends VisualVertex,
 		extends AbstractLayoutProvider<V, E, G> {
 //@formatter:on
 
-	private static final Icon DEFAULT_ICON = ResourceManager.loadImage("images/color_swatch.png");
+	private static final Icon DEFAULT_ICON = new GIcon("icon.graph.layout.default");
 
 	protected abstract Layout<V, E> createLayout(G g);
 

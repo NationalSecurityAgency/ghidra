@@ -24,15 +24,16 @@ import org.junit.Test;
 
 import docking.ComponentProvider;
 import docking.DockableComponent;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.datamgr.DataTypesProvider;
 import ghidra.app.plugin.core.programtree.ViewManagerComponentProvider;
 
 public class DecompilePluginScreenShots extends GhidraScreenShotGenerator {
-	private static final Color DARK_BLUE = new Color(0, 0, 128);
-	private static final Color DARK_GREEN = new Color(0, 128, 0);
-	private static final Color YELLOW_ORANGE = new Color(155, 150, 50);
-	private static final Color PURPLE = new Color(155, 50, 155);
+	private static final Color DARK_BLUE = Palette.getColor("navy");
+	private static final Color DARK_GREEN = Palette.GREEN;
+	private static final Color YELLOW_ORANGE = Palette.getColor("darkkhaki");
+	private static final Color PURPLE = Palette.PURPLE;
 
 	public DecompilePluginScreenShots() {
 		super();
@@ -57,12 +58,12 @@ public class DecompilePluginScreenShots extends GhidraScreenShotGenerator {
 	@Test
 	public void testDefuse() {
 		TextFormatter tf = new TextFormatter(17, 400, 4, 5, 0);
-		TextFormatterContext hl = new TextFormatterContext(Color.BLACK, Color.YELLOW);
-		TextFormatterContext red = new TextFormatterContext(Color.RED, Color.WHITE);
-		TextFormatterContext blue = new TextFormatterContext(Color.BLUE, Color.WHITE);
-		TextFormatterContext green = new TextFormatterContext(Color.GREEN, Color.WHITE);
+		TextFormatterContext hl = new TextFormatterContext(Palette.BLACK, Palette.YELLOW);
+		TextFormatterContext red = new TextFormatterContext(Palette.RED, Palette.WHITE);
+		TextFormatterContext blue = new TextFormatterContext(Palette.BLUE, Palette.WHITE);
+		TextFormatterContext green = new TextFormatterContext(Palette.GREEN, Palette.WHITE);
 		TextFormatterContext cursorhl =
-			new TextFormatterContext(Color.BLACK, Color.YELLOW, Color.RED);
+			new TextFormatterContext(Palette.BLACK, Palette.YELLOW, Palette.RED);
 
 		tf.writeln("|void| |max_retry|(node *ptr)", blue, red);
 		tf.writeln("");
@@ -87,12 +88,12 @@ public class DecompilePluginScreenShots extends GhidraScreenShotGenerator {
 	@Test
 	public void testForwardSlice() {
 		TextFormatter tf = new TextFormatter(16, 500, 4, 5, 0);
-		TextFormatterContext hl = new TextFormatterContext(Color.BLACK, Color.YELLOW);
-		TextFormatterContext red = new TextFormatterContext(Color.RED);
-		TextFormatterContext blue = new TextFormatterContext(Color.BLUE);
-		TextFormatterContext green = new TextFormatterContext(Color.GREEN);
+		TextFormatterContext hl = new TextFormatterContext(Palette.BLACK, Palette.YELLOW);
+		TextFormatterContext red = new TextFormatterContext(Palette.RED);
+		TextFormatterContext blue = new TextFormatterContext(Palette.BLUE);
+		TextFormatterContext green = new TextFormatterContext(Palette.GREEN);
 		TextFormatterContext cursorhl =
-			new TextFormatterContext(Color.BLACK, Color.YELLOW, Color.RED);
+			new TextFormatterContext(Palette.BLACK, Palette.YELLOW, Palette.RED);
 
 		tf.writeln("    a = psParm2->id;");
 		tf.writeln("    |b| = |max_alpha|(psParm1->next,psParm1->id);", cursorhl, red);
@@ -117,13 +118,13 @@ public class DecompilePluginScreenShots extends GhidraScreenShotGenerator {
 	@Test
 	public void testBackwardSlice() {
 		TextFormatter tf = new TextFormatter(16, 500, 4, 5, 0);
-		TextFormatterContext hl = new TextFormatterContext(Color.BLACK, Color.YELLOW);
-		TextFormatterContext red = new TextFormatterContext(Color.RED, Color.WHITE);
-		TextFormatterContext blue = new TextFormatterContext(Color.BLUE, Color.WHITE);
-		TextFormatterContext green = new TextFormatterContext(Color.GREEN, Color.WHITE);
-		TextFormatterContext greenhl = new TextFormatterContext(Color.GREEN, Color.YELLOW);
+		TextFormatterContext hl = new TextFormatterContext(Palette.BLACK, Palette.YELLOW);
+		TextFormatterContext red = new TextFormatterContext(Palette.RED, Palette.WHITE);
+		TextFormatterContext blue = new TextFormatterContext(Palette.BLUE, Palette.WHITE);
+		TextFormatterContext green = new TextFormatterContext(Palette.GREEN, Palette.WHITE);
+		TextFormatterContext greenhl = new TextFormatterContext(Palette.GREEN, Palette.YELLOW);
 		TextFormatterContext cursorhl =
-			new TextFormatterContext(Color.BLACK, Color.YELLOW, Color.RED);
+			new TextFormatterContext(Palette.BLACK, Palette.YELLOW, Palette.RED);
 
 		tf.writeln("    |a| = |psParm2|->id;", hl, hl);
 		tf.writeln("    b = |max_alpha|(|psParm1|->next,|psParm1|->id);", red, hl, hl);
@@ -188,12 +189,12 @@ public class DecompilePluginScreenShots extends GhidraScreenShotGenerator {
 		Font font = new Font("Monospaced", Font.PLAIN, 12);
 
 		TextFormatter tf = new TextFormatter(font, 15, 400, 4, 14, 1);
-		TextFormatterContext blue = new TextFormatterContext(Color.BLUE);
+		TextFormatterContext blue = new TextFormatterContext(Palette.BLUE);
 		TextFormatterContext darkBlue = new TextFormatterContext(DARK_BLUE);
 		TextFormatterContext darkGreen = new TextFormatterContext(DARK_GREEN);
 		TextFormatterContext orange = new TextFormatterContext(YELLOW_ORANGE);
 		TextFormatterContext purple = new TextFormatterContext(PURPLE);
-		tf.colorLines(new Color(180, 255, 180), 9, 1);
+		tf.colorLines(Palette.getColor("palegreen"), 9, 1);
 
 		// @formatter:off
 		tf.writeln("|8b 40 0c|     |MOV|    |EAX|,|Oxc|[|EAX|]", blue, darkBlue, orange, darkGreen, orange );
@@ -220,11 +221,12 @@ public class DecompilePluginScreenShots extends GhidraScreenShotGenerator {
 		Font font = new Font("Monospaced", Font.PLAIN, 13);
 
 		TextFormatter tf = new TextFormatter(font, 15, 400, 4, 2, 0);
-		TextFormatterContext blue = new TextFormatterContext(Color.BLUE);
-		TextFormatterContext green = new TextFormatterContext(Color.GREEN);
-		TextFormatterContext hl = new TextFormatterContext(Color.BLACK, Color.YELLOW);
-		TextFormatterContext greenhl = new TextFormatterContext(Color.GREEN, Color.YELLOW);
-		TextFormatterContext cursor = new TextFormatterContext(Color.WHITE, Color.WHITE, Color.RED);
+		TextFormatterContext blue = new TextFormatterContext(Palette.BLUE);
+		TextFormatterContext green = new TextFormatterContext(Palette.GREEN);
+		TextFormatterContext hl = new TextFormatterContext(Palette.BLACK, Palette.YELLOW);
+		TextFormatterContext greenhl = new TextFormatterContext(Palette.GREEN, Palette.YELLOW);
+		TextFormatterContext cursor =
+			new TextFormatterContext(Palette.WHITE, Palette.WHITE, Palette.RED);
 
 		// @formatter:off
 		tf.writeln("  dword dVar1:");
@@ -252,10 +254,11 @@ public class DecompilePluginScreenShots extends GhidraScreenShotGenerator {
 		Font font = new Font("Monospaced", Font.PLAIN, 13);
 
 		TextFormatter tf = new TextFormatter(font, 15, 400, 4, 2, 0);
-		TextFormatterContext blue = new TextFormatterContext(Color.BLUE);
-		TextFormatterContext green = new TextFormatterContext(Color.GREEN);
-		TextFormatterContext hl = new TextFormatterContext(Color.BLACK, Color.YELLOW);
-		TextFormatterContext cursor = new TextFormatterContext(Color.WHITE, Color.WHITE, Color.RED);
+		TextFormatterContext blue = new TextFormatterContext(Palette.BLUE);
+		TextFormatterContext green = new TextFormatterContext(Palette.GREEN);
+		TextFormatterContext hl = new TextFormatterContext(Palette.BLACK, Palette.YELLOW);
+		TextFormatterContext cursor =
+			new TextFormatterContext(Palette.WHITE, Palette.WHITE, Palette.RED);
 
 		// @formatter:off
 		tf.writeln("  dword dVar1:");

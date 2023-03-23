@@ -22,18 +22,19 @@ import javax.swing.tree.TreePath;
 
 import docking.action.KeyBindingData;
 import docking.action.MenuData;
+import generic.theme.GIcon;
 import ghidra.framework.main.datatree.DataTreeClipboardUtils;
 import ghidra.framework.main.datatree.FrontEndProjectTreeContext;
-import resources.ResourceManager;
+import ghidra.util.HelpLocation;
 
 public class ProjectDataCopyAction extends ProjectDataCopyCutBaseAction {
-	private static Icon icon = ResourceManager.loadImage("images/page_copy.png");
+	private static final Icon icon = new GIcon("icon.projectdata.copy");
 
 	public ProjectDataCopyAction(String owner, String group) {
 		super("Copy", owner);
 		setPopupMenuData(new MenuData(new String[] { "Copy" }, icon, group));
 		setKeyBindingData(new KeyBindingData('C', InputEvent.CTRL_DOWN_MASK));
-		markHelpUnnecessary();
+		setHelpLocation(new HelpLocation("FrontEndPlugin", "Copy"));
 	}
 
 	@Override
@@ -47,10 +48,6 @@ public class ProjectDataCopyAction extends ProjectDataCopyCutBaseAction {
 	@Override
 	protected boolean isEnabledForContext(FrontEndProjectTreeContext context) {
 		if (!context.hasOneOrMoreFilesAndFolders()) {
-			return false;
-		}
-
-		if (!context.isInActiveProject()) {
 			return false;
 		}
 

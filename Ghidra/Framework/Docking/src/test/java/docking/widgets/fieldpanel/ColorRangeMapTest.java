@@ -15,48 +15,42 @@
  */
 package docking.widgets.fieldpanel;
 
-import static org.junit.Assert.assertEquals;
-
-import java.awt.Color;
-
 import org.junit.Test;
 
 import docking.widgets.fieldpanel.internal.ColorRangeMap;
-import generic.test.AbstractGenericTest;
+import generic.test.AbstractGuiTest;
+import generic.theme.GThemeDefaults.Colors.Palette;
 
-public class ColorRangeMapTest extends AbstractGenericTest {
-	public ColorRangeMapTest() {
-		super();
-	}
+public class ColorRangeMapTest extends AbstractGuiTest {
 
 	@Test
 	public void testPaint1() {
 		ColorRangeMap map = new ColorRangeMap();
-		map.color(10, 10, Color.BLUE);
-		assertEquals(Color.WHITE, map.getColor(0, Color.WHITE));
-		assertEquals(Color.WHITE, map.getColor(9, Color.WHITE));
-		assertEquals(Color.BLUE, map.getColor(10, Color.WHITE));
-		assertEquals(Color.WHITE, map.getColor(11, Color.WHITE));
-		assertEquals(Color.WHITE, map.getColor(100, Color.WHITE));
+		map.color(10, 10, Palette.BLUE);
+		assertColorsEqual(Palette.WHITE, map.getColor(0, Palette.WHITE));
+		assertColorsEqual(Palette.WHITE, map.getColor(9, Palette.WHITE));
+		assertColorsEqual(Palette.BLUE, map.getColor(10, Palette.WHITE));
+		assertColorsEqual(Palette.WHITE, map.getColor(11, Palette.WHITE));
+		assertColorsEqual(Palette.WHITE, map.getColor(100, Palette.WHITE));
 	}
 
 	@Test
 	public void testCopy() {
 		ColorRangeMap map = new ColorRangeMap();
-		map.color(10, 10, Color.BLUE);
-		assertEquals(Color.WHITE, map.getColor(0, Color.WHITE));
-		assertEquals(Color.WHITE, map.getColor(9, Color.WHITE));
-		assertEquals(Color.BLUE, map.getColor(10, Color.WHITE));
-		assertEquals(Color.WHITE, map.getColor(11, Color.WHITE));
-		assertEquals(Color.WHITE, map.getColor(100, Color.WHITE));
+		map.color(10, 10, Palette.BLUE);
+		assertColorsEqual(Palette.WHITE, map.getColor(0, Palette.WHITE));
+		assertColorsEqual(Palette.WHITE, map.getColor(9, Palette.WHITE));
+		assertColorsEqual(Palette.BLUE, map.getColor(10, Palette.WHITE));
+		assertColorsEqual(Palette.WHITE, map.getColor(11, Palette.WHITE));
+		assertColorsEqual(Palette.WHITE, map.getColor(100, Palette.WHITE));
 
 		map = map.copy();
 
-		assertEquals(Color.WHITE, map.getColor(0, Color.WHITE));
-		assertEquals(Color.WHITE, map.getColor(9, Color.WHITE));
-		assertEquals(Color.BLUE, map.getColor(10, Color.WHITE));
-		assertEquals(Color.WHITE, map.getColor(11, Color.WHITE));
-		assertEquals(Color.WHITE, map.getColor(100, Color.WHITE));
+		assertColorsEqual(Palette.WHITE, map.getColor(0, Palette.WHITE));
+		assertColorsEqual(Palette.WHITE, map.getColor(9, Palette.WHITE));
+		assertColorsEqual(Palette.BLUE, map.getColor(10, Palette.WHITE));
+		assertColorsEqual(Palette.WHITE, map.getColor(11, Palette.WHITE));
+		assertColorsEqual(Palette.WHITE, map.getColor(100, Palette.WHITE));
 	}
 
 }

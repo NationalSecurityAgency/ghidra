@@ -28,7 +28,7 @@ import ghidra.program.model.mem.*;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 import ghidra.util.exception.*;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Test for Module.
@@ -731,7 +731,7 @@ public class ModuleTest extends AbstractGhidraHeadedIntegrationTest {
 		Address start = addr(offset);
 		try {
 			MemoryBlock block = memory.createInitializedBlock(name, start, length, (byte) 0,
-				TaskMonitorAdapter.DUMMY_MONITOR, false);
+				TaskMonitor.DUMMY, false);
 			return block;
 
 		}

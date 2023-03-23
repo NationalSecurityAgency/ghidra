@@ -23,6 +23,7 @@ import javax.swing.Icon;
 import docking.ActionContext;
 import docking.action.*;
 import docking.tool.ToolConstants;
+import generic.theme.GIcon;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.plugin.PluginCategoryNames;
@@ -32,8 +33,6 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.util.*;
 import ghidra.util.HelpLocation;
-import resources.ResourceManager;
-import resources.icons.RotateIcon;
 
 //@formatter:off
 @PluginInfo(
@@ -49,15 +48,14 @@ import resources.icons.RotateIcon;
 public class FunctionReachabilityPlugin extends ProgramPlugin {
 
 	// TODO
-	static final Icon ICON = new RotateIcon(
-		ResourceManager.loadImage("images/function_graph_curvey.png"), 90);
+	static final Icon ICON = new GIcon("icon.plugin.reachability.provider");
 
 	private DockingAction showProviderAction;
 	private List<FunctionReachabilityProvider> providers =
 		new ArrayList<>();
 
 	public FunctionReachabilityPlugin(PluginTool tool) {
-		super(tool, true, true);
+		super(tool);
 
 		createActions();
 	}

@@ -22,6 +22,7 @@ import javax.swing.SwingUtilities;
 import org.junit.Test;
 
 import docking.ComponentProvider;
+import generic.theme.GThemeDefaults.Colors.Palette;
 import ghidra.app.plugin.core.datamgr.DataTypesProvider;
 import ghidra.app.plugin.core.programtree.ViewManagerComponentProvider;
 
@@ -60,7 +61,7 @@ public class DisassembledViewPluginScreenShots extends GhidraScreenShotGenerator
 		size.height -= (2 * offset);// up
 		r.setSize(size);
 
-		drawRectangle(Color.YELLOW, r, 10);
+		drawRectangle(Palette.YELLOW, r, 10);
 	}
 
 }

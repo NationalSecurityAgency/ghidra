@@ -20,13 +20,14 @@ import java.util.*;
 import java.util.List;
 
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 
+import generic.theme.GColor;
+import generic.theme.GIcon;
 import ghidra.app.services.DataTypeQueryService;
+import ghidra.program.database.data.ProjectDataTypeManager;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
 import ghidra.util.Msg;
-import ghidra.util.datastruct.Algorithms;
 import ghidra.util.exception.AssertException;
 import resources.MultiIcon;
 import resources.ResourceManager;
@@ -37,28 +38,10 @@ public class DataTypeUtils {
 	private static final char END_CHAR = '\uffff';
 	private static final char BEGIN_CHAR = '\u0000';
 
-	private static Map<Icon, MultiIcon> highlightIconMap = new HashMap<>();
+	private static final Color COLOR_ICON_HIGHLIGHT =
+		new GColor("color.bg.plugin.datamgr.icon.highlight");
 
-	private static String OPEN_FOLDER = "images/openFolder.png";
-	private static String CLOSED_FOLDER = "images/closedFolder.png";
-	private static String DISABLED_OPEN_FOLDER = "images/disabledOpenFolder.png";
-	private static String DISABLED_CLOSED_FOLDER = "images/disabledClosedFolder.png";
-	private static String DEFAULT_ICON = "images/defaultDt.gif";
-	private static String DISABLED_DEFAULT_ICON = "images/disabledCode.gif";
-	private static String LOCKED_OPEN_FOLDER = "images/openFolderCheckedOut.png";
-	private static String LOCKED_CLOSED_FOLDER = "images/closedFolderCheckedOut.png";
-	private static String OPEN_ARCHIVE_FOLDER = "images/openFolderArchive.png";
-	private static String CLOSED_ARCHIVE_FOLDER = "images/closedFolderArchive.png";
-	private static String ROOT_ICON = "images/BookShelf.png";
-	private static String OPEN_ROOT_ICON = "images/BookShelfOpen.png";
-	private static String FAVORITE_ICON = "images/emblem-favorite.png";
-	private static String BUILT_IN_ICON = "images/package_development.png";
-	private static String STRUCTURE_ICON = "images/cstruct.png";
-	private static String UNION_ICON = "images/cUnion.png";
-	private static String TYPEDEF_ICON = "images/typedef.png";
-	private static String FUNCTION_ICON = "images/functionDef.png";
-	private static String ENUM_ICON = "images/enum.png";
-	private static String POINTER_ICON = "images/fingerPointer.png";
+	private static Map<Icon, MultiIcon> highlightIconMap = new HashMap<>();
 
 	private static Icon defaultIcon;
 	private static Icon disabledIcon;
@@ -89,29 +72,29 @@ public class DataTypeUtils {
 			return;
 		}
 		imagesLoaded = true;
-		defaultIcon = ResourceManager.loadImage(DEFAULT_ICON);
-		disabledIcon = ResourceManager.loadImage(DISABLED_DEFAULT_ICON);
+		defaultIcon = new GIcon("icon.plugin.datatypes.default");
+		disabledIcon = new GIcon("icon.plugin.datatypes.default.disabled");
 
-		favoriteIcon = ResourceManager.loadImage(FAVORITE_ICON);
-		disabledFavoriteIcon = ResourceManager.getDisabledIcon((ImageIcon) favoriteIcon);
+		favoriteIcon = new GIcon("icon.plugin.datatypes.util.favorite");
+		disabledFavoriteIcon = new GIcon("icon.plugin.datatypes.util.favorite.disabled");
 
-		builtInIcon = ResourceManager.loadImage(BUILT_IN_ICON);
-		disabledBuiltInIcon = ResourceManager.getDisabledIcon((ImageIcon) builtInIcon);
+		builtInIcon = new GIcon("icon.plugin.datatypes.built.in");
+		disabledBuiltInIcon = new GIcon("icon.plugin.datatypes.built.in.disabled");
 
-		rootIcon = ResourceManager.loadImage(ROOT_ICON);
-		openRootIcon = ResourceManager.loadImage(OPEN_ROOT_ICON);
+		rootIcon = new GIcon("icon.plugin.datatypes.util.root");
+		openRootIcon = new GIcon("icon.plugin.datatypes.util.open.root");
 
-		openFolderIcon = ResourceManager.loadImage(OPEN_FOLDER);
-		disabledOpenFolderIcon = ResourceManager.loadImage(DISABLED_OPEN_FOLDER);
+		openFolderIcon = new GIcon("icon.plugin.datatypes.util.open.folder");
+		disabledOpenFolderIcon = new GIcon("icon.plugin.datatypes.util.open.folder.disabled");
 
-		closedFolderIcon = ResourceManager.loadImage(CLOSED_FOLDER);
-		disabledClosedFolderIcon = ResourceManager.loadImage(DISABLED_CLOSED_FOLDER);
+		closedFolderIcon = new GIcon("icon.plugin.datatypes.util.closed.folder");
+		disabledClosedFolderIcon = new GIcon("icon.plugin.datatypes.util.closed.folder.disabled");
 
-		lockedOpenFolderIcon = ResourceManager.loadImage(LOCKED_OPEN_FOLDER);
-		lockedClosedFolderIcon = ResourceManager.loadImage(LOCKED_CLOSED_FOLDER);
+		lockedOpenFolderIcon = new GIcon("icon.plugin.datatypes.util.open.folder.locked");
+		lockedClosedFolderIcon = new GIcon("icon.plugin.datatypes.util.closed.folder.locked");
 
-		openArchiveFolderIcon = ResourceManager.loadImage(OPEN_ARCHIVE_FOLDER);
-		closedArchiveFolderIcon = ResourceManager.loadImage(CLOSED_ARCHIVE_FOLDER);
+		openArchiveFolderIcon = new GIcon("icon.plugin.datatypes.util.open.archive");
+		closedArchiveFolderIcon = new GIcon("icon.plugin.datatypes.util.closed.archive");
 
 		createDataTypeIcons();
 
@@ -120,29 +103,29 @@ public class DataTypeUtils {
 	private static void createDataTypeIcons() {
 		List<DataTypeIconWrapper> list = new ArrayList<>();
 
-		Icon enumIcon = ResourceManager.loadImage(ENUM_ICON);
+		Icon enumIcon = new GIcon("icon.plugin.datatypes.enum");
 		list.add(new DataTypeIconWrapper(Enum.class, enumIcon,
-			ResourceManager.getDisabledIcon((ImageIcon) enumIcon)));
+			ResourceManager.getDisabledIcon(enumIcon)));
 
-		Icon functionIcon = ResourceManager.loadImage(FUNCTION_ICON);
+		Icon functionIcon = new GIcon("icon.plugin.datatypes.function");
 		list.add(new DataTypeIconWrapper(FunctionDefinition.class, functionIcon,
-			ResourceManager.getDisabledIcon((ImageIcon) functionIcon)));
+			ResourceManager.getDisabledIcon(functionIcon)));
 
-		Icon pointerIcon = ResourceManager.loadImage(POINTER_ICON);
+		Icon pointerIcon = new GIcon("icon.plugin.datatypes.pointer");
 		list.add(new DataTypeIconWrapper(Pointer.class, pointerIcon,
-			ResourceManager.getDisabledIcon((ImageIcon) pointerIcon)));
+			ResourceManager.getDisabledIcon(pointerIcon)));
 
-		Icon typedefIcon = ResourceManager.loadImage(TYPEDEF_ICON);
+		Icon typedefIcon = new GIcon("icon.plugin.datatypes.typedef");
 		list.add(new DataTypeIconWrapper(TypeDef.class, typedefIcon,
-			ResourceManager.getDisabledIcon((ImageIcon) typedefIcon)));
+			ResourceManager.getDisabledIcon(typedefIcon)));
 
-		Icon unionIcon = ResourceManager.loadImage(UNION_ICON);
+		Icon unionIcon = new GIcon("icon.plugin.datatypes.union");
 		list.add(new DataTypeIconWrapper(Union.class, unionIcon,
-			ResourceManager.getDisabledIcon((ImageIcon) unionIcon)));
+			ResourceManager.getDisabledIcon(unionIcon)));
 
-		Icon structureIcon = ResourceManager.loadImage(STRUCTURE_ICON);
+		Icon structureIcon = new GIcon("icon.plugin.datatypes.structure");
 		list.add(new DataTypeIconWrapper(Structure.class, structureIcon,
-			ResourceManager.getDisabledIcon((ImageIcon) structureIcon)));
+			ResourceManager.getDisabledIcon(structureIcon)));
 
 		dataTypeIconWrappers = list.toArray(new DataTypeIconWrapper[list.size()]);
 	}
@@ -281,7 +264,7 @@ public class DataTypeUtils {
 		MultiIcon highlightIcon = highlightIconMap.get(baseIcon);
 
 		if (highlightIcon == null) {
-			highlightIcon = new MultiIcon(new HighlightIcon(new Color(204, 204, 255)));
+			highlightIcon = new MultiIcon(new HighlightIcon(COLOR_ICON_HIGHLIGHT));
 			highlightIcon.addIcon(baseIcon);
 			highlightIconMap.put(baseIcon, highlightIcon);
 		}
@@ -338,10 +321,10 @@ public class DataTypeUtils {
 		searchTextStart = prepareSearchText(searchTextStart);
 		searchTextEnd = prepareSearchText(searchTextEnd);
 
-		int startIndex = Algorithms.binarySearchWithDuplicates(dataTypeList, searchTextStart,
+		int startIndex = binarySearchWithDuplicates(dataTypeList, searchTextStart,
 			DATA_TYPE_LOOKUP_COMPARATOR);
 
-		int endIndex = Algorithms.binarySearchWithDuplicates(dataTypeList, searchTextEnd,
+		int endIndex = binarySearchWithDuplicates(dataTypeList, searchTextEnd,
 			DATA_TYPE_LOOKUP_COMPARATOR);
 
 		return dataTypeList.subList(startIndex, endIndex);
@@ -455,11 +438,54 @@ public class DataTypeUtils {
 			msg = "The archive file is not modifiable!\nYou must open the archive for editing\n" +
 				"before performing this operation.\n" + dtm.getName();
 		}
+		else if (dtm instanceof ProjectDataTypeManager) {
+			ProjectDataTypeManager projectDtm = (ProjectDataTypeManager) dtm;
+			if (!projectDtm.isUpdatable() && !projectDtm.getDomainFile().canCheckout()) {
+				msg = "The project archive is not modifiable!\n" + dtm.getName();
+			}
+			else {
+				msg = "The project archive is not modifiable!\nYou must check out the archive\n" +
+					"before performing this operation.\n" + dtm.getName();
+			}
+		}
 		else {
-			msg = "The project archive is not modifiable!\nYou must check out the archive\n" +
-				"before performing this operation.\n" + dtm.getName();
+			msg = "The Archive is not modifiable!\n";
 		}
 		Msg.showInfo(DataTypeUtils.class, parent, title, msg);
+	}
+
+	public static int binarySearchWithDuplicates(List<DataType> data,
+			String searchItem, Comparator<Object> comparator) {
+		int index = Collections.binarySearch(data, searchItem, comparator);
+
+		// the binary search returns a negative, incremented position if there is no match in the
+		// list for the given search
+		if (index < 0) {
+			index = -index - 1;
+		}
+		else {
+			index = findTrueStartIndex(searchItem, data, index, comparator);
+		}
+		return index;
+	}
+
+	// finds the index of the first element in the given list--this is used in conjunction with
+	// the binary search, which doesn't produce the desired results when searching lists with 
+	// duplicates
+
+	private static int findTrueStartIndex(String searchItem, List<DataType> dataList,
+			int startIndex, Comparator<Object> comparator) {
+		if (startIndex < 0) {
+			return startIndex;
+		}
+
+		for (int i = startIndex; i >= 0; i--) {
+			if (comparator.compare(dataList.get(i), searchItem) != 0) {
+				return ++i; // previous index
+			}
+		}
+
+		return 0; // this means that the search text matches the first element in the lists
 	}
 
 }
@@ -531,47 +557,5 @@ class HighlightIcon implements Icon {
 		g.setColor(color);
 		g.fillRect(x + 1, y, WIDTH, HEIGHT);
 		g.drawRect(x, y, WIDTH + 1, HEIGHT - 1);
-	}
-}
-
-class VersionIcon implements Icon {
-
-	private static Color VERSION_ICON_COLOR_DARK = new Color(0x82, 0x82, 0xff);
-	private static Color VERSION_ICON_COLOR_LIGHT = new Color(0x9f, 0x9f, 0xff);
-
-	private static final int WIDTH = 18;
-	private static final int HEIGHT = 17;
-
-	int width;
-	int height;
-
-	VersionIcon() {
-		this(WIDTH, HEIGHT);
-	}
-
-	VersionIcon(int width, int height) {
-		this.width = width;
-		this.height = height;
-	}
-
-	@Override
-	public int getIconHeight() {
-		return height;
-	}
-
-	@Override
-	public int getIconWidth() {
-		return width;
-	}
-
-	@Override
-	public void paintIcon(Component c, Graphics g, int x, int y) {
-		g.setColor(VERSION_ICON_COLOR_LIGHT);
-		g.fillRect(x + 1, y + 1, width - 2, height - 2);
-		g.setColor(VERSION_ICON_COLOR_DARK);
-		g.drawLine(x + 1, y, x + width - 2, y);
-		g.drawLine(x + width - 1, y + 1, x + width - 1, y + height - 2);
-		g.drawLine(x + 1, y + height - 1, x + width - 2, y + height - 1);
-		g.drawLine(x, y + 1, x, y + height - 2);
 	}
 }

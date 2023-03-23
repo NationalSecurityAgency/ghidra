@@ -17,11 +17,12 @@
 #include "slghsymbol.hh"
 #include "translate.hh"
 
-ParserContext::ParserContext(ContextCache *ccache)
+ParserContext::ParserContext(ContextCache *ccache,Translate *trans)
 
 {
-  parsestate = 0;
+  parsestate = uninitialized;
   contcache = ccache;
+  translate = trans;
   if (ccache != (ContextCache *)0) {
     contextsize = ccache->getDatabase()->getContextSize();
     context = new uintm[ contextsize ];
@@ -41,6 +42,18 @@ void ParserContext::initialize(int4 maxstate,int4 maxparam,AddrSpace *spc)
   for(int4 i=0;i<maxstate;++i)
     state[i].resolve.resize(maxparam);
   base_state = &state[0];
+}
+
+const Address &ParserContext::getN2addr(void) const
+
+{
+  if (n2addr.isInvalid()) {
+    if (translate == (Translate *)0 || parsestate == uninitialized)
+      throw LowlevelError("inst_next2 not available in this context");
+    int4 length = translate->instructionLength(naddr);
+    n2addr = naddr + length;
+  }
+  return n2addr;
 }
 
 uintm ParserContext::getInstructionBytes(int4 bytestart,int4 size,uint4 off) const

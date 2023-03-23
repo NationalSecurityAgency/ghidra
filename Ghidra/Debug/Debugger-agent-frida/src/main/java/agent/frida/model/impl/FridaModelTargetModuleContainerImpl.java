@@ -20,25 +20,13 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import agent.frida.frida.FridaModuleInfo;
-import agent.frida.manager.FridaCause;
-import agent.frida.manager.FridaModule;
-import agent.frida.manager.FridaProcess;
-import agent.frida.manager.FridaSession;
-import agent.frida.manager.FridaThread;
-import agent.frida.model.iface2.FridaModelTargetModule;
-import agent.frida.model.iface2.FridaModelTargetModuleContainer;
-import agent.frida.model.iface2.FridaModelTargetSession;
-import agent.frida.model.methods.FridaModelTargetModuleInitImpl;
-import agent.frida.model.methods.FridaModelTargetModuleInterceptorImpl;
-import agent.frida.model.methods.FridaModelTargetModuleLoadImpl;
-import agent.frida.model.methods.FridaModelTargetUnloadScriptImpl;
-import ghidra.dbg.target.TargetModule;
-import ghidra.dbg.target.TargetObject;
-import ghidra.dbg.target.TargetThread;
-import ghidra.dbg.target.schema.TargetAttributeType;
-import ghidra.dbg.target.schema.TargetElementType;
+import agent.frida.manager.*;
+import agent.frida.model.iface2.*;
+import agent.frida.model.methods.*;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
+import ghidra.dbg.target.*;
+import ghidra.dbg.target.schema.*;
 import ghidra.dbg.target.schema.TargetObjectSchema.ResyncMode;
-import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.util.Msg;
 
 @TargetObjectSchemaInfo(
@@ -77,9 +65,9 @@ public class FridaModelTargetModuleContainerImpl extends FridaModelTargetObjectI
 			unload //
 		), Map.of( //
 		), "Initialized");
-		
+
 		getManager().addEventsListener(this);
-		requestElements(true);
+		requestElements(RefreshBehavior.REFRESH_ALWAYS);
 	}
 
 	@Override
@@ -103,12 +91,13 @@ public class FridaModelTargetModuleContainerImpl extends FridaModelTargetObjectI
 		TargetThread eventThread =
 			(TargetThread) getModel().getModelObject(thread);
 		changeElements(List.of(), List.of(targetModule), Map.of(), "Loaded");
-		getListeners().fire.event(getProxy(), eventThread, TargetEventType.MODULE_LOADED,
-				"Library " + info.getModuleName(index) + " loaded", List.of(targetModule));
+		broadcast().event(getProxy(), eventThread, TargetEventType.MODULE_LOADED,
+			"Library " + info.getModuleName(index) + " loaded", List.of(targetModule));
 	}
 
 	@Override
-	public void moduleReplaced(FridaProcess proc, FridaModuleInfo info, int index, FridaCause cause) {
+	public void moduleReplaced(FridaProcess proc, FridaModuleInfo info, int index,
+			FridaCause cause) {
 		FridaModule module = info.getModule(index);
 		changeElements(List.of(), List.of(getTargetModule(module)), Map.of(), "Replaced");
 		FridaModelTargetModule targetModule = getTargetModule(module);
@@ -116,14 +105,15 @@ public class FridaModelTargetModuleContainerImpl extends FridaModelTargetObjectI
 	}
 
 	@Override
-	public void moduleUnloaded(FridaProcess proc, FridaModuleInfo info, int index, FridaCause cause) {
+	public void moduleUnloaded(FridaProcess proc, FridaModuleInfo info, int index,
+			FridaCause cause) {
 		FridaModelTargetModule targetModule = getTargetModule(info.getModule(index));
 		if (targetModule != null) {
 			FridaThread thread = getManager().getCurrentThread();
 			TargetThread eventThread =
 				(TargetThread) getModel().getModelObject(thread);
-			getListeners().fire.event(getProxy(), eventThread, TargetEventType.MODULE_UNLOADED,
-					"Library " + info.getModuleName(index) + " unloaded", List.of(targetModule));
+			broadcast().event(getProxy(), eventThread, TargetEventType.MODULE_UNLOADED,
+				"Library " + info.getModuleName(index) + " unloaded", List.of(targetModule));
 			FridaModelImpl impl = (FridaModelImpl) model;
 			impl.deleteModelObject(targetModule.getModule());
 		}
@@ -141,9 +131,9 @@ public class FridaModelTargetModuleContainerImpl extends FridaModelTargetObjectI
 	}
 
 	@Override
-	public CompletableFuture<Void> requestElements(boolean refresh) {
-		if (refresh) {
-			listeners.fire.invalidateCacheRequested(this);
+	public CompletableFuture<Void> requestElements(RefreshBehavior refresh) {
+		if (refresh.equals(RefreshBehavior.REFRESH_ALWAYS)) {
+			broadcast().invalidateCacheRequested(this);
 		}
 		return getManager().listModules(session.getProcess());
 	}

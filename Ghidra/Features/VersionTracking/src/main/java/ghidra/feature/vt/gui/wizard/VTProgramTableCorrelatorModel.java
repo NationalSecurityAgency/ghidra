@@ -20,11 +20,11 @@ import java.util.*;
 import javax.swing.Icon;
 
 import docking.widgets.table.AbstractGTableModel;
+import generic.theme.GIcon;
 import ghidra.feature.vt.api.main.VTProgramCorrelatorFactory;
 import ghidra.feature.vt.api.util.VTAbstractProgramCorrelatorFactory;
 import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.exception.AssertException;
-import resources.ResourceManager;
 
 public class VTProgramTableCorrelatorModel extends AbstractGTableModel<VTProgramCorrelatorFactory> {
 
@@ -40,7 +40,8 @@ public class VTProgramTableCorrelatorModel extends AbstractGTableModel<VTProgram
 				return o1.getPriority() - o2.getPriority();
 			}
 		};
-	private static final Icon ALREADY_RUN_ICON = ResourceManager.loadImage("images/flag-green.png");
+	private static final Icon ALREADY_RUN_ICON =
+		new GIcon("icon.version.tracking.correlator.status.already.run");
 
 	private List<VTProgramCorrelatorFactory> list;
 	private Set<String> previouslyRunCorrelators;

@@ -212,23 +212,14 @@ fielddef
 	}
 	:	^(t=OP_FIELDDEF n=unbound_identifier["field"] s=integer e=integer {
 			if (n != null) {
-                long start = $s.value.longValue();
-                long finish = $e.value.longValue();
-                if (finish < start) {
-                    reportError(find($t), "field '" + $n.value.getText() + "' starts at " + start + " and ends at " + finish);
-                }
                 $fielddef::fieldQuality = new FieldQuality($n.value.getText(), find($t), $s.value.longValue(), $e.value.longValue());
 			}
 		} fieldmods) {
 			if ($fielddef.size() > 0 && $fielddef::fieldQuality != null) {
 				if ($tokendef.size() > 0 && $tokendef::tokenSymbol != null) {
-					if ($tokendef::tokenSymbol.getToken().getSize()*8 <= $fielddef::fieldQuality.high) {
-						reportError(find($t), "field high must be less than token size");
-					} else {
-						sc.addTokenField(find(n), $tokendef::tokenSymbol, $fielddef::fieldQuality);
-					}
+					sc.addTokenField(find(n), $tokendef::tokenSymbol, $fielddef::fieldQuality);
 				} else if ($contextdef.size() > 0 && $contextdef::varnode != null) {
-					if (!sc.addContextField($contextdef::varnode, $fielddef::fieldQuality)) {
+					if (!sc.addContextField(find(n), $contextdef::varnode, $fielddef::fieldQuality)) {
 						reportError(find($t), "all context definitions must come before constructors");
 					}
 				}
@@ -349,9 +340,10 @@ specific_symbol[String purpose] returns [SpecificSymbol symbol]
 	:	^(OP_IDENTIFIER s=.) {
 			SleighSymbol sym = pcode.findSymbol($s.getText());
 			if (sym == null) {
-				unknownSymbolError($s.getText(), find($s), "start, end, operand, epsilon, or varnode", purpose);
+				unknownSymbolError($s.getText(), find($s), "start, end, next2, operand, epsilon, or varnode", purpose);
 			} else if(sym.getType() != symbol_type.start_symbol
 					&& sym.getType() != symbol_type.end_symbol
+					&& sym.getType() != symbol_type.next2_symbol
 					&& sym.getType() != symbol_type.operand_symbol
 					&& sym.getType() != symbol_type.epsilon_symbol
 					&& sym.getType() != symbol_type.varnode_symbol) {
@@ -839,7 +831,7 @@ pattern_symbol[String purpose] returns [PatternExpression expr]
 	:	^(OP_IDENTIFIER s=.) {
 			SleighSymbol sym = sc.findSymbol($s.getText());
 			if (sym == null) {
-				unknownSymbolError($s.getText(), find($s), "start, end, operand, epsilon, or varnode", purpose);
+				unknownSymbolError($s.getText(), find($s), "start, end, next2, operand, epsilon, or varnode", purpose);
             } else if(sym.getType() == symbol_type.operand_symbol) {
                 OperandSymbol os = (OperandSymbol) sym;
                 if (os.getDefiningSymbol() != null && os.getDefiningSymbol().getType() == symbol_type.subtable_symbol) {
@@ -848,6 +840,7 @@ pattern_symbol[String purpose] returns [PatternExpression expr]
                 $expr = os.getPatternExpression();
 			} else if(sym.getType() == symbol_type.start_symbol
 					|| sym.getType() == symbol_type.end_symbol
+					|| sym.getType() == symbol_type.next2_symbol
 					|| sym.getType() == symbol_type.epsilon_symbol
 					|| sym.getType() == symbol_type.varnode_symbol) {
 				SpecificSymbol ss = (SpecificSymbol) sym;
@@ -864,7 +857,7 @@ pattern_symbol[String purpose] returns [PatternExpression expr]
 					reportError(find($s), "Global symbol '" + sym.getName() + "' is not allowed in action expression");
 				}
 			} else {
-				wrongSymbolTypeError(sym, find($s), "start, end, operand, epsilon, or varnode", purpose);
+				wrongSymbolTypeError(sym, find($s), "start, end, next2, operand, epsilon, or varnode", purpose);
 			}
 		}
 	|	t=OP_WILDCARD {
@@ -877,9 +870,10 @@ pattern_symbol2[String purpose] returns [PatternExpression expr]
 	:	^(OP_IDENTIFIER s=.) {
 			SleighSymbol sym = sc.findSymbol($s.getText());
 			if (sym == null) {
-				unknownSymbolError($s.getText(), find($s), "start, end, operand, epsilon, or varnode", purpose);
+				unknownSymbolError($s.getText(), find($s), "start, end, next2, operand, epsilon, or varnode", purpose);
 			} else if(sym.getType() == symbol_type.start_symbol
 					|| sym.getType() == symbol_type.end_symbol
+					|| sym.getType() == symbol_type.next2_symbol
 					|| sym.getType() == symbol_type.operand_symbol
 					|| sym.getType() == symbol_type.epsilon_symbol
 					|| sym.getType() == symbol_type.varnode_symbol) {
@@ -893,7 +887,7 @@ pattern_symbol2[String purpose] returns [PatternExpression expr]
 				FamilySymbol z = (FamilySymbol) sym;
 				$expr = z.getPatternValue();
 			} else {
-				wrongSymbolTypeError(sym, find($s), "start, end, operand, epsilon, or varnode", purpose);
+				wrongSymbolTypeError(sym, find($s), "start, end, next2, operand, epsilon, or varnode", purpose);
 			}
 		}
 	|	t=OP_WILDCARD {
@@ -922,7 +916,7 @@ cstatement[VectorSTL<ContextChange> r]
 			} else if(sym.getType() == symbol_type.context_symbol) {
 				ContextSymbol t = (ContextSymbol) sym;
 				if (!sc.contextMod(r, t, e)) {
-					reportError(find($id), "Cannot use 'inst_next' to set context variable: '" + t.getName() + "'");
+					reportError(find($id), "Cannot use 'inst_next' or 'inst_next2' to set context variable: '" + t.getName() + "'");
 				}
 			} else if(sym.getType() == symbol_type.operand_symbol) {
 				OperandSymbol t = (OperandSymbol) sym;
@@ -950,6 +944,7 @@ cstatement[VectorSTL<ContextChange> r]
 							|| sym.getType() == symbol_type.varnodelist_symbol
 							|| sym.getType() == symbol_type.start_symbol
 							|| sym.getType() == symbol_type.end_symbol
+							|| sym.getType() == symbol_type.next2_symbol
 							|| sym.getType() == symbol_type.operand_symbol
 							|| sym.getType() == symbol_type.epsilon_symbol
 							|| sym.getType() == symbol_type.varnode_symbol) {
@@ -1176,10 +1171,11 @@ assignment returns [VectorSTL<OpTpl> value]
 				$value = pcode.newOutput(find(id), false, e, $id.getText());	
 			} else if(sym.getType() != symbol_type.start_symbol
 					&& sym.getType() != symbol_type.end_symbol
+					&& sym.getType() != symbol_type.next2_symbol
 					&& sym.getType() != symbol_type.operand_symbol
 					&& sym.getType() != symbol_type.epsilon_symbol
 					&& sym.getType() != symbol_type.varnode_symbol) {
-				wrongSymbolTypeError(sym, find(id), "start, end, operand, epsilon, or varnode", "assignment");
+				wrongSymbolTypeError(sym, find(id), "start, end, next2, operand, epsilon, or varnode", "assignment");
 			} else {
 				VarnodeTpl v = ((SpecificSymbol) sym).getVarnode();
 				e.setOutput(find(t), v);
@@ -1309,7 +1305,9 @@ jump_symbol[String purpose] returns [VarnodeTpl value]
 			SleighSymbol sym = pcode.findSymbol($s.getText());
 			if (sym == null) {
 				unknownSymbolError($s.getText(), find($s), "start, end, or operand", purpose);
-			} else if(sym.getType() == symbol_type.start_symbol || sym.getType() == symbol_type.end_symbol) {
+			} else if (sym.getType() == symbol_type.start_symbol ||
+					sym.getType() == symbol_type.end_symbol ||
+					sym.getType() == symbol_type.next2_symbol) {
 				SpecificSymbol ss = (SpecificSymbol) sym;
 				$value = new VarnodeTpl(find($s), new ConstTpl(ConstTpl.const_type.j_curspace),
 					ss.getVarnode().getOffset(),
@@ -1489,6 +1487,7 @@ expr_apply returns [Object value]
 					}
 				} else if(sym.getType() == symbol_type.start_symbol
 					|| sym.getType() == symbol_type.end_symbol
+					|| sym.getType() == symbol_type.next2_symbol
 					|| sym.getType() == symbol_type.operand_symbol
 					|| sym.getType() == symbol_type.epsilon_symbol
 					|| sym.getType() == symbol_type.varnode_symbol) {

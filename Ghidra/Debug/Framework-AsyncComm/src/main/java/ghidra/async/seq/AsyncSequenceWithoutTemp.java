@@ -38,6 +38,7 @@ public class AsyncSequenceWithoutTemp<R> {
 	/**
 	 * Construct a new sequence without a temporary value
 	 * 
+	 * <p>
 	 * Do not call this directly. Please use {@link AsyncUtils#sequence(TypeSpec)}.
 	 * 
 	 * @param seqResult the result of the whole sequence, passed to each appended sequence
@@ -180,6 +181,7 @@ public class AsyncSequenceWithoutTemp<R> {
 	/**
 	 * Finish defining this sequence of actions and obtain its future result
 	 * 
+	 * <p>
 	 * When an action in the sequence calls {@link AsyncHandlerCanExit#exit(Object, Throwable)}, the
 	 * returned {@link CompletableFuture} is completed. If any action completes exceptionally, the
 	 * returned {@link CompletableFuture} is completed exceptionally. If the final action executes,
@@ -197,13 +199,17 @@ public class AsyncSequenceWithoutTemp<R> {
 	/**
 	 * Register an action to execute on sequence completion
 	 * 
+	 * <p>
 	 * All registered actions are submitted for execution simultaneously when an action in the
 	 * sequence calls {@link AsyncHandlerCanExit#exit(Object, Throwable)}. This is useful for
 	 * methods that begin executing sequences "with a context". It is roughly equivalent to a
 	 * {@code finally} block. On-exit actions can be registered before other actions are appended to
 	 * the chain.
 	 * 
-	 * An uncaught exception in an on-exit action will simply be logged and ignored.
+	 * <p>
+	 * If the sequence completes exceptionally, that exception is passed to the action. This method
+	 * cannot be used to handle the exception, since this method returns this same sequence, not the
+	 * resulting one. An uncaught exception in an on-exit action will simply be logged and ignored.
 	 * 
 	 * @param action the action to execute
 	 */

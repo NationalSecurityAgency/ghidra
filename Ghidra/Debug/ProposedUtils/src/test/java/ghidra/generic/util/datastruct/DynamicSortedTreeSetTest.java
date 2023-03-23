@@ -22,8 +22,6 @@ import java.util.*;
 import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Test;
 
-import ghidra.generic.util.datastruct.DynamicSortedTreeSet;
-
 public class DynamicSortedTreeSetTest {
 	public static class NonComparable {
 		public NonComparable(String key, int cost) {

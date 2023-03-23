@@ -16,28 +16,38 @@
 #include "pcoderaw.hh"
 #include "translate.hh"
 
-/// Build this VarnodeData from an \b \<addr\> tag
-/// \param el is the parsed tag
-/// \param manage is the address space manager
-void VarnodeData::restoreXml(const Element *el,const AddrSpaceManager *manage)
+/// Build this VarnodeData from an \<addr>, \<register>, or \<varnode> element.
+/// \param decoder is the stream decoder
+void VarnodeData::decode(Decoder &decoder)
+
+{
+  uint4 elemId = decoder.openElement();
+  decodeFromAttributes(decoder);
+  decoder.closeElement(elemId);
+}
+
+/// Collect attributes for the VarnodeData possibly from amidst other attributes
+/// \param decoder is the stream decoder
+void VarnodeData::decodeFromAttributes(Decoder &decoder)
 
 {
   space = (AddrSpace *)0;
   size = 0;
-  int4 num = el->getNumAttributes();
-  for(int4 i=0;i<num;++i) {
-    if (el->getAttributeName(i)=="space") {
-      space = manage->getSpaceByName(el->getAttributeValue(i));
-      if (space == (AddrSpace *)0)
-	throw LowlevelError("Unknown space name: "+el->getAttributeValue(i));
-      offset = space->restoreXmlAttributes(el,size);
-      return;
+  for(;;) {
+    uint4 attribId = decoder.getNextAttributeId();
+    if (attribId == 0)
+      break;		// Its possible to have no attributes in an <addr/> tag
+    if (attribId == ATTRIB_SPACE) {
+      space = decoder.readSpace();
+      decoder.rewindAttributes();
+      offset = space->decodeAttributes(decoder,size);
+      break;
     }
-    else if (el->getAttributeName(i)=="name") {
-      const Translate *trans = manage->getDefaultCodeSpace()->getTrans();
-      const VarnodeData &point(trans->getRegister(el->getAttributeValue(i)));
+    else if (attribId == ATTRIB_NAME) {
+      const Translate *trans = decoder.getAddrSpaceManager()->getDefaultCodeSpace()->getTrans();
+      const VarnodeData &point(trans->getRegister(decoder.readString()));
       *this = point;
-      return;
+      break;
     }
   }
 }
@@ -52,4 +62,40 @@ bool VarnodeData::contains(const VarnodeData &op2) const
   if (op2.offset < offset) return false;
   if ((offset + (size-1)) < (op2.offset + (op2.size-1))) return false;
   return true;
+}
+
+/// This assumes the \<op> element is already open.
+/// Decode info suitable for call to PcodeEmit::dump.  The output pointer is changed to null if there
+/// is no output for this op, otherwise the existing pointer is used to store the output.
+/// \param decoder is the stream decoder
+/// \param isize is the (preparsed) number of input parameters for the p-code op
+/// \param invar is an array of storage for the input Varnodes
+/// \param outvar is a (handle) to the storage for the output Varnode
+/// \return the p-code op OpCode
+OpCode PcodeOpRaw::decode(Decoder &decoder,int4 isize,VarnodeData *invar,VarnodeData **outvar)
+
+{
+  OpCode opcode = (OpCode)decoder.readSignedInteger(ATTRIB_CODE);
+  uint4 subId = decoder.peekElement();
+  if (subId == ELEM_VOID) {
+    decoder.openElement();
+    decoder.closeElement(subId);
+    *outvar = (VarnodeData *)0;
+  }
+  else {
+    (*outvar)->decode(decoder);
+  }
+  for(int4 i=0;i<isize;++i) {
+    subId = decoder.peekElement();
+    if (subId == ELEM_SPACEID) {
+      decoder.openElement();
+      invar[i].space = decoder.getAddrSpaceManager()->getConstantSpace();
+      invar[i].offset = (uintb)(uintp)decoder.readSpace(ATTRIB_NAME);
+      invar[i].size = sizeof(void *);
+      decoder.closeElement(subId);
+    }
+    else
+      invar[i].decode(decoder);
+  }
+  return opcode;
 }

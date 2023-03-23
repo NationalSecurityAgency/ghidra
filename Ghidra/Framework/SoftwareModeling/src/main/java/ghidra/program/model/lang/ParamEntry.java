@@ -15,6 +15,10 @@
  */
 package ghidra.program.model.lang;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
+import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -22,8 +26,7 @@ import ghidra.app.plugin.processors.sleigh.VarnodeData;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.*;
-import ghidra.program.model.pcode.AddressXML;
-import ghidra.program.model.pcode.Varnode;
+import ghidra.program.model.pcode.*;
 import ghidra.util.SystemUtilities;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.*;
@@ -47,8 +50,7 @@ public class ParamEntry {
 
 	private int flags;
 	private int type;				// Restriction on DataType this entry must match
-	private int group;				// Group of (mutually exclusive) entries that this entry belongs to
-	private int groupsize;			// The number of consecutive groups taken by the entry
+	private int[] groupSet;			// Group(s) this entry belongs to
 	private AddressSpace spaceid;	// Space of this range
 	private long addressbase;		// Start of the range
 	private int size;				// size of the range
@@ -58,15 +60,16 @@ public class ParamEntry {
 	private Varnode[] joinrec;
 
 	public ParamEntry(int grp) {	// For use with restoreXml
-		group = grp;
+		groupSet = new int[1];
+		groupSet[0] = grp;
 	}
 
 	public int getGroup() {
-		return group;
+		return groupSet[0];
 	}
 
-	public int getGroupSize() {
-		return groupsize;
+	public int[] getAllGroups() {
+		return groupSet;
 	}
 
 	public int getSize() {
@@ -121,8 +124,62 @@ public class ParamEntry {
 		return spaceid;
 	}
 
-	public Varnode[] getJoinRecord() {
-		return joinrec;
+	/**
+	 * Collect pieces from the join list, in endian order, until the given size is covered.
+	 * The last piece is trimmed to match the size exactly.  If the size is too big to be
+	 * covered by this ParamEntry, null is returned.
+	 * @param sz is the given size
+	 * @return the collected array of Varnodes or null
+	 */
+	public Varnode[] getJoinPieces(int sz) {
+		int num = 0;
+		int first, replace;
+		Varnode vn = null;
+		Varnode[] res;
+		if (isBigEndian()) {
+			first = 0;
+			while (sz > 0) {
+				if (num >= joinrec.length) {
+					return null;
+				}
+				vn = joinrec[num];
+				if (vn.getSize() > sz) {
+					num += 1;
+					break;
+				}
+				sz -= vn.getSize();
+				num += 1;
+			}
+			replace = num - 1;
+		}
+		else {
+			while (sz > 0) {
+				if (num >= joinrec.length) {
+					return null;
+				}
+				vn = joinrec[joinrec.length - 1 - num];
+				if (vn.getSize() > sz) {
+					num += 1;
+					break;
+				}
+				sz -= vn.getSize();
+				num += 1;
+			}
+			first = joinrec.length - num;
+			replace = first;
+		}
+		if (sz == 0 && num == joinrec.length) {
+			return joinrec;
+		}
+		res = new Varnode[num];
+		for (int i = 0; i < num; ++i) {
+			res[i] = joinrec[first + i];
+		}
+		if (sz > 0) {
+			res[replace] = new Varnode(vn.getAddress(), sz);
+		}
+
+		return res;
 	}
 
 	/**
@@ -262,7 +319,7 @@ public class ParamEntry {
 	 * @return the slot index
 	 */
 	public int getSlot(Address addr, int skip) {
-		int res = group;
+		int res = groupSet[0];
 		if (alignment != 0) {
 			long diff = addr.getOffset() + skip - addressbase;
 			int baseslot = (int) diff / alignment;
@@ -274,7 +331,7 @@ public class ParamEntry {
 			}
 		}
 		else if (skip != 0) {
-			res += (groupsize - 1);
+			res = groupSet[groupSet.length - 1];
 		}
 		return res;
 	}
@@ -363,29 +420,24 @@ public class ParamEntry {
 		if (joinrec == null) {
 			return;
 		}
-		int mingrp = 1000;
-		int maxgrp = -1;
+		ArrayList<Integer> newGroupSet = new ArrayList<>();
 		for (Varnode piece : joinrec) {
 			ParamEntry entry = findEntryByStorage(curList, piece);
 			if (entry != null) {
-				if (entry.group < mingrp) {
-					mingrp = entry.group;
-				}
-				int max = entry.group + entry.groupsize;
-				if (max > maxgrp) {
-					maxgrp = max;
+				for (int group : entry.groupSet) {
+					newGroupSet.add(group);
 				}
 			}
 		}
-		if (maxgrp < 0 || mingrp >= 1000) {
+		if (newGroupSet.isEmpty()) {
 			throw new XmlParseException("<pentry> join must overlap at least one previous entry");
 		}
-		group = mingrp;
-		groupsize = (maxgrp - mingrp);
-		flags |= OVERLAPPING;
-		if (groupsize > joinrec.length) {
-			throw new XmlParseException("<pentry> join must overlap sequential entries");
+		newGroupSet.sort(null);
+		groupSet = new int[newGroupSet.size()];
+		for (int i = 0; i < groupSet.length; ++i) {
+			groupSet[i] = newGroupSet.get(i);
 		}
+		flags |= OVERLAPPING;
 	}
 
 	/**
@@ -398,9 +450,7 @@ public class ParamEntry {
 		if (joinrec != null) {
 			return;
 		}
-		int grpsize = 0;
-		int mingrp = 1000;
-		int maxgrp = -1;
+		ArrayList<Integer> newGroupSet = new ArrayList<>();
 		Address addr = spaceid.getAddress(addressbase);
 		for (ParamEntry entry : curList) {
 			if (entry == this) {
@@ -413,40 +463,35 @@ public class ParamEntry {
 				if (entry.isOverlap()) {
 					continue;		// Don't count resources (already counted overlapped pentry)
 				}
-				if (entry.group < mingrp) {
-					mingrp = entry.group;
+				for (int group : entry.groupSet) {
+					newGroupSet.add(group);
 				}
-				int max = entry.group + entry.groupsize;
-				if (max > maxgrp) {
-					maxgrp = max;
-				}
-				grpsize += entry.groupsize;
 			}
 			else {
 				throw new XmlParseException("Illegal overlap of <pentry> in compiler spec");
 			}
 		}
-		if (grpsize == 0) {
+		if (newGroupSet.isEmpty()) {
 			return;				// No overlaps
 		}
-		if (grpsize != (maxgrp - mingrp)) {
-			throw new XmlParseException("<pentry> must overlap sequential entries");
+		newGroupSet.sort(null);
+		groupSet = new int[newGroupSet.size()];
+		for (int i = 0; i < groupSet.length; ++i) {
+			groupSet[i] = newGroupSet.get(i);
 		}
-		group = mingrp;
-		groupsize = grpsize;
 		flags |= OVERLAPPING;
 	}
 
-	public void saveXml(StringBuilder buffer) {
-		buffer.append("<pentry");
-		SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "minsize", minsize);
-		SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "maxsize", size);
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_PENTRY);
+		encoder.writeSignedInteger(ATTRIB_MINSIZE, minsize);
+		encoder.writeSignedInteger(ATTRIB_MAXSIZE, size);
 		if (alignment != 0) {
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "align", alignment);
+			encoder.writeSignedInteger(ATTRIB_ALIGN, alignment);
 		}
 		if (type == TYPE_FLOAT || type == TYPE_PTR) {
 			String tok = (type == TYPE_FLOAT) ? "float" : "ptr";
-			SpecXmlUtils.encodeStringAttribute(buffer, "metatype", tok);
+			encoder.writeString(ATTRIB_METATYPE, tok);
 		}
 		String extString = null;
 		if ((flags & SMALLSIZE_SEXT) != 0) {
@@ -462,9 +507,8 @@ public class ParamEntry {
 			extString = "float";
 		}
 		if (extString != null) {
-			SpecXmlUtils.encodeStringAttribute(buffer, "extension", extString);
+			encoder.writeString(ATTRIB_EXTENSION, extString);
 		}
-		buffer.append(">\n");
 		AddressXML addressSize;
 		if (joinrec == null) {
 			// Treat as unsized address with no size
@@ -473,8 +517,8 @@ public class ParamEntry {
 		else {
 			addressSize = new AddressXML(spaceid, addressbase, size, joinrec);
 		}
-		addressSize.saveXml(buffer);
-		buffer.append("</pentry>");
+		addressSize.encode(encoder);
+		encoder.closeElement(ELEM_PENTRY);
 	}
 
 	public void restoreXml(XmlPullParser parser, CompilerSpec cspec, List<ParamEntry> curList,
@@ -484,7 +528,6 @@ public class ParamEntry {
 		size = minsize = -1;		// Must be filled in
 		alignment = 0;				// default
 		numslots = 1;
-		groupsize = 1;				// default
 
 		XmlElement el = parser.start("pentry");
 		Iterator<Entry<String, String>> iter = el.getAttributes().entrySet().iterator();
@@ -604,8 +647,13 @@ public class ParamEntry {
 		if (numslots != obj.numslots) {
 			return false;
 		}
-		if (group != obj.group || groupsize != obj.groupsize) {
+		if (groupSet.length != obj.groupSet.length) {
 			return false;
+		}
+		for (int i = 0; i < groupSet.length; ++i) {
+			if (groupSet[i] != obj.groupSet[i]) {
+				return false;
+			}
 		}
 		if (!SystemUtilities.isArrayEqual(joinrec, obj.joinrec)) {
 			return false;

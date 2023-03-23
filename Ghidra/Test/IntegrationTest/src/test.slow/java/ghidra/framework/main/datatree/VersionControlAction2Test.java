@@ -17,6 +17,8 @@ package ghidra.framework.main.datatree;
 
 import static org.junit.Assert.*;
 
+import java.net.URL;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.swing.*;
@@ -30,6 +32,7 @@ import docking.action.DockingActionIf;
 import docking.widgets.OptionDialog;
 import docking.widgets.table.GTable;
 import docking.widgets.tree.GTreeNode;
+import generic.theme.GIcon;
 import ghidra.framework.main.projectdata.actions.VersionControlAction;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;
@@ -40,6 +43,7 @@ import ghidra.program.model.symbol.SymbolTable;
 import ghidra.util.task.TaskMonitor;
 import resources.MultiIcon;
 import resources.ResourceManager;
+import resources.icons.UrlImageIcon;
 
 /**
  * Tests for version control (not multi user).
@@ -190,9 +194,11 @@ public class VersionControlAction2Test extends AbstractVersionControlActionTest 
 		assertTrue(icon instanceof MultiIcon);
 		Icon[] icons = ((MultiIcon) icon).getIcons();
 		Icon checkOutIcon = ResourceManager.loadImage("images/checkex.png");
+		URL checkOutIconUrl = getURL(checkOutIcon);
 		boolean found = false;
 		for (Icon element : icons) {
-			if (checkOutIcon.equals(element)) {
+			URL elementUrl = getURL(element);
+			if (Objects.equals(checkOutIconUrl, elementUrl)) {
 				found = true;
 				break;
 			}
@@ -420,4 +426,20 @@ public class VersionControlAction2Test extends AbstractVersionControlActionTest 
 		pressButtonByText(dialog, "Dismiss");
 		waitForTasks();
 	}
+
+	/**
+	 * Gets the URL for the given icon
+	 * @param icon the icon to get a URL for
+	 * @return the URL for the given icon
+	 */
+	public URL getURL(Icon icon) {
+		if (icon instanceof UrlImageIcon urlIcon) {
+			return urlIcon.getUrl();
+		}
+		if (icon instanceof GIcon gIcon) {
+			return gIcon.getUrl();
+		}
+		return null;
+	}
+
 }

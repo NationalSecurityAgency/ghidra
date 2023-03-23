@@ -17,11 +17,14 @@ package ghidra.framework.data;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.*;
 
 import javax.swing.Icon;
 
 import ghidra.framework.model.*;
+import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.framework.store.ItemCheckoutStatus;
 import ghidra.framework.store.Version;
 import ghidra.framework.store.db.PackedDatabase;
@@ -112,6 +115,29 @@ public class DomainFileProxy implements DomainFile {
 	}
 
 	@Override
+	public URL getSharedProjectURL() {
+		if (projectLocation != null && version == DomainFile.DEFAULT_VERSION) {
+			URL projectURL = projectLocation.getURL();
+			if (GhidraURL.isServerRepositoryURL(projectURL)) {
+				try {
+					// Direct URL construction done so that ghidra protocol 
+					// extension may be supported
+					String urlStr = projectURL.toExternalForm();
+					if (urlStr.endsWith("/")) {
+						urlStr = urlStr.substring(0, urlStr.length() - 1);
+					}
+					urlStr += getPathname();
+					return new URL(urlStr);
+				}
+				catch (MalformedURLException e) {
+					// ignore
+				}
+			}
+		}
+		return null;
+	}
+
+	@Override
 	public int compareTo(DomainFile df) {
 		return getName().compareToIgnoreCase(df.getName());
 	}
@@ -143,7 +169,7 @@ public class DomainFileProxy implements DomainFile {
 		DomainObjectAdapter dobj = getDomainObject();
 		if (dobj != null) {
 			try {
-				ContentHandler ch = DomainObjectAdapter.getContentHandler(dobj);
+				ContentHandler<?> ch = DomainObjectAdapter.getContentHandler(dobj);
 				return ch.getContentType();
 			}
 			catch (IOException e) {
@@ -151,6 +177,27 @@ public class DomainFileProxy implements DomainFile {
 			}
 		}
 		return "Unknown File";
+	}
+
+	@Override
+	public boolean isLinkFile() {
+		DomainObjectAdapter dobj = getDomainObject();
+		if (dobj != null) {
+			ContentHandler<?> ch;
+			try {
+				ch = DomainObjectAdapter.getContentHandler(dobj);
+				return LinkHandler.class.isAssignableFrom(ch.getClass());
+			}
+			catch (IOException e) {
+				// ignore
+			}
+		}
+		return false;
+	}
+
+	@Override
+	public DomainFolder followLink() {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -228,6 +275,7 @@ public class DomainFileProxy implements DomainFile {
 				dobj.release(consumer);
 			}
 			catch (IllegalArgumentException e) {
+				// ignore unknown consumer error
 			}
 		}
 	}
@@ -254,11 +302,6 @@ public class DomainFileProxy implements DomainFile {
 	public void addToVersionControl(String comment, boolean keepCheckedOut, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		throw new UnsupportedOperationException("Repository operations not supported");
-	}
-
-	@Override
-	public boolean isVersionControlSupported() {
-		return false;
 	}
 
 	@Override
@@ -304,6 +347,16 @@ public class DomainFileProxy implements DomainFile {
 	}
 
 	@Override
+	public boolean isLinkingSupported() {
+		return false;
+	}
+
+	@Override
+	public DomainFile copyToAsLink(DomainFolder newParent) throws IOException {
+		return null; // not supported by proxy file
+	}
+
+	@Override
 	public DomainFile copyTo(DomainFolder newParent, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		DomainObjectAdapter dobj = getDomainObject();
@@ -318,11 +371,8 @@ public class DomainFileProxy implements DomainFile {
 		}
 	}
 
-	/**
-	 * @see ghidra.framework.model.DomainFile#copyVersionTo(int, ghidra.framework.model.DomainFolder, ghidra.util.task.TaskMonitor)
-	 */
 	@Override
-	public DomainFile copyVersionTo(int version, DomainFolder destFolder, TaskMonitor monitor)
+	public DomainFile copyVersionTo(int ver, DomainFolder destFolder, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		throw new UnsupportedOperationException("copyVersionTo unsupported for DomainFileProxy");
 	}
@@ -380,6 +430,11 @@ public class DomainFileProxy implements DomainFile {
 	}
 
 	@Override
+	public void undoCheckout(boolean keep, boolean force) throws IOException {
+		throw new UnsupportedOperationException("undoCheckout() unsupported for DomainFileProxy");
+	}
+
+	@Override
 	public ChangeSet getChangesByOthersSinceCheckout() throws IOException {
 		return null;
 	}
@@ -415,7 +470,7 @@ public class DomainFileProxy implements DomainFile {
 			throw new UnsupportedOperationException("packFile() only valid for Database files");
 		}
 		DomainObjectAdapterDB dbObj = (DomainObjectAdapterDB) domainObj;
-		ContentHandler ch = DomainObjectAdapter.getContentHandler(domainObj);
+		ContentHandler<?> ch = DomainObjectAdapter.getContentHandler(domainObj);
 		PackedDatabase.packDatabase(dbObj.getDBHandle(), dbObj.getName(), ch.getContentType(), file,
 			monitor);
 	}

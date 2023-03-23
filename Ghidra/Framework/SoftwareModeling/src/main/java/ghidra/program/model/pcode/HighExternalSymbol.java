@@ -15,11 +15,15 @@
  */
 package ghidra.program.model.pcode;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
+import java.io.IOException;
+
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.VariableStorage;
 import ghidra.util.exception.InvalidInputException;
-import ghidra.util.xml.SpecXmlUtils;
 
 /**
  * A symbol, within a decompiler model, for a function without a body in the current Program.
@@ -55,13 +59,12 @@ public class HighExternalSymbol extends HighSymbol {
 	}
 
 	@Override
-	public void saveXML(StringBuilder buf) {
-		buf.append("<externrefsymbol");
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_EXTERNREFSYMBOL);
 		if ((name != null) && (name.length() > 0)) { // Give the symbol a name if we can
-			SpecXmlUtils.xmlEscapeAttribute(buf, "name", name + "_exref");
+			encoder.writeString(ATTRIB_NAME, name + "_exref");
 		}
-		buf.append(">\n");
-		AddressXML.buildXML(buf, resolveAddress);
-		buf.append("</externrefsymbol>\n");
+		AddressXML.encode(encoder, resolveAddress);
+		encoder.closeElement(ELEM_EXTERNREFSYMBOL);
 	}
 }

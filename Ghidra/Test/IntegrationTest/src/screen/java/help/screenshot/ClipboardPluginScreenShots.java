@@ -28,6 +28,7 @@ import docking.DialogComponentProvider;
 import docking.action.DockingAction;
 import docking.action.DockingActionIf;
 import docking.widgets.fieldpanel.FieldPanel;
+import generic.theme.GThemeDefaults.Colors.Java;
 import ghidra.app.plugin.core.clipboard.*;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
@@ -74,7 +75,7 @@ public class ClipboardPluginScreenShots extends GhidraScreenShotGenerator {
 		captureListingCallMnemonic(start, end);
 
 		placeImagesSideBySide(image, menuImage);
-		drawBorder(Color.BLACK);
+		drawBorder(Java.BORDER);
 	}
 
 	private void cropCopyMenu() {
@@ -149,21 +150,18 @@ public class ClipboardPluginScreenShots extends GhidraScreenShotGenerator {
 
 		Object listPanel = getInstanceField("listPanel", copySpecialDialog);
 		final JList<?> list = (JList<?>) getInstanceField("list", listPanel);
-		runSwing(new Runnable() {
-			@Override
-			public void run() {
-				ListModel<?> model = list.getModel();
-				int size = model.getSize();
-				for (int i = 0; i < size; i++) {
-					Object value = model.getElementAt(i);
-					if ("Labels and Comments".equals(value.toString())) {
-						list.setSelectedIndex(i);
-						return;
-					}
+		runSwing(() -> {
+			ListModel<?> model = list.getModel();
+			int size = model.getSize();
+			for (int i = 0; i < size; i++) {
+				Object value = model.getElementAt(i);
+				if ("Labels and Comments".equals(value.toString())) {
+					list.setSelectedIndex(i);
+					return;
 				}
-
-				throw new RuntimeException("Could not find 'Labels and Comments' copy action");
 			}
+
+			throw new RuntimeException("Could not find 'Labels and Comments' copy action");
 		});
 		waitForSwing();
 	}

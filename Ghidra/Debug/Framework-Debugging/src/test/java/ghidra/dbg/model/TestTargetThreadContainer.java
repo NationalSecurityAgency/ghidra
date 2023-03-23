@@ -24,12 +24,13 @@ import ghidra.dbg.target.TargetObject;
 
 public class TestTargetThreadContainer
 		extends DefaultTestTargetObject<TestTargetThread, TestTargetProcess> {
+
 	public TestTargetThreadContainer(TestTargetProcess parent) {
 		super(parent, "Threads", "Threads");
 	}
 
 	public TestTargetThread addThread(int tid) {
-		TestTargetThread thread = new TestTargetThread(this, tid);
+		TestTargetThread thread = getModel().newTestTargetThread(this, tid);
 		changeElements(List.of(), List.of(thread), Map.of(), "Test Thread Added");
 		return thread;
 	}

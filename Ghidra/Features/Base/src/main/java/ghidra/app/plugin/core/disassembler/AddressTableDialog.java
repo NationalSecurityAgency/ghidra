@@ -23,7 +23,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import docking.DialogComponentProvider;
+import docking.ReusableDialogComponentProvider;
 import docking.action.DockingAction;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GDLabel;
@@ -39,7 +39,7 @@ import ghidra.util.table.*;
 import ghidra.util.table.actions.MakeProgramSelectionAction;
 import ghidra.util.task.Task;
 
-public class AddressTableDialog extends DialogComponentProvider {
+public class AddressTableDialog extends ReusableDialogComponentProvider {
 	private static final int DEFAULT_MINIMUM_TABLE_SIZE = 3;
 	private static final String DIALOG_NAME = "Search For Address Tables";
 

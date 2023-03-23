@@ -33,12 +33,20 @@ public class Annotation {
 	private static final Pattern QUOTATION_PATTERN =
 		Pattern.compile("(?<!\\\\)[\"](.*?)(?<!\\\\)[\"]");
 
+	private static List<AnnotatedStringHandler> ANNOTATED_STRING_HANDLERS;
 	private static Map<String, AnnotatedStringHandler> ANNOTATED_STRING_MAP;
 
 	private String annotationText;
 	private String[] annotationParts;
 	private AnnotatedStringHandler annotatedStringHandler;
 	private AttributedString displayString;
+
+	public static List<AnnotatedStringHandler> getAnnotatedStringHandlers() {
+		if (ANNOTATED_STRING_HANDLERS == null) {
+			ANNOTATED_STRING_HANDLERS = getSupportedAnnotationHandlers();
+		}
+		return ANNOTATED_STRING_HANDLERS;
+	}
 
 	private static Map<String, AnnotatedStringHandler> getAnnotatedStringHandlerMap() {
 		if (ANNOTATED_STRING_MAP == null) { // lazy init due to our use of ClassSearcher
@@ -47,22 +55,26 @@ public class Annotation {
 		return ANNOTATED_STRING_MAP;
 	}
 
-	// locates AnnotatedStringHandler implementations to handle annotations
 	private static Map<String, AnnotatedStringHandler> createAnnotatedStringHandlerMap() {
 		Map<String, AnnotatedStringHandler> map = new HashMap<>();
-
-		// find all instances of AnnotatedString
-		List<AnnotatedStringHandler> instances =
-			ClassSearcher.getInstances(AnnotatedStringHandler.class);
-
-		for (AnnotatedStringHandler instance : instances) {
+		for (AnnotatedStringHandler instance : getAnnotatedStringHandlers()) {
 			String[] supportedAnnotations = instance.getSupportedAnnotations();
 			for (String supportedAnnotation : supportedAnnotations) {
 				map.put(supportedAnnotation, instance);
 			}
 		}
-
 		return Collections.unmodifiableMap(map);
+	}
+
+	// locates AnnotatedStringHandler implementations to handle annotations
+	private static List<AnnotatedStringHandler> getSupportedAnnotationHandlers() {
+		List<AnnotatedStringHandler> list = new ArrayList<>();
+		for (AnnotatedStringHandler h : ClassSearcher.getInstances(AnnotatedStringHandler.class)) {
+			if (h.getSupportedAnnotations().length != 0) {
+				list.add(h);
+			}
+		}
+		return Collections.unmodifiableList(list);
 	}
 
 	/**
@@ -182,14 +194,6 @@ public class Annotation {
 
 	public String getAnnotationText() {
 		return annotationText;
-	}
-
-	public static AnnotatedStringHandler[] getAnnotatedStringHandlers() {
-		Set<AnnotatedStringHandler> annotations =
-			new HashSet<>(getAnnotatedStringHandlerMap().values());
-		AnnotatedStringHandler[] retVal = new AnnotatedStringHandler[annotations.size()];
-		annotations.toArray(retVal);
-		return retVal;
 	}
 
 	/*package*/ static Set<String> getAnnotationNames() {

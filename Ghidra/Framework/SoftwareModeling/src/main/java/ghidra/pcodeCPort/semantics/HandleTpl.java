@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +15,14 @@
  */
 package ghidra.pcodeCPort.semantics;
 
-import generic.stl.VectorSTL;
-import ghidra.pcodeCPort.context.FixedHandle;
-import ghidra.pcodeCPort.context.ParserWalker;
-import ghidra.pcodeCPort.space.AddrSpace;
-import ghidra.pcodeCPort.space.spacetype;
-import ghidra.pcodeCPort.translate.Translate;
-
 import java.io.PrintStream;
 import java.util.List;
 
 import org.jdom.Element;
+
+import generic.stl.VectorSTL;
+import ghidra.pcodeCPort.space.AddrSpace;
+import ghidra.pcodeCPort.translate.Translate;
 
 public class HandleTpl {
 
@@ -112,33 +108,6 @@ public class HandleTpl {
 		temp_space = new ConstTpl(t_space);
 		temp_offset = new ConstTpl(ConstTpl.const_type.real, t_offset);
 		// Build handle to thing being pointed at by -vn-
-	}
-
-	public void fix(FixedHandle hand, ParserWalker walker) {
-		if (ptrspace.getType() == ConstTpl.const_type.real) {
-			// The export is unstarred, but this doesn't mean the varnode
-			// being exported isn't dynamic
-			space.fillinSpace(hand, walker);
-			hand.size = (int) size.fix(walker);
-			ptroffset.fillinOffset(hand, walker);
-		}
-		else {
-			hand.space = space.fixSpace(walker);
-			hand.size = (int) size.fix(walker);
-			hand.offset_offset = ptroffset.fix(walker);
-			hand.offset_space = ptrspace.fixSpace(walker);
-			if (hand.offset_space.getType() == spacetype.IPTR_CONSTANT) {
-				// Handle could have been dynamic but wasn't
-				hand.offset_space = null;
-				hand.offset_offset <<= hand.space.getScale();
-				hand.offset_offset &= hand.space.getMask();
-			}
-			else {
-				hand.offset_size = (int) ptrsize.fix(walker);
-				hand.temp_space = temp_space.fixSpace(walker);
-				hand.temp_offset = temp_offset.fix(walker);
-			}
-		}
 	}
 
 	public void changeHandleIndex(VectorSTL<Integer> handmap) {

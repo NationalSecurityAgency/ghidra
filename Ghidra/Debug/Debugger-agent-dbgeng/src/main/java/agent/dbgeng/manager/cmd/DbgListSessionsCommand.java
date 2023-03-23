@@ -45,7 +45,7 @@ public class DbgListSessionsCommand extends AbstractDbgCommand<Map<DebugSessionI
 			}
 			// Need to create the inferior as if we received =thread-group-created
 			Msg.warn(this, "Resync: Was missing group: i" + id);
-			manager.getSessionComputeIfAbsent(id);
+			manager.getSessionComputeIfAbsent(id, true);
 		}
 		for (DebugSessionId id : new ArrayList<>(cur)) {
 			if (updatedSessionIds.contains(id)) {

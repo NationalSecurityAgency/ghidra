@@ -17,25 +17,33 @@ package ghidra.trace.database.listing;
 
 import java.util.List;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.address.AddressRange;
-import ghidra.trace.model.listing.TraceDataView;
+import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.listing.*;
 
+/**
+ * The implementation of {@link TraceCodeSpace#data()}
+ */
 public class DBTraceDataView extends
 		AbstractComposedDBTraceCodeUnitsView<DBTraceDataAdapter, AbstractSingleDBTraceCodeUnitsView<? extends DBTraceDataAdapter>>
-		implements TraceDataView {
+		implements TraceDataView, InternalBaseCodeUnitsView<TraceData> {
+
+	/**
+	 * Construct the view
+	 * 
+	 * @param space the space, bound to an address space
+	 */
 	public DBTraceDataView(DBTraceCodeSpace space) {
 		super(space, List.of(space.definedData, space.undefinedData));
 	}
 
 	@Override
-	public boolean coversRange(Range<Long> span, AddressRange range) {
+	public boolean coversRange(Lifespan span, AddressRange range) {
 		return !space.instructions.intersectsRange(span, range);
 	}
 
 	@Override
-	public boolean intersectsRange(Range<Long> span, AddressRange range) {
+	public boolean intersectsRange(Lifespan span, AddressRange range) {
 		return !space.instructions.coversRange(span, range);
 	}
 }

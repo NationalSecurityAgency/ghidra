@@ -15,6 +15,10 @@
  */
 package ghidra.program.model.lang;
 
+import static ghidra.program.model.pcode.AttributeId.*;
+import static ghidra.program.model.pcode.ElementId.*;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,8 +28,8 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.pcode.PcodeOp;
-import ghidra.program.model.pcode.Varnode;
+import ghidra.program.model.pcode.*;
+import ghidra.util.exception.NotFoundException;
 import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.*;
 
@@ -161,26 +165,19 @@ public class InjectPayloadSleigh implements InjectPayload {
 	}
 
 	@Override
-	public void inject(InjectContext context, PcodeEmit emit) {
+	public void inject(InjectContext context, PcodeEmit emit) throws UnknownInstructionException,
+			MemoryAccessException, IOException, NotFoundException {
 		ParserWalker walker = emit.getWalker();
-		try {
-			walker.snippetState();
-			setupParameters(context, walker);
-			emit.build(pcodeTemplate, -1);
-		}
-		catch (UnknownInstructionException e) { // Should not be happening in a CallFixup
-			e.printStackTrace();
-			return;
-		}
-		catch (MemoryAccessException e) { // Should not be happening in a CallFixup
-			e.printStackTrace();
-			return;
-		}
+		walker.snippetState();
+		setupParameters(context, walker);
+		emit.build(pcodeTemplate, -1);
 		emit.resolveRelatives();
 	}
 
 	@Override
-	public PcodeOp[] getPcode(Program program, InjectContext con) {
+	public PcodeOp[] getPcode(Program program, InjectContext con)
+			throws UnknownInstructionException, MemoryAccessException, IOException,
+			NotFoundException {
 		SleighParserContext protoContext =
 			new SleighParserContext(con.baseAddr, con.nextAddr, con.refAddr, con.callAddr);
 		ParserWalker walker = new ParserWalker(protoContext);
@@ -230,39 +227,39 @@ public class InjectPayloadSleigh implements InjectPayload {
 	}
 
 	@Override
-	public void saveXml(StringBuilder buffer) {
-		buffer.append("<pcode");
+	public void encode(Encoder encoder) throws IOException {
+		encoder.openElement(ELEM_PCODE);
 		if (type == CALLMECHANISM_TYPE && subType >= 0) {
-			SpecXmlUtils.encodeStringAttribute(buffer, "inject",
-				(subType == 0) ? "uponentry" : "uponreturn");
+			encoder.writeString(ATTRIB_INJECT, (subType == 0) ? "uponentry" : "uponreturn");
 		}
 		if (paramShift != 0) {
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "paramshift", paramShift);
+			encoder.writeSignedInteger(ATTRIB_PARAMSHIFT, paramShift);
 		}
 		if (pcodeTemplate == null) {
-			SpecXmlUtils.encodeBooleanAttribute(buffer, "dynamic", true);
+			encoder.writeBool(ATTRIB_DYNAMIC, true);
 		}
 		if (incidentalCopy) {
-			SpecXmlUtils.encodeBooleanAttribute(buffer, "incidentalcopy", incidentalCopy);
+			encoder.writeBool(ATTRIB_INCIDENTALCOPY, incidentalCopy);
 		}
-		buffer.append(">\n");
 		for (InjectParameter param : inputlist) {
-			buffer.append("<input");
-			SpecXmlUtils.encodeStringAttribute(buffer, "name", param.getName());
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "size", param.getSize());
-			buffer.append("/>\n");
+			encoder.openElement(ELEM_INPUT);
+			encoder.writeString(ATTRIB_NAME, param.getName());
+			encoder.writeSignedInteger(ATTRIB_SIZE, param.getSize());
+			encoder.closeElement(ELEM_INPUT);
 		}
 		for (InjectParameter param : output) {
-			buffer.append("<output");
-			SpecXmlUtils.encodeStringAttribute(buffer, "name", param.getName());
-			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "size", param.getSize());
-			buffer.append("/>\n");
+			encoder.openElement(ELEM_OUTPUT);
+			encoder.writeString(ATTRIB_NAME, param.getName());
+			encoder.writeSignedInteger(ATTRIB_SIZE, param.getSize());
+			encoder.closeElement(ELEM_OUTPUT);
 		}
 		if (pcodeTemplate != null) {
 			// Decompiler will not read the <body> tag
-			buffer.append("<body> local tmp:1 = 0; </body>\n");
+			encoder.openElement(ELEM_BODY);
+			encoder.writeString(ATTRIB_CONTENT, " local tmp:1 = 0; ");
+			encoder.closeElement(ELEM_BODY);
 		}
-		buffer.append("</pcode>\n");
+		encoder.closeElement(ELEM_PCODE);
 	}
 
 	@Override
@@ -335,29 +332,36 @@ public class InjectPayloadSleigh implements InjectPayload {
 	/**
 	 * Verify that the storage locations passed -con- match the restrictions for this payload
 	 * @param con is InjectContext containing parameter storage locations
+	 * @throws NotFoundException for expected aspects of the context that are not present
 	 */
-	private void checkParameterRestrictions(InjectContext con, Address addr) {
+	private void checkParameterRestrictions(InjectContext con, Address addr)
+			throws NotFoundException {
 		int insize = (con.inputlist == null) ? 0 : con.inputlist.size();
 		if (inputlist.length != insize) {
-			throw new SleighException(
-				"Input parameters do not match injection specification: " + source);
+			throw new NotFoundException(
+				"Input parameters do not match specification " + name + " in\n" + source);
 		}
 		for (int i = 0; i < inputlist.length; ++i) {
 			int sz = inputlist[i].getSize();
 			if (sz != 0 && sz != con.inputlist.get(i).getSize()) {
-				throw new SleighException(
-					"Input parameter size does not match injection specification: " + source);
+				throw new NotFoundException(
+					"Input parameter size does not match specification " + name + " in\n" + source);
 			}
 		}
 		int outsize = (con.output == null) ? 0 : con.output.size();
 		if (output.length != outsize) {
-			throw new SleighException("Output does not match injection specification: " + source);
+			if (outsize == 0) {
+				throw new NotFoundException(
+					"Output expected by specification " + name + " in\n" + source);
+			}
+			throw new NotFoundException(
+				"Output not expected by specification " + name + " in\n" + source);
 		}
 		for (int i = 0; i < output.length; ++i) {
 			int sz = output[i].getSize();
 			if (sz != 0 && sz != con.output.get(i).getSize()) {
-				throw new SleighException(
-					"Output size does not match injection specification: " + source);
+				throw new NotFoundException(
+					"Output size does not match specification " + name + " in\n" + source);
 			}
 		}
 	}
@@ -367,9 +371,10 @@ public class InjectPayloadSleigh implements InjectPayload {
 	 * @param con is the InjectContext containing storage locations
 	 * @param walker is the sleigh parser state object
 	 * @throws UnknownInstructionException if there are too many parameters for the parser
+	 * @throws NotFoundException for expected aspects of the context that are not present
 	 */
 	private void setupParameters(InjectContext con, ParserWalker walker)
-			throws UnknownInstructionException {
+			throws UnknownInstructionException, NotFoundException {
 		checkParameterRestrictions(con, walker.getAddr());
 		for (int i = 0; i < inputlist.length; ++i) {
 			walker.allocateOperand();

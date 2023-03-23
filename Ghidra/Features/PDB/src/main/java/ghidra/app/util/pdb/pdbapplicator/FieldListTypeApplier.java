@@ -36,7 +36,7 @@ public class FieldListTypeApplier extends MsTypeApplier {
 	private boolean isEmpty;
 
 	// return can be null
-	static FieldListTypeApplier getFieldListApplierSpecial(PdbApplicator applicator,
+	static FieldListTypeApplier getFieldListApplierSpecial(DefaultPdbApplicator applicator,
 			RecordNumber recordNumber) throws PdbException {
 		MsTypeApplier applier =
 			applicator.getApplierOrNoTypeSpec(recordNumber, FieldListTypeApplier.class);
@@ -59,24 +59,24 @@ public class FieldListTypeApplier extends MsTypeApplier {
 
 	/**
 	 * Constructor.
-	 * @param applicator {@link PdbApplicator} for which this class is working.
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
 	 * @param msType {@link AbstractFieldListMsType} or {@link PrimitiveMsType} of {@code NO_TYPE}
 	 * @throws IllegalArgumentException Upon invalid arguments.
 	 */
-	public FieldListTypeApplier(PdbApplicator applicator, AbstractMsType msType)
+	public FieldListTypeApplier(DefaultPdbApplicator applicator, AbstractMsType msType)
 			throws IllegalArgumentException {
 		this(applicator, msType, false);
 	}
 
 	/**
 	 * Constructor with override for NO_TYPE Primitive.
-	 * @param applicator {@link PdbApplicator} for which this class is working.
+	 * @param applicator {@link DefaultPdbApplicator} for which this class is working.
 	 * @param msType {@link AbstractFieldListMsType} or {@link PrimitiveMsType} of {@code NO_TYPE}
 	 * @param noType {@code true} to specify that {@code msType} is NO_TYPE.
 	 * @throws IllegalArgumentException Upon invalid arguments.
 	 */
-	public FieldListTypeApplier(PdbApplicator applicator, AbstractMsType msType, boolean noType)
-			throws IllegalArgumentException {
+	public FieldListTypeApplier(DefaultPdbApplicator applicator, AbstractMsType msType,
+			boolean noType) throws IllegalArgumentException {
 		super(applicator, msType);
 		if (noType && msType instanceof PrimitiveMsType && ((PrimitiveMsType) msType).isNoType()) {
 			this.isEmpty = true;
@@ -146,9 +146,8 @@ public class FieldListTypeApplier extends MsTypeApplier {
 	private void applyBaseClasses(List<MsTypeField> baseClasses)
 			throws CancelledException, PdbException {
 		for (MsTypeField typeIterated : baseClasses) {
-			// Use dummy index of zero. 
-			MsTypeApplier applier =
-				applicator.getTypeApplier((AbstractMsType) typeIterated);
+			// Use dummy index of zero.
+			MsTypeApplier applier = applicator.getTypeApplier((AbstractMsType) typeIterated);
 			applier.apply(); // Need to apply here, as these are embedded records
 			baseClassList.add(applier);
 		}
@@ -157,8 +156,7 @@ public class FieldListTypeApplier extends MsTypeApplier {
 	private void applyMembers(List<MsTypeField> members) throws CancelledException, PdbException {
 		for (MsTypeField typeIterated : members) {
 			// Use dummy index of zero.
-			MsTypeApplier applier =
-				applicator.getTypeApplier((AbstractMsType) typeIterated);
+			MsTypeApplier applier = applicator.getTypeApplier((AbstractMsType) typeIterated);
 			applier.apply(); // Need to apply here, as these are embedded records
 			memberList.add(applier);
 		}
@@ -167,8 +165,7 @@ public class FieldListTypeApplier extends MsTypeApplier {
 	private void applyMethods(List<MsTypeField> methods) throws CancelledException, PdbException {
 		for (MsTypeField typeIterated : methods) {
 			// Use dummy index of zero.
-			MsTypeApplier applier =
-				applicator.getTypeApplier((AbstractMsType) typeIterated);
+			MsTypeApplier applier = applicator.getTypeApplier((AbstractMsType) typeIterated);
 			// TODO: note that these are likely NoTypeAppliers at the moment, as we had not
 			// yet implemented appliers for AbstractOneMethodMsType and
 			//  AbstractOverloadedMethodMsType

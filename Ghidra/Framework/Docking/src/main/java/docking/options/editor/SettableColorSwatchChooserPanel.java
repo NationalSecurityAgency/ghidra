@@ -21,11 +21,14 @@ import java.io.Serializable;
 import java.util.List;
 
 import javax.swing.*;
-import javax.swing.border.*;
+import javax.swing.border.LineBorder;
 import javax.swing.colorchooser.AbstractColorChooserPanel;
 
 import docking.widgets.label.GHtmlLabel;
 import docking.widgets.label.GLabel;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Java;
+import ghidra.util.ColorUtils;
 import ghidra.util.layout.VerticalLayout;
 
 public class SettableColorSwatchChooserPanel extends AbstractColorChooserPanel {
@@ -66,6 +69,7 @@ public class SettableColorSwatchChooserPanel extends AbstractColorChooserPanel {
 				return Integer.parseInt((String) value);
 			}
 			catch (NumberFormatException nfe) {
+				// return default value
 			}
 		}
 		return defaultValue;
@@ -118,8 +122,7 @@ public class SettableColorSwatchChooserPanel extends AbstractColorChooserPanel {
 		recentSwatchListener = new RecentSwatchListener();
 		recentSwatchPanel.addMouseListener(recentSwatchListener);
 
-		Border border =
-			new CompoundBorder(new LineBorder(Color.black), new LineBorder(Color.white));
+		LineBorder border = new LineBorder(Java.BORDER);
 		swatchPanel.setBorder(border);
 		gbc.weightx = 1.0;
 		gbc.gridwidth = 2;
@@ -182,6 +185,7 @@ public class SettableColorSwatchChooserPanel extends AbstractColorChooserPanel {
 
 	@Override
 	public void updateChooser() {
+		// stub
 	}
 
 	class HistorySwatchListener extends MouseAdapter {
@@ -222,7 +226,7 @@ class SwatchPanel extends JPanel {
 		initColors();
 		setToolTipText(""); // register for events
 		setOpaque(true);
-		setBackground(Color.white);
+		setBackground(Colors.BACKGROUND);
 		setRequestFocusEnabled(false);
 	}
 
@@ -232,6 +236,7 @@ class SwatchPanel extends JPanel {
 	}
 
 	protected void initValues() {
+		// stub
 	}
 
 	@Override
@@ -251,7 +256,7 @@ class SwatchPanel extends JPanel {
 				}
 				int y = row * (swatchSize.height + gap.height);
 				g.fillRect(x, y, swatchSize.width, swatchSize.height);
-				g.setColor(Color.black);
+				g.setColor(Java.BORDER);
 				g.drawLine(x + swatchSize.width - 1, y, x + swatchSize.width - 1,
 					y + swatchSize.height - 1);
 				g.drawLine(x, y + swatchSize.height - 1, x + swatchSize.width - 1,
@@ -268,7 +273,7 @@ class SwatchPanel extends JPanel {
 	}
 
 	protected void initColors() {
-
+		// stub
 	}
 
 	@Override
@@ -383,8 +388,8 @@ class MainSwatchPanel extends SwatchPanel {
 
 		colors = new Color[numColors];
 		for (int i = 0; i < numColors; i++) {
-			colors[i] =
-				new Color(rawValues[(i * 3)], rawValues[(i * 3) + 1], rawValues[(i * 3) + 2]);
+			colors[i] = ColorUtils.getColor(rawValues[(i * 3)], rawValues[(i * 3) + 1],
+				rawValues[(i * 3) + 2]);
 		}
 	}
 

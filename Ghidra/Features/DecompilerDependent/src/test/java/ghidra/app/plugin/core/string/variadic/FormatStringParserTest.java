@@ -107,9 +107,8 @@ public class FormatStringParserTest extends AbstractGenericTest {
 			{ program.getDataTypeManager().getPointer(new CharDataType()), new LongDataType() };
 		runFormatTest("#thisisatest%+-4.12s%#.1lin\nd2", expectedTypes2, true);
 
-		DataType[] expectedTypes3 =
-			{ new PointerDataType(DataType.VOID), new LongDoubleDataType(),
-				new UnsignedCharDataType() };
+		DataType[] expectedTypes3 = { new PointerDataType(DataType.VOID), new LongDoubleDataType(),
+			new UnsignedCharDataType() };
 		runFormatTest("%01.3pp%%%#1.2Lg%%%%%hhXxn2", expectedTypes3, true);
 
 		DataType[] expectedTypes4 = { new IntegerDataType(), new IntegerDataType(),
@@ -124,10 +123,10 @@ public class FormatStringParserTest extends AbstractGenericTest {
 
 	}
 
-	// Tests format strings that use astericks to add another int
+	// Tests format strings that use asterisks to add another int
 	// argument to determine field width or precision
 	@Test
-	public void testAsterickFormatString() {
+	public void testAsteriskFormatString() {
 		DataType[] expectedTypes1 = { new IntegerDataType(), new IntegerDataType() };
 		runFormatTest("%*d", expectedTypes1, true);
 
@@ -158,9 +157,8 @@ public class FormatStringParserTest extends AbstractGenericTest {
 		DataType[] expectedTypes3 = { new UnsignedShortDataType(), new UnsignedCharDataType() };
 		runFormatTest("%hx %hhu", expectedTypes3, true);
 
-		DataType[] expectedTypes4 =
-			{ new UnsignedLongDataType(), new LongLongDataType(), new UnsignedLongLongDataType(),
-				new PointerDataType(LongLongDataType.dataType) };
+		DataType[] expectedTypes4 = { new UnsignedLongDataType(), new LongLongDataType(),
+			new UnsignedLongLongDataType(), new PointerDataType(LongLongDataType.dataType) };
 		runFormatTest("%lX %lld %llx %lln", expectedTypes4, true);
 
 		DataType[] expectedTypes5 =

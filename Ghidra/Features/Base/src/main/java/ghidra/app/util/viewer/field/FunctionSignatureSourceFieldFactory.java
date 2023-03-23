@@ -15,15 +15,14 @@
  */
 package ghidra.app.util.viewer.field;
 
-import java.awt.Color;
 import java.math.BigInteger;
 
 import docking.widgets.fieldpanel.field.AttributedString;
 import docking.widgets.fieldpanel.field.TextFieldElement;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.viewer.field.ListingColors.FunctionColors;
 import ghidra.app.util.viewer.format.FieldFormatModel;
-import ghidra.app.util.viewer.options.OptionsGui;
 import ghidra.app.util.viewer.proxy.FunctionProxy;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.Options;
@@ -39,8 +38,6 @@ import ghidra.program.util.ProgramLocation;
 public class FunctionSignatureSourceFieldFactory extends FieldFactory {
 
 	public static final String FIELD_NAME = "Signature Source";
-//	private Color funRetColor;
-	private Color literalColor;
 
 	//private int displayWidth;
 
@@ -61,16 +58,6 @@ public class FunctionSignatureSourceFieldFactory extends FieldFactory {
 	public FunctionSignatureSourceFieldFactory(FieldFormatModel model, HighlightProvider hlProvider,
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
-
-		literalColor = displayOptions.getColor(OptionsGui.SEPARATOR.getColorOptionName(),
-			OptionsGui.SEPARATOR.getDefaultColor());
-	}
-
-	@Override
-	public void displayOptionsChanged(Options options, String optionName, Object oldValue,
-			Object newValue) {
-		super.displayOptionsChanged(options, optionName, oldValue, newValue);
-		literalColor = options.getColor(OptionsGui.SEPARATOR.getColorOptionName(), Color.BLACK);
 	}
 
 	@Override
@@ -83,7 +70,8 @@ public class FunctionSignatureSourceFieldFactory extends FieldFactory {
 			Function function = functionProxy.getObject();
 			SourceType source = function.getSignatureSource();
 			String sourceStr = "<" + source.toString() + ">";
-			AttributedString as = new AttributedString(sourceStr, literalColor, getMetrics());
+			AttributedString as =
+				new AttributedString(sourceStr, FunctionColors.SOURCE, getMetrics());
 			return ListingTextField.createSingleLineTextField(this, proxy,
 				new TextFieldElement(as, 0, 0), startX + varWidth, width, hlProvider);
 		}
@@ -125,19 +113,8 @@ public class FunctionSignatureSourceFieldFactory extends FieldFactory {
 
 	@Override
 	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider provider,
-			ToolOptions displayOptions, ToolOptions fieldOptions) {
-		return new FunctionSignatureSourceFieldFactory(formatModel, provider, displayOptions,
+			ToolOptions toolOptions, ToolOptions fieldOptions) {
+		return new FunctionSignatureSourceFieldFactory(formatModel, provider, toolOptions,
 			fieldOptions);
-	}
-
-	@Override
-	public Color getDefaultColor() {
-		return OptionsGui.SEPARATOR.getDefaultColor();
-	}
-
-	@Override
-	public void fieldOptionsChanged(Options options, String optionName, Object oldValue,
-			Object newValue) {
-		// don't care
 	}
 }

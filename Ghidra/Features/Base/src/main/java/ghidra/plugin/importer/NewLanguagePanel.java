@@ -25,6 +25,7 @@ import javax.swing.border.Border;
 
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.GDLabel;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.program.model.lang.*;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.util.table.*;
@@ -84,7 +85,7 @@ public class NewLanguagePanel extends JPanel {
 
 		formatLabel = new GDLabel();
 		formatLabel.setHorizontalAlignment(SwingConstants.CENTER);
-		formatLabel.setForeground(Color.BLUE);
+		formatLabel.setForeground(Messages.NORMAL);
 	}
 
 	private void layoutEverything() {

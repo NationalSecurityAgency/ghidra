@@ -13,12 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- * Created on Feb 9, 2005
- *
- */
 package ghidra.app.plugin.processors.sleigh;
 
+import java.io.IOException;
 import java.util.*;
 
 import ghidra.app.plugin.assembler.sleigh.sem.AssemblyResolvedPatterns;
@@ -92,7 +89,6 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 	private final static Address[] emptyFlow = new Address[0];
 
 	private ContextCache contextCache;
-//	private InstructionContext instructionContextCache;
 	private int length;
 	private ConstructState rootState;
 	private ConstructState mnemonicState; // state for print mnemonic
@@ -192,6 +188,7 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 	 * Walk the pcode templates in the order they would be emitted. Collect flowFlags FlowRecords
 	 * 
 	 * @param walker the pcode template walker
+	 * @return a summary of the flow information
 	 */
 	public static FlowSummary walkTemplates(OpTplWalker walker) {
 		FlowSummary res = new FlowSummary();
@@ -237,6 +234,9 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 					destType = res.lastop.getInput()[0].getOffset().getType();
 					if (destType == ConstTpl.J_NEXT) {
 						flags = BRANCH_TO_END;
+					}
+					else if (destType == ConstTpl.J_NEXT2) {
+						flags = JUMPOUT;
 					}
 					else if ((destType != ConstTpl.J_START) && (destType != ConstTpl.J_RELATIVE)) {
 						flags = JUMPOUT;
@@ -470,6 +470,7 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 			}
 		}
 		catch (Exception e) {
+			// Treat bad instructions as not part of delay slot
 		}
 		return delayInstrCnt;
 	}
@@ -549,6 +550,7 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 				return context.getAddress().addNoWrap(getFallThroughOffset(context));
 			}
 			catch (AddressOverflowException e) {
+				// Return null if fallthru goes beyond boundary of address space
 			}
 		}
 		return null;
@@ -635,8 +637,8 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 	 * @param res is the resulting flow Addresses
 	 * @param parsecontext is the parsing context for the current instruction
 	 * @param context is the context for the particular address so crossbuilds can be resolved
-	 * @throws MemoryAccessException
-	 * @throws UnknownContextException
+	 * @throws MemoryAccessException if a memory error occurred while resolving instruction details
+	 * @throws UnknownContextException if the gather encounters an instruction not previously parsed
 	 */
 	private void gatherFlows(ArrayList<Address> res, SleighParserContext parsecontext,
 			InstructionContext context, int secnum)
@@ -673,6 +675,9 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 				if (!hand.isInvalid() && hand.offset_space == null) {
 					Address addr = getHandleAddr(hand, parsecontext.getAddr().getAddressSpace());
 					res.add(addr);
+				}
+				else if (rec.op.getInput()[0].getOffset().getType() == ConstTpl.J_NEXT2) {
+					res.add(parsecontext.getN2addr());
 				}
 			}
 		}
@@ -735,6 +740,7 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 			sym.printList(walker, list);
 		}
 		catch (Exception e) {
+			// If the instruction produces memory errors, treat as if it has no representation list
 		}
 
 		AddressSpace curSpace = context.getAddress().getAddressSpace();
@@ -759,6 +765,7 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 			return ct.getOperand(opresolve[opIndex]);
 		}
 		catch (Exception e) {
+			// Return null for an out-of bounds opIndex
 		}
 		return null;
 	}
@@ -815,6 +822,7 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 			}
 		}
 		catch (Exception e) {
+			// If opIndex is out of bounds (or if there are memory errors) return a null Scalar
 		}
 		return null;
 	}
@@ -837,6 +845,7 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 			}
 		}
 		catch (Exception e) {
+			// If opIndex is out of bounds (or if there are memory errors) return null
 		}
 		return null;
 	}
@@ -991,7 +1000,7 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 					bytecount += len;
 				}
 				while (bytecount < delaySlotByteCnt);
-				protoContext.setDelaySlotLength(bytecount);
+				protoContext = new SleighParserContext(protoContext, bytecount);
 			}
 			ParserWalker walker = new ParserWalker(protoContext);
 			walker.baseState();
@@ -1001,7 +1010,6 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 			if (!isindelayslot) {
 				emit.resolveFinalFallthrough();
 			}
-			protoContext.setDelaySlotLength(0);
 			return emit.getPcodeOp();
 		}
 		catch (NotYetImplementedException e) {
@@ -1016,7 +1024,8 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 	}
 
 	@Override
-	public PackedBytes getPcodePacked(InstructionContext context, PcodeOverride override) {
+	public void getPcodePacked(PatchEncoder encoder, InstructionContext context,
+			PcodeOverride override) throws IOException {
 		int fallOffset = getLength();
 		try {
 			SleighParserContext protoContext = (SleighParserContext) context.getParserContext();
@@ -1031,28 +1040,21 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 					bytecount += len;
 				}
 				while (bytecount < delaySlotByteCnt);
-				protoContext.setDelaySlotLength(bytecount);
+				protoContext = new SleighParserContext(protoContext, bytecount);
 			}
 			ParserWalker walker = new ParserWalker(protoContext);
 			walker.baseState();
-			PcodeEmitPacked emit = new PcodeEmitPacked(walker, context, fallOffset, override);
-			emit.write(PcodeEmitPacked.inst_tag);
-			emit.dumpOffset(emit.getFallOffset());
+			PcodeEmitPacked emit =
+				new PcodeEmitPacked(encoder, walker, context, fallOffset, override);
 
-			// Write out the sequence number as a space and an offset
-			Address instrAddr = emit.getStartAddress();
-			int spcindex = instrAddr.getAddressSpace().getUnique();
-			emit.write(spcindex + 0x20);
-			emit.dumpOffset(instrAddr.getOffset());
-
+			emit.emitHeader();
 			emit.build(walker.getConstructor().getTempl(), -1);
 			emit.resolveRelatives();
 			if (!isindelayslot) {
 				emit.resolveFinalFallthrough();
 			}
-			protoContext.setDelaySlotLength(0);
-			emit.write(PcodeEmitPacked.end_tag); // Terminate the inst_tag
-			return emit.getPackedBytes();
+			emit.emitTail();
+			return;
 		}
 		catch (NotYetImplementedException e) {
 			// unimpl
@@ -1060,10 +1062,10 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 		catch (Exception e) {
 			Msg.error(this, "Pcode error at " + context.getAddress() + ": " + e.getMessage());
 		}
-		PcodeEmitPacked emit = new PcodeEmitPacked();
-		emit.write(PcodeEmitPacked.unimpl_tag);
-		emit.dumpOffset(length);
-		return emit.getPackedBytes();
+		encoder.clear();
+		encoder.openElement(ElementId.ELEM_UNIMPL);
+		encoder.writeSignedInteger(AttributeId.ATTRIB_OFFSET, length);
+		encoder.closeElement(ElementId.ELEM_UNIMPL);
 	}
 
 	@Override
@@ -1089,6 +1091,7 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 			}
 		}
 		catch (Exception e) {
+			// If opIndex is out of bounds (or if there are memory errors) return an empty p-code list
 		}
 		return emptyPCode;
 	}
@@ -1458,13 +1461,13 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 	}
 
 	/**
-	 * Reconstruct the ParserContext's internal packed context array and its list of global
+	 * Reconstruct the ParserContext's internal packed context array and its list of global 
 	 * ContextSet directives by walking a previously resolved ConstructState tree
 	 * 
 	 * @param protoContext is the SleighParserContext containing the tree and holding the context
-	 *            results
-	 * @param debug
-	 * @throws MemoryAccessException
+	 *   results
+	 * @param debug (optional) logger for collecting information about the recovered context
+	 * @throws MemoryAccessException if memory errors occur trying to recover context
 	 */
 	private void reconstructContext(SleighParserContext protoContext, SleighDebugLogger debug)
 			throws MemoryAccessException {
@@ -1552,8 +1555,6 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 			return null;
 		}
 		Address newaddr = hand.space.getTruncatedAddress(hand.offset_offset, false);
-
-		newaddr = newaddr.getPhysicalAddress();
 
 		// if we are in an address space, translate it
 		if (curSpace.isOverlaySpace()) {

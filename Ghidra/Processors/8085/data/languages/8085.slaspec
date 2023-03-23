@@ -58,7 +58,7 @@ attach variables [ sRegPair4_2 dRegPair4_2 ] [ BC DE HL SP ];
 attach variables [ qRegPair4_2 ] [ BC DE HL AF ];
 
 ################################################################
-# Psuedo Instructions
+# Pseudo Instructions
 ################################################################
 
 define pcodeop BCDadjust;

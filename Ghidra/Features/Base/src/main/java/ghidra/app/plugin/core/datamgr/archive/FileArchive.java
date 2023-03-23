@@ -19,13 +19,13 @@ import java.awt.Component;
 import java.io.File;
 import java.io.IOException;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import generic.jar.ResourceFile;
+import generic.theme.GIcon;
 import ghidra.framework.store.LockException;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateFileException;
-import resources.ResourceManager;
 
 /**
  * Manages a DataTypeFileManager and relative state.  For example, whether the manager is writable
@@ -33,8 +33,8 @@ import resources.ResourceManager;
  */
 public class FileArchive implements Archive {
 
-	private static ImageIcon CLOSED_ICON = ResourceManager.loadImage("images/closedBookGreen.png");
-	private static ImageIcon OPEN_ICON = ResourceManager.loadImage("images/openBookGreen.png");
+	private static Icon CLOSED_ICON = new GIcon("icon.plugin.datatypes.archive.file.closed");
+	private static Icon OPEN_ICON = new GIcon("icon.plugin.datatypes.archive.file.open");
 	private ResourceFile archiveFile;
 	private boolean hasWriteLock;
 	private boolean changed;
@@ -283,7 +283,7 @@ public class FileArchive implements Archive {
 			return;
 		}
 
-		if (saveAsFile.equals(getFile())) {
+		if (saveAsFile.equals(archiveFile.getFile(false))) {
 			save();
 		}
 		else {
@@ -292,7 +292,7 @@ public class FileArchive implements Archive {
 	}
 
 	@Override
-	public ImageIcon getIcon(boolean expanded) {
+	public Icon getIcon(boolean expanded) {
 		return expanded ? OPEN_ICON : CLOSED_ICON;
 	}
 }

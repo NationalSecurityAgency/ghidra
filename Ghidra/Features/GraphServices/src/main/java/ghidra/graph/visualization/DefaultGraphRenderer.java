@@ -37,8 +37,10 @@ import org.jungrapht.visualization.renderers.Renderer;
 import org.jungrapht.visualization.renderers.Renderer.VertexLabel.Position;
 import org.jungrapht.visualization.util.RectangleUtils;
 
+import generic.theme.GThemeDefaults.Colors;
 import generic.util.image.ImageUtils;
 import ghidra.service.graph.*;
+import ghidra.util.HTMLUtilities;
 
 /**
  * Handles the rendering of graphs for the {@link DefaultGraphDisplay}
@@ -77,8 +79,8 @@ public class DefaultGraphRenderer implements GraphRenderer {
 		this.options = options;
 		renderingHints.put(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		label = new JLabel();
-		label.setForeground(Color.black);
-		label.setBackground(Color.white);
+		label.setForeground(Colors.FOREGROUND);
+		label.setBackground(Colors.BACKGROUND);
 		label.setOpaque(false);
 		Border marginBorder = BorderFactory.createEmptyBorder(labelBorderSize, 2 * labelBorderSize,
 			labelBorderSize, 2 * labelBorderSize);
@@ -99,6 +101,10 @@ public class DefaultGraphRenderer implements GraphRenderer {
 	@Override
 	public void clearCache() {
 		iconCache.clear();
+	}
+
+	private String getVertexRenderedLabel(AttributedVertex v) {
+		return HTMLUtilities.toLiteralHTML(v.toString(), 80);
 	}
 
 	@Override
@@ -134,7 +140,7 @@ public class DefaultGraphRenderer implements GraphRenderer {
 			viewer.setInitialDimensionFunction(InitialDimensionFunction
 					.builder(renderContext.getVertexShapeFunction().andThen(toRectangle))
 					.build());
-			renderContext.setVertexLabelFunction(Object::toString);
+			renderContext.setVertexLabelFunction(this::getVertexRenderedLabel);
 			GraphLabelPosition labelPosition = options.getLabelPosition();
 			renderContext.setVertexLabelPosition(getJungraphTPosition(labelPosition));
 
@@ -158,7 +164,7 @@ public class DefaultGraphRenderer implements GraphRenderer {
 		}
 
 		renderContext.setVertexFontFunction(this::getFont);
-		renderContext.setVertexLabelRenderer(new JLabelVertexLabelRenderer(Color.black));
+		renderContext.setVertexLabelRenderer(new JLabelVertexLabelRenderer(Colors.FOREGROUND));
 		renderContext.setVertexDrawPaintFunction(this::getVertexColor);
 		renderContext.setVertexFillPaintFunction(this::getVertexColor);
 		renderContext.setVertexStrokeFunction(n -> new BasicStroke(3.0f));
@@ -285,7 +291,7 @@ public class DefaultGraphRenderer implements GraphRenderer {
 
 		// shapes are centered at the origin, so translate the graphics to compensate
 		graphics.translate(-bounds.x + strokeThickness, -bounds.y + strokeThickness);
-		graphics.setPaint(Color.WHITE);
+		graphics.setPaint(Colors.BACKGROUND);
 		graphics.fill(scaledShape);
 		graphics.setPaint(vertexColor);
 		graphics.setStroke(new BasicStroke(strokeThickness));
@@ -299,7 +305,7 @@ public class DefaultGraphRenderer implements GraphRenderer {
 		int yOffset = (int) ((iconHeight - label.getHeight()) * labelOffsetRatio);
 
 		graphics.translate(xOffset, yOffset);
-		graphics.setPaint(Color.black);
+		graphics.setPaint(Colors.FOREGROUND);
 		label.paint(graphics);
 
 		graphics.setTransform(graphicsTransform); // restore the original transform
@@ -318,7 +324,8 @@ public class DefaultGraphRenderer implements GraphRenderer {
 		// on the swing thread
 		Font font = options.getFont();
 		label.setFont(font);
-		label.setText(vertexName);
+		String escapedText = HTMLUtilities.toLiteralHTML(vertexName, 80);
+		label.setText(escapedText);
 		Dimension labelSize = label.getPreferredSize();
 
 		// make sure the the vertexName doesn't make the icon ridiculously big

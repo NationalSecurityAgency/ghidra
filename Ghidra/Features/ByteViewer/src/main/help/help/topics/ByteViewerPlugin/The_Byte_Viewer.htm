@@ -3,8 +3,7 @@
 <head>
   <title>The Byte Viewer</title>
   <meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
-  <link rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
-  <meta name="generator" content="Microsoft FrontPage 4.0">
+  <link rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
 </head>
 <body lang="EN-US">
 
@@ -20,7 +19,7 @@
 	<p>To show the Byte Viewer, select the icon, <img
  	src="images/binaryData.gif" border="0">,
 	on the Code Browser toolbar, OR, choose the <b>Window</b><img
-	 src="../../shared/arrow.gif" border="0" ><b>Bytes: ...</b> menu.</p>
+	 src="help/shared/arrow.gif" border="0" ><b>Bytes: ...</b> menu.</p>
 	<p> The following paragraphs describe the Byte Viewer.</p>
 
 	<h2><a name="ToggleFormatAction"></a><a name="formats"></a>Data Formats</h2>
@@ -34,7 +33,7 @@
 			may be added to your view.&nbsp;To add or remove a data format view
 			from the tool, press the&nbsp;<img alt="" src="images/wrench.png"> 
 			icon to bring up the&nbsp; <span
-			 style="font-style: italic;">Byte Vieweer Options </span>dialog.&nbsp;
+			 style="font-style: italic;">Byte Viewer Options </span>dialog.&nbsp;
 			Select the formats that you want and press the <span
 			 style="font-weight: bold;">OK </span>button.<br>
 	  		</p>
@@ -65,15 +64,14 @@
 				program. For those addresses that can be formed and are in memory, the
 				view shows the symbol, <img src="images/addressMark.png" border="0"> 
 				&nbsp; So if you go to that address in the <a
-				 href="help/topics/CodeBrowserPlugin/CodeBrowser.htm"> Code Browser</a>, and <font
-				 color="#000000"><a href="help/topics/DataPlugin/Data.htm#Pointer">make a
-				Pointer data type</a>,</font> <font color="#0000ff"> </font><font
-				 color="#000000">the address pointed to is in memory. Conversely, if
+				 href="help/topics/CodeBrowserPlugin/CodeBrowser.htm"> Code Browser</a>, and 
+				 <a href="help/topics/DataPlugin/Data.htm#Pointer">make a
+				Pointer data type</a>, the address pointed to is in memory. Conversely, if
 				you go to a "tic" address in the Code Browser and make a pointer, the
 				address pointed to is not in memory (the operand is
 				rendered in red).</font></p>
     
-    			<p><font color="#000000">This view does not support <a href="#EditBytes">editing</a>.</font></p>
+    			<p>This view does not support <a href="#EditBytes">editing</a>.</p>
   			</blockquote>
   
   		<h3><a name="Add_Byteviewer_Disassembled_Panel"></a><a name="Disassembled"></a>Disassembled</h3>
@@ -175,9 +173,9 @@
 			field</font>.</p>
 			
   			<p><font color="#000000">Undo the edit by hitting the Undo button (<img
- 			src="../../shared/undo.png" border="0" > ) on
+ 			src="icon.undo" border="0" > ) on
 			the tool. The byte reverts to its original value. Redo your edit by
-			hitting the Redo button (<img src="../../shared/redo.png" border="0"> ).</font></p>
+			hitting the Redo button (<img src="icon.redo" border="0"> ).</font></p>
 		</blockquote>
 
 		<blockquote>
@@ -186,7 +184,7 @@
 			Edit toolbar button </font><img src="images/editbytes.gif" alt=""> 
 			so that it no longer appears pushed-in<font
 			 color="#000000">.</font></p>
-			  <p><img src="../../shared/note.png" border="0">If
+			  <p><img src="help/shared/note.png" border="0">If
 			you have two Byte Viewers running, you can <a
 			 href="help/topics/FrontEndPlugin/Connecting_Tools.htm#SpecialToolEvent">connect</a>
 			the two tools for the "Byte Block Edit" event so that when you make
@@ -225,7 +223,7 @@
   		<blockquote>
     		<p>The alignment address specifies what address should appear in
 			column 0.&nbsp; Any address can be specified, but the address will be
-			normalized to be near the program's miminum address. This enables you to
+			normalized to be near the program's minimum address. This enables you to
 			view bytes in an offcut manner and to identify patterns in the bytes.
 			Changing the alignment address affects the <a href="#OffsetField">offset</a>,
 			which is the column that would display the bytes for address 0 if it
@@ -233,7 +231,7 @@
 			The offset is affected by both the alignment address and the bytes per
 			line. The offset is displayed as a label below the scroll
 			pane containing the views.</p>
-    		<p><img src="../../shared/tip.png" border="0" >Sometimes
+    		<p><img src="help/shared/tip.png" border="0" >Sometimes
 			you might see a byte pattern such that you want all the bytes
 			to line up in the first column of the display. Consider the cursor
 			position in the image below. If you want to see the fourth column of
@@ -254,7 +252,7 @@
 	  		<blockquote>
     			<p>The bytes per line indicates how many bytes are displayed in one
 				line in a view. The default value is 16. <br></p>
-    			<p><img src="../../shared/note.png" border="0"> 
+    			<p><img src="help/shared/note.png" border="0"> 
     			All formats shown must be able to support the new value.
 				For example,&nbsp; since the HexInteger and Integer&nbsp; formats show
 				bytes in groups of four, the bytes per line must be a multiple of four.

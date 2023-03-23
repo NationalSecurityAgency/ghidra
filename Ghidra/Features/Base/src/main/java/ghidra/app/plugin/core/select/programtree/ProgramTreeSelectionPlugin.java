@@ -55,7 +55,7 @@ public class ProgramTreeSelectionPlugin extends ProgramPlugin {
 	private TreeSelectAction selectModuleAction;
 
 	public ProgramTreeSelectionPlugin(PluginTool tool) {
-		super(tool, true, true);
+		super(tool);
 		createActions();
 	}
 

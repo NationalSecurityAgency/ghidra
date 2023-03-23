@@ -23,7 +23,6 @@ import agent.dbgeng.manager.*;
 import agent.dbgeng.model.iface1.DbgModelTargetFocusScope;
 import agent.dbgeng.model.iface2.*;
 import ghidra.dbg.target.TargetFocusScope;
-import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
 import ghidra.dbg.util.PathUtils;
 import ghidra.program.model.address.Address;
@@ -79,8 +78,6 @@ public class DbgModelTargetStackFrameImpl extends DbgModelTargetObjectImpl
 		return PathUtils.makeKey(indexFrame(frame));
 	}
 
-	protected final DbgModelTargetThread thread;
-
 	protected DbgStackFrame frame;
 	protected Address pc;
 	protected String func;
@@ -97,7 +94,6 @@ public class DbgModelTargetStackFrameImpl extends DbgModelTargetObjectImpl
 			DbgStackFrame frame) {
 		super(stack.getModel(), stack, keyFrame(frame), "StackFrame");
 		this.getModel().addModelObject(frame, this);
-		this.thread = thread;
 		this.pc = getModel().getAddressSpace("ram").getAddress(-1);
 
 		changeAttributes(List.of(), List.of(), Map.of( //
@@ -163,18 +159,8 @@ public class DbgModelTargetStackFrameImpl extends DbgModelTargetObjectImpl
 	}
 
 	@Override
-	public TargetObject getThread() {
-		return thread.getParent();
-	}
-
-	@Override
 	public Address getPC() {
 		return pc;
-	}
-
-	@Override
-	public DbgModelTargetProcess getProcess() {
-		return ((DbgModelTargetThreadImpl) thread).getProcess();
 	}
 
 	/*

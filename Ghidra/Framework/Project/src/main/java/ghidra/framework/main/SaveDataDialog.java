@@ -16,8 +16,8 @@
 package ghidra.framework.main;
 
 import java.awt.*;
-import java.awt.event.*;
-import java.lang.reflect.InvocationTargetException;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,14 +25,13 @@ import javax.swing.*;
 import javax.swing.border.TitledBorder;
 
 import docking.DialogComponentProvider;
-import docking.options.editor.ButtonPanelFactory;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.list.ListPanel;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.ProjectLocator;
 import ghidra.framework.plugintool.PluginTool;
-import ghidra.util.HelpLocation;
-import ghidra.util.Msg;
+import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
 
@@ -47,16 +46,11 @@ import ghidra.util.task.*;
  */
 public class SaveDataDialog extends DialogComponentProvider {
 
-	private final static String SELECT_ALL = "Select All";
-	private final static String DESELECT_ALL = "Select None";
-
-	private ListPanel listPanel;
+	private ListPanel<JCheckBox> listPanel;
 	private JPanel mainPanel;
 	private GCheckBox[] checkboxes;
 	private List<DomainFile> files;
 	private boolean[] saveable;
-	private JButton selectAllButton;
-	private JButton deselectAllButton;
 	private JButton yesButton;
 	private JButton noButton;
 	private PluginTool tool;
@@ -80,32 +74,22 @@ public class SaveDataDialog extends DialogComponentProvider {
 		yesButton = new JButton("Save");
 		yesButton.setMnemonic('S');
 		addButton(yesButton);
-		yesButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent evt) {
-				okCallback();
-			}
-		});
+		yesButton.addActionListener(evt -> okCallback());
 		noButton = new JButton("Don't Save");
 		noButton.setMnemonic('n');
-		noButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent evt) {
-				operationCompleted = true;
-				close();
-			}
+		noButton.addActionListener(evt -> {
+			operationCompleted = true;
+			close();
 		});
 		addButton(noButton);
 		addCancelButton();
-
-		addListeners();
 	}
 
 	/**
 	 * Shows the save dialog with the given domain files, but no options to save
 	 * the project.  The dialog will not appear if there is no data that needs
 	 * saving.
-	 * 
+	 *
 	 * @param domainFiles The files that may need saving.
 	 * @return true if the user hit the 'Save' or 'Don't Save' option; return false if the
 	 *         user cancelled the operation
@@ -170,51 +154,18 @@ public class SaveDataDialog extends DialogComponentProvider {
 		panel.setLayout(new BorderLayout());
 		JPanel parentPanel = new JPanel(new BorderLayout());
 
-		//
-		// Create Button Panel
-		//
-		selectAllButton = new JButton(SELECT_ALL);
-		selectAllButton.setMnemonic('A');
-		deselectAllButton = new JButton(DESELECT_ALL);
-		deselectAllButton.setMnemonic('N');
+		SelectPanel myButtonPanel = new SelectPanel(e -> selectAll(), e -> deselectAll());
 
-		JPanel buttonPanel = ButtonPanelFactory.createButtonPanel(
-			new JButton[] { selectAllButton, deselectAllButton });
-
-		//
-		// List Panel
-		//
-		listPanel = new ListPanel();
+		listPanel = new ListPanel<>();
 		listPanel.setCellRenderer(new DataCellRenderer());
 		listPanel.setMouseListener(new ListMouseListener());
 
-		// Layout Main Panel
-		parentPanel.add(buttonPanel, BorderLayout.EAST);
+		parentPanel.add(myButtonPanel, BorderLayout.EAST);
 		parentPanel.add(listPanel, BorderLayout.CENTER);
 		parentPanel.setBorder(new TitledBorder("Data"));
 
 		panel.add(parentPanel, BorderLayout.CENTER);
 		return panel;
-	}
-
-	/**
-	 * Add listeners to the buttons.
-	 */
-	private void addListeners() {
-		selectAllButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				selectAll();
-			}
-		});
-
-		deselectAllButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				deselectAll();
-			}
-		});
-
 	}
 
 	/**
@@ -265,7 +216,7 @@ public class SaveDataDialog extends DialogComponentProvider {
 		yesButton.setEnabled(false);
 		for (int i = 0; i < files.size(); i++) {
 			checkboxes[i] = new GCheckBox(files.get(i).getName());
-			checkboxes[i].setBackground(Color.white);
+			checkboxes[i].setBackground(Colors.BACKGROUND);
 			saveable[i] = files.get(i).canSave();
 			if (!saveable[i]) {
 				String text = files.get(i).getName() + readOnlyString;
@@ -285,10 +236,9 @@ public class SaveDataDialog extends DialogComponentProvider {
 
 		}
 		listPanel.refreshList(checkboxes);
-		setFocusComponent(yesButton);//.requestFocusInWindow();
+		setFocusComponent(yesButton);
 	}
 
-	/////////////////////////////////////////////////////////////////////////
 	/**
 	 * Cell renderer to show the checkboxes for the changed data files.
 	 */
@@ -302,12 +252,12 @@ public class SaveDataDialog extends DialogComponentProvider {
 
 			if (boldFont == null) {
 				Font font = list.getFont();
-				boldFont = new Font(font.getName(), font.getStyle() | Font.BOLD, font.getSize());
+				boldFont = font.deriveFont(font.getStyle() | Font.BOLD);
 			}
 
 			// set color to red if file cannot be saved 'as is'
 			if (!saveable[index]) {
-				checkboxes[index].setForeground(Color.red);
+				checkboxes[index].setForeground(Colors.ERROR);
 				checkboxes[index].setFont(boldFont);
 			}
 			return checkboxes[index];
@@ -323,7 +273,7 @@ public class SaveDataDialog extends DialogComponentProvider {
 		public void mouseClicked(MouseEvent e) {
 
 			clearStatusText();
-			JList list = (JList) e.getSource();
+			JList<?> list = (JList<?>) e.getSource();
 			int index = list.locationToIndex(e.getPoint());
 			if (index < 0) {
 				return;
@@ -340,10 +290,6 @@ public class SaveDataDialog extends DialogComponentProvider {
 		}
 	}
 
-	/////////////////////////////////////////////////////////////////////////
-	/**
-	 * Task to save files.
-	 */
 	private class SaveTask extends Task {
 		private DomainFile[] domainFiles;
 
@@ -352,9 +298,6 @@ public class SaveDataDialog extends DialogComponentProvider {
 			this.domainFiles = files;
 		}
 
-		/**
-		 * @see ghidra.util.task.Task#run(TaskMonitor)
-		 */
 		@Override
 		public void run(TaskMonitor monitor) {
 			try {
@@ -377,42 +320,12 @@ public class SaveDataDialog extends DialogComponentProvider {
 					t);
 			}
 			if (operationCompleted) {
-				try {
-					SwingUtilities.invokeAndWait(new Runnable() {
-						@Override
-						public void run() {
-							close();
-						}
-					});
-				}
-				catch (InterruptedException e) {
-					// don't care?
-				}
-				catch (InvocationTargetException e) {
-					// don't care?
-				}
+				Swing.runNow(() -> close());
 			}
 			else if (monitor.isCancelled()) {
-				updateList();
+				Swing.runNow(() -> initList());
 			}
 		}
 
-		/**
-		 * Refresh the list of files that need saving.
-		 */
-		private void updateList() {
-			Runnable r = new Runnable() {
-				@Override
-				public void run() {
-					initList();
-				}
-			};
-			try {
-				SwingUtilities.invokeAndWait(r);
-			}
-			catch (Exception e) {
-				// don't care?
-			}
-		}
 	}
 }

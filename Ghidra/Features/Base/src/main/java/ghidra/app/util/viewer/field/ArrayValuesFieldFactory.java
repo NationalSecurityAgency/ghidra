@@ -95,12 +95,16 @@ public class ArrayValuesFieldFactory extends FieldFactory {
 		int numComponents = parent.getNumComponents();
 		int index = data.getComponentIndex();
 		int remaining = numComponents - index;
-		int valuesThisLine = Math.min(remaining, valuesPerLine);
-		FieldElement[] aStrings = new FieldElement[valuesThisLine];
-		for (int i = 0; i < valuesThisLine; i++) {
+		int itemCount = Math.min(remaining, valuesPerLine);
+		boolean isLastLine = remaining <= itemCount;
+
+		FieldElement[] aStrings = new FieldElement[itemCount];
+		for (int i = 0; i < itemCount; i++) {
 			Data child = parent.getComponent(index++);
-			String value = getDisplayValue(child, i != valuesThisLine - 1);
-			AttributedString as = new AttributedString(value, color, getMetrics());
+			boolean isLastItem = isLastLine && (i == itemCount - 1);
+			String value = getDisplayValue(child, !isLastItem);
+			AttributedString as =
+				new AttributedString(value, ListingColors.ARRAY_VALUES, getMetrics());
 			aStrings[i] = new TextFieldElement(as, i, 0);
 		}
 		return ListingTextField.createPackedTextField(this, proxy, aStrings, startX + varWidth,

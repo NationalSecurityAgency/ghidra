@@ -17,23 +17,55 @@ package ghidra.util.database;
 
 import java.io.IOException;
 
-import com.google.common.collect.BoundType;
-import com.google.common.collect.Range;
-
 import db.*;
+import generic.End.Point;
 
+/**
+ * An iterator over records of a table
+ */
 public interface DirectedRecordIterator extends DirectedIterator<DBRecord> {
+	public final static DirectedRecordIterator EMPTY =
+		new AbstractDirectedRecordIterator(null) {
+			@Override
+			public boolean hasNext() throws IOException {
+				return false;
+			}
 
-	public static AbstractDirectedRecordIterator getIterator(Table table, Range<Long> keyRange,
+			@Override
+			public DBRecord next() throws IOException {
+				return null;
+			}
+		};
+
+	/**
+	 * Get an iterator over the table, restricted to the given range of keys, in the given direction
+	 * 
+	 * @param table the table
+	 * @param keySpan the limited range
+	 * @param direction the direction
+	 * @return the iterator
+	 * @throws IOException if the table cannot be read
+	 */
+	public static DirectedRecordIterator getIterator(Table table, KeySpan keySpan,
 			Direction direction) throws IOException {
-		long min = DirectedIterator.toIteratorMin(keyRange);
-		long max = DirectedIterator.toIteratorMax(keyRange);
+		if (keySpan.isEmpty()) {
+			return EMPTY;
+		}
+		long min = keySpan.min();
+		long max = keySpan.max();
 		if (direction == Direction.FORWARD) {
 			return new ForwardRecordIterator(table.iterator(min, max, min));
 		}
 		return new BackwardRecordIterator(table.iterator(min, max, max));
 	}
 
+	/**
+	 * Given an iterator over a closed range. Change its behavior to exclude the lower bound
+	 * 
+	 * @param it the iterator over the closed range
+	 * @param columnIndex the column number whose index being iterated
+	 * @param exclude the lower bound to be excluded
+	 */
 	private static DirectedRecordIterator applyBegFilter(DirectedRecordIterator it, int columnIndex,
 			Field exclude) throws IOException {
 		return new DirectedRecordIterator() {
@@ -71,6 +103,13 @@ public interface DirectedRecordIterator extends DirectedIterator<DBRecord> {
 		};
 	}
 
+	/**
+	 * Given an iterator over a closed range. Change its behavior to exclude the upper bound
+	 * 
+	 * @param it the iterator over the closed range
+	 * @param columnIndex the column number whose index being iterated
+	 * @param exclude the upper bound to be excluded
+	 */
 	private static DirectedRecordIterator applyEndFilter(DirectedRecordIterator it, int columnIndex,
 			Field exclude) throws IOException {
 		return new DirectedRecordIterator() {
@@ -108,18 +147,26 @@ public interface DirectedRecordIterator extends DirectedIterator<DBRecord> {
 		return it;
 	}
 
+	/**
+	 * Get an iterator over the table using a given index, restricted to the given range of values,
+	 * in the given direction
+	 * 
+	 * @param table the table
+	 * @param columnIndex the column number of the index
+	 * @param fieldSpan the limited range
+	 * @param direction the direction
+	 * @return the iterator
+	 * @throws IOException if the table cannot be read
+	 */
 	public static DirectedRecordIterator getIndexIterator(Table table, int columnIndex,
-			Range<Field> fieldRange, Direction direction) throws IOException {
-		Field lower = fieldRange.hasLowerBound() ? fieldRange.lowerEndpoint() : null;
-		Field upper = fieldRange.hasUpperBound() ? fieldRange.upperEndpoint() : null;
+			FieldSpan fieldSpan, Direction direction) throws IOException {
+		Field lower = fieldSpan.min() instanceof Point<Field> pt ? pt.val() : null;
+		Field upper = fieldSpan.max() instanceof Point<Field> pt ? pt.val() : null;
+
 		RecordIterator it =
 			table.indexIterator(columnIndex, lower, upper, direction == Direction.FORWARD);
-		Field excludeLower =
-			fieldRange.hasLowerBound() && fieldRange.lowerBoundType() == BoundType.OPEN ? lower
-					: null;
-		Field excludeUpper =
-			fieldRange.hasUpperBound() && fieldRange.upperBoundType() == BoundType.OPEN ? upper
-					: null;
+		Field excludeLower = !fieldSpan.min().isInclusive() ? lower : null;
+		Field excludeUpper = !fieldSpan.max().isInclusive() ? upper : null;
 		if (direction == Direction.FORWARD) {
 			return applyFilters(new ForwardRecordIterator(it), columnIndex, excludeLower,
 				excludeUpper);

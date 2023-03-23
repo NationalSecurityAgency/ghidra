@@ -29,6 +29,7 @@ import org.apache.commons.lang3.StringUtils;
 import docking.widgets.fieldpanel.field.FieldElement;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.Highlight;
+import generic.theme.GColor;
 import ghidra.GhidraOptions;
 import ghidra.GhidraOptions.CURSOR_MOUSE_BUTTON_NAMES;
 import ghidra.app.plugin.processors.generic.PcodeFieldFactory;
@@ -51,18 +52,15 @@ import ghidra.util.datastruct.Stack;
 
 public class ListingHighlightProvider
 		implements ButtonPressedListener, OptionsChangeListener, HighlightProvider {
-
-	private static final String DISPLAY_HIGHLIGHT_NAME =
-		CURSOR_HIGHLIGHT_GROUP + DELIMITER + "Enabled";
-
-	private static final String SCOPED_WRITE_HIGHLIGHT_COLOR =
-		CURSOR_HIGHLIGHT_GROUP + DELIMITER + "Scoped Write Highlight Color";
-
-	private static final String SCOPED_READ_HIGHLIGHT_COLOR =
-		CURSOR_HIGHLIGHT_GROUP + DELIMITER + "Scoped Read Highlight Color";
-
-	private static final String SCOPE_REGISTER_OPERAND =
-		CURSOR_HIGHLIGHT_GROUP + DELIMITER + "Scope Register Operand";
+	//@formatter:off
+	private static final GColor DEFAULT_HIGHLIGHT_COLOR = new GColor("color.bg.listing.highlighter.default");
+	private static final GColor DEFAULT_SCOPED_READ_COLOR = new GColor("color.bg.listing.highlighter.scoped.read");
+	private static final GColor DEFAULT_SCOPED_WRITE_COLOR = new GColor("color.bg.listing.highlighter.scoped.write");
+	private static final String DISPLAY_HIGHLIGHT_NAME = CURSOR_HIGHLIGHT_GROUP + DELIMITER + "Enabled";
+	private static final String SCOPED_WRITE_HIGHLIGHT_COLOR = CURSOR_HIGHLIGHT_GROUP + DELIMITER + "Scoped Write Highlight Color";
+	private static final String SCOPED_READ_HIGHLIGHT_COLOR = CURSOR_HIGHLIGHT_GROUP + DELIMITER + "Scoped Read Highlight Color";
+	private static final String SCOPE_REGISTER_OPERAND = CURSOR_HIGHLIGHT_GROUP + DELIMITER + "Scope Register Operand";
+	//@formatter:on
 
 	private static char[] UNDERSCORE_AND_PERIOD_OK = new char[] { '.', '_' };
 	private static char[] UNDERSCORE_OK = new char[] { '_' };
@@ -146,7 +144,7 @@ public class ListingHighlightProvider
 
 		Pattern highlightPattern = currentHighlightPattern;
 		Matcher matcher = highlightPattern.matcher(text);
-		List<Highlight> highlightList = new ArrayList<Highlight>();
+		List<Highlight> highlightList = new ArrayList<>();
 		while (matcher.find()) {
 			int start = matcher.start();
 			int end = matcher.end() - 1;
@@ -481,7 +479,7 @@ public class ListingHighlightProvider
 	}
 
 	private Set<Register> getRegisterSet(Register reg) {
-		Set<Register> regSet = new HashSet<Register>();
+		Set<Register> regSet = new HashSet<>();
 		regSet.add(reg);
 		Register r = reg.getParentRegister();
 		while (r != null) {
@@ -560,7 +558,7 @@ public class ListingHighlightProvider
 		// and set writeScope, all other instructions upto that point will be
 		// added to read scope
 		Program prog = instr.getProgram();
-		Stack<Address> backStack = new Stack<Address>();
+		Stack<Address> backStack = new Stack<>();
 		pushInstructionBackFlows(instr, backStack);
 		while (!backStack.isEmpty()) {
 			Address addr = backStack.pop();
@@ -589,7 +587,7 @@ public class ListingHighlightProvider
 		// follow flow downwards until register is changed
 		// add in each line that has register anywhere
 		Program prog = instr.getProgram();
-		Stack<Address> stack = new Stack<Address>();
+		Stack<Address> stack = new Stack<>();
 		pushInstructionFlows(instr, stack);
 		while (!stack.isEmpty()) {
 			Address addr = stack.pop();
@@ -849,7 +847,7 @@ public class ListingHighlightProvider
 		varnodeSize -= intOff;
 		varnodeOffset += intOff;
 
-		List<Varnode> varnodes = new ArrayList<Varnode>();
+		List<Varnode> varnodes = new ArrayList<>();
 		for (Varnode v : variableStorage.getVarnodes()) {
 			if (varnodeOffset >= v.getSize()) {
 				varnodeOffset -= v.getSize();
@@ -871,11 +869,13 @@ public class ListingHighlightProvider
 		ToolOptions opt = tool.getOptions(CATEGORY_BROWSER_FIELDS);
 		HelpLocation hl = new HelpLocation("CodeBrowserPlugin", "Cursor_Text_Highlight");
 
-		opt.registerOption(HIGHLIGHT_COLOR_NAME, Color.YELLOW, hl,
+		opt.registerThemeColorBinding(HIGHLIGHT_COLOR_NAME, DEFAULT_HIGHLIGHT_COLOR.getId(), hl,
 			"The color to use to highlight text.");
-		opt.registerOption(SCOPED_WRITE_HIGHLIGHT_COLOR, new Color(204, 204, 0), hl,
+		opt.registerThemeColorBinding(SCOPED_WRITE_HIGHLIGHT_COLOR,
+			DEFAULT_SCOPED_WRITE_COLOR.getId(), hl,
 			"The color to use for showing a register being written.");
-		opt.registerOption(SCOPED_READ_HIGHLIGHT_COLOR, new Color(0, 255, 0), hl,
+		opt.registerThemeColorBinding(SCOPED_READ_HIGHLIGHT_COLOR,
+			DEFAULT_SCOPED_READ_COLOR.getId(), hl,
 			"The color to use for showing a register being read.");
 
 		opt.registerOption(SCOPE_REGISTER_OPERAND, true, hl,
@@ -895,11 +895,11 @@ public class ListingHighlightProvider
 			setHighlightString(null, null);
 		}
 
-		textMatchingHighlightColor = opt.getColor(HIGHLIGHT_COLOR_NAME, Color.YELLOW);
-
+		textMatchingHighlightColor = opt.getColor(HIGHLIGHT_COLOR_NAME, DEFAULT_HIGHLIGHT_COLOR);
 		scopeWriteHighlightColor =
-			opt.getColor(SCOPED_WRITE_HIGHLIGHT_COLOR, new Color(204, 204, 0));
-		scopeReadHighlightColor = opt.getColor(SCOPED_READ_HIGHLIGHT_COLOR, new Color(0, 255, 0));
+			opt.getColor(SCOPED_WRITE_HIGHLIGHT_COLOR, DEFAULT_SCOPED_WRITE_COLOR);
+		scopeReadHighlightColor =
+			opt.getColor(SCOPED_READ_HIGHLIGHT_COLOR, DEFAULT_SCOPED_READ_COLOR);
 
 		/////////////////////////////////////////////////////
 

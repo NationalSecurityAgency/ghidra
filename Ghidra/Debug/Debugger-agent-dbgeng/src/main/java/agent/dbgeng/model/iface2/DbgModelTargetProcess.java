@@ -18,10 +18,22 @@ package agent.dbgeng.model.iface2;
 import java.util.concurrent.CompletableFuture;
 
 import agent.dbgeng.dbgeng.DebugProcessId;
-import agent.dbgeng.dbgeng.DebugSystemObjects;
-import agent.dbgeng.manager.*;
+import agent.dbgeng.manager.DbgEventsListenerAdapter;
+import agent.dbgeng.manager.DbgProcess;
+import agent.dbgeng.manager.DbgState;
+import agent.dbgeng.manager.DbgThread;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
-import agent.dbgeng.model.iface1.*;
+import agent.dbgeng.model.iface1.DbgModelSelectableObject;
+import agent.dbgeng.model.iface1.DbgModelTargetAccessConditioned;
+import agent.dbgeng.model.iface1.DbgModelTargetAttachable;
+import agent.dbgeng.model.iface1.DbgModelTargetAttacher;
+import agent.dbgeng.model.iface1.DbgModelTargetDeletable;
+import agent.dbgeng.model.iface1.DbgModelTargetDetachable;
+import agent.dbgeng.model.iface1.DbgModelTargetExecutionStateful;
+import agent.dbgeng.model.iface1.DbgModelTargetInterruptible;
+import agent.dbgeng.model.iface1.DbgModelTargetKillable;
+import agent.dbgeng.model.iface1.DbgModelTargetResumable;
+import agent.dbgeng.model.iface1.DbgModelTargetSteppable;
 import ghidra.dbg.target.TargetAggregate;
 import ghidra.dbg.target.TargetProcess;
 import ghidra.dbg.util.PathUtils;
@@ -53,16 +65,16 @@ public interface DbgModelTargetProcess extends //
 	public void threadStateChangedSpecific(DbgThread thread, DbgState state);
 
 	public default DbgProcess getProcess() {
+		return getProcess(true);
+	}
+
+	public default DbgProcess getProcess(boolean fire) {
 		DbgManagerImpl manager = getManager();
-		DebugSystemObjects so = manager.getSystemObjects();
 		try {
 			String index = PathUtils.parseIndex(getName());
-			Integer pid = Integer.decode(index);
-			DebugProcessId id = so.getProcessIdBySystemId(pid);
-			if (id == null) {
-				id = so.getCurrentProcessId();
-			}
-			return manager.getProcessComputeIfAbsent(id, pid);
+			Long pid = Long.decode(index);
+			DebugProcessId id = new DebugProcessId(pid);
+			return manager.getProcessComputeIfAbsent(id, pid, fire);
 		}
 		catch (IllegalArgumentException e) {
 			return manager.getCurrentProcess();

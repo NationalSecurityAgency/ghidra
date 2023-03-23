@@ -26,6 +26,7 @@ import docking.EmptyBorderToggleButton;
 import docking.widgets.HyperlinkComponent;
 import docking.widgets.checkbox.GCheckBox;
 import docking.widgets.label.*;
+import generic.theme.*;
 import ghidra.framework.plugintool.PluginConfigurationModel;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.framework.plugintool.util.*;
@@ -36,7 +37,7 @@ import ghidra.util.layout.VerticalLayout;
 import resources.ResourceManager;
 
 public class PluginManagerComponent extends JPanel implements Scrollable {
-	private static final Icon DEFAULT_ICON = ResourceManager.loadImage("images/plasma.png");
+	private static final Icon DEFAULT_ICON = new GIcon("icon.plugin.manager.default");
 
 	private final PluginTool tool;
 	private PluginConfigurationModel model;
@@ -45,7 +46,7 @@ public class PluginManagerComponent extends JPanel implements Scrollable {
 	PluginManagerComponent(PluginTool tool, PluginConfigurationModel model) {
 		super(new VerticalLayout(2));
 		setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-		setBackground(Color.WHITE);
+		setBackground(new GColor("color.bg"));
 		this.tool = tool;
 		this.model = model;
 		model.setChangeCallback(this::updateCheckboxes);
@@ -114,7 +115,7 @@ public class PluginManagerComponent extends JPanel implements Scrollable {
 //=================================================================================================
 
 	private class PluginPackageComponent extends JPanel {
-		private final Color BG = Color.white;
+		private Color BG = new GColor("color.bg");
 		private final PluginPackage pluginPackage;
 		private final GCheckBox checkBox;
 
@@ -129,7 +130,7 @@ public class PluginManagerComponent extends JPanel implements Scrollable {
 			initializeLabelSection();
 			initializeDescriptionSection();
 
-			setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY));
+			setBorder(BorderFactory.createLineBorder(GThemeDefaults.Colors.Java.BORDER));
 			updateCheckBoxState();
 		}
 
@@ -152,8 +153,7 @@ public class PluginManagerComponent extends JPanel implements Scrollable {
 			if (icon == null) {
 				icon = DEFAULT_ICON;
 			}
-			JLabel iconLabel =
-				new GIconLabel(ResourceManager.getScaledIcon(icon, 32, 32, 32));
+			JLabel iconLabel = new GIconLabel(ResourceManager.getScaledIcon(icon, 32, 32, 32));
 			iconLabel.setBackground(BG);
 
 			checkboxPanel.add(iconLabel);
@@ -176,7 +176,7 @@ public class PluginManagerComponent extends JPanel implements Scrollable {
 
 			GLabel nameLabel = new GLabel(pluginPackage.getName());
 			nameLabel.setFont(nameLabel.getFont().deriveFont(18f));
-			nameLabel.setForeground(Color.BLACK);
+			nameLabel.setForeground(new GColor("color.fg.pluginpanel.name"));
 			labelPanel.add(nameLabel);
 
 			HyperlinkComponent configureHyperlink = createConfigureHyperlink();
@@ -207,7 +207,7 @@ public class PluginManagerComponent extends JPanel implements Scrollable {
 			String htmlDescription = enchanceDescription(pluginPackage.getDescription());
 
 			JLabel descriptionlabel = new GHtmlLabel(htmlDescription);
-			descriptionlabel.setForeground(Color.GRAY);
+			descriptionlabel.setForeground(new GColor("color.fg.pluginpanel.description"));
 			descriptionlabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
 			descriptionlabel.setVerticalAlignment(SwingConstants.TOP);
 			descriptionlabel.setToolTipText(

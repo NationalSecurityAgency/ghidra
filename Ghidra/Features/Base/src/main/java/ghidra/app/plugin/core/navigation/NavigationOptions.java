@@ -97,8 +97,8 @@ public class NavigationOptions implements OptionsChangeListener {
 
 	private final String RESTRICT_GOTO_CURRENT_TAB = "'Go To' in Current Program Only";
 	private static final String RESTRICT_GOTO_CURRENT_TAB_DESCRIPTION = "Determines if the " +
-		"'Go To' service will only search for and navigate to labels in the current program. " +
-		"If this option is off and the search label is not found in the current program, the " +
+		"'Go To' service will only search for and navigate to locations in the current program. " +
+		"If this option is off and the search location is not found in the current program, the " +
 		"'Go To' action will search other open programs, " +
 		"possibly resulting in the listing view switching to a different open program tab. " +
 		"By default, this option is on, thereby guaranteeing that the listing view will not " +

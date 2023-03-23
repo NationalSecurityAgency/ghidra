@@ -33,6 +33,7 @@ import docking.widgets.tree.*;
 import docking.widgets.tree.support.GTreeNodeTransferable;
 import docking.widgets.tree.support.GTreeSelectionEvent.EventOrigin;
 import docking.widgets.tree.tasks.GTreeBulkTask;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.symboltree.actions.*;
 import ghidra.app.plugin.core.symboltree.nodes.*;
 import ghidra.framework.model.*;
@@ -45,14 +46,12 @@ import ghidra.program.model.symbol.*;
 import ghidra.program.util.*;
 import ghidra.util.*;
 import ghidra.util.exception.*;
-import ghidra.util.task.SwingUpdateManager;
-import ghidra.util.task.TaskMonitor;
-import resources.ResourceManager;
+import ghidra.util.task.*;
 
 public class SymbolTreeProvider extends ComponentProviderAdapter {
 
-	private static final ImageIcon ICON = ResourceManager.loadImage("images/sitemap_color.png");
-	private final static String NAME = "Symbol Tree";
+	private static final Icon ICON = new GIcon("icon.plugin.symboltree.provider");
+	private static final String NAME = "Symbol Tree";
 
 	private ClipboardOwner clipboardOwner;
 	private Clipboard localClipboard;// temporary clipboard used for the "cut" operation
@@ -76,7 +75,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 	 */
 	private List<GTreeTask> bufferedTasks = new ArrayList<>();
 	private SwingUpdateManager domainChangeUpdateManager = new SwingUpdateManager(1000,
-		SwingUpdateManager.DEFAULT_MAX_DELAY, "Symbol Tree Provider", () -> {
+		AbstractSwingUpdateManager.DEFAULT_MAX_DELAY, "Symbol Tree Provider", () -> {
 
 			if (bufferedTasks.isEmpty()) {
 				return;
@@ -167,7 +166,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 			public void mouseClicked(MouseEvent e) {
 
 				// This code serves to perform navigation in  the case that the selection handler
-				// above does not, as is the case when the node is already selected.  This code 
+				// above does not, as is the case when the node is already selected.  This code
 				// will get called on the mouse release, whereas the selection handler gets called
 				// on the mouse pressed.
 				// For now, just attempt to perform the goto.  It may get called twice, but this
@@ -197,7 +196,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 
 	protected void treeNodeCollapsed(TreePath path) {
 		Object lastPathComponent = path.getLastPathComponent();
-		if (lastPathComponent instanceof SymbolCategoryNode) {
+		if (lastPathComponent instanceof SymbolCategoryNode && !tree.hasFilterText()) {
 			tree.runTask(m -> ((SymbolCategoryNode) lastPathComponent).unloadChildren());
 		}
 	}
@@ -230,12 +229,12 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 
 		String createGroup = "0Create";
 		int createGroupIndex = 0;
-		DockingAction createNamespaceAction = new CreateNamespaceAction(plugin, createGroup,
-			Integer.toString(createGroupIndex++));
-		DockingAction createClassAction = new CreateClassAction(plugin, createGroup,
-			Integer.toString(createGroupIndex++));
-		DockingAction convertToClassAction = new ConvertToClassAction(plugin, createGroup,
-			Integer.toString(createGroupIndex++));
+		DockingAction createNamespaceAction =
+			new CreateNamespaceAction(plugin, createGroup, Integer.toString(createGroupIndex++));
+		DockingAction createClassAction =
+			new CreateClassAction(plugin, createGroup, Integer.toString(createGroupIndex++));
+		DockingAction convertToClassAction =
+			new ConvertToClassAction(plugin, createGroup, Integer.toString(createGroupIndex++));
 
 		DockingAction renameAction = new RenameAction(plugin);
 		DockingAction cutAction = new CutAction(plugin, this);
@@ -414,6 +413,11 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 	}
 
 	private void rebuildTree() {
+
+		// If we do not cancel the edit here, then an open edits will instead be committed.  It
+		// seems safer to cancel an edit rather than to commit it without asking.
+		tree.cancelEditing();
+
 		SymbolTreeRootNode node = (SymbolTreeRootNode) tree.getModelRoot();
 		node.setChildren(null);
 		tree.refilterLater();
@@ -434,9 +438,8 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 	private void addTask(GTreeTask task) {
 		// Note: if we want to call this method from off the Swing thread, then we have to
 		//       synchronize on the list that we are adding to here.
-		Swing.assertSwingThread(
-			"Adding tasks must be done on the Swing thread," +
-				"since they are put into a list that is processed on the Swing thread. ");
+		Swing.assertSwingThread("Adding tasks must be done on the Swing thread," +
+			"since they are put into a list that is processed on the Swing thread. ");
 
 		bufferedTasks.add(task);
 		domainChangeUpdateManager.update();

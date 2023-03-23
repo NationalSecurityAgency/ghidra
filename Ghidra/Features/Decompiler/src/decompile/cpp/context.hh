@@ -64,6 +64,7 @@ struct ContextSet {		// Instructions for setting a global context value
 
 class ParserWalker;		// Forward declaration
 class ParserWalkerChange;
+class Translate;
 
 class ParserContext {
   friend class ParserWalker;
@@ -75,6 +76,7 @@ public:
     pcode = 2			// Instruction is parsed in preparation for generating p-code
   };
 private:
+  Translate *translate;		// Instruction parser
   int4 parsestate;
   AddrSpace *const_space;
   uint1 buf[16];		// Buffer of bytes in the instruction stream
@@ -84,13 +86,14 @@ private:
   vector<ContextSet> contextcommit;
   Address addr;		// Address of start of instruction
   Address naddr;		// Address of next instruction
+  mutable Address n2addr;	// Address of instruction after the next
   Address calladdr;		// For injections, this is the address of the call being overridden
   vector<ConstructState> state; // Current resolved instruction
   ConstructState *base_state;
   int4 alloc;			// Number of ConstructState's allocated
   int4 delayslot;		// delayslot depth
 public:
-  ParserContext(ContextCache *ccache);
+  ParserContext(ContextCache *ccache,Translate *trans);
   ~ParserContext(void) { if (context != (uintm *)0) delete [] context; }
   uint1 *getBuffer(void) { return buf; }
   void initialize(int4 maxstate,int4 maxparam,AddrSpace *spc);
@@ -98,7 +101,7 @@ public:
   void setParserState(int4 st) { parsestate = st; }
   void deallocateState(ParserWalkerChange &walker);
   void allocateOperand(int4 i,ParserWalkerChange &walker);
-  void setAddr(const Address &ad) { addr = ad; }
+  void setAddr(const Address &ad) { addr = ad; n2addr = Address(); }
   void setNaddr(const Address &ad) { naddr = ad; }
   void setCalladdr(const Address &ad) { calladdr = ad; }
   void addCommit(TripleSymbol *sym,int4 num,uintm mask,bool flow,ConstructState *point);
@@ -106,6 +109,7 @@ public:
   void applyCommits(void);
   const Address &getAddr(void) const { return addr; }
   const Address &getNaddr(void) const { return naddr; }
+  const Address &getN2addr(void) const;
   const Address &getDestAddr(void) const { return calladdr; }
   const Address &getRefAddr(void) const { return calladdr; }
   AddrSpace *getCurSpace(void) const { return addr.getSpace(); }
@@ -147,6 +151,7 @@ public:
   AddrSpace *getConstSpace(void) const { return const_context->getConstSpace(); }
   const Address &getAddr(void) const { if (cross_context != (const ParserContext *)0) { return cross_context->getAddr(); } return const_context->getAddr(); }
   const Address &getNaddr(void) const { if (cross_context != (const ParserContext *)0) { return cross_context->getNaddr();} return const_context->getNaddr(); }
+  const Address &getN2addr(void) const { if (cross_context != (const ParserContext *)0) { return cross_context->getN2addr();} return const_context->getN2addr(); }
   const Address &getRefAddr(void) const { if (cross_context != (const ParserContext *)0) { return cross_context->getRefAddr();} return const_context->getRefAddr(); }
   const Address &getDestAddr(void) const { if (cross_context != (const ParserContext *)0) { return cross_context->getDestAddr();} return const_context->getDestAddr(); }
   int4 getLength(void) const { return const_context->getLength(); }

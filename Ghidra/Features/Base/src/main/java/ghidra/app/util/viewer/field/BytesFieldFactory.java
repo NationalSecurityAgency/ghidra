@@ -46,8 +46,6 @@ import ghidra.util.HelpLocation;
 public class BytesFieldFactory extends FieldFactory {
 	private static final int CHARS_IN_BYTE = 2;
 	public static final String FIELD_NAME = "Bytes";
-	public static final Color DEFAULT_COLOR = Color.BLUE;
-	public static final Color ALIGNMENT_BYTES_COLOR = Color.gray;
 	public final static String GROUP_TITLE = "Bytes Field";
 	public final static String MAX_DISPLAY_LINES_MSG =
 		GROUP_TITLE + Options.DELIMITER + "Maximum Lines To Display";
@@ -79,7 +77,7 @@ public class BytesFieldFactory extends FieldFactory {
 	/**
 	 * Constructor
 	 * @param model the model that the field belongs to.
-	 * @param hsProvider the HightLightStringProvider.
+	 * @param hlProvider the HightLightStringProvider.
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
@@ -210,10 +208,11 @@ public class BytesFieldFactory extends FieldFactory {
 
 		FieldElement[] aStrings = new FieldElement[fieldElementLength + extraLen];
 
-		buildAttributedByteValues(aStrings, 0, bytes, length, 0, color, extraLen != 0);
+		buildAttributedByteValues(aStrings, 0, bytes, length, 0, ListingColors.BYTES,
+			extraLen != 0);
 		if (extraLen != 0) {
 			buildAttributedByteValues(aStrings, fieldElementLength, alignmentBytes,
-				alignmentBytes.length, residual, ALIGNMENT_BYTES_COLOR, false);
+				alignmentBytes.length, residual, ListingColors.BYTES_ALIGNMENT, false);
 		}
 
 		return ListingTextField.createPackedTextField(this, proxy, aStrings, startX + varWidth,
@@ -431,11 +430,6 @@ public class BytesFieldFactory extends FieldFactory {
 			return new FieldLocation(index, fieldNum, rcl.row(), rcl.col());
 		}
 		return null;
-	}
-
-	@Override
-	public Color getDefaultColor() {
-		return DEFAULT_COLOR;
 	}
 
 	@Override

@@ -23,13 +23,13 @@ import java.io.IOException;
 import org.junit.*;
 
 import db.buffers.*;
+import db.buffers.LocalBufferFile.InputBlockStreamFactory;
 import generic.test.AbstractGenericTest;
 import ghidra.framework.store.local.LocalFileSystem;
 import ghidra.framework.store.local.LocalFolderItem;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import mockit.*;
 import utilities.util.FileUtilities;
 
 public class VersionFailureRecoveryTest extends AbstractGenericTest {
@@ -65,7 +65,7 @@ public class VersionFailureRecoveryTest extends AbstractGenericTest {
 	@Test
 	public void testAddToVersionControlFailure() {
 
-		new FakeBadBufferFile(); // setup for mocking
+		setInstanceField("inputBlockStreamFactory", LocalBufferFile.class, factory);
 
 		LocalBufferFile fakeBadBufferFile = null;
 		try {
@@ -99,18 +99,10 @@ public class VersionFailureRecoveryTest extends AbstractGenericTest {
 
 	}
 
-	private class FakeBadBufferFile extends MockUp<LocalBufferFile> {
+	private InputBlockStreamFactory factory = new InputBlockStreamFactory() {
 
-		@Mock
-		public int getIndexCount() {
-			return 10;
-		}
-
-		@Mock
-		public InputBlockStream getInputBlockStream(Invocation invocation) {
-
-			LocalBufferFile bufferFile = invocation.getInvokedInstance();
-
+		@Override
+		public InputBlockStream createInputBlockStream(LocalBufferFile bf) throws IOException {
 			return new InputBlockStream() {
 
 				@Override
@@ -125,7 +117,7 @@ public class VersionFailureRecoveryTest extends AbstractGenericTest {
 
 				@Override
 				public int getBlockSize() {
-					return bufferFile.getBufferSize();
+					return bf.getBufferSize();
 				}
 
 				@Override
@@ -135,10 +127,55 @@ public class VersionFailureRecoveryTest extends AbstractGenericTest {
 
 				@Override
 				public int getBlockCount() {
-					return bufferFile.getIndexCount();
+					return bf.getIndexCount();
 				}
 			};
 		}
 
-	}
+	};
+
+	/*
+	
+	private class FakeBadBufferFile extends LocalBufferFile {
+	
+		@Override
+		public int getIndexCount() {
+			return 10;
+		}
+	
+		@Override
+		public InputBlockStream getInputBlockStream() {
+	
+			LocalBufferFile bufferFile = null;
+	
+			return new InputBlockStream() {
+	
+				@Override
+				public boolean includesHeaderBlock() {
+					return true;
+				}
+	
+				@Override
+				public void close() throws IOException {
+					// ignore
+				}
+	
+				@Override
+				public int getBlockSize() {
+					return bufferFile.getBufferSize();
+				}
+	
+				@Override
+				public BufferFileBlock readBlock() throws IOException {
+					throw new IOException("forced block read failure");
+				}
+	
+				@Override
+				public int getBlockCount() {
+					return bufferFile.getIndexCount();
+				}
+			};
+		}
+	
+	}*/
 }

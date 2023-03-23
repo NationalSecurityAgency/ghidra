@@ -16,6 +16,7 @@
 package docking.widgets.tree;
 
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import javax.swing.Icon;
@@ -191,6 +192,22 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 	public GTreeNode getChild(String name) {
 		for (GTreeNode node : children()) {
 			if (name.equals(node.getName())) {
+				return node;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Returns the child node of this node with the given name which satisfies predicate filter.
+	 * 
+	 * @param name the name of the child to be returned
+	 * @param filter predicate filter
+	 * @return the child with the given name
+	 */
+	public GTreeNode getChild(String name, Predicate<GTreeNode> filter) {
+		for (GTreeNode node : children()) {
+			if (name.equals(node.getName()) && filter.test(node)) {
 				return node;
 			}
 		}
@@ -486,6 +503,15 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 		if (tree != null) {
 			tree.expandPath(this);
 		}
+	}
+
+	/**
+	 * Determine if this node may be auto-expanded.  Some special node cases may need to prevent
+	 * or limit auto-expansion due to tree depth or other special conditions.
+	 * @return true if this node allows auto-expansion, else false.
+	 */
+	public boolean isAutoExpandPermitted() {
+		return !isLeaf();
 	}
 
 	/**

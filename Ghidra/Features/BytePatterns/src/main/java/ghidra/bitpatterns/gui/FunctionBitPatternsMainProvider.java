@@ -28,6 +28,7 @@ import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.tool.ToolConstants;
 import docking.widgets.filechooser.GhidraFileChooser;
+import docking.widgets.filechooser.GhidraFileChooserMode;
 import docking.widgets.label.GLabel;
 import ghidra.bitpatterns.info.*;
 import ghidra.framework.options.OptionsChangeListener;
@@ -227,13 +228,14 @@ public class FunctionBitPatternsMainProvider extends ComponentProviderAdapter
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				GhidraFileChooser fileChooser = new GhidraFileChooser(component);
-				fileChooser.setFileSelectionMode(GhidraFileChooser.DIRECTORIES_ONLY);
+				fileChooser.setFileSelectionMode(GhidraFileChooserMode.DIRECTORIES_ONLY);
 				fileChooser.setTitle("Select Directory Containing XML Files");
 				String baseDir = Preferences.getProperty(PATTERN_INFO_DIR);
 				if (baseDir != null) {
 					fileChooser.setCurrentDirectory(new File(baseDir));
 				}
 				File xmlDir = fileChooser.getSelectedFile();
+				fileChooser.dispose();
 				if (xmlDir == null) {
 					return;
 				}

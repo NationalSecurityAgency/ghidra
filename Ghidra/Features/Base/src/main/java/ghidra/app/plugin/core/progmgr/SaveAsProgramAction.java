@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.progmgr;
 import docking.action.MenuData;
 import docking.tool.ToolConstants;
 import ghidra.program.model.listing.Program;
+import ghidra.util.HTMLUtilities;
 
 /**
  * Action class for the "Save As" action
@@ -26,7 +27,7 @@ public class SaveAsProgramAction extends AbstractProgramNameSwitchingAction {
 
 	public SaveAsProgramAction(ProgramManagerPlugin plugin, String group, int subGroup) {
 		super(plugin, "Save As File");
-		MenuData menuData = new MenuData(new String[] { ToolConstants.MENU_FILE, "Save &As..." });
+		MenuData menuData = new MenuData(new String[] { ToolConstants.MENU_FILE, "S&ave As..." });
 		menuData.setMenuGroup(group);
 		menuData.setMenuSubGroup(Integer.toString(subGroup));
 		setMenuBarData(menuData);
@@ -35,11 +36,13 @@ public class SaveAsProgramAction extends AbstractProgramNameSwitchingAction {
 	@Override
 	protected void programChanged(Program program) {
 		if (program == null) {
-			getMenuBarData().setMenuItemName("Save &As...");
+			getMenuBarData().setMenuItemName("S&ave As...");
 		}
 		else {
-			String programName = "'" + program.getDomainFile().getName() + "'";
-			getMenuBarData().setMenuItemName("Save " + programName + " &As...");
+			String progName = program.getDomainFile().getName();
+			getMenuBarData().setMenuItemNamePlain("Save '%s' As...'".formatted(progName));
+			getMenuBarData().setMnemonic('a');
+			setDescription("<html>Save '%s' As".formatted(HTMLUtilities.escapeHTML(progName)));
 		}
 	}
 

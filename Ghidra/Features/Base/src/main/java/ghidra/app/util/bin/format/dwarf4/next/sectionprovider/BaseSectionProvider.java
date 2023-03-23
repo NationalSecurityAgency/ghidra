@@ -15,26 +15,25 @@
  */
 package ghidra.app.util.bin.format.dwarf4.next.sectionprovider;
 
+import java.util.List;
+
 import java.io.IOException;
 
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.MemoryByteProvider;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Fetches DWARF sections from a normal program using simple Ghidra memory blocks. 
  */
 public class BaseSectionProvider implements DWARFSectionProvider {
 	protected Program program;
+	protected List<String> sectionPrefixes = getSectionPrefixSearchList();
 
-	public static boolean hasDWARFSections(Program program) {
-		try (BaseSectionProvider tmp = new BaseSectionProvider(program)) {
-			return tmp.hasSection(DWARFSectionNames.MINIMAL_DWARF_SECTIONS);
-		}
-	}
-
-	public static BaseSectionProvider createSectionProviderFor(Program program) {
+	public static BaseSectionProvider createSectionProviderFor(Program program,
+			TaskMonitor monitor) {
 		return new BaseSectionProvider(program);
 	}
 
@@ -42,16 +41,19 @@ public class BaseSectionProvider implements DWARFSectionProvider {
 		this.program = program;
 	}
 
-	@Override
-	public ByteProvider getSectionAsByteProvider(String sectionName) throws IOException {
+	protected List<String> getSectionPrefixSearchList() {
+		return List.of(".", "_", "__");
+	}
 
-		MemoryBlock block = program.getMemory().getBlock(sectionName);
-		if (block == null) {
-			block = program.getMemory().getBlock("." + sectionName);
-		}
+	@Override
+	public ByteProvider getSectionAsByteProvider(String sectionName, TaskMonitor monitor)
+			throws IOException {
+
+		MemoryBlock block = getSection(sectionName);
 		if (block != null && block.isInitialized()) {
-			// TODO: limit the returned ByteProvider to block.getSize() bytes
-			return new MemoryByteProvider(program.getMemory(), block.getStart());
+			// NOTE: MemoryByteProvider instances don't need to be closed(), so we don't
+			// track them here
+			return MemoryByteProvider.createMemoryBlockByteProvider(program.getMemory(), block);
 		}
 
 		return null;
@@ -60,12 +62,24 @@ public class BaseSectionProvider implements DWARFSectionProvider {
 	@Override
 	public boolean hasSection(String... sectionNames) {
 		for (String sectionName : sectionNames) {
-			if (program.getMemory().getBlock(sectionName) == null &&
-				program.getMemory().getBlock("." + sectionName) == null) {
+			if (getSection(sectionName) == null) {
 				return false;
 			}
 		}
 		return true;
+	}
+
+	protected MemoryBlock getSection(String sectionName) {
+		MemoryBlock block = program.getMemory().getBlock(sectionName);
+		if (block == null) {
+			for (String prefix : sectionPrefixes) {
+				block = program.getMemory().getBlock(prefix + sectionName);
+				if (block != null) {
+					break;
+				}
+			}
+		}
+		return block;
 	}
 
 	@Override

@@ -22,11 +22,9 @@ import java.util.List;
 import org.jdom.Element;
 
 import generic.stl.VectorSTL;
-import ghidra.pcodeCPort.context.ParserWalker;
 import ghidra.pcodeCPort.sleighbase.SleighBase;
 import ghidra.pcodeCPort.slghpatexpress.PatternExpression;
 import ghidra.pcodeCPort.slghpatexpress.PatternValue;
-import ghidra.pcodeCPort.translate.BadDataError;
 import ghidra.sleigh.grammar.Location;
 
 public class NameSymbol extends ValueSymbol {
@@ -57,29 +55,8 @@ public class NameSymbol extends ValueSymbol {
 	}
 
 	@Override
-	public Constructor resolve(ParserWalker pos) {
-		if (!tableisfilled) {
-			int ind = (int) patval.getValue(pos);
-			if ((ind >= nametable.size()) || (ind < 0) || (nametable.get(ind).length() == 0)) {
-				throw new BadDataError(
-					"No corresponding entry in nametable <" + getName() + ">, index=" + ind);
-			}
-		}
-		return null;
-	}
-
-	@Override
 	public symbol_type getType() {
 		return symbol_type.name_symbol;
-	}
-
-	@Override
-	public void print(PrintStream s, ParserWalker pos)
-
-	{
-		int ind = (int) patval.getValue(pos);
-		// ind is already checked to be in range by the resolve routine
-		s.print(nametable.get(ind));
 	}
 
 	@Override

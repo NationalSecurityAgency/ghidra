@@ -56,7 +56,7 @@ public class RestoreSelectionPlugin extends ProgramPlugin {
     private Map<Program, SelectionState> programToSelectionMap = new HashMap<Program, SelectionState>();
     
     public RestoreSelectionPlugin( PluginTool tool ) {
-        super( tool, false, true );
+        super( tool );
     }
 
     @Override

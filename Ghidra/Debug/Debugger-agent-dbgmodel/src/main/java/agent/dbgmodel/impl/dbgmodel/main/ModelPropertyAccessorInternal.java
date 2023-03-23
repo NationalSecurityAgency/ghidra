@@ -15,15 +15,15 @@
  */
 package agent.dbgmodel.impl.dbgmodel.main;
 
+import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Guid.REFIID;
 
+import agent.dbgeng.impl.dbgeng.DbgEngUtil;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.InterfaceSupplier;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.Preferred;
 import agent.dbgmodel.dbgmodel.main.ModelPropertyAccessor;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil.InterfaceSupplier;
 import agent.dbgmodel.jna.dbgmodel.main.IModelPropertyAccessor;
 import agent.dbgmodel.jna.dbgmodel.main.WrapIModelPropertyAccessor;
 import ghidra.util.datastruct.WeakValueHashMap;
@@ -32,19 +32,15 @@ public interface ModelPropertyAccessorInternal extends ModelPropertyAccessor {
 	Map<Pointer, ModelPropertyAccessorInternal> CACHE = new WeakValueHashMap<>();
 
 	static ModelPropertyAccessorInternal instanceFor(WrapIModelPropertyAccessor data) {
-		return DbgModelUtil.lazyWeakCache(CACHE, data, ModelPropertyAccessorImpl::new);
+		return DbgEngUtil.lazyWeakCache(CACHE, data, ModelPropertyAccessorImpl::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIModelPropertyAccessor>> PREFERRED_DATA_SPACES_IIDS_BUILDER =
-		ImmutableMap.builder();
-	Map<REFIID, Class<? extends WrapIModelPropertyAccessor>> PREFERRED_DATA_SPACES_IIDS =
-		PREFERRED_DATA_SPACES_IIDS_BUILDER //
-				.put(new REFIID(IModelPropertyAccessor.IID_IMODEL_PROPERTY_ACCESSOR),
-					WrapIModelPropertyAccessor.class) //
-				.build();
+	List<Preferred<WrapIModelPropertyAccessor>> PREFERRED_DATA_SPACES_IIDS = List.of(
+		new Preferred<>(IModelPropertyAccessor.IID_IMODEL_PROPERTY_ACCESSOR,
+			WrapIModelPropertyAccessor.class));
 
 	static ModelPropertyAccessorInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
-		return DbgModelUtil.tryPreferredInterfaces(ModelPropertyAccessorInternal.class,
+		return DbgEngUtil.tryPreferredInterfaces(ModelPropertyAccessorInternal.class,
 			PREFERRED_DATA_SPACES_IIDS, supplier);
 	}
 }

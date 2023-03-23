@@ -15,9 +15,18 @@
  * limitations under the License.
  */
 #include "float.hh"
-#include <sstream>
-#include <cmath>
 #include "address.hh"
+
+#include <cmath>
+#include <limits>
+using std::ldexp;
+using std::frexp;
+using std::signbit;
+using std::sqrt;
+using std::floor;
+using std::ceil;
+using std::round;
+using std::fabs;
 
 /// Set format for a given encoding size according to IEEE 754 standards
 /// \param sz is the size of the encoding in bytes
@@ -79,7 +88,7 @@ FloatFormat::floatclass FloatFormat::extractExpSig(double x,bool *sgn,uintb *sig
 {
   int4 e;
 
-  *sgn = std::signbit(x);
+  *sgn = signbit(x);
   if (x == 0.0) return zero;
   if (std::isinf(x)) return infinity;
   if (std::isnan(x)) return nan;
@@ -232,11 +241,13 @@ double FloatFormat::getHostFloat(uintb encoding,floatclass *type) const
   else if (exp == maxexponent) {
     if ( frac == 0 ) {		// Floating point infinity
       *type = infinity;
-      return sgn ? -INFINITY : +INFINITY;
+      double infinity = std::numeric_limits<double>::infinity();
+      return sgn ? -infinity : +infinity;
     }
     *type = nan;
     // encoding is "Not a Number" NaN
-    return sgn ? -NAN : +NAN; // Sign is usually ignored
+    double nan = std::numeric_limits<double>::quiet_NaN();
+    return sgn ? -nan : +nan; // Sign is usually ignored
   }
   else
     *type = normalized;

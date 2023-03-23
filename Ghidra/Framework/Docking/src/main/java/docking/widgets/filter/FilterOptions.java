@@ -23,16 +23,16 @@ import javax.swing.Icon;
 
 import org.jdom.Element;
 
+import generic.theme.GIcon;
 import resources.MultiIcon;
-import resources.ResourceManager;
 import resources.icons.TranslateIcon;
 
 public class FilterOptions {
-	private static final Icon CONTAINS_ICON = ResourceManager.loadImage("images/page_code.png");
-	private static final Icon STARTS_WITH_ICON = ResourceManager.loadImage("images/page_go.png");
-	private static final Icon EXACT_MATCH_ICON = ResourceManager.loadImage("images/page_green.png");
-	private static final Icon REG_EX_ICON = ResourceManager.loadImage("images/page_excel.png");
-	private static final Icon NOT_ICON = ResourceManager.loadImage("images/bullet_delete.png");
+	private static final Icon CONTAINS_ICON = new GIcon("icon.filter.options.contains");
+	private static final Icon STARTS_WITH_ICON = new GIcon("icon.filter.options.starts.with");
+	private static final Icon EXACT_MATCH_ICON = new GIcon("icon.filter.options.exact");
+	private static final Icon REG_EX_ICON = new GIcon("icon.filter.options.regex");
+	private static final Icon NOT_ICON = new GIcon("icon.filter.options.not");
 
 	final static Map<Character, String> DELIMITER_NAME_MAP = new HashMap<>(20);
 
@@ -325,8 +325,13 @@ public class FilterOptions {
 			char delim = getDelimitingCharacter();
 			String delimName = DELIMITER_NAME_MAP.get(delim);
 
-			buf.append("'").append(delim).append("'").append("&nbsp; <i>(").append(
-				delimName).append(")</i>");
+			buf.append("'")
+					.append(delim)
+					.append("'")
+					.append("&nbsp; <i>(")
+					.append(
+						delimName)
+					.append(")</i>");
 			buf.append("</td>");
 			buf.append("</tr>");
 		}

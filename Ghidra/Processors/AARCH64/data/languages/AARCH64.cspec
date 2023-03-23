@@ -25,6 +25,8 @@
   
   <global>
     <range space="ram"/>
+       <!-- The decompiler will treat registers in this range as global variables.
+        ie: tmp_ldWn, tmp_ldXn, tmp_stWn, tmp_stXn -->
     <range space="register"  first="0x3000" last="0x3fff"/>
   </global>
   

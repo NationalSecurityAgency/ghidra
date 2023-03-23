@@ -15,8 +15,7 @@
  */
 package ghidra.feature.vt.gui.provider.markuptable;
 
-import static ghidra.feature.vt.gui.plugin.VTPlugin.FILTERED_ICON;
-import static ghidra.feature.vt.gui.plugin.VTPlugin.UNFILTERED_ICON;
+import static ghidra.feature.vt.gui.plugin.VTPlugin.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -31,13 +30,13 @@ import javax.swing.table.*;
 import docking.*;
 import docking.action.*;
 import docking.actions.PopupActionProvider;
-import docking.help.HelpService;
 import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
 import docking.widgets.table.GTable;
 import docking.widgets.table.RowObjectTableModel;
 import docking.widgets.table.threaded.ThreadedTableModel;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.functioncompare.FunctionComparisonPanel;
 import ghidra.app.util.viewer.listingpanel.*;
 import ghidra.app.util.viewer.util.CodeComparisonPanel;
@@ -63,7 +62,7 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
 import ghidra.util.table.GhidraTable;
 import ghidra.util.table.GhidraThreadedTablePanel;
-import resources.ResourceManager;
+import help.HelpService;
 
 /**
  * This provides the GUI for displaying and working with version tracking markup items.
@@ -74,9 +73,9 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 	private static final String SHOW_COMPARISON_PANEL = "SHOW_COMPARISON_PANEL";
 
 	private static final Icon SHOW_LISTINGS_ICON =
-		ResourceManager.loadImage("images/application_tile_horizontal.png");
+		new GIcon("icon.version.tracking.action.show.listings");
 
-	private static final Icon FILTER_ICON = ResourceManager.loadImage("images/view-filter.png");
+	private static final Icon FILTER_ICON = new GIcon("icon.version.tracking.filter");
 	private static final String SHOW_COMPARE_ACTION_GROUP = "A9_ShowCompare"; // "A9_" forces to right of other dual view actions in toolbar.
 
 	private final VTController controller;
@@ -119,7 +118,7 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 		this.controller = controller;
 		controller.addListener(this);
 		setWindowGroup(VTPlugin.WINDOW_GROUP);
-		setIcon(ResourceManager.loadImage("images/application_view_detail.png"));
+		setIcon(new GIcon("icon.version.tracking.provider.markup"));
 		setDefaultWindowPosition(WindowPosition.BOTTOM);
 		setIntraGroupPosition(WindowPosition.STACK);
 
@@ -328,8 +327,10 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 			buffy.append("[Session: ").append(sessionName).append("] ");
 			buffy.append('-').append(markupItemsTableModel.getRowCount()).append(" markup items");
 			if (filteredCount != unfilteredCount) {
-				buffy.append(" (of ").append(markupItemsTableModel.getUnfilteredRowCount()).append(
-					')');
+				buffy.append(" (of ")
+						.append(markupItemsTableModel.getUnfilteredRowCount())
+						.append(
+							')');
 			}
 
 			setSubTitle(buffy.toString());
@@ -533,6 +534,8 @@ public class VTMarkupItemsTableProvider extends ComponentProviderAdapter
 		for (Filter<VTMarkupItem> filter : filters) {
 			filter.dispose();
 		}
+
+		ancillaryFilterDialog.dispose();
 
 		tool.removePopupActionProvider(this);
 	}

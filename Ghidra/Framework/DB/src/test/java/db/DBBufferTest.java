@@ -23,6 +23,7 @@ import java.util.Arrays;
 import org.junit.*;
 
 import generic.test.AbstractGenericTest;
+import ghidra.util.exception.ClosedException;
 
 public class DBBufferTest extends AbstractGenericTest {
 
@@ -109,6 +110,32 @@ public class DBBufferTest extends AbstractGenericTest {
 		buf.get(0, data);
 		assertTrue("Expected bytes in buffer", Arrays.equals(bytes, data));
 
+		dbh.close();
+
+		try {
+			txId = dbh.startTransaction();
+			fail("Expected closed exception");
+		}
+		catch (IllegalStateException e) {
+			// ignore
+		}
+
+		try {
+			dbh.getBuffer(bufId);
+			fail("Expected closed exception");
+		}
+		catch (ClosedException e) {
+			// ignore
+		}
+
+		try {
+			buf.get(0, data);
+			fail("Expected closed exception");
+		}
+		catch (ClosedException e) {
+			// ignore
+		}
+
 	}
 
 	@Test
@@ -159,6 +186,6 @@ public class DBBufferTest extends AbstractGenericTest {
 		dbh.undo();
 		buf = dbh.getBuffer(bufId);
 		assertEquals("Expected valid buffer", 0, buf.getByte(0));
-
+		
 	}
 }

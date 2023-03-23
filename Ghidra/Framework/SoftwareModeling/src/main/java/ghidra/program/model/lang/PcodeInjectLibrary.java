@@ -23,6 +23,7 @@ import ghidra.app.plugin.processors.sleigh.*;
 import ghidra.app.plugin.processors.sleigh.template.ConstructTpl;
 import ghidra.program.model.lang.InjectPayload.InjectParameter;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.pcode.Encoder;
 import ghidra.sleigh.grammar.Location;
 import ghidra.util.Msg;
 import ghidra.xml.XmlParseException;
@@ -375,25 +376,26 @@ public class PcodeInjectLibrary {
 	}
 
 	/**
-	 * Save the parts of the inject library that come from the compiler spec
-	 * to the output stream as XML tags
-	 * @param buffer is the output stream
+	 * Encode the parts of the inject library that come from the compiler spec
+	 * to the output stream
+	 * @param encoder is the stream encoder
+	 * @throws IOException for errors writing to the underlying stream
 	 */
-	public void saveCompilerSpecXml(StringBuilder buffer) {
+	public void encodeCompilerSpec(Encoder encoder) throws IOException {
 		for (InjectPayload injectPayload : callFixupMap.values()) {
 			if (injectPayload instanceof InjectPayloadSleigh) {
-				((InjectPayloadSleigh) injectPayload).saveXml(buffer);
+				((InjectPayloadSleigh) injectPayload).encode(encoder);
 			}
 		}
 		for (InjectPayload injectPayload : callOtherFixupMap.values()) {
 			if (injectPayload instanceof InjectPayloadSleigh) {
-				((InjectPayloadSleigh) injectPayload).saveXml(buffer);
+				((InjectPayloadSleigh) injectPayload).encode(encoder);
 			}
 		}
 		for (InjectPayload injectPayload : exePcodeMap.values()) {
 			if (injectPayload instanceof InjectPayloadSegment) {
 				if (injectPayload.getSource().startsWith("cspec")) {
-					((InjectPayloadSleigh) injectPayload).saveXml(buffer);
+					((InjectPayloadSleigh) injectPayload).encode(encoder);
 				}
 			}
 		}

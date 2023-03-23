@@ -28,7 +28,7 @@ import generic.test.ConcurrentTestExceptionHandler;
 import ghidra.program.model.data.*;
 
 public class StructureEditorUnlockedCellEdit2Test
-		extends AbstractStructureEditorUnlockedCellEditTest {
+		extends AbstractStructureEditorTest {
 
 	@Test
 	public void testF2EditKey() throws Exception {
@@ -527,6 +527,27 @@ public class StructureEditorUnlockedCellEdit2Test
 
 		assertEquals(29, model.getLength());
 		assertEquals(4, dt.getLength());
+
+		// insert new component at end first to force difference
+		// between program type and editor type.  This is done to 
+		// ensure we do not incorrectly update the edited structure
+		// during the resolve processing
+
+		int newRow = model.getNumComponents();
+		editCell(getTable(), newRow, column); // blank row
+		assertIsEditingField(newRow, column);
+
+		setText("byte");
+		pressEnterToSelectChoice();
+
+		assertNotEditingField();
+		assertEquals(1, model.getNumSelectedRows());
+		assertEquals(newRow + 1, model.getMinIndexSelected()); // blank row
+		assertCellString("byte", newRow, column);
+		assertEquals(30, model.getLength());
+
+		// change row-3 datatype from dword to simpleStructure*
+
 		editCell(getTable(), 3, column);
 		assertIsEditingField(3, column);
 
@@ -537,7 +558,7 @@ public class StructureEditorUnlockedCellEdit2Test
 		assertEquals(1, model.getNumSelectedRows());
 		assertEquals(3, model.getMinIndexSelected());
 		assertCellString("simpleStructure *", 3, column);
-		assertEquals(29, model.getLength());
+		assertEquals(30, model.getLength());
 		dt = getDataType(3);
 		assertEquals(4, dt.getLength());
 		assertEquals("simpleStructure *", dt.getDisplayName());

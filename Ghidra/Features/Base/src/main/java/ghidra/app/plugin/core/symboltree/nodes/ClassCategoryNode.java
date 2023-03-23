@@ -21,21 +21,20 @@ import java.util.*;
 import javax.swing.Icon;
 
 import docking.widgets.tree.GTreeNode;
+import generic.theme.GIcon;
 import ghidra.app.plugin.core.symboltree.SymbolCategory;
 import ghidra.program.model.listing.GhidraClass;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
-import ghidra.util.task.TaskMonitorAdapter;
-import resources.ResourceManager;
 
 public class ClassCategoryNode extends SymbolCategoryNode {
 
 	public static final Icon OPEN_FOLDER_CLASSES_ICON =
-		ResourceManager.loadImage("images/openFolderClasses.png");
+		new GIcon("icon.plugin.symboltree.node.category.classes.open");
 	public static final Icon CLOSED_FOLDER_CLASSES_ICON =
-		ResourceManager.loadImage("images/closedFolderClasses.png");
+		new GIcon("icon.plugin.symboltree.node.category.classes.closed");
 
 	ClassCategoryNode(Program program) {
 		super(SymbolCategory.CLASS_CATEGORY, program);
@@ -74,7 +73,7 @@ public class ClassCategoryNode extends SymbolCategoryNode {
 		Namespace parentNamespace = symbol.getParentNamespace();
 		Symbol namespaceSymbol = parentNamespace.getSymbol();
 		SymbolNode key = SymbolNode.createNode(namespaceSymbol, program);
-		GTreeNode parentNode = findSymbolTreeNode(key, false, TaskMonitorAdapter.DUMMY_MONITOR);
+		GTreeNode parentNode = findSymbolTreeNode(key, false, TaskMonitor.DUMMY);
 		if (parentNode == null) {
 			return null;
 		}
@@ -84,7 +83,7 @@ public class ClassCategoryNode extends SymbolCategoryNode {
 	@Override
 	protected List<GTreeNode> getSymbols(SymbolType type, TaskMonitor monitor)
 			throws CancelledException {
-		List<GTreeNode> list = new ArrayList<GTreeNode>();
+		List<GTreeNode> list = new ArrayList<>();
 
 		monitor.initialize(symbolTable.getNumSymbols());
 		SymbolType symbolType = symbolCategory.getSymbolType();

@@ -97,7 +97,7 @@ public class EhFrameHeaderSection {
 		DwarfEHDecoder fdeCountDecoder = getFdeCountDecoder(eh_frame_hdr);
 		Address fdeCountAddress = curAddress;
 
-		curAddress = processEncodedFdeCount(fdeCountAddress, fdeCountDecoder);
+		curAddress = markupEncodedFdeCount(fdeCountAddress, fdeCountDecoder);
 
 		int fdeTableCnt = getFdeTableCount(fdeCountAddress, curMemBlock, fdeCountDecoder);
 		if (fdeTableCnt > 0) {
@@ -113,8 +113,12 @@ public class EhFrameHeaderSection {
 	 * @param curAddress address of the FDE count field
 	 * @param fdeDecoder decoder to use in determining data type for this field
 	 * @return the next address after the FDE count field
+	 * @throws MemoryAccessException 
 	 */
-	private Address processEncodedFdeCount(Address curAddress, DwarfEHDecoder fdeDecoder) {
+	private Address markupEncodedFdeCount(Address curAddress, DwarfEHDecoder fdeDecoder)
+			throws MemoryAccessException {
+		DwarfDecodeContext ctx = new DwarfDecodeContext(program, curAddress);
+		long unused = fdeDecoder.decode(ctx); // we only parse to get the length of the integer
 
 		/* Create the Encoded FDE count member */
 		DataType encDataType = fdeDecoder.getDataType(program);
@@ -126,7 +130,7 @@ public class EhFrameHeaderSection {
 			new SetCommentCmd(curAddress, CodeUnit.EOL_COMMENT, "Encoded FDE count");
 		commentCmd.applyTo(program);
 
-		curAddress = curAddress.add(encDataType.getLength());
+		curAddress = curAddress.add(ctx.getEncodedLength());
 		return curAddress;
 	}
 
@@ -153,8 +157,8 @@ public class EhFrameHeaderSection {
 		/* Create the encoded Exception Handler Frame Pointer */
 		DwarfEHDecoder frmPtrDecoder =
 			DwarfDecoderFactory.getDecoder(eh_frame_hdr.getEh_FramePtrEncoding());
-		Address frmPtrAddr =
-			frmPtrDecoder.decodeAddress(new DwarfDecodeContext(program, curAddress, curMemBlock));
+		DwarfDecodeContext ctx = new DwarfDecodeContext(program, curAddress, curMemBlock);
+		Address frmPtrAddr = frmPtrDecoder.decodeAddress(ctx);
 
 		program.getReferenceManager().addMemoryReference(curAddress, frmPtrAddr, RefType.DATA,
 			SourceType.ANALYSIS, 0);
@@ -168,7 +172,7 @@ public class EhFrameHeaderSection {
 			new SetCommentCmd(curAddress, CodeUnit.EOL_COMMENT, "Encoded eh_frame_ptr");
 		commentCmd.applyTo(program);
 
-		curAddress = curAddress.add(frmPtrDataType.getLength());
+		curAddress = curAddress.add(ctx.getEncodedLength());
 		return curAddress;
 	}
 

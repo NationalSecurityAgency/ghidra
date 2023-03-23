@@ -1,4 +1,4 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+c<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 
 <HTML>
   <HEAD>
@@ -6,7 +6,7 @@
     "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
 
     <TITLE>Forward References</TITLE>
-    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
   </HEAD>
 
   <BODY lang="EN-US">
@@ -61,14 +61,14 @@
     within the program when you double click on an operand field within the Listing.<BR>
     </P>
 
-    <P><IMG src="../../shared/note.png" alt=""> <I>When a reference is placed on an operand, it
+    <P><IMG src="help/shared/note.png" alt=""> <I>When a reference is placed on an operand, it
     will only change the rendering of that operand within the program listing if the reference is
     marked as 'primary'.</I></P>
 
-    <P><IMG src="../../shared/note.png" alt=""> <I>If a reference is placed on an instruction
+    <P><IMG src="help/shared/note.png" alt=""> <I>If a reference is placed on an instruction
     mnemonic within the Listing, the instruction mnemonic will be <U>underlined</U>.</I></P>
 
-    <P><IMG src="../../shared/note.png" alt=""> <I>If a non-primary reference exists for an operand
+    <P><IMG src="help/shared/note.png" alt=""> <I>If a non-primary reference exists for an operand
     (i.e., not reflected in the instruction markup), the corresponding instruction operand within
     the Listing will be <U>underlined</U>.</I><BR>
     </P>
@@ -92,10 +92,10 @@
       <LI><A href="#regRefs">Register Reference</A></LI>
     </UL>
 
-    <P><IMG src="../../shared/note.png" alt=""> <I>Ghidra does not permit mixing "types of
+    <P><IMG src="help/shared/note.png" alt=""> <I>Ghidra does not permit mixing "types of
     references" for a given mnemonic or operand.</I></P>
 
-    <P><IMG src="../../shared/note.png" alt=""> <I>With the exception of Memory References, only a
+    <P><IMG src="help/shared/note.png" alt=""> <I>With the exception of Memory References, only a
     single reference may be placed on a given mnemonic/operand.</I><BR>
     </P>
 
@@ -170,11 +170,11 @@
     in use.<BR>
     </P>
 
-    <P><IMG src="../../shared/note.png" alt=""> <I>Stack References should be placed on all stack
+    <P><IMG src="help/shared/note.png" alt=""> <I>Stack References should be placed on all stack
     parameter/variable data access operands.</I><BR>
     </P>
 
-    <P><IMG src="../../shared/note.png" alt=""> <I>Stack References may only be specified for
+    <P><IMG src="help/shared/note.png" alt=""> <I>Stack References may only be specified for
     source code units contained within a function.</I><BR>
     </P>
 
@@ -189,11 +189,11 @@
     used.<BR>
     </P>
 
-    <P><IMG src="../../shared/note.png" alt=""> <I>Register References should be placed only on
+    <P><IMG src="help/shared/note.png" alt=""> <I>Register References should be placed only on
     register variable data assignment operands.</I><BR>
     </P>
 
-    <P><IMG src="../../shared/note.png" alt=""> <I>Register References may only be specified for
+    <P><IMG src="help/shared/note.png" alt=""> <I>Register References may only be specified for
     source code units contained within a function.</I></P>
 
     <H2><A name="refSymbols"></A>Reference Destination Symbols</H2>
@@ -740,11 +740,12 @@
             </FONT></TD>
 
             <TD valign="top">Used to change CALLOTHER pcode operations to CALL operations. The new call target is the "to" address of the 
-            reference.  The override only takes effect when the reference is primary, and only when there is exactly one primary 
+            reference.  Any inputs to the original CALLOTHER op are discarded; the new CALL op may have inputs assigned to it during decompilation.
+            The override only takes effect when the reference is primary, and only when there is exactly one primary 
             CALLOTHER_OVERRIDE_CALL reference at the "from" address of the reference. Only the first CALLOTHER operation at the "from"
             address of the reference is changed. <EM> Applying this override to instances of a CALLOTHER op that have output is not recommended 
-            and can adversely affect decompilation. </EM>  You can see whether a particular instance has an output by enabling the "PCode" field 
-            of the Listing. Note that this reference override takes precedence over those of CALLOTHER_OVERRIDE_JUMP
+            and can adversely affect decompilation (e.g., the decompiler may throw an exception). </EM>  You can see whether a particular instance has an 
+            output by enabling the "PCode" field of the Listing. Note that this reference override takes precedence over those of CALLOTHER_OVERRIDE_JUMP
             references. <BR> 
             </TD>
           </TR>
@@ -810,7 +811,7 @@
       mnemonic/operand current references)</LI>
     </UL>
 
-    <P>&nbsp;<IMG src="../../shared/note.png" alt=""> <I>Default key-bindings for actions are
+    <P>&nbsp;<IMG src="help/shared/note.png" alt=""> <I>Default key-bindings for actions are
     indicated with {}'s.<BR>
     </I></P>
 
@@ -819,7 +820,7 @@
     <P>While there is a separate action for creating a default reference on an operand (see <A
     href="#Create_Default_Reference">Creating a Default Reference</A> below), an arbitrary
     reference may be also be added directly to a mnemonic or operand by using the popup menu action
-    <I><B>References<IMG src="../../shared/arrow.gif" alt=""> Add Reference from...</B></I> .
+    <I><B>References<IMG src="help/shared/arrow.gif" alt=""> Add Reference from...</B></I> .
     &nbsp;This will cause the <A href="#addRefDialog"><I>Add Reference Dialog</I></A> to be
     displayed, allowing the user to specify any of the permitted reference types.<BR>
     </P>
@@ -828,7 +829,7 @@
 
     <P>While the current cursor location is on the operand of an instruction or data code unit
     within the CodeBrowser Listing, the popup menu item <I><B>References<IMG src=
-    "../../shared/arrow.gif" alt=""> Create Default Reference</B></I>* may be selected to create
+    "help/shared/arrow.gif" alt=""> Create Default Reference</B></I>* may be selected to create
     the default primary reference for an operand. &nbsp;This action will be disabled if the current
     location does not correspond to an operand field or a default reference can not be determined.
     &nbsp;<BR>
@@ -849,7 +850,7 @@
     is deleted, any explicit bindings to that variable will be cleared.<BR>
     </P>
 
-    <P><IMG src="../../shared/note.png" alt=""> <I>*The popup menu item name Create Default
+    <P><IMG src="help/shared/note.png" alt=""> <I>*The popup menu item name Create Default
     Reference may differ based upon the type of reference which will get created:&nbsp; Create
     Memory Reference, Create Stack Reference, Create Register Reference.</I><BR>
     </P>
@@ -858,13 +859,13 @@
 
     <P>While the current cursor location is on the mnemonic/operand of an instruction or data code
     unit within the CodeBrowser Listing, the popup menu item <I><B>References<IMG src=
-    "../../shared/arrow.gif" alt=""> Delete Reference</B></I>s* may be selected to delete all
+    "help/shared/arrow.gif" alt=""> Delete Reference</B></I>s* may be selected to delete all
     references on the current mnemonic/operand. &nbsp;This action will be disabled if the current
     location does not correspond to a mnemonic/operand field or references do not exist on the
     current mnemonic/operand.&nbsp;<BR>
     </P>
 
-    <P><IMG src="../../shared/note.png" alt=""> <I>*The popup menu item name Delete References may
+    <P><IMG src="help/shared/note.png" alt=""> <I>*The popup menu item name Delete References may
     differ based upon the existing reference(s):&nbsp; Delete Memory References, Delete Stack
     Reference, Delete Register Reference, Delete External Reference.</I><BR>
     </P>
@@ -876,7 +877,7 @@
     <P>All references "from" a data or instruction code unit can be edited and/or viewed by
     clicking on the code unit (or a specific operand) within the Listing and activating the
     <I><B>Add/Edit...</B></I> action via the popup menu item <I><B>References<IMG src=
-    "../../shared/arrow.gif" alt=""> Add/Edit...</B></I> {'R'}. &nbsp; Each time this action is
+    "help/shared/arrow.gif" alt=""> Add/Edit...</B></I> {'R'}. &nbsp; Each time this action is
     invoked a new instance of the <B><I>References Editor</I></B> panel will be displayed. &nbsp;Once the panel is
     displayed, the <IMG src="images/locationIn.gif" alt=""> &nbsp;toggle button may be pushed-in to
     have the <I>source</I> location follow the current location within the&nbsp;<A href=
@@ -903,7 +904,7 @@
         "#dragNDrop">Adding Memory References from a Selection</A>).<BR>
         </P>
 
-		<P><IMG src="../../shared/note.png" alt="">
+		<P><IMG src="help/shared/note.png" alt="">
 			The table entries that match the selected source element will be gray in color.
     	</P>
 
@@ -956,11 +957,11 @@
           </LI>
         </UL>
 
-        <P><IMG src="../../shared/note.png" alt=""> <I>*With the exception of External references,
+        <P><IMG src="help/shared/note.png" alt=""> <I>*With the exception of External references,
         both the Ref-Type and</I> <I>Primary? choices may be changed directly within this
         table.</I></P>
 
-        <P><IMG src="../../shared/note.png" alt=""> <I>References and symbol names corresponding to
+        <P><IMG src="help/shared/note.png" alt=""> <I>References and symbol names corresponding to
         memory references outside of the program's defined memory blocks will be displayed in red
         (e.g., <FONT color="#ff0000"><TT>DAT_00000000</TT></FONT>). &nbsp; These red references
         frequently correspond to well-known memory locations, although they could point out a bad
@@ -1038,24 +1039,24 @@
     clicking on it, as well as the <I>Type of Reference</I>. &nbsp;The available choices for Type
     of Reference may be constrained based upon the choosen operand.</P>
 
-    <P><IMG src="../../shared/note.png" alt=""> <I>In general, only flow references should be set
+    <P><IMG src="help/shared/note.png" alt=""> <I>In general, only flow references should be set
     on an instruction mnemonic, unless of course the instruction has no operands. &nbsp;References
     from data code units (e.g., addr/pointer) should always specify the scalar operand as the
     source, not the mnemonic (i.e., data-type).</I><BR>
     </P>
 
-    <P><IMG src="../../shared/note.png" alt=""> <I>Stack and register references may only be
+    <P><IMG src="help/shared/note.png" alt=""> <I>Stack and register references may only be
     specified for source code units contained within a function.</I> &nbsp;<I>Register references
     may only be set on operands containing a single register and in general should correspond to a
     WRITE <A href="../../topics/ReferencesPlugin/References_from.htm#refTypes">Ref-Type</A>.
     &nbsp;</I><BR>
     </P>
 
-    <P><IMG src="../../shared/note.png" alt=""> <I>With the exception of memory references, only a
+    <P><IMG src="help/shared/note.png" alt=""> <I>With the exception of memory references, only a
     single reference may be set for a given operand or mnemonic.</I><BR>
     </P>
 
-    <P><A name="addRefDialog"></A><IMG src="../../shared/note.png" alt=""> <I>An External reference
+    <P><A name="addRefDialog"></A><IMG src="help/shared/note.png" alt=""> <I>An External reference
     may not be set on a mnemonic.</I></P>
 
     <P align="center"><IMG src="images/AddReferenceDialog.png" alt=""></P>

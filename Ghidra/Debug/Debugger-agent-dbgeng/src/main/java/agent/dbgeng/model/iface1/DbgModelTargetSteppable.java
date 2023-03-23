@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import agent.dbgeng.manager.DbgManager.ExecSuffix;
+import agent.dbgeng.manager.DbgProcess;
 import agent.dbgeng.manager.DbgThread;
 import agent.dbgeng.model.iface2.*;
 import ghidra.dbg.target.TargetSteppable;
@@ -61,8 +62,6 @@ public interface DbgModelTargetSteppable extends DbgModelTargetObject, TargetSte
 		switch (kind) {
 			case SKIP:
 				throw new UnsupportedOperationException(kind.name());
-			case ADVANCE: // Why no exec-advance in dbgeng?
-				return thread.console("advance");
 			default:
 				if (this instanceof DbgModelTargetThread) {
 					DbgModelTargetThread targetThread = (DbgModelTargetThread) this;
@@ -70,8 +69,12 @@ public interface DbgModelTargetSteppable extends DbgModelTargetObject, TargetSte
 				}
 				if (this instanceof DbgModelTargetProcess) {
 					DbgModelTargetProcess targetProcess = (DbgModelTargetProcess) this;
+					DbgProcess process = targetProcess.getProcess();
+					if (process == null) {
+						process = getManager().getCurrentProcess();
+					}
 					return getModel()
-							.gateFuture(targetProcess.getProcess().step(convertToDbg(kind)));
+							.gateFuture(process.step(convertToDbg(kind)));
 				}
 				return getModel().gateFuture(thread.step(convertToDbg(kind)));
 		}

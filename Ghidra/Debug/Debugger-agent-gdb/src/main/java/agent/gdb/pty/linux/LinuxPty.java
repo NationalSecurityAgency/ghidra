@@ -16,17 +16,16 @@
 package agent.gdb.pty.linux;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
+
+import com.sun.jna.*;
+import com.sun.jna.ptr.IntByReference;
 
 import agent.gdb.pty.Pty;
 import ghidra.util.Msg;
-import jnr.ffi.Pointer;
-import jnr.ffi.byref.IntByReference;
-import jnr.posix.POSIX;
-import jnr.posix.POSIXFactory;
 
 public class LinuxPty implements Pty {
-	static final POSIX LIB_POSIX = POSIXFactory.getNativePOSIX();
+
+	static final PosixC LIB_POSIX = PosixC.INSTANCE;
 
 	private final int aparent;
 	private final int achild;
@@ -40,19 +39,15 @@ public class LinuxPty implements Pty {
 		// TODO: Support termp and winp?
 		IntByReference p = new IntByReference();
 		IntByReference c = new IntByReference();
-		Pointer n = Pointer.wrap(jnr.ffi.Runtime.getSystemRuntime(), ByteBuffer.allocate(1024));
-		if (Util.INSTANCE.openpty(p, c, n, null, null) < 0) {
-			int errno = LIB_POSIX.errno();
-			throw new IOException(errno + ": " + LIB_POSIX.strerror(errno));
-		}
-		return new LinuxPty(p.intValue(), c.intValue(), n.getString(0));
+		Memory n = new Memory(1024);
+		Util.INSTANCE.openpty(p, c, n, null, null);
+		return new LinuxPty(p.getValue(), c.getValue(), n.getString(0));
 	}
 
 	LinuxPty(int aparent, int achild, String name) {
 		Msg.debug(this, "New Pty: " + name + " at (" + aparent + "," + achild + ")");
 		this.aparent = aparent;
 		this.achild = achild;
-		//this.name = name;
 
 		this.parent = new LinuxPtyParent(aparent);
 		this.child = new LinuxPtyChild(achild, name);
@@ -73,15 +68,8 @@ public class LinuxPty implements Pty {
 		if (closed) {
 			return;
 		}
-		int result;
-		result = LIB_POSIX.close(achild);
-		if (result < 0) {
-			throw new IOException(LIB_POSIX.strerror(LIB_POSIX.errno()));
-		}
-		result = LIB_POSIX.close(aparent);
-		if (result < 0) {
-			throw new IOException(LIB_POSIX.strerror(LIB_POSIX.errno()));
-		}
+		LIB_POSIX.close(achild);
+		LIB_POSIX.close(aparent);
 		closed = true;
 	}
 }

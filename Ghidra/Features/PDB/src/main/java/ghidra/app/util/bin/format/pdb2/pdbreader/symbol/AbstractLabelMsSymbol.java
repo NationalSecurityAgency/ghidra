@@ -70,7 +70,7 @@ public abstract class AbstractLabelMsSymbol extends AbstractMsSymbol
 	/** Returns the {@link ProcedureFlags}.
 	 * @return Procedure flags.
 	 */
-	public ProcedureFlags getProcedureFlags() {
+	public ProcedureFlags getFlags() {
 		return flags;
 	}
 

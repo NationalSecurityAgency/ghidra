@@ -26,6 +26,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.mem.*;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
 import ghidra.trace.model.memory.TraceMemorySpaceInputStream;
+import ghidra.util.LockHold;
 import ghidra.util.MathUtilities;
 
 public abstract class AbstractDBTraceProgramViewMemoryBlock implements MemoryBlock {
@@ -96,6 +97,19 @@ public abstract class AbstractDBTraceProgramViewMemoryBlock implements MemoryBlo
 	private final List<MemoryBlockSourceInfo> info =
 		Collections.singletonList(new MyMemoryBlockSourceInfo());
 
+	private static final int CACHE_PAGE_COUNT = 3;
+	private final ByteCache cache = new ByteCache(CACHE_PAGE_COUNT) {
+		@Override
+		protected int doLoad(Address address, ByteBuffer buf) throws MemoryAccessException {
+			DBTraceMemorySpace space =
+				program.trace.getMemoryManager().getMemorySpace(getAddressSpace(), false);
+			if (space == null) {
+				throw new MemoryAccessException("Space does not exist");
+			}
+			return space.getViewBytes(program.snap, address, buf);
+		}
+	};
+
 	protected AbstractDBTraceProgramViewMemoryBlock(DBTraceProgramView program) {
 		this.program = program;
 	}
@@ -104,6 +118,15 @@ public abstract class AbstractDBTraceProgramViewMemoryBlock implements MemoryBlo
 
 	protected AddressSpace getAddressSpace() {
 		return getStart().getAddressSpace();
+	}
+
+	/**
+	 * Should be called when the snap changes or when bytes change
+	 */
+	protected void invalidateBytesCache(AddressRange range) {
+		if (range == null || range.intersects(getAddressRange())) {
+			cache.invalidate(range);
+		}
 	}
 
 	protected DBTraceMemorySpace getMemorySpace() {
@@ -167,20 +190,13 @@ public abstract class AbstractDBTraceProgramViewMemoryBlock implements MemoryBlo
 
 	@Override
 	public byte getByte(Address addr) throws MemoryAccessException {
-		AddressRange range = getAddressRange();
-		if (!range.contains(addr)) {
-			throw new MemoryAccessException();
+		try (LockHold hold = program.trace.lockRead()) {
+			AddressRange range = getAddressRange();
+			if (!range.contains(addr)) {
+				throw new MemoryAccessException();
+			}
+			return cache.read(addr);
 		}
-		DBTraceMemorySpace space =
-			program.trace.getMemoryManager().getMemorySpace(range.getAddressSpace(), false);
-		if (space == null) {
-			throw new MemoryAccessException("Space does not exist");
-		}
-		ByteBuffer buf = ByteBuffer.allocate(1);
-		if (space.getViewBytes(program.snap, addr, buf) != 1) {
-			throw new MemoryAccessException();
-		}
-		return buf.get(0);
 	}
 
 	@Override
@@ -190,17 +206,22 @@ public abstract class AbstractDBTraceProgramViewMemoryBlock implements MemoryBlo
 
 	@Override
 	public int getBytes(Address addr, byte[] b, int off, int len) throws MemoryAccessException {
-		AddressRange range = getAddressRange();
-		if (!range.contains(addr)) {
-			throw new MemoryAccessException();
+		try (LockHold hold = program.trace.lockRead()) {
+			AddressRange range = getAddressRange();
+			if (!range.contains(addr)) {
+				throw new MemoryAccessException();
+			}
+			if (cache.canCache(addr, len)) {
+				return cache.read(addr, ByteBuffer.wrap(b, off, len));
+			}
+			DBTraceMemorySpace space =
+				program.trace.getMemoryManager().getMemorySpace(range.getAddressSpace(), false);
+			if (space == null) {
+				throw new MemoryAccessException("Space does not exist");
+			}
+			len = MathUtilities.unsignedMin(len, range.getMaxAddress().subtract(addr) + 1);
+			return space.getViewBytes(program.snap, addr, ByteBuffer.wrap(b, off, len));
 		}
-		DBTraceMemorySpace space =
-			program.trace.getMemoryManager().getMemorySpace(range.getAddressSpace(), false);
-		if (space == null) {
-			throw new MemoryAccessException("Space does not exist");
-		}
-		len = MathUtilities.unsignedMin(len, range.getMaxAddress().subtract(addr) + 1);
-		return space.getViewBytes(program.snap, addr, ByteBuffer.wrap(b, off, len));
 	}
 
 	@Override
@@ -217,6 +238,7 @@ public abstract class AbstractDBTraceProgramViewMemoryBlock implements MemoryBlo
 
 	@Override
 	public int putBytes(Address addr, byte[] b, int off, int len) throws MemoryAccessException {
+		// NB. The trace will notify us of the write, and we invalidate then
 		AddressRange range = getAddressRange();
 		if (!range.contains(addr)) {
 			throw new MemoryAccessException();

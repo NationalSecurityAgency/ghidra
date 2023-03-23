@@ -15,6 +15,9 @@
  */
 package ghidra.util.database.err;
 
+/**
+ * Exception when a custom codec is required
+ */
 @SuppressWarnings("serial")
 public class NoDefaultCodecException extends RuntimeException {
 	public NoDefaultCodecException() {

@@ -1,0 +1,465 @@
+<!DOCTYPE doctype>
+
+<HTML>
+  <HEAD>
+    <META name="generator" content=
+    "HTML Tidy for Java (vers. 2009-12-01), see jtidy.sourceforge.net">
+    <LINK rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
+    <TITLE>Developer's Guide</TITLE>
+  </HEAD>
+
+  <BODY>
+    <H1>Developer's Guide to Theming</H1>
+
+    <P>This document provides information an application developer should know when developing
+    plugins, actions, scripts, etc., that use colors, fonts, or icons. By following these guidelines,
+    developers can easily make use of Ghidra's theming capabilities.</P>
+
+    <H2>Theme Resource Types</H2>
+
+    <P>When developing application code for Ghidra such as plugins, actions, etc., developers often
+    want to use colors, fonts, and icons. The key idea to support theming is to never 
+    <B>directly</B>
+    reference those resources. Instead, the developer should create an ID string for the resource
+    and then in a <CODE><I>module</I>.theme.properties</CODE> file, provide a default value for that ID.  
+    (Also, you may define an alternate "dark" default value that will be used if the
+    current theme is considered a dark theme).  The way you
+    define and use these IDs is a bit different depending on whether the resource is a color, font,
+    or icon. Colors and icons are similar in that developers use these types by creating either 
+    <CODE>GColor</CODE> or <CODE>GIcon</CODE>.
+    Unfortunately, because of the way fonts are implemented, there is no equivalent 
+    <CODE>GFont</CODE>, so using fonts is a bit more involved.</P>
+
+    <BLOCKQUOTE>
+      <H3>Colors</H3>
+
+      <P>For colors, developers should use the <CODE>GColor</CODE> class. Simply construct a new 
+      <CODE>GColor</CODE> object passing in the color resource ID as the argument. 
+      <CODE>GColor</CODE> is a subclass of <CODE>Color</CODE>, so it can be
+      used anywhere a <CODE>Color</CODE> would be used. The developer then needs to provide a 
+      default value for that ID in the module's <CODE><I>module</I>.theme.properties</CODE> file. 
+      So, for example:</P>
+
+      <BLOCKQUOTE>
+        <BLOCKQUOTE>
+          <CODE>panel.setBackground(Color.Red);</CODE>
+        </BLOCKQUOTE>
+
+        <P>becomes</P>
+
+        <BLOCKQUOTE>
+          <CODE>panel.setBackground(new GColor("color.bg.abc"));</CODE>
+        </BLOCKQUOTE>
+
+        <P>and</P>
+
+        <BLOCKQUOTE>
+          <CODE>public static final Color MY_COLOR = Color.BLUE;</CODE>
+        </BLOCKQUOTE>
+
+        <P>becomes</P>
+
+        <BLOCKQUOTE>
+          <CODE>public static final Color MY_COLOR = new
+          GColor("color.fg.xzy");</CODE>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <P>The <CODE>GColor</CODE> class uses a delegation model where all method calls to 
+      <CODE>GColor</CODE> get mapped to
+      its delegate color. If ever the color associated with a <CODE>GColor</CODE>'s resource ID 
+      changes, the <CODE>GColor</CODE> is automatically updated by calling the 
+      <CODE>refresh()</CODE> method.  This is done whenever the
+      <CODE>Gui.setColor(id)</CODE> is called or a new theme is loaded.</P>
+
+		<H3>Icons</H3>
+
+	      <P>Icons work just like colors, so you can just create a <CODE>GIcon(String id)</CODE>. 
+	      So, for example, </P>
+	
+	      <BLOCKQUOTE>
+	        <BLOCKQUOTE>
+	          <CODE>public static final Icon MY_ICON =
+	          ResourceManager("images/balloon.png");</CODE>
+	        </BLOCKQUOTE>
+	
+	        <P>becomes</P>
+	
+	        <BLOCKQUOTE>
+	          <CODE>public static final Icon MY_ICON = new
+	          GIcon("icon.text.bubble");</CODE>
+	        </BLOCKQUOTE>
+	      </BLOCKQUOTE>
+
+      <H3>Fonts</H3>
+
+      <P>Unfortunately, fonts are unable to use the delegation model used for colors and icons. 
+      Therefore, there is no <CODE>GFont</CODE> class. Programming fonts requires a bit more work. 
+      If a font used directly, such as in renderer or in a paint method, simply get the 
+      font each time 
+      from the <CODE>Gui</CODE> class, as shown below. To set a font on a component, use 
+      <CODE>Gui.registerFont(Component, String)</CODE>. Once the component is registered, the 
+      application will 
+      automatically update the component if the font associated with that ID changes. So, for 
+      example:</P>
+
+      <BLOCKQUOTE>
+        <BLOCKQUOTE>
+          <CODE>Font font = new Font("Monospaced", Font.BOLD, 12);</CODE>
+        </BLOCKQUOTE>
+
+        <P>becomes</P>
+
+        <BLOCKQUOTE>
+          <CODE>Font font = Gui.getFont("font.xyz");</CODE>
+        </BLOCKQUOTE>
+
+        <P>or</P>
+
+        <BLOCKQUOTE>
+          <CODE>myLabel.setFont(new Font("Dialog", Font.PLAIN, 14)</CODE>
+        </BLOCKQUOTE>
+
+        <P>becomes</P>
+
+        <BLOCKQUOTE>
+          <CODE>Gui.registerFont(myLabel, "font.xyz");</CODE>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+   </BLOCKQUOTE>
+
+
+    <H2><A name="Resource_Ids"></A>Resource ID Strings</H2>
+
+    <BLOCKQUOTE>
+      <P>Resource IDs are strings used to identify a color, font, or icon. These strings are
+      created by the developer and should be chosen in a way that it is as self-describing as
+      possible. So, for example, if you wanted the text color in some error message in some widget
+      "abc", you might create the color ID "color.fg.abc.error". To help keep resource IDs 
+      consistent, we created a convention for IDs as follows: </P>
+
+      <BLOCKQUOTE>
+        <BLOCKQUOTE>
+<PRE>
+<CODE>
+     [type].[category[...]].[client].[specialized uses]
+</CODE>
+</PRE>
+        </BLOCKQUOTE>
+      </BLOCKQUOTE>
+
+      <UL>
+        <LI><B>type:</B> color, font, or icon.</LI>
+
+        <LI><B>category:</B> any value, examples include 'bg'(background), 'fg'(foreground),
+        'cursor'. There may be multiple dot-separated values.</LI>
+
+        <LI><B>client:</B> the plugin name or feature name.</LI>
+
+        <LI><B>specialized uses:</B> any key value here that applies to the client, such as
+        'vertex' for a graph client.</LI>
+      </UL>
+
+      <BLOCKQUOTE>
+        <P>Examples:</P>
+
+        <UL>
+          <LI>color.bg</LI>
+
+          <LI>color.bg.listing</LI>
+
+		  <LI>color.bg.functiongraph.vertex.group</LI>
+
+          <LI>font.listing</LI>
+
+          <LI>font.listing.header</LI>
+
+          <LI>icon.error</LI>
+
+          <LI>icon.delete</LI>
+
+          <LI>icon.plugin.byteviewer.provider</LI>
+        </UL>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+    <H2>Theme Property Files</H2>
+
+    <BLOCKQUOTE>
+      <P>The default values for resource IDs are defined in files that reside
+      a module's data directory (not all modules define this file).   These files all
+      are named to end in <CODE>theme.properties</CODE> and begin with the module's name.   Some 
+      modules make use of multiple files in order to better manage the volume of IDs.   In this 
+      case, the name of each properties file offers a clue as to its contents.  Thus, for small 
+      modules, those without many resource IDs in use, one theme properties file is sufficient to 
+      easily define and manage all required IDs.  But, we recommend larger modules use multiple 
+      files, one for each sub-feature. The application will find all theme property files as long as
+      they exist in a module's data directory and are named with the 
+      <CODE>.theme.properties</CODE> suffix.</P>
+
+      <H3>Theme Properties File Naming Convention</H3>
+
+      <P>To promote consistency, theme property files should use the following naming
+      convention:</P>
+
+      <BLOCKQUOTE>
+        <BLOCKQUOTE>
+<PRE>
+<CODE>
+      <I>module name</I>[.additional name]].theme.properties
+</CODE>
+</PRE>
+        </BLOCKQUOTE>
+
+        <P>Examples:</P>
+
+        <UL>
+          <LI>base.theme.properties</LI>
+
+          <LI>base.listing.theme.properties</LI>
+        </UL>
+      </BLOCKQUOTE>
+
+      <H3>Theme Properties File Format</H3>
+
+      <P>Theme files uses a very simple format for specifying theme property values. Each line
+      specifies a property ID (sometimes referred to as the key) and a value, separated by an 
+      "=". A theme properties file consists of two sections: the standard defaults section and a 
+      section for specifying defaults for "dark" themes. 
+      </P>
+
+      <BLOCKQUOTE>
+<CODE>
+<PRE>
+[Defaults]
+
+[property id 1] = [some value]
+[property id 2] = [some value]
+[property id 3] = [some value]
+...
+
+[Dark Defaults]
+
+[property id 1] = [some value]
+[property id 2] = [some value]
+...
+</PRE>
+</CODE>
+      </BLOCKQUOTE>
+
+      <P>Example:</P>
+
+      <BLOCKQUOTE>
+<PRE>
+[Defaults]
+ 
+color.bg = white
+color.bg.listing = color.bg
+ 
+color.fg.listing.address = black
+color.fg.listing.bytes = #00ff00
+ 
+font.global = courirer-BOLD-12
+font.global.listing = font.global
+ 
+icon.error = defaultError.png
+ 
+ 
+[Dark Defaults]
+ 
+color.bg = black
+ 
+color.fg.listing.address = gray
+color.fg.listing.bytes = orange
+</PRE>
+      </BLOCKQUOTE>
+
+
+      <P>NOTE: The <CODE>[Dark Defaults]</CODE> section is for <U>optionally</U> overriding values 
+      defined in the standard <CODE>[Defaults]</CODE> section. If a property ID is not given a value
+      in the defaults section, it is an error. If a value is not defined in the 
+      <CODE>[Dark Defaults]</CODE> section, then the value defined in the <CODE>[Defaults]</CODE> 
+      section will be used in a dark theme.</P>
+    </BLOCKQUOTE>
+
+    <H2><A name="Theme_Property_Values"></A>Theme Property Values</H2>
+
+    <BLOCKQUOTE>
+      <P>The values specified in the theme properties files can be specified in a variety of ways,
+      including ways to modify other property values. For example, an icon's size can be modified
+      directly in the theme properties file. A font value can specified as a reference to another
+      defined font, but with a different size or style.</P>
+
+      <P>Also, any value can also be a reference to some other ID of the same type. So, for
+      example, a reference color entry might be something like "color.bg.listing = color.bg". This
+      says that the listing's background color should be whatever "color.bg" is defined to be. Note
+      that all of the application's defined properties start with either "color.", "font.", or
+      "icon.". Properties defined by a Java Look and Feel don't follow this pattern. To reference a
+      property that does not have a standard prefix, an ID can be prefixed with "[color]",
+      "[font]", or "[icon] as appropriate to allow the theme property parser to recognize the
+      values as IDs to other properties. So to refer to a Java property named "table.background", 
+      you would use the following definition: "color.bg.table = [color]table.background".</P>
+
+      <H3>Color Values</H3>
+
+      <P>Color values supports the following formats:</P>
+
+      <BLOCKQUOTE>
+        <UL>
+          <LI>#rrggbb</LI>
+
+          <LI>#rrggbbaa</LI>
+
+          <LI>0xrrggbb</LI>
+
+          <LI>0xrrggbbaa</LI>
+
+          <LI>rgb(red, green, blue)</LI>
+
+          <LI>rgba(red, green, blue, alpha)</LI>
+
+          <LI><I>web color name</I> // the case-insensitive name of a web color such as red, olive, or 
+          purple</LI>
+        </UL>
+      </BLOCKQUOTE>
+
+      <P>Examples:</P>
+<PRE>
+        color.foo = #0000ff             // blue
+        color.foo = #ff000080           // red with half transparency
+        color.foo = 0x00ff00            // green 
+        color.foo = 0xff000080          // red with half transparency
+        color.foo = rgb(0, 0, 255)      // blue
+        color.foo = rgba(255,0, 0, 128) // red with half transparency
+        color.foo = blue                // web color defined as 0x0000FF
+        color.foo = LawnGreen           // web color defined as 0x7CFC00
+</PRE>
+
+      <H3>Font Values</H3>
+
+      <P>Font values are specified using the following format:</P>
+
+      <BLOCKQUOTE>
+<PRE>
+<CODE>
+      family name-style-size
+</CODE>
+</PRE>
+
+        <UL>
+          <LI>family name: the font name such as <CODE>monospaced</CODE>, <CODE>dialog</CODE>, 
+          <CODE>courier</CODE>.</LI>
+
+          <LI>style: One of <CODE>PLAIN</CODE>, <CODE>BOLD</CODE>, <CODE>ITALIC</CODE>, or 
+          <CODE>BOLDITALIC</CODE>.</LI>
+
+          <LI>size: the font point size. 12 is very common.</LI>
+        </UL>
+      </BLOCKQUOTE>
+
+      <P>Examples:</P>
+<PRE>
+        font.foo = monospaced-PLAIN-12
+        font.foo = courier-BOLD-14
+        font.foo = SansSerif-ITALIC-10
+</PRE>
+
+      <H4>Font Modifiers</H4>
+
+      <P>When referencing another font, the referenced font can be modified using the following
+      format:</P>
+
+      <BLOCKQUOTE>
+<PRE>
+<CODE>
+      <I>font.ref</I>[family name][style][size]
+</CODE>
+</PRE>
+
+        <UL>
+          <LI><I>font.ref</I>: the theme property ID of some other font</LI>
+
+          <LI>family name: use the size and style of the reference font, but use this font
+          family.</LI>
+
+          <LI>style: use the same font as the reference font, but with this style. One of 
+          <CODE>PLAIN</CODE>, <CODE>BOLD</CODE>, <CODE>ITALIC</CODE>, or 
+          <CODE>BOLDITALIC</CODE>.</LI>
+
+          <LI>size: use the same font as the reference font, but with this size.</LI>
+        </UL>
+      </BLOCKQUOTE>
+
+      <P>Examples:</P>
+<PRE>
+        font.foo = SansSerif-PLAIN-12   // standard font spec
+        font.bar = font.foo[BOLD]       // results in SansSerif-BOLD-12
+        font.bar = font.foo[15]         // results in SansSerif-PLAIN-15
+        font.bar = font.foo[monospaced] // results in monospaced-PLAIN-12
+        font.bar = font.foo[ITALIC][15] // results in SansSerif-ITALIC-15
+</PRE>
+
+      <H3>Icon Values</H3>
+
+      <P>Icon are specified by simply entering the name of an icon that is in the classpath.
+      However, an icon value can get complicated because it can be modified in a number of ways,
+      such as scaling, disabling, even overlaying other icons. The format is as follows:</P>
+
+      <BLOCKQUOTE>
+<PRE>
+<CODE>
+      <I>iconName</I>[size(width,height)][disabled]{iconOverlayName[size(width,height)[disabled][move(x,y)]}{...}
+
+</CODE>
+</PRE>
+
+        <UL>
+          <LI><I>iconName</I>: the name the base icon</LI>
+
+          <LI>size(width,height): optional modifier to scale the image to the given size.</LI>
+
+          <LI>disabled: optional modifier to create a disabled version of the icon.</LI>
+
+          <LI>{...}: optional modifier to overlay an icon on the base icon. It is recursively
+          defined using the standard icon format.</LI>
+
+          <LI>move(x,y): optional modifier on overlays to position them relative to the base
+          icon.</LI>
+        </UL>
+      </BLOCKQUOTE>
+
+      <P>Examples:</P>
+<PRE>
+        icon.foo = house.png               // using the icon house.png found as an image resource on the classpath
+        icon.foo = house.png[size(10,10)]  // uses the house.png icon, but scales it to 10x10
+        icon.foo = house.png[disabled]     // creates a disabled version of house.png
+        icon.foo = house.png[16,16]{hammer.png[size(4,4)][move(12,12)]} 
+                                                // creates a 16x16 version of the house icon with a 4x4 scaled 
+                                                // hammer.icon overlayed in its lower right corner
+</PRE>
+
+      <P>To create stand-alone icon suitable for dynamically overlaying other icons, there is 
+      special syntax for specifying an empty base icon.  Use the empty icon along with another 
+      overlay icon in some specific area of the empty icon to create a final icon that can be used
+      as an overlay for other icons. For example, to
+      create an overlay icon that would add a flag to the bottom-right corner of any other icon:</P>
+<PRE>
+        icon.overlay.flag = EMPTY_ICON[size(16,16)]{flag.png[size(6,6)][move(10,10)]}
+</PRE>
+
+
+	  <P class="providedbyplugin">Provided by: <I>Theme Manager</I></P>
+
+      <P class="relatedtopic">Related Topics</P>
+
+      <UL>
+        <LI><A href="ThemingOverview.html">Theming Overview</A></LI>
+
+        <LI><A href="ThemingUserDocs.html">Theming User's Guide</A></LI>
+
+        <LI><A href="ThemingInternals.html">Theming Architecture</A></LI>
+      </UL><BR>
+    </BLOCKQUOTE>
+  </BODY>
+</HTML>

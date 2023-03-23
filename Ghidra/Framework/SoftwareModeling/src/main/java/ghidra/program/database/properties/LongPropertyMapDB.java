@@ -24,14 +24,13 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.util.LongPropertyMap;
 import ghidra.program.util.ChangeManager;
 import ghidra.util.exception.*;
-import ghidra.util.prop.PropertyVisitor;
 import ghidra.util.task.TaskMonitor;
 
 /**
  * Property manager that deals with properties that are of
  * long type and stored with a database table.
  */
-public class LongPropertyMapDB extends PropertyMapDB implements LongPropertyMap {
+public class LongPropertyMapDB extends PropertyMapDB<Long> implements LongPropertyMap {
 
 	/**
 	 * Construct a long property map.
@@ -53,9 +52,6 @@ public class LongPropertyMapDB extends PropertyMapDB implements LongPropertyMap 
 		checkMapVersion(openMode, monitor);
 	}
 
-	/**
-	 * @see ghidra.program.model.util.LongPropertyMap#add(ghidra.program.model.address.Address, long)
-	 */
 	@Override
 	public void add(Address addr, long value) {
 		Long oldValue = null;
@@ -70,15 +66,15 @@ public class LongPropertyMapDB extends PropertyMapDB implements LongPropertyMap 
 				if (oldValue == null) {
 					DBRecord rec = propertyTable.getRecord(key);
 					if (rec != null) {
-						oldValue = new Long(rec.getLongValue(PROPERTY_VALUE_COL));
+						oldValue = rec.getLongValue(PROPERTY_VALUE_COL);
 					}
 				}
 			}
 			DBRecord rec = schema.createRecord(key);
 			rec.setLongValue(PROPERTY_VALUE_COL, value);
 			propertyTable.putRecord(rec);
-			cache.put(key, new Long(value));
-			changeMgr.setPropertyChanged(name, addr, oldValue, new Long(value));
+			cache.put(key, value);
+			changeMgr.setPropertyChanged(name, addr, oldValue, value);
 		}
 		catch (IOException e) {
 			errHandler.dbError(e);
@@ -89,9 +85,6 @@ public class LongPropertyMapDB extends PropertyMapDB implements LongPropertyMap 
 		}
 	}
 
-	/**
-	 * @see ghidra.program.model.util.LongPropertyMap#getLong(ghidra.program.model.address.Address)
-	 */
 	@Override
 	public long getLong(Address addr) throws NoValueException {
 		if (propertyTable == null) {
@@ -124,25 +117,14 @@ public class LongPropertyMapDB extends PropertyMapDB implements LongPropertyMap 
 		return 0;
 	}
 
-	/**
-	 * @see ghidra.program.model.util.PropertyMap#getObject(ghidra.program.model.address.Address)
-	 */
 	@Override
-	public Object getObject(Address addr) {
+	public Long get(Address addr) {
 		try {
-			return new Long(getLong(addr));
+			return getLong(addr);
 		}
 		catch (NoValueException e) {
 			return null;
 		}
-	}
-
-	/**
-	 * @see ghidra.program.model.util.PropertyMap#applyValue(ghidra.util.prop.PropertyVisitor, ghidra.program.model.address.Address)
-	 */
-	@Override
-	public void applyValue(PropertyVisitor visitor, Address addr) {
-		throw new NotYetImplementedException();
 	}
 
 }

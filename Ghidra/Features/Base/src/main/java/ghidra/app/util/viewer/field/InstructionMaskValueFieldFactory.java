@@ -21,6 +21,7 @@ import java.math.BigInteger;
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.viewer.field.ListingColors.MaskColors;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.Options;
@@ -36,9 +37,6 @@ import ghidra.util.StringUtilities;
 public class InstructionMaskValueFieldFactory extends FieldFactory {
 
 	public static final String FIELD_NAME = "Instr Mask/Value";
-	public static final Color MASK_COLOR = new Color(0, 0, 128);
-	public static final Color VALUE_COLOR = new Color(0, 128, 0);
-	public static final Color LABEL_COLOR = new Color(0, 0, 0);
 
 	/**
 	 * Default constructor.
@@ -57,12 +55,6 @@ public class InstructionMaskValueFieldFactory extends FieldFactory {
 	private InstructionMaskValueFieldFactory(FieldFormatModel model, HighlightProvider hsProvider,
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, model, hsProvider, displayOptions, fieldOptions);
-	}
-
-	@Override
-	public void fieldOptionsChanged(Options options, String optionName, Object oldValue,
-			Object newValue) {
-		// stub
 	}
 
 	/**
@@ -98,14 +90,15 @@ public class InstructionMaskValueFieldFactory extends FieldFactory {
 		try {
 			FieldElement[] fieldElements = new FieldElement[2 * (operandCount + 1)];
 			fieldElements[0] =
-				getLine("M[m]: ", instructionMask.getBytes(), MASK_COLOR, proxy, varWidth);
+				getLine("M[m]: ", instructionMask.getBytes(), MaskColors.BITS, proxy, varWidth);
 			fieldElements[1] =
-				getLine("V[m]: ", instructionMask.applyMask(instr), VALUE_COLOR, proxy, varWidth);
+				getLine("V[m]: ", instructionMask.applyMask(instr), MaskColors.VALUE, proxy,
+					varWidth);
 			for (int i = 0; i < operandCount; i++) {
 				fieldElements[2 * (i + 1)] = getLine("M[" + i + "]: ", operandMasks[i].getBytes(),
-					MASK_COLOR, proxy, varWidth);
+					MaskColors.BITS, proxy, varWidth);
 				fieldElements[2 * (i + 1) + 1] = getLine("V[" + i + "]: ",
-					operandMasks[i].applyMask(instr), VALUE_COLOR, proxy, varWidth);
+					operandMasks[i].applyMask(instr), MaskColors.VALUE, proxy, varWidth);
 			}
 
 			return ListingTextField.createMultilineTextField(this, proxy, fieldElements,
@@ -121,10 +114,11 @@ public class InstructionMaskValueFieldFactory extends FieldFactory {
 
 		FieldElement[] fieldElements = new FieldElement[2];
 		AttributedString as =
-			new AttributedString(label, LABEL_COLOR, getMetrics(), false, underlineColor);
+			new AttributedString(label, MaskColors.LABEL, getMetrics(), false,
+				ListingColors.UNDERLINE);
 		fieldElements[0] = new TextFieldElement(as, 0, 0);
 		as = new AttributedString(getFormattedBytes(value), valueColor, getMetrics(), false,
-			underlineColor);
+			ListingColors.UNDERLINE);
 		fieldElements[1] = new TextFieldElement(as, 0, 0);
 		return new CompositeFieldElement(fieldElements);
 	}
@@ -141,9 +135,6 @@ public class InstructionMaskValueFieldFactory extends FieldFactory {
 		return buf.toString();
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#getProgramLocation(int, int, ghidra.app.util.viewer.field.ListingField)
-	 */
 	@Override
 	public ProgramLocation getProgramLocation(int row, int col, ListingField bf) {
 		Object obj = bf.getProxy().getObject();
@@ -156,9 +147,6 @@ public class InstructionMaskValueFieldFactory extends FieldFactory {
 			col);
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#getFieldLocation(ghidra.app.util.viewer.field.ListingField, BigInteger, int, ghidra.program.util.ProgramLocation)
-	 */
 	@Override
 	public FieldLocation getFieldLocation(ListingField bf, BigInteger index, int fieldNum,
 			ProgramLocation programLoc) {
@@ -171,9 +159,6 @@ public class InstructionMaskValueFieldFactory extends FieldFactory {
 		return null;
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#acceptsType(int, java.lang.Class)
-	 */
 	@Override
 	public boolean acceptsType(int category, Class<?> proxyObjectClass) {
 		return category == FieldFormatModel.INSTRUCTION_OR_DATA;
@@ -181,16 +166,8 @@ public class InstructionMaskValueFieldFactory extends FieldFactory {
 
 	@Override
 	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider hsProvider,
-			ToolOptions displayOptions, ToolOptions fieldOptions) {
-		return new InstructionMaskValueFieldFactory(formatModel, hsProvider, displayOptions,
+			ToolOptions toolOptions, ToolOptions fieldOptions) {
+		return new InstructionMaskValueFieldFactory(formatModel, hsProvider, toolOptions,
 			fieldOptions);
-	}
-
-	/**
-	 * @see ghidra.app.util.viewer.field.FieldFactory#getDefaultColor()
-	 */
-	@Override
-	public Color getDefaultColor() {
-		return Color.black;
 	}
 }

@@ -49,7 +49,7 @@ public class IMG implements Comparable<IMG> {
 	 * @param sourceFile the source file containing this IMG reference
 	 * @param imgSrc the IMG SRC attribute pulled from the HTML file
 	 * @param lineNumber the line number of the IMG tag
-	 * @throws URISyntaxException
+	 * @throws URISyntaxException if there is an exception resolving the image URI
 	 */
 	public IMG(HelpModuleLocation help, Path sourceFile, String imgSrc, int lineNumber)
 			throws URISyntaxException {

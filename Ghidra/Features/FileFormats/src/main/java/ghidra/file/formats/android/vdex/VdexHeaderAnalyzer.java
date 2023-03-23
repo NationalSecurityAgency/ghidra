@@ -22,6 +22,7 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.file.analyzers.FileFormatAnalyzer;
 import ghidra.file.formats.android.dex.format.DexHeader;
 import ghidra.file.formats.android.oat.OatUtilities;
+import ghidra.file.formats.android.vdex.sections.DexSectionHeader_002;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.ArrayDataType;
@@ -77,7 +78,7 @@ public class VdexHeaderAnalyzer extends FileFormatAnalyzer {
 		ByteProvider provider = new MemoryByteProvider(program.getMemory(), address);
 		BinaryReader reader = new BinaryReader(provider, !program.getLanguage().isBigEndian());
 		try {
-			VdexHeader vdexHeader = VdexFactory.getVdexHeader(reader);
+			VdexHeader vdexHeader = VdexHeaderFactory.getVdexHeader(reader);
 			vdexHeader.parse(reader, monitor);
 
 			DataType vdexHeaderDataType = vdexHeader.toDataType();
@@ -139,7 +140,7 @@ public class VdexHeaderAnalyzer extends FileFormatAnalyzer {
 
 	private Address createVerifierDepsSize(Program program, Address address, VdexHeader vdexHeader)
 			throws Exception {
-		if (vdexHeader.getVerifierDepsVersion() != VdexConstants.VERSION_10_RELEASE) {
+		if (vdexHeader.getVersion() != VdexConstants.VDEX_VERSION_021) {
 			return address;
 		}
 

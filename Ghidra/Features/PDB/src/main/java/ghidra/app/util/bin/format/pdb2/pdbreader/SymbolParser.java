@@ -36,6 +36,23 @@ public class SymbolParser {
 	}
 
 	/**
+	 * Deserializes the record length and {@link AbstractMsSymbol} from the {@link PdbByteReader}
+	 * and returns the symbol.
+	 * @param pdb {@link AbstractPdb} that owns the Symbols to be parsed.
+	 * @param reader {@link PdbByteReader} from which to deserialize the symbol record.
+	 * @return {@link AbstractMsSymbol} that was parsed.
+	 * @throws PdbException upon error parsing a field.
+	 * @throws CancelledException Upon user cancellation.
+	 */
+	public static AbstractMsSymbol parseLengthAndSymbol(AbstractPdb pdb, PdbByteReader reader)
+			throws PdbException, CancelledException {
+		int recordLength = reader.parseUnsignedShortVal();
+		PdbByteReader recordReader = reader.getSubPdbByteReader(recordLength);
+		recordReader.markAlign(2);
+		return parse(pdb, recordReader);
+	}
+
+	/**
 	 * Deserializes an {@link AbstractMsSymbol} from the {@link PdbByteReader} and returns it.
 	 * @param pdb {@link AbstractPdb} that owns the Symbols to be parsed.
 	 * @param reader {@link PdbByteReader} from which to deserialize the symbol record.

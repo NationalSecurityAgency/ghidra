@@ -32,13 +32,11 @@ import ghidra.framework.main.FrontEndTool;
 import ghidra.framework.model.*;
 import ghidra.framework.plugintool.dialog.ExtensionUtils;
 import ghidra.framework.project.DefaultProjectManager;
-import ghidra.framework.remote.InetNameLookup;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.ProgramDB;
 import ghidra.util.*;
 import ghidra.util.exception.UsrException;
 import ghidra.util.task.TaskLauncher;
-import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * Main Ghidra application class. Creates
@@ -53,14 +51,14 @@ import ghidra.util.task.TaskMonitorAdapter;
  * from when the last time Ghidra was run, (3) a class in the file was
  * not found,  or (4) a modification date specified in the classes file for
  * a jar file is older than the actual jar file's modification date.
- * 
+ *
  * <p><strong>Note</strong>: The Plugin path is a user preference that
  * indicates locations for where classes for plugins and data types should
  * be searched; the Plugin path can include jar files just like a classpath.
  * The Plugin path can be changed by using the <i>Edit Plugin Path</i> dialog,
  * displayed from the <i>Edit-&gt;Edit Plugin Path...</i> menu option on the main
  * Ghidra project window.
- * 
+ *
  * @see ghidra.GhidraLauncher
  */
 public class GhidraRun implements GhidraLaunchable {
@@ -73,7 +71,6 @@ public class GhidraRun implements GhidraLaunchable {
 		Runnable mainTask = () -> {
 
 			GhidraApplicationConfiguration configuration = new GhidraApplicationConfiguration();
-			configuration.setTaskMonitor(new StatusReportingTaskMonitor());
 			Application.initializeApplication(layout, configuration);
 
 			log = LogManager.getLogger(GhidraRun.class);
@@ -95,9 +92,6 @@ public class GhidraRun implements GhidraLaunchable {
 				openProject(projectPath);
 			});
 		};
-
-		// Automatically disable reverse name lookup if failure occurs
-		InetNameLookup.setDisableOnFailure(true);
 
 		// Start main thread in GhidraThreadGroup
 		Thread mainThread = new Thread(new GhidraThreadGroup(), mainTask, "Ghidra");
@@ -169,7 +163,8 @@ public class GhidraRun implements GhidraLaunchable {
 				reopen = false;
 			}
 		}
-		if (projectLocator == null) {
+
+		if (projectLocator == null && tool.shouldRestorePreviousProject()) {
 			updateSplashScreenStatusMessage("Checking for last opened project...");
 			projectLocator = pm.getLastOpenedProject();
 		}
@@ -240,17 +235,5 @@ public class GhidraRun implements GhidraLaunchable {
 
 	private class GhidraProjectManager extends DefaultProjectManager {
 		// this exists just to allow access to the constructor
-	}
-}
-
-class StatusReportingTaskMonitor extends TaskMonitorAdapter {
-	@Override
-	public synchronized void setCancelEnabled(boolean enable) {
-		// Not permitted
-	}
-
-	@Override
-	public void setMessage(String message) {
-		SplashScreen.updateSplashScreenStatus(message);
 	}
 }

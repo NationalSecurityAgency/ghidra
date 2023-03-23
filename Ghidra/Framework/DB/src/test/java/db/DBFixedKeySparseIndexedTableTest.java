@@ -170,6 +170,7 @@ public class DBFixedKeySparseIndexedTableTest extends AbstractGenericTest {
 					f = f.getMaxValue();
 				}
 				r.setField(i, f);
+				assertFalse(f.isNull());
 			}
 
 			// set min value all fields before i
@@ -182,6 +183,7 @@ public class DBFixedKeySparseIndexedTableTest extends AbstractGenericTest {
 					f = f.getMinValue();
 				}
 				r.setField(m, f);
+				assertFalse(f.isNull());
 			}
 
 //			// NOTE: sparse columns default to a null state if not explicitly set

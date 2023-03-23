@@ -132,6 +132,7 @@ public class ArmAnalyzer extends ConstantPropagationAnalyzer {
 						}
 
 					}
+
 					return false;
 				}
 
@@ -185,7 +186,7 @@ public class ArmAnalyzer extends ConstantPropagationAnalyzer {
 							return false;
 						}
 					}
-					else if (refType.isCall() && refType.isComputed()) {
+					else if (refType.isCall() && refType.isComputed() && !address.isExternalAddress()) {
 						// must disassemble right now, because TB flag could get set back at end of blx
 						doArmThumbDisassembly(program, instr, context, address, instr.getFlowType(),
 							true, monitor);
@@ -209,6 +210,21 @@ public class ArmAnalyzer extends ConstantPropagationAnalyzer {
 						symEval.encounteredBranch()) {
 						destSet.addRange(instruction.getMinAddress(), instruction.getMinAddress());
 					}
+					return false;
+				}
+				
+				@Override
+				public boolean evaluateReturn(Varnode retVN, VarnodeContext context, Instruction instruction) {
+					// check if a return is actually returning, or is branching with a constant PC
+
+					if (retVN != null && retVN.isConstant()) {
+						long offset = retVN.getOffset();
+						if (offset > 3 && offset != -1) {
+							// need to override the return to a branch
+							instruction.setFlowOverride(FlowOverride.BRANCH);
+						}
+					}
+					
 					return false;
 				}
 			};
@@ -399,7 +415,12 @@ public class ArmAnalyzer extends ConstantPropagationAnalyzer {
 			public boolean evaluateDestination(VarnodeContext context, Instruction instruction) {
 				return instruction.getMinAddress().equals(targetSwitchAddr);
 			}
-
+			
+			@Override
+			public boolean evaluateReturn(Varnode retVN, VarnodeContext context, Instruction instruction) {
+				return false;
+			}
+			
 			@Override
 			public Long unknownValue(VarnodeContext context, Instruction instruction,
 					Varnode node) {
@@ -806,8 +827,7 @@ public class ArmAnalyzer extends ConstantPropagationAnalyzer {
 		// this is here so the reference gets created, but not - disassembled if it is in a bad part of memory.
 		// something computed it into the memory
 		MemoryBlock block = program.getMemory().getBlock(target);
-		if (block == null || !block.isExecute() || !block.isInitialized() ||
-			block.getName().equals(MemoryBlock.EXTERNAL_BLOCK_NAME)) {
+		if (block == null || !block.isExecute() || !block.isInitialized() || block.isExternalBlock()) {
 			return;
 		}
 		

@@ -20,7 +20,7 @@
 #define __CPUI_SPACE__
 
 #include "error.hh"
-#include "xml.hh"
+#include "marshal.hh"
 
 /// \brief Fundemental address space types
 ///
@@ -40,6 +40,13 @@ class AddrSpaceManager;
 struct VarnodeData;
 class Translate;
 
+extern AttributeId ATTRIB_BASE;		///< Marshaling attribute "base"
+extern AttributeId ATTRIB_DEADCODEDELAY;	///< Marshaling attribute "deadcodedelay"
+extern AttributeId ATTRIB_DELAY;	///< Marshaling attribute "delay"
+extern AttributeId ATTRIB_LOGICALSIZE;	///< Marshaling attribute "logicalsize"
+extern AttributeId ATTRIB_PHYSICAL;	///< Marshaling attribute "physical"
+extern AttributeId ATTRIB_PIECE;	///< Marshaling attribute "piece"
+
 /// \brief A region where processor data is stored
 ///
 /// An AddrSpace (Address Space) is an arbitrary sequence of
@@ -53,8 +60,8 @@ class Translate;
 /// offsets ranging from 0x00000000 to 0xffffffff within the space
 /// for a total of 2^32 addressable bytes within the space.
 /// There can be multiple address spaces, and it is typical to have spaces
-///     - \b ram        Modelling the main processor address bus
-///     - \b register   Modelling a processors registers
+///     - \b ram        Modeling the main processor address bus
+///     - \b register   Modeling a processors registers
 ///
 /// The processor specification can set up any address spaces it
 /// needs in an arbitrary manner, but \e all data manipulated by
@@ -65,7 +72,7 @@ class Translate;
 /// The analysis engine also uses additional address spaces to
 /// model special concepts.  These include
 ///     - \b const        There is a \e constant address space for
-///                       modelling constant values in pcode expressions
+///                       modeling constant values in p-code expressions
 ///                       (See ConstantSpace)
 ///     - \b unique       There is always a \e unique address space used
 ///                       as a pool for temporary registers. (See UniqueSpace)
@@ -79,12 +86,13 @@ public:
     does_deadcode = 4,		///< Dead-code analysis is done on this space
     programspecific = 8,        ///< Space is specific to a particular loadimage
     reverse_justification = 16, ///< Justification within aligned word is opposite of endianness
-    overlay = 32,		///< This space is an overlay of another space
-    overlaybase = 64,		///< This is the base space for overlay space(s)
-    truncated = 128,		///< Space is truncated from its original size, expect pointers larger than this size
-    hasphysical = 256,		///< Has physical memory associated with it
-    is_otherspace = 512,	///< Quick check for the OtherSpace derived class
-    has_nearpointers = 0x400	///< Does there exist near pointers into this space
+    formal_stackspace = 0x20,	///< Space attached to the formal \b stack \b pointer
+    overlay = 0x40,		///< This space is an overlay of another space
+    overlaybase = 0x80,		///< This is the base space for overlay space(s)
+    truncated = 0x100,		///< Space is truncated from its original size, expect pointers larger than this size
+    hasphysical = 0x200,	///< Has physical memory associated with it
+    is_otherspace = 0x400,	///< Quick check for the OtherSpace derived class
+    has_nearpointers = 0x800	///< Does there exist near pointers into this space
   };
 private:
   spacetype type;		///< Type of space (PROCESSOR, CONSTANT, INTERNAL, ...)
@@ -108,10 +116,11 @@ protected:
   void setFlags(uint4 fl);	///< Set a cached attribute
   void clearFlags(uint4 fl);	///< Clear a cached attribute
   void saveBasicAttributes(ostream &s) const; ///< Write the XML attributes of this space
+  void decodeBasicAttributes(Decoder &decoder);	///< Read attributes for \b this space from an open XML element
   void truncateSpace(uint4 newsize);
 public:
   AddrSpace(AddrSpaceManager *m,const Translate *t,spacetype tp,const string &nm,uint4 size,uint4 ws,int4 ind,uint4 fl,int4 dl);
-  AddrSpace(AddrSpaceManager *m,const Translate *t,spacetype tp); ///< For use with restoreXml
+  AddrSpace(AddrSpaceManager *m,const Translate *t,spacetype tp); ///< For use with decode
   virtual ~AddrSpace(void) {}	///< The address space destructor
   const string &getName(void) const; ///< Get the name
   AddrSpaceManager *getManager(void) const; ///< Get the space manager
@@ -133,6 +142,7 @@ public:
   bool hasPhysical(void) const;  ///< Return \b true if data is physically stored in this
   bool isBigEndian(void) const;  ///< Return \b true if values in this space are big endian
   bool isReverseJustified(void) const;  ///< Return \b true if alignment justification does not match endianness
+  bool isFormalStackSpace(void) const;	///< Return \b true if \b this is attached to the formal \b stack \b pointer
   bool isOverlay(void) const;  ///< Return \b true if this is an overlay space
   bool isOverlayBase(void) const; ///< Return \b true if other spaces overlay this space
   bool isOtherSpace(void) const;	///< Return \b true if \b this is the \e other address space
@@ -145,13 +155,14 @@ public:
   virtual const VarnodeData &getSpacebaseFull(int4 i) const;	///< Return original spacebase register before truncation
   virtual bool stackGrowsNegative(void) const;		///< Return \b true if a stack in this space grows negative
   virtual AddrSpace *getContain(void) const;  ///< Return this space's containing space (if any)
-  virtual void saveXmlAttributes(ostream &s,uintb offset) const;  ///< Save an address as XML
-  virtual void saveXmlAttributes(ostream &s,uintb offset,int4 size) const;   ///< Save an address and size as XML
-  virtual uintb restoreXmlAttributes(const Element *el,uint4 &size) const;   ///< Recover an offset and size
+  virtual int4 overlapJoin(uintb offset,int4 size,AddrSpace *pointSpace,uintb pointOff,int4 pointSkip) const;
+  virtual void encodeAttributes(Encoder &encoder,uintb offset) const;  ///< Encode address attributes to a stream
+  virtual void encodeAttributes(Encoder &encoder,uintb offset,int4 size) const;   ///< Encode an address and size attributes to a stream
+  virtual uintb decodeAttributes(Decoder &decoder,uint4 &size) const;   ///< Recover an offset and size
   virtual void printRaw(ostream &s,uintb offset) const;  ///< Write an address in this space to a stream
   virtual uintb read(const string &s,int4 &size) const;  ///< Read in an address (and possible size) from a string
   virtual void saveXml(ostream &s) const; ///< Write the details of this space as XML
-  virtual void restoreXml(const Element *el); ///< Recover the details of this space from XML
+  virtual void decode(Decoder &decoder); ///< Recover the details of this space from XML
 
   static uintb addressToByte(uintb val,uint4 ws); ///< Scale from addressable units to byte units
   static uintb byteToAddress(uintb val,uint4 ws); ///< Scale from byte units to addressable units
@@ -175,9 +186,10 @@ public:
 class ConstantSpace : public AddrSpace {
 public:
   ConstantSpace(AddrSpaceManager *m,const Translate *t); ///< Only constructor
+  virtual int4 overlapJoin(uintb offset,int4 size,AddrSpace *pointSpace,uintb pointOff,int4 pointSkip) const;
   virtual void printRaw(ostream &s,uintb offset) const;
   virtual void saveXml(ostream &s) const;
-  virtual void restoreXml(const Element *el);
+  virtual void decode(Decoder &decoder);
   static const string NAME;		///< Reserved name for the address space
   static const int4 INDEX;		///< Reserved index for constant space
 };
@@ -186,7 +198,7 @@ public:
 class OtherSpace : public AddrSpace {
 public:
   OtherSpace(AddrSpaceManager *m, const Translate *t, int4 ind);	///< Constructor
-  OtherSpace(AddrSpaceManager *m, const Translate *t);	///< For use with restoreXml
+  OtherSpace(AddrSpaceManager *m, const Translate *t);	///< For use with decode
   virtual void printRaw(ostream &s, uintb offset) const;
   virtual void saveXml(ostream &s) const;
   static const string NAME;		///< Reserved name for the address space
@@ -205,7 +217,7 @@ public:
 class UniqueSpace : public AddrSpace {
 public:
   UniqueSpace(AddrSpaceManager *m,const Translate *t,int4 ind,uint4 fl);	///< Constructor
-  UniqueSpace(AddrSpaceManager *m,const Translate *t);	///< For use with restoreXml
+  UniqueSpace(AddrSpaceManager *m,const Translate *t);	///< For use with decode
   virtual void saveXml(ostream &s) const;
   static const string NAME;		///< Reserved name for the unique space
   static const uint4 SIZE;		///< Fixed size (in bytes) for unique space offsets
@@ -220,15 +232,17 @@ public:
 /// mapping the logical address in this space to its physical pieces.  Offsets into this space do not
 /// have an absolute meaning, the database may vary what offset is assigned to what set of pieces.
 class JoinSpace : public AddrSpace {
+  static const int4 MAX_PIECES = 64;	///< Maximum number of pieces that can be marshaled in one \e join address
 public:
   JoinSpace(AddrSpaceManager *m,const Translate *t,int4 ind);
-  virtual void saveXmlAttributes(ostream &s,uintb offset) const;
-  virtual void saveXmlAttributes(ostream &s,uintb offset,int4 size) const;
-  virtual uintb restoreXmlAttributes(const Element *el,uint4 &size) const;
+  virtual int4 overlapJoin(uintb offset,int4 size,AddrSpace *pointSpace,uintb pointOff,int4 pointSkip) const;
+  virtual void encodeAttributes(Encoder &encoder,uintb offset) const;
+  virtual void encodeAttributes(Encoder &encoder,uintb offset,int4 size) const;
+  virtual uintb decodeAttributes(Decoder &decoder,uint4 &size) const;
   virtual void printRaw(ostream &s,uintb offset) const;
   virtual uintb read(const string &s,int4 &size) const;
   virtual void saveXml(ostream &s) const;
-  virtual void restoreXml(const Element *el);
+  virtual void decode(Decoder &decoder);
   static const string NAME;		///< Reserved name for the join space
 };
 
@@ -246,7 +260,7 @@ public:
   OverlaySpace(AddrSpaceManager *m,const Translate *t);	///< Constructor
   virtual AddrSpace *getContain(void) const { return baseSpace; }
   virtual void saveXml(ostream &s) const;
-  virtual void restoreXml(const Element *el);
+  virtual void decode(Decoder &decoder);
 };
 
 /// An internal method for derived classes to set space attributes
@@ -428,6 +442,11 @@ inline bool AddrSpace::isBigEndian(void) const {
 /// cases the justification may be the opposite of the endianness.
 inline bool AddrSpace::isReverseJustified(void) const {
   return ((flags&reverse_justification)!=0);
+}
+
+/// Currently an architecture can declare only one formal stack pointer.
+inline bool AddrSpace::isFormalStackSpace(void) const {
+  return ((flags&formal_stackspace)!=0);
 }
 
 inline bool AddrSpace::isOverlay(void) const {

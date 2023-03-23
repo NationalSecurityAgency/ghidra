@@ -37,7 +37,7 @@ public class DBTraceNamespaceSymbolView
 
 	@Override
 	public DBTraceNamespaceSymbol add(String name, TraceNamespaceSymbol parent, SourceType source)
-			throws DuplicateNameException, InvalidInputException, IllegalArgumentException {
+			throws DuplicateNameException, InvalidInputException {
 		if (source == SourceType.DEFAULT) {
 			throw new IllegalArgumentException();
 		}

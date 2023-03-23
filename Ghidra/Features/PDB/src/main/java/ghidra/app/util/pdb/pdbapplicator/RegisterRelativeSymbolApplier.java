@@ -36,10 +36,11 @@ public class RegisterRelativeSymbolApplier extends MsSymbolApplier {
 
 	/**
 	 * Constructor
-	 * @param applicator the {@link PdbApplicator} for which we are working.
+	 * @param applicator the {@link DefaultPdbApplicator} for which we are working.
 	 * @param iter the Iterator containing the symbol sequence being processed
 	 */
-	public RegisterRelativeSymbolApplier(PdbApplicator applicator, AbstractMsSymbolIterator iter) {
+	public RegisterRelativeSymbolApplier(DefaultPdbApplicator applicator,
+			AbstractMsSymbolIterator iter) {
 		super(applicator, iter);
 		AbstractMsSymbol abstractSymbol = iter.next();
 		if (!(abstractSymbol instanceof AbstractRegisterRelativeAddressMsSymbol)) {
@@ -104,8 +105,7 @@ public class RegisterRelativeSymbolApplier extends MsSymbolApplier {
 //		}
 		int offset = (int) (relativeOffset & 0xffffffffL);
 
-		MsTypeApplier dataTypeApplier =
-			applicator.getTypeApplier(symbol.getTypeRecordNumber());
+		MsTypeApplier dataTypeApplier = applicator.getTypeApplier(symbol.getTypeRecordNumber());
 		DataType dt = dataTypeApplier.getDataType();
 		if (dt != null) {
 //			Variable m16 = stackFrame.getVariableContaining(-16);

@@ -15,27 +15,27 @@
  */
 package docking.widgets.imagepanel.actions;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import docking.ActionContext;
 import docking.action.MenuData;
 import docking.action.ToolBarData;
 import docking.widgets.imagepanel.ImagePanel;
-import resources.ResourceManager;
+import generic.theme.GIcon;
 
 /**
  * An action to zoom the image on a NavigableImagePanel.
  */
 public class ZoomInAction extends ImagePanelDockingAction {
 
-	private static final ImageIcon ZOOM_IN_ICON = ResourceManager.loadImage("images/zoom_in.png");
+	private static final Icon ICON = new GIcon("icon.widget.imagepanel.zoom.in");
 
 	public ZoomInAction(String owner, ImagePanel imagePanel) {
 		super("Zoom In", owner, imagePanel);
 
 		setPopupMenuData(new MenuData(new String[] { "Zoom in" }, "view"));
 
-		setToolBarData(new ToolBarData(ZOOM_IN_ICON));
+		setToolBarData(new ToolBarData(ICON));
 	}
 
 	@Override

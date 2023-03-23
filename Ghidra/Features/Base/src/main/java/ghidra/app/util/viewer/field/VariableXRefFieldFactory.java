@@ -15,15 +15,16 @@
  */
 package ghidra.app.util.viewer.field;
 
-import java.awt.Color;
 import java.math.BigInteger;
 import java.util.*;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.RowColLocation;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.util.HighlightProvider;
 import ghidra.app.util.XReferenceUtils;
+import ghidra.app.util.viewer.field.ListingColors.XrefColors;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.Options;
@@ -69,9 +70,13 @@ public class VariableXRefFieldFactory extends XRefFieldFactory {
 	protected VariableXRefFieldFactory(String name, FieldFormatModel model,
 			HighlightProvider hlProvider, Options displayOptions, ToolOptions fieldOptions) {
 		super(name, model, hlProvider, displayOptions, fieldOptions);
+	}
+
+	@Override
+	protected void initDisplayOptions(Options displayOptions) {
 		colorOptionName = "XRef Color";
 		styleOptionName = "XRef Style";
-		initDisplayOptions();
+		super.initDisplayOptions(displayOptions);
 	}
 
 	@Override
@@ -101,7 +106,7 @@ public class VariableXRefFieldFactory extends XRefFieldFactory {
 		int totalXrefs = xrefs.size() + offcuts.size();
 		boolean tooMany = totalXrefs > maxXRefs;
 
-		AttributedString delimiter = new AttributedString(delim, Color.BLACK, getMetrics());
+		AttributedString delimiter = new AttributedString(delim, Colors.FOREGROUND, getMetrics());
 
 		FieldElement[] elements = new FieldElement[tooMany ? maxXRefs : totalXrefs];
 		int count = 0;
@@ -110,7 +115,7 @@ public class VariableXRefFieldFactory extends XRefFieldFactory {
 			Reference reference = xrefs.get(count);
 			String prefix = getPrefix(program, reference, func);
 			AttributedString as = new AttributedString(reference.getFromAddress().toString(prefix),
-				color, getMetrics());
+				XrefColors.DEFAULT, getMetrics());
 			if (displayRefType) {
 				as = createRefTypeAttributedString(reference, as);
 			}
@@ -122,7 +127,7 @@ public class VariableXRefFieldFactory extends XRefFieldFactory {
 				char[] charSpaces = new char[delimiter.length()];
 				Arrays.fill(charSpaces, ' ');
 				AttributedString spaces =
-					new AttributedString(new String(charSpaces), color, getMetrics());
+					new AttributedString(new String(charSpaces), XrefColors.DEFAULT, getMetrics());
 				as = new CompositeAttributedString(new AttributedString[] { as, spaces });
 			}
 			elements[count] = new TextFieldElement(as, count, 0);
@@ -132,7 +137,7 @@ public class VariableXRefFieldFactory extends XRefFieldFactory {
 			Reference ref = offcuts.get(i);
 			String prefix = getPrefix(program, ref, func);
 			AttributedString as = new AttributedString(ref.getFromAddress().toString(prefix),
-				offcutColor, getMetrics());
+				XrefColors.OFFCUT, getMetrics());
 			if (displayRefType) {
 				as = createRefTypeAttributedString(ref, as);
 			}
@@ -144,14 +149,14 @@ public class VariableXRefFieldFactory extends XRefFieldFactory {
 				char[] charSpaces = new char[delimiter.length()];
 				Arrays.fill(charSpaces, ' ');
 				AttributedString spaces =
-					new AttributedString(new String(charSpaces), offcutColor, getMetrics());
+					new AttributedString(new String(charSpaces), XrefColors.OFFCUT, getMetrics());
 				as = new CompositeAttributedString(new AttributedString[] { as, spaces });
 			}
 			elements[count] = new TextFieldElement(as, count, 0);
 		}
 
 		if (tooMany) {
-			AttributedString as = new AttributedString("[more]", color, getMetrics());
+			AttributedString as = new AttributedString("[more]", XrefColors.DEFAULT, getMetrics());
 			elements[count - 1] = new TextFieldElement(as, count - 1, 0);
 		}
 

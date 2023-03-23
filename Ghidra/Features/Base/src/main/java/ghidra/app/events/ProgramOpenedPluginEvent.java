@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,38 +15,38 @@
  */
 package ghidra.app.events;
 
+import java.lang.ref.WeakReference;
+
 import ghidra.framework.plugintool.PluginEvent;
 import ghidra.program.model.listing.Program;
 
-import java.lang.ref.WeakReference;
-
 /**
- * Plugin event class for notification of programs being created, opened, or
- * closed.
- *
+ * Plugin event class for notification of programs being created, opened, or closed.
  */
 public class ProgramOpenedPluginEvent extends PluginEvent {
 
 	static final String NAME = "Program Opened";
-    
-    private WeakReference<Program> programRef;
 
-    /**
-     * Constuct a new plugin event.
-     * @param source name of the plugin that created this event
-     * @param p the program associated with this event
-     */
-    public ProgramOpenedPluginEvent(String source, Program p) {
-        super(source, NAME);
-        this.programRef = new WeakReference<Program>(p);
-    }
+	private WeakReference<Program> programRef;
 
-    /**
-     * Return the program on this event.
-     * @return null if the event if for a program closing.
-     */
-    public Program getProgram () {
-        return programRef.get();
-    }
+	/**
+	 * Construct a new plugin event.
+	 * @param source name of the plugin that created this event
+	 * @param p the program associated with this event
+	 */
+	public ProgramOpenedPluginEvent(String source, Program p) {
+		super(source, NAME);
+		this.programRef = new WeakReference<Program>(p);
+	}
+
+	/**
+	 * Returns the {@link Program} that has just been opened. This method
+	 * can return null, but only if the program has been closed and is no longer in use which
+	 * can't happen if the method is called during the original event notification.
+	 * @return the {@link Program} that has just been analyzed for the first time.
+	 */
+	public Program getProgram() {
+		return programRef.get();
+	}
 
 }

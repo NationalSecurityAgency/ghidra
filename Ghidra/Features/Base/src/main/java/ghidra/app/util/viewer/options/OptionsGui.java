@@ -35,112 +35,81 @@ import docking.widgets.fieldpanel.listener.LayoutModelListener;
 import docking.widgets.fieldpanel.support.*;
 import docking.widgets.indexedscrollpane.IndexedScrollPane;
 import docking.widgets.label.GDLabel;
+import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Palette;
+import generic.theme.GThemeDefaults.Colors.Tables;
 import ghidra.GhidraOptions;
+import ghidra.app.util.viewer.field.ListingColors;
+import ghidra.app.util.viewer.field.ListingColors.*;
 import ghidra.util.SystemUtilities;
 
 /**
  * Class for displaying and manipulating field colors and fonts.
  */
 public class OptionsGui extends JPanel {
-	private static final long serialVersionUID = 1L;
-	private static final Color DARK_GREEN = new Color(0, 128, 0);
-	private static final Color BLUE_GREEN = new Color(0, 128, 64);
-	private static final Color DARK_BLUE = new Color(0, 0, 128);
-	private static final Color PALE_BLUE = new Color(128, 128, 255);
-	private static final Color YELLOW_ORANGE = new Color(155, 150, 50);
-	private static final Color PURPLE = new Color(155, 50, 155);
-	private static final Color DEEP_PURPLE = new Color(75, 0, 130);
-	private static final Color DARK_PURPLE = new Color(102, 0, 102);
-	private static final Color DARK_CYAN = new Color(0, 102, 102);
-	private static final Color DARK_ORANGE = new Color(255, 128, 0);
-	private static final Color DARK_RED = new Color(130, 0, 75);
 	private static final Highlight[] NO_HIGHLIGHTS = new Highlight[0];
 	private static final HighlightFactory hlFactory =
 		(field, text, cursorTextOffset) -> NO_HIGHLIGHTS;
 
-	public static final ScreenElement COMMENT_AUTO =
-		new ScreenElement("Comment, Automatic", Color.LIGHT_GRAY);
-	public static final ScreenElement ADDRESS = new ScreenElement("Address", Color.BLACK);
-	public static final ScreenElement BACKGROUND = new ScreenElement("Background", Color.WHITE);
-	public static final ScreenElement BAD_REF_ADDR =
-		new ScreenElement("Bad Reference Address", Color.RED);
-	public static final ScreenElement BYTES = new ScreenElement("Bytes", Color.BLUE);
-	public static final ScreenElement CONSTANT = new ScreenElement("Constant", BLUE_GREEN);
-	public static final ScreenElement LABELS_UNREFD =
-		new ScreenElement("Labels, Unreferenced", Color.BLACK);
-	public static final ScreenElement ENTRY_POINT = new ScreenElement("Entry Point", Color.MAGENTA);
-	public static final ScreenElement COMMENT_EOL =
-		new ScreenElement("Comment, EOL", "EOL Comment", Color.BLUE);
-	public static final ScreenElement EXT_REF_RESOLVED =
-		new ScreenElement("External Reference, Resolved", Color.CYAN.darker().darker());
-	public static final ScreenElement FIELD_NAME = new ScreenElement("Field Name", Color.BLACK);
-	public static final ScreenElement FUN_CALL_FIXUP =
-		new ScreenElement("Function Call-Fixup", new Color(255, 0, 204));
-	public static final ScreenElement FUN_NAME = new ScreenElement("Function Name", Color.BLUE);
-	public static final ScreenElement FUN_PARAMS =
-		new ScreenElement("Function Parameters", Color.BLACK);
-	public static final ScreenElement FUN_TAG = new ScreenElement("Function Tag", DARK_RED);
-	public static final ScreenElement FUN_AUTO_PARAMS =
-		new ScreenElement("Function Auto-Parameters", Color.GRAY);
-	public static final ScreenElement FUN_RET_TYPE =
-		new ScreenElement("Function Return Type", Color.BLACK);
-	public static final ScreenElement COMMENT_REPEATABLE =
-		new ScreenElement("Comment, Repeatable", DARK_ORANGE);
-	public static final ScreenElement COMMENT_REF_REPEAT =
-		new ScreenElement("Comment, Referenced Repeatable", new Color(190, 190, 255));
-	public static final ScreenElement LABELS_LOCAL = new ScreenElement("Labels, Local", BLUE_GREEN);
-	public static final ScreenElement MNEMONIC_OVERRIDE =
-		new ScreenElement("Mnemonic, Override", new Color(255, 0, 204));
-	public static final ScreenElement MNEMONIC = new ScreenElement("Mnemonic", DARK_BLUE);
-	public static final ScreenElement UNIMPL =
-		new ScreenElement("Unimplemented Mnemonic", Color.RED);
-	public static final ScreenElement FLOW_ARROW_NON_ACTIVE =
-		new ScreenElement("Flow Arrow, Not Active", new Color(160, 160, 160));
-	public static final ScreenElement FLOW_ARROW_ACTIVE =
-		new ScreenElement("Flow Arrow, Active", Color.BLACK);
-	public static final ScreenElement FLOW_ARROW_SELECTED =
-		new ScreenElement("Flow Arrow, Selected", new Color(0, 200, 0));
-	public static final ScreenElement LABELS_NON_PRIMARY =
-		new ScreenElement("Labels, Non-primary", YELLOW_ORANGE);
-	public static final ScreenElement COMMENT_PLATE =
-		new ScreenElement("Comment, Plate", "Plate Comment", Color.GRAY);
-	public static final ScreenElement COMMENT_POST =
-		new ScreenElement("Comment, Post", "Post-Comment", Color.BLUE);
-	public static final ScreenElement COMMENT_PRE =
-		new ScreenElement("Comment, Pre", "Pre-Comment", DEEP_PURPLE);
-	public static final ScreenElement LABELS_PRIMARY =
-		new ScreenElement("Labels, Primary", DARK_BLUE);
-	public static final ScreenElement SEPARATOR = new ScreenElement("Separator", Color.BLACK);
-	public static final ScreenElement VARIABLE = new ScreenElement("Variable", PURPLE);
-	public static final ScreenElement PARAMETER_CUSTOM =
-		new ScreenElement("Parameter, Custom Storage", DARK_PURPLE);
-	public static final ScreenElement PARAMETER_DYNAMIC =
-		new ScreenElement("Parameter, Dynamic Storage", DARK_CYAN);
-	public static final ScreenElement VERSION_TRAK = new ScreenElement("Version Track", PURPLE);
-	public static final ScreenElement XREF = new ScreenElement("XRef", DARK_GREEN);
-	public static final ScreenElement XREF_OFFCUT = new ScreenElement("XRef, Offcut", Color.GRAY);
-	public static final ScreenElement XREF_READ = new ScreenElement("XRef Read", Color.BLUE);
-	public static final ScreenElement XREF_WRITE = new ScreenElement("XRef Write", DARK_ORANGE);
-	public static final ScreenElement XREF_OTHER = new ScreenElement("XRef Other", Color.BLACK);
-	public static final ScreenElement REGISTERS = new ScreenElement("Registers", YELLOW_ORANGE);
-	public static final ScreenElement UNDERLINE = new ScreenElement("Underline", PALE_BLUE);
-	public static final ScreenElement PCODE_LINE_LABEL =
-		new ScreenElement("P-code Line Label", Color.BLUE);
-	public static final ScreenElement PCODE_ADDR_SPACE =
-		new ScreenElement("P-code Address Space", Color.BLUE);
-	public static final ScreenElement PCODE_RAW_VARNODE =
-		new ScreenElement("P-code Raw Varnode", Color.BLUE);
-	public static final ScreenElement PCODE_USEROP =
-		new ScreenElement("P-code Userop", Color.BLUE);
+	// @formatter:off
+	public static final ScreenElement BACKGROUND = new ScreenElement("Background", ListingColors.BACKGROUND);
+	public static final ScreenElement COMMENT_AUTO = new ScreenElement("Comment, Automatic", CommentColors.AUTO);
+	public static final ScreenElement ADDRESS = new ScreenElement("Address", ListingColors.ADDRESS);
+	public static final ScreenElement BAD_REF_ADDR = new ScreenElement("Bad Reference Address", ListingColors.REF_BAD);
+	public static final ScreenElement BYTES = new ScreenElement("Bytes", ListingColors.BYTES);
+	public static final ScreenElement CONSTANT = new ScreenElement("Constant", ListingColors.CONSTANT);
+	public static final ScreenElement LABELS_UNREFD = new ScreenElement("Labels, Unreferenced", LabelColors.UNREFERENCED);
+	public static final ScreenElement ENTRY_POINT = new ScreenElement("Entry Point", ListingColors.EXT_ENTRY_POINT);
+	public static final ScreenElement COMMENT_EOL = new ScreenElement("Comment, EOL", "EOL Comment", CommentColors.EOL);
+	public static final ScreenElement EXT_REF_RESOLVED = new ScreenElement("External Reference, Resolved", ListingColors.EXT_REF_RESOLVED);
+	public static final ScreenElement FIELD_NAME = new ScreenElement("Field Name", ListingColors.FIELD_NAME);
+	public static final ScreenElement FUN_CALL_FIXUP = new ScreenElement("Function Call-Fixup", FunctionColors.CALL_FIXUP);
+	public static final ScreenElement FUN_NAME = new ScreenElement("Function Name", FunctionColors.NAME);
+	public static final ScreenElement FUN_PARAMS = new ScreenElement("Function Parameters", FunctionColors.PARAM);
+	public static final ScreenElement FUN_TAG = new ScreenElement("Function Tag", FunctionColors.TAG);
+	public static final ScreenElement FUN_AUTO_PARAMS = new ScreenElement("Function Auto-Parameters", FunctionColors.PARAM_AUTO);
+	public static final ScreenElement FUN_RET_TYPE = new ScreenElement("Function Return Type", FunctionColors.RETURN_TYPE);
+	public static final ScreenElement COMMENT_REPEATABLE = new ScreenElement("Comment, Repeatable", CommentColors.REPEATABLE);
+	public static final ScreenElement COMMENT_REF_REPEAT = new ScreenElement("Comment, Referenced Repeatable", CommentColors.REF_REPEATABLE);
+	public static final ScreenElement LABELS_LOCAL = new ScreenElement("Labels, Local", LabelColors.LOCAL);
+	public static final ScreenElement MNEMONIC = new ScreenElement("Mnemonic", MnemonicColors.NORMAL);
+	public static final ScreenElement MNEMONIC_OVERRIDE = new ScreenElement("Mnemonic, Override", MnemonicColors.OVERRIDE);
+	public static final ScreenElement MNEMONIC_UNIMPL = new ScreenElement("Unimplemented Mnemonic", MnemonicColors.UNIMPLEMENTED);
+	public static final ScreenElement FLOW_ARROW_ACTIVE = new ScreenElement("Flow Arrow, Active", FlowArrowColors.ACTIVE);
+	public static final ScreenElement FLOW_ARROW_NON_ACTIVE = new ScreenElement("Flow Arrow, Not Active", FlowArrowColors.INACTIVE);
+	public static final ScreenElement FLOW_ARROW_SELECTED = new ScreenElement("Flow Arrow, Selected", FlowArrowColors.SELECTED);
+	public static final ScreenElement LABELS_PRIMARY = new ScreenElement("Labels, Primary", LabelColors.PRIMARY);
+	public static final ScreenElement LABELS_NON_PRIMARY = new ScreenElement("Labels, Non-primary", LabelColors.NON_PRIMARY);
+	public static final ScreenElement COMMENT_PLATE = new ScreenElement("Comment, Plate", "Plate Comment", CommentColors.PLATE);
+	public static final ScreenElement COMMENT_POST = new ScreenElement("Comment, Post", "Post-Comment", CommentColors.POST);
+	public static final ScreenElement COMMENT_PRE = new ScreenElement("Comment, Pre", "Pre-Comment", CommentColors.PRE);
+	public static final ScreenElement SEPARATOR = new ScreenElement("Separator", ListingColors.SEPARATOR);
+	public static final ScreenElement VARIABLE = new ScreenElement("Variable", FunctionColors.VARIABLE);
+	public static final ScreenElement PARAMETER_CUSTOM = new ScreenElement("Parameter, Custom Storage", FunctionColors.PARAM_CUSTOM);
+	public static final ScreenElement PARAMETER_DYNAMIC = new ScreenElement("Parameter, Dynamic Storage", FunctionColors.PARAM_DYNAMIC);
+	public static final ScreenElement XREF = new ScreenElement("XRef", XrefColors.DEFAULT);
+	public static final ScreenElement XREF_OFFCUT = new ScreenElement("XRef, Offcut", XrefColors.OFFCUT);
+	public static final ScreenElement XREF_READ = new ScreenElement("XRef Read", XrefColors.READ);
+	public static final ScreenElement XREF_WRITE = new ScreenElement("XRef Write", XrefColors.WRITE);
+	public static final ScreenElement XREF_OTHER = new ScreenElement("XRef Other", XrefColors.OTHER);
+	public static final ScreenElement REGISTERS = new ScreenElement("Registers", ListingColors.REGISTER);
+	public static final ScreenElement UNDERLINE = new ScreenElement("Underline", ListingColors.UNDERLINE);
+	public static final ScreenElement PCODE_LINE_LABEL = new ScreenElement("P-code Line Label", PcodeColors.LABEL);
+	public static final ScreenElement PCODE_ADDR_SPACE = new ScreenElement("P-code Address Space", PcodeColors.ADDRESS_SPACE);
+	public static final ScreenElement PCODE_RAW_VARNODE = new ScreenElement("P-code Raw Varnode", PcodeColors.VARNODE);
+	public static final ScreenElement PCODE_USEROP = new ScreenElement("P-code Userop", PcodeColors.USEROP);
 
-	static ScreenElement[] elements = { ADDRESS, BACKGROUND, BAD_REF_ADDR, BYTES, COMMENT_AUTO,
-		COMMENT_EOL, COMMENT_PLATE, COMMENT_POST, COMMENT_PRE, COMMENT_REPEATABLE,
-		COMMENT_REF_REPEAT, CONSTANT, ENTRY_POINT, EXT_REF_RESOLVED, FIELD_NAME, FLOW_ARROW_ACTIVE,
-		FLOW_ARROW_NON_ACTIVE, FUN_CALL_FIXUP, FUN_NAME, FUN_PARAMS, FUN_AUTO_PARAMS, FUN_RET_TYPE,
-		FUN_TAG, LABELS_LOCAL, LABELS_NON_PRIMARY, LABELS_PRIMARY, LABELS_UNREFD, MNEMONIC,
-		MNEMONIC_OVERRIDE, PARAMETER_CUSTOM, PARAMETER_DYNAMIC, PCODE_LINE_LABEL, PCODE_ADDR_SPACE,
-		PCODE_RAW_VARNODE, PCODE_USEROP, REGISTERS, SEPARATOR, UNDERLINE, UNIMPL, VARIABLE,
-		VERSION_TRAK, XREF, XREF_OFFCUT, XREF_READ, XREF_WRITE, XREF_OTHER };
+	//@formatter:on
+
+	static ScreenElement[] elements =
+		{ ADDRESS, BACKGROUND, BAD_REF_ADDR, BYTES, COMMENT_AUTO, COMMENT_EOL, COMMENT_PLATE,
+			COMMENT_POST, COMMENT_PRE, COMMENT_REPEATABLE, COMMENT_REF_REPEAT, CONSTANT,
+			ENTRY_POINT, EXT_REF_RESOLVED, FIELD_NAME, FLOW_ARROW_ACTIVE, FLOW_ARROW_NON_ACTIVE,
+			FLOW_ARROW_SELECTED, FUN_CALL_FIXUP, FUN_NAME, FUN_PARAMS, FUN_AUTO_PARAMS,
+			FUN_RET_TYPE, FUN_TAG, LABELS_LOCAL, LABELS_NON_PRIMARY, LABELS_PRIMARY, LABELS_UNREFD,
+			MNEMONIC, MNEMONIC_OVERRIDE, PARAMETER_CUSTOM, PARAMETER_DYNAMIC, PCODE_LINE_LABEL,
+			PCODE_ADDR_SPACE, PCODE_RAW_VARNODE, PCODE_USEROP, REGISTERS, SEPARATOR, UNDERLINE,
+			MNEMONIC_UNIMPL, VARIABLE, XREF, XREF_OFFCUT, XREF_READ, XREF_WRITE, XREF_OTHER };
 
 	private Map<Integer, FontMetrics> metricsMap = new HashMap<>();
 
@@ -274,18 +243,12 @@ public class OptionsGui extends JPanel {
 		}
 	}
 
-	/**
-	 * Sets the base font to be used by the fields.
-	 */
 	public void setBaseFont(Font font) {
 		baseFont = font;
 		baseMetrics = getFontMetrics(font);
 		metricsMap.clear();
 	}
 
-	/**
-	 * Returns the current base font.
-	 */
 	public Font getBaseFont() {
 		return baseFont;
 	}
@@ -353,13 +316,13 @@ public class OptionsGui extends JPanel {
 		GraphicsEnvironment gEnv = GraphicsEnvironment.getLocalGraphicsEnvironment();
 		String envfonts[] = gEnv.getAvailableFontFamilyNames();
 		fontNameField = new GComboBox<>(envfonts);
-		fontNameField.setBackground(Color.white);
+		fontNameField.setBackground(Colors.BACKGROUND);
 		fontNameField.setRenderer(new FontRenderer());
 		panel1.add(fontNameField);
 
 		fontSizeField =
 			new GComboBox<>(IntStream.rangeClosed(6, 32).boxed().toArray(Integer[]::new));
-		fontSizeField.setBackground(Color.white);
+		fontSizeField.setBackground(Colors.BACKGROUND);
 		panel1.add(fontSizeField);
 		panel.add(panel1, BorderLayout.NORTH);
 
@@ -377,8 +340,8 @@ public class OptionsGui extends JPanel {
 
 	//Displays the font field with the actual fonts for easier selection
 	class FontRenderer extends GDLabel implements ListCellRenderer<String> {
-		private static final long serialVersionUID = 1L;
-		private final Color SELECTED_COLOR = new Color(10, 36, 106);
+
+		private final Color SELECTED_COLOR = Palette.getColor("darkslategray");
 
 		public FontRenderer() {
 			setOpaque(true);
@@ -391,8 +354,8 @@ public class OptionsGui extends JPanel {
 			Font origFont = fontNameField.getFont();
 			setFont(new Font(value.toString(), origFont.getStyle(), origFont.getSize()));
 
-			setBackground(isSelected ? SELECTED_COLOR : Color.white);
-			setForeground(isSelected ? Color.white : Color.black);
+			setBackground(isSelected ? SELECTED_COLOR : Colors.BACKGROUND);
+			setForeground(isSelected ? Tables.FG_SELECTED : Tables.FG_UNSELECTED);
 
 			return this;
 		}
@@ -420,7 +383,7 @@ public class OptionsGui extends JPanel {
 		subPanel = new JPanel(new BorderLayout());
 		subPanel.setBorder(BorderFactory.createTitledBorder(border, "Color"));
 		colorPanel = new JPanel();
-		colorPanel.setBackground(Color.white);
+		colorPanel.setBackground(Colors.BACKGROUND);
 		subPanel.add(colorPanel, BorderLayout.CENTER);
 		panel.add(subPanel, BorderLayout.NORTH);
 		return panel;
@@ -790,6 +753,7 @@ public class OptionsGui extends JPanel {
 			size = (Integer) fontSizeField.getSelectedItem();
 		}
 		catch (Exception e) {
+			// handled below
 		}
 
 		if (size < 6) {
@@ -824,9 +788,6 @@ public class OptionsGui extends JPanel {
 			return false;
 		}
 
-		/**
-		 * Returns a layout for the given index.
-		 */
 		public Layout getLayout(int index) {
 			return layouts[index];
 		}
@@ -843,6 +804,7 @@ public class OptionsGui extends JPanel {
 
 		@Override
 		public void flushChanges() {
+			// stub
 		}
 
 		@Override
@@ -901,9 +863,6 @@ public class OptionsGui extends JPanel {
 			add(text, element, false);
 		}
 
-		/**
-		 * Adds the string and adorns it based on the given type (display index)
-		 */
 		void add(String text, ScreenElement element, boolean underline) {
 
 			// add some padding to push off of the edge
@@ -928,9 +887,6 @@ public class OptionsGui extends JPanel {
 			}
 		}
 
-		/**
-		 * Returns a layout consisting of all the added text fields.
-		 */
 		Layout getLayout() {
 			return new SingleRowLayout(fields);
 		}

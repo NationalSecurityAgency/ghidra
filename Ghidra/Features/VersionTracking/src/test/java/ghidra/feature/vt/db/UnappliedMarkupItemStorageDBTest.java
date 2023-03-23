@@ -15,10 +15,8 @@
  */
 package ghidra.feature.vt.db;
 
-import static ghidra.feature.vt.db.VTTestUtils.createProgramCorrelator;
-import static ghidra.feature.vt.db.VTTestUtils.createRandomMarkupItemStub;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static ghidra.feature.vt.db.VTTestUtils.*;
+import static org.junit.Assert.*;
 
 import java.util.Collection;
 
@@ -32,15 +30,11 @@ import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.markupitem.MarkupTypeTestStub;
 import ghidra.program.model.address.Address;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class UnappliedMarkupItemStorageDBTest extends VTBaseTestCase {
 
 	private int testTransactionID;
-
-	public UnappliedMarkupItemStorageDBTest() {
-		super();
-	}
 
 	@Override
 	@Before
@@ -67,8 +61,8 @@ public class UnappliedMarkupItemStorageDBTest extends VTBaseTestCase {
 		MarkupItemStorageImpl storageImpl =
 			new MarkupItemStorageImpl(association, MarkupTypeTestStub.INSTANCE, addr(100));
 
-		// 
-		// Setting the address with anything other than a user-defined address should not 
+		//
+		// Setting the address with anything other than a user-defined address should not
 		// create a storage object
 		//
 		String addressSource = "Test Source";
@@ -92,8 +86,8 @@ public class UnappliedMarkupItemStorageDBTest extends VTBaseTestCase {
 		MarkupItemStorageImpl storageImpl =
 			new MarkupItemStorageImpl(association, MarkupTypeTestStub.INSTANCE, addr(100));
 
-		// 
-		// Setting the address with anything other than a user-defined address should not 
+		//
+		// Setting the address with anything other than a user-defined address should not
 		// create a storage object
 		//
 		String addressSource = "Test Source";
@@ -122,7 +116,7 @@ public class UnappliedMarkupItemStorageDBTest extends VTBaseTestCase {
 
 		//
 		// Test that setting ignored to true creates a DB storage
-		//         
+		//
 		MarkupItemStorage newStorage = storageImpl.setStatus(VTMarkupItemStatus.DONT_CARE);
 		assertTrue("A database entry was not created when setting the storage to ignored",
 			(newStorage instanceof MarkupItemStorageDB));
@@ -134,7 +128,7 @@ public class UnappliedMarkupItemStorageDBTest extends VTBaseTestCase {
 
 		//
 		// Test that any set destination address is retained when setting ignored to true and false
-		// 
+		//
 
 		storageImpl =
 			new MarkupItemStorageImpl(association, MarkupTypeTestStub.INSTANCE, addr(200));
@@ -188,7 +182,7 @@ public class UnappliedMarkupItemStorageDBTest extends VTBaseTestCase {
 
 		//
 		// Test that any set destination address is retained when setting apply failed to true and false
-		// 
+		//
 		storageImpl =
 			new MarkupItemStorageImpl(association, MarkupTypeTestStub.INSTANCE, addr(200));
 
@@ -227,10 +221,10 @@ public class UnappliedMarkupItemStorageDBTest extends VTBaseTestCase {
 	@Test
 	public void testLoadingUnappliedMarkupItemFindsExistingStorageRecord()
 			throws CancelledException {
-		// 
+		//
 		// Test that if we create a DB object, that a new 'equivalent' markup item will find and
 		// use the matching DB record.
-		//              
+		//
 		VTMatch match = createMatchSetWithOneMatch();
 
 		VTMarkupItem markupItem = createRandomMarkupItemStub(match);
@@ -242,7 +236,7 @@ public class UnappliedMarkupItemStorageDBTest extends VTBaseTestCase {
 
 		VTAssociationDB association = (VTAssociationDB) match.getAssociation();
 		Collection<VTMarkupItem> markupItems =
-			association.getMarkupItems(TaskMonitorAdapter.DUMMY_MONITOR);
+			association.getMarkupItems(TaskMonitor.DUMMY);
 		assertEquals(1, markupItems.size());
 		VTMarkupItem foundItem = markupItems.iterator().next();
 		Object storage = getInstanceField("markupItemStorage", foundItem);
@@ -254,16 +248,16 @@ public class UnappliedMarkupItemStorageDBTest extends VTBaseTestCase {
 	@Test
 	public void testLoadingUnappliedMarkupItemWithNoExistingStorageRecord()
 			throws CancelledException {
-		// 
+		//
 		// Test that if we create a DB object, that a new 'equivalent' markup item will find and
 		// use the matching DB record.
-		//              
+		//
 		VTMatch match = createMatchSetWithOneMatch();
 
 		VTMarkupItem markupItem = createRandomMarkupItemStub(match);
 		VTAssociationDB association = (VTAssociationDB) match.getAssociation();
 		Collection<VTMarkupItem> markupItems =
-			association.getMarkupItems(TaskMonitorAdapter.DUMMY_MONITOR);
+			association.getMarkupItems(TaskMonitor.DUMMY);
 		assertEquals(1, markupItems.size());
 		VTMarkupItem foundItem = markupItems.iterator().next();
 		Object storage = getInstanceField("markupItemStorage", foundItem);

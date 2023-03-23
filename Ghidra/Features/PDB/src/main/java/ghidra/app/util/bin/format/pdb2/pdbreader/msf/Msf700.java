@@ -20,9 +20,10 @@ import java.io.RandomAccessFile;
 import java.util.Arrays;
 
 import ghidra.app.util.bin.format.pdb2.pdbreader.*;
+import ghidra.util.task.TaskMonitor;
 
 /**
- * This class is the version of {@link AbstractMsf} for Microsoft v7.00 MSF.
+ * This class is the version of {@link Msf} for Microsoft v7.00 MSF.
  */
 public class Msf700 extends AbstractMsf {
 
@@ -38,39 +39,42 @@ public class Msf700 extends AbstractMsf {
 	// API
 	//==============================================================================================
 	/**
-	 * Constructor.
-	 * @param file The {@link RandomAccessFile} to process as a {@link Msf700}.
-	 * @param pdbOptions {@link PdbReaderOptions} used for processing the PDB.
-	 * @throws IOException Upon file IO seek/read issues.
-	 * @throws PdbException Upon unknown value for configuration.
+	 * Constructor
+	 * @param file the {@link RandomAccessFile} to process as a {@link Msf700}
+	 * @param filename name of {@code #file}
+	 * @param monitor the TaskMonitor
+	 * @param pdbOptions {@link PdbReaderOptions} used for processing the PDB
+	 * @throws IOException upon file IO seek/read issues
+	 * @throws PdbException upon unknown value for configuration
 	 */
-	public Msf700(RandomAccessFile file, PdbReaderOptions pdbOptions)
+	public Msf700(RandomAccessFile file, String filename, TaskMonitor monitor,
+			PdbReaderOptions pdbOptions)
 			throws IOException, PdbException {
-		super(file, pdbOptions);
+		super(file, filename, monitor, pdbOptions);
 	}
 
 	//==============================================================================================
 	// Abstract Methods
 	//==============================================================================================
 	@Override
-	void create() {
+	public void create() {
 		streamTable = new MsfStreamTable700(this);
 		freePageMap = new MsfFreePageMap700(this);
 		directoryStream = new MsfDirectoryStream700(this);
 	}
 
 	@Override
-	protected void parseFreePageMapPageNumber(PdbByteReader reader) throws PdbException {
+	public void parseFreePageMapPageNumber(PdbByteReader reader) throws PdbException {
 		currentFreePageMapFirstPageNumber = reader.parseInt();
 	}
 
 	@Override
-	protected void parseCurrentNumPages(PdbByteReader reader) throws PdbException {
+	public void parseCurrentNumPages(PdbByteReader reader) throws PdbException {
 		numPages = reader.parseInt();
 	}
 
 	@Override
-	void configureParameters() throws PdbException {
+	public void configureParameters() throws PdbException {
 		switch (pageSize) {
 			case 0x200:
 				log2PageSize = 9;
@@ -98,10 +102,10 @@ public class Msf700 extends AbstractMsf {
 	// Package-Protected Internals
 	//==============================================================================================
 	/**
-	 * Static method used to detect the header that belongs to this class.
-	 * @param file The RandomAccessFile to process as a {@link Msf700}.
-	 * @return True if the header for this class is positively identified.
-	 * @throws IOException Upon file IO seek/read issues.
+	 * Static method used to detect the header that belongs to this class
+	 * @param file the RandomAccessFile to process as a {@link Msf700}
+	 * @return {@code true} if the header for this class is positively identified
+	 * @throws IOException upon file IO seek/read issues
 	 */
 	static boolean detected(RandomAccessFile file) throws IOException {
 		byte[] bytes = new byte[IDENTIFICATION.length];
@@ -114,12 +118,12 @@ public class Msf700 extends AbstractMsf {
 	// Class Internals
 	//==============================================================================================
 	@Override
-	protected int getPageNumberSize() {
+	public int getPageNumberSize() {
 		return PAGE_NUMBER_SIZE;
 	}
 
 	@Override
-	protected byte[] getIdentification() {
+	public byte[] getIdentification() {
 		return IDENTIFICATION;
 	}
 

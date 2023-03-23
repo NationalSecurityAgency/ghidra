@@ -22,7 +22,7 @@ import org.jdom.Element;
 
 import generic.stl.IteratorSTL;
 import generic.stl.VectorSTL;
-import ghidra.pcodeCPort.context.*;
+import ghidra.pcodeCPort.context.SleighError;
 import ghidra.pcodeCPort.sleighbase.SleighBase;
 import ghidra.pcodeCPort.slghpatexpress.PatternExpression;
 import ghidra.pcodeCPort.slghpatexpress.TokenPattern;
@@ -58,11 +58,6 @@ public class SubtableSymbol extends TripleSymbol {
 		construct.push_back(ct);
 	}
 
-	@Override
-	public Constructor resolve(ParserWalker pos) {
-		return decisiontree.resolve(pos);
-	}
-
 	public TokenPattern getPattern() {
 		return pattern;
 	}
@@ -81,18 +76,8 @@ public class SubtableSymbol extends TripleSymbol {
 	}
 
 	@Override
-	public void getFixedHandle(FixedHandle hand, ParserWalker pos) {
-		throw new SleighError("Cannot use subtable in expression", null);
-	}
-
-	@Override
 	public int getSize() {
 		return -1;
-	}
-
-	@Override
-	public void print(PrintStream s, ParserWalker pos) {
-		throw new SleighError("Cannot use subtable in expression", null);
 	}
 
 	@Override

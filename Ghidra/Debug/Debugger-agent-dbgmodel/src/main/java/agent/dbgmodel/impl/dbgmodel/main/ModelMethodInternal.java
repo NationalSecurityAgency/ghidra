@@ -15,15 +15,15 @@
  */
 package agent.dbgmodel.impl.dbgmodel.main;
 
+import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.sun.jna.Pointer;
-import com.sun.jna.platform.win32.Guid.REFIID;
 
+import agent.dbgeng.impl.dbgeng.DbgEngUtil;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.InterfaceSupplier;
+import agent.dbgeng.impl.dbgeng.DbgEngUtil.Preferred;
 import agent.dbgmodel.dbgmodel.main.ModelMethod;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil;
-import agent.dbgmodel.impl.dbgmodel.DbgModelUtil.InterfaceSupplier;
 import agent.dbgmodel.jna.dbgmodel.main.IModelMethod;
 import agent.dbgmodel.jna.dbgmodel.main.WrapIModelMethod;
 import ghidra.util.datastruct.WeakValueHashMap;
@@ -32,18 +32,14 @@ public interface ModelMethodInternal extends ModelMethod {
 	Map<Pointer, ModelMethodInternal> CACHE = new WeakValueHashMap<>();
 
 	static ModelMethodInternal instanceFor(WrapIModelMethod data) {
-		return DbgModelUtil.lazyWeakCache(CACHE, data, ModelMethodImpl::new);
+		return DbgEngUtil.lazyWeakCache(CACHE, data, ModelMethodImpl::new);
 	}
 
-	ImmutableMap.Builder<REFIID, Class<? extends WrapIModelMethod>> PREFERRED_DATA_SPACES_IIDS_BUILDER =
-		ImmutableMap.builder();
-	Map<REFIID, Class<? extends WrapIModelMethod>> PREFERRED_DATA_SPACES_IIDS =
-		PREFERRED_DATA_SPACES_IIDS_BUILDER //
-				.put(new REFIID(IModelMethod.IID_IMODEL_METHOD), WrapIModelMethod.class) //
-				.build();
+	List<Preferred<WrapIModelMethod>> PREFERRED_DATA_SPACES_IIDS = List.of(
+		new Preferred<>(IModelMethod.IID_IMODEL_METHOD, WrapIModelMethod.class));
 
 	static ModelMethodInternal tryPreferredInterfaces(InterfaceSupplier supplier) {
-		return DbgModelUtil.tryPreferredInterfaces(ModelMethodInternal.class,
+		return DbgEngUtil.tryPreferredInterfaces(ModelMethodInternal.class,
 			PREFERRED_DATA_SPACES_IIDS, supplier);
 	}
 }

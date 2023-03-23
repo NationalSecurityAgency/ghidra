@@ -15,13 +15,13 @@
  */
 package ghidra.app.plugin.core.compositeeditor;
 
-import java.awt.Color;
 import java.awt.Component;
 
 import javax.swing.JLabel;
 
 import docking.widgets.table.GTableCellRenderer;
 import docking.widgets.table.GTableCellRenderingData;
+import generic.theme.GThemeDefaults.Colors;
 import ghidra.app.util.ToolTipUtils;
 import ghidra.program.model.data.*;
 import ghidra.util.HTMLUtilities;
@@ -43,7 +43,7 @@ public class DataTypeCellRenderer extends GTableCellRenderer {
 
 		String dtString = "";
 		String tooltipText = null;
-		boolean useRed = false;
+		boolean showError = false;
 		DataType dt = null;
 
 		if (value instanceof DataTypeInstance) {
@@ -51,7 +51,7 @@ public class DataTypeCellRenderer extends GTableCellRenderer {
 			tooltipText = getDataTypeToolTip(dt);
 			dtString = dt.getDisplayName();
 			if (dt.isNotYetDefined()) {
-				useRed = true;
+				showError = true;
 			}
 		}
 
@@ -61,8 +61,8 @@ public class DataTypeCellRenderer extends GTableCellRenderer {
 
 		c.setToolTipText(tooltipText);
 
-		if (useRed) {
-			c.setForeground(Color.RED);
+		if (showError) {
+			c.setForeground(Colors.ERROR);
 		}
 
 		return c;

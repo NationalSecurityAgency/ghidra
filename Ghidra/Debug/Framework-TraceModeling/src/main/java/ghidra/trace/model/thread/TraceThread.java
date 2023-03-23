@@ -17,11 +17,8 @@ package ghidra.trace.model.thread;
 
 import java.util.List;
 
-import com.google.common.collect.Range;
-
 import ghidra.program.model.lang.Register;
-import ghidra.trace.model.Trace;
-import ghidra.trace.model.TraceUniqueObject;
+import ghidra.trace.model.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
@@ -65,7 +62,7 @@ public interface TraceThread extends TraceUniqueObject {
 	void setName(String name);
 
 	/**
-	 * @see #setLifespan(Range)
+	 * @see #setLifespan(Lifespan)
 	 * 
 	 * @param creationSnap the creation snap, or {@link Long#MIN_VALUE} for "since the beginning of
 	 *            time"
@@ -80,7 +77,7 @@ public interface TraceThread extends TraceUniqueObject {
 	long getCreationSnap();
 
 	/**
-	 * @see #setLifespan(Range)
+	 * @see #setLifespan(Lifespan)
 	 * 
 	 * @param destructionSnap the destruction snap, or {@link Long#MAX_VALUE} for "to the end of
 	 *            time"
@@ -102,14 +99,14 @@ public interface TraceThread extends TraceUniqueObject {
 	 *             thread to conflict with that of another whose lifespan would intersect this
 	 *             thread's
 	 */
-	void setLifespan(Range<Long> lifespan) throws DuplicateNameException;
+	void setLifespan(Lifespan lifespan) throws DuplicateNameException;
 
 	/**
 	 * Get the lifespan of this thread
 	 * 
 	 * @return the lifespan
 	 */
-	Range<Long> getLifespan();
+	Lifespan getLifespan();
 
 	/**
 	 * Set a comment on this thread
@@ -131,7 +128,7 @@ public interface TraceThread extends TraceUniqueObject {
 	 * @return false if destroyed, true otherwise
 	 */
 	default boolean isAlive() {
-		return !getLifespan().hasUpperBound();
+		return !getLifespan().maxIsFinite();
 	}
 
 	/**

@@ -17,6 +17,11 @@ package agent.dbgeng.jna.dbgeng.sysobj;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
+import com.sun.jna.platform.win32.WinDef.ULONGLONG;
+import com.sun.jna.platform.win32.WinDef.ULONGLONGByReference;
+import com.sun.jna.platform.win32.WinNT.HRESULT;
+
+import agent.dbgeng.jna.dbgeng.sysobj.IDebugSystemObjects2.VTIndices2;
 
 public class WrapIDebugSystemObjects2 extends WrapIDebugSystemObjects
 		implements IDebugSystemObjects2 {
@@ -30,4 +35,25 @@ public class WrapIDebugSystemObjects2 extends WrapIDebugSystemObjects
 	public WrapIDebugSystemObjects2(Pointer pvInstance) {
 		super(pvInstance);
 	}
+	
+	@Override
+	public HRESULT GetImplicitThreadDataOffset(ULONGLONGByReference SysOffset) {
+		return _invokeHR(VTIndices2.GET_IMPLICIT_THREAD_DATA_OFFSET, getPointer(), SysOffset);
+	}
+
+	@Override
+	public HRESULT GetImplicitProcessDataOffset(ULONGLONGByReference SysOffset) {
+		return _invokeHR(VTIndices2.GET_IMPLICIT_PROCESS_DATA_OFFSET, getPointer(), SysOffset);
+	}
+	
+	@Override
+	public HRESULT SetImplicitThreadDataOffset(ULONGLONG SysOffset) {
+		return _invokeHR(VTIndices2.SET_IMPLICIT_THREAD_DATA_OFFSET, getPointer(), SysOffset);
+	}
+
+	@Override
+	public HRESULT SetImplicitProcessDataOffset(ULONGLONG SysOffset) {
+		return _invokeHR(VTIndices2.SET_IMPLICIT_PROCESS_DATA_OFFSET, getPointer(), SysOffset);
+	}
+	
 }

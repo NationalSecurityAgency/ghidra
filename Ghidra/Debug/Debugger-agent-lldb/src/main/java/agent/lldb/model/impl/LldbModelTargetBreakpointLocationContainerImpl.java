@@ -21,6 +21,7 @@ import java.util.Map;
 import SWIG.SBBreakpointLocation;
 import SWIG.SBTarget;
 import agent.lldb.model.iface2.*;
+import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.target.schema.*;
 
@@ -44,7 +45,7 @@ public class LldbModelTargetBreakpointLocationContainerImpl extends LldbModelTar
 		this.targetProcess = (LldbModelTargetProcessImpl) targetProcess;
 
 		getManager().addEventsListener(this);
-		requestElements(false);
+		requestElements(RefreshBehavior.REFRESH_NEVER);
 	}
 
 	public LldbModelTargetBreakpointLocation getTargetBreakpointLocation(SBBreakpointLocation loc) {
