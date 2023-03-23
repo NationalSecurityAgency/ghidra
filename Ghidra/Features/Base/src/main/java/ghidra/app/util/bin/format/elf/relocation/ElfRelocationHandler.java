@@ -95,7 +95,7 @@ abstract public class ElfRelocationHandler implements ExtensionPoint {
 		PointerTypedef dt =
 			new PointerTypedef(null, null, -1, program.getDataTypeManager(), componentOffset);
 		try {
-			DataUtilities.createData(program, addr, dt, -1, false,
+			DataUtilities.createData(program, addr, dt, -1,
 				ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
 		}
 		catch (CodeUnitInsertionException e) {

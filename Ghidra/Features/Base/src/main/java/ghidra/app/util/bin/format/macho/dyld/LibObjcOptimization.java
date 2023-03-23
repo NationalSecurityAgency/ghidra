@@ -124,7 +124,7 @@ public class LibObjcOptimization implements StructConverter {
 	public void markup(Program program, AddressSpace space, MessageLog log, TaskMonitor monitor) {
 		Address addr = space.getAddress(getAddr());
 		try {
-			DataUtilities.createData(program, addr, toDataType(), -1, false,
+			DataUtilities.createData(program, addr, toDataType(), -1,
 				DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 		}
 		catch (CodeUnitInsertionException | DuplicateNameException | IOException e) {

@@ -81,7 +81,7 @@ public class PublicSymbolApplier extends MsSymbolApplier {
 			Program program = applicator.getProgram();
 			if (GuidUtil.isGuidLabel(program, symbolAddress, name)) {
 				try {
-					DataUtilities.createData(program, symbolAddress, new GuidDataType(), -1, false,
+					DataUtilities.createData(program, symbolAddress, new GuidDataType(), -1,
 						ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
 				}
 				catch (CodeUnitInsertionException e) {

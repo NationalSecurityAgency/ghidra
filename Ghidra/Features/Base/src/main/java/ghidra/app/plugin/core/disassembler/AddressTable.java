@@ -271,7 +271,7 @@ public class AddressTable {
 		// TODO: add in the skip Length
 		for (int j = 0; j < len; j++) {
 			try { // make the data an address pointer
-				DataUtilities.createData(program, newAddress, adt, adt.getLength(), false,
+				DataUtilities.createData(program, newAddress, adt, adt.getLength(),
 					DataUtilities.ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
 			}
 			catch (CodeUnitInsertionException exc) {

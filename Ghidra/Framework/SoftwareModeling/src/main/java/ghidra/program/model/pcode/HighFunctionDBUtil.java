@@ -672,7 +672,7 @@ public class HighFunctionDBUtil {
 		}
 
 		try {
-			return DataUtilities.createData(program, addr, dt, -1, false,
+			return DataUtilities.createData(program, addr, dt, -1,
 				DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 		}
 		catch (CodeUnitInsertionException e) {

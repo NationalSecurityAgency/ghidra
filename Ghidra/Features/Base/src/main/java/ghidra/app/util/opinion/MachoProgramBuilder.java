@@ -836,7 +836,7 @@ public class MachoProgramBuilder {
 		}
 
 		try {
-			DataUtilities.createData(program, headerAddr, header.toDataType(), -1, false,
+			DataUtilities.createData(program, headerAddr, header.toDataType(), -1,
 				DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 
 			for (LoadCommand loadCommand : header.getLoadCommands()) {
@@ -846,7 +846,7 @@ public class MachoProgramBuilder {
 				Address loadCommandAddr =
 					headerAddr.add(loadCommand.getStartIndex() - header.getStartIndexInProvider());
 				DataType loadCommandDataType = loadCommand.toDataType();
-				DataUtilities.createData(program, loadCommandAddr, loadCommandDataType, -1, false,
+				DataUtilities.createData(program, loadCommandAddr, loadCommandDataType, -1,
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 
 				if (loadCommand instanceof SegmentCommand) {
@@ -858,7 +858,7 @@ public class MachoProgramBuilder {
 					for (Section section : segmentCommand.getSections()) {
 						DataType sectionDataType = section.toDataType();
 						Address sectionAddr = loadCommandAddr.add(sectionOffset);
-						DataUtilities.createData(program, sectionAddr, sectionDataType, -1, false,
+						DataUtilities.createData(program, sectionAddr, sectionDataType, -1,
 							DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 						listing.setComment(sectionAddr, CodeUnit.EOL_COMMENT,
 							section.getSegmentName() + "." + section.getSectionName());
@@ -870,7 +870,7 @@ public class MachoProgramBuilder {
 					LoadCommandString name = dynamicLinkerCommand.getLoadCommandString();
 					DataUtilities.createData(program, loadCommandAddr.add(name.getOffset()),
 						StructConverter.STRING, loadCommand.getCommandSize() - name.getOffset(),
-						false, DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+						DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				}
 				else if (loadCommand instanceof DynamicLibraryCommand) {
 					DynamicLibraryCommand dynamicLibraryCommand =
@@ -878,52 +878,52 @@ public class MachoProgramBuilder {
 					LoadCommandString name = dynamicLibraryCommand.getDynamicLibrary().getName();
 					DataUtilities.createData(program, loadCommandAddr.add(name.getOffset()),
 						StructConverter.STRING, loadCommand.getCommandSize() - name.getOffset(),
-						false, DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+						DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				}
 				else if (loadCommand instanceof RunPathCommand) {
 					RunPathCommand runPathCommand = (RunPathCommand) loadCommand;
 					LoadCommandString path = runPathCommand.getPath();
 					DataUtilities.createData(program, loadCommandAddr.add(path.getOffset()),
 						StructConverter.STRING, loadCommand.getCommandSize() - path.getOffset(),
-						false, DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+						DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				}
 				else if (loadCommand instanceof SubFrameworkCommand) {
 					SubFrameworkCommand subFrameworkCommand = (SubFrameworkCommand) loadCommand;
 					LoadCommandString name = subFrameworkCommand.getUmbrellaFrameworkName();
 					DataUtilities.createData(program, loadCommandAddr.add(name.getOffset()),
 						StructConverter.STRING, loadCommand.getCommandSize() - name.getOffset(),
-						false, DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+						DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				}
 				else if (loadCommand instanceof SubClientCommand) {
 					SubClientCommand subClientCommand = (SubClientCommand) loadCommand;
 					LoadCommandString name = subClientCommand.getClientName();
 					DataUtilities.createData(program, loadCommandAddr.add(name.getOffset()),
 						StructConverter.STRING, loadCommand.getCommandSize() - name.getOffset(),
-						false, DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+						DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				}
 				else if (loadCommand instanceof SubLibraryCommand) {
 					SubLibraryCommand subLibraryCommand = (SubLibraryCommand) loadCommand;
 					LoadCommandString name = subLibraryCommand.getSubLibraryName();
 					DataUtilities.createData(program, loadCommandAddr.add(name.getOffset()),
 						StructConverter.STRING, loadCommand.getCommandSize() - name.getOffset(),
-						false, DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+						DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				}
 				else if (loadCommand instanceof SubUmbrellaCommand) {
 					SubUmbrellaCommand subUmbrellaCommand = (SubUmbrellaCommand) loadCommand;
 					LoadCommandString name = subUmbrellaCommand.getSubUmbrellaFrameworkName();
 					DataUtilities.createData(program, loadCommandAddr.add(name.getOffset()),
 						StructConverter.STRING, loadCommand.getCommandSize() - name.getOffset(),
-						false, DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+						DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 					DataUtilities.createData(program, loadCommandAddr.add(name.getOffset()),
 						StructConverter.STRING, loadCommand.getCommandSize() - name.getOffset(),
-						false, DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+						DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				}
 				else if (loadCommand instanceof FileSetEntryCommand) {
 					FileSetEntryCommand fileSetEntryCommand = (FileSetEntryCommand) loadCommand;
 					LoadCommandString name = fileSetEntryCommand.getFileSetEntryId();
 					DataUtilities.createData(program, loadCommandAddr.add(name.getOffset()),
 						StructConverter.STRING, loadCommand.getCommandSize() - name.getOffset(),
-						false, DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+						DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				}
 				else if (loadCommand instanceof LinkerOptionCommand) {
 					LinkerOptionCommand linkerOptionCommand = (LinkerOptionCommand) loadCommand;
@@ -936,7 +936,7 @@ public class MachoProgramBuilder {
 							len = (int) (NumericUtilities.getUnsignedAlignedValue(
 								addr.add(len).getOffset(), 4) - addr.getOffset());
 						}
-						DataUtilities.createData(program, addr, StructConverter.STRING, len, false,
+						DataUtilities.createData(program, addr, StructConverter.STRING, len,
 							DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 						offset += len;
 					}
