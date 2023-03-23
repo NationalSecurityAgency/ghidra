@@ -1,5 +1,9 @@
 To use the LLDB agent in Ghidra, you will need to build the JNI interface to the LLDB Scripting Bridge.
 
+If you are using the distribution (vs. source) and wish to use the default swig files included (LLDB v14), you can use the
+macos_debugger_lldb_build_from_brew script in this same directory, kindly provide by @cyberkaida.  Make sure a 7.x version
+of gradle is in your path, and you've defined GHIDRA_INSTALL_DIR.
+
 To do this:
 (1) check the version for your copy of lldb:
 	lldb --version
