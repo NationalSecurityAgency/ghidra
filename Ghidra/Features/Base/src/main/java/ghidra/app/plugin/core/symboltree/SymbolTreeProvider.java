@@ -553,11 +553,11 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	private abstract class AbstactSymbolUpdateTask extends GTreeTask {
+	private abstract class AbstractSymbolUpdateTask extends GTreeTask {
 
 		protected final Symbol symbol;
 
-		AbstactSymbolUpdateTask(GTree tree, Symbol symbol) {
+		AbstractSymbolUpdateTask(GTree tree, Symbol symbol) {
 			super(tree);
 			this.symbol = symbol;
 		}
@@ -580,7 +580,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	private class SymbolAddedTask extends AbstactSymbolUpdateTask {
+	private class SymbolAddedTask extends AbstractSymbolUpdateTask {
 
 		SymbolAddedTask(GTree tree, Symbol symbol) {
 			super(tree, symbol);
@@ -599,7 +599,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	private class SymbolChangedTask extends AbstactSymbolUpdateTask {
+	private class SymbolChangedTask extends AbstractSymbolUpdateTask {
 
 		private String oldName;
 
@@ -622,7 +622,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 		}
 	}
 
-	private class SymbolRemovedTask extends AbstactSymbolUpdateTask {
+	private class SymbolRemovedTask extends AbstractSymbolUpdateTask {
 
 		SymbolRemovedTask(GTree tree, Symbol symbol) {
 			super(tree, symbol);
