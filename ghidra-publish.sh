@@ -6,9 +6,9 @@ set -o pipefail
 # sonatype, so that we can promote it to maven central:
 # https://repo1.maven.org/maven2/io/shiftleft/ghidra/
 # see also https://github.com/NationalSecurityAgency/ghidra/issues/799
-VERSION=10.1_PUBLIC_20211210
-VERSION_SHORT=10.1_PUBLIC
-VERSION_SHORTER=10.1
+VERSION=10.2.3_PUBLIC_20230208
+VERSION_SHORT=10.2.3_PUBLIC
+VERSION_SHORTER=10.2.3
 SONATYPE_URL=https://oss.sonatype.org/service/local/staging/deploy/maven2/
 # the server id from your local ~/.m2/settings.xml
 REPO_ID=sonatype-nexus-staging
