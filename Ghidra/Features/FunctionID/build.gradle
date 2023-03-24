@@ -62,7 +62,7 @@ task unpackFidDatabases {
 // Relative to the 'workingDir' Exec task property.
 def installPoint = "../help/help"
 
-task buildFidDocumentationPdf(type: Exec) {
+task buildFidHelpPdf(type: Exec) {
 
 	workingDir 'src/main/doc'
 
@@ -91,7 +91,7 @@ task buildFidDocumentationPdf(type: Exec) {
 		cp $installPoint/topics/FunctionID/images/*.png $buildDir/images
 
 		echo '** Building FunctionID.fo **'
-		xsltproc --output $buildDir/fid_withscaling.xml --stringparam profile.condition "withscaling" /usr/share/sgml/docbook/xsl-stylesheets/profiling/profile.xsl fid.xml 2>&1
+		xsltproc --output $buildDir/fid_withscaling.xml --stringparam profile.condition "withscaling" commonprofile.xsl fid.xml 2>&1
 		xsltproc --output $buildDir/FunctionID.fo fid_pdf.xsl $buildDir/fid_withscaling.xml 2>&1
 
 		echo '** Building FunctionID.pdf **'
@@ -137,9 +137,11 @@ task buildFidDocumentationPdf(type: Exec) {
  * A build (ex: 'gradle buildLocal') will place the html files in the distribution.
  * There is an associated, auto-generated clean task.
  **/
-task buildFidDocumentationHtml(type: Exec) {
+task buildFidHelpHtml(type: Exec) {
 
 	workingDir 'src/main/doc'
+
+	def buildDir = "../../../build/html"
 
 	// 'which' returns the number of failed arguments
 	// Using the 'which' command first will allow the task to fail if the required 
@@ -158,9 +160,10 @@ task buildFidDocumentationHtml(type: Exec) {
 	rm -f $installPoint/topics/FunctionID/*.html
 
 	echo '** Building html files **'
-	xsltproc --output $buildDir/fid_noscaling.xml --stringparam profile.condition "noscaling" /usr/share/sgml/docbook/xsl-stylesheets/profiling/profile.xsl fid.xml 2>&1
+	xsltproc --output $buildDir/fid_noscaling.xml --stringparam profile.condition "noscaling" commonprofile.xsl fid.xml 2>&1
 	xsltproc --stringparam base.dir ${installPoint}/topics/FunctionID/ fid_html.xsl $buildDir/fid_noscaling.xml 2>&1
-	sed -i -e '/Frontpage.css/ { p; s/Frontpage.css/languages.css/; }' ${installPoint}/topics/FunctionID/*.html
+	rm ${installPoint}/topics/FunctionID/index.html
+	sed -i -e '/DefaultStyle.css/ { p; sQhref=".*"Qhref="../../shared/languages.css"Q; }' ${installPoint}/topics/FunctionID/*.html
 
 	echo '** Done. **'
 	"""

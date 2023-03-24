@@ -3,26 +3,14 @@
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 <title>Function ID Plug-in</title>
 <link rel="stylesheet" type="text/css" href="help/shared/DefaultStyle.css">
-<link rel="stylesheet" type="text/css" href="help/shared/languages.css">
-<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<link rel="stylesheet" type="text/css" href="../../shared/languages.css">
+<meta name="generator" content="DocBook XSL Stylesheets V1.79.1">
+<link rel="home" href="index.html" title="Function ID">
+<link rel="up" href="index.html" title="Function ID">
 <link rel="prev" href="FunctionID.html" title="Function ID">
 <link rel="next" href="FunctionIDDebug.html" title="Function ID Debug Plug-in">
 </head>
-<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
-<div class="navheader">
-<table width="100%" summary="Navigation header">
-<tr><th colspan="3" align="center">Function ID Plug-in</th></tr>
-<tr>
-<td width="20%" align="left">
-<a accesskey="p" href="FunctionID.html">Prev</a>�</td>
-<th width="60%" align="center">�</th>
-<td width="20%" align="right">�<a accesskey="n" href="FunctionIDDebug.html">Next</a>
-</td>
-</tr>
-</table>
-<hr>
-</div>
-<div class="chapter">
+<body><div class="chapter">
 <div class="titlepage"><div><div><h1 class="title">
 <a name="FunctionIDPlugin"></a>Function ID Plug-in</h1></div></div></div>
 <p>
@@ -132,7 +120,7 @@ to populate the database.
 <div class="mediaobject" align="center"><table border="0" summary="manufactured viewport for HTML img" style="cellpadding: 0; cellspacing: 0;" width="100%"><tr><td align="center"><img src="images/PopulateFidDbFromPrograms1.png" align="middle" width="422" height="320"></td></tr></table></div>
 <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="idm140323472541088"></a>Dialog Fields</h4></div></div></div>
+<a name="dialogfields"></a>Dialog Fields</h4></div></div></div>
 <p>
   </p>
 <div class="informalexample"><div class="variablelist"><dl class="variablelist">
@@ -204,7 +192,7 @@ most commonly called within the library. This list can be used to create a
 <a name="preparelibraries"></a>Preparing Libraries for a Function ID Database</h2></div></div></div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="idm140323472516592"></a>Location of Programs</h3></div></div></div>
+<a name="programlocation"></a>Location of Programs</h3></div></div></div>
 <p>
 All functions going into a single Function ID <span class="emphasis"><em>Library</em></span> must already be imported and analyzed
 somewhere within a single Ghidra repository (shared or non-shared). Multiple libraries contained within
@@ -216,7 +204,7 @@ but all programs to be included in the library must be under the one root.
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="idm140323472513952"></a>Analysis</h3></div></div></div>
+<a name="analysis"></a>Analysis</h3></div></div></div>
 <p>
 All programs must be analyzed enough to have recovered the bodies of all the functions that are to be included
 in the library. Generally, the easiest way to accomplish this is to run Ghidra's default auto-analysis.
@@ -260,7 +248,7 @@ of error completely, but with Function ID there are some mitigation strategies.
 </p>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="idm140323472502064"></a>Causes</h3></div></div></div>
+<a name="causes"></a>Causes</h3></div></div></div>
 <p>
 False positives for the most part only happen with small functions.
 There are two related causes with Function ID:
@@ -291,7 +279,7 @@ In either case, Function ID can apply a symbol that is misleading for the analys
 </div>
 <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="idm140323472493552"></a>Mitigation via Threshold</h3></div></div></div>
+<a name="mitigation"></a>Mitigation via Threshold</h3></div></div></div>
 <p>
 All mitigation strategies, to some extent, trade-off false positives for
 <span class="bold"><strong>false negatives</strong></span>, which are functions that should have
@@ -391,23 +379,5 @@ script.
 </p>
 </div>
 </div>
-</div>
-<div class="navfooter">
-<hr>
-<table width="100%" summary="Navigation footer">
-<tr>
-<td width="40%" align="left">
-<a accesskey="p" href="FunctionID.html">Prev</a>�</td>
-<td width="20%" align="center">�</td>
-<td width="40%" align="right">�<a accesskey="n" href="FunctionIDDebug.html">Next</a>
-</td>
-</tr>
-<tr>
-<td width="40%" align="left" valign="top">Function ID�</td>
-<td width="20%" align="center"></td>
-<td width="40%" align="right" valign="top">�Function ID Debug Plug-in</td>
-</tr>
-</table>
-</div>
-</body>
+</div></body>
 </html>

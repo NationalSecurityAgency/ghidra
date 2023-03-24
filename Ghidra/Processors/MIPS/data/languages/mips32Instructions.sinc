@@ -980,13 +980,13 @@ define pcodeop SYNC;
 # 0111 00ss ssst tttt dddd d000 0010 0001
 :clo RD, RSsrc                  is $(AMODE) & REL6=0 & prime=0x1C & sa=0x0 & fct=0x21 & RD & RSsrc {
     # Count leading ones in a word
-    RD = countLeadingOnes( RSsrc );
+    RD = lzcount( ~RSsrc );
 }
 
 # 0111 00ss ssst tttt dddd d000 0010 0000
 :clz RD, RSsrc                  is $(AMODE) & REL6=0 & prime=0x1C & sa=0x0 & fct=0x20 & RD & RSsrc {
     # Count leading zeros in a word
-    RD = countLeadingZeros( RSsrc );
+    RD = lzcount( RSsrc );
 }
 
 # 0000 00ss ssst tttt 0000 0000 0001 1010
@@ -1573,11 +1573,11 @@ define pcodeop SYNC;
 }
 
 :clo RD, RSsrc                  	is $(AMODE) & REL6=1 & prime=0x00 & op=0 & sa=0x1 & fct=0x11 & RD & RSsrc {
-    RD = countLeadingOnes( RSsrc );
+    RD = lzcount( ~RSsrc );
 }
 
 :clz RD, RSsrc                  	is $(AMODE) & REL6=1 & prime=0x00 & op=0 & sa=0x1 & fct=0x10 & RD & RSsrc {
-    RD = countLeadingZeros( RSsrc );
+    RD = lzcount( RSsrc );
 }
 
 :div RD, RS32src, RT32src           is $(AMODE) & REL6=1 & prime=0x00 & fct=0x1A & fct2=0x02 & RD & RS32src & RT32src {

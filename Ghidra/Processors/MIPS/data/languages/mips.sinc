@@ -1001,12 +1001,6 @@ define pcodeop getCopRegH;
 define pcodeop setCopReg;
 define pcodeop setCopRegH;
 
-# countLeadingOnes(val)
-define pcodeop countLeadingOnes;
-
-# countLeadingZeros(val)
-define pcodeop countLeadingZeros;
-
 # extractField(value, msbd, lsb)
 define pcodeop extractField;
 

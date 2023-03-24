@@ -2,7 +2,7 @@
 <article id="pcoderef_title">
 <info>
   <title>P-Code Reference Manual</title>
-  <releaseinfo>Last updated September 5, 2019</releaseinfo>
+  <releaseinfo>Last updated March 2, 2023</releaseinfo>
 </info>
 <table xml:id="mytoc.htmltable" width="90%" frame='none'>
   <col width="25%"/>
@@ -22,7 +22,7 @@
  <td><link linkend="cpui_int_sub">INT_SUB</link></td>
  <td><link linkend="cpui_float_equal">FLOAT_EQUAL</link></td>
 </tr>
-<tr>P
+<tr>
  <td></td>
  <td><link linkend="cpui_store">STORE</link></td>
  <td><link linkend="cpui_int_carry">INT_CARRY</link></td>
@@ -90,51 +90,57 @@
 </tr>
 <tr>
  <td></td>
- <td><link linkend="cpui_int_equal">INT_EQUAL</link></td>
+ <td><link linkend="cpui_lzcount">LZCOUNT</link></td>
  <td><link linkend="cpui_int_mult">INT_MULT</link></td>
  <td><link linkend="cpui_float_floor">FLOAT_FLOOR</link></td>
 </tr>
 <tr>
  <td></td>
- <td><link linkend="cpui_int_notequal">INT_NOTEQUAL</link></td>
+ <td><link linkend="cpui_int_equal">INT_EQUAL</link></td>
  <td><link linkend="cpui_int_div">INT_DIV</link></td>
  <td><link linkend="cpui_float_round">FLOAT_ROUND</link></td>
 </tr>
 <tr>
  <td></td>
- <td><link linkend="cpui_int_less">INT_LESS</link></td>
+ <td><link linkend="cpui_int_notequal">INT_NOTEQUAL</link></td>
  <td><link linkend="cpui_int_rem">INT_REM</link></td>
  <td><link linkend="cpui_float_nan">FLOAT_NAN</link></td>
 </tr>
 <tr>
  <td></td>
- <td><link linkend="cpui_int_sless">INT_SLESS</link></td>
+ <td><link linkend="cpui_int_less">INT_LESS</link></td>
  <td><link linkend="cpui_int_sdiv">INT_SDIV</link></td>
  <td><link linkend="cpui_int2float">INT2FLOAT</link></td>
 </tr>
 <tr>
  <td></td>
- <td><link linkend="cpui_int_lessequal">INT_LESSEQUAL</link></td>
+ <td><link linkend="cpui_int_sless">INT_SLESS</link></td>
  <td><link linkend="cpui_int_srem">INT_SREM</link></td>
  <td><link linkend="cpui_float2float">FLOAT2FLOAT</link></td>
 </tr>
 <tr>
  <td></td>
- <td><link linkend="cpui_int_slessequal">INT_SLESSEQUAL</link></td>
+ <td><link linkend="cpui_int_lessequal">INT_LESSEQUAL</link></td>
  <td><link linkend="cpui_bool_negate">BOOL_NEGATE</link></td>
  <td><link linkend="cpui_trunc">TRUNC</link></td>
 </tr>
 <tr>
  <td></td>
- <td><link linkend="cpui_int_zext">INT_ZEXT</link></td>
+ <td><link linkend="cpui_int_slessequal">INT_SLESSEQUAL</link></td>
  <td><link linkend="cpui_bool_xor">BOOL_XOR</link></td>
  <td><link linkend="cpui_cpoolref">CPOOLREF</link></td>
 </tr>
 <tr>
  <td></td>
- <td><link linkend="cpui_int_sext">INT_SEXT</link></td>
+ <td><link linkend="cpui_int_zext">INT_ZEXT</link></td>
  <td><link linkend="cpui_bool_and">BOOL_AND</link></td>
  <td><link linkend="cpui_new">NEW</link></td>
+</tr>
+<tr>
+ <td></td>
+ <td><link linkend="cpui_int_sext">INT_SEXT</link></td>
+ <td></td>
+ <td></td>
 </tr>
 </tbody>
 </table>
@@ -974,6 +980,50 @@ contained in the input varnode, the number of 1 bits are counted and then return
 output varnode. A value of 0 returns 0, a 4-byte varnode containing the value 2<superscript>32</superscript>-1
 (all bits set) returns 32, for instance. The input and output varnodes can have any size. The resulting
 count is zero extended into the output varnode.
+</para>
+</sect2>
+
+<sect2 id="cpui_lzcount"><title>LZCOUNT</title>
+<informalexample>
+<table xml:id="lzcount.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Parameters</emphasis></td>
+  <td><emphasis role="bold">Description</emphasis></td>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>input0</td>
+  <td/>
+  <td>Input varnode to count.</td>
+</tr>
+<tr>
+  <td align='right'>output</td>
+  <td/>
+  <td>Resulting integer varnode containing count.</td>
+</tr>
+</tbody>
+<tfoot>
+<tr>
+  <td align="center" colspan="2"><emphasis role="bold">Semantic statement</emphasis></td>
+  <td/>
+</tr>
+<tr>
+  <td/>
+  <td colspan="2"><code>output = lzcount(input0);</code></td>
+</tr>
+</tfoot>
+</table>
+</informalexample>
+<para>
+This operator counts the number of zeros starting at the most significant bit.
+For instance, for a 4-byte varnode, a value of 0 returns 32, a value of 1
+returns 31, and the value 2<superscript>31</superscript> returns 0.
+The resulting count is zero extended into the output varnode.
 </para>
 </sect2>
 
@@ -4057,6 +4107,11 @@ to SLEIGH <emphasis role="bold">bitrange</emphasis> syntax such as output = inpu
   <td>POPCOUNT</td>
   <td><code>popcount(v0)</code></td>
   <td>Count 1 bits in v0.</td>
+</tr>
+<tr>
+  <td>LZCOUNT</td>
+  <td><code>lzcount(v0)</code></td>
+  <td>Counts the number of leading zero bits in v0.</td>
 </tr>
 <tr>
   <td>INT_EQUAL</td>

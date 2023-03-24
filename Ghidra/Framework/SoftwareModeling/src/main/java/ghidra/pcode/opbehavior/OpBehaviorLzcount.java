@@ -19,38 +19,37 @@ import java.math.BigInteger;
 
 import ghidra.program.model.pcode.PcodeOp;
 
-public class OpBehaviorPopcount extends UnaryOpBehavior {
+public class OpBehaviorLzcount extends UnaryOpBehavior {
 
-	public OpBehaviorPopcount() {
-		super(PcodeOp.POPCOUNT);
+	public OpBehaviorLzcount() {
+		super(PcodeOp.LZCOUNT);
 	}
 
 	@Override
 	public long evaluateUnary(int sizeout, int sizein, long val) {
-		val = (val & 0x5555555555555555L) + ((val >>> 1) & 0x5555555555555555L);
-		val = (val & 0x3333333333333333L) + ((val >>> 2) & 0x3333333333333333L);
-		val = (val & 0x0f0f0f0f0f0f0f0fL) + ((val >>> 4) & 0x0f0f0f0f0f0f0f0fL);
-		val = (val & 0x00ff00ff00ff00ffL) + ((val >>> 8) & 0x00ff00ff00ff00ffL);
-		val = (val & 0x0000ffff0000ffffL) + ((val >>> 16) & 0x0000ffff0000ffffL);
-		int res = (int) (val & 0xff);
-		res += (int) ((val >> 32) & 0xff);
-		return res;
+		long mask = 1L << ((sizein * 8) - 1);
+		long count = 0;
+		while (mask != 0) {
+			if ((mask & val) != 0) {
+				break;
+			}
+			++count;
+			mask >>>= 1;
+		}
+
+		return count;
 	}
 
 	@Override
 	public BigInteger evaluateUnary(int sizeout, int sizein, BigInteger unsignedIn1) {
 		int bitcount = 0;
-		while (sizein >= 8) {
-			bitcount += evaluateUnary(1, 8, unsignedIn1.longValue());
-			sizein -= 8;
-			if (sizein == 0) {
+		sizein = sizein * 8 - 1;
+		while (sizein >= 0) {
+			if (unsignedIn1.testBit(sizein)) {
 				break;
 			}
-			unsignedIn1 = unsignedIn1.shiftRight(64);
-		}
-		if (sizein > 0) {
-			long mask = sizein * 8 - 1;
-			bitcount += evaluateUnary(1, 8, unsignedIn1.longValue() & mask);
+			bitcount += 1;
+			sizein -= 1;
 		}
 		if (sizeout == 1) {
 			bitcount &= 0xff;
@@ -60,5 +59,4 @@ public class OpBehaviorPopcount extends UnaryOpBehavior {
 		}
 		return BigInteger.valueOf(bitcount);
 	}
-
 }

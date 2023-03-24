@@ -857,4 +857,11 @@ public:
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opPopcountOp(op); }
 };
 
+/// \brief Information about the LZCOUNT op-code
+class TypeOpLzcount : public TypeOpFunc {
+public:
+  TypeOpLzcount(TypeFactory *t);			///< Constructor
+  virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opLzcountOp(op); }
+};
+
 #endif

@@ -41,7 +41,7 @@ from Microsoft Visual Studio for the x86 processor. These have been broken apart
 separate Function ID databases, based on 32-bit or 64-code and the version of Visual Studio.
 Within each database, there are a two library variants -- one for debug versions and one for production.
 </para>
-<sect2>
+<sect2 id="hashing">
   <title>Hashing</title>
 <para>
 Function ID works by calculating a cumulative hash over all the machine <emphasis>instructions</emphasis>
@@ -82,7 +82,7 @@ is robust against changes due to linking; the <emphasis role="bold">specific has
 helps distinguish between closely related variants of a function.
 </para>
 </sect2>
-<sect2>
+<sect2 id="parentchild">
   <title>Parents and Children</title>
 <para>
 When Function ID examines a function, its parent and child functions are also considered
@@ -92,7 +92,7 @@ the full hashes of the functions will be identical, but the system will try to m
 the two subfunctions, allowing it to distinguish between the two.
 </para>
 </sect2>
-<sect2>
+<sect2 id="libraries">
   <title>Libraries</title>
 <para>
 Within a Function ID database, functions are grouped into <emphasis>libraries</emphasis>,
@@ -144,7 +144,7 @@ the analyzer will still report a single match but will leave off the fields it
 couldn't distinguish.
 </para>
 </sect2>
-<sect2>
+<sect2 id="singlematches">
   <title>Single Matches</title>
 <para>
 A <emphasis role="bold">Single Match</emphasis> for a function occurs under the following conditions:
@@ -283,7 +283,7 @@ increasing its overall score.
 If there are still more than one potential match, the highest assigned score is
 used to filter out matches with lower scores.
 </para>
-<sect2>
+<sect2 id="matchingfunction">
   <title>Matching Function Names</title>
 <para>
 If there are still multiple potential matches once thresholds have been applied to the
@@ -416,7 +416,7 @@ to populate the database.
   <imagedata condition="withscaling" fileref="images/PopulateFidDbFromPrograms1.png" width="100%" contentwidth="4in" contentdepth="3.033175in" align="center"/>
 </imageobject>
 </mediaobject>
-<sect3>
+<sect3 id="dialogfields">
   <title>Dialog Fields</title>
 <para>
   <informalexample>
@@ -519,7 +519,7 @@ most commonly called within the library. This list can be used to create a
 </section>
 <section id="preparelibraries">
   <title>Preparing Libraries for a Function ID Database</title>
-<sect2>
+<sect2 id="programlocation">
   <title>Location of Programs</title>
 <para>
 All functions going into a single Function ID <emphasis>Library</emphasis> must already be imported and analyzed
@@ -530,7 +530,7 @@ the root for the library. The process acts recursively, so there can be addition
 but all programs to be included in the library must be under the one root.
 </para>
 </sect2>
-<sect2>
+<sect2 id="analysis">
   <title>Analysis</title>
 <para>
 All programs must be analyzed enough to have recovered the bodies of all the functions that are to be included
@@ -572,7 +572,7 @@ function that is declared as a match by the analyzer but has the incorrect symbo
 As with any classification algorithm, it is generally not possible to eliminate this kind
 of error completely, but with Function ID there are some mitigation strategies.
 </para>
-<sect2>
+<sect2 id="causes">
   <title>Causes</title>
 <para>
 False positives for the most part only happen with small functions.
@@ -611,7 +611,7 @@ There are two related causes with Function ID:
 In either case, Function ID can apply a symbol that is misleading for the analyst.
 </para>
 </sect2>
-<sect2>
+<sect2 id="mitigation">
   <title>Mitigation via Threshold</title>
 <para>
 All mitigation strategies, to some extent, trade-off false positives for
@@ -758,7 +758,7 @@ section and check the box next to "FidDebugPlugin".
 The Function ID Debug Plug-in introduces the following actions to the
 <emphasis role="bold">Tools -> Function ID</emphasis> menu.
 </para>
-<sect2>
+<sect2 id="readonly">
   <title>Create Read-only Database</title>
 <para>
 Users can convert the read/write (.fidb) database into the a read-only (.fidbf) form. This is
@@ -787,7 +787,7 @@ the <command>RETURN</command> key, with the cursor and focus still in the desire
   <imagedata condition="withscaling" fileref="images/FIDSearch.png" width="100%" contentwidth="4in" contentdepth="3.3397in" align="center"/>
 </imageobject>
 </mediaobject>
-<sect3>
+<sect3 id="searchfields">
   <title>Search Fields</title>
 <para>
   <informalexample>
@@ -845,7 +845,7 @@ the <command>RETURN</command> key, with the cursor and focus still in the desire
   </informalexample>
 </para>
 </sect3>
-<sect3>
+<sect3 id="resultwindow">
   <title>Result Window</title>
 <para>
 Invoking a search will bring up the <emphasis>Result Window</emphasis>, presenting a row for
@@ -901,7 +901,7 @@ other columns:
   </variablelist>
   </informalexample>
 </para>
-<sect4>
+<sect4 id="editmenu">
   <title>Edit Menu</title>
 <para>
 The <emphasis>Result Window</emphasis> supports a small number of actions under the
@@ -962,7 +962,7 @@ strategy.
 </sect4>
 </sect3>
 </sect2>
-<sect2>
+<sect2 id="tableviewer">
   <title>Table Viewer</title>
 <para>
 This invokes an extremely low-level view into the underlying tables that back a
