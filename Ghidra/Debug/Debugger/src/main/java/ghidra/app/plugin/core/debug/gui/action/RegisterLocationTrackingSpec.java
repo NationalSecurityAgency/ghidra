@@ -22,6 +22,7 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
+import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.guest.TracePlatform;
@@ -89,6 +90,13 @@ public interface RegisterLocationTrackingSpec extends LocationTrackingSpec, Loca
 	default CompletableFuture<Address> computeTraceAddress(PluginTool tool,
 			DebuggerCoordinates coordinates) {
 		return CompletableFuture.supplyAsync(() -> doComputeTraceAddress(tool, coordinates));
+	}
+
+	@Override
+	default GoToInput getDefaultGoToInput(PluginTool tool, DebuggerCoordinates coordinates,
+			ProgramLocation location) {
+		Register register = computeRegister(coordinates);
+		return GoToInput.offsetOnly(register.getName());
 	}
 
 	@Override

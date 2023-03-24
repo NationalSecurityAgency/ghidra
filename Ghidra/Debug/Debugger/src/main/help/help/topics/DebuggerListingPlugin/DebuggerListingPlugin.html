@@ -134,10 +134,12 @@
     <H3><A name="go_to"></A>Go To (G)</H3>
 
     <P>This action is available whenever a trace is active in the listing. It prompts the user for
-    an address, which can be expressed in Sleigh, then attempts to navigate to it. The expression
-    is evaluated in the context of the current thread, frame, and point in time. If the current
-    trace is live and at the present, the target may be queried to retrieve any machine state
-    required to evaluate the expression.</P>
+    an address, which can be expressed in simple notation or <B>Sleigh</B>, then attempts to
+    navigate to it. The expression is evaluated in the context of the current thread, frame, and
+    point in time. If the current trace is live and at the present, the target may be queried to
+    retrieve any machine state required to evaluate the expression. The expression may be in terms
+    of labels, registers, and constants. Labels may come from the current trace or a program mapped
+    into the trace. Ambiguities are resolved arbitrarily.</P>
 
     <TABLE width="100%">
       <TBODY>
@@ -146,6 +148,22 @@
         </TR>
       </TBODY>
     </TABLE>
+
+    <P>Some examples:</P>
+
+    <UL>
+      <LI><CODE>00401234</CODE> &mdash; A constant address in simple notation</LI>
+
+      <LI><CODE>0x00401234:8</CODE> &mdash; A constant address in Sleigh notation</LI>
+
+      <LI><CODE>main + 10</CODE> &mdash; 10 bytes past the address of "main"</LI>
+
+      <LI><CODE>RAX</CODE> &mdash; The address in RAX</LI>
+
+      <LI><CODE>RSP + 8</CODE> &mdash; The address of stack offset 8</LI>
+
+      <LI><CODE>*:8 (RSP+8)</CODE> &mdash; The address pointed to by stack offset 8</LI>
+    </UL>
 
     <H3><A name="auto_sync_cursor_static"></A>Auto-Sync Cursor with Static Listing</H3>
 

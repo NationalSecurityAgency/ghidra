@@ -38,6 +38,7 @@ public class WatchLocationTrackingSpecFactory implements LocationTrackingSpecFac
 		}
 		return watchesService.getWatches()
 				.stream()
+				.filter(WatchLocationTrackingSpec::isTrackable)
 				.map(WatchLocationTrackingSpec::fromWatch)
 				.collect(Collectors.toList());
 	}

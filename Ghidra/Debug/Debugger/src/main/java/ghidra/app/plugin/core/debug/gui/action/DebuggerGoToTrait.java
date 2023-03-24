@@ -28,12 +28,17 @@ import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.utils.Utils;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Language;
 import ghidra.trace.model.guest.TracePlatform;
 
 public abstract class DebuggerGoToTrait {
+	/**
+	 * @see DebuggerGoToTrait#goTo(String, String)
+	 */
+	public record GoToResult(Address address, Boolean success) {
+	}
+
 	protected DockingAction action;
 
 	protected final PluginTool tool;
@@ -47,6 +52,8 @@ public abstract class DebuggerGoToTrait {
 		this.plugin = plugin;
 		this.provider = provider;
 	}
+
+	protected abstract GoToInput getDefaultInput();
 
 	protected abstract boolean goToAddress(Address address);
 
@@ -66,25 +73,61 @@ public abstract class DebuggerGoToTrait {
 	private void activatedGoTo(ActionContext context) {
 		DebuggerGoToDialog goToDialog = new DebuggerGoToDialog(this);
 		TracePlatform platform = current.getPlatform();
-		goToDialog.show((SleighLanguage) platform.getLanguage());
+		goToDialog.show((SleighLanguage) platform.getLanguage(), getDefaultInput());
 	}
 
-	public CompletableFuture<Boolean> goToSleigh(String spaceName, String expression) {
+	/**
+	 * Go to the given address
+	 * 
+	 * <p>
+	 * If parsing or evaluation fails, an exception is thrown, or the future completes
+	 * exceptionally. If the address is successfully computed, then a result will be returned. The
+	 * {@link GoToResult#address()} method gives the parsed or computed address. The
+	 * {@link GoToResult#success()} method indicates whether the cursor was successfully set to that
+	 * address.
+	 * 
+	 * @param spaceName the name of the address space
+	 * @param offset a simple offset or Sleigh expression
+	 * @return the result
+	 */
+	public CompletableFuture<GoToResult> goTo(String spaceName, String offset) {
+		TracePlatform platform = current.getPlatform();
+		Language language = platform.getLanguage();
+		AddressSpace space = language.getAddressFactory().getAddressSpace(spaceName);
+		if (space == null) {
+			throw new IllegalArgumentException("No such address space: " + spaceName);
+		}
+		try {
+			Address address = space.getAddress(offset);
+			if (address == null) {
+				address = language.getAddressFactory().getAddress(offset);
+			}
+			if (address != null) {
+				return CompletableFuture
+						.completedFuture(new GoToResult(address, goToAddress(address)));
+			}
+		}
+		catch (AddressFormatException e) {
+			// Fall-through to try Sleigh
+		}
+		return goToSleigh(spaceName, offset);
+	}
+
+	protected CompletableFuture<GoToResult> goToSleigh(String spaceName, String expression) {
 		TracePlatform platform = current.getPlatform();
 		Language language = platform.getLanguage();
 		if (!(language instanceof SleighLanguage)) {
 			throw new IllegalStateException("Current trace does not use Sleigh");
 		}
-		SleighLanguage slang = (SleighLanguage) language;
 		AddressSpace space = language.getAddressFactory().getAddressSpace(spaceName);
 		if (space == null) {
 			throw new IllegalArgumentException("No such address space: " + spaceName);
 		}
-		PcodeExpression expr = SleighProgramCompiler.compileExpression(slang, expression);
+		PcodeExpression expr = DebuggerPcodeUtils.compileExpression(tool, current, expression);
 		return goToSleigh(platform, space, expr);
 	}
 
-	public CompletableFuture<Boolean> goToSleigh(TracePlatform platform, AddressSpace space,
+	protected CompletableFuture<GoToResult> goToSleigh(TracePlatform platform, AddressSpace space,
 			PcodeExpression expression) {
 		PcodeExecutor<byte[]> executor = DebuggerPcodeUtils.executorForCoordinates(tool, current);
 		CompletableFuture<byte[]> result =
@@ -92,7 +135,7 @@ public abstract class DebuggerGoToTrait {
 		return result.thenApplyAsync(offset -> {
 			Address address = space.getAddress(
 				Utils.bytesToLong(offset, offset.length, expression.getLanguage().isBigEndian()));
-			return goToAddress(platform.mapGuestToHost(address));
+			return new GoToResult(address, goToAddress(platform.mapGuestToHost(address)));
 		}, AsyncUtils.SWING_EXECUTOR);
 	}
 }

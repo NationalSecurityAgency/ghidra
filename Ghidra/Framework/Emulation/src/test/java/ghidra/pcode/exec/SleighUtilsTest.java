@@ -15,13 +15,13 @@
  */
 package ghidra.pcode.exec;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.tree.Tree;
 import org.junit.Test;
 
+import ghidra.pcode.exec.SleighUtils.AddressOf;
 import ghidra.pcode.exec.SleighUtils.SleighParseError;
 
 public class SleighUtilsTest {
@@ -61,6 +61,40 @@ public class SleighUtilsTest {
 					----------------^
 					""", e.getMessage());
 		}
+	}
+
+	@Test
+	public void testRecoverAddressOfMismatchErr() {
+		AddressOf addrOf = SleighUtils.recoverAddressOf(null, "ptr + 8");
+		assertNull(addrOf);
+	}
+
+	@Test
+	public void testRecoverAddressOfForm1() {
+		AddressOf addrOf = SleighUtils.recoverAddressOf(null, "*ptr");
+		assertEquals(null, addrOf.space());
+		assertEquals("ptr", SleighUtils.generateSleighExpression(addrOf.offset()));
+	}
+
+	@Test
+	public void testRecoverAddressOfForm2a() {
+		AddressOf addrOf = SleighUtils.recoverAddressOf(null, "*:8 ptr");
+		assertEquals(null, addrOf.space());
+		assertEquals("ptr", SleighUtils.generateSleighExpression(addrOf.offset()));
+	}
+
+	@Test
+	public void testRecoverAddressOfForm2b() {
+		AddressOf addrOf = SleighUtils.recoverAddressOf(null, "*[ram] ptr");
+		assertEquals("ram", addrOf.space());
+		assertEquals("ptr", SleighUtils.generateSleighExpression(addrOf.offset()));
+	}
+
+	@Test
+	public void testRecoverAddressOfForm3() {
+		AddressOf addrOf = SleighUtils.recoverAddressOf(null, "*[ram]:8 ptr");
+		assertEquals("ram", addrOf.space());
+		assertEquals("ptr", SleighUtils.generateSleighExpression(addrOf.offset()));
 	}
 
 	@Test

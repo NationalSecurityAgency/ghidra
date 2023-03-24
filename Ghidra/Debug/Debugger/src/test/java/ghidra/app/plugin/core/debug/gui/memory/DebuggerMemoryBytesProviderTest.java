@@ -629,7 +629,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		performAction(memBytesProvider.actionGoTo, false);
 		DebuggerGoToDialog dialog1 = waitForDialogComponent(DebuggerGoToDialog.class);
 		runSwing(() -> {
-			dialog1.setExpression("r0");
+			dialog1.setOffset("r0");
 			dialog1.okCallback();
 		});
 
@@ -642,7 +642,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		performAction(memBytesProvider.actionGoTo, false);
 		DebuggerGoToDialog dialog2 = waitForDialogComponent(DebuggerGoToDialog.class);
 		runSwing(() -> {
-			dialog2.setExpression("*:4 r0");
+			dialog2.setOffset("*:4 r0");
 			dialog2.okCallback();
 		});
 

@@ -42,6 +42,10 @@
       constant 0x7fff0004 is a known issue. Just use the target's pointer size in bytes &mdash; 8
       in the example.</LI>
 
+      <LI><CODE>*:4 my_global</CODE>: Display 4 bytes starting at the label "my_global", e.g., to
+      read the <CODE>int</CODE> value there. The label may be in the trace or in a program mapped
+      to the trace. Ambiguities are resolved arbitrarily.</LI>
+
       <LI><CODE>*:8 RSP</CODE>: Display 8 bytes of [ram] starting at the offset given by register
       RSP, e.g., to read a <CODE>long</CODE> on the stack.</LI>
 

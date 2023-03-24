@@ -24,6 +24,7 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources.TrackLocationAction;
 import ghidra.async.AsyncUtils;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
+import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.util.TraceAddressSpace;
@@ -67,6 +68,15 @@ public enum NoneLocationTrackingSpec implements LocationTrackingSpec, LocationTr
 	public CompletableFuture<Address> computeTraceAddress(PluginTool tool,
 			DebuggerCoordinates coordinates) {
 		return AsyncUtils.nil();
+	}
+
+	@Override
+	public GoToInput getDefaultGoToInput(PluginTool tool, DebuggerCoordinates coordinates,
+			ProgramLocation location) {
+		if (location == null) {
+			return GoToInput.fromString("00000000");
+		}
+		return GoToInput.fromAddress(location.getAddress());
 	}
 
 	@Override

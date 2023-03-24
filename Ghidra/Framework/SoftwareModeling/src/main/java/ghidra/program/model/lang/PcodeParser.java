@@ -155,7 +155,7 @@ public class PcodeParser extends PcodeCompile {
 		if (sym != null) {
 			return sym;
 		}
-		return PcodeParser.this.sleigh.findSymbol(nm);
+		return sleigh.findSymbol(nm);
 	}
 
 	public SleighBase getSleigh() {
