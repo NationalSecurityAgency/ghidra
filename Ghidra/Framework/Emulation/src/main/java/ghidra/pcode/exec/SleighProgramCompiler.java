@@ -16,11 +16,12 @@
 package ghidra.pcode.exec;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import ghidra.app.plugin.processors.sleigh.*;
 import ghidra.app.plugin.processors.sleigh.template.ConstructTpl;
+import ghidra.pcode.utils.MessageFormattingUtils;
 import ghidra.pcodeCPort.pcoderaw.VarnodeData;
 import ghidra.pcodeCPort.sleighbase.SleighBase;
 import ghidra.pcodeCPort.slghsymbol.*;
@@ -47,6 +48,94 @@ public enum SleighProgramCompiler {
 	private static final String EXPRESSION_SOURCE_NAME = "expression";
 	public static final String NIL_SYMBOL_NAME = "__nil";
 
+	public interface PcodeLogEntry {
+		public static String formatList(List<PcodeLogEntry> list) {
+			return list.stream().map(e -> e.format()).collect(Collectors.joining("\n"));
+		}
+
+		Location loc();
+
+		String msg();
+
+		String type();
+
+		default String format() {
+			return "%s: %s".formatted(type(), MessageFormattingUtils.format(loc(), msg()));
+		}
+	}
+
+	record PcodeError(Location loc, String msg) implements PcodeLogEntry {
+		@Override
+		public String type() {
+			return "ERROR";
+		}
+	}
+
+	record PcodeWarning(Location loc, String msg) implements PcodeLogEntry {
+		@Override
+		public String type() {
+			return "WARNING";
+		}
+	}
+
+	public static class DetailedSleighException extends SleighException {
+		private final List<PcodeLogEntry> details;
+
+		public DetailedSleighException(List<PcodeLogEntry> details) {
+			super(PcodeLogEntry.formatList(details));
+			this.details = List.copyOf(details);
+		}
+
+		public List<PcodeLogEntry> getDetails() {
+			return details;
+		}
+	}
+
+	/**
+	 * A p-code parser that provides programmatic access to error diagnostics.
+	 */
+	public static class ErrorCollectingPcodeParser extends PcodeParser {
+		private final List<PcodeLogEntry> entries = new ArrayList<>();
+
+		public ErrorCollectingPcodeParser(SleighLanguage language) {
+			super(language, UniqueLayout.INJECT.getOffset(language));
+		}
+
+		@Override
+		public void reportError(Location location, String msg) {
+			entries.add(new PcodeError(location, msg));
+			super.reportError(location, msg);
+		}
+
+		@Override
+		public void reportWarning(Location location, String msg) {
+			entries.add(new PcodeWarning(location, msg));
+			super.reportWarning(location, msg);
+		}
+
+		@Override
+		public ConstructTpl compilePcode(String pcodeStatements, String srcFile, int srcLine)
+				throws SleighException {
+			try {
+				return super.compilePcode(pcodeStatements, srcFile, srcLine);
+			}
+			finally {
+				if (getErrors() != 0) {
+					throw new DetailedSleighException(entries);
+				}
+			}
+		}
+
+		@Override
+		public SleighSymbol findSymbol(String nm) {
+			SleighSymbol symbol = super.findSymbol(nm);
+			if (symbol == null) {
+				throw new SleighException("Unknown register: '" + nm + "'");
+			}
+			return symbol;
+		}
+	}
+
 	/**
 	 * Create a p-code parser for the given language
 	 * 
@@ -54,7 +143,7 @@ public enum SleighProgramCompiler {
 	 * @return a parser
 	 */
 	public static PcodeParser createParser(SleighLanguage language) {
-		return new PcodeParser(language, UniqueLayout.INJECT.getOffset(language));
+		return new ErrorCollectingPcodeParser(language);
 	}
 
 	/**
@@ -69,7 +158,7 @@ public enum SleighProgramCompiler {
 	 */
 	public static ConstructTpl compileTemplate(Language language, PcodeParser parser,
 			String sourceName, String source) {
-		return parser.compilePcode(source, EXPRESSION_SOURCE_NAME, 1);
+		return parser.compilePcode(source, sourceName, 1);
 	}
 
 	/**
@@ -162,22 +251,22 @@ public enum SleighProgramCompiler {
 	}
 
 	/**
-	 * Compile the given Sleigh source into a simple p-code program
+	 * Compile the given Sleigh source into a simple p-code program with the given parser
 	 * 
 	 * <p>
 	 * This is suitable for modifying program state using Sleigh statements. Most likely, in
 	 * scripting, or perhaps in a Sleigh repl. The library given during compilation must match the
 	 * library given for execution, at least in its binding of userop IDs to symbols.
 	 * 
+	 * @param the parser to use
 	 * @param language the language of the target p-code machine
 	 * @param sourceName a diagnostic name for the Sleigh source
 	 * @param source the Sleigh source
 	 * @param library the userop library or stub library for binding userop symbols
 	 * @return the compiled p-code program
 	 */
-	public static PcodeProgram compileProgram(SleighLanguage language, String sourceName,
-			String source, PcodeUseropLibrary<?> library) {
-		PcodeParser parser = createParser(language);
+	public static PcodeProgram compileProgram(PcodeParser parser, SleighLanguage language,
+			String sourceName, String source, PcodeUseropLibrary<?> library) {
 		Map<Integer, UserOpSymbol> symbols = library.getSymbols(language);
 		addParserSymbols(parser, symbols);
 
@@ -186,7 +275,18 @@ public enum SleighProgramCompiler {
 	}
 
 	/**
-	 * Compile the given Sleigh expression into a p-code program that can evaluate it
+	 * Compile the given Sleigh source into a simple p-code program
+	 * 
+	 * @see #compileProgram(PcodeParser, SleighLanguage, String, String, PcodeUseropLibrary)
+	 */
+	public static PcodeProgram compileProgram(SleighLanguage language, String sourceName,
+			String source, PcodeUseropLibrary<?> library) {
+		return compileProgram(createParser(language), language, sourceName, source, library);
+	}
+
+	/**
+	 * Compile the given Sleigh expression into a p-code program that can evaluate it, using the
+	 * given parser
 	 * 
 	 * <p>
 	 * TODO: Currently, expressions cannot be compiled for a user-supplied userop library. The
@@ -198,14 +298,23 @@ public enum SleighProgramCompiler {
 	 * @return a p-code program whose {@link PcodeExpression#evaluate(PcodeExecutor)} method will
 	 *         evaluate the expression on the given executor and its state.
 	 */
-	public static PcodeExpression compileExpression(SleighLanguage language, String expression) {
-		PcodeParser parser = createParser(language);
+	public static PcodeExpression compileExpression(PcodeParser parser, SleighLanguage language,
+			String expression) {
 		Map<Integer, UserOpSymbol> symbols = PcodeExpression.CAPTURING.getSymbols(language);
 		addParserSymbols(parser, symbols);
 
 		ConstructTpl template = compileTemplate(language, parser, EXPRESSION_SOURCE_NAME,
 			PcodeExpression.RESULT_NAME + "(" + expression + ");");
 		return constructProgram(PcodeExpression::new, language, template, symbols);
+	}
+
+	/**
+	 * Compile the given Sleigh expression into a p-code program that can evaluate it
+	 * 
+	 * @see #compileExpression(PcodeParser, SleighLanguage, String)
+	 */
+	public static PcodeExpression compileExpression(SleighLanguage language, String expression) {
+		return compileExpression(createParser(language), language, expression);
 	}
 
 	/**

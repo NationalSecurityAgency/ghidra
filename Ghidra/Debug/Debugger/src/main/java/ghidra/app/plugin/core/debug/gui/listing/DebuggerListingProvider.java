@@ -185,7 +185,15 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		}
 
 		@Override
+		protected GoToInput getDefaultInput() {
+			return trackingTrait.getDefaultGoToInput(getLocation());
+		}
+
+		@Override
 		protected boolean goToAddress(Address address) {
+			if (syncTrait.isAutoSyncCursorWithStaticListing()) {
+				syncTrait.doAutoSyncCursorIntoStatic(new ProgramLocation(getProgram(), address));
+			}
 			return getListingPanel().goTo(address);
 		}
 	}

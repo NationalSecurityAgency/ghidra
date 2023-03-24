@@ -22,21 +22,34 @@ import java.util.Map.Entry;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.service.emulation.*;
 import ghidra.app.plugin.core.debug.service.emulation.data.DefaultPcodeDebuggerAccess;
+import ghidra.app.plugin.processors.sleigh.SleighException;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.pcode.emu.ThreadPcodeExecutorState;
 import ghidra.pcode.exec.PcodeArithmetic.Purpose;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
+import ghidra.pcode.exec.SleighProgramCompiler.ErrorCollectingPcodeParser;
 import ghidra.pcode.exec.trace.*;
 import ghidra.pcode.exec.trace.data.DefaultPcodeTraceAccess;
 import ghidra.pcode.exec.trace.data.PcodeTraceDataAccess;
 import ghidra.pcode.utils.Utils;
+import ghidra.pcodeCPort.slghsymbol.SleighSymbol;
+import ghidra.pcodeCPort.slghsymbol.VarnodeSymbol;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemBuffer;
+import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.SymbolType;
+import ghidra.program.util.ProgramLocation;
+import ghidra.sleigh.grammar.Location;
 import ghidra.trace.model.Trace;
+import ghidra.trace.model.TraceLocation;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.TraceMemoryState;
+import ghidra.trace.model.symbol.TraceSymbol;
+import ghidra.trace.model.symbol.TraceSymbolWithLifespan;
 import ghidra.util.NumericUtilities;
 
 /**
@@ -44,6 +57,120 @@ import ghidra.util.NumericUtilities;
  */
 public enum DebuggerPcodeUtils {
 	;
+
+	/**
+	 * A p-code parser that can resolve labels from a trace or its mapped programs.
+	 */
+	public static class LabelBoundPcodeParser extends ErrorCollectingPcodeParser {
+		record ProgSym(String sourceName, String nm, Address address) {
+		}
+
+		private final DebuggerStaticMappingService mappings;
+		private final DebuggerCoordinates coordinates;
+
+		/**
+		 * Construct a parser bound to the given coordinates
+		 * 
+		 * @param tool the tool for the mapping service
+		 * @param coordinates the current coordinates for context
+		 */
+		public LabelBoundPcodeParser(PluginTool tool, DebuggerCoordinates coordinates) {
+			super((SleighLanguage) coordinates.getPlatform().getLanguage());
+			this.mappings = tool.getService(DebuggerStaticMappingService.class);
+			this.coordinates = coordinates;
+		}
+
+		protected SleighSymbol createSleighConstant(String sourceName, String nm, Address address) {
+			return new VarnodeSymbol(new Location(sourceName, 0), nm, getConstantSpace(),
+				address.getOffset(), address.getAddressSpace().getPointerSize());
+		}
+
+		@Override
+		public SleighSymbol findSymbol(String nm) {
+			SleighSymbol symbol = null;
+			try {
+				symbol = super.findSymbol(nm);
+			}
+			catch (SleighException e) {
+				// leave null
+			}
+			if (symbol == null) {
+				symbol = findUserSymbol(nm);
+			}
+			if (symbol == null) {
+				throw new SleighException("Unknown register or label: '" + nm + "'");
+			}
+			return symbol;
+		}
+
+		protected SleighSymbol findUserSymbol(String nm) {
+			Trace trace = coordinates.getTrace();
+			long snap = coordinates.getSnap();
+			for (TraceSymbol symbol : trace.getSymbolManager()
+					.labelsAndFunctions()
+					.getNamed(nm)) {
+				if (symbol instanceof TraceSymbolWithLifespan lifeSym &&
+					!lifeSym.getLifespan().contains(snap)) {
+					continue;
+				}
+				return createSleighConstant(trace.getName(), nm, symbol.getAddress());
+			}
+			for (Program program : mappings.getOpenMappedProgramsAtSnap(trace, snap)) {
+				for (Symbol symbol : program.getSymbolTable().getSymbols(nm)) {
+					if (symbol.isDynamic() || symbol.isExternal()) {
+						continue;
+					}
+					if (symbol.getSymbolType() != SymbolType.FUNCTION &&
+						symbol.getSymbolType() != SymbolType.LABEL) {
+						continue;
+					}
+					TraceLocation tloc = mappings.getOpenMappedLocation(trace,
+						new ProgramLocation(program, symbol.getAddress()), snap);
+					if (tloc == null) {
+						return null;
+					}
+					return createSleighConstant(program.getName(), nm, tloc.getAddress());
+				}
+			}
+			return null;
+		}
+	}
+
+	/**
+	 * Compile the given Sleigh source into a p-code program, resolving user labels
+	 *
+	 * <p>
+	 * The resulting program must only be used with a state bound to the same coordinates. Any
+	 * symbols which are resolved to labels in the trace or its mapped programs are effectively
+	 * substituted for their offsets. If a label moves, the program should be recompiled in order to
+	 * update those substitutions.
+	 * 
+	 * @param tool the tool for context
+	 * @param coordinates the coordinates for the trace (and programs) from which labels can be
+	 *            resolved
+	 * @see SleighProgramCompiler#compileProgram(PcodeParser, SleighLanguage, String, String,
+	 *      PcodeUseropLibrary)
+	 */
+	public static PcodeProgram compileProgram(PluginTool tool, DebuggerCoordinates coordinates,
+			String sourceName, String source, PcodeUseropLibrary<?> library) {
+		return SleighProgramCompiler.compileProgram(new LabelBoundPcodeParser(tool, coordinates),
+			(SleighLanguage) coordinates.getPlatform().getLanguage(), sourceName, source, library);
+	}
+
+	/**
+	 * Compile the given Sleigh expression into a p-code program, resolving user labels
+	 *
+	 * <p>
+	 * This has the same limitations as
+	 * {@link #compileProgram(PluginTool, DebuggerCoordinates, String, String, PcodeUseropLibrary)}
+	 * 
+	 * @see SleighProgramCompiler#compileExpression(PcodeParser, SleighLanguage, String)
+	 */
+	public static PcodeExpression compileExpression(PluginTool tool,
+			DebuggerCoordinates coordinates, String source) {
+		return SleighProgramCompiler.compileExpression(new LabelBoundPcodeParser(tool, coordinates),
+			(SleighLanguage) coordinates.getPlatform().getLanguage(), source);
+	}
 
 	/**
 	 * Get a p-code executor state for the given coordinates
@@ -76,7 +203,8 @@ public enum DebuggerPcodeUtils {
 			return shared;
 		}
 		PcodeExecutorState<byte[]> local = new RWTargetRegistersPcodeExecutorState(
-			access.getDataForLocalState(coordinates.getThread(), coordinates.getFrame()), Mode.RW);
+			access.getDataForLocalState(coordinates.getThread(), coordinates.getFrame()),
+			Mode.RW);
 		return new ThreadPcodeExecutorState<>(shared, local) {
 			@Override
 			public void clear() {
@@ -319,7 +447,8 @@ public enum DebuggerPcodeUtils {
 					bytes.binaryOp(opcode, sizeout, sizein1, in1.bytes.bytes, sizein2,
 						in2.bytes.bytes)),
 				STATE.binaryOp(opcode, sizeout, sizein1, in1.state, sizein2, in2.state),
-				location.binaryOp(opcode, sizeout, sizein1, in1.location, sizein2, in2.location),
+				location.binaryOp(opcode, sizeout, sizein1, in1.location, sizein2,
+					in2.location),
 				READS.binaryOp(opcode, sizeout, sizein1, in1.reads, sizein2, in2.reads));
 		}
 
@@ -495,7 +624,8 @@ public enum DebuggerPcodeUtils {
 		}
 
 		@Override
-		public WatchValue getVar(AddressSpace space, WatchValue offset, int size, boolean quantize,
+		public WatchValue getVar(AddressSpace space, WatchValue offset, int size,
+				boolean quantize,
 				Reason reason) {
 			return piece.getVar(space, offset.bytes.bytes, size, quantize, reason);
 		}

@@ -844,23 +844,31 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		waitForSwing();
 
 		assertTrue(listingProvider.actionGoTo.isEnabled());
+
 		performAction(listingProvider.actionGoTo, false);
 		DebuggerGoToDialog dialog1 = waitForDialogComponent(DebuggerGoToDialog.class);
 		runSwing(() -> {
-			dialog1.setExpression("r0");
+			dialog1.setOffset("00400123");
 			dialog1.okCallback();
 		});
-
 		waitForPass(
-			() -> assertEquals(tb.addr(0x00401234), listingProvider.getLocation().getAddress()));
+			() -> assertEquals(tb.addr(0x00400123), listingProvider.getLocation().getAddress()));
 
 		performAction(listingProvider.actionGoTo, false);
 		DebuggerGoToDialog dialog2 = waitForDialogComponent(DebuggerGoToDialog.class);
 		runSwing(() -> {
-			dialog2.setExpression("*:4 r0");
+			dialog2.setOffset("r0");
 			dialog2.okCallback();
 		});
+		waitForPass(
+			() -> assertEquals(tb.addr(0x00401234), listingProvider.getLocation().getAddress()));
 
+		performAction(listingProvider.actionGoTo, false);
+		DebuggerGoToDialog dialog3 = waitForDialogComponent(DebuggerGoToDialog.class);
+		runSwing(() -> {
+			dialog3.setOffset("*:4 r0");
+			dialog3.okCallback();
+		});
 		waitForPass(
 			() -> assertEquals(tb.addr(0x00404321), listingProvider.getLocation().getAddress()));
 	}

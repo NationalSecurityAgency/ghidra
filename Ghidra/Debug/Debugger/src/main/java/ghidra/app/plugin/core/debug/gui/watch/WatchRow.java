@@ -21,7 +21,6 @@ import java.util.concurrent.CompletableFuture;
 
 import db.Transaction;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
-import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.app.services.DataTypeManagerService;
 import ghidra.app.services.DebuggerControlService;
 import ghidra.app.services.DebuggerControlService.StateEditor;
@@ -96,7 +95,8 @@ public class WatchRow {
 			return;
 		}
 		try {
-			compiled = SleighProgramCompiler.compileExpression(provider.language, expression);
+			compiled = DebuggerPcodeUtils.compileExpression(provider.getTool(), provider.current,
+				expression);
 		}
 		catch (Exception e) {
 			error = e;
@@ -106,7 +106,6 @@ public class WatchRow {
 
 	protected void reevaluate() {
 		blank();
-		SleighLanguage language = provider.language;
 		PcodeExecutor<WatchValue> executor = provider.asyncWatchExecutor;
 		PcodeExecutor<byte[]> prevExec = provider.prevValueExecutor;
 		if (executor == null) {
@@ -114,9 +113,7 @@ public class WatchRow {
 			return;
 		}
 		CompletableFuture.runAsync(() -> {
-			if (compiled == null || compiled.getLanguage() != language) {
-				recompile();
-			}
+			recompile();
 			if (compiled == null) {
 				provider.contextChanged();
 				return;

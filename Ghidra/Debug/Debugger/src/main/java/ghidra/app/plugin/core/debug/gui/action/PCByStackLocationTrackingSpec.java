@@ -23,6 +23,7 @@ import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.TrackLocationAction;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
+import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.TraceAddressSnapRange;
 import ghidra.trace.model.stack.TraceStack;
@@ -85,6 +86,17 @@ public enum PCByStackLocationTrackingSpec implements LocationTrackingSpec, Locat
 	public CompletableFuture<Address> computeTraceAddress(PluginTool tool,
 			DebuggerCoordinates coordinates) {
 		return CompletableFuture.supplyAsync(() -> doComputeTraceAddress(tool, coordinates));
+	}
+
+	@Override
+	public GoToInput getDefaultGoToInput(PluginTool tool, DebuggerCoordinates coordinates,
+			ProgramLocation location) {
+		Address address = doComputeTraceAddress(tool, coordinates);
+		if (address == null) {
+			return NoneLocationTrackingSpec.INSTANCE.getDefaultGoToInput(tool, coordinates,
+				location);
+		}
+		return GoToInput.fromAddress(address);
 	}
 
 	// Note it does no good to override affectByRegChange. It must do what we'd avoid anyway.

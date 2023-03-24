@@ -135,7 +135,7 @@ public class DebuggerListingPluginScreenShots extends GhidraScreenShotGenerator 
 
 		performAction(listingProvider.actionGoTo, false);
 		DebuggerGoToDialog dialog = waitForDialogComponent(DebuggerGoToDialog.class);
-		dialog.setExpression("RAX");
+		dialog.setOffset("RAX");
 
 		captureDialog(dialog);
 	}

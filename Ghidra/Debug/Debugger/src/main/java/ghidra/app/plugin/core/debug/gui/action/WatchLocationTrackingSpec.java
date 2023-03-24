@@ -24,15 +24,16 @@ import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.TrackLocationAction;
 import ghidra.app.plugin.core.debug.gui.watch.WatchRow;
-import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.async.AsyncUtils;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.DebuggerPcodeUtils.WatchValue;
+import ghidra.pcode.exec.SleighUtils.AddressOf;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
-import ghidra.program.model.lang.Language;
+import ghidra.program.util.ProgramLocation;
 import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.stack.TraceStack;
 import ghidra.trace.util.TraceAddressSpace;
 
@@ -44,6 +45,11 @@ public class WatchLocationTrackingSpec implements LocationTrackingSpec {
 	public static final String CONFIG_PREFIX = "TRACK_WATCH_";
 
 	private final String expression;
+	private final String label;
+
+	public static boolean isTrackable(WatchRow watch) {
+		return SleighUtils.recoverAddressOf(null, watch.getExpression()) != null;
+	}
 
 	/**
 	 * Derive a tracking specification from the given watch
@@ -62,6 +68,8 @@ public class WatchLocationTrackingSpec implements LocationTrackingSpec {
 	 */
 	public WatchLocationTrackingSpec(String expression) {
 		this.expression = expression;
+		AddressOf addrOf = SleighUtils.recoverAddressOf(null, expression);
+		this.label = SleighUtils.generateSleighExpression(addrOf.offset());
 	}
 
 	@Override
@@ -97,7 +105,7 @@ public class WatchLocationTrackingSpec implements LocationTrackingSpec {
 
 	@Override
 	public String getLocationLabel() {
-		return "&watch";
+		return label;
 	}
 
 	/**
@@ -124,16 +132,25 @@ public class WatchLocationTrackingSpec implements LocationTrackingSpec {
 				return AsyncUtils.nil();
 			}
 			return CompletableFuture.supplyAsync(() -> {
-				Language language = current.getPlatform().getLanguage();
-				if (!(language instanceof SleighLanguage slang)) {
-					return null;
-				}
-				if (compiled == null || compiled.getLanguage() != language) {
-					compiled = SleighProgramCompiler.compileExpression(slang, expression);
-				}
+				compiled = DebuggerPcodeUtils.compileExpression(tool, current, expression);
 				WatchValue value = compiled.evaluate(asyncExec);
 				return value == null ? null : value.address();
 			});
+		}
+
+		@Override
+		public GoToInput getDefaultGoToInput(PluginTool tool, DebuggerCoordinates coordinates,
+				ProgramLocation location) {
+			TracePlatform platform = current.getPlatform();
+			String defaultSpace =
+				platform == null ? "ram" : platform.getLanguage().getDefaultSpace().getName();
+			AddressOf addrOf = SleighUtils.recoverAddressOf(defaultSpace, expression);
+			if (addrOf == null) {
+				return NoneLocationTrackingSpec.INSTANCE.getDefaultGoToInput(tool, coordinates,
+					location);
+			}
+			return new GoToInput(addrOf.space(),
+				SleighUtils.generateSleighExpression(addrOf.offset()));
 		}
 
 		@Override
