@@ -936,6 +936,33 @@
         <P><B>Selection Color</B> - Set the Browser <A href=
         "CodeBrowser.htm#Selection">Selection</A> color.</P>
       </BLOCKQUOTE>
+      
+      <H3><A name="Template_Display_Options"></A>Template Display Options</H3>
+      <BLOCKQUOTE>
+        <P><B>Max Template Depth</B> - Sets the depth to display nested templates. A
+        depth of 0 completely simplifies the entire template, while a depth of 1 will
+        show 1 level of templates.For example, if the name was "foo&lt;char,bar&lt;int, dog&lt;char&gt;&gt;",
+        a nesting depth of 0 would display "foo&lt;&gt;" and an nesting depth of 1 would display
+        "foo&lt;char, bar&lt;&gt;&gt;".
+        </P>
+
+        <P><B>Max Template Length</B> - This is the maximum length any template string will display.
+        If the template string exceeds this length, the middle part of the template will be replaced
+        with "..." to get the string down to the minimum length. For example, the string 
+        "foo&lt;abcdefghijklmnopqrstuvwxyz,0123456789&gt;" would display something like "foo&lt;abcd...6789&gt;" 
+        if the max length was set to 10. Note that this restriction is applied AFTER 
+        any simplifications from the nesting depth.
+		</P>
+
+        <P><B>Min Template Length</B> - This is the minimum length of a template before template 
+        simplification is applied. In other words, if the template string is less than this length,
+        then the template will not be simplified. This is done so that simple templates such as 
+        "foo&lt;char&gt;" are not simplified to "foo&lt;&gt;", even if the template nesting depth is set to 0.
+        </P>
+        
+        <P><B>Simplify Templated Names</B> - This turns the entire templating simplification feature
+        on or off. If this is off, none of the other option have any effect.</P>
+      </BLOCKQUOTE>
 
       <H3><A name="XREFs_Field"></A>XREFs Field</H3>
 

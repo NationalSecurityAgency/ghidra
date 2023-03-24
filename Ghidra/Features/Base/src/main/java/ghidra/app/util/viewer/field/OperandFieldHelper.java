@@ -491,6 +491,7 @@ abstract class OperandFieldHelper extends FieldFactory {
 		}
 
 		ColorStyleAttributes attributes = getOpAttributes(opElem, inst, opIndex);
+
 		AttributedString as = new AttributedString(opElem.toString(), attributes.colorAttribute,
 			getMetrics(attributes.styleAttribute), underline, ListingColors.UNDERLINE);
 		elements.add(new OperandFieldElement(as, opIndex, subOpIndex, characterOffset));

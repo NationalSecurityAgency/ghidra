@@ -20,6 +20,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import ghidra.GhidraOptions;
+import ghidra.app.util.template.TemplateSimplifier;
 import ghidra.framework.options.*;
 import ghidra.program.model.listing.CodeUnitFormatOptions;
 import ghidra.util.HelpLocation;
@@ -103,7 +104,7 @@ public class BrowserCodeUnitFormatOptions extends CodeUnitFormatOptions
 	BrowserCodeUnitFormatOptions(ToolOptions fieldOptions, boolean autoUpdate) {
 		this.fieldOptions = fieldOptions;
 		this.displayOptions = new OptionsBasedDataTypeDisplayOptions(fieldOptions);
-
+		templateSimplifier = new TemplateSimplifier(fieldOptions);
 		boolean exists = fieldOptions.isRegistered(NAMESPACE_OPTIONS);
 
 		if (!exists) {
@@ -144,7 +145,10 @@ public class BrowserCodeUnitFormatOptions extends CodeUnitFormatOptions
 	@Override
 	public void optionsChanged(ToolOptions options, String optionName, Object oldValue,
 			Object newValue) {
-		if (optionName.equals(GhidraOptions.SHOW_BLOCK_NAME_OPTION) ||
+		if (templateSimplifier.fieldOptionsChanged(options, optionName, oldValue, newValue)) {
+			notifyListeners();
+		}
+		else if (optionName.equals(GhidraOptions.SHOW_BLOCK_NAME_OPTION) ||
 			optionName.equals(REGISTER_VARIABLE_MARKUP_OPTION) ||
 			optionName.equals(STACK_VARIABLE_MARKUP_OPTION) ||
 			optionName.equals(INFERRED_VARIABLE_MARKUP_OPTION) ||
