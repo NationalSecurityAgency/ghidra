@@ -15,9 +15,7 @@
  */
 package ghidra.app.plugin.core.osgi;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.file.Files;
+import java.io.*;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.Map.Entry;
@@ -42,6 +40,7 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.util.Msg;
 import ghidra.util.task.TaskLauncher;
 import ghidra.util.task.TaskMonitor;
+import utilities.util.FileUtilities;
 
 /**
  * Hosts the embedded OSGi framework and manages {@link GhidraBundle}s.
@@ -373,9 +372,11 @@ public class BundleHost {
 	}
 
 	private static String makeCacheDir() throws IOException {
-		Path cacheDir = getCacheDir();
-		Files.createDirectories(cacheDir);
-		return cacheDir.toAbsolutePath().toString();
+		File cacheDir = getCacheDir().toFile();
+		if (!FileUtilities.mkdirs(cacheDir)) {
+			throw new IOException("Failed to make cache directory: " + cacheDir);
+		}
+		return cacheDir.getAbsolutePath();
 	}
 
 	private void createAndConfigureFramework() throws IOException {

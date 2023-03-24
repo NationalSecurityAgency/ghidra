@@ -280,6 +280,46 @@ public abstract class AbstractPointerMsType extends AbstractMsType {
 		return memberPointerType;
 	}
 
+	/**
+	 * Returns true of flat 0:32 address model
+	 * @return true if flat
+	 */
+	public boolean isFlat() {
+		return isFlat;
+	}
+
+	/**
+	 * Returns true if volatile pointer
+	 * @return true if volatile
+	 */
+	public boolean isVolatile() {
+		return isVolatile;
+	}
+
+	/**
+	 * Returns true if const pointer
+	 * @return true if const
+	 */
+	public boolean isConst() {
+		return isConst;
+	}
+
+	/**
+	 * Returns true if pointer not aligned on normal boundary
+	 * @return true if not aligned
+	 */
+	public boolean isUnaligned() {
+		return isUnaligned;
+	}
+
+	/**
+	 * Returns the record number of the class containing the member pointer
+	 * @return The record number
+	 */
+	public RecordNumber getMemberPointerContainingClassRecordNumber() {
+		return memberPointerContainingClassRecordNumber;
+	}
+
 	@Override
 	public void emit(StringBuilder builder, Bind bind) {
 		StringBuilder myBuilder = new StringBuilder();
@@ -315,7 +355,7 @@ public abstract class AbstractPointerMsType extends AbstractMsType {
 	 * Parses the attributes of the pointer.
 	 * <P>
 	 * Implementing class must, in the appropriate order pertinent to itself, parse
-	 * certain attributes, which at a minimum will fill in {@link #pointerType}, 
+	 * certain attributes, which at a minimum will fill in {@link #pointerType},
 	 * {@link #pointerMode}, {@link #isFlat}, {@link #isVolatile}, {@link #isConst},
 	 * and {@link #isUnaligned}.
 	 * @param reader {@link PdbByteReader} from which the attributes are parsed.

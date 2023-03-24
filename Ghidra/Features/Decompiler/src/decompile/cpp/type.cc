@@ -1894,6 +1894,67 @@ int4 TypeUnion::findCompatibleResolve(Datatype *ct) const
   return -1;
 }
 
+TypePartialStruct::TypePartialStruct(const TypePartialStruct &op)
+  : Datatype(op)
+{
+  stripped = op.stripped;
+  container = op.container;
+  offset = op.offset;
+}
+
+TypePartialStruct::TypePartialStruct(Datatype *contain,int4 off,int4 sz,Datatype *strip)
+  : Datatype(sz,TYPE_PARTIALSTRUCT)
+{
+#ifdef CPUI_DEBUG
+  if (contain->getMetatype() != TYPE_STRUCT && contain->getMetatype() != TYPE_ARRAY)
+    throw new LowlevelError("Parent of partial struct is not a struture or array");
+#endif
+  flags |= has_stripped;
+  stripped = strip;
+  container = contain;
+  offset = off;
+}
+
+void TypePartialStruct::printRaw(ostream &s) const
+
+{
+  container->printRaw(s);
+  s << "[off=" << dec << offset << ",sz=" << size << ']';
+}
+
+Datatype *TypePartialStruct::getSubType(uintb off,uintb *newoff) const
+
+{
+  off += offset;
+  return container->getSubType(off, newoff);
+}
+
+int4 TypePartialStruct::compare(const Datatype &op,int4 level) const
+
+{
+  int4 res = Datatype::compare(op,level);
+  if (res != 0) return res;
+  // Both must be partial
+  TypePartialStruct *tp = (TypePartialStruct *) &op;
+  if (offset != tp->offset) return (offset < tp->offset) ? -1 : 1;
+  level -= 1;
+  if (level < 0) {
+    if (id == op.getId()) return 0;
+    return (id < op.getId()) ? -1 : 1;
+  }
+  return container->compare(*tp->container,level); // Compare the underlying union
+}
+
+int4 TypePartialStruct::compareDependency(const Datatype &op) const
+
+{
+  if (submeta != op.getSubMeta()) return (submeta < op.getSubMeta()) ? -1 : 1;
+  TypePartialStruct *tp = (TypePartialStruct *) &op;	// Both must be partial
+  if (container != tp->container) return (container < tp->container) ? -1 : 1;	// Compare absolute pointers
+  if (offset != tp->offset) return (offset < tp->offset) ? -1 : 1;
+  return (op.getSize()-size);
+}
+
 TypePartialUnion::TypePartialUnion(const TypePartialUnion &op)
   : Datatype(op)
 {
@@ -3370,6 +3431,14 @@ TypeStruct *TypeFactory::getTypeStruct(const string &n)
   return (TypeStruct *) findAdd(tmp);
 }
 
+TypePartialStruct *TypeFactory::getTypePartialStruct(Datatype *contain,int4 off,int4 sz)
+
+{
+  Datatype *strip = getBase(sz, TYPE_UNKNOWN);
+  TypePartialStruct tps(contain,off,sz,strip);
+  return (TypePartialStruct *) findAdd(tps);
+}
+
 /// The created union will be incomplete and have no fields. They must be added later.
 /// \param n is the name of the union
 /// \return the TypeUnion object
@@ -3495,16 +3564,23 @@ TypePointer *TypeFactory::getTypePointerWithSpace(Datatype *ptrTo,AddrSpace *spc
 Datatype *TypeFactory::getExactPiece(Datatype *ct,int4 offset,int4 size)
 
 {
-  uintb newOff = offset;
-  while(ct != (Datatype *)0 && ct->getSize() > size && ct->getMetatype() != TYPE_UNION) {
-    ct = ct->getSubType(newOff, &newOff);
-  }
-  if (ct == (Datatype *)0 || ct->getSize() < size)
-    return (Datatype *)0;
-  if (ct->getSize() == size)
-    return ct;
-  if (ct->getMetatype() == TYPE_UNION)	// If we hit a containing union
-    return getTypePartialUnion((TypeUnion *)ct, newOff, size);
+  Datatype *lastType = (Datatype *)0;
+  uintb curOff = offset;
+  do {
+    if (ct->getSize() <= size) {
+      if (ct->getSize() == size)
+	return ct;			// Perfect size match
+      break;
+    }
+    else if (ct->getMetatype() == TYPE_UNION) {
+      return getTypePartialUnion((TypeUnion *)ct, curOff, size);
+    }
+    lastType = ct;
+    ct = ct->getSubType(curOff,&curOff);
+  } while(ct != (Datatype *)0);
+  // If we reach here, lastType is bigger than size
+  if (lastType->getMetatype() == TYPE_STRUCT || lastType->getMetatype() == TYPE_ARRAY)
+    return getTypePartialStruct(lastType, curOff, size);
   return (Datatype *)0;
 }
 

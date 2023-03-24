@@ -257,7 +257,7 @@ public class AddressEvaluator {
 		if (globalSymbols.size() == 1) {
 			return globalSymbols.get(0).getAddress();
 		}
-		return null;
+		return getValueObject(tok);
 	}
 
 	private static Object getValueObject(String strValue) {
@@ -268,10 +268,11 @@ public class AddressEvaluator {
 				start = 2;
 				radix = 16;
 			}
-			if (strValue.endsWith("UL")) {
+			strValue = strValue.toLowerCase();
+			if (strValue.endsWith("ul")) {
 				strValue = strValue.substring(start, strValue.length() - 2);
 			}
-			else if (strValue.endsWith("L") || strValue.endsWith("l") || strValue.endsWith("U")) {
+			else if (strValue.endsWith("l") || strValue.endsWith("u")) {
 				strValue = strValue.substring(start, strValue.length() - 1);
 			}
 			else {

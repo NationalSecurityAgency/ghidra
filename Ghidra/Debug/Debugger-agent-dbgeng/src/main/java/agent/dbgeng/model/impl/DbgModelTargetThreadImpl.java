@@ -21,14 +21,19 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import agent.dbgeng.dbgeng.DebugThreadId;
-import agent.dbgeng.manager.*;
+import agent.dbgeng.manager.DbgReason;
+import agent.dbgeng.manager.DbgState;
+import agent.dbgeng.manager.DbgThread;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
-import agent.dbgeng.model.iface1.DbgModelTargetFocusScope;
-import agent.dbgeng.model.iface2.*;
+import agent.dbgeng.model.iface2.DbgModelTargetProcess;
+import agent.dbgeng.model.iface2.DbgModelTargetRegisterContainerAndBank;
+import agent.dbgeng.model.iface2.DbgModelTargetThread;
+import agent.dbgeng.model.iface2.DbgModelTargetThreadContainer;
 import ghidra.dbg.target.TargetEnvironment;
-import ghidra.dbg.target.TargetFocusScope;
 import ghidra.dbg.target.TargetMethod.AnnotatedTargetMethod;
-import ghidra.dbg.target.schema.*;
+import ghidra.dbg.target.schema.TargetAttributeType;
+import ghidra.dbg.target.schema.TargetElementType;
+import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.dbg.util.PathUtils;
 
 @TargetObjectSchemaInfo(
@@ -61,7 +66,7 @@ public class DbgModelTargetThreadImpl extends DbgModelTargetObjectImpl
 		TargetStepKind.EXTENDED);
 
 	protected static String indexThread(DebugThreadId debugThreadId) {
-		return PathUtils.makeIndex(debugThreadId.id);
+		return debugThreadId.id();
 	}
 
 	protected static String indexThread(DbgThread thread) {
@@ -110,24 +115,31 @@ public class DbgModelTargetThreadImpl extends DbgModelTargetObjectImpl
 
 	@Override
 	public String getDisplay() {
-		if (getManager().isKernelMode()) {
-			return "[PR" + thread.getId().id + "]";
+		if (thread == null) {
+			return "[unknown]";
 		}
+		DebugThreadId id = thread.getId();
 		Long tid = thread.getTid();
-		if (tid < 0) {
-			return "[" + thread.getId().id + "]";
+		if (getManager().isKernelMode()) {
+			if (id.isSystem()) {
+				return "[" + id.id() + "]";
+			}
+			String tidstr = Long.toString(tid, base);
+			if (base == 16) {
+				tidstr = "0x" + tidstr;
+			}
+			Long offset = thread.getOffset();
+			return offset == null ? "[" + tidstr + "]" : "[" + tidstr + " : " + Long.toHexString(offset) + "]";
 		}
-		String tidstr = Long.toString(tid, base);
-		if (base == 16) {
-			tidstr = "0x" + tidstr;
-		}
-		return "[" + thread.getId().id + ":" + tidstr + "]";
-	}
-
-	@Override
-	public void threadSelected(DbgThread eventThread, DbgStackFrame frame, DbgCause cause) {
-		if (eventThread.equals(thread)) {
-			((DbgModelTargetFocusScope) searchForSuitable(TargetFocusScope.class)).setFocus(this);
+		else {
+			if (tid < 0) {
+				return "[" + id.id() + "]";
+			}
+			String tidstr = Long.toString(tid, base);
+			if (base == 16) {
+				tidstr = "0x" + tidstr;
+			}
+			return "[" + id.id() + ":" + tidstr + "]";
 		}
 	}
 

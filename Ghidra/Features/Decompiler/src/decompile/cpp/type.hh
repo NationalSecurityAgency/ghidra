@@ -99,23 +99,23 @@ enum sub_metatype {
   SUB_VOID = 22,		///< Compare as a TYPE_VOID
   SUB_SPACEBASE = 21,		///< Compare as a TYPE_SPACEBASE
   SUB_UNKNOWN = 20,		///< Compare as a TYPE_UNKNOWN
-  SUB_INT_CHAR = 19,		///< Signed 1-byte character, sub-type of TYPE_INT
-  SUB_UINT_CHAR = 18,		///< Unsigned 1-byte character, sub-type of TYPE_UINT
-  SUB_INT_PLAIN = 17,		///< Compare as a plain TYPE_INT
-  SUB_UINT_PLAIN = 16,		///< Compare as a plain TYPE_UINT
-  SUB_INT_ENUM = 15,		///< Signed enum, sub-type of TYPE_INT
-  SUB_UINT_ENUM = 14,		///< Unsigned enum, sub-type of TYPE_UINT
-  SUB_INT_UNICODE = 13,		///< Signed wide character, sub-type of TYPE_INT
-  SUB_UINT_UNICODE = 12,	///< Unsigned wide character, sub-type of TYPE_UINT
-  SUB_BOOL = 11,		///< Compare as TYPE_BOOL
-  SUB_CODE = 10,		///< Compare as TYPE_CODE
-  SUB_FLOAT = 9,		///< Compare as TYPE_FLOAT
-  SUB_PTRREL_UNK = 8,		///< Pointer to unknown field of struct, sub-type of TYPE_PTR
-  SUB_PTR = 7,			///< Compare as TYPE_PTR
-  SUB_PTRREL = 6,		///< Pointer relative to another data-type, sub-type of TYPE_PTR
-  SUB_PTR_STRUCT = 5,		///< Pointer into struct, sub-type of TYPE_PTR
-  SUB_ARRAY = 4,		///< Compare as TYPE_ARRAY
-  SUB_PARTIALSTRUCT = 3,	///< Compare as TYPE_PARTIALSTRUCT
+  SUB_PARTIALSTRUCT = 19,	///< Compare as TYPE_PARTIALSTRUCT
+  SUB_INT_CHAR = 18,		///< Signed 1-byte character, sub-type of TYPE_INT
+  SUB_UINT_CHAR = 17,		///< Unsigned 1-byte character, sub-type of TYPE_UINT
+  SUB_INT_PLAIN = 16,		///< Compare as a plain TYPE_INT
+  SUB_UINT_PLAIN = 15,		///< Compare as a plain TYPE_UINT
+  SUB_INT_ENUM = 14,		///< Signed enum, sub-type of TYPE_INT
+  SUB_UINT_ENUM = 13,		///< Unsigned enum, sub-type of TYPE_UINT
+  SUB_INT_UNICODE = 12,		///< Signed wide character, sub-type of TYPE_INT
+  SUB_UINT_UNICODE = 11,	///< Unsigned wide character, sub-type of TYPE_UINT
+  SUB_BOOL = 10,		///< Compare as TYPE_BOOL
+  SUB_CODE = 9,			///< Compare as TYPE_CODE
+  SUB_FLOAT = 8,		///< Compare as TYPE_FLOAT
+  SUB_PTRREL_UNK = 7,		///< Pointer to unknown field of struct, sub-type of TYPE_PTR
+  SUB_PTR = 6,			///< Compare as TYPE_PTR
+  SUB_PTRREL = 5,		///< Pointer relative to another data-type, sub-type of TYPE_PTR
+  SUB_PTR_STRUCT = 4,		///< Pointer into struct, sub-type of TYPE_PTR
+  SUB_ARRAY = 3,		///< Compare as TYPE_ARRAY
   SUB_STRUCT = 2,		///< Compare as TYPE_STRUCT
   SUB_UNION = 1,		///< Compare as TYPE_UNION
   SUB_PARTIALUNION = 0		///< Compare as a TYPE_PARTIALUNION
@@ -484,6 +484,24 @@ public:
   virtual const TypeField *resolveTruncation(int4 offset,PcodeOp *op,int4 slot,int4 &newoff);
 };
 
+/// \brief A data-type that holds \e part of a TypeStruct or TypeArray
+class TypePartialStruct : public Datatype {
+  friend class TypeFactory;
+  Datatype *stripped;		///< The \e undefined data-type to use if a formal data-type is required.
+  Datatype *container;		///< Parent structure or array of which \b this is a part
+  int4 offset;			///< Byte offset within the parent where \b this starts
+public:
+  TypePartialStruct(const TypePartialStruct &op);	///< Construct from another TypePartialStruct
+  TypePartialStruct(Datatype *contain,int4 off,int4 sz,Datatype *strip);	///< Constructor
+  Datatype *getParent(void) const { return container; }	///< Get the data-type containing \b this piece
+  virtual void printRaw(ostream &s) const;
+  virtual Datatype *getSubType(uintb off,uintb *newoff) const;
+  virtual int4 compare(const Datatype &op,int4 level) const;
+  virtual int4 compareDependency(const Datatype &op) const;
+  virtual Datatype *clone(void) const { return new TypePartialStruct(*this); }
+  virtual Datatype *getStripped(void) const { return stripped; }
+};
+
 /// \brief An internal data-type for holding information about a variable's relative position within a union data-type
 ///
 /// This is a data-type that can be assigned to a Varnode offset into a Symbol, where either the Symbol itself or
@@ -500,7 +518,7 @@ public:
   TypePartialUnion(const TypePartialUnion &op);			///< Construct from another TypePartialUnion
   TypePartialUnion(TypeUnion *contain,int4 off,int4 sz,Datatype *strip);	///< Constructor
   TypeUnion *getParentUnion(void) const { return container; }	///< Get the union which \b this is part of
-  virtual void printRaw(ostream &s) const;			///< Print a description of the type to stream
+  virtual void printRaw(ostream &s) const;
   virtual const TypeField *findTruncation(int4 off,int4 sz,const PcodeOp *op,int4 slot,int4 &newoff) const;
   virtual int4 numDepend(void) const;
   virtual Datatype *getDepend(int4 index) const;
@@ -681,6 +699,7 @@ public:
   TypePointer *getTypePointerNoDepth(int4 s,Datatype *pt,uint4 ws);	///< Construct a depth limited pointer data-type
   TypeArray *getTypeArray(int4 as,Datatype *ao);		///< Construct an array data-type
   TypeStruct *getTypeStruct(const string &n);			///< Create an (empty) structure
+  TypePartialStruct *getTypePartialStruct(Datatype *contain,int4 off,int4 sz);	///< Create a partial structure
   TypeUnion *getTypeUnion(const string &n);			///< Create an (empty) union
   TypePartialUnion *getTypePartialUnion(TypeUnion *contain,int4 off,int4 sz);	///< Create a partial union
   TypeEnum *getTypeEnum(const string &n);			///< Create an (empty) enumeration

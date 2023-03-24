@@ -15,14 +15,19 @@
  */
 package agent.dbgeng.manager.cmd;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import agent.dbgeng.dbgeng.DebugProcessId;
 import agent.dbgeng.dbgeng.DebugSystemObjects;
+import agent.dbgeng.dbgeng.DebugSystemProcessRecord;
 import agent.dbgeng.manager.DbgCause.Causes;
 import agent.dbgeng.manager.DbgManager;
 import agent.dbgeng.manager.DbgProcess;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
+import agent.dbgeng.manager.impl.DbgProcessImpl;
 import ghidra.util.Msg;
 
 /**
@@ -44,19 +49,29 @@ public class DbgListProcessesCommand extends AbstractDbgCommand<Map<DebugProcess
 				continue; // Do nothing, we're in sync
 			}
 			// Need to create the inferior as if we received =thread-group-created
-			Msg.warn(this, "Resync: Was missing group: i" + id);
 			DebugSystemObjects so = manager.getSystemObjects();
-			so.setCurrentProcessId(id);
-			int pid = so.getCurrentProcessSystemId();
-			manager.getProcessComputeIfAbsent(id, pid, true);
+			long pid;
+			if (!manager.isKernelMode()) {
+				Msg.warn(this, "Resync: Was missing group: i" + id);
+				so.setCurrentProcessId(id);
+				pid = so.getCurrentProcessSystemId();
+			} 
+			else {
+				id = new DebugSystemProcessRecord(id.value());
+				pid = -1;
+			}
+			DbgProcessImpl proc = manager.getProcessComputeIfAbsent(id, pid, true);
+			Long offset = so.getCurrentProcessDataOffset();
+			proc.setOffset(offset);
 		}
 		for (DebugProcessId id : new ArrayList<>(cur)) {
 			if (updatedProcessIds.contains(id)) {
 				continue; // Do nothing, we're in sync
 			}
-			// Need to remove the inferior as if we received =thread-group-removed
-			Msg.warn(this, "Resync: Had extra group: i" + id);
-			manager.removeProcess(id, Causes.UNCLAIMED);
+			if (!manager.isKernelMode()) {
+				Msg.warn(this, "Resync: Had extra group: i" + id);
+				manager.removeProcess(id, Causes.UNCLAIMED);
+			}
 		}
 		return allProcesses;
 	}

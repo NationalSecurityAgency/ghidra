@@ -238,6 +238,10 @@ public class GhidraLauncher {
 				String path = line.trim();
 				if (!path.startsWith("Module:") && path.endsWith(".jar")) {
 					ResourceFile jarFile = new ResourceFile(path);
+					if (path.startsWith("#") || path.startsWith("//")) {
+						System.err.println("Skipping jar file: " + jarFile);
+						continue;
+					}
 					if (!jarFile.isFile()) {
 						System.err.println("Failed to find required jar file: " + jarFile);
 						continue;

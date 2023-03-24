@@ -16,17 +16,52 @@
 package agent.dbgmodel.gadp.impl;
 
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.sun.jna.platform.win32.WinDef.ULONGLONG;
 import com.sun.jna.platform.win32.COM.COMException;
 
-import agent.dbgeng.dbgeng.*;
+import agent.dbgeng.dbgeng.DebugAdvanced;
+import agent.dbgeng.dbgeng.DebugClient;
+import agent.dbgeng.dbgeng.DebugControl;
+import agent.dbgeng.dbgeng.DebugDataSpaces;
+import agent.dbgeng.dbgeng.DebugEventCallbacks;
+import agent.dbgeng.dbgeng.DebugInputCallbacks;
+import agent.dbgeng.dbgeng.DebugModule;
+import agent.dbgeng.dbgeng.DebugModuleInfo;
+import agent.dbgeng.dbgeng.DebugOutputCallbacks;
+import agent.dbgeng.dbgeng.DebugProcessId;
+import agent.dbgeng.dbgeng.DebugProcessRecord;
+import agent.dbgeng.dbgeng.DebugRegisters;
+import agent.dbgeng.dbgeng.DebugRunningProcess;
 import agent.dbgeng.dbgeng.DebugRunningProcess.Description;
 import agent.dbgeng.dbgeng.DebugRunningProcess.Description.ProcessDescriptionFlags;
-import agent.dbgeng.dbgeng.DebugValue.*;
+import agent.dbgeng.dbgeng.DebugServerId;
+import agent.dbgeng.dbgeng.DebugSessionId;
+import agent.dbgeng.dbgeng.DebugSymbolEntry;
+import agent.dbgeng.dbgeng.DebugSymbolId;
+import agent.dbgeng.dbgeng.DebugSymbolName;
+import agent.dbgeng.dbgeng.DebugSymbols;
+import agent.dbgeng.dbgeng.DebugSystemObjects;
+import agent.dbgeng.dbgeng.DebugThreadId;
+import agent.dbgeng.dbgeng.DebugValue;
+import agent.dbgeng.dbgeng.DebugValue.DebugInt16Value;
+import agent.dbgeng.dbgeng.DebugValue.DebugInt32Value;
+import agent.dbgeng.dbgeng.DebugValue.DebugInt64Value;
+import agent.dbgeng.dbgeng.DebugValue.DebugValueType;
 import agent.dbgmodel.dbgmodel.bridge.HostDataModelAccess;
-import agent.dbgmodel.dbgmodel.debughost.*;
+import agent.dbgmodel.dbgmodel.debughost.DebugHost;
+import agent.dbgmodel.dbgmodel.debughost.DebugHostContext;
+import agent.dbgmodel.dbgmodel.debughost.DebugHostMemory1;
+import agent.dbgmodel.dbgmodel.debughost.DebugHostModule1;
+import agent.dbgmodel.dbgmodel.debughost.DebugHostSymbol1;
+import agent.dbgmodel.dbgmodel.debughost.DebugHostSymbolEnumerator;
+import agent.dbgmodel.dbgmodel.debughost.DebugHostSymbols;
 import agent.dbgmodel.dbgmodel.main.ModelObject;
 import agent.dbgmodel.impl.dbgmodel.DebugRunningProcessImpl;
 import agent.dbgmodel.impl.dbgmodel.bridge.HDMAUtil;
@@ -592,7 +627,7 @@ public class WrappedDbgModel
 	public void setCurrentThreadId(DebugThreadId dti) {
 		DebugSystemObjects so = client.getSystemObjects();
 		DebugThreadId currentThreadId = so.getCurrentThreadId();
-		if (dti.id != currentThreadId.id) {
+		if (!dti.id().equals(currentThreadId.id())) {
 			so.setCurrentThreadId(dti);
 		}
 		/*
@@ -919,7 +954,7 @@ public class WrappedDbgModel
 		}
 		int pid = Integer.decode(id);
 		if (pid == 0) {
-			return new DebugProcessId(-1);
+			return new DebugProcessRecord(-1);
 		}
 		DebugProcessId dpi = client.getSystemObjects().getProcessIdBySystemId(pid);
 		addObj(dpi, id);

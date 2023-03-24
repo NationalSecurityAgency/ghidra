@@ -24,7 +24,6 @@ import ghidra.app.util.bin.format.dwarf4.encoding.DWARFForm;
 import ghidra.app.util.bin.format.dwarf4.next.DWARFProgram;
 import ghidra.app.util.bin.format.dwarf4.next.StringTable;
 import ghidra.program.model.data.LEB128;
-import ghidra.util.NumberUtil;
 
 /**
  * A factory for deserializing {@link DWARFAttributeValue dwarf attribute} from
@@ -57,21 +56,21 @@ public class DWARFAttributeFactory {
 		switch (form) {
 			case DW_FORM_addr:
 				return new DWARFNumericAttribute(
-					DWARFUtil.readVarSizedULong(reader, unit.getPointerSize()));
+					reader.readNextUnsignedValue(unit.getPointerSize()));
 			case DW_FORM_ref1: {
-				long uoffset = DWARFUtil.readVarSizedULong(reader, 1);
+				long uoffset = reader.readNextUnsignedValue(1);
 				return new DWARFNumericAttribute(uoffset + unit.getStartOffset());
 			}
 			case DW_FORM_ref2: {
-				long uoffset = DWARFUtil.readVarSizedULong(reader, 2);
+				long uoffset = reader.readNextUnsignedValue(2);
 				return new DWARFNumericAttribute(uoffset + unit.getStartOffset());
 			}
 			case DW_FORM_ref4: {
-				long uoffset = DWARFUtil.readVarSizedULong(reader, 4);
+				long uoffset = reader.readNextUnsignedValue(4);
 				return new DWARFNumericAttribute(uoffset + unit.getStartOffset());
 			}
 			case DW_FORM_ref8: {
-				long uoffset = DWARFUtil.readVarSizedULong(reader, 8);
+				long uoffset = reader.readNextUnsignedValue(8);
 				return new DWARFNumericAttribute(uoffset + unit.getStartOffset());
 			}
 			case DW_FORM_ref_udata: {
@@ -112,20 +111,17 @@ public class DWARFAttributeFactory {
 				return new DWARFBlobAttribute(reader.readNextByteArray(length));
 			}
 			case DW_FORM_data1:
-				return new DWARFAmbigNumericAttribute(reader.readNextByte(),
-					NumberUtil.UNSIGNED_BYTE_MASK);
+				return new DWARFNumericAttribute(8, reader.readNextByte(), true);
 			case DW_FORM_data2:
-				return new DWARFAmbigNumericAttribute(reader.readNextShort(),
-					NumberUtil.UNSIGNED_SHORT_MASK);
+				return new DWARFNumericAttribute(16, reader.readNextShort(), true);
 			case DW_FORM_data4:
-				return new DWARFAmbigNumericAttribute(reader.readNextInt(),
-					NumberUtil.UNSIGNED_INT_MASK);
+				return new DWARFNumericAttribute(32, reader.readNextInt(), true);
 			case DW_FORM_data8:
-				return new DWARFNumericAttribute(reader.readNextLong());
+				return new DWARFNumericAttribute(64, reader.readNextLong(), true);
 			case DW_FORM_sdata:
-				return new DWARFNumericAttribute(reader.readNext(LEB128::signed));
+				return new DWARFNumericAttribute(64, reader.readNext(LEB128::signed), true);
 			case DW_FORM_udata:
-				return new DWARFNumericAttribute(reader.readNext(LEB128::unsigned));
+				return new DWARFNumericAttribute(64, reader.readNext(LEB128::unsigned), false);
 
 			case DW_FORM_exprloc: {
 				int length = reader.readNextUnsignedVarIntExact(LEB128::unsigned);

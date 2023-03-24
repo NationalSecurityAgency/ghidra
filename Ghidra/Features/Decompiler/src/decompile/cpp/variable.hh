@@ -48,10 +48,17 @@ class VariableGroup {
   };
 
   set<VariablePiece *,PieceCompareByOffset> pieceSet;	///< The set of VariablePieces making up \b this group
+  int4 size;					///< Number of contiguous bytes covered by the whole group
+  int4 symbolOffset;				///< Byte offset of \b this group within its containing Symbol
 public:
+  VariableGroup(void) { size = 0; symbolOffset = 0; }
   bool empty(void) const { return pieceSet.empty(); }	///< Return \b true if \b this group has no pieces
   void addPiece(VariablePiece *piece);		///< Add a new piece to \b this group
+  void adjustOffsets(int4 amt);			///< Adjust offset for every piece by the given amount
   void removePiece(VariablePiece *piece);	///< Remove a piece from \b this group
+  int4 getSize(void) const { return size; }	///< Get the number of bytes \b this group covers
+  void setSymbolOffset(int4 val) { symbolOffset = val; }	///< Cache the symbol offset for the group
+  int4 getSymbolOffset(void) const { return symbolOffset; }	///< Get offset of \b this group within its Symbol
 };
 
 /// \brief Information about how a HighVariable fits into a larger group or Symbol
@@ -80,11 +87,12 @@ public:
   void markExtendCoverDirty(void) const;	///< Mark all intersecting pieces as having a dirty extended cover
   void updateIntersections(void) const;	///< Calculate intersections with other pieces in the group
   void updateCover(void) const;	///< Calculate extended cover based on intersections
-  void adjustOffset(int4 amt);	///< Adjust every piece's offset by the given amount
   void transferGroup(VariableGroup *newGroup);	///< Transfer \b this piece to another VariableGroup
   void setHigh(HighVariable *newHigh) { high = newHigh; }	///< Move ownership of \b this to another HighVariable
   void combineOtherGroup(VariablePiece *op2,vector<HighVariable *> &mergePairs);	///< Combine two VariableGroups
 };
+
+class HighIntersectTest;
 
 /// \brief A high-level variable modeled as a list of low-level variables, each written once
 ///
@@ -122,6 +130,7 @@ private:
   friend class Varnode;
   friend class Merge;
   friend class VariablePiece;
+  friend class HighIntersectTest;
   vector<Varnode *> inst;		///< The member Varnode objects making up \b this HighVariable
   int4 numMergeClasses;			///< Number of different speculative merge classes in \b this
   mutable uint4 highflags;		///< Dirtiness flags
@@ -145,7 +154,7 @@ private:
   bool hasCopyIn2(void) const { return ((highflags&copy_in2)!=0); }	///< Is there at least two COPYs into \b this
   void remove(Varnode *vn);				///< Remove a member Varnode from \b this
   void mergeInternal(HighVariable *tv2,bool isspeculative);	///< Merge another HighVariable into \b this
-  void merge(HighVariable *tv2,bool isspeculative);	///< Merge with another HighVariable taking into account groups
+  void merge(HighVariable *tv2,HighIntersectTest *testCache,bool isspeculative);	///< Merge with another HighVariable taking into account groups
   void setSymbol(Varnode *vn) const;		///< Update Symbol information for \b this from the given member Varnode
   void setSymbolReference(Symbol *sym,int4 off);	///< Attach a reference to a Symbol to \b this
   void transferPiece(HighVariable *tv2);		///< Transfer ownership of another's VariablePiece to \b this
@@ -167,6 +176,7 @@ public:
   Varnode *getInstance(int4 i) const { return inst[i]; }	///< Get the i-th member Varnode
   void finalizeDatatype(Datatype *tp);		///< Set a final datatype for \b this variable
   void groupWith(int4 off,HighVariable *hi2);		///< Put \b this and another HighVariable in the same intersection group
+  void establishGroupSymbolOffset(void);	///< Transfer \b symbol offset of \b this to the VariableGroup
 
   /// \brief Print details of the cover for \b this (for debug purposes)
   ///
@@ -179,7 +189,6 @@ public:
   Varnode *getInputVarnode(void) const;		///< Find (the) input member Varnode
   Varnode *getTypeRepresentative(void) const;	///< Get a member Varnode with the strongest data-type
   Varnode *getNameRepresentative(void) const;	///< Get a member Varnode that dictates the naming of \b this HighVariable
-  Varnode *getPartialOrAddrTied(void) const;	///< Find the first member that can act as partial symbol storage
   int4 getNumMergeClasses(void) const { return numMergeClasses; }	///< Get the number of speculative merges for \b this
   bool isMapped(void) const { updateFlags(); return ((flags&Varnode::mapped)!=0); }	///< Return \b true if \b this is mapped
   bool isPersist(void) const { updateFlags(); return ((flags&Varnode::persist)!=0); }	///< Return \b true if \b this is a global variable
@@ -191,7 +200,6 @@ public:
   bool isUnaffected(void) const { updateFlags(); return ((flags&Varnode::unaffected)!=0); }	///< Return \b true if \b this is an \e unaffected register
   bool isExtraOut(void) const { updateFlags(); return ((flags&(Varnode::indirect_creation|Varnode::addrtied))==Varnode::indirect_creation); }	///< Return \b true if \b this is an extra output
   bool isProtoPartial(void) const { updateFlags(); return ((flags&Varnode::proto_partial)!=0); }	///< Return \b true if \b this is a piece concatenated into a larger whole
-  bool isPartialOrAddrTied(void) const { updateFlags(); return ((flags&(Varnode::addrtied|Varnode::proto_partial))!=0); }	///< Return \b true if \b this is potential partial symbol
   void setMark(void) const { flags |= Varnode::mark; }		///< Set the mark on this variable
   void clearMark(void) const { flags &= ~Varnode::mark; }	///< Clear the mark on this variable
   bool isMark(void) const { return ((flags&Varnode::mark)!=0); }	///< Return \b true if \b this is marked
@@ -208,7 +216,6 @@ public:
   bool isUnattached(void) const { return inst.empty(); }	///< Return \b true if \b this has no member Varnode
   bool isTypeLock(void) const { updateType(); return ((flags & Varnode::typelock)!=0); }	///< Return \b true if \b this is \e typelocked
   bool isNameLock(void) const { updateFlags(); return ((flags & Varnode::namelock)!=0); }	///< Return \b true if \b this is \e namelocked
-  bool sameGroup(const HighVariable *op2) const;	///< Return \b true if \b and other variable are parts of the same variable
   void encode(Encoder &encoder) const;		///< Encode \b this variable to stream as a \<high> element
 #ifdef MERGEMULTI_DEBUG
   void verifyCover(void) const;
@@ -217,6 +224,42 @@ public:
   static bool compareName(Varnode *vn1,Varnode *vn2);	///< Determine which given Varnode is most nameable
   static bool compareJustLoc(const Varnode *a,const Varnode *b);	///< Compare based on storage location
   static int4 markExpression(Varnode *vn,vector<HighVariable *> &highList);	///< Mark and collect variables in expression
+};
+
+/// \brief A record for caching a Cover intersection test between two HighVariable objects
+///
+/// This is just a pair of HighVariable objects that can be used as a map key. The HighIntersectTest
+/// class uses it to cache intersection test results between the two variables in a map.
+class HighEdge {
+  friend class HighIntersectTest;
+  HighVariable *a;		///< First HighVariable of the pair
+  HighVariable *b;		///< Second HighVariable of the pair
+public:
+  /// \brief Comparator
+  bool operator<(const HighEdge &op2) const { if (a==op2.a) return (b<op2.b); return (a<op2.a); }
+  HighEdge(HighVariable *c,HighVariable *d) { a=c; b=d; } ///< Constructor
+};
+
+/// \brief A cache of Cover intersection tests for HighVariables
+///
+/// An test is performed by calling the intersect() method, which returns the result of a full
+/// Cover intersection test, taking into account, overlapping pieces, shadow Varnodes etc. The
+/// results of the test are cached in \b this object, so repeated calls do not need to perform the
+/// full calculation.  The cache examines HighVariable dirtiness flags to determine if its Cover
+/// and cached tests are stale.  The Cover can be externally updated, without performing a test,
+/// and still keeping the cached tests accurate, by calling the updateHigh() method.  If two HighVariables
+/// to be merged, the cached tests can be updated by calling moveIntersectTest() before merging.
+class HighIntersectTest {
+  map<HighEdge,bool> highedgemap; ///< A cache of intersection tests, sorted by HighVariable pair
+  static void gatherBlockVarnodes(HighVariable *a,int4 blk,const Cover &cover,vector<Varnode *> &res);
+  static bool testBlockIntersection(HighVariable *a,int4 blk,const Cover &cover,int4 relOff,const vector<Varnode *> &blist);
+  bool blockIntersection(HighVariable *a,HighVariable *b,int4 blk);
+  void purgeHigh(HighVariable *high); ///< Remove cached intersection tests for a given HighVariable
+public:
+  void moveIntersectTests(HighVariable *high1,HighVariable *high2);
+  bool updateHigh(HighVariable *a); ///< Make sure given HighVariable's Cover is up-to-date
+  bool intersection(HighVariable *a,HighVariable *b);
+  void clear(void) { highedgemap.clear(); }
 };
 
 /// The internal cover is marked as dirty. If \b this is a piece of a VariableGroup, it and all the other

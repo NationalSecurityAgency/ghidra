@@ -13,82 +13,15 @@
 .gitignore||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
-data/generic.theme.properties||GHIDRA||||END|
-src/main/java/ghidra/framework/options/package.html||GHIDRA||||END|
 src/main/java/ghidra/util/datastruct/package.html||GHIDRA||||END|
 src/main/java/ghidra/util/graph/attributes/package.html||GHIDRA||||END|
 src/main/java/ghidra/util/graph/package.html||GHIDRA||||END|
-src/main/java/ghidra/util/layout/package.html||GHIDRA||||END|
 src/main/java/ghidra/util/map/package.html||GHIDRA||||END|
 src/main/java/ghidra/util/xml/package.html||GHIDRA||||END|
 src/main/resources/generic.log4j.xml||GHIDRA||||END|
 src/main/resources/generic.log4jdev.xml||GHIDRA||||END|
 src/main/resources/generic.log4jfile.xml||GHIDRA||||END|
 src/main/resources/generic.log4jtest.xml||GHIDRA||||END|
-src/main/resources/images/EmptyIcon.gif||GHIDRA||||END|
-src/main/resources/images/EmptyIcon16.gif||GHIDRA||||END|
-src/main/resources/images/GhidraIcon128.png||GHIDRA||||END|
-src/main/resources/images/GhidraIcon16.png||GHIDRA||||END|
-src/main/resources/images/GhidraIcon24.png||GHIDRA||||END|
-src/main/resources/images/GhidraIcon256.png||GHIDRA||||END|
-src/main/resources/images/GhidraIcon32.png||GHIDRA||||END|
-src/main/resources/images/GhidraIcon40.png||GHIDRA||||END|
-src/main/resources/images/GhidraIcon48.png||GHIDRA||||END|
-src/main/resources/images/GhidraIcon64.png||GHIDRA||||END|
-src/main/resources/images/Plus2.png||GHIDRA||||END|
-src/main/resources/images/applications-multimedia16.png||Tango Icons - Public Domain|||tango|END|
-src/main/resources/images/checkmark_green.gif||GHIDRA||||END|
-src/main/resources/images/closedSmallFolder.png||Modified Nuvola Icons - LGPL 2.1||||END|
-src/main/resources/images/collapse_all.png||GHIDRA||||END|
-src/main/resources/images/core.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
-src/main/resources/images/core24.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
-src/main/resources/images/dialog-cancel.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
-src/main/resources/images/disk.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
-src/main/resources/images/disk_save_as.png||FAMFAMFAM Icons - CC 2.5||||END|
-src/main/resources/images/down.png||GHIDRA||||END|
-src/main/resources/images/dragon16.gif||GHIDRA||||END|
-src/main/resources/images/edit-cut.png||Tango Icons - Public Domain|||tango icon set|END|
-src/main/resources/images/edit-cut22.png||Tango Icons - Public Domain|||tango icon set|END|
-src/main/resources/images/edit-delete.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
-src/main/resources/images/emblem-important.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
-src/main/resources/images/erase16.png||GHIDRA||||END|
-src/main/resources/images/error.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
-src/main/resources/images/exec.png||Crystal Clear Icons - LGPL 2.1||||END|
-src/main/resources/images/expand_all.png||GHIDRA||||END|
-src/main/resources/images/flag.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
-src/main/resources/images/go-home.png||Tango Icons - Public Domain|||tango icon set|END|
-src/main/resources/images/greenDragon16.png||GHIDRA||||END|
-src/main/resources/images/greenDragon24.png||GHIDRA||||END|
-src/main/resources/images/help-browser.png||Tango Icons - Public Domain|||tango icon set|END|
-src/main/resources/images/information.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
-src/main/resources/images/internet-web-browser16.png||Tango Icons - Public Domain|||originally internet-web-browser.png from tango|END|
-src/main/resources/images/kgpg.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
-src/main/resources/images/left.alternate.png||GHIDRA||||END|
-src/main/resources/images/left.png||GHIDRA||||END|
-src/main/resources/images/locationIn.gif||GHIDRA||||END|
-src/main/resources/images/locationOut.gif||GHIDRA||||END|
-src/main/resources/images/mergemgr16.gif||GHIDRA||||END|
-src/main/resources/images/network-receive16.png||Tango Icons - Public Domain|||originally network-receive.png from tango|END|
-src/main/resources/images/openFolder.png||Modified Nuvola Icons - LGPL 2.1||||END|
-src/main/resources/images/openSmallFolder.png||Modified Nuvola Icons - LGPL 2.1||||END|
-src/main/resources/images/page_paste.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
-src/main/resources/images/page_white_copy.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
-src/main/resources/images/process-stop.png||Tango Icons - Public Domain|||Theirs: Oxygen icon theme (dual license; LGPL or CC-SA-3.0)tango icon set|END|
-src/main/resources/images/program_obj.png||GHIDRA|||Custom Icon|END|
-src/main/resources/images/redDragon16.png||GHIDRA|||Renamed GIF version of redDragon16.png|END|
-src/main/resources/images/redDragon24.png||GHIDRA||||END|
-src/main/resources/images/redDragon32.png||GHIDRA||||END|
-src/main/resources/images/reload3.png||Crystal Clear Icons - LGPL 2.1||||END|
-src/main/resources/images/right.alternate.png||GHIDRA||||END|
-src/main/resources/images/right.png||GHIDRA||||END|
-src/main/resources/images/software-update-urgent.png||Tango Icons - Public Domain|||tango icon set|END|
-src/main/resources/images/sortascending.png||GHIDRA||||END|
-src/main/resources/images/sortdescending.png||GHIDRA||||END|
-src/main/resources/images/text_align_justify.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
-src/main/resources/images/up.png||GHIDRA||||END|
-src/main/resources/images/video-x-generic16.png||Tango Icons - Public Domain|||tango|END|
-src/main/resources/images/viewmagfit.png||Nuvola Icons - LGPL 2.1|||Nuvola icon set|END|
-src/main/resources/images/warning.png||FAMFAMFAM Icons - CC 2.5|||famfamfam silk icon set|END|
 src/main/resources/log4j-appender-console-with-links.xml||GHIDRA||||END|
 src/main/resources/log4j-appender-console.xml||GHIDRA||||END|
 src/main/resources/log4j-appender-logpanel.xml||GHIDRA||||END|

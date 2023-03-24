@@ -15,7 +15,14 @@
  */
 package agent.dbgeng.manager.cmd;
 
-import agent.dbgeng.manager.*;
+import agent.dbgeng.dbgeng.DebugProcessId;
+import agent.dbgeng.dbgeng.DebugSystemObjects;
+import agent.dbgeng.dbgeng.DebugThreadId;
+import agent.dbgeng.manager.DbgCommand;
+import agent.dbgeng.manager.DbgEvent;
+import agent.dbgeng.manager.DbgProcess;
+import agent.dbgeng.manager.DbgState;
+import agent.dbgeng.manager.DbgThread;
 import agent.dbgeng.manager.evt.DbgCommandDoneEvent;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
 
@@ -26,6 +33,12 @@ import agent.dbgeng.manager.impl.DbgManagerImpl;
  */
 public abstract class AbstractDbgCommand<T> implements DbgCommand<T> {
 	protected final DbgManagerImpl manager;
+	DbgProcess previousProcess;
+	Long previousProcessOffset;
+	DebugProcessId previousProcessId;
+	DbgThread previousThread;
+	Long previousThreadOffset;
+	DebugThreadId previousThreadId;
 
 	/**
 	 * Construct a new command to be executed by the given manager
@@ -59,5 +72,53 @@ public abstract class AbstractDbgCommand<T> implements DbgCommand<T> {
 	@Override
 	public void invoke() {
 		// Nothing
+	}
+	
+	public void setProcess(DbgProcess process) {
+		DebugSystemObjects so = manager.getSystemObjects();
+		previousProcess = process;
+		if (manager.isKernelMode() && !process.getId().isSystem()) {
+			previousProcessOffset = so.getCurrentProcessDataOffset();
+			so.setImplicitProcessDataOffset(process.getOffset());		
+		}
+		else {
+			previousProcessId = so.getCurrentProcessId();
+			so.setCurrentProcessId(process.getId());	
+		}
+	}
+	
+	
+	public void resetProcess() {
+		DebugSystemObjects so = manager.getSystemObjects();
+		if (manager.isKernelMode() && !previousProcess.getId().isSystem()) {
+			so.setImplicitProcessDataOffset(previousProcessOffset);
+		}
+		else {
+			so.setCurrentProcessId(previousProcessId);	
+		}
+	}	
+	
+	public void setThread(DbgThread thread) {
+		DebugSystemObjects so = manager.getSystemObjects();
+		previousThread = thread;
+		if (manager.isKernelMode() && !thread.getId().isSystem()) {
+			previousThreadOffset = so.getCurrentThreadDataOffset();
+			so.setImplicitThreadDataOffset(thread.getOffset());		
+		}
+		else {
+			previousThreadId = so.getCurrentThreadId();
+			so.setCurrentThreadId(thread.getId());	
+		}
+	}
+	
+	
+	public void resetThread() {
+		DebugSystemObjects so = manager.getSystemObjects();
+		if (manager.isKernelMode() && !previousThread.getId().isSystem()) {
+			so.setImplicitThreadDataOffset(previousThreadOffset);
+		}
+		else {
+			so.setCurrentThreadId((DebugThreadId) previousThreadId);	
+		}
 	}
 }

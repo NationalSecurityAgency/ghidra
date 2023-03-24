@@ -15,11 +15,12 @@
  */
 package ghidra.util.xml;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.ParserConfigurationException;
@@ -87,19 +88,21 @@ public class XmlUtilities {
 	 * @return the encoded XML string
 	 */
 	public static String escapeElementEntities(String xml) {
-		StringBuffer buffer = new StringBuffer();
-		for (int i = 0; i < xml.length(); i++) {
-			char next = xml.charAt(i);
-			if ((next < ' ') && (next != 0x09) && (next != 0x0A) && (next != 0x0D)) {
+		StringBuilder buffer = new StringBuilder();
+		for (int offset = 0; offset < xml.length();) {
+			int codePoint = xml.codePointAt(offset);
+			offset += Character.charCount(codePoint);
+
+			if ((codePoint < ' ') && (codePoint != 0x09) && (codePoint != 0x0A) && (codePoint != 0x0D)) {
 				continue;
 			}
-			if (next >= 0x7F) {
+			if (codePoint >= 0x7F) {
 				buffer.append("&#x");
-				buffer.append(Integer.toString(next, 16).toUpperCase());
+				buffer.append(Integer.toString(codePoint, 16).toUpperCase());
 				buffer.append(";");
 				continue;
 			}
-			switch (next) {
+			switch (codePoint) {
 				case '<':
 					buffer.append(LESS_THAN);
 					break;
@@ -115,11 +118,8 @@ public class XmlUtilities {
 				case '&':
 					buffer.append(AMPERSAND);
 					break;
-// Why was 7F deleted
-//				case 0x7F:
-//					break;
 				default:
-					buffer.append(next);
+					buffer.appendCodePoint(codePoint);
 					break;
 			}
 		}
@@ -137,10 +137,10 @@ public class XmlUtilities {
 	public static String unEscapeElementEntities(String escapedXMLString) {
 
 		Matcher matcher = HEX_DIGIT_PATTERN.matcher(escapedXMLString);
-		StringBuffer buffy = new StringBuffer();
+		StringBuilder buffy = new StringBuilder();
 		while (matcher.find()) {
-			int intValue = Integer.parseInt(matcher.group(1), 16);
-			matcher.appendReplacement(buffy, Character.toString((char) intValue));
+			int codePoint = Integer.parseInt(matcher.group(1), 16);
+			matcher.appendReplacement(buffy, Character.toString(codePoint));
 		}
 		matcher.appendTail(buffy);
 

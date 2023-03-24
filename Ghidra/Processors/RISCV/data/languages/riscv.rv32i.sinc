@@ -123,15 +123,15 @@
 }
 
 # jal d,a 0000006f 0000007f JSR (0, 0) 
-# call if RA set, destreg == RA
-:jal ra,immUJ is immUJ & ra & r0711=1 & op0001=0x3 & op0204=0x3 & op0506=0x3
+# call for rd = RA|T0 set to inst_next
+:jal rd,immUJ is immUJ & rd & (r0711=1 | r0711=5) & op0001=0x3 & op0204=0x3 & op0506=0x3
 {
-	ra = inst_next;
+	rd = inst_next;
 	call immUJ;
 }
 
-# goto if RA not set, destreg != RA
-:jal rd,immUJ is immUJ & rd & op0001=0x3 & op0204=0x3 & op0506=0x3
+# goto for all other rd set to inst_next
+:jal rd,immUJ is immUJ & rd & r0711 & op0001=0x3 & op0204=0x3 & op0506=0x3
 {
 	rd = inst_next;
 	goto immUJ;
@@ -144,16 +144,16 @@
 }
 
 # jalr d,s,j 00000067 0000707f JSR (0, 0)
-# call if RA set, destreg == RA
-:jalr ra,rs1,immI is rs1 & immI & ra & r0711=1 & op0001=0x3 & op0204=0x1 & op0506=0x3 & funct3=0x0
+# call for rd = RA|T0 set to inst_next
+:jalr rd,rs1,immI is rs1 & immI & rd & (r0711=1 | r0711=5) & op0001=0x3 & op0204=0x1 & op0506=0x3 & funct3=0x0
 {
 	local ea:$(XLEN) = (rs1 + immI) & ~1;
-	ra = inst_next;
+	rd = inst_next;
 	call [ea];
 }
 
-# goto if RA not set, destreg != RA
-:jalr rd,rs1,immI is rs1 & immI & rd & op0001=0x3 & op0204=0x1 & op0506=0x3 & funct3=0x0
+# goto for all other rd set to inst_next
+:jalr rd,rs1,immI is rs1 & immI & rd & r0711 & op0001=0x3 & op0204=0x1 & op0506=0x3 & funct3=0x0
 {
 	local ea:$(XLEN) = (rs1 + immI) & ~1;
 	rd = inst_next;

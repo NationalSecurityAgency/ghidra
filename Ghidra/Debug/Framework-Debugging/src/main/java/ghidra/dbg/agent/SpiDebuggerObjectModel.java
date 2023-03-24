@@ -21,7 +21,6 @@ import java.util.concurrent.CompletableFuture;
 
 import ghidra.async.AsyncUtils;
 import ghidra.dbg.DebuggerObjectModel;
-import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
 import ghidra.dbg.error.DebuggerModelTypeException;
 import ghidra.dbg.target.TargetObject;
 import ghidra.dbg.util.PathUtils;
@@ -50,17 +49,26 @@ public interface SpiDebuggerObjectModel extends DebuggerObjectModel {
 	}
 
 	public static CompletableFuture<Object> fetchSuccessorValue(TargetObject obj,
-			List<String> path, boolean refresh, boolean followLinks) {
+			List<String> path, RefreshBehavior refresh, boolean followLinks) {
 		if (path.isEmpty()) {
 			return CompletableFuture.completedFuture(obj);
 		}
 		String key = path.get(0);
 		CompletableFuture<?> futureChild;
-		if (refresh) {
-			futureChild = fetchFreshChild(obj, key);
-		}
-		else {
-			futureChild = obj.fetchChild(key);
+		switch (refresh) {
+			case REFRESH_ALWAYS:
+				futureChild = fetchFreshChild(obj, key);
+				break;
+			case REFRESH_NEVER:
+				futureChild = obj.fetchChild(key);
+				break;
+			case REFRESH_WHEN_ABSENT:
+			default:
+				CompletableFuture<?> futureChild0 = obj.fetchChild(key);		
+				futureChild = futureChild0.thenCompose(c -> {
+					return c == null ? fetchFreshChild(obj, key) : CompletableFuture.completedFuture(c);
+				});
+				break;
 		}
 		return futureChild.thenCompose(c -> {
 			if (c == null) {
@@ -91,7 +99,7 @@ public interface SpiDebuggerObjectModel extends DebuggerObjectModel {
 	}
 
 	@Override
-	public default CompletableFuture<?> fetchModelValue(List<String> path, boolean refresh) {
+	public default CompletableFuture<?> fetchModelValue(List<String> path, RefreshBehavior refresh) {
 		return fetchModelRoot().thenCompose(root -> {
 			return fetchSuccessorValue(root, path, refresh, true);
 		});
@@ -99,7 +107,45 @@ public interface SpiDebuggerObjectModel extends DebuggerObjectModel {
 
 	@Override
 	public default CompletableFuture<?> fetchModelValue(List<String> path) {
-		return fetchModelValue(path, false);
+		return fetchModelValue(path, RefreshBehavior.REFRESH_NEVER);
+	}
+
+	public static CompletableFuture<Object> fetchSuccessorValueUsingAvailableCache(TargetObject obj,
+			List<String> path, boolean followLinks) {
+		if (path.isEmpty()) {
+			return CompletableFuture.completedFuture(obj);
+		}
+		String key = path.get(0);
+		CompletableFuture<?> futureChild = obj.fetchChild(key);		
+		CompletableFuture<?> ffutureChild = futureChild.thenCompose(c -> {
+			return c == null ? fetchFreshChild(obj, key) : CompletableFuture.completedFuture(c);
+		});
+		return ffutureChild.thenCompose(c -> {
+			if (c == null) {
+				return AsyncUtils.nil();
+			}
+			if (!(c instanceof TargetObject)) {
+				if (path.size() == 1) {
+					return CompletableFuture.completedFuture(c);
+				}
+				else {
+					List<String> p = PathUtils.extend(obj.getPath(), key);
+					throw DebuggerModelTypeException.typeRequired(c, p, TargetObject.class);
+				}
+			}
+			TargetObject child = (TargetObject) c;
+			if (PathUtils.isLink(obj.getPath(), key, child.getPath()) && !followLinks) {
+				if (path.size() == 1) {
+					return CompletableFuture.completedFuture(c);
+				}
+				else {
+					List<String> p = PathUtils.extend(obj.getPath(), key);
+					throw DebuggerModelTypeException.linkForbidden(child, p);
+				}
+			}
+			List<String> remains = path.subList(1, path.size());
+			return fetchSuccessorValueUsingAvailableCache(child, remains, followLinks);
+		});
 	}
 
 	@Override

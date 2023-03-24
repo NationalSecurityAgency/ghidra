@@ -2448,7 +2448,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		Set<Address> primaryFixups = new HashSet<>();
 		for (SymbolDB symbol : fixupPinnedSymbols) {
 			Address currentAddress = symbol.getAddress();
-			Address beforeBaseChangeAddress = oldBase.add(currentAddress.subtract(base));
+			Address beforeBaseChangeAddress = oldBase.addWrap(currentAddress.subtract(base));
 			primaryFixups.add(currentAddress);
 			primaryFixups.add(beforeBaseChangeAddress);
 

@@ -20,14 +20,24 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import agent.dbgeng.dbgeng.DebugProcessId;
-import agent.dbgeng.manager.*;
+import agent.dbgeng.manager.DbgCause;
+import agent.dbgeng.manager.DbgProcess;
+import agent.dbgeng.manager.DbgState;
+import agent.dbgeng.manager.DbgThread;
 import agent.dbgeng.manager.impl.DbgManagerImpl;
-import agent.dbgeng.model.iface1.DbgModelTargetFocusScope;
-import agent.dbgeng.model.iface2.*;
+import agent.dbgeng.model.iface2.DbgModelTargetDebugContainer;
+import agent.dbgeng.model.iface2.DbgModelTargetMemoryContainer;
+import agent.dbgeng.model.iface2.DbgModelTargetModuleContainer;
+import agent.dbgeng.model.iface2.DbgModelTargetProcess;
+import agent.dbgeng.model.iface2.DbgModelTargetProcessContainer;
+import agent.dbgeng.model.iface2.DbgModelTargetThreadContainer;
 import ghidra.dbg.DebuggerObjectModel.RefreshBehavior;
-import ghidra.dbg.target.*;
+import ghidra.dbg.target.TargetAttachable;
 import ghidra.dbg.target.TargetEventScope.TargetEventType;
-import ghidra.dbg.target.schema.*;
+import ghidra.dbg.target.TargetObject;
+import ghidra.dbg.target.schema.TargetAttributeType;
+import ghidra.dbg.target.schema.TargetElementType;
+import ghidra.dbg.target.schema.TargetObjectSchemaInfo;
 import ghidra.dbg.util.PathUtils;
 
 @TargetObjectSchemaInfo(
@@ -69,7 +79,7 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 		TargetAttachKind.BY_OBJECT_REF, TargetAttachKind.BY_ID);
 
 	protected static String indexProcess(DebugProcessId debugProcessId) {
-		return PathUtils.makeIndex(debugProcessId.id);
+		return debugProcessId.id();
 	}
 
 	protected static String indexProcess(DbgProcess process) {
@@ -111,32 +121,42 @@ public class DbgModelTargetProcessImpl extends DbgModelTargetObjectImpl
 			SUPPORTED_ATTACH_KINDS_ATTRIBUTE_NAME, SUPPORTED_KINDS, //
 			SUPPORTED_STEP_KINDS_ATTRIBUTE_NAME, DbgModelTargetThreadImpl.SUPPORTED_KINDS //
 		), "Initialized");
-		setExecutionState(TargetExecutionState.ALIVE, "Initialized");
+		if (getManager().isKernelMode()) {
+			TargetExecutionState state = process.getPid() > 0 ?
+				TargetExecutionState.INACTIVE : TargetExecutionState.ALIVE;
+			setExecutionState(state, "Initialized");
+		}
+		else {
+			setExecutionState(TargetExecutionState.ALIVE, "Initialized");
+		}
 
 		getManager().addEventsListener(this);
 	}
 
 	@Override
 	public String getDisplay() {
-		if (getManager().isKernelMode()) {
-			return "[kernel]";
-		}
-
+		DebugProcessId id = process.getId();
 		Long pid = process.getPid();
-		if (pid < 0) {
-			return "[" + process.getId().id + "]";
+		if (getManager().isKernelMode()) {
+			if (id.isSystem()) {
+				return "["+id.id()+"]";
+			}
+			String pidstr = Long.toString(pid, base);
+			if (base == 16) {
+				pidstr = "0x" + pidstr;
+			}
+			Long offset = process.getOffset();
+			return offset == null ? "[" + pidstr + "]" : "[" + pidstr + " : " + Long.toHexString(offset) + "]";
 		}
-		String pidstr = Long.toString(pid, base);
-		if (base == 16) {
-			pidstr = "0x" + pidstr;
-		}
-		return "[" + process.getId().id + ":" + pidstr + "]";
-	}
-
-	@Override
-	public void processSelected(DbgProcess eventProcess, DbgCause cause) {
-		if (eventProcess.equals(process)) {
-			((DbgModelTargetFocusScope) searchForSuitable(TargetFocusScope.class)).setFocus(this);
+		else {
+			if (pid < 0) {
+				return "[" + id.id() + "]";
+			}
+			String pidstr = Long.toString(pid, base);
+			if (base == 16) {
+				pidstr = "0x" + pidstr;
+			}
+			return "[" + id.id() + ":" + pidstr + "]";
 		}
 	}
 

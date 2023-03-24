@@ -18,7 +18,6 @@ package agent.dbgeng.manager.cmd;
 import java.math.BigInteger;
 
 import agent.dbgeng.dbgeng.DebugControl;
-import agent.dbgeng.dbgeng.DebugProcessId;
 import agent.dbgeng.manager.DbgEvent;
 import agent.dbgeng.manager.DbgProcess;
 import agent.dbgeng.manager.evt.AbstractDbgCompletedCommandEvent;
@@ -94,11 +93,9 @@ public class DbgResolveProcessCommand extends AbstractDbgCommand<DbgProcess> {
 	@Override
 	public void invoke() {
 		if (process != null) {
-			DebugProcessId id = process.getId();
-			if (id != null) {
-				DebugControl control = manager.getControl();
-				control.execute("!process "+Long.toHexString(id.id)+" 0");		
-			}
+			DebugControl control = manager.getControl();
+			Long key = process.getOffset() != null ? process.getOffset() : process.getPid();
+			control.execute("!process "+Long.toHexString(key)+" 0");		
 		}
 	}
 }

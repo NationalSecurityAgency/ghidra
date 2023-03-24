@@ -59,7 +59,8 @@ public class PropertyFileTest extends AbstractGenericTest {
 		pf.putInt("TestInt", 1234);
 		pf.putLong("TestLong", 0x12345678);
 
-		StringBuffer sb = new StringBuffer("Line1\nLine2\n\"Ugly\" & Special <Values>; ");
+		StringBuffer sb = new StringBuffer(
+			"Line1\nLine2\n\"Ugly\" & Special <Values>; \u0128, \u0132, \307 and \253");
 		for (int i = 1; i < 35; i++) {
 			sb.append((char) i);
 		}
@@ -69,6 +70,10 @@ public class PropertyFileTest extends AbstractGenericTest {
 		String str = sb.toString();
 
 		pf.putString("TestString", URLEncoder.encode(str, "UTF-8"));
+
+		// also test plain unicode values, as well as a 32bit unicode value
+		String string2 = "non-control char values: < & ; > \u00bb \u0128, \u0132,  \uD835\uDCC8";
+		pf.putString("TestString2", string2);
 
 		pf.writeState();
 
@@ -81,6 +86,7 @@ public class PropertyFileTest extends AbstractGenericTest {
 		assertEquals(1234, pf2.getInt("TestInt", -1));
 		assertEquals(0x12345678, pf2.getLong("TestLong", -1));
 		assertEquals(str, URLDecoder.decode(pf2.getString("TestString", null), "UTF-8"));
+		assertEquals(string2, pf2.getString("TestString2", null));
 
 	}
 

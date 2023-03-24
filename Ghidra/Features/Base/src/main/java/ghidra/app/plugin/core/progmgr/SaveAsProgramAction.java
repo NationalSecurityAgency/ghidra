@@ -40,7 +40,7 @@ public class SaveAsProgramAction extends AbstractProgramNameSwitchingAction {
 		}
 		else {
 			String progName = program.getDomainFile().getName();
-			getMenuBarData().setMenuItemNamePlain("Save '%s' As...'".formatted(progName));
+			getMenuBarData().setMenuItemNamePlain("Save '%s' As...".formatted(progName));
 			getMenuBarData().setMnemonic('a');
 			setDescription("<html>Save '%s' As".formatted(HTMLUtilities.escapeHTML(progName)));
 		}

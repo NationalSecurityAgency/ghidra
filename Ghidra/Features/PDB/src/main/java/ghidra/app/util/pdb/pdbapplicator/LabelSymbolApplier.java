@@ -25,7 +25,8 @@ import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractLabelMsSymbol;
 import ghidra.app.util.bin.format.pdb2.pdbreader.symbol.AbstractMsSymbol;
 import ghidra.app.util.pdb.pdbapplicator.SymbolGroup.AbstractMsSymbolIterator;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.util.Msg;
 import ghidra.util.exception.*;
@@ -70,11 +71,20 @@ public class LabelSymbolApplier extends MsSymbolApplier {
 			return;
 		}
 
-		// The applyFunction call hierarchy here, was copied and modified from FunctionSymbolApplier.
-		// We need to re-look at this and create common as possibly in applicator or utility or
-		// else where. Note that our applyFunction here does not apply a function definition, as
-		// we have no data type associated with the label.
-		applyFunction(symbolAddress, label, applicator.getCancelOnlyWrappingMonitor());
+		// Create function or label, depending on what is indicated.  Note that the indicator is
+		//  sufficient, but not necessary for a function; thus, we might not create a function
+		//  where one exists.  However, other analyses, such as EntryPointAnalysis might pick
+		//  this up.
+		if (hasFunctionIndication()) {
+			// The applyFunction call hierarchy here, was copied and modified from
+			// FunctionSymbolApplier.  We need to re-look at this and create common as possibly
+			// in applicator or utility or else where. Note that our applyFunction here does not
+			// apply a function definition, as we have no data type associated with the label.
+			applyFunction(symbolAddress, label, applicator.getCancelOnlyWrappingMonitor());
+		}
+		else {
+			applicator.createSymbol(symbolAddress, label, true);
+		}
 	}
 
 	@Override
@@ -116,6 +126,15 @@ public class LabelSymbolApplier extends MsSymbolApplier {
 		// outside of the the address range of their GPROC, and will prevent another GPROC at the
 		// same address as the label from becoming primary (e.g., $LN7 of cn3 at a750).
 		applicator.createSymbol(symbolAddress, label, false);
+	}
+
+	/**
+	 * Returns true if seems like a function.  Not necessary, but (seems) sufficient, to indicate a
+	 *  function
+	 * @return true if function indicated
+	 */
+	private boolean hasFunctionIndication() {
+		return symbol.getFlags().hasFunctionIndication();
 	}
 
 	/**

@@ -133,6 +133,7 @@ public class DbgProcessImpl implements DbgProcess {
 	 * @param thread the thread to add
 	 */
 	public void addThread(DbgThreadImpl thread) {
+		assert(thread.getProcess().equals(this));
 		DbgThreadImpl exists = threads.get(thread.getId());
 		if (exists != null) {
 			Msg.warn(this, "Adding pre-existing thread " + exists);
@@ -207,6 +208,9 @@ public class DbgProcessImpl implements DbgProcess {
 
 	@Override
 	public CompletableFuture<Map<DebugThreadId, DbgThread>> listThreads() {
+		if (manager.isKernelMode() && !id.isSystem()) {
+			return CompletableFuture.completedFuture(getKnownThreads());
+		}
 		return manager.execute(new DbgListThreadsCommand(manager, this));
 	}
 

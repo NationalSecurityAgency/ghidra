@@ -15,14 +15,25 @@
  */
 package agent.dbgeng.impl.dbgeng.sysobj;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
-import com.sun.jna.platform.win32.WinDef.*;
+import com.sun.jna.platform.win32.WinDef.ULONG;
+import com.sun.jna.platform.win32.WinDef.ULONGByReference;
+import com.sun.jna.platform.win32.WinDef.ULONGLONG;
+import com.sun.jna.platform.win32.WinDef.ULONGLONGByReference;
 import com.sun.jna.platform.win32.WinNT.HRESULT;
 import com.sun.jna.platform.win32.COM.COMUtils;
 
-import agent.dbgeng.dbgeng.*;
+import agent.dbgeng.dbgeng.COMUtilsExtra;
+import agent.dbgeng.dbgeng.DbgEng;
 import agent.dbgeng.dbgeng.DbgEng.OpaqueCleanable;
+import agent.dbgeng.dbgeng.DebugProcessId;
+import agent.dbgeng.dbgeng.DebugProcessRecord;
+import agent.dbgeng.dbgeng.DebugSessionId;
+import agent.dbgeng.dbgeng.DebugThreadId;
+import agent.dbgeng.dbgeng.DebugThreadRecord;
 import agent.dbgeng.jna.dbgeng.sysobj.IDebugSystemObjects;
 
 public class DebugSystemObjectsImpl1 implements DebugSystemObjectsInternal {
@@ -40,10 +51,10 @@ public class DebugSystemObjectsImpl1 implements DebugSystemObjectsInternal {
 		ULONGByReference pulId = new ULONGByReference();
 		HRESULT hr = jnaSysobj.GetEventThread(pulId);
 		if (hr.equals(COMUtilsExtra.E_UNEXPECTED)) {
-			return new DebugThreadId(-1);
+			return new DebugThreadRecord(-1);
 		}
 		COMUtils.checkRC(hr);
-		return new DebugThreadId(pulId.getValue().intValue());
+		return new DebugThreadRecord(pulId.getValue().intValue());
 	}
 
 	@Override
@@ -51,10 +62,10 @@ public class DebugSystemObjectsImpl1 implements DebugSystemObjectsInternal {
 		ULONGByReference pulId = new ULONGByReference();
 		HRESULT hr = jnaSysobj.GetEventProcess(pulId);
 		if (hr.equals(COMUtilsExtra.E_UNEXPECTED)) {
-			return new DebugProcessId(-1);
+			return new DebugProcessRecord(-1);
 		}
 		COMUtils.checkRC(hr);
-		return new DebugProcessId(pulId.getValue().intValue());
+		return new DebugProcessRecord(pulId.getValue().intValue());
 	}
 
 	@Override
@@ -62,15 +73,15 @@ public class DebugSystemObjectsImpl1 implements DebugSystemObjectsInternal {
 		ULONGByReference pulId = new ULONGByReference();
 		HRESULT hr = jnaSysobj.GetCurrentThreadId(pulId);
 		if (hr.equals(COMUtilsExtra.E_UNEXPECTED)) {
-			return new DebugThreadId(-1);
+			return new DebugThreadRecord(-1);
 		}
 		COMUtils.checkRC(hr);
-		return new DebugThreadId(pulId.getValue().intValue());
+		return new DebugThreadRecord(pulId.getValue().intValue());
 	}
 
 	@Override
 	public void setCurrentThreadId(DebugThreadId id) {
-		HRESULT hr = jnaSysobj.SetCurrentThreadId(new ULONG(id.id));
+		HRESULT hr = jnaSysobj.SetCurrentThreadId(new ULONG(id.value()));
 		if (!hr.equals(COMUtilsExtra.E_UNEXPECTED) && !hr.equals(COMUtilsExtra.E_NOINTERFACE)) {
 			COMUtils.checkRC(hr);
 		}
@@ -81,15 +92,15 @@ public class DebugSystemObjectsImpl1 implements DebugSystemObjectsInternal {
 		ULONGByReference pulId = new ULONGByReference();
 		HRESULT hr = jnaSysobj.GetCurrentProcessId(pulId);
 		if (hr.equals(COMUtilsExtra.E_UNEXPECTED)) {
-			return new DebugProcessId(-1);
+			return new DebugProcessRecord(-1);
 		}
 		COMUtils.checkRC(hr);
-		return new DebugProcessId(pulId.getValue().intValue());
+		return new DebugProcessRecord(pulId.getValue().intValue());
 	}
 
 	@Override
 	public void setCurrentProcessId(DebugProcessId id) {
-		HRESULT hr = jnaSysobj.SetCurrentProcessId(new ULONG(id.id));
+		HRESULT hr = jnaSysobj.SetCurrentProcessId(new ULONG(id.value()));
 		if (hr.equals(COMUtilsExtra.E_UNEXPECTED)) {
 			//System.err.println("Failure on setCurrentProcessId(" + id + ")");
 			return;
@@ -131,7 +142,7 @@ public class DebugSystemObjectsImpl1 implements DebugSystemObjectsInternal {
 		COMUtils.checkRC(jnaSysobj.GetThreadIdsByIndex(ulStart, ulCount, aulIds, null));
 		List<DebugThreadId> result = new ArrayList<>(count);
 		for (int i = 0; i < count; i++) {
-			result.add(new DebugThreadId(aulIds[i].intValue()));
+			result.add(new DebugThreadRecord(aulIds[i].intValue()));
 		}
 		return result;
 	}
@@ -141,7 +152,7 @@ public class DebugSystemObjectsImpl1 implements DebugSystemObjectsInternal {
 		ULONGLONG ullHandle = new ULONGLONG(handle);
 		ULONGByReference pulId = new ULONGByReference();
 		COMUtils.checkRC(jnaSysobj.GetThreadIdByHandle(ullHandle, pulId));
-		return new DebugThreadId(pulId.getValue().intValue());
+		return new DebugThreadRecord(pulId.getValue().intValue());
 	}
 
 	@Override
@@ -154,7 +165,7 @@ public class DebugSystemObjectsImpl1 implements DebugSystemObjectsInternal {
 			return null;
 		}
 		COMUtils.checkRC(hr);
-		return new DebugThreadId(pulId.getValue().intValue());
+		return new DebugThreadRecord(pulId.getValue().intValue());
 	}
 
 	@Override
@@ -162,7 +173,7 @@ public class DebugSystemObjectsImpl1 implements DebugSystemObjectsInternal {
 		ULONGLONG ullHandle = new ULONGLONG(handle);
 		ULONGByReference pulId = new ULONGByReference();
 		COMUtils.checkRC(jnaSysobj.GetProcessIdByHandle(ullHandle, pulId));
-		return new DebugProcessId(pulId.getValue().intValue());
+		return new DebugProcessRecord(pulId.getValue().intValue());
 	}
 
 	@Override
@@ -175,7 +186,7 @@ public class DebugSystemObjectsImpl1 implements DebugSystemObjectsInternal {
 			return null;
 		}
 		COMUtils.checkRC(hr);
-		return new DebugProcessId(pulId.getValue().intValue());
+		return new DebugProcessRecord(pulId.getValue().intValue());
 	}
 
 	@Override
@@ -201,7 +212,7 @@ public class DebugSystemObjectsImpl1 implements DebugSystemObjectsInternal {
 		COMUtils.checkRC(jnaSysobj.GetProcessIdsByIndex(ulStart, ulCount, aulIds, null));
 		List<DebugProcessId> result = new ArrayList<>(count);
 		for (int i = 0; i < count; i++) {
-			result.add(new DebugProcessId(aulIds[i].intValue()));
+			result.add(new DebugProcessRecord(aulIds[i].intValue()));
 		}
 		return result;
 	}

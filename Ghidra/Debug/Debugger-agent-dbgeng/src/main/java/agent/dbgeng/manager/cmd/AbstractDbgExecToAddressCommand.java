@@ -54,7 +54,7 @@ public abstract class AbstractDbgExecToAddressCommand extends AbstractDbgCommand
 	@Override
 	public void invoke() {
 		String cmd = generateCommand(address);
-		String prefix = id == null ? "" : "~" + id.id + " ";
+		String prefix = id == null ? "" : "~" + id.id() + " ";
 		DebugControl control = manager.getControl();
 		DbgThreadImpl eventThread = manager.getEventThread();
 		if (eventThread != null && eventThread.getId().equals(id)) {

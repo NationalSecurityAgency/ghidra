@@ -170,13 +170,14 @@ public class DbgModelTargetRegisterContainerImpl extends DbgModelTargetObjectImp
 
 	private void changeAttrs(DbgModelTargetRegister reg, BigInteger value) {
 		String oldval = (String) reg.getCachedAttributes().get(VALUE_ATTRIBUTE_NAME);
+		String valstr = Long.toUnsignedString(value.longValue(), 16);  //value.toString(16);
 		String newval = (value.longValue() == 0) ? reg.getName()
-				: reg.getName() + " : " + value.toString(16);
+				: reg.getName() + " : " + valstr;
 		reg.changeAttributes(List.of(), Map.of( //
-			VALUE_ATTRIBUTE_NAME, value.toString(16), //
+			VALUE_ATTRIBUTE_NAME, valstr, //
 			DISPLAY_ATTRIBUTE_NAME, newval //
 		), "Refreshed");
-		reg.setModified(!value.toString(16).equals(oldval));
+		reg.setModified(!valstr.equals(oldval));
 	}
 
 	@Override

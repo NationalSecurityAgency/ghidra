@@ -691,11 +691,15 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 					}
 				}
 				else {
-					DefaultPdbUniversalMember member =
-						new DefaultPdbUniversalMember(applicator, memberName, fieldApplier, offset);
+					String memberComment = null;
+					if (fieldApplier instanceof PointerTypeApplier ptrApplier) {
+						memberComment = ptrApplier.getPointerCommentField();
+					}
+					DefaultPdbUniversalMember member = new DefaultPdbUniversalMember(applicator,
+						memberName, fieldApplier, offset, memberComment);
 					members.add(member);
 					classType.addMember(memberName, fieldDataType, isFlexibleArray,
-						convertAttributes(memberAttributes), offset);
+						convertAttributes(memberAttributes), offset, memberComment);
 				}
 			}
 			else if (memberTypeApplierIterated instanceof EnumerateTypeApplier) {
