@@ -314,6 +314,9 @@ define register offset=0x1100 size=8
 	gmid_el1
 	gcr_el1
 	ssbs
+	allint
+	dit
+	svcr
 ];
 
 # bitrange definitions are [<least significant bit>,<size>]
