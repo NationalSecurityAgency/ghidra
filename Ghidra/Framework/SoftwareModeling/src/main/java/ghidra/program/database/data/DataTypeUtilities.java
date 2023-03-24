@@ -285,7 +285,7 @@ public class DataTypeUtilities {
 			DataType dataType2) {
 		if (dataType1 instanceof BuiltIn) {
 			// Same kind if both types share a common BuiltIn implementation
-			Class<?> baseClass = dataType1.getClass().getSuperclass();
+			Class<?> baseClass = dataType1.getClass();
 			Class<?> superClass;
 			while ((superClass = baseClass.getSuperclass()) != BuiltIn.class) {
 				baseClass = superClass;

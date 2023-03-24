@@ -145,6 +145,16 @@ public class DWARFCompileUnit {
 	}
 
 	/**
+	 * Checks validity of a file index number.
+	 * 
+	 * @param index file number, 1..N
+	 * @return boolean true if index is a valid file number, false otherwise
+	 */
+	public boolean isValidFileIndex(int index) {
+		return line.isValidFileIndex(index);
+	}
+
+	/**
 	 * Get the producer of the compile unit
 	 * @return the producer of the compile unit
 	 */
