@@ -141,13 +141,13 @@ public class BlockGraphTask extends Task {
 			java.util.function.Function<AttributedVertex, Address> addressFunction) {
 
 		display.addAction(new ActionBuilder("Rename Symbol", "Block Graph")
-				.popupMenuPath("Rename Symbol")
-				.withContext(VertexGraphActionContext.class)
-				.helpLocation(new HelpLocation("ProgramGraphPlugin", "Rename_Symbol"))
-				// only enable action when vertex corresponds to an address
-				.enabledWhen(c -> addressFunction.apply(c.getClickedVertex()) != null)
-				.onAction(c -> updateVertexName(addressFunction, c))
-				.build());
+			.popupMenuPath("Rename Symbol")
+			.withContext(VertexGraphActionContext.class)
+			.helpLocation(new HelpLocation("ProgramGraphPlugin", "Rename_Symbol"))
+			// only enable action when vertex corresponds to an address
+			.enabledWhen(c -> addressFunction.apply(c.getClickedVertex()) != null)
+			.onAction(c -> updateVertexName(addressFunction, c))
+			.build());
 	}
 
 	private void updateVertexName(
@@ -231,16 +231,18 @@ public class BlockGraphTask extends Task {
 		AddressSet set = new AddressSet();
 		set.add(function.getBody());
 		try {
-			CodeBlock block = blockModel.getCodeBlockAt(function.getEntryPoint(), taskMonitor);
-			CodeBlockReferenceIterator it = blockModel.getDestinations(block, taskMonitor);
-			while (it.hasNext()) {
-				CodeBlockReference next = it.next();
-				set.add(next.getDestinationBlock());
-			}
-			it = blockModel.getSources(block, taskMonitor);
-			while (it.hasNext()) {
-				CodeBlockReference next = it.next();
-				set.add(next.getSourceBlock());
+			for (CodeBlock block : blockModel.getCodeBlocksContaining(function.getEntryPoint(),
+				taskMonitor)) {
+				CodeBlockReferenceIterator it = blockModel.getDestinations(block, taskMonitor);
+				while (it.hasNext()) {
+					CodeBlockReference next = it.next();
+					set.add(next.getDestinationBlock());
+				}
+				it = blockModel.getSources(block, taskMonitor);
+				while (it.hasNext()) {
+					CodeBlockReference next = it.next();
+					set.add(next.getSourceBlock());
+				}
 			}
 		}
 		catch (CancelledException e) {
