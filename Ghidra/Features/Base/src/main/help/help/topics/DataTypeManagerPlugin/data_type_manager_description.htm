@@ -854,7 +854,11 @@
           or you will be prompted to enter a unique name. The resulting enum will contain a
           combination of all names and values from the selected enums. NOTE: If more than one of
           the same value is contained in the enums, they will all be added to the new enum.
-          However, only the first one entered will be applied when this enum is used.</P>
+          However, only the first one entered will be applied when this enum is used. If more than one 
+          entry with the same name is contained in the selected enums, any extras with the same value will
+          be ignored and any with different value will be given a new name consisting of original name appended
+          with as many underscores needed to make it unique. A comment will be added so users know which ones
+          had names modified to allow the addition of the entry.</P>
         </BLOCKQUOTE>
 
         <H3><A name="DeleteDataType"></A>Deleting a Data Type</H3>

@@ -105,6 +105,8 @@ public class CreateEnumFromSelectionTest extends AbstractGhidraHeadedIntegration
 
 	@Test
 	public void testCreateEnumFromSelection() throws Exception {
+		
+		//NOTE: This test tests basic create enum from selection
 
 		// make two test enums in the program name folder
 
@@ -196,6 +198,9 @@ public class CreateEnumFromSelectionTest extends AbstractGhidraHeadedIntegration
 
 	@Test
 	public void testCreateEnumFromSelectionDupe() throws Exception {
+		
+		//NOTE: This test tests basic create enum from selection and 
+		// tries to make second new enum with duplicate name and verifies that it won't
 
 		// make two test enums in the program name folder
 
@@ -280,6 +285,115 @@ public class CreateEnumFromSelectionTest extends AbstractGhidraHeadedIntegration
 		DataTypeNode newEnumNode = (DataTypeNode) programNode.getChild("myNewEnum2");
 		assertNotNull(newEnumNode);
 
+	}
+	
+	@Test
+	public void testCreateEnumFromSelectionDupeEntryNameOrValue() throws Exception {
+		
+		//NOTE: This test tests handing of duplicate entry names and values
+		// duplicate value diff name - add both
+		// duplicate name and value - just add one entry with that combo
+		// duplicate name diff value - add second name with _ appended and a comment to indicate change
+
+		// make two test enums in the program name folder
+
+		Category category = programNode.getCategory();
+		DataTypeManager dataTypeManager = category.getDataTypeManager();
+
+		int id = dataTypeManager.startTransaction("new enum 1");
+		Enum enumm = new EnumDataType("Colors", 1);
+		enumm.add("Red", 0);
+		enumm.add("Green", 0x10);
+		enumm.add("Blue", 0x20);
+
+		category.addDataType(enumm, null);
+		dataTypeManager.endTransaction(id, true);
+		waitForTree();
+
+		int id2 = dataTypeManager.startTransaction("new enum 2");
+		Enum enumm2 = new EnumDataType("MoreColors", 1);
+		enumm2.add("Red", 0); // add dup name same value
+		enumm2.add("Green", 0x5); // add dup name diff value
+		enumm2.add("Black", 0x10); // add dup value diff name
+		enumm2.add("Purple", 0x30);
+		enumm2.add("White", 0x40);
+		enumm2.add("Yellow", 0x50);
+
+		category.addDataType(enumm2, null);
+		dataTypeManager.endTransaction(id2, true);
+		waitForTree();
+
+		program.flushEvents();
+		waitForPostedSwingRunnables();
+
+		DataTypeNode testEnumNode1 = (DataTypeNode) programNode.getChild("Colors");
+		assertNotNull(testEnumNode1);
+
+		DataTypeNode testEnumNode2 = (DataTypeNode) programNode.getChild("MoreColors");
+		assertNotNull(testEnumNode2);
+
+		expandNode(programNode);
+		selectNodes(testEnumNode1, testEnumNode2);
+		waitForTree();
+
+		final DockingActionIf action = getAction(plugin, "Enum from Selection");
+		assertNotNull(action);
+		assertTrue(action.isEnabledForContext(provider.getActionContext(null)));
+		assertTrue(action.isAddToPopup(provider.getActionContext(null)));
+
+		executeOnSwingWithoutBlocking(new Runnable() {
+			@Override
+			public void run() {
+				DataTypeTestUtils.performAction(action, tree);
+			}
+		});
+
+		Window window = waitForWindow("Name new ENUM");
+		assertNotNull(window);
+
+		final JTextField tf = findComponent(window, JTextField.class);
+		assertNotNull(tf);
+
+		tf.setText("myNewEnum");
+		pressButtonByText(window, "OK");
+		assertTrue(!window.isShowing());
+		waitForPostedSwingRunnables();
+		waitForTree();
+
+		DataTypeNode newEnumNode = (DataTypeNode) programNode.getChild("myNewEnum");
+		waitForTree();
+
+		assertNotNull(newEnumNode);
+
+		Enum newEnum = (Enum) newEnumNode.getDataType();
+		long values[] = newEnum.getValues();
+		String names[] = newEnum.getNames();
+
+		assertEquals(values.length, 7);
+		assertEquals(names.length, 8);
+		
+
+		assertEquals(newEnum.getName(0x00L), "Red");
+		assertEquals(newEnum.getName(0x5L), "Green_");
+		assertEquals(newEnum.getName(0x10L), "Black"); // single query will return first alphabetically		
+		assertEquals(newEnum.getName(0x20L), "Blue");
+		assertEquals(newEnum.getName(0x30L), "Purple");
+		assertEquals(newEnum.getName(0x40L), "White");
+		assertEquals(newEnum.getName(0x50L), "Yellow");
+		
+		String[] namesfor10 = newEnum.getNames(0x10);
+		assertEquals(namesfor10.length, 2);
+		assertEquals(namesfor10[0], "Black");
+		assertEquals(namesfor10[1], "Green");
+
+		assertEquals(newEnum.getValue("Red"), 0x00L);
+		assertEquals(newEnum.getValue("Green_"), 0x5L);
+		assertEquals(newEnum.getValue("Green"), 0x10L);
+		assertEquals(newEnum.getValue("Black"), 0x10L);	
+		assertEquals(newEnum.getValue("Blue"), 0x20L);
+		assertEquals(newEnum.getValue("Purple"), 0x30L);
+		assertEquals(newEnum.getValue("White"), 0x40L);
+		assertEquals(newEnum.getValue("Yellow"), 0x50L);
 	}
 
 	@Test
