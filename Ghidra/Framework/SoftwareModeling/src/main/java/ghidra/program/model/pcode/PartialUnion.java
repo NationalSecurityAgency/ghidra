@@ -119,4 +119,11 @@ public class PartialUnion extends AbstractDataType {
 		return 0;
 	}
 
+	/**
+	 * Get a data-type that can be used as a formal replacement for this (internal) data-type
+	 * @return a replacement data-type
+	 */
+	public DataType getStrippedDataType() {
+		return Undefined.getUndefinedDataType(size);
+	}
 }
