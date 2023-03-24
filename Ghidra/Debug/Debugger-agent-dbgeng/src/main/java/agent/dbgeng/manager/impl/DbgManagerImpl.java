@@ -1595,8 +1595,10 @@ public class DbgManagerImpl implements DbgManager {
 	}
 
 	public CompletableFuture<Void> setActiveThread(DbgThread thread) {
-		if (thread == null || thread.getTid().equals(currentThread.getTid())) {
-			return CompletableFuture.completedFuture(null);
+		if (currentThread != null) {
+			if (thread == null || thread.getTid().equals(currentThread.getTid())) {
+				return CompletableFuture.completedFuture(null);
+			}
 		}
 		currentThread = thread;
 		currentProcess = thread.getProcess();
@@ -1604,8 +1606,10 @@ public class DbgManagerImpl implements DbgManager {
 	}
 
 	public CompletableFuture<Void> setActiveProcess(DbgProcess process) {
-		if (process == null || process.getPid().equals(currentProcess.getPid())) {
-			return CompletableFuture.completedFuture(null);
+		if (currentProcess != null) {
+			if (process == null || process.getPid().equals(currentProcess.getPid())) {
+				return CompletableFuture.completedFuture(null);
+			}
 		}
 		currentProcess = process;
 		return execute(new DbgSetActiveProcessCommand(this, process));
