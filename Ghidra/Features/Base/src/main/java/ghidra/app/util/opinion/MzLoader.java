@@ -146,7 +146,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 			Address addr = headerBlock.getStart();
 
 			// Header
-			DataUtilities.createData(program, addr, mz.getHeader().toDataType(), -1, false,
+			DataUtilities.createData(program, addr, mz.getHeader().toDataType(), -1,
 				DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 
 			// Relocation Table
@@ -157,7 +157,7 @@ public class MzLoader extends AbstractLibrarySupportLoader {
 				addr = addr.add(header.e_lfarlc());
 				for (int i = 0; i < relocations.size(); i++) {
 					monitor.checkCanceled();
-					DataUtilities.createData(program, addr.add(i * len), relocationType, -1, false,
+					DataUtilities.createData(program, addr.add(i * len), relocationType, -1,
 						DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				}
 			}

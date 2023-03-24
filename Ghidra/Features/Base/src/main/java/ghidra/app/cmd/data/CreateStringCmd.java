@@ -84,7 +84,7 @@ public class CreateStringCmd implements Command {
 		Program program = (Program) obj;
 
 		try {
-			DataUtilities.createData(program, addr, stringDataType, length, false, clearMode);
+			DataUtilities.createData(program, addr, stringDataType, length, clearMode);
 		}
 		catch (CodeUnitInsertionException e) {
 			msg = e.getMessage();

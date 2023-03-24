@@ -288,7 +288,7 @@ public class DumpFileLoader extends AbstractProgramWrapperLoader {
 					}
 					continue;
 				}
-				DataUtilities.createData(program, address, dd.getDataType(), -1, false,
+				DataUtilities.createData(program, address, dd.getDataType(), -1,
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 			}
 			catch (CodeUnitInsertionException e) {

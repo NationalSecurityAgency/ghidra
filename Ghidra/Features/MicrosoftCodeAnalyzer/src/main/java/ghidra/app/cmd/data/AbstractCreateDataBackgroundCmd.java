@@ -238,7 +238,7 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 		monitor.checkCanceled();
 
 		// Create data at the address using the datatype.
-		DataUtilities.createData(program, address, dt, dt.getLength(), false, getClearDataMode());
+		DataUtilities.createData(program, address, dt, dt.getLength(), getClearDataMode());
 
 		return true;
 	}

@@ -81,7 +81,7 @@ public class PefDebugAnalyzer extends AbstractAnalyzer {
 			return;
 		}
 		DataType debugDataType = debug.toDataType();
-		DataUtilities.createData(program, address, debugDataType, debugDataType.getLength(), false,
+		DataUtilities.createData(program, address, debugDataType, debugDataType.getLength(),
 			ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
 		Address functionAddress = address.subtract(debug.getDistance());
 		Function function = listing.getFunctionAt(functionAddress);

@@ -222,19 +222,19 @@ public class PeLoader extends AbstractPeDebugLoader {
 		try {
 			DataType dt = pe.getDOSHeader().toDataType();
 			Address start = program.getImageBase();
-			DataUtilities.createData(program, start, dt, -1, false,
+			DataUtilities.createData(program, start, dt, -1,
 				DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 
 			dt = pe.getRichHeader().toDataType();
 			if (dt != null) {
 				start = program.getImageBase().add(pe.getRichHeader().getOffset());
-				DataUtilities.createData(program, start, dt, -1, false,
+				DataUtilities.createData(program, start, dt, -1,
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 			}
 
 			dt = ntHeader.toDataType();
 			start = program.getImageBase().add(pe.getDOSHeader().e_lfanew());
-			DataUtilities.createData(program, start, dt, -1, false,
+			DataUtilities.createData(program, start, dt, -1,
 				DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 
 			FileHeader fh = ntHeader.getFileHeader();
@@ -243,7 +243,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 			start = program.getImageBase().add(index);
 			for (SectionHeader section : sections) {
 				dt = section.toDataType();
-				DataUtilities.createData(program, start, dt, -1, false,
+				DataUtilities.createData(program, start, dt, -1,
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				setComment(CodeUnit.EOL_COMMENT, start, section.getName());
 				start = start.add(dt.getLength());

@@ -245,7 +245,7 @@ public class DyldCacheAccelerateInfo implements StructConverter {
 			Address addr = accelerateInfoAddr.add(imagesExtrasOffset);
 			for (DyldCacheImageInfoExtra imageInfoExtra : imageInfoExtraList) {
 				Data d = DataUtilities.createData(program, addr, imageInfoExtra.toDataType(), -1,
-					false, DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				addr = addr.add(d.getLength());
 				monitor.checkCanceled();
 				monitor.incrementProgress(1);
@@ -265,7 +265,7 @@ public class DyldCacheAccelerateInfo implements StructConverter {
 			Address addr = accelerateInfoAddr.add(initializersOffset);
 			for (DyldCacheAcceleratorInitializer initializer : acceleratorInitializerList) {
 				Data d = DataUtilities.createData(program, addr, initializer.toDataType(), -1,
-					false, DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				Address funcAddr = program.getImageBase().add(initializer.getFunctionsOffset());
 				try {
 					program.getFunctionManager().createFunction(null, funcAddr,
@@ -292,7 +292,7 @@ public class DyldCacheAccelerateInfo implements StructConverter {
 		try {
 			Address addr = accelerateInfoAddr.add(dofSectionsOffset);
 			for (DyldCacheAcceleratorDof dof : acceleratorDofList) {
-				Data d = DataUtilities.createData(program, addr, dof.toDataType(), -1, false,
+				Data d = DataUtilities.createData(program, addr, dof.toDataType(), -1,
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				addr = addr.add(d.getLength());
 				monitor.checkCanceled();
@@ -312,7 +312,7 @@ public class DyldCacheAccelerateInfo implements StructConverter {
 		try {
 			Address addr = accelerateInfoAddr.add(reExportListOffset);
 			DataType dt = new ArrayDataType(WORD, reExportCount, WORD.getLength());
-			DataUtilities.createData(program, addr, dt, -1, false,
+			DataUtilities.createData(program, addr, dt, -1,
 				DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 			program.getListing().setComment(addr, CodeUnit.EOL_COMMENT, "re-exports");
 			monitor.incrementProgress(1);
@@ -330,7 +330,7 @@ public class DyldCacheAccelerateInfo implements StructConverter {
 		try {
 			Address addr = accelerateInfoAddr.add(depListOffset);
 			DataType dt = new ArrayDataType(WORD, depListCount, WORD.getLength());
-			DataUtilities.createData(program, addr, dt, -1, false,
+			DataUtilities.createData(program, addr, dt, -1,
 				DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 			program.getListing().setComment(addr, CodeUnit.EOL_COMMENT, "dependencies");
 			monitor.incrementProgress(1);
@@ -348,7 +348,7 @@ public class DyldCacheAccelerateInfo implements StructConverter {
 		try {
 			Address addr = accelerateInfoAddr.add(rangeTableOffset);
 			for (DyldCacheRangeEntry rangeEntry : rangeEntryList) {
-				Data d = DataUtilities.createData(program, addr, rangeEntry.toDataType(), -1, false,
+				Data d = DataUtilities.createData(program, addr, rangeEntry.toDataType(), -1,
 					DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 				addr = addr.add(d.getLength());
 				monitor.checkCanceled();

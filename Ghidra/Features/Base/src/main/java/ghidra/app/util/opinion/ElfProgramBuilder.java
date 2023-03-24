@@ -2309,7 +2309,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		try {
 			Data d = listing.getDataAt(address);
 			if (d == null || !dt.isEquivalent(d.getDataType())) {
-				d = DataUtilities.createData(program, address, dt, -1, false,
+				d = DataUtilities.createData(program, address, dt, -1,
 					ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
 			}
 			return d;
