@@ -17,8 +17,8 @@ package wasm.format;
 
 import java.io.IOException;
 
+import ghidra.app.util.bin.LEB128Info;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.dwarf4.LEB128;
 import ghidra.program.model.data.ArrayDataType;
 import ghidra.program.model.data.CategoryPath;
 import ghidra.program.model.data.DataType;
@@ -99,12 +99,12 @@ public class StructureBuilder {
 		add(dataType, name, null);
 	}
 
-	public void add(LEB128 leb128, String name, String comment) {
-		addArray(StructConverter.BYTE, leb128.getLength(), name, comment);
+	public void addUnsignedLeb128(LEB128Info leb128, String name, String comment) {
+		add(StructConverter.ULEB128, leb128.getLength(), name, comment);
 	}
 
-	public void add(LEB128 leb128, String name) {
-		add(leb128, name, null);
+	public void addUnsignedLeb128(LEB128Info leb128, String name) {
+		addUnsignedLeb128(leb128, name, null);
 	}
 
 	public void add(StructConverter converter, String name, String comment) throws DuplicateNameException, IOException {

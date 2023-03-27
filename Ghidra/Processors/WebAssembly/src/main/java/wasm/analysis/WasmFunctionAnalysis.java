@@ -23,8 +23,8 @@ import java.util.List;
 import java.util.Map;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.dwarf4.LEB128;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.data.LEB128;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.listing.ContextChangeException;
@@ -352,11 +352,11 @@ public class WasmFunctionAnalysis {
 
 	// #region BinaryReader utilities
 	private static long readLeb128(BinaryReader reader) throws IOException {
-		return LEB128.readUnsignedValue(reader).asLong();
+		return reader.readNext(LEB128::unsigned);
 	}
 
 	private static long readSignedLeb128(BinaryReader reader) throws IOException {
-		return LEB128.readSignedValue(reader).asLong();
+		return reader.readNext(LEB128::signed);
 	}
 	// #endregion
 
@@ -957,7 +957,7 @@ public class WasmFunctionAnalysis {
 			break;
 		}
 		case 0xFC: {
-			int opcode2 = LEB128.readAsUInt32(reader);
+			int opcode2 = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 			switch (opcode2) {
 			case 0x00: /* i32.trunc_sat_f32_s */
 			case 0x01: /* i32.trunc_sat_f32_u */
@@ -1047,7 +1047,7 @@ public class WasmFunctionAnalysis {
 			break;
 		}
 		case 0xFD: {
-			int opcode2 = LEB128.readAsUInt32(reader);
+			int opcode2 = reader.readNextUnsignedVarIntExact(LEB128::unsigned);
 			switch (opcode2) {
 			case 0x0: /* v128.load */
 			case 0x1: /* v128.load8x8_s */

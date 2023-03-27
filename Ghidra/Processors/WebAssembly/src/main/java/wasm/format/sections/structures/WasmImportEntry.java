@@ -18,8 +18,8 @@ package wasm.format.sections.structures;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.LEB128Info;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.dwarf4.LEB128;
 import ghidra.program.model.data.DataType;
 import ghidra.util.exception.DuplicateNameException;
 import wasm.format.StructureBuilder;
@@ -31,7 +31,7 @@ public class WasmImportEntry implements StructConverter {
 	private WasmName field;
 	private WasmExternalKind kind;
 
-	private LEB128 functionEntry;
+	private LEB128Info functionEntry;
 	private WasmTableType tableEntry;
 	private WasmResizableLimits memoryEntry;
 	private WasmGlobalType globalEntry;
@@ -45,7 +45,7 @@ public class WasmImportEntry implements StructConverter {
 		kind = WasmExternalKind.values()[reader.readNextByte()];
 		switch (kind) {
 		case EXT_FUNCTION:
-			functionEntry = LEB128.readUnsignedValue(reader);
+			functionEntry = reader.readNext(LEB128Info::unsigned);
 			break;
 		case EXT_TABLE:
 			tableEntry = new WasmTableType(reader);
@@ -118,7 +118,7 @@ public class WasmImportEntry implements StructConverter {
 		builder.add(BYTE, "kind");
 		switch (kind) {
 		case EXT_FUNCTION:
-			builder.add(functionEntry, "type");
+			builder.addUnsignedLeb128(functionEntry, "type");
 			break;
 		case EXT_TABLE:
 			builder.add(tableEntry, "type");

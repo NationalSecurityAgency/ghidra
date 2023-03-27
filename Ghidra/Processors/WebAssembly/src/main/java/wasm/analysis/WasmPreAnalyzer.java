@@ -25,7 +25,6 @@ import ghidra.app.services.AnalysisPriority;
 import ghidra.app.services.AnalyzerType;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.MemoryByteProvider;
-import ghidra.app.util.bin.format.dwarf4.LEB128;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
 import ghidra.program.disassemble.Disassembler;
@@ -33,6 +32,7 @@ import ghidra.program.disassemble.DisassemblerMessageListener;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.data.LEB128;
 import ghidra.program.model.lang.Processor;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
@@ -80,10 +80,10 @@ public class WasmPreAnalyzer extends AbstractAnalyzer {
 
 	private int guessCStackGlobalForFunction(Program program, Address funcAddress) throws IOException {
 		BinaryReader codeReader = new BinaryReader(new MemoryByteProvider(program.getMemory(), funcAddress), true);
-		int localsCount = LEB128.readAsInt32(codeReader);
+		int localsCount = codeReader.readNextVarInt(LEB128::signed);
 		for (int i = 0; i < localsCount; i++) {
-			LEB128.readAsInt32(codeReader); /* count */
-			LEB128.readAsInt32(codeReader); /* type */
+			codeReader.readNextVarInt(LEB128::signed); /* count */
+			codeReader.readNextVarInt(LEB128::signed); /* type */
 		}
 
 		/*
@@ -92,7 +92,7 @@ public class WasmPreAnalyzer extends AbstractAnalyzer {
 		 */
 		if (codeReader.readNextUnsignedByte() != 0x23)
 			return -1;
-		return LEB128.readAsInt32(codeReader);
+		return codeReader.readNextVarInt(LEB128::signed);
 	}
 
 	private int guessCStackGlobal(Program program, List<WasmFuncSignature> functions, TaskMonitor monitor) {

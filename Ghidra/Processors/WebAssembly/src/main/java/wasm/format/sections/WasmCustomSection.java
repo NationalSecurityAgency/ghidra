@@ -18,7 +18,7 @@ package wasm.format.sections;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.dwarf4.LEB128;
+import ghidra.app.util.bin.LEB128Info;
 import ghidra.util.exception.DuplicateNameException;
 import wasm.format.StructureBuilder;
 import wasm.format.sections.structures.WasmName;
@@ -37,7 +37,7 @@ public abstract class WasmCustomSection extends WasmSection {
 		long initialOffset = reader.getPointerIndex();
 		/* skip section header: id + contentLength */
 		reader.readNextUnsignedByte();
-		LEB128.readUnsignedValue(reader);
+		reader.readNext(LEB128Info::unsigned);
 
 		String name = new WasmName(reader).getValue();
 		reader.setPointerIndex(initialOffset);

@@ -21,8 +21,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.LEB128Info;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.dwarf4.LEB128;
 import ghidra.program.model.data.DataType;
 import ghidra.util.exception.DuplicateNameException;
 import wasm.format.StructureBuilder;
@@ -30,16 +30,16 @@ import wasm.format.WasmEnums.ValType;
 
 public class WasmCodeEntry implements StructConverter {
 
-	private LEB128 codeSize;
+	private LEB128Info codeSize;
 	private List<WasmLocalEntry> locals = new ArrayList<WasmLocalEntry>();
-	private LEB128 localCount;
+	private LEB128Info localCount;
 	private long codeOffset;
 	private byte[] instructions;
 
 	public WasmCodeEntry(BinaryReader reader) throws IOException {
-		codeSize = LEB128.readUnsignedValue(reader);
+		codeSize = reader.readNext(LEB128Info::unsigned);
 		codeOffset = reader.getPointerIndex();
-		localCount = LEB128.readUnsignedValue(reader);
+		localCount = reader.readNext(LEB128Info::unsigned);
 		for (int i = 0; i < localCount.asLong(); ++i) {
 			locals.add(new WasmLocalEntry(reader));
 		}
@@ -47,7 +47,7 @@ public class WasmCodeEntry implements StructConverter {
 		reader.setPointerIndex(codeOffset + codeSize.asLong());
 	}
 
-	public LEB128 getCodeSizeLeb128() {
+	public LEB128Info getCodeSizeLeb128() {
 		return codeSize;
 	}
 
@@ -80,7 +80,7 @@ public class WasmCodeEntry implements StructConverter {
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		StructureBuilder builder = new StructureBuilder("code_" + codeOffset);
-		builder.add(codeSize, "code_size");
+		builder.addUnsignedLeb128(codeSize, "code_size");
 		builder.addArray(BYTE, instructions.length, "instructions");
 		return builder.toStructure();
 	}
