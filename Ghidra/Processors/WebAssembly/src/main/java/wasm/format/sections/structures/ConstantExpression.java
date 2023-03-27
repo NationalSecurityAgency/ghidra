@@ -18,8 +18,8 @@ package wasm.format.sections.structures;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.LEB128Info;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.dwarf4.LEB128;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.data.DataType;
@@ -45,7 +45,7 @@ followed by an explicit end byte (0x0b).
 public final class ConstantExpression implements StructConverter {
 
 	private ConstantInstruction type;
-	private LEB128 opcode2;
+	private LEB128Info opcode2;
 	private Object value;
 
 	private enum ConstantInstruction {
@@ -66,15 +66,15 @@ public final class ConstantExpression implements StructConverter {
 		switch (typeCode) {
 		case 0x23:
 			type = ConstantInstruction.GLOBAL_GET;
-			value = LEB128.readUnsignedValue(reader);
+			value = reader.readNext(LEB128Info::unsigned);
 			break;
 		case 0x41:
 			type = ConstantInstruction.I32_CONST;
-			value = LEB128.readUnsignedValue(reader);
+			value = reader.readNext(LEB128Info::unsigned);
 			break;
 		case 0x42:
 			type = ConstantInstruction.I64_CONST;
-			value = LEB128.readUnsignedValue(reader);
+			value = reader.readNext(LEB128Info::unsigned);
 			break;
 		case 0x43:
 			type = ConstantInstruction.F32_CONST;
@@ -98,10 +98,10 @@ public final class ConstantExpression implements StructConverter {
 		}
 		case 0xD2:
 			type = ConstantInstruction.REF_FUNC;
-			value = LEB128.readUnsignedValue(reader);
+			value = reader.readNext(LEB128Info::unsigned);
 			break;
 		case 0xFD:
-			opcode2 = LEB128.readUnsignedValue(reader);
+			opcode2 = reader.readNext(LEB128Info::unsigned);
 			if (opcode2.asUInt32() == 0x0C) {
 				type = ConstantInstruction.V128_CONST;
 				value = reader.readNextByteArray(16);
@@ -146,11 +146,11 @@ public final class ConstantExpression implements StructConverter {
 	public byte[] asBytes(WasmModule module) {
 		switch (type) {
 		case I32_CONST:
-			return intToBytes((int) ((LEB128) value).asLong());
+			return intToBytes((int) ((LEB128Info) value).asLong());
 		case I64_CONST:
-			return longToBytes(((LEB128) value).asLong());
+			return longToBytes(((LEB128Info) value).asLong());
 		case REF_FUNC:
-			return intToBytes((int) WasmLoader.getFunctionAddressOffset(module, (int) ((LEB128) value).asLong()));
+			return intToBytes((int) WasmLoader.getFunctionAddressOffset(module, (int) ((LEB128Info) value).asLong()));
 		case F32_CONST:
 		case F64_CONST:
 		case V128_CONST:
@@ -167,21 +167,21 @@ public final class ConstantExpression implements StructConverter {
 
 	public Address asAddress(AddressFactory addressFactory, WasmModule module) {
 		if (type == ConstantInstruction.REF_FUNC) {
-			return WasmLoader.getFunctionAddress(addressFactory, module, (int) ((LEB128) value).asLong());
+			return WasmLoader.getFunctionAddress(addressFactory, module, (int) ((LEB128Info) value).asLong());
 		}
 		return null;
 	}
 
 	public Long asI32() {
 		if (type == ConstantInstruction.I32_CONST) {
-			return ((LEB128) value).asLong();
+			return ((LEB128Info) value).asLong();
 		}
 		return null;
 	}
 
 	public Long asGlobalGet() {
 		if (type == ConstantInstruction.GLOBAL_GET) {
-			return ((LEB128) value).asLong();
+			return ((LEB128Info) value).asLong();
 		}
 		return null;
 	}
@@ -195,7 +195,7 @@ public final class ConstantExpression implements StructConverter {
 		case I64_CONST:
 		case REF_FUNC:
 		case GLOBAL_GET:
-			builder.add((LEB128) value, "value");
+			builder.addUnsignedLeb128((LEB128Info) value, "value");
 			break;
 		case F32_CONST:
 			builder.add(Float4DataType.dataType, "value");
@@ -204,7 +204,7 @@ public final class ConstantExpression implements StructConverter {
 			builder.add(Float8DataType.dataType, "value");
 			break;
 		case V128_CONST:
-			builder.add((LEB128) opcode2, "opcode2");
+			builder.addUnsignedLeb128((LEB128Info) opcode2, "opcode2");
 			builder.add(ValType.Undefined16, "value");
 			break;
 		case REF_NULL_FUNCREF:

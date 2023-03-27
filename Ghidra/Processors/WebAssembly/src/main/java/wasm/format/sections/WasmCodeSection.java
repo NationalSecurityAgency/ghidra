@@ -21,19 +21,19 @@ import java.util.Collections;
 import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.dwarf4.LEB128;
+import ghidra.app.util.bin.LEB128Info;
 import ghidra.util.exception.DuplicateNameException;
 import wasm.format.StructureBuilder;
 import wasm.format.sections.structures.WasmCodeEntry;
 
 public class WasmCodeSection extends WasmSection {
 
-	private LEB128 count;
+	private LEB128Info count;
 	private List<WasmCodeEntry> functions = new ArrayList<WasmCodeEntry>();
 
 	public WasmCodeSection(BinaryReader reader) throws IOException {
 		super(reader);
-		count = LEB128.readUnsignedValue(reader);
+		count = reader.readNext(LEB128Info::unsigned);
 		for (int i = 0; i < count.asLong(); ++i) {
 			functions.add(new WasmCodeEntry(reader));
 		}
@@ -45,7 +45,7 @@ public class WasmCodeSection extends WasmSection {
 
 	@Override
 	protected void addToStructure(StructureBuilder builder) throws DuplicateNameException, IOException {
-		builder.add(count, "count");
+		builder.addUnsignedLeb128(count, "count");
 		// Do not add individual code entries to the structure: they need to be parsed
 		// as code instead of data.
 	}

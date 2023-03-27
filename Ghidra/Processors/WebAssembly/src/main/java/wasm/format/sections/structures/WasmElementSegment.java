@@ -21,8 +21,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.LEB128Info;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.dwarf4.LEB128;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.data.DataType;
@@ -37,12 +37,12 @@ public class WasmElementSegment implements StructConverter {
 	private int flags;
 	private ElementSegmentMode mode;
 
-	private LEB128 tableidx; /* if (flags & 3) == 2 */
+	private LEB128Info tableidx; /* if (flags & 3) == 2 */
 	private ConstantExpression offset; /* if (flags & 1) == 0 */
-	private LEB128 count;
+	private LEB128Info count;
 
 	int elemkind; /* if (flags & 4) == 0 */
-	private List<LEB128> funcidxs; /* if (flags & 4) == 0 */
+	private List<LEB128Info> funcidxs; /* if (flags & 4) == 0 */
 
 	ValType elemtype; /* if (flags & 4) != 0 */
 	private List<ConstantExpression> exprs; /* if (flags & 4) != 0 */
@@ -57,7 +57,7 @@ public class WasmElementSegment implements StructConverter {
 		flags = reader.readNextUnsignedByte();
 		if ((flags & 3) == 2) {
 			/* active segment with explicit table index */
-			tableidx = LEB128.readUnsignedValue(reader);
+			tableidx = reader.readNext(LEB128Info::unsigned);
 		} else {
 			/* tableidx defaults to 0 */
 			tableidx = null;
@@ -89,12 +89,12 @@ public class WasmElementSegment implements StructConverter {
 			}
 		}
 
-		count = LEB128.readUnsignedValue(reader);
+		count = reader.readNext(LEB128Info::unsigned);
 		if ((flags & 4) == 0) {
 			/* vector of funcidx */
 			funcidxs = new ArrayList<>();
 			for (int i = 0; i < count.asLong(); i++) {
-				funcidxs.add(LEB128.readUnsignedValue(reader));
+				funcidxs.add(reader.readNext(LEB128Info::unsigned));
 			}
 		} else {
 			/* vector of expr */
@@ -187,7 +187,7 @@ public class WasmElementSegment implements StructConverter {
 		StructureBuilder builder = new StructureBuilder("element_segment");
 		builder.add(BYTE, "flags");
 		if (tableidx != null) {
-			builder.add(tableidx, "tableidx");
+			builder.addUnsignedLeb128(tableidx, "tableidx");
 		}
 		if (offset != null) {
 			builder.add(offset, "offset");
@@ -197,10 +197,10 @@ public class WasmElementSegment implements StructConverter {
 			builder.add(BYTE, "element_type");
 		}
 
-		builder.add(count, "count");
+		builder.addUnsignedLeb128(count, "count");
 		if (funcidxs != null) {
 			for (int i = 0; i < funcidxs.size(); i++) {
-				builder.add(funcidxs.get(i), "element" + i);
+				builder.addUnsignedLeb128(funcidxs.get(i), "element" + i);
 			}
 		}
 		if (exprs != null) {

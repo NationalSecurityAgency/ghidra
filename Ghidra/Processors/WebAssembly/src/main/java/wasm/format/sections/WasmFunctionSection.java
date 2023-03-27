@@ -20,20 +20,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.dwarf4.LEB128;
+import ghidra.app.util.bin.LEB128Info;
 import ghidra.util.exception.DuplicateNameException;
 import wasm.format.StructureBuilder;
 
 public class WasmFunctionSection extends WasmSection {
 
-	private LEB128 count;
-	private List<LEB128> types = new ArrayList<LEB128>();
+	private LEB128Info count;
+	private List<LEB128Info> types = new ArrayList<LEB128Info>();
 
 	public WasmFunctionSection(BinaryReader reader) throws IOException {
 		super(reader);
-		count = LEB128.readUnsignedValue(reader);
+		count = reader.readNext(LEB128Info::unsigned);
 		for (int i = 0; i < count.asLong(); ++i) {
-			types.add(LEB128.readUnsignedValue(reader));
+			types.add(reader.readNext(LEB128Info::unsigned));
 		}
 	}
 
@@ -47,9 +47,9 @@ public class WasmFunctionSection extends WasmSection {
 
 	@Override
 	protected void addToStructure(StructureBuilder builder) throws DuplicateNameException, IOException {
-		builder.add(count, "count");
+		builder.addUnsignedLeb128(count, "count");
 		for (int i = 0; i < types.size(); i++) {
-			builder.add(types.get(i), "function_" + i);
+			builder.addUnsignedLeb128(types.get(i), "function_" + i);
 		}
 	}
 

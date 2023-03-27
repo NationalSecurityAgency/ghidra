@@ -18,6 +18,7 @@ package wasm.analysis;
 import ghidra.app.plugin.core.analysis.DWARFAnalyzer;
 import ghidra.app.util.bin.format.dwarf4.next.sectionprovider.DWARFSectionProviderFactory;
 import ghidra.program.model.listing.Program;
+import ghidra.util.task.TaskMonitor;
 import wasm.WasmLoader;
 
 public class WasmDWARFAnalyzer extends DWARFAnalyzer {
@@ -27,7 +28,7 @@ public class WasmDWARFAnalyzer extends DWARFAnalyzer {
 		String format = program.getExecutableFormat();
 
 		if (WasmLoader.WEBASSEMBLY.equals(format)
-				&& DWARFSectionProviderFactory.createSectionProviderFor(program) != null) {
+				&& DWARFSectionProviderFactory.createSectionProviderFor(program, TaskMonitor.DUMMY) != null) {
 			return true;
 		}
 		return false;

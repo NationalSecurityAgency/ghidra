@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.dwarf4.LEB128;
+import ghidra.app.util.bin.LEB128Info;
 import ghidra.util.exception.DuplicateNameException;
 import wasm.format.StructureBuilder;
 import wasm.format.WasmEnums.WasmExternalKind;
@@ -31,13 +31,13 @@ import wasm.format.sections.structures.WasmImportEntry;
 
 public class WasmImportSection extends WasmSection {
 
-	private LEB128 count;
+	private LEB128Info count;
 	private List<WasmImportEntry> importList = new ArrayList<>();
 	private Map<WasmExternalKind, List<WasmImportEntry>> imports = new EnumMap<>(WasmExternalKind.class);
 
 	public WasmImportSection(BinaryReader reader) throws IOException {
 		super(reader);
-		count = LEB128.readUnsignedValue(reader);
+		count = reader.readNext(LEB128Info::unsigned);
 		for (int i = 0; i < count.asLong(); ++i) {
 			WasmImportEntry entry = new WasmImportEntry(reader);
 			WasmExternalKind kind = entry.getKind();
@@ -55,7 +55,7 @@ public class WasmImportSection extends WasmSection {
 
 	@Override
 	protected void addToStructure(StructureBuilder builder) throws DuplicateNameException, IOException {
-		builder.add(count, "count");
+		builder.addUnsignedLeb128(count, "count");
 		for (int i = 0; i < importList.size(); i++) {
 			builder.add(importList.get(i), "import_" + i);
 		}

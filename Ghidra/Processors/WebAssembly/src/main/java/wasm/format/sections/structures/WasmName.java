@@ -19,18 +19,18 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.LEB128Info;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.dwarf4.LEB128;
 import ghidra.program.model.data.DataType;
 import ghidra.util.exception.DuplicateNameException;
 import wasm.format.StructureBuilder;
 
 public class WasmName implements StructConverter {
-	private LEB128 size;
+	private LEB128Info size;
 	private String value;
 
 	public WasmName(BinaryReader reader) throws IOException {
-		size = LEB128.readUnsignedValue(reader);
+		size = reader.readNext(LEB128Info::unsigned);
 		byte[] data = reader.readNextByteArray((int) size.asLong());
 		value = new String(data, StandardCharsets.UTF_8);
 	}
@@ -46,7 +46,7 @@ public class WasmName implements StructConverter {
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		StructureBuilder builder = new StructureBuilder("name_" + size.asLong());
-		builder.add(size, "size");
+		builder.addUnsignedLeb128(size, "size");
 		builder.addString((int) size.asLong(), "value");
 		return builder.toStructure();
 	}

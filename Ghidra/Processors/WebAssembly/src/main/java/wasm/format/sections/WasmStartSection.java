@@ -18,17 +18,17 @@ package wasm.format.sections;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.format.dwarf4.LEB128;
+import ghidra.app.util.bin.LEB128Info;
 import ghidra.util.exception.DuplicateNameException;
 import wasm.format.StructureBuilder;
 
 public class WasmStartSection extends WasmSection {
 
-	private LEB128 funcIdx;
+	private LEB128Info funcIdx;
 
 	public WasmStartSection(BinaryReader reader) throws IOException {
 		super(reader);
-		funcIdx = LEB128.readUnsignedValue(reader);
+		funcIdx = reader.readNext(LEB128Info::unsigned);
 	}
 
 	public long getStartFunctionIndex() {
@@ -37,7 +37,7 @@ public class WasmStartSection extends WasmSection {
 
 	@Override
 	public void addToStructure(StructureBuilder builder) throws DuplicateNameException, IOException {
-		builder.add(funcIdx, "func");
+		builder.addUnsignedLeb128(funcIdx, "func");
 	}
 
 	@Override

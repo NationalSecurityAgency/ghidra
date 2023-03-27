@@ -23,7 +23,6 @@ import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.ByteProviderWrapper;
 import ghidra.app.util.bin.MemBufferByteProvider;
-import ghidra.app.util.bin.format.dwarf4.LEB128;
 import ghidra.pcode.emulate.Emulate;
 import ghidra.pcode.emulate.EmulateInstructionStateModifier;
 import ghidra.pcode.emulate.EmulateMemoryStateBuffer;
@@ -33,6 +32,7 @@ import ghidra.pcode.memstate.MemoryState;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.data.LEB128;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.program.model.pcode.PcodeOp;
@@ -69,12 +69,12 @@ public class WasmEmulateInstructionStateModifier extends EmulateInstructionState
 				while (true) {
 					moduleSize = reader.getPointerIndex();
 					int id = reader.readNextUnsignedByte();
-					LEB128 contentLength = LEB128.readUnsignedValue(reader);
-					reader.setPointerIndex(reader.getPointerIndex() + contentLength.asLong());
+					long contentLength = reader.readNext(LEB128::unsigned);
+					reader.setPointerIndex(reader.getPointerIndex() + contentLength);
 					// A custom section (id 0) must have a name, so a zero-length custom section
 					// is invalid. This happens if we have two consecutive null bytes, which
 					// suggests that we're at the end of the module.
-					if (id == 0 && contentLength.asLong() == 0) {
+					if (id == 0 && contentLength == 0) {
 						break;
 					}
 				}

@@ -344,7 +344,7 @@ public class WasmLoader extends AbstractLibrarySupportLoader {
 		for (int i = 0; i < codeEntries.size(); i++) {
 			WasmCodeEntry entry = codeEntries.get(i);
 			StructureBuilder builder = new StructureBuilder("code_" + (i + imports.size()));
-			builder.add(entry.getCodeSizeLeb128(), "code_size");
+			builder.addUnsignedLeb128(entry.getCodeSizeLeb128(), "code_size");
 			long offset = entry.getOffset() - entry.getCodeSizeLeb128().getLength();
 			createData(program, program.getListing(), moduleBlock.getStart().add(offset), builder.toStructure());
 		}

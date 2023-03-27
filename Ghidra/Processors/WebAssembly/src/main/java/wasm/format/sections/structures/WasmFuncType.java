@@ -18,8 +18,8 @@ package wasm.format.sections.structures;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.LEB128Info;
 import ghidra.app.util.bin.StructConverter;
-import ghidra.app.util.bin.format.dwarf4.LEB128;
 import ghidra.program.model.data.DataType;
 import ghidra.util.exception.DuplicateNameException;
 import wasm.format.StructureBuilder;
@@ -29,16 +29,16 @@ public class WasmFuncType implements StructConverter {
 
 	@SuppressWarnings("unused")
 	private int form; /* always 0 in this version */
-	private LEB128 paramCount;
+	private LEB128Info paramCount;
 	private ValType[] paramTypes;
-	private LEB128 returnCount;
+	private LEB128Info returnCount;
 	private ValType[] returnTypes;
 
 	public WasmFuncType(BinaryReader reader) throws IOException {
 		form = reader.readNextUnsignedByte();
-		paramCount = LEB128.readUnsignedValue(reader);
+		paramCount = reader.readNext(LEB128Info::unsigned);
 		paramTypes = ValType.fromBytes(reader.readNextByteArray((int) paramCount.asLong()));
-		returnCount = LEB128.readUnsignedValue(reader);
+		returnCount = reader.readNext(LEB128Info::unsigned);
 		returnTypes = ValType.fromBytes(reader.readNextByteArray((int) returnCount.asLong()));
 	}
 
@@ -72,9 +72,9 @@ public class WasmFuncType implements StructConverter {
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		StructureBuilder builder = new StructureBuilder("func_type_" + paramCount.asLong() + "_" + returnCount.asLong());
 		builder.add(BYTE, "form");
-		builder.add(paramCount, "param_count");
+		builder.addUnsignedLeb128(paramCount, "param_count");
 		builder.addArray(BYTE, (int) paramCount.asLong(), "param_types");
-		builder.add(returnCount, "return_count");
+		builder.addUnsignedLeb128(returnCount, "return_count");
 		builder.addArray(BYTE, (int) returnCount.asLong(), "return_types");
 		return builder.toStructure();
 	}
