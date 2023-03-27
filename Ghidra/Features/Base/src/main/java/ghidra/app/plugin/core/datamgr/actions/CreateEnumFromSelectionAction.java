@@ -15,6 +15,9 @@
  */
 package ghidra.app.plugin.core.datamgr.actions;
 
+import java.util.Arrays;
+import java.util.List;
+
 import javax.swing.SwingUtilities;
 import javax.swing.tree.TreePath;
 
@@ -107,9 +110,8 @@ public class CreateEnumFromSelectionAction extends DockingAction {
 
 		DataType dt = myDataTypeManager.getDataType(category.getCategoryPath(), newName);
 		while (dt != null) {
-			InputDialog dupInputDialog =
-				new InputDialog("Duplicate ENUM Name",
-					"Please enter a unique name for the new ENUM: ");
+			InputDialog dupInputDialog = new InputDialog("Duplicate ENUM Name",
+				"Please enter a unique name for the new ENUM: ");
 			tool = plugin.getTool();
 			tool.showDialog(dupInputDialog);
 
@@ -119,7 +121,7 @@ public class CreateEnumFromSelectionAction extends DockingAction {
 			newName = dupInputDialog.getValue();
 			dt = myDataTypeManager.getDataType(category.getCategoryPath(), newName);
 		}
-		createNewEnum(category, enumArray, newName);
+		createMergedEnum(category, enumArray, newName);
 
 		// select new node in tree.  Must use invoke later to give the tree a chance to add the
 		// the new node to the tree.
@@ -130,8 +132,8 @@ public class CreateEnumFromSelectionAction extends DockingAction {
 			@Override
 			public void run() {
 				GTreeNode rootNode = gTree.getViewRoot();
-				gTree.setSelectedNodeByNamePath(new String[] { rootNode.getName(), parentNodeName,
-					newNodeName });
+				gTree.setSelectedNodeByNamePath(
+					new String[] { rootNode.getName(), parentNodeName, newNodeName });
 			}
 		});
 	}
@@ -168,34 +170,109 @@ public class CreateEnumFromSelectionAction extends DockingAction {
 		return false;
 	}
 
-	public void createNewEnum(Category category, Enum[] enumArray, String newName) {
+	private void createMergedEnum(Category category, Enum[] enumsToMerge, String mergedEnumName) {
 
-		// figure out size of the new enum using the max size of the selected enums
+		int maxEnumSize = computeNewEnumSize(enumsToMerge);
+
+		SourceArchive sourceArchive = category.getDataTypeManager().getLocalSourceArchive();
+		Enum mergedEnum = new EnumDataType(category.getCategoryPath(), mergedEnumName, maxEnumSize,
+			category.getDataTypeManager());
+
+		mergedEnum.setSourceArchive(sourceArchive);
+
+		for (Enum element : enumsToMerge) {
+			mergeEnum(mergedEnum, element);
+		}
+
+		addEnumDataType(category, mergedEnum);
+
+	}
+
+	private void addEnumDataType(Category category, Enum mergedEnum) {
+		int id = category.getDataTypeManager().startTransaction("Create New Enum Data Type");
+		category.getDataTypeManager()
+				.addDataType(mergedEnum, DataTypeConflictHandler.REPLACE_HANDLER);
+		category.getDataTypeManager().endTransaction(id, true);
+	}
+
+	private void mergeEnum(Enum mergedEnum, Enum enumToMerge) {
+
+		for (String name : enumToMerge.getNames()) {
+
+			long valueToAdd = enumToMerge.getValue(name);
+			String comment = "";
+
+			if (isDuplicateEntry(mergedEnum, enumToMerge, name)) {
+				continue;
+			}
+
+			if (isConflictingEntry(mergedEnum, enumToMerge, name)) {
+				name = createDeconflictedName(mergedEnum, name);
+
+				comment = "NOTE: Duplicate name with different value";
+				Msg.debug(this,
+					"Merged Enum " + mergedEnum.getName() +
+						" has at least one duplicate named entry with different value than " +
+						"original. Underscore(s) have been appended to name allow addition.");
+			}
+
+			mergedEnum.add(name, valueToAdd, comment);
+
+		}
+	}
+
+	private String createDeconflictedName(Enum enumm, String name) {
+
+		List<String> existingNames = Arrays.asList(enumm.getNames());
+		while (existingNames.contains(name)) {
+			name = name + "_";
+		}
+		return name;
+	}
+
+	private boolean isDuplicateEntry(Enum mergedEnum, Enum enumToMerge, String name) {
+
+		List<String> existingNames = Arrays.asList(mergedEnum.getNames());
+
+		if (!existingNames.contains(name)) {
+			return false;
+		}
+
+		long valueToAdd = enumToMerge.getValue(name);
+		long existingValue = mergedEnum.getValue(name);
+		if (valueToAdd == existingValue) {
+			return true;
+		}
+
+		return false;
+	}
+
+	private boolean isConflictingEntry(Enum mergedEnum, Enum enumToMerge, String name) {
+
+		List<String> existingNames = Arrays.asList(mergedEnum.getNames());
+
+		if (!existingNames.contains(name)) {
+			return false;
+		}
+
+		long valueToAdd = enumToMerge.getValue(name);
+		long existingValue = mergedEnum.getValue(name);
+		if (valueToAdd == existingValue) {
+			return false;
+		}
+
+		return true;
+	}
+
+	// figure out size in bytes of the new enum using the max size of the selected enums
+	private int computeNewEnumSize(Enum[] enumArray) {
 		int maxEnumSize = 1;
 		for (Enum element : enumArray) {
 			if (maxEnumSize < element.getLength()) {
 				maxEnumSize = element.getLength();
 			}
 		}
-		SourceArchive sourceArchive = category.getDataTypeManager().getLocalSourceArchive();
-		Enum dataType =
-			new EnumDataType(category.getCategoryPath(), newName, maxEnumSize,
-				category.getDataTypeManager());
-
-		for (Enum element : enumArray) {
-			String[] names = element.getNames();
-			for (String name : names) {
-				dataType.add(name, element.getValue(name));
-
-			}
-		}
-
-		dataType.setSourceArchive(sourceArchive);
-		int id = category.getDataTypeManager().startTransaction("Create New Enum Data Type");
-		category.getDataTypeManager()
-				.addDataType(dataType, DataTypeConflictHandler.REPLACE_HANDLER);
-		category.getDataTypeManager().endTransaction(id, true);
-
+		return maxEnumSize;
 	}
 
 }
