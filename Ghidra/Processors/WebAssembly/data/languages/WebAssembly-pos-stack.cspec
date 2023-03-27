@@ -20,7 +20,7 @@
   </global>
   <stackpointer register="SP" space="ram" growth="positive"/>
   <default_proto>
-    <prototype name="__wasm" extrapop="0" stackshift="0">
+    <prototype name="__wasm" extrapop="0" stackshift="0" strategy="register">
       <input>
         <!-- With the positive stack direction, Ghidra will allocate
         starting at the highest addresses in any <addr> pentry, which is
