@@ -24,6 +24,7 @@ import ghidra.app.util.bin.*;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataUtilities.ClearDataMode;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.Msg;
@@ -240,7 +241,8 @@ public class ElfNote implements ElfInfoItem {
 		StructureDataType dt = toStructure(program.getDataTypeManager());
 		if (dt != null) {
 			try {
-				program.getListing().createData(address, dt);
+				DataUtilities.createData(program, address, dt, -1, false,
+					ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
 			}
 			catch (CodeUnitInsertionException e) {
 				Msg.error(this, "Failed to markup Elf Note at %s: %s".formatted(address, this), e);
