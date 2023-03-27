@@ -98,6 +98,14 @@ public enum DebuggerPcodeUtils {
 				symbol = findUserSymbol(nm);
 			}
 			if (symbol == null) {
+				/**
+				 * TODO: This may break things that check for the absence of a symbol
+				 * 
+				 * I don't think it'll affect expressions, but it could later affect user Sleigh
+				 * libraries than an expression might like to use. The better approach would be
+				 * to incorporate a better error message into the Sleigh compiler, but it won't
+				 * always know the use case for a clear message.
+				 */
 				throw new SleighException("Unknown register or label: '" + nm + "'");
 			}
 			return symbol;
