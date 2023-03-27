@@ -1209,6 +1209,11 @@ public class MachoProgramBuilder {
 	private void performRelocations(LinkedHashMap<RelocationInfo, Address> relocationMap)
  			throws CancelledException {
  		MachoRelocationHandler handler = MachoRelocationHandlerFactory.getHandler(machoHeader);
+		if (handler == null) {
+			log.appendMsg(String.format("No relocation handler for machine type 0x%x",
+				machoHeader.getCpuType()));
+		}
+
  		Iterator<RelocationInfo> iter = relocationMap.keySet().iterator();
  		while (iter.hasNext()) {
  			RelocationInfo relocationInfo = iter.next();
@@ -1216,12 +1221,7 @@ public class MachoProgramBuilder {
  			MachoRelocation relocation = null;
 
 			RelocationResult result = RelocationResult.FAILURE;
- 			if (handler == null) {
- 				handleRelocationError(address, String.format(
- 					"No relocation handler for machine type 0x%x to process relocation at %s with type 0x%x",
- 					machoHeader.getCpuType(), address, relocationInfo.getType()));
- 			}
- 			else {
+			if (handler != null) {
 				relocation = handler.isPairedRelocation(relocationInfo)
 						? new MachoRelocation(program, machoHeader, address, relocationInfo,
 							iter.next())
@@ -1258,7 +1258,8 @@ public class MachoProgramBuilder {
 						new long[] { relocationInfo.getValue(),
 					relocationInfo.getLength(), relocationInfo.isPcRelocated() ? 1 : 0,
 					relocationInfo.isExternal() ? 1 : 0, relocationInfo.isScattered() ? 1 : 0 },
-						result.byteLength(), relocation.getTargetDescription());
+						result.byteLength(),
+						relocation != null ? relocation.getTargetDescription() : null);
 		}
 	}
 	
