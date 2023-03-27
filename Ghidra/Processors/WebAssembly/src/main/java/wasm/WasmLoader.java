@@ -35,7 +35,6 @@ import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.ArrayDataType;
 import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeConflictException;
 import ghidra.program.model.data.DataUtilities;
 import ghidra.program.model.data.DataUtilities.ClearDataMode;
 import ghidra.program.model.lang.LanguageCompilerSpecPair;
@@ -264,8 +263,6 @@ public class WasmLoader extends AbstractLibrarySupportLoader {
 			return d;
 		} catch (CodeUnitInsertionException e) {
 			Msg.warn(WasmLoader.class, "Data markup conflict at " + address, e);
-		} catch (DataTypeConflictException e) {
-			Msg.error(WasmLoader.class, "Data type markup conflict:" + e.getMessage(), e);
 		}
 		return null;
 	}
