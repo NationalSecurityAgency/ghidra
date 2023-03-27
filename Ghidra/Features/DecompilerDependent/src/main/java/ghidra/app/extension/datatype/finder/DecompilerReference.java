@@ -162,7 +162,9 @@ public abstract class DecompilerReference {
 			int n = parent.getLength();
 			if (offset >= 0 && offset < n) {
 				DataTypeComponent dtc = parent.getComponentContaining(field.getOffset());
-				fieldDt = dtc.getDataType();
+				if (dtc != null) {
+					return dtc.getDataType();
+				}
 			}
 		}
 		return fieldDt;

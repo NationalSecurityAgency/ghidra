@@ -51,6 +51,7 @@ class MIPS_ElfRelocationContext extends ElfRelocationContext {
 	boolean savedAddendHasError = false;
 	long savedAddend;
 
+	ElfSymbol lastElfSymbol;
 	Address lastSymbolAddr;
 
 	MIPS_ElfRelocationContext(MIPS_ElfRelocationHandler handler, ElfLoadHelper loadHelper,
@@ -82,6 +83,7 @@ class MIPS_ElfRelocationContext extends ElfRelocationContext {
 		useSavedAddend = false;
 		savedAddendHasError = false;
 		lastSymbolAddr = null;
+		lastElfSymbol = null;
 
 		super.endRelocationTableProcessing();
 	}

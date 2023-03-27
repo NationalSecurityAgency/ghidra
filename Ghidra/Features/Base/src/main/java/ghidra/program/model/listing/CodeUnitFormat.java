@@ -1202,10 +1202,9 @@ public class CodeUnitFormat {
 		long offset = offsetRef.getOffset();
 		String sign = "+";
 		if (offset < 0) {
-			offset = -offset;
-			sign = "-";
+			sign = ""; // sign provided by Scalar.toString()
 		}
-		Scalar offsetScalar = new Scalar(64, offsetRef.getOffset(), true);
+		Scalar offsetScalar = new Scalar(64, offset, true);
 		OperandRepresentationList list = new OperandRepresentationList();
 		list.add(baseRefObj);
 		list.add(sign);
