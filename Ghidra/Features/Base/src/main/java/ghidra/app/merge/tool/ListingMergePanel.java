@@ -29,6 +29,7 @@ import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
 import docking.widgets.fieldpanel.support.BackgroundColorModel;
 import generic.theme.GIcon;
+import ghidra.GhidraOptions;
 import ghidra.app.merge.MergeConstants;
 import ghidra.app.nav.Navigatable;
 import ghidra.app.plugin.core.codebrowser.hover.*;
@@ -149,7 +150,7 @@ public class ListingMergePanel extends JPanel
 	}
 
 	private ToolOptions getFieldOptions() {
-		ToolOptions fieldOptions = new ToolOptions("field");
+		ToolOptions fieldOptions = new ToolOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS);
 		fieldOptions.setBoolean(RegisterFieldFactory.DISPLAY_HIDDEN_REGISTERS_OPTION_NAME, true);
 		return fieldOptions;
 	}
@@ -382,7 +383,7 @@ public class ListingMergePanel extends JPanel
 	}
 
 	/**
-	 * Add the result program's listing model as a listener to the result program 
+	 * Add the result program's listing model as a listener to the result program
 	 * for domain object events.
 	 */
 	public void addDomainObjectListener() {
@@ -391,7 +392,7 @@ public class ListingMergePanel extends JPanel
 	}
 
 	/**
-	 * Remove the result program's listing model as a listener to the result program 
+	 * Remove the result program's listing model as a listener to the result program
 	 * for domain object events.
 	 */
 	public void removeDomainObjectListener() {
