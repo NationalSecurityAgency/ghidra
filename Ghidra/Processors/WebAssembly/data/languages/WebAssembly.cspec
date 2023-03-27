@@ -20,7 +20,7 @@
   </global>
   <stackpointer register="SP" space="ram"/>
   <default_proto>
-    <prototype name="__wasm" extrapop="0" stackshift="0">
+    <prototype name="__wasm" extrapop="0" stackshift="0" strategy="register">
       <input>
         <pentry minsize="1" maxsize="500" align="16">
           <addr offset="0x20000000" space="register"/>
