@@ -15,11 +15,12 @@
  */
 package ghidra.util;
 
-import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import java.math.BigInteger;
 
 import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -217,7 +218,7 @@ public final class NumericUtilities {
 	 */
 	public final static String toHexString(long value, int size) {
 		if (size > 0 && size < 8) {
-			value &= -1L >> (8 * (8 - size));
+			value &= -1L >>> (8 * (8 - size));
 		}
 		return HEX_PREFIX_x + Long.toHexString(value);
 	}
