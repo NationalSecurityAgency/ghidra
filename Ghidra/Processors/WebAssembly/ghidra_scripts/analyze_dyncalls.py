@@ -18,6 +18,9 @@
 # elements they call, and rename functions listed in the table by their dynCall
 # type and index. These dynCall indices are often used as function pointers in
 # compiled C/C++ code.
+# This script should only be used if your dynCall_ functions contain binary AND
+# operations (i.e. i32.and), indicating that the table is segmented into type-
+# specific power-of-two-sized chunks.
 # @author nneonneo
 # @category Analysis.Wasm
 # @keybinding
