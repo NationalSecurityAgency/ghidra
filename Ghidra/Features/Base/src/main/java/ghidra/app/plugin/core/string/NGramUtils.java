@@ -358,7 +358,7 @@ public class NGramUtils {
 			}
 			else {
 				retArr[i] =
-					new Integer(new Character(inputChars[i].charAt(0)).charValue()).toString();
+					Integer.valueOf(Character.valueOf(inputChars[i].charAt(0)).charValue()).toString();
 			}
 		}
 

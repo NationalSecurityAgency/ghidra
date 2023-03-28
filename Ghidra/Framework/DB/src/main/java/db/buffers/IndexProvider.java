@@ -45,7 +45,7 @@ class IndexProvider {
 	IndexProvider(int indexCount, int[] freeIndexes) {
 		nextIndex = indexCount;
 		for (int i = 0; i < freeIndexes.length; i++) {
-			freeIndexStack.push(new Integer(freeIndexes[i]));
+			freeIndexStack.push(Integer.valueOf(freeIndexes[i]));
 		}
 	}
 	
@@ -87,17 +87,17 @@ class IndexProvider {
 		// Increase index count
 		if (index >= nextIndex) {
 			for (int i = nextIndex; i < index; i++) {
-				freeIndexStack.push(new Integer(i));
+				freeIndexStack.push(Integer.valueOf(i));
 			}
 			nextIndex = index + 1;
 			return true;
 		}
 		
-		return freeIndexStack.remove(new Integer(index));
+		return freeIndexStack.remove(Integer.valueOf(index));
 	}
 	
 	boolean isFree(int index) {
-		return freeIndexStack.contains(new Integer(index));
+		return freeIndexStack.contains(Integer.valueOf(index));
 	}
 	
 	/**
@@ -105,7 +105,7 @@ class IndexProvider {
 	 * @param index buffer index
 	 */
 	void freeIndex(int index) {
-		freeIndexStack.push(new Integer(index));
+		freeIndexStack.push(Integer.valueOf(index));
 	}
 	
 	/**

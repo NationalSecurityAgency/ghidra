@@ -30,12 +30,12 @@ class BoundedSpinnerNumberModel extends SpinnerNumberModel {
 	}
 
 	public BoundedSpinnerNumberModel(int value, int minimum, int maximum, int stepSize) {
-		this(new Integer(value), new Integer(minimum), new Integer(maximum), new Integer(stepSize));
+		this(Integer.valueOf(value), Integer.valueOf(minimum), Integer.valueOf(maximum), Integer.valueOf(stepSize));
 	}
 
 	public BoundedSpinnerNumberModel(double value, double minimum, double maximum,
 			double stepSize) {
-		this(new Double(value), new Double(minimum), new Double(maximum), new Double(stepSize));
+		this(Double.valueOf(value), Double.valueOf(minimum), Double.valueOf(maximum), Double.valueOf(stepSize));
 	}
 
 	public BoundedSpinnerNumberModel() {

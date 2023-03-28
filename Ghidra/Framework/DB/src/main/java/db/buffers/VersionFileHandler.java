@@ -82,7 +82,7 @@ public class VersionFileHandler {
 					freeIndexes = vf.getFreeIndexList();
 					String[] names = vf.getOldParameterNames();
 					for (int i = 0; i < names.length; i++) {
-						origParms.put(names[i], new Integer(vf.getOldParameter(names[i])));
+						origParms.put(names[i], Integer.valueOf(vf.getOldParameter(names[i])));
 					}
 					originalFileId = vf.getOriginalFileID();
 				}

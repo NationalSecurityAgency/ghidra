@@ -463,7 +463,7 @@ public class MipsAddressAnalyzer extends ConstantPropagationAnalyzer {
 					// will pick it up.
 					if (func != null) {
 						Address funcAddr = func.getEntryPoint();
-						Long value = new Long(funcAddr.getOffset());
+						Long value = Long.valueOf(funcAddr.getOffset());
 						try {
 							ProgramContext progContext = program.getProgramContext();
 							// if T9 hasn't already been set

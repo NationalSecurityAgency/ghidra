@@ -85,7 +85,7 @@ public class DoubleRangeConstraintEditor extends AbstractColumnConstraintEditor<
 
 	private JSpinner createSpinner(Number value) {
 
-		Number stepSize = new Double(.1);
+		Number stepSize = Double.valueOf(.1);
 		SpinnerNumberModel spinnerModel = new SpinnerNumberModel(value, null, null, stepSize);
 
 		JSpinner spinner = new JSpinner(spinnerModel);

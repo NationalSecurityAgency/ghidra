@@ -2919,15 +2919,15 @@ class SymbolMerger extends AbstractListingMerger {
 		private final static long serialVersionUID = 1;
 
 		public boolean add(long l) {
-			return super.add(new Long(l));
+			return super.add(Long.valueOf(l));
 		}
 
 		public boolean contains(long l) {
-			return super.contains(new Long(l));
+			return super.contains(Long.valueOf(l));
 		}
 
 		public boolean remove(long l) {
-			return super.remove(new Long(l));
+			return super.remove(Long.valueOf(l));
 		}
 	}
 

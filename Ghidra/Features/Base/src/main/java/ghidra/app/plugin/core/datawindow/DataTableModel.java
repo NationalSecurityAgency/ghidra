@@ -250,7 +250,7 @@ class DataTableModel extends AddressBasedTableModel<DataRowObject> {
 				return null;
 			}
 
-			return new Integer(data.getLength());
+			return Integer.valueOf(data.getLength());
 		}
 
 	}

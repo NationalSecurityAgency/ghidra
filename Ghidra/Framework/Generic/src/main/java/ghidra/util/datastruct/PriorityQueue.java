@@ -37,7 +37,7 @@ public class PriorityQueue<T> {
 	 * @param priority the priority assigned to the object.
 	 */
 	public void add(T obj, int priority) {
-		Integer key = new Integer(priority);
+		Integer key = Integer.valueOf(priority);
 		LinkedList<T> list = tree.get(key);
 		if (list == null) {
 			list = new LinkedList<T>();

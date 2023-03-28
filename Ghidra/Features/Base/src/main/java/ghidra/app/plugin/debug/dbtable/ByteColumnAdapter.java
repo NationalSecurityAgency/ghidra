@@ -27,12 +27,12 @@ public class ByteColumnAdapter extends AbstractColumnAdapter {
 
 	@Override
 	Object getKeyValue(DBRecord rec) {
-		return new Byte(((ByteField) rec.getKeyField()).getByteValue());
+		return Byte.valueOf(((ByteField) rec.getKeyField()).getByteValue());
 	}
 
 	@Override
 	Object getValue(DBRecord rec, int col) {
-		return new Byte(rec.getByteValue(col));
+		return Byte.valueOf(rec.getByteValue(col));
 	}
 
 }

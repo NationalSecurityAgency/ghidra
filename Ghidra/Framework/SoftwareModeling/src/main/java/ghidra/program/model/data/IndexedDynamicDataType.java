@@ -86,7 +86,7 @@ public abstract class IndexedDynamicDataType extends DynamicDataType {
 		}
 
 		for (int i = 0; i < keys.length; i++) {
-			table.put(new Long(keys[i]), new Integer(i));
+			table.put(Long.valueOf(keys[i]), Integer.valueOf(i));
 		}
 		if (mask == 0) {
 			mask = 0xFFFFFFFF;
@@ -129,7 +129,7 @@ public abstract class IndexedDynamicDataType extends DynamicDataType {
 		}
 
 		for (int i = 0; i < structs.length; i++) {
-			table.put(new Long(i), new Integer(i));
+			table.put(Long.valueOf(i), Integer.valueOf(i));
 		}
 	}
 
@@ -145,10 +145,10 @@ public abstract class IndexedDynamicDataType extends DynamicDataType {
 		long index = getIndex(memory, start.add(indexOffset)) & mask;
 		Integer structIndex = null;
 		if (keys.length == 1) {
-			structIndex = (index == keys[0]) ? new Integer(0) : new Integer(1);
+			structIndex = (index == keys[0]) ? Integer.valueOf(0) : Integer.valueOf(1);
 		}
 		else {
-			structIndex = table.get(new Long(index));
+			structIndex = table.get(Long.valueOf(index));
 		}
 
 		if (structIndex == null) {

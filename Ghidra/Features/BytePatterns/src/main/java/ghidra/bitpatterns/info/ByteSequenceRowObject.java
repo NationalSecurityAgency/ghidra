@@ -92,7 +92,7 @@ public class ByteSequenceRowObject {
 					numTotalSeqs++;
 				}
 				else {
-					byteSeqCounts.put(currentFilteredByteString, new Integer(1));
+					byteSeqCounts.put(currentFilteredByteString, Integer.valueOf(1));
 					numTotalSeqs++;
 				}
 			}
@@ -327,7 +327,7 @@ public class ByteSequenceRowObject {
 			bytesAndDisCount.put(bytesAndDisassembly, count + 1);
 		}
 		else {
-			bytesAndDisCount.put(bytesAndDisassembly, new Integer(1));
+			bytesAndDisCount.put(bytesAndDisassembly, Integer.valueOf(1));
 		}
 	}
 
