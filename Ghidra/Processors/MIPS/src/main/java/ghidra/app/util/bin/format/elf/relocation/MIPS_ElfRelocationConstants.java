@@ -75,6 +75,14 @@ public class MIPS_ElfRelocationConstants {
 	public static final int R_MIPS_TLS_TPREL_LO16 = 50;
 	public static final int R_MIPS_GLOB_DAT = 51;
 
+	/* MIPSr6 relocations */
+	public static final int R_MIPS_PC21_S2 = 60;
+	public static final int R_MIPS_PC26_S2 = 61;
+	public static final int R_MIPS_PC18_S3 = 62;
+	public static final int R_MIPS_PC19_S2 = 63;
+	public static final int R_MIPS_PCHI16 = 64;
+	public static final int R_MIPS_PCLO16 = 65;
+
 	/* These relocs are used for the mips16.  */
 	public static final int R_MIPS16_26 = 100;
 	public static final int R_MIPS16_GPREL = 101;
@@ -144,6 +152,7 @@ public class MIPS_ElfRelocationConstants {
 
 	// Masks for manipulating MIPS relocation targets
 	public static final int MIPS_LOW26 = 0x03FFFFFF;
+	public static final int MIPS_LOW21 = 0x001FFFFF;
 	
 	private MIPS_ElfRelocationConstants() {
 		// no construct

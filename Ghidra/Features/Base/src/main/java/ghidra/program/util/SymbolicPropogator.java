@@ -2477,7 +2477,8 @@ public class SymbolicPropogator {
 	}
 
 	private int createData(Address address, int size) {
-		if (!program.getListing().isUndefined(address, address)) {
+		if (program.getMemory().isExternalBlockAddress(address) ||
+			!program.getListing().isUndefined(address, address)) {
 			return 0;
 		}
 

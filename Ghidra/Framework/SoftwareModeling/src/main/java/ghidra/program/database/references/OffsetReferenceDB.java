@@ -18,6 +18,7 @@ package ghidra.program.database.references;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
+import ghidra.util.NumericUtilities;
 
 class OffsetReferenceDB extends MemReferenceDB implements OffsetReference {
 
@@ -58,7 +59,8 @@ class OffsetReferenceDB extends MemReferenceDB implements OffsetReference {
 
 	@Override
 	public String toString() {
-		return super.toString() + " Offset: 0x" + Long.toHexString(offsetOrShift);
+		String offsetStr = NumericUtilities.toSignedHexString(offsetOrShift);
+		return super.toString() + " Offset: " + offsetStr;
 	}
 
 }
