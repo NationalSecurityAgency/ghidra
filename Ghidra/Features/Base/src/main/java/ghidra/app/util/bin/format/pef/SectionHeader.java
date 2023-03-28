@@ -153,7 +153,7 @@ public class SectionHeader implements StructConverter {
 						throw new IllegalStateException(
 							"Unable to read enough bytes for " + opcode);
 					}
-					for (int i = 0; i < repeatCount - 1; ++i) {
+					for (int i = 0; i < repeatCount + 1; ++i) {
 						System.arraycopy(rawData, 0, data, index, rawData.length);
 						index += rawData.length;
 					}

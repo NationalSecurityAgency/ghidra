@@ -63,6 +63,14 @@ public abstract class Relocation implements StructConverter {
 		return 2;
 	}
 
+	public int getRepeatCount() {
+		return 0;
+	}
+
+	public int getRepeatChunks() {
+		return 0;
+	}
+
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		DataType dt = getSizeInBytes() == 2 ? WORD : DWORD;
 		return new TypedefDataType(toString(), dt);

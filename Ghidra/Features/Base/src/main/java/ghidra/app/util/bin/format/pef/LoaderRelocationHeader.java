@@ -42,7 +42,7 @@ public class LoaderRelocationHeader implements StructConverter {
 	private int   relocCount;
 	private int   firstRelocOffset;
 
-	private List<Relocation> _relocations = new ArrayList<Relocation>();
+	private ArrayList<Relocation> _relocations = new ArrayList<Relocation>();
 
 	LoaderRelocationHeader(BinaryReader reader, LoaderInfoHeader loader) throws IOException {
 		sectionIndex     = reader.readNextShort();
@@ -99,7 +99,7 @@ public class LoaderRelocationHeader implements StructConverter {
 		return firstRelocOffset;
 	}
 
-	public List<Relocation> getRelocations() {
+	public ArrayList<Relocation> getRelocations() {
 		return _relocations;
 	}
 
