@@ -104,12 +104,17 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 		}
 
 		@Override
+		protected GoToInput getDefaultInput() {
+			return trackingTrait.getDefaultGoToInput(currentLocation);
+		}
+
+		@Override
 		protected boolean goToAddress(Address address) {
 			TraceProgramView view = current.getView();
 			if (view == null) {
 				return false;
 			}
-			return goTo(view, new ProgramLocation(view, address));
+			return DebuggerMemoryBytesProvider.this.goTo(view, new ProgramLocation(view, address));
 		}
 	}
 

@@ -23,6 +23,7 @@ import org.jdom.Element;
 
 import docking.widgets.fieldpanel.support.Highlight;
 import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.template.TemplateSimplifier;
 import ghidra.app.util.viewer.field.*;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.ServiceProvider;
@@ -67,6 +68,7 @@ public class FormatManager implements OptionsChangeListener {
 	private ServiceProvider serviceProvider;
 	private int arrayValuesPerLine = 1;
 	private boolean groupArrayElements = true;
+	TemplateSimplifier templateSimplifier;
 
 	// NOTE:  Unused custom format code was removed.  The custom format code last existed in
 	// commit #204e7892bf2f110ebb05ca4beee3fe5b397f88c9.  
@@ -80,6 +82,7 @@ public class FormatManager implements OptionsChangeListener {
 	public FormatManager(ToolOptions displayOptions, ToolOptions fieldOptions) {
 		this.fieldOptions = fieldOptions;
 		this.displayOptions = displayOptions;
+		this.templateSimplifier = new TemplateSimplifier(fieldOptions);
 		highlightProvider = new MultipleHighlighterProvider();
 		getFactorys();
 		for (int i = 0; i < NUM_MODELS; i++) {
@@ -153,7 +156,7 @@ public class FormatManager implements OptionsChangeListener {
 	/**
 	 * Adds a listener to be notified when a format changes.
 	 * 
-	 * @param listener the listener to be added.
+	 * @param listener the listener to be added
 	 */
 	public void addFormatModelListener(FormatModelListener listener) {
 		formatListeners.add(listener);
@@ -171,6 +174,7 @@ public class FormatManager implements OptionsChangeListener {
 
 	/**
 	 * Returns the total number of model in the format manager.
+	 * @return the total number of model in the format manager 
 	 */
 	public int getNumModels() {
 		return NUM_MODELS;
@@ -180,27 +184,31 @@ public class FormatManager implements OptionsChangeListener {
 	 * Returns the format model for the given index.
 	 * 
 	 * @param index the index of the format model to return.
+	 * @return the format model for the given index
 	 */
 	public FieldFormatModel getModel(int index) {
 		return models[index];
 	}
 
 	/**
-	 * Returns the format model for the address break (divider)
+	 * Returns the format model for the address break (divider).
+	 * @return the format model for the address break (divider)
 	 */
 	public FieldFormatModel getDividerModel() {
 		return models[FieldFormatModel.DIVIDER];
 	}
 
 	/**
-	 * Returns the format model for the plate field
+	 * Returns the format model for the plate field.
+	 * @return the format model for the plate field 
 	 */
 	public FieldFormatModel getPlateFormat() {
 		return models[FieldFormatModel.PLATE];
 	}
 
 	/**
-	 * Returns the format model for the function signature
+	 * Returns the format model for the function signature.
+	 * @return the format model for the function signature
 	 */
 	public FieldFormatModel getFunctionFormat() {
 		return models[FieldFormatModel.FUNCTION];
@@ -208,6 +216,7 @@ public class FormatManager implements OptionsChangeListener {
 
 	/**
 	 * Returns the format model for the function variables.
+	 * @return the format model for the function variables
 	 */
 	public FieldFormatModel getFunctionVarFormat() {
 		return models[FieldFormatModel.FUNCTION_VARS];
@@ -215,6 +224,7 @@ public class FormatManager implements OptionsChangeListener {
 
 	/**
 	 * Returns the format model for a code unit.
+	 * @return the format model for a code unit
 	 */
 	public FieldFormatModel getCodeUnitFormat() {
 		return models[FieldFormatModel.INSTRUCTION_OR_DATA];
@@ -261,6 +271,7 @@ public class FormatManager implements OptionsChangeListener {
 
 	/**
 	 * Returns the Options used for display properties.
+	 * @return  the Options used for display properties.
 	 */
 	public ToolOptions getDisplayOptions() {
 		return displayOptions;
@@ -268,9 +279,18 @@ public class FormatManager implements OptionsChangeListener {
 
 	/**
 	 * Returns the Options used for field specific properties.
+	 * @return the Options used for field specific properties 
 	 */
 	public ToolOptions getFieldOptions() {
 		return fieldOptions;
+	}
+
+	/**
+	 * Returns the template simplifier.
+	 * @return the template simplifier.
+	 */
+	public TemplateSimplifier getTemplateSimplifier() {
+		return templateSimplifier;
 	}
 
 	/**
@@ -852,6 +872,7 @@ public class FormatManager implements OptionsChangeListener {
 			}
 		}
 		else if (options == fieldOptions) {
+			templateSimplifier.fieldOptionsChanged(options, name, oldValue, newValue);
 			for (int i = 0; i < NUM_MODELS; i++) {
 				models[i].fieldOptionsChanged(options, name, oldValue, newValue);
 			}

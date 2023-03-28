@@ -432,6 +432,27 @@ public class DIEAggregate {
 	}
 
 	/**
+	 * Returns the name of the source file this item was declared in (DW_AT_decl_file)
+	 * 
+	 * @return name of file this item was declared in, or null if info not available
+	 */
+	public String getSourceFile() {
+		AttrInfo attrInfo = findAttribute(DWARFAttribute.DW_AT_decl_file);
+		if (attrInfo == null) {
+			return null;
+		}
+		DWARFNumericAttribute attr = attrInfo.getValue(DWARFNumericAttribute.class);
+		if (attr == null) {
+			return null;
+		}
+		int fileNum = (int) attr.getUnsignedValue();
+		DWARFCompileUnit dcu = attrInfo.die.getCompilationUnit().getCompileUnit();
+		return dcu.isValidFileIndex(fileNum)
+				? dcu.getFileByIndex(fileNum)
+				: null;
+	}
+
+	/**
 	 * Return a list of children that are of a specific DWARF type.
 	 * <p>
 	 * @param childTag see {@link DWARFTag DWARFTag DW_TAG_* values}

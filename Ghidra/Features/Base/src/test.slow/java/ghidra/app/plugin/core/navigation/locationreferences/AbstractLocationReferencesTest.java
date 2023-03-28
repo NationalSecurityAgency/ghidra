@@ -374,7 +374,7 @@ public abstract class AbstractLocationReferencesTest extends AbstractProgramBase
 		int tx = program.startTransaction("Test");
 		try {
 			Data data =
-				DataUtilities.createData(program, a, dt, 1, false, ClearDataMode.CHECK_FOR_SPACE);
+				DataUtilities.createData(program, a, dt, 1, ClearDataMode.CHECK_FOR_SPACE);
 			assertNotNull("Unable to apply data type at address: " + a, data);
 			return data;
 		}

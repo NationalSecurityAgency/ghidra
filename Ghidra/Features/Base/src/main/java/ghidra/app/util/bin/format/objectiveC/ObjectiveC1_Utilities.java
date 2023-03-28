@@ -147,7 +147,7 @@ public final class ObjectiveC1_Utilities {
 
 		// need to clear, as pointers could have been created on import
 		// from following pointer chains
-		DataUtilities.createData(program, address, dt, -1, false,
+		DataUtilities.createData(program, address, dt, -1,
 			ClearDataMode.CLEAR_ALL_DEFAULT_CONFLICT_DATA);
 	}
 

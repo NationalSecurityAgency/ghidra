@@ -113,6 +113,7 @@ public enum OpCode {
 	CPUI_INSERT,
 	CPUI_EXTRACT,
 	CPUI_POPCOUNT,
+	CPUI_LZCOUNT,
 
 	CPUI_MAX;
 
@@ -203,7 +204,8 @@ public enum OpCode {
 		"UNUSED1", "FLOAT_NAN", "FLOAT_ADD", "FLOAT_DIV", "FLOAT_MULT", "FLOAT_SUB",
 		"FLOAT_NEG", "FLOAT_ABS", "FLOAT_SQRT", "INT2FLOAT", "FLOAT2FLOAT", "TRUNC", "CEIL",
 		"FLOOR", "ROUND", "BUILD", "DELAY_SLOT", "PIECE", "SUBPIECE", "CAST", "LABEL",
-		"CROSSBUILD", "SEGMENTOP", "CPOOLREF", "NEW", "INSERT", "EXTRACT", "POPCOUNT" };
+		"CROSSBUILD", "SEGMENTOP", "CPOOLREF", "NEW", "INSERT", "EXTRACT", "POPCOUNT",
+		"LZCOUNT" };
 
 	public static String get_opname(OpCode op) {
 		return opcode_name[op.ordinal()];
@@ -212,7 +214,7 @@ public enum OpCode {
 	static final int opcode_indices[] = { 0, 39, 37, 40, 38, 4, 6, 60, 7, 8, 9, 64, 5, 57, 1, 68, 66,
 			61, 71, 55, 52, 47, 48, 41, 43, 44, 49, 46, 51, 42, 53, 50, 58, 70, 54, 24, 19, 27, 21,
 			33, 11, 29, 15, 16, 32, 25, 12, 28, 35, 30, 23, 22, 34, 18, 13, 14, 36, 31, 20, 26, 17,
-			65, 2, 69, 62, 72, 10, 59, 67, 3, 63, 56, 45 };
+			65, 2, 73, 69, 62, 72, 10, 59, 67, 3, 63, 56, 45 };
 
 	public static OpCode get_opcode(String nm) { // Use binary search to find name
 		int min = 1; // Don't include BLANK

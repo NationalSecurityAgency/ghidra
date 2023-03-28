@@ -195,6 +195,75 @@ public class FunctionSignatureParserTest extends AbstractGhidraHeadedIntegration
 	}
 
 	@Test
+	public void testReturnPointerToNoPointer() throws Exception {
+		FunctionSignature f = fun("char *", "Bob");
+		FunctionDefinitionDataType dt = parser.parse(f, "char Bob()");
+		assertEquals("char Bob(void)", dt.getRepresentation(null, null, 0));
+	}
+
+	@Test
+	public void testReturnPointerToSizedPointer() throws Exception {
+		FunctionSignature f = fun("char *", "Bob");
+		FunctionDefinitionDataType dt = parser.parse(f, "char *32 Bob()");
+		assertEquals("char * Bob(void)", dt.getRepresentation(null, null, 0));
+		assertEquals("char *", dt.getReturnType().getDisplayName());
+	}
+
+	@Test
+	public void testReturnPointerToPointerPointer() throws Exception {
+		FunctionSignature f = fun("char *", "Bob");
+		FunctionDefinitionDataType dt = parser.parse(f, "char * * Bob()");
+		assertEquals("char * * Bob(void)", dt.getRepresentation(null, null, 0));
+	}
+
+	@Test
+	public void testChangeReturnTypeToIncludeSizedPointer() throws Exception {
+		FunctionSignature f = fun("char", "Bob");
+		FunctionDefinitionDataType dt = parser.parse(f, "char *32 Bob(void)");
+		assertEquals("char * Bob(void)", dt.getRepresentation(null, null, 0));
+		assertEquals("char *32", dt.getReturnType().getName());
+	}
+
+	@Test
+	public void testParseFunctionNameWithSizedPointerReturnType() throws Exception {
+		FunctionSignature f = fun("char *32", "Bob");
+		FunctionDefinitionDataType dt = parser.parse(f, "char *32 Joe()");
+		assertEquals("char * Joe(void)", dt.getRepresentation(null, null, 0));
+	}
+
+	@Test
+	public void testParamPointerToSizedPointer() throws Exception {
+		FunctionSignature f = fun("int", "Bob", "char *", "p1");
+		FunctionDefinitionDataType dt = parser.parse(f, "int Bob(char *32 p1)");
+		assertEquals("int Bob(char * p1)", dt.getRepresentation(null, null, 0));
+		ParameterDefinition[] arguments = dt.getArguments();
+		assertEquals("char *32", arguments[0].getDataType().getName());
+	}
+
+	@Test
+	public void testParamPointerToPointerPointer() throws Exception {
+		FunctionSignature f = fun("int", "Bob", "char *", "p1");
+		FunctionDefinitionDataType dt = parser.parse(f, "int Bob(char * * p1)");
+		assertEquals("int Bob(char * * p1)", dt.getRepresentation(null, null, 0));
+	}
+
+	@Test
+	public void testChangeParamTypeToIncludeSizedPointer() throws Exception {
+		FunctionSignature f = fun("int", "Bob", "char", "p1");
+		FunctionDefinitionDataType dt = parser.parse(f, "int Bob(char *32 p1)");
+		assertEquals("int Bob(char * p1)", dt.getRepresentation(null, null, 0));
+		ParameterDefinition[] arguments = dt.getArguments();
+		assertEquals("char *32", arguments[0].getDataType().getName());
+	}
+
+	@Test
+	public void testParseParamNameWithSizedPointerDataType() throws Exception {
+		FunctionSignature f = fun("int", "Bob", "char *32", "p1");
+		FunctionDefinitionDataType dt = parser.parse(f, "int Bob(char *32 p2)");
+		assertEquals("int Bob(char * p2)", dt.getRepresentation(null, null, 0));
+	}
+
+	@Test
 	public void testSpacesNotAllowedInTypedFunctionName() {
 		FunctionSignature f = fun("int", "Bob", "int", "a");
 
@@ -418,6 +487,15 @@ public class FunctionSignatureParserTest extends AbstractGhidraHeadedIntegration
 	private DataType createDataType(String name) {
 		if (name.equals("int")) {
 			return new IntegerDataType();
+		}
+		if (name.equals("char *")) {
+			return new PointerDataType(new CharDataType());
+		}
+		if (name.equals("char *32")) {
+			return new Pointer32DataType(new CharDataType());
+		}
+		if (name.equals("char * *32")) {
+			return new Pointer32DataType(new PointerDataType(new CharDataType()));
 		}
 		return new StructureDataType(name, 2);
 	}

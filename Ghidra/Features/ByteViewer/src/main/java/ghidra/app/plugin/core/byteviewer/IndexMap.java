@@ -175,7 +175,7 @@ public class IndexMap {
 	 * except for the last line of a block which may end part way in the line.
 	 */
 	int getLastActiveFactoryIndex(BigInteger index, FieldFactory[] factories) {
-		for (int i = factories.length - 1; i > 0; i--) {
+		for (int i = factories.length - 1; i >= 0; i--) {
 			if (factories[i].isActive(index)) {
 				return i;
 			}

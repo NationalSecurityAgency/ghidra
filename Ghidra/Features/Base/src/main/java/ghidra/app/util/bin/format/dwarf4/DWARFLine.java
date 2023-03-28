@@ -190,6 +190,17 @@ public class DWARFLine {
 			"Negative file index was given: " + Integer.toString(index));
 	}
 
+	/**
+	 * Returns true if file exists.
+	 * 
+	 * @param index file number, excluding 0
+	 * @return boolean true if file exists
+	 */
+	public boolean isValidFileIndex(int index) {
+		index--;
+		return 0 <= index && index < file_names.size();
+	}
+
 	@Override
 	public String toString() {
 		StringBuffer buffer = new StringBuffer();

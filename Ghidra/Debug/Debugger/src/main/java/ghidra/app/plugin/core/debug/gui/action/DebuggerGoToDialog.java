@@ -16,65 +16,69 @@
 package ghidra.app.plugin.core.debug.gui.action;
 
 import java.awt.BorderLayout;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 
-import docking.DialogComponentProvider;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources;
+import ghidra.app.plugin.core.debug.gui.action.DebuggerGoToTrait.GoToResult;
+import ghidra.app.plugin.core.debug.gui.breakpoint.AbstractDebuggerSleighInputDialog;
+import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.async.AsyncUtils;
-import ghidra.program.model.address.AddressFactory;
-import ghidra.program.model.address.AddressSpace;
-import ghidra.util.MessageType;
-import ghidra.util.Msg;
+import ghidra.framework.plugintool.util.PluginUtils;
+import ghidra.pcode.exec.SleighUtils;
+import ghidra.program.model.address.*;
+import ghidra.trace.model.guest.TracePlatform;
+import ghidra.util.*;
 
-public class DebuggerGoToDialog extends DialogComponentProvider {
+public class DebuggerGoToDialog extends AbstractDebuggerSleighInputDialog {
+	private static final String TEXT = """
+			<html>
+			<body width="400px">
+			<p>
+			Enter an address or Sleigh expression. Press <b>F1</b> for help and examples.
+			</p>
+			</body>
+			</html>
+			""";
 
 	private final DebuggerGoToTrait trait;
 	private final DefaultComboBoxModel<String> modelSpaces;
 
-	final JTextField textExpression;
 	final JComboBox<String> comboSpaces;
 
 	public DebuggerGoToDialog(DebuggerGoToTrait trait) {
-		super("Go To", true, true, true, false);
+		super("Go To", TEXT);
+		setHelpLocation(new HelpLocation(
+			PluginUtils.getPluginNameFromClass(DebuggerListingPlugin.class),
+			DebuggerResources.GoToAction.HELP_ANCHOR));
 		this.trait = trait;
 
-		textExpression = new JTextField();
 		modelSpaces = new DefaultComboBoxModel<>();
 		comboSpaces = new JComboBox<>(modelSpaces);
 
-		JPanel panel = new JPanel(new BorderLayout());
-		panel.setBorder(new EmptyBorder(16, 16, 16, 16));
-		JLabel help = new JLabel(
-			"<html>Enter any sleigh expression to evaluate against the current thread.<br/>" +
-				"Note that constants and memory derefs must have a resolved size.<br/>" +
-				"Examples:<br/>" +
-				"<ul>" +
-				"<li>To go to a constant address: <code>0x00401234:4</code></li>" +
-				"<li>To go to the address in a register: <code>RAX</code></li>" +
-				"<li>To dereference the pointer at an address in a register: <code>*:8 RAX</code></li>" +
-				"</ul></html>");
-		help.getMaximumSize().width = 400;
-		panel.add(help, BorderLayout.NORTH);
-		Box box = Box.createHorizontalBox();
-		box.setBorder(new EmptyBorder(16, 0, 0, 0));
-		panel.add(box);
+		Box hbox = Box.createHorizontalBox();
+		hbox.add(comboSpaces);
+		hbox.add(new JLabel(":"));
+		panel.add(hbox, BorderLayout.WEST);
 
-		box.add(new JLabel("*["));
-		box.add(comboSpaces);
-		box.add(new JLabel("]"));
-		box.add(textExpression);
+		setFocusComponent(textInput);
 
-		addWorkPanel(panel);
-		setFocusComponent(textExpression);
-
-		addOKButton();
-		addCancelButton();
+		textInput.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+					okCallback();
+					e.consume();
+				}
+			}
+		});
 	}
 
 	protected void populateSpaces(SleighLanguage language) {
@@ -94,19 +98,37 @@ public class DebuggerGoToDialog extends DialogComponentProvider {
 		}
 	}
 
+	@Override
+	protected void validate() {
+		TracePlatform platform = trait.current.getPlatform();
+		if (platform == null) {
+			throw new AssertionError("No current trace platform");
+		}
+		Address address = platform.getAddressFactory().getAddress(getInput());
+		if (address != null) {
+			return;
+		}
+		SleighUtils.parseSleighExpression(getInput());
+	}
+
 	@Override // public for tests
 	public void okCallback() {
-		CompletableFuture<Boolean> future;
+		validateAndMarkup();
+		if (!isValid) {
+			return;
+		}
+
+		CompletableFuture<GoToResult> future;
 		try {
-			future = trait.goToSleigh((String) comboSpaces.getSelectedItem(),
-				textExpression.getText());
+			future = trait.goTo((String) comboSpaces.getSelectedItem(), getInput());
 		}
 		catch (Throwable t) {
 			future = CompletableFuture.failedFuture(t);
 		}
-		future.thenAccept(success -> {
-			if (!success) {
-				setStatusText("Address not in trace", MessageType.ERROR, true);
+		future.thenAccept(result -> {
+			if (!result.success()) {
+				setStatusText("<html>Address <code>" + result.address() + "</code> not in trace", MessageType.ERROR,
+					true);
 			}
 			else {
 				close();
@@ -124,12 +146,15 @@ public class DebuggerGoToDialog extends DialogComponentProvider {
 		close();
 	}
 
-	public void show(SleighLanguage language) {
+	public void show(SleighLanguage language, GoToInput defaultInput) {
 		populateSpaces(language);
-		trait.tool.showDialog(this);
+		if (language.getAddressFactory().getAddressSpace(defaultInput.space()) != null) {
+			comboSpaces.setSelectedItem(defaultInput.space());
+		}
+		prompt(trait.tool, defaultInput.offset());
 	}
 
-	public void setExpression(String expression) {
-		textExpression.setText(expression);
+	public void setOffset(String offset) {
+		textInput.setText(offset);
 	}
 }

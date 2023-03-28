@@ -15,6 +15,7 @@
  */
 package ghidra.program.model.listing;
 
+import ghidra.app.util.template.TemplateSimplifier;
 import ghidra.program.model.data.DataTypeDisplayOptions;
 
 public class CodeUnitFormatOptions {
@@ -80,9 +81,11 @@ public class CodeUnitFormatOptions {
 	protected volatile boolean showOffcutInfo = true;
 
 	protected DataTypeDisplayOptions displayOptions = DataTypeDisplayOptions.DEFAULT;
+	protected TemplateSimplifier templateSimplifier;
 
 	public CodeUnitFormatOptions() {
 		// use default options;
+		templateSimplifier = new TemplateSimplifier();
 	}
 
 	/**
@@ -93,6 +96,7 @@ public class CodeUnitFormatOptions {
 	public CodeUnitFormatOptions(ShowBlockName showBlockName, ShowNamespace showNamespace) {
 		this.showBlockName = showBlockName;
 		this.showNamespace = showNamespace;
+		templateSimplifier = new TemplateSimplifier();
 	}
 
 	/**
@@ -119,7 +123,7 @@ public class CodeUnitFormatOptions {
 			String localPrefixOverride, boolean doRegVariableMarkup, boolean doStackVariableMarkup,
 			boolean includeInferredVariableMarkup, boolean alwaysShowPrimaryReference,
 			boolean includeScalarReferenceAdjustment, boolean showLibraryInNamespace,
-			boolean followReferencedPointers) {
+			boolean followReferencedPointers, TemplateSimplifier templateSimplifier) {
 		this.showBlockName = showBlockName;
 		this.showNamespace = showNamespace;
 		this.showLibraryInNamespace = showLibraryInNamespace;
@@ -130,6 +134,7 @@ public class CodeUnitFormatOptions {
 		this.alwaysShowPrimaryReference = alwaysShowPrimaryReference;
 		this.followReferencedPointers = followReferencedPointers;
 		this.includeScalarReferenceAdjustment = includeScalarReferenceAdjustment;
+		this.templateSimplifier = templateSimplifier;
 	}
 
 	/**
@@ -138,5 +143,9 @@ public class CodeUnitFormatOptions {
 	 */
 	public ShowBlockName getShowBlockNameOption() {
 		return showBlockName;
+	}
+
+	public String simplifyTemplate(String name) {
+		return templateSimplifier.simplify(name);
 	}
 }

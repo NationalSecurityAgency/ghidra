@@ -112,7 +112,7 @@ public class CreateVfTableBackgroundCmd extends AbstractCreateDataBackgroundCmd<
 				return false;
 			}
 			Data data = DataUtilities.createData(program, terminatorAddress,
-				PointerDataType.dataType, -1, false, getClearDataMode());
+				PointerDataType.dataType, -1, getClearDataMode());
 			TypeDescriptorModel rtti0Model = model.getRtti0Model();
 			if (rtti0Model != null) {
 				monitor.checkCanceled();
@@ -142,7 +142,7 @@ public class CreateVfTableBackgroundCmd extends AbstractCreateDataBackgroundCmd<
 		DataType metaPointer = new PointerDataType(program.getDataTypeManager());
 		try {
 			DataUtilities.createData(program, metaAddress, metaPointer, metaPointer.getLength(),
-				false, getClearDataMode());
+				getClearDataMode());
 			return true;
 		}
 		catch (CodeUnitInsertionException e) {

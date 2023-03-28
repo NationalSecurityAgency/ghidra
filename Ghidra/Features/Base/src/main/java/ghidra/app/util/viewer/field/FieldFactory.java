@@ -21,6 +21,7 @@ import java.math.BigInteger;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import generic.theme.Gui;
 import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.template.TemplateSimplifier;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.Options;
@@ -54,6 +55,7 @@ public abstract class FieldFactory implements ExtensionPoint {
 
 	protected String colorOptionName;
 	protected String styleOptionName;
+	private TemplateSimplifier templateSimplifier;
 
 	/**
 	 * Base constructor
@@ -72,14 +74,14 @@ public abstract class FieldFactory implements ExtensionPoint {
 		styleOptionName = name + " Style";
 
 		width = 100;
-
+		templateSimplifier = model.getFormatManager().getTemplateSimplifier();
 		initDisplayOptions(displayOptions);
 		initFieldOptions(fieldOptions);
 	}
 
 	protected void initFieldOptions(Options fieldOptions) {
 		fieldOptions.getOptions(name)
-				.setOptionsHelpLocation(new HelpLocation("CodeBrowserPlugin", name));
+			.setOptionsHelpLocation(new HelpLocation("CodeBrowserPlugin", name));
 	}
 
 	protected void initDisplayOptions(Options displayOptions) {
@@ -313,5 +315,9 @@ public abstract class FieldFactory implements ExtensionPoint {
 			Font font = newFont.deriveFont(i); // i is looping over the 4 font styles PLAIN, BOLD, ITALIC, and BOLDITALIC
 			fontMetrics[i] = Toolkit.getDefaultToolkit().getFontMetrics(font);
 		}
+	}
+
+	protected String simplifyTemplates(String input) {
+		return templateSimplifier.simplify(input);
 	}
 }

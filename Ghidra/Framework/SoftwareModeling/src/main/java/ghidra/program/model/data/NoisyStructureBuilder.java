@@ -19,6 +19,8 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
+import ghidra.program.model.pcode.PartialUnion;
+
 /**
  * Build a structure from a "noisy" source of field information.
  * Feed it field records, either via addDataType(), when we
@@ -91,6 +93,11 @@ public class NoisyStructureBuilder {
 				DataTypeManager manager = dt.getDataTypeManager();
 				dt = manager.getPointer(DataType.DEFAULT, dt.getLength());
 			}
+		}
+		else if (dt instanceof PartialUnion) {
+			// The decompiler can produce the internal data-type PartialUnion, which must
+			// be replaced with a suitable formal data-type within the structure being built
+			dt = ((PartialUnion) dt).getStrippedDataType();
 		}
 		computeMax(offset, dt.getLength());
 		Entry<Long, DataType> firstEntry = checkForOverlap(offset, dt.getLength());

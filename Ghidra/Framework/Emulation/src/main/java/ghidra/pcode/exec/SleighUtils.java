@@ -290,6 +290,39 @@ public enum SleighUtils {
 		});
 	}
 
+	public static void matchDereference(Tree tree, Consumer<Tree> onSpace, Consumer<Tree> onSize,
+			Consumer<Tree> onOffset) {
+		switch (tree.getChildCount()) {
+			case 3:
+				match(tree, SleighParser.OP_DEREFERENCE, onSpace, onSize, onOffset);
+				return;
+			case 2:
+				Tree child0 = tree.getChild(0);
+				switch (child0.getType()) {
+					case SleighParser.OP_IDENTIFIER:
+						match(tree, SleighParser.OP_DEREFERENCE, onSpace, onOffset);
+						return;
+					case SleighParser.OP_BIN_CONSTANT:
+					case SleighParser.OP_DEC_CONSTANT:
+					case SleighParser.OP_HEX_CONSTANT:
+						match(tree, SleighParser.OP_DEREFERENCE, onSize, onOffset);
+						return;
+					default:
+						throw new AssertionError(
+							"OP_DEREFERENCE with 2 children where child[0] is " +
+								SleighParser.tokenNames[child0.getType()]);
+				}
+			case 1:
+				match(tree, SleighParser.OP_DEREFERENCE, onOffset);
+				return;
+			default:
+				// Likely, the op is mismatched. Ensure the error message says so.
+				match(tree, SleighParser.OP_DEREFERENCE);
+				throw new AssertionError(
+					"OP_DEREFERENCE with " + tree.getChildCount() + " children");
+		}
+	}
+
 	/**
 	 * Check if the given tree represents an unconditional breakpoint in the emulator
 	 * 
@@ -386,6 +419,36 @@ public enum SleighUtils {
 			return recoverConditionFromBreakpoint(tree);
 		}
 		catch (SleighParseError e) {
+			return null;
+		}
+	}
+
+	public record AddressOf(String space, Tree offset) {
+	}
+
+	public static AddressOf recoverAddressOf(String defaultSpace, Tree tree) {
+		var l = new Object() {
+			String space = defaultSpace;
+			Tree offset;
+		};
+		matchDereference(tree, wantSpaceId -> {
+			match(wantSpaceId, SleighParser.OP_IDENTIFIER, id -> {
+				l.space = getIdentifier(id);
+			});
+		}, wantSize -> {
+			// I don't care about size
+		}, wantOffset -> {
+			l.offset = wantOffset;
+		});
+		return new AddressOf(l.space, removeParenthesisTree(Objects.requireNonNull(l.offset)));
+	}
+
+	public static AddressOf recoverAddressOf(String defaultSpace, String expression) {
+		try {
+			Tree tree = parseSleighExpression(expression);
+			return recoverAddressOf(defaultSpace, tree);
+		}
+		catch (SleighParseError | MismatchException e) {
 			return null;
 		}
 	}

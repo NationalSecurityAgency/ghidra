@@ -1415,7 +1415,6 @@ attach variables vrC_8_15 [vr0_8_15 vr1_8_15 vr2_8_15 vr3_8_15 vr4_8_15 vr5_8_15
 ################################################################
 
 define pcodeop clearHistory;
-define pcodeop countLeadingZeros;
 define pcodeop countTrailingZeros;
 define pcodeop dataCacheBlockAllocate;
 define pcodeop dataCacheBlockFlush;

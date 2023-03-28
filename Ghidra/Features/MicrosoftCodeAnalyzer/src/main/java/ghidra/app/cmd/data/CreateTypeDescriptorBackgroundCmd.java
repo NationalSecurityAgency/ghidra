@@ -112,7 +112,7 @@ public class CreateTypeDescriptorBackgroundCmd
 		// Create 'name' char[0] data at the address immediately following structure
 		Program program = model.getProgram();
 		Data nameData = DataUtilities.createData(program, arrayAddr, charArray,
-			charArray.getLength(), false, getClearDataMode());
+			charArray.getLength(), getClearDataMode());
 
 		nameData.setComment(CodeUnit.EOL_COMMENT, "TypeDescriptor.name");
 

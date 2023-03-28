@@ -20,6 +20,7 @@ import java.util.ArrayList;
 
 import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.util.DisplayableEol;
+import ghidra.app.util.template.TemplateSimplifier;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
@@ -85,7 +86,8 @@ class ProgramTextWriter {
 			writer.print("<HTML><BODY BGCOLOR=#ffffe0>");
 			writer.println("<FONT FACE=COURIER SIZE=3><STRONG><PRE>");
 		}
-
+		TemplateSimplifier simplifier = new TemplateSimplifier();
+		simplifier.setEnabled(false);
 		CodeUnitFormatOptions formatOptions = new CodeUnitFormatOptions(
 			options.isShowBlockNameInOperands() ? CodeUnitFormatOptions.ShowBlockName.NON_LOCAL
 					: CodeUnitFormatOptions.ShowBlockName.NEVER,
@@ -95,7 +97,8 @@ class ProgramTextWriter {
 			true, // include extended reference markup
 			true, // include scalar adjustment
 			true, // include library names in namespace
-			true // follow referenced pointers
+			true, // follow referenced pointers
+			simplifier // disabled simplifier
 		);
 
 		CodeUnitFormat cuFormat = new CodeUnitFormat(formatOptions);
@@ -628,9 +631,9 @@ class ProgramTextWriter {
 				if (options.isHTML()) {
 					Reference ref =
 						cu.getProgram()
-								.getReferenceManager()
-								.getPrimaryReferenceFrom(cuAddress,
-									i);
+							.getReferenceManager()
+							.getPrimaryReferenceFrom(cuAddress,
+								i);
 					addReferenceLinkedText(ref, opReps[i], true);
 				}
 				else {

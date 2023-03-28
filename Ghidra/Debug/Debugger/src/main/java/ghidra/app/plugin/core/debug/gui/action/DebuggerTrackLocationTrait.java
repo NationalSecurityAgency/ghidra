@@ -315,6 +315,13 @@ public class DebuggerTrackLocationTrait {
 		action.setCurrentActionStateByUserData(spec);
 	}
 
+	public GoToInput getDefaultGoToInput(ProgramLocation loc) {
+		if (tracker == null) {
+			return NoneLocationTrackingSpec.INSTANCE.getDefaultGoToInput(tool, current, loc);
+		}
+		return tracker.getDefaultGoToInput(tool, current, loc);
+	}
+
 	protected void locationTracked() {
 		// Listener method
 	}

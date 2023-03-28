@@ -74,7 +74,7 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 //		}
 
 		for (int i = 0; i < 40; i++) {
-			DataUtilities.createData(program, addr(i), StringDataType.dataType, 1, false,
+			DataUtilities.createData(program, addr(i), StringDataType.dataType, 1,
 				ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
 		}
 	}
@@ -202,7 +202,7 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testInstanceSettings() throws Exception {
 
-		Data data = DataUtilities.createData(program, addr(10), ByteDataType.dataType, 1, false,
+		Data data = DataUtilities.createData(program, addr(10), ByteDataType.dataType, 1,
 			ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
 
 		DataType dt = data.getDataType();

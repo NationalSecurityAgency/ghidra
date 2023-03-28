@@ -27,6 +27,7 @@ import docking.widgets.fieldpanel.FieldPanel;
 import docking.widgets.fieldpanel.internal.FieldPanelCoordinator;
 import docking.widgets.label.GIconLabel;
 import generic.theme.GIcon;
+import ghidra.GhidraOptions;
 import ghidra.app.merge.MergeConstants;
 import ghidra.app.merge.MergeManager;
 import ghidra.app.merge.util.ConflictCountPanel;
@@ -49,7 +50,7 @@ import ghidra.program.model.symbol.ExternalLocation;
 import resources.icons.EmptyIcon;
 
 /**
- * Panel to select a data type in order to resolve an add conflict in the multi-user 
+ * Panel to select a data type in order to resolve an add conflict in the multi-user
  * external location merger.
  */
 class ExternalAddConflictPanel extends JPanel implements CodeFormatService {
@@ -90,7 +91,6 @@ class ExternalAddConflictPanel extends JPanel implements CodeFormatService {
 
 	ExternalAddConflictPanel(MergeManager mergeManager, int totalConflicts, Program latestProgram,
 			Program myProgram, boolean showListingPanel) {
-		super();
 		this.tool = mergeManager.getMergeTool();
 		this.mergeManager = mergeManager;
 		this.totalConflicts = totalConflicts;
@@ -168,7 +168,7 @@ class ExternalAddConflictPanel extends JPanel implements CodeFormatService {
 	}
 
 	private ToolOptions getFieldOptions() {
-		ToolOptions fieldOptions = new ToolOptions("field");
+		ToolOptions fieldOptions = new ToolOptions(GhidraOptions.CATEGORY_BROWSER_FIELDS);
 		fieldOptions.setBoolean(RegisterFieldFactory.DISPLAY_HIDDEN_REGISTERS_OPTION_NAME, true);
 		return fieldOptions;
 	}
@@ -310,7 +310,7 @@ class ExternalAddConflictPanel extends JPanel implements CodeFormatService {
 	}
 
 	/**
-	 * Add the latest program's listing model as a listener to the latest program 
+	 * Add the latest program's listing model as a listener to the latest program
 	 * for domain object events.
 	 */
 	public void addDomainObjectListener() {
@@ -319,7 +319,7 @@ class ExternalAddConflictPanel extends JPanel implements CodeFormatService {
 	}
 
 	/**
-	 * Remove the latest program's listing model as a listener to the latest program 
+	 * Remove the latest program's listing model as a listener to the latest program
 	 * for domain object events.
 	 */
 	public void removeDomainObjectListener() {

@@ -157,6 +157,14 @@ public final class DWARFAttribute {
 	public static final int DW_AT_GNU_pubtypes = 0x2135;
 	// end GNU DebugFission
 
+	// Apple proprietary tags
+	public static final int DW_AT_APPLE_ptrauth_key = 0x3e04;
+	public static final int DW_AT_APPLE_ptrauth_address_discriminated = 0x3e05;
+	public static final int DW_AT_APPLE_ptrauth_extra_discriminator = 0x3e06;
+	public static final int DW_AT_APPLE_omit_frame_ptr = 0x3fe7;
+	public static final int DW_AT_APPLE_optimized = 0x3fe1;
+	// end Apple proprietary tags
+
 	public static String toString(long value) {
 		return DWARFUtil.toString(DWARFAttribute.class, value);
 	}

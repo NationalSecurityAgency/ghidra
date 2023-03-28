@@ -329,6 +329,7 @@ public:
   virtual void opInsertOp(const PcodeOp *op);
   virtual void opExtractOp(const PcodeOp *op);
   virtual void opPopcountOp(const PcodeOp *op) { opFunc(op); }
+  virtual void opLzcountOp(const PcodeOp *op) { opFunc(op); }
 };
 
 /// \brief Set of print commands for displaying an open brace '{' and setting a new indent level

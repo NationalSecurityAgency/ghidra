@@ -59,7 +59,7 @@ public class FunctionSignatureFieldFactory extends FieldFactory {
 	 * @param fieldOptions the Options for field specific properties.
 	 */
 	public FunctionSignatureFieldFactory(FieldFormatModel model, HighlightProvider hlProvider,
-			Options displayOptions, Options fieldOptions) {
+			ToolOptions displayOptions, ToolOptions fieldOptions) {
 		super(FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
 
 		fieldOptions.registerOption(DISPLAY_NAMESPACE, false, null,
@@ -100,7 +100,7 @@ public class FunctionSignatureFieldFactory extends FieldFactory {
 			elementIndex++;
 		}
 
-		// noreturn
+		// no return
 		if (function.hasNoReturn()) {
 			as = new AttributedString(Function.NORETURN + " ", FunctionColors.RETURN_TYPE,
 				getMetrics());
@@ -110,7 +110,9 @@ public class FunctionSignatureFieldFactory extends FieldFactory {
 		}
 
 		// return type
-		as = new AttributedString(function.getReturn().getFormalDataType().getDisplayName() + " ",
+		String returnTypeName = function.getReturn().getFormalDataType().getDisplayName();
+		returnTypeName = simplifyTemplates(returnTypeName);
+		as = new AttributedString(returnTypeName + " ",
 			FunctionColors.RETURN_TYPE, getMetrics());
 		textElements.add(new FunctionReturnTypeFieldElement(as, elementIndex, 0, startCol));
 		startCol += as.length();
@@ -126,14 +128,14 @@ public class FunctionSignatureFieldFactory extends FieldFactory {
 			as = new AttributedString(callingConvention + " ", FunctionColors.RETURN_TYPE,
 				getMetrics());
 			textElements
-					.add(new FunctionCallingConventionFieldElement(as, elementIndex, 0, startCol));
+				.add(new FunctionCallingConventionFieldElement(as, elementIndex, 0, startCol));
 			startCol += as.length();
 			elementIndex++;
 		}
 
 		// function name
-		as = new AttributedString(function.getName(displayFunctionScope),
-			getFunctionNameColor(function), getMetrics());
+		String functionName = simplifyTemplates(function.getName(displayFunctionScope));
+		as = new AttributedString(functionName, getFunctionNameColor(function), getMetrics());
 		textElements.add(new FunctionNameFieldElement(as, elementIndex, 0, startCol));
 		startCol += as.length();
 		elementIndex++;
@@ -159,15 +161,15 @@ public class FunctionSignatureFieldFactory extends FieldFactory {
 			Color pcolor =
 				params[i].isAutoParameter() ? FunctionColors.PARAM_AUTO : FunctionColors.PARAM;
 
-			String text = params[i].getFormalDataType().getDisplayName() + " ";
-			as = new AttributedString(text, pcolor, getMetrics());
+			String dtName = simplifyTemplates(params[i].getFormalDataType().getDisplayName() + " ");
+			as = new AttributedString(dtName, pcolor, getMetrics());
 			textElements.add(
 				new FunctionParameterFieldElement(as, elementIndex, paramOffset, startCol, i));
 			startCol += as.length();
 			paramOffset += as.length();
 			elementIndex++;
 
-			text = params[i].getName();
+			String text = params[i].getName();
 			as = new AttributedString(text, pcolor, getMetrics());
 			textElements.add(
 				new FunctionParameterNameFieldElement(as, elementIndex, paramOffset, startCol, i));
@@ -381,7 +383,6 @@ public class FunctionSignatureFieldFactory extends FieldFactory {
 	@Override
 	public void fieldOptionsChanged(Options options, String optionName, Object oldValue,
 			Object newValue) {
-
 		if (optionName.equals(DISPLAY_NAMESPACE)) {
 			displayFunctionScope = ((Boolean) newValue).booleanValue();
 			model.update();

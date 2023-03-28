@@ -2484,7 +2484,7 @@ ArmPCRelImmed12: reloff		is U23=0 & immed & rotate
 {
   build COND;
   build rm;
-  Rd = count_leading_zeroes(rm);
+  Rd = lzcount(rm);
 }
 
 @endif # VERSION_5

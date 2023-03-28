@@ -1,0 +1,17 @@
+<decompilertest>
+<!-- Example of a "Count Leading Zeros" instruction (cntlzw) being used as a zero test -->
+<binaryimage arch="PowerPC:BE:32:default:default">
+<bytechunk space="ram" offset="0x10020" readonly="true">
+686300037c6300345463d97e4e800020
+</bytechunk>
+<symbol space="ram" offset="0x10020" name="cntlzwtest"/>
+</binaryimage>
+<script>
+  <com>lo fu cntlzwtest</com>
+  <com>decompile</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name = "Leading zeros count #1" min="1" max="1">return param_1 == 3;</stringmatch>
+<stringmatch name = "Leading zeros count #2" min="0" max="0">lzcount</stringmatch>
+</decompilertest>

@@ -643,7 +643,7 @@ public class ProgramBuilder {
 
 	public void applyFixedLengthDataType(String addressString, DataType dt, int length) {
 		tx(() -> {
-			DataUtilities.createData(program, addr(addressString), dt, length, false,
+			DataUtilities.createData(program, addr(addressString), dt, length,
 				ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
 		});
 	}
@@ -688,7 +688,7 @@ public class ProgramBuilder {
 			int previousDataLength = 0;
 			for (int i = 0; i < n; i++) {
 				address = address.addNoWrap(previousDataLength);
-				Data newStringInstance = DataUtilities.createData(program, address, dt, -1, false,
+				Data newStringInstance = DataUtilities.createData(program, address, dt, -1,
 					ClearDataMode.CLEAR_SINGLE_DATA);
 				previousDataLength = newStringInstance.getLength();
 			}
@@ -830,7 +830,7 @@ public class ProgramBuilder {
 			startTransaction();
 			try {
 				Data data = DataUtilities.createData(program, addr, dataType, stringBytes.length,
-					false, ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
+					ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
 				CharsetSettingsDefinition.CHARSET.setCharset(data, charset.name());
 				return data;
 			}

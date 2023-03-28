@@ -23,7 +23,7 @@
   set       toc,title
 </xsl:param>
 
-<xsl:param name="html.stylesheet" select="'html/Frontpage.css'"/>    <!-- Use our custom cascading style sheet -->
+<xsl:param name="html.stylesheet" select="'html/DefaultStyle.css'"/>    <!-- Use our custom cascading style sheet -->
 
 <xsl:output method="html"
             encoding="UTF8"

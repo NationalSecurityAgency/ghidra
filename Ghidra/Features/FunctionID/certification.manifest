@@ -4,6 +4,7 @@ Module.manifest||GHIDRA||||END|
 data/building_fid.txt||GHIDRA||||END|
 data/common_symbols_win32.txt||GHIDRA|||Symbols used to generate fiddb files distributed with Ghidra|END|
 data/common_symbols_win64.txt||GHIDRA|||Symbols used to generate fiddb files distributed with Ghidra|END|
+src/main/doc/commonprofile.xsl||GHIDRA||||END|
 src/main/doc/fid.xml||GHIDRA||||END|
 src/main/doc/fid_common.xsl||GHIDRA||||END|
 src/main/doc/fid_html.xsl||GHIDRA||||END|

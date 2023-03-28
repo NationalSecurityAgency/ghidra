@@ -814,13 +814,13 @@
 #cntlzd  r0,r0 		0x7c 00 00 74
 :cntlzd A,S			is OP=31 & S & A & BITS_11_15=0 & XOP_1_10=58 & Rc=0
 {
-	A = countLeadingZeros(S);
+	A = lzcount(S);
 }
 
 #cntlzd. r0,r0		0x7c 00 00 75
 :cntlzd. A,S		is OP=31 & S & A & BITS_11_15=0 & XOP_1_10=58 & Rc=1
 {
-	A = countLeadingZeros(S);
+	A = lzcount(S);
 	cr0flags(A);
 }
 @endif
@@ -828,13 +828,13 @@
 #cntlzw  r0,r0 		0x7c 00 00 34
 :cntlzw A,S			is OP=31 & S & A & BITS_11_15=0 & XOP_1_10=26 & Rc=0
 {
-	A = countLeadingZeros(S:4);
+	A = lzcount(S:4);
 }
 
 #cntlzw. r0,r0		0x7c 00 00 35
 :cntlzw. A,S		is OP=31 & S & A & BITS_11_15=0 & XOP_1_10=26 & Rc=1
 {
-	A = countLeadingZeros(S:4);
+	A = lzcount(S:4);
 	cr0flags(A);
 }
 #===========================================================
