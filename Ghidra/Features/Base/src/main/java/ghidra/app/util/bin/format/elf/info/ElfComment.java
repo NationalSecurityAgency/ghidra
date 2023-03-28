@@ -23,8 +23,9 @@ import java.io.IOException;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.data.DataUtilities;
+import ghidra.program.model.data.DataUtilities.ClearDataMode;
 import ghidra.program.model.data.StringUTF8DataType;
-import ghidra.program.model.listing.Listing;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.SymbolTable;
@@ -93,7 +94,6 @@ public class ElfComment implements ElfInfoItem {
 	public void markupProgram(Program program, Address address) {
 		try {
 			Options progInfo = program.getOptions(Program.PROGRAM_INFO);
-			Listing listing = program.getListing();
 			SymbolTable symTable = program.getSymbolTable();
 
 			for (int commentNum = 0; commentNum < commentStrings.size(); commentNum++) {
@@ -103,7 +103,8 @@ public class ElfComment implements ElfInfoItem {
 				progInfo.setString("Elf Comment[%d]".formatted(commentNum), commentStr);
 				symTable.createLabel(address, "ElfComment[%d]".formatted(commentNum),
 					SourceType.IMPORTED);
-				listing.createData(address, StringUTF8DataType.dataType, strLen);
+				DataUtilities.createData(program, address, StringUTF8DataType.dataType, strLen,
+					false, ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
 				address = address.addWrap(strLen); // need to allow wrap so we don't error when hitting end-of-section
 			}
 		}
