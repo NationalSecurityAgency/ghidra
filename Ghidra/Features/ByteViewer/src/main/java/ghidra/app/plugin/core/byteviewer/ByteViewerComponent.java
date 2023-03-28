@@ -606,6 +606,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 
 	/**
 	 * Convert the cursor location to a byte block and an offset.
+	 * @return the cursor location to a byte block and an offset.
 	 */
 	ByteBlockInfo getViewerCursorLocation() {
 		FieldLocation loc = getCursorLocation();
@@ -634,11 +635,10 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 		if (info == null) {
 			return null;
 		}
-		ByteBlock block = info.getBlock();
 		BigInteger offset = info.getOffset();
 		int byteOffset = model.getByteOffset(info.getBlock(), pos);
 		offset = offset.add(BigInteger.valueOf(byteOffset));
-		return new ByteBlockInfo(block, offset, loc.getCol());
+		return new ByteBlockInfo(info.getBlock(), offset, loc.getCol());
 	}
 
 	DataFormatModel getDataModel() {
@@ -764,7 +764,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 		layoutModel.setFactorys(fieldFactories, model, charWidth);
 	}
 
-	private ByteBlockInfo getBlockInfoForSelectionStart(FieldLocation loc) {
+	private IndexedByteBlockInfo getBlockInfoForSelectionStart(FieldLocation loc) {
 		BigInteger index = loc.getIndex();
 		int fieldNum = loc.getFieldNum();
 
@@ -778,7 +778,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 		return indexMap.getBlockInfo(index, offset);
 	}
 
-	private ByteBlockInfo getBlockInfoForSelectionEnd(FieldLocation loc) {
+	private IndexedByteBlockInfo getBlockInfoForSelectionEnd(FieldLocation loc) {
 		BigInteger lineIndex = loc.getIndex();
 		int fieldNum = loc.getFieldNum();
 
@@ -812,10 +812,17 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 		return indexMap.getBlockInfo(lineIndex, lastByteInSelectionOnLine);
 	}
 
-	private void addByteBlockRange(ByteBlockSelection sel, ByteBlockInfo start, ByteBlockInfo end) {
+	private void addByteBlockRange(ByteBlockSelection sel, IndexedByteBlockInfo start,
+			IndexedByteBlockInfo end) {
 		if (start == null || end == null) {
 			return;
 		}
+
+		// this should only happen when both the start and end are on the same separator line
+		if (start.compareTo(end) > 0) {
+			return;
+		}
+
 		ByteBlock startBlock = start.getBlock();
 		ByteBlock endBlock = end.getBlock();
 
@@ -849,8 +856,8 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 
 		for (int i = 0; i < count; i++) {
 			FieldRange range = fieldSelection.getFieldRange(i);
-			ByteBlockInfo start = getBlockInfoForSelectionStart(range.getStart());
-			ByteBlockInfo end = getBlockInfoForSelectionEnd(range.getEnd());
+			IndexedByteBlockInfo start = getBlockInfoForSelectionStart(range.getStart());
+			IndexedByteBlockInfo end = getBlockInfoForSelectionEnd(range.getEnd());
 			addByteBlockRange(blockSelection, start, end);
 		}
 
