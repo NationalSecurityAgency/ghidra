@@ -33,14 +33,19 @@ import wasm.format.WasmModule;
 
 /* A reader for expressions containing a single constant instruction.
 
-In principle, constant expressions could contain more than one 
-
 Such expressions consist of an instruction from the following list:
 - t.const c
 - ref.null
 - ref.func x
 - global.get x
 followed by an explicit end byte (0x0b).
+
+In principle, constant expressions could contain more than one instruction.
+However, a constant expression must produce a single value, so with the
+current list of allowed instructions, no valid expression can contain two
+or more instructions. This may change in the future: the extended-const
+proposal will add add/sub/mul instructions, at which point this class will
+need to be updated to handle multiple instructions in a single expression.
 */
 public final class ConstantExpression implements StructConverter {
 
