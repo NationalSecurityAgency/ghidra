@@ -125,15 +125,6 @@ public enum SleighProgramCompiler {
 				}
 			}
 		}
-
-		@Override
-		public SleighSymbol findSymbol(String nm) {
-			SleighSymbol symbol = super.findSymbol(nm);
-			if (symbol == null) {
-				throw new SleighException("Unknown register: '" + nm + "'");
-			}
-			return symbol;
-		}
 	}
 
 	/**
