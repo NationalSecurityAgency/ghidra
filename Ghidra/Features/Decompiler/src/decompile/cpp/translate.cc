@@ -234,7 +234,7 @@ AddrSpace *AddrSpaceManager::decodeSpace(Decoder &decoder,const Translate *trans
   else if (elemId == ELEM_SPACE)
     res = new AddrSpace(this,trans,IPTR_PROCESSOR);
   else
-    throw LowLevelError("Invalid address space element. Internal element id: " + elemId);
+    throw LowlevelError("Invalid address space element. Internal element id: " + elemId);
 
   res->decode(decoder);
   return res;
