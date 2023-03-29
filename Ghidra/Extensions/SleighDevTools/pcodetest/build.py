@@ -48,7 +48,7 @@ class BuildUtil:
                 f = subprocess.PIPE
             if verbose: self.log_info(string)
             try:
-                sp = subprocess.Popen(cmd, stdout=f, stderr=subprocess.PIPE)
+                sp = subprocess.Popen(cmd, stdout=f, stderr=subprocess.PIPE, encoding="utf8")
             except OSError as e:
                 self.log_err("Command: " + string)
                 self.log_err(e.strerror)
