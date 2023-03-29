@@ -439,13 +439,15 @@ storeaddr: memalign memoffset is memalign; memoffset; sp2_32 {
 	sp1_32 = int2float(sp1_32);
 }
 :f32.convert_i32_u  is opc=0xB3; sp1_32; ctx_is_directive=0 {
-	sp1_32 = int2float(sp1_32);
+	local tmp:8 = zext(sp1_32);
+	sp1_32 = int2float(tmp);
 }
 :f32.convert_i64_s  is opc=0xB4; sp1_32; sp1_64; ctx_is_directive=0 {
 	sp1_32 = int2float(sp1_64);
 }
 :f32.convert_i64_u  is opc=0xB5; sp1_32; sp1_64; ctx_is_directive=0 {
-	sp1_32 = int2float(sp1_64);
+	local tmp:9 = zext(sp1_64);
+	sp1_32 = int2float(tmp);
 }
 :f32.demote_f64  is opc=0xB6; sp1_32; sp1_64; ctx_is_directive=0 {
 	sp1_32 = float2float(sp1_64);
@@ -454,13 +456,15 @@ storeaddr: memalign memoffset is memalign; memoffset; sp2_32 {
 	sp1_64 = int2float(sp1_32);
 }
 :f64.convert_i32_u  is opc=0xB8; sp1_32; sp1_64; ctx_is_directive=0 {
-	sp1_64 = int2float(sp1_32);
+	local tmp:8 = zext(sp1_32);
+	sp1_64 = int2float(tmp);
 }
 :f64.convert_i64_s  is opc=0xB9; sp1_64; ctx_is_directive=0 {
 	sp1_64 = int2float(sp1_64);
 }
 :f64.convert_i64_u  is opc=0xBA; sp1_64; ctx_is_directive=0 {
-	sp1_64 = int2float(sp1_64);
+	local tmp:9 = zext(sp1_64);
+	sp1_64 = int2float(tmp);
 }
 :f64.promote_f32  is opc=0xBB; sp1_32; sp1_64; ctx_is_directive=0 {
 	sp1_64 = float2float(sp1_32);
