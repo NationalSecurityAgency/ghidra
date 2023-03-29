@@ -288,6 +288,7 @@ define context contextreg
   rexRprefix=(16,16)    # REX.R bit prefix extend r
   rexXprefix=(17,17)    # REX.X bit prefix extend SIB index field to 4 bits
   rexBprefix=(18,18)    # REX.B bit prefix extend r/m, SIB base, Reg operand
+  rexWRXBprefix=(15,18) # REX.WRXB bits
   rexprefix=(19,19)     # True if the Rex prefix is present - note, if present, vex_mode is not supported
                         #   rexWRXB bits can be re-used since they are incompatible.
   vexMode=(20,20)       # 1 for vex instruction, 0 for normal
@@ -3203,8 +3204,7 @@ define pcodeop swap_bytes;
 :NEG rm64      is $(LONGMODE_ON) & vexMode=0 & opsize=2 & byte=0xf7; rm64 & reg_opcode=3 ... { negflags(rm64); rm64 = -rm64; resultflags(rm64); }
 @endif
 
-:NOP            is vexMode=0 & opsize=0 & byte=0x90 & rexprefix=0   { }
-:NOP            is vexMode=0 & opsize=1 & byte=0x90 & rexprefix=0   { }
+:NOP            is vexMode=0 & byte=0x90 & (mandover=0 | mandover=4) & (rexprefix=0 | rexWRXBprefix=8)  { }
 :NOP rm16       is vexMode=0 & mandover & opsize=0 & byte=0x0f; high5=3; rm16  ...    { }
 :NOP rm32       is vexMode=0 & mandover & opsize=1 & byte=0x0f; high5=3; rm32  ...    { }
 :NOP^"/reserved" rm16 is vexMode=0 & mandover & opsize=0 & byte=0x0f; byte=0x18; rm16 & reg_opcode_hb=1 ...    { }
