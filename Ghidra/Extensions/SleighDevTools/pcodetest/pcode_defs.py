@@ -732,3 +732,12 @@ PCodeTest({
     'language_id': 'Xtensa:BE:32:default',
     'ccflags': '-L %(toolchain_dir)s/lib/gcc/xtensa-elf/%(gcc_version)s',
 })
+
+PCodeTest({
+    'name': 'WebAssembly',
+    'compile_exe': 'bin/clang',
+    'toolchain': 'LLVM/llvm',
+    'toolchain_type': 'llvm',
+    'ccflags': '-std=c99 --target=wasm32-wasi -Wl,--export-dynamic -Wl,--no-gc-sections -Wl,--no-entry',
+    'language_id': 'Wasm:LE:32:default',
+})
