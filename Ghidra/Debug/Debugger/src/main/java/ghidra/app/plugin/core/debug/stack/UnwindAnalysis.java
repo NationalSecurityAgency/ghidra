@@ -353,7 +353,7 @@ public class UnwindAnalysis {
 		public SymPcodeExecutorState executeToPc(Deque<BlockEdge> to) throws CancelledException {
 			SymPcodeExecutorState state = new SymPcodeExecutorState(program);
 			SymPcodeExecutor exec =
-				SymPcodeExecutor.forProgram(program, state, Reason.EXECUTE, warnings, monitor);
+				SymPcodeExecutor.forProgram(program, state, Reason.EXECUTE_READ, warnings, monitor);
 			executePathTo(exec, to);
 			executeBlockTo(exec, pcBlock.block, pc);
 			return state;
@@ -375,7 +375,7 @@ public class UnwindAnalysis {
 		public SymPcodeExecutorState executeFromPc(SymPcodeExecutorState state,
 				Deque<BlockEdge> from) throws CancelledException {
 			SymPcodeExecutor exec =
-				SymPcodeExecutor.forProgram(program, state, Reason.EXECUTE, warnings, monitor);
+				SymPcodeExecutor.forProgram(program, state, Reason.EXECUTE_READ, warnings, monitor);
 			executeBlockFrom(exec, pcBlock.block, pc);
 			executePathFrom(exec, from);
 			return state;

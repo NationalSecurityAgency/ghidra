@@ -159,7 +159,8 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		 * @param state the composite state assigned to the thread
 		 */
 		public PcodeThreadExecutor(DefaultPcodeThread<T> thread) {
-			super(thread.language, thread.arithmetic, thread.state, Reason.EXECUTE);
+			// NB. The executor itself is not decoding. So reads are in fact data reads.
+			super(thread.language, thread.arithmetic, thread.state, Reason.EXECUTE_READ);
 			this.thread = thread;
 		}
 

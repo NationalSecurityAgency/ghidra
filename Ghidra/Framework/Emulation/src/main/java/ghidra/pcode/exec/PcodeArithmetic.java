@@ -17,6 +17,7 @@ package ghidra.pcode.exec;
 
 import java.math.BigInteger;
 
+import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.pcode.opbehavior.*;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.lang.Endian;
@@ -49,21 +50,31 @@ public interface PcodeArithmetic<T> {
 	 */
 	enum Purpose {
 		/** The value is needed to parse an instruction */
-		DECODE,
+		DECODE(Reason.EXECUTE_DECODE),
 		/** The value is needed for disassembly context */
-		CONTEXT,
+		CONTEXT(Reason.EXECUTE_READ),
 		/** The value is needed to decide a conditional branch */
-		CONDITION,
+		CONDITION(Reason.EXECUTE_READ),
 		/** The value will be used as the address of an indirect branch */
-		BRANCH,
+		BRANCH(Reason.EXECUTE_READ),
 		/** The value will be used as the address of a value to load */
-		LOAD,
+		LOAD(Reason.EXECUTE_READ),
 		/** The value will be used as the address of a value to store */
-		STORE,
+		STORE(Reason.EXECUTE_READ),
 		/** Some other reason, perhaps for userop library use */
-		OTHER,
+		OTHER(Reason.EXECUTE_READ),
 		/** The user or a tool is inspecting the value */
-		INSPECT
+		INSPECT(Reason.INSPECT);
+
+		private final Reason reason;
+
+		private Purpose(Reason reason) {
+			this.reason = reason;
+		}
+
+		public Reason reason() {
+			return reason;
+		}
 	}
 
 	/**

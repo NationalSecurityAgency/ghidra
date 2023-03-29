@@ -94,6 +94,15 @@ public interface PcodeTraceDataAccess {
 
 	/**
 	 * Compute the intersection of the given address set and the set of
+	 * {@link TraceMemoryState#KNOWN} or (@link {@link TraceMemoryState#ERROR} memory
+	 * 
+	 * @param view the address set
+	 * @return the intersection
+	 */
+	AddressSetView intersectViewKnown(AddressSetView view);
+
+	/**
+	 * Compute the intersection of the given address set and the set of
 	 * {@link TraceMemoryState#UNKNOWN} memory
 	 * 
 	 * @param view the address set

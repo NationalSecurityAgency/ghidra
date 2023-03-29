@@ -165,16 +165,16 @@ public class AdaptedEmulator implements Emulator {
 		}
 
 		@Override
-		protected void readUninitializedFromBacking(ULongSpanSet uninitialized) {
+		protected ULongSpanSet readUninitializedFromBacking(ULongSpanSet uninitialized) {
 			if (uninitialized.isEmpty()) {
-				return;
+				return uninitialized;
 			}
 			if (backing.loadImage == null) {
 				if (space.isUniqueSpace()) {
 					throw new AccessPcodeExecutionException(
 						"Attempted to read from uninitialized unique: " + uninitialized);
 				}
-				return;
+				return uninitialized;
 			}
 			ULongSpan bound = uninitialized.bound();
 			byte[] data = new byte[(int) bound.length()];
@@ -184,6 +184,7 @@ public class AdaptedEmulator implements Emulator {
 				bytes.putData(span.min(), data, (int) (span.min() - bound.min()),
 					(int) span.length());
 			}
+			return bytes.getUninitialized(bound.min(), bound.max());
 		}
 
 		@Override

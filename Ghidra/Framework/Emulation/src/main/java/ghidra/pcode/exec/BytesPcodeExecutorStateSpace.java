@@ -18,7 +18,7 @@ package ghidra.pcode.exec;
 import java.util.*;
 
 import generic.ULongSpan;
-import generic.ULongSpan.ULongSpanSet;
+import generic.ULongSpan.*;
 import ghidra.generic.util.datastruct.SemisparseByteArray;
 import ghidra.pcode.exec.PcodeExecutorStatePiece.Reason;
 import ghidra.program.model.address.*;
@@ -77,8 +77,10 @@ public class BytesPcodeExecutorStateSpace<B> {
 	 * Extension point: Read from backing into this space, when acting as a cache.
 	 * 
 	 * @param uninitialized the ranges which need to be read.
+	 * @return the ranges which remain uninitialized
 	 */
-	protected void readUninitializedFromBacking(ULongSpanSet uninitialized) {
+	protected ULongSpanSet readUninitializedFromBacking(ULongSpanSet uninitialized) {
+		return uninitialized;
 	}
 
 	/**
@@ -95,15 +97,35 @@ public class BytesPcodeExecutorStateSpace<B> {
 	}
 
 	protected AddressRange addrRng(ULongSpan span) {
-		Address start = space.getAddress(span.min());
-		Address end = space.getAddress(span.max());
-		return new AddressRangeImpl(start, end);
+		return new AddressRangeImpl(
+			space.getAddress(span.min()),
+			space.getAddress(span.max()));
+	}
+
+	protected ULongSpan spanRng(AddressRange range) {
+		return ULongSpan.span(
+			range.getMinAddress().getOffset(),
+			range.getMaxAddress().getOffset());
 	}
 
 	protected AddressSet addrSet(ULongSpanSet set) {
 		AddressSet result = new AddressSet();
 		for (ULongSpan span : set.spans()) {
 			result.add(addrRng(span));
+		}
+		return result;
+	}
+
+	/**
+	 * This assumes without assertion that the set is contained in this space
+	 * 
+	 * @param set the address set
+	 * @return the unsigned long span set
+	 */
+	protected ULongSpanSet spanSet(AddressSetView set) {
+		MutableULongSpanSet result = new DefaultULongSpanSet();
+		for (AddressRange range : set) {
+			result.add(spanRng(range));
 		}
 		return result;
 	}
@@ -151,12 +173,32 @@ public class BytesPcodeExecutorStateSpace<B> {
 	 * @return the bytes read
 	 */
 	public byte[] read(long offset, int size, Reason reason) {
-		if (backing != null) {
-			readUninitializedFromBacking(bytes.getUninitialized(offset, offset + size - 1));
+		ULongSpanSet uninitialized = bytes.getUninitialized(offset, offset + size - 1);
+		if (uninitialized.isEmpty()) {
+			return readBytes(offset, size, reason);
 		}
-		ULongSpanSet stillUninit = bytes.getUninitialized(offset, offset + size - 1);
-		if (!stillUninit.isEmpty() && reason == Reason.EXECUTE) {
-			warnUninit(stillUninit);
+		if (backing != null) {
+			uninitialized = readUninitializedFromBacking(uninitialized);
+			if (uninitialized.isEmpty()) {
+				return readBytes(offset, size, reason);
+			}
+		}
+
+		Iterator<ULongSpan> it =
+			uninitialized.complement(ULongSpan.extent(offset, size)).iterator();
+		if (it.hasNext()) {
+			ULongSpan init = it.next();
+			if (init.min().longValue() == offset) {
+				return readBytes(offset, (int) init.length(), reason);
+			}
+		}
+
+		if (reason == Reason.EXECUTE_READ) {
+			warnUninit(uninitialized);
+		}
+		else if (reason == Reason.EXECUTE_DECODE) {
+			throw new DecodePcodeExecutionException("Cannot decode uninitialized memory",
+				space.getAddress(offset));
 		}
 		return readBytes(offset, size, reason);
 	}

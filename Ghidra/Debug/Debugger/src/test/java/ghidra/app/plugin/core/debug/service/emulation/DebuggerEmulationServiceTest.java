@@ -39,6 +39,7 @@ import ghidra.app.plugin.core.debug.service.platform.DebuggerPlatformServicePlug
 import ghidra.app.services.DebuggerEmulationService.EmulationResult;
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.app.services.DebuggerTraceManagerService.ActivationCause;
+import ghidra.pcode.exec.DecodePcodeExecutionException;
 import ghidra.pcode.exec.InterruptPcodeExecutionException;
 import ghidra.pcode.utils.Utils;
 import ghidra.program.model.address.Address;
@@ -344,12 +345,52 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerGU
 	}
 
 	@Test
+	public void testInterruptOnDecodeUninitialized() throws Exception {
+		createProgram();
+		intoProject(program);
+		Assembler asm = Assemblers.getAssembler(program);
+		Memory memory = program.getMemory();
+		Address addrText = addr(program, 0x00400000);
+		Register regPC = program.getRegister("pc");
+
+		try (Transaction tx = program.openTransaction("Initialize")) {
+			MemoryBlock blockText = memory.createInitializedBlock(".text", addrText, 0x1000,
+				(byte) 0, TaskMonitor.DUMMY, false);
+			blockText.setExecute(true);
+			asm.assemble(addrText,
+				"br 0x003ffffe");
+		}
+
+		programManager.openProgram(program);
+		waitForSwing();
+		codeBrowser.goTo(new ProgramLocation(program, addrText));
+		waitForSwing();
+
+		performEnabledAction(codeBrowser.getProvider(), emulationPlugin.actionEmulateProgram, true);
+
+		Trace trace = traceManager.getCurrentTrace();
+		assertNotNull(trace);
+
+		TraceThread thread = Unique.assertOne(trace.getThreadManager().getAllThreads());
+		TraceMemorySpace regs = trace.getMemoryManager().getMemoryRegisterSpace(thread, false);
+
+		EmulationResult result = emulationPlugin.run(trace.getPlatformManager().getHostPlatform(),
+			TraceSchedule.snap(0), TaskMonitor.DUMMY, Scheduler.oneThread(thread));
+
+		assertEquals(TraceSchedule.parse("0:t0-1"), result.schedule());
+		assertTrue(result.error() instanceof DecodePcodeExecutionException);
+
+		long scratch = result.snapshot();
+		assertEquals(new BigInteger("003ffffe", 16), regs.getViewValue(scratch, regPC).getUnsignedValue());
+	}
+
+	@Test
 	public void testExecutionBreakpoint() throws Exception {
 		createProgram();
 		intoProject(program);
 		Assembler asm = Assemblers.getAssembler(program);
 		Memory memory = program.getMemory();
-		Address addrText = addr(program, 0x000400000);
+		Address addrText = addr(program, 0x00400000);
 		Register regPC = program.getRegister("pc");
 		Register regR0 = program.getRegister("r0");
 		Register regR1 = program.getRegister("r1");
@@ -411,7 +452,7 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerGU
 		intoProject(program);
 		Assembler asm = Assemblers.getAssembler(program);
 		Memory memory = program.getMemory();
-		Address addrText = addr(program, 0x000400000);
+		Address addrText = addr(program, 0x00400000);
 		Address addrI1;
 		Address addrI2;
 		try (Transaction tx = program.openTransaction("Initialize")) {
@@ -470,7 +511,7 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerGU
 		intoProject(program);
 		Assembler asm = Assemblers.getAssembler(program);
 		Memory memory = program.getMemory();
-		Address addrText = addr(program, 0x000400000);
+		Address addrText = addr(program, 0x00400000);
 		Register regPC = program.getRegister("pc");
 		Register regR0 = program.getRegister("r0");
 		Register regR1 = program.getRegister("r1");
@@ -537,7 +578,7 @@ public class DebuggerEmulationServiceTest extends AbstractGhidraHeadedDebuggerGU
 		intoProject(program);
 		Assembler asm = Assemblers.getAssembler(program);
 		Memory memory = program.getMemory();
-		Address addrText = addr(program, 0x000400000);
+		Address addrText = addr(program, 0x00400000);
 		Register regPC = program.getRegister("pc");
 		Register regR0 = program.getRegister("r0");
 		Register regR1 = program.getRegister("r1");

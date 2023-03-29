@@ -30,6 +30,11 @@ import ghidra.trace.model.memory.TraceMemorySpace;
 public class RequireIsKnownTraceCachedWriteBytesPcodeExecutorStatePiece
 		extends AbstractCheckedTraceCachedWriteBytesPcodeExecutorStatePiece {
 
+	/**
+	 * Construct a piece
+	 * 
+	 * @param data the trace-data access shim
+	 */
 	public RequireIsKnownTraceCachedWriteBytesPcodeExecutorStatePiece(PcodeTraceDataAccess data) {
 		super(data);
 	}
@@ -45,11 +50,6 @@ public class RequireIsKnownTraceCachedWriteBytesPcodeExecutorStatePiece
 			spaceMap.fork());
 	}
 
-	/**
-	 * Construct a piece
-	 * 
-	 * @param data the trace-data access shim
-	 */
 	protected AddressSetView getKnown(PcodeTraceDataAccess backing) {
 		return backing.getKnownNow();
 	}
