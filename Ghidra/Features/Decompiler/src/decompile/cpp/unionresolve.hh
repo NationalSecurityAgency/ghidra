@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __UNION_RESOLVE__
-#define __UNION_RESOLVE__
+#ifndef __UNIONRESOLVE_HH__
+#define __UNIONRESOLVE_HH__
 
 #include "op.hh"
+
+namespace ghidra {
 
 /// \brief A data-type \e resolved from an associated TypeUnion or TypeStruct
 ///
@@ -177,4 +179,5 @@ inline bool ResolveEdge::operator<(const ResolveEdge &op2) const
   return (opTime < op2.opTime);
 }
 
+} // End namespace ghidra
 #endif

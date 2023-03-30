@@ -16,10 +16,12 @@
 /// \file type.hh
 /// \brief Classes for describing and printing data-types
 
-#ifndef __CPUI_TYPE__
-#define __CPUI_TYPE__
+#ifndef __TYPE_HH__
+#define __TYPE_HH__
 
 #include "address.hh"
+
+namespace ghidra {
 
 extern AttributeId ATTRIB_ALIGNMENT;	///< Marshaling attribute "alignment"
 extern AttributeId ATTRIB_ARRAYSIZE;	///< Marshaling attribute "arraysize"
@@ -808,4 +810,5 @@ inline void TypePointerRel::markEphemeral(TypeFactory &typegrp)
     submeta = SUB_PTRREL_UNK;
 }
 
+} // End namespace ghidra
 #endif

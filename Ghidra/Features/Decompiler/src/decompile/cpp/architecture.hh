@@ -15,8 +15,8 @@
  */
 /// \file architecture.hh
 /// \brief Architecture and associated classes that help manage a single processor architecture and load image
-#ifndef __CPUI_ARCHITECTURE__
-#define __CPUI_ARCHITECTURE__
+#ifndef __ARCHITECTURE_HH__
+#define __ARCHITECTURE_HH__
 
 #include "capability.hh"
 #include "varmap.hh"
@@ -33,6 +33,8 @@
 #include "options.hh"
 #include "transform.hh"
 #include "prefersplit.hh"
+
+namespace ghidra {
 
 #ifdef CPUI_STATISTICS
 /// \brief Class for collecting statistics while processing over multiple functions
@@ -397,4 +399,5 @@ inline bool Architecture::highPtrPossible(const Address &loc,int4 size) const {
   return !nohighptr.inRange(loc,size);
 }
 
+} // End namespace ghidra
 #endif

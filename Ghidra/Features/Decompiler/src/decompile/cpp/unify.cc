@@ -16,6 +16,8 @@
 #ifdef CPUI_RULECOMPILE
 #include "unify.hh"
 
+namespace ghidra {
+
 UnifyDatatype::UnifyDatatype(uint4 tp)
 
 {
@@ -1641,4 +1643,5 @@ void UnifyCPrinter::print(ostream &s)
   }
 }
 
+} // End namespace ghidra
 #endif

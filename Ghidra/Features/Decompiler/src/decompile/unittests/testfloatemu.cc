@@ -25,6 +25,9 @@
 #include <cstring>
 
 #include <limits>
+
+namespace ghidra {
+
 using std::isnan;
 using std::sqrt;
 using std::floor;
@@ -484,4 +487,5 @@ TEST(float_opSub) {
     }
 }
 
+} // End namespace ghidra
 // end generated 

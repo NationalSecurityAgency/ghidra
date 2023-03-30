@@ -22,6 +22,11 @@
 #endif
 #ifdef CPUI_STATISTICS
 #include <cmath>
+#endif
+
+namespace ghidra {
+
+#ifdef CPUI_STATISTICS
 using std::sqrt;
 #endif
 
@@ -1532,3 +1537,5 @@ void Statistics::printResults(ostream &s)
 }
 
 #endif
+
+} // End namespace ghidra

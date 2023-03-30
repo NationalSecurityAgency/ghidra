@@ -15,6 +15,8 @@
  */
 #include "libdecomp.hh"
 
+namespace ghidra {
+
 void startDecompilerLibrary(const char *sleighhome)
 
 {
@@ -59,3 +61,4 @@ void shutdownDecompilerLibrary(void)
 {
 }
 
+} // End namespace ghidra

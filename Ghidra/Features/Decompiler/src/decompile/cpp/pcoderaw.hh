@@ -15,11 +15,13 @@
  */
 /// \file pcoderaw.hh
 /// \brief Raw descriptions of varnodes and p-code ops
-#ifndef __CPUI_PCODERAW__
-#define __CPUI_PCODERAW__
+#ifndef __PCODERAW_HH__
+#define __PCODERAW_HH__
 
 #include "address.hh"
 #include "opbehavior.hh"
+
+namespace ghidra {
 
 /// \brief Data defining a specific memory location
 ///
@@ -234,4 +236,5 @@ inline VarnodeData *PcodeOpRaw::getInput(int4 i) const
   return in[i];
 }
 
+} // End namespace ghidra
 #endif

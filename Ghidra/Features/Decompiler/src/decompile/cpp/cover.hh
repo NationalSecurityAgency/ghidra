@@ -15,10 +15,12 @@
  */
 /// \file cover.hh
 /// \brief Classes describing the topological scope of variables within a function
-#ifndef __CPUI_COVER__
-#define __CPUI_COVER__
+#ifndef __COVER_HH__
+#define __COVER_HH__
 
 #include "type.hh"
+
+namespace ghidra {
 
 class PcodeOp;
 class FlowBlock;
@@ -89,4 +91,5 @@ public:
   map<int4,CoverBlock>::const_iterator end(void) const { return cover.end(); }		///< Get end of CoverBlocks
 };
 
+} // End namespace ghidra
 #endif

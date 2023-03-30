@@ -17,6 +17,8 @@
 #include "codedata.hh"
 #include "loadimage_bfd.hh"
 
+namespace ghidra {
+
 // Constructing this registers the capability
 IfaceCodeDataCapability IfaceCodeDataCapability::ifaceCodeDataCapability;
 
@@ -786,3 +788,5 @@ void IfcCodeDataDumpTargetHits::execute(istream &s)
 {
   codedata->dumpTargetHits(*status->fileoptr);
 }
+
+} // End namespace ghidra

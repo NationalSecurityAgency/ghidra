@@ -16,6 +16,8 @@
 #include "ghidra_translate.hh"
 #include "funcdata.hh"
 
+namespace ghidra {
+
 /// \brief Associate a Varnode with a register name
 ///
 /// \param nm is the register name
@@ -154,3 +156,4 @@ void GhidraTranslate::decode(Decoder &decoder)
   decoder.closeElement(elemId);
 }
 
+} // End namespace ghidra

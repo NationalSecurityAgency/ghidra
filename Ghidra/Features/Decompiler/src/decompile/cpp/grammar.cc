@@ -90,6 +90,8 @@
 
 #include "grammar.hh"
 
+namespace ghidra {
+
 extern int grammarlex(void);
 extern int grammarerror(const char *str);
 static CParse *parse;
@@ -484,14 +486,14 @@ static const yytype_uint8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    60,    60,    61,    65,    66,    70,    71,    72,    73,
-      74,    75,    76,    77,    81,    82,    86,    91,    92,    93,
-      97,    98,    99,   100,   101,   102,   106,   107,   111,   115,
-     116,   117,   118,   122,   123,   127,   132,   133,   134,   135,
-     136,   140,   141,   145,   146,   150,   151,   155,   156,   157,
-     158,   160,   165,   166,   167,   168,   172,   173,   177,   178,
-     182,   183,   187,   188,   189,   193,   194,   195,   199,   201,
-     203,   207
+       0,    62,    62,    63,    67,    68,    72,    73,    74,    75,
+      76,    77,    78,    79,    83,    84,    88,    93,    94,    95,
+      99,   100,   101,   102,   103,   104,   108,   109,   113,   117,
+     118,   119,   120,   124,   125,   129,   134,   135,   136,   137,
+     138,   142,   143,   147,   148,   152,   153,   157,   158,   159,
+     160,   162,   167,   168,   169,   170,   174,   175,   179,   180,
+     184,   185,   189,   190,   191,   195,   196,   197,   201,   203,
+     205,   209
 };
 #endif
 
@@ -3360,3 +3362,4 @@ Address parse_machaddr(istream &s,int4 &defaultsize,const TypeFactory &typegrp,b
   return res;
 }
 
+} // End namespace ghidra

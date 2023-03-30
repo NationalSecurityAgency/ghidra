@@ -15,10 +15,12 @@
  */
 /// \file subflow.hh
 /// \brief Classes for reducing/splitting Varnodes containing smaller logical values
-#ifndef __SUBVARIABLE_FLOW__
-#define __SUBVARIABLE_FLOW__
+#ifndef __SUBFLOW_HH__
+#define __SUBFLOW_HH__
 
 #include "funcdata.hh"
+
+namespace ghidra {
 
 /// \brief Class for shrinking big Varnodes carrying smaller logical values
 ///
@@ -198,4 +200,5 @@ public:
   bool doTrace(void);		///< Trace lanes as far as possible from the root Varnode
 };
 
+} // End namespace ghidra
 #endif

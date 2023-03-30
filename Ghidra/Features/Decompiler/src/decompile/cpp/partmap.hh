@@ -16,10 +16,12 @@
  */
 /// \file partmap.hh
 /// \brief The partmap<> template mapping a linear space to value objects
-#ifndef __PARTMAP__
-#define __PARTMAP__
+#ifndef __PARTMAP_HH__
+#define __PARTMAP_HH__
 
 #include <map>
+
+namespace ghidra {
 
 /// \brief A map from a linear space to value objects
 ///
@@ -194,6 +196,8 @@ template<typename _linetype,typename _valuetype>
     after = (*enditer).first;
     return defaultvalue;
   }
+
+} // End namespace ghidra
 #endif
 
 #if 0

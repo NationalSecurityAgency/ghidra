@@ -16,11 +16,13 @@
 /// \file jumptable.hh
 /// \brief Classes to support jump-tables and their recovery
 
-#ifndef __CPUI_JUMPTABLE__
-#define __CPUI_JUMPTABLE__
+#ifndef __JUMPTABLE_HH__
+#define __JUMPTABLE_HH__
 
 #include "emulateutil.hh"
 #include "rangeutil.hh"
+
+namespace ghidra {
 
 class EmulateFunction;
 
@@ -601,4 +603,5 @@ inline bool JumpTable::IndexPair::compareByPosition(const IndexPair &op1,const I
   return (op1.blockPosition < op2.blockPosition);
 }
 
+} // End namespace ghidra
 #endif

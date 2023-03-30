@@ -16,6 +16,8 @@
 #include "userop.hh"
 #include "funcdata.hh"
 
+namespace ghidra {
+
 AttributeId ATTRIB_FARPOINTER = AttributeId("farpointer",85);
 AttributeId ATTRIB_INPUTOP = AttributeId("inputop",86);
 AttributeId ATTRIB_OUTPUTOP = AttributeId("outputop",87);
@@ -511,3 +513,5 @@ void UserOpManage::manualCallOtherFixup(const string &useropname,const string &o
     throw err;
   }
 }
+
+} // End namespace ghidra

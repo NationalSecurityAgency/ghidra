@@ -16,6 +16,8 @@
 #include "pcoderaw.hh"
 #include "translate.hh"
 
+namespace ghidra {
+
 /// Build this VarnodeData from an \<addr>, \<register>, or \<varnode> element.
 /// \param decoder is the stream decoder
 void VarnodeData::decode(Decoder &decoder)
@@ -99,3 +101,5 @@ OpCode PcodeOpRaw::decode(Decoder &decoder,int4 isize,VarnodeData *invar,Varnode
   }
   return opcode;
 }
+
+} // End namespace ghidra

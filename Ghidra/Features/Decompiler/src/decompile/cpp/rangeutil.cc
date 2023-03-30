@@ -16,6 +16,8 @@
 #include "rangeutil.hh"
 #include "block.hh"
 
+namespace ghidra {
+
 const char CircleRange::arrange[] = "gcgbegdagggggggeggggcgbggggggggcdfgggggggegdggggbgggfggggcgbegda";
 
 /// All the instantiations where left == right represent the same set. We
@@ -2600,3 +2602,5 @@ void ValueSetSolver::dumpValueSets(ostream &s) const
 }
 
 #endif
+
+} // End namespace ghidra

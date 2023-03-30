@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __SLGHPATTERN__
-#define __SLGHPATTERN__
+#ifndef __SLGHPATTERN_HH__
+#define __SLGHPATTERN_HH__
 
 #include "context.hh"
+
+namespace ghidra {
 
 // A mask/value pair viewed as two bitstreams
 class PatternBlock {
@@ -168,4 +170,5 @@ public:
   virtual void restoreXml(const Element *el);
 };
 
+} // End namespace ghidra
 #endif

@@ -73,22 +73,32 @@
 /* Pull parsers.  */
 #define YYPULL 1
 
+/* Substitute the type names.  */
+#define YYSTYPE         SLEIGHSTYPE
+/* Substitute the variable and function names.  */
+#define yyparse         sleighparse
+#define yylex           sleighlex
+#define yyerror         sleigherror
+#define yydebug         sleighdebug
+#define yynerrs         sleighnerrs
 
-
+#define yylval          sleighlval
+#define yychar          sleighchar
 
 /* Copy the first part of user declarations.  */
 
 
 #include "slgh_compile.hh"
 
-#define YYERROR_VERBOSE
+extern FILE *sleighin;
+extern int sleighlex(void);
 
-  extern SleighCompile *slgh;
-  extern int4 actionon;
-  extern FILE *yyin;
-  extern int yydebug;
-  extern int yylex(void);
-  extern int yyerror(const char *str );
+namespace ghidra {
+
+extern SleighCompile *slgh;
+extern int4 actionon;
+extern int sleighdebug;
+extern int sleigherror(const char *str );
 
 
 
@@ -110,20 +120,28 @@
 
 /* In a future release of Bison, this section will be replaced
    by #include "slghparse.hh".  */
-#ifndef YY_YY_SLGHPARSE_HH_INCLUDED
-# define YY_YY_SLGHPARSE_HH_INCLUDED
+#ifndef YY_SLEIGH_SLGHPARSE_HH_INCLUDED
+# define YY_SLEIGH_SLGHPARSE_HH_INCLUDED
 /* Debug traces.  */
-#ifndef YYDEBUG
-# define YYDEBUG 0
-#endif
+#ifndef SLEIGHDEBUG
+# if defined YYDEBUG
 #if YYDEBUG
-extern int yydebug;
+#   define SLEIGHDEBUG 1
+#  else
+#   define SLEIGHDEBUG 0
+#  endif
+# else /* ! defined YYDEBUG */
+#  define SLEIGHDEBUG 0
+# endif /* ! defined YYDEBUG */
+#endif  /* ! defined SLEIGHDEBUG */
+#if SLEIGHDEBUG
+extern int sleighdebug;
 #endif
 
 /* Token type.  */
-#ifndef YYTOKENTYPE
-# define YYTOKENTYPE
-  enum yytokentype
+#ifndef SLEIGHTOKENTYPE
+# define SLEIGHTOKENTYPE
+  enum sleightokentype
   {
     OP_BOOL_OR = 258,
     OP_BOOL_AND = 259,
@@ -242,9 +260,9 @@ extern int yydebug;
 #endif
 
 /* Value type.  */
-#if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
+#if ! defined SLEIGHSTYPE && ! defined SLEIGHSTYPE_IS_DECLARED
 
-union YYSTYPE
+union SLEIGHSTYPE
 {
 
 
@@ -294,17 +312,17 @@ union YYSTYPE
 
 };
 
-typedef union YYSTYPE YYSTYPE;
-# define YYSTYPE_IS_TRIVIAL 1
-# define YYSTYPE_IS_DECLARED 1
+typedef union SLEIGHSTYPE SLEIGHSTYPE;
+# define SLEIGHSTYPE_IS_TRIVIAL 1
+# define SLEIGHSTYPE_IS_DECLARED 1
 #endif
 
 
-extern YYSTYPE yylval;
+extern SLEIGHSTYPE sleighlval;
 
-int yyparse (void);
+int sleighparse (void);
 
-#endif /* !YY_YY_SLGHPARSE_HH_INCLUDED  */
+#endif /* !YY_SLEIGH_SLGHPARSE_HH_INCLUDED  */
 
 /* Copy the second part of user declarations.  */
 
@@ -489,7 +507,7 @@ void free (void *); /* INFRINGES ON USER NAME SPACE */
 
 #if (! defined yyoverflow \
      && (! defined __cplusplus \
-         || (defined YYSTYPE_IS_TRIVIAL && YYSTYPE_IS_TRIVIAL)))
+         || (defined SLEIGHSTYPE_IS_TRIVIAL && SLEIGHSTYPE_IS_TRIVIAL)))
 
 /* A type that is properly aligned for any stack member.  */
 union yyalloc
@@ -613,49 +631,49 @@ static const yytype_uint8 yytranslate[] =
      128
 };
 
-#if YYDEBUG
+#if SLEIGHDEBUG
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,   158,   158,   159,   160,   161,   163,   164,   165,   166,
-     167,   168,   169,   170,   171,   172,   174,   175,   176,   177,
-     179,   180,   182,   184,   186,   187,   188,   189,   190,   192,
-     194,   195,   198,   199,   200,   201,   202,   204,   205,   206,
-     207,   208,   209,   211,   213,   214,   215,   216,   217,   218,
-     219,   221,   223,   225,   227,   228,   230,   233,   235,   237,
-     239,   241,   244,   246,   247,   248,   250,   252,   253,   254,
-     257,   258,   261,   263,   264,   265,   267,   268,   270,   271,
-     272,   273,   274,   275,   276,   277,   278,   280,   281,   282,
-     283,   285,   287,   290,   291,   292,   293,   294,   295,   296,
-     297,   298,   299,   300,   301,   302,   304,   305,   306,   307,
-     309,   310,   312,   313,   315,   316,   318,   319,   320,   321,
-     322,   323,   324,   327,   328,   329,   330,   332,   333,   335,
-     336,   337,   338,   339,   340,   342,   343,   345,   347,   348,
-     350,   351,   352,   353,   354,   356,   357,   358,   359,   361,
-     362,   363,   364,   365,   366,   367,   368,   369,   370,   371,
-     372,   373,   374,   375,   376,   377,   378,   379,   380,   381,
-     382,   383,   384,   385,   387,   388,   389,   390,   391,   392,
-     393,   394,   395,   396,   397,   398,   399,   400,   401,   402,
-     403,   404,   405,   406,   407,   408,   409,   410,   411,   412,
-     413,   414,   415,   416,   417,   418,   419,   420,   421,   422,
-     423,   424,   425,   426,   427,   428,   429,   430,   431,   432,
-     433,   434,   435,   436,   437,   438,   439,   440,   441,   442,
-     443,   444,   445,   446,   447,   448,   449,   450,   451,   452,
-     453,   455,   456,   457,   458,   460,   461,   462,   463,   464,
-     465,   466,   467,   468,   470,   471,   472,   473,   475,   476,
-     477,   478,   479,   481,   482,   483,   485,   486,   488,   489,
-     490,   491,   492,   493,   495,   496,   497,   498,   499,   501,
-     502,   503,   504,   505,   506,   508,   509,   511,   512,   513,
-     515,   516,   517,   519,   520,   521,   524,   525,   527,   528,
-     529,   531,   533,   534,   535,   536,   538,   539,   540,   542,
-     543,   544,   545,   546,   548,   549,   551,   552,   554,   555,
-     558,   559,   560,   562,   563,   564,   566,   567,   568,   569,
-     570,   571,   572,   573,   574,   575,   576,   577,   578,   579,
-     580,   581,   582
+       0,   160,   160,   161,   162,   163,   165,   166,   167,   168,
+     169,   170,   171,   172,   173,   174,   176,   177,   178,   179,
+     181,   182,   184,   186,   188,   189,   190,   191,   192,   194,
+     196,   197,   200,   201,   202,   203,   204,   206,   207,   208,
+     209,   210,   211,   213,   215,   216,   217,   218,   219,   220,
+     221,   223,   225,   227,   229,   230,   232,   235,   237,   239,
+     241,   243,   246,   248,   249,   250,   252,   254,   255,   256,
+     259,   260,   263,   265,   266,   267,   269,   270,   272,   273,
+     274,   275,   276,   277,   278,   279,   280,   282,   283,   284,
+     285,   287,   289,   292,   293,   294,   295,   296,   297,   298,
+     299,   300,   301,   302,   303,   304,   306,   307,   308,   309,
+     311,   312,   314,   315,   317,   318,   320,   321,   322,   323,
+     324,   325,   326,   329,   330,   331,   332,   334,   335,   337,
+     338,   339,   340,   341,   342,   344,   345,   347,   349,   350,
+     352,   353,   354,   355,   356,   358,   359,   360,   361,   363,
+     364,   365,   366,   367,   368,   369,   370,   371,   372,   373,
+     374,   375,   376,   377,   378,   379,   380,   381,   382,   383,
+     384,   385,   386,   387,   389,   390,   391,   392,   393,   394,
+     395,   396,   397,   398,   399,   400,   401,   402,   403,   404,
+     405,   406,   407,   408,   409,   410,   411,   412,   413,   414,
+     415,   416,   417,   418,   419,   420,   421,   422,   423,   424,
+     425,   426,   427,   428,   429,   430,   431,   432,   433,   434,
+     435,   436,   437,   438,   439,   440,   441,   442,   443,   444,
+     445,   446,   447,   448,   449,   450,   451,   452,   453,   454,
+     455,   457,   458,   459,   460,   462,   463,   464,   465,   466,
+     467,   468,   469,   470,   472,   473,   474,   475,   477,   478,
+     479,   480,   481,   483,   484,   485,   487,   488,   490,   491,
+     492,   493,   494,   495,   497,   498,   499,   500,   501,   503,
+     504,   505,   506,   507,   508,   510,   511,   513,   514,   515,
+     517,   518,   519,   521,   522,   523,   526,   527,   529,   530,
+     531,   533,   535,   536,   537,   538,   540,   541,   542,   544,
+     545,   546,   547,   548,   550,   551,   553,   554,   556,   557,
+     560,   561,   562,   564,   565,   566,   568,   569,   570,   571,
+     572,   573,   574,   575,   576,   577,   578,   579,   580,   581,
+     582,   583,   584
 };
 #endif
 
-#if YYDEBUG || YYERROR_VERBOSE || 0
+#if SLEIGHDEBUG || YYERROR_VERBOSE || 0
 /* YYTNAME[SYMBOL-NUM] -- String name of the symbol SYMBOL-NUM.
    First, the terminals, then, starting at YYNTOKENS, nonterminals.  */
 static const char *const yytname[] =
@@ -1657,7 +1675,7 @@ while (0)
 
 
 /* Enable debugging if requested.  */
-#if YYDEBUG
+#if SLEIGHDEBUG
 
 # ifndef YYFPRINTF
 #  include <stdio.h> /* INFRINGES ON USER NAME SPACE */
@@ -1778,12 +1796,12 @@ do {                                    \
 /* Nonzero means print parse trace.  It is left uninitialized so that
    multiple parsers can coexist.  */
 int yydebug;
-#else /* !YYDEBUG */
+#else /* !SLEIGHDEBUG */
 # define YYDPRINTF(Args)
 # define YY_SYMBOL_PRINT(Title, Type, Value, Location)
 # define YY_STACK_PRINT(Bottom, Top)
 # define YY_REDUCE_PRINT(Rule)
-#endif /* !YYDEBUG */
+#endif /* !SLEIGHDEBUG */
 
 
 /* YYINITDEPTH -- initial size of the parser's stacks.  */
@@ -2349,7 +2367,7 @@ yyreduce:
 
   case 28:
 
-    { string errmsg=(yyvsp[0].anysym)->getName()+": redefined as a token"; yyerror(errmsg.c_str()); YYERROR; }
+    { string errmsg=(yyvsp[0].anysym)->getName()+": redefined as a token"; slgh->reportError(errmsg); YYERROR; }
 
     break;
 
@@ -2368,7 +2386,7 @@ yyreduce:
   case 31:
 
     { (yyval.varsym) = (yyvsp[-1].varsym); if (!slgh->addContextField( (yyvsp[-1].varsym), (yyvsp[0].fieldqual) ))
-                                            { yyerror("All context definitions must come before constructors"); YYERROR; } }
+                                            { slgh->reportError("All context definitions must come before constructors"); YYERROR; } }
 
     break;
 
@@ -2380,7 +2398,7 @@ yyreduce:
 
   case 33:
 
-    { delete (yyvsp[-3].i); delete (yyvsp[-1].i); string errmsg = (yyvsp[-6].anysym)->getName()+": redefined as field"; yyerror(errmsg.c_str()); YYERROR; }
+    { delete (yyvsp[-3].i); delete (yyvsp[-1].i); string errmsg = (yyvsp[-6].anysym)->getName()+": redefined as field"; slgh->reportError(errmsg); YYERROR; }
 
     break;
 
@@ -2410,7 +2428,7 @@ yyreduce:
 
   case 38:
 
-    { delete (yyvsp[-3].i); delete (yyvsp[-1].i); string errmsg = (yyvsp[-6].anysym)->getName()+": redefined as field"; yyerror(errmsg.c_str()); YYERROR; }
+    { delete (yyvsp[-3].i); delete (yyvsp[-1].i); string errmsg = (yyvsp[-6].anysym)->getName()+": redefined as field"; slgh->reportError(errmsg); YYERROR; }
 
     break;
 
@@ -2452,7 +2470,7 @@ yyreduce:
 
   case 45:
 
-    { string errmsg = (yyvsp[0].anysym)->getName()+": redefined as space"; yyerror(errmsg.c_str()); YYERROR; }
+    { string errmsg = (yyvsp[0].anysym)->getName()+": redefined as space"; slgh->reportError(errmsg); YYERROR; }
 
     break;
 
@@ -2495,7 +2513,7 @@ yyreduce:
 
   case 52:
 
-    { yyerror("Parsed integer is too big (overflow)"); YYERROR; }
+    { slgh->reportError("Parsed integer is too big (overflow)"); YYERROR; }
 
     break;
 
@@ -2634,7 +2652,7 @@ yyreduce:
 
   case 81:
 
-    { (yyval.construct) = (yyvsp[-1].construct); if (!slgh->isInRoot((yyvsp[-1].construct))) { yyerror("Unexpected '^' at start of print pieces");  YYERROR; } }
+    { (yyval.construct) = (yyvsp[-1].construct); if (!slgh->isInRoot((yyvsp[-1].construct))) { slgh->reportError("Unexpected '^' at start of print pieces");  YYERROR; } }
 
     break;
 
@@ -2701,7 +2719,7 @@ yyreduce:
   case 92:
 
     { if ((actionon==1)&&((yyvsp[0].famsym)->getType() != SleighSymbol::context_symbol))
-                                             { string errmsg="Global symbol "+(yyvsp[0].famsym)->getName(); errmsg += " is not allowed in action expression"; yyerror(errmsg.c_str()); } (yyval.patexp) = (yyvsp[0].famsym)->getPatternValue(); }
+                                             { string errmsg="Global symbol "+(yyvsp[0].famsym)->getName(); errmsg += " is not allowed in action expression"; slgh->reportError(errmsg); } (yyval.patexp) = (yyvsp[0].famsym)->getPatternValue(); }
 
     break;
 
@@ -2859,7 +2877,7 @@ yyreduce:
 
     { (yyval.pateq) = slgh->constrainOperand((yyvsp[-2].operandsym),(yyvsp[0].patexp)); 
                                           if ((yyval.pateq) == (PatternEquation *)0) 
-                                            { string errmsg="Constraining currently undefined operand "+(yyvsp[-2].operandsym)->getName(); yyerror(errmsg.c_str()); } }
+                                            { string errmsg="Constraining currently undefined operand "+(yyvsp[-2].operandsym)->getName(); slgh->reportError(errmsg); } }
 
     break;
 
@@ -2907,7 +2925,7 @@ yyreduce:
 
   case 130:
 
-    { (yyval.contop) = (yyvsp[-4].contop); if (!slgh->contextMod((yyvsp[-4].contop),(yyvsp[-3].contextsym),(yyvsp[-1].patexp))) { string errmsg="Cannot use 'inst_next' or 'inst_next2' to set context variable: "+(yyvsp[-3].contextsym)->getName(); yyerror(errmsg.c_str()); YYERROR; } }
+    { (yyval.contop) = (yyvsp[-4].contop); if (!slgh->contextMod((yyvsp[-4].contop),(yyvsp[-3].contextsym),(yyvsp[-1].patexp))) { string errmsg="Cannot use 'inst_next' or 'inst_next2' to set context variable: "+(yyvsp[-3].contextsym)->getName(); slgh->reportError(errmsg); YYERROR; } }
 
     break;
 
@@ -2931,7 +2949,7 @@ yyreduce:
 
   case 134:
 
-    { string errmsg="Expecting context symbol, not "+*(yyvsp[0].str); delete (yyvsp[0].str); yyerror(errmsg.c_str()); YYERROR; }
+    { string errmsg="Expecting context symbol, not "+*(yyvsp[0].str); delete (yyvsp[0].str); slgh->reportError(errmsg); YYERROR; }
 
     break;
 
@@ -2985,13 +3003,13 @@ yyreduce:
 
   case 143:
 
-    { string errmsg="Unknown export varnode: "+*(yyvsp[0].str); delete (yyvsp[0].str); yyerror(errmsg.c_str()); YYERROR; }
+    { string errmsg="Unknown export varnode: "+*(yyvsp[0].str); delete (yyvsp[0].str); slgh->reportError(errmsg); YYERROR; }
 
     break;
 
   case 144:
 
-    { string errmsg="Unknown pointer varnode: "+*(yyvsp[0].str); delete (yyvsp[-1].starqual); delete (yyvsp[0].str); yyerror(errmsg.c_str()); YYERROR; }
+    { string errmsg="Unknown pointer varnode: "+*(yyvsp[0].str); delete (yyvsp[-1].starqual); delete (yyvsp[0].str); slgh->reportError(errmsg); YYERROR; }
 
     break;
 
@@ -3003,7 +3021,7 @@ yyreduce:
 
   case 146:
 
-    { (yyval.sem) = (yyvsp[-1].sem); if (!(yyval.sem)->addOpList(*(yyvsp[0].stmt))) { delete (yyvsp[0].stmt); yyerror("Multiple delayslot declarations"); YYERROR; } delete (yyvsp[0].stmt); }
+    { (yyval.sem) = (yyvsp[-1].sem); if (!(yyval.sem)->addOpList(*(yyvsp[0].stmt))) { delete (yyvsp[0].stmt); slgh->reportError("Multiple delayslot declarations"); YYERROR; } delete (yyvsp[0].stmt); }
 
     break;
 
@@ -3051,7 +3069,7 @@ yyreduce:
 
   case 154:
 
-    { (yyval.stmt) = (vector<OpTpl *> *)0; string errmsg = "Redefinition of symbol: "+(yyvsp[-1].specsym)->getName(); yyerror(errmsg.c_str()); YYERROR; }
+    { (yyval.stmt) = (vector<OpTpl *> *)0; string errmsg = "Redefinition of symbol: "+(yyvsp[-1].specsym)->getName(); slgh->reportError(errmsg); YYERROR; }
 
     break;
 
@@ -3081,13 +3099,13 @@ yyreduce:
 
   case 159:
 
-    { delete (yyvsp[-3].varnode); delete (yyvsp[-1].i); yyerror("Illegal truncation on left-hand side of assignment"); YYERROR; }
+    { delete (yyvsp[-3].varnode); delete (yyvsp[-1].i); slgh->reportError("Illegal truncation on left-hand side of assignment"); YYERROR; }
 
     break;
 
   case 160:
 
-    { delete (yyvsp[-3].varnode); delete (yyvsp[-1].i); yyerror("Illegal subpiece on left-hand side of assignment"); YYERROR; }
+    { delete (yyvsp[-3].varnode); delete (yyvsp[-1].i); slgh->reportError("Illegal subpiece on left-hand side of assignment"); YYERROR; }
 
     break;
 
@@ -3147,7 +3165,7 @@ yyreduce:
 
   case 170:
 
-    { yyerror("Must specify an indirect parameter for return"); YYERROR; }
+    { slgh->reportError("Must specify an indirect parameter for return"); YYERROR; }
 
     break;
 
@@ -3567,7 +3585,7 @@ yyreduce:
 
   case 240:
 
-    { if ((*(yyvsp[-1].param)).size() < 2) { string errmsg = "Must at least two inputs to cpool"; yyerror(errmsg.c_str()); YYERROR; } (yyval.tree) = slgh->pcode.createVariadic(CPUI_CPOOLREF,(yyvsp[-1].param)); }
+    { if ((*(yyvsp[-1].param)).size() < 2) { string errmsg = "Must at least two inputs to cpool"; slgh->reportError(errmsg); YYERROR; } (yyval.tree) = slgh->pcode.createVariadic(CPUI_CPOOLREF,(yyvsp[-1].param)); }
 
     break;
 
@@ -3621,7 +3639,7 @@ yyreduce:
 
   case 249:
 
-    { (yyval.varnode) = new VarnodeTpl(ConstTpl(ConstTpl::j_curspace),ConstTpl(ConstTpl::real,0),ConstTpl(ConstTpl::j_curspace_size)); yyerror("Parsed integer is too big (overflow)"); }
+    { (yyval.varnode) = new VarnodeTpl(ConstTpl(ConstTpl::j_curspace),ConstTpl(ConstTpl::real,0),ConstTpl(ConstTpl::j_curspace_size)); slgh->reportError("Parsed integer is too big (overflow)"); }
 
     break;
 
@@ -3645,7 +3663,7 @@ yyreduce:
 
   case 253:
 
-    { string errmsg = "Unknown jump destination: "+*(yyvsp[0].str); delete (yyvsp[0].str); yyerror(errmsg.c_str()); YYERROR; }
+    { string errmsg = "Unknown jump destination: "+*(yyvsp[0].str); delete (yyvsp[0].str); slgh->reportError(errmsg); YYERROR; }
 
     break;
 
@@ -3663,13 +3681,13 @@ yyreduce:
 
   case 256:
 
-    { string errmsg = "Unknown varnode parameter: "+*(yyvsp[0].str); delete (yyvsp[0].str); yyerror(errmsg.c_str()); YYERROR; }
+    { string errmsg = "Unknown varnode parameter: "+*(yyvsp[0].str); delete (yyvsp[0].str); slgh->reportError(errmsg); YYERROR; }
 
     break;
 
   case 257:
 
-    { string errmsg = "Subtable not attached to operand: "+(yyvsp[0].subtablesym)->getName(); yyerror(errmsg.c_str()); YYERROR; }
+    { string errmsg = "Subtable not attached to operand: "+(yyvsp[0].subtablesym)->getName(); slgh->reportError(errmsg); YYERROR; }
 
     break;
 
@@ -3681,7 +3699,7 @@ yyreduce:
 
   case 259:
 
-    { (yyval.varnode) = new VarnodeTpl(ConstTpl(slgh->getConstantSpace()),ConstTpl(ConstTpl::real,0),ConstTpl(ConstTpl::real,0)); yyerror("Parsed integer is too big (overflow)"); }
+    { (yyval.varnode) = new VarnodeTpl(ConstTpl(slgh->getConstantSpace()),ConstTpl(ConstTpl::real,0),ConstTpl(ConstTpl::real,0)); slgh->reportError("Parsed integer is too big (overflow)"); }
 
     break;
 
@@ -3711,13 +3729,13 @@ yyreduce:
 
   case 264:
 
-    { string errmsg = "Unknown assignment varnode: "+*(yyvsp[0].str); delete (yyvsp[0].str); yyerror(errmsg.c_str()); YYERROR; }
+    { string errmsg = "Unknown assignment varnode: "+*(yyvsp[0].str); delete (yyvsp[0].str); slgh->reportError(errmsg); YYERROR; }
 
     break;
 
   case 265:
 
-    { string errmsg = "Subtable not attached to operand: "+(yyvsp[0].subtablesym)->getName(); yyerror(errmsg.c_str()); YYERROR; }
+    { string errmsg = "Subtable not attached to operand: "+(yyvsp[0].subtablesym)->getName(); slgh->reportError(errmsg); YYERROR; }
 
     break;
 
@@ -3759,13 +3777,13 @@ yyreduce:
 
   case 272:
 
-    { string errmsg="Unknown export varnode: "+*(yyvsp[0].str); delete (yyvsp[0].str); yyerror(errmsg.c_str()); YYERROR; }
+    { string errmsg="Unknown export varnode: "+*(yyvsp[0].str); delete (yyvsp[0].str); slgh->reportError(errmsg); YYERROR; }
 
     break;
 
   case 273:
 
-    { string errmsg = "Subtable not attached to operand: "+(yyvsp[0].subtablesym)->getName(); yyerror(errmsg.c_str()); YYERROR; }
+    { string errmsg = "Subtable not attached to operand: "+(yyvsp[0].subtablesym)->getName(); slgh->reportError(errmsg); YYERROR; }
 
     break;
 
@@ -3879,7 +3897,7 @@ yyreduce:
 
   case 292:
 
-    { if (*(yyvsp[0].str)!="_") { string errmsg = "Expecting integer but saw: "+*(yyvsp[0].str); delete (yyvsp[0].str); yyerror(errmsg.c_str()); YYERROR; }
+    { if (*(yyvsp[0].str)!="_") { string errmsg = "Expecting integer but saw: "+*(yyvsp[0].str); delete (yyvsp[0].str); slgh->reportError(errmsg); YYERROR; }
                                   (yyval.biglist) = new vector<intb>; (yyval.biglist)->push_back((intb)0xBADBEEF); delete (yyvsp[0].str); }
 
     break;
@@ -3898,7 +3916,7 @@ yyreduce:
 
   case 295:
 
-    { if (*(yyvsp[0].str)!="_") { string errmsg = "Expecting integer but saw: "+*(yyvsp[0].str); delete (yyvsp[0].str); yyerror(errmsg.c_str()); YYERROR; }
+    { if (*(yyvsp[0].str)!="_") { string errmsg = "Expecting integer but saw: "+*(yyvsp[0].str); delete (yyvsp[0].str); slgh->reportError(errmsg); YYERROR; }
                                   (yyval.biglist) = (yyvsp[-1].biglist); (yyval.biglist)->push_back((intb)0xBADBEEF); delete (yyvsp[0].str); }
 
     break;
@@ -3929,7 +3947,7 @@ yyreduce:
 
   case 300:
 
-    { string errmsg = (yyvsp[0].anysym)->getName()+": redefined"; yyerror(errmsg.c_str()); YYERROR; }
+    { string errmsg = (yyvsp[0].anysym)->getName()+": redefined"; slgh->reportError(errmsg); YYERROR; }
 
     break;
 
@@ -4007,7 +4025,7 @@ yyreduce:
 
   case 313:
 
-    { string errmsg = *(yyvsp[0].str)+": is not a value pattern"; delete (yyvsp[0].str); yyerror(errmsg.c_str()); YYERROR; }
+    { string errmsg = *(yyvsp[0].str)+": is not a value pattern"; delete (yyvsp[0].str); slgh->reportError(errmsg); YYERROR; }
 
     break;
 
@@ -4031,7 +4049,7 @@ yyreduce:
 
   case 317:
 
-    { if (*(yyvsp[0].str)!="_") { string errmsg = *(yyvsp[0].str)+": is not a varnode symbol"; delete (yyvsp[0].str); yyerror(errmsg.c_str()); YYERROR; }
+    { if (*(yyvsp[0].str)!="_") { string errmsg = *(yyvsp[0].str)+": is not a varnode symbol"; delete (yyvsp[0].str); slgh->reportError(errmsg); YYERROR; }
 				  (yyval.symlist) = new vector<SleighSymbol *>; (yyval.symlist)->push_back((SleighSymbol *)0); delete (yyvsp[0].str); }
 
     break;
@@ -4044,7 +4062,7 @@ yyreduce:
 
   case 319:
 
-    { if (*(yyvsp[0].str)!="_") { string errmsg = *(yyvsp[0].str)+": is not a varnode symbol"; delete (yyvsp[0].str); yyerror(errmsg.c_str()); YYERROR; }
+    { if (*(yyvsp[0].str)!="_") { string errmsg = *(yyvsp[0].str)+": is not a varnode symbol"; delete (yyvsp[0].str); slgh->reportError(errmsg); YYERROR; }
                                   (yyval.symlist) = (yyvsp[-1].symlist); (yyval.symlist)->push_back((SleighSymbol *)0); delete (yyvsp[0].str); }
 
     break;
@@ -4419,9 +4437,11 @@ yyreturn:
 
 
 
-int yyerror(const char *s)
+int sleigherror(const char *s)
 
 {
   slgh->reportError(s);
   return 0;
 }
+
+} // End namespace ghidra

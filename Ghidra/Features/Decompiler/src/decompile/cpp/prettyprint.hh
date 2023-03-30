@@ -16,10 +16,12 @@
 /// \file prettyprint.hh
 /// \brief Routines for emitting high-level (C) language syntax in a well formatted way.
 
-#ifndef __PRETTYPRINT__
-#define __PRETTYPRINT__
+#ifndef __PRETTYPRINT_HH__
+#define __PRETTYPRINT_HH__
 
 #include "type.hh"
+
+namespace ghidra {
 
 class Varnode;
 class PcodeOp;
@@ -1060,4 +1062,5 @@ inline void Emit::emitPending(void)
   }
 }
 
+} // End namespace ghidra
 #endif

@@ -15,6 +15,8 @@
  */
 #include "condexe.hh"
 
+namespace ghidra {
+
 ConditionMarker::ConditionMarker(void)
 
 {
@@ -1094,3 +1096,5 @@ int4 RuleOrPredicate::applyOp(PcodeOp *op,Funcdata &data)
   data.opSetOpcode(op,CPUI_COPY);
   return 1;
 }
+
+} // End namespace ghidra

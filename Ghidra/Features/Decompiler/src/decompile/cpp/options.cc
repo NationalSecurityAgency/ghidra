@@ -18,6 +18,8 @@
 #include "flow.hh"
 #include "printc.hh"
 
+namespace ghidra {
+
 ElementId ELEM_ALIASBLOCK = ElementId("aliasblock",174);
 ElementId ELEM_ALLOWCONTEXTSET = ElementId("allowcontextset",175);
 ElementId ELEM_ANALYZEFORLOOPS = ElementId("analyzeforloops",176);
@@ -917,3 +919,5 @@ string OptionNamespaceStrategy::apply(Architecture *glb,const string &p1,const s
   glb->print->setNamespaceStrategy(strategy);
   return "Namespace strategy set";
 }
+
+} // End namespace ghidra

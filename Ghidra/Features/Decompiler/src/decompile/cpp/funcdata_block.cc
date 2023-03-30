@@ -16,6 +16,8 @@
 #include "funcdata.hh"
 #include "flow.hh"
 
+namespace ghidra {
+
 // Funcdata members pertaining directly to blocks
 
 /// A description of each block in the current structure hierarchy is
@@ -1085,3 +1087,5 @@ void Funcdata::spliceBlockBasic(BlockBasic *bl)
   bblocks.spliceBlock(bl);
   structureReset();
 }
+
+} // End namespace ghidra

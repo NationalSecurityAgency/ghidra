@@ -16,6 +16,8 @@
 #include "type.hh"
 #include "funcdata.hh"
 
+namespace ghidra {
+
 /// The base propagation ordering associated with each meta-type.
 /// The array elements correspond to the ordering of #type_metatype.
 sub_metatype Datatype::base2sub[15] = {
@@ -4087,3 +4089,5 @@ void TypeFactory::parseEnumConfig(Decoder &decoder)
     enumtype = TYPE_UINT;
   decoder.closeElement(elemId);
 }
+
+} // End namespace ghidra

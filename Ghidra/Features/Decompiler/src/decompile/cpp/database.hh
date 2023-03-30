@@ -20,12 +20,14 @@
 /// scopes, namespaces etc.  Search can be by name or the address of the Symbol storage
 /// location.
 
-#ifndef __CPUI_DATABASE__
-#define __CPUI_DATABASE__
+#ifndef __DATABASE_HH__
+#define __DATABASE_HH__
 
 #include "variable.hh"
 #include "partmap.hh"
 #include "rangemap.hh"
+
+namespace ghidra {
 
 class Architecture;
 class Funcdata;
@@ -976,4 +978,5 @@ inline Symbol::Symbol(Scope *sc)
   depthResolution = 0;
 }
 
+} // End namespace ghidra
 #endif

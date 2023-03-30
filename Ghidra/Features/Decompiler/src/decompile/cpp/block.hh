@@ -16,10 +16,12 @@
 /// \file block.hh
 /// \brief Classes related to \e basic \e blocks and control-flow structuring
 
-#ifndef __CPUI_BLOCK__
-#define __CPUI_BLOCK__
+#ifndef __BLOCK_HH__
+#define __BLOCK_HH__
 
 #include "jumptable.hh"
+
+namespace ghidra {
 
 class BlockBasic;		// Forward declarations
 class BlockList;
@@ -816,4 +818,5 @@ inline bool BlockSwitch::CaseOrder::compare(const CaseOrder &a,const CaseOrder &
   return (a.depth < b.depth);
 }
 
+} // End namespace ghidra
 #endif

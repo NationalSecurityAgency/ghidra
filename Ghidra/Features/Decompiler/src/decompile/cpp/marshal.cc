@@ -16,6 +16,8 @@
 #include "marshal.hh"
 #include "translate.hh"
 
+namespace ghidra {
+
 using namespace PackedFormat;
 
 unordered_map<string,uint4> AttributeId::lookupAttributeId;
@@ -1159,3 +1161,5 @@ ElementId ELEM_VALUE = ElementId("value",9);
 ElementId ELEM_VOID = ElementId("void",10);
 
 ElementId ELEM_UNKNOWN = ElementId("XMLunknown",270); // Number serves as next open index
+
+} // End namespace ghidra

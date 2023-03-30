@@ -16,6 +16,8 @@
 #include "address.hh"
 #include "translate.hh"
 
+namespace ghidra {
+
 AttributeId ATTRIB_FIRST = AttributeId("first",27);
 AttributeId ATTRIB_LAST = AttributeId("last",28);
 AttributeId ATTRIB_UNIQ = AttributeId("uniq",29);
@@ -991,3 +993,5 @@ int4 power2Divide(int4 n,uint8 divisor,uint8 &q,uint8 &r)
   }
   return 0;
 }
+
+} // End namespace ghidra

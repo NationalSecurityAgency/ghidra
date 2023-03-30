@@ -15,6 +15,8 @@
  */
 #include "string_ghidra.hh"
 
+namespace ghidra {
+
 GhidraStringManager::GhidraStringManager(ArchitectureGhidra *g,int4 max)
   : StringManager(max)
 {
@@ -44,3 +46,5 @@ const vector<uint1> &GhidraStringManager::getStringData(const Address &addr,Data
   isTrunc = stringData.isTruncated;
   return stringData.byteData;
 }
+
+} // End namespace ghidra

@@ -18,6 +18,8 @@
 
 #include "coreaction.hh"
 
+namespace ghidra {
+
 /// Specify the name, group, and properties of the Action
 /// \param f is the collection of property flags
 /// \param nm is the Action name
@@ -1156,3 +1158,5 @@ Action *ActionDatabase::deriveAction(const string &baseaction, const string &grp
   registerAction(grp,newact);
   return newact;
 }
+
+} // End namespace ghidra

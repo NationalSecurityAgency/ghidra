@@ -17,6 +17,8 @@
 #include "block.hh"
 #include "funcdata.hh"
 
+namespace ghidra {
+
 AttributeId ATTRIB_ALTINDEX = AttributeId("altindex",75);
 AttributeId ATTRIB_DEPTH = AttributeId("depth",76);
 AttributeId ATTRIB_END = AttributeId("end",77);
@@ -3566,3 +3568,5 @@ FlowBlock *BlockMap::createBlock(const string &name)
   sortlist.push_back(bl);
   return bl;
 }
+
+} // End namespace ghidra

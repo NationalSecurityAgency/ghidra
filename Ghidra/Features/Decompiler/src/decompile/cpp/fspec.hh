@@ -16,11 +16,13 @@
 /// \file fspec.hh
 /// \brief Definitions for specifying functions prototypes
 
-#ifndef __CPUI_FSPEC__
-#define __CPUI_FSPEC__
+#ifndef __FSPEC_HH__
+#define __FSPEC_HH__
 
 #include "op.hh"
 #include "rangemap.hh"
+
+namespace ghidra {
 
 class JoinRecord;
 
@@ -1717,4 +1719,5 @@ inline bool EffectRecord::operator!=(const EffectRecord &op2) const
   return (type != op2.type);
 }
 
+} // End namespace ghidra
 #endif

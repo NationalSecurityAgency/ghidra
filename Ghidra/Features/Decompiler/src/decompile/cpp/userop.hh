@@ -16,10 +16,12 @@
 /// \file userop.hh
 /// \brief Classes for more detailed definitions of user defined p-code operations
 
-#ifndef __CPUI_USEROP__
-#define __CPUI_USEROP__
+#ifndef __USEROP_HH__
+#define __USEROP_HH__
 
 #include "typeop.hh"
+
+namespace ghidra {
 
 extern AttributeId ATTRIB_FARPOINTER;	///< Marshaling attribute "farpointer"
 extern AttributeId ATTRIB_INPUTOP;	///< Marshaling attribute "inputop"
@@ -301,4 +303,5 @@ public:
 			    const vector<string> &inname,const string &snippet,Architecture *glb);
 };
 
+} // End namespace ghidra
 #endif

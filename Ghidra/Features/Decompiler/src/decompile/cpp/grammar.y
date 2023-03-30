@@ -17,6 +17,8 @@
 %{
 #include "grammar.hh"
 
+namespace ghidra {
+
 extern int grammarlex(void);
 extern int grammarerror(const char *str);
 static CParse *parse;
@@ -1567,3 +1569,4 @@ Address parse_machaddr(istream &s,int4 &defaultsize,const TypeFactory &typegrp,b
   return res;
 }
 
+} // End namespace ghidra

@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __SLGHSYMBOL__
-#define __SLGHSYMBOL__
+#ifndef __SLGHSYMBOL_HH__
+#define __SLGHSYMBOL_HH__
 
 #include "semantics.hh"
 #include "slghpatexpress.hh"
+
+namespace ghidra {
 
 class SleighBase;		// Forward declaration
 class SleighSymbol {
@@ -639,4 +641,5 @@ public:
   virtual symbol_type getType(void) const { return label_symbol; }
 };
 
+} // End namespace ghidra
 #endif
