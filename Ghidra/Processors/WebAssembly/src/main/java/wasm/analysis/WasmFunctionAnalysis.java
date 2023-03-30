@@ -1071,7 +1071,7 @@ public class WasmFunctionAnalysis {
 				break;
 			case 0xD: /* i8x16.shuffle */
 				for (int i = 0; i < 16; i++)
-					readLeb128(reader); /* laneidx16 */
+					reader.readNextByte(); /* laneidx16 */
 				binaryOp(instAddress, ValType.v128, ValType.v128);
 				break;
 			case 0xE: /* i8x16.swizzle */
@@ -1093,62 +1093,62 @@ public class WasmFunctionAnalysis {
 				break;
 			case 0x15: /* i8x16.extract_lane_s */
 			case 0x16: /* i8x16.extract_lane_u */
-				readLeb128(reader); /* laneidx */
+				reader.readNextByte(); /* laneidx */
 				unaryOp(instAddress, ValType.v128, ValType.i32);
 				break;
 			case 0x17: /* i8x16.replace_lane */
-				readLeb128(reader); /* laneidx */
+				reader.readNextByte(); /* laneidx */
 				popValue(instAddress, ValType.i32);
 				popValue(instAddress, ValType.v128);
 				pushValue(instAddress, ValType.v128);
 				break;
 			case 0x18: /* i16x8.extract_lane_s */
 			case 0x19: /* i16x8.extract_lane_u */
-				readLeb128(reader); /* laneidx */
+				reader.readNextByte(); /* laneidx */
 				unaryOp(instAddress, ValType.v128, ValType.i32);
 				break;
 			case 0x1A: /* i16x8.replace_lane */
-				readLeb128(reader); /* laneidx */
+				reader.readNextByte(); /* laneidx */
 				popValue(instAddress, ValType.i32);
 				popValue(instAddress, ValType.v128);
 				pushValue(instAddress, ValType.v128);
 				break;
 			case 0x1B: /* i32x4.extract_lane */
-				readLeb128(reader); /* laneidx */
+				reader.readNextByte(); /* laneidx */
 				unaryOp(instAddress, ValType.v128, ValType.i32);
 				break;
 			case 0x1C: /* i32x4.replace_lane */
-				readLeb128(reader); /* laneidx */
+				reader.readNextByte(); /* laneidx */
 				popValue(instAddress, ValType.i32);
 				popValue(instAddress, ValType.v128);
 				pushValue(instAddress, ValType.v128);
 				break;
 			case 0x1D: /* i64x2.extract_lane */
-				readLeb128(reader); /* laneidx */
+				reader.readNextByte(); /* laneidx */
 				unaryOp(instAddress, ValType.v128, ValType.i64);
 				break;
 			case 0x1E: /* i64x2.replace_lane */
-				readLeb128(reader); /* laneidx */
+				reader.readNextByte(); /* laneidx */
 				popValue(instAddress, ValType.i64);
 				popValue(instAddress, ValType.v128);
 				pushValue(instAddress, ValType.v128);
 				break;
 			case 0x1F: /* f32x4.extract_lane */
-				readLeb128(reader); /* laneidx */
+				reader.readNextByte(); /* laneidx */
 				unaryOp(instAddress, ValType.v128, ValType.f32);
 				break;
 			case 0x20: /* f32x4.replace_lane */
-				readLeb128(reader); /* laneidx */
+				reader.readNextByte(); /* laneidx */
 				popValue(instAddress, ValType.f32);
 				popValue(instAddress, ValType.v128);
 				pushValue(instAddress, ValType.v128);
 				break;
 			case 0x21: /* f64x2.extract_lane */
-				readLeb128(reader); /* laneidx */
+				reader.readNextByte(); /* laneidx */
 				unaryOp(instAddress, ValType.v128, ValType.f64);
 				break;
 			case 0x22: /* f64x2.replace_lane */
-				readLeb128(reader); /* laneidx */
+				reader.readNextByte(); /* laneidx */
 				popValue(instAddress, ValType.f64);
 				popValue(instAddress, ValType.v128);
 				pushValue(instAddress, ValType.v128);
@@ -1221,7 +1221,7 @@ public class WasmFunctionAnalysis {
 			case 0x57: /* v128.load64_lane */
 				readLeb128(reader); /* align */
 				readLeb128(reader); /* offset */
-				readLeb128(reader); /* laneidx */
+				reader.readNextByte(); /* laneidx */
 				popValue(instAddress, ValType.v128);
 				popValue(instAddress, ValType.i32);
 				pushValue(instAddress, ValType.v128);
@@ -1232,7 +1232,7 @@ public class WasmFunctionAnalysis {
 			case 0x5B: /* v128.store64_lane */
 				readLeb128(reader); /* align */
 				readLeb128(reader); /* offset */
-				readLeb128(reader); /* laneidx */
+				reader.readNextByte(); /* laneidx */
 				popValue(instAddress, ValType.v128);
 				popValue(instAddress, ValType.i32);
 				break;
@@ -1240,7 +1240,6 @@ public class WasmFunctionAnalysis {
 			case 0x5D: /* v128.load64_zero */
 				readLeb128(reader); /* align */
 				readLeb128(reader); /* offset */
-				readLeb128(reader); /* laneidx */
 				popValue(instAddress, ValType.i32);
 				pushValue(instAddress, ValType.v128);
 				break;
