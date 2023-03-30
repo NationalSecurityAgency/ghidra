@@ -81,6 +81,11 @@ public class DefaultPcodeTraceThreadAccess
 	}
 
 	@Override
+	public AddressSetView intersectViewKnown(AddressSetView view) {
+		return memory.intersectViewKnown(view).union(registers.intersectViewKnown(view));
+	}
+
+	@Override
 	public AddressSetView intersectUnknown(AddressSetView view) {
 		return memory.intersectUnknown(view).union(registers.intersectUnknown(view));
 	}

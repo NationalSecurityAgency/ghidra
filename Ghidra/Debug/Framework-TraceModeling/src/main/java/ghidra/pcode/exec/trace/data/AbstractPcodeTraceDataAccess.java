@@ -150,6 +150,23 @@ public abstract class AbstractPcodeTraceDataAccess implements InternalPcodeTrace
 	}
 
 	@Override
+	public AddressSetView intersectViewKnown(AddressSetView guestView) {
+		TraceMemoryOperations ops = getMemoryOps(false);
+		if (ops == null) {
+			return new AddressSet();
+		}
+
+		AddressSetView hostView = toOverlay(platform.mapGuestToHost(guestView));
+		AddressSet hostKnown = new AddressSet();
+		for (long sn : viewport.getOrderedSnaps()) {
+			hostKnown.add(ops.getAddressesWithState(sn, hostView,
+				st -> st != null && st != TraceMemoryState.UNKNOWN));
+		}
+		AddressSetView hostResult = hostView.intersect(hostKnown);
+		return platform.mapHostToGuest(hostResult);
+	}
+
+	@Override
 	public AddressSetView intersectUnknown(AddressSetView guestView) {
 		TraceMemoryOperations ops = getMemoryOps(false);
 		if (ops == null) {

@@ -869,11 +869,12 @@ public interface Span<N, S extends Span<N, S>> extends Comparable<S> {
 
 		@Override
 		public S bound() {
-			S result = domain.empty();
-			for (Entry<S, V> entry : spanTree.values()) {
-				result = result.bound(entry.getKey());
+			if (spanTree.isEmpty()) {
+				return domain.empty();
 			}
-			return result;
+			S first = spanTree.firstEntry().getValue().getKey();
+			S last = spanTree.lastEntry().getValue().getKey();
+			return first.bound(last);
 		}
 
 		@Override

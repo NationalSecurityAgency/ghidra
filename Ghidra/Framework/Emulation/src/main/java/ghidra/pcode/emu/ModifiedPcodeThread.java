@@ -112,7 +112,7 @@ public class ModifiedPcodeThread<T> extends DefaultPcodeThread<T> {
 		 * These two exist as a way to integrate the language-specific injects that are already
 		 * written for {@link Emulator}.
 		 */
-		emulate = new GlueEmulate(language, new AdaptedMemoryState<>(state, Reason.EXECUTE) {
+		emulate = new GlueEmulate(language, new AdaptedMemoryState<>(state, Reason.EXECUTE_READ) {
 			@Override
 			public void setMemoryBank(MemoryBank bank) {
 				// Ignore

@@ -47,9 +47,11 @@ public interface PcodeExecutorStatePiece<A, T> {
 	enum Reason {
 		/** The value is needed as the default program counter or disassembly context */
 		RE_INIT,
-		/** The value is needed by the emulator in the course of execution */
-		EXECUTE,
-		/** The value is being inspected */
+		/** The value is being read by the emulator as data in the course of execution */
+		EXECUTE_READ,
+		/** The value is being decoded by the emulator as an instruction for execution */
+		EXECUTE_DECODE,
+		/** The value is being inspected by something other than an emulator */
 		INSPECT
 	}
 
