@@ -94,10 +94,9 @@ public abstract class AbstractOrdinalSupportLoader extends AbstractLibrarySuppor
 	}
 
 	@Override
-	protected boolean processLibrary(Program lib, String libName, File libFile,
+	protected void processLibrary(Program lib, String libName, File libFile,
 			ByteProvider provider, LoadSpec loadSpec, List<Option> options, MessageLog log,
-			TaskMonitor monitor)
-			throws IOException, CancelledException {
+			TaskMonitor monitor) throws IOException, CancelledException {
 		int size = loadSpec.getLanguageCompilerSpec().getLanguageDescription().getSize();
 
 		// Create exports file
@@ -113,8 +112,6 @@ public abstract class AbstractOrdinalSupportLoader extends AbstractLibrarySuppor
 				Msg.error(this, "Unable to create exports file for " + libFile, e);
 			}
 		}
-
-		return isLoadLocalLibraries(options) || isLoadSystemLibraries(options);
 	}
 
 	@Override
