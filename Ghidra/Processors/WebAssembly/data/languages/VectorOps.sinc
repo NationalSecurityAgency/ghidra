@@ -20,70 +20,98 @@ loadaddr2: memalign memoffset is memalign; memoffset; sp2_32 {
 	export addr;
 }
 
+# splatN(value) construct vector by replicating the N-bit value
+define pcodeop splat8;
+define pcodeop splat16;
+define pcodeop splat32;
+define pcodeop splat64;
+# extractN(vector, laneidx) extract a single N-bit lane from the vector
+define pcodeop extract8;
+define pcodeop extract16;
+define pcodeop extract32;
+define pcodeop extract64;
+# replaceN(vector, laneidx, value) replace a single N-bit lane with provided value
+define pcodeop replace8;
+define pcodeop replace16;
+define pcodeop replace32;
+define pcodeop replace64;
+
 ## Vector instructions
 # [i32] -> [v128]
 :v128.load loadaddr is opc=0xFD; opc2_0; loadaddr; sp1_128; ctx_is_directive=0 {
     sp1_128 = *:16 loadaddr;
 }
 
-define pcodeop v128_load8x8_s;
 # [i32] -> [v128]
 :v128.load8x8_s loadaddr is opc=0xFD; opc2_1; loadaddr; sp1_128; ctx_is_directive=0 {
-    sp1_128 = v128_load8x8_s(loadaddr);
+    sp1_128[0,16] = sext(*:1 loadaddr);
+    sp1_128[16,16] = sext(*:1 (loadaddr + 1));
+    sp1_128[32,16] = sext(*:1 (loadaddr + 2));
+    sp1_128[48,16] = sext(*:1 (loadaddr + 3));
+    sp1_128[64,16] = sext(*:1 (loadaddr + 4));
+    sp1_128[80,16] = sext(*:1 (loadaddr + 5));
+    sp1_128[96,16] = sext(*:1 (loadaddr + 6));
+    sp1_128[112,16] = sext(*:1 (loadaddr + 7));
 }
 
-define pcodeop v128_load8x8_u;
 # [i32] -> [v128]
 :v128.load8x8_u loadaddr is opc=0xFD; opc2_2; loadaddr; sp1_128; ctx_is_directive=0 {
-    sp1_128 = v128_load8x8_u(loadaddr);
+    sp1_128[0,16] = zext(*:1 loadaddr);
+    sp1_128[16,16] = zext(*:1 (loadaddr + 1));
+    sp1_128[32,16] = zext(*:1 (loadaddr + 2));
+    sp1_128[48,16] = zext(*:1 (loadaddr + 3));
+    sp1_128[64,16] = zext(*:1 (loadaddr + 4));
+    sp1_128[80,16] = zext(*:1 (loadaddr + 5));
+    sp1_128[96,16] = zext(*:1 (loadaddr + 6));
+    sp1_128[112,16] = zext(*:1 (loadaddr + 7));
 }
 
-define pcodeop v128_load16x4_s;
 # [i32] -> [v128]
 :v128.load16x4_s loadaddr is opc=0xFD; opc2_3; loadaddr; sp1_128; ctx_is_directive=0 {
-    sp1_128 = v128_load16x4_s(loadaddr);
+    sp1_128[0,32] = sext(*:2 loadaddr);
+    sp1_128[32,32] = sext(*:2 (loadaddr + 2));
+    sp1_128[64,32] = sext(*:2 (loadaddr + 4));
+    sp1_128[96,32] = sext(*:2 (loadaddr + 6));
 }
 
-define pcodeop v128_load16x4_u;
 # [i32] -> [v128]
 :v128.load16x4_u loadaddr is opc=0xFD; opc2_4; loadaddr; sp1_128; ctx_is_directive=0 {
-    sp1_128 = v128_load16x4_u(loadaddr);
+    sp1_128[0,32] = zext(*:2 loadaddr);
+    sp1_128[32,32] = zext(*:2 (loadaddr + 2));
+    sp1_128[64,32] = zext(*:2 (loadaddr + 4));
+    sp1_128[96,32] = zext(*:2 (loadaddr + 6));
 }
 
-define pcodeop v128_load32x2_s;
 # [i32] -> [v128]
 :v128.load32x2_s loadaddr is opc=0xFD; opc2_5; loadaddr; sp1_128; ctx_is_directive=0 {
-    sp1_128 = v128_load32x2_s(loadaddr);
+    sp1_128[0,64] = sext(*:4 loadaddr);
+    sp1_128[64,64] = sext(*:4 (loadaddr + 4));
 }
 
-define pcodeop v128_load32x2_u;
 # [i32] -> [v128]
 :v128.load32x2_u loadaddr is opc=0xFD; opc2_6; loadaddr; sp1_128; ctx_is_directive=0 {
-    sp1_128 = v128_load32x2_u(loadaddr);
+    sp1_128[0,64] = zext(*:4 loadaddr);
+    sp1_128[64,64] = zext(*:4 (loadaddr + 4));
 }
 
-define pcodeop v128_load8_splat;
 # [i32] -> [v128]
 :v128.load8_splat loadaddr is opc=0xFD; opc2_7; loadaddr; sp1_128; ctx_is_directive=0 {
-    sp1_128 = v128_load8_splat(loadaddr);
+    sp1_128 = splat8(*:1 loadaddr);
 }
 
-define pcodeop v128_load16_splat;
 # [i32] -> [v128]
 :v128.load16_splat loadaddr is opc=0xFD; opc2_8; loadaddr; sp1_128; ctx_is_directive=0 {
-    sp1_128 = v128_load16_splat(loadaddr);
+    sp1_128 = splat16(*:2 loadaddr);
 }
 
-define pcodeop v128_load32_splat;
 # [i32] -> [v128]
 :v128.load32_splat loadaddr is opc=0xFD; opc2_9; loadaddr; sp1_128; ctx_is_directive=0 {
-    sp1_128 = v128_load32_splat(loadaddr);
+    sp1_128 = splat32(*:4 loadaddr);
 }
 
-define pcodeop v128_load64_splat;
 # [i32] -> [v128]
 :v128.load64_splat loadaddr is opc=0xFD; opc2_10; loadaddr; sp1_128; ctx_is_directive=0 {
-    sp1_128 = v128_load64_splat(loadaddr);
+    sp1_128 = splat64(*:8 loadaddr);
 }
 
 # [i32 v128] -> []
@@ -109,124 +137,108 @@ define pcodeop i8x16_swizzle;
     sp2_128 = i8x16_swizzle(sp1_128, sp2_128);
 }
 
-define pcodeop i8x16_splat;
 # [i32] -> [v128]
 :i8x16.splat is opc=0xFD; opc2_15; sp1_128; sp1_32; ctx_is_directive=0 {
-    sp1_128 = i8x16_splat(sp1_32);
+    sp1_128 = splat8(sp1_32:1);
 }
 
-define pcodeop i16x8_splat;
 # [i32] -> [v128]
 :i16x8.splat is opc=0xFD; opc2_16; sp1_128; sp1_32; ctx_is_directive=0 {
-    sp1_128 = i16x8_splat(sp1_32);
+    sp1_128 = splat16(sp1_32:2);
 }
 
-define pcodeop i32x4_splat;
 # [i32] -> [v128]
 :i32x4.splat is opc=0xFD; opc2_17; sp1_128; sp1_32; ctx_is_directive=0 {
-    sp1_128 = i32x4_splat(sp1_32);
+    sp1_128 = splat32(sp1_32:4);
 }
 
-define pcodeop i64x2_splat;
 # [i64] -> [v128]
 :i64x2.splat is opc=0xFD; opc2_18; sp1_128; sp1_64; ctx_is_directive=0 {
-    sp1_128 = i64x2_splat(sp1_64);
+    sp1_128 = splat64(sp1_64:8);
 }
 
-define pcodeop f32x4_splat;
 # [f32] -> [v128]
 :f32x4.splat is opc=0xFD; opc2_19; sp1_128; sp1_32; ctx_is_directive=0 {
-    sp1_128 = f32x4_splat(sp1_32);
+    sp1_128 = splat32(sp1_32:4);
 }
 
-define pcodeop f64x2_splat;
 # [f64] -> [v128]
 :f64x2.splat is opc=0xFD; opc2_20; sp1_128; sp1_64; ctx_is_directive=0 {
-    sp1_128 = f64x2_splat(sp1_64);
+    sp1_128 = splat64(sp1_64:8);
 }
 
-define pcodeop i8x16_extract_lane_s;
 # [v128] -> [i32]
 :i8x16.extract_lane_s laneidx is opc=0xFD; opc2_21; laneidx; sp1_128; sp1_32; ctx_is_directive=0 {
-    sp1_32 = i8x16_extract_lane_s(laneidx:1, sp1_128);
+    local tmp:1 = extract8(sp1_128, laneidx:1);
+    sp1_32 = sext(tmp);
 }
 
-define pcodeop i8x16_extract_lane_u;
 # [v128] -> [i32]
 :i8x16.extract_lane_u laneidx is opc=0xFD; opc2_22; laneidx; sp1_128; sp1_32; ctx_is_directive=0 {
-    sp1_32 = i8x16_extract_lane_u(laneidx:1, sp1_128);
+    local tmp:1 = extract8(sp1_128, laneidx:1);
+    sp1_32 = zext(tmp);
 }
 
-define pcodeop i8x16_replace_lane;
 # [v128 i32] -> [v128]
 :i8x16.replace_lane laneidx is opc=0xFD; opc2_23; laneidx; sp1_32; sp2_128; ctx_is_directive=0 {
-    sp2_128 = i8x16_replace_lane(laneidx:1, sp1_32, sp2_128);
+    sp2_128 = replace8(sp2_128, laneidx:1, sp1_32:1);
 }
 
-define pcodeop i16x8_extract_lane_s;
 # [v128] -> [i32]
 :i16x8.extract_lane_s laneidx is opc=0xFD; opc2_24; laneidx; sp1_128; sp1_32; ctx_is_directive=0 {
-    sp1_32 = i16x8_extract_lane_s(laneidx:1, sp1_128);
+    local tmp:2 = extract16(sp1_128, laneidx:1);
+    sp1_32 = sext(tmp);
 }
 
-define pcodeop i16x8_extract_lane_u;
 # [v128] -> [i32]
 :i16x8.extract_lane_u laneidx is opc=0xFD; opc2_25; laneidx; sp1_128; sp1_32; ctx_is_directive=0 {
-    sp1_32 = i16x8_extract_lane_u(laneidx:1, sp1_128);
+    local tmp:2 = extract16(sp1_128, laneidx:1);
+    sp1_32 = zext(tmp);
 }
 
-define pcodeop i16x8_replace_lane;
 # [v128 i32] -> [v128]
 :i16x8.replace_lane laneidx is opc=0xFD; opc2_26; laneidx; sp1_32; sp2_128; ctx_is_directive=0 {
-    sp2_128 = i16x8_replace_lane(laneidx:1, sp1_32, sp2_128);
+    sp2_128 = replace16(sp2_128, laneidx:1, sp1_32:2);
 }
 
-define pcodeop i32x4_extract_lane;
 # [v128] -> [i32]
 :i32x4.extract_lane laneidx is opc=0xFD; opc2_27; laneidx; sp1_128; sp1_32; ctx_is_directive=0 {
-    sp1_32 = i32x4_extract_lane(laneidx:1, sp1_128);
+    sp1_32 = extract32(sp1_128, laneidx:1);
 }
 
-define pcodeop i32x4_replace_lane;
 # [v128 i32] -> [v128]
 :i32x4.replace_lane laneidx is opc=0xFD; opc2_28; laneidx; sp1_32; sp2_128; ctx_is_directive=0 {
-    sp2_128 = i32x4_replace_lane(laneidx:1, sp1_32, sp2_128);
+    sp2_128 = replace32(sp2_128, laneidx:1, sp1_32);
 }
 
-define pcodeop i64x2_extract_lane;
 # [v128] -> [i64]
 :i64x2.extract_lane laneidx is opc=0xFD; opc2_29; laneidx; sp1_128; sp1_64; ctx_is_directive=0 {
-    sp1_64 = i64x2_extract_lane(laneidx:1, sp1_128);
+    sp1_64 = extract64(sp1_128, laneidx:1);
 }
 
-define pcodeop i64x2_replace_lane;
 # [v128 i64] -> [v128]
 :i64x2.replace_lane laneidx is opc=0xFD; opc2_30; laneidx; sp1_64; sp2_128; ctx_is_directive=0 {
-    sp2_128 = i64x2_replace_lane(laneidx:1, sp1_64, sp2_128);
+    sp2_128 = replace64(sp2_128, laneidx:1, sp1_64);
 }
 
-define pcodeop f32x4_extract_lane;
 # [v128] -> [f32]
 :f32x4.extract_lane laneidx is opc=0xFD; opc2_31; laneidx; sp1_128; sp1_32; ctx_is_directive=0 {
-    sp1_32 = f32x4_extract_lane(laneidx:1, sp1_128);
+    sp1_32 = extract32(sp1_128, laneidx:1);
 }
 
-define pcodeop f32x4_replace_lane;
 # [v128 f32] -> [v128]
 :f32x4.replace_lane laneidx is opc=0xFD; opc2_32; laneidx; sp1_32; sp2_128; ctx_is_directive=0 {
-    sp2_128 = f32x4_replace_lane(laneidx:1, sp1_32, sp2_128);
+    sp2_128 = replace32(sp2_128, laneidx:1, sp1_32);
 }
 
-define pcodeop f64x2_extract_lane;
 # [v128] -> [f64]
 :f64x2.extract_lane laneidx is opc=0xFD; opc2_33; laneidx; sp1_128; sp1_64; ctx_is_directive=0 {
-    sp1_64 = f64x2_extract_lane(laneidx:1, sp1_128);
+    sp1_64 = extract64(sp1_128, laneidx:1);
 }
 
-define pcodeop f64x2_replace_lane;
 # [v128 f64] -> [v128]
 :f64x2.replace_lane laneidx is opc=0xFD; opc2_34; laneidx; sp1_64; sp2_128; ctx_is_directive=0 {
-    sp2_128 = f64x2_replace_lane(laneidx:1, sp1_64, sp2_128);
+    sp2_128 = replace64(sp2_128, laneidx:1, sp1_64);
 }
 
 define pcodeop i8x16_eq;
@@ -523,64 +535,55 @@ define pcodeop v128_any_true;
     sp1_32 = v128_any_true(sp1_128);
 }
 
-define pcodeop v128_load8_lane;
 # [i32 v128] -> [v128]
 :v128.load8_lane loadaddr2 laneidx is opc=0xFD; opc2_84; loadaddr2; laneidx; sp1_128; sp2_128; ctx_is_directive=0 {
-    sp2_128 = v128_load8_lane(loadaddr2, laneidx:1, sp1_128);
+    sp2_128 = replace8(sp1_128, laneidx:1, *:1 loadaddr2);
 }
 
 define pcodeop v128_load16_lane;
 # [i32 v128] -> [v128]
 :v128.load16_lane loadaddr2 laneidx is opc=0xFD; opc2_85; loadaddr2; laneidx; sp1_128; sp2_128; ctx_is_directive=0 {
-    sp2_128 = v128_load16_lane(loadaddr2, laneidx:1, sp1_128);
+    sp2_128 = replace16(sp1_128, laneidx:1, *:2 loadaddr2);
 }
 
-define pcodeop v128_load32_lane;
 # [i32 v128] -> [v128]
 :v128.load32_lane loadaddr2 laneidx is opc=0xFD; opc2_86; loadaddr2; laneidx; sp1_128; sp2_128; ctx_is_directive=0 {
-    sp2_128 = v128_load32_lane(loadaddr2, laneidx:1, sp1_128);
+    sp2_128 = replace32(sp1_128, laneidx:1, *:4 loadaddr2);
 }
 
-define pcodeop v128_load64_lane;
 # [i32 v128] -> [v128]
 :v128.load64_lane loadaddr2 laneidx is opc=0xFD; opc2_87; loadaddr2; laneidx; sp1_128; sp2_128; ctx_is_directive=0 {
-    sp2_128 = v128_load64_lane(loadaddr2, laneidx:1, sp1_128);
+    sp2_128 = replace64(sp1_128, laneidx:1, *:8 loadaddr2);
 }
 
-define pcodeop v128_store8_lane;
 # [i32 v128] -> []
 :v128.store8_lane storeaddr laneidx is opc=0xFD; opc2_88; storeaddr; laneidx; sp1_128; ctx_is_directive=0 {
-    v128_store8_lane(storeaddr, laneidx:1, sp1_128);
+    *:1 storeaddr = extract8(sp1_128, laneidx:1);
 }
 
-define pcodeop v128_store16_lane;
 # [i32 v128] -> []
 :v128.store16_lane storeaddr laneidx is opc=0xFD; opc2_89; storeaddr; laneidx; sp1_128; ctx_is_directive=0 {
-    v128_store16_lane(storeaddr, laneidx:1, sp1_128);
+    *:2 storeaddr = extract16(sp1_128, laneidx:1);
 }
 
-define pcodeop v128_store32_lane;
 # [i32 v128] -> []
 :v128.store32_lane storeaddr laneidx is opc=0xFD; opc2_90; storeaddr; laneidx; sp1_128; ctx_is_directive=0 {
-    v128_store32_lane(storeaddr, laneidx:1, sp1_128);
+    *:4 storeaddr = extract32(sp1_128, laneidx:1);
 }
 
-define pcodeop v128_store64_lane;
 # [i32 v128] -> []
 :v128.store64_lane storeaddr laneidx is opc=0xFD; opc2_91; storeaddr; laneidx; sp1_128; ctx_is_directive=0 {
-    v128_store64_lane(storeaddr, laneidx:1, sp1_128);
+    *:8 storeaddr = extract64(sp1_128, laneidx:1);
 }
 
-define pcodeop v128_load32_zero;
 # [i32] -> [v128]
-:v128.load32_zero loadaddr laneidx is opc=0xFD; opc2_92; loadaddr; laneidx; sp1_128; ctx_is_directive=0 {
-    sp1_128 = v128_load32_zero(loadaddr, laneidx:1);
+:v128.load32_zero loadaddr is opc=0xFD; opc2_92; loadaddr; sp1_128; ctx_is_directive=0 {
+    sp1_128 = zext(*:4 loadaddr);
 }
 
-define pcodeop v128_load64_zero;
 # [i32] -> [v128]
-:v128.load64_zero loadaddr laneidx is opc=0xFD; opc2_93; loadaddr; laneidx; sp1_128; ctx_is_directive=0 {
-    sp1_128 = v128_load64_zero(loadaddr, laneidx:1);
+:v128.load64_zero loadaddr is opc=0xFD; opc2_93; loadaddr; sp1_128; ctx_is_directive=0 {
+    sp1_128 = zext(*:8 loadaddr);
 }
 
 define pcodeop f32x4_demote_f64x2_zero;
