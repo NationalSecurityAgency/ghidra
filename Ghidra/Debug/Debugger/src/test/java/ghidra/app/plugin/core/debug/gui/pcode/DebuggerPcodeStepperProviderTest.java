@@ -86,8 +86,7 @@ public class DebuggerPcodeStepperProviderTest extends AbstractGhidraHeadedDebugg
 			init.executeSleigh("pc = 0x00400000;");
 
 			Assembler asm = Assemblers.getAssembler(tb.trace.getFixedProgramView(0));
-			iit = asm.assemble(start,
-				"imm r0, #0x123");
+			iit = asm.assemble(start, "imm r0, #0x123");
 
 		}
 		imm123 = iit.next();
@@ -149,6 +148,7 @@ public class DebuggerPcodeStepperProviderTest extends AbstractGhidraHeadedDebugg
 
 							@PcodeUserop
 							public void stepper_test_userop() {
+								// stub
 							}
 						};
 					}
@@ -196,7 +196,7 @@ public class DebuggerPcodeStepperProviderTest extends AbstractGhidraHeadedDebugg
 				goto <L0>;
 				""");
 		assertEquals(3, rows.size());
-		assertEquals("<html><span class=\"lab\">&lt;0&gt;</span></html>", rows.get(0).getLabel());
+		assertEquals("<html><font color=\"Blue\">&lt;0&gt;</font></html>", rows.get(0).getLabel());
 		assertEquals("<html></html>", rows.get(1).getLabel());
 		assertEquals(FallthroughPcodeRow.class, rows.get(2).getClass());
 	}
@@ -211,7 +211,7 @@ public class DebuggerPcodeStepperProviderTest extends AbstractGhidraHeadedDebugg
 		assertEquals(4, rows.size());
 		assertEquals("<html></html>", rows.get(0).getLabel());
 		assertEquals("<html></html>", rows.get(1).getLabel());
-		assertEquals("<html><span class=\"lab\">&lt;0&gt;</span></html>", rows.get(2).getLabel());
+		assertEquals("<html><font color=\"Blue\">&lt;0&gt;</font></html>", rows.get(2).getLabel());
 		assertEquals(FallthroughPcodeRow.class, rows.get(3).getClass());
 	}
 
@@ -225,7 +225,7 @@ public class DebuggerPcodeStepperProviderTest extends AbstractGhidraHeadedDebugg
 		assertEquals(3, rows.size());
 		assertEquals("<html></html>", rows.get(0).getLabel());
 		assertEquals("<html></html>", rows.get(1).getLabel());
-		assertEquals("<html><span class=\"lab\">&lt;0&gt;</span></html>", rows.get(2).getLabel());
+		assertEquals("<html><font color=\"Blue\">&lt;0&gt;</font></html>", rows.get(2).getLabel());
 		assertEquals(FallthroughPcodeRow.class, rows.get(2).getClass());
 	}
 
@@ -240,11 +240,11 @@ public class DebuggerPcodeStepperProviderTest extends AbstractGhidraHeadedDebugg
 				""");
 		assertEquals(5, rows.size());
 		// NB. templates number labels in order of appearance in BRANCHes
-		assertEquals("<html><span class=\"lab\">&lt;3&gt;</span></html>", rows.get(0).getLabel());
-		assertEquals("<html><span class=\"lab\">&lt;0&gt;</span></html>", rows.get(1).getLabel());
-		assertEquals("<html><span class=\"lab\">&lt;1&gt;</span></html>", rows.get(2).getLabel());
+		assertEquals("<html><font color=\"Blue\">&lt;3&gt;</font></html>", rows.get(0).getLabel());
+		assertEquals("<html><font color=\"Blue\">&lt;0&gt;</font></html>", rows.get(1).getLabel());
+		assertEquals("<html><font color=\"Blue\">&lt;1&gt;</font></html>", rows.get(2).getLabel());
 		assertEquals("<html></html>", rows.get(3).getLabel());
-		assertEquals("<html><span class=\"lab\">&lt;2&gt;</span></html>", rows.get(4).getLabel());
+		assertEquals("<html><font color=\"Blue\">&lt;2&gt;</font></html>", rows.get(4).getLabel());
 		assertEquals(FallthroughPcodeRow.class, rows.get(4).getClass());
 	}
 }
