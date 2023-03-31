@@ -38,19 +38,19 @@ import ghidra.util.UserSearchUtils;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * This class attempts to search for text as it is rendered on the screen.  This in in 
- * contrast to the Program Database Searcher which searches the database.  This is 
- * needed because some information on the screen is rendered "on the fly" and not 
- * stored in the database.  This searcher is much slower, but delivers 
+ * This class attempts to search for text as it is rendered on the screen.  This in in
+ * contrast to the Program Database Searcher which searches the database.  This is
+ * needed because some information on the screen is rendered "on the fly" and not
+ * stored in the database.  This searcher is much slower, but delivers
  * results that are in-line with what the user sees.
  * <p>
- * The search is performed in two steps.  First it uses Instruction and Data iterators to 
+ * The search is performed in two steps.  First it uses Instruction and Data iterators to
  * find possible addresses where where information would be rendered.  Then for each of those
  * addresses, it uses the code browsers rendering engine to produce a textual representation
  * for that address.  The textual representation also maintains information about the field
  * that generated it so that the search can be constrained to specific fields such as the
- * label or comment field. 
- * 
+ * label or comment field.
+ *
  */
 class ListingDisplaySearcher implements Searcher {
 
@@ -80,7 +80,7 @@ class ListingDisplaySearcher implements Searcher {
 
 	/**
 	 * Constructor
-	 * @param codeViewerService service to get the Layouts
+	 * @param tool the tool
 	 * @param program current program
 	 * @param startLocation location from where to begin searching
 	 * @param set address set; may be null
@@ -143,7 +143,7 @@ class ListingDisplaySearcher implements Searcher {
 	private AddressIterator[] getSearchIterators() {
 		//
 		// This code used to get specific iterators for labels, comments, etc, depending
-		// on what options were selected (which is the fastest way to search).  However, 
+		// on what options were selected (which is the fastest way to search).  However,
 		// this approach missed auto comments and structure comments.
 		//
 		// The idea now is to get iterators that will return addresses for every defined
@@ -168,16 +168,13 @@ class ListingDisplaySearcher implements Searcher {
 			iterators.add(listing.getCommentAddressIterator(searchAddresses, options.isForward()));
 		}
 		if (options.searchLabels() || all) {
-			SymbolIterator labels = program.getSymbolTable().getPrimarySymbolIterator(
-				searchAddresses, options.isForward());
+			SymbolIterator labels = program.getSymbolTable()
+					.getPrimarySymbolIterator(searchAddresses, options.isForward());
 			iterators.add(new LabelSearchAddressIterator(labels));
 		}
 		return iterators.toArray(new AddressIterator[iterators.size()]);
 	}
 
-	/**
-	 * Get the next location.
-	 */
 	ProgramLocation next() {
 		if (locationList.size() == 0) {
 			findNext();
@@ -318,8 +315,8 @@ class ListingDisplaySearcher implements Searcher {
 	}
 
 	private void searchForward() {
-		for (int i =
-			currentFieldIndex; i < currentLayout.getNumFields(); i++, currentFieldIndex++) {
+		for (int i = currentFieldIndex; i < currentLayout
+				.getNumFields(); i++, currentFieldIndex++) {
 			int matchingFieldCount = findLocations(i);
 			if (matchingFieldCount != 0) {
 				currentFieldIndex += matchingFieldCount;
@@ -355,7 +352,7 @@ class ListingDisplaySearcher implements Searcher {
 
 		int fieldCount = 1; // we always match on one field, unless it is the Mnemonic/Operand combo
 
-		// if field is the Mnemonic, and instructions or data are 
+		// if field is the Mnemonic, and instructions or data are
 		// being searched, get the next field as well
 		boolean isMnemonic = fieldName.equals(MnemonicFieldFactory.FIELD_NAME);
 		boolean isInstructionsOrData =
@@ -422,13 +419,6 @@ class ListingDisplaySearcher implements Searcher {
 		isInitialized = true;
 	}
 
-	/**
-	 * Sets the currentFieldIndex of the field that corresponds to the
-	 * startLoc program location
-	 * @param field
-	 * @param fieldIndex
-	 * @return true if this field corresponds to the startLoc program location
-	 */
 	private boolean getFieldForLocation(ListingField field, int fieldIndex) {
 		FieldFactory ff = field.getFieldFactory();
 		FieldLocation floc = ff.getFieldLocation(field, BigInteger.ZERO, fieldIndex, startLocation);
