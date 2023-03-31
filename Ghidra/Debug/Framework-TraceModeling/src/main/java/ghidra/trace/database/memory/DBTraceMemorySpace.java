@@ -434,7 +434,7 @@ public class DBTraceMemorySpace
 	}
 
 	@Override
-	public AddressSetView getAddressesWithState(long snap, AddressSetView set,
+	public AddressSetView getAddressesWithState(Lifespan span, AddressSetView set,
 			Predicate<TraceMemoryState> predicate) {
 		try (LockHold hold = LockHold.lock(lock.readLock())) {
 			AddressSet remains = new AddressSet(set);
@@ -442,7 +442,7 @@ public class DBTraceMemorySpace
 			while (!remains.isEmpty()) {
 				AddressRange range = remains.getFirstRange();
 				remains.delete(range);
-				for (Entry<TraceAddressSnapRange, TraceMemoryState> entry : doGetStates(snap,
+				for (Entry<TraceAddressSnapRange, TraceMemoryState> entry : doGetStates(span,
 					range)) {
 					AddressRange foundRange = entry.getKey().getRange();
 					remains.delete(foundRange);
@@ -455,21 +455,20 @@ public class DBTraceMemorySpace
 		}
 	}
 
-	protected Collection<Entry<TraceAddressSnapRange, TraceMemoryState>> doGetStates(long snap,
+	protected Collection<Entry<TraceAddressSnapRange, TraceMemoryState>> doGetStates(Lifespan span,
 			AddressRange range) {
 		// TODO: A better way to handle memory-mapped registers?
 		if (getAddressSpace().isRegisterSpace() && !range.getAddressSpace().isRegisterSpace()) {
-			return trace.getMemoryManager().getStates(snap, range);
+			return trace.getMemoryManager().doGetStates(span, range);
 		}
-		return stateMapSpace.reduce(TraceAddressSnapRangeQuery.intersecting(range.getMinAddress(),
-			range.getMaxAddress(), snap, snap)).entries();
+		return stateMapSpace.reduce(TraceAddressSnapRangeQuery.intersecting(range, span)).entries();
 	}
 
 	@Override
 	public Collection<Entry<TraceAddressSnapRange, TraceMemoryState>> getStates(long snap,
 			AddressRange range) {
 		assertInSpace(range);
-		return doGetStates(snap, range);
+		return doGetStates(Lifespan.at(snap), range);
 	}
 
 	@Override

@@ -76,6 +76,10 @@ public class BytesTracePcodeExecutorStatePiece
 			}
 		}
 
+		protected AddressSetView intersectViewKnown(AddressSetView set) {
+			return backing.intersectViewKnown(set, true);
+		}
+
 		@Override
 		protected ULongSpanSet readUninitializedFromBacking(ULongSpanSet uninitialized) {
 			if (uninitialized.isEmpty()) {
@@ -84,7 +88,7 @@ public class BytesTracePcodeExecutorStatePiece
 			// TODO: Warn or bail when reading UNKNOWN bytes
 			// NOTE: Read without regard to gaps
 			// NOTE: Cannot write those gaps, though!!!
-			AddressSetView knownButUninit = backing.intersectViewKnown(addrSet(uninitialized));
+			AddressSetView knownButUninit = intersectViewKnown(addrSet(uninitialized));
 			if (knownButUninit.isEmpty()) {
 				return uninitialized;
 			}

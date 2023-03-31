@@ -50,8 +50,8 @@ public class RequireIsKnownTraceCachedWriteBytesPcodeExecutorStatePiece
 			spaceMap.fork());
 	}
 
-	protected AddressSetView getKnown(PcodeTraceDataAccess backing) {
-		return backing.getKnownNow();
+	protected AddressSetView getKnown(PcodeTraceDataAccess backing, AddressSetView set) {
+		return backing.intersectViewKnown(set, false);
 	}
 
 	protected AccessPcodeExecutionException excFor(AddressSetView unknown) {
@@ -68,7 +68,7 @@ public class RequireIsKnownTraceCachedWriteBytesPcodeExecutorStatePiece
 			throw excFor(uninitialized);
 		}
 		// TODO: Could find first instead?
-		AddressSetView unknown = uninitialized.subtract(getKnown(backing));
+		AddressSetView unknown = uninitialized.subtract(getKnown(backing, uninitialized));
 		if (unknown.isEmpty()) {
 			return size;
 		}

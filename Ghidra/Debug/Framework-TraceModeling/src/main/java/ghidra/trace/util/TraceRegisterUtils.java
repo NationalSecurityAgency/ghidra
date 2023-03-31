@@ -60,6 +60,34 @@ public enum TraceRegisterUtils {
 		return result;
 	}
 
+	public static AddressRange getPhysicalRange(AddressRange range) {
+		AddressSpace space = range.getAddressSpace();
+		AddressSpace physical = space.getPhysicalSpace();
+		if (space == physical) {
+			return range;
+		}
+		return new AddressRangeImpl(
+			physical.getAddress(range.getMinAddress().getOffset()),
+			physical.getAddress(range.getMaxAddress().getOffset()));
+	}
+
+	/**
+	 * Convert a set in an overlay space to the corresponding set in its physical space
+	 * 
+	 * @param set a set contained entirely in one space
+	 * @return the physical set
+	 */
+	public static AddressSetView getPhysicalSet(AddressSetView set) {
+		if (set.isEmpty() || !set.getMinAddress().getAddressSpace().isOverlaySpace()) {
+			return set;
+		}
+		AddressSet result = new AddressSet();
+		for (AddressRange rng : set) {
+			result.add(getPhysicalRange(rng));
+		}
+		return result;
+	}
+
 	public static byte[] padOrTruncate(byte[] arr, int length) {
 		if (arr.length == length) {
 			return arr;

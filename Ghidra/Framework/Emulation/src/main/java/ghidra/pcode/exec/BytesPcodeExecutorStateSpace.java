@@ -32,6 +32,7 @@ import ghidra.util.Msg;
  * @param <B> if this space is a cache, the type of object backing this space
  */
 public class BytesPcodeExecutorStateSpace<B> {
+	protected final static byte[] EMPTY = new byte[] {};
 	protected final SemisparseByteArray bytes;
 	protected final Language language; // for logging diagnostics
 	protected final AddressSpace space;
@@ -197,8 +198,13 @@ public class BytesPcodeExecutorStateSpace<B> {
 			warnUninit(uninitialized);
 		}
 		else if (reason == Reason.EXECUTE_DECODE) {
-			throw new DecodePcodeExecutionException("Cannot decode uninitialized memory",
-				space.getAddress(offset));
+			/**
+			 * The callers may be reading ahead, so it's not appropriate to throw an exception here.
+			 * Instead, communicate there's no more. If the buffer's empty on their end, they'll
+			 * handle the error as appropriate. If it's in the emulator, the instruction decoder
+			 * should eventually throw the decode exception.
+			 */
+			return EMPTY;
 		}
 		return readBytes(offset, size, reason);
 	}
