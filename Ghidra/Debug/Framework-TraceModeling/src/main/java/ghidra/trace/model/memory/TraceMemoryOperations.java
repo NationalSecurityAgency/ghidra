@@ -271,6 +271,20 @@ public interface TraceMemoryOperations {
 	/**
 	 * Get at least the subset of addresses having state satisfying the given predicate
 	 * 
+	 * @param snap the time
+	 * @param set the set to examine
+	 * @param predicate a predicate on state to search for
+	 * @return the address set
+	 * @see #getAddressesWithState(Lifespan, AddressSetView, Predicate)
+	 */
+	default AddressSetView getAddressesWithState(long snap, AddressSetView set,
+			Predicate<TraceMemoryState> predicate) {
+		return getAddressesWithState(Lifespan.at(snap), set, predicate);
+	}
+
+	/**
+	 * Get at least the subset of addresses having state satisfying the given predicate
+	 * 
 	 * <p>
 	 * The implementation may provide a larger view than requested, but within the requested set,
 	 * only ranges satisfying the predicate may be present. Use
@@ -288,7 +302,7 @@ public interface TraceMemoryOperations {
 	 * @param predicate a predicate on state to search for
 	 * @return the address set
 	 */
-	AddressSetView getAddressesWithState(long snap, AddressSetView set,
+	AddressSetView getAddressesWithState(Lifespan span, AddressSetView set,
 			Predicate<TraceMemoryState> predicate);
 
 	/**

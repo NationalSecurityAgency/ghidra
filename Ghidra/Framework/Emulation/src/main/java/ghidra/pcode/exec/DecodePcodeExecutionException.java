@@ -21,7 +21,7 @@ public class DecodePcodeExecutionException extends PcodeExecutionException {
 	private final Address pc;
 
 	public DecodePcodeExecutionException(String message, Address pc) {
-		super(message + ", PC=" + pc);
+		super(message.contains("PC=") ? message : "%s (PC=%s)".formatted(message, pc));
 		this.pc = pc;
 	}
 
