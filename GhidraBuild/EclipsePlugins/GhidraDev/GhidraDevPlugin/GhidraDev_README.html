@@ -147,6 +147,10 @@ that specify other projects on their build paths.</p>
 <ul>
   <li>PyDev 6.3.1 or later (<a href="#PyDevSupport">more info</a>)</li>
   <li>CDT 8.6.0 or later</li>
+  <li>
+    Gradle - required version(s) specified by linked Ghidra release 
+    (<a href="#ExportGhidraModuleExtension">more info</a>)
+  </li>
 </ul>
 <p>(<a href="#top">Back to Top</a>)</p>
 
@@ -217,7 +221,7 @@ installed into Ghidra as an "extension".</p>
       exports a Ghidra module project as a Ghidra extension to the project's <i>dist</i> folder.  
       The exported extension archive file can be distributed to other users and imported via 
       Ghidra's front-end GUI.  The export process requires Gradle, which is configured in the 
-      wizard.
+      wizard.  Note that the Gradle version to use is specified by the linked Ghidra release.
     </li>
   </ul>
   <li><a name="Preferences"></a>Preferences</li>

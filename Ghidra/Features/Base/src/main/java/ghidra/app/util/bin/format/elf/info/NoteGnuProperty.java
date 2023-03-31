@@ -25,6 +25,7 @@ import ghidra.app.util.bin.StructConverter;
 import ghidra.framework.options.Options;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataUtilities.ClearDataMode;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.Msg;
@@ -180,12 +181,14 @@ public class NoteGnuProperty extends ElfNote {
 			StructureDataType struct =
 				createNoteStructure(null, "NoteGnuProperty_%d".formatted(getNameLen()), false,
 					getNameLen(), 0, program.getDataTypeManager());
-			Data propData = listing.createData(address, struct);
+			Data propData = DataUtilities.createData(program, address, struct, -1, false,
+				ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
 			address = propData.getMaxAddress().next();
 
 			for (NotePropertyElement element : elements) {
 				DataType elementDT = getElementDataType(dtm, element);
-				Data elementData = listing.createData(address, elementDT);
+				Data elementData = DataUtilities.createData(program, address, elementDT, -1, false,
+					ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
 				listing.setComment(address, CodeUnit.EOL_COMMENT,
 					element.typeName() + "=" + element.value());
 				address = elementData.getMaxAddress().next();

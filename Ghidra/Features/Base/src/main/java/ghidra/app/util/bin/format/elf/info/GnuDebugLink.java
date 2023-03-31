@@ -22,6 +22,7 @@ import java.io.IOException;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataUtilities.ClearDataMode;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.Msg;
@@ -98,7 +99,8 @@ public class GnuDebugLink implements ElfInfoItem {
 		try {
 			StructureDataType struct = toStructure(program.getDataTypeManager());
 			if (struct != null) {
-				program.getListing().createData(address, struct);
+				DataUtilities.createData(program, address, struct, -1, false,
+					ClearDataMode.CLEAR_ALL_UNDEFINED_CONFLICT_DATA);
 			}
 		}
 		catch (CodeUnitInsertionException e) {

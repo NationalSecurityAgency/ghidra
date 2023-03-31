@@ -351,10 +351,8 @@ public class OmfFileHeader extends OmfRecord {
 				header.groups.add(group);
 			}
 			else if (record instanceof OmfFixupRecord fixuprec) {
-				if (lastDataBlock != null) {
-					fixuprec.setDataBlock(lastDataBlock);
-					header.fixup.add(fixuprec);
-				}
+				fixuprec.setDataBlock(lastDataBlock);
+				header.fixup.add(fixuprec);
 			}
 			else if (record instanceof OmfEnumeratedData enumheader) {
 				header.addEnumeratedBlock(enumheader);

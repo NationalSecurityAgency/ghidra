@@ -63,7 +63,8 @@ public class MIPS_Elf64Relocation extends ElfRelocation {
 	}
 
 	/**
-	 * Return the special symbol index associated with this relocation
+	 * Return the special symbol index associated with this relocation.  This symbol
+	 * may be used by the 2nd relocation of a compound relocations.
 	 * @return special symbol index (r_ssym)
 	 */
 	public int getSpecialSymbolIndex() {

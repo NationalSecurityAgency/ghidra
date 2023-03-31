@@ -185,6 +185,16 @@ public class Relocation {
 	}
 
 	/**
+	 * Returns the number of original instruction bytes affected by applied relocation.
+	 * 
+	 * @return number of original instruction bytes affected by relocation if it was successfully applied
+	 * (i.e., {@link Status#APPLIED}, {@link Status#APPLIED_OTHER}), otherwise null may be returned.
+	 */
+	public int getLength() {
+		return bytes != null ? bytes.length : 0;
+	}
+
+	/**
 	 * The name of the symbol being relocated or <code>null</code> if there is no symbol name.
 	 * 
 	 * @return the name of the symbol being relocated or <code>null</code> if there is no symbol name.

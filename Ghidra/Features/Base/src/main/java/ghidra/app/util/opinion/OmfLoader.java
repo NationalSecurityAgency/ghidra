@@ -198,6 +198,9 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 					int method, index, locationType = -1;
 					locAddress = null;
 
+					if(fixup.getDataBlock() == null) {
+						continue;	// If no data block don't try to fixup
+					}
 					try {
 						if (subrec.isTargetThread()) {
 							Subrecord rec = targetThreads[subrec.getFixThreadNum()];

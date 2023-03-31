@@ -114,7 +114,12 @@ public class ComponentOffsetSettingsDefinition
 	public String getAttributeSpecification(Settings settings) {
 		if (hasValue(settings)) {
 			long offset = getValue(settings);
-			return "offset(0x" + Long.toHexString(offset) + ")";
+			String sign = "";
+			if (offset < 0) {
+				offset = -offset;
+				sign = "-";
+			}
+			return "offset(" + sign + "0x" + Long.toHexString(offset) + ")";
 		}
 		return null;
 	}
