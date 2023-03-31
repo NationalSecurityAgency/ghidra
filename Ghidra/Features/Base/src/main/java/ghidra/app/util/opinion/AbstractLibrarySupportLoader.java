@@ -437,14 +437,13 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * @param options The options
 	 * @param log The log
 	 * @param monitor A cancelable monitor
-	 * @return True if the library should be loaded into the project; otherwise, false
 	 * @throws IOException If an IO-related error occurred
 	 * @throws CancelledException If the user cancelled the action
 	 */
-	protected boolean processLibrary(Program library, String libraryName, File libraryFile,
+	protected void processLibrary(Program library, String libraryName, File libraryFile,
 			ByteProvider provider, LoadSpec loadSpec, List<Option> options, MessageLog log,
 			TaskMonitor monitor) throws IOException, CancelledException {
-		return isLoadLocalLibraries(options) || isLoadSystemLibraries(options);
+		// Default behavior is to do nothing
 	}
 
 	/**
@@ -471,11 +470,13 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 			TaskMonitor monitor) throws CancelledException, IOException {
 
 		List<Loaded<Program>> loadedPrograms = new ArrayList<>();
-		Program library = null;
 		Set<String> processed = new TreeSet<>(getLibraryNameComparator());
 		Queue<UnprocessedLibrary> unprocessed =
 			createUnprocessedQueue(libraryNameList, getLibraryLoadDepth(options));
-		List<String> searchPaths = getLibrarySearchPaths(provider, options);
+		boolean loadLocalLibraries = isLoadLocalLibraries(options);
+		boolean loadSystemLibraries = isLoadSystemLibraries(options);
+		List<String> localSearchPaths = getLocalLibrarySearchPaths(provider, options);
+		List<String> systemSearchPaths = getSystemLibrarySearchPaths(provider, options);
 		DomainFolder linkSearchFolder = getLinkSearchFolder(project, projectFolderPath, options);
 		String libraryDestFolderPath =
 			getLibraryDestinationFolderPath(project, projectFolderPath, options);
@@ -493,7 +494,6 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 					continue;
 				}
 				processed.add(libraryName);
-				boolean foundLibrary = false;
 				if (libraryDestFolder != null &&
 					findLibrary(libraryName, libraryDestFolder) != null) {
 					log.appendMsg("Library " + libraryName + ": Already loaded ");
@@ -502,38 +502,36 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 					findLibrary(libraryName, linkSearchFolder) != null) {
 					log.appendMsg("Library " + libraryName + ": Already loaded ");
 				}
-				else if (!searchPaths.isEmpty()) {
-					String simpleLibraryName = FilenameUtils.getName(libraryName);
-
-					List<File> candidateLibraryFiles =
-						findLibrary(FilenameUtils.separatorsToUnix(libraryName), searchPaths);
-					for (File candidateLibraryFile : candidateLibraryFiles) {
-						monitor.checkCanceled();
-						List<String> newLibraryList = new ArrayList<>();
-						library = loadLibrary(simpleLibraryName, candidateLibraryFile,
-							desiredLoadSpec, newLibraryList, options, consumer, log, monitor);
-						for (String newLibraryName : newLibraryList) {
-							unprocessed.add(new UnprocessedLibrary(newLibraryName, depth - 1));
+				else {
+					// Note that it is possible to have local (or system) search paths with those
+					// options turned off (if shouldSearchAllPaths() is overridden to return true).
+					// In this case, we still want to process those libraries, but we 
+					// do not want to save them, so they can be released.
+					if (!localSearchPaths.isEmpty()) {
+						Loaded<Program> loadedLibrary = loadLibraryFromSearchPaths(
+							libraryName, provider, localSearchPaths, libraryDestFolderPath,
+							unprocessed, depth, desiredLoadSpec, options, log, consumer, monitor);
+						if (loadedLibrary != null) {
+							if (loadLocalLibraries) {
+								loadedPrograms.add(loadedLibrary);
+							}
+							else {
+								loadedLibrary.release(consumer);
+							}
 						}
-						if (library == null) {
-							continue;
-						}
-						foundLibrary = true;
-						log.appendMsg(
-							"Library " + libraryName + ": Examining " + candidateLibraryFile);
-						if (processLibrary(library, libraryName, candidateLibraryFile, provider,
-							desiredLoadSpec, options, log, monitor)) {
-							loadedPrograms.add(new Loaded<Program>(library, simpleLibraryName,
-								libraryDestFolderPath));
-						}
-						else {
-							library.release(consumer);
-						}
-						library = null;
-						break;
 					}
-					if (!foundLibrary) {
-						log.appendMsg("Library " + libraryName + ": Not found");
+					if (!systemSearchPaths.isEmpty()) {
+						Loaded<Program> loadedLibrary = loadLibraryFromSearchPaths(
+							libraryName, provider, systemSearchPaths, libraryDestFolderPath,
+							unprocessed, depth, desiredLoadSpec, options, log, consumer, monitor);
+						if (loadedLibrary != null) {
+							if (loadSystemLibraries) {
+								loadedPrograms.add(loadedLibrary);
+							}
+							else {
+								loadedLibrary.release(consumer);
+							}
+						}
 					}
 				}
 			}
@@ -543,9 +541,68 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 		finally {
 			if (!success) {
 				release(loadedPrograms, consumer);
-				if (library != null) {
-					library.release(consumer);
+			}
+		}
+	}
+
+	/**
+	 * Loads the given library into the given {@link DomainFolder folder} if it can find it in
+	 * the given {@link List} of search paths
+	 *
+	 * @param libraryName The name of the library to load
+	 * @param provider The {@link ByteProvider} of the program being loaded
+	 * @param searchPaths The {@link List} of search paths
+	 * @param libraryDestFolderPath The path of the project folder to load the libraries into. 
+	 *   Could be null if the specified project is null or a destination folder path could not be 
+	 *   determined.
+	 * @param unprocessed The {@link Queue} of {@link UnprocessedLibrary unprocessed libraries}
+	 * @param depth The load depth of the library to load
+	 * @param desiredLoadSpec The desired {@link LoadSpec}
+	 * @param options The load options
+	 * @param log The log
+	 * @param consumer A consumer object for {@link DomainObject}s generated
+	 * @param monitor A cancelable task monitor
+	 * @return A {@link List} of newly loaded programs and libraries.  Any program in the list is 
+	 *   the caller's responsibility to release.
+	 * @throws IOException if there was an IO-related problem loading
+	 * @throws CancelledException if the user cancelled the load
+	 */
+	private Loaded<Program> loadLibraryFromSearchPaths(String libraryName,
+			ByteProvider provider, List<String> searchPaths, String libraryDestFolderPath,
+			Queue<UnprocessedLibrary> unprocessed, int depth, LoadSpec desiredLoadSpec,
+			List<Option> options, MessageLog log, Object consumer, TaskMonitor monitor)
+			throws CancelledException, IOException {
+
+		Program library = null;
+		String simpleLibraryName = FilenameUtils.getName(libraryName);
+		List<File> candidateLibraryFiles =
+			findLibrary(FilenameUtils.separatorsToUnix(libraryName), searchPaths);
+
+		boolean success = false;
+		try {
+			for (File candidateLibraryFile : candidateLibraryFiles) {
+				monitor.checkCanceled();
+				List<String> newLibraryList = new ArrayList<>();
+				library = loadLibrary(simpleLibraryName, candidateLibraryFile,
+					desiredLoadSpec, newLibraryList, options, consumer, log, monitor);
+				for (String newLibraryName : newLibraryList) {
+					unprocessed.add(new UnprocessedLibrary(newLibraryName, depth - 1));
 				}
+				if (library == null) {
+					continue;
+				}
+				log.appendMsg("Library " + libraryName + ": Examining " + candidateLibraryFile);
+				processLibrary(library, libraryName, candidateLibraryFile, provider,
+					desiredLoadSpec, options, log, monitor);
+				success = true;
+				return new Loaded<Program>(library, simpleLibraryName, libraryDestFolderPath);
+			}
+			log.appendMsg("Library " + libraryName + ": Not found");
+			return null;
+		}
+		finally {
+			if (!success && library != null) {
+				library.release(consumer);
 			}
 		}
 	}
@@ -913,19 +970,33 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	}
 
 	/**
-	 * Gets a {@link List} of priority-ordered paths used to search for libraries
+	 * Gets a {@link List} of priority-ordered local paths used to search for libraries
 	 * 
 	 * @param provider The {@link ByteProvider} of the program being loaded
 	 * @param options The options
-	 * @return A {@link List} of priority-ordered paths used to search for libraries
+	 * @return A {@link List} of priority-ordered local paths used to search for libraries
 	 */
-	private List<String> getLibrarySearchPaths(ByteProvider provider, List<Option> options) {
-		String parent = getProviderFilePath(provider);
+	private List<String> getLocalLibrarySearchPaths(ByteProvider provider, List<Option> options) {
 		List<String> paths = new ArrayList<>();
-		if (shouldSearchAllPaths(options) || isLoadLocalLibraries(options) && parent != null) {
-			paths.add(parent);
+		if (isLoadLocalLibraries(options) || shouldSearchAllPaths(options)) {
+			String parent = getProviderFilePath(provider);
+			if (parent != null) {
+				paths.add(parent);
+			}
 		}
-		if (shouldSearchAllPaths(options) || isLoadSystemLibraries(options)) {
+		return paths;
+	}
+
+	/**
+	 * Gets a {@link List} of priority-ordered system paths used to search for libraries
+	 * 
+	 * @param provider The {@link ByteProvider} of the program being loaded
+	 * @param options The options
+	 * @return A {@link List} of priority-ordered system paths used to search for libraries
+	 */
+	private List<String> getSystemLibrarySearchPaths(ByteProvider provider, List<Option> options) {
+		List<String> paths = new ArrayList<>();
+		if (isLoadSystemLibraries(options) || shouldSearchAllPaths(options)) {
 			paths.addAll(LibrarySearchPathManager.getLibraryPathsList());
 		}
 		return paths;
