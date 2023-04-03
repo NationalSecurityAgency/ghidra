@@ -827,6 +827,10 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 			return "";
 		}
 
+		if (isDisposed()) {
+			return "";
+		}
+
 		if (GhidraFileChooser.MY_COMPUTER.equals(getCurrentDirectory())) {
 			String str = getModel().getDescription(file);
 			if (str == null || str.length() == 0) {
@@ -838,6 +842,10 @@ public class GhidraFileChooser extends ReusableDialogComponentProvider implement
 			return file.getAbsolutePath() + "  ";
 		}
 		return getFilename(file) + "  ";
+	}
+
+	private boolean isDisposed() {
+		return fileChooserModel == null;
 	}
 
 	private void setDirectoryList(File directory, List<File> files) {
