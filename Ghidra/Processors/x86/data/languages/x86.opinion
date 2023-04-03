@@ -71,11 +71,11 @@
         <constraint primary="16bit" processor="x86"          endian="little" size="16" />
       </constraint>
       <constraint compilerSpecID="borlandcpp">
-        <constraint primary="32bit" secondary="borlandcpp" processor="x86"        endian="little" size="32" />
-        <constraint primary="32bit" secondary="codegearcpp" processor="x86"       endian="little" size="32" />
+        <constraint primary="32bit" secondary="borlandcpp"  processor="x86" endian="little" size="32" />
+        <constraint primary="32bit" secondary="codegearcpp" processor="x86" endian="little" size="32" />
       </constraint>
       <constraint compilerSpecID="borlanddelphi">
-        <constraint primary="32bit" secondary="borlanddelphi" processor="x86"     endian="little" size="32" />
+        <constraint primary="32bit" secondary="borlanddelphi" processor="x86" endian="little" size="32" />
       </constraint>
     </constraint>
 </opinions>

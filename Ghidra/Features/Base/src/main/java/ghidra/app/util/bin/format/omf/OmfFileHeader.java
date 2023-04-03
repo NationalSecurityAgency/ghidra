@@ -256,8 +256,8 @@ public class OmfFileHeader extends OmfRecord {
 	 * @throws IOException for problems reading program data
 	 * @throws OmfException for malformed records
 	 */
-	public static OmfFileHeader scan(BinaryReader reader, TaskMonitor monitor,
-			boolean fastscan) throws IOException, OmfException {
+	public static OmfFileHeader scan(BinaryReader reader, TaskMonitor monitor, boolean fastscan)
+			throws IOException, OmfException {
 		OmfRecord record = OmfRecord.readRecord(reader);
 		if (!(record instanceof OmfFileHeader)) {
 			throw new OmfException("Object file does not start with proper header");
@@ -275,24 +275,24 @@ public class OmfFileHeader extends OmfRecord {
 			}
 
 			if (record instanceof OmfCommentRecord comment) {
-				switch(comment.getCommentClass()) {
-				case OmfCommentRecord.COMMENT_CLASS_TRANSLATOR:
-					header.translator = comment.getValue();
-					break;
-				case OmfCommentRecord.COMMENT_CLASS_LIBMOD:
-					header.libModuleName = comment.getValue();
-					break;
-				case OmfCommentRecord.COMMENT_CLASS_WATCOM_SETTINGS:
-					header.translator = "Watcom";
-					break;
-				case OmfCommentRecord.COMMENT_CLASS_MICROSOFT_SETTINGS:
-					header.translator = "Microsoft";
-					break;
+				switch (comment.getCommentClass()) {
+					case OmfCommentRecord.COMMENT_CLASS_TRANSLATOR:
+						header.translator = comment.getValue();
+						break;
+					case OmfCommentRecord.COMMENT_CLASS_LIBMOD:
+						header.libModuleName = comment.getValue();
+						break;
+					case OmfCommentRecord.COMMENT_CLASS_WATCOM_SETTINGS:
+						header.translator = "Watcom";
+						break;
+					case OmfCommentRecord.COMMENT_CLASS_MICROSOFT_SETTINGS:
+						header.translator = "Microsoft";
+						break;
 				}
 			}
 			else if (record instanceof OmfSegmentHeader head) {
 				header.format16bit = head.is16Bit();
-				if(fastscan) {
+				if (fastscan) {
 					break;
 				}
 			}
