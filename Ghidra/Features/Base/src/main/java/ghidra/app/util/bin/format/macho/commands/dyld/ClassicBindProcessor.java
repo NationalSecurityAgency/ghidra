@@ -46,6 +46,9 @@ public class ClassicBindProcessor extends AbstractClassicProcessor {
 				long address = relocation.getAddress() + getRelocationBase();
 				int symbolIndex = relocation.getValue();
 				NList nList = symbolTableCommand.getSymbolAt(symbolIndex);
+				if (nList == null) {
+					continue;
+				}
 				boolean isWeak = (nList.getDescription() & NListConstants.DESC_N_WEAK_REF) != 0;
 				String fromDylib = getClassicOrdinalName(nList.getLibraryOrdinal());
 				Section section = getSectionName(address);

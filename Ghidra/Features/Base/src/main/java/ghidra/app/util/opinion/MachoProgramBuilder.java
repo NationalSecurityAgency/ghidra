@@ -139,7 +139,7 @@ public class MachoProgramBuilder {
 		processUndefinedSymbols();
 		processAbsoluteSymbols();
 		List<Address> chainedFixups = processChainedFixups();
-		processDyldInfo(false);
+		processBindings(false);
 		markupHeaders(machoHeader, setupHeaderAddr(machoHeader.getAllSegments()));
 		markupSections();
 		processProgramVars();
@@ -776,7 +776,7 @@ public class MachoProgramBuilder {
 		}
 	}
 
-	protected void processDyldInfo(boolean doClassic) {
+	protected void processBindings(boolean doClassic) {
 		List<DyldInfoCommand> commands = machoHeader.getLoadCommands(DyldInfoCommand.class);
 		for (DyldInfoCommand command : commands) {
 			if (command.getBindSize() > 0) {
@@ -801,13 +801,7 @@ public class MachoProgramBuilder {
 			}
 		}
 
-		if (!doClassic) {
-			return;
-		}
-
-		//then we are use the old school binding technique.
-		//this only still appears in powerpc
-		if (commands.size() == 0) {
+		if (commands.size() == 0 && doClassic) {
 			ClassicBindProcessor classicBindProcess =
 				new ClassicBindProcessor(machoHeader, program);
 			try {
