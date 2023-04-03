@@ -15,7 +15,8 @@
  */
 package ghidra.util;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -312,6 +313,13 @@ public class NumericUtilitiesTest {
 		assertEquals(0xa, NumericUtilities.getUnsignedAlignedValue(8, 5));
 		assertEquals(0xa, NumericUtilities.getUnsignedAlignedValue(0xa, 0));
 
+	}
+
+	@Test
+	public void testToHexString() {
+		for (int sizeofValue = 1; sizeofValue <= 8; sizeofValue++) {
+			assertEquals("0x" + "ff".repeat(sizeofValue), NumericUtilities.toHexString(-1, sizeofValue));
+		}
 	}
 
 	private void asssertBytesEquals(byte[] expected, byte[] actual) {

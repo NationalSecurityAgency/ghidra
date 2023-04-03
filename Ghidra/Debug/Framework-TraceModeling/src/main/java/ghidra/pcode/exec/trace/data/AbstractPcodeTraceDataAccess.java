@@ -23,6 +23,7 @@ import ghidra.trace.model.Lifespan;
 import ghidra.trace.model.TraceTimeViewport;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.memory.*;
+import ghidra.trace.util.TraceRegisterUtils;
 
 /**
  * An abstract data-access shim, for either memory or registers
@@ -130,23 +131,30 @@ public abstract class AbstractPcodeTraceDataAccess implements InternalPcodeTrace
 		return hostSet.isEmpty() ? TraceMemoryState.KNOWN : TraceMemoryState.UNKNOWN;
 	}
 
-	protected AddressSetView doGetKnown(Lifespan span) {
+	@Override
+	public AddressSetView intersectViewKnown(AddressSetView guestView, boolean useFullSpans) {
 		TraceMemoryOperations ops = getMemoryOps(false);
 		if (ops == null) {
 			return new AddressSet();
 		}
-		return platform.mapHostToGuest(ops.getAddressesWithState(span,
-			s -> s == TraceMemoryState.KNOWN));
-	}
 
-	@Override
-	public AddressSetView getKnownNow() {
-		return doGetKnown(Lifespan.at(snap));
-	}
-
-	@Override
-	public AddressSetView getKnownBefore() {
-		return doGetKnown(Lifespan.since(snap));
+		AddressSetView hostView = toOverlay(platform.mapGuestToHost(guestView));
+		AddressSet hostKnown = new AddressSet();
+		if (useFullSpans) {
+			for (Lifespan span : viewport.getOrderedSpans()) {
+				hostKnown.add(ops.getAddressesWithState(span, hostView,
+					st -> st != null && st != TraceMemoryState.UNKNOWN));
+			}
+		}
+		else {
+			for (long snap : viewport.getOrderedSnaps()) {
+				hostKnown.add(ops.getAddressesWithState(snap, hostView,
+					st -> st != null && st != TraceMemoryState.UNKNOWN));
+			}
+		}
+		AddressSetView hostResult =
+			TraceRegisterUtils.getPhysicalSet(hostView.intersect(hostKnown));
+		return platform.mapHostToGuest(hostResult);
 	}
 
 	@Override
@@ -159,7 +167,7 @@ public abstract class AbstractPcodeTraceDataAccess implements InternalPcodeTrace
 		AddressSetView hostView = toOverlay(platform.mapGuestToHost(guestView));
 		AddressSetView hostKnown = ops.getAddressesWithState(snap, hostView,
 			s -> s != null && s != TraceMemoryState.UNKNOWN);
-		AddressSetView hostResult = hostView.subtract(hostKnown);
+		AddressSetView hostResult = TraceRegisterUtils.getPhysicalSet(hostView.subtract(hostKnown));
 		return platform.mapHostToGuest(hostResult);
 	}
 

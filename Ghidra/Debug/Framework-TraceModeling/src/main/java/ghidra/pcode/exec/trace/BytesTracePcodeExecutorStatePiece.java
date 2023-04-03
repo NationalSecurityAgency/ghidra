@@ -21,7 +21,8 @@ import java.util.Map;
 import generic.ULongSpan;
 import generic.ULongSpan.ULongSpanSet;
 import ghidra.generic.util.datastruct.SemisparseByteArray;
-import ghidra.pcode.exec.*;
+import ghidra.pcode.exec.AbstractBytesPcodeExecutorStatePiece;
+import ghidra.pcode.exec.BytesPcodeExecutorStateSpace;
 import ghidra.pcode.exec.trace.BytesTracePcodeExecutorStatePiece.CachedSpace;
 import ghidra.pcode.exec.trace.data.PcodeTraceDataAccess;
 import ghidra.program.model.address.*;
@@ -75,20 +76,34 @@ public class BytesTracePcodeExecutorStatePiece
 			}
 		}
 
+		protected AddressSetView intersectViewKnown(AddressSetView set) {
+			return backing.intersectViewKnown(set, true);
+		}
+
 		@Override
-		protected void readUninitializedFromBacking(ULongSpanSet uninitialized) {
-			if (!uninitialized.isEmpty()) {
-				// TODO: Warn or bail when reading UNKNOWN bytes
-				// NOTE: Read without regard to gaps
-				// NOTE: Cannot write those gaps, though!!!
-				ULongSpan bound = uninitialized.bound();
-				ByteBuffer buf = ByteBuffer.allocate((int) bound.length());
-				backing.getBytes(space.getAddress(bound.min()), buf);
-				for (ULongSpan span : uninitialized.spans()) {
-					bytes.putData(span.min(), buf.array(), (int) (span.min() - bound.min()),
-						(int) span.length());
-				}
+		protected ULongSpanSet readUninitializedFromBacking(ULongSpanSet uninitialized) {
+			if (uninitialized.isEmpty()) {
+				return uninitialized;
 			}
+			// TODO: Warn or bail when reading UNKNOWN bytes
+			// NOTE: Read without regard to gaps
+			// NOTE: Cannot write those gaps, though!!!
+			AddressSetView knownButUninit = intersectViewKnown(addrSet(uninitialized));
+			if (knownButUninit.isEmpty()) {
+				return uninitialized;
+			}
+			AddressRange knownBound = new AddressRangeImpl(
+				knownButUninit.getMinAddress(),
+				knownButUninit.getMaxAddress());
+			ByteBuffer buf = ByteBuffer.allocate((int) knownBound.getLength());
+			backing.getBytes(knownBound.getMinAddress(), buf);
+			for (AddressRange range : knownButUninit) {
+				bytes.putData(range.getMinAddress().getOffset(), buf.array(),
+					(int) (range.getMinAddress().subtract(knownBound.getMinAddress())),
+					(int) range.getLength());
+			}
+			ULongSpan uninitBound = uninitialized.bound();
+			return bytes.getUninitialized(uninitBound.min(), uninitBound.max());
 		}
 
 		protected void warnUnknown(AddressSetView unknown) {

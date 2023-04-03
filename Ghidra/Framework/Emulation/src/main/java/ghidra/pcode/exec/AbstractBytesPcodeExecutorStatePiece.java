@@ -25,6 +25,7 @@ import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.pcode.PcodeOp;
+import ghidra.program.model.pcode.Varnode;
 import ghidra.util.Msg;
 
 /**
@@ -41,16 +42,21 @@ public abstract class AbstractBytesPcodeExecutorStatePiece<S extends BytesPcodeE
 	protected class StateMemBuffer implements MemBufferMixin {
 		protected final Address address;
 		protected final BytesPcodeExecutorStateSpace<?> source;
+		protected final Reason reason;
 
 		/**
 		 * Construct a buffer bound to the given space, at the given address
 		 * 
 		 * @param address the address
 		 * @param source the space
+		 * @param reason the reason this buffer reads from the state, as in
+		 *            {@link PcodeExecutorStatePiece#getVar(Varnode, Reason)}
 		 */
-		public StateMemBuffer(Address address, BytesPcodeExecutorStateSpace<?> source) {
+		public StateMemBuffer(Address address, BytesPcodeExecutorStateSpace<?> source,
+				Reason reason) {
 			this.address = address;
 			this.source = source;
+			this.reason = reason;
 		}
 
 		@Override
@@ -70,8 +76,8 @@ public abstract class AbstractBytesPcodeExecutorStatePiece<S extends BytesPcodeE
 
 		@Override
 		public int getBytes(ByteBuffer buffer, int addressOffset) {
-			byte[] data = source.read(address.getOffset() + addressOffset, buffer.remaining(),
-				Reason.EXECUTE);
+			byte[] data =
+				source.read(address.getOffset() + addressOffset, buffer.remaining(), reason);
 			buffer.put(data);
 			return data.length;
 		}
@@ -160,7 +166,8 @@ public abstract class AbstractBytesPcodeExecutorStatePiece<S extends BytesPcodeE
 
 	@Override
 	public MemBuffer getConcreteBuffer(Address address, PcodeArithmetic.Purpose purpose) {
-		return new StateMemBuffer(address, getForSpace(address.getAddressSpace(), false));
+		return new StateMemBuffer(address, getForSpace(address.getAddressSpace(), false),
+			purpose.reason());
 	}
 
 	@Override

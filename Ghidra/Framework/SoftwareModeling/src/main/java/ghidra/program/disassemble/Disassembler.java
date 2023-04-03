@@ -802,8 +802,10 @@ public class Disassembler implements DisassemblerConflictHandler {
 			disassembleInstructionBlock(block, blockMemBuffer, null, limit, null, false);
 		}
 		catch (Exception e) {
-			Msg.error(this, "Pseudo block disassembly failure at " + blockMemBuffer.getAddress() +
-				": " + e.getMessage(), e);
+			String message = "Pseudo block disassembly failure at " + blockMemBuffer.getAddress() +
+				": " + e.getMessage();
+			Msg.error(this, message, e);
+			reportMessage(message);
 		}
 		finally {
 

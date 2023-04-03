@@ -64,33 +64,14 @@ public interface PcodeTraceDataAccess {
 	TraceMemoryState getViewportState(AddressRange range);
 
 	/**
-	 * Get the address set of {@link TraceMemoryState#KNOWN} memory in the source snapshot
+	 * Compute the intersection of the given address set and the set of
+	 * {@link TraceMemoryState#KNOWN} or (@link {@link TraceMemoryState#ERROR} memory
 	 * 
-	 * <p>
-	 * Note, this does not consider the snapshot's viewport.
-	 * 
-	 * @implNote This can be an expensive operation when the platform is a guest, since what would
-	 *           ordinarily be a lazy address set must be computed and translated to the guest
-	 *           address spaces.
-	 * 
-	 * @return the address set
+	 * @param view the address set
+	 * @param useFullSpans how to treat the viewport; true for ever known, false for known now.
+	 * @return the intersection
 	 */
-	AddressSetView getKnownNow();
-
-	/**
-	 * Get the address set of {@link TraceMemoryState#KNOWN} memory among all snapshots from 0 to
-	 * the source snapshot
-	 * 
-	 * <p>
-	 * Note, this does not consider the snapshot's viewport.
-	 * 
-	 * @implNote This can be an expensive operation when the platform is a guest, since what would
-	 *           ordinarily be a lazy address set must be computed and translated to the guest
-	 *           address spaces.
-	 * 
-	 * @return the address set
-	 */
-	AddressSetView getKnownBefore();
+	AddressSetView intersectViewKnown(AddressSetView view, boolean useFullSpans);
 
 	/**
 	 * Compute the intersection of the given address set and the set of

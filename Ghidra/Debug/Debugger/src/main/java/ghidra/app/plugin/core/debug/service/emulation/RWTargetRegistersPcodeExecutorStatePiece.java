@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.debug.service.emulation;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+import generic.ULongSpan.ULongSpanSet;
 import ghidra.app.plugin.core.debug.service.emulation.data.PcodeDebuggerDataAccess;
 import ghidra.app.plugin.core.debug.service.emulation.data.PcodeDebuggerRegistersAccess;
 import ghidra.generic.util.datastruct.SemisparseByteArray;
@@ -78,15 +79,14 @@ public class RWTargetRegistersPcodeExecutorStatePiece
 		}
 
 		@Override
-		protected void fillUninitialized(AddressSet uninitialized) {
-			if (space.isUniqueSpace()) {
-				return;
+		protected ULongSpanSet readUninitializedFromTarget(ULongSpanSet uninitialized) {
+			if (space.isUniqueSpace() || !backing.isLive()) {
+				return uninitialized;
 			}
-			if (!backing.isLive()) {
-				return;
-			}
-			AddressSetView unknown = backing.intersectUnknown(uninitialized);
+			AddressSet addrsUninit = addrSet(uninitialized);
+			AddressSetView unknown = backing.intersectUnknown(addrsUninit);
 			waitTimeout(backing.readFromTargetRegisters(unknown));
+			return uninitialized;
 		}
 
 		@Override

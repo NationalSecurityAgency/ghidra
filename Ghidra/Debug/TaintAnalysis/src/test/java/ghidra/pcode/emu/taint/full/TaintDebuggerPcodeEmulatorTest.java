@@ -15,7 +15,8 @@
  */
 package ghidra.pcode.emu.taint.full;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Set;
 
@@ -30,18 +31,18 @@ import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationServicePl
 import ghidra.app.plugin.core.debug.service.emulation.DebuggerPcodeMachine;
 import ghidra.app.plugin.core.debug.service.modules.DebuggerStaticMappingServicePlugin;
 import ghidra.app.services.DebuggerEmulationService;
+import ghidra.app.services.DebuggerEmulationService.EmulationResult;
 import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.pcode.emu.taint.trace.TaintTracePcodeEmulatorTest;
 import ghidra.pcode.emu.taint.trace.TaintTracePcodeExecutorStatePiece;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.util.StringPropertyMap;
 import ghidra.program.util.ProgramLocation;
-import ghidra.trace.model.DefaultTraceLocation;
-import ghidra.trace.model.Lifespan;
+import ghidra.trace.model.*;
 import ghidra.trace.model.property.TracePropertyMap;
 import ghidra.trace.model.property.TracePropertyMapSpace;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.model.time.schedule.TraceSchedule;
+import ghidra.trace.model.time.schedule.*;
 import ghidra.util.task.TaskMonitor;
 
 public class TaintDebuggerPcodeEmulatorTest extends AbstractGhidraHeadedDebuggerGUITest {
@@ -75,11 +76,19 @@ public class TaintDebuggerPcodeEmulatorTest extends AbstractGhidraHeadedDebugger
 
 		traceManager.activateTrace(tb.trace);
 
-		TraceSchedule time = TraceSchedule.parse("0:t0-1");
-		emuService.emulate(tb.trace, time, TaskMonitor.DUMMY);
-		traceManager.activateTime(time);
+		EmulationResult result =
+			emuService.run(tb.host, TraceSchedule.snap(0), monitor, new Scheduler() {
+				int calls = 0;
 
-		DebuggerPcodeMachine<?> emu = emuService.getCachedEmulator(tb.trace, time);
+				@Override
+				public TickStep nextSlice(Trace trace) {
+					// Expect decode of uninitialized memory immediately
+					assertEquals(0, calls++);
+					return new TickStep(0, 1);
+				}
+			});
+
+		DebuggerPcodeMachine<?> emu = emuService.getCachedEmulator(tb.trace, result.schedule());
 		assertTrue(emu instanceof TaintDebuggerPcodeEmulator);
 	}
 

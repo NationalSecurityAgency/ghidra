@@ -52,8 +52,8 @@ public class RequireHasKnownTraceCachedWriteBytesPcodeExecutorStatePiece
 	}
 
 	@Override
-	protected AddressSetView getKnown(PcodeTraceDataAccess backing) {
-		return backing.getKnownBefore();
+	protected AddressSetView getKnown(PcodeTraceDataAccess backing, AddressSetView set) {
+		return backing.intersectViewKnown(set, true);
 	}
 
 	@Override

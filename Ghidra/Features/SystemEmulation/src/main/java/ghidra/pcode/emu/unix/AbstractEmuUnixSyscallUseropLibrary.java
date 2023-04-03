@@ -287,7 +287,7 @@ public abstract class AbstractEmuUnixSyscallUseropLibrary<T>
 		// TODO: Not ideal to require concrete size. What are the alternatives, though?
 		// TODO: size should actually be long (size_t)
 		int size = (int) arithmetic.toLong(count, Purpose.OTHER);
-		T buf = state.getVar(space, bufPtr, size, true, Reason.EXECUTE);
+		T buf = state.getVar(space, bufPtr, size, true, Reason.EXECUTE_READ);
 		// TODO: Write back into state? "write" shouldn't touch the buffer....
 		return desc.write(buf);
 	}

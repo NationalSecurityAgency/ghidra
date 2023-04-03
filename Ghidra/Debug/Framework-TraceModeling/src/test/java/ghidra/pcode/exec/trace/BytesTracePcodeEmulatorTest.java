@@ -942,6 +942,23 @@ public class BytesTracePcodeEmulatorTest extends AbstractTracePcodeEmulatorTest 
 		}
 	}
 
+	@Test(expected = DecodePcodeExecutionException.class)
+	public void testUninitialized() throws Throwable {
+		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "Toy:BE:64:default")) {
+			assertEquals(Register.NO_CONTEXT, tb.language.getContextBaseRegister());
+
+			TraceThread thread = initTrace(tb, """
+					pc = 0x00400000;
+					sp = 0x00110000;
+					""",
+				List.of()); // An empty, uninitialized program
+
+			BytesTracePcodeEmulator emu = new BytesTracePcodeEmulator(tb.host, 0);
+			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
+			emuThread.stepInstruction();
+		}
+	}
+
 	@Test
 	public void testMov_w_mW1_W0() throws Throwable {
 		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "dsPIC33F:LE:24:default")) {
