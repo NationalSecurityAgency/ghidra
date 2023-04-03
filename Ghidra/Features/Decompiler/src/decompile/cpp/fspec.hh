@@ -40,6 +40,7 @@ extern AttributeId ATTRIB_STACKSHIFT;	///< Marshaling attribute "stackshift"
 extern AttributeId ATTRIB_STRATEGY;	///< Marshaling attribute "strategy"
 extern AttributeId ATTRIB_THISBEFORERETPOINTER;	///< Marshaling attribute "thisbeforeretpointer"
 extern AttributeId ATTRIB_VOIDLOCK;	///< Marshaling attribute "voidlock"
+extern AttributeId ATTRIB_ISRIGHTTOLEFT;	///< Marshaling attribute "isrighttoleft"
 
 extern ElementId ELEM_GROUP;		///< Marshaling element \<group>
 extern ElementId ELEM_INTERNALLIST;	///< Marshaling element \<internallist>
@@ -419,7 +420,10 @@ public:
   /// \param proto is the ordered list of data-types
   /// \param typefactory is the TypeFactory (for constructing pointers)
   /// \param res will contain the storage locations corresponding to the datatypes
-  virtual void assignMap(const vector<Datatype *> &proto,TypeFactory &typefactory,vector<ParameterPieces> &res) const=0;
+  /// \param pointersize size of current pointer (for 'near' / 'far' sizes)
+  /// \param is_right_to_left order of parameter stacking
+  virtual void assignMap(const vector<Datatype*>& proto, TypeFactory& typefactory, vector<ParameterPieces>& res,
+      int4 pointersize, bool isrighttoleft) const = 0;
 
   /// \brief Given an unordered list of storage locations, calculate a function prototype
   ///
@@ -585,7 +589,8 @@ public:
   virtual ~ParamListStandard(void);
   const list<ParamEntry> &getEntry(void) const { return entry; }	///< Get the list of parameter entries
   virtual uint4 getType(void) const { return p_standard; }
-  virtual void assignMap(const vector<Datatype *> &proto,TypeFactory &typefactory,vector<ParameterPieces> &res) const;
+  virtual void assignMap(const vector<Datatype *> &proto,TypeFactory &typefactory,vector<ParameterPieces> &res,
+      int4 pointersize, bool isrighttoleft) const;
   virtual void fillinMap(ParamActive *active) const;
   virtual bool checkJoin(const Address &hiaddr,int4 hisize,const Address &loaddr,int4 losize) const;
   virtual bool checkSplit(const Address &loc,int4 size,int4 splitpoint) const;
@@ -614,7 +619,8 @@ public:
   ParamListRegisterOut(void) : ParamListStandard() {}		///< Constructor
   ParamListRegisterOut(const ParamListRegisterOut &op2) : ParamListStandard(op2) {}	///< Copy constructor
   virtual uint4 getType(void) const { return p_register_out; }
-  virtual void assignMap(const vector<Datatype *> &proto,TypeFactory &typefactory,vector<ParameterPieces> &res) const;
+  virtual void assignMap(const vector<Datatype *> &proto,TypeFactory &typefactory,vector<ParameterPieces> &res,
+      int4 pointersize, bool isrighttoleft) const;
   virtual void fillinMap(ParamActive *active) const;
   virtual bool possibleParam(const Address &loc,int4 size) const;
   virtual ParamList *clone(void) const;
@@ -649,7 +655,8 @@ public:
   ParamListStandardOut(void) : ParamListRegisterOut() {}	///< Constructor for use with decode()
   ParamListStandardOut(const ParamListStandardOut &op2) : ParamListRegisterOut(op2) {}	///< Copy constructor
   virtual uint4 getType(void) const { return p_standard_out; }
-  virtual void assignMap(const vector<Datatype *> &proto,TypeFactory &typefactory,vector<ParameterPieces> &res) const;
+  virtual void assignMap(const vector<Datatype *> &proto,TypeFactory &typefactory,vector<ParameterPieces> &res,
+      int4 pointersize, bool isrighttoleft) const;
   virtual void decode(Decoder &decoder,vector<EffectRecord> &effectlist,bool normalstack);
   virtual ParamList *clone(void) const;
 };
@@ -715,6 +722,7 @@ class ProtoModel {
   bool stackgrowsnegative;	///< True if stack parameters have (normal) low address to high address ordering
   bool hasThis;			///< True if this model has a \b this parameter (auto-parameter)
   bool isConstruct;		///< True if this model is a constructor for a particular object
+  bool isRightToLeft;		///< True if parameters are stacked from right to left (default)
   bool isPrinted;		///< True if this model should be printed as part of function declarations
   void defaultLocalRange(void);	///< Set the default stack range used for local variables
   void defaultParamRange(void);	///< Set the default stack range used for input parameters
@@ -751,6 +759,9 @@ public:
     output->fillinMap(active); }
 
   void assignParameterStorage(const vector<Datatype *> &typelist,vector<ParameterPieces> &res,bool ignoreOutputError);
+
+  /// \brief Get pointer size based upon current address model or proto model name
+  int4 getPointerSize() const;
 
   /// \brief Check if the given two input storage locations can represent a single logical parameter
   ///

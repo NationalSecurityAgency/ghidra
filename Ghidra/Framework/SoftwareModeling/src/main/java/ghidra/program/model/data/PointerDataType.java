@@ -269,7 +269,8 @@ public class PointerDataType extends BuiltIn implements Pointer {
 	@Override
 	public String getDisplayName() {
 		// NOTE: Pointer display name only specifies length if null base type
-		if (displayName == null) {
+		// or length is different to compiler default
+		if ((displayName == null) || (length != getDataOrganization().getPointerSize())) {
 			DataType dt = getDataType();
 			if (dt == null) {
 				displayName = POINTER_NAME;
@@ -279,6 +280,9 @@ public class PointerDataType extends BuiltIn implements Pointer {
 			}
 			else {
 				displayName = dt.getDisplayName() + " *";
+				if ((length > 0) && (length != getDataOrganization().getPointerSize())) {
+					displayName += Integer.toString(8 * length);
+				}
 			}
 		}
 		return displayName;

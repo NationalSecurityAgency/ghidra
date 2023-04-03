@@ -32,7 +32,7 @@ public class ParamListRegisterOut extends ParamListStandard {
 
 	@Override
 	public void assignMap(Program prog, DataType[] proto, ArrayList<VariableStorage> res,
-			boolean addAutoParams) {
+			boolean addAutoParams, int size, boolean isRightToLeft) {
 		int[] status = new int[numgroup];
 		for (int i = 0; i < numgroup; ++i) {
 			status[i] = 0;

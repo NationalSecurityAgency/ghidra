@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -154,29 +154,35 @@ public class ParamListStandard implements ParamList {
 
 	@Override
 	public void assignMap(Program prog, DataType[] proto, ArrayList<VariableStorage> res,
-			boolean addAutoParams) {
+			boolean addAutoParams, int size, boolean isRightToLeft) {
 		int[] status = new int[numgroup];
 		for (int i = 0; i < numgroup; ++i) {
 			status[i] = 0;
 		}
 
-		if (addAutoParams && res.size() == 2) {	// Check for hidden parameters defined by the output list
-			DataTypeManager dtm = prog.getDataTypeManager();
-			Pointer pointer = dtm.getPointer(proto[0]);
-			VariableStorage store = assignAddress(prog, pointer, status, true, false);
+		DataTypeManager dtm = prog.getDataTypeManager();
+		Pointer returnPtr = dtm.getPointer(proto[0], size);
+		boolean hiddenParam = (addAutoParams && res.size() == 2);
+
+		if (hiddenParam && isRightToLeft) {	// Check for hidden parameters defined by the output list
+			VariableStorage store = assignAddress(prog, returnPtr, status, true, false);
 			res.set(1, store);
 		}
 		for (int i = 1; i < proto.length; ++i) {
 			VariableStorage store;
 			if ((pointermax != 0) && (proto[i] != null) && (proto[i].getLength() > pointermax)) {	// DataType is too big
 				// Assume datatype is stored elsewhere and only the pointer is passed
-				DataTypeManager dtm = prog.getDataTypeManager();
-				Pointer pointer = dtm.getPointer(proto[i]);
+				Pointer pointer = dtm.getPointer(proto[i], size);
 				store = assignAddress(prog, pointer, status, false, true);
 			}
 			else {
 				store = assignAddress(prog, proto[i], status, false, false);
 			}
+			res.add(store);
+		}
+		if (hiddenParam && !isRightToLeft) {	// Check for hidden parameters defined by the output list
+			VariableStorage store = assignAddress(prog, returnPtr, status, true, false);
+			res.remove(1);	// res[1] already exists!
 			res.add(store);
 		}
 	}

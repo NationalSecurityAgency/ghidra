@@ -32,6 +32,7 @@ AttributeId ATTRIB_STACKSHIFT = AttributeId("stackshift",126);
 AttributeId ATTRIB_STRATEGY = AttributeId("strategy",127);
 AttributeId ATTRIB_THISBEFORERETPOINTER = AttributeId("thisbeforeretpointer",128);
 AttributeId ATTRIB_VOIDLOCK = AttributeId("voidlock",129);
+AttributeId ATTRIB_ISRIGHTTOLEFT = AttributeId("isrighttoleft",145);
 
 ElementId ELEM_GROUP = ElementId("group",160);
 ElementId ELEM_INTERNALLIST = ElementId("internallist",161);
@@ -667,24 +668,28 @@ Address ParamListStandard::assignAddress(const Datatype *tp,vector<int4> &status
   return Address();		// Return invalid address to indicated we could not assign anything
 }
 
-void ParamListStandard::assignMap(const vector<Datatype *> &proto,TypeFactory &typefactory,vector<ParameterPieces> &res) const
+void ParamListStandard::assignMap(const vector<Datatype *> &proto,TypeFactory &typefactory,vector<ParameterPieces> &res,
+  int4 pointersize, bool isrighttoleft) const
 
 {
   vector<int4> status(numgroup,0);
 
-  if (res.size() == 2) {	// Check for hidden parameters defined by the output list
+  bool hiddenparam = res.size() == 2;
+  
+  if (hiddenparam && isrighttoleft) {	// Check for hidden parameters defined by the output list
     res.back().addr = assignAddress(res.back().type,status);	// Reserve first param for hidden ret value
     res.back().flags |= ParameterPieces::hiddenretparm;
     if (res.back().addr.isInvalid())
       throw ParamUnassignedError("Cannot assign parameter address for " + res.back().type->getName());
   }
+
   for(int4 i=1;i<proto.size();++i) {
     res.emplace_back();
     if ((pointermax != 0) && (proto[i]->getSize() > pointermax)) { // Datatype is too big
       // Assume datatype is stored elsewhere and only the pointer is passed
-      AddrSpace *spc = spacebase;
+      AddrSpace* spc = spacebase;
       if (spc == (AddrSpace*)0) spc = typefactory.getArch()->getDefaultDataSpace();
-      int4 pointersize = spc->getAddrSize();
+//      int4 pointersize = spc->getAddrSize();
       int4 wordsize = spc->getWordSize();
       Datatype *pointertp = typefactory.getTypePointer(pointersize,proto[i],wordsize);
       res.back().addr = assignAddress(pointertp,status);
@@ -698,6 +703,13 @@ void ParamListStandard::assignMap(const vector<Datatype *> &proto,TypeFactory &t
     }
     if (res.back().addr.isInvalid())
       throw ParamUnassignedError("Cannot assign parameter address for " + proto[i]->getName());
+  }
+
+  if (hiddenparam && !isrighttoleft) {	// Check for hidden parameters defined by the output list
+    res.back().addr = assignAddress(res.back().type, status);	// Reserve first param for hidden ret value
+    res.back().flags |= ParameterPieces::hiddenretparm;
+    if (res.back().addr.isInvalid())
+      throw ParamUnassignedError("Cannot assign parameter address for " + res.back().type->getName());
   }
 }
 
@@ -1387,7 +1399,8 @@ ParamList *ParamListStandard::clone(void) const
   return res;
 }
 
-void ParamListRegisterOut::assignMap(const vector<Datatype *> &proto,TypeFactory &typefactory,vector<ParameterPieces> &res) const
+void ParamListRegisterOut::assignMap(const vector<Datatype *> &proto,TypeFactory &typefactory,vector<ParameterPieces> &res,
+    int4 pointersize, bool isrighttoleft) const
 
 {
   vector<int4> status(numgroup,0);
@@ -1527,7 +1540,8 @@ ParamList *ParamListRegister::clone(void) const
   return res;
 }
 
-void ParamListStandardOut::assignMap(const vector<Datatype *> &proto,TypeFactory &typefactory,vector<ParameterPieces> &res) const
+void ParamListStandardOut::assignMap(const vector<Datatype *> &proto,TypeFactory &typefactory,vector<ParameterPieces> &res,
+    int4 pointersize, bool isrighttoleft) const
 
 {
   vector<int4> status(numgroup,0);
@@ -1543,7 +1557,7 @@ void ParamListStandardOut::assignMap(const vector<Datatype *> &proto,TypeFactory
     AddrSpace *spc = spacebase;
     if (spc == (AddrSpace *)0)
       spc = typefactory.getArch()->getDefaultDataSpace();
-    int4 pointersize = spc->getAddrSize();
+//    int4 pointersize = spc->getAddrSize();
     int4 wordsize = spc->getWordSize();
     Datatype *pointertp = typefactory.getTypePointer(pointersize, proto[0], wordsize);
     res.back().addr = assignAddress(pointertp,status);
@@ -2152,6 +2166,7 @@ ProtoModel::ProtoModel(const string &nm,const ProtoModel &op2)
   if (name == "__thiscall")
     hasThis = true;
   compatModel = &op2;
+  isRightToLeft = op2.isRightToLeft;
 }
 
 ProtoModel::~ProtoModel(void)
@@ -2193,12 +2208,23 @@ bool ProtoModel::isCompatible(const ProtoModel *op2) const
 /// \param typelist is the list of data-types from the function prototype
 /// \param res will hold the storage locations for each parameter
 /// \param ignoreOutputError is \b true if problems assigning the output parameter are ignored
-void ProtoModel::assignParameterStorage(const vector<Datatype *> &typelist,vector<ParameterPieces> &res,bool ignoreOutputError)
+void ProtoModel::assignParameterStorage(const vector<Datatype *> &typelistConst,vector<ParameterPieces> &res,bool ignoreOutputError)
 
 {
+  vector<Datatype *> typelist = typelistConst;
+
+  // Deal with left-to-right (PASCAL convention) parameter ordering
+  if (!isRightToLeft) {
+    // swap around the datatypes to map variable storage high-to-low
+    for (int i = 1; i <= (typelist.size() - 1) / 2; i++) {
+      std::swap(typelist[typelist.size() - i], typelist[i]);
+    }
+  }
+
+  int4 pointersize = getPointerSize();
   if (ignoreOutputError) {
     try {
-      output->assignMap(typelist,*glb->types,res);
+      output->assignMap(typelist,*glb->types,res,pointersize,isRightToLeft);
     }
     catch(ParamUnassignedError &err) {
       res.clear();
@@ -2209,9 +2235,39 @@ void ProtoModel::assignParameterStorage(const vector<Datatype *> &typelist,vecto
     }
   }
   else {
-    output->assignMap(typelist,*glb->types,res);
+    output->assignMap(typelist,*glb->types,res,pointersize,isRightToLeft);
   }
-  input->assignMap(typelist,*glb->types,res);
+  input->assignMap(typelist,*glb->types,res,pointersize,isRightToLeft);
+
+  // Deal with left-to-right (PASCAL convention) parameter ordering
+  if (!isRightToLeft) {
+    // swap back the resulting storage to be ordered correctly
+    for (int i = 1; i <= (res.size() - 1) / 2; i++) {
+      std::swap(res[res.size() - i], res[i]);
+    }
+  }
+}
+
+/// \brief Does \param str end with \param end
+template<typename TString>
+inline bool ends_with(const TString& str, const TString& end) {
+  if (end.size() > str.size()) return false;
+  return std::equal(end.rbegin(), end.rend(), str.rbegin());
+}
+
+///  \brief Get pointer size for this proto
+int4 ProtoModel::getPointerSize() const
+
+{
+  AddrSpace *spc = glb->getDefaultDataSpace();
+  int4 pointersize = spc->getAddrSize();
+  if (ends_with<string>(name,"16near")) {
+    pointersize = 2;
+  }
+  else if (ends_with<string>(name,"16far")) {
+    pointersize = 4;
+  }
+  return pointersize;
 }
 
 /// \brief Look up an effect from the given EffectRecord list
@@ -2315,6 +2371,7 @@ void ProtoModel::decode(Decoder &decoder)
   extrapop = -300;
   hasThis = false;
   isConstruct = false;
+  isRightToLeft = false;
   isPrinted = true;
   effectlist.clear();
   injectUponEntry = -1;
@@ -2340,6 +2397,9 @@ void ProtoModel::decode(Decoder &decoder)
     }
     else if (attribId == ATTRIB_CONSTRUCTOR) {
       isConstruct = decoder.readBool();
+    }
+    else if (attribId == ATTRIB_ISRIGHTTOLEFT) {
+      isRightToLeft = decoder.readBool();
     }
     else
       throw LowlevelError("Unknown prototype attribute");

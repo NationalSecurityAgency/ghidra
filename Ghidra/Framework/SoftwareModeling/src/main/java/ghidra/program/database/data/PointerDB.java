@@ -152,6 +152,9 @@ class PointerDB extends DataTypeDB implements Pointer {
 						displayName += Integer.toString(getLength() * 8);
 					}
 				}
+				else if (getLength() != dt.getDataOrganization().getPointerSize()) {
+					displayName = dt.getDisplayName() + "*" + Integer.toString(getLength() * 8);
+				}
 				else {
 					displayName = dt.getDisplayName() + " *";
 				}

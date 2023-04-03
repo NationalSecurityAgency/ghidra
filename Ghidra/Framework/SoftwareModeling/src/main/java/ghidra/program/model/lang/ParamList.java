@@ -42,9 +42,11 @@ public interface ParamList {
 	 * @param proto is the list of datatypes
 	 * @param res is the vector for holding the VariableStorage corresponding to datatypes
 	 * @param addAutoParams if true add/process auto-parameters
+	 * @param size is the new pointers size
+	 * @param isRightToLeft adds the hidden-auto-param to the correct end of the returned list
 	 */
 	public void assignMap(Program prog, DataType[] proto, ArrayList<VariableStorage> res,
-			boolean addAutoParams);
+			boolean addAutoParams, int size, boolean isRightToLeft);
 
 	public void encode(Encoder encoder, boolean isInput) throws IOException;
 
