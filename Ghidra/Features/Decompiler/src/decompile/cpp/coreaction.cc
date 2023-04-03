@@ -2868,8 +2868,7 @@ int4 ActionMarkExplicit::baseExplicit(Varnode *vn,int4 maxref)
     else if (useOp->code() == CPUI_PIECE) {
       Varnode *rootVn = PieceNode::findRoot(vn);
       if (vn == rootVn) return -1;
-      Datatype *ct = rootVn->getStructuredType();
-      if (ct != (Datatype *)0) {
+      if (rootVn->getDef()->isPartialRoot()) {
 	// Getting PIECEd into a structured thing.  Unless vn is a leaf, it should be implicit
 	if (def->code() != CPUI_PIECE) return -1;
 	if (vn->loneDescend() == (PcodeOp *)0) return -1;
@@ -5205,7 +5204,7 @@ void ActionDatabase::buildDefaultGroups(void)
   const char *members[] = { "base", "protorecovery", "protorecovery_a", "deindirect", "localrecovery",
 			    "deadcode", "typerecovery", "stackptrflow",
 			    "blockrecovery", "stackvars", "deadcontrolflow", "switchnorm",
-			    "cleanup", "merge", "dynamic", "casts", "analysis",
+			    "cleanup", "splitcopy", "splitpointer", "merge", "dynamic", "casts", "analysis",
 			    "fixateglobals", "fixateproto",
 			    "segment", "returnsplit", "nodejoin", "doubleload", "doubleprecis",
 			    "unreachable", "subvar", "floatprecision",
@@ -5472,6 +5471,9 @@ void ActionDatabase::universalAction(Architecture *conf)
     actcleanup->addRule( new RulePtrsubCharConstant("cleanup") );
     actcleanup->addRule( new RuleExtensionPush("cleanup") );
     actcleanup->addRule( new RulePieceStructure("cleanup") );
+    actcleanup->addRule( new RuleSplitCopy("splitcopy") );
+    actcleanup->addRule( new RuleSplitLoad("splitpointer") );
+    actcleanup->addRule( new RuleSplitStore("splitpointer") );
   }
   act->addAction( actcleanup );
 

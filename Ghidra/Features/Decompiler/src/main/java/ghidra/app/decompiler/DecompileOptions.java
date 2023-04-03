@@ -98,6 +98,32 @@ public class DecompileOptions {
 	private final static boolean ANALYZEFORLOOPS_OPTIONDEFAULT = true;	// Must match Architecture::resetDefaultsInternal
 	private boolean analyzeForLoops;
 
+	private final static String SPLITSTRUCTURES_OPTIONSTRING =
+		"Analysis.Split combined structure fields";
+	private final static String SPLITSTRUCTURES_OPTIONDESCRIPTION =
+		"If set, the decompiler will split a copy operation to or from a structure that affects more than " +
+			"one field. The copy will be split into multiple operations so that each logical field is copied " +
+			"separately.";
+	private final static boolean SPLITSTRUCTURES_OPTIONDEFAULT = true;	// Must match Architecture::resetDefaultsInternal
+	private boolean splitStructures;
+
+	private final static String SPLITARRAYS_OPTIONSTRING = "Analysis.Split combined array elements";
+	private final static String SPLITARRAYS_OPTIONDESCRIPTION =
+		"If set, the decompiler will split a copy operation to or from an array that affects more than " +
+			"one element. The copy will be split into multiple operations so that each logical element is copied " +
+			"separately.";
+	private final static boolean SPLITARRAYS_OPTIONDEFAULT = true;	// Must match Architecture::resetDefaultsInternal
+	private boolean splitArrays;
+
+	private final static String SPLITPOINTERS_OPTIONSTRING =
+		"Analysis.Split pointers to combined elements";
+	private final static String SPLITPOINTERS_OPTIONDESCRIPTION =
+		"If set, a single copy, through a pointer, to either multiple array elements or multiple structure fields " +
+			"will be split.  The copy, via LOAD or STORE, will be split into multiple operations so that each " +
+			"logical element is accessed separately.";
+	private final static boolean SPLITPOINTERS_OPTIONDEFAULT = true;	// Must match Architecture::resetDefaultsInternal
+	private boolean splitPointers;
+
 	private final static String NULLTOKEN_OPTIONSTRING = "Display.Print 'NULL' for null pointers";
 	private final static String NULLTOKEN_OPTIONDESCRIPTION =
 		"If set, any zero valued pointer (null pointer) will " +
@@ -380,6 +406,9 @@ public class DecompileOptions {
 		readOnly = READONLY_OPTIONDEFAULT; // This flipped values
 		eliminateUnreachable = ELIMINATE_UNREACHABLE_OPTIONDEFAULT;
 		simplifyDoublePrecision = SIMPLIFY_DOUBLEPRECISION_OPTIONDEFAULT;
+		splitStructures = SPLITSTRUCTURES_OPTIONDEFAULT;
+		splitArrays = SPLITARRAYS_OPTIONDEFAULT;
+		splitPointers = SPLITPOINTERS_OPTIONDEFAULT;
 		ignoreunimpl = IGNOREUNIMPL_OPTIONDEFAULT;
 		inferconstptr = INFERCONSTPTR_OPTIONDEFAULT;
 		analyzeForLoops = ANALYZEFORLOOPS_OPTIONDEFAULT;
@@ -435,6 +464,11 @@ public class DecompileOptions {
 		inferconstptr = opt.getBoolean(INFERCONSTPTR_OPTIONSTRING, INFERCONSTPTR_OPTIONDEFAULT);
 		analyzeForLoops =
 			opt.getBoolean(ANALYZEFORLOOPS_OPTIONSTRING, ANALYZEFORLOOPS_OPTIONDEFAULT);
+		splitStructures =
+			opt.getBoolean(SPLITSTRUCTURES_OPTIONSTRING, SPLITSTRUCTURES_OPTIONDEFAULT);
+		splitArrays = opt.getBoolean(SPLITARRAYS_OPTIONSTRING, SPLITARRAYS_OPTIONDEFAULT);
+		splitPointers = opt.getBoolean(SPLITPOINTERS_OPTIONSTRING, SPLITPOINTERS_OPTIONDEFAULT);
+
 		nullToken = opt.getBoolean(NULLTOKEN_OPTIONSTRING, NULLTOKEN_OPTIONDEFAULT);
 		inplaceTokens = opt.getBoolean(INPLACEOP_OPTIONSTRING, INPLACEOP_OPTIONDEFAULT);
 		aliasBlock = opt.getEnum(ALIASBLOCK_OPTIONSTRING, ALIASBLOCK_OPTIONDEFAULT);
@@ -537,6 +571,15 @@ public class DecompileOptions {
 		opt.registerOption(ANALYZEFORLOOPS_OPTIONSTRING, ANALYZEFORLOOPS_OPTIONDEFAULT,
 			new HelpLocation(HelpTopics.DECOMPILER, "AnalysisForLoops"),
 			ANALYZEFORLOOPS_OPTIONDESCRIPTION);
+		opt.registerOption(SPLITSTRUCTURES_OPTIONSTRING, SPLITSTRUCTURES_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "AnalysisSplitStruct"),
+			SPLITSTRUCTURES_OPTIONDESCRIPTION);
+		opt.registerOption(SPLITARRAYS_OPTIONSTRING, SPLITARRAYS_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "AnalysisSplitArray"),
+			SPLITARRAYS_OPTIONDESCRIPTION);
+		opt.registerOption(SPLITPOINTERS_OPTIONSTRING, SPLITPOINTERS_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "AnalysisSplitPointers"),
+			SPLITPOINTERS_OPTIONDESCRIPTION);
 		opt.registerOption(NULLTOKEN_OPTIONSTRING, NULLTOKEN_OPTIONDEFAULT,
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayNull"), NULLTOKEN_OPTIONDESCRIPTION);
 		opt.registerOption(INPLACEOP_OPTIONSTRING, INPLACEOP_OPTIONDEFAULT,
@@ -680,13 +723,28 @@ public class DecompileOptions {
 	 */
 	public void encode(Encoder encoder, DecompInterface iface) throws IOException {
 		encoder.openElement(ELEM_OPTIONSLIST);
-		appendOption(encoder, ELEM_CURRENTACTION, "conditionalexe", predicate ? "on" : "off", "");
-		appendOption(encoder, ELEM_READONLY, readOnly ? "on" : "off", "", "");
-		appendOption(encoder, ELEM_CURRENTACTION, iface.getSimplificationStyle(), "unreachable",
-			eliminateUnreachable ? "on" : "off");
-		appendOption(encoder, ELEM_CURRENTACTION, iface.getSimplificationStyle(), "doubleprecis",
-			simplifyDoublePrecision ? "on" : "off");
+		if (predicate != PREDICATE_OPTIONDEFAULT) {
+			appendOption(encoder, ELEM_CURRENTACTION, "conditionalexe", predicate ? "on" : "off",
+				"");
+		}
+		if (eliminateUnreachable != ELIMINATE_UNREACHABLE_OPTIONDEFAULT) {
+			appendOption(encoder, ELEM_CURRENTACTION, iface.getSimplificationStyle(), "unreachable",
+				eliminateUnreachable ? "on" : "off");
+		}
+		if (simplifyDoublePrecision != SIMPLIFY_DOUBLEPRECISION_OPTIONDEFAULT) {
+			appendOption(encoder, ELEM_CURRENTACTION, iface.getSimplificationStyle(),
+				"doubleprecis", simplifyDoublePrecision ? "on" : "off");
+		}
+		if (splitStructures != SPLITSTRUCTURES_OPTIONDEFAULT ||
+			splitArrays != SPLITARRAYS_OPTIONDEFAULT ||
+			splitPointers != SPLITPOINTERS_OPTIONDEFAULT) {
+			String p1 = splitStructures ? "struct" : "";
+			String p2 = splitArrays ? "array" : "";
+			String p3 = splitPointers ? "pointer" : "";
+			appendOption(encoder, ELEM_SPLITDATATYPE, p1, p2, p3);
+		}
 
+		appendOption(encoder, ELEM_READONLY, readOnly ? "on" : "off", "", "");
 		// Must set language early so that the object is in place before other option changes
 		appendOption(encoder, ELEM_SETLANGUAGE, displayLanguage.toString(), "", "");
 

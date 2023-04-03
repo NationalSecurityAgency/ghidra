@@ -151,25 +151,14 @@ bool SymbolEntry::updateType(Varnode *vn) const
 Datatype *SymbolEntry::getSizedType(const Address &inaddr,int4 sz) const
 
 {
-  uintb off;
+  int4 off;
 
   if (isDynamic())
     off = offset;
   else
-    off = (inaddr.getOffset() - addr.getOffset()) + offset;
+    off = (int4)(inaddr.getOffset() - addr.getOffset()) + offset;
   Datatype *cur = symbol->getType();
-  do {
-    if (offset == 0 && cur->getSize() == sz)
-      return cur;
-    cur = cur->getSubType(off,&off);
-  } while(cur != (Datatype *)0);
-  //    else {
-  // This case occurs if the varnode is a "partial type" of some sort
-  // This PROBABLY means the varnode shouldn't be considered addrtied
-  // I.e. it shouldn't be considered part of the same variable as symbol
-  //    }
-    
-  return (Datatype *)0;
+  return symbol->getScope()->getArch()->types->getExactPiece(cur, off, sz);
 }
 
 /// Give a contained one-line description of \b this storage, suitable for a debug console

@@ -1102,7 +1102,7 @@ TypeOpIntAdd::TypeOpIntAdd(TypeFactory *t)
   : TypeOpBinary(t,CPUI_INT_ADD,"+",TYPE_INT,TYPE_INT)
 {
   opflags = PcodeOp::binary | PcodeOp::commutative;
-  addlflags = inherits_sign;
+  addlflags = arithmetic_op | inherits_sign;
   behave = new OpBehaviorIntAdd();
 }
 
@@ -1253,7 +1253,7 @@ TypeOpIntSub::TypeOpIntSub(TypeFactory *t)
   : TypeOpBinary(t,CPUI_INT_SUB,"-",TYPE_INT,TYPE_INT)
 {
   opflags = PcodeOp::binary;
-  addlflags = inherits_sign;
+  addlflags = arithmetic_op | inherits_sign;
   behave = new OpBehaviorIntSub();
 }
 
@@ -1267,6 +1267,7 @@ TypeOpIntCarry::TypeOpIntCarry(TypeFactory *t)
   : TypeOpFunc(t,CPUI_INT_CARRY,"CARRY",TYPE_BOOL,TYPE_UINT)
 {
   opflags = PcodeOp::binary;
+  addlflags = arithmetic_op;
   behave = new OpBehaviorIntCarry();
 }
 
@@ -1297,6 +1298,7 @@ TypeOpIntSborrow::TypeOpIntSborrow(TypeFactory *t)
   : TypeOpFunc(t,CPUI_INT_SBORROW,"SBORROW",TYPE_BOOL,TYPE_INT)
 {
   opflags = PcodeOp::binary;
+  addlflags = arithmetic_op;
   behave = new OpBehaviorIntSborrow();
 }
 
@@ -1312,7 +1314,7 @@ TypeOpInt2Comp::TypeOpInt2Comp(TypeFactory *t)
   : TypeOpUnary(t,CPUI_INT_2COMP,"-",TYPE_INT,TYPE_INT)
 {
   opflags = PcodeOp::unary;
-  addlflags = inherits_sign;
+  addlflags = arithmetic_op | inherits_sign;
   behave = new OpBehaviorInt2Comp();
 }
 
@@ -1326,7 +1328,7 @@ TypeOpIntNegate::TypeOpIntNegate(TypeFactory *t)
   : TypeOpUnary(t,CPUI_INT_NEGATE,"~",TYPE_UINT,TYPE_UINT)
 {
   opflags = PcodeOp::unary;
-  addlflags = inherits_sign;
+  addlflags = logical_op | inherits_sign;
   behave = new OpBehaviorIntNegate();
 }
 
@@ -1340,7 +1342,7 @@ TypeOpIntXor::TypeOpIntXor(TypeFactory *t)
   : TypeOpBinary(t,CPUI_INT_XOR,"^",TYPE_UINT,TYPE_UINT)
 {
   opflags = PcodeOp::binary | PcodeOp::commutative;
-  addlflags = inherits_sign;
+  addlflags = logical_op | inherits_sign;
   behave = new OpBehaviorIntXor();
 }
 
@@ -1368,7 +1370,7 @@ TypeOpIntAnd::TypeOpIntAnd(TypeFactory *t)
   : TypeOpBinary(t,CPUI_INT_AND,"&",TYPE_UINT,TYPE_UINT)
 {
   opflags = PcodeOp::binary | PcodeOp::commutative;
-  addlflags = inherits_sign;
+  addlflags = logical_op | inherits_sign;
   behave = new OpBehaviorIntAnd();
 }
 
@@ -1396,7 +1398,7 @@ TypeOpIntOr::TypeOpIntOr(TypeFactory *t)
   : TypeOpBinary(t,CPUI_INT_OR,"|",TYPE_UINT,TYPE_UINT)
 {
   opflags = PcodeOp::binary | PcodeOp::commutative;
-  addlflags = inherits_sign;
+  addlflags = logical_op | inherits_sign;
   behave = new OpBehaviorIntOr();
 }
 
@@ -1539,7 +1541,7 @@ TypeOpIntMult::TypeOpIntMult(TypeFactory *t)
   : TypeOpBinary(t,CPUI_INT_MULT,"*",TYPE_INT,TYPE_INT)
 {
   opflags = PcodeOp::binary | PcodeOp::commutative;
-  addlflags = inherits_sign;
+  addlflags = arithmetic_op | inherits_sign;
   behave = new OpBehaviorIntMult();
 }
 
@@ -1553,7 +1555,7 @@ TypeOpIntDiv::TypeOpIntDiv(TypeFactory *t)
   : TypeOpBinary(t,CPUI_INT_DIV,"/",TYPE_UINT,TYPE_UINT)
 {
   opflags = PcodeOp::binary;
-  addlflags = inherits_sign;
+  addlflags = arithmetic_op | inherits_sign;
   behave = new OpBehaviorIntDiv();
 }
 
@@ -1573,7 +1575,7 @@ TypeOpIntSdiv::TypeOpIntSdiv(TypeFactory *t)
   : TypeOpBinary(t,CPUI_INT_SDIV,"/",TYPE_INT,TYPE_INT)
 {
   opflags = PcodeOp::binary;
-  addlflags = inherits_sign;
+  addlflags = arithmetic_op | inherits_sign;
   behave = new OpBehaviorIntSdiv();
 }
 
@@ -1593,7 +1595,7 @@ TypeOpIntRem::TypeOpIntRem(TypeFactory *t)
   : TypeOpBinary(t,CPUI_INT_REM,"%",TYPE_UINT,TYPE_UINT)
 {
   opflags = PcodeOp::binary;
-  addlflags = inherits_sign | inherits_sign_zero;
+  addlflags = arithmetic_op | inherits_sign | inherits_sign_zero;
   behave = new OpBehaviorIntRem();
 }
 
@@ -1613,7 +1615,7 @@ TypeOpIntSrem::TypeOpIntSrem(TypeFactory *t)
   : TypeOpBinary(t,CPUI_INT_SREM,"%",TYPE_INT,TYPE_INT)
 {
   opflags = PcodeOp::binary;
-  addlflags = inherits_sign | inherits_sign_zero;
+  addlflags = arithmetic_op | inherits_sign | inherits_sign_zero;
   behave = new OpBehaviorIntSrem();
 }
 
@@ -1633,6 +1635,7 @@ TypeOpBoolNegate::TypeOpBoolNegate(TypeFactory *t)
   : TypeOpUnary(t,CPUI_BOOL_NEGATE,"!",TYPE_BOOL,TYPE_BOOL)
 {
   opflags = PcodeOp::unary | PcodeOp::booloutput;
+  addlflags = logical_op;
   behave = new OpBehaviorBoolNegate();
 }
 
@@ -1640,6 +1643,7 @@ TypeOpBoolXor::TypeOpBoolXor(TypeFactory *t)
   : TypeOpBinary(t,CPUI_BOOL_XOR,"^^",TYPE_BOOL,TYPE_BOOL)
 {
   opflags = PcodeOp::binary | PcodeOp::commutative | PcodeOp::booloutput;
+  addlflags = logical_op;
   behave = new OpBehaviorBoolXor();
 }
 
@@ -1647,6 +1651,7 @@ TypeOpBoolAnd::TypeOpBoolAnd(TypeFactory *t)
   : TypeOpBinary(t,CPUI_BOOL_AND,"&&",TYPE_BOOL,TYPE_BOOL)
 {
   opflags = PcodeOp::binary | PcodeOp::commutative | PcodeOp::booloutput;
+  addlflags = logical_op;
   behave = new OpBehaviorBoolAnd();
 }
 
@@ -1654,6 +1659,7 @@ TypeOpBoolOr::TypeOpBoolOr(TypeFactory *t)
   : TypeOpBinary(t,CPUI_BOOL_OR,"||",TYPE_BOOL,TYPE_BOOL)
 {
   opflags = PcodeOp::binary | PcodeOp::commutative | PcodeOp::booloutput;
+  addlflags = logical_op;
   behave = new OpBehaviorBoolOr();
 }
 
@@ -1661,6 +1667,7 @@ TypeOpFloatEqual::TypeOpFloatEqual(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_EQUAL,"==",TYPE_BOOL,TYPE_FLOAT)
 {
   opflags = PcodeOp::binary | PcodeOp::booloutput | PcodeOp::commutative;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatEqual(trans);
 }
 
@@ -1668,6 +1675,7 @@ TypeOpFloatNotEqual::TypeOpFloatNotEqual(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_NOTEQUAL,"!=",TYPE_BOOL,TYPE_FLOAT)
 {
   opflags = PcodeOp::binary | PcodeOp::booloutput | PcodeOp::commutative;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatNotEqual(trans);
 }
 
@@ -1675,6 +1683,7 @@ TypeOpFloatLess::TypeOpFloatLess(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_LESS,"<",TYPE_BOOL,TYPE_FLOAT)
 {
   opflags = PcodeOp::binary | PcodeOp::booloutput;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatLess(trans);
 }
 
@@ -1682,6 +1691,7 @@ TypeOpFloatLessEqual::TypeOpFloatLessEqual(TypeFactory *t,const Translate *trans
   : TypeOpBinary(t,CPUI_FLOAT_LESSEQUAL,"<=",TYPE_BOOL,TYPE_FLOAT)
 {
   opflags = PcodeOp::binary | PcodeOp::booloutput;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatLessEqual(trans);
 }
 
@@ -1689,6 +1699,7 @@ TypeOpFloatNan::TypeOpFloatNan(TypeFactory *t,const Translate *trans)
   : TypeOpFunc(t,CPUI_FLOAT_NAN,"NAN",TYPE_BOOL,TYPE_FLOAT)
 {
   opflags = PcodeOp::unary | PcodeOp::booloutput;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatNan(trans);
 }
 
@@ -1696,6 +1707,7 @@ TypeOpFloatAdd::TypeOpFloatAdd(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_ADD,"+",TYPE_FLOAT,TYPE_FLOAT)
 {
   opflags = PcodeOp::binary | PcodeOp::commutative;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatAdd(trans);
 }
 
@@ -1703,6 +1715,7 @@ TypeOpFloatDiv::TypeOpFloatDiv(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_DIV,"/",TYPE_FLOAT,TYPE_FLOAT)
 {
   opflags = PcodeOp::binary;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatDiv(trans);
 }
 
@@ -1710,6 +1723,7 @@ TypeOpFloatMult::TypeOpFloatMult(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_MULT,"*",TYPE_FLOAT,TYPE_FLOAT)
 {
   opflags = PcodeOp::binary | PcodeOp::commutative;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatMult(trans);
 }
 
@@ -1717,6 +1731,7 @@ TypeOpFloatSub::TypeOpFloatSub(TypeFactory *t,const Translate *trans)
   : TypeOpBinary(t,CPUI_FLOAT_SUB,"-",TYPE_FLOAT,TYPE_FLOAT)
 {
   opflags = PcodeOp::binary;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatSub(trans);
 }
 
@@ -1724,6 +1739,7 @@ TypeOpFloatNeg::TypeOpFloatNeg(TypeFactory *t,const Translate *trans)
   : TypeOpUnary(t,CPUI_FLOAT_NEG,"-",TYPE_FLOAT,TYPE_FLOAT)
 {
   opflags = PcodeOp::unary;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatNeg(trans);
 }
 
@@ -1731,6 +1747,7 @@ TypeOpFloatAbs::TypeOpFloatAbs(TypeFactory *t,const Translate *trans)
   : TypeOpFunc(t,CPUI_FLOAT_ABS,"ABS",TYPE_FLOAT,TYPE_FLOAT)
 {
   opflags = PcodeOp::unary;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatAbs(trans);
 }
 
@@ -1738,6 +1755,7 @@ TypeOpFloatSqrt::TypeOpFloatSqrt(TypeFactory *t,const Translate *trans)
   : TypeOpFunc(t,CPUI_FLOAT_SQRT,"SQRT",TYPE_FLOAT,TYPE_FLOAT)
 {
   opflags = PcodeOp::unary;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatSqrt(trans);
 }
 
@@ -1745,6 +1763,7 @@ TypeOpFloatInt2Float::TypeOpFloatInt2Float(TypeFactory *t,const Translate *trans
   : TypeOpFunc(t,CPUI_FLOAT_INT2FLOAT,"INT2FLOAT",TYPE_FLOAT,TYPE_INT)
 {
   opflags = PcodeOp::unary;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatInt2Float(trans);
 }
 
@@ -1752,6 +1771,7 @@ TypeOpFloatFloat2Float::TypeOpFloatFloat2Float(TypeFactory *t,const Translate *t
   : TypeOpFunc(t,CPUI_FLOAT_FLOAT2FLOAT,"FLOAT2FLOAT",TYPE_FLOAT,TYPE_FLOAT)
 {
   opflags = PcodeOp::unary;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatFloat2Float(trans);
 }
 
@@ -1759,6 +1779,7 @@ TypeOpFloatTrunc::TypeOpFloatTrunc(TypeFactory *t,const Translate *trans)
   : TypeOpFunc(t,CPUI_FLOAT_TRUNC,"TRUNC",TYPE_INT,TYPE_FLOAT)
 {
   opflags = PcodeOp::unary;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatTrunc(trans);
 }
 
@@ -1766,6 +1787,7 @@ TypeOpFloatCeil::TypeOpFloatCeil(TypeFactory *t,const Translate *trans)
   : TypeOpFunc(t,CPUI_FLOAT_CEIL,"CEIL",TYPE_FLOAT,TYPE_FLOAT)
 {
   opflags = PcodeOp::unary;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatCeil(trans);
 }
 
@@ -1773,6 +1795,7 @@ TypeOpFloatFloor::TypeOpFloatFloor(TypeFactory *t,const Translate *trans)
   : TypeOpFunc(t,CPUI_FLOAT_FLOOR,"FLOOR",TYPE_FLOAT,TYPE_FLOAT)
 {
   opflags = PcodeOp::unary;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatFloor(trans);
 }
 
@@ -1780,6 +1803,7 @@ TypeOpFloatRound::TypeOpFloatRound(TypeFactory *t,const Translate *trans)
   : TypeOpFunc(t,CPUI_FLOAT_ROUND,"ROUND",TYPE_FLOAT,TYPE_FLOAT)
 {
   opflags = PcodeOp::unary;
+  addlflags = floatingpoint_op;
   behave = new OpBehaviorFloatRound(trans);
 }
 
@@ -1794,15 +1818,6 @@ Datatype *TypeOpMulti::propagateType(Datatype *alttype,PcodeOp *op,Varnode *invn
 				     int4 inslot,int4 outslot)
 {
   if ((inslot!=-1)&&(outslot!=-1)) {
-    if (invn == outvn && outvn->getTempType()->needsResolution()) {
-      // If same Varnode occupies two input slots of the MULTIEQUAL
-      // the second input slot should inherit the resolution of the first
-      Funcdata *fd = op->getParent()->getFuncdata();
-      Datatype *unionType = outvn->getTempType();
-      const ResolvedUnion *res = fd->getUnionField(unionType, op, inslot);
-      if (res != (const ResolvedUnion *)0)
-	fd->setUnionField(unionType, op, outslot, *res);
-    }
     return (Datatype *)0; // Must propagate input <-> output
   }
   Datatype *newtype;
@@ -2025,6 +2040,7 @@ TypeOpPtradd::TypeOpPtradd(TypeFactory *t) : TypeOp(t,CPUI_PTRADD,"+")
 
 {
   opflags = PcodeOp::ternary | PcodeOp::nocollapse;
+  addlflags = arithmetic_op;
   behave = new OpBehavior(CPUI_PTRADD,false); // Dummy behavior
 }
 
@@ -2094,6 +2110,7 @@ TypeOpPtrsub::TypeOpPtrsub(TypeFactory *t) : TypeOp(t,CPUI_PTRSUB,"->")
 				// But the typing information doesn't really
 				// allow this to be commutative.
   opflags = PcodeOp::binary|PcodeOp::nocollapse;
+  addlflags = arithmetic_op;
   behave = new OpBehavior(CPUI_PTRSUB,false); // Dummy behavior
 }
 
