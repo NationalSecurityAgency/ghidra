@@ -185,12 +185,18 @@ public class BytesPcodeExecutorStateSpace<B> {
 			}
 		}
 
-		Iterator<ULongSpan> it =
-			uninitialized.complement(ULongSpan.extent(offset, size)).iterator();
-		if (it.hasNext()) {
-			ULongSpan init = it.next();
-			if (init.min().longValue() == offset) {
-				return readBytes(offset, (int) init.length(), reason);
+		/**
+		 * The decoder will buffer ahead, so give it as much as we can, but no more than is actually
+		 * initialized. If it's a (non-decode) read, give it everything, but invoke the warning.
+		 */
+		if (reason == Reason.EXECUTE_DECODE) {
+			Iterator<ULongSpan> it =
+				uninitialized.complement(ULongSpan.extent(offset, size)).iterator();
+			if (it.hasNext()) {
+				ULongSpan init = it.next();
+				if (init.min().longValue() == offset) {
+					return readBytes(offset, (int) init.length(), reason);
+				}
 			}
 		}
 
