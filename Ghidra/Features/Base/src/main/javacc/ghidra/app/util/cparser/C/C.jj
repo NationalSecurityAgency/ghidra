@@ -221,8 +221,15 @@ public class CParser {
             }
         }
 
-        dt = new TypedefDataType(getCurrentCategoryPath(), type, dt, dtMgr);
-        dt = addDef(types, type, dt);
+        // TODO: for builtin-Types, override with the built-in
+        //       wchar_t, etc...
+        if (type.equals("wchar_t")) {
+        	dt = WideCharDataType.dataType;
+        } else {
+        	dt = new TypedefDataType(getCurrentCategoryPath(), type, dt, dtMgr);
+        }
+    	dt = addDef(types, type, dt);
+    	
         return dt;
     }
 
@@ -257,12 +264,11 @@ public class CParser {
         }    
         
         // check the BuiltinTypeManager
-        // Don't check, left in in case basic types like uint64_t are in builtins
-        // BuiltInDataTypeManager builtInMgr = BuiltInDataTypeManager.getDataTypeManager();
-        // DataType bdt = findDataType(builtInMgr, type);
-        // if (bdt != null) {
-        //    return bdt;
-        // }
+        BuiltInDataTypeManager builtInMgr = BuiltInDataTypeManager.getDataTypeManager();
+        DataType bdt = findDataType(builtInMgr, type);
+        if (bdt != null) {
+            return bdt;
+        }
         
         possiblyUndefinedType = type;
         return null;
@@ -1177,8 +1183,6 @@ TOKEN :
     |
     <W64 : "__w64">
     |
-    <WCHAR : "wchar_t">
-    |
     <ENUM : "enum"> 
     |
     <AUTO : "auto"> 
@@ -1604,8 +1608,6 @@ Declaration BuiltInTypeSpecifier(Declaration dec) : {
                                 }
                                 dec.setDataType(dt);
                             }
-        |
-        <WCHAR>             { dec.setDataType(resolveInternal(WideCharDataType.dataType)); }
         |
         <SHORT>             { dt = dec.getDataType();
                            if (dt == null) {
