@@ -60,6 +60,7 @@ import utilities.util.FileUtilities;
 class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 	public static final String BLOCK_SOURCE_NAME = "Elf Loader";
+	public static final String PROCESS_ENTRY_CALLING_CONVENTION_NAME = "processEntry";
 
 	private static final String SEGMENT_NAME_PREFIX = "segment_";
 	private static final String UNALLOCATED_NAME_PREFIX = "unallocated_";
@@ -196,8 +197,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		}
 	}
 
-	private void createFileBytes(ByteProvider byteProvider,
-			TaskMonitor monitor) throws IOException, CancelledException {
+	private void createFileBytes(ByteProvider byteProvider, TaskMonitor monitor)
+			throws IOException, CancelledException {
 		monitor.setMessage("Loading FileBytes...");
 		try (InputStream fileIn = byteProvider.getInputStream(0);
 				MonitoredInputStream mis = new MonitoredInputStream(fileIn, monitor)) {
@@ -210,8 +211,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	}
 
 	private void adjustSegmentAndSectionFileAllocations(ByteProvider byteProvider,
-			TaskMonitor monitor)
-			throws IOException, CancelledException {
+			TaskMonitor monitor) throws IOException, CancelledException {
 
 		// Identify file ranges not allocated to segments or sections
 		RangeMap fileMap = new RangeMap();
@@ -285,8 +285,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			String name = UNALLOCATED_NAME_PREFIX + unallocatedIndex++;
 			try {
 				addInitializedMemorySection(null, start, length,
-					AddressSpace.OTHER_SPACE.getMinAddress(),
-					name, false, false, false, null, false, false);
+					AddressSpace.OTHER_SPACE.getMinAddress(), name, false, false, false, null,
+					false, false);
 			}
 			catch (AddressOverflowException e) {
 				// ignore
@@ -650,11 +650,25 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		monitor.setMessage("Creating entry points...");
 
 		long entry = elf.e_entry(); // already adjusted for pre-link
-		if (entry != 0) {
+		if (entry != 0 && (elf.isExecutable() || elf.isSharedObject())) {
 			Address entryAddr =
 				createEntryFunction(ElfLoader.ELF_ENTRY_FUNCTION_NAME, entry);
 			if (entryAddr != null) {
 				addElfHeaderReferenceMarkup(elf.getEntryComponentOrdinal(), entryAddr);
+				Function entryFunc = program.getFunctionManager().getFunctionAt(entryAddr);
+				//note: ElfConstants.ELFOSABI_NONE is used when the are no os/abi-specific 
+				//elf extensions, i.e., plain vanilla elf.  
+				//note: this value can also represent "unspecified"
+				if (entryFunc != null && (elf.e_ident_osabi() == ElfConstants.ELFOSABI_LINUX ||
+					elf.e_ident_osabi() == ElfConstants.ELFOSABI_NONE)) {
+					try {
+						entryFunc.setCallingConvention(PROCESS_ENTRY_CALLING_CONVENTION_NAME);
+					}
+					catch (InvalidInputException e) {
+						//calling convention for process entry not defined in the appropriate cspec
+						//just skip
+					}
+				}
 			}
 		}
 
@@ -936,7 +950,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		}
 
 		processRelocationTableEntries(relocationTable, context, relocationSpace, baseOffset,
-				monitor);
+			monitor);
 	}
 
 	private void processRelocationTableEntries(ElfRelocationTable relocationTable,
@@ -1539,7 +1553,6 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		symbolTables.addAll(List.of(elf.getSymbolTables()));
 		symbolTables.addAll(getGnuDebugDataSymbolTables(monitor));
 
-
 		int totalCount = 0;
 		for (ElfSymbolTable elfSymbolTable : symbolTables) {
 			totalCount += elfSymbolTable.getSymbolCount();
@@ -1788,8 +1801,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 			// Unable to place symbol within relocatable if section missing/stripped
 			else if (elf.isRelocatable()) {
-				log("No Memory for symbol: " + elfSymbol.getFormattedName() +
-					" - 0x" + Long.toHexString(elfSymbol.getValue()));
+				log("No Memory for symbol: " + elfSymbol.getFormattedName() + " - 0x" +
+					Long.toHexString(elfSymbol.getValue()));
 				return null;
 			}
 
@@ -1827,8 +1840,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			// SHN_HIPROC 0xff1f
 			// SHN_HIRESERVE 0xffff
 
-			log("Unable to place symbol: " + elfSymbol.getFormattedName() +
-				" - value=0x" + Long.toHexString(elfSymbol.getValue()) + ", section-index=0x" +
+			log("Unable to place symbol: " + elfSymbol.getFormattedName() + " - value=0x" +
+				Long.toHexString(elfSymbol.getValue()) + ", section-index=0x" +
 				Integer.toHexString(Short.toUnsignedInt(sectionIndex)));
 			return null;
 		}
@@ -2062,8 +2075,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				// Do not add constant symbols to program symbol table
 				// define as equate instead
 				try {
-					program.getEquateTable()
-							.createEquate(name, address.getOffset());
+					program.getEquateTable().createEquate(name, address.getOffset());
 				}
 				catch (DuplicateNameException | InvalidInputException e) {
 					// ignore
@@ -2211,8 +2223,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 					memory.convertToInitialized(block, (byte) 0);
 				}
 				if (program.getDefaultPointerSize() != (elf.is64Bit() ? 8 : 4)) {
-					log(
-						"Unsupported pointer size for indirect linkage at: " + indirectPointerAddr);
+					log("Unsupported pointer size for indirect linkage at: " + indirectPointerAddr);
 					return null;
 				}
 				if (elf.is64Bit()) {
@@ -2554,7 +2565,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 			// ElfW(Addr)  bitmask[maskwords];  // 2 bit Bloom filter on hashval
 			addr = addr.add(d.getLength());
-			DataType bloomDataType = elf.is64Bit() ? QWordDataType.dataType : DWordDataType.dataType;
+			DataType bloomDataType =
+				elf.is64Bit() ? QWordDataType.dataType : DWordDataType.dataType;
 			d = listing.createData(addr,
 				new ArrayDataType(bloomDataType, (int) maskwords, bloomDataType.getLength()));
 			d.setComment(CodeUnit.EOL_COMMENT, "GNU XHash Table - bitmask");
@@ -3069,8 +3081,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 						// Create new zeroed segment block with no bytes from file
 						String blockName = String.format("%s%d", SEGMENT_NAME_PREFIX, i);
 						MemoryBlock newBlock = memory.createInitializedBlock(blockName, expandStart,
-							expandSize, (byte) 0,
-							monitor, false);
+							expandSize, (byte) 0, monitor, false);
 						newBlock.setSourceName(BLOCK_SOURCE_NAME);
 						newBlock.setComment("Zero-initialized segment");
 					}
@@ -3286,9 +3297,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 				throw new AssertException("unexpected", e);
 			}
 		}
-		Symbol gotSym =
-			SymbolUtilities.getLabelOrFunctionSymbol(program, ElfConstants.GOT_SYMBOL_NAME,
-			err -> log(err));
+		Symbol gotSym = SymbolUtilities.getLabelOrFunctionSymbol(program,
+			ElfConstants.GOT_SYMBOL_NAME, err -> log(err));
 		if (gotSym != null) {
 			return gotSym.getAddress().getAddressableWordOffset();
 		}
@@ -3664,8 +3674,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		finally {
 			if (block == null) {
 				Address end = start.addNoWrap(revisedLength - 1);
-				log("Unexpected ELF memory bock load conflict when creating '" + name +
-					"' at " + start.toString(true) + "-" + end.toString(true));
+				log("Unexpected ELF memory bock load conflict when creating '" + name + "' at " +
+					start.toString(true) + "-" + end.toString(true));
 			}
 		}
 		return block;
