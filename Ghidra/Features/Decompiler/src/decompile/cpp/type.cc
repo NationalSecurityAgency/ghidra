@@ -1907,7 +1907,7 @@ TypePartialStruct::TypePartialStruct(Datatype *contain,int4 off,int4 sz,Datatype
 {
 #ifdef CPUI_DEBUG
   if (contain->getMetatype() != TYPE_STRUCT && contain->getMetatype() != TYPE_ARRAY)
-    throw new LowlevelError("Parent of partial struct is not a struture or array");
+    throw LowlevelError("Parent of partial struct is not a struture or array");
 #endif
   flags |= has_stripped;
   stripped = strip;
@@ -2119,7 +2119,7 @@ void TypePointerRel::decode(Decoder &decoder,TypeFactory &typegrp)
   offset = decoder.readSignedInteger(ATTRIB_CONTENT);
   decoder.closeElement(subId);
   if (offset == 0)
-    throw new LowlevelError("For metatype=\"ptrstruct\", <off> tag must not be zero");
+    throw LowlevelError("For metatype=\"ptrstruct\", <off> tag must not be zero");
   submeta = SUB_PTRREL;
   if (name.size() == 0)		// If the data-type is not named
     markEphemeral(typegrp);	// it is considered ephemeral
