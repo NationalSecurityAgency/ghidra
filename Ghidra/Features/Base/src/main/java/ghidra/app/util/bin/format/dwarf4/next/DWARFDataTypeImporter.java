@@ -28,6 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import ghidra.app.util.DataTypeNamingUtil;
 import ghidra.app.util.bin.format.dwarf4.*;
+import ghidra.app.util.bin.format.dwarf4.attribs.DWARFNumericAttribute;
 import ghidra.app.util.bin.format.dwarf4.encoding.*;
 import ghidra.app.util.bin.format.dwarf4.expression.DWARFExpressionException;
 import ghidra.program.database.DatabaseObject;
@@ -390,6 +391,10 @@ public class DWARFDataTypeImporter {
 
 		DWARFNameInfo dni = prog.getName(diea);
 		int enumSize = (int) diea.getUnsignedLong(DWARFAttribute.DW_AT_byte_size, -1);
+		// in addition to byte_size, enums can have encoding (signed/unsigned) and a basetype, which
+		// itself might have a signed/unsigned encoding.
+		// Which attributes are present varies wildly between versions and vendors, so seems 
+		// best to just rely on the bare minimum.
 
 		if (enumSize == 0) {
 			Msg.warn(this, "Enum " + dni.getNamespacePath() + "[DWARF DIE " + diea.getHexOffset() +
@@ -403,12 +408,11 @@ public class DWARFDataTypeImporter {
 		}
 
 		Enum enumDT = new EnumDataType(dni.getParentCP(), dni.getName(), enumSize, dataTypeManager);
-		populateStubEnum(enumDT, diea);
+		populateStubEnum(enumDT, diea, false);
 
 		// Merge enums with the same name / category path if possible
 		for (DataType prevDT : dwarfDTM.forAllConflicts(dni.asDataTypePath())) {
-			if (prevDT instanceof Enum && ((Enum) prevDT).getLength() == enumDT.getLength()) {
-				Enum prevEnum = (Enum) prevDT;
+			if (prevDT instanceof Enum prevEnum && prevEnum.getLength() == enumDT.getLength()) {
 				if (isCompatEnumValues(enumDT, prevEnum)) {
 					mergeEnumValues(prevEnum, enumDT);
 					return new DWARFDataType(prevEnum, dni, diea.getOffset());
@@ -422,24 +426,29 @@ public class DWARFDataTypeImporter {
 		return new DWARFDataType(result, dni, diea.getOffset());
 	}
 
-	private void populateStubEnum(Enum enumDT, DIEAggregate diea) {
+	private void populateStubEnum(Enum enumDT, DIEAggregate diea, boolean defaultSignedness) {
+		// NOTE: gcc tends to emit values without an explicit signedness.  The caller
+		// can specify a default signedness, but this should probably always be unsigned.
 		for (DebugInfoEntry childEntry : diea.getChildren(DWARFTag.DW_TAG_enumerator)) {
 			DIEAggregate childDIEA = prog.getAggregate(childEntry);
-			String childName = childDIEA.getName();
+			String valueName = childDIEA.getName();
 
-			// TODO: DW_AT_const_value also supports block and string form types?
-			long childValue = childDIEA.getLong(DWARFAttribute.DW_AT_const_value, 0);
+			DWARFNumericAttribute enumValAttr = childDIEA
+					.getAttribute(DWARFAttribute.DW_AT_const_value, DWARFNumericAttribute.class);
+			if (enumValAttr != null) {
+				long enumVal = enumValAttr.getValueWithSignednessHint(defaultSignedness);
 
-			// NOTE: adding the same name=value pair a second time is handled correctly and ignored.
-			// Adding a second name=different_value pair generates an exception
-			try {
-				enumDT.add(childName, childValue);
-			}
-			catch (IllegalArgumentException iae) {
-				Msg.error(this,
-					"Failed to add value " + childName + "=" + childValue + "[" +
-						Long.toHexString(childValue) + "] to enum " + enumDT.getCategoryPath(),
-					iae);
+				// NOTE: adding the same name=value pair a second time is handled correctly and ignored.
+				// Adding a second name=different_value pair generates an exception
+				try {
+					enumDT.add(valueName, enumVal);
+				}
+				catch (IllegalArgumentException iae) {
+					Msg.error(this,
+						"Failed to add value %s=%d[%x] to enum %s".formatted(valueName, enumVal,
+							enumVal, enumDT.getCategoryPath()),
+						iae);
+				}
 			}
 		}
 	}
