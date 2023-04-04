@@ -269,7 +269,10 @@ public class AddressEvaluator {
 				radix = 16;
 			}
 			strValue = strValue.toLowerCase();
-			if (strValue.endsWith("ul")) {
+			if (strValue.endsWith("ull") || strValue.endsWith("llu")) {
+				strValue = strValue.substring(start, strValue.length() - 3);
+			}
+			else if (strValue.endsWith("ul") || strValue.endsWith("lu") || strValue.endsWith("ll")) {
 				strValue = strValue.substring(start, strValue.length() - 2);
 			}
 			else if (strValue.endsWith("l") || strValue.endsWith("u")) {
