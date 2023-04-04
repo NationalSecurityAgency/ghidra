@@ -204,6 +204,7 @@ public class CParserPlugin extends ProgramPlugin {
 
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		cpp.setOutputStream(bos);
+		cpp.setMonitor(monitor);
 
 		try {
 			for (String filename : filenames) {
@@ -257,6 +258,7 @@ public class CParserPlugin extends ProgramPlugin {
 			try {
 				parserMessages = "";
 				cParser.setParseFileName(fName);
+				cParser.setMonitor(monitor);
 				cParser.parse(bis);
 			}
 			finally {

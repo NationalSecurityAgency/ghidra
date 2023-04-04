@@ -441,6 +441,7 @@ public class CParserUtils {
 		PrintStream old = System.out;
 		System.setOut(os);
 
+		cpp.setMonitor(monitor);
 		cpp.setOutputStream(bos);
 
 		try {
@@ -494,6 +495,7 @@ public class CParserUtils {
 			try {
 				parserMessages = "";
 				cParser.setParseFileName(fName);
+				cParser.setMonitor(monitor);
 				cParser.parse(bis);
 			} finally {
 				parserMessages = cParser.getParseMessages();

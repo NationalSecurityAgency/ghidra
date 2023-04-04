@@ -110,6 +110,7 @@ PARSER_BEGIN(PreProcessor)
 package ghidra.app.util.cparser.CPP;
 
 import ghidra.util.Msg;
+import ghidra.util.task.TaskMonitor;
 
 import java.util.*;
 import java.io.*;
@@ -549,6 +550,8 @@ public class PreProcessor {
 
     // true if parse was successful
     private boolean parseSuccess = false;
+    
+    private TaskMonitor monitor = null;
 
 	// Toggle printing
 	private int verboseLevel = 0;
@@ -1334,6 +1337,10 @@ public class PreProcessor {
 	public PreProcessor() throws ParseException {
 		this(System.in);
 	}
+	
+	public void setMonitor(TaskMonitor monitor) {
+	    this.monitor = monitor;
+	}
 
 	// Run the parser
 	public static void main(String args[]) {
@@ -1359,7 +1366,14 @@ void Input() :
     ppt.emit(false);
 }
 {
-    ( b=TranslationUnit(){if (b.getTruth()==false) break;})*
+    ( b=TranslationUnit()
+        {
+           if (monitor != null && monitor.isCancelled()) {
+              throw new ParseException("Parsing Canceled");
+           }
+           if (b.getTruth()==false) break;
+        }
+    )*
     {
         if (conditionDepth!=execStack.size()) {
             addParseMessage(null, "Imbalance in sequence/nesting of compile-time conditions/logic in input file "+curFileStackTop());

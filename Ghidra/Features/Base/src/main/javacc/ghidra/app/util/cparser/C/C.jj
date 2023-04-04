@@ -84,6 +84,7 @@ package ghidra.app.util.cparser.C;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
 import ghidra.util.Msg;
+import ghidra.util.task.TaskMonitor;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
@@ -137,6 +138,8 @@ public class CParser {
 
     // true if parse was successful
     private boolean parseSuccess = false;
+    
+    private TaskMonitor monitor = null;
     
     // packing size for structures
     private int packSize = 0;
@@ -551,6 +554,10 @@ public class CParser {
 
     public boolean didParseSucceed() {
       return parseSuccess;
+    }
+    
+    public void setMonitor(TaskMonitor monitor) {
+      this.monitor = monitor;
     }
 
     private FunctionDefinitionDataType newAnonymousFunction(FunctionDefinitionDataType currentFuncDT) {
@@ -1444,6 +1451,9 @@ void ExternalDeclaration() : {}
         ";"
     )
     {
+        if (monitor != null && monitor.isCancelled()) {
+           throw new ParseException("Parsing Canceled");
+        }
         typedefParsingStack.clear();
     }
 }
