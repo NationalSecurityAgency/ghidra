@@ -201,18 +201,15 @@ class StorageAddressModel {
 		int currentSize = getCurrentSize();
 		if (currentSize == 0) {
 			statusText = "No storage has been allocated";
-//			return false;
 		}
 		else if (currentSize > 0 && unconstrained) {
 			return true;
 		}
 		else if (currentSize < requiredSize) {
 			statusText = "Warning: Not enough storage space allocated";
-//			return false;
 		}
 		else if (currentSize > requiredSize) {
 			statusText = "Warning: Too much storage space allocated";
-//			return false;
 		}
 		return true;
 	}
