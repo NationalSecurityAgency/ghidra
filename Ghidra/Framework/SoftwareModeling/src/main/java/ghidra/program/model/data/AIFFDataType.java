@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,15 +20,45 @@ import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.Msg;
 
+/**
+ * AIFF / AIFC header format:
+ * <pre>
+ * struct {
+ * 	int32 ckID;				'FORM'
+ * 	int32 ckDataSize;
+ * 	int32 formType;			'AIFF', 'AIFC'
+ *  -variable length chunk data-
+ * }
+ * </pre> 
+ *
+ */
 public class AIFFDataType extends BuiltIn implements Dynamic {
 
-	//first four bytes must = FORM then skip four then next four must = AIFF
-	public static byte[] MAGIC =
-		new byte[] { (byte) 'F', (byte) 'O', (byte) 'R', (byte) 'M', (byte) 0x00, (byte) 0x00,
-			(byte) 0x00, (byte) 0x00, (byte) 'A', (byte) 'I', (byte) 'F', (byte) 'F' };
+	/**
+	 * Magic bytes for 'AIFF' audio file header
+	 */
+	public static byte[] MAGIC_AIFF =
+		new byte[] {
+			(byte) 'F', (byte) 'O', (byte) 'R', (byte) 'M',
+			(byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00,
+			(byte) 'A', (byte) 'I', (byte) 'F', (byte) 'F' };
+	/**
+	 * Magic bytes for 'AIFC' audio file header (almost same as AIFF)
+	 */
+	public static byte[] MAGIC_AIFC =
+		new byte[] {
+			(byte) 'F', (byte) 'O', (byte) 'R', (byte) 'M',
+			(byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00,
+			(byte) 'A', (byte) 'I', (byte) 'F', (byte) 'C' };
+
+	/**
+	 * Byte search mask for magic bytes
+	 */
 	public static byte[] MAGIC_MASK =
-		new byte[] { (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0x00, (byte) 0x00,
-			(byte) 0x00, (byte) 0x00, (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff };
+		new byte[] {
+			(byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff,
+			(byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00,
+			(byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff };
 
 	public AIFFDataType() {
 		this(null);
@@ -46,11 +76,17 @@ public class AIFFDataType extends BuiltIn implements Dynamic {
 	@Override
 	public int getLength(MemBuffer buf, int maxLength) {
 		try {
-			if (!checkMagic(buf)) {
+			if (!checkMagic(buf, MAGIC_AIFF) && !checkMagic(buf, MAGIC_AIFC)) {
 				return -1;
 			}
 
-			return (buf.getInt(4) + 8);
+			int dataSize = buf.getInt(4);
+			if (dataSize <= 0) {
+				// check dataSize for validity.  TODO: more strict with upper bounds
+				return -1;
+			}
+
+			return dataSize + 8;
 		}
 		catch (Exception e) {
 			Msg.debug(this, "Invalid AIFF data at " + buf.getAddress());
@@ -58,9 +94,9 @@ public class AIFFDataType extends BuiltIn implements Dynamic {
 		return -1;
 	}
 
-	private boolean checkMagic(MemBuffer buf) throws MemoryAccessException {
-		for (int i = 0; i < MAGIC.length; i++) {
-			if (MAGIC[i] != (buf.getByte(i) & MAGIC_MASK[i])) {
+	private boolean checkMagic(MemBuffer buf, byte[] magicBytes) throws MemoryAccessException {
+		for (int i = 0; i < magicBytes.length; i++) {
+			if (magicBytes[i] != (buf.getByte(i) & MAGIC_MASK[i])) {
 				return false;
 			}
 		}

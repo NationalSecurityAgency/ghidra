@@ -85,7 +85,10 @@ public class EmbeddedMediaAnalyzer extends AbstractAnalyzer {
 			AUDataType.MAGIC, AUDataType.MAGIC_MASK);
 
 		addByteSearchPattern(searcher, program, foundMedia, new AIFFDataType(), "AIFF",
-			AIFFDataType.MAGIC, AIFFDataType.MAGIC_MASK);
+			AIFFDataType.MAGIC_AIFF, AIFFDataType.MAGIC_MASK);
+
+		addByteSearchPattern(searcher, program, foundMedia, new AIFFDataType(), "AIFC",
+			AIFFDataType.MAGIC_AIFC, AIFFDataType.MAGIC_MASK);
 
 		searcher.search(program, searchSet, monitor);
 
