@@ -124,7 +124,6 @@ public abstract class AbstractProgramLoader implements Loader {
 			MessageLog messageLog, Object consumer, TaskMonitor monitor) throws IOException,
 			CancelledException, VersionException, LoadException {
 
-
 		if (!loadSpec.isComplete()) {
 			throw new LoadException("Load spec is incomplete");
 		}
@@ -369,7 +368,7 @@ public abstract class AbstractProgramLoader implements Loader {
 				fsrl = fsrl.withMD5(md5);
 			}
 			prog.getOptions(Program.PROGRAM_INFO)
-					.setString(ProgramMappingService.PROGRAM_SOURCE_FSRL, fsrl.toString());
+				.setString(ProgramMappingService.PROGRAM_SOURCE_FSRL, fsrl.toString());
 		}
 		prog.setExecutableMD5(md5);
 		String sha256 = computeBinarySHA256(provider);
@@ -498,17 +497,19 @@ public abstract class AbstractProgramLoader implements Loader {
 				boolean anchorSymbols = shouldAnchorSymbols(options);
 				List<AddressLabelInfo> labels = lang.getDefaultSymbols();
 				for (AddressLabelInfo info : labels) {
-					createSymbol(program, info.getLabel(), info.getAddress(), info.isEntry(), info.isPrimary(), anchorSymbols);
+					createSymbol(program, info.getLabel(), info.getAddress(), info.isEntry(),
+						info.isPrimary(), anchorSymbols);
 				}
 			}
-			GhidraProgramUtilities.removeAnalyzedFlag(program);
+			GhidraProgramUtilities.resetAnalysisFlags(program);
 		}
 		finally {
 			program.endTransaction(id, true);
 		}
 	}
 
-	private static void createSymbol(Program program, String labelname, Address address, boolean isEntry, boolean isPrimary, boolean anchorSymbols) {
+	private static void createSymbol(Program program, String labelname, Address address,
+			boolean isEntry, boolean isPrimary, boolean anchorSymbols) {
 		SymbolTable symTable = program.getSymbolTable();
 		Address addr = address;
 		Symbol s = symTable.getPrimarySymbol(addr);

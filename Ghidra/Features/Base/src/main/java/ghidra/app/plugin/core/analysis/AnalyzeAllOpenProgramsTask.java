@@ -132,7 +132,7 @@ class AnalyzeAllOpenProgramsTask extends Task {
 				AutoAnalysisManager manager = AutoAnalysisManager.getAnalysisManager(program);
 				initializeAnalysisOptions(program, prototypeAnalysisOptions, manager);
 
-				GhidraProgramUtilities.setAnalyzedFlag(program, true);
+				GhidraProgramUtilities.markProgramAnalyzed(program);
 
 				analyzeStrategy.analyzeProgram(program, manager, monitor);
 			}

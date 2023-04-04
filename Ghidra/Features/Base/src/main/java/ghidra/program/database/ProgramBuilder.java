@@ -136,10 +136,10 @@ public class ProgramBuilder {
 		CompilerSpec compilerSpec = compilerSpecID == null ? language.getDefaultCompilerSpec()
 				: language.getCompilerSpecByID(new CompilerSpecID(compilerSpecID));
 		program = new ProgramDB(name, language, compilerSpec, consumer == null ? this : consumer);
-		setAnalyzed(true);
+		setAnalyzed();
 		program.setTemporary(true); // ignore changes
 	}
-	
+
 	/**
 	 * Construct program builder using a full language object rather than a language id string
 	 * @param name program name
@@ -150,7 +150,7 @@ public class ProgramBuilder {
 			throws Exception {
 		CompilerSpec compilerSpec = language.getDefaultCompilerSpec();
 		program = new ProgramDB(name, language, compilerSpec, this);
-		setAnalyzed(true);
+		setAnalyzed();
 		program.setTemporary(true); // ignore changes
 	}
 
@@ -281,10 +281,9 @@ public class ProgramBuilder {
 
 	/** 
 	 * This prevents the 'ask to analyze' dialog from showing when called with {@code true}
-	 * @param analyzed true to mark the program as analyzed
 	 */
-	public void setAnalyzed(boolean analyzed) {
-		GhidraProgramUtilities.setAnalyzedFlag(program, analyzed);
+	public void setAnalyzed() {
+		GhidraProgramUtilities.markProgramAnalyzed(program);
 	}
 
 	public MemoryBlock createMemory(String name, String address, int size) {
@@ -321,8 +320,8 @@ public class ProgramBuilder {
 
 		return tx(() -> {
 			return program.getMemory()
-					.createInitializedBlock(name, addr(address), size, (byte) 0, TaskMonitor.DUMMY,
-						true);
+				.createInitializedBlock(name, addr(address), size, (byte) 0, TaskMonitor.DUMMY,
+					true);
 		});
 	}
 

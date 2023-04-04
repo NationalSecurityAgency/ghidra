@@ -457,7 +457,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 		//
 		// Cancel
 		//
-		if (choice == OptionDialog.OPTION_THREE) {
+		if (choice == OptionDialog.CANCEL_OPTION) {
 			// Cancel
 			return;
 		}

@@ -188,7 +188,7 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 
 		// check if this is the first time this program is being analyzed. If so,
 		// schedule a callback when it is completed to send a FirstTimeAnalyzedPluginEvent
-		boolean isAnalyzed = GhidraProgramUtilities.isAnalyzedFlagSet(program);
+		boolean isAnalyzed = GhidraProgramUtilities.isAnalyzed(program);
 		if (!isAnalyzed) {
 			analysisMgr.addListener(new FirstTimeAnalyzedCallback());
 		}
