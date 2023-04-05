@@ -137,14 +137,71 @@ public class NewLanguagePanel extends JPanel {
 			if (e.getValueIsAdjusting()) {
 				return;
 			}
-			notifyListeners();
+			notifyListeners(LcsSelectionListener.EventType.VALUE_CHANGED);
 		});
 		table.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseReleased(MouseEvent e) {
 				if (e.getClickCount() == 2) {
-					// do the next action thingie
+					notifyListeners(LcsSelectionListener.EventType.VALUE_CHOSEN);
 				}
+			}
+		});
+		table.addKeyListener(new KeyListener() {
+			@Override
+			public void keyTyped(KeyEvent e) {
+			}
+
+			@Override
+			public void keyPressed(KeyEvent e) {
+				// Digits, letters, and dashes are appended to the filter text box.
+				if (Character.isLetterOrDigit(e.getKeyChar()) || e.getKeyChar() == '-') {
+					e.consume();
+					String filterText = tableFilterPanel.getFilterText();
+					tableFilterPanel.setFilterText(filterText + e.getKeyChar());
+					return;
+				}
+
+				switch (e.getKeyCode()) {
+					// Enter commits the selection if there is any.
+					case KeyEvent.VK_ENTER:
+						e.consume();
+
+						if (table.getSelectedRows().length > 0) {
+							notifyListeners(LcsSelectionListener.EventType.VALUE_CHOSEN);
+						}
+						break;
+
+					// Backspace removes the last character from the filter text box.
+					case KeyEvent.VK_BACK_SPACE:
+						e.consume();
+
+						String filterText = tableFilterPanel.getFilterText();
+						if (!filterText.isEmpty()) {
+							tableFilterPanel.setFilterText(filterText.substring(0, filterText.length() - 1));
+						}
+						break;
+
+					// Left and right cursor movement events are ignored, as columns don't need to be individually
+					// selected anyway.
+					//
+					// TODO: The proper fix for this is to add single-line selection to TableModel and GhidraTable,
+					//       let's do it later.
+					case KeyEvent.VK_LEFT:
+					case KeyEvent.VK_RIGHT:
+						e.consume();
+						break;
+
+					// TODO: Fix handling of TAB/focus change events.  Right now all focus change events are used to
+					//       change the currently selected cell, which in this specific dialog does not really matter.
+					//       All it has to do instead is to transfer focus to the next eligible UI element.
+					default:
+						break;
+				}
+			}
+
+			@Override
+			public void keyReleased(KeyEvent e) {
 			}
 		});
 	}
@@ -173,7 +230,7 @@ public class NewLanguagePanel extends JPanel {
 
 	private void setLanguages(List<LanguageCompilerSpecPair> lcsPairList) {
 		tableModel.setLanguages(lcsPairList);
-		notifyListeners();
+		notifyListeners(LcsSelectionListener.EventType.VALUE_CHANGED);
 	}
 
 	private void switchToAllList() {
@@ -207,7 +264,7 @@ public class NewLanguagePanel extends JPanel {
 
 	private LanguageCompilerSpecPair recommendedLcsPair;
 
-	private void notifyListeners() {
+	private void notifyListeners(LcsSelectionListener.EventType eventType) {
 		LanguageCompilerSpecPair selectedLcsPair = getSelectedLcsPair();
 		if (selectedLcsPair == null) {
 			descriptionLabel.setText(DEFAULT_DESCRIPTION_TEXT);
@@ -222,11 +279,27 @@ public class NewLanguagePanel extends JPanel {
 			}
 			descriptionLabel.setFont(descriptionLabel.getFont().deriveFont(Font.PLAIN));
 		}
-//		notifyListenersOfValidityChanged();
+
 		if (!listeners.isEmpty()) {
 			LcsSelectionEvent e = new LcsSelectionEvent(selectedLcsPair);
-			for (LcsSelectionListener listener : listeners) {
-				listener.valueChanged(e);
+
+			switch (eventType) {
+				case VALUE_CHANGED: {
+					for (LcsSelectionListener listener : listeners) {
+						listener.valueChanged(e);
+					}
+					break;
+				}
+
+				case VALUE_CHOSEN: {
+					for (LcsSelectionListener listener : listeners) {
+						listener.valueChosen(e);
+					}
+					break;
+				}
+
+				default:
+					break;
 			}
 		}
 	}
@@ -327,5 +400,4 @@ public class NewLanguagePanel extends JPanel {
 		table.dispose();
 		listeners.clear();
 	}
-
 }

@@ -52,12 +52,9 @@ public class ImporterLanguageDialog extends DialogComponentProvider {
 		}
 		else {
 			try {
-				SwingUtilities.invokeAndWait(new Runnable() {
-					@Override
-					public void run() {
-						build();
-						tool.showDialog(ImporterLanguageDialog.this, parent);
-					}
+				SwingUtilities.invokeAndWait(() -> {
+					build();
+					tool.showDialog(ImporterLanguageDialog.this, parent);
 				});
 			}
 			catch (Exception e) {
@@ -76,6 +73,13 @@ public class ImporterLanguageDialog extends DialogComponentProvider {
 			@Override
 			public void valueChanged(LcsSelectionEvent e) {
 				validateFormInput();
+			}
+
+			@Override
+			public void valueChosen(LcsSelectionEvent e) {
+				if (isOKEnabled()) {
+					okCallback();
+				}
 			}
 		});
 
