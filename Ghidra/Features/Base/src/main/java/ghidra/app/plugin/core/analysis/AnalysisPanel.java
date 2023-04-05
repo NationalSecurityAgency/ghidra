@@ -359,8 +359,8 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 		}
 		File saveFile = getOptionsSaveFile(saveName);
 		if (saveFile.exists() && OptionDialog.CANCEL_OPTION == OptionDialog
-				.showOptionDialogWithCancelAsDefaultButton(this, "Overwrite Configuration",
-					"Overwrite existing configuration file: " + saveName + " ?", "Overwrite")) {
+			.showOptionDialogWithCancelAsDefaultButton(this, "Overwrite Configuration",
+				"Overwrite existing configuration file: " + saveName + " ?", "Overwrite")) {
 			return;
 		}
 		FileOptions currentOptions = getCurrentOptionsAsFileOptions();
@@ -687,7 +687,7 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 					GenericOptionsComponent.createOptionComponent(childState);
 
 				HelpLocation helpLoc = analysisOptions
-						.getHelpLocation(analyzerName + Options.DELIMITER_STRING + childOptionName);
+					.getHelpLocation(analyzerName + Options.DELIMITER_STRING + childOptionName);
 				if (helpLoc != null) {
 					help.registerHelp(comp, helpLoc);
 				}
@@ -775,7 +775,7 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 
 	private boolean isAnalyzed() {
 		Options options = programs.get(0).getOptions(Program.PROGRAM_INFO);
-		return options.getBoolean(Program.ANALYZED, false);
+		return options.getBoolean(Program.ANALYZED_OPTION_NAME, false);
 	}
 
 	private Options[] loadPossibleOptionsChoicesForComboBox() {

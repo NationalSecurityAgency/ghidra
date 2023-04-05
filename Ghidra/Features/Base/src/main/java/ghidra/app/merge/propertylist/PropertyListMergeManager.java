@@ -72,7 +72,8 @@ public class PropertyListMergeManager implements MergeResolver {
 	 * resultProgram and latestProgram start out the same
 	 */
 	public PropertyListMergeManager(ProgramMultiUserMergeManager mergeManager,
-			Program resultProgram, Program myProgram, Program originalProgram, Program latestProgram) {
+			Program resultProgram, Program myProgram, Program originalProgram,
+			Program latestProgram) {
 		this.mergeManager = mergeManager;
 		this.resultProgram = resultProgram;
 		this.myProgram = myProgram;
@@ -142,7 +143,8 @@ public class PropertyListMergeManager implements MergeResolver {
 				currentMonitor.setProgress(i);
 				String myName = myNames.get(i);
 				int progress = (int) (((float) (i / myNamesCount)) * 100);
-				mergeManager.updateProgress(progress, "Merging property list for " + myName + "...");
+				mergeManager.updateProgress(progress,
+					"Merging property list for " + myName + "...");
 				boolean isInLatest = latestNames.contains(myName);
 				boolean isInOrig = origNames.contains(myName);
 				if (!isInLatest && !isInOrig) {
@@ -275,11 +277,6 @@ public class PropertyListMergeManager implements MergeResolver {
 		if (SystemUtilities.isEqual(origValue, myValue) ||
 			SystemUtilities.isEqual(resultValue, myValue)) {
 			// value was not modified in my program or it was changed the same as in latest
-			return;
-		}
-		if (propertyName.equals(Program.ANALYZED) && Boolean.TRUE.equals(myValue)) {
-			// If my version sets "Analyzed" to true, then it should result in true.
-			setValue(resultList, propertyName, myList.getType(propertyName), Boolean.TRUE);
 			return;
 		}
 		if (SystemUtilities.isEqual(resultValue, origValue)) {

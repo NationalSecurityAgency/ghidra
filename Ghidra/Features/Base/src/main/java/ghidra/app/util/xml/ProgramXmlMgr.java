@@ -389,7 +389,7 @@ public class ProgramXmlMgr {
 
 		//if instructions were imported, then remove the "needs analyzed" property
 		if (options.isInstructions()) {
-			GhidraProgramUtilities.setAnalyzedFlag(program, true);
+			GhidraProgramUtilities.markProgramAnalyzed(program);
 		}
 
 		return log;

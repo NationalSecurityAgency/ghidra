@@ -256,9 +256,9 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 				// By default, create test output within a directory at the same level as the
 				// development repositories
 				outputRoot = Application.getApplicationRootDirectory()
-						.getParentFile()
-						.getParentFile()
-						.getCanonicalPath();
+					.getParentFile()
+					.getParentFile()
+					.getCanonicalPath();
 			}
 			catch (IOException e) {
 				throw new RuntimeException(e);
@@ -1562,7 +1562,7 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 
 		setAnalysisOptions(program.getOptions(Program.ANALYSIS_PROPERTIES));
 
-		GhidraProgramUtilities.setAnalyzedFlag(program, true);
+		GhidraProgramUtilities.markProgramAnalyzed(program);
 
 		// Remove all single-byte functions created by Elf importer
 		// NOTE: This is a known issues with optimized code and symbols marked as ElfSymbol.STT_FUNC
@@ -1670,7 +1670,7 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 				RegisterValue thumbMode = new RegisterValue(tReg, BigInteger.ONE);
 				try {
 					program.getProgramContext()
-							.setRegisterValue(functionAddr, functionAddr, thumbMode);
+						.setRegisterValue(functionAddr, functionAddr, thumbMode);
 				}
 				catch (ContextChangeException e) {
 					throw new AssertException(e);
@@ -1684,7 +1684,7 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 				RegisterValue thumbMode = new RegisterValue(isaModeReg, BigInteger.ONE);
 				try {
 					program.getProgramContext()
-							.setRegisterValue(functionAddr, functionAddr, thumbMode);
+						.setRegisterValue(functionAddr, functionAddr, thumbMode);
 				}
 				catch (ContextChangeException e) {
 					throw new AssertException(e);
@@ -1909,7 +1909,7 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 					if (absoluteGzfFilePath.exists()) {
 						program = getGzfProgram(outputDir, gzfCachePath);
 						if (program != null && !MD5Utilities.getMD5Hash(testFile.file)
-								.equals(program.getExecutableMD5())) {
+							.equals(program.getExecutableMD5())) {
 							// remove obsolete GZF cache file
 							env.release(program);
 							program = null;
@@ -1934,7 +1934,7 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 						}
 						else {
 							program = env.getGhidraProject()
-									.importProgram(testFile.file, language, compilerSpec);
+								.importProgram(testFile.file, language, compilerSpec);
 						}
 						program.addConsumer(this);
 						env.getGhidraProject().close(program);
@@ -1955,8 +1955,8 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 
 				if (!program.getLanguageID().equals(language.getLanguageID()) ||
 					!program.getCompilerSpec()
-							.getCompilerSpecID()
-							.equals(compilerSpec.getCompilerSpecID())) {
+						.getCompilerSpecID()
+						.equals(compilerSpec.getCompilerSpecID())) {
 					throw new IOException((usingCachedGZF ? "Cached " : "") +
 						"Program has incorrect language/compiler spec (" + program.getLanguageID() +
 						"/" + program.getCompilerSpec().getCompilerSpecID() + "): " +
@@ -2121,7 +2121,7 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 				testFileDigest.append(nameAndAddr);
 				testFileDigest.append(" (GroupInfo @ ");
 				testFileDigest
-						.append(testGroup.controlBlock.getInfoStructureAddress().toString(true));
+					.append(testGroup.controlBlock.getInfoStructureAddress().toString(true));
 				testFileDigest.append(")");
 				if (duplicateTests.contains(testGroup.testGroupName)) {
 					testFileDigest.append(" *DUPLICATE*");

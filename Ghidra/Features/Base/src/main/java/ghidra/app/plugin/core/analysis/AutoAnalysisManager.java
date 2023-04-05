@@ -1048,8 +1048,8 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 	}
 
 	public void registerOptions() {
-		Options options = program.getOptions(Program.ANALYSIS_PROPERTIES);
-		registerOptions(options);
+		registerGlobalAnalyisOptions();
+		registerAnalyzerOptions();
 	}
 
 	public void initializeOptions() {
@@ -1075,7 +1075,18 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 		dataTasks.optionsChanged(options);
 	}
 
-	public void registerOptions(Options options) {
+	private void registerGlobalAnalyisOptions() {
+		Options options = program.getOptions(Program.PROGRAM_INFO);
+		options.registerOption(Program.ANALYZED_OPTION_NAME, false, null,
+			"Indicates if program has ever been analyzed");
+
+		options.registerOption(Program.ASK_TO_ANALYZE_OPTION_NAME, true, null,
+			"Indicates if user should be prompted to analyze an unanalyzed program when opened");
+
+	}
+
+	public void registerAnalyzerOptions() {
+		Options options = program.getOptions(Program.ANALYSIS_PROPERTIES);
 		byteTasks.registerOptions(options);
 		functionTasks.registerOptions(options);
 		functionModifierChangedTasks.registerOptions(options);
@@ -1106,13 +1117,16 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 		Swing.assertSwingThread("Asking to analyze must be on the swing thread!");
 
 		if (GhidraProgramUtilities.shouldAskToAnalyze(program)) {
-			// initialize the analyzed flag to a non-null value to indicate we at least asked
-			GhidraProgramUtilities.setAnalyzedFlag(program, false);
+			String name = HTMLUtilities.escapeHTML(program.getDomainFile().getName());
+			HelpLocation help = new HelpLocation("AutoAnalysisPlugin", "Ask_To_Analyze");
+			int result = OptionDialog.showOptionNoCancelDialog(tool.getToolFrame(), "Analyze?",
+				"<html>" + name + " has not been analyzed. Would you like to analyze it now?",
+				"Yes", "No", "No (Don't ask again)", OptionDialog.QUESTION_MESSAGE, help);
 
-			int answer = OptionDialog.showYesNoDialog(tool.getToolFrame(), "Analyze",
-				"<html>" + HTMLUtilities.escapeHTML(program.getDomainFile().getName()) +
-					" has not been analyzed. Would you like to analyze it now?");
-			return answer == OptionDialog.OPTION_ONE; //Analyze
+			if (result == OptionDialog.OPTION_THREE) {
+				GhidraProgramUtilities.markProgramNotToAskToAnalyze(program);
+			}
+			return result == OptionDialog.OPTION_ONE; //Analyze
 		}
 		return false;
 	}
@@ -1271,12 +1285,12 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 				testLen = spacer.length() - 5;
 			}
 			taskTimesStringBuf
-					.append("    " + element + spacer.substring(testLen) + secString + "\n");
+				.append("    " + element + spacer.substring(testLen) + secString + "\n");
 		}
 
 		taskTimesStringBuf.append("-----------------------------------------------------\n");
 		taskTimesStringBuf
-				.append("     Total Time   " + (int) (totalTaskTime / 1000.00) + " secs\n");
+			.append("     Total Time   " + (int) (totalTaskTime / 1000.00) + " secs\n");
 		taskTimesStringBuf.append("-----------------------------------------------------\n");
 
 		return taskTimesStringBuf.toString();

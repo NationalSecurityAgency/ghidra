@@ -15,12 +15,11 @@
  */
 package pdb;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.swing.SwingConstants;
 
@@ -39,6 +38,7 @@ import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.framework.preferences.Preferences;
 import ghidra.program.model.listing.Program;
+import ghidra.program.util.GhidraProgramUtilities;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -75,22 +75,22 @@ public class PdbPlugin extends Plugin {
 
 	private void createActions() {
 		new ActionBuilder("Load PDB File", this.getName())
-				.supportsDefaultToolContext(true)
-				.withContext(ProgramActionContext.class)
-				.validContextWhen(pac -> pac.getProgram() != null &&
-					PdbAnalyzerCommon.canAnalyzeProgram(pac.getProgram()))
-				.menuPath(ToolConstants.MENU_FILE, "Load PDB File...")
-				.menuGroup("Import PDB", "3")
-				.helpLocation(new HelpLocation(PDB_PLUGIN_HELP_TOPIC, "Load PDB File"))
-				.onAction(pac -> loadPDB(pac))
-				.buildAndInstall(tool);
+			.supportsDefaultToolContext(true)
+			.withContext(ProgramActionContext.class)
+			.validContextWhen(pac -> pac.getProgram() != null &&
+				PdbAnalyzerCommon.canAnalyzeProgram(pac.getProgram()))
+			.menuPath(ToolConstants.MENU_FILE, "Load PDB File...")
+			.menuGroup("Import PDB", "3")
+			.helpLocation(new HelpLocation(PDB_PLUGIN_HELP_TOPIC, "Load PDB File"))
+			.onAction(pac -> loadPDB(pac))
+			.buildAndInstall(tool);
 
 		new ActionBuilder("Symbol Server Config", this.getName())
-				.menuPath(ToolConstants.MENU_EDIT, "Symbol Server Config")
-				.menuGroup(ToolConstants.TOOL_OPTIONS_MENU_GROUP)
-				.helpLocation(new HelpLocation(PDB_PLUGIN_HELP_TOPIC, "Symbol Server Config"))
-				.onAction(ac -> configPDB())
-				.buildAndInstall(tool);
+			.menuPath(ToolConstants.MENU_EDIT, "Symbol Server Config")
+			.menuGroup(ToolConstants.TOOL_OPTIONS_MENU_GROUP)
+			.helpLocation(new HelpLocation(PDB_PLUGIN_HELP_TOPIC, "Symbol Server Config"))
+			.onAction(ac -> configPDB())
+			.buildAndInstall(tool);
 	}
 
 	private void configPDB() {
@@ -107,8 +107,7 @@ public class PdbPlugin extends Plugin {
 			return;
 		}
 
-		boolean analyzed =
-			program.getOptions(Program.PROGRAM_INFO).getBoolean(Program.ANALYZED, false);
+		boolean analyzed = GhidraProgramUtilities.isAnalyzed(program);
 
 		if (analyzed) {
 			int response =
@@ -147,8 +146,8 @@ public class PdbPlugin extends Plugin {
 			LoadPdbTask loadPdbTask = new LoadPdbTask(program, pdbFile,
 				loadPdbResults.useMsDiaParser, loadPdbResults.control, dataTypeManagerService);
 			TaskBuilder.withTask(loadPdbTask)
-					.setStatusTextAlignment(SwingConstants.LEADING)
-					.setLaunchDelay(0);
+				.setStatusTextAlignment(SwingConstants.LEADING)
+				.setLaunchDelay(0);
 			new TaskLauncher(loadPdbTask, null, 0);
 
 			// Check for error messages & exceptions and handle them here
@@ -282,15 +281,15 @@ public class PdbPlugin extends Plugin {
 			SymbolServerInstanceCreatorContext symbolServerInstanceCreatorContext) {
 		SymbolServer temporarySymbolServer =
 			symbolServerInstanceCreatorContext.getSymbolServerInstanceCreatorRegistry()
-					.newSymbolServer(Preferences.getProperty(SYMBOL_STORAGE_DIR_OPTION, "", true),
-						symbolServerInstanceCreatorContext);
+				.newSymbolServer(Preferences.getProperty(SYMBOL_STORAGE_DIR_OPTION, "", true),
+					symbolServerInstanceCreatorContext);
 		SymbolStore symbolStore =
 			(temporarySymbolServer instanceof SymbolStore) ? (SymbolStore) temporarySymbolServer
 					: new SameDirSymbolStore(symbolServerInstanceCreatorContext.getRootDir());
 		List<SymbolServer> symbolServers =
 			symbolServerInstanceCreatorContext.getSymbolServerInstanceCreatorRegistry()
-					.createSymbolServersFromPathList(getSymbolSearchPaths(),
-						symbolServerInstanceCreatorContext);
+				.createSymbolServersFromPathList(getSymbolSearchPaths(),
+					symbolServerInstanceCreatorContext);
 		return new SymbolServerService(symbolStore, symbolServers);
 	}
 
@@ -307,9 +306,9 @@ public class PdbPlugin extends Plugin {
 				symbolServerService.getSymbolStore().getName());
 
 			String path = symbolServerService.getSymbolServers()
-					.stream()
-					.map(SymbolServer::getName)
-					.collect(Collectors.joining(";"));
+				.stream()
+				.map(SymbolServer::getName)
+				.collect(Collectors.joining(";"));
 			Preferences.setProperty(SYMBOL_SEARCH_PATH_OPTION, path);
 		}
 		else {
