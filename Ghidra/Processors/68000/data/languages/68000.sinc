@@ -1997,7 +1997,7 @@ ptestLevel: "#"^mregn	is mregn  { export *[const]:1 mregn; }
 :tst.l eal			is (opbig=0x4a & op67=2)... & eal				{ logflags(); resflags(eal); }
 
 @ifdef COLDFIRE
-:tas eab			is (opbig=0x4a & op67=3)... & eab				{ logflags(); resflags(eab); eab = eab | 0x80; } 
+:tas eab			is (opbig=0x4a & op67=3 & $(MEM_ALTER_ADDR_MODES))... & eab				{ logflags(); resflags(eab); eab = eab | 0x80; }
 @endif # COLDFIRE
 
 :unlk regan			is opbig=0x4e & op37=11 & regan					{ SP = regan; regan = *SP; SP = SP+4; }
