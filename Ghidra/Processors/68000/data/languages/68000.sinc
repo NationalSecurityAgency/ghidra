@@ -1290,6 +1290,10 @@ subdiv: regdr:regdq		is regdq & regdr & divsz=1 & divsgn=1				{ divi:8 = (sext(r
 :ext.l regdn			is op=4 & reg9dn=4 & op68=3 & op35=0 & regdn			{ local tmp =regdn:2; regdn = sext(tmp); }
 :extb.l regdn			is op=4 & reg9dn=4 & op68=7 & op35=0 & regdn			{ local tmp =regdn:1; regdn = sext(tmp); }
 
+@ifdef COLDFIRE
+:halt			is d16=0x4ac8							unimpl
+@endif
+
 :illegal			is d16=0x4afc							unimpl
 
 # jump addresses derived from effective address calculation
