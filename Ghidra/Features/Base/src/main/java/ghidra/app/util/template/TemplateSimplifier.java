@@ -71,8 +71,8 @@ public class TemplateSimplifier {
 
 	/**
 	 * Sets the template nesting depth to be simplified. A depth of 0 simplifies the entire 
-	 * template portion of the name (everything in between <>). A depth of 1 leaves one level of
-	 * template information
+	 * template portion of the name (everything in between {@code <>}). A depth of 1 leaves one 
+	 * level of template information
 	 * @param depth the nesting depth
 	 */
 	public void setNestingDepth(int depth) {
