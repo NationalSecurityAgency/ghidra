@@ -217,7 +217,7 @@ class JumpValuesRangeDefault : public JumpValuesRange {
   uintb extravalue;		///< The extra value
   Varnode *extravn;		///< The starting Varnode associated with the extra value
   PcodeOp *extraop;		///< The starting PcodeOp associated with the extra value
-  mutable bool lastvalue;	///< \b true is the extra value has been visited by the iterator
+  mutable bool lastvalue;	///< \b true if the extra value has been visited by the iterator
 public:
   void setExtraValue(uintb val) { extravalue = val; }	///< Set the extra value explicitly
   void setDefaultVn(Varnode *vn) { extravn = vn; }	///< Set the associated start Varnode
