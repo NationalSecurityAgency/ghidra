@@ -30,6 +30,7 @@ import org.apache.commons.lang3.StringUtils;
 import docking.ActionContext;
 import docking.ComponentProvider;
 import docking.action.*;
+import docking.action.builder.ToggleActionBuilder;
 import docking.widgets.OptionDialog;
 import generic.theme.GIcon;
 import generic.theme.GThemeDefaults.Colors.Messages;
@@ -80,6 +81,7 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 	private CategoryPath originalCategoryPath;
 	private Enum originalEnum;
 	private long originalEnumID = -1;
+	private ToggleDockingAction hexDisplayAction;
 
 	/**
 	 * Construct a new enum editor provider.
@@ -276,6 +278,14 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 	}
 
 	private void createActions() {
+		hexDisplayAction = new ToggleActionBuilder("Toggle Hex Mode", plugin.getName())
+			.menuPath("Show Enum Values in Hex")
+			.description("Toggles Enum value column to show values in hex or decimal")
+			.keyBinding("Shift-H")
+			.selected(true)
+			.onAction(c -> editorPanel.setHexDisplayMode(hexDisplayAction.isSelected()))
+			.buildAndInstallLocal(this);
+
 		addAction = new EnumPluginAction("Add Enum Value", e -> editorPanel.addEntry());
 		addAction.setEnabled(true);
 		String editGroup = "Edit";
@@ -287,7 +297,7 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 			new EnumPluginAction("Delete Enum Value", e -> editorPanel.deleteSelectedEntries());
 		deleteAction.setEnabled(false);
 		deleteAction
-				.setPopupMenuData(new MenuData(new String[] { "Delete" }, DELETE_ICON, editGroup));
+			.setPopupMenuData(new MenuData(new String[] { "Delete" }, DELETE_ICON, editGroup));
 		deleteAction.setToolBarData(new ToolBarData(DELETE_ICON, editGroup));
 		deleteAction.setDescription("Delete the selected enum entries");
 
