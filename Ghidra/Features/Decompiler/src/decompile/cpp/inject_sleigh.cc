@@ -17,6 +17,8 @@
 #include "pcodeparse.hh"
 #include "architecture.hh"
 
+namespace ghidra {
+
 InjectContextSleigh::~InjectContextSleigh(void)
 
 {
@@ -468,3 +470,5 @@ int4 PcodeInjectLibrarySleigh::manualCallOtherFixup(const string &name,const str
   registerInject(injectid);
   return injectid;
 }
+
+} // End namespace ghidra

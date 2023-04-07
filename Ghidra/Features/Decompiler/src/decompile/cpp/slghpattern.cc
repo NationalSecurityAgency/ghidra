@@ -15,6 +15,8 @@
  */
 #include "slghpattern.hh"
 
+namespace ghidra {
+
 uintm DisjointPattern::getMask(int4 startbit,int4 size,bool context) const
 
 {
@@ -1014,3 +1016,5 @@ void OrPattern::restoreXml(const Element *el)
     ++iter;
   }
 }
+
+} // End namespace ghidra

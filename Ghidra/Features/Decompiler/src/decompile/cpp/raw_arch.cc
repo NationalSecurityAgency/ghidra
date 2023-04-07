@@ -15,6 +15,8 @@
  */
 #include "raw_arch.hh"
 
+namespace ghidra {
+
 ElementId ELEM_RAW_SAVEFILE = ElementId("raw_savefile",237);
 
 // Constructing this object registers the capability
@@ -124,3 +126,5 @@ void RawBinaryArchitecture::restoreXml(DocumentStorage &store)
     SleighArchitecture::restoreXml(store);
   }
 }
+
+} // End namespace ghidra

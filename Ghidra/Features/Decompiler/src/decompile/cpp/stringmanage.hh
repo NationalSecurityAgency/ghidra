@@ -16,10 +16,12 @@
 /// \file stringmanage.hh
 /// \brief Classes for decoding and storing string data
 
-#ifndef __STRING_MANAGE__
-#define __STRING_MANAGE__
+#ifndef __STRINGMANAGE_HH__
+#define __STRINGMANAGE_HH__
 
 #include "type.hh"
+
+namespace ghidra {
 
 class Architecture;
 
@@ -87,4 +89,5 @@ public:
   bool writeUnicode(ostream &s,uint1 *buffer,int4 size,int4 charsize);	///< Translate/copy unicode to UTF8
 };
 
+} // End namespace ghidra
 #endif

@@ -16,6 +16,8 @@
 #include "typeop.hh"
 #include "funcdata.hh"
 
+namespace ghidra {
+
 /// \param inst will hold the array of TypeOp objects, indexed on op-code
 /// \param tlst is the corresponding TypeFactory for the Architecture
 /// \param trans is the Translate object for floating-point formats
@@ -2343,3 +2345,5 @@ TypeOpLzcount::TypeOpLzcount(TypeFactory *t)
   opflags = PcodeOp::unary;
   behave = new OpBehaviorLzcount();
 }
+
+} // End namespace ghidra

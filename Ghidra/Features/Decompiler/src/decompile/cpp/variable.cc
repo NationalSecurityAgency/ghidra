@@ -17,6 +17,8 @@
 #include "op.hh"
 #include "database.hh"
 
+namespace ghidra {
+
 AttributeId ATTRIB_CLASS = AttributeId("class",66);
 AttributeId ATTRIB_REPREF = AttributeId("repref",67);
 AttributeId ATTRIB_SYMREF = AttributeId("symref",68);
@@ -1122,3 +1124,4 @@ bool HighIntersectTest::intersection(HighVariable *a,HighVariable *b)
   return res;
 }
 
+} // End namespace ghidra

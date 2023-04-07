@@ -16,6 +16,8 @@
 #include "merge.hh"
 #include "funcdata.hh"
 
+namespace ghidra {
+
 /// This instance assumes the identity of the given Varnode and the defining index is
 /// cached to facilitate quick sorting.
 /// \param v is the given Varnode
@@ -1669,3 +1671,5 @@ void Merge::verifyHighCovers(void)
   }
 }
 #endif
+
+} // End namespace ghidra

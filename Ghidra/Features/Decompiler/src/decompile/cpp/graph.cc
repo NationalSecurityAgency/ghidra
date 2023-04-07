@@ -16,6 +16,8 @@
  */
 #include "graph.hh"
 
+namespace ghidra {
+
 static void print_varnode_vertex(Varnode *vn,ostream &s)
 
 {
@@ -496,3 +498,5 @@ void dump_dom_graph(const string &name,const BlockGraph &graph,ostream &s)
   dump_block_vertex(graph,s,falsenode);
   dump_dom_edges(graph,s,falsenode);
 }
+
+} // End namespace ghidra

@@ -17,6 +17,8 @@
 #include "slghsymbol.hh"
 #include "translate.hh"
 
+namespace ghidra {
+
 ParserContext::ParserContext(ContextCache *ccache,Translate *trans)
 
 {
@@ -234,3 +236,4 @@ void ParserWalkerChange::calcCurrentLength(int4 length,int4 numopers)
   point->length = length - point->offset; // Convert back to relative length
 }
 
+} // End namespace ghidra

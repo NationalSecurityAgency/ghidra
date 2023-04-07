@@ -15,6 +15,8 @@
  */
 #include "funcdata.hh"
 
+namespace ghidra {
+
 AttributeId ATTRIB_NOCODE = AttributeId("nocode",84);
 
 ElementId ELEM_AST = ElementId("ast",115);
@@ -1044,3 +1046,4 @@ void Funcdata::debugPrintRange(int4 i) const
 
 #endif
 
+} // End namespace ghidra

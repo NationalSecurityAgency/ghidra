@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __PCODE_SNIPPET__
-#define __PCODE_SNIPPET__
+#ifndef __PCODEPARSE_HH__
+#define __PCODEPARSE_HH__
 
 #include "pcodecompile.hh"
 #include "sleighbase.hh"
+
+namespace ghidra {
 
 // Classes for compiling a standalone snippet of pcode, given an existing sleigh language
 
@@ -95,5 +97,5 @@ public:
   void addOperand(const string &name,int4 index);
 };
 
-
+} // End namespace ghidra
 #endif

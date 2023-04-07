@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __CPUI_GRAMMAR__
-#define __CPUI_GRAMMAR__
+#ifndef __GRAMMAR_HH__
+#define __GRAMMAR_HH__
 
 #include "funcdata.hh"
+
+namespace ghidra {
 
 class GrammarToken {
   friend class GrammarLexer;
@@ -288,4 +290,5 @@ extern Address parse_machaddr(istream &s,int4 &defaultsize,const TypeFactory &ty
 extern Address parse_varnode(istream &s,int4 &size,Address &pc,uintm &uq,const TypeFactory &typegrp);
 extern Address parse_op(istream &s,uintm &uq,const TypeFactory &typegrp);
 
+} // End namespace ghidra
 #endif

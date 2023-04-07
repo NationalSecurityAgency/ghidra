@@ -17,6 +17,9 @@
 #include "emulate.hh"
 #include "flow.hh"
 
+namespace ghidra {
+
+
 AttributeId ATTRIB_LABEL = AttributeId("label",131);
 AttributeId ATTRIB_NUM = AttributeId("num",132);
 
@@ -2811,3 +2814,5 @@ bool JumpTable::checkForMultistage(Funcdata *fd)
   }
   return false;
 }
+
+} // End namespace ghidra

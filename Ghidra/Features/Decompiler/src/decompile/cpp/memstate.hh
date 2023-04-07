@@ -16,11 +16,13 @@
 /// \file memstate.hh
 /// \brief Classes for keeping track of memory state during emulation
 
-#ifndef __CPUI_MEMSTATE__
-#define __CPUI_MEMSTATE__
+#ifndef __MEMSTATE_HH__
+#define __MEMSTATE_HH__
 
 #include "pcoderaw.hh"
 #include "loadimage.hh"
+
+namespace ghidra {
 
 /// \brief Memory storage/state for a single AddressSpace
 ///
@@ -202,4 +204,5 @@ inline uintb MemoryState::getValue(const VarnodeData *vn) const
   return getValue(vn->space,vn->offset,vn->size);
 }
 
+} // End namespace ghidra
  #endif

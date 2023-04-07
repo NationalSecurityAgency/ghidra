@@ -16,10 +16,12 @@
 /// \file cast.hh
 /// \brief API and specific strategies for applying type casts
 
-#ifndef __CPUI_CAST__
-#define __CPUI_CAST__
+#ifndef __CAST_HH__
+#define __CAST_HH__
 
 #include "type.hh"
+
+namespace ghidra {
 
 class Varnode;
 class PcodeOp;
@@ -199,4 +201,5 @@ public:
   virtual bool isZextCast(Datatype *outtype,Datatype *intype) const;
 };
 
+} // End namespace ghidra
 #endif

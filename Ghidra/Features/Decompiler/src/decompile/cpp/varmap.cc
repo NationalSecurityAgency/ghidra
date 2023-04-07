@@ -16,6 +16,8 @@
 #include "varmap.hh"
 #include "funcdata.hh"
 
+namespace ghidra {
+
 AttributeId ATTRIB_LOCK = AttributeId("lock",133);
 AttributeId ATTRIB_MAIN = AttributeId("main",134);
 
@@ -1450,3 +1452,5 @@ void ScopeLocal::addRecommendName(Symbol *sym)
   if (sym->getCategory() < 0)
     removeSymbol(sym);
 }
+
+} // End namespace ghidra

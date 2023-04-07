@@ -13,10 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __PREFERSPLIT__
-#define __PREFERSPLIT__
+#ifndef __PREFERSPLIT_HH__
+#define __PREFERSPLIT_HH__
 
 #include "varnode.hh"
+
+namespace ghidra {
+
 class Funcdata;			// Forward declaration
 
 extern ElementId ELEM_PREFERSPLIT;	///< Marshaling element \<prefersplit>
@@ -68,4 +71,5 @@ public:
   void splitAdditional(void);
 };
 
+} // End namespace ghidra
 #endif

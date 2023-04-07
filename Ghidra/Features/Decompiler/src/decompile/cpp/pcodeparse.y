@@ -17,10 +17,12 @@
 %{
 #include "pcodeparse.hh"
 
-  //#define YYERROR_VERBOSE
-  extern int pcodelex(void);
-  static PcodeSnippet *pcode;
-  extern int pcodeerror(const char *str );
+//#define YYERROR_VERBOSE
+namespace ghidra {
+
+extern int pcodelex(void);
+static PcodeSnippet *pcode;
+extern int pcodeerror(const char *str );
 %}
 
 %union {
@@ -810,3 +812,5 @@ int pcodeerror(const char *s)
   pcode->reportError((const Location *)0,s);
   return 0;
 }
+
+} // End namespace ghidra

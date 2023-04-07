@@ -16,11 +16,13 @@
 /// \file options.hh
 /// \brief Classes for processing architecture configuration options
 
-#ifndef __ARCH_OPTIONS__
-#define __ARCH_OPTIONS__
+#ifndef __OPTIONS_HH__
+#define __OPTIONS_HH__
 
 #include "error.hh"
 #include "marshal.hh"
+
+namespace ghidra {
 
 class Architecture;
 
@@ -320,4 +322,5 @@ public:
   virtual string apply(Architecture *glb,const string &p1,const string &p2,const string &p3) const;
 };
 
+} // End namespace ghidra
 #endif

@@ -17,6 +17,8 @@
 #include "printlanguage.hh"
 #include "funcdata.hh"
 
+namespace ghidra {
+
 const string PrintLanguage::OPEN_PAREN = "(";
 const string PrintLanguage::CLOSE_PAREN = ")";
 
@@ -811,3 +813,5 @@ void PrintLanguage::formatBinary(ostream &s,uintb val)
     mask >>= 1;
   }
 }
+
+} // End namespace ghidra

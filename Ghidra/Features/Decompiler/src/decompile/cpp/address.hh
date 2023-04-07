@@ -23,10 +23,12 @@
 ///  by placing them in their own space, separate from RAM. Indirection
 ///  (i.e. pointers) must be simulated through the LOAD and STORE ops.
 
-#ifndef __CPUI_ADDR__
-#define __CPUI_ADDR__
+#ifndef __ADDRESS_HH__
+#define __ADDRESS_HH__
 
 #include "space.hh"
+
+namespace ghidra {
 
 class AddrSpaceManager;
 
@@ -555,4 +557,5 @@ extern void unsignedSubtract128(uint8 *a,uint8 *b);
 extern int4 unsignedCompare128(uint8 *a,uint8 *b);
 extern int4 power2Divide(int4 n,uint8 divisor,uint8 &q,uint8 &r);
 
+} // End namespace ghidra
 #endif

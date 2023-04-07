@@ -16,6 +16,8 @@
 #include "comment.hh"
 #include "funcdata.hh"
 
+namespace ghidra {
+
 ElementId ELEM_COMMENT = ElementId("comment",86);
 ElementId ELEM_COMMENTDB = ElementId("commentdb",87);
 ElementId ELEM_TEXT = ElementId("text",88);
@@ -400,3 +402,5 @@ void CommentSorter::setupHeader(uint4 headerType)
   subsort.pos = 0xffffffff;
   opstop = commmap.upper_bound(subsort);
 }
+
+} // End namespace ghidra

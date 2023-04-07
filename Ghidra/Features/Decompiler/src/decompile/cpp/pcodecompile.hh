@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __PCODE_COMPILE__
-#define __PCODE_COMPILE__
+#ifndef __PCODECOMPILE_HH__
+#define __PCODECOMPILE_HH__
 
 #include "slghsymbol.hh"
+
+namespace ghidra {
 
 class Location {
   string filename;
@@ -102,4 +104,5 @@ public:
   static bool propagateSize(ConstructTpl *ct);
 };
 
+} // End namespace ghidra
 #endif

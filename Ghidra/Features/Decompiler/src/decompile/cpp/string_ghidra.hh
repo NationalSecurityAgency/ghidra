@@ -16,10 +16,12 @@
 /// \file string_ghidra.hh
 /// \brief Implementation of the StringManager through the ghidra client
 
-#ifndef __STRING_GHIDRA__
-#define __STRING_GHIDRA__
+#ifndef __STRING_GHIDRA_HH__
+#define __STRING_GHIDRA_HH__
 
 #include "ghidra_arch.hh"
+
+namespace ghidra {
 
 /// \brief Implementation of the StringManager that queries through the ghidra client
 ///
@@ -36,4 +38,5 @@ public:
   virtual const vector<uint1> &getStringData(const Address &addr,Datatype *charType,bool &isTrunc);
 };
 
+} // End namespace ghidra
 #endif

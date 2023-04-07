@@ -15,12 +15,16 @@
  */
 /// \file slgh_compile.hh
 /// \brief High-level control of the sleigh compilation process
+#ifndef __SLGH_COMPILE_HH__
+#define __SLGH_COMPILE_HH__
 
 #include "sleighbase.hh"
 #include "pcodecompile.hh"
 #include "filemanage.hh"
 #include <iostream>
 #include <sstream>
+
+namespace ghidra {
 
 using std::cout;
 using std::cerr;
@@ -450,3 +454,6 @@ public:
 
 extern SleighCompile *slgh;		///< A global reference to the SLEIGH compiler accessible to the parse functions
 extern int yydebug;			///< Debug state for the SLEIGH parse functions
+
+} // End namespace ghidra
+#endif

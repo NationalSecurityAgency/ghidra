@@ -16,6 +16,8 @@
 #include "loadimage_xml.hh"
 #include "translate.hh"
 
+namespace ghidra {
+
 AttributeId ATTRIB_ARCH = AttributeId("arch",135);
 
 ElementId ELEM_BINARYIMAGE = ElementId("binaryimage",230);
@@ -292,3 +294,5 @@ void LoadImageXml::adjustVma(long adjust)
   }
   addrtosymbol = newsymbol;
 }
+
+} // End namespace ghidra

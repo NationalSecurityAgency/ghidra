@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __CPUI_CODEDATA__
-#define __CPUI_CODEDATA__
+#ifndef __CODEDATA_HH__
+#define __CODEDATA_HH__
 
 #include "ifacedecomp.hh"
+
+namespace ghidra {
 
 class IfaceCodeDataCapability : public IfaceCapability {
   static IfaceCodeDataCapability ifaceCodeDataCapability;	// Singleton instance
@@ -194,4 +196,5 @@ public:
   virtual void execute(istream &s);
 };
 
+} // End namespace ghidra
 #endif

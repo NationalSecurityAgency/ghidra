@@ -16,6 +16,8 @@
 #include "override.hh"
 #include "funcdata.hh"
 
+namespace ghidra {
+
 ElementId ELEM_DEADCODEDELAY = ElementId("deadcodedelay",218);
 ElementId ELEM_FLOW = ElementId("flow",219);
 ElementId ELEM_FORCEGOTO = ElementId("forcegoto",220);
@@ -429,3 +431,5 @@ uint4 Override::stringToType(const string &nm)
     return Override::RETURN;
   return Override::NONE;
 }
+
+} // End namespace ghidra

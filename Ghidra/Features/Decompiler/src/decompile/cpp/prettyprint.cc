@@ -16,6 +16,8 @@
 #include "prettyprint.hh"
 #include "funcdata.hh"
 
+namespace ghidra {
+
 AttributeId ATTRIB_BLOCKREF = AttributeId("blockref",35);
 AttributeId ATTRIB_CLOSE = AttributeId("close",36);
 AttributeId ATTRIB_COLOR = AttributeId("color",37);
@@ -1169,3 +1171,5 @@ void EmitPrettyPrint::resetDefaults(void)
   resetDefaultsInternal();
   resetDefaultsPrettyPrint();
 }
+
+} // End namespace ghidra

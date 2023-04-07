@@ -15,13 +15,15 @@
  */
 /// \file testfunction.hh
 /// \brief Framework for decompiler data driven single function tests
-#ifndef __TESTFUNCTION__
-#define __TESTFUNCTION__
+#ifndef __TESTFUNCTION_HH__
+#define __TESTFUNCTION_HH__
 
 #include "ifaceterm.hh"
 #include "error.hh"
 #include "xml.hh"
 #include <regex>
+
+namespace ghidra {
 
 class IfaceDecompData;
 
@@ -94,4 +96,5 @@ public:
   static int runTestFiles(const vector<string> &testFiles,ostream &s);	///< Run tests for each listed file
 };
 
+} // End namespace ghidra
 #endif

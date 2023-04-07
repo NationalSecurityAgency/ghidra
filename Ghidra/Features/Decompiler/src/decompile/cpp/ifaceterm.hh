@@ -16,6 +16,9 @@
 /// \file ifaceterm.hh
 /// \brief Add some terminal capabilities to the command-line interface (IfaceStatus)
 
+#ifndef __IFACETERM_HH__
+#define __IFACETERM_HH__
+
 #include "interface.hh"
 
 #ifdef __TERMINAL__
@@ -24,6 +27,8 @@ extern "C" {
 #include <errno.h>
 }
 #endif
+
+namespace ghidra {
 
 /// \brief Implement the command-line interface on top of a specific input stream
 ///
@@ -48,3 +53,6 @@ public:
   virtual void popScript(void);
   virtual bool isStreamFinished(void) const;
 };
+
+} // End namespace ghidra
+#endif

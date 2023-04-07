@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __CPUI_MARSHAL__
-#define __CPUI_MARSHAL__
+#ifndef __MARSHAL_HH__
+#define __MARSHAL_HH__
 
 #include "xml.hh"
 #include <list>
 #include <unordered_map>
+
+namespace ghidra {
 
 using std::list;
 using std::unordered_map;
@@ -685,4 +687,5 @@ extern ElementId ELEM_VAL;		///< Marshaling element \<val>
 extern ElementId ELEM_VALUE;		///< Marshaling element \<value>
 extern ElementId ELEM_VOID;		///< Marshaling element \<void>
 
+} // End namespace ghidra
 #endif

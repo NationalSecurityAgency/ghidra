@@ -15,6 +15,8 @@
  */
 #include "inject_ghidra.hh"
 
+namespace ghidra {
+
 void InjectContextGhidra::encode(Encoder &encoder) const
 
 {
@@ -230,3 +232,5 @@ int4 PcodeInjectLibraryGhidra::manualCallOtherFixup(const string &name,const str
 {
   return 0;	 // We don't have to do anything
 }
+
+} // End namespace ghidra

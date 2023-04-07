@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __CONTEXT_GHIDRA__
-#define __CONTEXT_GHIDRA__
+#ifndef __GHIDRA_CONTEXT_HH__
+#define __GHIDRA_CONTEXT_HH__
 
 /// \file ghidra_context.hh
 /// \brief Obtaining context information from a Ghidra client
 
 #include "globalcontext.hh"
 #include "ghidra_arch.hh"
+
+namespace ghidra {
 
 /// \brief An implementation of a ContextDatabase obtaining context information via a Ghidra client
 ///
@@ -72,4 +74,5 @@ public:
     throw LowlevelError("getTrackedDefault should not be called for GHIDRA"); }
 };
 
+} // End namespace ghidra
 #endif

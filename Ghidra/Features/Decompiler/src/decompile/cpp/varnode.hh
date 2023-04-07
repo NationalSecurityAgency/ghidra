@@ -15,11 +15,13 @@
  */
 /// \file varnode.hh
 /// \brief The Varnode and VarnodeBank classes
-#ifndef __CPUI_VARNODE__
-#define __CPUI_VARNODE__
+#ifndef __VARNODE_HH__
+#define __VARNODE_HH__
 
 #include "pcoderaw.hh"
 #include "cover.hh"
+
+namespace ghidra {
 
 class HighVariable;
 
@@ -434,4 +436,5 @@ inline AddrSpace *Varnode::getSpaceFromConst(void) const {
   return (AddrSpace *)(uintp)loc.getOffset();
 }
 
+} // End namespace ghidra
 #endif

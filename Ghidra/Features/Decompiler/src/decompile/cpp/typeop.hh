@@ -16,13 +16,15 @@
 /// \file typeop.hh
 /// \brief Data-type and behavior information associated with specific p-code op-codes.
 
-#ifndef __CPUI_TYPEOP__
-#define __CPUI_TYPEOP__
+#ifndef __TYPEOP_HH__
+#define __TYPEOP_HH__
 
 #include "cpool.hh"
 #include "variable.hh"
 #include "opbehavior.hh"
 #include "printlanguage.hh"
+
+namespace ghidra {
 
 class PcodeOp;
 class Translate;
@@ -864,4 +866,5 @@ public:
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opLzcountOp(op); }
 };
 
+} // End namespace ghidra
 #endif

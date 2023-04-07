@@ -23,6 +23,8 @@
 #include "cpool_ghidra.hh"
 #include "inject_ghidra.hh"
 
+namespace ghidra {
+
 //AttributeId ATTRIB_BADDATA = AttributeId("baddata",145);
 
 ElementId ELEM_COMMAND_ISNAMEUSED = ElementId("command_isnameused",239);
@@ -935,3 +937,4 @@ bool ArchitectureGhidra::isDynamicSymbolName(const string &nm)
   return true;
 }
 
+} // End namespace ghidra

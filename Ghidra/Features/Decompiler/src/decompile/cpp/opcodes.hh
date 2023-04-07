@@ -16,10 +16,12 @@
 /// \file opcodes.hh
 /// \brief All the individual p-code operations
 
-#ifndef __CPUI_OPCODES__
-#define __CPUI_OPCODES__
+#ifndef __OPCODES_HH__
+#define __OPCODES_HH__
 
 #include <string>
+
+namespace ghidra {
 
 using std::string;
 
@@ -133,4 +135,5 @@ extern OpCode get_opcode(const string &nm);		///< Convert a name string to the m
 
 extern OpCode get_booleanflip(OpCode opc,bool &reorder);	///< Get the complementary OpCode
 
+} // End namespace ghidra
 #endif

@@ -17,10 +17,12 @@
 /// \brief Utilities for making references to \b dynamic variables: defined as
 /// locations and constants that can only be identified by their context within the data-flow graph.
 
-#ifndef __CPUI_DYNAMIC__
-#define __CPUI_DYNAMIC__
+#ifndef __DYNAMIC_HH__
+#define __DYNAMIC_HH__
 
 #include "varnode.hh"
+
+namespace ghidra {
 
 /// \brief An edge between a Varnode and a PcodeOp
 ///
@@ -102,4 +104,5 @@ public:
   static const uint4 transtable[];				///< Translation of op-codes to hash values
 };
 
+} // End namespace ghidra
 #endif

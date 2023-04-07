@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __CPUI_FUNCDATA__
-#define __CPUI_FUNCDATA__
+#ifndef __FUNCDATA_HH__
+#define __FUNCDATA_HH__
 
 /// \file funcdata.hh
 /// \brief Utilities for processing data structures associated with a single function
@@ -25,6 +25,8 @@
 #include "merge.hh"
 #include "dynamic.hh"
 #include "unionresolve.hh"
+
+namespace ghidra {
 
 class FlowInfo;
 
@@ -682,4 +684,5 @@ extern PcodeOp *cseElimination(Funcdata &data,PcodeOp *op1,PcodeOp *op2);
 extern void cseEliminateList(Funcdata &data,vector< pair<uintm,PcodeOp *> > &list,
 			     vector<Varnode *> &outlist);
 
+} // End namespace ghidra
 #endif

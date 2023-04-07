@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __SLGHPATEXPRESS__
-#define __SLGHPATEXPRESS__
+#ifndef __SLGHPATEXPRESS_HH__
+#define __SLGHPATEXPRESS_HH__
 
 #include "slghpattern.hh"
+
+namespace ghidra {
 
 class TokenPattern {
   Pattern *pattern;
@@ -484,4 +486,5 @@ public:
   virtual void operandOrder(Constructor *ct,vector<OperandSymbol *> &order) const;
 };
 
+} // End namespace ghidra
 #endif

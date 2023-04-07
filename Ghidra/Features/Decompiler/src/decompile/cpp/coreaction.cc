@@ -18,6 +18,8 @@
 #include "double.hh"
 #include "subflow.hh"
 
+namespace ghidra {
+
 /// \brief A stack equation
 struct StackEqn {
   int4 var1;			///< Variable with 1 coefficient
@@ -5500,3 +5502,5 @@ void ActionDatabase::universalAction(Architecture *conf)
   act->addAction( new ActionPrototypeWarnings("protorecovery") );
   act->addAction( new ActionStop("base") );
 }
+
+} // End namespace ghidra

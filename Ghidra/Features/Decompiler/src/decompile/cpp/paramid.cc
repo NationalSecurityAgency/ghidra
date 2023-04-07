@@ -15,6 +15,8 @@
  */
 #include "paramid.hh"
 
+namespace ghidra {
+
 ElementId ELEM_PARAMMEASURES = ElementId("parammeasures",106);
 ElementId ELEM_PROTO = ElementId("proto",107);
 ElementId ELEM_RANK = ElementId("rank",108);
@@ -278,3 +280,5 @@ void ParamIDAnalysis::savePretty( ostream &s,bool moredetail ) const
   }
   s << "\n";
 }
+
+} // End namespace ghidra
