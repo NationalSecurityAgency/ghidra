@@ -30,10 +30,12 @@ public class FileArchiveNode extends ArchiveNode {
 		new GIcon("icon.plugin.datatypes.tree.node.archive.file.checked.out.exclusive");
 
 	FileArchive fileArchive; // casted reference for easy access
+	String fullName;
 
 	public FileArchiveNode(FileArchive archive, ArrayPointerFilterState filterState) {
 		super(archive, filterState);
 		this.fileArchive = archive;
+		fullName = archive.getName() + ": " + archive.getFile().getAbsolutePath();
 	}
 
 	@Override
@@ -56,6 +58,16 @@ public class FileArchiveNode extends ArchiveNode {
 			return "<html>" + HTMLUtilities.escapeHTML(file.getAbsolutePath());
 		}
 		return "[Unsaved New Archive]";
+	}
+
+	@Override
+	public String getName() {
+		return fullName;
+	}
+
+	@Override
+	public String getDisplayText() {
+		return archive.getName();
 	}
 
 	public boolean hasWriteLock() {
