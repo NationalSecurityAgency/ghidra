@@ -22,6 +22,11 @@
 #include "emulate.hh"
 #include <iostream>
 
+using std::cerr;
+using std::cout;
+
+namespace ghidra {
+
 // These are the bytes for an example x86 binary
 // These bytes are loaded at address 0x80483b4
 static uint1 myprog[] = {
@@ -283,9 +288,13 @@ static void doEmulation(Translate &trans,LoadImage &loader)
   } while(!emulater.getHalt());
 }
 
+} // End namespace ghidra
+
 int main(int argc,char **argv)
 
 {
+  using namespace ghidra;
+
   if (argc != 2) {
     cerr << "USAGE:  " << argv[0] << " disassemble" << endl;
     cerr << "        " << argv[0] << " pcode" << endl;
