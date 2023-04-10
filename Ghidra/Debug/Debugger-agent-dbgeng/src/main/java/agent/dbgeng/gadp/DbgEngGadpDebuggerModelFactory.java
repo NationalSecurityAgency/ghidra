@@ -87,10 +87,10 @@ public class DbgEngGadpDebuggerModelFactory extends AbstractGadpLocalDebuggerMod
 		cmd.addAll(List.of("-H", host));
 		cmd.addAll(List.of("-p", Integer.toString(port)));
 		//cmd.addAll(List.of("-t", transport));
-		if (!remote.equals("none")) {
+		if (!remote.equals("none") && !remote.equals("")) {
 			cmd.addAll(List.of("-r", remote));
 		}
-		if (!transport.equals("none")) {
+		if (!transport.equals("none") && !transport.equals("")) {
 			cmd.addAll(List.of("-t", transport));
 		}
 	}
