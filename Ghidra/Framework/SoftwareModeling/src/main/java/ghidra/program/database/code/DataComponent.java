@@ -40,7 +40,9 @@ class DataComponent extends DataDB {
 	private int[] path;
 
 	/**
-	 * Constructs a new DataComponent
+	 * Constructs a new {@link DataComponent} for a {@link DataTypeComponent}.
+	 * NOTE: a zero-length component will be forced to have a length of 1-byte.
+	 * This can result in what would appear to be overlapping components with the same overset.
 	 * @param codeMgr the code manager.
 	 * @param componentCache data component cache
 	 * @param address the address of the data component
@@ -57,29 +59,31 @@ class DataComponent extends DataDB {
 		this.component = component;
 		this.level = parent.level + 1;
 		this.offset = component.getOffset();
-		this.length = component.getLength();
+		length = component.getLength();
+		if (length == 0) {
+			length = 1; // zero-length components must be forced to have a length of 1
+		}
 	}
 
 	/**
-	 * Constructs a new array DataComponent.
+	 * Constructs a new {@link DataComponent} for an {@link Array} element.
 	 * @param codeMgr the code manager.
 	 * @param componentCache data component cache
 	 * @param address the address of the data component
 	 * @param addr the convert address long value
 	 * @param parent the DataDB object that contains this component.
 	 * @param array the array containing this component.
-	 * @param ordinal the ordinal for this component.
-	 * @param offset the offset of this component within its parent.
-	 * @param length the length of this component.
+	 * @param ordinal the array index for this component.
 	 */
 	DataComponent(CodeManager codeMgr, DBObjectCache<DataDB> componentCache, Address address,
-			long addr, DataDB parent, Array array, int ordinal, int offset, int length) {
+			long addr, DataDB parent, Array array, int ordinal) {
 		super(codeMgr, componentCache, ordinal, address, addr, array.getDataType());
+		int elementLength = array.getElementLength();
 		this.indexInParent = ordinal;
 		this.parent = parent;
-		this.offset = offset;
+		this.offset = ordinal * elementLength;
 		this.level = parent.level + 1;
-		this.length = length;
+		this.length = elementLength;
 	}
 
 	@Override
@@ -102,6 +106,9 @@ class DataComponent extends DataDB {
 			dataType = c.getDataType();
 			offset = component.getOffset();
 			length = component.getLength();
+			if (length == 0) {
+				length = 1; // zero-length components must be forced to have a length of 1
+			}
 		}
 		else if (pdt instanceof Array) {
 			Array a = (Array) pdt;
