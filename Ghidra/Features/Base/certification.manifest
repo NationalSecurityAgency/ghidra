@@ -11,6 +11,7 @@
 .gitignore||GHIDRA||||END|
 .launch/Ghidra Code Coverage.launch||GHIDRA||||END|
 .launch/Ghidra.launch||GHIDRA||||END|
+.launch/Headless.launch||GHIDRA||||END|
 Module.manifest||GHIDRA||||END|
 data/ElfFunctionsThatDoNotReturn||GHIDRA||||END|
 data/ExtensionPoint.manifest||GHIDRA||||END|
