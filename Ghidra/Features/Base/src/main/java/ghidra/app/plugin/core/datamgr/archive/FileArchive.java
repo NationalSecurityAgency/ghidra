@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.datamgr.archive;
 import java.awt.Component;
 import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
 
 import javax.swing.Icon;
 
@@ -165,6 +166,26 @@ public class FileArchive implements Archive {
 
 	public DataTypeManagerHandler getArchiveManager() {
 		return archiveManager;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(archiveFile);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		FileArchive other = (FileArchive) obj;
+		return Objects.equals(archiveFile, other.archiveFile);
 	}
 
 	private void fireStateChanged() {
