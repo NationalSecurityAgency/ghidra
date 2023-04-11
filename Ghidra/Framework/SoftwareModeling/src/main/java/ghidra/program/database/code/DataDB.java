@@ -230,19 +230,16 @@ class DataDB extends CodeUnitDB implements Data {
 
 			if (baseDataType instanceof Array) {
 				Array array = (Array) baseDataType;
-				int elementLength = array.getElementLength();
-				Address componentAddr = address.add(index * elementLength);
+				Address componentAddr = address.add(index * array.getElementLength());
 				return new DataComponent(codeMgr, componentCache, componentAddr,
-					addressMap.getKey(componentAddr, false), this, array, index,
-					index * elementLength, elementLength);
+					addressMap.getKey(componentAddr, false), this, array, index);
 			}
 			if (baseDataType instanceof Composite) {
-				Composite struct = (Composite) baseDataType;
-				DataTypeComponent dtc = struct.getComponent(index);
+				Composite composite = (Composite) baseDataType;
+				DataTypeComponent dtc = composite.getComponent(index);
 				Address componentAddr = address.add(dtc.getOffset());
 				return new DataComponent(codeMgr, componentCache, componentAddr,
 					addressMap.getKey(componentAddr, false), this, dtc);
-
 			}
 			if (baseDataType instanceof DynamicDataType) {
 				DynamicDataType ddt = (DynamicDataType) baseDataType;
