@@ -378,10 +378,16 @@ int      fputs( char * , void * ) __asm("_" "fputs" "$FPOOTS");
 
 void     _exit(int) __attribute__((noreturn));
 
+// NoReturn
+
+extern void gcc_exit (int __status) __attribute__ ((__noreturn__));
+
+__declspec(noreturn) void __cdecl win_exit(int _Code);
+
+void     _exit(int) __attribute__((noreturn));
+
 // C11 noreturn
 void     _Noreturn _Noreturn_exit(int);
-
-
 
 
 // C23 Attributes

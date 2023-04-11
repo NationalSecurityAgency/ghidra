@@ -29,8 +29,9 @@ data/parserprofiles/MacOSX_10.9.prf||GHIDRA||||END|
 data/parserprofiles/MacOSX_Cocoa.prf||GHIDRA||||END|
 data/parserprofiles/VisualStudio12_32.prf||GHIDRA||||END|
 data/parserprofiles/VisualStudio12_64.prf||GHIDRA||||END|
-data/parserprofiles/VisualStudio9.prf||GHIDRA||reviewed||END|
-data/parserprofiles/clib.prf||GHIDRA||reviewed||END|
+data/parserprofiles/VisualStudio22_64.prf||GHIDRA||||END|
+data/parserprofiles/VisualStudio9.prf||GHIDRA||||END|
+data/parserprofiles/clib.prf||GHIDRA||||END|
 data/parserprofiles/generic_clib_32.prf||GHIDRA||||END|
 data/parserprofiles/generic_clib_64.prf||GHIDRA||||END|
 data/parserprofiles/linux_32.prf||GHIDRA||||END|

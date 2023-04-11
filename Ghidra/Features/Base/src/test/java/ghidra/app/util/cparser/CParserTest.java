@@ -222,11 +222,11 @@ public class CParserTest extends AbstractGhidraHeadlessIntegrationTest {
 		String parseMessages = parser.getParseMessages();
 		System.out.println(parseMessages);
 		
-		assertTrue("Duplicate ENUM message", parseMessages.contains("duplicate enum value: options_enum : PLUS_SET : 16"));
+		assertTrue("Duplicate ENUM message missing", parseMessages.contains("duplicate enum value: options_enum : PLUS_SET : 16"));
 		
-		assertTrue("Duplicate ENUM message", parseMessages.contains("Static_Asssert has failed  \"\"math fail!\"\""));
+		assertTrue("Duplicate ENUM message missing", parseMessages.contains("Static_Asssert has failed  \"\"math fail!\"\""));
 		
-		assertTrue("Duplicate ENUM message", parseMessages.contains("Static_Asssert has failed  \"\"1 + 1 == 3, fail!\"\""));
+		assertTrue("Duplicate ENUM message missing", parseMessages.contains("Static_Asssert has failed  \"\"1 + 1 == 3, fail!\"\""));
 
 		DataType dt;
 		DataType pointedToDT;
@@ -362,8 +362,16 @@ public class CParserTest extends AbstractGhidraHeadlessIntegrationTest {
 
 		dt = dtMgr.getDataType(new CategoryPath("/functions"), "_Noreturn_exit");
 		assertTrue("not a function", dt instanceof FunctionDefinition);
-		assertTrue("Caller should purge", ((FunctionDefinition) dt).hasNoReturn());
+		assertTrue("Caller should noreturn", ((FunctionDefinition) dt).hasNoReturn());
 
+		dt = dtMgr.getDataType(new CategoryPath("/functions"), "win_exit");
+		assertTrue("not a function", dt instanceof FunctionDefinition);
+		assertTrue("Caller should noreturn", ((FunctionDefinition) dt).hasNoReturn());
+
+		dt = dtMgr.getDataType(new CategoryPath("/functions"), "gcc_exit");
+		assertTrue("not a function", dt instanceof FunctionDefinition);
+		assertTrue("Caller should noreturn", ((FunctionDefinition) dt).hasNoReturn());
+		
 		dt = dtMgr.getDataType(new CategoryPath("/"), "UINT2");
 		assertTrue(dt instanceof TypeDef);
 		assertEquals("ushort", ((TypeDef) dt).getBaseDataType().getName());

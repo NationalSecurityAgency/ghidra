@@ -222,9 +222,6 @@ wscapi.h
 wsdapi.h
 wspiapi.h
 
--I/VisualStudio/VS12/include
--I/VisualStudio/Windows/v7.0a/Include
--I/VisualStudio/VS12/src
 -D_M_IX86
 -D_MSC_VER=9090
 -D_INTEGRAL_MAX_BITS=32
@@ -239,7 +236,6 @@ wspiapi.h
 -DSTRSAFE_LIB
 -DSTRSAFE_LIB_IMPL
 -DLPSKBINFO=LPARAM
--D_WCHAR_T_DEFINED
 -DCONST=const
 -D_CRT_SECURE_NO_WARNINGS
 -D_CRT_NONSTDC_NO_DEPRECATE
@@ -250,3 +246,12 @@ wspiapi.h
 -D__possibly_notnullterminated
 -Dtype_info="void *"
 -v0
+
+/data/HeaderFiles/VC/VS12/include
+/data/HeaderFiles/VC/Windows/v7.0a/Include
+/data/HeaderFiles/VC/VS12/src
+
+x86:LE:32:default
+
+windows
+
