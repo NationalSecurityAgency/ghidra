@@ -32,7 +32,10 @@ public class PreProcessorTest extends AbstractGenericTest {
 	private static String resourceName = "PreProcessorTest.h";
 	private static CategoryPath path =
 		new CategoryPath(new CategoryPath("/PreProcessorTest.h"), "defines");
-
+	
+	private static CategoryPath definedPath =
+			new CategoryPath(new CategoryPath("/defined.h"), "defines");
+	
 	// must get rid of after all tests
 	private static StandAloneDataTypeManager dtMgr;
 	private static ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -397,6 +400,13 @@ public class PreProcessorTest extends AbstractGenericTest {
 		defval = parser.getDef(defname);
 		// if a define is not defined, getDef() returns name of define as value
 		assertEquals("No INCLUDE5 define", "INCLUDE5", defval);
+	}
+	
+	@Test
+	public void testDefinedInclude() {
+		defname = "DID_INCLUDE_DEFINED_INCLUDED";
+		value = 1;
+		checkDefine(dtMgr, definedPath, value, defname);
 	}
 	
 	@Test
