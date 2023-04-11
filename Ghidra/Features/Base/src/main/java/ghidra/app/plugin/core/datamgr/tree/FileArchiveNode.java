@@ -30,12 +30,10 @@ public class FileArchiveNode extends ArchiveNode {
 		new GIcon("icon.plugin.datatypes.tree.node.archive.file.checked.out.exclusive");
 
 	FileArchive fileArchive; // casted reference for easy access
-	String fullName;
 
 	public FileArchiveNode(FileArchive archive, ArrayPointerFilterState filterState) {
 		super(archive, filterState);
 		this.fileArchive = archive;
-		fullName = archive.getName() + ": " + archive.getFile().getAbsolutePath();
 	}
 
 	@Override
@@ -60,40 +58,7 @@ public class FileArchiveNode extends ArchiveNode {
 		return "[Unsaved New Archive]";
 	}
 
-	@Override
-	public String getName() {
-		return fullName;
-	}
-
-	@Override
-	public String getDisplayText() {
-		return archive.getName();
-	}
-
 	public boolean hasWriteLock() {
 		return fileArchive.hasWriteLock();
 	}
-
-	/**
-	 * Overridden to avoid path conflicts that arise in CategoryNode.equals()
-	 *
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) {
-			return true;
-		}
-		if (getClass() != o.getClass()) {
-			return false;
-		}
-
-		if (super.equals(o)) {
-			ResourceFile myFile = fileArchive.getFile();
-			ResourceFile otherFile = ((FileArchiveNode) o).fileArchive.getFile();
-			return myFile.equals(otherFile);
-		}
-		return false;
-	}
-
 }

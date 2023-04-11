@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.datamgr.archive;
 
 import java.awt.Component;
 import java.io.IOException;
+import java.util.Objects;
 
 import javax.swing.Icon;
 
@@ -52,6 +53,26 @@ public class ProgramArchive implements DomainFileArchive {
 	@Override
 	public String getName() {
 		return dataTypeManager.getName();
+	}
+
+	@Override
+	public int hashCode() {
+		return program.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		ProgramArchive other = (ProgramArchive) obj;
+		return Objects.equals(program, other.program);
 	}
 
 	@Override
