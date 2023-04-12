@@ -65,8 +65,8 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 	public void testInsertRow() throws Exception {
 
 		Category cat = program.getListing()
-				.getDataTypeManager()
-				.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
+			.getDataTypeManager()
+			.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
 		final Enum enumm = new EnumDataType("Colors", 1);
 		enumm.add("Red", 0);
 		enumm.add("Green", 0x10);
@@ -91,7 +91,7 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 
 		assertEquals("Blue", model.getValueAt(3, EnumTableModel.NAME_COL));
 		assertEquals("Gold", model.getValueAt(2, EnumTableModel.NAME_COL));
-		assertEquals("0x15", model.getValueAt(2, EnumTableModel.VALUE_COL));
+		assertEquals(0x15L, model.getValueAt(2, EnumTableModel.VALUE_COL));
 		// add an entry with a value of 5
 		addEntry(table, model, "Pink", 5);
 		assertEquals(5, model.getRowCount());
@@ -101,8 +101,8 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testSortColumns() throws Exception {
 		Category cat = program.getListing()
-				.getDataTypeManager()
-				.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
+			.getDataTypeManager()
+			.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
 		final Enum enumm = new EnumDataType("Colors", 1);
 		enumm.add("Red", 0);
 		enumm.add("Green", 0x10);
@@ -145,8 +145,8 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 	public void testSortOnComments() {
 
 		Category cat = program.getListing()
-				.getDataTypeManager()
-				.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
+			.getDataTypeManager()
+			.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
 		Enum enumm = new EnumDataType("Colors", 1);
 		enumm.add("Red", 0, "1");
 		enumm.add("Green", 0x10, "3");
@@ -184,8 +184,8 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testSortOrder() throws Exception {
 		Category cat = program.getListing()
-				.getDataTypeManager()
-				.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
+			.getDataTypeManager()
+			.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
 		final Enum enumm = new EnumDataType("Colors", 1);
 		enumm.add("Red", 0);
 		enumm.add("Green", 0x10);
@@ -210,9 +210,9 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 		clickMouse(header, 1, rect.x, rect.y, 1, 0);
 		waitForSwing();
 
-		assertEquals("0x20", model.getValueAt(0, EnumTableModel.VALUE_COL));
-		assertEquals("0x10", model.getValueAt(1, EnumTableModel.VALUE_COL));
-		assertEquals("0x0", model.getValueAt(2, EnumTableModel.VALUE_COL));
+		assertEquals(0x20L, model.getValueAt(0, EnumTableModel.VALUE_COL));
+		assertEquals(0x10L, model.getValueAt(1, EnumTableModel.VALUE_COL));
+		assertEquals(0L, model.getValueAt(2, EnumTableModel.VALUE_COL));
 
 		// sort by Name
 		rect = header.getHeaderRect(EnumTableModel.NAME_COL);
@@ -229,8 +229,8 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testInsertRowByName() throws Exception {
 		Category cat = program.getListing()
-				.getDataTypeManager()
-				.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
+			.getDataTypeManager()
+			.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
 		final Enum enumm = new EnumDataType("Colors", 1);
 		enumm.add("Red", 0);
 		enumm.add("Green", 0x10);
@@ -483,8 +483,8 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 	public void testDuplicateName() throws Exception {
 
 		Category cat = program.getListing()
-				.getDataTypeManager()
-				.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
+			.getDataTypeManager()
+			.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
 		final Enum enumm = new EnumDataType("Colors", 1);
 		enumm.add("Red", 0);
 		enumm.add("Green", 0x10);
@@ -810,8 +810,8 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 			TableCellEditor editor = table.getCellEditor(newRow, EnumTableModel.VALUE_COL);
 
 			Component c = editor.getTableCellEditorComponent(table,
-				model.getValueAt(newRow, EnumTableModel.NAME_COL), true, newRow,
-				EnumTableModel.NAME_COL);
+				model.getValueAt(newRow, EnumTableModel.VALUE_COL), true, newRow,
+				EnumTableModel.VALUE_COL);
 			JTextField tf = (JTextField) c;
 			tf.setText("0x" + Long.toHexString(value));
 			editor.stopCellEditing();
@@ -855,8 +855,8 @@ public class EnumEditor2Test extends AbstractGhidraHeadedIntegrationTest {
 
 	private Enum editSampleEnum() {
 		Category cat = program.getListing()
-				.getDataTypeManager()
-				.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
+			.getDataTypeManager()
+			.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
 		final Enum enumm = new EnumDataType("Colors", 1);
 		enumm.add("Red", 0);
 		enumm.add("Green", 0x10);
