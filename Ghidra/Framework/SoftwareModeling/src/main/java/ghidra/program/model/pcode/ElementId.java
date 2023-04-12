@@ -421,5 +421,8 @@ public record ElementId(String name, int id) {
 	public static final ElementId ELEM_COMMAND_GETUSEROPNAME =
 		new ElementId("command_getuseropname", COMMAND_GETUSEROPNAME);
 
+	// option to allow comments to align with code
+	public static final ElementId ELEM_COMMENTINDENTALIGN = new ElementId("commentindentalign", 271);
+
 	public static final ElementId ELEM_UNKNOWN = new ElementId("XMLunknown", 270);
 }

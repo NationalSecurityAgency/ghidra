@@ -179,6 +179,13 @@ public class DecompileOptions {
 	private final static int COMMENTINDENT_OPTIONDEFAULT = 20;	// Must match PrintLanguage::resetDefaultsInternal
 	private int commentindent;
 
+	private final static String COMMENTINDENTALIGN_OPTIONSTRING = "Display.Comment lines aligned with code";
+	private final static String COMMENTINDENTALIGN_OPTIONDESCRIPTION =
+		"Align each comment with the indentation of the code immediately " +
+			"following it, instead of using the comment line indent level";
+	private final static boolean COMMENTINDENTALIGN_OPTIONDEFAULT = false;	// Must match PrintLanguage::resetDefaultsInternal
+	private boolean commentindentAlign;
+
 	private final static String COMMENTSTYLE_OPTIONSTRING = "Display.Comment style";
 	private final static String COMMENTSTYLE_OPTIONDESCRIPTION =
 		"Choice between either the C style comments /* */ or C++ style // ";
@@ -391,6 +398,7 @@ public class DecompileOptions {
 		maxwidth = MAXWIDTH_OPTIONDEFAULT;
 		indentwidth = INDENTWIDTH_OPTIONDEFAULT;
 		commentindent = COMMENTINDENT_OPTIONDEFAULT;
+		commentindentAlign = COMMENTINDENTALIGN_OPTIONDEFAULT;
 		commentStyle = COMMENTSTYLE_OPTIONDEFAULT;
 		commentPREInclude = COMMENTPRE_OPTIONDEFAULT;
 		commentPLATEInclude = COMMENTPLATE_OPTIONDEFAULT;
@@ -443,6 +451,7 @@ public class DecompileOptions {
 		maxwidth = opt.getInt(MAXWIDTH_OPTIONSTRING, MAXWIDTH_OPTIONDEFAULT);
 		indentwidth = opt.getInt(INDENTWIDTH_OPTIONSTRING, INDENTWIDTH_OPTIONDEFAULT);
 		commentindent = opt.getInt(COMMENTINDENT_OPTIONSTRING, COMMENTINDENT_OPTIONDEFAULT);
+		commentindentAlign = opt.getBoolean(COMMENTINDENTALIGN_OPTIONSTRING, COMMENTINDENTALIGN_OPTIONDEFAULT);
 		commentStyle = opt.getEnum(COMMENTSTYLE_OPTIONSTRING, COMMENTSTYLE_OPTIONDEFAULT);
 		commentEOLInclude = opt.getBoolean(COMMENTEOL_OPTIONSTRING, COMMENTEOL_OPTIONDEFAULT);
 		commentPREInclude = opt.getBoolean(COMMENTPRE_OPTIONSTRING, COMMENTPRE_OPTIONDEFAULT);
@@ -559,6 +568,9 @@ public class DecompileOptions {
 		opt.registerOption(COMMENTINDENT_OPTIONSTRING, COMMENTINDENT_OPTIONDEFAULT,
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayCommentIndent"),
 			COMMENTINDENT_OPTIONDESCRIPTION);
+		opt.registerOption(COMMENTINDENTALIGN_OPTIONSTRING, COMMENTINDENTALIGN_OPTIONDEFAULT,
+			new HelpLocation(HelpTopics.DECOMPILER, "DisplayCommentIndentAlign"),
+			COMMENTINDENTALIGN_OPTIONDESCRIPTION);
 		opt.registerOption(COMMENTSTYLE_OPTIONSTRING, COMMENTSTYLE_OPTIONDEFAULT,
 			new HelpLocation(HelpTopics.DECOMPILER, "DisplayCommentStyle"),
 			COMMENTSTYLE_OPTIONDESCRIPTION);
@@ -722,6 +734,9 @@ public class DecompileOptions {
 		}
 		if (commentindent != COMMENTINDENT_OPTIONDEFAULT) {
 			appendOption(encoder, ELEM_COMMENTINDENT, Integer.toString(commentindent), "", "");
+		}
+		if (commentindentAlign != COMMENTINDENTALIGN_OPTIONDEFAULT) {
+			appendOption(encoder, ELEM_COMMENTINDENTALIGN, commentindentAlign ? "on" : "off", "", "");
 		}
 		if (commentStyle != COMMENTSTYLE_OPTIONDEFAULT) {
 			String curstyle = CommentStyleEnum.CPPStyle.equals(commentStyle) ? "cplusplus" : "c";
@@ -1004,6 +1019,22 @@ public class DecompileOptions {
 
 	public void setMaxInstructions(int num) {
 		maxIntructionsPer = num;
+	}
+
+	public int getCommentIndent() {
+		return commentindent;
+	}
+
+	public void setCommentIndent(int indent) {
+		commentindent = indent;
+	}
+
+	public boolean isCommentIndentAlign() {
+		return commentindentAlign;
+	}
+
+	public void setCommentIndentAlign(boolean align) {
+		commentindentAlign = align;
 	}
 
 	public CommentStyleEnum getCommentStyle() {
