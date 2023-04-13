@@ -351,8 +351,19 @@ public class DWARFCompilationUnit {
 		DebugInfoEntry parent = null;
 		DebugInfoEntry die;
 		DebugInfoEntry unexpectedTerminator = null;
-		while ((br.getPointerIndex() < getEndOffset()) &&
-			(die = DebugInfoEntry.read(br, this, dwarfProgram.getAttributeFactory())) != null) {
+		while ((br.getPointerIndex() < getEndOffset())) {
+			try {
+				die = DebugInfoEntry.read(br, this, dwarfProgram.getAttributeFactory());
+			}
+			catch (IOException ioe) {
+				Msg.error(null,
+					"Failed to parse the DW_TAG_compile_unit DIE at the start of compilation unit " +
+						this.compUnitNumber + " at offset " + this.startOffset + " (0x" +
+						Long.toHexString(this.startOffset) + "), skipping entire compilation unit",
+					ioe);
+				br.setPointerIndex(this.getEndOffset());
+				continue;
+			}
 
 			monitor.checkCancelled();
 
