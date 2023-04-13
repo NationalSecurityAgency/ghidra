@@ -179,6 +179,8 @@ public class ParseDialogParsingAndPromptsTest extends AbstractGhidraHeadedIntegr
 		
 		pressButtonByText(waitForDialogComponent("Confirm"), "Continue", false);
 		
+		waitForBusyTool(tool);
+
 		pressButtonByText(waitForDialogComponent("C-Parse of Header Files Complete"), "OK", false);
 		
 		DataType dataType = program.getDataTypeManager().getDataType("/"+dummyHeader.getName()+ "/" + "mystruct");
@@ -228,6 +230,8 @@ public class ParseDialogParsingAndPromptsTest extends AbstractGhidraHeadedIntegr
 		
 		pressButtonByText(waitForDialogComponent("Confirm"), "Continue", false);
 		
+		waitForBusyTool(tool);
+
 		pressButtonByText(waitForDialogComponent("C-Parse of Header Files Complete"), "OK", false);
 		
 		DataType dataType = program.getDataTypeManager().getDataType("/"+dummyHeader.getName()+ "/" + "mystruct");
@@ -436,12 +440,18 @@ public class ParseDialogParsingAndPromptsTest extends AbstractGhidraHeadedIntegr
 
 		pressButtonByText(waitForDialogComponent("C-Parse of Header Files Complete"), "OK", false);
 		
+		waitForBusyTool(tool);
+
 		// open the file archive		
 		FileDataTypeManager fileArchive = FileDataTypeManager.openFileArchive(GDTarchiveFile, false);
-		
-		DataType dataType = fileArchive.getDataType("/"+dummyHeader.getName()+ "/" + "mystruct");
-		
-		assertNotNull("mystruct parsed into program", dataType);
+		try {
+			DataType dataType =
+				fileArchive.getDataType("/" + dummyHeader.getName() + "/" + "mystruct");
+			assertNotNull("mystruct parsed into program", dataType);
+		}
+		finally {
+			fileArchive.close();
+		}
 	}
 
 	// test parse to file, choose file
@@ -498,19 +508,26 @@ public class ParseDialogParsingAndPromptsTest extends AbstractGhidraHeadedIntegr
 
 		pressButtonByText(waitForDialogComponent("Use Open Archives?"), "Use Open Archives", false);	
 		
+		waitForBusyTool(tool);
+
 		pressButtonByText(waitForDialogComponent("C-Parse of Header Files Complete"), "OK", false);
 		
 		// open the file archive		
 		FileDataTypeManager fileArchive = FileDataTypeManager.openFileArchive(GDTarchiveFile, false);
-		
-		DataType dataType = fileArchive.getDataType("/"+dummyHeader.getName()+ "/" + "mystruct");
-		
-		assertNotNull("mystruct parsed into program", dataType);
-		
-		Structure struct = (Structure) dataType;
-		
-		DataTypeComponent component = struct.getComponent(1);
-		assertEquals (component.getDataType().getName(), "wint_t");
+		try {
+			DataType dataType =
+				fileArchive.getDataType("/" + dummyHeader.getName() + "/" + "mystruct");
+
+			assertNotNull("mystruct parsed into program", dataType);
+
+			Structure struct = (Structure) dataType;
+
+			DataTypeComponent component = struct.getComponent(1);
+			assertEquals(component.getDataType().getName(), "wint_t");
+		}
+		finally {
+			fileArchive.close();
+		}
 	}
 
 	
