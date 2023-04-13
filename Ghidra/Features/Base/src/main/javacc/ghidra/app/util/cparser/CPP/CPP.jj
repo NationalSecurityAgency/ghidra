@@ -110,6 +110,7 @@ PARSER_BEGIN(PreProcessor)
 package ghidra.app.util.cparser.CPP;
 
 import ghidra.util.Msg;
+import ghidra.util.task.TaskMonitor;
 
 import java.util.*;
 import java.io.*;
@@ -549,6 +550,8 @@ public class PreProcessor {
 
     // true if parse was successful
     private boolean parseSuccess = false;
+    
+    private TaskMonitor monitor = null;
 
 	// Toggle printing
 	private int verboseLevel = 0;
@@ -832,9 +835,17 @@ public class PreProcessor {
 		String fn = new String(ft);
 		// get rid of any errant quoting or whitespace
 		fn = fn.trim();
-		if (fn.charAt(0) == '\"' && fn.endsWith("\"")) {
-			fn = fn.substring(1, fn.length() - 1);
+
+		// Check for quoted include file name, protects embedded spaces
+		if (fn.startsWith("\"") && fn.indexOf('\"', 1) > 0) {
+			fn = fn.substring(1, fn.indexOf('\"', 1));
 		}
+
+		// Check for <> include file name, protects embedded spaces
+		if (fn.startsWith("<") && fn.indexOf('>', 1) > 0) {
+			fn = fn.substring(1, fn.indexOf('>', 1));
+		}
+
 		FileInputStream fis = null;
 		File iFile = null;
 		int i;
@@ -1334,6 +1345,10 @@ public class PreProcessor {
 	public PreProcessor() throws ParseException {
 		this(System.in);
 	}
+	
+	public void setMonitor(TaskMonitor monitor) {
+	    this.monitor = monitor;
+	}
 
 	// Run the parser
 	public static void main(String args[]) {
@@ -1359,7 +1374,14 @@ void Input() :
     ppt.emit(false);
 }
 {
-    ( b=TranslationUnit(){if (b.getTruth()==false) break;})*
+    ( b=TranslationUnit()
+        {
+           if (monitor != null && monitor.isCancelled()) {
+              throw new ParseException("Parsing Canceled");
+           }
+           if (b.getTruth()==false) break;
+        }
+    )*
     {
         if (conditionDepth!=execStack.size()) {
             addParseMessage(null, "Imbalance in sequence/nesting of compile-time conditions/logic in input file "+curFileStackTop());
@@ -2461,7 +2483,7 @@ TOKEN:
     <#NOTWWSQLT: ~[" ","\t","\n","\r","<","\""]> |
     <#NOTWSQLT: ~["\t","\n","\r","<","\""]> |
     <#NOTVALCMT: ("/##/")> |
-    <INTEGER_LITERAL: <DECIMAL_LITERAL> (["l","L"])? | <HEX_LITERAL> (["l","L","U"])* | <OCTAL_LITERAL> (["l","L"])*> |
+    <INTEGER_LITERAL: <DECIMAL_LITERAL> (["u","l","L","U"])* | <HEX_LITERAL> (["u","l","L","U"])* | <OCTAL_LITERAL> (["u","l","L","U"])*> |
     <#DECIMAL_LITERAL: ["0"-"9"] (["0"-"9"])*> |
     <#HEX_LITERAL: "0" ["x","X"] (["0"-"9","a"-"f","A"-"F"])+> |
     <#HEX_DIGIT: (["0"-"9","a"-"f","A"-"F"])> |

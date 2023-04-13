@@ -107,4 +107,50 @@ public interface Enum extends DataType {
 	 * @return formatted integer string
 	 */
 	public String getRepresentation(BigInteger bigInt, Settings settings, int bitLength);
+
+	/**
+	 * Returns true if this enum has an entry with the given name.
+	 * @param name the name to check for an entry
+	 * @return true if this enum has an entry with the given name
+	 */
+	public boolean contains(String name);
+
+	/**
+	 * Returns true if this enum has an entry with the given value.
+	 * @param value the value to check for an entry
+	 * @return true if this enum has an entry with the given value 
+	 */
+	public boolean contains(long value);
+
+	/**
+	 * Returns true if the enum contains at least one negative value. Internally, enums have
+	 * three states, signed, unsigned, and none (can't tell from the values). If any of
+	 * the values are negative, the enum is considered signed. If any of the values are large
+	 * unsigned values (upper bit set), then it is considered unsigned. This method will return
+	 * true if the enum is signed, and false if it is either unsigned or none (meaning that it
+	 * doesn't matter for the values that are contained in the enum.
+	 * @return true if the enum contains at least one negative value
+	 */
+	public boolean isSigned();
+
+	/**
+	 * Returns the maximum value that this enum can represent based on its size and signedness.
+	 * @return the maximum value that this enum can represent based on its size and signedness.
+	 */
+	public long getMaxPossibleValue();
+
+	/**
+	 * Returns the maximum value that this enum can represent based on its size and signedness.
+	 * @return the maximum value that this enum can represent based on its size and signedness.
+	 */
+	public long getMinPossibleValue();
+
+	/**
+	 * Returns the smallest length (size in bytes) this enum can be and still represent all of
+	 * it's current values. Note that that this will only return powers of 2 (1,2,4, or 8)
+	 * @return the smallest length (size in bytes) this enum can be and still represent all of
+	 * it's current values
+	 */
+	public int getMinimumPossibleLength();
+
 }

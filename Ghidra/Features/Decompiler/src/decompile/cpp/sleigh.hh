@@ -16,10 +16,12 @@
 /// \file sleigh.hh
 /// \brief Classes and utilities for the main SLEIGH engine
 
-#ifndef __SLEIGH__
-#define __SLEIGH__
+#ifndef __SLEIGH_HH__
+#define __SLEIGH_HH__
 
 #include "sleighbase.hh"
+
+namespace ghidra {
 
 class LoadImage;
 
@@ -522,4 +524,6 @@ public:
 
   
  */
+
+} // End namespace ghidra
 #endif

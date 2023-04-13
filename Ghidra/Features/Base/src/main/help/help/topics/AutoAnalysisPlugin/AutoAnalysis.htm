@@ -128,6 +128,20 @@
       Analyzers in the Analysis menu. Only those analyzers which support one-shot use and are
       applicable to the current program will be available within the One Shot sub-menu.</P>
     </BLOCKQUOTE>
+    
+    <H3><A name="Ask_To_Analyze"></A>Ask To Analyze</H3>
+    <BLOCKQUOTE>
+    	<P> When opening a program for the first time, you will be asked if you want to analyze the
+      	program. If you respond "Yes", The <A href= "#Auto_Analysis_Option">Auto Analysis Options</A> 
+      	dialog will appear, allowing you to begin analyzing the program. If you decide not to
+      	analyze the program, you have the choice of having Ghidra asking you  again the next time
+      	you open the program. If you pick the "No" options, Ghidra will continue to ask you to
+      	every time you open the program. If you pick "No (Don't ask again)" Ghidra will never ask you to
+      	analyze the program again, but you can still manually initiate analysis at any time.
+      	If you choose not to have Ghidra ask again, it will set a property in the program called
+      	"Should Ask To Analyze" to false. Since this changes a property in the program, the program
+      	now has changes that need to be saved. </P>
+  	</BLOCKQUOTE>
 
     <H2><A name="Auto_Analysis_Option"></A> <A name=
     "ghidra_app_plugin_analysis_AutoAnalysisPlugin_AnalysisOptionsDialog"></A> <A name=
@@ -199,9 +213,7 @@
 			<LI>Delete - Deletes the currently selected named configuration.</LI>
 		</UL>
     </BLOCKQUOTE>
-  
-    </BLOCKQUOTE>
-
+     </BLOCKQUOTE>
     <H2><A name="Auto_Analyzers"></A>Auto Analyzers</H2>
 
     <BLOCKQUOTE>

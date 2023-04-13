@@ -76,9 +76,7 @@ public class IsolateVariableTask extends RenameTask {
 			}
 			return true;
 		}
-		LocalSymbolMap localSymbolMap = highFunction.getLocalSymbolMap();
-		if (localSymbolMap.containsVariableWithName(newName) ||
-			isSymbolInFunction(function, newName)) {
+		if (isSymbolInFunction(function, newName)) {
 			errorMsg = "Duplicate name";
 			return false;
 		}

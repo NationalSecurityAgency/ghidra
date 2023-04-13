@@ -16,10 +16,12 @@
 /// \file ghidra_arch.hh
 /// \brief Ghidra specific architecture information and connection to a Ghidra client
 
-#ifndef __GHIDRA_ARCH__
-#define __GHIDRA_ARCH__
+#ifndef __GHIDRA_ARCH_HH__
+#define __GHIDRA_ARCH_HH__
 
 #include "architecture.hh"
+
+namespace ghidra {
 
 extern ElementId ELEM_COMMAND_ISNAMEUSED;		///< Marshaling element \<command_isnameused>
 extern ElementId ELEM_COMMAND_GETBYTES;			///< Marshaling element \<command_getbytes>
@@ -166,4 +168,5 @@ public:
   static bool isDynamicSymbolName(const string &nm);		///< Check if name is of form FUN_.. or DAT_..
 };
 
+} // End namespace ghidra
 #endif

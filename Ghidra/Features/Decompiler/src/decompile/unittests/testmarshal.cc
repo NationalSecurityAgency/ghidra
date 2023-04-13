@@ -16,6 +16,8 @@
 #include "translate.hh"
 #include "test.hh"
 
+namespace ghidra {
+
 class TestAddrSpaceManager : public AddrSpaceManager {
 public:
   TestAddrSpaceManager(Translate *t);
@@ -550,3 +552,5 @@ TEST(marshal_bufferpad) {
   ASSERT_EQUALS(nextel,0);
   decoder.closeElement(el);
 }
+
+} // End namespace ghidra

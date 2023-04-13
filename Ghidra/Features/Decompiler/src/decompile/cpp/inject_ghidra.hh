@@ -16,11 +16,13 @@
 /// \file inject_ghidra.hh
 /// \brief P-code injection classes using a Ghidra client as the back-end for generating p-code
 
-#ifndef __INJECT_GHIDRA__
-#define __INJECT_GHIDRA__
+#ifndef __INJECT_GHIDRA_HH__
+#define __INJECT_GHIDRA_HH__
 
 #include "pcodeinject.hh"
 #include "ghidra_arch.hh"
+
+namespace ghidra {
 
 /// \brief An injection context that can be serialized and sent to the Ghidra client
 ///
@@ -91,4 +93,5 @@ public:
   virtual const vector<OpBehavior *> &getBehaviors(void);
 };
 
+} // End namespace ghidra
 #endif

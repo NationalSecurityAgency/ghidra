@@ -146,7 +146,7 @@ public abstract class AbstractClassicProcessor {
 			status = Status.UNSUPPORTED;
 		}
 		else {
-			status = Status.APPLIED;
+			status = Status.APPLIED_OTHER;
 		}
 
 		// put an entry in the relocation table, handled or not

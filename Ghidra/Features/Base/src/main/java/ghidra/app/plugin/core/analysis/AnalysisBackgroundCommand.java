@@ -53,7 +53,7 @@ public class AnalysisBackgroundCommand extends MergeableBackgroundCommand {
 	@Override
 	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
 		if (markAsAnalyzed) {
-			GhidraProgramUtilities.setAnalyzedFlag((Program) obj, true);
+			GhidraProgramUtilities.markProgramAnalyzed((Program) obj);
 		}
 		mgr.startAnalysis(monitor);
 		return true;
@@ -63,12 +63,12 @@ public class AnalysisBackgroundCommand extends MergeableBackgroundCommand {
 	@Override
 	public MergeableBackgroundCommand mergeCommands(MergeableBackgroundCommand command) {
 		SystemUtilities.assertTrue(command instanceof AnalysisBackgroundCommand,
-			"This code assumes that the "
-				+ "two commands are both AnalysisBackgroundCommands and this is not the case.");
+			"This code assumes that the " +
+				"two commands are both AnalysisBackgroundCommands and this is not the case.");
 
 		AnalysisBackgroundCommand abc = (AnalysisBackgroundCommand) command;
-		SystemUtilities.assertTrue(mgr == abc.mgr, "This code assumes that the "
-			+ "managers of the two commands are the same instance and this is not the case.");
+		SystemUtilities.assertTrue(mgr == abc.mgr, "This code assumes that the " +
+			"managers of the two commands are the same instance and this is not the case.");
 
 		// once we encounter a markAsAnalyzed value that is true, then leave it on
 		markAsAnalyzed = markAsAnalyzed | abc.markAsAnalyzed;

@@ -18,6 +18,8 @@
 #include "crc32.hh"
 #include <ctype.h>
 
+namespace ghidra {
+
 AttributeId ATTRIB_CAT = AttributeId("cat",61);
 AttributeId ATTRIB_FIELD = AttributeId("field",62);
 AttributeId ATTRIB_MERGE = AttributeId("merge",63);
@@ -3364,3 +3366,5 @@ void Database::decodeScope(Decoder &decoder,Scope *newScope)
   }
   decoder.closeElement(elemId);
 }
+
+} // End namespace ghidra

@@ -16,11 +16,13 @@
 /// \file ghidra_translate.hh
 /// \brief Class for fetching p-code from a Ghidra client
 
-#ifndef __TRANSLATE_GHIDRA__
-#define __TRANSLATE_GHIDRA__
+#ifndef __GHIDRA_TRANSLATE_HH__
+#define __GHIDRA_TRANSLATE_HH__
 
 #include "translate.hh"
 #include "ghidra_arch.hh"
+
+namespace ghidra {
 
 /// \brief An implementation of Translate that queries a Ghidra client for p-code information
 ///
@@ -53,4 +55,5 @@ public:
     throw LowlevelError("Cannot dump assembly through this interface"); }
 };
 
+} // End namespace ghidra
 #endif

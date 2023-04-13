@@ -15,11 +15,13 @@
  */
 /// \file loadimage_ghidra.hh
 /// \brief Use the Ghidra client as a load image
-#ifndef __LOADIMAGE_GHIDRA__
-#define __LOADIMAGE_GHIDRA__
+#ifndef __LOADIMAGE_GHIDRA_HH__
+#define __LOADIMAGE_GHIDRA_HH__
 
 #include "loadimage.hh"
 #include "ghidra_arch.hh"
+
+namespace ghidra {
 
 class ArchitectureGhidra;
 
@@ -39,4 +41,5 @@ public:
   virtual void adjustVma(long adjust);
 };
 
+} // End namespace ghidra
 #endif

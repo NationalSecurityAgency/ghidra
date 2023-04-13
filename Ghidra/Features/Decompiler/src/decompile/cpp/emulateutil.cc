@@ -16,6 +16,8 @@
 #include "architecture.hh"
 #include "emulateutil.hh"
 
+namespace ghidra {
+
 /// \param g is the Architecture providing the LoadImage
 EmulatePcodeOp::EmulatePcodeOp(Architecture *g)
 
@@ -391,3 +393,5 @@ uintb EmulateSnippet::getTempValue(uintb offset) const
     return 0;
   return (*iter).second;
 }
+
+} // End namespace ghidra

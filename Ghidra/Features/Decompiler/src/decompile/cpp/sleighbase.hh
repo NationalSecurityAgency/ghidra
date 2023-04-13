@@ -15,11 +15,13 @@
  */
 /// \file sleighbase.hh
 /// \brief Base class for applications that process SLEIGH format specifications
-#ifndef __SLEIGHBASE__
-#define __SLEIGHBASE__
+#ifndef __SLEIGHBASE_HH__
+#define __SLEIGHBASE_HH__
 
 #include "translate.hh"
 #include "slghsymbol.hh"
+
+namespace ghidra {
 
 /// \brief class for recording source file information for SLEIGH constructors.
 
@@ -84,4 +86,5 @@ public:
   void saveXml(ostream &s) const;	///< Write out the SLEIGH specification as an XML \<sleigh> tag.
 };
 
+} // End namespace ghidra
 #endif

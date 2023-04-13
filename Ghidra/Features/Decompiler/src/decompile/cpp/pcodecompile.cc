@@ -15,6 +15,8 @@
  */
 #include "pcodecompile.hh"
 
+namespace ghidra {
+
 string Location::format(void) const
 
 {
@@ -778,3 +780,5 @@ VarnodeTpl *PcodeCompile::addressOf(VarnodeTpl *var,uint4 size)
   delete var;
   return res;
 }
+
+} // End namespace ghidra

@@ -16,8 +16,8 @@
  */
 // Use the GNU bfd library to manipulate a load image
 
-#ifndef __LOADIMAGE_BFD__
-#define __LOADIMAGE_BFD__
+#ifndef __LOADIMAGE_BFD_HH__
+#define __LOADIMAGE_BFD_HH__
 
 #include "loadimage.hh"
 
@@ -45,6 +45,8 @@
   #undef PACKAGE_VERSION
   #undef __LOADIMAGE_BFD__DEFINED_PACKAGE_VERSION
 #endif
+
+namespace ghidra {
 
 struct ImportRecord {
   string dllname;
@@ -88,4 +90,5 @@ public:
   virtual void adjustVma(long adjust);
 };
 
+} // End namespace ghidra
 #endif

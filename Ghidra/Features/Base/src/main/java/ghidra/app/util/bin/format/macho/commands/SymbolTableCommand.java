@@ -31,7 +31,6 @@ import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.ProgramModule;
 import ghidra.program.model.symbol.RefType;
 import ghidra.program.model.symbol.Reference;
-import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
@@ -131,7 +130,6 @@ public class SymbolTableCommand extends LoadCommand {
 			return null;
 		}
 		if (index > symbols.size()) {
-			Msg.error(this, "Attempt to get symbols at " + Integer.toHexString(index));
 			return null;
 		}
 		return symbols.get(index);

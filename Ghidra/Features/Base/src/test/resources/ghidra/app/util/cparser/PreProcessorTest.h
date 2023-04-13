@@ -76,13 +76,17 @@
  #define DID_FILE_ISDEF_DEF 1
  #endif
 
-#include "multinclude.h"
+#include <multinclude.h> /* include once */
+
+#include "multinclude.h" /* include twice */
 
 #include "multinclude.h"
 
 #include "multinclude.h"
 
-#include "multinclude.h"
+#define __DEFINED_INCLUDE <defined.h>
+
+#include __DEFINED_INCLUDE /* THIS SHOULD BE IGNORED <> */
 
 #define __TEXT(quote)  quote
 
@@ -219,12 +223,27 @@ int TEST_FAILED;
 
 #define DefVal10 ((0x7fff) * 900L / 1000)
 
-#define DefVal_1L (1L)
-#define DefVal_2l (2l)
-#define DefVal_3U (3U )
-#define DefVal_4u ( 4u)
-#define DefVal_5UL ( 5UL )
-#define DefVal_6ul (6ul)
+#define DefVal_1L	1L
+#define DefVal_2l	2l
+#define DefVal_3U	3U 
+#define DefVal_4u	4u
+#define DefVal_5UL	5UL
+#define DefVal_6ul	6ul
+#define DefVal_7lu	7lu
+#define DefVal_8llu	8llu
+#define DefVal_9ull	9ull
+#define DefVal_10ll	10ll
+
+#define DefVal_P_1L (1L)
+#define DefVal_P_2l (2l)
+#define DefVal_P_3U (3U )
+#define DefVal_P_4u ( 4u)
+#define DefVal_P_5UL ( 5UL )
+#define DefVal_P_6ul (6ul)
+#define DefVal_P_7lu ( 7lu )
+#define DefVal_P_8llu ( 8llu )
+#define DefVal_P_9ull ( 9ull )
+#define DefVal_P_10ll ( 10ll )
 
 #define BIGNUM 64 * 16 + 16
 

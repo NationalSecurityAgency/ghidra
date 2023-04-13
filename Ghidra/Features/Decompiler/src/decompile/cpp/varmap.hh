@@ -16,10 +16,12 @@
 /// \file varmap.hh
 /// \brief Classes for keeping track of local variables and reconstructing stack layout
 
-#ifndef __CPUI_VARMAP__
-#define __CPUI_VARMAP__
+#ifndef __VARMAP_HH__
+#define __VARMAP_HH__
 
 #include "database.hh"
+
+namespace ghidra {
 
 extern AttributeId ATTRIB_LOCK;		///< Marshaling attribute "lock"
 extern AttributeId ATTRIB_MAIN;		///< Marshaling attribute "main"
@@ -250,4 +252,5 @@ public:
   void addTypeRecommendation(const Address &addr,Datatype *dt);		///< Add a new data-type recommendation
 };
 
+} // End namespace ghidra
 #endif

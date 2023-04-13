@@ -16,10 +16,12 @@
 /// \file loadimage.hh
 /// \brief Classes and API for accessing a binary load image
 
-#ifndef __CPUI_LOADIMAGE__
-#define __CPUI_LOADIMAGE__
+#ifndef __LOADIMAGE_HH__
+#define __LOADIMAGE_HH__
 
 #include "address.hh"
+
+namespace ghidra {
 
 /// \brief Exception indicating data was not available
 ///
@@ -224,4 +226,5 @@ inline void LoadImage::getReadonly(RangeList &list) const {
 /// \param size is the number of bytes to retrieve from the image
 /// \param addr is the starting address of the bytes to retrieve
 
+} // End namespace ghidra
 #endif

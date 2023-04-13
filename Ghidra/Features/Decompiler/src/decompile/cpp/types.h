@@ -16,10 +16,12 @@
  */
 /* typedefs for getting specific word sizes */
 
-#ifndef __MYTYPES__
-#define __MYTYPES__
+#ifndef __TYPES_H__
+#define __TYPES_H__
 
 #include <cstdint>
+
+namespace ghidra {
 
 // Use of uintm and intm is deprecated.  They must currently be set to be 32-bit.
 typedef uint32_t uintm;
@@ -93,5 +95,7 @@ CPUI_DEBUG        --    This is the ONE debug switch that should be passed in
 //# define MERGEMULTI_DEBUG
 //# define VARBANK_DEBUG
 #endif
+
+} // End namespace ghidra
 
 #endif

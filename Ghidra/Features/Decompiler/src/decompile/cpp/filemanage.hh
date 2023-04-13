@@ -15,14 +15,16 @@
  */
 // Generic (POSIX) class for searching files and managing paths
 
-#ifndef __FILEMANAGE__
-#define __FILEMANAGE__
+#ifndef __FILEMANAGE_HH__
+#define __FILEMANAGE_HH__
 
 #include <vector>
 #include <string>
 #include <iostream>
 #include <sstream>
 #include <fstream>
+
+namespace ghidra {
 
 using std::vector;
 using std::string;
@@ -49,4 +51,5 @@ public:
   static string discoverGhidraRoot(const char *argv0);
 };
 
+} // End namespace ghidra
 #endif

@@ -15,6 +15,8 @@
  */
 #include "globalcontext.hh"
 
+namespace ghidra {
+
 ElementId ELEM_CONTEXT_DATA = ElementId("context_data",120);
 ElementId ELEM_CONTEXT_POINTS = ElementId("context_points",121);
 ElementId ELEM_CONTEXT_POINTSET = ElementId("context_pointset",122);
@@ -613,3 +615,4 @@ void ContextCache::setContext(const Address &addr1,const Address &addr2,int4 num
     curspace = (AddrSpace *)0;	// Invalidate cache
 }
 
+} // End namespace ghidra

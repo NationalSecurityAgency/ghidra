@@ -260,14 +260,16 @@ public class MachoRelocation {
 		Symbol sym = null;
 		NList nlist = machoHeader.getFirstLoadCommand(SymbolTableCommand.class)
 				.getSymbolAt(relocInfo.getValue());
-		Address addr = space.getAddress(nlist.getValue());
-		sym = program.getSymbolTable()
-				.getSymbol(SymbolUtilities.replaceInvalidChars(nlist.getString(), true), addr,
-					null);
-		if (sym == null) {
-			sym = SymbolUtilities.getLabelOrFunctionSymbol(program, nlist.getString(), err -> {
-				// no logging
-			});
+		if (nlist != null) {
+			Address addr = space.getAddress(nlist.getValue());
+			sym = program.getSymbolTable()
+					.getSymbol(SymbolUtilities.replaceInvalidChars(nlist.getString(), true), addr,
+						null);
+			if (sym == null) {
+				sym = SymbolUtilities.getLabelOrFunctionSymbol(program, nlist.getString(), err -> {
+					// no logging
+				});
+			}
 		}
 		return sym;
 	}

@@ -94,6 +94,16 @@ public class Scalar {
 	}
 
 	/**
+	 * {@return the value, using the specified signedness.  Equivalent to calling getSignedValue()
+	 * or getUnsignedValue()}
+	 * 
+	 * @param signednessOverride true for a signed value, false for an unsigned value
+	 */
+	public long getValue(boolean signednessOverride) {
+		return signednessOverride ? getSignedValue() : value;
+	}
+
+	/**
 	 * Returns the BigInteger representation of the value.
 	 * 
 	 * @return new BigInteger representation of the value

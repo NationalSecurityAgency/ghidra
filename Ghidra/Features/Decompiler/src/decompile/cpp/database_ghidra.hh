@@ -16,11 +16,13 @@
 /// \file database_ghidra.hh
 /// \brief Facilities for retrieving symbol information from a Ghidra client
 
-#ifndef __DATABASE_GHIDRA__
-#define __DATABASE_GHIDRA__
+#ifndef __DATABASE_GHIDRA_HH__
+#define __DATABASE_GHIDRA_HH__
 
 #include "database.hh"
 #include "ghidra_arch.hh"
+
+namespace ghidra {
 
 /// \brief An implementation of the Scope interface by querying a Ghidra client for Symbol information
 ///
@@ -137,4 +139,5 @@ public:
   virtual bool isNameUsed(const string &nm,const Scope *op2) const;
 };
 
+} // End namespace ghidra
 #endif

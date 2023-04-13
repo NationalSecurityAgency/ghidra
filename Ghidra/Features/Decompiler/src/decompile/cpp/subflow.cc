@@ -15,6 +15,8 @@
  */
 #include "subflow.hh"
 
+namespace ghidra {
+
 /// \brief Return \e slot of constant if INT_OR op sets all bits in mask, otherwise -1
 ///
 /// \param orop is the given CPUI_INT_OR op
@@ -2524,3 +2526,5 @@ bool LaneDivide::doTrace(void)
   if (!retval) return false;
   return true;
 }
+
+} // End namespace ghidra

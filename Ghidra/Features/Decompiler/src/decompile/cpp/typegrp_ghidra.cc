@@ -15,6 +15,8 @@
  */
 #include "typegrp_ghidra.hh"
 
+namespace ghidra {
+
 Datatype *TypeFactoryGhidra::findById(const string &n,uint8 id,int4 sz)
 
 {
@@ -32,3 +34,5 @@ Datatype *TypeFactoryGhidra::findById(const string &n,uint8 id,int4 sz)
   ct = decodeType(decoder); // Parse ghidra's type
   return ct;
 }
+
+} // End namespace ghidra

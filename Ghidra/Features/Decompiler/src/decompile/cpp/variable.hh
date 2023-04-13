@@ -16,10 +16,12 @@
 /// \file variable.hh
 /// \brief Definitions for high-level variables
 
-#ifndef __CPUI_TYPEVAR__
-#define __CPUI_TYPEVAR__
+#ifndef __VARIABLE_HH__
+#define __VARIABLE_HH__
 
 #include "varnode.hh"
+
+namespace ghidra {
 
 class Symbol;
 
@@ -291,4 +293,5 @@ inline const Cover &HighVariable::getCover(void) const
   return piece->getCover();
 }
 
+} // End namespace ghidra
 #endif

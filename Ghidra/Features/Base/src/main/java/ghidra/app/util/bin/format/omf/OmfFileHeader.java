@@ -37,6 +37,7 @@ public class OmfFileHeader extends OmfRecord {
 	private ArrayList<OmfFixupRecord> fixup = new ArrayList<OmfFixupRecord>();
 	private ArrayList<OmfSegmentHeader> extraSeg = null;		// Holds implied segments that don't have official header record
 	//	private OmfModuleEnd endModule = null;
+	private boolean format16bit;
 
 	public OmfFileHeader(BinaryReader reader) throws IOException {
 		readRecordHeader(reader);
@@ -65,7 +66,7 @@ public class OmfFileHeader extends OmfRecord {
 	 * @return the string identifying the architecture this object was compiled for
 	 */
 	public String getMachineName() {
-		return "i386";			// This is the only possibility
+		return format16bit ? "16bit" : "32bit";
 	}
 
 	/**
@@ -250,13 +251,13 @@ public class OmfFileHeader extends OmfRecord {
 	 * Scan the object file, for the main header and comment records. Other records are parsed but not saved
 	 * @param reader is the byte stream
 	 * @param monitor is checked for cancellation
-	 * @param initialCommentsOnly  is true if we only want to scan the header and the initial comments,
+	 * @param fastscan is true if we only want to scan the header until first seghead,
 	 * @return the header record
 	 * @throws IOException for problems reading program data
 	 * @throws OmfException for malformed records
 	 */
-	public static OmfFileHeader scan(BinaryReader reader, TaskMonitor monitor,
-			boolean initialCommentsOnly) throws IOException, OmfException {
+	public static OmfFileHeader scan(BinaryReader reader, TaskMonitor monitor, boolean fastscan)
+			throws IOException, OmfException {
 		OmfRecord record = OmfRecord.readRecord(reader);
 		if (!(record instanceof OmfFileHeader)) {
 			throw new OmfException("Object file does not start with proper header");
@@ -274,16 +275,26 @@ public class OmfFileHeader extends OmfRecord {
 			}
 
 			if (record instanceof OmfCommentRecord comment) {
-				byte commentClass = comment.getCommentClass();
-				if (commentClass == OmfCommentRecord.COMMENT_CLASS_TRANSLATOR) {
-					header.translator = comment.getValue();
-				}
-				else if (commentClass == OmfCommentRecord.COMMENT_CLASS_LIBMOD) {
-					header.libModuleName = comment.getValue();
+				switch (comment.getCommentClass()) {
+					case OmfCommentRecord.COMMENT_CLASS_TRANSLATOR:
+						header.translator = comment.getValue();
+						break;
+					case OmfCommentRecord.COMMENT_CLASS_LIBMOD:
+						header.libModuleName = comment.getValue();
+						break;
+					case OmfCommentRecord.COMMENT_CLASS_WATCOM_SETTINGS:
+						header.translator = "Watcom";
+						break;
+					case OmfCommentRecord.COMMENT_CLASS_MICROSOFT_SETTINGS:
+						header.translator = "Microsoft";
+						break;
 				}
 			}
-			else if (initialCommentsOnly) {
-				break;
+			else if (record instanceof OmfSegmentHeader head) {
+				header.format16bit = head.is16Bit();
+				if (fastscan) {
+					break;
+				}
 			}
 		}
 		return header;

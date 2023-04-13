@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef __CPUI_MERGE__
-#define __CPUI_MERGE__
+#ifndef __MERGE_HH__
+#define __MERGE_HH__
 
 /// \file merge.hh
 /// \brief Utilities for merging low-level Varnodes into high-level variables
 
 #include "op.hh"
+
+namespace ghidra {
 
 /// \brief Helper class associating a Varnode with the block where it is defined
 ///
@@ -156,4 +158,5 @@ inline bool Merge::compareHighByBlock(const HighVariable *a,const HighVariable *
   return (result < 0);
 }
 
+} // End namespace ghidra
 #endif

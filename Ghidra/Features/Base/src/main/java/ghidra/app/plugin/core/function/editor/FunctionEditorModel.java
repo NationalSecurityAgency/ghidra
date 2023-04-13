@@ -227,10 +227,10 @@ public class FunctionEditorModel {
 				returnDataTypeSize + "-bytes)";
 			return false;
 		}
-		else if (storageSize > returnDataTypeSize) {
-			statusText = "Too much Return Storage (" + storageSize + "-bytes) for datatype (" +
-				returnDataTypeSize + "-bytes)";
-			return false;
+		else if (storageSize > returnDataTypeSize && storageSize <= 8 && returnDataTypeSize <= 8 &&
+			Undefined.isUndefined(returnInfo.getDataType())) {
+			// grow undefined type size if needed
+			returnInfo.setFormalDataType(Undefined.getUndefinedDataType(storageSize));
 		}
 		return true;
 	}
@@ -298,20 +298,20 @@ public class FunctionEditorModel {
 			return true; // don't constrain float storage size
 		}
 
-		int requiredSize = datatype.getLength();
+		int paramSize = datatype.getLength();
 
-		if (storageSize < requiredSize) {
+		if (storageSize < paramSize) {
 			statusText = "Insufficient storage (" + storageSize + "-bytes) for datatype (" +
-				requiredSize + "-bytes) assigned to parameter " + (param.getOrdinal() + 1);
+				paramSize + "-bytes) assigned to parameter " + (param.getOrdinal() + 1);
 			return false;
 		}
-		else if (requiredSize == 0) {
+		else if (paramSize == 0) {
 			// assume 0-sized structure which we need to allow
 		}
-		else if (storageSize > requiredSize) {
-			statusText = "Too much storage (" + storageSize + "-bytes) for datatype (" +
-				requiredSize + "-bytes) assigned to parameter " + (param.getOrdinal() + 1);
-			return false;
+		else if (storageSize > paramSize && storageSize <= 8 && paramSize <= 8 &&
+			Undefined.isUndefined(param.getDataType())) {
+			// grow undefined type size if needed
+			param.setFormalDataType(Undefined.getUndefinedDataType(storageSize));
 		}
 		return true;
 	}

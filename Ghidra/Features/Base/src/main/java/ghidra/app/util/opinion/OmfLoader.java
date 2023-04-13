@@ -70,6 +70,12 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 		if (record.startsWith("CodeGear")) {
 			return "codegearcpp";
 		}
+		if (record.equals("MS C")) {
+			return "windows";
+		}
+		if (record.startsWith("Watcom")) {
+			return "watcom";
+		}
 		return null;
 	}
 
@@ -156,7 +162,7 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 			message = "Unable to process relocation at " + addr + " with type 0x" +
 				Integer.toHexString(type);
 			program.getBookmarkManager()
-				.setBookmark(addr, BookmarkType.ERROR, "Relocations", message);
+					.setBookmark(addr, BookmarkType.ERROR, "Relocations", message);
 		}
 		else {
 			message = "Badly broken relocation";
@@ -238,10 +244,9 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 							targetAddr += subrec.getTargetDisplacement();
 						locationType = subrec.getLocationType();
 						OmfSegmentHeader seg =
-								header.resolveSegment(fixup.getDataBlock().getSegmentIndex());
+							header.resolveSegment(fixup.getDataBlock().getSegmentIndex());
 						locAddress = seg.getAddress(language)
-								.add(
-									fixup.getDataBlock().getDataOffset() +
+								.add(fixup.getDataBlock().getDataOffset() +
 									subrec.getDataRecordOffset());
 						if (locAddress == null) {
 							log.appendMsg("Couldn't find address for fixup");
@@ -249,74 +254,74 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 						}
 						finalvalue = targetAddr;
 						switch (locationType) {
-						case 0: // Low-order byte
-							origbytes = new byte[1];
-							memory.getBytes(locAddress, origbytes);
-							if (subrec.isSegmentRelative()) {
-								finalvalue += origbytes[0];
-							}
-							else {
-								finalvalue -= (locAddress.getOffset() + 1);
-							}
-							memory.setByte(locAddress, (byte) finalvalue);
-							break;
-						case 1: // 16-bit offset
-						case 5: // 16-bit loader-resolved offset (treated same as 1)
-							origbytes = new byte[2];
-							memory.getBytes(locAddress, origbytes);
-							if (subrec.isSegmentRelative()) {
-								finalvalue += converter.getShort(origbytes);
-							}
-							else {
-								finalvalue -= (locAddress.getOffset() + 2);
-							}
-							memory.setShort(locAddress, (short) finalvalue);
-							break;
-						case 2: // 16-bit base -- logical segment base (selector)
-							if (!subrec.isSegmentRelative()) {
-								// Segment can't be self relative
-								relocationError(program, log, locAddress, locationType);
-								continue;
-							}
-							origbytes = new byte[2];
-							memory.getBytes(locAddress, origbytes);
-							finalvalue += converter.getShort(origbytes) << 4;
-							finalvalue >>= 4; // Convert address to segment
-							memory.setShort(locAddress, (short) finalvalue);
-							break;
-						case 3: // 32-bit far pointer (16-bit segment:16-bit offset)
-							if (!subrec.isSegmentRelative()) {
-								// Far can't be self relative
-								relocationError(program, log, locAddress, locationType);
-								continue;
-							}
-							origbytes = new byte[4];
-							memory.getBytes(locAddress, origbytes);
-							finalvalue += converter.getInt(origbytes);
-							// Convert to segment:offset in 64K blocks 
-							finalvalue =
-									((finalvalue & 0xffff0000L) << 12) | (finalvalue & 0xffff);
-							memory.setInt(locAddress, (int) finalvalue);
-							break;
-						// case 11: // 48-bit far pointer (16-bit segment:32-bit offset)
-						case 4: // High-order byte (high byte of 16-bit offset)
-						case 9: // 32-bit offset
-						case 13: // 32-bit loader-resolved offset (treated same as 9)
-							origbytes = new byte[4];
-							memory.getBytes(locAddress, origbytes);
-							if (subrec.isSegmentRelative()) {
+							case 0: // Low-order byte
+								origbytes = new byte[1];
+								memory.getBytes(locAddress, origbytes);
+								if (subrec.isSegmentRelative()) {
+									finalvalue += origbytes[0];
+								}
+								else {
+									finalvalue -= (locAddress.getOffset() + 1);
+								}
+								memory.setByte(locAddress, (byte) finalvalue);
+								break;
+							case 1: // 16-bit offset
+							case 5: // 16-bit loader-resolved offset (treated same as 1)
+								origbytes = new byte[2];
+								memory.getBytes(locAddress, origbytes);
+								if (subrec.isSegmentRelative()) {
+									finalvalue += converter.getShort(origbytes);
+								}
+								else {
+									finalvalue -= (locAddress.getOffset() + 2);
+								}
+								memory.setShort(locAddress, (short) finalvalue);
+								break;
+							case 2: // 16-bit base -- logical segment base (selector)
+								if (!subrec.isSegmentRelative()) {
+									// Segment can't be self relative
+									relocationError(program, log, locAddress, locationType);
+									continue;
+								}
+								origbytes = new byte[2];
+								memory.getBytes(locAddress, origbytes);
+								finalvalue += converter.getShort(origbytes) << 4;
+								finalvalue >>= 4; // Convert address to segment
+								memory.setShort(locAddress, (short) finalvalue);
+								break;
+							case 3: // 32-bit far pointer (16-bit segment:16-bit offset)
+								if (!subrec.isSegmentRelative()) {
+									// Far can't be self relative
+									relocationError(program, log, locAddress, locationType);
+									continue;
+								}
+								origbytes = new byte[4];
+								memory.getBytes(locAddress, origbytes);
 								finalvalue += converter.getInt(origbytes);
-							}
-							else {
-								finalvalue -= (locAddress.getOffset() + 4);
-							}
-							memory.setInt(locAddress, (int) finalvalue);
-							break;
-						default:
-							log.appendMsg("Unsupported relocation type " +
-								Integer.toString(locationType) + " at 0x" +
-								Long.toHexString(locAddress.getOffset()));
-							break;
+								// Convert to segment:offset in 64K blocks 
+								finalvalue =
+									((finalvalue & 0xffff0000L) << 12) | (finalvalue & 0xffff);
+								memory.setInt(locAddress, (int) finalvalue);
+								break;
+							// case 11: // 48-bit far pointer (16-bit segment:32-bit offset)
+							case 4: // High-order byte (high byte of 16-bit offset)
+							case 9: // 32-bit offset
+							case 13: // 32-bit loader-resolved offset (treated same as 9)
+								origbytes = new byte[4];
+								memory.getBytes(locAddress, origbytes);
+								if (subrec.isSegmentRelative()) {
+									finalvalue += converter.getInt(origbytes);
+								}
+								else {
+									finalvalue -= (locAddress.getOffset() + 4);
+								}
+								memory.setInt(locAddress, (int) finalvalue);
+								break;
+							default:
+								log.appendMsg("Unsupported relocation type " +
+									Integer.toString(locationType) + " at 0x" +
+									Long.toHexString(locAddress.getOffset()));
+								break;
 						}
 					}
 					catch (MemoryAccessException e) {
@@ -334,7 +339,7 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 					long[] values = new long[1];
 					values[0] = finalvalue;
 					program.getRelocationTable()
-						.add(locAddress, Status.APPLIED, locationType, values, origbytes, null);
+							.add(locAddress, Status.APPLIED, locationType, values, origbytes, null);
 				}
 			}
 		}
@@ -371,7 +376,7 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 			if (segmentSize == 0) {
 				continue;
 			}
-			
+
 			if (segment.hasNonZeroData()) {
 				MemoryBlockUtils.createInitializedBlock(program, false, segment.getName(),
 					segmentAddr, segment.getRawDataStream(reader, log), segmentSize, "", "",
@@ -548,7 +553,8 @@ public class OmfLoader extends AbstractProgramWrapperLoader {
 		Map<String, OmfSymbol> publicSymbols = header.getPublicSymbols()
 				.stream()
 				.flatMap(symbolRec -> symbolRec.getSymbols().stream())
-				.collect(Collectors.toMap(sym -> sym.getName(), java.util.function.Function.identity()));
+				.collect(
+					Collectors.toMap(sym -> sym.getName(), java.util.function.Function.identity()));
 
 		monitor.setMessage("Creating External Symbols");
 

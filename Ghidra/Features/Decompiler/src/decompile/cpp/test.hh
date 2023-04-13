@@ -26,12 +26,16 @@
 ///             ASSERT(0.0 < 1.0);
 ///         }
 ///
+#ifndef __TEST_HH__
+#define __TEST_HH__
 
 #include <vector>
 #include <set>
 #include <string>
 #include <sstream>
 #include <iostream>
+
+namespace ghidra {
 
 using std::vector;
 using std::set;
@@ -66,6 +70,7 @@ struct UnitTest {
   static int run(set<string> &testNames);	///< Run all the instantiated tests
 };
 
+} // End namespace ghidra
 
 /// \brief Main unit test macro
 #define TEST(testname)                                                                                                 \
@@ -101,3 +106,5 @@ struct UnitTest {
                   << " != " << ssb.str() << "\"." << endl;                                                          \
         throw 0;                                                                                                       \
     }
+
+#endif

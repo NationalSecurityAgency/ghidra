@@ -878,7 +878,7 @@ public class HeadlessAnalyzer {
 
 					// Get parent folder to pass to GhidraScript
 					File parentFile = new File(c.getResource(c.getSimpleName() + ".class").toURI())
-							.getParentFile();
+						.getParentFile();
 
 					currScript = (GhidraScript) c.getConstructor().newInstance();
 					currScript.setScriptArgs(scriptArgs);
@@ -1019,7 +1019,7 @@ public class HeadlessAnalyzer {
 					mgr.startAnalysis(TaskMonitor.DUMMY); // kick start
 
 					Msg.info(this, "REPORT: Analysis succeeded for file: " + fileAbsolutePath);
-					GhidraProgramUtilities.setAnalyzedFlag(program, true);
+					GhidraProgramUtilities.markProgramAnalyzed(program);
 				}
 				else {
 					HeadlessTimedTaskMonitor timerMonitor =
@@ -1042,7 +1042,7 @@ public class HeadlessAnalyzer {
 						timerMonitor.cancel();
 
 						Msg.info(this, "REPORT: Analysis succeeded for file: " + fileAbsolutePath);
-						GhidraProgramUtilities.setAnalyzedFlag(program, true);
+						GhidraProgramUtilities.markProgramAnalyzed(program);
 					}
 				}
 			}
@@ -1559,7 +1559,7 @@ public class HeadlessAnalyzer {
 					return false;
 				}
 			}
-			
+
 			// Save
 			for (Loaded<Program> loaded : loadResults) {
 				if (!loaded.getDomainObject().isTemporary()) {

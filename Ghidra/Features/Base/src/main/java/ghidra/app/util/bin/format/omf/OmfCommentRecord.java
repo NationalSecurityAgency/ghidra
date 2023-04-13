@@ -27,6 +27,10 @@ public class OmfCommentRecord extends OmfRecord {
 	public static final byte COMMENT_CLASS_LIBMOD = (byte) 0xA3;
 	// Default library cmd
 	public static final byte COMMENT_CLASS_DEFAULT_LIBRARY = (byte) 0x9F;
+	// Watcom compile parameters
+	public static final byte COMMENT_CLASS_WATCOM_SETTINGS = (byte) 0x9b;
+	// Microsoft compile parameters
+	public static final byte COMMENT_CLASS_MICROSOFT_SETTINGS = (byte) 0x9d;
 
 	private byte commentType;
 	private byte commentClass;

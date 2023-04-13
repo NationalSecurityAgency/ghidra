@@ -76,8 +76,8 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testEnumFields() throws Exception {
 		Category c = program.getListing()
-				.getDataTypeManager()
-				.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
+			.getDataTypeManager()
+			.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
 		Enum enumm = createEnum(c, "TestEnum", 1);
 		edit(enumm);
 
@@ -130,8 +130,8 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testEnumSize1() throws Exception {
 		Category category = program.getListing()
-				.getDataTypeManager()
-				.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
+			.getDataTypeManager()
+			.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
 		Enum enumm = createEnum(category, "TestEnum", 1);
 		edit(enumm);
 
@@ -149,22 +149,22 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 		EnumTableModel model = (EnumTableModel) table.getModel();
 
 		assertEquals("New_Name", model.getValueAt(0, NAME_COL));
-		assertEquals("0x0", model.getValueAt(0, VALUE_COL));
+		assertEquals(0L, model.getValueAt(0, VALUE_COL));
 
 		addEnumValue();
 
 		assertEquals("New_Name_(1)", model.getValueAt(1, NAME_COL));
-		assertEquals("0x1", model.getValueAt(1, VALUE_COL));
+		assertEquals(1L, model.getValueAt(1, VALUE_COL));
 
 		addEnumValue();
 
 		assertEquals("New_Name_(2)", model.getValueAt(2, NAME_COL));
-		assertEquals("0x2", model.getValueAt(2, VALUE_COL));
+		assertEquals(2L, model.getValueAt(2, VALUE_COL));
 
 		editValueInTable(1, "0x5");
 
 		// 5 gets moved to the end
-		assertEquals("0x5", model.getValueAt(2, VALUE_COL));
+		assertEquals(5L, model.getValueAt(2, VALUE_COL));
 
 		// apply the change
 		runSwing(() -> applyAction.actionPerformed(new ActionContext()));
@@ -181,8 +181,8 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 	public void testEnumSize1BadInput() throws Exception {
 		// test entering too large a value
 		Category category = program.getListing()
-				.getDataTypeManager()
-				.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
+			.getDataTypeManager()
+			.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
 		Enum enumm = createEnum(category, "TestEnum", 1);
 		edit(enumm);
 
@@ -200,32 +200,32 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 		EnumTableModel model = (EnumTableModel) table.getModel();
 
 		assertEquals("New_Name", model.getValueAt(0, NAME_COL));
-		assertEquals("0x0", model.getValueAt(0, VALUE_COL));
+		assertEquals(0L, model.getValueAt(0, VALUE_COL));
 
 		addEnumValue();
 
 		String editName = "New_Name_(1)";
 		assertEquals(editName, model.getValueAt(1, NAME_COL));
-		assertEquals("0x1", model.getValueAt(1, VALUE_COL));
+		assertEquals(1L, model.getValueAt(1, VALUE_COL));
 
 		addEnumValue();
 
 		assertEquals("New_Name_(2)", model.getValueAt(2, NAME_COL));
-		assertEquals("0x2", model.getValueAt(2, VALUE_COL));
+		assertEquals(2L, model.getValueAt(2, VALUE_COL));
 
 		int row = getRowFor(editName);
 
 		editValueInTable(row, "0x777");
 
 		row = getRowFor(editName); // the row may have changed if we are sorted on the values col
-		assertEquals("0x77", model.getValueAt(row, VALUE_COL));
+		assertEquals(0x77L, model.getValueAt(row, VALUE_COL));
 	}
 
 	@Test
 	public void testEnumSize4BadInput() throws Exception {
 		Category category = program.getListing()
-				.getDataTypeManager()
-				.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
+			.getDataTypeManager()
+			.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
 		Enum enumm = createEnum(category, "MyTestEnum", 4);
 		edit(enumm);
 
@@ -251,32 +251,32 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 		final EnumTableModel model = (EnumTableModel) table.getModel();
 
 		assertEquals("New_Name", model.getValueAt(0, NAME_COL));
-		assertEquals("0x0", model.getValueAt(0, VALUE_COL));
+		assertEquals(0L, model.getValueAt(0, VALUE_COL));
 
 		addEnumValue();
 
 		String editName = "New_Name_(1)";
 		assertEquals(editName, model.getValueAt(1, NAME_COL));
-		assertEquals("0x1", model.getValueAt(1, VALUE_COL));
+		assertEquals(1L, model.getValueAt(1, VALUE_COL));
 
 		addEnumValue();
 
 		assertEquals("New_Name_(2)", model.getValueAt(2, NAME_COL));
-		assertEquals("0x2", model.getValueAt(2, VALUE_COL));
+		assertEquals(2L, model.getValueAt(2, VALUE_COL));
 
 		int row = getRowFor(editName);
 
 		editValueInTable(row, "0xfff777777");
 
 		row = getRowFor(editName); // the row may have changed if we are sorted on the values col
-		assertEquals("0xfff77777", model.getValueAt(row, VALUE_COL));
+		assertEquals(0xfff77777L, model.getValueAt(row, VALUE_COL));
 	}
 
 	@Test
 	public void testBadInputForValue() throws Exception {
 		Category cat = program.getListing()
-				.getDataTypeManager()
-				.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
+			.getDataTypeManager()
+			.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
 		Enum enumm = createEnum(cat, "TestEnum", 1);
 		edit(enumm);
 
@@ -297,15 +297,15 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 		waitForSwing();
 
 		runSwing(() -> editor.stopCellEditing());
-		assertEquals("0x0", model.getValueAt(0, VALUE_COL));
+		assertEquals(0L, model.getValueAt(0, VALUE_COL));
 	}
 
 	@Test
 	public void testEditExistingEnum1() throws Exception {
 
 		Category cat = program.getListing()
-				.getDataTypeManager()
-				.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
+			.getDataTypeManager()
+			.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
 		final Enum enumm = new EnumDataType("Colors", 1);
 		enumm.add("Red", 0);
 		enumm.add("Green", 1);
@@ -368,8 +368,8 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testValueForNewEntry() throws Exception {
 		Category cat = program.getListing()
-				.getDataTypeManager()
-				.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
+			.getDataTypeManager()
+			.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
 		final Enum enumm = new EnumDataType("Colors", 1);
 		enumm.add("Red", 0x10);
 		enumm.add("Green", 0x20);
@@ -394,7 +394,7 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 		});
 		waitForSwing();
 
-		assertEquals("0x31", model.getValueAt(3, VALUE_COL));
+		assertEquals(0x31L, model.getValueAt(3, VALUE_COL));
 	}
 
 	@Test
@@ -762,8 +762,8 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 	public void testChangeEnumSizeAndInStructure() throws Exception {
 
 		Category category = program.getListing()
-				.getDataTypeManager()
-				.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
+			.getDataTypeManager()
+			.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
 		Enum enumm = createEnum(category, "EnumX", 2);
 
 		int transactionID = program.startTransaction("Test");
@@ -832,8 +832,8 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 	public void testChangeEnumDescriptionEtcAndInStructure() throws Exception {
 
 		Category category = program.getListing()
-				.getDataTypeManager()
-				.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
+			.getDataTypeManager()
+			.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
 		Enum enumm = createEnum(category, "EnumX", 2);
 
 		int transactionID = program.startTransaction("Test");
@@ -1140,8 +1140,8 @@ public class EnumEditor1Test extends AbstractGhidraHeadedIntegrationTest {
 
 	private Enum createRedGreenBlueEnum() {
 		Category cat = program.getListing()
-				.getDataTypeManager()
-				.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
+			.getDataTypeManager()
+			.getCategory(new CategoryPath(CategoryPath.ROOT, "Category1"));
 		final Enum enumm = new EnumDataType("Colors", 1);
 		enumm.add("Red", 0);
 		enumm.add("Green", 1);

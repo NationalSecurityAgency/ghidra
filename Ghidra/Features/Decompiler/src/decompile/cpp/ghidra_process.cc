@@ -23,9 +23,12 @@
 #endif
 
 #ifdef __REMOTE_SOCKET__
-
 #include "ifacedecomp.hh"
+#endif
 
+namespace ghidra {
+
+#ifdef __REMOTE_SOCKET__
 
 static IfaceStatus *ghidra_dcp = (IfaceStatus *)0;
 static RemoteSocket *remote = (RemoteSocket *)0;
@@ -502,9 +505,13 @@ void GhidraDecompCapability::initialize(void)
   commandmap["setOptions"] = new SetOptions();
 }
 
+} // End namespace ghidra
+
 int main(int argc,char **argv)
 
 {
+  using namespace ghidra;
+
   signal(SIGSEGV, &ArchitectureGhidra::segvHandler);  // Exit on SEGV errors
 #ifdef _WINDOWS
   // Force i/o streams to be in binary mode
@@ -520,4 +527,3 @@ int main(int argc,char **argv)
   }
   GhidraCapability::shutDown();
 }
-

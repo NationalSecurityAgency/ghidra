@@ -1042,6 +1042,9 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				return resolvedDataType;
 			}
 
+			// TODO: delayed pointer-resolve use of "undefined *" could cause unintended
+			// equivalence match.  May need to use an internal reserved type instead. 
+
 			SourceArchive sourceArchive = dataType.getSourceArchive();
 			if (sourceArchive != null && sourceArchive.getArchiveType() == ArchiveType.BUILT_IN) {
 				resolvedDataType = resolveBuiltIn(dataType, currentHandler);
@@ -1411,6 +1414,15 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			return existingDataType;
 		}
 
+		if (sourceArchive.getSourceArchiveID().equals(getUniversalID())) {
+			// Avoid conflict handling for types with a source which matches
+			// this archive, although a conflict name may still be used.  
+			// This can occur when a semi-mirrored archive instance is used
+			// such as the CompositeViewerDataTypeManager which uses the same 
+			// Archive UniversalID as the edited datatype's source.
+			return createDataType(dataType, sourceArchive, handler);
+		}
+
 		// If we have the same path name and the existing data type is a local data type
 		// and is equivalent to this one, then associate it with the source archive
 		existingDataType = findEquivalentDataTypeSameLocation(dataType);
@@ -1421,7 +1433,7 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 			}
 			return existingDataType;
 		}
-			
+
 		return resolveNoEquivalentFound(dataType, sourceArchive, handler);
 	}
 
@@ -1437,11 +1449,15 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 	private DataType resolveNoEquivalentFound(DataType dataType, SourceArchive sourceArchive,
 			DataTypeConflictHandler handler) {
 
+		if (sourceArchive != null && sourceArchive.getArchiveType() == ArchiveType.PROGRAM) {
+			sourceArchive = null; // do not preserve program as a source archive
+		}
+
 		// If not found, do we have the same named data type in the same category already?
 		// (preference is given to similar kind of datatype when checking existing conflict types)
 		DataType existingDataType = findDataTypeSameLocation(dataType);
 		if (existingDataType == null) {
-			return createDataType(dataType, handler);
+			return createDataType(dataType, sourceArchive, handler);
 		}
 
 		// So we have a dataType with the same path and name, but not equivalent, so use
@@ -1472,15 +1488,15 @@ abstract public class DataTypeManagerDB implements DataTypeManager {
 				}
 
 			case RENAME_AND_ADD: // default handler behavior
-				return createDataType(dataType, handler);
+				return createDataType(dataType, sourceArchive, handler);
 
 			default:  // USE_EXISTING - new type is discarded and old conflicted type is returned
 				return existingDataType;
 		}
 	}
 
-	private DataType createDataType(DataType dataType, DataTypeConflictHandler handler) {
-		SourceArchive sourceArchive = dataType.getSourceArchive();
+	private DataType createDataType(DataType dataType, SourceArchive sourceArchive,
+			DataTypeConflictHandler handler) {
 		String dtName = getUnusedConflictName(dataType);
 		DataType newDataType = createDataType(dataType, dtName, sourceArchive, handler);
 

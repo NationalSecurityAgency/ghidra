@@ -15,6 +15,8 @@
  */
 #include "funcdata.hh"
 
+namespace ghidra {
+
 // Funcdata members pertaining directly to varnodes
 
 /// Properties of a given storage location are gathered from symbol information and
@@ -2044,3 +2046,5 @@ bool AncestorRealistic::execute(PcodeOp *op,int4 slot,ParamTrial *t,bool allowFa
   }
   return false;
 }
+
+} // End namespace ghidra

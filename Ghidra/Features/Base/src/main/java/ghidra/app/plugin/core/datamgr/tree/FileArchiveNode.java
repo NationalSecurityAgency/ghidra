@@ -61,27 +61,4 @@ public class FileArchiveNode extends ArchiveNode {
 	public boolean hasWriteLock() {
 		return fileArchive.hasWriteLock();
 	}
-
-	/**
-	 * Overridden to avoid path conflicts that arise in CategoryNode.equals()
-	 *
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) {
-			return true;
-		}
-		if (getClass() != o.getClass()) {
-			return false;
-		}
-
-		if (super.equals(o)) {
-			ResourceFile myFile = fileArchive.getFile();
-			ResourceFile otherFile = ((FileArchiveNode) o).fileArchive.getFile();
-			return myFile.equals(otherFile);
-		}
-		return false;
-	}
-
 }

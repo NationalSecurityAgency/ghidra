@@ -111,13 +111,13 @@ public class DWARFAttributeFactory {
 				return new DWARFBlobAttribute(reader.readNextByteArray(length));
 			}
 			case DW_FORM_data1:
-				return new DWARFNumericAttribute(8, reader.readNextByte(), true);
+				return new DWARFNumericAttribute(8, reader.readNextByte(), true, true);
 			case DW_FORM_data2:
-				return new DWARFNumericAttribute(16, reader.readNextShort(), true);
+				return new DWARFNumericAttribute(16, reader.readNextShort(), true, true);
 			case DW_FORM_data4:
-				return new DWARFNumericAttribute(32, reader.readNextInt(), true);
+				return new DWARFNumericAttribute(32, reader.readNextInt(), true, true);
 			case DW_FORM_data8:
-				return new DWARFNumericAttribute(64, reader.readNextLong(), true);
+				return new DWARFNumericAttribute(64, reader.readNextLong(), true, true);
 			case DW_FORM_sdata:
 				return new DWARFNumericAttribute(64, reader.readNext(LEB128::signed), true);
 			case DW_FORM_udata:

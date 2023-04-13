@@ -16,8 +16,8 @@
 /// \file ghidra_process.hh
 /// \brief The formal commands that can be issued to the decompiler by the Ghidra client
 
-#ifndef __GHIDRA_PROCESS__
-#define __GHIDRA_PROCESS__
+#ifndef __GHIDRA_PROCESS_HH__
+#define __GHIDRA_PROCESS_HH__
 
 #include "capability.hh"
 #include "ghidra_arch.hh"
@@ -26,6 +26,8 @@
 #include "paramid.hh"
 #include <iostream>
 #include <csignal>
+
+namespace ghidra {
 
 using std::cin;
 using std::cout;
@@ -239,4 +241,5 @@ public:
 extern void connect_to_console(Funcdata *fd);
 #endif
 
+} // End namespace ghidra
 #endif

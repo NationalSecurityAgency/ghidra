@@ -16,6 +16,9 @@
 #include "slghsymbol.hh"
 #include "sleighbase.hh"
 #include <cmath>
+
+namespace ghidra {
+
 using std::log;
 
 SleighSymbol *SymbolScope::addSymbol(SleighSymbol *a)
@@ -2644,3 +2647,5 @@ ContextChange *ContextCommit::clone(void) const
   res->num = num;
   return res;
 }
+
+} // End namespace ghidra

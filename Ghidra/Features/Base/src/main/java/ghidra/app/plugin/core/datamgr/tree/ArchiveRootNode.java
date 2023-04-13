@@ -222,8 +222,8 @@ public class ArchiveRootNode extends DataTypeTreeNode {
 				int index = Collections.binarySearch(allChildrenList, node);
 				if (index < 0) {
 					index = -index - 1;
-					addNode(index, node);
 				}
+				addNode(index, node);
 			}
 		}
 

@@ -15,22 +15,46 @@
  */
 package ghidra.app.util.cparser;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
-import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
 
 import org.junit.Assert;
 import org.junit.Test;
 
-import generic.test.AbstractGenericTest;
 import ghidra.app.util.cparser.C.CParser;
 import ghidra.app.util.cparser.C.ParseException;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.Array;
+import ghidra.program.model.data.BuiltInDataType;
+import ghidra.program.model.data.CategoryPath;
+import ghidra.program.model.data.CharDataType;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataTypeComponent;
+import ghidra.program.model.data.DataTypeConflictHandler;
+import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.data.Enum;
+import ghidra.program.model.data.FunctionDefinition;
+import ghidra.program.model.data.GenericCallingConvention;
+import ghidra.program.model.data.LongLongDataType;
+import ghidra.program.model.data.ParameterDefinition;
+import ghidra.program.model.data.Pointer;
+import ghidra.program.model.data.ShortDataType;
+import ghidra.program.model.data.StandAloneDataTypeManager;
+import ghidra.program.model.data.Structure;
+import ghidra.program.model.data.StructureDataType;
+import ghidra.program.model.data.TypeDef;
+import ghidra.program.model.data.TypedefDataType;
+import ghidra.program.model.data.UnsignedLongDataType;
+import ghidra.program.model.data.UnsignedLongLongDataType;
+import ghidra.program.model.data.UnsignedShortDataType;
+import ghidra.program.model.data.WideCharDataType;
+import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 
-public class CParserTest extends AbstractGenericTest {
+public class CParserTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	public CParserTest() {
 		super();
@@ -94,6 +118,59 @@ public class CParserTest extends AbstractGenericTest {
 		assertTrue(pdt32 instanceof TypeDef);
 		assertTrue(pdt32.getName().equals("uint64_t"));
 		assertEquals(8, pdt32.getLength());
+	}
+	
+	@Test
+	public void testWcharT() throws Exception {
+
+		DataType dt;
+		Structure sdt;
+		DataTypeComponent comp;
+		
+		CParser parser;
+		
+		parser = new CParser();
+		dt = parser.parse("typedef int wchar_t;");
+		
+		assertTrue(dt instanceof WideCharDataType);
+
+		parser = new CParser();
+		dt = parser.parse("struct mystruct {" +
+						  "    wchar_t defined_wchar_t;" +
+				          "};");
+
+		sdt = (Structure) dt;
+		comp = sdt.getComponent(0);
+		assertTrue(comp.getDataType() instanceof WideCharDataType);
+		
+		parser = new CParser();
+		dt = parser.parse("typedef int wchar_t;" +
+		                  "struct mystruct {" +
+				          "    wchar_t defined_wchar_t;" +
+		                  "};");
+		
+		sdt = (Structure) dt;
+		comp = sdt.getComponent(0);
+		assertTrue(comp.getDataType() instanceof WideCharDataType);
+		
+
+		parser = new CParser();
+		dt = parser.parse("typedef short wchar_t;" +
+                                   "  typedef wchar_t foo;");
+
+		assertTrue(dt != null);
+		assertTrue(dt instanceof TypeDef);
+		assertTrue(dt.getName().equals("foo"));
+		assertEquals(2, dt.getLength());
+		assertTrue(((TypeDef) dt).getBaseDataType() instanceof BuiltInDataType);
+
+		parser = new CParser();
+		DataType pdt32 = parser.parse("typedef wchar_t foo;");
+		assertTrue(dt != null);
+		assertTrue(dt instanceof TypeDef);
+		assertTrue(dt.getName().equals("foo"));
+		assertEquals(2, dt.getLength());
+		assertTrue(((TypeDef) dt).getBaseDataType() instanceof BuiltInDataType);
 	}
 
 	@Test

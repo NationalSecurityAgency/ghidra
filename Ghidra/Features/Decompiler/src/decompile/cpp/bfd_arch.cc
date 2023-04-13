@@ -16,6 +16,8 @@
  */
 #include "bfd_arch.hh"
 
+namespace ghidra {
+
 // Constructing this object registers capability
 BfdArchitectureCapability BfdArchitectureCapability::bfdArchitectureCapability;
 
@@ -169,3 +171,5 @@ void BfdArchitecture::restoreXml(DocumentStorage &store)
     SleighArchitecture::restoreXml(store);
   }
 }
+
+} // End namespace ghidra

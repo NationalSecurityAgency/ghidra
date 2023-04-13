@@ -15,6 +15,8 @@
  */
 #include "ifacedecomp.hh"
 
+namespace ghidra {
+
 void FunctionTestProperty::startTest(void) const
 
 {
@@ -346,3 +348,5 @@ int FunctionTestCollection::runTestFiles(const vector<string> &testFiles,ostream
   }
   return totalTestsApplied - totalTestsSucceeded;
 }
+
+} // End namespace ghidra

@@ -16,6 +16,8 @@
 #include "architecture.hh"
 #include "test.hh"
 
+namespace ghidra {
+
 class CircleRangeTestEnvironment {
   Architecture *g;
 public:
@@ -794,3 +796,5 @@ TEST(circlerange_pushsext6) {
 TEST(circlerange_pushsext7) {
   ASSERT(CircleRangeTest::testPushUnary(0,0,4,1, CPUI_INT_SEXT, 2));
 }
+
+} // End namespace ghidra
