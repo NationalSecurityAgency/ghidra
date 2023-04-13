@@ -531,9 +531,19 @@ public class CParserUtils {
 		cpp.addIncludePaths(includePaths);
 
 		PrintStream os = System.out;
-		String fName = dtMgr.getName().replace(".gdt","")+"_CParser.out";
+		
+		String fName = dtMgr.getName();
+		
+		// make a path to tmpdir with name of data type manager
+		String path = System.getProperty("java.io.tmpdir") + File.pathSeparator + fName;
+		// if file data type manager, use path to .gdt file
+		if (dtMgr instanceof FileDataTypeManager) {
+			path = ((FileDataTypeManager) dtMgr).getPath();
+		}
+		path = path + "_CParser.out";
+		
 		try {
-			os = new PrintStream(new FileOutputStream(fName));
+			os = new PrintStream(new FileOutputStream(path));
 		} catch (FileNotFoundException e2) {
 			Msg.error(CParserUtils.class, "Unexpected Exception: " + e2.getMessage(), e2);
 		}
