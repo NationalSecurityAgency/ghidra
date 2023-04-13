@@ -101,7 +101,7 @@ public class DefaultPdbUniversalMember extends PdbMember {
 
 		DataType dt = getDataTypeInternal();
 		if (dt instanceof PdbBitField) {
-			PdbBitField bfDt = (PdbBitField) dataType;
+			PdbBitField bfDt = (PdbBitField) dt;
 			builder.append(", type=");
 			builder.append(bfDt.getBaseDataType().getName());
 			builder.append(", offset=");
@@ -113,7 +113,7 @@ public class DefaultPdbUniversalMember extends PdbMember {
 		}
 		else {
 			builder.append(", type=");
-			builder.append(dataType.getName());
+			builder.append(dt.getName());
 			builder.append(", offset=");
 			builder.append(getOffset());
 		}
