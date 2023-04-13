@@ -329,18 +329,18 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			return false;
 		}
 
-		if (elf.getLoadAdapter().hasFilteredLoadInputStream(this, loadable, start)) {
+		byte[] bytes = new byte[(int) length];
+		int bytesRead;
+		if (loadable.hasFilteredLoadInputStream(this, start)) {
 			// block is unable to map directly to file bytes - read from filtered input stream
-			try (InputStream dataInput =
-				getInitializedBlockInputStream(loadable, start, fileOffset, length)) {
-				byte[] bytes = new byte[(int) length];
-				return dataInput.read(bytes) == bytes.length && isZeroedArray(bytes, bytes.length);
+			try (InputStream is = loadable.getFilteredLoadInputStream(this, start, length, null)) {
+				bytesRead = is.read(bytes);
 			}
 		}
-
-		byte[] bytes = new byte[(int) length];
-		return fileBytes.getModifiedBytes(fileOffset, bytes) == bytes.length &&
-			isZeroedArray(bytes, bytes.length);
+		else {
+			bytesRead = fileBytes.getModifiedBytes(fileOffset, bytes);
+		}
+		return bytesRead == length && isZeroedArray(bytes, bytes.length);
 	}
 
 	@Override
@@ -3332,7 +3332,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			if (elfSectionToLoad.isAlloc() && addr != 0) {
 				AddressSpace loadSpace = getSectionAddressSpace(elfSectionToLoad);
 				if (loadSpace.equals(space)) {
-					long sectionByteLength = elfSectionToLoad.getAdjustedSize(); // size in bytes
+					long sectionByteLength = elf.getLoadAdapter().getAdjustedSize(elfSectionToLoad); // size in bytes
 					long sectionLength = sectionByteLength / space.getAddressableUnitSize();
 					relocStartAddr = Math.max(relocStartAddr, addr + sectionLength);
 				}
@@ -3399,7 +3399,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			throws AddressOutOfBoundsException {
 
 		long addr = elfSectionToLoad.getAddress();
-		long sectionByteLength = elfSectionToLoad.getAdjustedSize(); // size in bytes
+		long sectionByteLength = elf.getLoadAdapter().getAdjustedSize(elfSectionToLoad); // size in bytes
 		long loadOffset = elfSectionToLoad.getOffset(); // file offset in bytes
 		Long nextRelocOffset = null;
 
@@ -3569,22 +3569,6 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		return sym;
 	}
 
-	/**
-	 * Get a suitable input stream for loading a memory block defined by a specified loadable.
-	 * @param loadable Corresponding ElfSectionHeader or ElfProgramHeader for the memory block to be created.
-	 * @param start memory load address
-	 * @param fileOffset byte provider offset
-	 * @param dataLength the in-memory data length in bytes (actual bytes read from dataInput may be more)
-	 * @return input stream for loading memory block
-	 * @throws IOException if failed to obtain input stream
-	 */
-	private InputStream getInitializedBlockInputStream(MemoryLoadable loadable, Address start,
-			long fileOffset, long dataLength) throws IOException {
-		InputStream dataInput = elf.getByteProvider().getInputStream(fileOffset);
-		return elf.getLoadAdapter()
-				.getFilteredLoadInputStream(this, loadable, start, dataLength, dataInput);
-	}
-
 	private String formatFloat(float value, int maxDecimalPlaces) {
 		NumberFormat format = NumberFormat.getNumberInstance();
 		format.setMaximumIntegerDigits(maxDecimalPlaces);
@@ -3642,26 +3626,40 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 //		Msg.debug(this,
 //			"Loading block " + name + " at " + start + " from file offset " + fileOffset);
 
-		long endOffset = fileOffset + revisedLength - 1;
-		if (endOffset >= fileBytes.getSize()) {
+		long compSectOrigSize = loadable instanceof ElfSectionHeader header && header.isCompressed()
+				? header.getSize()
+				: -1;
+
+		String blockComment = comment;
+		if (compSectOrigSize >= 0) {
+			blockComment +=
+				" (decompressed, original length: 0x%x)".formatted(compSectOrigSize);
+		}
+		else if ((fileOffset + revisedLength - 1) >= fileBytes.getSize()) {
+			// ensure valid length for non-compressed items
 			revisedLength = fileBytes.getSize() - fileOffset;
 			log("Truncating block load for " + name + " which exceeds file length");
 		}
-
-		String blockComment = comment;
 		if (dataLength != revisedLength) {
+			// either gt MAX_BINARY_SIZE or gt fileBytes size
 			blockComment += " (section truncated)";
 		}
 
 		MemoryBlock block = null;
 		try {
-			if (elf.getLoadAdapter().hasFilteredLoadInputStream(this, loadable, start)) {
+			if (loadable != null && loadable.hasFilteredLoadInputStream(this, start)) {
 				// block is unable to map directly to file bytes - load from input stream
-				try (InputStream dataInput =
-					getInitializedBlockInputStream(loadable, start, fileOffset, revisedLength)) {
+				try (InputStream is =
+					loadable.getFilteredLoadInputStream(this, start, revisedLength,
+						(errorMsg, th) -> {
+							String loadableTypeStr =
+								compSectOrigSize >= 0 ? "compressed section " : "";
+							log.appendMsg("Error when reading %s[%s]: %s".formatted(loadableTypeStr,
+								name, errorMsg));
+							Msg.error(this, errorMsg, th);
+						})) {
 					block = MemoryBlockUtils.createInitializedBlock(program, isOverlay, name, start,
-						dataInput, revisedLength, blockComment, BLOCK_SOURCE_NAME, r, w, x, log,
-						monitor);
+						is, revisedLength, blockComment, BLOCK_SOURCE_NAME, r, w, x, log, monitor);
 				}
 			}
 			else {
@@ -3674,8 +3672,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		finally {
 			if (block == null) {
 				Address end = start.addNoWrap(revisedLength - 1);
-				log("Unexpected ELF memory bock load conflict when creating '" + name + "' at " +
-					start.toString(true) + "-" + end.toString(true));
+				log("Unexpected ELF memory block load conflict when creating '" + name +
+					"' at " + start.toString(true) + "-" + end.toString(true));
 			}
 		}
 		return block;
