@@ -287,7 +287,6 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 		List<Symbol> vftableSymbols = createMissingVftableSymbols(completeObjectLocatorSymbols);
 		return vftableSymbols;
-
 	}
 
 	/**
@@ -447,8 +446,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			Data baseClassDescriptor = extendedFlatAPI.getDataAt(baseClassDescriptorAddress);
 			if (baseClassDescriptor == null || !baseClassDescriptor.getDataType()
 					.getName()
-					.equals(
-						RTTI_BASE_CLASS_DESCRIPTOR_DATA_NAME)) {
+					.equals(RTTI_BASE_CLASS_DESCRIPTOR_DATA_NAME)) {
 
 				int num1 = extendedFlatAPI.getInt(baseClassDescriptorAddress.add(8));
 				int num2 = extendedFlatAPI.getInt(baseClassDescriptorAddress.add(12));
@@ -531,11 +529,9 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 		Data classHierarchyStructure = extendedFlatAPI.getDataAt(classHierarchyDescriptorAddress);
 
-		if (classHierarchyStructure != null &&
-			classHierarchyStructure.getDataType()
-					.getName()
-					.equals(
-						RTTI_CLASS_HIERARCHY_DESCRIPTOR_DATA_NAME)) {
+		if (classHierarchyStructure != null && classHierarchyStructure.getDataType()
+				.getName()
+				.equals(RTTI_CLASS_HIERARCHY_DESCRIPTOR_DATA_NAME)) {
 			return classHierarchyDescriptorAddress;
 
 		}
@@ -842,8 +838,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	private void createMissingFunctions(List<Symbol> vftableSymbols)
 			throws CancelledException, Exception {
 
-		List<Address> unusedVftableReferences =
-			findVftableReferencesNotInFunction(vftableSymbols);
+		List<Address> unusedVftableReferences = findVftableReferencesNotInFunction(vftableSymbols);
 
 		if (unusedVftableReferences.size() > 0) {
 			extendedFlatAPI.createUndefinedFunctions(unusedVftableReferences);
@@ -1146,8 +1141,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		List<RecoveredClass> classHierarchy = new ArrayList<RecoveredClass>();
 
 		List<Symbol> symbols = extendedFlatAPI.getListOfSymbolsByNameInNamespace(
-			RTTI_BASE_CLASS_ARRAY_LABEL,
-			recoveredClass.getClassNamespace(), false);
+			RTTI_BASE_CLASS_ARRAY_LABEL, recoveredClass.getClassNamespace(), false);
 
 		if (symbols.size() == 1) {
 			Symbol rttiBaseClassSymbol = symbols.get(0);
@@ -1269,7 +1263,6 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			Msg.debug(this, recoveredClass.getName() + " has ambiguous inh type");
 		}
 
-
 	}
 
 	/**
@@ -1336,8 +1329,6 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		makeConstructorsAndDestructorsThiscalls(recoveredClasses);
 
 	}
-
-
 
 	/**
 	 * Method to recover parent information, including class offsets, vbase structure and its offset and address if applicable, and whether
@@ -1495,8 +1486,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 				continue;
 			}
 
-			FillOutStructureCmd fillCmd =
-				new FillOutStructureCmd(program, location, tool);
+			FillOutStructureCmd fillCmd = new FillOutStructureCmd(program, location, tool);
 
 			Address vbtableAddress = getVbtableAddressFromDecompiledFunction(fillCmd, highFunction,
 				recoveredClass, constructor, vbtableOffset);
@@ -1526,8 +1516,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 				continue;
 			}
 
-			FillOutStructureCmd fillCmd =
-				new FillOutStructureCmd(program, location, tool);
+			FillOutStructureCmd fillCmd = new FillOutStructureCmd(program, location, tool);
 
 			Address vbtableAddress = getVbtableAddressFromDecompiledFunction(fillCmd, highFunction,
 				recoveredClass, constructor, vbtableOffset);
@@ -1665,8 +1654,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 				List<RecoveredClass> parents =
 					new ArrayList<RecoveredClass>(recoveredClass.getClassHierarchyMap().keySet());
 				RecoveredClass singleParent = parents.get(0);
-				List<RecoveredClass> grandParents =
-					getParentsWithVirtualFunctions(singleParent);
+				List<RecoveredClass> grandParents = getParentsWithVirtualFunctions(singleParent);
 				// check that they both have vftables 
 				// get their order from the class hierarchy list
 				// first see if it has a parent order map and just make it the same one 
@@ -2200,17 +2188,14 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 		// create pointers to empty vftable structs so they can be added to the class data type
 		// then filled in later
-		Map<Address, DataType> vfPointerDataTypes =
-			createEmptyVfTableStructs(recoveredClass);
+		Map<Address, DataType> vfPointerDataTypes = createEmptyVfTableStructs(recoveredClass);
 
 		// create current class structure and add pointer to vftable, all parent member data strutures, and class member data structure
 		Structure classStruct = null;
 
-		classStruct = createClassStructureUsingRTTI(recoveredClass,
-			vfPointerDataTypes);
+		classStruct = createClassStructureUsingRTTI(recoveredClass, vfPointerDataTypes);
 
 		applyVbtableStructure(recoveredClass);
-
 
 		// Now that we have a class data type
 		// name constructor and destructor functions and put into the class namespace
@@ -2392,8 +2377,8 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 				// if it fits at offset or is at the end and class structure can be grown, 
 				// copy the whole baseClass structure to the class Structure at the given offset
-				EditStructureUtils.addDataTypeToStructure(classStructureDataType,
-						baseClassOffset, baseClassStructure, baseClassStructure.getName(), monitor);
+				EditStructureUtils.addDataTypeToStructure(classStructureDataType, baseClassOffset,
+					baseClassStructure, baseClassStructure.getName(), monitor);
 
 			}
 
@@ -2421,8 +2406,8 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 			// if it fits at offset or is at the end and class structure can be grown, 
 			// copy the whole baseClass structure to the class Structure at the given offset
-			EditStructureUtils.addDataTypeToStructure(classStructureDataType,
-				offset.intValue(), classVftablePointer, CLASS_VTABLE_PTR_FIELD_EXT, monitor);
+			EditStructureUtils.addDataTypeToStructure(classStructureDataType, offset.intValue(),
+				classVftablePointer, CLASS_VTABLE_PTR_FIELD_EXT, monitor);
 		}
 
 		// add the vbtable structure for single inheritance/virt parent case
@@ -2769,25 +2754,23 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	 * @return the newly created jumped to function or null if it cannot be created
 	 */
 	private Function createSplitDeletingDestructorFunction(AddressSetView body) {
-		
+
 		if (body.getNumAddressRanges() != 2) {
 			return null;
 		}
 		AddressRange firstRange = body.getFirstRange();
 		Address maxAddressofFirstRange = firstRange.getMaxAddress();
-		Instruction instructionContaining =
-			api.getInstructionContaining(maxAddressofFirstRange);
+		Instruction instructionContaining = api.getInstructionContaining(maxAddressofFirstRange);
 		if (!instructionContaining.getFlowType().isJump()) {
 			return null;
 		}
 		AddressRange lastRange = body.getLastRange();
 		Address minAddressOfLastRange = lastRange.getMinAddress();
-		Reference reference =
-			api.getReference(instructionContaining, minAddressOfLastRange);
+		Reference reference = api.getReference(instructionContaining, minAddressOfLastRange);
 		if (reference == null) {
 			return null;
 		}
-		instructionContaining.setFlowOverride(FlowOverride.CALL_RETURN);	
+		instructionContaining.setFlowOverride(FlowOverride.CALL_RETURN);
 		Function newFunction = api.createFunction(minAddressOfLastRange, null);
 		return newFunction;
 	}
@@ -2836,4 +2819,3 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	}
 
 }
-
