@@ -355,7 +355,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			return ("There is no open program");
 		}
 
-		if (!GhidraProgramUtilities.isAnalyzedFlagSet(currentProgram)) {
+		if (!GhidraProgramUtilities.isAnalyzed(currentProgram)) {
 			return ("The program has not been analyzed. Please run auto-analysis and make sure " +
 				"the RTTI analzer is one of the analyzers enabled.");
 		}
