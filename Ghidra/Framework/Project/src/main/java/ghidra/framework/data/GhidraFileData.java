@@ -1888,10 +1888,7 @@ public class GhidraFileData {
 
 class VersionIcon implements Icon {
 
-	private static Color VERSION_ICON_COLOR_DARK =
-		new GColor("color.bg.ghidra.file.data.version.icon.dark");
-	private static Color VERSION_ICON_COLOR_LIGHT =
-		new GColor("color.bg.ghidra.file.data.version.icon.light");
+	private static Color VERSION_ICON_COLOR = new GColor("color.bg.icon.versioned");
 
 	private static final int WIDTH = GhidraFileData.ICON_WIDTH;
 	private static final int HEIGHT = GhidraFileData.ICON_HEIGHT;
@@ -1908,9 +1905,8 @@ class VersionIcon implements Icon {
 
 	@Override
 	public void paintIcon(Component c, Graphics g, int x, int y) {
-		g.setColor(VERSION_ICON_COLOR_LIGHT);
+		g.setColor(VERSION_ICON_COLOR);
 		g.fillRect(x + 1, y + 1, WIDTH - 2, HEIGHT - 2);
-		g.setColor(VERSION_ICON_COLOR_DARK);
 		g.drawLine(x + 1, y, x + WIDTH - 2, y);
 		g.drawLine(x + WIDTH - 1, y + 1, x + WIDTH - 1, y + HEIGHT - 2);
 		g.drawLine(x + 1, y + HEIGHT - 1, x + WIDTH - 2, y + HEIGHT - 1);

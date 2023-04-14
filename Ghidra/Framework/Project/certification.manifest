@@ -19,7 +19,6 @@ src/main/java/ghidra/framework/plugintool/package.html||GHIDRA||||END|
 src/main/java/ghidra/framework/plugintool/util/package.html||GHIDRA||||END|
 src/main/java/ghidra/framework/project/package.html||GHIDRA||||END|
 src/main/java/ghidra/framework/project/tool/package.html||GHIDRA||||END|
-src/main/resources/images/Minus.png||GHIDRA||||END|
 src/main/resources/images/applications-development-web.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/images/applications-science.png||Oxygen Icons - LGPL 3.0||||END|
 src/main/resources/images/checkNotLatest.gif||GHIDRA||reviewed||END|

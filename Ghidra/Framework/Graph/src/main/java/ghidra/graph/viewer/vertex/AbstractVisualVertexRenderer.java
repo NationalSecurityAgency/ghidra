@@ -122,8 +122,7 @@ public class AbstractVisualVertexRenderer<V extends VisualVertex, E extends Visu
 
 		Paint oldPaint = g.getPaint();
 
-		Color yellowWithTransparency = HIGHLIGHT_COLOR;
-		g.setPaint(yellowWithTransparency);
+		g.setPaint(HIGHLIGHT_COLOR);
 
 		int offset = 10;
 

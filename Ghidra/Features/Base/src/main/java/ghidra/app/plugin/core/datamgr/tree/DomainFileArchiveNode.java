@@ -115,7 +115,7 @@ public class DomainFileArchiveNode extends ArchiveNode {
 	public Icon getIcon(boolean expanded) {
 
 		Icon baseIcon = archive.getIcon(expanded);
-		BackgroundIcon bgIcon = new BackgroundIcon(24, 16, isVersioned);
+		DtBackgroundIcon bgIcon = new DtBackgroundIcon(isVersioned);
 		MultiIcon multiIcon = new MultiIcon(bgIcon);
 		multiIcon.addIcon(baseIcon);
 

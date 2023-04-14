@@ -39,7 +39,7 @@ public class RepositoryCustomScreenShots extends GhidraScreenShotGenerator {
 	@Test
 	public void testMultiUser() {
 		image = createEmptyImage(800, 600);
-		Color purple = Palette.getColor("fuchsia");
+		Color purple = Palette.getColor("magenta");
 		Color green = Palette.LIME;
 		int y = 50;
 		int x = 450;

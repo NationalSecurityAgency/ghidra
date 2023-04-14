@@ -5,7 +5,6 @@
 Module.manifest||GHIDRA||||END|
 build.files/buildLocalHelp.xml||GHIDRA||||END|
 data/help.theme.properties||GHIDRA||||END|
-src/main/resources/help/shared/arrow.gif||GHIDRA||||END|
 src/main/resources/help/shared/close16.gif||GHIDRA||||END|
 src/main/resources/help/shared/note.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|
 src/main/resources/help/shared/note.yellow.png||Oxygen Icons - LGPL 3.0|||Oxygen icon theme (dual license; LGPL or CC-SA-3.0)|END|

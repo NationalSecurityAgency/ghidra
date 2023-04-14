@@ -22,7 +22,7 @@ import javax.swing.JTree;
 import javax.swing.tree.TreePath;
 
 import docking.widgets.tree.support.GTreeRenderer;
-import generic.theme.GThemeDefaults.Colors.Tables;
+import generic.theme.GColor;
 import generic.theme.Gui;
 import ghidra.app.plugin.core.debug.gui.objects.DebuggerObjectsProvider;
 import ghidra.app.plugin.core.debug.gui.objects.ObjectContainer;
@@ -31,6 +31,8 @@ import ghidra.dbg.target.TargetExecutionStateful.TargetExecutionState;
 import ghidra.dbg.target.TargetObject;
 
 class ObjectTreeCellRenderer extends GTreeRenderer {
+
+	private static final Color COLOR_FOREGROUND_SELECTION = new GColor("color.fg.tree.selected");
 	private static final String FONT_ID = "font.debugger.object.tree.renderer";
 
 	private final DebuggerObjectsProvider provider;
@@ -51,7 +53,7 @@ class ObjectTreeCellRenderer extends GTreeRenderer {
 			TargetObject targetObject = container.getTargetObject();
 			if (container.isSubscribed()) {
 				Color color = provider.COLOR_FOREGROUND_SUBSCRIBED;
-				if (!color.equals(Tables.FG_UNSELECTED)) {
+				if (!color.equals(getTextNonSelectionColor())) {
 					component.setForeground(color);
 				}
 			}
@@ -86,7 +88,7 @@ class ObjectTreeCellRenderer extends GTreeRenderer {
 				if (last instanceof ObjectNode) {
 					ObjectContainer selection = ((ObjectNode) last).getContainer();
 					if (container.equals(selection)) {
-						component.setForeground(Tables.FG_SELECTED);
+						component.setForeground(COLOR_FOREGROUND_SELECTION);
 					}
 				}
 			}

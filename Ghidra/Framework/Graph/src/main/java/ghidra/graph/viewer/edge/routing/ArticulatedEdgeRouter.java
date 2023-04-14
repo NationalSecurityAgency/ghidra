@@ -343,7 +343,7 @@ class ArticulatedEdgeRouter<V extends VisualVertex, E extends VisualEdge<V>>
 			return Palette.GREEN;
 		}
 		if (isTrueEdge(edge)) {
-			return new GColor("color.palette.darkblue");
+			return new GColor("color.palette.navy");
 		}
 		return new GColor("color.palette.dodgerblue");
 	}

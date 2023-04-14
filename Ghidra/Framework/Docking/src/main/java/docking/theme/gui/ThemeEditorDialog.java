@@ -47,6 +47,7 @@ public class ThemeEditorDialog extends DialogComponentProvider {
 	private ThemeFontTable fontTable;
 	private ThemeIconTable iconTable;
 	private ThemeColorTree colorTree;
+	private ThemeColorTable paletteTable;
 
 	private ThemeManager themeManager;
 
@@ -90,7 +91,8 @@ public class ThemeEditorDialog extends DialogComponentProvider {
 		DockingAction reloadDefaultsAction = new ActionBuilder("Restore Theme Values", getTitle())
 				.toolBarIcon(new GIcon("icon.refresh"))
 				.toolBarGroup("B")
-				.description("Reloads default values and restores theme to its original values.")
+				.description("Reloads default values from the filesystem and restores the " +
+					"original theme values.")
 				.helpLocation(new HelpLocation("Theming", "Reload_Theme"))
 				.onAction(e -> restoreCallback())
 				.build();
@@ -151,6 +153,7 @@ public class ThemeEditorDialog extends DialogComponentProvider {
 	private void reset() {
 		colorTree.rebuild();
 		colorTable.reloadAll();
+		paletteTable.reloadAll();
 		fontTable.reloadAll();
 		iconTable.reloadAll();
 		updateButtons();
@@ -177,6 +180,7 @@ public class ThemeEditorDialog extends DialogComponentProvider {
 			}
 			colorTree.rebuild();
 			colorTable.reloadAll();
+			paletteTable.reloadAll();
 			fontTable.reloadAll();
 			iconTable.reloadAll();
 		});
@@ -233,11 +237,13 @@ public class ThemeEditorDialog extends DialogComponentProvider {
 		iconTable = new ThemeIconTable(themeManager, valuesCache);
 		fontTable = new ThemeFontTable(themeManager, valuesCache);
 		colorTree = new ThemeColorTree(themeManager);
+		paletteTable = new ThemeColorPaletteTable(themeManager, valuesCache);
 
 		tabbedPane.add("Colors", colorTable);
 		tabbedPane.add("Fonts", fontTable);
 		tabbedPane.add("Icons", iconTable);
 		tabbedPane.add("Color Tree", colorTree);
+		tabbedPane.add("Palette", paletteTable);
 
 		return tabbedPane;
 	}
@@ -293,6 +299,7 @@ public class ThemeEditorDialog extends DialogComponentProvider {
 			if (event.hasAnyColorChanged()) {
 				colorTable.reloadCurrent();
 				colorTree.rebuild();
+				paletteTable.reloadCurrent();
 			}
 			if (event.hasAnyFontChanged()) {
 				fontTable.reloadCurrent();
@@ -300,6 +307,7 @@ public class ThemeEditorDialog extends DialogComponentProvider {
 			if (event.hasAnyIconChanged()) {
 				iconTable.reloadCurrent();
 			}
+
 			updateButtons();
 		}
 	}

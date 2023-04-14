@@ -67,7 +67,7 @@ public class ThemeColorTree extends JPanel implements ActionContextProvider {
 	}
 
 	private Component buildBinCombo() {
-		groupingCombo = new JComboBox<GroupingStrategy>(GroupingStrategy.values());
+		groupingCombo = new JComboBox<>(GroupingStrategy.values());
 		groupingCombo.setSelectedItem(GroupingStrategy.BIN_64);
 		groupingCombo.addItemListener(this::comboChanged);
 		return groupingCombo;
@@ -79,7 +79,7 @@ public class ThemeColorTree extends JPanel implements ActionContextProvider {
 
 	private Component buildSortCombo() {
 		ColorSorter[] sorters = { RGB, RBG, GRB, GBR, BRG, BGR };
-		colorSortCombo = new JComboBox<ColorSorter>(sorters);
+		colorSortCombo = new JComboBox<>(sorters);
 		colorSortCombo.addItemListener(this::comboChanged);
 		return colorSortCombo;
 	}
@@ -326,25 +326,25 @@ public class ThemeColorTree extends JPanel implements ActionContextProvider {
 			GroupingStrategy grouping = (GroupingStrategy) groupingCombo.getSelectedItem();
 			switch (grouping) {
 				case REF:
-					return new ArrayList<GTreeNode>(nodes);
+					return new ArrayList<>(nodes);
 				case SAME_COLORS:
 					List<ColorNode> grouped = groupSameColors(nodes);
-					return new ArrayList<GTreeNode>(grouped);
+					return new ArrayList<>(grouped);
 				case BIN_8:
 					bins = 8;
 					grouped = groupSameColors(nodes);
 					List<ColorNode> binned = binColors(grouped, bins);
-					return new ArrayList<GTreeNode>(binned);
+					return new ArrayList<>(binned);
 				case BIN_64:
 					bins = 64;
 					grouped = groupSameColors(nodes);
 					binned = binColors(grouped, bins);
-					return new ArrayList<GTreeNode>(binned);
+					return new ArrayList<>(binned);
 				case BIN_512:
 					bins = 512;
 					grouped = groupSameColors(nodes);
 					binned = binColors(grouped, bins);
-					return new ArrayList<GTreeNode>(binned);
+					return new ArrayList<>(binned);
 				default:
 					return new ArrayList<>();
 			}
@@ -361,6 +361,10 @@ public class ThemeColorTree extends JPanel implements ActionContextProvider {
 				if (colorNode.isIndirect()) {
 					String refId = colorNode.getReferenceId();
 					ColorValueNode parent = idMap.get(refId);
+					if (parent == null) {
+						// this implies the user has changed id names and refreshed the tool
+						continue;
+					}
 					parent.addNode(colorNode);
 				}
 				else {
