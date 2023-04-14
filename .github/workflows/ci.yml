@@ -1,0 +1,104 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches:
+      - 'amp/main'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  GRADLE_VERSION: 8.1
+  JAVA_VERSION: 17
+
+jobs:
+  build-natives:
+    name: Build Native - ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - target: linux_x86_64
+            os: ubuntu-latest
+          - target: mac_x86_64
+            os: macos-latest
+      fail-fast: true
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+      - name: Fetch deps
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-version: ${{ env.GRADLE_VERSION }}
+          cache-read-only: ${{ !startsWith(github.ref, 'refs/heads/amp/main') }}
+          arguments: --parallel -I gradle/support/fetchDependencies.gradle init
+      - name: Build natives
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-version: ${{ env.GRADLE_VERSION }}
+          cache-read-only: ${{ !startsWith(github.ref, 'refs/heads/amp/main') }}
+          arguments: --parallel buildNatives_${{ matrix.target }}
+      - name: Tar the binaries
+        run: tar -cvf "${{matrix.target}}.build.tar" $(find . -path "*/build/os/${{ matrix.target }}/*" -type f)
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: natives-${{ matrix.target }}
+          path: "${{matrix.target}}.build.tar"
+          retention-days: 1
+  build-java:
+    name: Build Java
+    needs: [build-natives]
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+      - name: Download linux_x86_64
+        uses: actions/download-artifact@v3
+        with:
+          name: natives-linux_x86_64
+      - name: Download mac_x86_64
+        uses: actions/download-artifact@v3
+        with:
+          name: natives-mac_x86_64
+      - name: Extract all binaries
+        run: |
+          for file in *.build.tar; do
+            echo "Extracting $file"
+            tar xvf "$file"
+          done
+      - name: Fetch deps
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-version: ${{ env.GRADLE_VERSION }}
+          cache-read-only: ${{ !startsWith(github.ref, 'refs/heads/amp/main') }}
+          arguments: --parallel -I gradle/support/fetchDependencies.gradle init
+      - name: Build multiplatform release
+        uses: gradle/gradle-build-action@v2
+        with:
+          gradle-version: ${{ env.GRADLE_VERSION }}
+          cache-read-only: ${{ !startsWith(github.ref, 'refs/heads/amp/main') }}
+          arguments: --parallel -PallPlatforms buildGhidra -x ip
+      - name: Upload multiplatform build
+        uses: actions/upload-artifact@v3
+        with:
+          name: ghidra
+          path: "build/dist/*"
+          retention-days: 7
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: "build/dist/*"
