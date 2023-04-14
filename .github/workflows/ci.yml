@@ -1,0 +1,48 @@
+name: CI
+on:
+  release:
+    types:
+      - published
+  
+  pull_request:
+  push:
+    branches:
+      - 'main'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-natives:
+    name: Build Native - ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      matrix:
+        include:
+          - target: linux_x86_64
+            os: ubuntu-latest
+          - target: mac_x86_64
+            os: macos-latest
+      fail-fast: true
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: 17
+      - name: Fetch deps
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: -I gradle/support/fetchDependencies.gradle init
+      - name: Build natives
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: buildNatives_${{ matrix.target }}
+      - name: Tar the binaries
+        run: tar -cvf "${{matrix.target}}.build.tar" $(find . -path "*/build/os/${{ matrix.target }}/*" -type f)
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: natives-${{ matrix.target }}
+          path: "${{matrix.target}}.build.tar"
