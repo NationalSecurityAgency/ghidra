@@ -22,21 +22,27 @@ import javax.swing.Icon;
 import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors.Palette;
 
-class BackgroundIcon implements Icon {
+/**
+ * An icon used by the data types tree to uniformly space all icons.  Clients of versioned objects
+ * can signal that this icon can paint a custom background.
+ */
+public class DtBackgroundIcon implements Icon {
 
-	private static Color VERSION_ICON_COLOR_LINE = new GColor("color.bg.tree.renderer.icon.line");
-	private static Color VERSION_ICON_COLOR_LIGHT = new GColor("color.bg.tree.renderer.icon.fill");
+	private static Color VERSION_ICON_COLOR = new GColor("color.bg.icon.versioned");
 
 	private static Color ALPHA = Palette.NO_COLOR;
 
-	private int width;
-	private int height;
-	private boolean isVersioned;
+	private Color bgColor = Palette.NO_COLOR;
 
-	BackgroundIcon(int width, int height, boolean isVersioned) {
-		this.width = width;
-		this.height = height;
-		this.isVersioned = isVersioned;
+	private int width = 24;
+	private int height = 16;
+
+	DtBackgroundIcon() {
+		this(false);
+	}
+
+	DtBackgroundIcon(boolean isVersioned) {
+		this.bgColor = isVersioned ? VERSION_ICON_COLOR : ALPHA;
 	}
 
 	@Override
@@ -51,18 +57,11 @@ class BackgroundIcon implements Icon {
 
 	@Override
 	public void paintIcon(Component c, Graphics g, int x, int y) {
-		if (isVersioned) {
-			g.setColor(VERSION_ICON_COLOR_LIGHT);
-			g.fillRect(x + 1, y + 1, width - 2, height - 2);
-			g.setColor(VERSION_ICON_COLOR_LINE);
-			g.drawLine(x + 1, y, x + width - 2, y);
-			g.drawLine(x + width - 1, y + 1, x + width - 1, y + height - 2);
-			g.drawLine(x + 1, y + height - 1, x + width - 2, y + height - 1);
-			g.drawLine(x, y + 1, x, y + height - 2);
-		}
-		else {
-			g.setColor(ALPHA);
-			g.fillRect(x, y, width, height);
-		}
+		g.setColor(bgColor);
+		g.fillRect(x + 1, y + 1, width - 2, height - 2);
+		g.drawLine(x + 1, y, x + width - 2, y);
+		g.drawLine(x + width - 1, y + 1, x + width - 1, y + height - 2);
+		g.drawLine(x + 1, y + height - 1, x + width - 2, y + height - 1);
+		g.drawLine(x, y + 1, x, y + height - 2);
 	}
 }

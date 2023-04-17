@@ -42,35 +42,35 @@ public class AutoAnalysisPluginScreenShots extends GhidraScreenShotGenerator {
 	@Test
 	public void testAutoAnalysis() {
 		Color darkGreen = Palette.GREEN;
-		Color darkBlue = Palette.getColor("darkblue");
+		Color navy = Palette.getColor("navy");
 		image = new BufferedImage(700, 400, BufferedImage.TYPE_INT_ARGB);
 		Graphics g = image.getGraphics();
 		g.setColor(Colors.BACKGROUND);
 		g.fillRect(0, 0, 700, 400);
 
 		drawText("(1) User Disassembles Code", Colors.FOREGROUND, new Point(160, 30), 24);
-		drawArrow(darkBlue, new Point(325, 35), new Point(325, 70));
+		drawArrow(navy, new Point(325, 35), new Point(325, 70));
 		drawText("(new code)", darkGreen, new Point(270, 90), 24);
 
 		drawText("(2) Function Analyzer", Colors.FOREGROUND, new Point(0, 150), 24);
-		drawArrow(darkBlue, new Point(265, 82), new Point(180, 120));
+		drawArrow(navy, new Point(265, 82), new Point(180, 120));
 		drawText("(new function)", darkGreen, new Point(100, 190), 24);
 
 		drawText("(3) Stack Analyzer", Colors.FOREGROUND, new Point(10, 230), 24);
-		drawArrow(darkBlue, new Point(50, 155), new Point(50, 205));
+		drawArrow(navy, new Point(50, 155), new Point(50, 205));
 
 		drawText("(4) Operand Analyzer", Colors.FOREGROUND, new Point(180, 290), 24);
-		drawArrow(darkBlue, new Point(300, 94), new Point(300, 260));
+		drawArrow(navy, new Point(300, 94), new Point(300, 260));
 		drawText("(5) Data Reference Analyzer", Colors.FOREGROUND, new Point(280, 350), 24);
-		drawArrow(darkBlue, new Point(350, 94), new Point(490, 325));
+		drawArrow(navy, new Point(350, 94), new Point(490, 325));
 
 		Point p1 = new Point(447, 355);
 		Point p2 = new Point(447, 395);
 		Point p3 = new Point(690, 395);
 
-		drawLine(darkBlue, 3, p1, p2);
-		drawLine(darkBlue, 3, p2, p3);
-		drawArrow(darkBlue, p3, new Point(404, 88));
+		drawLine(navy, 3, p1, p2);
+		drawLine(navy, 3, p2, p3);
+		drawArrow(navy, p3, new Point(404, 88));
 	}
 
 	@Test

@@ -57,23 +57,14 @@ import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.Msg;
 
-@PluginInfo(
-	shortDescription = "Compare memory state between times in a trace",
-	description = "Provides a side-by-side diff view between snapshots (points in time) in a " +
-		"trace. The comparison is limited to raw bytes.",
-	category = PluginCategoryNames.DEBUGGER,
-	packageName = DebuggerPluginPackage.NAME,
-	status = PluginStatus.RELEASED,
-	eventsConsumed = {
+@PluginInfo(shortDescription = "Compare memory state between times in a trace", description = "Provides a side-by-side diff view between snapshots (points in time) in a " +
+	"trace. The comparison is limited to raw bytes.", category = PluginCategoryNames.DEBUGGER, packageName = DebuggerPluginPackage.NAME, status = PluginStatus.RELEASED, eventsConsumed = {
 		TraceClosedPluginEvent.class,
-	},
-	eventsProduced = {},
-	servicesRequired = {
+	}, eventsProduced = {}, servicesRequired = {
 		DebuggerListingService.class,
-	},
-	servicesProvided = {})
+	}, servicesProvided = {})
 public class DebuggerTraceViewDiffPlugin extends AbstractDebuggerPlugin {
-	static final Color COLOR_DIFF = new GColor("color.bg.debugger.diff.marker");
+	static final Color COLOR_DIFF = new GColor("color.bg.highlight.listing.diff");
 
 	protected static final String MARKER_NAME = "Trace Diff";
 	protected static final String MARKER_DESCRIPTION = "Difference between snapshots in this trace";

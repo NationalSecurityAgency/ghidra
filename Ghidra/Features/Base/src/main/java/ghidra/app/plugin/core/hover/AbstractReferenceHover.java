@@ -24,8 +24,8 @@ import javax.swing.JToolTip;
 
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
-import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors;
+import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.plugin.core.gotoquery.GoToHelper;
 import ghidra.app.services.CodeFormatService;
 import ghidra.app.util.*;
@@ -47,7 +47,7 @@ public abstract class AbstractReferenceHover extends AbstractConfigurableHover {
 
 	private static final int WINDOW_OFFSET = 50;
 	private static final Color BACKGROUND_COLOR = Colors.BG_TOOLTIP;
-	private static final Color FG_COLOR_NOT_IN_MEMORY = new GColor("color.fg.hint");
+	private static final Color FG_COLOR_NOT_IN_MEMORY = Messages.HINT;
 
 	private CodeFormatService codeFormatService;
 	private ListingPanel panel;

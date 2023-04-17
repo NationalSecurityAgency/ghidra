@@ -30,6 +30,7 @@ import org.osgi.framework.Bundle;
 import docking.widgets.table.*;
 import generic.jar.ResourceFile;
 import generic.theme.GColor;
+import generic.theme.GThemeDefaults.Colors;
 import generic.util.Path;
 import ghidra.docking.settings.Settings;
 import ghidra.framework.plugintool.ServiceProvider;
@@ -45,7 +46,7 @@ public class BundleStatusTableModel
 		extends GDynamicColumnTableModel<BundleStatus, List<BundleStatus>> {
 
 	//@formatter:off
-	private static final Color COLOR_BUNDLE_ERROR = new GColor("color.fg.error");
+	private static final Color COLOR_BUNDLE_ERROR = Colors.ERROR;
 	private static final Color COLOR_BUNDLE_DISABLED = new GColor("color.fg.table.bundle.disabled");
 	private static final Color COLOR_BUNDLE_BUSY = new GColor("color.fg.table.bundle.busy");
 	private static final Color COLOR_BUNDLE_INACTIVE = new GColor("color.fg.table.bundle.inactive");

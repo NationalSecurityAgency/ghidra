@@ -38,7 +38,7 @@ public class FileArchiveNode extends ArchiveNode {
 
 	@Override
 	public Icon getIcon(boolean expanded) {
-		BackgroundIcon bgIcon = new BackgroundIcon(24, 16, false);
+		DtBackgroundIcon bgIcon = new DtBackgroundIcon();
 		MultiIcon multiIcon = new MultiIcon(bgIcon);
 		boolean hasWriteLock = fileArchive.hasWriteLock();
 		Icon baseIcon = fileArchive.getIcon(expanded);

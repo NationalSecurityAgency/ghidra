@@ -23,21 +23,54 @@ import java.util.List;
 
 import javax.swing.*;
 import javax.swing.colorchooser.AbstractColorChooserPanel;
+import javax.swing.plaf.ColorChooserUI;
 
 public class GhidraColorChooser extends JColorChooser {
 
 	private static final String DEFAULT_TITLE = "Please Choose a Color";
 
 	private String title = DEFAULT_TITLE;
-	private RecentColorCache recentColorCache = new RecentColorCache();
+	private RecentColorCache historyColorCache = new RecentColorCache();
+	private List<Color> recentColors = new ArrayList<>();
 	private String activeTabName;
 
 	public GhidraColorChooser() {
 		super();
+
+		init();
 	}
 
 	public GhidraColorChooser(Color initialColor) {
 		super(initialColor);
+
+		init();
+	}
+
+	@Override
+	public void setUI(ColorChooserUI ui) {
+		List<Color> history = getColorHistory();
+		List<Color> recents = getRecentColors();
+
+		super.setUI(ui);
+		SettableColorSwatchChooserPanel swatchPanel = installSettableColorSwatchChooserPanel();
+
+		swatchPanel.setRecentColors(recents);
+		swatchPanel.setHistoryColors(history);
+	}
+
+	private void init() {
+		JTabbedPane tabbedPane = findTabbedPane(this);
+		tabbedPane.addChangeListener(e -> {
+
+			if (!tabbedPane.isShowing()) {
+				return;
+			}
+
+			int n = tabbedPane.getSelectedIndex();
+			if (n != -1) {
+				activeTabName = tabbedPane.getTitleAt(n);
+			}
+		});
 	}
 
 	public void setTitle(String title) {
@@ -45,19 +78,58 @@ public class GhidraColorChooser extends JColorChooser {
 	}
 
 	public void addColorToHistory(Color c) {
-		recentColorCache.addColor(c);
-		maybeInstallSettableColorSwatchChooserPanel();
+		historyColorCache.addColor(c);
+		installHistoryColors();
 	}
 
 	public void setColorHistory(List<Color> colors) {
 		for (Color color : colors) {
-			recentColorCache.addColor(color);
+			historyColorCache.addColor(color);
 		}
-		maybeInstallSettableColorSwatchChooserPanel();
+
+		installHistoryColors();
 	}
 
 	public List<Color> getColorHistory() {
-		return recentColorCache.getMRUColorList();
+		SettableColorSwatchChooserPanel swatchPanel = getCustomSwatchPanel();
+		if (swatchPanel != null) {
+			return swatchPanel.getHistoryColors();
+		}
+		if (historyColorCache != null) { // null during init
+			return historyColorCache.getMRUColorList();
+		}
+		return Collections.emptyList();
+	}
+
+	public void setRecentColors(List<Color> colors) {
+		recentColors.clear();
+		if (colors != null) {
+			recentColors.addAll(colors);
+		}
+
+		installRecentColors();
+	}
+
+	private void installHistoryColors() {
+		SettableColorSwatchChooserPanel swatchPanel = installSettableColorSwatchChooserPanel();
+		swatchPanel.setHistoryColors(historyColorCache.getMRUColorList());
+	}
+
+	private void installRecentColors() {
+		SettableColorSwatchChooserPanel swatchPanel = installSettableColorSwatchChooserPanel();
+		swatchPanel.setRecentColors(recentColors);
+	}
+
+	public List<Color> getRecentColors() {
+
+		List<Color> results = new ArrayList<>();
+		SettableColorSwatchChooserPanel swatchPanel = getCustomSwatchPanel();
+		if (swatchPanel == null) {
+			return results;
+		}
+
+		results.addAll(swatchPanel.getRecentColors());
+		return results;
 	}
 
 	/**
@@ -68,28 +140,32 @@ public class GhidraColorChooser extends JColorChooser {
 	 */
 	public void setActiveTab(String tabName) {
 		activeTabName = tabName;
+		doSetActiveTab();
+	}
+
+	public String getActiveTab() {
+		return activeTabName;
 	}
 
 	@SuppressWarnings("deprecation")
 	public Color showDialog(Component centerOverComponent) {
 		OKListener okListener = new OKListener();
 		JDialog dialog = createDialog(centerOverComponent, title, true, this, okListener, null);
-		doSetActiveTab(dialog);
-
 		dialog.show(); // blocks until user brings dialog down...
+
 		Color color = okListener.getColor();
 		if (color != null) {
-			recentColorCache.addColor(color);
+			historyColorCache.addColor(color);
 		}
 		return color; // null if the user cancels
 	}
 
-	private void doSetActiveTab(JDialog dialog) {
+	private void doSetActiveTab() {
 		if (activeTabName == null) {
 			return;
 		}
 
-		JTabbedPane pane = findTabbedPane(dialog);
+		JTabbedPane pane = findTabbedPane(this);
 		if (pane == null) {
 			return;
 		}
@@ -126,24 +202,28 @@ public class GhidraColorChooser extends JColorChooser {
 		return null;
 	}
 
-	private void maybeInstallSettableColorSwatchChooserPanel() {
-		if (recentColorCache.isEmpty()) {
-			return;
-		}
+	private SettableColorSwatchChooserPanel getCustomSwatchPanel() {
 
-		List<Color> mruColorList = recentColorCache.getMRUColorList();
 		AbstractColorChooserPanel[] chooserPanels = getChooserPanels();
 		if (chooserPanels != null & chooserPanels.length > 1) {
 			AbstractColorChooserPanel panel = chooserPanels[0];
 			if (panel instanceof SettableColorSwatchChooserPanel) {
-				// we've already added our panel--reuse
-				((SettableColorSwatchChooserPanel) panel).setRecentColors(mruColorList);
-				return;
+				return (SettableColorSwatchChooserPanel) panel;
 			}
 		}
+		return null;
+	}
 
+	private SettableColorSwatchChooserPanel installSettableColorSwatchChooserPanel() {
+
+		SettableColorSwatchChooserPanel swatchPanel = getCustomSwatchPanel();
+		if (swatchPanel != null) {
+			return swatchPanel; // already installed
+		}
+
+		AbstractColorChooserPanel[] chooserPanels = getChooserPanels();
 		SettableColorSwatchChooserPanel newSwatchPanel =
-			new SettableColorSwatchChooserPanel(mruColorList);
+			new SettableColorSwatchChooserPanel();
 		AbstractColorChooserPanel[] newChooserPanels =
 			new AbstractColorChooserPanel[chooserPanels.length];
 		newChooserPanels[0] = newSwatchPanel;
@@ -153,6 +233,7 @@ public class GhidraColorChooser extends JColorChooser {
 		}
 
 		setChooserPanels(newChooserPanels);
+		return newSwatchPanel;
 	}
 
 //==================================================================================================
@@ -173,7 +254,7 @@ public class GhidraColorChooser extends JColorChooser {
 	}
 
 	private class RecentColorCache extends LinkedHashMap<Color, Color> implements Iterable<Color> {
-		private static final int MAX_SIZE = 15;
+		private static final int MAX_SIZE = 35; // the number of squares in the UI
 
 		public RecentColorCache() {
 			super(16, 0.75f, true);

@@ -228,13 +228,12 @@ public class UiDefaultsMapper {
 	protected void assignSystemColorValues() {
 		// Originally, these values were assigned to the corresponding concepts as defined
 		// in the BasicLookAndFeel such as "control", "text", etc. Unfortunately, those
-		// conventions are rarely used by specific
-		// look and feels and most look and feels needed to override this method and put in 
-		// different values. However, it was discovered that using a representative component
-		// value worked much better. So each Look and Feel was examined and those component values
-		// chosen here are the ones that seemed to work for the most look and feels. If a
-		// specific look and feel needs different values, this class is designed to be subclassed
-		// where the values can be overridden. See the NimbusUiDefaultsMapper as an example.
+		// conventions are rarely used by specific look and feels.  It was discovered that using a 
+		// representative component value worked much better. So each Look and Feel was examined and
+		// those component values chosen here are the ones that seemed to work for the most look and
+		// feels. If a specific look and feel needs different values, this class is designed to be 
+		// subclassed where the values can be overridden. See the NimbusUiDefaultsMapper as an 
+		// example.
 
 		assignSystemColorFromLafId(BG_CONTROL_ID, "Button.background");
 		assignSystemColorFromLafId(FG_CONTROL_ID, "Button.foreground");

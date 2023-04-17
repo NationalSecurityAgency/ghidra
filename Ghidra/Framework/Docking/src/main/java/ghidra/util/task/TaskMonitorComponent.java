@@ -23,6 +23,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.*;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.widgets.EmptyBorderButton;
 import docking.widgets.OptionDialog;
 import docking.widgets.label.GDHtmlLabel;
@@ -106,8 +108,13 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 		shouldCancelRunnable = () -> {
 			int currentTaskID = taskID.get();
 
+			String trailingText = "?";
+			String name = getTaskName();
+			if (!StringUtils.isBlank(name)) {
+				trailingText = " " + name + "?";
+			}
 			boolean userSaysYes = OptionDialog.showYesNoDialog(null, "Cancel?",
-				"Do you really want to cancel " + getTaskName() + "?") == OptionDialog.OPTION_ONE;
+				"Do you really want to cancel" + trailingText) == OptionDialog.OPTION_ONE;
 
 			if (userSaysYes && currentTaskID == taskID.get()) {
 				cancel();

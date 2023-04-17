@@ -98,7 +98,7 @@ public class ColorValue extends ThemeValue<Color> {
 	@Override
 	protected Color getUnresolvedReferenceValue(String primaryId, String unresolvedId) {
 
-		Throwable t = ReflectionUtilities.createThrowableWithStackOlderThan();
+		Throwable t = ReflectionUtilities.createThrowableWithStackOlderThan(getClass());
 		StackTraceElement[] trace = t.getStackTrace();
 		StackTraceElement[] filtered =
 			ReflectionUtilities.filterStackTrace(trace, "docking.theme", "classfinder",

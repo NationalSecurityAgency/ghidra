@@ -15,14 +15,12 @@
  */
 package ghidra.util.table;
 
-import java.awt.Color;
 import java.awt.Font;
 
 import javax.swing.JTable;
 import javax.swing.table.TableModel;
 
 import docking.widgets.table.GTableCellRenderer;
-import generic.theme.GColor;
 import ghidra.app.util.viewer.field.ListingColors;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
@@ -31,11 +29,6 @@ import ghidra.program.model.symbol.ExternalLocation;
 import ghidra.program.model.symbol.Symbol;
 
 public class GhidraTableCellRenderer extends GTableCellRenderer {
-
-	public Color SELECTED_CELL_COLOR = new GColor("color.bg.table.selected.ghidratable");
-	public Color BAD_EQUATE_COLOR = new GColor("color.fg.table.ghidratable.equate.bad");
-	public Color EQUATE_COLOR = new GColor("color.fg.table.ghidratable.equate");
-	public Color SUGGESTION_COLOR = new GColor("color.fg.table.ghidratable.suggestion");
 
 	public GhidraTableCellRenderer() {
 		// default constructor

@@ -225,8 +225,8 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 		opt.registerOption(OPTION_HIGHLIGHT_CURSOR_LINE, true, help,
 			"Toggles highlighting background color of line containing the cursor");
 
-		Color missingValueColor = opt.getColor(SEPARATOR_COLOR_OPTION_NAME, SEPARATOR_COLOR);
-		panel.setSeparatorColor(missingValueColor);
+		Color separatorColor = opt.getColor(SEPARATOR_COLOR_OPTION_NAME, SEPARATOR_COLOR);
+		panel.setSeparatorColor(separatorColor);
 
 		panel.setCurrentCursorColor(CURSOR_ACTIVE_COLOR);
 		panel.setNonFocusCursorColor(CURSOR_NOT_FOCUSED_COLOR);

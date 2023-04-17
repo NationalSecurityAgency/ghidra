@@ -45,11 +45,11 @@ public class ProgramDiffDetails {
 	private static final String STANDARD_NEW_LINE = "\n";
 
 	//@formatter:off
-	private static Color FG_COLOR_ADDRESS = new GColor("color.bg.plugin.programdiff.details.address");
-	private static Color FG_COLOR_COMMENT = new GColor("color.bg.plugin.programdiff.details.comment");
-	private static Color FG_COLOR_DANGER = new GColor("color.bg.plugin.programdiff.details.danger");
-	private static Color FG_COLOR_EMPHASIZE = new GColor("color.bg.plugin.programdiff.details.emphasize");
-	private static Color FG_COLOR_PROGRAM = new GColor("color.bg.plugin.programdiff.details.emphasize");
+	private static Color FG_COLOR_ADDRESS = new GColor("color.fg.plugin.programdiff.details.address");
+	private static Color FG_COLOR_COMMENT = new GColor("color.fg.plugin.programdiff.details.comment");
+	private static Color FG_COLOR_DANGER = new GColor("color.fg.plugin.programdiff.details.danger");
+	private static Color FG_COLOR_EMPHASIZE = new GColor("color.fg.plugin.programdiff.details.emphasize");
+	private static Color FG_COLOR_PROGRAM = new GColor("color.fg.plugin.programdiff.details.program");
 	//@formatter:on
 
 	private static final Color EMPHASIZE_COLOR = FG_COLOR_EMPHASIZE;

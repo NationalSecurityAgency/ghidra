@@ -653,6 +653,11 @@ public class BitFieldPlacementComponent extends JPanel implements Scrollable {
 		y += CELL_HEIGHT + BYTE_SEPARATOR_THICKNESS;
 		g.fillRect(0, y, width, BYTE_SEPARATOR_THICKNESS); // bottom line
 
+		if (g instanceof Graphics2D g2d) {
+			g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+				RenderingHints.VALUE_ANTIALIAS_ON);
+		}
+
 		paintByteHeader(g, BYTE_SEPARATOR_THICKNESS, allocationByteOffset);
 		paintBits((Graphics2D) g, (2 * BYTE_SEPARATOR_THICKNESS) + CELL_HEIGHT);
 	}

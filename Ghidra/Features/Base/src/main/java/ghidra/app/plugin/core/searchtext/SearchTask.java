@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,23 +24,21 @@ import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Task to do a single search..
- * 
+ * Task to do a single search.
  */
 class SearchTask extends Task {
 
 	private Searcher textSearcher;
 	private Navigatable navigatable;
-	private ProgramLocation loc = null;
+	private ProgramLocation loc;
 	private boolean isCanceled;
-	private TaskMonitor taskMonitor;
 	private Program program;
 
 	/**
 	 * Constructor for SearchTask.
+	 * @param navigatable the navigatable
+	 * @param program the program
 	 * @param textSearcher existing search to use
-	 * @param listener listener that will be called when the search
-	 * completes
 	 */
 	SearchTask(Navigatable navigatable, Program program, Searcher textSearcher) {
 		super("Searching Program Text", true, true, false);
@@ -50,21 +47,19 @@ class SearchTask extends Task {
 		this.program = program;
 	}
 
-	/**
-	 * @see ghidra.util.task.Task#run(TaskMonitor)
-	 */
 	@Override
 	public void run(TaskMonitor monitor) {
+
+		monitor.setMessage("Searching...");
+		if (isCanceled) {
+			monitor.cancel();
+			return;
+		}
+
+		monitor.setMessage("Searching...");
+		textSearcher.setMonitor(monitor);
 		try {
-			monitor.setMessage("Searching...");
-			textSearcher.setMonitor(monitor);
-			this.taskMonitor = monitor;
-			if (isCanceled) {
-				monitor.cancel();
-			}
-			else {
-				loc = textSearcher.search();
-			}
+			loc = textSearcher.search();
 		}
 		catch (Exception e) {
 			if (!(e instanceof DomainObjectException)) {
@@ -73,16 +68,10 @@ class SearchTask extends Task {
 		}
 	}
 
-	/**
-	 * Get the text searcher that this task used.
-	 */
 	Searcher getTextSearcher() {
 		return textSearcher;
 	}
 
-	/**
-	 * Get the program for this search task.
-	 */
 	Navigatable getNavigatable() {
 		return navigatable;
 	}
@@ -95,6 +84,7 @@ class SearchTask extends Task {
 	 * Called when program is deactivated but the task hasn't started to
 	 * run yet. Cancel it when it does run.
 	 */
+	@Override
 	public void cancel() {
 		super.cancel();
 		isCanceled = true;
