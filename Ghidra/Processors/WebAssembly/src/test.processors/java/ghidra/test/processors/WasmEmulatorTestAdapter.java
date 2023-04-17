@@ -29,7 +29,7 @@ import ghidra.test.processors.support.PCodeTestControlBlock;
 import ghidra.test.processors.support.ProcessorEmulatorTestAdapter;
 import ghidra.util.task.TaskMonitor;
 
-public class WasmEmulatorTestAdapter extends ProcessorEmulatorTestAdapter {
+public abstract class WasmEmulatorTestAdapter extends ProcessorEmulatorTestAdapter {
 
 	private static final String[] REG_DUMP_SET = new String[] {};
 	private static final byte[] MAIN_CONTROL_BLOCK_MAGIC = "AbCdEFgH".getBytes();
@@ -128,7 +128,7 @@ public class WasmEmulatorTestAdapter extends ProcessorEmulatorTestAdapter {
 
 		/* Run analysis now so that all the code segments are properly defined */
 		setAnalysisOptions(program.getOptions(Program.ANALYSIS_PROPERTIES));
-		GhidraProgramUtilities.setAnalyzedFlag(program, true);
+		GhidraProgramUtilities.markProgramAnalyzed(program);
 		AutoAnalysisManager analysisMgr = AutoAnalysisManager.getAnalysisManager(program);
 		analysisMgr.cancelQueuedTasks(); // GhidraProject import utility jumped the gun with analysis initialization
 		analysisMgr.initializeOptions();
