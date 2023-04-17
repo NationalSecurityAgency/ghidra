@@ -29,6 +29,12 @@ public class StateMachine {
 	 * corresponding to a machine instruction.
 	 */
 	public int file;
+	
+	/**
+	 * The subop of this special op, always 0 in dwarf versions less than 4
+	 */
+	public int op_index;
+	
 	/**
 	 * An unsigned integer indicating a source line number. Lines are
 	 * numbered beginning at 1. The compiler may emit the value 0 in cases
@@ -56,15 +62,23 @@ public class StateMachine {
 	 * the end of a sequence of target machine instructions.
 	 */
 	public boolean isEndSequence;
+	
+	
+	/**
+	 * Did we just execute a prologue end
+	 */
+	public boolean isPrologueEnd;
 
 	public void reset(boolean defaultIsStatement) {
 		address = 0;
+		op_index = 0;
 		file = 1;
 		line = 1;
 		column = 0;
 		isStatement = defaultIsStatement;
 		isBasicBlock = false;
 		isEndSequence = false;
+		isPrologueEnd = false;
 	}
 
 	void print() {

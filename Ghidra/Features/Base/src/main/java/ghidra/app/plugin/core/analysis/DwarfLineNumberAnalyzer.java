@@ -46,12 +46,62 @@ public class DwarfLineNumberAnalyzer extends AbstractAnalyzer {
 		setPrototype();
 		setSupportsOneTimeAnalysis();
 	}
+	
+	
+	public static interface StatementProgramInstructionsFactory {
+		StatementProgramInstructions create(BinaryReader reader, StateMachine machine, StatementProgramPrologue prologue);
+	}
+	
+	
+	static class LineExecutorFactory implements StatementProgramInstructionsFactory {
+		private final Program currentProgram;
+		
+		
+		
+		public LineExecutorFactory(Program currentProgram) {
+			super();
+			this.currentProgram = currentProgram;
+		}
 
-	@Override
-	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
-			throws CancelledException {
-		AddressSpace space = program.getAddressFactory().getDefaultAddressSpace();
 
+
+		@Override
+		public StatementProgramInstructions create(BinaryReader reader, StateMachine machine,
+				StatementProgramPrologue prologue) {
+			return new LineExecutor(reader, machine, prologue, currentProgram);
+		}
+		
+	}
+	
+	static class LineExecutor extends StatementProgramInstructions {
+		private final Program currentProgram;
+		
+		
+		public LineExecutor(BinaryReader reader, StateMachine machine, StatementProgramPrologue prologue, Program prog) {
+			super(reader, machine, prologue);
+			this.currentProgram = prog;
+		}
+
+		@Override
+		protected void emitRow(StateMachine state, StatementProgramPrologue prologue) {
+			FileEntry entry = prologue.getFileNameByIndex(state.file);
+			String directory = prologue.getDirectoryByIndex(entry.getDirectoryIndex());
+
+			Address address = currentProgram.getAddressFactory().getDefaultAddressSpace().getAddress(state.address);
+			CodeUnit cu = currentProgram.getListing().getCodeUnitContaining(address);
+			if (cu != null) {
+				cu.setProperty("Source Path",
+					directory + File.separator + entry.getFileName());
+				cu.setProperty("Source File", entry.getFileName());
+				cu.setProperty("Source Line", state.line);
+			}
+
+		}
+		
+	}
+	
+	
+	public static boolean visitLines(Program program, TaskMonitor monitor,StatementProgramInstructionsFactory factory) {
 		DwarfSectionNames sectionNames = new DwarfSectionNames(program);
 		try {
 			ByteProvider provider = getByteProvider(program, sectionNames);
@@ -69,24 +119,12 @@ public class DwarfLineNumberAnalyzer extends AbstractAnalyzer {
 				StateMachine machine = new StateMachine();
 				machine.reset(prologue.isDefaultIsStatement());
 
-				StatementProgramInstructions instructions =
-					new StatementProgramInstructions(reader, machine, prologue);
+				var instructions =
+						factory.create(reader, machine, prologue);
 
 				while (!monitor.isCancelled()) {
 					instructions.execute();
 					//machine.print();
-
-					FileEntry entry = prologue.getFileNameByIndex(machine.file);
-					String directory = prologue.getDirectoryByIndex(entry.getDirectoryIndex());
-
-					Address address = space.getAddress(machine.address);
-					CodeUnit cu = program.getListing().getCodeUnitContaining(address);
-					if (cu != null) {
-						cu.setProperty("Source Path",
-							directory + File.separator + entry.getFileName());
-						cu.setProperty("Source File", entry.getFileName());
-						cu.setProperty("Source Line", machine.line);
-					}
 
 					if (reader.getPointerIndex() - startIndex >= prologue.getTotalLength() +
 						StatementProgramPrologue.TOTAL_LENGTH_FIELD_LEN) {
@@ -96,13 +134,20 @@ public class DwarfLineNumberAnalyzer extends AbstractAnalyzer {
 			}
 		}
 		catch (Exception e) {
-			Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
+			Msg.error(DwarfLineNumberAnalyzer.class, "Unexpected Exception: " + e.getMessage(), e);
 			return false;
 		}
 		return true;
 	}
 
-	private ByteProvider getByteProvider(Program program, DwarfSectionNames sectionNames)
+	@Override
+	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
+			throws CancelledException {
+		return visitLines(program, monitor, new LineExecutorFactory(program));
+
+	}
+
+	private static ByteProvider getByteProvider(Program program, DwarfSectionNames sectionNames)
 			throws IOException {
 		File exePath = new File(program.getExecutablePath());
 		if (MachoLoader.MACH_O_NAME.equals(program.getExecutableFormat())) {

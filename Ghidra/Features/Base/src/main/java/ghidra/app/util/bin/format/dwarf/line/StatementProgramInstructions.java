@@ -19,8 +19,9 @@ import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.program.model.data.LEB128;
+import ghidra.util.Msg;
 
-public final class StatementProgramInstructions {
+abstract public class StatementProgramInstructions {
 
 	//Standard Opcodes
 
@@ -60,6 +61,9 @@ public final class StatementProgramInstructions {
 		machine = null;
 		prologue = null;
 	}
+	
+	
+	protected abstract void emitRow(StateMachine state, StatementProgramPrologue prologue);
 
 	/**
 	 * Read the next instruction and executes it 
@@ -77,11 +81,18 @@ public final class StatementProgramInstructions {
 		else {
 			executeStandard(opcode);
 		}
+		machine.print();
 	}
 
 	private void executeSpecial(int specialOpcodeValue) {
 		int adjustedOpcode = (specialOpcodeValue & 0xff) - prologue.getOpcodeBase();
-		int addressIncrement = adjustedOpcode / prologue.getLineRange();
+		int op_advance = adjustedOpcode / prologue.getLineRange();
+		int addressIncrement = (prologue.getMinimumInstructionLength() * ((op_advance + machine.op_index) / prologue.getMaximumOperationsPerInstruction() ));
+		int new_opindex = (machine.op_index + op_advance) %  prologue.getMaximumOperationsPerInstruction();
+		Msg.info(this, "Adjusted opcode: " + Integer.toString(adjustedOpcode));
+		Msg.info(this, "Increment: " + Integer.toString(addressIncrement));
+		Msg.info(this, "Lrange: " + Integer.toString( prologue.getLineRange()));
+		
 		int lineIncrement = prologue.getLineBase() + (adjustedOpcode % prologue.getLineRange());
 
 		addressIncrement &= 0xff;
@@ -89,7 +100,11 @@ public final class StatementProgramInstructions {
 
 		machine.line += (byte) lineIncrement;
 		machine.address += (addressIncrement * prologue.getMinimumInstructionLength());
+		machine.op_index = new_opindex;
+		Msg.info(this, "Address increment for special: " + Integer.toString(addressIncrement));
+		this.emitRow(machine, prologue);
 		machine.isBasicBlock = false;
+		machine.isPrologueEnd = false;
 	}
 
 	private void executeExtended(int opcode) throws IOException {
@@ -97,7 +112,7 @@ public final class StatementProgramInstructions {
 
 		long oldIndex = reader.getPointerIndex();
 		int extendedOpcode = reader.readNextByte();
-
+		Msg.info(this, "Executing extension: " + Integer.toString(extendedOpcode));
 		switch (extendedOpcode) {
 			case DW_LNE_end_sequence:
 				machine.isEndSequence = true;
@@ -105,6 +120,7 @@ public final class StatementProgramInstructions {
 				break;
 			case DW_LNE_set_address:
 				machine.address = reader.readNextInt();
+				Msg.info(this, "Set addr: " + Long.toHexString(machine.address));
 				break;
 			case DW_LNE_define_file://TODO
 				//break;
@@ -117,9 +133,16 @@ public final class StatementProgramInstructions {
 	}
 
 	private void executeStandard(int opcode) throws IOException {
+		Msg.info(this, "Executing: " + Integer.toString(opcode));
 		switch (opcode) {
 			case DW_LNS_copy: {
+				this.emitRow(machine, prologue);
 				machine.isBasicBlock = false;
+				machine.isPrologueEnd = false;
+				break;
+			}
+			case DW_LNS_set_prologue_end: {
+				machine.isPrologueEnd = true;
 				break;
 			}
 			case DW_LNS_advance_pc: {
@@ -161,6 +184,8 @@ public final class StatementProgramInstructions {
 				machine.address += value;
 				break;
 			}
+			default:
+				throw new UnsupportedOperationException("Missing LNS: " + Integer.toString(opcode));
 		}
 	}
 }

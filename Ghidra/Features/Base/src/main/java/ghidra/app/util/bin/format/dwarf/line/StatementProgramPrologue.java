@@ -29,11 +29,13 @@ public class StatementProgramPrologue {
 	private short      version;
 	private int        prologueLength;
 	private byte       minimumInstructionLength;
+	private byte 	   maximumOperationsPerInstruction;
 	private boolean    defaultIsStatement;
 	private byte       lineBase;
 	private byte       lineRange;
 	private byte       opcodeBase;
 	private byte []    standardOpcodeLengths;
+
 
 	private List<String>     includeDirectories = new ArrayList<String>();
 	private List<FileEntry>  fileNames          = new ArrayList<FileEntry>();
@@ -42,12 +44,13 @@ public class StatementProgramPrologue {
 		totalLength                = reader.readNextInt();
 		version                    = reader.readNextShort();
 
-		if (version != 2) {
-			throw new IllegalStateException("Only DWARF v2 is supported.");
-		}
-
 		prologueLength             = reader.readNextInt();
 		minimumInstructionLength   = reader.readNextByte();
+		if (version >= 4) {
+			maximumOperationsPerInstruction = reader.readNextByte();
+		} else {
+			maximumOperationsPerInstruction = 1;
+		}
 		defaultIsStatement         = reader.readNextByte() != 0;
 		lineBase                   = reader.readNextByte();
 		lineRange                  = reader.readNextByte();
@@ -69,6 +72,10 @@ public class StatementProgramPrologue {
 			}
 			fileNames.add(entry);
 		}
+	}
+	
+	public byte getMaximumOperationsPerInstruction() {
+		return maximumOperationsPerInstruction;
 	}
 
 	/**
