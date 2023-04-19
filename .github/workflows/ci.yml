@@ -3,7 +3,9 @@ on:
   pull_request:
   push:
     branches:
-      - 'amp/main'
+      - "amp/main"
+    tags:
+      - amp-ghidra-v*
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -29,7 +31,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-java@v3
         with:
-          distribution: 'temurin'
+          distribution: "temurin"
           java-version: ${{ env.JAVA_VERSION }}
       - name: Fetch deps
         uses: gradle/gradle-build-action@v2
@@ -63,7 +65,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-java@v3
         with:
-          distribution: 'temurin'
+          distribution: "temurin"
           java-version: ${{ env.JAVA_VERSION }}
       - name: Download linux_x86_64
         uses: actions/download-artifact@v3
@@ -99,6 +101,6 @@ jobs:
           retention-days: 7
       - name: Release
         uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/amp-ghidra-v')
         with:
           files: "build/dist/*"
