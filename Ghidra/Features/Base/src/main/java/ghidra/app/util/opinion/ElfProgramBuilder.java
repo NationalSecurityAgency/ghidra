@@ -2166,13 +2166,16 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			if (isEntry) {
 				program.getSymbolTable().addExternalEntryPoint(address);
 			}
+			if (StringUtils.isEmpty(name)) {
+				name = null;
+			}
 			FunctionManager functionMgr = program.getFunctionManager();
 			function = functionMgr.getFunctionAt(address);
 			if (function == null) {
-				function = functionMgr.createFunction(null, address, new AddressSet(address),
+				function = functionMgr.createFunction(name, address, new AddressSet(address),
 					SourceType.IMPORTED);
 			}
-			else if (!StringUtils.isEmpty(name)) {
+			else if (name != null) {
 				createSymbol(address, name, true, false, null);
 			}
 		}
