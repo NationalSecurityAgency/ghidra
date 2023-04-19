@@ -21,7 +21,7 @@ apply plugin: 'eclipse'
 
 eclipse.project.name = 'Features GhidraServer'
 
-def yajswRelease = "yajsw-stable-13.05"
+def yajswRelease = "yajsw-stable-13.09"
 
 configurations {
 	runGhidraServer
