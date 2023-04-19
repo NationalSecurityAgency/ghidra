@@ -48,6 +48,7 @@ import ghidra.program.model.reloc.RelocationResult;
 import ghidra.program.model.reloc.RelocationTable;
 import ghidra.program.model.symbol.*;
 import ghidra.program.model.util.CodeUnitInsertionException;
+import ghidra.program.util.ExternalSymbolResolver;
 import ghidra.util.Msg;
 import ghidra.util.NumericUtilities;
 import ghidra.util.exception.*;
@@ -601,27 +602,46 @@ public class MachoProgramBuilder {
 		}
 	}
 
-	protected void processLibraries() {
+	protected void processLibraries() throws Exception {
 		monitor.setMessage("Processing libraries...");
-		List<LoadCommand> commands = machoHeader.getLoadCommands();
-		for (LoadCommand command : commands) {
+
+		Options props = program.getOptions(Program.PROGRAM_INFO);
+		int libraryIndex = 0;
+
+		for (LoadCommand command : machoHeader.getLoadCommands()) {
 			if (monitor.isCancelled()) {
 				return;
 			}
-			if (command instanceof DynamicLibraryCommand) {
-				DynamicLibraryCommand dylibCommand = (DynamicLibraryCommand) command;
+
+			String libraryPath = null;
+
+			if (command instanceof DynamicLibraryCommand dylibCommand) {
 				DynamicLibrary dylib = dylibCommand.getDynamicLibrary();
-				addLibrary(dylib.getName().getString());
+				libraryPath = dylib.getName().getString();
 			}
-			else if (command instanceof SubLibraryCommand) {
-				SubLibraryCommand sublibCommand = (SubLibraryCommand) command;
-				addLibrary(sublibCommand.getSubLibraryName().getString());
+			else if (command instanceof SubLibraryCommand sublibCommand) {
+				libraryPath = sublibCommand.getSubLibraryName().getString();
 			}
-			else if (command instanceof PreboundDynamicLibraryCommand) {
-				PreboundDynamicLibraryCommand pbdlCommand = (PreboundDynamicLibraryCommand) command;
-				addLibrary(pbdlCommand.getLibraryName());
+			else if (command instanceof PreboundDynamicLibraryCommand pbdlCommand) {
+				libraryPath = pbdlCommand.getLibraryName();
+			}
+
+			if (libraryPath != null) {
+				// For now, strip off the full path and just the use the filename.  We will utilize
+				// the full path one day when we started looking in dyld_shared_cache files for
+				// libraries.
+				int index = libraryPath.lastIndexOf("/");
+				String libraryName = index != -1 ? libraryPath.substring(index + 1) : libraryPath;
+				if (!libraryName.equals(program.getName())) {
+					addLibrary(libraryName);
+					props.setString(
+						ExternalSymbolResolver.getRequiredLibraryProperty(libraryIndex++),
+						libraryName);
+				}
 			}
 		}
+
+		program.getSymbolTable().createExternalLibrary(Library.UNKNOWN, SourceType.IMPORTED);
 	}
 
 	protected void processProgramDescription() {
