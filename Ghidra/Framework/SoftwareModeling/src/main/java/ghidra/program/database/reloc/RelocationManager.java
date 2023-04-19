@@ -31,6 +31,7 @@ import ghidra.program.model.mem.Memory;
 import ghidra.program.model.reloc.Relocation;
 import ghidra.program.model.reloc.Relocation.Status;
 import ghidra.program.model.reloc.RelocationTable;
+import ghidra.program.util.ChangeManager;
 import ghidra.util.Lock;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.VersionException;
@@ -147,9 +148,15 @@ public class RelocationManager implements RelocationTable, ManagerDB {
 		try {
 			byte flags = RelocationDBAdapter.getFlags(status, 0);
 			adapter.add(addr, flags, type, values, bytes, symbolName);
-			return new Relocation(addr, status, type, values,
+			Relocation reloc = new Relocation(addr, status, type, values,
 				getOriginalBytes(addr, status, bytes, 0),
 				symbolName);
+
+			// fire event
+			// TODO: full change support is missing
+			program.setChanged(ChangeManager.DOCR_RELOCATION_ADDED, null, reloc);
+
+			return reloc;
 		}
 		catch (IOException e) {
 			program.dbError(e);
@@ -167,9 +174,15 @@ public class RelocationManager implements RelocationTable, ManagerDB {
 		try {
 			byte flags = RelocationDBAdapter.getFlags(status, byteLength);
 			adapter.add(addr, flags, type, values, null, symbolName);
-			return new Relocation(addr, status, type, values,
+			Relocation reloc = new Relocation(addr, status, type, values,
 				getOriginalBytes(addr, status, null, byteLength),
 				symbolName);
+
+			// fire event
+			// TODO: full change support is missing
+			program.setChanged(ChangeManager.DOCR_RELOCATION_ADDED, null, reloc);
+
+			return reloc;
 		}
 		catch (IOException e) {
 			program.dbError(e);
