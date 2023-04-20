@@ -25,10 +25,7 @@ apply from: "gradle/support/loadApplicationProperties.gradle"
 ***************************************************************************************/
 import org.gradle.util.GradleVersion;
 println "Gradle: " + GradleVersion.current().version
-final GradleVersion minimum_version = GradleVersion.version("${rootProject.GRADLE_MINIMUM_VERSION}")
-if (GradleVersion.current() < minimum_version) {
-	throw new GradleException("Requires at least $minimum_version, but was run with $gradle.gradleVersion")
-}
+checkGradleVersion()
 
 /***************************************************************************************
  * Define the location of JAVA_HOME
@@ -111,6 +108,41 @@ apply from: "gradle/root/jacoco.gradle"       // adds tasks for java code covera
 apply plugin: 'base'
 clean {
 	delete "$buildDir"
+}
+
+/*********************************************************************************
+ * Throws a GradleException if the current Gradle version is outside of the supported
+ * Gradle version range defined in application.properties.
+ *
+ * NOTE: This function is duplicated in buildExtension.gradle
+ *********************************************************************************/
+import org.gradle.util.GradleVersion;
+def checkGradleVersion() {
+	GradleVersion min = null;
+	GradleVersion max = null;
+	try {
+		min = GradleVersion.version("${rootProject.GRADLE_MIN}")
+	}
+	catch (IllegalArgumentException e) {
+		String defaultMin = "1.0"
+		println "Invalid minimum Gradle version specified in application.properties...using ${defaultMin}"
+		min = GradleVersion.version(defaultMin)
+	}
+	try {
+		if (rootProject.GRADLE_MAX) {
+			max = GradleVersion.version("${rootProject.GRADLE_MAX}")
+		}
+	}
+	catch (IllegalArgumentException e) {
+		println "Invalid maximum Gradle version specified in application.properties...ignoring"
+	}
+	String gradleRange = "at least ${min}"
+	if (max) {
+		gradleRange += " and less than ${max}"		
+	}
+	if (GradleVersion.current() < min || (max && GradleVersion.current() >= max)) {
+		throw new GradleException("Requires ${gradleRange}, but was run with $gradle.gradleVersion")
+	}
 }
 
 /******************************************************************************************
