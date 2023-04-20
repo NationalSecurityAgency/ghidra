@@ -47,7 +47,7 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 	 * 20-Apr-2023 - version 4 - Added architecture support and string-based function calling
 	 *                           convention specification.
 	 *                           
-	 * NOTE: In reality version is based entirely on the underlying {@link StandAloneDataTypeManager}
+	 * NOTE: The true versioning is based on the underlying {@link StandAloneDataTypeManager}
 	 * implementation and its ability to detect and manage versioning concerns.  Due to the need to
 	 * always support opening in a read-only fashion we are unable to impose a forced upgrade
 	 * requirement.
