@@ -81,7 +81,7 @@ public class DebuggerMethodActionsPluginTest extends AbstractGhidraHeadedDebugge
 	List<String> commands = Collections.synchronizedList(new ArrayList<>());
 
 	@Before
-	public void setUpMethodAcitonsTest() throws Exception {
+	public void setUpMethodActionsTest() throws Exception {
 		listingPlugin = addPlugin(tool, DebuggerListingPlugin.class);
 		mappingService = addPlugin(tool, DebuggerStaticMappingServicePlugin.class);
 		methodsPlugin = addPlugin(tool, DebuggerMethodActionsPlugin.class);
