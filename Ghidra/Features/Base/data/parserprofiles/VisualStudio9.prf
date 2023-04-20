@@ -58,13 +58,10 @@ yvals.h
 CommDlg.h
 WinUser.h
 WinNls.h
-C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\crt\src\internal.h
+internal.h
 strsafe.h
 penwin.h
 
--IC:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\Include
--IC:\Program Files (x86)\Microsoft SDKs\Windows\v5.0\Include
--IC:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\crt\src
 -D_M_IX86=500
 -D_MSC_VER=9090
 -D_MSC_EXTENSIONS
@@ -85,5 +82,11 @@ penwin.h
 -DSTRSAFE_LIB_IMPL
 -DLPSKBINFO=LPARAM
 -D_PHNDLR=void *
--D_WCHAR_T_DEFINED
 -DCONST=const
+
+C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\Include
+C:\Program Files (x86)\Microsoft SDKs\Windows\v5.0\Include
+C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\crt\src
+
+x86:LE:64:default
+

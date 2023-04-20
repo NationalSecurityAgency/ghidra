@@ -37,8 +37,7 @@ public class DeleteArchiveAction extends DockingAction {
 	public DeleteArchiveAction(DataTypeManagerPlugin plugin) {
 		super("Delete Archive", plugin.getName());
 
-// ACTIONS - auto generated
-		setPopupMenuData(new MenuData(new String[] { "Delete Archive" }, null, "Edit"));
+		setPopupMenuData(new MenuData(new String[] { "Delete Archive" }, null, "File"));
 
 		setKeyBindingData(new KeyBindingData(KeyEvent.VK_DELETE, 0));
 

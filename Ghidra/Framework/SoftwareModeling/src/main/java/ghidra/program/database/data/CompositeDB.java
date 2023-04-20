@@ -60,8 +60,8 @@ abstract class CompositeDB extends DataTypeDB implements CompositeInternal {
 	protected abstract void initialize();
 
 	/**
-	 * Get the preferred length for a new component. For Unions and internally
-	 * aligned structures the preferred component length for a fixed-length dataType
+	 * Get the preferred length for a new component. For Unions and packed
+	 * structures the preferred component length for a fixed-length dataType
 	 * will be the length of that dataType. Otherwise the length returned will be no
 	 * larger than the specified length.
 	 * 

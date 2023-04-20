@@ -34,7 +34,12 @@ public class UnsignedCharDataType extends CharDataType {
 	}
 
 	public UnsignedCharDataType(DataTypeManager dtm) {
-		super("uchar", false, dtm);
+		super("uchar", dtm);
+	}
+
+	@Override
+	public boolean isSigned() {
+		return false;
 	}
 
 	@Override

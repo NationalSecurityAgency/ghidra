@@ -1473,6 +1473,7 @@ public class DataTypeMergeManager implements MergeResolver {
 		ParameterDefinition[] sourceVars = sourceFunctionDefDt.getArguments();
 		ParameterDefinition[] destVars = new ParameterDefinition[sourceVars.length];
 		boolean sourceHasVarArgs = sourceFunctionDefDt.hasVarArgs();
+		boolean sourceHasNoReturn = sourceFunctionDefDt.hasNoReturn();
 
 		DataType resolvedRDT = DataType.DEFAULT;
 		if (sourceReturnType != null) {
@@ -1492,6 +1493,7 @@ public class DataTypeMergeManager implements MergeResolver {
 		}
 		destDt.setArguments(destVars);
 		destDt.setVarArgs(sourceHasVarArgs);
+		destDt.setNoReturn(sourceHasNoReturn);
 
 		destDt.setLastChangeTime(oldLastChangeTime);
 		destDt.setLastChangeTimeInSourceArchive(oldLastChangeTimeInSourceArchive);

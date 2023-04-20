@@ -22,7 +22,6 @@ package ghidra.program.model.data;
  * associated data type manager.
  */
 public class SignedCharDataType extends CharDataType {
-	private final static long serialVersionUID = 1;
 
 	public static final SignedCharDataType dataType = new SignedCharDataType();
 
@@ -34,7 +33,12 @@ public class SignedCharDataType extends CharDataType {
 	}
 
 	public SignedCharDataType(DataTypeManager dtm) {
-		super("schar", true, dtm);
+		super("schar", dtm);
+	}
+
+	@Override
+	public boolean isSigned() {
+		return true;
 	}
 
 	@Override

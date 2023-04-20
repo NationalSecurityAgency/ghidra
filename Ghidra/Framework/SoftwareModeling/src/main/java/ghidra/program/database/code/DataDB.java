@@ -47,6 +47,7 @@ class DataDB extends CodeUnitDB implements Data {
 	protected DataType baseDataType;
 
 	protected int level = 0;
+
 	protected ProgramDataTypeManager dataMgr;
 
 	private Boolean hasMutabilitySetting;

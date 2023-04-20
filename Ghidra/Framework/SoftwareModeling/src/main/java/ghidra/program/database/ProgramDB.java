@@ -36,7 +36,6 @@ import ghidra.program.database.code.InstructionDB;
 import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.database.external.ExternalManagerDB;
 import ghidra.program.database.function.FunctionManagerDB;
-import ghidra.program.database.map.AddressMap;
 import ghidra.program.database.map.AddressMapDB;
 import ghidra.program.database.mem.MemoryMapDB;
 import ghidra.program.database.module.TreeManager;
@@ -745,13 +744,13 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 
 	/**
 	 * Returns this programs address map.
-	 * NOTE: This method has been dropped from the Program interface to help
-	 * discourage the use of the program's address map since bad assumptions 
+	 * NOTE: This method should be dropped from the {@link Program} interface to help
+	 * discourage the its use external to this implementation since bad assumptions 
 	 * are frequently made about address keys which may not be ordered or sequential
 	 * across an entire address space.
 	 */
 	@Override
-	public AddressMap getAddressMap() {
+	public AddressMapDB getAddressMap() {
 		return addrMap;
 	}
 
@@ -1678,7 +1677,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		monitor.checkCanceled();
 
 		try {
-			managers[SYMBOL_MGR] = new SymbolManager(dbh, addrMap, openMode, lock, monitor);
+			managers[SYMBOL_MGR] = new SymbolManager(dbh, addrMap, openMode, this, lock, monitor);
 		}
 		catch (VersionException e) {
 			versionExc = e.combine(versionExc);
@@ -2069,6 +2068,9 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 					contextMgr.initializeDefaultValues(language, compilerSpec);
 				}
 
+				// Update datatype manager data organization
+				getDataTypeManager().languageChanged(monitor);
+
 				// Force function manager to reconcile calling conventions
 				managers[FUNCTION_MGR].setProgram(this);
 				managers[FUNCTION_MGR].programReady(UPDATE, getStoredVersion(), monitor);
@@ -2443,6 +2445,8 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 		lock.acquire();
 		try {
 			((ProgramCompilerSpec) compilerSpec).installExtensions();
+			getFunctionManager().invalidateCache(true);
+			getDataTypeManager().invalidateCache();
 		}
 		finally {
 			lock.release();

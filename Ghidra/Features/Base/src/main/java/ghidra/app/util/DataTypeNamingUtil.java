@@ -16,6 +16,8 @@
 package ghidra.app.util;
 
 import ghidra.program.model.data.*;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.FunctionSignature;
 import ghidra.util.InvalidNameException;
 
 public class DataTypeNamingUtil {
@@ -42,12 +44,16 @@ public class DataTypeNamingUtil {
 
 		StringBuilder sb = new StringBuilder(ANONYMOUS_FUNCTION_DEF_PREFIX);
 
-		GenericCallingConvention convention = functionDefinition.getGenericCallingConvention();
-		if (convention != null && convention != GenericCallingConvention.unknown) {
-			sb.append(convention.getDeclarationName());
+		if (functionDefinition.hasNoReturn()) {
+			sb.append("_").append(FunctionSignature.NORETURN_DISPLAY_STRING);
 		}
-		sb.append("_");
 
+		String convention = functionDefinition.getCallingConventionName();
+		if (convention != null && !Function.UNKNOWN_CALLING_CONVENTION_STRING.equals(convention)) {
+			sb.append("_").append(convention);
+		}
+
+		sb.append("_");
 		sb.append(mangleDTName(returnType.getName()));
 		for (ParameterDefinition p : parameters) {
 			sb.append("_").append(mangleDTName(p.getDataType().getName()));

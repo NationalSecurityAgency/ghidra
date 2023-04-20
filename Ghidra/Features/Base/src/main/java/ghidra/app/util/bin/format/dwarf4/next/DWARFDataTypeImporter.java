@@ -16,13 +16,11 @@
 package ghidra.app.util.bin.format.dwarf4.next;
 
 import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute.*;
-import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag.DW_TAG_base_type;
-import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag.DW_TAG_subrange_type;
-
-import java.util.*;
-import java.util.stream.Collectors;
+import static ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag.*;
 
 import java.io.IOException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -35,7 +33,9 @@ import ghidra.program.database.DatabaseObject;
 import ghidra.program.database.data.DataTypeUtilities;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
+import ghidra.program.model.lang.CompilerSpec;
 import ghidra.util.Msg;
+import ghidra.util.exception.InvalidInputException;
 
 /**
  * Creates Ghidra {@link DataType}s using information from DWARF debug entries.  The caller
@@ -301,6 +301,7 @@ public class DWARFDataTypeImporter {
 		FunctionDefinitionDataType funcDef =
 			new FunctionDefinitionDataType(dni.getParentCP(), dni.getName(), dataTypeManager);
 		funcDef.setReturnType(returnType.dataType);
+		funcDef.setNoReturn(diea.getBool(DW_AT_noreturn, false));
 		funcDef.setArguments(params.toArray(new ParameterDefinition[params.size()]));
 
 		if (!diea.getChildren(DWARFTag.DW_TAG_unspecified_parameters).isEmpty()) {
@@ -308,7 +309,12 @@ public class DWARFDataTypeImporter {
 		}
 
 		if (foundThisParam) {
-			funcDef.setGenericCallingConvention(GenericCallingConvention.thiscall);
+			try {
+				funcDef.setCallingConvention(CompilerSpec.CALLING_CONVENTION_thiscall);
+			}
+			catch (InvalidInputException e) {
+				Msg.error(this, "Unexpected calling convention error", e);
+			}
 		}
 
 		if (dni.isAnon() && mangleAnonFuncNames) {

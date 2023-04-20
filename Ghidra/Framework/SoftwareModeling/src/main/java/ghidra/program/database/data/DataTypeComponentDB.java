@@ -305,10 +305,10 @@ class DataTypeComponentDB implements InternalDataTypeComponent {
 			return false;
 		}
 		DataType myParent = getParent();
-		boolean aligned =
+		boolean isPacked =
 			(myParent instanceof Composite) ? ((Composite) myParent).isPackingEnabled() : false;
-		// Components don't need to have matching offset when they are aligned
-		if ((!aligned && (offset != dtc.getOffset())) ||
+		// Components don't need to have matching offset when structure has packing enabled
+		if ((!isPacked && (offset != dtc.getOffset())) ||
 			!SystemUtilities.isEqual(getFieldName(), dtc.getFieldName()) ||
 			!SystemUtilities.isEqual(getComment(), dtc.getComment())) {
 			return false;

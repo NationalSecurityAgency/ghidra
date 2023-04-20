@@ -20,36 +20,46 @@ import java.io.IOException;
 import db.*;
 import ghidra.util.exception.VersionException;
 
+/**
+ * Version 2 implementation for accessing the PointerDB database table. 
+ * 
+ * NOTE: Use of tablePrefix introduced with this adapter version.
+ */
 class PointerDBAdapterV2 extends PointerDBAdapter {
 	final static int VERSION = 2;
 
 	private Table table;
 
-	PointerDBAdapterV2(DBHandle handle, boolean create) throws VersionException, IOException {
-
+	/**
+	 * Gets a version 2 adapter for the PointerDB database table.
+	 * @param handle handle to the database containing the table.
+	 * @param tablePrefix prefix to be used with default table name
+	 * @param create true if this constructor should create the table.
+	 * @throws VersionException if the the table's version does not match the expected version
+	 * for this adapter.
+	 * @throws IOException if IO error occurs
+	 */
+	PointerDBAdapterV2(DBHandle handle, String tablePrefix, boolean create)
+			throws VersionException, IOException {
+		String tableName = tablePrefix + POINTER_TABLE_NAME;
 		if (create) {
-			table = handle.createTable(POINTER_TABLE_NAME, SCHEMA, new int[] { PTR_CATEGORY_COL });
+			table = handle.createTable(tableName, SCHEMA, new int[] { PTR_CATEGORY_COL });
 		}
 		else {
-			table = handle.getTable(POINTER_TABLE_NAME);
+			table = handle.getTable(tableName);
 			if (table == null) {
-				throw new VersionException("Missing Table: " + POINTER_TABLE_NAME);
+				throw new VersionException("Missing Table: " + tableName);
 			}
-			else if (table.getSchema().getVersion() != VERSION) {
-				int version = table.getSchema().getVersion();
-				if (version < VERSION) {
-					throw new VersionException(true);
-				}
-				throw new VersionException(VersionException.NEWER_VERSION, false);
+			int version = table.getSchema().getVersion();
+			if (version != VERSION) {
+				throw new VersionException(version < VERSION);
 			}
 		}
 	}
 
 	@Override
 	DBRecord createRecord(long dataTypeID, long categoryID, int length) throws IOException {
-		long tableKey = table.getKey();
-		long key = DataTypeManagerDB.createKey(DataTypeManagerDB.POINTER, tableKey);
-
+		long key = DataTypeManagerDB.createKey(DataTypeManagerDB.POINTER, table.getKey());
 		DBRecord record = SCHEMA.createRecord(key);
 		record.setLongValue(PTR_DT_ID_COL, dataTypeID);
 		record.setLongValue(PTR_CATEGORY_COL, categoryID);
@@ -85,7 +95,7 @@ class PointerDBAdapterV2 extends PointerDBAdapter {
 
 	@Override
 	void deleteTable(DBHandle handle) throws IOException {
-		handle.deleteTable(POINTER_TABLE_NAME);
+		handle.deleteTable(table.getName());
 	}
 
 	@Override

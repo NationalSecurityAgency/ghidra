@@ -19,7 +19,6 @@ import java.io.IOException;
 
 import db.*;
 import ghidra.program.database.util.EmptyRecordIterator;
-import ghidra.program.model.data.GenericCallingConvention;
 import ghidra.util.UniversalID;
 
 /**
@@ -37,15 +36,19 @@ class FunctionDefinitionDBAdapterNoTable extends FunctionDefinitionDBAdapter {
 	}
 
 	@Override
-	public DBRecord createRecord(String name, String comments, long categoryID, long returnDtID,
-			boolean hasVarArgs, GenericCallingConvention genericCallingConvention,
-			long sourceArchiveID, long sourceDataTypeID, long lastChangeTime) throws IOException {
-		throw new UnsupportedOperationException(
-			"Not allowed to update version prior to existence of Function Definition Data Types table.");
+	DBRecord createRecord(String name, String comments, long categoryID, long returnDtID,
+			boolean hasNoReturn, boolean hasVarArgs, byte callingConventionID, long sourceArchiveID,
+			long sourceDataTypeID, long lastChangeTime) throws IOException {
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public DBRecord getRecord(long functionDefID) throws IOException {
+	public int getRecordCount() {
+		return 0;
+	}
+
+	@Override
+	DBRecord getRecord(long functionDefID) throws IOException {
 		return null;
 	}
 
@@ -55,22 +58,22 @@ class FunctionDefinitionDBAdapterNoTable extends FunctionDefinitionDBAdapter {
 	}
 
 	@Override
-	public void updateRecord(DBRecord record, boolean setLastChangeTime) throws IOException {
+	void updateRecord(DBRecord record, boolean setLastChangeTime) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public boolean removeRecord(long functionDefID) throws IOException {
+	boolean removeRecord(long functionDefID) throws IOException {
 		return false;
 	}
 
 	@Override
-	protected void deleteTable(DBHandle handle) {
+	void deleteTable(DBHandle handle) {
 		// do nothing
 	}
 
 	@Override
-	public Field[] getRecordIdsInCategory(long categoryID) throws IOException {
+	Field[] getRecordIdsInCategory(long categoryID) throws IOException {
 		return Field.EMPTY_ARRAY;
 	}
 

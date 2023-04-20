@@ -1344,4 +1344,8 @@ abstract class CompositeViewerModel extends AbstractTableModel
 		return originalCompositeId;
 	}
 
+	@Override
+	public void programArchitectureChanged(DataTypeManager dataTypeManager) {
+		// don't care
+	}
 }

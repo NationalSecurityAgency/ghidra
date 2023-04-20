@@ -1172,6 +1172,16 @@ public class PreProcessor {
 	public void addIncludePath(String path) {
 		pathList.addElement(path);
 	}
+	
+	public void addIncludePaths(String[] paths) {
+		if (paths == null || paths.length < 1) {
+			return;
+		}
+		
+		for (String path : paths) {
+			addIncludePath(path);
+		}
+	}
 
 	public int getNumericType(String val) {
 		try {
@@ -1246,7 +1256,7 @@ public class PreProcessor {
 		outputStream = new PrintStream(fos);
 	}
 
-	public void parse(String filename) throws ParseException {
+	public boolean parse(String filename) throws ParseException {
 		if (verboseLevel == 1) {
 			addParseMessage(null,
 				"PreProcessor:  Reading from file " + filename + " . . .");
@@ -1269,7 +1279,7 @@ public class PreProcessor {
 		}
 		if (fis == null) {
 			addParseMessage(null, "PreProcessor:  File " + filename + " not found.");
-			return;
+			return false;
 		}
 		fileStack.push(filename);
 		alreadyDone = new HashMap<String, Integer>();
@@ -1290,6 +1300,7 @@ public class PreProcessor {
 			addParseMessage(filename, "PreProcessor Token Error:  " + e.getMessage());
 			throw e;
 		}
+		return true;
 	}
 
 	PreProcessor(PreProcessor parent) {

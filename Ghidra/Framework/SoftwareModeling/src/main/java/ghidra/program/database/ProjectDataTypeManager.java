@@ -13,17 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.program.database.data;
+package ghidra.program.database;
 
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.LinkedList;
+
+import javax.help.UnsupportedOperationException;
 
 import db.*;
 import db.util.ErrorHandler;
 import ghidra.framework.model.DomainFile;
-import ghidra.program.database.DataTypeArchiveDB;
+import ghidra.framework.store.LockException;
 import ghidra.program.model.data.*;
+import ghidra.program.model.lang.*;
+import ghidra.program.model.listing.IncompatibleLanguageException;
 import ghidra.program.util.DataTypeArchiveChangeManager;
 import ghidra.util.InvalidNameException;
 import ghidra.util.Lock;
@@ -35,13 +38,23 @@ import ghidra.util.task.TaskMonitor;
  * Class for managing data types in a project archive
  * NOTE: default data organization is used.
  */
-public class ProjectDataTypeManager extends DataTypeManagerDB
+public class ProjectDataTypeManager extends StandAloneDataTypeManager
 		implements ProjectArchiveBasedDataTypeManager {
 
-	private DataTypeArchiveDB dataTypeArchive;
+	private final DataTypeArchiveDB dataTypeArchive;
 
 	/**
-	 * Constructor
+	 * Constructor for a data-type manager using a specified DBHandle.
+	 * <p>
+	 * <B>NOTE:</B> If archive has an assigned architecture, issues may arise due to a revised or
+	 * missing {@link Language}/{@link CompilerSpec} which will result in a warning but not
+	 * prevent the archive from being opened.  Such a warning condition will ne logged and may 
+	 * result in missing or stale information for existing datatypes which have architecture related
+	 * data.  In some case it may be appropriate to 
+	 * {@link FileDataTypeManager#getWarning() check for warnings} on the returned archive
+	 * object prior to its use.
+	 * 
+	 * @param dataTypeArchive associated archive
 	 * @param handle open database  handle
 	 * @param openMode the program open mode
 	 * @param errHandler the database I/O error handler
@@ -51,27 +64,17 @@ public class ProjectDataTypeManager extends DataTypeManagerDB
 	 * @throws VersionException if the database does not match the expected version.
 	 * @throws IOException if a database I/O error occurs.
 	 */
-	public ProjectDataTypeManager(DBHandle handle, int openMode, ErrorHandler errHandler, Lock lock,
+	ProjectDataTypeManager(DataTypeArchiveDB dataTypeArchive, DBHandle handle, int openMode,
+			ErrorHandler errHandler, Lock lock,
 			TaskMonitor monitor) throws CancelledException, VersionException, IOException {
-		super(handle, null, openMode, errHandler, lock, monitor);
-	}
-
-	/**
-	 * Set the associated Archive
-	 * @param dtArchive associated archive
-	 */
-	public void setDataTypeArchive(DataTypeArchiveDB dtArchive) {
-		this.dataTypeArchive = dtArchive;
+		super(handle, openMode, errHandler, lock, monitor);
+		this.dataTypeArchive = dataTypeArchive;
+		reportWarning();
 	}
 
 	@Override
 	public String getName() {
 		return dataTypeArchive.getDomainFile().getName();
-	}
-
-	@Override
-	public Pointer getPointer(DataType dt) {
-		return PointerDataType.getPointer(dt, dataTypeArchive.getDefaultPointerSize());
 	}
 
 	@Override
@@ -82,6 +85,23 @@ public class ProjectDataTypeManager extends DataTypeManagerDB
 
 		dataTypeArchive.setName(name);
 		categoryRenamed(CategoryPath.ROOT, null);
+	}
+
+	@Override
+	public void clearProgramArchitecture(TaskMonitor monitor)
+			throws CancelledException, IOException, LockException {
+		dataTypeArchive.checkExclusiveAccess();
+		super.clearProgramArchitecture(monitor);
+	}
+
+	@Override
+	public void setProgramArchitecture(Language language, CompilerSpecID compilerSpecId,
+			LanguageUpdateOption updateOption, TaskMonitor monitor)
+			throws CompilerSpecNotFoundException, LanguageNotFoundException, IOException,
+			LockException, UnsupportedOperationException, IncompatibleLanguageException,
+			CancelledException {
+		dataTypeArchive.checkExclusiveAccess();
+		super.setProgramArchitecture(language, compilerSpecId, updateOption, monitor);
 	}
 
 	////////////////////
@@ -169,21 +189,12 @@ public class ProjectDataTypeManager extends DataTypeManagerDB
 	///////////////////
 	@Override
 	protected void replaceDataTypeIDs(long oldDataTypeID, long newDataTypeID) {
-//		dataTypeArchive.getCodeManager().replace(oldID, newID, monitor);
-		// TODO
+		// do nothing
 	}
 
 	@Override
-	protected void deleteDataTypeIDs(LinkedList<Long> deletedIds, TaskMonitor monitor)
-			throws CancelledException {
-		long[] ids = new long[deletedIds.size()];
-		Iterator<Long> it = deletedIds.iterator();
-		int i = 0;
-		while (it.hasNext()) {
-			ids[i++] = it.next().longValue();
-		}
-//		dataTypeArchive.getCodeManager().clearData(ids, monitor);
-		// TODO
+	protected void deleteDataTypeIDs(LinkedList<Long> deletedIds, TaskMonitor monitor) {
+		// do nothing
 	}
 
 	@Override
@@ -191,6 +202,7 @@ public class ProjectDataTypeManager extends DataTypeManagerDB
 		return dataTypeArchive.openTransaction(description);
 	}
 
+	@SuppressWarnings("sync-override")
 	@Override
 	public int startTransaction(String description) {
 		return dataTypeArchive.startTransaction(description);
@@ -201,6 +213,7 @@ public class ProjectDataTypeManager extends DataTypeManagerDB
 		dataTypeArchive.flushEvents();
 	}
 
+	@SuppressWarnings("sync-override")
 	@Override
 	public void endTransaction(int transactionID, boolean commit) {
 		dataTypeArchive.endTransaction(transactionID, commit);
@@ -231,7 +244,7 @@ public class ProjectDataTypeManager extends DataTypeManagerDB
 	public void archiveReady(int openMode, TaskMonitor monitor)
 			throws IOException, CancelledException {
 		if (openMode == DBConstants.UPGRADE) {
-			doSourceArchiveUpdates(null, monitor);
+			doSourceArchiveUpdates(monitor);
 			migrateOldFlexArrayComponentsIfRequired(monitor);
 		}
 	}

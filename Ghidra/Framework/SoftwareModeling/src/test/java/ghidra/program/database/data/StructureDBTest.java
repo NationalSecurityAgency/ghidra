@@ -23,13 +23,13 @@ import org.junit.*;
 
 import com.google.common.collect.Sets;
 
-import generic.test.AbstractGTest;
+import generic.test.AbstractGenericTest;
 import ghidra.program.model.data.*;
 import ghidra.util.InvalidNameException;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.TaskMonitorAdapter;
 
-public class StructureDBTest extends AbstractGTest {
+public class StructureDBTest extends AbstractGenericTest {
 
 	private StructureDB struct;
 	private DataTypeManagerDB dataMgr;

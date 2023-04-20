@@ -15,15 +15,15 @@
  */
 package ghidra.program.database.data;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import org.junit.Before;
 import org.junit.Test;
 
-import generic.test.AbstractGTest;
+import generic.test.AbstractGenericTest;
 import ghidra.program.model.data.*;
 
-public class BitFieldDBDataTypeTest extends AbstractGTest {
+public class BitFieldDBDataTypeTest extends AbstractGenericTest {
 
 	private DataTypeManagerDB dataMgr;
 

@@ -207,7 +207,6 @@ zlib.h
 -DTARGET_API_MAC_OSX
 -DTARGET_COCOA
 -DHANDLE="unsigned long"
--D_WCHAR_T
 -D_Complex
 -Drestrict
 -D__restrict

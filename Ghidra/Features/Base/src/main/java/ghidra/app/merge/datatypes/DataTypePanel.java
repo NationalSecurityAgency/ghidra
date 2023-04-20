@@ -29,6 +29,7 @@ import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsDefinition;
 import ghidra.program.model.data.*;
 import ghidra.program.model.data.Enum;
+import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.FunctionSignature;
 import ghidra.util.StringUtilities;
 import ghidra.util.UniversalID;
@@ -348,7 +349,14 @@ class DataTypePanel extends JPanel {
 		ParameterDefinition[] vars = fd.getArguments();
 
 		DataType returnType = fd.getReturnType();
+		if (fd.hasNoReturn()) {
+			insertString(FunctionSignature.NORETURN_DISPLAY_STRING + "  ", contentAttrSet);
+		}
 		insertString(returnType.getDisplayName(), contentAttrSet);
+		String callingConventionName = fd.getCallingConventionName();
+		if (!Function.UNKNOWN_CALLING_CONVENTION_STRING.equals(callingConventionName)) {
+			insertString(callingConventionName + "  ", contentAttrSet);
+		}
 		insertString("  " + fd.getDisplayName(), nameAttrSet);
 		insertString(" (", contentAttrSet);
 		boolean hasVarArgs = fd.hasVarArgs();

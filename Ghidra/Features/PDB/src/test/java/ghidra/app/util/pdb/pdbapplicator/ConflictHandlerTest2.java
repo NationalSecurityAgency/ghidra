@@ -25,6 +25,7 @@ import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.data.DataTypeManagerDB;
 import ghidra.program.model.data.*;
+import ghidra.program.model.lang.CompilerSpec;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
@@ -66,7 +67,7 @@ public class ConflictHandlerTest2 extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	@Test
-	public void testDataTypeConflicts() {
+	public void testDataTypeConflicts() throws Exception {
 		DataTypeConflictHandler handler =
 			DataTypeConflictHandler.REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER;
 
@@ -77,7 +78,7 @@ public class ConflictHandlerTest2 extends AbstractGhidraHeadedIntegrationTest {
 		FunctionDefinitionDataType fn1 =
 			new FunctionDefinitionDataType(CategoryPath.ROOT, "fn1", dtm);
 		fn1.setReturnType(pointer1);
-		fn1.setGenericCallingConvention(GenericCallingConvention.cdecl);
+		fn1.setCallingConvention(CompilerSpec.CALLING_CONVENTION_cdecl);
 		fn1.setArguments(new ParameterDefinition[0]);
 
 		Composite internalStruct1 = createComposite(dtm, "inner");
@@ -93,7 +94,7 @@ public class ConflictHandlerTest2 extends AbstractGhidraHeadedIntegrationTest {
 		FunctionDefinitionDataType fn2 =
 			new FunctionDefinitionDataType(CategoryPath.ROOT, "fn2", dtm);
 		fn2.setReturnType(pointer2);
-		fn2.setGenericCallingConvention(GenericCallingConvention.cdecl);
+		fn2.setCallingConvention(CompilerSpec.CALLING_CONVENTION_cdecl);
 		fn2.setArguments(new ParameterDefinition[0]);
 
 		Composite internalStruct2 = createComposite(dtm, "inner");

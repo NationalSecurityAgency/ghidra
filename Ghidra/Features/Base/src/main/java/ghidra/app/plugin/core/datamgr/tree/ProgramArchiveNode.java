@@ -17,6 +17,7 @@ package ghidra.app.plugin.core.datamgr.tree;
 
 import ghidra.app.plugin.core.datamgr.archive.ProgramArchive;
 import ghidra.framework.model.DomainFile;
+import ghidra.program.model.data.DataTypeManager;
 import ghidra.util.HTMLUtilities;
 
 public class ProgramArchiveNode extends DomainFileArchiveNode {
@@ -27,10 +28,19 @@ public class ProgramArchiveNode extends DomainFileArchiveNode {
 
 	@Override
 	public String getToolTip() {
+		DataTypeManager dtm = archive.getDataTypeManager();
 		DomainFile file = ((ProgramArchive) archive).getDomainFile();
+		StringBuilder buf = new StringBuilder(HTMLUtilities.HTML);
 		if (file != null) {
-			return "<html>" + HTMLUtilities.escapeHTML(file.getPathname());
+			buf.append(HTMLUtilities.escapeHTML(file.toString()));
 		}
-		return "[Unsaved New Program Archive]";
+		else {
+			buf.append("[Unsaved New Program Archive]");
+		}
+		buf.append(HTMLUtilities.BR);
+		buf.append(HTMLUtilities.HTML_SPACE);
+		buf.append(HTMLUtilities.HTML_SPACE);
+		buf.append(HTMLUtilities.escapeHTML(dtm.getProgramArchitectureSummary()));
+		return buf.toString();
 	}
 }

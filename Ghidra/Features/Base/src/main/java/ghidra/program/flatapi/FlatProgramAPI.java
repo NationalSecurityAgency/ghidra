@@ -36,6 +36,8 @@ import ghidra.framework.model.*;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
+import ghidra.program.model.lang.CompilerSpec;
+import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.scalar.Scalar;
@@ -2486,7 +2488,16 @@ public class FlatProgramAPI {
 	}
 
 	/**
-	 * Opens a Data Type Archive
+	 * Opens an existing File Data Type Archive.
+	 * <p>
+	 * <B>NOTE:</B> If archive has an assigned architecture, issues may arise due to a revised or
+	 * missing {@link Language}/{@link CompilerSpec} which will result in a warning but not
+	 * prevent the archive from being opened.  Such a warning condition will be logged and may 
+	 * result in missing or stale information for existing datatypes which have architecture related
+	 * data.  In some case it may be appropriate to 
+	 * {@link FileDataTypeManager#getWarning() check for warnings} on the returned archive
+	 * object prior to its use.
+	 * 
 	 * @param archiveFile the archive file to open
 	 * @param readOnly should file be opened read only
 	 * @return the data type manager
@@ -2494,8 +2505,7 @@ public class FlatProgramAPI {
 	 */
 	public final FileDataTypeManager openDataTypeArchive(File archiveFile, boolean readOnly)
 			throws Exception {
-		FileDataTypeManager dtfm = FileDataTypeManager.openFileArchive(archiveFile, !readOnly);
-		return dtfm;
+		return FileDataTypeManager.openFileArchive(archiveFile, !readOnly);
 	}
 
 	/**

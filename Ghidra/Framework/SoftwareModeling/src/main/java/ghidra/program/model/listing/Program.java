@@ -46,7 +46,7 @@ import ghidra.util.task.TaskMonitor;
  * For example, the createCodeUnit() method of listing will fail if memory is
  * undefined at the address where the codeUnit is to be created.
  */
-public interface Program extends DataTypeManagerDomainObject {
+public interface Program extends DataTypeManagerDomainObject, ProgramArchitecture {
 
 	public static final String ANALYSIS_PROPERTIES = "Analyzers";
 	public static final String DISASSEMBLER_PROPERTIES = "Disassembler";
@@ -85,8 +85,10 @@ public interface Program extends DataTypeManagerDomainObject {
 	/**
 	 * Get the internal program address map
 	 * @return internal address map
+	 * @deprecated Method intended for internal ProgramDB use and is not intended for general use.
+	 * This method may be removed from this interface in a future release.
 	 */
-	// FIXME!! Should not expose on interface - anything using this should use ProgramDB or avoid using map!
+	@Deprecated(forRemoval = true)
 	public AddressMap getAddressMap();
 
 	/**

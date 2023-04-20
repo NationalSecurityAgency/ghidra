@@ -219,5 +219,10 @@ public class DataTypeIndexer {
 		public void sourceArchiveChanged(DataTypeManager dtm, SourceArchive dataTypeSource) {
 			markStale();
 		}
+
+		@Override
+		public void programArchitectureChanged(DataTypeManager dataTypeManager) {
+			markStale();
+		}
 	}
 }

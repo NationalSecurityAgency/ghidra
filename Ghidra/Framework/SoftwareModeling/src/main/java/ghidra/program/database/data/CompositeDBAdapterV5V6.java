@@ -32,6 +32,8 @@ import ghidra.util.exception.VersionException;
  * Version 6 did not change the schema but corresponds to the elimination
  * of Structure flex-arrays which are supported in read-only mode under
  * the older version 5 adapter version.
+ * 
+ * NOTE: Use of tablePrefix introduced with adapter V6.
  */
 class CompositeDBAdapterV5V6 extends CompositeDBAdapter {
 
@@ -66,33 +68,30 @@ class CompositeDBAdapterV5V6 extends CompositeDBAdapter {
 	/**
 	 * Gets an adapter for the Composite database table.
 	 * @param handle handle to the database containing the table.
-	 * @param openMode
+	 * @param openMode the mode this adapter is to be opened for (CREATE, UPDATE, READ_ONLY, UPGRADE).
+	 * @param tablePrefix prefix to be used with default table name
 	 * @throws VersionException if the the table's version does not match the expected version
 	 * for this adapter.
 	 * @throws IOException if IO error occurs
 	 */
-	public CompositeDBAdapterV5V6(DBHandle handle, int openMode)
+	CompositeDBAdapterV5V6(DBHandle handle, int openMode, String tablePrefix)
 			throws VersionException, IOException {
+		String tableName = tablePrefix + COMPOSITE_TABLE_NAME;
 		if (openMode == DBConstants.CREATE) {
-			compositeTable = handle.createTable(COMPOSITE_TABLE_NAME, V5V6_COMPOSITE_SCHEMA,
+			compositeTable = handle.createTable(tableName, V5V6_COMPOSITE_SCHEMA,
 				new int[] { V5V6_COMPOSITE_CAT_COL, V5V6_COMPOSITE_UNIVERSAL_DT_ID_COL });
 		}
 		else {
-			compositeTable = handle.getTable(COMPOSITE_TABLE_NAME);
+			compositeTable = handle.getTable(tableName);
 			if (compositeTable == null) {
-				throw new VersionException("Missing Table: " + COMPOSITE_TABLE_NAME);
+				throw new VersionException("Missing Table: " + tableName);
 			}
 			int version = compositeTable.getSchema().getVersion();
-			if (version == V5_VERSION && openMode == DBConstants.READ_ONLY) {
-				return; // StructureDB handles read-only flex-array migration
-			}
 			if (version != VERSION) {
-				String msg = "Expected version " + VERSION + " for table " + COMPOSITE_TABLE_NAME +
-					" but got " + version;
-				if (version < VERSION) {
-					throw new VersionException(msg, VersionException.OLDER_VERSION, true);
+				if (version == V5_VERSION && openMode == DBConstants.READ_ONLY) {
+					return; // StructureDB handles read-only flex-array migration
 				}
-				throw new VersionException(msg, VersionException.NEWER_VERSION, false);
+				throw new VersionException(version < VERSION);
 			}
 		}
 	}
@@ -102,12 +101,12 @@ class CompositeDBAdapterV5V6 extends CompositeDBAdapter {
 	}
 
 	@Override
-	int getRecordCount() {
+	public int getRecordCount() {
 		return compositeTable.getRecordCount();
 	}
 
 	@Override
-	public DBRecord createRecord(String name, String comments, boolean isUnion, long categoryID,
+	DBRecord createRecord(String name, String comments, boolean isUnion, long categoryID,
 			int length, int computedAlignment, long sourceArchiveID, long sourceDataTypeID,
 			long lastChangeTime, int packValue, int minAlignment) throws IOException {
 		if (compositeTable.getSchema().getVersion() == V5_VERSION) {
@@ -141,7 +140,7 @@ class CompositeDBAdapterV5V6 extends CompositeDBAdapter {
 	}
 
 	@Override
-	public DBRecord getRecord(long dataTypeID) throws IOException {
+	DBRecord getRecord(long dataTypeID) throws IOException {
 		return compositeTable.getRecord(dataTypeID);
 	}
 
@@ -151,7 +150,7 @@ class CompositeDBAdapterV5V6 extends CompositeDBAdapter {
 	}
 
 	@Override
-	public void updateRecord(DBRecord record, boolean setLastChangeTime) throws IOException {
+	void updateRecord(DBRecord record, boolean setLastChangeTime) throws IOException {
 		if (compositeTable.getSchema().getVersion() == V5_VERSION) {
 			throw new UnsupportedOperationException();
 		}
@@ -163,7 +162,7 @@ class CompositeDBAdapterV5V6 extends CompositeDBAdapter {
 	}
 
 	@Override
-	public boolean removeRecord(long compositeID) throws IOException {
+	boolean removeRecord(long compositeID) throws IOException {
 		if (compositeTable.getSchema().getVersion() == V5_VERSION) {
 			throw new UnsupportedOperationException();
 		}
@@ -172,11 +171,11 @@ class CompositeDBAdapterV5V6 extends CompositeDBAdapter {
 
 	@Override
 	void deleteTable(DBHandle handle) throws IOException {
-		handle.deleteTable(COMPOSITE_TABLE_NAME);
+		handle.deleteTable(compositeTable.getName());
 	}
 
 	@Override
-	public Field[] getRecordIdsInCategory(long categoryID) throws IOException {
+	Field[] getRecordIdsInCategory(long categoryID) throws IOException {
 		return compositeTable.findRecords(new LongField(categoryID),
 			CompositeDBAdapter.COMPOSITE_CAT_COL);
 	}

@@ -33,6 +33,7 @@ import generic.jar.ResourceFile;
 import ghidra.app.plugin.core.datamgr.util.DataTypeArchiveUtility;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.cparser.C.CParserUtils;
+import ghidra.app.util.cparser.C.CParserUtils.CParseResults;
 import ghidra.app.util.cparser.C.ParseException;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.data.FileDataTypeManager;
@@ -64,9 +65,9 @@ public class CreateJNIGDTArchivesScript extends GhidraScript {
 		
         FileDataTypeManager dtMgr = FileDataTypeManager.createFileArchive(f);
         
-		String messages = CParserUtils.parseHeaderFiles(openTypes, filenames, args, dtMgr, languageID, compiler, null, monitor);
+		CParseResults results = CParserUtils.parseHeaderFiles(openTypes, filenames, args, dtMgr, languageID, compiler, monitor);
 		
-		Msg.info(this, messages);
+		Msg.info(this, results.getFormattedParseMessage(null));
 
 		dtMgr.save();
 		dtMgr.close();
@@ -113,7 +114,6 @@ public class CreateJNIGDTArchivesScript extends GhidraScript {
 				"-D__builtin_va_list=void *",
 				"-D__DO_NOT_DEFINE_COMPILE",
 				"-D_Complex",
-				"-D_WCHAR_T",
 				"-D__NO_STRING_INLINES",
 				"-D__signed__",
 				"-D__extension__=",
@@ -159,7 +159,6 @@ public class CreateJNIGDTArchivesScript extends GhidraScript {
 				"-D__builtin_va_list=void *",
 				"-D__DO_NOT_DEFINE_COMPILE",
 				"-D_Complex",
-				"-D_WCHAR_T",
 				"-D__NO_STRING_INLINES",
 				"-D__signed__",
 				"-D__extension__=",

@@ -56,18 +56,14 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 	private static SettingsDefinition[] SETTINGS_DEFS =
 		{ FormatSettingsDefinition.DEF_HEX, PADDING, ENDIAN, MNEMONIC };
 
-	private final boolean signed;
-
 	/**
 	 * Constructor
 	 * 
 	 * @param name a unique signed/unsigned data-type name (also used as the mnemonic)
-	 * @param signed true if signed, false if unsigned
 	 * @param dtm data-type manager whose data organization should be used
 	 */
-	public AbstractIntegerDataType(String name, boolean signed, DataTypeManager dtm) {
+	public AbstractIntegerDataType(String name, DataTypeManager dtm) {
 		super(null, name, dtm);
-		this.signed = signed;
 	}
 
 	/**
@@ -86,11 +82,10 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 	}
 
 	/**
+	 * Determine if this type is signed.
 	 * @return true if this is a signed integer data-type
 	 */
-	public boolean isSigned() {
-		return signed;
-	}
+	public abstract boolean isSigned();
 
 	@Override
 	public String getDefaultLabelPrefix() {
@@ -134,6 +129,7 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 		if (size <= 0) {
 			return null;
 		}
+		boolean signed = isSigned();
 		DataOrganization dataOrganization = getDataOrganization();
 		if (size == dataOrganization.getCharSize()) {
 			return signed ? C_SIGNED_CHAR : C_UNSIGNED_CHAR;
@@ -311,7 +307,7 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 
 		boolean negative = bigInt.signum() < 0;
 
-		if (negative && (!signed || (format != FormatSettingsDefinition.DECIMAL))) {
+		if (negative && (!isSigned() || (format != FormatSettingsDefinition.DECIMAL))) {
 			// force use of unsigned value
 			bigInt = bigInt.add(BigInteger.valueOf(2).pow(bitLength));
 		}

@@ -140,6 +140,7 @@ public class ApplyFunctionSignatureCmd extends BackgroundCommand {
 			func.updateFunction(conventionName, returnParam, params,
 				FunctionUpdateType.DYNAMIC_STORAGE_FORMAL_PARAMS, false, source);
 			func.setVarArgs(signature.hasVarArgs());
+			func.setNoReturn(signature.hasNoReturn());
 		}
 		catch (DuplicateNameException e) {
 			// should not happen unless caused by a concurrent operation
@@ -212,29 +213,21 @@ public class ApplyFunctionSignatureCmd extends BackgroundCommand {
 	}
 
 	private String getCallingConvention(Function function, CompilerSpec compilerSpec) {
-		PrototypeModel preferredModel = null;
-		if (signature.getGenericCallingConvention() != GenericCallingConvention.unknown) {
-			preferredModel = compilerSpec.matchConvention(signature.getGenericCallingConvention());
+
+		// Ignore signature's calling convention if unknown/not-defined
+		String callingConvention = signature.getCallingConventionName();
+		if (compilerSpec.getCallingConvention(callingConvention) == null) {
+			callingConvention = null;
 		}
 
-		PrototypeModel convention = function.getCallingConvention();
-		if (convention == null || !preserveCallingConvention) {
-			convention = preferredModel;
-// NOTE: This has been disable since it can cause imported signature information to be
-// ignored and overwritten by subsequent analysis
-//			if (convention == null && compilerSpec.getCallingConventions().length > 1) {
-//				// use default source for signature if convention is really unknown so that we
-//				// know dynamic storage assignment is unreliable
-//				source = SourceType.DEFAULT;
-//			}
+		// Continue using function's current calling convention if valid and either
+		// reservation was requested or signature's convention is unknown/not-defined.
+		PrototypeModel currentConvention = function.getCallingConvention();
+		if (currentConvention != null && (callingConvention == null || preserveCallingConvention)) {
+			callingConvention = function.getCallingConventionName();
 		}
 
-		// Calling convention is permitted to change
-		String conventionName = function.getCallingConventionName();
-		if (!preserveCallingConvention && convention != null) {
-			conventionName = convention.getName();
-		}
-		return conventionName;
+		return callingConvention;
 	}
 
 	private static void updateStackPurgeSize(Function function, Program program) {

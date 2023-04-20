@@ -21,8 +21,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.StringSettingsDefinition;
-import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.lang.ProgramArchitecture;
 
 public class AddressSpaceSettingsDefinition
 		implements StringSettingsDefinition, TypeDefSettingsDefinition {
@@ -118,12 +118,14 @@ public class AddressSpaceSettingsDefinition
 
 	@Override
 	public boolean addPreferredValues(Object settingsOwner, Set<String> set) {
-		if (settingsOwner instanceof ProgramBasedDataTypeManager) {
-			ProgramBasedDataTypeManager dtm = (ProgramBasedDataTypeManager) settingsOwner;
-			AddressFactory addressFactory = dtm.getProgram().getAddressFactory();
-			for (AddressSpace space : addressFactory.getAllAddressSpaces()) {
-				if (space.isLoadedMemorySpace()) {
-					set.add(space.getName());
+		if (settingsOwner instanceof DataTypeManager) {
+			DataTypeManager dtm = (DataTypeManager) settingsOwner;
+			ProgramArchitecture arch = dtm.getProgramArchitecture();
+			if (arch != null) {
+				for (AddressSpace space : arch.getAddressFactory().getAllAddressSpaces()) {
+					if (space.isLoadedMemorySpace()) {
+						set.add(space.getName());
+					}
 				}
 			}
 			return true;

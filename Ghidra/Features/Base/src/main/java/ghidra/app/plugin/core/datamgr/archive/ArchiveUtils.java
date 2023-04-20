@@ -96,17 +96,21 @@ public class ArchiveUtils {
 			return true;
 		}
 		catch (ReadOnlyException e) {
-			Msg.showError(log, null, "Unable to Lock File for Writing", e.getMessage());
+			Msg.showError(log, null, "Unable to Lock Archive for Writing", e.getMessage());
 		}
 		catch (LockException exc) {
-			Msg.showError(log, null, "Unable to Lock File for Writing",
+			Msg.showError(log, null, "Unable to Lock Archive for Writing",
 				"Unable to obtain lock for archive: " + archive.getName() + "\n" +
 					exc.getMessage());
 		}
 		catch (IOException ioe) {
-			Msg.showError(log, null, "Unable to Lock File for Writing",
-				"Problem attempting to lock archive: " + archive.getName() + "\n" +
-					ioe.getMessage());
+			Throwable cause = ioe.getCause();
+			if (cause == null) {
+				cause = ioe;
+			}
+			Msg.showError(log, null, "Unable to Lock Archive for Writing",
+				"Problem attempting to open archive for update: " + archive.getName() + "\n" +
+					cause.getMessage());
 		}
 		return false;
 	}

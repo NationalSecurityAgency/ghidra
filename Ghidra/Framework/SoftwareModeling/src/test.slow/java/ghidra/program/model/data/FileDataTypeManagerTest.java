@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import org.junit.*;
 
 import generic.test.AbstractGenericTest;
+import ghidra.program.model.data.StandAloneDataTypeManager.ArchiveWarning;
 
 public class FileDataTypeManagerTest extends AbstractGenericTest {
 
@@ -68,6 +69,7 @@ public class FileDataTypeManagerTest extends AbstractGenericTest {
 			dtMgr = null;
 
 			dtMgr = FileDataTypeManager.openFileArchive(testArchiveFile, false);
+			assertEquals(ArchiveWarning.NONE, dtMgr.getWarning());
 			assertFalse(dtMgr.isUpdatable());
 
 			ArrayList<DataType> list = new ArrayList<>();
@@ -94,7 +96,7 @@ public class FileDataTypeManagerTest extends AbstractGenericTest {
 			dtMgr = null;
 		}
 		catch (IOException e) {
-			Assert.fail("Unexpected Exception");
+			failWithException("Unexpected exception", e);
 		}
 		finally {
 			if (dtMgr != null) {
@@ -113,6 +115,7 @@ public class FileDataTypeManagerTest extends AbstractGenericTest {
 			FileDataTypeManager dtMgr = null;
 			try {
 				dtMgr = FileDataTypeManager.openFileArchive(testArchiveFile, true);
+				assertEquals(ArchiveWarning.NONE, dtMgr.getWarning());
 				assertTrue("Archive not updateable, i=" + i, dtMgr.isUpdatable());
 
 				int txId = dtMgr.startTransaction("Add Type");
@@ -143,6 +146,7 @@ public class FileDataTypeManagerTest extends AbstractGenericTest {
 
 		try {
 			dtMgr = FileDataTypeManager.openFileArchive(testArchiveFile, false);
+			assertEquals(ArchiveWarning.NONE, dtMgr.getWarning());
 			assertFalse(dtMgr.isUpdatable());
 
 			ArrayList<DataType> list = new ArrayList<>();

@@ -243,7 +243,7 @@ public class VariableUtilities {
 			}
 			if (dtLen < storageSize && storage.isRegisterStorage()) {
 				// TODO: this could be expanded to handle other storage
-				return new VariableStorage(storage.getProgram(),
+				return new VariableStorage(storage.getProgramArchitecture(),
 					shrinkRegister(storage.getRegister(), storageSize - dtLen));
 			}
 			throw new InvalidInputException(
@@ -721,7 +721,7 @@ public class VariableUtilities {
 	@Deprecated
 	public static ParameterImpl getThisParameter(Function function, PrototypeModel convention) {
 		if (convention != null &&
-			convention.getGenericCallingConvention() == GenericCallingConvention.thiscall) {
+			CompilerSpec.CALLING_CONVENTION_thiscall.equals(convention.getName())) {
 
 			DataType dt = findOrCreateClassStruct(function);
 			if (dt == null) {

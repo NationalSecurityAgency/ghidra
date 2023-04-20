@@ -27,6 +27,7 @@ import generic.jar.ResourceFile;
 import generic.test.AbstractGenericTest;
 import ghidra.framework.Application;
 import ghidra.program.model.data.*;
+import ghidra.program.model.data.StandAloneDataTypeManager.ArchiveWarning;
 
 public class DataTypeArchiveIDTest extends AbstractGenericTest {
 
@@ -68,6 +69,7 @@ public class DataTypeArchiveIDTest extends AbstractGenericTest {
 			notFound.remove(path);
 
 			FileDataTypeManager dtm = FileDataTypeManager.openFileArchive(gdtFile, false);
+			assertEquals(ArchiveWarning.NONE, dtm.getWarning());
 			try {
 				assertEquals("Archive UniversalID mismatch: " + path, oldID,
 					dtm.getUniversalID().toString());
@@ -101,6 +103,7 @@ public class DataTypeArchiveIDTest extends AbstractGenericTest {
 	public void spotCheckWindowsVS12_32() throws IOException {
 		ResourceFile gdtFile = Application.getModuleDataFile(WIN_VS12_32_GDT_PATH);
 		FileDataTypeManager dtm = FileDataTypeManager.openFileArchive(gdtFile, false);
+		assertEquals(ArchiveWarning.NONE, dtm.getWarning());
 		try {
 			DataType dt = dtm.getDataType("/winsock.h/fd_set");
 			assertNotNull(dt);
@@ -117,6 +120,7 @@ public class DataTypeArchiveIDTest extends AbstractGenericTest {
 	public void spotCheckWindowsVS12_64() throws IOException {
 		ResourceFile gdtFile = Application.getModuleDataFile(WIN_VS12_64_GDT_PATH);
 		FileDataTypeManager dtm = FileDataTypeManager.openFileArchive(gdtFile, false);
+		assertEquals(ArchiveWarning.NONE, dtm.getWarning());
 		try {
 			DataType dt = dtm.getDataType("/winsock.h/fd_set");
 			assertNotNull(dt);
@@ -132,6 +136,7 @@ public class DataTypeArchiveIDTest extends AbstractGenericTest {
 	public void spotCheckGenericCLib32() throws IOException {
 		ResourceFile gdtFile = Application.getModuleDataFile(GENERIC_CLIB_32_GDT_PATH);
 		FileDataTypeManager dtm = FileDataTypeManager.openFileArchive(gdtFile, false);
+		assertEquals(ArchiveWarning.NONE, dtm.getWarning());
 		try {
 			DataType dt = dtm.getDataType("/select.h/fd_set");
 			assertNotNull(dt);
@@ -147,6 +152,7 @@ public class DataTypeArchiveIDTest extends AbstractGenericTest {
 	public void spotCheckGenericCLib64() throws IOException {
 		ResourceFile gdtFile = Application.getModuleDataFile(GENERIC_CLIB_64_GDT_PATH);
 		FileDataTypeManager dtm = FileDataTypeManager.openFileArchive(gdtFile, false);
+		assertEquals(ArchiveWarning.NONE, dtm.getWarning());
 		try {
 			DataType dt = dtm.getDataType("/select.h/fd_set");
 			assertNotNull(dt);
@@ -162,6 +168,7 @@ public class DataTypeArchiveIDTest extends AbstractGenericTest {
 	public void spotCheckMacOS10_9() throws IOException {
 		ResourceFile gdtFile = Application.getModuleDataFile(MAC_OS_10_9_GDT_PATH);
 		FileDataTypeManager dtm = FileDataTypeManager.openFileArchive(gdtFile, false);
+		assertEquals(ArchiveWarning.NONE, dtm.getWarning());
 		try {
 			DataType dt = dtm.getDataType("/_fd_def.h/fd_set");
 			assertNotNull(dt);

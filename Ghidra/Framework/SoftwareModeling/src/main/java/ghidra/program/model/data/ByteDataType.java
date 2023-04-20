@@ -20,9 +20,7 @@ import ghidra.program.model.lang.DecompilerLanguage;
 /**
  * Provides a definition of a Byte within a program.
  */
-public class ByteDataType extends AbstractIntegerDataType {
-
-	private static final long serialVersionUID = 1L;
+public class ByteDataType extends AbstractUnsignedIntegerDataType {
 
 	/** A statically defined ByteDataType instance.*/
 	public final static ByteDataType dataType = new ByteDataType();
@@ -32,7 +30,7 @@ public class ByteDataType extends AbstractIntegerDataType {
 	}
 
 	public ByteDataType(DataTypeManager dtm) {
-		super("byte", false, dtm);
+		super("byte", dtm);
 	}
 
 	@Override
@@ -52,8 +50,9 @@ public class ByteDataType extends AbstractIntegerDataType {
 
 	@Override
 	public String getDecompilerDisplayName(DecompilerLanguage language) {
-		if (language == DecompilerLanguage.JAVA_LANGUAGE)
+		if (language == DecompilerLanguage.JAVA_LANGUAGE) {
 			return "ubyte";
+		}
 		return name;
 	}
 

@@ -146,7 +146,7 @@ public class FileArchive implements Archive {
 	}
 
 	@Override
-	public DataTypeManager getDataTypeManager() {
+	public FileDataTypeManager getDataTypeManager() {
 		return fileDataTypeManager;
 	}
 
@@ -293,6 +293,11 @@ public class FileArchive implements Archive {
 
 		@Override
 		public void sourceArchiveChanged(DataTypeManager dtm, SourceArchive dataTypeSource) {
+			setChanged(true);
+		}
+
+		@Override
+		public void programArchitectureChanged(DataTypeManager dataTypeManager) {
 			setChanged(true);
 		}
 	}

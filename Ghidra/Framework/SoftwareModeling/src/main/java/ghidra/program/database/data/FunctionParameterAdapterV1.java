@@ -22,6 +22,8 @@ import ghidra.util.exception.VersionException;
 
 /**
  * Version 1 implementation for accessing the Function Definition Parameters database table. 
+ * 
+ * NOTE: Use of tablePrefix introduced with this adapter version.
  */
 class FunctionParameterAdapterV1 extends FunctionParameterAdapter {
 	static final int VERSION = 1;
@@ -45,30 +47,27 @@ class FunctionParameterAdapterV1 extends FunctionParameterAdapter {
 	/**
 	 * Gets a version 1 adapter for the Function Definition Parameter database table.
 	 * @param handle handle to the database containing the table.
+	 * @param tablePrefix prefix to be used with default table name
 	 * @param create true if this constructor should create the table.
 	 * @throws VersionException if the the table's version does not match the expected version
 	 * for this adapter.
+	 * @throws IOException if an IO error occurs
 	 */
-	public FunctionParameterAdapterV1(DBHandle handle, boolean create)
+	public FunctionParameterAdapterV1(DBHandle handle, String tablePrefix, boolean create)
 			throws VersionException, IOException {
-
+		String tableName = tablePrefix + PARAMETER_TABLE_NAME;
 		if (create) {
-			table = handle.createTable(PARAMETER_TABLE_NAME, V1_PARAMETER_SCHEMA,
+			table = handle.createTable(tableName, V1_PARAMETER_SCHEMA,
 				new int[] { V1_PARAMETER_PARENT_ID_COL });
 		}
 		else {
-			table = handle.getTable(PARAMETER_TABLE_NAME);
+			table = handle.getTable(tableName);
 			if (table == null) {
 				throw new VersionException(true);
 			}
 			int version = table.getSchema().getVersion();
 			if (version != VERSION) {
-				String msg = "Expected version " + VERSION + " for table " + PARAMETER_TABLE_NAME +
-					" but got " + table.getSchema().getVersion();
-				if (version < VERSION) {
-					throw new VersionException(msg, VersionException.OLDER_VERSION, true);
-				}
-				throw new VersionException(msg, VersionException.NEWER_VERSION, false);
+				throw new VersionException(version < VERSION);
 			}
 		}
 	}
@@ -76,12 +75,7 @@ class FunctionParameterAdapterV1 extends FunctionParameterAdapter {
 	@Override
 	public DBRecord createRecord(long dataTypeID, long parentID, int ordinal, String name,
 			String comment, int dtLength) throws IOException {
-
-		long tableKey = table.getKey();
-//		if (tableKey <= DataManager.VOID_DATATYPE_ID) {
-//			tableKey = DataManager.VOID_DATATYPE_ID +1;
-//		}
-		long key = DataTypeManagerDB.createKey(DataTypeManagerDB.PARAMETER, tableKey);
+		long key = DataTypeManagerDB.createKey(DataTypeManagerDB.PARAMETER, table.getKey());
 		DBRecord record = V1_PARAMETER_SCHEMA.createRecord(key);
 		record.setLongValue(V1_PARAMETER_PARENT_ID_COL, parentID);
 		record.setLongValue(V1_PARAMETER_DT_ID_COL, dataTypeID);
@@ -115,7 +109,7 @@ class FunctionParameterAdapterV1 extends FunctionParameterAdapter {
 
 	@Override
 	protected void deleteTable(DBHandle handle) throws IOException {
-		handle.deleteTable(PARAMETER_TABLE_NAME);
+		handle.deleteTable(table.getName());
 	}
 
 	@Override

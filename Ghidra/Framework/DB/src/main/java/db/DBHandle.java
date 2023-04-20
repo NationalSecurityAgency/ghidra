@@ -1055,7 +1055,7 @@ public class DBHandle {
 		Table table;
 		synchronized (this) {
 			if (tables.containsKey(name)) {
-				throw new IOException("Table already exists");
+				throw new IOException("Table already exists: " + name);
 			}
 			checkTransaction();
 			table = new Table(this, masterTable.createTableRecord(name, schema, -1));
@@ -1084,7 +1084,7 @@ public class DBHandle {
 		}
 		checkTransaction();
 		if (tables.containsKey(newName)) {
-			throw new DuplicateNameException("Table already exists");
+			throw new DuplicateNameException("Table already exists: " + newName);
 		}
 		Table table = tables.remove(oldName);
 		if (table == null) {

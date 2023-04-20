@@ -47,6 +47,8 @@ public class SpecifyCPrototypeAction extends AbstractDecompilerAction {
 	 */
 	private void verifyDynamicEditorModel(HighFunction hf, FunctionEditorModel model) {
 
+		// TODO: devise alternative approach - bad practice to manipulate model in this fashion
+
 		FunctionPrototype functionPrototype = hf.getFunctionPrototype();
 		int decompParamCnt = functionPrototype.getNumParams();
 
@@ -125,6 +127,7 @@ public class SpecifyCPrototypeAction extends AbstractDecompilerAction {
 		}
 		fsig.setArguments(args);
 		fsig.setVarArgs(functionPrototype.isVarArg());
+		fsig.setNoReturn(functionPrototype.hasNoReturn());
 		return fsig;
 	}
 

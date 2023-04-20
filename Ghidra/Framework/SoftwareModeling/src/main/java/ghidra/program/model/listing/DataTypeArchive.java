@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +15,9 @@
  */
 package ghidra.program.model.listing;
 
-import ghidra.program.model.data.DataTypeManagerDomainObject;
-
 import java.util.Date;
+
+import ghidra.program.model.data.DataTypeManagerDomainObject;
 
 /**
  * This interface represents the main entry point into an object which
@@ -36,6 +35,13 @@ public interface DataTypeArchive extends DataTypeManagerDomainObject {
 	public static final String CREATED_WITH_GHIDRA_VERSION  = "Created With Ghidra Version";
 	/** A date from January 1, 1970 */
 	public static final Date   JANUARY_1_1970               = new Date(0);
+
+	/**
+	 * Determine if this archive has exclusive-write access which may be neccessary for some 
+	 * operations.
+	 * @return true if archive has exclusive-write access
+	 */
+	public boolean hasExclusiveAccess();
 
 	/**
 	 * Gets the default pointer size as it may be stored within the data type archive.

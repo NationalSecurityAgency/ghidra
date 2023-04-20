@@ -15,6 +15,7 @@
  */
 package ghidra.app.plugin.core.function;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.cmd.function.ApplyFunctionSignatureCmd;
@@ -77,7 +78,11 @@ public class EditFunctionSignatureDialog extends AbstractEditFunctionSignatureDi
 
 	@Override
 	protected List<String> getCallingConventionNames() {
-		return function.getProgram().getFunctionManager().getCallingConventionNames();
+		List<String> list = new ArrayList<>();
+		list.add(Function.UNKNOWN_CALLING_CONVENTION_STRING);
+		list.add(Function.DEFAULT_CALLING_CONVENTION_STRING);
+		list.addAll(function.getProgram().getFunctionManager().getCallingConventionNames());
+		return list;
 	}
 
 	@Override
@@ -182,12 +187,6 @@ public class EditFunctionSignatureDialog extends AbstractEditFunctionSignatureDi
 			public boolean applyTo(DomainObject obj) {
 				try {
 					String conventionName = getCallingConvention();
-					if ("unknown".equals(conventionName)) {
-						conventionName = null;
-					}
-					else if ("default".equals(conventionName)) {
-						conventionName = function.getDefaultCallingConventionName();
-					}
 					function.setCallingConvention(conventionName);
 					return true;
 				}

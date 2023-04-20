@@ -54,11 +54,6 @@ public class StubFunctionManager implements FunctionManager {
 	}
 
 	@Override
-	public PrototypeModel[] getCallingConventions() {
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public Function createFunction(String name, Address entryPoint, AddressSetView body,
 			SourceType source) throws InvalidInputException, OverlappingFunctionException {
 		throw new UnsupportedOperationException();
