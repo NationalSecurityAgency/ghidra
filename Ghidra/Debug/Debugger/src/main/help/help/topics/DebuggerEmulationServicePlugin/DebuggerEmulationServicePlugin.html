@@ -47,5 +47,14 @@
     <P>This action is always available. It lists emulators available for configuration. Selecting
     one will set it as the current emulator. The next time emulation is activated, it will use the
     selected emulator.</P>
+
+    <H3><A name="invalidate_cache"></A> Invalidate Emulator Cache</H3>
+
+    <P>This action is available whenever a trace is active. It invalidates all the scratch
+    snapshots in the current trace, which are used for caching emulated machine states. This is
+    recommended when you change the emulator configuration, when you change the Sleigh code of an
+    emulated breakpoint, or when you patch the trace database. If you do not invalidate the cache,
+    the effects of your change may not appear, since the trace manager may recall a cached snapshot
+    instead of actually emulating.</P>
   </BODY>
 </HTML>
