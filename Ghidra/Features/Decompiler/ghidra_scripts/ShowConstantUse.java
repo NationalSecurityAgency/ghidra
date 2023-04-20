@@ -867,12 +867,12 @@ public class ShowConstantUse extends GhidraScript {
 					doneSet);
 				return;
 			case PcodeOp.MULTIEQUAL:
-				followToParam(constUse, defUseList, highFunction, def.getInput(0), funcList,
-					doneSet);
-				@SuppressWarnings("unchecked")
-				ArrayList<PcodeOp> splitUseList = (ArrayList<PcodeOp>) defUseList.clone();
-				followToParam(constUse, splitUseList, highFunction, def.getInput(1), funcList,
-					doneSet);
+				for (int i = 0; i < def.getNumInputs(); i++) {
+					@SuppressWarnings("unchecked")
+					ArrayList<PcodeOp> splitUseList = (ArrayList<PcodeOp>) defUseList.clone();
+					followToParam(constUse, splitUseList, highFunction, def.getInput(i), funcList,
+						doneSet);
+				}
 				return;
 			case PcodeOp.CAST:
 				followToParam(constUse, defUseList, highFunction, def.getInput(0), funcList,
