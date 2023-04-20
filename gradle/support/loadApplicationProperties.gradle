@@ -26,7 +26,8 @@ file("Ghidra/application.properties").withReader { reader ->
 	project.ext.RELEASE_VERSION = version
 	project.ext.RELEASE_NAME = ghidraProps.getProperty('application.release.name')
 	project.ext.JAVA_COMPILER = ghidraProps.getProperty('application.java.compiler')
-	project.ext.GRADLE_MINIMUM_VERSION = ghidraProps.getProperty('application.gradle.min')
+	project.ext.GRADLE_MIN = ghidraProps.getProperty('application.gradle.min')
+	project.ext.GRADLE_MAX = ghidraProps.getProperty('application.gradle.max')
 	project.ext.DISTRO_PREFIX = "ghidra_${version}_${RELEASE_NAME}"
 	
 	// Build dates may or may not be already present in the application.properties file.
