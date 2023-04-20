@@ -103,6 +103,7 @@ public class RelocationTablePlugin extends Plugin implements DomainObjectListene
 	@Override
 	public void domainObjectChanged(DomainObjectChangedEvent ev) {
 		if (ev.containsEvent(ChangeManager.DOCR_IMAGE_BASE_CHANGED) ||
+			ev.containsEvent(ChangeManager.DOCR_RELOCATION_ADDED) ||
 			ev.containsEvent(DomainObject.DO_OBJECT_RESTORED)) {
 			provider.setProgram(currentProgram);
 		}
