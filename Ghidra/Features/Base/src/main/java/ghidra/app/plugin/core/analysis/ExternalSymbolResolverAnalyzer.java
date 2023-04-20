@@ -44,7 +44,7 @@ public class ExternalSymbolResolverAnalyzer extends AbstractAnalyzer {
 		"Links unresolved external symbols to the first symbol found in the program's required libraries list (found in program properties).";
 
 	/**
-	 * Creates a new {@link MachoFunctionStartsAnalyzer} 
+	 * Creates a new {@link ExternalSymbolResolverAnalyzer} 
 	 */
 	public ExternalSymbolResolverAnalyzer() {
 		super(NAME, DESCRIPTION, AnalyzerType.BYTE_ANALYZER);
@@ -57,6 +57,11 @@ public class ExternalSymbolResolverAnalyzer extends AbstractAnalyzer {
 
 	@Override
 	public boolean canAnalyze(Program program) {
+		// This analyzer needs to look around the project for imported libraries
+		if (program.getDomainFile().getParent() == null) {
+			return false;
+		}
+		
 		Options options = program.getOptions(Program.PROGRAM_INFO);
 		String format = options.getString("Executable Format", null);
 		return ElfLoader.ELF_NAME.equals(format) || MachoLoader.MACH_O_NAME.equals(format);
