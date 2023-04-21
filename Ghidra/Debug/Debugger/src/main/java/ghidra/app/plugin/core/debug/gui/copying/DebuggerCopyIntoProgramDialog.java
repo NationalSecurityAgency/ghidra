@@ -810,7 +810,7 @@ public class DebuggerCopyIntoProgramDialog extends ReusableDialogComponentProvid
 	protected void executeCapture(AddressRange range, TraceRecorder recorder, TaskMonitor monitor)
 			throws Exception {
 		synchronized (this) {
-			monitor.checkCanceled();
+			monitor.checkCancelled();
 			CompletableFuture<Void> recCapture =
 				recorder.readMemoryBlocks(new AddressSet(range), monitor);
 			this.captureTask = recCapture.thenCompose(__ -> {
