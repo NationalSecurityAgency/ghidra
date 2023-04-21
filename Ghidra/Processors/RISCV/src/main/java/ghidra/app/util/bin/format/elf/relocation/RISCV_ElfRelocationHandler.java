@@ -21,8 +21,8 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
-import ghidra.program.model.reloc.RelocationResult;
 import ghidra.program.model.reloc.Relocation.Status;
+import ghidra.program.model.reloc.RelocationResult;
 import ghidra.util.exception.NotFoundException;
 
 public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
@@ -88,7 +88,7 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 				// Runtime relocation word32 = S + A
 				value32 = (int) (symbolValue + addend);
 				memory.setInt(relocationAddress, value32);
-				if (addend != 0) {
+				if (symbolIndex != 0 && addend != 0 && !sym.isSection()) {
 					warnExternalOffsetRelocation(program, relocationAddress,
 						symbolAddr, symbolName, addend, elfRelocationContext.getLog());
 					if (elf.is32Bit()) {
@@ -102,7 +102,7 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 				value64 = symbolValue + addend;
 				memory.setLong(relocationAddress, value64);
 				byteLength = 8;
-				if (addend != 0) {
+				if (symbolIndex != 0 && addend != 0 && !sym.isSection()) {
 					warnExternalOffsetRelocation(program, relocationAddress,
 						symbolAddr, symbolName, addend, elfRelocationContext.getLog());
 					if (elf.is64Bit()) {

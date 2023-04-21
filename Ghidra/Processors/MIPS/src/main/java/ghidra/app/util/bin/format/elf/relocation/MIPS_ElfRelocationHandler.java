@@ -459,7 +459,7 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 					status = Status.APPLIED;
 
 					// Handle possible offset-pointer use
-					if (symbolIndex != 0 && addend != 0 && elfSymbol.isGlobal()) {
+					if (symbolIndex != 0 && addend != 0 && !elfSymbol.isSection()) {
 						// create offset-pointer and resulting offset-reference
 						warnExternalOffsetRelocation(program, relocationAddress,
 							symbolAddr, symbolName, addend, mipsRelocationContext.getLog());
@@ -551,15 +551,15 @@ public class MIPS_ElfRelocationHandler extends ElfRelocationHandler {
 					status = Status.APPLIED;
 
 					// Handle possible offset-pointer use
-					boolean isGlobal = elfSymbol.isGlobal();
+					boolean isSectionBased = elfSymbol.isSection();
 					Address addr = symbolAddr;
 					if (symbolIndex == 0 && mipsRelocationContext.lastSymbolAddr != null) {
 						// handle compound mips64 relocation
 						addr = mipsRelocationContext.lastSymbolAddr;
 						symbolName = mipsRelocationContext.lastElfSymbol.getNameAsString();
-						isGlobal = mipsRelocationContext.lastElfSymbol.isGlobal();
+						isSectionBased = mipsRelocationContext.lastElfSymbol.isSection();
 					}
-					if (addr != null && isGlobal) {
+					if (addr != null && !isSectionBased) {
 						if (symbolIndex == 0) {
 							// compute addend used with compound relocation and lastSymbolAddr 
 							addend -= addr.getOffset();
