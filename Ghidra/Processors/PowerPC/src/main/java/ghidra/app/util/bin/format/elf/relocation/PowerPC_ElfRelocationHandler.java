@@ -29,8 +29,8 @@ import ghidra.program.model.lang.Register;
 import ghidra.program.model.listing.ContextChangeException;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
-import ghidra.program.model.reloc.RelocationResult;
 import ghidra.program.model.reloc.Relocation.Status;
+import ghidra.program.model.reloc.RelocationResult;
 import ghidra.program.model.symbol.*;
 import ghidra.util.exception.*;
 
@@ -116,7 +116,7 @@ public class PowerPC_ElfRelocationHandler extends ElfRelocationHandler {
 			case PowerPC_ElfRelocationConstants.R_PPC_GLOB_DAT:
 				newValue = symbolValue + addend;
 				memory.setInt(relocationAddress, newValue);
-				if (addend != 0) {
+				if (symbolIndex != 0 && addend != 0 && !sym.isSection()) {
 					warnExternalOffsetRelocation(program, relocationAddress,
 						symbolAddr, symbolName, addend, elfRelocationContext.getLog());
 					applyComponentOffsetPointer(program, relocationAddress, addend);
