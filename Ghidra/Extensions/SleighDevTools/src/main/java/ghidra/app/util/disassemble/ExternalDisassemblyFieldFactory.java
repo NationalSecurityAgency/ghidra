@@ -23,7 +23,7 @@ import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors.Messages;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.field.*;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
@@ -61,7 +61,7 @@ public class ExternalDisassemblyFieldFactory extends FieldFactory {
 		super(FIELD_NAME);
 	}
 
-	private ExternalDisassemblyFieldFactory(FieldFormatModel model, HighlightProvider hlProvider,
+	private ExternalDisassemblyFieldFactory(FieldFormatModel model, ListingHighlightProvider hlProvider,
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
 	}
@@ -96,7 +96,7 @@ public class ExternalDisassemblyFieldFactory extends FieldFactory {
 
 	@Override
 	public FieldFactory newInstance(FieldFormatModel formatModel,
-			HighlightProvider highlightProvider, ToolOptions options, ToolOptions fieldOptions) {
+			ListingHighlightProvider highlightProvider, ToolOptions options, ToolOptions fieldOptions) {
 		return new ExternalDisassemblyFieldFactory(formatModel, highlightProvider, options,
 			fieldOptions);
 	}

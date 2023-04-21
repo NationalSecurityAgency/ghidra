@@ -40,8 +40,8 @@ import ghidra.app.plugin.core.table.TableComponentProvider;
 import ghidra.app.services.*;
 import ghidra.app.util.*;
 import ghidra.app.util.query.TableService;
-import ghidra.app.util.viewer.field.BytesFieldFactory;
-import ghidra.app.util.viewer.field.FieldFactory;
+import ghidra.app.util.viewer.field.*;
+import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.*;
 import ghidra.framework.plugintool.*;
@@ -82,8 +82,6 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 
 	/** Constant for read/writeConfig() for dialog options */
 	private static final String SHOW_ADVANCED_OPTIONS = "Show Advanced Options";
-
-	final static Highlight[] NO_HIGHLIGHTS = new Highlight[0];
 
 	private static final int MAX_PRE_POPULTATE_BYTE_COUNT = 20;
 
@@ -334,7 +332,6 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 
 	@Override
 	public void setSearchText(String maskedString) {
-		//sets the search value to a bit string provided by the MnemonicSearchPlugin
 		searchDialog.setSearchText(maskedString);
 	}
 
@@ -613,7 +610,7 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 	}
 
 	private abstract class SearchResultsHighlighter
-			implements HighlightProvider, ComponentProviderActivationListener {
+			implements ListingHighlightProvider, ComponentProviderActivationListener {
 
 		private TableComponentProvider<MemSearchResult> provider;
 		private Program highlightProgram;
@@ -688,16 +685,20 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 		}
 
 		@Override
-		public Highlight[] getHighlights(String text, Object obj,
-				Class<? extends FieldFactory> fieldFactoryClass, int cursorTextOffset) {
+		public Highlight[] createHighlights(String text, ListingField field, int cursorTextOffset) {
+
 			Program program = navigatable != null ? navigatable.getProgram() : null;
+			Class<? extends FieldFactory> fieldFactoryClass = field.getFieldFactory().getClass();
 			if (fieldFactoryClass != BytesFieldFactory.class) {
 				return NO_HIGHLIGHTS;
 			}
 			if (checkRemoveHighlights()) {
 				return NO_HIGHLIGHTS;
 			}
-			if (!(obj instanceof CodeUnit)) {
+
+			ProxyObj<?> proxy = field.getProxy();
+			Object obj = proxy.getObject();
+			if (!(obj instanceof CodeUnit cu)) {
 				return NO_HIGHLIGHTS;
 			}
 			if (!doHighlight) {
@@ -708,7 +709,6 @@ public class MemSearchPlugin extends Plugin implements OptionsChangeListener,
 				return NO_HIGHLIGHTS;
 			}
 
-			CodeUnit cu = (CodeUnit) obj;
 			Address minAddr = cu.getMinAddress();
 			Address maxAddr = cu.getMaxAddress();
 			List<MemSearchResult> results = getAddressesFoundInRange(minAddr, maxAddr);

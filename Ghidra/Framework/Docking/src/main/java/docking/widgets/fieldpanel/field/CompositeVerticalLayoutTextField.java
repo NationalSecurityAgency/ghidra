@@ -52,7 +52,7 @@ public class CompositeVerticalLayoutTextField implements TextField {
 	private int startX;
 	private int width;
 	private int preferredWidth;
-	private HighlightFactory hlFactory;
+	private FieldHighlightFactory hlFactory;
 
 	private int height;
 	private int heightAbove;
@@ -71,12 +71,12 @@ public class CompositeVerticalLayoutTextField implements TextField {
 	private boolean isClipped;
 
 	public CompositeVerticalLayoutTextField(List<TextField> fields, int startX, int width,
-			int maxLines, HighlightFactory hlFactory) {
+			int maxLines, FieldHighlightFactory hlFactory) {
 		this(fields, startX, width, maxLines, hlFactory, " ");
 	}
 
 	protected CompositeVerticalLayoutTextField(List<TextField> fields, int startX, int width,
-			int maxLines, HighlightFactory hlFactory, String rowSeparator) {
+			int maxLines, FieldHighlightFactory hlFactory, String rowSeparator) {
 
 		this.startX = startX;
 		this.width = width;

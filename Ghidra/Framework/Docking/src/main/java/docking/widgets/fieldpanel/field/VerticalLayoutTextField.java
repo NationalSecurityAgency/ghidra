@@ -42,7 +42,7 @@ public class VerticalLayoutTextField implements TextField {
 	protected int startX;
 	protected int width;
 	protected int preferredWidth;
-	protected HighlightFactory hlFactory;
+	protected FieldHighlightFactory hlFactory;
 
 	private int height;
 	private int heightAbove;
@@ -71,7 +71,7 @@ public class VerticalLayoutTextField implements TextField {
 	 */
 	@Deprecated(since = "10.1", forRemoval = true)
 	public VerticalLayoutTextField(FieldElement[] textElements, int startX, int width, int maxLines,
-			HighlightFactory hlFactory) {
+			FieldHighlightFactory hlFactory) {
 		this(Arrays.asList(textElements), startX, width, maxLines, hlFactory, " ");
 	}
 
@@ -87,7 +87,7 @@ public class VerticalLayoutTextField implements TextField {
 	 */
 	public VerticalLayoutTextField(List<FieldElement> textElements, int startX, int width,
 			int maxLines,
-			HighlightFactory hlFactory) {
+			FieldHighlightFactory hlFactory) {
 		this(textElements, startX, width, maxLines, hlFactory, " ");
 	}
 
@@ -104,7 +104,7 @@ public class VerticalLayoutTextField implements TextField {
 	 *        getText() method.
 	 */
 	protected VerticalLayoutTextField(List<FieldElement> textElements, int startX, int width,
-			int maxLines, HighlightFactory hlFactory, String rowSeparator) {
+			int maxLines, FieldHighlightFactory hlFactory, String rowSeparator) {
 
 		this.startX = startX;
 		this.width = width;
@@ -280,7 +280,7 @@ public class VerticalLayoutTextField implements TextField {
 			cursorRow = cursorLoc.row();
 		}
 
-		Highlight[] highlights = hlFactory.getHighlights(this, getText(), cursorTextOffset);
+		Highlight[] highlights = hlFactory.createHighlights(this, getText(), cursorTextOffset);
 		int columns = 0;
 		int n = subFields.size();
 

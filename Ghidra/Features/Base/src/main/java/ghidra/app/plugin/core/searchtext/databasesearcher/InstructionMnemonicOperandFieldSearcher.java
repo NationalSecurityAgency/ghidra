@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import ghidra.app.plugin.core.searchtext.Searcher.TextSearchResult;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.listing.*;
@@ -74,7 +75,7 @@ public class InstructionMnemonicOperandFieldSearcher extends ProgramDatabaseFiel
 	}
 
 	@Override
-	protected Address advance(List<ProgramLocation> currentMatches) {
+	protected Address advance(List<TextSearchResult> currentMatches) {
 		Instruction instruction = iterator.hasNext() ? iterator.next() : null;
 		Address nextAddress = null;
 		if (instruction != null) {
@@ -85,7 +86,7 @@ public class InstructionMnemonicOperandFieldSearcher extends ProgramDatabaseFiel
 	}
 
 	private void findMatchesForCurrentAddress(Instruction instruction,
-			List<ProgramLocation> currentMatches) {
+			List<TextSearchResult> currentMatches) {
 		String mnemonicString = instruction.getMnemonicString();
 		String[] opStrings = getOperandStrings(instruction);
 		Matcher matcher = pattern.matcher(combineStrings(mnemonicString, opStrings));
@@ -103,18 +104,18 @@ public class InstructionMnemonicOperandFieldSearcher extends ProgramDatabaseFiel
 		}
 	}
 
-	private void addOperandMatch(Instruction instruction, List<ProgramLocation> currentMatches,
+	private void addOperandMatch(Instruction instruction, List<TextSearchResult> currentMatches,
 			String[] opStrings, Address address, int index) {
 		if (!doOperands) {
 			return;
 		}
 		int opIndex = findOpIndex(opStrings, index);
 		int charOffset = findCharOffset(index, opIndex, opStrings);
-		currentMatches.add(new OperandFieldLocation(program, address, null,
-			instruction.getAddress(opIndex), opStrings[opIndex], opIndex, charOffset));
+		currentMatches.add(new TextSearchResult(new OperandFieldLocation(program, address, null,
+			instruction.getAddress(opIndex), opStrings[opIndex], opIndex, charOffset), index));
 	}
 
-	private void addMnemonicMatch(List<ProgramLocation> currentMatches, Address address,
+	private void addMnemonicMatch(List<TextSearchResult> currentMatches, Address address,
 			String mnemonicString, int startIndex, int endIndex) {
 		if (!doMnemonics) {
 			return;
@@ -124,7 +125,9 @@ public class InstructionMnemonicOperandFieldSearcher extends ProgramDatabaseFiel
 			return;
 		}
 
-		currentMatches.add(new MnemonicFieldLocation(program, address, null, null, mnemonicString,
+		currentMatches.add(new TextSearchResult(
+			new MnemonicFieldLocation(program, address, null, null, mnemonicString,
+				startIndex),
 			startIndex));
 	}
 

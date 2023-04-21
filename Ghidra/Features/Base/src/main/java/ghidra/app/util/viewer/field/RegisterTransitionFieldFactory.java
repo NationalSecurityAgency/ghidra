@@ -22,7 +22,7 @@ import java.util.List;
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.app.cmd.function.CallDepthChangeInfo;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.Options;
@@ -55,7 +55,7 @@ public class RegisterTransitionFieldFactory extends FieldFactory {
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
-	private RegisterTransitionFieldFactory(FieldFormatModel model, HighlightProvider hsProvider,
+	private RegisterTransitionFieldFactory(FieldFormatModel model, ListingHighlightProvider hsProvider,
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, model, hsProvider, displayOptions, fieldOptions);
 		initOptions(displayOptions, fieldOptions);
@@ -242,7 +242,7 @@ public class RegisterTransitionFieldFactory extends FieldFactory {
 	}
 
 	@Override
-	public FieldFactory newInstance(FieldFormatModel fieldFormatModel, HighlightProvider hsProvider,
+	public FieldFactory newInstance(FieldFormatModel fieldFormatModel, ListingHighlightProvider hsProvider,
 			ToolOptions displayOptions, ToolOptions fieldOptions) {
 		return new RegisterTransitionFieldFactory(fieldFormatModel, hsProvider, displayOptions,
 			fieldOptions);

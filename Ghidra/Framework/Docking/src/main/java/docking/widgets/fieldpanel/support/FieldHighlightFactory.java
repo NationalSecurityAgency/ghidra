@@ -17,7 +17,12 @@ package docking.widgets.fieldpanel.support;
 
 import docking.widgets.fieldpanel.field.Field;
 
-public interface HighlightFactory {
+/**
+ * A highlighter for for {@link Field}s.
+ */
+public interface FieldHighlightFactory {
+
+	public static Highlight[] NO_HIGHLIGHTS = new Highlight[0];
 
 	/**
 	 * Returns the highlights for the given text
@@ -28,5 +33,5 @@ public interface HighlightFactory {
 	 * 		  cursor is not in this field.
 	 * @return an array of highlights to be rendered
 	 */
-	public Highlight[] getHighlights(Field field, String text, int cursorTextOffset);
+	public Highlight[] createHighlights(Field field, String text, int cursorTextOffset);
 }

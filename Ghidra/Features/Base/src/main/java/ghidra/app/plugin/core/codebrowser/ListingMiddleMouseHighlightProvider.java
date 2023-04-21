@@ -34,8 +34,9 @@ import ghidra.GhidraOptions;
 import ghidra.GhidraOptions.CURSOR_MOUSE_BUTTON_NAMES;
 import ghidra.app.plugin.processors.generic.PcodeFieldFactory;
 import ghidra.app.services.ButtonPressedListener;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.field.*;
+import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.OptionsChangeListener;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
@@ -50,8 +51,8 @@ import ghidra.program.util.*;
 import ghidra.util.*;
 import ghidra.util.datastruct.Stack;
 
-public class ListingHighlightProvider
-		implements ButtonPressedListener, OptionsChangeListener, HighlightProvider {
+public class ListingMiddleMouseHighlightProvider
+		implements ButtonPressedListener, OptionsChangeListener, ListingHighlightProvider {
 	//@formatter:off
 	private static final GColor DEFAULT_HIGHLIGHT_COLOR = new GColor("color.bg.listing.highlighter.default");
 	private static final GColor DEFAULT_SCOPED_READ_COLOR = new GColor("color.bg.listing.highlighter.scoped.read");
@@ -87,7 +88,7 @@ public class ListingHighlightProvider
 	private final Component repaintComponent;
 	private final PluginTool tool;
 
-	public ListingHighlightProvider(PluginTool tool, Component repaintComponent) {
+	public ListingMiddleMouseHighlightProvider(PluginTool tool, Component repaintComponent) {
 		this.tool = tool;
 		this.repaintComponent = repaintComponent;
 
@@ -102,8 +103,11 @@ public class ListingHighlightProvider
 	}
 
 	@Override
-	public Highlight[] getHighlights(String text, Object obj,
-			Class<? extends FieldFactory> fieldFactoryClass, int cursorTextOffset) {
+	public Highlight[] createHighlights(String text, ListingField field, int cursorTextOffset) {
+
+		Class<? extends FieldFactory> fieldFactoryClass = field.getFieldFactory().getClass();
+		ProxyObj<?> proxy = field.getProxy();
+		Object obj = proxy.getObject();
 		if (scopeRegisterHighlight && scope != null) {
 			if (fieldFactoryClass == VariableNameFieldFactory.class ||
 				fieldFactoryClass == VariableLocFieldFactory.class) {

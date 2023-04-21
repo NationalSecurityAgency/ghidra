@@ -23,7 +23,6 @@ import docking.widgets.fieldpanel.internal.FieldBackgroundColorManager;
 import docking.widgets.fieldpanel.internal.PaintContext;
 import docking.widgets.fieldpanel.support.*;
 import generic.theme.GThemeDefaults.Colors.Palette;
-import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.EmptyProxy;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 
@@ -78,15 +77,6 @@ public class IndentField implements ListingField {
 	@Override
 	public FieldFactory getFieldFactory() {
 		return factory;
-	}
-
-	/**
-	 * Returns the FieldModel that contains the FieldFactory that generated this
-	 * field.
-	 */
-	@Override
-	public FieldFormatModel getFieldModel() {
-		return factory.getFieldModel();
 	}
 
 	/**

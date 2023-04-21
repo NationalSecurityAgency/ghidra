@@ -20,7 +20,7 @@ import java.math.BigInteger;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.field.ListingColors.MaskColors;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
@@ -52,7 +52,7 @@ public class InstructionMaskValueFieldFactory extends FieldFactory {
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
-	private InstructionMaskValueFieldFactory(FieldFormatModel model, HighlightProvider hsProvider,
+	private InstructionMaskValueFieldFactory(FieldFormatModel model, ListingHighlightProvider hsProvider,
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, model, hsProvider, displayOptions, fieldOptions);
 	}
@@ -165,7 +165,7 @@ public class InstructionMaskValueFieldFactory extends FieldFactory {
 	}
 
 	@Override
-	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider hsProvider,
+	public FieldFactory newInstance(FieldFormatModel formatModel, ListingHighlightProvider hsProvider,
 			ToolOptions toolOptions, ToolOptions fieldOptions) {
 		return new InstructionMaskValueFieldFactory(formatModel, hsProvider, toolOptions,
 			fieldOptions);

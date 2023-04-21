@@ -461,15 +461,6 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 	}
 
 	/**
-	 * Returns the character offset in the display item at the (row,col).
-	 *
-	 * @return the character offset in the display item at the (row,col).
-	 */
-	public int getCharOffset() {
-		return charOffset;
-	}
-
-	/**
 	 * Returns the column index of the display piece represented by this location. For most
 	 * locations, there is only one display item per row, in which case this value will be 0.
 	 * @return the column.
@@ -478,4 +469,12 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 		return col;
 	}
 
+	/**
+	 * Returns the character offset in the display item at the (row,col).
+	 *
+	 * @return the character offset in the display item at the (row,col).
+	 */
+	public int getCharOffset() {
+		return charOffset;
+	}
 }

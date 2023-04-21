@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.util.viewer.format;
+package ghidra.app.util.viewer.field;
 
 import java.awt.Color;
 
 import docking.widgets.fieldpanel.field.*;
-import docking.widgets.fieldpanel.support.*;
+import docking.widgets.fieldpanel.support.FieldLocation;
+import docking.widgets.fieldpanel.support.Highlight;
 import generic.theme.GColor;
 import generic.theme.GThemeDefaults.Colors;
-import ghidra.app.util.HighlightProvider;
-import ghidra.app.util.viewer.field.*;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 
 public class ErrorListingField extends ListingTextField {
@@ -31,21 +31,25 @@ public class ErrorListingField extends ListingTextField {
 
 	private Throwable t;
 
-	private static HighlightProvider myProvider =
-		(text, obj, fieldFactoryClass, cursorTextOffset) -> new Highlight[] {
+	private static ListingHighlightProvider myProvider =
+		(text, field, cursorTextOffset) -> new Highlight[] {
 			new Highlight(0, text.length() - 1, BG_ERROR_COLOR) };
 
 	public ErrorListingField(FieldFactory ff, ProxyObj<?> proxy, int varWidth, Throwable t) {
-		super(ff, proxy, createField(ff, proxy, varWidth, t));
+		super(ff, proxy, null, createHighlightFactory());
+		this.field = createField(ff, proxy, varWidth);
 		this.t = t;
 	}
 
-	private static TextField createField(FieldFactory ff, ProxyObj<?> proxy, int varWidth,
-			Throwable t) {
-		HighlightFactory hlFactory =
-			new FieldHighlightFactory(myProvider, ff.getClass(), proxy.getObject());
-		return new ClippingTextField(ff.getStartX() + varWidth, ff.getWidth(),
-			createElement(ff, t), hlFactory);
+	private static ListingFieldHighlightFactoryAdapter createHighlightFactory() {
+		return new ListingFieldHighlightFactoryAdapter(myProvider);
+	}
+
+	private ClippingTextField createField(FieldFactory ff, ProxyObj<?> proxy, int varWidth) {
+		ClippingTextField textField =
+			new ClippingTextField(ff.getStartX() + varWidth, ff.getWidth(),
+				createElement(ff, t), hlFactory);
+		return textField;
 	}
 
 	private static FieldElement createElement(FieldFactory ff, Throwable t) {

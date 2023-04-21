@@ -1404,8 +1404,8 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		env.showTool();
 		ByteViewerComponent component = panel.getCurrentComponent();
 
-		ByteViewerHighlightProvider highlightProvider =
-			(ByteViewerHighlightProvider) getInstanceField("highlightProvider", component);
+		ByteViewerHighlighter highlightProvider =
+			(ByteViewerHighlighter) getInstanceField("highlightProvider", component);
 		String currentHighlightText = highlightProvider.getText();
 		assertNull(currentHighlightText);
 

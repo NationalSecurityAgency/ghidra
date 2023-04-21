@@ -24,7 +24,7 @@ import ghidra.app.nav.*;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.ProgramPlugin;
 import ghidra.app.services.*;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.PluginConstants;
 import ghidra.app.util.navigation.GoToServiceImpl;
 import ghidra.app.util.query.TableService;
@@ -225,7 +225,7 @@ public final class GoToServicePlugin extends ProgramPlugin {
 		}
 
 		@Override
-		public void removeHighlightProvider(HighlightProvider highlightProvider, Program program) {
+		public void removeHighlightProvider(ListingHighlightProvider highlightProvider, Program program) {
 			CodeViewerService service = tool.getService(CodeViewerService.class);
 			if (service != null) {
 				service.removeHighlightProvider(highlightProvider, program);
@@ -233,7 +233,7 @@ public final class GoToServicePlugin extends ProgramPlugin {
 		}
 
 		@Override
-		public void setHighlightProvider(HighlightProvider highlightProvider, Program program) {
+		public void setHighlightProvider(ListingHighlightProvider highlightProvider, Program program) {
 			CodeViewerService service = tool.getService(CodeViewerService.class);
 			if (service != null) {
 				service.setHighlightProvider(highlightProvider, program);

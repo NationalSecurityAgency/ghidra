@@ -27,7 +27,6 @@ import java.util.stream.Collectors;
 import javax.swing.*;
 
 import org.apache.commons.collections4.IteratorUtils;
-import org.junit.After;
 
 import docking.action.DockingActionIf;
 import docking.test.AbstractDockingTest;
@@ -37,8 +36,9 @@ import ghidra.app.plugin.core.codebrowser.CodeViewerProvider;
 import ghidra.app.plugin.core.table.TableComponentProvider;
 import ghidra.app.plugin.core.table.TableServicePlugin;
 import ghidra.app.services.*;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.field.BytesFieldFactory;
+import ghidra.app.util.viewer.field.ListingField;
 import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.*;
@@ -96,12 +96,6 @@ public abstract class AbstractMemSearchTest extends AbstractProgramBasedTest {
 		showMemSearchDialog();
 		setToggleButtonSelected(pane, MemSearchDialog.ADVANCED_BUTTON_NAME, true);
 		selectRadioButton("Binary");
-	}
-
-	@Override
-	@After
-	public void tearDown() throws Exception {
-		env.dispose();
 	}
 
 	@Override
@@ -163,10 +157,10 @@ public abstract class AbstractMemSearchTest extends AbstractProgramBasedTest {
 	private List<Address> getHighlightAddresses() {
 		CodeViewerService service = tool.getService(CodeViewerService.class);
 		Object codeViewerProvider = getInstanceField("connectedProvider", service);
-		Map<Program, HighlightProvider> highlighterMap =
-			(Map<Program, HighlightProvider>) getInstanceField("programHighlighterMap",
+		Map<Program, ListingHighlightProvider> highlighterMap =
+			(Map<Program, ListingHighlightProvider>) getInstanceField("programHighlighterMap",
 				codeViewerProvider);
-		HighlightProvider highlightProvider = highlighterMap.get(program);
+		ListingHighlightProvider highlightProvider = highlighterMap.get(program);
 
 		assertEquals("The inner-class has been renamed", "SearchTableHighlightHandler",
 			highlightProvider.getClass().getSimpleName());
@@ -237,10 +231,10 @@ public abstract class AbstractMemSearchTest extends AbstractProgramBasedTest {
 		triggerText(valueField, text);
 	}
 
-	protected HighlightProvider getHighlightProvider() {
+	protected ListingHighlightProvider getHighlightProvider() {
 		CodeViewerService service = tool.getService(CodeViewerService.class);
 		FormatManager fm = (FormatManager) getInstanceField("formatMgr", service);
-		return (HighlightProvider) getInstanceField("highlightProvider", fm);
+		return (ListingHighlightProvider) getInstanceField("highlightProvider", fm);
 	}
 
 	protected void repeatSearch() {
@@ -296,10 +290,11 @@ public abstract class AbstractMemSearchTest extends AbstractProgramBasedTest {
 	}
 
 	protected Highlight[] getByteHighlights(Address address, String bytes) {
+		goTo(address);
 		CodeUnit cu = codeUnitContaining(address);
-		HighlightProvider provider1 = getHighlightProvider();
-		Highlight[] h = provider1.getHighlights(bytes, cu, BytesFieldFactory.class, -1);
-		return h;
+		ListingHighlightProvider hlProvider = getHighlightProvider();
+		ListingField field = getField(address, BytesFieldFactory.FIELD_NAME);
+		return hlProvider.createHighlights(bytes, field, -1);
 	}
 
 	protected void setEndianess(String text) {

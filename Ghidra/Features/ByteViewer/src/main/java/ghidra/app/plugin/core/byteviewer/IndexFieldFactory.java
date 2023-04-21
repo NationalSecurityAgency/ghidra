@@ -22,7 +22,7 @@ import java.math.BigInteger;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.field.SimpleTextField;
 import docking.widgets.fieldpanel.support.Highlight;
-import docking.widgets.fieldpanel.support.HighlightFactory;
+import docking.widgets.fieldpanel.support.FieldHighlightFactory;
 import ghidra.app.plugin.core.format.ByteBlockInfo;
 
 /**
@@ -37,7 +37,7 @@ class IndexFieldFactory {
 	private String noValueStr;
 	private int startX;
 	private Color missingValueColor;
-	private HighlightFactory highlightFactory = new DummyHighlightFactory();
+	private FieldHighlightFactory highlightFactory = new DummyHighlightFactory();
 
 	/**
 	 * Constructor
@@ -136,14 +136,14 @@ class IndexFieldFactory {
 		missingValueColor = c;
 	}
 
-	static class DummyHighlightFactory implements HighlightFactory {
+	static class DummyHighlightFactory implements FieldHighlightFactory {
 		private final Highlight[] NO_HIGHLIGHTS = new Highlight[0];
 
 		public DummyHighlightFactory() {
 		}
 
 		@Override
-		public Highlight[] getHighlights(Field field, String text, int cursorTextOffset) {
+		public Highlight[] createHighlights(Field field, String text, int cursorTextOffset) {
 			return NO_HIGHLIGHTS;
 		}
 	}

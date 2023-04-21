@@ -24,7 +24,7 @@ import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.GhidraOptions;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.field.ListingColors.MnemonicColors;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
@@ -68,7 +68,7 @@ public class MnemonicFieldFactory extends FieldFactory {
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
-	private MnemonicFieldFactory(FieldFormatModel model, HighlightProvider hsProvider,
+	private MnemonicFieldFactory(FieldFormatModel model, ListingHighlightProvider hsProvider,
 			Options displayOptions, ToolOptions fieldOptions) {
 		super(FIELD_NAME, model, hsProvider, displayOptions, fieldOptions);
 
@@ -202,7 +202,7 @@ public class MnemonicFieldFactory extends FieldFactory {
 	}
 
 	@Override
-	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider hsProvider,
+	public FieldFactory newInstance(FieldFormatModel formatModel, ListingHighlightProvider hsProvider,
 			ToolOptions displayOptions, ToolOptions fieldOptions) {
 		return new MnemonicFieldFactory(formatModel, hsProvider, displayOptions, fieldOptions);
 	}

@@ -65,7 +65,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 	private boolean indexUpdate = true;
 	private FieldLocation lastFieldLoc;
 
-	private ByteViewerHighlightProvider highlightProvider;
+	private ByteViewerHighlighter highlightProvider = new ByteViewerHighlighter();
 	private int highlightButton = MouseEvent.BUTTON2;
 
 	/**
@@ -86,7 +86,6 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 		this.bytesPerLine = bytesPerLine;
 		this.fm = fm;
 		this.layoutModel = layoutModel;
-		highlightProvider = new ByteViewerHighlightProvider();
 
 		setName(model.getName());
 		initialize();
