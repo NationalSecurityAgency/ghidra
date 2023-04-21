@@ -32,7 +32,6 @@ import ghidra.framework.plugintool.util.PluginStatus;
 	status = PluginStatus.RELEASED,
 	servicesRequired = {
 		DebuggerLogicalBreakpointService.class,
-		DebuggerModelService.class,
 	},
 	eventsConsumed = {
 		TraceOpenedPluginEvent.class,
