@@ -76,7 +76,7 @@ public class DebuggerDisassemblerPlugin extends Plugin implements PopupActionPro
 		}
 	}
 
-	protected static RegisterValue deriveAlternativeDefaultContext(Language language,
+	public static RegisterValue deriveAlternativeDefaultContext(Language language,
 			LanguageID alternative, Address address) {
 		LanguageService langServ = DefaultLanguageService.getLanguageService();
 		Language altLang;

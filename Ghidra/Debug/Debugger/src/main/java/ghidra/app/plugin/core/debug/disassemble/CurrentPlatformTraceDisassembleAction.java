@@ -64,6 +64,9 @@ public class CurrentPlatformTraceDisassembleAction extends DockingAction {
 		TraceObject object = current.getObject();
 		DebuggerPlatformMapper mapper =
 			plugin.platformService.getMapper(trace, object, view.getSnap());
+		if (mapper == null) {
+			return null;
+		}
 		return new Reqs(mapper, thread, object, view);
 	}
 

@@ -645,7 +645,7 @@ public class DBTraceMemorySpace
 	@Override
 	public int putBytes(long snap, Address start, ByteBuffer buf) {
 		assertInSpace(start);
-		int arrOff = buf.arrayOffset() + buf.position();
+		int pos = buf.position();
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
 
 			ByteBuffer oldBytes = ByteBuffer.allocate(buf.remaining());
@@ -659,7 +659,8 @@ public class DBTraceMemorySpace
 				doSetState(snap, start, end, TraceMemoryState.KNOWN);
 
 				// Read back the written bytes and fire event
-				byte[] bytes = Arrays.copyOfRange(buf.array(), arrOff, arrOff + result);
+				byte[] bytes = new byte[result];
+				buf.get(pos, bytes);
 				ImmutableTraceAddressSnapRange tasr = new ImmutableTraceAddressSnapRange(start,
 					start.add(result - 1), snap, lastSnap.snap);
 				trace.setChanged(new TraceChangeRecord<>(TraceMemoryBytesChangeType.CHANGED,

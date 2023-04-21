@@ -26,11 +26,13 @@ import java.nio.charset.CharsetEncoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.List;
 
-import db.Transaction;
 import db.DBHandle;
+import db.Transaction;
 import generic.theme.GThemeDefaults.Colors.Messages;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.dbg.util.PathPredicates;
 import ghidra.pcode.exec.*;
 import ghidra.pcode.exec.trace.TraceSleighUtils;
 import ghidra.program.disassemble.Disassembler;
@@ -52,6 +54,7 @@ import ghidra.trace.model.*;
 import ghidra.trace.model.guest.TraceGuestPlatform;
 import ghidra.trace.model.guest.TracePlatform;
 import ghidra.trace.model.symbol.TraceReferenceManager;
+import ghidra.trace.model.target.*;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.Msg;
 import ghidra.util.database.DBOpenMode;
@@ -748,6 +751,60 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	public CompilerSpec getCompiler(String langID, String compID)
 			throws CompilerSpecNotFoundException, LanguageNotFoundException {
 		return getLanguage(langID).getCompilerSpecByID(new CompilerSpecID(compID));
+	}
+
+	/**
+	 * Get an object by its canonical path
+	 * 
+	 * @param canonicalPath the canonical path
+	 * @return the object or null
+	 */
+	public TraceObject obj(String canonicalPath) {
+		return trace.getObjectManager()
+				.getObjectByCanonicalPath(TraceObjectKeyPath.parse(canonicalPath));
+	}
+
+	
+	/**
+	 * Get an object by its path pattern
+	 * 
+	 * @param path the path pattern
+	 * @return the object or null
+	 */
+	public TraceObject objAny(String pat) {
+		return objAny(pat, Lifespan.at(0));
+	}
+	public TraceObject objAny(String path, Lifespan span) {
+		return trace.getObjectManager().getObjectsByPath(span, TraceObjectKeyPath.parse(path))
+				.findFirst()
+				.orElse(null);
+	}
+
+	/**
+	 * Get the value (not value entry) of an object
+	 * 
+	 * @param obj the object
+	 * @param snap the snapshot key
+	 * @param key the entry key
+	 * @return the value, possibly null
+	 */
+	public Object objValue(TraceObject obj, long snap, String key) {
+		TraceObjectValue value = obj.getValue(snap, key);
+		return value == null ? null : value.getValue();
+	}
+
+	/**
+	 * List all values matching the given pattern at the given stnap.
+	 * 
+	 * @param snap the snap
+	 * @param pattern the pattern
+	 * @return the list of values
+	 */
+	public List<Object> objValues(long snap, String pattern) {
+		return trace.getObjectManager()
+				.getValuePaths(Lifespan.at(snap), PathPredicates.parse(pattern))
+				.map(p -> p.getDestinationValue(trace.getObjectManager().getRootObject()))
+				.toList();
 	}
 
 	@Override

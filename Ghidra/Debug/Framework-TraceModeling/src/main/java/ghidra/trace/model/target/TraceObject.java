@@ -48,6 +48,13 @@ public interface TraceObject extends TraceUniqueObject {
 	Trace getTrace();
 
 	/**
+	 * Get the database key for this object
+	 * 
+	 * @return the key
+	 */
+	long getKey();
+
+	/**
 	 * Get the root of the tree containing this object
 	 * 
 	 * @return the root
@@ -171,7 +178,11 @@ public interface TraceObject extends TraceUniqueObject {
 		 * Throw {@link DuplicateKeyException} if the specified lifespan would result in conflicting
 		 * entries
 		 */
-		DENY;
+		DENY,
+		/**
+		 * Adjust the new entry to fit into the span available, possibly ignoring it altogether
+		 */
+		ADJUST;
 	}
 
 	/**
