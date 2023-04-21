@@ -27,7 +27,7 @@ public interface Searcher {
 	 * Get the next program location.
 	 * @return null if there is no next program location.
 	 */
-	public ProgramLocation search();
+	public TextSearchResult search();
 
 	/**
 	 * Set the task monitor.
@@ -40,4 +40,15 @@ public interface Searcher {
 	 * @return the search option
 	 */
 	public SearchOptions getSearchOptions();
+
+	/**
+	 * A record object that represents a single search result
+	 * 
+	 * @param programLocation the program location of the search result. 
+	 * @param offset the offset in the *model*'s text of the search result; this value will be from
+	 *        0 to text.length(), where text is a single string for all text in the given field.
+	 */
+	public record TextSearchResult(ProgramLocation programLocation, int offset) {
+		// stub
+	}
 }

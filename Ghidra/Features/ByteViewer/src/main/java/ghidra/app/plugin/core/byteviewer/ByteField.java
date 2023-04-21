@@ -24,7 +24,7 @@ import docking.util.GraphicsUtils;
 import docking.widgets.fieldpanel.field.SimpleTextField;
 import docking.widgets.fieldpanel.internal.FieldBackgroundColorManager;
 import docking.widgets.fieldpanel.internal.PaintContext;
-import docking.widgets.fieldpanel.support.HighlightFactory;
+import docking.widgets.fieldpanel.support.FieldHighlightFactory;
 import docking.widgets.fieldpanel.support.RowColLocation;
 import ghidra.util.ColorUtils;
 
@@ -52,7 +52,7 @@ public class ByteField extends SimpleTextField {
 	 */
 	public ByteField(String text, FontMetrics fontMetrics, int startX, int width,
 			boolean allowCursorAtEnd, int fieldOffset, BigInteger index,
-			HighlightFactory hlFactory) {
+			FieldHighlightFactory hlFactory) {
 
 		super(text, fontMetrics, startX, width, allowCursorAtEnd, hlFactory);
 		this.fieldOffset = fieldOffset;
@@ -64,7 +64,7 @@ public class ByteField extends SimpleTextField {
 	public void paint(JComponent c, Graphics g, PaintContext context,
 			Rectangle clip, FieldBackgroundColorManager colorManager, RowColLocation cursorLoc, int rowHeight) {
 		paintSelection(g, colorManager, 0);
-		paintHighlights(g, hlFactory.getHighlights(this, text, -1));
+		paintHighlights(g, hlFactory.createHighlights(this, text, -1));
 		g.setFont(metrics.getFont());
 		if (foregroundColor == null) {
 			foregroundColor = context.getForeground();

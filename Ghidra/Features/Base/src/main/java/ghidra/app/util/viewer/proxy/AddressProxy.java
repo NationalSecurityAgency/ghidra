@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,14 +19,15 @@ import ghidra.app.util.viewer.listingpanel.ListingModel;
 import ghidra.program.model.address.Address;
 
 /**
- * Stores information about a address in a program such that the address can 
- * be retrieved when needed.
+ * Stores information about an address in a program.
  */
 public class AddressProxy extends ProxyObj<Address> {
-	Address addr;
+
+	private Address addr;
 
 	/**
 	 * Construct a address proxy
+	 * @param model the model
 	 * @param addr the address to proxy
 	 */
 	public AddressProxy(ListingModel model, Address addr) {
@@ -35,12 +35,13 @@ public class AddressProxy extends ProxyObj<Address> {
 		this.addr = addr;
 	}
 
-	/**
-	 * @see ghidra.app.util.viewer.proxy.ProxyObj#getObject()
-	 */
 	@Override
 	public Address getObject() {
 		return addr;
 	}
 
+	@Override
+	public boolean contains(Address a) {
+		return addr.equals(a);
+	}
 }

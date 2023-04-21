@@ -18,7 +18,7 @@ package ghidra.app.util.viewer.field;
 import java.math.BigInteger;
 
 import docking.widgets.fieldpanel.support.FieldLocation;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.ToolOptions;
@@ -43,7 +43,7 @@ public class OperandFieldFactory extends OperandFieldHelper {
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
-	protected OperandFieldFactory(FieldFormatModel model, HighlightProvider hlProvider,
+	protected OperandFieldFactory(FieldFormatModel model, ListingHighlightProvider hlProvider,
 			ToolOptions displayOptions, ToolOptions fieldOptions) {
 		super(FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
 	}
@@ -89,7 +89,7 @@ public class OperandFieldFactory extends OperandFieldHelper {
 	}
 
 	@Override
-	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider hsProvider,
+	public FieldFactory newInstance(FieldFormatModel formatModel, ListingHighlightProvider hsProvider,
 			ToolOptions displayOptions, ToolOptions fieldOptions) {
 		return new OperandFieldFactory(formatModel, hsProvider, displayOptions, fieldOptions);
 	}

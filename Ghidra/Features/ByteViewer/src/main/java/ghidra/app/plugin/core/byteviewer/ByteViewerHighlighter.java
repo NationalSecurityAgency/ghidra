@@ -19,17 +19,14 @@ import java.awt.Color;
 
 import docking.widgets.fieldpanel.support.Highlight;
 import generic.theme.GColor;
-import ghidra.app.util.HighlightProvider;
-import ghidra.app.util.viewer.field.FieldFactory;
 
-public class ByteViewerHighlightProvider implements HighlightProvider {
+class ByteViewerHighlighter {
+
 	private static Highlight[] NO_HIGHLIGHTS = new Highlight[0];
 	private String highlightText;
 	private Color highlightColor = new GColor("color.bg.byteviewer.highlight");
 
-	@Override
-	public Highlight[] getHighlights(String text, Object obj,
-			Class<? extends FieldFactory> fieldFactoryClass, int cursorTextOffset) {
+	public Highlight[] createHighlights(String text) {
 
 		if (text.equals(highlightText)) {
 			return new Highlight[] { new Highlight(0, text.length() - 1, highlightColor) };
@@ -48,5 +45,4 @@ public class ByteViewerHighlightProvider implements HighlightProvider {
 	void setHighlightColor(Color color) {
 		this.highlightColor = color;
 	}
-
 }

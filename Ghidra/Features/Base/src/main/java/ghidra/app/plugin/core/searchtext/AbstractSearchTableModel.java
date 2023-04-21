@@ -16,6 +16,7 @@
 package ghidra.app.plugin.core.searchtext;
 
 import ghidra.GhidraOptions;
+import ghidra.app.plugin.core.searchtext.Searcher.TextSearchResult;
 import ghidra.app.util.PluginConstants;
 import ghidra.app.util.query.ProgramLocationPreviewTableModel;
 import ghidra.framework.options.Options;
@@ -58,11 +59,11 @@ public abstract class AbstractSearchTableModel extends ProgramLocationPreviewTab
 			throws CancelledException {
 		Searcher searcher = getSearcher(tool, monitor);
 		monitor.checkCanceled();
-		ProgramLocation loc = searcher.search();
-		while (loc != null && accumulator.size() < searchLimit) {
-			accumulator.add(loc);
+		TextSearchResult result = searcher.search();
+		while (result != null && accumulator.size() < searchLimit) {
+			accumulator.add(result.programLocation());
 			monitor.checkCanceled();
-			loc = searcher.search();
+			result = searcher.search();
 		}
 	}
 

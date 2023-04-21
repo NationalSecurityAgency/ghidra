@@ -19,14 +19,15 @@ import java.awt.Color;
 import java.util.ArrayList;
 
 import docking.widgets.fieldpanel.support.Highlight;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.field.*;
+import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.program.model.address.*;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.util.ListingDiff;
 
-public class ListingDiffHighlightProvider implements HighlightProvider {
+public class ListingDiffHighlightProvider implements ListingHighlightProvider {
 
 	private static final int NUM_CHARACTERS_PER_BYTE = 3; // 2 hex digits and a space;
 	private static final String DEFAULT_OPERAND_SEPARATOR = ",";
@@ -52,13 +53,14 @@ public class ListingDiffHighlightProvider implements HighlightProvider {
 	}
 
 	@Override
-	public Highlight[] getHighlights(String text, Object obj,
-			Class<? extends FieldFactory> fieldFactoryClass, int cursorTextOffset) {
+	public Highlight[] createHighlights(String text, ListingField field, int cursorTextOffset) {
 
-		Highlight[] highlights = EMPTY_HIGHLIGHT;
+		Highlight[] highlights = NO_HIGHLIGHTS;
 
-		if (obj instanceof CodeUnit) {
-			CodeUnit codeUnit = (CodeUnit) obj;
+		ProxyObj<?> proxy = field.getProxy();
+		Object obj = proxy.getObject();
+		if (obj instanceof CodeUnit codeUnit) {
+			Class<? extends FieldFactory> fieldFactoryClass = field.getFieldFactory().getClass();
 			if (fieldFactoryClass == BytesFieldFactory.class) {
 				highlights = getByteDiffHighlights(text, codeUnit, cursorTextOffset);
 			}
@@ -78,7 +80,7 @@ public class ListingDiffHighlightProvider implements HighlightProvider {
 		AddressSetView unmatchedDiffs = (isListing1) ? listingDiff.getListing1UnmatchedCode()
 				: listingDiff.getListing2UnmatchedCode();
 		if (unmatchedDiffs.contains(minAddress)) {
-			return EMPTY_HIGHLIGHT;
+			return NO_HIGHLIGHTS;
 		}
 		Color byteDiffsBackgroundColor = comparisonOptions.getByteDiffsBackgroundColor();
 		AddressSetView byteDiffs =
@@ -100,7 +102,7 @@ public class ListingDiffHighlightProvider implements HighlightProvider {
 			}
 			return highlights.toArray(new Highlight[highlights.size()]);
 		}
-		return EMPTY_HIGHLIGHT;
+		return NO_HIGHLIGHTS;
 	}
 
 	private Highlight[] getMnemonicDiffHighlights(String text, CodeUnit codeUnit,
@@ -109,7 +111,7 @@ public class ListingDiffHighlightProvider implements HighlightProvider {
 		AddressSetView unmatchedDiffs = (isListing1) ? listingDiff.getListing1UnmatchedCode()
 				: listingDiff.getListing2UnmatchedCode();
 		if (unmatchedDiffs.contains(minAddress)) {
-			return EMPTY_HIGHLIGHT;
+			return NO_HIGHLIGHTS;
 		}
 		Color mnemonicDiffsBackgroundColor = comparisonOptions.getMnemonicDiffsBackgroundColor();
 		AddressSetView codeUnitDiffs = (isListing1) ? listingDiff.getListing1CodeUnitDiffs()
@@ -129,7 +131,7 @@ public class ListingDiffHighlightProvider implements HighlightProvider {
 				return entireTextHighlight(text, cursorTextOffset, mnemonicDiffsBackgroundColor);
 			}
 		}
-		return EMPTY_HIGHLIGHT;
+		return NO_HIGHLIGHTS;
 	}
 
 	private Highlight[] getOperandDiffHighlights(String text, CodeUnit codeUnit,
@@ -138,7 +140,7 @@ public class ListingDiffHighlightProvider implements HighlightProvider {
 		AddressSetView unmatchedDiffs = (isListing1) ? listingDiff.getListing1UnmatchedCode()
 				: listingDiff.getListing2UnmatchedCode();
 		if (unmatchedDiffs.contains(minAddress)) {
-			return EMPTY_HIGHLIGHT;
+			return NO_HIGHLIGHTS;
 		}
 		Color operandDiffsBackgroundColor = comparisonOptions.getOperandDiffsBackgroundColor();
 		AddressSetView codeUnitDiffs = (isListing1) ? listingDiff.getListing1CodeUnitDiffs()
@@ -165,7 +167,7 @@ public class ListingDiffHighlightProvider implements HighlightProvider {
 			}
 			return highlights.toArray(new Highlight[highlights.size()]);
 		}
-		return EMPTY_HIGHLIGHT;
+		return NO_HIGHLIGHTS;
 	}
 
 	/**

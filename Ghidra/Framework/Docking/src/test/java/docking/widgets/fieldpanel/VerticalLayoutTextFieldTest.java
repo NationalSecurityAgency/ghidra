@@ -39,7 +39,7 @@ public class VerticalLayoutTextFieldTest extends AbstractGenericTest {
 	@Before
 	public void setUp() throws Exception {
 
-		HighlightFactory factory = (f, text, cursorTextOffset) -> {
+		FieldHighlightFactory factory = (f, text, cursorTextOffset) -> {
 			return new Highlight[] { new Highlight(4, 4, Palette.YELLOW) };
 		};
 

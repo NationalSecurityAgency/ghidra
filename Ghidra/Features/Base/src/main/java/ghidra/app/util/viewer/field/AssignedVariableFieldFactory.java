@@ -20,7 +20,7 @@ import java.util.ArrayList;
 
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.field.ListingColors.FunctionColors;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
@@ -50,7 +50,7 @@ public class AssignedVariableFieldFactory extends FieldFactory {
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
-	private AssignedVariableFieldFactory(FieldFormatModel model, HighlightProvider hsProvider,
+	private AssignedVariableFieldFactory(FieldFormatModel model, ListingHighlightProvider hsProvider,
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, model, hsProvider, displayOptions, fieldOptions);
 	}
@@ -134,7 +134,7 @@ public class AssignedVariableFieldFactory extends FieldFactory {
 	}
 
 	@Override
-	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider hsProvider,
+	public FieldFactory newInstance(FieldFormatModel formatModel, ListingHighlightProvider hsProvider,
 			ToolOptions displayOptions, ToolOptions fieldOptions) {
 		return new AssignedVariableFieldFactory(formatModel, hsProvider, displayOptions,
 			fieldOptions);

@@ -18,7 +18,7 @@ package ghidra.app.util.viewer.field;
 import java.math.BigInteger;
 
 import docking.widgets.fieldpanel.support.FieldLocation;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.Options;
@@ -46,7 +46,7 @@ public class OpenCloseFieldFactory extends FieldFactory {
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
-	private OpenCloseFieldFactory(FieldFormatModel model, HighlightProvider hlProvider,
+	private OpenCloseFieldFactory(FieldFormatModel model, ListingHighlightProvider hlProvider,
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, model, hlProvider, displayOptions, fieldOptions);
 		servicesChanged();
@@ -154,7 +154,7 @@ public class OpenCloseFieldFactory extends FieldFactory {
 	}
 
 	@Override
-	public FieldFactory newInstance(FieldFormatModel fieldModel, HighlightProvider provider,
+	public FieldFactory newInstance(FieldFormatModel fieldModel, ListingHighlightProvider provider,
 			ToolOptions displayOptions, ToolOptions fieldOptions) {
 		return new OpenCloseFieldFactory(fieldModel, provider, displayOptions, fieldOptions);
 	}

@@ -39,7 +39,7 @@ public class FlowLayoutTextFieldTest extends AbstractGenericTest {
 	@Before
 	public void setUp() throws Exception {
 
-		HighlightFactory factory = (field, text, cursorTextOffset) -> {
+		FieldHighlightFactory factory = (field, text, cursorTextOffset) -> {
 			return new Highlight[] { new Highlight(4, 4, Palette.YELLOW) };
 		};
 

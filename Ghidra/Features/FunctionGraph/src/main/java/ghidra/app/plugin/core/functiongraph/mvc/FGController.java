@@ -33,7 +33,7 @@ import docking.widgets.fieldpanel.support.FieldLocation;
 import docking.widgets.fieldpanel.support.Highlight;
 import ghidra.GhidraOptions;
 import ghidra.app.nav.Navigatable;
-import ghidra.app.plugin.core.codebrowser.ListingHighlightProvider;
+import ghidra.app.plugin.core.codebrowser.ListingMiddleMouseHighlightProvider;
 import ghidra.app.plugin.core.functiongraph.*;
 import ghidra.app.plugin.core.functiongraph.graph.FGEdge;
 import ghidra.app.plugin.core.functiongraph.graph.FunctionGraph;
@@ -41,7 +41,7 @@ import ghidra.app.plugin.core.functiongraph.graph.layout.FGLayoutProvider;
 import ghidra.app.plugin.core.functiongraph.graph.vertex.*;
 import ghidra.app.services.ButtonPressedListener;
 import ghidra.app.services.CodeViewerService;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.field.FieldFactory;
 import ghidra.app.util.viewer.field.ListingField;
 import ghidra.app.util.viewer.format.FieldFormatModel;
@@ -81,7 +81,7 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 
 	private FunctionGraphOptions functionGraphOptions;
 
-	private SharedHighlightProvider sharedHighlightProvider;
+	private FgHighlightProvider sharedHighlightProvider;
 	private StringSelectionListener sharedStringSelectionListener =
 		string -> provider.setClipboardStringContent(string);
 
@@ -140,7 +140,7 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 
 	private void setMinimalFormatManager(FormatManager formatManager) {
 		this.minimalFormatManager = formatManager;
-		SharedHighlightProvider highlightProvider = lazilyCreateSharedHighlightProvider();
+		FgHighlightProvider highlightProvider = lazilyCreateSharedHighlightProvider();
 		minimalFormatManager.addHighlightProvider(highlightProvider);
 	}
 
@@ -158,12 +158,12 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 		return defaultFormatManager;
 	}
 
-	private SharedHighlightProvider lazilyCreateSharedHighlightProvider() {
+	private FgHighlightProvider lazilyCreateSharedHighlightProvider() {
 		if (sharedHighlightProvider != null) {
 			return sharedHighlightProvider;
 		}
 		sharedHighlightProvider =
-			new SharedHighlightProvider(plugin.getTool(), provider.getComponent());
+			new FgHighlightProvider(plugin.getTool(), provider.getComponent());
 		return sharedHighlightProvider;
 	}
 
@@ -1067,18 +1067,17 @@ public class FGController implements ProgramLocationListener, ProgramSelectionLi
 // Inner Classes
 //==================================================================================================
 
-	private static class SharedHighlightProvider
-			implements HighlightProvider, ButtonPressedListener {
-		private ListingHighlightProvider highlighter;
+	private static class FgHighlightProvider
+			implements ListingHighlightProvider, ButtonPressedListener {
+		private ListingMiddleMouseHighlightProvider highlighter;
 
-		SharedHighlightProvider(PluginTool tool, Component repaintComponent) {
-			highlighter = new ListingHighlightProvider(tool, repaintComponent);
+		FgHighlightProvider(PluginTool tool, Component repaintComponent) {
+			highlighter = new ListingMiddleMouseHighlightProvider(tool, repaintComponent);
 		}
 
 		@Override
-		public Highlight[] getHighlights(String text, Object obj,
-				Class<? extends FieldFactory> fieldFactoryClass, int cursorTextOffset) {
-			return highlighter.getHighlights(text, obj, fieldFactoryClass, cursorTextOffset);
+		public Highlight[] createHighlights(String text, ListingField field, int cursorTextOffset) {
+			return highlighter.createHighlights(text, field, cursorTextOffset);
 		}
 
 		@Override

@@ -21,7 +21,7 @@ import docking.widgets.fieldpanel.field.AttributedString;
 import docking.widgets.fieldpanel.field.TextFieldElement;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import generic.theme.GColor;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.field.*;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
@@ -50,14 +50,14 @@ public class TaintFieldFactory extends FieldFactory {
 		super(FIELD_NAME);
 	}
 
-	protected TaintFieldFactory(FieldFormatModel formatModel, HighlightProvider highlightProvider,
+	protected TaintFieldFactory(FieldFormatModel formatModel, ListingHighlightProvider highlightProvider,
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, formatModel, highlightProvider, displayOptions, fieldOptions);
 	}
 
 	@Override
 	public FieldFactory newInstance(FieldFormatModel formatModel,
-			HighlightProvider highlightProvider, ToolOptions displayOptions,
+			ListingHighlightProvider highlightProvider, ToolOptions displayOptions,
 			ToolOptions fieldOptions) {
 		return new TaintFieldFactory(formatModel, highlightProvider, displayOptions, fieldOptions);
 	}

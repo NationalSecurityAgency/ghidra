@@ -33,7 +33,7 @@ import ghidra.app.plugin.core.functiongraph.graph.vertex.FGVertex;
 import ghidra.app.plugin.core.functiongraph.graph.vertex.GroupedFunctionGraphVertex;
 import ghidra.app.plugin.core.functiongraph.mvc.*;
 import ghidra.app.services.*;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.framework.model.*;
 import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.PluginTool;
@@ -1298,12 +1298,12 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 	}
 
 	@Override
-	public void removeHighlightProvider(HighlightProvider highlightProvider, Program program) {
+	public void removeHighlightProvider(ListingHighlightProvider highlightProvider, Program program) {
 		// currently unsupported
 	}
 
 	@Override
-	public void setHighlightProvider(HighlightProvider highlightProvider, Program program) {
+	public void setHighlightProvider(ListingHighlightProvider highlightProvider, Program program) {
 		// currently unsupported
 	}
 

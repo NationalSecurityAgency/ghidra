@@ -20,7 +20,7 @@ import java.math.BigInteger;
 import docking.widgets.OptionDialog;
 import docking.widgets.fieldpanel.field.*;
 import docking.widgets.fieldpanel.support.FieldLocation;
-import ghidra.app.util.HighlightProvider;
+import ghidra.app.util.ListingHighlightProvider;
 import ghidra.app.util.viewer.format.FieldFormatModel;
 import ghidra.app.util.viewer.proxy.ProxyObj;
 import ghidra.framework.options.Options;
@@ -52,7 +52,7 @@ public class SpacerFieldFactory extends FieldFactory {
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	 */
-	private SpacerFieldFactory(FieldFormatModel model, HighlightProvider hsProvider,
+	private SpacerFieldFactory(FieldFormatModel model, ListingHighlightProvider hsProvider,
 			Options displayOptions, Options fieldOptions) {
 		super(FIELD_NAME, model, hsProvider, displayOptions, fieldOptions);
 	}
@@ -65,7 +65,7 @@ public class SpacerFieldFactory extends FieldFactory {
 	 * @param displayOptions the Options for display properties.
 	 * @param fieldOptions the Options for field specific properties.
 	  */
-	public SpacerFieldFactory(String text, FieldFormatModel model, HighlightProvider hsProvider,
+	public SpacerFieldFactory(String text, FieldFormatModel model, ListingHighlightProvider hsProvider,
 			Options displayOptions, Options fieldOptions) {
 
 		super(FIELD_NAME, model, hsProvider, displayOptions, fieldOptions);
@@ -179,7 +179,7 @@ public class SpacerFieldFactory extends FieldFactory {
 	}
 
 	@Override
-	public FieldFactory newInstance(FieldFormatModel formatModel, HighlightProvider provider,
+	public FieldFactory newInstance(FieldFormatModel formatModel, ListingHighlightProvider provider,
 			ToolOptions options, ToolOptions fieldOptions) {
 		return new SpacerFieldFactory(formatModel, provider, options, fieldOptions);
 	}
