@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.register;
 
-import static ghidra.lifecycle.Unfinished.*;
+import static ghidra.lifecycle.Unfinished.TODO;
 import static org.junit.Assert.*;
 
 import java.math.BigInteger;

@@ -35,8 +35,7 @@ import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree.TraceAdd
 import ghidra.trace.database.space.AbstractDBTraceSpaceBasedManager;
 import ghidra.trace.database.space.DBTraceDelegatingManager;
 import ghidra.trace.database.thread.DBTraceThreadManager;
-import ghidra.trace.model.Lifespan;
-import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.model.*;
 import ghidra.trace.model.memory.*;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
@@ -313,7 +312,9 @@ public class DBTraceMemoryManager extends AbstractDBTraceSpaceBasedManager<DBTra
 
 	protected Collection<Entry<TraceAddressSnapRange, TraceMemoryState>> doGetStates(Lifespan span,
 			AddressRange range) {
-		return delegateRead(range.getAddressSpace(), m -> m.doGetStates(span, range));
+		return delegateReadOr(range.getAddressSpace(), m -> m.doGetStates(span, range),
+			() -> List.of(Map.entry(new ImmutableTraceAddressSnapRange(range, span),
+				TraceMemoryState.UNKNOWN)));
 	}
 
 	@Override
